@@ -1,0 +1,75 @@
+/**
+
+\page matrix Matrix
+
+Muchos algoritmos que requieren trabajar con conjuntos de datos
+requieren muestras con el mismo número de elementos. Así, parece muy
+natural utilizar una matriz donde cada fila es una muestra. El número
+de filas coincide con el número de muestras a presentar al
+algoritmo. El número de columnas correspondería con el tamaño de cada
+patrón.
+
+<tt>april</tt> permite definir matrices de varias maneras utilizando la
+clase <tt>matrix</tt>, la forma más sencilla es mediante
+<tt>matrix.fromString</tt>, por ejemplo:
+
+\verbatim
+xor_in = matrix.fromString[[
+# podemos añadir lineas de comentarios cuando queramos
+# basta con situar un '#' al principio de la linea
+# la primera linea contiene el numero de componentes en cada dimension
+4 2
+# el numero de dimensiones se obtiene implicitamente
+# la siguiente linea contiene el tipo de representacion, ascii o binary
+ascii
+# luego vienen los valores propiamente dichos separados por espacio, 
+# tabulador, enter, coma, punto y coma
+0 0
+0 1
+1 0
+1 1
+]]
+xor_out = matrix.fromString"4 1\nascii\n0 1 1 0" -- o incluso asi
+\endverbatim
+
+De manera que están definidas las siguientes funciones para cargar y
+salvar matrices:
+
+\verbatim
+function matrix.loadfile(filename)
+  local f = io.open(filename,"r")
+  local b = f:read("*a")
+  f:close()
+  return matrix.fromString(b)
+end
+\endverbatim
+
+\verbatim
+function matrix.savefile(matrix,filename,format)
+  local f = io.open(filename,"w")
+  f:write(matrix:toString(format))
+  f:close()
+end
+\endverbatim
+
+Podemos consultar las dimensiones de una matrix utilizando el método
+<tt>dim</tt> que devuelve una tabla con el tamaño de cada dimensión
+de la manera siguiente:
+
+\verbatim
+print("La matriz xor_in tiene dimensiones {"..
+     table.concat(m_in:dim(),",").."}")
+--> La matriz xor_in tiene dimensiones {4,2}
+\endverbatim
+
+\verbatim
+m1 = matrix(2,3)              --> matrix de 2x3
+m2 = matrix(2,2,{1,2,3,4})    --> el último argumento puede ser
+                              --> una tabla con los valores
+m3 = matrix(unpack(m1:dim())) --> matriz del mismo tamaño que m1
+m3:fill(2)                    --> rellenar la matriz con un valor
+m4 = matrix(3)
+m4:set{1,2,3}                 --> dar valores a una matriz ya creada
+\endverbatim
+
+*/

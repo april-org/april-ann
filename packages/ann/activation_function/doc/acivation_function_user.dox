@@ -1,0 +1,70 @@
+/**
+   \page ann.activations ActivationFunction
+   
+   Activation functions are basic in neural networks. They receive the neuron
+   potential, that is, the dot product between inputs and weights, and they
+   compute a squashing function, normally logistic or tanh. Some especial neural
+   networks, as the Restricted Boltzmann Machines, uses an especial type of
+   activation function based on stochastic process.
+
+   From the user point-of-view, the activation function is a C++ object that
+   could be instantiated. The unit (or neuron) layers receive this object. For
+   example:
+
+   \verbatim
+   -- First, we need an mlp
+   net=ann.mlp()
+
+   -- Second we build an activation function object
+   logistic_activation = ann.activations.logistic()
+
+   -- Third we give previous object to an activation units layer
+   units=ann.units.real_cod{
+     size=10,
+     ann=net,
+     actf=logistic_activation,
+     type="hidden"
+   }
+   
+   -- It is also posible to build in the same call the activation function and
+   -- the activation units layer
+   units=ann.units.real_cod{
+     size=10,
+     ann=net,
+     actf=ann.activations.logistic(),
+     type="hidden"
+   }
+   \endverbatim
+
+   \section ActivationFunction Linear activation function
+   
+   It is posible to give a nil value to the activation units layer. In this
+   case, the linear (or identity) activation function will be used.
+
+   \verbatim
+   units=ann.units.real_cod{
+     size=10,
+     ann=net,
+     type="hidden"
+   }
+   \endverbatim
+
+   \section LogisticActivationFunction ann.activations.logistic
+   
+   The logistic activation function is a widely used activation function. It is
+   an smoothed version of the step function, and its range is \f$ [0,1] \f$.
+
+   \section TanhActivationFunction ann.activations.tanh
+   
+   The tanh activation function is a widely used activation function. It is
+   an smoothed version of the step function, and its range is \f$ [-1,1] \f$.
+
+   \section SoftmaxActivationFunction ann.activations.softmax
+   
+   The softmax activation function is a widely used activation function on the
+   output layer. It is useful for classification tasks, because its outputs
+   could be interpreted as probabilities. Its range is \f$ [0,1] \f$, and the
+   sum of all outputs will be one.
+   
+*/
+

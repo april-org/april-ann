@@ -1,0 +1,293 @@
+Manual para uso del Bindeador
+=============================
+
+El uso basico del bindeador es para poder hacer wrappers de clases
+C++, puediendo utilizarlas desde lua. Este uso basico se ve extendido
+añadiendo la posibilidad de bindear tambien funciones C/C++ para que
+sean visibles en un lugar del espacio de nombres y tablas de lua.
+
+Todo esto se lleva a cabo mediante una serie de macros
+especiales. Todas las macros del bindeador tienen esta forma: //BIND_*
+donde el * denota el tipo de comando o accion que estamos bindeando
+(pudiendo ser funciones, metodos de una clase, constructores de clase,
+destructores, constructores estaticos que se ejecutan al comenzar la
+ejecucion de la funcion "main" de C...). Existen dos tipos de
+macros/comandos en el bindeador. Las que pueden contener codigo C/C++,
+de manera que permiten implementar funciones (metodos, constructores
+...) y las que tan solo ejecutan un comando (crear una tabla, declarar
+herencia entre clases ...). Las macros del primer tipo necesitan al
+final el comando //BIND_END para indicar donde acaba el codigo C/C++
+que necesitan.
+
+*******************************************************************
+
+EN TODOS LOS BLOQUES DE CODIGO C++ HAY DEFINIDIAS LAS SIGUIENTES
+VARIABLES:
+
+	- luaState *L: Es el estado de la pila de Lua, para poder
+          recoger y poner variables ;)
+
+*******************************************************************
+
+Las macros actuales son:
+
+        //BIND_STATIC_CONSTRUCTOR nombre_constructor
+	{
+		CODIGO C++
+	}
+	//BIND_END
+
+Sirve para declarar una funcion que sera ejecutada de forma inevitable
+;) al iniciar la ejecucion de la funcion "main" de C. De esa forma se
+pueden hacer cosas como registrar codigos en tablas globales,
+etc. Dado que cada constructor tiene un nombre diferente, y son
+estaticos a cada fichero bindeado, podemos tener varios
+STATIC_CONSTRUCTOR en un mismo fichero de binding, aunque no sirve
+para mucho esto :S
+
+*******************************************************************
+
+      //BIND_CREATE_TABLE tabla1.tabla2.tabla3...
+
+Sirve para crear en lua una ruta de tablas, de manera que si no
+existen las tablas padre, seran creadas ;)
+
+*******************************************************************
+
+      //BIND_FUNCTION tabla1.tabla2....nombre_de_funcion
+      {
+	CODIGO C++
+      }
+
+Crea una funcion que puede ser utilizada desde lua. La funcion es
+creada en la ruta de tablas 'tabla1.tabla2....nombre_de_funcion' de
+manera que si no existen las tablas, son creadas. Por tanto para poder
+usarla desde lua es necesario hacer:
+a.b.c.d.nombreFuncion(parametros...)
+
+*******************************************************************
+
+      //BIND_HEADER_C
+         CODIGO C++
+      //BIND_END
+
+El codigo sera metido en la cabecera del fichero '.cc' que se genera a
+partir del fichero con el binding.
+
+*******************************************************************
+
+      //BIND_HEADER_H
+         CODIGO C++
+      //BIND_END
+
+El codigo sera metido en la cabecera del fichero '.h' que se genera a
+partir del fichero con el binding.
+
+*******************************************************************
+
+      //BIND_LUACLASSNAME claseC tabla1.tabla2.....nombreLua
+
+Asocia a una claseC un nombre en Lua. El nombre en Lua puede ser una
+ruta de tablas, de manera que seran creadas si no existian.
+
+*******************************************************************
+
+      //BIND_CPP_CLASS ClassName
+
+Genera los metodos tipo lua_isClassName, lua_toClassName, lua_pushClassName,
+para que puedan ser utilizados por otros ficheros de binding.
+
+*******************************************************************
+
+      //BIND_SUBCLASS_OF childclass parentclass
+
+Sirve para indicar que una clase es hija de otra. Los nombres
+childclass y parentclass deben ser los nombres en C de las clases, de
+manera que si el nombre en C no se corresponde con el nombre en Lua,
+ya que ha sido modificado mediante //BIND_LUACLASSNAME, es necesario
+poner un //BIND_LUACLASSNAME antes del SUBCLASS_OF, tanto para la
+clase hija como la padre.
+
+
+*******************************************************************
+
+      //BIND_CLASS_OPEN ClassName
+      {
+	 CODIGO C++
+      }
+      //BIND_END
+
+Sirve para añadir codigo que se ejecutara cuando se inicie el
+programa, concretamente cuando se creen las estructuras lua referidas
+a la clase ClassName. ClassName es el nombre de la clase bindeada en
+C++.
+
+*******************************************************************
+
+      //BIND_CONSTRUCTOR ClassName
+      {
+	 CODIGO C++
+      }
+      //BIND_END
+
+Añade codigo C++ que sera ejecutado cuando se construyan desde lua las
+clases bindeadas. Actua como un constructor de C++. El ClassName es el
+nombre de la clase en C++.
+
+*******************************************************************
+
+      //BIND_DESTRUCTOR ClassName
+      {
+	 CODIGO C++
+      }
+      //BIND_END
+
+Idem que el anterior pero para el destructor.
+
+*******************************************************************
+
+      //BIND_METHOD ClassName metodo
+      {
+         CODIGO C++
+      }
+      //BIND_END
+
+Sirve para crear un metodo nuevo en una clase Lua. ClassName hace
+referencia al nombre de la clase en C++ y metodo hace referencia al
+nombre que tendra el metodo visto desde lua. En el bloque de codigo
+C++ se puede usar la variable "ClassName *obj", que apunta al objeto
+C++ que contiene el objeto Lua, y haria las veces de puntero "this".
+
+*******************************************************************
+
+      //BIND_CLASS_METHOD ClassName metodo
+      {
+         CODIGO C++
+      }
+      //BIND_END
+
+Crea un metodo estatico (de clase). Por tanto la variable *obj no
+existe.
+
+*******************************************************************
+
+Tambien hay definidas una serie de macros y funciones que ayudan a
+recuperar los parametros que reciben los metodos bindeados.
+
+MACROS
+
+    * Manipulaci�n de tablas:
+
+	- LUABIND_TABLE_GETN(idx, var): Pone en la variable 'var' el
+          numero de elementos de la tabla situada en la posicion 'idx'
+          de la pila de Lua.
+
+	- LUABIND_TABLE_TO_NEW_VECTOR(table, tipo, vector): Genera en
+          la variable 'vector' un vector, reservado con 'new[]', a
+          partir de la tabla situada en la posicion 'table', asumiendo
+          que la tabla es un vector en Lua y que TODAS sus componentes
+          son de tipo 'tipo'.
+
+    ***OJO*** Las siguientes macros trabajan con los parametros de las
+    funciones llamadas desde Lua, y necesitan que la pila no haya sido
+    manipulada previamente. Comprobar y obtener los valores de los parametros
+    debe ser lo primero que se haga en el binding de cada funcion.
+
+	- LUABIND_CHECK_ARGN(op, n): Comprueba si el numero de
+          argumentos pasados desde lua al metodo actual cumple la
+          siguiente condicion:
+		    numero_argumentos  op  n
+	  donde 'op' es un operador de tipo <,<=,==,>=,>,!=
+
+	- LUABIND_CHECK_PARAMETER(i, type): Comprueba que el tipo del
+          parametro 'i' del metodo es del tipo 'type'.
+
+	- LUABIND_GET_PARAMETER(i, type, var): Devuelve en la variable
+	  'var' el parametro 'i' de tipo 'type'. Si no existe o el
+	  tipo no es correcto da error.
+
+	- LUABIND_GET_OPTIONAL_PARAMETER(i, type, var, default_value):
+	  Devuelve en la variable 'var' el parametro 'i' de tipo
+	  'type'. Si no existe el parametro 'i', devuelve
+	  'default_value'. Si el tipo no es correcto da error.
+
+	- LUABIND_GET_TABLE_PARAMETER(i, name, type, var): Busca en la
+          tabla que se encuentra en la posicion 'i' de la pila un
+          campo con el nombre 'name', de tipo 'type' y lo deja en la
+          variable 'var'. Si no existe o el tipo no es correcto da
+          error.
+	- LUABIND_GET_TABLE_OPTIONAL_PARAMETER(i, name, type, var,
+	  default_value): Busca en la tabla que se encuentra en la
+	  posicion 'i' de la pila un campo con el nombre 'name', de
+	  tipo 'type' y lo deja en la variable 'var'. Si no existe
+	  devuelve 'default_value'. Si el tipo no es correcto da
+	  error.
+
+    ***OJO*** Las siguientes macros sirven para declarar devolucion de valores
+    desde una funcion llamada desde Lua.  La devolucion se hace por medio de la
+    pila (cada RETURN equivale a un push en la pila y un incremento del numero
+    total de valores devueltos), asi que no se debe manipular la pila entre
+    llamadas a LUABIND_RETURN*. Por ejemplo:
+            LUABIND_RETURN(int, A);
+            lua_pushnumber(L, B);
+            LUABIND_RETURN(int, C);
+    generaria un return 2 al final del binding, devolviendo los dos ultimos
+    valores de la pila (B y C) en lugar de A y C como se pretendia.
+
+        - LUABIND_RETURN(type, value): Especifica un valor devuelto 'value'
+          de tipo 'type'.
+
+        - LUABIND_RETURN_NIL(): Especifica la devolucion de un valor nil de
+          Lua.
+
+        - LUABIND_RETURN_FROM_STACK(index): Especifica que se va a devolver
+          el valor situado en la posicion 'index' en la pila de Lua.
+
+    * Tratamiento de errores:
+
+	- LUABIND_ERROR(str): Para lanzar un error mostrando el
+          mensaje 'str'.
+
+	- LUABIND_FERROR1(str, p1): Para lanzar un error mostrando el
+          mensaje 'str' que puede contener una cadena formateada
+          estilo printf con un argumento.
+
+	- LUABIND_FERROR2(str, p1, p2): Para lanzar un error mostrando el
+          mensaje 'str' que puede contener una cadena formateada
+          estilo printf con dos argumentos.
+
+	- LUABIND_FERROR3(str, p1, p2, p3): Para lanzar un error mostrando el
+          mensaje 'str' que puede contener una cadena formateada
+          estilo printf con tres argumentos.
+
+*****************************************************************
+
+FUNCIONES
+
+	- int lua_toint(lua_State *L, int idx): Recupera de la
+          posicion 'idx' de la pila de Lua un valor numerico que sera
+          casteado a int.
+   
+	- float lua_tofloat(lua_State *L, int idx): Recupera de la
+          posicion 'idx' de la pila de Lua un valor numerico que sera
+          casteado a float.
+
+	- char *lua_toNEW_STRING(lua_State *L, int idx): Recupera de
+          la posicion 'idx' de la pila de Lua una cadena de
+          caracteres, de manera que la memoria de la cadena sera
+          reservada con "new[]" y por tanto necesita ser borrada con
+          "delete[]", y el borrado es responsabilidad del usuario.
+
+	- char lua_tochar(lua_State *L, int idx): Recupera de la
+          posicion 'idx' de la pila de Lua un unica char.
+
+	- void check_table_fields(lua_State *L, int idx, ...):
+          Comprueba que en la tabla situada en la posicion 'idx' de la
+          pila de Lua SOLO hay campos con los nombres indicados en la
+          lista variable (...). De esa forma, si aparece un campo que
+          no esta en la lista, saltara una error. Sin embargo, si un
+          campo de la lista no esta definido, NO dara error. De esa
+          forma pueden haber campos opcionales y obligatorios que
+          seran comprobados con las MACROS, y aquellos campos que
+          debido a errores tipograficos no sean correctos, seran
+          detectados.

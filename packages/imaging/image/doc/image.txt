@@ -1,0 +1,131 @@
+* Image.empty(x,y)
+
+  crea una imagen de tamaño x,y, inicializada con ceros, y la devuelve
+
+* Image.load(filename)
+
+  carga una imagen desde fichero (OJO: utiliza convert, que debe estar
+  instalado).  Es un simple wrapper de matrix.loadImage().
+
+* Image.load_pgm_gz(filename)
+
+  carga una imagen desde un fichero PGM comprimido con gzip (.pgm.gz).
+  (OJO: requiere zcat)
+
+* Image.save(img, filename)
+
+  guarda la imagen indicada a un fichero PNM
+
+-------------------------------------------------------------------------------
+
+Todas las funciones anteriores utilizan o devuelven objetos de tipo Image.
+
+Los objetos de tipo Image representan regiones rectangulares sobre una matriz,
+interpretadas como pixels en escala de grises.
+
+Por ejemplo, supongamos que disponemos de una matriz m de 240 filas y 320
+columnas.  Podemos definir una imagen I1 que contenga a toda la matriz, pero
+tambien podemos definir subimagenes sobre la misma matriz.
+
+         /------------320---------------\
+         +------------------------------+  \
+      I1:|   +-------------+            |  |
+         |I4:|   +-----+   |            |  |
+         |   |I2:|     |   |            |  |
+         |   |   |     |   |            |  |
+         |   |   +-----+   |            | 240
+         |   +-------------+            |  |
+         |         +----------------+   |  |
+         |      I3:|                |   |  |
+         |         +----------------+   |  /
+         +------------------------------+
+
+Cada uno de estos objetos tiene los siguientes métodos:
+
+ - Image(m): constructor. Toma una matriz y devuelve una imagen con las mismas
+   dimensiones.
+
+ - Image(m, cropstring): constructor. Toma una matriz m y una cadena con la
+   forma "widthxheight+offsetx+offsety". offsetx y offsety son las
+   coordenadas de la esquina superior izquierda desde la esquina superior
+   izquierda (0,0) de la matriz.
+
+ - Image(m, width, height, offsetx, offsety): constructor. Igual que el
+   anterior pero especificando los parámetros por separado.
+
+ - crop(cropstring): devuelve una subimagen de si misma, con el tamaño y el
+   origen indicado en la cropstring
+
+ - crop(width, height, offsetx, offsety): devuelve una subimagen con los
+   parametros indicados.
+
+ - info(): Devuelve, por este orden, la matriz subyacente ylos valores width,
+   height, offsetx y offsety de la imagen.
+
+ - info_bis(): Devuelve una tabla con las siguientes claves:
+
+     - "matrix"
+     - "width"
+     - "height"
+     - "offset_width" (offsetx)
+     - "offset_height" (offsety)
+
+ - getpixel(x,y): Devuelve el valor del pixel en las coordenadas(x,y)
+
+ - putpixel(x,y,v): Pone el valor v en el pixel (x,y)
+
+ - clone(): Crea una matriz nueva consistente en una copia de la submatriz
+   definida por la imagen y devuelve Image(matriz_nueva).
+
+ - projection_h(): Devuelve una matriz unidimensional de talla height en la que
+   el elemento i-ésimo contiene la suma de los valores la fila i de la imagen
+
+ - projection_v(): Devuelve una matriz unidimensional de talla width en la que
+   el elemento i-ésimo contiene la suma de los valores de la columna i de la
+   imagen
+
+ - shear_h(angle, unit="rad", default_value=CTEBLANCO):
+   - angle: valor numerico, angulo para el shear, valores positivos de angle
+     producen el efecto en la direccion indicada en el dibujo.
+   - unit:  "rad", "deg" o "grad" (radianes, grados sexagesimales o grados
+     centesimales)
+   - default_value: valor con el que se rellenarán las areas nuevas de la
+     imagen resultado. Por ejemplo, en el dibujo inferior, la esquina donde
+     esta la palabra "angle" y la esquina opuesta.
+
+            +-------+  +-------+
+            |       |  |\       \
+            |  OLD  |  | \  NEW  \
+            |       |  |an\       \
+            +-------+  |gle+-------+
+
+ - shear_h_inplace: igual que la anterior, pero actuando sobre la matriz
+   original
+
+ - min_bounding_box(umbral): Devuelve una imagen de tamaño minimo tal que
+   contenga todos los pixels negros de la imagen original. El parametro
+   umbral determina que pixels seran considerados negros.
+
+ - copy(img, x, y): Hace una copia de la imagen img en un rectangulo del mismo
+   tamaño con la esquina superior izquierda en la posicion (x,y) de la imagen
+   actual.
+
+ Los siguientes metodos estan pensados para aplicarse a imagenes que contengan
+ lineas de texto.
+
+ - slant_angle(): devuelve una estimacion del slant de la imagen. Aplicable
+   principalmente a texto.
+
+ - RLSA(umbral): Aplica el algoritmo RLSA (Run Length smoothing algorithm) a la
+   imagen.
+
+ - base_lines(): Devuelve dos valores con la posicion de las lineas base inferior
+   y superior (en este orden) del texto.
+
+ - rotate90cw(amount): Rota la imagen 90° en el sentido de las agujas del reloj.
+   amount debe ser +1 o -1 (cuando es -1 se rota en el sentido contrario).
+
+ - remove_blank_columns(): Elimina las columnas de una imagen que esten
+   compuestas enteramente por pixels con un valor UMBRAL_BINARIZADO=0.5
+   definido en la propia funcion en C
+ 

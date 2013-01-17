@@ -1,0 +1,55 @@
+README for MersenneTwister.h package
+Richard J. Wagner  v1.1  29 September 2009
+
+Instructions
+------------
+
+The only necessary file for using this Mersenne Twister random number
+generator is "MersenneTwister.h".  The class name is MTRand.
+
+Usage examples are in "example.cpp".  Linux, Unix, and Max OS X users can type
+"make" to compile and then type "./example" to run the example program.
+
+To test the output and compare to other random number generators type
+"make test".
+
+When you are done with testing, type "make clean" to get rid of temporary files.
+
+For Windows users with a compiler such as Microsoft Visual C++, simply add
+"example.cpp" and "MersenneTwister.h" to an empty C++ console application.
+Compile and run to see the generator in action.  The "make" command will not
+work, so the test program "Test/Wagner/Wagner.cpp" must be run manually if
+desired.  The output should contain no error messages and the lists of random
+numbers should exactly match those in "Test/Reference.out".
+
+If you encounter any problems, please e-mail a copy of the output and a
+description of the test system to me at "wagnerr@umich.edu".  Any other
+feedback is welcome too.
+
+
+Installation
+------------
+
+Just copy the file "MersenneTwister.h" to your working directory or some other
+place where your compiler can find it.  Put the following line at the top of
+your program to access the MTRand class:
+
+#include "MersenneTwister.h"
+
+
+Contents
+--------
+
+README            - this file
+MersenneTwister.h - declaration and implementation of MTRand class
+example.cpp       - examples of using MTRand
+Makefile          - instructions used by "make" command
+
+MersenneTwister.html - Web page about MersenneTwister.h
+Random.jpg           - background for MersenneTwister.html
+
+Test/Makefile      - instructions used by "make" command for test programs
+Test/Results.sh    - script to examine the output from test programs
+Test/Reference.out - expected output from MT random number generators
+Test/Wagner/       - test program for MersenneTwister.h
+Test/*/            - test programs for other MT implementations
