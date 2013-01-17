@@ -54,7 +54,7 @@ the following sections:
   },
 ```
 
-You need to especify the -I option to the compiler, and all the extra_libs stuff related with MKL.
+You need to especify the `-I` option to the compiler, and all the extra_libs stuff related with MKL.
 Exists one build file for each possible target: build_release.lua, build_debug.lua, build_mkl_release.lua,
 build_mkl_debug.lua, ... and so on.
 
