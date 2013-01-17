@@ -5,12 +5,13 @@ Compilation
 -----------
 
 First, it is mandatory to configure (only the first time) the repo PATH and other stuff:
-$ . configure.sh
+
+```$ . configure.sh```
 
 Second, you could compile the april version which you need. We have developed compiling files for use
 different libraries. It is simple, you do
 
-$ make TARGET
+```$ make TARGET```
 
 where TARGET is one of the following, depending on which version you want:
 
