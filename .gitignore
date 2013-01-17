@@ -1,0 +1,30 @@
+# Building dirs #
+#################
+build_release
+build_debug
+build_mkl_release
+build_mkl_debug
+build_mkl_and_cuda_release
+build_mkl_and_cuda_debug
+build_release_macosx
+build_debug_macosx
+bin
+dep_graph.dot
+include
+lib
+
+# Emacs backups #
+#################
+*~
+\#*\#
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db

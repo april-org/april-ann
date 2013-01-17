@@ -1,31 +1,28 @@
 ALL: release-mkl
 
-configure:
-	. configure.sh
-
-document: configure
+document:
 	lua -l formiga build_release.lua document
 
-release-macosx: configure
+release-macosx:
 	lua -l formiga build_release_macosx.lua
 
-release-mkl: configure
+release-mkl:
 	lua -l formiga build_mkl_release.lua
 
-release: configure
+release:
 	lua -l formiga build_release.lua
 
-release-cuda-mkl: configure
+release-cuda-mkl:
 	lua -l formiga build_cuda_and_mkl_release.lua
 
-debug-macosx: configure
+debug-macosx:
 	lua -l formiga build_debug_macosx.lua
 
-debug-mkl: configure
+debug-mkl:
 	lua -l formiga build_mkl_debug.lua
 
-debug: configure
+debug:
 	lua -l formiga build_debug.lua
 
-debug-cuda-mkl: configure
+debug-cuda-mkl:
 	lua -l formiga build_cuda_and_mkl_debug.lua
