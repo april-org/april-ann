@@ -1,0 +1,12 @@
+--- src/liolib.c	2007-04-23 17:21:50.000000000 +0200
++++ src/liolib.c	2007-04-23 17:25:42.000000000 +0200
+@@ -306,7 +306,8 @@
+     nr = fread(p, sizeof(char), rlen, f);
+     luaL_addsize(&b, nr);
+     n -= nr;  /* still have to read `n' chars */
+-  } while (n > 0 && nr == rlen);  /* until end of count or eof */
++  } while ((n > 0 && nr == rlen) || (ferror(f) && !feof(f) && errno==EINTR)
++);  /* until end of count or eof */
+   luaL_pushresult(&b);  /* close buffer */
+   return (n == 0 || lua_strlen(L, -1) > 0);
+ }

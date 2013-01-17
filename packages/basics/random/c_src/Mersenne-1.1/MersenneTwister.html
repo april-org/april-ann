@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+
+<head>
+	<meta name="Author" content="Richard Joseph Wagner">
+	<meta name="Description" content="C++ class implementing the Mersenne Twister random number generator">
+	<meta name="Keywords" content="Mersenne,Twister,MT,random,number,generator,RNG,pseudorandom,PRNG,C++,class,MTRand">
+	<style type="text/css">
+		body { text-align: justify;
+			   margin: 1em auto;
+			   max-width: 50em;
+			   color: #002244;
+			   background-color: white;
+			   background: url("Random.jpg");
+			   font-family: "new century schoolbook", serif }
+		
+		a:link    { color: #0055cc }
+		a:visited { color: #303077 }
+		a:active  { color: #aaaa00 }
+		
+		h1 { text-align: center; font-size: 200%; margin: 0em 0em 0.2em; color: #000066 }
+		li { margin: 0em 0em 0.2em }
+		tr { text-indent: 2em }
+		
+		.left    { text-align:  left }
+		.center  { text-align:  center }
+		.right   { text-align:  right }
+		.justify { text-align:  justify }
+	</style>
+	<title>Mersenne Twister Random Number Generator</title>
+</head>
+
+<body>
+
+<h1>Mersenne Twister Random Number Generator</h1>
+
+The Mersenne Twister is an algorithm for generating random numbers.
+It was designed with consideration of the flaws in various other generators.
+It has an incredibly long period, 2<sup>19937</sup>-1 (more than 10<sup>6001</sup>), before its sequence of numbers will repeat.
+And it has 623 dimensions of equidistribution, meaning that all sequences up to 623 numbers long are equally probable.
+The generator is also fast; it avoids multiplication and division, and it benefits from caches and pipelines.
+See the
+<a href="http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html">inventors' page</a>
+or
+<a href="http://en.wikipedia.org/wiki/Mersenne_twister">Wikipedia article</a>
+for more details.
+
+<p>I have implemented the Mersenne Twister in a C++ class that is fast, convenient, portable, and free.
+Take a look at the
+<a href="MersenneTwister.h">class</a>
+and
+<a href="example.cpp">example</a>
+program.
+Or download the complete package in
+<a href="Mersenne-1.1.zip">zip</a>
+or
+<a href="Mersenne-1.1.tar.gz">tarball</a>
+format.
+
+<p>Features:
+<ul>
+	<li>Simple creation of generator with <code>MTRand r;</code></li>
+	<li>Convenient access with <code>double a = r();</code></li>
+	<li>Generation of integers or floating-point numbers</li>
+	<li>Easy seeding options</li>
+	<ul>
+		<li>Automatically from <code>/dev/urandom</code> or <code>time()</code> and <code>clock()</code></li>
+		<li>Single integer</li>
+		<li>Arrays of any length (to access full 19937-bit range)</li>
+	</ul>
+	<li>Ability to save and restore state</li>
+	<li>Thorough example program</li>
+	<li>Validation and performance tests</li>
+	<li>Open source code under BSD license</li>
+</ul>
+
+<p>The included performance tests verify the speed and correctness of this generator compared to known sequences and alternative implementations.
+It has been tested in a variety of hardware and software environments including:
+Intel Core 2 Quad, AMD Opteron 848;
+Red Hat Linux, Mac OS X 10.5 Leopard, Windows XP;
+GNU Compiler Collection 4.2 (<code>g++</code>), Intel Compiler 10.1 (<code>icpc</code>), Portland Group International Compiler 9.0 (<code>pgCC</code>), Pathscale Compiler 3.1 (<code>pathCC</code>), and Microsoft Visual C++ 2008.
+
+<p>Version 1.0 incorporated several changes released by the Mersenne Twister inventors on 26 January 2002.
+The seeding algorithm was revised to correct a minor problem in which the highest bit of the seed was not well represented in the generator state.
+The ability to start with large seeds was extended to seed arrays of arbitrary length.
+Access was added for 53-bit real numbers in [0,1), matching the accuracy of IEEE doubles.
+Also, the software license was changed from the GNU Lesser General Public License to a BSD license, making commercial use of this software more convenient.
+
+<p>The v1.0 release included some other improvements as well.
+By popular demand, access was added for real numbers from normal (Gaussian) distributions.
+Safeguards were added to prevent out-of-range number generation on 64-bit machines.
+Finally, new optimizations yielded 25% faster generation overall and 100% faster generation for integers in [0,n].
+
+<p>Version 1.1 focuses on portability and reliability.
+Instances of deprecated C++ features were modernized.
+Operations were rewritten to work on ones'-complement machines and environments with unsigned enumerations.
+The test program was toughened and expanded.
+A slight correction was made in terminology;
+the parameter for setting the standard deviation of a Gaussian distribution is now properly labeled as "stddev" rather than "variance".
+A copy constructor and copy operator were also added.
+The seed correlations, generator functions, output sequences, and save formats are identical to Version 1.0.
+
+<p>Downloads:
+<table>
+	<tr><td>Version 1.1</td><td><a href="Mersenne-1.1.zip">Mersenne-1.1.zip</a></td><td><a href="Mersenne-1.1.tar.gz">Mersenne-1.1.tar.gz</a></td></tr>
+	<tr><td>Version 1.0</td><td><a href="Mersenne-1.0.zip">Mersenne-1.0.zip</a></td><td><a href="Mersenne-1.0.tar.gz">Mersenne-1.0.tar.gz</a></td></tr>
+	<tr><td>Version 0.8</td><td><a href="Mersenne-0.8.zip">Mersenne-0.8.zip</a></td><td><a href="Mersenne-0.8.tar.gz">Mersenne-0.8.tar.gz</a></td></tr>
+	<tr><td>Version 0.7</td><td><a href="Mersenne-0.7.zip">Mersenne-0.7.zip</a></td><td><a href="Mersenne-0.7.tar.gz">Mersenne-0.7.tar.gz</a></td></tr>
+	<tr><td>Version 0.6</td><td><a href="Mersenne-0.6.zip">Mersenne-0.6.zip</a></td><td><a href="Mersenne-0.6.tar.gz">Mersenne-0.6.tar.gz</a></td></tr>
+	<tr><td>Version 0.5</td><td><a href="Mersenne-0.5.zip">Mersenne-0.5.zip</a></td><td><a href="Mersenne-0.5.tar.gz">Mersenne-0.5.tar.gz</a></td></tr>
+	<tr><td>Version 0.4</td><td><a href="Mersenne-0.4.zip">Mersenne-0.4.zip</a></td><td><a href="Mersenne-0.4.tar.gz">Mersenne-0.4.tar.gz</a></td></tr>
+	<tr><td>Version 0.3</td><td><a href="Mersenne-0.3.zip">Mersenne-0.3.zip</a></td><td><a href="Mersenne-0.3.tar.gz">Mersenne-0.3.tar.gz</a></td></tr>
+	<tr><td>Version 0.2</td><td><a href="Mersenne-0.2.zip">Mersenne-0.2.zip</a></td><td><a href="Mersenne-0.2.tar.gz">Mersenne-0.2.tar.gz</a></td></tr>
+	<tr><td>Version 0.1</td><td><a href="Mersenne-0.1.zip">Mersenne-0.1.zip</a></td><td><a href="Mersenne-0.1.tar.gz">Mersenne-0.1.tar.gz</a></td></tr>
+</table>
+
+<p>Comments, questions, and improvements are always welcome.
+
+<p>If you like this software, you might also want to try my
+<a href="http://www-personal.umich.edu/~wagnerr/ConfigFile.html">ConfigFile</a>
+(C++) configuration file reader and 
+<a href="http://www-personal.umich.edu/~wagnerr/PythonAnneal.html">Anneal.py</a>
+(Python) module for optimization by simulated annealing.
+
+
+
+
+
+<p class="center">
+<a href="http://www-personal.umich.edu/~wagnerr/">Creations of Rick Wagner</a>
+(<a href="mailto:wagnerr@umich.edu">wagnerr@umich.edu</a>) 30 September 2009
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
