@@ -67,6 +67,11 @@ Includes these sources
 - MersenneTwister: http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
 - GZIO: http://luaforge.net/projects/gzio/
 
+Doxygen documentation
+---------------------
+- [Developer manual](http://pakozm.github.com/april-ann/doxygen_doc/developer/html/index.html)
+- [Reference manual](http://pakozm.github.com/april-ann/doxygen_doc/user_refman/html/index.html)
+
 MAC OS X
 --------
 
