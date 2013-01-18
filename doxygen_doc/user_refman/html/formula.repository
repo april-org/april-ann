@@ -1,5 +1,0 @@
-\form#0:\[ f(y) = \frac{1}{1 + e^{-y}} \]
-\form#1:\[ a_i = \frac{e^{y_i}}{\sum_{j} e^{y_j}} \]
-\form#2:\[ f(y) = \frac{2}{1 + e^{-y}} - 1 \]
-\form#3:$ [0,1] $
-\form#4:$ [-1,1] $

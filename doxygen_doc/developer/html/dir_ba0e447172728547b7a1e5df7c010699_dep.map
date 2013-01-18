@@ -1,9 +1,0 @@
-<map id="trainable/c_src/" name="trainable/c_src/">
-<area shape="rect" id="node2" href="dir_ba0e447172728547b7a1e5df7c010699.html" title="c_src" alt="" coords="27,55,99,103"/>
-<area shape="rect" id="node3" href="dir_3c977a2c99fea78aad01c383029302da.html" title="basics" alt="" coords="27,247,99,295"/>
-<area shape="rect" id="edge5" href="dir_000033_000009.html" title="2" alt="" coords="50,218,58,235"/>
-<area shape="rect" id="node4" href="dir_d6af17d02717b4c4a7169237e30fc3e8.html" title="function_interface" alt="" coords="51,151,176,199"/>
-<area shape="rect" id="edge7" href="dir_000033_000022.html" title="3" alt="" coords="95,121,103,139"/>
-<area shape="rect" id="edge3" href="dir_000022_000009.html" title="6" alt="" coords="88,225,96,243"/>
-<area shape="rect" id="graph2" href="dir_8717f5bae7b0e09b01b39895da17097e.html" title="trainable" alt="" coords="16,16,109,113"/>
-</map>

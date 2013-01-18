@@ -1,6 +1,0 @@
-<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$classann_1_1actions_1_1____base____.html" title="ann::actions::__base__" alt="" coords="5,59,163,88"/>
-<area shape="rect" id="node3" href="$classann_1_1actions_1_1activations.html" title="ann::actions::activations" alt="" coords="217,5,380,35"/>
-<area shape="rect" id="node5" href="$classann_1_1actions_1_1dot__product.html" title="ann::actions::dot_product" alt="" coords="215,59,383,88"/>
-<area shape="rect" id="node7" href="$classann_1_1actions_1_1forward__bias.html" title="ann::actions::forward_bias" alt="" coords="212,112,385,141"/>
-</map>

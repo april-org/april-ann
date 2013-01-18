@@ -1,8 +1,0 @@
-<map id="Basics" name="Basics">
-<area shape="rect" id="node1" href="$group__math.html" title="Math" alt="" coords="152,5,203,35"/>
-<area shape="rect" id="node2" href="$group__util.html" title="Util" alt="" coords="156,59,199,88"/>
-<area shape="rect" id="node3" href="$group__matrix.html" title="Matrix" alt="" coords="148,112,207,141"/>
-<area shape="rect" id="node5" href="$group__random.html" title="Random" alt="" coords="143,165,212,195"/>
-<area shape="rect" id="node6" href="$group__affine__transform.html" title="Affine_transform" alt="" coords="119,219,236,248"/>
-<area shape="rect" id="node7" href="$group__dataset.html" title="Dataset" alt="" coords="144,272,211,301"/>
-</map>

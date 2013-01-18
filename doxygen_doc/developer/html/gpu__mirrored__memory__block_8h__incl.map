@@ -1,8 +1,0 @@
-<map id="basics/math/c_src/gpu_mirrored_memory_block.h" name="basics/math/c_src/gpu_mirrored_memory_block.h">
-<area shape="rect" id="node5" href="$gpu__helper_8h.html" title="gpu_helper.h" alt="" coords="176,101,272,131"/>
-<area shape="rect" id="node7" href="$error__print_8h.html" title="error_print.h" alt="" coords="93,179,184,208"/>
-<area shape="rect" id="node27" href="$aligned__memory_8h.html" title="aligned_memory.h" alt="" coords="297,101,425,131"/>
-<area shape="rect" id="node13" href="$cblas__headers_8h.html" title="cblas_headers.h" alt="" coords="208,179,325,208"/>
-<area shape="rect" id="node19" href="$vector_8h.html" title="vector.h" alt="" coords="435,179,504,208"/>
-<area shape="rect" id="node23" href="$swap_8h.html" title="swap.h" alt="" coords="528,256,592,285"/>
-</map>
