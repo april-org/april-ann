@@ -36,7 +36,84 @@
         <span class="blc"></span><span class="trc"></span>
         </div>
         <article class="markdown-body">
-          <h3>Welcome to GitHub Pages.</h3>
+          <h3>Welcome April-ANN</h3>
+
+<p>April is a big project with the purpose of develop an awesome toolkit for pattern recognition tasks :)</p>
+
+<p>Currently, only doxygen documentation for developer and user reference manual are avialabe:</p>
+
+<ul>
+<li><a href="http://pakozm.github.com/april-ann/doxygen_doc/developer/html/index.html">Developer manual</a></li>
+<li><a href="http://pakozm.github.com/april-ann/doxygen_doc/user_refman/html/index.html">User reference manual</a></li>
+</ul><h3>Includes these sources</h3>
+
+<ul>
+<li>LUA virtual machine 5.1.4: <a href="http://www.lua.org/">http://www.lua.org/</a>
+</li>
+<li>Luiz's lstrip for Lua 5.1: <a href="http://www.tecgraf.puc-rio.br/%7Elhf/ftp/lua/5.1/lstrip.tar.gz">http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/5.1/lstrip.tar.gz</a>
+</li>
+<li>MersenneTwister: <a href="http://www.math.sci.hiroshima-u.ac.jp/%7Em-mat/MT/emt.html">http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html</a>
+</li>
+<li>GZIO: <a href="http://luaforge.net/projects/gzio/">http://luaforge.net/projects/gzio/</a>
+</li>
+</ul><h2>Compilation</h2>
+
+<p>First, it is mandatory to configure (only the first time) the repo PATH and other stuff:</p>
+
+<p><code>$ . configure.sh</code></p>
+
+<p>Second, you could compile the april version which you need. We have developed compiling files for use
+different libraries. It is simple, you do</p>
+
+<p><code>$ make TARGET</code></p>
+
+<p>where TARGET is one of the following, depending on which version you want:</p>
+
+<ul>
+<li>ATLAS: release/debug</li>
+<li>Intel MKL: release-mkl/debug-mkl</li>
+<li>Intel MKL + CUDA: release-cuda-mkl/debug-cuda-mkl</li>
+<li>Mac OS X Accelerate Framework: release-macosx/debug-macosx</li>
+</ul><p>Each of this targets will need a little configuration depending on your library
+installation. For example, in order to compile with MKL, the file build_mkl_release.lua contains
+the following sections:</p>
+
+<pre><code>  global_flags = {
+    debug="no",
+    use_lstrip = "no",
+    use_readline="yes",
+    optimization = "yes",
+    platform = "unix",
+    extra_flags={
+      -- For Intel MKL :)
+      "-DUSE_MKL",
+      "-I/opt/MKL/include",
+      --------------------
+      "-march=native",
+      "-msse",
+      "-DNDEBUG",
+    },
+    extra_libs={
+      "-lpthread",
+      -- For Intel MKL :)
+      "-L/opt/MKL/lib",
+      "-lmkl_intel_lp64",
+      "-Wl,--start-group",
+      "-lmkl_intel_thread",
+      "-lmkl_core",
+      "-Wl,--end-group",
+      "-liomp5"
+    },
+  },
+</code></pre>
+
+<p>You need to especify the <code>-I</code> option to the compiler, and all the extra_libs stuff related with MKL.
+Exists one build file for each possible target: build_release.lua, build_debug.lua, build_mkl_release.lua,
+build_mkl_debug.lua, ... and so on.</p>
+
+<p>ENJOY!</p>
+
+<h3>How to use gh-pages branch</h3>
 
 <p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
 
@@ -46,18 +123,6 @@ $ git checkout gh-pages
 </code></pre>
 
 <p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
-
-<h3>Designer Templates</h3>
-
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
-
-<h3>Rather Drive Stick?</h3>
-
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
-
-<h3>Authors and Contributors</h3>
-
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
 
 <h3>Support or Contact</h3>
 
