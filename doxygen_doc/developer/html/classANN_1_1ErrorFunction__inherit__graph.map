@@ -1,0 +1,8 @@
+<map id="ANN::ErrorFunction" name="ANN::ErrorFunction">
+<area shape="rect" id="node5" href="$classANN_1_1CrossEntropy.html" title="ANN::CrossEntropy" alt="" coords="5,160,144,189"/>
+<area shape="rect" id="node7" href="$classANN_1_1FullCrossEntropy.html" title="ANN::FullCrossEntropy" alt="" coords="168,160,328,189"/>
+<area shape="rect" id="node9" href="$classANN_1_1LocalFMeasure.html" title="ANN::LocalFMeasure" alt="" coords="352,160,499,189"/>
+<area shape="rect" id="node11" href="$classANN_1_1MSE.html" title="ANN::MSE" alt="" coords="523,160,611,189"/>
+<area shape="rect" id="node13" href="$classANN_1_1Tanh.html" title="ANN::Tanh" alt="" coords="635,160,723,189"/>
+<area shape="rect" id="node2" href="$classReferenced.html" title="Referenced" alt="" coords="381,5,469,35"/>
+</map>

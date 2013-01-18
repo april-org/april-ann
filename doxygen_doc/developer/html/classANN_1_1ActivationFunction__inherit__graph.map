@@ -1,0 +1,8 @@
+<map id="ANN::ActivationFunction" name="ANN::ActivationFunction">
+<area shape="rect" id="node5" href="$classANN_1_1LogisticActivationFunction.html" title="A logistic (or sigmoid) activation function." alt="" coords="363,5,573,35"/>
+<area shape="rect" id="node7" href="$classANN_1_1SoftmaxActivationFunction.html" title="A softmax activation function." alt="" coords="360,59,576,88"/>
+<area shape="rect" id="node9" href="$classANN_1_1StochasticActivationFunction.html" title="ANN::StochasticActivation\lFunction" alt="" coords="379,111,557,158"/>
+<area shape="rect" id="node13" href="$classANN_1_1TanhActivationFunction.html" title="A tanh activation function." alt="" coords="371,181,565,211"/>
+<area shape="rect" id="node2" href="$classReferenced.html" title="Referenced" alt="" coords="7,89,95,119"/>
+<area shape="rect" id="node11" href="$classANN_1_1BinarySamplingActivationFunction.html" title="ANN::BinarySamplingActivation\lFunction" alt="" coords="624,111,832,158"/>
+</map>

@@ -1,0 +1,19 @@
+<map id="ann/ann_base/c_src/actunit.cc" name="ann/ann_base/c_src/actunit.cc">
+<area shape="rect" id="node5" href="$aligned__memory_8h.html" title="aligned_memory.h" alt="" coords="880,429,1008,459"/>
+<area shape="rect" id="node9" href="$actunit_8h.html" title="actunit.h" alt="" coords="489,101,561,131"/>
+<area shape="rect" id="node11" href="$error__print_8h.html" title="error_print.h" alt="" coords="99,507,189,536"/>
+<area shape="rect" id="node67" href="$wrapper_8h.html" title="wrapper.h" alt="" coords="296,256,373,285"/>
+<area shape="rect" id="node79" href="$constants_8h.html" title="constants.h" alt="" coords="1477,101,1568,131"/>
+<area shape="rect" id="node16" href="$referenced_8h.html" title="referenced.h" alt="" coords="968,343,1061,372"/>
+<area shape="rect" id="node18" href="$activation__function_8h.html" title="activation_function.h" alt="" coords="509,179,651,208"/>
+<area shape="rect" id="node46" href="$gpu__mirrored__memory__block_8h.html" title="gpu_mirrored_memory\l_block.h" alt="" coords="397,334,547,381"/>
+<area shape="rect" id="node74" href="$ann__configuration_8h.html" title="ann_configuration.h" alt="" coords="571,343,704,372"/>
+<area shape="rect" id="node21" href="$MersenneTwister_8h.html" title="MersenneTwister.h" alt="" coords="1048,256,1181,285"/>
+<area shape="rect" id="node34" href="$constString_8h.html" title="constString.h" alt="" coords="760,256,859,285"/>
+<area shape="rect" id="node38" href="$logbase_8h.html" title="logbase.h" alt="" coords="728,343,805,372"/>
+<area shape="rect" id="node40" href="$logbase__standard_8h.html" title="logbase_standard.h" alt="" coords="653,429,787,459"/>
+<area shape="rect" id="node50" href="$gpu__helper_8h.html" title="gpu_helper.h" alt="" coords="296,429,392,459"/>
+<area shape="rect" id="node53" href="$cblas__headers_8h.html" title="cblas_headers.h" alt="" coords="307,507,424,536"/>
+<area shape="rect" id="node58" href="$vector_8h.html" title="vector.h" alt="" coords="213,507,283,536"/>
+<area shape="rect" id="node62" href="$swap_8h.html" title="swap.h" alt="" coords="131,584,195,613"/>
+</map>

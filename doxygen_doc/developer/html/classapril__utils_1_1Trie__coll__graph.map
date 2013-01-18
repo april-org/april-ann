@@ -1,0 +1,14 @@
+<map id="april_utils::Trie&lt; O &gt;" name="april_utils::Trie&lt; O &gt;">
+<area shape="rect" id="node2" href="$classapril__utils_1_1hash.html" title="april_utils::hash\&lt;\l int, O \&gt;" alt="" coords="1399,120,1519,167"/>
+<area shape="rect" id="node4" href="$structapril__utils_1_1hash_1_1node.html" title="april_utils::hash\&lt;\l KeyType, DataType,\l HashFcn, EqualKey \&gt;::node" alt="" coords="543,249,732,313"/>
+<area shape="rect" id="node11" href="$classapril__utils_1_1hash_1_1iterator.html" title="april_utils::hash\&lt;\l KeyType, DataType,\l HashFcn, EqualKey \&gt;\l::iterator" alt="" coords="803,190,957,271"/>
+<area shape="rect" id="node13" href="$classapril__utils_1_1hash.html" title="april_utils::hash\&lt;\l KeyType, DataType,\l HashFcn, EqualKey \&gt;" alt="" coords="1091,173,1245,237"/>
+<area shape="rect" id="node25" href="$classapril__utils_1_1hash.html" title="april_utils::hash\&lt;\l int_pair, int \&gt;" alt="" coords="1399,375,1519,422"/>
+<area shape="rect" id="node6" href="$structapril__utils_1_1pair.html" title="april_utils::pair\&lt;\l const key_type, data\l_type \&gt;" alt="" coords="308,249,455,313"/>
+<area shape="rect" id="node8" href="$structapril__utils_1_1pair.html" title="april_utils::pair\&lt;\l T1, T2 \&gt;" alt="" coords="5,258,120,304"/>
+<area shape="rect" id="node18" href="$structapril__utils_1_1default__equality__comparison__function.html" title="april_utils::default\l_equality_comparison\l_function\&lt; int \&gt;" alt="" coords="1095,326,1241,390"/>
+<area shape="rect" id="node20" href="$structapril__utils_1_1default__equality__comparison__function.html" title="april_utils::default\l_equality_comparison\l_function\&lt; T \&gt;" alt="" coords="807,381,953,445"/>
+<area shape="rect" id="node29" href="$structapril__utils_1_1default__equality__comparison__function.html" title="april_utils::default\l_equality_comparison\l_function\&lt; int_pair \&gt;" alt="" coords="1095,414,1241,478"/>
+<area shape="rect" id="node22" href="$structapril__utils_1_1default__hash__function_3_01int_01_4.html" title="april_utils::default\l_hash_function\&lt; int \&gt;" alt="" coords="1095,38,1241,84"/>
+<area shape="rect" id="node27" href="$structapril__utils_1_1default__hash__function_3_01int__pair_01_4.html" title="april_utils::default\l_hash_function\&lt; int_pair \&gt;" alt="" coords="1080,502,1256,548"/>
+</map>

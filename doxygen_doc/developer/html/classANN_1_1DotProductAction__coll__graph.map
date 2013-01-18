@@ -1,0 +1,8 @@
+<map id="ANN::DotProductAction" name="ANN::DotProductAction">
+<area shape="rect" id="node2" href="$classANN_1_1Action.html" title="ANN::Action" alt="" coords="53,117,149,147"/>
+<area shape="rect" id="node4" href="$classReferenced.html" title="Referenced" alt="" coords="197,5,285,35"/>
+<area shape="rect" id="node8" href="$classANN_1_1ActivationUnits.html" title="ANN::ActivationUnits" alt="" coords="173,117,319,147"/>
+<area shape="rect" id="node13" href="$classANN_1_1Connections.html" title="ANN::Connections" alt="" coords="343,117,474,147"/>
+<area shape="rect" id="node6" href="$structANNConfiguration.html" title="ANNConfiguration" alt="" coords="37,5,165,35"/>
+<area shape="rect" id="node16" href="$classGPUMirroredMemoryBlock.html" title="GPUMirroredMemoryBlock\&lt; T \&gt;" alt="" coords="309,5,519,35"/>
+</map>

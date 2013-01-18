@@ -1,0 +1,8 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classann_1_1error__functions_1_1____base____.html" title="ann::error_functions\l::__base__" alt="" coords="7,143,143,190"/>
+<area shape="rect" id="node3" href="$classann_1_1error__functions_1_1cross__entropy.html" title="ann::error_functions\l::cross_entropy" alt="" coords="209,5,345,51"/>
+<area shape="rect" id="node5" href="$classann_1_1error__functions_1_1full__cross__entropy.html" title="ann::error_functions\l::full_cross_entropy" alt="" coords="209,74,345,121"/>
+<area shape="rect" id="node7" href="$classann_1_1error__functions_1_1local__fmeasure.html" title="ann::error_functions\l::local_fmeasure" alt="" coords="209,143,345,190"/>
+<area shape="rect" id="node9" href="$classann_1_1error__functions_1_1mse.html" title="ann::error_functions::mse" alt="" coords="192,213,363,243"/>
+<area shape="rect" id="node11" href="$classann_1_1error__functions_1_1tanh.html" title="ann::error_functions\l::tanh" alt="" coords="209,266,345,313"/>
+</map>

@@ -1709,7 +1709,7 @@ function formiga.__make_redirect_page__ (title,wait,urldest)
   '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">\n'..
     '<html><head>\n'..
     '<meta http-equiv="Refresh" content="'..wait..
-    '; url='..urldest..'; charset=utf-8">\n'..
+    '; url='..urldest..'">\n'..
     '</head><title>'..title..'</title>\n'..
     '<body><a href="'..urldest..'">"Pincha aquí"</a>'..
     '</body>\n</html>'
