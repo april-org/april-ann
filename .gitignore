@@ -1,7 +1,6 @@
 # Building dirs #
 #################
 build_*
-doxygen_doc
 bin
 dep_graph.dot
 include
