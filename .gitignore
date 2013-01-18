@@ -1,0 +1,7 @@
+bin
+build_*
+dep_graph.dot
+include
+lib
+lua
+*~
