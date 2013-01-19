@@ -22,7 +22,7 @@ where TARGET is one of the following, depending on which version you want:
 
 Each of this targets will need a little configuration depending on your library
 installation. For example, in order to compile with MKL, the file build_mkl_release.lua contains
-the following sections:
+the following sections (among others):
 
 ```
   global_flags = {
