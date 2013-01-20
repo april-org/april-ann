@@ -142,7 +142,6 @@ namespace ANN {
 		  conf.use_cuda_flag);
       }
       else {
-	// FIXME: I'm not sure of this two calls... please review it
 	if (!transpose_weights)
 	  doSgemv(CblasColMajor, CblasTrans,
 		  num_outputs, num_inputs,
