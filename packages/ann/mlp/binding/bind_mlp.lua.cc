@@ -78,6 +78,16 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD MLP show_weights
+//DOC_BEGIN
+// void show_weights()
+/// Show at stdout weights values: for debugging
+//DOC_END
+{
+  obj->showWeights();
+}
+//BIND_END
+
 //BIND_METHOD MLP randomize_weights
 //DOC_BEGIN
 // void randomize_weights({ random = random(...), [inf = number], [sup = number] })

@@ -68,7 +68,8 @@ namespace ANN {
     if (activations.size() < 2)
       ERROR_EXIT(128, "Impossible to generate a zero layer AllAllMLP\n");
 
-    // We register the input and the output layers of the network
+    // We register the input and the output layers of the network. The
+    // activations vector is a property of superclass
     registerInput(activations[0]);
     registerOutput(activations.back());
   
@@ -127,13 +128,20 @@ namespace ANN {
 				 MatrixFloat *old_weights_mat) {
     generateActionsAllAll(str);
     unsigned int pos = 0;
+    if (static_cast<unsigned int>(weights_mat->size) != getNumberOfWeights())
+      ERROR_EXIT(255, "Incorrect number of weights at matrix!!!\n");
+    if (static_cast<unsigned int>(old_weights_mat->size) != getNumberOfWeights())
+      ERROR_EXIT(255, "Incorrect number of weights at old matrix!!!\n");
     // step +=2 because connections are stored in groups of two: bias and the
     // rest of weights
     for (unsigned int i=0,k=0; i<connections.size(); i+=2,++k) {
       unsigned int colsize = activations[k]->numNeurons()+1;
       // ATTENTION: The loadWeights function returns the next pos value
+      
+      // bias connections
       connections[i]->loadWeights(weights_mat, old_weights_mat, pos,
 				  colsize);
+      // rest of weights connections
       pos = connections[i+1]->loadWeights(weights_mat, old_weights_mat, pos+1,
 					  colsize) - 1;
     }

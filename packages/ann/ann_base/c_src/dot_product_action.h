@@ -34,6 +34,7 @@ namespace ANN {
     const unsigned int num_inputs, num_outputs;
     const ANNConfiguration &conf;
     float learning_rate, momentum, weight_decay, c_weight_decay;
+    bool transpose_weights;
 
     void
     backpropagateErrors(FloatGPUMirroredMemoryBlock *weights_mat_ptr,
@@ -54,7 +55,8 @@ namespace ANN {
     DotProductAction(const ANNConfiguration &conf,
 		     ActivationUnits *inputs,
 		     ActivationUnits *outputs,
-		     Connections *weights_matrix);
+		     Connections *weights_matrix,
+		     bool transpose_weights=false);
     virtual ~DotProductAction();
     virtual void doForward();
     virtual void doBackward();

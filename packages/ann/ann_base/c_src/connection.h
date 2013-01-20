@@ -51,7 +51,8 @@ namespace ANN {
   public:
     static const double weightnearzero;
     
-    Connections(unsigned int total_size);
+    Connections(unsigned int total_size,
+		unsigned int num_inputs, unsigned int num_outputs);
     virtual ~Connections();
     
     // contamos el numero de veces que nos referencian, asi sabemos si
@@ -96,6 +97,13 @@ namespace ANN {
     
     virtual unsigned int getNumWeights() const {
       return total_size;
+    }
+    
+    virtual unsigned int getNumInputs() const {
+      return num_inputs;
+    }
+    virtual unsigned int getNumOutputs() const {
+      return num_outputs;
     }
     
   };

@@ -31,7 +31,8 @@ namespace ANN {
   DotProductAction::DotProductAction(const ANNConfiguration &conf,
 				     ActivationUnits *inputs,
 				     ActivationUnits *outputs,
-				     Connections *weights_matrix) :
+				     Connections *weights_matrix,
+				     bool transpose_weights) :
     Action(conf),
     inputs(inputs), outputs(outputs), weights_matrix(weights_matrix),
     num_inputs(inputs->numNeurons()),
@@ -40,9 +41,15 @@ namespace ANN {
     learning_rate(-1.0f),
     momentum(0.0f),
     weight_decay(0.0f),
-    c_weight_decay(1.0f) {
-    if (!weights_matrix->checkInputOutputSizes(inputs, outputs))
-      ERROR_EXIT(256, "The input/output sizes are not correct.\n");
+    c_weight_decay(1.0f),
+    transpose_weights(transpose_weights) {
+    if (!transpose_weights) {
+      if (!weights_matrix->checkInputOutputSizes(inputs, outputs))
+	ERROR_EXIT(256, "The input/output sizes are not correct.\n");
+    }
+    else
+      if (!weights_matrix->checkInputOutputSizes(outputs, inputs))
+	ERROR_EXIT(256, "The input/output sizes are not correct.\n");
     weights_matrix->countReference();
     IncRef(inputs);
     IncRef(outputs);
@@ -61,28 +68,51 @@ namespace ANN {
     FloatGPUMirroredMemoryBlock *output_ptr      = outputs->getPtr();
     FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
     
-    if (conf.cur_bunch_size == 1)
+    if (conf.cur_bunch_size == 1) {
       // vector x matrix product
-      doSgemv(CblasColMajor, CblasNoTrans,
-	      num_outputs, num_inputs,
-	      1.0f, weights_mat_ptr, num_outputs,
-	      input_ptr, conf.max_bunch_size,
-	      1.0f, output_ptr, conf.max_bunch_size,
-	      0, inputs->getOffset(), outputs->getOffset(),
-	      conf.use_cuda_flag);
-    else
+      if (!transpose_weights)
+	doSgemv(CblasColMajor, CblasNoTrans,
+		num_outputs, num_inputs,
+		1.0f, weights_mat_ptr, num_outputs,
+		input_ptr, conf.max_bunch_size,
+		1.0f, output_ptr, conf.max_bunch_size,
+		0, inputs->getOffset(), outputs->getOffset(),
+		conf.use_cuda_flag);
+      else
+	doSgemv(CblasColMajor, CblasTrans,
+		num_inputs, num_outputs,
+		1.0f, weights_mat_ptr, num_inputs,
+		input_ptr, conf.max_bunch_size,
+		1.0f, output_ptr, conf.max_bunch_size,
+		0, inputs->getOffset(), outputs->getOffset(),
+		conf.use_cuda_flag);
+	}
+    else {
       // matrix x matrix product
       // C = \alpha op(A) op(B) + \beta C
       // input * weights = output
-      doSgemm(CblasColMajor, CblasNoTrans, CblasTrans,
-              conf.cur_bunch_size, num_outputs, num_inputs,
-              1.0f, input_ptr, conf.max_bunch_size,
-              weights_mat_ptr, num_outputs,
-	      // beta = 1.0f, C matrix contains BIAS and probably other layer
-	      // computations
-              1.0f, output_ptr, conf.max_bunch_size,
-              inputs->getOffset(), 0, outputs->getOffset(),
-              conf.use_cuda_flag);
+      if (!transpose_weights)
+	doSgemm(CblasColMajor, CblasNoTrans, CblasTrans,
+		conf.cur_bunch_size, num_outputs, num_inputs,
+		1.0f, input_ptr, conf.max_bunch_size,
+		weights_mat_ptr, num_outputs,
+		// beta = 1.0f, C matrix contains BIAS and probably other layer
+		// computations
+		1.0f, output_ptr, conf.max_bunch_size,
+		inputs->getOffset(), 0, outputs->getOffset(),
+		conf.use_cuda_flag);
+      else
+	doSgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
+		conf.cur_bunch_size, num_outputs, num_inputs,
+		1.0f,
+		input_ptr, conf.max_bunch_size,
+		weights_mat_ptr, num_inputs,
+		// beta = 1.0f, C matrix contains BIAS and probably other layer
+		// computations
+		1.0f, output_ptr, conf.max_bunch_size,
+		inputs->getOffset(), 0, outputs->getOffset(),
+		conf.use_cuda_flag);
+    }
   }
   
   void DotProductAction::
@@ -94,22 +124,42 @@ namespace ANN {
     if (output_error != 0) {
       if (conf.cur_bunch_size > 1) {
 	// C = alpha * A * B + beta * C
-	doSgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
-		conf.cur_bunch_size, num_inputs, num_outputs,
-		1.0f, input_error, conf.max_bunch_size,
-		weights_mat_ptr, num_outputs,
-		1.0f, output_error, conf.max_bunch_size,
-		input_error_shift, 0, output_error_shift,
-		conf.use_cuda_flag);
+	if (!transpose_weights)
+	  doSgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
+		  conf.cur_bunch_size, num_inputs, num_outputs,
+		  1.0f, input_error, conf.max_bunch_size,
+		  weights_mat_ptr, num_outputs,
+		  1.0f, output_error, conf.max_bunch_size,
+		  input_error_shift, 0, output_error_shift,
+		  conf.use_cuda_flag);
+	else
+	  doSgemm(CblasColMajor, CblasNoTrans, CblasTrans,
+		  conf.cur_bunch_size, num_inputs, num_outputs,
+		  1.0f, input_error, conf.max_bunch_size,
+		  weights_mat_ptr, num_inputs,
+		  1.0f, output_error, conf.max_bunch_size,
+		  input_error_shift, 0, output_error_shift,
+		  conf.use_cuda_flag);
       }
       else {
-	doSgemv(CblasColMajor, CblasNoTrans,
-		num_inputs, num_outputs,
-		1.0f, weights_mat_ptr, num_inputs,
-		input_error, conf.max_bunch_size,
-		1.0f, output_error, conf.max_bunch_size,
-		0, input_error_shift, output_error_shift,
-		conf.use_cuda_flag);
+	// FIXME: I'm not sure of this two calls... please review it
+	if (!transpose_weights)
+	  doSgemv(CblasColMajor, CblasTrans,
+		  num_outputs, num_inputs,
+		  1.0f, weights_mat_ptr, num_outputs,
+		  input_error, conf.max_bunch_size,
+		  1.0f, output_error, conf.max_bunch_size,
+		  0, input_error_shift, output_error_shift,
+		  conf.use_cuda_flag);
+	else {
+	  doSgemv(CblasColMajor, CblasNoTrans,
+		  num_inputs, num_outputs,
+		  1.0f, weights_mat_ptr, num_inputs,
+		  input_error, conf.max_bunch_size,
+		  1.0f, output_error, conf.max_bunch_size,
+		  0, input_error_shift, output_error_shift,
+		  conf.use_cuda_flag);
+	}
       }
     }
   }
@@ -130,33 +180,56 @@ namespace ANN {
       -(1.0f/sqrtf(static_cast<float>(references))) *
       learning_rate;
       
-    if (conf.cur_bunch_size > 1)
-      doSgemm(CblasColMajor, CblasTrans, CblasNoTrans,    // transposicones
-	      num_outputs, num_inputs, conf.cur_bunch_size, // dimensiones
-	      norm_learn_rate,                          // alpha
-	      input_error,                              // A
-	      conf.max_bunch_size,                      // A stride
-	      input,                                    // B
-	      conf.max_bunch_size,                      // B stride
-	      beta,                                     // beta
-	      prev_weights_mat_ptr,                     // C
-	      num_outputs,                              // C stride
-	      input_error_shift, input_shift, 0,        // desplazamientos
-	      conf.use_cuda_flag);
+    if (conf.cur_bunch_size > 1) {
+      if (!transpose_weights)
+	doSgemm(CblasColMajor, CblasTrans, CblasNoTrans,
+		num_outputs, num_inputs, conf.cur_bunch_size, // dimensiones
+		norm_learn_rate,                          // alpha
+		input_error,                              // A
+		conf.max_bunch_size,                      // A stride
+		input,                                    // B
+		conf.max_bunch_size,                      // B stride
+		beta,                                     // beta
+		prev_weights_mat_ptr,                     // C
+		num_outputs,                              // C stride
+		input_error_shift, input_shift, 0,        // desplazamientos
+		conf.use_cuda_flag);
+      else
+	doSgemm(CblasColMajor, CblasTrans, CblasNoTrans,
+		num_inputs, num_outputs, conf.cur_bunch_size, // dimensiones
+		norm_learn_rate,                          // alpha
+		input,                                    // B
+		conf.max_bunch_size,                      // B stride
+		input_error,                              // A
+		conf.max_bunch_size,                      // A stride
+		beta,                                     // beta
+		prev_weights_mat_ptr,                     // C
+		num_inputs,                               // C stride
+		input_shift, input_error_shift, 0,        // desplazamientos
+		conf.use_cuda_flag);
+    }
     else {
       if (beta < 1.0f)
         doSscal((num_inputs * num_outputs),
 		beta,
 		prev_weights_mat_ptr, 0, 1,
 		conf.use_cuda_flag);
-
-      doSger(CblasColMajor,
-	     num_outputs, num_inputs,
-	     norm_learn_rate,
-	     input_error, input_error_shift, conf.max_bunch_size,
-	     input, input_shift, conf.max_bunch_size,
-	     prev_weights_mat_ptr, 0, num_outputs,
-	     conf.use_cuda_flag);
+      if (!transpose_weights)
+	doSger(CblasColMajor,
+	       num_outputs, num_inputs,
+	       norm_learn_rate,
+	       input_error, input_error_shift, conf.max_bunch_size,
+	       input, input_shift, conf.max_bunch_size,
+	       prev_weights_mat_ptr, 0, num_outputs,
+	       conf.use_cuda_flag);
+      else
+	doSger(CblasColMajor,
+	       num_inputs, num_outputs,
+	       norm_learn_rate,
+	       input, input_shift, conf.max_bunch_size,
+	       input_error, input_error_shift, conf.max_bunch_size,
+	       prev_weights_mat_ptr, 0, num_inputs,
+	       conf.use_cuda_flag);
     }
   }
     

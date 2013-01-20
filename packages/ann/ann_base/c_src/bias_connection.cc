@@ -25,7 +25,7 @@
 namespace ANN {
 
   BiasConnections::BiasConnections(unsigned int bias_size) :
-    Connections(bias_size) {
+    Connections(bias_size, 1, bias_size) {
   }
   
   bool BiasConnections::checkInputOutputSizes(ActivationUnits *input,
@@ -57,14 +57,10 @@ namespace ANN {
     
     float *w      = weights->getPPALForReadAndWrite();
     float *prev_w = prev_weights->getPPALForReadAndWrite();
-      
-    for (unsigned int j=0; j<num_outputs; ++j) {
-      unsigned int k = j;
-      for (unsigned int i=0; i<num_inputs; ++i) {
-	rnd_weight(w[k]);
-	prev_w[k] = w[k];
-	k += num_outputs;
-      }
+    
+    for (unsigned int j=0; j<total_size; ++j) {
+      rnd_weight(w[j]);
+      prev_w[j] = w[j];
     }
   }
     
