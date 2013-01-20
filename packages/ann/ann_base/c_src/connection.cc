@@ -26,10 +26,12 @@
 namespace ANN {
   const double Connections::weightnearzero = 1e-10;
   
-  Connections::Connections(unsigned int total_size) :
+  Connections::Connections(unsigned int total_size,
+			   unsigned int num_inputs, unsigned int num_outputs) :
     Referenced(),
     weights(0), prev_weights(0),
     total_size(total_size),
+    num_inputs(num_inputs), num_outputs(num_outputs),
     num_references(0), update_weights_calls(0) {
     weights      = new FloatGPUMirroredMemoryBlock(total_size);
     prev_weights = new FloatGPUMirroredMemoryBlock(total_size);

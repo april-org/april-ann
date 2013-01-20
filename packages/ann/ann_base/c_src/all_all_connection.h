@@ -26,7 +26,6 @@
 
 namespace ANN {
   class AllAllConnections : public Connections {
-    unsigned int num_inputs, num_outputs;
   public:
     AllAllConnections(unsigned int num_inputs,
 		      unsigned int num_outputs);

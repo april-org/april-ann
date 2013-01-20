@@ -19,6 +19,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include <cstdio>
 #include <cstring>
 #include "constString.h"
 #include "error_print.h"
@@ -97,12 +98,13 @@ namespace ANN {
 
   void MLP::showWeights()
   {
-    /*
-      printf("Weights:\n");
-      for (unsigned int i = 0; i < connections.size(); i++)
-      connections[i]->showWeights();
+    for (unsigned int i=0; i<connections.size(); i++) {
+      printf("W[%d] = ", i);
+      const float *w = connections[i]->getPtr()->getPPALForRead();
+      for (unsigned int k=0; k<connections[i]->getNumWeights(); ++k)
+	printf("%f ", w[k]);
       printf("\n");
-    */
+    }
   }
 
   // from trainable supervised

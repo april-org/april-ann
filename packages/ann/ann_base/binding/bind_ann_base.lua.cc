@@ -107,6 +107,8 @@ using namespace Functions;
   obj = new RealActivationUnits(size, ann->getConfReference(),
 				strcmp(type, "inputs") != 0);
   ann->registerActivationUnits(obj);
+  if (strcmp(type, "inputs") == 0)       ann->registerInput(obj);
+  else if (strcmp(type, "outputs") == 0) ann->registerOutput(obj);
   LUABIND_RETURN(RealActivationUnits, obj);
 }
 //BIND_END
@@ -242,6 +244,7 @@ using namespace Functions;
   
   obj = new ForwardBiasAction(ann->getConfReference(),
 			      output, conn);
+  ann->registerAction(obj);
   LUABIND_RETURN(ForwardBiasAction, obj);
 }
 //BIND_END
@@ -255,20 +258,25 @@ using namespace Functions;
 //BIND_CONSTRUCTOR DotProductAction
 {
   LUABIND_CHECK_ARGN(==,1);
-  check_table_fields(L, 1, "ann", "input", "output", "connections", 0);
+  check_table_fields(L, 1, "ann", "input", "output", "connections",
+		     "transpose", 0);
   
   ActivationUnits *input;
   ActivationUnits *output;
   Connections     *conn;
   ANNBase	  *ann;
+  bool             transpose;
   
   LUABIND_GET_TABLE_PARAMETER(1, input, ActivationUnits, input);
   LUABIND_GET_TABLE_PARAMETER(1, output, ActivationUnits, output);
   LUABIND_GET_TABLE_PARAMETER(1, connections, Connections, conn);
   LUABIND_GET_TABLE_PARAMETER(1, ann, ANNBase, ann);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, transpose, bool, transpose, false);
   
   obj = new DotProductAction(ann->getConfReference(),
-			      input, output, conn);
+			     input, output, conn,
+			     transpose);
+  ann->registerAction(obj);
   LUABIND_RETURN(DotProductAction, obj);
 }
 //BIND_END
@@ -294,6 +302,7 @@ using namespace Functions;
   
   obj = new ActivationsAction(ann->getConfReference(),
 			      output, actfunc);
+  ann->registerAction(obj);
   LUABIND_RETURN(ActivationsAction, obj);
 }
 //BIND_END
@@ -386,7 +395,8 @@ using namespace Functions;
   LUABIND_GET_TABLE_PARAMETER(1, w, MatrixFloat, w);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, w);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, first_pos, uint, first_pos, 0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, column_size, uint, column_size, 1);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, column_size, uint, column_size,
+				       obj->getNumInputs());
 
   LUABIND_RETURN(uint, obj->loadWeights(w, oldw, first_pos, column_size));
 }

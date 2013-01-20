@@ -25,8 +25,7 @@ namespace ANN {
 
   AllAllConnections::AllAllConnections(unsigned int num_inputs,
 				       unsigned int num_outputs) :
-    Connections(num_inputs*num_outputs),
-    num_inputs(num_inputs), num_outputs(num_outputs) {
+    Connections(num_inputs*num_outputs, num_inputs, num_outputs) {
   }
   
   bool AllAllConnections::checkInputOutputSizes(ActivationUnits *input,
