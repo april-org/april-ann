@@ -41,6 +41,15 @@ using namespace ANN;
 //BIND_SUBCLASS_OF TanhActivationFunction     ActivationFunction
 //BIND_SUBCLASS_OF SoftmaxActivationFunction  ActivationFunction
 
+//BIND_FUNCTION ann.activations.from_string
+{
+  const char *str;
+  LUABIND_GET_PARAMETER(1, string, str);
+  ActivationFunction *obj = getActivationFunctionByTypeString(str);
+  LUABIND_RETURN(ActivationFunction, obj);
+}
+//BIND_END
+
 //BIND_CONSTRUCTOR ActivationFunction
 //DOC_BEGIN
 // __activation_function__()

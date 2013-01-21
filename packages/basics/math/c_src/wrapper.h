@@ -43,7 +43,8 @@ void doMultiplyLogisticDerivatives(FloatGPUMirroredMemoryBlock *units,
 				   FloatGPUMirroredMemoryBlock *input_errors,
 				   unsigned int units_size,
 				   const ANNConfiguration &conf,
-				   bool use_gpu);
+				   bool use_gpu,
+				   bool in_log_base);
      
 void doApplyTanhActivation(FloatGPUMirroredMemoryBlock *units,
 			   unsigned int units_size,
@@ -54,7 +55,8 @@ void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *units,
 			       FloatGPUMirroredMemoryBlock *input_errors,
 			       unsigned int units_size,
 			       const ANNConfiguration &conf,
-			       bool use_gpu);
+			       bool use_gpu,
+			       bool in_log_base);
 
 void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *units,
             FloatGPUMirroredMemoryBlock *minimums,

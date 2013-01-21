@@ -193,6 +193,24 @@ __global__ void logisticDerKernel(const float *units,
   }
 }
 
+__global__ void logisticDerKernelInLogBase(const float *units,
+					   float *errors,
+					   unsigned int max_x,
+					   unsigned int lda_x,
+					   unsigned int max_y) {
+  unsigned int matrix_x_pos, matrix_y_pos;
+  getColumnMajorBunchMatrixPositions(blockIdx,
+				     blockDim,
+				     threadIdx,
+				     matrix_x_pos,
+				     matrix_y_pos);
+  if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
+    unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
+    float value = clamp(units[index], 0.0000001f, 0.9999999f);
+    errors[index] = exp( errors[index] + logf(value) + logf(1.0f - value));
+  }
+}
+
 __global__ void tanhActKernel(float *units,
                               unsigned int max_x,
 			      unsigned int lda_x,
@@ -224,6 +242,25 @@ __global__ void tanhDerKernel(const float *units,
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
     float value = clamp(units[index], -0.99999998f, 0.99999998f);;
     errors[index] *= 0.5f * (1.0f - (value * value));
+  }
+}
+
+__global__ void tanhDerKernelInLogBase(const float *units,
+				       float *errors,
+				       unsigned int max_x,
+				       unsigned int lda_x,
+				       unsigned int max_y) {
+  unsigned int matrix_x_pos, matrix_y_pos;
+  getColumnMajorBunchMatrixPositions(blockIdx,
+				     blockDim,
+				     threadIdx,
+				     matrix_x_pos,
+				     matrix_y_pos);
+  if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
+    unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
+    float value = clamp(units[index], -0.99999998f, 0.99999998f);;
+    errors[index] = exp( errors[index] -0.6931471805599453 + // log(0.5)
+			 logf(1.0 - value*value) );
   }
 }
 
@@ -485,14 +522,17 @@ __global__ void applyFullCrossEntropyKernel(const float *output,
 				     matrix_y_pos);
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
-    // FIXME: CUIDADO esto solo es cierto para salida LOGISTIC o SOFTMAX
-    output_error[index] = output[index] - target_output[index];
-    float aux_out    = output_error[index];
-    float aux_target = target_output[index];
-    if (fabs(aux_target) > epsilon)
-      pattern_errors[index] += aux_target * ((fabs(aux_out) > epsilon) ? logf(aux_out) : inf);
-    if (fabs(1.0f - aux_target) > epsilon)
-      pattern_errors[index] += (1.0f - aux_target) * ((fabs(1.0f - aux_out) > epsilon) ? logf(1.0f - aux_out) : inf);
+    float aux_out        = output[index];
+    float aux_target     = target_output[index];
+    float aux_log_out    = logf(aux_out);
+    float aux_log_target = logf(aux_target);
+    output_error[index] = aux_log_target - aux_log_out;
+    if (fabsf(aux_target > epsilon)) {
+      if (fabsf(aux_out > epsilon))
+	pattern_errors[index] += aux_target*aux_log_out;
+      else
+	pattern_errors[index] += aux_target*inf;
+    }
   }
 }
 #endif
@@ -536,7 +576,8 @@ void doMultiplyLogisticDerivatives(FloatGPUMirroredMemoryBlock *units,
 				   FloatGPUMirroredMemoryBlock *input_errors,
 				   unsigned int units_size,
 				   const ANNConfiguration &conf,
-				   bool use_gpu) {
+				   bool use_gpu,
+				   bool in_log_base) {
 #ifdef USE_CUDA
   if (use_gpu) {
     const float *units_ptr = units->getGPUForRead();
@@ -544,26 +585,46 @@ void doMultiplyLogisticDerivatives(FloatGPUMirroredMemoryBlock *units,
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(conf, units_size,
 						 block, grid);
-    
-    logisticDerKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-      (units_ptr,
-       input_errors_ptr,
-       conf.cur_bunch_size,
-       conf.max_bunch_size,
-       units_size);
+    if (in_log_base)
+      logisticDerKernelInLogBase<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+	(units_ptr,
+	 input_errors_ptr,
+	 conf.cur_bunch_size,
+	 conf.max_bunch_size,
+	 units_size);
+    else
+      logisticDerKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+	(units_ptr,
+	 input_errors_ptr,
+	 conf.cur_bunch_size,
+	 conf.max_bunch_size,
+	 units_size);
   }
   else {
 #endif
     const float *units_ptr  = units->getPPALForRead();
     float *input_errors_ptr = input_errors->getPPALForReadAndWrite();
-
-    for (unsigned int i=0; i<units_size; ++i) {
-      for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	float value = clamp(units_ptr[b], 0.000000001f, 0.999999999f);
-	input_errors_ptr[b] *= value*(1.0f-value);
+    if (in_log_base) {
+      for (unsigned int i=0; i<units_size; ++i) {
+	for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
+	  float value = clamp(units_ptr[b], 0.000000001f, 0.999999999f);
+	  input_errors_ptr[b] = exp( input_errors_ptr[b] +
+				     logf(value) +
+				     log(1.0f-value) );
+	}
+	units_ptr        += conf.max_bunch_size;
+	input_errors_ptr += conf.max_bunch_size;
       }
-      units_ptr        += conf.max_bunch_size;
-      input_errors_ptr += conf.max_bunch_size;
+    }
+    else {
+      for (unsigned int i=0; i<units_size; ++i) {
+	for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
+	  float value = clamp(units_ptr[b], 0.000000001f, 0.999999999f);
+	  input_errors_ptr[b] *= value*(1.0f-value);
+	}
+	units_ptr        += conf.max_bunch_size;
+	input_errors_ptr += conf.max_bunch_size;
+      }
     }
 #ifdef USE_CUDA
   }
@@ -606,7 +667,8 @@ void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *units,
 			       FloatGPUMirroredMemoryBlock *input_errors,
 			       unsigned int units_size,
 			       const ANNConfiguration &conf,
-			       bool use_gpu) {
+			       bool use_gpu,
+			       bool in_log_base) {
 #ifdef USE_CUDA
   if (use_gpu) {
     const float *units_ptr = units->getGPUForRead();
@@ -614,26 +676,47 @@ void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *units,
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(conf, units_size,
 						 block, grid);
-    
-    tanhDerKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-      (units_ptr,
-       input_errors_ptr,
-       conf.cur_bunch_size,
-       conf.max_bunch_size,
-       units_size);
+    if (in_log_base)
+      tanhDerKernelInLogBase<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+	(units_ptr,
+	 input_errors_ptr,
+	 conf.cur_bunch_size,
+	 conf.max_bunch_size,
+	 units_size);
+    else
+      tanhDerKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+	(units_ptr,
+	 input_errors_ptr,
+	 conf.cur_bunch_size,
+	 conf.max_bunch_size,
+	 units_size);
   }
   else {
 #endif
     const float *units_ptr = units->getPPALForRead();
     float *input_errors_ptr = input_errors->getPPALForReadAndWrite();
 
-    for (unsigned int i=0; i<units_size; ++i) {
-      for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-        float value = clamp(units_ptr[b], -0.99999998f, 0.99999998f);
-        input_errors_ptr[b] *= 0.5f * (1.0f-value*value);
+    if (in_log_base) {
+      for (unsigned int i=0; i<units_size; ++i) {
+	for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
+	  float value = clamp(units_ptr[b], -0.99999998f, 0.99999998f);
+	  input_errors_ptr[b] = exp( input_errors_ptr[b] +
+				     -0.6931471805599453 + // log(0.5)
+				     logf(1.0f-value*value) );
+	}
+	units_ptr        += conf.max_bunch_size;
+	input_errors_ptr += conf.max_bunch_size;
       }
-      units_ptr        += conf.max_bunch_size;
-      input_errors_ptr += conf.max_bunch_size;
+    }
+    else {
+      for (unsigned int i=0; i<units_size; ++i) {
+	for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
+	  float value = clamp(units_ptr[b], -0.99999998f, 0.99999998f);
+	  input_errors_ptr[b] *= 0.5f * (1.0f-value*value);
+	}
+	units_ptr        += conf.max_bunch_size;
+	input_errors_ptr += conf.max_bunch_size;
+      }
     }
 #ifdef USE_CUDA
   }
@@ -1108,16 +1191,16 @@ void doCalculateFullCrossEntropy(FloatGPUMirroredMemoryBlock *output,
 
     for (unsigned int i = 0; i < output_size; i++) {
       for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	output_error_ptr[b] = output_ptr[b] - target_output_ptr[b];
-	float aux_out    = output_error_ptr[b];
-	float aux_target = target_output_ptr[b];
-	if (fabs(aux_target) > EPSILON) {
-	  pattern_errors_ptr[b] += aux_target * ((fabs(aux_out) > EPSILON) ?
-						 logf(aux_out) : INF);
-	}
-	if (fabs(1.0f - aux_target) > EPSILON) {
-	  pattern_errors_ptr[b] += (1.0f - aux_target) * ((fabs(1.0f - aux_out) > EPSILON) ?
-							  logf(1.0f - aux_out) : INF);
+	float aux_out        = output_ptr[b];
+	float aux_target     = target_output_ptr[b];
+	float aux_log_out    = logf(aux_out);
+	float aux_log_target = logf(aux_target);
+	output_error_ptr[b] = aux_log_target - aux_log_out;
+	if (fabsf(aux_target > EPSILON)) {
+	  if (fabsf(aux_out > EPSILON))
+	    pattern_errors_ptr[b] += aux_target*aux_log_out;
+	  else
+	    pattern_errors_ptr[b] += aux_target*INF;
 	}
       }
       output_ptr         += conf.max_bunch_size;

@@ -52,18 +52,20 @@ namespace ANN {
     // Description example: "20 inputs 30 logistic 10 softmax"  
     unsigned int num_neurons;
     constString token, descrip(description);
-
+    ActivationUnitsType type = INPUTS_TYPE;
     while (descrip.extract_unsigned_int(&num_neurons) &&
 	   (token = descrip.extract_token())) {
       // We always use the Real activations type
       ActivationUnits *act = new
 	RealActivationUnits(num_neurons,
 			    conf,
+			    type,
 			    (activations.size() == 0 ? false : true));
       activation_functions.push_back(getActivationFunctionByTypeString(token));
       if (activations.size() == 0 && token != "inputs")
 	ERROR_EXIT(256, "The first activation must be 'inputs'\n");
       registerActivationUnits(act);
+      type = HIDDEN_TYPE;
     }
     if (activations.size() < 2)
       ERROR_EXIT(128, "Impossible to generate a zero layer AllAllMLP\n");
@@ -72,7 +74,8 @@ namespace ANN {
     // activations vector is a property of superclass
     registerInput(activations[0]);
     registerOutput(activations.back());
-  
+    activations.back()->setType(OUTPUTS_TYPE);
+    
     // we need three actions for each layer:
     //   1) bias action
     //   2) dot product action (executes all dot products in the layer)

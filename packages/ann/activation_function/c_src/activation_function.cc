@@ -48,12 +48,14 @@ namespace ANN {
 						       FloatGPUMirroredMemoryBlock *input_errors,
 						       unsigned int size,
 						       const ANNConfiguration &conf,
-						       bool use_cuda) {
+						       bool use_cuda,
+						       bool in_log_base) {
     doMultiplyLogisticDerivatives(units,
 				  input_errors,
 				  size,
 				  conf,
-				  use_cuda);
+				  use_cuda,
+				  in_log_base);
   }
 
   ActivationFunction *LogisticActivationFunction::clone() {
@@ -76,12 +78,14 @@ namespace ANN {
 						   FloatGPUMirroredMemoryBlock *input_errors,
 						   unsigned int size,
 						   const ANNConfiguration &conf,
-						   bool use_cuda) {
+						   bool use_cuda,
+						   bool in_log_base) {
     doMultiplyTanhDerivatives(units,
                               input_errors,
                               size,
                               conf,
-                              use_cuda);
+                              use_cuda,
+			      in_log_base);
   }
 
   ActivationFunction *TanhActivationFunction::clone() {
@@ -130,7 +134,8 @@ namespace ANN {
 						      FloatGPUMirroredMemoryBlock *input_errors,
 						      unsigned int size,
 						      const ANNConfiguration &conf,
-						      bool use_cuda) {
+						      bool use_cuda,
+						      bool in_log_base) {
   }
   
   ActivationFunction *SoftmaxActivationFunction::clone() {
