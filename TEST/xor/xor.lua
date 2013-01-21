@@ -45,7 +45,7 @@ end
 
 if ann then
   lared=ann.mlp.all_all.generate{
-    topology   = "2 inputs 2 tanh 1 tanh",
+    topology   = "2 inputs 2 logistic 1 logistic",
     w          = m,
     oldw       = m,
     bunch_size = bunch_size,
@@ -56,13 +56,13 @@ if ann then
 else
   if bunch_size > 1 then
     lared = mlp.generate_with_bunch{
-      topology   = "2 inputs 2 tanh 1 tanh",
+      topology   = "2 inputs 2 logistic 1 logistic",
       w          = m,
       oldw       = m,
       bunch_size = bunch_size,
 				   }
   else
-    lared = mlp.generate("2 inputs 2 tanh 1 tanh", m, m)
+    lared = mlp.generate("2 inputs 2 logistic 1 logistic", m, m)
   end
 end
 
@@ -115,13 +115,13 @@ lared = auxnet:clone()
 if not ann then
   if bunch_size > 1 then
     lared = mlp.generate_with_bunch{
-      topology   = "2 inputs 2 tanh 1 tanh",
+      topology   = "2 inputs 2 logistic 1 logistic",
       w          = m,
       oldw       = m,
       bunch_size = bunch_size,
 				   }
   else
-    lared = mlp.generate("2 inputs 2 tanh 1 tanh", m, m)
+    lared = mlp.generate("2 inputs 2 logistic 1 logistic", m, m)
   end
 end
 show_weights(lared)
@@ -178,7 +178,7 @@ show_weights(lared)
 -- lared=auxnet:clone()
 -- if not ann then
 --   lared = mlp.generate_with_bunch{
---     topology   = "2 inputs 2 tanh 1 tanh",
+--     topology   = "2 inputs 2 logistic 1 logistic",
 --     w          = m,
 --     oldw       = m,
 --     bunch_size = bunch_size,
@@ -225,13 +225,13 @@ lared=auxnet:clone()
 if not ann then
   if bunch_size > 1 then
     lared = mlp.generate_with_bunch{
-      topology   = "2 inputs 2 tanh 1 tanh",
+      topology   = "2 inputs 2 logistic 1 logistic",
       w          = m,
       oldw       = m,
       bunch_size = bunch_size,
 				   }
   else
-    lared = mlp.generate("2 inputs 2 tanh 1 tanh", m, m)
+    lared = mlp.generate("2 inputs 2 logistic 1 logistic", m, m)
   end
 end
 data={

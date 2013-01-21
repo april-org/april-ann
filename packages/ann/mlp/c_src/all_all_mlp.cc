@@ -249,12 +249,5 @@ namespace ANN {
     delete   weights_mat;
     delete   old_weights_mat;
   }
-
-  Connections *AllAllMLP::getLayerConnections(unsigned int layer)  {
-    if (layer >= connections.size()) {
-      ERROR_PRINT("Incorrect layer number!!!");
-      exit(128);
-    }
-    return connections[layer];
-  }
+  
 }

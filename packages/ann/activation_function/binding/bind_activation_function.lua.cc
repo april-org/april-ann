@@ -46,7 +46,8 @@ using namespace ANN;
   const char *str;
   LUABIND_GET_PARAMETER(1, string, str);
   ActivationFunction *obj = getActivationFunctionByTypeString(str);
-  LUABIND_RETURN(ActivationFunction, obj);
+  if (obj != 0) LUABIND_RETURN(ActivationFunction, obj);
+  else LUABIND_RETURN_NIL();
 }
 //BIND_END
 

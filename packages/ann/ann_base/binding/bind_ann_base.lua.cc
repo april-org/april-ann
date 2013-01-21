@@ -22,6 +22,7 @@
 //BIND_HEADER_C
 #include "bind_activation_function.h"
 #include "bind_matrix.h"
+#include "bind_mtrand.h"
 //BIND_END
 
 //BIND_HEADER_H
@@ -112,7 +113,7 @@ using namespace Functions;
   
   obj = new RealActivationUnits(size, ann->getConfReference(),
 				type_enum,
-				type_enum == INPUTS_TYPE);
+				type_enum != INPUTS_TYPE);
   ann->registerActivationUnits(obj);
   if (type_enum == INPUTS_TYPE)
     ann->registerInput(obj);
@@ -195,6 +196,26 @@ using namespace Functions;
   LUABIND_GET_PARAMETER(1, bool, use_cuda);
   LUABIND_GET_OPTIONAL_PARAMETER(2, bool, pinned, true);
   obj->setUseCuda(use_cuda, pinned);
+}
+//BIND_END
+
+//BIND_METHOD ANNBase get_layer_connections
+{
+  unsigned int layer;
+  LUABIND_GET_PARAMETER(1, uint, layer);
+  if (layer < 1)
+    LUABIND_ERROR("First layer is numbered with 1");
+  LUABIND_RETURN(Connections, obj->getLayerConnections(layer-1));
+}
+//BIND_END
+
+//BIND_METHOD ANNBase get_layer_activations
+{
+  unsigned int layer;
+  LUABIND_GET_PARAMETER(1, uint, layer);
+  if (layer < 1)
+    LUABIND_ERROR("First layer is numbered with 1");
+  LUABIND_RETURN(ActivationUnits, obj->getLayerActivations(layer-1));
 }
 //BIND_END
 
@@ -399,6 +420,7 @@ using namespace Functions;
 //BIND_METHOD Connections load
 {
   LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1,table);
   check_table_fields(L, 1, "w", "oldw", "first_pos", "column_size", 0);
 
   unsigned int	 first_pos, column_size;
@@ -416,17 +438,24 @@ using namespace Functions;
 
 //BIND_METHOD Connections weights
 {
-  LUABIND_CHECK_ARGN(==,1);
-  check_table_fields(L, 1, "w", "oldw", "first_pos", "column_size", 0);
-
-  unsigned int	 first_pos, column_size;
-  MatrixFloat	*w, *oldw;
+  LUABIND_CHECK_ARGN(<=,1);
+  LUABIND_CHECK_ARGN(>=,0);
+  int nargs;
+  LUABIND_TABLE_GETN(1, nargs);
+  unsigned int	 first_pos=0, column_size=obj->getNumInputs();
+  MatrixFloat	*w=0, *oldw=0;
   
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, w, MatrixFloat, w, 0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, 0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, first_pos, uint, first_pos, 0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, column_size, uint, column_size,
-				       obj->getNumInputs());
+  if (nargs == 1) {
+    LUABIND_CHECK_PARAMETER(1,table);
+    check_table_fields(L, 1, "w", "oldw", "first_pos", "column_size", 0);
+
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, w, MatrixFloat, w, w);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, oldw);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, first_pos, uint, first_pos,
+					 first_pos);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, column_size, uint, column_size,
+					 column_size);
+  }
 
   int size = static_cast<int>(obj->size());
   if (!w)    w    = new MatrixFloat(1, first_pos + size);
@@ -447,6 +476,21 @@ using namespace Functions;
   LUABIND_RETURN(uint, obj->size());
 }
 //BIND_END
+
+//BIND_METHOD Connections randomize_weights
+{
+  LUABIND_CHECK_PARAMETER(1, table);
+  check_table_fields(L, 1, "random", "inf", "sup", 0);
+  MTRand *rnd;
+  float inf, sup;
+  LUABIND_GET_TABLE_PARAMETER(1, random, MTRand, rnd);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, inf, float, inf, -0.7);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, sup, float,  sup, 0.7);
+  obj->randomizeWeights(rnd, inf, sup);
+}
+//BIND_END
+
+////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME AllAllConnections ann.connections.all_all
 //BIND_CPP_CLASS    AllAllConnections
