@@ -29,13 +29,23 @@
 #include "ann_configuration.h"
 
 namespace ANN {
-
+  
+  enum ActivationUnitsType {
+    INPUTS_TYPE,
+    HIDDEN_TYPE,
+    OUTPUTS_TYPE
+  };
+  
   class ActivationUnits : public Referenced {
   protected:
     const ANNConfiguration &conf;
+    ActivationUnitsType     type;
   public:
-    ActivationUnits(const ANNConfiguration &conf) : conf(conf) {}
+    ActivationUnits(const ANNConfiguration &conf,
+		    ActivationUnitsType type) : conf(conf), type(type) {}
     virtual ~ActivationUnits() { }
+    ActivationUnitsType getType() const { return type; }
+    void setType(ActivationUnitsType type) { this->type=type; }
     /// devuelve el tamanyo del vector que representa la entrada (no
     /// tiene porque ser igual al numero de neuronas)
     virtual unsigned int size() const	 = 0;
@@ -68,6 +78,7 @@ namespace ANN {
   public:
     RealActivationUnits(unsigned int        num_neurons,
 			const ANNConfiguration &conf,
+			ActivationUnitsType type,
 			bool create_error_vector);
     ~RealActivationUnits();
     unsigned int		 size() const;
@@ -98,7 +109,8 @@ namespace ANN {
   public:
     LocalActivationUnits(unsigned int num_groups,
 			 unsigned int num_neurons,
-			 const ANNConfiguration &conf);
+			 const ANNConfiguration &conf,
+			 ActivationUnitsType type);
     ~LocalActivationUnits();
     // devuelve 1, ya que la entrada es un numero entero
     unsigned int size() const;
@@ -125,7 +137,8 @@ namespace ANN {
     ActivationUnitsSlice(ActivationUnits *units,
 			 unsigned int begin_unit,
 			 unsigned int end_unit,
-			 const ANNConfiguration &conf);
+			 const ANNConfiguration &conf,
+			 ActivationUnitsType type);
     ~ActivationUnitsSlice();
     // aplica la funcion de activacion
     void activate(bool use_cuda);

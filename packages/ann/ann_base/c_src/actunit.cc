@@ -32,8 +32,9 @@ namespace ANN {
   // Each neuron takes a value within the range of the real numbers
   RealActivationUnits::RealActivationUnits(unsigned int num_neurons,
 					   const ANNConfiguration &conf,
+					   ActivationUnitsType type,
 					   bool create_error_vector) :
-    ActivationUnits(conf),
+    ActivationUnits(conf, type),
     num_neurons(num_neurons) {
 
     activations = new FloatGPUMirroredMemoryBlock(num_neurons * conf.max_bunch_size);
@@ -67,6 +68,7 @@ namespace ANN {
   ActivationUnits *RealActivationUnits::clone(const ANNConfiguration &conf) {
     return new RealActivationUnits(num_neurons,
 				   conf,
+				   type,
 				   error_vector!=0);
   }
   
@@ -86,8 +88,9 @@ namespace ANN {
 
   LocalActivationUnits::LocalActivationUnits(unsigned int num_groups,
 					     unsigned int num_neurons,
-					     const ANNConfiguration &conf) :
-    ActivationUnits(conf),
+					     const ANNConfiguration &conf,
+					     ActivationUnitsType type) :
+    ActivationUnits(conf, type),
     num_groups(num_groups),
     num_neurons(num_neurons) {
     // FIXME poner este numero como una constante en algun sitio de april:
@@ -116,7 +119,7 @@ namespace ANN {
   }
 
   ActivationUnits *LocalActivationUnits::clone(const ANNConfiguration &conf) {
-    return new LocalActivationUnits(num_groups, num_neurons, conf);
+    return new LocalActivationUnits(num_groups, num_neurons, conf, type);
   }
 
   void LocalActivationUnits::reset(bool use_cuda) {
@@ -135,8 +138,9 @@ namespace ANN {
   ActivationUnitsSlice::ActivationUnitsSlice(ActivationUnits *units,
 					     unsigned int begin_unit,
 					     unsigned int end_unit,
-					     const ANNConfiguration &conf) :
-    ActivationUnits(conf),
+					     const ANNConfiguration &conf,
+					     ActivationUnitsType type) :
+    ActivationUnits(conf, type),
     units(units), begin_unit(begin_unit), end_unit(end_unit),
     num_units(end_unit - begin_unit + 1) {
     IncRef(units);

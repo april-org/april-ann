@@ -95,16 +95,21 @@ namespace ANN {
       parameters as: current bunch size, maximum bunch size, use_cuda global
       flag, ...
       
-      \para use_cuda a boolean flag indicating the use of CPU computation or
+      @param use_cuda a boolean flag indicating the use of CPU computation or
       GPU computation (using CUDA). Overrides the configuration stored at conf
       parameter.
       
+      @param in_log_base indicates when the input error computation is in
+      logbase. However, this method will store the derivative in natural
+      base. So, if input error is in logbase, this method must do computation in
+      logbase and after return to natural base computing the exponential.
     */
     virtual void multiplyDerivatives(FloatGPUMirroredMemoryBlock *units,
 				     FloatGPUMirroredMemoryBlock *input_errors,
 				     unsigned int size,
 				     const ANNConfiguration &conf,
-				     bool use_cuda) = 0;
+				     bool use_cuda,
+				     bool in_log_base) = 0;
     
     /// Returns a deep copy of the object
     virtual ActivationFunction *clone() = 0;
@@ -131,7 +136,8 @@ namespace ANN {
 			     FloatGPUMirroredMemoryBlock *input_errors,
 			     unsigned int size,
 			     const ANNConfiguration &conf,
-			     bool use_cuda);
+			     bool use_cuda,
+			     bool in_log_base);
     ActivationFunction *clone();
   };
 
@@ -155,7 +161,8 @@ namespace ANN {
 			     FloatGPUMirroredMemoryBlock *input_errors,
 			     unsigned int size,
 			     const ANNConfiguration &conf,
-			     bool use_cuda);
+			     bool use_cuda,
+			     bool in_log_base);
     ActivationFunction *clone();
   };
 
@@ -193,7 +200,8 @@ namespace ANN {
 			     FloatGPUMirroredMemoryBlock *input_errors,
 			     unsigned int size,
 			     const ANNConfiguration &conf,
-			     bool use_cuda);
+			     bool use_cuda,
+			     bool in_log_base);
     ActivationFunction *clone();
   };
 
@@ -276,7 +284,8 @@ namespace ANN {
 			     FloatGPUMirroredMemoryBlock *input_errors,
 			     unsigned int size,
 			     const ANNConfiguration &conf,
-			     bool use_cuda) {
+			     bool use_cuda,
+			     bool in_log_base) {
       ERROR_PRINT("NOT SUPORTTED METHOD");
     }
   };

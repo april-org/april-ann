@@ -93,6 +93,7 @@ using namespace Functions;
   unsigned int		 size;
   ANNBase		*ann;
   const char		*type;
+  ActivationUnitsType    type_enum = HIDDEN_TYPE;
   
   LUABIND_GET_TABLE_PARAMETER(1, size, uint, size);
   LUABIND_GET_TABLE_PARAMETER(1, ann, ANNBase, ann);
@@ -104,11 +105,19 @@ using namespace Functions;
     LUABIND_FERROR1("Incorrect type '%s'!!\n", type);
   }
   
+  if (strcmp(type, "inputs") == 0)
+    type_enum = INPUTS_TYPE;
+  else if (strcmp(type, "outputs") == 0)
+    type_enum = OUTPUTS_TYPE;
+  
   obj = new RealActivationUnits(size, ann->getConfReference(),
-				strcmp(type, "inputs") != 0);
+				type_enum,
+				type_enum == INPUTS_TYPE);
   ann->registerActivationUnits(obj);
-  if (strcmp(type, "inputs") == 0)       ann->registerInput(obj);
-  else if (strcmp(type, "outputs") == 0) ann->registerOutput(obj);
+  if (type_enum == INPUTS_TYPE)
+    ann->registerInput(obj);
+  else if (type_enum == OUTPUTS_TYPE)
+    ann->registerOutput(obj);
   LUABIND_RETURN(RealActivationUnits, obj);
 }
 //BIND_END
@@ -127,13 +136,16 @@ using namespace Functions;
   
   unsigned int		 size, num_groups;
   ANNBase		*ann;
-  
+  ActivationUnitsType    type_enum = INPUTS_TYPE;
+
   LUABIND_GET_TABLE_PARAMETER(1, size, uint, size);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, num_groups, uint, num_groups, 1);
   LUABIND_GET_TABLE_PARAMETER(1, ann, ANNBase, ann);
   
-  obj = new LocalActivationUnits(num_groups, size, ann->getConfReference());
+  obj = new LocalActivationUnits(num_groups, size, ann->getConfReference(),
+				 type_enum);
   ann->registerActivationUnits(obj);
+  ann->registerInput(obj);
   LUABIND_RETURN(LocalActivationUnits, obj);
 }
 //BIND_END
@@ -413,7 +425,8 @@ using namespace Functions;
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, w, MatrixFloat, w, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, first_pos, uint, first_pos, 0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, column_size, uint, column_size, 1);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, column_size, uint, column_size,
+				       obj->getNumInputs());
 
   int size = static_cast<int>(obj->size());
   if (!w)    w    = new MatrixFloat(1, first_pos + size);

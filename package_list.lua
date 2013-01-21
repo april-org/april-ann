@@ -11,6 +11,7 @@ return {
   "activation_function",
   "ann_base",
   "mlp",
+  "sdae",
   "gzio",
   "image",
   "image_io",
