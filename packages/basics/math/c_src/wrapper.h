@@ -34,6 +34,16 @@
 #include "gpu_helper.h"
 #include "ann_configuration.h"
 
+#define LOGF_ZERO             1e-20f 
+#define DERIVATIVE_SATURATION 17.0f
+
+void doRestoreNaturalBase(FloatGPUMirroredMemoryBlock *units,
+			  FloatGPUMirroredMemoryBlock *input_errors,
+			  unsigned int units_size,
+			  const ANNConfiguration &conf,
+			  bool use_gpu,
+			  bool in_log_base);
+
 void doApplyLogisticActivation(FloatGPUMirroredMemoryBlock *units,
 			       unsigned int units_size,
 			       const ANNConfiguration &conf,

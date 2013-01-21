@@ -142,6 +142,30 @@ namespace ANN {
     return new SoftmaxActivationFunction();
   }
   
+  LinearActivationFunction::LinearActivationFunction()  { }
+  LinearActivationFunction::~LinearActivationFunction() { }
+  void LinearActivationFunction::applyActivation(FloatGPUMirroredMemoryBlock *units, 
+						 unsigned int units_size,
+						 const ANNConfiguration &conf,
+						 bool use_cuda) { }
+  void LinearActivationFunction::multiplyDerivatives(FloatGPUMirroredMemoryBlock *units,
+						     FloatGPUMirroredMemoryBlock *input_errors,
+						     unsigned int size,
+						     const ANNConfiguration &conf,
+						     bool use_cuda,
+						     bool in_log_base) {
+    if (in_log_base) doRestoreNaturalBase(units,
+					  input_errors,
+					  size,
+					  conf,
+					  use_cuda,
+					  in_log_base);
+  }
+
+  ActivationFunction *LinearActivationFunction::clone() {
+    return new LinearActivationFunction();
+  }
+  
   //////////////////////////////////////////////////////////
   
   BinarySamplingActivationFunction::
@@ -195,7 +219,8 @@ namespace ANN {
   //////////////////////////////////////////////////////////////////////////////
   
   ActivationFunction *getActivationFunctionByTypeString(const char *str) {
-    if (!strcmp(str, "inputs") || !strcmp(str, "linear")) return 0;
+    if (!strcmp(str, "inputs") || !strcmp(str, "linear"))
+      return new LinearActivationFunction();
     else if (!strcmp(str, "logistic")) return new LogisticActivationFunction();
     else if (!strcmp(str, "tanh")) return new TanhActivationFunction();
     else if (!strcmp(str, "softmax")) return new SoftmaxActivationFunction();
@@ -204,7 +229,8 @@ namespace ANN {
   }
   
   ActivationFunction *getActivationFunctionByTypeString(const constString &str) {
-    if (str == "inputs" || str ==  "linear") return 0;
+    if (str == "inputs" || str ==  "linear")
+      return new LinearActivationFunction();
     else if (str == "logistic") return new LogisticActivationFunction();
     else if (str == "tanh") return new TanhActivationFunction();
     else if (str == "softmax") return new SoftmaxActivationFunction();

@@ -61,6 +61,7 @@ using namespace ANN;
 {
   unsigned int bunch_size;
   LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, table);
   check_table_fields(L, 1, "bunch_size", 0);
   LUABIND_GET_TABLE_PARAMETER(1, bunch_size, uint, bunch_size);
   obj = new MLP(ANNConfiguration(bunch_size,bunch_size));
@@ -99,6 +100,7 @@ using namespace ANN;
 //DOC_END
 {
   LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, table);
   check_table_fields(L, 1, "random", "inf", "sup", 0);
 
   MTRand	*random;
@@ -136,6 +138,7 @@ using namespace ANN;
 //BIND_CLASS_METHOD AllAllMLP generate
 {
   LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, table);
   check_table_fields(L, 1, "topology", "bunch_size",
 		     "random", "inf", "sup",
 		     "w", "oldw", 0);
@@ -192,15 +195,5 @@ using namespace ANN;
 //BIND_METHOD AllAllMLP clone
 {
   LUABIND_RETURN(AllAllMLP, obj->clone());
-}
-//BIND_END
-
-//BIND_METHOD AllAllMLP get_layer_connections
-{
-  unsigned int layer;
-  LUABIND_GET_PARAMETER(1, uint, layer);
-  if (layer < 1)
-    LUABIND_ERROR("First layer is numbered with 1");
-  LUABIND_RETURN(Connections, obj->getLayerConnections(layer-1));
 }
 //BIND_END

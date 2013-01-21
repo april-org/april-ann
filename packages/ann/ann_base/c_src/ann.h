@@ -95,6 +95,9 @@ namespace ANN {
     unsigned int getInputSize() const;
     unsigned int getOutputSize() const;
   
+    Connections *getLayerConnections(unsigned int layer);
+    ActivationUnits *getLayerActivations(unsigned int layer);
+
     virtual void setInput(const float *input, unsigned int bunch_pos);
     virtual void copyOutput(float *output, unsigned int bunch_pos);
     virtual void setDesiredOutput(float *target_output, unsigned int bunch_pos);
@@ -123,7 +126,7 @@ namespace ANN {
     float getMaxWeights() const; // falta terminar
     
     virtual unsigned int getNumWeights() const = 0;
-    
+
   };
 }
 #endif // ANN_H

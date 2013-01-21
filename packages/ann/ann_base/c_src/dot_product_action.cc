@@ -299,7 +299,8 @@ namespace ANN {
       DotProductAction(conf,
 		       static_cast<ActivationUnits*>(clone_dict[inputs]),
 		       static_cast<ActivationUnits*>(clone_dict[outputs]),
-		       static_cast<Connections*>(clone_dict[weights_matrix]));
+		       static_cast<Connections*>(clone_dict[weights_matrix]),
+		       transpose_weights);
     action->learning_rate  = learning_rate;
     action->momentum       = momentum;
     action->weight_decay   = weight_decay;

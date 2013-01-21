@@ -116,8 +116,10 @@ namespace ANN {
   
   void Connections::pruneSubnormalAndCheckNormal() {
     float *w = weights->getPPALForReadAndWrite();
-    if (!april_utils::check_floats(w, total_size))
+    if (!april_utils::check_floats(w, total_size)) {
+      assert("No finite numbers at weights matrix!!!" && false);
       ERROR_EXIT(128, "No finite numbers at weights matrix!!!\n");
+    }
   }
     
   FloatGPUMirroredMemoryBlock *Connections::getPtr() {

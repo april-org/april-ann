@@ -205,6 +205,30 @@ namespace ANN {
     ActivationFunction *clone();
   };
 
+
+  //! A linear activation function.
+  /*! Implements ActivationFunction interface but it doesn't compute nothing. It
+      is necessary when the error_function is computed in logbase, in order to
+      restore natural base result.
+  */
+  class LinearActivationFunction : public ActivationFunction
+  {
+  public:
+    LinearActivationFunction();
+    virtual ~LinearActivationFunction();
+    void applyActivation(FloatGPUMirroredMemoryBlock *units, 
+                         unsigned int units_size,
+			 const ANNConfiguration &conf,
+                         bool use_cuda);
+    void multiplyDerivatives(FloatGPUMirroredMemoryBlock *units,
+			     FloatGPUMirroredMemoryBlock *input_errors,
+			     unsigned int size,
+			     const ANNConfiguration &conf,
+			     bool use_cuda,
+			     bool in_log_base);
+    ActivationFunction *clone();
+  };
+
   //////////////////////////////////////////////////////////
 
   /// A virtual class that define the basic interface for stochastic activation

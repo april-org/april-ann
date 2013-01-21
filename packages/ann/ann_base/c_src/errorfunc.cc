@@ -22,6 +22,7 @@
 #include <cstdio>
 #include <cmath>
 #include "errorfunc.h"
+#include "wrapper.h"
 
 namespace ANN {
   
@@ -89,7 +90,7 @@ namespace ANN {
   /*
 
     MixtureCrossEntropy::MixtureCrossEntropy() :
-    EPSILON(1e-20), INF(-99) {
+    EPSILON(LOGF_ZERO), INF(-50) {
     }
 
     // lo mismo que para MSE pero para la crossentropy
@@ -199,7 +200,7 @@ namespace ANN {
   ////////////////////////////////////////
 
   CrossEntropy::CrossEntropy() :
-    EPSILON(1e-20), INF(-99) {
+    EPSILON(LOGF_ZERO), INF(logf(LOGF_ZERO)) {
   }
 
   // lo mismo que para MSE pero para la crossentropy
@@ -232,7 +233,7 @@ namespace ANN {
   ///////////////////////////////////////////////////////////
 
   FullCrossEntropy::FullCrossEntropy() :
-    EPSILON(1e-99), INF(logf(EPSILON)) {
+    EPSILON(LOGF_ZERO), INF(logf(LOGF_ZERO)) {
   }
 
   // lo mismo que para MSE pero para la crossentropy

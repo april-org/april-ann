@@ -52,8 +52,6 @@ namespace ANN {
     void loadModel(const char *filename);
     void saveModel(const char *filename);
     
-    Connections *getLayerConnections(unsigned int layer);
-
     void randomizeWeights(MTRand *rnd, float low, float high);
   };
 
