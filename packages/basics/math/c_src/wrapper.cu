@@ -157,23 +157,6 @@ __global__ void saxpyLoopKernel(unsigned int N,
   }
 }
 
-__global__ void restoreNaturalBaseKernel(const float *units,
-					 float *errors,
-					 unsigned int max_x,
-					 unsigned int lda_x,
-					 unsigned int max_y) {
-  unsigned int matrix_x_pos, matrix_y_pos;
-  getColumnMajorBunchMatrixPositions(blockIdx,
-				     blockDim,
-				     threadIdx,
-				     matrix_x_pos,
-				     matrix_y_pos);
-  if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
-    unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
-    errors[index] = exp( errors[index] ) - 2.0f;
-  }
-}
-
 __global__ void logisticActKernel(float *units,
                                   unsigned int max_x,
 				  unsigned int lda_x,
