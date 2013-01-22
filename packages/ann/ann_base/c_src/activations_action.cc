@@ -44,14 +44,11 @@ namespace ANN {
   }
   
   void ActivationsAction::doBackward() {
-    bool in_log_base=(conf.output_error_in_logbase &&
-		      (units->getType() == OUTPUTS_TYPE));
     act_func->multiplyDerivatives(units->getPtr(),
 				  units->getErrorVectorPtr(),
 				  units->size(),
 				  conf,
-				  conf.use_cuda_flag,
-				  in_log_base);
+				  conf.use_cuda_flag);
   }
   
   Action *ActivationsAction::clone(hash<void*,void*> &clone_dict,

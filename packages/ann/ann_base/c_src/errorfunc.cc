@@ -90,7 +90,7 @@ namespace ANN {
   /*
 
     MixtureCrossEntropy::MixtureCrossEntropy() :
-    EPSILON(LOGF_ZERO), INF(-50) {
+    EPSILON(NEAR_ZERO), INF(logf(NEAR_ZERO)) {
     }
 
     // lo mismo que para MSE pero para la crossentropy
@@ -200,7 +200,7 @@ namespace ANN {
   ////////////////////////////////////////
 
   CrossEntropy::CrossEntropy() :
-    EPSILON(LOGF_ZERO), INF(logf(LOGF_ZERO)) {
+    EPSILON(NEAR_ZERO), INF(logf(NEAR_ZERO)) {
   }
 
   // lo mismo que para MSE pero para la crossentropy
@@ -233,7 +233,7 @@ namespace ANN {
   ///////////////////////////////////////////////////////////
 
   FullCrossEntropy::FullCrossEntropy() :
-    EPSILON(LOGF_ZERO), INF(logf(LOGF_ZERO)) {
+    EPSILON(NEAR_ZERO), INF(logf(NEAR_ZERO)) {
   }
 
   // lo mismo que para MSE pero para la crossentropy
