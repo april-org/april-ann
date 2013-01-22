@@ -27,6 +27,7 @@
 
 using april_utils::ceilingPowerOfTwo;
 using april_utils::clamp;
+using april_utils::avoid_zero;
 
 // ATTENTION: In 64-bit machines is better to use exp than expf
 #define sigmoid(numerator,value) (numerator) / (exp(-(value))+1.0f)
@@ -456,8 +457,10 @@ __global__ void applyCrossEntropyKernel(const float *output,
 				     matrix_y_pos);
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
-    float o = (fabsf(output[index]) < epsilon) ? epsilon : output[index];
-    float t = (fabsf(target_output[index]) < epsilon) ? epsilon : target_output[index];
+    float o = avoid_zero(output[index], epsilon);
+    float t = avoid_zero(target_output[index], epsilon);
+    assert("Cross-Entropy only works on [0,1] outputs" && o > 0.0f);
+    assert("Cross-Entropy only works on [0,1] targets" && t > 0.0f);
     output_error[index] = (o - t) / (o * (1.0f - o));
     if (t > epsilon) {
       if (o > epsilon) pattern_errors[index] += t * logf(o);
@@ -483,11 +486,11 @@ __global__ void applyFullCrossEntropyKernel(const float *output,
 				     matrix_y_pos);
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
-    float o         = (fabsf(output[index]) < epsilon) ? epsilon : output[index];
-    float t         = ((fabsf(target_output[index]) < epsilon) ? epsilon :
-		       target_output[index] );
-    float inv_t     = ((fabsf(1.0f - target_output[index]) < epsilon) ? epsilon :
-		       1.0f - target_output[index]);
+    float o         = avoid_zero(output[index], epsilon);
+    float t         = avoid_zero(target_output[index], epsilon);
+    assert("Full-Cross-Entropy only works on [0,1] outputs" && o > 0.0f);
+    assert("Full-Cross-Entropy only works on [0,1] targets" && t > 0.0f);
+    float inv_t     = avoid_zero(1.0f - target_output[index], epsilon);
     float log_o     = (o > epsilon) ? logf(o) : inf;
     float log_inv_o = (1.0f - o > epsilon) ? logf(1.0f - o) : inf;
     output_error[index] = (o - t) / (o * (1.0f - o));
@@ -1052,9 +1055,10 @@ void doCalculateCrossEntropy(FloatGPUMirroredMemoryBlock *output,
 
     for (unsigned int i = 0; i < output_size; i++) {
       for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	float o = (fabsf(output_ptr[b]) < EPSILON) ? EPSILON : output_ptr[b];
-	float t = ( (fabsf(target_output_ptr[b]) < EPSILON) ? EPSILON :
-		    target_output_ptr[b] );
+	float o = avoid_zero(output_ptr[b], EPSILON);
+	float t = avoid_zero(target_output_ptr[b], EPSILON);
+	assert("Cross-Entropy only works on [0,1] outputs" && o > 0.0f);
+	assert("Cross-Entropy only works on [0,1] targets" && t > 0.0f);
 	output_error_ptr[b] = (o - t) / (o * (1.0f - o));
 	if (t > EPSILON) {
 	  if (o > EPSILON) pattern_errors_ptr[b] += t * logf(o);
@@ -1111,12 +1115,11 @@ void doCalculateFullCrossEntropy(FloatGPUMirroredMemoryBlock *output,
 
     for (unsigned int i = 0; i < output_size; i++) {
       for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	float o         = ((fabsf(output_ptr[b]) < EPSILON) ? EPSILON :
-			   output_ptr[b]);
-	float t         = ((fabsf(target_output_ptr[b]) < EPSILON) ? EPSILON :
-			   target_output_ptr[b] );
-	float inv_t     = ((fabsf(1.0f - target_output_ptr[b]) < EPSILON) ?
-			   EPSILON : 1.0f - target_output_ptr[b]);
+	float o         = avoid_zero(output_ptr[b], EPSILON);
+	float t         = avoid_zero(target_output_ptr[b], EPSILON);
+	assert("Full-Cross-Entropy only works on [0,1] outputs" && o > 0.0f);
+	assert("Full-Cross-Entropy only works on [0,1] targets" && t > 0.0f);
+	float inv_t     = avoid_zero(1.0f - target_output_ptr[b], EPSILON);
 	float log_o     = (o > EPSILON) ? logf(o) : INF;
 	float log_inv_o = (1.0f - o > EPSILON) ? logf(1.0f - o) : INF;
 	output_error_ptr[b] = (o - t) / (o * (1.0f - o));

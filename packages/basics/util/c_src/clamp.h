@@ -29,6 +29,16 @@ namespace april_utils {
     if (val < lower) return lower;
     return val;
   }
+  
+  template <typename T>
+  T avoid_zero(T val, T near_zero)
+  {
+    if (-near_zero < val && val < near_zero) {
+      if (val < 0) return -near_zero;
+      else return near_zero;
+    }
+    return val;
+  }
 }
 
 #endif // defined(CLAMP_H)
