@@ -41,7 +41,6 @@ namespace ANN {
     if (this->error_func) DecRef(this->error_func);
     this->error_func = error_func;
     IncRef(this->error_func);
-    if (error_func->logBaseComputation()) conf.output_error_in_logbase = true;
   }
 
   // FIXME: showActivations instead of showNetworkAtts??

@@ -48,14 +48,12 @@ namespace ANN {
 						       FloatGPUMirroredMemoryBlock *input_errors,
 						       unsigned int size,
 						       const ANNConfiguration &conf,
-						       bool use_cuda,
-						       bool in_log_base) {
+						       bool use_cuda) {
     doMultiplyLogisticDerivatives(units,
 				  input_errors,
 				  size,
 				  conf,
-				  use_cuda,
-				  in_log_base);
+				  use_cuda);
   }
 
   ActivationFunction *LogisticActivationFunction::clone() {
@@ -78,14 +76,12 @@ namespace ANN {
 						   FloatGPUMirroredMemoryBlock *input_errors,
 						   unsigned int size,
 						   const ANNConfiguration &conf,
-						   bool use_cuda,
-						   bool in_log_base) {
+						   bool use_cuda) {
     doMultiplyTanhDerivatives(units,
                               input_errors,
                               size,
                               conf,
-                              use_cuda,
-			      in_log_base);
+                              use_cuda);
   }
 
   ActivationFunction *TanhActivationFunction::clone() {
@@ -134,8 +130,13 @@ namespace ANN {
 						      FloatGPUMirroredMemoryBlock *input_errors,
 						      unsigned int size,
 						      const ANNConfiguration &conf,
-						      bool use_cuda,
-						      bool in_log_base) {
+						      bool use_cuda) {
+    // Is the same as sigmoid
+    doMultiplyLogisticDerivatives(units,
+				  input_errors,
+				  size,
+				  conf,
+				  use_cuda);
   }
   
   ActivationFunction *SoftmaxActivationFunction::clone() {
@@ -152,14 +153,7 @@ namespace ANN {
 						     FloatGPUMirroredMemoryBlock *input_errors,
 						     unsigned int size,
 						     const ANNConfiguration &conf,
-						     bool use_cuda,
-						     bool in_log_base) {
-    if (in_log_base) doRestoreNaturalBase(units,
-					  input_errors,
-					  size,
-					  conf,
-					  use_cuda,
-					  in_log_base);
+						     bool use_cuda) {
   }
 
   ActivationFunction *LinearActivationFunction::clone() {

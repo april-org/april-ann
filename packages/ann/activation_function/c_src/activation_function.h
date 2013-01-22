@@ -99,17 +99,12 @@ namespace ANN {
       GPU computation (using CUDA). Overrides the configuration stored at conf
       parameter.
       
-      @param in_log_base indicates when the input error computation is in
-      logbase. However, this method will store the derivative in natural
-      base. So, if input error is in logbase, this method must do computation in
-      logbase and after return to natural base computing the exponential.
     */
     virtual void multiplyDerivatives(FloatGPUMirroredMemoryBlock *units,
 				     FloatGPUMirroredMemoryBlock *input_errors,
 				     unsigned int size,
 				     const ANNConfiguration &conf,
-				     bool use_cuda,
-				     bool in_log_base) = 0;
+				     bool use_cuda) = 0;
     
     /// Returns a deep copy of the object
     virtual ActivationFunction *clone() = 0;
@@ -136,8 +131,7 @@ namespace ANN {
 			     FloatGPUMirroredMemoryBlock *input_errors,
 			     unsigned int size,
 			     const ANNConfiguration &conf,
-			     bool use_cuda,
-			     bool in_log_base);
+			     bool use_cuda);
     ActivationFunction *clone();
   };
 
@@ -161,8 +155,7 @@ namespace ANN {
 			     FloatGPUMirroredMemoryBlock *input_errors,
 			     unsigned int size,
 			     const ANNConfiguration &conf,
-			     bool use_cuda,
-			     bool in_log_base);
+			     bool use_cuda);
     ActivationFunction *clone();
   };
 
@@ -200,16 +193,15 @@ namespace ANN {
 			     FloatGPUMirroredMemoryBlock *input_errors,
 			     unsigned int size,
 			     const ANNConfiguration &conf,
-			     bool use_cuda,
-			     bool in_log_base);
+			     bool use_cuda);
     ActivationFunction *clone();
   };
 
 
   //! A linear activation function.
   /*! Implements ActivationFunction interface but it doesn't compute nothing. It
-      is necessary when the error_function is computed in logbase, in order to
-      restore natural base result.
+      would be necessary in some future scenarios, nevertheless it is not
+      computing anything at this moment.
   */
   class LinearActivationFunction : public ActivationFunction
   {
@@ -224,8 +216,7 @@ namespace ANN {
 			     FloatGPUMirroredMemoryBlock *input_errors,
 			     unsigned int size,
 			     const ANNConfiguration &conf,
-			     bool use_cuda,
-			     bool in_log_base);
+			     bool use_cuda);
     ActivationFunction *clone();
   };
 
@@ -308,8 +299,7 @@ namespace ANN {
 			     FloatGPUMirroredMemoryBlock *input_errors,
 			     unsigned int size,
 			     const ANNConfiguration &conf,
-			     bool use_cuda,
-			     bool in_log_base) {
+			     bool use_cuda) {
       ERROR_PRINT("NOT SUPORTTED METHOD");
     }
   };

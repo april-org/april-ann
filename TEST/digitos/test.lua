@@ -9,11 +9,26 @@ otrorand      = random(5678)
 learning_rate = 0.01
 momentum      = 0.01
 weight_decay  = 1e-05
-max_epochs    = tonumber(arg[2] or 10)
+max_epochs    = 10
+
+-- training and validation
+errors = {
+  {2.1902080, 1.9230258},
+  {1.5131317, 1.0309657},
+  {0.8268588, 0.5496867},
+  {0.4540252, 0.3792447},
+  {0.2721280, 0.2869021},
+  {0.2027510, 0.2012986},
+  {0.1563686, 0.1800094},
+  {0.1242468, 0.1540778},
+  {0.1074638, 0.1612442},
+  {0.0955907, 0.1626286},
+}
+epsilon = 1e-05
 
 --------------------------------------------------------------
 
-m1 = matrix.loadImage("digits.png", "gray")
+m1 = ImageIO.read("digits.png"):to_grayscale():invert_colors():matrix()
 train_input = dataset.matrix(m1,
 			     {
 			       patternSize = {16,16},
@@ -85,20 +100,18 @@ lared:set_option("momentum",      momentum)
 lared:set_option("weight_decay",  weight_decay)
 lared:set_use_cuda(true, true)
 
-
-lared:set_error_function(ann.error_functions.mse())
---lared:set_error_function(ann.error_functions.cross_entropy())
+lared:set_error_function(ann.error_functions.cross_entropy())
 
 totalepocas = 0
 
 -- ponemos esto aqui para que se inicie CUDA
 errorval    = lared:validate_dataset(datosvalidar)
-print(errorval)
+print("# Initial validation error:", errorval)
 
 clock = util.stopwatch()
 clock:go()
 
-ann.mlp.all_all.save(lared, "wop.net", "ascii", "old")
+--ann.mlp.all_all.save(lared, "wop.net", "ascii", "old")
 print("Epoch Training  Validation")
 for epoch = 1,max_epochs do
   collectgarbage("collect")
@@ -108,6 +121,12 @@ for epoch = 1,max_epochs do
   totalepocas = totalepocas+1
   errortrain  = lared:train_dataset(datosentrenar)
   errorval    = lared:validate_dataset(datosvalidar)
+  if math.abs(errortrain - errors[epoch][1]) > epsilon then
+    error("Training error is not equal enough to reference error")
+  end
+  if math.abs(errorval - errors[epoch][2]) > epsilon then
+    error("Validation error is not equal enough to reference error")
+  end
   --  ann.mlp.all_all.save(lared, "wop.net", "ascii", "old")
   printf("%4d  %.7f %.7f\n",
 	 totalepocas,errortrain,errorval)
@@ -117,9 +136,11 @@ clock:stop()
 cpu,wall = clock:read()
 printf("Wall total time: %.3f    per epoch: %.3f\n", wall, wall/max_epochs)
 printf("CPU  total time: %.3f    per epoch: %.3f\n", cpu, cpu/max_epochs)
-ann.mlp.all_all.save(lared, "red_original.net", "ascii", "old")
+--ann.mlp.all_all.save(lared, "red_original.net", "ascii", "old")
 
-for ipat,pat in datosvalidar.input_dataset:patterns() do
-  local out=lared:calculate(pat)
-  print(table.concat(out, " "))
-end
+--for ipat,pat in datosvalidar.input_dataset:patterns() do
+--  local out=lared:calculate(pat)
+--  print(table.concat(out, " "))
+--end
+
+print("Test passed! OK!")
