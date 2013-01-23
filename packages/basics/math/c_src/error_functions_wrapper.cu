@@ -35,7 +35,7 @@ using april_utils::avoid_zero;
 ///////////////////////////////////////////////////////////
 
 #ifdef USE_CUDA
-
+#include "cuda_utils.h"
 __global__ void applyMSEErrorFunctionKernel(const float *output,
 					    const float *target_output,
 					    float *output_error,
@@ -101,8 +101,8 @@ __global__ void applyCrossEntropyErrorFunctionKernel(const float *output,
 				     matrix_y_pos);
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
-    float o = avoid_zero(output[index], epsilon);
-    float t = avoid_zero(target_output[index], epsilon);
+    float o = avoid_zero_in_cuda(output[index], epsilon);
+    float t = avoid_zero_in_cuda(target_output[index], epsilon);
     output_error[index] = (o - t) / (o * (1.0f - o));
     if (t > epsilon) {
       if (o > epsilon) pattern_errors[index] += t * logf(o);
@@ -128,9 +128,9 @@ __global__ void applyFullCrossEntropyErrorFunctionKernel(const float *output,
 				     matrix_y_pos);
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
-    float o         = avoid_zero(output[index], epsilon);
-    float t         = avoid_zero(target_output[index], epsilon);
-    float inv_t     = avoid_zero(1.0f - target_output[index], epsilon);
+    float o         = avoid_zero_in_cuda(output[index], epsilon);
+    float t         = avoid_zero_in_cuda(target_output[index], epsilon);
+    float inv_t     = avoid_zero_in_cuda(1.0f - target_output[index], epsilon);
     float log_o     = (o > epsilon) ? logf(o) : inf;
     float log_inv_o = (1.0f - o > epsilon) ? logf(1.0f - o) : inf;
     output_error[index] = (o - t) / (o * (1.0f - o));
@@ -216,7 +216,7 @@ void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
     computeBlockAndGridSizesForAColumnMajorBunch(conf, output_size,
 						 block, grid);
   
-    applyTanhErrorFunctionKernelKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+    applyTanhErrorFunctionKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
       (output_ptr,
        target_output_ptr,
        output_error_ptr,
