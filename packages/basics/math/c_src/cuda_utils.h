@@ -22,8 +22,6 @@
 
 // AUXILIAR INLINE FUNCTIONS //
 #ifdef USE_CUDA
-#define clip(v,min,max) ((v)<min?min:((v)>max?max:v))
-
 static __device__ float avoid_zero_in_cuda(float val, float near_zero) {
   if (-near_zero < val && val < near_zero) {
     if (val < 0) return -near_zero;
