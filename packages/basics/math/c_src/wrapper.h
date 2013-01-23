@@ -37,6 +37,35 @@
 #define NEAR_ZERO             1e-20f 
 #define DERIVATIVE_SATURATION 17.0f
 
+// ATTENTION: In 64-bit machines is better to use exp than expf
+#define sigmoid(numerator,value) (numerator) / (exp(-(value))+1.0f)
+
+#define getMatrixFlatIndex(x,lda,y) ((x)+(y)*(lda))
+#define getMatrixIndex(x,lda,y) ((x)*(lda)+(y))
+
+#ifdef USE_CUDA
+// COMMON HEADERS
+__device__ void getColumnMajorBunchMatrixPositions(const dim3 &blockIdx,
+						   const dim3 &blockDim,
+						   const dim3 &threadIdx,
+						   unsigned int &matrix_x_pos,
+						   unsigned int &matrix_y_pos);
+
+void computeBlockAndGridSizesForAColumnMajorBunch(const ANNConfiguration &conf,
+						  unsigned int size,
+						  dim3 &block, dim3 &grid);
+
+void computeBlockAndGridSizesForARowMajorBunch(const ANNConfiguration &conf,
+					       unsigned int size,
+					       dim3 &block, dim3 &grid);
+
+void computeBlockAndGridSizesForAnArray(const ANNConfiguration &conf,
+					dim3 &block, dim3 &grid);
+
+cublasOperation_t getCublasOperation(CBLAS_TRANSPOSE operation);
+#endif
+
+// ACTIVATION FUNCTIONS
 void doApplyLogisticActivation(FloatGPUMirroredMemoryBlock *units,
 			       unsigned int units_size,
 			       const ANNConfiguration &conf,
@@ -67,22 +96,23 @@ void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *units,
 			      const ANNConfiguration &conf,
 			      bool use_gpu);
 
-void doCalculateMSE(FloatGPUMirroredMemoryBlock *output,
-		    FloatGPUMirroredMemoryBlock *target_output,
-		    FloatGPUMirroredMemoryBlock *output_error,
-		    FloatGPUMirroredMemoryBlock *pattern_errors,
-		    float zero_epsilon_distance,
-		    unsigned int output_size,
-		    const ANNConfiguration &conf,
-		    bool use_gpu);
+// ERROR FUNCTIONS
+void doCalculateMSEErrorFunction(FloatGPUMirroredMemoryBlock *output,
+				 FloatGPUMirroredMemoryBlock *target_output,
+				 FloatGPUMirroredMemoryBlock *output_error,
+				 FloatGPUMirroredMemoryBlock *pattern_errors,
+				 float zero_epsilon_distance,
+				 unsigned int output_size,
+				 const ANNConfiguration &conf,
+				 bool use_gpu);
 
-void doCalculateTanh(FloatGPUMirroredMemoryBlock *output,
-		     FloatGPUMirroredMemoryBlock *target_output,
-		     FloatGPUMirroredMemoryBlock *output_error,
-		     FloatGPUMirroredMemoryBlock *pattern_errors,
-		     unsigned int output_size,
-		     const ANNConfiguration &conf,
-		     bool use_gpu);
+void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
+				  FloatGPUMirroredMemoryBlock *target_output,
+				  FloatGPUMirroredMemoryBlock *output_error,
+				  FloatGPUMirroredMemoryBlock *pattern_errors,
+				  unsigned int output_size,
+				  const ANNConfiguration &conf,
+				  bool use_gpu);
 
 /*
   float doCalculateMixtureCrossEntropy(FloatGPUMirroredMemoryBlock *output,
@@ -96,14 +126,14 @@ void doCalculateTanh(FloatGPUMirroredMemoryBlock *output,
   bool use_gpu);
 */
 
-void doCalculateLocalFMeasure(float alpha,
-			      FloatGPUMirroredMemoryBlock *output,
-			      FloatGPUMirroredMemoryBlock *target_output,
-			      FloatGPUMirroredMemoryBlock *output_error,
-			      FloatGPUMirroredMemoryBlock *pattern_errors,
-			      unsigned int output_size,
-			      const ANNConfiguration &conf,
-			      bool use_gpu);
+void doCalculateLocalFMeasureErrorFunction(float alpha,
+					   FloatGPUMirroredMemoryBlock *output,
+					   FloatGPUMirroredMemoryBlock *target_output,
+					   FloatGPUMirroredMemoryBlock *output_error,
+					   FloatGPUMirroredMemoryBlock *pattern_errors,
+					   unsigned int output_size,
+					   const ANNConfiguration &conf,
+					   bool use_gpu);
 
 /*
   float doCalculateGA(FloatGPUMirroredMemoryBlock *output,
@@ -115,26 +145,27 @@ void doCalculateLocalFMeasure(float alpha,
   bool use_gpu);
 */
 
-void doCalculateCrossEntropy(FloatGPUMirroredMemoryBlock *output,
-			     FloatGPUMirroredMemoryBlock *target_output,
-			     FloatGPUMirroredMemoryBlock *output_error,
-			     FloatGPUMirroredMemoryBlock *pattern_errors,
-			     float EPSILON,
-			     float INF,
-			     unsigned int output_size,
-			     const ANNConfiguration &conf,
-			     bool use_gpu);
+void doCalculateCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *output,
+					  FloatGPUMirroredMemoryBlock *target_output,
+					  FloatGPUMirroredMemoryBlock *output_error,
+					  FloatGPUMirroredMemoryBlock *pattern_errors,
+					  float EPSILON,
+					  float INF,
+					  unsigned int output_size,
+					  const ANNConfiguration &conf,
+					  bool use_gpu);
 
-void doCalculateFullCrossEntropy(FloatGPUMirroredMemoryBlock *output,
-				 FloatGPUMirroredMemoryBlock *target_output,
-				 FloatGPUMirroredMemoryBlock *output_error,
-				 FloatGPUMirroredMemoryBlock *pattern_errors,
-				 float EPSILON,
-				 float INF,
-				 unsigned int output_size,
-				 const ANNConfiguration &conf,
-				 bool use_gpu);
+void doCalculateFullCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *output,
+					      FloatGPUMirroredMemoryBlock *target_output,
+					      FloatGPUMirroredMemoryBlock *output_error,
+					      FloatGPUMirroredMemoryBlock *pattern_errors,
+					      float EPSILON,
+					      float INF,
+					      unsigned int output_size,
+					      const ANNConfiguration &conf,
+					      bool use_gpu);
 
+// BLAS FUNCTIONS
 void doSgemv(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
 	     int m, int n,
 	     float alpha, FloatGPUMirroredMemoryBlock *a, unsigned int a_inc,
@@ -173,10 +204,6 @@ void doSgemm(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
 	     FloatGPUMirroredMemoryBlock* c, unsigned int c_inc,
 	     unsigned int a_shift, unsigned int b_shift, unsigned int c_shift,
 	     bool use_gpu);
-
-void initEnvironment(bool use_gpu);
-
-void shutdownEnvironment(bool use_gpu);
 
 void doVectorSetToZero(FloatGPUMirroredMemoryBlock *v,
 		       unsigned int v_size,

@@ -38,14 +38,14 @@ namespace ANN {
 					unsigned int output_size,
 					const ANNConfiguration &conf) {
     bool use_cuda_flag = conf.use_cuda_flag && (conf.cur_bunch_size > 1);
-    doCalculateMSE(output,
-		   target_output,
-		   output_error,
-		   pattern_errors,
-		   zero_epsilon_distance,
-		   output_size,
-		   conf,
-		   use_cuda_flag);
+    doCalculateMSEErrorFunction(output,
+				target_output,
+				output_error,
+				pattern_errors,
+				zero_epsilon_distance,
+				output_size,
+				conf,
+				use_cuda_flag);
   }
   
   // calcula el MSE de un batch a partir de la suma de todas las
@@ -69,13 +69,13 @@ namespace ANN {
 					 unsigned int output_size,
 					 const ANNConfiguration &conf) {
     bool use_cuda_flag = conf.use_cuda_flag && (conf.cur_bunch_size > 1);
-    doCalculateTanh(output,
-		    target_output,
-		    output_error,
-		    pattern_errors,
-		    output_size,
-		    conf,
-		    use_cuda_flag);
+    doCalculateTanhErrorFunction(output,
+				 target_output,
+				 output_error,
+				 pattern_errors,
+				 output_size,
+				 conf,
+				 use_cuda_flag);
   }
   
   // calcula el Tanh de un batch a partir de la suma de todas las
@@ -141,14 +141,14 @@ namespace ANN {
 						  unsigned int output_size,
 						  const ANNConfiguration &conf) {
     bool use_cuda_flag = conf.use_cuda_flag && (conf.cur_bunch_size > 1);
-    doCalculateLocalFMeasure(alpha,
-			     output,
-			     target_output,
-			     output_error,
-			     pattern_errors,
-			     output_size,
-			     conf,
-			     use_cuda_flag);
+    doCalculateLocalFMeasureErrorFunction(alpha,
+					  output,
+					  target_output,
+					  output_error,
+					  pattern_errors,
+					  output_size,
+					  conf,
+					  use_cuda_flag);
     ++N;
   }
   
@@ -211,15 +211,15 @@ namespace ANN {
 						 unsigned int output_size,
 						 const ANNConfiguration &conf) {
     bool use_cuda_flag = conf.use_cuda_flag && (conf.cur_bunch_size > 1);
-    doCalculateCrossEntropy(output,
-			    target_output,
-			    output_error,
-			    pattern_errors,
-			    EPSILON,
-			    INF,
-			    output_size,
-			    conf,
-			    use_cuda_flag);
+    doCalculateCrossEntropyErrorFunction(output,
+					 target_output,
+					 output_error,
+					 pattern_errors,
+					 EPSILON,
+					 INF,
+					 output_size,
+					 conf,
+					 use_cuda_flag);
 
   }
 
@@ -244,15 +244,15 @@ namespace ANN {
 						     unsigned int output_size,
 						     const ANNConfiguration &conf) {
     bool use_cuda_flag = conf.use_cuda_flag && (conf.cur_bunch_size > 1);
-    doCalculateFullCrossEntropy(output,
-				target_output,
-				output_error,
-				pattern_errors,
-				EPSILON,
-				INF,
-				output_size,
-				conf,
-				use_cuda_flag);
+    doCalculateFullCrossEntropyErrorFunction(output,
+					     target_output,
+					     output_error,
+					     pattern_errors,
+					     EPSILON,
+					     INF,
+					     output_size,
+					     conf,
+					     use_cuda_flag);
 
   }
 
