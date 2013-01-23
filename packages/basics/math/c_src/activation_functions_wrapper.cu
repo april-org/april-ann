@@ -30,6 +30,7 @@ using april_utils::ceilingPowerOfTwo;
 ///////////////////////////////////////////////////////////
 /////////////////// Kernels ///////////////////////////////
 ///////////////////////////////////////////////////////////
+#define clip(v,min,max) ((v)<min?min:((v)>max?max:v))
 
 #ifdef USE_CUDA
 #include "cuda_utils.h"
@@ -542,3 +543,4 @@ void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *units,
   }
 #endif
 }
+#undef clip
