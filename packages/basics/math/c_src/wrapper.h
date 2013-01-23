@@ -43,28 +43,6 @@
 #define getMatrixFlatIndex(x,lda,y) ((x)+(y)*(lda))
 #define getMatrixIndex(x,lda,y) ((x)*(lda)+(y))
 
-#ifdef USE_CUDA
-// COMMON HEADERS
-__device__ void getColumnMajorBunchMatrixPositions(const dim3 &blockIdx,
-						   const dim3 &blockDim,
-						   const dim3 &threadIdx,
-						   unsigned int &matrix_x_pos,
-						   unsigned int &matrix_y_pos);
-
-void computeBlockAndGridSizesForAColumnMajorBunch(const ANNConfiguration &conf,
-						  unsigned int size,
-						  dim3 &block, dim3 &grid);
-
-void computeBlockAndGridSizesForARowMajorBunch(const ANNConfiguration &conf,
-					       unsigned int size,
-					       dim3 &block, dim3 &grid);
-
-void computeBlockAndGridSizesForAnArray(const ANNConfiguration &conf,
-					dim3 &block, dim3 &grid);
-
-cublasOperation_t getCublasOperation(CBLAS_TRANSPOSE operation);
-#endif
-
 // ACTIVATION FUNCTIONS
 void doApplyLogisticActivation(FloatGPUMirroredMemoryBlock *units,
 			       unsigned int units_size,
