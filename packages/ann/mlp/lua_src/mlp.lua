@@ -1,62 +1,43 @@
 ann = ann or {}
 ann.mlp = ann.mlp or {}
-ann.mlp.all_all = ann.mlp.all_all or {}
 
-function ann.mlp.all_all.save(model, filename, mode, old)
-  if type(model) ~= "ann.mlp.all_all" then
-    error ("Incorrect ANN mode!!!")
+function ann.mlp.add_layers(t)
+  local new_net = t.ann:clone()
+  new_net:release_output()
+  local prev_units = new_net:get_layer_activations(new_net:get_layer_activations_size())
+  for i=1,#t.new_layers do
+    if i == #t.new_layers then type = "outputs" end
+    local actf   = ann.activations.from_string(t.new_layers[i][2])
+    local size   = t.new_layers[i][1]
+    local input  = prev_units
+    local output = ann.units.real_cod{ ann = new_net,
+				       size = size,
+				       type = type }
+    local bias   = ann.connections.bias{ ann  = new_net,
+					 size = size }
+    local weights = ann.connections.all_all{
+      ann         = new_net,
+      input_size  = input:num_neurons(),
+      output_size = size }
+    ann.actions.forward_bias{ ann = new_net,
+			      output = output,
+			      connections = bias }
+    ann.actions.dot_product{ ann = new_net,
+			     input = input,
+			     output = output,
+			     connections = weights }
+    if actf then
+      ann.actions.activations{ ann = new_net,
+			       output = output,
+			       actfunc = actf }
+    end
+    bias:randomize_weights{ random=t.random,
+			    inf=t.inf,
+			    sup=t.sup }
+    weights:randomize_weights{ random=t.random,
+			       inf=t.inf,
+			       sup=t.sup }
+    prev_units = units
   end
-  local w,oldw = model:weights()
-  local f = io.open(filename,"w")
-  f:write("return {\n\""..model:description().."\",\nmatrix.fromString[["..
-	  w:toString(mode).."]],")
-  if old == "old" then 
-    f:write("\nmatrix.fromString[[\n"..
-	    oldw:toString(mode).."]],\n")
-  end
-  f:write("}\n")
-  f:close()
-end
-
-function ann.mlp.all_all.load(filename, bunch_size)
-  local c = loadfile(filename)
-  local data = c()
-  return c and ann.mlp.all_all.generate{
-    topology    = data[1],
-    w           = data[2],
-    oldw        = data[3],
-    bunch_size  = bunch_size,
-  }
-end
-
--- layer_num must be > 0 and <= than num_layers
-function ann.mlp.all_all.prune_up_to_layer(model, layer_num, bunch_size)
-  if type(model) ~= "ann.mlp.all_all" then
-    error ("Incorrect ANN mode!!!")
-  end
-  local layers = {}
-  local size = 0
-  for i=1,layer_num do
-    table.insert(layers, model:get_layer_connections(i))
-    size = size + layers[i]:size()
-  end
-  local w    = matrix( size )
-  local oldw = matrix( size )
-  local next_pos = 0
-  for i=1,#layers do
-    next_pos = layers[i]:weights{
-      w         = w,
-      oldw      = oldw,
-      first_pos = next_pos
-    }
-  end
-  local desc_tokens = string.tokenize(model:description(), " ")
-  local new_description = table.concat(desc_tokens, " ", 1, layer_num*2)
-  local new_model = ann.mlp.all_all.generate{
-    topology   = new_description,
-    bunch_size = bunch_size,
-    w          = w,
-    oldw       = oldw
-  }
-  return new_model
+  return new_net
 end
