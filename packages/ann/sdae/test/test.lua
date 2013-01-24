@@ -151,3 +151,37 @@ for i=1,500 do
 	 mse_tr_deep_wo, mse_val_deep_wo,
 	 mse_tr_shallow, mse_val_shallow)
 end
+
+-- classification
+local deep_out_ds = dataset.matrix(matrix(val_output:numPatterns(),
+					  val_output:patternSize()))
+local deep_wo_out_ds = dataset.matrix(matrix(val_output:numPatterns(),
+					     val_output:patternSize()))
+local shallow_out_ds = dataset.matrix(matrix(val_output:numPatterns(),
+					     val_output:patternSize()))
+
+
+deep_classifier:use_dataset{ input_dataset  = val_input,
+			     output_dataset = deep_out_ds }
+
+deep_classifier_wo_pretraining:use_dataset{input_dataset =val_input,
+					   output_dataset=deep_wo_out_ds}
+
+shallow_classifier:use_dataset{ input_dataset  = val_input,
+				output_dataset = shallow_out_ds }
+
+local errors = {0,0,0}
+
+for ipat,pat in val_input:patterns() do
+  local _,class         = table.max(val_output:getPattern(ipat))
+  local _,deep_class    = table.max(deep_out_ds:getPattern(ipat))
+  local _,deep_wo_class = table.max(deep_wo_out_ds:getPattern(ipat))
+  local _,shallow_class = table.max(shallow_out_ds:getPattern(ipat))
+  if class ~= deep_class then errors[1] = errors[1] + 1 end
+  if class ~= deep_wo_class then errors[2] = errors[2] + 1 end
+  if class ~= shallow_class then errors[3] = errors[3] + 1 end
+end
+
+print(errors[1]/val_input:numPatterns(),
+      errors[2]/val_input:numPatterns(),
+      errors[3]/val_input:numPatterns())
