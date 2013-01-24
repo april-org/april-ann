@@ -17,7 +17,7 @@ val_input  = dataset.matrix(m1,
 			      orderStep   = {1,0}
 			    })
 
-weights,bias = ann.autoencoders.stacked_denoising_pretraining{
+params = {
   input_dataset       = train_input,
   val_input_dataset   = val_input,
   replacement         = nil,
@@ -30,8 +30,12 @@ weights,bias = ann.autoencoders.stacked_denoising_pretraining{
 			  { size=  32, actf="logistic"},
 			  { size=   2, actf="linear"}},
   bunch_size          = 16,
-  learning_rate       = 0.005,
+  learning_rate       = 0.01,
   momentum            = 0.02,
   weight_decay        = 1e-05,
   max_epochs          = 200,
-  max_epochs_wo_improvement = 10 }
+  max_epochs_wo_improvement = 10 
+}
+
+sdae_table = ann.autoencoders.stacked_denoising_pretraining(params)
+sdae       = ann.autoencoders.stacked_denoising_finetunning(sdae_table, params)
