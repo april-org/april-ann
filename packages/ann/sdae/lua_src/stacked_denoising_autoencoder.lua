@@ -172,6 +172,7 @@ function ann.autoencoders.build_full_autoencoder(bunch_size,
   return sdae
 end
 
+-- Generate the data table for training a two-layered auto-encoder
 function ann.autoencoders.generate_training_table_configuration_from_params(current_dataset_params,
 									    params)
   local data = {}
@@ -438,6 +439,8 @@ function ann.autoencoders.stacked_denoising_finetunning(sdae_table, params)
   return best_net
 end
 
+-- This function returns a MLP formed by the codification part of a full stacked
+-- auto encoder
 function ann.autoencoders.build_codifier_from_sdae(sdae,
 						   bunch_size,
 						   layers)
@@ -481,7 +484,8 @@ function ann.autoencoders.build_codifier_from_sdae(sdae,
   end
   return codifier_net
 end
-  
+
+-- Returns a dataset with the codification of input dataset patterns  
 function ann.autoencoders.compute_encoded_dataset_using_codifier(codifier_net,
 								 input_dataset)
   local output_dataset = dataset.matrix(matrix(input_dataset:numPatterns(),
