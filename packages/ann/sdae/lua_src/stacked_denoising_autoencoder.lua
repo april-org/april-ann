@@ -60,22 +60,20 @@ function ann.autoencoders.build_autoencoder_from_sizes_and_actf(bunch_size,
 					   type = "outputs" }
   local hidden_bias  = ann.connections.bias{ ann  = autoencoder,
 					     size = cod_size }
-  local inv_fanin = 1.0/input_size
   hidden_bias:randomize_weights{ random=weights_random,
-				 inf=-inv_fanin,
-				 sup= inv_fanin }
+				 inf=-0.1,
+				 sup= 0.1 }
   local hidden_weights  = ann.connections.all_all{ ann         = autoencoder,
 						   input_size  = input_size,
 						   output_size = cod_size }
   hidden_weights:randomize_weights{ random=weights_random,
-				    inf=-inv_fanin,
-				    sup= inv_fanin }
+				    inf=-0.1,
+				    sup= 0.1 }
   local output_bias = ann.connections.bias{ ann  = autoencoder,
 					    size = input_size }
-  local inv_fanin = 1.0/cod_size
   output_bias:randomize_weights{ random=weights_random,
-				 inf=-inv_fanin,
-				 sup= inv_fanin }
+				 inf=-0.1,
+				 sup= 0.1 }
   ann.actions.forward_bias { ann         = autoencoder,
 			     output      = hidden_layer,
 			     connections = hidden_bias }

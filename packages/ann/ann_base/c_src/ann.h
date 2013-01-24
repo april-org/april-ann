@@ -91,7 +91,21 @@ namespace ANN {
 
     void registerInput(ActivationUnits *actu);
     void registerOutput(ActivationUnits *actu);
-  
+    
+    /// This method converts output neurons into hidden neurons, and it sets output to zero
+    void releaseOutput() {
+      delete desired_output;
+      delete pattern_errors;
+      desired_output    = 0;
+      pattern_errors    = 0;
+      output_errors     = 0;
+      output_neurons    = 0;
+      total_num_outputs = 0;
+      for (unsigned int i=0; i<activations.size(); ++i)
+	if (activations[i]->getType() == OUTPUTS_TYPE)
+	  activations[i]->setType(HIDDEN_TYPE);
+    }
+
     unsigned int getInputSize() const;
     unsigned int getOutputSize() const;
   

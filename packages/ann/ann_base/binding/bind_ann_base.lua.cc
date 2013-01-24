@@ -191,6 +191,12 @@ using namespace Functions;
 }
 //BIND_END
 
+//BIND_METHOD ANNBase release_output
+{
+  obj->releaseOutput();
+}
+//BIND_END
+
 //BIND_METHOD ANNBase register_action
 {
   Action *action;
