@@ -22,15 +22,6 @@
 
 // AUXILIAR INLINE FUNCTIONS //
 #ifdef USE_CUDA
-static __device__ float avoid_number_in_cuda(float val, float number,
-					     float near_zero) {
-  if (((number - epsilon) < val) && (val < (number + epsilon))) {
-    if (val < number) return number - epsilon ;
-    else return number + epsilon;
-  }
-  return val;
-}
-
 static __device__ void getColumnMajorBunchMatrixPositions(const dim3 &blockIdx,
 							  const dim3 &blockDim,
 							  const dim3 &threadIdx,

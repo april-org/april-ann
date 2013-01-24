@@ -29,16 +29,6 @@ namespace april_utils {
     if (val < lower) return lower;
     return val;
   }
-  
-  template <typename T>
-  T avoid_number(T val, T number, T epsilon)
-  {
-    if (((number - epsilon) < val) && (val < (number + epsilon))) {
-      if (val < number) return number - epsilon ;
-      else return number + epsilon;
-    }
-    return val;
-  }
 }
 
 #endif // defined(CLAMP_H)
