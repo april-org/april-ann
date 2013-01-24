@@ -95,6 +95,9 @@ namespace ANN {
     unsigned int getInputSize() const;
     unsigned int getOutputSize() const;
   
+    unsigned int getLayerConnectionsSize() const { return connections.size(); }
+    unsigned int getLayerActivationsSize() const { return activations.size(); }
+    
     Connections *getLayerConnections(unsigned int layer);
     ActivationUnits *getLayerActivations(unsigned int layer);
 

@@ -2,12 +2,12 @@ ann.autoencoders = ann.autoencoders or {}
 
 -- This function builds a codifier from the weights of the first layer of a
 -- restricted autoencoder
-function ann.autoencoders.build_codifier_from_weights(bunch_size,
-						      input_size,
-						      input_actf,
-						      cod_size,
-						      cod_actf,
-						      bias_mat,weights_mat)
+function ann.autoencoders.build_two_layered_codifier_from_weights(bunch_size,
+								  input_size,
+								  input_actf,
+								  cod_size,
+								  cod_actf,
+								  bias_mat,weights_mat)
   local codifier = ann.mlp{ bunch_size = bunch_size }
   local input_layer  = ann.units.real_cod{ ann  = codifier,
 					   size = input_size,
@@ -213,7 +213,7 @@ end
 --   * perturbation_random => random number generator
 --   * var => variance of gaussian noise
 --   * layers => table which contains a list of { size=...., actf=....}, being
---               size a number and actf a string = "logistic"|"linear"
+--               size a number and actf a string = "logistic"|"tanh"|"linear"
 --   * bunch_size => size of mini-batch
 --   * learning_rate
 --   * momentum
@@ -333,12 +333,12 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
       -- generation of new input patterns using only the first part of
       -- autoencoder except at last loop iteration
       local codifier
-      codifier = ann.autoencoders.build_codifier_from_weights(params.bunch_size,
-							      input_size,
-							      input_actf,
-							      cod_size,
-							      cod_actf,
-							      b1mat, wmat)
+      codifier = ann.autoencoders.build_two_layered_codifier_from_weights(params.bunch_size,
+									  input_size,
+									  input_actf,
+									  cod_size,
+									  cod_actf,
+									  b1mat, wmat)
       -- auxiliar function
       local generate_codification = function(codifier, ds)
 	local output_mat = matrix(ds:numPatterns(), cod_size)
@@ -436,4 +436,57 @@ function ann.autoencoders.stacked_denoising_finetunning(sdae_table, params)
     if epoch - best_epoch > params.max_epochs_wo_improvement then break end
   end
   return best_net
+end
+
+function ann.autoencoders.build_codifier_from_sdae(sdae,
+						   bunch_size,
+						   layers)
+  local sdae_connections = sdae:get_layer_connections_vector()
+  local sdae_activations = sdae:get_layer_activations_vector()
+  local codifier_net = ann.mlp{ bunch_size = bunch_size }
+  local codifier_connections = {}
+  local codifier_activations = {}
+  for i=1,(#layers-1)*2 do
+    table.insert(codifier_connections, sdae_connections[i]:clone(codifier_net))
+  end
+  local type = "inputs"
+  for i=1,#layers-1 do
+    table.insert(codifier_activations, sdae_activations[i]:clone(codifier_net,
+								 type))
+    type = "hidden"
+  end
+  table.insert(codifier_activations, sdae_activations[#layers]:clone(codifier_net,
+								     "outputs"))
+  local k=1
+  for i=2,#layers do
+    local actf    = ann.activations.from_string(layers[i].actf)
+    local input   = codifier_activations[i-1]
+    local output  = codifier_activations[i]
+    local bias    = codifier_connections[k]
+    local weights = codifier_connections[k+1]
+    ann.actions.forward_bias{ ann         = codifier_net,
+			      output      = output,
+			      connections = bias }
+    ann.actions.dot_product{ ann         = codifier_net,
+			     input       = input,
+			     output      = output,
+			     connections = weights,
+			     transpose   = false }
+    if actf then
+      ann.actions.activations{ ann     = codifier_net,
+			       output  = output,
+			       actfunc = actf }
+    end
+    k = k + 2
+  end
+  return codifier_net
+end
+  
+function ann.autoencoders.compute_encoded_dataset_using_codifier(codifier_net,
+								 input_dataset)
+  local output_dataset = dataset.matrix(matrix(input_dataset:numPatterns(),
+					       codifier_net:get_output_size()))
+  codifier_net:use_dataset{ input_dataset  = input_dataset,
+			    output_dataset = output_dataset }
+  return output_dataset
 end

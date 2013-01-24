@@ -83,7 +83,8 @@ namespace ANN {
 					    unsigned int first_weight_pos,
 					    unsigned int column_size) {
     if ((total_size + (column_size - num_inputs)*num_outputs +
-	 first_weight_pos) > data->size) ERROR_EXIT(24, "Incorrect matrix size\n");
+	 first_weight_pos) > static_cast<unsigned int>(data->size))
+      ERROR_EXIT(24, "Incorrect matrix size\n");
     
     unsigned int current_w_pos = first_weight_pos;
     float *w                   = weights->getPPALForReadAndWrite();
@@ -101,7 +102,8 @@ namespace ANN {
 					      unsigned int first_weight_pos,
 					      unsigned int column_size) {
     if ((total_size + (column_size - num_inputs)*num_outputs +
-	 first_weight_pos) > data->size) ERROR_EXIT(24, "Incorrect matrix size\n");
+	 first_weight_pos) > static_cast<unsigned int>(data->size))
+      ERROR_EXIT(24, "Incorrect matrix size\n");
     
     unsigned int current_w_pos = first_weight_pos;
     const float *w             = weights->getPPALForRead();

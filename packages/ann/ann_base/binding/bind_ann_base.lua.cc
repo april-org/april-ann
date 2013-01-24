@@ -77,6 +77,32 @@ using namespace Functions;
 }
 //BIND_END
 
+//BIND_METHOD ActivationUnits clone
+{
+  LUABIND_CHECK_ARGN(>=,1);
+  LUABIND_CHECK_ARGN(<=,2);
+  ANNBase *ann;
+  const char *type;
+  LUABIND_GET_PARAMETER(1, ANNBase, ann);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, string, type, 0);
+  ActivationUnitsType type_enum = HIDDEN_TYPE;
+  if (type == 0) type_enum = obj->getType();
+  else if (strcmp(type, "inputs") == 0)
+    type_enum = INPUTS_TYPE;
+  else if (strcmp(type, "outputs") == 0)
+    type_enum = OUTPUTS_TYPE;
+  ActivationUnits *units = obj->clone(ann->getConfReference());
+  units->setType(type_enum);
+  ann->registerActivationUnits(units);
+  if (type_enum == INPUTS_TYPE) ann->registerInput(units);
+  else if (type_enum == OUTPUTS_TYPE) ann->registerOutput(units);
+  LUABIND_RETURN(ActivationUnits, units);
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////
+
+
 //BIND_CONSTRUCTOR RealActivationUnits
 //DOC_BEGIN
 // ann.units.real{ size = ..., ann = ..., type = (inputs, hidden, outputs) }
@@ -218,6 +244,46 @@ using namespace Functions;
   LUABIND_RETURN(ActivationUnits, obj->getLayerActivations(layer-1));
 }
 //BIND_END
+
+//BIND_METHOD ANNBase get_layer_connections_size
+{
+  LUABIND_RETURN(uint, obj->getLayerConnectionsSize());
+}
+//BIND_END
+
+//BIND_METHOD ANNBase get_layer_activations_size
+{
+  LUABIND_RETURN(uint, obj->getLayerActivationsSize());
+}
+//BIND_END
+
+
+//BIND_METHOD ANNBase get_layer_connections_vector
+{
+  unsigned int sz = obj->getLayerConnectionsSize();
+  lua_createtable(L, static_cast<int>(sz), 0);
+  for (unsigned int i=0; i<sz; ++i) {
+    Connections *cnn = obj->getLayerConnections(i);
+    lua_pushConnections(L, cnn);
+    lua_rawseti(L, -2, i+1);
+  }
+  LUABIND_RETURN_FROM_STACK(1);
+}
+//BIND_END
+
+//BIND_METHOD ANNBase get_layer_activations_vector
+{
+  unsigned int sz = obj->getLayerActivationsSize();
+  lua_createtable(L, static_cast<int>(sz), 0);
+  for (unsigned int i=0; i<sz; ++i) {
+    ActivationUnits *units = obj->getLayerActivations(i);
+    lua_pushActivationUnits(L, units);
+    lua_rawseti(L, -2, i+1);
+  }
+  LUABIND_RETURN_FROM_STACK(1);
+}
+//BIND_END
+
 
 /////////////////////////////////////////////////////
 
@@ -414,6 +480,17 @@ using namespace Functions;
 //BIND_CONSTRUCTOR Connections
 {
   LUABIND_ERROR("Abstract class!!!");
+}
+//BIND_END
+
+//BIND_METHOD Connections clone
+{
+  LUABIND_CHECK_ARGN(==,1);
+  ANNBase *ann;
+  LUABIND_GET_PARAMETER(1, ANNBase, ann);
+  Connections *cnn = obj->clone();
+  ann->registerConnections(cnn);
+  LUABIND_RETURN(Connections, cnn);
 }
 //BIND_END
 
