@@ -172,6 +172,37 @@ function ann.autoencoders.build_full_autoencoder(bunch_size,
   return sdae
 end
 
+function ann.autoencoders.generate_training_table_configuration_from_params(current_dataset_params,
+									    params)
+  local data = {}
+  if current_dataset_params.input_dataset then
+    -- The input is perturbed with gaussian noise
+    data.input_dataset = dataset.perturbation{
+      dataset  = current_dataset_params.input_dataset,
+      mean     = 0,
+      variance = params.var,
+      random   = params.perturbation_random }
+    data.output_dataset = current_dataset_params.input_dataset
+  end -- if params.input_dataset
+  if current_dataset_params.distribution then
+    data.distribution = {}
+    for _,v in ipairs(current_dataset_params.distribution) do
+      table.insert(data.distribution, {
+		     -- The input is perturbed with gaussian noise
+		     input_dataset = dataset.perturbation{
+		       dataset  = v.input_dataset,
+		       mean     = 0,
+		       variance = params.var,
+		       random   = params.perturbation_random },
+		     output_dataset = v.input_dataset,
+		     probability = v.prob })
+    end -- for _,v in ipairs(params.distribution)
+  end -- if params.distribution
+  data.shuffle     = params.shuffle_random
+  data.replacement = params.replacement
+  return data
+end
+
 -- Params is a table which could contain:
 --   * input_dataset => dataset with input (and output) for AE
 --   * val_input_dataset => for validation
@@ -190,29 +221,23 @@ end
 --   * max_epochs
 --   * max_epochs_wo_improvement
 --
--- This function returns a Stacked Denoising Auto-Encoder which weights and bias
--- where trained following the pretrain algorithm and fine-tuned at the end
+-- This function returns a Stacked Denoising Auto-Encoder parameters table,
+-- pretrained following algorithm of:
+--
+-- [CITE]
 --
 -- If you train an auto-encoder for a topology of 256 128 64
 -- the WHOLE auto-encoder will had this topology:
 -- 256 - 128 - 64 - 128 - 256
 -- So it has four layers: (1) 256-128, (2) 128-64, (3) 64-128, (4) 128-256
 --
--- After it is trained, you can do whatever you want. The weights at layers are
--- simetrical, so the 1 and 4 layer uses the same weights, the 2 and 3 also uses
--- the same weights. Bias are not simetrical, exists a bias vector each of the 4
--- layers at the example.
---
--- In the connections array stored at the ANN, you will found the weights in
--- this order (following previous example):
--- [1] => 128      bias of layer (1)
--- [2] => 256*128  weights of layer (1)
--- [3] =>  64      bias of layer (2)
--- [4] => 128*64   weights of layer (2)
--- [5] => 128      bias of layer (3)
--- [6] =>  64*128  weights of layer (3) => transposed of [4]
--- [7] => 256      bias of layer (4)
--- [8] => 128*256  weights of layer (4) => transposed of [2]
+-- Two arrays store weights and bias, in this order:
+-- bias[1] => 128      bias of layer (1)
+-- bias[2] =>  64      bias of layer (2)
+-- bias[3] => 128      bias of layer (3)
+-- bias[4] => 256      bias of layer (4)
+-- weights[1] => 256*128  weights of layer (1)
+-- weights[2] => 128*64   weights of layer (2)
 function ann.autoencoders.stacked_denoising_pretraining(params)
   local check_mandatory_param = function(params, name)
     if not params[name] then error ("Parameter " .. name .. " is mandatory") end
@@ -265,34 +290,10 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
 	  input_size, cod_size, input_size, i-1)
     local input_actf = ann.activations.from_string(params.layers[i-1].actf)
     local cod_actf   = ann.activations.from_string(params.layers[i].actf)
-    local data = { shuffle = params.shuffle_random,
-		   replacement = params.replacement }
     local val_data = current_val_dataset_params
-    if current_dataset_params.input_dataset then
-      data = {
-	-- The input is perturbed with gaussian noise
-	input_dataset = dataset.perturbation{
-	  dataset  = current_dataset_params.input_dataset,
-	  mean     = 0,
-	  variance = params.var,
-	  random   = params.perturbation_random },
-	output_dataset = current_dataset_params.input_dataset,
-      }
-    end -- if params.input_dataset
-    if current_dataset_params.distribution then
-      data.distribution = {}
-      for _,v in ipairs(current_dataset_params.distribution) do
-	table.insert(data.distribution, {
-		       -- The input is perturbed with gaussian noise
-		       input_dataset = dataset.perturbation{
-			 dataset  = v.input_dataset,
-			 mean     = 0,
-			 variance = params.var,
-			 random   = params.perturbation_random },
-		       output_dataset = v.input_dataset,
-		       probability = v.prob })
-      end -- for _,v in ipairs(params.distribution)
-    end -- if params.distribution
+    local data
+    data = ann.autoencoders.generate_training_table_configuration_from_params(current_dataset_params,
+									      params)
     local dae
     dae = ann.autoencoders.build_autoencoder_from_sizes_and_actf(params.bunch_size,
 								 input_size,
@@ -363,6 +364,46 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
       current_val_dataset_params.output_dataset = ds
     end -- if i ~= params.layers
   end -- for i=2,#params.layers
+  return {weights=weights, bias=bias}
+end
+
+
+
+-- Receive an autoencoder table with bias and weights, pretrained with previous
+-- function
+function ann.autoencoders.stacked_denoising_finetunning(sdae_table, params)
+  local check_mandatory_param = function(params, name)
+    if not params[name] then error ("Parameter " .. name .. " is mandatory") end
+  end
+  local valid_params = table.invert{ "shuffle_random", "distribution",
+				     "perturbation_random", "replacement",
+				     "var", "layers", "bunch_size",
+				     "learning_rate",
+				     "max_epochs", "max_epochs_wo_improvement",
+				     "momentum", "weight_decay", "val_input_dataset",
+				     "weights_random"}
+  for name,v in pairs(valid_params) do
+    if not valid_params[name] then
+      error("Incorrect param name '"..name.."'")
+    end
+  end
+  -- Error checking in params table --
+  if params.input_dataset and params.distribution then
+    error("The input_dataset and distribution parameters are forbidden together")
+  end
+  if params.distribution and not params.replacement then
+    error("The replacement parameter is mandatary if distribution")
+  end
+  for _,name in ipairs({ "shuffle_random", "perturbation_random",
+			 "var", "layers", "bunch_size", "learning_rate",
+			 "max_epochs", "max_epochs_wo_improvement",
+			 "momentum", "weight_decay", "val_input_dataset",
+			 "weights_random"}) do
+    check_mandatory_param(params, name)
+  end
+  --------------------------------------
+  local weights = sdae_table.weights
+  local bias    = sdae_table.bias
   -- FINETUNING
   print("# Begining of fine-tuning")
   local sdae = ann.autoencoders.build_full_autoencoder(params.bunch_size,
@@ -372,33 +413,9 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
   sdae:set_option("momentum", params.momentum)
   sdae:set_option("weight_decay", params.weight_decay)
   collectgarbage("collect")
-  local data = { shuffle = params.shuffle_random,
-		 replacement = params.replacement }
-  if params.input_dataset then
-    data = {
-      -- The input is perturbed with gaussian noise
-      input_dataset = dataset.perturbation{
-	dataset  = params.input_dataset,
-	mean     = 0,
-	variance = params.var,
-	random   = params.perturbation_random },
-      output_dataset = params.input_dataset,
-    }
-  end -- if params.input_dataset
-  if params.distribution then
-    data.distribution = {}
-    for _,v in ipairs(params.distribution) do
-      table.insert(data.distribution, {
-		     -- The input is perturbed with gaussian noise
-		     input_dataset = dataset.perturbation{
-		       dataset  = v.input_dataset,
-		       mean     = 0,
-		       variance = params.var,
-		       random   = params.perturbation_random },
-		     output_dataset = v.input_dataset,
-		     probability = v.prob })
-    end -- for _,v in ipairs(params.distribution)
-  end -- if params.distribution
+  local data
+  data = ann.autoencoders.generate_training_table_configuration_from_params(params,
+									    params)
   local val_data = { input_dataset  = params.val_input_dataset,
 		     output_dataset = params.val_input_dataset }
   local best_val_error = 111111111
