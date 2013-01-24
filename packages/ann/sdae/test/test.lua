@@ -32,7 +32,7 @@ weights,bias = ann.autoencoders.stacked_denoising_pretraining{
 			  { size=  32, actf="logistic"},
 			  { size=   2, actf="linear"}},
   bunch_size          = 16,
-  learning_rate       = 0.0001,
+  learning_rate       = 0.001,
   momentum            = 0.02,
   weight_decay        = 1e-05,
   max_epochs          = 200,

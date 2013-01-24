@@ -22,10 +22,11 @@
 
 // AUXILIAR INLINE FUNCTIONS //
 #ifdef USE_CUDA
-static __device__ float avoid_zero_in_cuda(float val, float near_zero) {
-  if (-near_zero < val && val < near_zero) {
-    if (val < 0) return -near_zero;
-    else return near_zero;
+static __device__ float avoid_number_in_cuda(float val, float number,
+					     float near_zero) {
+  if (((number - epsilon) < val) && (val < (number + epsilon))) {
+    if (val < number) return number - epsilon ;
+    else return number + epsilon;
   }
   return val;
 }

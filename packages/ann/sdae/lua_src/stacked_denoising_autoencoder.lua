@@ -156,7 +156,7 @@ function ann.autoencoders.build_full_autoencoder(bunch_size,
     table.insert(bias_sdae, ann.connections.bias{
 		   ann  = sdae,
 		   size = layers[i].size })
-    bias_sdae[#bias_sdae]:load{ w=bias_mat[i][1] }
+    bias_sdae[#bias_sdae]:load{ w=bias_mat[i][2] }
     ann.actions.forward_bias{ ann=sdae,
 			      output=neuron_layers[#neuron_layers],
 			      connections=bias_sdae[#bias_sdae] }
@@ -311,6 +311,7 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
     for epoch=1,params.max_epochs do
       local train_error = dae:train_dataset(data)
       local val_error   = dae:validate_dataset(val_data)
+      local _,m = dae:get_layer_connections(2):weights()
       if val_error < best_val_error then
 	best_val_error = val_error
 	best_epoch     = epoch
