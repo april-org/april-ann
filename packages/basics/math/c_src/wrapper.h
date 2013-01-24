@@ -34,7 +34,7 @@
 #include "gpu_helper.h"
 #include "ann_configuration.h"
 
-#define NEAR_ZERO             1e-20f 
+#define NEAR_ZERO             1e-7f
 #define DERIVATIVE_SATURATION 17.0f
 
 // ATTENTION: In 64-bit machines is better to use exp than expf

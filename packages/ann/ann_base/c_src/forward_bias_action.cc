@@ -101,7 +101,7 @@ namespace ANN {
 		prev_bias_ptr, 1,
 		conf.cur_bunch_size, 1,
 		conf.use_cuda_flag);
-    
+
     // Forces to update counts at this backward step
     bias_vector->endUpdate();
   }

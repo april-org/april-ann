@@ -253,7 +253,6 @@ namespace ANN {
 					     output_size,
 					     conf,
 					     use_cuda_flag);
-
   }
 
   // idem

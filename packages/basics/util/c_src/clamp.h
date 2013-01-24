@@ -31,11 +31,11 @@ namespace april_utils {
   }
   
   template <typename T>
-  T avoid_zero(T val, T near_zero)
+  T avoid_number(T val, T number, T epsilon)
   {
-    if (-near_zero < val && val < near_zero) {
-      if (val < 0) return -near_zero;
-      else return near_zero;
+    if (((number - epsilon) < val) && (val < (number + epsilon))) {
+      if (val < number) return number - epsilon ;
+      else return number + epsilon;
     }
     return val;
   }

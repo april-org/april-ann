@@ -113,6 +113,7 @@ namespace ANN {
 		inputs->getOffset(), 0, outputs->getOffset(),
 		conf.use_cuda_flag);
     }
+    
   }
   
   void DotProductAction::

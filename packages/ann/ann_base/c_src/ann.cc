@@ -305,7 +305,7 @@ namespace ANN {
 
   Connections *ANNBase::getLayerConnections(unsigned int layer) {
     if (layer >= connections.size()) {
-      ERROR_PRINT("Incorrect layer number!!!");
+      ERROR_PRINT("Incorrect layer number!!!\n");
       exit(128);
     }
     return connections[layer];
@@ -313,7 +313,7 @@ namespace ANN {
   
   ActivationUnits *ANNBase::getLayerActivations(unsigned int layer) {
     if (layer >= activations.size()) {
-      ERROR_PRINT("Incorrect layer number!!!");
+      ERROR_PRINT("Incorrect layer number!!!\n");
       exit(128);
     }
     return activations[layer];

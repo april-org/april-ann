@@ -160,6 +160,8 @@ public:
     aligned_free(mem_ppal);
 #endif
   }
+
+  unsigned int getSize() const { return size; }
   
 #ifdef USE_CUDA
   void pinnedMemoryPageLock() {

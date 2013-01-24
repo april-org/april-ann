@@ -25,7 +25,7 @@
 #include "wrapper.h"
 
 using april_utils::clamp;
-using april_utils::avoid_zero;
+using april_utils::avoid_number;
 
 // ATTENTION: In 64-bit machines is better to use exp than expf
 #define sigmoid(numerator,value) (numerator) / (exp(-(value))+1.0f)
@@ -101,13 +101,15 @@ __global__ void applyCrossEntropyErrorFunctionKernel(const float *output,
 				     matrix_y_pos);
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
-    float o = avoid_zero_in_cuda(output[index], epsilon);
-    float t = avoid_zero_in_cuda(target_output[index], epsilon);
-    output_error[index] = (o - t) / (o * (1.0f - o));
+    float o = avoid_number_in_cuda(output[index], 0.0f, epsilon);
+    float t = avoid_number_in_cuda(target_output[index], 0.0f, epsilon);
     if (t > epsilon) {
       if (o > epsilon) pattern_errors[index] += t * logf(o);
       else pattern_errors[index] += t * inf;
     }
+    // compute derivative
+    o = avoid_number_in_cuda(o, 1.0f, EPSILON);
+    output_error[index] = (o - t) / (o * (1.0f - o));
   }
 }
 
@@ -128,16 +130,18 @@ __global__ void applyFullCrossEntropyErrorFunctionKernel(const float *output,
 				     matrix_y_pos);
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
-    float o         = avoid_zero_in_cuda(output[index], epsilon);
-    float t         = avoid_zero_in_cuda(target_output[index], epsilon);
-    float inv_t     = avoid_zero_in_cuda(1.0f - target_output[index], epsilon);
+    float o         = avoid_number_in_cuda(output[index], epsilon);
+    float t         = avoid_number_in_cuda(target_output[index], epsilon);
+    float inv_t     = avoid_number_in_cuda(1.0f - target_output[index], epsilon);
     float log_o     = (o > epsilon) ? logf(o) : inf;
     float log_inv_o = (1.0f - o > epsilon) ? logf(1.0f - o) : inf;
-    output_error[index] = (o - t) / (o * (1.0f - o));
     if (t > epsilon)
       pattern_errors[index] += t * log_o;
     if (inv_t > epsilon)
       pattern_errors[index] += inv_t * log_inv_o;
+    // compute derivative
+    o = avoid_number_in_cuda(o, 1.0f, EPSILON);
+    output_error[index] = (o - t) / (o * (1.0f - o));
   }
 }
 #endif
@@ -422,13 +426,15 @@ void doCalculateCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *output,
 
     for (unsigned int i = 0; i < output_size; i++) {
       for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	float o = avoid_zero(output_ptr[b], EPSILON);
-	float t = avoid_zero(target_output_ptr[b], EPSILON);
-	output_error_ptr[b] = (o - t) / (o * (1.0f - o));
+	float o = avoid_number(output_ptr[b], 0.0f, EPSILON);
+	float t = avoid_number(target_output_ptr[b], 0.0f, EPSILON);
 	if (t > EPSILON) {
 	  if (o > EPSILON) pattern_errors_ptr[b] += t * logf(o);
 	  else pattern_errors_ptr[b] += t * INF;
 	}
+	// compute derivative
+	o = avoid_number(o, 1.0f, EPSILON);
+	output_error_ptr[b] = (o - t) / (o * (1.0f - o));
       }
       output_ptr         += conf.max_bunch_size;
       target_output_ptr  += conf.max_bunch_size;
@@ -480,17 +486,21 @@ void doCalculateFullCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *outpu
 
     for (unsigned int i = 0; i < output_size; i++) {
       for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	float o         = avoid_zero(output_ptr[b], EPSILON);
-	float t         = avoid_zero(target_output_ptr[b], EPSILON);
-	float inv_t     = avoid_zero(1.0f - target_output_ptr[b], EPSILON);
+	float o         = avoid_number(output_ptr[b],
+				       0.0f, EPSILON);
+	float t         = avoid_number(target_output_ptr[b],
+				       0.0f, EPSILON);
+	float inv_t     = avoid_number(1.0f - target_output_ptr[b],
+				       0.0f, EPSILON);
 	float log_o     = (o > EPSILON) ? logf(o) : INF;
 	float log_inv_o = (1.0f - o > EPSILON) ? logf(1.0f - o) : INF;
-	output_error_ptr[b] = (o - t) / (o * (1.0f - o));
 	if (t > EPSILON)
 	  pattern_errors_ptr[b] += t * log_o;
 	if (inv_t > EPSILON)
 	  pattern_errors_ptr[b] += inv_t * log_inv_o;
-
+	// compute derivative
+	o = avoid_number(o, 1.0f, EPSILON);
+	output_error_ptr[b] = (o - t) / (o * (1.0f - o));
       }
       output_ptr         += conf.max_bunch_size;
       target_output_ptr  += conf.max_bunch_size;
