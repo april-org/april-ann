@@ -1,5 +1,3 @@
-dofile("../lua_src/stacked_denoising_autoencoder.lua")
-
 m1 = ImageIO.read("digits.png"):to_grayscale():invert_colors():matrix()
 train_input = dataset.matrix(m1,
 			     {
@@ -32,7 +30,7 @@ weights,bias = ann.autoencoders.stacked_denoising_pretraining{
 			  { size=  32, actf="logistic"},
 			  { size=   2, actf="linear"}},
   bunch_size          = 16,
-  learning_rate       = 0.001,
+  learning_rate       = 0.005,
   momentum            = 0.02,
   weight_decay        = 1e-05,
   max_epochs          = 200,
