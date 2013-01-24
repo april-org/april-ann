@@ -26,7 +26,7 @@ weights,bias = ann.autoencoders.stacked_denoising_pretraining{
   weights_random      = random(7890),
   var                 = 0.02,
   layers              = { { size= 256, actf="logistic"},
-			  { size=1024, actf="logistic"},
+			  { size= 512, actf="logistic"},
 			  { size=  32, actf="logistic"},
 			  { size=   2, actf="linear"}},
   bunch_size          = 16,
