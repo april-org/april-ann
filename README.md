@@ -1,6 +1,24 @@
 april-ann
 =========
 
+Requirements
+------------
+
+Requires the following libraries. Versions are only orientative, it could work with older and newer versions.
+
+- GNU C++ compiler (g++): v 4.7.2
+- BLAS implementation: ATLAS (v. 3) or Intel MKL (v. 10.3.6)
+- Threads posix (pthread)
+- Readline (libreadline)
+
+The following libreries are recommended, but optional:
+- [OPTIONAL] libpng: if you want to open PNG images
+- [OPTIONAL] libtiff: if you want to open TIFF images
+- [OPTIONAL] libz: if you want to poen GZIPED files
+
+For perform computation on GPU, this optional library:
+- [OPTIONAL] CUDA and CUBLAS: release 4.2.6
+
 Compilation
 -----------
 
@@ -59,6 +77,27 @@ Exists one build file for each possible target: build_release.lua, build_debug.l
 build_mkl_debug.lua, ... and so on.
 
 ENJOY!
+
+Packages
+--------
+
+April-ANN is compiled following a package system. In the directory packages you could find a
+tree of directory entries. Leaves in the tree are directories which contain file "package.lua".
+The "package.lua" defines requirements, dependencies, libraries, and other stuff needed by the
+corresponding package.
+
+Each package could contain this directories:
+
+- c_src: source files (.h, .cc, .c, .cpp, .cu, and others).
+- binding: binding files (.lua.cc), a kind of templatized file which generates the glue code between C/C++ and Lua.
+- lua_src: lua source files which define functions, tables, and pseudo-classes in Lua.
+- doc: doxygen documentation additional files.
+- test: examples and files for testing.
+
+At root directory exists a file named "package_list.lua". It is a Lua table with the name of packages that
+you want to compile. If you don't want or don't have libpng, or libtiff, or other library, you could
+erase the package name from this list to avoid it compilation.
+
 
 Includes these sources
 ----------------------
