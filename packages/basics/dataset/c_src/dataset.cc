@@ -832,6 +832,42 @@ int PerturbationDataSet<T>::putPattern(int index, T *pat) {
 //-------------------------------------------------------------
 
 template <typename T>
+SaltNoiseDataSet<T>::SaltNoiseDataSet(DataSet<T> *ds, MTRand *random,
+				      double vd,
+				      T zero) :
+  ds(ds), random(random), vd(vd), zero(zero),
+  number_of_zeroes(static_cast<int>(vd*ds->patternSize())) {
+  IncRef(ds);
+  IncRef(random);
+  zero_positions = new int[ds->patternSize()];
+}
+
+template<typename T>
+SaltNoiseDataSet<T>::~SaltNoiseDataSet() {
+  DecRef(ds);
+  DecRef(random);
+  delete[] zero_positions;
+}
+
+template<typename T>
+int SaltNoiseDataSet<T>::getPattern(int index, T *pat) {
+  int ret = ds->getPattern(index, pat);
+  int sz  = ds->patternSize();
+  random->shuffle(sz, zero_positions);
+  for (int i=0; i<number_of_zeroes; ++i) pat[zero_positions[i]] = zero;
+  return ret;
+}
+
+template<typename T>
+int SaltNoiseDataSet<T>::putPattern(int index, T *pat) {
+  ERROR_PRINT("Method putPattern forbidden for SaltNoiseDataSet!!!\n");
+  exit(1);
+  return 0;  
+}
+
+//-------------------------------------------------------------
+
+template <typename T>
 DerivDataSet<T>::DerivDataSet(DataSet<T> *ds,
 			      bool deriv0, bool deriv1, bool deriv2) :
   ds(ds), deriv0(deriv0), deriv1(deriv1), deriv2(deriv2) {
