@@ -178,35 +178,45 @@ function ann.autoencoders.generate_training_table_configuration_from_params(curr
   local data = {}
   if current_dataset_params.input_dataset then
     data.input_dataset = current_dataset_params.input_dataset
+    data.output_dataset = current_dataset_params.input_dataset
     if noise then
       -- The input is perturbed with gaussian noise
-      data.input_dataset = dataset.salt_noise{
-	dataset = dataset.perturbation{
-	  dataset  = current_dataset_params.input_dataset,
+      if params.var > 0.0 then
+	data.input_dataset = dataset.perturbation{
+	  dataset  = data.input_dataset,
 	  mean     = 0,
 	  variance = params.var,
-	  random   = params.perturbation_random },
-	vd = params.salt_noise_percentage, -- 10%
-	zero = 0.0,
-	random = params.perturbation_random }
+	  random   = params.perturbation_random }
+      end
+      if params.salt_noise_percentage > 0.0 then
+	data.input_dataset = dataset.salt_noise{
+	  dataset = data.input_dataset
+	  vd = params.salt_noise_percentage, -- 10%
+	  zero = 0.0,
+	  random = params.perturbation_random }
+      end
     end
-    data.output_dataset = current_dataset_params.input_dataset
   end -- if params.input_dataset
   if current_dataset_params.distribution then
     data.distribution = {}
     for _,v in ipairs(current_dataset_params.distribution) do
       local ds = v.input_dataset
       if noise then
-	-- The input is perturbed with gaussian noise and salt noise
-	ds = dataset.salt_noise{
-	  dataset = dataset.perturbation{
-	    dataset  = v.input_dataset,
+	-- The input is perturbed with gaussian noise
+	if params.var > 0.0 then
+	  data.input_dataset = dataset.perturbation{
+	    dataset  = data.input_dataset,
 	    mean     = 0,
 	    variance = params.var,
-	    random   = params.perturbation_random },
-	  vd = params.salt_noise_percentage, -- 10%
-	  zero = 0.0,
-	  random = params.perturbation_random }
+	    random   = params.perturbation_random }
+	end
+	if params.salt_noise_percentage > 0.0 then
+	  data.input_dataset = dataset.salt_noise{
+	    dataset = data.input_dataset
+	    vd = params.salt_noise_percentage, -- 10%
+	    zero = 0.0,
+	    random = params.perturbation_random }
+	end
       end
       table.insert(data.distribution, {
 		     input_dataset = ds,
