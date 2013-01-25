@@ -96,7 +96,7 @@ Each package could contain this directories:
 
 At root directory exists a file named "package_list.lua". It is a Lua table with the name of packages that
 you want to compile. If you don't want or don't have libpng, or libtiff, or other library, you could
-erase the package name from this list to avoid it compilation.
+erase the package name from this list to avoid its compilation.
 
 
 Includes these sources
