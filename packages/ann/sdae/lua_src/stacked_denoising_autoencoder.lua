@@ -107,8 +107,9 @@ end
 -- returns a fully connected stacked denoising autoencoder ANN.
 function ann.autoencoders.build_full_autoencoder(bunch_size,
 						 layers,
-						 weights_mat,
-						 bias_mat)
+						 sdae_table)
+  local weights_mat = sdae_table.weights
+  local bias_mat    = sdae_table.bias
   local sdae = ann.mlp{ bunch_size = bunch_size }
   local neuron_layers = {}
   local actfs         = {}
@@ -172,29 +173,44 @@ end
 
 -- Generate the data table for training a two-layered auto-encoder
 function ann.autoencoders.generate_training_table_configuration_from_params(current_dataset_params,
-									    params)
+									    params,
+									    noise)
   local data = {}
   if current_dataset_params.input_dataset then
-    -- The input is perturbed with gaussian noise
-    data.input_dataset = dataset.perturbation{
-      dataset  = current_dataset_params.input_dataset,
-      mean     = 0,
-      variance = params.var,
-      random   = params.perturbation_random }
+    data.input_dataset = current_dataset_params.input_dataset
+    if noise then
+      -- The input is perturbed with gaussian noise
+      data.input_dataset = dataset.salt_noise{
+	dataset = dataset.perturbation{
+	  dataset  = current_dataset_params.input_dataset,
+	  mean     = 0,
+	  variance = params.var,
+	  random   = params.perturbation_random },
+	vd = params.salt_noise_percentage, -- 10%
+	zero = 0.0,
+	random = params.perturbation_random }
+    end
     data.output_dataset = current_dataset_params.input_dataset
   end -- if params.input_dataset
   if current_dataset_params.distribution then
     data.distribution = {}
     for _,v in ipairs(current_dataset_params.distribution) do
+      local ds = v.input_dataset
+      if noise then
+	-- The input is perturbed with gaussian noise and salt noise
+	ds = dataset.salt_noise{
+	  dataset = dataset.perturbation{
+	    dataset  = v.input_dataset,
+	    mean     = 0,
+	    variance = params.var,
+	    random   = params.perturbation_random },
+	  vd = params.salt_noise_percentage, -- 10%
+	  zero = 0.0,
+	  random = params.perturbation_random }
+      end
       table.insert(data.distribution, {
-		     -- The input is perturbed with gaussian noise
-		     input_dataset = dataset.perturbation{
-		       dataset  = v.input_dataset,
-		       mean     = 0,
-		       variance = params.var,
-		       random   = params.perturbation_random },
-		     output_dataset = v.input_dataset,
-		     probability = v.prob })
+		     input_dataset = ds,
+		     probability   = v.prob })
     end -- for _,v in ipairs(params.distribution)
   end -- if params.distribution
   data.shuffle     = params.shuffle_random
@@ -247,7 +263,7 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
 				     "learning_rate",
 				     "max_epochs", "max_epochs_wo_improvement",
 				     "momentum", "weight_decay", "val_input_dataset",
-				     "weights_random"}
+				     "weights_random", "salt_noise_percentage" }
   for name,v in pairs(valid_params) do
     if not valid_params[name] then
       error("Incorrect param name '"..name.."'")
@@ -264,7 +280,7 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
 			 "var", "layers", "bunch_size", "learning_rate",
 			 "max_epochs", "max_epochs_wo_improvement",
 			 "momentum", "weight_decay", "val_input_dataset",
-			 "weights_random"}) do
+			 "weights_random", "salt_noise_percentage"}) do
     check_mandatory_param(params, name)
   end
   --------------------------------------
@@ -292,7 +308,8 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
     local val_data = current_val_dataset_params
     local data
     data = ann.autoencoders.generate_training_table_configuration_from_params(current_dataset_params,
-									      params)
+									      params,
+									      i==2)
     local dae
     dae = ann.autoencoders.build_autoencoder_from_sizes_and_actf(params.bunch_size,
 								 input_size,
@@ -380,7 +397,7 @@ function ann.autoencoders.stacked_denoising_finetunning(sdae_table, params)
 				     "learning_rate",
 				     "max_epochs", "max_epochs_wo_improvement",
 				     "momentum", "weight_decay", "val_input_dataset",
-				     "weights_random"}
+				     "weights_random", "salt_noise_percentage"}
   for name,v in pairs(valid_params) do
     if not valid_params[name] then
       error("Incorrect param name '"..name.."'")
@@ -397,24 +414,23 @@ function ann.autoencoders.stacked_denoising_finetunning(sdae_table, params)
 			 "var", "layers", "bunch_size", "learning_rate",
 			 "max_epochs", "max_epochs_wo_improvement",
 			 "momentum", "weight_decay", "val_input_dataset",
-			 "weights_random"}) do
+			 "weights_random", "salt_noise_percentage"}) do
     check_mandatory_param(params, name)
   end
   --------------------------------------
-  local weights = sdae_table.weights
-  local bias    = sdae_table.bias
   -- FINETUNING
   print("# Begining of fine-tuning")
   local sdae = ann.autoencoders.build_full_autoencoder(params.bunch_size,
 						       params.layers,
-						       weights, bias)
+						       sdae_table)
   sdae:set_option("learning_rate", params.learning_rate)
   sdae:set_option("momentum", params.momentum)
   sdae:set_option("weight_decay", params.weight_decay)
   collectgarbage("collect")
   local data
   data = ann.autoencoders.generate_training_table_configuration_from_params(params,
-									    params)
+									    params,
+									    true)
   local val_data = { input_dataset  = params.val_input_dataset,
 		     output_dataset = params.val_input_dataset }
   local best_val_error = 111111111
@@ -435,6 +451,52 @@ function ann.autoencoders.stacked_denoising_finetunning(sdae_table, params)
     if epoch - best_epoch > params.max_epochs_wo_improvement then break end
   end
   return best_net
+end
+
+-- This function returns a MLP formed by the codification part of a full stacked
+-- auto encoder
+function ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
+							 bunch_size,
+							 layers)
+  local weights_mat   = sdae_table.weights
+  local bias_mat      = sdae_table.bias
+  local codifier_net  = ann.mlp{ bunch_size = bunch_size }
+  local neuron_layers = {}
+  local actfs         = {}
+  local weights_codifier_net  = {}
+  local bias_codifier_net     = {}
+  table.insert(neuron_layers, ann.units.real_cod{
+		 ann  = codifier_net,
+		 size = layers[1].size,
+		 type = "inputs" })
+  for i=2,#layers do
+    table.insert(neuron_layers, ann.units.real_cod{
+		   ann  = codifier_net,
+		   size = layers[i].size,
+		   type = ((i < #layers and "hidden") or "outputs") })
+    table.insert(actfs, ann.activations.from_string(layers[i].actf))
+    table.insert(bias_codifier_net, ann.connections.bias{
+		   ann  = codifier_net,
+		   size = layers[i].size })
+    bias_codifier_net[#bias_codifier_net]:load{ w=bias_mat[i-1][1] }
+    table.insert(weights_codifier_net, ann.connections.all_all{
+		   ann = codifier_net,
+		   input_size  = layers[i-1].size,
+		   output_size = layers[i].size })
+    weights_codifier_net[#bias_codifier_net]:load{ w=weights_mat[i-1] }
+    ann.actions.forward_bias{ ann=codifier_net,
+			      output=neuron_layers[#neuron_layers],
+			      connections=bias_codifier_net[#bias_codifier_net] }
+    ann.actions.dot_product{ ann=codifier_net,
+			     input=neuron_layers[#neuron_layers-1],
+			     output=neuron_layers[#neuron_layers],
+			     connections=weights_codifier_net[#weights_codifier_net],
+			     transpose = false }
+    ann.actions.activations{ ann=codifier_net,
+			     actfunc=actfs[#actfs],
+			     output=neuron_layers[#neuron_layers] }
+  end
+  return codifier_net
 end
 
 -- This function returns a MLP formed by the codification part of a full stacked

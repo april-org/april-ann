@@ -28,28 +28,32 @@ layers = {
 }
 
 params = {
-  input_dataset       = train_input,
-  val_input_dataset   = val_input,
-  replacement         = nil,
-  shuffle_random      = random(1234),
-  perturbation_random = random(4567),
-  weights_random      = random(7890),
-  var                 = 0.02,
-  layers              = layers,
-  bunch_size          = bunch_size,
-  learning_rate       = 0.001,
-  momentum            = 0.002,
-  weight_decay        = 1e-05,
-  max_epochs          = 200,
-  max_epochs_wo_improvement = 10 
+  input_dataset         = train_input,
+  val_input_dataset     = val_input,
+  replacement           = nil,
+  shuffle_random        = random(1234),
+  perturbation_random   = random(4567),
+  weights_random        = random(7890),
+  var                   = 0.02,
+  salt_noise_percentage = 0.1,
+  layers                = layers,
+  bunch_size            = bunch_size,
+  learning_rate         = 0.001,
+  momentum              = 0.002,
+  weight_decay          = 1e-05,
+  max_epochs            = 200,
+  max_epochs_wo_improvement = 10
 }
 
 sdae_table = ann.autoencoders.stacked_denoising_pretraining(params)
 sdae       = ann.autoencoders.stacked_denoising_finetunning(sdae_table,
-							    params)
+                                                           params)
 codifier_net = ann.autoencoders.build_codifier_from_sdae(sdae,
 							 bunch_size,
 							 layers)
+--codifier_net = ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
+--							       bunch_size,
+--							       layers)
 
 local outf = io.open("data", "w")
 encoded_dataset = ann.autoencoders.compute_encoded_dataset_using_codifier(codifier_net,
@@ -132,14 +136,20 @@ datosvalidar = {
 deep_classifier:set_option("learning_rate", 0.1)
 deep_classifier:set_option("momentum", 0.02)
 deep_classifier:set_option("weight_decay", 1e-06)
-shallow_classifier:set_option("learning_rate", 0.01)
-shallow_classifier:set_option("momentum", 0.02)
-shallow_classifier:set_option("weight_decay", 1e-06)
-deep_classifier_wo_pretraining:set_option("learning_rate", 0.01)
-deep_classifier_wo_pretraining:set_option("momentum", 0.02)
-deep_classifier_wo_pretraining:set_option("weight_decay", 1e-06)
+shallow_classifier:set_option("learning_rate",
+			      deep_classifier:get_option("learning_rate"))
+shallow_classifier:set_option("momentum",
+			      deep_classifier:get_option("momentum"))
+shallow_classifier:set_option("weight_decay",
+			      deep_classifier:get_option("weight_decay"))
+deep_classifier_wo_pretraining:set_option("learning_rate",
+					  deep_classifier:get_option("learning_rate"))
+deep_classifier_wo_pretraining:set_option("momentum",
+					  deep_classifier:get_option("momentum"))
+deep_classifier_wo_pretraining:set_option("weight_decay",
+					  deep_classifier:get_option("weight_decay"))
 
-for i=1,500 do
+for i=1,50 do
   local mse_tr_deep = deep_classifier:train_dataset(datosentrenar_deep)
   local mse_tr_deep_wo = deep_classifier_wo_pretraining:train_dataset(datosentrenar_deep_wo)
   local mse_tr_shallow = shallow_classifier:train_dataset(datosentrenar_shallow)

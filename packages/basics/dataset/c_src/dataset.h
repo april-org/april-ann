@@ -492,6 +492,31 @@ class PerturbationDataSet : public DataSet<T> {
   int putPattern(int index, T *pat);
 };
 
+/// A specialization of DataSet which add a fixed size salt noise to patterns.
+template <typename T>
+class SaltNoiseDataSet : public DataSet<T> {
+  /// The underlying DataSet.
+  DataSet<T> *ds;
+  /// A MTRand for random selection of pattern components
+  MTRand     *random;
+  /// Percentage of values to be modified
+  double      vd;
+  /// Value of the zero
+  T           zero;
+  /// Number of zeroes: vd * patternSize
+  int         number_of_zeroes;
+  /// Vector of ints for the selected zero positions
+  int *zero_positions;
+public:
+  SaltNoiseDataSet(DataSet<T> *ds, MTRand *random,
+		   double vd, T zero);
+  virtual ~SaltNoiseDataSet();
+  int numPatterns() { return ds->numPatterns(); }
+  int patternSize() { return ds->patternSize(); }
+  int getPattern(int index, T *pat);
+  int putPattern(int index, T *pat);
+};
+
 /// A specialization of DataSet for cacheNNLMs training.
 template <typename T>
 class CacheDataSet : public DataSet<T> {
