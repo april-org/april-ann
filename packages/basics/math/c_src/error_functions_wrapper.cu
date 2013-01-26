@@ -101,7 +101,7 @@ __global__ void applyCrossEntropyErrorFunctionKernel(const float *output,
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
     float o = clip(output[index], epsilon, 1.0f - epsilon);
-    float t = clip(target_output[index], epsilon, 1.0f);
+    float t = clip(target_output[index], epsilon, 1.0f - epsilon);
     if (t > epsilon) {
       if (o > epsilon) pattern_errors[index] += t * logf(o);
       else pattern_errors[index] += t * inf;
@@ -129,8 +129,8 @@ __global__ void applyFullCrossEntropyErrorFunctionKernel(const float *output,
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
     float o         = clip(output[index], epsilon, 1.0f - epsilon);
-    float t         = clip(target_output[index], epsilon, 1.0f);
-    float inv_t     = clip(1.0f - target_output[index], epsilon, 1.0f);
+    float t         = clip(target_output[index], epsilon, 1.0f - epsilon);
+    float inv_t     = clip(1.0f - target_output[index], epsilon, 1.0f - epsilon);
     float log_o     = (o > epsilon) ? logf(o) : inf;
     float log_inv_o = (1.0f - o > epsilon) ? logf(1.0f - o) : inf;
     if (t > epsilon)
@@ -426,7 +426,7 @@ void doCalculateCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *output,
 	assert(!(output_ptr[b] > 1.0f) && !(output_ptr[b] < 0.0f));
 	assert(!(target_output_ptr[b] > 1.0f) && !(target_output_ptr[b] < 0.0f));
 	float o = clamp(output_ptr[b], EPSILON, 1.0f - EPSILON);
-	float t = clamp(target_output_ptr[b], EPSILON, 1.0f);
+	float t = clamp(target_output_ptr[b], EPSILON, 1.0f - EPSILON);
 	if (t > EPSILON) {
 	  if (o > EPSILON) pattern_errors_ptr[b] += t * logf(o);
 	  else pattern_errors_ptr[b] += t * INF;
@@ -487,8 +487,8 @@ void doCalculateFullCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *outpu
 	assert(!(output_ptr[b] > 1.0f) && !(output_ptr[b] < 0.0f));
 	assert(!(target_output_ptr[b] > 1.0f) && !(target_output_ptr[b] < 0.0f));
 	float o         = clamp(output_ptr[b], EPSILON, 1.0f - EPSILON);
-	float t         = clamp(target_output_ptr[b], EPSILON, 1.0f);
-	float inv_t     = clamp(1.0f - target_output_ptr[b], EPSILON, 1.0f);
+	float t         = clamp(target_output_ptr[b], EPSILON, 1.0f - EPSILON);
+	float inv_t     = clamp(1.0f - target_output_ptr[b], EPSILON, 1.0f - EPSILON);
 	float log_o     = (o > EPSILON) ? logf(o) : INF;
 	float log_inv_o = (1.0f - o > EPSILON) ? logf(1.0f - o) : INF;
 	if (t > EPSILON)
