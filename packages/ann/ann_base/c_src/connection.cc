@@ -24,7 +24,7 @@
 #include "check_floats.h"
 
 namespace ANN {
-  const double Connections::weightnearzero = 1e-5;
+  const double Connections::weightnearzero = 1e-10;
   
   Connections::Connections(unsigned int total_size,
 			   unsigned int num_inputs, unsigned int num_outputs) :

@@ -64,7 +64,7 @@ __global__ void logisticDerKernel(const float *units,
 				     matrix_y_pos);
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
-    float value = clip(units[index], 0.00001f, 0.99999f);
+    float value = clip(units[index], NEAR_ZERO, 1.0f - NEAR_ZERO);
     errors[index] *= value * (1.0f - value);
   }
 }
@@ -98,7 +98,7 @@ __global__ void tanhDerKernel(const float *units,
 				     matrix_y_pos);
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
-    float value = clip(units[index], -0.99998f, 0.99998f);;
+    float value = clip(units[index], -1.0f + NEAR_ZERO, 1.0f - NEAR_ZERO);
     errors[index] *= 0.5f * (1.0f - (value * value));
   }
 }
@@ -331,7 +331,7 @@ void doMultiplyLogisticDerivatives(FloatGPUMirroredMemoryBlock *units,
     float *input_errors_ptr = input_errors->getPPALForReadAndWrite();
     for (unsigned int i=0; i<units_size; ++i) {
       for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	float value = clamp(units_ptr[b], 0.00001f, 0.99999f);
+	float value = clamp(units_ptr[b], NEAR_ZERO, 1.0f - NEAR_ZERO);
 	input_errors_ptr[b] *= value*(1.0f-value);
       }
       units_ptr        += conf.max_bunch_size;
@@ -400,7 +400,7 @@ void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *units,
 
     for (unsigned int i=0; i<units_size; ++i) {
       for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	float value = clamp(units_ptr[b], -0.99998f, 0.99998f);
+	float value = clamp(units_ptr[b], -1.0f + NEAR_ZERO, 1.0f - NEAR_ZERO);
 	input_errors_ptr[b] *= 0.5f * (1.0f-value*value);
       }
       units_ptr        += conf.max_bunch_size;
