@@ -21,7 +21,7 @@
  */
 //BIND_HEADER_C
 #include "errorfunc.h"
-
+#include "bind_activation_function.h"
 //BIND_END
 
 //BIND_HEADER_H
@@ -126,6 +126,32 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD MLP push_back_all_all_layer
+{
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  check_table_fields(L, 1, "input", "output",
+		     "has_bias", "bias", "weights",
+		     "actfunc", "transpose", 0);
+  
+  ActivationUnits *input, *output;
+  Connections     *bias, *weights;
+  ActivationFunction *actf;
+  bool has_bias, transpose;
+
+  LUABIND_GET_TABLE_PARAMETER(1, input,  ActivationUnits, input);
+  LUABIND_GET_TABLE_PARAMETER(1, output, ActivationUnits, output);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, actfunc, ActivationFunction, actf, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, has_bias, bool, has_bias, true);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, transpose, bool, transpose, false);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, bias, Connections, bias, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, Connections, weights, 0);
+
+  obj->pushBackAllAllLayer(input, output, actf, weights,
+			   transpose, has_bias, bias);
+}
+//BIND_END
+
 
 ///////////////////////////////////////////////////////////////////
 
@@ -171,18 +197,6 @@ using namespace ANN;
   else if (random) obj->generateAllAll(topology, random, inf, sup);
   
   LUABIND_RETURN(AllAllMLP, obj);
-}
-//BIND_END
-
-//BIND_METHOD AllAllMLP weights
-{
-  MatrixFloat *weights     = 0;
-  MatrixFloat *old_weights = 0;
-  
-  obj->copyWeightsToMatrix(&weights, &old_weights);
-  
-  LUABIND_RETURN(MatrixFloat, weights);
-  LUABIND_RETURN(MatrixFloat, old_weights);
 }
 //BIND_END
 

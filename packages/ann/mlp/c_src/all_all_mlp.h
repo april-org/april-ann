@@ -33,7 +33,6 @@ namespace ANN {
   protected:
     
     void generateActionsAllAll(const char *description);
-    unsigned int getNumberOfWeights();
     
   public:
 
@@ -45,8 +44,8 @@ namespace ANN {
 			MatrixFloat *weights_mat,
 			MatrixFloat *old_weights_mat);
     
-    void copyWeightsToMatrix(MatrixFloat **weights_mat,
-			     MatrixFloat **old_weights_mat);
+    unsigned int copyWeightsTo(MatrixFloat **weights_mat,
+			       MatrixFloat **old_weights_mat) const;
     const char *getDescription() { return description; }
     AllAllMLP *clone();
     void loadModel(const char *filename);

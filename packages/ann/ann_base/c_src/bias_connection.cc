@@ -21,6 +21,9 @@
  */
 #include "error_print.h"
 #include "bias_connection.h"
+#include "maxmin.h"
+
+using april_utils::max;
 
 namespace ANN {
 
@@ -82,10 +85,14 @@ namespace ANN {
 					    MatrixFloat *old_data,
 					    unsigned int first_weight_pos,
 					    unsigned int column_size) {
-    if ((total_size + (column_size - num_inputs)*num_outputs +
-	 first_weight_pos) > static_cast<unsigned int>(data->size))
-      ERROR_EXIT(24, "Incorrect matrix size\n");
-    
+    unsigned int min_size =
+      (total_size +
+       max(0, (static_cast<int>(column_size-num_inputs)-1))*total_size +
+       first_weight_pos);
+    if (min_size > static_cast<unsigned int>(data->size))
+      ERROR_EXIT2(24, "Incorrect matrix size, was %d, expected >= %d\n",
+		  data->size, min_size);
+    if (!old_data) old_data = data;
     unsigned int current_w_pos = first_weight_pos;
     float *w                   = weights->getPPALForReadAndWrite();
     float *prev_w              = prev_weights->getPPALForReadAndWrite();
@@ -101,9 +108,13 @@ namespace ANN {
 					      MatrixFloat *old_data,
 					      unsigned int first_weight_pos,
 					      unsigned int column_size) {
-    if ((total_size + (column_size - num_inputs)*num_outputs +
-	 first_weight_pos) > static_cast<unsigned int>(data->size))
-      ERROR_EXIT(24, "Incorrect matrix size\n");
+    unsigned int min_size =
+      (total_size +
+       max(0, (static_cast<int>(column_size-num_inputs)-1))*total_size +
+       first_weight_pos);
+    if (min_size > static_cast<unsigned int>(data->size))
+      ERROR_EXIT2(24, "Incorrect matrix size, was %d, expected >= %d\n",
+		  data->size, min_size);
     
     unsigned int current_w_pos = first_weight_pos;
     const float *w             = weights->getPPALForRead();

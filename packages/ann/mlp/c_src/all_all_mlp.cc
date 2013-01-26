@@ -131,9 +131,9 @@ namespace ANN {
 				 MatrixFloat *old_weights_mat) {
     generateActionsAllAll(str);
     unsigned int pos = 0;
-    if (static_cast<unsigned int>(weights_mat->size) != getNumberOfWeights())
+    if (static_cast<unsigned int>(weights_mat->size) != getNumWeights())
       ERROR_EXIT(255, "Incorrect number of weights at matrix!!!\n");
-    if (static_cast<unsigned int>(old_weights_mat->size) != getNumberOfWeights())
+    if (static_cast<unsigned int>(old_weights_mat->size) != getNumWeights())
       ERROR_EXIT(255, "Incorrect number of weights at old matrix!!!\n");
     // step +=2 because connections are stored in groups of two: bias and the
     // rest of weights
@@ -151,9 +151,9 @@ namespace ANN {
   }
   
   // Copies the weights of the given matrices
-  void AllAllMLP::copyWeightsToMatrix(MatrixFloat **weights_mat,
-				      MatrixFloat **old_weights_mat) {
-    unsigned int numw = getNumberOfWeights();
+  unsigned int AllAllMLP::copyWeightsTo(MatrixFloat **weights_mat,
+					MatrixFloat **old_weights_mat) const {
+    unsigned int numw = getNumWeights();
     *weights_mat     = new MatrixFloat(1, static_cast<int>(numw));
     *old_weights_mat = new MatrixFloat(1, static_cast<int>(numw));
     
@@ -178,7 +178,7 @@ namespace ANN {
 					    colsize) - 1;
       // We substract 1 so it points to the next bias
     }
-    
+    return pos;
   }
 
   AllAllMLP *AllAllMLP::clone() {
@@ -192,19 +192,12 @@ namespace ANN {
     copy->description    = copystr(description);
     return copy;
   }
-
-  unsigned int AllAllMLP::getNumberOfWeights() {
-    unsigned int numw = 0;
-    for (unsigned int i=0; i<connections.size(); ++i)
-      numw += connections[i]->size();
-    return numw;
-}
   
   void AllAllMLP::saveModel(const char *filename) {
     MatrixFloat *weights_mat;
     MatrixFloat *old_weights_mat;
     
-    copyWeightsToMatrix(&weights_mat, &old_weights_mat);
+    copyWeightsTo(&weights_mat, &old_weights_mat);
     
     char *weights_mat_buffer;
     char *old_weights_mat_buffer;

@@ -107,41 +107,43 @@ h1 = ann.units.real_cod{ size = 3, ann = lared, type = "hidden" }
 o  = ann.units.real_cod{ size = 1, ann = lared, type = "outputs" }
 
 -- connection layers
-b0 = ann.connections.bias{ size = h0:num_neurons(), ann = lared }
+b0 = ann.connections.bias{ size = h0:num_neurons(), ann = lared, w = bias0_m }
 c0 = ann.connections.all_all{ input_size = i:num_neurons(),
-			      output_size = h0:num_neurons(), ann = lared }
-b1 = ann.connections.bias{ size = h1:num_neurons(), ann = lared }
+			      output_size = h0:num_neurons(), ann = lared,
+			      w = w0_m}
+b1 = ann.connections.bias{ size = h1:num_neurons(), ann = lared,
+			   w = bias1_m }
 c1 = ann.connections.all_all{ input_size = h1:num_neurons(),
-			      output_size = h0:num_neurons(), ann = lared }
-b2 = ann.connections.bias{ size = o:num_neurons(), ann = lared }
+			      output_size = h0:num_neurons(), ann = lared,
+			      w = w1t_m }
+b2 = ann.connections.bias{ size = o:num_neurons(), ann = lared,
+			   w = bias2_m }
 c2 = ann.connections.all_all{ input_size = h1:num_neurons(),
-			      output_size = o:num_neurons(), ann = lared }
+			      output_size = o:num_neurons(), ann = lared,
+			      w = w2_m }
 
 -- first layer actions
-ann.actions.forward_bias{ ann = lared, output = h0, connections = b0 }
-ann.actions.dot_product{  ann = lared, input = i, output = h0, connections = c0 }
-ann.actions.activations{  ann = lared, actfunc = ann.activations.tanh(),
-			  output = h0 }
+lared:push_back_all_all_layer{
+  input   = i,
+  output  = h0,
+  bias    = b0,
+  weights = c0,
+  actfunc = ann.activations.tanh() }
 -- second layer actions
-ann.actions.forward_bias{ ann = lared, output = h1, connections = b1 }
-ann.actions.dot_product{  ann = lared, input = h0, output = h1, connections = c1,
-			  transpose = true }
-ann.actions.activations{  ann = lared, actfunc = ann.activations.tanh(),
-			  output = h1 }
-
+lared:push_back_all_all_layer{
+  input   = h0,
+  output  = h1,
+  bias    = b1,
+  weights = c1,
+  actfunc = ann.activations.tanh(),
+  transpose = true }
 -- third layer actions
-ann.actions.forward_bias{ ann = lared, output = o, connections = b2 }
-ann.actions.dot_product{  ann = lared, input = h1, output = o, connections = c2 }
-ann.actions.activations{  ann = lared, actfunc = ann.activations.logistic(),
-			  output = o }
-
--- load connecctions
-b0:load{ w = bias0_m }
-b1:load{ w = bias1_m }
-b2:load{ w = bias2_m }
-c0:load{ w = w0_m }
-c1:load{ w = w1t_m }
-c2:load{ w = w2_m }
+lared:push_back_all_all_layer{
+  input   = h1,
+  output  = o,
+  bias    = b2,
+  weights = c2,
+  actfunc = ann.activations.logistic() }
 
 lared:set_option("learning_rate", learning_rate)
 lared:set_option("momentum",      momentum)

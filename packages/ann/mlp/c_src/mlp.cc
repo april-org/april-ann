@@ -24,6 +24,11 @@
 #include "constString.h"
 #include "error_print.h"
 #include "mlp.h"
+#include "bias_connection.h"
+#include "all_all_connection.h"
+#include "dot_product_action.h"
+#include "forward_bias_action.h"
+#include "activations_action.h"
 
 namespace ANN {
 
@@ -268,11 +273,35 @@ namespace ANN {
       connections[i]->randomizeWeights(rnd, low, high);
   }
 
-  unsigned int MLP::getNumWeights() const {
-    unsigned int numw = 0;
-    for (unsigned int i=0; i<connections.size(); ++i)
-      numw += connections[i]->getNumWeights();
-    return numw;
+  void MLP::pushBackAllAllLayer(ActivationUnits    *inputs,
+				ActivationUnits    *outputs,
+				ActivationFunction *actf,
+				Connections        *weights,
+				bool                transpose_weights,
+				bool                has_bias,
+				Connections        *bias) {
+    Action *action;
+    if (has_bias) {
+      // Add action bias
+      if (bias == 0) {
+	bias = new BiasConnections(outputs->numNeurons());
+	registerConnections(bias);
+      }
+      action = new ForwardBiasAction(getConfReference(), outputs, bias);
+      registerAction(action);
+    }
+    if (weights == 0) {
+      weights = new AllAllConnections(inputs->numNeurons(), outputs->numNeurons());
+      registerConnections(weights);
+    }
+    action = new DotProductAction(getConfReference(),
+				  inputs, outputs,
+				  weights, transpose_weights);
+    registerAction(action);
+    if (actf == 0) actf = new LinearActivationFunction();
+    action = new ActivationsAction(getConfReference(),
+				   outputs, actf);
+    registerAction(action);
   }
 
 }
