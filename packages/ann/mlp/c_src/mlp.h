@@ -72,8 +72,14 @@ namespace ANN {
     MLP *clone();
     virtual void randomizeWeights(MTRand *rnd, float low, float high);
 
-    unsigned int getNumWeights() const;
-
+    void pushBackAllAllLayer(ActivationUnits    *inputs,
+			     ActivationUnits    *outputs,
+			     ActivationFunction *actf,
+			     Connections        *weights, // if 0 reserves new
+			     bool                transpose_weights,
+			     bool                has_bias,
+			     Connections        *bias); // if 0 reserves new
+    
   };
 
 }

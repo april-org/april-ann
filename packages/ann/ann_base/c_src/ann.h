@@ -30,6 +30,7 @@
 #include "connection.h"
 #include "action.h"
 #include "ann_configuration.h"
+#include "activation_function.h"
 
 using april_utils::vector;
 
@@ -142,8 +143,15 @@ namespace ANN {
     
     float getMaxWeights() const; // falta terminar
     
-    virtual unsigned int getNumWeights() const = 0;
-
+    unsigned int getNumWeights() const {
+      unsigned int numw = 0;
+      for (unsigned int i=0; i<connections.size(); ++i)
+	numw += connections[i]->getNumWeights();
+      return numw;
+    }
+    
+    virtual unsigned int copyWeightsTo(MatrixFloat **data,
+				       MatrixFloat **old_data) const;
   };
 }
 #endif // ANN_H

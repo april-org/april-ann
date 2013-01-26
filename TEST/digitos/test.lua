@@ -13,16 +13,16 @@ max_epochs    = 10
 
 -- training and validation
 errors = {
-  {2.1902080, 1.9230258},
-  {1.5131317, 1.0309657},
-  {0.8268588, 0.5496867},
-  {0.4540252, 0.3792447},
-  {0.2721280, 0.2869021},
-  {0.2027510, 0.2012986},
-  {0.1563686, 0.1800094},
-  {0.1242468, 0.1540778},
-  {0.1074638, 0.1612442},
-  {0.0955907, 0.1626286},
+  {2.1826949, 1.8960779},
+  {1.4842647, 1.0203998},
+  {0.8297270, 0.5678325},
+  {0.4682161, 0.3914193},
+  {0.2817744, 0.2966153},
+  {0.2072810, 0.2108385},
+  {0.1584013, 0.1847290},
+  {0.1259473, 0.1575812},
+  {0.1125821, 0.1618845},
+  {0.0988079, 0.1749958},
 }
 epsilon = 1e-05
 
@@ -111,23 +111,27 @@ print("# Initial validation error:", errorval)
 clock = util.stopwatch()
 clock:go()
 
---ann.mlp.all_all.save(lared, "wop.net", "ascii", "old")
+-- ann.mlp.all_all.save(lared, "wop.net", "ascii", "old")
 print("Epoch Training  Validation")
 for epoch = 1,max_epochs do
   collectgarbage("collect")
-  --  ann.mlp.all_all.save(lared, "tmp.net", "binary", "old")
-  --  lared=ann.mlp.all_all.load("tmp.net", bunch_size)
+  -- ann.mlp.all_all.save(lared, "tmp.net", "binary", "old")
+  -- lared=ann.mlp.all_all.load("tmp.net", bunch_size)
   
   totalepocas = totalepocas+1
   errortrain  = lared:train_dataset(datosentrenar)
   errorval    = lared:validate_dataset(datosvalidar)
   if math.abs(errortrain - errors[epoch][1]) > epsilon then
-    error("Training error is not equal enough to reference error")
+    error(string.format("Training error %g is not equal enough to "..
+  			"reference error %g",
+  			errortrain, errors[epoch][1]))
   end
   if math.abs(errorval - errors[epoch][2]) > epsilon then
-    error("Validation error is not equal enough to reference error")
+    error(string.format("Validation error %g is not equal enough to "..
+  			"reference error %g",
+  			errorval, errors[epoch][2]))
   end
-  --  ann.mlp.all_all.save(lared, "wop.net", "ascii", "old")
+   ann.mlp.all_all.save(lared, "wop.net", "ascii", "old")
   printf("%4d  %.7f %.7f\n",
 	 totalepocas,errortrain,errorval)
 end

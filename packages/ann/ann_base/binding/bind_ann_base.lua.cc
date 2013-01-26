@@ -290,6 +290,19 @@ using namespace Functions;
 }
 //BIND_END
 
+//BIND_METHOD ANNBase weights
+{
+  MatrixFloat *weights     = 0;
+  MatrixFloat *old_weights = 0;
+  
+  unsigned int sz = obj->copyWeightsTo(&weights, &old_weights);
+  
+  LUABIND_RETURN(MatrixFloat, weights);
+  LUABIND_RETURN(MatrixFloat, old_weights);
+  LUABIND_RETURN(uint, sz);
+}
+//BIND_END
+
 
 /////////////////////////////////////////////////////
 
@@ -337,6 +350,7 @@ using namespace Functions;
 //BIND_CONSTRUCTOR ForwardBiasAction
 {
   LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, table);
   check_table_fields(L, 1, "ann", "output", "connections", 0);
   
   ActivationUnits *output;
@@ -548,9 +562,10 @@ using namespace Functions;
       first_pos + obj->size() > static_cast<unsigned int>(oldw->size) )
     LUABIND_ERROR("Incorrect matrix size!!\n");
 
-  LUABIND_RETURN(uint, obj->copyWeightsTo(w, oldw, first_pos, column_size));
+  unsigned int sz = obj->copyWeightsTo(w, oldw, first_pos, column_size);
   LUABIND_RETURN(MatrixFloat, w);
   LUABIND_RETURN(MatrixFloat, oldw);
+  LUABIND_RETURN(uint, sz);
 }
 //BIND_END
 
@@ -581,14 +596,25 @@ using namespace Functions;
 
 //BIND_CONSTRUCTOR AllAllConnections
 {
-  check_table_fields(L, 1, "input_size", "output_size", "ann", 0);
-  unsigned int input_size, output_size;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  check_table_fields(L, 1, "input_size", "output_size", "ann",
+		     "w", "oldw", "first_pos", "column_size", 0);
+  MatrixFloat *w, *oldw;
+  unsigned int input_size, output_size, first_pos, column_size;
   ANNBase *ann;
   LUABIND_GET_TABLE_PARAMETER(1, input_size, uint, input_size);
   LUABIND_GET_TABLE_PARAMETER(1, output_size, uint, output_size);
   LUABIND_GET_TABLE_PARAMETER(1, ann, ANNBase, ann);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, w, MatrixFloat, w, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, first_pos, uint, first_pos, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, column_size, uint, column_size,
+				       input_size);
+  if (oldw && !w) LUABIND_ERROR("Parameter w is mandatory with oldw!!!\n");
   obj=new AllAllConnections(input_size, output_size);
   ann->registerConnections(obj);
+  if (w) obj->loadWeights(w, oldw, first_pos, column_size);
   LUABIND_RETURN(AllAllConnections, obj);
 }
 //BIND_END
@@ -599,13 +625,23 @@ using namespace Functions;
 
 //BIND_CONSTRUCTOR BiasConnections
 {
-  check_table_fields(L, 1, "size", "ann", 0);
-  unsigned int size;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  check_table_fields(L, 1, "size", "ann",
+		     "w", "oldw", "first_pos", "column_size", 0);
+  MatrixFloat *w, *oldw;
+  unsigned int size, first_pos, column_size;
   ANNBase *ann;
   LUABIND_GET_TABLE_PARAMETER(1, size, uint, size);
   LUABIND_GET_TABLE_PARAMETER(1, ann, ANNBase, ann);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, w, MatrixFloat, w, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, first_pos, uint, first_pos, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, column_size, uint, column_size, 1);
+  if (oldw && !w) LUABIND_ERROR("Parameter w is mandatory with oldw!!!\n");
   obj=new BiasConnections(size);
   ann->registerConnections(obj);
+  if (w) obj->loadWeights(w, oldw, first_pos, column_size);
   LUABIND_RETURN(BiasConnections, obj);
 }
 //BIND_END

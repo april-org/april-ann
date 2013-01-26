@@ -318,4 +318,17 @@ namespace ANN {
     }
     return activations[layer];
   }
+
+  unsigned int ANNBase::copyWeightsTo(MatrixFloat **data,
+				      MatrixFloat **old_data) const {
+    const unsigned int numw = getNumWeights();
+    *data     = new MatrixFloat(1, static_cast<int>(numw));
+    *old_data = new MatrixFloat(1, static_cast<int>(numw));
+    unsigned int pos = 0;
+    for (unsigned int i=0; i<connections.size(); ++i)
+      pos = connections[i]->copyWeightsTo(*data, *old_data, pos,
+					  connections[i]->getNumInputs());
+    return pos;
+  }
+
 }
