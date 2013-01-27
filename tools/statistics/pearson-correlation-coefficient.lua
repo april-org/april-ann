@@ -35,7 +35,12 @@ for line in f:lines() do
   end
 end
 
-local r_xy = ( (N * xy_sum - x_sum*y_sum) /
-	       ( math.sqrt(N * x2_sum - x_sum*x_sum) *
-		 math.sqrt(N * y2_sum - y_sum*y_sum) ) )
-print(r_xy)
+local sx  = math.sqrt(N * x2_sum - x_sum*x_sum)
+local sy  = math.sqrt(N * y2_sum - y_sum*y_sum)
+local rxy = (N * xy_sum - x_sum*y_sum) / ( sx*sy )
+
+-- linear regression fitting: y = alpha + beta * x
+local beta   = rxy * sy / sx
+local alpha  = y_sum/N - beta * x_sum/N
+
+printf("rxy=    %.2f\nalpha= %.2f\nbeta=  %.2f\n", rxy, alpha, beta)
