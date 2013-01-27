@@ -73,9 +73,10 @@ outf:close()
 shallow_classifier = ann.mlp.all_all.generate{
   topology = "256 inputs 256 tanh 128 tanh 10 softmax",
   random   = random(1234),
-  inf      = -0.1,
-  sup      = 0.1,
-  bunch_size = bunch_size }
+  inf      = -1,
+  sup      =  1,
+  bunch_size = bunch_size,
+  use_fanin = true}
 
 deep_classifier = ann.mlp.add_layers{
   ann        = codifier_net,
@@ -89,8 +90,9 @@ deep_classifier:set_error_function(ann.error_functions.mse())
 deep_classifier_wo_pretraining = ann.mlp.all_all.generate{
   topology = "256 inputs 256 logistic 128 logistic 32 logistic 10 softmax",
   random   = random(1234),
-  inf      = -0.1,
-  sup      = 0.1,
+  inf      = -1,
+  sup      =  1,
+  use_fanin = true,
   bunch_size = bunch_size }
 
 m2 = matrix(10,{1,0,0,0,0,0,0,0,0,0})

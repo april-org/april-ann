@@ -69,8 +69,9 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(bunch_size,
     actfunc   = input_actf }
   -- randomize weights
   autoencoder:randomize_weights{ random=weights_random,
-				 inf=-0.1,
-				 sup= 0.1 }
+				 inf=-1,
+				 sup= 1,
+				 use_fanin = true}
   return autoencoder
 end
 
