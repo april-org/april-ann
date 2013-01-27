@@ -31,6 +31,24 @@
 #include "referenced.h"
 #include "MersenneTwister.h"
 #include "matrixFloat.h"
+#include "error_print.h"
+#include "maxmin.h"
+
+using april_utils::max;
+
+#define MAX_ITERATIONS_RANDOMIZE_LOOP 1000
+
+// generates a random weight, checking number of iterations and weightnearzero
+#define rnd_weight(rnd, value, dinf, range, weightnearzero) do {	\
+    unsigned int it = 0;						\
+    do {								\
+      (value) = (rnd)->rand((range))+(dinf);				\
+      it++;								\
+    } while (it < MAX_ITERATIONS_RANDOMIZE_LOOP &&			\
+	     fabs((value)) < (weightnearzero));				\
+    if (fabs((value)) < (weightnearzero))				\
+      ERROR_PRINT("# WARNING!!! Detected weightnearzero\n");		\
+  } while(false);
 
 namespace ANN {
   
@@ -47,6 +65,8 @@ namespace ANN {
     /// update_weights_call, se inicia a 0 cuando este valor llega a
     /// getNumReferences()
     unsigned int update_weights_calls;
+
+    unsigned int fanin;
     
   public:
     static const double weightnearzero;
@@ -75,10 +95,12 @@ namespace ANN {
     // INTERFAZ A IMPLEMENTAR
     virtual bool checkInputOutputSizes(ActivationUnits *input,
 				       ActivationUnits *output) const = 0;
-    virtual void randomizeWeights(MTRand *rnd, float low, float high) = 0;
+    virtual void randomizeWeights(MTRand *rnd, float low, float high,
+				  bool use_fanin) = 0;
     virtual void randomizeWeightsAtColumn(unsigned int col,
 					  MTRand *rnd,
-					  float low, float high) = 0;
+					  float low, float high,
+					  bool use_fanin) = 0;
     // Carga/guarda los pesos de la matriz data comenzando por la
     // posicion first_weight_pos. Devuelve la suma del numero de pesos
     // cargados/salvados y first_weight_pos. En caso de error,
@@ -105,6 +127,8 @@ namespace ANN {
     virtual unsigned int getNumOutputs() const {
       return num_outputs;
     }
+    
+    void setFanIn(unsigned int value) { fanin = max(fanin, value); }
     
   };
 }

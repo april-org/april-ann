@@ -27,13 +27,15 @@
 struct ANNConfiguration {
   unsigned int max_bunch_size; // maximum bunch size ANTES num_bunch
   unsigned int cur_bunch_size; // current bunch size, ANTES cur_bunch
-  bool         use_cuda_flag; // use_cuda
+  bool         use_cuda_flag;  // use_cuda
+  bool         error_function_logistic_mandatory;
   ANNConfiguration(int max_bunch_size,
 		   int cur_bunch_size,
 		   bool use_cuda_flag=false) :
     max_bunch_size(max_bunch_size),
     cur_bunch_size(cur_bunch_size),
-    use_cuda_flag(use_cuda_flag) {
+    use_cuda_flag(use_cuda_flag),
+    error_function_logistic_mandatory(false) {
   }
 };
 

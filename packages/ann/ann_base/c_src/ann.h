@@ -152,6 +152,7 @@ namespace ANN {
     
     virtual unsigned int copyWeightsTo(MatrixFloat **data,
 				       MatrixFloat **old_data) const;
+    
   };
 }
 #endif // ANN_H

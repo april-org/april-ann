@@ -40,9 +40,11 @@ namespace ANN {
   protected:
     const ANNConfiguration &conf;
     ActivationUnitsType     type;
+    unsigned int            fanin;
   public:
     ActivationUnits(const ANNConfiguration &conf,
-		    ActivationUnitsType type) : conf(conf), type(type) {}
+		    ActivationUnitsType type) :
+      conf(conf), type(type), fanin(0) {}
     virtual ~ActivationUnits() { }
     ActivationUnitsType getType() const { return type; }
     void setType(ActivationUnitsType type) { this->type=type; }
@@ -63,6 +65,9 @@ namespace ANN {
     /// pone a 0 los contadores, deltas de error, etc
     virtual void reset(bool use_cuda) = 0;
     const ANNConfiguration &getConfReference() const { return conf; }
+    /// for FAN IN computation
+    virtual unsigned int getFanIn() const { return fanin; }
+    virtual void increaseFanIn(unsigned int value) { fanin += value; }
   };
   
   /// Implementa un vector de neuronas de tamanyo num_neurons *

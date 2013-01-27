@@ -40,6 +40,8 @@ namespace ANN {
     virtual float computeBatchErrorFunction(float error_sums,
 					    unsigned int num_patterns)  = 0;
     virtual ErrorFunction *clone() = 0; // deep copy
+
+    bool logisticMandatory() const { return false; }
   };
 
   class MSE : public ErrorFunction {
@@ -124,6 +126,29 @@ return new GA();
     ErrorFunction *clone() {
       return new CrossEntropy();
     }
+  };
+
+  ///////////////////////////////////////
+  
+  class LogisticCrossEntropy : public ErrorFunction {
+    const float EPSILON, INF;
+  public:
+    LogisticCrossEntropy();
+    virtual ~LogisticCrossEntropy() {}
+
+    // calcula la entropia cruzada
+    void computePatternErrorFunction(FloatGPUMirroredMemoryBlock *output,
+				     FloatGPUMirroredMemoryBlock *target_output,
+				     FloatGPUMirroredMemoryBlock *output_error,
+				     FloatGPUMirroredMemoryBlock *pattern_errors,
+				     unsigned int output_size,
+				     const ANNConfiguration &conf);
+    float computeBatchErrorFunction(float error_sums,
+				    unsigned int num_patterns);
+    ErrorFunction *clone() {
+      return new CrossEntropy();
+    }
+    bool logisticMandatory() const { return true; }
   };
 
   ///////////////////////////////////////

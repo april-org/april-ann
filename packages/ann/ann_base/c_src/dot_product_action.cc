@@ -46,10 +46,13 @@ namespace ANN {
     if (!transpose_weights) {
       if (!weights_matrix->checkInputOutputSizes(inputs, outputs))
 	ERROR_EXIT(256, "The input/output sizes are not correct.\n");
+      outputs->increaseFanIn(inputs->numNeurons());
     }
     else
-      if (!weights_matrix->checkInputOutputSizes(outputs, inputs))
+      if (!weights_matrix->checkInputOutputSizes(outputs, inputs)) {
 	ERROR_EXIT(256, "The input/output sizes are not correct.\n");
+	inputs->increaseFanIn(outputs->numNeurons());
+      }
     weights_matrix->countReference();
     IncRef(inputs);
     IncRef(outputs);
@@ -333,6 +336,13 @@ namespace ANN {
     // the weight decay is always fixed to 0
     mGetOption("weight_decay", weight_decay);
     ERROR_EXIT(140, "The option to be get does not exist.\n");
+  }
+
+  void DotProductAction::transferFanInToConnections() {
+    if (!transpose_weights)
+      weights_matrix->setFanIn(outputs->getFanIn());
+    else
+      weights_matrix->setFanIn(inputs->getFanIn());
   }
   
   //////////////////////////////////////////////////////////////////////////

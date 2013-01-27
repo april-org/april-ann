@@ -46,6 +46,7 @@ namespace ANN {
     if (this->error_func) DecRef(this->error_func);
     this->error_func = error_func;
     IncRef(this->error_func);
+    conf.error_function_logistic_mandatory = error_func->logisticMandatory();
   }
 
   // FIXME: showActivations instead of showNetworkAtts??
@@ -268,9 +269,12 @@ namespace ANN {
     return copy;
   }
 
-  void MLP::randomizeWeights(MTRand *rnd, float low, float high) {
+  void MLP::randomizeWeights(MTRand *rnd, float low, float high,
+			     bool use_fanin) {
+    for (unsigned int i = 0; i < actions.size(); i++)
+      actions[i]->transferFanInToConnections();
     for (unsigned int i=0; i<connections.size(); ++i)
-      connections[i]->randomizeWeights(rnd, low, high);
+      connections[i]->randomizeWeights(rnd, low, high, use_fanin);
   }
 
   void MLP::pushBackAllAllLayer(ActivationUnits    *inputs,

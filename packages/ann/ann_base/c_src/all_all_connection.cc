@@ -48,39 +48,25 @@ namespace ANN {
   
   // Crea de forma aleatoria el conjunto de pesos con valores en el
   // rango [low*sqrt(fan_in), high*sqrt(fan_in)]
-  void AllAllConnections::randomizeWeights(MTRand *rnd, float low, float high) {
-    double inv_sqrt_fan_in = 1.0/sqrt(num_inputs);
-    double dsup            = high*inv_sqrt_fan_in;
-    double dinf            = low*inv_sqrt_fan_in;
-    //unsigned int k=0;
-    if (dsup < weightnearzero || dinf < weightnearzero) {
-      if (inv_sqrt_fan_in > weightnearzero) {
-	dsup =  inv_sqrt_fan_in;
-	dinf = -inv_sqrt_fan_in;
-      }
-      else {
-	while(dsup < weightnearzero || dinf < weightnearzero) {
-	  dsup = dsup*2.0;
-	  dinf = dinf*2.0;
-	}
-      }
+  void AllAllConnections::randomizeWeights(MTRand *rnd, float low, float high,
+					   bool use_fanin) {
+    double dinf = low;
+    double dsup = high;
+    if (use_fanin) {
+      double inv_sqrt_fan_in = 1.0/sqrt(fanin);
+      dinf *= inv_sqrt_fan_in;
+      dsup *= inv_sqrt_fan_in;
     }
-    double rango = dsup - dinf;
-      
-    // FIXME: no se si vale la pena poner un numero maximo de intentos
-    // (alto) por si alguna extranya combinacion de valores convierte
-    // esto en un bucle infinito:
-#define rnd_weight(value) do {			\
-      (value) = rnd->rand(rango)+dinf;	\
-    } while (fabs((value)) < weightnearzero);
-      
+    // assert to avoid nearzero weights
+    assert(fabs(dinf) > weightnearzero);
+    assert(fabs(dsup) > weightnearzero);
+    double range  = dsup - dinf;
     float *w      = weights->getPPALForReadAndWrite();
     float *prev_w = prev_weights->getPPALForReadAndWrite();
-      
     for (unsigned int j=0; j<num_outputs; ++j) {
       unsigned int k = j;
       for (unsigned int i=0; i<num_inputs; ++i) {
-	rnd_weight(w[k]);
+	rnd_weight(rnd, w[k], dinf, range, weightnearzero);
 	prev_w[k] = w[k];
 	k += num_outputs;
       }
@@ -89,35 +75,28 @@ namespace ANN {
     
   void AllAllConnections::randomizeWeightsAtColumn(unsigned int col,
 						   MTRand *rnd,
-						   float low, float high) {
-    double inv_sqrt_fan_in = 1.0/sqrt(num_inputs);
-    double dsup            = high*inv_sqrt_fan_in;
-    double dinf            = low*inv_sqrt_fan_in;
-    
-    if (dsup < weightnearzero || dinf < -weightnearzero) {
-      if (inv_sqrt_fan_in > weightnearzero) {
-	dsup =  inv_sqrt_fan_in;
-	dinf = -inv_sqrt_fan_in;
-      }
-      else {
-	while(dsup < weightnearzero || dinf < -weightnearzero) {
-	  dsup = dsup*2.0;
-	  dinf = dinf*2.0;
-	}
-      }
+						   float low, float high,
+						   bool use_fanin) {
+    double dinf = low;
+    double dsup = high;
+    if (use_fanin) {
+      double inv_sqrt_fan_in = 1.0/sqrt(fanin);
+      dinf *= inv_sqrt_fan_in;
+      dsup *= inv_sqrt_fan_in;
     }
-    double rango  = dsup - dinf;
+    // assert to avoid nearzero weights
+    assert(fabs(dinf) > weightnearzero);
+    assert(fabs(dsup) > weightnearzero);
+    double range  = dsup - dinf;
     float *w      = weights->getPPALForReadAndWrite();
     float *prev_w = prev_weights->getPPALForReadAndWrite();
-      
     unsigned int k = col;
     for (unsigned int i=0; i<num_inputs; ++i) {
-      rnd_weight(w[k]);
+      rnd_weight(rnd, w[k], dinf, range, weightnearzero);
       prev_w[k] = w[k];
       k += num_outputs;
     }
   }
-#undef rnd_weight
   
   unsigned int AllAllConnections::loadWeights(MatrixFloat *data,
 					      MatrixFloat *old_data,

@@ -50,36 +50,49 @@ namespace ANN {
   
   // Crea de forma aleatoria el conjunto de pesos con valores en el
   // rango [low, high]
-  void BiasConnections::randomizeWeights(MTRand *rnd, float low, float high) {
-    double dsup  = high;
-    double dinf  = low;
-    double rango = dsup - dinf;
-#define rnd_weight(value) do {			\
-      (value) = rnd->rand(rango)+dinf;	\
-    } while (fabs((value)) < weightnearzero);
-    
+  void BiasConnections::randomizeWeights(MTRand *rnd, float low, float high,
+					 bool use_fanin) {
+    double dsup   = high;
+    double dinf   = low;
+    if (use_fanin) {
+      double inv_sqrt_fan_in = 1.0/sqrt(fanin);
+      dinf *= inv_sqrt_fan_in;
+      dsup *= inv_sqrt_fan_in;
+    }
+    // assert to avoid nearzero weights
+    assert(fabs(dinf) > weightnearzero);
+    assert(fabs(dsup) > weightnearzero);
+    double range  = dsup - dinf;
     float *w      = weights->getPPALForReadAndWrite();
     float *prev_w = prev_weights->getPPALForReadAndWrite();
     
     for (unsigned int j=0; j<total_size; ++j) {
-      rnd_weight(w[j]);
+      rnd_weight(rnd, w[j], dinf, range, weightnearzero);
       prev_w[j] = w[j];
     }
   }
     
   void BiasConnections::randomizeWeightsAtColumn(unsigned int col,
 						 MTRand *rnd,
-						 float low, float high) {
+						 float low, float high,
+						 bool use_fanin) {
     double dsup   = high;
     double dinf   = low;
-    double rango  = dsup - dinf;
+    if (use_fanin) {
+      double inv_sqrt_fan_in = 1.0/sqrt(fanin);
+      dinf *= inv_sqrt_fan_in;
+      dsup *= inv_sqrt_fan_in;
+    }
+    // assert to avoid nearzero weights
+    assert(fabs(dinf) > weightnearzero);
+    assert(fabs(dsup) > weightnearzero);
+    double range  = dsup - dinf;
     float *w      = weights->getPPALForReadAndWrite();
     float *prev_w = prev_weights->getPPALForReadAndWrite();
     // solo hay un bias en la columna dada
-    rnd_weight(w[col]);
+    rnd_weight(rnd, w[col], dinf, range, weightnearzero);
     prev_w[col] = w[col];
   }
-#undef rnd_weight
   
   unsigned int BiasConnections::loadWeights(MatrixFloat *data,
 					    MatrixFloat *old_data,
@@ -142,4 +155,5 @@ namespace ANN {
     }
     return conn;
   }
+  
 }

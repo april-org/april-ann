@@ -111,6 +111,34 @@ __global__ void applyCrossEntropyErrorFunctionKernel(const float *output,
   }
 }
 
+__global__ void applyLogisticCrossEntropyErrorFunctionKernel(const float *output,
+							     const float *target_output,
+							     float *output_error,
+							     float *pattern_errors,
+							     float epsilon,
+							     float inf,
+							     unsigned int max_x,
+							     unsigned int lda_x,
+							     unsigned int max_y) {
+  unsigned int matrix_x_pos, matrix_y_pos;
+  getColumnMajorBunchMatrixPositions(blockIdx,
+				     blockDim,
+				     threadIdx,
+				     matrix_x_pos,
+				     matrix_y_pos);
+  if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
+    unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
+    // compute derivative
+    output_error[index] = output[index] - target_output[index];
+    float o = clip(output[index], epsilon, 1.0f - epsilon);
+    float t = clip(target_output[index], epsilon, 1.0f - epsilon);
+    if (t > epsilon) {
+      if (o > epsilon) pattern_errors[index] += t * logf(o);
+      else pattern_errors[index] += t * inf;
+    }
+  }
+}
+
 __global__ void applyFullCrossEntropyErrorFunctionKernel(const float *output,
 							 const float *target_output,
 							 float *output_error,
@@ -433,6 +461,66 @@ void doCalculateCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *output,
 	}
 	// compute derivative
 	output_error_ptr[b] = (o - t) / (o * (1.0f - o));
+      }
+      output_ptr         += conf.max_bunch_size;
+      target_output_ptr  += conf.max_bunch_size;
+      output_error_ptr   += conf.max_bunch_size;
+      pattern_errors_ptr += conf.max_bunch_size;
+    }
+#ifdef USE_CUDA
+  }
+#endif
+}
+
+void doCalculateLogisticCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *output,
+						  FloatGPUMirroredMemoryBlock *target_output,
+						  FloatGPUMirroredMemoryBlock *output_error,
+						  FloatGPUMirroredMemoryBlock *pattern_errors,
+						  float EPSILON,
+						  float INF,
+						  unsigned int output_size,
+						  const ANNConfiguration &conf,
+						  bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    const float *output_ptr        = output->getGPUForRead();
+    const float *target_output_ptr = target_output->getGPUForRead();
+    float *output_error_ptr        = output_error->getGPUForWrite();
+    float *pattern_errors_ptr      = pattern_errors->getGPUForReadAndWrite();
+    dim3 block, grid;
+    computeBlockAndGridSizesForAColumnMajorBunch(conf, output_size,
+						 block, grid);
+    
+    applyLogisticCrossEntropyErrorFunctionKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (output_ptr,
+       target_output_ptr,
+       output_error_ptr,
+       pattern_errors_ptr,
+       EPSILON,
+       INF,
+       conf.cur_bunch_size,
+       conf.max_bunch_size,
+       output_size);
+  }
+  else {
+#endif
+    const float *output_ptr        = output->getPPALForRead();
+    const float *target_output_ptr = target_output->getPPALForRead();
+    float *output_error_ptr        = output_error->getPPALForWrite();
+    float *pattern_errors_ptr      = pattern_errors->getPPALForReadAndWrite();
+
+    for (unsigned int i = 0; i < output_size; i++) {
+      for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
+	assert(!(output_ptr[b] > 1.0f) && !(output_ptr[b] < 0.0f));
+	assert(!(target_output_ptr[b] > 1.0f) && !(target_output_ptr[b] < 0.0f));
+	// compute derivative
+	output_error_ptr[b] = output_ptr[b] - target_output_ptr[b];
+	float o = clamp(output_ptr[b], EPSILON, 1.0f - EPSILON);
+	float t = clamp(target_output_ptr[b], EPSILON, 1.0f - EPSILON);
+	if (t > EPSILON) {
+	  if (o > EPSILON) pattern_errors_ptr[b] += t * logf(o);
+	  else pattern_errors_ptr[b] += t * INF;
+	}
       }
       output_ptr         += conf.max_bunch_size;
       target_output_ptr  += conf.max_bunch_size;

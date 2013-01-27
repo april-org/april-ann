@@ -39,7 +39,8 @@ namespace ANN {
     AllAllMLP(ANNConfiguration configuration);
     ~AllAllMLP();
     
-    void generateAllAll(const char *str, MTRand *rnd, float low, float high);
+    void generateAllAll(const char *str, MTRand *rnd, float low, float high,
+			bool use_fanin);
     void generateAllAll(const char *str,
 			MatrixFloat *weights_mat,
 			MatrixFloat *old_weights_mat);
@@ -51,7 +52,7 @@ namespace ANN {
     void loadModel(const char *filename);
     void saveModel(const char *filename);
     
-    void randomizeWeights(MTRand *rnd, float low, float high);
+    void randomizeWeights(MTRand *rnd, float low, float high, bool use_fanin);
   };
 
 }

@@ -37,6 +37,7 @@ namespace ANN {
     momentum(0.0f) {
     if (!bias_vector->checkInputOutputSizes(0, outputs))
       ERROR_EXIT(256, "The input/output sizes are not correct.\n");
+    outputs->increaseFanIn(1);
     bias_vector->countReference();
     IncRef(outputs);
     IncRef(bias_vector);
@@ -140,6 +141,10 @@ namespace ANN {
     mGetOption("weight_decay", 0.0f);
     ERROR_EXIT(140, "The option to be get does not exist.\n");
   }
-  
+
+  void ForwardBiasAction::transferFanInToConnections() {
+    bias_vector->setFanIn(outputs->getFanIn());
+  }
+
   //////////////////////////////////////////////////////////////////////////
 }

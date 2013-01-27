@@ -106,23 +106,28 @@ namespace ANN {
     }
   }
 
-  void AllAllMLP::randomizeWeights(MTRand *rnd, float low, float high) {
+  void AllAllMLP::randomizeWeights(MTRand *rnd, float low, float high,
+				   bool use_fanin) {
+    for (unsigned int i = 0; i < actions.size(); i++)
+      actions[i]->transferFanInToConnections();
     // step +=2 because connections are stored in groups of two: bias and the
     // rest of weights
     for (unsigned int i=0; i<connections.size(); i += 2) {
       const unsigned int sz = connections[i]->size();
       for (unsigned int k=0; k<sz; ++k) {
-	connections[i]->randomizeWeightsAtColumn(k, rnd, low, high);
-	connections[i+1]->randomizeWeightsAtColumn(k, rnd, low, high);
+	// BIAS
+	connections[i]->randomizeWeightsAtColumn  (k,rnd,low,high,use_fanin);
+	// WEIGHTS
+	connections[i+1]->randomizeWeightsAtColumn(k,rnd,low,high,use_fanin);
       }
     }
   }
   
   // Generates a random network
   void AllAllMLP::generateAllAll(const char *str, MTRand *rnd,
-				 float low, float high) {
+				 float low, float high, bool use_fanin) {
     generateActionsAllAll(str);
-    randomizeWeights(rnd, low, high);
+    randomizeWeights(rnd, low, high, use_fanin);
   }
   
   // Generates a network and initializes it with the given weights

@@ -232,6 +232,40 @@ namespace ANN {
 
   ///////////////////////////////////////////////////////////
 
+  LogisticCrossEntropy::LogisticCrossEntropy() :
+    EPSILON(NEAR_ZERO), INF(logf(NEAR_ZERO)) {
+  }
+
+  // lo mismo que para MSE pero para la crossentropy
+  void LogisticCrossEntropy::computePatternErrorFunction(FloatGPUMirroredMemoryBlock *output,
+							 FloatGPUMirroredMemoryBlock *target_output,
+							 FloatGPUMirroredMemoryBlock *output_error,
+							 FloatGPUMirroredMemoryBlock *pattern_errors,
+							 unsigned int output_size,
+							 const ANNConfiguration &conf) {
+    bool use_cuda_flag = conf.use_cuda_flag && (conf.cur_bunch_size > 1);
+    doCalculateLogisticCrossEntropyErrorFunction(output,
+						 target_output,
+						 output_error,
+						 pattern_errors,
+						 EPSILON,
+						 INF,
+						 output_size,
+						 conf,
+						 use_cuda_flag);
+    
+  }
+  
+  // idem
+  float LogisticCrossEntropy::computeBatchErrorFunction(float error_sums,
+							unsigned int num_patterns) {
+    return -error_sums/num_patterns;
+  }
+
+
+  ///////////////////////////////////////////////////////////
+
+
   FullCrossEntropy::FullCrossEntropy() :
     EPSILON(NEAR_ZERO), INF(logf(NEAR_ZERO)) {
   }
