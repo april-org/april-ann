@@ -89,7 +89,8 @@ function check_result(lared, result)
   for i = 1,ds_input:numPatterns() do
     value = lared:calculate(ds_input:getPattern(i))[1]
     if math.abs(value - result[i]) > delta then
-      error("Incorrect result using bunch_size=1!!!")
+      error("Incorrect result using bunch_size=1!!! expected " ..
+	    value .. " was " .. result[i])
     end
     if math.abs(outds:getPattern(i)[1] - result[i]) > delta then
       error("Incorrect result using bunch_size=" .. bunch_size .."!!!")

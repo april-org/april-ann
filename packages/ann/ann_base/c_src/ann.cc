@@ -149,8 +149,8 @@ namespace ANN {
   {
 #ifndef USE_CUDA
     if (use_cuda) {
-      fprintf(stderr, "Warning: Trying to set flag for using CUDA to true!\n");
-      fprintf(stderr, "Flag will be set to false. Check your script.\n");
+      fprintf(stderr, "# Warning: Trying to set flag for using CUDA to true!\n");
+      fprintf(stderr, "# Flag will be set to false. Check your script.\n");
       return;
     }
 #else

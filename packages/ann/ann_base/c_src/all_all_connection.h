@@ -33,10 +33,11 @@ namespace ANN {
 
     bool checkInputOutputSizes(ActivationUnits *input,
 			       ActivationUnits *output) const;
-    void randomizeWeights(MTRand *rnd, float low, float high);
+    void randomizeWeights(MTRand *rnd, float low, float high, bool use_fanin);
     void randomizeWeightsAtColumn(unsigned int col,
 				  MTRand *rnd,
-				  float low, float high);
+				  float low, float high,
+				  bool use_fanin);
     // Carga/guarda los pesos de la matriz data comenzando por la
     // posicion first_weight_pos. Devuelve la suma del numero de pesos
     // cargados/salvados y first_weight_pos. En caso de error,

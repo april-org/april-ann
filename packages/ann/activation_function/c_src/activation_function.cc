@@ -49,11 +49,14 @@ namespace ANN {
 						       unsigned int size,
 						       const ANNConfiguration &conf,
 						       bool use_cuda) {
-    doMultiplyLogisticDerivatives(units,
-				  input_errors,
-				  size,
-				  conf,
-				  use_cuda);
+    if (!conf.error_function_logistic_mandatory)
+      doMultiplyLogisticDerivatives(units,
+				    input_errors,
+				    size,
+				    conf,
+				    use_cuda);
+    // else nothing because the error function is prepared to logistic
+    // derivatives
   }
 
   ActivationFunction *LogisticActivationFunction::clone() {
@@ -77,6 +80,9 @@ namespace ANN {
 						   unsigned int size,
 						   const ANNConfiguration &conf,
 						   bool use_cuda) {
+    if (conf.error_function_logistic_mandatory)
+      ERROR_EXIT(123, "The logistic or softmax activation function is"
+		 " mandataroy due to the error function");
     doMultiplyTanhDerivatives(units,
                               input_errors,
                               size,
@@ -131,12 +137,15 @@ namespace ANN {
 						      unsigned int size,
 						      const ANNConfiguration &conf,
 						      bool use_cuda) {
-    // Is the same as sigmoid
-    doMultiplyLogisticDerivatives(units,
-				  input_errors,
-				  size,
-				  conf,
-				  use_cuda);
+    if (!conf.error_function_logistic_mandatory)
+      // Is the same as sigmoid
+      doMultiplyLogisticDerivatives(units,
+				    input_errors,
+				    size,
+				    conf,
+				    use_cuda);
+    // else nothing because the error function is prepared to logistic
+    // derivatives
   }
   
   ActivationFunction *SoftmaxActivationFunction::clone() {

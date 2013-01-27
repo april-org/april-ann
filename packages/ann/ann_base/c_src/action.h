@@ -48,6 +48,7 @@ namespace ANN {
     virtual void setOption(const char *name, double value) { }
     virtual bool hasOption(const char *name) { return false; }
     virtual double getOption(const char *name) { return 0.0; }
+    virtual void transferFanInToConnections() = 0;
   };
   
   // template<typename T>
@@ -141,6 +142,7 @@ namespace ANN {
     void doBackward();
     Action *clone(hash<void*,void*> &clone_dict,		  
 		  const ANNConfiguration &conf) { return 0; }
+    void transferFanInToConnections() { }
   };
 }
 

@@ -65,6 +65,7 @@ namespace ANN {
     virtual void setOption(const char *name, double value);
     virtual bool hasOption(const char *name);
     virtual double getOption(const char *name);
+    void transferFanInToConnections();
   };
 }
 

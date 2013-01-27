@@ -95,22 +95,24 @@ using namespace ANN;
 /// Initializes the weights using a random numbers generator and an
 /// optional inferior and superior interval values.
 ///@param random A random number generator, instance of MTRand (random in LUA)
-///@param inf Inferior bound of the interval. By default is -0.7.
-///@param sup Superior bound of the interval. By default is  0.7.
+///@param inf Inferior bound of the interval. By default is -1.0.
+///@param sup Superior bound of the interval. By default is  1.0.
+///@param use_fanin If apply or not fan in to [inf,sup] random weights interval.
 //DOC_END
 {
   LUABIND_CHECK_ARGN(==,1);
   LUABIND_CHECK_PARAMETER(1, table);
-  check_table_fields(L, 1, "random", "inf", "sup", 0);
+  check_table_fields(L, 1, "random", "inf", "sup", "use_fanin", 0);
 
   MTRand	*random;
   float		 inf, sup;
-  
+  bool           use_fanin;
   LUABIND_GET_TABLE_PARAMETER(1, random, MTRand, random);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, inf, float, inf, -0.7);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, sup, float, sup,  0.7);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, inf, float, inf, -1.0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, sup, float, sup,  1.0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, use_fanin, bool, use_fanin, true);
   
-  obj->randomizeWeights(random, inf, sup);
+  obj->randomizeWeights(random, inf, sup, use_fanin);
 }
 //BIND_END
 
@@ -167,21 +169,23 @@ using namespace ANN;
   LUABIND_CHECK_PARAMETER(1, table);
   check_table_fields(L, 1, "topology", "bunch_size",
 		     "random", "inf", "sup",
-		     "w", "oldw", 0);
+		     "w", "oldw", "use_fanin", 0);
 
   const char	*topology;
   unsigned int	 bunch_size;
   MTRand	*random;
   float		 inf, sup;
   MatrixFloat	*w, *oldw;
+  bool           use_fanin;
   
   LUABIND_GET_TABLE_PARAMETER(1, topology, string, topology);
   LUABIND_GET_TABLE_PARAMETER(1, bunch_size, uint, bunch_size);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, random, MTRand, random, 0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, inf, float, inf, -0.7);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, sup, float, sup,  0.7);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, inf, float, inf, -1.0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, sup, float, sup,  1.0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, w, MatrixFloat, w, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, use_fanin, bool, use_fanin, true);
 
   if ( (w != 0 || oldw != 0) && random) {
     LUABIND_ERROR("w/oldw is forbidden with random parameter!!!\n");
@@ -194,7 +198,7 @@ using namespace ANN;
   AllAllMLP *obj = new AllAllMLP(ANNConfiguration(bunch_size,bunch_size));
 
   if (w)           obj->generateAllAll(topology, w, oldw);
-  else if (random) obj->generateAllAll(topology, random, inf, sup);
+  else if (random) obj->generateAllAll(topology, random, inf, sup, use_fanin);
   
   LUABIND_RETURN(AllAllMLP, obj);
 }

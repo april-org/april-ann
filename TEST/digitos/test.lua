@@ -3,26 +3,26 @@ bunch_size    = tonumber(arg[1]) or 64
 semilla       = 1234
 aleat         = random(semilla)
 description   = "256 inputs 256 tanh 128 tanh 10 softmax"
-inf           = -0.1
-sup           =  0.1
+inf           = -1
+sup           =  1
 otrorand      = random(5678)
-learning_rate = 0.01
+learning_rate = 0.07
 momentum      = 0.01
 weight_decay  = 1e-05
 max_epochs    = 10
 
 -- training and validation
 errors = {
-  {2.1826949, 1.8960779},
-  {1.4842647, 1.0203998},
-  {0.8297270, 0.5678325},
-  {0.4682161, 0.3914193},
-  {0.2817744, 0.2966153},
-  {0.2072810, 0.2108385},
-  {0.1584013, 0.1847290},
-  {0.1259473, 0.1575812},
-  {0.1125821, 0.1618845},
-  {0.0988079, 0.1749958},
+  {2.2427213, 2.1271448},
+  {1.8567718, 1.4179991},
+  {1.7889993, 1.5020195},
+  {1.0254155, 0.6416390},
+  {0.5304626, 0.3737333},
+  {0.2664535, 0.2535898},
+  {0.2046538, 0.2155054},
+  {0.1515969, 0.1934462},
+  {0.1334122, 0.2049303},
+  {0.1111678, 0.1520087},
 }
 epsilon = 1e-05
 
@@ -78,6 +78,7 @@ lared = ann.mlp.all_all.generate{
   random      = aleat,
   inf         = inf,
   sup         = sup,
+  use_fanin   = true,
 }
 
 -- datos para entrenar
@@ -100,7 +101,7 @@ lared:set_option("momentum",      momentum)
 lared:set_option("weight_decay",  weight_decay)
 lared:set_use_cuda(true, true)
 
-lared:set_error_function(ann.error_functions.cross_entropy())
+lared:set_error_function(ann.error_functions.logistic_cross_entropy())
 
 totalepocas = 0
 
@@ -111,7 +112,8 @@ print("# Initial validation error:", errorval)
 clock = util.stopwatch()
 clock:go()
 
--- ann.mlp.all_all.save(lared, "wop.net", "ascii", "old")
+ann.mlp.all_all.save(lared, "wop.net", "ascii", "old")
+--lared:show_weights()
 print("Epoch Training  Validation")
 for epoch = 1,max_epochs do
   collectgarbage("collect")
@@ -131,7 +133,7 @@ for epoch = 1,max_epochs do
   			"reference error %g",
   			errorval, errors[epoch][2]))
   end
-   ann.mlp.all_all.save(lared, "wop.net", "ascii", "old")
+  -- ann.mlp.all_all.save(lared, "wop.net", "ascii", "old")
   printf("%4d  %.7f %.7f\n",
 	 totalepocas,errortrain,errorval)
 end

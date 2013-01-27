@@ -70,7 +70,8 @@ namespace ANN {
     void showWeights();
   
     MLP *clone();
-    virtual void randomizeWeights(MTRand *rnd, float low, float high);
+    virtual void randomizeWeights(MTRand *rnd, float low, float high,
+				  bool use_fanin);
 
     void pushBackAllAllLayer(ActivationUnits    *inputs,
 			     ActivationUnits    *outputs,

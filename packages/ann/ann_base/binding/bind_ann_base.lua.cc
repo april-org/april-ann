@@ -114,6 +114,7 @@ using namespace Functions;
 {
   
   LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, table);
   check_table_fields(L, 1, "size", "ann",
 		     "type", 0);
   
@@ -159,6 +160,7 @@ using namespace Functions;
 {
   
   LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, table);
   check_table_fields(L, 1, "size", "num_groups", "ann", 0);
   
   unsigned int		 size, num_groups;
@@ -303,7 +305,6 @@ using namespace Functions;
 }
 //BIND_END
 
-
 /////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME Action ann.actions.__base__
@@ -377,6 +378,7 @@ using namespace Functions;
 //BIND_CONSTRUCTOR DotProductAction
 {
   LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, table);
   check_table_fields(L, 1, "ann", "input", "output", "connections",
 		     "transpose", 0);
   
@@ -409,6 +411,7 @@ using namespace Functions;
 //BIND_CONSTRUCTOR ActivationsAction
 {
   LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, table);
   check_table_fields(L, 1, "ann", "actfunc", "output", 0);
   
   ActivationUnits    *output;
@@ -469,6 +472,18 @@ using namespace Functions;
   LUABIND_RETURN(CrossEntropy, obj);
 }
 //BIND_END
+
+//BIND_LUACLASSNAME LogisticCrossEntropy ann.error_functions.logistic_cross_entropy
+//BIND_CPP_CLASS    LogisticCrossEntropy
+//BIND_SUBCLASS_OF  LogisticCrossEntropy ErrorFunction
+
+//BIND_CONSTRUCTOR LogisticCrossEntropy
+{
+  obj = new LogisticCrossEntropy();
+  LUABIND_RETURN(LogisticCrossEntropy, obj);
+}
+//BIND_END
+
 
 //BIND_LUACLASSNAME FullCrossEntropy ann.error_functions.full_cross_entropy
 //BIND_CPP_CLASS    FullCrossEntropy
@@ -577,14 +592,17 @@ using namespace Functions;
 
 //BIND_METHOD Connections randomize_weights
 {
+  LUABIND_CHECK_ARGN(==, 1);
   LUABIND_CHECK_PARAMETER(1, table);
-  check_table_fields(L, 1, "random", "inf", "sup", 0);
+  check_table_fields(L, 1, "random", "inf", "sup", "use_fanin", 0);
   MTRand *rnd;
   float inf, sup;
+  bool use_fanin;
   LUABIND_GET_TABLE_PARAMETER(1, random, MTRand, rnd);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, inf, float, inf, -0.7);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, sup, float,  sup, 0.7);
-  obj->randomizeWeights(rnd, inf, sup);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, inf, float, inf, -1.0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, sup, float,  sup, 1.0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, use_fanin, bool,  use_fanin, false);
+  obj->randomizeWeights(rnd, inf, sup, use_fanin);
 }
 //BIND_END
 
@@ -662,6 +680,8 @@ using namespace Functions;
   float *outputs;
   float *target_outputs;
   unsigned int output_size;
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
   check_table_fields(L, 1, "outputs", "target_outputs", 0);
   lua_getfield(L, 1, "outputs");
   LUABIND_TABLE_GETN(-1, output_size);

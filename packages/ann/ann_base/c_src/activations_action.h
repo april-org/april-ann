@@ -39,6 +39,7 @@ namespace ANN {
     virtual void doBackward();
     virtual Action *clone(hash<void*,void*> &clone_dict,
 			  const ANNConfiguration &conf);
+    void transferFanInToConnections() { }
   };
 }
 

@@ -34,7 +34,7 @@
 #include "gpu_helper.h"
 #include "ann_configuration.h"
 
-#define NEAR_ZERO             1e-7f
+#define NEAR_ZERO             1e-5f
 #define DERIVATIVE_SATURATION 17.0f
 
 // ATTENTION: In 64-bit machines is better to use exp than expf
@@ -132,6 +132,17 @@ void doCalculateCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *output,
 					  unsigned int output_size,
 					  const ANNConfiguration &conf,
 					  bool use_gpu);
+
+void doCalculateLogisticCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *output,
+						  FloatGPUMirroredMemoryBlock *target_output,
+						  FloatGPUMirroredMemoryBlock *output_error,
+						  FloatGPUMirroredMemoryBlock *pattern_errors,
+						  float EPSILON,
+						  float INF,
+						  unsigned int output_size,
+						  const ANNConfiguration &conf,
+						  bool use_gpu);
+
 
 void doCalculateFullCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *output,
 					      FloatGPUMirroredMemoryBlock *target_output,
