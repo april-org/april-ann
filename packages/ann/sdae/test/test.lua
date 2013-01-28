@@ -35,11 +35,11 @@ params = {
   perturbation_random   = random(4567),
   weights_random        = random(7890),
   var                   = 0.02,
-  salt_noise_percentage = 0.1,
+  salt_noise_percentage = 0.20,
   layers                = layers,
   bunch_size            = bunch_size,
-  learning_rate         = 0.001,
-  momentum              = 0.002,
+  learning_rate         = 0.01,
+  momentum              = 0.02,
   weight_decay          = 1e-05,
   max_epochs            = 200,
   max_epochs_wo_improvement = 10
@@ -77,6 +77,7 @@ shallow_classifier = ann.mlp.all_all.generate{
   sup      =  1,
   bunch_size = bunch_size,
   use_fanin = true}
+shallow_classifier:set_error_function(ann.error_functions.logistic_cross_entropy())
 
 deep_classifier = ann.mlp.add_layers{
   ann        = codifier_net,
@@ -85,7 +86,7 @@ deep_classifier = ann.mlp.add_layers{
   random     = random(1234),
   inf        = -0.1,
   sup        = 0.1 }
-deep_classifier:set_error_function(ann.error_functions.mse())
+deep_classifier:set_error_function(ann.error_functions.logistic_cross_entropy())
 
 deep_classifier_wo_pretraining = ann.mlp.all_all.generate{
   topology = "256 inputs 256 logistic 128 logistic 32 logistic 10 softmax",
@@ -94,6 +95,7 @@ deep_classifier_wo_pretraining = ann.mlp.all_all.generate{
   sup      =  1,
   use_fanin = true,
   bunch_size = bunch_size }
+deep_classifier_wo_pretraining:set_error_function(ann.error_functions.logistic_cross_entropy())
 
 m2 = matrix(10,{1,0,0,0,0,0,0,0,0,0})
 train_output = dataset.matrix(m2,

@@ -33,10 +33,12 @@ function ann.mlp.add_layers(t)
     end
     bias:randomize_weights{ random=t.random,
 			    inf=t.inf,
-			    sup=t.sup }
+			    sup=t.sup,
+			    use_fanin = false }
     weights:randomize_weights{ random=t.random,
 			       inf=t.inf,
-			       sup=t.sup }
+			       sup=t.sup,
+			       use_fanin = false}
     prev_units = units
   end
   return new_net
