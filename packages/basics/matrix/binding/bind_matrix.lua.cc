@@ -230,7 +230,6 @@
 //BIND_METHOD MatrixFloat toHEX
 //DOC_BEGIN
 // string toHEX()
-///@param matrix
 //DOC_END
 {
   char *buffer;
