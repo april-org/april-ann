@@ -1,10 +1,10 @@
 if #arg ~= 5 then
   print("Syntax error!")
-  printf("\tExecute as: %s FILENAME NUMCOL1 NUMCOL2 SEED CONF\n", arg[0])
-  printf("\tuse - as FILENAME for stdin\n")
-  printf("\tNUMCOL1 and NUMCOL2 are column indexes of your data\n")
-  printf("\tSEED is a random number generator seed for bootstrap confidences\n")
-  printf("\tCONF is the confidence value (0.95 for example)\n")
+  printf("\t%s FILENAME NUMCOL1 NUMCOL2 SEED CONF\n", arg[0])
+  printf("\t\tuse - as FILENAME for stdin\n")
+  printf("\t\tNUMCOL1 and NUMCOL2 are column indexes of your data\n")
+  printf("\t\tSEED is a random number generator seed for bootstrap confidences\n")
+  printf("\t\tCONF is the confidence value (0.95 for example)\n")
   os.exit(1)
 end
 filename = arg[1]
