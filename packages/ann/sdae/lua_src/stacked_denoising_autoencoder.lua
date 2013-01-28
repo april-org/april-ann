@@ -208,6 +208,7 @@ end
 --   * weight_decay
 --   * max_epochs
 --   * max_epochs_wo_improvement
+--   * training_percentage_criteria
 --
 -- This function returns a Stacked Denoising Auto-Encoder parameters table,
 -- pretrained following algorithm of:
@@ -236,7 +237,8 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
 				     "learning_rate",
 				     "max_epochs", "max_epochs_wo_improvement",
 				     "momentum", "weight_decay", "val_input_dataset",
-				     "weights_random", "salt_noise_percentage" }
+				     "weights_random", "salt_noise_percentage",
+				     "training_percentage_criteria" }
   for name,v in pairs(valid_params) do
     if not valid_params[name] then
       error("Incorrect param name '"..name.."'")
@@ -251,10 +253,20 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
   end
   for _,name in ipairs({ "shuffle_random", "perturbation_random",
 			 "var", "layers", "bunch_size", "learning_rate",
-			 "max_epochs", "max_epochs_wo_improvement",
-			 "momentum", "weight_decay", "val_input_dataset",
-			 "weights_random", "salt_noise_percentage"}) do
+			 "max_epochs",
+			 "momentum", "weight_decay",
+			 "weights_random", "salt_noise_percentage",
+			 "training_percentage_criteria" }) do
     check_mandatory_param(params, name)
+  end
+  if params.val_input_dataset then
+    if not params.max_epochs_wo_improvement then
+      error ("max_epochs_wo_improvement is mandatory with val_input_dataset")
+    end
+  else
+    if not params.training_percentage_criteria then
+      error ("training_percentage_criteria is mandatory if not val_input_dataset")
+    end
   end
   --------------------------------------
 
@@ -263,10 +275,13 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
     input_dataset = params.input_dataset,
     distribution  = params.distribution
   }
-  local current_val_dataset_params = {
-    input_dataset  = params.val_input_dataset,
-    output_dataset = params.val_input_dataset
-  }
+  local current_val_dataset_params
+  if params.val_input_dataset then
+    current_val_dataset_params = {
+      input_dataset  = params.val_input_dataset,
+      output_dataset = params.val_input_dataset
+    }
+  end
   -- output weights and bias matrices
   local weights = {}
   local bias    = {}
@@ -303,20 +318,32 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
     local best_val_error = 111111111
     local best_net       = dae:clone()
     local best_epoch     = 0
+    local prev_train_err = 111111111
     for epoch=1,params.max_epochs do
       local train_error = dae:train_dataset(data)
-      local val_error   = dae:validate_dataset(val_data)
-      local m = dae:get_layer_connections(2):weights()
+      local val_error   = 0
+      if val_data then
+	dae:validate_dataset(val_data)
+      end
+      local train_improve = (prev_train_err - train_error)/prev_train_err
+      if params.training_percentage_criteria then
+	if train_improve < params.training_percentage_criteria then break end
+      end
+      prev_train_err = train_error
       if val_error < best_val_error then
 	best_val_error = val_error
 	best_epoch     = epoch
 	best_net       = dae:clone()
       end
-      printf("%4d %10.6f %10.6f  (best %10.6f at epoch %4d)\n",
-	     epoch, train_error, val_error, best_val_error, best_epoch)
+      printf("%4d %10.6f %10.6f  (best %10.6f at epoch %4d)  %.4f\n",
+	     epoch, train_error, val_error, best_val_error, best_epoch,
+	    train_improve)
       collectgarbage("collect")
       -- convergence criteria
-      if epoch - best_epoch > params.max_epochs_wo_improvement then break end
+      if params.val_input_dataset then
+	if epoch - best_epoch > params.max_epochs_wo_improvement then break end
+      else best_val_error = 111111111
+      end
     end
     local b1mat = best_net:get_layer_connections(1):weights()
     local b2mat = best_net:get_layer_connections(3):weights()
@@ -351,11 +378,13 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
 					 current_dataset_params.input_dataset)
 	current_dataset_params.input_dataset = ds
       end
-      -- compute code for validation input dataset
-      local ds = generate_codification(codifier,
-				       current_val_dataset_params.input_dataset)
-      current_val_dataset_params.input_dataset  = ds
-      current_val_dataset_params.output_dataset = ds
+      if current_val_dataset_params then
+	-- compute code for validation input dataset
+	local ds = generate_codification(codifier,
+					 current_val_dataset_params.input_dataset)
+	current_val_dataset_params.input_dataset  = ds
+	current_val_dataset_params.output_dataset = ds
+      end
     end -- if i ~= params.layers
   end -- for i=2,#params.layers
   return {weights=weights, bias=bias}
@@ -374,7 +403,9 @@ function ann.autoencoders.stacked_denoising_finetunning(sdae_table, params)
 				     "var", "layers", "bunch_size",
 				     "learning_rate",
 				     "max_epochs", "max_epochs_wo_improvement",
-				     "momentum", "weight_decay", "val_input_dataset",
+				     "momentum", "weight_decay",
+				     "val_input_dataset",
+				     "training_percentage_criteria",
 				     "weights_random", "salt_noise_percentage"}
   for name,v in pairs(valid_params) do
     if not valid_params[name] then

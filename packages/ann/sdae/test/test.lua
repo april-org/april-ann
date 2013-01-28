@@ -27,7 +27,24 @@ layers = {
   { size=  32, actf="logistic"},
 }
 
-params = {
+params_pretrain = {
+  input_dataset         = train_input,
+  replacement           = nil,
+  shuffle_random        = random(1234),
+  perturbation_random   = random(4567),
+  weights_random        = random(7890),
+  var                   = 0.00,
+  salt_noise_percentage = 0.10,
+  layers                = layers,
+  bunch_size            = bunch_size,
+  learning_rate         = 0.01,
+  momentum              = 0.02,
+  weight_decay          = 1e-05,
+  max_epochs            = 200,
+  training_percentage_criteria = 0.01
+}
+
+params_sdae_finetunning = {
   input_dataset         = train_input,
   val_input_dataset     = val_input,
   replacement           = nil,
@@ -35,7 +52,7 @@ params = {
   perturbation_random   = random(4567),
   weights_random        = random(7890),
   var                   = 0.02,
-  salt_noise_percentage = 0.20,
+  salt_noise_percentage = 0.10,
   layers                = layers,
   bunch_size            = bunch_size,
   learning_rate         = 0.01,
@@ -45,9 +62,10 @@ params = {
   max_epochs_wo_improvement = 10
 }
 
-sdae_table = ann.autoencoders.stacked_denoising_pretraining(params)
+
+sdae_table = ann.autoencoders.stacked_denoising_pretraining(params_pretrain)
 sdae       = ann.autoencoders.stacked_denoising_finetunning(sdae_table,
-                                                           params)
+                                                           params_sdae_finetunning)
 codifier_net = ann.autoencoders.build_codifier_from_sdae(sdae,
 							 bunch_size,
 							 layers)
