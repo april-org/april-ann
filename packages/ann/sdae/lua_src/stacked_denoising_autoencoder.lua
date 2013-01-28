@@ -294,7 +294,12 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
     dae:set_option("momentum", params.momentum)
     dae:set_option("weight_decay", params.weight_decay)
     collectgarbage("collect")
-    dae:set_error_function(ann.error_functions.full_cross_entropy())
+    if (params.layers[i-1].actf == "logistic" or
+	params.layer[i-1].actf == "softmax") then
+      dae:set_error_function(ann.error_functions.full_logistic_cross_entropy())
+    else
+      dae:set_error_function(ann.error_functions.mse())
+    end
     local best_val_error = 111111111
     local best_net       = dae:clone()
     local best_epoch     = 0
@@ -399,6 +404,12 @@ function ann.autoencoders.stacked_denoising_finetunning(sdae_table, params)
   sdae:set_option("learning_rate", params.learning_rate)
   sdae:set_option("momentum", params.momentum)
   sdae:set_option("weight_decay", params.weight_decay)
+  if (params.layers[1].actf == "logistic" or
+      params.layers[1].actf == "softmax") then
+    sdae:set_error_function(ann.error_functions.full_logistic_cross_entropy())
+  else
+    sdae:set_error_function(ann.error_functions.mse())
+  end
   collectgarbage("collect")
   local data
   data = generate_training_table_configuration_from_params(params,

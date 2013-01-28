@@ -496,6 +496,17 @@ using namespace Functions;
 }
 //BIND_END
 
+//BIND_LUACLASSNAME FullLogisticCrossEntropy ann.error_functions.full_logistic_cross_entropy
+//BIND_CPP_CLASS    FullLogisticCrossEntropy
+//BIND_SUBCLASS_OF  FullLogisticCrossEntropy ErrorFunction
+
+//BIND_CONSTRUCTOR FullLogisticCrossEntropy
+{
+  obj = new FullLogisticCrossEntropy();
+  LUABIND_RETURN(FullLogisticCrossEntropy, obj);
+}
+//BIND_END
+
 //BIND_LUACLASSNAME LocalFMeasure ann.error_functions.local_fmeasure
 //BIND_CPP_CLASS    LocalFMeasure
 //BIND_SUBCLASS_OF  LocalFMeasure ErrorFunction

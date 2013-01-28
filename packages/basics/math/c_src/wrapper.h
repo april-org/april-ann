@@ -154,6 +154,16 @@ void doCalculateFullCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *outpu
 					      const ANNConfiguration &conf,
 					      bool use_gpu);
 
+void doCalculateFullLogisticCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *output,
+						      FloatGPUMirroredMemoryBlock *target_output,
+						      FloatGPUMirroredMemoryBlock *output_error,
+						      FloatGPUMirroredMemoryBlock *pattern_errors,
+						      float EPSILON,
+						      float INF,
+						      unsigned int output_size,
+						      const ANNConfiguration &conf,
+						      bool use_gpu);
+
 // BLAS FUNCTIONS
 void doSgemv(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
 	     int m, int n,

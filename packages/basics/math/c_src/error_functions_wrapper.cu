@@ -169,6 +169,38 @@ __global__ void applyFullCrossEntropyErrorFunctionKernel(const float *output,
     output_error[index] = (o - t) / (o * (1.0f - o));
   }
 }
+
+__global__ void applyFullLogisticCrossEntropyErrorFunctionKernel(const float *output,
+								 const float *target_output,
+								 float *output_error,
+								 float *pattern_errors,
+								 float epsilon,
+								 float inf,
+								 unsigned int max_x,
+								 unsigned int lda_x,
+								 unsigned int max_y) {
+  unsigned int matrix_x_pos, matrix_y_pos;
+  getColumnMajorBunchMatrixPositions(blockIdx,
+				     blockDim,
+				     threadIdx,
+				     matrix_x_pos,
+				     matrix_y_pos);
+  if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
+    unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
+    // compute derivative
+    output_error[index] = output[index] - target_output[index];
+    float o         = clip(output[index], epsilon, 1.0f - epsilon);
+    float t         = clip(target_output[index], epsilon, 1.0f - epsilon);
+    float inv_t     = clip(1.0f - target_output[index], epsilon, 1.0f - epsilon);
+    float log_o     = (o > epsilon) ? logf(o) : inf;
+    float log_inv_o = (1.0f - o > epsilon) ? logf(1.0f - o) : inf;
+    if (t > epsilon)
+      pattern_errors[index] += t * log_o;
+    if (inv_t > epsilon)
+      pattern_errors[index] += inv_t * log_inv_o;
+  }
+}
+
 #endif
 
 
@@ -585,6 +617,70 @@ void doCalculateFullCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *outpu
 	  pattern_errors_ptr[b] += inv_t * log_inv_o;
 	// compute derivative
 	output_error_ptr[b] = (o - t) / (o * (1.0f - o));
+      }
+      output_ptr         += conf.max_bunch_size;
+      target_output_ptr  += conf.max_bunch_size;
+      output_error_ptr   += conf.max_bunch_size;
+      pattern_errors_ptr += conf.max_bunch_size;
+    }
+#ifdef USE_CUDA
+  }
+#endif
+}
+
+void doCalculateFullLogisticCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *output,
+						      FloatGPUMirroredMemoryBlock *target_output,
+						      FloatGPUMirroredMemoryBlock *output_error,
+						      FloatGPUMirroredMemoryBlock *pattern_errors,
+						      float EPSILON,
+						      float INF,
+						      unsigned int output_size,
+						      const ANNConfiguration &conf,
+						      bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    const float *output_ptr        = output->getGPUForRead();
+    const float *target_output_ptr = target_output->getGPUForRead();
+    float *output_error_ptr        = output_error->getGPUForWrite();
+    float *pattern_errors_ptr      = pattern_errors->getGPUForReadAndWrite();
+    dim3 block, grid;
+    computeBlockAndGridSizesForAColumnMajorBunch(conf, output_size,
+						 block, grid);
+
+    applyFullLogisticCrossEntropyErrorFunctionKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (output_ptr,
+       target_output_ptr,
+       output_error_ptr,
+       pattern_errors_ptr,
+       EPSILON,
+       INF,
+       conf.cur_bunch_size,
+       conf.max_bunch_size,
+       output_size);
+
+  }
+  else {
+#endif
+    const float *output_ptr        = output->getPPALForRead();
+    const float *target_output_ptr = target_output->getPPALForRead();
+    float *output_error_ptr        = output_error->getPPALForWrite();
+    float *pattern_errors_ptr      = pattern_errors->getPPALForReadAndWrite();
+
+    for (unsigned int i = 0; i < output_size; i++) {
+      for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
+	assert(!(output_ptr[b] > 1.0f) && !(output_ptr[b] < 0.0f));
+	assert(!(target_output_ptr[b] > 1.0f) && !(target_output_ptr[b] < 0.0f));
+	// compute derivative
+	output_error_ptr[b] = output_ptr[b] - target_output_ptr[b];
+	float o         = clamp(output_ptr[b], EPSILON, 1.0f - EPSILON);
+	float t         = clamp(target_output_ptr[b], EPSILON, 1.0f - EPSILON);
+	float inv_t     = clamp(1.0f - target_output_ptr[b], EPSILON, 1.0f - EPSILON);
+	float log_o     = (o > EPSILON) ? logf(o) : INF;
+	float log_inv_o = (1.0f - o > EPSILON) ? logf(1.0f - o) : INF;
+	if (t > EPSILON)
+	  pattern_errors_ptr[b] += t * log_o;
+	if (inv_t > EPSILON)
+	  pattern_errors_ptr[b] += inv_t * log_inv_o;
       }
       output_ptr         += conf.max_bunch_size;
       target_output_ptr  += conf.max_bunch_size;

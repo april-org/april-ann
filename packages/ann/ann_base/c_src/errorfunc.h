@@ -146,7 +146,7 @@ return new GA();
     float computeBatchErrorFunction(float error_sums,
 				    unsigned int num_patterns);
     ErrorFunction *clone() {
-      return new CrossEntropy();
+      return new LogisticCrossEntropy();
     }
     bool logisticMandatory() const { return true; }
   };
@@ -198,6 +198,29 @@ return new GA();
     ErrorFunction *clone() {
       return new FullCrossEntropy();
     }
+  };
+
+  ///////////////////////////////////////
+
+  class FullLogisticCrossEntropy : public ErrorFunction {
+    const float EPSILON, INF;
+  public:
+    FullLogisticCrossEntropy();
+    virtual ~FullLogisticCrossEntropy() {}
+
+    // calcula la entropia cruzada
+    void computePatternErrorFunction(FloatGPUMirroredMemoryBlock *output,
+				     FloatGPUMirroredMemoryBlock *target_output,
+				     FloatGPUMirroredMemoryBlock *output_error,
+				     FloatGPUMirroredMemoryBlock *pattern_errors,
+				     unsigned int output_size,
+				     const ANNConfiguration &conf);
+    float computeBatchErrorFunction(float error_sums,
+				    unsigned int num_patterns);
+    ErrorFunction *clone() {
+      return new FullLogisticCrossEntropy();
+    }
+    bool logisticMandatory() const { return true; }
   };
 
   ///////////////////////////////////////
