@@ -21,12 +21,21 @@ local f
 if filename == "-" then f = io.stdin
 else f = io.open(filename, "r") end
 
+function zero_if_null(v)
+  if v == "None" or v == "Undefined" or v == "Unintialized" or v == "Null" then
+    v = 0
+  end
+  return v
+end
+
 local N      = 0
 local x      = {}
 local y      = {}
 for line in f:lines() do
   local t  = string.tokenize(line)
   if string.sub(t[1], 1, 1) ~= "#" then
+    t[col1] = zero_if_null(t[col1])
+    t[col2] = zero_if_null(t[col2])
     local v1 = tonumber(t[col1]) or
       error("Impossible to convert to number col1: " .. t[col1])
     local v2 = tonumber(t[col2]) or
@@ -84,9 +93,9 @@ local alpha1  = data[a].y_sum/N - beta1 * data[a].x_sum/N
 local beta2   = rxy2 * data[b].sy / data[b].sx
 local alpha2  = data[b].y_sum/N - beta2 * data[b].x_sum/N
 
-printf("rxy=    %.4f +- %.4f [%.4f, %.4f]\n",
+printf("rxy=    % .4f +- % .4f [% .4f, % .4f]\n",
        (rxy1 + rxy2)/2, math.abs(rxy1-rxy2)*0.5, rxy1, rxy2)
-printf("alpha=  %.4f +- %.4f [%.4f, %.4f]\n",
+printf("alpha=  % .4f +- % .4f [% .4f, % .4f]\n",
        (alpha1 + alpha2)/2, math.abs(alpha1-alpha2)*0.5, alpha1, alpha2)
-printf("beta=   %.4f +- %.4f [%.4f, %.4f]\n",
+printf("beta=   % .4f +- % .4f [% .4f, % .4f]\n",
        (beta1 + beta2)/2, math.abs(beta1+beta2)*0.5, beta1, beta2)
