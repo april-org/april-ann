@@ -258,17 +258,21 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 // clasificación, en tal caso el DataSet sobre el que se basa el
 // IndexDataSet representa la salida asociada a cada una de las
 // clases.
-// Requiere 2 argumentos. El primero es el dataset base. El segundo es
-// una tabla con tantos datasets como patternSize tenga el dataset
-// base, cada uno de ellos actuará como diccionario. El patternSize
-// del dataset index resultante es igual a la suma de los patternSize
-// de cada diccionario.
+// Requiere 2 argumentos, y un 3 argumento opcional. El primero es el dataset
+// base. El segundo es una tabla con tantos datasets como patternSize tenga el
+// dataset base, cada uno de ellos actuará como diccionario. El patternSize del
+// dataset index resultante es igual a la suma de los patternSize de cada
+// diccionario. El tercer argumento es el primer valor del indice (normalmente 0
+// o 1)
 {
-  LUABIND_CHECK_ARGN(==, 2);
+  LUABIND_CHECK_ARGN(>=, 2);
+  LUABIND_CHECK_ARGN(<=, 3);
   LUABIND_CHECK_PARAMETER(1, DataSetFloat);
   LUABIND_CHECK_PARAMETER(2, table);
+  int numdics, firstindex;
+  LUABIND_GET_OPTIONAL_PARAMETER(3, int, firstindex, 1);
+  
   DataSetFloat *ds = lua_toDataSetFloat(L,1);
-  int numdics;
   LUABIND_TABLE_GETN(2, numdics);
   if (numdics != ds->patternSize())
     LUABIND_FERROR2("bad number of  dictionary datasets in table (%d instead of %d)",
@@ -277,7 +281,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   vds[0] = ds;
   DataSetFloat **vds_aux = vds+1;
   LUABIND_TABLE_TO_VECTOR(2, DataSetFloat, vds_aux, numdics);
-  DataSetFloat *obj = new IndexDataSet<float>(vds,1);
+  DataSetFloat *obj = new IndexDataSet<float>(vds, firstindex);
   delete[] vds;
   LUABIND_RETURN(DataSetFloat,obj);
 }
