@@ -463,7 +463,9 @@ int IndexDataSet<T>::getPattern(int index, T *pat) {
   int pos = 0;
   indices->getPattern(index,patternindices);
   for (int i=0; i < numdiccionarios; i++) {
-    pos += diccionarios[i]->getPattern((int)patternindices[i]-firstindex,pat+pos);
+    int idx = patternindices[i]-firstindex;
+    assert("Incorrect index at IndexDataSet" && idx >= 0);
+    pos += diccionarios[i]->getPattern((int)idx,pat+pos);
   }
   return patternSize();
 }
