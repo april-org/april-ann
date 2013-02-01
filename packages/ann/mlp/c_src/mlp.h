@@ -76,10 +76,10 @@ namespace ANN {
     void pushBackAllAllLayer(ActivationUnits    *inputs,
 			     ActivationUnits    *outputs,
 			     ActivationFunction *actf,
-			     Connections        *weights, // if 0 reserves new
+			     Connections       **weights, // if *ptr=0 reserves new
 			     bool                transpose_weights,
 			     bool                has_bias,
-			     Connections        *bias); // if 0 reserves new
+			     Connections       **bias); // if *ptr=0 reserves new
     
   };
 

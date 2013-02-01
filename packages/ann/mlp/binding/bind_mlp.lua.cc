@@ -149,8 +149,10 @@ using namespace ANN;
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, bias, Connections, bias, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, Connections, weights, 0);
 
-  obj->pushBackAllAllLayer(input, output, actf, weights,
-			   transpose, has_bias, bias);
+  obj->pushBackAllAllLayer(input, output, actf, &weights,
+			   transpose, has_bias, &bias);
+  if (bias != 0)    LUABIND_RETURN(Connections, bias);
+  if (weights != 0) LUABIND_RETURN(Connections, weights);
 }
 //BIND_END
 
