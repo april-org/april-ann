@@ -26,8 +26,7 @@
 bool ReadFileStream::moveAndFillBuffer() {
   // printf ("------------- MOVE ------------ %d %d\n", buffer_pos, buffer_len);
   int diff = buffer_len - buffer_pos;
-  if (diff > 0)
-    memcpy(buffer, buffer + buffer_pos, diff);
+  for (int i=0; i<diff; ++i) buffer[i] = buffer[buffer_pos + i];
   if (!feof(f))
     buffer_len = fread(buffer + diff, sizeof(char), buffer_pos, f) + diff;
   else buffer_len = 0;
