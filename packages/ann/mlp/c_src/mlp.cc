@@ -280,27 +280,27 @@ namespace ANN {
   void MLP::pushBackAllAllLayer(ActivationUnits    *inputs,
 				ActivationUnits    *outputs,
 				ActivationFunction *actf,
-				Connections        *weights,
+				Connections       **weights,
 				bool                transpose_weights,
 				bool                has_bias,
-				Connections        *bias) {
+				Connections       **bias) {
     Action *action;
     if (has_bias) {
       // Add action bias
-      if (bias == 0) {
-	bias = new BiasConnections(outputs->numNeurons());
-	registerConnections(bias);
+      if (*bias == 0) {
+	*bias = new BiasConnections(outputs->numNeurons());
+	registerConnections(*bias);
       }
-      action = new ForwardBiasAction(getConfReference(), outputs, bias);
+      action = new ForwardBiasAction(getConfReference(), outputs, *bias);
       registerAction(action);
     }
-    if (weights == 0) {
-      weights = new AllAllConnections(inputs->numNeurons(), outputs->numNeurons());
-      registerConnections(weights);
+    if (*weights == 0) {
+      *weights = new AllAllConnections(inputs->numNeurons(), outputs->numNeurons());
+      registerConnections(*weights);
     }
     action = new DotProductAction(getConfReference(),
 				  inputs, outputs,
-				  weights, transpose_weights);
+				  *weights, transpose_weights);
     registerAction(action);
     if (actf == 0) actf = new LinearActivationFunction();
     action = new ActivationsAction(getConfReference(),

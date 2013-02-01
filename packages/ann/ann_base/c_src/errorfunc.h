@@ -41,7 +41,7 @@ namespace ANN {
 					    unsigned int num_patterns)  = 0;
     virtual ErrorFunction *clone() = 0; // deep copy
 
-    bool logisticMandatory() const { return false; }
+    virtual bool logisticMandatory() const = 0;
   };
 
   class MSE : public ErrorFunction {
@@ -62,6 +62,7 @@ namespace ANN {
     ErrorFunction *clone() {
       return new MSE();
     }
+    bool logisticMandatory() const { return false; }
   };
 
   /////////////////////////////////////////////////////
@@ -83,6 +84,7 @@ namespace ANN {
     ErrorFunction *clone() {
       return new Tanh();
     }
+    bool logisticMandatory() const { return false; }
   };
   
   /*
@@ -126,6 +128,7 @@ return new GA();
     ErrorFunction *clone() {
       return new CrossEntropy();
     }
+    bool logisticMandatory() const { return false; }
   };
 
   ///////////////////////////////////////
@@ -176,6 +179,7 @@ return new GA();
     ErrorFunction *clone() {
       return new LocalFMeasure(alpha);
     }
+    bool logisticMandatory() const { return false; }
   };
   
   ///////////////////////////////////////
@@ -198,6 +202,7 @@ return new GA();
     ErrorFunction *clone() {
       return new FullCrossEntropy();
     }
+    bool logisticMandatory() const { return false; }
   };
 
   ///////////////////////////////////////
