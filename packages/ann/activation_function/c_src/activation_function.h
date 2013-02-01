@@ -104,7 +104,8 @@ namespace ANN {
 				     FloatGPUMirroredMemoryBlock *input_errors,
 				     unsigned int size,
 				     const ANNConfiguration &conf,
-				     bool use_cuda) = 0;
+				     bool use_cuda,
+				     bool is_output) = 0;
     
     /// Returns a deep copy of the object
     virtual ActivationFunction *clone() = 0;
@@ -131,7 +132,8 @@ namespace ANN {
 			     FloatGPUMirroredMemoryBlock *input_errors,
 			     unsigned int size,
 			     const ANNConfiguration &conf,
-			     bool use_cuda);
+			     bool use_cuda,
+			     bool is_output);
     ActivationFunction *clone();
   };
 
@@ -155,7 +157,8 @@ namespace ANN {
 			     FloatGPUMirroredMemoryBlock *input_errors,
 			     unsigned int size,
 			     const ANNConfiguration &conf,
-			     bool use_cuda);
+			     bool use_cuda,
+			     bool is_output);
     ActivationFunction *clone();
   };
 
@@ -193,7 +196,8 @@ namespace ANN {
 			     FloatGPUMirroredMemoryBlock *input_errors,
 			     unsigned int size,
 			     const ANNConfiguration &conf,
-			     bool use_cuda);
+			     bool use_cuda,
+			     bool is_output);
     ActivationFunction *clone();
   };
 
@@ -216,7 +220,8 @@ namespace ANN {
 			     FloatGPUMirroredMemoryBlock *input_errors,
 			     unsigned int size,
 			     const ANNConfiguration &conf,
-			     bool use_cuda);
+			     bool use_cuda,
+			     bool is_output);
     ActivationFunction *clone();
   };
 
@@ -299,7 +304,8 @@ namespace ANN {
 			     FloatGPUMirroredMemoryBlock *input_errors,
 			     unsigned int size,
 			     const ANNConfiguration &conf,
-			     bool use_cuda) {
+			     bool use_cuda,
+			     bool is_output) {
       ERROR_PRINT("NOT SUPORTTED METHOD");
     }
   };

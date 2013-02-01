@@ -48,8 +48,9 @@ namespace ANN {
 						       FloatGPUMirroredMemoryBlock *input_errors,
 						       unsigned int size,
 						       const ANNConfiguration &conf,
-						       bool use_cuda) {
-    if (!conf.error_function_logistic_mandatory)
+						       bool use_cuda,
+						       bool is_output) {
+    if (!is_output || !conf.error_function_logistic_mandatory)
       doMultiplyLogisticDerivatives(units,
 				    input_errors,
 				    size,
@@ -79,8 +80,9 @@ namespace ANN {
 						   FloatGPUMirroredMemoryBlock *input_errors,
 						   unsigned int size,
 						   const ANNConfiguration &conf,
-						   bool use_cuda) {
-    if (conf.error_function_logistic_mandatory)
+						   bool use_cuda,
+						   bool is_output) {
+    if (is_output && conf.error_function_logistic_mandatory)
       ERROR_EXIT(123, "The logistic or softmax activation function is"
 		 " mandataroy due to the error function");
     doMultiplyTanhDerivatives(units,
@@ -136,8 +138,9 @@ namespace ANN {
 						      FloatGPUMirroredMemoryBlock *input_errors,
 						      unsigned int size,
 						      const ANNConfiguration &conf,
-						      bool use_cuda) {
-    if (!conf.error_function_logistic_mandatory)
+						      bool use_cuda,
+						      bool is_output) {
+    if (!is_output || !conf.error_function_logistic_mandatory)
       // Is the same as sigmoid
       doMultiplyLogisticDerivatives(units,
 				    input_errors,
@@ -162,7 +165,8 @@ namespace ANN {
 						     FloatGPUMirroredMemoryBlock *input_errors,
 						     unsigned int size,
 						     const ANNConfiguration &conf,
-						     bool use_cuda) {
+						     bool use_cuda,
+						     bool is_output) {
   }
 
   ActivationFunction *LinearActivationFunction::clone() {
