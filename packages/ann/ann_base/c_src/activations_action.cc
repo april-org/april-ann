@@ -48,7 +48,8 @@ namespace ANN {
 				  units->getErrorVectorPtr(),
 				  units->size(),
 				  conf,
-				  conf.use_cuda_flag);
+				  conf.use_cuda_flag,
+				  (units->getType() == OUTPUTS_TYPE));
   }
   
   Action *ActivationsAction::clone(hash<void*,void*> &clone_dict,

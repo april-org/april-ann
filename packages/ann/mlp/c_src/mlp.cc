@@ -32,10 +32,10 @@
 
 namespace ANN {
 
-  MLP::MLP(ANNConfiguration configuration) : ANNBase(configuration)
+  MLP::MLP(ANNConfiguration configuration) : ANNBase(configuration),
+					     error_func(0)
   {
-    error_func = new MSE();
-    IncRef(error_func);
+    setErrorFunction(new MSE());
   }
 
   MLP::~MLP() {
