@@ -6,23 +6,23 @@ description   = "256 inputs 256 tanh 128 tanh 10 softmax"
 inf           = -1
 sup           =  1
 otrorand      = random(5678)
-learning_rate = 0.07
+learning_rate = 0.01
 momentum      = 0.01
 weight_decay  = 1e-05
 max_epochs    = 10
 
 -- training and validation
 errors = {
-  {2.2427213, 2.1271448},
-  {1.8567718, 1.4179991},
-  {1.7889993, 1.5020195},
-  {1.0254155, 0.6416390},
-  {0.5304626, 0.3737333},
-  {0.2664535, 0.2535898},
-  {0.2046538, 0.2155054},
-  {0.1515969, 0.1934462},
-  {0.1334122, 0.2049303},
-  {0.1111678, 0.1520087},
+  {2.1908491, 1.9261616},
+  {1.5168998, 1.0358256},
+  {0.8315809, 0.5523109},
+  {0.4558621, 0.3801708},
+  {0.2730320, 0.2880864},
+  {0.2035244, 0.2022299},
+  {0.1568214, 0.1808007},
+  {0.1246625, 0.1546615},
+  {0.1078244, 0.1615846},
+  {0.0958952, 0.1634587},
 }
 epsilon = 1e-05
 
@@ -112,7 +112,7 @@ print("# Initial validation error:", errorval)
 clock = util.stopwatch()
 clock:go()
 
-ann.mlp.all_all.save(lared, "wop.net", "ascii", "old")
+--ann.mlp.all_all.save(lared, "wop.net", "ascii", "old")
 --lared:show_weights()
 print("Epoch Training  Validation")
 for epoch = 1,max_epochs do
@@ -133,7 +133,7 @@ for epoch = 1,max_epochs do
   			"reference error %g",
   			errorval, errors[epoch][2]))
   end
-  -- ann.mlp.all_all.save(lared, "wop.net", "ascii", "old")
+  --ann.mlp.all_all.save(lared, "wop.net", "ascii", "old")
   printf("%4d  %.7f %.7f\n",
 	 totalepocas,errortrain,errorval)
 end

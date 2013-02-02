@@ -77,6 +77,7 @@ if use_adrian_mlp then
     random      = aleat,
     inf         = inf,
     sup         = sup,
+    use_fanin   = false,
   }
   ann.mlp.all_all.save(lared, "new.net", "ascii", "old")
   --lared:set_error_function(ann.error_functions.cross_entropy())
