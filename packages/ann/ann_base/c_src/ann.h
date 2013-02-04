@@ -115,6 +115,7 @@ namespace ANN {
     
     Connections *getLayerConnections(unsigned int layer);
     ActivationUnits *getLayerActivations(unsigned int layer);
+    Action          *getAction(unsigned int idx);
 
     virtual void setInput(const float *input, unsigned int bunch_pos);
     virtual void copyOutput(float *output, unsigned int bunch_pos);
