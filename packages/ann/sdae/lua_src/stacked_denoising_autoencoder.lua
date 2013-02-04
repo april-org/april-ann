@@ -315,6 +315,12 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
     else
       dae:set_error_function(ann.error_functions.mse())
     end
+    if params.layers[i-1].actf=="linear" or params.layers[i].actf=="linear" then
+      -- if activation is linear, the derivative slope is so high, so we use
+      -- learning_rate to reduce its impact
+      local ratio = 1/math.sqrt(cod_size+input_size)
+      dae:set_option("learning_rate", params.learning_rate*ratio)
+    end
     local best_val_error = 111111111
     local best_net       = dae:clone()
     local best_epoch     = 0
