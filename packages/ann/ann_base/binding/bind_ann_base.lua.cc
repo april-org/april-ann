@@ -253,6 +253,16 @@ using namespace Functions;
 }
 //BIND_END
 
+//BIND_METHOD ANNBase get_action
+{
+  unsigned int idx;
+  LUABIND_GET_PARAMETER(1, uint, idx);
+  if (idx < 1)
+    LUABIND_ERROR("First action is numbered with 1");
+  LUABIND_RETURN(Action, obj->getAction(idx-1));
+}
+//BIND_END
+
 //BIND_METHOD ANNBase get_layer_connections_size
 {
   LUABIND_RETURN(uint, obj->getLayerConnectionsSize());

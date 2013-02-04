@@ -319,6 +319,12 @@ namespace ANN {
     return activations[layer];
   }
 
+  Action *ANNBase::getAction(unsigned int idx) {
+    if (idx >= actions.size())
+      ERROR_EXIT(128, "Incorrect action number!!!\n");
+    return actions[idx];
+  }
+
   unsigned int ANNBase::copyWeightsTo(MatrixFloat **data,
 				      MatrixFloat **old_data) const {
     const unsigned int numw = getNumWeights();
