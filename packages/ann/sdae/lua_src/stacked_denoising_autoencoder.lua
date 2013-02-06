@@ -54,12 +54,11 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(bunch_size,
 					   size = input_size,
 					   type = "outputs" }
   -- first layer
-  autoencoder:push_back_all_all_layer{
+  local hidden_bias,hidden_weights
+  hidden_bias,hidden_weights = autoencoder:push_back_all_all_layer{
     input   = input_layer,
     output  = hidden_layer,
     actfunc = cod_actf }
-  -- the connections layer (1) is a bias object, (2) is the an all_all object
-  local hidden_weights = autoencoder:get_layer_connections(2)
   -- second layer (weights transposed)
   autoencoder:push_back_all_all_layer{
     input     = hidden_layer,
@@ -310,7 +309,7 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
     dae:set_option("weight_decay", params.weight_decay)
     collectgarbage("collect")
     if (params.layers[i-1].actf == "logistic" or
-	params.layer[i-1].actf == "softmax") then
+	params.layers[i-1].actf == "softmax") then
       dae:set_error_function(ann.error_functions.full_logistic_cross_entropy())
     else
       dae:set_error_function(ann.error_functions.mse())
