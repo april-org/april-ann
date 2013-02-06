@@ -35,9 +35,9 @@ ds_xor_in = dataset.matrix(xor_in) --> 4 patrones de tamaño 2
 ds_xor_out = dataset.matrix(xor_out) --> 4 patrones de tamaño 1
 \endverbatim
 
-Cuando creamos un dataset a partir de una matriz de dimensiones $n_1
-\times n_2 \times \cdots \times n_k$ se crea un dataset con $n_1$
-patrones de tamaño $n_2 \cdots \times n_{k}$. Para una matriz de
+Cuando creamos un dataset a partir de una matriz de dimensiones \f$n_1
+\times n_2 \times \cdots \times n_k\f$ se crea un dataset con \f$n_1\f$
+patrones de tamaño \f$n_2 \cdots \times n_{k}\f$. Para una matriz de
 dimensión 2 corresponde con lo esperado de manera intuitiva, mientras
 que para una matriz tiene una sola dimensión (un vector) se
 corresponde con el recorrido de todos sus valores, como se aprecia en
@@ -70,35 +70,33 @@ Hasta aquí no se aprecia ninguna ventaja del uso de
 una misma matriz podemos generar varios datasets variando algunos
 parámetros que, hasta el momento, se han tomado por defecto. Si
 creamos un dataset con \c dataset.matrix y el primer
-argumento es una matriz de tamaño $n_1 \times n_2 \times \cdots \times
-n_k$, podemos pasar un segundo argumento que es una tabla con los
+argumento es una matriz de tamaño \f$n_1 \times n_2 \times \cdots \times
+n_k\f$, podemos pasar un segundo argumento que es una tabla con los
 siguientes campos:
 
-\begin{description}
-
-\item[patternSize] Es una tabla de $k$ enteros estrictamente
+ - \b patternSize, Es una tabla de \f$k\f$ enteros estrictamente
   positivos. Indica el tamaño del sub-patrón. Su valor por defecto es
-  $\{ 1, n_2, n_3, \ldots{}, n_k\}$.
+  \f$\{ 1, n_2, n_3, \ldots{}, n_k\}\f$.
 
-\item[offset] Es una tabla de $k$ enteros. Indica la posición inicial
+ - \b offset, Es una tabla de \f$k\f$ enteros. Indica la posición inicial
   del primer subpatrón que se va a extraer. Esta es una mejora
   respecto al \nom{SNNS}, por ejemplo. Además, los valores pueden ser
   negativos o pueden salirse de las coordenadas límite de la
   matriz. Atención porque la posición inicial en una coordenada es 0
   (como en C) y no 1 (como en \nom{Lua}). El valor por defecto de este
-  campo es $\{0,\ldots{},0\}$.
+  campo es \f$\{0,\ldots{},0\}\f$.
 
-\item[numSteps] Es una tabla de $k$ enteros estrictamente
+ - \b numSteps, Es una tabla de \f$k\f$ enteros estrictamente
   positivos. Indica el número de pasos que se utilizan en cada
   dimensión para generar todos los subpatrones. Su valor por defecto
-  es $\{n_1, 1, \ldots{}, 1\}$. El número total de patrones del
+  es \f$\{n_1, 1, \ldots{}, 1\}\f$. El número total de patrones del
   dataset será siempre igual al productorio de los valores de este
   campo.
 
-\item[stepSize] Es una tabla de $k$ valores enteros, pueden ser
+ - \b stepSize, Es una tabla de \f$k\f$ valores enteros, pueden ser
   negativos o incluso cero. Indica el número de coordenadas que
   avanzamos en cada dimensión cuando generamos los subpatrones. Su
-  valor por defecto es $\{1,\ldots{},1\}$.
+  valor por defecto es \f$\{1,\ldots{},1\}\f$.
 
   Evidentemente, en aquellas coordenadas donde \c numSteps
   sea 1, no se utiliza el valor correspondiente de
@@ -114,18 +112,18 @@ siguientes campos:
   sea inferior al número de elementos en esa dimensión, y poner 1 en
   las restantes.
 
-\item[orderStep] Indica el orden en que se utilizan las $k$
+ - \b orderStep, Indica el orden en que se utilizan las \f$k\f$
   coordenadas de la matriz para recorrer todos los subpatrones que se
-  van a generar. Su valor por defecto es $k-1,k-2,\ldots{},2,1,0$ que
+  van a generar. Su valor por defecto es \f$k-1,k-2,\ldots{},2,1,0\f$ que
   corresponde a recorrer una matriz bidimensional por filas. Variando
   este campo se puede lograr un recorrido por columnas, por ejemplo.
 
-\item[defaultValue] Es un valor numérico (no necesariamente entero)
+ - \b defaultValue, Es un valor numérico (no necesariamente entero)
   que se utiliza para rellenar un patrón en aquellas zonas que se
   salen de los límites de la matriz por cualquiera de sus extremos. Su
   valor por defecto es 0.
 
-\item[circular] Es una tabla de $k$ valores \emph{booleanos} (en
+ - \b circular, Es una tabla de \f$k\f$ valores \emph{booleanos} (en
   \nom{Lua} existen los literales \lstinline{true} y
   \lstinline{false}) que indican, para cada coordenada de la matriz,
   si ésta es circular o no. Su valor por defecto es todo a
@@ -138,10 +136,9 @@ siguientes campos:
   cilindro sin tapas. Si hacemos las 2 coordenadas circulares
   tendríamos un toro (un donut).
 
-\end{description}
-
 Veamos un ejemplo sencillo del uso de estos valores. Queremos generar
 los datasets para aprender la or exclusiva utilizando una sola matriz:
+
 \verbatim
 m_xor = matrix.fromString[[
 4 3
@@ -233,15 +230,15 @@ componentes como queramos que sea el \c patternSize del
 
 Cada componente correspondiente a cada posición de los patrones
 generados por el \c dataset.linearcomb es una combinación
-lineal expresada como una lista de pares (índice,valor). El índice $0$
-está reservado a la constante numérica $1$.
+lineal expresada como una lista de pares (índice,valor). El índice \f$0\f$
+está reservado a la constante numérica \f$1\f$.
 
-Veamos mediante un ejemplo cómo se utiliza. Tenemos un dataset de $4$
-patrones de tamaño $4$. Queremos generar otro dataset con $4$ patrones
-de tamaño $3$, donde cada uno de los 3 elementos del patrón es una
+Veamos mediante un ejemplo cómo se utiliza. Tenemos un dataset de \f$4\f$
+patrones de tamaño \f$4\f$. Queremos generar otro dataset con \f$4\f$ patrones
+de tamaño \f$3\f$, donde cada uno de los 3 elementos del patrón es una
 combinación lineal del dataset de partida. La primera componente es el
-$1^{er}$ elemento del patrón original más dos veces el segundo
-elemento. La segunda componente es la constante numérica $5$ más dos
+\f$1^{er}\f$ elemento del patrón original más dos veces el segundo
+elemento. La segunda componente es la constante numérica \f$5\f$ más dos
 veces el tercer elemento del patrón original. Por último, la tercera
 componente es la segunda componente del patrón original:
 
