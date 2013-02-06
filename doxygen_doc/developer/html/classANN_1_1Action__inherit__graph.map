@@ -1,0 +1,7 @@
+<map id="ANN::Action" name="ANN::Action">
+<area shape="rect" id="node5" href="$classANN_1_1ActivationsAction.html" title="ANN::ActivationsAction" alt="" coords="5,160,165,189"/>
+<area shape="rect" id="node7" href="$classANN_1_1CopyAction.html" title="ANN::CopyAction" alt="" coords="189,160,315,189"/>
+<area shape="rect" id="node9" href="$classANN_1_1DotProductAction.html" title="ANN::DotProductAction" alt="" coords="339,160,501,189"/>
+<area shape="rect" id="node11" href="$classANN_1_1ForwardBiasAction.html" title="ANN::ForwardBiasAction" alt="" coords="525,160,693,189"/>
+<area shape="rect" id="node2" href="$classReferenced.html" title="Referenced" alt="" coords="292,5,380,35"/>
+</map>

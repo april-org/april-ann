@@ -1,0 +1,19 @@
+<map id="imaging/libpng/c_src/libpng.h" name="imaging/libpng/c_src/libpng.h">
+<area shape="rect" id="node3" href="$utilImageFloat_8h.html" title="utilImageFloat.h" alt="" coords="308,101,423,131"/>
+<area shape="rect" id="node5" href="$utilMatrixFloat_8h.html" title="utilMatrixFloat.h" alt="" coords="964,179,1079,208"/>
+<area shape="rect" id="node22" href="$matrix_8h.html" title="matrix.h" alt="" coords="431,333,500,363"/>
+<area shape="rect" id="node44" href="$image_8h.html" title="image.h" alt="" coords="432,179,499,208"/>
+<area shape="rect" id="node63" href="$floatrgb_8h.html" title="floatrgb.h" alt="" coords="161,179,236,208"/>
+<area shape="rect" id="node7" href="$constString_8h.html" title="constString.h" alt="" coords="1016,333,1115,363"/>
+<area shape="rect" id="node20" href="$matrixFloat_8h.html" title="matrixFloat.h" alt="" coords="929,256,1028,285"/>
+<area shape="rect" id="node40" href="$read__file__stream_8h.html" title="read_file_stream.h" alt="" coords="1103,256,1231,285"/>
+<area shape="rect" id="node13" href="$logbase_8h.html" title="logbase.h" alt="" coords="1009,411,1087,440"/>
+<area shape="rect" id="node15" href="$logbase__standard_8h.html" title="logbase_standard.h" alt="" coords="981,488,1115,517"/>
+<area shape="rect" id="node24" href="$referenced_8h.html" title="referenced.h" alt="" coords="763,411,856,440"/>
+<area shape="rect" id="node26" href="$constants_8h.html" title="constants.h" alt="" coords="496,411,587,440"/>
+<area shape="rect" id="node28" href="$clamp_8h.html" title="clamp.h" alt="" coords="109,411,176,440"/>
+<area shape="rect" id="node30" href="$aligned__memory_8h.html" title="aligned_memory.h" alt="" coords="611,411,739,440"/>
+<area shape="rect" id="node48" href="$affine__transform_8h.html" title="affine_transform.h" alt="" coords="403,256,528,285"/>
+<area shape="rect" id="node52" href="$image_8cc.html" title="image.cc" alt="" coords="253,256,328,285"/>
+<area shape="rect" id="node60" href="$maxmin_8h.html" title="maxmin.h" alt="" coords="328,333,405,363"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="ann::time_series_error_functions::__base__" name="ann::time_series_error_functions::__base__">
+<area shape="rect" id="node3" href="$classann_1_1time__series__error__functions_1_1absolute__error.html" title="ann::time_series_error\l_functions::absolute_error" alt="" coords="207,5,377,51"/>
+<area shape="rect" id="node5" href="$classann_1_1time__series__error__functions_1_1nrmse.html" title="ann::time_series_error\l_functions::nrmse" alt="" coords="217,74,367,121"/>
+<area shape="rect" id="node7" href="$classann_1_1time__series__error__functions_1_1rmse.html" title="ann::time_series_error\l_functions::rmse" alt="" coords="217,143,367,190"/>
+</map>

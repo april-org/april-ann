@@ -1,0 +1,7 @@
+<map id="Functions::DataProducer&lt; T &gt;" name="Functions::DataProducer&lt; T &gt;">
+<area shape="rect" id="node5" href="$classFunctions_1_1DataProducer.html" title="Functions::DataProducer\l\&lt; double \&gt;" alt="" coords="5,182,171,229"/>
+<area shape="rect" id="node7" href="$classFunctions_1_1DataProducer.html" title="Functions::DataProducer\l\&lt; float \&gt;" alt="" coords="195,182,360,229"/>
+<area shape="rect" id="node2" href="$classReferenced.html" title="Referenced" alt="" coords="92,5,180,35"/>
+<area shape="rect" id="node9" href="$classFunctions_1_1DataSetFloatProducer.html" title="A specialization of FloatDataProducer which gets data from a dataset." alt="" coords="53,289,269,319"/>
+<area shape="rect" id="node11" href="$classFunctions_1_1FloatContextualizerProducerFromDouble.html" title="A specialization of FloatDataProducer which gets data from another producer." alt="" coords="293,281,493,327"/>
+</map>

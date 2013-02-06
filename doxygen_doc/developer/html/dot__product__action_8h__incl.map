@@ -1,0 +1,29 @@
+<map id="ann/ann_base/c_src/dot_product_action.h" name="ann/ann_base/c_src/dot_product_action.h">
+<area shape="rect" id="node3" href="$action_8h.html" title="action.h" alt="" coords="879,101,945,131"/>
+<area shape="rect" id="node5" href="$actunit_8h.html" title="actunit.h" alt="" coords="1057,256,1129,285"/>
+<area shape="rect" id="node79" href="$connection_8h.html" title="connection.h" alt="" coords="1821,179,1917,208"/>
+<area shape="rect" id="node7" href="$error__print_8h.html" title="error_print.h" alt="" coords="969,661,1060,691"/>
+<area shape="rect" id="node13" href="$referenced_8h.html" title="referenced.h" alt="" coords="1388,497,1481,527"/>
+<area shape="rect" id="node74" href="$ann__configuration_8h.html" title="ann_configuration.h" alt="" coords="719,497,852,527"/>
+<area shape="rect" id="node111" href="$aux__hash__table_8h.html" title="aux_hash_table.h" alt="" coords="439,411,561,440"/>
+<area shape="rect" id="node122" href="$hash__table_8h.html" title="hash_table.h" alt="" coords="141,333,237,363"/>
+<area shape="rect" id="node15" href="$activation__function_8h.html" title="activation_function.h" alt="" coords="1023,333,1164,363"/>
+<area shape="rect" id="node43" href="$gpu__mirrored__memory__block_8h.html" title="gpu_mirrored_memory\l_block.h" alt="" coords="1215,489,1364,535"/>
+<area shape="rect" id="node18" href="$MersenneTwister_8h.html" title="MersenneTwister.h" alt="" coords="1560,411,1693,440"/>
+<area shape="rect" id="node31" href="$constString_8h.html" title="constString.h" alt="" coords="495,497,593,527"/>
+<area shape="rect" id="node67" href="$wrapper_8h.html" title="wrapper.h" alt="" coords="1055,411,1132,440"/>
+<area shape="rect" id="node35" href="$logbase_8h.html" title="logbase.h" alt="" coords="259,584,336,613"/>
+<area shape="rect" id="node37" href="$logbase__standard_8h.html" title="logbase_standard.h" alt="" coords="231,661,364,691"/>
+<area shape="rect" id="node47" href="$gpu__helper_8h.html" title="gpu_helper.h" alt="" coords="1215,584,1311,613"/>
+<area shape="rect" id="node64" href="$aligned__memory_8h.html" title="aligned_memory.h" alt="" coords="2180,584,2308,613"/>
+<area shape="rect" id="node50" href="$cblas__headers_8h.html" title="cblas_headers.h" alt="" coords="1204,661,1321,691"/>
+<area shape="rect" id="node56" href="$vector_8h.html" title="vector.h" alt="" coords="876,661,945,691"/>
+<area shape="rect" id="node60" href="$swap_8h.html" title="swap.h" alt="" coords="888,739,952,768"/>
+<area shape="rect" id="node85" href="$constants_8h.html" title="constants.h" alt="" coords="1999,497,2089,527"/>
+<area shape="rect" id="node90" href="$matrixFloat_8h.html" title="matrixFloat.h" alt="" coords="2083,256,2181,285"/>
+<area shape="rect" id="node105" href="$maxmin_8h.html" title="maxmin.h" alt="" coords="2513,333,2591,363"/>
+<area shape="rect" id="node92" href="$matrix_8h.html" title="matrix.h" alt="" coords="2147,411,2216,440"/>
+<area shape="rect" id="node96" href="$clamp_8h.html" title="clamp.h" alt="" coords="2164,497,2231,527"/>
+<area shape="rect" id="node118" href="$pair_8h.html" title="pair.h" alt="" coords="131,497,184,527"/>
+<area shape="rect" id="node120" href="$null__types_8h.html" title="null_types.h" alt="" coords="93,584,184,613"/>
+</map>
