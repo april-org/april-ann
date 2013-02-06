@@ -1,0 +1,297 @@
+ /**
+
+  \page dataset Dataset
+
+Las matrices por sí mismas no son directamente utilizables desde los
+algoritmos de aprendizaje automático, ya que estos utilizan una
+abstracción de un conjunto de datos denominada \c dataset
+
+Un \c dataset responde a los métodos siguientes:
+
+ - \b numPatterns, devuelve el número de patrones.
+
+ - \b patternSize, devuelve el tamaño máximo de los patrones.
+
+ - \b getPattern, recibe un índice numérico (un valor entre 1 y
+   numPatterns) y devuelve un vector (tabla \nom{Lua}) con el
+   índice-ésimo patrón.
+
+ - \b putPattern, recibe un índice numérico (un valor entre 1 y
+   \nom{numPatterns}) y un vector de tamaño \nom{patternSize} y
+   modifica el \nom{dataset} para dar cuenta de esta información. No
+   todas las clases \nom{dataset} permiten modificarse, y en tal caso
+   avisan devolviendo 0 en lugar de \nom{patternSize}.  \end{itemize}
+
+ .
+
+\section dataset_matrix dataset.matrix
+
+La forma más convencional de crear un \c dataset es a partir
+de una matriz:
+\verbatim
+--> recordemos que xor_in es una matriz de 4x2
+ds_xor_in = dataset.matrix(xor_in) --> 4 patrones de tamaño 2
+--> recordemos que xor_out es una matriz de 4x1
+ds_xor_out = dataset.matrix(xor_out) --> 4 patrones de tamaño 1
+\endverbatim
+
+Cuando creamos un dataset a partir de una matriz de dimensiones \f$n_1
+\times n_2 \times \cdots \times n_k\f$ se crea un dataset con \f$n_1\f$
+patrones de tamaño \f$n_2 \cdots \times n_{k}\f$. Para una matriz de
+dimensión 2 corresponde con lo esperado de manera intuitiva, mientras
+que para una matriz tiene una sola dimensión (un vector) se
+corresponde con el recorrido de todos sus valores, como se aprecia en
+el siguiente ejemplo, donde además vemos que el método
+\c patterns() devuelve un iterador que se puede utlizar en un
+bucle \c for:
+
+\verbatim
+a = matrix(2, 2, {1,2,3,4})
+b = dataset.matrix(a)
+for i,j in b:patterns() do print(table.concat(j,",")) end
+--> 1,2
+--> 3,4
+a = matrix(2,2,2,{1,2,3,4,5,6,7,8})
+b = dataset.matrix(a)
+for i,j in b:patterns() do print(table.concat(j,",")) end
+--> 1,2,3,4
+--> 5,6,7,8
+a = matrix(4,{1,2,3,4})
+b = dataset.matrix(a)
+for i,j in b:patterns() do print(table.concat(j,",")) end
+--> 1
+--> 2
+--> 3
+--> 4
+\endverbatim
+
+Hasta aquí no se aprecia ninguna ventaja del uso de
+\c dataset respecto de las matrices. Vamos a ver que sobre
+una misma matriz podemos generar varios datasets variando algunos
+parámetros que, hasta el momento, se han tomado por defecto. Si
+creamos un dataset con \c dataset.matrix y el primer
+argumento es una matriz de tamaño \f$n_1 \times n_2 \times \cdots \times
+n_k\f$, podemos pasar un segundo argumento que es una tabla con los
+siguientes campos:
+
+ - \b patternSize, es una tabla de \f$k\f$ enteros estrictamente
+  positivos. Indica el tamaño del sub-patrón. Su valor por defecto es
+  \f$\{ 1, n_2, n_3, \ldots{}, n_k\}\f$.
+
+ - \b offset, es una tabla de \f$k\f$ enteros. Indica la posición inicial
+  del primer subpatrón que se va a extraer. Esta es una mejora
+  respecto al \nom{SNNS}, por ejemplo. Además, los valores pueden ser
+  negativos o pueden salirse de las coordenadas límite de la
+  matriz. Atención porque la posición inicial en una coordenada es 0
+  (como en C) y no 1 (como en \nom{Lua}). El valor por defecto de este
+  campo es \f$\{0,\ldots{},0\}\f$.
+
+ - \b numSteps, es una tabla de \f$k\f$ enteros estrictamente
+  positivos. Indica el número de pasos que se utilizan en cada
+  dimensión para generar todos los subpatrones. Su valor por defecto
+  es \f$\{n_1, 1, \ldots{}, 1\}\f$. El número total de patrones del
+  dataset será siempre igual al productorio de los valores de este
+  campo.
+
+ - \b stepSize, es una tabla de \f$k\f$ valores enteros, pueden ser
+  negativos o incluso cero. Indica el número de coordenadas que
+  avanzamos en cada dimensión cuando generamos los subpatrones. Su
+  valor por defecto es \f$\{1,\ldots{},1\}\f$.
+
+  Evidentemente, en aquellas coordenadas donde \c numSteps
+  sea 1, no se utiliza el valor correspondiente de
+  \c stepSize, así que da igual el valor que le demos en esas
+  coordenadas.
+
+  Existen muchas formas de recorrer una matriz, pero hay dos muy
+  habituales denominadas modo \emph{particionamiento} (denominado
+  también teselación o ``tiling'') y el modo \emph{desplazamiento} (o
+  ``shifting''). Para crear un dataset que recorra la matriz en modo
+  particionamiento basta con poner el valor \nom{stepSize} igual a
+  \nom{patternSize} en aquellas coordenadas donde \nom{patternSize}
+  sea inferior al número de elementos en esa dimensión, y poner 1 en
+  las restantes.
+
+ - \b orderStep, indica el orden en que se utilizan las \f$k\f$
+  coordenadas de la matriz para recorrer todos los subpatrones que se
+  van a generar. Su valor por defecto es \f$k-1,k-2,\ldots{},2,1,0\f$ que
+  corresponde a recorrer una matriz bidimensional por filas. Variando
+  este campo se puede lograr un recorrido por columnas, por ejemplo.
+
+ - \b defaultValue, es un valor numérico (no necesariamente entero)
+  que se utiliza para rellenar un patrón en aquellas zonas que se
+  salen de los límites de la matriz por cualquiera de sus extremos. Su
+  valor por defecto es 0.
+
+ - \b circular, es una tabla de \f$k\f$ valores \emph{booleanos} (en
+  \nom{Lua} existen los literales \lstinline{true} y
+  \lstinline{false}) que indican, para cada coordenada de la matriz,
+  si ésta es circular o no. Su valor por defecto es todo a
+  \lstinline{false} (es decir, no circular). Cuando una coordenada no
+  es circular, al salirnos fuera de la matriz nos encontraremos con el
+  valor por defecto \nom{defaultValue}, mientras que si la coordenada
+  sí es circular, en lugar de salirnos volveremos a la coordenada
+  inicial. Por ejemplo, si creamos una matriz de dimensión 2 y hacemos
+  circular una de las coordenadas, tendríamos algo similar a un
+  cilindro sin tapas. Si hacemos las 2 coordenadas circulares
+  tendríamos un toro (un donut).
+
+Veamos un ejemplo sencillo del uso de estos valores. Queremos generar
+los datasets para aprender la or exclusiva utilizando una sola matriz:
+
+\verbatim
+m_xor = matrix.fromString[[
+4 3
+ascii
+0 0 0
+0 1 1
+1 0 1
+1 1 0
+]]
+ds_input  = dataset.matrix(m_xor,{patternSize={1,2}})
+ds_output = dataset.matrix(m_xor,{offset={0,2},patternSize={1,1}})
+for i = 1,ds_input:numPatterns() do
+  printf("Index %d -> Input: %s Output: %s\n",i,
+	 table.concat(ds_input:getPattern(i),","),
+	 table.concat(ds_output:getPattern(i),","))
+end
+--[[ Salida:
+Index 1 -> Input: 0,0 Output: 0
+Index 2 -> Input: 0,1 Output: 1
+Index 3 -> Input: 1,0 Output: 1
+Index 4 -> Input: 1,1 Output: 0
+]]--
+\endverbatim
+
+Como esta forma de utilizar una matriz es tan general, podemos definir
+la siguiente funcion:
+\verbatim
+function dataset_pair(m,sizein,sizeout)
+  local d_in  = dataset.matrix(m,{patternSize = {1,sizein}})
+  local d_out = dataset.matrix(m,{offset={0,sizein},patternSize = {1,sizeout}})
+  return d_in,d_out
+end
+-- se puede utilizar así:
+ds_input,ds_output = dataset_pair(m_xor,2,1)
+\endverbatim
+
+\section dataset_union dataset.union
+
+Permite que varios datasets que tienen el mismo
+\c patternSize se vean como uno solo con un
+\c numPatterns igual al sumatorio de los
+\c numPatterns de los \c datasets que lo
+componen. Requiere un único argumento que es una tabla con los
+\c datasets necesarios.
+
+\section dataset_indexed dataset.indexed
+
+El formato indexado permite crear un mapping de indices a
+patterns. Puede ser útil para especificar la salida de una
+clasificación, en tal caso el \c dataset sobre el que se basa
+el \c dataset.indexed representa la salida asociada a cada
+una de las clases.
+
+Requiere 2 argumentos. El primero es el dataset base. El segundo es
+una tabla con tantos \c datasets como \c patternSize
+tenga el dataset base, cada uno de ellos actuará como diccionario. El
+\c patternSize del \c dataset.indexed resultante es
+igual a la suma de los \c patternSize de cada diccionario.
+
+\section dataset_slice dataset.slice
+
+Permite seleccionar un subconjunto de patterns de un dataset, este
+subconjunto debe ser un intervalo (para subconjuntos más generales se
+puede utilizar la clase \c dataset.index) Requiere 3
+argumentos. El primero es el dataset y luego necesita 2 argumentos que
+son los indices inicial y final de los patrones que se eligen como
+subconjunto.
+
+\section dataset_split dataset.split
+
+Permite seleccionar un subconjunto de los elementos de salida de un
+dataset. Es decir, el dataset resultante tiene el mismo numero de
+patrones (\c numPatterns) pero un \c patternSize
+menor. El subconjunto de salida es un intervalo del original.
+
+\section dataset_linearcomb dataset.linearcomb
+
+Permite realizar una combinación lineal de los elementos de un
+\c dataset. Se trata de una forma mucho más general que el
+\c dataset.split anteriormente descrito puesto que, aunque de
+manera algo complicada, es posible simular un
+\c dataset.split mediante un \c dataset.linearcomb.
+
+Un \c dataset.linearcomb requiere dos argumentos: un
+\c dataset y una tabla. La tabla es un vector con tantas
+componentes como queramos que sea el \c patternSize del
+\c dataset.linearcomb resultante. Obsérvese que el
+\c numPatterns del dataset resultante será el mismo.
+
+Cada componente correspondiente a cada posición de los patrones
+generados por el \c dataset.linearcomb es una combinación
+lineal expresada como una lista de pares (índice,valor). El índice \f$0\f$
+está reservado a la constante numérica \f$1\f$.
+
+Veamos mediante un ejemplo cómo se utiliza. Tenemos un dataset de \f$4\f$
+patrones de tamaño \f$4\f$. Queremos generar otro dataset con \f$4\f$ patrones
+de tamaño \f$3\f$, donde cada uno de los 3 elementos del patrón es una
+combinación lineal del dataset de partida. La primera componente es el
+\f$1^{er}\f$ elemento del patrón original más dos veces el segundo
+elemento. La segunda componente es la constante numérica \f$5\f$ más dos
+veces el tercer elemento del patrón original. Por último, la tercera
+componente es la segunda componente del patrón original:
+
+\verbatim
+-- creamos una matriz
+m = matrix.fromString[[
+4 4
+ascii
+ 1  2  3  4
+ 4  5  6  8
+ 9 10 11 12
+13 14 15 16
+]]
+d = dataset.matrix(m) - 4 patrones: cada fila de la matriz
+linearc = { -- 3 combinaciones lineales:
+  { {1,1.0}, {2, 2.0} },
+  { {0,5.0} , {3, 2.0} }, -- 5.0 + 2*posicion_3 del patrón
+  { {2,1.0} },
+}
+dlc = dataset.linearcomb(d,linearc)
+
+print("dataset d:")
+for index,pattern in d:patterns() do
+  print(index,string.join(pattern,","))
+end
+print("dataset dlc:")
+for index,pattern in dlc:patterns() do
+  print(index,string.join(pattern,","))
+end
+
+--[[ La salida sería:
+dataset d:
+1       1,2,3,4
+2       4,5,6,8
+3       9,10,11,12
+4       13,14,15,16
+dataset dlc:
+1       5,11,2
+2       14,17,5
+3       29,27,10
+4       41,35,14
+]]
+
+\endverbatim
+
+\section dataset_join dataset.join
+
+Permite juntar las salidas de varios dataset que tienen el mismo
+numero de patrones (\c numPatterns). El
+\c patternSize del dataset resultante es igual al sumatorio
+de los \c patternSize de los datasets que lo
+componen. Requiere un único argumento que es una tabla con los
+datasets necesarios.
+
+
+*/
