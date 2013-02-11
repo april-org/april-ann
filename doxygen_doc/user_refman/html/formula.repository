@@ -1,0 +1,20 @@
+\form#0:\[ f(y) = \frac{1}{1 + e^{-y}} \]
+\form#1:\[ a_i = \frac{e^{y_i}}{\sum_{j} e^{y_j}} \]
+\form#2:\[ f(y) = \frac{2}{1 + e^{-y}} - 1 \]
+\form#3:$ [0,1] $
+\form#4:$ [-1,1] $
+\form#5:$n_1 \times n_2 \times \cdots \times n_k$
+\form#6:$n_1$
+\form#7:$n_2 \cdots \times n_{k}$
+\form#8:$k$
+\form#9:$\{ 1, n_2, n_3, \ldots{}, n_k\}$
+\form#10:$\{0,\ldots{},0\}$
+\form#11:$\{n_1, 1, \ldots{}, 1\}$
+\form#12:$\{1,\ldots{},1\}$
+\form#13:$k-1,k-2,\ldots{},2,1,0$
+\form#14:$0$
+\form#15:$1$
+\form#16:$4$
+\form#17:$3$
+\form#18:$1^{er}$
+\form#19:$5$

@@ -1,0 +1,14 @@
+<map id="basics/util/c_src/trie4lua.cc" name="basics/util/c_src/trie4lua.cc">
+<area shape="rect" id="node3" href="$trie4lua_8h.html" title="trie4lua.h" alt="" coords="333,83,408,112"/>
+<area shape="rect" id="node5" href="$referenced_8h.html" title="referenced.h" alt="" coords="240,160,333,189"/>
+<area shape="rect" id="node7" href="$aux__hash__table_8h.html" title="aux_hash_table.h" alt="" coords="277,237,400,267"/>
+<area shape="rect" id="node36" href="$hash__table_8h.html" title="hash_table.h" alt="" coords="471,160,567,189"/>
+<area shape="rect" id="node15" href="$error__print_8h.html" title="error_print.h" alt="" coords="93,315,184,344"/>
+<area shape="rect" id="node21" href="$constString_8h.html" title="constString.h" alt="" coords="259,315,357,344"/>
+<area shape="rect" id="node32" href="$pair_8h.html" title="pair.h" alt="" coords="467,315,520,344"/>
+<area shape="rect" id="node25" href="$logbase_8h.html" title="logbase.h" alt="" coords="347,392,424,421"/>
+<area shape="rect" id="node27" href="$logbase__standard_8h.html" title="logbase_standard.h" alt="" coords="345,469,479,499"/>
+<area shape="rect" id="node34" href="$null__types_8h.html" title="null_types.h" alt="" coords="448,392,539,421"/>
+<area shape="rect" id="node43" href="$vector_8h.html" title="vector.h" alt="" coords="581,237,651,267"/>
+<area shape="rect" id="node46" href="$swap_8h.html" title="swap.h" alt="" coords="637,315,701,344"/>
+</map>

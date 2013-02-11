@@ -1,0 +1,21 @@
+<map id="ann/ann_base/c_src/connection.h" name="ann/ann_base/c_src/connection.h">
+<area shape="rect" id="node3" href="$action_8h.html" title="ann/ann_base/c_src\l/action.h" alt="" coords="601,102,739,149"/>
+<area shape="rect" id="node15" href="$ann_8h.html" title="ann/ann_base/c_src\l/ann.h" alt="" coords="763,198,902,245"/>
+<area shape="rect" id="node25" href="$dot__product__action_8h.html" title="ann/ann_base/c_src\l/dot_product_action.h" alt="" coords="430,198,577,245"/>
+<area shape="rect" id="node31" href="$forward__bias__action_8h.html" title="ann/ann_base/c_src\l/forward_bias_action.h" alt="" coords="203,198,355,245"/>
+<area shape="rect" id="node38" href="$all__all__connection_8h.html" title="ann/ann_base/c_src\l/all_all_connection.h" alt="" coords="977,198,1115,245"/>
+<area shape="rect" id="node46" href="$bias__connection_8h.html" title="ann/ann_base/c_src\l/bias_connection.h" alt="" coords="1254,294,1393,341"/>
+<area shape="rect" id="node52" href="$connection_8cc.html" title="ann/ann_base/c_src\l/connection.cc" alt="" coords="1190,102,1329,149"/>
+<area shape="rect" id="node5" href="$action_8cc.html" title="ann/ann_base/c_src\l/action.cc" alt="" coords="601,198,739,245"/>
+<area shape="rect" id="node7" href="$activations__action_8h.html" title="ann/ann_base/c_src\l/activations_action.h" alt="" coords="262,294,403,341"/>
+<area shape="rect" id="node19" href="$mlp_8h.html" title="ann/mlp/c_src/mlp.h" alt="" coords="870,303,1009,332"/>
+<area shape="rect" id="node9" href="$activations__action_8cc.html" title="ann/ann_base/c_src\l/activations_action.cc" alt="" coords="262,390,411,437"/>
+<area shape="rect" id="node11" href="$all__all__mlp_8cc.html" title="ann/mlp/c_src/all_all\l_mlp.cc" alt="" coords="625,486,766,533"/>
+<area shape="rect" id="node13" href="$mlp_8cc.html" title="ann/mlp/c_src/mlp.cc" alt="" coords="622,399,769,428"/>
+<area shape="rect" id="node17" href="$ann_8cc.html" title="ann/ann_base/c_src\l/ann.cc" alt="" coords="707,294,846,341"/>
+<area shape="rect" id="node21" href="$all__all__mlp_8h.html" title="ann/mlp/c_src/all_all\l_mlp.h" alt="" coords="818,390,959,437"/>
+<area shape="rect" id="node27" href="$dot__product__action_8cc.html" title="ann/ann_base/c_src\l/dot_product_action.cc" alt="" coords="478,294,633,341"/>
+<area shape="rect" id="node33" href="$forward__bias__action_8cc.html" title="ann/ann_base/c_src\l/forward_bias_action.cc" alt="" coords="27,294,187,341"/>
+<area shape="rect" id="node40" href="$all__all__connection_8cc.html" title="ann/ann_base/c_src\l/all_all_connection.cc" alt="" coords="1083,294,1230,341"/>
+<area shape="rect" id="node48" href="$bias__connection_8cc.html" title="ann/ann_base/c_src\l/bias_connection.cc" alt="" coords="1254,390,1393,437"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="ann::actions::__base__" name="ann::actions::__base__">
+<area shape="rect" id="node3" href="$classann_1_1actions_1_1activations.html" title="ann::actions::activations" alt="" coords="5,83,168,112"/>
+<area shape="rect" id="node5" href="$classann_1_1actions_1_1dot__product.html" title="ann::actions::dot_product" alt="" coords="192,83,360,112"/>
+<area shape="rect" id="node7" href="$classann_1_1actions_1_1forward__bias.html" title="ann::actions::forward_bias" alt="" coords="384,83,557,112"/>
+</map>

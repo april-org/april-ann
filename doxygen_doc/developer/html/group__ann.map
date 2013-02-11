@@ -1,0 +1,6 @@
+<map id="Ann" name="Ann">
+<area shape="rect" id="node2" href="$group__mlp.html" title="Mlp" alt="" coords="144,5,187,35"/>
+<area shape="rect" id="node3" href="$group__ann__base.html" title="Ann_base" alt="" coords="125,59,205,88"/>
+<area shape="rect" id="node4" href="$group__ann__configuration.html" title="Ann_configuration" alt="" coords="103,112,228,141"/>
+<area shape="rect" id="node5" href="$group__activation__function.html" title="Activation_function" alt="" coords="99,165,232,195"/>
+</map>

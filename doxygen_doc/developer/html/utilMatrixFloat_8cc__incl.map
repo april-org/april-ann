@@ -1,0 +1,14 @@
+<map id="basics/matrix/c_src/utilMatrixFloat.cc" name="basics/matrix/c_src/utilMatrixFloat.cc">
+<area shape="rect" id="node3" href="$read__file__stream_8h.html" title="read_file_stream.h" alt="" coords="877,179,1005,208"/>
+<area shape="rect" id="node18" href="$utilMatrixFloat_8h.html" title="utilMatrixFloat.h" alt="" coords="784,101,899,131"/>
+<area shape="rect" id="node29" href="$clamp_8h.html" title="clamp.h" alt="" coords="179,333,245,363"/>
+<area shape="rect" id="node42" href="$binarizer_8h.html" title="binarizer.h" alt="" coords="996,101,1079,131"/>
+<area shape="rect" id="node5" href="$constString_8h.html" title="constString.h" alt="" coords="892,256,991,285"/>
+<area shape="rect" id="node11" href="$logbase_8h.html" title="logbase.h" alt="" coords="949,333,1027,363"/>
+<area shape="rect" id="node13" href="$logbase__standard_8h.html" title="logbase_standard.h" alt="" coords="949,411,1083,440"/>
+<area shape="rect" id="node21" href="$matrixFloat_8h.html" title="matrixFloat.h" alt="" coords="633,179,732,208"/>
+<area shape="rect" id="node23" href="$matrix_8h.html" title="matrix.h" alt="" coords="577,256,647,285"/>
+<area shape="rect" id="node25" href="$referenced_8h.html" title="referenced.h" alt="" coords="781,333,875,363"/>
+<area shape="rect" id="node27" href="$constants_8h.html" title="constants.h" alt="" coords="269,333,360,363"/>
+<area shape="rect" id="node31" href="$aligned__memory_8h.html" title="aligned_memory.h" alt="" coords="384,333,512,363"/>
+</map>

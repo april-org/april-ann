@@ -98,4 +98,4 @@ printf("rxy=    % .4f +- % .4f [% .4f, % .4f]\n",
 printf("alpha=  % .4f +- % .4f [% .4f, % .4f]\n",
        (alpha1 + alpha2)/2, math.abs(alpha1-alpha2)*0.5, alpha1, alpha2)
 printf("beta=   % .4f +- % .4f [% .4f, % .4f]\n",
-       (beta1 + beta2)/2, math.abs(beta1+beta2)*0.5, beta1, beta2)
+       (beta1 + beta2)/2, math.abs(beta1-beta2)*0.5, beta1, beta2)
