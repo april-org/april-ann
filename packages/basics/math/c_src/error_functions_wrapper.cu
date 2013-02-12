@@ -26,6 +26,7 @@
 
 using april_utils::clamp;
 
+#define clip(value, min, max) (((value) < (min)) ? (min) : (((value) > (max)) ? (max) : (value)))
 // ATTENTION: In 64-bit machines is better to use exp than expf
 #define sigmoid(numerator,value) (numerator) / (exp(-(value))+1.0f)
 
@@ -693,3 +694,4 @@ void doCalculateFullLogisticCrossEntropyErrorFunction(FloatGPUMirroredMemoryBloc
 }
 
 #undef sigmoid
+#undef clip
