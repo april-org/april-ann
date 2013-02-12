@@ -290,13 +290,14 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
     local cod_size   = params.layers[i].size
     printf("# Training of layer %d--%d--%d (number %d)\n",
 	   input_size, cod_size, input_size, i-1)
+    io.stdout:flush()
     local input_actf = ann.activations.from_string(params.layers[i-1].actf)
     local cod_actf   = ann.activations.from_string(params.layers[i].actf)
     local val_data = current_val_dataset_params
     local data
     data = generate_training_table_configuration_from_params(current_dataset_params,
 							     params,
-							     i==2)
+							     true)
     local dae
     dae = build_two_layered_autoencoder_from_sizes_and_actf(params.bunch_size,
 							    input_size,
@@ -343,6 +344,7 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
       printf("%4d %10.6f %10.6f  (best %10.6f at epoch %4d)  %.4f\n",
 	     epoch, train_error, val_error, best_val_error, best_epoch,
 	    train_improve)
+      io.stdout:flush()
       collectgarbage("collect")
       -- convergence criteria
       if params.val_input_dataset then
@@ -434,6 +436,7 @@ function ann.autoencoders.stacked_denoising_finetunning(sdae_table, params)
   --------------------------------------
   -- FINETUNING
   print("# Begining of fine-tuning")
+  io.stdout:flush()
   local sdae = ann.autoencoders.build_full_autoencoder(params.bunch_size,
 						       params.layers,
 						       sdae_table)
@@ -466,6 +469,7 @@ function ann.autoencoders.stacked_denoising_finetunning(sdae_table, params)
     end
     printf("%4d %10.6f %10.6f  (best %10.6f at epoch %4d)\n",
 	   epoch, train_error, val_error, best_val_error, best_epoch)
+    io.stdout:flush()
     collectgarbage("collect")
     -- convergence criteria
     if epoch - best_epoch > params.max_epochs_wo_improvement then break end
