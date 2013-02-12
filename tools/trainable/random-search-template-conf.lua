@@ -6,11 +6,13 @@ return {
   random_params = {
     { option="-a", tag="a", sampling = "uniform", type="integer",
       values= { { min=-5, max=10 }, { min=20, max=100, step=10 } } },
-    { option="-b", tag="b", sampling = "uniform", type="real", values= {
+    { option="-b", tag="b", sampling = "uniform", type="real", prec=3, values= {
 	{ min=-5.0, max=10.0}, { min=20.0, max=100.0 } } },
     { option="-c", tag="c", sampling = "uniform", values= { "n", "m", "l", "o" } },
-    { option="-d", tag="d", sampling = "gaussian", values= { mean=5, variance=0.1 } },
+    { option="-d", tag="d", sampling = "gaussian", prec=3, values= { mean=5, variance=0.1 } },
+    { option="-e", tag="e", sampling = "random" },
   },
+  check=function(params) return true end
   script = "",
   exec   = "echo ",
   working_dir = ".",
