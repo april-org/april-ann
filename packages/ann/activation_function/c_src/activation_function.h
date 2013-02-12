@@ -33,7 +33,7 @@
 namespace ANN {
 
   /// A pure abstract class that define the basic interface that
-  /// activation functions must complain.
+  /// activation functions must fulfill.
   class ActivationFunction : public Referenced
   {
   public:

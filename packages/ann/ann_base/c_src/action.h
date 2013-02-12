@@ -33,6 +33,8 @@ using april_utils::hash;    // required during cloning process
 
 namespace ANN {
 
+  /// An abstract class that defines the basic interface that
+  /// the actions must fulfill.
   class Action : public Referenced {
   protected:
     const ANNConfiguration &conf;
@@ -40,7 +42,15 @@ namespace ANN {
     Action(const ANNConfiguration &conf) : conf(conf) { }
     // Wrapper of connections->forward(....)
     virtual ~Action() { }
+
+    /// Abstract method that executes the set of operations
+    /// required for each block of connections when performing
+    /// the forward step of the Backpropagation algorithm.
     virtual void doForward() = 0;
+
+    /// Abstract method that executes the set of operations
+    /// required for each block of connections when performing
+    /// the backward step of the Backpropagation algorithm.
     virtual void doBackward() = 0;
     virtual Action *clone(hash<void*,void*> &clone_dict,
 			  const ANNConfiguration &conf) = 0;
