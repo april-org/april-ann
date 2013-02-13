@@ -1,3 +1,4 @@
+--
 -- Template for configuration
 -- return {
 --    fixed_params = {
@@ -6,10 +7,10 @@
 --             ...
 --    },
 --    random_params = {
---             { option="--option-name", tag=ANY, sampling = "uniform", type="integer"|"real", values= { { min=ANY, max=ANY }, { min=ANY, max=ANY, step=ANY} } },
+--             { option="--option-name", tag=ANY, sampling = "uniform", prec=NUMBER, type="integer"|"real", values= { { min=ANY, max=ANY }, { min=ANY, max=ANY, step=ANY} } },
 --             { option="--option-name", tag=ANY, sampling = "uniform", values= { a, b, c, ..., d } },
 --             { option="--option-name", tag=ANY, sampling = "gaussian", values= { mean=ANY, variance=ANY } },
---             { option="--option-name", tag=ANY, sampling = "random" },
+--             { option="--option-name", tag=ANY, sampling = "random", check = FUNCTION },
 --             ...
 --   },
 --   check=function(params) return true end
@@ -40,6 +41,7 @@ function check_random(param)
   if not param.tag then error("Each random parameter needs a tag") end
   if not param.sampling then error("Each random parameter needs a sampling") end
   if not param.prec then param.prec = 10 end
+  if not param.check then param.check = function(params) return true end end
   if param.sampling == "gaussian" then
     if not param.values then error("Each random parameter needs values") end
     if not param.values.mean or not param.values.variance then
@@ -149,9 +151,11 @@ for i=1,num_iterations do
 	params_check[param.tag] = param.value
       end
       for _,param in ipairs(random_params) do
-	local v = sample(param, rnd)
-	put_value(param.option, param.tag, v)
-	params_check[param.tag] = v
+	repeat
+	  local v = sample(param, rnd)
+	  put_value(param.option, param.tag, v)
+	  params_check[param.tag] = v
+	until param.check(params_check)
       end
     until check(params_check)
     filename=string.format("%s/output-%s.log", working_dir,
