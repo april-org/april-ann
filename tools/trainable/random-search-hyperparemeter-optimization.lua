@@ -60,7 +60,8 @@ function check_random(param)
 	if not p.min or not p.max then
 	  error("Values need min and max (optionally step) parameters")
 	end
-	p.size = math.max(1,math.floor((p.max - p.min)/p.step))
+	p.size = (p.max - p.min)/p.step
+	if param.type == "integer" then p.size = math.floor(p.size) end
 	size   = size + p.size
       end
       param.size = size
@@ -81,10 +82,10 @@ function sample(param, rnd)
     v = tostring(sample_random_from_bash())
   else
     if type(param.values[1]) == "table" then
-      local pos = rnd:randInt(1, param.size)
-      for _,p in ipairs(param.values) do
+      local pos = rnd:rand(param.size)
+      for k,p in ipairs(param.values) do
 	pos = pos - p.size
-	if pos <= 0 then
+	if pos <= 0 or k==#param.values then
 	  if param.type == "integer" then
 	    v = tostring(rnd:randInt(0, p.size)*p.step + p.min)
 	  else
@@ -160,6 +161,7 @@ for i=1,num_iterations do
     if skip then printf ("# Skipping file %s\n", filename) end
   until not skip
   printf("# iteration %d :: %s\n", i, table.concat(filename_tags, " "))
+  printf("# \t output file: %s\n", filename)
   local args_str = table.concat(args_table, " ")
   local cmd = string.format("%s %s %s", exec, script, args_str)
   local f = io.popen(cmd)
