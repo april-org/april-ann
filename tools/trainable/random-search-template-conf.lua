@@ -11,11 +11,14 @@ return {
     { option="-c", tag="c", sampling = "uniform", values= { "n", "m", "l", "o" } },
     { option="-d", tag="d", sampling = "gaussian", prec=3, values= { mean=5, variance=0.1 } },
     { option="-e", tag="e", sampling = "random" },
+    { option=nil, tag="metaparameter", sampling=ANY ...  },
+    { option=ANY, check=function(params) return true end, tag=ANY,
+      sampling=ANY ...  },
   },
   check=function(params) return true end
-  script = "",
   exec   = "echo ",
+  script = "",
   working_dir = ".",
   --  seed = ANY_SEED_VALUE (if not given, take "echo $RANDOM" as seed)
-  n = 2000,
+  n = 100, -- number of iterations
 }
