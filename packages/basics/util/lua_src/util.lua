@@ -444,6 +444,11 @@ function string.get_extension(path)
         return ext
 end
 
+function string.get_path(path_with_filename, sep)
+  sep=sep or'/'
+  return path_with_filename:match("(.*"..sep..")") or ""
+end
+
 -- This function prepares a safe environment for call user functions
 function safe_call(f, env, ...)
   env = env or {}

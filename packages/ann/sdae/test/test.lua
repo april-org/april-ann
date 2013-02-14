@@ -41,7 +41,7 @@ params_pretrain = {
   momentum              = 0.02,
   weight_decay          = 1e-05,
   max_epochs            = 200,
-  training_percentage_criteria = 0.01
+  pretraining_percentage_stopping_criterion = 0.01,
 }
 
 params_sdae_finetunning = {
@@ -59,7 +59,8 @@ params_sdae_finetunning = {
   momentum              = 0.02,
   weight_decay          = 1e-05,
   max_epochs            = 200,
-  max_epochs_wo_improvement = 10
+  max_epochs_wo_improvement = 10,
+  stopping_criterion=ann.stopping_criterions.make_max_epochs_wo_imp_relative(2)
 }
 
 

@@ -206,8 +206,8 @@ end
 --   * momentum
 --   * weight_decay
 --   * max_epochs
---   * max_epochs_wo_improvement
---   * training_percentage_criteria
+--   * stopping_criterion => function
+--   * pretraining_percentage_stopping_criterion
 --
 -- This function returns a Stacked Denoising Auto-Encoder parameters table,
 -- pretrained following algorithm of:
@@ -237,7 +237,7 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
 				     "max_epochs", "max_epochs_wo_improvement",
 				     "momentum", "weight_decay", "val_input_dataset",
 				     "weights_random", "salt_noise_percentage",
-				     "training_percentage_criteria" }
+				     "pretraining_percentage_stopping_criterion" }
   for name,v in pairs(valid_params) do
     if not valid_params[name] then
       error("Incorrect param name '"..name.."'")
@@ -255,7 +255,7 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
 			 "max_epochs",
 			 "momentum", "weight_decay",
 			 "weights_random", "salt_noise_percentage",
-			 "training_percentage_criteria" }) do
+			 "pretraining_percentage_stopping_criterion" }) do
     check_mandatory_param(params, name)
   end
   if params.val_input_dataset then
@@ -263,8 +263,8 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
       error ("max_epochs_wo_improvement is mandatory with val_input_dataset")
     end
   else
-    if not params.training_percentage_criteria then
-      error ("training_percentage_criteria is mandatory if not val_input_dataset")
+    if not params.pretraining_percentage_stopping_criterion then
+      error ("pretraining_percentage_stopping_criterion is mandatory if not val_input_dataset")
     end
   end
   --------------------------------------
@@ -332,8 +332,8 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
 	dae:validate_dataset(val_data)
       end
       local train_improve = (prev_train_err - train_error)/prev_train_err
-      if params.training_percentage_criteria then
-	if train_improve < params.training_percentage_criteria then break end
+      if params.pretraining_percentage_stopping_criterion then
+	if train_improve < params.pretraining_percentage_stopping_criterion then break end
       end
       prev_train_err = train_error
       if val_error < best_val_error then
@@ -348,7 +348,7 @@ function ann.autoencoders.stacked_denoising_pretraining(params)
       collectgarbage("collect")
       -- convergence criteria
       if params.val_input_dataset then
-	if epoch - best_epoch > params.max_epochs_wo_improvement then break end
+	if epoch - best_epoch >= params.max_epochs_wo_improvement then break end
       else best_val_error = 111111111
       end
     end
@@ -412,8 +412,9 @@ function ann.autoencoders.stacked_denoising_finetunning(sdae_table, params)
 				     "max_epochs", "max_epochs_wo_improvement",
 				     "momentum", "weight_decay",
 				     "val_input_dataset",
-				     "training_percentage_criteria",
-				     "weights_random", "salt_noise_percentage"}
+				     "pretraining_percentage_stopping_criterion",
+				     "weights_random", "salt_noise_percentage",
+				     "stopping_criterion" }
   for name,v in pairs(valid_params) do
     if not valid_params[name] then
       error("Incorrect param name '"..name.."'")
@@ -430,7 +431,8 @@ function ann.autoencoders.stacked_denoising_finetunning(sdae_table, params)
 			 "var", "layers", "bunch_size", "learning_rate",
 			 "max_epochs", "max_epochs_wo_improvement",
 			 "momentum", "weight_decay", "val_input_dataset",
-			 "weights_random", "salt_noise_percentage"}) do
+			 "weights_random", "salt_noise_percentage",
+			 "stopping_criterion" }) do
     check_mandatory_param(params, name)
   end
   --------------------------------------
@@ -450,31 +452,29 @@ function ann.autoencoders.stacked_denoising_finetunning(sdae_table, params)
     sdae:set_error_function(ann.error_functions.mse())
   end
   collectgarbage("collect")
-  local data
-  data = generate_training_table_configuration_from_params(params,
-							   params,
-							   true)
+  local data = generate_training_table_configuration_from_params(params,
+								 params,
+								 true)
   local val_data = { input_dataset  = params.val_input_dataset,
 		     output_dataset = params.val_input_dataset }
-  local best_val_error = 111111111
-  local best_net       = sdae:clone()
-  local best_epoch     = 0
-  for epoch=1,params.max_epochs do
-    local train_error = sdae:train_dataset(data)
-    local val_error   = sdae:validate_dataset(val_data)
-    if val_error < best_val_error then
-      best_val_error = val_error
-      best_epoch     = epoch
-      best_net       = sdae:clone()
-    end
-    printf("%4d %10.6f %10.6f  (best %10.6f at epoch %4d)\n",
-	   epoch, train_error, val_error, best_val_error, best_epoch)
-    io.stdout:flush()
-    collectgarbage("collect")
-    -- convergence criteria
-    if epoch - best_epoch > params.max_epochs_wo_improvement then break end
-  end
-  return best_net
+  local stopping_criterion = params.stopping_criterion
+  local result
+  result = ann.train_crossvalidation{ ann = sdae,
+				      training_table     = data,
+				      validation_table   = val_data,
+				      max_epochs         = params.max_epochs,
+				      stopping_criterion = stopping_criterion,
+				      update_function    = function(t)
+					printf("%4d %.10.6f %10.6f "..
+					       " (best %10.6f at epoch %4d)\n",
+					       t.current_epoch,
+					       t.train_error,
+					       t.validation_error,
+					       t.best_val_error,
+					       t.best_epoch)
+					io.stdout:flush()
+				      end }
+  return result.best_net
 end
 
 -- This function returns a MLP formed by the codification part of a full stacked

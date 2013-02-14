@@ -37,8 +37,12 @@ end
 -- }
 --
 -- and returns this:
--- { best_net = best_net, best_epoch = best_epoch,
---   best_val_error = best_val_error }
+--  return { best_net         = best_net,
+--	     best_epoch       = best_epoch,
+--	     best_val_error   = best_val_error,
+--	     num_epochs       = epoch,
+--	     last_train_error = last_train_error,
+--	     last_val_error   = last_val_error }
 function ann.train_crossvalidation(params)
   check_train_crossvalidation_params(params)
   params.first_epoch = params.first_epoch or 1
@@ -48,10 +52,13 @@ function ann.train_crossvalidation(params)
   if not params.validation_table then error("Needs validation_table field") end
   if not params.stopping_criterion then error("Needs stopping_criterion field") end
   params.update_function = params.update_function or function(t) return end
-  local thenet         = params.ann
-  local best_epoch     = 0
-  local best_net       = thenet:clone()
-  local best_val_error = thenet:validate_dataset(params.validation_table)
+  local thenet           = params.ann
+  local best_epoch       = 0
+  local best_net         = thenet:clone()
+  local best_val_error   = thenet:validate_dataset(params.validation_table)
+  local last_val_error   = best_val_error
+  local last_train_error = 0
+  local last_epoch       = 0
   params.ann = nil
   if not params.validation_func then
     params.validation_func = function(thenet, t)
@@ -63,6 +70,7 @@ function ann.train_crossvalidation(params)
     local tr_error  = thenet:train_dataset(params.training_table)
     local val_error = safe_call(params.validation_func, {},
 				thenet, params.validation_table)
+    last_train_error,last_val_error,last_epoch = tr_error,val_error,epoch
     if val_error < best_val_error then
       best_epoch     = epoch
       best_val_error = val_error
@@ -85,6 +93,10 @@ function ann.train_crossvalidation(params)
       break						  
     end
   end
-  return { best_net = best_net, best_epoch = best_epoch,
-	   best_val_error = best_val_error }
+  return { best_net         = best_net,
+	   best_val_error   = best_val_error,
+	   best_epoch       = best_epoch,
+	   last_epoch       = last_epoch,
+	   last_train_error = last_train_error,
+	   last_val_error   = last_val_error }
 end
