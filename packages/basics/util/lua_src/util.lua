@@ -459,6 +459,8 @@ function safe_call(f, env, ...)
   env.loadstring = nil    env.courutine = nil     env.print    = print
   env.pairs      = pairs  env.ipairs    = ipairs  env.tostring = tostring
   env.printf     = printf
+  env.io = { stderr = io.stderr,
+	     stdout = io.stdout }
   setfenv(f, env)
   local status,result_or_error = pcall(f, unpack(arg))
   if not status then
