@@ -465,7 +465,7 @@ function ann.autoencoders.stacked_denoising_finetunning(sdae_table, params)
 				      max_epochs         = params.max_epochs,
 				      stopping_criterion = stopping_criterion,
 				      update_function    = function(t)
-					printf("%4d %.10.6f %10.6f "..
+					printf("%4d %10.6f %10.6f "..
 					       " (best %10.6f at epoch %4d)\n",
 					       t.current_epoch,
 					       t.train_error,
