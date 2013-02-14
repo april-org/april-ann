@@ -53,24 +53,6 @@ help_string =
   printf("# CMD: \t %s\n",table.concat(arg, " "))
 
   ------------------------ Auxiliar functions ---------------------------------
-  -- This function prepares a safe environment for call user functions
-  function safe_call(f, env, param)
-    env = env or {}
-    env.os         = nil    env.io        = nil     env.file     = nil
-    env.debug      = nil    env.load      = nil     env.loadfile = nil
-    env.load       = nil    env.dofile    = nil     env.math     = math
-    env.table      = table  env.string    = string  env.tonumber = tonumber
-    env.loadstring = nil    env.courutine = nil     env.print    = print
-    env.pairs      = pairs  env.ipairs    = ipairs  env.tostring = tostring
-    setfenv(f, env)
-    local status,result_or_error = pcall(f, param)
-    if not status then
-      print(result_or_error)
-      error("Incorrect function call")
-    end
-    return result_or_error
-  end
-
   -- This sample random numbers from urandom device
   function sample_random_from_bash()
     return tonumber(io.popen("od -N2 -An -i /dev/urandom"):read("*l"))

@@ -443,3 +443,22 @@ function string.get_extension(path)
         local ext = string.match(path, ".*[.]([^.]*)$")
         return ext
 end
+
+-- This function prepares a safe environment for call user functions
+function safe_call(f, env, ...)
+  env = env or {}
+  env.os         = nil    env.io        = nil     env.file     = nil
+  env.debug      = nil    env.load      = nil     env.loadfile = nil
+  env.load       = nil    env.dofile    = nil     env.math     = math
+  env.table      = table  env.string    = string  env.tonumber = tonumber
+  env.loadstring = nil    env.courutine = nil     env.print    = print
+  env.pairs      = pairs  env.ipairs    = ipairs  env.tostring = tostring
+  env.printf     = printf
+  setfenv(f, env)
+  local status,result_or_error = pcall(f, unpack(arg))
+  if not status then
+    print(result_or_error)
+    error("Incorrect function call")
+  end
+  return result_or_error
+end
