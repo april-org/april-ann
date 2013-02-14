@@ -53,7 +53,7 @@ function ann.train_crossvalidation(params)
   if not params.stopping_criterion then error("Needs stopping_criterion field") end
   params.update_function = params.update_function or function(t) return end
   local thenet           = params.ann
-  local best_epoch       = 0
+  local best_epoch       = 1
   local best_net         = thenet:clone()
   local best_val_error   = thenet:validate_dataset(params.validation_table)
   local last_val_error   = best_val_error
