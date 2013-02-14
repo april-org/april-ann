@@ -243,11 +243,12 @@ help_string =
         end
         for _,param in ipairs(random_params) do
           -- Third loop, until current param option check function returns true
+	  local v
           repeat
-            local v = sample(param, rnd)
-            put_value(param.option, param.tag, v)
+            v = sample(param, rnd)
             params_check[param.tag] = v
           until safe_call(param.check, {}, params_check)
+	  put_value(param.option, param.tag, v)
         end
       until safe_call(check, {}, params_check)
       filename=string.format("%s/output-%s.log", working_dir,
