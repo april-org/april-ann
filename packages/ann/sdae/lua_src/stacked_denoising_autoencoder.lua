@@ -462,6 +462,7 @@ function ann.autoencoders.stacked_denoising_finetunning(sdae_table, params)
   result = ann.train_crossvalidation{ ann = sdae,
 				      training_table     = data,
 				      validation_table   = val_data,
+				      min_epochs         = 4,
 				      max_epochs         = params.max_epochs,
 				      stopping_criterion = stopping_criterion,
 				      update_function    = function(t)
