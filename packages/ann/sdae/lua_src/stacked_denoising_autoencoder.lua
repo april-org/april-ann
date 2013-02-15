@@ -409,7 +409,7 @@ function ann.autoencoders.stacked_denoising_finetunning(sdae_table, params)
 				     "perturbation_random", "replacement",
 				     "var", "layers", "bunch_size",
 				     "learning_rate",
-				     "max_epochs", "max_epochs_wo_improvement",
+				     "max_epochs",
 				     "momentum", "weight_decay",
 				     "val_input_dataset",
 				     "pretraining_percentage_stopping_criterion",
@@ -429,7 +429,7 @@ function ann.autoencoders.stacked_denoising_finetunning(sdae_table, params)
   end
   for _,name in ipairs({ "shuffle_random", "perturbation_random",
 			 "var", "layers", "bunch_size", "learning_rate",
-			 "max_epochs", "max_epochs_wo_improvement",
+			 "max_epochs",
 			 "momentum", "weight_decay", "val_input_dataset",
 			 "weights_random", "salt_noise_percentage",
 			 "stopping_criterion" }) do
