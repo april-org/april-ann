@@ -70,6 +70,7 @@ stopping_criterion = ann.stopping_criterions.make_max_epochs_wo_imp_relative(2)
 result = ann.train_crossvalidation{ ann = thenet,
 				    training_table     = training_data,
 				    validation_table   = validation_data,
+				    min_epochs         = 4,
 				    max_epochs         = 1000,
 				    stopping_criterion = stopping_criterion,
 				    update_function    =

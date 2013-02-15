@@ -18,7 +18,7 @@ end
 local function check_train_crossvalidation_params(params)
   local check = table.invert{ "ann", "training_table", "validation_table",
 			      "max_epochs", "stopping_criterion",
-			      "update_function", "first_epoch" }
+			      "update_function", "first_epoch", "min_epochs" }
   for name,value in pairs(params) do
     if not check[name] then error ("Incorrect param name: " .. name) end
   end
@@ -29,6 +29,7 @@ end
 --   training_table   = { input_dataset = ...., output_dataset = ....., .....},
 --   validation_table = { input_dataset = ...., output_dataset = ....., .....},
 --   validation_func = function( thenet, validation_table ) .... end
+--   min_epochs = NUMBER,
 --   max_epochs = NUMBER,
 --   -- train_params is this table ;)
 --   stopping_criterion = function{ current_epoch, best_epoch, best_val_error, train_error, validation_error, train_params } .... return true or false end
@@ -51,6 +52,7 @@ function ann.train_crossvalidation(params)
   if not params.training_table then error("Needs training_table field") end
   if not params.validation_table then error("Needs validation_table field") end
   if not params.stopping_criterion then error("Needs stopping_criterion field") end
+  if not params.min_epochs then error("Needs a min_epochs field") end
   params.update_function = params.update_function or function(t) return end
   local thenet           = params.ann
   local best_epoch       = 1
@@ -83,13 +85,14 @@ function ann.train_crossvalidation(params)
 		train_error      = tr_error,
 		validation_error = val_error,
 		train_params     = params })
-    if safe_call(params.stopping_criterion, {},
-		 { current_epoch    = epoch,
-		   best_epoch       = best_epoch,
-		   best_val_error   = best_val_error,
-		   train_error      = tr_error,
-		   validation_error = val_error,
-		   train_params     = params }) then
+    if (epoch > params.min_epochs and
+	safe_call(params.stopping_criterion, {},
+		  { current_epoch    = epoch,
+		    best_epoch       = best_epoch,
+		    best_val_error   = best_val_error,
+		    train_error      = tr_error,
+		    validation_error = val_error,
+		    train_params     = params })) then
       break						  
     end
   end
