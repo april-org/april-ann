@@ -10,7 +10,7 @@ help_string =
 
      return {
        fixed_params = {
-         { option="--option-name",  value=ANY,  tag="outputtag"  },
+         { option="--option-name",  value=ANY,  tag="outputtag", hidden=true },
          { option="--option-name2", value=ANY2, tag="outputtag"  },
          ...
        },
@@ -59,7 +59,8 @@ help_string =
   end
 
   -- This function check the correction of fixed_params
-  local fixed_param_valid_options = table.invert{"option", "tag", "value"}
+  local fixed_param_valid_options = table.invert{"option", "tag", "value",
+						 "hidden" }
   function check_fixed(param)
     if not param.option then error("Each fixed parameter needs an option") end
     if not param.tag then error("Each fixed parameter needs a tag") end
@@ -229,16 +230,19 @@ help_string =
         args_table    = {}
         filename_tags = {}
         -- auxiliar function
-        function put_value(option, tag, value)
+        function put_value(option, tag, value, hidden)
           local value = tostring(value)
           if option then
             table.insert(args_table,string.format("%s%s", option, value))
           end
-          table.insert(filename_tags,
-                       string.format("%s:%s", tag, string.gsub(value, "/", "_")))
+	  if not hidden then
+	    table.insert(filename_tags,
+			 string.format("%s:%s", tag,
+				       string.gsub(value, "/", "_")))
+	  end
         end
         for _,param in ipairs(fixed_params) do
-          put_value(param.option, param.tag, param.value)
+          put_value(param.option, param.tag, param.value, param.hidden)
           params_check[param.tag] = param.value
         end
         for _,param in ipairs(random_params) do
