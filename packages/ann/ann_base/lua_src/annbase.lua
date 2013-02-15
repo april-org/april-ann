@@ -61,7 +61,6 @@ function ann.train_crossvalidation(params)
   local last_val_error   = best_val_error
   local last_train_error = 0
   local last_epoch       = 0
-  params.ann = nil
   if not params.validation_func then
     params.validation_func = function(thenet, t)
       return thenet:validate_dataset(t)
