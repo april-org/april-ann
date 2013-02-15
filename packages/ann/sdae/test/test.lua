@@ -59,7 +59,6 @@ params_sdae_finetunning = {
   momentum              = 0.02,
   weight_decay          = 1e-05,
   max_epochs            = 200,
-  max_epochs_wo_improvement = 10,
   stopping_criterion=ann.stopping_criterions.make_max_epochs_wo_imp_relative(2)
 }
 
