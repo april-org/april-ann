@@ -69,29 +69,26 @@ function ann.train_crossvalidation(params)
   for epoch=params.first_epoch,params.max_epochs do
     collectgarbage("collect")
     local tr_error  = thenet:train_dataset(params.training_table)
-    local val_error = safe_call(params.validation_func, {},
-				thenet, params.validation_table)
+    local val_error = params.validation_func(thenet, params.validation_table)
     last_train_error,last_val_error,last_epoch = tr_error,val_error,epoch
     if val_error < best_val_error then
       best_epoch     = epoch
       best_val_error = val_error
       best_net       = thenet:clone()
     end
-    safe_call(params.update_function, {},
-	      { current_epoch    = epoch,
-		best_epoch       = best_epoch,
-		best_val_error   = best_val_error,
-		train_error      = tr_error,
-		validation_error = val_error,
-		train_params     = params })
+    params.update_function({ current_epoch    = epoch,
+			     best_epoch       = best_epoch,
+			     best_val_error   = best_val_error,
+			     train_error      = tr_error,
+			     validation_error = val_error,
+			     train_params     = params })
     if (epoch > params.min_epochs and
-	safe_call(params.stopping_criterion, {},
-		  { current_epoch    = epoch,
-		    best_epoch       = best_epoch,
-		    best_val_error   = best_val_error,
-		    train_error      = tr_error,
-		    validation_error = val_error,
-		    train_params     = params })) then
+	params.stopping_criterion({ current_epoch    = epoch,
+				    best_epoch       = best_epoch,
+				    best_val_error   = best_val_error,
+				    train_error      = tr_error,
+				    validation_error = val_error,
+				    train_params     = params })) then
       break						  
     end
   end
