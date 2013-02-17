@@ -217,6 +217,7 @@ end
 --   * momentum
 --   * weight_decay
 --   * max_epochs
+--   * min_epochs
 --   * stopping_criterion => function
 --   * pretraining_percentage_stopping_criterion
 --
@@ -251,7 +252,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
 				     "perturbation_random", "replacement",
 				     "var", "layers", "bunch_size",
 				     "learning_rate",
-				     "max_epochs",
+				     "max_epochs", "min_epochs",
 				     "momentum", "weight_decay",
 				     "weights_random", "salt_noise_percentage",
 				     "pretraining_percentage_stopping_criterion" }
@@ -331,7 +332,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
     ---------- TRAIN THE AUTOENCODER WO VALIDATION ----------
     local best_net = ann.train_wo_validation{
       ann            = dae,
-      min_epochs     = 2,
+      min_epochs     = params.min_epochs,
       max_epochs     = params.max_epochs,
       training_table = data,
       percentage_stopping_criterion = params.pretraining_percentage_stopping_criterion,
@@ -405,7 +406,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
     end
     local best_net = ann.train_wo_validation{
       ann            = thenet,
-      min_epochs     = 2,
+      min_epochs     = params.min_epochs,
       max_epochs     = params.max_epochs,
       training_table = data,
       percentage_stopping_criterion = params.pretraining_percentage_stopping_criterion,
@@ -438,7 +439,7 @@ function ann.autoencoders.sdae_finetunning(sdae_table, params)
 				     "perturbation_random", "replacement",
 				     "var", "layers", "bunch_size",
 				     "learning_rate",
-				     "max_epochs",
+				     "max_epochs", "min_epochs",
 				     "momentum", "weight_decay",
 				     "val_input_dataset",
 				     "pretraining_percentage_stopping_criterion",
@@ -491,7 +492,7 @@ function ann.autoencoders.sdae_finetunning(sdae_table, params)
   result = ann.train_crossvalidation{ ann = sdae,
 				      training_table     = data,
 				      validation_table   = val_data,
-				      min_epochs         = 4,
+				      min_epochs         = params.min_epochs,
 				      max_epochs         = params.max_epochs,
 				      stopping_criterion = stopping_criterion,
 				      update_function    = function(t)

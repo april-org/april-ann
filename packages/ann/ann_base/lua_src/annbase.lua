@@ -142,7 +142,7 @@ function ann.train_wo_validation(params)
     collectgarbage("collect")
     local tr_err         = thenet:train_dataset(params.training_table)
     local tr_improvement = (prev_tr_err - tr_err)/prev_tr_err
-    if (epoch >= params.min_epochs and
+    if (epoch > params.min_epochs and
 	tr_improvement < params.percentage_stopping_criterion) then
       break
     end
