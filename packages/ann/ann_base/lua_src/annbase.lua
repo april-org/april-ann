@@ -15,10 +15,21 @@ function ann.stopping_criterions.make_max_epochs_wo_imp_relative(rel_max)
   return f
 end
 
+-----------------------------------------------------------------------------
+
 local function check_train_crossvalidation_params(params)
   local check = table.invert{ "ann", "training_table", "validation_table",
 			      "max_epochs", "stopping_criterion",
 			      "update_function", "first_epoch", "min_epochs" }
+  for name,value in pairs(params) do
+    if not check[name] then error ("Incorrect param name: " .. name) end
+  end
+end
+
+local function check_train_wo_validation_params(params)
+  local check = table.invert{ "ann", "training_table", "update_function",
+			      "max_epochs", "min_epochs",
+			      "percentage_stopping_criterion" }
   for name,value in pairs(params) do
     if not check[name] then error ("Incorrect param name: " .. name) end
   end
@@ -98,4 +109,49 @@ function ann.train_crossvalidation(params)
 	   last_epoch       = last_epoch,
 	   last_train_error = last_train_error,
 	   last_val_error   = last_val_error }
+end
+
+-- This function trains the ANN without validation, it is trained until a
+-- maximum of epochs or until the improvement in training error is less than
+-- given percentage
+--
+-- params is a table like this:
+-- { ann = neural_network,
+--   training_table   = { input_dataset = ...., output_dataset = ....., .....},
+--   min_epochs = NUMBER,
+--   max_epochs = NUMBER,
+--   update_function = function{ current_epoch, best_epoch, best_val_error,
+--   percentage_stopping_criterion = NUMBER (normally 0.01 or 0.001)
+-- }
+--
+-- returns the trained ANN 
+function ann.train_wo_validation(params)
+  check_train_wo_validation_params(params)
+  if not params.max_epochs then error("Needs max_epochs field") end
+  if not params.ann then error("Needs ann field") end
+  if not params.training_table then error("Needs training_table field") end
+  if not params.min_epochs then error("Needs a min_epochs field") end
+  if not params.percentage_stopping_criterion then
+    error("Needs a percentage_stopping_criterion field")
+  end
+  params.update_function = params.update_function or function(t) return end
+  local thenet      = params.ann
+  local prev_tr_err = 111111111
+  local best_net    = thenet:clone()
+  for epoch=1,params.max_epochs do
+    collectgarbage("collect")
+    local tr_err         = thenet:train_dataset(params.training_table)
+    local tr_improvement = (prev_tr_err - tr_err)/prev_tr_err
+    if (epoch >= params.min_epochs and
+	tr_improvement < params.percentage_stopping_criterion) then
+      break
+    end
+    best_net = thenet:clone()
+    params.update_function{ current_epoch     = epoch,
+			    train_error       = tr_err,
+			    train_improvement = tr_improvement,
+			    train_params      = params }
+    prev_tr_err = tr_err
+  end
+  return best_net
 end

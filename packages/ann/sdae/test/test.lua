@@ -20,6 +20,25 @@ val_input  = dataset.matrix(m1,
 			      orderStep   = {1,0}
 			    })
 
+m2 = matrix(10,{1,0,0,0,0,0,0,0,0,0})
+train_output = dataset.matrix(m2,
+			      {
+				patternSize = {10},
+				offset      = {0},
+				numSteps    = {800},
+				stepSize    = {-1},
+				circular    = {true}
+			      })
+
+val_output   = dataset.matrix(m2,
+			      {
+				patternSize = {10},
+				offset      = {0},
+				numSteps    = {200},
+				stepSize    = {-1},
+				circular    = {true}
+			      })
+
 layers = {
   { size= 256, actf="logistic"},
   { size= 256, actf="logistic"},
@@ -41,47 +60,49 @@ params_pretrain = {
   momentum              = 0.02,
   weight_decay          = 1e-05,
   max_epochs            = 200,
-  pretraining_percentage_stopping_criterion = 0.01,
+  pretraining_percentage_stopping_criterion = 0.00001,
+  supervised_layer      = { size = 10, actf = "softmax" },
+  output_datasets       = { train_output },
 }
 
-params_sdae_finetunning = {
-  input_dataset         = train_input,
-  val_input_dataset     = val_input,
-  replacement           = nil,
-  shuffle_random        = random(1234),
-  perturbation_random   = random(4567),
-  weights_random        = random(7890),
-  var                   = 0.02,
-  salt_noise_percentage = 0.10,
-  layers                = layers,
-  bunch_size            = bunch_size,
-  learning_rate         = 0.01,
-  momentum              = 0.02,
-  weight_decay          = 1e-05,
-  max_epochs            = 200,
-  stopping_criterion=ann.stopping_criterions.make_max_epochs_wo_imp_relative(2)
-}
+-- params_sdae_finetunning = {
+--   input_dataset         = train_input,
+--   val_input_dataset     = val_input,
+--   replacement           = nil,
+--   shuffle_random        = random(1234),
+--   perturbation_random   = random(4567),
+--   weights_random        = random(7890),
+--   var                   = 0.02,
+--   salt_noise_percentage = 0.10,
+--   layers                = layers,
+--   bunch_size            = bunch_size,
+--   learning_rate         = 0.01,
+--   momentum              = 0.02,
+--   weight_decay          = 1e-05,
+--   max_epochs            = 200,
+--   stopping_criterion=ann.stopping_criterions.make_max_epochs_wo_imp_relative(2),
+-- }
 
 
-sdae_table = ann.autoencoders.stacked_denoising_pretraining(params_pretrain)
-sdae       = ann.autoencoders.stacked_denoising_finetunning(sdae_table,
-                                                           params_sdae_finetunning)
-codifier_net = ann.autoencoders.build_codifier_from_sdae(sdae,
-							 bunch_size,
-							 layers)
---codifier_net = ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
---							       bunch_size,
---							       layers)
+sdae_table,deep_classifier = ann.autoencoders.greedy_layerwise_pretraining(params_pretrain)
+--sdae       = ann.autoencoders.sdae_finetunning(sdae_table,
+--					       params_sdae_finetunning)
+--codifier_net = ann.autoencoders.build_codifier_from_sdae(sdae,
+--							 bunch_size,
+--							 layers)
+codifier_net = ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
+							       bunch_size,
+							       layers)
 
 local outf = io.open("data", "w")
-encoded_dataset = ann.autoencoders.compute_encoded_dataset_using_codifier(codifier_net,
-									  train_input)
+encoded_dataset = ann.autoencoders.encode_dataset(codifier_net,
+						  train_input)
 for ipat,pat in encoded_dataset:patterns() do
   fprintf(outf, "Pattern %d %s\n", ipat, table.concat(pat, " "))
 end
 
-encoded_dataset = ann.autoencoders.compute_encoded_dataset_using_codifier(codifier_net,
-									  val_input)
+encoded_dataset = ann.autoencoders.encode_dataset(codifier_net,
+						  val_input)
 for ipat,pat in encoded_dataset:patterns() do
   fprintf(outf, "Pattern %d %s\n", ipat, table.concat(pat, " "))
 end
@@ -97,14 +118,14 @@ shallow_classifier = ann.mlp.all_all.generate{
   use_fanin = true}
 shallow_classifier:set_error_function(ann.error_functions.logistic_cross_entropy())
 
-deep_classifier = ann.mlp.add_layers{
-  ann        = codifier_net,
-  new_layers = { { 10, "softmax" } },
-  bunch_size = bunch_size,
-  random     = random(1234),
-  inf        = -0.1,
-  sup        = 0.1 }
-deep_classifier:set_error_function(ann.error_functions.logistic_cross_entropy())
+-- deep_classifier = ann.mlp.add_layers{
+--   ann        = codifier_net,
+--   new_layers = { { 10, "softmax" } },
+--   bunch_size = bunch_size,
+--   random     = random(1234),
+--   inf        = -0.1,
+--   sup        = 0.1 }
+-- deep_classifier:set_error_function(ann.error_functions.logistic_cross_entropy())
 
 deep_classifier_wo_pretraining = ann.mlp.all_all.generate{
   topology = "256 inputs 256 logistic 128 logistic 32 logistic 10 softmax",
@@ -114,25 +135,6 @@ deep_classifier_wo_pretraining = ann.mlp.all_all.generate{
   use_fanin = true,
   bunch_size = bunch_size }
 deep_classifier_wo_pretraining:set_error_function(ann.error_functions.logistic_cross_entropy())
-
-m2 = matrix(10,{1,0,0,0,0,0,0,0,0,0})
-train_output = dataset.matrix(m2,
-			      {
-				patternSize = {10},
-				offset      = {0},
-				numSteps    = {800},
-				stepSize    = {-1},
-				circular    = {true}
-			      })
-
-val_output   = dataset.matrix(m2,
-			      {
-				patternSize = {10},
-				offset      = {0},
-				numSteps    = {200},
-				stepSize    = {-1},
-				circular    = {true}
-			      })
 
 datosentrenar_deep = {
   input_dataset = train_input,
@@ -157,19 +159,22 @@ datosvalidar = {
 
 deep_classifier:set_option("learning_rate", 0.1)
 deep_classifier:set_option("momentum", 0.02)
-deep_classifier:set_option("weight_decay", 1e-06)
+-- deep_classifier:set_option("weight_decay", 1e-06)
+deep_classifier:set_error_function(ann.error_functions.logistic_cross_entropy())
 shallow_classifier:set_option("learning_rate",
 			      deep_classifier:get_option("learning_rate"))
 shallow_classifier:set_option("momentum",
 			      deep_classifier:get_option("momentum"))
 shallow_classifier:set_option("weight_decay",
 			      deep_classifier:get_option("weight_decay"))
+shallow_classifier:set_error_function(ann.error_functions.logistic_cross_entropy())
 deep_classifier_wo_pretraining:set_option("learning_rate",
 					  deep_classifier:get_option("learning_rate"))
 deep_classifier_wo_pretraining:set_option("momentum",
 					  deep_classifier:get_option("momentum"))
 deep_classifier_wo_pretraining:set_option("weight_decay",
 					  deep_classifier:get_option("weight_decay"))
+deep_classifier_wo_pretraining:set_error_function(ann.error_functions.logistic_cross_entropy())
 
 for i=1,50 do
   local mse_tr_deep = deep_classifier:train_dataset(datosentrenar_deep)
