@@ -62,7 +62,6 @@ help_string =
   local fixed_param_valid_options = table.invert{"option", "tag", "value",
 						 "hidden" }
   function check_fixed(param)
-    if not param.option then error("Each fixed parameter needs an option") end
     if not param.tag then error("Each fixed parameter needs a tag") end
     if not param.value then error("Each fixed parameter needs a value") end
     for name,v in pairs(param) do
