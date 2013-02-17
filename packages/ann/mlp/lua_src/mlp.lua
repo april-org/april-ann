@@ -31,14 +31,18 @@ function ann.mlp.add_layers(t)
 			       output = output,
 			       actfunc = actf }
     end
-    bias:randomize_weights{ random=t.random,
-			    inf=t.inf,
-			    sup=t.sup,
-			    use_fanin = false }
-    weights:randomize_weights{ random=t.random,
-			       inf=t.inf,
-			       sup=t.sup,
-			       use_fanin = false}
+    if t.random then
+      bias:randomize_weights{ random=t.random,
+			      inf=t.inf,
+			      sup=t.sup,
+			      use_fanin = false }
+      weights:randomize_weights{ random=t.random,
+				 inf=t.inf,
+				 sup=t.sup,
+				 use_fanin = false}
+    end
+    if t.bias_table then bias:load{ w=t.bias_table[i] } end
+    if t.weights_table then weights:load{ w=t.weights_table[i] } end
     prev_units = units
   end
   return new_net
