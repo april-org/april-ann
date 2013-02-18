@@ -42,6 +42,7 @@ namespace ANN {
     momentum(0.0f),
     weight_decay(0.0f),
     c_weight_decay(1.0f),
+    squared_length_L2_penalty(-1.0f),
     transpose_weights(transpose_weights) {
     if (!transpose_weights) {
       if (!weights_matrix->checkInputOutputSizes(inputs, outputs))
@@ -118,14 +119,14 @@ namespace ANN {
     }
     
   }
-  
-  void DotProductAction::
-  backpropagateErrors(FloatGPUMirroredMemoryBlock *weights_mat_ptr,
-		      FloatGPUMirroredMemoryBlock *output_error,
-		      const unsigned int output_error_shift,
-		      FloatGPUMirroredMemoryBlock *input_error,
-		      const unsigned int input_error_shift) {
+
+  void DotProductAction::doBackprop() {
+    FloatGPUMirroredMemoryBlock *output_error = inputs->getErrorVectorPtr();
     if (output_error != 0) {
+      const unsigned int output_error_shift        = inputs->getOffset();
+      FloatGPUMirroredMemoryBlock *input_error     = outputs->getErrorVectorPtr();
+      const unsigned int input_error_shift         = outputs->getOffset();
+      FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
       if (conf.cur_bunch_size > 1) {
 	// C = alpha * A * B + beta * C
 	if (!transpose_weights)
@@ -165,8 +166,29 @@ namespace ANN {
 	}
       }
     }
+    
+    if (squared_length_L2_penalty > 0.0f && !transpose_weights) {
+      // TODO: Implement this in CBLAS and CUDA
+      FloatGPUMirroredMemoryBlock *sql_sums   = outputs->getSquaredLengthSums();
+      FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
+      
+      float *squared_length_sums = sql_sums->getPPALForReadAndWrite();
+      const float *w = weights_mat_ptr->getPPALForRead();
+      
+      for (unsigned int j=0; j<num_outputs; ++j) {
+	unsigned int k = j;
+	// compute squared length, adding previous squared lengths computed
+	// over the same neuron
+	float squared_length = squared_length_sums[j];
+	for (unsigned int i=0; i<num_inputs; ++i) {
+	  squared_length += w[k]*w[k];
+	  k += num_outputs;
+	}
+	squared_length_sums[j] = squared_length;
+      }
+    }
   }
-
+  
   void DotProductAction::
   computeBPUpdateOnPrevVectors(FloatGPUMirroredMemoryBlock *prev_weights_mat_ptr,
 			       FloatGPUMirroredMemoryBlock *input,
@@ -236,10 +258,9 @@ namespace ANN {
 	       conf.use_cuda_flag);
     }
   }
-    
-
+  
   // The DotProductAction
-  void DotProductAction::doBackward() {
+  void DotProductAction::doUpdate() {
     assert(learning_rate > 0.0f &&
 	   "Learning rate/momentum/weight decay needs to be fixed with "
 	   "setOption method!!!");
@@ -257,20 +278,38 @@ namespace ANN {
     const unsigned int input_shift  = inputs->getOffset();
     const unsigned int output_shift = outputs->getOffset();
     
-#ifdef USE_CUDA
-    GPUHelper::createNStreams(2);
-    GPUHelper::setCurrentStream(1);
-#endif
-    backpropagateErrors(weights_mat_ptr,
-			output_error, input_shift,
-			input_error, output_shift);
-#ifdef USE_CUDA
-    GPUHelper::setCurrentStream(2);
-#endif
-    
     float beta_parameter_for_cblas_bp = 1.0f;
     // Momentum computation
     if (weights_matrix->isFirstUpdateCall()) {
+      
+      if (squared_length_L2_penalty > 0.0f && !transpose_weights) {
+	// TODO: Implement this in CBLAS and CUDA
+	
+	FloatGPUMirroredMemoryBlock *sql_sums   = outputs->getSquaredLengthSums();
+	FloatGPUMirroredMemoryBlock *w_ptr      = weights_matrix->getPtr();
+	FloatGPUMirroredMemoryBlock *prev_w_ptr =
+	  weights_matrix->getPrevPtr();
+	
+	const float *squared_length_sums = sql_sums->getPPALForRead();
+	float *w      = weights_mat_ptr->getPPALForReadAndWrite();
+	float *prev_w = prev_weights_mat_ptr->getPPALForReadAndWrite();
+	
+	for (unsigned int j=0; j<num_outputs; ++j) {
+	  // compute squared length, adding previous squared lengths computed
+	  // over the same neuron
+	  float squared_length = squared_length_sums[j];
+	  if (squared_length > squared_length_L2_penalty) {
+	    float ratio    = sqrtf(squared_length_L2_penalty/squared_length);
+	    unsigned int k = j;
+	    for (unsigned int i=0; i<num_inputs; ++i) {
+	      w[k]      *= ratio;
+	      prev_w[k] *= ratio;
+	      k += num_outputs;
+	    }
+	  }
+	}
+      }
+      
       if (momentum > 0.0f) {
 	// prev_w[i,j] = momentum * (w[i,j] - prev_w[i,j])
 	weights_matrix->computeMomentumOnPrevVector(momentum,
@@ -288,10 +327,6 @@ namespace ANN {
 				 input, input_shift,
 				 input_error, output_shift,
 				 beta_parameter_for_cblas_bp);
-    
-#ifdef USE_CUDA
-    GPUHelper::destroyStreams();
-#endif    
     
     // Forces to update counts and swap vectors if necessary at this backward
     // step

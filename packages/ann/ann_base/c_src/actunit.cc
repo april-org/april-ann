@@ -46,11 +46,14 @@ namespace ANN {
 	ERROR_EXIT(141, "Can not alloc error vectors\n");
     }
     else error_vector = 0;
+    
+    squared_length_sums = 0;
   }
 
   RealActivationUnits::~RealActivationUnits() {
     delete activations;
     if (error_vector) delete error_vector;
+    if (squared_length_sums) delete squared_length_sums;
   }
   
   void RealActivationUnits::reset(bool use_cuda) {
@@ -84,6 +87,12 @@ namespace ANN {
     return error_vector;
   }
 
+  FloatGPUMirroredMemoryBlock *RealActivationUnits::getSquaredLengthSums() {
+    if (squared_length_sums == 0)
+      squared_length_sums = new FloatGPUMirroredMemoryBlock(num_neurons);
+    return squared_length_sums;
+  }
+
   /////////////////////////////////////////////////////////////////////
 
   LocalActivationUnits::LocalActivationUnits(unsigned int num_groups,
@@ -101,11 +110,13 @@ namespace ANN {
       exit(1);
     }
     activations = new FloatGPUMirroredMemoryBlock(conf.max_bunch_size * num_groups);
+    squared_length_sums = 0;
   }
 
   LocalActivationUnits::~LocalActivationUnits() {
     // hacer deletes de blocks
     delete activations;
+    if (squared_length_sums) delete squared_length_sums;
   }
 
   unsigned int LocalActivationUnits::size() const {
@@ -116,6 +127,12 @@ namespace ANN {
   FloatGPUMirroredMemoryBlock *LocalActivationUnits::getPtr()
   {
     return activations;
+  }
+
+  FloatGPUMirroredMemoryBlock *LocalActivationUnits::getSquaredLengthSums() {
+    if (squared_length_sums == 0)
+      squared_length_sums = new FloatGPUMirroredMemoryBlock(num_neurons);
+    return squared_length_sums;
   }
 
   ActivationUnits *LocalActivationUnits::clone(const ANNConfiguration &conf) {
@@ -165,6 +182,10 @@ namespace ANN {
   // Returns a pointer to the error vector
   FloatGPUMirroredMemoryBlock *ActivationUnitsSlice::getErrorVectorPtr() {
     return units->getErrorVectorPtr();
+  }
+
+  FloatGPUMirroredMemoryBlock *ActivationUnitsSlice::getSquaredLengthSums() {
+    return units->getSquaredLengthSums();
   }
 
   // Returns the value of the offset. If we add it to size(), the value obtained

@@ -43,13 +43,16 @@ namespace ANN {
 			      conf.use_cuda_flag);
   }
   
-  void ActivationsAction::doBackward() {
+  void ActivationsAction::doBackprop() {
     act_func->multiplyDerivatives(units->getPtr(),
 				  units->getErrorVectorPtr(),
 				  units->size(),
 				  conf,
 				  conf.use_cuda_flag,
 				  (units->getType() == OUTPUTS_TYPE));
+  }
+
+  void ActivationsAction::doUpdate() {
   }
   
   Action *ActivationsAction::clone(hash<void*,void*> &clone_dict,

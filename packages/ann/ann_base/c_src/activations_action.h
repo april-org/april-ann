@@ -36,7 +36,8 @@ namespace ANN {
 		      ActivationFunction *act_func);
     virtual ~ActivationsAction();
     virtual void doForward();
-    virtual void doBackward();
+    virtual void doBackprop();
+    virtual void doUpdate();
     virtual Action *clone(hash<void*,void*> &clone_dict,
 			  const ANNConfiguration &conf);
     void transferFanInToConnections() { }
