@@ -66,6 +66,8 @@ namespace ANN {
       doVectorSetToZero(error_vector, num_neurons*conf.max_bunch_size, 1, 0,
 			use_cuda);
     }
+    if (squared_length_sums)
+      doVectorSetToZero(squared_length_sums, num_neurons, 1, 0, use_cuda);
   }
   
   ActivationUnits *RealActivationUnits::clone(const ANNConfiguration &conf) {
@@ -140,7 +142,8 @@ namespace ANN {
   }
 
   void LocalActivationUnits::reset(bool use_cuda) {
-    // NOTHING TO DO
+    if (squared_length_sums)
+      doVectorSetToZero(squared_length_sums, num_neurons, 1, 0, use_cuda);
   }
 
   /////////////////////////////////////////////////////////////////////
