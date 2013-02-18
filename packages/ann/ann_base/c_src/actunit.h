@@ -68,6 +68,7 @@ namespace ANN {
     /// for FAN IN computation
     virtual unsigned int getFanIn() const { return fanin; }
     virtual void increaseFanIn(unsigned int value) { fanin += value; }
+    virtual void addSquaredLength
   };
   
   /// Implementa un vector de neuronas de tamanyo num_neurons *
