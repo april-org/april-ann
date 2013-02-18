@@ -59,6 +59,7 @@ params_pretrain = {
   learning_rate         = 0.01,
   momentum              = 0.02,
   weight_decay          = 1e-05,
+  min_epochs            = 4,
   max_epochs            = 200,
   pretraining_percentage_stopping_criterion = 0.00001,
   supervised_layer      = { size = 10, actf = "softmax" },
