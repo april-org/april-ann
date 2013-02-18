@@ -52,13 +52,14 @@ params_pretrain = {
   shuffle_random        = random(1234),
   perturbation_random   = random(4567),
   weights_random        = random(7890),
-  var                   = 0.00,
+  var                   = 0.10,
   salt_noise_percentage = 0.10,
   layers                = layers,
   bunch_size            = bunch_size,
-  learning_rate         = 0.01,
-  momentum              = 0.02,
+  learning_rate         = 0.06,
+  momentum              = 0.10,
   weight_decay          = 1e-05,
+  min_epochs            =  10,
   max_epochs            = 200,
   pretraining_percentage_stopping_criterion = 0.00001,
   supervised_layer      = { size = 10, actf = "softmax" },
@@ -157,7 +158,7 @@ datosvalidar = {
   output_dataset = val_output
 }
 
-deep_classifier:set_option("learning_rate", 0.1)
+deep_classifier:set_option("learning_rate", 0.4)
 deep_classifier:set_option("momentum", 0.02)
 -- deep_classifier:set_option("weight_decay", 1e-06)
 deep_classifier:set_error_function(ann.error_functions.logistic_cross_entropy())

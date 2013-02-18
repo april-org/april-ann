@@ -91,8 +91,9 @@ namespace ANN {
     const unsigned int references = bias_vector->getNumReferences();
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
     const float norm_learn_rate =
-      //-(1.0f/sqrtf(static_cast<float>(references*conf.cur_bunch_size))) *
-      -(1.0f/sqrtf(static_cast<float>(references))) *
+      -(1.0f/sqrtf(static_cast<float>(references*conf.cur_bunch_size))) *
+      //-(1.0f/static_cast<float>(references*conf.cur_bunch_size)) *
+      //-(1.0f/sqrtf(static_cast<float>(references))) *
       learning_rate;
     
     // bias update: prev_bias[j] = prev_bias[j] + \sum_b norm_learn_rate * ERROR_INPUT[b,j]
