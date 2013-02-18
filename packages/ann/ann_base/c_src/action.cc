@@ -29,7 +29,11 @@ namespace ANN {
   {
   }
   
-  void CopyAction::doBackward()
+  void CopyAction::doBackprop()
+  {
+  }
+
+  void CopyAction::doUpdate()
   {
   }
 }

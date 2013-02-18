@@ -40,7 +40,8 @@ namespace ANN {
 		      Connections *bias_vector);
     virtual ~ForwardBiasAction();
     virtual void doForward();
-    virtual void doBackward();
+    virtual void doBackprop();
+    virtual void doUpdate();
     virtual Action *clone(hash<void*,void*> &clone_dict,
 			  const ANNConfiguration &conf);
     virtual void setOption(const char *name, double value);

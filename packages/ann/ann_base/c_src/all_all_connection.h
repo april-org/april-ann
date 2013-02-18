@@ -52,8 +52,6 @@ namespace ANN {
 			       unsigned int first_weight_pos,
 			       unsigned int column_size);
     Connections *clone();
-    
-    void endUpdate();
   };
 }
 

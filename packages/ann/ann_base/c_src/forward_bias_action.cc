@@ -60,15 +60,18 @@ namespace ANN {
 		conf.use_cuda_flag);
   }
   
-  // The ForwardBiasAction doBackward method tell the bias_vector to compute
-  // momentum if it is necessary, and doBackward computes also the
+  void ForwardBiasAction::doBackprop() {
+  }
+
+  // The ForwardBiasAction doUpdate method tell the bias_vector to compute
+  // momentum if it is necessary, and doUpdate computes also the
   // backpropagation update of the bias_vector.
-  void ForwardBiasAction::doBackward() {
+  void ForwardBiasAction::doUpdate() {
     assert(learning_rate > 0.0f &&
 	   "Learning rate/momentum/weight decay needs to be fixed with "
 	   "setOption method!!!");
     
-    // Foces bias_vector to update internal counts for a backward step
+    // Foces bias_vector to update internal counts for a update step
     bias_vector->beginUpdate();
     
     FloatGPUMirroredMemoryBlock *bias_ptr      = bias_vector->getPtr();
@@ -86,7 +89,7 @@ namespace ANN {
       else bias_vector->copyToPrevVector(conf.use_cuda_flag);
     } // if (bias_vector->needsToComputeMomentum()) {
 
-    // backprop learning rule:
+    // update learning rule:
     // PREV_W = alpha * ERRORS + PREV_W
     const unsigned int references = bias_vector->getNumReferences();
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
@@ -104,7 +107,7 @@ namespace ANN {
 		conf.cur_bunch_size, 1,
 		conf.use_cuda_flag);
 
-    // Forces to update counts at this backward step
+    // Forces to update counts at this update step
     bias_vector->endUpdate();
   }
 

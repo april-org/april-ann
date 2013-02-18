@@ -48,10 +48,13 @@ namespace ANN {
     /// the forward step of the Backpropagation algorithm.
     virtual void doForward() = 0;
 
+    /// Abstract method that back-propagates error derivatives and computes
+    /// other useful stuff
+    virtual void doBackprop() = 0;
     /// Abstract method that executes the set of operations
     /// required for each block of connections when performing
-    /// the backward step of the Backpropagation algorithm.
-    virtual void doBackward() = 0;
+    /// the backprop step of the Backpropagation algorithm.
+    virtual void doUpdate()   = 0;
     virtual Action *clone(hash<void*,void*> &clone_dict,
 			  const ANNConfiguration &conf) = 0;
     // Changes the value of a training parameter
@@ -149,7 +152,8 @@ namespace ANN {
 	       unsigned int copy_size);
     ~CopyAction();
     void doForward();
-    void doBackward();
+    void doBackprop();
+    void doUpdate();
     Action *clone(hash<void*,void*> &clone_dict,		  
 		  const ANNConfiguration &conf) { return 0; }
     void transferFanInToConnections() { }

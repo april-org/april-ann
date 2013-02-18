@@ -66,7 +66,9 @@ namespace ANN {
   {
     //printf ("BACKWARD START\n");
     for (int i = actions.size() - 1; i >= 0; i--)
-      actions[i]->doBackward();
+      actions[i]->doBackprop();
+    for (int i = actions.size() - 1; i >= 0; i--)
+      actions[i]->doUpdate();
     //printf ("BACKWARD END\n");
   }
 
