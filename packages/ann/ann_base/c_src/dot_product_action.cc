@@ -356,6 +356,7 @@ namespace ANN {
       c_weight_decay = 1.0f - weight_decay;
       return;
     }
+    mSetOption("squared_length_L2_penalty", squared_length_L2_penalty);
     ERROR_EXIT1(140, "The option to be set does not exist: %s.\n", name);
   }
   
@@ -363,6 +364,7 @@ namespace ANN {
     mHasOption("learning_rate");
     mHasOption("momentum");
     mHasOption("weight_decay");
+    mHasOption("squared_length_L2_penalty");
     return false;
   }
   
@@ -371,6 +373,7 @@ namespace ANN {
     mGetOption("momentum", momentum);
     // the weight decay is always fixed to 0
     mGetOption("weight_decay", weight_decay);
+    mGetOption("squared_length_L2_penalty", squared_length_L2_penalty);
     ERROR_EXIT(140, "The option to be get does not exist.\n");
   }
 

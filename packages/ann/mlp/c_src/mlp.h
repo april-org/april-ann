@@ -37,6 +37,7 @@ namespace ANN {
     unsigned int cur_bunch_pos;
 
     float learning_rate, momentum, weight_decay, c_weight_decay;
+    float squared_length_L2_penalty;
     ErrorFunction *error_func;
     
     void  beginTrainingBatch();
