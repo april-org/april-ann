@@ -74,9 +74,10 @@ help_string =
   -- This function check the correction of random_params
   local random_param_valid_options = table.invert{"option", "tag", "values",
                                                   "sampling", "prec", "check",
-                                                  "type"}
+                                                  "type", "size" }
   local random_param_values_table_valid_options = table.invert{"min","max","step",
-                                                               "mean", "variance"}
+                                                               "mean", "variance",
+							       "size" }
   function check_random(param)
     if not param.tag then error("Each random parameter needs a tag") end
     if not param.sampling then error("Each random parameter needs a sampling") end
