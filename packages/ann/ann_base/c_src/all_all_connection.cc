@@ -168,4 +168,27 @@ namespace ANN {
     }
     return conn;
   }
+
+  void AllAllConnections::endUpdate() {
+    Connections::endUpdate();
+    float *w             = weights->getPPALForReadAndWrite();
+    float *prev_w        = prev_weights->getPPALForReadAndWrite();
+    for (unsigned int j=0; j<num_outputs; ++j) {
+      unsigned int k = j;
+      float squared_length = 0.0f;
+      for (unsigned int i=0; i<num_inputs; ++i) {
+	squared_length += w[k]*w[k];
+	k += num_outputs;
+      }
+      if (squared_length > 15.0f) {
+	float ratio    = sqrtf(15.0f/squared_length);
+	unsigned int k = j;
+	for (unsigned int i=0; i<num_inputs; ++i) {
+	  w[k]      *= ratio;
+	  prev_w[k] *= ratio;
+	  k += num_outputs;
+	}
+      }
+    }    
+  }
 }
