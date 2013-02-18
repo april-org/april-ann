@@ -34,7 +34,7 @@ namespace ANN {
     const unsigned int num_inputs, num_outputs;
     const ANNConfiguration &conf;
     float learning_rate, momentum, weight_decay, c_weight_decay;
-    float squared_length_L2_penalty;
+    float neuron_squared_length_upper_bound;
     bool transpose_weights;
 
     void

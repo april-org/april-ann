@@ -37,7 +37,7 @@ namespace ANN {
 					     momentum(0.0f),
 					     weight_decay(0.0f),
 					     c_weight_decay(1.0f),
-					     squared_length_L2_penalty(-1.0f),
+					     neuron_squared_length_upper_bound(-1.0f),
 					     error_func(0)
   {
     setErrorFunction(new MSE());
@@ -138,7 +138,7 @@ namespace ANN {
       c_weight_decay = 1.0 - weight_decay;
       return;
     }
-    mSetOption("squared_length_L2_penalty", squared_length_L2_penalty);
+    mSetOption("neuron_squared_length_upper_bound", neuron_squared_length_upper_bound);
     ERROR_EXIT(140, "The option to be set does not exist.\n");
   }
 
@@ -147,7 +147,7 @@ namespace ANN {
     mHasOption("learning_rate");
     mHasOption("momentum");
     mHasOption("weight_decay");
-    mHasOption("squared_length_L2_penalty");
+    mHasOption("neuron_squared_length_upper_bound");
     return false;
   }
 
@@ -156,7 +156,7 @@ namespace ANN {
     mGetOption("learning_rate", learning_rate);
     mGetOption("momentum", momentum);
     mGetOption("weight_decay", weight_decay);
-    mGetOption("squared_length_L2_penalty", squared_length_L2_penalty);
+    mGetOption("neuron_squared_length_upper_bound", neuron_squared_length_upper_bound);
     ERROR_EXIT(140, "The option to be get does not exist.\n");
   }
 
@@ -276,7 +276,7 @@ namespace ANN {
     copy->momentum       = momentum;
     copy->weight_decay   = weight_decay;
     copy->c_weight_decay = c_weight_decay;
-    copy->squared_length_L2_penalty = squared_length_L2_penalty;
+    copy->neuron_squared_length_upper_bound = neuron_squared_length_upper_bound;
     return copy;
   }
 

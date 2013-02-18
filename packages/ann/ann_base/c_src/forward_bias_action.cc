@@ -128,7 +128,7 @@ namespace ANN {
     // the weight decay is always fixed to 0, but it does not throw error
     // message
     if (strcmp("weight_decay", name) == 0) return;
-    if (strcmp("squared_length_L2_penalty", name) == 0) return;
+    if (strcmp("neuron_squared_length_upper_bound", name) == 0) return;
     ERROR_EXIT(140, "The option to be set does not exist.\n");
   }
   
@@ -136,7 +136,7 @@ namespace ANN {
     mHasOption("learning_rate");
     mHasOption("momentum");
     mHasOption("weight_decay");
-    mHasOption("squared_length_L2_penalty");
+    mHasOption("neuron_squared_length_upper_bound");
     return false;
   }
   
@@ -145,7 +145,7 @@ namespace ANN {
     mGetOption("momentum", momentum);
     // the weight decay is always fixed to 0
     mGetOption("weight_decay", 0.0f);
-    mGetOption("squared_length_L2_penalty", -1.0f);
+    mGetOption("neuron_squared_length_upper_bound", -1.0f);
     ERROR_EXIT(140, "The option to be get does not exist.\n");
   }
 

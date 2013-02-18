@@ -42,7 +42,7 @@ namespace ANN {
     momentum(0.0f),
     weight_decay(0.0f),
     c_weight_decay(1.0f),
-    squared_length_L2_penalty(-1.0f),
+    neuron_squared_length_upper_bound(-1.0f),
     transpose_weights(transpose_weights) {
     if (!transpose_weights) {
       if (!weights_matrix->checkInputOutputSizes(inputs, outputs))
@@ -167,7 +167,7 @@ namespace ANN {
       }
     }
     
-    if (squared_length_L2_penalty > 0.0f && !transpose_weights) {
+    if (neuron_squared_length_upper_bound > 0.0f && !transpose_weights) {
       // TODO: Implement this in CBLAS and CUDA
       FloatGPUMirroredMemoryBlock *sql_sums   = outputs->getSquaredLengthSums();
       FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
@@ -282,7 +282,7 @@ namespace ANN {
     // Momentum computation
     if (weights_matrix->isFirstUpdateCall()) {
       
-      if (squared_length_L2_penalty > 0.0f && !transpose_weights) {
+      if (neuron_squared_length_upper_bound > 0.0f && !transpose_weights) {
 	// TODO: Implement this in CBLAS and CUDA
 	
 	FloatGPUMirroredMemoryBlock *sql_sums   = outputs->getSquaredLengthSums();
@@ -298,8 +298,8 @@ namespace ANN {
 	  // compute squared length, adding previous squared lengths computed
 	  // over the same neuron
 	  float squared_length = squared_length_sums[j];
-	  if (squared_length > squared_length_L2_penalty) {
-	    float ratio    = sqrtf(squared_length_L2_penalty/squared_length);
+	  if (squared_length > neuron_squared_length_upper_bound) {
+	    float ratio    = sqrtf(neuron_squared_length_upper_bound/squared_length);
 	    unsigned int k = j;
 	    for (unsigned int i=0; i<num_inputs; ++i) {
 	      w[k]      *= ratio;
@@ -345,6 +345,7 @@ namespace ANN {
     action->momentum       = momentum;
     action->weight_decay   = weight_decay;
     action->c_weight_decay = c_weight_decay;
+    action->neuron_squared_length_upper_bound = neuron_squared_length_upper_bound;
     return action;
   }
 
@@ -356,7 +357,7 @@ namespace ANN {
       c_weight_decay = 1.0f - weight_decay;
       return;
     }
-    mSetOption("squared_length_L2_penalty", squared_length_L2_penalty);
+    mSetOption("neuron_squared_length_upper_bound", neuron_squared_length_upper_bound);
     ERROR_EXIT1(140, "The option to be set does not exist: %s.\n", name);
   }
   
@@ -364,7 +365,7 @@ namespace ANN {
     mHasOption("learning_rate");
     mHasOption("momentum");
     mHasOption("weight_decay");
-    mHasOption("squared_length_L2_penalty");
+    mHasOption("neuron_squared_length_upper_bound");
     return false;
   }
   
@@ -373,7 +374,7 @@ namespace ANN {
     mGetOption("momentum", momentum);
     // the weight decay is always fixed to 0
     mGetOption("weight_decay", weight_decay);
-    mGetOption("squared_length_L2_penalty", squared_length_L2_penalty);
+    mGetOption("neuron_squared_length_upper_bound", neuron_squared_length_upper_bound);
     ERROR_EXIT(140, "The option to be get does not exist.\n");
   }
 
