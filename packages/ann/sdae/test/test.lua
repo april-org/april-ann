@@ -59,7 +59,7 @@ params_pretrain = {
   learning_rate         = 0.06,
   momentum              = 0.10,
   weight_decay          = 0.0,
-  squared_length_L2_penalty = 15.0,
+  neuron_squared_length_upper_bound = 15.0,
   min_epochs            =  10,
   max_epochs            = 200,
   pretraining_percentage_stopping_criterion = 0.00001,
@@ -162,7 +162,7 @@ datosvalidar = {
 deep_classifier:set_option("learning_rate", 0.4)
 deep_classifier:set_option("momentum", 0.02)
 deep_classifier:set_option("weight_decay", 0.0)
-deep_classifier:set_option("squared_length_L2_penalty", 15.0);
+deep_classifier:set_option("neuron_squared_length_upper_bound", 15.0);
 deep_classifier:set_error_function(ann.error_functions.logistic_cross_entropy())
 shallow_classifier:set_option("learning_rate",
 			      deep_classifier:get_option("learning_rate"))
@@ -170,8 +170,8 @@ shallow_classifier:set_option("momentum",
 			      deep_classifier:get_option("momentum"))
 shallow_classifier:set_option("weight_decay",
 			      deep_classifier:get_option("weight_decay"))
-shallow_classifier:set_option("squared_length_L2_penalty",
-			      deep_classifier:get_option("squared_length_L2_penalty"))
+shallow_classifier:set_option("neuron_squared_length_upper_bound",
+			      deep_classifier:get_option("neuron_squared_length_upper_bound"))
 shallow_classifier:set_error_function(ann.error_functions.logistic_cross_entropy())
 deep_classifier_wo_pretraining:set_option("learning_rate",
 					  deep_classifier:get_option("learning_rate"))
@@ -179,8 +179,8 @@ deep_classifier_wo_pretraining:set_option("momentum",
 					  deep_classifier:get_option("momentum"))
 deep_classifier_wo_pretraining:set_option("weight_decay",
 					  deep_classifier:get_option("weight_decay"))
-deep_classifier:set_option("squared_length_L2_penalty",
-			   deep_classifier:get_option("squared_length_L2_penalty"))
+deep_classifier:set_option("neuron_squared_length_upper_bound",
+			   deep_classifier:get_option("neuron_squared_length_upper_bound"))
 deep_classifier_wo_pretraining:set_error_function(ann.error_functions.logistic_cross_entropy())
 
 for i=1,50 do
