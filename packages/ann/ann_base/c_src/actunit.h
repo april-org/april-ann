@@ -46,21 +46,30 @@ namespace ANN {
 		    ActivationUnitsType type) :
       conf(conf), type(type), fanin(0) {}
     virtual ~ActivationUnits() { }
+
+    /// Method for getting the type of the activation units.
     ActivationUnitsType getType() const { return type; }
+
+    /// Method for setting the type of the activation units.
     void setType(ActivationUnitsType type) { this->type=type; }
-    /// devuelve el tamanyo del vector que representa la entrada (no
-    /// tiene porque ser igual al numero de neuronas)
+
+    /// Abstract method that returns the length of the array that represents
+    /// the input (which is not necessarily equal to the number of neurons).
     virtual unsigned int size() const	 = 0;
-    /// devuelve el numero de neuronas de la entrada
+
+    /// Abstract method that returns the number of neurons at the input.
     virtual unsigned int numNeurons() const = 0;
-    /// devuelve un puntero al vector de unidades, tantas unidades como
-    /// size()*bunch_size
+
+    /// Abstract method that returns a pointer to the array of units.
     virtual FloatGPUMirroredMemoryBlock *getPtr() = 0;
-    /// devuelve un puntero al vector con la suma de los errores
+
+    /// Abstract methods that returns a pointer to the array of errors.
     virtual FloatGPUMirroredMemoryBlock *getErrorVectorPtr() = 0;
+
     /// devuelve el valor de offset, que sumado al size(), puede que el vector
     /// no comienze en 0
     virtual unsigned int getOffset() const = 0;
+
     virtual ActivationUnits *clone(const ANNConfiguration &conf) = 0;
     /// pone a 0 los contadores, deltas de error, etc
     virtual void reset(bool use_cuda) = 0;
