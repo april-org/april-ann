@@ -65,7 +65,7 @@ namespace ANN {
     virtual void saveModel(const char *filename);
   
     void showNetworkAtts();
-    void doForward();
+    void doForward(bool during_training=false);
     void doBackward();
     void showActivations();
     void showWeights();

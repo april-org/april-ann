@@ -25,7 +25,7 @@ namespace ANN {
 
   // DotProductAction implementation
   
-  void CopyAction::doForward()
+  void CopyAction::doForward(bool during_training)
   {
   }
   

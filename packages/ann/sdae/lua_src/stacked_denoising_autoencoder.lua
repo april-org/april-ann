@@ -78,6 +78,7 @@ end
 local function generate_training_table_configuration_from_params(current_dataset_params,
 								 params,
 								 noise,
+								 input_actf,
 								 output_datasets)
   local data = {}
   if current_dataset_params.input_dataset then
@@ -97,11 +98,11 @@ local function generate_training_table_configuration_from_params(current_dataset
 	  variance = params.var,
 	  random   = params.perturbation_random }
       end
-      if params.salt_noise_percentage > 0.0 then
+      if input_actf ~= "linear" and params.salt_noise_percentage > 0.0 then
 	data.input_dataset = dataset.salt_noise{
 	  dataset = data.input_dataset,
 	  vd = params.salt_noise_percentage, -- 10%
-	  zero = 0.0,
+	  zero = (input_actf == "tanh" and -1.0) or 0.0,
 	  random = params.perturbation_random }
       end
     end
@@ -119,11 +120,11 @@ local function generate_training_table_configuration_from_params(current_dataset
 	    variance = params.var,
 	    random   = params.perturbation_random }
 	end
-	if params.salt_noise_percentage > 0.0 then
+	if input_actf ~= "linear" and params.salt_noise_percentage > 0.0 then
 	  data.input_dataset = dataset.salt_noise{
 	    dataset = data.input_dataset,
 	    vd = params.salt_noise_percentage, -- 10%
-	    zero = 0.0,
+	    zero = (input_actf == "tanh" and -1.0) or 0.0,
 	    random = params.perturbation_random }
 	end
       end
@@ -308,7 +309,8 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
     local data
     data = generate_training_table_configuration_from_params(current_dataset_params,
 							     params,
-							     true)
+							     true,
+							     input_actf)
     local dae
     dae = build_two_layered_autoencoder_from_sizes_and_actf(params.bunch_size,
 							    input_size,
@@ -343,7 +345,9 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
       update_function = function(t)
 	printf("%4d %10.6f  (improvement %.4f)\n",
 	       t.current_epoch, t.train_error, t.train_improvement)
-	io.stdout:flush()	
+	io.stdout:flush()
+	local lr = t.train_params.ann:get_option("learning_rate")
+	t.train_params.ann:set_option("learning_rate", lr*0.9)
       end }
     ---------------------------------------------------------
     local b1mat = best_net:get_layer_connections(1):weights()
@@ -387,6 +391,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
     data = generate_training_table_configuration_from_params(current_dataset_params,
 							     params,
 							     true,
+							     params.layers[#params.layers].actf,
 							     params.output_datasets)
     local thenet = ann.mlp.all_all.generate{
       topology = string.format("%d inputs %d %s",
@@ -418,7 +423,9 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
       update_function = function(t)
 	printf("%4d %10.6f  (improvement %.4f)\n",
 	       t.current_epoch, t.train_error, t.train_improvement)
-	io.stdout:flush()	
+	io.stdout:flush()
+	local lr = t.train_params.ann:get_option("learning_rate")
+	t.train_params.ann:set_option("learning_rate", lr*0.9)
       end }
     local codifier = ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
 								     params.bunch_size,
@@ -491,7 +498,8 @@ function ann.autoencoders.sdae_finetunning(sdae_table, params)
   collectgarbage("collect")
   local data = generate_training_table_configuration_from_params(params,
 								 params,
-								 true)
+								 true,
+								 params.layers[1].actf)
   local val_data = { input_dataset  = params.val_input_dataset,
 		     output_dataset = params.val_input_dataset }
   local stopping_criterion = params.stopping_criterion
@@ -511,6 +519,8 @@ function ann.autoencoders.sdae_finetunning(sdae_table, params)
 					       t.best_val_error,
 					       t.best_epoch)
 					io.stdout:flush()
+					local lr = t.train_params.ann:get_option("learning_rate")
+					t.train_params.ann:set_option("learning_rate", lr*0.9)
 				      end }
   return result.best_net
 end

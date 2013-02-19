@@ -53,7 +53,7 @@ params_pretrain = {
   perturbation_random   = random(4567),
   weights_random        = random(7890),
   var                   = 0.10,
-  salt_noise_percentage = 0.10,
+  salt_noise_percentage = 0.0,
   layers                = layers,
   bunch_size            = bunch_size,
   learning_rate         = 0.06,
@@ -75,7 +75,7 @@ params_pretrain = {
 --   perturbation_random   = random(4567),
 --   weights_random        = random(7890),
 --   var                   = 0.02,
---   salt_noise_percentage = 0.10,
+--   salt_noise_percentage = 0.0,
 --   layers                = layers,
 --   bunch_size            = bunch_size,
 --   learning_rate         = 0.01,
@@ -183,7 +183,7 @@ deep_classifier:set_option("neuron_squared_length_upper_bound",
 			   deep_classifier:get_option("neuron_squared_length_upper_bound"))
 deep_classifier_wo_pretraining:set_error_function(ann.error_functions.logistic_cross_entropy())
 
-for i=1,50 do
+for i=1,200 do
   local mse_tr_deep = deep_classifier:train_dataset(datosentrenar_deep)
   local mse_tr_deep_wo = deep_classifier_wo_pretraining:train_dataset(datosentrenar_deep_wo)
   local mse_tr_shallow = shallow_classifier:train_dataset(datosentrenar_shallow)

@@ -42,9 +42,10 @@ namespace ANN {
     ActivationUnitsType     type;
     unsigned int            fanin;
   public:
+    float                   drop_factor;
     ActivationUnits(const ANNConfiguration &conf,
 		    ActivationUnitsType type) :
-      conf(conf), type(type), fanin(0) {}
+      conf(conf), type(type), fanin(0), drop_factor(0.0f) {}
     virtual ~ActivationUnits() { }
     ActivationUnitsType getType() const { return type; }
     void setType(ActivationUnitsType type) { this->type=type; }

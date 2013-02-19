@@ -67,17 +67,19 @@ namespace ANN {
   }
   
   // The DotProductAction
-  void DotProductAction::doForward() {
+  void DotProductAction::doForward(bool during_training) {
     FloatGPUMirroredMemoryBlock *input_ptr       = inputs->getPtr();
     FloatGPUMirroredMemoryBlock *output_ptr      = outputs->getPtr();
     FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
-    
+    float weights_factor = 1.0f;
+    if (!during_training && inputs->drop_factor > 0.0f)
+      weights_factor = 1.0f - inputs->drop_factor;
     if (conf.cur_bunch_size == 1) {
       // vector x matrix product
       if (!transpose_weights)
 	doSgemv(CblasColMajor, CblasNoTrans,
 		num_outputs, num_inputs,
-		1.0f, weights_mat_ptr, num_outputs,
+		weights_factor, weights_mat_ptr, num_outputs,
 		input_ptr, conf.max_bunch_size,
 		1.0f, output_ptr, conf.max_bunch_size,
 		0, inputs->getOffset(), outputs->getOffset(),
@@ -85,7 +87,7 @@ namespace ANN {
       else
 	doSgemv(CblasColMajor, CblasTrans,
 		num_inputs, num_outputs,
-		1.0f, weights_mat_ptr, num_inputs,
+		weights_factor, weights_mat_ptr, num_inputs,
 		input_ptr, conf.max_bunch_size,
 		1.0f, output_ptr, conf.max_bunch_size,
 		0, inputs->getOffset(), outputs->getOffset(),
@@ -98,7 +100,7 @@ namespace ANN {
       if (!transpose_weights)
 	doSgemm(CblasColMajor, CblasNoTrans, CblasTrans,
 		conf.cur_bunch_size, num_outputs, num_inputs,
-		1.0f, input_ptr, conf.max_bunch_size,
+		weights_factor, input_ptr, conf.max_bunch_size,
 		weights_mat_ptr, num_outputs,
 		// beta = 1.0f, C matrix contains BIAS and probably other layer
 		// computations
@@ -108,7 +110,7 @@ namespace ANN {
       else
 	doSgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
 		conf.cur_bunch_size, num_outputs, num_inputs,
-		1.0f,
+		weights_factor,
 		input_ptr, conf.max_bunch_size,
 		weights_mat_ptr, num_inputs,
 		// beta = 1.0f, C matrix contains BIAS and probably other layer
@@ -167,24 +169,46 @@ namespace ANN {
       }
     }
     
-    if (neuron_squared_length_upper_bound > 0.0f && !transpose_weights) {
-      // TODO: Implement this in CBLAS and CUDA
-      FloatGPUMirroredMemoryBlock *sql_sums   = outputs->getSquaredLengthSums();
-      FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
-      
-      float *squared_length_sums = sql_sums->getPPALForReadAndWrite();
-      const float *w = weights_mat_ptr->getPPALForRead();
-      
-      for (unsigned int j=0; j<num_outputs; ++j) {
-	unsigned int k = j;
-	// compute squared length, adding previous squared lengths computed
-	// over the same neuron
-	float squared_length = squared_length_sums[j];
-	for (unsigned int i=0; i<num_inputs; ++i) {
-	  squared_length += w[k]*w[k];
-	  k += num_outputs;
+    if (neuron_squared_length_upper_bound > 0.0f) {
+      if (!transpose_weights) {
+	// TODO: Implement this in CBLAS and CUDA
+	FloatGPUMirroredMemoryBlock *sql_sums   = outputs->getSquaredLengthSums();
+	FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
+	
+	float *squared_length_sums = sql_sums->getPPALForReadAndWrite();
+	const float *w = weights_mat_ptr->getPPALForRead();
+	
+	for (unsigned int j=0; j<num_outputs; ++j) {
+	  unsigned int k = j;
+	  // compute squared length, adding previous squared lengths computed
+	  // over the same neuron
+	  float squared_length = squared_length_sums[j];
+	  for (unsigned int i=0; i<num_inputs; ++i) {
+	    squared_length += w[k]*w[k];
+	    k += num_outputs;
+	  }
+	  squared_length_sums[j] = squared_length;
 	}
-	squared_length_sums[j] = squared_length;
+      }
+      else {
+	// TODO: Implement this in CBLAS and CUDA
+	FloatGPUMirroredMemoryBlock *sql_sums   = outputs->getSquaredLengthSums();
+	FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
+	
+	float *squared_length_sums = sql_sums->getPPALForReadAndWrite();
+	const float *w = weights_mat_ptr->getPPALForRead();
+	
+	unsigned int k = 0;
+	for (unsigned int j=0; j<num_outputs; ++j) {
+	  // compute squared length, adding previous squared lengths computed
+	  // over the same neuron
+	  float squared_length = squared_length_sums[j];
+	  for (unsigned int i=0; i<num_inputs; ++i) {
+	    squared_length += w[k]*w[k];
+	    ++k;
+	  }
+	  squared_length_sums[j] = squared_length;
+	}
       }
     }
   }
@@ -281,30 +305,58 @@ namespace ANN {
     float beta_parameter_for_cblas_bp = 1.0f;
     // Momentum computation
     if (weights_matrix->isFirstUpdateCall()) {
-      
-      if (neuron_squared_length_upper_bound > 0.0f && !transpose_weights) {
-	// TODO: Implement this in CBLAS and CUDA
+      if (neuron_squared_length_upper_bound > 0.0f) {
+	if (!transpose_weights) {
+	  // TODO: Implement this in CBLAS and CUDA
+	  
+	  FloatGPUMirroredMemoryBlock *sql_sums   = outputs->getSquaredLengthSums();
+	  FloatGPUMirroredMemoryBlock *w_ptr      = weights_matrix->getPtr();
+	  FloatGPUMirroredMemoryBlock *prev_w_ptr =
+	    weights_matrix->getPrevPtr();
 	
-	FloatGPUMirroredMemoryBlock *sql_sums   = outputs->getSquaredLengthSums();
-	FloatGPUMirroredMemoryBlock *w_ptr      = weights_matrix->getPtr();
-	FloatGPUMirroredMemoryBlock *prev_w_ptr =
-	  weights_matrix->getPrevPtr();
+	  const float *squared_length_sums = sql_sums->getPPALForRead();
+	  float *w      = weights_mat_ptr->getPPALForReadAndWrite();
+	  float *prev_w = prev_weights_mat_ptr->getPPALForReadAndWrite();
 	
-	const float *squared_length_sums = sql_sums->getPPALForRead();
-	float *w      = weights_mat_ptr->getPPALForReadAndWrite();
-	float *prev_w = prev_weights_mat_ptr->getPPALForReadAndWrite();
+	  for (unsigned int j=0; j<num_outputs; ++j) {
+	    // compute squared length, adding previous squared lengths computed
+	    // over the same neuron
+	    float squared_length = squared_length_sums[j];
+	    if (squared_length > neuron_squared_length_upper_bound) {
+	      float ratio    = sqrtf(neuron_squared_length_upper_bound/squared_length);
+	      unsigned int k = j;
+	      for (unsigned int i=0; i<num_inputs; ++i) {
+		w[k]      *= ratio;
+		prev_w[k] *= ratio;
+		k += num_outputs;
+	      }
+	    }
+	  }
+	}
+	else {
+	  // TODO: Implement this in CBLAS and CUDA
 	
-	for (unsigned int j=0; j<num_outputs; ++j) {
-	  // compute squared length, adding previous squared lengths computed
-	  // over the same neuron
-	  float squared_length = squared_length_sums[j];
-	  if (squared_length > neuron_squared_length_upper_bound) {
-	    float ratio    = sqrtf(neuron_squared_length_upper_bound/squared_length);
-	    unsigned int k = j;
-	    for (unsigned int i=0; i<num_inputs; ++i) {
-	      w[k]      *= ratio;
-	      prev_w[k] *= ratio;
-	      k += num_outputs;
+	  FloatGPUMirroredMemoryBlock *sql_sums   = outputs->getSquaredLengthSums();
+	  FloatGPUMirroredMemoryBlock *w_ptr      = weights_matrix->getPtr();
+	  FloatGPUMirroredMemoryBlock *prev_w_ptr =
+	    weights_matrix->getPrevPtr();
+	
+	  const float *squared_length_sums = sql_sums->getPPALForRead();
+	  float *w      = weights_mat_ptr->getPPALForReadAndWrite();
+	  float *prev_w = prev_weights_mat_ptr->getPPALForReadAndWrite();
+	
+	  unsigned int k = 0;
+	  for (unsigned int j=0; j<num_outputs; ++j) {
+	    // compute squared length, adding previous squared lengths computed
+	    // over the same neuron
+	    float squared_length = squared_length_sums[j];
+	    if (squared_length > neuron_squared_length_upper_bound) {
+	      float ratio    = sqrtf(neuron_squared_length_upper_bound/squared_length);
+	      for (unsigned int i=0; i<num_inputs; ++i) {
+		w[k]      *= ratio;
+		prev_w[k] *= ratio;
+		k++;
+	      }
 	    }
 	  }
 	}

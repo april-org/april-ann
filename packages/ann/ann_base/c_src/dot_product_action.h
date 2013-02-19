@@ -59,7 +59,7 @@ namespace ANN {
 		     Connections *weights_matrix,
 		     bool transpose_weights=false);
     virtual ~DotProductAction();
-    virtual void doForward();
+    virtual void doForward(bool during_training=false);
     virtual void doBackprop();
     virtual void doUpdate();
     virtual Action *clone(hash<void*,void*> &clone_dict,
