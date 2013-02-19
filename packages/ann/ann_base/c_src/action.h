@@ -54,9 +54,15 @@ namespace ANN {
     virtual void doBackward() = 0;
     virtual Action *clone(hash<void*,void*> &clone_dict,
 			  const ANNConfiguration &conf) = 0;
-    // Changes the value of a training parameter
+
+    /// Virtual method for setting the value of a training parameter.
     virtual void setOption(const char *name, double value) { }
+
+    /// Virtual method for determining if a training parameter
+    /// is being used or can be used within the network.
     virtual bool hasOption(const char *name) { return false; }
+
+    /// Virtual method for getting the value of a training parameter.
     virtual double getOption(const char *name) { return 0.0; }
     virtual void transferFanInToConnections() = 0;
   };
