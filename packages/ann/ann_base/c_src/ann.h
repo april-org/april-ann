@@ -56,7 +56,7 @@ namespace ANN {
     ANNBase(ANNConfiguration configuration);
     virtual void setNumBunch(unsigned int num_bunch);
     virtual unsigned int getNumBunch();
-    virtual void doForward()  = 0;
+    virtual void doForward(bool during_training=false)  = 0;
     virtual void doBackward() = 0;
     
     void clearTopology() {

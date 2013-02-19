@@ -59,11 +59,11 @@ namespace ANN {
   {
   }
 
-  void MLP::doForward()
+  void MLP::doForward(bool during_training)
   {
     //printf ("FORWARD START\n");
     for (unsigned int i = 0; i < actions.size(); i++)
-      actions[i]->doForward();
+      actions[i]->doForward(during_training);
     //printf ("FORWARD END\n");
   }
 
@@ -243,7 +243,7 @@ namespace ANN {
   {
     resetErrorVectors();
     
-    doForward();
+    doForward(true);
 
     error_func->computePatternErrorFunction(output_neurons,
 					    desired_output,

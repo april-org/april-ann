@@ -50,7 +50,7 @@ namespace ANN {
   
   // The ForwardBiasAction copies the bias vector at the outputs vector in the
   // method doForward.
-  void ForwardBiasAction::doForward() {
+  void ForwardBiasAction::doForward(bool during_training) {
     FloatGPUMirroredMemoryBlock *output_ptr      = outputs->getPtr();
     FloatGPUMirroredMemoryBlock *bias_vector_ptr = bias_vector->getPtr();
     doScopyLoop(outputs->numNeurons(),

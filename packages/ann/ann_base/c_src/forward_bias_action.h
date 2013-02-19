@@ -39,7 +39,7 @@ namespace ANN {
 		      ActivationUnits *outputs,
 		      Connections *bias_vector);
     virtual ~ForwardBiasAction();
-    virtual void doForward();
+    virtual void doForward(bool during_training=false);
     virtual void doBackprop();
     virtual void doUpdate();
     virtual Action *clone(hash<void*,void*> &clone_dict,

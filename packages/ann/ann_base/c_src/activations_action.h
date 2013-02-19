@@ -35,7 +35,7 @@ namespace ANN {
 		      ActivationUnits    *units,
 		      ActivationFunction *act_func);
     virtual ~ActivationsAction();
-    virtual void doForward();
+    virtual void doForward(bool during_training=false);
     virtual void doBackprop();
     virtual void doUpdate();
     virtual Action *clone(hash<void*,void*> &clone_dict,
