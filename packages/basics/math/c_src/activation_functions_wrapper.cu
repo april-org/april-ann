@@ -400,7 +400,9 @@ void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *units,
 
     for (unsigned int i=0; i<units_size; ++i) {
       for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	float value = clamp(units_ptr[b], -1.0f + NEAR_ZERO, 1.0f - NEAR_ZERO);
+	float value = clamp(units_ptr[b],
+			    -1.0f + 2*NEAR_ZERO,
+			    1.0f - 2*NEAR_ZERO);
 	input_errors_ptr[b] *= 0.5f * (1.0f-value*value);
       }
       units_ptr        += conf.max_bunch_size;

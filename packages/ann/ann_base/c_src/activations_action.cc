@@ -43,14 +43,17 @@ namespace ANN {
 			      units->size(),
 			      conf,
 			      conf.use_cuda_flag);
-    if (during_training && units->getType() != OUTPUTS_TYPE) {
-      // dropout 50%
-      FloatGPUMirroredMemoryBlock *unit_ptr = units->getPtr();
+    if (conf.use_dropout) {
       float min = act_func->getMinimum();
       if (min > -10.0f) {
 	if (units->getType() == INPUTS_TYPE)
-	  units->drop_factor = 0.3;
+	  units->drop_factor = 0.2;
 	units->drop_factor = 0.5;
+      }
+      if (during_training && units->getType() != OUTPUTS_TYPE) {
+	// dropout 50%
+	FloatGPUMirroredMemoryBlock *unit_ptr = units->getPtr();
+	
 	unsigned int size = units->numNeurons();
 	int *unit_order = new int[size];
 	for (unsigned int i=0; i<size; ++i)
