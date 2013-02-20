@@ -72,7 +72,10 @@ namespace ANN {
     FloatGPUMirroredMemoryBlock *output_ptr      = outputs->getPtr();
     FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
     float weights_factor = 1.0f;
-    if (!during_training && inputs->drop_factor > 0.0f)
+    if (conf.use_dropout &&
+	!during_training &&
+	inputs->getType() == HIDDEN_TYPE &&
+	inputs->drop_factor > 0.0f)
       weights_factor = 1.0f - inputs->drop_factor;
     if (conf.cur_bunch_size == 1) {
       // vector x matrix product
@@ -304,7 +307,28 @@ namespace ANN {
     
     float beta_parameter_for_cblas_bp = 1.0f;
     // Momentum computation
-    if (weights_matrix->isFirstUpdateCall()) {
+    if (weights_matrix->isFirstUpdateCall()) {      
+      if (momentum > 0.0f) {
+	// prev_w[i,j] = momentum * (w[i,j] - prev_w[i,j])
+	weights_matrix->computeMomentumOnPrevVector(momentum,
+						    conf.use_cuda_flag);
+	weights_matrix->computeWeightDecayOnPrevVector(c_weight_decay,
+						       conf.use_cuda_flag);
+      }
+      else {
+	weights_matrix->copyToPrevVector(conf.use_cuda_flag);
+	beta_parameter_for_cblas_bp = c_weight_decay;
+      }
+    } // if (weights_matrix->needsToComputeMomentum()) {
+    
+    computeBPUpdateOnPrevVectors(prev_weights_mat_ptr,
+				 input, input_shift,
+				 input_error, output_shift,
+				 beta_parameter_for_cblas_bp);
+    
+    // Forces to update counts and swap vectors if necessary at this backward
+    // step
+    if (weights_matrix->endUpdate()) {
       if (neuron_squared_length_upper_bound > 0.0f) {
 	if (!transpose_weights) {
 	  // TODO: Implement this in CBLAS and CUDA
@@ -361,28 +385,8 @@ namespace ANN {
 	  }
 	}
       }
-      
-      if (momentum > 0.0f) {
-	// prev_w[i,j] = momentum * (w[i,j] - prev_w[i,j])
-	weights_matrix->computeMomentumOnPrevVector(momentum,
-						    conf.use_cuda_flag);
-	weights_matrix->computeWeightDecayOnPrevVector(c_weight_decay,
-						       conf.use_cuda_flag);
-      }
-      else {
-	weights_matrix->copyToPrevVector(conf.use_cuda_flag);
-	beta_parameter_for_cblas_bp = c_weight_decay;
-      }
-    } // if (weights_matrix->needsToComputeMomentum()) {
-    
-    computeBPUpdateOnPrevVectors(prev_weights_mat_ptr,
-				 input, input_shift,
-				 input_error, output_shift,
-				 beta_parameter_for_cblas_bp);
-    
-    // Forces to update counts and swap vectors if necessary at this backward
-    // step
-    weights_matrix->endUpdate();
+
+    }
   }
 
   Action *DotProductAction::clone(hash<void*,void*> &clone_dict,

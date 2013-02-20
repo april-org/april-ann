@@ -80,7 +80,7 @@ namespace ANN {
     void         countReference();
     unsigned int getNumReferences() const;
     virtual void         beginUpdate();
-    virtual void         endUpdate(); // return true when last update call
+    virtual bool         endUpdate(); // return true when last update call
     bool         isFirstUpdateCall();
     void         computeMomentumOnPrevVector(float momentum,
 					     bool  use_cuda);
