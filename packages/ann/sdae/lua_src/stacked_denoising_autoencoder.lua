@@ -98,7 +98,7 @@ local function generate_training_table_configuration_from_params(current_dataset
 	  variance = params.var,
 	  random   = params.perturbation_random }
       end
-      if input_actf ~= "linear" and params.salt_noise_percentage > 0.0 then
+      if params.salt_noise_percentage > 0.0 then
 	data.input_dataset = dataset.salt_noise{
 	  dataset = data.input_dataset,
 	  vd = params.salt_noise_percentage, -- 10%
@@ -120,7 +120,7 @@ local function generate_training_table_configuration_from_params(current_dataset
 	    variance = params.var,
 	    random   = params.perturbation_random }
 	end
-	if input_actf ~= "linear" and params.salt_noise_percentage > 0.0 then
+	if params.salt_noise_percentage > 0.0 then
 	  data.input_dataset = dataset.salt_noise{
 	    dataset = data.input_dataset,
 	    vd = params.salt_noise_percentage, -- 10%
