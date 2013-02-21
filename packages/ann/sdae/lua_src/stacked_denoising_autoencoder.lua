@@ -68,9 +68,9 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(bunch_size,
     actfunc   = input_actf }
   -- randomize weights
   autoencoder:randomize_weights{ random=weights_random,
-				 inf=-1,
-				 sup= 1,
-				 use_fanin = true}
+				 inf=-math.sqrt(6 / (input_size + cod_size)),
+				 sup= math.sqrt(6 / (input_size + cod_size)),
+				 use_fanin = false}
   return autoencoder
 end
 
@@ -391,9 +391,11 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
 			       params.supervised_layer.actf),
       bunch_size = params.bunch_size,
       random     = params.weights_random,
-      inf        = -1,
-      sup        =  1,
-      use_fanin  = true }
+      inf=-math.sqrt(6 / (params.layers[#params.layers].size +
+			  params.supervised_layer.size)),
+      sup= math.sqrt(6 / (params.layers[#params.layers].size +
+			  params.supervised_layer.size)),
+      use_fanin = false }
     
     thenet:set_option("learning_rate", params.learning_rate)
     thenet:set_option("momentum", params.momentum)
