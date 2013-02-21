@@ -144,7 +144,7 @@ namespace ANN {
       follows the equation:
 
      \f[
-     a_i = f(y_o) = \frac{2}{1 + e^{-y_i}} - 1
+     a_i = f(y_i) = \frac{2}{1 + e^{-y_i}} - 1
      \f]
   */
   class TanhActivationFunction : public ActivationFunction
@@ -212,6 +212,31 @@ namespace ANN {
   public:
     LinearActivationFunction();
     virtual ~LinearActivationFunction();
+    void applyActivation(FloatGPUMirroredMemoryBlock *units, 
+                         unsigned int units_size,
+			 const ANNConfiguration &conf,
+                         bool use_cuda);
+    void multiplyDerivatives(FloatGPUMirroredMemoryBlock *units,
+			     FloatGPUMirroredMemoryBlock *input_errors,
+			     unsigned int size,
+			     const ANNConfiguration &conf,
+			     bool use_cuda,
+			     bool is_output);
+    ActivationFunction *clone();
+  };
+
+  //! Softsign activation function.
+  /*! Implements ActivationFunction interface and computes:
+
+    \f[
+     a_i = f(y_i) = \frac{y_i}{1 + \vert y_i \vert }
+     \f]
+  */
+  class SoftsignActivationFunction : public ActivationFunction
+  {
+  public:
+    SoftsignActivationFunction();
+    virtual ~SoftsignActivationFunction();
     void applyActivation(FloatGPUMirroredMemoryBlock *units, 
                          unsigned int units_size,
 			 const ANNConfiguration &conf,
