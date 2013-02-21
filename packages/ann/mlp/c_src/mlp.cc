@@ -302,9 +302,9 @@ namespace ANN {
 				  inputs, outputs,
 				  *weights, transpose_weights);
     registerAction(action);
-    if (actf == 0) actf = new LinearActivationFunction();
-    action = new ActivationsAction(getConfReference(),
-				   outputs, actf);
+    if (actf != 0)
+      action = new ActivationsAction(getConfReference(),
+				     outputs, actf);
     registerAction(action);
   }
 

@@ -26,7 +26,6 @@
 #include "activation_function.h"
 #include "ceiling_power_of_two.h"
 
-#define clip(value, min, max) (((value) < (min)) ? (min) : (((value) > (max)) ? (max) : (value)))
 // OJO: en maquinas de 64 bits es mejor hacer exp que expf
 #define sigmoid(numerator,value) (numerator) / (exp(-(value))+1.0f)
 
@@ -225,16 +224,6 @@ namespace ANN {
   
   //////////////////////////////////////////////////////////////////////////////
   
-  ActivationFunction *getActivationFunctionByTypeString(const char *str) {
-    if (!strcmp(str, "inputs") || !strcmp(str, "linear"))
-      return new LinearActivationFunction();
-    else if (!strcmp(str, "logistic")) return new LogisticActivationFunction();
-    else if (!strcmp(str, "tanh")) return new TanhActivationFunction();
-    else if (!strcmp(str, "softmax")) return new SoftmaxActivationFunction();
-    else ERROR_EXIT1(256, "Incorrect activation function type '%s'\n", str);
-    return 0;
-  }
-  
   ActivationFunction *getActivationFunctionByTypeString(const constString &str) {
     if (str == "inputs" || str ==  "linear")
       return new LinearActivationFunction();
@@ -244,6 +233,10 @@ namespace ANN {
     else ERROR_EXIT(256, "Incorrect activation function type\n");
     return 0;
   }
+
+  ActivationFunction *getActivationFunctionByTypeString(const char *str) {
+    constString cstr(str);
+    return getActivationFunctionByTypeString(cstr);
+  }
 }
 #undef sigmoid
-#undef clip
