@@ -166,10 +166,46 @@ namespace ANN {
 						     const ANNConfiguration &conf,
 						     bool use_cuda,
 						     bool is_output) {
+    if (is_output && conf.error_function_logistic_mandatory)
+      ERROR_EXIT(123, "The logistic or softmax activation function is"
+		 " mandataroy due to the error function");
   }
 
   ActivationFunction *LinearActivationFunction::clone() {
     return new LinearActivationFunction();
+  }
+  
+  //////////////////////////////////////////////////////////
+
+  SoftsignActivationFunction::SoftsignActivationFunction()  { }
+  SoftsignActivationFunction::~SoftsignActivationFunction() { }
+  void SoftsignActivationFunction::applyActivation(FloatGPUMirroredMemoryBlock *units, 
+						   unsigned int units_size,
+						   const ANNConfiguration &conf,
+						   bool use_cuda) {
+    doApplySoftsignActivation(units,
+			      units_size,
+			      conf,
+			      use_cuda);
+  }
+  void SoftsignActivationFunction::multiplyDerivatives(FloatGPUMirroredMemoryBlock *units,
+						     FloatGPUMirroredMemoryBlock *input_errors,
+						     unsigned int size,
+						     const ANNConfiguration &conf,
+						     bool use_cuda,
+						     bool is_output) {
+    if (is_output && conf.error_function_logistic_mandatory)
+      ERROR_EXIT(123, "The logistic or softmax activation function is"
+		 " mandataroy due to the error function");
+    doMultiplySoftsignDerivatives(units,
+				  input_errors,
+				  size,
+				  conf,
+				  use_cuda);
+  }
+
+  ActivationFunction *SoftsignActivationFunction::clone() {
+    return new SoftsignActivationFunction();
   }
   
   //////////////////////////////////////////////////////////
@@ -229,6 +265,7 @@ namespace ANN {
       return new LinearActivationFunction();
     else if (str == "logistic") return new LogisticActivationFunction();
     else if (str == "tanh") return new TanhActivationFunction();
+    else if (str == "softsign") return new SoftsignActivationFunction();
     else if (str == "softmax") return new SoftmaxActivationFunction();
     else ERROR_EXIT(256, "Incorrect activation function type\n");
     return 0;
