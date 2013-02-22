@@ -15,7 +15,7 @@ local function build_two_layered_codifier_from_weights(bunch_size,
 					   size = input_size,
 					   type = "inputs" }
   local cod_layer = ann.units.real_cod{ ann  = codifier,
-					size = cod_size,
+ 					size = cod_size,
 					type = "outputs" }
   local cod_bias  = ann.connections.bias{ ann  = codifier,
 					  size = cod_size }
@@ -383,9 +383,9 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
     printf("# Training of supervised layer %d--%d (number %d)\n",
 	   params.layers[#layers].size, params.supervised_layer.size,
 	   #params.layers+1)
-    local data
-    local input_size = params.layers[#layers].size
+    local input_size     = params.layers[#layers].size
     local input_actf_str = params.layers[#layers].actf
+    local data
     data = generate_training_table_configuration_from_params(current_dataset_params,
 							     params,
 							     true,
@@ -403,8 +403,8 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
       use_fanin = false }
     
     thenet:set_option("learning_rate", params.learning_rate)
-    thenet:set_option("momentum", params.momentum)
-    thenet:set_option("weight_decay", params.weight_decay)
+    thenet:set_option("momentum",      params.momentum)
+    thenet:set_option("weight_decay",  params.weight_decay)
     if (params.supervised_layer.actf == "softmax" or
 	params.supervised_layer.actf == "logistic") then
       thenet:set_error_function(ann.error_functions.logistic_cross_entropy())
@@ -567,11 +567,11 @@ function ann.autoencoders.build_codifier_from_sdae(sdae, bunch_size, layers)
   for i=1,(#layers-1)*2 do
     table.insert(codifier_connections, sdae_connections[i]:clone(codifier_net))
   end
-  local type = "inputs"
+  local layer_type = "inputs"
   for i=1,#layers-1 do
     table.insert(codifier_activations, sdae_activations[i]:clone(codifier_net,
-								 type))
-    type = "hidden"
+								 layer_type))
+    layer_type = "hidden"
   end
   table.insert(codifier_activations, sdae_activations[#layers]:clone(codifier_net,
 								     "outputs"))
