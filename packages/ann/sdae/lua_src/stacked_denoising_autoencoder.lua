@@ -273,7 +273,6 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
   end
   for _,name in ipairs({ "shuffle_random", "perturbation_random",
 			 "var", "layers", "bunch_size", "learning_rate",
-			 "neuron_squared_length_upper_bound",
 			 "max_epochs",
 			 "momentum", "weight_decay",
 			 "weights_random", "salt_noise_percentage",
@@ -321,7 +320,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
     dae:set_option("learning_rate", params.learning_rate)
     dae:set_option("momentum", params.momentum)
     dae:set_option("weight_decay", params.weight_decay)
-    dae:set_option("neuron_squared_length_upper_bound", params.neuron_squared_length_upper_bound)
+    dae:set_option("neuron_squared_length_upper_bound", params.neuron_squared_length_upper_bound or -1)
     collectgarbage("collect")
     if (params.layers[i-1].actf == "logistic" or
 	params.layers[i-1].actf == "softmax") then
@@ -407,7 +406,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
     thenet:set_option("learning_rate", params.learning_rate)
     thenet:set_option("momentum", params.momentum)
     thenet:set_option("weight_decay", params.weight_decay)
-    thenet:set_option("neuron_squared_length_upper_bound", params.neuron_squared_length_upper_bound)
+    thenet:set_option("neuron_squared_length_upper_bound", params.neuron_squared_length_upper_bound or -1)
     if (params.supervised_layer.actf == "softmax" or
 	params.supervised_layer.actf == "logistic") then
       thenet:set_error_function(ann.error_functions.logistic_cross_entropy())
@@ -472,7 +471,7 @@ function ann.autoencoders.sdae_finetunning(sdae_table, params)
   end
   for _,name in ipairs({ "shuffle_random", "perturbation_random",
 			 "var", "layers", "bunch_size", "learning_rate",
-			 "max_epochs", "neuron_squared_length_upper_bound",
+			 "max_epochs",
 			 "momentum", "weight_decay", "val_input_dataset",
 			 "weights_random", "salt_noise_percentage",
 			 "stopping_criterion" }) do
@@ -488,7 +487,7 @@ function ann.autoencoders.sdae_finetunning(sdae_table, params)
   sdae:set_option("learning_rate", params.learning_rate)
   sdae:set_option("momentum", params.momentum)
   sdae:set_option("weight_decay", params.weight_decay)
-  sdae:set_option("neuron_squared_length_upper_bound", params.neuron_squared_length_upper_bound)
+  sdae:set_option("neuron_squared_length_upper_bound", params.neuron_squared_length_upper_bound or -1)
   if (params.layers[1].actf == "logistic" or
       params.layers[1].actf == "softmax") then
     sdae:set_error_function(ann.error_functions.full_logistic_cross_entropy())

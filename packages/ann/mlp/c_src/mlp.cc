@@ -23,6 +23,7 @@
 #include <cstring>
 #include "constString.h"
 #include "error_print.h"
+#include "trainsuper.h"
 #include "mlp.h"
 #include "bias_connection.h"
 #include "all_all_connection.h"
@@ -128,7 +129,8 @@ namespace ANN {
     // NOTE: option is only updated in connections since training
     // algorithm is placed there
     for (unsigned int i = 0; i < actions.size(); i++)
-      actions[i]->setOption(name, value);
+      if (actions[i]->hasOption(name))
+	actions[i]->setOption(name, value);
   
     mSetOption("learning_rate", learning_rate);
     mSetOption("momentum", momentum);
@@ -138,7 +140,9 @@ namespace ANN {
       c_weight_decay = 1.0 - weight_decay;
       return;
     }
-    mSetOption("neuron_squared_length_upper_bound", neuron_squared_length_upper_bound);
+    mSetOption("neuron_squared_length_upper_bound",
+	       neuron_squared_length_upper_bound);
+    mSetOption("dropout", dropout);
     ERROR_EXIT(140, "The option to be set does not exist.\n");
   }
 
@@ -148,6 +152,7 @@ namespace ANN {
     mHasOption("momentum");
     mHasOption("weight_decay");
     mHasOption("neuron_squared_length_upper_bound");
+    mHasOption("dropout");
     return false;
   }
 
@@ -157,6 +162,7 @@ namespace ANN {
     mGetOption("momentum", momentum);
     mGetOption("weight_decay", weight_decay);
     mGetOption("neuron_squared_length_upper_bound", neuron_squared_length_upper_bound);
+    mGetOption("dropout", dropout);
     ERROR_EXIT(140, "The option to be get does not exist.\n");
   }
 

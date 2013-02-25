@@ -72,11 +72,7 @@ namespace ANN {
     FloatGPUMirroredMemoryBlock *output_ptr      = outputs->getPtr();
     FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
     float weights_factor = 1.0f;
-    if (conf.use_dropout &&
-	!during_training &&
-	inputs->getType() == HIDDEN_TYPE &&
-	inputs->drop_factor > 0.0f)
-      weights_factor = 1.0f - inputs->drop_factor;
+    if (!during_training) weights_factor = 1.0f - inputs->drop_factor;
     if (conf.cur_bunch_size == 1) {
       // vector x matrix product
       if (!transpose_weights)
@@ -413,7 +409,8 @@ namespace ANN {
       c_weight_decay = 1.0f - weight_decay;
       return;
     }
-    mSetOption("neuron_squared_length_upper_bound", neuron_squared_length_upper_bound);
+    mSetOption("neuron_squared_length_upper_bound",
+	       neuron_squared_length_upper_bound);
     ERROR_EXIT1(140, "The option to be set does not exist: %s.\n", name);
   }
   
