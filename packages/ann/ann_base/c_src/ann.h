@@ -117,7 +117,6 @@ namespace ANN {
     ActivationUnits *getLayerActivations(unsigned int layer);
     Action          *getAction(unsigned int idx);
     
-    void setDropout(bool value) { conf.use_dropout = value; }
     virtual void setInput(const float *input, unsigned int bunch_pos);
     virtual void copyOutput(float *output, unsigned int bunch_pos);
     virtual void setDesiredOutput(float *target_output, unsigned int bunch_pos);

@@ -30,6 +30,7 @@ namespace ANN {
   class ActivationsAction : public Action {
     ActivationUnits    *units;
     ActivationFunction *act_func;
+    float               dropout;
   public:
     ActivationsAction(const ANNConfiguration &conf,
 		      ActivationUnits    *units,
@@ -41,6 +42,9 @@ namespace ANN {
     virtual Action *clone(hash<void*,void*> &clone_dict,
 			  const ANNConfiguration &conf);
     void transferFanInToConnections() { }
+    void setOption(const char *name, double value);
+    bool hasOption(const char *name);
+    double getOption(const char *name);
   };
 }
 

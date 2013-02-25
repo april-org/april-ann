@@ -41,8 +41,8 @@ val_output   = dataset.matrix(m2,
 
 layers = {
   { size= 256, actf="logistic"},
+  { size= 512, actf="logistic"},
   { size= 256, actf="logistic"},
-  { size= 128, actf="logistic"},
   { size=  32, actf="logistic"},
 }
 
@@ -59,10 +59,9 @@ params_pretrain = {
   learning_rate         = 0.06,
   momentum              = 0.10,
   weight_decay          = 0.0,
-  neuron_squared_length_upper_bound = 15.0,
   min_epochs            =  10,
   max_epochs            = 200,
-  pretraining_percentage_stopping_criterion = 0.00001,
+  pretraining_percentage_stopping_criterion = 0.01,
   supervised_layer      = { size = 10, actf = "softmax" },
   output_datasets       = { train_output },
 }
@@ -138,6 +137,12 @@ deep_classifier_wo_pretraining = ann.mlp.all_all.generate{
   bunch_size = bunch_size }
 deep_classifier_wo_pretraining:set_error_function(ann.error_functions.logistic_cross_entropy())
 
+train_input = dataset.salt_noise{
+  dataset = train_input,
+  vd      = 0.2,
+  zero    = 0.0,
+  random  = random(95285) }
+
 datosentrenar_deep = {
   input_dataset = train_input,
   output_dataset = train_output,
@@ -163,7 +168,9 @@ deep_classifier:set_option("learning_rate", 0.4)
 deep_classifier:set_option("momentum", 0.02)
 deep_classifier:set_option("weight_decay", 0.0)
 deep_classifier:set_option("neuron_squared_length_upper_bound", 15.0);
+deep_classifier:set_option("dropout", 0.5)
 deep_classifier:set_error_function(ann.error_functions.logistic_cross_entropy())
+
 shallow_classifier:set_option("learning_rate",
 			      deep_classifier:get_option("learning_rate"))
 shallow_classifier:set_option("momentum",
@@ -172,7 +179,10 @@ shallow_classifier:set_option("weight_decay",
 			      deep_classifier:get_option("weight_decay"))
 shallow_classifier:set_option("neuron_squared_length_upper_bound",
 			      deep_classifier:get_option("neuron_squared_length_upper_bound"))
+shallow_classifier:set_option("dropout",
+			      deep_classifier:get_option("dropout"))
 shallow_classifier:set_error_function(ann.error_functions.logistic_cross_entropy())
+
 deep_classifier_wo_pretraining:set_option("learning_rate",
 					  deep_classifier:get_option("learning_rate"))
 deep_classifier_wo_pretraining:set_option("momentum",
@@ -181,6 +191,8 @@ deep_classifier_wo_pretraining:set_option("weight_decay",
 					  deep_classifier:get_option("weight_decay"))
 deep_classifier:set_option("neuron_squared_length_upper_bound",
 			   deep_classifier:get_option("neuron_squared_length_upper_bound"))
+deep_classifier_wo_pretraining:set_option("dropout",
+					  deep_classifier:get_option("dropout"))
 deep_classifier_wo_pretraining:set_error_function(ann.error_functions.logistic_cross_entropy())
 
 for i=1,200 do
