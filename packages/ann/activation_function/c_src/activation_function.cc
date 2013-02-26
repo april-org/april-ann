@@ -26,7 +26,6 @@
 #include "activation_function.h"
 #include "ceiling_power_of_two.h"
 
-#define clip(value, min, max) (((value) < (min)) ? (min) : (((value) > (max)) ? (max) : (value)))
 // OJO: en maquinas de 64 bits es mejor hacer exp que expf
 #define sigmoid(numerator,value) (numerator) / (exp(-(value))+1.0f)
 
@@ -167,10 +166,46 @@ namespace ANN {
 						     const ANNConfiguration &conf,
 						     bool use_cuda,
 						     bool is_output) {
+    if (is_output && conf.error_function_logistic_mandatory)
+      ERROR_EXIT(123, "The logistic or softmax activation function is"
+		 " mandataroy due to the error function");
   }
 
   ActivationFunction *LinearActivationFunction::clone() {
     return new LinearActivationFunction();
+  }
+  
+  //////////////////////////////////////////////////////////
+
+  SoftsignActivationFunction::SoftsignActivationFunction()  { }
+  SoftsignActivationFunction::~SoftsignActivationFunction() { }
+  void SoftsignActivationFunction::applyActivation(FloatGPUMirroredMemoryBlock *units, 
+						   unsigned int units_size,
+						   const ANNConfiguration &conf,
+						   bool use_cuda) {
+    doApplySoftsignActivation(units,
+			      units_size,
+			      conf,
+			      use_cuda);
+  }
+  void SoftsignActivationFunction::multiplyDerivatives(FloatGPUMirroredMemoryBlock *units,
+						     FloatGPUMirroredMemoryBlock *input_errors,
+						     unsigned int size,
+						     const ANNConfiguration &conf,
+						     bool use_cuda,
+						     bool is_output) {
+    if (is_output && conf.error_function_logistic_mandatory)
+      ERROR_EXIT(123, "The logistic or softmax activation function is"
+		 " mandataroy due to the error function");
+    doMultiplySoftsignDerivatives(units,
+				  input_errors,
+				  size,
+				  conf,
+				  use_cuda);
+  }
+
+  ActivationFunction *SoftsignActivationFunction::clone() {
+    return new SoftsignActivationFunction();
   }
   
   //////////////////////////////////////////////////////////
@@ -225,25 +260,20 @@ namespace ANN {
   
   //////////////////////////////////////////////////////////////////////////////
   
-  ActivationFunction *getActivationFunctionByTypeString(const char *str) {
-    if (!strcmp(str, "inputs") || !strcmp(str, "linear"))
-      return new LinearActivationFunction();
-    else if (!strcmp(str, "logistic")) return new LogisticActivationFunction();
-    else if (!strcmp(str, "tanh")) return new TanhActivationFunction();
-    else if (!strcmp(str, "softmax")) return new SoftmaxActivationFunction();
-    else ERROR_EXIT1(256, "Incorrect activation function type '%s'\n", str);
-    return 0;
-  }
-  
   ActivationFunction *getActivationFunctionByTypeString(const constString &str) {
     if (str == "inputs" || str ==  "linear")
       return new LinearActivationFunction();
     else if (str == "logistic") return new LogisticActivationFunction();
     else if (str == "tanh") return new TanhActivationFunction();
+    else if (str == "softsign") return new SoftsignActivationFunction();
     else if (str == "softmax") return new SoftmaxActivationFunction();
     else ERROR_EXIT(256, "Incorrect activation function type\n");
     return 0;
   }
+
+  ActivationFunction *getActivationFunctionByTypeString(const char *str) {
+    constString cstr(str);
+    return getActivationFunctionByTypeString(cstr);
+  }
 }
 #undef sigmoid
-#undef clip
