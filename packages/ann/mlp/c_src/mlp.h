@@ -37,7 +37,9 @@ namespace ANN {
     unsigned int cur_bunch_pos;
 
     float learning_rate, momentum, weight_decay, c_weight_decay;
-    float neuron_squared_length_upper_bound;
+    // FIXME: experimental parameters
+    float neuron_squared_length_upper_bound, dropout;
+    /////////////////////////////////
     ErrorFunction *error_func;
     
     void  beginTrainingBatch();

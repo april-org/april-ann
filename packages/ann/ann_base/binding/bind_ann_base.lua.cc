@@ -224,14 +224,6 @@ using namespace Functions;
 }
 //BIND_END
 
-//BIND_METHOD ANNBase set_dropout
-{
-  bool value;
-  LUABIND_GET_PARAMETER(1, bool, value);
-  obj->setDropout(value);
-}
-//BIND_END
-
 //BIND_METHOD ANNBase set_use_cuda
 {
   bool use_cuda, pinned;

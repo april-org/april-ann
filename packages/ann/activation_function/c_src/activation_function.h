@@ -108,7 +108,7 @@ namespace ANN {
 				     bool is_output) = 0;
     
     /// Returns the minium value
-    virtual float getMinimum() = 0;
+    virtual float getDropoutValue() = 0;
     
     
     /// Returns a deep copy of the object
@@ -138,7 +138,7 @@ namespace ANN {
 			     const ANNConfiguration &conf,
 			     bool use_cuda,
 			     bool is_output);
-    float getMinimum() { return 0.0f; }
+    float getDropoutValue() { return 0.0f; }
     ActivationFunction *clone();
   };
 
@@ -164,7 +164,7 @@ namespace ANN {
 			     const ANNConfiguration &conf,
 			     bool use_cuda,
 			     bool is_output);
-    float getMinimum() { return -1.0f; }
+    float getDropoutValue() { return -1.0f; }
     ActivationFunction *clone();
   };
 
@@ -204,7 +204,7 @@ namespace ANN {
 			     const ANNConfiguration &conf,
 			     bool use_cuda,
 			     bool is_output);
-    float getMinimum() { return 0.0f; }
+    float getDropoutValue() { return 0.0f; }
     ActivationFunction *clone();
   };
 
@@ -229,7 +229,7 @@ namespace ANN {
 			     const ANNConfiguration &conf,
 			     bool use_cuda,
 			     bool is_output);
-    float getMinimum() { return -1111111111.0f; }
+    float getDropoutValue() { return 0.0f; }
     ActivationFunction *clone();
   };
 
@@ -316,7 +316,7 @@ namespace ANN {
 			     bool is_output) {
       ERROR_PRINT("NOT SUPORTTED METHOD");
     }
-    float getMinimum() { return 0.0f; }
+    float getDropoutValue() { return 0.0f; }
   };
   
   /// A binary sampling activation function. Implements
