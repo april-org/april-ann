@@ -164,7 +164,7 @@ namespace ANN {
 			     const ANNConfiguration &conf,
 			     bool use_cuda,
 			     bool is_output);
-    float getDropoutValue() { return -1.0f; }
+    float getDropoutValue() { return 0.0f; }
     ActivationFunction *clone();
   };
 
