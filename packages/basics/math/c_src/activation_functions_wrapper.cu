@@ -103,6 +103,41 @@ __global__ void tanhDerKernel(const float *units,
   }
 }
 
+__global__ void softsignActKernel(float *units,
+				  unsigned int max_x,
+				  unsigned int lda_x,
+				  unsigned int max_y) {
+  unsigned int matrix_x_pos, matrix_y_pos;
+  getColumnMajorBunchMatrixPositions(blockIdx,
+				     blockDim,
+				     threadIdx,
+				     matrix_x_pos,
+				     matrix_y_pos);
+  if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
+    unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
+    units[index] = units[index] / (1.0f + fabsf(units[index]));
+  }
+}
+
+__global__ void softsignDerKernel(const float *units,
+                              float *errors,
+                              unsigned int max_x,
+			      unsigned int lda_x,
+                              unsigned int max_y) {
+  unsigned int matrix_x_pos, matrix_y_pos;
+  getColumnMajorBunchMatrixPositions(blockIdx,
+				     blockDim,
+				     threadIdx,
+				     matrix_x_pos,
+				     matrix_y_pos);
+  if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
+    unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
+    float value = clip(units[index], -1.0f + NEAR_ZERO, 1.0f - NEAR_ZERO);
+    float aux   = 1.0f + fabsf(value);
+    errors[index] *= 1.0f/(aux * aux);
+  }
+}
+
 __global__ void minMaxFirstReduction(float *units,
                                      float *minimums,
                                      float *maximums,
@@ -400,10 +435,78 @@ void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *units,
 
     for (unsigned int i=0; i<units_size; ++i) {
       for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	float value = clamp(units_ptr[b],
-			    -1.0f + 2*NEAR_ZERO,
-			    1.0f - 2*NEAR_ZERO);
+	float value = clamp(units_ptr[b], -1.0f + NEAR_ZERO, 1.0f - NEAR_ZERO);
 	input_errors_ptr[b] *= 0.5f * (1.0f-value*value);
+      }
+      units_ptr        += conf.max_bunch_size;
+      input_errors_ptr += conf.max_bunch_size;
+    }
+#ifdef USE_CUDA
+  }
+#endif
+}
+
+void doApplySoftsignActivation(FloatGPUMirroredMemoryBlock *units,
+			       unsigned int units_size,
+			       const ANNConfiguration &conf,
+			       bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    float *units_ptr = units->getGPUForReadAndWrite();
+    dim3 block, grid;
+    computeBlockAndGridSizesForAColumnMajorBunch(conf, units_size,
+						 block, grid);
+    
+    softsignActKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (units_ptr,
+       conf.cur_bunch_size,
+       conf.max_bunch_size,
+       units_size);
+  }
+  else {
+#endif
+    float *units_ptr = units->getPPALForReadAndWrite();
+
+    for (unsigned int i=0; i<units_size; ++i) {
+      for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
+	units_ptr[b] = units_ptr[b] / (1.0f + fabsf(units_ptr[b]));
+      }
+      units_ptr += conf.max_bunch_size;
+    }
+#ifdef USE_CUDA
+  }
+#endif
+}
+
+void doMultiplySoftsignDerivatives(FloatGPUMirroredMemoryBlock *units,
+				   FloatGPUMirroredMemoryBlock *input_errors,
+				   unsigned int units_size,
+				   const ANNConfiguration &conf,
+				   bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    const float *units_ptr = units->getGPUForRead();
+    float *input_errors_ptr = input_errors->getGPUForReadAndWrite();
+    dim3 block, grid;
+    computeBlockAndGridSizesForAColumnMajorBunch(conf, units_size,
+						 block, grid);
+    softsignDerKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (units_ptr,
+       input_errors_ptr,
+       conf.cur_bunch_size,
+       conf.max_bunch_size,
+       units_size);
+  }
+  else {
+#endif
+    const float *units_ptr = units->getPPALForRead();
+    float *input_errors_ptr = input_errors->getPPALForReadAndWrite();
+
+    for (unsigned int i=0; i<units_size; ++i) {
+      for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
+	float value = clamp(units_ptr[b], -1.0f + NEAR_ZERO, 1.0f - NEAR_ZERO);
+	float aux   = 1.0f + fabsf(value);
+	input_errors_ptr[b] *= 1.0f/(aux * aux);
       }
       units_ptr        += conf.max_bunch_size;
       input_errors_ptr += conf.max_bunch_size;

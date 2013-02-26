@@ -233,6 +233,32 @@ namespace ANN {
     ActivationFunction *clone();
   };
 
+  //! Softsign activation function.                                                                                                                   
+  /*! Implements ActivationFunction interface and computes:                                                                                           
+                                                                                                                                                      
+    \f[                                                                                                                                               
+     a_i = f(y_i) = \frac{y_i}{1 + \vert y_i \vert }                                                                                                  
+     \f]                                                                                                                                              
+  */
+  class SoftsignActivationFunction : public ActivationFunction
+  {
+  public:
+    SoftsignActivationFunction();
+    virtual ~SoftsignActivationFunction();
+    void applyActivation(FloatGPUMirroredMemoryBlock *units,
+                         unsigned int units_size,
+                         const ANNConfiguration &conf,
+                         bool use_cuda);
+    void multiplyDerivatives(FloatGPUMirroredMemoryBlock *units,
+                             FloatGPUMirroredMemoryBlock *input_errors,
+                             unsigned int size,
+                             const ANNConfiguration &conf,
+                             bool use_cuda,
+                             bool is_output);
+    float getDropoutValue() { return 0.0f; }
+    ActivationFunction *clone();
+  };
+
   //////////////////////////////////////////////////////////
 
   /// A virtual class that define the basic interface for stochastic activation
