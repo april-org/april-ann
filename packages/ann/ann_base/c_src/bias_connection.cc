@@ -67,8 +67,8 @@ namespace ANN {
     float *prev_w = prev_weights->getPPALForReadAndWrite();
     
     for (unsigned int j=0; j<total_size; ++j) {
-      //rnd_weight(rnd, w[j], dinf, range, weightnearzero);
-      prev_w[j] = w[j] = 0.0f;
+      rnd_weight(rnd, w[j], dinf, range, weightnearzero);
+      prev_w[j] = w[j];
     }
   }
     
@@ -90,8 +90,8 @@ namespace ANN {
     float *w      = weights->getPPALForReadAndWrite();
     float *prev_w = prev_weights->getPPALForReadAndWrite();
     // solo hay un bias en la columna dada
-    // rnd_weight(rnd, w[col], dinf, range, weightnearzero);
-    prev_w[col] = w[col] = 0.0f;
+    rnd_weight(rnd, w[col], dinf, range, weightnearzero);
+    prev_w[col] = w[col];
   }
   
   unsigned int BiasConnections::loadWeights(MatrixFloat *data,

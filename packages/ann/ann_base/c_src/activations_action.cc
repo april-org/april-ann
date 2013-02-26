@@ -29,7 +29,7 @@ namespace ANN {
   ActivationsAction::ActivationsAction(const ANNConfiguration &conf,
 				       ActivationUnits     *units,
 				       ActivationFunction *act_func) :
-    Action(conf), units(units), act_func(act_func) {
+    Action(conf), units(units), act_func(act_func), dropout(0.0f) {
     IncRef(units);
     IncRef(act_func);
   }
