@@ -15,7 +15,7 @@ local function build_two_layered_codifier_from_weights(bunch_size,
 					   size = input_size,
 					   type = "inputs" }
   local cod_layer = ann.units.real_cod{ ann  = codifier,
-					size = cod_size,
+ 					size = cod_size,
 					type = "outputs" }
   local cod_bias  = ann.connections.bias{ ann  = codifier,
 					  size = cod_size }
@@ -68,9 +68,9 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(bunch_size,
     actfunc   = input_actf }
   -- randomize weights
   autoencoder:randomize_weights{ random=weights_random,
-				 inf=-1,
-				 sup= 1,
-				 use_fanin = true}
+				 inf=-math.sqrt(6 / (input_size + cod_size)),
+				 sup= math.sqrt(6 / (input_size + cod_size)),
+				 use_fanin = false}
   return autoencoder
 end
 
@@ -78,7 +78,8 @@ end
 local function generate_training_table_configuration_from_params(current_dataset_params,
 								 params,
 								 noise,
-								 output_datasets)
+								 output_datasets,
+								 zero)
   local data = {}
   if current_dataset_params.input_dataset then
     if output_datasets and #output_datasets > 1 then
@@ -101,7 +102,7 @@ local function generate_training_table_configuration_from_params(current_dataset
 	data.input_dataset = dataset.salt_noise{
 	  dataset = data.input_dataset,
 	  vd = params.salt_noise_percentage, -- 10%
-	  zero = 0.0,
+	  zero = zero,
 	  random = params.perturbation_random }
       end
     end
@@ -123,7 +124,7 @@ local function generate_training_table_configuration_from_params(current_dataset
 	  data.input_dataset = dataset.salt_noise{
 	    dataset = data.input_dataset,
 	    vd = params.salt_noise_percentage, -- 10%
-	    zero = 0.0,
+	    zero = zero,
 	    random = params.perturbation_random }
 	end
       end
@@ -300,12 +301,15 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
     printf("# Training of layer %d--%d--%d (number %d)\n",
 	   input_size, cod_size, input_size, i-1)
     io.stdout:flush()
-    local input_actf = ann.activations.from_string(params.layers[i-1].actf)
+    local input_actf_str = params.layers[i-1].actf
+    local input_actf = ann.activations.from_string(input_actf_str)
     local cod_actf   = ann.activations.from_string(params.layers[i].actf)
     local data
     data = generate_training_table_configuration_from_params(current_dataset_params,
 							     params,
-							     true)
+							     true,
+							     nil,
+							     (((input_actf_str == "tanh" or input_actf_str == "softsign") and -1.0) or 0.0))
     local dae
     dae = build_two_layered_autoencoder_from_sizes_and_actf(params.bunch_size,
 							    input_size,
@@ -379,25 +383,28 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
     printf("# Training of supervised layer %d--%d (number %d)\n",
 	   params.layers[#layers].size, params.supervised_layer.size,
 	   #params.layers+1)
+    local input_size     = params.layers[#layers].size
+    local input_actf_str = params.layers[#layers].actf
     local data
     data = generate_training_table_configuration_from_params(current_dataset_params,
 							     params,
 							     true,
-							     params.output_datasets)
+							     params.output_datasets,
+							     (((input_actf_str == "tanh" or input_actf_str == "softsign") and -1.0) or 0.0))
     local thenet = ann.mlp.all_all.generate{
       topology = string.format("%d inputs %d %s",
-			       params.layers[#params.layers].size,
+			       input_size,
 			       params.supervised_layer.size,
 			       params.supervised_layer.actf),
       bunch_size = params.bunch_size,
       random     = params.weights_random,
-      inf        = -1,
-      sup        =  1,
-      use_fanin  = true }
+      inf=-math.sqrt(6 / (input_size + params.supervised_layer.size)),
+      sup= math.sqrt(6 / (input_size + params.supervised_layer.size)),
+      use_fanin = false }
     
     thenet:set_option("learning_rate", params.learning_rate)
-    thenet:set_option("momentum", params.momentum)
-    thenet:set_option("weight_decay", params.weight_decay)
+    thenet:set_option("momentum",      params.momentum)
+    thenet:set_option("weight_decay",  params.weight_decay)
     if (params.supervised_layer.actf == "softmax" or
 	params.supervised_layer.actf == "logistic") then
       thenet:set_error_function(ann.error_functions.logistic_cross_entropy())
@@ -560,11 +567,11 @@ function ann.autoencoders.build_codifier_from_sdae(sdae, bunch_size, layers)
   for i=1,(#layers-1)*2 do
     table.insert(codifier_connections, sdae_connections[i]:clone(codifier_net))
   end
-  local type = "inputs"
+  local layer_type = "inputs"
   for i=1,#layers-1 do
     table.insert(codifier_activations, sdae_activations[i]:clone(codifier_net,
-								 type))
-    type = "hidden"
+								 layer_type))
+    layer_type = "hidden"
   end
   table.insert(codifier_activations, sdae_activations[#layers]:clone(codifier_net,
 								     "outputs"))

@@ -6,13 +6,14 @@ function ann.mlp.add_layers(t)
   new_net:release_output()
   local prev_units = new_net:get_layer_activations(new_net:get_layer_activations_size())
   for i=1,#t.new_layers do
-    if i == #t.new_layers then type = "outputs" end
+    local layer_type = "hidden"
+    if i == #t.new_layers then layer_type = "outputs" end
     local actf   = ann.activations.from_string(t.new_layers[i][2])
     local size   = t.new_layers[i][1]
     local input  = prev_units
     local output = ann.units.real_cod{ ann = new_net,
 				       size = size,
-				       type = type }
+				       type = layer_type }
     local bias   = ann.connections.bias{ ann  = new_net,
 					 size = size }
     local weights = ann.connections.all_all{
