@@ -66,10 +66,21 @@ void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *units,
 			       const ANNConfiguration &conf,
 			       bool use_gpu);
 
+void doApplySoftsignActivation(FloatGPUMirroredMemoryBlock *units,
+			       unsigned int units_size,
+			       const ANNConfiguration &conf,
+			       bool use_gpu);
+
+void doMultiplySoftsignDerivatives(FloatGPUMirroredMemoryBlock *units,
+				   FloatGPUMirroredMemoryBlock *input_errors,
+				   unsigned int units_size,
+				   const ANNConfiguration &conf,
+				   bool use_gpu);
+
 void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *units,
-            FloatGPUMirroredMemoryBlock *minimums,
-            FloatGPUMirroredMemoryBlock *maximums,
-            FloatGPUMirroredMemoryBlock *sums,
+			      FloatGPUMirroredMemoryBlock *minimums,
+			      FloatGPUMirroredMemoryBlock *maximums,
+			      FloatGPUMirroredMemoryBlock *sums,
 			      unsigned int units_size,
 			      const ANNConfiguration &conf,
 			      bool use_gpu);

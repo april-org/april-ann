@@ -20,6 +20,7 @@ end
 local function check_train_crossvalidation_params(params)
   local check = table.invert{ "ann", "training_table", "validation_table",
 			      "max_epochs", "stopping_criterion",
+			      "validation_function",
 			      "update_function", "first_epoch", "min_epochs" }
   for name,value in pairs(params) do
     if not check[name] then error ("Incorrect param name: " .. name) end
@@ -39,7 +40,7 @@ end
 -- { ann = neural_network,
 --   training_table   = { input_dataset = ...., output_dataset = ....., .....},
 --   validation_table = { input_dataset = ...., output_dataset = ....., .....},
---   validation_func = function( thenet, validation_table ) .... end
+--   validation_function = function( thenet, validation_table ) .... end
 --   min_epochs = NUMBER,
 --   max_epochs = NUMBER,
 --   -- train_params is this table ;)
@@ -65,22 +66,23 @@ function ann.train_crossvalidation(params)
   if not params.stopping_criterion then error("Needs stopping_criterion field") end
   if not params.min_epochs then error("Needs a min_epochs field") end
   params.update_function = params.update_function or function(t) return end
-  local thenet           = params.ann
-  local best_epoch       = 1
-  local best_net         = thenet:clone()
-  local best_val_error   = thenet:validate_dataset(params.validation_table)
-  local last_val_error   = best_val_error
-  local last_train_error = 0
-  local last_epoch       = 0
-  if not params.validation_func then
-    params.validation_func = function(thenet, t)
+  if not params.validation_function then
+    params.validation_function = function(thenet, t)
       return thenet:validate_dataset(t)
     end
   end
+  local thenet           = params.ann
+  local best_epoch       = 1
+  local best_net         = thenet:clone()
+  local best_val_error   = params.validation_function(thenet,
+						      params.validation_table)
+  local last_val_error   = best_val_error
+  local last_train_error = 0
+  local last_epoch       = 0
   for epoch=params.first_epoch,params.max_epochs do
     collectgarbage("collect")
     local tr_error  = thenet:train_dataset(params.training_table)
-    local val_error = params.validation_func(thenet, params.validation_table)
+    local val_error = params.validation_function(thenet, params.validation_table)
     last_train_error,last_val_error,last_epoch = tr_error,val_error,epoch
     if val_error < best_val_error then
       best_epoch     = epoch
