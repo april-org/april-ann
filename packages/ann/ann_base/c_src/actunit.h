@@ -63,16 +63,18 @@ namespace ANN {
     /// Abstract method that returns a pointer to the array of units.
     virtual FloatGPUMirroredMemoryBlock *getPtr() = 0;
 
-    /// Abstract methods that returns a pointer to the array of errors.
+    /// Abstract method that returns a pointer to the array of errors.
     virtual FloatGPUMirroredMemoryBlock *getErrorVectorPtr() = 0;
 
-    /// devuelve el valor de offset, que sumado al size(), puede que el vector
-    /// no comienze en 0
+    /// Abstract method that returns the value of the offset.
     virtual unsigned int getOffset() const = 0;
 
+    /// Abstract method that returns a copy of the activation units.
     virtual ActivationUnits *clone(const ANNConfiguration &conf) = 0;
-    /// pone a 0 los contadores, deltas de error, etc
+
+    /// Abstract method for resetting the activation units.
     virtual void reset(bool use_cuda) = 0;
+
     const ANNConfiguration &getConfReference() const { return conf; }
     /// for FAN IN computation
     virtual unsigned int getFanIn() const { return fanin; }
