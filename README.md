@@ -26,7 +26,7 @@ First, it is mandatory to configure (only the first time) the repo PATH and othe
 
 ```$ . configure.sh```
 
-Second, you could compile the april version which you need. We have developed compiling files for use
+Second, you could compile the april version which you need. We have developed compiling files for using
 different libraries. It is simple, you do
 
 ```$ make TARGET```
