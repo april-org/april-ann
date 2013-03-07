@@ -330,6 +330,19 @@ function table.copy(t, lookup_table)
  return copy
 end
 
+-- Warning: this function makes a DEEP copy of LUA tables, but userdata objects
+-- are copied as references
+function table.deep_copy(t)
+  local ret = {}
+  for i,v in pairs(t) do
+    if type(v) == "table" then
+      ret[i] = table.deep_copy(v)
+    else
+      ret[i] = v
+    end
+  end
+  return ret
+end
 
 function glob(...)
   local r = {}
