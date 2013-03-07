@@ -1,5 +1,24 @@
+/*
+ * This file is part of the Neural Network modules of the APRIL toolkit (A
+ * Pattern Recognizer In Lua).
+ *
+ * Copyright 2013, Jorge Gorbe Moya, Joan Pastor Pellicer
+ *
+ * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ */
 #include <cmath>
-
 #include "binarization.h"
 
 ImageFloat *binarize_niblack(const ImageFloat *src, int windowRadius, float k, float minThreshold, float maxThreshold)
@@ -100,107 +119,87 @@ ImageFloat *binarize_niblack(const ImageFloat *src, int windowRadius, float k, f
 
 ImageFloat *binarize_niblack_simple(const ImageFloat *src, int windowRadius, float k)
 {
-  assert(src->width  > 0 && "Zero-sized image!");
-  assert(src->height > 0 && "Zero-sized image!");
-   //Image Integral Matrix
-   //
-  ImageFloat *result       = new ImageFloat(src->width, src->height);
-  double **M = new double*[src->width];
-  for(int i = 0; i < src->width; ++i)
-	M[i] = new double[src->height];
-  //Square Image Integral
-  double **M2 = new double*[src->width];
-  for(int i = 0; i < src->width; ++i)
-	M2[i] = new double[src->height];
-  
-  int env=windowRadius;
-  for(int y = 0; y < src->height; y++)      
-    for (int x = 0; x < src->width; x++){
-      
+    assert(src->width  > 0 && "Zero-sized image!");
+    assert(src->height > 0 && "Zero-sized image!");
+    // Image Integral Matrix
+    ImageFloat *result = new ImageFloat(src->width, src->height);
+    double **M = new double*[src->width];
+    for(int i = 0; i < src->width; ++i)
+        M[i] = new double[src->height];
+    // Square Image Integral
+    double **M2 = new double*[src->width];
+    for(int i = 0; i < src->width; ++i)
+        M2[i] = new double[src->height];
 
-      M[x][y]=(*src)(x,y);
-      M2[x][y]=(*src)(x,y)*(*src)(x,y);
-      if(x && y){
-	M[x][y]+=M[x-1][y]+M[x][y-1]-M[x-1][y-1];
-	M2[x][y]+=M2[x-1][y]+M2[x][y-1]-M2[x-1][y-1];
-      }
-      else if(x && !y){
-	M[x][y]+=M[x-1][y];
-	M2[x][y]+=M2[x-1][y];
-      }
-      else if(!x && y){
-	M[x][y]+=M[x][y-1];
-	M2[x][y]+=M2[x][y-1];
-      }
-      
-      //cerr << x << " " << y <<" " << M[x][y] << endl;
-      //cerr << x << " " << y <<" " << M2[x][y] << endl;
-    }
- 
-  //cout << img.height() << " " << img.width() << endl;
+    int env=windowRadius;
+    for(int y = 0; y < src->height; y++)      
+        for (int x = 0; x < src->width; x++){
+            M[x][y]=(*src)(x,y);
+            M2[x][y]=(*src)(x,y)*(*src)(x,y);
+            if(x && y){
+                M[x][y]+=M[x-1][y]+M[x][y-1]-M[x-1][y-1];
+                M2[x][y]+=M2[x-1][y]+M2[x][y-1]-M2[x-1][y-1];
+            }
+            else if(x && !y){
+                M[x][y]+=M[x-1][y];
+                M2[x][y]+=M2[x-1][y];
+            }
+            else if(!x && y){
+                M[x][y]+=M[x][y-1];
+                M2[x][y]+=M2[x][y-1];
+            }
 
-  for(int y = 0; y < src->height; y++){
-    for (int x = 0; x < src->width; x++){
-      int limInf , limSup , limRight,limLeft = 0;
-      int area = 1;
+        }
 
-      //We take the limits of the enviroment
-      if(x-env < 0){
-        limLeft = 0;
-      }
-      else limLeft=x-env;
+    for(int y = 0; y < src->height; y++){
+        for (int x = 0; x < src->width; x++){
+            int limInf , limSup , limRight,limLeft = 0;
+            int area = 1;
 
-      if(x+env >= src->width){
-        limRight = src->width-1;
-      }
-      else limRight=x+env;
+            // We take the limits of the enviroment
+            if(x-env < 0){
+                limLeft = 0;
+            }
+            else limLeft=x-env;
 
-      if(y-env < 0){
-        limSup = 0;
-      }
-      else limSup=y-env;
+            if(x+env >= src->width){
+                limRight = src->width-1;
+            }
+            else limRight=x+env;
 
-      if(y+env >= src->height){
-        limInf = src->height-1;
-      }
-      else limInf=y+env;       
-      //cout << M[x][y] << " ";
+            if(y-env < 0){
+                limSup = 0;
+            }
+            else limSup=y-env;
 
-      area = (limInf-limSup+1)*(limRight-limLeft+1);
+            if(y+env >= src->height){
+                limInf = src->height-1;
+            }
+            else limInf=y+env;       
 
+            area = (limInf-limSup+1)*(limRight-limLeft+1);
 
-      //Calculate the mean
-      double mean = double(M[limLeft][limSup]+ M[limRight][limInf] - M[limLeft][limInf] -M[limRight][limSup])/area;
+            //Calculate the mean
+            double mean = double(M[limLeft][limSup]+ M[limRight][limInf] - M[limLeft][limInf] -M[limRight][limSup])/area;
+            double mean2 = double(M2[limLeft][limSup]+ M2[limRight][limInf] - M2[limLeft][limInf] -M2[limRight][limSup])/area;
+            //Compute the Standar Deviacion square(Mean^2-mean2)
+            double sd = sqrt(mean2-mean*mean);
 
-      double mean2 = double(M2[limLeft][limSup]+ M2[limRight][limInf] - M2[limLeft][limInf] -M2[limRight][limSup])/area;
-
-      //cout << "Pixel " << x << " " << y << ", "<< limLeft << " " << limRight << " " << limSup << " "<< limInf << " " << area << endl;
-
-      //Compute the Standar Deviacion square(Mean^2-mean2)
-      double sd = sqrt(mean2-mean*mean);
-
-      //Apply the Threshold T=mean-0.2sd
-
-      float T = mean - k*sd;
-      (*result)(x,y) = (*src)(x,y) < T ? 0 : 1;
-
-//      printf("#Pixel %d %d: (%lf - %lf), %f (value %f)\n",x,y,mean, mean2, T, (*src)(x,y));
-
-      //       if((*result)(x,y)== 0)
-      //cout << "Pixel " << x << " " << y << ", "<< mean << " " << mean2 << " " << T << endl;
+            //Apply the Threshold T=mean-0.2sd
+            float T = mean - k*sd;
+            (*result)(x,y) = (*src)(x,y) < T ? 0 : 1;
+        }
     }
 
-  }
+    for(int i = 0; i < src->width;++i){
+        delete []M[i];
+        delete []M2[i];
 
-  for(int i = 0; i < src->width;++i){
-    delete []M[i];
-    delete []M2[i];
+    }
+    delete []M;
+    delete []M2;
 
-  }
-  delete []M;
-  delete []M2;
-
-  return result;
+    return result;
 }
 
 
@@ -209,7 +208,6 @@ ImageFloat *binarize_otsus(const ImageFloat *src)
     assert(src->width  > 0 && "Zero-sized image!");
     assert(src->height > 0 && "Zero-sized image!");
     //Image Integral Matrix
-    //
     ImageFloat *result       = new ImageFloat(src->width, src->height);
 
     int ntotal = src->height*src->width;
@@ -223,27 +221,26 @@ ImageFloat *binarize_otsus(const ImageFloat *src)
     double p1 = 0.0;
     double p2 = 0.0;
 
-    //Prepare the gray histogram
+    // Prepare the gray histogram
     for (int i = 0; i< 255; i++) h[i] = 0;
-    
-    //Calculate the histogram
+
+    // Calculate the histogram
     for (int y = 1; y < src->height; y++){
         for (int x = 1; x < src->width; x++){
-            //Samplear a 255
+            // Samplear to 255 value
             int v = (int)((*src)(x,y)*255);
             h[v]++;
         }
     }
 
-    //Normalize data
-    //Calculate sum of g * h[g];
+    // Normalize data
+    // Calculate sum of g * h[g];
     for (int i = 0; i< 255; i++){
         h[i] = h[i]/ntotal;
         sum  += h[i]*i;
     }
 
-
-    //For every histogram
+    // For each histogram
     for(int g = 0; g < 255; g++){
 
         double m1 = 0.0;
@@ -261,20 +258,19 @@ ImageFloat *binarize_otsus(const ImageFloat *src)
         m2 = (sum - csum) / p2;
         sb = p1*p2*(m1-m2)*(m1-m2);
 
-        //Take the best T who maximize inter-class variance
+        // Take the best T who maximize inter-class variance
         if(sb > sbmax){
             sbmax = sb;
             T = g;
         }      
 
     }
-    //Apply the new Threshold
+    // Apply the new Threshold
     for(int y = 1; y < src->height; y++)      
         for (int x = 1; x < src->width; x++){
             int v = (int)((*src)(x,y)*255);
             if( v > T) (*result)(x,y) = 1;
             else (*result)(x,y) = 0;
-
         } 
 
     return result;
@@ -286,21 +282,17 @@ ImageFloat *binarize_threshold(const ImageFloat *src, double threshold) {
     assert(src->width  > 0 && "Zero-sized image!");
     assert(src->height > 0 && "Zero-sized image!");
     //Image Integral Matrix
-    //
     ImageFloat *result       = new ImageFloat(src->width, src->height);
 
     int ntotal = src->height*src->width;
 
-    //Calculate the histogram
     for (int y = 1; y < src->height; y++){
         for (int x = 1; x < src->width; x++){
             if ((*src)(x,y) < threshold) {
-             (*result)(x,y) = 0;   
-                
+                (*result)(x,y) = 0;   
             }
             else {
-            (*result)(x,y) = 1;
-
+                (*result)(x,y) = 1;
             }
         }
     }
