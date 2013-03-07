@@ -1,3 +1,25 @@
+/*
+ * This file is part of the Neural Network modules of the APRIL toolkit (A
+ * Pattern Recognizer In Lua).
+ *
+ * Copyright 2013, Salvador España-Boquera, Francisco
+ * Zamora-Martinez, Joan Pastor-Pellicer
+ *
+ * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ */
+
 //BIND_HEADER_H
 #include <errno.h>
 #include <stdio.h>
@@ -42,7 +64,7 @@
   LUABIND_GET_TABLE_PARAMETER(1, ground_truth, DataSetFloat, GT);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, binary, bool, binary, false);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, threshold, float, threshold, 0.5);
-  obj->process_dataset(ds,GT,binary,threshold);
+  obj->processDataset(ds,GT,binary,threshold);
 }
 //BIND_END
 
@@ -57,7 +79,7 @@
   LUABIND_CHECK_ARGN(==,2);
   LUABIND_GET_PARAMETER(1,float,pred);
   LUABIND_GET_PARAMETER(2,float,ref);
-  obj->process_sample(pred,ref);
+  obj->processSample(pred,ref);
 }
 //BIND_END
 
@@ -67,9 +89,9 @@
 //DOC_END
 {
   LUABIND_CHECK_ARGN(==,0);
-  double FM,PR,RC,GA,TNR,ACC,MSE, PSNR, BRP, BRT, FNR;
+  double FM,PR,RC,GA,TNR,ACC,MSE, PSNR, BRP, BRR, FNR;
 
-  obj->get_metrics(FM,PR,RC,GA,MSE, TNR,ACC, PSNR, BRP, BRT, FNR);
+  obj->getMetrics(FM,PR,RC,GA,MSE, TNR,ACC, PSNR, BRP, BRR, FNR);
 
   /*
   LUABIND_RETURN(float,FM);
@@ -109,14 +131,12 @@
   lua_pushnumber(L,BRP);
   lua_setfield(L,-2,"BRP");
 
-
-  lua_pushnumber(L,BRT);
+  lua_pushnumber(L,BRR);
   lua_setfield(L,-2,"BRT");
 
   lua_pushnumber(L,FNR);
   lua_setfield(L,-2,"FNR");
   LUABIND_RETURN_FROM_STACK(-1);
-
 }
 //BIND_END
 

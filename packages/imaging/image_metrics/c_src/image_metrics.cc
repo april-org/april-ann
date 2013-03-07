@@ -1,13 +1,34 @@
+/*
+ * This file is part of the Neural Network modules of the APRIL toolkit (A
+ * Pattern Recognizer In Lua).
+ *
+ * Copyright 2013, Salvador España-Boquera, Francisco
+ * Zamora-Martinez, Joan Pastor-Pellicer
+ *
+ * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ */
+
 #include "error_print.h"
 #include "image_metrics.h"
 #include <cmath>
-void ImageMetrics::process_sample(float pred, float ref){
+void ImageMetrics::processSample(float pred, float ref){
 
   double act_tp;
   double act_fp;
   double act_tn;
   double act_fn;
-
 
   //tp  p(pred=black | ref = black)
   act_tp = (1-pred)*(1-ref);
@@ -17,7 +38,6 @@ void ImageMetrics::process_sample(float pred, float ref){
   act_tn = (pred)*(ref);
   //tp  p(pred = white | ref = black)
   act_fn = (pred)*(1-ref);
-
 
   true_positives  += act_tp;
   false_positives += act_fp;
@@ -29,30 +49,23 @@ void ImageMetrics::process_sample(float pred, float ref){
   SSE += act_sse;
   ++n_samples;
 
-
 }
 
-//TODO: Sobre cargar el operador +
+// TODO: Overload the + operator
 void ImageMetrics::clear(){
-
     true_positives = 0.0;
     false_positives = 0.0;
     true_negatives = 0.0;
     false_negatives = 0.0;
     SSE = 0.0;
     n_samples = 0;
-
-
 }
 
 int ImageMetrics::nSamples(){
-
     return n_samples;
-
-
 }
-void ImageMetrics::combine(ImageMetrics &m1){
 
+void ImageMetrics::combine(ImageMetrics &m1){
     true_positives += m1.true_positives;
     false_positives += m1.false_positives;
     true_negatives += m1.true_negatives;
@@ -60,18 +73,13 @@ void ImageMetrics::combine(ImageMetrics &m1){
 
     SSE += m1.SSE;
     n_samples += m1.n_samples;
-
-
 }
-void ImageMetrics::get_metrics(double &FM, double &PR, double &RC, double &GA,double &MSE, double &TNR, double &ACC, double &PSNR, double &BRP, double &BRT, double &FNR){
 
-
+bool ImageMetrics::getMetrics(double &FM, double &PR, double &RC, double &GA,double &MSE, double &TNR, double &ACC, double &PSNR, double &BRP, double &BRR, double &FNR){
 
     if (n_samples == 0) {
-
-        FM = PR = RC = GA = MSE = TNR = ACC = BRP = BRT = FNR = 0.0f;
-
-        return; 
+        FM = PR = RC = GA = MSE = TNR = ACC = BRP = BRR = FNR = 0.0f;
+        return false; 
     }
 
     PR = true_positives/(true_positives+false_positives);
@@ -83,49 +91,36 @@ void ImageMetrics::get_metrics(double &FM, double &PR, double &RC, double &GA,do
     }
     if (true_positives == 0) 
         FM = 0.0;
-
     else
         FM = 2*PR*RC/(PR+RC);
 
-    //  printf("tp %lf, fp %lf, fn %lf tn %lf\n",true_positives,false_positives, false_negatives, true_negatives);
-    //Geometric mean pixel accuracy
     double b = (true_positives);
     double B = (true_positives+false_negatives);
     double w = (true_negatives);
     double W = (false_positives+true_negatives);
-
+    
+    // GA
     GA = sqrt((b*w)/(B*W));
-
-    //TNR
+    // TNR
     TNR = true_negatives/(true_negatives+false_positives);
-
-
-    //FNR
+    // FNR
     FNR = false_positives/(true_negatives+false_positives);
-
-
-    //ACC
+    // ACC
     ACC = (true_positives+true_negatives)/(true_positives+true_negatives+false_positives+false_negatives);
-
-    //MSE
+    // MSE
     MSE = SSE/n_samples;
-
-    //Miss Classification Penalty Metric
-
+    // PSNR
     PSNR = 10 * log10(1./MSE);
-//    printf("PSNR %lf %lf %lf\n", MSE, log10(1./MSE), PSNR);
-    // BRP: Black Ratio (Image Predicted)
-
+    // BRP Black Ratio (Image Predicted)
     BRP = b/n_samples;
-    // BRT Black Ratio (TEST)
-    BRT = B/n_samples;
-
-
+    // BRP Black Ratio (Reference)
+    BRR = B/n_samples;
+    
+    return true;
 }
 
 
-
-void ImageMetrics::process_dataset(DataSetFloat *ds, DataSetFloat *GT, bool binary, float threshold)
+void ImageMetrics::processDataset(DataSetFloat *ds, DataSetFloat *GT, bool binary, float threshold)
 {
     // Error control
     if (ds->numPatterns() != GT->numPatterns()) {
@@ -175,7 +170,7 @@ void ImageMetrics::process_dataset(DataSetFloat *ds, DataSetFloat *GT, bool bina
 
             pat_GT[0] = (pat_GT[0] <= threshold)? 0 : 1;
         }
-        process_sample(pat_ds[0], pat_GT[0]);
+        processSample(pat_ds[0], pat_GT[0]);
 
     }
     delete[] pat_ds;

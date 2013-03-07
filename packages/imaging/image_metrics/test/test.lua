@@ -37,7 +37,7 @@ myMetrics:process_dataset({
     ground_truth = gt 
 })
 
-FM, PR, RC, GA,MSE, TNR, ACC = myMetrics:get_metrics()
+res = myMetrics:get_metrics()
 
-printf("FMeasure: %f, PR: %f, RC: %f, RC, GA:%f,MSE: %f, TNR: %f, ACC: %f\n",FM,PR,RC,GA, MSE,TNR, ACC)
+printf("FMeasure: %f, PR: %f, RC: %f, RC, GA:%f,MSE: %f, TNR: %f, ACC: %f\n",res.FM, res.PR, res.RC, res.GA, res.MSE, res.TNR, res.ACC)
 
