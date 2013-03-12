@@ -34,7 +34,7 @@ return {
 
      and any number of arguments which modify configuration file values. This arguments could access to:
 
-     - all_hyperparams table which could be indexed by TAGs            => all_hyperparams.TAG.option='blah'
+     - all_hyperparams table which could be indexed by TAGs       => all_hyperparams.TAG.option='blah'
      - global_vars table which could be indexed by any global var => global_vars.seed=blah
    ]]
 
