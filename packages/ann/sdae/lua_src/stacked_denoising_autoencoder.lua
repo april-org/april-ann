@@ -362,12 +362,12 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
   local full_ann = nil
   if params.supervised_layer then
     printf("# Training of supervised layer %d--%d (number %d)\n",
-	   params.layers[#layers].size, params.supervised_layer.size,
+	   params.layers[#params.layers].size, params.supervised_layer.size,
 	   #params.layers+1)
-    local input_size     = params.layers[#layers].size
-    local input_actf_str = params.layers[#layers].actf
+    local input_size     = params.layers[#params.layers].size
+    local input_actf_str = params.layers[#params.layers].actf
     local global_options    = table.deep_copy(params.training_options.global)
-    local layerwise_options = (params.training_options.layerwise[#layers] or
+    local layerwise_options = (params.training_options.layerwise[#params.layers] or
 			       { ann_options = {} })
     layerwise_options.ann_options = layerwise_options.ann_options or {}
     local lookup = function(name) return layerwise_options[name] or global_options[name] end
