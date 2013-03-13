@@ -35,7 +35,9 @@
 //BIND_LUACLASSNAME ImageHistogram image.image_histogram
 //BIND_CPP_CLASS    ImageHistogram
 
+//BIND_LUACLASSNAME ImageFloat Image
 //BIND_CONSTRUCTOR ImageHistogram
+
 //DOC_BEGIN
 // ImageHistogram()
 // @param number of gray_levels
@@ -58,8 +60,8 @@
 //BIND_CONSTRUCTOR ImageHistogram
 //DOC_BEGIN
 // ImageHistogram()
+// @param ImageFloat for compute the histogram
 // @param number of gray_levels
-// @param number to compute the radius
 //DOC_END
 {
 
@@ -77,7 +79,8 @@
 
 //BIND_METHOD ImageHistogram generate_window_histogram
 //DOC_BEGIN
-// Returns the number of gray levels in the class
+// Returns the a 3-D matrix with the integral threshold counter at
+// each pixel
 //
 //DOC_END
 {
@@ -98,5 +101,32 @@
   LUABIND_RETURN(MatrixFloat, obj->getIntegralHistogram());
 }
 //BIND_END
+
+//BIND_DESTRUCTOR ImageHistogram
+{
+}
+//BIND_END
+
+//BIND_METHOD ImageFloat get_window_histogram
+//DOC_BEGIN
+// Given a image return a 3-D matrix with the histogram
+// @param number of gray_levels
+// @param radius
+{
+    int gray_levels;
+    int radius;
+    
+    LUABIND_CHECK_ARGN(==,2);
+    LUABIND_GET_PARAMETER(1, int, gray_levels);
+    LUABIND_GET_PARAMETER(1, int, radius);
+
+    ImageHistogram *hist = new ImageHistogram(obj, gray_levels);
+    MatrixFloat *mHist = hist->generateWindowHistogram(radius);
+
+    delete hist;
+    LUABIND_RETURN(MatrixFloat, mHist);
+}
+//BIND_END
+
 //////////////////////////////////////////////////////////////////////
 
