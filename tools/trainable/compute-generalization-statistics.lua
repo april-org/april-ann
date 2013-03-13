@@ -1,9 +1,31 @@
+if #arg < 5 then
+  print("Syntax error!")
+  printf("\t%s FILENAME VAL_MEAN_COL VAL_VAR_COL TEST_MEAN_COL TEST_VAR_COL [W_REPS [EXP_REPS [EXP1_SIZE [EXP2_SIZE ...] ] ] ]\n", arg[0])
+  printf("\nThis script computes the generalization ability given a set of experiments\n")
+  printf("using different hyperparameters.\n\n")
+  printf("\tuse - as FILENAME for stdin\n")
+  printf("\tVAL_MEAN_COL is the column with the MEAN for your loss-function\n")
+  printf("\t             over all validation samples\n")
+  printf("\tVAL_VAR_COL is the column with the VARIANCE of the MEAN for your\n")
+  printf("\t            loss-function over all validation samples\n")
+  printf("\tTEST_MEAN_COL idem but with TEST\n")
+  printf("\tTEST_VAR_COL idem but with TEST\n")
+  printf("\tW_REPS is the number of simulation repetitions to compute\n")
+  printf("\t       generalization weights (by default 1000)\n")
+  printf("\tEXP_REPS is the number of simulation repetitions to compute\n")
+  printf("\t         box-whiskers plots for each size (by default 1)\n")
+  printf("\tThe following arguments are as many experiment sizes as you need\n")
+  printf("\t(taken as subset of all your data), by default num_lines_of(FILENAME)\n")
+  printf("\n\tSee 2012, Bergstra and Bengio, 'Random Search for Hyper-Parameter Optimization'\n")
+  printf("\tfor more details: http://jmlr.csail.mit.edu/papers/volume13/bergstra12a/bergstra12a.pdf\n")
+  os.exit(1)
+end
 datafilename     = arg[1]
 val_mean_column  = tonumber(arg[2])
 val_var_column   = tonumber(arg[3])
 test_mean_column = tonumber(arg[4])
 test_var_column  = tonumber(arg[5])
-repetitions      = tonumber(arg[6])
+repetitions      = tonumber(arg[6] or 1000)
 expsize_reps     = tonumber(arg[7] or 1)
 expsizes         = {}
 for i=8,#arg do table.insert(expsizes, tonumber(arg[i])) end
@@ -74,19 +96,23 @@ for _,expsize in ipairs(expsizes) do
     end
     test_var = test_var - test_mean*test_mean
     -----------------------------------------
-    -- print(expsize, test_mean, test_var)
+    if #expsizes == 1 and expsize_reps == 1 then
+      print(expsize, test_mean, test_var)
+    end
     table.insert(test_means_tbl, test_mean)
   end
-  -- sort test_means_tbl
-  table.sort(test_means_tbl)
-  -- compute box-whisker data
-  local q0 = 1
-  local q1 = math.round(#test_means_tbl/4)
-  local q2 = math.round(#test_means_tbl/2)
-  local q3 = math.round(#test_means_tbl*3/4)
-  local q4 = #test_means_tbl
-  print(expsize,
-	test_means_tbl[q0],
-	test_means_tbl[q1],test_means_tbl[q2],test_means_tbl[q3],
-	test_means_tbl[q4])
+  if #test_means_tbl > 1 then
+    -- sort test_means_tbl
+    table.sort(test_means_tbl)
+    -- compute box-whisker data
+    local q0 = 1
+    local q1 = math.max(1,math.round(#test_means_tbl/4))
+    local q2 = math.max(1,math.round(#test_means_tbl/2))
+    local q3 = math.max(1,math.round(#test_means_tbl*3/4))
+    local q4 = #test_means_tbl
+    print(expsize,
+	  test_means_tbl[q0],
+	  test_means_tbl[q1],test_means_tbl[q2],test_means_tbl[q3],
+	  test_means_tbl[q4])
+  end
 end
