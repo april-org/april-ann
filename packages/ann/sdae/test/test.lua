@@ -39,7 +39,7 @@ val_output   = dataset.matrix(m2,
 				circular    = {true}
 			      })
 
-layers = {
+layers_table = {
   { size= 256, actf="logistic"},
   { size= 256, actf="logistic"},
   { size= 128, actf="logistic"},
@@ -52,7 +52,7 @@ params_pretrain = {
   shuffle_random        = random(1234),
   weights_random        = random(7890),
   
-  layers                = layers,
+  layers                = layers_table,
   supervised_layer      = { size = 10, actf = "softmax" },
   output_datasets       = { train_output },
   
@@ -91,7 +91,7 @@ params_pretrain = {
 sdae_table,deep_classifier = ann.autoencoders.greedy_layerwise_pretraining(params_pretrain)
 codifier_net = ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
 							       bunch_size,
-							       layers)
+							       layers_table)
 
 local outf = io.open("data", "w")
 encoded_dataset = ann.autoencoders.encode_dataset(codifier_net,
