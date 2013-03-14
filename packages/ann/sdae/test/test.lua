@@ -93,6 +93,10 @@ sdae_table,deep_classifier = ann.autoencoders.greedy_layerwise_pretraining(param
 codifier_net = ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
 							       bunch_size,
 							       layers_table)
+deep_classifier = ann.mlp.convert_to_all_all{
+  ann = deep_classifier,
+  topology = "256 inputs 256 logistic 128 logistic 32 logistic 10 softmax",
+  bunch_size = bunch_size }
 
 local outf = io.open("data", "w")
 encoded_dataset = ann.autoencoders.encode_dataset(codifier_net,
@@ -159,7 +163,7 @@ datosvalidar = {
 
 deep_classifier:set_option("learning_rate", 0.1)
 deep_classifier:set_option("momentum", 0.02)
--- deep_classifier:set_option("weight_decay", 1e-06)
+deep_classifier:set_option("weight_decay", 0.0)
 deep_classifier:set_error_function(ann.error_functions.logistic_cross_entropy())
 shallow_classifier:set_option("learning_rate",
 			      deep_classifier:get_option("learning_rate"))
