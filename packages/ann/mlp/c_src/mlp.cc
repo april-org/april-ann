@@ -33,6 +33,10 @@
 namespace ANN {
 
   MLP::MLP(ANNConfiguration configuration) : ANNBase(configuration),
+					     learning_rate(-1.0f),
+					     momentum(0.0f),
+					     weight_decay(0.0f),
+					     c_weight_decay(1.0f),
 					     error_func(0)
   {
     setErrorFunction(new MSE());
