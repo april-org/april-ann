@@ -40,10 +40,10 @@ val_output   = dataset.matrix(m2,
 			      })
 
 layers_table = {
-  { size= 256, actf="logistic"},
-  { size= 256, actf="logistic"},
-  { size= 128, actf="logistic"},
-  { size=  32, actf="logistic"},
+  { size= 256, actf="logistic"}, -- INPUT LAYER
+  { size= 256, actf="logistic"}, -- FIRST HIDDEN LAYER
+  { size= 128, actf="logistic"}, -- SECOND HIDDEN LAYER
+  { size=  32, actf="logistic"}, -- THIRD HIDDEN LAYER
 }
 
 params_pretrain = {
@@ -53,6 +53,7 @@ params_pretrain = {
   weights_random        = random(7890),
   
   layers                = layers_table,
+  -- OUTPUT LAYER (SUPERVISED): classification task, 10 classes (10 digits)
   supervised_layer      = { size = 10, actf = "softmax" },
   output_datasets       = { train_output },
   
@@ -65,12 +66,12 @@ params_pretrain = {
 		      momentum      = 0.02,
 		      weight_decay  = 1e-05 },
       noise_pipeline = { function(ds) return dataset.perturbation{
-			     dataset  = ds,
+			     dataset  = ds, -- WARNING: the function argument
 			     mean     = 0,
 			     variance = 0.01,
 			     random   = random(8249824) } end,
 			 function(ds) return dataset.salt_noise{
-			     dataset  = ds,
+			     dataset  = ds, -- WARNING: the function argument
 			     vd       = 0.10,
 			     zero     = 0.0,
 			     random   = random(8249824) } end },
