@@ -35,7 +35,7 @@ printf("mean: %g\nvariance: %g\n\n", mean, var)
 
 for _,lag in ipairs(lags) do
   local i   = 1
-  local j   = lag
+  local j   = 1 + lag
   local sum = 0
   while j <= #data do
     local x,y = data[i],data[j]
