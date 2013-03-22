@@ -12,8 +12,13 @@ function ann.mlp.convert_to_all_all(t)
     error("Incorrect topology description")
   end
   for i=1,net:get_layer_connections_size() do
-    local w = net:get_layer_connections(i):weights()
-    all_all_net:get_layer_connections(i):load{ w = w }
+    local old_w = net:get_layer_connections(i)
+    local new_w = all_all_net:get_layer_connections(i)
+    if old_w:size() ~= new_w:size() then
+        error("Mismatch between connection sizes!! check that "..
+              "bias weights are registered before matrix weights")
+    end
+    old_w:load{ w = new_w:weights() }
   end
   return all_all_net
 end
