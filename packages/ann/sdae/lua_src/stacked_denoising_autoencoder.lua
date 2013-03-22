@@ -131,6 +131,7 @@ function ann.autoencoders.build_full_autoencoder(bunch_size,
   local actfs         = {}
   local weights_sdae  = {}
   local bias_sdae     = {}
+
   table.insert(neuron_layers, ann.units.real_cod{
 		 ann  = sdae,
 		 size = layers[1].size,
@@ -256,6 +257,8 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
   params.training_options.global    = params.training_options.global    or { ann_options }
   params.training_options.layerwise = params.training_options.layerwise or {}
   --------------------------------------
+  -- on the fly. Do not generate all the dataset for each layer
+  local on_the_fly = not params.replacement
 
   -- copy dataset params to auxiliar table
   local current_dataset_params = {
@@ -265,6 +268,16 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
   -- output weights and bias matrices
   local weights = {}
   local bias    = {}
+  -- incremental mlp
+  local mlp_final = ann.mlp{bunch_size = params.bunch_size}
+  --add first layer
+  local layer_ant = ann.units.real_cod
+  {
+    ann  = mlp_final,
+    size = params.layers[1].size,
+    type = "inputs"
+  }
+  
   -- loop for each pair of layers
   for i=2,#params.layers do
     local input_size = params.layers[i-1].size
@@ -330,8 +343,35 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
     local b1mat = best_net:get_layer_connections(1):weights()
     local b2mat = best_net:get_layer_connections(3):weights()
     local wmat  = best_net:get_layer_connections(2):weights()
+
+    local layer_act = ann.units.real_cod{
+      ann = mlp_final,
+      size = params.layers[i].size,
+      type = ((i<#params.layers or params.supervised_layer) and "hidden") or "outputs"
+    }
+    
+    mlp_final:push_back_all_all_layer{
+      input  = layer_ant,
+      output = layer_act,
+      weights = ann.connections.all_all{
+        ann         = mlp_final,
+        input_size  = params.layers[i-1].size,
+        output_size = params.layers[i].size,
+        w           = wmat,
+      },
+      bias = ann.connections.bias{
+        ann   = mlp_final,
+        size  = params.layers[i].size,
+        w     = b1mat,
+      },
+      actfunc = ann.activations.from_string(params.layers[i].actf),
+    }
+
+    layer_ant = layer_act
     table.insert(weights, wmat)
     table.insert(bias, { b1mat, b2mat })
+
+    --insert the information
     if i ~= #params.layers or params.supervised_layer then
       -- generation of new input patterns using only the first part of
       -- autoencoder except at last loop iteration
@@ -343,17 +383,17 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
 							 cod_actf,
 							 b1mat, wmat)
       if current_dataset_params.distribution then
-	-- compute code for each distribution dataset
-	for _,v in ipairs(current_dataset_params.distribution) do
-	  v.input_dataset = ann.autoencoders.encode_dataset(codifier,
-							    v.input_dataset)
-	end
+        	-- compute code for each distribution dataset
+        	for _,v in ipairs(current_dataset_params.distribution) do
+                        	  v.input_dataset = ann.autoencoders.encode_dataset(codifier,
+          							    v.input_dataset)
+        	end
       else
-	-- compute code for input dataset
-	local ds =
-	  ann.autoencoders.encode_dataset(codifier,
-					  current_dataset_params.input_dataset)
-	  current_dataset_params.input_dataset = ds
+        	-- compute code for input dataset
+        	local ds =
+      	  ann.autoencoders.encode_dataset(codifier,
+	                              				  current_dataset_params.input_dataset)
+          current_dataset_params.input_dataset = ds
       end
     end -- if i ~= params.layers
   end -- for i=2,#params.layers
@@ -423,8 +463,33 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
       bunch_size    = params.bunch_size,
       bias_table    = { best_net:get_layer_connections(1):weights() },
       weights_table = { best_net:get_layer_connections(2):weights() } }
+
+    mlp_final:push_back_all_all_layer{
+      input  = layer_ant,
+      output = ann.units.real_cod{
+        ann = mlp_final,
+        size = params.supervised_layer.size,
+        type = "outputs"
+      },
+      weights = ann.connections.all_all{
+        ann         = mlp_final,
+        input_size  = params.layers[#params.layers].size,
+        output_size = params.supervised_layer.size,
+        w           = best_net:get_layer_connections(2):weights(),
+      },
+      bias = ann.connections.bias{
+        ann   = mlp_final,
+        size  = params.supervised_layer.size,
+        w     = best_net:get_layer_connections(1):weights(),
+      },
+      actfunc = ann.activations.from_string(params.supervised_layer.actf),
+    }
   end
-  return sdae_table,full_ann
+
+--  print(full_ann:get_output_size())
+--  print(mlp_final:get_output_size())
+--  return sdae_table,full_ann
+  return sdae_table, mlp_final
 end
 
 -- This function returns a MLP formed by the codification part of a full stacked
