@@ -21,22 +21,26 @@
  */
 #include "trainsuper.h"
 #include "activations_action.h"
+#include "wrapper.h"
 
 namespace ANN {
 
-  MTRand *rnd = new MTRand();
-  
   ActivationsAction::ActivationsAction(const ANNConfiguration &conf,
-				       ActivationUnits     *units,
-				       ActivationFunction *act_func) :
-    Action(conf), units(units), act_func(act_func), dropout(0.0f) {
+				       ActivationUnits        *units,
+				       ActivationFunction     *act_func) :
+    Action(conf), units(units), act_func(act_func),
+    dropout(0.0f) {
     IncRef(units);
     IncRef(act_func);
+    dropout_mask = new FloatGPUMirroredMemoryBlock(units->numNeurons()*conf.max_bunch_size);
+    units_order_permutation = new int[units->numNeurons()];
   }
   
   ActivationsAction::~ActivationsAction() {
     DecRef(units);
     DecRef(act_func);
+    delete dropout_mask;
+    delete[] units_order_permutation;
   }
   
   void ActivationsAction::doForward(bool during_training) {
@@ -45,21 +49,33 @@ namespace ANN {
 			      conf,
 			      conf.use_cuda_flag);
     if (dropout > 0.0f) {
-      float dropout_value = act_func->getDropoutValue();
       if (during_training) {
-	// TODO: Generic implementation, to run in GPU or CPU
-	FloatGPUMirroredMemoryBlock *unit_ptr = units->getPtr();
-	unsigned int size = units->numNeurons();
-	int *unit_order = new int[size];
+	unsigned int size   = units->numNeurons();
+	float *mask_ptr     = dropout_mask->getPPALForWrite();
+	float dropout_value = act_func->getDropoutValue();
+	/*
+	// initialize permutation vector
 	for (unsigned int i=0; i<size; ++i)
-	  unit_order[i] = static_cast<int>(i);
-	float *unit = unit_ptr->getPPALForReadAndWrite();
+	units_order_permutation[i] = static_cast<int>(i);
+	// auxiliar variables
+	// configure dropout mask for each bunch of activations
 	for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	  rnd->shuffle(size, unit_order);
-	  for (unsigned int i=0; i<size*dropout; ++i)
-	    unit[b + unit_order[i]*conf.max_bunch_size] = dropout_value;
+	conf.rnd.shuffle(size, units_order_permutation);
+	unsigned int i;
+	// first size*dropout units are masked
+	for (i=0; i<size*dropout; ++i)
+	mask_ptr[b + units_order_permutation[i]*conf.max_bunch_size] = 0.0f;
+	// the rest are unmasked
+	for (; i<size; ++i)
+	mask_ptr[b + units_order_permutation[i]*conf.max_bunch_size] = 1.0f;
 	}
-	delete[] unit_order;
+	*/
+	for (unsigned int i=0; i<size*conf.max_bunch_size; ++i)
+	  if (conf.rnd.rand() < dropout) mask_ptr[i] = 0.0f;
+	  else mask_ptr[i] = 1.0f;
+	// apply mask
+       	applyMask(units->getPtr(), dropout_mask, dropout_value,
+		  units->size(), conf, conf.use_cuda_flag);
       }
     }
   }

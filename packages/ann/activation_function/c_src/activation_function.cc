@@ -226,7 +226,7 @@ namespace ANN {
 		  bool use_cuda) {
     
     if (use_cuda) {
-      ERROR_PRINT("NOT IMPLEMENTED YET FOR USE_CUDA=TRUE");
+      ERROR_EXIT(128, "NOT IMPLEMENTED YET FOR USE_CUDA=TRUE\n");
     }
 
     float *units_ptr = units->getPPALForReadAndWrite();
