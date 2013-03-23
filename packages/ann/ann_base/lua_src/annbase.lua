@@ -141,8 +141,10 @@ function ann.train_wo_validation(params)
   local prev_tr_err = 111111111
   local best_net    = thenet:clone()
   for epoch=1,params.max_epochs do
+    local tr_table = params.training_table
+    if type(tr_table) == "function" then tr_table = tr_table() end
     collectgarbage("collect")
-    local tr_err         = thenet:train_dataset(params.training_table)
+    local tr_err         = thenet:train_dataset(tr_table)
     local tr_improvement = (prev_tr_err - tr_err)/prev_tr_err
     if (epoch > params.min_epochs and
 	tr_improvement < params.percentage_stopping_criterion) then

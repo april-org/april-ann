@@ -94,6 +94,37 @@ function april_help(t)
   end
 end
 
+-- This function prepares a safe environment for call user functions
+function safe_call(f, env, ...)
+  env = env or {}
+  env.os         = nil    env.io        = nil     env.file     = nil
+  env.debug      = nil    env.load      = nil     env.loadfile = nil
+  env.load       = nil    env.dofile    = nil     env.math     = math
+  env.table      = table  env.string    = string  env.tonumber = tonumber
+  env.loadstring = nil    env.courutine = nil     env.print    = print
+  env.pairs      = pairs  env.ipairs    = ipairs  env.tostring = tostring
+  env.printf     = printf
+  env.io = { stderr = io.stderr,
+	     stdout = io.stdout }
+  setfenv(f, env)
+  local status,result_or_error = pcall(f, unpack(arg))
+  if not status then
+    print(result_or_error)
+    error("Incorrect function call")
+  end
+  return result_or_error
+end
+
+function glob(...)
+  local r = {}
+  for i,expr in ipairs(arg) do
+    local f = io.popen("ls -d "..expr)
+    for i in f:lines() do table.insert(r,i) end
+    f:close()
+  end
+  return r
+end
+
 function parallel_foreach(num_processes, list, func)
   id = util.split_process(num_processes)-1
   for index, value in ipairs(list) do
@@ -102,6 +133,47 @@ function parallel_foreach(num_processes, list, func)
     end
   end
 end
+
+function clrscr()
+  io.write("\027[2J")	-- ANSI clear screen
+  io.write("\027[H")	-- ANSI home cursor
+end
+
+function printf(...)
+  io.write(string.format(unpack(arg)))
+end
+
+function fprintf(file,...)
+  file:write(string.format(unpack(arg)))
+end
+
+function range(...)
+  local inf,step,sup
+  if (arg.n == 1) then
+    inf = 1
+    step = 1
+    sup = arg[1]
+  else
+    if (arg.n == 2) then
+      inf = arg[1]
+      step = 1
+      sup = arg[2]
+    else
+      inf = arg[1]
+      sup = arg[2]
+      step = arg[3]
+    end
+  end
+  local t = {}
+  for i = inf,sup,step do
+    table.insert(t,i)
+  end
+  return t
+end
+
+---------------------------------------------------------------
+------------------------ MATH UTILS ---------------------------
+---------------------------------------------------------------
 
 -- Redondea un valor real
 function math.round(val)
@@ -142,41 +214,28 @@ function math.std(t, ini, fin)
    return math.sqrt(suma_sqr/(total-1)),total
 end
 
-function clrscr()
-  io.write("\027[2J")	-- ANSI clear screen
-  io.write("\027[H")	-- ANSI home cursor
+---------------------------------------------------------------
+------------------------ STRING UTILS -------------------------
+---------------------------------------------------------------
+
+function string.basename(path)
+        local name = string.match(path, "([^/]+)$")
+        return name
 end
 
-function printf(...)
-  io.write(string.format(unpack(arg)))
+function string.remove_extension(path)
+  local name,ext = string.match(path, "(.*)[.]([^.]*)$")
+  return name,ext
 end
 
-function fprintf(file,...)
-  file:write(string.format(unpack(arg)))
+function string.get_extension(path)
+        local ext = string.match(path, ".*[.]([^.]*)$")
+        return ext
 end
 
-function range(...)
-  local inf,step,sup
-  if (arg.n == 1) then
-    inf = 1
-    step = 1
-    sup = arg[1]
-  else
-    if (arg.n == 2) then
-      inf = arg[1]
-      step = 1
-      sup = arg[2]
-    else
-      inf = arg[1]
-      sup = arg[2]
-      step = arg[3]
-    end
-  end
-  local t = {}
-  for i = inf,sup,step do
-    table.insert(t,i)
-  end
-  return t
+function string.get_path(path_with_filename, sep)
+  sep=sep or'/'
+  return path_with_filename:match("(.*"..sep..")") or ""
 end
 
 function string.lines_of(t)
@@ -240,6 +299,10 @@ end
 
 string.join = table.concat
 
+---------------------------------------------------------------
+------------------------ TABLE UTILS --------------------------
+---------------------------------------------------------------
+
 function table.invert(t)
   local n = {}
   for i,j in pairs(t) do n[j] = i end
@@ -295,7 +358,6 @@ function table.filter(t,f)
   return n
 end
       
-
 function table.join(t1,t2)
    local result={}
    local k=1
@@ -330,15 +392,18 @@ function table.copy(t, lookup_table)
  return copy
 end
 
-
-function glob(...)
-  local r = {}
-  for i,expr in ipairs(arg) do
-    local f = io.popen("ls -d "..expr)
-    for i in f:lines() do table.insert(r,i) end
-    f:close()
+-- Warning: this function makes a DEEP copy of LUA tables, but userdata objects
+-- are copied as references
+function table.deep_copy(t)
+  local ret = {}
+  for i,v in pairs(t) do
+    if type(v) == "table" then
+      ret[i] = table.deep_copy(v)
+    else
+      ret[i] = v
+    end
   end
-  return r
+  return ret
 end
 
 function table.expand(t)
@@ -429,43 +494,17 @@ function table.min(t)
   return min,index
 end
 
-function string.basename(path)
-        local name = string.match(path, "([^/]+)$")
-        return name
-end
+---------------------------------------------------------------
+--------------------------- IO UTILS --------------------------
+---------------------------------------------------------------
 
-function string.remove_extension(path)
-  local name,ext = string.match(path, "(.*)[.]([^.]*)$")
-  return name,ext
-end
-
-function string.get_extension(path)
-        local ext = string.match(path, ".*[.]([^.]*)$")
-        return ext
-end
-
-function string.get_path(path_with_filename, sep)
-  sep=sep or'/'
-  return path_with_filename:match("(.*"..sep..")") or ""
-end
-
--- This function prepares a safe environment for call user functions
-function safe_call(f, env, ...)
-  env = env or {}
-  env.os         = nil    env.io        = nil     env.file     = nil
-  env.debug      = nil    env.load      = nil     env.loadfile = nil
-  env.load       = nil    env.dofile    = nil     env.math     = math
-  env.table      = table  env.string    = string  env.tonumber = tonumber
-  env.loadstring = nil    env.courutine = nil     env.print    = print
-  env.pairs      = pairs  env.ipairs    = ipairs  env.tostring = tostring
-  env.printf     = printf
-  env.io = { stderr = io.stderr,
-	     stdout = io.stdout }
-  setfenv(f, env)
-  local status,result_or_error = pcall(f, unpack(arg))
-  if not status then
-    print(result_or_error)
-    error("Incorrect function call")
-  end
-  return result_or_error
+function io.uncommented_lines(filename)
+  local f = (filename and io.open(filename, "r")) or io.stdin
+  return function()
+    local line = nil
+    repeat
+      line = f:read("*l")
+    until not line or not string.match(line, "^%s*#.*$") 
+    return line
+	 end
 end

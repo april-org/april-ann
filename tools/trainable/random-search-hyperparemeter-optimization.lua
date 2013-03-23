@@ -2,44 +2,39 @@ help_string =
   [[
      Command line args must be:
 
-     april-ann  random-search.....lua  conf.lua  ["all_params.TAG.option='blah'" "global_vars.working_dir='blah'" "global_vars.n=blah" "global_vars.seed=blah"... ]
+     april-ann  random-search.....lua  conf.lua  ["all_hyperparams.TAG.option='blah'" "global_vars.working_dir='blah'" "global_vars.n=blah" "global_vars.seed=blah"... ]
 
      This script executes a random search optimization of hyperparameters of any
      executable (not only april scripts). It receives one mandatory argument, a
      configuration file which must fullfil following template:
 
-     return {
-       fixed_params = {
-         { option="--option-name",  value=ANY,  tag="outputtag", hidden=true },
-         { option="--option-name2", value=ANY2, tag="outputtag"  },
-         ...
-       },
-       random_params = {
-         { option="--option-name", tag=ANY, sampling = "uniform",
-           type="integer",
-           values= { { min=ANY, max=ANY }, { min=ANY, max=ANY, step=ANY} } },
-         { option="--option-name", tag=ANY, sampling = "uniform",
-           prec=NUMBER, type="real",
-           values= { { min=ANY, max=ANY }, { min=ANY, max=ANY, step=ANY} } },
-         { option="--option-name", tag=ANY, sampling = "uniform", values= { a, b, c, ..., d } },
-         { option="--option-name", tag=ANY, prec=NUMBER,
-           sampling = "gaussian", values= { mean=ANY, variance=ANY } },
-         { option="--option-name", tag=ANY, sampling = "random",
-           check = FUNCTION },
-         { option=nil, tag=ANY, sampling=.... }, -- this is a metaparameter example
-         ...
-       },
-       check=function(params) return true end
-       script = PATH_TO_SCRIPT,
-       exec   = PATH_TO_APRIL_OR_OTHER_SYSTEM,
-       working_dir = PATH_TO_WORKING_DIR,
-       seed = ANY_SEED_VALUE (if not given, take random from bash)
-                              n = number of iterations,
-     }
+return {
+  hyperparams = {
+    { option="--o1=",  value=10,  tag="o1", sampling="fixed", hidden=true },
+    { option="--o2=",  value=20,  tag="o2", sampling="fixed" },
+    { option="--r1",   tag="r1", sampling = "uniform",
+      type="integer",
+      values= { { min=1, max=10 }, { min=20, max=100, step=10} },
+      filter = function(hyperparams) hyperparams["r1"] = "200" return true end },
+    { option="--r2=", tag="r2", sampling = "uniform", values= { 1, 2, 3, 4, 5 } },
+    { option="--r3=", tag="r3", prec=3,
+      sampling = "gaussian", values= { mean=0, variance=0.1 } },
+    { option="--r4=", tag="r4", sampling = "random",
+      filter = function(hyperparams)
+	if hyperparams["r2"] == "1" then hyperparams["r4"] = "0" end return true
+      end },
+    { option=nil, tag="r5", sampling="random" }
+  },
+  filter = function(hyperparams) hyperparams['r5'] = '0.4' return true end,
+  script = "",
+  exec   = "echo",
+  working_dir = "/tmp/",
+  -- seed = ANY_SEED_VALUE (if not given, take random from bash)
+  n = 50 }
 
      and any number of arguments which modify configuration file values. This arguments could access to:
 
-     - all_params table which could be indexed by TAGs            => all_params.TAG.option='blah'
+     - all_hyperparams table which could be indexed by TAGs       => all_hyperparams.TAG.option='blah'
      - global_vars table which could be indexed by any global var => global_vars.seed=blah
    ]]
 
@@ -58,100 +53,104 @@ help_string =
     return tonumber(io.popen("od -N2 -An -i /dev/urandom"):read("*l"))
   end
 
-  -- This function check the correction of fixed_params
-  local fixed_param_valid_options = table.invert{"option", "tag", "value",
-						 "hidden" }
-  function check_fixed(param)
-    if not param.tag then error("Each fixed parameter needs a tag") end
-    if not param.value then error("Each fixed parameter needs a value") end
-    for name,v in pairs(param) do
-      if not fixed_param_valid_options[name] then
-        error("Incorrect fixed param option name: " .. name)
-      end
+  -- This function check the correction of random_hyperparams
+  local fixed_hyperparam_valid_options  = table.invert{"option", "tag", "value",
+						       "hidden", "sampling" }
+  local random_hyperparam_valid_options = table.invert{"option", "tag", "values",
+						       "sampling", "prec", "filter",
+						       "type", "size" }
+  local random_hyperparam_values_table_valid_options = table.invert{"min","max","step",
+								    "mean", "variance",
+								    "size" }
+  function check_hyperparam(hyperparam)
+    if not hyperparam.sampling then
+      error("Each hyperhyperparameter needs a sampling")
     end
-  end
-
-  -- This function check the correction of random_params
-  local random_param_valid_options = table.invert{"option", "tag", "values",
-                                                  "sampling", "prec", "check",
-                                                  "type", "size" }
-  local random_param_values_table_valid_options = table.invert{"min","max","step",
-                                                               "mean", "variance",
-							       "size" }
-  function check_random(param)
-    if not param.tag then error("Each random parameter needs a tag") end
-    if not param.sampling then error("Each random parameter needs a sampling") end
-    if not param.prec then param.prec = 10 end
-    if not param.check then param.check = function(params) return true end end
-    for name,v in pairs(param) do
-      if not random_param_valid_options[name] then
-        error("Incorrect random param option name: " .. name)
+    if not hyperparam.tag then error("Each hyperparameter needs a tag") end
+    if hyperparam.sampling == "fixed" then
+      for name,v in pairs(hyperparam) do
+	if not fixed_hyperparam_valid_options[name] then
+	  error("Incorrect fixed hyperparam option name: " .. name)
+	end
       end
-    end
-    if param.sampling == "gaussian" then
-      if not param.values then error("Each random parameter needs values") end
-      if not param.values.mean or not param.values.variance then
-        error("Gaussian sampling needs mean and variance")
-      end
-    elseif param.sampling == "uniform" then
-      if not param.values then error("Each random parameter needs values") end
-      if type(param.values) ~= "table" then
-        error("Uniform sampling needs values table")
-      end
-      if type(param.values[1]) == "table" then
-        if param.type ~= "integer" and param.type ~= "real" then
-          error("Needs integer or real type option: ")
-        end
-        local size = 0
-        for _,p in ipairs(param.values) do
-          for name,v in pairs(p) do
-            if not random_param_values_table_valid_options[name] then
-              error("Incorrect random values table option name: " .. name)
-            end
-          end
-          if not p.step then p.step = 1 end
-          if not p.min or not p.max then
-            error("Values need min and max (optionally step) parameters")
-          end
-          p.size = (p.max - p.min)/p.step
-          if param.type == "integer" then p.size = math.floor(p.size) end
-          size   = size + p.size
-        end
-        param.size = size
-      end
-    elseif param.sampling == "random" then
-      -- NOTHING TO DO
+      hyperparam.filter = function(hyperparams) return true end
     else
-      error("Incorrect sampling type")
+      if not hyperparam.prec then hyperparam.prec = 10 end
+      if not hyperparam.filter then hyperparam.filter = function(hyperparams) return true end end
+      for name,v in pairs(hyperparam) do
+	if not random_hyperparam_valid_options[name] then
+	  error("Incorrect random hyperparam option name: " .. name)
+	end
+      end
+      if hyperparam.sampling == "gaussian" then
+	if not hyperparam.values then
+	  error("Each random hyperparameter needs values")
+	end
+	if not hyperparam.values.mean or not hyperparam.values.variance then
+	  error("Gaussian sampling needs mean and variance")
+	end
+      elseif hyperparam.sampling == "uniform" then
+	if not hyperparam.values then error("Each random hyperparameter needs values") end
+	if type(hyperparam.values) ~= "table" then
+	  error("Uniform sampling needs values table")
+	end
+	if type(hyperparam.values[1]) == "table" then
+	  if hyperparam.type ~= "integer" and hyperparam.type ~= "real" then
+	    error("Needs integer or real type option: ")
+	  end
+	  local size = 0
+	  for _,p in ipairs(hyperparam.values) do
+	    for name,v in pairs(p) do
+	      if not random_hyperparam_values_table_valid_options[name] then
+		error("Incorrect random values table option name: " .. name)
+	      end
+	    end
+	    if not p.step then p.step = 1 end
+	    if not p.min or not p.max then
+	      error("Values need min and max (optionally step) hyperparameters")
+	    end
+	    p.size = (p.max - p.min)/p.step
+	    if hyperparam.type == "integer" then p.size = math.floor(p.size) end
+	    size   = size + p.size
+	  end
+	  hyperparam.size = size
+	end
+      elseif hyperparam.sampling == "random" then
+	-- NOTHING TO DO
+      else
+	error("Incorrect sampling type")
+      end
     end
   end
 
-  -- This function sample one value from the given param distribution and random
+  -- This function sample one value from the given hyperparam distribution and random
   -- number generator
-  function sample(param, rnd)
+  function sample(hyperparam, rnd)
     local v
-    if param.sampling == "gaussian" then
-      v = string.format("%."..param.prec.."f",
-                        rnd:randNorm(param.values.mean, param.values.variance))
-    elseif param.sampling == "random" then
+    if hyperparam.sampling == "fixed" then
+      v = tostring(hyperparam.value)
+    elseif hyperparam.sampling == "gaussian" then
+      v = string.format("%."..hyperparam.prec.."f",
+                        rnd:randNorm(hyperparam.values.mean, hyperparam.values.variance))
+    elseif hyperparam.sampling == "random" then
       v = tostring(sample_random_from_bash())
     else
-      if type(param.values[1]) == "table" then
-        local pos = rnd:rand(param.size)
-        for k,p in ipairs(param.values) do
+      if type(hyperparam.values[1]) == "table" then
+        local pos = rnd:rand(hyperparam.size)
+        for k,p in ipairs(hyperparam.values) do
           pos = pos - p.size
-          if pos <= 0 or k==#param.values then
-            if param.type == "integer" then
+          if pos <= 0 or k==#hyperparam.values then
+            if hyperparam.type == "integer" then
               v = tostring(rnd:randInt(0, p.size)*p.step + p.min)
             else
-              v = string.format("%.".. param.prec .."f",
+              v = string.format("%.".. hyperparam.prec .."f",
                                 rnd:rand(p.max-p.min) + p.min)
             end
             break
           end
         end
       else
-        v = tostring(rnd:choose(param.values))
+        v = tostring(rnd:choose(hyperparam.values))
       end
     end
     return v
@@ -167,38 +166,30 @@ help_string =
   global_vars.working_dir   = conf_table.working_dir or error("Needs a working_dir option")
   global_vars.exec          = conf_table.exec or error("Needs an exec option")
   global_vars.script        = conf_table.script or error("Needs a script option")
-  global_vars.check         = conf_table.check or (function(params) return true end)
-  fixed_params              = conf_table.fixed_params or {}
-  random_params             = conf_table.random_params or {}
-
-  all_params = {}
+  global_vars.filter        = conf_table.filter or (function(hyperparams) return true end)
+  hyperparams_conf_tbl      = conf_table.hyperparams or {}
+  
+  all_hyperparams = {}
 
   -- ERROR CHECK --
-  for _,param in ipairs(fixed_params) do
-    check_fixed(param)
-    if all_params[param.tag] then
-      error("The following tag is repeated: " .. param.tag)
+  for _,hyperparam in ipairs(hyperparams_conf_tbl) do
+    check_hyperparam(hyperparam)
+    if all_hyperparams[hyperparam.tag] then
+      error("The following tag is repeated: " .. hyperparam.tag)
     end
-    all_params[param.tag] = param
-  end
-  for _,param in ipairs(random_params) do
-    check_random(param)
-    if all_params[param.tag] then
-      error("The following tag is repeated: " .. param.tag)
-    end
-    all_params[param.tag] = param
+    all_hyperparams[hyperparam.tag] = hyperparam
   end
 
-  -- Modify params by command line
+  -- Modify hyperparams by command line
   local valid_cmd_options = table.invert{ "seed", "working_dir",
-                                          "exec", "script", "check", "n" }
+                                          "exec", "script", "filter", "n" }
   for i=2,#arg do
     -- load the chunk
     local chunk_func=loadstring(arg[i]) or error("Impossible to load string: "..
                                                  arg[i])
     -- execute the chunk
-    safe_call(chunk_func, { all_params  = all_params,
-                            global_vars = global_vars })
+    safe_call(chunk_func, { all_hyperparams = all_hyperparams,
+                            global_vars     = global_vars })
     --
     printf("# Executed chunk string: %s\n", arg[i])
   end
@@ -208,27 +199,40 @@ help_string =
   local working_dir = global_vars.working_dir
   local exec        = global_vars.exec
   local script      = global_vars.script
-  local check       = global_vars.check
+  local filter      = global_vars.filter
   local rnd         = random(seed)
 
   printf("# Seed %d\n", global_vars.seed)
-  printf("# Sampling over %d hyperparameters\n", #random_params)
+  printf("# Sampling over %d hyperparameters\n", #hyperparams_conf_tbl)
 
   -- N random iterations
   for i=1,n do
     collectgarbage("collect")
-    local params_check   = nil
-    local args_table     = nil
-    local filename_tags  = nil
-    local filename       = nil
-    local skip           = false
-    -- First loop, until the combination of params were unique
+    local hyperparam_values  = nil
+    local args_table         = nil
+    local filename_tags      = nil
+    local filename           = nil
+    local skip               = false
+    local max_iters          = 1000
+    local iter1_count        = 0
+    -- First loop, until the combination of hyperparams were unique
     repeat
-      -- Second loop, until param check function returns true
+      iter1_count = iter1_count + 1
+      if iter1_count > max_iters then
+	error("Possible infinite loop, all possible hyperparam values "..
+	      "are sampled yet")
+      end
+      -- Second loop, until hyperparam filter function returns true
+      local iter2_count = 0
       repeat
-        params_check  = {}
-        args_table    = {}
-        filename_tags = {}
+	iter2_count = iter2_count + 1
+	if iter2_count > max_iters then
+	  error("Possible infinite loop due to global filter function\n"..
+		"Check that it is not always returning false or nil")
+	end
+	hyperparam_values  = {}
+        args_table         = {}
+        filename_tags      = {}
         -- auxiliar function
         function put_value(option, tag, value, hidden)
           local value = tostring(value)
@@ -241,29 +245,47 @@ help_string =
 				       string.gsub(value, "/", "_")))
 	  end
         end
-        for _,param in ipairs(fixed_params) do
-          put_value(param.option, param.tag, param.value, param.hidden)
-          params_check[param.tag] = param.value
-        end
-        for _,param in ipairs(random_params) do
-          -- Third loop, until current param option check function returns true
+        for _,hyperparam in ipairs(hyperparams_conf_tbl) do
+          -- Third loop, until current filter function returns true
 	  local v
+	  local iter3_count = 0
           repeat
-            v = sample(param, rnd)
-            params_check[param.tag] = v
-          until safe_call(param.check, {}, params_check)
-	  put_value(param.option, param.tag, v)
+	    iter3_count = iter3_count + 1
+	    if iter3_count > max_iters then
+	      error("Possible infinite loop due to filter function of: "..
+		    hyperparam.tag .."\n"..
+		    "Check that it is not always returning false or nil")
+	    end
+            v = sample(hyperparam, rnd)
+            hyperparam_values[hyperparam.tag] = v
+          until safe_call(hyperparam.filter, {}, hyperparam_values)
         end
-      until safe_call(check, {}, params_check)
+      until safe_call(filter, {}, hyperparam_values)
+      for _,hyperparam in ipairs(hyperparams_conf_tbl) do
+	local tag = hyperparam.tag
+	if type(hyperparam_values[tag]) ~= "string" then
+	  print("WARNING!!! Please, check that all filter functions set"..
+		" hyperparams to string type values, at least this "..
+		"one: " .. tag)
+	end
+	put_value(hyperparam.option, tag, tostring(hyperparam_values[tag]))
+      end
+      
       filename=string.format("%s/output-%s.log", working_dir,
                              table.concat(filename_tags, "_"))
       skip = (io.open(filename, "r") ~= nil)
       if skip then printf ("# Skipping file %s\n", filename) end
     until not skip
-    printf("# iteration %d :: %s\n", i, table.concat(filename_tags, " "))
+    printf("# ITERATION %d :: %s\n", i, table.concat(filename_tags, " "))
     printf("# \t output file: %s\n", filename)
     local args_str = table.concat(args_table, " ")
-    local cmd = string.format("%s %s %s", exec, script, args_str)
+    local cmd      = string.format("%s %s %s", exec, script, args_str)
+    printf("# \t executed string: %s\n", cmd)
+    printf("# \t hyperparam values:\n")
+    for _,hyperparam in ipairs(hyperparams_conf_tbl) do
+      printf("# \t \t %s = %s\n", hyperparam.tag,
+	     hyperparam_values[hyperparam.tag])
+    end
     local f = io.popen(cmd)
     local g = io.open(filename, "w") or
       error(string.format("Impossible to open logfile '%s'", filename))
