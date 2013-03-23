@@ -75,11 +75,12 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(bunch_size,
 end
 
 -- Generate the data table for training a two-layered auto-encoder
-local function generate_training_table_configuration_from_params(current_dataset_params,
-								 params,
-								 noise,
-								 output_datasets,
-								 zero)
+local function generate_training_table_configuration(current_dataset_params,
+						     replacement,
+						     shuffle_random,
+						     noise_pipeline,
+						     output_datasets,
+						     zero)
   local data = {}
   if current_dataset_params.input_dataset then
     if output_datasets and #output_datasets > 1 then
@@ -89,44 +90,18 @@ local function generate_training_table_configuration_from_params(current_dataset
     data.input_dataset  = current_dataset_params.input_dataset
     data.output_dataset = ((output_datasets or {})[1] or
 			   current_dataset_params.input_dataset)
-    if noise then
-      -- The input is perturbed with gaussian noise
-      if params.var > 0.0 then
-	data.input_dataset = dataset.perturbation{
-	  dataset  = data.input_dataset,
-	  mean     = 0,
-	  variance = params.var,
-	  random   = params.perturbation_random }
-      end
-      if params.salt_noise_percentage > 0.0 then
-	data.input_dataset = dataset.salt_noise{
-	  dataset = data.input_dataset,
-	  vd = params.salt_noise_percentage, -- 10%
-	  zero = zero,
-	  random = params.perturbation_random }
-      end
+    -- The input is perturbed with noise
+    for _,noise_builder in ipairs(noise_pipeline) do
+      data.input_dataset = noise_builder(data.input_dataset)
     end
   end -- if params.input_dataset
   if current_dataset_params.distribution then
     data.distribution = {}
     for idx,v in ipairs(current_dataset_params.distribution) do
       local ds = v.input_dataset
-      if noise then
-	-- The input is perturbed with gaussian noise
-	if params.var > 0.0 then
-	  data.input_dataset = dataset.perturbation{
-	    dataset  = data.input_dataset,
-	    mean     = 0,
-	    variance = params.var,
-	    random   = params.perturbation_random }
-	end
-	if params.salt_noise_percentage > 0.0 then
-	  data.input_dataset = dataset.salt_noise{
-	    dataset = data.input_dataset,
-	    vd = params.salt_noise_percentage, -- 10%
-	    zero = zero,
-	    random = params.perturbation_random }
-	end
+      -- The input is perturbed with noise
+      for _,noise_builder in ipairs(noise_pipeline) do
+	data.input_dataset = noise_builder(data.input_dataset)
       end
       if output_datasets and not output_datasets[idx] then
 	error("Incorrect number of output_datasets")
@@ -135,10 +110,10 @@ local function generate_training_table_configuration_from_params(current_dataset
 		     input_dataset  = ds,
 		     output_dataset = (output_datasets or {})[idx] or ds,
 		     probability    = v.prob })
-    end -- for _,v in ipairs(params.distribution)
-  end -- if params.distribution
-  data.shuffle     = params.shuffle_random
-  data.replacement = params.replacement
+    end -- for _,v in ipairs(distribution)
+  end -- if distribution
+  data.shuffle     = shuffle_random
+  data.replacement = replacement
   return data
 end
 
@@ -251,15 +226,11 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
   local valid_params = table.invert{ "shuffle_random", "distribution",
 				     "input_dataset", "output_datasets",
 				     "supervised_layer",
-				     "perturbation_random", "replacement",
-				     "var", "layers", "bunch_size",
-				     "learning_rate",
-				     "neuron_squared_length_upper_bound",
-				     "max_epochs", "min_epochs",
-				     "momentum", "weight_decay",
-				     "weights_random", "salt_noise_percentage",
-				     "pretraining_percentage_stopping_criterion" }
-  for name,v in pairs(valid_params) do
+				     "replacement",
+				     "layers", "bunch_size",
+				     "training_options",
+				     "weights_random" }
+  for name,v in pairs(params) do
     if not valid_params[name] then
       error("Incorrect param name '"..name.."'")
     end
@@ -271,12 +242,9 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
   if params.distribution and not params.replacement then
     error("The replacement parameter is mandatary if distribution")
   end
-  for _,name in ipairs({ "shuffle_random", "perturbation_random",
-			 "var", "layers", "bunch_size", "learning_rate",
-			 "max_epochs",
-			 "momentum", "weight_decay",
-			 "weights_random", "salt_noise_percentage",
-			 "pretraining_percentage_stopping_criterion" }) do
+  for _,name in ipairs({ "shuffle_random",
+			 "layers", "bunch_size", "training_options",
+			 "weights_random" }) do
     check_mandatory_param(params, name)
   end
   if (params.supervised_layer~=nil) == (not params.output_datasets) then
@@ -286,6 +254,8 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
   if params.output_datasets and not type(params.output_datasets) == "table" then
     error("Param output_datasets must be an array of datasets")
   end
+  params.training_options.global    = params.training_options.global    or { ann_options }
+  params.training_options.layerwise = params.training_options.layerwise or {}
   --------------------------------------
 
   -- copy dataset params to auxiliar table
@@ -306,12 +276,17 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
     local input_actf_str = params.layers[i-1].actf
     local input_actf = ann.activations.from_string(input_actf_str)
     local cod_actf   = ann.activations.from_string(params.layers[i].actf)
+    local global_options    = table.deep_copy(params.training_options.global)
+    local layerwise_options = params.training_options.layerwise[i-1] or {}
+    layerwise_options.ann_options = layerwise_options.ann_options or {}
+    local lookup = function(name) return layerwise_options[name] or global_options[name] end
     local data
-    data = generate_training_table_configuration_from_params(current_dataset_params,
-							     params,
-							     true,
-							     nil,
-							     (((input_actf_str == "tanh" or input_actf_str == "softsign") and -1.0) or 0.0))
+    data = generate_training_table_configuration(current_dataset_params,
+						 params.replacement,
+						 params.shuffle_random,
+						 lookup("noise_pipeline") or {},
+						 nil,
+						 (((input_actf_str == "tanh" or input_actf_str == "softsign") and -1.0) or 0.0))
     local dae
     dae = build_two_layered_autoencoder_from_sizes_and_actf(params.bunch_size,
 							    input_size,
@@ -319,10 +294,14 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
 							    cod_size,
 							    cod_actf,
 							    params.weights_random)
-    dae:set_option("learning_rate", params.learning_rate)
-    dae:set_option("momentum", params.momentum)
-    dae:set_option("weight_decay", params.weight_decay)
-    dae:set_option("neuron_squared_length_upper_bound", params.neuron_squared_length_upper_bound or -1)
+    for key,value in pairs(global_options.ann_options) do
+      if layerwise_options.ann_options[key] == nil then
+	dae:set_option(key, value)
+      end
+    end
+    for key,value in pairs(layerwise_options.ann_options) do
+      dae:set_option(key, value)
+    end
     collectgarbage("collect")
     if (params.layers[i-1].actf == "logistic" or
 	params.layers[i-1].actf == "softmax") then
@@ -334,15 +313,15 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
       -- if activation is linear, the derivative slope is so high, so we use
       -- learning_rate to reduce its impact
       local ratio = 1/math.sqrt(cod_size+input_size)
-      dae:set_option("learning_rate", params.learning_rate*ratio)
+      dae:set_option("learning_rate", dae:get_option("learning_rate")*ratio)
     end
     ---------- TRAIN THE AUTOENCODER WO VALIDATION ----------
     local best_net = ann.train_wo_validation{
       ann            = dae,
-      min_epochs     = params.min_epochs,
-      max_epochs     = params.max_epochs,
+      min_epochs     = lookup("min_epochs"),
+      max_epochs     = lookup("max_epochs"),
       training_table = data,
-      percentage_stopping_criterion = params.pretraining_percentage_stopping_criterion,
+      percentage_stopping_criterion = lookup("pretraining_percentage_stopping_criterion"),
       update_function = function(t)
 	printf("%4d %10.6f  (improvement %.4f)\n",
 	       t.current_epoch, t.train_error, t.train_improvement)
@@ -384,16 +363,22 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
   local full_ann = nil
   if params.supervised_layer then
     printf("# Training of supervised layer %d--%d (number %d)\n",
-	   params.layers[#layers].size, params.supervised_layer.size,
+	   params.layers[#params.layers].size, params.supervised_layer.size,
 	   #params.layers+1)
-    local input_size     = params.layers[#layers].size
-    local input_actf_str = params.layers[#layers].actf
+    local input_size     = params.layers[#params.layers].size
+    local input_actf_str = params.layers[#params.layers].actf
+    local global_options    = table.deep_copy(params.training_options.global)
+    local layerwise_options = (params.training_options.layerwise[#params.layers] or
+			       { ann_options = {} })
+    layerwise_options.ann_options = layerwise_options.ann_options or {}
+    local lookup = function(name) return layerwise_options[name] or global_options[name] end
     local data
-    data = generate_training_table_configuration_from_params(current_dataset_params,
-							     params,
-							     true,
-							     params.output_datasets,
-							     (((input_actf_str == "tanh" or input_actf_str == "softsign") and -1.0) or 0.0))
+    data = generate_training_table_configuration(current_dataset_params,
+						 params.replacement,
+						 params.shuffle_random,
+						 lookup("noise_pipeline") or {},
+						 params.output_datasets,
+						 (((input_actf_str == "tanh" or input_actf_str == "softsign") and -1.0) or 0.0))
     local thenet = ann.mlp.all_all.generate{
       topology = string.format("%d inputs %d %s",
 			       input_size,
@@ -404,11 +389,14 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
       inf=-math.sqrt(6 / (input_size + params.supervised_layer.size)),
       sup= math.sqrt(6 / (input_size + params.supervised_layer.size)),
       use_fanin = false }
-    
-    thenet:set_option("learning_rate", params.learning_rate)
-    thenet:set_option("momentum", params.momentum)
-    thenet:set_option("weight_decay", params.weight_decay)
-    thenet:set_option("neuron_squared_length_upper_bound", params.neuron_squared_length_upper_bound or -1)
+    for key,value in pairs(global_options.ann_options) do
+      if layerwise_options.ann_options[key] == nil then
+	thenet:set_option(key, value)
+      end
+    end
+    for key,value in pairs(layerwise_options.ann_options) do
+      thenet:set_option(key, value)
+    end
     if (params.supervised_layer.actf == "softmax" or
 	params.supervised_layer.actf == "logistic") then
       thenet:set_error_function(ann.error_functions.logistic_cross_entropy())
@@ -417,10 +405,10 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
     end
     local best_net = ann.train_wo_validation{
       ann            = thenet,
-      min_epochs     = params.min_epochs,
-      max_epochs     = params.max_epochs,
+      min_epochs     = lookup("min_epochs"),
+      max_epochs     = lookup("max_epochs"),
       training_table = data,
-      percentage_stopping_criterion = params.pretraining_percentage_stopping_criterion,
+      percentage_stopping_criterion = lookup("pretraining_percentage_stopping_criterion"),
       update_function = function(t)
 	printf("%4d %10.6f  (improvement %.4f)\n",
 	       t.current_epoch, t.train_error, t.train_improvement)
@@ -438,90 +426,6 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
       weights_table = { best_net:get_layer_connections(2):weights() } }
   end
   return sdae_table,full_ann
-end
-
--- Receive an autoencoder table with bias and weights, pretrained with previous
--- function
-function ann.autoencoders.sdae_finetunning(sdae_table, params)
-  local check_mandatory_param = function(params, name)
-    if not params[name] then error ("Parameter " .. name .. " is mandatory") end
-  end
-  local valid_params = table.invert{ "shuffle_random", "distribution",
-				     "perturbation_random", "replacement",
-				     "var", "layers", "bunch_size",
-				     "learning_rate",
-				     "neuron_squared_length_upper_bound",
-				     "max_epochs", "min_epochs",
-				     "momentum", "weight_decay",
-				     "val_input_dataset",
-				     "pretraining_percentage_stopping_criterion",
-				     "weights_random", "salt_noise_percentage",
-				     "stopping_criterion" }
-  for name,v in pairs(valid_params) do
-    if not valid_params[name] then
-      error("Incorrect param name '"..name.."'")
-    end
-  end
-  -- Error checking in params table --
-  if params.input_dataset and params.distribution then
-    error("The input_dataset and distribution parameters are forbidden together")
-  end
-  if params.distribution and not params.replacement then
-    error("The replacement parameter is mandatary if distribution")
-  end
-  for _,name in ipairs({ "shuffle_random", "perturbation_random",
-			 "var", "layers", "bunch_size", "learning_rate",
-			 "max_epochs",
-			 "momentum", "weight_decay", "val_input_dataset",
-			 "weights_random", "salt_noise_percentage",
-			 "stopping_criterion" }) do
-    check_mandatory_param(params, name)
-  end
-  --------------------------------------
-  -- FINETUNING
-  print("# Begining of fine-tuning")
-  io.stdout:flush()
-  local sdae = ann.autoencoders.build_full_autoencoder(params.bunch_size,
-						       params.layers,
-						       sdae_table)
-  sdae:set_option("learning_rate", params.learning_rate)
-  sdae:set_option("momentum", params.momentum)
-  sdae:set_option("weight_decay", params.weight_decay)
-  sdae:set_option("neuron_squared_length_upper_bound", params.neuron_squared_length_upper_bound or -1)
-  if (params.layers[1].actf == "logistic" or
-      params.layers[1].actf == "softmax") then
-    sdae:set_error_function(ann.error_functions.full_logistic_cross_entropy())
-  else
-    sdae:set_error_function(ann.error_functions.mse())
-  end
-  collectgarbage("collect")
-  local data = generate_training_table_configuration_from_params(params,
-								 params,
-								 true,
-								 params.layers[1].actf)
-  local val_data = { input_dataset  = params.val_input_dataset,
-		     output_dataset = params.val_input_dataset }
-  local stopping_criterion = params.stopping_criterion
-  local result
-  result = ann.train_crossvalidation{ ann = sdae,
-				      training_table     = data,
-				      validation_table   = val_data,
-				      min_epochs         = params.min_epochs,
-				      max_epochs         = params.max_epochs,
-				      stopping_criterion = stopping_criterion,
-				      update_function    = function(t)
-					printf("%4d %10.6f %10.6f "..
-					       " (best %10.6f at epoch %4d)\n",
-					       t.current_epoch,
-					       t.train_error,
-					       t.validation_error,
-					       t.best_val_error,
-					       t.best_epoch)
-					io.stdout:flush()
-					local lr = t.train_params.ann:get_option("learning_rate")
-					t.train_params.ann:set_option("learning_rate", lr*0.9)
-				      end }
-  return result.best_net
 end
 
 -- This function returns a MLP formed by the codification part of a full stacked

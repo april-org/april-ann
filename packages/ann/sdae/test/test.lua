@@ -39,61 +39,64 @@ val_output   = dataset.matrix(m2,
 				circular    = {true}
 			      })
 
-layers = {
-  { size= 256, actf="logistic"},
-  { size= 512, actf="logistic"},
-  { size= 256, actf="logistic"},
-  { size=  32, actf="logistic"},
+layers_table = {
+  { size= 256, actf="logistic"}, -- INPUT LAYER
+  { size= 256, actf="logistic"}, -- FIRST HIDDEN LAYER
+  { size= 128, actf="logistic"}, -- SECOND HIDDEN LAYER
+  { size=  32, actf="logistic"}, -- THIRD HIDDEN LAYER
 }
 
 params_pretrain = {
   input_dataset         = train_input,
   replacement           = nil,
   shuffle_random        = random(1234),
-  perturbation_random   = random(4567),
   weights_random        = random(7890),
-  var                   = 0.10,
-  salt_noise_percentage = 0.0,
-  layers                = layers,
-  bunch_size            = bunch_size,
-  learning_rate         = 0.06,
-  momentum              = 0.10,
-  weight_decay          = 0.0,
-  min_epochs            =  10,
-  max_epochs            = 200,
-  pretraining_percentage_stopping_criterion = 0.01,
+  
+  layers                = layers_table,
+  -- OUTPUT LAYER (SUPERVISED): classification task, 10 classes (10 digits)
   supervised_layer      = { size = 10, actf = "softmax" },
   output_datasets       = { train_output },
+  
+  bunch_size            = bunch_size,
+  
+  -- training parameters
+  training_options      = {
+    global = {
+      ann_options = { learning_rate = 0.01,
+		      momentum      = 0.02,
+		      weight_decay  = 1e-05 },
+      noise_pipeline = { function(ds) return dataset.perturbation{
+			     dataset  = ds, -- WARNING: the function argument
+			     mean     = 0,
+			     variance = 0.01,
+			     random   = random(8249824) } end,
+			 function(ds) return dataset.salt_noise{
+			     dataset  = ds, -- WARNING: the function argument
+			     vd       = 0.10,
+			     zero     = 0.0,
+			     random   = random(8249824) } end },
+      min_epochs            = 4,
+      max_epochs            = 200,
+      pretraining_percentage_stopping_criterion = 0.01,
+    },
+    layerwise = { { min_epochs=50 },
+		  { min_epochs=20 },
+		  { ann_options = { learning_rate = 0.04,
+				    momentum      = 0.02,
+				    weight_decay  = 4e-05 },
+		    min_epochs=20 },
+		  { min_epochs=10 }, },
+  }
 }
 
--- params_sdae_finetunning = {
---   input_dataset         = train_input,
---   val_input_dataset     = val_input,
---   replacement           = nil,
---   shuffle_random        = random(1234),
---   perturbation_random   = random(4567),
---   weights_random        = random(7890),
---   var                   = 0.02,
---   salt_noise_percentage = 0.0,
---   layers                = layers,
---   bunch_size            = bunch_size,
---   learning_rate         = 0.01,
---   momentum              = 0.02,
---   weight_decay          = 1e-05,
---   max_epochs            = 200,
---   stopping_criterion=ann.stopping_criterions.make_max_epochs_wo_imp_relative(2),
--- }
-
-
 sdae_table,deep_classifier = ann.autoencoders.greedy_layerwise_pretraining(params_pretrain)
---sdae       = ann.autoencoders.sdae_finetunning(sdae_table,
---					       params_sdae_finetunning)
---codifier_net = ann.autoencoders.build_codifier_from_sdae(sdae,
---							 bunch_size,
---							 layers)
 codifier_net = ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
 							       bunch_size,
-							       layers)
+							       layers_table)
+deep_classifier = ann.mlp.convert_to_all_all{
+  ann = deep_classifier,
+  topology = "256 inputs 256 logistic 128 logistic 32 logistic 10 softmax",
+  bunch_size = bunch_size }
 
 local outf = io.open("data", "w")
 encoded_dataset = ann.autoencoders.encode_dataset(codifier_net,

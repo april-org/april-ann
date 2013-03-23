@@ -64,7 +64,7 @@ namespace ANN {
     /// Abstract method that returns a pointer to the array of units.
     virtual FloatGPUMirroredMemoryBlock *getPtr() = 0;
 
-    /// Abstract methods that returns a pointer to the array of errors.
+    /// Abstract method that returns a pointer to the array of errors.
     virtual FloatGPUMirroredMemoryBlock *getErrorVectorPtr() = 0;
     /// Devuelve un puntero al vector con la suma de los cuadrados de los pesos
     /// que entran a cada neurona
@@ -73,9 +73,12 @@ namespace ANN {
     /// no comienze en 0
     virtual unsigned int getOffset() const = 0;
 
+    /// Abstract method that returns a copy of the activation units.
     virtual ActivationUnits *clone(const ANNConfiguration &conf) = 0;
-    /// pone a 0 los contadores, deltas de error, etc
+
+    /// Abstract method for resetting the activation units.
     virtual void reset(bool use_cuda) = 0;
+
     const ANNConfiguration &getConfReference() const { return conf; }
     /// for FAN IN computation
     virtual unsigned int getFanIn() const { return fanin; }
