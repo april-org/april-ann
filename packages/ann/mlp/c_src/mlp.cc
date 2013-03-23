@@ -134,15 +134,21 @@ namespace ANN {
   
     mSetOption("learning_rate", learning_rate);
     mSetOption("momentum", momentum);
+    mSetOption("neuron_squared_length_upper_bound",
+	       neuron_squared_length_upper_bound);
+    mSetOption("dropout", dropout);
     // Caso especial, no podemos usar esto: mSetOption("weight_decay", weight_decay);
     if (strcmp("weight_decay", name) == 0) {
       weight_decay   = value;
       c_weight_decay = 1.0 - weight_decay;
       return;
     }
-    mSetOption("neuron_squared_length_upper_bound",
-	       neuron_squared_length_upper_bound);
-    mSetOption("dropout", dropout);
+    // Otro caso especial
+    if (strcmp("dropout_seed", name) == 0) {
+      int seed = static_cast<int>(value);
+      conf.rnd.seed(seed);
+      return;
+    }
     ERROR_EXIT(140, "The option to be set does not exist.\n");
   }
 
@@ -153,6 +159,7 @@ namespace ANN {
     mHasOption("weight_decay");
     mHasOption("neuron_squared_length_upper_bound");
     mHasOption("dropout");
+    mHasOption("dropout_seed");
     return false;
   }
 

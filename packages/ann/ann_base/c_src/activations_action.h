@@ -28,9 +28,11 @@
 
 namespace ANN {
   class ActivationsAction : public Action {
-    ActivationUnits    *units;
-    ActivationFunction *act_func;
-    float               dropout;
+    ActivationUnits             *units;
+    ActivationFunction          *act_func;
+    FloatGPUMirroredMemoryBlock *dropout_mask;
+    float                        dropout;
+    int                         *units_order_permutation;
   public:
     ActivationsAction(const ANNConfiguration &conf,
 		      ActivationUnits    *units,
