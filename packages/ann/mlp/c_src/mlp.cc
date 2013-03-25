@@ -289,6 +289,7 @@ namespace ANN {
     copy->momentum       = momentum;
     copy->weight_decay   = weight_decay;
     copy->c_weight_decay = c_weight_decay;
+    copy->dropout        = dropout;
     copy->neuron_squared_length_upper_bound = neuron_squared_length_upper_bound;
     return copy;
   }
