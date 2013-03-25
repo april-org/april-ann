@@ -94,9 +94,13 @@ namespace ANN {
   
   Action *ActivationsAction::clone(hash<void*,void*> &clone_dict,
 				   const ANNConfiguration &conf) {
-    return new ActivationsAction(conf,
-				 static_cast<ActivationUnits*>(clone_dict[units]),
-				 act_func->clone());
+    ActivationsAction *action = new
+      ActivationsAction(conf,
+			static_cast<ActivationUnits*>(clone_dict[units]),
+			act_func->clone());
+    action->dropout            = dropout;
+    action->units->drop_factor = dropout;
+    return action;
   }
   
   void ActivationsAction::setOption(const char *name, double value) {
