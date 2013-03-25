@@ -18,7 +18,7 @@ function ann.mlp.convert_to_all_all(t)
         error("Mismatch between connection sizes!! check that "..
               "bias weights are registered before matrix weights")
     end
-    old_w:load{ w = new_w:weights() }
+    new_w:load{ w = old_w:weights() }
   end
   return all_all_net
 end
