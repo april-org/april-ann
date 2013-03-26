@@ -74,12 +74,33 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(bunch_size,
   return autoencoder
 end
 
+--auxiliar function to generate a replacement
+function get_replacement_dataset(randObject, replacementSize, ...)
+  local resul = {}
+  if #arg > 0 then
+    local mat = matrix(replacementSize)
+    local numPat = arg[1]:numPatterns()
+    for i=1,replacementSize do
+      mat:setElement(i,randObject:randInt(1,numPat))
+    end
+    local ds = dataset.matrix(mat)
+    for i,v in ipairs(arg) do
+      if v:numPatterns() ~= numPat then
+	error("Datasets have differnet number of patterns")
+      end
+      table.insert(resul,dataset.indexed(ds,{v}))
+    end
+  end
+  return resul
+end
+
+
 -- Generate the data table for training a two-layered auto-encoder
 local function generate_training_table_configuration(current_dataset_params,
 						     replacement,
 						     shuffle_random,
 						     noise_pipeline,
-						     output_datasets,
+                 output_datasets,
 						     zero)
   local data = {}
   if current_dataset_params.input_dataset then
@@ -87,6 +108,7 @@ local function generate_training_table_configuration(current_dataset_params,
       error("Without distribution only one dataset is allowed "..
 	    "at output_datasets table")
     end
+
     data.input_dataset  = current_dataset_params.input_dataset
     data.output_dataset = ((output_datasets or {})[1] or
 			   current_dataset_params.input_dataset)
@@ -117,6 +139,62 @@ local function generate_training_table_configuration(current_dataset_params,
   return data
 end
 
+
+
+local function generate_training_table_configuration_on_the_fly(
+    current_dataset_params,
+    replacement,
+    shuffle_random,
+    noise_pipeline,
+    mlp_final,
+    output_datasets
+    )
+
+    return function()
+
+        -- Take the original datasets (input, and output)
+        local input_dataset  = current_dataset_params.input_dataset
+        local output_dataset = (output_datasets or {})[1]
+        -- Generate a replacement of each dataset
+        local input_repl_ds, output_repl_ds
+
+        -- if autoencoder, only generate one corpus replacement
+        if not output_dataset then
+        -- Select the replacement from the original dataset
+            input_repl_ds =
+                  get_replacement_dataset(shuffle_random,
+                  replacement,
+                  input_dataset)[1]
+        -- Take and keep the output 
+        else
+           input_repl_ds, output_repl_ds = unpack(
+                  get_replacement_dataset(shuffle_random,
+                  replacement, input_dataset, output_dataset))
+        end
+       
+        -- generate the last layer dataset
+        local input_layer_dataset = ann.autoencoders.encode_dataset(mlp_final, input_repl_ds)
+    
+        -- The output is the same than the imput
+        if not output_dataset then
+             output_dataset = input_layer_dataset   
+        else
+             output_dataset = output_repl_ds            
+        end -- if output dataset
+        
+
+        -- Add the noise
+        for _,noise_builder in ipairs(noise_pipeline) do
+              input_dataset = noise_builder(input_layer_dataset)
+        end
+        
+        return {
+          input_dataset  = input_dataset,
+          output_dataset = output_dataset
+        }
+
+    end
+end
 -- PUBLIC FUNCTIONS --
 
 -- This functions receives layer sizes and sdae_table with weights and bias
@@ -258,7 +336,10 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
   params.training_options.layerwise = params.training_options.layerwise or {}
   --------------------------------------
   -- on the fly. Do not generate all the dataset for each layer
-  local on_the_fly = not params.replacement
+  local on_the_fly = params.replacement
+  if on_the_fly then
+      print("#On the fly mode enabled")
+  end
 
   -- copy dataset params to auxiliar table
   local current_dataset_params = {
@@ -293,12 +374,22 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
     layerwise_options.ann_options = layerwise_options.ann_options or {}
     local lookup = function(name) return layerwise_options[name] or global_options[name] end
     local data
-    data = generate_training_table_configuration(current_dataset_params,
-						 params.replacement,
-						 params.shuffle_random,
-						 lookup("noise_pipeline") or {},
-						 nil,
-						 (((input_actf_str == "tanh" or input_actf_str == "softsign") and -1.0) or 0.0))
+
+    if not on_the_fly or i == 2 then
+        data = generate_training_table_configuration(current_dataset_params,
+                 params.replacement,
+                 params.shuffle_random,
+                 lookup("noise_pipeline") or {},
+                 nil,
+                 (((input_actf_str == "tanh" or input_actf_str == "softsign") and -1.0) or 0.0))
+    else
+        data = generate_training_table_configuration_on_the_fly(current_dataset_params,
+                 params.replacement,
+                 params.shuffle_random,
+                 lookup("noise_pipeline") or {},
+                 mlp_final,
+                 nil)
+    end
     local dae
     dae = build_two_layered_autoencoder_from_sizes_and_actf(params.bunch_size,
 							    input_size,
@@ -308,7 +399,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
 							    params.weights_random)
     for key,value in pairs(global_options.ann_options) do
       if layerwise_options.ann_options[key] == nil then
-	dae:set_option(key, value)
+	       dae:set_option(key, value)
       end
     end
     for key,value in pairs(layerwise_options.ann_options) do
@@ -335,21 +426,26 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
       training_table = data,
       percentage_stopping_criterion = lookup("pretraining_percentage_stopping_criterion"),
       update_function = function(t)
-	printf("%4d %10.6f  (improvement %.4f)\n",
-	       t.current_epoch, t.train_error, t.train_improvement)
-	io.stdout:flush()	
-      end }
+   	                           printf("%4d %10.6f  (improvement %.4f)\n",
+                	             t.current_epoch, t.train_error, t.train_improvement)
+                              io.stdout:flush()	
+                        end }
     ---------------------------------------------------------
     local b1mat = best_net:get_layer_connections(1):weights()
     local b2mat = best_net:get_layer_connections(3):weights()
     local wmat  = best_net:get_layer_connections(2):weights()
 
+    -- release_output
+    mlp_final:release_output()
+
     local layer_act = ann.units.real_cod{
       ann = mlp_final,
       size = cod_size,
-      type = ((i<#params.layers or params.supervised_layer) and "hidden") or "outputs"
+   --  type = ((i<#params.layers or params.supervised_layer) and "hidden") or "outputs"
+      type = "outputs"
     }
     
+
     mlp_final:push_back_all_all_layer{
       input  = layer_ant,
       output = layer_act,
@@ -389,21 +485,29 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
           							    v.input_dataset)
         	end
       else
+          -- On the fly generation mode
+          if not on_the_fly then
         	-- compute code for input dataset
-        	local ds =
-      	  ann.autoencoders.encode_dataset(codifier,
+              local ds =
+              ann.autoencoders.encode_dataset(codifier,
 	                              				  current_dataset_params.input_dataset)
-          current_dataset_params.input_dataset = ds
+              current_dataset_params.input_dataset = ds
+          end
+--          local ds = ann.autoencoders.encode_dataset(mlp_final,
+--                                          params.input_dataset)
+
       end
+
+
     end -- if i ~= params.layers
   end -- for i=2,#params.layers
   local sdae_table = {weights=weights, bias=bias}
   -- Train a supervised layer
-  local full_ann = nil
   if params.supervised_layer then
+
     printf("# Training of supervised layer %d--%d (number %d)\n",
-	   params.layers[#params.layers].size, params.supervised_layer.size,
-	   #params.layers+1)
+	  params.layers[#params.layers].size, params.supervised_layer.size,
+	  #params.layers+1)
     local input_size     = params.layers[#params.layers].size
     local input_actf_str = params.layers[#params.layers].actf
     local global_options    = table.deep_copy(params.training_options.global)
@@ -412,12 +516,24 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
     layerwise_options.ann_options = layerwise_options.ann_options or {}
     local lookup = function(name) return layerwise_options[name] or global_options[name] end
     local data
-    data = generate_training_table_configuration(current_dataset_params,
-						 params.replacement,
-						 params.shuffle_random,
-						 lookup("noise_pipeline") or {},
-						 params.output_datasets,
-						 (((input_actf_str == "tanh" or input_actf_str == "softsign") and -1.0) or 0.0))
+
+    if not on_the_fly then
+        data = generate_training_table_configuration(current_dataset_params,
+                 params.replacement,
+                 params.shuffle_random,
+                 lookup("noise_pipeline") or {},
+                 params.output_datasets,
+                 (((input_actf_str == "tanh" or input_actf_str == "softsign") and -1.0) or 0.0))
+
+    else
+        data = generate_training_table_configuration_on_the_fly(current_dataset_params,
+                 params.replacement,
+                 params.shuffle_random,
+                 lookup("noise_pipeline") or {},
+                 mlp_final,
+                 params.output_datasets)
+
+    end
     local thenet = ann.mlp.all_all.generate{
       topology = string.format("%d inputs %d %s",
 			       input_size,
@@ -430,18 +546,20 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
       use_fanin = false }
     for key,value in pairs(global_options.ann_options) do
       if layerwise_options.ann_options[key] == nil then
-	thenet:set_option(key, value)
+	       thenet:set_option(key, value)
       end
     end
     for key,value in pairs(layerwise_options.ann_options) do
       thenet:set_option(key, value)
     end
+    
     if (params.supervised_layer.actf == "softmax" or
-	params.supervised_layer.actf == "logistic") then
-      thenet:set_error_function(ann.error_functions.logistic_cross_entropy())
+      	params.supervised_layer.actf == "logistic") then
+          thenet:set_error_function(ann.error_functions.logistic_cross_entropy())
     else
-      thenet:set_error_function(ann.error_functions.mse())
+          thenet:set_error_function(ann.error_functions.mse())
     end
+
     local best_net = ann.train_wo_validation{
       ann            = thenet,
       min_epochs     = lookup("min_epochs"),
@@ -449,22 +567,19 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
       training_table = data,
       percentage_stopping_criterion = lookup("pretraining_percentage_stopping_criterion"),
       update_function = function(t)
-	printf("%4d %10.6f  (improvement %.4f)\n",
-	       t.current_epoch, t.train_error, t.train_improvement)
-	io.stdout:flush()	
-      end }
+	                          printf("%4d %10.6f  (improvement %.4f)\n",
+                          	       t.current_epoch, t.train_error, t.train_improvement)
+                                  io.stdout:flush()	
+                        end
+    }
     local codifier = ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
 								     params.bunch_size,
 								     params.layers)
-    full_ann = ann.mlp.add_layers{
-      ann           = codifier,
-      new_layers    = { { params.supervised_layer.size,
-			  params.supervised_layer.actf } },
-      bunch_size    = params.bunch_size,
-      bias_table    = { best_net:get_layer_connections(1):weights() },
-      weights_table = { best_net:get_layer_connections(2):weights() } }
       local auxb = best_net:get_layer_connections(1):weights()
       local auxw = best_net:get_layer_connections(2):weights()
+
+      mlp_final:release_output()
+
       mlp_final:push_back_all_all_layer{
           input  = layer_ant,
           output = ann.units.real_cod{
@@ -487,9 +602,6 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
       }
   end
 
-  --  print(full_ann:get_output_size())
-  --  print(mlp_final:get_output_size())
-  --  return sdae_table,full_ann
   return sdae_table, mlp_final
 end
 
@@ -508,82 +620,88 @@ function ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
     table.insert(neuron_layers, ann.units.real_cod{
         ann  = codifier_net,
         size = layers[1].size,
-        type = "inputs" })
-        for i=2,#layers do
-            table.insert(neuron_layers, ann.units.real_cod{
-                ann  = codifier_net,
-                size = layers[i].size,
-                type = ((i < #layers and "hidden") or "outputs") })
-                table.insert(actfs, ann.activations.from_string(layers[i].actf))
-                table.insert(bias_codifier_net, ann.connections.bias{
-                    ann  = codifier_net,
-                    size = layers[i].size,
-                    w    = bias_mat[i-1][1] })
-                    table.insert(weights_codifier_net, ann.connections.all_all{
-                        ann = codifier_net,
-                        input_size  = layers[i-1].size,
-                        output_size = layers[i].size,
-                        w           = weights_mat[i-1] })
-                        codifier_net:push_back_all_all_layer{
-                            input   = neuron_layers[#neuron_layers-1],
-                            output  = neuron_layers[#neuron_layers],
-                            bias    = bias_codifier_net[#bias_codifier_net],
-                            weights = weights_codifier_net[#weights_codifier_net],
-                            actfunc = actfs[#actfs] }
-                        end
-                        return codifier_net
-                    end
+        type = "inputs"
+    })
+    for i=2,#layers do
+        table.insert(neuron_layers, ann.units.real_cod{
+            ann  = codifier_net,
+            size = layers[i].size,
+            type = ((i < #layers and "hidden") or "outputs")
+        })
 
-                    -- This function returns a MLP formed by the codification part of a full stacked
-                    -- auto encoder
-                    function ann.autoencoders.build_codifier_from_sdae(sdae, bunch_size, layers)
-                        local sdae_connections = sdae:get_layer_connections_vector()
-                        local sdae_activations = sdae:get_layer_activations_vector()
-                        local codifier_net = ann.mlp{ bunch_size = bunch_size }
-                        local codifier_connections = {}
-                        local codifier_activations = {}
-                        for i=1,(#layers-1)*2 do
-                            table.insert(codifier_connections, sdae_connections[i]:clone(codifier_net))
-                        end
-                        local layer_type = "inputs"
-                        for i=1,#layers-1 do
-                            table.insert(codifier_activations, sdae_activations[i]:clone(codifier_net,
-                            layer_type))
-                            layer_type = "hidden"
-                        end
-                        table.insert(codifier_activations, sdae_activations[#layers]:clone(codifier_net,
-                        "outputs"))
-                        local k=1
-                        for i=2,#layers do
-                            local actf    = ann.activations.from_string(layers[i].actf)
-                            local input   = codifier_activations[i-1]
-                            local output  = codifier_activations[i]
-                            local bias    = codifier_connections[k]
-                            local weights = codifier_connections[k+1]
-                            codifier_net:push_back_all_all_layer{
-                                input   = input,
-                                output  = output,
-                                bias    = bias,
-                                weights = weights,
-                                actfunc = actf }
-                                k = k + 2
-                            end
-                            return codifier_net
-                        end
+        table.insert(actfs, ann.activations.from_string(layers[i].actf))
+        table.insert(bias_codifier_net, ann.connections.bias{
+            ann  = codifier_net,
+            size = layers[i].size,
+            w    = bias_mat[i-1][1]
+        })
+        table.insert(weights_codifier_net, ann.connections.all_all{
+            ann = codifier_net,
+            input_size  = layers[i-1].size,
+            output_size = layers[i].size,
+            w           = weights_mat[i-1]
+        })
+        codifier_net:push_back_all_all_layer{
+            input   = neuron_layers[#neuron_layers-1],
+            output  = neuron_layers[#neuron_layers],
+            bias    = bias_codifier_net[#bias_codifier_net],
+            weights = weights_codifier_net[#weights_codifier_net],
+            actfunc = actfs[#actfs]
+        }
+    end
+    return codifier_net
+end
 
-                        -- Returns a dataset with the codification of input dataset patterns  
-                        function ann.autoencoders.compute_encoded_dataset_using_codifier()
-                            error("Deprecated, use ann.autoencoders.encode_dataset")
-                        end
-                        function ann.autoencoders.encode_dataset(codifier_net,
-                            input_dataset)
-                            local output_dataset = dataset.matrix(matrix(input_dataset:numPatterns(),
-                            codifier_net:get_output_size()))
-                            codifier_net:use_dataset{ input_dataset  = input_dataset,
-                            output_dataset = output_dataset }
-                            return output_dataset
-                        end
+-- This function returns a MLP formed by the codification part of a full stacked
+-- auto encoder
+function ann.autoencoders.build_codifier_from_sdae(sdae, bunch_size, layers)
+    local sdae_connections = sdae:get_layer_connections_vector()
+    local sdae_activations = sdae:get_layer_activations_vector()
+    local codifier_net = ann.mlp{ bunch_size = bunch_size }
+    local codifier_connections = {}
+    local codifier_activations = {}
+    for i=1,(#layers-1)*2 do
+        table.insert(codifier_connections, sdae_connections[i]:clone(codifier_net))
+    end
+    local layer_type = "inputs"
+    for i=1,#layers-1 do
+        table.insert(codifier_activations, sdae_activations[i]:clone(codifier_net,
+        layer_type))
+        layer_type = "hidden"
+    end
+    table.insert(codifier_activations, sdae_activations[#layers]:clone(codifier_net,
+    "outputs"))
+    local k=1
+    for i=2,#layers do
+        local actf    = ann.activations.from_string(layers[i].actf)
+        local input   = codifier_activations[i-1]
+        local output  = codifier_activations[i]
+        local bias    = codifier_connections[k]
+        local weights = codifier_connections[k+1]
+        codifier_net:push_back_all_all_layer{
+            input   = input,
+            output  = output,
+            bias    = bias,
+            weights = weights,
+            actfunc = actf }
+            k = k + 2
+        end
+        return codifier_net
+    end
 
-                        function ann.autoencoders.stacked_denoising_pretraining(t)
-                            error("Deprecated, use ann.autoencoders.greedy_layerwise_pretraining")
-                        end
+    -- Returns a dataset with the codification of input dataset patterns  
+    function ann.autoencoders.compute_encoded_dataset_using_codifier()
+        error("Deprecated, use ann.autoencoders.encode_dataset")
+    end
+    function ann.autoencoders.encode_dataset(codifier_net,
+        input_dataset)
+        local output_dataset = dataset.matrix(matrix(input_dataset:numPatterns(),
+        codifier_net:get_output_size()))
+        codifier_net:use_dataset{ input_dataset  = input_dataset,
+        output_dataset = output_dataset }
+        return output_dataset
+    end
+
+    function ann.autoencoders.stacked_denoising_pretraining(t)
+        error("Deprecated, use ann.autoencoders.greedy_layerwise_pretraining")
+    end
