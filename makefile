@@ -15,6 +15,9 @@ release:
 release-cuda-mkl:
 	lua -l formiga build_cuda_and_mkl_release.lua
 
+release-experimental:
+	lua -l formiga build_experimental_release.lua
+
 debug-macosx:
 	lua -l formiga build_debug_macosx.lua
 
@@ -26,3 +29,6 @@ debug:
 
 debug-cuda-mkl:
 	lua -l formiga build_cuda_and_mkl_debug.lua
+
+debug-experimental:
+	lua -l formiga build_experimental_debug.lua

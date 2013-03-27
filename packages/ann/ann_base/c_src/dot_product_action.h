@@ -34,6 +34,7 @@ namespace ANN {
     const unsigned int num_inputs, num_outputs;
     const ANNConfiguration &conf;
     float learning_rate, momentum, weight_decay, c_weight_decay;
+    float neuron_squared_length_upper_bound;
     bool transpose_weights;
 
     void
@@ -58,8 +59,9 @@ namespace ANN {
 		     Connections *weights_matrix,
 		     bool transpose_weights=false);
     virtual ~DotProductAction();
-    virtual void doForward();
-    virtual void doBackward();
+    virtual void doForward(bool during_training=false);
+    virtual void doBackprop();
+    virtual void doUpdate();
     virtual Action *clone(hash<void*,void*> &clone_dict,
 			  const ANNConfiguration &conf);
     virtual void setOption(const char *name, double value);

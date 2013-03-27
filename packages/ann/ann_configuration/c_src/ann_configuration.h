@@ -22,6 +22,8 @@
 #ifndef ANNCONFIGURATION_H
 #define ANNCONFIGURATION_H
 
+#include "MersenneTwister.h"
+
 // information required by different parts of the ann grouped into a public class
 // a constant reference is keeped by them, the object belongs to the ann
 struct ANNConfiguration {
@@ -29,6 +31,7 @@ struct ANNConfiguration {
   unsigned int cur_bunch_size; // current bunch size, ANTES cur_bunch
   bool         use_cuda_flag;  // use_cuda
   bool         error_function_logistic_mandatory;
+  mutable MTRand rnd;
   ANNConfiguration(int max_bunch_size,
 		   int cur_bunch_size,
 		   bool use_cuda_flag=false) :

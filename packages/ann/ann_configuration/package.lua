@@ -1,6 +1,6 @@
  package{ name = "ann_configuration",
    version = "1.0",
-   depends = { },
+   depends = { "random" },
    keywords = { "ANN", "bunch", "cuda" },
    description = "Define ANNs classes to model configuration of some parameters",
    -- targets como en ant

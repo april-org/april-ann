@@ -42,6 +42,7 @@ namespace ANN {
     momentum(0.0f),
     weight_decay(0.0f),
     c_weight_decay(1.0f),
+    neuron_squared_length_upper_bound(-1.0f),
     transpose_weights(transpose_weights) {
     if (!transpose_weights) {
       if (!weights_matrix->checkInputOutputSizes(inputs, outputs))
@@ -66,17 +67,18 @@ namespace ANN {
   }
   
   // The DotProductAction
-  void DotProductAction::doForward() {
+  void DotProductAction::doForward(bool during_training) {
     FloatGPUMirroredMemoryBlock *input_ptr       = inputs->getPtr();
     FloatGPUMirroredMemoryBlock *output_ptr      = outputs->getPtr();
     FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
-    
+    float weights_factor = 1.0f;
+    if (!during_training) weights_factor = 1.0f - inputs->drop_factor;
     if (conf.cur_bunch_size == 1) {
       // vector x matrix product
       if (!transpose_weights)
 	doSgemv(CblasColMajor, CblasNoTrans,
 		num_outputs, num_inputs,
-		1.0f, weights_mat_ptr, num_outputs,
+		weights_factor, weights_mat_ptr, num_outputs,
 		input_ptr, conf.max_bunch_size,
 		1.0f, output_ptr, conf.max_bunch_size,
 		0, inputs->getOffset(), outputs->getOffset(),
@@ -84,7 +86,7 @@ namespace ANN {
       else
 	doSgemv(CblasColMajor, CblasTrans,
 		num_inputs, num_outputs,
-		1.0f, weights_mat_ptr, num_inputs,
+		weights_factor, weights_mat_ptr, num_inputs,
 		input_ptr, conf.max_bunch_size,
 		1.0f, output_ptr, conf.max_bunch_size,
 		0, inputs->getOffset(), outputs->getOffset(),
@@ -97,7 +99,7 @@ namespace ANN {
       if (!transpose_weights)
 	doSgemm(CblasColMajor, CblasNoTrans, CblasTrans,
 		conf.cur_bunch_size, num_outputs, num_inputs,
-		1.0f, input_ptr, conf.max_bunch_size,
+		weights_factor, input_ptr, conf.max_bunch_size,
 		weights_mat_ptr, num_outputs,
 		// beta = 1.0f, C matrix contains BIAS and probably other layer
 		// computations
@@ -107,7 +109,7 @@ namespace ANN {
       else
 	doSgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
 		conf.cur_bunch_size, num_outputs, num_inputs,
-		1.0f,
+		weights_factor,
 		input_ptr, conf.max_bunch_size,
 		weights_mat_ptr, num_inputs,
 		// beta = 1.0f, C matrix contains BIAS and probably other layer
@@ -118,14 +120,14 @@ namespace ANN {
     }
     
   }
-  
-  void DotProductAction::
-  backpropagateErrors(FloatGPUMirroredMemoryBlock *weights_mat_ptr,
-		      FloatGPUMirroredMemoryBlock *output_error,
-		      const unsigned int output_error_shift,
-		      FloatGPUMirroredMemoryBlock *input_error,
-		      const unsigned int input_error_shift) {
+
+  void DotProductAction::doBackprop() {
+    FloatGPUMirroredMemoryBlock *output_error = inputs->getErrorVectorPtr();
     if (output_error != 0) {
+      const unsigned int output_error_shift        = inputs->getOffset();
+      FloatGPUMirroredMemoryBlock *input_error     = outputs->getErrorVectorPtr();
+      const unsigned int input_error_shift         = outputs->getOffset();
+      FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
       if (conf.cur_bunch_size > 1) {
 	// C = alpha * A * B + beta * C
 	if (!transpose_weights)
@@ -165,8 +167,51 @@ namespace ANN {
 	}
       }
     }
+    
+    if (neuron_squared_length_upper_bound > 0.0f) {
+      if (!transpose_weights) {
+	// TODO: Implement this in CBLAS and CUDA
+	FloatGPUMirroredMemoryBlock *sql_sums   = outputs->getSquaredLengthSums();
+	FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
+	
+	float *squared_length_sums = sql_sums->getPPALForReadAndWrite();
+	const float *w = weights_mat_ptr->getPPALForRead();
+	
+	for (unsigned int j=0; j<num_outputs; ++j) {
+	  unsigned int k = j;
+	  // compute squared length, adding previous squared lengths computed
+	  // over the same neuron
+	  float squared_length = squared_length_sums[j];
+	  for (unsigned int i=0; i<num_inputs; ++i) {
+	    squared_length += w[k]*w[k];
+	    k += num_outputs;
+	  }
+	  squared_length_sums[j] = squared_length;
+	}
+      }
+      else {
+	// TODO: Implement this in CBLAS and CUDA
+	FloatGPUMirroredMemoryBlock *sql_sums   = outputs->getSquaredLengthSums();
+	FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
+	
+	float *squared_length_sums = sql_sums->getPPALForReadAndWrite();
+	const float *w = weights_mat_ptr->getPPALForRead();
+	
+	unsigned int k = 0;
+	for (unsigned int j=0; j<num_outputs; ++j) {
+	  // compute squared length, adding previous squared lengths computed
+	  // over the same neuron
+	  float squared_length = squared_length_sums[j];
+	  for (unsigned int i=0; i<num_inputs; ++i) {
+	    squared_length += w[k]*w[k];
+	    ++k;
+	  }
+	  squared_length_sums[j] = squared_length;
+	}
+      }
+    }
   }
-
+  
   void DotProductAction::
   computeBPUpdateOnPrevVectors(FloatGPUMirroredMemoryBlock *prev_weights_mat_ptr,
 			       FloatGPUMirroredMemoryBlock *input,
@@ -179,8 +224,9 @@ namespace ANN {
     const unsigned int references = weights_matrix->getNumReferences();
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
     const float norm_learn_rate =
-      //-(1.0f/sqrtf(static_cast<float>(references*conf.cur_bunch_size))) *
-      -(1.0f/sqrtf(static_cast<float>(references))) *
+      -(1.0f/sqrtf(static_cast<float>(references*conf.cur_bunch_size))) *
+      //-(1.0f/static_cast<float>(references*conf.cur_bunch_size)) *
+      //-(1.0f/sqrtf(static_cast<float>(references))) *
       learning_rate;
       
     if (conf.cur_bunch_size > 1) {
@@ -235,10 +281,9 @@ namespace ANN {
 	       conf.use_cuda_flag);
     }
   }
-    
-
+  
   // The DotProductAction
-  void DotProductAction::doBackward() {
+  void DotProductAction::doUpdate() {
     assert(learning_rate > 0.0f &&
 	   "Learning rate/momentum/weight decay needs to be fixed with "
 	   "setOption method!!!");
@@ -256,20 +301,9 @@ namespace ANN {
     const unsigned int input_shift  = inputs->getOffset();
     const unsigned int output_shift = outputs->getOffset();
     
-#ifdef USE_CUDA
-    GPUHelper::createNStreams(2);
-    GPUHelper::setCurrentStream(1);
-#endif
-    backpropagateErrors(weights_mat_ptr,
-			output_error, input_shift,
-			input_error, output_shift);
-#ifdef USE_CUDA
-    GPUHelper::setCurrentStream(2);
-#endif
-    
     float beta_parameter_for_cblas_bp = 1.0f;
     // Momentum computation
-    if (weights_matrix->isFirstUpdateCall()) {
+    if (weights_matrix->isFirstUpdateCall()) {      
       if (momentum > 0.0f) {
 	// prev_w[i,j] = momentum * (w[i,j] - prev_w[i,j])
 	weights_matrix->computeMomentumOnPrevVector(momentum,
@@ -288,13 +322,67 @@ namespace ANN {
 				 input_error, output_shift,
 				 beta_parameter_for_cblas_bp);
     
-#ifdef USE_CUDA
-    GPUHelper::destroyStreams();
-#endif    
-    
     // Forces to update counts and swap vectors if necessary at this backward
     // step
-    weights_matrix->endUpdate();
+    if (weights_matrix->endUpdate()) {
+      if (neuron_squared_length_upper_bound > 0.0f) {
+	if (!transpose_weights) {
+	  // TODO: Implement this in CBLAS and CUDA
+	  
+	  FloatGPUMirroredMemoryBlock *sql_sums   = outputs->getSquaredLengthSums();
+	  FloatGPUMirroredMemoryBlock *w_ptr      = weights_matrix->getPtr();
+	  FloatGPUMirroredMemoryBlock *prev_w_ptr =
+	    weights_matrix->getPrevPtr();
+	
+	  const float *squared_length_sums = sql_sums->getPPALForRead();
+	  float *w      = weights_mat_ptr->getPPALForReadAndWrite();
+	  float *prev_w = prev_weights_mat_ptr->getPPALForReadAndWrite();
+	
+	  for (unsigned int j=0; j<num_outputs; ++j) {
+	    // compute squared length, adding previous squared lengths computed
+	    // over the same neuron
+	    float squared_length = squared_length_sums[j];
+	    if (squared_length > neuron_squared_length_upper_bound) {
+	      float ratio    = sqrtf(neuron_squared_length_upper_bound/squared_length);
+	      unsigned int k = j;
+	      for (unsigned int i=0; i<num_inputs; ++i) {
+		w[k]      *= ratio;
+		prev_w[k] *= ratio;
+		k += num_outputs;
+	      }
+	    }
+	  }
+	}
+	else {
+	  // TODO: Implement this in CBLAS and CUDA
+	
+	  FloatGPUMirroredMemoryBlock *sql_sums   = outputs->getSquaredLengthSums();
+	  FloatGPUMirroredMemoryBlock *w_ptr      = weights_matrix->getPtr();
+	  FloatGPUMirroredMemoryBlock *prev_w_ptr =
+	    weights_matrix->getPrevPtr();
+	
+	  const float *squared_length_sums = sql_sums->getPPALForRead();
+	  float *w      = weights_mat_ptr->getPPALForReadAndWrite();
+	  float *prev_w = prev_weights_mat_ptr->getPPALForReadAndWrite();
+	
+	  unsigned int k = 0;
+	  for (unsigned int j=0; j<num_outputs; ++j) {
+	    // compute squared length, adding previous squared lengths computed
+	    // over the same neuron
+	    float squared_length = squared_length_sums[j];
+	    if (squared_length > neuron_squared_length_upper_bound) {
+	      float ratio    = sqrtf(neuron_squared_length_upper_bound/squared_length);
+	      for (unsigned int i=0; i<num_inputs; ++i) {
+		w[k]      *= ratio;
+		prev_w[k] *= ratio;
+		k++;
+	      }
+	    }
+	  }
+	}
+      }
+
+    }
   }
 
   Action *DotProductAction::clone(hash<void*,void*> &clone_dict,
@@ -309,6 +397,7 @@ namespace ANN {
     action->momentum       = momentum;
     action->weight_decay   = weight_decay;
     action->c_weight_decay = c_weight_decay;
+    action->neuron_squared_length_upper_bound = neuron_squared_length_upper_bound;
     return action;
   }
 
@@ -320,6 +409,8 @@ namespace ANN {
       c_weight_decay = 1.0f - weight_decay;
       return;
     }
+    mSetOption("neuron_squared_length_upper_bound",
+	       neuron_squared_length_upper_bound);
     ERROR_EXIT1(140, "The option to be set does not exist: %s.\n", name);
   }
   
@@ -327,6 +418,7 @@ namespace ANN {
     mHasOption("learning_rate");
     mHasOption("momentum");
     mHasOption("weight_decay");
+    mHasOption("neuron_squared_length_upper_bound");
     return false;
   }
   
@@ -335,6 +427,7 @@ namespace ANN {
     mGetOption("momentum", momentum);
     // the weight decay is always fixed to 0
     mGetOption("weight_decay", weight_decay);
+    mGetOption("neuron_squared_length_upper_bound", neuron_squared_length_upper_bound);
     ERROR_EXIT(140, "The option to be get does not exist.\n");
   }
 
