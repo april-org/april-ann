@@ -85,10 +85,12 @@ function get_replacement_dataset(randObject, replacementSize, ...)
     end
     local ds = dataset.matrix(mat)
     for i,v in ipairs(arg) do
-      if v:numPatterns() ~= numPat then
-	error("Datasets have differnet number of patterns")
+      if v ~= nil then
+          if v:numPatterns() ~= numPat then
+            error("Datasets have differnet number of patterns")
+          end
+          table.insert(resul,dataset.indexed(ds,{v}))
       end
-      table.insert(resul,dataset.indexed(ds,{v}))
     end
   end
   return resul
@@ -157,31 +159,13 @@ local function generate_training_table_configuration_on_the_fly(
         local output_dataset = (output_datasets or {})[1]
         -- Generate a replacement of each dataset
         local input_repl_ds, output_repl_ds
-
         -- if autoencoder, only generate one corpus replacement
-        if not output_dataset then
-        -- Select the replacement from the original dataset
-            input_repl_ds =
-                  get_replacement_dataset(shuffle_random,
-                  replacement,
-                  input_dataset)[1]
-        -- Take and keep the output 
-        else
-           input_repl_ds, output_repl_ds = unpack(
-                  get_replacement_dataset(shuffle_random,
-                  replacement, input_dataset, output_dataset))
-        end
-       
+        input_repl_ds, output_repl_ds = unpack( get_replacement_dataset(shuffle_random, replacement, input_dataset, output_dataset) )
         -- generate the last layer dataset
         local input_layer_dataset = ann.autoencoders.encode_dataset(mlp_final, input_repl_ds)
     
         -- The output is the same than the imput
-        if not output_dataset then
-             output_dataset = input_layer_dataset   
-        else
-             output_dataset = output_repl_ds            
-        end -- if output dataset
-        
+        output_dataset = (output_repl_ds or input_layer_dataset)
 
         -- Add the noise
         for _,noise_builder in ipairs(noise_pipeline) do
@@ -337,8 +321,9 @@ function ann.autoencoders.greedy_layerwise_pretraining(params)
   --------------------------------------
   -- on the fly. Do not generate all the dataset for each layer
   local on_the_fly = params.replacement
-  if on_the_fly then
-      print("#On the fly mode enabled")
+  if on_the_fly and params.distribution then
+      error("On the fly mode is not working with dataset distribution")
+      --print("#On the fly mode enabled")
   end
 
   -- copy dataset params to auxiliar table

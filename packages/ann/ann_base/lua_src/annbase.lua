@@ -81,19 +81,30 @@ function ann.train_crossvalidation(params)
   local last_epoch       = 0
   for epoch=params.first_epoch,params.max_epochs do
     collectgarbage("collect")
+    clock = util.stopwatch()
+    clock:go()
+
     local tr_error  = thenet:train_dataset(params.training_table)
     local val_error = params.validation_function(thenet, params.validation_table)
     last_train_error,last_val_error,last_epoch = tr_error,val_error,epoch
+
+    clock:stop()
+    cpu, wall = clock:read()
+
     if val_error < best_val_error then
       best_epoch     = epoch
       best_val_error = val_error
       best_net       = thenet:clone()
     end
+
+    
     params.update_function({ current_epoch    = epoch,
 			     best_epoch       = best_epoch,
 			     best_val_error   = best_val_error,
 			     train_error      = tr_error,
 			     validation_error = val_error,
+           cpu              = cpu,
+           wall             = wall,
 			     train_params     = params })
     if (epoch > params.min_epochs and
 	params.stopping_criterion({ current_epoch    = epoch,
