@@ -107,6 +107,10 @@ namespace ANN {
 				     bool use_cuda,
 				     bool is_output) = 0;
     
+    /// Returns the minium value
+    virtual float getDropoutValue() = 0;
+    
+    
     /// Returns a deep copy of the object
     virtual ActivationFunction *clone() = 0;
   };
@@ -134,6 +138,7 @@ namespace ANN {
 			     const ANNConfiguration &conf,
 			     bool use_cuda,
 			     bool is_output);
+    float getDropoutValue() { return 0.0f; }
     ActivationFunction *clone();
   };
 
@@ -159,6 +164,7 @@ namespace ANN {
 			     const ANNConfiguration &conf,
 			     bool use_cuda,
 			     bool is_output);
+    float getDropoutValue() { return 0.0f; }
     ActivationFunction *clone();
   };
 
@@ -198,6 +204,7 @@ namespace ANN {
 			     const ANNConfiguration &conf,
 			     bool use_cuda,
 			     bool is_output);
+    float getDropoutValue() { return 0.0f; }
     ActivationFunction *clone();
   };
 
@@ -222,31 +229,33 @@ namespace ANN {
 			     const ANNConfiguration &conf,
 			     bool use_cuda,
 			     bool is_output);
+    float getDropoutValue() { return 0.0f; }
     ActivationFunction *clone();
   };
 
-  //! Softsign activation function.
-  /*! Implements ActivationFunction interface and computes:
-
-    \f[
-     a_i = f(y_i) = \frac{y_i}{1 + \vert y_i \vert }
-     \f]
+  //! Softsign activation function.                                                                                                                   
+  /*! Implements ActivationFunction interface and computes:                                                                                           
+                                                                                                                                                      
+    \f[                                                                                                                                               
+     a_i = f(y_i) = \frac{y_i}{1 + \vert y_i \vert }                                                                                                  
+     \f]                                                                                                                                              
   */
   class SoftsignActivationFunction : public ActivationFunction
   {
   public:
     SoftsignActivationFunction();
     virtual ~SoftsignActivationFunction();
-    void applyActivation(FloatGPUMirroredMemoryBlock *units, 
+    void applyActivation(FloatGPUMirroredMemoryBlock *units,
                          unsigned int units_size,
-			 const ANNConfiguration &conf,
+                         const ANNConfiguration &conf,
                          bool use_cuda);
     void multiplyDerivatives(FloatGPUMirroredMemoryBlock *units,
-			     FloatGPUMirroredMemoryBlock *input_errors,
-			     unsigned int size,
-			     const ANNConfiguration &conf,
-			     bool use_cuda,
-			     bool is_output);
+                             FloatGPUMirroredMemoryBlock *input_errors,
+                             unsigned int size,
+                             const ANNConfiguration &conf,
+                             bool use_cuda,
+                             bool is_output);
+    float getDropoutValue() { return 0.0f; }
     ActivationFunction *clone();
   };
 
@@ -333,6 +342,7 @@ namespace ANN {
 			     bool is_output) {
       ERROR_PRINT("NOT SUPORTTED METHOD");
     }
+    float getDropoutValue() { return 0.0f; }
   };
   
   /// A binary sampling activation function. Implements

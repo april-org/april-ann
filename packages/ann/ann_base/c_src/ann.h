@@ -56,7 +56,7 @@ namespace ANN {
     ANNBase(ANNConfiguration configuration);
     virtual void setNumBunch(unsigned int num_bunch);
     virtual unsigned int getNumBunch();
-    virtual void doForward()  = 0;
+    virtual void doForward(bool during_training=false)  = 0;
     virtual void doBackward() = 0;
     
     void clearTopology() {
@@ -116,7 +116,7 @@ namespace ANN {
     Connections *getLayerConnections(unsigned int layer);
     ActivationUnits *getLayerActivations(unsigned int layer);
     Action          *getAction(unsigned int idx);
-
+    
     virtual void setInput(const float *input, unsigned int bunch_pos);
     virtual void copyOutput(float *output, unsigned int bunch_pos);
     virtual void setDesiredOutput(float *target_output, unsigned int bunch_pos);

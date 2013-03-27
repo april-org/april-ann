@@ -192,6 +192,7 @@ end
 --   * learning_rate
 --   * momentum
 --   * weight_decay
+--   * neuron_squared_length_upper_bound
 --   * max_epochs
 --   * min_epochs
 --   * stopping_criterion => function
