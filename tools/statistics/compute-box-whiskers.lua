@@ -18,6 +18,6 @@ local q1 = math.round(#data/4)
 local q2 = math.round(#data/2)
 local q3 = math.round(#data*3/4)
 local q4 = #data
-local mean     = sum/#data
-local variance = (sum2 - sum*sum/#data)/(#data - 1)
-print(data[q0], data[q1], data[q2], data[q3], data[q4], mean, variance)
+local mean   = sum/#data
+local stddev = math.sqrt( (sum2 - sum*sum/#data)/(#data - 1) )
+print(data[q0], data[q1], data[q2], data[q3], data[q4], mean, stddev)
