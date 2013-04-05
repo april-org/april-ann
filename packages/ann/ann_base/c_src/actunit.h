@@ -42,9 +42,10 @@ namespace ANN {
     ActivationUnitsType     type;
     unsigned int            fanin;
   public:
+    float                   drop_factor;
     ActivationUnits(const ANNConfiguration &conf,
 		    ActivationUnitsType type) :
-      conf(conf), type(type), fanin(0) {}
+      conf(conf), type(type), fanin(0), drop_factor(0.0f) {}
     virtual ~ActivationUnits() { }
 
     /// Method for getting the type of the activation units.
@@ -65,8 +66,11 @@ namespace ANN {
 
     /// Abstract method that returns a pointer to the array of errors.
     virtual FloatGPUMirroredMemoryBlock *getErrorVectorPtr() = 0;
-
-    /// Abstract method that returns the value of the offset.
+    /// Devuelve un puntero al vector con la suma de los cuadrados de los pesos
+    /// que entran a cada neurona
+    virtual FloatGPUMirroredMemoryBlock *getSquaredLengthSums() = 0;
+    /// devuelve el valor de offset, que sumado al size(), puede que el vector
+    /// no comienze en 0
     virtual unsigned int getOffset() const = 0;
 
     /// Abstract method that returns a copy of the activation units.
@@ -91,6 +95,7 @@ namespace ANN {
     unsigned int		 num_neurons;
     FloatGPUMirroredMemoryBlock *activations;
     FloatGPUMirroredMemoryBlock *error_vector;
+    FloatGPUMirroredMemoryBlock *squared_length_sums;
   public:
     RealActivationUnits(unsigned int        num_neurons,
 			const ANNConfiguration &conf,
@@ -100,6 +105,7 @@ namespace ANN {
     unsigned int		 size() const;
     FloatGPUMirroredMemoryBlock *getPtr();
     FloatGPUMirroredMemoryBlock *getErrorVectorPtr();
+    FloatGPUMirroredMemoryBlock *getSquaredLengthSums();
     unsigned int     getOffset() const { return 0; }
     ActivationUnits *clone(const ANNConfiguration &conf);
     // deprecated:
@@ -121,6 +127,7 @@ namespace ANN {
   class LocalActivationUnits : public ActivationUnits {
     unsigned int        num_groups, num_neurons;
     FloatGPUMirroredMemoryBlock *activations;
+    FloatGPUMirroredMemoryBlock *squared_length_sums;
     //float              *activations;
   public:
     LocalActivationUnits(unsigned int num_groups,
@@ -133,6 +140,7 @@ namespace ANN {
     // devuelve el puntero al vector interno, para acelerar calculos
     FloatGPUMirroredMemoryBlock *getPtr();
     FloatGPUMirroredMemoryBlock *getErrorVectorPtr() { return 0; };
+    FloatGPUMirroredMemoryBlock *getSquaredLengthSums();
     unsigned int getOffset() const { return 0; }
     ActivationUnits *clone(const ANNConfiguration &conf);
     unsigned int numNeurons() const {
@@ -165,6 +173,7 @@ namespace ANN {
     FloatGPUMirroredMemoryBlock *getPtr();
     // devuelve un puntero al vector con la suma de los errores
     FloatGPUMirroredMemoryBlock *getErrorVectorPtr();
+    FloatGPUMirroredMemoryBlock *getSquaredLengthSums();
     // devuelve el valor de offset, que sumado al size(), es el valor
     // del major stride para CBLAS
     unsigned int getOffset() const;

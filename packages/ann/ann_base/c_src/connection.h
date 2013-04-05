@@ -79,8 +79,8 @@ namespace ANN {
     // la conexion es compartida por mas de una accion
     void         countReference();
     unsigned int getNumReferences() const;
-    void         beginUpdate();
-    void         endUpdate();
+    virtual void         beginUpdate();
+    virtual bool         endUpdate(); // return true when last update call
     bool         isFirstUpdateCall();
     void         computeMomentumOnPrevVector(float momentum,
 					     bool  use_cuda);

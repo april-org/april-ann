@@ -44,6 +44,11 @@
 #define getMatrixIndex(x,lda,y) ((x)*(lda)+(y))
 
 // ACTIVATION FUNCTIONS
+void applyMask(FloatGPUMirroredMemoryBlock *units,
+	       FloatGPUMirroredMemoryBlock *mask, float mask_value,
+	       unsigned int units_size,
+	       const ANNConfiguration &conf,
+	       bool use_gpu);
 void doApplyLogisticActivation(FloatGPUMirroredMemoryBlock *units,
 			       unsigned int units_size,
 			       const ANNConfiguration &conf,

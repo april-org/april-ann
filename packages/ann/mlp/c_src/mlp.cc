@@ -23,6 +23,7 @@
 #include <cstring>
 #include "constString.h"
 #include "error_print.h"
+#include "trainsuper.h"
 #include "mlp.h"
 #include "bias_connection.h"
 #include "all_all_connection.h"
@@ -33,6 +34,11 @@
 namespace ANN {
 
   MLP::MLP(ANNConfiguration configuration) : ANNBase(configuration),
+					     learning_rate(-1.0f),
+					     momentum(0.0f),
+					     weight_decay(0.0f),
+					     c_weight_decay(1.0f),
+					     neuron_squared_length_upper_bound(-1.0f),
 					     error_func(0)
   {
     setErrorFunction(new MSE());
@@ -54,11 +60,11 @@ namespace ANN {
   {
   }
 
-  void MLP::doForward()
+  void MLP::doForward(bool during_training)
   {
     //printf ("FORWARD START\n");
     for (unsigned int i = 0; i < actions.size(); i++)
-      actions[i]->doForward();
+      actions[i]->doForward(during_training);
     //printf ("FORWARD END\n");
   }
 
@@ -66,7 +72,9 @@ namespace ANN {
   {
     //printf ("BACKWARD START\n");
     for (int i = actions.size() - 1; i >= 0; i--)
-      actions[i]->doBackward();
+      actions[i]->doBackprop();
+    for (int i = actions.size() - 1; i >= 0; i--)
+      actions[i]->doUpdate();
     //printf ("BACKWARD END\n");
   }
 
@@ -121,14 +129,24 @@ namespace ANN {
     // NOTE: option is only updated in connections since training
     // algorithm is placed there
     for (unsigned int i = 0; i < actions.size(); i++)
-      actions[i]->setOption(name, value);
+      if (actions[i]->hasOption(name))
+	actions[i]->setOption(name, value);
   
     mSetOption("learning_rate", learning_rate);
     mSetOption("momentum", momentum);
+    mSetOption("neuron_squared_length_upper_bound",
+	       neuron_squared_length_upper_bound);
+    mSetOption("dropout", dropout);
     // Caso especial, no podemos usar esto: mSetOption("weight_decay", weight_decay);
     if (strcmp("weight_decay", name) == 0) {
       weight_decay   = value;
       c_weight_decay = 1.0 - weight_decay;
+      return;
+    }
+    // Otro caso especial
+    if (strcmp("dropout_seed", name) == 0) {
+      int seed = static_cast<int>(value);
+      conf.rnd.seed(seed);
       return;
     }
     ERROR_EXIT(140, "The option to be set does not exist.\n");
@@ -139,6 +157,9 @@ namespace ANN {
     mHasOption("learning_rate");
     mHasOption("momentum");
     mHasOption("weight_decay");
+    mHasOption("neuron_squared_length_upper_bound");
+    mHasOption("dropout");
+    mHasOption("dropout_seed");
     return false;
   }
 
@@ -147,6 +168,8 @@ namespace ANN {
     mGetOption("learning_rate", learning_rate);
     mGetOption("momentum", momentum);
     mGetOption("weight_decay", weight_decay);
+    mGetOption("neuron_squared_length_upper_bound", neuron_squared_length_upper_bound);
+    mGetOption("dropout", dropout);
     ERROR_EXIT(140, "The option to be get does not exist.\n");
   }
 
@@ -233,7 +256,7 @@ namespace ANN {
   {
     resetErrorVectors();
     
-    doForward();
+    doForward(true);
 
     error_func->computePatternErrorFunction(output_neurons,
 					    desired_output,
@@ -266,6 +289,8 @@ namespace ANN {
     copy->momentum       = momentum;
     copy->weight_decay   = weight_decay;
     copy->c_weight_decay = c_weight_decay;
+    copy->dropout        = dropout;
+    copy->neuron_squared_length_upper_bound = neuron_squared_length_upper_bound;
     return copy;
   }
 

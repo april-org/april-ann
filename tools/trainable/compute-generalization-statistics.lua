@@ -65,7 +65,11 @@ for _,expsize in ipairs(expsizes) do
     local wins       = {}
     local population = {}
     for i=1,expsize do
-      table.insert(population, data[rnd:randInt(1,#data)])
+      local idx = rnd:randInt(1,#data)
+      if #expsizes == 1 and expsize_reps == 1 then
+	idx = i
+      end
+      table.insert(population, data[idx])
       table.insert(wins, 0)
     end
     -- sampling loop for estimation of random experiment weights
