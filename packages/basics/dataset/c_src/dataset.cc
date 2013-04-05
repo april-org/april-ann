@@ -703,7 +703,11 @@ SparseDataset<T>::SparseDataset(Matrix<T> *m, int nump, int patsize, T zero) :
   for (int i=0; i<nump; ++i) {
     matrix_indexes[i]  = j;
     int	count	       = m->data[j];
-    j		      += (count<<1) + 1;
+    for (int k=0; k<count<<2; k+=2)
+      if (m->data[k] < 0 || m->data[k] >= patternsize)
+	ERROR_EXIT2(128, "Incorrect position value %.0f at matrix,"
+		    " expected in range [0,%d]\n", m->data[k], patternsize-1);
+    j += (count<<1) + 1;
   }
   if (j > m->size) {
     ERROR_PRINT2("Tamanyo de matriz incorrecto para SparseDataset!!!\n"

@@ -823,8 +823,17 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 
 //BIND_CLASS_METHOD DataSetFloat sparse
 /* 
-   Permite crear un dataset a partir de una matriz.  Requiere 2
+   Permite crear un dataset a partir de una matriz sparse.  Requiere 2
    argumentos. MatrixFloat y tabla con numpatterns, patternsize, zero.
+   La matriz sparse es una secuencia de numeros, donde cada patron
+   se representa por:
+
+   N x1 v1 x2 v2 ... xN vN
+
+   donde N es el numero de posiciones distintas de ZERO que contiene el patron
+   y (xi vi) son parejas que indican que la posicion xi tiene valor vi.
+
+   IMPORTANTE: xi empieza en 0 y llega hasta patternSize-1
 */
 
 {
