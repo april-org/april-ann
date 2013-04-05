@@ -28,18 +28,25 @@
 
 namespace ANN {
   class ActivationsAction : public Action {
-    ActivationUnits    *units;
-    ActivationFunction *act_func;
+    ActivationUnits             *units;
+    ActivationFunction          *act_func;
+    FloatGPUMirroredMemoryBlock *dropout_mask;
+    float                        dropout;
+    int                         *units_order_permutation;
   public:
     ActivationsAction(const ANNConfiguration &conf,
 		      ActivationUnits    *units,
 		      ActivationFunction *act_func);
     virtual ~ActivationsAction();
-    virtual void doForward();
-    virtual void doBackward();
+    virtual void doForward(bool during_training=false);
+    virtual void doBackprop();
+    virtual void doUpdate();
     virtual Action *clone(hash<void*,void*> &clone_dict,
 			  const ANNConfiguration &conf);
     void transferFanInToConnections() { }
+    void setOption(const char *name, double value);
+    bool hasOption(const char *name);
+    double getOption(const char *name);
   };
 }
 

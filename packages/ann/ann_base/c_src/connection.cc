@@ -59,13 +59,15 @@ namespace ANN {
     ++update_weights_calls;
   }
     
-  void Connections::endUpdate() {
+  bool Connections::endUpdate() {
     // if it is the last call
     if (update_weights_calls == num_references) {
       // Swap(w, prev_w)
       april_utils::swap(weights, prev_weights);
       update_weights_calls = 0;
+      return true;
     }
+    return false;
   }
     
   bool Connections::isFirstUpdateCall() {
