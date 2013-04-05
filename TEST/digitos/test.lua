@@ -6,23 +6,23 @@ description   = "256 inputs 256 tanh 128 tanh 10 softmax"
 inf           = -1
 sup           =  1
 otrorand      = random(5678)
-learning_rate = 0.01
+learning_rate = 0.08
 momentum      = 0.01
 weight_decay  = 1e-05
 max_epochs    = 10
 
 -- training and validation
 errors = {
-  {2.1908491, 1.9261616},
-  {1.5168998, 1.0358256},
-  {0.8315809, 0.5523109},
-  {0.4558621, 0.3801708},
-  {0.2730320, 0.2880864},
-  {0.2035244, 0.2022299},
-  {0.1568214, 0.1808007},
-  {0.1246625, 0.1546615},
-  {0.1078244, 0.1615846},
-  {0.0958952, 0.1634587},
+  {2.1908491, 1.9118698},
+  {1.5040729, 1.0716470},
+  {0.8239720, 0.5406004},
+  {0.4551140, 0.4344249},
+  {0.2809585, 0.3176593},
+  {0.2066836, 0.1987799},
+  {0.1539478, 0.1826732},
+  {0.1245205, 0.1523282},
+  {0.1063003, 0.1743564},
+  {0.0950506, 0.1691928},
 }
 epsilon = 1e-05
 
@@ -125,13 +125,13 @@ for epoch = 1,max_epochs do
   errorval    = lared:validate_dataset(datosvalidar)
   if math.abs(errortrain - errors[epoch][1]) > epsilon then
     error(string.format("Training error %g is not equal enough to "..
-  			"reference error %g",
-  			errortrain, errors[epoch][1]))
+			"reference error %g",
+			errortrain, errors[epoch][1]))
   end
   if math.abs(errorval - errors[epoch][2]) > epsilon then
     error(string.format("Validation error %g is not equal enough to "..
-  			"reference error %g",
-  			errorval, errors[epoch][2]))
+			"reference error %g",
+			errorval, errors[epoch][2]))
   end
   --ann.mlp.all_all.save(lared, "wop.net", "ascii", "old")
   printf("%4d  %.7f %.7f\n",
