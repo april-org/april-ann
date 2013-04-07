@@ -41,11 +41,12 @@ namespace ANN {
     const ANNConfiguration &conf;
     ActivationUnitsType     type;
     unsigned int            fanin;
+    bool                    is_sparse;
   public:
     float                   drop_factor;
     ActivationUnits(const ANNConfiguration &conf,
 		    ActivationUnitsType type) :
-      conf(conf), type(type), fanin(0), drop_factor(0.0f) {}
+      conf(conf), type(type), fanin(0), is_sparse(false), drop_factor(0.0f) {}
     virtual ~ActivationUnits() { }
 
     /// Method for getting the type of the activation units.
@@ -83,6 +84,8 @@ namespace ANN {
     /// for FAN IN computation
     virtual unsigned int getFanIn() const { return fanin; }
     virtual void increaseFanIn(unsigned int value) { fanin += value; }
+    bool isSparse() const { return is_sparse; }
+    void setSparse(bool v) { is_sparse = v; }
   };
   
   /// Implementa un vector de neuronas de tamanyo num_neurons *
@@ -116,41 +119,6 @@ namespace ANN {
     void reset(bool use_cuda);
   };
 
-  /// implementa la clase de activacion local. En este tipo de
-  /// activacion todas las neuronas estan a 0 menos una neurona que
-  /// esta a 1. Se puede representar por lo tanto simplemente
-  /// conociendo la posicion de dicho 1, lo que permite acelerar mucho
-  /// todos los calculos. Es un tipo de capa que SOLO puede ser
-  /// entrada de la red neuronal, nunca puede estar en capas
-  /// intermedias. IMPORTANTE: la primera neurona, por convención, es
-  /// la 1 y no la 0.
-  class LocalActivationUnits : public ActivationUnits {
-    unsigned int        num_groups, num_neurons;
-    FloatGPUMirroredMemoryBlock *activations;
-    FloatGPUMirroredMemoryBlock *squared_length_sums;
-    //float              *activations;
-  public:
-    LocalActivationUnits(unsigned int num_groups,
-			 unsigned int num_neurons,
-			 const ANNConfiguration &conf,
-			 ActivationUnitsType type);
-    ~LocalActivationUnits();
-    // devuelve 1, ya que la entrada es un numero entero
-    unsigned int size() const;
-    // devuelve el puntero al vector interno, para acelerar calculos
-    FloatGPUMirroredMemoryBlock *getPtr();
-    FloatGPUMirroredMemoryBlock *getErrorVectorPtr() { return 0; };
-    FloatGPUMirroredMemoryBlock *getSquaredLengthSums();
-    unsigned int getOffset() const { return 0; }
-    ActivationUnits *clone(const ANNConfiguration &conf);
-    unsigned int numNeurons() const {
-      return num_neurons*num_groups;
-    }
-    // deprecated:
-    // const unsigned int &getBunchSize() const;
-    void reset(bool use_cuda);
-  };
-    
   /// implementa un subvector de neuronas que se encuentra como
   /// secuencia DENTRO de otro. Es util cuando hay matrices
   /// compartidas entre varias capas.

@@ -71,10 +71,12 @@ namespace ANN {
   }
   
   ActivationUnits *RealActivationUnits::clone(const ANNConfiguration &conf) {
-    return new RealActivationUnits(num_neurons,
-				   conf,
-				   type,
-				   error_vector!=0);
+    RealActivationUnits *units = new RealActivationUnits(num_neurons,
+							 conf,
+							 type,
+							 error_vector!=0);
+    units->is_sparse = is_sparse;
+    return units;
   }
   
   unsigned int RealActivationUnits::size() const {
@@ -93,57 +95,6 @@ namespace ANN {
     if (squared_length_sums == 0)
       squared_length_sums = new FloatGPUMirroredMemoryBlock(num_neurons);
     return squared_length_sums;
-  }
-
-  /////////////////////////////////////////////////////////////////////
-
-  LocalActivationUnits::LocalActivationUnits(unsigned int num_groups,
-					     unsigned int num_neurons,
-					     const ANNConfiguration &conf,
-					     ActivationUnitsType type) :
-    ActivationUnits(conf, type),
-    num_groups(num_groups),
-    num_neurons(num_neurons) {
-    // FIXME poner este numero como una constante en algun sitio de april:
-    if (num_neurons > 16777216) {
-      // el maximo numero entero que se puede representar con un float
-      ERROR_PRINT("The size of LocalActivationUnits is too "
-		  "large: max is 16777216\n");
-      exit(1);
-    }
-    activations = new FloatGPUMirroredMemoryBlock(conf.max_bunch_size * num_groups);
-    squared_length_sums = 0;
-  }
-
-  LocalActivationUnits::~LocalActivationUnits() {
-    // hacer deletes de blocks
-    delete activations;
-    if (squared_length_sums) delete squared_length_sums;
-  }
-
-  unsigned int LocalActivationUnits::size() const {
-    // only one activation for group (a local code)
-    return num_groups;
-  }
-
-  FloatGPUMirroredMemoryBlock *LocalActivationUnits::getPtr()
-  {
-    return activations;
-  }
-
-  FloatGPUMirroredMemoryBlock *LocalActivationUnits::getSquaredLengthSums() {
-    if (squared_length_sums == 0)
-      squared_length_sums = new FloatGPUMirroredMemoryBlock(num_neurons);
-    return squared_length_sums;
-  }
-
-  ActivationUnits *LocalActivationUnits::clone(const ANNConfiguration &conf) {
-    return new LocalActivationUnits(num_groups, num_neurons, conf, type);
-  }
-
-  void LocalActivationUnits::reset(bool use_cuda) {
-    if (squared_length_sums)
-      doVectorSetToZero(squared_length_sums, num_neurons, 1, 0, use_cuda);
   }
 
   /////////////////////////////////////////////////////////////////////

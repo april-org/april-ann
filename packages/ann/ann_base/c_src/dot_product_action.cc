@@ -73,52 +73,91 @@ namespace ANN {
     FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
     float weights_factor = 1.0f;
     if (!during_training) weights_factor = 1.0f - inputs->drop_factor;
-    if (conf.cur_bunch_size == 1) {
-      // vector x matrix product
-      if (!transpose_weights)
-	doSgemv(CblasColMajor, CblasNoTrans,
-		num_outputs, num_inputs,
-		weights_factor, weights_mat_ptr, num_outputs,
-		input_ptr, conf.max_bunch_size,
-		1.0f, output_ptr, conf.max_bunch_size,
-		0, inputs->getOffset(), outputs->getOffset(),
-		conf.use_cuda_flag);
-      else
-	doSgemv(CblasColMajor, CblasTrans,
-		num_inputs, num_outputs,
-		weights_factor, weights_mat_ptr, num_inputs,
-		input_ptr, conf.max_bunch_size,
-		1.0f, output_ptr, conf.max_bunch_size,
-		0, inputs->getOffset(), outputs->getOffset(),
-		conf.use_cuda_flag);
+
+    // if input is sparse, then zero input values are not multiplied
+    if (inputs->isSparse()) {
+      if (!transpose_weights) {
+	const float *input_float_ptr = input_ptr->getPPALForRead();
+	for (unsigned int i=0; i<num_inputs; ++i) {
+	  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
+	    if (input_float_ptr[b] < -0.0f || input_float_ptr[b] > 0.0f) {
+	      unsigned int w_shift = i*num_outputs;
+	      doSaxpy(num_outputs,
+		      weights_factor*input_float_ptr[b],
+		      weights_mat_ptr, w_shift, 1,
+		      output_ptr, b, conf.max_bunch_size, conf.use_cuda_flag);
+	    }
+	  }
+	  input_float_ptr += conf.max_bunch_size;
 	}
+      } // if !transposed weights
+      else {
+	const float *input_float_ptr = input_ptr->getPPALForRead();
+	for (unsigned int i=0; i<num_inputs; ++i) {
+	  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
+	    if (input_float_ptr[b] < -0.0f || input_float_ptr[b] > 0.0f) {
+	      unsigned int w_shift = i;
+	      doSaxpy(num_outputs,
+		      weights_factor*input_float_ptr[b],
+		      weights_mat_ptr, w_shift, num_outputs,
+		      output_ptr, b, conf.max_bunch_size, conf.use_cuda_flag);
+	    }
+	  }
+	  input_float_ptr += conf.max_bunch_size;
+	}
+      } // if !transposed weights .. else
+    } // if isSparse
     else {
-      // matrix x matrix product
-      // C = \alpha op(A) op(B) + \beta C
-      // input * weights = output
-      if (!transpose_weights)
-	doSgemm(CblasColMajor, CblasNoTrans, CblasTrans,
-		conf.cur_bunch_size, num_outputs, num_inputs,
-		weights_factor, input_ptr, conf.max_bunch_size,
-		weights_mat_ptr, num_outputs,
-		// beta = 1.0f, C matrix contains BIAS and probably other layer
-		// computations
-		1.0f, output_ptr, conf.max_bunch_size,
-		inputs->getOffset(), 0, outputs->getOffset(),
-		conf.use_cuda_flag);
-      else
-	doSgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
-		conf.cur_bunch_size, num_outputs, num_inputs,
-		weights_factor,
-		input_ptr, conf.max_bunch_size,
-		weights_mat_ptr, num_inputs,
-		// beta = 1.0f, C matrix contains BIAS and probably other layer
-		// computations
-		1.0f, output_ptr, conf.max_bunch_size,
-		inputs->getOffset(), 0, outputs->getOffset(),
-		conf.use_cuda_flag);
-    }
-    
+      if (conf.cur_bunch_size == 1) {
+	// vector x matrix product
+	if (!transpose_weights) {
+	  doSgemv(CblasColMajor, CblasNoTrans,
+		  num_outputs, num_inputs,
+		  weights_factor, weights_mat_ptr, num_outputs,
+		  input_ptr, conf.max_bunch_size,
+		  1.0f, output_ptr, conf.max_bunch_size,
+		  0, inputs->getOffset(), outputs->getOffset(),
+		  conf.use_cuda_flag);
+	} // if !transposed weights
+	else {
+	  doSgemv(CblasColMajor, CblasTrans,
+		  num_inputs, num_outputs,
+		  weights_factor, weights_mat_ptr, num_inputs,
+		  input_ptr, conf.max_bunch_size,
+		  1.0f, output_ptr, conf.max_bunch_size,
+		  0, inputs->getOffset(), outputs->getOffset(),
+		  conf.use_cuda_flag);
+	} // if !transposed weights ... else
+      } // if bunch_size==1
+      else {
+	// matrix x matrix product
+	// C = \alpha op(A) op(B) + \beta C
+	// input * weights = output
+	if (!transpose_weights) {
+	  doSgemm(CblasColMajor, CblasNoTrans, CblasTrans,
+		  conf.cur_bunch_size, num_outputs, num_inputs,
+		  weights_factor, input_ptr, conf.max_bunch_size,
+		  weights_mat_ptr, num_outputs,
+		  // beta = 1.0f, C matrix contains BIAS and probably other layer
+		  // computations
+		  1.0f, output_ptr, conf.max_bunch_size,
+		  inputs->getOffset(), 0, outputs->getOffset(),
+		  conf.use_cuda_flag);
+	} // if !transposed weights
+	else {
+	  doSgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
+		  conf.cur_bunch_size, num_outputs, num_inputs,
+		  weights_factor,
+		  input_ptr, conf.max_bunch_size,
+		  weights_mat_ptr, num_inputs,
+		  // beta = 1.0f, C matrix contains BIAS and probably other layer
+		  // computations
+		  1.0f, output_ptr, conf.max_bunch_size,
+		  inputs->getOffset(), 0, outputs->getOffset(),
+		  conf.use_cuda_flag);
+	} // if !transposed weights ... else
+      } // if bunch_size==1 ... else
+    } // if isSparse ... else
   }
 
   void DotProductAction::doBackprop() {
@@ -166,9 +205,11 @@ namespace ANN {
 		  conf.use_cuda_flag);
 	}
       }
-    }
+    } // if output_error != 0
     
     if (neuron_squared_length_upper_bound > 0.0f) {
+      if (conf.use_cuda_flag)
+	ERROR_EXIT(128,"Max-norm penalty CUDA version not implemented yet!!!\n");
       if (!transpose_weights) {
 	// TODO: Implement this in CBLAS and CUDA
 	FloatGPUMirroredMemoryBlock *sql_sums   = outputs->getSquaredLengthSums();
@@ -229,57 +270,99 @@ namespace ANN {
       //-(1.0f/sqrtf(static_cast<float>(references))) *
       learning_rate;
       
-    if (conf.cur_bunch_size > 1) {
-      if (!transpose_weights)
-	doSgemm(CblasColMajor, CblasTrans, CblasNoTrans,
-		num_outputs, num_inputs, conf.cur_bunch_size, // dimensiones
-		norm_learn_rate,                          // alpha
-		input_error,                              // A
-		conf.max_bunch_size,                      // A stride
-		input,                                    // B
-		conf.max_bunch_size,                      // B stride
-		beta,                                     // beta
-		prev_weights_mat_ptr,                     // C
-		num_outputs,                              // C stride
-		input_error_shift, input_shift, 0,        // desplazamientos
-		conf.use_cuda_flag);
-      else
-	doSgemm(CblasColMajor, CblasTrans, CblasNoTrans,
-		num_inputs, num_outputs, conf.cur_bunch_size, // dimensiones
-		norm_learn_rate,                          // alpha
-		input,                                    // B
-		conf.max_bunch_size,                      // B stride
-		input_error,                              // A
-		conf.max_bunch_size,                      // A stride
-		beta,                                     // beta
-		prev_weights_mat_ptr,                     // C
-		num_inputs,                               // C stride
-		input_shift, input_error_shift, 0,        // desplazamientos
-		conf.use_cuda_flag);
-    }
-    else {
+    if (inputs->isSparse()) {
       if (beta < 1.0f)
-        doSscal((num_inputs * num_outputs),
+	doSscal((num_inputs * num_outputs),
 		beta,
 		prev_weights_mat_ptr, 0, 1,
 		conf.use_cuda_flag);
-      if (!transpose_weights)
-	doSger(CblasColMajor,
-	       num_outputs, num_inputs,
-	       norm_learn_rate,
-	       input_error, input_error_shift, conf.max_bunch_size,
-	       input, input_shift, conf.max_bunch_size,
-	       prev_weights_mat_ptr, 0, num_outputs,
-	       conf.use_cuda_flag);
-      else
-	doSger(CblasColMajor,
-	       num_inputs, num_outputs,
-	       norm_learn_rate,
-	       input, input_shift, conf.max_bunch_size,
-	       input_error, input_error_shift, conf.max_bunch_size,
-	       prev_weights_mat_ptr, 0, num_inputs,
-	       conf.use_cuda_flag);
-    }
+      if (!transpose_weights) {
+	const float *input_float_ptr = input->getPPALForRead() + input_shift;
+	for (unsigned int i=0; i<num_inputs; ++i) {
+	  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
+	    if (input_float_ptr[b] < -0.0f || input_float_ptr[b] > 0.0f) {
+	      unsigned int w_shift = i*num_outputs;
+	      doSaxpy(num_outputs,
+		      norm_learn_rate*input_float_ptr[b],
+		      input_error, b+input_error_shift, conf.max_bunch_size,
+		      prev_weights_mat_ptr, w_shift, 1,
+		      conf.use_cuda_flag);
+	    }
+	  }
+	  input_float_ptr += conf.max_bunch_size;
+	}
+      } // if !transposed weights
+      else {
+	const float *input_float_ptr = input->getPPALForRead() + input_shift;
+	for (unsigned int i=0; i<num_inputs; ++i) {
+	  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
+	    if (input_float_ptr[b] < -0.0f || input_float_ptr[b] > 0.0f) {
+	      unsigned int w_shift = i;
+	      doSaxpy(num_outputs,
+		      norm_learn_rate*input_float_ptr[b],
+		      input_error, b+input_error_shift, conf.max_bunch_size,
+		      prev_weights_mat_ptr, w_shift, num_outputs,
+		      conf.use_cuda_flag);
+	    }
+	  }
+	  input_float_ptr += conf.max_bunch_size;
+	}
+      } // if !transposed weights ... else
+    } // if isSparse
+    else {
+      if (conf.cur_bunch_size > 1) {
+	if (!transpose_weights) {
+	  doSgemm(CblasColMajor, CblasTrans, CblasNoTrans,
+		  num_outputs, num_inputs, conf.cur_bunch_size, // dimensiones
+		  norm_learn_rate,                          // alpha
+		  input_error,                              // A
+		  conf.max_bunch_size,                      // A stride
+		  input,                                    // B
+		  conf.max_bunch_size,                      // B stride
+		  beta,                                     // beta
+		  prev_weights_mat_ptr,                     // C
+		  num_outputs,                              // C stride
+		  input_error_shift, input_shift, 0,        // desplazamientos
+		  conf.use_cuda_flag);
+	} // if !transposed weights
+	else
+	  doSgemm(CblasColMajor, CblasTrans, CblasNoTrans,
+		  num_inputs, num_outputs, conf.cur_bunch_size, // dimensiones
+		  norm_learn_rate,                          // alpha
+		  input,                                    // B
+		  conf.max_bunch_size,                      // B stride
+		  input_error,                              // A
+		  conf.max_bunch_size,                      // A stride
+		  beta,                                     // beta
+		  prev_weights_mat_ptr,                     // C
+		  num_inputs,                               // C stride
+		  input_shift, input_error_shift, 0,        // desplazamientos
+		  conf.use_cuda_flag);
+      } // if bunch_size > 1 ... else
+      else {
+	if (beta < 1.0f)
+	  doSscal((num_inputs * num_outputs),
+		  beta,
+		  prev_weights_mat_ptr, 0, 1,
+		  conf.use_cuda_flag);
+	if (!transpose_weights)
+	  doSger(CblasColMajor,
+		 num_outputs, num_inputs,
+		 norm_learn_rate,
+		 input_error, input_error_shift, conf.max_bunch_size,
+		 input, input_shift, conf.max_bunch_size,
+		 prev_weights_mat_ptr, 0, num_outputs,
+		 conf.use_cuda_flag);
+	else
+	  doSger(CblasColMajor,
+		 num_inputs, num_outputs,
+		 norm_learn_rate,
+		 input, input_shift, conf.max_bunch_size,
+		 input_error, input_error_shift, conf.max_bunch_size,
+		 prev_weights_mat_ptr, 0, num_inputs,
+		 conf.use_cuda_flag);
+      }
+    } // if isSparse ... else
   }
   
   // The DotProductAction
