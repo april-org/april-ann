@@ -56,14 +56,11 @@ using namespace Functions;
 
 //BIND_LUACLASSNAME ActivationUnits      ann.units.__base__
 //BIND_LUACLASSNAME RealActivationUnits  ann.units.real_cod
-//BIND_LUACLASSNAME LocalActivationUnits ann.units.local_cod
 
 //BIND_CPP_CLASS    ActivationUnits
 //BIND_CPP_CLASS    RealActivationUnits
-//BIND_CPP_CLASS    LocalActivationUnits
 
 //BIND_SUBCLASS_OF  RealActivationUnits  ActivationUnits
-//BIND_SUBCLASS_OF  LocalActivationUnits ActivationUnits
 
 //BIND_CONSTRUCTOR ActivationUnits
 {
@@ -74,6 +71,15 @@ using namespace Functions;
 //BIND_METHOD ActivationUnits num_neurons
 {
   LUABIND_RETURN(uint, obj->numNeurons());
+}
+//BIND_END
+
+//BIND_METHOD ActivationUnits set_sparse
+{
+  bool v;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_GET_PARAMETER(1, bool, v);
+  obj->setSparse(v);
 }
 //BIND_END
 
@@ -147,35 +153,6 @@ using namespace Functions;
   else if (type_enum == OUTPUTS_TYPE)
     ann->registerOutput(obj);
   LUABIND_RETURN(RealActivationUnits, obj);
-}
-//BIND_END
-
-//BIND_CONSTRUCTOR LocalActivationUnits
-//DOC_BEGIN
-// ann.units.real{ size = ..., ann = ... }
-/// Create a local activation input units layer
-/// @param size The number of neurons
-/// @param ann  The ANN which belongs
-//DOC_END
-{
-  
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_CHECK_PARAMETER(1, table);
-  check_table_fields(L, 1, "size", "num_groups", "ann", 0);
-  
-  unsigned int		 size, num_groups;
-  ANNBase		*ann;
-  ActivationUnitsType    type_enum = INPUTS_TYPE;
-
-  LUABIND_GET_TABLE_PARAMETER(1, size, uint, size);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, num_groups, uint, num_groups, 1);
-  LUABIND_GET_TABLE_PARAMETER(1, ann, ANNBase, ann);
-  
-  obj = new LocalActivationUnits(num_groups, size, ann->getConfReference(),
-				 type_enum);
-  ann->registerActivationUnits(obj);
-  ann->registerInput(obj);
-  LUABIND_RETURN(LocalActivationUnits, obj);
 }
 //BIND_END
 
