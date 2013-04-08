@@ -143,7 +143,7 @@ template <typename T>
 class IdentityDataSet : public DataSet<T> {
  private:
   /// Value of zero.
-  T zerovalue,
+  const T zerovalue,
   /// Value of one.
     onevalue;
   /// Patterm size.
@@ -408,8 +408,6 @@ class BitDataSet : public DataSet<T> {
  */
 template <typename T>
 class SparseDataset : public DataSet<T> {
-  /// Zero representation.
-  T          zero;
   /// The underlying matrix with sparse data representation.
   Matrix<T> *matrix;
   /// Number of patterns.
@@ -420,7 +418,7 @@ class SparseDataset : public DataSet<T> {
   int *matrix_indexes;
   
  public:
-  SparseDataset(Matrix<T> *m, int nump, int patsize, T zero);
+  SparseDataset(Matrix<T> *m, int nump, int patsize);
   virtual ~SparseDataset();
   int numPatterns() { return numpatterns; }
   int patternSize() { return patternsize; }
@@ -502,7 +500,7 @@ class SaltNoiseDataSet : public DataSet<T> {
   /// Percentage of values to be modified
   double      vd;
   /// Value of the zero
-  T           zero;
+  const T     zero;
   /// Number of zeroes: vd * patternSize
   int         number_of_zeroes;
   /// Vector of ints for the selected zero positions

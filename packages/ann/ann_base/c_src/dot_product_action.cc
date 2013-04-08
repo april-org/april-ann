@@ -73,7 +73,7 @@ namespace ANN {
     FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
     float weights_factor = 1.0f;
     if (!during_training) weights_factor = 1.0f - inputs->drop_factor;
-
+    
     // if input is sparse, then zero input values are not multiplied
     if (inputs->isSparse()) {
       if (!transpose_weights) {
@@ -81,9 +81,10 @@ namespace ANN {
 	unsigned int w_shift = 0;
 	for (unsigned int i=0; i<num_inputs; ++i, w_shift+=num_outputs) {
 	  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	    if (input_float_ptr[b] < -0.0f || input_float_ptr[b] > 0.0f) {
+	    float v = input_float_ptr[b];
+	    if ( v != 0.0f ) {
 	      doSaxpy(num_outputs,
-		      weights_factor*input_float_ptr[b],
+		      weights_factor*v,
 		      weights_mat_ptr, w_shift, 1,
 		      output_ptr, b, conf.max_bunch_size, conf.use_cuda_flag);
 	    }
@@ -95,11 +96,11 @@ namespace ANN {
 	const float *input_float_ptr = input_ptr->getPPALForRead();
 	for (unsigned int i=0; i<num_inputs; ++i) {
 	  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	    if (input_float_ptr[b] < -0.0f || input_float_ptr[b] > 0.0f) {
-	      unsigned int w_shift = i;
+	    float v = input_float_ptr[b];
+	    if ( v != 0.0f ) {
 	      doSaxpy(num_outputs,
-		      weights_factor*input_float_ptr[b],
-		      weights_mat_ptr, w_shift, num_outputs,
+		      weights_factor*v,
+		      weights_mat_ptr, i, num_outputs,
 		      output_ptr, b, conf.max_bunch_size, conf.use_cuda_flag);
 	    }
 	  }
@@ -281,9 +282,10 @@ namespace ANN {
 	unsigned int w_shift = 0;
 	for (unsigned int i=0; i<num_inputs; ++i, w_shift+=num_outputs) {
 	  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	    if (input_float_ptr[b] < -0.0f || input_float_ptr[b] > 0.0f) {
+	    float v = input_float_ptr[b];
+	    if ( v != 0.0f ) {
 	      doSaxpy(num_outputs,
-		      norm_learn_rate*input_float_ptr[b],
+		      norm_learn_rate*v,
 		      input_error, b+input_error_shift, conf.max_bunch_size,
 		      prev_weights_mat_ptr, w_shift, 1,
 		      conf.use_cuda_flag);
@@ -296,12 +298,12 @@ namespace ANN {
 	const float *input_float_ptr = input->getPPALForRead() + input_shift;
 	for (unsigned int i=0; i<num_inputs; ++i) {
 	  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	    if (input_float_ptr[b] < -0.0f || input_float_ptr[b] > 0.0f) {
-	      unsigned int w_shift = i;
+	    float v = input_float_ptr[b];
+	    if ( v != 0.0f ) {
 	      doSaxpy(num_outputs,
-		      norm_learn_rate*input_float_ptr[b],
+		      norm_learn_rate*v,
 		      input_error, b+input_error_shift, conf.max_bunch_size,
-		      prev_weights_mat_ptr, w_shift, num_outputs,
+		      prev_weights_mat_ptr, i, num_outputs,
 		      conf.use_cuda_flag);
 	    }
 	  }
