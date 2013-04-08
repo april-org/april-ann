@@ -22,6 +22,7 @@
 #ifndef DATASET_CC_H
 #define DATASET_CC_H
 
+#include <cstring>
 #include <cstdlib>
 #include <cstdio>
 #include "dataset.h"
@@ -234,10 +235,9 @@ MatrixDataSet<T>::~MatrixDataSet(){
 template <typename T>
 IdentityDataSet<T>::IdentityDataSet(int patternSize,
 				    T zerovalue,
-				    T onevalue) {
+				    T onevalue) : zerovalue(zerovalue),
+						  onevalue(onevalue) {
   patternsz = patternSize;
-  this->zerovalue = zerovalue;
-  this->onevalue = onevalue;
 }
   
 template <typename T>
@@ -694,8 +694,8 @@ int BitDataSet<T>::putPattern(int index, T *pat) {
 // ---------------------------------------------------------------------
 
 template <typename T>
-SparseDataset<T>::SparseDataset(Matrix<T> *m, int nump, int patsize, T zero) :
-  zero(zero), matrix(m), numpatterns(nump), patternsize(patsize) {
+SparseDataset<T>::SparseDataset(Matrix<T> *m, int nump, int patsize) :
+  matrix(m), numpatterns(nump), patternsize(patsize) {
   IncRef(m);
   matrix_indexes = new int[nump];
   int	j	 = 0;
@@ -723,10 +723,10 @@ SparseDataset<T>::~SparseDataset() {
   delete[] matrix_indexes;
 }
 
-template <typename	T>
+template <typename T>
 int SparseDataset<T>::getPattern(int index, T *pat) {
-  // Atencion: Solo funciona con float
-  for (int i=0; i<patternsize; ++i) pat[i] = zero;
+  // WARNING: inly works with float
+  memset(pat, 0, sizeof(T)*patternsize);
   
   int	pos   = matrix_indexes[index];
   int	count = matrix->data[pos++];

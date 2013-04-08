@@ -824,7 +824,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 //BIND_CLASS_METHOD DataSetFloat sparse
 /* 
    Permite crear un dataset a partir de una matriz sparse.  Requiere 2
-   argumentos. MatrixFloat y tabla con numpatterns, patternsize, zero.
+   argumentos. MatrixFloat y tabla con numpatterns y patternsize.
    La matriz sparse es una secuencia de numeros, donde cada patron
    se representa por:
 
@@ -847,21 +847,17 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
     check_table_fields(L, 2,
 		       "patternSize",
 		       "numPatterns",
-		       "zero",
 		       0);
   }
 
-  float        zero;
   MatrixFloat *mat;
   LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
   int patsize, numpat;
   
   LUABIND_GET_TABLE_PARAMETER(2, patternSize, int, patsize);
   LUABIND_GET_TABLE_PARAMETER(2, numPatterns, int, numpat);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(2, zero, float, zero, 0.0f);
-  SparseDataset<float> *obj = new SparseDataset<float>(mat,numpat,
-						       patsize,
-						       zero);
+  SparseDatasetFloat *obj = new SparseDatasetFloat(mat,numpat,
+						   patsize);
   LUABIND_RETURN(DataSetFloat,obj);
 }
 //BIND_END
