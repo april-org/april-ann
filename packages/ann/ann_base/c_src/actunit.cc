@@ -99,6 +99,53 @@ namespace ANN {
 
   /////////////////////////////////////////////////////////////////////
 
+  // Layer composed of units with a Real type
+  // Each neuron takes a value within the range of the real numbers
+  SparseActivationUnits::SparseActivationUnits(unsigned int num_neurons,
+					       const ANNConfiguration &conf,
+					       ActivationUnitsType type) :
+    ActivationUnits(conf, type),
+    num_neurons(num_neurons) {
+
+    activations = new FloatGPUMirroredMemoryBlock((2 * num_neurons + 1) *
+						  conf.max_bunch_size);
+    if (activations == 0)
+      ERROR_EXIT(141, "Can not alloc unit vectors\n");
+  }
+
+  SparseActivationUnits::~SparseActivationUnits() {
+    delete activations;
+  }
+  
+  void SparseActivationUnits::reset(bool use_cuda) {
+  }
+  
+  ActivationUnits *SparseActivationUnits::clone(const ANNConfiguration &conf) {
+    SparseActivationUnits *units = new SparseActivationUnits(num_neurons,
+							     conf,
+							     type);
+    return units;
+  }
+  
+  unsigned int SparseActivationUnits::size() const {
+    return 2*num_neurons + 1;
+  }
+
+  FloatGPUMirroredMemoryBlock *SparseActivationUnits::getPtr() {
+    return activations;
+  }
+
+  FloatGPUMirroredMemoryBlock *SparseActivationUnits::getErrorVectorPtr() {
+    return 0;
+  }
+
+  FloatGPUMirroredMemoryBlock *SparseActivationUnits::getSquaredLengthSums() {
+    return 0;
+  }
+
+  /////////////////////////////////////////////////////////////////////
+
+
   /*  
       class ActivationUnitsSlice : public ActivationUnits {
       ActivationUnits *units;
