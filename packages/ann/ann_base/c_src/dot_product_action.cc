@@ -78,18 +78,32 @@ namespace ANN {
     if (inputs->isSparse()) {
       if (!transpose_weights) {
 	const float *input_float_ptr = input_ptr->getPPALForRead();
-	unsigned int w_shift = 0;
-	for (unsigned int i=0; i<num_inputs; ++i, w_shift+=num_outputs) {
+	/*
+	  unsigned int w_shift = 0;
+	  for (unsigned int i=0; i<num_inputs; ++i, w_shift+=num_outputs) {
 	  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	    float v = input_float_ptr[b];
-	    if ( v != 0.0f ) {
-	      doSaxpy(num_outputs,
-		      weights_factor*v,
-		      weights_mat_ptr, w_shift, 1,
-		      output_ptr, b, conf.max_bunch_size, conf.use_cuda_flag);
-	    }
+	  float v = input_float_ptr[b];
+	  if ( v != 0.0f ) {
+	  doSaxpy(num_outputs,
+	  weights_factor*v,
+	  weights_mat_ptr, w_shift, 1,
+	  output_ptr, b, conf.max_bunch_size, conf.use_cuda_flag);
+	  }
 	  }
 	  input_float_ptr += conf.max_bunch_size;
+	  }
+	*/
+	for (unsigned int b=0, j=0; b<conf.cur_bunch_size; ++b) {
+	  unsigned int N = static_cast<unsigned int>(input_float_ptr[j++]);
+	  for (unsigned int i=0, j=0; i < N; ++i, j += 2) {
+	    unsigned int neuron = static_cast<unsigned int>(input_float_ptr[j]);
+	    float value = input_float_ptr[j+1];
+	    unsigned int w_shift = neuron*num_outputs;
+	    doSaxpy(num_outputs,
+		    weights_factor*v,
+		    weights_mat_ptr, w_shift, 1,
+		    output_ptr, b, conf.max_bunch_size, conf.use_cuda_flag);
+	  }
 	}
       } // if !transposed weights
       else {
@@ -279,20 +293,33 @@ namespace ANN {
 		conf.use_cuda_flag);
       if (!transpose_weights) {
 	const float *input_float_ptr = input->getPPALForRead() + input_shift;
-	unsigned int w_shift = 0;
-	for (unsigned int i=0; i<num_inputs; ++i, w_shift+=num_outputs) {
-	  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	    float v = input_float_ptr[b];
-	    if ( v != 0.0f ) {
-	      doSaxpy(num_outputs,
-		      norm_learn_rate*v,
-		      input_error, b+input_error_shift, conf.max_bunch_size,
-		      prev_weights_mat_ptr, w_shift, 1,
-		      conf.use_cuda_flag);
-	    }
+	// unsigned int w_shift = 0;
+	// for (unsigned int i=0; i<num_inputs; ++i, w_shift+=num_outputs) {
+	//   for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
+	//     float v = input_float_ptr[b];
+	//     if ( v != 0.0f ) {
+	//       doSaxpy(num_outputs,
+	// 	      norm_learn_rate*v,
+	// 	      input_error, b+input_error_shift, conf.max_bunch_size,
+	// 	      prev_weights_mat_ptr, w_shift, 1,
+	// 	      conf.use_cuda_flag);
+	//     }
+	//   }
+	//   input_float_ptr += conf.max_bunch_size;
+	// }
+	for (unsigned int b=0, j=0; b<conf.cur_bunch_size; ++b) {
+	  unsigned int N = static_cast<unsigned int>(input_float_ptr[j++]);
+	  for (unsigned int i=0, j=0; i < N; ++i, j += 2) {
+	    unsigned int neuron = static_cast<unsigned int>(input_float_ptr[j]);
+	    float value = input_float_ptr[j+1];
+	    unsigned int w_shift = neuron*num_outputs;
+	    doSaxpy(num_outputs,
+		    norm_learn_rate*value,
+		    input_error, b+input_error_shift, conf.max_bunch_size,
+		    prev_weights_mat_ptr, w_shift, 1,
+		    conf.use_cuda_flag);
 	  }
-	  input_float_ptr += conf.max_bunch_size;
-	}
+	}	
       } // if !transposed weights
       else {
 	const float *input_float_ptr = input->getPPALForRead() + input_shift;

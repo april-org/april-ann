@@ -41,7 +41,6 @@ namespace ANN {
     const ANNConfiguration &conf;
     ActivationUnitsType     type;
     unsigned int            fanin;
-    bool                    is_sparse;
   public:
     float                   drop_factor;
     ActivationUnits(const ANNConfiguration &conf,
@@ -84,14 +83,12 @@ namespace ANN {
     /// for FAN IN computation
     virtual unsigned int getFanIn() const { return fanin; }
     virtual void increaseFanIn(unsigned int value) { fanin += value; }
-    bool isSparse() const { return is_sparse; }
-    void setSparse(bool v) { is_sparse = v; }
+    bool isSparse() const = 0;
   };
   
   /// Implementa un vector de neuronas de tamanyo num_neurons *
   /// bunch_size, de manera que cada num_neurons tenemos una muestra, y
-  /// tenemos tantas muestras como bunch. Precisa de una funcion de
-  /// activacion, que puede ser NULL.
+  /// tenemos tantas muestras como bunch.
   //  TODO: flag use_cuda para otros tipos de unidades de activacion.
   class RealActivationUnits : public ActivationUnits 
   {
@@ -117,6 +114,36 @@ namespace ANN {
       return size();
     }
     void reset(bool use_cuda);
+    bool isSparse() const { return false; }
+  };
+
+  /// Implements a layer of neurons which activations are sparse. It is only
+  /// valid as input, never as hidden or output layer. The activations array
+  /// keeps a sequence of numbers 2N+1 numbers, being N the number of activated
+  /// neurons:  N pos_1 val_1 pos_2 val_2 ... pos_N val_N, being pos_i and val_i
+  /// the neuron identifier and its activation value.
+  class SparseActivationUnits : public ActivationUnits 
+  {
+    unsigned int		 num_neurons;
+    FloatGPUMirroredMemoryBlock *activations;
+  public:
+    SparseActivationUnits(unsigned int        num_neurons,
+			  const ANNConfiguration &conf,
+			  ActivationUnitsType type);
+    ~SparseActivationUnits();
+    unsigned int		 size() const;
+    FloatGPUMirroredMemoryBlock *getPtr();
+    FloatGPUMirroredMemoryBlock *getErrorVectorPtr();
+    FloatGPUMirroredMemoryBlock *getSquaredLengthSums();
+    unsigned int     getOffset() const { return 0; }
+    ActivationUnits *clone(const ANNConfiguration &conf);
+    // deprecated:
+    // const unsigned int &getBunchSize() const { return bunch_size; }
+    unsigned int numNeurons() const {
+      return size();
+    }
+    void reset(bool use_cuda);
+    bool isSparse() const { return true; }
   };
 
   /// implementa un subvector de neuronas que se encuentra como
