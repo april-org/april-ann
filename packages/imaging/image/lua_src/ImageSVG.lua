@@ -11,7 +11,6 @@ function imageSVG:__call(params)
     obj.width = params.width or -1
     obj.height = params.height or -1
 
-    print(obj.width, obj.height)
     -- Header, body and footer are tables of strings
     obj.header = {}
     obj.body   = {}
@@ -25,23 +24,20 @@ end
 function imageSVG:setHeader()
 
   self.header = {}
-  table.insert(self.header, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
-	table.insert(self.header, "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 20001102//EN\" \"http://www.w3.org/TR/2000/CR-SVG-20001102/DTD/svg-20001102.dtd\">\n")
+  table.insert(self.header, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+	table.insert(self.header, "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 20001102//EN\" \"http://www.w3.org/TR/2000/CR-SVG-20001102/DTD/svg-20001102.dtd\">")
 
 --  local swidth  = tostring(self.width) or "100%"
 --  local sheight = tostring(self.height) or "100%"
   
   local swidth  = (self.width ~= -1 and tostring(self.width)) or "100%"
   local sheight = (self.height ~= -1 and tostring(self.height)) or "100%"
-  
 	table.insert(self.header,string.format("<svg width=\"%s\" height=\"%s\">\n", swidth, sheight))
-
-  table.insert(self.header, "<g transform=\"translate(0,0)\">\n")
 end
 
 function imageSVG:setFooter()
   self.footer = {}
-  table.insert(self.footer, "</g>\n</svg>")
+  table.insert(self.footer, "</svg>")
 end
 
 -- Recieves a table with points x,y
@@ -64,26 +60,24 @@ function imageSVG:addPathFromTable(path, params)
         end
 
     end
-    table.insert(buffer, string.format("\"fill=\"none\" stroke = \"%s\" stroke-width = \"%s\"/>", stroke, stroke_width))
+    table.insert(buffer, string.format("\" fill=\"none\" stroke = \"%s\" stroke-width = \"%s\"/>", stroke, stroke_width))
 
     table.insert(self.body, table.concat(buffer))
-
 end
 
 function imageSVG:getHeader()
-    return table.concat(self.header) 
+    return table.concat(self.header, "\n") 
 end
 function imageSVG:getBody()
-    return table.concat(self.body) 
+    return table.concat(self.body, "\n") 
 end
 function imageSVG:getFooter()
-    return table.concat(self.footer) 
+    return table.concat(self.footer, "\n") 
 end
 function imageSVG:getString()
     return table.concat({self:getHeader(), self:getBody(), self:getFooter()})
 end
 function imageSVG:write(filename)
-    print("\nStarting to write Svg-file.")
     file = io.open(filename, "w")
     file:write(self:getHeader())
     file:write(self:getBody())
@@ -92,9 +86,7 @@ end
 
 -- Each element of the table is a path
 function imageSVG:addPaths(paths)
-
     local colors = { "red", "blue", "green", "green", "orange"}
-
     for i, path in ipairs(paths) do
         local color = "black"
         if (i <= #colors) then
@@ -110,7 +102,9 @@ function imageSVG:resize(height, width)
 end
 
 -- Extra image function
-function imageSVG.overlapSVG(png_file, svg_file)
-  os.execute('inkscape -z -e '..png_file..' '..svg_file..' 1>/dev/null 2>/dev/null')
+function imageSVG:addImage(filename, width, height, offsetX, offsetY)
+  
+    table.insert(self.body, string.format("<image x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" xlink:href=\"%s\">\n</image>", offsetX, offsetY, width, height, filename))
+
 end
 
