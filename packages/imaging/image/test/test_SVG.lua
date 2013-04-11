@@ -13,7 +13,7 @@ mySVG:addPathFromTable(t, { stroke = "green"})
 print("===============")
 print(mySVG:getString())
 
-mySVG:write("kk.svg")
+mySVG:write("img1.svg")
 
 print(mySVG:getString())
 
@@ -25,7 +25,7 @@ mySVG:setFooter({})
 t1 = { {0,0}, {100,0}, {100,100}, {0, 100} }
 t2 = { {0,0}, {50,50}, {100,0}, {0, 100} }
 t = {t1,t2}
+mySVG:addImage("molo.png",100,100, 50, 50)
 mySVG:addPaths(t)
-mySVG:write("kk2.svg")
+mySVG:write("img2.svg")
 
-imageSVG.overlapSVG("molo.png","kk2.svg")
