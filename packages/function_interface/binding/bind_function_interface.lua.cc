@@ -25,8 +25,8 @@
 
 //BIND_HEADER_H
 #include "function_interface.h"
-#include "datasetfloat_producer.h"
-#include "datasetfloat_consumer.h"
+#include "datasettoken_producer.h"
+#include "datasettoken_consumer.h"
 
 using namespace Functions;
 
@@ -57,19 +57,19 @@ using namespace Functions;
 
 ///////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME FloatFloatFunctionInterface __function_interface_float_float__
-//BIND_CPP_CLASS    FloatFloatFunctionInterface
+//BIND_LUACLASSNAME TokenTokenFunctionInterface __function_interface_token_token__
+//BIND_CPP_CLASS    TokenTokenFunctionInterface
 
-//BIND_SUBCLASS_OF FloatFloatFunctionInterface FunctionBase
+//BIND_SUBCLASS_OF TokenTokenFunctionInterface FunctionBase
 
-//BIND_CONSTRUCTOR FloatFloatFunctionInterface
+//BIND_CONSTRUCTOR TokenTokenFunctionInterface
 {
   LUABIND_ERROR("Abstract class!!!");
 }
 //BIND_END
 
 
-//BIND_METHOD FloatFloatFunctionInterface calculate
+//BIND_METHOD TokenTokenFunctionInterface calculate
 //DOC_BEGIN
 // calculate(input) : table
 
@@ -79,7 +79,7 @@ using namespace Functions;
 //DOC_END
 {
   unsigned int input_size, output_size = obj->getOutputSize();
-  float *input, *output = new float[output_size];
+  Token *input, *output = new float[output_size];
   LUABIND_CHECK_ARGN(==,1);
   LUABIND_TABLE_GETN(1, input_size);
   if (input_size != obj->getInputSize())

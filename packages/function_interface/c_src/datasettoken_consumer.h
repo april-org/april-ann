@@ -20,36 +20,29 @@
  *
  */
 
-#include "datasetfloat_consumer.h"
+#include "function_interface.h"
+#include "datasetToken.h"
 
 namespace Functions {
-  
-  DataSetFloatConsumer::DataSetFloatConsumer(DataSetFloat *ds) : ds(ds) {
-    IncRef(ds);
-    ipat = 0;
-  }
-  
-  DataSetFloatConsumer::~DataSetFloatConsumer() {
-    DecRef(ds);
-  }
-  
-  void DataSetFloatConsumer::put(float *pattern) {
-    // check for a NULL pointer and check the number of patterns with the
-    // counter value
-    if (pattern != 0 && static_cast<int>(ipat) < ds->numPatterns())
-      ds->putPattern(ipat++, pattern);
-    // we have the property of pattern pointer, we delete it
-    delete[] pattern;
-  }
-  
-  void DataSetFloatConsumer::reset() {
-    // with every reset, this consumer will overwrite the entire DataSetFloat
-    ipat = 0;
-  }
-  
-  void DataSetFloatConsumer::destroy() {
-    // nothing more to do, only reset the counter
-    ipat = 0;
-  }
 
+  /// A specialization of DataConsumer which put data into a dataset.
+  /**
+     A specialization of FloatDataConsumer class which works as a sink of data
+     vectors. Data vectros will be stored in the internal DataSetToken
+     attribute. The DataSetToken must have enough space for all consumed
+     vectors.
+   */
+  class DataSetTokenConsumer : public DataConsumer{
+    /// Internal DataSetToken where tokens will be stored.
+    DataSetToken *ds;
+    /// Auxiliar iterator counter of how many vectors were processed.
+    unsigned int  ipat;
+  public:
+    DataSetTokenConsumer(DataSetToken *ds);
+    ~DataSetTokenConsumer();
+    void put(Token *pattern);
+    void reset();
+    void destroy();
+  };
+  
 }
