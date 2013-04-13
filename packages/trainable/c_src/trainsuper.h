@@ -23,7 +23,7 @@
 #define _TRAINABLE_SUPERVISED_H
 
 #include "function_interface.h"
-#include "datasetFloat.h"
+#include "datasetToken.h"
 
 #define mSetOption(var_name,var) if(!strcmp(name,(var_name))){(var)=value;return;}
 #define mHasOption(var_name) if(!strcmp(name,(var_name))) return true;
@@ -33,8 +33,8 @@ namespace Trainable {
 
   class TrainableSupervised : public Functions::FloatFloatFunctionInterface {
   
-    void exitOnDatasetSizeError(DataSetFloat *input_dataset,
-				DataSetFloat *output_dataset);
+    void exitOnDatasetSizeError(DataSetToken *input_dataset,
+				DataSetToken *output_dataset);
 
   protected:
     /// Entre begin y end va el conjunto de patrones de una epoca
@@ -71,33 +71,33 @@ namespace Trainable {
     
     ////////// METODOS IMPLEMENTADOS, SE PERMITE SOBREESCRIBIRLOS ///////////
     // Metodos ya implementados
-    virtual float trainOnePattern(float *input, float *target_output);
-    virtual float validateOnePattern(float *input, float *target_output);
+    virtual float trainOnePattern(Token *input, Token *target_output);
+    virtual float validateOnePattern(Token *input, Token *target_output);
 
     // para entrenar con datasets
-    virtual float trainDataset(DataSetFloat *input_dataset,
-			       DataSetFloat *target_output_dataset,
+    virtual float trainDataset(DataSetToken *input_dataset,
+			       DataSetToken *target_output_dataset,
 			       MTRand       *shuffle=0);
-    virtual float trainDatasetWithReplacement(DataSetFloat *input_dataset,
-					      DataSetFloat *target_output_dataset,
+    virtual float trainDatasetWithReplacement(DataSetToken *input_dataset,
+					      DataSetToken *target_output_dataset,
 					      MTRand *shuffle,
 					      int replacement);
     virtual float trainDatasetWithDistribution(int num_classes,
-					       DataSetFloat **input_datasets,
-					       DataSetFloat **target_output_datasets,
+					       DataSetToken **input_datasets,
+					       DataSetToken **target_output_datasets,
 					       double *aprioris,
 					       MTRand *shuffle,
 					       int replacement);
     
     // para validar con datasets
-    virtual float validateDataset(DataSetFloat *input_dataset,
-				  DataSetFloat *target_output_dataset);
-    virtual float validateDatasetWithReplacement(DataSetFloat *input_dataset,
-						 DataSetFloat *target_output_dataset,
+    virtual float validateDataset(DataSetToken *input_dataset,
+				  DataSetToken *target_output_dataset);
+    virtual float validateDatasetWithReplacement(DataSetToken *input_dataset,
+						 DataSetToken *target_output_dataset,
 						 MTRand *shuffle,
 						 int replacement);
-    virtual void useDataset(DataSetFloat *input_dataset,
-			    DataSetFloat *output_dataset);
+    virtual void useDataset(DataSetToken *input_dataset,
+			    DataSetToken *output_dataset);
   };
 
 }

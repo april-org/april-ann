@@ -30,7 +30,6 @@
 
 using april_utils::ReferencedVectorUint;
 
-
 /// A pure abstract templatized class that serves as interface.
 /**
    A DataSet is a class interface which define the concept of set of pattern
@@ -52,7 +51,7 @@ class DataSet : public Referenced {
   virtual int getPattern(int index, T *pat)=0;
   /// Put the given vector pat at pattern index. The function returns the
   /// patternSize().
-  virtual int putPattern(int index, T *pat)=0;
+  virtual int putPattern(int index, const T *pat)=0;
 };
 
 /// DataSet specialization to put or get patterns from a Matrix object.
@@ -83,6 +82,8 @@ class MatrixDataSet : public DataSet<T> {
   int *coordinate;
   /// Auxiliar, for getPattern.
   T *pattern;
+  /// Auxiliar, for putPattern.
+  const T *const_pattern;
   /// Auxiliar, for getPattern.
   int offsetpat;
   void index2coordinate(int index);
@@ -109,7 +110,7 @@ class MatrixDataSet : public DataSet<T> {
   int numPatterns() { return numPatternsv; }
   int patternSize() { return patternSizev; }
   int getPattern(int index, T *pat);
-  int putPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
 };
 
 /// DataSet specialization to put or get patterns from a union of DataSets.
@@ -135,7 +136,7 @@ class UnionDataSet : public DataSet<T> {
   int numPatterns() { return d[num]; }
   int patternSize() { return patternsz; }
   int getPattern(int index, T *pat);
-  int putPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
 };
 
 /// DataSet specialization which serves to getPatterns from an IdentityMatrix.
@@ -156,7 +157,7 @@ class IdentityDataSet : public DataSet<T> {
   int numPatterns() { return patternsz; }
   int patternSize() { return patternsz; }
   int getPattern(int index, T *pat);
-  int putPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
 };
 
 /// A DataSet specialization which takes an interval of patterns from other.
@@ -182,7 +183,7 @@ class SubDataSet : public DataSet<T> {
   int numPatterns() { return size; }
   int patternSize() { return ds->patternSize(); }
   int getPattern(int index, T *pat);
-  int putPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
 };
 
 /// A specialization of DataSet which takes an split of other DataSet.
@@ -210,7 +211,7 @@ class SplitDataSet : public DataSet<T> {
   int numPatterns() { return ds->numPatterns(); }
   int patternSize() { return size; }
   int getPattern(int index, T *pat);
-  int putPattern(int index, T *pat) { return 0; } // NO DEFINIDO
+  int putPattern(int index, const T *pat) { return 0; } // NO DEFINIDO
 };
 
 /// A specialization of DataSet which join outputs from several DataSets.
@@ -234,7 +235,7 @@ class JoinDataSet : public DataSet<T> {
   int numPatterns() { return vds[0]->numPatterns(); }
   int patternSize() { return d[num]; }
   int getPattern(int index, T *pat);
-  int putPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
 };
 
 /// A specialization of DataSet which takes a general sub set from other.
@@ -265,7 +266,7 @@ class IndexDataSet : public DataSet<T> {
   int numPatterns() { return indices->numPatterns(); }
   int patternSize() { return patternsize; }
   int getPattern(int index, T *pat);
-  int putPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
 };
 
 /// An auxiliar object for LinearCombDataSet.
@@ -308,7 +309,7 @@ class LinearCombDataSet : public DataSet<T> {
   int numPatterns() { return ds->numPatterns(); }
   int patternSize() { return conf->patternsize; }
   int getPattern(int index, T *pat);
-  int putPattern(int index, T *pat) { return 0; } // undefined method
+  int putPattern(int index, const T *pat) { return 0; } // undefined method
 };
 
 /// A specialization of DataSet which takes a DataSet and adds context to its patterns.
@@ -339,7 +340,7 @@ class ContextualizerDataSet : public DataSet<T> {
   int numPatterns() { return numpatterns; }
   int patternSize() { return patternsize; }
   int getPattern(int index, T *pat);
-  int putPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
 };
 
 /// A specialization of DataSet for data accumulation using putPattern
@@ -358,7 +359,7 @@ class AccumulateDataSet : public DataSet<T> {
   int numPatterns() { return numpatterns; }
   int patternSize() { return patternsize; }
   int getPattern(int index, T *pat);
-  int putPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
 };
 
 template <typename T>
@@ -374,7 +375,7 @@ class ByteDataSet : public DataSet<T> {
   int numPatterns() { return numpatterns; }
   int patternSize() { return patternsize; }
   int getPattern(int index, T *pat);
-  int putPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
 };
 
 template <typename T>
@@ -388,7 +389,7 @@ class BitDataSet : public DataSet<T> {
   int numPatterns() { return numpatterns; }
   int patternSize() { return patternsize; }
   int getPattern(int index, T *pat);
-  int putPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
 };
 
 
@@ -423,7 +424,7 @@ class SparseDataset : public DataSet<T> {
   int numPatterns() { return numpatterns; }
   int patternSize() { return patternsize; }
   int getPattern(int index, T *pat);
-  int putPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
 };
 
 /// A specialization DataSet for shortlist approach in NNLMs.
@@ -449,7 +450,7 @@ public:
   int numPatterns() { return ds->numPatterns(); }
   int patternSize() { return patsize; }
   int getPattern(int index, T *pat);
-  int putPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
 };
 
 /// Similar to IndexedDataSet but using a vector of unsigned int as indexes.
@@ -465,7 +466,7 @@ class IndexFilterDataSet : public DataSet<T> {
   int numPatterns() { return (int)indexes->size(); }
   int patternSize() { return ds->patternSize(); }
   int getPattern(int index, T *pat);
-  int putPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
 };
 
 #include "MersenneTwister.h"
@@ -487,7 +488,7 @@ class PerturbationDataSet : public DataSet<T> {
   int numPatterns() { return ds->numPatterns(); }
   int patternSize() { return ds->patternSize(); }
   int getPattern(int index, T *pat);
-  int putPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
 };
 
 /// A specialization of DataSet which add a fixed size salt noise to patterns.
@@ -512,7 +513,7 @@ public:
   int numPatterns() { return ds->numPatterns(); }
   int patternSize() { return ds->patternSize(); }
   int getPattern(int index, T *pat);
-  int putPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
 };
 
 /// A specialization of DataSet for cacheNNLMs training.
@@ -544,7 +545,7 @@ class CacheDataSet : public DataSet<T> {
   int				 numPatterns() { return ds->numPatterns(); }
   int patternSize() { return cache_size; }
   int				 getPattern(int index, T *pat);
-  int				 putPattern(int index, T *pat);
+  int				 putPattern(int index, const T *pat);
 };
 
 template <typename T>
@@ -559,7 +560,7 @@ class DerivDataSet : public DataSet<T> {
   int numPatterns() { return numpatterns; }
   int patternSize() { return patternsz;   }
   int getPattern(int index, T *pat);
-  int putPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
 };
 
 /*** Implementacion ***/
