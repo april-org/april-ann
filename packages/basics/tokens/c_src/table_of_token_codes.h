@@ -46,6 +46,7 @@ public:
   static const TokenCode vector_uint32       = 0x3006;
   static const TokenCode vector_SymbolScores = 0x3007;
   static const TokenCode vector_Tokens       = 0x3008;
+  static const TokenCode vector_float_sparse = 0x3009;
   
   // envio de grafos:
   static const TokenCode token_idag          = 0x4000;  

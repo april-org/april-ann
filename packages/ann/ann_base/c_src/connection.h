@@ -78,7 +78,13 @@ namespace ANN {
     // contamos el numero de veces que nos referencian, asi sabemos si
     // la conexion es compartida por mas de una accion
     void         countReference();
-    unsigned int getNumReferences() const;
+    unsigned int getNumReferences() const { return num_references; }
+    unsigned int getInputSize()  const { return num_inputs; }
+    unsigned int getNumInputs()  const { return num_inputs; }
+    unsigned int getOutputSize() const { return num_outputs; }
+    unsigned int getNumOutputs() const { return num_outputs; }
+    
+
     virtual void         beginUpdate();
     virtual bool         endUpdate(); // return true when last update call
     bool         isFirstUpdateCall();
@@ -94,13 +100,13 @@ namespace ANN {
     
     // INTERFAZ A IMPLEMENTAR
     virtual bool checkInputOutputSizes(ActivationUnits *input,
-				       ActivationUnits *output) const = 0;
+				       ActivationUnits *output) const;
     virtual void randomizeWeights(MTRand *rnd, float low, float high,
-				  bool use_fanin) = 0;
+				  bool use_fanin);
     virtual void randomizeWeightsAtColumn(unsigned int col,
 					  MTRand *rnd,
 					  float low, float high,
-					  bool use_fanin) = 0;
+					  bool use_fanin);
     // Carga/guarda los pesos de la matriz data comenzando por la
     // posicion first_weight_pos. Devuelve la suma del numero de pesos
     // cargados/salvados y first_weight_pos. En caso de error,
@@ -108,24 +114,17 @@ namespace ANN {
     virtual unsigned int loadWeights(MatrixFloat *data,
 				     MatrixFloat *old_data,
 				     unsigned int first_weight_pos,
-				     unsigned int column_size) = 0;
+				     unsigned int column_size);
 
     virtual unsigned int copyWeightsTo(MatrixFloat *data,
 				       MatrixFloat *old_data,
 				       unsigned int first_weight_pos,
-				       unsigned int column_size) = 0;
+				       unsigned int column_size);
     // para hacer copias
     virtual Connections *clone() = 0;
     
     virtual unsigned int getNumWeights() const {
       return total_size;
-    }
-    
-    virtual unsigned int getNumInputs() const {
-      return num_inputs;
-    }
-    virtual unsigned int getNumOutputs() const {
-      return num_outputs;
     }
     
     void setFanIn(unsigned int value) { fanin = max(fanin, value); }

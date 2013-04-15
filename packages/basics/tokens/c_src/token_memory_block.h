@@ -14,6 +14,7 @@ public:
   const GPUMirroredMemoryBlock *getMemBlock() const { return mem_block; }
   GPUMirroredMemoryBlock *getMemBlock() { return mem_block; }
   void getUsedSize() const { return used_size; }
+  void getMaxSize() const { return mem_block->getSize(); }
   void resize(unsigned int size);
   Token *clone() const;
   buffer_list* toString();

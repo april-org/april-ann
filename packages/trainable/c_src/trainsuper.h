@@ -31,7 +31,7 @@
 
 namespace Trainable {
 
-  class TrainableSupervised : public Functions::FloatFloatFunctionInterface {
+  class TrainableSupervised : public Functions::FunctionInterface {
   
     void exitOnDatasetSizeError(DataSetToken *input_dataset,
 				DataSetToken *output_dataset);
@@ -40,12 +40,12 @@ namespace Trainable {
     /// Entre begin y end va el conjunto de patrones de una epoca
     virtual void beginTrainingBatch() = 0;
     // le da un patrin para entrenar
-    virtual void trainPattern(float *input, float *target_output)    = 0;
+    virtual void trainPattern(Token *input, Token *target_output)    = 0;
     virtual float endTrainingBatch()   = 0;
 
     virtual void beginValidateBatch() = 0;
     // le da un patron para calcular el error, PERO sin entrenar
-    virtual void validatePattern(float *input, float *target_output) = 0;
+    virtual void validatePattern(Token *input, Token *target_output) = 0;
     virtual float endValidateBatch()   = 0;
   
   public:
@@ -58,16 +58,6 @@ namespace Trainable {
 
     virtual void loadModel(const char *filename) = 0;
     virtual void saveModel(const char *filename) = 0;
-    
-    // Heredados de FunctionBase
-    // virtual unsigned int getInputSize()  const = 0;
-    // virtual unsigned int getOutputSize() const = 0;
-    Functions::NS_function_io::type getInputType() const {
-      return Functions::NS_function_io::FLOAT;
-    }
-    Functions::NS_function_io::type getOutputType() const {
-      return Functions::NS_function_io::FLOAT;
-    }
     
     ////////// METODOS IMPLEMENTADOS, SE PERMITE SOBREESCRIBIRLOS ///////////
     // Metodos ya implementados
