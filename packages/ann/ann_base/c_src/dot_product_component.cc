@@ -24,237 +24,130 @@
 
 namespace ANN {
 
-  /////////////////////////////////////
-  // DotProductAction implementation //
-  /////////////////////////////////////
+  ///////////////////////////////////////////
+  // DotProductANNComponent implementation //
+  ///////////////////////////////////////////
   
-  DotProductAction::DotProductAction(const char *name, const char *weights_name,
+  DotProductANNComponent::DotProductANNComponent(const char *name, const char *weights_name,
 				     unsigned int input_size,
 				     unsigned int output_size,
 				     bool transpose_weights) :
     ANNComponent(input_size, output_size, name, weights_name),
-    input(0), output(0),
-    error_input(0), error_output(0),
+    input(0), output(new TokenMemoryBlock()),
+    error_input(0), error_output(new TokenMemoryBlock()),
     weights_matrix(0),
     learning_rate(-1.0f),
     momentum(0.0f),
     weight_decay(0.0f),
     c_weight_decay(1.0f),
-    neuron_squared_length_upper_bound(-1.0f),
-    transpose_weights(transpose_weights) {
+    neuron_squared_length_upper_bound(-1.0f) {
+    IncRef(output);
+    IncRef(error_output);
+    this->transpose_weights = (transpose_weights) ? CblasTrans : CblasNoTrans;
   }
   
-  DotProductAction::~DotProductAction() {
-    DecRef(input);
+  DotProductANNComponent::~DotProductANNComponent() {
+    if (input) DecRef(input);
+    if (error_input) DecRef(error_input);
     DecRef(output);
-    DecRef(error_input);
     DecRef(error_output);
-    DecRef(weights_matrix);
+    if (weights_matrix) DecRef(weights_matrix);
   }
   
-  // The DotProductAction
-  void DotProductAction::doForward(bool during_training) {
-    FloatGPUMirroredMemoryBlock *input_ptr       = inputs->getPtr();
-    FloatGPUMirroredMemoryBlock *output_ptr      = outputs->getPtr();
+  // The DotProductANNComponent
+  Token *DotProductANNComponent::doForward(Token *_input, bool during_training) {
+    // error checking
+    if ( (_input == 0) ||
+	 (_input->getTokenCode() != table_of_token_codes::token_mem_block))
+      ERROR_EXIT(129,"Incorrect input Token type, expected token_mem_block!\n");
+    // change current input by new input
+    if (input) DecRef(input);
+    input = _input->convertTo<TokenMemoryBlock*>();
+    IncRef(input);
+    // compute current bunch
+    unsigned int bunch_size = input->getUsedSize() / input_size;
+    this->bunch_size = bunch_size;
+    // and resize the output to fit the bunch
+    output->resize(bunch_size * output_size);
+    // get memory blocks for tokens and weights
+    FloatGPUMirroredMemoryBlock *input_ptr       = input->getMemBlock();
+    FloatGPUMirroredMemoryBlock *output_ptr      = output->getMemBlock();
     FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
+    // weights factor depends on dropout parameter
     float weights_factor = 1.0f;
     if (!during_training) weights_factor = 1.0f - inputs->drop_factor;
-    
-    // if input is sparse, then zero input values are not multiplied
-    if (inputs->isSparse()) {
-      if (!transpose_weights) {
-	const float *input_float_ptr = input_ptr->getPPALForRead();
-	/*
-	  unsigned int w_shift = 0;
-	  for (unsigned int i=0; i<num_inputs; ++i, w_shift+=num_outputs) {
-	  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	  float v = input_float_ptr[b];
-	  if ( v != 0.0f ) {
-	  doSaxpy(num_outputs,
-	  weights_factor*v,
-	  weights_mat_ptr, w_shift, 1,
-	  output_ptr, b, conf.max_bunch_size, conf.use_cuda_flag);
-	  }
-	  }
-	  input_float_ptr += conf.max_bunch_size;
-	  }
-	*/
-	for (unsigned int b=0, j=0; b<conf.cur_bunch_size; ++b) {
-	  unsigned int N = static_cast<unsigned int>(input_float_ptr[j++]);
-	  for (unsigned int i=0, j=0; i < N; ++i, j += 2) {
-	    unsigned int neuron = static_cast<unsigned int>(input_float_ptr[j]);
-	    float value = input_float_ptr[j+1];
-	    unsigned int w_shift = neuron*num_outputs;
-	    doSaxpy(num_outputs,
-		    weights_factor*v,
-		    weights_mat_ptr, w_shift, 1,
-		    output_ptr, b, conf.max_bunch_size, conf.use_cuda_flag);
-	  }
-	}
-      } // if !transposed weights
-      else {
-	const float *input_float_ptr = input_ptr->getPPALForRead();
-	for (unsigned int i=0; i<num_inputs; ++i) {
-	  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	    float v = input_float_ptr[b];
-	    if ( v != 0.0f ) {
-	      doSaxpy(num_outputs,
-		      weights_factor*v,
-		      weights_mat_ptr, i, num_outputs,
-		      output_ptr, b, conf.max_bunch_size, conf.use_cuda_flag);
-	    }
-	  }
-	  input_float_ptr += conf.max_bunch_size;
-	}
-      } // if !transposed weights .. else
-    } // if isSparse
+    //
+    if (bunch_size == 1) {
+      // vector x matrix product
+      doSgemv(CblasColMajor, transpose_weights,
+	      weights_matrix->getOutputSize(), weights_matrix->getInputSize(),
+	      weights_factor, weights_mat_ptr, weights_matrix->getOutputSize(),
+	      input_ptr, bunch_size, // conf.max_bunch_size
+	      1.0f, output_ptr, bunch_size, // conf.max_bunch_size,
+	      0, 0, 0, // inputs->getOffset(), outputs->getOffset()
+	      GlobalConf::use_cuda);
+    } // if bunch_size==1
     else {
-      if (conf.cur_bunch_size == 1) {
-	// vector x matrix product
-	if (!transpose_weights) {
-	  doSgemv(CblasColMajor, CblasNoTrans,
-		  num_outputs, num_inputs,
-		  weights_factor, weights_mat_ptr, num_outputs,
-		  input_ptr, conf.max_bunch_size,
-		  1.0f, output_ptr, conf.max_bunch_size,
-		  0, inputs->getOffset(), outputs->getOffset(),
-		  conf.use_cuda_flag);
-	} // if !transposed weights
-	else {
-	  doSgemv(CblasColMajor, CblasTrans,
-		  num_inputs, num_outputs,
-		  weights_factor, weights_mat_ptr, num_inputs,
-		  input_ptr, conf.max_bunch_size,
-		  1.0f, output_ptr, conf.max_bunch_size,
-		  0, inputs->getOffset(), outputs->getOffset(),
-		  conf.use_cuda_flag);
-	} // if !transposed weights ... else
-      } // if bunch_size==1
-      else {
-	// matrix x matrix product
-	// C = \alpha op(A) op(B) + \beta C
-	// input * weights = output
-	if (!transpose_weights) {
-	  doSgemm(CblasColMajor, CblasNoTrans, CblasTrans,
-		  conf.cur_bunch_size, num_outputs, num_inputs,
-		  weights_factor, input_ptr, conf.max_bunch_size,
-		  weights_mat_ptr, num_outputs,
-		  // beta = 1.0f, C matrix contains BIAS and probably other layer
-		  // computations
-		  1.0f, output_ptr, conf.max_bunch_size,
-		  inputs->getOffset(), 0, outputs->getOffset(),
-		  conf.use_cuda_flag);
-	} // if !transposed weights
-	else {
-	  doSgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
-		  conf.cur_bunch_size, num_outputs, num_inputs,
-		  weights_factor,
-		  input_ptr, conf.max_bunch_size,
-		  weights_mat_ptr, num_inputs,
-		  // beta = 1.0f, C matrix contains BIAS and probably other layer
-		  // computations
-		  1.0f, output_ptr, conf.max_bunch_size,
-		  inputs->getOffset(), 0, outputs->getOffset(),
-		  conf.use_cuda_flag);
-	} // if !transposed weights ... else
-      } // if bunch_size==1 ... else
-    } // if isSparse ... else
-  }
-
-  void DotProductAction::doBackprop() {
-    FloatGPUMirroredMemoryBlock *output_error = inputs->getErrorVectorPtr();
-    if (output_error != 0) {
-      const unsigned int output_error_shift        = inputs->getOffset();
-      FloatGPUMirroredMemoryBlock *input_error     = outputs->getErrorVectorPtr();
-      const unsigned int input_error_shift         = outputs->getOffset();
-      FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
-      if (conf.cur_bunch_size > 1) {
-	// C = alpha * A * B + beta * C
-	if (!transpose_weights)
-	  doSgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
-		  conf.cur_bunch_size, num_inputs, num_outputs,
-		  1.0f, input_error, conf.max_bunch_size,
-		  weights_mat_ptr, num_outputs,
-		  1.0f, output_error, conf.max_bunch_size,
-		  input_error_shift, 0, output_error_shift,
-		  conf.use_cuda_flag);
-	else
-	  doSgemm(CblasColMajor, CblasNoTrans, CblasTrans,
-		  conf.cur_bunch_size, num_inputs, num_outputs,
-		  1.0f, input_error, conf.max_bunch_size,
-		  weights_mat_ptr, num_inputs,
-		  1.0f, output_error, conf.max_bunch_size,
-		  input_error_shift, 0, output_error_shift,
-		  conf.use_cuda_flag);
-      }
-      else {
-	if (!transpose_weights)
-	  doSgemv(CblasColMajor, CblasTrans,
-		  num_outputs, num_inputs,
-		  1.0f, weights_mat_ptr, num_outputs,
-		  input_error, conf.max_bunch_size,
-		  1.0f, output_error, conf.max_bunch_size,
-		  0, input_error_shift, output_error_shift,
-		  conf.use_cuda_flag);
-	else {
-	  doSgemv(CblasColMajor, CblasNoTrans,
-		  num_inputs, num_outputs,
-		  1.0f, weights_mat_ptr, num_inputs,
-		  input_error, conf.max_bunch_size,
-		  1.0f, output_error, conf.max_bunch_size,
-		  0, input_error_shift, output_error_shift,
-		  conf.use_cuda_flag);
-	}
-      }
-    } // if output_error != 0
-    
-    if (neuron_squared_length_upper_bound > 0.0f) {
-      if (conf.use_cuda_flag)
-	ERROR_EXIT(128,"Max-norm penalty CUDA version not implemented yet!!!\n");
-      if (!transpose_weights) {
-	// TODO: Implement this in CBLAS and CUDA
-	FloatGPUMirroredMemoryBlock *sql_sums   = outputs->getSquaredLengthSums();
-	FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
-	
-	float *squared_length_sums = sql_sums->getPPALForReadAndWrite();
-	const float *w = weights_mat_ptr->getPPALForRead();
-	
-	for (unsigned int j=0; j<num_outputs; ++j) {
-	  unsigned int k = j;
-	  // compute squared length, adding previous squared lengths computed
-	  // over the same neuron
-	  float squared_length = squared_length_sums[j];
-	  for (unsigned int i=0; i<num_inputs; ++i) {
-	    squared_length += w[k]*w[k];
-	    k += num_outputs;
-	  }
-	  squared_length_sums[j] = squared_length;
-	}
-      }
-      else {
-	// TODO: Implement this in CBLAS and CUDA
-	FloatGPUMirroredMemoryBlock *sql_sums   = outputs->getSquaredLengthSums();
-	FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
-	
-	float *squared_length_sums = sql_sums->getPPALForReadAndWrite();
-	const float *w = weights_mat_ptr->getPPALForRead();
-	
-	unsigned int k = 0;
-	for (unsigned int j=0; j<num_outputs; ++j) {
-	  // compute squared length, adding previous squared lengths computed
-	  // over the same neuron
-	  float squared_length = squared_length_sums[j];
-	  for (unsigned int i=0; i<num_inputs; ++i) {
-	    squared_length += w[k]*w[k];
-	    ++k;
-	  }
-	  squared_length_sums[j] = squared_length;
-	}
-      }
-    }
+      // matrix x matrix product
+      // C = \alpha op(A) op(B) + \beta C
+      // input * weights = output
+      doSgemm(CblasColMajor,
+	      CblasNoTrans, NEGATE_CBLAS_TRANSPOSE(transpose_weights),
+	      bunch_size, output_size, input_size, // conf.cur_bunch_size,
+	      weights_factor, input_ptr, bunch_size, // conf.max_bunch_size,
+	      weights_mat_ptr, weights_matrix->getOutputSize(),
+	      // beta = 1.0f, C matrix contains BIAS and probably other layer
+	      // computations
+	      1.0f, output_ptr, bunch_size, // conf.max_bunch_size,
+	      0, 0, 0, // inputs->getOffset(), 0, outputs->getOffset(),
+	      GlobalConf::use_cuda); // conf.use_cuda_flag);
+    } // if bunch_size==1 ... else
+    return output;
   }
   
-  void DotProductAction::
+  Token *DotProductANNComponent::doBackprop(Token *_input_error) {
+    // error checking
+    if ( (_input_error == 0) ||
+	 (_input_error->getTokenCode() != table_of_token_codes::token_mem_block))
+      ERROR_EXIT(129,"Incorrect input error Token type, expected token_mem_block!\n");
+    // change current input by new input
+    if (input_error) DecRef(input_error);
+    input_error = _input_error->convertTo<TokenMemoryBlock*>();
+    IncRef(input_error);
+    // compute current bunch
+    unsigned int bunch_size = input_error->getUsedSize() / output_size;
+    if (bunch_size != this->bunch_size)
+      ERROR_EXIT(129, "Different bunches found at doForward and doBackprop\n");
+    // and resize the output to fit the bunch
+    output_error->resize(bunch_size * input_size);
+    //
+    FloatGPUMirroredMemoryBlock *input_error     = input_error->getMemBlock();
+    FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
+    if (bunch_size > 1) {
+      // C = alpha * A * B + beta * C
+      doSgemm(CblasColMajor,
+	      CblasNoTrans, NEGATE_CBLAS_TRANSPOSE(transpose_weights),
+	      bunch_size, num_inputs, num_outputs, // conf.cur_bunch_size,
+	      1.0f, input_error, bunch_size, // conf.max_bunch_size,
+	      weights_mat_ptr, weights_matrix->getOutputSize(),
+	      1.0f, output_error, bunch_size, // conf.max_bunch_size,
+	      0, 0, 0, // input_error_shift, 0, output_error_shift,
+	      GlobalConf::use_cuda);
+    }
+    else {
+      doSgemv(CblasColMajor, NEGATE_CBLAS_TRANSPOSE(transpose_weights),
+	      weights_matrix->getOutputSize(),
+	      weights_matrix->getInputSize(),
+	      1.0f, weights_mat_ptr, weights_matrix->getOutputSize(),
+	      input_error, bunch_size, // conf.max_bunch_size,
+	      1.0f, output_error, bunch_size, // conf.max_bunch_size,
+	      0, 0, 0, // 0, input_error_shift, output_error_shift,
+	      GlobalConf::use_cuda);
+    }
+    return output_error;
+  }
+  
+  void DotProductANNComponent::
   computeBPUpdateOnPrevVectors(FloatGPUMirroredMemoryBlock *prev_weights_mat_ptr,
 			       FloatGPUMirroredMemoryBlock *input,
 			       const unsigned int input_shift,
@@ -267,121 +160,41 @@ namespace ANN {
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
     const float norm_learn_rate =
       -(1.0f/sqrtf(static_cast<float>(references*conf.cur_bunch_size))) *
-      //-(1.0f/static_cast<float>(references*conf.cur_bunch_size)) *
-      //-(1.0f/sqrtf(static_cast<float>(references))) *
       learning_rate;
-      
-    if (inputs->isSparse()) {
-      if (beta < 1.0f)
-	doSscal((num_inputs * num_outputs),
-		beta,
-		prev_weights_mat_ptr, 0, 1,
-		conf.use_cuda_flag);
-      if (!transpose_weights) {
-	const float *input_float_ptr = input->getPPALForRead() + input_shift;
-	// unsigned int w_shift = 0;
-	// for (unsigned int i=0; i<num_inputs; ++i, w_shift+=num_outputs) {
-	//   for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	//     float v = input_float_ptr[b];
-	//     if ( v != 0.0f ) {
-	//       doSaxpy(num_outputs,
-	// 	      norm_learn_rate*v,
-	// 	      input_error, b+input_error_shift, conf.max_bunch_size,
-	// 	      prev_weights_mat_ptr, w_shift, 1,
-	// 	      conf.use_cuda_flag);
-	//     }
-	//   }
-	//   input_float_ptr += conf.max_bunch_size;
-	// }
-	for (unsigned int b=0, j=0; b<conf.cur_bunch_size; ++b) {
-	  unsigned int N = static_cast<unsigned int>(input_float_ptr[j++]);
-	  for (unsigned int i=0, j=0; i < N; ++i, j += 2) {
-	    unsigned int neuron = static_cast<unsigned int>(input_float_ptr[j]);
-	    float value = input_float_ptr[j+1];
-	    unsigned int w_shift = neuron*num_outputs;
-	    doSaxpy(num_outputs,
-		    norm_learn_rate*value,
-		    input_error, b+input_error_shift, conf.max_bunch_size,
-		    prev_weights_mat_ptr, w_shift, 1,
-		    conf.use_cuda_flag);
-	  }
-	}	
-      } // if !transposed weights
-      else {
-	const float *input_float_ptr = input->getPPALForRead() + input_shift;
-	for (unsigned int i=0; i<num_inputs; ++i) {
-	  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	    float v = input_float_ptr[b];
-	    if ( v != 0.0f ) {
-	      doSaxpy(num_outputs,
-		      norm_learn_rate*v,
-		      input_error, b+input_error_shift, conf.max_bunch_size,
-		      prev_weights_mat_ptr, i, num_outputs,
-		      conf.use_cuda_flag);
-	    }
-	  }
-	  input_float_ptr += conf.max_bunch_size;
-	}
-      } // if !transposed weights ... else
-    } // if isSparse
+    if (bunch_size > 1) {
+      doSgemm(CblasColMajor, CblasTrans, CblasNoTrans,
+	      weights_matrix->getOutputSize()
+	      weights_matrix->getInputSize(),
+	      bunch_size, // conf.cur_bunch_size, // dimensiones
+	      norm_learn_rate,                          // alpha
+	      (transpose_weights == CblasNoTrans)?input_error:input,                              // A
+	      bunch_size, // conf.max_bunch_size,                      // A stride
+	      (transpose_weights == CblasNoTrans)?input:input_error,                                    // B
+	      bunch_size,                      // B stride
+	      beta,                                     // beta
+	      prev_weights_mat_ptr,                     // C
+	      weights_matrix->getOutputSize(),                              // C stride
+	      0, 0, 0, // input_shift, 0,        // desplazamientos
+	      GlobalConf::use_cuda);
+    } // if bunch_size > 1 ... else
     else {
-      if (conf.cur_bunch_size > 1) {
-	if (!transpose_weights) {
-	  doSgemm(CblasColMajor, CblasTrans, CblasNoTrans,
-		  num_outputs, num_inputs, conf.cur_bunch_size, // dimensiones
-		  norm_learn_rate,                          // alpha
-		  input_error,                              // A
-		  conf.max_bunch_size,                      // A stride
-		  input,                                    // B
-		  conf.max_bunch_size,                      // B stride
-		  beta,                                     // beta
-		  prev_weights_mat_ptr,                     // C
-		  num_outputs,                              // C stride
-		  input_error_shift, input_shift, 0,        // desplazamientos
-		  conf.use_cuda_flag);
-	} // if !transposed weights
-	else
-	  doSgemm(CblasColMajor, CblasTrans, CblasNoTrans,
-		  num_inputs, num_outputs, conf.cur_bunch_size, // dimensiones
-		  norm_learn_rate,                          // alpha
-		  input,                                    // B
-		  conf.max_bunch_size,                      // B stride
-		  input_error,                              // A
-		  conf.max_bunch_size,                      // A stride
-		  beta,                                     // beta
-		  prev_weights_mat_ptr,                     // C
-		  num_inputs,                               // C stride
-		  input_shift, input_error_shift, 0,        // desplazamientos
-		  conf.use_cuda_flag);
-      } // if bunch_size > 1 ... else
-      else {
-	if (beta < 1.0f)
-	  doSscal((num_inputs * num_outputs),
-		  beta,
-		  prev_weights_mat_ptr, 0, 1,
-		  conf.use_cuda_flag);
-	if (!transpose_weights)
-	  doSger(CblasColMajor,
-		 num_outputs, num_inputs,
-		 norm_learn_rate,
-		 input_error, input_error_shift, conf.max_bunch_size,
-		 input, input_shift, conf.max_bunch_size,
-		 prev_weights_mat_ptr, 0, num_outputs,
-		 conf.use_cuda_flag);
-	else
-	  doSger(CblasColMajor,
-		 num_inputs, num_outputs,
-		 norm_learn_rate,
-		 input, input_shift, conf.max_bunch_size,
-		 input_error, input_error_shift, conf.max_bunch_size,
-		 prev_weights_mat_ptr, 0, num_inputs,
-		 conf.use_cuda_flag);
-      }
-    } // if isSparse ... else
+      if (beta < 1.0f)
+	doSscal(weights_matrix->getNumWeights(),
+		beta, prev_weights_mat_ptr, 0, 1,
+		GlobalConf::use_cuda);
+      doSger(CblasColMajor,
+	     weights_matrix->getOutputSize(),
+	     weights_matrix->getInputSize(),
+	     norm_learn_rate,
+	     (transpose_weights == CblasNoTrans)?input_error:input, 0, bunch_size, // input_error_shift, conf.max_bunch_size,
+	     (transpose_weights == CblasNoTrans)?input:input_error, 0, bunch_size, // input_shift, conf.max_bunch_size,
+	     prev_weights_mat_ptr, 0, weights_matrix->getOutputSize(),
+	     GlobalConf::use_cuda);
+    } // if bunch_size > 1 ... else
   }
   
-  // The DotProductAction
-  void DotProductAction::doUpdate() {
+  // The DotProductANNComponent
+  void DotProductANNComponent::doUpdate() {
     assert(learning_rate > 0.0f &&
 	   "Learning rate/momentum/weight decay needs to be fixed with "
 	   "setOption method!!!");
@@ -392,120 +205,63 @@ namespace ANN {
     FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
     FloatGPUMirroredMemoryBlock *prev_weights_mat_ptr =
       weights_matrix->getPrevPtr();
-    FloatGPUMirroredMemoryBlock *input        = inputs->getPtr();
-    FloatGPUMirroredMemoryBlock *input_error  = outputs->getErrorVectorPtr();
-    FloatGPUMirroredMemoryBlock *output_error = inputs->getErrorVectorPtr();
-
-    const unsigned int input_shift  = inputs->getOffset();
-    const unsigned int output_shift = outputs->getOffset();
+    FloatGPUMirroredMemoryBlock *input        = inputs->getMemBlock();
+    FloatGPUMirroredMemoryBlock *input_error  = outputs->getMemBlock();
+    FloatGPUMirroredMemoryBlock *output_error = inputs->getMemBlock();
     
     float beta_parameter_for_cblas_bp = 1.0f;
-    // Momentum computation
-    if (weights_matrix->isFirstUpdateCall()) {      
+    if (weights_matrix->isFirstUpdateCall()) {
+      // Momentum computation
       if (momentum > 0.0f) {
 	// prev_w[i,j] = momentum * (w[i,j] - prev_w[i,j])
 	weights_matrix->computeMomentumOnPrevVector(momentum,
-						    conf.use_cuda_flag);
+						    GlobalConf::use_cuda);
 	weights_matrix->computeWeightDecayOnPrevVector(c_weight_decay,
-						       conf.use_cuda_flag);
+						       GlobalConf::use_cuda);
       }
       else {
-	weights_matrix->copyToPrevVector(conf.use_cuda_flag);
+	weights_matrix->copyToPrevVector(GlobalConf::use_cuda);
 	beta_parameter_for_cblas_bp = c_weight_decay;
       }
     } // if (weights_matrix->needsToComputeMomentum()) {
     
     computeBPUpdateOnPrevVectors(prev_weights_mat_ptr,
-				 input, input_shift,
-				 input_error, output_shift,
+				 input, 0, // input_shift,
+				 input_error, 0, // output_shift,
 				 beta_parameter_for_cblas_bp);
     
     // Forces to update counts and swap vectors if necessary at this backward
     // step
     if (weights_matrix->endUpdate()) {
-      if (neuron_squared_length_upper_bound > 0.0f) {
-	if (!transpose_weights) {
-	  // TODO: Implement this in CBLAS and CUDA
-	  
-	  FloatGPUMirroredMemoryBlock *sql_sums   = outputs->getSquaredLengthSums();
-	  FloatGPUMirroredMemoryBlock *w_ptr      = weights_matrix->getPtr();
-	  FloatGPUMirroredMemoryBlock *prev_w_ptr =
-	    weights_matrix->getPrevPtr();
-	
-	  const float *squared_length_sums = sql_sums->getPPALForRead();
-	  float *w      = weights_mat_ptr->getPPALForReadAndWrite();
-	  float *prev_w = prev_weights_mat_ptr->getPPALForReadAndWrite();
-	
-	  for (unsigned int j=0; j<num_outputs; ++j) {
-	    // compute squared length, adding previous squared lengths computed
-	    // over the same neuron
-	    float squared_length = squared_length_sums[j];
-	    if (squared_length > neuron_squared_length_upper_bound) {
-	      float ratio    = sqrtf(neuron_squared_length_upper_bound/squared_length);
-	      unsigned int k = j;
-	      for (unsigned int i=0; i<num_inputs; ++i) {
-		w[k]      *= ratio;
-		prev_w[k] *= ratio;
-		k += num_outputs;
-	      }
-	    }
-	  }
-	}
-	else {
-	  // TODO: Implement this in CBLAS and CUDA
-	
-	  FloatGPUMirroredMemoryBlock *sql_sums   = outputs->getSquaredLengthSums();
-	  FloatGPUMirroredMemoryBlock *w_ptr      = weights_matrix->getPtr();
-	  FloatGPUMirroredMemoryBlock *prev_w_ptr =
-	    weights_matrix->getPrevPtr();
-	
-	  const float *squared_length_sums = sql_sums->getPPALForRead();
-	  float *w      = weights_mat_ptr->getPPALForReadAndWrite();
-	  float *prev_w = prev_weights_mat_ptr->getPPALForReadAndWrite();
-	
-	  unsigned int k = 0;
-	  for (unsigned int j=0; j<num_outputs; ++j) {
-	    // compute squared length, adding previous squared lengths computed
-	    // over the same neuron
-	    float squared_length = squared_length_sums[j];
-	    if (squared_length > neuron_squared_length_upper_bound) {
-	      float ratio    = sqrtf(neuron_squared_length_upper_bound/squared_length);
-	      for (unsigned int i=0; i<num_inputs; ++i) {
-		w[k]      *= ratio;
-		prev_w[k] *= ratio;
-		k++;
-	      }
-	    }
-	  }
-	}
-      }
-
+      // TODO: max norm penalty
     }
   }
-
+  
   void DotProductANNComponent::reset() {
-    if (error_output != 0) {
-      doVectorSetToZero(
-    }
+    if (error_output != 0) doVectorSetToZero(error_output->getMemBlock(),
+					     error_output->getMaxSize(),
+					     0, 0, GlobalConf::use_cuda);
+    if (output != 0) doVectorSetToZero(output->getMemBlock(),
+				       output->getMaxSize(),
+				       0, 0, GlobalConf::use_cuda);
+    if (input) DecRef(input); input = 0;
+    if (input_error) DecRef(input_error); input_error = 0;
   }
 
-  Action *DotProductAction::clone(hash<void*,void*> &clone_dict,
-				  const ANNConfiguration &conf) {
-    DotProductAction *action = new
-      DotProductAction(conf,
-		       static_cast<ActivationUnits*>(clone_dict[inputs]),
-		       static_cast<ActivationUnits*>(clone_dict[outputs]),
-		       static_cast<Connections*>(clone_dict[weights_matrix]),
-		       transpose_weights);
-    action->learning_rate  = learning_rate;
-    action->momentum       = momentum;
-    action->weight_decay   = weight_decay;
-    action->c_weight_decay = c_weight_decay;
-    action->neuron_squared_length_upper_bound = neuron_squared_length_upper_bound;
-    return action;
+  ANNComponent *DotProductANNComponent::clone() {
+    DotProductANNComponent *component = new
+      DotProductANNComponent(name, weights_name,
+			     input_size, output_size,
+			     (transpose_weights == CblasTrans));
+    component->learning_rate  = learning_rate;
+    component->momentum       = momentum;
+    component->weight_decay   = weight_decay;
+    component->c_weight_decay = c_weight_decay;
+    component->neuron_squared_length_upper_bound = neuron_squared_length_upper_bound;
+    return component;
   }
 
-  void DotProductAction::setOption(const char *name, double value) {
+  void DotProductANNComponent::setOption(const char *name, double value) {
     mSetOption("learning_rate", learning_rate);
     mSetOption("momentum", momentum);
     if (strcmp("weight_decay", name) == 0) {
@@ -518,7 +274,7 @@ namespace ANN {
     ERROR_EXIT1(140, "The option to be set does not exist: %s.\n", name);
   }
   
-  bool DotProductAction::hasOption(const char *name) {
+  bool DotProductANNComponent::hasOption(const char *name) {
     mHasOption("learning_rate");
     mHasOption("momentum");
     mHasOption("weight_decay");
@@ -526,7 +282,7 @@ namespace ANN {
     return false;
   }
   
-  double DotProductAction::getOption(const char *name) {
+  double DotProductANNComponent::getOption(const char *name) {
     mGetOption("learning_rate", learning_rate);
     mGetOption("momentum", momentum);
     // the weight decay is always fixed to 0
@@ -537,28 +293,32 @@ namespace ANN {
   
   void build(unsigned int input_size, unsigned int output_size,
 	     hash<string,void*> &weights_dict) {
-    weights_matrix *&w = weights_dict[weights_name];
-    
-    if (!transpose_weights) {
-      if (w != 0) {
-	weights_matrix = w;
-	if (!weights_matrix->checkInputOutputSizes(input_size, output_size))
-	  ERROR_EXIT(256, "The input/output sizes are not correct.\n");
-      }
-      else weights_matrix = w = new Connections(input_size, output_size);
-      // TODO: compute fan-in
-      // outputs->increaseFanIn(inputs->numNeurons());
+    unsigned int weights_input_size  = input_size;
+    unsigned int weights_output_size = output_size;
+    if (input_size == 0)  this->input_size  = input_size;
+    if (output_size == 0) this->output_size = output_size;
+    if (this->input_size != input_size)
+      ERROR_EXIT2(129, "Incorrect input size, expected %d, found %d\n",
+		  this->input_size, input_size);
+    if (this->output_size != output_size)
+      ERROR_EXIT2(129, "Incorrect output size, expected %d, found %d\n",
+		  this->output_size, output_size);
+    ////////////////////////////////////////////////////////////////////
+    if (transpose_weights) weights_input_size  = output_size;
+    if (transpose_weights) weights_output_size = input_size;
+    Connections *&w = weights_dict[weights_name];    
+    if (w != 0) {
+      weights_matrix = w;
+      if (!weights_matrix->checkInputOutputSizes(weights_input_size,
+						 weights_output_size))
+	ERROR_EXIT2(256,"The weights matrix input/output sizes are not correct, "
+		    "expected %d,%d.\n",
+		    weights_input_size, weights_output_size);
     }
-    else {
-      if (w != 0) {
-	weights_matrix = w;
-	if (!weights_matrix->checkInputOutputSizes(output_size, input_size))
-	  ERROR_EXIT(256, "The input/output sizes are not correct.\n");
-      }
-      else weights_matrix = w = new Connections(output_size, input_size);
-      // TODO: compute fan-in
-      // inputs->increaseFanIn(outputs->numNeurons());
-    }
+    else weights_matrix = new Connections(weights_input_size,
+					  weights_output_size);
+    // TODO: compute fan-in
+    // outputs->increaseFanIn(inputs->numNeurons());
     IncRef(weights_matrix);
   }
   

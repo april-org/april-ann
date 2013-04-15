@@ -22,17 +22,21 @@
 #ifndef DOTPRODUCTACTION_H
 #define DOTPRODUCTACTION_H  
 
+#include "cblas_headers.h"
 #include "ann_component.h"
 #include "connection.h"
 
 namespace ANN {
   class DotProductANNComponent : public ANNComponent {
-    Token       *input, *output, *error_input, *error_output;
+    const TokenMemoryBlock *input, *error_input;
+    TokenMemoryBlock       *output, *error_output;
     Connections *weights_matrix;
+    unsigned int bunch_size;
     
     /// learning parameters
     float learning_rate, momentum, weight_decay, c_weight_decay;
     float neuron_squared_length_upper_bound;
+    CBLAS_TRANSPOSE transpose_weights;
     bool transpose_weights;
 
     void
