@@ -22,17 +22,15 @@
 #ifndef DOTPRODUCTACTION_H
 #define DOTPRODUCTACTION_H  
 
-#include "action.h"
-#include "actunit.h"
+#include "ann_component.h"
 #include "connection.h"
 
 namespace ANN {
-  class DotProductAction : public Action {
-    ActivationUnits      *inputs;
-    ActivationUnits      *outputs;
-    Connections          *weights_matrix;
-    const unsigned int num_inputs, num_outputs;
-    const ANNConfiguration &conf;
+  class DotProductANNComponent : public ANNComponent {
+    Token       *input, *output, *error_input, *error_output;
+    Connections *weights_matrix;
+    
+    /// learning parameters
     float learning_rate, momentum, weight_decay, c_weight_decay;
     float neuron_squared_length_upper_bound;
     bool transpose_weights;
@@ -53,21 +51,22 @@ namespace ANN {
 				 float beta);
 
   public:
-    DotProductAction(const ANNConfiguration &conf,
-		     ActivationUnits *inputs,
-		     ActivationUnits *outputs,
-		     Connections *weights_matrix,
-		     bool transpose_weights=false);
-    virtual ~DotProductAction();
-    virtual void doForward(bool during_training=false);
-    virtual void doBackprop();
-    virtual void doUpdate();
-    virtual Action *clone(hash<void*,void*> &clone_dict,
-			  const ANNConfiguration &conf);
+    DotProductANNComponent(const char *name, const char *weights_name,
+			   unsigned int input_size  = 0,
+			   unsigned int output_size = 0,
+			   bool transpose_weights   = false);
+    virtual ~DotProductANNComponent();
+    virtual Token *doForward(Token* input, bool during_training);
+    virtual Token *doBackprop(Token *input_error);
+    virtual void  *doUpdate();
+    virtual void   reset();
+    virtual ANNComponent *clone();
     virtual void setOption(const char *name, double value);
     virtual bool hasOption(const char *name);
     virtual double getOption(const char *name);
-    void transferFanInToConnections();
+    virtual void build(unsigned int input_size,
+		       unsigned int output_size,
+		       hash<string,void *> &weights_dict) = 0;
   };
 }
 

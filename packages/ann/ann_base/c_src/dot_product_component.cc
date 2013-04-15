@@ -28,41 +28,27 @@ namespace ANN {
   // DotProductAction implementation //
   /////////////////////////////////////
   
-  DotProductAction::DotProductAction(const ANNConfiguration &conf,
-				     ActivationUnits *inputs,
-				     ActivationUnits *outputs,
-				     Connections *weights_matrix,
+  DotProductAction::DotProductAction(const char *name, const char *weights_name,
+				     unsigned int input_size,
+				     unsigned int output_size,
 				     bool transpose_weights) :
-    Action(conf),
-    inputs(inputs), outputs(outputs), weights_matrix(weights_matrix),
-    num_inputs(inputs->numNeurons()),
-    num_outputs(outputs->numNeurons()),
-    conf(conf),
+    ANNComponent(input_size, output_size, name, weights_name),
+    input(0), output(0),
+    error_input(0), error_output(0),
+    weights_matrix(0),
     learning_rate(-1.0f),
     momentum(0.0f),
     weight_decay(0.0f),
     c_weight_decay(1.0f),
     neuron_squared_length_upper_bound(-1.0f),
     transpose_weights(transpose_weights) {
-    if (!transpose_weights) {
-      if (!weights_matrix->checkInputOutputSizes(inputs, outputs))
-	ERROR_EXIT(256, "The input/output sizes are not correct.\n");
-      outputs->increaseFanIn(inputs->numNeurons());
-    }
-    else
-      if (!weights_matrix->checkInputOutputSizes(outputs, inputs)) {
-	ERROR_EXIT(256, "The input/output sizes are not correct.\n");
-	inputs->increaseFanIn(outputs->numNeurons());
-      }
-    weights_matrix->countReference();
-    IncRef(inputs);
-    IncRef(outputs);
-    IncRef(weights_matrix);
   }
   
   DotProductAction::~DotProductAction() {
-    DecRef(inputs);
-    DecRef(outputs);
+    DecRef(input);
+    DecRef(output);
+    DecRef(error_input);
+    DecRef(error_output);
     DecRef(weights_matrix);
   }
   
@@ -497,6 +483,12 @@ namespace ANN {
     }
   }
 
+  void DotProductANNComponent::reset() {
+    if (error_output != 0) {
+      doVectorSetToZero(
+    }
+  }
+
   Action *DotProductAction::clone(hash<void*,void*> &clone_dict,
 				  const ANNConfiguration &conf) {
     DotProductAction *action = new
@@ -542,12 +534,32 @@ namespace ANN {
     mGetOption("neuron_squared_length_upper_bound", neuron_squared_length_upper_bound);
     ERROR_EXIT(140, "The option to be get does not exist.\n");
   }
-
-  void DotProductAction::transferFanInToConnections() {
-    if (!transpose_weights)
-      weights_matrix->setFanIn(outputs->getFanIn());
-    else
-      weights_matrix->setFanIn(inputs->getFanIn());
+  
+  void build(unsigned int input_size, unsigned int output_size,
+	     hash<string,void*> &weights_dict) {
+    weights_matrix *&w = weights_dict[weights_name];
+    
+    if (!transpose_weights) {
+      if (w != 0) {
+	weights_matrix = w;
+	if (!weights_matrix->checkInputOutputSizes(input_size, output_size))
+	  ERROR_EXIT(256, "The input/output sizes are not correct.\n");
+      }
+      else weights_matrix = w = new Connections(input_size, output_size);
+      // TODO: compute fan-in
+      // outputs->increaseFanIn(inputs->numNeurons());
+    }
+    else {
+      if (w != 0) {
+	weights_matrix = w;
+	if (!weights_matrix->checkInputOutputSizes(output_size, input_size))
+	  ERROR_EXIT(256, "The input/output sizes are not correct.\n");
+      }
+      else weights_matrix = w = new Connections(output_size, input_size);
+      // TODO: compute fan-in
+      // inputs->increaseFanIn(outputs->numNeurons());
+    }
+    IncRef(weights_matrix);
   }
   
   //////////////////////////////////////////////////////////////////////////

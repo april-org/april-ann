@@ -26,8 +26,8 @@
 
 namespace Trainable {
 
-  float TrainableSupervised::trainOnePattern(float *input,
-					     float *target_output) {
+  float TrainableSupervised::trainOnePattern(Token *input,
+					     Token *target_output) {
     beginTrainingBatch();
     trainPattern(input, target_output);
     return endTrainingBatch();
