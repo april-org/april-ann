@@ -5,40 +5,30 @@
 #include "table_of_token_codes.h"
 
 template <typename T>
-TokenVector<T>::TokenVector(T *vec, unsigned int vlength,
-			    bool use_vector, bool vector_owner) :
-  TokenVectorGeneric(vlength), vector_owner(vector_owner) {
-  if (use_vector) this->vec = vec;
-  else {
-    assert(!vector_owner);
-    this->vec    = new T[vlength];
-    for (unsigned int i=0; i<vlength; ++i) this->vec[i] = vec[i];
-  }
+TokenVector<T>::TokenVector() {
+}
+
+template <typename T>
+TokenVector::TokenVector(unsigned int vlength) : vec(vlength) {
 }
 
 template <typename T>
 TokenVector<T>::TokenVector(const T *vec, unsigned int vlength) :
-  TokenVectorGeneric(vlength), vector_owner(true) {
-  this->vec = new T[vlength];
-  for (unsigned int i=0; i<vlength; ++i) {
-    this->vec[i] = vec[i];
-  }
+  vec(vec, vec+vlength) {
 }
 
 template <typename T>
-TokenVector<T>::TokenVector(unsigned int vlength) :
-TokenVectorGeneric(vlength), vector_owner(true) {
-  vec = new T[vlength];
+TokenVector<T>::TokenVector(const vector<T> &vec) :
+  vec(vec) {
 }
 
 template <typename T>
 TokenVector<T>::~TokenVector() {
-  if (vector_owner) delete[] vec;
 }
 
 template <typename T>
-Token TokenVector<T>::copyToken() const {
-  return new TokenVector<T>(vec,vector_length);
+Token *TokenVector<T>::clone() const {
+  return new TokenVector<T>(vec);
 }
 
 template <typename T>
@@ -56,12 +46,12 @@ buffer_list* TokenVector<T>::debugString(const char *prefix,
 }
 
 template <typename T>
-uint32_t TokenVector<T>::codeTypeOfToken() const {
+TokenCode TokenVector<T>::getTokenCode() const {
   return table_of_Token_codes::error;
 }
 
 template <typename T>
-Token TokenVector<T>::fromString(constString cs) {
+Token *TokenVector<T>::fromString(constString &cs) {
   return 0; // no hay un fromString generico
 }
 
@@ -70,7 +60,7 @@ Token TokenVector<T>::fromString(constString cs) {
 template<>
 buffer_list* TokenVector<float>::toString() {
   buffer_list *resul = new buffer_list;
-  resul->add_binarized_float_left(vec,vector_length);
+  resul->add_binarized_float_left(vec.begin(),vec.size());
   return resul;
 }
 
@@ -80,17 +70,17 @@ buffer_list* TokenVector<float>::debugString(const char *prefix,
   // TODO: de momento ignoramos debugLevel
   buffer_list *resul = new buffer_list;
   resul->add_formatted_string_right("%s TokenVector_float with %d values\n",
-				    prefix,vector_length);
+				    prefix,vec.size());
   return resul;
 }
 
 template <>
-uint32_t TokenVector<float>::codeTypeOfToken() const {
+TokenCode TokenVector<float>::getTokenCode() const {
   return table_of_Token_codes::vector_float;
 }
 
 template <>
-Token *TokenVector<float>::fromString(constString cs) {
+Token *TokenVector<float>::fromString(constString &cs) {
   if (cs.len() % 5 != 0)
     return 0; // talla incorrecta
   int vec_len = cs.len() / 5;
@@ -111,7 +101,7 @@ Token *TokenVector<float>::fromString(constString cs) {
 template <>
 buffer_list* TokenVector<double>::toString() {
   buffer_list *resul = new buffer_list;
-  resul->add_binarized_double_left(vec,vector_length);
+  resul->add_binarized_double_left(vec.begin(),vec.size());
   return resul;
 }
 
@@ -120,18 +110,18 @@ buffer_list* TokenVector<double>::debugString(const char *prefix,
 					      int debugLevel) {
   // TODO: de momento ignoramos debugLevel
   buffer_list *resul = new buffer_list;
-  resul->add_formatted_string_right("%s TokenVector_double with %d values\n",
-				    prefix,vector_length);
+  resul->add_formatted_string_right("%s TokenVector_double with %u values\n",
+				    prefix,vec.size());
   return resul;
 }
 
 template <>
-uint32_t TokenVector<double>::codeTypeOfToken() const {
+TokenCode TokenVector<double>::getTokenCode() const {
   return table_of_Token_codes::vector_double;
 }
 
 template <>
-Token *TokenVector<double>::fromString(constString cs) {
+Token *TokenVector<double>::fromString(constString &cs) {
   if (cs.len() % 10 != 0)
     return 0; // talla incorrecta
   int vec_len = cs.len() / 10;
@@ -152,7 +142,7 @@ Token *TokenVector<double>::fromString(constString cs) {
 template <>
 buffer_list* TokenVector<int32_t>::toString() {
   buffer_list *resul = new buffer_list;
-  resul->add_binarized_int32_left(vec,vector_length);
+  resul->add_binarized_int32_left(vec.begin(),vec.size());
   return resul;
 }
 
@@ -162,17 +152,17 @@ buffer_list* TokenVector<int32_t>::debugString(const char *prefix,
   // TODO: de momento ignoramos debugLevel
   buffer_list *resul = new buffer_list;
   resul->add_formatted_string_right("%s TokenVector_int32 with %d values\n",
-				    prefix,vector_length);
+				    prefix,vec.size());
   return resul;
 }
 
 template <>
-uint32_t TokenVector<int32_t>::codeTypeOfToken() const {
+TokenCode TokenVector<int32_t>::getTokenCode() const {
   return table_of_Token_codes::vector_int32;
 }
 
 template <>
-Token *TokenVector<int32_t>::fromString(constString cs) {
+Token *TokenVector<int32_t>::fromString(constString &cs) {
   if (cs.len() % 5 != 0)
     return 0; // talla incorrecta
   int vec_len = cs.len() / 5;
@@ -193,7 +183,7 @@ Token *TokenVector<int32_t>::fromString(constString cs) {
 template <>
 buffer_list* TokenVector<uint32_t>::toString() {
   buffer_list *resul = new buffer_list;
-  resul->add_binarized_uint32_left(vec,vector_length);
+  resul->add_binarized_uint32_left(vec.begin(),vec.size());
   return resul;
 }
 
@@ -203,17 +193,17 @@ buffer_list* TokenVector<uint32_t>::debugString(const char *prefix,
   // TODO: de momento ignoramos debugLevel
   buffer_list *resul = new buffer_list;
   resul->add_formatted_string_right("%s TokenVector_uint32 with %d values\n",
-				    prefix,vector_length);
+				    prefix,vec.size());
   return resul;
 }
 
 template <>
-uint32_t TokenVector<uint32_t>::codeTypeOfToken() const {
+TokenCode TokenVector<uint32_t>::getTokenCode() const {
   return table_of_Token_codes::vector_uint32;
 }
 
 template <>
-Token *TokenVector<uint32_t>::fromString(constString cs) {
+Token *TokenVector<uint32_t>::fromString(constString &cs) {
   if (cs.len() % 5 != 0)
     return 0; // talla incorrecta
   int vec_len = cs.len() / 5;
@@ -234,7 +224,7 @@ Token *TokenVector<uint32_t>::fromString(constString cs) {
 template <>
 buffer_list* TokenVector<char>::toString() {
   buffer_list *resul = new buffer_list;
-  resul->add_constString_left(constString(vec,vector_length));
+  resul->add_constString_left(constString(vec.begin(),vec.size()));
   return resul;
 }
 
@@ -244,19 +234,69 @@ buffer_list* TokenVector<char>::debugString(const char *prefix,
   // TODO: de momento ignoramos debugLevel
   buffer_list *resul = new buffer_list;
   resul->add_formatted_string_right("%s TokenVector_char with %d values\n",
-				    prefix,vector_length);
+				    prefix,vec.size());
   return resul;
 }
 
 template <>
-uint32_t TokenVector<char>::codeTypeOfToken() const {
+TokenCode TokenVector<char>::getTokenCode() const {
   return table_of_Token_codes::vector_char;
 }
 
 template <>
-Token *TokenVector<char>::fromString(constString cs) {
+Token *TokenVector<char>::fromString(constString &cs) {
   TokenVector<char> *resul = new TokenVector<char>((const char*)cs,cs.len());
   return resul;
+}
+
+
+// ------------------------- vector token -------------------------
+
+template <>
+buffer_list* TokenVector<Token>::toString() {
+  /*
+    buffer_list *resul = new buffer_list;
+    char b[5];
+    constString cs(binarizer::code_uint32(vec.size()));
+    resul->add_constString_left(cs);
+    for (unsigned int i=0; i<vec.size(); ++i)
+    resul->add_buffer_right(vec[i].toString());
+    return resul;
+  */
+  // NOT IMPLEMENTED
+  return 0;
+}
+
+template <>
+buffer_list* TokenVector<Token>::debugString(const char *prefix,
+					    int debugLevel) {
+  // TODO: de momento ignoramos debugLevel
+  buffer_list *resul = new buffer_list;
+  resul->add_formatted_string_right("%s TokenVector_Token with %d values\n",
+				    prefix,vec.size());
+  return resul;
+}
+
+template <>
+TokenCode TokenVector<Token>::getTokenCode() const {
+  return table_of_Token_codes::vector_Token;
+}
+
+template <>
+Token *TokenVector<Token>::fromString(constString &cs) {
+  /*
+    uint32_t size;
+    cs.extract_uint32_binary(&size);
+    TokenVector<Token> *resul = new TokenVector<Token>();
+    resul->vec.resize(size);
+    for (unsigned int i=0; i<size; ++i) {
+    if (resul->
+    resul->vec.push_back(
+    }
+    return resul;
+  */
+  // NOT IMPLEMENTED
+  return 0;
 }
 
 template class TokenVector<float>;
@@ -264,3 +304,4 @@ template class TokenVector<double>;
 template class TokenVector<int32_t>;
 template class TokenVector<uint32_t>;
 template class TokenVector<char>;
+template class TokenVector<Token*>;
