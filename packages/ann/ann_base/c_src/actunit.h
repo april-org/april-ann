@@ -41,6 +41,7 @@ namespace ANN {
     const ANNConfiguration &conf;
     ActivationUnitsType     type;
     unsigned int            fanin;
+    bool is_sparse;
   public:
     float                   drop_factor;
     ActivationUnits(const ANNConfiguration &conf,
@@ -83,7 +84,8 @@ namespace ANN {
     /// for FAN IN computation
     virtual unsigned int getFanIn() const { return fanin; }
     virtual void increaseFanIn(unsigned int value) { fanin += value; }
-    bool isSparse() const = 0;
+    bool isSparse() const { return is_sparse; }
+    void setSparse(bool v) { is_sparse = v; }
   };
   
   /// Implementa un vector de neuronas de tamanyo num_neurons *

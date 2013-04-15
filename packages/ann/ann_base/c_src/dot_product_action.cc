@@ -100,7 +100,7 @@ namespace ANN {
 	    float value = input_float_ptr[j+1];
 	    unsigned int w_shift = neuron*num_outputs;
 	    doSaxpy(num_outputs,
-		    weights_factor*v,
+		    weights_factor*value,
 		    weights_mat_ptr, w_shift, 1,
 		    output_ptr, b, conf.max_bunch_size, conf.use_cuda_flag);
 	  }
