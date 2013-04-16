@@ -28,8 +28,7 @@
 
 namespace ANN {
   class BiasANNComponent : public ANNComponent {
-    TokenMemoryBlock *input,  *error_input;
-    TokenMemoryBlock *output, *error_output;
+    TokenMemoryBlock *input, *output, *error;
     Connections *bias_vector;
     unsigned int bunch_size;
     
@@ -50,11 +49,11 @@ namespace ANN {
     virtual ~BiasANNComponent();
     virtual const Token *getInput() const { return input; }
     virtual const Token *getOutput() const { return output; }
-    virtual const Token *getErrorInput() const { return error_input; }
-    virtual const Token *getErrorOutput() const { return error_output; }
+    virtual const Token *getErrorInput() const { return error; }
+    virtual const Token *getErrorOutput() const { return error; }
     virtual Token *doForward(Token* input, bool during_training);
     virtual Token *doBackprop(Token *input_error);
-    virtual void  *doUpdate();
+    virtual void   doUpdate();
     virtual void   reset();
     virtual ANNComponent *clone();
     virtual void setOption(const char *name, double value);
@@ -65,8 +64,6 @@ namespace ANN {
 		       hash<string,Connections*> &weights_dict,
 		       hash<string,ANNComponent*> &components_dict);
     virtual void copyWeights(hash<string,Connections*> &weights_dict);
-    virtual void copyComponents(hash<string,ANNComponent*> &weights_dict);
-    virtual ANNComponent *getComponent(string &name) = 0;
   };
 }
 

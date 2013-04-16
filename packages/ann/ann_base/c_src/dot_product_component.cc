@@ -197,8 +197,7 @@ namespace ANN {
   // The DotProductANNComponent
   void DotProductANNComponent::doUpdate() {
     assert(learning_rate > 0.0f &&
-	   "Learning rate/momentum/weight decay needs to be fixed with "
-	   "setOption method!!!");
+	   "Learning rate needs to be fixed with setOption method!!!");
     
     // Foces weights_matrix to update internal counts for a backward step
     weights_matrix->beginUpdate();
@@ -332,6 +331,7 @@ namespace ANN {
     }
     // TODO: compute fan-in
     // outputs->increaseFanIn(inputs->numNeurons());
+    weights_matrixr->countReference();
     IncRef(weights_matrix);
   }
 
@@ -344,11 +344,6 @@ namespace ANN {
 		  "not shared with weights_matrix attribute\n",
 		  weights_name.c_str());
     else if (w == 0) w = weights_matrix;
-  }
-
-  void copyComponents(hash<string,ANNComponent*> &components_dict) {
-    components_dict[name] = this;
-  }
-  
+  }  
   //////////////////////////////////////////////////////////////////////////
 }

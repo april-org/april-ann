@@ -66,7 +66,7 @@ namespace ANN {
     virtual const Token *getErrorOutput() const { return error_output; }
     virtual Token *doForward(Token* input, bool during_training);
     virtual Token *doBackprop(Token *input_error);
-    virtual void  *doUpdate();
+    virtual void   doUpdate();
     virtual void   reset();
     virtual ANNComponent *clone();
     virtual void setOption(const char *name, double value);
@@ -77,8 +77,6 @@ namespace ANN {
 		       hash<string,Connections*> &weights_dict,
 		       hash<string,ANNComponent*> &components_dict);
     virtual void copyWeights(hash<string,Connections*> &weights_dict);
-    virtual void copyComponents(hash<string,ANNComponent*> &weights_dict);
-    virtual ANNComponent *getComponent(string &name) = 0;
   };
 }
 
