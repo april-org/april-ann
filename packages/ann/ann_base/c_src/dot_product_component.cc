@@ -56,6 +56,7 @@ namespace ANN {
   
   // The DotProductANNComponent
   Token *DotProductANNComponent::doForward(Token *_input, bool during_training) {
+    assert(weights_matrix != 0);
     // error checking
     if ( (_input == 0) ||
 	 (_input->getTokenCode() != table_of_token_codes::token_mem_block))
@@ -291,10 +292,13 @@ namespace ANN {
     ERROR_EXIT(140, "The option to be get does not exist.\n");
   }
   
-  void build(unsigned int input_size, unsigned int output_size,
-	     hash<string,void*> &weights_dict) {
+  void DotProductANNComponent::build(unsigned int input_size,
+				     unsigned int output_size,
+				     hash<string,Connections*> &weights_dict,
+				     hash<string,ANNComponent*> &components_dict) {
     unsigned int weights_input_size  = input_size;
     unsigned int weights_output_size = output_size;
+    ////////////////////////////////////////////////////////////////////
     if (input_size == 0)  this->input_size  = input_size;
     if (output_size == 0) this->output_size = output_size;
     if (this->input_size != input_size)
@@ -304,9 +308,15 @@ namespace ANN {
       ERROR_EXIT2(129, "Incorrect output size, expected %d, found %d\n",
 		  this->output_size, output_size);
     ////////////////////////////////////////////////////////////////////
+    ANNComponent *&component = components_dict[name];
+    if (component != 0) ERROR_EXIT(102, "Non unique component name found: %s\n",
+				   name.c_str());
+    component = this;
+    ////////////////////////////////////////////////////////////////////
+    if (weights_matrix != 0) DecRef(weights_matrix);
     if (transpose_weights) weights_input_size  = output_size;
     if (transpose_weights) weights_output_size = input_size;
-    Connections *&w = weights_dict[weights_name];    
+    Connections *&w = weights_dict[weights_name];
     if (w != 0) {
       weights_matrix = w;
       if (!weights_matrix->checkInputOutputSizes(weights_input_size,
@@ -315,11 +325,29 @@ namespace ANN {
 		    "expected %d,%d.\n",
 		    weights_input_size, weights_output_size);
     }
-    else weights_matrix = new Connections(weights_input_size,
-					  weights_output_size);
+    else {
+      weights_matrix = new Connections(weights_input_size,
+				       weights_output_size);
+      w = weights_matrix;
+    }
     // TODO: compute fan-in
     // outputs->increaseFanIn(inputs->numNeurons());
     IncRef(weights_matrix);
+  }
+
+  void copyWeights(hash<string,Connections*> &weights_dict) {
+    if (weights_matrix == 0)
+      ERROR_EXIT(100, "Component not built, impossible execute copyWeights\n");
+    Connections *&w = weights_dict[weights_name];
+    if (w != 0 && w != weights_matrix)
+      ERROR_EXIT1(101, "Weights dictionary contains %s weights name which is "
+		  "not shared with weights_matrix attribute\n",
+		  weights_name.c_str());
+    else if (w == 0) w = weights_matrix;
+  }
+
+  void copyComponents(hash<string,ANNComponent*> &components_dict) {
+    components_dict[name] = this;
   }
   
   //////////////////////////////////////////////////////////////////////////
