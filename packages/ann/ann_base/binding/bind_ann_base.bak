@@ -20,7 +20,7 @@
  *
  */
 //BIND_HEADER_C
-//#include "bind_activation_function.h"
+#include "bind_activation_function.h"
 #include "bind_matrix.h"
 #include "bind_mtrand.h"
 //BIND_END
