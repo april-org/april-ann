@@ -95,7 +95,9 @@ namespace ANN {
     virtual void copyWeights(hash<string,Connections*> &weights_dict) = 0;
 
     /// Abstract method to retrieve ANNComponents objects
-    virtual void copyComponents(hash<string,ANNComponent*> &weights_dict) = 0;
+    virtual void copyComponents(hash<string,ANNComponent*> &weights_dict) {
+      components_dict[name] = this;
+    }
     
     /// Virtual method which returns the component with the given name if
     /// exists, otherwise it returns 0. By default, base components only
