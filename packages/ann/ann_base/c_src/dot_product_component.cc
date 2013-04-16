@@ -28,7 +28,8 @@ namespace ANN {
   // DotProductANNComponent implementation //
   ///////////////////////////////////////////
   
-  DotProductANNComponent::DotProductANNComponent(const char *name, const char *weights_name,
+  DotProductANNComponent::DotProductANNComponent(const char *name,
+						 const char *weights_name,
 						 unsigned int input_size,
 						 unsigned int output_size,
 						 bool transpose_weights) :

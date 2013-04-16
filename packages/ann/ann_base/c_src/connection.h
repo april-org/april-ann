@@ -99,14 +99,12 @@ namespace ANN {
     FloatGPUMirroredMemoryBlock *getPrevPtr();
     
     // INTERFAZ A IMPLEMENTAR
-    virtual bool checkInputOutputSizes(ActivationUnits *input,
-				       ActivationUnits *output) const;
-    virtual void randomizeWeights(MTRand *rnd, float low, float high,
-				  bool use_fanin);
+    virtual bool checkInputOutputSizes(unsigned int input_size,
+				       unsigned int output_size) const;
+    virtual void randomizeWeights(MTRand *rnd, float low, float high);
     virtual void randomizeWeightsAtColumn(unsigned int col,
 					  MTRand *rnd,
-					  float low, float high,
-					  bool use_fanin);
+					  float low, float high);
     // Carga/guarda los pesos de la matriz data comenzando por la
     // posicion first_weight_pos. Devuelve la suma del numero de pesos
     // cargados/salvados y first_weight_pos. En caso de error,
@@ -121,7 +119,7 @@ namespace ANN {
 				       unsigned int first_weight_pos,
 				       unsigned int column_size);
     // para hacer copias
-    virtual Connections *clone() = 0;
+    virtual Connections *clone();
     
     virtual unsigned int getNumWeights() const {
       return total_size;
