@@ -19,32 +19,22 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef DOTPRODUCTANNCOMPONENT_H
-#define DOTPRODUCTANNCOMPONENT_H  
+#ifndef BIASANNCOMPONENT_H
+#define BIASANNCOMPONENT_H  
 
 #include "cblas_headers.h"
 #include "ann_component.h"
 #include "connection.h"
 
 namespace ANN {
-  class DotProductANNComponent : public ANNComponent {
+  class BiasANNComponent : public ANNComponent {
     TokenMemoryBlock *input,  *error_input;
     TokenMemoryBlock *output, *error_output;
-    Connections *weights_matrix;
+    Connections *bias_vector;
     unsigned int bunch_size;
     
     /// learning parameters
-    float learning_rate, momentum, weight_decay, c_weight_decay;
-    float neuron_squared_length_upper_bound;
-    CBLAS_TRANSPOSE transpose_weights;
-    bool transpose_weights;
-
-    void
-    backpropagateErrors(FloatGPUMirroredMemoryBlock *weights_mat_ptr,
-			FloatGPUMirroredMemoryBlock *output_error,
-			const unsigned int output_error_shift,
-			FloatGPUMirroredMemoryBlock *input_error,
-			const unsigned int input_error_shift);
+    float learning_rate, momentum;
     
     void
     computeBPUpdateOnPrevVectors(FloatGPUMirroredMemoryBlock *prev_weights_mat_ptr,
@@ -53,13 +43,11 @@ namespace ANN {
 				 FloatGPUMirroredMemoryBlock *input_error,
 				 const unsigned int input_error_shift,
 				 float beta);
-
+    
   public:
-    DotProductANNComponent(const char *name, const char *weights_name,
-			   unsigned int input_size  = 0,
-			   unsigned int output_size = 0,
-			   bool transpose_weights   = false);
-    virtual ~DotProductANNComponent();
+    BiasANNComponent(const char *name, const char *weights_name,
+		     unsigned int size = 0);
+    virtual ~BiasANNComponent();
     virtual const Token *getInput() const { return input; }
     virtual const Token *getOutput() const { return output; }
     virtual const Token *getErrorInput() const { return error_input; }
@@ -82,4 +70,4 @@ namespace ANN {
   };
 }
 
-#endif // DOTPRODUCTANNCOMPONENT_H
+#endif // BIASANNCOMPONENT_H

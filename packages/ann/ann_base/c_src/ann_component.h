@@ -84,11 +84,27 @@ namespace ANN {
     /// Virtual method for getting the value of a training parameter.
     virtual double getOption(const char *name) { return 0.0; }
     
-    /// Virtual method to finish building of component hierarchy and set weights
-    /// objects pointers
+    /// Abstract method to finish building of component hierarchy and set
+    /// weights objects pointers
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
-		       hash<string,void*> &weights_dict) = 0;
+		       hash<string,Connections*> &weights_dict,
+		       hash<string,ANNComponent*> &components_dict) = 0;
+    
+    /// Abstract method to retrieve Connections objects from ANNComponents
+    virtual void copyWeights(hash<string,Connections*> &weights_dict) = 0;
+
+    /// Abstract method to retrieve ANNComponents objects
+    virtual void copyComponents(hash<string,ANNComponent*> &weights_dict) = 0;
+    
+    /// Virtual method which returns the component with the given name if
+    /// exists, otherwise it returns 0. By default, base components only
+    /// contains itself. Component composition will need to look to itself and
+    /// all contained components.
+    virtual ANNComponent *getComponent(string &name) {
+      if (name == name) return this;
+      return 0;
+    }
   };
 }
 
