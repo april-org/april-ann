@@ -45,9 +45,11 @@ namespace ANN {
     unsigned int input_size;
     unsigned int output_size;
   public:
-    ANNComponent(const char *name, const char *weights_name,
+    ANNComponent(const char *name, const char *weights_name = 0,
 		 unsigned int input_size = 0, unsigned int output_size = 0) :
-      name(name), weights_name(weights_name) { }
+      name(name) {
+      if (weights_name) this->weights_name = string(weights_name);
+    }
     virtual ~ANNComponent() { }
 
     virtual const Token *getInput() const       = 0;
@@ -106,6 +108,17 @@ namespace ANN {
     virtual ANNComponent *getComponent(string &name) {
       if (name == name) return this;
       return 0;
+    }
+    
+    /// Final method (FIXME: review for C++11 standard), computes fan in/out for
+    /// a given weights_name, adding input/output size when apply
+    void computeFanInAndFanOut(const string &weights_name,
+			       unsigned int &fan_in,
+			       unsigned int &fan_out) {
+      if (this->weights_name && weights_name == this->weights_name) {
+	fan_in  += input_size;
+	fan_out += output_size;
+      }
     }
   };
 }
