@@ -29,9 +29,9 @@ namespace ANN {
   ///////////////////////////////////////////
   
   DotProductANNComponent::DotProductANNComponent(const char *name, const char *weights_name,
-				     unsigned int input_size,
-				     unsigned int output_size,
-				     bool transpose_weights) :
+						 unsigned int input_size,
+						 unsigned int output_size,
+						 bool transpose_weights) :
     ANNComponent(input_size, output_size, name, weights_name),
     input(0), output(new TokenMemoryBlock()),
     error_input(0), error_output(new TokenMemoryBlock()),
@@ -105,33 +105,33 @@ namespace ANN {
     return output;
   }
   
-  Token *DotProductANNComponent::doBackprop(Token *_input_error) {
+  Token *DotProductANNComponent::doBackprop(Token *_error_input) {
     // error checking
-    if ( (_input_error == 0) ||
-	 (_input_error->getTokenCode() != table_of_token_codes::token_mem_block))
+    if ( (_error_input == 0) ||
+	 (_error_input->getTokenCode() != table_of_token_codes::token_mem_block))
       ERROR_EXIT(129,"Incorrect input error Token type, expected token_mem_block!\n");
     // change current input by new input
-    if (input_error) DecRef(input_error);
-    input_error = _input_error->convertTo<TokenMemoryBlock*>();
-    IncRef(input_error);
+    if (error_input) DecRef(error_input);
+    error_input = _error_input->convertTo<TokenMemoryBlock*>();
+    IncRef(error_input);
     // compute current bunch
-    unsigned int bunch_size = input_error->getUsedSize() / output_size;
+    unsigned int bunch_size = error_input->getUsedSize() / output_size;
     if (bunch_size != this->bunch_size)
       ERROR_EXIT(129, "Different bunches found at doForward and doBackprop\n");
     // and resize the output to fit the bunch
-    output_error->resize(bunch_size * input_size);
+    error_output->resize(bunch_size * input_size);
     //
-    FloatGPUMirroredMemoryBlock *input_error     = input_error->getMemBlock();
+    FloatGPUMirroredMemoryBlock *error_input     = error_input->getMemBlock();
     FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
     if (bunch_size > 1) {
       // C = alpha * A * B + beta * C
       doSgemm(CblasColMajor,
 	      CblasNoTrans, NEGATE_CBLAS_TRANSPOSE(transpose_weights),
 	      bunch_size, num_inputs, num_outputs, // conf.cur_bunch_size,
-	      1.0f, input_error, bunch_size, // conf.max_bunch_size,
+	      1.0f, error_input, bunch_size, // conf.max_bunch_size,
 	      weights_mat_ptr, weights_matrix->getOutputSize(),
-	      1.0f, output_error, bunch_size, // conf.max_bunch_size,
-	      0, 0, 0, // input_error_shift, 0, output_error_shift,
+	      1.0f, error_output, bunch_size, // conf.max_bunch_size,
+	      0, 0, 0, // error_input_shift, 0, error_output_shift,
 	      GlobalConf::use_cuda);
     }
     else {
@@ -139,20 +139,20 @@ namespace ANN {
 	      weights_matrix->getOutputSize(),
 	      weights_matrix->getInputSize(),
 	      1.0f, weights_mat_ptr, weights_matrix->getOutputSize(),
-	      input_error, bunch_size, // conf.max_bunch_size,
-	      1.0f, output_error, bunch_size, // conf.max_bunch_size,
-	      0, 0, 0, // 0, input_error_shift, output_error_shift,
+	      error_input, bunch_size, // conf.max_bunch_size,
+	      1.0f, error_output, bunch_size, // conf.max_bunch_size,
+	      0, 0, 0, // 0, error_input_shift, error_output_shift,
 	      GlobalConf::use_cuda);
     }
-    return output_error;
+    return error_output;
   }
   
   void DotProductANNComponent::
   computeBPUpdateOnPrevVectors(FloatGPUMirroredMemoryBlock *prev_weights_mat_ptr,
 			       FloatGPUMirroredMemoryBlock *input,
 			       const unsigned int input_shift,
-			       FloatGPUMirroredMemoryBlock *input_error,
-			       const unsigned int input_error_shift,
+			       FloatGPUMirroredMemoryBlock *error_input,
+			       const unsigned int error_input_shift,
 			       float beta) {
     // backprop learning rule:
     // PREV_W = alpha * ERRORS + PREV_W
@@ -167,9 +167,9 @@ namespace ANN {
 	      weights_matrix->getInputSize(),
 	      bunch_size, // conf.cur_bunch_size, // dimensiones
 	      norm_learn_rate,                          // alpha
-	      (transpose_weights == CblasNoTrans)?input_error:input,                              // A
+	      (transpose_weights == CblasNoTrans)?error_input:input,                              // A
 	      bunch_size, // conf.max_bunch_size,                      // A stride
-	      (transpose_weights == CblasNoTrans)?input:input_error,                                    // B
+	      (transpose_weights == CblasNoTrans)?input:error_input,                                    // B
 	      bunch_size,                      // B stride
 	      beta,                                     // beta
 	      prev_weights_mat_ptr,                     // C
@@ -186,8 +186,8 @@ namespace ANN {
 	     weights_matrix->getOutputSize(),
 	     weights_matrix->getInputSize(),
 	     norm_learn_rate,
-	     (transpose_weights == CblasNoTrans)?input_error:input, 0, bunch_size, // input_error_shift, conf.max_bunch_size,
-	     (transpose_weights == CblasNoTrans)?input:input_error, 0, bunch_size, // input_shift, conf.max_bunch_size,
+	     (transpose_weights == CblasNoTrans)?error_input:input, 0, bunch_size, // error_input_shift, conf.max_bunch_size,
+	     (transpose_weights == CblasNoTrans)?input:error_input, 0, bunch_size, // input_shift, conf.max_bunch_size,
 	     prev_weights_mat_ptr, 0, weights_matrix->getOutputSize(),
 	     GlobalConf::use_cuda);
     } // if bunch_size > 1 ... else
@@ -206,8 +206,8 @@ namespace ANN {
     FloatGPUMirroredMemoryBlock *prev_weights_mat_ptr =
       weights_matrix->getPrevPtr();
     FloatGPUMirroredMemoryBlock *input        = inputs->getMemBlock();
-    FloatGPUMirroredMemoryBlock *input_error  = outputs->getMemBlock();
-    FloatGPUMirroredMemoryBlock *output_error = inputs->getMemBlock();
+    FloatGPUMirroredMemoryBlock *error_input  = outputs->getMemBlock();
+    FloatGPUMirroredMemoryBlock *error_output = inputs->getMemBlock();
     
     float beta_parameter_for_cblas_bp = 1.0f;
     if (weights_matrix->isFirstUpdateCall()) {
@@ -227,7 +227,7 @@ namespace ANN {
     
     computeBPUpdateOnPrevVectors(prev_weights_mat_ptr,
 				 input, 0, // input_shift,
-				 input_error, 0, // output_shift,
+				 error_input, 0, // output_shift,
 				 beta_parameter_for_cblas_bp);
     
     // Forces to update counts and swap vectors if necessary at this backward
@@ -245,7 +245,7 @@ namespace ANN {
 				       output->getMaxSize(),
 				       0, 0, GlobalConf::use_cuda);
     if (input) DecRef(input); input = 0;
-    if (input_error) DecRef(input_error); input_error = 0;
+    if (error_input) DecRef(error_input); error_input = 0;
   }
 
   ANNComponent *DotProductANNComponent::clone() {

@@ -28,8 +28,8 @@
 
 namespace ANN {
   class DotProductANNComponent : public ANNComponent {
-    const TokenMemoryBlock *input, *error_input;
-    TokenMemoryBlock       *output, *error_output;
+    TokenMemoryBlock *input,  *error_input;
+    TokenMemoryBlock *output, *error_output;
     Connections *weights_matrix;
     unsigned int bunch_size;
     
@@ -60,6 +60,10 @@ namespace ANN {
 			   unsigned int output_size = 0,
 			   bool transpose_weights   = false);
     virtual ~DotProductANNComponent();
+    virtual const Token *getInput() const { return input; }
+    virtual const Token *getOutput() const { return output; }
+    virtual const Token *getErrorInput() const { return error_input; }
+    virtual const Token *getErrorOutput() const { return error_output; }
     virtual Token *doForward(Token* input, bool during_training);
     virtual Token *doBackprop(Token *input_error);
     virtual void  *doUpdate();

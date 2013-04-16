@@ -49,6 +49,11 @@ namespace ANN {
 		 unsigned int input_size = 0, unsigned int output_size = 0) :
       name(name), weights_name(weights_name) { }
     virtual ~ANNComponent() { }
+
+    virtual const Token *getInput() const       = 0;
+    virtual const Token *getOutput() const      = 0;
+    virtual const Token *getErrorInput() const  = 0;
+    virtual const Token *getErrorOutput() const = 0;
     
     /// Abstract method that executes the set of operations required for each
     /// block of connections when performing the forward step of the
