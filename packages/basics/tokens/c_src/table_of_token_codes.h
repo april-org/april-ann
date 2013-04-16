@@ -1,42 +1,62 @@
+/*
+ * This file is part of the Neural Network modules of the APRIL toolkit (A
+ * Pattern Recognizer In Lua).
+ *
+ * Copyright 2013, Salvador España-Boquera, Francisco Zamora-Martinez
+ *
+ * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ */
 #ifndef TABLE_OF_TOKEN_CODES_H
 #define TABLE_OF_TOKEN_CODES_H
 
 #include <stdint.h>
 
-/* AGRUPAR TIPOS DE TOKEN EN FAMILIAS Y REPARTIR EL RANGO
-   NUMERICO DE CARA A FUTURAS AMPLIACIONES
-   
-   Hacemos bloques basicos de 4096 (0x1000) elementos
-   
-   Bloque  Numero  Clase
-   0     0x0000  tipos de error
-   1     0x1000  senyales
-   2     0x2000  tipos basicos
-   3     0x3000  vectores
-   4     0x4000  grafos
-   
+/*  TOKEN TYPE GROUPS PREPARED FOR FUTURE AMPLIATIONS
 
+   Basic group with 4096 elements (0x1000)
+   
+   Block Number  Class
+   0     0x0000  error types
+   1     0x1000  signals
+   2     0x2000  basic types
+   3     0x3000  vectors
+   4     0x4000  graphs
 */
 
+/// Definition of TokenCode type
 typedef uint32_t TokenCode
 
+
+/// Static class which contains TokenCodes for each corresponding Token type
 class table_of_token_codes {
 public:
-  // especiales 1024 (0x400)
+  // especial codes 1024 (0x400)
   static const TokenCode error               = 0x0000;
   
-  // notificaciones 1024
+  // notifications 1024
   // 1024-20
   static const TokenCode signal_end          = 0x1000;
   
-  // tipos basicos 1024
+  // basic types 1024
   static const TokenCode boolean             = 0x2000;
   static const TokenCode token_char          = 0x2001;
   static const TokenCode token_int32         = 0x2002;
   static const TokenCode token_uint32        = 0x2003;
   static const TokenCode token_mem_block     = 0x2004;
   
-  // vectores:
+  // vectors:
   static const TokenCode vector_float        = 0x3000;
   static const TokenCode vector_double       = 0x3001;
   static const TokenCode vector_log_float    = 0x3002;
@@ -48,7 +68,7 @@ public:
   static const TokenCode vector_Tokens       = 0x3008;
   static const TokenCode vector_float_sparse = 0x3009;
   
-  // envio de grafos:
+  // graph protocol:
   static const TokenCode token_idag          = 0x4000;  
 };
 
