@@ -144,15 +144,20 @@ namespace ANN {
   double BiasANNComponent::getOption(const char *name) {
     mGetOption("learning_rate", learning_rate);
     mGetOption("momentum", momentum);
-    ERROR_EXIT1(140, "The option %s does not exist.\n", name);
+    return ANNComponent::getOption(name);
   }
 
   void BiasANNComponent::build(unsigned int _input_size,
 			       unsigned int _output_size,
 			       hash<string,Connections*> &weights_dict,
 			       hash<string,ANNComponent*> &components_dict) {
-    ANNComponent(_input_size, _output_size, weights_dict, components_dict);
+    ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
     //
+    if (input_size == 0 || output_size == 0)
+      ERROR_EXIT(141, "Impossible to compute input/output "
+		 "sizes for this component\n");
+    if (input_size != output_size)
+      ERROR_EXIT(142, "BiasANNComponent input/output sizes must be equal\n");
     unsigned int weights_input_size  = 1;
     unsigned int weights_output_size = output_size;
     ////////////////////////////////////////////////////////////////////

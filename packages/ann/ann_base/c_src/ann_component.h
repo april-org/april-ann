@@ -84,6 +84,8 @@ namespace ANN {
     
     virtual ANNComponent *clone() = 0;
     
+    /// Virtual method to set use_cuda option. All childs which rewrite this
+    /// method must call parent method before do anything.
     virtual void setUseCuda(bool v) { use_cuda = true; }
     
     /// Virtual method for setting the value of a training parameter.
@@ -93,11 +95,17 @@ namespace ANN {
     /// is being used or can be used within the network.
     virtual bool hasOption(const char *name) { return false; }
     
-    /// Virtual method for getting the value of a training parameter.
-    virtual double getOption(const char *name) { return 0.0; }
+    /// Virtual method for getting the value of a training parameter. All
+    /// childs which rewrite this method must call parent method before do
+    /// anything.
+    virtual double getOption(const char *name) {
+      ERROR_EXIT1(140, "The option %s does not exist.\n", name);
+      return 0.0f;
+    }
     
     /// Abstract method to finish building of component hierarchy and set
-    /// weights objects pointers
+    /// weights objects pointers. All childs which rewrite this method must call
+    /// parent method before do anything.
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
 		       hash<string,Connections*> &weights_dict,
@@ -119,27 +127,29 @@ namespace ANN {
     }
     
     /// Abstract method to retrieve Connections objects from ANNComponents
-    virtual void copyWeights(hash<string,Connections*> &weights_dict) = 0;
+    virtual void copyWeights(hash<string,Connections*> &weights_dict) { }
 
-    /// Abstract method to retrieve ANNComponents objects
-    virtual void copyComponents(hash<string,ANNComponent*> &weights_dict) {
+    /// Abstract method to retrieve ANNComponents objects. All childs which
+    /// rewrite this method must call parent method before do anything.
+    virtual void copyComponents(hash<string,ANNComponent*> &components_dict) {
       components_dict[name] = this;
     }
     
     /// Virtual method which returns the component with the given name if
     /// exists, otherwise it returns 0. By default, base components only
     /// contains itself. Component composition will need to look to itself and
-    /// all contained components.
+    /// all contained components. All childs which rewrite this method must
+    /// call parent method before do anything.
     virtual ANNComponent *getComponent(string &name) {
       if (name == name) return this;
       return 0;
     }
     
     /// Final method (FIXME: review for C++11 standard), computes fan in/out for
-    /// a given weights_name, adding input/output size when apply
+    /// a given weights_name, adding input/output size when apply.
     virtual void computeFanInAndFanOut(const string &weights_name,
-			       unsigned int &fan_in,
-			       unsigned int &fan_out) {
+				       unsigned int &fan_in,
+				       unsigned int &fan_out) {
       if (this->weights_name && weights_name == this->weights_name) {
 	fan_in  += input_size;
 	fan_out += output_size;
