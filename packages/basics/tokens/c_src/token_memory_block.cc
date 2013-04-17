@@ -35,7 +35,7 @@ TokenMemoryBlock::~TokenMemoryBlock() {
 void TokenMemoryBlock::resize(unsigned int size) {
   if (size > mem_block->getSize()) {
     delete mem_block;
-    mem_block = new FloatGPUMirroredMemoryBlock(size);
+    mem_block = new FloatGPUMirroredMemoryBlock(size<<1);
   }
   used_size = size;
 }

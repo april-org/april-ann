@@ -43,6 +43,7 @@ public:
     // NOT IMPLEMENTED
     return 0;
   }
+  void clear() { used_size = 0; }
 };
 
 #endif // TOKEN_MEMORY_BLOCK_H
