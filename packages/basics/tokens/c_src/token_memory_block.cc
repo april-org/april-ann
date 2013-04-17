@@ -19,12 +19,13 @@
  *
  */
 #include "wrapper.h"
+#include "gpu_mirrored_memory_block.h"
 #include "token_memory_block.h"
 
 TokenMemoryBlock::TokenMemoryBlock() : mem_block(0), used_size(0) { }
 
 TokenMemoryBlock::TokenMemoryBlock(unsigned int size) : used_size(0) {
-  mem_block = new GPUMirroredMemoryBlock(size);
+  mem_block = new FloatGPUMirroredMemoryBlock(size);
 }
 
 TokenMemoryBlock::~TokenMemoryBlock() {
@@ -34,7 +35,7 @@ TokenMemoryBlock::~TokenMemoryBlock() {
 void TokenMemoryBlock::resize(unsigned int size) {
   if (size > mem_block->getSize()) {
     delete mem_block;
-    mem_block = new GPUMirroredMemoryBlock(size);
+    mem_block = new FloatGPUMirroredMemoryBlock(size);
   }
   used_size = size;
 }
@@ -45,7 +46,7 @@ Token *TokenMemoryBlock::clone() const {
   doScopy(mem_block->getSize(),
 	  mem_block, 0, 1,
 	  token->mem_block, 0, 1,
-	  GlobalConf::use_cuda);
+	  false);
   return token;
 }
 
@@ -61,9 +62,4 @@ buffer_list* TokenMemoryBlock::debugString(const char *prefix, int debugLevel) {
 
 TokenCode TokenMemoryBlock::getTokenCode() const {
   return table_of_token_codes::token_mem_block;
-}
-
-static Token *TokenMemoryBlock::fromString(constString &cs) {
-  // NOT IMPLEMENTED
-  return 0;
 }

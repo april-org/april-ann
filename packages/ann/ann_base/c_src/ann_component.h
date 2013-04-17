@@ -22,15 +22,20 @@
 #ifndef ANNCOMPONENT_H
 #define ANNCOMPONENT_H
 
-#include "string.h"
-#include "constString.h"
-#include "actunit.h"
+#include <cstring>
+#include "mystring.h"
 #include "connection.h"
 #include "referenced.h"
 #include "error_print.h"
+#include "token_base.h"
 #include "aux_hash_table.h" // required for build
 #include "hash_table.h"     // required for build
 using april_utils::hash;    // required for build
+using april_utils::string;
+
+#define mSetOption(var_name,var) if(!strcmp(name,(var_name))){(var)=value;return;}
+#define mHasOption(var_name) if(!strcmp(name,(var_name))) return true;
+#define mGetOption(var_name, var) if(!strcmp(name,(var_name)))return (var);
 
 namespace ANN {
 
@@ -48,7 +53,7 @@ namespace ANN {
   public:
     ANNComponent(const char *name, const char *weights_name = 0,
 		 unsigned int input_size = 0, unsigned int output_size = 0) :
-      name(name), use_cuda(false) {
+      Referenced(), name(name), use_cuda(false) {
       if (weights_name) this->weights_name = string(weights_name);
     }
     virtual ~ANNComponent() { }
@@ -112,8 +117,8 @@ namespace ANN {
 		       hash<string,ANNComponent*> &components_dict) {
       ////////////////////////////////////////////////////////////////////
       ANNComponent *&component = components_dict[name];
-      if (component != 0) ERROR_EXIT(102, "Non unique component name found: %s\n",
-				     name.c_str());
+      if (component != 0) ERROR_EXIT1(102, "Non unique component name found: %s\n",
+				      name.c_str());
       component = this;
       ////////////////////////////////////////////////////////////////////
       if (input_size == 0)  input_size  = _input_size;
@@ -141,7 +146,7 @@ namespace ANN {
     /// all contained components. All childs which rewrite this method must
     /// call parent method before do anything.
     virtual ANNComponent *getComponent(string &name) {
-      if (name == name) return this;
+      if (this->name == name) return this;
       return 0;
     }
     
@@ -150,7 +155,7 @@ namespace ANN {
     virtual void computeFanInAndFanOut(const string &weights_name,
 				       unsigned int &fan_in,
 				       unsigned int &fan_out) {
-      if (this->weights_name && weights_name == this->weights_name) {
+      if (!this->weights_name.empty() && weights_name == this->weights_name) {
 	fan_in  += input_size;
 	fan_out += output_size;
       }

@@ -19,6 +19,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef WRAPPER_H
+#define WRAPPER_H
 #include <cstdio>
 
 #include "cblas_headers.h"
@@ -254,3 +256,4 @@ void doSger(CBLAS_ORDER major_type,
             unsigned int a_shift,
             unsigned int a_inc,
             bool use_gpu);
+#endif // WRAPPER_H

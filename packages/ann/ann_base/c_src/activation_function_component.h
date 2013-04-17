@@ -22,13 +22,15 @@
 #ifndef ACTFCOMPONENT_H
 #define ACTFCOMPONENT_H
 
+#include "token_memory_block.h"
 #include "ann_component.h"
+#include "gpu_mirrored_memory_block.h"
 
 namespace ANN {
 
   /// An abstract class that defines the basic interface that
   /// the anncomponents must fulfill.
-  class ActivationFunctionANNComponent : public Referenced {
+  class ActivationFunctionANNComponent : public ANNComponent {
     TokenMemoryBlock *input, *output, *error_input, *error_output;
     unsigned int bunch_size;
   protected:
@@ -64,7 +66,7 @@ namespace ANN {
 
     virtual bool hasOption(const char *name);
     
-    virtual double getOption(const char *name) { return 0.0; }
+    virtual double getOption(const char *name);
     
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,

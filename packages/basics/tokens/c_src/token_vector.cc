@@ -18,7 +18,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "TokenVector.h"
+#include "token_vector.h"
 #include <stdlib.h>
 #include "binarizer.h"
 
@@ -29,7 +29,7 @@ TokenVector<T>::TokenVector() {
 }
 
 template <typename T>
-TokenVector::TokenVector(unsigned int vlength) : vec(vlength) {
+TokenVector<T>::TokenVector(unsigned int vlength) : vec(vlength) {
 }
 
 template <typename T>
@@ -67,7 +67,7 @@ buffer_list* TokenVector<T>::debugString(const char *prefix,
 
 template <typename T>
 TokenCode TokenVector<T>::getTokenCode() const {
-  return table_of_Token_codes::error;
+  return table_of_token_codes::error;
 }
 
 template <typename T>
@@ -96,7 +96,7 @@ buffer_list* TokenVector<float>::debugString(const char *prefix,
 
 template <>
 TokenCode TokenVector<float>::getTokenCode() const {
-  return table_of_Token_codes::vector_float;
+  return table_of_token_codes::vector_float;
 }
 
 template <>
@@ -137,7 +137,7 @@ buffer_list* TokenVector<double>::debugString(const char *prefix,
 
 template <>
 TokenCode TokenVector<double>::getTokenCode() const {
-  return table_of_Token_codes::vector_double;
+  return table_of_token_codes::vector_double;
 }
 
 template <>
@@ -178,7 +178,7 @@ buffer_list* TokenVector<int32_t>::debugString(const char *prefix,
 
 template <>
 TokenCode TokenVector<int32_t>::getTokenCode() const {
-  return table_of_Token_codes::vector_int32;
+  return table_of_token_codes::vector_int32;
 }
 
 template <>
@@ -219,7 +219,7 @@ buffer_list* TokenVector<uint32_t>::debugString(const char *prefix,
 
 template <>
 TokenCode TokenVector<uint32_t>::getTokenCode() const {
-  return table_of_Token_codes::vector_uint32;
+  return table_of_token_codes::vector_uint32;
 }
 
 template <>
@@ -260,7 +260,7 @@ buffer_list* TokenVector<char>::debugString(const char *prefix,
 
 template <>
 TokenCode TokenVector<char>::getTokenCode() const {
-  return table_of_Token_codes::vector_char;
+  return table_of_token_codes::vector_char;
 }
 
 template <>
@@ -299,7 +299,7 @@ buffer_list* TokenVector<Token>::debugString(const char *prefix,
 
 template <>
 TokenCode TokenVector<Token>::getTokenCode() const {
-  return table_of_Token_codes::vector_Token;
+  return table_of_token_codes::vector_Tokens;
 }
 
 template <>

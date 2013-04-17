@@ -36,7 +36,7 @@
 */
 
 /// Definition of TokenCode type
-typedef uint32_t TokenCode
+typedef uint32_t TokenCode;
 
 
 /// Static class which contains TokenCodes for each corresponding Token type

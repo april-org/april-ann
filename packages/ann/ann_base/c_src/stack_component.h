@@ -29,11 +29,13 @@ using april_utils::vector;
 
 namespace ANN {
 
-  class StackANNComponent : public Referenced {
+  class StackANNComponent : public ANNComponent {
     vector<ANNComponent*> components;
   public:
     StackANNComponent(const char *name);
     virtual ~StackANNComponent();
+
+    void pushComponent(ANNComponent *component);
 
     virtual const Token *getInput() const;
     virtual const Token *getOutput() const;

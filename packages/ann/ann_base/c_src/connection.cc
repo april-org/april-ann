@@ -22,18 +22,17 @@
 #include "swap.h"
 #include "connection.h"
 #include "check_floats.h"
+#include "wrapper.h"
 
 namespace ANN {
   const double Connections::weightnearzero = 1e-7;
   
-  Connections::Connections(unsigned int total_size,
-			   unsigned int num_inputs, unsigned int num_outputs) :
+  Connections::Connections(unsigned int num_inputs, unsigned int num_outputs) :
     Referenced(),
     weights(0), prev_weights(0),
-    total_size(total_size),
+    total_size(num_inputs*num_outputs),
     num_inputs(num_inputs), num_outputs(num_outputs),
-    num_references(0), update_weights_calls(0),
-    fanin(num_inputs) {
+    num_references(0), update_weights_calls(0) {
     weights      = new FloatGPUMirroredMemoryBlock(total_size);
     prev_weights = new FloatGPUMirroredMemoryBlock(total_size);
     if (weights == 0 || prev_weights == 0)
@@ -45,8 +44,8 @@ namespace ANN {
     delete prev_weights;
   }
 
-  bool AllAllConnections::checkInputOutputSizes(unsigned int input_size,
-						unsigned int output_size) const {
+  bool Connections::checkInputOutputSizes(unsigned int input_size,
+					  unsigned int output_size) const {
     // TODO: comprobar error input==0 y output==0
     if (num_inputs != input_size) {
       ERROR_PRINT("Incorrect input size!!!\n");
@@ -146,7 +145,7 @@ namespace ANN {
   }
 
   // Crea de forma aleatoria el conjunto de pesos con valores en el
-  // rango [low*sqrt(fan_in), high*sqrt(fan_in)]
+  // rango [low, high]
   void Connections::randomizeWeights(MTRand *rnd, float low, float high) {
     double dinf = low;
     double dsup = high;

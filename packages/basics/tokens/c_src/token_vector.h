@@ -24,11 +24,11 @@
 #include "vector.h"
 #include "token_base.h"
 
-using namespace april_utils::vector;
+using april_utils::vector;
 
-class TokenVectorGeneric : public TokenBase {
+class TokenVectorGeneric : public Token {
 public:
-  unsigned int size() const = 0;
+  virtual unsigned int size() const = 0;
 };
 
 template <typename T>
@@ -51,6 +51,7 @@ public:
   buffer_list* debugString(const char *prefix, int debugLevel);
   TokenCode getTokenCode() const;
   static Token *fromString(constString &cs);
+  virtual unsigned int size() const { return vec.size(); }
 };
 
 typedef TokenVector<float>    TokenVectorFloat;

@@ -19,8 +19,11 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "dot_product_action.h"
-#include "trainsuper.h"
+#include "swap.h"
+#include "dot_product_component.h"
+#include "wrapper.h"
+
+using april_utils::swap;
 
 namespace ANN {
 
@@ -33,9 +36,11 @@ namespace ANN {
 						 unsigned int input_size,
 						 unsigned int output_size,
 						 bool transpose_weights) :
-    ANNComponent(input_size, output_size, name, weights_name),
-    input(0), output(new TokenMemoryBlock()),
-    error_input(0), error_output(new TokenMemoryBlock()),
+    ANNComponent(name, weights_name, input_size, output_size),
+    input(0),
+    error_input(0),
+    output(new TokenMemoryBlock()),
+    error_output(new TokenMemoryBlock()),
     weights_matrix(0),
     learning_rate(-1.0f),
     momentum(0.0f),
@@ -120,16 +125,17 @@ namespace ANN {
     // and resize the output to fit the bunch
     error_output->resize(bunch_size * input_size);
     //
-    FloatGPUMirroredMemoryBlock *error_input_ptr = error_input->getMemBlock();
-    FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
+    FloatGPUMirroredMemoryBlock *error_input_ptr  = error_input->getMemBlock();
+    FloatGPUMirroredMemoryBlock *error_output_ptr = error_output->getMemBlock();
+    FloatGPUMirroredMemoryBlock *weights_mat_ptr  = weights_matrix->getPtr();
     if (bunch_size > 1) {
       // C = alpha * A * B + beta * C
       doSgemm(CblasColMajor,
 	      CblasNoTrans, NEGATE_CBLAS_TRANSPOSE(transpose_weights),
-	      bunch_size, num_inputs, num_outputs, // conf.cur_bunch_size,
+	      bunch_size, input_size, output_size, // conf.cur_bunch_size,
 	      1.0f, error_input_ptr, bunch_size, // conf.max_bunch_size,
 	      weights_mat_ptr, weights_matrix->getOutputSize(),
-	      1.0f, error_output, bunch_size, // conf.max_bunch_size,
+	      1.0f, error_output_ptr, bunch_size, // conf.max_bunch_size,
 	      0, 0, 0, // error_input_shift, 0, error_output_shift,
 	      use_cuda);
     }
@@ -139,7 +145,7 @@ namespace ANN {
 	      weights_matrix->getInputSize(),
 	      1.0f, weights_mat_ptr, weights_matrix->getOutputSize(),
 	      error_input_ptr, bunch_size, // conf.max_bunch_size,
-	      1.0f, error_output, bunch_size, // conf.max_bunch_size,
+	      1.0f, error_output_ptr, bunch_size, // conf.max_bunch_size,
 	      0, 0, 0, // 0, error_input_shift, error_output_shift,
 	      use_cuda);
     }
@@ -158,11 +164,11 @@ namespace ANN {
     const unsigned int references = weights_matrix->getNumReferences();
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
     const float norm_learn_rate =
-      -(1.0f/sqrtf(static_cast<float>(references*conf.cur_bunch_size))) *
+      -(1.0f/sqrtf(static_cast<float>(references*bunch_size))) *
       learning_rate;
     if (bunch_size > 1) {
       doSgemm(CblasColMajor, CblasTrans, CblasNoTrans,
-	      weights_matrix->getOutputSize()
+	      weights_matrix->getOutputSize(),
 	      weights_matrix->getInputSize(),
 	      bunch_size, // conf.cur_bunch_size, // dimensiones
 	      norm_learn_rate,                          // alpha
@@ -203,9 +209,9 @@ namespace ANN {
     FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
     FloatGPUMirroredMemoryBlock *prev_weights_mat_ptr =
       weights_matrix->getPrevPtr();
-    FloatGPUMirroredMemoryBlock *input        = inputs->getMemBlock();
-    FloatGPUMirroredMemoryBlock *error_input  = outputs->getMemBlock();
-    FloatGPUMirroredMemoryBlock *error_output = inputs->getMemBlock();
+    FloatGPUMirroredMemoryBlock *input_ptr        = input->getMemBlock();
+    FloatGPUMirroredMemoryBlock *error_input_ptr  = output->getMemBlock();
+    FloatGPUMirroredMemoryBlock *error_output_ptr = input->getMemBlock();
     
     float beta_parameter_for_cblas_bp = 1.0f;
     if (weights_matrix->isFirstUpdateCall()) {
@@ -224,8 +230,8 @@ namespace ANN {
     } // if (weights_matrix->needsToComputeMomentum()) {
     
     computeBPUpdateOnPrevVectors(prev_weights_mat_ptr,
-				 input, 0, // input_shift,
-				 error_input, 0, // output_shift,
+				 input_ptr, 0, // input_shift,
+				 error_input_ptr, 0, // output_shift,
 				 beta_parameter_for_cblas_bp);
     
     // Forces to update counts and swap vectors if necessary at this backward
@@ -248,7 +254,7 @@ namespace ANN {
 
   ANNComponent *DotProductANNComponent::clone() {
     DotProductANNComponent *component = new
-      DotProductANNComponent(name, weights_name,
+      DotProductANNComponent(name.c_str(), weights_name.c_str(),
 			     input_size, output_size,
 			     (transpose_weights == CblasTrans));
     component->learning_rate  = learning_rate;
@@ -302,7 +308,7 @@ namespace ANN {
     unsigned int weights_output_size = output_size;
     ////////////////////////////////////////////////////////////////////
     if (weights_matrix != 0) DecRef(weights_matrix);
-    if (transpose_weights) swap(weights_input_size, weights_output_size)
+    if (transpose_weights) swap(weights_input_size, weights_output_size);
     Connections *&w = weights_dict[weights_name];
     if (w != 0) {
       weights_matrix = w;
@@ -319,11 +325,11 @@ namespace ANN {
     }
     // TODO: compute fan-in
     // outputs->increaseFanIn(inputs->numNeurons());
-    weights_matrixr->countReference();
+    weights_matrix->countReference();
     IncRef(weights_matrix);
   }
 
-  void copyWeights(hash<string,Connections*> &weights_dict) {
+  void DotProductANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
     if (weights_matrix == 0)
       ERROR_EXIT(100, "Component not built, impossible execute copyWeights\n");
     Connections *&w = weights_dict[weights_name];

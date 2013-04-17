@@ -83,8 +83,8 @@ namespace april_utils {
       vector_size = used_size = last - first;
       if (vector_size) vec = new T[vector_size];
       else vec=0;
-      for (unsigned int i=0; i<used_size; i++)
-	vec[i] = first++;
+      for (unsigned int i=0; i<used_size; i++, first++)
+	vec[i] = *first;
     }
 
     vector &operator=(const vector &l) {
@@ -166,7 +166,9 @@ namespace april_utils {
     }
 
     iterator begin() { return vec; }
+    const_iterator begin() const { return vec; }
     iterator end() { return vec+used_size; }
+    const_iterator end() const { return vec+used_size; }
 
   };
 } // namespace april_utils
