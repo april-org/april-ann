@@ -56,13 +56,13 @@ namespace ANN {
 		input_ptr, 1,
 		output_ptr, 1,
 		bunch_size, bunch_size,
-		GlobalConf::use_cuda);
+		use_cuda);
     // addition of bias vector at output
     doSaxpyLoop(output_size, 1.0f,
 		bias_vector_ptr, 1,
 		output_ptr, bunch_size,
 		bunch_size, bunch_size,
-		GlobalConf::use_cuda);
+		use_cuda);
     return output;
   }
 
@@ -89,10 +89,10 @@ namespace ANN {
     if (bias_vector->isFirstUpdateCall()) {
       if (momentum > 0.0f) {
 	// prev_w[i,j] = momentum * (w[i,j] - prev_w[i,j])
-	bias_vector->computeMomentumOnPrevVector(momentum, GlobalConf::use_cuda);
-	bias_vector->computeWeightDecayOnPrevVector(1.0f,  GlobalConf::use_cuda);
+	bias_vector->computeMomentumOnPrevVector(momentum, use_cuda);
+	bias_vector->computeWeightDecayOnPrevVector(1.0f,  use_cuda);
       }
-      else bias_vector->copyToPrevVector(GlobalConf::use_cuda);
+      else bias_vector->copyToPrevVector(use_cuda);
     } // if (bias_vector->needsToComputeMomentum()) {
   
     // update learning rule:
@@ -109,7 +109,7 @@ namespace ANN {
 		input_error, bunch_size,
 		prev_bias_ptr, 1,
 		bunch_size, 1,
-		GlobalConf::use_cuda);
+		use_cuda);
 
     // If necessary, update counts, swap vectors, and other stuff
     bias_vector->endUpdate();
@@ -118,7 +118,7 @@ namespace ANN {
   void reset() {
     if (output != 0) doVectorSetToZero(output->getMemBlock(),
 				       output->getMaxSize(),
-				       0, 0, GlobalConf::use_cuda);
+				       0, 0, use_cuda);
     if (input) DecRef(input); input = 0;
     if (error != 0) DecRef(error); error = 0;
   }
@@ -144,29 +144,17 @@ namespace ANN {
   double BiasANNComponent::getOption(const char *name) {
     mGetOption("learning_rate", learning_rate);
     mGetOption("momentum", momentum);
-    ERROR_EXIT(140, "The option to be get does not exist.\n");
+    ERROR_EXIT1(140, "The option %s does not exist.\n", name);
   }
 
-  void BiasANNComponent::build(unsigned int input_size,
-			       unsigned int output_size,
+  void BiasANNComponent::build(unsigned int _input_size,
+			       unsigned int _output_size,
 			       hash<string,Connections*> &weights_dict,
 			       hash<string,ANNComponent*> &components_dict) {
+    ANNComponent(_input_size, _output_size, weights_dict, components_dict);
+    //
     unsigned int weights_input_size  = 1;
     unsigned int weights_output_size = output_size;
-    ////////////////////////////////////////////////////////////////////
-    if (input_size == 0)  this->input_size  = input_size;
-    if (output_size == 0) this->output_size = output_size;
-    if (this->input_size != input_size)
-      ERROR_EXIT2(129, "Incorrect input size, expected %d, found %d\n",
-		  this->input_size, input_size);
-    if (this->output_size != output_size)
-      ERROR_EXIT2(129, "Incorrect output size, expected %d, found %d\n",
-		  this->output_size, output_size);
-    ////////////////////////////////////////////////////////////////////
-    ANNComponent *&component = components_dict[name];
-    if (component != 0) ERROR_EXIT(102, "Non unique component name found: %s\n",
-				   name.c_str());
-    component = this;
     ////////////////////////////////////////////////////////////////////
     if (bias_vector != 0) DecRef(bias_vector);
     Connections *&w = weights_dict[weights_name];
