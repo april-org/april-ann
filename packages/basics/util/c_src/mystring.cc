@@ -1,5 +1,5 @@
 #include <cstring>
-#include "string.h"
+#include "mystring.h"
 
 namespace april_utils {
     
@@ -23,7 +23,7 @@ namespace april_utils {
     return *this;
   }
   
-  void string::append(string &other) {
+  void string::append(const string &other) {
     for (size_type i=0; i<other.size(); ++i) vec.push_back(other[i]);
   }
   
@@ -68,16 +68,20 @@ namespace april_utils {
   char *string::begin() { return vec.begin(); }
   
   char *string::end() { return vec.end(); }
+
+  const char *string::begin() const { return vec.begin(); }
   
-  size_type string::size() { return vec.size(); }
+  const char *string::end() const { return vec.end(); }
   
-  size_type string::max_size() { return vec.max_size(); }
+  string::size_type string::size() const { return vec.size(); }
   
-  void string::resize(size_type size) { vec.resize(size); }
+  string::size_type string::max_size() const { return vec.max_size(); }
   
-  size_type string::capacity() { return vec.capacity(); }
+  void string::resize(string::size_type size) { vec.resize(size); }
   
-  void string::reserve(size_type size) { vec.reserve(size); }
+  string::size_type string::capacity() { return vec.capacity(); }
+  
+  void string::reserve(string::size_type size) { vec.reserve(size); }
   
   void string::clear() { vec.clear(); }
   
@@ -89,9 +93,9 @@ namespace april_utils {
   
   char &string::at(unsigned int i) { return vec[i]; }
   
-  char  string::front() const { return vec.front(); }
+  char string::front() const { return vec[0]; }
   
-  char &string::front() { return vec.front(); }
+  char &string::front() { return vec[0]; }
   
   char  string::back() const { return vec.back(); }
   

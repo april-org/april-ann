@@ -22,6 +22,7 @@
 #ifndef DOTPRODUCTANNCOMPONENT_H
 #define DOTPRODUCTANNCOMPONENT_H  
 
+#include "token_memory_block.h"
 #include "cblas_headers.h"
 #include "ann_component.h"
 #include "connection.h"
@@ -37,7 +38,6 @@ namespace ANN {
     float learning_rate, momentum, weight_decay, c_weight_decay;
     float neuron_squared_length_upper_bound;
     CBLAS_TRANSPOSE transpose_weights;
-    bool transpose_weights;
 
     void
     backpropagateErrors(FloatGPUMirroredMemoryBlock *weights_mat_ptr,

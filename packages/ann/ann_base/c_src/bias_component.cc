@@ -20,19 +20,25 @@
  *
  */
 #include "bias_component.h"  
+#include "wrapper.h"
 
 namespace ANN {
 
-  BiasBiasANNComponent::BiasANNComponent(const char *name,
-					 const char *weights_name,
-					 unsigned int size = 0) :
-    ANNComponent(name, weights_name, size, size), 
+  BiasANNComponent::BiasANNComponent(const char *name,
+				     const char *weights_name) :
+    ANNComponent(name, weights_name, 0, 0), 
     input(0), output(new TokenMemoryBlock()), error(0),
-    learning_rate(-1.0f), momentum(0.0f), bias_vector(0) { }
+    bias_vector(0), learning_rate(-1.0f), momentum(0.0f) {
+    IncRef(output);
+  }
 
-  BiasANNComponent::~BiasANNComponent() { }
+  BiasANNComponent::~BiasANNComponent() {
+    if (input) DecRef(input);
+    if (error) DecRef(error);
+    DecRef(output);
+  }
 
-  Token *doForward(Token* _input, bool during_training) {
+  Token *BiasANNComponent::doForward(Token* _input, bool during_training) {
     assert(bias_vector != 0);
     // error checking
     if ( (_input == 0) ||
@@ -67,12 +73,16 @@ namespace ANN {
   }
 
   /// In BiasANNComponent this method is a by-pass
-  Token *BiasANNComponent::doBackprop(Token *input_error)
+  Token *BiasANNComponent::doBackprop(Token *_error_input)
   {
-    if (error != 0) DecRef(error);
-    error = input_error;
+    if ( (_error_input == 0) ||
+	 (_error_input->getTokenCode() != table_of_token_codes::token_mem_block))
+      ERROR_EXIT(129,"Incorrect input error Token type, expected token_mem_block!\n");
+    // change current input by new input
+    if (error) DecRef(error);
+    error = _error_input->convertTo<TokenMemoryBlock*>();
     IncRef(error);
-    return error;
+    return _error_input;
   }
 
   void BiasANNComponent::doUpdate() {
@@ -100,7 +110,7 @@ namespace ANN {
     const unsigned int references = bias_vector->getNumReferences();
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
     const float norm_learn_rate =
-      -(1.0f/sqrtf(static_cast<float>(references*conf.cur_bunch_size))) *
+      -(1.0f/sqrtf(static_cast<float>(references*bunch_size))) *
       learning_rate;
   
     // bias update: prev_bias[j] = prev_bias[j] + \sum_b norm_learn_rate * ERROR_INPUT[b,j]
@@ -115,7 +125,7 @@ namespace ANN {
     bias_vector->endUpdate();
   }
 
-  void reset() {
+  void BiasANNComponent::reset() {
     if (output != 0) doVectorSetToZero(output->getMemBlock(),
 				       output->getMaxSize(),
 				       0, 0, use_cuda);
@@ -124,9 +134,10 @@ namespace ANN {
   }
 
   ANNComponent *BiasANNComponent::clone() {
-    ANNComponent *component  = new BiasANNComponent(name,weights_name,input_size);
-    component->learning_rate = learning_rate;
-    component->momentum      = momentum;
+    BiasANNComponent *component = new BiasANNComponent(name.c_str(),
+						       weights_name.c_str());
+    component->learning_rate    = learning_rate;
+    component->momentum         = momentum;
     return component;
   }
 
@@ -182,7 +193,7 @@ namespace ANN {
     IncRef(bias_vector);  
   }
 
-  void copyWeights(hash<string,Connections*> &weights_dict) {
+  void BiasANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
     if (bias_vector == 0)
       ERROR_EXIT(100, "Component not built, impossible execute copyWeights\n");
     Connections *&w = weights_dict[weights_name];

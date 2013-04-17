@@ -25,7 +25,16 @@ namespace ANN {
 
   StackANNComponent::StackANNComponent(const char *name) :
     ANNComponent(name, 0) { }
-  StackANNComponent::~StackANNComponent() { }
+  
+  StackANNComponent::~StackANNComponent() {
+    for (unsigned int i=0; i<components.size(); ++i)
+      DecRef(components[i]);
+  }
+
+  void StackANNComponent::pushComponent(ANNComponent *component) {
+    IncRef(component);
+    components.push_back(component);
+  }
 
   const Token *StackANNComponent::getInput() const {
     return components[0]->getInput();
@@ -53,7 +62,7 @@ namespace ANN {
   Token *StackANNComponent::doBackprop(Token *input_error) {
     Token *aux_token = input_error;
     for (unsigned int c=components.size(); c>0; --c)
-      aux_token = components[c-1]->doBackprop(aux_token, during_training);
+      aux_token = components[c-1]->doBackprop(aux_token);
     return aux_token;
   }
     
@@ -68,9 +77,10 @@ namespace ANN {
   }
     
   ANNComponent *StackANNComponent::clone() {
-    StackANNComponent *obj = new StackANNComponent(name);
+    StackANNComponent *obj = new StackANNComponent(name.c_str());
     for (unsigned int c=0; c<components.size(); ++c)
-      obj->components.push_back(components[c]->clone());
+      obj->pushComponent(components[c]->clone());
+    return obj;
   }
   
   void StackANNComponent::setUseCuda(bool v) {
@@ -144,8 +154,8 @@ namespace ANN {
   void StackANNComponent::computeFanInAndFanOut(const string &weights_name,
 						unsigned int &fan_in,
 						unsigned int &fan_out) {
-    for (unsigned int c=0; c<components.size() && component==0; ++c)
-      component[c]->computeFanInAndFanOut(weights_name, fan_in, fan_out);
+    for (unsigned int c=0; c<components.size(); ++c)
+      components[c]->computeFanInAndFanOut(weights_name, fan_in, fan_out);
   }
 
 }

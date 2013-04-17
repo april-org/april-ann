@@ -24,7 +24,6 @@
 #include <stdint.h>
 #include "binarizer.h"
 
-
 // glibc defines these ones in string.h 
 // they're gone in C99, but stay in C++ :_(
 #undef BIG_ENDIAN

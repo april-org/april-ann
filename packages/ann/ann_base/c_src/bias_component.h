@@ -25,6 +25,7 @@
 #include "cblas_headers.h"
 #include "ann_component.h"
 #include "connection.h"
+#include "token_memory_block.h"
 
 namespace ANN {
   class BiasANNComponent : public ANNComponent {
@@ -44,8 +45,7 @@ namespace ANN {
 				 float beta);
     
   public:
-    BiasANNComponent(const char *name, const char *weights_name,
-		     unsigned int size = 0);
+    BiasANNComponent(const char *name, const char *weights_name);
     virtual ~BiasANNComponent();
     virtual const Token *getInput() const { return input; }
     virtual const Token *getOutput() const { return output; }

@@ -1,6 +1,7 @@
 #ifndef STRING_H
 #define STRING_H
 
+#include <cstring>
 #include "vector.h"
 #include "aux_hash_table.h"
 
@@ -15,7 +16,7 @@ namespace april_utils {
     typedef container::iterator        iterator;
     typedef container::const_iterator  const_iterator;
     typedef container::difference_type difference_type;
-    typedef container::size_type       size_t;
+    typedef container::size_type       size_type;
   private:
     vector<char> vec;
     
@@ -27,7 +28,7 @@ namespace april_utils {
     ~string();
     string &operator=(const string &other);
     string &operator+=(const string &other);
-    void append(string &other);
+    void append(const string &other);
     bool operator==(const string &other) const;
     bool operator<(const string &other)  const;
     bool operator<=(const string &other) const;
@@ -39,8 +40,10 @@ namespace april_utils {
     const char *data() const;
     char *begin();
     char *end();
-    size_type size();
-    size_type max_size();
+    const char *begin() const;
+    const char *end() const;
+    size_type size() const;
+    size_type max_size() const;
     void resize(size_type size);
     size_type capacity();
     void reserve(size_type size);
@@ -65,8 +68,7 @@ namespace april_utils {
       return resul;
     }
   };
-
-
+  
 }
 
 #endif // STRING_H
