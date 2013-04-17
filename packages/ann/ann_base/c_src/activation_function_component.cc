@@ -22,6 +22,7 @@
 #include "activation_function_component.h"
 
 // TODO: IMPLEMENT DROPOUT
+
 ActivationFunctionANNComponent::ActivationFunctionANNComponent(const char *name) :
   ANNComponent(name, 0, 0, 0),
   output(new TokenMemoryBlock()), error_output(new TokenMemoryBlock()) { }
