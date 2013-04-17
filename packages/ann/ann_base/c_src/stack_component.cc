@@ -67,37 +67,43 @@ namespace ANN {
       components[c]->reset();
   }
     
-  virtual ANNComponent *clone() {
+  ANNComponent *StackANNComponent::clone() {
     StackANNComponent *obj = new StackANNComponent(name);
     for (unsigned int c=0; c<components.size(); ++c)
       obj->components.push_back(components[c]->clone());
   }
-    
-  void setOption(const char *name, double value) {
+  
+  void StackANNComponent::setUseCuda(bool v) {
+    ANNComponent::setUseCuda(v);
+    for (unsigned int c=0; c<components.size(); ++c)
+      components[c]->setUseCuda(v);
+  }
+  
+  void StackANNComponent::setOption(const char *name, double value) {
     for (unsigned int c=0; c<components.size(); ++c)
       components[c]->setOption(name, value);
   }
 
-  bool hasOption(const char *name) {
+  bool StackANNComponent::hasOption(const char *name) {
     bool ret = false;
     for (unsigned int c=0; c<components.size() && !ret; ++c)
       ret = components[c]->hasOption(name);
     return ret;
   }
     
-  double getOption(const char *name) {
+  double StackANNComponent::getOption(const char *name) {
     for (unsigned int c=0; c<components.size(); ++c) {
       if (components[c]->hasOption(name))
 	return components[c]->getOption(name);
     }
-    ERROR_EXIT1(140, "The option %s does not exist.\n", name);
+    return ANNComponent::getOption(name);
   }
     
-  void build(unsigned int _input_size,
-	     unsigned int _output_size,
-	     hash<string,Connections*> &weights_dict,
-	     hash<string,ANNComponent*> &components_dict) {
-    ANNComponent(_input_size, _output_size, weights_dict, components_dict);
+  void StackANNComponent::build(unsigned int _input_size,
+				unsigned int _output_size,
+				hash<string,Connections*> &weights_dict,
+				hash<string,ANNComponent*> &components_dict) {
+    ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
     //////////////////////////////////////////////////////////////
     unsigned int current_input_size  = input_size;
     unsigned int current_output_size = 0;
@@ -109,17 +115,37 @@ namespace ANN {
       current_input_size  = components[c]->getOutputSize();
       current_output_size = 0;
     }
-    if (output_size == 0) output_size = current_output_size;
+    if (output_size == 0) output_size = current_input_size;
     if (input_size == 0 || output_size == 0)
       ERROR_EXIT(141, "Impossible to compute input/output "
 		 "sizes for this component\n");
     if (current_output_size != output_size)
       ERROR_EXIT(141, "StackANNComponent output size are not correct\n");
   }
-    
-  virtual void copyWeights(hash<string,Connections*> &weights_dict);
+  
+  void StackANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
+    for (unsigned int c=0; c<components.size(); ++c)
+      components[c]->copyWeights(weights_dict);
+  }
 
-  virtual void copyComponents(hash<string,ANNComponent*> &weights_dict);
+  void StackANNComponent::copyComponents(hash<string,ANNComponent*> &components_dict) {
+    ANNComponent::copyComponents(components_dict);
+    for (unsigned int c=0; c<components.size(); ++c)
+      components[c]->copyComponents(components_dict);
+  }
     
-  virtual ANNComponent *getComponent(string &name);
+  ANNComponent *StackANNComponent::getComponent(string &name) {
+    ANNComponent *component = ANNComponent::getComponent(name);
+    for (unsigned int c=0; c<components.size() && component==0; ++c)
+      component = components[c]->getComponent(name);
+    return component;
+  }
+
+  void StackANNComponent::computeFanInAndFanOut(const string &weights_name,
+						unsigned int &fan_in,
+						unsigned int &fan_out) {
+    for (unsigned int c=0; c<components.size() && component==0; ++c)
+      component[c]->computeFanInAndFanOut(weights_name, fan_in, fan_out);
+  }
+
 }

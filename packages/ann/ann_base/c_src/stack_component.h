@@ -50,6 +50,8 @@ namespace ANN {
     
     virtual ANNComponent *clone();
     
+    virtual void setUseCuda(bool v);
+    
     virtual void setOption(const char *name, double value);
 
     virtual bool hasOption(const char *name);
@@ -63,10 +65,13 @@ namespace ANN {
     
     virtual void copyWeights(hash<string,Connections*> &weights_dict);
 
-    virtual void copyComponents(hash<string,ANNComponent*> &weights_dict);
+    virtual void copyComponents(hash<string,ANNComponent*> &components_dict);
     
     virtual ANNComponent *getComponent(string &name);
 
+    virtual void computeFanInAndFanOut(const string &weights_name,
+				       unsigned int &fan_in,
+				       unsigned int &fan_out);
   };
 }
 

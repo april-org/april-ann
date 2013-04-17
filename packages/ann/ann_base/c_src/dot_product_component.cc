@@ -75,19 +75,16 @@ namespace ANN {
     FloatGPUMirroredMemoryBlock *input_ptr       = input->getMemBlock();
     FloatGPUMirroredMemoryBlock *output_ptr      = output->getMemBlock();
     FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
-    // weights factor depends on dropout parameter
-    float weights_factor = 1.0f;
-    if (!during_training) weights_factor = 1.0f - inputs->drop_factor;
     //
     if (bunch_size == 1) {
       // vector x matrix product
       doSgemv(CblasColMajor, transpose_weights,
 	      weights_matrix->getOutputSize(), weights_matrix->getInputSize(),
-	      weights_factor, weights_mat_ptr, weights_matrix->getOutputSize(),
+	      1.0f, weights_mat_ptr, weights_matrix->getOutputSize(),
 	      input_ptr, bunch_size, // conf.max_bunch_size
 	      1.0f, output_ptr, bunch_size, // conf.max_bunch_size,
 	      0, 0, 0, // inputs->getOffset(), outputs->getOffset()
-	      GlobalConf::use_cuda);
+	      use_cuda);
     } // if bunch_size==1
     else {
       // matrix x matrix product
@@ -96,13 +93,13 @@ namespace ANN {
       doSgemm(CblasColMajor,
 	      CblasNoTrans, NEGATE_CBLAS_TRANSPOSE(transpose_weights),
 	      bunch_size, output_size, input_size, // conf.cur_bunch_size,
-	      weights_factor, input_ptr, bunch_size, // conf.max_bunch_size,
+	      1.0f, input_ptr, bunch_size, // conf.max_bunch_size,
 	      weights_mat_ptr, weights_matrix->getOutputSize(),
 	      // beta = 1.0f, C matrix contains BIAS and probably other layer
 	      // computations
 	      1.0f, output_ptr, bunch_size, // conf.max_bunch_size,
 	      0, 0, 0, // inputs->getOffset(), 0, outputs->getOffset(),
-	      GlobalConf::use_cuda); // conf.use_cuda_flag);
+	      use_cuda); // conf.use_cuda_flag);
     } // if bunch_size==1 ... else
     return output;
   }
@@ -123,28 +120,28 @@ namespace ANN {
     // and resize the output to fit the bunch
     error_output->resize(bunch_size * input_size);
     //
-    FloatGPUMirroredMemoryBlock *error_input     = error_input->getMemBlock();
+    FloatGPUMirroredMemoryBlock *error_input_ptr = error_input->getMemBlock();
     FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
     if (bunch_size > 1) {
       // C = alpha * A * B + beta * C
       doSgemm(CblasColMajor,
 	      CblasNoTrans, NEGATE_CBLAS_TRANSPOSE(transpose_weights),
 	      bunch_size, num_inputs, num_outputs, // conf.cur_bunch_size,
-	      1.0f, error_input, bunch_size, // conf.max_bunch_size,
+	      1.0f, error_input_ptr, bunch_size, // conf.max_bunch_size,
 	      weights_mat_ptr, weights_matrix->getOutputSize(),
 	      1.0f, error_output, bunch_size, // conf.max_bunch_size,
 	      0, 0, 0, // error_input_shift, 0, error_output_shift,
-	      GlobalConf::use_cuda);
+	      use_cuda);
     }
     else {
       doSgemv(CblasColMajor, NEGATE_CBLAS_TRANSPOSE(transpose_weights),
 	      weights_matrix->getOutputSize(),
 	      weights_matrix->getInputSize(),
 	      1.0f, weights_mat_ptr, weights_matrix->getOutputSize(),
-	      error_input, bunch_size, // conf.max_bunch_size,
+	      error_input_ptr, bunch_size, // conf.max_bunch_size,
 	      1.0f, error_output, bunch_size, // conf.max_bunch_size,
 	      0, 0, 0, // 0, error_input_shift, error_output_shift,
-	      GlobalConf::use_cuda);
+	      use_cuda);
     }
     return error_output;
   }
@@ -177,13 +174,13 @@ namespace ANN {
 	      prev_weights_mat_ptr,                     // C
 	      weights_matrix->getOutputSize(),                              // C stride
 	      0, 0, 0, // input_shift, 0,        // desplazamientos
-	      GlobalConf::use_cuda);
+	      use_cuda);
     } // if bunch_size > 1 ... else
     else {
       if (beta < 1.0f)
 	doSscal(weights_matrix->getNumWeights(),
 		beta, prev_weights_mat_ptr, 0, 1,
-		GlobalConf::use_cuda);
+		use_cuda);
       doSger(CblasColMajor,
 	     weights_matrix->getOutputSize(),
 	     weights_matrix->getInputSize(),
@@ -191,7 +188,7 @@ namespace ANN {
 	     (transpose_weights == CblasNoTrans)?error_input:input, 0, bunch_size, // error_input_shift, conf.max_bunch_size,
 	     (transpose_weights == CblasNoTrans)?input:error_input, 0, bunch_size, // input_shift, conf.max_bunch_size,
 	     prev_weights_mat_ptr, 0, weights_matrix->getOutputSize(),
-	     GlobalConf::use_cuda);
+	     use_cuda);
     } // if bunch_size > 1 ... else
   }
   
@@ -216,12 +213,12 @@ namespace ANN {
       if (momentum > 0.0f) {
 	// prev_w[i,j] = momentum * (w[i,j] - prev_w[i,j])
 	weights_matrix->computeMomentumOnPrevVector(momentum,
-						    GlobalConf::use_cuda);
+						    use_cuda);
 	weights_matrix->computeWeightDecayOnPrevVector(c_weight_decay,
-						       GlobalConf::use_cuda);
+						       use_cuda);
       }
       else {
-	weights_matrix->copyToPrevVector(GlobalConf::use_cuda);
+	weights_matrix->copyToPrevVector(use_cuda);
 	beta_parameter_for_cblas_bp = c_weight_decay;
       }
     } // if (weights_matrix->needsToComputeMomentum()) {
@@ -241,10 +238,10 @@ namespace ANN {
   void DotProductANNComponent::reset() {
     if (error_output != 0) doVectorSetToZero(error_output->getMemBlock(),
 					     error_output->getMaxSize(),
-					     0, 0, GlobalConf::use_cuda);
+					     0, 0, use_cuda);
     if (output != 0) doVectorSetToZero(output->getMemBlock(),
 				       output->getMaxSize(),
-				       0, 0, GlobalConf::use_cuda);
+				       0, 0, use_cuda);
     if (input) DecRef(input); input = 0;
     if (error_input) DecRef(error_input); error_input = 0;
   }
@@ -289,15 +286,18 @@ namespace ANN {
     // the weight decay is always fixed to 0
     mGetOption("weight_decay", weight_decay);
     mGetOption("neuron_squared_length_upper_bound", neuron_squared_length_upper_bound);
-    ERROR_EXIT1(140, "The option %s does not exist.\n", name);
+    return ANNComponent::getOption(name);
   }
   
   void DotProductANNComponent::build(unsigned int _input_size,
 				     unsigned int _output_size,
 				     hash<string,Connections*> &weights_dict,
 				     hash<string,ANNComponent*> &components_dict) {
-    ANNComponent(_input_size, _output_size, weights_dict, components_dict);
+    ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
     //
+    if (input_size == 0 || output_size == 0)
+      ERROR_EXIT(141, "Impossible to compute input/output "
+		 "sizes for this component\n");
     unsigned int weights_input_size  = input_size;;
     unsigned int weights_output_size = output_size;
     ////////////////////////////////////////////////////////////////////
