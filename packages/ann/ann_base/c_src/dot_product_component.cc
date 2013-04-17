@@ -289,33 +289,20 @@ namespace ANN {
     // the weight decay is always fixed to 0
     mGetOption("weight_decay", weight_decay);
     mGetOption("neuron_squared_length_upper_bound", neuron_squared_length_upper_bound);
-    ERROR_EXIT(140, "The option to be get does not exist.\n");
+    ERROR_EXIT1(140, "The option %s does not exist.\n", name);
   }
   
-  void DotProductANNComponent::build(unsigned int input_size,
-				     unsigned int output_size,
+  void DotProductANNComponent::build(unsigned int _input_size,
+				     unsigned int _output_size,
 				     hash<string,Connections*> &weights_dict,
 				     hash<string,ANNComponent*> &components_dict) {
-    unsigned int weights_input_size  = input_size;
+    ANNComponent(_input_size, _output_size, weights_dict, components_dict);
+    //
+    unsigned int weights_input_size  = input_size;;
     unsigned int weights_output_size = output_size;
     ////////////////////////////////////////////////////////////////////
-    if (input_size == 0)  this->input_size  = input_size;
-    if (output_size == 0) this->output_size = output_size;
-    if (this->input_size != input_size)
-      ERROR_EXIT2(129, "Incorrect input size, expected %d, found %d\n",
-		  this->input_size, input_size);
-    if (this->output_size != output_size)
-      ERROR_EXIT2(129, "Incorrect output size, expected %d, found %d\n",
-		  this->output_size, output_size);
-    ////////////////////////////////////////////////////////////////////
-    ANNComponent *&component = components_dict[name];
-    if (component != 0) ERROR_EXIT(102, "Non unique component name found: %s\n",
-				   name.c_str());
-    component = this;
-    ////////////////////////////////////////////////////////////////////
     if (weights_matrix != 0) DecRef(weights_matrix);
-    if (transpose_weights) weights_input_size  = output_size;
-    if (transpose_weights) weights_output_size = input_size;
+    if (transpose_weights) swap(weights_input_size, weights_output_size)
     Connections *&w = weights_dict[weights_name];
     if (w != 0) {
       weights_matrix = w;
