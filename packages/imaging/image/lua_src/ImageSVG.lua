@@ -46,7 +46,7 @@ function imageSVG:addPathFromTable(path, params)
 
     local id = params.id or ""
     local stroke = params.stroke or "black"
-    local stroke_width = params.stroke_width or "1"
+    local stroke_width = params.stroke_width or "2"
 
     local buffer = {}
 
@@ -86,13 +86,15 @@ end
 
 -- Each element of the table is a path
 function imageSVG:addPaths(paths)
-    local colors = { "red", "blue", "green", "green", "orange"}
+    local colors = { "red", "blue", "green", "orange", "purple"}
+    print(#paths)
     for i, path in ipairs(paths) do
         local color = "black"
         if (i <= #colors) then
             color = colors[i]
         end
-        self:addPathFromTable(path,{stroke = color})
+--        print(i, color, #path)
+        self:addPathFromTable(path,{stroke = color, id = tostring(i)})
     end
 end
 

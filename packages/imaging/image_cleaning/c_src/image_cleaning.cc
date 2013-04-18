@@ -76,8 +76,7 @@ Matrix<float> * ImageHistogram::generateWindowHistogram(int radius) {
     using april_utils::min;
 
     Matrix<float> *matrix = new Matrix<float>(3,dims, 0.0);
-
-    assert(width < (2*radius+1) && height < (2*radius+1) && "The window is bigger than the image limits");
+    assert(width > (2*radius+1) && height > (2*radius+1) && "The window is bigger than the image limits");
 
     for (int i = 0; i < height; ++i) {
         for (int j = 0; j < width; ++j) {
