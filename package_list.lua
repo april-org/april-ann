@@ -20,6 +20,7 @@ return {
   "image_metrics",
   "binarization_filter",
   "image_cleaning",
+  "interest_points",
   --"libtiff",
  }
 
