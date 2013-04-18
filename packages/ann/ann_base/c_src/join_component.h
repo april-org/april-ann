@@ -30,8 +30,26 @@ namespace ANN {
 
   class JoinANNComponent : public ANNComponent {
     vector<ANNComponent*> components;
-    Token *input, *error_output;
-    TokenMemoryBlock *output, *error_input;
+    // Token pointers which contains exactly the same that was received
+    Token *input, *error_input, *error_output;
+
+    // This token is always a MemoryBlock
+    TokenMemoryBlock *output;
+
+    // Auxiliar Token pointers to prepare data from and for contained components
+    TokenBunchVector *input_vector,  *error_input_vector;
+    TokenBunchVector *output_vector, *error_output_vector;
+
+    // private auxiliar methods
+    void buildInputBunchVector(TokenBunchVector *&vector_token,
+			       Token *token);
+    void buildErrorInputBunchVector(TokenBunchVector *&vector_token,
+				    Token *token);
+    void buildMemoryBlockToken(TokenMemoryBlock *&mem_block_token,
+			       TokenBunchVector *token);
+    void buildMemoryBlockToken(TokenMemoryBlock *&mem_block_token,
+			       Token *token);
+    
   public:
     JoinANNComponent(const char *name);
     virtual ~JoinANNComponent();

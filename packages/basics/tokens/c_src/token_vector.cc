@@ -275,6 +275,11 @@ Token *TokenVector<char>::fromString(constString &cs) {
 // ------------------------- vector token -------------------------
 
 template <>
+TokenVector<Token>::~TokenVector() {
+  for (unsigned int i=0; i<vec.size(); ++i) DecRef(vec[i]);
+}
+
+template <>
 buffer_list* TokenVector<Token>::toString() {
   /*
     buffer_list *resul = new buffer_list;
