@@ -192,7 +192,7 @@ T& Matrix<T>::operator() (int row, int col) {
 
 template <typename T>
 T& Matrix<T>::operator() (int coord0, int coord1, int coord2, ...) {
-    int index = (coord0*matrixSize[1]+coord1)*matrixSize[2]*coord2;
+    int index = (coord0*matrixSize[1]+coord1)*matrixSize[2]+coord2;
     va_list ap;
     va_start(ap, coord2);
     for(int i=3; i<numDim; i++) {
