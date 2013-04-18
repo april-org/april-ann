@@ -23,6 +23,7 @@
 
 #include "vector.h"
 #include "token_base.h"
+#include "pair.h"
 
 using april_utils::vector;
 
@@ -33,19 +34,23 @@ public:
 
 template <typename T>
 class TokenVector : public TokenVectorGeneric {
-  vector<T> vec;
+  april_utils::vector<T> vec;
 public:
   TokenVector();
   TokenVector(unsigned int vlength);
   // always copy the vector
   TokenVector(const T *vec, unsigned int vlength);
-  TokenVector(const vector<T> &vec);
+  TokenVector(const april_utils::vector<T> &vec);
   ~TokenVector();
   
   T& operator[] (unsigned int i) { return vec[i]; }
   const T& operator[] (unsigned int i) const { return vec[i]; }
-  vector<T> &data() { return vec; }
-  const vector<T> &data() const { return vec; }
+  april_utils::vector<T> &getContainer() { return vec; }
+  const april_utils::vector<T> &getContainer() const { return vec; }
+  void push_back(const T &data) { vec.push_back(data); }
+  void clear() { vec.clear(); }
+  T *data() { return vec.begin(); }
+  const T *data() const { return vec.begin(); }
   Token *clone() const;
   buffer_list* toString();
   buffer_list* debugString(const char *prefix, int debugLevel);
@@ -60,5 +65,6 @@ typedef TokenVector<int32_t>  TokenVectorInt32;
 typedef TokenVector<uint32_t> TokenVectorUint32;
 typedef TokenVector<char>     TokenVectorChar;
 typedef TokenVector<Token*>   TokenBunchVector;
+typedef TokenVector<april_utils::pair<unsigned int, float> > TokenSparseVectorFloat;
 
 #endif // TOKEN_VECTOR_H

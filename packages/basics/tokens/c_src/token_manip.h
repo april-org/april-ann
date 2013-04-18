@@ -22,19 +22,10 @@
 #define TOKEN_MANIP_H
 
 #include "token_base.h"
-#include "vector.h"
-
-/// This function pushes in a bunch of patterns a new pattern. Patterns are
-/// of type TokenMemoryBlock.
-void pushTokenMemBlockAt(unsigned int bunch_pos, Token *bunch, Token *pat);
-
-/// This function puhses in a bunch of patterns a new pattern. Patterns could
-/// be any combination of TokenBunchVector's which internally contains
-/// a TokenMemoryBlock.
-void pushTokenAt(unsigned int bunch_pos, Token *&bunch, Token *pat);
+#include "token_"
 
 /// Function which takes a vector of TokenMemoryBlock and produces a block
 /// with all the bunch concatenated
-void concatTokenVector
+void concatBunchOfTokens(Token *&result, TokenBunchVector *bunch);
 
 #endif // TOKEN_MANIP_H
