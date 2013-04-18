@@ -18,60 +18,44 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef STACKCOMPONENT_H
-#define STACKCOMPONENT_H
+#ifndef JOINCOMPONENT_H
+#define JOINCOMPONENT_H
 
 #include "vector.h"
 #include "ann_component.h"
 
+using april_utils::vector;
+
 namespace ANN {
 
-  class StackANNComponent : public ANNComponent {
-    april_utils::vector<ANNComponent*> components;
+  class JoinANNComponent : public ANNComponent {
+    vector<ANNComponent*> components;
+    Token *input, *error_output;
+    TokenMemoryBlock *output, *error_input;
   public:
-    StackANNComponent(const char *name);
-    virtual ~StackANNComponent();
-
-    void pushComponent(ANNComponent *component);
-
-    virtual const Token *getInput() const;
-    virtual const Token *getOutput() const;
-    virtual const Token *getErrorInput() const;
-    virtual const Token *getErrorOutput() const;
+    JoinANNComponent(const char *name);
+    virtual ~JoinANNComponent();
+    
+    void addComponent(ANNComponent *component);
+    
+    virtual const Token *getInput() const { return input; }
+    virtual const Token *getOutput() const { return output; }
+    virtual const Token *getErrorInput() const { return error_input; }
+    virtual const Token *getErrorOutput() const { return error_output; }
     
     virtual Token *doForward(Token* input, bool during_training);
 
     virtual Token *doBackprop(Token *input_error);
     
-    virtual void doUpdate();
-
     virtual void reset();
     
     virtual ANNComponent *clone();
-    
-    virtual void setUseCuda(bool v);
-    
-    virtual void setOption(const char *name, double value);
 
-    virtual bool hasOption(const char *name);
-    
-    virtual double getOption(const char *name);
-    
-    virtual void build(unsigned int input_size,
-		       unsigned int output_size,
+    virtual void build(unsigned int _input_size,
+		       unsigned int _output_size,
 		       hash<string,Connections*> &weights_dict,
 		       hash<string,ANNComponent*> &components_dict);
-    
-    virtual void copyWeights(hash<string,Connections*> &weights_dict);
-
-    virtual void copyComponents(hash<string,ANNComponent*> &components_dict);
-    
-    virtual ANNComponent *getComponent(string &name);
-
-    virtual void computeFanInAndFanOut(const string &weights_name,
-				       unsigned int &fan_in,
-				       unsigned int &fan_out);
   };
 }
 
-#endif // STACKCOMPONENT_H
+#endif // JOINCOMPONENT_H

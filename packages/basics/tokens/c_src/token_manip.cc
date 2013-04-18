@@ -73,3 +73,42 @@ void pushTokenAt(unsigned int bunch_pos, Token *&bunch, Token *pat) {
 	       "expected token_memory_block or vector_Tokens\n");
   }
 }
+
+/// Function to concat a vector (or bunch) of tokens in a memory block
+/**
+   Function to concat a vector (or bunch) of tokens in a memory block (for
+   ANNComponent classes). Each Token of bunch parameter could be a
+   TokenMemoryBlock, a TokenVectorSparseFloat, a TokenBunchVector of
+   TokenMemoryBlock, or a TokenBunchVector of TokenVectorSparseFloat. None other
+   posibilities are allowed.
+   
+   @param result is a reference to a Token pointer where the concatenation
+   result will be stored. If result==0 then a new Token will be allocated and
+   IncRef'd.
+   
+   @param bunch a TokenBunchVector which contains an array of Tokens to be
+   concatenated. All elements of the bunch will be DecRef'd at the end of this
+   method, so bunch->size() will be zero at the end.
+ */
+void concatBunchOfTokens(Token *&result, TokenBunchVector *bunch) {
+  if (bunch->size() == 0)
+    ERROR_EXIT(80, "Found TokenBunchVector parameter with size == 0.\n");  
+  if (bunch->getTokenCode() != table_of_token_codes::vector_Tokens)
+    ERROR_EXIT(80, "Found TokenBunchVector parameter "
+	       "with type different of vector_Tokens.\n");  
+  //////////////////////////////////////////////////////////////////////
+  if (result == 0) {
+    result = bunch[0]->clone();
+    IncRef(result);
+  }
+  unsigned int bunch_size = bunch->size();
+  Token **bunch_data = bunch->data();
+  for (unsigned int i=0; i<bunch_size; ++i) {
+    Token *current = bunch_data[i];
+    switch(current->getTokenCode()) {
+    case TokenMemoryBlock:
+      result.resize(bunch_size * current->
+    }
+  }
+  bunch->clear();
+}

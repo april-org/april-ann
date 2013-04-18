@@ -61,10 +61,10 @@ namespace ANN {
     unsigned int getInputSize() const { return input_size; }
     unsigned int getOutputSize() const { return output_size; }
     
-    virtual const Token *getInput() const       = 0;
-    virtual const Token *getOutput() const      = 0;
-    virtual const Token *getErrorInput() const  = 0;
-    virtual const Token *getErrorOutput() const = 0;
+    virtual const Token *getInput() const { return 0; }
+    virtual const Token *getOutput() const { return 0; }
+    virtual const Token *getErrorInput() const { return 0; }
+    virtual const Token *getErrorOutput() const { return 0; }
     
     /// Virtual method that executes the set of operations required for each
     /// block of connections when performing the forward step of the
@@ -87,7 +87,11 @@ namespace ANN {
     /// reseted)
     virtual void reset() { }
     
-    virtual ANNComponent *clone() = 0;
+    virtual ANNComponent *clone() {
+      return new ANNComponent(name.c_str(),
+			      weights_name.c_str(),
+			      input_size, output_size);
+    }
     
     /// Virtual method to set use_cuda option. All childs which rewrite this
     /// method must call parent method before do anything.

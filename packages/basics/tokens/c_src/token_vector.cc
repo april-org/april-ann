@@ -21,8 +21,10 @@
 #include "token_vector.h"
 #include <stdlib.h>
 #include "binarizer.h"
-
 #include "table_of_token_codes.h"
+
+using april_utils::vector;
+using april_utils::pair;
 
 template <typename T>
 TokenVector<T>::TokenVector() {
@@ -319,9 +321,61 @@ Token *TokenVector<Token>::fromString(constString &cs) {
   return 0;
 }
 
+// ---------------------- sparse vector token ----------------------
+
+// TODO: implement
+template <>
+buffer_list* TokenVector<pair<unsigned int, float> >::toString() {
+  /*
+    buffer_list *resul = new buffer_list;
+    char b[5];
+    constString cs(binarizer::code_uint32(vec.size()));
+    resul->add_constString_left(cs);
+    for (unsigned int i=0; i<vec.size(); ++i)
+    resul->add_buffer_right(vec[i].toString());
+    return resul;
+  */
+  // NOT IMPLEMENTED
+  return 0;
+}
+
+template <>
+buffer_list* TokenVector<pair<unsigned int, float> >::debugString(const char *prefix,
+								  int debugLevel) {
+  // TODO: de momento ignoramos debugLevel
+  buffer_list *resul = new buffer_list;
+  resul->add_formatted_string_right("%s TokenSparseVectorFloat with %d values\n",
+				    prefix,vec.size());
+  return resul;
+}
+
+template <>
+TokenCode TokenVector<pair<unsigned int, float> >::getTokenCode() const {
+  return table_of_token_codes::vector_float_sparse;
+}
+
+// TODO: implement
+template <>
+Token *TokenVector<pair<unsigned int, float> >::fromString(constString &cs) {
+  /*
+    uint32_t size;
+    cs.extract_uint32_binary(&size);
+    TokenVector<Token> *resul = new TokenVector<Token>();
+    resul->vec.resize(size);
+    for (unsigned int i=0; i<size; ++i) {
+    if (resul->
+    resul->vec.push_back(
+    }
+    return resul;
+  */
+  // NOT IMPLEMENTED
+  return 0;
+}
+
 template class TokenVector<float>;
 template class TokenVector<double>;
 template class TokenVector<int32_t>;
 template class TokenVector<uint32_t>;
 template class TokenVector<char>;
 template class TokenVector<Token*>;
+template class TokenVector<pair<unsigned int, float> >;
