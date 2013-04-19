@@ -50,12 +50,17 @@ using namespace ANN;
 //                  ANNComponent                   //
 /////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME ANNComponent ann.__component__
+//BIND_LUACLASSNAME ANNComponent ann.components.base
 //BIND_CPP_CLASS    ANNComponent
 
 //BIND_CONSTRUCTOR ANNComponent
 {
-  LUABIND_ERROR("Abstract class!!!");
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  const char *name;
+  LUABIND_GET_TABLE_PARAMETER(1, name, string, name);
+  obj = new ANNComponent(name);
+  LUABIND_RETURN(ANNComponent, name);
 }
 //BIND_END
 
@@ -238,20 +243,6 @@ using namespace ANN;
   string name_string(name);
   ANNComponent *component = obj->getComponent(name_string);
   LUABIND_RETURN(ANNComponent, component);
-}
-//BIND_END
-
-//BIND_METHOD ANNComponent computeFanInAndFanOut
-{
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_CHECK_PARAMETER(1,string);
-  const char *name;
-  LUABIND_GET_PARAMETER(1, string, name);
-  string name_string(name);
-  unsigned int fan_in, fan_out;
-  obj->computeFanInAndFanOut(name_string, fan_in, fan_out);
-  LUABIND_RETURN(uint, fan_in);
-  LUABIND_RETURN(uint, fan_out);
 }
 //BIND_END
 
