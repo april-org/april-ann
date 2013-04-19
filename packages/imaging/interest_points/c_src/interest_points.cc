@@ -52,8 +52,36 @@ namespace InterestPoints {
             stroke.clear();
         }
 
+    // Returns true if white, false if not
+    // It is assumed that white is 1 and 0
+    // otherwise use flag reverse
+    inline
+        bool is_white(float value, float threshold, bool reverse = false) {
+            
+            
+            if (value > threshold)
+                return true xor reverse;
+            
+            if (value == threshold)
+                return true;
 
+            return false xor reverse;
+        }
 
+    // Returns true if white, false if not
+    // It is assumed that white is 1 and 0
+    // otherwise use flag reverse
+    inline
+        bool is_black(float value, float threshold, bool reverse = false) {
+          
+            if (value < threshold)
+                return true xor reverse;
+
+            if (value == threshold)
+                return true;
+
+            return false xor reverse;
+        }
     vector<Point2D>* extract_points_from_image(ImageFloat *pimg) {
 
         const int          contexto = 6;
@@ -81,8 +109,11 @@ namespace InterestPoints {
         for (x = 0; x < w; ++x) {
             // el borde inferior de los trazos, subiendo en la columna
             for (y = h-1; y > 0; --y) {
-                if ((y==h-1 || (img(x,y+1) <= threshold_white)) &&
-                        (img(x,y-1) >= threshold_black)) { // procesar el pixel
+                if ((y==h-1 || is_white(img(x,y+1), threshold_white)) &&
+                            (is_black(img(x,y-1), threshold_black)) ) { // procesar el pixel
+
+//                if ((y==h-1 || (img(x,y+1) <= threshold_white)) &&
+//                        (img(x,y-1) >= threshold_black)) { // procesar el pixel
                     int index=-1;
                     if (stamp_max[y] == x) index=y;
                     else if (y-1>=0 && stamp_max[y-1] == x) index=y-1;
@@ -102,8 +133,11 @@ namespace InterestPoints {
             }
             // el borde superior de los trazos, bajando en la columna
             for (y = 0; y < h-1; ++y) {
-                if ( (img(x,y+1) >= threshold_black) &&
-                        (y==0 || img(x,y-1) <= threshold_white) ) {
+                if ( is_black(img(x,y+1), threshold_black) &&
+                        (y==0 || is_white(img(x,y-1), threshold_white) ) ) {
+
+                //if ( (img(x,y+1) >= threshold_black) &&
+                //        (y==0 || img(x,y-1) <= threshold_white) ) {
                     // procesar el pixel
                     int index=-1;
                     if (stamp_min[y] == x) index=y;

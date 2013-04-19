@@ -5,7 +5,8 @@ setmetatable(imageSVG, imageSVG)
 imageSVG.__tostring = function() return "imageSVG" end
 
 function imageSVG:__call(params)
-
+    
+    print("wop")
     local obj = {}
     
     obj.width = params.width or -1
@@ -32,7 +33,7 @@ function imageSVG:setHeader()
   
   local swidth  = (self.width ~= -1 and tostring(self.width)) or "100%"
   local sheight = (self.height ~= -1 and tostring(self.height)) or "100%"
-	table.insert(self.header,string.format("<svg width=\"%s\" height=\"%s\">\n", swidth, sheight))
+	table.insert(self.header,string.format("<svg width=\"%s\" height=\"%s\"\nxmlns:xlink=\"http://www.w3.org/1999/xlink\" >\n", swidth, sheight))
 end
 
 function imageSVG:setFooter()
@@ -103,6 +104,30 @@ function imageSVG:resize(height, width)
     self.width = width
 end
 
+-- Point is a table with two coordinates
+function imageSVG:addCircle(point, params)
+
+    local radius = params.radius or 1
+    local color = params.color or "green"
+
+    local cx = point[1]
+    local cy = point[2]
+    table.insert(self.body,string.format("<circle cx=\"%d\" cy=\"%d\" r=\"%f\" fill=\"%s\"/>", cx, cy, radius, color))
+end
+
+-- Point is a table with two coordinates
+function imageSVG:addSquare(point, params)
+
+    local side = params.side or 1
+    local color = params.color or "green"
+
+    local x = point[1]
+    local y = point[2]
+    
+    table.insert(self.body,string.format("<rect x=\"%d\" y=\"%d\" width=\"%f\" height=\"%f\" fill=\"%s\"/>", x, y, side,side, color))
+end
+
+
 -- Extra image function
 function imageSVG:addImage(filename, width, height, offsetX, offsetY)
   
@@ -110,3 +135,11 @@ function imageSVG:addImage(filename, width, height, offsetX, offsetY)
 
 end
 
+function imageSVG.fromImageFile(filename, width, height)
+
+  mySVG = imageSVG({width = width, height = height})
+  mySVG:setHeader()
+  mySVG:setFooter()
+  mySVG:addImage(filename, width, height, 0, 0)
+  return mySVG  
+end
