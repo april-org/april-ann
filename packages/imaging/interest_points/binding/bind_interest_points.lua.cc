@@ -20,8 +20,6 @@
 
   vector<Point2D> *result=InterestPoints::extract_points_from_image(img);
 
-  
-  /*
   lua_createtable(L, result->size(), 0);
   for (unsigned int i=1; i <= result->size(); i++) {
     lua_createtable(L, 2, 0);
@@ -34,7 +32,6 @@
 
   LUABIND_RETURN_FROM_STACK(-1); 
   delete result;
-  **/
 }
 //BIND_END
 
