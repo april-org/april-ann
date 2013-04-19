@@ -31,8 +31,10 @@ namespace ANN {
   class HyperplaneANNComponent : public ANNComponent {
     DotProductANNComponent *dot_product;
     BiasANNComponent       *bias;
-  public:
+    
     HyperplaneANNComponent(const char *name);
+    
+  public:
     HyperplaneANNComponent(const char *name,
 			   const char *dot_product_name,
 			   const char *bias_name,
