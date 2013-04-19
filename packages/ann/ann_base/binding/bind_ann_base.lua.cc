@@ -39,7 +39,10 @@ void pushHashTableInLuaStack(hash<string,Value> &h,
 #include "ann_component.h"
 #include "dot_product_component.h"
 #include "bias_component.h"
+#include "hyperplane_component.h"
 #include "activation_function_component.h"
+#include "stack_component.h"
+#include "join_component.h"
 #include "connection.h"
 
 using namespace ANN;
@@ -54,9 +57,15 @@ using namespace ANN;
 //BIND_CPP_CLASS    ANNComponent
 
 //BIND_CONSTRUCTOR ANNComponent
+//DOC_BEGIN
+// base(name)
+/// Superclass for ann.components objects. It is also a dummy by-pass object (does nothing with input/output data).
+/// @param name A lua string with the name of the component.
+//DOC_END
 {
   LUABIND_CHECK_ARGN(==,1);
   LUABIND_CHECK_PARAMETER(1, table);
+  check_table_fileds(L, -1, "name", 0);
   const char *name;
   LUABIND_GET_TABLE_PARAMETER(1, name, string, name);
   obj = new ANNComponent(name);
@@ -65,6 +74,12 @@ using namespace ANN;
 //BIND_END
 
 //BIND_METHOD ANNComponent set_option
+//DOC_BEGIN
+// set_option(name, value)
+/// Method to modify the value of a given option name.
+/// @param name A lua string with the name of the option.
+/// @param value A lua number with the desired value.
+//DOC_END
 {
   const char *name;
   double value;
@@ -76,6 +91,11 @@ using namespace ANN;
 //BIND_END
 
 //BIND_METHOD ANNComponent get_option
+//DOC_BEGIN
+// get_option(name)
+/// Method to retrieve the value of a given option name.
+/// @param name A lua string with the name of the option.
+//DOC_END
 {
   const char *name;
   LUABIND_CHECK_ARGN(==,1);
@@ -85,6 +105,11 @@ using namespace ANN;
 //BIND_END
 
 //BIND_METHOD ANNComponent has_option
+//DOC_BEGIN
+// has_option(name)
+/// Method to ask for the existence of a given option name.
+/// @param name A lua string with the name of the option.
+//DOC_END
 {
   const char *name;
   LUABIND_CHECK_ARGN(==,1);
@@ -247,5 +272,33 @@ using namespace ANN;
 //BIND_END
 
 /////////////////////////////////////////////////////
-//                  ANNComponent                   //
+//             DotProductANNComponent              //
 /////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME DotProductANNComponent ann.components.dot_product
+//BIND_CPP_CLASS    DotProductANNComponent
+//BIND_SUBCLASS_OF  DotProductANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR DotProductANNComponent
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  check_table_fileds(L, -1, "name", "weights", 
+		     "input", "output", "transpose", 0);
+
+  const char *name, *weights_name;
+  unsigned int input_size, output_size;
+  bool transpose_weights;
+
+  LUABIND_GET_TABLE_PARAMETER(1, name, string, name);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights_name, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input, uint, input_size, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, output, uint, output_size, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, transpose, bool, transpose_weights,
+				       false);
+  obj = new DotProductANNComponent(name, weights_name,
+				   input_size, output_size,
+				   transpose_weights);
+  LUABIND_RETURN(DotProductANNComponent, obj);
+}
+//BIND_END
