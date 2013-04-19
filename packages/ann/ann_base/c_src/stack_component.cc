@@ -41,7 +41,7 @@ namespace ANN {
   }
 
   const Token *StackANNComponent::getOutput() const {
-    return components.back()->getInput();
+    return components.back()->getOutput();
   }
   
   const Token *StackANNComponent::getErrorInput() const {

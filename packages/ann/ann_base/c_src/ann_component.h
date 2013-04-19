@@ -57,6 +57,9 @@ namespace ANN {
       if (weights_name) this->weights_name = string(weights_name);
     }
     virtual ~ANNComponent() { }
+
+    const char *getName() const { return name.c_str(); }
+    const char *getWeightsName() const { return weights_name.c_str(); }
     
     unsigned int getInputSize() const { return input_size; }
     unsigned int getOutputSize() const { return output_size; }
