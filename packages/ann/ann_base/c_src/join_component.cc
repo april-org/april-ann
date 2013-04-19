@@ -26,16 +26,20 @@ namespace ANN {
   
   JoinANNComponent::JoinANNComponent(const char *name) :
     ANNComponent(name),
-    input(0), error_input(0), error_output(0),
+    input(0),
+    error_output(new TokenMemoryBlock()),
+    error_input(0),
     output(new TokenMemoryBlock()),
     input_vector(new TokenBunchVector()),
     error_input_vector(new TokenBunchVector()),
     output_vector(new TokenBunchVector()),
-    error_output_vector(new TokenBunchVector()) {
-    IncRef(output);
+    error_output_vector(new TokenBunchVector()),
+    segmented_input(false) {
     IncRef(input_vector);
     IncRef(error_input_vector);
+    IncRef(output);
     IncRef(output_vector);
+    IncRef(error_output);
     IncRef(error_output_vector);
   }
   
@@ -44,11 +48,11 @@ namespace ANN {
       DecRef(components[i]);
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
-    if (error_output) DecRef(error_output);
-    DecRef(output);
     DecRef(input_vector);
     DecRef(error_input_vector);
+    DecRef(output);
     DecRef(output_vector);
+    DecRef(error_output);
     DecRef(error_output_vector);
   }
 
@@ -57,19 +61,11 @@ namespace ANN {
     IncRef(component);
   }
 
-  /**
-     Two possible inputs:
-
-       - A TokenMemoryBlock which will be segmented into pieces to feed each
-         joined component
-
-       - A TokenBunchVector of Tokens, where each position of the
-         vector is the input of each component
-   */  
   void JoinANNComponent::buildInputBunchVector(TokenBunchVector *&vector_token,
 					       Token *token) {
     switch(token->getTokenCode()) {
     case table_of_token_codes::TokenMemoryBlock: {
+      segmented_input = false;
       TokenMemoryBlock *mem_token = token->convertTo<TokenMemoryBlock*>();
       unsigned int bunch_size = mem_token->getUsedSize() / input_size;
       unsigned int pos=0;
@@ -95,6 +91,7 @@ namespace ANN {
       break;
     }
     case table_of_token_codes::TokenBunchVector: {
+      segmented_input = true;
       TokenBunchVector *vtoken = token->convertTo<TokenBunchVector*>();
       if (token_vector.size() != vtoken.size())
 	ERROR_EXIT(128, "Incorrect number of components at input vector, "
@@ -197,27 +194,128 @@ namespace ANN {
     if (error_input) DecRef(error_input);
     error_input = _error_input;
     IncRef(error_input);
-    //
+    // INFO: will be possible to put this method inside previous loop, but seems
+    // more simpler a decoupled code
     buildErrorInputBunchVector(error_input_vector, _error_input);
     for (unsigned int i=0; i<components.size(); ++i) {
       if (error_output_vector[i]) DecRef(error_output_vector[i]);
       error_output_vector[i] = component[i]->doBackprop(component_mem_token);
       IncRef(error_output_vector[i]);
     }
-    return error_output_vector;
+    // error_output_vector has the gradients of each component stored as
+    // array. Depending on the received input, this vector would be returned as
+    // it is, or gradients will be stored as a TokenMemoryBlock joining all
+    // array positions.
+    if (segmented_input) {
+      if (error_output) DecRef(error_output);
+      error_output = error_output_vector;
+      IncRef(error_output);
+    }
+    else {
+      TokenMemoryBlock *error_output_mem_block;
+      if (error_output->getTokenCode() != table_of_token_codes::token_memory_block) {
+	DecRef(error_output);
+	error_output = new TokenMemoryBlock();
+	IncRef(error_output);
+      }
+      error_output_mem_block = error_output->convertTo<TokenMemoryBlock*>();
+      // INFO: will be possible to put this method inside previous loop, but
+      // seems more simpler a decoupled code
+      buildMemoryBlockToken(error_output_mem_block, error_output_vector);
+    }
+    return error_output;
+  }
+
+  void JoinANNComponent::doUpdate() {
+    for (unsigned int i=0; i<components.size(); ++i)
+      components[i]->doUpdate();
   }
   
   void JoinANNComponent::reset() {
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
+    for (unsigned int i=0; i<components.size(); ++i)
+      components[i]->reset();
   }
   
-  ANNComponent *JoinANNComponent::clone();
+  ANNComponent *JoinANNComponent::clone() {
+    ANNComponent *join_component = new JoinANNComponent(name);
+    for (unsigned int i=0; i<components.size(); ++i)
+      join_component->addComponent(components[i]->clone());
+    return join_component;
+  }
 
   void JoinANNComponent::build(unsigned int _input_size,
 			       unsigned int _output_size,
 			       hash<string,Connections*> &weights_dict,
 			       hash<string,ANNComponent*> &components_dict) {
+    ANNComponent::build(_input_size, _output_size,
+			weights_dict, components_dict);
+    //
+    if (components.size() == 0)
+      ERROR_EXIT(128, "JoinANNComponent needs one or more components, "
+		 "use addComponent method\n");
+    unsigned int computed_input_size = 0, computed_output_size = 0;
+    for (unsigned int i=0; i<components.size(); ++i) {
+      computed_input_size  += components[i]->getInputSize();
+      computed_output_size += components[i]->getOutputSize();
+    }
+    if (input_size == 0)  input_size  = computed_input_size;
+    if (output_size == 0) output_size = computed_output_size;
+    if (input_size != computed_input_size)
+      ERROR_EXIT(128, "Incorrect input sizes, components inputs sum %d but "
+		 " expected %d\n", computed_input_size, input_size);
+    if (output_size != computed_output_size)
+      ERROR_EXIT(128, "Incorrect output sizes, components outputs sum %d but "
+		 " expected %d\n", computed_output_size, output_size);
+    //
+    for (unsigned int i=0; i<components.size(); ++i)
+      components[i]->build(0, 0, weights_dict, components_dict);
   }
+  
+  void JoinANNComponent::setUseCuda(bool v) {
+    ANNComponent::setUseCuda(v);
+    for (unsigned int c=0; c<components.size(); ++c)
+      components[c]->setUseCuda(v);
+  }
+  
+  void JoinANNComponent::setOption(const char *name, double value) {
+    for (unsigned int c=0; c<components.size(); ++c)
+      components[c]->setOption(name, value);
+  }
+  
+  bool JoinANNComponent::hasOption(const char *name) {
+    bool ret = false;
+    for (unsigned int c=0; c<components.size() && !ret; ++c)
+      ret = components[c]->hasOption(name);
+    return ret;
+  }
+  
+  double JoinANNComponent::getOption(const char *name) {
+    for (unsigned int c=0; c<components.size(); ++c) {
+      if (components[c]->hasOption(name))
+	return components[c]->getOption(name);
+    }
+    return ANNComponent::getOption(name);
+  }
+
+  void JoinANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
+    for (unsigned int i=0; i<components.size(); ++i)
+      components[i]->copyWeights(weights_dict);
+  }
+
+  void JoinANNComponent::copyComponents(hash<string,ANNComponent*> &components_dict) {
+    ANNComponent::copyComponents(components_dict);
+    for (unsigned int i=0; i<components.size(); ++i)
+      components[i]->copyComponents(components_dict);
+  }
+  
+  ANNComponent *JoinANNComponent::getComponent(string &name) {
+    ANNComponent *c = ANNComponent::getComponent(name);
+    for (unsigned int i=0; i<components.size() && c == 0; ++i)
+      c = components[i]->getComponent(name);
+    return c;
+  }
+  
 };
 }

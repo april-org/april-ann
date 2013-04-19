@@ -151,11 +151,4 @@ namespace ANN {
     return component;
   }
 
-  void StackANNComponent::computeFanInAndFanOut(const string &weights_name,
-						unsigned int &fan_in,
-						unsigned int &fan_out) {
-    for (unsigned int c=0; c<components.size(); ++c)
-      components[c]->computeFanInAndFanOut(weights_name, fan_in, fan_out);
-  }
-
 }

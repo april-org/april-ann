@@ -67,10 +67,6 @@ namespace ANN {
     virtual void copyComponents(hash<string,ANNComponent*> &components_dict);
     
     virtual ANNComponent *getComponent(string &name);
-
-    virtual void computeFanInAndFanOut(const string &weights_name,
-				       unsigned int &fan_in,
-				       unsigned int &fan_out);
   };
 }
 

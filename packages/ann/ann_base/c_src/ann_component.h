@@ -104,9 +104,9 @@ namespace ANN {
     /// is being used or can be used within the network.
     virtual bool hasOption(const char *name) { return false; }
     
-    /// Virtual method for getting the value of a training parameter. All
-    /// childs which rewrite this method must call parent method before do
-    /// anything.
+    /// Virtual method for getting the value of a training parameter. All childs
+    /// which rewrite this method must call parent method after their process,
+    /// if the looked option is not found to show the error message.
     virtual double getOption(const char *name) {
       ERROR_EXIT1(140, "The option %s does not exist.\n", name);
       return 0.0f;
@@ -154,16 +154,6 @@ namespace ANN {
       return 0;
     }
     
-    /// Final method (FIXME: review for C++11 standard), computes fan in/out for
-    /// a given weights_name, adding input/output size when apply.
-    virtual void computeFanInAndFanOut(const string &weights_name,
-				       unsigned int &fan_in,
-				       unsigned int &fan_out) {
-      if (!this->weights_name.empty() && weights_name == this->weights_name) {
-	fan_in  += input_size;
-	fan_out += output_size;
-      }
-    }
   };
 }
 
