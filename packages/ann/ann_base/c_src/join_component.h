@@ -23,6 +23,8 @@
 
 #include "vector.h"
 #include "ann_component.h"
+#include "token_vector.h"
+#include "token_memory_block.h"
 
 using april_utils::vector;
 
@@ -53,15 +55,15 @@ namespace ANN {
 			       Token *token);
     
   public:
-    JoinANNComponent(const char *name);
+    JoinANNComponent(const char *name=0);
     virtual ~JoinANNComponent();
     
     void addComponent(ANNComponent *component);
     
-    virtual const Token *getInput() const { return input; }
-    virtual const Token *getOutput() const { return output; }
-    virtual const Token *getErrorInput() const { return error_input; }
-    virtual const Token *getErrorOutput() const { return error_output; }
+    virtual Token *getInput() { return input; }
+    virtual Token *getOutput() { return output; }
+    virtual Token *getErrorInput() { return error_input; }
+    virtual Token *getErrorOutput() { return error_output; }
     
     virtual Token *doForward(Token* input, bool during_training);
 

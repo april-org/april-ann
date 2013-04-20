@@ -29,6 +29,7 @@ namespace ANN {
     ANNComponent(name, weights_name, 0, 0), 
     input(0), output(new TokenMemoryBlock()), error(0),
     bias_vector(0), learning_rate(-1.0f), momentum(0.0f) {
+    if (weights_name == 0) generateDefaultWeightsName();
     IncRef(output);
   }
 
@@ -179,7 +180,7 @@ namespace ANN {
       if (!bias_vector->checkInputOutputSizes(weights_input_size,
 					      weights_output_size))
 	ERROR_EXIT2(256,"The weights matrix input/output sizes are not correct, "
-		    "expected %d,%d.\n",
+		    "expected %d inputs and %d outputs.\n",
 		    weights_input_size, weights_output_size);
     }
     else {

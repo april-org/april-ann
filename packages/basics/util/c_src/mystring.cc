@@ -5,7 +5,7 @@ namespace april_utils {
     
   string::string() { }
   
-  string::string(const char *ptr) : vec(ptr, ptr+strlen(ptr)) { }
+  string::string(const char *ptr) : vec(ptr, ptr+strlen(ptr)+1) { }
   
   string::string(const char *ptr, size_t len) : vec(ptr, ptr+len) { }
 

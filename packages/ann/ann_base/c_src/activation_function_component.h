@@ -46,13 +46,13 @@ namespace ANN {
 				     unsigned int bunch_size,
 				     bool is_output) = 0;
   public:
-    ActivationFunctionANNComponent(const char *name);
+    ActivationFunctionANNComponent(const char *name=0);
     virtual ~ActivationFunctionANNComponent();
     
-    virtual const Token *getInput() const { return input; }
-    virtual const Token *getOutput() const { return output; }
-    virtual const Token *getErrorInput() const { return error_input; }
-    virtual const Token *getErrorOutput() const { return error_output; }
+    virtual Token *getInput() { return input; }
+    virtual Token *getOutput() { return output; }
+    virtual Token *getErrorInput() { return error_input; }
+    virtual Token *getErrorOutput() { return error_output; }
     
     virtual Token *doForward(Token* input, bool during_training);
     

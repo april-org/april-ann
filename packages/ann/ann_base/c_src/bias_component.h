@@ -45,12 +45,12 @@ namespace ANN {
 				 float beta);
     
   public:
-    BiasANNComponent(const char *name, const char *weights_name);
+    BiasANNComponent(const char *name=0, const char *weights_name=0);
     virtual ~BiasANNComponent();
-    virtual const Token *getInput() const { return input; }
-    virtual const Token *getOutput() const { return output; }
-    virtual const Token *getErrorInput() const { return error; }
-    virtual const Token *getErrorOutput() const { return error; }
+    virtual Token *getInput() { return input; }
+    virtual Token *getOutput() { return output; }
+    virtual Token *getErrorInput() { return error; }
+    virtual Token *getErrorOutput() { return error; }
     virtual Token *doForward(Token* input, bool during_training);
     virtual Token *doBackprop(Token *input_error);
     virtual void   doUpdate();

@@ -24,7 +24,7 @@
 namespace ANN {
 
   StackANNComponent::StackANNComponent(const char *name) :
-    ANNComponent(name, 0) { }
+    ANNComponent(name) { }
   
   StackANNComponent::~StackANNComponent() {
     for (unsigned int i=0; i<components.size(); ++i)
@@ -36,19 +36,19 @@ namespace ANN {
     components.push_back(component);
   }
 
-  const Token *StackANNComponent::getInput() const {
+  Token *StackANNComponent::getInput() {
     return components[0]->getInput();
   }
 
-  const Token *StackANNComponent::getOutput() const {
+  Token *StackANNComponent::getOutput() {
     return components.back()->getOutput();
   }
   
-  const Token *StackANNComponent::getErrorInput() const {
+  Token *StackANNComponent::getErrorInput() {
     return components.back()->getErrorInput();
   }
 
-  const Token *StackANNComponent::getErrorOutput() const {
+  Token *StackANNComponent::getErrorOutput() {
     return components.back()->getErrorOutput();
   }
     
@@ -115,6 +115,10 @@ namespace ANN {
 				hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
     //////////////////////////////////////////////////////////////
+    if (components.size() == 0)
+      ERROR_EXIT(128, "StackANNComponent needs one or more components, "
+		 "use pushComponent method\n");
+    //
     unsigned int current_input_size  = input_size;
     unsigned int current_output_size = 0;
     for (unsigned int c=0; c<components.size(); ++c) {
@@ -125,12 +129,13 @@ namespace ANN {
       current_input_size  = components[c]->getOutputSize();
       current_output_size = 0;
     }
-    if (output_size == 0) output_size = current_input_size;
-    if (input_size == 0 || output_size == 0)
+    if (input_size  == 0) input_size  = components[0]->getInputSize();
+    if (output_size == 0) output_size = components.back()->getOutputSize();
+    else if (output_size != components.back()->getOutputSize())
+      ERROR_EXIT(141, "StackANNComponent output size is not correct\n");
+    if (input_size  == 0 || output_size == 0)
       ERROR_EXIT(141, "Impossible to compute input/output "
 		 "sizes for this component\n");
-    if (current_output_size != output_size)
-      ERROR_EXIT(141, "StackANNComponent output size are not correct\n");
   }
   
   void StackANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {

@@ -2,8 +2,7 @@
  * This file is part of the Neural Network modules of the APRIL toolkit (A
  * Pattern Recognizer In Lua).
  *
- * Copyright 2012, Salvador España-Boquera, Adrian Palacios Corella, Francisco
- * Zamora-Martinez
+ * Copyright 2013, Francisco Zamora-Martinez
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
@@ -33,6 +32,8 @@
 using april_utils::hash;    // required for build
 using april_utils::string;
 
+#define MAX_NAME_STR 120
+
 #define mSetOption(var_name,var) if(!strcmp(name,(var_name))){(var)=value;return;}
 #define mHasOption(var_name) if(!strcmp(name,(var_name))) return true;
 #define mGetOption(var_name, var) if(!strcmp(name,(var_name)))return (var);
@@ -42,7 +43,16 @@ namespace ANN {
   /// An abstract class that defines the basic interface that
   /// the anncomponents must fulfill.
   class ANNComponent : public Referenced {
+  private:
+    void generateDefaultName() {
+      char str_id[MAX_NAME_STR+1];
+      snprintf(str_id, MAX_NAME_STR, "c%u", next_name_id);
+      name = string(str_id);
+      ++next_name_id;
+    }
   protected:
+    static unsigned int next_name_id;
+    static unsigned int next_weights_id;
     /// The name identifies this component to do fast search. It is a unique
     /// name, repetitions are forbidden.
     string name;
@@ -51,12 +61,23 @@ namespace ANN {
     unsigned int output_size;
     bool use_cuda;
   public:
-    ANNComponent(const char *name, const char *weights_name = 0,
+    ANNComponent(const char *name = 0, const char *weights_name = 0,
 		 unsigned int input_size = 0, unsigned int output_size = 0) :
-      Referenced(), name(name), use_cuda(false) {
+      Referenced(),
+      input_size(input_size), output_size(output_size),
+      use_cuda(false) {
+      if (name) this->name = string(name);
+      else generateDefaultName();
       if (weights_name) this->weights_name = string(weights_name);
     }
     virtual ~ANNComponent() { }
+    
+    void generateDefaultWeightsName() {
+      char str_id[MAX_NAME_STR+1];
+      snprintf(str_id, MAX_NAME_STR, "w%u", next_weights_id);
+      weights_name = string(str_id);
+      ++next_weights_id;
+    }
 
     const char *getName() const { return name.c_str(); }
     const char *getWeightsName() const { return weights_name.c_str(); }
@@ -64,10 +85,10 @@ namespace ANN {
     unsigned int getInputSize() const { return input_size; }
     unsigned int getOutputSize() const { return output_size; }
     
-    virtual const Token *getInput() const { return 0; }
-    virtual const Token *getOutput() const { return 0; }
-    virtual const Token *getErrorInput() const { return 0; }
-    virtual const Token *getErrorOutput() const { return 0; }
+    virtual Token *getInput() { return 0; }
+    virtual Token *getOutput() { return 0; }
+    virtual Token *getErrorInput() { return 0; }
+    virtual Token *getErrorOutput() { return 0; }
     
     /// Virtual method that executes the set of operations required for each
     /// block of connections when performing the forward step of the
@@ -128,8 +149,10 @@ namespace ANN {
 				      name.c_str());
       component = this;
       ////////////////////////////////////////////////////////////////////
-      if (input_size == 0)  input_size  = _input_size;
-      if (output_size == 0) output_size = _output_size;
+      if (input_size   == 0)  input_size   = _input_size;
+      if (output_size  == 0)  output_size  = _output_size;
+      if (_input_size  == 0)  _input_size  = input_size;
+      if (_output_size == 0)  _output_size = output_size;
       if (input_size != _input_size)
 	ERROR_EXIT2(129, "Incorrect input size, expected %d, found %d\n",
 		    input_size, _input_size);
@@ -159,5 +182,7 @@ namespace ANN {
     
   };
 }
+
+#undef MAX_NAME_STR
 
 #endif // ANNCOMPONENT_H

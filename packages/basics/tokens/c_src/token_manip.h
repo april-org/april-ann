@@ -22,7 +22,7 @@
 #define TOKEN_MANIP_H
 
 #include "token_base.h"
-#include "token_"
+#include "token_vector.h"
 
 /// Function which takes a vector of TokenMemoryBlock and produces a block
 /// with all the bunch concatenated
