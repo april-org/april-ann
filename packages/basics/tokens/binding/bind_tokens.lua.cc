@@ -73,7 +73,7 @@
 
 //BIND_METHOD TokenMemoryBlock to_table
 {
-  int sz = static_cast<int>(obj->getUsedSize());;
+  int sz = static_cast<int>(obj->getUsedSize());
   const float *vector = obj->getMemBlock()->getPPALForRead();
   LUABIND_VECTOR_TO_NEW_TABLE(float, vector, sz);
   LUABIND_RETURN_FROM_STACK(-1);
