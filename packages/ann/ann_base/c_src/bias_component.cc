@@ -34,6 +34,7 @@ namespace ANN {
   }
 
   BiasANNComponent::~BiasANNComponent() {
+    if (bias_vector) DecRef(bias_vector);
     if (input) DecRef(input);
     if (error) DecRef(error);
     DecRef(output);
@@ -51,6 +52,9 @@ namespace ANN {
     IncRef(input);
     // compute current bunch
     unsigned int bunch_size = input->getUsedSize() / input_size;
+    if (input->getUsedSize() % input_size != 0)
+      ERROR_EXIT2(128, "Input memory block (size %d) is not multiple of %d\n",
+		  input->getUsedSize(), input_size);
     this->bunch_size = bunch_size;
     // and resize the output to fit the bunch
     output->resize(bunch_size * output_size);

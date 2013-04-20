@@ -32,8 +32,16 @@ TokenMemoryBlock::~TokenMemoryBlock() {
   delete mem_block;
 }
 
+void TokenMemoryBlock::setData(float *data, unsigned int size) {
+  resize(size);
+  float *mem_ptr = mem_block->getPPALForWrite();
+  for (unsigned int i=0; i<size; ++i)
+    mem_ptr[i] = data[i];
+}
+
 void TokenMemoryBlock::resize(unsigned int size) {
-  if (size > mem_block->getSize()) {
+  if (mem_block == 0) mem_block = new FloatGPUMirroredMemoryBlock(size);
+  else if (size > mem_block->getSize()) {
     delete mem_block;
     mem_block = new FloatGPUMirroredMemoryBlock(size<<1);
   }

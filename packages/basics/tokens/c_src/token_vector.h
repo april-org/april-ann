@@ -47,7 +47,7 @@ public:
   const T& operator[] (unsigned int i) const { return vec[i]; }
   april_utils::vector<T> &getContainer() { return vec; }
   const april_utils::vector<T> &getContainer() const { return vec; }
-  void push_back(const T &data) { vec.push_back(data); }
+  void push_back(T &data) { vec.push_back(data); }
   void clear() { vec.clear(); }
   T *data() { return vec.begin(); }
   const T *data() const { return vec.begin(); }

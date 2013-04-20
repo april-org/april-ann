@@ -54,11 +54,11 @@ namespace ANN {
   }
   
   DotProductANNComponent::~DotProductANNComponent() {
+    if (weights_matrix) DecRef(weights_matrix);
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
     DecRef(output);
     DecRef(error_output);
-    if (weights_matrix) DecRef(weights_matrix);
   }
   
   // The DotProductANNComponent
@@ -74,6 +74,9 @@ namespace ANN {
     IncRef(input);
     // compute current bunch
     unsigned int bunch_size = input->getUsedSize() / input_size;
+    if (input->getUsedSize() % input_size != 0)
+      ERROR_EXIT2(128, "Input memory block (size %d) is not multiple of %d\n",
+		  input->getUsedSize(), input_size);
     this->bunch_size = bunch_size;
     // and resize the output to fit the bunch
     output->resize(bunch_size * output_size);
@@ -87,9 +90,9 @@ namespace ANN {
       doSgemv(CblasColMajor, transpose_weights,
 	      weights_matrix->getOutputSize(), weights_matrix->getInputSize(),
 	      1.0f, weights_mat_ptr, weights_matrix->getOutputSize(),
-	      input_ptr, bunch_size, // conf.max_bunch_size
-	      1.0f, output_ptr, bunch_size, // conf.max_bunch_size,
-	      0, 0, 0, // inputs->getOffset(), outputs->getOffset()
+	      input_ptr, 1,
+	      1.0f, output_ptr, 1,
+	      0, 0, 0,
 	      use_cuda);
     } // if bunch_size==1
     else {
@@ -133,11 +136,11 @@ namespace ANN {
       // C = alpha * A * B + beta * C
       doSgemm(CblasColMajor,
 	      CblasNoTrans, NEGATE_CBLAS_TRANSPOSE(transpose_weights),
-	      bunch_size, input_size, output_size, // conf.cur_bunch_size,
-	      1.0f, error_input_ptr, bunch_size, // conf.max_bunch_size,
+	      bunch_size, input_size, output_size,
+	      1.0f, error_input_ptr, bunch_size,
 	      weights_mat_ptr, weights_matrix->getOutputSize(),
-	      1.0f, error_output_ptr, bunch_size, // conf.max_bunch_size,
-	      0, 0, 0, // error_input_shift, 0, error_output_shift,
+	      1.0f, error_output_ptr, bunch_size,
+	      0, 0, 0,
 	      use_cuda);
     }
     else {
@@ -145,9 +148,9 @@ namespace ANN {
 	      weights_matrix->getOutputSize(),
 	      weights_matrix->getInputSize(),
 	      1.0f, weights_mat_ptr, weights_matrix->getOutputSize(),
-	      error_input_ptr, bunch_size, // conf.max_bunch_size,
-	      1.0f, error_output_ptr, bunch_size, // conf.max_bunch_size,
-	      0, 0, 0, // 0, error_input_shift, error_output_shift,
+	      error_input_ptr, 1,
+	      1.0f, error_output_ptr, 1,
+	      0, 0, 0,
 	      use_cuda);
     }
     return error_output;
@@ -171,16 +174,16 @@ namespace ANN {
       doSgemm(CblasColMajor, CblasTrans, CblasNoTrans,
 	      weights_matrix->getOutputSize(),
 	      weights_matrix->getInputSize(),
-	      bunch_size, // conf.cur_bunch_size, // dimensiones
+	      bunch_size,                               // dimensiones
 	      norm_learn_rate,                          // alpha
-	      (transpose_weights == CblasNoTrans)?error_input:input,                              // A
-	      bunch_size, // conf.max_bunch_size,                      // A stride
-	      (transpose_weights == CblasNoTrans)?input:error_input,                                    // B
-	      bunch_size,                      // B stride
+	      (transpose_weights == CblasNoTrans)?error_input:input, // A
+	      bunch_size,                                            // A stride
+	      (transpose_weights == CblasNoTrans)?input:error_input, // B
+	      bunch_size,                                            // B stride
 	      beta,                                     // beta
 	      prev_weights_mat_ptr,                     // C
-	      weights_matrix->getOutputSize(),                              // C stride
-	      0, 0, 0, // input_shift, 0,        // desplazamientos
+	      weights_matrix->getOutputSize(),          // C stride
+	      0, 0, 0,                                  // offsets
 	      use_cuda);
     } // if bunch_size > 1 ... else
     else {
@@ -309,7 +312,8 @@ namespace ANN {
     unsigned int weights_output_size = output_size;
     ////////////////////////////////////////////////////////////////////
     if (weights_matrix != 0) DecRef(weights_matrix);
-    if (transpose_weights) swap(weights_input_size, weights_output_size);
+    if (transpose_weights == CblasTrans)
+      swap(weights_input_size, weights_output_size);
     Connections *&w = weights_dict[weights_name];
     if (w != 0) {
       weights_matrix = w;
