@@ -250,25 +250,37 @@ using namespace ANN;
 
 //BIND_METHOD ANNComponent get_input
 {
-  LUABIND_RETURN(Token, obj->getInput());
+  Token *aux = obj->getInput();
+  if (aux == 0)
+    LUABIND_RETURN_NIL();
+  else LUABIND_RETURN(Token, aux);
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent get_output
 {
-  LUABIND_RETURN(Token, obj->getOutput());
+  Token *aux = obj->getOutput();
+  if (aux == 0)
+    LUABIND_RETURN_NIL();
+  else LUABIND_RETURN(Token, aux);
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent get_error_input
 {
-  LUABIND_RETURN(Token, obj->getErrorInput());
+  Token *aux = obj->getErrorInput();
+  if (aux == 0)
+    LUABIND_RETURN_NIL();
+  else LUABIND_RETURN(Token, aux);
 }
 //BIND_END
 
-//BIND_METHOD ANNComponent get_output
+//BIND_METHOD ANNComponent get_error_output
 {
-  LUABIND_RETURN(Token, obj->getErrorOutput());
+  Token *aux = obj->getErrorOutput();
+  if (aux == 0)
+    LUABIND_RETURN_NIL();
+  else LUABIND_RETURN(Token, aux);
 }
 //BIND_END
 

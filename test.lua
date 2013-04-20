@@ -24,14 +24,22 @@ weights_table["b2"]:load{ w=m, first_pos=6, column_size=3 }
 weights_table["w2"]:load{ w=m, first_pos=7, column_size=3 }
 
 function print_token(token)
-  print(table.concat(token:convert_to_memblock():to_table()), " ")
+  if token then
+    print(table.concat(token:convert_to_memblock():to_table(), " "))
+  else
+    print(token)
+  end
 end
 
 function doforward(input_tbl)
   local output = thenet:forward(tokens.memblock(input_tbl))
+  print_token(components_table["w1"]:get_input())
   print_token(components_table["w1"]:get_output())
+  print_token(components_table["b1"]:get_input())
   print_token(components_table["b1"]:get_output())
+  print_token(components_table["w2"]:get_input())
   print_token(components_table["w2"]:get_output())
+  print_token(components_table["b2"]:get_input())
   print_token(components_table["b2"]:get_output())
   print_token(output)
 end
