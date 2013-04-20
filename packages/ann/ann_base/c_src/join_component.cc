@@ -272,8 +272,14 @@ namespace ANN {
       ERROR_EXIT2(128, "Incorrect output sizes, components outputs sum %d but "
 		  " expected %d\n", computed_output_size, output_size);
     //
-    for (unsigned int i=0; i<components.size(); ++i)
+    for (unsigned int i=0; i<components.size(); ++i) {
       components[i]->build(0, 0, weights_dict, components_dict);
+      Token *aux;
+      aux = new TokenMemoryBlock(); input_vector->push_back(aux);
+      aux = new TokenMemoryBlock(); output_vector->push_back(aux);
+      aux = new TokenMemoryBlock(); error_input_vector->push_back(aux);
+      aux = new TokenMemoryBlock(); error_output_vector->push_back(aux);
+    }
   }
   
   void JoinANNComponent::setUseCuda(bool v) {

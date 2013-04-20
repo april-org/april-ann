@@ -28,7 +28,7 @@
 #include "token_vector.h"
 //BIND_END
 
-//BIND_LUACLASSNAME Token token
+//BIND_LUACLASSNAME Token tokens.base
 //BIND_CPP_CLASS    Token
 
 //BIND_CONSTRUCTOR Token
@@ -40,5 +40,42 @@
 //BIND_METHOD Token clone
 {
   LUABIND_RETURN(Token, obj->clone());
+}
+//BIND_END
+
+//BIND_METHOD Token convert_to_memblock
+{
+  TokenMemoryBlock *token_memblock = obj->convertTo<TokenMemoryBlock*>();
+  LUABIND_RETURN(TokenMemoryBlock, token_memblock);
+}
+//BIND_END
+
+////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME TokenMemoryBlock tokens.memblock
+//BIND_CPP_CLASS    TokenMemoryBlock
+//BIND_SUBCLASS_OF  TokenMemoryBlock Token
+
+//BIND_CONSTRUCTOR TokenMemoryBlock
+{
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  unsigned int sz;
+  LUABIND_TABLE_GETN(1, sz);
+  float *vector = new float[sz];
+  LUABIND_TABLE_TO_VECTOR(1, float, vector, sz);
+  obj = new TokenMemoryBlock(sz);
+  obj->setData(vector, sz);
+  delete[] vector;
+  LUABIND_RETURN(TokenMemoryBlock, obj);
+}
+//BIND_END
+
+//BIND_METHOD TokenMemoryBlock to_table
+{
+  int sz = static_cast<int>(obj->getUsedSize());;
+  const float *vector = obj->getMemBlock()->getPPALForRead();
+  LUABIND_VECTOR_TO_NEW_TABLE(float, vector, sz);
+  LUABIND_RETURN_FROM_STACK(-1);
 }
 //BIND_END

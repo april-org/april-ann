@@ -31,6 +31,7 @@ public:
   TokenMemoryBlock();
   TokenMemoryBlock(unsigned int size);
   ~TokenMemoryBlock();
+  void setData(float *data, unsigned int size);
   FloatGPUMirroredMemoryBlock *getMemBlock() { return mem_block; }
   unsigned int getUsedSize() const { return used_size; }
   unsigned int getMaxSize() const { return mem_block->getSize(); }
