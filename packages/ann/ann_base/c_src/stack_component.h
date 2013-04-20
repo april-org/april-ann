@@ -29,15 +29,15 @@ namespace ANN {
   class StackANNComponent : public ANNComponent {
     april_utils::vector<ANNComponent*> components;
   public:
-    StackANNComponent(const char *name);
+    StackANNComponent(const char *name=0);
     virtual ~StackANNComponent();
 
     void pushComponent(ANNComponent *component);
 
-    virtual const Token *getInput() const;
-    virtual const Token *getOutput() const;
-    virtual const Token *getErrorInput() const;
-    virtual const Token *getErrorOutput() const;
+    virtual Token *getInput();
+    virtual Token *getOutput();
+    virtual Token *getErrorInput();
+    virtual Token *getErrorOutput();
     
     virtual Token *doForward(Token* input, bool during_training);
 

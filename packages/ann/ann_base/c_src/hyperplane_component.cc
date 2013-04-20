@@ -23,7 +23,7 @@
 namespace ANN {
 
   HyperplaneANNComponent::HyperplaneANNComponent(const char *name) :
-    ANNComponent(name), dot_product(0), bias(0) {
+    ANNComponent(name), dot_product(), bias() {
   }
   
   HyperplaneANNComponent::HyperplaneANNComponent(const char *name,
@@ -34,7 +34,7 @@ namespace ANN {
 						 unsigned int input_size,
 						 unsigned int output_size,
 						 bool transpose_weights) :
-    ANNComponent(name, input_size, output_size),
+    ANNComponent(name, 0, input_size, output_size),
     dot_product(new DotProductANNComponent(dot_product_name,
 					   dot_product_weights_name,
 					   input_size, output_size,
@@ -49,19 +49,19 @@ namespace ANN {
     if (bias != 0) DecRef(bias);
   }
 
-  const Token *HyperplaneANNComponent::getInput() const {
+  Token *HyperplaneANNComponent::getInput() {
     return dot_product->getInput();
   }
 
-  const Token *HyperplaneANNComponent::getOutput() const {
+  Token *HyperplaneANNComponent::getOutput() {
     return bias->getOutput();
   }
   
-  const Token *HyperplaneANNComponent::getErrorInput() const {
+  Token *HyperplaneANNComponent::getErrorInput() {
     return bias->getErrorInput();
   }
 
-  const Token *HyperplaneANNComponent::getErrorOutput() const {
+  Token *HyperplaneANNComponent::getErrorOutput() {
     return dot_product->getErrorOutput();
   }
     
@@ -88,8 +88,8 @@ namespace ANN {
   ANNComponent *HyperplaneANNComponent::clone() {
     HyperplaneANNComponent *obj;
     obj = new HyperplaneANNComponent(name.c_str());
-    obj->dot_product = dot_product->clone();
-    obj->bias        = bias->clone();
+    obj->dot_product = dynamic_cast<DotProductANNComponent*>(dot_product->clone());
+    obj->bias        = dynamic_cast<BiasANNComponent*>(bias->clone());
     IncRef(obj->dot_product);
     IncRef(obj->bias);
     return obj;

@@ -45,10 +45,10 @@ namespace ANN {
 			   bool transpose_weights=false);
     virtual ~HyperplaneANNComponent();
 
-    virtual const Token *getInput() const;
-    virtual const Token *getOutput() const;
-    virtual const Token *getErrorInput() const;
-    virtual const Token *getErrorOutput() const;
+    virtual Token *getInput();
+    virtual Token *getOutput();
+    virtual Token *getErrorInput();
+    virtual Token *getErrorOutput();
     
     virtual Token *doForward(Token* input, bool during_training);
 

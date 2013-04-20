@@ -47,6 +47,7 @@ namespace ANN {
     weight_decay(0.0f),
     c_weight_decay(1.0f),
     neuron_squared_length_upper_bound(-1.0f) {
+    if (weights_name == 0) generateDefaultWeightsName();
     IncRef(output);
     IncRef(error_output);
     this->transpose_weights = (transpose_weights) ? CblasTrans : CblasNoTrans;

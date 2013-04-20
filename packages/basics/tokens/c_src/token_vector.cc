@@ -275,12 +275,12 @@ Token *TokenVector<char>::fromString(constString &cs) {
 // ------------------------- vector token -------------------------
 
 template <>
-TokenVector<Token>::~TokenVector() {
+TokenVector<Token*>::~TokenVector() {
   for (unsigned int i=0; i<vec.size(); ++i) DecRef(vec[i]);
 }
 
 template <>
-buffer_list* TokenVector<Token>::toString() {
+buffer_list* TokenVector<Token*>::toString() {
   /*
     buffer_list *resul = new buffer_list;
     char b[5];
@@ -295,7 +295,7 @@ buffer_list* TokenVector<Token>::toString() {
 }
 
 template <>
-buffer_list* TokenVector<Token>::debugString(const char *prefix,
+buffer_list* TokenVector<Token*>::debugString(const char *prefix,
 					    int debugLevel) {
   // TODO: de momento ignoramos debugLevel
   buffer_list *resul = new buffer_list;
@@ -305,12 +305,12 @@ buffer_list* TokenVector<Token>::debugString(const char *prefix,
 }
 
 template <>
-TokenCode TokenVector<Token>::getTokenCode() const {
+TokenCode TokenVector<Token*>::getTokenCode() const {
   return table_of_token_codes::vector_Tokens;
 }
 
 template <>
-Token *TokenVector<Token>::fromString(constString &cs) {
+Token *TokenVector<Token*>::fromString(constString &cs) {
   /*
     uint32_t size;
     cs.extract_uint32_binary(&size);

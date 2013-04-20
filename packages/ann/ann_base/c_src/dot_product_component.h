@@ -55,15 +55,15 @@ namespace ANN {
 				 float beta);
 
   public:
-    DotProductANNComponent(const char *name, const char *weights_name,
+    DotProductANNComponent(const char *name=0, const char *weights_name=0,
 			   unsigned int input_size  = 0,
 			   unsigned int output_size = 0,
 			   bool transpose_weights   = false);
     virtual ~DotProductANNComponent();
-    virtual const Token *getInput() const { return input; }
-    virtual const Token *getOutput() const { return output; }
-    virtual const Token *getErrorInput() const { return error_input; }
-    virtual const Token *getErrorOutput() const { return error_output; }
+    virtual Token *getInput() { return input; }
+    virtual Token *getOutput() { return output; }
+    virtual Token *getErrorInput() { return error_input; }
+    virtual Token *getErrorOutput() { return error_output; }
     virtual Token *doForward(Token* input, bool during_training);
     virtual Token *doBackprop(Token *input_error);
     virtual void   doUpdate();
