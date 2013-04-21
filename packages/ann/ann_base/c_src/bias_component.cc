@@ -63,16 +63,16 @@ namespace ANN {
     FloatGPUMirroredMemoryBlock *output_ptr      = output->getMemBlock();
     FloatGPUMirroredMemoryBlock *bias_vector_ptr = bias_vector->getPtr();
     // linear transfer of input to output
-    doScopyLoop(output_size,
-		input_ptr, 1,
-		output_ptr, 1,
-		bunch_size, bunch_size,
-		use_cuda);
+    doScopy(output_size*bunch_size,
+	    input_ptr, 0, 1,
+	    output_ptr, 0, 1,
+	    use_cuda);
     // addition of bias vector at output
     doSaxpyLoop(output_size, 1.0f,
 		bias_vector_ptr, 1,
 		output_ptr, bunch_size,
-		bunch_size, bunch_size,
+		bunch_size,
+		0, 1,
 		use_cuda);
     return output;
   }
@@ -123,7 +123,8 @@ namespace ANN {
 		norm_learn_rate,
 		input_error, bunch_size,
 		prev_bias_ptr, 1,
-		bunch_size, 1,
+		bunch_size,
+		1, 0,
 		use_cuda);
 
     // If necessary, update counts, swap vectors, and other stuff
@@ -131,9 +132,10 @@ namespace ANN {
   }
 
   void BiasANNComponent::reset() {
-    if (output != 0) doVectorSetToZero(output->getMemBlock(),
-				       output->getMaxSize(),
-				       0, 0, use_cuda);
+    if (output != 0 && output->getMaxSize() > 0)
+      doVectorSetToZero(output->getMemBlock(),
+			output->getMaxSize(),
+			1, 0, use_cuda);
     if (input) DecRef(input); input = 0;
     if (error != 0) DecRef(error); error = 0;
   }

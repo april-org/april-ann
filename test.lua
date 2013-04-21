@@ -44,8 +44,11 @@ function doforward(input_tbl)
   print_token(output)
 end
 
+-- executing with a bunch of patterns
+doforward(tokens.table.bunch{ {0,0}, {0,1}, {1,0}, {1,1} })
+
 for _,v in ipairs({ {0,0}, {0,1}, {1,0}, {1,1} }) do
   print("##########")
-  print(v[1],v[2])
+  thenet:reset()
   doforward(v)
 end

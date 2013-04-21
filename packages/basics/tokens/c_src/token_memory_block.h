@@ -34,7 +34,7 @@ public:
   void setData(float *data, unsigned int size);
   FloatGPUMirroredMemoryBlock *getMemBlock() { return mem_block; }
   unsigned int getUsedSize() const { return used_size; }
-  unsigned int getMaxSize() const { return mem_block->getSize(); }
+  unsigned int getMaxSize() const { return mem_block?mem_block->getSize():0; }
   void resize(unsigned int size);
   Token *clone() const;
   buffer_list* toString();
