@@ -246,12 +246,14 @@ namespace ANN {
   }
   
   void DotProductANNComponent::reset() {
-    if (error_output != 0) doVectorSetToZero(error_output->getMemBlock(),
-					     error_output->getMaxSize(),
-					     0, 0, use_cuda);
-    if (output != 0) doVectorSetToZero(output->getMemBlock(),
-				       output->getMaxSize(),
-				       0, 0, use_cuda);
+    if (error_output != 0 && error_output->getMaxSize() > 0)
+      doVectorSetToZero(error_output->getMemBlock(),
+			error_output->getMaxSize(),
+			1, 0, use_cuda);
+    if (output != 0 && output->getMaxSize() > 0)
+      doVectorSetToZero(output->getMemBlock(),
+			output->getMaxSize(),
+			1, 0, use_cuda);
     if (input) DecRef(input); input = 0;
     if (error_input) DecRef(error_input); error_input = 0;
   }

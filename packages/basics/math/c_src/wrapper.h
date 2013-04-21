@@ -212,7 +212,9 @@ void doSaxpy(int N, float alpha, FloatGPUMirroredMemoryBlock* x,
 void doSaxpyLoop(int N, float alpha, FloatGPUMirroredMemoryBlock* x,
 		 unsigned int x_inc, FloatGPUMirroredMemoryBlock* y,
 		 unsigned int y_inc, unsigned int times,
-		 const unsigned int stride, bool use_gpu);
+		 const unsigned int stride_x,
+		 const unsigned int stride_y,
+		 bool use_gpu);
 
 void doSgemm(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
 	     CBLAS_TRANSPOSE b_transpose, int m, int n, int k, float alpha,

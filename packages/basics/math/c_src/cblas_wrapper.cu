@@ -63,13 +63,14 @@ __global__ void saxpyLoopKernel(unsigned int N,
 				float *y_mem,
 				unsigned int y_inc,
 				unsigned int times,
-				unsigned int x_ld) {
+				unsigned int x_ld,
+				unsigned int y_ld) {
   unsigned int matrix_x_pos, matrix_y_pos;
   matrix_x_pos = blockIdx.x*blockDim.x + threadIdx.x;
   matrix_y_pos = blockIdx.y*blockDim.y + threadIdx.y;
   if (matrix_x_pos < times && matrix_y_pos < N) {
     unsigned int index_x = matrix_x_pos*x_ld + matrix_y_pos*x_inc;
-    unsigned int index_y = matrix_y_pos*y_inc;
+    unsigned int index_y = matrix_x_pos*y_ld + matrix_y_pos*y_inc;
     float val = alpha * x_mem[index_x];
     // This loop is used to synchronize the threads for accessing
     // the global memory where they write the results. The loop
@@ -278,7 +279,8 @@ void doSaxpyLoop(int N,
 		 FloatGPUMirroredMemoryBlock* y,
 		 unsigned int y_inc,
 		 unsigned int times,
-		 const unsigned int stride,
+		 const unsigned int x_stride,
+		 const unsigned int y_stride,
 		 bool use_gpu)
 {
   const float *x_mem;
@@ -287,7 +289,7 @@ void doSaxpyLoop(int N,
   if (use_gpu)
     {
       x_mem = x->getGPUForRead();
-      y_mem = y->getGPUForWrite();
+      y_mem = y->getGPUForReadAndWrite();
 
       const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
       dim3 block, grid;
@@ -302,7 +304,7 @@ void doSaxpyLoop(int N,
       grid.z = 1;
 
       saxpyLoopKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-	(N, alpha, x_mem, x_inc, y_mem, y_inc, times, stride);
+	(N, alpha, x_mem, x_inc, y_mem, y_inc, times, x_stride, y_stride);
     }
   else
     {
@@ -316,8 +318,8 @@ void doSaxpyLoop(int N,
 
       for (unsigned int i = 0; i < times; i++)
 	cblas_saxpy(N, alpha,
-                    x_mem + i * stride, x_inc, 
-                    y_mem, y_inc);
+                    x_mem + i * x_stride, x_inc, 
+                    y_mem + i * y_stride, y_inc);
 #ifdef USE_CUDA
     }
 #endif
