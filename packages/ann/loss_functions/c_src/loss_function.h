@@ -41,18 +41,9 @@ namespace ANN {
     }
     virtual float  addLoss(Token *input, Token *target) = 0;
     virtual Token *computeGrandient(Token *input, Token *target) = 0;
-    virtual float  getTotalLoss() = 0;
+    virtual float  getAccumLoss() = 0;
     virtual void reset() = 0;
   };
 }
 
 #endif // LOSSFUNCTION_H
-
-
-      doVectorSetToZero(error_output->getMemBlock(),
-			error_output->getMaxSize(),
-			1, 0, use_cuda);
-      pattern_errors->clear();
-      float sum = doAsum(pattern_errors->getUsedSize(), pattern_errors, 1);
-      // TODO: Poner a cero pattern_errors
-

@@ -84,7 +84,7 @@ namespace ANN {
     FloatGPUMirroredMemoryBlock *input_ptr        = input->getMemBlock();
     FloatGPUMirroredMemoryBlock *output_ptr       = output->getMemBlock();
     FloatGPUMirroredMemoryBlock *error_input_ptr  = error_input->getMemBlock();
-    FloatGPUMirroredMemoryBlock *error_output_ptr = error_input->getMemBlock();
+    FloatGPUMirroredMemoryBlock *error_output_ptr = error_output->getMemBlock();
     // apply derivatives at gradients
     multiplyDerivatives(input_ptr, output_ptr,
 			error_input_ptr, error_output_ptr,

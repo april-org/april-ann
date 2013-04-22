@@ -46,6 +46,12 @@ public:
   }
   void clear() { used_size = 0; }
   bool getCudaFlag() { return mem_block->getCudaFlag(); }
+  void printDebug() {
+    const float *data = mem_block->getPPALForRead();
+    for (unsigned int i=0; i<used_size; ++i)
+      printf ("%f ", data[i]);
+    printf("\n");
+  }
 };
 
 #endif // TOKEN_MEMORY_BLOCK_H
