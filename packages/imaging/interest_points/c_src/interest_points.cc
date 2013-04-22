@@ -139,12 +139,13 @@ namespace InterestPoints {
 
             return false xor reverse;
         }
-    vector<Point2D>* extract_points_from_image(ImageFloat *pimg) {
+  april_utils::vector<Point2D>* extract_points_from_image(ImageFloat *pimg, float threshold_white, float threshold_black, int local_context, int duplicate_interval) {
 
-        const int          contexto = 6;
-        const float threshold_white = 0.4; // <= es blanco
-        const float threshold_black = 0.6; // >= es negro
+/*        const int          contexto = 6;
+        const float threshold_white = 0.6; // <= es blanco
+        const float threshold_black = 0.4; // >= es negro
         const float duplicate_interval = 2;
+        */
         ImageFloat &img = *pimg; // mas comodo
         int x,y,h=img.height,w=img.width;
 
@@ -159,8 +160,8 @@ namespace InterestPoints {
             stamp_min[y]      = -1;
         }
         vector<xy> result_xy;
-        max_finder<xy> maxf(contexto,contexto,&result_xy);
-        min_finder<xy> minf(contexto,contexto,&result_xy);
+        max_finder<xy> maxf(local_context, local_context, &result_xy);
+        min_finder<xy> minf(local_context, local_context, &result_xy);
 
         // avanzamos columna a columna por toda la imagen
         for (x = 0; x < w; ++x) {
