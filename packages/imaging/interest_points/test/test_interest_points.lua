@@ -12,14 +12,22 @@ print(w, h)
 
 mySVG = imageSVG.fromImageFile(imgFile, w, h)
 --img = img:invert_colors()
-points = interest_points.extract_points_from_image(img)
+uppers, lowers = interest_points.extract_points_from_image(img)
+print(#uppers)
+print(#lowers)
 
 outFile = string.remove_extension(imgFile)..".svg" 
 
-for _, p in ipairs(points) do
+for _, p in ipairs(uppers) do
     mySVG:addSquare(p, {})
 
 
 end
+for _, p in ipairs(lowers) do
+    mySVG:addSquare(p, {color = "red"})
+
+
+end
 mySVG:write(outFile)
-print(#points)
+print(#uppers)
+print(#lowers)

@@ -1,3 +1,24 @@
+/*
+ * This file is part of the Neural Network modules of the APRIL toolkit (A
+ * Pattern Recognizer In Lua).
+ *
+ * Copyright 2013, Salvador España-Boquera, Francisco
+ * Zamora-Martinez, Joan Pastor-Pellicer
+ *
+ * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ */
 #include "interest_points.h"
 #include "utilImageFloat.h"
 #include "utilMatrixFloat.h"
@@ -139,7 +160,7 @@ namespace InterestPoints {
 
             return false xor reverse;
         }
-  april_utils::vector<Point2D>* extract_points_from_image(ImageFloat *pimg, float threshold_white, float threshold_black, int local_context, int duplicate_interval) {
+  april_utils::vector<Point2D>* extract_points_from_image_old(ImageFloat *pimg, float threshold_white, float threshold_black, int local_context, int duplicate_interval) {
 
 /*        const int          contexto = 6;
         const float threshold_white = 0.6; // <= es blanco
@@ -239,4 +260,121 @@ namespace InterestPoints {
 
             }
 
-        } // namespace InterestPoints
+            void extract_points_from_image(ImageFloat *pimg, vector<Point2D> *local_minima, vector<Point2D> *local_maxima, float threshold_white, float threshold_black, int local_context, int duplicate_interval) {
+
+                /*        const int          contexto = 6;
+                          const float threshold_white = 0.6; // <= es blanco
+                          const float threshold_black = 0.4; // >= es negro
+                          const float duplicate_interval = 2;
+                          */
+                ImageFloat &img = *pimg; // mas comodo
+                int x,y,h=img.height,w=img.width;
+
+                int *stamp_max = new int[h];
+                int *stamp_min = new int[h];
+                vector<xy> **stroke_vec_max = new vector<xy>*[h]; // resultado
+                vector<xy> **stroke_vec_min = new vector<xy>*[h]; // resultado
+                for (y = 0; y < h; ++y) {
+                    stroke_vec_max[y] = new vector<xy>;
+                    stroke_vec_min[y] = new vector<xy>;
+                    stamp_max[y]      = -1;
+                    stamp_min[y]      = -1;
+                }
+                vector<xy> result_max;
+                vector<xy> result_min;
+                max_finder<xy> maxf(local_context, local_context, &result_max);
+                min_finder<xy> minf(local_context, local_context, &result_min);
+
+                // avanzamos columna a columna por toda la imagen
+                for (x = 0; x < w; ++x) {
+                    // el borde inferior de los trazos, subiendo en la columna
+                    for (y = h-1; y > 0; --y) {
+                        if ((y==h-1 || is_white(img(x,y+1), threshold_white)) &&
+                                (is_black(img(x,y-1), threshold_black)) ) { // procesar el pixel
+
+                            //                if ((y==h-1 || (img(x,y+1) <= threshold_white)) &&
+                            //                        (img(x,y-1) >= threshold_black)) { // procesar el pixel
+                            int index=-1;
+                            if (stamp_max[y] == x) index=y;
+                            else if (y-1>=0 && stamp_max[y-1] == x) index=y-1;
+                            else if (y+1<h  && stamp_max[y+1] == x) index=y+1;
+                            else if (y-2>=0 && stamp_max[y-2] == x) index=y-2;
+                            else if (y+2<h  && stamp_max[y+2] == x) index=y+2;
+                            else {
+                                process_stroke_max(maxf,stroke_vec_max[y]);
+                                index = y;
+                            }
+                            stroke_vec_max[index]->push_back(xy(x,y));
+                            if (index != y) { 
+                                swap(stroke_vec_max[y],stroke_vec_max[index]);
+                            }
+                            stamp_max[y] = x+1;
+                            //
+                            --y;
+                        }
+                        }
+                        // el borde superior de los trazos, bajando en la columna
+                        for (y = 0; y < h-1; ++y) {
+                            if ( is_black(img(x,y+1), threshold_black) &&
+                                    (y==0 || is_white(img(x,y-1), threshold_white) ) ) {
+
+                                //if ( (img(x,y+1) >= threshold_black) &&
+                                //        (y==0 || img(x,y-1) <= threshold_white) ) {
+                                // procesar el pixel
+                                int index=-1;
+                                if (stamp_min[y] == x) index=y;
+                                else if (y-1>=0 && stamp_min[y-1] == x) index=y-1;
+                                else if (y+1<h  && stamp_min[y+1] == x) index=y+1;
+                                else if (y-2>=0 && stamp_min[y-2] == x) index=y-2;
+                                else if (y+2<h  && stamp_min[y+2] == x) index=y+2;
+                                else {
+                                    process_stroke_min(minf,stroke_vec_min[y]);
+                                    index = y;
+                                }
+                                stroke_vec_min[index]->push_back(xy(x,y));
+                                if (index != y) { swap(stroke_vec_min[y],stroke_vec_min[index]); }
+                                stamp_min[y] = x+1;
+                                ++y;
+                            }
+                            }
+                        }
+                        for (y = 0; y<h; ++y) {
+                            process_stroke_max(maxf,stroke_vec_max[y]);
+                            process_stroke_min(minf,stroke_vec_min[y]);
+                            delete stroke_vec_max[y];
+                            delete stroke_vec_min[y];
+                        }
+                        delete[] stroke_vec_max;
+                        delete[] stroke_vec_min;
+                        delete[] stamp_max;
+                        delete[] stamp_min;
+                        // convertir stroke_set a Point2D
+
+                        int sz = result_min.size();
+                        printf("Local maxima %d\n", sz);
+                        
+                        vector<Point2D> &vec_max = *local_maxima;
+                        for (int i=0;i<sz;++i) {
+                            local_maxima->push_back(Point2D(result_min[i].x, result_min[i].y));
+                        }
+
+                        //Delete duplicates
+                        remove_neighborns(vec_max, duplicate_interval,h);
+                        ///                        return result_Point2D;
+
+                        sz = result_max.size();
+                        printf("Local minima %d\n", sz);
+                        //vector<Point2D> *result_Point2D_max = new vector<Point2D>(sz);
+                        vector<Point2D> &vec_min = *local_minima;
+                        for (int i=0;i<sz;++i) {
+                            local_minima->push_back(Point2D(result_max[i].x, result_max[i].y));
+//                            vec_max[i].first  = result_max[i].x;
+//                            vec_max[i].second = result_max[i].y;
+                        }
+                         
+                        //Delete duplicates
+                        remove_neighborns(vec_min, duplicate_interval, h);
+                        ///                        return result_Point2D;
+
+                    }
+                } // namespace InterestPoints
