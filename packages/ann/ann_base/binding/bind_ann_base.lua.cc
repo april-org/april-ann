@@ -47,6 +47,8 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "join_component.h"
 #include "activation_function_component.h"
 #include "connection.h"
+#include "activation_function_component.h"
+#include "logistic_actf_component.h"
 
 using namespace ANN;
 
@@ -566,5 +568,42 @@ using namespace ANN;
   ANNComponent *component;
   LUABIND_GET_PARAMETER(1, ANNComponent, component);
   obj->addComponent(component);
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//         ActivationFunctionANNComponent          //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME ActivationFunctionANNComponent ann.components.actf
+//BIND_CPP_CLASS    ActivationFunctionANNComponent
+//BIND_SUBCLASS_OF  ActivationFunctionANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR ActivationFunctionANNComponent
+{
+  LUABIND_ERROR("Abstract class!!!");
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//            LogisticActfANNComponent             //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME LogisticActfANNComponent ann.components.logistic
+//BIND_CPP_CLASS    LogisticActfANNComponent
+//BIND_SUBCLASS_OF  LogisticActfANNComponent ActivationFunctionANNComponent
+
+//BIND_CONSTRUCTOR LogisticActfANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  }
+  obj = new LogisticActfANNComponent(name);
+  LUABIND_RETURN(LogisticActfANNComponent, obj);  
 }
 //BIND_END

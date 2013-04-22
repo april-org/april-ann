@@ -58,8 +58,7 @@ void doApplyLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
 			       unsigned int bunch_size,
 			       bool use_gpu);
 
-void doMultiplyLogisticDerivatives(FloatGPUMirroredMemoryBlock *input_units,
-				   FloatGPUMirroredMemoryBlock *output_units,
+void doMultiplyLogisticDerivatives(FloatGPUMirroredMemoryBlock *output_units,
 				   FloatGPUMirroredMemoryBlock *input_errors,
 				   FloatGPUMirroredMemoryBlock *output_errors,
 				   unsigned int size,
@@ -72,8 +71,7 @@ void doApplyTanhActivation(FloatGPUMirroredMemoryBlock *input_units,
 			   unsigned int bunch_size,
 			   bool use_gpu);
 
-void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *input_units,
-			       FloatGPUMirroredMemoryBlock *output_units,
+void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *output_units,
 			       FloatGPUMirroredMemoryBlock *input_errors,
 			       FloatGPUMirroredMemoryBlock *output_errors,
 			       unsigned int size,
@@ -82,15 +80,14 @@ void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *input_units,
 
 void doApplySoftsignActivation(FloatGPUMirroredMemoryBlock *input_units,
 			       FloatGPUMirroredMemoryBlock *output_units,
-			       unsigned int size
+			       unsigned int size,
 			       unsigned int bunch_size,
 			       bool use_gpu);
 
-void doMultiplySoftsignDerivatives(FloatGPUMirroredMemoryBlock *input_units,
-				   FloatGPUMirroredMemoryBlock *output_units,
+void doMultiplySoftsignDerivatives(FloatGPUMirroredMemoryBlock *output_units,
 				   FloatGPUMirroredMemoryBlock *input_errors,
 				   FloatGPUMirroredMemoryBlock *output_errors,
-				   unsigned int units_size,
+				   unsigned int size,
 				   unsigned int bunch_size,
 				   bool use_gpu);
 
@@ -99,7 +96,7 @@ void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
 			      FloatGPUMirroredMemoryBlock *minimums,
 			      FloatGPUMirroredMemoryBlock *maximums,
 			      FloatGPUMirroredMemoryBlock *sums,
-			      unsigned int units_size,
+			      unsigned int size,
 			      unsigned int bunch_size,
 			      bool use_gpu);
 

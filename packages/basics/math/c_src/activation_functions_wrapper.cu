@@ -227,7 +227,7 @@ __global__ void minMaxNextReduction(float *minimums,
   }
 }
 
-__global__ void sumFirstReduction(const float *input_units,
+__global__ void sumFirstReduction(const float *output_units,
                                   float *sums,
                                   unsigned int reduction_top,
                                   unsigned int max_x,
@@ -247,9 +247,9 @@ __global__ void sumFirstReduction(const float *input_units,
       unsigned int passive_index = getMatrixIndex((matrix_x_pos + active_reduction), lda_x, matrix_y_pos);
 
       if (matrix_x_pos + active_reduction < max_x)
-        sums[index] = input_units[index] + input_units[passive_index];
+        sums[index] = output_units[index] + output_units[passive_index];
       else
-        sums[index] = input_units[index];
+        sums[index] = output_units[index];
     }
   }
 }
@@ -386,10 +386,9 @@ void doApplyLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
   }
   else {
 #endif
-    const float *input_units_ptr  = units->getPPALForRead();
-    const float *output_units_ptr = units->getPPALForWrite();
-    
-    const unsigned int sz = units_size*bunch_size;
+    const float *input_units_ptr  = input_units->getPPALForRead();
+    float *output_units_ptr = output_units->getPPALForWrite();
+    const unsigned int sz = size*bunch_size;
     for (unsigned int i=0; i<sz; ++i)
       // ATTENTION: In 64-bit machines is better to use exp than expf
       output_units_ptr[i] = sigmoid(1.0f, input_units_ptr[i]);
@@ -410,7 +409,7 @@ void doMultiplyLogisticDerivatives(FloatGPUMirroredMemoryBlock *output_units,
     const float *input_errors_ptr = input_errors->getGPUForRead();
     float *output_errors_ptr = input_errors->getGPUForWrite();
     dim3 block, grid;
-    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, units_size,
+    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
     logisticDerKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
       (output_units_ptr,
@@ -418,14 +417,14 @@ void doMultiplyLogisticDerivatives(FloatGPUMirroredMemoryBlock *output_units,
        output_errors_ptr,
        bunch_size,
        bunch_size,
-       units_size);
+       size);
   }
   else {
 #endif
     const float *output_units_ptr = output_units->getPPALForRead();
     const float *input_errors_ptr = input_errors->getPPALForRead();
     float *output_errors_ptr = output_errors->getPPALForWrite();
-    const unsigned int sz = units_size*bunch_size;
+    const unsigned int sz = size*bunch_size;
     for (unsigned int i=0; i<sz; ++i) {
       float value = clamp(output_units_ptr[i], NEAR_ZERO, 1.0f - NEAR_ZERO);
       output_errors_ptr[i] = input_errors_ptr[i] * value*(1.0f-value);
@@ -437,7 +436,7 @@ void doMultiplyLogisticDerivatives(FloatGPUMirroredMemoryBlock *output_units,
 
 void doApplyTanhActivation(FloatGPUMirroredMemoryBlock *input_units,
 			   FloatGPUMirroredMemoryBlock *output_units,
-			   unsigned int units_size,
+			   unsigned int size,
 			   unsigned int bunch_size,
 			   bool use_gpu) {
 #ifdef USE_CUDA
@@ -445,7 +444,7 @@ void doApplyTanhActivation(FloatGPUMirroredMemoryBlock *input_units,
     const float *input_units_ptr = input_units->getGPUForRead();
     float *output_units_ptr = output_units->getGPUForWrite();
     dim3 block, grid;
-    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, units_size,
+    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
     
     tanhActKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
@@ -453,15 +452,15 @@ void doApplyTanhActivation(FloatGPUMirroredMemoryBlock *input_units,
        output_units_ptr,
        bunch_size,
        bunch_size,
-       units_size);
+       size);
   }
   else {
 #endif
-    float *input_units_ptr = input_units->getPPALForRead();
-    float *output_units_ptr = units->getPPALForWrite();
-    const unsigned int sz = units_size*bunch_size;
+    const float *input_units_ptr = input_units->getPPALForRead();
+    float *output_units_ptr = output_units->getPPALForWrite();
+    const unsigned int sz = size*bunch_size;
     for (unsigned int i=0; i<sz; ++i)
-      output_units_ptr[b] = sigmoid(2.0f, input_units_ptr[b]) - 1.0f;
+      output_units_ptr[i] = sigmoid(2.0f, input_units_ptr[i]) - 1.0f;
 #ifdef USE_CUDA
   }
 #endif
@@ -470,7 +469,7 @@ void doApplyTanhActivation(FloatGPUMirroredMemoryBlock *input_units,
 void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *output_units,
 			       FloatGPUMirroredMemoryBlock *input_errors,
 			       FloatGPUMirroredMemoryBlock *output_errors,
-			       unsigned int units_size,
+			       unsigned int size,
 			       unsigned int bunch_size,
 			       bool use_gpu) {
 #ifdef USE_CUDA
@@ -480,7 +479,7 @@ void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *output_units,
     const float *input_errors_ptr = input_errors->getGPUForRead();
     float *output_errors_ptr = input_errors->getGPUForWrite();
     dim3 block, grid;
-    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, units_size,
+    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
     tanhDerKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
       (output_units_ptr,
@@ -488,14 +487,14 @@ void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *output_units,
        output_errors_ptr,
        bunch_size,
        bunch_size,
-       units_size);
+       size);
   }
   else {
 #endif
     const float *output_units_ptr = output_units->getPPALForRead();
     const float *input_errors_ptr = input_errors->getPPALForRead();
     float *output_errors_ptr = output_errors->getPPALForWrite();
-    const unsigned int sz = units_size*bunch_size;
+    const unsigned int sz = size*bunch_size;
     for (unsigned int i=0; i<sz; ++i) {
       float value = clamp(output_units_ptr[i], -1.0f + NEAR_ZERO, 1.0f - NEAR_ZERO);
       output_errors_ptr[i] = input_errors_ptr[i] * 0.5f * (1.0f-value*value);
@@ -505,178 +504,182 @@ void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *output_units,
 #endif
 }
 
-void doApplySoftsignActivation(FloatGPUMirroredMemoryBlock *units,
-			       unsigned int units_size,
-			       const ANNConfiguration &conf,
+void doApplySoftsignActivation(FloatGPUMirroredMemoryBlock *input_units,
+			       FloatGPUMirroredMemoryBlock *output_units,
+			       unsigned int size,
+			       unsigned int bunch_size,
 			       bool use_gpu) {
 #ifdef USE_CUDA
   if (use_gpu) {
-    float *units_ptr = units->getGPUForReadAndWrite();
+    const float *input_units_ptr = units->getGPUForRead();
+    float *output_units_ptr = units->getGPUForWrite();
     dim3 block, grid;
-    computeBlockAndGridSizesForAColumnMajorBunch(conf, units_size,
+    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
     
     softsignActKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-      (units_ptr,
-       conf.cur_bunch_size,
-       conf.max_bunch_size,
-       units_size);
+      (input_units_ptr,
+       output_units_ptr,
+       bunch_size,
+       bunch_size,
+       size);
   }
   else {
 #endif
-    float *units_ptr = units->getPPALForReadAndWrite();
-
-    for (unsigned int i=0; i<units_size; ++i) {
-      for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	units_ptr[b] = units_ptr[b] / (1.0f + fabsf(units_ptr[b]));
-      }
-      units_ptr += conf.max_bunch_size;
-    }
+    const float *input_units_ptr = input_units->getPPALForRead();
+    float *output_units_ptr = output_units->getPPALForWrite();
+    const unsigned int sz = size*bunch_size;
+    for (unsigned int i=0; i<sz; ++i)
+      output_units_ptr[i] = input_units_ptr[i] / (1.0f + fabsf(input_units_ptr[i]));
 #ifdef USE_CUDA
   }
 #endif
 }
 
-void doMultiplySoftsignDerivatives(FloatGPUMirroredMemoryBlock *units,
+void doMultiplySoftsignDerivatives(FloatGPUMirroredMemoryBlock *output_units,
 				   FloatGPUMirroredMemoryBlock *input_errors,
-				   unsigned int units_size,
-				   const ANNConfiguration &conf,
+				   FloatGPUMirroredMemoryBlock *output_errors,
+				   unsigned int size,
+				   unsigned int bunch_size,
 				   bool use_gpu) {
 #ifdef USE_CUDA
   if (use_gpu) {
-    const float *units_ptr = units->getGPUForRead();
-    float *input_errors_ptr = input_errors->getGPUForReadAndWrite();
+    float *output_units_ptr = output_units->getGPUForWrite();
+    const float *input_errors_ptr = input_errors->getGPUForRead();
+    float *output_errors_ptr = output_errors->getGPUForWrite();
     dim3 block, grid;
-    computeBlockAndGridSizesForAColumnMajorBunch(conf, units_size,
+    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
     softsignDerKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-      (units_ptr,
+      (output_units_ptr,
        input_errors_ptr,
-       conf.cur_bunch_size,
-       conf.max_bunch_size,
-       units_size);
+       output_errors_ptr,
+       bunch_size,
+       bunch_size,
+       size);
   }
   else {
 #endif
-    const float *units_ptr = units->getPPALForRead();
-    float *input_errors_ptr = input_errors->getPPALForReadAndWrite();
-
-    for (unsigned int i=0; i<units_size; ++i) {
-      for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-	float value = clamp(units_ptr[b], -1.0f + NEAR_ZERO, 1.0f - NEAR_ZERO);
-	float aux   = 1.0f + fabsf(value);
-	input_errors_ptr[b] *= 1.0f/(aux * aux);
-      }
-      units_ptr        += conf.max_bunch_size;
-      input_errors_ptr += conf.max_bunch_size;
+    const float *output_units_ptr = output_units->getPPALForRead();
+    const float *input_errors_ptr = input_errors->getPPALForRead();
+    float *output_errors_ptr = output_errors->getPPALForWrite();
+    const unsigned int sz = size*bunch_size;
+    for (unsigned int i=0; i<sz; ++i) {
+      float value = clamp(output_units_ptr[i], -1.0f + NEAR_ZERO, 1.0f - NEAR_ZERO);
+      float aux   = 1.0f + fabsf(value);
+      output_errors_ptr[i] = input_errors_ptr[i] * 1.0f/(aux * aux);
     }
 #ifdef USE_CUDA
   }
 #endif
 }
 
-void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *units,
+void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
+			      FloatGPUMirroredMemoryBlock *output_units,
 			      FloatGPUMirroredMemoryBlock *minimums,
 			      FloatGPUMirroredMemoryBlock *maximums,
 			      FloatGPUMirroredMemoryBlock *sums,
-			      unsigned int units_size,
-			      const ANNConfiguration &conf,
+			      unsigned int size,
+			      unsigned int bunch_size,
 			      bool use_gpu) {
 #ifdef USE_CUDA
   if (use_gpu) {
-    float *units_ptr = units->getGPUForReadAndWrite();
+    const float *input_units_ptr = input_units->getGPUForRead();
+    float *output_units_ptr = output_units->getGPUForWrite();
     float *minimums_ptr = minimums->getGPUForWrite();
     float *maximums_ptr = maximums->getGPUForWrite();
     float *sums_ptr = sums->getGPUForWrite();
-    unsigned int units_top = ceilingPowerOfTwo(units_size);
+    unsigned int units_top = ceilingPowerOfTwo(size);
     unsigned int top_reduction = units_top;
     dim3 block, grid;
-    computeBlockAndGridSizesForARowMajorBunch(conf, units_size,
+    computeBlockAndGridSizesForARowMajorBunch(bunch_size, size,
 					      block, grid);
     
     minMaxFirstReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-      (units_ptr,
+      (input_units_ptr,
        minimums_ptr,
        maximums_ptr,
        top_reduction,
-       units_size,
-       conf.cur_bunch_size,
-       conf.max_bunch_size);
+       size,
+       bunch_size,
+       bunch_size);
     for (top_reduction >>= 1; top_reduction != 1; top_reduction >>= 1) {
-      computeBlockAndGridSizesForARowMajorBunch(conf, top_reduction,
+      computeBlockAndGridSizesForARowMajorBunch(bunch_size, top_reduction,
 						block, grid);
       minMaxNextReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
         (minimums_ptr,
          maximums_ptr,
          top_reduction,
-         conf.cur_bunch_size,
-         conf.max_bunch_size);
+         bunch_size,
+         bunch_size);
     }
 
-    computeBlockAndGridSizesForAnArray(conf, block, grid);
+    computeBlockAndGridSizesForAnArray(bunch_size, block, grid);
     applyMinimumNorm<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
       (minimums_ptr,
        maximums_ptr,
-       conf.cur_bunch_size);
+       bunch_size);
 
-    computeBlockAndGridSizesForARowMajorBunch(conf, units_size,
+    computeBlockAndGridSizesForARowMajorBunch(bunch_size, size,
 					      block, grid);
 
     applyExpMinusMinimum<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-      (units_ptr,
+      (input_units_ptr,
+       output_units_ptr,
        minimums_ptr,
-       units_size,
-       conf.cur_bunch_size,
-       conf.max_bunch_size);
+       size,
+       bunch_size,
+       bunch_size);
     
     // We reset the top
     top_reduction = units_top;
 
     sumFirstReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-      (units_ptr,
+      (output_units_ptr,
        sums_ptr,
        top_reduction,
-       units_size,
-       conf.cur_bunch_size,
-       conf.max_bunch_size);
+       size,
+       bunch_size,
+       bunch_size);
     for (top_reduction >>= 1; top_reduction != 1; top_reduction >>= 1) {
-      computeBlockAndGridSizesForARowMajorBunch(conf, top_reduction,
+      computeBlockAndGridSizesForARowMajorBunch(bunch_size, top_reduction,
 						block, grid);
       sumNextReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
         (sums_ptr,
          top_reduction,
-         conf.cur_bunch_size,
-         conf.max_bunch_size);
+         bunch_size,
+         bunch_size);
     }
 
-    computeBlockAndGridSizesForAnArray(conf, block, grid);
+    computeBlockAndGridSizesForAnArray(bunch_size, block, grid);
     applyInverse<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
       (sums_ptr,
-       conf.cur_bunch_size);
+       bunch_size);
 
-    computeBlockAndGridSizesForARowMajorBunch(conf, units_size,
+    computeBlockAndGridSizesForARowMajorBunch(bunch_size, size,
 					      block, grid);
 
     applyRatio<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-      (units_ptr,
+      (output_units_ptr,
        sums_ptr,
-       units_size,
-       conf.cur_bunch_size,
-       conf.max_bunch_size);
+       size,
+       bunch_size,
+       bunch_size);
   }
   else {
 #endif
-    float *units_ptr = units->getPPALForReadAndWrite();
+    const float *input_units_ptr = input_units->getPPALForRead();
+    float *output_units_ptr = output_units->getPPALForWrite();
     
-    for (unsigned int b = 0; b < conf.cur_bunch_size; ++b)
+    for (unsigned int b = 0; b < bunch_size; ++b)
       {
-	float minimum = units_ptr[0];
-	float maximum = units_ptr[0];
-	unsigned int cur_pos = conf.max_bunch_size;
-	for (unsigned int i = 2; i < units_size; i += 2) {
-	  float prev_unit = units_ptr[cur_pos];
-	  cur_pos += conf.max_bunch_size;
-	  float cur_unit = units_ptr[cur_pos];
+	float minimum = input_units_ptr[0];
+	float maximum = input_units_ptr[0];
+	unsigned int cur_pos = bunch_size;
+	for (unsigned int i = 2; i < size; i += 2) {
+	  float prev_unit = input_units_ptr[cur_pos];
+	  cur_pos += bunch_size;
+	  float cur_unit = input_units_ptr[cur_pos];
 
 	  if (prev_unit < cur_unit) {
 	    if (prev_unit < minimum) minimum = prev_unit;
@@ -685,24 +688,25 @@ void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *units,
 	    if (cur_unit < minimum) minimum = cur_unit;
 	    if (prev_unit > maximum) maximum = prev_unit;
 	  }
-	  cur_pos += conf.max_bunch_size;
+	  cur_pos += bunch_size;
 	}
-	if ((units_size & 1) == 0) { // si es par
-	  unsigned int max_pos = (units_size - 1) * conf.max_bunch_size;
-	  if (units_ptr[max_pos] < minimum) minimum = units_ptr[max_pos];
-	  if (units_ptr[max_pos] > maximum) maximum = units_ptr[max_pos];
+	if ((size & 1) == 0) { // si es par
+	  unsigned int max_pos = (size - 1) * bunch_size;
+	  if (input_units_ptr[max_pos] < minimum) minimum = input_units_ptr[max_pos];
+	  if (input_units_ptr[max_pos] > maximum) maximum = input_units_ptr[max_pos];
 	}
 	if ((maximum - minimum) > 30.0f) minimum = maximum - 30.0f;
 	double addition = 0;
 	cur_pos = 0;
-	for (unsigned int i = 0; i < units_size; i++) {
-	  units_ptr[cur_pos] = exp(units_ptr[cur_pos] - minimum);
-	  addition += units_ptr[cur_pos];
-	  cur_pos += conf.max_bunch_size;
+	for (unsigned int i = 0; i < size; i++) {
+	  output_units_ptr[cur_pos] = exp(input_units_ptr[cur_pos] - minimum);
+	  addition += output_units_ptr[cur_pos];
+	  cur_pos += bunch_size;
 	}
 	float ratio = 1.0f/addition;
-	cblas_sscal(units_size, ratio, units_ptr, conf.max_bunch_size);
-	units_ptr++;
+	cblas_sscal(size, ratio, output_units_ptr, bunch_size);
+	output_units_ptr++;
+	input_units_ptr++;
       }
 #ifdef USE_CUDA
   }

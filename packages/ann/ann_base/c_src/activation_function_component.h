@@ -60,8 +60,6 @@ namespace ANN {
 
     virtual void reset();
     
-    virtual ANNComponent *clone() = 0;
-    
     virtual void setOption(const char *name, double value);
 
     virtual bool hasOption(const char *name);

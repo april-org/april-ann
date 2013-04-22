@@ -1,25 +1,44 @@
 #include "cblas_headers.h"
 #include "logistic_actf_component.h"
+#include "wrapper.h"
 
-void LogisticActfANNComponent::applyActivation(FloatGPUMirroredMemoryBlock *input_units,
-					       FloatGPUMirroredMemoryBlock *output_units,
-					       unsigned int size,
-					       unsigned int bunch_size) {
-  doApplyLogisticActivation(input_units,
-			    output_units,
-			    size,
-			    bunch_size,
-			    use_cuda);
-}
+namespace ANN {
 
-void LogisticActfANNComponent::multiplyDerivatives(FloatGPUMirroredMemoryBlock *input_units,
-						   FloatGPUMirroredMemoryBlock *output_units,
-						   FloatGPUMirroredMemoryBlock *input_errors,
-						   FloatGPUMirroredMemoryBlock *output_errors,
-						   unsigned int size,
-						   unsigned int bunch_size,
-						   bool is_output);
+  LogisticActfANNComponent::LogisticActfANNComponent(const char *name) :
+    ActivationFunctionANNComponent(name) { }
+  LogisticActfANNComponent::~LogisticActfANNComponent() { }
 
-LogisticActfANNComponent::LogisticActfANNComponent(const char *name) :
-  ActivationFunctionANNComponent(name) {
+  void LogisticActfANNComponent::applyActivation(FloatGPUMirroredMemoryBlock *input_units,
+						 FloatGPUMirroredMemoryBlock *output_units,
+						 unsigned int size,
+						 unsigned int bunch_size) {
+    doApplyLogisticActivation(input_units,
+			      output_units,
+			      size,
+			      bunch_size,
+			      use_cuda);
+  }
+
+  void LogisticActfANNComponent::multiplyDerivatives(FloatGPUMirroredMemoryBlock *input_units,
+						     FloatGPUMirroredMemoryBlock *output_units,
+						     FloatGPUMirroredMemoryBlock *input_errors,
+						     FloatGPUMirroredMemoryBlock *output_errors,
+						     unsigned int size,
+						     unsigned int bunch_size,
+						     bool is_output) {
+    input_units = 0;
+    // TODO: Implement special case for cross entropy loss function
+    // if (!is_output || !conf.error_function_logistic_mandatory)
+    doMultiplyLogisticDerivatives(output_units,
+				  input_errors,
+				  output_errors,
+				  size,
+				  bunch_size,
+				  use_cuda);
+  }
+
+  ANNComponent *LogisticActfANNComponent::clone() {
+    return new LogisticActfANNComponent(name.c_str());
+  }
+
 }
