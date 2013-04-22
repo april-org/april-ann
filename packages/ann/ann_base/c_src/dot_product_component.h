@@ -32,7 +32,7 @@ namespace ANN {
     TokenMemoryBlock *input,  *error_input;
     TokenMemoryBlock *output, *error_output;
     Connections *weights_matrix;
-    unsigned int bunch_size;
+    unsigned int bunch_size, num_backprops;
     
     /// learning parameters
     float learning_rate, momentum, weight_decay, c_weight_decay;

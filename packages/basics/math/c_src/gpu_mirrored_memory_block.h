@@ -222,6 +222,14 @@ public:
   }
 #endif
 
+  bool getCudaFlag() {
+#ifdef USE_CUDA
+    return getUpdatedGPU();
+#else
+    return false;
+#endif
+  }
+
 };
 
 // typedef for referring to float memory blocks

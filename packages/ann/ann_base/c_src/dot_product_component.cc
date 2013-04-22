@@ -37,6 +37,7 @@ namespace ANN {
 						 unsigned int output_size,
 						 bool transpose_weights) :
     ANNComponent(name, weights_name, input_size, output_size),
+    num_backprops(0),
     input(0),
     error_input(0),
     output(new TokenMemoryBlock()),
@@ -114,6 +115,7 @@ namespace ANN {
   }
   
   Token *DotProductANNComponent::doBackprop(Token *_error_input) {
+    ++num_backprops;
     // error checking
     if ( (_error_input == 0) ||
 	 (_error_input->getTokenCode() != table_of_token_codes::token_mem_block))
@@ -139,7 +141,7 @@ namespace ANN {
 	      bunch_size, input_size, output_size,
 	      1.0f, error_input_ptr, bunch_size,
 	      weights_mat_ptr, weights_matrix->getOutputSize(),
-	      0.0f, error_output_ptr, bunch_size,
+	      1.0f, error_output_ptr, bunch_size,
 	      0, 0, 0,
 	      use_cuda);
     }
@@ -149,7 +151,7 @@ namespace ANN {
 	      weights_matrix->getInputSize(),
 	      1.0f, weights_mat_ptr, weights_matrix->getOutputSize(),
 	      error_input_ptr, 1,
-	      0.0f, error_output_ptr, 1,
+	      1.0f, error_output_ptr, 1,
 	      0, 0, 0,
 	      use_cuda);
     }
@@ -168,7 +170,7 @@ namespace ANN {
     const unsigned int references = weights_matrix->getNumReferences();
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
     const float norm_learn_rate =
-      -(1.0f/sqrtf(static_cast<float>(references*bunch_size))) *
+      -(1.0f/sqrtf(static_cast<float>(references*bunch_size*num_backprops))) *
       learning_rate;
     if (bunch_size > 1) {
       doSgemm(CblasColMajor, CblasTrans, CblasNoTrans,
@@ -246,14 +248,17 @@ namespace ANN {
   }
   
   void DotProductANNComponent::reset() {
+    num_backprops = 0;
     if (error_output != 0 && error_output->getMaxSize() > 0)
       doVectorSetToZero(error_output->getMemBlock(),
 			error_output->getMaxSize(),
 			1, 0, use_cuda);
-    if (output != 0 && output->getMaxSize() > 0)
+    /*
+      if (output != 0 && output->getMaxSize() > 0)
       doVectorSetToZero(output->getMemBlock(),
-			output->getMaxSize(),
-			1, 0, use_cuda);
+      output->getMaxSize(),
+      1, 0, use_cuda);
+    */
     if (input) DecRef(input); input = 0;
     if (error_input) DecRef(error_input); error_input = 0;
   }
