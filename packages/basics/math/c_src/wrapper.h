@@ -51,45 +51,56 @@ void applyMask(FloatGPUMirroredMemoryBlock *units,
 	       unsigned int units_size,
 	       const ANNConfiguration &conf,
 	       bool use_gpu);
-void doApplyLogisticActivation(FloatGPUMirroredMemoryBlock *units,
-			       unsigned int units_size,
-			       const ANNConfiguration &conf,
+
+void doApplyLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
+			       FloatGPUMirroredMemoryBlock *output_units,
+			       unsigned int size,
+			       unsigned int bunch_size,
 			       bool use_gpu);
 
-void doMultiplyLogisticDerivatives(FloatGPUMirroredMemoryBlock *units,
+void doMultiplyLogisticDerivatives(FloatGPUMirroredMemoryBlock *input_units,
+				   FloatGPUMirroredMemoryBlock *output_units,
 				   FloatGPUMirroredMemoryBlock *input_errors,
-				   unsigned int units_size,
-				   const ANNConfiguration &conf,
+				   FloatGPUMirroredMemoryBlock *output_errors,
+				   unsigned int size,
+				   unsigned int bunch_size,
 				   bool use_gpu);
      
-void doApplyTanhActivation(FloatGPUMirroredMemoryBlock *units,
-			   unsigned int units_size,
-			   const ANNConfiguration &conf,
+void doApplyTanhActivation(FloatGPUMirroredMemoryBlock *input_units,
+			   FloatGPUMirroredMemoryBlock *output_units,
+			   unsigned int size,
+			   unsigned int bunch_size,
 			   bool use_gpu);
 
-void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *units,
+void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *input_units,
+			       FloatGPUMirroredMemoryBlock *output_units,
 			       FloatGPUMirroredMemoryBlock *input_errors,
-			       unsigned int units_size,
-			       const ANNConfiguration &conf,
+			       FloatGPUMirroredMemoryBlock *output_errors,
+			       unsigned int size,
+			       unsigned int bunch_size,
 			       bool use_gpu);
 
-void doApplySoftsignActivation(FloatGPUMirroredMemoryBlock *units,
-			       unsigned int units_size,
-			       const ANNConfiguration &conf,
+void doApplySoftsignActivation(FloatGPUMirroredMemoryBlock *input_units,
+			       FloatGPUMirroredMemoryBlock *output_units,
+			       unsigned int size
+			       unsigned int bunch_size,
 			       bool use_gpu);
 
-void doMultiplySoftsignDerivatives(FloatGPUMirroredMemoryBlock *units,
+void doMultiplySoftsignDerivatives(FloatGPUMirroredMemoryBlock *input_units,
+				   FloatGPUMirroredMemoryBlock *output_units,
 				   FloatGPUMirroredMemoryBlock *input_errors,
+				   FloatGPUMirroredMemoryBlock *output_errors,
 				   unsigned int units_size,
-				   const ANNConfiguration &conf,
+				   unsigned int bunch_size,
 				   bool use_gpu);
 
-void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *units,
+void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
+			      FloatGPUMirroredMemoryBlock *output_units,
 			      FloatGPUMirroredMemoryBlock *minimums,
 			      FloatGPUMirroredMemoryBlock *maximums,
 			      FloatGPUMirroredMemoryBlock *sums,
 			      unsigned int units_size,
-			      const ANNConfiguration &conf,
+			      unsigned int bunch_size,
 			      bool use_gpu);
 
 // ERROR FUNCTIONS
