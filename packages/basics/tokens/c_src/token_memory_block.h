@@ -45,6 +45,7 @@ public:
     return 0;
   }
   void clear() { used_size = 0; }
+  bool getCudaFlag() { return mem_block->getCudaFlag(); }
 };
 
 #endif // TOKEN_MEMORY_BLOCK_H

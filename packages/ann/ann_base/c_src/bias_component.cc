@@ -26,7 +26,8 @@ namespace ANN {
 
   BiasANNComponent::BiasANNComponent(const char *name,
 				     const char *weights_name) :
-    ANNComponent(name, weights_name, 0, 0), 
+    ANNComponent(name, weights_name, 0, 0),
+    num_backprops(0),
     input(0), output(new TokenMemoryBlock()), error(0),
     bias_vector(0), learning_rate(-1.0f), momentum(0.0f) {
     if (weights_name == 0) generateDefaultWeightsName();
@@ -80,6 +81,7 @@ namespace ANN {
   /// In BiasANNComponent this method is a by-pass
   Token *BiasANNComponent::doBackprop(Token *_error_input)
   {
+    ++num_backprops;
     if ( (_error_input == 0) ||
 	 (_error_input->getTokenCode() != table_of_token_codes::token_mem_block))
       ERROR_EXIT(129,"Incorrect input error Token type, expected token_mem_block!\n");
@@ -115,7 +117,7 @@ namespace ANN {
     const unsigned int references = bias_vector->getNumReferences();
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
     const float norm_learn_rate =
-      -(1.0f/sqrtf(static_cast<float>(references*bunch_size))) *
+      -(1.0f/sqrtf(static_cast<float>(references*bunch_size*num_backprops))) *
       learning_rate;
   
     // bias update: prev_bias[j] = prev_bias[j] + \sum_b norm_learn_rate * ERROR_INPUT[b,j]
@@ -132,10 +134,13 @@ namespace ANN {
   }
 
   void BiasANNComponent::reset() {
-    if (output != 0 && output->getMaxSize() > 0)
+    num_backprops = 0;
+    /*
+      if (output != 0 && output->getMaxSize() > 0)
       doVectorSetToZero(output->getMemBlock(),
-			output->getMaxSize(),
-			1, 0, use_cuda);
+      output->getMaxSize(),
+      1, 0, use_cuda);
+    */
     if (input) DecRef(input); input = 0;
     if (error != 0) DecRef(error); error = 0;
   }

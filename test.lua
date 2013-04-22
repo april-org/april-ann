@@ -33,6 +33,8 @@ function print_token(token)
   end
 end
 
+
+
 function doforward(input_tbl)
   local output = thenet:forward(tokens.memblock(input_tbl))
   print_token(components_table["w1"]:get_input())
