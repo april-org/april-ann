@@ -11,6 +11,7 @@ return {
 --   "function_interface",
 --   "activation_function",
   "ann_base",
+  "loss_functions",
 --   "mlp",
 --   "sdae",
 --   "gzio",

@@ -23,16 +23,18 @@
 
 #include "referenced.h"
 #include "token_base.h"
+#include "loss_function.h"
 
 namespace ANN {
   class MSELossFunction : public LossFunction {
+    TokenMemoryBlock *error_mem_block;
     float accumulated_loss;
   public:
-    MSELossFunction(unsigned int size) : Referenced(), LossFunction(size) { }
-    virtual ~MSELossFunction() { }
+    MSELossFunction(unsigned int size);
+    virtual ~MSELossFunction();
     virtual float  addLoss(Token *input, Token *target);
     virtual Token *computeGrandient(Token *input, Token *target);
-    virtual float  getTotalLoss();
+    virtual float  getAccumLoss();
     virtual void reset();
   };
 }

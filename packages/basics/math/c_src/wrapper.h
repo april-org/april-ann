@@ -101,14 +101,20 @@ void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
 			      bool use_gpu);
 
 // ERROR FUNCTIONS
-void doCalculateMSEErrorFunction(FloatGPUMirroredMemoryBlock *output,
-				 FloatGPUMirroredMemoryBlock *target_output,
-				 FloatGPUMirroredMemoryBlock *output_error,
-				 FloatGPUMirroredMemoryBlock *pattern_errors,
-				 float zero_epsilon_distance,
-				 unsigned int output_size,
-				 const ANNConfiguration &conf,
-				 bool use_gpu);
+float doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
+			FloatGPUMirroredMemoryBlock *target,
+			float zero_epsilon_distance,
+			unsigned int size,
+			unsigned int bunch_size,
+			bool use_gpu);
+
+void doAccumulateMSEGradient(FloatGPUMirroredMemoryBlock *input,
+			     FloatGPUMirroredMemoryBlock *target,
+			     FloatGPUMirroredMemoryBlock *error_output,
+			     float zero_epsilon_distance,
+			     unsigned int size,
+			     unsigned int bunch_size,
+			     bool use_gpu);
 
 void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
 				  FloatGPUMirroredMemoryBlock *target_output,

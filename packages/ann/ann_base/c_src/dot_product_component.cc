@@ -37,12 +37,12 @@ namespace ANN {
 						 unsigned int output_size,
 						 bool transpose_weights) :
     ANNComponent(name, weights_name, input_size, output_size),
-    num_backprops(0),
     input(0),
     error_input(0),
     output(new TokenMemoryBlock()),
     error_output(new TokenMemoryBlock()),
     weights_matrix(0),
+    num_backprops(0),
     learning_rate(-1.0f),
     momentum(0.0f),
     weight_decay(0.0f),
@@ -137,7 +137,7 @@ namespace ANN {
     if (bunch_size > 1) {
       // C = alpha * A * B + beta * C
       doSgemm(CblasColMajor,
-	      CblasNoTrans, NEGATE_CBLAS_TRANSPOSE(transpose_weights),
+	      CblasNoTrans, transpose_weights,
 	      bunch_size, input_size, output_size,
 	      1.0f, error_input_ptr, bunch_size,
 	      weights_mat_ptr, weights_matrix->getOutputSize(),
