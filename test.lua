@@ -11,11 +11,13 @@ thenet:push( ann.components.hyperplane{ input=2, output=2,
 					dot_product_weights="w1",
 					bias_name="b1",
 					dot_product_name="w1" } )
+thenet:push( ann.components.logistic() )
 thenet:push( ann.components.hyperplane{ input=2, output=1,
 					bias_weights="b2",
 					dot_product_weights="w2",
 					bias_name="b2",
 					dot_product_name="w2" } )
+thenet:push( ann.components.logistic() )
 weights_table,components_table = thenet:build()
 
 weights_table["b1"]:load{ w=m, first_pos=0, column_size=3 }
@@ -49,6 +51,5 @@ doforward(tokens.table.bunch{ {0,0}, {0,1}, {1,0}, {1,1} })
 
 for _,v in ipairs({ {0,0}, {0,1}, {1,0}, {1,1} }) do
   print("##########")
-  thenet:reset()
   doforward(v)
 end

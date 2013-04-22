@@ -87,7 +87,7 @@ namespace ANN {
     if (error) DecRef(error);
     error = _error_input->convertTo<TokenMemoryBlock*>();
     IncRef(error);
-    return _error_input;
+    return error;
   }
 
   void BiasANNComponent::doUpdate() {

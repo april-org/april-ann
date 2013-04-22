@@ -91,7 +91,7 @@ namespace ANN {
 	      weights_matrix->getOutputSize(), weights_matrix->getInputSize(),
 	      1.0f, weights_mat_ptr, weights_matrix->getOutputSize(),
 	      input_ptr, 1,
-	      1.0f, output_ptr, 1,
+	      0.0f, output_ptr, 1,
 	      0, 0, 0,
 	      use_cuda);
     } // if bunch_size==1
@@ -106,7 +106,7 @@ namespace ANN {
 	      weights_mat_ptr, weights_matrix->getOutputSize(),
 	      // beta = 1.0f, C matrix contains BIAS and probably other layer
 	      // computations
-	      1.0f, output_ptr, bunch_size, // conf.max_bunch_size,
+	      0.0f, output_ptr, bunch_size, // conf.max_bunch_size,
 	      0, 0, 0, // inputs->getOffset(), 0, outputs->getOffset(),
 	      use_cuda); // conf.use_cuda_flag);
     } // if bunch_size==1 ... else
@@ -139,7 +139,7 @@ namespace ANN {
 	      bunch_size, input_size, output_size,
 	      1.0f, error_input_ptr, bunch_size,
 	      weights_mat_ptr, weights_matrix->getOutputSize(),
-	      1.0f, error_output_ptr, bunch_size,
+	      0.0f, error_output_ptr, bunch_size,
 	      0, 0, 0,
 	      use_cuda);
     }
@@ -149,7 +149,7 @@ namespace ANN {
 	      weights_matrix->getInputSize(),
 	      1.0f, weights_mat_ptr, weights_matrix->getOutputSize(),
 	      error_input_ptr, 1,
-	      1.0f, error_output_ptr, 1,
+	      0.0f, error_output_ptr, 1,
 	      0, 0, 0,
 	      use_cuda);
     }

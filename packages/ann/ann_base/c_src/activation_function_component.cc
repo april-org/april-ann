@@ -28,7 +28,10 @@ namespace ANN {
 
   ActivationFunctionANNComponent::ActivationFunctionANNComponent(const char *name) :
     ANNComponent(name, 0, 0, 0),
-    output(new TokenMemoryBlock()), error_output(new TokenMemoryBlock()) {
+    input(0),
+    output(new TokenMemoryBlock()),
+    error_input(0),
+    error_output(new TokenMemoryBlock()) {
     IncRef(output);
     IncRef(error_output);
   }
@@ -118,6 +121,8 @@ namespace ANN {
 					     hash<string,Connections*> &weights_dict,
 					     hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
+    if (input_size == 0) input_size = output_size;
+    if (output_size == 0) output_size = input_size;
     if (input_size != output_size)
       ERROR_EXIT(240, "ActivationFunctionANNComponent input/output "
 		 "sizes must be equal\n");

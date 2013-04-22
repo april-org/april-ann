@@ -22,6 +22,7 @@
 #ifndef LOGISTICACTFCOMPONENT_H
 #define LOGISTICACTFCOMPONENT_H
 
+#include "activation_function_component.h"
 #include "token_memory_block.h"
 #include "ann_component.h"
 #include "gpu_mirrored_memory_block.h"
@@ -45,6 +46,8 @@ namespace ANN {
 				     bool is_output);
   public:
     LogisticActfANNComponent(const char *name);
+    virtual ~LogisticActfANNComponent();
+    virtual ANNComponent *clone();
   };
 }
 
