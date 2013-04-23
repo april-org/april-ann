@@ -44,6 +44,10 @@ function show_gradients()
     print(name)
     print_token(errors)
   end
+  for _,name in ipairs({"b1","w1","b2","w2"}) do
+    local w = weights_table[name]:weights()
+    print("WEIGHTS", name, table.concat(w:toTable(), " "))
+  end
 end
 
 thenet:set_option("learning_rate", 0.01)
@@ -57,7 +61,7 @@ for i=1,100000 do
   lossfunc:reset()
   thenet:reset()
   local output  = thenet:forward(input_batch)
-  print_token(output)
+  -- print_token(output)
   local tr_loss = lossfunc:loss(output, target_batch)
   print(i, tr_loss)
   local gradient = lossfunc:gradient(output, target_batch)
