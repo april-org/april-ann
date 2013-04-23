@@ -216,8 +216,8 @@ namespace ANN {
     FloatGPUMirroredMemoryBlock *prev_weights_mat_ptr =
       weights_matrix->getPrevPtr();
     FloatGPUMirroredMemoryBlock *input_ptr        = input->getMemBlock();
-    FloatGPUMirroredMemoryBlock *error_input_ptr  = output->getMemBlock();
-    FloatGPUMirroredMemoryBlock *error_output_ptr = input->getMemBlock();
+    FloatGPUMirroredMemoryBlock *error_input_ptr  = error_input->getMemBlock();
+    FloatGPUMirroredMemoryBlock *error_output_ptr = error_output->getMemBlock();
     
     float beta_parameter_for_cblas_bp = 1.0f;
     if (weights_matrix->isFirstUpdateCall()) {
