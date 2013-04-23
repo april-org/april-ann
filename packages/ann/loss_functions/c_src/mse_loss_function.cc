@@ -32,7 +32,6 @@ namespace ANN {
   }
   
   MSELossFunction::~MSELossFunction() {
-    DecRef(error_output);
   }
   
   float MSELossFunction::addLoss(Token *_input, Token *target) {

@@ -22,10 +22,12 @@ thenet:push( ann.components.hyperplane{ input=2, output=1,
 thenet:push( ann.components.logistic{ name="output" } )
 weights_table,components_table = thenet:build()
 
-weights_table["b1"]:load{ w=m, first_pos=0, column_size=3 }
-weights_table["w1"]:load{ w=m, first_pos=1, column_size=3 }
-weights_table["b2"]:load{ w=m, first_pos=6, column_size=3 }
-weights_table["w2"]:load{ w=m, first_pos=7, column_size=3 }
+function load_initial_weights()
+  weights_table["b1"]:load{ w=m, first_pos=0, column_size=3 }
+  weights_table["w1"]:load{ w=m, first_pos=1, column_size=3 }
+  weights_table["b2"]:load{ w=m, first_pos=6, column_size=3 }
+  weights_table["w2"]:load{ w=m, first_pos=7, column_size=3 }
+end
 
 function print_token(token)
   if token then
@@ -50,14 +52,48 @@ function show_gradients()
   end
 end
 
-thenet:set_option("learning_rate", 0.01)
+thenet:set_option("learning_rate", 0.4)
+thenet:set_option("momentum", 0.1)
+thenet:set_option("weight_decay", 1e-05)
+load_initial_weights()
 input_batch = tokens.memblock(tokens.table.bunch{ {0,0}, {0,1}, {1,0}, {1,1} })
 target_batch = tokens.memblock(tokens.table.bunch{ {0}, {1}, {1}, {0} })
 lossfunc = ann.loss.mse(thenet:get_output_size())
 
 print_token(thenet:forward(input_batch))
 
-for i=1,100000 do
+lossfunc:reset()
+thenet:reset()
+thenet:backprop(lossfunc:gradient(thenet:forward(tokens.memblock({0,0})), tokens.memblock{0}))
+thenet:update()
+show_gradients()
+print_token(thenet:forward(input_batch))
+
+lossfunc:reset()
+thenet:reset()
+thenet:backprop(lossfunc:gradient(thenet:forward(tokens.memblock({0,1})), tokens.memblock{1}))
+thenet:update()
+show_gradients()
+print_token(thenet:forward(input_batch))
+
+load_initial_weights()
+
+lossfunc:reset()
+thenet:reset()
+thenet:backprop(lossfunc:gradient(thenet:forward(input_batch), target_batch))
+thenet:update()
+show_gradients()
+print_token(thenet:forward(input_batch))
+
+lossfunc:reset()
+thenet:reset()
+thenet:backprop(lossfunc:gradient(thenet:forward(input_batch), target_batch))
+thenet:update()
+show_gradients()
+print_token(thenet:forward(input_batch))
+
+
+for i=3,30000 do
   lossfunc:reset()
   thenet:reset()
   local output  = thenet:forward(input_batch)
@@ -69,3 +105,6 @@ for i=1,100000 do
   -- show_gradients()
   thenet:update()
 end
+
+print_token(thenet:forward(input_batch))
+show_gradients()

@@ -4,7 +4,7 @@ thenet = ann.mlp.all_all.generate{
   use_fanin  =  false,
   inf        = -0.1,
   sup        =  0.1,
-  bunch_size =  1 }
+  bunch_size =  4 }
 
 thenet:set_option("learning_rate", 1.0)
 thenet:set_option("momentum",      0.5)
