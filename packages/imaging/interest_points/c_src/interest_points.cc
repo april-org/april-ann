@@ -111,7 +111,7 @@ namespace InterestPoints {
                     //Case 2: continue line
                     line_end[y] = x;
 
-                    if (line_end[x] - line_ini[x] > dup_int) {
+                    if (line_end[y] - line_ini[y] > dup_int) {
                         // Process the line
                       process_neighborns(nV, line_ini, line_end, y); 
                     }
