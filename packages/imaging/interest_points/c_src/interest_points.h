@@ -41,7 +41,7 @@ namespace InterestPoints
    * @param[in] local_context The number of pixels in stroke that is used to compute the local maxima/minima
    * @param[in] duplicate_interval The minimum distance of locals within the same stroke
    */
-  april_utils::vector<Point2D>* extract_points_from_image_old(ImageFloat *pimg, float threshold_white = 0.6, float threshold_black = 0.4, int local_context = 6, int duplicate_interval = 3);
+  april_utils::vector<Point2D>* extract_points_from_image_old(ImageFloat *pimg, float threshold_white = 0.6, float threshold_black = 0.4, int local_context = 6, int duplicate_interval = 5);
 
   /**
    * @brief Given an Image returns a vector with the local maxima and local minima of the given image.
