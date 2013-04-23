@@ -38,6 +38,7 @@ namespace ANN {
     }
     virtual ~LossFunction() {
       if (error_output) DecRef(error_output);
+      if (input) DecRef(input);
     }
     virtual float  addLoss(Token *input, Token *target) = 0;
     virtual Token *computeGrandient(Token *input, Token *target) = 0;
