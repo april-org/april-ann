@@ -39,18 +39,15 @@ namespace ANN {
     ANNComponent(name, weights_name, input_size, output_size),
     input(0),
     error_input(0),
-    output(new TokenMemoryBlock()),
-    error_output(new TokenMemoryBlock()),
+    output(0),
+    error_output(0),
     weights_matrix(0),
-    num_backprops(0),
     learning_rate(-1.0f),
     momentum(0.0f),
     weight_decay(0.0f),
     c_weight_decay(1.0f),
     neuron_squared_length_upper_bound(-1.0f) {
     if (weights_name == 0) generateDefaultWeightsName();
-    IncRef(output);
-    IncRef(error_output);
     this->transpose_weights = (transpose_weights) ? CblasTrans : CblasNoTrans;
   }
   
@@ -58,8 +55,8 @@ namespace ANN {
     if (weights_matrix) DecRef(weights_matrix);
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
-    DecRef(output);
-    DecRef(error_output);
+    if (output) DecRef(output);
+    if (error_output) DecRef(error_output);
   }
   
   // The DotProductANNComponent
@@ -79,8 +76,10 @@ namespace ANN {
       ERROR_EXIT2(128, "Input memory block (size %d) is not multiple of %d\n",
 		  input->getUsedSize(), input_size);
     this->bunch_size = bunch_size;
-    // and resize the output to fit the bunch
-    output->resize(bunch_size * output_size);
+    // new output to fit the bunch
+    if (output) DecRef(output);
+    output = new TokenMemoryBlock(bunch_size * output_size);
+    IncRef(output);
     // get memory blocks for tokens and weights
     FloatGPUMirroredMemoryBlock *input_ptr       = input->getMemBlock();
     FloatGPUMirroredMemoryBlock *output_ptr      = output->getMemBlock();
@@ -115,7 +114,6 @@ namespace ANN {
   }
   
   Token *DotProductANNComponent::doBackprop(Token *_error_input) {
-    ++num_backprops;
     // error checking
     if ( (_error_input == 0) ||
 	 (_error_input->getTokenCode() != table_of_token_codes::token_mem_block))
@@ -128,8 +126,10 @@ namespace ANN {
     unsigned int bunch_size = error_input->getUsedSize() / output_size;
     if (bunch_size != this->bunch_size)
       ERROR_EXIT(129, "Different bunches found at doForward and doBackprop\n");
-    // and resize the output to fit the bunch
-    error_output->resize(bunch_size * input_size);
+    // new error output to fit the bunch
+    if (error_output) DecRef(error_output);
+    error_output = new TokenMemoryBlock(bunch_size * input_size);
+    IncRef(error_output);
     //
     FloatGPUMirroredMemoryBlock *error_input_ptr  = error_input->getMemBlock();
     FloatGPUMirroredMemoryBlock *error_output_ptr = error_output->getMemBlock();
@@ -170,7 +170,7 @@ namespace ANN {
     const unsigned int references = weights_matrix->getNumReferences();
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
     const float norm_learn_rate =
-      -(1.0f/sqrtf(static_cast<float>(references*bunch_size*num_backprops))) *
+      -(1.0f/sqrtf(static_cast<float>(references*bunch_size))) *
       learning_rate;
     if (bunch_size > 1) {
       doSgemm(CblasColMajor, CblasTrans, CblasNoTrans,
@@ -248,19 +248,14 @@ namespace ANN {
   }
   
   void DotProductANNComponent::reset() {
-    num_backprops = 0;
-    if (error_output != 0 && error_output->getMaxSize() > 0)
-      doVectorSetToZero(error_output->getMemBlock(),
-			error_output->getMaxSize(),
-			1, 0, use_cuda);
-    /*
-      if (output != 0 && output->getMaxSize() > 0)
-      doVectorSetToZero(output->getMemBlock(),
-      output->getMaxSize(),
-      1, 0, use_cuda);
-    */
-    if (input) DecRef(input); input = 0;
-    if (error_input) DecRef(error_input); error_input = 0;
+    if (input)        DecRef(input);
+    if (error_input)  DecRef(error_input);
+    if (output)       DecRef(output);
+    if (error_output) DecRef(error_output);
+    input	 = 0;
+    error_input	 = 0;
+    output	 = 0;
+    error_output = 0;
   }
 
   ANNComponent *DotProductANNComponent::clone() {

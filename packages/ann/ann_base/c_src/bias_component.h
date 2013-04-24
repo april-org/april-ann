@@ -29,7 +29,6 @@
 
 namespace ANN {
   class BiasANNComponent : public ANNComponent {
-    unsigned int num_backprops;
     TokenMemoryBlock *input, *output, *error;
     Connections *bias_vector;
     unsigned int bunch_size;
