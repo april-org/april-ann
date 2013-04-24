@@ -29,18 +29,16 @@ namespace ANN {
   ActivationFunctionANNComponent::ActivationFunctionANNComponent(const char *name) :
     ANNComponent(name, 0, 0, 0),
     input(0),
-    output(new TokenMemoryBlock()),
+    output(0)
     error_input(0),
-    error_output(new TokenMemoryBlock()) {
-    IncRef(output);
-    IncRef(error_output);
+    error_output(0) {
   }
 
   ActivationFunctionANNComponent::~ActivationFunctionANNComponent() {
-    if (input) DecRef(input);
-    if (error_input) DecRef(error_input);
-    DecRef(output);
-    DecRef(error_output);
+    if (input)        DecRef(input);
+    if (error_input)  DecRef(error_input);
+    if (output)       DecRef(output);
+    if (error_output) DecRef(error_output);
   }
 
   Token *ActivationFunctionANNComponent::doForward(Token* _input,
@@ -55,8 +53,10 @@ namespace ANN {
     IncRef(input);
     // compute bunch size
     bunch_size = input->getUsedSize() / input_size;
-    // and resize the output to fit the bunch
-    output->resize(bunch_size * output_size);
+    // new  output to fit the bunch
+    if (output) DecRef(output);
+    output = new TokenMemoryBlock(input->getUsedSize());
+    IncRef(output);
     // get memory blocks for tokens
     FloatGPUMirroredMemoryBlock *input_ptr  = input->getMemBlock();
     FloatGPUMirroredMemoryBlock *output_ptr = output->getMemBlock();
@@ -78,8 +78,10 @@ namespace ANN {
     unsigned int bunch_size = error_input->getUsedSize() / output_size;
     if (bunch_size != this->bunch_size)
       ERROR_EXIT(129, "Different bunches found at doForward and doBackprop\n");
-    // and resize the output to fit the bunch
-    error_output->resize(bunch_size * input_size);
+    // new error output to fit the bunch
+    if (error_output) DecRef(error_output);
+    error_output = new TokenMemoryBlock(error_input->getUsedSize());
+    IncRef(error_output);
     //
     FloatGPUMirroredMemoryBlock *input_ptr        = input->getMemBlock();
     FloatGPUMirroredMemoryBlock *output_ptr       = output->getMemBlock();
@@ -101,8 +103,14 @@ namespace ANN {
       doVectorSetToZero(output->getMemBlock(),
 			output->getMaxSize(),
 			1, 0, use_cuda);
-    if (input) DecRef(input); input = 0;
-    if (error_input) DecRef(error_input); error_input = 0;
+    if (input) DecRef(input);
+    if (error_input) DecRef(error_input);
+    if (output) DecRef(output);
+    if (error_output) DecRef(error_output);
+    input	 = 0;
+    error_input	 = 0;
+    output	 = 0;
+    error_output = 0;
   }
 
   void ActivationFunctionANNComponent::setOption(const char *name, double value) {
