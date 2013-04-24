@@ -186,7 +186,8 @@ using namespace ANN;
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, inf, float, inf, -1.0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, sup, float, sup,  1.0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, w, MatrixFloat, w, 0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, 0);
+  //LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, w);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, use_fanin, bool, use_fanin, true);
 
   if ( (w != 0 || oldw != 0) && random) {

@@ -1,5 +1,4 @@
 return { 
-  "tokens",
 --   "dataset",
 --   "matrix",
 --   "random",
@@ -21,5 +20,6 @@ return {
 -- --  "median_filter",
 --   "image_metrics",
 --   "binarization_filter",
+--   "image_cleaning",
 --   --"libtiff",
  }

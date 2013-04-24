@@ -30,20 +30,16 @@ namespace ANN {
   JoinANNComponent::JoinANNComponent(const char *name) :
     ANNComponent(name),
     input(0),
-    error_output(new TokenMemoryBlock()),
-    output(new TokenMemoryBlock()),
+    error_output(0),
+    output(0),
     error_input(0),
     input_vector(new TokenBunchVector()),
     error_input_vector(new TokenBunchVector()),
-    output_vector(new TokenBunchVector()),
-    error_output_vector(new TokenBunchVector()),
+    output_vector(0),
+    error_output_vector(0),
     segmented_input(false) {
     IncRef(input_vector);
     IncRef(error_input_vector);
-    IncRef(output);
-    IncRef(output_vector);
-    IncRef(error_output);
-    IncRef(error_output_vector);
   }
   
   JoinANNComponent::~JoinANNComponent() {
@@ -53,10 +49,10 @@ namespace ANN {
     if (error_input) DecRef(error_input);
     DecRef(input_vector);
     DecRef(error_input_vector);
-    DecRef(output);
-    DecRef(output_vector);
-    DecRef(error_output);
-    DecRef(error_output_vector);
+    if (output) DecRef(output);
+    if (output_vector) DecRef(output_vector);
+    if (error_output) DecRef(error_output);
+    if (error_output_vector) DecRef(error_output_vector);
   }
   
   void JoinANNComponent::addComponent(ANNComponent *component) {
