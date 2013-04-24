@@ -24,9 +24,9 @@
 
 TokenMemoryBlock::TokenMemoryBlock() : mem_block(0), used_size(0) { }
 
-TokenMemoryBlock::TokenMemoryBlock(unsigned int size) : used_size(0) {
-  mem_block = new FloatGPUMirroredMemoryBlock(size);
-  doVectorSetToZero(mem_block, size, 1, 0, false);
+TokenMemoryBlock::TokenMemoryBlock(unsigned int size) :
+  mem_block(0), used_size(0) {
+  resize(size);
 }
 
 TokenMemoryBlock::~TokenMemoryBlock() {

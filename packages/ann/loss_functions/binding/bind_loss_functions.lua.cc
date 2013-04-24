@@ -26,6 +26,8 @@
 //BIND_HEADER_H
 #include "loss_function.h"
 #include "mse_loss_function.h"
+#include "cross_entropy_loss_function.h"
+#include "multiclass_cross_entropy_loss_function.h"
 
 using namespace ANN;
 
@@ -84,7 +86,7 @@ using namespace ANN;
 //BIND_END
 
 /////////////////////////////////////////////////////
-//                   LossFunction                  //
+//                       MSE                       //
 /////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME MSELossFunction ann.loss.mse
@@ -99,5 +101,43 @@ using namespace ANN;
   LUABIND_GET_PARAMETER(1, uint, size);
   obj=new MSELossFunction(size);
   LUABIND_RETURN(MSELossFunction, obj);
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//                  CROSS ENTROPY                  //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME CrossEntropyLossFunction ann.loss.cross_entropy
+//BIND_CPP_CLASS    CrossEntropyLossFunction
+//BIND_SUBCLASS_OF  CrossEntropyLossFunction LossFunction
+
+//BIND_CONSTRUCTOR CrossEntropyLossFunction
+{
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, number);
+  unsigned int size;
+  LUABIND_GET_PARAMETER(1, uint, size);
+  obj=new CrossEntropyLossFunction(size);
+  LUABIND_RETURN(CrossEntropyLossFunction, obj);
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//          MULTI-CLASS CROSS ENTROPY              //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME MultiClassCrossEntropyLossFunction ann.loss.multi_class_cross_entropy
+//BIND_CPP_CLASS    MultiClassCrossEntropyLossFunction
+//BIND_SUBCLASS_OF  MultiClassCrossEntropyLossFunction LossFunction
+
+//BIND_CONSTRUCTOR MultiClassCrossEntropyLossFunction
+{
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, number);
+  unsigned int size;
+  LUABIND_GET_PARAMETER(1, uint, size);
+  obj=new MultiClassCrossEntropyLossFunction(size);
+  LUABIND_RETURN(MultiClassCrossEntropyLossFunction, obj);
 }
 //BIND_END

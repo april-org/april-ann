@@ -19,25 +19,29 @@
  *
  */
 #include "token_memory_block.h"
-#include "multi_class_cross_entropy_loss_function.h"
+#include "multiclass_cross_entropy_loss_function.h"
 #include "wrapper.h"
 
 namespace ANN {
 
   MultiClassCrossEntropyLossFunction::MultiClassCrossEntropyLossFunction(unsigned int size) :
-    LossFunction(size), accumulated_loss(0.0f) {
+    LossFunction(size), accumulated_loss(0.0f), N(0) {
+    if (size < 2)
+      ERROR_EXIT(128,
+		 "Multi class cross entropy is only allowed for multi-class "
+		 "problems (more than one output log softmax neurons). "
+		 "Use cross entropy instead.\n");
   }
   
   MultiClassCrossEntropyLossFunction::~MultiClassCrossEntropyLossFunction() {
   }
   
-  float MultiClassCrossEntropyLossFunction::addLoss(Token *_input, Token *target) {
-    if (_input->getTokenCode() != table_of_token_codes::token_mem_block)
+  float MultiClassCrossEntropyLossFunction::addLoss(Token *input, Token *target) {
+    if (input->getTokenCode() != table_of_token_codes::token_mem_block)
       ERROR_EXIT(128, "Incorrect input token type, expected memory block\n");
     if (target->getTokenCode() != table_of_token_codes::token_mem_block)
       ERROR_EXIT(128, "Incorrect target token type, expected memory block\n");
     //
-    AssignRef(input, _input);
     TokenMemoryBlock *input_mem_token = input->convertTo<TokenMemoryBlock*>();
     TokenMemoryBlock *target_mem_block = target->convertTo<TokenMemoryBlock*>();
     if (input_mem_token->getUsedSize() != target_mem_block->getUsedSize())
@@ -50,16 +54,16 @@ namespace ANN {
 						      input_mem_token->getCudaFlag());
     loss = -loss/bunch_size;
     accumulated_loss += loss;
+    ++N;
     return loss;
   }
 
-  Token *MultiClassCrossEntropyLossFunction::computeGrandient(Token *_input, Token *target) {
-    if (_input->getTokenCode() != table_of_token_codes::token_mem_block)
+  Token *MultiClassCrossEntropyLossFunction::computeGrandient(Token *input, Token *target) {
+    if (input->getTokenCode() != table_of_token_codes::token_mem_block)
       ERROR_EXIT(128, "Incorrect token type, expected memory block\n");
     if (target->getTokenCode() != table_of_token_codes::token_mem_block)
       ERROR_EXIT(128, "Incorrect target token type, expected memory block\n");
     //
-    AssignRef(input, _input);
     TokenMemoryBlock *input_mem_token  = input->convertTo<TokenMemoryBlock*>();
     TokenMemoryBlock *target_mem_block = target->convertTo<TokenMemoryBlock*>();
     if (input_mem_token->getUsedSize() != target_mem_block->getUsedSize())
@@ -78,14 +82,12 @@ namespace ANN {
   }
   
   float MultiClassCrossEntropyLossFunction::getAccumLoss() {
-    return accumulated_loss;
+    return accumulated_loss/N;
   }
    
   void MultiClassCrossEntropyLossFunction::reset() {
     LossFunction::reset();
     accumulated_loss = 0.0f;
-    doVectorSetToZero(error_mem_block->getMemBlock(),
-		      error_mem_block->getMaxSize(),
-		      1, 0, error_mem_block->getCudaFlag());
+    N = 0;
   }
 }

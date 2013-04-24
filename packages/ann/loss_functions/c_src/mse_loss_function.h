@@ -28,6 +28,7 @@
 namespace ANN {
   class MSELossFunction : public LossFunction {
     float accumulated_loss;
+    unsigned int N;
   public:
     MSELossFunction(unsigned int size);
     virtual ~MSELossFunction();

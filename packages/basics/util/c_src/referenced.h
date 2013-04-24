@@ -27,7 +27,7 @@
       if ((dest)) DecRef((dest));					\
       (dest) = (ref);							\
       IncRef((ref));							\
-  } while(0);
+  } while(0)
 
 class Referenced {
  protected:

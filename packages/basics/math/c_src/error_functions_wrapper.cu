@@ -143,7 +143,7 @@ __global__ void computeCrossEntropyGradientKernel(const float *output,
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
     // compute derivative
-    output_error[index] = exp(output[index]) - target_output[index];
+    output_error[index] += exp(output[index]) - target_output[index];
   }
 }
 
@@ -308,17 +308,17 @@ float doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
     float sum = 0.0f;
     for (unsigned int i = 0; i < size; i++) {
       for (unsigned int b=0; b<bunch_size; ++b) {
-	assert(!(output_ptr[b] > 0.0f));
+	assert(!(input_ptr[b] > 0.0f));
 	assert(!(target_ptr[b] < 0.0f) && !(target_ptr[b] > 1.0f));
 	// compute derivative
-	float log_o     = output_ptr[b];
-	float log_inv_o = log(1.0 - exp(output_ptr[b]));
+	float log_o     = input_ptr[b];
+	float log_inv_o = log(1.0 - exp(input_ptr[b]));
 	float t         = clamp(target_ptr[b], EPSILON, 1.0f - EPSILON);
-	float inv_t     = clamp(1.0f - target_output_ptr[b], EPSILON, 1.0f - EPSILON);
+	float inv_t     = clamp(1.0f - target_ptr[b], EPSILON, 1.0f - EPSILON);
 	if (t > EPSILON)     sum += t * log_o;
 	if (inv_t > EPSILON) sum += inv_t * log_inv_o;
       }
-      output_ptr += bunch_size;
+      input_ptr += bunch_size;
       target_ptr += bunch_size;
     }
     return sum;
@@ -362,14 +362,14 @@ float doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
     float sum = 0.0f;
     for (unsigned int i = 0; i < size; i++) {
       for (unsigned int b=0; b<bunch_size; ++b) {
-	assert(!(output_ptr[b] > 0.0f));
+	assert(!(input_ptr[b] > 0.0f));
 	assert(!(target_ptr[b] < 0.0f) && !(target_ptr[b] > 1.0f));
 	// compute derivative
-	float log_o = output_ptr[b];
+	float log_o = input_ptr[b];
 	float t = clamp(target_ptr[b], EPSILON, 1.0f - EPSILON);
 	if (t > EPSILON) sum += t * log_o;
       }
-      output_ptr += bunch_size;
+      input_ptr  += bunch_size;
       target_ptr += bunch_size;
     }
     return sum;
@@ -410,7 +410,7 @@ void doAccumulateCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
     float *error_output_ptr = error_output->getPPALForReadAndWrite();
     for (unsigned int i = 0; i < size; i++) {
       for (unsigned int b=0; b<bunch_size; ++b)
-	output_error_ptr[b] = input_ptr[b] - target_ptr[b];
+	error_output_ptr[b] += exp(input_ptr[b]) - target_ptr[b];
       input_ptr  += bunch_size;
       target_ptr += bunch_size;
       error_output_ptr += bunch_size;

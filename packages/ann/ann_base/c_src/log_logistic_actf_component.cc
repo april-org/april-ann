@@ -26,9 +26,12 @@ namespace ANN {
 							unsigned int size,
 							unsigned int bunch_size,
 							bool is_output) {
-    input_units = 0;
-    // This activation function only could be used with cross-entropy, so is not
-    // needed to compute nothing here
+    // This activation function derivative is cancelled by cross-entropy
+    // derivative. It only could be used with cross entropy loss function.
+    doScopy(input_errors->getSize(),
+	    input_errors, 0, 1,
+	    output_errors, 0, 1,
+	    use_cuda);
   }
 
   ANNComponent *LogLogisticActfANNComponent::clone() {

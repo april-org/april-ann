@@ -451,6 +451,38 @@ void doMultiplyLogisticDerivatives(FloatGPUMirroredMemoryBlock *output_units,
 #endif
 }
 
+void doApplyLogLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
+				  FloatGPUMirroredMemoryBlock *output_units,
+				  unsigned int size,
+				  unsigned int bunch_size,
+				  bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    const float *input_units_ptr = input_units_ptr->getGPUForRead();
+    float *output_units_ptr = units->getGPUForWrite();
+    dim3 block, grid;
+    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
+						 block, grid);
+    logLogisticActKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (input_units_ptr,
+       output_units_ptr,
+       bunch_size,
+       bunch_size,
+       units_size);
+  }
+  else {
+#endif
+    const float *input_units_ptr  = input_units->getPPALForRead();
+    float *output_units_ptr = output_units->getPPALForWrite();
+    const unsigned int sz = size*bunch_size;
+    for (unsigned int i=0; i<sz; ++i)
+      // ATTENTION: In 64-bit machines is better to use exp than expf
+      output_units_ptr[i] = logsigmoid(input_units_ptr[i]);
+#ifdef USE_CUDA
+  }
+#endif
+}
+
 void doApplyTanhActivation(FloatGPUMirroredMemoryBlock *input_units,
 			   FloatGPUMirroredMemoryBlock *output_units,
 			   unsigned int size,
