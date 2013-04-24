@@ -89,6 +89,23 @@ __global__ void logisticDerKernel(const float *output_units,
   }
 }
 
+__global__ void logLogisticActKernel(const float *input_units,
+				     float *output_units,
+				     unsigned int max_x,
+				     unsigned int lda_x,
+				     unsigned int max_y) {
+  unsigned int matrix_x_pos, matrix_y_pos;
+  getColumnMajorBunchMatrixPositions(blockIdx,
+				     blockDim,
+				     threadIdx,
+				     matrix_x_pos,
+				     matrix_y_pos);
+  if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
+    unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
+    output_units[index] = logsigmoid(input_units[index]);
+  }
+}
+
 __global__ void tanhActKernel(const float *input_units,
 			      float *output_units,
                               unsigned int max_x,
