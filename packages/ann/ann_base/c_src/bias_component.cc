@@ -27,18 +27,16 @@ namespace ANN {
   BiasANNComponent::BiasANNComponent(const char *name,
 				     const char *weights_name) :
     ANNComponent(name, weights_name, 0, 0),
-    num_backprops(0),
-    input(0), output(new TokenMemoryBlock()), error(0),
+    input(0), output(0), error(0),
     bias_vector(0), learning_rate(-1.0f), momentum(0.0f) {
     if (weights_name == 0) generateDefaultWeightsName();
-    IncRef(output);
   }
 
   BiasANNComponent::~BiasANNComponent() {
     if (bias_vector) DecRef(bias_vector);
     if (input) DecRef(input);
     if (error) DecRef(error);
-    DecRef(output);
+    if (output) DecRef(output);
   }
 
   Token *BiasANNComponent::doForward(Token* _input, bool during_training) {
@@ -57,8 +55,10 @@ namespace ANN {
       ERROR_EXIT2(128, "Input memory block (size %d) is not multiple of %d\n",
 		  input->getUsedSize(), input_size);
     this->bunch_size = bunch_size;
-    // and resize the output to fit the bunch
-    output->resize(bunch_size * output_size);
+    // new output to fit the bunch
+    if (output) DecRef(output);
+    output = new TokenMemoryBlock(input->getUsedSize());
+    IncRef(output);
     // get memory blocks for tokens and weights
     FloatGPUMirroredMemoryBlock *input_ptr       = input->getMemBlock();
     FloatGPUMirroredMemoryBlock *output_ptr      = output->getMemBlock();
@@ -81,7 +81,6 @@ namespace ANN {
   /// In BiasANNComponent this method is a by-pass
   Token *BiasANNComponent::doBackprop(Token *_error_input)
   {
-    ++num_backprops;
     if ( (_error_input == 0) ||
 	 (_error_input->getTokenCode() != table_of_token_codes::token_mem_block))
       ERROR_EXIT(129,"Incorrect input error Token type, expected token_mem_block!\n");
@@ -117,7 +116,7 @@ namespace ANN {
     const unsigned int references = bias_vector->getNumReferences();
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
     const float norm_learn_rate =
-      -(1.0f/sqrtf(static_cast<float>(references*bunch_size*num_backprops))) *
+      -(1.0f/sqrtf(static_cast<float>(references*bunch_size))) *
       learning_rate;
   
     // bias update: prev_bias[j] = prev_bias[j] + \sum_b norm_learn_rate * ERROR_INPUT[b,j]
@@ -134,22 +133,19 @@ namespace ANN {
   }
 
   void BiasANNComponent::reset() {
-    num_backprops = 0;
-    /*
-      if (output != 0 && output->getMaxSize() > 0)
-      doVectorSetToZero(output->getMemBlock(),
-      output->getMaxSize(),
-      1, 0, use_cuda);
-    */
-    if (input) DecRef(input); input = 0;
-    if (error != 0) DecRef(error); error = 0;
+    if (input)  DecRef(input);
+    if (error)  DecRef(error);
+    if (output) DecRef(output);
+    input  = 0;
+    error  = 0;
+    output = 0;
   }
 
   ANNComponent *BiasANNComponent::clone() {
     BiasANNComponent *component = new BiasANNComponent(name.c_str(),
 						       weights_name.c_str());
-    component->learning_rate    = learning_rate;
-    component->momentum         = momentum;
+    component->learning_rate = learning_rate;
+    component->momentum      = momentum;
     return component;
   }
 
@@ -199,8 +195,6 @@ namespace ANN {
 				    weights_output_size);
       w = bias_vector;
     }
-    // TODO: compute fan-in
-    // outputs->increaseFanIn(inputs->numNeurons());
     bias_vector->countReference();
     IncRef(bias_vector);  
   }
