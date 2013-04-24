@@ -49,6 +49,7 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "connection.h"
 #include "activation_function_component.h"
 #include "logistic_actf_component.h"
+#include "log_logistic_actf_component.h"
 
 using namespace ANN;
 
@@ -538,6 +539,12 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD StackANNComponent pop
+{
+  obj->popComponent();
+}
+//BIND_END
+
 /////////////////////////////////////////////////////
 //               JoinANNComponent                  //
 /////////////////////////////////////////////////////
@@ -605,5 +612,28 @@ using namespace ANN;
   }
   obj = new LogisticActfANNComponent(name);
   LUABIND_RETURN(LogisticActfANNComponent, obj);  
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//           LogLogisticActfANNComponent           //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME LogLogisticActfANNComponent ann.components.log_logistic
+//BIND_CPP_CLASS    LogLogisticActfANNComponent
+//BIND_SUBCLASS_OF  LogLogisticActfANNComponent ActivationFunctionANNComponent
+
+//BIND_CONSTRUCTOR LogLogisticActfANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  }
+  obj = new LogLogisticActfANNComponent(name);
+  LUABIND_RETURN(LogLogisticActfANNComponent, obj);  
 }
 //BIND_END

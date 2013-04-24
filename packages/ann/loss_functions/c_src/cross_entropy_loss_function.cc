@@ -25,19 +25,23 @@
 namespace ANN {
 
   CrossEntropyLossFunction::CrossEntropyLossFunction(unsigned int size) :
-    LossFunction(size), accumulated_loss(0.0f) {
+    LossFunction(size), accumulated_loss(0.0f), N(0) {
+    if (size != 1)
+      ERROR_EXIT(128,
+		 "Cross entropy is only allowed for two-class problems "
+		 "(one output log logistic neuron). "
+		 "Use multi class cross entropy instead.\n");
   }
   
   CrossEntropyLossFunction::~CrossEntropyLossFunction() {
   }
   
-  float CrossEntropyLossFunction::addLoss(Token *_input, Token *target) {
-    if (_input->getTokenCode() != table_of_token_codes::token_mem_block)
+  float CrossEntropyLossFunction::addLoss(Token *input, Token *target) {
+    if (input->getTokenCode() != table_of_token_codes::token_mem_block)
       ERROR_EXIT(128, "Incorrect input token type, expected memory block\n");
     if (target->getTokenCode() != table_of_token_codes::token_mem_block)
       ERROR_EXIT(128, "Incorrect target token type, expected memory block\n");
     //
-    AssignRef(input, _input);
     TokenMemoryBlock *input_mem_token = input->convertTo<TokenMemoryBlock*>();
     TokenMemoryBlock *target_mem_block = target->convertTo<TokenMemoryBlock*>();
     if (input_mem_token->getUsedSize() != target_mem_block->getUsedSize())
@@ -50,16 +54,16 @@ namespace ANN {
 					    input_mem_token->getCudaFlag());
     loss = -loss/bunch_size;
     accumulated_loss += loss;
+    ++N;
     return loss;
   }
 
-  Token *CrossEntropyLossFunction::computeGrandient(Token *_input, Token *target) {
-    if (_input->getTokenCode() != table_of_token_codes::token_mem_block)
+  Token *CrossEntropyLossFunction::computeGrandient(Token *input, Token *target) {
+    if (input->getTokenCode() != table_of_token_codes::token_mem_block)
       ERROR_EXIT(128, "Incorrect token type, expected memory block\n");
     if (target->getTokenCode() != table_of_token_codes::token_mem_block)
       ERROR_EXIT(128, "Incorrect target token type, expected memory block\n");
     //
-    AssignRef(input, _input);
     TokenMemoryBlock *input_mem_token  = input->convertTo<TokenMemoryBlock*>();
     TokenMemoryBlock *target_mem_block = target->convertTo<TokenMemoryBlock*>();
     if (input_mem_token->getUsedSize() != target_mem_block->getUsedSize())
@@ -78,14 +82,12 @@ namespace ANN {
   }
   
   float CrossEntropyLossFunction::getAccumLoss() {
-    return accumulated_loss;
+    return accumulated_loss/N;
   }
    
   void CrossEntropyLossFunction::reset() {
     LossFunction::reset();
     accumulated_loss = 0.0f;
-    doVectorSetToZero(error_mem_block->getMemBlock(),
-		      error_mem_block->getMaxSize(),
-		      1, 0, error_mem_block->getCudaFlag());
+    N = 0;
   }
 }

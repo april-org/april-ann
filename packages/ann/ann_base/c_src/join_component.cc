@@ -35,11 +35,12 @@ namespace ANN {
     error_input(0),
     input_vector(new TokenBunchVector()),
     error_input_vector(new TokenBunchVector()),
-    output_vector(0),
-    error_output_vector(0),
+    output_vector(new TokenBunchVector()),
+    error_output_vector(new TokenBunchVector()),
     segmented_input(false) {
     IncRef(input_vector);
     IncRef(error_input_vector);
+    IncRef(output_vector);
   }
   
   JoinANNComponent::~JoinANNComponent() {
@@ -50,9 +51,9 @@ namespace ANN {
     DecRef(input_vector);
     DecRef(error_input_vector);
     if (output) DecRef(output);
-    if (output_vector) DecRef(output_vector);
+    DecRef(output_vector);
     if (error_output) DecRef(error_output);
-    if (error_output_vector) DecRef(error_output_vector);
+    DecRef(error_output_vector);
   }
   
   void JoinANNComponent::addComponent(ANNComponent *component) {
@@ -61,28 +62,21 @@ namespace ANN {
   }
 
   void JoinANNComponent::buildInputBunchVector(TokenBunchVector *&vector_token,
-					       Token *token) {
-    switch(token->getTokenCode()) {
+					       Token *input_token) {
+    switch(input_token->getTokenCode()) {
     case table_of_token_codes::token_mem_block: {
       segmented_input = false;
-      TokenMemoryBlock *mem_token = token->convertTo<TokenMemoryBlock*>();
-      unsigned int bunch_size = mem_token->getUsedSize() / input_size;
+      TokenMemoryBlock *mem_input_token;
+      mem_input_token = input_token->convertTo<TokenMemoryBlock*>();
+      unsigned int bunch_size = mem_input_token->getUsedSize() / input_size;
       unsigned int pos=0;
       for (unsigned int i=0; i<vector_token->size(); ++i) {
-	// force input token to be a TokenMemoryBlock
-	if ((*vector_token)[i]->getTokenCode() !=
-	    table_of_token_codes::token_mem_block) {
-	  DecRef((*vector_token)[i]);
-	  (*vector_token)[i] = new TokenMemoryBlock();
-	  IncRef((*vector_token)[i]);
-	}
-	TokenMemoryBlock *component_mem_token;
-	component_mem_token = (*vector_token)[i]->convertTo<TokenMemoryBlock*>();
 	unsigned int sz = bunch_size * components[i]->getInputSize();
-	component_mem_token->resize(sz);
+	TokenMemoryBlock *component_mem_token = new TokenMemoryBlock(sz);
+	AssignRef((*vector_token)[i], component_mem_token);
 	// copy from _input to component_mem_token
 	doScopy(sz,
-		mem_token->getMemBlock(), pos, 1,
+		mem_input_token->getMemBlock(), pos, 1,
 		component_mem_token->getMemBlock(), 0, 1,
 		use_cuda);
 	pos += sz;
@@ -91,16 +85,13 @@ namespace ANN {
     }
     case table_of_token_codes::vector_Tokens: {
       segmented_input = true;
-      TokenBunchVector *vtoken = token->convertTo<TokenBunchVector*>();
-      if (vector_token->size() != vtoken->size())
+      TokenBunchVector *vinput_token=input_token->convertTo<TokenBunchVector*>();
+      if (vector_token->size() != vinput_token->size())
 	ERROR_EXIT2(128, "Incorrect number of components at input vector, "
 		    "expected %u and found %u\n",
-		    vector_token->size(), vtoken->size());
-      for (unsigned int i=0; i<vector_token->size(); ++i) {
-	if ((*vector_token)[i]) DecRef((*vector_token)[i]);
-	(*vector_token)[i] = (*vtoken)[i];
-	IncRef((*vector_token)[i]);
-      }
+		    vector_token->size(), vinput_token->size());
+      for (unsigned int i=0; i<vector_token->size(); ++i)
+	AssignRef((*vector_token)[i], (*vinput_token)[i]);
       break;
     }
     default:
@@ -117,17 +108,10 @@ namespace ANN {
     unsigned int bunch_size = mem_token->getUsedSize() / output_size;
     unsigned int pos=0;
     for (unsigned int i=0; i<vector_token->size(); ++i) {
-      // force input token to be a TokenMemoryBlock
-      if ((*vector_token)[i]->getTokenCode() !=
-	  table_of_token_codes::token_mem_block) {
-	DecRef((*vector_token)[i]);
-	(*vector_token)[i] = new TokenMemoryBlock();
-      }
-      TokenMemoryBlock *component_mem_token;
-      component_mem_token = (*vector_token)[i]->convertTo<TokenMemoryBlock*>();
       unsigned int sz = bunch_size * components[i]->getOutputSize();
-      component_mem_token->resize(sz);
-      // copy from mem_token to component_mem_token
+      TokenMemoryBlock *component_mem_token;
+      component_mem_token = new TokenMemoryBlock(sz);
+      AssignRef((*vector_token)[i], component_mem_token);
       doScopy(sz,
 	      mem_token->getMemBlock(), pos, 1,
 	      component_mem_token->getMemBlock(), 0, 1,
@@ -136,9 +120,8 @@ namespace ANN {
     }
   }
   
-  void JoinANNComponent::buildMemoryBlockToken(TokenMemoryBlock *&mem_block_token,
-					       TokenBunchVector *token) {
-    mem_block_token->clear();
+  TokenMemoryBlock *JoinANNComponent::buildMemoryBlockToken(TokenBunchVector *token) {
+    TokenMemoryBlock *mem_block_token = new TokenMemoryBlock(output_size);
     unsigned int pos = 0;
     for (unsigned int i=0; i<token->size(); ++i) {
       if ((*token)[i]->getTokenCode() != table_of_token_codes::token_mem_block)
@@ -146,7 +129,7 @@ namespace ANN {
       TokenMemoryBlock *component_output_mem_block;
       component_output_mem_block = (*token)[i]->convertTo<TokenMemoryBlock*>();
       unsigned int sz = component_output_mem_block->getUsedSize();
-      output->resize(pos + sz);
+      assert(output->getUsedSize() <= pos + sz);
       // copy from component_output to output Token
       doScopy(sz,
 	      component_output_mem_block->getMemBlock(), 0, 1,
@@ -155,34 +138,28 @@ namespace ANN {
       //
       pos += sz;
     }
+    return mem_block_token;
   }
 
-  void JoinANNComponent::buildMemoryBlockToken(TokenMemoryBlock *&mem_block_token,
-					       Token *token) {
+  TokenMemoryBlock *JoinANNComponent::buildMemoryBlockToken(Token *token) {
     if (token->getTokenCode() != table_of_token_codes::vector_Tokens)
       ERROR_EXIT(128, "Incorrect output token type");
     //
     TokenBunchVector *vector_token = token->convertTo<TokenBunchVector*>();
-    buildMemoryBlockToken(mem_block_token, vector_token);
+    return buildMemoryBlockToken(vector_token);
   }
   
   Token *JoinANNComponent::doForward(Token* _input, bool during_training) {
-    if (input) DecRef(input);
-    input = _input;
-    IncRef(input);
+    AssignRef(input, _input);
     // INFO: will be possible to put this method inside next loop, but seems
     // more simpler a decoupled code
     buildInputBunchVector(input_vector, _input);
-    for (unsigned int i=0; i<components.size(); ++i) {
-      Token *component_output = components[i]->doForward((*input_vector)[i],
-							 during_training);
-      if ((*output_vector)[i]) DecRef((*output_vector)[i]);
-      (*output_vector)[i] = component_output;
-      IncRef((*output_vector)[i]);
-    }
+    for (unsigned int i=0; i<components.size(); ++i)
+      AssignRef((*output_vector)[i],
+		components[i]->doForward((*input_vector)[i], during_training));
     // INFO: will be possible to put this method inside previous loop, but seems
     // more simpler a decoupled code
-    buildMemoryBlockToken(output, output_vector);
+    AssignRef(output, buildMemoryBlockToken(output_vector));
     //
     return output;
   }
@@ -196,32 +173,17 @@ namespace ANN {
     // INFO: will be possible to put this method inside previous loop, but seems
     // more simpler a decoupled code
     buildErrorInputBunchVector(error_input_vector, _error_input);
-    for (unsigned int i=0; i<components.size(); ++i) {
-      if ((*error_output_vector)[i]) DecRef((*error_output_vector)[i]);
-      (*error_output_vector)[i] = components[i]->doBackprop((*error_input_vector)[i]);
-      IncRef((*error_output_vector)[i]);
-    }
+    for (unsigned int i=0; i<components.size(); ++i)
+      AssignRef((*error_output_vector)[i],
+		components[i]->doBackprop((*error_input_vector)[i]));
     // error_output_vector has the gradients of each component stored as
     // array. Depending on the received input, this vector would be returned as
     // it is, or gradients will be stored as a TokenMemoryBlock joining all
     // array positions.
-    if (segmented_input) {
-      if (error_output) DecRef(error_output);
-      error_output = error_output_vector;
-      IncRef(error_output);
-    }
-    else {
-      TokenMemoryBlock *error_output_mem_block;
-      if (error_output->getTokenCode() != table_of_token_codes::token_mem_block) {
-	DecRef(error_output);
-	error_output = new TokenMemoryBlock();
-	IncRef(error_output);
-      }
-      error_output_mem_block = error_output->convertTo<TokenMemoryBlock*>();
-      // INFO: will be possible to put this method inside previous loop, but
-      // seems more simpler a decoupled code
-      buildMemoryBlockToken(error_output_mem_block, error_output_vector);
-    }
+    if (segmented_input) AssignRef(error_output, error_output_vector);
+    // INFO: will be possible to put this method inside previous loop, but
+    // seems more simpler a decoupled code
+    else AssignRef(error_output, buildMemoryBlockToken(error_output_vector));
     return error_output;
   }
 
@@ -233,6 +195,12 @@ namespace ANN {
   void JoinANNComponent::reset() {
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
+    if (output) DecRef(output);
+    if (error_output) DecRef(error_output);
+    input	 = 0;
+    error_input	 = 0;
+    output	 = 0;
+    error_output = 0;
     for (unsigned int i=0; i<components.size(); ++i)
       components[i]->reset();
   }
@@ -270,11 +238,11 @@ namespace ANN {
     //
     for (unsigned int i=0; i<components.size(); ++i) {
       components[i]->build(0, 0, weights_dict, components_dict);
-      Token *aux;
-      aux = new TokenMemoryBlock(); input_vector->push_back(aux);
-      aux = new TokenMemoryBlock(); output_vector->push_back(aux);
-      aux = new TokenMemoryBlock(); error_input_vector->push_back(aux);
-      aux = new TokenMemoryBlock(); error_output_vector->push_back(aux);
+      Token *null(0);
+      input_vector->push_back(null);
+      output_vector->push_back(null);
+      error_input_vector->push_back(null);
+      error_output_vector->push_back(null);
     }
   }
   

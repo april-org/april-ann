@@ -30,23 +30,20 @@ namespace ANN {
   /// the loss_functions must complain.
   class LossFunction : public Referenced {
   protected:
-    Token *input, *error_output;
+    Token *error_output;
     unsigned int size;
   public:
     LossFunction(unsigned int size) :
-    Referenced(), input(0), error_output(0), size(size) {
+    Referenced(), error_output(0), size(size) {
     }
     virtual ~LossFunction() {
       if (error_output) DecRef(error_output);
-      if (input) DecRef(input);
     }
     virtual float  addLoss(Token *input, Token *target) = 0;
     virtual Token *computeGrandient(Token *input, Token *target) = 0;
     virtual float  getAccumLoss() = 0;
     virtual void   reset() {
-      if (input) DecRef(input);
       if (error_output) DecRef(error_output);
-      input = 0;
       error_output = 0;
     }
   };

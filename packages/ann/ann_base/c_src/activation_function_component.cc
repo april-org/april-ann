@@ -29,7 +29,7 @@ namespace ANN {
   ActivationFunctionANNComponent::ActivationFunctionANNComponent(const char *name) :
     ANNComponent(name, 0, 0, 0),
     input(0),
-    output(0)
+    output(0),
     error_input(0),
     error_output(0) {
   }
@@ -95,14 +95,6 @@ namespace ANN {
   }
 
   void ActivationFunctionANNComponent::reset() {
-    if (error_output != 0 && error_output->getMaxSize() > 0)
-      doVectorSetToZero(error_output->getMemBlock(),
-			error_output->getMaxSize(),
-			1, 0, use_cuda);
-    if (output != 0 && output->getMaxSize() > 0)
-      doVectorSetToZero(output->getMemBlock(),
-			output->getMaxSize(),
-			1, 0, use_cuda);
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);

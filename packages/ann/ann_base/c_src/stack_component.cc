@@ -36,6 +36,11 @@ namespace ANN {
     components.push_back(component);
   }
 
+  void StackANNComponent::popComponent() {
+    DecRef(components.back());
+    components.pop_back();
+  }
+
   Token *StackANNComponent::getInput() {
     return components[0]->getInput();
   }

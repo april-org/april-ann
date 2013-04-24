@@ -28,6 +28,7 @@
 namespace ANN {
   class MultiClassCrossEntropyLossFunction : public LossFunction {
     float accumulated_loss;
+    unsigned int N;
   public:
     MultiClassCrossEntropyLossFunction(unsigned int size);
     virtual ~MultiClassCrossEntropyLossFunction();

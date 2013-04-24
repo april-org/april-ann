@@ -25,19 +25,18 @@
 namespace ANN {
 
   MSELossFunction::MSELossFunction(unsigned int size) :
-    LossFunction(size), accumulated_loss(0.0f) {
+    LossFunction(size), accumulated_loss(0.0f), N(0) {
   }
   
   MSELossFunction::~MSELossFunction() {
   }
   
-  float MSELossFunction::addLoss(Token *_input, Token *target) {
-    if (_input->getTokenCode() != table_of_token_codes::token_mem_block)
+  float MSELossFunction::addLoss(Token *input, Token *target) {
+    if (input->getTokenCode() != table_of_token_codes::token_mem_block)
       ERROR_EXIT(128, "Incorrect input token type, expected memory block\n");
     if (target->getTokenCode() != table_of_token_codes::token_mem_block)
       ERROR_EXIT(128, "Incorrect target token type, expected memory block\n");
     //
-    AssignRef(input, _input);
     TokenMemoryBlock *input_mem_token = input->convertTo<TokenMemoryBlock*>();
     TokenMemoryBlock *target_mem_block = target->convertTo<TokenMemoryBlock*>();
     if (input_mem_token->getUsedSize() != target_mem_block->getUsedSize())
@@ -50,25 +49,27 @@ namespace ANN {
 				   input_mem_token->getCudaFlag());
     loss *= 0.5f/bunch_size;
     accumulated_loss += loss;
+    ++N;
     return loss;
   }
 
-  Token *MSELossFunction::computeGrandient(Token *_input, Token *target) {
-    if (_input->getTokenCode() != table_of_token_codes::token_mem_block)
+  Token *MSELossFunction::computeGrandient(Token *input, Token *target) {
+    if (input->getTokenCode() != table_of_token_codes::token_mem_block)
       ERROR_EXIT(128, "Incorrect token type, expected memory block\n");
     if (target->getTokenCode() != table_of_token_codes::token_mem_block)
       ERROR_EXIT(128, "Incorrect target token type, expected memory block\n");
     //
-    AssignRef(input, _input);
     TokenMemoryBlock *input_mem_token  = input->convertTo<TokenMemoryBlock*>();
     TokenMemoryBlock *target_mem_block = target->convertTo<TokenMemoryBlock*>();
     if (input_mem_token->getUsedSize() != target_mem_block->getUsedSize())
-      ERROR_EXIT(128, "Different token sizes found\n");
+      ERROR_EXIT2(128, "Different token sizes found, input=%d  target=%d\n",
+		  input_mem_token->getUsedSize(),
+		  target_mem_block->getUsedSize());
     //
     unsigned int bunch_size = input_mem_token->getUsedSize() / size;
     TokenMemoryBlock *error_mem_block;
     error_mem_block = new TokenMemoryBlock(input_mem_token->getUsedSize());
-    IncRef(error_output, error_mem_block);
+    AssignRef(error_output, error_mem_block);
     doAccumulateMSEGradient(input_mem_token->getMemBlock(),
 			    target_mem_block->getMemBlock(),
 			    error_mem_block->getMemBlock(),
@@ -78,14 +79,12 @@ namespace ANN {
   }
   
   float MSELossFunction::getAccumLoss() {
-    return accumulated_loss;
+    return accumulated_loss/N;
   }
    
   void MSELossFunction::reset() {
     LossFunction::reset();
     accumulated_loss = 0.0f;
-    doVectorSetToZero(error_mem_block->getMemBlock(),
-		      error_mem_block->getMaxSize(),
-		      1, 0, error_mem_block->getCudaFlag());
+    N = 0;
   }
 }

@@ -26,7 +26,6 @@ namespace ANN {
 						     unsigned int size,
 						     unsigned int bunch_size,
 						     bool is_output) {
-    input_units = 0;
     // TODO: Implement special case for cross entropy loss function
     // if (!is_output || !conf.error_function_logistic_mandatory)
     doMultiplyLogisticDerivatives(output_units,

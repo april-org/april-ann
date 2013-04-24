@@ -33,6 +33,7 @@ namespace ANN {
     virtual ~StackANNComponent();
 
     void pushComponent(ANNComponent *component);
+    void popComponent();
 
     virtual Token *getInput();
     virtual Token *getOutput();
