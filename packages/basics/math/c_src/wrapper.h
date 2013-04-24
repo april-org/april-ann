@@ -41,6 +41,7 @@
 
 // ATTENTION: In 64-bit machines is better to use exp than expf
 #define sigmoid(numerator,value) (numerator) / (exp(-(value))+1.0f)
+#define logsigmoid(value) -log(exp(-(value))+1.0f)
 
 #define getMatrixFlatIndex(x,lda,y) ((x)+(y)*(lda))
 #define getMatrixIndex(x,lda,y) ((x)*(lda)+(y))
@@ -64,7 +65,20 @@ void doMultiplyLogisticDerivatives(FloatGPUMirroredMemoryBlock *output_units,
 				   unsigned int size,
 				   unsigned int bunch_size,
 				   bool use_gpu);
+
+void doApplyLogLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
+				  FloatGPUMirroredMemoryBlock *output_units,
+				  unsigned int size,
+				  unsigned int bunch_size,
+				  bool use_gpu);
      
+void doMultiplyLogLogisticDerivatives(FloatGPUMirroredMemoryBlock *output_units,
+				      FloatGPUMirroredMemoryBlock *input_errors,
+				      FloatGPUMirroredMemoryBlock *output_errors,
+				      unsigned int size,
+				      unsigned int bunch_size,
+				      bool use_gpu);
+
 void doApplyTanhActivation(FloatGPUMirroredMemoryBlock *input_units,
 			   FloatGPUMirroredMemoryBlock *output_units,
 			   unsigned int size,
@@ -116,6 +130,28 @@ void doAccumulateMSEGradient(FloatGPUMirroredMemoryBlock *input,
 			     unsigned int bunch_size,
 			     bool use_gpu);
 
+float doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
+				 FloatGPUMirroredMemoryBlock *target,
+				 float epsilon,
+				 unsigned int size,
+				 unsigned int bunch_size,
+				 bool use_gpu);
+
+float doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
+					   FloatGPUMirroredMemoryBlock *target,
+					   float epsilon,
+					   unsigned int size,
+					   unsigned int bunch_size,
+					   bool use_gpu);
+
+void doAccumulateCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
+				      FloatGPUMirroredMemoryBlock *target,
+				      FloatGPUMirroredMemoryBlock *error_output,
+				      float epsilon,
+				      unsigned int size,
+				      unsigned int bunch_size,
+				      bool use_gpu);
+
 void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
 				  FloatGPUMirroredMemoryBlock *target_output,
 				  FloatGPUMirroredMemoryBlock *output_error,
@@ -123,18 +159,6 @@ void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
 				  unsigned int output_size,
 				  const ANNConfiguration &conf,
 				  bool use_gpu);
-
-/*
-  float doCalculateMixtureCrossEntropy(FloatGPUMirroredMemoryBlock *output,
-  FloatGPUMirroredMemoryBlock *target_output,
-  FloatGPUMirroredMemoryBlock *output_error,
-  FloatGPUMirroredMemoryBlock *pattern_errors,
-  float EPSILON,
-  float INF,
-  unsigned int output_size,
-  const ANNConfiguration &conf,
-  bool use_gpu);
-*/
 
 void doCalculateLocalFMeasureErrorFunction(float alpha,
 					   FloatGPUMirroredMemoryBlock *output,
@@ -144,57 +168,6 @@ void doCalculateLocalFMeasureErrorFunction(float alpha,
 					   unsigned int output_size,
 					   const ANNConfiguration &conf,
 					   bool use_gpu);
-
-/*
-  float doCalculateGA(FloatGPUMirroredMemoryBlock *output,
-  FloatGPUMirroredMemoryBlock *target_output,
-  FloatGPUMirroredMemoryBlock *output_error,
-  FloatGPUMirroredMemoryBlock *pattern_errors,
-  unsigned int output_size,
-  const ANNConfiguration &conf,
-  bool use_gpu);
-*/
-
-void doCalculateCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *output,
-					  FloatGPUMirroredMemoryBlock *target_output,
-					  FloatGPUMirroredMemoryBlock *output_error,
-					  FloatGPUMirroredMemoryBlock *pattern_errors,
-					  float EPSILON,
-					  float INF,
-					  unsigned int output_size,
-					  const ANNConfiguration &conf,
-					  bool use_gpu);
-
-void doCalculateLogisticCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *output,
-						  FloatGPUMirroredMemoryBlock *target_output,
-						  FloatGPUMirroredMemoryBlock *output_error,
-						  FloatGPUMirroredMemoryBlock *pattern_errors,
-						  float EPSILON,
-						  float INF,
-						  unsigned int output_size,
-						  const ANNConfiguration &conf,
-						  bool use_gpu);
-
-
-void doCalculateFullCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *output,
-					      FloatGPUMirroredMemoryBlock *target_output,
-					      FloatGPUMirroredMemoryBlock *output_error,
-					      FloatGPUMirroredMemoryBlock *pattern_errors,
-					      float EPSILON,
-					      float INF,
-					      unsigned int output_size,
-					      const ANNConfiguration &conf,
-					      bool use_gpu);
-
-void doCalculateFullLogisticCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *output,
-						      FloatGPUMirroredMemoryBlock *target_output,
-						      FloatGPUMirroredMemoryBlock *output_error,
-						      FloatGPUMirroredMemoryBlock *pattern_errors,
-						      float EPSILON,
-						      float INF,
-						      unsigned int output_size,
-						      const ANNConfiguration &conf,
-						      bool use_gpu);
 
 // BLAS FUNCTIONS
 void doSgemv(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,

@@ -27,7 +27,6 @@
 
 namespace ANN {
   class MSELossFunction : public LossFunction {
-    TokenMemoryBlock *error_mem_block;
     float accumulated_loss;
   public:
     MSELossFunction(unsigned int size);

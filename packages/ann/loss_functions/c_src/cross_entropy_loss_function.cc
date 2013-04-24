@@ -19,19 +19,19 @@
  *
  */
 #include "token_memory_block.h"
-#include "mse_loss_function.h"
+#include "cross_entropy_loss_function.h"
 #include "wrapper.h"
 
 namespace ANN {
 
-  MSELossFunction::MSELossFunction(unsigned int size) :
+  CrossEntropyLossFunction::CrossEntropyLossFunction(unsigned int size) :
     LossFunction(size), accumulated_loss(0.0f) {
   }
   
-  MSELossFunction::~MSELossFunction() {
+  CrossEntropyLossFunction::~CrossEntropyLossFunction() {
   }
   
-  float MSELossFunction::addLoss(Token *_input, Token *target) {
+  float CrossEntropyLossFunction::addLoss(Token *_input, Token *target) {
     if (_input->getTokenCode() != table_of_token_codes::token_mem_block)
       ERROR_EXIT(128, "Incorrect input token type, expected memory block\n");
     if (target->getTokenCode() != table_of_token_codes::token_mem_block)
@@ -44,16 +44,16 @@ namespace ANN {
       ERROR_EXIT(128, "Different token sizes found\n");
     //
     unsigned int bunch_size = input_mem_token->getUsedSize() / size;
-    float loss = doMSELossFunction(input_mem_token->getMemBlock(),
-				   target_mem_block->getMemBlock(),
-				   0.0f, size, bunch_size,
-				   input_mem_token->getCudaFlag());
-    loss *= 0.5f/bunch_size;
+    float loss = doCrossEntropyLossFunction(input_mem_token->getMemBlock(),
+					    target_mem_block->getMemBlock(),
+					    0.0f, size, bunch_size,
+					    input_mem_token->getCudaFlag());
+    loss = -loss/bunch_size;
     accumulated_loss += loss;
     return loss;
   }
 
-  Token *MSELossFunction::computeGrandient(Token *_input, Token *target) {
+  Token *CrossEntropyLossFunction::computeGrandient(Token *_input, Token *target) {
     if (_input->getTokenCode() != table_of_token_codes::token_mem_block)
       ERROR_EXIT(128, "Incorrect token type, expected memory block\n");
     if (target->getTokenCode() != table_of_token_codes::token_mem_block)
@@ -68,20 +68,20 @@ namespace ANN {
     unsigned int bunch_size = input_mem_token->getUsedSize() / size;
     TokenMemoryBlock *error_mem_block;
     error_mem_block = new TokenMemoryBlock(input_mem_token->getUsedSize());
-    IncRef(error_output, error_mem_block);
-    doAccumulateMSEGradient(input_mem_token->getMemBlock(),
-			    target_mem_block->getMemBlock(),
-			    error_mem_block->getMemBlock(),
-			    0.0f, size, bunch_size,
-			    input_mem_token->getCudaFlag());
+    AssignRef(error_output, error_mem_block);
+    doAccumulateCrossEntropyGradient(input_mem_token->getMemBlock(),
+				     target_mem_block->getMemBlock(),
+				     error_mem_block->getMemBlock(),
+				     0.0f, size, bunch_size,
+				     input_mem_token->getCudaFlag());
     return error_output;
   }
   
-  float MSELossFunction::getAccumLoss() {
+  float CrossEntropyLossFunction::getAccumLoss() {
     return accumulated_loss;
   }
    
-  void MSELossFunction::reset() {
+  void CrossEntropyLossFunction::reset() {
     LossFunction::reset();
     accumulated_loss = 0.0f;
     doVectorSetToZero(error_mem_block->getMemBlock(),
