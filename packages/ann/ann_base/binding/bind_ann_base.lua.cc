@@ -49,6 +49,8 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "connection.h"
 #include "activation_function_component.h"
 #include "logistic_actf_component.h"
+#include "tanh_actf_component.h"
+#include "softsign_actf_component.h"
 #include "log_logistic_actf_component.h"
 #include "softmax_actf_component.h"
 #include "log_softmax_actf_component.h"
@@ -622,6 +624,53 @@ using namespace ANN;
   LUABIND_RETURN(LogisticActfANNComponent, obj);  
 }
 //BIND_END
+
+/////////////////////////////////////////////////////
+//              TanhActfANNComponent               //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME TanhActfANNComponent ann.components.tanh
+//BIND_CPP_CLASS    TanhActfANNComponent
+//BIND_SUBCLASS_OF  TanhActfANNComponent ActivationFunctionANNComponent
+
+//BIND_CONSTRUCTOR TanhActfANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  }
+  obj = new TanhActfANNComponent(name);
+  LUABIND_RETURN(TanhActfANNComponent, obj);  
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//            SoftsignActfANNComponent             //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME SoftsignActfANNComponent ann.components.softsign
+//BIND_CPP_CLASS    SoftsignActfANNComponent
+//BIND_SUBCLASS_OF  SoftsignActfANNComponent ActivationFunctionANNComponent
+
+//BIND_CONSTRUCTOR SoftsignActfANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  }
+  obj = new SoftsignActfANNComponent(name);
+  LUABIND_RETURN(SoftsignActfANNComponent, obj);  
+}
+//BIND_END
+
 
 /////////////////////////////////////////////////////
 //           LogLogisticActfANNComponent           //
