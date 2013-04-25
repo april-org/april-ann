@@ -4,11 +4,12 @@ setmetatable(imageSVG, imageSVG)
 
 imageSVG.__tostring = function() return "imageSVG" end
 
+local colors = { "red", "blue", "green", "orange", "purple"}
+
 function imageSVG:__call(params)
-    
-    print("wop")
+
     local obj = {}
-    
+
     obj.width = params.width or -1
     obj.height = params.height or -1
 
@@ -16,7 +17,7 @@ function imageSVG:__call(params)
     obj.header = {}
     obj.body   = {}
     obj.footer = {}
-    
+
     setmetatable(obj, self)
     return obj
 
@@ -24,21 +25,21 @@ end
 
 function imageSVG:setHeader()
 
-  self.header = {}
-  table.insert(self.header, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
-	table.insert(self.header, "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 20001102//EN\" \"http://www.w3.org/TR/2000/CR-SVG-20001102/DTD/svg-20001102.dtd\">")
+    self.header = {}
+    table.insert(self.header, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+    table.insert(self.header, "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 20001102//EN\" \"http://www.w3.org/TR/2000/CR-SVG-20001102/DTD/svg-20001102.dtd\">")
 
---  local swidth  = tostring(self.width) or "100%"
---  local sheight = tostring(self.height) or "100%"
-  
-  local swidth  = (self.width ~= -1 and tostring(self.width)) or "100%"
-  local sheight = (self.height ~= -1 and tostring(self.height)) or "100%"
-	table.insert(self.header,string.format("<svg width=\"%s\" height=\"%s\"\nxmlns:xlink=\"http://www.w3.org/1999/xlink\" >\n", swidth, sheight))
+    --  local swidth  = tostring(self.width) or "100%"
+    --  local sheight = tostring(self.height) or "100%"
+
+    local swidth  = (self.width ~= -1 and tostring(self.width)) or "100%"
+    local sheight = (self.height ~= -1 and tostring(self.height)) or "100%"
+    table.insert(self.header,string.format("<svg width=\"%s\" height=\"%s\"\nxmlns:xlink=\"http://www.w3.org/1999/xlink\" >\n", swidth, sheight))
 end
 
 function imageSVG:setFooter()
-  self.footer = {}
-  table.insert(self.footer, "</svg>")
+    self.footer = {}
+    table.insert(self.footer, "</svg>")
 end
 
 -- Recieves a table with points x,y
@@ -87,18 +88,33 @@ end
 
 -- Each element of the table is a path
 function imageSVG:addPaths(paths)
-    local colors = { "red", "blue", "green", "orange", "purple"}
-    print(#paths)
     for i, path in ipairs(paths) do
         local color = "black"
         if (i <= #colors) then
             color = colors[i]
         end
---        print(i, color, #path)
+        --        print(i, color, #path)
         self:addPathFromTable(path,{stroke = color, id = tostring(i)})
     end
 end
 
+
+
+-- Given a table with table of points, draw
+function imageSVG:addPointsFromTables(tables, size)
+
+    local colors = { "red", "blue", "green", "orange", "purple"}
+    for i, points in ipairs(tables) do
+        local color = "black"
+        if (i <= #colors) then
+            color = colors[i]
+        end
+
+        for j, point in ipairs(points) do
+            self:addPoint(point, {color = color, side = size})
+        end
+    end
+end
 function imageSVG:resize(height, width)
     self.height = height
     self.width = width
@@ -123,23 +139,26 @@ function imageSVG:addSquare(point, params)
 
     local x = point[1]
     local y = point[2]
-    
+
     table.insert(self.body,string.format("<rect x=\"%d\" y=\"%d\" width=\"%f\" height=\"%f\" fill=\"%s\"/>", x, y, side,side, color))
 end
 
+function imageSVG:addPoint(point, params)
+    self:addSquare(point, params)
+end
 
 -- Extra image function
 function imageSVG:addImage(filename, width, height, offsetX, offsetY)
-  
+
     table.insert(self.body, string.format("<image x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" xlink:href=\"%s\">\n</image>", offsetX, offsetY, width, height, filename))
 
 end
 
 function imageSVG.fromImageFile(filename, width, height)
 
-  mySVG = imageSVG({width = width, height = height})
-  mySVG:setHeader()
-  mySVG:setFooter()
-  mySVG:addImage(filename, width, height, 0, 0)
-  return mySVG  
+    mySVG = imageSVG({width = width, height = height})
+    mySVG:setHeader()
+    mySVG:setFooter()
+    mySVG:addImage(filename, width, height, 0, 0)
+    return mySVG  
 end
