@@ -302,12 +302,12 @@ __global__ void applyMinimumNorm(float *minimums,
       minimums[matrix_x_pos] = maximums[matrix_x_pos] - 30.0f;
 }
 
-__global__ void applyExpMinusMinimum(const float *input_units,
-				     float *output_units,
-                                     float *minimums,
-                                     unsigned int max_x,
-                                     unsigned int max_y,
-                                     unsigned int lda_x) {
+__global__ void applyExpMinus(const float *input_units,
+			      float *output_units,
+			      float *data,
+			      unsigned int max_x,
+			      unsigned int max_y,
+			      unsigned int lda_x) {
   unsigned int matrix_x_pos, matrix_y_pos;
   getColumnMajorBunchMatrixPositions(blockIdx,
 				     blockDim,
@@ -316,7 +316,25 @@ __global__ void applyExpMinusMinimum(const float *input_units,
 				     matrix_y_pos);
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixIndex(matrix_x_pos, lda_x, matrix_y_pos);
-    output_units[index] = exp(input_units[index] - minimums[matrix_y_pos]);
+    output_units[index] = exp(input_units[index] - data[matrix_y_pos]);
+  }
+}
+
+__global__ void applyMinusLog(const float *input_units,
+			      float *output_units,
+			      float *data,
+			      unsigned int max_x,
+			      unsigned int max_y,
+			      unsigned int lda_x) {
+  unsigned int matrix_x_pos, matrix_y_pos;
+  getColumnMajorBunchMatrixPositions(blockIdx,
+				     blockDim,
+				     threadIdx,
+				     matrix_x_pos,
+				     matrix_y_pos);
+  if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
+    unsigned int index = getMatrixIndex(matrix_x_pos, lda_x, matrix_y_pos);
+    output_units[index] = input_units[index] - log(data[matrix_y_pos]);
   }
 }
 
@@ -672,7 +690,7 @@ void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
     computeBlockAndGridSizesForARowMajorBunch(bunch_size, size,
 					      block, grid);
 
-    applyExpMinusMinimum<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+    applyExpMinus<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
       (input_units_ptr,
        output_units_ptr,
        minimums_ptr,
@@ -754,6 +772,142 @@ void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
 	}
 	float ratio = 1.0f/addition;
 	cblas_sscal(size, ratio, output_units_ptr, bunch_size);
+	output_units_ptr++;
+	input_units_ptr++;
+      }
+#ifdef USE_CUDA
+  }
+#endif
+}
+
+void doApplyLogSoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
+				 FloatGPUMirroredMemoryBlock *output_units,
+				 FloatGPUMirroredMemoryBlock *minimums,
+				 FloatGPUMirroredMemoryBlock *maximums,
+				 FloatGPUMirroredMemoryBlock *sums,
+				 unsigned int size,
+				 unsigned int bunch_size,
+				 bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    const float *input_units_ptr = input_units->getGPUForRead();
+    float *output_units_ptr = output_units->getGPUForWrite();
+    float *minimums_ptr = minimums->getGPUForWrite();
+    float *maximums_ptr = maximums->getGPUForWrite();
+    float *sums_ptr = sums->getGPUForWrite();
+    unsigned int units_top = ceilingPowerOfTwo(size);
+    unsigned int top_reduction = units_top;
+    dim3 block, grid;
+    computeBlockAndGridSizesForARowMajorBunch(bunch_size, size,
+					      block, grid);
+    
+    minMaxFirstReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (input_units_ptr,
+       minimums_ptr,
+       maximums_ptr,
+       top_reduction,
+       size,
+       bunch_size,
+       bunch_size);
+    for (top_reduction >>= 1; top_reduction != 1; top_reduction >>= 1) {
+      computeBlockAndGridSizesForARowMajorBunch(bunch_size, top_reduction,
+						block, grid);
+      minMaxNextReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+        (minimums_ptr,
+         maximums_ptr,
+         top_reduction,
+         bunch_size,
+         bunch_size);
+    }
+
+    computeBlockAndGridSizesForAnArray(bunch_size, block, grid);
+    applyMinimumNorm<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (minimums_ptr,
+       maximums_ptr,
+       bunch_size);
+
+    computeBlockAndGridSizesForARowMajorBunch(bunch_size, size,
+					      block, grid);
+
+    applyExpMinus<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (input_units_ptr,
+       output_units_ptr,
+       maximums_ptr,
+       size,
+       bunch_size,
+       bunch_size);
+    
+    // We reset the top
+    top_reduction = units_top;
+
+    sumFirstReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (output_units_ptr,
+       sums_ptr,
+       top_reduction,
+       size,
+       bunch_size,
+       bunch_size);
+    for (top_reduction >>= 1; top_reduction != 1; top_reduction >>= 1) {
+      computeBlockAndGridSizesForARowMajorBunch(bunch_size, top_reduction,
+						block, grid);
+      sumNextReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+        (sums_ptr,
+         top_reduction,
+         bunch_size,
+         bunch_size);
+    }
+
+    
+    computeBlockAndGridSizesForARowMajorBunch(bunch_size, size,
+					      block, grid);
+
+    applyMinusLog<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (input_units_ptr,
+       output_units_ptr,
+       sums_ptr,
+       size,
+       bunch_size,
+       bunch_size);
+  }
+  else {
+#endif
+    const float *input_units_ptr = input_units->getPPALForRead();
+    float *output_units_ptr = output_units->getPPALForWrite();
+    
+    for (unsigned int b = 0; b < bunch_size; ++b)
+      {
+	float maximum = input_units_ptr[0];
+	unsigned int cur_pos = bunch_size;
+	for (unsigned int i = 2; i < size; i += 2) {
+	  float prev_unit = input_units_ptr[cur_pos];
+	  cur_pos += bunch_size;
+	  float cur_unit = input_units_ptr[cur_pos];
+
+	  if (prev_unit < cur_unit) {
+	    if (cur_unit > maximum) maximum = cur_unit;
+	  } else {
+	    if (prev_unit > maximum) maximum = prev_unit;
+	  }
+	  cur_pos += bunch_size;
+	}
+	if ((size & 1) == 0) { // si es par
+	  unsigned int max_pos = (size - 1) * bunch_size;
+	  if (input_units_ptr[max_pos] > maximum) maximum = input_units_ptr[max_pos];
+	}
+	double addition = 0;
+	cur_pos = 0;
+	for (unsigned int i = 0; i < size; i++) {
+	  float exp_output = exp(input_units_ptr[cur_pos] - maximum);
+	  output_units_ptr[cur_pos] = input_units_ptr[cur_pos];
+	  addition += exp_output;
+	  cur_pos += bunch_size;
+	}
+	float ratio = log(addition);
+	cur_pos = 0;
+	for (unsigned int i = 0; i < size; i++) {
+	  output_units_ptr[cur_pos] -= ratio;
+	  cur_pos += bunch_size;
+	}
 	output_units_ptr++;
 	input_units_ptr++;
       }

@@ -90,7 +90,7 @@ namespace ANN {
     // apply derivatives at gradients
     multiplyDerivatives(input_ptr, output_ptr,
 			error_input_ptr, error_output_ptr,
-			input_size, bunch_size, false);
+			input_size, bunch_size);
     return error_output;
   }
 

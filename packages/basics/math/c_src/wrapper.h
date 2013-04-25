@@ -114,6 +114,15 @@ void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
 			      unsigned int bunch_size,
 			      bool use_gpu);
 
+void doApplyLogSoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
+				 FloatGPUMirroredMemoryBlock *output_units,
+				 FloatGPUMirroredMemoryBlock *minimums,
+				 FloatGPUMirroredMemoryBlock *maximums,
+				 FloatGPUMirroredMemoryBlock *sums,
+				 unsigned int size,
+				 unsigned int bunch_size,
+				 bool use_gpu);
+
 // ERROR FUNCTIONS
 float doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
 			FloatGPUMirroredMemoryBlock *target,

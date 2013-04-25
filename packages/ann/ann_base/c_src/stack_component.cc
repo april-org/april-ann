@@ -36,6 +36,10 @@ namespace ANN {
     components.push_back(component);
   }
 
+  ANNComponent *StackANNComponent::topComponent() {
+    return components.back();
+  }
+
   void StackANNComponent::popComponent() {
     DecRef(components.back());
     components.pop_back();

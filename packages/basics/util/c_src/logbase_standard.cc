@@ -29,4 +29,3 @@ const double log_double::doublenearzero   = 1e-37;
 const double log_double::rawscorenearzero = -85;
 const double log_double::rawscorezero     = -1e8;
 const double log_double::rawscoreone      = 0;
-
