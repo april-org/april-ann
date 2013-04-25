@@ -513,6 +513,54 @@ void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
 */
 
 // F'(a,b)/a_i = ( 2 b_i H(a,b) - G(a,b) ) / H^2(a,b)
+float doLocalFMeasureLossFunction(FloatGPUMirroredMemoryBlock *input,
+				  FloatGPUMirroredMemoryBlock *target,
+				  unsigned int size,
+				  unsigned int bunch_size,
+				  bool use_gpu) {
+  if (use_gpu) ERROR_EXIT(128, "GPU VERSION NOT IMPLEMENTED!!!\n");
+  const float *output_ptr        = output->getPPALForRead();
+  const float *target_output_ptr = target_output->getPPALForRead();
+  float *pattern_errors_ptr      = pattern_errors->getPPALForReadAndWrite();
+  float *output_error_ptr        = output_error->getPPALForWrite();
+  float Gab = 0.0f, Hab = 0.0f;
+  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
+    unsigned int ipos = b;
+    for (unsigned int i = 0; i < output_size; i++) {
+      // float out = clamp(output_ptr[ipos], 0.0f, 1.0f);
+      float out = output_ptr[ipos];
+      Gab += 1.0f + out * target_output_ptr[ipos] - out - target_output_ptr[ipos];
+      Hab += 2.0f - out - target_output_ptr[ipos];
+      ipos += conf.max_bunch_size;
+    }
+  }
+  float HabP2 = Hab*Hab;
+  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
+    unsigned int ipos = b;
+    for (unsigned int i = 0; i < output_size; i++) {
+      // Aqui cambiamos de signo alpha para convertir una minimizacion en una
+      // maximizacion
+      if (HabP2 > 0.0f) {
+	float v = -alpha * ( (target_output_ptr[ipos] - 1) * Hab + Gab) / HabP2;
+	output_error_ptr[ipos] = clamp(v,
+				       -DERIVATIVE_SATURATION,
+				       DERIVATIVE_SATURATION);
+      }
+      else output_error_ptr[ipos] = 0.0f;
+      ipos += conf.max_bunch_size;
+    }
+  }
+  // cambiamos de signo para convertir la minimizacion en una maximizacion
+  float error;
+  if (Hab > 0.0f)
+    error = -alpha*Gab/Hab;
+  else error = -1.0f;
+  // Sumamos el error en la componente 0 porque la FMeasure no se descompone por
+  // neuronas y bunch, se calcula para todo el grupo de neuronas y para todo el
+  // bunch de una sola vez
+  pattern_errors_ptr[0] += error;
+}
+
 void doCalculateLocalFMeasureErrorFunction(float alpha,
 					   FloatGPUMirroredMemoryBlock *output,
 					   FloatGPUMirroredMemoryBlock *target_output,
