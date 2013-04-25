@@ -24,8 +24,7 @@ namespace ANN {
 							FloatGPUMirroredMemoryBlock *input_errors,
 							FloatGPUMirroredMemoryBlock *output_errors,
 							unsigned int size,
-							unsigned int bunch_size,
-							bool is_output) {
+							unsigned int bunch_size) {
     // This activation function derivative is cancelled by cross-entropy
     // derivative. It only could be used with cross entropy loss function.
     doScopy(input_errors->getSize(),

@@ -42,8 +42,7 @@ namespace ANN {
 				     FloatGPUMirroredMemoryBlock *input_errors,
 				     FloatGPUMirroredMemoryBlock *output_errors,
 				     unsigned int size,
-				     unsigned int bunch_size,
-				     bool is_output);
+				     unsigned int bunch_size);
   public:
     LogLogisticActfANNComponent(const char *name);
     virtual ~LogLogisticActfANNComponent();

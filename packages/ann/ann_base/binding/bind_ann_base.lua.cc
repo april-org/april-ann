@@ -50,6 +50,8 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "activation_function_component.h"
 #include "logistic_actf_component.h"
 #include "log_logistic_actf_component.h"
+#include "softmax_actf_component.h"
+#include "log_softmax_actf_component.h"
 
 using namespace ANN;
 
@@ -539,6 +541,12 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD StackANNComponent top
+{
+  LUABIND_RETURN(ANNComponent, obj->topComponent());
+}
+//BIND_END
+
 //BIND_METHOD StackANNComponent pop
 {
   obj->popComponent();
@@ -635,5 +643,51 @@ using namespace ANN;
   }
   obj = new LogLogisticActfANNComponent(name);
   LUABIND_RETURN(LogLogisticActfANNComponent, obj);  
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//            SoftmaxActfANNComponent              //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME SoftmaxActfANNComponent ann.components.softmax
+//BIND_CPP_CLASS    SoftmaxActfANNComponent
+//BIND_SUBCLASS_OF  SoftmaxActfANNComponent ActivationFunctionANNComponent
+
+//BIND_CONSTRUCTOR SoftmaxActfANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  }
+  obj = new SoftmaxActfANNComponent(name);
+  LUABIND_RETURN(SoftmaxActfANNComponent, obj);  
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//           LogSoftmaxActfANNComponent            //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME LogSoftmaxActfANNComponent ann.components.log_softmax
+//BIND_CPP_CLASS    LogSoftmaxActfANNComponent
+//BIND_SUBCLASS_OF  LogSoftmaxActfANNComponent ActivationFunctionANNComponent
+
+//BIND_CONSTRUCTOR LogSoftmaxActfANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  }
+  obj = new LogSoftmaxActfANNComponent(name);
+  LUABIND_RETURN(LogSoftmaxActfANNComponent, obj);  
 }
 //BIND_END

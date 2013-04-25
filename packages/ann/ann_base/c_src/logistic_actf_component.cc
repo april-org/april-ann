@@ -24,10 +24,7 @@ namespace ANN {
 						     FloatGPUMirroredMemoryBlock *input_errors,
 						     FloatGPUMirroredMemoryBlock *output_errors,
 						     unsigned int size,
-						     unsigned int bunch_size,
-						     bool is_output) {
-    // TODO: Implement special case for cross entropy loss function
-    // if (!is_output || !conf.error_function_logistic_mandatory)
+						     unsigned int bunch_size) {
     doMultiplyLogisticDerivatives(output_units,
 				  input_errors,
 				  output_errors,
