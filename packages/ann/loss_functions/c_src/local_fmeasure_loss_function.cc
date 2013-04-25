@@ -24,8 +24,11 @@
 
 namespace ANN {
 
-  LocalFMeasureLossFunction::LocalFMeasureLossFunction(unsigned int size) :
-    LossFunction(size), accumulated_loss(0.0f), N(0) {
+  LocalFMeasureLossFunction::LocalFMeasureLossFunction(unsigned int size,
+						       float beta,
+						       bool complement_output) :
+    LossFunction(size), beta(beta), complement_output(complement_output),
+    accumulated_loss(0.0f), N(0) {
   }
   
   LocalFMeasureLossFunction::~LocalFMeasureLossFunction() {
@@ -43,16 +46,19 @@ namespace ANN {
       ERROR_EXIT(128, "Different token sizes found\n");
     //
     unsigned int bunch_size = input_mem_token->getUsedSize() / size;
+    Gab = 0.0f;
+    Hab = 0.0f;
     float loss = doLocalFMeasureLossFunction(input_mem_token->getMemBlock(),
 					     target_mem_block->getMemBlock(),
 					     size, bunch_size,
+					     beta, Gab, Hab,
+					     complement_output,
 					     input_mem_token->getCudaFlag());
-    loss /= -bunch_size;
     accumulated_loss += loss;
     ++N;
     return loss;
   }
-
+  
   Token *LocalFMeasureLossFunction::computeGrandient(Token *input, Token *target) {
     if (input->getTokenCode() != table_of_token_codes::token_mem_block)
       ERROR_EXIT(128, "Incorrect token type, expected memory block\n");
@@ -70,11 +76,11 @@ namespace ANN {
     TokenMemoryBlock *error_mem_block;
     error_mem_block = new TokenMemoryBlock(input_mem_token->getUsedSize());
     AssignRef(error_output, error_mem_block);
-    doAccumulateLocalFMeasureGradient(input_mem_token->getMemBlock(),
-				      target_mem_block->getMemBlock(),
-				      error_mem_block->getMemBlock(),
-				      size, bunch_size,
-				      input_mem_token->getCudaFlag());
+    doComputeLocalFMeasureGradient(target_mem_block->getMemBlock(),
+				   error_mem_block->getMemBlock(),
+				   size, bunch_size,
+				   beta, Gab, Hab, complement_output,
+				   input_mem_token->getCudaFlag());
     return error_output;
   }
   

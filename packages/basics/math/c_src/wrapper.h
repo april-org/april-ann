@@ -131,13 +131,13 @@ float doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
 			unsigned int bunch_size,
 			bool use_gpu);
 
-void doAccumulateMSEGradient(FloatGPUMirroredMemoryBlock *input,
-			     FloatGPUMirroredMemoryBlock *target,
-			     FloatGPUMirroredMemoryBlock *error_output,
-			     float zero_epsilon_distance,
-			     unsigned int size,
-			     unsigned int bunch_size,
-			     bool use_gpu);
+void doComputeMSEGradient(FloatGPUMirroredMemoryBlock *input,
+			  FloatGPUMirroredMemoryBlock *target,
+			  FloatGPUMirroredMemoryBlock *error_output,
+			  float zero_epsilon_distance,
+			  unsigned int size,
+			  unsigned int bunch_size,
+			  bool use_gpu);
 
 float doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
 				 FloatGPUMirroredMemoryBlock *target,
@@ -153,13 +153,13 @@ float doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
 					   unsigned int bunch_size,
 					   bool use_gpu);
 
-void doAccumulateCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
-				      FloatGPUMirroredMemoryBlock *target,
-				      FloatGPUMirroredMemoryBlock *error_output,
-				      float epsilon,
-				      unsigned int size,
-				      unsigned int bunch_size,
-				      bool use_gpu);
+void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
+				   FloatGPUMirroredMemoryBlock *target,
+				   FloatGPUMirroredMemoryBlock *error_output,
+				   float epsilon,
+				   unsigned int size,
+				   unsigned int bunch_size,
+				   bool use_gpu);
 
 void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
 				  FloatGPUMirroredMemoryBlock *target_output,
@@ -169,14 +169,23 @@ void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
 				  const ANNConfiguration &conf,
 				  bool use_gpu);
 
-void doCalculateLocalFMeasureErrorFunction(float alpha,
-					   FloatGPUMirroredMemoryBlock *output,
-					   FloatGPUMirroredMemoryBlock *target_output,
-					   FloatGPUMirroredMemoryBlock *output_error,
-					   FloatGPUMirroredMemoryBlock *pattern_errors,
-					   unsigned int output_size,
-					   const ANNConfiguration &conf,
-					   bool use_gpu);
+float doLocalFMeasureLossFunction(FloatGPUMirroredMemoryBlock *input,
+				  FloatGPUMirroredMemoryBlock *target,
+				  unsigned int size,
+				  unsigned int bunch_size,
+				  float beta,
+				  float &Gab, float &Hab,
+				  bool complement_output,
+				  bool use_gpu);
+
+void doComputeLocalFMeasureGradient(FloatGPUMirroredMemoryBlock *target,
+				    FloatGPUMirroredMemoryBlock *output_error,
+				    unsigned int size,
+				    unsigned int bunch_size,
+				    float beta,
+				    float Gab, float Hab,
+				    bool complement_output,
+				    bool use_gpu);
 
 // BLAS FUNCTIONS
 void doSgemv(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
