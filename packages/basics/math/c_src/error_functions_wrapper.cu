@@ -228,13 +228,13 @@ float doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
 }
 
 
-void doAccumulateMSEGradient(FloatGPUMirroredMemoryBlock *input,
-			     FloatGPUMirroredMemoryBlock *target,
-			     FloatGPUMirroredMemoryBlock *error_output,
-			     float zero_epsilon_distance,
-			     unsigned int size,
-			     unsigned int bunch_size,
-			     bool use_gpu) {
+void doComputeMSEGradient(FloatGPUMirroredMemoryBlock *input,
+			  FloatGPUMirroredMemoryBlock *target,
+			  FloatGPUMirroredMemoryBlock *error_output,
+			  float zero_epsilon_distance,
+			  unsigned int size,
+			  unsigned int bunch_size,
+			  bool use_gpu) {
 #ifdef USE_CUDA
   if (use_gpu) {    
     const float *input_ptr  = input->getGPUForRead();
@@ -378,13 +378,13 @@ float doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
 #endif
 }
 
-void doAccumulateCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
-				      FloatGPUMirroredMemoryBlock *target,
-				      FloatGPUMirroredMemoryBlock *error_output,
-				      float EPSILON,
-				      unsigned int size,
-				      unsigned int bunch_size,
-				      bool use_gpu) {
+void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
+				   FloatGPUMirroredMemoryBlock *target,
+				   FloatGPUMirroredMemoryBlock *error_output,
+				   float EPSILON,
+				   unsigned int size,
+				   unsigned int bunch_size,
+				   bool use_gpu) {
 #ifdef USE_CUDA
   if (use_gpu) {    
     const float *input_ptr  = input->getGPUForRead();
@@ -512,104 +512,80 @@ void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
   }
 */
 
-// F'(a,b)/a_i = ( 2 b_i H(a,b) - G(a,b) ) / H^2(a,b)
+// F(o,t) = (1 + beta^2) * sum o_i * t_i / sum( o_i + beta^2 * t_i )
+// Gab = (1 + beta^2) sum o_i * t_i
+// Hab = sum( o_i + beta^2 * t_i )
 float doLocalFMeasureLossFunction(FloatGPUMirroredMemoryBlock *input,
 				  FloatGPUMirroredMemoryBlock *target,
 				  unsigned int size,
 				  unsigned int bunch_size,
+				  float beta,
+				  float &Gab, float &Hab,
+				  bool complement_output,
 				  bool use_gpu) {
-  if (use_gpu) ERROR_EXIT(128, "GPU VERSION NOT IMPLEMENTED!!!\n");
-  const float *output_ptr        = output->getPPALForRead();
-  const float *target_output_ptr = target_output->getPPALForRead();
-  float *pattern_errors_ptr      = pattern_errors->getPPALForReadAndWrite();
-  float *output_error_ptr        = output_error->getPPALForWrite();
-  float Gab = 0.0f, Hab = 0.0f;
-  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
+  if (use_gpu)   ERROR_EXIT(128, "GPU VERSION NOT IMPLEMENTED!!!\n");
+  if (size != 1) ERROR_EXIT(128, "Multi-class version is not implemented\n");
+  const float *input_ptr  = input->getPPALForRead();
+  const float *target_ptr = target->getPPALForRead();
+  FloatGPUMirroredMemoryBlock *pattern_errors = 
+    new FloatGPUMirroredMemoryBlock(target->getSize());
+  float *pattern_errors_ptr = pattern_errors->getPPALForReadAndWrite();
+  Gab = 0.0f;
+  Hab = 0.0f;
+  float beta2 = beta*beta;
+  for (unsigned int b=0; b<bunch_size; ++b) {
     unsigned int ipos = b;
-    for (unsigned int i = 0; i < output_size; i++) {
+    for (unsigned int i = 0; i < size; i++) {
       // float out = clamp(output_ptr[ipos], 0.0f, 1.0f);
-      float out = output_ptr[ipos];
-      Gab += 1.0f + out * target_output_ptr[ipos] - out - target_output_ptr[ipos];
-      Hab += 2.0f - out - target_output_ptr[ipos];
-      ipos += conf.max_bunch_size;
-    }
-  }
-  float HabP2 = Hab*Hab;
-  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-    unsigned int ipos = b;
-    for (unsigned int i = 0; i < output_size; i++) {
-      // Aqui cambiamos de signo alpha para convertir una minimizacion en una
-      // maximizacion
-      if (HabP2 > 0.0f) {
-	float v = -alpha * ( (target_output_ptr[ipos] - 1) * Hab + Gab) / HabP2;
-	output_error_ptr[ipos] = clamp(v,
-				       -DERIVATIVE_SATURATION,
-				       DERIVATIVE_SATURATION);
+      float in = input_ptr[ipos];
+      assert(!(in < 0.0f) && !(in > 1.0f));
+      if (!complement_output) {
+	Gab += in * target_ptr[ipos];
+	Hab += in + beta2 * target_ptr[ipos];
       }
-      else output_error_ptr[ipos] = 0.0f;
-      ipos += conf.max_bunch_size;
+      else {
+	Gab += 1.0f + in * target_ptr[ipos] - in - target_ptr[ipos];
+	Hab += 1.0f + beta2 - in - beta2 * target_ptr[ipos];
+      }
+      ipos += bunch_size;
     }
   }
+  Gab = (1.0f + beta2)*Gab;
   // cambiamos de signo para convertir la minimizacion en una maximizacion
   float error;
   if (Hab > 0.0f)
-    error = -alpha*Gab/Hab;
+    error = -Gab/Hab;
   else error = -1.0f;
-  // Sumamos el error en la componente 0 porque la FMeasure no se descompone por
-  // neuronas y bunch, se calcula para todo el grupo de neuronas y para todo el
-  // bunch de una sola vez
-  pattern_errors_ptr[0] += error;
+  return error;
 }
 
-void doCalculateLocalFMeasureErrorFunction(float alpha,
-					   FloatGPUMirroredMemoryBlock *output,
-					   FloatGPUMirroredMemoryBlock *target_output,
-					   FloatGPUMirroredMemoryBlock *output_error,
-					   FloatGPUMirroredMemoryBlock *pattern_errors,
-					   unsigned int output_size,
-					   const ANNConfiguration &conf,
-					   bool use_gpu) {
-  if (use_gpu) ERROR_EXIT(128, "GPU VERSION NOT IMPLEMENTED!!!\n");
-  const float *output_ptr        = output->getPPALForRead();
-  const float *target_output_ptr = target_output->getPPALForRead();
-  float *pattern_errors_ptr      = pattern_errors->getPPALForReadAndWrite();
-  float *output_error_ptr        = output_error->getPPALForWrite();
-  float Gab = 0.0f, Hab = 0.0f;
-  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-    unsigned int ipos = b;
-    for (unsigned int i = 0; i < output_size; i++) {
-      // float out = clamp(output_ptr[ipos], 0.0f, 1.0f);
-      float out = output_ptr[ipos];
-      Gab += 1.0f + out * target_output_ptr[ipos] - out - target_output_ptr[ipos];
-      Hab += 2.0f - out - target_output_ptr[ipos];
-      ipos += conf.max_bunch_size;
-    }
-  }
-  float HabP2 = Hab*Hab;
-  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-    unsigned int ipos = b;
-    for (unsigned int i = 0; i < output_size; i++) {
-      // Aqui cambiamos de signo alpha para convertir una minimizacion en una
-      // maximizacion
-      if (HabP2 > 0.0f) {
-	float v = -alpha * ( (target_output_ptr[ipos] - 1) * Hab + Gab) / HabP2;
-	output_error_ptr[ipos] = clamp(v,
-				       -DERIVATIVE_SATURATION,
-				       DERIVATIVE_SATURATION);
+// F'(o,t) = (1 + beta^2)*t_i / Hab - Gab/Hab
+void doComputeLocalFMeasureGradient(FloatGPUMirroredMemoryBlock *target,
+				    FloatGPUMirroredMemoryBlock *output_error,
+				    unsigned int size,
+				    unsigned int bunch_size,
+				    float beta,
+				    float Gab, float Hab,
+				    bool complement_output,
+				    bool use_gpu) {
+  if (use_gpu)   ERROR_EXIT(128, "GPU VERSION NOT IMPLEMENTED!!!\n");
+  if (size != 1) ERROR_EXIT(128, "Multi-class version is not implemented\n");
+  const float *target_ptr = target->getPPALForRead();
+  float *output_error_ptr = output_error->getPPALForReadAndWrite();
+  float beta2_p1  = 1.0f + beta*beta;
+  if (Hab > 0.0f) {
+    float inv_Hab     = 1.0f/Hab;
+    float Gab_DIV_Hab2 = Gab*inv_Hab*inv_Hab;
+    for (unsigned int b=0; b<bunch_size; ++b) {
+      unsigned int ipos = b;
+      for (unsigned int i = 0; i < size; i++) {
+	float t = target_ptr[ipos];
+	if (complement_output) t = 1.0f - t;
+	output_error_ptr[ipos] += beta2_p1*t*inv_Hab - Gab_DIV_Hab2;
       }
-      else output_error_ptr[ipos] = 0.0f;
-      ipos += conf.max_bunch_size;
+      ipos += bunch_size;
     }
   }
-  // cambiamos de signo para convertir la minimizacion en una maximizacion
-  float error;
-  if (Hab > 0.0f)
-    error = -alpha*Gab/Hab;
-  else error = -1.0f;
-  // Sumamos el error en la componente 0 porque la FMeasure no se descompone por
-  // neuronas y bunch, se calcula para todo el grupo de neuronas y para todo el
-  // bunch de una sola vez
-  pattern_errors_ptr[0] += error;
 }
 
 /*

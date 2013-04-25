@@ -73,11 +73,11 @@ namespace ANN {
     TokenMemoryBlock *error_mem_block;
     error_mem_block = new TokenMemoryBlock(input_mem_token->getUsedSize());
     AssignRef(error_output, error_mem_block);
-    doAccumulateCrossEntropyGradient(input_mem_token->getMemBlock(),
-				     target_mem_block->getMemBlock(),
-				     error_mem_block->getMemBlock(),
-				     0.0f, size, bunch_size,
-				     input_mem_token->getCudaFlag());
+    doComputeCrossEntropyGradient(input_mem_token->getMemBlock(),
+				  target_mem_block->getMemBlock(),
+				  error_mem_block->getMemBlock(),
+				  0.0f, size, bunch_size,
+				  input_mem_token->getCudaFlag());
     return error_output;
   }
   

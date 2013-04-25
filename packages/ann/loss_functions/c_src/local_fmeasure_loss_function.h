@@ -27,10 +27,13 @@
 
 namespace ANN {
   class LocalFMeasureLossFunction : public LossFunction {
+    float beta, Gab, Hab;
+    bool  complement_output;
     float accumulated_loss;
     unsigned int N;
   public:
-    LocalFMeasureLossFunction(unsigned int size);
+    LocalFMeasureLossFunction(unsigned int size, float beta=1.0f,
+			      bool complement_output=false);
     virtual ~LocalFMeasureLossFunction();
     virtual float  addLoss(Token *input, Token *target);
     virtual Token *computeGrandient(Token *input, Token *target);
