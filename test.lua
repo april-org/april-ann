@@ -88,8 +88,9 @@ thenet:update()
 show_gradients()
 print_token(thenet:forward(input_batch))
 
-load_initial_weights()
+----------------------------------------------------------
 
+load_initial_weights()
 lossfunc:reset()
 thenet:reset()
 thenet:backprop(lossfunc:gradient(thenet:forward(input_batch),
