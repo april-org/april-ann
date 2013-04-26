@@ -16,6 +16,19 @@ local function check_dataset_sizes(ds1, ds2)
   return true
 end
 
+local function make_token(t)
+  if type(t) == "table" then
+    local type_t1 = type(t[1])
+    if type_t1 == "table" then
+      return tokens.memblock(tokens.table.bunch(t))
+    elseif type_t1 == "token" then
+      error("Not implemented yet")
+    end
+  else
+    error("Not implemented yet")
+  end
+end
+
 -----------------------
 -- TRAINABLE CLASSES --
 -----------------------
@@ -31,6 +44,13 @@ function trainable.supervised_trainer:__call(ann_component, loss_function)
   local obj = { ann_component = ann_component, loss_function = loss_function }
   setmetatable(obj, self)
   return obj
+end
+
+function trainable.supervised_trainer:build(weights_table)
+  self.weights_table = weights_table
+  self.weights_table,
+  self.components_table = self.ann_component:build(weights_table)
+  return self.weights_table,self.components_table
 end
 
 april_set_doc("trainable.supervised_trainer",
@@ -141,10 +161,12 @@ function trainable.supervised_trainer:train_dataset(t)
     table.insert(input_bunch,  ds_table.input_dataset:getPattern(index))
     table.insert(output_bunch, ds_table.output_dataset:getPattern(index))
     if i==#ds_idx_table or #input_bunch == bunch_size then
-      trainer:train_step(input_bunch,output_bunch)
+      trainer:train_step(make_token(input_bunch),make_token(output_bunch))
       input_bunch,output_bunch = {},{}
     end
   end
+  ds_pat_table = nil
+  ds_idx_table = nil
   collectgarbage("collect")
   return self.loss_function:get_accum_loss()
 end
