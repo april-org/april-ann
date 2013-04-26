@@ -1,28 +1,28 @@
 -- un generador de valores aleatorios... y otros parametros
-bunch_size    = tonumber(arg[1]) or 64
-semilla       = 1234
-aleat         = random(semilla)
-description   = "256 inputs 256 tanh 128 tanh 10 softmax"
-inf           = -1
-sup           =  1
-otrorand      = random(5678)
-learning_rate = 0.08
-momentum      = 0.01
-weight_decay  = 1e-05
-max_epochs    = 10
+bunch_size     = tonumber(arg[1]) or 64
+semilla        = 1234
+weights_random = random(semilla)
+description    = "256 inputs 256 tanh 128 tanh 10 log_softmax"
+inf            = -1
+sup            =  1
+shuffle_random = random(5678)
+learning_rate  = 0.08
+momentum       = 0.01
+weight_decay   = 1e-05
+max_epochs     = 10
 
 -- training and validation
 errors = {
-  {2.1908491, 1.9118698},
-  {1.5040729, 1.0716470},
-  {0.8239720, 0.5406004},
-  {0.4551140, 0.4344249},
-  {0.2809585, 0.3176593},
-  {0.2066836, 0.1987799},
-  {0.1539478, 0.1826732},
-  {0.1245205, 0.1523282},
-  {0.1063003, 0.1743564},
-  {0.0950506, 0.1691928},
+  {2.2699234, 2.0364990},
+  {1.6727996, 1.2317111},
+  {0.9137920, 0.5743981},
+  {0.5094233, 0.3587638},
+  {0.3098969, 0.2858882},
+  {0.2155668, 0.1911811},
+  {0.1612766, 0.1525298},
+  {0.1280116, 0.1290455},
+  {0.1094717, 0.1413695},
+  {0.0995687, 0.1391480}
 }
 epsilon = 1e-05
 
@@ -72,10 +72,15 @@ val_output   = dataset.matrix(m2,
 			      })
 
 
-lared = ann.mlp.all_all.generate{
-  bunch_size  = bunch_size,
-  topology    = description,
-  random      = aleat,
+thenet = ann.mlp.all_all.generate(description)
+thenet:set_option("learning_rate", learning_rate)
+thenet:set_option("momentum",      momentum)
+thenet:set_option("weight_decay",  weight_decay)
+trainer = trainable.supervised_trainer(thenet,
+				       ann.loss.multi_class_cross_entropy(10))
+trainer:build()
+trainer:randomize_weights{
+  random      = weights_random,
   inf         = inf,
   sup         = sup,
   use_fanin   = true,
@@ -85,68 +90,46 @@ lared = ann.mlp.all_all.generate{
 datosentrenar = {
   input_dataset  = train_input,
   output_dataset = train_output,
-  shuffle        = otrorand,
+  shuffle        = shuffle_random,
+  bunch_size     = bunch_size,
 }
 
 datosvalidar = {
   input_dataset  = val_input,
   output_dataset = val_output,
+  bunch_size     = bunch_size,
 }
-
---lared = ann.mlp.all_all.load("jaja.net", bunch_size)
---print(lared:validate_dataset(datosvalidar))
-
-lared:set_option("learning_rate", learning_rate)
-lared:set_option("momentum",      momentum)
-lared:set_option("weight_decay",  weight_decay)
-lared:set_use_cuda(true, true)
-
-lared:set_error_function(ann.error_functions.logistic_cross_entropy())
 
 totalepocas = 0
 
--- ponemos esto aqui para que se inicie CUDA
-errorval    = lared:validate_dataset(datosvalidar)
+errorval = trainer:validate_dataset(datosvalidar)
 print("# Initial validation error:", errorval)
 
 clock = util.stopwatch()
 clock:go()
 
---ann.mlp.all_all.save(lared, "wop.net", "ascii", "old")
---lared:show_weights()
 print("Epoch Training  Validation")
 for epoch = 1,max_epochs do
   collectgarbage("collect")
-  -- ann.mlp.all_all.save(lared, "tmp.net", "binary", "old")
-  -- lared=ann.mlp.all_all.load("tmp.net", bunch_size)
-  
   totalepocas = totalepocas+1
-  errortrain  = lared:train_dataset(datosentrenar)
-  errorval    = lared:validate_dataset(datosvalidar)
+  errortrain  = trainer:train_dataset(datosentrenar)
+  errorval    = trainer:validate_dataset(datosvalidar)
+  printf("%4d  %.7f %.7f\n",
+	 totalepocas,errortrain,errorval)
   if math.abs(errortrain - errors[epoch][1]) > epsilon then
     error(string.format("Training error %g is not equal enough to "..
-			"reference error %g",
+			  "reference error %g",
 			errortrain, errors[epoch][1]))
   end
   if math.abs(errorval - errors[epoch][2]) > epsilon then
     error(string.format("Validation error %g is not equal enough to "..
-			"reference error %g",
+			  "reference error %g",
 			errorval, errors[epoch][2]))
   end
-  --ann.mlp.all_all.save(lared, "wop.net", "ascii", "old")
-  printf("%4d  %.7f %.7f\n",
-	 totalepocas,errortrain,errorval)
 end
 
 clock:stop()
 cpu,wall = clock:read()
 printf("Wall total time: %.3f    per epoch: %.3f\n", wall, wall/max_epochs)
 printf("CPU  total time: %.3f    per epoch: %.3f\n", cpu, cpu/max_epochs)
---ann.mlp.all_all.save(lared, "red_original.net", "ascii", "old")
-
---for ipat,pat in datosvalidar.input_dataset:patterns() do
---  local out=lared:calculate(pat)
---  print(table.concat(out, " "))
---end
-
 print("Test passed! OK!")

@@ -322,7 +322,8 @@ __global__ void applyExpMinus(const float *input_units,
 
 __global__ void applyMinusLog(const float *input_units,
 			      float *output_units,
-			      float *data,
+			      float *sums,
+			      float *maximums,
 			      unsigned int max_x,
 			      unsigned int max_y,
 			      unsigned int lda_x) {
@@ -334,7 +335,8 @@ __global__ void applyMinusLog(const float *input_units,
 				     matrix_y_pos);
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixIndex(matrix_x_pos, lda_x, matrix_y_pos);
-    output_units[index] = input_units[index] - log(data[matrix_y_pos]);
+    output_units[index] = (input_units[index] +
+			   maximums[matrix_y_pos] - log(sums[matrix_y_pos]));
   }
 }
 
@@ -738,43 +740,43 @@ void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
     const float *input_units_ptr = input_units->getPPALForRead();
     float *output_units_ptr = output_units->getPPALForWrite();
     
-    for (unsigned int b = 0; b < bunch_size; ++b)
-      {
-	float minimum = input_units_ptr[0];
-	float maximum = input_units_ptr[0];
-	unsigned int cur_pos = bunch_size;
-	for (unsigned int i = 2; i < size; i += 2) {
-	  float prev_unit = input_units_ptr[cur_pos];
-	  cur_pos += bunch_size;
-	  float cur_unit = input_units_ptr[cur_pos];
-
-	  if (prev_unit < cur_unit) {
-	    if (prev_unit < minimum) minimum = prev_unit;
-	    if (cur_unit > maximum) maximum = cur_unit;
-	  } else {
-	    if (cur_unit < minimum) minimum = cur_unit;
-	    if (prev_unit > maximum) maximum = prev_unit;
-	  }
-	  cur_pos += bunch_size;
+    for (unsigned int b = 0; b < bunch_size; ++b) {
+      float minimum = input_units_ptr[0];
+      float maximum = input_units_ptr[0];
+      unsigned int cur_pos = bunch_size;
+      for (unsigned int i = 2; i < size; i += 2) {
+	float prev_unit = input_units_ptr[cur_pos];
+	cur_pos += bunch_size;
+	float cur_unit = input_units_ptr[cur_pos];
+	if (prev_unit < cur_unit) {
+	  if (prev_unit < minimum) minimum = prev_unit;
+	  if (cur_unit > maximum) maximum = cur_unit;
+	} else {
+	  if (cur_unit < minimum) minimum = cur_unit;
+	  if (prev_unit > maximum) maximum = prev_unit;
 	}
-	if ((size & 1) == 0) { // si es par
-	  unsigned int max_pos = (size - 1) * bunch_size;
-	  if (input_units_ptr[max_pos] < minimum) minimum = input_units_ptr[max_pos];
-	  if (input_units_ptr[max_pos] > maximum) maximum = input_units_ptr[max_pos];
-	}
-	if ((maximum - minimum) > 30.0f) minimum = maximum - 30.0f;
-	double addition = 0;
-	cur_pos = 0;
-	for (unsigned int i = 0; i < size; i++) {
-	  output_units_ptr[cur_pos] = exp(input_units_ptr[cur_pos] - minimum);
-	  addition += output_units_ptr[cur_pos];
-	  cur_pos += bunch_size;
-	}
-	float ratio = 1.0f/addition;
-	cblas_sscal(size, ratio, output_units_ptr, bunch_size);
-	output_units_ptr++;
-	input_units_ptr++;
+	cur_pos += bunch_size;
       }
+      if ((size & 1) == 0) { // si es par
+	unsigned int max_pos = (size - 1) * bunch_size;
+	if (input_units_ptr[max_pos] < minimum)
+	  minimum = input_units_ptr[max_pos];
+	if (input_units_ptr[max_pos] > maximum)
+	  maximum = input_units_ptr[max_pos];
+      }
+      if ((maximum - minimum) > 30.0f) minimum = maximum - 30.0f;
+      double addition = 0;
+      cur_pos = 0;
+      for (unsigned int i = 0; i < size; i++) {
+	output_units_ptr[cur_pos] = exp(input_units_ptr[cur_pos] - minimum);
+	addition += output_units_ptr[cur_pos];
+	cur_pos += bunch_size;
+      }
+      float ratio = 1.0f/addition;
+      cblas_sscal(size, ratio, output_units_ptr, bunch_size);
+      output_units_ptr++;
+      input_units_ptr++;
+    }
 #ifdef USE_CUDA
   }
 #endif
@@ -865,6 +867,7 @@ void doApplyLogSoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
       (input_units_ptr,
        output_units_ptr,
        sums_ptr,
+       maximums_ptr,
        size,
        bunch_size,
        bunch_size);
@@ -874,43 +877,44 @@ void doApplyLogSoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
     const float *input_units_ptr = input_units->getPPALForRead();
     float *output_units_ptr = output_units->getPPALForWrite();
     
-    for (unsigned int b = 0; b < bunch_size; ++b)
-      {
-	float maximum = input_units_ptr[0];
-	unsigned int cur_pos = bunch_size;
-	for (unsigned int i = 2; i < size; i += 2) {
-	  float prev_unit = input_units_ptr[cur_pos];
-	  cur_pos += bunch_size;
-	  float cur_unit = input_units_ptr[cur_pos];
-
-	  if (prev_unit < cur_unit) {
-	    if (cur_unit > maximum) maximum = cur_unit;
-	  } else {
-	    if (prev_unit > maximum) maximum = prev_unit;
-	  }
-	  cur_pos += bunch_size;
+    for (unsigned int b = 0; b < bunch_size; ++b) {
+      float maximum = input_units_ptr[0];
+      unsigned int cur_pos = bunch_size;
+      for (unsigned int i = 2; i < size; i += 2) {
+	float prev_unit = input_units_ptr[cur_pos];
+	cur_pos += bunch_size;
+	float cur_unit = input_units_ptr[cur_pos];
+	if (prev_unit < cur_unit) {
+	  if (cur_unit > maximum) maximum = cur_unit;
+	} else {
+	  if (prev_unit > maximum) maximum = prev_unit;
 	}
-	if ((size & 1) == 0) { // si es par
-	  unsigned int max_pos = (size - 1) * bunch_size;
-	  if (input_units_ptr[max_pos] > maximum) maximum = input_units_ptr[max_pos];
-	}
-	double addition = 0;
-	cur_pos = 0;
-	for (unsigned int i = 0; i < size; i++) {
-	  float exp_output = exp(input_units_ptr[cur_pos] - maximum);
-	  output_units_ptr[cur_pos] = input_units_ptr[cur_pos];
-	  addition += exp_output;
-	  cur_pos += bunch_size;
-	}
-	float ratio = log(addition);
-	cur_pos = 0;
-	for (unsigned int i = 0; i < size; i++) {
-	  output_units_ptr[cur_pos] -= ratio;
-	  cur_pos += bunch_size;
-	}
-	output_units_ptr++;
-	input_units_ptr++;
+	cur_pos += bunch_size;
       }
+      if ((size & 1) == 0) { // si es par
+	unsigned int last_pos = (size - 1) * bunch_size;
+	if (input_units_ptr[last_pos] > maximum)
+	  maximum = input_units_ptr[last_pos];
+      }
+      double addition = 0.0f;
+      cur_pos = 0;
+      for (unsigned int i = 0; i < size; i++) {
+	output_units_ptr[cur_pos] = input_units_ptr[cur_pos];
+	double exp_output = exp(output_units_ptr[cur_pos] - maximum);
+	addition += exp_output;
+	cur_pos += bunch_size;
+      }
+      float ratio = maximum + log(addition);
+      cur_pos = 0;
+      for (unsigned int i = 0; i < size; i++) {
+	output_units_ptr[cur_pos] -= ratio;
+	assert(!(output_units_ptr[cur_pos] > 0.0f) &&
+	       "Numerical inestability at log-softmax activation function");
+	cur_pos += bunch_size;
+      }
+      output_units_ptr++;
+      input_units_ptr++;
+    }
 #ifdef USE_CUDA
   }
 #endif

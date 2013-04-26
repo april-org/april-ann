@@ -62,7 +62,10 @@ function trainable.supervised_trainer:randomize_weights(t)
       use_fanin  = { mandatory = false, default = false },
       use_fanout = { mandatory = false, default = false },
     }, t)
-  for i,wname in self.weights_order do
+  if #self.weights_order == 0 then
+    error("Execute build method before randomize_weights")
+  end
+  for i,wname in ipairs(self.weights_order) do
     local current_inf = params.inf
     local current_sup = params.sup
     local constant    = 0
@@ -111,6 +114,15 @@ function trainable.supervised_trainer:train_step(input, target)
   self.ann_component:backprop(gradient)
   self.ann_component:update()
   return tr_loss,gradient
+end
+
+function trainable.supervised_trainer:validate_step(input, target)
+  if type(input)  == "table" then input  = tokens.memblock(input)  end
+  if type(target) == "table" then target = tokens.memblock(target) end
+  self.ann_component:reset()
+  local output   = self.ann_component:forward(input)
+  local tr_loss  = self.loss_function:loss(output, target)
+  return tr_loss
 end
 
 function trainable.supervised_trainer:calculate(input)
@@ -211,6 +223,59 @@ function trainable.supervised_trainer:train_dataset(t)
     table.insert(output_bunch, output)
     if i==#ds_idx_table or #input_bunch == bunch_size then
       trainer:train_step(make_token(input_bunch),make_token(output_bunch))
+      input_bunch,output_bunch = {},{}
+    end
+  end
+  ds_pat_table = nil
+  ds_idx_table = nil
+  return self.loss_function:get_accum_loss()
+end
+
+function trainable.supervised_trainer:validate_dataset(t)
+  local params = get_table_fields(
+    {
+      input_dataset  = { mandatory = true, default=nil },
+      output_dataset = { mandatory = true, default=nil },
+      bunch_size     = { type_match = "number", mandatory = true },
+      shuffle        = { type_match = "random", mandatory = false, default=nil },
+      replacement    = { type_match = "number", mandatory = false, default=nil },
+    }, t)
+  -- ERROR CHECKING
+  if params.input_dataset == not params.output_dataset then
+    error("input_dataset and output_dataset fields are mandatory together")
+  end
+  if params.input_dataset and params.distribution then
+    error("input_dataset/output_dataset fields are forbidden with distribution")
+  end
+  -- TRAINING TABLES
+  
+  -- for each pattern, index in corresponding datasets
+  local ds_idx_table = {}
+  self.loss_function:reset()
+  check_dataset_sizes(params.input_dataset, params.output_dataset)
+  local num_patterns = params.input_dataset:numPatterns()
+  -- generate training tables depending on training mode (replacement,
+  -- shuffled, or sequential)
+  if params.replacement then
+    local _=params.shuffle or error("shuffle is mandatory with replacement")
+    for i=1,params.replacement do
+      table.insert(ds_idx_table, param.shuffle:randInt(1,num_patterns))
+    end
+  elseif params.shuffle then
+    ds_idx_table = params.shuffle:shuffle(num_patterns)
+  else
+    for i=1,num_patterns do table.insert(ds_idx_table, i) end
+  end
+  -- TRAIN USING ds_idx_table
+  local input_bunch,output_bunch = {},{}
+  for i=1,#ds_idx_table do
+    local idx    = ds_idx_table[i]
+    local input  = params.input_dataset:getPattern(idx)
+    local output = params.output_dataset:getPattern(idx)
+    table.insert(input_bunch,  input)
+    table.insert(output_bunch, output)
+    if i==#ds_idx_table or #input_bunch == bunch_size then
+      trainer:validate_step(make_token(input_bunch),make_token(output_bunch))
       input_bunch,output_bunch = {},{}
     end
   end
