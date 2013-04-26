@@ -72,7 +72,7 @@ using namespace ANN;
 }
 //BIND_END
 
-//BIND_METHOD LossFunction accum_loss
+//BIND_METHOD LossFunction get_accum_loss
 {
   float loss = obj->getAccumLoss();
   LUABIND_RETURN(float, loss);
