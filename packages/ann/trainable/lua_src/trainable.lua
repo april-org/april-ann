@@ -203,7 +203,6 @@ function trainable.supervised_trainer:train_dataset(t)
   end
   -- TRAIN USING ds_idx_table and ds_pat_table
   local input_bunch,output_bunch = {},{}
-  collectgarbage("collect")
   for i=1,#ds_idx_table do
     local idx    = ds_idx_table[i]
     local input  = (ds_pat_table[i] or params).input_dataset:getPattern(idx)
@@ -217,6 +216,5 @@ function trainable.supervised_trainer:train_dataset(t)
   end
   ds_pat_table = nil
   ds_idx_table = nil
-  collectgarbage("collect")
   return self.loss_function:get_accum_loss()
 end
