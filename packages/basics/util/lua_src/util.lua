@@ -1,3 +1,28 @@
+-- Convert a table in a class
+function class(classname, nonmutable)
+  -- a lua class:
+  classname = classname or {}
+  if nonmutable then classname.__index = classname end
+  setmetatable(classname, classname)
+end
+
+-- help documentation
+function april_set_doc(table_name, docstring)
+  if type(docstring) ~= "string" then
+    error("april_doc docstring type is not string")
+  end
+  _APRIL_DOC_TABLE_ = _APRIL_DOC_TABLE_ or {}
+  _APRIL_DOC_TABLE_[table_name] = _APRIL_DOC_TABLE_[table_name] or {}
+  table.insert(_APRIL_DOC_TABLE_[table_name], docstring)
+end
+
+function april_get_doc(table_name)
+  local doc = _APRIL_DOC_TABLE_[table_name] or { "nil" }
+  for _,str in ipairs(doc) do
+    print("",str)
+  end
+end
+
 -- Esperamos que en el futuro nos permita ser de GRAN ayuda para
 -- conocer entradas/salidas de las funciones y metodos C++
 function april_help(t)
@@ -169,6 +194,75 @@ function range(...)
     table.insert(t,i)
   end
   return t
+end
+
+function check_mandatory_table_fields(fields, t)
+  for _,name in ipairs(fields) do
+    table.insert(ret, t[name] or error("The "..name.." field is mandatory"))
+  end
+end
+
+--
+--  local params = get_table_fields{
+--    begin_token  = { type_match = "string", mandatory = false, default = "<s>"  },
+--    end_token    = { type_match = "string", mandatory = false, default = "</s>" },
+--    unknown_word = { type_match = "string", mandatory = false, default = "<unk>" },
+--    factors = { type_match = "table", mandatory = true,
+--		getter = get_table_fields_ipairs{
+--		  vocabulary = { type_match = "lexClass", mandatory = true },
+--		  layers = { type_match = "table", mandatory = true,
+--			     getter = get_table_fields_ipairs{
+--			       actf = { type_match = "string", mandatory = true },
+--			       size = { type_match = "number", mandatory = true },
+--			     },
+--		  },
+--		},
+--    },
+--  }
+local valid_get_table_fields_params_attributes = { type_match = true,
+						   mandatory  = true,
+						   getter = true,
+						   default = true }
+function get_table_fields(params, t)
+  local ret = {}
+  for key,value in pairs(t) do
+    if not params[key] then error("Unknown field: " .. key) end
+  end
+  for key,data in pairs(params) do
+    local data = data or {}
+    for k,_ in pairs(data) do
+      if not valid_get_table_fields_params_attributes[k] then
+	error("Incorrect parameter to function get_table_fields: " .. k)
+      end
+    end
+    -- each param has type_match, mandatory, default, and getter
+    local v = t[key] or data.default
+    if v == nil and data.mandatory then
+      error("Mandatory field not found: " .. key)
+    end
+    if data.type_match and type(v) ~= data.type_match then
+      error("Incorrect field type: " .. key)
+    end
+    if data.getter then v=(t[key]~=nil and data.getter(t[key])) or nil end
+    ret[key] = v
+  end
+  return ret
+end
+
+function get_table_fields_ipairs(...)
+  return function(t)
+    local ret = {}
+    for i,v in ipairs(t) do
+      table.insert(ret, get_table_fields(unpack(arg), v))
+    end
+    return ret
+	 end
+end
+
+function get_table_fields_recursive(...)
+  return function(t)
+    return get_table_fields(unpack(arg), t)
+  end
 end
 
 ---------------------------------------------------------------
