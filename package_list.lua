@@ -11,6 +11,7 @@ return {
 --   "activation_function",
   "ann_base",
   "loss_functions",
+  "trainable",
 --   "mlp",
 --   "sdae",
 --   "gzio",
