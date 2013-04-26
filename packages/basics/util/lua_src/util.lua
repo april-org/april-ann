@@ -1,9 +1,20 @@
 -- Convert a table in a class
-function class(classname, nonmutable)
-  -- a lua class:
-  classname = classname or {}
-  if nonmutable then classname.__index = classname end
-  setmetatable(classname, classname)
+function class(classname)
+  local t = string.tokenize(classname, ".")
+  _G[t[1]] = _G[t[1]] or {}
+  local current = _G[t[1]]
+  for i=2,#t do
+    current[t[i]] = current[t[i]] or {}
+    current = current[t[i]]
+  end
+  current.__index = current
+  setmetatable(current, current)
+end
+
+function class_instance(obj, class, nonmutable)
+  setmetatable(obj, class)
+  if nonmutable then obj.__index = class end
+  return obj
 end
 
 -- help documentation
@@ -240,7 +251,7 @@ function get_table_fields(params, t)
     if v == nil and data.mandatory then
       error("Mandatory field not found: " .. key)
     end
-    if data.type_match and type(v) ~= data.type_match then
+    if v ~= nil and data.type_match and type(v) ~= data.type_match then
       error("Incorrect field type: " .. key)
     end
     if data.getter then v=(t[key]~=nil and data.getter(t[key])) or nil end

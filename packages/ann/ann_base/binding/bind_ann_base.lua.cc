@@ -156,6 +156,18 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD Connections get_input_size
+{
+  LUABIND_RETURN(uint, obj->getInputSize());
+}
+//BIND_END
+
+//BIND_METHOD Connections get_output_size
+{
+  LUABIND_RETURN(uint, obj->getOutputSize());
+}
+//BIND_END
+
 //BIND_METHOD Connections randomize_weights
 {
   LUABIND_CHECK_ARGN(==, 1);
@@ -400,7 +412,7 @@ using namespace ANN;
 }
 //BIND_END
 
-//BIND_METHOD ANNComponent copyComponents
+//BIND_METHOD ANNComponent getComponent
 {
   LUABIND_CHECK_ARGN(==,1);
   LUABIND_CHECK_PARAMETER(1,string);

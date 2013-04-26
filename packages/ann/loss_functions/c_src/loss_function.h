@@ -24,6 +24,7 @@
 #include "referenced.h"
 #include "token_base.h"
 #include "token_memory_block.h"
+#include "error_print.h"
 
 namespace ANN {
   /// An abstract class that defines the basic interface that
@@ -35,6 +36,8 @@ namespace ANN {
   public:
     LossFunction(unsigned int size) :
     Referenced(), error_output(0), size(size) {
+      if (size == 0)
+	ERROR_EXIT(128, "Impossible to build ZERO size LossFunction\n");
     }
     virtual ~LossFunction() {
       if (error_output) DecRef(error_output);
