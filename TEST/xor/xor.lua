@@ -13,66 +13,39 @@ m = matrix.fromString[[
       -1.0 2.0 2.0
 ]]
 
-function show_weights(lared)
-  w = lared:weights()
-  pesos = dataset.matrix(w,
-			 {
-			   patternSize = {1},
-			   offset      = {0},
-			   numSteps    = {num_weights},
-			   stepSize    = {1}
-			 })
-  
+function show_weights(trainer, filter)
+  if not filter then filter = function(x) return x end end
   print()
   for i = 1,ds_input:numPatterns() do
-    if ann then
-      value = lared:calculate(ds_input:getPattern(i))[1]
-    else
-      value = lared:use(ds_input:getPattern(i))[1]
-    end
+    value = filter(trainer:calculate(ds_input:getPattern(i))[1])
     printf("%s\t %s\n",
 	   table.concat(ds_input:getPattern(i),","),
 	   value)
   end
   print()
-
-  for i=1,num_weights do
-    printf ("%d\t %1.14f\n", i, pesos:getPattern(i)[1])
+  for _,wname in ipairs({ "b1", "w1", "b2", "w2" }) do
+    local w = trainer.weights_table[wname]:weights():toTable()
+    print(wname, table.concat(w, " "))
   end
+end
+
+function load_initial_weights(weights_table)
+  weights_table["b1"]:load{ w=m, first_pos=0, column_size=3 }
+  weights_table["w1"]:load{ w=m, first_pos=1, column_size=3 }
+  weights_table["b2"]:load{ w=m, first_pos=6, column_size=3 }
+  weights_table["w2"]:load{ w=m, first_pos=7, column_size=3 }
 end
 
 -----------------------------------------------------------
 
-if ann then
-  lared=ann.mlp.all_all.generate{
-    topology   = "2 inputs 2 logistic 1 logistic",
-    w          = m,
-    oldw       = m,
-    bunch_size = bunch_size,
-  }
-  lared:set_option("learning_rate", learning_rate)
-  lared:set_option("momentum",      momentum)
-  lared:set_option("weight_decay",  weight_decay)
-else
-  if bunch_size > 1 then
-    lared = mlp.generate_with_bunch{
-      topology   = "2 inputs 2 logistic 1 logistic",
-      w          = m,
-      oldw       = m,
-      bunch_size = bunch_size,
-				   }
-  else
-    lared = mlp.generate("2 inputs 2 logistic 1 logistic", m, m)
-  end
-end
-
-auxnet=lared:clone()
-
---if ann then
---  ann.mlp.all_all.save(lared, "wop.net", "ascii", "old")
---else
---  mlp.save(lared, "wop.net", "ascii", "old")
---end
+net_component=ann.mlp.all_all.generate("2 inputs 2 logistic 1 logistic")
+net_component:set_option("learning_rate", learning_rate)
+net_component:set_option("momentum",      momentum)
+net_component:set_option("weight_decay",  weight_decay)
+trainer=trainable.supervised_trainer(net_component)
+trainer:build()
+trainer:set_loss_function(ann.loss.mse(net_component:get_output_size()))
+load_initial_weights(trainer.weights_table)
 
 m_xor = matrix.fromString[[
     4 3
@@ -109,172 +82,58 @@ ds_output2 = dataset.matrix(m_xor,{
 
 print ("----------------------------------------------")
 print ("----------------------------------------------")
-print ("Valores iniciales")
+print ("Initial values")
 
-lared = auxnet:clone()
-if not ann then
-  if bunch_size > 1 then
-    lared = mlp.generate_with_bunch{
-      topology   = "2 inputs 2 logistic 1 logistic",
-      w          = m,
-      oldw       = m,
-      bunch_size = bunch_size,
-				   }
-  else
-    lared = mlp.generate("2 inputs 2 logistic 1 logistic", m, m)
-  end
-end
-show_weights(lared)
-
--- ---------------------
--- -- BP Con momentum --
--- ---------------------
-
--- print ("----------------------------------------------")
--- print ("----------------------------------------------")
--- print ("Test para el BP con momentum 0.4, learning rate 0.4, weight decay 0.0, y sin shuffle")
-
--- data={
---   input_dataset  = ds_input,
---   output_dataset = ds_output,
---   shuffle        = aleat
--- }
-
--- for i=1,2 do
---   if ann then
---     lared:train_dataset(data)
---   else
---     data.learning_rate = learning_rate
---     data.momentum      = momentum
---     data.weight_decay  = weight_decay
---     lared:train(data)
---   end
--- end
--- print ("\nDespués de 2 épocas:\n")
--- show_weights(lared)
-
--- for i=3,300 do
---   if ann then
---     lared:train_dataset(data)
---   else
---     data.learning_rate = learning_rate
---     data.momentum      = momentum
---     data.weight_decay  = weight_decay
---     lared:train(data)
---   end
--- end
--- print ("\nDespués de 300 épocas:\n")
--- show_weights(lared)
-
--- -----------------------------------
--- -- BP sin momentum y sin shuffle --
--- -----------------------------------
-
--- print ("----------------------------------------------")
--- print ("----------------------------------------------")
--- --print ("Test para el BP con momentum sin shuffle")
-
-
--- lared=auxnet:clone()
--- if not ann then
---   lared = mlp.generate_with_bunch{
---     topology   = "2 inputs 2 logistic 1 logistic",
---     w          = m,
---     oldw       = m,
---     bunch_size = bunch_size,
---   }
--- end
+show_weights(trainer)
 
 print ("----------------------------------------------")
 print ("--------------------------------------------")
-print ("Después de mostrar (0,0)")
+print ("After forward of (0,0)")
 
 data={
   input_dataset  = ds_input1,
   output_dataset = ds_output1,
-  shuffle        = aleat
+  shuffle        = aleat,
+  bunch_size     = bunch_size
 }
-if ann then
-  lared:train_dataset(data)
-else
-  data.learning_rate = learning_rate
-  data.momentum      = momentum
-  data.weight_decay  = weight_decay
-  lared:train(data)
-end
-show_weights(lared)
+trainer:train_dataset(data)
+show_weights(trainer)
 
-print ("\nDespués de mostrar (0,1)")
+print ("\After forward of (0,1)")
 data={
   input_dataset  = ds_input2,
   output_dataset = ds_output2,
-  shuffle        = aleat
+  shuffle        = aleat,
+  bunch_size     = bunch_size
 }
+trainer:train_dataset(data)
+show_weights(trainer)
 
-if ann then
-  lared:train_dataset(data)
-else
-  data.learning_rate = learning_rate
-  data.momentum      = momentum
-  data.weight_decay  = weight_decay
-  lared:train(data)
-end
-show_weights(lared)
+load_initial_weights(trainer.weights_table)
 
-lared=auxnet:clone()
-if not ann then
-  if bunch_size > 1 then
-    lared = mlp.generate_with_bunch{
-      topology   = "2 inputs 2 logistic 1 logistic",
-      w          = m,
-      oldw       = m,
-      bunch_size = bunch_size,
-				   }
-  else
-    lared = mlp.generate("2 inputs 2 logistic 1 logistic", m, m)
-  end
-end
 data={
   input_dataset  = ds_input,
   output_dataset = ds_output,
-  shuffle        = aleat
+  shuffle        = aleat,
+  bunch_size     = bunch_size
 }
+print ("\nAfter one epoch")
+trainer:train_dataset(data)
+show_weights(trainer)
 
-print ("\nDespués de una época")
-if ann then
-  lared:train_dataset(data)
-else
-  data.learning_rate = learning_rate
-  data.momentum      = momentum
-  data.weight_decay  = weight_decay
-  lared:train(data)
-end
-show_weights(lared)
+print ("\nAfter two epochs")
+trainer:train_dataset(data)
+show_weights(trainer)
 
-if ann then ann.mlp.all_all.save(lared, "jeje.net", "ascii", "old") end
+net_component:pop()
+net_component:push( ann.components.log_logistic() )
+trainer=trainable.supervised_trainer(net_component)
+trainer:build()
+trainer:set_loss_function(ann.loss.cross_entropy(net_component:get_output_size()))
+load_initial_weights(trainer.weights_table)
 
-print ("\nDespués de dos épocas")
-if ann then
-  lared:train_dataset(data)
-else
-  data.learning_rate = learning_rate
-  data.momentum      = momentum
-  data.weight_decay  = weight_decay
-  lared:train(data)
-end
-show_weights(lared)
-
-lared:set_error_function(ann.error_functions.cross_entropy())
-
-print ("\nDespués de 30000 épocas")
+print ("\After 30000 epochs")
 for i=3,30000 do
-  if ann then
-    print(i, lared:train_dataset(data))
-  else
-    data.learning_rate = learning_rate
-    data.momentum      = momentum
-    data.weight_decay  = weight_decay
-    lared:train(data)
-  end
+  print(i, trainer:train_dataset(data))
 end
-show_weights(lared)
+show_weights(trainer, math.exp)

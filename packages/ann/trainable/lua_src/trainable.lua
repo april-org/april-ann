@@ -1,6 +1,3 @@
-trainable = trainable or {}
-trainable.supervised_trainer = trainable.supervised_trainer or {}
-
 -------------------------------
 -- LOCAL AUXILIARY FUNCTIONS --
 -------------------------------
@@ -36,20 +33,68 @@ end
 -- CLASS supervised_trainer
 april_set_doc("trainable.supervised_trainer",
 	      "Lua class for supervised machine learning models training")
-class(trainable.supervised_trainer)
+class("trainable.supervised_trainer", true)
 
-april_set_doc("trainable.supervised_trainer",
-	      "Methods")
+april_set_doc("trainable.supervised_trainer", "Methods")
 function trainable.supervised_trainer:__call(ann_component, loss_function)
-  local obj = { ann_component = ann_component, loss_function = loss_function }
-  setmetatable(obj, self)
+  local obj = {
+    ann_component    = ann_component,
+    loss_function    = loss_function,
+    weights_table    = {},
+    components_table = {},
+    weights_order    = {},
+    components_order = {}
+  }
+  obj = class_instance(obj, self, true)
   return obj
 end
 
+function trainable.supervised_trainer:set_loss_function(loss_function)
+  self.loss_function = loss_function
+end
+
+function trainable.supervised_trainer:randomize_weights(t)
+  local params = get_table_fields(
+    {
+      random  = { mandatory = true },
+      inf     = { mandatory = true },
+      sup     = { mandatory = true },
+      use_fanin  = { mandatory = false, default = false },
+      use_fanout = { mandatory = false, default = false },
+    }, t)
+  for i,wname in self.weights_order do
+    local current_inf = params.inf
+    local current_sup = params.sup
+    local constant    = 0
+    local connection  = self.weights_table[wname]
+    if params.use_fanin then
+      constant = constant + connection:get_input_size()
+    end
+    if params.use_fanout then
+      constant = constant + connection:get_output_size()
+    end
+    if constant > 0 then
+      current_inf = current_inf / math.sqrt(constant)
+      current_sup = current_sup / math.sqrt(constant)
+    end
+    connection:randomize_weights{ random = params.random,
+				  inf    = current_inf,
+				  sup    = current_sup }
+  end
+end
+
 function trainable.supervised_trainer:build(weights_table)
-  self.weights_table = weights_table
+  self.weights_table = weights_table or {}
   self.weights_table,
-  self.components_table = self.ann_component:build(weights_table)
+  self.components_table = self.ann_component:build(self.weights_table)
+  self.weights_order = {}
+  for name,_ in pairs(self.weights_table) do table.insert(self.weights_order,
+							  name) end
+  table.sort(self.weights_order)
+  self.components_order = {}
+  for name,_ in pairs(self.components_table) do table.insert(self.components_order,
+							     name) end
+  table.sort(self.components_order)
   return self.weights_table,self.components_table
 end
 
@@ -57,8 +102,8 @@ april_set_doc("trainable.supervised_trainer",
 	      "\ttrain_step(input,target) => performs one training step "..
 		"(reset, forward, loss, gradient, backprop, and update)")
 function trainable.supervised_trainer:train_step(input, target)
-  if type("input")  == "table" then input  = tokens.memblock(input)  end
-  if type("target") == "table" then target = tokens.memblock(target) end
+  if type(input)  == "table" then input  = tokens.memblock(input)  end
+  if type(target) == "table" then target = tokens.memblock(target) end
   self.ann_component:reset()
   local output   = self.ann_component:forward(input)
   local tr_loss  = self.loss_function:loss(output, target)
@@ -66,6 +111,11 @@ function trainable.supervised_trainer:train_step(input, target)
   self.ann_component:backprop(gradient)
   self.ann_component:update()
   return tr_loss,gradient
+end
+
+function trainable.supervised_trainer:calculate(input)
+  if type(input) == "table" then input = tokens.memblock(input) end
+  return self.ann_component:forward(input):convert_to_memblock():to_table()
 end
 
 april_set_doc("trainable.supervised_trainer",
@@ -97,8 +147,8 @@ function trainable.supervised_trainer:train_dataset(t)
 			 },
       },
       bunch_size     = { type_match = "number", mandatory = true },
-      shuffle        = { type_match = "random", mandatroy = false, default=nil },
-      replacement    = { type_match = "number", mandatroy = false, default=nil },
+      shuffle        = { type_match = "random", mandatory = false, default=nil },
+      replacement    = { type_match = "number", mandatory = false, default=nil },
     }, t)
   -- ERROR CHECKING
   if params.input_dataset == not params.output_dataset then
@@ -152,14 +202,14 @@ function trainable.supervised_trainer:train_dataset(t)
     end
   end
   -- TRAIN USING ds_idx_table and ds_pat_table
-  local input_bunch,output_dataset = {},{}
+  local input_bunch,output_bunch = {},{}
   collectgarbage("collect")
   for i=1,#ds_idx_table do
     local idx    = ds_idx_table[i]
     local input  = (ds_pat_table[i] or params).input_dataset:getPattern(idx)
     local output = (ds_pat_table[i] or params).output_dataset:getPattern(idx)
-    table.insert(input_bunch,  ds_table.input_dataset:getPattern(index))
-    table.insert(output_bunch, ds_table.output_dataset:getPattern(index))
+    table.insert(input_bunch,  input)
+    table.insert(output_bunch, output)
     if i==#ds_idx_table or #input_bunch == bunch_size then
       trainer:train_step(make_token(input_bunch),make_token(output_bunch))
       input_bunch,output_bunch = {},{}
