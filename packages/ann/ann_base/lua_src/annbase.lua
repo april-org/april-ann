@@ -194,8 +194,9 @@ function ann.mlp.all_all.generate(topology)
     if not ann.components[actf] then
       error("Incorrect activation function: " .. actf)
     end
-    thenet:push( ann.components[actf]() )
+    thenet:push( ann.components[actf]{ name = actf .. count } )
     count = count + 1
+    prev_size = size
   end
   return thenet
 end

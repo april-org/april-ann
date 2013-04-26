@@ -124,8 +124,9 @@ namespace ANN {
     if (input_size == 0) input_size = output_size;
     if (output_size == 0) output_size = input_size;
     if (input_size != output_size)
-      ERROR_EXIT(240, "ActivationFunctionANNComponent input/output "
-		 "sizes must be equal\n");
+      ERROR_EXIT3(240, "ActivationFunctionANNComponent input/output "
+		  "sizes must be equal (component %s): %d != %d\n",
+		  name.c_str(), input_size, output_size);
   }
 
 } // namespace ANN

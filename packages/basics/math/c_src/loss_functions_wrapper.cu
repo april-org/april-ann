@@ -308,8 +308,10 @@ float doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
     float sum = 0.0f;
     for (unsigned int i = 0; i < size; i++) {
       for (unsigned int b=0; b<bunch_size; ++b) {
-	assert(!(input_ptr[b] > 0.0f));
-	assert(!(target_ptr[b] < 0.0f) && !(target_ptr[b] > 1.0f));
+	assert(!(input_ptr[b] > 0.0f) &&
+	       "Only log-based activation functions are allowed");
+	assert(!(target_ptr[b] < 0.0f) && !(target_ptr[b] > 1.0f) &&
+	       "Only [0,1] target patterns are allowed");
 	// compute derivative
 	float log_o     = input_ptr[b];
 	float log_inv_o = log(1.0 - exp(input_ptr[b]));
@@ -362,8 +364,10 @@ float doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
     float sum = 0.0f;
     for (unsigned int i = 0; i < size; i++) {
       for (unsigned int b=0; b<bunch_size; ++b) {
-	assert(!(input_ptr[b] > 0.0f));
-	assert(!(target_ptr[b] < 0.0f) && !(target_ptr[b] > 1.0f));
+	assert(!(input_ptr[b] > 0.0f) &&
+	       "Only log-based activation functions are allowed");
+	assert(!(target_ptr[b] < 0.0f) && !(target_ptr[b] > 1.0f) &&
+	       "Only [0,1] target patterns are allowed");
 	// compute derivative
 	float log_o = input_ptr[b];
 	float t = clamp(target_ptr[b], EPSILON, 1.0f - EPSILON);
@@ -538,7 +542,8 @@ float doLocalFMeasureLossFunction(FloatGPUMirroredMemoryBlock *input,
     for (unsigned int i = 0; i < size; i++) {
       // float out = clamp(output_ptr[ipos], 0.0f, 1.0f);
       float in = input_ptr[ipos];
-      assert(!(in < 0.0f) && !(in > 1.0f));
+      assert(!(in < 0.0f) && !(in > 1.0f) &&
+	     "Only [0,1] activation functions are allowed");
       if (!complement_output) {
 	Gab += in * target_ptr[ipos];
 	Hab += in + beta2 * target_ptr[ipos];

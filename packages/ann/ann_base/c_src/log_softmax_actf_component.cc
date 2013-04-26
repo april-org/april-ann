@@ -11,10 +11,11 @@ namespace ANN {
     ActivationFunctionANNComponent(name) { }
   LogSoftmaxActfANNComponent::~LogSoftmaxActfANNComponent() { }
 
-  void LogSoftmaxActfANNComponent::applyActivation(FloatGPUMirroredMemoryBlock *input_units,
-						   FloatGPUMirroredMemoryBlock *output_units,
-						   unsigned int size,
-						   unsigned int bunch_size) {
+  void LogSoftmaxActfANNComponent::
+  applyActivation(FloatGPUMirroredMemoryBlock *input_units,
+		  FloatGPUMirroredMemoryBlock *output_units,
+		  unsigned int size,
+		  unsigned int bunch_size) {
     FloatGPUMirroredMemoryBlock *minimums = 0;
     FloatGPUMirroredMemoryBlock *maximums = 0;
     FloatGPUMirroredMemoryBlock *sums = 0;
@@ -40,15 +41,19 @@ namespace ANN {
     }
   }
 
-  void LogSoftmaxActfANNComponent::multiplyDerivatives(FloatGPUMirroredMemoryBlock *input_units,
-						       FloatGPUMirroredMemoryBlock *output_units,
-						       FloatGPUMirroredMemoryBlock *input_errors,
-						       FloatGPUMirroredMemoryBlock *output_errors,
-						       unsigned int size,
-						       unsigned int bunch_size) {
-    // Nothing to do, this activation function needs cross entropy loss
-    // function, which does all the job. The derivative is cancelled, and not
-    // needed.
+  void LogSoftmaxActfANNComponent::
+  multiplyDerivatives(FloatGPUMirroredMemoryBlock *input_units,
+		      FloatGPUMirroredMemoryBlock *output_units,
+		      FloatGPUMirroredMemoryBlock *input_errors,
+		      FloatGPUMirroredMemoryBlock *output_errors,
+		      unsigned int size,
+		      unsigned int bunch_size) {
+    // This activation function derivative is cancelled by cross-entropy
+    // derivative. It only could be used with cross entropy loss function.
+    doScopy(input_errors->getSize(),
+	    input_errors, 0, 1,
+	    output_errors, 0, 1,
+	    use_cuda);
   }
   
   ANNComponent *LogSoftmaxActfANNComponent::clone() {

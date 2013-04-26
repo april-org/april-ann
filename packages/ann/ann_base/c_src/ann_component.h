@@ -82,8 +82,12 @@ namespace ANN {
     const char *getName() const { return name.c_str(); }
     const char *getWeightsName() const { return weights_name.c_str(); }
     
-    unsigned int getInputSize() const { return input_size; }
-    unsigned int getOutputSize() const { return output_size; }
+    unsigned int getInputSize() const {
+      return input_size;
+    }
+    unsigned int getOutputSize() const {
+      return output_size;
+    }
     
     virtual Token *getInput() { return 0; }
     virtual Token *getOutput() { return 0; }
