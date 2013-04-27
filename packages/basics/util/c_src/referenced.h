@@ -26,7 +26,7 @@
 #define AssignRef(dest,ref) do {					\
       if ((dest)) DecRef((dest));					\
       (dest) = (ref);							\
-      IncRef((ref));							\
+      IncRef((dest));							\
   } while(0)
 
 class Referenced {

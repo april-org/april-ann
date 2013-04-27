@@ -52,6 +52,7 @@ public:
       printf ("%f ", data[i]);
     printf("\n");
   }
+  void setToZero(bool use_cuda);
 };
 
 #endif // TOKEN_MEMORY_BLOCK_H

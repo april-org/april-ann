@@ -48,15 +48,11 @@ namespace ANN {
 	 (_input->getTokenCode() != table_of_token_codes::token_mem_block))
       ERROR_EXIT(129,"Incorrect input Token type, expected token_mem_block!\n");
     // change current input by new input
-    if (input) DecRef(input);
-    input = _input->convertTo<TokenMemoryBlock*>();
-    IncRef(input);
+    AssignRef(input,_input->convertTo<TokenMemoryBlock*>());
     // compute bunch size
     bunch_size = input->getUsedSize() / input_size;
     // new  output to fit the bunch
-    if (output) DecRef(output);
-    output = new TokenMemoryBlock(input->getUsedSize());
-    IncRef(output);
+    AssignRef(output,new TokenMemoryBlock(input->getUsedSize()));
     // get memory blocks for tokens
     FloatGPUMirroredMemoryBlock *input_ptr  = input->getMemBlock();
     FloatGPUMirroredMemoryBlock *output_ptr = output->getMemBlock();
@@ -71,17 +67,14 @@ namespace ANN {
 	 (_error_input->getTokenCode() != table_of_token_codes::token_mem_block))
       ERROR_EXIT(129,"Incorrect input error Token type, expected token_mem_block!\n");
     // change current input by new input
-    if (error_input) DecRef(error_input);
-    error_input = _error_input->convertTo<TokenMemoryBlock*>();
+    AssignRef(error_input,_error_input->convertTo<TokenMemoryBlock*>());
     IncRef(error_input);
     // compute current bunch
     unsigned int bunch_size = error_input->getUsedSize() / output_size;
     if (bunch_size != this->bunch_size)
       ERROR_EXIT(129, "Different bunches found at doForward and doBackprop\n");
     // new error output to fit the bunch
-    if (error_output) DecRef(error_output);
-    error_output = new TokenMemoryBlock(error_input->getUsedSize());
-    IncRef(error_output);
+    AssignRef(error_output,new TokenMemoryBlock(error_input->getUsedSize()));
     //
     FloatGPUMirroredMemoryBlock *input_ptr        = input->getMemBlock();
     FloatGPUMirroredMemoryBlock *output_ptr       = output->getMemBlock();
