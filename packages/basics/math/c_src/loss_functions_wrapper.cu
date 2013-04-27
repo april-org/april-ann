@@ -74,7 +74,7 @@ __global__ void computeMSEGradientKernel(const float *output,
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
     float d = output[index] - target_output[index];
     if (fabsf(d) < zero_epsilon_distance) d = 0.0f;
-    error_output[index] += d;
+    error_output[index] = d;
   }
 }
 
@@ -143,7 +143,7 @@ __global__ void computeCrossEntropyGradientKernel(const float *output,
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
     // compute derivative
-    output_error[index] += exp(output[index]) - target_output[index];
+    error_output[index] = exp(output[index]) - target_output[index];
   }
 }
 
@@ -262,7 +262,7 @@ void doComputeMSEGradient(FloatGPUMirroredMemoryBlock *input,
       for (unsigned int b=0; b<bunch_size; ++b) {
 	d = input_ptr[b] - target_ptr[b];
 	if (fabsf(d) < zero_epsilon_distance) d = 0.0f;
-	error_output_ptr[b] += d;
+	error_output_ptr[b] = d;
       }
       input_ptr  += bunch_size;
       target_ptr += bunch_size;
@@ -414,7 +414,7 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
     float *error_output_ptr = error_output->getPPALForReadAndWrite();
     for (unsigned int i = 0; i < size; i++) {
       for (unsigned int b=0; b<bunch_size; ++b)
-	error_output_ptr[b] += exp(input_ptr[b]) - target_ptr[b];
+	error_output_ptr[b] = exp(input_ptr[b]) - target_ptr[b];
       input_ptr  += bunch_size;
       target_ptr += bunch_size;
       error_output_ptr += bunch_size;
@@ -527,7 +527,7 @@ float doLocalFMeasureLossFunction(FloatGPUMirroredMemoryBlock *input,
 				  float &Gab, float &Hab,
 				  bool complement_output,
 				  bool use_gpu) {
-  if (use_gpu)   ERROR_EXIT(128, "GPU VERSION NOT IMPLEMENTED!!!\n");
+  if (use_gpu)   ERROR_EXIT(128, "GPU VERSION NOT IMPLEMENTED YET!!!\n");
   if (size != 1) ERROR_EXIT(128, "Multi-class version is not implemented\n");
   const float *input_ptr  = input->getPPALForRead();
   const float *target_ptr = target->getPPALForRead();
@@ -586,9 +586,9 @@ void doComputeLocalFMeasureGradient(FloatGPUMirroredMemoryBlock *target,
       for (unsigned int i = 0; i < size; i++) {
 	float t = target_ptr[ipos];
 	if (complement_output) t = 1.0f - t;
-	output_error_ptr[ipos] += beta2_p1*t*inv_Hab - Gab_DIV_Hab2;
+	output_error_ptr[ipos] = beta2_p1*t*inv_Hab - Gab_DIV_Hab2;
+	ipos += bunch_size;
       }
-      ipos += bunch_size;
     }
   }
 }

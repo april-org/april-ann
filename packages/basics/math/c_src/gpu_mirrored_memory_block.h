@@ -22,6 +22,9 @@
 #ifndef GPU_MIRRORED_MEMORY_BLOCK_H
 #define GPU_MIRRORED_MEMORY_BLOCK_H
 
+// Define NO_POOL to avoid the use of a pool of pointers
+#define NO_POOL
+
 #include <cassert>
 
 #ifdef USE_CUDA
@@ -32,9 +35,16 @@
 #include "gpu_helper.h"
 #include "error_print.h"
 #include "aligned_memory.h"
+#include "hash_table.h"
+#include "aux_hash_table.h"
+#include "list.h"
 
 template<typename T>
 class GPUMirroredMemoryBlock {
+#ifndef NO_POOL
+  const static unsigned int MAX_POOL_LIST_SIZE = 20;
+  static april_utils::hash<unsigned int,april_utils::list<T*> > pool_lists;
+#endif
   unsigned int size;
   T      *mem_ppal;
 #ifdef USE_CUDA  
@@ -129,7 +139,9 @@ class GPUMirroredMemoryBlock {
 #endif
   
 public:
-  
+
+  // WARNING!!! the memory zone is not initialized, caller must do it if
+  // needed
   GPUMirroredMemoryBlock(unsigned int sz) : size(sz) {
 #ifdef USE_CUDA
     updated  = 0;
@@ -138,9 +150,17 @@ public:
     mem_gpu  = 0;
     pinned   = false;
 #endif
-    mem_ppal = aligned_malloc<T>(sz);
-    // We initialize the memory zone
-    for (unsigned int i=0; i<sz; ++i) mem_ppal[i] = T();
+#ifndef NO_POOL
+    april_utils::list<T*> &l = pool_lists[size];
+    if (l.empty())
+      mem_ppal = aligned_malloc<T>(size);
+    else {
+      mem_ppal = *(l.begin());
+      l.pop_front();
+    }
+#else
+    mem_ppal = aligned_malloc<T>(size);
+#endif
   }
   ~GPUMirroredMemoryBlock() {
 #ifdef USE_CUDA
@@ -149,7 +169,15 @@ public:
 	ERROR_EXIT1(162, "Could not copy memory from host to device: %s\n",
 		    cudaGetErrorString(cudaGetLastError()));
     }
-    else aligned_free(mem_ppal);
+    else {
+#ifndef NO_POOL
+      april_utils::list<T*> &l = pool_lists[size];
+      if (l.size() < MAX_POOL_LIST_SIZE) l.push_front(mem_ppal);
+      else aligned_free(mem_ppal);
+#else
+      aligned_free(mem_ppal);
+#endif
+    }
     if (mem_gpu != 0) {
       CUresult result;
       result = cuMemFree(mem_gpu);
@@ -157,7 +185,13 @@ public:
         ERROR_EXIT(163, "Could not free memory from device.\n");
     }
 #else
+#ifndef NO_POOL
+    april_utils::list<T*> &l = pool_lists[size];
+    if (l.size() < MAX_POOL_LIST_SIZE) l.push_front(mem_ppal);
+    else aligned_free(mem_ppal);
+#else
     aligned_free(mem_ppal);
+#endif
 #endif
   }
 
@@ -233,5 +267,13 @@ public:
 
 // typedef for referring to float memory blocks
 typedef GPUMirroredMemoryBlock<float> FloatGPUMirroredMemoryBlock;
+
+#ifndef NO_POOL
+template<typename T>
+april_utils::hash<unsigned int,april_utils::list<T*> >
+GPUMirroredMemoryBlock<T>::pool_lists(1024);
+#endif
+
+#undef NO_POOL
 
 #endif // GPU_MIRRORED_MEMORY_BLOCK_H

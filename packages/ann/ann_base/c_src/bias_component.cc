@@ -46,9 +46,7 @@ namespace ANN {
 	 (_input->getTokenCode() != table_of_token_codes::token_mem_block))
       ERROR_EXIT(129,"Incorrect input Token type, expected token_mem_block!\n");
     // change current input by new input
-    if (input) DecRef(input);
-    input = _input->convertTo<TokenMemoryBlock*>();
-    IncRef(input);
+    AssignRef(input,_input->convertTo<TokenMemoryBlock*>());
     // compute current bunch
     unsigned int bunch_size = input->getUsedSize() / input_size;
     if (input->getUsedSize() % input_size != 0)
@@ -56,9 +54,7 @@ namespace ANN {
 		  input->getUsedSize(), input_size);
     this->bunch_size = bunch_size;
     // new output to fit the bunch
-    if (output) DecRef(output);
-    output = new TokenMemoryBlock(input->getUsedSize());
-    IncRef(output);
+    AssignRef(output,new TokenMemoryBlock(input->getUsedSize()));
     // get memory blocks for tokens and weights
     FloatGPUMirroredMemoryBlock *input_ptr       = input->getMemBlock();
     FloatGPUMirroredMemoryBlock *output_ptr      = output->getMemBlock();
@@ -85,9 +81,7 @@ namespace ANN {
 	 (_error_input->getTokenCode() != table_of_token_codes::token_mem_block))
       ERROR_EXIT(129,"Incorrect input error Token type, expected token_mem_block!\n");
     // change current input by new input
-    if (error) DecRef(error);
-    error = _error_input->convertTo<TokenMemoryBlock*>();
-    IncRef(error);
+    AssignRef(error,_error_input->convertTo<TokenMemoryBlock*>());
     return error;
   }
 

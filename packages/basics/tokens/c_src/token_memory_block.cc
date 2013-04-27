@@ -41,18 +41,12 @@ void TokenMemoryBlock::setData(float *data, unsigned int size) {
 }
 
 void TokenMemoryBlock::resize(unsigned int size) {
-  bool init_to_zero = false;
-  if (mem_block == 0) {
+  if (mem_block == 0)
     mem_block = new FloatGPUMirroredMemoryBlock(size);
-    init_to_zero = true;
-  }
   else if (size > mem_block->getSize()) {
     delete mem_block;
     mem_block = new FloatGPUMirroredMemoryBlock(size<<1);
-    init_to_zero = true;
   }
-  if (init_to_zero)
-    doVectorSetToZero(mem_block, mem_block->getSize(), 1, 0, false);
   used_size = size;
 }
 
@@ -78,4 +72,8 @@ buffer_list* TokenMemoryBlock::debugString(const char *prefix, int debugLevel) {
 
 TokenCode TokenMemoryBlock::getTokenCode() const {
   return table_of_token_codes::token_mem_block;
+}
+
+void TokenMemoryBlock::setToZero(bool use_cuda) {
+  doVectorSetToZero(mem_block, mem_block->getSize(), 1, 0, use_cuda);
 }
