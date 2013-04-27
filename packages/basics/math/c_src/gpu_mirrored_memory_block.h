@@ -35,9 +35,12 @@
 #include "gpu_helper.h"
 #include "error_print.h"
 #include "aligned_memory.h"
+
+#ifndef NO_POOL
 #include "hash_table.h"
 #include "aux_hash_table.h"
 #include "list.h"
+#endif
 
 template<typename T>
 class GPUMirroredMemoryBlock {
