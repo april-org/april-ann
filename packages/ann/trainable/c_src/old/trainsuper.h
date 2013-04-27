@@ -22,72 +22,59 @@
 #ifndef _TRAINABLE_SUPERVISED_H
 #define _TRAINABLE_SUPERVISED_H
 
+#include "loss_function.h"
+#include "ann_component.h"
 #include "function_interface.h"
 #include "datasetToken.h"
 
-#define mSetOption(var_name,var) if(!strcmp(name,(var_name))){(var)=value;return;}
-#define mHasOption(var_name) if(!strcmp(name,(var_name))) return true;
-#define mGetOption(var_name, var) if(!strcmp(name,(var_name)))return (var);
-
 namespace Trainable {
-
-  class TrainableSupervised : public Functions::FunctionInterface {
   
-    void exitOnDatasetSizeError(DataSetToken *input_dataset,
-				DataSetToken *output_dataset);
-
-  protected:
-    /// Entre begin y end va el conjunto de patrones de una epoca
-    virtual void beginTrainingBatch() = 0;
-    // le da un patrin para entrenar
-    virtual void trainPattern(Token *input, Token *target_output)    = 0;
-    virtual float endTrainingBatch()   = 0;
-
-    virtual void beginValidateBatch() = 0;
-    // le da un patron para calcular el error, PERO sin entrenar
-    virtual void validatePattern(Token *input, Token *target_output) = 0;
-    virtual float endValidateBatch()   = 0;
-  
+  /// Static class for improve lua functions efficiency
+  class TrainableSupervised {
   public:
-    
-    virtual ~TrainableSupervised() { }
+    static float trainDataset(ANNComponent *ann_component,
+			      LossFunction *loss_function,
+			      unsigned int  bunch_size,
+			      DataSetToken *input_dataset,
+			      DataSetToken *target_output_dataset,
+			      MTRand       *shuffle=0);
 
-    virtual void setOption(const char *name, double value) = 0;
-    virtual bool hasOption(const char *name)               = 0;
-    virtual double getOption(const char *name)             = 0;
+    static float trainDatasetWithReplacement(ANNComponent *ann_component,
+					     LossFunction *loss_function,
+					     unsigned int  bunch_size,
+					     DataSetToken *input_dataset,
+					     DataSetToken *target_output_dataset,
+					     MTRand *shuffle,
+					     int replacement);
 
-    virtual void loadModel(const char *filename) = 0;
-    virtual void saveModel(const char *filename) = 0;
-    
-    ////////// METODOS IMPLEMENTADOS, SE PERMITE SOBREESCRIBIRLOS ///////////
-    // Metodos ya implementados
-    virtual float trainOnePattern(Token *input, Token *target_output);
-    virtual float validateOnePattern(Token *input, Token *target_output);
-
-    // para entrenar con datasets
-    virtual float trainDataset(DataSetToken *input_dataset,
-			       DataSetToken *target_output_dataset,
-			       MTRand       *shuffle=0);
-    virtual float trainDatasetWithReplacement(DataSetToken *input_dataset,
-					      DataSetToken *target_output_dataset,
+    static float trainDatasetWithDistribution(ANNComponent *ann_component,
+					      LossFunction *loss_function,
+					      unsigned int  bunch_size,
+					      int num_classes,
+					      DataSetToken **input_datasets,
+					      DataSetToken **target_output_datasets,
+					      double *aprioris,
 					      MTRand *shuffle,
 					      int replacement);
-    virtual float trainDatasetWithDistribution(int num_classes,
-					       DataSetToken **input_datasets,
-					       DataSetToken **target_output_datasets,
-					       double *aprioris,
-					       MTRand *shuffle,
-					       int replacement);
     
-    // para validar con datasets
-    virtual float validateDataset(DataSetToken *input_dataset,
-				  DataSetToken *target_output_dataset);
-    virtual float validateDatasetWithReplacement(DataSetToken *input_dataset,
-						 DataSetToken *target_output_dataset,
-						 MTRand *shuffle,
-						 int replacement);
-    virtual void useDataset(DataSetToken *input_dataset,
-			    DataSetToken *output_dataset);
+    static float validateDataset(ANNComponent *ann_component,
+				 LossFunction *loss_function,
+				 unsigned int  bunch_size,
+				 DataSetToken *input_dataset,
+				 DataSetToken *target_output_dataset);
+    
+    static float validateDatasetWithReplacement(ANNComponent *ann_component,
+						LossFunction *loss_function,
+						unsigned int  bunch_size,
+						DataSetToken *input_dataset,
+						DataSetToken *target_output_dataset,
+						MTRand *shuffle,
+						int replacement);
+    
+    static void useDataset(ANNComponent *ann_component,
+			   unsigned int  bunch_size,
+			   DataSetToken *input_dataset,
+			   DataSetToken *output_dataset);
   };
 
 }

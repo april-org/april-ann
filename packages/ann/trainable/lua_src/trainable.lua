@@ -169,6 +169,14 @@ function trainable.supervised_trainer:train_dataset(t)
   if params.input_dataset and params.distribution then
     error("input_dataset/output_dataset fields are forbidden with distribution")
   end
+  --
+  
+  if params.distribution then error("Distribution is not correctly implemented") end
+  
+  -- params.ann  = self.ann_component
+  -- params.loss = self.loss_function
+  -- trainable.supervised_trainer_static_functions.train_dataset(params)
+
   -- TRAINING TABLES
   
   -- for each pattern, a pair of input/output datasets (or nil if not
@@ -182,8 +190,13 @@ function trainable.supervised_trainer:train_dataset(t)
     -- sampled following the given apriory probability
     local _=params.shuffle or error("shuffle is mandatory with distribution")
     local _=params.replacement or error("replacement is mandatory with distribution")
+
     local sizes = {}
     for i,v in ipairs(params.distribution) do
+      if type(v.input_dataset) ~= "dataset.token" then
+	v.input_dataset  = dataset.token.wrapper(v.input_dataset)
+	v.output_dataset = dataset.token.wrapper(v.output_dataset)
+      end
       check_dataset_sizes(v.input_dataset, v.output_dataset)
       table.insert(aprioris, v.probability)
       table.insert(sizes, v.input_dataset:numPatterns())
@@ -198,6 +211,10 @@ function trainable.supervised_trainer:train_dataset(t)
       table.insert(ds_idx_table, idx)
     end
   else
+    if type(params.input_dataset) ~= "dataset.token" then
+      params.input_dataset  = dataset.token.wrapper(params.input_dataset)
+      params.output_dataset = dataset.token.wrapper(params.output_dataset)
+    end
     check_dataset_sizes(params.input_dataset, params.output_dataset)
     local num_patterns = params.input_dataset:numPatterns()
     -- generate training tables depending on training mode (replacement,
@@ -214,16 +231,15 @@ function trainable.supervised_trainer:train_dataset(t)
     end
   end
   -- TRAIN USING ds_idx_table and ds_pat_table
-  local input_bunch,output_bunch = {},{}
+  local bunch_indexes = {}
   for i=1,#ds_idx_table do
-    local idx    = ds_idx_table[i]
-    local input  = (ds_pat_table[i] or params).input_dataset:getPattern(idx)
-    local output = (ds_pat_table[i] or params).output_dataset:getPattern(idx)
-    table.insert(input_bunch,  input)
-    table.insert(output_bunch, output)
-    if i==#ds_idx_table or #input_bunch == bunch_size then
-      trainer:train_step(make_token(input_bunch),make_token(output_bunch))
-      input_bunch,output_bunch = {},{}
+    local idx = ds_idx_table[i]
+    table.insert(bunch_indexes, idx - 1) -- OJITO restamos 1
+    if i==#ds_idx_table or #bunch_indexes == bunch_size then
+      local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
+      local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
+      trainer:train_step(input_bunch, output_bunch)
+      bunch_indexes = {}
     end
   end
   ds_pat_table = nil
@@ -232,6 +248,10 @@ function trainable.supervised_trainer:train_dataset(t)
 end
 
 function trainable.supervised_trainer:validate_dataset(t)
+  -- t.ann  = self.ann_component
+  -- t.loss = self.loss_function
+  -- trainable.supervised_trainer_static_functions.validate_dataset(t)
+
   local params = get_table_fields(
     {
       input_dataset  = { mandatory = true, default=nil },
@@ -252,6 +272,10 @@ function trainable.supervised_trainer:validate_dataset(t)
   -- for each pattern, index in corresponding datasets
   local ds_idx_table = {}
   self.loss_function:reset()
+  if type(params.input_dataset) ~= "dataset.token" then
+    params.input_dataset  = dataset.token.wrapper(params.input_dataset)
+    params.output_dataset = dataset.token.wrapper(params.output_dataset)
+  end
   check_dataset_sizes(params.input_dataset, params.output_dataset)
   local num_patterns = params.input_dataset:numPatterns()
   -- generate training tables depending on training mode (replacement,
@@ -267,19 +291,23 @@ function trainable.supervised_trainer:validate_dataset(t)
     for i=1,num_patterns do table.insert(ds_idx_table, i) end
   end
   -- TRAIN USING ds_idx_table
-  local input_bunch,output_bunch = {},{}
+  local bunch_indexes = {}
   for i=1,#ds_idx_table do
-    local idx    = ds_idx_table[i]
-    local input  = params.input_dataset:getPattern(idx)
-    local output = params.output_dataset:getPattern(idx)
-    table.insert(input_bunch,  input)
-    table.insert(output_bunch, output)
-    if i==#ds_idx_table or #input_bunch == bunch_size then
-      trainer:validate_step(make_token(input_bunch),make_token(output_bunch))
-      input_bunch,output_bunch = {},{}
+    local idx = ds_idx_table[i]
+    table.insert(bunch_indexes,  idx - 1) -- OJITO - 1
+    if i==#ds_idx_table or #bunch_indexes == bunch_size then
+      local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
+      local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
+      trainer:validate_step(input_bunch, output_bunch)
+      bunch_indexes = {}
     end
   end
   ds_pat_table = nil
   ds_idx_table = nil
   return self.loss_function:get_accum_loss()
+end
+
+function trainable.supervised_trainer:use_dataset(t)
+  -- t.ann  = self.ann_component
+  -- trainable.supervised_trainer_static_functions.use_dataset(t)
 end

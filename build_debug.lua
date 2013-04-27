@@ -11,7 +11,7 @@ luapkg{
     optimization = "no",
     platform = "unix",
     extra_flags={
-      "-pg",
+      "-pg"
     },
     extra_libs={
       "-pg",

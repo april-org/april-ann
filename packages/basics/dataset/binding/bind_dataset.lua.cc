@@ -25,6 +25,7 @@
 #include "bind_mtrand.h"
 #include "MersenneTwister.h"
 #include "bind_referenced_vector.h"
+#include "bind_tokens.h"
 
 int dataset_iterator_function(lua_State *L) {
   // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es
@@ -59,6 +60,7 @@ int dataset_iterator_function(lua_State *L) {
 #include <cmath> // para sqrt en mean_deviation
 #include "bind_mtrand.h"
 #include "MersenneTwister.h"
+#include "datasetToken.h"
 //BIND_END
 
 //BIND_LUACLASSNAME LinearCombConfFloat dataset.linear_comb_conf
@@ -106,7 +108,6 @@ int dataset_iterator_function(lua_State *L) {
   LUABIND_RETURN(LinearCombConfFloat, obj);
 }
 //BIND_END
-
 
 
 //BIND_LUACLASSNAME DataSetFloat dataset
@@ -1023,3 +1024,69 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 //BIND_END
 
 //////////////////////////////////////////
+
+//BIND_LUACLASSNAME DataSetToken dataset.token
+//BIND_CPP_CLASS    DataSetToken
+
+//BIND_CONSTRUCTOR DataSetToken
+{
+  LUABIND_ERROR("Abstract class!!!");
+}
+//BIND_END
+
+//BIND_METHOD DataSetToken numPatterns
+{
+  LUABIND_RETURN(int, obj->numPatterns());
+}
+//BIND_END
+
+//BIND_METHOD DataSetToken patternSize
+{
+  LUABIND_RETURN(int, obj->patternSize());
+}
+//BIND_END
+
+//BIND_METHOD DataSetToken getPattern
+{
+  int index;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, int);
+  LUABIND_GET_PARAMETER(1,int,index);
+  if (index < 1 || index > obj->numPatterns())
+    LUABIND_ERROR("index out of range");
+  Token *token = obj->getPattern(index-1); // ojito que le RESTAMOS uno
+  LUABIND_RETURN(Token, token);
+}
+//BIND_END
+
+//BIND_METHOD DataSetToken getPatternBunch
+{
+  unsigned int bunch_size;
+  int *indexes;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  LUABIND_TABLE_GETN(1,bunch_size);
+  indexes = new int[bunch_size];
+  LUABIND_TABLE_TO_VECTOR(1,uint,indexes,bunch_size);
+  Token *token = obj->getPatternBunch(indexes,bunch_size);
+  LUABIND_RETURN(Token, token);
+}
+//BIND_END
+
+//////////////////////////////////////////
+
+//BIND_LUACLASSNAME DataSetFloat2TokenWrapper dataset.token.wrapper
+//BIND_CPP_CLASS    DataSetFloat2TokenWrapper
+//BIND_SUBCLASS_OF  DataSetFloat2TokenWrapper DataSetToken
+
+//BIND_CONSTRUCTOR DataSetFloat2TokenWrapper
+{
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, DataSetFloat);
+  DataSetFloat *ds;
+  LUABIND_GET_PARAMETER(1, DataSetFloat, ds);
+  obj = new DataSetFloat2TokenWrapper(ds);
+  LUABIND_RETURN(DataSetToken, obj);
+}
+//BIND_END
+
