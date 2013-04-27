@@ -1,8 +1,8 @@
  package{ name = "trainable",
    version = "1.0",
-   depends = { "util", "dataset", "random" },
+   depends = { "util", "dataset", "random", "ann_base", "loss_functions" },
    keywords = { "Trainable" },
-   description = "Define the interface and common methods of trainable models",
+   description = "Define a wrapper with common methods of trainable models",
    -- targets como en ant
    target{
      name = "init",
@@ -33,8 +33,8 @@
        dest_dir = "build",
      },
      -- build_bind{
-     -- file = "binding/bind_trainablesuper.lua.cc",
-     -- dest_dir = "build",
+     --   file = "binding/bind_trainablesuper.lua.cc",
+     --   dest_dir = "build",
      -- }
    },
    target{

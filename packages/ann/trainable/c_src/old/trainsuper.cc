@@ -21,50 +21,52 @@
  */
 #include "dice.h"
 #include "trainsuper.h"
-#include "datasetfloat_producer.h"
-#include "datasetfloat_consumer.h"
+// #include "datasetfloat_producer.h"
+// #include "datasetfloat_consumer.h"
 
 namespace Trainable {
-
-  float TrainableSupervised::trainOnePattern(Token *input,
-					     Token *target_output) {
-    beginTrainingBatch();
-    trainPattern(input, target_output);
-    return endTrainingBatch();
-  }
-  float TrainableSupervised::validateOnePattern(float *input,
-						float *target_output) {
-    beginValidateBatch();
-    validatePattern(input, target_output);
-    return endValidateBatch();
+  
+  void trainPattern(ANNComponent *ann_component,
+		    LossFunction *loss_function,
+		    Token        *input,
+		    Token        *target) {
+    ann_component->reset();
+    Token *output = ann_component->doForward(input);
+    loss_function->addLoss(output, target);
+    ann_component->doBackprop(loss_function->computeGrandient(output, target));
+    ann_component->doUpdate();
   }
 
-  void TrainableSupervised::exitOnDatasetSizeError(DataSetFloat *input_dataset,
-						   DataSetFloat *target_output_dataset) {
-    if (input_dataset->patternSize() != static_cast<int>(getInputSize()))
-      ERROR_EXIT2(128, "Incorrect patternSize!! InputSize=%u PatternSize=%d\n",
-		  getInputSize(), input_dataset->patternSize());
-    if (target_output_dataset->patternSize() != static_cast<int>(getOutputSize()))
-      ERROR_EXIT2(128, "Incorrect patternSize!! OutputSize=%u PatternSize=%d\n",
-		  getOutputSize(), target_output_dataset->patternSize());
+  void validatePattern(ANNComponent *ann_component,
+		       LossFunction *loss_function,
+		       Token        *input,
+		       Token        *target) {
+    ann_component->reset();
+    Token *output = ann_component->doForward(input);
+    loss_function->addLoss(output, target);
   }
-
+  
   /// Entrena con un dataset de entrada y otro de salida, admite ademas
   /// el parametro shuffle, que en caso de existir implica que el
   /// entrenamiento es aleatorio
-  float TrainableSupervised::trainDataset(DataSetFloat	*input_dataset,
-					  DataSetFloat	*target_output_dataset,
-					  MTRand		*shuffle)
+  static float TrainableSupervised::trainDataset(ANNComponent	*ann_component,
+						 LossFunction	*loss_function,
+						 unsigned int	 bunch_size,
+						 DataSetToken	*input_dataset,
+						 DataSetToken	*target_output_dataset,
+						 MTRand	*shuffle)
   {
     exitOnDatasetSizeError(input_dataset, target_output_dataset);
-    float *input         = new float[getInputSize()];
-    float *target_output = new float[getOutputSize()];
-  
+    
     int numberPatternsTrain      = input_dataset->numPatterns();
     const int threshold_big_perm = 65536;
-  
+    
+    TokenBunchVector *input_bunch  = new TokenBunchVector(bunch_size);
+    TokenBunchVector *output_bunch = new TokenBunchVector(bunch_size);
+    input_bunch->clear();
+    target_bunch->clear();
+    
     // Comenzamos a entrenar
-    beginTrainingBatch();
     if (shuffle != 0) {
       // entrenamos con shuffle
       if (numberPatternsTrain <= threshold_big_perm) {
@@ -73,10 +75,20 @@ namespace Trainable {
 	shuffle->shuffle(numberPatternsTrain,vshuffle);
 	for (int i = 0; i < numberPatternsTrain; i++) {
 	  index = vshuffle[i];
-	  input_dataset->getPattern(index, input);
-	  target_output_dataset->getPattern(index, target_output);
-	  // le damos el patron
-	  trainPattern(input, target_output);
+	  Token *input  = input_dataset->getPattern(index);
+	  Token *target = target_output_dataset->getPattern(index);
+	  input_bunch->push_back(input);
+	  target_bunch->push_back(target);
+	  if (input_bunch->size() == bunch_size) {
+	    trainPattern(ann_component, loss_function,
+			 input_bunch, target_bunch);
+	    input_bunch->clear();
+	    target_bunch->clear();
+	  }
+	}
+	if (input_bunch->size() > 0) {
+	  trainPattern(ann_component, loss_function,
+		       input_bunch, target_bunch);
 	}
 	delete[] vshuffle;
       } else { // 2 level permutation:
@@ -93,12 +105,24 @@ namespace Trainable {
 	for (int i = 0; i < divisor; i++) {
 	  for (int j = 0; j <= cociente; j++) { 
 	    index = (vshuffle2[j] << log2divisor) + vshuffle1[i];
-	    if (index < numberPatternsTrain) { 
-	      input_dataset->getPattern(index, input);
-	      target_output_dataset->getPattern(index, target_output);
-	      // le damos el patron
-	      trainPattern(input, target_output);
+	    if (index < numberPatternsTrain) {
+	      Token *input  = input_dataset->getPattern(index);
+	      Token *target = target_output_dataset->getPattern(index);
+	      input_bunch->push_back(input);
+	      target_bunch->push_back(target);
+	      if (input_bunch->size() == bunch_size) {
+		trainPattern(ann_component, loss_function,
+			     input_bunch, target_bunch);
+		input_bunch->clear();
+		target_bunch->clear();
+	      }
 	    }
+	  }
+	  if (input_bunch->size() > 0) {
+	    trainPattern(ann_component, loss_function,
+			 input_bunch, target_bunch);
+	    input_bunch->clear();
+	    target_bunch->clear();
 	  }
 	}
 	delete[] vshuffle1;
@@ -111,43 +135,61 @@ namespace Trainable {
 	trainPattern(input, target_output);
       }
     } // end of without shuffle
-    float error = endTrainingBatch();
-    delete[] input;
-    delete[] target_output;
+    float error = loss_function->getAccumLoss();
+    delete input_bunch;
+    delete target_bunch;
     return error;
   }
 
-  float TrainableSupervised::
-  trainDatasetWithReplacement(DataSetFloat	*input_dataset,
-			      DataSetFloat	*target_output_dataset,
+  static float TrainableSupervised::
+  trainDatasetWithReplacement(ANNComponent	*ann_component,
+			      LossFunction	*loss_function,
+			      unsigned int	 bunch_size,
+			      DataSetToken	*input_dataset,
+			      DataSetToken	*target_output_dataset,
 			      MTRand		*shuffle,
-			      int			 replacement)
+			      int		 replacement)
   {
     exitOnDatasetSizeError(input_dataset, target_output_dataset);
-    float *input            = new float[getInputSize()];
-    float *target_output    = new float[getOutputSize()];
     int numberPatternsTrain = input_dataset->numPatterns();
-    // entrenamos:
-    beginTrainingBatch();
+
+    TokenBunchVector *input_bunch  = new TokenBunchVector(bunch_size);
+    TokenBunchVector *output_bunch = new TokenBunchVector(bunch_size);
+    input_bunch->clear();
+    target_bunch->clear();
+    
     for (int i = 0; i < replacement; ++i) { 
       int index = shuffle->randInt(numberPatternsTrain-1);
-      input_dataset->getPattern(index, input);
-      target_output_dataset->getPattern(index, target_output);
-      trainPattern(input, target_output);
+      Token *input  = input_dataset->getPattern(index);
+      Token *target = target_output_dataset->getPattern(index);
+      input_bunch->push_back(input);
+      target_bunch->push_back(target);
+      if (input_bunch->size() == bunch_size) {
+	trainPattern(ann_component, loss_function,
+		     input_bunch, target_bunch);
+	input_bunch->clear();
+	target_bunch->clear();
+      }
     }
-    float error = endTrainingBatch();
-    delete[] input;
-    delete[] target_output;
+    if (input_bunch->size() > 0)
+      trainPattern(ann_component, loss_function,
+		   input_bunch, target_bunch);
+    float error = loss_function->getAccumLoss();
+    delete input_bunch;
+    delete target_bunch;
     return error;
   }
 
-  float TrainableSupervised::
-  trainDatasetWithDistribution(int num_classes,
-			       DataSetFloat **input_datasets,
-			       DataSetFloat **target_output_datasets,
-			       double *aprioris,
-			       MTRand *shuffle,
-			       int replacement)
+  static float TrainableSupervised::
+  trainDatasetWithDistribution(ANNComponent	 *ann_component,
+			       LossFunction	 *loss_function,
+			       unsigned int	  bunch_size,
+			       int		  num_classes,
+			       DataSetToken	**input_datasets,
+			       DataSetToken	**target_output_datasets,
+			       double		 *aprioris,
+			       MTRand		 *shuffle,
+			       int		  replacement)
   {
     int *ds_sizes = new int[num_classes];
     for (int i=0; i<num_classes; i++) {
@@ -155,18 +197,33 @@ namespace Trainable {
 			     target_output_datasets[i]);
       ds_sizes[i] = input_datasets[i]->numPatterns()-1;
     }
-    float *input            = new float[getInputSize()];
-    float *target_output    = new float[getOutputSize()];
+
+    TokenBunchVector *input_bunch  = new TokenBunchVector(bunch_size);
+    TokenBunchVector *output_bunch = new TokenBunchVector(bunch_size);
+    input_bunch->clear();
+    target_bunch->clear();
+    
     // creamos el random.dice
     dice *thedice = new dice(num_classes,aprioris);
-    // entrenamos
-    beginTrainingBatch();
     for (int i = 0; i < replacement; ++i) { 
       int whichclass = thedice->thrown(shuffle);
       int index = shuffle->randInt(ds_sizes[whichclass]);
-      input_datasets[whichclass]->getPattern(index, input);
-      target_output_datasets[whichclass]->getPattern(index, target_output);
-      trainPattern(input, target_output);
+      Token *input  = input_datasets[whichclass]->getPattern(index);
+      Token *target = target_output_datasets[whichclass]->getPattern(index);
+      input_bunch->push_back(input);
+      target_bunch->push_back(target);
+      if (input_bunch->size() == bunch_size) {
+	trainPattern(ann_component, loss_function,
+		     input_bunch, target_bunch);
+	input_bunch->clear();
+	target_bunch->clear();
+      }
+    }
+    if (input_bunch->size() > 0) {
+      trainPattern(ann_component, loss_function,
+		   input_bunch, target_bunch);
+      input_bunch->clear();
+      target_bunch->clear();
     }
     // liberamos memoria:
     delete thedice;
@@ -179,8 +236,11 @@ namespace Trainable {
   }
 
   // para validar con datasets
-  float TrainableSupervised::validateDataset(DataSetFloat *input_dataset,
-					     DataSetFloat *target_output_dataset)
+  static float TrainableSupervised::validateDataset(ANNComponent	*ann_component,
+						    LossFunction	*loss_function,
+						    unsigned int	 bunch_size,
+						    DataSetToken	*input_dataset,
+						    DataSetToken	*target_output_dataset)
   {
     exitOnDatasetSizeError(input_dataset,
 			   target_output_dataset);
@@ -199,11 +259,14 @@ namespace Trainable {
     return error;
   }
 
-  float TrainableSupervised::
-  validateDatasetWithReplacement(DataSetFloat *input_dataset,
-				 DataSetFloat *target_output_dataset,
-				 MTRand *shuffle,
-				 int replacement)
+  static float TrainableSupervised::
+  validateDatasetWithReplacement(ANNComponent	*ann_component,
+				 LossFunction	*loss_function,
+				 unsigned int	 bunch_size,
+				 DataSetToken	*input_dataset,
+				 DataSetToken	*target_output_dataset,
+				 MTRand		*shuffle,
+				 int		 replacement)
   {
     exitOnDatasetSizeError(input_dataset,
 			   target_output_dataset);
@@ -224,70 +287,26 @@ namespace Trainable {
   }
 
   // para calcular la salida de la red con datasets
-  void TrainableSupervised::useDataset(DataSetFloat *input_dataset,
-				       DataSetFloat *output_dataset)
+  static void TrainableSupervised::useDataset(ANNComponent	*ann_component,
+					      unsigned int	 bunch_size,
+					      DataSetToken	*input_dataset,
+					      DataSetToken	*output_dataset)
   {
-    exitOnDatasetSizeError(input_dataset,
-			   output_dataset);
-    
-    Functions::DataSetFloatProducer *producer;
-    Functions::DataSetFloatConsumer *consumer;
-    producer = new Functions::DataSetFloatProducer(input_dataset);
-    consumer = new Functions::DataSetFloatConsumer(output_dataset);
-    
-    calculateInPipeline(producer, getInputSize(),
-			consumer, getOutputSize());
-    
-    delete producer;
-    delete consumer;
+    /*
+      exitOnDatasetSizeError(input_dataset,
+      output_dataset);
+      
+      Functions::DataSetTokenProducer *producer;
+      Functions::DataSetTokenConsumer *consumer;
+      producer = new Functions::DataSetTokenProducer(input_dataset);
+      consumer = new Functions::DataSetTokenConsumer(output_dataset);
+      
+      calculateInPipeline(producer, getInputSize(),
+      consumer, getOutputSize());
+      
+      delete producer;
+      delete consumer;
+    */
   }
   
 }
-
-
-/*
-  void MLP::validate_dataset_with_weighted(DataSetFloat *input_dataset,
-  DataSetFloat *output_dataset,
-  DataSetFloat *weighted,
-  float *output_suma_ponderaciones,
-  int    num_ponderaciones,
-  float *mask)
-  {
-  #ifdef BUNCH
-  fprintf(stderr, "FUNCION NO PERMITIDA EN MODO BUNCH\n");
-  exit(123);
-  #endif
-  int numberPatternsValidate = input_dataset->numPatterns();
-  
-  // proporcionamos otro dataset que indica la ponderación de cada
-  // muestra presentada por tanto se trata de un dataset con el
-  // mismo numPatterns que los input_dataset y output_dataset
-  
-  float *ponderaciones      = new float[num_ponderaciones];
-  float *suma_ponderaciones = new float[num_ponderaciones];
-  float *sum_sqr_err        = new float[num_ponderaciones]; // lo que devuelve
-  for (int i=0; i < num_ponderaciones; i++) 
-  sum_sqr_err[i] = suma_ponderaciones[i] = 0;
-  for (int i = 0; i < numberPatternsValidate; i++) { 
-  input_dataset->getPattern(i,vector);
-  output_dataset->getPattern(i,desired_output);
-  weighted->getPattern(i,ponderaciones);
-  float msepattern = this->validate_pattern(mask);
-  for (int j=0; j < num_ponderaciones; j++) {
-  sum_sqr_err[j]        += ponderaciones[j]*msepattern;
-  suma_ponderaciones[j] += ponderaciones[j];
-  }
-  }
-  for (int i=0; i < num_ponderaciones; i++) {
-  // printf("suma_ponderaciones[%d] da %lf\n",
-  // i,suma_ponderaciones[i]);// PROVISIONAL
-  if (suma_ponderaciones[i] > 0)
-  output_suma_ponderaciones[i] = obtain_epoch_error(sum_sqr_err[i],
-  suma_ponderaciones[i]);
-  else output_suma_ponderaciones[i] = 0.0f;
-  delete[] ponderaciones;
-  delete[] suma_ponderaciones;
-  delete[] sum_sqr_err;
-  }
-  }
-*/

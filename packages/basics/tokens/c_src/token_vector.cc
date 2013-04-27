@@ -274,6 +274,29 @@ Token *TokenVector<char>::fromString(constString &cs) {
 
 // ------------------------- vector token -------------------------
 
+template <>
+TokenVector<Token*>::TokenVector(Token * const *vec, unsigned int vlength) :
+  vec(vec, vec+vlength) {
+  for (unsigned int i=0; i<vlength; ++i) IncRef(vec[i]);
+}
+
+template <>
+TokenVector<Token*>::TokenVector(const vector<Token*> &vec) :
+  vec(vec) {
+  for (unsigned int i=0; i<vec.size(); ++i) IncRef(vec[i]);
+}
+
+template<>
+void TokenVector<Token*>::clear() {
+  for (unsigned int i=0; i<vec.size(); ++i) {
+    if (vec[i]) {
+      DecRef(vec[i]);
+      vec[i] = 0;
+    }
+  }
+  vec.clear();
+}
+
 template<>
 void TokenVector<Token*>::push_back(Token *&data) {
   if (data) IncRef(data);

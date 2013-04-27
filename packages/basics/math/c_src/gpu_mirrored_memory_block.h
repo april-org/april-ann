@@ -36,7 +36,7 @@
 template<typename T>
 class GPUMirroredMemoryBlock {
   unsigned int size;
-  T     *mem_ppal;
+  T      *mem_ppal;
 #ifdef USE_CUDA  
   CUdeviceptr mem_gpu;
   char        updated; // bit 0 CPU, bit 1 GPU
@@ -229,7 +229,6 @@ public:
     return false;
 #endif
   }
-
 };
 
 // typedef for referring to float memory blocks
