@@ -180,7 +180,7 @@ function trainable.supervised_trainer:train_dataset(t)
 
     local sizes = {}
     for i,v in ipairs(params.distribution) do
-      if type(v.input_dataset) ~= "dataset.token" then
+      if isa(v.input_dataset, dataset) then
 	v.input_dataset  = dataset.token.wrapper(v.input_dataset)
 	v.output_dataset = dataset.token.wrapper(v.output_dataset)
       end
@@ -198,7 +198,7 @@ function trainable.supervised_trainer:train_dataset(t)
       table.insert(ds_idx_table, idx)
     end
   else
-    if not isa(params.input_dataset, dataset.token) then
+    if isa(params.input_dataset, dataset) then
       params.input_dataset  = dataset.token.wrapper(params.input_dataset)
       params.output_dataset = dataset.token.wrapper(params.output_dataset)
     end
@@ -259,7 +259,7 @@ function trainable.supervised_trainer:validate_dataset(t)
   -- for each pattern, index in corresponding datasets
   local ds_idx_table = {}
   self.loss_function:reset()
-  if type(params.input_dataset) ~= "dataset.token" then
+  if isa(params.input_dataset, dataset) then
     params.input_dataset  = dataset.token.wrapper(params.input_dataset)
     params.output_dataset = dataset.token.wrapper(params.output_dataset)
   end
