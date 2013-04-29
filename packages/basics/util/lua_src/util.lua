@@ -98,6 +98,7 @@ function april_help(t)
   end
   if #names > 0 then
     print(" -- Names in the namespace")
+    table.sort(names)
     for i,v in pairs(names) do
       print_data(v)
     end
@@ -105,6 +106,7 @@ function april_help(t)
   end
   if #classes > 0 then
     print(" -- Classes in the namespace")
+    table.sort(classes)
     for i,v in pairs(classes) do
       print_data(v)
     end
@@ -116,7 +118,10 @@ function april_help(t)
     else
       print(" -- Object functions (methods or static functions)")
     end
-    for i,v in pairs(funcs) do print_data(v) end
+    local aux = {}
+    for i,v in pairs(funcs) do table.insert(aux, v) end
+    table.sort(aux)
+    for i,v in ipairs(aux) do print_data(v) end
     print("")
   end
   if obj then
@@ -124,32 +129,39 @@ function april_help(t)
       local superclass_name = getmetatable(t).id
       t = getmetatable(t).__index
       print(" -- Inherited methods from " .. superclass_name)
+      local aux = {}
       for i,v in pairs(t) do
 	if type(v) == "function" then
-	  print_data(i)
+	  table.insert(aux,i)
 	end
       end
+      table.sort(aux)
+      for i,v in ipairs(aux) do print_data(v) end
       print("")
     end
   else
     if t.meta_instance and t.meta_instance.__index then
       print(" -- Methods")
+      local aux = {}
       for i,v in pairs(t.meta_instance.__index) do
 	if type(v) == "function" then
-	  print_data(i)
+	  table.insert(aux, i)
 	end
       end
+      for i,v in ipairs(aux) do print_data(v) end
       print("")
       t = t.meta_instance.__index
       while getmetatable(t) and getmetatable(t).__index do
 	local superclass_name = getmetatable(t).id
 	t = getmetatable(t).__index
 	print(" -- Inherited methods from " .. superclass_name)
+	local aux = {}
 	for i,v in pairs(t) do
 	  if type(v) == "function" then
-	    print_data(i)
+	    table.insert(aux, i)
 	  end
 	end
+	for i,v in ipairs(aux) do print_data(v) end
 	print("")
       end
     end

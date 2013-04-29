@@ -422,6 +422,7 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
 #endif
 }
 
+/*
 void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
 				  FloatGPUMirroredMemoryBlock *target_output,
 				  FloatGPUMirroredMemoryBlock *output_error,
@@ -475,6 +476,7 @@ void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
   }
 #endif
 }
+*/
 
 /*
   void doCalculateMixtureCrossEntropy(FloatGPUMirroredMemoryBlock *output,

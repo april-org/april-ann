@@ -34,7 +34,6 @@
 
 #include "gpu_mirrored_memory_block.h"
 #include "gpu_helper.h"
-#include "ann_configuration.h"
 
 #define NEAR_ZERO             1e-5f
 #define DERIVATIVE_SATURATION 17.0f
@@ -47,11 +46,13 @@
 #define getMatrixIndex(x,lda,y) ((x)*(lda)+(y))
 
 // ACTIVATION FUNCTIONS
-void applyMask(FloatGPUMirroredMemoryBlock *units,
-	       FloatGPUMirroredMemoryBlock *mask, float mask_value,
-	       unsigned int units_size,
-	       const ANNConfiguration &conf,
-	       bool use_gpu);
+/*
+  void applyMask(FloatGPUMirroredMemoryBlock *units,
+  FloatGPUMirroredMemoryBlock *mask, float mask_value,
+  unsigned int units_size,
+  const ANNConfiguration &conf,
+  bool use_gpu);
+*/
 
 void doApplyLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
 			       FloatGPUMirroredMemoryBlock *output_units,
@@ -99,6 +100,19 @@ void doApplySoftsignActivation(FloatGPUMirroredMemoryBlock *input_units,
 			       bool use_gpu);
 
 void doMultiplySoftsignDerivatives(FloatGPUMirroredMemoryBlock *output_units,
+				   FloatGPUMirroredMemoryBlock *input_errors,
+				   FloatGPUMirroredMemoryBlock *output_errors,
+				   unsigned int size,
+				   unsigned int bunch_size,
+				   bool use_gpu);
+
+void doApplySoftplusActivation(FloatGPUMirroredMemoryBlock *input_units,
+			       FloatGPUMirroredMemoryBlock *output_units,
+			       unsigned int size,
+			       unsigned int bunch_size,
+			       bool use_gpu);
+
+void doMultiplySoftplusDerivatives(FloatGPUMirroredMemoryBlock *output_units,
 				   FloatGPUMirroredMemoryBlock *input_errors,
 				   FloatGPUMirroredMemoryBlock *output_errors,
 				   unsigned int size,
@@ -161,13 +175,15 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
 				   unsigned int bunch_size,
 				   bool use_gpu);
 
-void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
-				  FloatGPUMirroredMemoryBlock *target_output,
-				  FloatGPUMirroredMemoryBlock *output_error,
-				  FloatGPUMirroredMemoryBlock *pattern_errors,
-				  unsigned int output_size,
-				  const ANNConfiguration &conf,
-				  bool use_gpu);
+/*
+  void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
+  FloatGPUMirroredMemoryBlock *target_output,
+  FloatGPUMirroredMemoryBlock *output_error,
+  FloatGPUMirroredMemoryBlock *pattern_errors,
+  unsigned int output_size,
+  const ANNConfiguration &conf,
+  bool use_gpu);
+*/
 
 float doLocalFMeasureLossFunction(FloatGPUMirroredMemoryBlock *input,
 				  FloatGPUMirroredMemoryBlock *target,
