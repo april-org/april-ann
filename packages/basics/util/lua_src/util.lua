@@ -246,7 +246,7 @@ end
 --    unknown_word = { type_match = "string", mandatory = false, default = "<unk>" },
 --    factors = { type_match = "table", mandatory = true,
 --		getter = get_table_fields_ipairs{
---		  vocabulary = { type_match = "lexClass", mandatory = true },
+--		  vocabulary = { isa_match(lexClass), mandatory = true },
 --		  layers = { type_match = "table", mandatory = true,
 --			     getter = get_table_fields_ipairs{
 --			       actf = { type_match = "string", mandatory = true },
@@ -257,9 +257,10 @@ end
 --    },
 --  }
 local valid_get_table_fields_params_attributes = { type_match = true,
+						   isa_match  = true,
 						   mandatory  = true,
-						   getter = true,
-						   default = true }
+						   getter     = true,
+						   default    = true }
 function get_table_fields(params, t)
   local ret = {}
   for key,value in pairs(t) do
@@ -279,6 +280,9 @@ function get_table_fields(params, t)
     end
     if v ~= nil and data.type_match and type(v) ~= data.type_match then
       error("Incorrect field type: " .. key)
+    end
+    if v ~= nil and data.isa_match and not isa(v, data.isa_match) then
+      error("Incorrect field isa_match predicate: " .. key)
     end
     if data.getter then v=(t[key]~=nil and data.getter(t[key])) or nil end
     ret[key] = v
