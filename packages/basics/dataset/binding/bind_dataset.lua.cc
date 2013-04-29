@@ -1069,7 +1069,40 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   indexes = new int[bunch_size];
   LUABIND_TABLE_TO_VECTOR(1,uint,indexes,bunch_size);
   Token *token = obj->getPatternBunch(indexes,bunch_size);
+  delete[] indexes;
   LUABIND_RETURN(Token, token);
+}
+//BIND_END
+
+//BIND_METHOD DataSetToken putPattern
+{
+  int index;
+  Token *pattern;
+  LUABIND_CHECK_ARGN(==,2);
+  LUABIND_CHECK_PARAMETER(1, int);
+  LUABIND_CHECK_PARAMETER(2, Token);
+  LUABIND_GET_PARAMETER(1,int,index);
+  LUABIND_GET_PARAMETER(2,Token,pattern);
+  if (index < 1 || index > obj->numPatterns())
+    LUABIND_ERROR("index out of range");
+  obj->putPattern(index-1, pattern); // ojito que le RESTAMOS uno
+}
+//BIND_END
+
+//BIND_METHOD DataSetToken putPatternBunch
+{
+  unsigned int bunch_size;
+  int *indexes;
+  Token *pattern;
+  LUABIND_CHECK_ARGN(==,2);
+  LUABIND_CHECK_PARAMETER(1, table);
+  LUABIND_CHECK_PARAMETER(2, Token);
+  LUABIND_GET_PARAMETER(2,Token,pattern);
+  LUABIND_TABLE_GETN(1,bunch_size);
+  indexes = new int[bunch_size];
+  LUABIND_TABLE_TO_VECTOR(1,uint,indexes,bunch_size);
+  obj->putPatternBunch(indexes,bunch_size,pattern);
+  delete[] indexes;
 }
 //BIND_END
 

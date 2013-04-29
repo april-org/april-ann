@@ -29,13 +29,21 @@ namespace ANN {
   class CrossEntropyLossFunction : public LossFunction {
     float accumulated_loss;
     unsigned int N;
+    CrossEntropyLossFunction(unsigned int size, float accumulated_loss,
+			     unsigned int N) :
+      LossFunction(size),
+      accumulated_loss(accumulated_loss),
+      N(N) { }
   public:
     CrossEntropyLossFunction(unsigned int size);
     virtual ~CrossEntropyLossFunction();
     virtual float  addLoss(Token *input, Token *target);
-    virtual Token *computeGrandient(Token *input, Token *target);
+    virtual Token *computeGradient(Token *input, Token *target);
     virtual float  getAccumLoss();
     virtual void   reset();
+    virtual LossFunction *clone() {
+      return new CrossEntropyLossFunction(size, accumulated_loss, N);
+    }
   };
 }
 

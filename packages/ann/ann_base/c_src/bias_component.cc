@@ -138,6 +138,8 @@ namespace ANN {
   ANNComponent *BiasANNComponent::clone() {
     BiasANNComponent *component = new BiasANNComponent(name.c_str(),
 						       weights_name.c_str());
+    component->input_size    = input_size;
+    component->output_size   = output_size;
     component->learning_rate = learning_rate;
     component->momentum      = momentum;
     return component;

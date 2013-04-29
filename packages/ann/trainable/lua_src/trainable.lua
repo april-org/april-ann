@@ -27,8 +27,8 @@ function trainable.supervised_trainer:__call(ann_component,
 					     loss_function,
 					     bunch_size)
   local obj = {
-    ann_component    = ann_component,
-    loss_function    = loss_function,
+    ann_component    = ann_component or error("Needs an ANN component object"),
+    loss_function    = loss_function or false,
     weights_table    = {},
     components_table = {},
     weights_order    = {},
@@ -79,14 +79,16 @@ end
 function trainable.supervised_trainer:build(weights_table)
   self.weights_table = weights_table or {}
   self.weights_table,
-  self.components_table = self.ann_component:build(self.weights_table)
+  self.components_table = self.ann_component:build{ weights=self.weights_table }
   self.weights_order = {}
-  for name,_ in pairs(self.weights_table) do table.insert(self.weights_order,
-							  name) end
+  for name,_ in pairs(self.weights_table) do
+    table.insert(self.weights_order, name)
+  end
   table.sort(self.weights_order)
   self.components_order = {}
-  for name,_ in pairs(self.components_table) do table.insert(self.components_order,
-							     name) end
+  for name,_ in pairs(self.components_table) do
+    table.insert(self.components_order, name)
+  end
   table.sort(self.components_order)
   return self.weights_table,self.components_table
 end
@@ -302,8 +304,7 @@ function trainable.supervised_trainer:use_dataset(t)
 			 mandatory = (self.bunch_size == false),
 			 default=self.bunch_size },
     }, t)
-  if isa_match(params.input_dataset, dataset) then
-    is_dataset_token = false
+  if isa(params.input_dataset, dataset) then
     params.input_dataset = dataset.token.wrapper(params.input_dataset)
     if params.output_dataset then
       params.output_dataset = dataset.token.wrapper(params.output_dataset)
@@ -311,10 +312,12 @@ function trainable.supervised_trainer:use_dataset(t)
       local nump    = params.input_dataset:numPatterns()
       local outsize = self.ann_component:get_output_size()
       params.output_dataset = dataset.matrix(matrix(nump, outsize))
+      t.output_dataset      = params.output_dataset
       params.output_dataset = dataset.token.wrapper(params.output_dataset)
     end
   elseif not params.output_dataset then
-    params.output_dataset = dataset.token.vector(params.output_dataset)
+    params.output_dataset = dataset.token.vector(params.input_dataset:numPatterns())
+    t.output_dataset = params.output_dataset
   end
   local bunch_indexes = {}
   local nump = params.input_dataset:numPatterns()
@@ -322,10 +325,30 @@ function trainable.supervised_trainer:use_dataset(t)
     table.insert(bunch_indexes, i)
     if #bunch_indexes==params.bunch_size or i==nump then
       local input  = params.input_dataset:getPatternBunch(bunch_indexes)
-      local output = self:calculate(input)
-      params.output_dataset:putPattern(output)
+      local output = self.ann_component:forward(input)
+      params.output_dataset:putPatternBunch(bunch_indexes,output)
       bunch_indexes = {}
     end
   end
-  return params.output_dataset
+  return t.output_dataset
+end
+
+function trainable.supervised_trainer:clone()
+  local obj = {
+    ann_component    = self.ann_component:clone(),
+    loss_function    = self.loss_function:clone(),
+    weights_table    = {},
+    components_table = {},
+    weights_order    = {},
+    components_order = {},
+    bunch_size       = self.bunch_size,
+  }
+  obj = class_instance(obj, self, true)
+  if #self.weights_order > 0 then
+    for wname,connections in pairs(self.weights_table) do
+      obj.weights_table[wname] = connections:clone()
+    end
+    obj:build(obj.weights_table)
+  end
+  return obj
 end

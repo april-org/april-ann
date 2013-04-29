@@ -53,7 +53,7 @@ namespace ANN {
     return loss;
   }
 
-  Token *MSELossFunction::computeGrandient(Token *input, Token *target) {
+  Token *MSELossFunction::computeGradient(Token *input, Token *target) {
     if (input->getTokenCode() != table_of_token_codes::token_mem_block)
       ERROR_EXIT(128, "Incorrect token type, expected memory block\n");
     if (target->getTokenCode() != table_of_token_codes::token_mem_block)

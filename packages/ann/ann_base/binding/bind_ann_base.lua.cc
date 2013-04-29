@@ -374,7 +374,7 @@ using namespace ANN;
 	string key(lua_tostring(L, -1));
 	Connections *value = lua_toConnections(L, -2);
 	weights_dict[key]  = value;
-      // pop value + copy of key, leaving original key
+	// pop value + copy of key, leaving original key
 	lua_pop(L, 2);
 	// stack now contains: -1 => key; -2 => table
       }
@@ -457,6 +457,13 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD DotProductANNComponent clone
+{
+  LUABIND_RETURN(DotProductANNComponent,
+		 dynamic_cast<DotProductANNComponent*>(obj->clone()));
+}
+//BIND_END
+
 /////////////////////////////////////////////////////
 //                BiasANNComponent                 //
 /////////////////////////////////////////////////////
@@ -478,6 +485,13 @@ using namespace ANN;
   }
   obj = new BiasANNComponent(name, weights_name);
   LUABIND_RETURN(BiasANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD BiasANNComponent clone
+{
+  LUABIND_RETURN(BiasANNComponent,
+		 dynamic_cast<BiasANNComponent*>(obj->clone()));
 }
 //BIND_END
 
@@ -519,6 +533,13 @@ using namespace ANN;
 				   input_size, output_size,
 				   transpose_weights);
   LUABIND_RETURN(HyperplaneANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD HyperplaneANNComponent clone
+{
+  LUABIND_RETURN(HyperplaneANNComponent,
+		 dynamic_cast<HyperplaneANNComponent*>(obj->clone()));
 }
 //BIND_END
 
@@ -567,6 +588,13 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD StackANNComponent clone
+{
+  LUABIND_RETURN(StackANNComponent,
+		 dynamic_cast<StackANNComponent*>(obj->clone()));
+}
+//BIND_END
+
 /////////////////////////////////////////////////////
 //               JoinANNComponent                  //
 /////////////////////////////////////////////////////
@@ -600,6 +628,13 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD JoinANNComponent clone
+{
+  LUABIND_RETURN(JoinANNComponent,
+		 dynamic_cast<JoinANNComponent*>(obj->clone()));
+}
+//BIND_END
+
 /////////////////////////////////////////////////////
 //         ActivationFunctionANNComponent          //
 /////////////////////////////////////////////////////
@@ -611,6 +646,13 @@ using namespace ANN;
 //BIND_CONSTRUCTOR ActivationFunctionANNComponent
 {
   LUABIND_ERROR("Abstract class!!!");
+}
+//BIND_END
+
+//BIND_METHOD ActivationFunctionANNComponent clone
+{
+  LUABIND_RETURN(ActivationFunctionANNComponent,
+		 dynamic_cast<ActivationFunctionANNComponent*>(obj->clone()));
 }
 //BIND_END
 

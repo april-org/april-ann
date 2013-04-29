@@ -90,6 +90,8 @@ namespace ANN {
     obj = new HyperplaneANNComponent(name.c_str());
     obj->dot_product = dynamic_cast<DotProductANNComponent*>(dot_product->clone());
     obj->bias        = dynamic_cast<BiasANNComponent*>(bias->clone());
+    obj->input_size  = input_size;
+    obj->output_size = output_size;
     IncRef(obj->dot_product);
     IncRef(obj->bias);
     return obj;

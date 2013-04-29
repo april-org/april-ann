@@ -43,12 +43,13 @@ namespace ANN {
       if (error_output) DecRef(error_output);
     }
     virtual float  addLoss(Token *input, Token *target) = 0;
-    virtual Token *computeGrandient(Token *input, Token *target) = 0;
+    virtual Token *computeGradient(Token *input, Token *target) = 0;
     virtual float  getAccumLoss() = 0;
     virtual void   reset() {
       if (error_output) DecRef(error_output);
       error_output = 0;
     }
+    virtual LossFunction *clone() = 0;
   };
 }
 

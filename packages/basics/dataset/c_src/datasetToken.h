@@ -40,7 +40,10 @@ public:
   /// Get the pattern index to the vector pat
   virtual Token *getPatternBunch(const int *indexes,unsigned int bunch_size)=0;
   /// Put the given vector pat at pattern index
-  virtual int putPattern(int index, const Token *pat)=0;
+  virtual void putPattern(int index, Token *pat)=0;
+  /// Put the pattern bunch
+  virtual void putPatternBunch(const int *indexes,unsigned int bunch_size,
+			       Token *pat)=0;
 };
 
 class DataSetFloat2TokenWrapper : public DataSetToken {
@@ -73,20 +76,37 @@ class DataSetFloat2TokenWrapper : public DataSetToken {
     FloatGPUMirroredMemoryBlock *mem_block = token->getMemBlock();
     unsigned int mem_ptr_shift = 0;
     for (unsigned int i=0; i<bunch_size; ++i, ++mem_ptr_shift) {
-      static_cast<unsigned int>(ds->getPattern(indexes[i],
-					       aux_mem_block->getPPALForWrite()));
+      ds->getPattern(indexes[i],
+		     aux_mem_block->getPPALForWrite());
       doScopy(pattern_size, aux_mem_block, 0, 1,
 	      mem_block, mem_ptr_shift, bunch_size,
 	      false);
     }
     return token;
   }
-  int putPattern(int index, const Token *pat) {
-    /*
-      const float *v = pat->data();
-      ds->putPattern(index, v);
-    */
-    return 0;
+  void putPattern(int index, Token *pat) {
+    if (pat->getTokenCode() != table_of_token_codes::token_mem_block)
+      ERROR_EXIT(128, "Incorrect token type, expected token memory block\n");
+    TokenMemoryBlock *token_mem_block = pat->convertTo<TokenMemoryBlock*>();
+    FloatGPUMirroredMemoryBlock *mem_block = token_mem_block->getMemBlock();
+    const float *v = mem_block->getPPALForRead();
+    ds->putPattern(index, v);
+  }
+  
+  void putPatternBunch(const int *indexes,unsigned int bunch_size,
+		       Token *pat) {
+    if (pat->getTokenCode() != table_of_token_codes::token_mem_block)
+      ERROR_EXIT(128, "Incorrect token type, expected token memory block\n");
+    TokenMemoryBlock *token_mem_block = pat->convertTo<TokenMemoryBlock*>();
+    FloatGPUMirroredMemoryBlock *mem_block = token_mem_block->getMemBlock();
+    unsigned int mem_ptr_shift = 0;
+    for (unsigned int i=0; i<bunch_size; ++i, ++mem_ptr_shift) {
+      doScopy(pattern_size,
+	      mem_block, mem_ptr_shift, bunch_size,
+	      aux_mem_block, 0, 1,
+	      false);
+      ds->putPattern(indexes[i], aux_mem_block->getPPALForRead());
+    }
   }
 };
 

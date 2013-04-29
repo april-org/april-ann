@@ -67,7 +67,7 @@ using namespace ANN;
   Token *input, *target;
   LUABIND_GET_PARAMETER(1, Token, input);
   LUABIND_GET_PARAMETER(2, Token, target);
-  Token *error = obj->computeGrandient(input, target);
+  Token *error = obj->computeGradient(input, target);
   LUABIND_RETURN(Token, error);
 }
 //BIND_END
@@ -82,6 +82,12 @@ using namespace ANN;
 //BIND_METHOD LossFunction reset
 {
   obj->reset();
+}
+//BIND_END
+
+//BIND_METHOD LossFunction clone
+{
+  LUABIND_RETURN(LossFunction, obj->clone());
 }
 //BIND_END
 
