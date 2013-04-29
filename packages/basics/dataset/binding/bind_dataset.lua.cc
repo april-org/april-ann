@@ -1086,7 +1086,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   DataSetFloat *ds;
   LUABIND_GET_PARAMETER(1, DataSetFloat, ds);
   obj = new DataSetFloat2TokenWrapper(ds);
-  LUABIND_RETURN(DataSetToken, obj);
+  LUABIND_RETURN(DataSetFloat2TokenWrapper, obj);
 }
 //BIND_END
 

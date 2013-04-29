@@ -13,19 +13,6 @@ local function check_dataset_sizes(ds1, ds2)
   return true
 end
 
-local function make_token(t)
-  if type(t) == "table" then
-    local type_t1 = type(t[1])
-    if type_t1 == "table" then
-      return tokens.memblock(tokens.table.bunch(t))
-    elseif type_t1 == "token" then
-      error("Not implemented yet")
-    end
-  else
-    error("Not implemented yet")
-  end
-end
-
 -----------------------
 -- TRAINABLE CLASSES --
 -----------------------
@@ -33,7 +20,7 @@ end
 -- CLASS supervised_trainer
 april_set_doc("trainable.supervised_trainer",
 	      "Lua class for supervised machine learning models training")
-class("trainable.supervised_trainer", true)
+class("trainable.supervised_trainer")
 
 april_set_doc("trainable.supervised_trainer", "Methods")
 function trainable.supervised_trainer:__call(ann_component, loss_function)
@@ -211,7 +198,7 @@ function trainable.supervised_trainer:train_dataset(t)
       table.insert(ds_idx_table, idx)
     end
   else
-    if type(params.input_dataset) ~= "dataset.token" then
+    if not isa(params.input_dataset, dataset.token) then
       params.input_dataset  = dataset.token.wrapper(params.input_dataset)
       params.output_dataset = dataset.token.wrapper(params.output_dataset)
     end
