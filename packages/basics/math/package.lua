@@ -1,6 +1,6 @@
 package{ name = "math",
    version = "1.0",
-   depends = { "util", "ann_configuration" },
+   depends = { "util" },
    keywords = { },
    description = "Math library",
    -- targets como en ant

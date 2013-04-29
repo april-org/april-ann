@@ -179,6 +179,43 @@ __global__ void softsignDerKernel(const float *output_units,
   }
 }
 
+__global__ void softplusActKernel(const float *input_units,
+				  float *output_units,
+				  unsigned int max_x,
+				  unsigned int lda_x,
+				  unsigned int max_y) {
+  unsigned int matrix_x_pos, matrix_y_pos;
+  getColumnMajorBunchMatrixPositions(blockIdx,
+				     blockDim,
+				     threadIdx,
+				     matrix_x_pos,
+				     matrix_y_pos);
+  if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
+    unsigned int index  = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
+    output_units[index] = log1pf(expf(input_units[index]));
+  }
+}
+
+__global__ void softplusDerKernel(const float *output_units,
+				  const float *input_errors,
+				  float *output_errors,
+				  unsigned int max_x,
+				  unsigned int lda_x,
+				  unsigned int max_y) {
+  unsigned int matrix_x_pos, matrix_y_pos;
+  getColumnMajorBunchMatrixPositions(blockIdx,
+				     blockDim,
+				     threadIdx,
+				     matrix_x_pos,
+				     matrix_y_pos);
+  if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
+    unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
+    float value = clip(output_units[index], 0.0f + NEAR_ZERO,
+		       output_units[index] + NEAR_ZERO);
+    output_errors[index] = input_errors[index] * sigmoid(1.0f, value);
+  }
+}
+
 __global__ void minMaxFirstReduction(const float *input_units,
                                      float *minimums,
                                      float *maximums,
@@ -375,36 +412,38 @@ __global__ void applyRatio(float *output_units,
 ///////// Activations and derivatives wrappers ////////////
 ///////////////////////////////////////////////////////////
 
-void applyMask(FloatGPUMirroredMemoryBlock *units,
-	       FloatGPUMirroredMemoryBlock *mask, float mask_value,
-	       unsigned int units_size,
-	       const ANNConfiguration &conf,
-	       bool use_gpu) {
-#ifdef USE_CUDA
+/*
+  void applyMask(FloatGPUMirroredMemoryBlock *units,
+  FloatGPUMirroredMemoryBlock *mask, float mask_value,
+  unsigned int units_size,
+  const ANNConfiguration &conf,
+  bool use_gpu) {
+  #ifdef USE_CUDA
   if (use_gpu) {
-    float *units_ptr = units->getGPUForWrite();
-    float *mask_ptr  = mask->getGPUForRead();
-    dim3 block, grid;
-    computeBlockAndGridSizesForAColumnMajorBunch(conf, units_size,
-						 block, grid);
-    applyMaskKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-      (units_ptr, mask_ptr, mask_value,
-       conf.cur_bunch_size, conf.max_bunch_size, units_size);
+  float *units_ptr = units->getGPUForWrite();
+  float *mask_ptr  = mask->getGPUForRead();
+  dim3 block, grid;
+  computeBlockAndGridSizesForAColumnMajorBunch(conf, units_size,
+  block, grid);
+  applyMaskKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+  (units_ptr, mask_ptr, mask_value,
+  conf.cur_bunch_size, conf.max_bunch_size, units_size);
   }
   else {
-#endif
-    float *units_ptr      = units->getPPALForWrite();
-    const float *mask_ptr = mask->getPPALForRead();
-    for (unsigned int i=0; i<units_size; ++i) {
-      for (unsigned int b=0; b<conf.cur_bunch_size; ++b)
-	if (mask_ptr[b] < 1.0f) units_ptr[b] = mask_value;
-      units_ptr += conf.max_bunch_size;
-      mask_ptr  += conf.max_bunch_size;
-    }
-#ifdef USE_CUDA
+  #endif
+  float *units_ptr      = units->getPPALForWrite();
+  const float *mask_ptr = mask->getPPALForRead();
+  for (unsigned int i=0; i<units_size; ++i) {
+  for (unsigned int b=0; b<conf.cur_bunch_size; ++b)
+  if (mask_ptr[b] < 1.0f) units_ptr[b] = mask_value;
+  units_ptr += conf.max_bunch_size;
+  mask_ptr  += conf.max_bunch_size;
   }
-#endif
-}
+  #ifdef USE_CUDA
+  }
+  #endif
+  }
+*/
 
 void doApplyLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
 			       FloatGPUMirroredMemoryBlock *output_units,
@@ -639,6 +678,76 @@ void doMultiplySoftsignDerivatives(FloatGPUMirroredMemoryBlock *output_units,
       float value = clamp(output_units_ptr[i], -1.0f + NEAR_ZERO, 1.0f - NEAR_ZERO);
       float aux   = 1.0f + fabsf(value);
       output_errors_ptr[i] = input_errors_ptr[i] * 1.0f/(aux * aux);
+    }
+#ifdef USE_CUDA
+  }
+#endif
+}
+
+void doApplySoftplusActivation(FloatGPUMirroredMemoryBlock *input_units,
+			       FloatGPUMirroredMemoryBlock *output_units,
+			       unsigned int size,
+			       unsigned int bunch_size,
+			       bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    const float *input_units_ptr = units->getGPUForRead();
+    float *output_units_ptr      = units->getGPUForWrite();
+    dim3 block, grid;
+    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
+						 block, grid);
+    
+    softplusActKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (input_units_ptr,
+       output_units_ptr,
+       bunch_size,
+       bunch_size,
+       size);
+  }
+  else {
+#endif
+    const float *input_units_ptr = input_units->getPPALForRead();
+    float *output_units_ptr      = output_units->getPPALForWrite();
+    const unsigned int sz        = size*bunch_size;
+    for (unsigned int i=0; i<sz; ++i)
+      output_units_ptr[i] = log1pf(expf(input_units_ptr[i]));
+#ifdef USE_CUDA
+  }
+#endif
+}
+
+void doMultiplySoftplusDerivatives(FloatGPUMirroredMemoryBlock *output_units,
+				   FloatGPUMirroredMemoryBlock *input_errors,
+				   FloatGPUMirroredMemoryBlock *output_errors,
+				   unsigned int size,
+				   unsigned int bunch_size,
+				   bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    float *output_units_ptr       = output_units->getGPUForWrite();
+    const float *input_errors_ptr = input_errors->getGPUForRead();
+    float *output_errors_ptr      = output_errors->getGPUForWrite();
+    dim3 block, grid;
+    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
+						 block, grid);
+    softplusDerKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (output_units_ptr,
+       input_errors_ptr,
+       output_errors_ptr,
+       bunch_size,
+       bunch_size,
+       size);
+  }
+  else {
+#endif
+    const float *output_units_ptr = output_units->getPPALForRead();
+    const float *input_errors_ptr = input_errors->getPPALForRead();
+    float *output_errors_ptr      = output_errors->getPPALForWrite();
+    const unsigned int sz         = size*bunch_size;
+    for (unsigned int i=0; i<sz; ++i) {
+      float value = clamp(output_units_ptr[i], 0.0f + NEAR_ZERO,
+			  output_units_ptr[i] + NEAR_ZERO);
+      output_errors_ptr[i] = input_errors_ptr[i] * sigmoid(1.0f, value);
     }
 #ifdef USE_CUDA
   }
