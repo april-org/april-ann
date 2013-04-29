@@ -3,14 +3,12 @@
 -------------------------------
 
 local function check_dataset_sizes(ds1, ds2)
-  if ds1:numPatterns() ~= ds2:numPatterns() then
-    error(string.format("Different input/output datasets "..
-			  "numPatterns found: "..
-			  "%d != %d",
-			ds1:numPatterns(),
-			ds2:numPatterns()))
-  end
-  return true
+  assert(ds1:numPatterns() == ds2:numPatterns(),
+	 string.format("Different input/output datasets "..
+			 "numPatterns found: "..
+			 "%d != %d",
+		       ds1:numPatterns(),
+		       ds2:numPatterns()))
 end
 
 -----------------------
@@ -27,7 +25,7 @@ function trainable.supervised_trainer:__call(ann_component,
 					     loss_function,
 					     bunch_size)
   local obj = {
-    ann_component    = ann_component or error("Needs an ANN component object"),
+    ann_component    = assert(ann_component,"Needs an ANN component object"),
     loss_function    = loss_function or false,
     weights_table    = {},
     components_table = {},
@@ -52,9 +50,8 @@ function trainable.supervised_trainer:randomize_weights(t)
       use_fanin  = { type_match="boolean", mandatory = false, default = false },
       use_fanout = { type_match="boolean", mandatory = false, default = false },
     }, t)
-  if #self.weights_order == 0 then
-    error("Execute build method before randomize_weights")
-  end
+  assert(#self.weights_order > 0,
+	 "Execute build method before randomize_weights")
   for i,wname in ipairs(self.weights_order) do
     local current_inf = params.inf
     local current_sup = params.sup
@@ -157,15 +154,13 @@ function trainable.supervised_trainer:train_dataset(t)
       replacement    = { type_match = "number", mandatory = false, default=nil },
     }, t)
   -- ERROR CHECKING
-  if params.input_dataset == not params.output_dataset then
-    error("input_dataset and output_dataset fields are mandatory together")
-  end
-  if params.input_dataset and params.distribution then
-    error("input_dataset/output_dataset fields are forbidden with distribution")
-  end
+  assert(params.input_dataset ~= not params.output_dataset,
+	 "input_dataset and output_dataset fields are mandatory together")
+  assert(not params.input_dataset or not params.distribution,
+	 "input_dataset/output_dataset fields are forbidden with distribution")
   --
   
-  if params.distribution then error("Distribution is not correctly implemented") end
+  assert(not params.distribution, "Distribution is not correctly implemented")
   -- TRAINING TABLES
   
   -- for each pattern, a pair of input/output datasets (or nil if not
@@ -178,8 +173,8 @@ function trainable.supervised_trainer:train_dataset(t)
   if params.distribution then
     -- Training with distribution: given a table of datasets the patterns are
     -- sampled following the given apriory probability
-    local _=params.shuffle or error("shuffle is mandatory with distribution")
-    local _=params.replacement or error("replacement is mandatory with distribution")
+    assert(params.shuffle,"shuffle is mandatory with distribution")
+    assert(params.replacement,"replacement is mandatory with distribution")
 
     local sizes = {}
     for i,v in ipairs(params.distribution) do
@@ -210,7 +205,7 @@ function trainable.supervised_trainer:train_dataset(t)
     -- generate training tables depending on training mode (replacement,
     -- shuffled, or sequential)
     if params.replacement then
-      local _=params.shuffle or error("shuffle is mandatory with replacement")
+      assert(params.shuffle,"shuffle is mandatory with replacement")
       for i=1,params.replacement do
 	table.insert(ds_idx_table, param.shuffle:randInt(1,num_patterns))
       end
@@ -249,12 +244,10 @@ function trainable.supervised_trainer:validate_dataset(t)
       replacement    = { type_match = "number", mandatory = false, default=nil },
     }, t)
   -- ERROR CHECKING
-  if params.input_dataset == not params.output_dataset then
-    error("input_dataset and output_dataset fields are mandatory together")
-  end
-  if params.input_dataset and params.distribution then
-    error("input_dataset/output_dataset fields are forbidden with distribution")
-  end
+  assert(params.input_dataset ~= not params.output_dataset,
+	 "input_dataset and output_dataset fields are mandatory together")
+  assert(not params.input_dataset or not params.distribution,
+	 "input_dataset/output_dataset fields are forbidden with distribution")
   -- TRAINING TABLES
   
   -- for each pattern, index in corresponding datasets
@@ -269,7 +262,7 @@ function trainable.supervised_trainer:validate_dataset(t)
   -- generate training tables depending on training mode (replacement,
   -- shuffled, or sequential)
   if params.replacement then
-    local _=params.shuffle or error("shuffle is mandatory with replacement")
+    assert(params.shuffle,"shuffle is mandatory with replacement")
     for i=1,params.replacement do
       table.insert(ds_idx_table, param.shuffle:randInt(1,num_patterns))
     end
