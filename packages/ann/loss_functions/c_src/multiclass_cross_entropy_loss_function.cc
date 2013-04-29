@@ -26,10 +26,10 @@ namespace ANN {
 
   MultiClassCrossEntropyLossFunction::MultiClassCrossEntropyLossFunction(unsigned int size) :
     LossFunction(size), accumulated_loss(0.0f), N(0) {
-    if (size < 2)
+    if (size < 3)
       ERROR_EXIT(128,
 		 "Multi class cross entropy is only allowed for multi-class "
-		 "problems (more than one output log softmax neurons). "
+		 "problems (three or more output log softmax neurons). "
 		 "Use cross entropy instead.\n");
   }
   
