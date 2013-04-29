@@ -23,14 +23,17 @@ april_set_doc("trainable.supervised_trainer",
 class("trainable.supervised_trainer")
 
 april_set_doc("trainable.supervised_trainer", "Methods")
-function trainable.supervised_trainer:__call(ann_component, loss_function)
+function trainable.supervised_trainer:__call(ann_component,
+					     loss_function,
+					     bunch_size)
   local obj = {
     ann_component    = ann_component,
     loss_function    = loss_function,
     weights_table    = {},
     components_table = {},
     weights_order    = {},
-    components_order = {}
+    components_order = {},
+    bunch_size       = bunch_size or false,
   }
   obj = class_instance(obj, self, true)
   return obj
@@ -43,11 +46,11 @@ end
 function trainable.supervised_trainer:randomize_weights(t)
   local params = get_table_fields(
     {
-      random  = { mandatory = true },
-      inf     = { mandatory = true },
-      sup     = { mandatory = true },
-      use_fanin  = { mandatory = false, default = false },
-      use_fanout = { mandatory = false, default = false },
+      random  = { isa_match = random,  mandatory = true },
+      inf     = { type_match="number", mandatory = true },
+      sup     = { type_match="number", mandatory = true },
+      use_fanin  = { type_match="boolean", mandatory = false, default = false },
+      use_fanout = { type_match="boolean", mandatory = false, default = false },
     }, t)
   if #self.weights_order == 0 then
     error("Execute build method before randomize_weights")
@@ -121,7 +124,7 @@ april_set_doc("trainable.supervised_trainer",
 	      "\ttrain_step(t) => performs one training epoch with a given "..
 		" table with datasets. Arguments:")
 april_set_doc("trainable.supervised_trainer",
-	      "\t                 t.bunch_size  mini batch size (bunch)")
+	      "\t                 [t.bunch_size]  mini batch size (bunch)")
 april_set_doc("trainable.supervised_trainer",
 	      "\t                 [t.input_dataset]  dataset with input patterns")
 april_set_doc("trainable.supervised_trainer",
@@ -137,7 +140,7 @@ function trainable.supervised_trainer:train_dataset(t)
     {
       input_dataset  = { mandatory = false, default=nil },
       output_dataset = { mandatory = false, default=nil },
-      distribution   = { mandatory = false, default=nil,
+      distribution   = { type_match="table", mandatory = false, default=nil,
 			 getter = get_table_fields_ipairs{
 			   input_dataset  = { mandatory=true },
 			   output_dataset = { mandatory=true },
@@ -145,8 +148,10 @@ function trainable.supervised_trainer:train_dataset(t)
 					      mandatory=true },
 			 },
       },
-      bunch_size     = { type_match = "number", mandatory = true },
-      shuffle        = { type_match = "random", mandatory = false, default=nil },
+      bunch_size     = { type_match = "number",
+			 mandatory = (self.bunch_size == false),
+			 default=self.bunch_size },
+      shuffle        = { isa_match  = random,   mandatory = false, default=nil },
       replacement    = { type_match = "number", mandatory = false, default=nil },
     }, t)
   -- ERROR CHECKING
@@ -159,11 +164,6 @@ function trainable.supervised_trainer:train_dataset(t)
   --
   
   if params.distribution then error("Distribution is not correctly implemented") end
-  
-  -- params.ann  = self.ann_component
-  -- params.loss = self.loss_function
-  -- trainable.supervised_trainer_static_functions.train_dataset(params)
-
   -- TRAINING TABLES
   
   -- for each pattern, a pair of input/output datasets (or nil if not
@@ -171,6 +171,7 @@ function trainable.supervised_trainer:train_dataset(t)
   local ds_pat_table = {}
   -- for each pattern, index in corresponding datasets
   local ds_idx_table = {}
+  -- set to ZERO the accumulated of loss
   self.loss_function:reset()
   if params.distribution then
     -- Training with distribution: given a table of datasets the patterns are
@@ -235,16 +236,14 @@ function trainable.supervised_trainer:train_dataset(t)
 end
 
 function trainable.supervised_trainer:validate_dataset(t)
-  -- t.ann  = self.ann_component
-  -- t.loss = self.loss_function
-  -- trainable.supervised_trainer_static_functions.validate_dataset(t)
-
   local params = get_table_fields(
     {
-      input_dataset  = { mandatory = true, default=nil },
-      output_dataset = { mandatory = true, default=nil },
-      bunch_size     = { type_match = "number", mandatory = true },
-      shuffle        = { type_match = "random", mandatory = false, default=nil },
+      input_dataset  = { mandatory = true },
+      output_dataset = { mandatory = true },
+      bunch_size     = { type_match = "number",
+			 mandatory = (self.bunch_size == false),
+			 default=self.bunch_size },
+      shuffle        = { isa_match  = random, mandatory = false, default=nil },
       replacement    = { type_match = "number", mandatory = false, default=nil },
     }, t)
   -- ERROR CHECKING
@@ -295,6 +294,38 @@ function trainable.supervised_trainer:validate_dataset(t)
 end
 
 function trainable.supervised_trainer:use_dataset(t)
-  -- t.ann  = self.ann_component
-  -- trainable.supervised_trainer_static_functions.use_dataset(t)
+  local params = get_table_fields(
+    {
+      input_dataset  = { mandatory = true },
+      output_dataset = { mandatory = false, default=nil },
+      bunch_size     = { type_match = "number",
+			 mandatory = (self.bunch_size == false),
+			 default=self.bunch_size },
+    }, t)
+  if isa_match(params.input_dataset, dataset) then
+    is_dataset_token = false
+    params.input_dataset = dataset.token.wrapper(params.input_dataset)
+    if params.output_dataset then
+      params.output_dataset = dataset.token.wrapper(params.output_dataset)
+    else
+      local nump    = params.input_dataset:numPatterns()
+      local outsize = self.ann_component:get_output_size()
+      params.output_dataset = dataset.matrix(matrix(nump, outsize))
+      params.output_dataset = dataset.token.wrapper(params.output_dataset)
+    end
+  elseif not params.output_dataset then
+    params.output_dataset = dataset.token.vector(params.output_dataset)
+  end
+  local bunch_indexes = {}
+  local nump = params.input_dataset:numPatterns()
+  for i=1,nump do
+    table.insert(bunch_indexes, i)
+    if #bunch_indexes==params.bunch_size or i==nump then
+      local input  = params.input_dataset:getPatternBunch(bunch_indexes)
+      local output = self:calculate(input)
+      params.output_dataset:putPattern(output)
+      bunch_indexes = {}
+    end
+  end
+  return params.output_dataset
 end

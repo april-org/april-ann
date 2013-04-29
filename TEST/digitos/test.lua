@@ -77,7 +77,8 @@ thenet:set_option("learning_rate", learning_rate)
 thenet:set_option("momentum",      momentum)
 thenet:set_option("weight_decay",  weight_decay)
 trainer = trainable.supervised_trainer(thenet,
-				       ann.loss.multi_class_cross_entropy(10))
+				       ann.loss.multi_class_cross_entropy(10),
+				       bunch_size)
 trainer:build()
 trainer:randomize_weights{
   random      = weights_random,
@@ -91,13 +92,11 @@ datosentrenar = {
   input_dataset  = train_input,
   output_dataset = train_output,
   shuffle        = shuffle_random,
-  bunch_size     = bunch_size,
 }
 
 datosvalidar = {
   input_dataset  = val_input,
   output_dataset = val_output,
-  bunch_size     = bunch_size,
 }
 
 totalepocas = 0
