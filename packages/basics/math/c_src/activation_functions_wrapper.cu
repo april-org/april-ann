@@ -5,7 +5,7 @@
  * Copyright 2012, Salvador España-Boquera, Adrian Palacios Corella, Francisco
  * Zamora-Martinez
  *
- * The APRIL-MLP toolkit is free software; you can redistribute it and/or modify it
+ * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
  * published by the Free Software Foundation
  *
@@ -320,7 +320,7 @@ __global__ void applyExpMinus(const float *input_units,
 				     matrix_y_pos);
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index  = getMatrixIndex(matrix_x_pos, lda_x, matrix_y_pos);
-    output_units[index] = exp(input_units[index] - data[matrix_y_pos]);
+    output_units[index] = expf(input_units[index] - data[matrix_y_pos]);
   }
 }
 
@@ -431,7 +431,6 @@ void doApplyLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
     float *output_units_ptr      = output_units->getPPALForWrite();
     const unsigned int sz        = size*bunch_size;
     for (unsigned int i=0; i<sz; ++i)
-      // ATTENTION: In 64-bit machines is better to use exp than expf
       output_units_ptr[i] = sigmoid(1.0f, input_units_ptr[i]);
 #ifdef USE_CUDA
   }
@@ -500,7 +499,6 @@ void doApplyLogLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
     float *output_units_ptr      = output_units->getPPALForWrite();
     const unsigned int sz        = size*bunch_size;
     for (unsigned int i=0; i<sz; ++i)
-      // ATTENTION: In 64-bit machines is better to use exp than expf
       output_units_ptr[i] = logsigmoid(input_units_ptr[i]);
 #ifdef USE_CUDA
   }
@@ -772,9 +770,10 @@ void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
       double addition = 0;
       cur_pos = 0;
       for (unsigned int i = 0; i < size; i++) {
-	output_units_ptr[cur_pos] = exp(input_units_ptr[cur_pos] - minimum);
-	addition += output_units_ptr[cur_pos];
-	cur_pos += bunch_size;
+	double e = exp(input_units_ptr[cur_pos] - minimum);
+	output_units_ptr[cur_pos] = e;
+	addition += e;
+	cur_pos  += bunch_size;
       }
       float ratio = 1.0f/addition;
       cblas_sscal(size, ratio, output_units_ptr, bunch_size);
@@ -906,7 +905,7 @@ void doApplyLogSoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
 	output_units_ptr[cur_pos] = input_units_ptr[cur_pos];
 	double exp_output = exp(output_units_ptr[cur_pos] - maximum);
 	addition += exp_output;
-	cur_pos += bunch_size;
+	cur_pos  += bunch_size;
       }
       float ratio = maximum + log(addition);
       cur_pos = 0;

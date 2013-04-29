@@ -27,8 +27,6 @@
 using april_utils::clamp;
 
 #define clip(value, min, max) (((value) < (min)) ? (min) : (((value) > (max)) ? (max) : (value)))
-// ATTENTION: In 64-bit machines is better to use exp than expf
-#define sigmoid(numerator,value) (numerator) / (exp(-(value))+1.0f)
 
 ///////////////////////////////////////////////////////////
 /////////////////// Kernels ///////////////////////////////
@@ -119,7 +117,7 @@ __global__ void computeCrossEntropyLossFunctionKernel(const float *output,
     // compute derivative
     // float o         = clip(output[index], epsilon, 1.0f - epsilon);
     float log_o     = output[index];
-    float log_inv_o = log(1.0 - exp(log_o));
+    float log_inv_o = log(1.0 - expf(log_o));
     float t         = clip(target_output[index], epsilon, 1.0f - epsilon);
     float inv_t     = clip(1.0f - target_output[index], epsilon, 1.0f - epsilon);
     if (t > epsilon) pattern_errors[index] += t * log_o;
@@ -143,7 +141,7 @@ __global__ void computeCrossEntropyGradientKernel(const float *output,
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
     // compute derivative
-    error_output[index] = exp(output[index]) - target_output[index];
+    error_output[index] = expf(output[index]) - target_output[index];
   }
 }
 
@@ -314,7 +312,7 @@ float doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
 	       "Only [0,1] target patterns are allowed");
 	// compute derivative
 	float log_o     = input_ptr[b];
-	float log_inv_o = log(1.0 - exp(input_ptr[b]));
+	float log_inv_o = log(1.0 - expf(input_ptr[b]));
 	float t         = clamp(target_ptr[b], EPSILON, 1.0f - EPSILON);
 	float inv_t     = clamp(1.0f - target_ptr[b], EPSILON, 1.0f - EPSILON);
 	if (t > EPSILON)     sum += t * log_o;
@@ -414,7 +412,7 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
     float *error_output_ptr = error_output->getPPALForReadAndWrite();
     for (unsigned int i = 0; i < size; i++) {
       for (unsigned int b=0; b<bunch_size; ++b)
-	error_output_ptr[b] = exp(input_ptr[b]) - target_ptr[b];
+	error_output_ptr[b] = expf(input_ptr[b]) - target_ptr[b];
       input_ptr  += bunch_size;
       target_ptr += bunch_size;
       error_output_ptr += bunch_size;

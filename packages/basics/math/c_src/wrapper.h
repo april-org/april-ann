@@ -40,8 +40,8 @@
 #define DERIVATIVE_SATURATION 17.0f
 
 // ATTENTION: In 64-bit machines is better to use exp than expf
-#define sigmoid(numerator,value) (numerator) / (exp(-(value))+1.0f)
-#define logsigmoid(value) -log(exp(-(value))+1.0f)
+#define sigmoid(numerator,value) (numerator) / (expf(-(value))+1.0f)
+#define logsigmoid(value) -log1pf(expf(-(value)))
 
 #define getMatrixFlatIndex(x,lda,y) ((x)+(y)*(lda))
 #define getMatrixIndex(x,lda,y) ((x)*(lda)+(y))
