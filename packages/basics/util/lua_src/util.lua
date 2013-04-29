@@ -1,5 +1,6 @@
--- Convert a table in a class
-function class(classname)
+-- Convert a table in a class, and it receives an optional parent class to
+-- implement simple heritance
+function class(classname, parentclass)
   local t = string.tokenize(classname, ".")
   _G[t[1]] = _G[t[1]] or {}
   local current = _G[t[1]]
@@ -7,15 +8,40 @@ function class(classname)
     current[t[i]] = current[t[i]] or {}
     current = current[t[i]]
   end
-  current.__index = current
+  if not parentclass then
+    current.__index = current
+  else
+    current.__index = parentclass
+  end
+  -- To be coherent with C++ binded classes
+  current.meta_instance = { __index = current }
   setmetatable(current, current)
 end
 
+-- Converts a Lua table in an instance of the given class. An optional
+-- nonmutable boolean with true indicates if the resulting table field names are
+-- static (is not possible to add new fields, but yes to modify)
 function class_instance(obj, class, nonmutable)
   setmetatable(obj, class)
   if nonmutable then obj.__index = class end
   return obj
 end
+
+-- Predicate which returns true if a given object instance is a subclass of a
+-- given Lua table (it works for Lua class(...) and C++ binding)
+function isa( object_instance, base_class_table )
+  local base_class_meta = (base_class_table.meta_instance or {}).__index
+  local object_table    = object_instance
+  local _isa            = false
+  while (not _isa and object_table and getmetatable(object_table) and
+	 getmetatable(object_table).__index) do
+    local t = getmetatable(object_table).__index
+    _isa = (t == base_class_meta)
+    object_table = t
+  end
+  return _isa
+end
+
 
 -- help documentation
 function april_set_doc(table_name, docstring)
