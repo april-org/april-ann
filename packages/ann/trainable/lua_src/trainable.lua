@@ -327,16 +327,12 @@ function trainable.supervised_trainer:use_dataset(t)
 end
 
 function trainable.supervised_trainer:clone()
-  local obj = {
-    ann_component    = self.ann_component:clone(),
-    loss_function    = self.loss_function:clone(),
-    weights_table    = {},
-    components_table = {},
-    weights_order    = {},
-    components_order = {},
-    bunch_size       = self.bunch_size,
-  }
-  obj = class_instance(obj, self, true)
+  local obj = trainable.supervised_trainer(self.ann_component:clone(),
+					   nil,
+					   self.bunch_size)
+  if self.loss_function then
+    obj:set_loss_function(self.loss_function:clone())
+  end
   if #self.weights_order > 0 then
     for wname,connections in pairs(self.weights_table) do
       obj.weights_table[wname] = connections:clone()
