@@ -255,6 +255,8 @@ namespace ANN {
       DotProductANNComponent(name.c_str(), weights_name.c_str(),
 			     input_size, output_size,
 			     (transpose_weights == CblasTrans));
+    component->input_size     = input_size;
+    component->output_size    = output_size;
     component->learning_rate  = learning_rate;
     component->momentum       = momentum;
     component->weight_decay   = weight_decay;

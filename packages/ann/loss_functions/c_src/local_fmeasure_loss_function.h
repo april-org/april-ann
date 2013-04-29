@@ -31,14 +31,25 @@ namespace ANN {
     bool  complement_output;
     float accumulated_loss;
     unsigned int N;
+    LocalFMeasureLossFunction(unsigned int size, float beta, float Gab,
+			      float Hab, bool complement_output,
+			      float accumulated_loss, unsigned int N) :
+      LossFunction(size), beta(beta), Gab(Gab), Hab(Hab),
+      complement_output(complement_output), accumulated_loss(accumulated_loss),
+      N(N) { }
   public:
     LocalFMeasureLossFunction(unsigned int size, float beta=1.0f,
 			      bool complement_output=false);
     virtual ~LocalFMeasureLossFunction();
     virtual float  addLoss(Token *input, Token *target);
-    virtual Token *computeGrandient(Token *input, Token *target);
+    virtual Token *computeGradient(Token *input, Token *target);
     virtual float  getAccumLoss();
     virtual void reset();
+    virtual LossFunction *clone() {
+      return new LocalFMeasureLossFunction(size, beta, Gab, Hab,
+					   complement_output,
+					   accumulated_loss, N);
+    }
   };
 }
 

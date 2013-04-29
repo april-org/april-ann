@@ -209,6 +209,8 @@ namespace ANN {
     JoinANNComponent *join_component = new JoinANNComponent(name.c_str());
     for (unsigned int i=0; i<components.size(); ++i)
       join_component->addComponent(components[i]->clone());
+    join_component->input_size  = input_size;
+    join_component->output_size = output_size;
     return join_component;
   }
 

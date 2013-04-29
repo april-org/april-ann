@@ -68,7 +68,6 @@ namespace ANN {
       ERROR_EXIT(129,"Incorrect input error Token type, expected token_mem_block!\n");
     // change current input by new input
     AssignRef(error_input,_error_input->convertTo<TokenMemoryBlock*>());
-    IncRef(error_input);
     // compute current bunch
     unsigned int bunch_size = error_input->getUsedSize() / output_size;
     if (bunch_size != this->bunch_size)
