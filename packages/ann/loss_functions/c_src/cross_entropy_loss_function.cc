@@ -45,7 +45,9 @@ namespace ANN {
     TokenMemoryBlock *input_mem_token = input->convertTo<TokenMemoryBlock*>();
     TokenMemoryBlock *target_mem_block = target->convertTo<TokenMemoryBlock*>();
     if (input_mem_token->getUsedSize() != target_mem_block->getUsedSize())
-      ERROR_EXIT(128, "Different token sizes found\n");
+      ERROR_EXIT2(128, "Different token sizes found: input=%d vs target=%d\n",
+		  input_mem_token->getUsedSize(),
+		  target_mem_block->getUsedSize());
     //
     unsigned int bunch_size = input_mem_token->getUsedSize() / size;
     float loss = doCrossEntropyLossFunction(input_mem_token->getMemBlock(),

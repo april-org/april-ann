@@ -45,6 +45,7 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "hyperplane_component.h"
 #include "stack_component.h"
 #include "join_component.h"
+#include "copy_component.h"
 #include "activation_function_component.h"
 #include "connection.h"
 #include "activation_function_component.h"
@@ -200,13 +201,15 @@ using namespace ANN;
 {
   LUABIND_CHECK_ARGN(<=,1);
   int argn = lua_gettop(L);
-  const char *name = 0;
+  const char *name  = 0;
+  unsigned int size = 0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", 0);
+    check_table_fields(L, 1, "name", "size", 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint,   size, 0);
   }
-  obj = new ANNComponent(name);
+  obj = new ANNComponent(name, 0, size, size);
   LUABIND_RETURN(ANNComponent, obj);
 }
 //BIND_END
@@ -633,6 +636,38 @@ using namespace ANN;
 {
   LUABIND_RETURN(JoinANNComponent,
 		 dynamic_cast<JoinANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//               CopyANNComponent                  //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME CopyANNComponent ann.components.copy
+//BIND_CPP_CLASS    CopyANNComponent
+//BIND_SUBCLASS_OF  CopyANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR CopyANNComponent
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  unsigned int input_size=0, output_size=0, times;
+  check_table_fields(L, 1, "times", "name", "input", "output", 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, times, uint, times, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input, uint, input_size, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, output, uint, output_size, 0);
+  obj = new CopyANNComponent(times, name, input_size, output_size);
+  LUABIND_RETURN(CopyANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD CopyANNComponent clone
+{
+  LUABIND_RETURN(CopyANNComponent,
+		 dynamic_cast<CopyANNComponent*>(obj->clone()));
 }
 //BIND_END
 

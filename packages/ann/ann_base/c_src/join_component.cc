@@ -129,11 +129,11 @@ namespace ANN {
       TokenMemoryBlock *component_output_mem_block;
       component_output_mem_block = (*token)[i]->convertTo<TokenMemoryBlock*>();
       unsigned int sz = component_output_mem_block->getUsedSize();
-      assert(output->getUsedSize() <= pos + sz);
+      assert(component_output_mem_block->getUsedSize() <= pos + sz);
       // copy from component_output to output Token
       doScopy(sz,
 	      component_output_mem_block->getMemBlock(), 0, 1,
-	      output->getMemBlock(), pos, 1,
+	      mem_block_token->getMemBlock(), pos, 1,
 	      use_cuda);
       //
       pos += sz;
@@ -167,9 +167,7 @@ namespace ANN {
   Token *JoinANNComponent::doBackprop(Token *_error_input) {
     if (_error_input->getTokenCode() != table_of_token_codes::token_mem_block)
       ERROR_EXIT(128, "Incorrect error input token type\n");
-    if (error_input) DecRef(error_input);
-    error_input = _error_input->convertTo<TokenMemoryBlock*>();
-    IncRef(error_input);
+    AssignRef(error_input, _error_input->convertTo<TokenMemoryBlock*>());
     // INFO: will be possible to put this method inside previous loop, but seems
     // more simpler a decoupled code
     buildErrorInputBunchVector(error_input_vector, _error_input);
