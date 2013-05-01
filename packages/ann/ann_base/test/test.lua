@@ -31,10 +31,7 @@ function show_weights(trainer, filter)
 	   value)
   end
   print()
-  for _,wname in ipairs({ "b1", "w1", "b2", "w2" }) do
-    local w = trainer.weights_table[wname]:weights():toTable()
-    print(wname, table.concat(w, " "))
-  end
+  trainer:show_weights()
 end
 -----------------------------------------------------------
 
@@ -68,8 +65,8 @@ net_component=ann.components.stack()
 net_component:push( ann.components.copy{ times=2, input=2 } )
 join=ann.components.join() net_component:push( join )
 h1 = ann.components.stack()
-h1.push( ann.components.hyperplane{ input=2, output=2 } )
-h1.push( ann.components.tanh() )
+h1:push( ann.components.hyperplane{ input=2, output=2 } )
+h1:push( ann.components.tanh() )
 join:add( h1 )
 join:add( ann.components.base{ size=2 } )
 net_component:push( ann.components.hyperplane{ input=4, output=1 })

@@ -37,10 +37,12 @@ namespace ANN {
     error_input_vector(new TokenBunchVector()),
     output_vector(new TokenBunchVector()),
     error_output_vector(new TokenBunchVector()),
-    segmented_input(false) {
+    segmented_input(false),
+    bunch_size(0) {
     IncRef(input_vector);
     IncRef(error_input_vector);
     IncRef(output_vector);
+    IncRef(error_output_vector);
   }
   
   JoinANNComponent::~JoinANNComponent() {
@@ -61,19 +63,21 @@ namespace ANN {
     IncRef(component);
   }
 
-  void JoinANNComponent::buildInputBunchVector(TokenBunchVector *&vector_token,
+  void JoinANNComponent::buildInputBunchVector(TokenBunchVector *&result_vector_token,
 					       Token *input_token) {
     switch(input_token->getTokenCode()) {
     case table_of_token_codes::token_mem_block: {
       segmented_input = false;
       TokenMemoryBlock *mem_input_token;
       mem_input_token = input_token->convertTo<TokenMemoryBlock*>();
-      unsigned int bunch_size = mem_input_token->getUsedSize() / input_size;
+      bunch_size = mem_input_token->getUsedSize() / input_size;
+      assert((bunch_size*input_size == mem_input_token->getUsedSize()) &&
+	     "Incorrect token size, is not divisible by bunch_size");
       unsigned int pos=0;
-      for (unsigned int i=0; i<vector_token->size(); ++i) {
+      for (unsigned int i=0; i<result_vector_token->size(); ++i) {
 	unsigned int sz = bunch_size * components[i]->getInputSize();
 	TokenMemoryBlock *component_mem_token = new TokenMemoryBlock(sz);
-	AssignRef((*vector_token)[i], component_mem_token);
+	AssignRef((*result_vector_token)[i], component_mem_token);
 	// copy from _input to component_mem_token
 	doScopy(sz,
 		mem_input_token->getMemBlock(), pos, 1,
@@ -85,13 +89,15 @@ namespace ANN {
     }
     case table_of_token_codes::vector_Tokens: {
       segmented_input = true;
-      TokenBunchVector *vinput_token=input_token->convertTo<TokenBunchVector*>();
-      if (vector_token->size() != vinput_token->size())
+      TokenBunchVector *input_vector_token;
+      input_vector_token = input_token->convertTo<TokenBunchVector*>();
+      if (result_vector_token->size() != input_vector_token->size())
 	ERROR_EXIT2(128, "Incorrect number of components at input vector, "
 		    "expected %u and found %u\n",
-		    vector_token->size(), vinput_token->size());
-      for (unsigned int i=0; i<vector_token->size(); ++i)
-	AssignRef((*vector_token)[i], (*vinput_token)[i]);
+		    result_vector_token->size(), input_vector_token->size());
+      for (unsigned int i=0; i<result_vector_token->size(); ++i)
+	AssignRef((*result_vector_token)[i], (*input_vector_token)[i]);
+      bunch_size = 0;
       break;
     }
     default:
@@ -105,7 +111,11 @@ namespace ANN {
       ERROR_EXIT(128, "Incorrect token type\n");
     //
     TokenMemoryBlock *mem_token = token->convertTo<TokenMemoryBlock*>();
-    unsigned int bunch_size = mem_token->getUsedSize() / output_size;
+    if (bunch_size == 0) bunch_size = mem_token->getUsedSize() / output_size;
+    assert((bunch_size == (mem_token->getUsedSize() / output_size)) &&
+	   "Incorrect bunch size at input error");
+    assert((bunch_size*output_size == mem_token->getUsedSize()) &&
+	   "Incorrect input error token size, not divisible by bunch_size");
     unsigned int pos=0;
     for (unsigned int i=0; i<vector_token->size(); ++i) {
       unsigned int sz = bunch_size * components[i]->getOutputSize();
@@ -121,7 +131,14 @@ namespace ANN {
   }
   
   TokenMemoryBlock *JoinANNComponent::buildMemoryBlockToken(TokenBunchVector *token) {
-    TokenMemoryBlock *mem_block_token = new TokenMemoryBlock(output_size);
+    TokenMemoryBlock *mem_block_token;
+    if ((*token)[0]->getTokenCode() != table_of_token_codes::token_mem_block)
+      ERROR_EXIT(128, "Incorrect token type\n");
+    if (bunch_size == 0) {
+      TokenMemoryBlock *aux = (*token)[0]->convertTo<TokenMemoryBlock*>();
+      bunch_size =aux->getUsedSize() / components[0]->getOutputSize();
+    }
+    mem_block_token = new TokenMemoryBlock(output_size*bunch_size);
     unsigned int pos = 0;
     for (unsigned int i=0; i<token->size(); ++i) {
       if ((*token)[i]->getTokenCode() != table_of_token_codes::token_mem_block)
@@ -129,7 +146,7 @@ namespace ANN {
       TokenMemoryBlock *component_output_mem_block;
       component_output_mem_block = (*token)[i]->convertTo<TokenMemoryBlock*>();
       unsigned int sz = component_output_mem_block->getUsedSize();
-      assert(component_output_mem_block->getUsedSize() <= pos + sz);
+      assert(pos + sz <= mem_block_token->getUsedSize());
       // copy from component_output to output Token
       doScopy(sz,
 	      component_output_mem_block->getMemBlock(), 0, 1,
@@ -199,6 +216,7 @@ namespace ANN {
     error_input	 = 0;
     output	 = 0;
     error_output = 0;
+    bunch_size   = 0;
     for (unsigned int i=0; i<components.size(); ++i)
       components[i]->reset();
   }
@@ -224,26 +242,23 @@ namespace ANN {
 		 "use addComponent method\n");
     unsigned int computed_input_size = 0, computed_output_size = 0;
     for (unsigned int i=0; i<components.size(); ++i) {
+      components[i]->build(0, 0, weights_dict, components_dict);
       computed_input_size  += components[i]->getInputSize();
       computed_output_size += components[i]->getOutputSize();
-    }
-    if (input_size == 0)  input_size  = computed_input_size;
-    if (output_size == 0) output_size = computed_output_size;
-    if (input_size != computed_input_size)
-      ERROR_EXIT2(128, "Incorrect input sizes, components inputs sum %d but "
-		  " expected %d\n", computed_input_size, input_size);
-    if (output_size != computed_output_size)
-      ERROR_EXIT2(128, "Incorrect output sizes, components outputs sum %d but "
-		  " expected %d\n", computed_output_size, output_size);
-    //
-    for (unsigned int i=0; i<components.size(); ++i) {
-      components[i]->build(0, 0, weights_dict, components_dict);
       Token *null(0);
       input_vector->push_back(null);
       output_vector->push_back(null);
       error_input_vector->push_back(null);
       error_output_vector->push_back(null);
     }
+    if (input_size == 0)  input_size  = computed_input_size;
+    if (output_size == 0) output_size = computed_output_size;
+    if (input_size != computed_input_size)
+      ERROR_EXIT2(128, "Incorrect input sizes, components inputs sum %d but "
+		  "expected %d\n", computed_input_size, input_size);
+    if (output_size != computed_output_size)
+      ERROR_EXIT2(128, "Incorrect output sizes, components outputs sum %d but "
+		  "expected %d\n", computed_output_size, output_size);
   }
   
   void JoinANNComponent::setUseCuda(bool v) {
