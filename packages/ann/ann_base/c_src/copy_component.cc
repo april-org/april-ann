@@ -65,18 +65,19 @@ namespace ANN {
     if (error_input->size() != times)
       ERROR_EXIT2(128, "Incorrect error input size, found %d, expected %d\n",
 		  error_input->size(), times);
-    TokenMemoryBlock *error_output_mem_block = new TokenMemoryBlock(input_size);
-    AssignRef(error_output, error_output_mem_block);
     // The first is done out, scopy of input to output
     Token *current = (*error_input)[0];
     if (current->getTokenCode() != table_of_token_codes::token_mem_block)
       ERROR_EXIT(128, "Incorrect token type, expected token mem block\n");
     TokenMemoryBlock *current_mem_block;
     current_mem_block = current->convertTo<TokenMemoryBlock*>();
-    if (current_mem_block->getUsedSize() != input_size)
-      ERROR_EXIT2(128, "Incorrect error input size, found %d, expected %d\n",
-		  current_mem_block->getUsedSize(), input_size);
-    doScopy(input_size,
+    unsigned int sz   = current_mem_block->getUsedSize();
+    unsigned int bunch_size = sz / input_size;
+    assert((bunch_size * input_size == sz) &&
+	   "Incorrect input error token size, not divisible by bunch_size");
+    TokenMemoryBlock *error_output_mem_block = new TokenMemoryBlock(sz);
+    AssignRef(error_output, error_output_mem_block);
+    doScopy(sz,
 	    current_mem_block->getMemBlock(), 0, 1,
 	    error_output_mem_block->getMemBlock(), 0, 1,
 	    use_cuda);
@@ -87,10 +88,10 @@ namespace ANN {
 	ERROR_EXIT(128, "Incorrect token type, expected token mem block\n");
       TokenMemoryBlock *current_mem_block;
       current_mem_block = current->convertTo<TokenMemoryBlock*>();
-      if (current_mem_block->getUsedSize() != input_size)
+      if (current_mem_block->getUsedSize() != sz)
 	ERROR_EXIT2(128, "Incorrect error input size, found %d, expected %d\n",
-		    current_mem_block->getUsedSize(), input_size);
-      doSaxpy(input_size,
+		    current_mem_block->getUsedSize(), sz);
+      doSaxpy(sz,
 	      1.0f, current_mem_block->getMemBlock(), 0, 1,
 	      error_output_mem_block->getMemBlock(), 0, 1,
 	      use_cuda);

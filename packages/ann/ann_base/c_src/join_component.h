@@ -41,8 +41,9 @@ namespace ANN {
     // Auxiliar Token pointers to prepare data from and for contained components
     TokenBunchVector *input_vector,  *error_input_vector;
     TokenBunchVector *output_vector, *error_output_vector;
-    
+
     bool segmented_input;
+    unsigned int bunch_size;
 
     // private auxiliar methods
     void buildInputBunchVector(TokenBunchVector *&vector_token,

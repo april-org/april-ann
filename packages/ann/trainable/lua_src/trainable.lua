@@ -326,6 +326,13 @@ function trainable.supervised_trainer:use_dataset(t)
   return t.output_dataset
 end
 
+function trainable.supervised_trainer:show_weights()
+  for _,wname in pairs(self.weights_order) do
+    local w = self.weights_table[wname]:weights():toTable()
+    print(wname, table.concat(w, " "))
+  end
+end
+
 function trainable.supervised_trainer:clone()
   local obj = trainable.supervised_trainer(self.ann_component:clone(),
 					   nil,
