@@ -1108,6 +1108,43 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 
 //////////////////////////////////////////
 
+//BIND_LUACLASSNAME UnionDataSetToken dataset.token.union
+//BIND_CPP_CLASS    UnionDataSetToken
+//BIND_SUBCLASS_OF  UnionDataSetToken DataSetToken
+
+//BIND_CONSTRUCTOR UnionDataSetToken
+{
+  LUABIND_CHECK_ARGN(<=,1);
+  int argn = lua_gettop(L);
+  if (argn == 1) {
+    unsigned int size;
+    LUABIND_CHECK_PARAMETER(1, table);
+    LUABIND_TABLE_GETN(1, size);
+    if (size < 2)
+      LUABIND_ERROR("UnionDataSetToken needs a Lua tablw with two or "
+		    "more DataSetToken\n");
+    DataSetToken **ds_array = new DataSetToken*[size];
+    LUABIND_TABLE_TO_VECTOR(1, DataSetToken, ds_array, size);
+    obj = new UnionDataSetToken(ds_array, size);
+    delete[] ds_array;
+  }
+  else obj = new UnionDataSetToken();
+  LUABIND_RETURN(UnionDataSetToken, obj);
+}
+//BIND_END
+
+//BIND_METHOD UnionDataSetToken push_back
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, DataSetToken);
+  DataSetToken *ds;
+  LUABIND_GET_PARAMETER(1, DataSetToken, ds);
+  obj->push_back(ds);
+}
+//BIND_END
+
+//////////////////////////////////////////
+
 //BIND_LUACLASSNAME DataSetFloat2TokenWrapper dataset.token.wrapper
 //BIND_CPP_CLASS    DataSetFloat2TokenWrapper
 //BIND_SUBCLASS_OF  DataSetFloat2TokenWrapper DataSetToken

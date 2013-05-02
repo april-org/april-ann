@@ -32,7 +32,8 @@ namespace ANN {
 					       FloatGPUMirroredMemoryBlock *output_units,
 					       unsigned int size,
 					       unsigned int bunch_size) {
-    doScopy(size*bunch_size, input_units, 0, 1,
+    doScopy(size*bunch_size,
+	    input_units, 0, 1,
 	    output_units, 0, 1,
 	    use_cuda);
   }
@@ -43,7 +44,8 @@ namespace ANN {
 						   FloatGPUMirroredMemoryBlock *output_errors,
 						   unsigned int size,
 						   unsigned int bunch_size) {
-    doScopy(size*bunch_size, input_errors, 0, 1,
+    doScopy(size*bunch_size,
+	    input_errors, 0, 1,
 	    output_errors, 0, 1,
 	    use_cuda);
   }
