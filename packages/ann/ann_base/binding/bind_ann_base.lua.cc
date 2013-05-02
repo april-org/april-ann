@@ -52,10 +52,13 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "logistic_actf_component.h"
 #include "tanh_actf_component.h"
 #include "softsign_actf_component.h"
-#include "softplus_actf_component.h"
 #include "log_logistic_actf_component.h"
 #include "softmax_actf_component.h"
 #include "log_softmax_actf_component.h"
+#include "softplus_actf_component.h"
+#include "hardtanh_actf_component.h"
+#include "sin_actf_component.h"
+#include "linear_actf_component.h"
 
 using namespace ANN;
 
@@ -762,29 +765,6 @@ using namespace ANN;
 //BIND_END
 
 /////////////////////////////////////////////////////
-//            SoftplusActfANNComponent             //
-/////////////////////////////////////////////////////
-
-//BIND_LUACLASSNAME SoftplusActfANNComponent ann.components.softplus
-//BIND_CPP_CLASS    SoftplusActfANNComponent
-//BIND_SUBCLASS_OF  SoftplusActfANNComponent ActivationFunctionANNComponent
-
-//BIND_CONSTRUCTOR SoftplusActfANNComponent
-{
-  LUABIND_CHECK_ARGN(<=, 1);
-  int argn = lua_gettop(L);
-  const char *name=0;
-  if (argn == 1) {
-    LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", 0);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
-  }
-  obj = new SoftplusActfANNComponent(name);
-  LUABIND_RETURN(SoftplusActfANNComponent, obj);  
-}
-//BIND_END
-
-/////////////////////////////////////////////////////
 //           LogLogisticActfANNComponent           //
 /////////////////////////////////////////////////////
 
@@ -850,5 +830,97 @@ using namespace ANN;
   }
   obj = new LogSoftmaxActfANNComponent(name);
   LUABIND_RETURN(LogSoftmaxActfANNComponent, obj);  
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//            SoftplusActfANNComponent             //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME SoftplusActfANNComponent ann.components.softplus
+//BIND_CPP_CLASS    SoftplusActfANNComponent
+//BIND_SUBCLASS_OF  SoftplusActfANNComponent ActivationFunctionANNComponent
+
+//BIND_CONSTRUCTOR SoftplusActfANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  }
+  obj = new SoftplusActfANNComponent(name);
+  LUABIND_RETURN(SoftplusActfANNComponent, obj);  
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//            HardtanhActfANNComponent             //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME HardtanhActfANNComponent ann.components.hardtanh
+//BIND_CPP_CLASS    HardtanhActfANNComponent
+//BIND_SUBCLASS_OF  HardtanhActfANNComponent ActivationFunctionANNComponent
+
+//BIND_CONSTRUCTOR HardtanhActfANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  }
+  obj = new HardtanhActfANNComponent(name);
+  LUABIND_RETURN(HardtanhActfANNComponent, obj);  
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//               SinActfANNComponent               //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME SinActfANNComponent ann.components.sin
+//BIND_CPP_CLASS    SinActfANNComponent
+//BIND_SUBCLASS_OF  SinActfANNComponent ActivationFunctionANNComponent
+
+//BIND_CONSTRUCTOR SinActfANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  }
+  obj = new SinActfANNComponent(name);
+  LUABIND_RETURN(SinActfANNComponent, obj);  
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//              LinearActfANNComponent             //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME LinearActfANNComponent ann.components.linear
+//BIND_CPP_CLASS    LinearActfANNComponent
+//BIND_SUBCLASS_OF  LinearActfANNComponent ActivationFunctionANNComponent
+
+//BIND_CONSTRUCTOR LinearActfANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  }
+  obj = new LinearActfANNComponent(name);
+  LUABIND_RETURN(LinearActfANNComponent, obj);  
 }
 //BIND_END

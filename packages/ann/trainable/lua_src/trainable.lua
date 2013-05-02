@@ -73,10 +73,19 @@ function trainable.supervised_trainer:randomize_weights(t)
   end
 end
 
-function trainable.supervised_trainer:build(weights_table)
-  self.weights_table = weights_table or {}
+function trainable.supervised_trainer:build(t)
+  local params = get_table_fields(
+    {
+      weights_table = { type_match="table",  mandatory = false, default=nil },
+      input         = { type_match="number", mandatory = false, default=nil },
+      output        = { type_match="number", mandatory = false, default=nil },
+    }, t or {})
+  self.weights_table = params.weights_table or {}
   self.weights_table,
-  self.components_table = self.ann_component:build{ weights=self.weights_table }
+  self.components_table = self.ann_component:build{
+    input   = params.input,
+    output  = params.output,
+    weights = self.weights_table, }
   self.weights_order = {}
   for name,_ in pairs(self.weights_table) do
     table.insert(self.weights_order, name)

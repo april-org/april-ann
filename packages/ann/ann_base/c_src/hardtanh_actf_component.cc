@@ -19,33 +19,33 @@
  *
  */
 #include "cblas_headers.h"
-#include "softsign_actf_component.h"
+#include "hardtanh_actf_component.h"
 #include "wrapper.h"
 
 namespace ANN {
 
-  SoftsignActfANNComponent::SoftsignActfANNComponent(const char *name) :
+  HardtanhActfANNComponent::HardtanhActfANNComponent(const char *name) :
     ActivationFunctionANNComponent(name) { }
-  SoftsignActfANNComponent::~SoftsignActfANNComponent() { }
+  HardtanhActfANNComponent::~HardtanhActfANNComponent() { }
 
-  void SoftsignActfANNComponent::applyActivation(FloatGPUMirroredMemoryBlock *input_units,
+  void HardtanhActfANNComponent::applyActivation(FloatGPUMirroredMemoryBlock *input_units,
 						 FloatGPUMirroredMemoryBlock *output_units,
 						 unsigned int size,
 						 unsigned int bunch_size) {
-    doApplySoftsignActivation(input_units,
+    doApplyHardtanhActivation(input_units,
 			      output_units,
 			      size,
 			      bunch_size,
 			      use_cuda);
   }
 
-  void SoftsignActfANNComponent::multiplyDerivatives(FloatGPUMirroredMemoryBlock *input_units,
+  void HardtanhActfANNComponent::multiplyDerivatives(FloatGPUMirroredMemoryBlock *input_units,
 						     FloatGPUMirroredMemoryBlock *output_units,
 						     FloatGPUMirroredMemoryBlock *input_errors,
 						     FloatGPUMirroredMemoryBlock *output_errors,
 						     unsigned int size,
 						     unsigned int bunch_size) {
-    doMultiplySoftsignDerivatives(output_units,
+    doMultiplyHardtanhDerivatives(input_units,
 				  input_errors,
 				  output_errors,
 				  size,
@@ -53,8 +53,8 @@ namespace ANN {
 				  use_cuda);
   }
 
-  ANNComponent *SoftsignActfANNComponent::clone() {
-    return new SoftsignActfANNComponent(name.c_str());
+  ANNComponent *HardtanhActfANNComponent::clone() {
+    return new HardtanhActfANNComponent(name.c_str());
   }
 
 }
