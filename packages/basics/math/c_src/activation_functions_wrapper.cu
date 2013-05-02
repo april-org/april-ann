@@ -196,7 +196,7 @@ __global__ void softplusActKernel(const float *input_units,
   }
 }
 
-__global__ void softplusDerKernel(const float *output_units,
+__global__ void softplusDerKernel(const float *input_units,
 				  const float *input_errors,
 				  float *output_errors,
 				  unsigned int max_x,
@@ -210,9 +210,46 @@ __global__ void softplusDerKernel(const float *output_units,
 				     matrix_y_pos);
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
-    float value = clip(output_units[index], 0.0f + NEAR_ZERO,
-		       output_units[index] + NEAR_ZERO);
+    float value = input_units[index];
     output_errors[index] = input_errors[index] * sigmoid(1.0f, value);
+  }
+}
+
+__global__ void hardtanhActKernel(const float *input_units,
+				  float *output_units,
+				  unsigned int max_x,
+				  unsigned int lda_x,
+				  unsigned int max_y) {
+  unsigned int matrix_x_pos, matrix_y_pos;
+  getColumnMajorBunchMatrixPositions(blockIdx,
+				     blockDim,
+				     threadIdx,
+				     matrix_x_pos,
+				     matrix_y_pos);
+  if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
+    unsigned int index  = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
+    output_units[index] = clip(input_units[index], -1.0f, +1.0f);
+  }
+}
+
+__global__ void hardtanhDerKernel(const float *input_units,
+				  const float *input_errors,
+				  float *output_errors,
+				  unsigned int max_x,
+				  unsigned int lda_x,
+				  unsigned int max_y) {
+  unsigned int matrix_x_pos, matrix_y_pos;
+  getColumnMajorBunchMatrixPositions(blockIdx,
+				     blockDim,
+				     threadIdx,
+				     matrix_x_pos,
+				     matrix_y_pos);
+  if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
+    unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
+    float value = 0.0f;
+    if (-1.0f < input_units[index] && input_units[index] < 1.0f)
+      value = input_units[index];
+    output_errors[index] = input_errors[index] * value;
   }
 }
 
@@ -710,13 +747,13 @@ void doApplySoftplusActivation(FloatGPUMirroredMemoryBlock *input_units,
     float *output_units_ptr      = output_units->getPPALForWrite();
     const unsigned int sz        = size*bunch_size;
     for (unsigned int i=0; i<sz; ++i)
-      output_units_ptr[i] = log1pf(expf(input_units_ptr[i]));
+      output_units_ptr[i] = log1p(exp(input_units_ptr[i]));
 #ifdef USE_CUDA
   }
 #endif
 }
 
-void doMultiplySoftplusDerivatives(FloatGPUMirroredMemoryBlock *output_units,
+void doMultiplySoftplusDerivatives(FloatGPUMirroredMemoryBlock *input_units,
 				   FloatGPUMirroredMemoryBlock *input_errors,
 				   FloatGPUMirroredMemoryBlock *output_errors,
 				   unsigned int size,
@@ -724,14 +761,14 @@ void doMultiplySoftplusDerivatives(FloatGPUMirroredMemoryBlock *output_units,
 				   bool use_gpu) {
 #ifdef USE_CUDA
   if (use_gpu) {
-    float *output_units_ptr       = output_units->getGPUForWrite();
+    float *input_units_ptr        = input_units->getGPUForWrite();
     const float *input_errors_ptr = input_errors->getGPUForRead();
     float *output_errors_ptr      = output_errors->getGPUForWrite();
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
     softplusDerKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-      (output_units_ptr,
+      (input_units_ptr,
        input_errors_ptr,
        output_errors_ptr,
        bunch_size,
@@ -740,14 +777,153 @@ void doMultiplySoftplusDerivatives(FloatGPUMirroredMemoryBlock *output_units,
   }
   else {
 #endif
-    const float *output_units_ptr = output_units->getPPALForRead();
+    const float *input_units_ptr  = input_units->getPPALForRead();
     const float *input_errors_ptr = input_errors->getPPALForRead();
     float *output_errors_ptr      = output_errors->getPPALForWrite();
     const unsigned int sz         = size*bunch_size;
     for (unsigned int i=0; i<sz; ++i) {
-      float value = clamp(output_units_ptr[i], 0.0f + NEAR_ZERO,
-			  output_units_ptr[i] + NEAR_ZERO);
-      output_errors_ptr[i] = input_errors_ptr[i] * sigmoid(1.0f, value);
+      float value = sigmoid(1.0f, input_units_ptr[i]);
+      output_errors_ptr[i] = input_errors_ptr[i] * value;
+    }
+#ifdef USE_CUDA
+  }
+#endif
+}
+
+void doApplyHardtanhActivation(FloatGPUMirroredMemoryBlock *input_units,
+			       FloatGPUMirroredMemoryBlock *output_units,
+			       unsigned int size,
+			       unsigned int bunch_size,
+			       bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    const float *input_units_ptr = units->getGPUForRead();
+    float *output_units_ptr      = units->getGPUForWrite();
+    dim3 block, grid;
+    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
+						 block, grid);
+    
+    hardtanhActKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (input_units_ptr,
+       output_units_ptr,
+       bunch_size,
+       bunch_size,
+       size);
+  }
+  else {
+#endif
+    const float *input_units_ptr = input_units->getPPALForRead();
+    float *output_units_ptr      = output_units->getPPALForWrite();
+    const unsigned int sz        = size*bunch_size;
+    for (unsigned int i=0; i<sz; ++i)
+      output_units_ptr[i] = clamp(input_units_ptr[i], -1.0f, 1.0f);
+#ifdef USE_CUDA
+  }
+#endif
+}
+
+void doMultiplyHardtanhDerivatives(FloatGPUMirroredMemoryBlock *input_units,
+				   FloatGPUMirroredMemoryBlock *input_errors,
+				   FloatGPUMirroredMemoryBlock *output_errors,
+				   unsigned int size,
+				   unsigned int bunch_size,
+				   bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    float *input_units_ptr        = input_units->getGPUForWrite();
+    const float *input_errors_ptr = input_errors->getGPUForRead();
+    float *output_errors_ptr      = output_errors->getGPUForWrite();
+    dim3 block, grid;
+    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
+						 block, grid);
+    hardtanhDerKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (input_units_ptr,
+       input_errors_ptr,
+       output_errors_ptr,
+       bunch_size,
+       bunch_size,
+       size);
+  }
+  else {
+#endif
+    const float *input_units_ptr  = input_units->getPPALForRead();
+    const float *input_errors_ptr = input_errors->getPPALForRead();
+    float *output_errors_ptr      = output_errors->getPPALForWrite();
+    const unsigned int sz         = size*bunch_size;
+    for (unsigned int i=0; i<sz; ++i) {
+      float value = 0.0f;
+      if (-1.0f < input_units_ptr[i] && input_units_ptr[i] < 1.0f)
+	value = input_units_ptr[i];
+      output_errors_ptr[i] = input_errors_ptr[i] * value;
+    }
+#ifdef USE_CUDA
+  }
+#endif
+}
+
+void doApplySinActivation(FloatGPUMirroredMemoryBlock *input_units,
+			  FloatGPUMirroredMemoryBlock *output_units,
+			  unsigned int size,
+			  unsigned int bunch_size,
+			  bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    const float *input_units_ptr = units->getGPUForRead();
+    float *output_units_ptr      = units->getGPUForWrite();
+    dim3 block, grid;
+    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
+						 block, grid);
+    
+    sinActKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (input_units_ptr,
+       output_units_ptr,
+       bunch_size,
+       bunch_size,
+       size);
+  }
+  else {
+#endif
+    const float *input_units_ptr = input_units->getPPALForRead();
+    float *output_units_ptr      = output_units->getPPALForWrite();
+    const unsigned int sz        = size*bunch_size;
+    for (unsigned int i=0; i<sz; ++i)
+      output_units_ptr[i] = sinf(input_units_ptr[i]);
+#ifdef USE_CUDA
+  }
+#endif
+}
+
+void doMultiplySinDerivatives(FloatGPUMirroredMemoryBlock *input_units,
+			      FloatGPUMirroredMemoryBlock *input_errors,
+			      FloatGPUMirroredMemoryBlock *output_errors,
+			      unsigned int size,
+			      unsigned int bunch_size,
+			      bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    float *input_units_ptr        = input_units->getGPUForWrite();
+    const float *input_errors_ptr = input_errors->getGPUForRead();
+    float *output_errors_ptr      = output_errors->getGPUForWrite();
+    dim3 block, grid;
+    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
+						 block, grid);
+    sinDerKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (input_units_ptr,
+       input_errors_ptr,
+       output_errors_ptr,
+       bunch_size,
+       bunch_size,
+       size);
+  }
+  else {
+#endif
+    const float *input_units_ptr  = input_units->getPPALForRead();
+    const float *input_errors_ptr = input_errors->getPPALForRead();
+    float *output_errors_ptr      = output_errors->getPPALForWrite();
+    const unsigned int sz         = size*bunch_size;
+    for (unsigned int i=0; i<sz; ++i) {
+      float value = cosf(input_units_ptr[i]);
+      output_errors_ptr[i] = input_errors_ptr[i] * value;
     }
 #ifdef USE_CUDA
   }

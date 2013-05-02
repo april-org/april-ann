@@ -1,4 +1,5 @@
 return { 
+--  "plotter",
   "dataset",
   "matrix",
   "random",

@@ -89,3 +89,29 @@ for i=1,10000 do
 end
 print(trainer:validate_dataset(data))
 show_weights(trainer, math.exp)
+
+-- TEST ACTIVATION FUNCTIONS
+
+for _,actf in ipairs({"softsign", "softplus", "sin", "hardtanh", "linear"}) do
+  print("#######################################################")
+  printf("# %s Test                                       #\n", actf)
+  net_component=ann.mlp.all_all.generate(string.format("2 inputs 2 %s 2 %s 1 log_logistic",
+						       actf, actf))
+  net_component:set_option("learning_rate", learning_rate)
+  net_component:set_option("momentum",      momentum)
+  net_component:set_option("weight_decay",  weight_decay)
+  trainer=trainable.supervised_trainer(net_component,
+				       ann.loss.cross_entropy(1),
+				       bunch_size)
+  trainer:build()
+  trainer:randomize_weights{
+    random = random1,
+    inf    = -0.1,
+    sup    = 0.1
+  }
+  for i=1,100000 do
+    trainer:train_dataset(data)
+  end
+  print(trainer:validate_dataset(data))
+  show_weights(trainer, math.exp)
+end

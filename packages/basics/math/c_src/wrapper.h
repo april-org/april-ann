@@ -112,12 +112,38 @@ void doApplySoftplusActivation(FloatGPUMirroredMemoryBlock *input_units,
 			       unsigned int bunch_size,
 			       bool use_gpu);
 
-void doMultiplySoftplusDerivatives(FloatGPUMirroredMemoryBlock *output_units,
+void doMultiplySoftplusDerivatives(FloatGPUMirroredMemoryBlock *input_units,
 				   FloatGPUMirroredMemoryBlock *input_errors,
 				   FloatGPUMirroredMemoryBlock *output_errors,
 				   unsigned int size,
 				   unsigned int bunch_size,
 				   bool use_gpu);
+
+void doApplyHardtanhActivation(FloatGPUMirroredMemoryBlock *input_units,
+			       FloatGPUMirroredMemoryBlock *output_units,
+			       unsigned int size,
+			       unsigned int bunch_size,
+			       bool use_gpu);
+
+void doMultiplyHardtanhDerivatives(FloatGPUMirroredMemoryBlock *input_units,
+				   FloatGPUMirroredMemoryBlock *input_errors,
+				   FloatGPUMirroredMemoryBlock *output_errors,
+				   unsigned int size,
+				   unsigned int bunch_size,
+				   bool use_gpu);
+
+void doApplySinActivation(FloatGPUMirroredMemoryBlock *input_units,
+			  FloatGPUMirroredMemoryBlock *output_units,
+			  unsigned int size,
+			  unsigned int bunch_size,
+			  bool use_gpu);
+
+void doMultiplySinDerivatives(FloatGPUMirroredMemoryBlock *input_units,
+			      FloatGPUMirroredMemoryBlock *input_errors,
+			      FloatGPUMirroredMemoryBlock *output_errors,
+			      unsigned int size,
+			      unsigned int bunch_size,
+			      bool use_gpu);
 
 void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
 			      FloatGPUMirroredMemoryBlock *output_units,
