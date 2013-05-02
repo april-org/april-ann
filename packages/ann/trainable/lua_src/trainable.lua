@@ -351,7 +351,9 @@ function trainable.supervised_trainer:clone()
     for wname,connections in pairs(self.weights_table) do
       obj.weights_table[wname] = connections:clone()
     end
-    obj:build(obj.weights_table)
+    obj:build{ weights = obj.weights_table,
+	       input   = self.ann_component:get_input_size(),
+	       output  = self.ann_component:get_output_size(), }
   end
   return obj
 end
