@@ -169,13 +169,9 @@ function trainable.supervised_trainer:train_dataset(t)
 	 "input_dataset/output_dataset fields are forbidden with distribution")
   --
   
-  assert(not params.distribution, "Distribution is not correctly implemented")
   -- TRAINING TABLES
   
-  -- for each pattern, a pair of input/output datasets (or nil if not
-  -- distribution)
-  local ds_pat_table = {}
-  -- for each pattern, index in corresponding datasets
+  -- for each pattern, index in dataset
   local ds_idx_table = {}
   -- set to ZERO the accumulated of loss
   self.loss_function:reset()
@@ -184,8 +180,11 @@ function trainable.supervised_trainer:train_dataset(t)
     -- sampled following the given apriory probability
     assert(params.shuffle,"shuffle is mandatory with distribution")
     assert(params.replacement,"replacement is mandatory with distribution")
-
-    local sizes = {}
+    params.input_dataset  = dataset.token.union()
+    params.output_dataset = dataset.token.union()
+    local aprioris = {}
+    local sizes    = {}
+    local sums     = { 0 }
     for i,v in ipairs(params.distribution) do
       if isa(v.input_dataset, dataset) then
 	v.input_dataset  = dataset.token.wrapper(v.input_dataset)
@@ -194,15 +193,16 @@ function trainable.supervised_trainer:train_dataset(t)
       check_dataset_sizes(v.input_dataset, v.output_dataset)
       table.insert(aprioris, v.probability)
       table.insert(sizes, v.input_dataset:numPatterns())
+      table.insert(sums, sums[#sums] + sizes[#sizes])
+      params.input_dataset:push_back(v.input_dataset)
+      params.output_dataset:push_back(v.output_dataset)
     end
     -- generate training tables
     local dice = random.dice(aprioris)
-    for i=1,#params.replacement do
+    for i=1,params.replacement do
       local whichclass=dice:thrown(params.shuffle)
-      local ds_table=params.distribution[whichclass]
-      local idx=shuffle:randInt(1,sizes[whichclass])
-      table.insert(ds_pat_table, params.distribution[whichclass])
-      table.insert(ds_idx_table, idx)
+      local idx=params.shuffle:randInt(1,sizes[whichclass])
+      table.insert(ds_idx_table, idx + sums[whichclass])
     end
   else
     if isa(params.input_dataset, dataset) then
@@ -216,7 +216,7 @@ function trainable.supervised_trainer:train_dataset(t)
     if params.replacement then
       assert(params.shuffle,"shuffle is mandatory with replacement")
       for i=1,params.replacement do
-	table.insert(ds_idx_table, param.shuffle:randInt(1,num_patterns))
+	table.insert(ds_idx_table, params.shuffle:randInt(1,num_patterns))
       end
     elseif params.shuffle then
       ds_idx_table = params.shuffle:shuffle(num_patterns)
@@ -224,7 +224,7 @@ function trainable.supervised_trainer:train_dataset(t)
       for i=1,num_patterns do table.insert(ds_idx_table, i) end
     end
   end
-  -- TRAIN USING ds_idx_table and ds_pat_table
+  -- TRAIN USING ds_idx_table
   local bunch_indexes = {}
   for i=1,#ds_idx_table do
     local idx = ds_idx_table[i]
@@ -236,7 +236,6 @@ function trainable.supervised_trainer:train_dataset(t)
       bunch_indexes = {}
     end
   end
-  ds_pat_table = nil
   ds_idx_table = nil
   return self.loss_function:get_accum_loss()
 end
@@ -292,7 +291,6 @@ function trainable.supervised_trainer:validate_dataset(t)
       bunch_indexes = {}
     end
   end
-  ds_pat_table = nil
   ds_idx_table = nil
   return self.loss_function:get_accum_loss()
 end

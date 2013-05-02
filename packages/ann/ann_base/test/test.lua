@@ -57,6 +57,65 @@ end
 print(trainer:validate_dataset(data))
 show_weights(trainer, math.exp)
 
+-- All All Test with replacement
+print("#######################################################")
+print("# All All Test  with replacement                      #")
+net_component=ann.mlp.all_all.generate("2 inputs 2 tanh 1 log_logistic")
+net_component:set_option("learning_rate", learning_rate)
+net_component:set_option("momentum",      momentum)
+net_component:set_option("weight_decay",  weight_decay)
+trainer=trainable.supervised_trainer(net_component,
+				     ann.loss.cross_entropy(1),
+				     bunch_size)
+trainer:build()
+trainer:randomize_weights{
+  random = random1,
+  inf    = -0.1,
+  sup    = 0.1
+}
+for i=1,30000 do
+  err = trainer:train_dataset{
+    input_dataset  = data.input_dataset,
+    output_dataset = data.output_dataset,
+    shuffle        = data.shuffle,
+    replacement    = 4,
+  }
+end
+print(trainer:validate_dataset(data))
+show_weights(trainer, math.exp)
+
+-- All All Test with distribution
+print("#######################################################")
+print("# All All Test  with distribution                     #")
+net_component=ann.mlp.all_all.generate("2 inputs 2 tanh 1 log_logistic")
+net_component:set_option("learning_rate", learning_rate)
+net_component:set_option("momentum",      momentum)
+net_component:set_option("weight_decay",  weight_decay)
+trainer=trainable.supervised_trainer(net_component,
+				     ann.loss.cross_entropy(1),
+				     bunch_size)
+trainer:build()
+trainer:randomize_weights{
+  random = random1,
+  inf    = -0.1,
+  sup    = 0.1
+}
+for i=1,30000 do
+  err = trainer:train_dataset{
+    distribution = { { input_dataset  = data.input_dataset,
+		       output_dataset = data.output_dataset,
+		       probability    = 0.3, },
+		     { input_dataset  = data.input_dataset,
+		       output_dataset = data.output_dataset,
+		       probability    = 0.7, },
+    },
+    shuffle     = data.shuffle,
+    replacement = 4,
+  }
+end
+print(trainer:validate_dataset(data))
+show_weights(trainer, math.exp)
+
 -- Join and Copy Test => stack, join, copy, hyperplane and actf, components
 print("#######################################################")
 print("# Join and Copy Test => stack, join, copy, hyperplane and actf, components #")
