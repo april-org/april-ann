@@ -101,13 +101,8 @@ end
 
 
 -- Given a table with table of points, draw
-<<<<<<< HEAD
 function imageSVG:addPointsFromTables(tables, size)
-=======
-function imageSVG:addPointsFromTables(tables)
->>>>>>> 8f890d6263c5b3b4a840db8bc3a121b0de972508
 
-    local colors = { "red", "blue", "green", "orange", "purple"}
     for i, points in ipairs(tables) do
         local color = "black"
         if (i <= #colors) then
@@ -115,11 +110,7 @@ function imageSVG:addPointsFromTables(tables)
         end
 
         for j, point in ipairs(points) do
-<<<<<<< HEAD
             self:addPoint(point, {color = color, side = size})
-=======
-            self:addPoint(point, {color = color})
->>>>>>> 8f890d6263c5b3b4a840db8bc3a121b0de972508
         end
     end
 end

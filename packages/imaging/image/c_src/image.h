@@ -98,6 +98,7 @@ class Image : public Referenced {
   Image<T> *affine_transform(AffineTransform2D *trans, T default_value, int *offset_x=0, int *offset_y=0) const;
   
   Image<T> *remove_blank_columns() const;
+  Image<T> *substract_image(Image<T> *img, T low, T high) const;
  private:
   void invert_affine_matrix(float c[6], float dest[6]) const;
 };

@@ -33,6 +33,7 @@
 #include "clamp.h"
 #include "maxmin.h"
 
+
 template <typename T>
 Image<T>::Image(Matrix<T> *mat) {
   // if (mat->numDim != 2) { ... } // <- TODO
@@ -892,5 +893,31 @@ Image<T> *Image<T>::affine_transform(AffineTransform2D *trans, T default_value,
   return result;
 }
 
+template <typename T>
+Image<T>* Image<T>::substract_image(Image<T> *img, T low, T high) const {
+  
+  int  s_height = img->height;
+  int  s_width  = img->width;
+
+//  printf("%d %d %d %d\n", s_width, s_height, this->width, this->height);
+  assert("The images does not have the same dimension"
+          && s_width == this->width && s_height == this->height);
+
+  int dims[2];
+  dims[0] = this->height;
+  dims[1] = this->width;
+  Matrix<T> *mat = new Matrix<T>(2,dims);
+  Image<T>  *res = new Image<T>(mat);
+
+
+  for (int y = 0; y < this->height; y++){
+      for (int x = 0; x < this->width; x++){
+          T value = high + (*this)(x,y) -(*img)(x,y);
+          (*res)(x, y) =  april_utils::clamp(value, low, high);
+      } 
+  }
+
+  return res;
+}
 
 #endif // _IMAGE_CC_
