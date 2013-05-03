@@ -280,7 +280,18 @@
 }
 //BIND_END
 
+//BIND_METHOD ImageFloat substract
+{
+  ImageFloat *img;
+  
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_GET_PARAMETER(1, ImageFloat, img);
 
+  ImageFloat *res = obj->substract_image(img, 0.0, 1.0);
+
+  LUABIND_RETURN(ImageFloat, res);
+}
+//BIND_END
 
 //BIND_METHOD ImageFloat rotate90cw
 {
