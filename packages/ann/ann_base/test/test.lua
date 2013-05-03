@@ -6,16 +6,16 @@ random2        = random(4283)
 bunch_size     = 4
 
 -----------------------------------------------------------
-m_xor = matrix.fromString[[
+m_or = matrix.fromString[[
     4 3
     ascii
     0 0 0
     0 1 1
     1 0 1
-    1 1 0
+    1 1 1
 ]]
-ds_input  = dataset.matrix(m_xor,{patternSize={1,2}})
-ds_output = dataset.matrix(m_xor,{offset={0,2},patternSize={1,1}})
+ds_input  = dataset.matrix(m_or,{patternSize={1,2}})
+ds_output = dataset.matrix(m_or,{offset={0,2},patternSize={1,1}})
 data = {
   input_dataset  = ds_input,
   output_dataset = ds_output,
@@ -73,7 +73,7 @@ trainer:randomize_weights{
   inf    = -0.1,
   sup    = 0.1
 }
-for i=1,30000 do
+for i=1,10000 do
   err = trainer:train_dataset{
     input_dataset  = data.input_dataset,
     output_dataset = data.output_dataset,
@@ -100,7 +100,7 @@ trainer:randomize_weights{
   inf    = -0.1,
   sup    = 0.1
 }
-for i=1,30000 do
+for i=1,10000 do
   err = trainer:train_dataset{
     distribution = { { input_dataset  = data.input_dataset,
 		       output_dataset = data.output_dataset,
@@ -168,7 +168,7 @@ for _,actf in ipairs({"softsign", "softplus", "sin", "hardtanh", "linear"}) do
     inf    = -0.1,
     sup    = 0.1
   }
-  for i=1,100000 do
+  for i=1,10000 do
     trainer:train_dataset(data)
   end
   print(trainer:validate_dataset(data))

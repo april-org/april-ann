@@ -29,10 +29,11 @@
 
 namespace ANN {
   class DotProductANNComponent : public ANNComponent {
-    TokenMemoryBlock *input,  *error_input;
-    TokenMemoryBlock *output, *error_output;
+    Token            *input;
+    TokenMemoryBlock *error_input, *output, *error_output;
     Connections *weights_matrix;
     unsigned int bunch_size;
+    bool sparse_input;
     
     /// learning parameters
     float learning_rate, momentum, weight_decay, c_weight_decay;
@@ -48,10 +49,8 @@ namespace ANN {
     
     void
     computeBPUpdateOnPrevVectors(FloatGPUMirroredMemoryBlock *prev_weights_mat_ptr,
-				 FloatGPUMirroredMemoryBlock *input,
-				 const unsigned int input_shift,
+				 Token *input_token,
 				 FloatGPUMirroredMemoryBlock *input_error,
-				 const unsigned int input_error_shift,
 				 float beta);
 
   public:
