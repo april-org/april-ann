@@ -58,6 +58,11 @@ namespace ANN {
   }
 
   Token *CopyANNComponent::doBackprop(Token *_error_input) {
+    if (_error_input == 0) {
+      if (error_input)  { DecRef(error_input);  error_input  = 0; }
+      if (error_output) { DecRef(error_output); error_output = 0; }
+      return 0;
+    }
     if (_error_input->getTokenCode() != table_of_token_codes::vector_Tokens)
       ERROR_EXIT(128, "Incorrect error input token type, "
 		 "expected TokenBunchVector\n");

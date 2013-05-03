@@ -22,6 +22,10 @@
 #include "swap.h"
 #include "dot_product_component.h"
 #include "wrapper.h"
+#include "token_base.h"
+#include "token_vector.h"
+#include "token_memory_block.h"
+#include "table_of_token_codes.h"
 
 using april_utils::swap;
 
@@ -62,54 +66,101 @@ namespace ANN {
   // The DotProductANNComponent
   Token *DotProductANNComponent::doForward(Token *_input, bool during_training) {
     assert(weights_matrix != 0);
-    // error checking
-    if ( (_input == 0) ||
-	 (_input->getTokenCode() != table_of_token_codes::token_mem_block))
-      ERROR_EXIT(129,"Incorrect input Token type, expected token_mem_block!\n");
-    // change current input by new input
-    AssignRef(input,_input->convertTo<TokenMemoryBlock*>());
-    // compute current bunch
-    unsigned int bunch_size = input->getUsedSize() / input_size;
-    if (input->getUsedSize() % input_size != 0)
-      ERROR_EXIT2(128, "Input memory block (size %d) is not multiple of %d\n",
-		  input->getUsedSize(), input_size);
-    this->bunch_size = bunch_size;
-    // new output to fit the bunch
-    AssignRef(output,new TokenMemoryBlock(bunch_size * output_size));
-    // get memory blocks for tokens and weights
-    FloatGPUMirroredMemoryBlock *input_ptr       = input->getMemBlock();
-    FloatGPUMirroredMemoryBlock *output_ptr      = output->getMemBlock();
     FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
-    //
-    if (bunch_size == 1) {
-      // vector x matrix product
-      doSgemv(CblasColMajor, transpose_weights,
-	      weights_matrix->getOutputSize(), weights_matrix->getInputSize(),
-	      1.0f, weights_mat_ptr, weights_matrix->getOutputSize(),
-	      input_ptr, 1,
-	      0.0f, output_ptr, 1,
-	      0, 0, 0,
-	      use_cuda);
-    } // if bunch_size==1
-    else {
-      // matrix x matrix product
-      // C = \alpha op(A) op(B) + \beta C
-      // input * weights = output
-      doSgemm(CblasColMajor,
-	      CblasNoTrans, NEGATE_CBLAS_TRANSPOSE(transpose_weights),
-	      bunch_size, output_size, input_size, // conf.cur_bunch_size,
-	      1.0f, input_ptr, bunch_size, // conf.max_bunch_size,
-	      weights_mat_ptr, weights_matrix->getOutputSize(),
-	      // beta = 1.0f, C matrix contains BIAS and probably other layer
-	      // computations
-	      0.0f, output_ptr, bunch_size, // conf.max_bunch_size,
-	      0, 0, 0, // inputs->getOffset(), 0, outputs->getOffset(),
-	      use_cuda); // conf.use_cuda_flag);
-    } // if bunch_size==1 ... else
+    // error checking
+    if (_input == 0)
+      ERROR_EXIT(129,"Null Token received!\n");
+    switch(_input->getTokenCode()) {
+    case table_of_token_codes::token_mem_block: {
+      sparse_input = false;
+      // change current input by new input
+      AssignRef(input,_input);
+      TokenMemoryBlock *input_mem_token=_input->convertTo<TokenMemoryBlock*>();
+      // compute current bunch
+      bunch_size = input_mem_token->getUsedSize() / input_size;
+      if (input_mem_token->getUsedSize() % input_size != 0)
+	ERROR_EXIT2(128, "Input memory block (size %d) is not multiple of %d\n",
+		    input_mem_token->getUsedSize(), input_size);
+      // new output to fit the bunch
+      AssignRef(output,new TokenMemoryBlock(bunch_size * output_size));
+      // get memory blocks for tokens and weights
+      FloatGPUMirroredMemoryBlock *input_ptr       = input_mem_token->getMemBlock();
+      FloatGPUMirroredMemoryBlock *output_ptr      = output->getMemBlock();
+      //
+      if (bunch_size == 1) {
+	// vector x matrix product
+	doSgemv(CblasColMajor, transpose_weights,
+		weights_matrix->getOutputSize(), weights_matrix->getInputSize(),
+		1.0f, weights_mat_ptr, weights_matrix->getOutputSize(),
+		input_ptr, 1,
+		0.0f, output_ptr, 1,
+		0, 0, 0,
+		use_cuda);
+      } // if bunch_size==1
+      else {
+	// matrix x matrix product
+	// C = \alpha op(A) op(B) + \beta C
+	// input * weights = output
+	doSgemm(CblasColMajor,
+		CblasNoTrans, NEGATE_CBLAS_TRANSPOSE(transpose_weights),
+		bunch_size, output_size, input_size, // conf.cur_bunch_size,
+		1.0f, input_ptr, bunch_size, // conf.max_bunch_size,
+		weights_mat_ptr, weights_matrix->getOutputSize(),
+		// beta = 1.0f, C matrix contains BIAS and probably other layer
+		// computations
+		0.0f, output_ptr, bunch_size, // conf.max_bunch_size,
+		0, 0, 0, // inputs->getOffset(), 0, outputs->getOffset(),
+		use_cuda); // conf.use_cuda_flag);
+      } // if bunch_size==1 ... else
+      break;
+    }
+    case table_of_token_codes::vector_Tokens: {
+      sparse_input = true;
+      AssignRef(input, _input);
+      TokenBunchVector *input_vector_token=input->convertTo<TokenBunchVector*>();
+      bunch_size = input_vector_token->size();
+      if (bunch_size == 0) ERROR_EXIT(128, "Found bunch_size==0\n");
+      AssignRef(output,new TokenMemoryBlock(bunch_size * output_size));
+      output->setToZero(use_cuda);
+      FloatGPUMirroredMemoryBlock *output_ptr = output->getMemBlock();
+      unsigned int w_lda  = output_size;
+      unsigned int w_step = 1;
+      if (transpose_weights == CblasTrans) {
+	w_lda  = 1;
+	w_step = output_size;
+      }
+      for (unsigned int b=0; b<bunch_size; ++b) {
+	Token *current = (*input_vector_token)[b];
+	if (current->getTokenCode()!=table_of_token_codes::vector_float_sparse)
+	  ERROR_EXIT(128,"Incorrect token type, expected vector_float_sparse\n");
+	TokenSparseVectorFloat *sparse_token;
+	sparse_token = current->convertTo<TokenSparseVectorFloat*>();
+	for (unsigned int k=0; k<sparse_token->size(); ++k) {
+	  unsigned int pos     = (*sparse_token)[k].first;
+	  float value          = (*sparse_token)[k].second;
+	  unsigned int w_shift = pos*w_lda;
+	  doSaxpy(output_size,
+		  value,
+		  weights_mat_ptr, w_shift, w_step,
+		  output_ptr, b, bunch_size, use_cuda);
+	}
+      }
+      break;
+    }
+    };
     return output;
   }
   
   Token *DotProductANNComponent::doBackprop(Token *_error_input) {
+    if (sparse_input) {
+      // If input is parse, the component needs to be an input of the ANN,
+      // therefore the input is probably SO LARGE, and computing the backprop
+      // will lead in HIGH computational cost ;) Because of this, the components
+      // returns a NULL gradient pointer
+      if (error_input)  { DecRef(error_input);  error_input  = 0; }
+      if (error_output) { DecRef(error_output); error_output = 0; }
+      return 0;
+    }
     // error checking
     if ( (_error_input == 0) ||
 	 (_error_input->getTokenCode() != table_of_token_codes::token_mem_block))
@@ -152,10 +203,8 @@ namespace ANN {
   
   void DotProductANNComponent::
   computeBPUpdateOnPrevVectors(FloatGPUMirroredMemoryBlock *prev_weights_mat_ptr,
-			       FloatGPUMirroredMemoryBlock *input,
-			       const unsigned int input_shift,
+			       Token *input_token,
 			       FloatGPUMirroredMemoryBlock *error_input,
-			       const unsigned int error_input_shift,
 			       float beta) {
     // backprop learning rule:
     // PREV_W = alpha * ERRORS + PREV_W
@@ -164,36 +213,65 @@ namespace ANN {
     const float norm_learn_rate =
       -(1.0f/sqrtf(static_cast<float>(references*bunch_size))) *
       learning_rate;
-    if (bunch_size > 1) {
-      doSgemm(CblasColMajor, CblasTrans, CblasNoTrans,
-	      weights_matrix->getOutputSize(),
-	      weights_matrix->getInputSize(),
-	      bunch_size,                               // dimensiones
-	      norm_learn_rate,                          // alpha
-	      (transpose_weights == CblasNoTrans)?error_input:input, // A
-	      bunch_size,                                            // A stride
-	      (transpose_weights == CblasNoTrans)?input:error_input, // B
-	      bunch_size,                                            // B stride
-	      beta,                                     // beta
-	      prev_weights_mat_ptr,                     // C
-	      weights_matrix->getOutputSize(),          // C stride
-	      0, 0, 0,                                  // offsets
-	      use_cuda);
-    } // if bunch_size > 1 ... else
+    if (sparse_input) {
+      TokenBunchVector *input_vector_token;
+      input_vector_token  = input_token->convertTo<TokenBunchVector*>();
+      unsigned int w_lda  = output_size;
+      unsigned int w_step = 1;
+      if (transpose_weights == CblasTrans) {
+	w_lda  = 1;
+	w_step = output_size;
+      }
+      for (unsigned int b=0; b<bunch_size; ++b) {
+	Token *current = (*input_vector_token)[b];
+	TokenSparseVectorFloat *sparse_token;
+	sparse_token = current->convertTo<TokenSparseVectorFloat*>();
+	for (unsigned int k=0; k<sparse_token->size(); ++k) {
+	  unsigned int pos     = (*sparse_token)[k].first;
+	  float value          = (*sparse_token)[k].second;
+	  unsigned int w_shift = pos*w_lda;
+	  doSaxpy(output_size,
+		  norm_learn_rate*value,
+		  error_input, b, bunch_size,
+		  prev_weights_mat_ptr, w_shift, w_step,
+		  use_cuda);
+	}
+      }
+    }
     else {
-      if (beta < 1.0f)
-	doSscal(weights_matrix->getNumWeights(),
-		beta, prev_weights_mat_ptr, 0, 1,
+      TokenMemoryBlock *input_mem_token=input_token->convertTo<TokenMemoryBlock*>();
+      FloatGPUMirroredMemoryBlock *input=input_mem_token->getMemBlock();
+      if (bunch_size > 1) {
+	doSgemm(CblasColMajor, CblasTrans, CblasNoTrans,
+		weights_matrix->getOutputSize(),
+		weights_matrix->getInputSize(),
+		bunch_size,                               // dimensiones
+		norm_learn_rate,                          // alpha
+		(transpose_weights == CblasNoTrans)?error_input:input, // A
+		bunch_size,                                            // A stride
+		(transpose_weights == CblasNoTrans)?input:error_input, // B
+		bunch_size,                                            // B stride
+		beta,                                     // beta
+		prev_weights_mat_ptr,                     // C
+		weights_matrix->getOutputSize(),          // C stride
+		0, 0, 0,                                  // offsets
 		use_cuda);
-      doSger(CblasColMajor,
-	     weights_matrix->getOutputSize(),
-	     weights_matrix->getInputSize(),
-	     norm_learn_rate,
-	     (transpose_weights == CblasNoTrans)?error_input:input, 0, bunch_size, // error_input_shift, conf.max_bunch_size,
-	     (transpose_weights == CblasNoTrans)?input:error_input, 0, bunch_size, // input_shift, conf.max_bunch_size,
-	     prev_weights_mat_ptr, 0, weights_matrix->getOutputSize(),
-	     use_cuda);
-    } // if bunch_size > 1 ... else
+      } // if bunch_size > 1 ... else
+      else {
+	if (beta < 1.0f)
+	  doSscal(weights_matrix->getNumWeights(),
+		  beta, prev_weights_mat_ptr, 0, 1,
+		  use_cuda);
+	doSger(CblasColMajor,
+	       weights_matrix->getOutputSize(),
+	       weights_matrix->getInputSize(),
+	       norm_learn_rate,
+	       (transpose_weights == CblasNoTrans)?error_input:input, 0, bunch_size,
+	       (transpose_weights == CblasNoTrans)?input:error_input, 0, bunch_size,
+	       prev_weights_mat_ptr, 0, weights_matrix->getOutputSize(),
+	       use_cuda);
+      } // if bunch_size > 1 ... else
+    }
   }
   
   // The DotProductANNComponent
@@ -207,9 +285,7 @@ namespace ANN {
     FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
     FloatGPUMirroredMemoryBlock *prev_weights_mat_ptr =
       weights_matrix->getPrevPtr();
-    FloatGPUMirroredMemoryBlock *input_ptr        = input->getMemBlock();
     FloatGPUMirroredMemoryBlock *error_input_ptr  = error_input->getMemBlock();
-    FloatGPUMirroredMemoryBlock *error_output_ptr = error_output->getMemBlock();
     
     float beta_parameter_for_cblas_bp = 1.0f;
     if (weights_matrix->isFirstUpdateCall()) {
@@ -228,8 +304,8 @@ namespace ANN {
     } // if (weights_matrix->needsToComputeMomentum()) {
     
     computeBPUpdateOnPrevVectors(prev_weights_mat_ptr,
-				 input_ptr, 0, // input_shift,
-				 error_input_ptr, 0, // output_shift,
+				 input,
+				 error_input_ptr,
 				 beta_parameter_for_cblas_bp);
     
     // Forces to update counts and swap vectors if necessary at this backward
@@ -249,7 +325,7 @@ namespace ANN {
     output	 = 0;
     error_output = 0;
   }
-
+  
   ANNComponent *DotProductANNComponent::clone() {
     DotProductANNComponent *component = new
       DotProductANNComponent(name.c_str(), weights_name.c_str(),
