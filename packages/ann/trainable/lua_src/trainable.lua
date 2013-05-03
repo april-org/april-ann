@@ -143,6 +143,12 @@ function trainable.supervised_trainer:calculate(input)
   return self.ann_component:forward(input):convert_to_memblock():to_table()
 end
 
+--april_set_doc("trainable.supervised_trainer", {
+--		class = "class|namespace|function|method|var",
+--		summary = "",
+--		description = "",
+--		param = { ["nombre"] = "" }
+--					      })
 april_set_doc("trainable.supervised_trainer",
 	      "\ttrain_step(t) => performs one training epoch with a given "..
 		" table with datasets. Arguments:")
