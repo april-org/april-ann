@@ -44,6 +44,7 @@ namespace ANN {
   /// the anncomponents must fulfill.
   class ANNComponent : public Referenced {
   private:
+    bool is_built;
     void generateDefaultName() {
       char str_id[MAX_NAME_STR+1];
       snprintf(str_id, MAX_NAME_STR, "c%u", next_name_id);
@@ -64,6 +65,7 @@ namespace ANN {
     ANNComponent(const char *name = 0, const char *weights_name = 0,
 		 unsigned int input_size = 0, unsigned int output_size = 0) :
       Referenced(),
+      is_built(false),
       input_size(input_size), output_size(output_size),
       use_cuda(false) {
       if (name) this->name = string(name);
@@ -71,6 +73,11 @@ namespace ANN {
       if (weights_name) this->weights_name = string(weights_name);
     }
     virtual ~ANNComponent() { }
+
+    const string &getName() const { return name; }
+    const string &getWeightsName() const { return weights_name; }
+    
+    bool getIsBuilt() const { return is_built; }
     
     void generateDefaultWeightsName() {
       char str_id[MAX_NAME_STR+1];
@@ -79,9 +86,6 @@ namespace ANN {
       ++next_weights_id;
     }
 
-    const char *getName() const { return name.c_str(); }
-    const char *getWeightsName() const { return weights_name.c_str(); }
-    
     unsigned int getInputSize() const {
       return input_size;
     }
@@ -116,8 +120,7 @@ namespace ANN {
     virtual void reset() { }
     
     virtual ANNComponent *clone() {
-      return new ANNComponent(name.c_str(),
-			      weights_name.c_str(),
+      return new ANNComponent(name.c_str(), weights_name.c_str(),
 			      input_size, output_size);
     }
     
@@ -147,6 +150,8 @@ namespace ANN {
 		       unsigned int _output_size,
 		       hash<string,Connections*> &weights_dict,
 		       hash<string,ANNComponent*> &components_dict) {
+      // if (is_built) ERROR_EXIT(128, "Rebuild is forbidden!!!!\n");
+      is_built = true;
       ////////////////////////////////////////////////////////////////////
       ANNComponent *&component = components_dict[name];
       if (component != 0) ERROR_EXIT1(102, "Non unique component name found: %s\n",

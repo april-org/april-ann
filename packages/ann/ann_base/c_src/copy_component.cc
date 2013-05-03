@@ -114,7 +114,7 @@ namespace ANN {
     output	 = 0;
     error_output = 0;
   }
-  
+
   ANNComponent *CopyANNComponent::clone() {
     CopyANNComponent *copy_component = new CopyANNComponent(times,
 							    name.c_str(),

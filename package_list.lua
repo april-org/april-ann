@@ -14,7 +14,7 @@ return {
   "loss_functions",
   "trainable",
 --   "mlp",
---   "sdae",
+  "sdae",
 --   "gzio",
   "image",
   "image_io",
