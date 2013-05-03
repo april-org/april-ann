@@ -204,16 +204,24 @@ using namespace ANN;
 {
   LUABIND_CHECK_ARGN(<=,1);
   int argn = lua_gettop(L);
-  const char *name  = 0;
-  unsigned int size = 0;
+  const char *name    = 0;
+  const char *weights = 0;
+  unsigned int size   = 0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", "size", 0);
+    check_table_fields(L, 1, "name", "weights", "size", 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint,   size, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, 0);
   }
-  obj = new ANNComponent(name, 0, size, size);
+  obj = new ANNComponent(name, weights, size, size);
   LUABIND_RETURN(ANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD ANNComponent get_is_built
+{
+  LUABIND_RETURN(bool, obj->getIsBuilt());
 }
 //BIND_END
 
@@ -401,7 +409,7 @@ using namespace ANN;
 }
 //BIND_END
 
-//BIND_METHOD ANNComponent copyWeights
+//BIND_METHOD ANNComponent copy_weights
 {
   hash<string,Connections*> weights_dict;
   obj->copyWeights(weights_dict);
@@ -410,7 +418,7 @@ using namespace ANN;
 }
 //BIND_END
 
-//BIND_METHOD ANNComponent copyComponents
+//BIND_METHOD ANNComponent copy_components
 {
   hash<string,ANNComponent*> components_dict;
   obj->copyComponents(components_dict);
@@ -419,7 +427,7 @@ using namespace ANN;
 }
 //BIND_END
 
-//BIND_METHOD ANNComponent getComponent
+//BIND_METHOD ANNComponent get_component
 {
   LUABIND_CHECK_ARGN(==,1);
   LUABIND_CHECK_PARAMETER(1,string);

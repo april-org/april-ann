@@ -34,11 +34,26 @@ function trainable.supervised_trainer:__call(ann_component,
     bunch_size       = bunch_size or false,
   }
   obj = class_instance(obj, self, true)
+  if ann_component:get_is_built() then obj:build() end
   return obj
 end
 
 function trainable.supervised_trainer:set_loss_function(loss_function)
   self.loss_function = loss_function
+end
+
+function trainable.supervised_trainer:component(str)
+  if #self.weights_order == 0 then
+    error("Needs execution of build method")
+  end
+  return self.components_table[str] or error("Incorrect component name " .. str)
+end
+
+function trainable.supervised_trainer:weights(str)
+  if #self.weights_order == 0 then
+    error("Needs execution of build method")
+  end
+  return self.weights_table[str] or error("Incorrect weights name " .. str)
 end
 
 function trainable.supervised_trainer:randomize_weights(t)
@@ -76,9 +91,9 @@ end
 function trainable.supervised_trainer:build(t)
   local params = get_table_fields(
     {
-      weights_table = { type_match="table",  mandatory = false, default=nil },
-      input         = { type_match="number", mandatory = false, default=nil },
-      output        = { type_match="number", mandatory = false, default=nil },
+      weights = { type_match="table",  mandatory = false, default=nil },
+      input   = { type_match="number", mandatory = false, default=nil },
+      output  = { type_match="number", mandatory = false, default=nil },
     }, t or {})
   self.weights_table = params.weights_table or {}
   self.weights_table,
@@ -232,7 +247,7 @@ function trainable.supervised_trainer:train_dataset(t)
     if i==#ds_idx_table or #bunch_indexes == bunch_size then
       local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
       local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
-      trainer:train_step(input_bunch, output_bunch)
+      self:train_step(input_bunch, output_bunch)
       bunch_indexes = {}
     end
   end
@@ -287,7 +302,7 @@ function trainable.supervised_trainer:validate_dataset(t)
     if i==#ds_idx_table or #bunch_indexes == bunch_size then
       local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
       local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
-      trainer:validate_step(input_bunch, output_bunch)
+      self:validate_step(input_bunch, output_bunch)
       bunch_indexes = {}
     end
   end
@@ -456,7 +471,7 @@ end
 -- }
 --
 -- returns the trained object
-function ann.train_wo_validation(t)
+function trainable.supervised_trainer:train_wo_validation(t)
   local params = get_table_fields(
     {
       training_table = { mandatory=true },

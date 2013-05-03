@@ -54,7 +54,7 @@ params_pretrain = {
   
   layers                = layers_table,
   -- OUTPUT LAYER (SUPERVISED): classification task, 10 classes (10 digits)
-  supervised_layer      = { size = 10, actf = "softmax" },
+  supervised_layer      = { size = 10, actf = "log_softmax" },
   output_datasets       = { train_output },
   
   bunch_size            = bunch_size,
@@ -89,56 +89,48 @@ params_pretrain = {
   }
 }
 
+loss_name = "multi_class_cross_entropy"
 sdae_table,deep_classifier = ann.autoencoders.greedy_layerwise_pretraining(params_pretrain)
 codifier_net = ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
-							       bunch_size,
 							       layers_table)
-deep_classifier = ann.mlp.convert_to_all_all{
-  ann = deep_classifier,
-  topology = "256 inputs 256 logistic 128 logistic 32 logistic 10 softmax",
-  bunch_size = bunch_size }
+trainer_deep_classifier = trainable.supervised_trainer(deep_classifier,
+						       ann.loss[loss_name](10),
+						       bunch_size)
+trainer_deep_classifier:build()
+-- local outf = io.open("data", "w")
+-- encoded_dataset = ann.autoencoders.encode_dataset(codifier_net,
+-- 						  train_input)
+-- for ipat,pat in encoded_dataset:patterns() do
+--   fprintf(outf, "Pattern %d %s\n", ipat, table.concat(pat, " "))
+-- end
 
-local outf = io.open("data", "w")
-encoded_dataset = ann.autoencoders.encode_dataset(codifier_net,
-						  train_input)
-for ipat,pat in encoded_dataset:patterns() do
-  fprintf(outf, "Pattern %d %s\n", ipat, table.concat(pat, " "))
-end
-
-encoded_dataset = ann.autoencoders.encode_dataset(codifier_net,
-						  val_input)
-for ipat,pat in encoded_dataset:patterns() do
-  fprintf(outf, "Pattern %d %s\n", ipat, table.concat(pat, " "))
-end
-outf:close()
+-- encoded_dataset = ann.autoencoders.encode_dataset(codifier_net,
+-- 						  val_input)
+-- for ipat,pat in encoded_dataset:patterns() do
+--   fprintf(outf, "Pattern %d %s\n", ipat, table.concat(pat, " "))
+-- end
+-- outf:close()
 
 --
-shallow_classifier = ann.mlp.all_all.generate{
-  topology = "256 inputs 256 tanh 128 tanh 10 softmax",
+shallow_classifier = ann.mlp.all_all.generate("256 inputs 256 tanh 128 tanh 10 log_softmax")
+trainer_shallow_classifier = trainable.supervised_trainer(shallow_classifier,
+							  ann.loss[loss_name](10),
+							  bunch_size)
+trainer_shallow_classifier:build()
+trainer_shallow_classifier:randomize_weights {
   random   = random(1234),
-  inf      = -1,
-  sup      =  1,
-  bunch_size = bunch_size,
-  use_fanin = true}
-shallow_classifier:set_error_function(ann.error_functions.logistic_cross_entropy())
-
--- deep_classifier = ann.mlp.add_layers{
---   ann        = codifier_net,
---   new_layers = { { 10, "softmax" } },
---   bunch_size = bunch_size,
---   random     = random(1234),
---   inf        = -0.1,
---   sup        = 0.1 }
--- deep_classifier:set_error_function(ann.error_functions.logistic_cross_entropy())
-
-deep_classifier_wo_pretraining = ann.mlp.all_all.generate{
-  topology = "256 inputs 256 logistic 128 logistic 32 logistic 10 softmax",
+  inf      = -0.1,
+  sup      =  0.1 }
+--
+deep_classifier_wo_pretraining = ann.mlp.all_all.generate("256 inputs 256 logistic 128 logistic 32 logistic 10 log_softmax")
+trainer_deep_wo_pretraining = trainable.supervised_trainer(deep_classifier_wo_pretraining,
+							   ann.loss[loss_name](10),
+							   bunch_size)
+trainer_deep_wo_pretraining:build()
+trainer_deep_wo_pretraining:randomize_weights{
   random   = random(1234),
-  inf      = -1,
-  sup      =  1,
-  use_fanin = true,
-  bunch_size = bunch_size }
-deep_classifier_wo_pretraining:set_error_function(ann.error_functions.logistic_cross_entropy())
+  inf      = -0.1,
+  sup      =  0.1 }
 
 train_input = dataset.salt_noise{
   dataset = train_input,
@@ -167,23 +159,21 @@ datosvalidar = {
   output_dataset = val_output
 }
 
-deep_classifier:set_option("learning_rate", 1.0)
+deep_classifier:set_option("learning_rate", 0.4)
 deep_classifier:set_option("momentum", 0.2)
 deep_classifier:set_option("weight_decay", 0.0)
-deep_classifier:set_option("neuron_squared_length_upper_bound", 15.0);
-deep_classifier:set_option("dropout", 0.5)
-deep_classifier:set_error_function(ann.error_functions.logistic_cross_entropy())
+--deep_classifier:set_option("neuron_squared_length_upper_bound", 15.0);
+--deep_classifier:set_option("dropout", 0.5)
 
 shallow_classifier:set_option("learning_rate", 0.4)
 shallow_classifier:set_option("momentum",
 			      deep_classifier:get_option("momentum"))
 shallow_classifier:set_option("weight_decay",
 			      deep_classifier:get_option("weight_decay"))
-shallow_classifier:set_option("neuron_squared_length_upper_bound",
-			      deep_classifier:get_option("neuron_squared_length_upper_bound"))
-shallow_classifier:set_option("dropout",
-			      deep_classifier:get_option("dropout"))
-shallow_classifier:set_error_function(ann.error_functions.logistic_cross_entropy())
+--shallow_classifier:set_option("neuron_squared_length_upper_bound",
+--			      deep_classifier:get_option("neuron_squared_length_upper_bound"))
+--shallow_classifier:set_option("dropout",
+--			      deep_classifier:get_option("dropout"))
 
 deep_classifier_wo_pretraining:set_option("learning_rate",
 					  shallow_classifier:get_option("learning_rate"))
@@ -191,19 +181,18 @@ deep_classifier_wo_pretraining:set_option("momentum",
 					  deep_classifier:get_option("momentum"))
 deep_classifier_wo_pretraining:set_option("weight_decay",
 					  deep_classifier:get_option("weight_decay"))
-deep_classifier:set_option("neuron_squared_length_upper_bound",
-			   deep_classifier:get_option("neuron_squared_length_upper_bound"))
-deep_classifier_wo_pretraining:set_option("dropout",
-					  deep_classifier:get_option("dropout"))
-deep_classifier_wo_pretraining:set_error_function(ann.error_functions.logistic_cross_entropy())
+--deep_classifier:set_option("neuron_squared_length_upper_bound",
+--			   deep_classifier:get_option("neuron_squared_length_upper_bound"))
+--deep_classifier_wo_pretraining:set_option("dropout",
+--					  deep_classifier:get_option("dropout"))
 
 for i=1,200 do
-  local mse_tr_deep = deep_classifier:train_dataset(datosentrenar_deep)
-  local mse_tr_deep_wo = deep_classifier_wo_pretraining:train_dataset(datosentrenar_deep_wo)
-  local mse_tr_shallow = shallow_classifier:train_dataset(datosentrenar_shallow)
-  local mse_val_deep = deep_classifier:validate_dataset(datosvalidar)
-  local mse_val_deep_wo = deep_classifier_wo_pretraining:validate_dataset(datosvalidar)
-  local mse_val_shallow = shallow_classifier:validate_dataset(datosvalidar)
+  local mse_tr_deep = trainer_deep_classifier:train_dataset(datosentrenar_deep)
+  local mse_tr_deep_wo = trainer_deep_wo_pretraining:train_dataset(datosentrenar_deep_wo)
+  local mse_tr_shallow = trainer_shallow_classifier:train_dataset(datosentrenar_shallow)
+  local mse_val_deep = trainer_deep_classifier:validate_dataset(datosvalidar)
+  local mse_val_deep_wo = trainer_deep_wo_pretraining:validate_dataset(datosvalidar)
+  local mse_val_shallow = trainer_shallow_classifier:validate_dataset(datosvalidar)
   printf("%5d %.6f %.6f \t %.6f %.6f \t %.6f %.6f\n", i,
 	 mse_tr_deep, mse_val_deep,
 	 mse_tr_deep_wo, mse_val_deep_wo,
@@ -213,21 +202,9 @@ for i=1,200 do
 end
 
 -- classification
-local deep_out_ds = dataset.matrix(matrix(val_output:numPatterns(),
-					  val_output:patternSize()))
-local deep_wo_out_ds = dataset.matrix(matrix(val_output:numPatterns(),
-					     val_output:patternSize()))
-local shallow_out_ds = dataset.matrix(matrix(val_output:numPatterns(),
-					     val_output:patternSize()))
-
-deep_classifier:use_dataset{ input_dataset  = val_input,
-			     output_dataset = deep_out_ds }
-
-deep_classifier_wo_pretraining:use_dataset{input_dataset =val_input,
-					   output_dataset=deep_wo_out_ds}
-
-shallow_classifier:use_dataset{ input_dataset  = val_input,
-				output_dataset = shallow_out_ds }
+deep_out_ds    = trainer_deep_classifier:use_dataset{ input_dataset = val_input }
+deep_wo_out_ds = trainer_deep_wo_pretraining:use_dataset{ input_dataset = val_input }
+shallow_out_ds = trainer_shallow_classifier:use_dataset{ input_dataset  = val_input }
 
 local errors = {0,0,0}
 
