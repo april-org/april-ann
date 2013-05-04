@@ -14,13 +14,29 @@ end
 -----------------------
 -- TRAINABLE CLASSES --
 -----------------------
-
--- CLASS supervised_trainer
-april_set_doc("trainable.supervised_trainer",
-	      "Lua class for supervised machine learning models training")
+april_set_doc("trainable.supervised_trainer", {
+		class       = "class",
+		summary     = "Supervised machine learning trainer",
+		description =
+		  table.concat({"This class implements methods useful to",
+				"train, evalute and modify contents of",
+				"ANN components or similar supervised learning",
+				"models"}, " ") })
 class("trainable.supervised_trainer")
 
-april_set_doc("trainable.supervised_trainer", "Methods")
+
+april_set_doc("trainable.supervised_trainer.__call", {
+		class = "method", summary = "Constructor",
+		description =
+		  table.concat({"Constructor of the supervised_trainer class.",
+				"This class implements methods useful to",
+				"train, evalute and modify contents of",
+				"ANN components or similar supervised learning",
+				"models"}, " "),
+		params = { "ANN component or similar supervised learning model",
+			   "Loss function",
+			   "Bunch size (mini batch)" },
+		outputs = { "Instantiated object" }, })
 function trainable.supervised_trainer:__call(ann_component,
 					     loss_function,
 					     bunch_size)
@@ -114,9 +130,6 @@ function trainable.supervised_trainer:build(t)
   return self.weights_table,self.components_table
 end
 
-april_set_doc("trainable.supervised_trainer",
-	      "\ttrain_step(input,target) => performs one training step "..
-		"(reset, forward, loss, gradient, backprop, and update)")
 function trainable.supervised_trainer:train_step(input, target)
   if type(input)  == "table" then input  = tokens.memblock(input)  end
   if type(target) == "table" then target = tokens.memblock(target) end
@@ -143,27 +156,6 @@ function trainable.supervised_trainer:calculate(input)
   return self.ann_component:forward(input):convert_to_memblock():to_table()
 end
 
---april_set_doc("trainable.supervised_trainer", {
---		class = "class|namespace|function|method|var",
---		summary = "",
---		description = "",
---		param = { ["nombre"] = "" }
---					      })
-april_set_doc("trainable.supervised_trainer",
-	      "\ttrain_step(t) => performs one training epoch with a given "..
-		" table with datasets. Arguments:")
-april_set_doc("trainable.supervised_trainer",
-	      "\t                 [t.bunch_size]  mini batch size (bunch)")
-april_set_doc("trainable.supervised_trainer",
-	      "\t                 [t.input_dataset]  dataset with input patterns")
-april_set_doc("trainable.supervised_trainer",
-	      "\t                 [t.output_dataset]  dataset with output patterns")
-april_set_doc("trainable.supervised_trainer",
-	      "\t                 [t.distribution]")
-april_set_doc("trainable.supervised_trainer",
-	      "\t                 [t.shuffle]  optional random object")
-april_set_doc("trainable.supervised_trainer",
-	      "\t                 [t.replacement]  optional replacement size")
 function trainable.supervised_trainer:train_dataset(t)
   local params = get_table_fields(
     {
