@@ -1,6 +1,4 @@
-imageSVG = imageSVG or {}
-imageSVG.__index = imageSVG
-setmetatable(imageSVG, imageSVG)
+class("imageSVG")
 
 imageSVG.__tostring = function() return "imageSVG" end
 
@@ -16,7 +14,8 @@ function imageSVG:__call(params)
     obj.body   = {}
     obj.footer = {}
     
-    setmetatable(obj, self)
+    obj = class_instance(obj, self)
+
     return obj
 
 end

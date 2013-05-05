@@ -57,21 +57,21 @@ function isa( object_instance, base_class_table )
 end
 
 -- help documentation
-local allowed_classes = { "class", "namespace", "function", "method", "var" }
+local allowed_classes = { ["class"]=true,
+			  ["namespace"]=true,
+			  ["function"]=true,
+			  ["method"]=true,
+			  ["var"]=true }
 function april_set_doc(table_name, docblock)
   local docblock = get_table_fields(
     {
       class       = { mandatory=true,  type_match="string", default=nil },
       summary     = { mandatory=true,  type_match="string" },
-      description = { mandatory=true,  type_match="string" },
+      description = { mandatory=false, type_match="string" },
       params      = { mandatory=false, type_match="table", default=nil },
       outputs     = { mandatory=false, type_match="table", default=nil },
     }, docblock)
-  local ok = false
-  for i,v in ipairs(allowed_classes) do
-    if v==docblock.class then ok=true break end
-  end
-  assert(ok, "Incorrect class: " .. docblock.class)
+  assert(allowed_classes[docblock.class], "Incorrect class: " .. docblock.class)
   _APRIL_DOC_TABLE_ = _APRIL_DOC_TABLE_ or {}
   local current = get_table_from_dotted_string(table_name, true,
 					       _APRIL_DOC_TABLE_)
@@ -82,19 +82,27 @@ function april_print_doc(table_name, verbosity, prefix)
   assert(type(table_name)=="string", "Needs a string as first argument")
   assert(type(verbosity)=="number",  "Needs a number as first argument")
   local prefix = prefix or ""
-  local current_table = get_table_from_dotted_string(table_name, true,
-						     _APRIL_DOC_TABLE_)
+  local current_table
+  if #table_name==0 then current_table=_APRIL_DOC_TABLE_
+  else current_table = get_table_from_dotted_string(table_name, true,
+						    _APRIL_DOC_TABLE_)
+  end
   if #current_table == 0 then table.insert(current_table, {}) end
   local t = string.tokenize(table_name, ".")
+  if #t == 0 then table.insert(t, "") end
   for _,current in ipairs(current_table) do
     local out = { }
     if verbosity > 1 then
       table.insert(out,{prefix,
-			ansi.fg["bright_red"]..current.class or "",
-			ansi.fg["green"]..t[#t]..ansi.fg["default"]})
+			ansi.fg["bright_red"]..
+			  (string.format("%9s",current.class or "")),
+			ansi.fg["green"]..table_name..ansi.fg["default"]})
     else
       table.insert(out,
-		   {prefix,ansi.fg["green"]..t[#t]..ansi.fg["default"]})
+		   {prefix,
+		    ansi.fg["bright_red"]..
+		      (string.format("%9s",current.class or "")),
+		    ansi.fg["green"]..t[#t]..ansi.fg["default"]})
     end
     if verbosity > 0 then
       if current.summary then
@@ -105,37 +113,39 @@ function april_print_doc(table_name, verbosity, prefix)
     if verbosity > 1 then
       if current.description then
 	table.insert(out,
-		     { "\t"..ansi.fg["cyan"].."description:"..ansi.fg["default"],
+		     { "\n"..ansi.fg["cyan"].."description:"..ansi.fg["default"],
 		       string.truncate(current.description, COLWIDTH,
-				       "\t            ") })
+				       "            "),"\n" })
       end
       if current.params then
 	table.insert(out,
-		     { "\t"..ansi.fg["cyan"].."parameters:"..ansi.fg["default"] })
+		     { "\n"..ansi.fg["cyan"].."parameters:"..ansi.fg["default"] })
 	local names_table = {}
 	for name,_ in pairs(current.params) do table.insert(names_table, name) end
 	table.sort(names_table)
 	for _,name in ipairs(names_table) do
 	  local description = current.params[name]
 	  table.insert(out,
-		       { "\t\t",
+		       { "\t",
 			 ansi.fg["green"]..string.format("%16s",name)..ansi.fg["default"],
-			 string.truncate(description, COLWIDTH, "\t\t\t\t") } )
+			 string.truncate(description, COLWIDTH, "\t\t\t") } )
 	end
+	table.insert(out, { "" })
       end
       if current.outputs then
 	table.insert(out,
-		     { "\t"..ansi.fg["cyan"].."outputs:"..ansi.fg["default"] })
+		     { "\n"..ansi.fg["cyan"].."outputs:"..ansi.fg["default"] })
 	local names_table = {}
 	for name,_ in pairs(current.outputs) do table.insert(names_table, name) end
 	table.sort(names_table)
 	for _,name in ipairs(names_table) do
 	  local description = current.outputs[name]
 	  table.insert(out,
-		       { "\t\t",
+		       { "\t",
 			 ansi.fg["green"]..string.format("%16s",name)..ansi.fg["default"],
-			 string.truncate(description, COLWIDTH, "\t\t\t\t") } )
+			 string.truncate(description, COLWIDTH, "\t\t\t") } )
 	end
+	table.insert(out, { "" })
       end
     end
     for i=1,#out do out[i] = table.concat(out[i], " ") end
@@ -145,8 +155,12 @@ end
 
 -- verbosity => 0 only names, 1 only summary, 2 all
 function april_help(table_name, verbosity)
+  if not table_name then table_name="" end
   assert(type(table_name) == "string", "Expected string as first argument")
-  local t = get_table_from_dotted_string(table_name)
+  local t
+  if #table_name == 0 then t = _G
+  else t = get_table_from_dotted_string(table_name)
+  end
   local verbosity = verbosity or 2
   local obj = false
   april_print_doc(table_name, verbosity)
@@ -156,37 +170,52 @@ function april_help(table_name, verbosity)
     if getmetatable(t) and getmetatable(t).__index then
       t = getmetatable(t).__index
       obj = true
-    else
-      return
+      --  else
+      --      return
     end
   end
   -- local print_data = function(d) print("\t * " .. d) end
-  local classes = {}
-  local funcs   = {}
-  local names   = {}
+  local classes    = {}
+  local funcs      = {}
+  local names      = {}
+  local vars       = {}
   for i,v in pairs(t) do
     if type(v) == "function" then
-      table.insert(funcs, i)
+      table.insert(funcs, {i, string.format("%8s",type(v))})
     elseif type(v) == "table" then
       if i ~= "meta_instance" then
-	if v.meta_instance then
-	  if i ~= "__index" then table.insert(classes, i) end
+	if getmetatable(v) and getmetatable(v).id then
+	  if i~="__index" then table.insert(classes, i) end
 	else
 	  if getmetatable(v) and not getmetatable(v).__call then
 	    table.insert(names, i)
 	  else
-	    table.insert(funcs, i)
+	    table.insert(funcs, {i, string.format("%8s",type(v))})
 	  end
 	end
       end
+    else
+      table.insert(vars, {i, string.format("%8s",type(v))})
     end
+  end
+  if #vars > 0 then
+    print(ansi.fg["cyan"].." -- basic variables (string, number)"..
+	ansi.fg["default"])
+    table.sort(vars, function(a,b) return a[1] < b[1] end)
+    for i,v in pairs(vars) do
+      april_print_doc(table_name .. "." .. v[1], math.min(1, verbosity),
+		      ansi.fg["cyan"].."   * "..
+			v[2]..ansi.fg["default"])
+      -- print_data(v)
+    end
+    print("")
   end
   if #names > 0 then
     print(ansi.fg["cyan"].." -- names in the namespace"..ansi.fg["default"])
     table.sort(names)
     for i,v in pairs(names) do
       april_print_doc(table_name .. "." .. v, math.min(1, verbosity),
-		      ansi.fg["cyan"].."\t *"..ansi.fg["default"])
+		      ansi.fg["cyan"].."   *"..ansi.fg["default"])
       -- print_data(v)
     end
     print("")
@@ -197,26 +226,25 @@ function april_help(table_name, verbosity)
     for i,v in pairs(classes) do
       april_print_doc(table_name .. "." .. v,
 		      math.min(1, verbosity),
-		      ansi.fg["cyan"].."\t *"..ansi.fg["default"])
+		      ansi.fg["cyan"].."   *"..ansi.fg["default"])
       -- print_data(v)
     end
     print("")
   end
   if getmetatable(t) ~= t and #funcs > 0 then
     if not obj then
-      print(ansi.fg["cyan"].." -- static functions"..ansi.fg["default"])
+      print(ansi.fg["cyan"].." -- static functions or tables"..ansi.fg["default"])
     else
       print(ansi.fg["cyan"]..
-	      " -- object functions (methods or static functions)"..
+	      " -- object functions or tables (methods, static functions or tables)"..
 	      ansi.fg["default"])
     end
-    local aux = {}
-    for i,v in pairs(funcs) do table.insert(aux, v) end
-    table.sort(aux)
-    for i,v in ipairs(aux) do
-      april_print_doc(table_name .. "." .. v,
+    table.sort(funcs, function(a,b) return a[1] < b[1] end)
+    for i,v in ipairs(funcs) do
+      april_print_doc(table_name .. "." .. v[1],
 		      math.min(1, verbosity),
-		      ansi.fg["cyan"].."\t *"..ansi.fg["default"])
+		      ansi.fg["cyan"].."   * "..
+			v[2]..ansi.fg["default"])
       -- print_data(v)
     end
     print("")
@@ -239,7 +267,7 @@ function april_help(table_name, verbosity)
       for i,v in ipairs(aux) do
 	april_print_doc(table_name .. "." .. v,
 			math.min(1, verbosity),
-			ansi.fg["cyan"].."\t *"..ansi.fg["default"])
+			ansi.fg["cyan"].."   *"..ansi.fg["default"])
 	-- print_data(v)
       end
       print("")
@@ -257,7 +285,7 @@ function april_help(table_name, verbosity)
       for i,v in ipairs(aux) do
 	april_print_doc(table_name .. "." .. v,
 			math.min(1, verbosity),
-			ansi.fg["cyan"].."\t *"..ansi.fg["default"])
+			ansi.fg["cyan"].."   *"..ansi.fg["default"])
 	-- print_data(v)
       end
       print("")
@@ -279,13 +307,19 @@ function april_help(table_name, verbosity)
 	for i,v in ipairs(aux) do
 	  april_print_doc(table_name .. "." .. v,
 			  math.min(1, verbosity),
-			  ansi.fg["cyan"].."\t *"..ansi.fg["default"])
+			  ansi.fg["cyan"].."   *"..ansi.fg["default"])
 	  -- print_data(v)
 	end
 	print("")
       end
     end
   end
+  local sub = ""
+  repeat
+    printf("Recursive help for %s: ", table_name)
+    sub = io.read()
+    if #sub > 0 then april_help(table_name.."."..sub, verbosity) end
+  until #sub==0
 end
 
 function april_dir(t, verbosity)

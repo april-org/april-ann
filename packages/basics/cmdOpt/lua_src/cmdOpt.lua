@@ -13,9 +13,7 @@
 -- the void long option "--" can be used to stop option list
 
 -- a lua class:
-cmdOpt = cmdOpt or {}
-cmdOpt.__index = cmdOpt
-setmetatable(cmdOpt, cmdOpt)
+class("cmdOpt")
 
 function cmdOpt:add_option(option)
   -- option is a table with the following parameters:
@@ -91,7 +89,7 @@ function cmdOpt:__call(tbl)
     copyright     = tbl.copyright or "",
     see_also      = tbl.see_also or "",
   }
-  setmetatable(obj, self)
+  obj = class_instance(obj, self, true)
   for i,option in ipairs(tbl) do
     obj:add_option(option)
   end

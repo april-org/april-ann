@@ -1,13 +1,11 @@
 -- wrapper para field_manager
 
-field_manager = field_manager or {}
-field_manager.__index = field_manager
-setmetatable(field_manager, field_manager)
+class("field_manager")
 
 -- constructor
 function field_manager:__call()
   local obj = { fields = {} }
-  setmetatable(obj, self)
+  obj = class_instance(obj, self, true)
   return obj
 end
 
