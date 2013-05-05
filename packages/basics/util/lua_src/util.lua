@@ -161,7 +161,7 @@ function april_print_doc(table_name, verbosity, prefix)
     end
     for i=1,#out do out[i] = table.concat(out[i], " ") end
     print(table.concat(out, "\n"))
-    if verbosity > 0 then print("") end
+    if verbosity > 1 then print("") end
   end
 end
 
@@ -330,9 +330,10 @@ function april_help(table_name, verbosity)
   local sub = ""
   repeat
     printf("Recursive help for %s: ", table_name)
-    sub = io.read()
+    sub = io.read() or ""
     if #sub > 0 then april_help(table_name.."."..sub, verbosity) end
   until #sub==0
+  print()
 end
 
 function april_dir(t, verbosity)
