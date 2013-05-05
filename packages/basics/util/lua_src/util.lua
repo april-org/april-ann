@@ -67,7 +67,8 @@ function april_set_doc(table_name, docblock)
     {
       class       = { mandatory=true,  type_match="string", default=nil },
       summary     = { mandatory=true,  type_match="string" },
-      description = { mandatory=false, type_match="string" },
+      description = { mandatory=false, type_match="string",
+		      default=docblock.summary },
       params      = { mandatory=false, type_match="table", default=nil },
       outputs     = { mandatory=false, type_match="table", default=nil },
     }, docblock)
@@ -91,6 +92,7 @@ function april_print_doc(table_name, verbosity, prefix)
   local t = string.tokenize(table_name, ".")
   if #t == 0 then table.insert(t, "") end
   for _,current in ipairs(current_table) do
+    local name = table_name
     local out = { }
     if verbosity > 1 then
       table.insert(out,{prefix,
@@ -98,6 +100,7 @@ function april_print_doc(table_name, verbosity, prefix)
 			  (string.format("%9s",current.class or "")),
 			ansi.fg["green"]..table_name..ansi.fg["default"]})
     else
+      name = t[#t]
       table.insert(out,
 		   {prefix,
 		    ansi.fg["bright_red"]..
@@ -106,8 +109,16 @@ function april_print_doc(table_name, verbosity, prefix)
     end
     if verbosity > 0 then
       if current.summary then
-	table.insert(out[1], ansi.fg["cyan"].."=>"..ansi.fg["default"])
-	table.insert(out[1], current.summary)
+	if #name<24 then
+	  table.insert(out[1], ansi.fg["cyan"].."=>"..ansi.fg["default"])
+	  local aux = "          "
+	  table.insert(out[1], string.truncate(current.summary, COLWIDTH,
+					       aux..aux..aux))
+	else
+	  local aux = "                              "
+	  table.insert(out, { aux,string.truncate(current.summary, COLWIDTH,
+						  aux) })
+	end
       end
     end
     if verbosity > 1 then
@@ -115,7 +126,7 @@ function april_print_doc(table_name, verbosity, prefix)
 	table.insert(out,
 		     { "\n"..ansi.fg["cyan"].."description:"..ansi.fg["default"],
 		       string.truncate(current.description, COLWIDTH,
-				       "            "),"\n" })
+				       "            ") })
       end
       if current.params then
 	table.insert(out,
@@ -128,9 +139,9 @@ function april_print_doc(table_name, verbosity, prefix)
 	  table.insert(out,
 		       { "\t",
 			 ansi.fg["green"]..string.format("%16s",name)..ansi.fg["default"],
-			 string.truncate(description, COLWIDTH, "\t\t\t") } )
+			 string.truncate(description, COLWIDTH,
+					 "                         ") } )
 	end
-	table.insert(out, { "" })
       end
       if current.outputs then
 	table.insert(out,
@@ -143,13 +154,14 @@ function april_print_doc(table_name, verbosity, prefix)
 	  table.insert(out,
 		       { "\t",
 			 ansi.fg["green"]..string.format("%16s",name)..ansi.fg["default"],
-			 string.truncate(description, COLWIDTH, "\t\t\t") } )
+			 string.truncate(description, COLWIDTH,
+					 "                        ") } )
 	end
-	table.insert(out, { "" })
       end
     end
     for i=1,#out do out[i] = table.concat(out[i], " ") end
     print(table.concat(out, "\n"))
+    if verbosity > 0 then print("") end
   end
 end
 
@@ -165,6 +177,7 @@ function april_help(table_name, verbosity)
   local obj = false
   april_print_doc(table_name, verbosity)
   if type(t) == "function" then
+    printf("No more recursive help for %s\n", table_name)
     return
   elseif type(t) ~= "table" then
     if getmetatable(t) and getmetatable(t).__index then
