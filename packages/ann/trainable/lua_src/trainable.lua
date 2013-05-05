@@ -631,6 +631,37 @@ function trainable.supervised_trainer:validate_dataset(t)
   return self.loss_function:get_accum_loss()
 end
 
+------------------------------------------------------------------------
+
+april_set_doc("trainable.supervised_trainer.use_dataset", {
+		class = "method",
+		summary = "Computes forward with a given dataset "..
+		  "provinding output dataset",
+		description = table.concat(
+		  {
+		    "This method performs forward with all patterns of the",
+		    "given input_dataset, storing outputs at an",
+		    "output_dataset with enough space.",
+		    "If output_dataset field is given, it must be prepared to",
+		    "store all input_dataset:numPatterns().",
+		    "If output_dataset field is nil, a new dataset will be",
+		    "constructed. The method returns the output_dataset in",
+		    "both cases.",
+		    "Each forward step is performed with bunch_size patterns.",
+		  }, " "),
+		params = {
+		  ["input_dataset"]  = "A dataset float or dataset token",
+		  ["output_dataset"] = "A dataset float or dataset token [optional].",
+		  ["bunch_size"]     = table.concat(
+		    {
+		      "Bunch size (mini-batch). It is optional if bunch_size",
+		      "was set at constructor, otherwise it is mandatory.",
+		    }, " "),
+		},
+		outputs = {
+		  "The output_dataset with input_dataset:numPatterns().",
+		} })
+
 function trainable.supervised_trainer:use_dataset(t)
   local params = get_table_fields(
     {
@@ -669,12 +700,24 @@ function trainable.supervised_trainer:use_dataset(t)
   return t.output_dataset
 end
 
+------------------------------------------------------------------------
+
+april_set_doc("trainable.supervised_trainer.show_weights", {
+		class = "method",
+		summary = "Print connection weights (for debug purposes).", })
+
 function trainable.supervised_trainer:show_weights()
   for _,wname in pairs(self.weights_order) do
     local w = self.weights_table[wname]:weights():toTable()
     print(wname, table.concat(w, " "))
   end
 end
+
+------------------------------------------------------------------------
+
+april_set_doc("trainable.supervised_trainer.clone", {
+		class = "method",
+		summary = "Returns a deep-copy of the object.", })
 
 function trainable.supervised_trainer:clone()
   local obj = trainable.supervised_trainer(self.ann_component:clone(),
@@ -694,6 +737,7 @@ function trainable.supervised_trainer:clone()
   return obj
 end
 
+------------------------------------------------------------------------
 -- params is a table like this:
 -- { training_table   = { input_dataset = ...., output_dataset = ....., .....},
 --   validation_table = { input_dataset = ...., output_dataset = ....., .....},
@@ -713,6 +757,65 @@ end
 --	     num_epochs       = epoch,
 --	     last_train_error = last_train_error,
 --	     last_val_error   = last_val_error }
+april_set_doc("trainable.supervised_trainer.train_holdout_validation", {
+		class = "method",
+		summary = "Trains until convergence with training and "..
+		  "validation tables.",
+		description = table.concat(
+		  {
+		    "This method trains the component object using",
+		    "a training_table checking convergence using a",
+		    "validation_table.",
+		    "It performs a loop until convergence (stopping criterion)",
+		    "running train_dataset(training_table) and",
+		    "validate_dataset(validation_table) alternatively.",
+		    "Execution of validate_dataset(...) is configurable by",
+		    "validation_function parameter. After each epoch",
+		    "update_function parameter could be used to do things",
+		    "or to show information at screen. It outputs a table.",
+		  }, " "),
+		params = {
+		  ["training_table"] = "A table for training_dataset method",
+		  ["validation_table"] = "A table for validate_dataset method",
+		  ["validation_function"] = "A function to customize "..
+		    "validation procedure [optional]. By default it calls "..
+		    "validate_dataset(validation_table) and uses same loss "..
+		    "function to train and validate. The function is called "..
+		    "as validation_function(self, validation_table)",
+		  ["best_function"] = "A function to customize code execution "..
+		    "when validation loss is improved [optional]. It is "..
+		    "called as best_function(best_trainer_clone)",
+		  ["min_epochs"] = "Minimum number of epochs",
+		  ["max_epochs"] = "Maximum number of epochs",
+		  ["stopping_criterion"] = "A predicate function which "..
+		  "returns true if stopping criterion, false otherwise. "..
+		    "Some basic criterions are implemented at "..
+		    "trainable.stopping_criterions table."..
+		    "The criterion function is called as "..
+		    "stopping_criterion({ current_epoch=..., best_epoch=..., "..
+		    "best_val_error=..., train_error=..., "..
+		    "validation_error=..., train_params=THIS_PARAMS }).",
+		  ["update_function"] = "Function executed after each "..
+		  "epoch (after training and validation), for print "..
+		    "purposes (and other stuff). It is called as "..
+		    "update_function({ current_epoch=..., "..
+		    "best_epoch=..., best_val_error=..., "..
+		    "train_error=..., validation_error=..., "..
+		    "cpu=CPU_TIME_LAST_EPCOCH, "..
+		    "wall=CPU_WALL_TIME_LAST_EPOCH, "..
+		    "train_params=THIS_PARAMS}) [optional].",
+		  ["first_epoch"] = "Useful to rerun previous stopped "..
+		    "experiments",
+		},
+		outputs = {
+		  ["best"] = "The best validation loss trainer clone",
+		  ["best_val_error"] = "The best validation loss",
+		  ["best_epoch"] = "The best epoch",
+		  ["last_epoch"] = "Number of epochs performed",
+		  ["last_train_error"] = "The training loss achieved at last epoch",
+		  ["last_val_error"] = "The validation loss achieved at last epoch",
+		}, })
+
 function trainable.supervised_trainer:train_holdout_validation(t)
   local params = get_table_fields(
     {
@@ -779,6 +882,7 @@ function trainable.supervised_trainer:train_holdout_validation(t)
 	   last_val_error   = last_val_error }
 end
 
+---------------------------------------------------------------------------
 -- This function trains without validation, it is trained until a maximum of
 -- epochs or until the improvement in training error is less than given
 -- percentage
@@ -792,6 +896,77 @@ end
 -- }
 --
 -- returns the trained object
+april_set_doc("trainable.supervised_trainer.train_wo_validation", {
+		class = "method",
+		summary = "Trains until a given convergence of training loss, "..
+		  "using a given training_table.",
+		description = table.concat(
+		  {
+		    "This method trains the component object using",
+		    "a training_table checking convergence based on training",
+		    "loss.",
+		    "It performs a loop until convergence (stopping criterion)",
+		    "running train_dataset(training_table).",
+		    "After each epoch",
+		    "update_function parameter could be used to do things",
+		    "or to show information at screen. It outputs a",
+		    "trainable.supervised_trainer object.",
+		  }, " "),
+		params = {
+		  ["training_table"] = "A table for training_dataset method",
+		  ["min_epochs"] = "Minimum number of epochs",
+		  ["max_epochs"] = "Maximum number of epochs",
+		  ["percentage_stopping_criterion"] = "A percentage of "..
+		    "training loss improvement under which convergence is "..
+		    "achieved.",
+		  ["update_function"] = "Function executed after each "..
+		  "epoch (after training and validation), for print "..
+		    "purposes (and other stuff). It is called as "..
+		    "update_function({ train_error=..., "..
+		    "train_improvement=..., "..
+		    "train_params=THIS_PARAMS}) [optional].",
+		},
+		outputs = {
+		  "A trainable.supervised_trainer object"
+		}, })
+
+april_set_doc("trainable.supervised_trainer.train_wo_validation", {
+		class = "method",
+		summary = "Trains until a given convergence of training loss, "..
+		  "using a given training_table functor.",
+		description = table.concat(
+		  {
+		    "This method trains the component object using",
+		    "a training_table checking convergence based on training",
+		    "loss. The training_table is a function which after",
+		    "it is called, it returns a table for",
+		    "training_dataset(...) method, so it is customizable.",
+		    "It performs a loop until convergence (stopping criterion)",
+		    "running train_dataset(training_table).",
+		    "After each epoch",
+		    "update_function parameter could be used to do things",
+		    "or to show information at screen. It outputs a",
+		    "trainable.supervised_trainer object.",
+		  }, " "),
+		params = {
+		  ["training_table"] = "A function which returns a "..
+		    "training_dataset compatible table",
+		  ["min_epochs"] = "Minimum number of epochs",
+		  ["max_epochs"] = "Maximum number of epochs",
+		  ["percentage_stopping_criterion"] = "A percentage of "..
+		    "training loss improvement under which convergence is "..
+		    "achieved.",
+		  ["update_function"] = "Function executed after each "..
+		  "epoch (after training and validation), for print "..
+		    "purposes (and other stuff). It is called as "..
+		    "update_function({ train_error=..., "..
+		    "train_improvement=..., "..
+		    "train_params=THIS_PARAMS}) [optional].",
+		},
+		outputs = {
+		  "A trainable.supervised_trainer object"
+		}, })
+
 function trainable.supervised_trainer:train_wo_validation(t)
   local params = get_table_fields(
     {
@@ -828,7 +1003,24 @@ end
 -------------------------
 -- STOPPING CRITERIONS --
 -------------------------
+april_set_doc("trainable.stopping_criterions", {
+		class       = "namespace",
+		summary     = "Table with built-in stopping criterions", })
+
 trainable.stopping_criterions = trainable.stopping_criterions or {}
+
+--------------------------------------------------------------------------
+
+april_set_doc("trainable.stopping_criterions.make_max_epochs_wo_imp_absolute", {
+		class       = "function",
+		summary     = "Returns a stopping criterion based on absolute loss.",
+		description = table.concat(
+		  {
+		    "This function returns a stopping criterion function",
+		    "which returns is true if current_epoch - best_epoch >= abs_max."
+		  }, " "),
+		params = { "Absolute maximum difference (abs_max)" },
+		outputs = { "A stopping criterion function" }, })
 
 function trainable.stopping_criterions.make_max_epochs_wo_imp_absolute(abs_max)
   local f = function(params)
@@ -836,6 +1028,20 @@ function trainable.stopping_criterions.make_max_epochs_wo_imp_absolute(abs_max)
   end
   return f
 end
+
+--------------------------------------------------------------------------
+
+april_set_doc("trainable.stopping_criterions.make_max_epochs_wo_imp_relative", {
+		class       = "function",
+		summary     = "Returns a stopping criterion based on relative loss.",
+		description = table.concat(
+		  {
+		    "This function returns a stopping criterion function",
+		    "which returns is true if not",
+		    "current_epoch/best_epoch < rel_max."
+		  }, " "),
+		params = { "Relative maximum difference (rel_max)" },
+		outputs = { "A stopping criterion function" }, })
 
 function trainable.stopping_criterions.make_max_epochs_wo_imp_relative(rel_max)
   local f = function(params)
