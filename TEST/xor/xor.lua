@@ -126,7 +126,7 @@ trainer:train_dataset(data)
 show_weights(trainer)
 
 net_component:pop()
-net_component:push( ann.components.log_logistic() )
+net_component:push( ann.components.actf.log_logistic() )
 trainer=trainable.supervised_trainer(net_component)
 trainer:build()
 trainer:set_loss_function(ann.loss.cross_entropy(net_component:get_output_size()))

@@ -12,14 +12,14 @@ thenet:push( ann.components.hyperplane{ input=2, output=2,
 					name="hyperplane1",
 					bias_name="b1",
 					dot_product_name="w1" } )
-thenet:push( ann.components.logistic{ name="h1" } )
+thenet:push( ann.components.actf.logistic{ name="h1" } )
 thenet:push( ann.components.hyperplane{ input=2, output=1,
 					bias_weights="b2",
 					dot_product_weights="w2",
 					name="hyperplane2",
 					bias_name="b2",
 					dot_product_name="w2" } )
-thenet:push( ann.components.logistic{ name="output" } )
+thenet:push( ann.components.actf.logistic{ name="output" } )
 weights_table,components_table = thenet:build()
 
 thenet:set_option("learning_rate", 0.4)
@@ -111,7 +111,7 @@ print("##################################")
 
 print_token(thenet:forward(input_batch))
 thenet:pop()
-thenet:push( ann.components.log_logistic{ name="output" } )
+thenet:push( ann.components.actf.log_logistic{ name="output" } )
 weights_table,components_table = thenet:build{ weights = weights_table }
 print_token(thenet:forward(input_batch), math.exp)
 
