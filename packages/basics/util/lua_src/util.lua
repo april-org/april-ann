@@ -4,12 +4,11 @@ function get_table_from_dotted_string(dotted_string, create, basetable)
   local create    = create or false
   local basetable = basetable or _G
   local t = string.tokenize(dotted_string, ".")
-  assert(create or basetable[t[1]], "Table name not found: " .. t[1])
+  if not create and not basetable[t[1]] then return nil end
   basetable[t[1]] = basetable[t[1]] or {}
   local current = basetable[t[1]]
   for i=2,#t do
-    assert(create or current[t[i]], "Table name not found: " ..
-	     table.concat(t, ".", 1, i))
+    if not create and not current[t[i]] then return nil end
     current[t[i]] = current[t[i]] or {}
     current = current[t[i]]
   end
@@ -66,14 +65,35 @@ function april_set_doc(table_name, docblock)
   local docblock = get_table_fields(
     {
       class       = { mandatory=true,  type_match="string", default=nil },
-      summary     = { mandatory=true,  type_match="string" },
-      description = { mandatory=false, type_match="string",
-		      default=docblock.summary },
+      summary     = { mandatory=true },
+      description = { mandatory=false, default=docblock.summary },
       params      = { mandatory=false, type_match="table", default=nil },
       outputs     = { mandatory=false, type_match="table", default=nil },
     }, docblock)
   assert(allowed_classes[docblock.class], "Incorrect class: " .. docblock.class)
   _APRIL_DOC_TABLE_ = _APRIL_DOC_TABLE_ or {}
+  if type(docblock.summary) == "table" then
+    docblock.summary = table.concat(docblock.summary, " ")
+  end
+  assert(type(docblock.summary) == "string", "Incorrect summary type")
+  if type(docblock.description) == "table" then
+    docblock.description = table.concat(docblock.description, " ")
+  end
+  assert(type(docblock.description) == "string", "Incorrect description type")
+  if docblock.params then
+    for i,v in pairs(docblock.params) do
+      if type(v) == "table" then
+	docblock.params[i] = table.concat(v, " ")
+      end
+    end
+  end
+  if docblock.outputs then
+    for i,v in pairs(docblock.outputs) do
+      if type(v) == "table" then
+	docblock.outputs[i] = table.concat(v, " ")
+      end
+    end
+  end
   local current = get_table_from_dotted_string(table_name, true,
 					       _APRIL_DOC_TABLE_)
   table.insert(current, docblock)
@@ -85,8 +105,9 @@ function april_print_doc(table_name, verbosity, prefix)
   local prefix = prefix or ""
   local current_table
   if #table_name==0 then current_table=_APRIL_DOC_TABLE_
-  else current_table = get_table_from_dotted_string(table_name, true,
-						    _APRIL_DOC_TABLE_)
+  else
+    current_table = get_table_from_dotted_string(table_name, true,
+						 _APRIL_DOC_TABLE_)
   end
   if #current_table == 0 then table.insert(current_table, {}) end
   local t = string.tokenize(table_name, ".")
@@ -171,13 +192,30 @@ function april_help(table_name, verbosity)
   assert(type(table_name) == "string", "Expected string as first argument")
   local t
   if #table_name == 0 then t = _G
-  else t = get_table_from_dotted_string(table_name)
+  else
+    t = get_table_from_dotted_string(table_name)
+    if not t then
+      local aux  = string.tokenize(table_name, ".")
+      local last = aux[#aux]
+      t = get_table_from_dotted_string(table.concat(aux, ".", 1, #aux-1))
+      if not t or not getmetatable(t) then
+	error(table_name .. " not found")
+      end
+      local auxt = getmetatable(t)[last]
+      if not auxt then
+	if not t.meta_instance then
+	  error(table_name .. " not found")
+	end
+	t = t.meta_instance.__index[last] or error(table_name .. " not found")
+      else t = auxt
+      end
+    end
   end
   local verbosity = verbosity or 2
   local obj = false
   april_print_doc(table_name, verbosity)
   if type(t) == "function" then
-    printf("No more recursive help for %s\n", table_name)
+    -- printf("No more recursive help for %s\n", table_name)
     return
   elseif type(t) ~= "table" then
     if getmetatable(t) and getmetatable(t).__index then
@@ -278,7 +316,7 @@ function april_help(table_name, verbosity)
       end
       table.sort(aux)
       for i,v in ipairs(aux) do
-	april_print_doc(table_name .. "." .. v,
+	april_print_doc(superclass_name .. "." .. v,
 			math.min(1, verbosity),
 			ansi.fg["cyan"].."   *"..ansi.fg["default"])
 	-- print_data(v)
@@ -292,6 +330,13 @@ function april_help(table_name, verbosity)
       for i,v in pairs(t.meta_instance.__index) do
 	if type(v) == "function" then
 	  table.insert(aux, i)
+	end
+      end
+      if getmetatable(t) then
+	for i,v in pairs(getmetatable(t)) do
+	  if type(v) == "function" then
+	    table.insert(aux, i)
+	  end
 	end
       end
       table.sort(aux)
@@ -318,7 +363,7 @@ function april_help(table_name, verbosity)
 	end
 	table.sort(aux)
 	for i,v in ipairs(aux) do
-	  april_print_doc(table_name .. "." .. v,
+	  april_print_doc(superclass_name .. "." .. v,
 			  math.min(1, verbosity),
 			  ansi.fg["cyan"].."   *"..ansi.fg["default"])
 	  -- print_data(v)
@@ -327,12 +372,6 @@ function april_help(table_name, verbosity)
       end
     end
   end
-  local sub = ""
-  repeat
-    printf("Recursive help for %s: ", table_name)
-    sub = io.read() or ""
-    if #sub > 0 then april_help(table_name.."."..sub, verbosity) end
-  until #sub==0
   print()
 end
 
