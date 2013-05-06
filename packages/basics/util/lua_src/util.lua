@@ -124,7 +124,10 @@ function april_print_doc(table_name, verbosity, prefix)
   if #current_table == 0 then table.insert(current_table, {}) end
   local t = string.tokenize(table_name, ".")
   if #t == 0 then table.insert(t, "") end
-  for _,current in ipairs(current_table) do
+  for idx,current in ipairs(current_table) do
+    if idx > 1 and verbosity > 1 then
+      print("\t--------------------------------------------------------------\n")
+    end
     local name = table_name
     local out = { }
     if verbosity > 1 then
@@ -351,11 +354,15 @@ function april_help(table_name, verbosity)
 	  end
 	end
       end
+      local prev = nil
       table.sort(aux)
       for i,v in ipairs(aux) do
-	april_print_doc(table_name .. "." .. v,
-			math.min(1, verbosity),
-			ansi.fg["cyan"].."   *"..ansi.fg["default"])
+	if v ~= prev then
+	  april_print_doc(table_name .. "." .. v,
+			  math.min(1, verbosity),
+			  ansi.fg["cyan"].."   *"..ansi.fg["default"])
+	end
+	prev = v
 	-- print_data(v)
       end
       print("")
