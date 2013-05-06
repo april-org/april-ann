@@ -166,7 +166,6 @@ namespace ANN {
 			       unsigned int _output_size,
 			       hash<string,Connections*> &weights_dict,
 			       hash<string,ANNComponent*> &components_dict) {
-    bool rebuild = (getIsBuilt() == true);
     ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
     //
     if (input_size == 0 || output_size == 0)
@@ -179,13 +178,12 @@ namespace ANN {
     ////////////////////////////////////////////////////////////////////
     Connections *&w = weights_dict[weights_name];
     if (w != 0) {
-      bias_vector = w;
+      AssignRef(bias_vector, w);
       if (!bias_vector->checkInputOutputSizes(weights_input_size,
 					      weights_output_size))
 	ERROR_EXIT2(256,"The weights matrix input/output sizes are not correct, "
 		    "expected %d inputs and %d outputs.\n",
 		    weights_input_size, weights_output_size);
-      IncRef(bias_vector);
     }
     else {
       if (bias_vector == 0) {
@@ -195,7 +193,7 @@ namespace ANN {
       }
       w = bias_vector;
     }
-    if (!rebuild) bias_vector->countReference();
+    bias_vector->countReference();
   }
 
   void BiasANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {

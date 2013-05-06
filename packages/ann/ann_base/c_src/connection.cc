@@ -256,8 +256,8 @@ namespace ANN {
   // para hacer copias
   Connections *Connections::clone() {
     Connections *conn	      = new Connections(num_inputs, num_outputs);
-    float	*other_w      = conn->weights->getPPALForReadAndWrite();
-    float	*other_prev_w = conn->prev_weights->getPPALForReadAndWrite();
+    float	*other_w      = conn->weights->getPPALForWrite();
+    float	*other_prev_w = conn->prev_weights->getPPALForWrite();
     const float *w            = weights->getPPALForRead();
     const float *prev_w       = prev_weights->getPPALForRead();
     

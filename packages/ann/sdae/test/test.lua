@@ -80,12 +80,12 @@ params_pretrain = {
       pretraining_percentage_stopping_criterion = 0.01,
     },
     layerwise = { { min_epochs=50 },
-		  { min_epochs=20 },
-		  { ann_options = { learning_rate = 0.4,
-				    momentum      = 0.02,
-				    weight_decay  = 4e-05 },
-		    min_epochs=20 },
-		  { min_epochs=10 }, },
+     		  { min_epochs=20 },
+     		  { ann_options = { learning_rate = 0.4,
+     				    momentum      = 0.02,
+     				    weight_decay  = 4e-05 },
+     		    min_epochs=20 },
+     		  { min_epochs=10 }, },
   }
 }
 

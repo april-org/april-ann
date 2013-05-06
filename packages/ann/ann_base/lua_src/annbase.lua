@@ -48,10 +48,10 @@ function ann.mlp.all_all.generate(topology, first_count)
 		   name="layer" .. count,
 		   bias_name="b" .. count,
 		   dot_product_name="w" .. count } )
-    if not ann.components[actf] then
+    if not ann.components.actf[actf] then
       error("Incorrect activation function: " .. actf)
     end
-    thenet:push( ann.components[actf]{ name = "actf" .. count } )
+    thenet:push( ann.components.actf[actf]{ name = "actf" .. count } )
     count = count + 1
     prev_size = size
   end
@@ -472,7 +472,11 @@ april_set_doc("ann.components.base.reset",
 april_set_doc("ann.components.base.clone",
 	      {
 		class="method",
-		summary="Makes a deep-copy of the component",
+		summary="Makes a deep-copy of the component, except connections",
+		description={
+		  "Makes a deep-copy of the component, except connections.",
+		  "All component options are cloned, except use_cuda flag.",
+		},
 		outputs={
 		  "A new instance of ann.components"
 		}
@@ -492,6 +496,14 @@ april_set_doc("ann.components.base.set_use_cuda",
 
 ----------------------------------------------------------------------
 
+april_set_doc("ann.components.base.reset_connections",
+	      {
+		class="method",
+		summary="Set to zero the count reference of shared connections",
+	      })
+
+----------------------------------------------------------------------
+
 april_set_doc("ann.components.base.build",
 	      {
 		class="method",
@@ -503,7 +515,9 @@ april_set_doc("ann.components.base.build",
 		  "It reserves memory necessary for connections and setup",
 		  "auxiliary data structures. Connection weights are not valid",
 		  "before calling build. Build methods of components are",
-		  "automatically called recursively.",
+		  "automatically called recursively. A component can be",
+		  "built twice, but is mandatory to call reset_connections()",
+		  "method before each additional build (or always if doubt).",
 		},
 		params = {
 		  ["input"] = {"Input size of the component [optional]. By",

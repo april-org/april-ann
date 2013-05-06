@@ -66,13 +66,15 @@ namespace ANN {
   }
     
   Token *HyperplaneANNComponent::doForward(Token* input, bool during_training) {
-    return bias->doForward(dot_product->doForward(input,
-						  during_training),
-			   during_training);
+    Token *output = dot_product->doForward(input, during_training);
+    output = bias->doForward(output, during_training);
+    return output;
   }
 
   Token *HyperplaneANNComponent::doBackprop(Token *input_error) {
-    return dot_product->doBackprop(bias->doBackprop(input_error));
+    Token *output = bias->doBackprop(input_error);
+    output = dot_product->doBackprop(output);
+    return output;
   }
     
   void HyperplaneANNComponent::doUpdate() {

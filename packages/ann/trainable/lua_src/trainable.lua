@@ -201,7 +201,8 @@ function trainable.supervised_trainer:build(t)
       input   = { type_match="number", mandatory = false, default=nil },
       output  = { type_match="number", mandatory = false, default=nil },
     }, t or {})
-  self.weights_table = params.weights_table or {}
+  self.weights_table = params.weights or {}
+  self.ann_component:reset_connections()
   self.weights_table,
   self.components_table = self.ann_component:build{
     input   = params.input,
@@ -671,31 +672,29 @@ function trainable.supervised_trainer:use_dataset(t)
 			 mandatory = (self.bunch_size == false),
 			 default=self.bunch_size },
     }, t)
+  local nump = params.input_dataset:numPatterns()
   if isa(params.input_dataset, dataset) then
     params.input_dataset = dataset.token.wrapper(params.input_dataset)
     if params.output_dataset then
       params.output_dataset = dataset.token.wrapper(params.output_dataset)
     else
-      local nump    = params.input_dataset:numPatterns()
       local outsize = self.ann_component:get_output_size()
       params.output_dataset = dataset.matrix(matrix(nump, outsize))
       t.output_dataset      = params.output_dataset
       params.output_dataset = dataset.token.wrapper(params.output_dataset)
     end
   elseif not params.output_dataset then
-    params.output_dataset = dataset.token.vector(params.input_dataset:numPatterns())
+    params.output_dataset = dataset.token.vector(nump)
     t.output_dataset = params.output_dataset
   end
-  local bunch_indexes = {}
-  local nump = params.input_dataset:numPatterns()
-  for i=1,nump do
-    table.insert(bunch_indexes, i)
-    if #bunch_indexes==params.bunch_size or i==nump then
-      local input  = params.input_dataset:getPatternBunch(bunch_indexes)
-      local output = self.ann_component:forward(input)
-      params.output_dataset:putPatternBunch(bunch_indexes,output)
-      bunch_indexes = {}
-    end
+  for i=1,nump,params.bunch_size do
+    local bunch_indexes = {}
+    local last = math.min(i+params.bunch_size-1, nump)
+    -- OJO j - 1
+    for j=i,last do table.insert(bunch_indexes, j - 1) end
+    local input  = params.input_dataset:getPatternBunch(bunch_indexes)
+    local output = self.ann_component:forward(input)
+    params.output_dataset:putPatternBunch(bunch_indexes,output)
   end
   return t.output_dataset
 end

@@ -179,6 +179,7 @@ class DataSetFloat2TokenWrapper : public DataSetToken {
     FloatGPUMirroredMemoryBlock *mem_block = token->getMemBlock();
     unsigned int mem_ptr_shift = 0;
     for (unsigned int i=0; i<bunch_size; ++i, ++mem_ptr_shift) {
+      assert(0 <= indexes[i] && indexes[i] < num_patterns);
       ds->getPattern(indexes[i],
 		     aux_mem_block->getPPALForWrite());
       doScopy(pattern_size, aux_mem_block, 0, 1,
@@ -204,6 +205,7 @@ class DataSetFloat2TokenWrapper : public DataSetToken {
     FloatGPUMirroredMemoryBlock *mem_block = token_mem_block->getMemBlock();
     unsigned int mem_ptr_shift = 0;
     for (unsigned int i=0; i<bunch_size; ++i, ++mem_ptr_shift) {
+      assert(0 <= indexes[i] && indexes[i] < num_patterns);
       doScopy(pattern_size,
 	      mem_block, mem_ptr_shift, bunch_size,
 	      aux_mem_block, 0, 1,

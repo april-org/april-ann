@@ -16,7 +16,7 @@ local function build_two_layered_codifier_from_weights(input_size,
 			     bias_weights        = "bias",
 			     input  = input_size,
 			     output = cod_size, } )
-  codifier_component:push(ann.components[cod_actf]())
+  codifier_component:push(ann.components.actf[cod_actf]())
   local weights_table = codifier_component:build()
   weights_table["weights"]:load{ w = weights_mat }
   weights_table["bias"]:load{ w = bias_mat }
@@ -38,7 +38,7 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(input_size,
 				bias_weights        = "bias1",
 				input  = input_size,
 				output = cod_size, } )
-  autoencoder_component:push(ann.components[cod_actf]{ name="actf1" })
+  autoencoder_component:push(ann.components.actf[cod_actf]{ name="actf1" })
   autoencoder_component:push( ann.components.hyperplane{
 				name                = "layer2",
 				dot_product_weights = "weights",
@@ -46,7 +46,7 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(input_size,
 				input  = cod_size,
 				output = input_size,
 				transpose = true} )
-  autoencoder_component:push(ann.components[input_actf]{ name="actf2" })
+  autoencoder_component:push(ann.components.actf[input_actf]{ name="actf2" })
   local weights_table = autoencoder_component:build()
   for _,wname in ipairs({ "weights", "bias1", "bias2" }) do
     weights_table[wname]:randomize_weights{
@@ -177,7 +177,7 @@ function ann.autoencoders.build_full_autoencoder(layers,
 		 output              = size,
 		 dot_product_weights = wname,
 		 bias_weights        = bname })
-    sdae:push( ann.components[actf]() )
+    sdae:push( ann.components.actf[actf]() )
     --
     weights_table[wname] = ann.connections{ input=prev_size,
 					    output=size,
@@ -197,7 +197,7 @@ function ann.autoencoders.build_full_autoencoder(layers,
 		 transpose           = true,
 		 dot_product_weights = wname,
 		 bias_weights        = bname })
-    sdae:push( ann.components[actf]() )
+    sdae:push( ann.components.actf[actf]() )
     --
     weights_table[bname] = ann.connections{ input=1,
 					    output=size,
@@ -330,7 +330,12 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 						   lookup("noise_pipeline") or {},
 						   nil)
     else
-      local mlp_final_trainer = trainer(mlp_final:clone(), nil, params.bunch_size)
+      local mlp_final_trainer = trainable.supervised_trainer(mlp_final:clone(),
+							     nil,
+							     params.bunch_size)
+      local aux_weights = {}
+      for i,v in pairs(mlp_final_weights) do aux_weights[i] = v:clone() end
+      mlp_final_trainer:build{ weights=mlp_final_weights }
       data = generate_training_table_configuration_on_the_fly(current_dataset_params,
 							      params.replacement,
 							      params.shuffle_random,
@@ -355,7 +360,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
     collectgarbage("collect")
     local loss_function
     if input_size > 1 and (input_actf == "log_logistic" or
-			 input_actf == "log_softmax") then
+			   input_actf == "log_softmax") then
       loss_function = ann.loss.multi_class_cross_entropy(input_size)
     elseif input_size == 1 and input_actf == "log_logistic" then
       loss_function = ann.loss.cross_entropy(input_size)
@@ -394,12 +399,12 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
     mlp_final:push( ann.components.hyperplane{
 		      input  = input_size,
 		      output = cod_size,
-		      name = "layer" .. (i-1),
-		      dot_product_name = "weights" .. (i-1),
-		      bias_name = "bias" .. (i-1),
+		      name   = "layer" .. (i-1),
+		      dot_product_name    = "weights" .. (i-1),
+		      bias_name           = "bias" .. (i-1),
 		      dot_product_weights = "weights" .. (i-1),
-		      bias_weights = "bias" .. (i-1), })
-    mlp_final:push( ann.components[cod_actf]{ name="actf" .. (i-1) } )
+		      bias_weights        = "bias" .. (i-1), })
+    mlp_final:push( ann.components.actf[cod_actf]{ name="actf" .. (i-1) } )
     mlp_final_weights["weights" .. (i-1)] = wobj
     mlp_final_weights["bias"    .. (i-1)] = b1obj
     --
@@ -418,6 +423,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 	local cod_trainer = trainable.supervised_trainer(codifier,
 							 nil,
 							 params.bunch_size)
+	cod_trainer:build()
 	if current_dataset_params.distribution then
 	  -- compute code for each distribution dataset
 	  for _,v in ipairs(current_dataset_params.distribution) do
@@ -458,7 +464,12 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 						   params.output_datasets)
 
     else
-      local mlp_final_trainer = trainer(mlp_final:clone(), nil, params.bunch_size)
+      local mlp_final_trainer = trainable.supervised_trainer(mlp_final:clone(),
+							     nil,
+							     params.bunch_size)
+      local aux_weights = {}
+      for i,v in pairs(mlp_final_weights) do aux_weights[i] = v:clone() end
+      mlp_final_trainer:build{ weights = aux_weights }
       data = generate_training_table_configuration_on_the_fly(current_dataset_params,
 							      params.replacement,
 							      params.shuffle_random,
@@ -487,9 +498,9 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 	loss_function = ann.loss.multi_class_cross_entropy(params.supervised_layer.size)
     elseif (params.supervised_layer.size == 1 and
 	    params.supervised_layer.actf == "log_logistic") then
-      loss_function = ann.loss.cross_entropy(cod_size)
+      loss_function = ann.loss.cross_entropy(params.supervised_layer.size)
     else
-      loss_function = ann.loss.mse(cod_size)
+      loss_function = ann.loss.mse(params.supervised_layer.size)
     end
     local thenet_trainer = trainable.supervised_trainer(thenet,
 							loss_function,
@@ -517,12 +528,12 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
     mlp_final:push( ann.components.hyperplane{
 		      input  = input_size,
 		      output = params.supervised_layer.size,
-		      name = "layer" .. lastn,
-		      dot_product_name = "weights" .. lastn,
-		      bias_name = "bias" .. lastn,
+		      name   = "layer" .. lastn,
+		      dot_product_name    = "weights" .. lastn,
+		      bias_name           = "bias" .. lastn,
 		      dot_product_weights = "weights" .. lastn,
-		      bias_weights = "bias" .. lastn, })
-    mlp_final:push( ann.components[params.supervised_layer.actf]{
+		      bias_weights        = "bias" .. lastn, })
+    mlp_final:push( ann.components.actf[params.supervised_layer.actf]{
 		      name="actf" .. lastn } )
     mlp_final_weights["weights" .. lastn] = wobj
     mlp_final_weights["bias"    .. lastn] = bobj
@@ -549,7 +560,7 @@ function ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
 			 output = layers[i].size,
 			 dot_product_weights = wname,
 			 bias_weights        = bname })
-    codifier_net:push( ann.components[layers[i].actf]() )
+    codifier_net:push( ann.components.actf[layers[i].actf]() )
     weights_table[wname] = ann.connections{ input=layers[i-1].size,
 					    output=layers[i].size,
 					    w = weights_mat[i-1] }
