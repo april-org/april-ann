@@ -80,11 +80,20 @@ function april_set_doc(table_name, docblock)
     docblock.description = table.concat(docblock.description, " ")
   end
   assert(type(docblock.description) == "string", "Incorrect description type")
+  docblock.summary = string.gsub(docblock.summary, "%[(.*)%]",
+				 "["..ansi.fg["bright_yellow"].."%1"..
+				   ansi.fg["default"].."]")
+  docblock.description = string.gsub(docblock.description, "%[(.*)%]",
+				     "["..ansi.fg["bright_yellow"].."%1"..
+				       ansi.fg["default"].."]")
   if docblock.params then
     for i,v in pairs(docblock.params) do
       if type(v) == "table" then
 	docblock.params[i] = table.concat(v, " ")
       end
+      docblock.params[i] = string.gsub(docblock.params[i], "%[(.*)%]",
+				       "["..ansi.fg["bright_yellow"].."%1"..
+					 ansi.fg["default"].."]")
     end
   end
   if docblock.outputs then
@@ -92,6 +101,9 @@ function april_set_doc(table_name, docblock)
       if type(v) == "table" then
 	docblock.outputs[i] = table.concat(v, " ")
       end
+      docblock.outputs[i] = string.gsub(docblock.outputs[i], "%[(.*)%]",
+					"["..ansi.fg["bright_yellow"].."%1"..
+					  ansi.fg["default"].."]")
     end
   end
   local current = get_table_from_dotted_string(table_name, true,
@@ -153,9 +165,9 @@ function april_print_doc(table_name, verbosity, prefix)
 	table.insert(out,
 		     { "\n"..ansi.fg["cyan"].."parameters:"..ansi.fg["default"] })
 	local names_table = {}
-	for name,_ in pairs(current.params) do table.insert(names_table, name) end
-	table.sort(names_table)
-	for _,name in ipairs(names_table) do
+	for name,_ in pairs(current.params) do table.insert(names_table,name) end
+	table.sort(names_table, function(a,b) return tostring(a)<tostring(b) end)
+	for k,name in ipairs(names_table) do
 	  local description = current.params[name]
 	  table.insert(out,
 		       { "\t",
@@ -168,9 +180,9 @@ function april_print_doc(table_name, verbosity, prefix)
 	table.insert(out,
 		     { "\n"..ansi.fg["cyan"].."outputs:"..ansi.fg["default"] })
 	local names_table = {}
-	for name,_ in pairs(current.outputs) do table.insert(names_table, name) end
-	table.sort(names_table)
-	for _,name in ipairs(names_table) do
+	for name,_ in pairs(current.outputs) do table.insert(names_table,name) end
+	table.sort(names_table, function(a,b) return tostring(a)<tostring(b) end)
+	for k,name in ipairs(names_table) do
 	  local description = current.outputs[name]
 	  table.insert(out,
 		       { "\t",
@@ -883,3 +895,78 @@ function io.uncommented_lines(filename)
     return line
 	 end
 end
+
+-------------------
+-- DOCUMENTATION --
+-------------------
+april_set_doc("class", {
+		class = "function",
+		summary = "This function creates a lua class table",
+		description = {
+		  "Creates a lua class table for the given",
+		  "dotted table name string. Also it is possible to",
+		  "especify a parentclass for simple hieritance.", },
+		params = {
+		  "The table name string",
+		  "The parent class table [optional]",
+		}, })
+
+april_set_doc("class_instance", {
+		class = "function",
+		summary = "This function makes a table the instance of a class",
+		description = {
+		  "Transforms a table to be the instance of a given class.",
+		  "It supports an optional argument to indicate if the instance",
+		  "is nonmutable, so the user can't create new indexes.", },
+		params = {
+		  "The table object",
+		  "The class table",
+		  { "A boolean indicating if it is nonmutable [optional], by",
+		    "default it is false" },
+		},
+		outputs = {
+		  "The table instanced as object of the given class",
+		}, })
+
+april_set_doc("isa", {
+		class = "function",
+		summary = "A predicate to check if a table is instance of a class",
+		params = {
+		  "The table object",
+		  "The class table",
+		},
+		outputs = {
+		  "A boolean",
+		}, })
+
+april_set_doc("april_set_doc", {
+		class   = "function",
+		summary = "This function adds documentation to april",
+		description = {
+		  "This function builds documentation data structures.",
+		  "The documentation can be retrieved by april_help and",
+		  "april_dir functions.",
+		},
+		params = {
+		  "A string with the lua value name",
+		  { "A table which contains 'class', 'summary', 'description',",
+		    "'params' and 'outputs' fields, described below.", },
+		  ["class"] = { "The class of lua value: class, namespace,",
+				"function, variable" },
+		  ["summary"] = { "A string with a brief description of the",
+				  "lua value.",
+				  "An array of strings is also valid, which",
+				  "will be concatenated with ' '" },
+		  ["description"] = { "A string with description of the lua",
+				      "value.",
+				      "An array of strings is also valid, which",
+				      "will be concatenated with ' '" },
+		  ["params"] = { "A dictionary string=>string, associates to",
+				 "each parameter name a description.",
+				 "The description string could be a table,",
+				 "which will be contatenated with ' '.", },
+		  ["outputs"] = { "A dictionary string=>string, associates to",
+				  "each output name a description.",
+				  "The description string could be a table,",
+				  "which will be contatenated with ' '.", },
+		}, })
