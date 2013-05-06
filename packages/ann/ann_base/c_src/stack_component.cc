@@ -166,5 +166,4 @@ namespace ANN {
       component = components[c]->getComponent(name);
     return component;
   }
-
 }

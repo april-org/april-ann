@@ -71,6 +71,11 @@ namespace ANN {
     Connections(unsigned int num_inputs, unsigned int num_outputs);
     ~Connections();
     
+    void reset() {
+      num_references       = 0;
+      update_weights_calls = 0;
+    }
+    
     // contamos el numero de veces que nos referencian, asi sabemos si
     // la conexion es compartida por mas de una accion
     void         countReference();

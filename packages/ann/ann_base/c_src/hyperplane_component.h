@@ -78,6 +78,15 @@ namespace ANN {
     virtual void copyComponents(hash<string,ANNComponent*> &components_dict);
     
     virtual ANNComponent *getComponent(string &name);
+    virtual void resetConnections() {
+      dot_product->resetConnections();
+      bias->resetConnections();
+    }
+    virtual void debugInfo() {
+      ANNComponent::debugInfo();
+      dot_product->debugInfo();
+      bias->debugInfo();
+    }
   };
 }
 

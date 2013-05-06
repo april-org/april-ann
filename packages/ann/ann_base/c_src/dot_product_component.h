@@ -76,6 +76,9 @@ namespace ANN {
 		       hash<string,Connections*> &weights_dict,
 		       hash<string,ANNComponent*> &components_dict);
     virtual void copyWeights(hash<string,Connections*> &weights_dict);
+    virtual void resetConnections() {
+      if (weights_matrix) weights_matrix->reset();
+    }
   };
 }
 

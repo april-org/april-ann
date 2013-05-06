@@ -375,7 +375,6 @@ namespace ANN {
 				     unsigned int _output_size,
 				     hash<string,Connections*> &weights_dict,
 				     hash<string,ANNComponent*> &components_dict) {
-    bool rebuild = (getIsBuilt() == true);
     ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
     //
     if (input_size == 0 || output_size == 0)
@@ -388,13 +387,12 @@ namespace ANN {
       swap(weights_input_size, weights_output_size);
     Connections *&w = weights_dict[weights_name];
     if (w != 0) {
-      weights_matrix = w;
+      AssignRef(weights_matrix, w);
       if (!weights_matrix->checkInputOutputSizes(weights_input_size,
 						 weights_output_size))
 	ERROR_EXIT2(256,"The weights matrix input/output sizes are not correct, "
 		    "expected %d,%d.\n",
 		    weights_input_size, weights_output_size);
-      IncRef(weights_matrix);
     }
     else {
       if (weights_matrix == 0) {
@@ -406,7 +404,7 @@ namespace ANN {
     }
     // TODO: compute fan-in
     // outputs->increaseFanIn(inputs->numNeurons());
-    if (!rebuild) weights_matrix->countReference();
+    weights_matrix->countReference();
   }
 
   void DotProductANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {

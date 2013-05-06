@@ -225,6 +225,18 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD ANNComponent reset_connections
+{
+  obj->resetConnections();
+}
+//BIND_END
+
+//BIND_METHOD ANNComponent debug_info
+{
+  obj->debugInfo();
+}
+//BIND_END
+
 //BIND_METHOD ANNComponent set_option
 //DOC_BEGIN
 // set_option(name, value)
@@ -377,16 +389,16 @@ using namespace ANN;
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, output, uint, output_size, 0);
     lua_getfield(L, 1, "weights");
     if (lua_istable(L, -1)) {
-      // stack now contains: -1 => table
       lua_pushvalue(L, -1);
-      // stack now contains: -1 => nil; -2 => table
+      // stack now contains: -1 => table
       lua_pushnil(L);
+      // stack now contains: -1 => nil; -2 => table
       while (lua_next(L, -2)) {
-	// stack now contains: -1 => value; -2 => key; -3 => table
 	// copy the key so that lua_tostring does not modify the original
 	lua_pushvalue(L, -2);
-	// stack now contains: -1 => key; -2 => value; -3 => key; -4 => table
+	// stack now contains: -1 => value; -2 => key; -3 => table
 	string key(lua_tostring(L, -1));
+	// stack now contains: -1 => key; -2 => value; -3 => key; -4 => table
 	Connections *value = lua_toConnections(L, -2);
 	weights_dict[key]  = value;
 	// pop value + copy of key, leaving original key
@@ -707,7 +719,7 @@ using namespace ANN;
 //            LogisticActfANNComponent             //
 /////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME LogisticActfANNComponent ann.components.logistic
+//BIND_LUACLASSNAME LogisticActfANNComponent ann.components.actf.logistic
 //BIND_CPP_CLASS    LogisticActfANNComponent
 //BIND_SUBCLASS_OF  LogisticActfANNComponent ActivationFunctionANNComponent
 
@@ -730,7 +742,7 @@ using namespace ANN;
 //              TanhActfANNComponent               //
 /////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME TanhActfANNComponent ann.components.tanh
+//BIND_LUACLASSNAME TanhActfANNComponent ann.components.actf.tanh
 //BIND_CPP_CLASS    TanhActfANNComponent
 //BIND_SUBCLASS_OF  TanhActfANNComponent ActivationFunctionANNComponent
 
@@ -753,7 +765,7 @@ using namespace ANN;
 //            SoftsignActfANNComponent             //
 /////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME SoftsignActfANNComponent ann.components.softsign
+//BIND_LUACLASSNAME SoftsignActfANNComponent ann.components.actf.softsign
 //BIND_CPP_CLASS    SoftsignActfANNComponent
 //BIND_SUBCLASS_OF  SoftsignActfANNComponent ActivationFunctionANNComponent
 
@@ -776,7 +788,7 @@ using namespace ANN;
 //           LogLogisticActfANNComponent           //
 /////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME LogLogisticActfANNComponent ann.components.log_logistic
+//BIND_LUACLASSNAME LogLogisticActfANNComponent ann.components.actf.log_logistic
 //BIND_CPP_CLASS    LogLogisticActfANNComponent
 //BIND_SUBCLASS_OF  LogLogisticActfANNComponent ActivationFunctionANNComponent
 
@@ -799,7 +811,7 @@ using namespace ANN;
 //            SoftmaxActfANNComponent              //
 /////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME SoftmaxActfANNComponent ann.components.softmax
+//BIND_LUACLASSNAME SoftmaxActfANNComponent ann.components.actf.softmax
 //BIND_CPP_CLASS    SoftmaxActfANNComponent
 //BIND_SUBCLASS_OF  SoftmaxActfANNComponent ActivationFunctionANNComponent
 
@@ -822,7 +834,7 @@ using namespace ANN;
 //           LogSoftmaxActfANNComponent            //
 /////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME LogSoftmaxActfANNComponent ann.components.log_softmax
+//BIND_LUACLASSNAME LogSoftmaxActfANNComponent ann.components.actf.log_softmax
 //BIND_CPP_CLASS    LogSoftmaxActfANNComponent
 //BIND_SUBCLASS_OF  LogSoftmaxActfANNComponent ActivationFunctionANNComponent
 
@@ -845,7 +857,7 @@ using namespace ANN;
 //            SoftplusActfANNComponent             //
 /////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME SoftplusActfANNComponent ann.components.softplus
+//BIND_LUACLASSNAME SoftplusActfANNComponent ann.components.actf.softplus
 //BIND_CPP_CLASS    SoftplusActfANNComponent
 //BIND_SUBCLASS_OF  SoftplusActfANNComponent ActivationFunctionANNComponent
 
@@ -868,7 +880,7 @@ using namespace ANN;
 //            HardtanhActfANNComponent             //
 /////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME HardtanhActfANNComponent ann.components.hardtanh
+//BIND_LUACLASSNAME HardtanhActfANNComponent ann.components.actf.hardtanh
 //BIND_CPP_CLASS    HardtanhActfANNComponent
 //BIND_SUBCLASS_OF  HardtanhActfANNComponent ActivationFunctionANNComponent
 
@@ -891,7 +903,7 @@ using namespace ANN;
 //               SinActfANNComponent               //
 /////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME SinActfANNComponent ann.components.sin
+//BIND_LUACLASSNAME SinActfANNComponent ann.components.actf.sin
 //BIND_CPP_CLASS    SinActfANNComponent
 //BIND_SUBCLASS_OF  SinActfANNComponent ActivationFunctionANNComponent
 
@@ -914,7 +926,7 @@ using namespace ANN;
 //              LinearActfANNComponent             //
 /////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME LinearActfANNComponent ann.components.linear
+//BIND_LUACLASSNAME LinearActfANNComponent ann.components.actf.linear
 //BIND_CPP_CLASS    LinearActfANNComponent
 //BIND_SUBCLASS_OF  LinearActfANNComponent ActivationFunctionANNComponent
 

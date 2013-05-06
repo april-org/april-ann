@@ -69,6 +69,15 @@ namespace ANN {
     virtual void copyComponents(hash<string,ANNComponent*> &components_dict);
     
     virtual ANNComponent *getComponent(string &name);
+    virtual void resetConnections() {
+      for (unsigned int i=0; i<components.size(); ++i)
+	components[i]->resetConnections();
+    }
+    virtual void debugInfo() {
+      ANNComponent::debugInfo();
+      for (unsigned int i=0; i<components.size(); ++i)
+	components[i]->debugInfo();
+    }
   };
 }
 

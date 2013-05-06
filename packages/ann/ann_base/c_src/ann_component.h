@@ -179,6 +179,17 @@ namespace ANN {
       components_dict[name] = this;
     }
     
+    /// 
+    virtual void resetConnections() { }
+    
+    ///
+    virtual void debugInfo() {
+      fprintf(stderr, "Component '%s' ('%s')  %d inputs   %d outputs\n",
+	      name.c_str(),
+	      !(weights_name.empty())?weights_name.c_str():"(null)",
+	      input_size, output_size);
+    }
+    
     /// Virtual method which returns the component with the given name if
     /// exists, otherwise it returns 0. By default, base components only
     /// contains itself. Component composition will need to look to itself and
@@ -188,7 +199,6 @@ namespace ANN {
       if (this->name == name) return this;
       return 0;
     }
-    
   };
 }
 
