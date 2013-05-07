@@ -28,6 +28,7 @@
 #include "mse_loss_function.h"
 #include "cross_entropy_loss_function.h"
 #include "multiclass_cross_entropy_loss_function.h"
+#include "local_fmeasure_loss_function.h"
 
 using namespace ANN;
 
@@ -37,7 +38,7 @@ using namespace ANN;
 //                   LossFunction                  //
 /////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME LossFunction ann.loss
+//BIND_LUACLASSNAME LossFunction ann.loss.__base__
 //BIND_CPP_CLASS    LossFunction
 
 //BIND_CONSTRUCTOR LossFunction
@@ -145,5 +146,29 @@ using namespace ANN;
   LUABIND_GET_PARAMETER(1, uint, size);
   obj=new MultiClassCrossEntropyLossFunction(size);
   LUABIND_RETURN(MultiClassCrossEntropyLossFunction, obj);
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//                LOCAL FMEASURE                   //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME LocalFMeasureLossFunction ann.loss.local_fmeasure
+//BIND_CPP_CLASS    LocalFMeasureLossFunction
+//BIND_SUBCLASS_OF  LocalFMeasureLossFunction LossFunction
+
+//BIND_CONSTRUCTOR LocalFMeasureLossFunction
+{
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  check_table_fields(L, 1, "size", "beta", "complement", 0);
+  unsigned int size;
+  float beta;
+  bool complement;
+  LUABIND_GET_TABLE_PARAMETER(1, size, uint, size);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, complement, bool, complement, false);
+  obj=new LocalFMeasureLossFunction(size, beta, complement);
+  LUABIND_RETURN(LocalFMeasureLossFunction, obj);
 }
 //BIND_END
