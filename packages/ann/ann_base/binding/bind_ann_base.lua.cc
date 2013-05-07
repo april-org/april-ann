@@ -344,7 +344,9 @@ using namespace ANN;
   Token *input;
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_GET_PARAMETER(1, Token, input);
-  LUABIND_RETURN(Token, obj->doBackprop(input));
+  Token *gradient = obj->doBackprop(input);
+  if (gradient != 0) LUABIND_RETURN(Token, gradient);
+  else LUABIND_RETURN_NIL();
 }
 //BIND_END
 
