@@ -248,7 +248,7 @@ april_set_doc("ann.components",
 april_set_doc("ann.components.base",
 	      {
 		class="class",
-		summary="ANN components are blocks which build neural networks",
+		summary="ANN component parent class",
 		description=
 		  {
 		    "ANN components are the blocks used to build neural networks.",
