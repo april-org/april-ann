@@ -16,7 +16,7 @@ return {
   "image",
   "image_io",
   "libpng",
---  "median_filter",
+  "median_filter",
   "image_metrics",
   "binarization_filter",
   "image_cleaning",
