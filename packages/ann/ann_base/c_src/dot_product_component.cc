@@ -117,7 +117,7 @@ namespace ANN {
     case table_of_token_codes::vector_float_sparse: {
       TokenBunchVector *aux = new TokenBunchVector();
       aux->push_back(_input);
-      AssignRef(_input, aux);
+      _input = aux; // incref is not necessary
       // continues in the next case
     }
     case table_of_token_codes::vector_Tokens: {
