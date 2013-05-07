@@ -49,6 +49,81 @@ public:
 			       Token *pat)=0;
 };
 
+class DataSetTokenVector : public DataSetToken {
+  april_utils::vector<Token*> data;
+  int pattern_size;
+public:
+  DataSetTokenVector(int pattern_size) : pattern_size(pattern_size) { }
+  virtual ~DataSetTokenVector() {
+    for (unsigned int i=0; i<data.size(); ++i) DecRef(data[i]);
+  }
+  void push_back(Token *token) {
+    data.push_back(token);
+    IncRef(token);
+  }
+  /// Number of patterns in the set
+  virtual int numPatterns() { return static_cast<int>(data.size()); }
+  /// Size of each pattern.
+  virtual int patternSize() { return pattern_size; }
+  /// Get the pattern index to the vector pat
+  virtual Token *getPattern(int index) {
+    if (index < 0 || index >= numPatterns())
+      return 0;
+    return data[index];
+  }
+  /// Get the pattern index to the vector pat
+  virtual Token *getPatternBunch(const int *indexes,unsigned int bunch_size) {
+    Token *output;
+    Token *aux_token = getPattern(indexes[0]);
+    TokenCode token_code = aux_token->getTokenCode();
+    switch(token_code) {
+    case table_of_token_codes::token_mem_block: {
+      TokenMemoryBlock *output_mem_token;
+      output_mem_token = new TokenMemoryBlock(bunch_size * pattern_size);
+      output           = output_mem_token;
+      unsigned int i   = 0;
+      unsigned int pos = 0;
+      do {
+	IncRef(aux_token);
+	TokenMemoryBlock *aux_mem_block_token;
+	aux_mem_block_token = aux_token->convertTo<TokenMemoryBlock*>();
+	doScopy(pattern_size,
+		aux_mem_block_token->getMemBlock(), 0, 1,
+		output_mem_token->getMemBlock(), pos++, bunch_size,
+		aux_mem_block_token->getCudaFlag());
+	DecRef(aux_token);
+	if ( (++i) < bunch_size) aux_token = getPattern(indexes[i]);
+	else break;
+      } while(true);
+      break;
+    }
+    default: {
+      TokenBunchVector *output_token_vector = new TokenBunchVector(bunch_size);
+      output         = output_token_vector;
+      unsigned int i = 0;
+      do {
+	(*output_token_vector)[i] = aux_token;
+	IncRef(aux_token);
+	if ( (++i) < bunch_size) aux_token = getPattern(indexes[i]);
+	else break;
+      } while(true);
+      break;
+    }
+    }
+    return output;
+  }
+  /// Put the given vector pat at pattern index
+  virtual void putPattern(int index, Token *pat) {
+    if (index < 0 || index >= numPatterns()) return;
+    AssignRef(data[index], pat);
+  }
+  /// Put the pattern bunch
+  virtual void putPatternBunch(const int *indexes,unsigned int bunch_size,
+			       Token *pat) {
+    ERROR_EXIT(128, "Not implemented!!!\n");    
+  }
+};
+
 class UnionDataSetToken : public DataSetToken {
   april_utils::vector<DataSetToken*> ds_array;
   april_utils::vector<int>           sum_patterns;
@@ -121,7 +196,7 @@ public:
       } while(true);
       break;
     }
-    case table_of_token_codes::vector_Tokens: {
+    default: {
       TokenBunchVector *output_token_vector = new TokenBunchVector(bunch_size);
       output         = output_token_vector;
       unsigned int i = 0;
@@ -133,8 +208,6 @@ public:
       } while(true);
       break;
     }
-    default:
-      ERROR_EXIT(128, "Incorrect token type\n");
     }
     return output;
   }
@@ -154,7 +227,7 @@ class DataSetFloat2TokenWrapper : public DataSetToken {
   DataSetFloat *ds;
   int           pattern_size;
   int           num_patterns;
- public:
+public:
   DataSetFloat2TokenWrapper(DataSetFloat *ds) : ds(ds) {
     IncRef(ds);
     pattern_size  = ds->patternSize();

@@ -114,6 +114,12 @@ namespace ANN {
       } // if bunch_size==1 ... else
       break;
     }
+    case table_of_token_codes::vector_float_sparse: {
+      TokenBunchVector *aux = new TokenBunchVector();
+      aux->push_back(_input);
+      AssignRef(_input, aux);
+      // continues in the next case
+    }
     case table_of_token_codes::vector_Tokens: {
       sparse_input = true;
       AssignRef(input, _input);
@@ -139,6 +145,8 @@ namespace ANN {
 	  unsigned int pos     = (*sparse_token)[k].first;
 	  float value          = (*sparse_token)[k].second;
 	  unsigned int w_shift = pos*w_lda;
+	  if (pos >= input_size)
+	    ERROR_EXIT(128, "Overflow at sparse vector input pos\n");
 	  doSaxpy(output_size,
 		  value,
 		  weights_mat_ptr, w_shift, w_step,
@@ -147,26 +155,27 @@ namespace ANN {
       }
       break;
     }
+    default:
+      ERROR_EXIT1(128, "Incorrect token type: %d\n", _input->getTokenCode());
     };
     return output;
   }
   
   Token *DotProductANNComponent::doBackprop(Token *_error_input) {
-    if (sparse_input) {
-      // If input is parse, the component needs to be an input of the ANN,
-      // therefore the input is probably SO LARGE, and computing the backprop
-      // will lead in HIGH computational cost ;) Because of this, the components
-      // returns a NULL gradient pointer
-      if (error_input)  { DecRef(error_input);  error_input  = 0; }
-      if (error_output) { DecRef(error_output); error_output = 0; }
-      return 0;
-    }
     // error checking
     if ( (_error_input == 0) ||
 	 (_error_input->getTokenCode() != table_of_token_codes::token_mem_block))
       ERROR_EXIT(129,"Incorrect input error Token type, expected token_mem_block!\n");
     // change current input by new input
     AssignRef(error_input,_error_input->convertTo<TokenMemoryBlock*>());
+    if (sparse_input) {
+      // If input is parse, the component needs to be an input of the ANN,
+      // therefore the input is probably SO LARGE, and computing the backprop
+      // will lead in HIGH computational cost ;) Because of this, the components
+      // returns a NULL gradient pointer
+      if (error_output) { DecRef(error_output); error_output = 0; }
+      return 0;
+    }
     // compute current bunch
     unsigned int bunch_size = error_input->getUsedSize() / output_size;
     if (bunch_size != this->bunch_size)
@@ -230,6 +239,8 @@ namespace ANN {
 	  unsigned int pos     = (*sparse_token)[k].first;
 	  float value          = (*sparse_token)[k].second;
 	  unsigned int w_shift = pos*w_lda;
+	  if (pos >= input_size)
+	    ERROR_EXIT(128, "Overflow at sparse vector input pos\n");
 	  doSaxpy(output_size,
 		  norm_learn_rate*value,
 		  error_input, b, bunch_size,
