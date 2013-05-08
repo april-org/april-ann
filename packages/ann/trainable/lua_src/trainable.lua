@@ -17,11 +17,10 @@ end
 april_set_doc("trainable.supervised_trainer", {
 		class       = "class",
 		summary     = "Supervised machine learning trainer",
-		description =
-		  table.concat({"This class implements methods useful to",
-				"train, evalute and modify contents of",
-				"ANN components or similar supervised learning",
-				"models"}, " ") })
+		description ={"This class implements methods useful to",
+			      "train, evalute and modify contents of",
+			      "ANN components or similar supervised learning",
+			      "models"}, })
 
 class("trainable.supervised_trainer")
 
@@ -29,15 +28,14 @@ class("trainable.supervised_trainer")
 
 april_set_doc("trainable.supervised_trainer.__call", {
 		class = "method", summary = "Constructor",
-		description =
-		  table.concat({"Constructor of the supervised_trainer class.",
-				"This class implements methods useful to",
-				"train, evalute and modify contents of",
-				"ANN components or similar supervised learning",
-				"models.",
-				"If the component is in build state, the",
-				"constructed trainer is in build state also.",
-			       }, " "),
+		description ={"Constructor of the supervised_trainer class.",
+			      "This class implements methods useful to",
+			      "train, evalute and modify contents of",
+			      "ANN components or similar supervised learning",
+			      "models.",
+			      "If the component is in build state, the",
+			      "constructed trainer is in build state also.",
+		},
 		params = { "ANN component or similar supervised learning model",
 			   "Loss function [optional]",
 			   "Bunch size (mini batch) [optional]" },
@@ -142,16 +140,70 @@ end
 
 ------------------------------------------------------------------------
 
+april_set_doc("trainable.supervised_trainer.iterate_components", {
+		class = "method",
+		summary = "Iterates over all components",
+		description =
+		  {
+		    "This method is an iterator function to be used at for",
+		    "loops: for name,component in trainer:iterate_components()",
+		    "do print(name,component) end",
+		  }, })
+
+function trainable.supervised_trainer:iterate_components()
+  if #self.components_order == 0 then
+    error("It is not build")
+  end
+  local pos = 0
+  return function()
+    pos = pos + 1
+    if pos > #self.components_order then
+      return nil
+    end
+    local name = self.components_order[pos]
+    return name,self.components_table[name]
+  end
+end
+
+------------------------------------------------------------------------
+
+april_set_doc("trainable.supervised_trainer.iterate_weights", {
+		class = "method",
+		summary = "Iterates over all weight connection objects",
+		description = 
+		  {
+		    "This method is an iterator function to be used at for",
+		    "loops: for name,connections in trainer:iterate_weights()",
+		    "do print(name,component) end",
+		  }, })
+
+function trainable.supervised_trainer:iterate_weights()
+  if #self.weights_order == 0 then
+    error("It is not build")
+  end
+  local pos = 0
+  return function()
+    pos = pos + 1
+    if pos > #self.weights_order then
+      return nil
+    end
+    local name = self.weights_order[pos]
+    return name,self.weights_table[name]
+  end
+end
+
+------------------------------------------------------------------------
+
 april_set_doc("trainable.supervised_trainer.component", {
 		class = "method",
 		summary = "Returns a component given its name",
-		description = table.concat(
+		description =
 		  {
 		    "This method returns a component object",
 		    "which name is the given argument.",
 		    "This method is forbidden before build method is called.",
 		    "If an error is produced, the program will be halted."
-		  }, " "),
+		  },
 		params = { "A string with the component name" },
 		outputs = { "A component object" } })
 
@@ -167,13 +219,13 @@ end
 april_set_doc("trainable.supervised_trainer.weights", {
 		class = "method",
 		summary = "Returns a connections object given its name",
-		description = table.concat(
+		description =
 		  {
 		    "This method returns a connections object",
 		    "which name is the given argument.",
 		    "This method is forbidden before build method is called.",
 		    "If an error is produced, the program will be halted."
-		  }, " "),
+		  }, 
 		params = { "A string with the connections name" },
 		outputs = { "An ann.connections object" } })
 
@@ -189,7 +241,7 @@ end
 april_set_doc("trainable.supervised_trainer.randomize_weights", {
 		class = "method",
 		summary = "Initializes randomly model weights and biases",
-		description = table.concat(
+		description =
 		  {
 		    "This method initialies the weights, following an uniform",
 		    "distribution, in the range [c*inf,c*sup].",
@@ -198,7 +250,7 @@ april_set_doc("trainable.supervised_trainer.randomize_weights", {
 		    "If fan-in=true and fan-out=false, then c=fanin.",
 		    "If fan-in=false and fan-out=true, then c=fanout.",
 		    "If fan-in and fan-out are true, then c=fanin + fanout.",
-		  }, " "),
+		  },
 		params = {
 		  ["random"] = "A random object",
 		  ["inf"]    = "Range inf value",
@@ -244,7 +296,7 @@ end
 april_set_doc("trainable.supervised_trainer.build", {
 		class = "method",
 		summary = "Executes build method of the component",
-		description = table.concat(
+		description = 
 		  {
 		    "This method executes the build method of its",
 		    "ann_component property, and weights_order, weights_table,",
@@ -252,7 +304,7 @@ april_set_doc("trainable.supervised_trainer.build", {
 		    "also built. The method returns two tables with the",
 		    "content of weights_table and components_table, in order",
 		    "to provide easy acces to components and connections.",
-		  }, " "),
+		  }, 
 		params = {
 		  ["weights"] = "A dictionary weights_name => ann.connections object [optional]",
 		  ["input"]   = "The input size of the component [optional]",
@@ -295,13 +347,13 @@ end
 april_set_doc("trainable.supervised_trainer.train_step", {
 		class = "method",
 		summary = "Executes one training step",
-		description = table.concat(
+		description = 
 		  {
 		    "This method executes one training step of its component",
 		    "with the given pair input/target output.",
 		    "It returns the loss for the given pair of patterns and",
 		    "the gradient computed at component inputs.",
-		  }, " "),
+		  }, 
 		params = {
 		  "A table with one input pattern or a token (with one or more patterns)",
 		  "The corresponding target output pattern (table or token)",
@@ -328,11 +380,11 @@ end
 april_set_doc("trainable.supervised_trainer.validate_step", {
 		class = "method",
 		summary = "Executes one validate step",
-		description = table.concat(
+		description = 
 		  {
 		    "This method performs one forward step and computes",
 		    "the loss for the given pair input/target output.",
-		  }, " "),
+		  }, 
 		params = {
 		  "A table with one input pattern or a token (with one or more patterns)",
 		  "The corresponding target output pattern (table or token)",
@@ -355,11 +407,11 @@ end
 april_set_doc("trainable.supervised_trainer.calculate", {
 		class = "method",
 		summary = "Executes one forward",
-		description = table.concat(
+		description = 
 		  {
 		    "This method performs one forward step and returns",
 		    "the computed output for the given input.",
-		  }, " "),
+		  }, 
 		params = {
 		  "A table with one input pattern or a token (with one or more patterns)",
 		},
@@ -377,21 +429,21 @@ end
 april_set_doc("trainable.supervised_trainer.train_dataset", {
 		class = "method",
 		summary = "Executes one training epoch with a given dataset",
-		description = table.concat(
+		description = 
 		  {
 		    "This method performs one training epoch with a given",
 		    "dataset traversing patterns in order, and returns the",
 		    "mean loss of each training step.",
 		    "Each training step is performed with bunch_size patterns.",
-		  }, " "),
+		  }, 
 		params = {
 		  ["input_dataset"]  = "A dataset float or dataset token",
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
-		  ["bunch_size"]     = table.concat(
+		  ["bunch_size"]     = 
 		    {
 		      "Bunch size (mini-batch). It is optional if bunch_size",
 		      "was set at constructor, otherwise it is mandatory.",
-		    }, " "),
+		    }, 
 		},
 		outputs = {
 		  "A number with the mean loss of each training step",
@@ -400,22 +452,22 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 april_set_doc("trainable.supervised_trainer.train_dataset", {
 		class = "method",
 		summary = "Executes one training epoch with shuffle",
-		description = table.concat(
+		description = 
 		  {
 		    "This method performs one training epoch with a given",
 		    "dataset traversing patterns in shuffle order, and returns the",
 		    "mean loss of each training step.",
 		    "Each training step is performed with bunch_size patterns.",
-		  }, " "),
+		  }, 
 		params = {
 		  ["input_dataset"]  = "A dataset float or dataset token",
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
 		  ["shuffle"]        = "A random object used to shuffle patterns before training",
-		  ["bunch_size"]     = table.concat(
+		  ["bunch_size"]     = 
 		    {
 		      "Bunch size (mini-batch). It is optional if bunch_size",
 		      "was set at constructor, otherwise it is mandatory.",
-		    }, " "),
+		    }, 
 		},
 		outputs = {
 		  "A number with the mean loss of each training step",
@@ -424,24 +476,24 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 april_set_doc("trainable.supervised_trainer.train_dataset", {
 		class = "method",
 		summary = "Executes one stochastic training epoch with replacement",
-		description = table.concat(
+		description = 
 		  {
 		    "This method performs one stochastic training epoch with a given",
 		    "dataset. Patterns are choosed randomly with replacement",
 		    "until a given replacement size. The",
 		    "mean loss of each training step is returned.",
 		    "Each training step is performed with bunch_size patterns.",
-		  }, " "),
+		  }, 
 		params = {
 		  ["input_dataset"]  = "A dataset float or dataset token",
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
 		  ["shuffle"]        = "A random object used to shuffle patterns before training",
 		  ["replacement"]    = "A number with the size of replacement training",
-		  ["bunch_size"]     = table.concat(
+		  ["bunch_size"]     = 
 		    {
 		      "Bunch size (mini-batch). It is optional if bunch_size",
 		      "was set at constructor, otherwise it is mandatory.",
-		    }, " "),
+		    }, 
 		},
 		outputs = {
 		  "A number with the mean loss of each training step",
@@ -450,7 +502,7 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 april_set_doc("trainable.supervised_trainer.train_dataset", {
 		class = "method",
 		summary = "Executes one stochastic training epoch with distribution",
-		description = table.concat(
+		description = 
 		  {
 		    "This method performs one stochastic training epoch with a given",
 		    "set of datasets with different a-priory probabilities.",
@@ -458,17 +510,17 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 		    "given a-priori distribution, until a given replacement",
 		    "size. The mean loss of each training step is returned.",
 		    "Each training step is performed with bunch_size patterns.",
-		  }, " "),
+		  }, 
 		params = {
 		  ["distibution"]    = "An array of tables with input_dataset,"..
 		    " output_dataset and probability fields",
 		  ["shuffle"]        = "A random object used to shuffle patterns before training",
 		  ["replacement"]    = "A number with the size of replacement training",
-		  ["bunch_size"]     = table.concat(
+		  ["bunch_size"]     = 
 		    {
 		      "Bunch size (mini-batch). It is optional if bunch_size",
 		      "was set at constructor, otherwise it is mandatory.",
-		    }, " "),
+		    }, 
 		},
 		outputs = {
 		  "A number with the mean loss of each training step",
@@ -576,21 +628,21 @@ end
 april_set_doc("trainable.supervised_trainer.validate_dataset", {
 		class = "method",
 		summary = "Executes one validation epoch with a given dataset",
-		description = table.concat(
+		description = 
 		  {
 		    "This method performs one validation epoch with a given",
 		    "dataset traversing patterns in order, and returns the",
 		    "mean loss of each validate step.",
 		    "Each validate step is performed with bunch_size patterns.",
-		  }, " "),
+		  }, 
 		params = {
 		  ["input_dataset"]  = "A dataset float or dataset token",
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
-		  ["bunch_size"]     = table.concat(
+		  ["bunch_size"]     = 
 		    {
 		      "Bunch size (mini-batch). It is optional if bunch_size",
 		      "was set at constructor, otherwise it is mandatory.",
-		    }, " "),
+		    }, 
 		},
 		outputs = {
 		  "A number with the mean loss of each validate step",
@@ -599,22 +651,22 @@ april_set_doc("trainable.supervised_trainer.validate_dataset", {
 april_set_doc("trainable.supervised_trainer.validate_dataset", {
 		class = "method",
 		summary = "Executes one validation epoch with shuffle",
-		description = table.concat(
+		description = 
 		  {
 		    "This method performs one validation epoch with a given",
 		    "dataset traversing patterns in shuffle order, and returns the",
 		    "mean loss of each validate step.",
 		    "Each validate step is performed with bunch_size patterns.",
-		  }, " "),
+		  }, 
 		params = {
 		  ["input_dataset"]  = "A dataset float or dataset token",
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
 		  ["shuffle"]        = "A random object used to shuffle patterns before validate",
-		  ["bunch_size"]     = table.concat(
+		  ["bunch_size"]     = 
 		    {
 		      "Bunch size (mini-batch). It is optional if bunch_size",
 		      "was set at constructor, otherwise it is mandatory.",
-		    }, " "),
+		    }, 
 		},
 		outputs = {
 		  "A number with the mean loss of each validate step",
@@ -623,24 +675,24 @@ april_set_doc("trainable.supervised_trainer.validate_dataset", {
 april_set_doc("trainable.supervised_trainer.validate_dataset", {
 		class = "method",
 		summary = "Executes one stochastic validation epoch with replacement",
-		description = table.concat(
+		description = 
 		  {
 		    "This method performs one stochastic validation epoch with a given",
 		    "dataset. Patterns are choosed randomly with replacement",
 		    "until a given replacement size. The",
 		    "mean loss of each validate step is returned.",
 		    "Each validate step is performed with bunch_size patterns.",
-		  }, " "),
+		  }, 
 		params = {
 		  ["input_dataset"]  = "A dataset float or dataset token",
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
 		  ["shuffle"]        = "A random object used to shuffle patterns before validate",
 		  ["replacement"]    = "A number with the size of replacement validate",
-		  ["bunch_size"]     = table.concat(
+		  ["bunch_size"]     = 
 		    {
 		      "Bunch size (mini-batch). It is optional if bunch_size",
 		      "was set at constructor, otherwise it is mandatory.",
-		    }, " "),
+		    }, 
 		},
 		outputs = {
 		  "A number with the mean loss of each validate step",
@@ -707,7 +759,7 @@ april_set_doc("trainable.supervised_trainer.use_dataset", {
 		class = "method",
 		summary = "Computes forward with a given dataset "..
 		  "provinding output dataset",
-		description = table.concat(
+		description = 
 		  {
 		    "This method performs forward with all patterns of the",
 		    "given input_dataset, storing outputs at an",
@@ -718,15 +770,15 @@ april_set_doc("trainable.supervised_trainer.use_dataset", {
 		    "constructed. The method returns the output_dataset in",
 		    "both cases.",
 		    "Each forward step is performed with bunch_size patterns.",
-		  }, " "),
+		  }, 
 		params = {
 		  ["input_dataset"]  = "A dataset float or dataset token",
 		  ["output_dataset"] = "A dataset float or dataset token [optional].",
-		  ["bunch_size"]     = table.concat(
+		  ["bunch_size"]     = 
 		    {
 		      "Bunch size (mini-batch). It is optional if bunch_size",
 		      "was set at constructor, otherwise it is mandatory.",
-		    }, " "),
+		    }, 
 		},
 		outputs = {
 		  "The output_dataset with input_dataset:numPatterns().",
@@ -829,7 +881,7 @@ april_set_doc("trainable.supervised_trainer.train_holdout_validation", {
 		class = "method",
 		summary = "Trains until convergence with training and "..
 		  "validation tables.",
-		description = table.concat(
+		description = 
 		  {
 		    "This method trains the component object using",
 		    "a training_table checking convergence using a",
@@ -841,7 +893,7 @@ april_set_doc("trainable.supervised_trainer.train_holdout_validation", {
 		    "validation_function parameter. After each epoch",
 		    "update_function parameter could be used to do things",
 		    "or to show information at screen. It outputs a table.",
-		  }, " "),
+		  }, 
 		params = {
 		  ["training_table"] = "A table for training_dataset method",
 		  ["validation_table"] = "A table for validate_dataset method",
@@ -968,7 +1020,7 @@ april_set_doc("trainable.supervised_trainer.train_wo_validation", {
 		class = "method",
 		summary = "Trains until a given convergence of training loss, "..
 		  "using a given training_table.",
-		description = table.concat(
+		description = 
 		  {
 		    "This method trains the component object using",
 		    "a training_table checking convergence based on training",
@@ -979,7 +1031,7 @@ april_set_doc("trainable.supervised_trainer.train_wo_validation", {
 		    "update_function parameter could be used to do things",
 		    "or to show information at screen. It outputs a",
 		    "trainable.supervised_trainer object.",
-		  }, " "),
+		  }, 
 		params = {
 		  ["training_table"] = "A table for training_dataset method",
 		  ["min_epochs"] = "Minimum number of epochs",
@@ -1002,7 +1054,7 @@ april_set_doc("trainable.supervised_trainer.train_wo_validation", {
 		class = "method",
 		summary = "Trains until a given convergence of training loss, "..
 		  "using a given training_table functor.",
-		description = table.concat(
+		description = 
 		  {
 		    "This method trains the component object using",
 		    "a training_table checking convergence based on training",
@@ -1015,7 +1067,7 @@ april_set_doc("trainable.supervised_trainer.train_wo_validation", {
 		    "update_function parameter could be used to do things",
 		    "or to show information at screen. It outputs a",
 		    "trainable.supervised_trainer object.",
-		  }, " "),
+		  }, 
 		params = {
 		  ["training_table"] = "A function which returns a "..
 		    "training_dataset compatible table",
@@ -1082,11 +1134,11 @@ trainable.stopping_criterions = trainable.stopping_criterions or {}
 april_set_doc("trainable.stopping_criterions.make_max_epochs_wo_imp_absolute", {
 		class       = "function",
 		summary     = "Returns a stopping criterion based on absolute loss.",
-		description = table.concat(
+		description = 
 		  {
 		    "This function returns a stopping criterion function",
 		    "which returns is true if current_epoch - best_epoch >= abs_max."
-		  }, " "),
+		  }, 
 		params = { "Absolute maximum difference (abs_max)" },
 		outputs = { "A stopping criterion function" }, })
 
@@ -1102,12 +1154,12 @@ end
 april_set_doc("trainable.stopping_criterions.make_max_epochs_wo_imp_relative", {
 		class       = "function",
 		summary     = "Returns a stopping criterion based on relative loss.",
-		description = table.concat(
+		description = 
 		  {
 		    "This function returns a stopping criterion function",
 		    "which returns is true if not",
 		    "current_epoch/best_epoch < rel_max."
-		  }, " "),
+		  }, 
 		params = { "Relative maximum difference (rel_max)" },
 		outputs = { "A stopping criterion function" }, })
 

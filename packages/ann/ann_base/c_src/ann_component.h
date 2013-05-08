@@ -76,6 +76,7 @@ namespace ANN {
 
     const string &getName() const { return name; }
     const string &getWeightsName() const { return weights_name; }
+    const bool hasWeightsName() const { return weights_name.size() > 0; }
     
     bool getIsBuilt() const { return is_built; }
     

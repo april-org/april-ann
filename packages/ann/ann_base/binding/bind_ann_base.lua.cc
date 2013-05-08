@@ -219,6 +219,24 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD ANNComponent get_name
+{
+  LUABIND_RETURN(string, obj->getName().c_str());
+}
+//BIND_END
+
+//BIND_METHOD ANNComponent get_weights_name
+{
+  LUABIND_RETURN(string, obj->getWeightsName().c_str());
+}
+//BIND_END
+
+//BIND_METHOD ANNComponent has_weigths_name
+{
+  LUABIND_RETURN(bool, obj->hasWeightsName());
+}
+//BIND_END
+
 //BIND_METHOD ANNComponent get_is_built
 {
   LUABIND_RETURN(bool, obj->getIsBuilt());
