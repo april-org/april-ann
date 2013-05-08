@@ -122,18 +122,16 @@ using namespace ANN;
 //BIND_METHOD Connections weights
 {
   LUABIND_CHECK_ARGN(<=,1);
-  LUABIND_CHECK_ARGN(>=,0);
-  int nargs;
-  LUABIND_TABLE_GETN(1, nargs);
-  unsigned int	 first_pos=0, column_size=obj->getNumInputs();
-  MatrixFloat	*w=0, *oldw=0;
+  int argn = lua_gettop(L);
+  unsigned int  first_pos=0, column_size=obj->getNumInputs();
+  MatrixFloat  *w=0, *oldw=0;
   
-  if (nargs == 1) {
+  if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1,table);
     check_table_fields(L, 1, "w", "oldw", "first_pos", "column_size", 0);
 
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, w, MatrixFloat, w, w);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, oldw);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, w);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, first_pos, uint, first_pos,
 					 first_pos);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, column_size, uint, column_size,
@@ -148,10 +146,10 @@ using namespace ANN;
       first_pos + obj->size() > static_cast<unsigned int>(oldw->size) )
     LUABIND_ERROR("Incorrect matrix size!!\n");
 
-  unsigned int sz = obj->copyWeightsTo(w, oldw, first_pos, column_size);
+  unsigned int lastpos = obj->copyWeightsTo(w, oldw, first_pos, column_size);
   LUABIND_RETURN(MatrixFloat, w);
   LUABIND_RETURN(MatrixFloat, oldw);
-  LUABIND_RETURN(uint, sz);
+  LUABIND_RETURN(uint, lastpos);
 }
 //BIND_END
 
