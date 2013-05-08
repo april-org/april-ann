@@ -571,6 +571,8 @@ function trainable.supervised_trainer:train_dataset(t)
     for i,v in ipairs(params.distribution) do
       if isa(v.input_dataset, dataset) then
 	v.input_dataset  = dataset.token.wrapper(v.input_dataset)
+      end
+      if isa(v.output_dataset, dataset) then
 	v.output_dataset = dataset.token.wrapper(v.output_dataset)
       end
       check_dataset_sizes(v.input_dataset, v.output_dataset)
@@ -590,6 +592,8 @@ function trainable.supervised_trainer:train_dataset(t)
   else
     if isa(params.input_dataset, dataset) then
       params.input_dataset  = dataset.token.wrapper(params.input_dataset)
+    end
+    if isa(params.output_dataset, dataset) then
       params.output_dataset = dataset.token.wrapper(params.output_dataset)
     end
     check_dataset_sizes(params.input_dataset, params.output_dataset)
@@ -721,6 +725,8 @@ function trainable.supervised_trainer:validate_dataset(t)
   self.loss_function:reset()
   if isa(params.input_dataset, dataset) then
     params.input_dataset  = dataset.token.wrapper(params.input_dataset)
+  end
+  if isa(params.input_dataset, dataset) then
     params.output_dataset = dataset.token.wrapper(params.output_dataset)
   end
   check_dataset_sizes(params.input_dataset, params.output_dataset)
@@ -793,20 +799,22 @@ function trainable.supervised_trainer:use_dataset(t)
 			 mandatory = (self.bunch_size == false),
 			 default=self.bunch_size },
     }, t)
-  local nump = params.input_dataset:numPatterns()
+  local nump    = params.input_dataset:numPatterns()
+  local outsize = self.ann_component:get_output_size()
   if isa(params.input_dataset, dataset) then
     params.input_dataset = dataset.token.wrapper(params.input_dataset)
-    if params.output_dataset then
-      params.output_dataset = dataset.token.wrapper(params.output_dataset)
-    else
-      local outsize = self.ann_component:get_output_size()
-      params.output_dataset = dataset.matrix(matrix(nump, outsize))
-      t.output_dataset      = params.output_dataset
+  end
+  if params.output_dataset then
+    if isa(params.output_dataset, dataset) then
       params.output_dataset = dataset.token.wrapper(params.output_dataset)
     end
-  elseif not params.output_dataset then
-    params.output_dataset = dataset.token.vector(nump)
-    t.output_dataset = params.output_dataset
+  elseif isa(params.input_dataset, dataset) then
+    params.output_dataset = dataset.matrix(matrix(nump, outsize))
+    t.output_dataset      = params.output_dataset
+    params.output_dataset = dataset.token.wrapper(params.output_dataset)
+  else
+    params.output_dataset = dataset.token.vector(outsize)
+    t.output_dataset      = params.output_dataset
   end
   for i=1,nump,params.bunch_size do
     local bunch_indexes = {}

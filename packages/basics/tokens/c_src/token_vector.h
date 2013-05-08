@@ -30,6 +30,7 @@ using april_utils::vector;
 class TokenVectorGeneric : public Token {
 public:
   virtual unsigned int size() const = 0;
+  virtual void clear() = 0;
 };
 
 template <typename T>
@@ -48,7 +49,6 @@ public:
   april_utils::vector<T> &getContainer() { return vec; }
   const april_utils::vector<T> &getContainer() const { return vec; }
   void push_back(T &data) { vec.push_back(data); }
-  void clear() { vec.clear(); }
   T *data() { return vec.begin(); }
   const T *data() const { return vec.begin(); }
   Token *clone() const;
@@ -57,6 +57,7 @@ public:
   TokenCode getTokenCode() const;
   static Token *fromString(constString &cs);
   virtual unsigned int size() const { return vec.size(); }
+  virtual void clear() { vec.clear(); }
 };
 
 typedef TokenVector<float>    TokenVectorFloat;

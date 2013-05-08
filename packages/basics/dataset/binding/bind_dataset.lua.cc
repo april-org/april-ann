@@ -1121,7 +1121,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
     LUABIND_CHECK_PARAMETER(1, table);
     LUABIND_TABLE_GETN(1, size);
     if (size < 2)
-      LUABIND_ERROR("UnionDataSetToken needs a Lua tablw with two or "
+      LUABIND_ERROR("UnionDataSetToken needs a Lua table with two or "
 		    "more DataSetToken\n");
     DataSetToken **ds_array = new DataSetToken*[size];
     LUABIND_TABLE_TO_VECTOR(1, DataSetToken, ds_array, size);
@@ -1140,6 +1140,33 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   DataSetToken *ds;
   LUABIND_GET_PARAMETER(1, DataSetToken, ds);
   obj->push_back(ds);
+}
+//BIND_END
+
+//////////////////////////////////////////
+
+//BIND_LUACLASSNAME DataSetTokenVector dataset.token.vector
+//BIND_CPP_CLASS    DataSetTokenVector
+//BIND_SUBCLASS_OF  DataSetTokenVector DataSetToken
+
+//BIND_CONSTRUCTOR DataSetTokenVector
+{
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, int);
+  int pattern_size;
+  LUABIND_GET_PARAMETER(1, int, pattern_size);
+  obj = new DataSetTokenVector(pattern_size);
+  LUABIND_RETURN(DataSetTokenVector, obj);
+}
+//BIND_END
+
+//BIND_METHOD DataSetTokenVector push_back
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, Token);
+  Token *token;
+  LUABIND_GET_PARAMETER(1, Token, token);
+  obj->push_back(token);
 }
 //BIND_END
 

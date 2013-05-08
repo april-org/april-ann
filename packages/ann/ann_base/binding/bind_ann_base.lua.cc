@@ -362,7 +362,9 @@ using namespace ANN;
   Token *input;
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_GET_PARAMETER(1, Token, input);
-  LUABIND_RETURN(Token, obj->doBackprop(input));
+  Token *gradient = obj->doBackprop(input);
+  if (gradient != 0) LUABIND_RETURN(Token, gradient);
+  else LUABIND_RETURN_NIL();
 }
 //BIND_END
 
@@ -696,7 +698,7 @@ using namespace ANN;
   const char *name=0;
   unsigned int input_size=0, output_size=0, times;
   check_table_fields(L, 1, "times", "name", "input", "output", 0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, times, uint, times, 0);
+  LUABIND_GET_TABLE_PARAMETER(1, times, uint, times);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input, uint, input_size, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, output, uint, output_size, 0);

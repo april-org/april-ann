@@ -80,20 +80,11 @@ function april_set_doc(table_name, docblock)
     docblock.description = table.concat(docblock.description, " ")
   end
   assert(type(docblock.description) == "string", "Incorrect description type")
-  docblock.summary = string.gsub(docblock.summary, "%[(.*)%]",
-				 "["..ansi.fg["bright_yellow"].."%1"..
-				   ansi.fg["default"].."]")
-  docblock.description = string.gsub(docblock.description, "%[(.*)%]",
-				     "["..ansi.fg["bright_yellow"].."%1"..
-				       ansi.fg["default"].."]")
   if docblock.params then
     for i,v in pairs(docblock.params) do
       if type(v) == "table" then
 	docblock.params[i] = table.concat(v, " ")
       end
-      docblock.params[i] = string.gsub(docblock.params[i], "%[(.*)%]",
-				       "["..ansi.fg["bright_yellow"].."%1"..
-					 ansi.fg["default"].."]")
     end
   end
   if docblock.outputs then
@@ -101,9 +92,6 @@ function april_set_doc(table_name, docblock)
       if type(v) == "table" then
 	docblock.outputs[i] = table.concat(v, " ")
       end
-      docblock.outputs[i] = string.gsub(docblock.outputs[i], "%[(.*)%]",
-					"["..ansi.fg["bright_yellow"].."%1"..
-					  ansi.fg["default"].."]")
     end
   end
   local current = get_table_from_dotted_string(table_name, true,
@@ -148,21 +136,32 @@ function april_print_doc(table_name, verbosity, prefix)
 	if #name<24 then
 	  table.insert(out[1], ansi.fg["cyan"].."=>"..ansi.fg["default"])
 	  local aux = "          "
-	  table.insert(out[1], string.truncate(current.summary, COLWIDTH,
-					       aux..aux..aux))
+	  local str = string.truncate(current.summary, COLWIDTH,
+				      aux..aux..aux)
+	  str = string.gsub(str, "%[(.*)%]",
+			    "["..ansi.fg["bright_yellow"].."%1"..
+			      ansi.fg["default"].."]")
+	  table.insert(out[1], str)
 	else
 	  local aux = "                              "
-	  table.insert(out, { aux,string.truncate(current.summary, COLWIDTH,
-						  aux) })
+	  local str = string.truncate(current.summary, COLWIDTH, aux)
+	  str = string.gsub(str, "%[(.*)%]",
+			    "["..ansi.fg["bright_yellow"].."%1"..
+			      ansi.fg["default"].."]")
+	  table.insert(out, { aux, str })
 	end
       end
     end
     if verbosity > 1 then
       if current.description then
+	local str = string.truncate(current.description, COLWIDTH,
+				    "            ")
+	str = string.gsub(str, "%[(.*)%]",
+			  "["..ansi.fg["bright_yellow"].."%1"..
+			    ansi.fg["default"].."]")
 	table.insert(out,
 		     { "\n"..ansi.fg["cyan"].."description:"..ansi.fg["default"],
-		       string.truncate(current.description, COLWIDTH,
-				       "            ") })
+		       str })
       end
       if current.params then
 	table.insert(out,
@@ -172,11 +171,15 @@ function april_print_doc(table_name, verbosity, prefix)
 	table.sort(names_table, function(a,b) return tostring(a)<tostring(b) end)
 	for k,name in ipairs(names_table) do
 	  local description = current.params[name]
+	  local str = string.truncate(description, COLWIDTH,
+				      "                         ")
+	  str = string.gsub(str, "%[(.*)%]",
+			    "["..ansi.fg["bright_yellow"].."%1"..
+			      ansi.fg["default"].."]")
 	  table.insert(out,
 		       { "\t",
 			 ansi.fg["green"]..string.format("%16s",name)..ansi.fg["default"],
-			 string.truncate(description, COLWIDTH,
-					 "                         ") } )
+			 str } )
 	end
       end
       if current.outputs then
@@ -187,11 +190,15 @@ function april_print_doc(table_name, verbosity, prefix)
 	table.sort(names_table, function(a,b) return tostring(a)<tostring(b) end)
 	for k,name in ipairs(names_table) do
 	  local description = current.outputs[name]
+	  local str = string.truncate(description, COLWIDTH,
+				      "                         ")
+	  str = string.gsub(str, "%[(.*)%]",
+			    "["..ansi.fg["bright_yellow"].."%1"..
+			      ansi.fg["default"].."]")
 	  table.insert(out,
 		       { "\t",
 			 ansi.fg["green"]..string.format("%16s",name)..ansi.fg["default"],
-			 string.truncate(description, COLWIDTH,
-					 "                        ") } )
+			 str } )
 	end
       end
     end
