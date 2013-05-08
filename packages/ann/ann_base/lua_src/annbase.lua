@@ -55,8 +55,49 @@ function ann.mlp.all_all.generate(topology, first_count)
     count = count + 1
     prev_size = size
   end
-  return thenet
+  local obj = {
+    topology    = topology,
+    first_count = first_count,
+    thenet      = thenet, }
+  -- we make obj a wrapper of thenet, so we keep useful information as a lua
+  -- table
+  local current = thenet
+  while (getmetatable(current) and getmetatable(current).__index and
+	 getmetatable(current).__index ~= current) do
+    current = getmetatable(current).__index
+    for i,v in pairs(current) do
+      if type(v) == "function" then
+	obj[i] =
+	  function(...)
+	    local obj = arg[1]
+	    table.remove(arg, 1)
+	    return obj.thenet[i](obj.thenet, unpack(arg))
+	  end
+      end
+    end
+  end
+  return obj
 end
+
+function ann.mlp.all_all.save(model, filename, mode, old)
+  if type(model) ~= "table" or not model.topology then
+    error ("Incorrect ANN mode!!!")
+  end
+  error("NOT IMPLEMENTED")
+end
+
+function ann.mlp.all_all.load(filename, bunch_size)
+  error("NOT IMPLEMENTED")
+  local c = loadfile(filename)
+  local data = c()
+  return c and ann.mlp.all_all.generate{
+    topology    = data[1],
+    w           = data[2],
+    oldw        = data[3],
+    bunch_size  = bunch_size,
+  }
+end
+
 
 ---------------------------
 -- BINDING DOCUMENTATION --
