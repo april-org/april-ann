@@ -103,6 +103,14 @@ end
 -- BINDING DOCUMENTATION --
 ---------------------------
 
+april_set_doc("ann",
+	      {
+		class="namespace",
+		summary="Namespace which contains all ANN related classes",
+	      })
+
+-------------------------------------------------------------------
+
 april_set_doc("ann.connections",
 	      {
 		class="class",
@@ -270,10 +278,18 @@ april_set_doc("ann.connections.randomize_weights",
 -------------------------------------------------------------------
 -------------------------------------------------------------------
 
+april_set_doc("ann.components",
+	      {
+		class="namespace",
+		summary="Namespace which all ANN components classes",
+	      })
+
+-------------------------------------------------------------------
+
 april_set_doc("ann.components.base",
 	      {
 		class="class",
-		summary="ANN components are blocks which build neural networks",
+		summary="ANN component parent class",
 		description=
 		  {
 		    "ANN components are the blocks used to build neural networks.",
@@ -290,6 +306,8 @@ april_set_doc("ann.components.base",
 		    "The ANNs are trained following gradient descent algorithm,",
 		    "so each component has four main properties: input, output,",
 		    "error_input and error_output.",
+		    "All classes inside the table ann.components are child of",
+		    "this superclass",
 		  },
 	      })
 
@@ -619,3 +637,427 @@ april_set_doc("ann.components.base.get_component",
 		    "at the components hierarchy."},
 		}
 	      })
+
+-------------------------------
+--        COMPONENTS         --
+-------------------------------
+
+april_set_doc("ann.components.dot_product", {
+		class="class",
+		summary="A component which implements output = input x weights",
+		description = {
+		  "The dot product component implements a dot product between",
+		  "its input and a weights matrix. If the input is a bunch",
+		  "(more than one pattern), a matrix-matrix product will be",
+		  "done, as many outputs as inputs.",
+		}, })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.dot_product.__call",
+	      {
+		class="method",
+		summary="Constructor of the component",
+		description = {
+		  "All the paremeters are",
+		  "[optional]. Names are generated automatically if non given.",
+		  "Sizes are set to zero by default, so will be mandatory to",
+		  "indicate the sizes at build method.",
+		},
+		params={
+		  ["name"] = "A string with the given name [optional]",
+		  ["weights"] = {
+		    "A string with the weights name, two components with",
+		    "the same weights name share the weights matrix [optional]", },
+		  ["input"] = "Number of component input neurons [optional]",
+		  ["output"] = "Number of component output neurons [optional]",
+		  ["transpose"] = {
+		    "Indicates if the matrix is transposed before dot/matrix",
+		    "product [optional]. By default is false", }
+		},
+		outputs= { "An instance of ann.components.dot_product" }
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.bias", {
+		class="class",
+		summary="A component which implements output = input + bias",
+		description = {
+		  "The bias component implements the addition of bias to",
+		  "its input. If the input is a bunch",
+		  "(more than one pattern), bias is added to all of them,",
+		  "producing as many outputs as inputs.",
+		}, })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.bias.__call",
+	      {
+		class="method",
+		summary="Constructor of the component",
+		description = {
+		  "All the paremeters are",
+		  "[optional]. Names are generated automatically if non given.",
+		},
+		params={
+		  ["name"] = "A string with the given name [optional]",
+		  ["weights"] = {
+		    "A string with the weights name, two components with",
+		    "the same weights name share the weights matrix [optional]", },
+		},
+		outputs= { "An instance of ann.components.bias" }
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.hyperplane", {
+		class="class",
+		summary="A component which implements output=input*weigths + bias",
+		description = {
+		  "This component is composed by an ann.components.dot_product",
+		  "and a ann.components.bias.",
+		  "It implements an standard ANN layer computation:",
+		  "output = input * weights + bias.",
+		}, })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.hyperplane.__call",
+	      {
+		class="method",
+		summary="Constructor of the component",
+		description = {
+		  "All the paremeters are",
+		  "[optional]. Names are generated automatically if non given.",
+		  "Sizes are set to zero by default, so will be mandatory to",
+		  "indicate the sizes at build method.",
+		},
+		params={
+		  ["name"] = "A string with the given name [optional]",
+		  ["dot_product_name"] = {
+		    "A string with the name for the dot_product",
+		    "component [optional]", },
+		  ["bias_name"] = {
+		    "A string with the name for the bias",
+		    "component [optional]", },
+		  ["dot_product_weights"] = {
+		    "A string with the weights name for the dot_product",
+		    "component [optional]", },
+		  ["bias_weights"] = {
+		    "A string with the weights name for the bias",
+		    "component [optional]", },
+		  ["input"] = "Number of component input neurons [optional]",
+		  ["output"] = "Number of component output neurons [optional]",
+		  ["transpose"] = {
+		    "Indicates if the dot_product matrix is transposed",
+		    "[optional]. By default is false", }
+		},
+		outputs= { "An instance of ann.components.hyperplane" }
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.stack", {
+		class="class",
+		summary="A container component for stack multiple components",
+		description = {
+		  "This component is a container composed by several",
+		  "stacked components, so the output of one component is the",
+		  "input of the next."
+		}, })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.stack.__call",
+	      {
+		class="method",
+		summary="Constructor of the component",
+		description = {
+		  "The Name is generated automatically if non given.",
+		},
+		params={
+		  ["name"] = "A string with the given name [optional]",
+		},
+		outputs= { "An instance of ann.components.stack" }
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.stack.push",
+	      {
+		class="method",
+		summary="Pushes a component to the stack",
+		params={
+		  "An instance of ann.components.base (or any child class)",
+		},
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.stack.pop",
+	      {
+		class="method",
+		summary="Pops the top component of the stack",
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.stack.top",
+	      {
+		class="method",
+		summary="Returns the top component of the stack",
+		outputs={ "An instance of ann.components.base" },
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.join", {
+		class="class",
+		summary="A container component for join multiple components",
+		description = {
+		  "This component is a container composed by several",
+		  "joined components, so the input is fragmented given each",
+		  "fragment to only one component, and the output of every",
+		  "component is join to compose a unique output token",
+		}, })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.join.__call",
+	      {
+		class="method",
+		summary="Constructor of the component",
+		description = {
+		  "The Name is generated automatically if non given.",
+		},
+		params={
+		  ["name"] = "A string with the given name [optional]",
+		},
+		outputs= { "An instance of ann.components.join" }
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.join.add",
+	      {
+		class="method",
+		summary="Adds a component to the join",
+		params={
+		  "An instance of ann.components.base (or any child class)",
+		},
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.copy", {
+		class="class",
+		summary="A dummy component for copy multiple times its input",})
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.copy.__call",
+	      {
+		class="method",
+		summary="Constructor of the component",
+		description = {
+		  "The Name is generated automatically if non given.",
+		  "Sizes are set to zero by default, so it is mandatory to give",
+		  "it at build method is not given at the constructor."
+		},
+		params={
+		  ["times"] = {
+		    "A number indicating how many times the",
+		    "input is replicated", },
+		  ["name"] = "A string with the given name [optional]",
+		  ["input"] = "Number of component input neurons [optional]",
+		  ["output"] = "Number of component output neurons [optional]",
+		},
+		outputs= { "An instance of ann.components.join" }
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf",
+	      {
+		class="namespace",
+		summary="Namespace which contains all activation functions",
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.__base__", {
+		class="class",
+		summary="Abstract class child of ann.components.base",
+		description={
+		  "This class is used as parent of all activation functions.",
+		  "Activation functions input/output sizes are equal,",
+		  "and they are set depending on previous components",
+		  "or at the build method.",
+		}, })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.logistic", {
+		class="class",
+		summary="Logistic (or sigmoid) activation function", })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.logistic.__call", {
+		class="method",
+		summary="Constructor of the component",
+		params={
+		  ["name"] = "The name of the component [optional].",
+		}, })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.tanh", {
+		class="class",
+		summary="Tanh activation function", })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.tanh.__call", {
+		class="method",
+		summary="Constructor of the component",
+		params={
+		  ["name"] = "The name of the component [optional].",
+		}, })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.softsign", {
+		class="class",
+		summary="Softsign activation function", })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.softsign.__call", {
+		class="method",
+		summary="Constructor of the component",
+		params={
+		  ["name"] = "The name of the component [optional].",
+		}, })
+
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.log_logistic", {
+		class="class",
+		summary="Logarithm of logistic activation function",
+		description={
+		  "This activation function only works if the loss function is",
+		  "cross-entropy or multi-class cross-entropy",
+		}, })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.log_logistic.__call", {
+		class="method",
+		summary="Constructor of the component",
+		params={
+		  ["name"] = "The name of the component [optional].",
+		}, })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.softmax", {
+		class="class",
+		summary="Softmax activation function",
+		description={
+		  "This activation function is computed over each input",
+		  "pattern and ensures that outputs are probabilities."
+		}, })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.softmax.__call", {
+		class="method",
+		summary="Constructor of the component",
+		params={
+		  ["name"] = "The name of the component [optional].",
+		}, })
+
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.log_softmax", {
+		class="class",
+		summary="Logarithm of softmax activation function",
+		description={
+		  "This activation function is computed over each input",
+		  "pattern and ensures that outputs are probabilities.",
+		  "It only works with multi-class cross-entropy loss function.",
+		}, })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.log_softmax.__call", {
+		class="method",
+		summary="Constructor of the component",
+		params={
+		  ["name"] = "The name of the component [optional].",
+		}, })
+
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.softplus", {
+		class="class",
+		summary="Softplus activation function", })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.softplus.__call", {
+		class="method",
+		summary="Constructor of the component",
+		params={
+		  ["name"] = "The name of the component [optional].",
+		}, })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.sin", {
+		class="class",
+		summary="Sin activation function", })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.sin.__call", {
+		class="method",
+		summary="Constructor of the component",
+		params={
+		  ["name"] = "The name of the component [optional].",
+		}, })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.linear", {
+		class="class",
+		summary="Linear activation function", })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.linear.__call", {
+		class="method",
+		summary="Constructor of the component",
+		params={
+		  ["name"] = "The name of the component [optional].",
+		}, })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.hardtanh", {
+		class="class",
+		summary="Hardtanh activation function", })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.hardtanh.__call", {
+		class="method",
+		summary="Constructor of the component",
+		params={
+		  ["name"] = "The name of the component [optional].",
+		}, })
