@@ -33,11 +33,13 @@ april_set_doc("ann.mlp.all_all",
 	      })
 
 function ann.mlp.all_all.generate(topology, first_count)
+  local first_count = first_count or 1
   local thenet = ann.components.stack()
   local name   = "layer"
-  local count  = first_count or 1
+  local count  = first_count
   local t      = string.tokenize(topology)
   local prev_size = tonumber(t[1])
+  local names_order = {}
   for i=3,#t,2 do
     local size = tonumber(t[i])
     local actf = t[i+1]
@@ -48,6 +50,8 @@ function ann.mlp.all_all.generate(topology, first_count)
 		   name="layer" .. count,
 		   bias_name="b" .. count,
 		   dot_product_name="w" .. count } )
+    table.insert(names_order, "b"..count)
+    table.insert(names_order, "w"..count)
     if not ann.components.actf[actf] then
       error("Incorrect activation function: " .. actf)
     end
@@ -56,11 +60,12 @@ function ann.mlp.all_all.generate(topology, first_count)
     prev_size = size
   end
   local obj = {
-    topology    = topology,
+    description = topology,
     first_count = first_count,
+    names_order = names_order,
     thenet      = thenet, }
   -- we make obj a wrapper of thenet, so we keep useful information as a lua
-  -- table
+  -- table but it is like the original object from the outside
   local current = thenet
   while (getmetatable(current) and getmetatable(current).__index and
 	 getmetatable(current).__index ~= current) do
@@ -69,9 +74,13 @@ function ann.mlp.all_all.generate(topology, first_count)
       if type(v) == "function" then
 	obj[i] =
 	  function(...)
-	    local obj = arg[1]
-	    table.remove(arg, 1)
-	    return obj.thenet[i](obj.thenet, unpack(arg))
+	    local t = arg[1]
+	    if t == obj then
+	      table.remove(arg, 1)
+	      return obj.thenet[i](obj.thenet, unpack(arg))
+	    else
+	      return obj.thenet[i](unpack(arg))
+	    end
 	  end
       end
     end
@@ -79,25 +88,105 @@ function ann.mlp.all_all.generate(topology, first_count)
   return obj
 end
 
+-------------------------------------------------------------------
+
+april_set_doc("ann.mlp.all_all.save",
+	      {
+		class="function",
+		summary="Saves an all-all stacked ANN model",
+		description={
+		  "This function saves an all-all ANN model. It only works",
+		  "with models generated via ann.mlp.all_all.generate",
+		  "function.",
+		},
+		params= {
+		  { "The model object" },
+		  { "A filename string" },
+		  { "Matrix save mode [optional], by default 'binary'" },
+		},
+	      })
+
 function ann.mlp.all_all.save(model, filename, mode, old)
-  if type(model) ~= "table" or not model.topology then
+  if type(model) ~= "table" or not model.description then
     error ("Incorrect ANN mode!!!")
   end
-  error("NOT IMPLEMENTED")
+  local mode = mode or "binary"
+  local old  = old or "old"
+  local weights_table = model:copy_weights()
+  local total_size = 0
+  for _,cnn in pairs(weights_table) do total_size = total_size + cnn:size() end
+  local wmatrix    = matrix(total_size)
+  local oldwmatrix = matrix(total_size)
+  local pos        = 0
+  for i=1,#model.names_order,2 do
+    local bname   = model.names_order[i]
+    local wname   = model.names_order[i+1]
+    local bias    = weights_table[bname]
+    local weights = weights_table[wname]
+    local colsize = weights:get_input_size() + 1
+    bias:weights{
+      w           = wmatrix,
+      oldw        = oldwmatrix,
+      first_pos   = pos,
+      column_size = colsize }
+    _,_,pos = weights:weights{
+      w           = wmatrix,
+      oldw        = oldwmatrix,
+      first_pos   = pos + 1,
+      column_size = colsize }
+    pos = pos - 1
+  end
+  local f = io.open(filename,"w")
+  f:write("return {\n\""..model.description.."\",\nmatrix.fromString[["..
+	    wmatrix:toString(mode).."]],")
+  if old == "old" then 
+    f:write("\nmatrix.fromString[[\n"..
+	      oldwmatrix:toString(mode).."]],\n")
+  end
+  f:write("first_count=" .. model.first_count .. ",\n")
+  f:write("}\n")
+  f:close()
 end
 
-function ann.mlp.all_all.load(filename, bunch_size)
-  error("NOT IMPLEMENTED")
-  local c = loadfile(filename)
-  local data = c()
-  return c and ann.mlp.all_all.generate{
-    topology    = data[1],
-    w           = data[2],
-    oldw        = data[3],
-    bunch_size  = bunch_size,
-  }
-end
+-------------------------------------------------------------------
 
+april_set_doc("ann.mlp.all_all.load",
+	      {
+		class="function",
+		summary="Loads an all-all stacked ANN model",
+		description={
+		  "This function loads an all-all ANN model. It only works",
+		  "with models generated via ann.mlp.all_all.generate",
+		  "function.",
+		},
+		params= {
+		  { "A filename string" },
+		},
+		outputs = {
+		  "An all-all ANN model"
+		}
+	      })
+
+function ann.mlp.all_all.load(filename)
+  local c     = loadfile(filename)
+  local data  = c()
+  local model = ann.mlp.all_all.generate(data[1], data.first_count)
+  local w     = data[2]
+  local oldw  = data[3] or w
+  local weights_table = model:build()
+  local pos = 0
+  for i=1,#model.names_order,2 do
+    local bname   = model.names_order[i]
+    local wname   = model.names_order[i+1]
+    local bias    = weights_table[bname]
+    local weights = weights_table[wname]
+    local colsize = weights:get_input_size() + 1
+    bias:load{ w=w, oldw=oldw, first_pos=pos, column_size=colsize }
+    pos = weights:load{ w=w, oldw=oldw,
+			first_pos=pos+1, column_size=colsize } - 1
+  end
+  return model
+end
 
 ---------------------------
 -- BINDING DOCUMENTATION --

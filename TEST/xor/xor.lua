@@ -130,9 +130,10 @@ net_component:push( ann.components.actf.log_logistic() )
 trainer=trainable.supervised_trainer(net_component)
 trainer:build()
 trainer:set_loss_function(ann.loss.cross_entropy(net_component:get_output_size()))
+trainer:save("ll.net", "ascii")
 load_initial_weights(trainer.weights_table)
 
-print ("\After 30000 epochs")
+print ("\nAfter 30000 epochs")
 for i=3,30000 do
   print(i, trainer:train_dataset(data))
 end

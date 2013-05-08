@@ -48,7 +48,7 @@ namespace april_utils {
     size_type capacity();
     void reserve(size_type size);
     void clear();
-    bool empty();
+    bool empty() const;
     void swap(string &other);
     char  at(unsigned int i) const;
     char &at(unsigned int i);

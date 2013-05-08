@@ -85,7 +85,7 @@ namespace april_utils {
   
   void string::clear() { vec.clear(); }
   
-  bool string::empty() { return vec.size() == 0; }
+  bool string::empty() const { return vec.size() == 0; }
   
   void string::swap(string &other) { vec.swap(other.vec); }
   
