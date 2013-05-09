@@ -579,7 +579,12 @@ april_set_doc("ann.components.base.forward",
 		class="method",
 		summary="Computes forward step with the given token",
 		params={
-		  "An input token"
+		  "An input token",
+		  { "A boolean indicating if the forward is during_training or not.",
+		    "This information is used by ann.components.actf objects to",
+		    "apply dropout during training, and to halve the activation",
+		    "during validation (or test). It is [optional], by default",
+		    "is false.", }
 		},
 		outputs = {
 		  "An output token",
@@ -997,6 +1002,14 @@ april_set_doc("ann.components.actf.__base__", {
 		  "Activation functions input/output sizes are equal,",
 		  "and they are set depending on previous components",
 		  "or at the build method.",
+		  "This parent class implements dropout technique to improve",
+		  "training of very large neural networks.",
+		  "Dropout must be applied ONLY to activation function",
+		  "components by using set_option method (other components",
+		  "may abort the program with error).",
+		  "Dropout is forbidden at OUTPUT activation components, so",
+		  "don't set it indiscrimately. It must be applied component",
+		  "by component."
 		}, })
 
 ----------------------------------------------------------------------
