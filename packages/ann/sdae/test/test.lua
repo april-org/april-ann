@@ -40,12 +40,13 @@ val_output   = dataset.matrix(m2,
 			      })
 
 layers_table = {
-  { size= 256, actf="logistic"}, -- INPUT LAYER
-  { size= 256, actf="logistic"}, -- FIRST HIDDEN LAYER
-  { size= 128, actf="logistic"}, -- SECOND HIDDEN LAYER
-  { size=  32, actf="logistic"}, -- THIRD HIDDEN LAYER
+  { size=  256, actf="logistic"}, -- INPUT LAYER
+  { size= 1024, actf="logistic"}, -- FIRST HIDDEN LAYER
+  { size= 1024, actf="logistic"}, -- SECOND HIDDEN LAYER
+  { size=   32, actf="logistic"}, -- THIRD HIDDEN LAYER
 }
 
+perturbation_prob = random(9283424)
 params_pretrain = {
   input_dataset         = train_input,
   replacement           = nil,
@@ -69,12 +70,12 @@ params_pretrain = {
 			     dataset  = ds, -- WARNING: the function argument
 			     mean     = 0,
 			     variance = 0.01,
-			     random   = random(8249824) } end,
+			     random   = perturbation_prob } end,
 			 function(ds) return dataset.salt_noise{
 			     dataset  = ds, -- WARNING: the function argument
 			     vd       = 0.10,
 			     zero     = 0.0,
-			     random   = random(8249824) } end },
+			     random   = perturbation_prob } end },
       min_epochs            = 4,
       max_epochs            = 200,
       pretraining_percentage_stopping_criterion = 0.01,
@@ -122,7 +123,7 @@ trainer_shallow_classifier:randomize_weights {
   inf      = -0.1,
   sup      =  0.1 }
 --
-deep_classifier_wo_pretraining = ann.mlp.all_all.generate("256 inputs 256 logistic 128 logistic 32 logistic 10 log_softmax")
+deep_classifier_wo_pretraining = ann.mlp.all_all.generate("256 inputs 1024 logistic 1024 logistic 32 logistic 10 log_softmax")
 trainer_deep_wo_pretraining = trainable.supervised_trainer(deep_classifier_wo_pretraining,
 							   ann.loss[loss_name](10),
 							   bunch_size)
@@ -159,11 +160,18 @@ datosvalidar = {
   output_dataset = val_output
 }
 
+function set_dropout(trainer)
+  local max=trainer:count_components("^actf.*$")
+  for name,component in trainer:iterate_components("^actf.*$") do
+    if name ~= "actf"..max then component:set_option("dropout", 0.5) end
+  end
+end
+
 deep_classifier:set_option("learning_rate", 0.4)
 deep_classifier:set_option("momentum", 0.2)
 deep_classifier:set_option("weight_decay", 0.0)
 --deep_classifier:set_option("neuron_squared_length_upper_bound", 15.0);
---deep_classifier:set_option("dropout", 0.5)
+set_dropout(trainer_deep_classifier)
 
 shallow_classifier:set_option("learning_rate", 0.4)
 shallow_classifier:set_option("momentum",
@@ -172,8 +180,7 @@ shallow_classifier:set_option("weight_decay",
 			      deep_classifier:get_option("weight_decay"))
 --shallow_classifier:set_option("neuron_squared_length_upper_bound",
 --			      deep_classifier:get_option("neuron_squared_length_upper_bound"))
---shallow_classifier:set_option("dropout",
---			      deep_classifier:get_option("dropout"))
+set_dropout(trainer_shallow_classifier)
 
 deep_classifier_wo_pretraining:set_option("learning_rate",
 					  shallow_classifier:get_option("learning_rate"))
@@ -183,8 +190,7 @@ deep_classifier_wo_pretraining:set_option("weight_decay",
 					  deep_classifier:get_option("weight_decay"))
 --deep_classifier:set_option("neuron_squared_length_upper_bound",
 --			   deep_classifier:get_option("neuron_squared_length_upper_bound"))
---deep_classifier_wo_pretraining:set_option("dropout",
---					  deep_classifier:get_option("dropout"))
+set_dropout(trainer_deep_wo_pretraining)
 
 for i=1,200 do
   local mse_tr_deep = trainer_deep_classifier:train_dataset(datosentrenar_deep)

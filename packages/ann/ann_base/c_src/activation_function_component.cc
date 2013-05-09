@@ -26,12 +26,17 @@
 
 namespace ANN {
 
+  MTRand ActivationFunctionANNComponent::dropout_random = MTRand();
+  int    ActivationFunctionANNComponent::dropout_seed   = -1;
+
   ActivationFunctionANNComponent::ActivationFunctionANNComponent(const char *name) :
     ANNComponent(name, 0, 0, 0),
     input(0),
     output(0),
     error_input(0),
-    error_output(0) {
+    error_output(0),
+    dropout_factor(0.0f),
+    units_order_permutation(0) {
   }
 
   ActivationFunctionANNComponent::~ActivationFunctionANNComponent() {
@@ -39,6 +44,7 @@ namespace ANN {
     if (error_input)  DecRef(error_input);
     if (output)       DecRef(output);
     if (error_output) DecRef(error_output);
+    delete[] units_order_permutation;
   }
 
   Token *ActivationFunctionANNComponent::doForward(Token* _input,
@@ -58,6 +64,28 @@ namespace ANN {
     FloatGPUMirroredMemoryBlock *output_ptr = output->getMemBlock();
     // execute apply activations abstract method
     applyActivation(input_ptr, output_ptr, input_size, bunch_size);
+    // apply dropout
+    if (dropout_factor > 0.0f) {
+      if (during_training) {
+	FloatGPUMirroredMemoryBlock *dropout_mask;
+	dropout_mask    = new FloatGPUMirroredMemoryBlock(input->getUsedSize());
+	float *mask_ptr = dropout_mask->getPPALForWrite();
+	for (unsigned int i=0; i<dropout_mask->getSize(); ++i) {
+	  if (dropout_random.rand() < dropout_factor) mask_ptr[i] = 0.0f;
+	  else mask_ptr[i] = 1.0f;
+	}
+	// apply mask
+	applyMask(output_ptr, dropout_mask, 0.0f, input_size,
+		  bunch_size, use_cuda);
+	delete dropout_mask;
+      }
+      else {
+	float scal_factor = 1.0f - dropout_factor;
+	doSscal(output_ptr->getSize(), scal_factor,
+		output_ptr, 0, 1,
+		use_cuda);
+      }
+    }
     return output;
   }
     
@@ -98,13 +126,19 @@ namespace ANN {
   }
 
   void ActivationFunctionANNComponent::setOption(const char *name, double value) {
+    mSetOption("dropout",      dropout_factor);
+    mSetOption("dropout_seed", dropout_seed);
   }
 
   bool ActivationFunctionANNComponent::hasOption(const char *name) {
+    mHasOption("dropout");
+    mHasOption("dropout_seed");
     return false;
   }
     
   double ActivationFunctionANNComponent::getOption(const char *name) {
+    mGetOption("dropout",      dropout_factor);
+    mGetOption("dropout_seed", dropout_seed);
     return ANNComponent::getOption(name);
   }
     

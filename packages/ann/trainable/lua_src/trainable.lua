@@ -162,26 +162,77 @@ end
 
 ------------------------------------------------------------------------
 
+april_set_doc("trainable.supervised_trainer.count_components", {
+		class = "method",
+		summary = "Count the number of components",
+		params = {
+		  { "A match string: filter and count only components",
+		    "which match [optional], by default is '.*'" },
+		}, })
+
+function trainable.supervised_trainer:count_components(match_string)
+  local match_string = match_string or ".*"
+  if #self.components_order == 0 then
+    error("It is not build")
+  end
+  local count = 0
+  for i=1,#self.components_order do
+    if self.components_order[i]:match(match_string) then count=count+1 end
+  end
+  return count
+end
+
+------------------------------------------------------------------------
+
+april_set_doc("trainable.supervised_trainer.count_weights", {
+		class = "method",
+		summary = "Count the number of connection weight objects",
+		params = {
+		  { "A match string: filter and count only connections",
+		    "which match [optional], by default is '.*'" },
+		}, })
+
+function trainable.supervised_trainer:count_weights(match_string)
+  local match_string = match_string or ".*"
+  if #self.weights_order == 0 then
+    error("It is not build")
+  end
+  local count = 0
+  for i=1,#self.weights_order do
+    if self.weights_order[i]:match(match_string) then count=count+1 end
+  end
+  return count
+end
+
+------------------------------------------------------------------------
+
 april_set_doc("trainable.supervised_trainer.iterate_components", {
 		class = "method",
-		summary = "Iterates over all components",
+		summary = "Iterates over components",
 		description =
 		  {
 		    "This method is an iterator function to be used at for",
 		    "loops: for name,component in trainer:iterate_components()",
 		    "do print(name,component) end",
-		  }, })
+		  },
+		params = {
+		  { "A match string: filter and iterates only on components",
+		    "which match [optional], by default is '.*'" },
+		}, })
 
-function trainable.supervised_trainer:iterate_components()
+function trainable.supervised_trainer:iterate_components(match_string)
+  local match_string = match_string or ".*"
   if #self.components_order == 0 then
     error("It is not build")
   end
   local pos = 0
   return function()
-    pos = pos + 1
-    if pos > #self.components_order then
-      return nil
-    end
+    repeat
+      pos = pos + 1
+      if pos > #self.components_order then
+	return nil
+      end
+    until self.components_order[pos]:match(match_string)
     local name = self.components_order[pos]
     return name,self.components_table[name]
   end
@@ -191,24 +242,31 @@ end
 
 april_set_doc("trainable.supervised_trainer.iterate_weights", {
 		class = "method",
-		summary = "Iterates over all weight connection objects",
+		summary = "Iterates over weight connection objects",
 		description = 
 		  {
 		    "This method is an iterator function to be used at for",
 		    "loops: for name,connections in trainer:iterate_weights()",
 		    "do print(name,component) end",
-		  }, })
+		  },
+		params = {
+		  { "A match string: filter and count only connections",
+		    "which match [optional], by default is '.*'" },
+		}, })
 
-function trainable.supervised_trainer:iterate_weights()
+function trainable.supervised_trainer:iterate_weights(match_string)
+  local match_string = match_string or ".*"
   if #self.weights_order == 0 then
     error("It is not build")
   end
   local pos = 0
   return function()
-    pos = pos + 1
-    if pos > #self.weights_order then
-      return nil
-    end
+    repeat
+      pos = pos + 1
+      if pos > #self.weights_order then
+	return nil
+      end
+    until self.weights_order[pos]:match(match_string)
     local name = self.weights_order[pos]
     return name,self.weights_table[name]
   end
@@ -389,7 +447,7 @@ function trainable.supervised_trainer:train_step(input, target)
   if type(input)  == "table" then input  = tokens.memblock(input)  end
   if type(target) == "table" then target = tokens.memblock(target) end
   self.ann_component:reset()
-  local output   = self.ann_component:forward(input)
+  local output   = self.ann_component:forward(input, true)
   local tr_loss  = self.loss_function:loss(output, target)
   local gradient = self.loss_function:gradient(output, target)
   self.ann_component:backprop(gradient)
