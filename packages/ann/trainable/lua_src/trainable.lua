@@ -71,6 +71,28 @@ end
 
 ------------------------------------------------------------------------
 
+april_set_doc("trainable.supervised_trainer.get_input_size", {
+		class = "method",
+		summary = "Gets the input size of its component",
+		outputs = { "The input size (a number)" }, })
+
+function trainable.supervised_trainer:get_input_size()
+  return self.ann_component:get_input_size()
+end
+
+------------------------------------------------------------------------
+
+april_set_doc("trainable.supervised_trainer.get_output_size", {
+		class = "method",
+		summary = "Gets the output size of its component",
+		outputs = { "The output size (a number)" }, })
+
+function trainable.supervised_trainer:get_output_size()
+  return self.ann_component:get_output_size()
+end
+
+------------------------------------------------------------------------
+
 april_set_doc("trainable.supervised_trainer.save", {
 		class = "method",
 		summary = "Save the model at a disk file",

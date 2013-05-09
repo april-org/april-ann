@@ -49,6 +49,22 @@ int dataset_iterator_function(lua_State *L) {
   return 2;
 }
 
+int datasetToken_iterator_function(lua_State *L) {
+  // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es
+  // el estado invariante (en este caso el dataset) y _var es var_1 de
+  // iteracion anterior (en este caso el indice)
+  DataSetToken *obj = lua_toDataSetToken(L,1);
+  int index = (int)lua_tonumber(L,2) + 1; // le sumamos uno
+  if (index > obj->numPatterns()) {
+    lua_pushnil(L); return 1;
+  }
+  lua_pushnumber(L,index);
+  int ps = obj->patternSize();
+  Token *tk = obj->getPattern(index-1); // ojito que le RESTAMOS uno
+  lua_pushToken(L,tk);
+  return 2;
+}
+
 //BIND_END
 
 //BIND_HEADER_H
@@ -1103,6 +1119,16 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   LUABIND_TABLE_TO_VECTOR(1,uint,indexes,bunch_size);
   obj->putPatternBunch(indexes,bunch_size,pattern);
   delete[] indexes;
+}
+//BIND_END
+
+//BIND_METHOD DataSetToken patterns
+// para iterar con un for index,pattern in obj:patterns() do ... end
+{
+  LUABIND_CHECK_ARGN(==, 0);
+  LUABIND_RETURN(cfunction,datasetToken_iterator_function);
+  LUABIND_RETURN(DataSetToken,obj);
+  LUABIND_RETURN(int,0);
 }
 //BIND_END
 
