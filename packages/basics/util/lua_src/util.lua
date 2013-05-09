@@ -109,7 +109,13 @@ function april_print_doc(table_name, verbosity, prefix)
     current_table = get_table_from_dotted_string(table_name, true,
 						 _APRIL_DOC_TABLE_)
   end
-  if #current_table == 0 then table.insert(current_table, {}) end
+  if #current_table == 0 then
+    if verbosity > 1 then
+      print("No documentation found. Check that you are asking for a BASE "..
+	      "class method, not a child class inherited method.")
+    end
+    table.insert(current_table, {})
+  end
   local t = string.tokenize(table_name, ".")
   if #t == 0 then table.insert(t, "") end
   for idx,current in ipairs(current_table) do
