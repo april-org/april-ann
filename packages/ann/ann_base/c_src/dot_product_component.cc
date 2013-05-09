@@ -75,7 +75,7 @@ namespace ANN {
       sparse_input = false;
       // change current input by new input
       AssignRef(input,_input);
-      TokenMemoryBlock *input_mem_token=_input->convertTo<TokenMemoryBlock*>();
+      TokenMemoryBlock *input_mem_token=input->convertTo<TokenMemoryBlock*>();
       // compute current bunch
       bunch_size = input_mem_token->getUsedSize() / input_size;
       if (input_mem_token->getUsedSize() % input_size != 0)
@@ -117,7 +117,9 @@ namespace ANN {
     case table_of_token_codes::vector_float_sparse: {
       TokenBunchVector *aux = new TokenBunchVector();
       aux->push_back(_input);
-      _input = aux; // incref is not necessary
+      _input = aux; // is not necessary to do incref(aux) or decref(_input)
+      // the incref is done at line 127
+
       // continues in the next case
     }
     case table_of_token_codes::vector_Tokens: {

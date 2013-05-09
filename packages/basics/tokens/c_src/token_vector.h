@@ -68,4 +68,131 @@ typedef TokenVector<char>     TokenVectorChar;
 typedef TokenVector<Token*>   TokenBunchVector;
 typedef TokenVector<april_utils::pair<unsigned int, float> > TokenSparseVectorFloat;
 
+/* forward declarations */
+
+template<>
+buffer_list* TokenVector<float>::toString();
+
+template<>
+buffer_list* TokenVector<float>::debugString(const char *prefix,
+					     int debugLevel);
+
+template <>
+TokenCode TokenVector<float>::getTokenCode() const;
+
+template <>
+Token *TokenVector<float>::fromString(constString &cs);
+
+// ------------------------- vector double -------------------------
+
+template <>
+buffer_list* TokenVector<double>::toString();
+
+template <>
+buffer_list* TokenVector<double>::debugString(const char *prefix,
+					      int debugLevel);
+
+template <>
+TokenCode TokenVector<double>::getTokenCode() const;
+
+template <>
+Token *TokenVector<double>::fromString(constString &cs);
+
+// ------------------------- vector int32 -------------------------
+
+template <>
+buffer_list* TokenVector<int32_t>::toString();
+
+template <>
+buffer_list* TokenVector<int32_t>::debugString(const char *prefix,
+					       int debugLevel);
+
+template <>
+TokenCode TokenVector<int32_t>::getTokenCode() const;
+
+template <>
+Token *TokenVector<int32_t>::fromString(constString &cs);
+
+// ------------------------- vector uint32_t -------------------------
+
+template <>
+buffer_list* TokenVector<uint32_t>::toString();
+
+template <>
+buffer_list* TokenVector<uint32_t>::debugString(const char *prefix,
+						int debugLevel);
+
+template <>
+TokenCode TokenVector<uint32_t>::getTokenCode() const;
+
+template <>
+Token *TokenVector<uint32_t>::fromString(constString &cs);
+
+// ------------------------- vector char -------------------------
+
+template <>
+buffer_list* TokenVector<char>::toString();
+
+template <>
+buffer_list* TokenVector<char>::debugString(const char *prefix,
+					    int debugLevel);
+
+template <>
+TokenCode TokenVector<char>::getTokenCode() const;
+
+template <>
+Token *TokenVector<char>::fromString(constString &cs);
+
+
+// ------------------------- vector token -------------------------
+
+template <>
+TokenVector<Token*>::TokenVector(Token * const *vec, unsigned int vlength);
+
+template <>
+TokenVector<Token*>::TokenVector(const vector<Token*> &vec);
+
+template<>
+void TokenVector<Token*>::clear();
+
+template<>
+void TokenVector<Token*>::push_back(Token *&data);
+
+template <>
+TokenVector<Token*>::~TokenVector();
+
+template <>
+buffer_list* TokenVector<Token*>::toString();
+
+template <>
+buffer_list* TokenVector<Token*>::debugString(const char *prefix,
+					      int debugLevel);
+
+template <>
+TokenCode TokenVector<Token*>::getTokenCode() const;
+
+template <>
+Token *TokenVector<Token*>::fromString(constString &cs);
+
+// ---------------------- sparse vector token ----------------------
+
+// TODO: implement
+template <>
+buffer_list* TokenVector<april_utils::pair<unsigned int, float> >::toString();
+
+template <>
+buffer_list*
+TokenVector<april_utils::pair<unsigned int, float> >::debugString(const char *prefix,
+								  int debugLevel);
+
+template <>
+TokenCode
+TokenVector<april_utils::pair<unsigned int, float> >::getTokenCode() const;
+
+// TODO: implement
+template <>
+Token
+*TokenVector<april_utils::pair<unsigned int, float> >::fromString(constString &cs);
+
+
 #endif // TOKEN_VECTOR_H

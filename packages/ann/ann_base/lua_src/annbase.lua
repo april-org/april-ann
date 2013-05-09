@@ -2,7 +2,21 @@ get_table_from_dotted_string("ann.mlp.all_all", true)
 
 ----------------------------------------------------------------------
 
+april_set_doc("ann.mlp",
+	      {
+		class="namespace",
+		summary="Namespace with utilties for easy MLP training", })
+
+----------------------------------------------------------------------
+
 april_set_doc("ann.mlp.all_all",
+	      {
+		class="namespace",
+		summary="Namespace with utilities for all-all MLP training", })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.mlp.all_all.generate",
 	      {
 		class="function",
 		summary="Function to build all-all stacked ANN models",

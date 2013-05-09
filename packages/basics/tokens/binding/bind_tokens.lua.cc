@@ -190,7 +190,7 @@ int token_sparse_iterator_function(lua_State *L) {
   Token *token;
   LUABIND_CHECK_PARAMETER(1, Token);
   LUABIND_GET_PARAMETER(1, Token, token);
-  obj->push_back(token);
+  obj->TokenBunchVector::push_back(token);
 }
 //BIND_END
 
