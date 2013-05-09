@@ -726,7 +726,7 @@ function trainable.supervised_trainer:validate_dataset(t)
   if isa(params.input_dataset, dataset) then
     params.input_dataset  = dataset.token.wrapper(params.input_dataset)
   end
-  if isa(params.input_dataset, dataset) then
+  if isa(params.output_dataset, dataset) then
     params.output_dataset = dataset.token.wrapper(params.output_dataset)
   end
   check_dataset_sizes(params.input_dataset, params.output_dataset)
