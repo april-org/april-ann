@@ -46,6 +46,7 @@ namespace ANN {
     output(0),
     error_output(0),
     weights_matrix(0),
+    num_updates_from_last_prune(0),
     learning_rate(-1.0f),
     momentum(0.0f),
     weight_decay(0.0f),
@@ -325,6 +326,11 @@ namespace ANN {
     // step
     if (weights_matrix->endUpdate()) {
       // TODO: max norm penalty
+      ++num_updates_from_last_prune;
+      if (num_updates_from_last_prune > MAX_UPDATES_WITHOUT_PRUNE) {
+	num_updates_from_last_prune = 0;
+	weights_matrix->pruneSubnormalAndCheckNormal();
+      }
     }
   }
   

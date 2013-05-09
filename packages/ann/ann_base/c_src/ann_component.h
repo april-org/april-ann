@@ -32,6 +32,7 @@
 using april_utils::hash;    // required for build
 using april_utils::string;
 
+#define MAX_UPDATES_WITHOUT_PRUNE 10000
 #define MAX_NAME_STR 120
 
 #define mSetOption(var_name,var) if(!strcmp(name,(var_name))){(var)=value;return;}
