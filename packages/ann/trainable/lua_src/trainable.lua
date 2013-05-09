@@ -823,9 +823,6 @@ function trainable.supervised_trainer:use_dataset(t)
     }, t)
   local nump    = params.input_dataset:numPatterns()
   local outsize = self.ann_component:get_output_size()
-  if isa(params.input_dataset, dataset) then
-    params.input_dataset = dataset.token.wrapper(params.input_dataset)
-  end
   if params.output_dataset then
     if isa(params.output_dataset, dataset) then
       params.output_dataset = dataset.token.wrapper(params.output_dataset)
@@ -837,6 +834,9 @@ function trainable.supervised_trainer:use_dataset(t)
   else
     params.output_dataset = dataset.token.vector(outsize)
     t.output_dataset      = params.output_dataset
+  end
+  if isa(params.input_dataset, dataset) then
+    params.input_dataset = dataset.token.wrapper(params.input_dataset)
   end
   for i=1,nump,params.bunch_size do
     local bunch_indexes = {}
