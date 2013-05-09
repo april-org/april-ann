@@ -28,7 +28,8 @@ namespace ANN {
 				     const char *weights_name) :
     ANNComponent(name, weights_name, 0, 0),
     input(0), output(0), error(0),
-    bias_vector(0), learning_rate(-1.0f), momentum(0.0f) {
+    bias_vector(0), num_updates_from_last_prune(0),
+    learning_rate(-1.0f), momentum(0.0f) {
     if (weights_name == 0) generateDefaultWeightsName();
   }
 
@@ -123,7 +124,13 @@ namespace ANN {
 		use_cuda);
 
     // If necessary, update counts, swap vectors, and other stuff
-    bias_vector->endUpdate();
+    if (bias_vector->endUpdate()) {
+      ++num_updates_from_last_prune;
+      if (num_updates_from_last_prune > MAX_UPDATES_WITHOUT_PRUNE) {
+	num_updates_from_last_prune = 0;
+	bias_vector->pruneSubnormalAndCheckNormal();
+      }
+    }
   }
 
   void BiasANNComponent::reset() {

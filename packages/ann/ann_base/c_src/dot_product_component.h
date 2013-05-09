@@ -32,7 +32,7 @@ namespace ANN {
     Token            *input;
     TokenMemoryBlock *error_input, *output, *error_output;
     Connections *weights_matrix;
-    unsigned int bunch_size;
+    unsigned int bunch_size, num_updates_from_last_prune;
     bool sparse_input;
     
     /// learning parameters
