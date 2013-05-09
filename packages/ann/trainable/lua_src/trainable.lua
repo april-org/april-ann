@@ -879,7 +879,7 @@ end
 -- }
 --
 -- and returns this:
---  return { best_net         = best_net,
+--  return { best             = best,
 --	     best_epoch       = best_epoch,
 --	     best_val_error   = best_val_error,
 --	     num_epochs       = epoch,
