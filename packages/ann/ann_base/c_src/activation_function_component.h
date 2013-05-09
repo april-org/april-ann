@@ -25,6 +25,7 @@
 #include "token_memory_block.h"
 #include "ann_component.h"
 #include "gpu_mirrored_memory_block.h"
+#include "MersenneTwister.h"
 
 namespace ANN {
 
@@ -33,6 +34,11 @@ namespace ANN {
   class ActivationFunctionANNComponent : public ANNComponent {
     TokenMemoryBlock *input, *output, *error_input, *error_output;
     unsigned int bunch_size;
+    // for dropout
+    float                        dropout_factor;
+    int                         *units_order_permutation;
+    static MTRand                dropout_random;
+    static int                   dropout_seed;
   protected:
     virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,
 				 FloatGPUMirroredMemoryBlock *output_units,

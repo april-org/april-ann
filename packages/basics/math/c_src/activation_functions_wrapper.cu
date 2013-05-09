@@ -49,7 +49,7 @@ __global__ void applyMaskKernel(float *units,
 				     matrix_y_pos);
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
-    if (mask[index] < 1.0f) units[index] = mask_value;
+    if (mask[index] < 0.5f) units[index] = mask_value;
   }
 }
 
@@ -449,38 +449,36 @@ __global__ void applyRatio(float *output_units,
 ///////// Activations and derivatives wrappers ////////////
 ///////////////////////////////////////////////////////////
 
-/*
-  void applyMask(FloatGPUMirroredMemoryBlock *units,
-  FloatGPUMirroredMemoryBlock *mask, float mask_value,
-  unsigned int units_size,
-  const ANNConfiguration &conf,
-  bool use_gpu) {
-  #ifdef USE_CUDA
+
+void applyMask(FloatGPUMirroredMemoryBlock *units,
+	       FloatGPUMirroredMemoryBlock *mask, float mask_value,
+	       unsigned int size,
+	       unsigned int bunch_size,
+	       bool use_gpu) {
+#ifdef USE_CUDA
   if (use_gpu) {
-  float *units_ptr = units->getGPUForWrite();
-  float *mask_ptr  = mask->getGPUForRead();
-  dim3 block, grid;
-  computeBlockAndGridSizesForAColumnMajorBunch(conf, units_size,
-  block, grid);
-  applyMaskKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-  (units_ptr, mask_ptr, mask_value,
-  conf.cur_bunch_size, conf.max_bunch_size, units_size);
+    float *units_ptr = units->getGPUForWrite();
+    float *mask_ptr  = mask->getGPUForRead();
+    dim3 block, grid;
+    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
+						 block, grid);
+    applyMaskKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (units_ptr, mask_ptr, mask_value, bunch_size, bunch_size, size);
   }
   else {
-  #endif
-  float *units_ptr      = units->getPPALForWrite();
-  const float *mask_ptr = mask->getPPALForRead();
-  for (unsigned int i=0; i<units_size; ++i) {
-  for (unsigned int b=0; b<conf.cur_bunch_size; ++b)
-  if (mask_ptr[b] < 1.0f) units_ptr[b] = mask_value;
-  units_ptr += conf.max_bunch_size;
-  mask_ptr  += conf.max_bunch_size;
+#endif
+    float *units_ptr      = units->getPPALForWrite();
+    const float *mask_ptr = mask->getPPALForRead();
+    for (unsigned int i=0; i<size; ++i) {
+      for (unsigned int b=0; b<bunch_size; ++b)
+	if (mask_ptr[b] < 0.5f) units_ptr[b] = mask_value;
+      units_ptr += bunch_size;
+      mask_ptr  += bunch_size;
+    }
+#ifdef USE_CUDA
   }
-  #ifdef USE_CUDA
-  }
-  #endif
-  }
-*/
+#endif
+}
 
 void doApplyLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
 			       FloatGPUMirroredMemoryBlock *output_units,

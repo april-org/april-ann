@@ -349,9 +349,12 @@ using namespace ANN;
 //BIND_METHOD ANNComponent forward
 {
   Token *input;
-  LUABIND_CHECK_ARGN(==, 1);
+  bool during_training;
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_CHECK_ARGN(<=, 2);
   LUABIND_GET_PARAMETER(1, Token, input);
-  LUABIND_RETURN(Token, obj->doForward(input, false));
+  LUABIND_GET_OPTIONAL_PARAMETER(2, bool, during_training, false);
+  LUABIND_RETURN(Token, obj->doForward(input, during_training));
 }
 //BIND_END
 
