@@ -22,6 +22,7 @@ function show_weights(trainer, filter)
     --printf("%s\t %s\n",
     --table.concat(ds_input:getPattern(i),","),
     --value)
+    print(value)
   end
   print()
   for _,wname in ipairs({ "b1", "w1", "b2", "w2" }) do

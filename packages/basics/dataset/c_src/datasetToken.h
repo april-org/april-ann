@@ -69,7 +69,7 @@ public:
   virtual Token *getPattern(int index) {
     if (index < 0 || index >= numPatterns())
       return 0;
-    return data[index];
+    return data[index]->clone();
   }
   /// Get the pattern index to the vector pat
   virtual Token *getPatternBunch(const int *indexes,unsigned int bunch_size) {

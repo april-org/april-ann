@@ -260,7 +260,7 @@ function april_help(table_name, verbosity)
 	if getmetatable(v) and getmetatable(v).id then
 	  if i~="__index" then table.insert(classes, i) end
 	else
-	  if getmetatable(v) and not getmetatable(v).__call then
+	  if not getmetatable(v) or not getmetatable(v).__call then
 	    table.insert(names, i)
 	  else
 	    table.insert(funcs, {i, string.format("%8s",type(v))})
