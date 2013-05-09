@@ -115,11 +115,11 @@ __global__ void computeCrossEntropyLossFunctionKernel(const float *output,
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
     // compute derivative
-    // float o         = clip(output[index], epsilon, 1.0f - epsilon);
-    float log_o     = output[index];
-    float log_inv_o = log(1.0 - expf(log_o));
-    float t         = clip(target_output[index], epsilon, 1.0f - epsilon);
-    float inv_t     = clip(1.0f - target_output[index], epsilon, 1.0f - epsilon);
+    float  log_o     = output[index];
+    double o         = exp(output[index]);
+    float  log_inv_o = (o<1.0) ? log(1.0 - o) : log(epsilon);
+    float  t         = clip(target_output[index], epsilon, 1.0f - epsilon);
+    float  inv_t     = clip(1.0f - target_output[index], epsilon, 1.0f - epsilon);
     if (t > epsilon) pattern_errors[index] += t * log_o;
     if (inv_t > epsilon) pattern_errors[index] += inv_t * log_inv_o;
   }
@@ -311,10 +311,11 @@ float doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
 	assert(!(target_ptr[b] < 0.0f) && !(target_ptr[b] > 1.0f) &&
 	       "Only [0,1] target patterns are allowed");
 	// compute derivative
-	float log_o     = input_ptr[b];
-	float log_inv_o = log(1.0 - expf(input_ptr[b]));
-	float t         = clamp(target_ptr[b], EPSILON, 1.0f - EPSILON);
-	float inv_t     = clamp(1.0f - target_ptr[b], EPSILON, 1.0f - EPSILON);
+	float  log_o     = input_ptr[b];
+	double o         = exp(input_ptr[b]);
+	float  log_inv_o = (o<1.0) ? log(1.0 - o) : log(EPSILON);
+	float  t         = clamp(target_ptr[b], EPSILON, 1.0f - EPSILON);
+	float  inv_t     = clamp(1.0f - target_ptr[b], EPSILON, 1.0f - EPSILON);
 	if (t > EPSILON)     sum += t * log_o;
 	if (inv_t > EPSILON) sum += inv_t * log_inv_o;
       }
