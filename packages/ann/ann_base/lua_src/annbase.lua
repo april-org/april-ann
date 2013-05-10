@@ -282,6 +282,15 @@ april_set_doc("ann.connections.clone",
 
 -------------------------------------------------------------------
 
+april_set_doc("ann.connections.scale",
+	      {
+		class="method",
+		summary="Scale the weights by a given factor",
+		params = { "A number with the scale factor" }
+	      })
+
+-------------------------------------------------------------------
+
 april_set_doc("ann.connections.load",
 	      {
 		class="method",
@@ -461,6 +470,9 @@ april_set_doc("ann.components.base.set_option",
 		  {
 		    "This method changes the value of an option.",
 		    "Not all components implement the same options.",
+		    "Implemented options are: learning_rate, momentum,",
+		    "weight_decay, max_norm_penalty, dropout_factor, and",
+		    "dropout_seed.",
 		  },
 		params = {
 		  "A string with the name of the option",
@@ -709,6 +721,14 @@ april_set_doc("ann.components.base.build",
 
 ----------------------------------------------------------------------
 
+april_set_doc("ann.components.base.debug_info",
+	      {
+		class="method",
+		summary="Debug info at screen",
+	      })
+
+----------------------------------------------------------------------
+
 april_set_doc("ann.components.base.copy_weights",
 	      {
 		class="method",
@@ -743,6 +763,39 @@ april_set_doc("ann.components.base.get_component",
 		outputs= {
 		  { "An ann.components which has the given name",
 		    "at the components hierarchy."},
+		}
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.base.get_name",
+	      {
+		class="method",
+		summary="Returns the name of this ann.component",
+		outputs= {
+		  { "A string with the name."},
+		}
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.base.get_weights_name",
+	      {
+		class="method",
+		summary="Returns the weigths_name of this ann.component",
+		outputs= {
+		  { "A string with the weigths_name."},
+		}
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.base.has_weights_name",
+	      {
+		class="method",
+		summary="Indicates if this component has connection weights object",
+		outputs= {
+		  { "A boolean"},
 		}
 	      })
 
