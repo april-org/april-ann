@@ -269,4 +269,11 @@ namespace ANN {
     return conn;
   }
 
+  void Connections::scale(float alpha) {
+    doSscal(total_size, alpha, weights, 0, 1,
+	    weights->getCudaFlag());
+    doSscal(total_size, alpha, prev_weights, 0, 1,
+	    prev_weights->getCudaFlag());
+  }
+  
 }

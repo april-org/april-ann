@@ -125,6 +125,8 @@ namespace ANN {
     unsigned int getNumWeights() const {
       return total_size;
     }
+    
+    void scale(float alpha);
   };
 }
 #endif

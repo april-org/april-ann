@@ -160,17 +160,25 @@ datosvalidar = {
   output_dataset = val_output
 }
 
+dropout_factor = 0.5
 function set_dropout(trainer)
   local max=trainer:count_components("^actf.*$")
   for name,component in trainer:iterate_components("^actf.*$") do
-    if name ~= "actf"..max then component:set_option("dropout", 0.5) end
+    if name ~= "actf"..max then
+      component:set_option("dropout",dropout_factor)
+    end
   end
+end
+
+-- we scale the weights before dropout
+for name,cnn in trainer_deep_classifier:iterate_weights("^w.*$") do
+  if name ~= "w1" then cnn:scale(1.0/dropout_factor) end
 end
 
 deep_classifier:set_option("learning_rate", 0.4)
 deep_classifier:set_option("momentum", 0.2)
 deep_classifier:set_option("weight_decay", 0.0)
---deep_classifier:set_option("neuron_squared_length_upper_bound", 15.0);
+deep_classifier:set_option("max_norm_penalty", 15.0);
 set_dropout(trainer_deep_classifier)
 
 shallow_classifier:set_option("learning_rate", 0.4)
@@ -178,8 +186,8 @@ shallow_classifier:set_option("momentum",
 			      deep_classifier:get_option("momentum"))
 shallow_classifier:set_option("weight_decay",
 			      deep_classifier:get_option("weight_decay"))
---shallow_classifier:set_option("neuron_squared_length_upper_bound",
---			      deep_classifier:get_option("neuron_squared_length_upper_bound"))
+shallow_classifier:set_option("max_norm_penalty",
+			      deep_classifier:get_option("max_norm_penalty"))
 set_dropout(trainer_shallow_classifier)
 
 deep_classifier_wo_pretraining:set_option("learning_rate",
@@ -188,8 +196,8 @@ deep_classifier_wo_pretraining:set_option("momentum",
 					  deep_classifier:get_option("momentum"))
 deep_classifier_wo_pretraining:set_option("weight_decay",
 					  deep_classifier:get_option("weight_decay"))
---deep_classifier:set_option("neuron_squared_length_upper_bound",
---			   deep_classifier:get_option("neuron_squared_length_upper_bound"))
+deep_classifier:set_option("max_norm_penalty",
+			   deep_classifier:get_option("max_norm_penalty"))
 set_dropout(trainer_deep_wo_pretraining)
 
 for i=1,200 do

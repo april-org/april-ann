@@ -100,6 +100,16 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD Connections scale
+{
+  float alpha;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, number);
+  LUABIND_GET_PARAMETER(1, float, alpha);
+  obj->scale(alpha);
+}
+//BIND_END
+
 //BIND_METHOD Connections load
 {
   LUABIND_CHECK_ARGN(==,1);
