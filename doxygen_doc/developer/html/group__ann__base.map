@@ -1,5 +1,4 @@
 <map id="Ann_base" name="Ann_base">
-<area shape="rect" id="node1" href="$group__ann.html" title="Ann" alt="" coords="5,32,51,61"/>
-<area shape="rect" id="node2" href="$group__mlp.html" title="Mlp" alt="" coords="304,5,347,35"/>
-<area shape="rect" id="node4" href="$group__activation__function.html" title="Activation_function" alt="" coords="259,59,392,88"/>
+<area shape="rect" id="node1" href="$group__ann.html" title="Ann" alt="" coords="5,8,51,37"/>
+<area shape="rect" id="node3" href="$group__loss__functions.html" title="Loss_functions" alt="" coords="260,8,369,37"/>
 </map>
