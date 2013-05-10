@@ -511,3 +511,30 @@ void doSger(CBLAS_ORDER major_type,
   }
 #endif
 }
+
+float doSnrm2(unsigned int n,
+	      FloatGPUMirroredMemoryBlock *x,
+	      unsigned int shift,
+	      unsigned int inc,
+	      bool use_gpu) {
+  float result;
+  const float *x_mem;
+#ifdef USE_CUDA
+  if (use_gpu) {
+    cublasStatus_t status;
+    cublasHandle_t handle = GPUHelper::getHandler();
+    x_mem  = x->getGPUForRead() + shift;
+    status = cublasSetStream(handle, GPUHelper::getCurrentStream());
+    checkCublasError(status);
+    status = cublasSnrm(handle, n, x_mem, inc, &result);
+    checkCublasError(status);
+  }
+  else {
+#endif
+    x_mem = x->getPPALForRead() + shift;
+    result = cblas_snrm2(n, x_mem, inc);
+#ifdef USE_CUDA
+  }
+#endif
+  return result;
+}

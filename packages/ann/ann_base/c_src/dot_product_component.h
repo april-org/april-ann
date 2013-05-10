@@ -37,7 +37,7 @@ namespace ANN {
     
     /// learning parameters
     float learning_rate, momentum, weight_decay, c_weight_decay;
-    float neuron_squared_length_upper_bound;
+    float max_norm_penalty;
     CBLAS_TRANSPOSE transpose_weights;
 
     void

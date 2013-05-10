@@ -303,4 +303,10 @@ void doSger(CBLAS_ORDER major_type,
             unsigned int a_shift,
             unsigned int a_inc,
             bool use_gpu);
+
+float doSnrm2(unsigned int n,
+	      FloatGPUMirroredMemoryBlock *x,
+	      unsigned int shift,
+	      unsigned int inc,
+	      bool use_gpu);
 #endif // WRAPPER_H

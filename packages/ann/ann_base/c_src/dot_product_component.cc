@@ -51,7 +51,7 @@ namespace ANN {
     momentum(0.0f),
     weight_decay(0.0f),
     c_weight_decay(1.0f),
-    neuron_squared_length_upper_bound(-1.0f) {
+    max_norm_penalty(-1.0f) {
     if (weights_name == 0) generateDefaultWeightsName();
     this->transpose_weights = (transpose_weights) ? CblasTrans : CblasNoTrans;
   }
@@ -251,7 +251,7 @@ namespace ANN {
 		  use_cuda);
 	}
       }
-    }
+    } // if sparse_input
     else {
       TokenMemoryBlock *input_mem_token=input_token->convertTo<TokenMemoryBlock*>();
       FloatGPUMirroredMemoryBlock *input=input_mem_token->getMemBlock();
@@ -285,7 +285,7 @@ namespace ANN {
 	       prev_weights_mat_ptr, 0, weights_matrix->getOutputSize(),
 	       use_cuda);
       } // if bunch_size > 1 ... else
-    }
+    } // if sparse_input ... else
   }
   
   // The DotProductANNComponent
@@ -325,12 +325,24 @@ namespace ANN {
     // Forces to update counts and swap vectors if necessary at this backward
     // step
     if (weights_matrix->endUpdate()) {
-      // TODO: max norm penalty
       ++num_updates_from_last_prune;
       if (num_updates_from_last_prune > MAX_UPDATES_WITHOUT_PRUNE) {
 	num_updates_from_last_prune = 0;
 	weights_matrix->pruneSubnormalAndCheckNormal();
       }
+      if (max_norm_penalty > 0.0) {
+	for (unsigned int i=0; i<output_size; ++i) {
+	  float norm2 = doSnrm2(input_size,
+				weights_matrix->getPtr(), i, output_size,
+				use_cuda);
+	  if (norm2 > max_norm_penalty) {
+	    float scal = max_norm_penalty/norm2;
+	    doSscal(input_size, scal,
+		    weights_matrix->getPtr(), i, output_size,
+		    use_cuda);
+	  } // if norm2 > max_norm_penalty
+	} // for (i=0; i<output_size; ++i)
+      } // if max_norm_penalty > 0.0
     }
   }
   
@@ -356,7 +368,7 @@ namespace ANN {
     component->momentum       = momentum;
     component->weight_decay   = weight_decay;
     component->c_weight_decay = c_weight_decay;
-    component->neuron_squared_length_upper_bound = neuron_squared_length_upper_bound;
+    component->max_norm_penalty = max_norm_penalty;
     return component;
   }
 
@@ -368,8 +380,8 @@ namespace ANN {
       c_weight_decay = 1.0f - weight_decay;
       return;
     }
-    mSetOption("neuron_squared_length_upper_bound",
-	       neuron_squared_length_upper_bound);
+    mSetOption("max_norm_penalty",
+	       max_norm_penalty);
     ERROR_EXIT1(140, "The option to be set does not exist: %s.\n", name);
   }
   
@@ -377,7 +389,7 @@ namespace ANN {
     mHasOption("learning_rate");
     mHasOption("momentum");
     mHasOption("weight_decay");
-    mHasOption("neuron_squared_length_upper_bound");
+    mHasOption("max_norm_penalty");
     return false;
   }
   
@@ -386,7 +398,7 @@ namespace ANN {
     mGetOption("momentum", momentum);
     // the weight decay is always fixed to 0
     mGetOption("weight_decay", weight_decay);
-    mGetOption("neuron_squared_length_upper_bound", neuron_squared_length_upper_bound);
+    mGetOption("max_norm_penalty", max_norm_penalty);
     return ANNComponent::getOption(name);
   }
   
