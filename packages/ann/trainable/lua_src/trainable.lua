@@ -692,18 +692,20 @@ function trainable.supervised_trainer:train_dataset(t)
     end
   end
   -- TRAIN USING ds_idx_table
-  local bunch_indexes = {}
-  for i=1,#ds_idx_table do
-    local idx = ds_idx_table[i]
-    table.insert(bunch_indexes, idx - 1) -- OJITO restamos 1
-    if i==#ds_idx_table or #bunch_indexes == bunch_size then
-      local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
-      local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
-      self:train_step(input_bunch, output_bunch)
-      bunch_indexes = {}
-    end
+  local k=0
+  for i=1,#ds_idx_table,params.bunch_size do
+    local bunch_indexes = {}
+    local last = math.min(i+params.bunch_size-1, #ds_idx_table)
+    -- OJO j - 1
+    for j=i,last do table.insert(bunch_indexes, ds_idx_table[j] - 1) end
+    local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
+    local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
+    self:train_step(input_bunch, output_bunch)
+    k=k+1
+    if k == 10000 then collectgarbage("collect") k=0 end
   end
   ds_idx_table = nil
+  collectgarbage("collect")
   return self.loss_function:get_accum_loss()
 end
 
@@ -824,18 +826,20 @@ function trainable.supervised_trainer:validate_dataset(t)
     for i=1,num_patterns do table.insert(ds_idx_table, i) end
   end
   -- TRAIN USING ds_idx_table
-  local bunch_indexes = {}
-  for i=1,#ds_idx_table do
-    local idx = ds_idx_table[i]
-    table.insert(bunch_indexes,  idx - 1) -- OJITO - 1
-    if i==#ds_idx_table or #bunch_indexes == bunch_size then
-      local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
-      local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
-      self:validate_step(input_bunch, output_bunch)
-      bunch_indexes = {}
-    end
+  local k=0
+  for i=1,#ds_idx_table,params.bunch_size do
+    local bunch_indexes = {}
+    local last = math.min(i+params.bunch_size-1, #ds_idx_table)
+    -- OJO j - 1
+    for j=i,last do table.insert(bunch_indexes, ds_idx_table[j] - 1) end
+    local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
+    local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
+    self:validate_step(input_bunch, output_bunch)
+    k=k+1
+    if k == 10000 then collectgarbage("collect") k=0 end
   end
   ds_idx_table = nil
+  collectgarbage("collect")
   return self.loss_function:get_accum_loss()
 end
 
