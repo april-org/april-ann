@@ -1,0 +1,33 @@
+<map id="ann/ann_base/c_src/dot_product_component.cc" name="ann/ann_base/c_src/dot_product_component.cc">
+<area shape="rect" id="node3" href="$swap_8h.html" title="swap.h" alt="" coords="1440,584,1504,613"/>
+<area shape="rect" id="node5" href="$dot__product__component_8h.html" title="dot_product_component.h" alt="" coords="1060,101,1230,131"/>
+<area shape="rect" id="node7" href="$token__memory__block_8h.html" title="token_memory_block.h" alt="" coords="1265,179,1422,208"/>
+<area shape="rect" id="node37" href="$token__base_8h.html" title="token_base.h" alt="" coords="1833,256,1932,285"/>
+<area shape="rect" id="node44" href="$table__of__token__codes_8h.html" title="table_of_token_codes.h" alt="" coords="2226,343,2386,372"/>
+<area shape="rect" id="node136" href="$wrapper_8h.html" title="wrapper.h" alt="" coords="129,256,206,285"/>
+<area shape="rect" id="node144" href="$token__vector_8h.html" title="token_vector.h" alt="" coords="1621,179,1728,208"/>
+<area shape="rect" id="node21" href="$cblas__headers_8h.html" title="cblas_headers.h" alt="" coords="45,507,162,536"/>
+<area shape="rect" id="node66" href="$ann__component_8h.html" title="ann_component.h" alt="" coords="1082,179,1208,208"/>
+<area shape="rect" id="node85" href="$connection_8h.html" title="connection.h" alt="" coords="840,256,936,285"/>
+<area shape="rect" id="node9" href="$gpu__mirrored__memory__block_8h.html" title="gpu_mirrored_memory\l_block.h" alt="" coords="392,334,541,381"/>
+<area shape="rect" id="node13" href="$gpu__helper_8h.html" title="gpu_helper.h" alt="" coords="293,429,389,459"/>
+<area shape="rect" id="node15" href="$error__print_8h.html" title="error_print.h" alt="" coords="202,507,293,536"/>
+<area shape="rect" id="node34" href="$aligned__memory_8h.html" title="aligned_memory.h" alt="" coords="317,507,445,536"/>
+<area shape="rect" id="node27" href="$vector_8h.html" title="vector.h" alt="" coords="1509,507,1578,536"/>
+<area shape="rect" id="node47" href="$buffer__list_8h.html" title="buffer_list.h" alt="" coords="2061,343,2152,372"/>
+<area shape="rect" id="node57" href="$constString_8h.html" title="constString.h" alt="" coords="1920,429,2018,459"/>
+<area shape="rect" id="node63" href="$referenced_8h.html" title="referenced.h" alt="" coords="980,507,1073,536"/>
+<area shape="rect" id="node50" href="$logbase_8h.html" title="logbase.h" alt="" coords="1930,507,2008,536"/>
+<area shape="rect" id="node52" href="$logbase__standard_8h.html" title="logbase_standard.h" alt="" coords="1890,584,2024,613"/>
+<area shape="rect" id="node70" href="$mystring_8h.html" title="mystring.h" alt="" coords="1205,256,1288,285"/>
+<area shape="rect" id="node74" href="$aux__hash__table_8h.html" title="aux_hash_table.h" alt="" coords="1317,343,1440,372"/>
+<area shape="rect" id="node128" href="$hash__table_8h.html" title="hash_table.h" alt="" coords="1606,256,1702,285"/>
+<area shape="rect" id="node81" href="$pair_8h.html" title="pair.h" alt="" coords="1610,429,1664,459"/>
+<area shape="rect" id="node83" href="$null__types_8h.html" title="null_types.h" alt="" coords="1602,507,1693,536"/>
+<area shape="rect" id="node91" href="$constants_8h.html" title="constants.h" alt="" coords="717,507,808,536"/>
+<area shape="rect" id="node94" href="$MersenneTwister_8h.html" title="MersenneTwister.h" alt="" coords="1301,429,1434,459"/>
+<area shape="rect" id="node106" href="$matrixFloat_8h.html" title="matrixFloat.h" alt="" coords="616,343,714,372"/>
+<area shape="rect" id="node121" href="$maxmin_8h.html" title="maxmin.h" alt="" coords="810,429,888,459"/>
+<area shape="rect" id="node108" href="$matrix_8h.html" title="matrix.h" alt="" coords="616,429,685,459"/>
+<area shape="rect" id="node112" href="$clamp_8h.html" title="clamp.h" alt="" coords="469,507,536,536"/>
+</map>

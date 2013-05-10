@@ -1,0 +1,10 @@
+<map id="ann/loss_functions/c_src/loss_function.h" name="ann/loss_functions/c_src/loss_function.h">
+<area shape="rect" id="node3" href="$cross__entropy__loss__function_8h.html" title="ann/loss_functions\l/c_src/cross_entropy\l_loss_function.h" alt="" coords="5,101,149,165"/>
+<area shape="rect" id="node7" href="$local__fmeasure__loss__function_8h.html" title="ann/loss_functions\l/c_src/local_fmeasure\l_loss_function.h" alt="" coords="175,101,324,165"/>
+<area shape="rect" id="node11" href="$mse__loss__function_8h.html" title="ann/loss_functions\l/c_src/mse_loss_function.h" alt="" coords="349,110,531,157"/>
+<area shape="rect" id="node15" href="$multiclass__cross__entropy__loss__function_8h.html" title="ann/loss_functions\l/c_src/multiclass_cross\l_entropy_loss_function.h" alt="" coords="560,101,725,165"/>
+<area shape="rect" id="node5" href="$cross__entropy__loss__function_8cc.html" title="ann/loss_functions\l/c_src/cross_entropy\l_loss_function.cc" alt="" coords="5,213,149,277"/>
+<area shape="rect" id="node9" href="$local__fmeasure__loss__function_8cc.html" title="ann/loss_functions\l/c_src/local_fmeasure\l_loss_function.cc" alt="" coords="173,213,323,277"/>
+<area shape="rect" id="node13" href="$mse__loss__function_8cc.html" title="ann/loss_functions\l/c_src/mse_loss_function.cc" alt="" coords="347,222,536,269"/>
+<area shape="rect" id="node17" href="$multiclass__cross__entropy__loss__function_8cc.html" title="ann/loss_functions\l/c_src/multiclass_cross\l_entropy_loss_function.cc" alt="" coords="560,213,733,277"/>
+</map>
