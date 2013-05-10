@@ -217,6 +217,11 @@ end
 -- verbosity => 0 only names, 1 only summary, 2 all
 function april_help(table_name, verbosity)
   if not table_name then table_name="" end
+  if (type(table_name) ~= "string" and
+      getmetatable(table_name) and
+      getmetatable(table_name).id) then
+    table_name = getmetatable(table_name).id
+  end
   assert(type(table_name) == "string", "Expected string as first argument")
   local t
   if #table_name == 0 then t = _G
@@ -241,17 +246,20 @@ function april_help(table_name, verbosity)
   end
   local verbosity = verbosity or 2
   local obj = false
-  april_print_doc(table_name, verbosity)
   if type(t) == "function" then
+    april_print_doc(table_name, verbosity)
     -- printf("No more recursive help for %s\n", table_name)
     return
   elseif type(t) ~= "table" then
     if getmetatable(t) and getmetatable(t).__index then
-      t = getmetatable(t).__index
-      obj = true
-      --  else
-      --      return
+      local id = getmetatable(t).id
+      t = get_table_from_dotted_string(id)
+      april_print_doc(id, verbosity)
+    else
+      april_print_doc(table_name, verbosity)
     end
+  else
+    april_print_doc(table_name, verbosity)
   end
   -- local print_data = function(d) print("\t * " .. d) end
   local classes    = {}
@@ -311,13 +319,7 @@ function april_help(table_name, verbosity)
     print("")
   end
   if getmetatable(t) ~= t and #funcs > 0 then
-    if not obj then
-      print(ansi.fg["cyan"].." -- static functions or tables"..ansi.fg["default"])
-    else
-      print(ansi.fg["cyan"]..
-	      " -- object functions or tables (methods, static functions or tables)"..
-	      ansi.fg["default"])
-    end
+    print(ansi.fg["cyan"].." -- static functions or tables"..ansi.fg["default"])
     table.sort(funcs, function(a,b) return a[1] < b[1] end)
     for i,v in ipairs(funcs) do
       april_print_doc(table_name .. "." .. v[1],
@@ -328,7 +330,34 @@ function april_help(table_name, verbosity)
     end
     print("")
   end
-  if obj then
+  if t.meta_instance and t.meta_instance.__index then
+    print(ansi.fg["cyan"].." -- methods"..ansi.fg["default"])
+    local aux = {}
+    for i,v in pairs(t.meta_instance.__index) do
+      if type(v) == "function" then
+	table.insert(aux, i)
+      end
+    end
+    if getmetatable(t) then
+      for i,v in pairs(getmetatable(t)) do
+	if type(v) == "function" then
+	  table.insert(aux, i)
+	end
+      end
+    end
+    local prev = nil
+    table.sort(aux)
+    for i,v in ipairs(aux) do
+      if v ~= prev then
+	april_print_doc(table_name .. "." .. v,
+			math.min(1, verbosity),
+			ansi.fg["cyan"].."   *"..ansi.fg["default"])
+      end
+      prev = v
+      -- print_data(v)
+    end
+    print("")
+    t = t.meta_instance.__index
     while (getmetatable(t) and getmetatable(t).__index and
 	   getmetatable(t).__index ~= t) do
       local superclass_name = getmetatable(t).id
@@ -339,7 +368,7 @@ function april_help(table_name, verbosity)
       local aux = {}
       for i,v in pairs(t) do
 	if type(v) == "function" then
-	  table.insert(aux,i)
+	  table.insert(aux, i)
 	end
       end
       table.sort(aux)
@@ -350,58 +379,6 @@ function april_help(table_name, verbosity)
 	-- print_data(v)
       end
       print("")
-    end
-  else
-    if t.meta_instance and t.meta_instance.__index then
-      print(ansi.fg["cyan"].." -- methods"..ansi.fg["default"])
-      local aux = {}
-      for i,v in pairs(t.meta_instance.__index) do
-	if type(v) == "function" then
-	  table.insert(aux, i)
-	end
-      end
-      if getmetatable(t) then
-	for i,v in pairs(getmetatable(t)) do
-	  if type(v) == "function" then
-	    table.insert(aux, i)
-	  end
-	end
-      end
-      local prev = nil
-      table.sort(aux)
-      for i,v in ipairs(aux) do
-	if v ~= prev then
-	  april_print_doc(table_name .. "." .. v,
-			  math.min(1, verbosity),
-			  ansi.fg["cyan"].."   *"..ansi.fg["default"])
-	end
-	prev = v
-	-- print_data(v)
-      end
-      print("")
-      t = t.meta_instance.__index
-      while (getmetatable(t) and getmetatable(t).__index and
-	     getmetatable(t).__index ~= t) do
-	local superclass_name = getmetatable(t).id
-	t = getmetatable(t).__index
-	print(ansi.fg["cyan"]..
-		" -- inherited methods from " ..
-		superclass_name..ansi.fg["default"])
-	local aux = {}
-	for i,v in pairs(t) do
-	  if type(v) == "function" then
-	    table.insert(aux, i)
-	  end
-	end
-	table.sort(aux)
-	for i,v in ipairs(aux) do
-	  april_print_doc(superclass_name .. "." .. v,
-			  math.min(1, verbosity),
-			  ansi.fg["cyan"].."   *"..ansi.fg["default"])
-	  -- print_data(v)
-	end
-	print("")
-      end
     end
   end
   print()
