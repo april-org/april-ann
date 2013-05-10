@@ -12,7 +12,7 @@ return {
   hyperparams = {
     { option="--o1=",  value=10,  tag="o1", sampling="fixed", hidden=true },
     { option="--o2=",  value=20,  tag="o2", sampling="fixed" },
-    { option="--r1",   tag="r1", sampling = "uniform",
+    { option="--r1",   tag="r1", sampling = "log-uniform",
       type="integer",
       values= { { min=1, max=10 }, { min=20, max=100, step=10} },
       filter = function(hyperparams) hyperparams["r1"] = "200" return true end },
@@ -89,7 +89,7 @@ return {
 	if not hyperparam.values.mean or not hyperparam.values.variance then
 	  error("Gaussian sampling needs mean and variance")
 	end
-      elseif hyperparam.sampling == "uniform" then
+      elseif hyperparam.sampling == "uniform" or hyperparam.sampling == "log-uniform" then
 	if not hyperparam.values then error("Each random hyperparameter needs values") end
 	if type(hyperparam.values) ~= "table" then
 	  error("Uniform sampling needs values table")
@@ -134,22 +134,42 @@ return {
                         rnd:randNorm(hyperparam.values.mean, hyperparam.values.variance))
     elseif hyperparam.sampling == "random" then
       v = tostring(sample_random_from_bash())
-    else
+    else -- uniform and log-uniform
       if type(hyperparam.values[1]) == "table" then
         local pos = rnd:rand(hyperparam.size)
         for k,p in ipairs(hyperparam.values) do
           pos = pos - p.size
           if pos <= 0 or k==#hyperparam.values then
             if hyperparam.type == "integer" then
-              v = tostring(rnd:randInt(0, p.size)*p.step + p.min)
-            else
-              v = string.format("%.".. hyperparam.prec .."f",
-                                rnd:rand(p.max-p.min) + p.min)
-            end
+	      local r
+	      if hyperparam.sampling == "uniform" then
+		r = rnd:randInt(0, p.size)*p.step + p.min
+	      else
+		if p.step ~= 1 then
+		  error("Step must be one for log-uniform integers")
+		end
+		r = rnd:rand(math.log(p.max)-math.log(p.min)) + math.log(p.min)
+		r = math.round(math.exp(r))
+	      end
+              v = tostring(r)
+            else -- if hyperparam.type == "integer" ...
+	      local r
+	      if hyperparam.sampling == "uniform" then
+		r = rnd:rand(p.max-p.min) + p.min
+	      else
+		r = rnd:rand(math.log(p.max)-math.log(p.min)) + math.log(p.min)
+		r = math.exp(r)
+	      end
+	      v = string.format("%.".. hyperparam.prec .."f", r)
+	      print(v)
+	    end -- if hyperparam.type == "integer" else ...
             break
-          end
-        end
-      else
+          end -- if pos <= 0 or k == #hyperparam.values ...
+        end -- for k,p in ipairs(hyperparam.values)
+      else -- if type(hyperparam.values[1]) == "table" ...
+	if hyperparam.sampling == "log-uniform" then
+	  error("log-uniform sampling don't works with a finite table")
+	end
         v = tostring(rnd:choose(hyperparam.values))
       end
     end
