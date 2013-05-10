@@ -84,11 +84,13 @@ Citation
 If you are interested in use this software, please cite correctly the source. In academic publications
 you can use this bibitem:
 
+```bibtex
 @misc{aprilann,
         Author = {Francisco Zamora-Mart\'inez and others},
         Note = {{https://github.com/pakozm/april-ann}},
         Title = {{April-ANN toolkit, A Pattern Recognizer In Lua, Artificial Neural Networks module}},
         Year = {2013}}
+```
 
 
 Packages
