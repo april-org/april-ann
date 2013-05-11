@@ -2,6 +2,8 @@
 -- LOCAL AUXILIARY FUNCTIONS --
 -------------------------------
 
+local MAX_ITERS_WO_COLLECT_GARBAGE=10000
+
 local function check_dataset_sizes(ds1, ds2)
   assert(ds1:numPatterns() == ds2:numPatterns(),
 	 string.format("Different input/output datasets "..
@@ -702,7 +704,7 @@ function trainable.supervised_trainer:train_dataset(t)
     local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
     self:train_step(input_bunch, output_bunch)
     k=k+1
-    if k == 10000 then collectgarbage("collect") k=0 end
+    if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
   end
   ds_idx_table = nil
   collectgarbage("collect")
@@ -836,7 +838,7 @@ function trainable.supervised_trainer:validate_dataset(t)
     local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
     self:validate_step(input_bunch, output_bunch)
     k=k+1
-    if k == 10000 then collectgarbage("collect") k=0 end
+    if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
   end
   ds_idx_table = nil
   collectgarbage("collect")
@@ -900,6 +902,7 @@ function trainable.supervised_trainer:use_dataset(t)
   if isa(params.input_dataset, dataset) then
     params.input_dataset = dataset.token.wrapper(params.input_dataset)
   end
+  local k=0
   for i=1,nump,params.bunch_size do
     local bunch_indexes = {}
     local last = math.min(i+params.bunch_size-1, nump)
@@ -908,6 +911,8 @@ function trainable.supervised_trainer:use_dataset(t)
     local input  = params.input_dataset:getPatternBunch(bunch_indexes)
     local output = self.ann_component:forward(input)
     params.output_dataset:putPatternBunch(bunch_indexes,output)
+    k=k+1
+    if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
   end
   return t.output_dataset
 end
