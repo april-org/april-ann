@@ -50,8 +50,10 @@ namespace ANN {
 			       Token *token);
     void buildErrorInputBunchVector(TokenBunchVector *&vector_token,
 				    Token *token);
-    TokenMemoryBlock *buildMemoryBlockToken(TokenBunchVector *token);
-    TokenMemoryBlock *buildMemoryBlockToken(Token *token);
+    TokenMemoryBlock *buildMemoryBlockToken(TokenBunchVector *token,
+					    bool is_output);
+    TokenMemoryBlock *buildMemoryBlockToken(Token *token,
+					    bool is_output);
     
   public:
     JoinANNComponent(const char *name=0);

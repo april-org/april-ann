@@ -4,51 +4,50 @@ ann.autoencoders = ann.autoencoders or {}
 
 -- This function builds a codifier from the weights of the first layer of a
 -- restricted autoencoder
-local function build_two_layered_codifier_from_weights(input_size,
-						       input_actf,
-						       cod_size,
-						       cod_actf,
-						       bias_mat,
-						       weights_mat)
+local function build_two_layered_codifier(names_prefix,
+					  input_size,
+					  input_actf,
+					  cod_size,
+					  cod_actf)
   local codifier_component = ann.components.stack()
   codifier_component:push( ann.components.hyperplane{
-			     dot_product_weights = "w",
-			     bias_weights        = "b",
+			     dot_product_weights = names_prefix.."w",
+			     bias_weights        = names_prefix.."b",
 			     input  = input_size,
 			     output = cod_size, } )
   codifier_component:push(ann.components.actf[cod_actf]())
-  local weights_table = codifier_component:build()
-  weights_table["w"]:load{ w = weights_mat }
-  weights_table["b"]:load{ w = bias_mat }
   return codifier_component
 end
 
 -- This function builds an autoencoder of two layers (input-hidden-output) where
 -- the hidden-output uses the same weights as input-hidden, so it is
 -- simetric.
-local function build_two_layered_autoencoder_from_sizes_and_actf(input_size,
+local function build_two_layered_autoencoder_from_sizes_and_actf(names_prefix,
+								 input_size,
 								 input_actf,
 								 cod_size,
 								 cod_actf,
 								 weights_random)
   local autoencoder_component = ann.components.stack()
   autoencoder_component:push( ann.components.hyperplane{
-				name                = "layer1",
-				dot_product_weights = "w",
-				bias_weights        = "b1",
+				name                = names_prefix.."layer1",
+				dot_product_weights = names_prefix.."w",
+				bias_weights        = names_prefix.."b1",
 				input  = input_size,
 				output = cod_size, } )
-  autoencoder_component:push(ann.components.actf[cod_actf]{ name="actf1" })
+  autoencoder_component:push(ann.components.actf[cod_actf]{ name=names_prefix.."actf1" })
   autoencoder_component:push( ann.components.hyperplane{
-				name                = "layer2",
-				dot_product_weights = "w",
-				bias_weights        = "b2",
+				name                = names_prefix.."layer2",
+				dot_product_weights = names_prefix.."w",
+				bias_weights        = names_prefix.."b2",
 				input  = cod_size,
 				output = input_size,
 				transpose = true} )
-  autoencoder_component:push(ann.components.actf[input_actf]{ name="actf2" })
+  autoencoder_component:push(ann.components.actf[input_actf]{ name=names_prefix.."actf2" })
   local weights_table = autoencoder_component:build()
-  for _,wname in ipairs({ "w", "b1", "b2" }) do
+  for _,wname in ipairs({ names_prefix.."w",
+			  names_prefix.."b1",
+			  names_prefix.."b2" }) do
     weights_table[wname]:randomize_weights{
       random = weights_random,
       inf    = -math.sqrt(6 / (input_size + cod_size)),
@@ -251,6 +250,7 @@ end
 function ann.autoencoders.greedy_layerwise_pretraining(t)
   local params = get_table_fields(
     {
+      names_prefix     = { mandatory=false, default="", type_match="string" },
       shuffle_random   = { mandatory=true,  isa_match=random },
       weights_random   = { mandatory=true,  isa_match=random },
       layers           = { mandatory=true, type_match="table",
@@ -275,6 +275,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 			     actf = { mandatory=true, type_match="string" },
 			     size = { mandatory=true, type_match="number" },
 			   }, },
+      on_the_fly        = { mandatory=false, default=false, type_match="boolean" },
     }, t)
   -- Error checking in params table --
   if params.input_dataset and params.distribution then
@@ -291,7 +292,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
   params.training_options.layerwise = params.training_options.layerwise or {}
   --------------------------------------
   -- on the fly. Do not generate all the dataset for each layer
-  local on_the_fly = params.replacement
+  local on_the_fly = params.replacement or params.on_the_fly
   if on_the_fly and params.distribution then
     error("On the fly mode is not working with dataset distribution")
   end
@@ -335,7 +336,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 							     params.bunch_size)
       local aux_weights = {}
       for i,v in pairs(mlp_final_weights) do aux_weights[i] = v:clone() end
-      mlp_final_trainer:build{ weights=mlp_final_weights }
+      mlp_final_trainer:build{ weights=aux_weights }
       data = generate_training_table_configuration_on_the_fly(current_dataset_params,
 							      params.replacement,
 							      params.shuffle_random,
@@ -344,7 +345,8 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 							      nil)
     end
     local dae
-    dae = build_two_layered_autoencoder_from_sizes_and_actf(input_size,
+    dae = build_two_layered_autoencoder_from_sizes_and_actf(params.names_prefix,
+							    input_size,
 							    input_actf,
 							    cod_size,
 							    cod_actf,
@@ -376,6 +378,8 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
     ---------- TRAIN THE AUTOENCODER WO VALIDATION ----------
     local trainer = trainable.supervised_trainer(dae, loss_function,
 						 params.bunch_size)
+    trainer:build()
+    -- printf("BEFORE TRAIN %d\n", i)
     local best_net = trainer:train_wo_validation{
       min_epochs     = lookup("min_epochs"),
       max_epochs     = lookup("max_epochs"),
@@ -386,10 +390,11 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 	       t.current_epoch, t.train_error, t.train_improvement)
 	io.stdout:flush()	
       end }
+    -- printf("AFTER TRAIN %d\n", i)
     ---------------------------------------------------------
-    local b1obj = best_net:weights("b1"):clone()
-    local b2obj = best_net:weights("b2"):clone()
-    local wobj  = best_net:weights("w"):clone()
+    local b1obj = best_net:weights(params.names_prefix.."b1"):clone()
+    local b2obj = best_net:weights(params.names_prefix.."b2"):clone()
+    local wobj  = best_net:weights(params.names_prefix.."w"):clone()
     local b1mat = b1obj:weights()
     local b2mat = b2obj:weights()
     local wmat  = wobj:weights()
@@ -399,31 +404,35 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
     mlp_final:push( ann.components.hyperplane{
 		      input  = input_size,
 		      output = cod_size,
-		      name   = "layer" .. (i-1),
-		      dot_product_name    = "w" .. (i-1),
-		      bias_name           = "b" .. (i-1),
-		      dot_product_weights = "w" .. (i-1),
-		      bias_weights        = "b" .. (i-1), })
-    mlp_final:push( ann.components.actf[cod_actf]{ name="actf" .. (i-1) } )
-    mlp_final_weights["w" .. (i-1)] = wobj
-    mlp_final_weights["b"    .. (i-1)] = b1obj
+		      name   = params.names_prefix.."layer" .. (i-1),
+		      dot_product_name    = params.names_prefix.."w" .. (i-1),
+		      bias_name           = params.names_prefix.."b" .. (i-1),
+		      dot_product_weights = params.names_prefix.."w" .. (i-1),
+		      bias_weights        = params.names_prefix.."b" .. (i-1), })
+    mlp_final:push( ann.components.actf[cod_actf]{ name=params.names_prefix.."actf" .. (i-1) } )
+    mlp_final_weights[params.names_prefix.."w" .. (i-1)] = wobj
+    mlp_final_weights[params.names_prefix.."b"    .. (i-1)] = b1obj
     --
     --insert the information
     if not on_the_fly then
       if i ~= #params.layers or params.supervised_layer then
+	-- printf("LAYER %d\n", i)
 	-- generation of new input patterns using only the first part of
 	-- autoencoder except at last loop iteration (only if not
 	-- supervised_layer)
 	local codifier
-	codifier = build_two_layered_codifier_from_weights(input_size,
-							   input_actf,
-							   cod_size,
-							   cod_actf,
-							   b1mat, wmat)
+	codifier = build_two_layered_codifier(params.names_prefix,
+					      input_size,
+					      input_actf,
+					      cod_size,
+					      cod_actf)
 	local cod_trainer = trainable.supervised_trainer(codifier,
 							 nil,
 							 params.bunch_size)
 	cod_trainer:build()
+	-- print("Load bias ", params.names_prefix .. "b")
+	cod_trainer:weights(params.names_prefix.."b"):load{ w = b1mat }
+	cod_trainer:weights(params.names_prefix.."w"):load{ w = wmat }
 	if current_dataset_params.distribution then
 	  -- compute code for each distribution dataset
 	  for _,v in ipairs(current_dataset_params.distribution) do
@@ -446,7 +455,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
   if params.supervised_layer then
     printf("# Training of supervised layer %d--%d (number %d)\n",
 	   params.layers[#params.layers].size, params.supervised_layer.size,
-	   #params.layers+1)
+	   #params.layers)
     local input_size     = params.layers[#params.layers].size
     local input_actf     = params.layers[#params.layers].actf
     local global_options    = table.deep_copy(params.training_options.global)
@@ -482,7 +491,8 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
       string.format("%d inputs %d %s",
 		    input_size,
 		    params.supervised_layer.size,
-		    params.supervised_layer.actf))
+		    params.supervised_layer.actf),
+      nil, params.names_prefix)
     for key,value in pairs(global_options.ann_options) do
       if layerwise_options.ann_options[key] == nil then
 	thenet:set_option(key, value)
@@ -522,23 +532,23 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 	io.stdout:flush()	
       end
     }
-    local wobj  = best_net_trainer:weights("w1"):clone()
-    local bobj  = best_net_trainer:weights("b1"):clone()
+    local wobj  = best_net_trainer:weights(params.names_prefix.."w1"):clone()
+    local bobj  = best_net_trainer:weights(params.names_prefix.."b1"):clone()
     local lastn = #params.layers
     mlp_final:push( ann.components.hyperplane{
 		      input  = input_size,
 		      output = params.supervised_layer.size,
-		      name   = "layer" .. lastn,
-		      dot_product_name    = "w" .. lastn,
-		      bias_name           = "b" .. lastn,
-		      dot_product_weights = "w" .. lastn,
-		      bias_weights        = "b" .. lastn, })
+		      name   = params.names_prefix.."layer" .. lastn,
+		      dot_product_name    = params.names_prefix.."w" .. lastn,
+		      bias_name           = params.names_prefix.."b" .. lastn,
+		      dot_product_weights = params.names_prefix.."w" .. lastn,
+		      bias_weights        = params.names_prefix.."b" .. lastn, })
     mlp_final:push( ann.components.actf[params.supervised_layer.actf]{
-		      name="actf" .. lastn } )
-    mlp_final_weights["w" .. lastn] = wobj
-    mlp_final_weights["b"    .. lastn] = bobj
+		      name=params.names_prefix.."actf" .. lastn } )
+    mlp_final_weights[params.names_prefix.."w" .. lastn] = wobj
+    mlp_final_weights[params.names_prefix.."b"    .. lastn] = bobj
   end
-
+  
   mlp_final:build{ weights = mlp_final_weights }
   
   return sdae_table, mlp_final

@@ -56,7 +56,7 @@ function trainable.supervised_trainer:__call(ann_component,
     bunch_size       = bunch_size or false,
   }
   obj = class_instance(obj, self, true)
-  if ann_component:get_is_built() then obj:build() end
+  -- if ann_component:get_is_built() then obj:build() end
   return obj
 end
 
@@ -284,7 +284,7 @@ april_set_doc("trainable.supervised_trainer.component", {
 		    "This method returns a component object",
 		    "which name is the given argument.",
 		    "This method is forbidden before build method is called.",
-		    "If an error is produced, the program will be halted."
+		    "If an error is produced, it returns nil."
 		  },
 		params = { "A string with the component name" },
 		outputs = { "A component object" } })
@@ -293,7 +293,7 @@ function trainable.supervised_trainer:component(str)
   if #self.weights_order == 0 then
     error("Needs execution of build method")
   end
-  return self.components_table[str] or error("Incorrect component name " .. str)
+  return self.components_table[str]
 end
 
 ------------------------------------------------------------------------
@@ -306,7 +306,7 @@ april_set_doc("trainable.supervised_trainer.weights", {
 		    "This method returns a connections object",
 		    "which name is the given argument.",
 		    "This method is forbidden before build method is called.",
-		    "If an error is produced, the program will be halted."
+		    "If an error is produced, returns nil."
 		  }, 
 		params = { "A string with the connections name" },
 		outputs = { "An ann.connections object" } })
@@ -315,7 +315,7 @@ function trainable.supervised_trainer:weights(str)
   if #self.weights_order == 0 then
     error("Needs execution of build method")
   end
-  return self.weights_table[str] or error("Incorrect weights name " .. str)
+  return self.weights_table[str]
 end
 
 ------------------------------------------------------------------------
@@ -847,6 +847,58 @@ end
 
 ------------------------------------------------------------------------
 
+april_set_doc("trainable.supervised_trainer.for_each_pattern", {
+		class = "method",
+		summary = "Iterates over a dataset calling a given function",
+		description = 
+		  {
+		    "This method performs forward with all patterns of the",
+		    "given input_dataset. Each forward is done for bunch_size",
+		    "patterns at the same time, and after each forward the",
+		    "given function is called.",
+		  }, 
+		params = {
+		  ["input_dataset"]  = "A dataset float or dataset token",
+		  ["func"] = {"A function with this header: ",
+			      "func(INDEXES,TRAINER). INDEXES is a table",
+			      "with pattern indexes of the bunch, and",
+			      "TRAINER is the instance of the trainer object.",},
+		  ["bunch_size"]     = 
+		    {
+		      "Bunch size (mini-batch). It is [optional] if bunch_size",
+		      "was set at constructor, otherwise it is mandatory.",
+		    }, 
+		}, })
+
+function trainable.supervised_trainer:for_each_pattern(t)
+  local params = get_table_fields(
+    {
+      input_dataset  = { mandatory = true },
+      func           = { mandatory = true, type_match="function" },
+      bunch_size     = { type_match = "number",
+			 mandatory = (self.bunch_size == false),
+			 default=self.bunch_size },
+    }, t)
+  if isa(params.input_dataset, dataset) then
+    params.input_dataset = dataset.token.wrapper(params.input_dataset)
+  end
+  local nump = params.input_dataset:numPatterns()
+  local k=0
+  for i=1,nump,params.bunch_size do
+    local bunch_indexes = {}
+    local last = math.min(i+params.bunch_size-1, nump)
+    -- OJO j - 1
+    for j=i,last do table.insert(bunch_indexes, j - 1) end
+    local input  = params.input_dataset:getPatternBunch(bunch_indexes)
+    local output = self.ann_component:forward(input)
+    params.func(bunch_indexes, self)
+    k=k+1
+    if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
+  end
+end
+
+------------------------------------------------------------------------
+
 april_set_doc("trainable.supervised_trainer.use_dataset", {
 		class = "method",
 		summary = "Computes forward with a given dataset "..
@@ -944,12 +996,11 @@ function trainable.supervised_trainer:clone()
     obj:set_loss_function(self.loss_function:clone())
   end
   if #self.weights_order > 0 then
-    for wname,connections in pairs(self.weights_table) do
-      obj.weights_table[wname] = connections:clone()
+    local aux_weights = {}
+    for wname,cnn in pairs(self.weights_table) do
+      aux_weights[wname] = cnn:clone()
     end
-    obj:build{ weights = obj.weights_table,
-	       input   = self.ann_component:get_input_size(),
-	       output  = self.ann_component:get_output_size(), }
+    obj:build{ weights=aux_weights }
   end
   return obj
 end
@@ -1176,7 +1227,8 @@ april_set_doc("trainable.supervised_trainer.train_wo_validation", {
 		  ["update_function"] = "Function executed after each "..
 		  "epoch (after training and validation), for print "..
 		    "purposes (and other stuff). It is called as "..
-		    "update_function({ train_error=..., "..
+		    "update_function({ current_epoch=..., "..
+		    "train_error=..., "..
 		    "train_improvement=..., "..
 		    "train_params=THIS_PARAMS}) [optional].",
 		},

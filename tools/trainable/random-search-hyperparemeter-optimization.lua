@@ -96,7 +96,7 @@ return {
 	end
 	if type(hyperparam.values[1]) == "table" then
 	  if hyperparam.type ~= "integer" and hyperparam.type ~= "real" then
-	    error("Needs integer or real type option: ")
+	    error("Needs integer or real type field for TAG "..hyperparam.tag)
 	  end
 	  local size = 0
 	  for _,p in ipairs(hyperparam.values) do

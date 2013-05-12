@@ -306,7 +306,7 @@ function cmdOpt:parse_args(arguments)
   for _,opt in pairs(self.options) do
     if opt.mode == 'always' and opt.index_name and result[opt.index_name] == nil then
       value = opt.default_value
-      assert(value ~= nil, opt.argument_name .. " option is mandataroy!!")
+      assert(value ~= nil, opt.index_name .. " option is mandataroy!!")
       if type(opt.filter) == "function" then value = opt.filter(value) end
       if type(opt.action) == "function" then opt.action(value) end
       result[opt.index_name] = value

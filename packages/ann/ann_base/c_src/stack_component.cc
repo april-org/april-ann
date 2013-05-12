@@ -43,6 +43,7 @@ namespace ANN {
   void StackANNComponent::popComponent() {
     DecRef(components.back());
     components.pop_back();
+    output_size = components.back()->getOutputSize();
   }
 
   Token *StackANNComponent::getInput() {
@@ -143,10 +144,13 @@ namespace ANN {
     if (input_size  == 0) input_size  = components[0]->getInputSize();
     if (output_size == 0) output_size = components.back()->getOutputSize();
     else if (output_size != components.back()->getOutputSize())
-      ERROR_EXIT(141, "StackANNComponent output size is not correct\n");
+      ERROR_EXIT2(141, "StackANNComponent output size is not correct: "
+		  "%d != %d\n", output_size,
+		  components.back()->getOutputSize());
     if (input_size  == 0 || output_size == 0)
-      ERROR_EXIT(141, "Impossible to compute input/output "
-		 "sizes for this component\n");
+      ERROR_EXIT2(141, "Impossible to compute input/output "
+		  "sizes for this component input=%d output=%d\n",
+		  input_size, output_size);
   }
   
   void StackANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
