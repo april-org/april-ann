@@ -30,7 +30,7 @@ namespace ANN {
     input(0), output(0), error(0),
     bias_vector(0), num_updates_from_last_prune(0),
     learning_rate(-1.0f), momentum(0.0f) {
-    if (weights_name == 0) generateDefaultWeightsName();
+    if (weights_name == 0) generateDefaultWeightsName("b");
   }
 
   BiasANNComponent::~BiasANNComponent() {
@@ -173,7 +173,8 @@ namespace ANN {
 			       unsigned int _output_size,
 			       hash<string,Connections*> &weights_dict,
 			       hash<string,ANNComponent*> &components_dict) {
-    ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
+    ANNComponent::build(_input_size, _output_size,
+			weights_dict, components_dict);
     //
     if (input_size == 0 || output_size == 0)
       ERROR_EXIT(141, "Impossible to compute input/output "
@@ -184,8 +185,10 @@ namespace ANN {
     unsigned int weights_output_size = output_size;
     ////////////////////////////////////////////////////////////////////
     Connections *&w = weights_dict[weights_name];
+    // printf("%s :: %p %p\n", weights_name.c_str(), w, bias_vector);
     if (w != 0) {
       AssignRef(bias_vector, w);
+      // printf("COPY OF BIAS FROM HASH %s\n", weights_name.c_str());
       if (!bias_vector->checkInputOutputSizes(weights_input_size,
 					      weights_output_size))
 	ERROR_EXIT2(256,"The weights matrix input/output sizes are not correct, "
@@ -194,10 +197,12 @@ namespace ANN {
     }
     else {
       if (bias_vector == 0) {
+	// printf("NEW OF BIAS %s\n", weights_name.c_str());
 	bias_vector = new Connections(weights_input_size,
 				      weights_output_size);
 	IncRef(bias_vector);
       }
+      // else printf("USING PREVIOUS BIAS %s\n", weights_name.c_str());
       w = bias_vector;
     }
     bias_vector->countReference();

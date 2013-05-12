@@ -52,7 +52,7 @@ namespace ANN {
     weight_decay(0.0f),
     c_weight_decay(1.0f),
     max_norm_penalty(-1.0f) {
-    if (weights_name == 0) generateDefaultWeightsName();
+    if (weights_name == 0) generateDefaultWeightsName("w");
     this->transpose_weights = (transpose_weights) ? CblasTrans : CblasNoTrans;
   }
   
@@ -406,7 +406,8 @@ namespace ANN {
 				     unsigned int _output_size,
 				     hash<string,Connections*> &weights_dict,
 				     hash<string,ANNComponent*> &components_dict) {
-    ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
+    ANNComponent::build(_input_size, _output_size,
+			weights_dict, components_dict);
     //
     if (input_size == 0 || output_size == 0)
       ERROR_EXIT(141, "Impossible to compute input/output "
@@ -417,7 +418,9 @@ namespace ANN {
     if (transpose_weights == CblasTrans)
       swap(weights_input_size, weights_output_size);
     Connections *&w = weights_dict[weights_name];
+    // printf("%s :: %p %p\n", weights_name.c_str(), w, weights_matrix);
     if (w != 0) {
+      // printf("COPY OF WEIGHTS FROM HASH %s\n", weights_name.c_str());
       AssignRef(weights_matrix, w);
       if (!weights_matrix->checkInputOutputSizes(weights_input_size,
 						 weights_output_size))
@@ -427,10 +430,12 @@ namespace ANN {
     }
     else {
       if (weights_matrix == 0) {
+	// printf("NEW OF WEIGHTS %s\n", weights_name.c_str());
 	weights_matrix = new Connections(weights_input_size,
 					 weights_output_size);
 	IncRef(weights_matrix);
       }
+      // else printf("USING PREVIOUS WEIGHTS %s\n", weights_name.c_str());
       w = weights_matrix;
     }
     // TODO: compute fan-in

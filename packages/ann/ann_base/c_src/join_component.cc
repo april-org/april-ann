@@ -33,16 +33,12 @@ namespace ANN {
     error_output(0),
     output(0),
     error_input(0),
-    input_vector(new TokenBunchVector()),
-    error_input_vector(new TokenBunchVector()),
-    output_vector(new TokenBunchVector()),
-    error_output_vector(new TokenBunchVector()),
+    input_vector(0),
+    error_input_vector(0),
+    output_vector(0),
+    error_output_vector(0),
     segmented_input(false),
     bunch_size(0) {
-    IncRef(input_vector);
-    IncRef(error_input_vector);
-    IncRef(output_vector);
-    IncRef(error_output_vector);
   }
   
   JoinANNComponent::~JoinANNComponent() {
@@ -50,12 +46,12 @@ namespace ANN {
       DecRef(components[i]);
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
-    DecRef(input_vector);
-    DecRef(error_input_vector);
+    if (input_vector) DecRef(input_vector);
+    if (error_input_vector) DecRef(error_input_vector);
     if (output) DecRef(output);
-    DecRef(output_vector);
+    if (output_vector) DecRef(output_vector);
     if (error_output) DecRef(error_output);
-    DecRef(error_output_vector);
+    if (error_output_vector) DecRef(error_output_vector);
   }
   
   void JoinANNComponent::addComponent(ANNComponent *component) {
@@ -130,15 +126,22 @@ namespace ANN {
     }
   }
   
-  TokenMemoryBlock *JoinANNComponent::buildMemoryBlockToken(TokenBunchVector *token) {
+  TokenMemoryBlock *JoinANNComponent::buildMemoryBlockToken(TokenBunchVector *token,
+							    bool is_output) {
     TokenMemoryBlock *mem_block_token;
     if ((*token)[0]->getTokenCode() != table_of_token_codes::token_mem_block)
       ERROR_EXIT(128, "Incorrect token type\n");
     if (bunch_size == 0) {
       TokenMemoryBlock *aux = (*token)[0]->convertTo<TokenMemoryBlock*>();
-      bunch_size =aux->getUsedSize() / components[0]->getOutputSize();
+      if (is_output)
+	bunch_size =aux->getUsedSize() / components[0]->getOutputSize();
+      else
+	bunch_size =aux->getUsedSize() / components[0]->getInputSize();
     }
-    mem_block_token = new TokenMemoryBlock(output_size*bunch_size);
+    if (is_output)
+      mem_block_token = new TokenMemoryBlock(output_size*bunch_size);
+    else
+      mem_block_token = new TokenMemoryBlock(input_size*bunch_size);
     unsigned int pos = 0;
     for (unsigned int i=0; i<token->size(); ++i) {
       if ((*token)[i]->getTokenCode() != table_of_token_codes::token_mem_block)
@@ -158,12 +161,13 @@ namespace ANN {
     return mem_block_token;
   }
 
-  TokenMemoryBlock *JoinANNComponent::buildMemoryBlockToken(Token *token) {
+  TokenMemoryBlock *JoinANNComponent::buildMemoryBlockToken(Token *token,
+							    bool is_output) {
     if (token->getTokenCode() != table_of_token_codes::vector_Tokens)
       ERROR_EXIT(128, "Incorrect output token type");
     //
     TokenBunchVector *vector_token = token->convertTo<TokenBunchVector*>();
-    return buildMemoryBlockToken(vector_token);
+    return buildMemoryBlockToken(vector_token, is_output);
   }
   
   Token *JoinANNComponent::doForward(Token* _input, bool during_training) {
@@ -176,7 +180,7 @@ namespace ANN {
 		components[i]->doForward((*input_vector)[i], during_training));
     // INFO: will be possible to put this method inside previous loop, but seems
     // more simpler a decoupled code
-    AssignRef(output, buildMemoryBlockToken(output_vector));
+    AssignRef(output, buildMemoryBlockToken(output_vector, true));
     //
     return output;
   }
@@ -203,7 +207,8 @@ namespace ANN {
     if (segmented_input) AssignRef(error_output, error_output_vector);
     // INFO: will be possible to put this method inside previous loop, but
     // seems more simpler a decoupled code
-    else AssignRef(error_output, buildMemoryBlockToken(error_output_vector));
+    else AssignRef(error_output, buildMemoryBlockToken(error_output_vector,
+						       false));
     return error_output;
   }
 
@@ -246,15 +251,18 @@ namespace ANN {
       ERROR_EXIT(128, "JoinANNComponent needs one or more components, "
 		 "use addComponent method\n");
     unsigned int computed_input_size = 0, computed_output_size = 0;
+    AssignRef(input_vector, new TokenBunchVector(components.size()));
+    AssignRef(output_vector, new TokenBunchVector(components.size()));
+    AssignRef(error_input_vector, new TokenBunchVector(components.size()));
+    AssignRef(error_output_vector, new TokenBunchVector(components.size()));
     for (unsigned int i=0; i<components.size(); ++i) {
       components[i]->build(0, 0, weights_dict, components_dict);
       computed_input_size  += components[i]->getInputSize();
       computed_output_size += components[i]->getOutputSize();
-      Token *null(0);
-      input_vector->push_back(null);
-      output_vector->push_back(null);
-      error_input_vector->push_back(null);
-      error_output_vector->push_back(null);
+      (*input_vector)[i]	= 0;
+      (*output_vector)[i]	= 0;
+      (*error_input_vector)[i]	= 0;
+      (*error_output_vector)[i] = 0;
     }
     if (input_size == 0)  input_size  = computed_input_size;
     if (output_size == 0) output_size = computed_output_size;

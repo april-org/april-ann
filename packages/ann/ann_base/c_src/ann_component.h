@@ -32,8 +32,8 @@
 using april_utils::hash;    // required for build
 using april_utils::string;
 
-#define MAX_UPDATES_WITHOUT_PRUNE 10000
-#define MAX_NAME_STR 120
+#define MAX_UPDATES_WITHOUT_PRUNE 100
+#define MAX_NAME_STR 256
 
 #define mSetOption(var_name,var) if(!strcmp(name,(var_name))){(var)=value;return;}
 #define mHasOption(var_name) if(!strcmp(name,(var_name))) return true;
@@ -46,9 +46,11 @@ namespace ANN {
   class ANNComponent : public Referenced {
   private:
     bool is_built;
-    void generateDefaultName() {
+    void generateDefaultName(const char *prefix=0) {
+      char default_prefix[2] = "c";
       char str_id[MAX_NAME_STR+1];
-      snprintf(str_id, MAX_NAME_STR, "c%u", next_name_id);
+      if (prefix == 0) prefix = default_prefix;
+      snprintf(str_id, MAX_NAME_STR, "%s%u", prefix, next_name_id);
       name = string(str_id);
       ++next_name_id;
     }
@@ -81,9 +83,11 @@ namespace ANN {
     
     bool getIsBuilt() const { return is_built; }
     
-    void generateDefaultWeightsName() {
+    void generateDefaultWeightsName(const char *prefix=0) {
       char str_id[MAX_NAME_STR+1];
-      snprintf(str_id, MAX_NAME_STR, "w%u", next_weights_id);
+      char default_prefix[2] = "w";
+      if (prefix == 0) prefix = default_prefix;
+      snprintf(str_id, MAX_NAME_STR, "%s%u", prefix, next_weights_id);
       weights_name = string(str_id);
       ++next_weights_id;
     }
@@ -164,6 +168,8 @@ namespace ANN {
       if (output_size  == 0)  output_size  = _output_size;
       if (_input_size  == 0)  _input_size  = input_size;
       if (_output_size == 0)  _output_size = output_size;
+      if (_output_size != 0)  output_size  = _output_size;
+      if (_input_size  != 0)  input_size   = _input_size;
       if (input_size != _input_size)
 	ERROR_EXIT2(129, "Incorrect input size, expected %d, found %d\n",
 		    input_size, _input_size);

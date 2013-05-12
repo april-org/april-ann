@@ -46,8 +46,9 @@ april_set_doc("ann.mlp.all_all.generate",
 		}
 	      })
 
-function ann.mlp.all_all.generate(topology, first_count)
-  local first_count = first_count or 1
+function ann.mlp.all_all.generate(topology, first_count, names_prefix)
+  local first_count  = first_count or 1
+  local names_prefix = names_prefix or ""
   local thenet = ann.components.stack()
   local name   = "layer"
   local count  = first_count
@@ -59,17 +60,17 @@ function ann.mlp.all_all.generate(topology, first_count)
     local actf = t[i+1]
     thenet:push( ann.components.hyperplane{
 		   input=prev_size, output=size,
-		   bias_weights="b" .. count,
-		   dot_product_weights="w" .. count,
-		   name="layer" .. count,
-		   bias_name="b" .. count,
-		   dot_product_name="w" .. count } )
-    table.insert(names_order, "b"..count)
-    table.insert(names_order, "w"..count)
+		   bias_weights=names_prefix.."b" .. count,
+		   dot_product_weights=names_prefix.."w" .. count,
+		   name=names_prefix.."layer" .. count,
+		   bias_name=names_prefix.."b" .. count,
+		   dot_product_name=names_prefix.."w" .. count } )
+    table.insert(names_order, names_prefix.."b"..count)
+    table.insert(names_order, names_prefix.."w"..count)
     if not ann.components.actf[actf] then
       error("Incorrect activation function: " .. actf)
     end
-    thenet:push( ann.components.actf[actf]{ name = "actf" .. count } )
+    thenet:push( ann.components.actf[actf]{ name = names_prefix.."actf" .. count } )
     count = count + 1
     prev_size = size
   end
