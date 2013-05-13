@@ -1,4 +1,18 @@
-ann.autoencoders = ann.autoencoders or {}
+get_table_from_dotted_string("ann.autoencoders", true)
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.autoencoders",
+	      {
+		class="namespace",
+		summary={"Namespace with utilties for easy training",
+			 "of Stacked Denoising Auto-Encoders (SDAEs).",
+			 "This namespace contains functions which works",
+			 "with ann.components instances, and others with",
+			 "a table with weight matrixes and bias vectors.", },
+	      })
+
+----------------------------------------------------------------------
 
 -- AUXILIAR LOCAL FUNCTIONS --
 
@@ -160,8 +174,33 @@ end
 
 -- This functions receives layer sizes and sdae_table with weights and bias
 -- arrays. It returns a fully connected stacked denoising autoencoder ANN.
+april_set_doc("ann.autoencoders.build_full_autoencoder",
+	      {
+		class="function",
+		summary="Function to build full SDAE (encoding and decoding) ",
+		description=
+		  {
+		    "This function composes an ANN component",
+		    "from the layers table and the sdae_table",
+		    "build by other functions of this namespace. It builds",
+		    "a full auto-encoder, which means that it has the encoding",
+		    "part and the transposed decoding part of the auto-encoder.",
+		  },
+		params= {
+		  { "A table with layers info, as this example:",
+		    "{ { size=..., actf=... }, { size=..., actf=...}, ... }", },
+		  "An sdae table, returned by other function of this namespace",
+		  { "A string prefix [optional], used as prefix of the",
+		    "component names." },
+		},
+		outputs= {
+		  {"A component object with the especified ",
+		   "neural network topology" },
+		}
+	      })
 function ann.autoencoders.build_full_autoencoder(layers,
-						 sdae_table)
+						 sdae_table,
+						 names_prefix)
   local weights_mat   = sdae_table.weights
   local bias_mat      = sdae_table.bias
   local sdae          = ann.components.stack()
@@ -170,13 +209,14 @@ function ann.autoencoders.build_full_autoencoder(layers,
   local k = 1
   for i=2,#layers do
     local size , actf   = layers[i].size,layers[i].actf
-    local wname , bname = "w" .. (i-1) , "b" .. k
+    local wname , bname = names_prefix.."w" .. (i-1) , names_prefix.."b" .. k
+    local actfname = names_prefix.."actf" .. k
     sdae:push( ann.components.hyperplane{
 		 input               = prev_size,
 		 output              = size,
 		 dot_product_weights = wname,
 		 bias_weights        = bname })
-    sdae:push( ann.components.actf[actf]() )
+    sdae:push( ann.components.actf[actf]{ name=actfname })
     --
     weights_table[wname] = ann.connections{ input=prev_size,
 					    output=size,
@@ -189,14 +229,15 @@ function ann.autoencoders.build_full_autoencoder(layers,
   end
   for i=#layers-1,1,-1 do
     local size , actf   = layers[i].size,layers[i].actf
-    local wname , bname = "w" .. i , "b" .. k
+    local wname , bname = names_prefix.."w" .. i , names_prefix.."b" .. ke
+    local actfname = names_prefix.."actf" .. k
     sdae:push( ann.components.hyperplane{
 		 input               = prev_size,
 		 output              = size,
 		 transpose           = true,
 		 dot_product_weights = wname,
 		 bias_weights        = bname })
-    sdae:push( ann.components.actf[actf]() )
+    sdae:push( ann.components.actf[actf]{ name=actfname })
     --
     weights_table[bname] = ann.connections{ input=1,
 					    output=size,
@@ -247,6 +288,125 @@ end
 -- bias[4] => 256      bias of layer (4)
 -- weights[1] => 256*128  weights of layer (1)
 -- weights[2] => 128*64   weights of layer (2)
+april_set_doc("ann.autoencoders.greedy_layerwise_pretraining",
+	      {
+		class="function",
+		summary={"MAIN function of this namespace, which implements",
+			 "the SDAE training", },
+		description=
+		  {
+		    "This function builds a SDAE following the greedy",
+		    "layerwise algorithm described at",
+		    "http://deeplearning.net/tutorial/SdA.html",
+		    "The function receives a table with a lot of parameters",
+		    "for training description."
+		  },
+		params= {
+		  ["names_prefix"]   = {"A prefix added to all component names",
+					"[optional]",},
+		  ["shuffle_random"] = "A random object instance for shuffle",
+		  ["weights_random"] = {"A random object instance for weights",
+					"initialization"},
+		  ["layers"] =
+		    {"A table describing the layers of the SDAE:",
+		     "{ { size=NUMBER, actf=ACTF_STRING }, ... }.",
+		     "This table has the sizes of INPUT LAYER, FIRST HIDDEN",
+		     "LAYER, SECOND HIDDEN LAYER, ..., LAST HIDDEN LAYER",},
+		  ["bunch_size"] = "A number with the value of the bunch",
+		  ["training_options"] = {
+		    "It is a table with options and hyperparameters related to",
+		    "the training. The table has two main fields, global and",
+		    "layerwise. Layerwise table is an array of options, so",
+		    "any option at global table could be overwritten by",
+		    "layerwise option. Each position of layerwise array is",
+		    "related to each iteration of the greedy algorithm.",
+		    "Please, read the wiki for detailed information.",
+		  },
+		  ["input_dataset"] = {
+		    "It is the dataset with input data",
+		  },
+		  ["output_datasets"] = {
+		    "An array with one dataset, the output data [optional]",
+		  },
+		  ["replacement"] = "Replacement during training [optional]",
+		  ["supervised_layer"] = {
+		    "A table with { size=NUMBER, actf=ACTF_STRING } [optional]",
+		  },
+		  ["on_the_fly"] = {
+		    "A boolean, for large datasets, the greedy algorithm must",
+		    "compute",
+		    "encodings on-the-fly, in order to reduce the memory",
+		    "fingerprint [optional]",
+		  },
+		},
+		outputs= {
+		  {"The sdae_table = { weights = ARRAY OF MATRIXES,",
+		   "bias = ARRAY OF MATRIXES }",},
+		  {"An instance of ann.components.stack() with encoding",
+		   "part of SDAE (or a deep classifier if given",
+		   "output_datsets" },
+		}
+	      })
+april_set_doc("ann.autoencoders.greedy_layerwise_pretraining",
+	      {
+		class="function",
+		summary={"MAIN function of this namespace, which implements",
+			 "the SDAE training", },
+		description=
+		  {
+		    "This function builds a SDAE following the greedy",
+		    "layerwise algorithm described at",
+		    "http://deeplearning.net/tutorial/SdA.html",
+		    "The function receives a table with a lot of parameters",
+		    "for training description."
+		  },
+		params= {
+		  ["names_prefix"]   = {"A prefix added to all component names",
+					"[optional]",},
+		  ["shuffle_random"] = "A random object instance for shuffle",
+		  ["weights_random"] = {"A random object instance for weights",
+					"initialization"},
+		  ["layers"] =
+		    {"A table describing the layers of the SDAE:",
+		     "{ { size=NUMBER, actf=ACTF_STRING }, ... }.",
+		     "This table has the sizes of INPUT LAYER, FIRST HIDDEN",
+		     "LAYER, SECOND HIDDEN LAYER, ..., LAST HIDDEN LAYER",},
+		  ["bunch_size"] = "A number with the value of the bunch",
+		  ["training_options"] = {
+		    "It is a table with options and hyperparameters related to",
+		    "the training. The table has two main fields, global and",
+		    "layerwise. Layerwise table is an array of options, so",
+		    "any option at global table could be overwritten by",
+		    "layerwise option. Each position of layerwise array is",
+		    "related to each iteration of the greedy algorithm.",
+		    "Please, read the wiki for detailed information.",
+		  },
+		  ["distribution"] = {
+		    "A distribution table as for",
+		    "trainable.supervised_trainer.train_dataset.",
+		  },
+		  ["output_datasets"] = {
+		    "An array with one dataset, the output data [optional]",
+		  },
+		  ["replacement"] = "Replacement during training [optional]",
+		  ["supervised_layer"] = {
+		    "A table with { size=NUMBER, actf=ACTF_STRING } [optional]",
+		  },
+		  ["on_the_fly"] = {
+		    "A boolean, for large datasets, the greedy algorithm must",
+		    "compute",
+		    "encodings on-the-fly, in order to reduce the memory",
+		    "fingerprint [optional]",
+		  },
+		},
+		outputs= {
+		  {"The sdae_table = { weights = ARRAY OF MATRIXES,",
+		   "bias = ARRAY OF MATRIXES }",},
+		  {"An instance of ann.components.stack() with encoding",
+		   "part of SDAE (or a deep classifier if given",
+		   "output_datsets" },
+		}
+	      })
 function ann.autoencoders.greedy_layerwise_pretraining(t)
   local params = get_table_fields(
     {
@@ -259,8 +419,15 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 			     size = { mandatory=true, type_match="number" },
 			   }, },
       bunch_size       = { mandatory=true, type_match="number", },
-      training_options = { mandatory=true, type_match="table" },
+      training_options = { mandatory=true },
+
+      --      , type_match="table",
+      --			   getter=get_table_fields_recursive{
+      --			     global = { mandatory=true, type_match="table",
+      --					
+      --			   } },
       --
+      
       input_dataset    = { mandatory=false },
       output_datasets  = { mandatory=false, type_match="table", default=nil },
       distribution     = { mandatory=false, type_match="table", default=nil,
@@ -288,7 +455,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
     error("Params output_datasets and "..
 	    "supervised_layer must be present together")
   end
-  params.training_options.global    = params.training_options.global    or { ann_options }
+  params.training_options.global    = params.training_options.global    or { ann_options = {} }
   params.training_options.layerwise = params.training_options.layerwise or {}
   --------------------------------------
   -- on the fly. Do not generate all the dataset for each layer

@@ -26,19 +26,25 @@ april_set_doc("ann.mlp.all_all.generate",
 		    "given topology description (stacked all-all).",
 		    "It generates default names for components and connection",
 		    "weights. Each layer has one ann.components.dot_product",
-		    "with name='w'..NUMBER and weights_name='w'..NUMBER,",
+		    "with name=PREFIX..'w'..NUMBER and",
+		    "weights_name=PREFIX..'w'..NUMBER,",
 		    "one ann.components.bias with name='b'..NUMBER and",
-		    "weights_name='b'..NUMBER, and an ann.components.actf with",
-		    "name='actf'..NUMBER.",
+		    "weights_name=PREFIX..'b'..NUMBER, and an",
+		    "ann.components.actf with",
+		    "name=PREFIX..'actf'..NUMBER.",
 		    "NUMBER is a counter initialized at 1, or with the",
 		    "value of second argument (count) for",
 		    "ann.mlp.all_all(topology, count) if it is given.",
+		    "PREFIX is the third argument of the function, by default",
+		    "is an empty string.",
 		  },
 		params= {
 		  { "Topology description string as ",
 		    "'1024 inputs 128 logistc 10 log_softmax" },
 		  { "First count parameter (count) ",
 		    "[optional]. By default 1." },
+		  { "Prefix for all component and weight names [optional].",
+		    "By default is an empty string." },
 		},
 		outputs= {
 		  {"A component object with the especified ",
@@ -77,6 +83,7 @@ function ann.mlp.all_all.generate(topology, first_count, names_prefix)
   local obj = {
     description = topology,
     first_count = first_count,
+    prefix      = names_prefix,
     names_order = names_order,
     thenet      = thenet, }
   -- we make obj a wrapper of thenet, so we keep useful information as a lua
@@ -159,6 +166,7 @@ function ann.mlp.all_all.save(model, filename, mode, old)
 	      oldwmatrix:toString(mode).."]],\n")
   end
   f:write("first_count=" .. model.first_count .. ",\n")
+  f:write("prefix='" .. model.prefix .. "',\n")
   f:write("}\n")
   f:close()
 end
@@ -185,7 +193,7 @@ april_set_doc("ann.mlp.all_all.load",
 function ann.mlp.all_all.load(filename)
   local c     = loadfile(filename)
   local data  = c()
-  local model = ann.mlp.all_all.generate(data[1], data.first_count)
+  local model = ann.mlp.all_all.generate(data[1], data.first_count, data.prefix)
   local w     = data[2]
   local oldw  = data[3] or w
   local weights_table = model:build()
