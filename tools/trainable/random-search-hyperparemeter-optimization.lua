@@ -161,7 +161,6 @@ return {
 		r = math.exp(r)
 	      end
 	      v = string.format("%.".. hyperparam.prec .."f", r)
-	      print(v)
 	    end -- if hyperparam.type == "integer" else ...
             break
           end -- if pos <= 0 or k == #hyperparam.values ...
