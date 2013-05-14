@@ -201,6 +201,7 @@ april_set_doc("ann.autoencoders.build_full_autoencoder",
 function ann.autoencoders.build_full_autoencoder(layers,
 						 sdae_table,
 						 names_prefix)
+  local names_prefix  = names_prefix or ""
   local weights_mat   = sdae_table.weights
   local bias_mat      = sdae_table.bias
   local sdae          = ann.components.stack()
@@ -229,7 +230,7 @@ function ann.autoencoders.build_full_autoencoder(layers,
   end
   for i=#layers-1,1,-1 do
     local size , actf   = layers[i].size,layers[i].actf
-    local wname , bname = names_prefix.."w" .. i , names_prefix.."b" .. ke
+    local wname , bname = names_prefix.."w" .. i , names_prefix.."b" .. k
     local actfname = names_prefix.."actf" .. k
     sdae:push( ann.components.hyperplane{
 		 input               = prev_size,
@@ -245,7 +246,7 @@ function ann.autoencoders.build_full_autoencoder(layers,
     prev_size = size
     k = k+1
   end
-  dae:build{ weights=weights_table }
+  sdae:build{ weights=weights_table }
   return sdae
 end
 

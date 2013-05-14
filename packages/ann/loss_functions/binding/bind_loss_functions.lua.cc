@@ -26,6 +26,7 @@
 //BIND_HEADER_H
 #include "loss_function.h"
 #include "mse_loss_function.h"
+#include "mae_loss_function.h"
 #include "cross_entropy_loss_function.h"
 #include "multiclass_cross_entropy_loss_function.h"
 #include "local_fmeasure_loss_function.h"
@@ -108,6 +109,25 @@ using namespace ANN;
   LUABIND_GET_PARAMETER(1, uint, size);
   obj=new MSELossFunction(size);
   LUABIND_RETURN(MSELossFunction, obj);
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//                       MAE                       //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME MAELossFunction ann.loss.mae
+//BIND_CPP_CLASS    MAELossFunction
+//BIND_SUBCLASS_OF  MAELossFunction LossFunction
+
+//BIND_CONSTRUCTOR MAELossFunction
+{
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, number);
+  unsigned int size;
+  LUABIND_GET_PARAMETER(1, uint, size);
+  obj=new MAELossFunction(size);
+  LUABIND_RETURN(MAELossFunction, obj);
 }
 //BIND_END
 

@@ -177,6 +177,21 @@ void doComputeMSEGradient(FloatGPUMirroredMemoryBlock *input,
 			  unsigned int bunch_size,
 			  bool use_gpu);
 
+float doMAELossFunction(FloatGPUMirroredMemoryBlock *input,
+			FloatGPUMirroredMemoryBlock *target,
+			float zero_epsilon_distance,
+			unsigned int size,
+			unsigned int bunch_size,
+			bool use_gpu);
+
+void doComputeMAEGradient(FloatGPUMirroredMemoryBlock *input,
+			  FloatGPUMirroredMemoryBlock *target,
+			  FloatGPUMirroredMemoryBlock *error_output,
+			  float zero_epsilon_distance,
+			  unsigned int size,
+			  unsigned int bunch_size,
+			  bool use_gpu);
+
 float doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
 				 FloatGPUMirroredMemoryBlock *target,
 				 float epsilon,

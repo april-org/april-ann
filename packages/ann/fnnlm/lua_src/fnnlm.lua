@@ -24,7 +24,7 @@ function ann.fnnlm:__call(t)
   local obj = { 
     factor_names      = {},
     factor_components = {},
-    cache_component   = {}
+    cache_component   = {},
     input_component   = ann.components.join{  name="factors_join" },
     hidden_component  = ann.components.stack{ name="hidden_stack" },
     output_component  = ann.components.stack{ name="output_stack" },
@@ -92,10 +92,9 @@ function ann.fnnlm:__call(t)
     trainable.supervised_trainer(obj.ann_component,
 				 ann.loss.multi_class_cross_entropy(params.output_size),
 				 params.bunch_size)
-end
---
-obj = class_instance(obj, fnnlm, true)
-return obj
+  --
+  obj = class_instance(obj, fnnlm, true)
+  return obj
 end
 
 function ann.fnnlm:get_component()

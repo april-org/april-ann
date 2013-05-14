@@ -76,6 +76,49 @@ __global__ void computeMSEGradientKernel(const float *output,
   }
 }
 
+__global__ void computeMAELossFunctionKernel(const float *output,
+					     const float *target_output,
+					     float *pattern_errors,
+					     float zero_epsilon_distance,
+					     unsigned int max_x,
+					     unsigned int lda_x,
+					     unsigned int max_y) {
+  unsigned int matrix_x_pos, matrix_y_pos;
+  getColumnMajorBunchMatrixPositions(blockIdx,
+				     blockDim,
+				     threadIdx,
+				     matrix_x_pos,
+				     matrix_y_pos);
+  if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
+    unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
+    float absd = fabsf(output[index] - target_output[index]);
+    if (absd < zero_epsilon_distance) absd = 0.0f;
+    pattern_errors[index] = absd / max_y;
+  }
+}
+
+__global__ void computeMAEGradientKernel(const float *output,
+					 const float *target_output,
+					 float *error_output,
+					 float zero_epsilon_distance,
+					 unsigned int max_x,
+					 unsigned int lda_x,
+					 unsigned int max_y) {
+  unsigned int matrix_x_pos, matrix_y_pos;
+  getColumnMajorBunchMatrixPositions(blockIdx,
+				     blockDim,
+				     threadIdx,
+				     matrix_x_pos,
+				     matrix_y_pos);
+  if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
+    unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
+    float d = output[index] - target_output[index];
+    float absd = fabsf(d);
+    if (d < zero_epsilon_distance) error_output[index] = 0.0f;
+    else error_output[index] = d * (-target_output[index]) / absd;
+  }
+}
+
 __global__ void computeMultiClassCrossEntropyLossFunctionKernel(const float *output,
 								const float *target_output,
 								float *pattern_errors,
@@ -261,6 +304,103 @@ void doComputeMSEGradient(FloatGPUMirroredMemoryBlock *input,
 	d = input_ptr[b] - target_ptr[b];
 	if (fabsf(d) < zero_epsilon_distance) d = 0.0f;
 	error_output_ptr[b] = d;
+      }
+      input_ptr  += bunch_size;
+      target_ptr += bunch_size;
+      error_output_ptr += bunch_size;
+    }
+#ifdef USE_CUDA
+  }
+#endif
+}
+
+float doMAELossFunction(FloatGPUMirroredMemoryBlock *input,
+			FloatGPUMirroredMemoryBlock *target,
+			float zero_epsilon_distance,
+			unsigned int size,
+			unsigned int bunch_size,
+			bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {    
+    const float *input_ptr  = input->getGPUForRead();
+    const float *target_ptr = target->getGPUForRead();
+    FloatGPUMirroredMemoryBlock *pattern_errors = 
+      new FloatGPUMirroredMemoryBlock(target->getSize());
+    float *pattern_errors_ptr = pattern_errors->getGPUForWrite();
+    dim3 block, grid;
+    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
+						 block, grid);
+    computeMAELossFunctionKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (input_ptr,
+       target_ptr,
+       pattern_errors_ptr,
+       zero_epsilon_distance,
+       bunch_size,
+       bunch_size,
+       size);
+    float sum = cublasSasum(pattern_errors->getSize(), pattern_errors_ptr, 1);
+    delete pattern_errors;
+    return sum;
+  }
+  else {
+#endif
+    float absd = 0.0f, sum=0.0f;
+    const float *input_ptr  = input->getPPALForRead();
+    const float *target_ptr = target->getPPALForRead();
+    for (unsigned int i = 0; i < size; i++) {
+      float mae = 0.0f;
+      for (unsigned int b=0; b<bunch_size; ++b) {
+	absd = fabsf(input_ptr[b] - target_ptr[b]);
+	if (absd < zero_epsilon_distance) absd = 0.0f;
+	mae += absd;
+      }
+      sum += mae/size;
+      input_ptr  += bunch_size;
+      target_ptr += bunch_size;
+    }
+    return sum;
+#ifdef USE_CUDA
+  }
+#endif
+}
+
+
+void doComputeMAEGradient(FloatGPUMirroredMemoryBlock *input,
+			  FloatGPUMirroredMemoryBlock *target,
+			  FloatGPUMirroredMemoryBlock *error_output,
+			  float zero_epsilon_distance,
+			  unsigned int size,
+			  unsigned int bunch_size,
+			  bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {    
+    const float *input_ptr  = input->getGPUForRead();
+    const float *target_ptr = target->getGPUForRead();
+    float *error_output_ptr = error_output_ptr->getGPUForReadAndWrite();
+    dim3 block, grid;
+    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
+						 block, grid);
+    computeMAEGradientKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (input_ptr,
+       target_ptr,
+       error_output_ptr,
+       zero_epsilon_distance,
+       bunch_size,
+       bunch_size,
+       size);
+  }
+  else {
+#endif
+    float d = 0.0f, absd = 0.0f;
+    const float *input_ptr  = input->getPPALForRead();
+    const float *target_ptr = target->getPPALForRead();
+    float *error_output_ptr = error_output->getPPALForReadAndWrite();
+    for (unsigned int i = 0; i < size; i++) {
+      for (unsigned int b=0; b<bunch_size; ++b) {
+	d = input_ptr[b] - target_ptr[b];
+	absd = fabsf(d);
+	if (absd < zero_epsilon_distance) error_output_ptr[b] = 0.0f;
+	else error_output_ptr[b] = d * (-target_ptr[b]) / absd;
       }
       input_ptr  += bunch_size;
       target_ptr += bunch_size;
