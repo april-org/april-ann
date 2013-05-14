@@ -103,7 +103,8 @@ __global__ void computeMAEGradientKernel(const float *output,
 					 float zero_epsilon_distance,
 					 unsigned int max_x,
 					 unsigned int lda_x,
-					 unsigned int max_y) {
+					 unsigned int max_y,
+					 float invN) {
   unsigned int matrix_x_pos, matrix_y_pos;
   getColumnMajorBunchMatrixPositions(blockIdx,
 				     blockDim,
@@ -113,9 +114,11 @@ __global__ void computeMAEGradientKernel(const float *output,
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
     float d = output[index] - target_output[index];
-    float absd = fabsf(d);
-    if (d < zero_epsilon_distance) error_output[index] = 0.0f;
-    else error_output[index] = d * (-target_output[index]) / absd;
+    if (fabsf(d) < zero_epsilon_distance) error_output[index] = 0.0f;
+    else {
+      if (d < 0.0f) error_output_ptr[index] = -invN;
+      else error_output_ptr[index] = invN;
+    }
   }
 }
 
@@ -387,7 +390,8 @@ void doComputeMAEGradient(FloatGPUMirroredMemoryBlock *input,
        zero_epsilon_distance,
        bunch_size,
        bunch_size,
-       size);
+       size,
+       1.0f/size);
   }
   else {
 #endif
@@ -395,12 +399,15 @@ void doComputeMAEGradient(FloatGPUMirroredMemoryBlock *input,
     const float *input_ptr  = input->getPPALForRead();
     const float *target_ptr = target->getPPALForRead();
     float *error_output_ptr = error_output->getPPALForReadAndWrite();
+    float invN = 1.0f/size;
     for (unsigned int i = 0; i < size; i++) {
       for (unsigned int b=0; b<bunch_size; ++b) {
 	d = input_ptr[b] - target_ptr[b];
-	absd = fabsf(d);
-	if (absd < zero_epsilon_distance) error_output_ptr[b] = 0.0f;
-	else error_output_ptr[b] = d * (-target_ptr[b]) / absd;
+	if (fabsf(d) < zero_epsilon_distance) error_output_ptr[b] = 0.0f;
+	else {
+	  if (d < 0.0f) error_output_ptr[b] = -invN;
+	  else error_output_ptr[b] = invN;
+	}
       }
       input_ptr  += bunch_size;
       target_ptr += bunch_size;
