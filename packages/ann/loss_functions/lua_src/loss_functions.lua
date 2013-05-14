@@ -121,6 +121,27 @@ april_set_doc("ann.loss.mse.__call",
 
 -------------------------------------------------------------------
 
+april_set_doc("ann.loss.mae",
+	      {
+		class="class",
+		summary="Mean absolute error loss function",
+		description={
+		  "The mae loss function computes 1/N*\\sum_i 1/M \\sum_j |o^(i)_j - t^(i)_j|.",
+		}
+	      })
+
+april_set_doc("ann.loss.mae.__call",
+	      {
+		class="method",
+		summary="Constructor",
+		params={
+		  "The expected pattern size"
+		},
+		outputs={ "An instance of ann.loss.mae" },
+	      })
+
+-------------------------------------------------------------------
+
 april_set_doc("ann.loss.cross_entropy",
 	      {
 		class="class",
