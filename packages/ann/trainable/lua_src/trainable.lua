@@ -62,6 +62,17 @@ end
 
 ------------------------------------------------------------------------
 
+april_set_doc("trainable.supervised_trainer.get_component", {
+		class = "method",
+		summary = "Returns an instance of ann.components",
+		outputs = { "An instance of ann.components" }, })
+
+function trainable.supervised_trainer:get_component()
+  return self.ann_component
+end
+
+------------------------------------------------------------------------
+
 april_set_doc("trainable.supervised_trainer.set_loss_function", {
 		class = "method",
 		summary = "Modifies the loss function property",
