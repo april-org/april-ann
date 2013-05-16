@@ -196,6 +196,12 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD Connections print_debug
+{
+  obj->printDebug();
+}
+//BIND_END
+
 /////////////////////////////////////////////////////
 //                  ANNComponent                   //
 /////////////////////////////////////////////////////
