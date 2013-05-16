@@ -127,6 +127,8 @@ namespace ANN {
     }
     
     void scale(float alpha);
+
+    void printDebug();
   };
 }
 #endif

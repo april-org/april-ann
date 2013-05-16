@@ -276,4 +276,10 @@ namespace ANN {
 	    prev_weights->getCudaFlag());
   }
   
+  void Connections::printDebug() {
+    printf ("Connections %p, input=%d, output=%d, num_refs=%d, calls=%d\n",
+	    this, num_inputs, num_outputs, num_references,
+	    update_weights_calls);
+  }
+  
 }
