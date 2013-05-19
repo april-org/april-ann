@@ -87,7 +87,7 @@ namespace ANN {
 	    error_output_mem_block->getMemBlock(), 0, 1,
 	    use_cuda);
     // The rest of tokens
-    for (unsigned int i=0; i<times; ++i) {
+    for (unsigned int i=1; i<times; ++i) {
       Token *current = (*error_input)[i];
       if (current->getTokenCode() != table_of_token_codes::token_mem_block)
 	ERROR_EXIT(128, "Incorrect token type, expected token mem block\n");
