@@ -19,11 +19,37 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "error_print.h"
-#include "image_cleaning.h"
-#include "maxmin.h"
 #include <cmath>
+#include "error_print.h"
+#include "maxmin.h"
+#include "image_cleaning.h"
+Matrix<float> * getHistogram(const ImageFloat &img, int gray_levels) {
 
+  int width = img.width;
+  int height = img.height;
+
+  int dims[1];
+  
+  dims[0] = gray_levels;
+
+  Matrix<float> *matrix = new Matrix<float>(1,dims, 0.0);
+  int total = height*width;
+
+  for (int i = 0; i < height; ++i) {
+    for (int j = 0; j < width; ++j) {
+        int h = getIndex(img(i,j), gray_levels);
+        (*matrix)(h) += 1;      
+        }
+    
+  }
+  //Normalize the histogram
+  for(int h = 0; h < gray_levels; ++h) {
+    (*matrix)(h) /= total;
+  }
+  
+  return matrix;
+
+}
 ImageHistogram::ImageHistogram(const ImageHistogram &other) {
 
     width  = other.width;
@@ -57,7 +83,7 @@ void ImageHistogram::computeIntegralHistogram(ImageFloat *img) {
                 for (int h = 0; h < gray_levels; ++h)
                     hist(i, j, h) = hist(i-1,j,h) + hist(i,j-1,h) - hist(i-1,j-1,h);
             }
-            int h = getIndex(value);
+            int h = getIndex(value, gray_levels);
 
             hist(i,j,h) = hist(i,j,h) + 1;
             // First row
@@ -117,6 +143,55 @@ Matrix<float> * ImageHistogram::generateWindowHistogram(int radius) {
         }
     }
     return matrix;
+}
+
+Matrix<float> *ImageHistogram::getWindowHistogram(int x1, int y1, int x2, int y2){
+  int top    = x1;
+  int bottom = x2;
+  int left   = y1;
+  int right  = y2;
+
+  // The returned matrix has the gray level histogram
+  int dims[1];
+  dims[0] = this->gray_levels;
+  
+  Matrix<float> *matrix = new Matrix<float>(1, dims, 0.0);
+
+  // Normalize by size
+  int size = (bottom - top + 1)*(right-left + 1);
+
+  int top_left, top_right, bottom_left, bottom_right;
+  for(int h = 0; h < gray_levels; ++h) {
+
+      bottom_right = hist(bottom, right, h);
+      top_left = top_right = bottom_left = 0;
+
+      if (top != 0 && left != 0) {
+          top_left = hist(top-1, left-1, h);
+          bottom_left = hist(bottom, left-1, h);
+          top_right = hist(top-1, right, h);
+      }
+      else if (top == 0 && left == 0);
+
+
+      else if (top == 0) {
+          bottom_left = hist(bottom, left-1, h);
+      }
+      else if(left == 0) {
+          top_right = hist(top-1, right, h);
+      }
+
+      int value =  bottom_right + top_left - bottom_left - top_right;
+      (*matrix)(h) = (float)value/size;
+
+  }
+  return matrix;
+
+}
+
+Matrix<float> * ImageHistogram::getImageHistogram() {
+
+  return getWindowHistogram(0,0, height, width);
 }
 
 Matrix<float> * ImageHistogram::getIntegralHistogram(){
