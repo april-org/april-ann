@@ -31,6 +31,15 @@
   Class that contains the counters for calculate the histogram of a given image
 
  **/
+///Light and slow image histogram. It's used for computing the histogram of an image on a traditional way (without computing the integral interval)
+Matrix<float> * getHistogram(ImageFloat &img, int intervals);
+
+//// Given a pixel value, returns the index of histogram
+inline int getIndex(float value, int gray_levels) {
+    if (value >= 1) return gray_levels - 1;
+    return (int) floor(value*gray_levels);
+}
+
 class ImageHistogram : public Referenced {
     public:
 
@@ -38,7 +47,8 @@ class ImageHistogram : public Referenced {
         int *integral_histogram;
         int width, height;
 
-        //// Creator recieves and image
+
+        /// Creator recieves and image
         ImageHistogram(ImageFloat *img, int levels) :
             gray_levels(levels){
                 this->width  = img->width;
@@ -65,11 +75,16 @@ class ImageHistogram : public Referenced {
             return gray_levels;
         }
 
-        //// Given a radius gets for each pixel the histogram of these window
+        /// Given a radius gets for each pixel the histogram of these window
         // centered pixel
         Matrix<float> * generateWindowHistogram(int radius);
         //// Return a new copy of the integral matrix
         Matrix<float> * getIntegralHistogram();
+
+        /// Compute all the image Histogram
+        Matrix<float> * getImageHistogram();
+
+        Matrix<float> * getWindowHistogram(int x1, int y1, int x2, int y2);
 
     protected:
         /// Accessor to the integral_histogram matrix
@@ -78,12 +93,6 @@ class ImageHistogram : public Referenced {
         }
         inline int & hist(int x, int y, int h) {
             return integral_histogram[x*width*gray_levels + y*gray_levels+h];
-        }
-
-        //// Given a pixel value, returns the index of histogram
-        inline int getIndex(float value) {
-            if (value >= 1) return gray_levels - 1;
-            return (int) floor(value*gray_levels);
         }
         //// Takes an Image and Fill the integral matrix
         void computeIntegralHistogram(ImageFloat *img);
