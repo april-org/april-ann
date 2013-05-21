@@ -22,18 +22,17 @@
 #include "swap.h"
 #include "connection.h"
 #include "check_floats.h"
+#include "wrapper.h"
 
 namespace ANN {
   const double Connections::weightnearzero = 1e-7;
   
-  Connections::Connections(unsigned int total_size,
-			   unsigned int num_inputs, unsigned int num_outputs) :
+  Connections::Connections(unsigned int num_inputs, unsigned int num_outputs) :
     Referenced(),
     weights(0), prev_weights(0),
-    total_size(total_size),
+    total_size(num_inputs*num_outputs),
     num_inputs(num_inputs), num_outputs(num_outputs),
-    num_references(0), update_weights_calls(0),
-    fanin(num_inputs) {
+    num_references(0), update_weights_calls(0) {
     weights      = new FloatGPUMirroredMemoryBlock(total_size);
     prev_weights = new FloatGPUMirroredMemoryBlock(total_size);
     if (weights == 0 || prev_weights == 0)
@@ -44,9 +43,21 @@ namespace ANN {
     delete weights;
     delete prev_weights;
   }
-    
-  // contamos el numero de veces que nos referencian, asi sabemos si
-  // la conexion es compartida por mas de una accion
+
+  bool Connections::checkInputOutputSizes(unsigned int input_size,
+					  unsigned int output_size) const {
+    // TODO: comprobar error input==0 y output==0
+    if (num_inputs != input_size) {
+      ERROR_PRINT("Incorrect input size!!!\n");
+      return false;
+    }
+    if (num_outputs != output_size) {
+      ERROR_PRINT("Incorrect output size!!!\n");
+      return false;
+    }
+    return true;
+  }
+
   void Connections::countReference() {
     ++num_references;
   }
@@ -124,7 +135,7 @@ namespace ANN {
       ERROR_EXIT(128, "No finite numbers at weights matrix!!!\n");
     }
   }
-    
+
   FloatGPUMirroredMemoryBlock *Connections::getPtr() {
     return weights;
   }
@@ -132,4 +143,143 @@ namespace ANN {
   FloatGPUMirroredMemoryBlock *Connections::getPrevPtr() {
     return prev_weights;
   }
+
+  // Crea de forma aleatoria el conjunto de pesos con valores en el
+  // rango [low, high]
+  void Connections::randomizeWeights(MTRand *rnd, float low, float high) {
+    double dinf = low;
+    double dsup = high;
+    /*
+      if (use_fanin) {
+      double inv_sqrt_fan_in = 1.0/sqrt(fanin);
+      dinf *= inv_sqrt_fan_in;
+      dsup *= inv_sqrt_fan_in;
+      }
+    */
+    // assert to avoid nearzero weights
+    assert(fabs(dinf) > weightnearzero);
+    assert(fabs(dsup) > weightnearzero);
+    double range  = dsup - dinf;
+    float *w      = weights->getPPALForReadAndWrite();
+    float *prev_w = prev_weights->getPPALForReadAndWrite();
+    for (unsigned int j=0; j<num_outputs; ++j) {
+      unsigned int k = j;
+      for (unsigned int i=0; i<num_inputs; ++i) {
+	rnd_weight(rnd, w[k], dinf, range, weightnearzero);
+	prev_w[k] = w[k];
+	k += num_outputs;
+      }
+    }
+  }
+    
+  void Connections::randomizeWeightsAtColumn(unsigned int col,
+					     MTRand *rnd,
+					     float low, float high) {
+    double dinf = low;
+    double dsup = high;
+    /*
+      if (use_fanin) {
+      double inv_sqrt_fan_in = 1.0/sqrt(fanin);
+      dinf *= inv_sqrt_fan_in;
+      dsup *= inv_sqrt_fan_in;
+      }
+    */
+    // assert to avoid nearzero weights
+    assert(fabs(dinf) > weightnearzero);
+    assert(fabs(dsup) > weightnearzero);
+    double range  = dsup - dinf;
+    float *w      = weights->getPPALForReadAndWrite();
+    float *prev_w = prev_weights->getPPALForReadAndWrite();
+    unsigned int k = col;
+    for (unsigned int i=0; i<num_inputs; ++i) {
+      rnd_weight(rnd, w[k], dinf, range, weightnearzero);
+      prev_w[k] = w[k];
+      k += num_outputs;
+    }
+  }
+  
+  unsigned int Connections::loadWeights(MatrixFloat *data,
+					MatrixFloat *old_data,
+					unsigned int first_weight_pos,
+					unsigned int column_size) {
+    unsigned int min_size =
+      (total_size +
+       max(0, (static_cast<int>(column_size-num_inputs)-1))*num_outputs +
+       first_weight_pos);
+    if (min_size > static_cast<unsigned int>(data->size))
+      ERROR_EXIT2(24, "Incorrect matrix size, was %d, expected >= %d\n",
+		  data->size, min_size);
+    if (!old_data) old_data = data;
+    unsigned int current_w_pos = first_weight_pos;
+    float *w                   = weights->getPPALForReadAndWrite();
+    float *prev_w              = prev_weights->getPPALForReadAndWrite();
+    for (unsigned int j=0; j<num_outputs; ++j) {
+      unsigned int k = j;
+      for (unsigned int i=0; i<num_inputs; ++i) {
+	w[k]      = data->data[current_w_pos+i];
+	prev_w[k] = old_data->data[current_w_pos+i];
+	k += num_outputs;
+      }
+      current_w_pos += column_size;
+    }
+    return current_w_pos;
+  }
+
+  unsigned int Connections::copyWeightsTo(MatrixFloat *data,
+					  MatrixFloat *old_data,
+					  unsigned int first_weight_pos,
+					  unsigned int column_size) {
+    unsigned int min_size =
+      (total_size +
+       max(0, (static_cast<int>(column_size-num_inputs)-1))*num_outputs +
+       first_weight_pos);
+    if (min_size > static_cast<unsigned int>(data->size))
+      ERROR_EXIT2(24, "Incorrect matrix size, was %d, expected >= %d\n",
+		  data->size, min_size);
+
+    unsigned int current_w_pos = first_weight_pos;
+    const float *w             = weights->getPPALForRead();
+    const float *prev_w        = prev_weights->getPPALForRead();
+      
+    for (unsigned int j=0; j<num_outputs; ++j) {
+      unsigned int k = j;
+      for (unsigned int i=0; i<num_inputs; ++i) {
+	data->data[current_w_pos+i]     = w[k];
+	old_data->data[current_w_pos+i] = prev_w[k];
+	k += num_outputs;
+      }
+      current_w_pos += column_size;
+    }
+    return current_w_pos;
+  }
+    
+  // para hacer copias
+  Connections *Connections::clone() {
+    Connections *conn	      = new Connections(num_inputs, num_outputs);
+    float	*other_w      = conn->weights->getPPALForWrite();
+    float	*other_prev_w = conn->prev_weights->getPPALForWrite();
+    const float *w            = weights->getPPALForRead();
+    const float *prev_w       = prev_weights->getPPALForRead();
+    
+    // Podriamos considerar hacer esto con cblas... aceleraria mucho.
+    for (unsigned int i = 0; i < total_size; i++) {
+      other_prev_w[i] = prev_w[i];
+      other_w[i]      = w[i];
+    }
+    return conn;
+  }
+
+  void Connections::scale(float alpha) {
+    doSscal(total_size, alpha, weights, 0, 1,
+	    weights->getCudaFlag());
+    doSscal(total_size, alpha, prev_weights, 0, 1,
+	    prev_weights->getCudaFlag());
+  }
+  
+  void Connections::printDebug() {
+    printf ("Connections %p, input=%d, output=%d, num_refs=%d, calls=%d\n",
+	    this, num_inputs, num_outputs, num_references,
+	    update_weights_calls);
+  }
+  
 }

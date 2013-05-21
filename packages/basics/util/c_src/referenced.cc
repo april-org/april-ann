@@ -21,6 +21,8 @@
 #ifndef _REFERENCEDCC_
 #define _REFERENCEDCC_
 
+// #define __DEBUG__
+
 #include "referenced.h"
 #ifdef __DEBUG__
 #include <cstdio>

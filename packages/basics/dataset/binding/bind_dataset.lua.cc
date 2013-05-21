@@ -25,6 +25,7 @@
 #include "bind_mtrand.h"
 #include "MersenneTwister.h"
 #include "bind_referenced_vector.h"
+#include "bind_tokens.h"
 
 int dataset_iterator_function(lua_State *L) {
   // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es
@@ -48,6 +49,22 @@ int dataset_iterator_function(lua_State *L) {
   return 2;
 }
 
+int datasetToken_iterator_function(lua_State *L) {
+  // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es
+  // el estado invariante (en este caso el dataset) y _var es var_1 de
+  // iteracion anterior (en este caso el indice)
+  DataSetToken *obj = lua_toDataSetToken(L,1);
+  int index = (int)lua_tonumber(L,2) + 1; // le sumamos uno
+  if (index > obj->numPatterns()) {
+    lua_pushnil(L); return 1;
+  }
+  lua_pushnumber(L,index);
+  int ps = obj->patternSize();
+  Token *tk = obj->getPattern(index-1); // ojito que le RESTAMOS uno
+  lua_pushToken(L,tk);
+  return 2;
+}
+
 //BIND_END
 
 //BIND_HEADER_H
@@ -59,6 +76,7 @@ int dataset_iterator_function(lua_State *L) {
 #include <cmath> // para sqrt en mean_deviation
 #include "bind_mtrand.h"
 #include "MersenneTwister.h"
+#include "datasetToken.h"
 //BIND_END
 
 //BIND_LUACLASSNAME LinearCombConfFloat dataset.linear_comb_conf
@@ -106,7 +124,6 @@ int dataset_iterator_function(lua_State *L) {
   LUABIND_RETURN(LinearCombConfFloat, obj);
 }
 //BIND_END
-
 
 
 //BIND_LUACLASSNAME DataSetFloat dataset
@@ -1023,3 +1040,176 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 //BIND_END
 
 //////////////////////////////////////////
+
+//BIND_LUACLASSNAME DataSetToken dataset.token
+//BIND_CPP_CLASS    DataSetToken
+
+//BIND_CONSTRUCTOR DataSetToken
+{
+  LUABIND_ERROR("Abstract class!!!");
+}
+//BIND_END
+
+//BIND_METHOD DataSetToken numPatterns
+{
+  LUABIND_RETURN(int, obj->numPatterns());
+}
+//BIND_END
+
+//BIND_METHOD DataSetToken patternSize
+{
+  LUABIND_RETURN(int, obj->patternSize());
+}
+//BIND_END
+
+//BIND_METHOD DataSetToken getPattern
+{
+  int index;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, int);
+  LUABIND_GET_PARAMETER(1,int,index);
+  if (index < 1 || index > obj->numPatterns())
+    LUABIND_ERROR("index out of range");
+  Token *token = obj->getPattern(index-1); // ojito que le RESTAMOS uno
+  LUABIND_RETURN(Token, token);
+}
+//BIND_END
+
+//BIND_METHOD DataSetToken getPatternBunch
+{
+  unsigned int bunch_size;
+  int *indexes;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  LUABIND_TABLE_GETN(1,bunch_size);
+  indexes = new int[bunch_size];
+  LUABIND_TABLE_TO_VECTOR(1,uint,indexes,bunch_size);
+  Token *token = obj->getPatternBunch(indexes,bunch_size);
+  delete[] indexes;
+  LUABIND_RETURN(Token, token);
+}
+//BIND_END
+
+//BIND_METHOD DataSetToken putPattern
+{
+  int index;
+  Token *pattern;
+  LUABIND_CHECK_ARGN(==,2);
+  LUABIND_CHECK_PARAMETER(1, int);
+  LUABIND_CHECK_PARAMETER(2, Token);
+  LUABIND_GET_PARAMETER(1,int,index);
+  LUABIND_GET_PARAMETER(2,Token,pattern);
+  if (index < 1 || index > obj->numPatterns())
+    LUABIND_ERROR("index out of range");
+  obj->putPattern(index-1, pattern); // ojito que le RESTAMOS uno
+}
+//BIND_END
+
+//BIND_METHOD DataSetToken putPatternBunch
+{
+  unsigned int bunch_size;
+  int *indexes;
+  Token *pattern;
+  LUABIND_CHECK_ARGN(==,2);
+  LUABIND_CHECK_PARAMETER(1, table);
+  LUABIND_CHECK_PARAMETER(2, Token);
+  LUABIND_GET_PARAMETER(2,Token,pattern);
+  LUABIND_TABLE_GETN(1,bunch_size);
+  indexes = new int[bunch_size];
+  LUABIND_TABLE_TO_VECTOR(1,uint,indexes,bunch_size);
+  obj->putPatternBunch(indexes,bunch_size,pattern);
+  delete[] indexes;
+}
+//BIND_END
+
+//BIND_METHOD DataSetToken patterns
+// para iterar con un for index,pattern in obj:patterns() do ... end
+{
+  LUABIND_CHECK_ARGN(==, 0);
+  LUABIND_RETURN(cfunction,datasetToken_iterator_function);
+  LUABIND_RETURN(DataSetToken,obj);
+  LUABIND_RETURN(int,0);
+}
+//BIND_END
+
+//////////////////////////////////////////
+
+//BIND_LUACLASSNAME UnionDataSetToken dataset.token.union
+//BIND_CPP_CLASS    UnionDataSetToken
+//BIND_SUBCLASS_OF  UnionDataSetToken DataSetToken
+
+//BIND_CONSTRUCTOR UnionDataSetToken
+{
+  LUABIND_CHECK_ARGN(<=,1);
+  int argn = lua_gettop(L);
+  if (argn == 1) {
+    unsigned int size;
+    LUABIND_CHECK_PARAMETER(1, table);
+    LUABIND_TABLE_GETN(1, size);
+    if (size < 2)
+      LUABIND_ERROR("UnionDataSetToken needs a Lua table with two or "
+		    "more DataSetToken\n");
+    DataSetToken **ds_array = new DataSetToken*[size];
+    LUABIND_TABLE_TO_VECTOR(1, DataSetToken, ds_array, size);
+    obj = new UnionDataSetToken(ds_array, size);
+    delete[] ds_array;
+  }
+  else obj = new UnionDataSetToken();
+  LUABIND_RETURN(UnionDataSetToken, obj);
+}
+//BIND_END
+
+//BIND_METHOD UnionDataSetToken push_back
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, DataSetToken);
+  DataSetToken *ds;
+  LUABIND_GET_PARAMETER(1, DataSetToken, ds);
+  obj->push_back(ds);
+}
+//BIND_END
+
+//////////////////////////////////////////
+
+//BIND_LUACLASSNAME DataSetTokenVector dataset.token.vector
+//BIND_CPP_CLASS    DataSetTokenVector
+//BIND_SUBCLASS_OF  DataSetTokenVector DataSetToken
+
+//BIND_CONSTRUCTOR DataSetTokenVector
+{
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, int);
+  int pattern_size;
+  LUABIND_GET_PARAMETER(1, int, pattern_size);
+  obj = new DataSetTokenVector(pattern_size);
+  LUABIND_RETURN(DataSetTokenVector, obj);
+}
+//BIND_END
+
+//BIND_METHOD DataSetTokenVector push_back
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, Token);
+  Token *token;
+  LUABIND_GET_PARAMETER(1, Token, token);
+  obj->push_back(token);
+}
+//BIND_END
+
+//////////////////////////////////////////
+
+//BIND_LUACLASSNAME DataSetFloat2TokenWrapper dataset.token.wrapper
+//BIND_CPP_CLASS    DataSetFloat2TokenWrapper
+//BIND_SUBCLASS_OF  DataSetFloat2TokenWrapper DataSetToken
+
+//BIND_CONSTRUCTOR DataSetFloat2TokenWrapper
+{
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, DataSetFloat);
+  DataSetFloat *ds;
+  LUABIND_GET_PARAMETER(1, DataSetFloat, ds);
+  obj = new DataSetFloat2TokenWrapper(ds);
+  LUABIND_RETURN(DataSetFloat2TokenWrapper, obj);
+}
+//BIND_END
+

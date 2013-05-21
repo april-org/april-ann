@@ -47,4 +47,6 @@ extern "C" {
 #define VECTOR_DSET(n, value, vec, step) catlas_dset((n), (value), (vec), (step))
 #endif
 
+#define NEGATE_CBLAS_TRANSPOSE(trans) ((trans) == CblasNoTrans)?CblasTrans:CblasNoTrans
+
 #endif // CBLAS_HEADERS_H

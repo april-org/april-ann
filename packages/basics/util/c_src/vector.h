@@ -78,6 +78,15 @@ namespace april_utils {
 	vec[i] = l.vec[i];
     }
 
+    // copy range [frist,last)
+    vector(const_iterator first, const_iterator last) {
+      vector_size = used_size = last - first;
+      if (vector_size) vec = new T[vector_size];
+      else vec=0;
+      for (unsigned int i=0; i<used_size; i++, first++)
+	vec[i] = *first;
+    }
+
     vector &operator=(const vector &l) {
       if (&l != this) {
         used_size = l.used_size;
@@ -157,7 +166,9 @@ namespace april_utils {
     }
 
     iterator begin() { return vec; }
+    const_iterator begin() const { return vec; }
     iterator end() { return vec+used_size; }
+    const_iterator end() const { return vec+used_size; }
 
   };
 } // namespace april_utils

@@ -63,13 +63,14 @@ __global__ void saxpyLoopKernel(unsigned int N,
 				float *y_mem,
 				unsigned int y_inc,
 				unsigned int times,
-				unsigned int x_ld) {
+				unsigned int x_ld,
+				unsigned int y_ld) {
   unsigned int matrix_x_pos, matrix_y_pos;
   matrix_x_pos = blockIdx.x*blockDim.x + threadIdx.x;
   matrix_y_pos = blockIdx.y*blockDim.y + threadIdx.y;
   if (matrix_x_pos < times && matrix_y_pos < N) {
     unsigned int index_x = matrix_x_pos*x_ld + matrix_y_pos*x_inc;
-    unsigned int index_y = matrix_y_pos*y_inc;
+    unsigned int index_y = matrix_x_pos*y_ld + matrix_y_pos*y_inc;
     float val = alpha * x_mem[index_x];
     // This loop is used to synchronize the threads for accessing
     // the global memory where they write the results. The loop
@@ -144,34 +145,32 @@ void doScopy(int N, FloatGPUMirroredMemoryBlock* x,
   const float *x_mem;
   float *y_mem;
 #ifdef USE_CUDA
-  if (use_gpu)
-    {
-      cublasStatus_t status;
-      cublasHandle_t handle = GPUHelper::getHandler();
-      //printf("Doing a scopy with comp=1 & cuda=1\n");
-      x_mem = x->getGPUForRead() + x_shift;
-      y_mem = y->getGPUForWrite() + y_shift;
-
-      status = cublasSetStream(handle, GPUHelper::getCurrentStream());
-      checkCublasError(status);
-
-      status = cublasScopy(handle, N, x_mem, x_inc, y_mem, y_inc);
-
-      checkCublasError(status);
-    }
-  else
-    {
-      //printf("Doing a scopy with comp=1 & cuda=0\n");
+  if (use_gpu) {
+    cublasStatus_t status;
+    cublasHandle_t handle = GPUHelper::getHandler();
+    //printf("Doing a scopy with comp=1 & cuda=1\n");
+    x_mem = x->getGPUForRead() + x_shift;
+    y_mem = y->getGPUForWrite() + y_shift;
+    
+    status = cublasSetStream(handle, GPUHelper::getCurrentStream());
+    checkCublasError(status);
+    
+    status = cublasScopy(handle, N, x_mem, x_inc, y_mem, y_inc);
+    
+    checkCublasError(status);
+  }
+  else {
+    //printf("Doing a scopy with comp=1 & cuda=0\n");
 #endif
 #ifndef USE_CUDA
-      //printf("Doing a scopy with comp=0 & cuda=0\n");
+    //printf("Doing a scopy with comp=0 & cuda=0\n");
 #endif
-      x_mem = x->getPPALForRead() + x_shift;
-      y_mem = y->getPPALForWrite() + y_shift;
+    x_mem = x->getPPALForRead() + x_shift;
+    y_mem = y->getPPALForWrite() + y_shift;
 
-      cblas_scopy(N, x_mem, x_inc, y_mem, y_inc);
+    cblas_scopy(N, x_mem, x_inc, y_mem, y_inc);
 #ifdef USE_CUDA
-    }
+  }
 #endif
 }
 
@@ -187,43 +186,41 @@ void doScopyLoop(int N,
   const float *x_mem;
   float *y_mem;
 #ifdef USE_CUDA
-  if (use_gpu)
-    {
-      //printf("Doing a scopy with comp=1 & cuda=1\n");
-      x_mem = x->getGPUForRead();
-      y_mem = y->getGPUForWrite();
+  if (use_gpu) {
+    //printf("Doing a scopy with comp=1 & cuda=1\n");
+    x_mem = x->getGPUForRead();
+    y_mem = y->getGPUForWrite();
 
-      const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
-      dim3 block, grid;
-      // Number of threads on each block dimension
-      block.x = min(MAX_THREADS, times);
-      block.y = min(MAX_THREADS/block.x, N);
-      block.z = 1;
+    const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
+    dim3 block, grid;
+    // Number of threads on each block dimension
+    block.x = min(MAX_THREADS, times);
+    block.y = min(MAX_THREADS/block.x, N);
+    block.z = 1;
 
-      grid.x = (times/block.x +
-                (times % block.x ? 1 : 0));
-      grid.y = (N/block.y + (N % block.y ? 1 : 0));
-      grid.z = 1;
+    grid.x = (times/block.x +
+	      (times % block.x ? 1 : 0));
+    grid.y = (N/block.y + (N % block.y ? 1 : 0));
+    grid.z = 1;
 
-      scopyLoopKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-	(N, x_mem, x_inc, y_mem, y_inc, times, stride);
-    }
-  else
-    {
-      //printf("Doing a scopy with comp=1 & cuda=0\n");
+    scopyLoopKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (N, x_mem, x_inc, y_mem, y_inc, times, stride);
+  }
+  else {
+    //printf("Doing a scopy with comp=1 & cuda=0\n");
 #endif
 #ifndef USE_CUDA
-      //printf("Doing a scopy with comp=0 & cuda=0\n");
+    //printf("Doing a scopy with comp=0 & cuda=0\n");
 #endif
-      x_mem = x->getPPALForRead();
-      y_mem = y->getPPALForWrite();
+    x_mem = x->getPPALForRead();
+    y_mem = y->getPPALForWrite();
 
-      for (unsigned int i = 0; i < times; i++)
-	cblas_scopy(N, 
-                    x_mem, x_inc,
-                    y_mem + i * stride , y_inc);
+    for (unsigned int i = 0; i < times; i++)
+      cblas_scopy(N, 
+		  x_mem, x_inc,
+		  y_mem + i * stride , y_inc);
 #ifdef USE_CUDA
-    }
+  }
 #endif
 }
 
@@ -240,34 +237,32 @@ void doSaxpy(int N,
   const float *x_mem;
   float *y_mem;
 #ifdef USE_CUDA
-  if (use_gpu)
-    {
-      cublasStatus_t status;
-      cublasHandle_t handle = GPUHelper::getHandler();
-      //printf("Doing a saxpy with comp=1 & cuda=1\n");
-      x_mem = x->getGPUForRead() + x_shift;
-      y_mem = y->getGPUForReadAndWrite() + y_shift;
+  if (use_gpu) {
+    cublasStatus_t status;
+    cublasHandle_t handle = GPUHelper::getHandler();
+    //printf("Doing a saxpy with comp=1 & cuda=1\n");
+    x_mem = x->getGPUForRead() + x_shift;
+    y_mem = y->getGPUForReadAndWrite() + y_shift;
 
-      status = cublasSetStream(handle, GPUHelper::getCurrentStream());
-      checkCublasError(status);
+    status = cublasSetStream(handle, GPUHelper::getCurrentStream());
+    checkCublasError(status);
 
-      status = cublasSaxpy(handle, N, &alpha, x_mem, x_inc, y_mem, y_inc);
+    status = cublasSaxpy(handle, N, &alpha, x_mem, x_inc, y_mem, y_inc);
 
-      checkCublasError(status);
-    }
-  else
-    {
-      //printf("Doing a saxpy with comp=1 & cuda=0\n");
+    checkCublasError(status);
+  }
+  else {
+    //printf("Doing a saxpy with comp=1 & cuda=0\n");
 #endif
 #ifndef USE_CUDA
-      //printf("Doing a saxpy with comp=0 & cuda=0\n");
+    //printf("Doing a saxpy with comp=0 & cuda=0\n");
 #endif
-      x_mem = x->getPPALForRead() + x_shift;
-      y_mem = y->getPPALForReadAndWrite() + y_shift;
+    x_mem = x->getPPALForRead() + x_shift;
+    y_mem = y->getPPALForReadAndWrite() + y_shift;
 
-      cblas_saxpy(N, alpha, x_mem, x_inc, y_mem, y_inc);
+    cblas_saxpy(N, alpha, x_mem, x_inc, y_mem, y_inc);
 #ifdef USE_CUDA
-    }
+  }
 #endif
 }
 
@@ -278,48 +273,47 @@ void doSaxpyLoop(int N,
 		 FloatGPUMirroredMemoryBlock* y,
 		 unsigned int y_inc,
 		 unsigned int times,
-		 const unsigned int stride,
+		 const unsigned int x_stride,
+		 const unsigned int y_stride,
 		 bool use_gpu)
 {
   const float *x_mem;
   float *y_mem;
 #ifdef USE_CUDA
-  if (use_gpu)
-    {
-      x_mem = x->getGPUForRead();
-      y_mem = y->getGPUForWrite();
+  if (use_gpu) {
+    x_mem = x->getGPUForRead();
+    y_mem = y->getGPUForReadAndWrite();
 
-      const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
-      dim3 block, grid;
-      // Number of threads on each block dimension
-      block.x = min(MAX_THREADS, times);
-      block.y = min(MAX_THREADS/block.x, N);
-      block.z = 1;
+    const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
+    dim3 block, grid;
+    // Number of threads on each block dimension
+    block.x = min(MAX_THREADS, times);
+    block.y = min(MAX_THREADS/block.x, N);
+    block.z = 1;
 
-      grid.x = (times/block.x +
-                (times % block.x ? 1 : 0));
-      grid.y = (N/block.y + (N % block.y ? 1 : 0));
-      grid.z = 1;
+    grid.x = (times/block.x +
+	      (times % block.x ? 1 : 0));
+    grid.y = (N/block.y + (N % block.y ? 1 : 0));
+    grid.z = 1;
 
-      saxpyLoopKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-	(N, alpha, x_mem, x_inc, y_mem, y_inc, times, stride);
-    }
-  else
-    {
-      //printf("Doing a saxpy loop with comp=1 & cuda=0\n");
+    saxpyLoopKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (N, alpha, x_mem, x_inc, y_mem, y_inc, times, x_stride, y_stride);
+  }
+  else {
+    //printf("Doing a saxpy loop with comp=1 & cuda=0\n");
 #endif
 #ifndef USE_CUDA
-      //printf("Doing a saxpy loop with comp=0 & cuda=0\n");
+    //printf("Doing a saxpy loop with comp=0 & cuda=0\n");
 #endif
-      x_mem = x->getPPALForRead();
-      y_mem = y->getPPALForReadAndWrite();
+    x_mem = x->getPPALForRead();
+    y_mem = y->getPPALForReadAndWrite();
 
-      for (unsigned int i = 0; i < times; i++)
-	cblas_saxpy(N, alpha,
-                    x_mem + i * stride, x_inc, 
-                    y_mem, y_inc);
+    for (unsigned int i = 0; i < times; i++)
+      cblas_saxpy(N, alpha,
+		  x_mem + i * x_stride, x_inc, 
+		  y_mem + i * y_stride, y_inc);
 #ifdef USE_CUDA
-    }
+  }
 #endif
 }
 
@@ -345,55 +339,53 @@ void doSgemm(CBLAS_ORDER major_type,
   const float *a_mem, *b_mem;
   float *c_mem;
 #ifdef USE_CUDA
-  if (use_gpu)
-    {
-      cublasStatus_t status;
-      cublasHandle_t handle = GPUHelper::getHandler();
-      assert(major_type == CblasColMajor);
-      //printf("Doing a sgemm with comp=1 & cuda=1\n");
-      a_mem = a->getGPUForRead() + a_shift;
-      b_mem = b->getGPUForRead() + b_shift;
-      c_mem = c->getGPUForReadAndWrite() + c_shift;
-      cublasOperation_t cublas_a_transpose = getCublasOperation(a_transpose);
-      cublasOperation_t cublas_b_transpose = getCublasOperation(b_transpose);
+  if (use_gpu) {
+    cublasStatus_t status;
+    cublasHandle_t handle = GPUHelper::getHandler();
+    assert(major_type == CblasColMajor);
+    //printf("Doing a sgemm with comp=1 & cuda=1\n");
+    a_mem = a->getGPUForRead() + a_shift;
+    b_mem = b->getGPUForRead() + b_shift;
+    c_mem = c->getGPUForReadAndWrite() + c_shift;
+    cublasOperation_t cublas_a_transpose = getCublasOperation(a_transpose);
+    cublasOperation_t cublas_b_transpose = getCublasOperation(b_transpose);
 
-      status = cublasSetStream(handle, GPUHelper::getCurrentStream());
-      checkCublasError(status);
+    status = cublasSetStream(handle, GPUHelper::getCurrentStream());
+    checkCublasError(status);
 
-      status = cublasSgemm(handle, cublas_a_transpose, cublas_b_transpose,
-			   m, n, k,
-			   &alpha, a_mem, a_inc,
-			   b_mem, b_inc,
-			   &beta, c_mem, c_inc);
+    status = cublasSgemm(handle, cublas_a_transpose, cublas_b_transpose,
+			 m, n, k,
+			 &alpha, a_mem, a_inc,
+			 b_mem, b_inc,
+			 &beta, c_mem, c_inc);
 
-      checkCublasError(status);
-    }
-  else
-    {
-      //printf("Doing a sgemm with comp=1 & cuda=0\n");
+    checkCublasError(status);
+  }
+  else {
+    //printf("Doing a sgemm with comp=1 & cuda=0\n");
 #endif
-      //printf("Doing a sgemm with comp=0 & cuda=0\n");
-      a_mem = a->getPPALForRead() + a_shift;
-      b_mem = b->getPPALForRead() + b_shift;
-      c_mem = c->getPPALForReadAndWrite() + c_shift;
+    //printf("Doing a sgemm with comp=0 & cuda=0\n");
+    a_mem = a->getPPALForRead() + a_shift;
+    b_mem = b->getPPALForRead() + b_shift;
+    c_mem = c->getPPALForReadAndWrite() + c_shift;
 
-      // matrix matrix product: C = \alpha op(A) op(B) + \beta C
-      cblas_sgemm(major_type,   // Row or Col Major
-		  a_transpose,  // Transpose or not A
-		  b_transpose,  // Transpose or not B
-		  m,            // num rows of A (before transpose)
-		  n,            // num rows at B (before transpose)
-		  k,            // Common dimension between A and B
-		  alpha,        // Alpha value
-		  a_mem,        // A matrix
-		  a_inc,        // A matrix stride
-		  b_mem,        // B matrix
-		  b_inc,        // B matrix stride
-		  beta,         // Beta value
-		  c_mem,        // C matrix
-		  c_inc);       // C matrix stride
+    // matrix matrix product: C = \alpha op(A) op(B) + \beta C
+    cblas_sgemm(major_type,   // Row or Col Major
+		a_transpose,  // Transpose or not A
+		b_transpose,  // Transpose or not B
+		m,            // num rows of A (before transpose)
+		n,            // num rows at B (before transpose)
+		k,            // Common dimension between A and B
+		alpha,        // Alpha value
+		a_mem,        // A matrix
+		a_inc,        // A matrix stride
+		b_mem,        // B matrix
+		b_inc,        // B matrix stride
+		beta,         // Beta value
+		c_mem,        // C matrix
+		c_inc);       // C matrix stride
 #ifdef USE_CUDA
-    }
+  }
 #endif
 }
 
@@ -431,6 +423,7 @@ void doVectorSet(FloatGPUMirroredMemoryBlock *v,
 		 unsigned int inc,
 		 unsigned int shift,
 		 bool use_gpu) {
+  if (use_gpu) ERROR_EXIT(128, "CUDA version not implemented yet\n");
   float *ptr = v->getPPALForWrite() + shift;
   VECTOR_SSET(v_size, value, ptr, inc);
 }
@@ -482,7 +475,6 @@ void doSger(CBLAS_ORDER major_type,
   const float *y_mem;
   float *a_mem;
 #ifdef USE_CUDA
-
   if (use_gpu) {
     cublasStatus_t status;
     cublasHandle_t handle = GPUHelper::getHandler();
@@ -518,4 +510,31 @@ void doSger(CBLAS_ORDER major_type,
 #ifdef USE_CUDA
   }
 #endif
+}
+
+float doSnrm2(unsigned int n,
+	      FloatGPUMirroredMemoryBlock *x,
+	      unsigned int shift,
+	      unsigned int inc,
+	      bool use_gpu) {
+  float result;
+  const float *x_mem;
+#ifdef USE_CUDA
+  if (use_gpu) {
+    cublasStatus_t status;
+    cublasHandle_t handle = GPUHelper::getHandler();
+    x_mem  = x->getGPUForRead() + shift;
+    status = cublasSetStream(handle, GPUHelper::getCurrentStream());
+    checkCublasError(status);
+    status = cublasSnrm(handle, n, x_mem, inc, &result);
+    checkCublasError(status);
+  }
+  else {
+#endif
+    x_mem = x->getPPALForRead() + shift;
+    result = cblas_snrm2(n, x_mem, inc);
+#ifdef USE_CUDA
+  }
+#endif
+  return result;
 }
