@@ -1,7 +1,7 @@
  package{ name = "ann_base",
    version = "1.0",
-   depends = { "util", "activation_function", "trainable", "function_interface",
-	       "random", "matrix", "math", "ann_configuration" },
+   depends = { "util", "tokens",
+	       "random", "matrix", "math" },
    keywords = { "ANN interfaces" },
    description = "Define ANNs classes and interfaces",
    -- targets como en ant

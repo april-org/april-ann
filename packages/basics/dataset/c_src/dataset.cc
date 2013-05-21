@@ -176,12 +176,12 @@ void MatrixDataSet<T>::auxPutPattern(int offsetmatrix, int d) {
     T *data = matrix->data + offsetmatrix*t;    
     if (circular[d]) {
       for(i = subMatrixSize[d], c = coordinate[d]; i; c++,i--) {
-	data[mod(c,t)] = pattern[offsetpat++];
+	data[mod(c,t)] = const_pattern[offsetpat++];
       }
     } else {
       for(i = subMatrixSize[d], c = coordinate[d]; i; c++,i--) {
 	if ((0 <= c) && (c < t)) {
-	  data[c] = pattern[offsetpat];
+	  data[c] = const_pattern[offsetpat];
 	}
 	offsetpat++;
       }
@@ -210,9 +210,9 @@ void MatrixDataSet<T>::auxPutPattern(int offsetmatrix, int d) {
 
 //se asume que T *pat ya es un vector suficientemente grande
 template <typename T>
-int MatrixDataSet<T>::putPattern(int index, T *pat) {
+int MatrixDataSet<T>::putPattern(int index, const T *pat) {
   index2coordinate(index); // actualiza vector coordinate
-  pattern   = pat; // pattern es atributo que se va modificando
+  const_pattern = pat; // pattern es atributo que se va modificando
   offsetpat = 0;   // idem
   auxPutPattern(0, 0); // llamada recursiva inicial
   return patternSize();
@@ -256,7 +256,7 @@ int IdentityDataSet<T>::getPattern(int index, T *pat) {
 }
 
 template <typename T>
-int IdentityDataSet<T>::putPattern(int index, T *pat) {
+int IdentityDataSet<T>::putPattern(int index, const T *pat) {
   return 0;
 }
 
@@ -310,7 +310,7 @@ int UnionDataSet<T>::getPattern(int index, T *pat) {
 };
 
 template <typename T>
-int UnionDataSet<T>::putPattern(int index, T *pat) {
+int UnionDataSet<T>::putPattern(int index, const T *pat) {
   // buscamos el dataset asociado y su índice correspondiente
   if (index < 0 || index >= numPatterns())
     return 0;
@@ -349,7 +349,7 @@ int SubDataSet<T>::getPattern(int index, T *pat) {
 }
 
 template <typename T>
-int SubDataSet<T>::putPattern(int index, T *pat) {
+int SubDataSet<T>::putPattern(int index, const T *pat) {
   // TODO: falta comprobar que el indice esta en el rango correcto
   return ds->putPattern(ini + index,pat);
 }
@@ -420,7 +420,7 @@ int JoinDataSet<T>::getPattern(int index, T *pat) {
 }
 
 template <typename T>
-int JoinDataSet<T>::putPattern(int index, T *pat) {
+int JoinDataSet<T>::putPattern(int index, const T *pat) {
   for (int i=0; i < num; i++) 
     vds[i]->putPattern(index, pat+d[i]);
   return patternSize();
@@ -471,7 +471,7 @@ int IndexDataSet<T>::getPattern(int index, T *pat) {
 }
 
 template <typename T>
-int IndexDataSet<T>::putPattern(int index, T *pat) {
+int IndexDataSet<T>::putPattern(int index, const T *pat) {
   int pos = 0;
   index += firstindex;
   indices->getPattern(index,patternindices);
@@ -550,8 +550,8 @@ int ContextualizerDataSet<T>::getPattern(int index, T *pat) {
 }
 
 template <typename T>
-int ContextualizerDataSet<T>::putPattern(int index, T *pat) {
-  T *vec = pat;
+int ContextualizerDataSet<T>::putPattern(int index, const T *pat) {
+  const T *vec = pat;
   int ps = ds->patternSize(), i,j = index-ctxtizq;
   for (i=0; i<ctxtizq; i++,vec += ps, j++)
     if (j >= 0)
@@ -590,7 +590,7 @@ int AccumulateDataSet<T>::getPattern(int index, T *pat) {
 }
 
 template <typename T>
-int AccumulateDataSet<T>::putPattern(int index, T *pat) {
+int AccumulateDataSet<T>::putPattern(int index, const T *pat) {
   //   if (index < 0 || index >= numpatterns)
   //     return 0;
   for (int i=0; i<patternsize; i++)
@@ -628,7 +628,7 @@ int ByteDataSet<T>::getPattern(int index, T *pat) {
 }
 
 template <typename T>
-int ByteDataSet<T>::putPattern(int index, T *pat) {
+int ByteDataSet<T>::putPattern(int index, const T *pat) {
   //   if (index < 0 || index >= numpatterns)
   //     return 0;
   int offset = index*patternsize;
@@ -674,7 +674,7 @@ int BitDataSet<T>::getPattern(int index, T *pat) {
 }
 
 template <typename T>
-int BitDataSet<T>::putPattern(int index, T *pat) {
+int BitDataSet<T>::putPattern(int index, const T *pat) {
   index       = index * patternsize;
   int bytePos = index >> 3;
   int bitPos  = index & (0x07);
@@ -739,7 +739,7 @@ int SparseDataset<T>::getPattern(int index, T *pat) {
 }
 
 template <typename T>
-int SparseDataset<T>::putPattern(int index, T *pat) {
+int SparseDataset<T>::putPattern(int index, const T *pat) {
   ERROR_PRINT("Method putPattern forbidden for SparseDataset!!!\n");
   exit(1);
   return 0;
@@ -768,7 +768,7 @@ int ShortListDataSet<T>::getPattern(int index, T *pat) {
 }
 
 template<typename T>
-int ShortListDataSet<T>::putPattern(int index, T *pat) {
+int ShortListDataSet<T>::putPattern(int index, const T *pat) {
   return ds->putPattern(index, pat);
 }
 
@@ -796,7 +796,7 @@ int IndexFilterDataSet<T>::getPattern(int index, T *pat) {
 }
 
 template<typename T>
-int IndexFilterDataSet<T>::putPattern(int index, T *pat) {
+int IndexFilterDataSet<T>::putPattern(int index, const T *pat) {
   ERROR_PRINT("Method putPattern forbidden for IndexFilterDataSet!!!\n");
   exit(1);
   return 0;  
@@ -829,7 +829,7 @@ int PerturbationDataSet<T>::getPattern(int index, T *pat) {
 }
 
 template<typename T>
-int PerturbationDataSet<T>::putPattern(int index, T *pat) {
+int PerturbationDataSet<T>::putPattern(int index, const T *pat) {
   ERROR_PRINT("Method putPattern forbidden for PerturbationDataSet!!!\n");
   exit(1);
   return 0;  
@@ -865,7 +865,7 @@ int SaltNoiseDataSet<T>::getPattern(int index, T *pat) {
 }
 
 template<typename T>
-int SaltNoiseDataSet<T>::putPattern(int index, T *pat) {
+int SaltNoiseDataSet<T>::putPattern(int index, const T *pat) {
   ERROR_PRINT("Method putPattern forbidden for SaltNoiseDataSet!!!\n");
   exit(1);
   return 0;  
@@ -933,7 +933,7 @@ int DerivDataSet<T>::getPattern(int index, T *pat) {
 }
 
 template<typename T>
-int DerivDataSet<T>::putPattern(int index, T *pat) {
+int DerivDataSet<T>::putPattern(int index, const T *pat) {
   ERROR_PRINT("Method putPattern forbidden for DerivDataSet!!!\n");
   exit(1);
   return 0;  
@@ -1031,7 +1031,7 @@ int CacheDataSet<T>::getPattern(int index, T *pat) {
 }
 
 template<typename T>
-int CacheDataSet<T>::putPattern(int index, T *pat) {
+int CacheDataSet<T>::putPattern(int index, const T *pat) {
   ERROR_PRINT("Method putPattern forbidden for CacheDataSet!!!\n");
   exit(1);
   return 0;

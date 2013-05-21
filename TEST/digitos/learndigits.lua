@@ -1,5 +1,3 @@
-use_adrian_mlp = (type(ann) == "table")
-
 function verdigito(digito)
   local out = "------------------\n"
   for x = 0,15 do
@@ -65,32 +63,20 @@ val_output   = dataset.matrix(m2,
 -- un generador de valores aleatorios... y otros parametros
 semilla     = 1234
 aleat       = random(semilla)
-description = "256 inputs 256 tanh 128 tanh 10 softmax"
+description = "256 inputs 256 tanh 128 tanh 10 log_softmax"
 inf         = -0.1
 sup         =  0.1
 bunch_size  =  tonumber(arg[1]) or 64
 
-if use_adrian_mlp then
-  lared = ann.mlp.all_all.generate{
-    bunch_size  = bunch_size,
-    topology    = description,
-    random      = aleat,
-    inf         = inf,
-    sup         = sup,
-    use_fanin   = false,
-  }
-  ann.mlp.all_all.save(lared, "new.net", "ascii", "old")
-  --lared:set_error_function(ann.error_functions.cross_entropy())
-else
-  lared = mlp.generate_with_bunch{
-    bunch_size = bunch_size,
-    topology   = description,
-    random     = aleat,
-    inf        = inf,
-    sup        = sup
-  }
-  mlp.save(lared, "old.net", "ascii", "old")
-end
+thenet  = ann.mlp.all_all.generate(description)
+trainer = trainable.supervised_trainer(thenet,
+				       ann.loss.multi_class_cross_entropy(10))
+trainer:build()
+trainer:randomize_weights{
+  random = aleat,
+  inf    = inf,
+  sup    = sup,
+}
 
 -- otro para mostrar datos de validacion
 otrorand = random(5678)
@@ -102,11 +88,8 @@ function ver_resultado()
     digito  = otrorand:randInt(0,9)
     autor   = otrorand:randInt(0,19)
     index   = 1+autor*10+digito
-    if use_adrian_mlp then
-      resul   = lared:calculate(val_input:getPattern(index))
-    else
-      resul   = lared:use(val_input:getPattern(index))
-    end
+    resul   = trainer:calculate(val_input:getPattern(index))
+    for i=1,#resul do resul[i]=math.exp(resul[i]) end
     desired = val_output:getPattern(index)
     inputpattern  = train_input:getPattern(index)
     verdigito(inputpattern)
@@ -135,27 +118,19 @@ end
 datosentrenar = {
   input_dataset  = train_input,
   output_dataset = train_output,
-  shuffle        = aleat
+  shuffle        = aleat,
+  bunch_size     = bunch_size,
 }
 
 datosvalidar = {
   input_dataset  = val_input,
   output_dataset = val_output,
+  bunch_size     = bunch_size,
 }
 
-learning_rate = 0.01
-momentum      = 0.00
-weight_decay  = 0.00
-
-if not use_adrian_mlp then
-  datosentrenar.learning_rate  = learning_rate
-  datosentrenar.momentum       = momentum
-  datosentrenar.weight_decay   = weight_decay
-else
-  lared:set_option("learning_rate", learning_rate)
-  lared:set_option("momentum",      momentum)
-  lared:set_option("weight_decay",  weight_decay)
-end
+thenet:set_option("learning_rate", 0.04)
+thenet:set_option("momentum",      0.02)
+thenet:set_option("weight_decay",  1e-05)
 
 -- datos para guardar una matriz de salida de la red
 msalida = matrix(200,10)
@@ -169,20 +144,11 @@ datosusar = {
 totalepocas = 0
 
 function entrenar(epocas)
-  lared:set_option("learning_rate", learning_rate)
-  lared:set_option("momentum",      momentum)
-  lared:set_option("weight_decay",  weight_decay)
-
   print("Epoch Training  Validation")
   for epoch = 1,epocas do
     totalepocas = totalepocas+1
-    if use_adrian_mlp then
-      errortrain = lared:train_dataset(datosentrenar)
-      errorval   = lared:validate_dataset(datosvalidar)
-    else
-      errortrain = lared:train(datosentrenar)
-      errorval   = lared:validate(datosvalidar)
-    end
+    errortrain  = trainer:train_dataset(datosentrenar)
+    errorval    = trainer:validate_dataset(datosvalidar)
     printf("%4d  %.7f %.7f\n",
 	   totalepocas,errortrain,errorval)
   end
@@ -193,13 +159,8 @@ function entrenar_reemplazo(epocas,reemplazos)
   print("Epoch Training  Validation")
   for epoch = 1,epocas do
     totalepocas = totalepocas+1
-    if use_adrian_mlp then
-      errortrain = lared:train_dataset(datosentrenar)
-      errorval   = lared:validate_dataset(datosvalidar)
-    else
-      errortrain = lared:train(datosentrenar)
-      errorval   = lared:validate(datosvalidar)
-    end
+    errortrain  = trainer:train_dataset(datosentrenar)
+    errorval    = trainer:validate_dataset(datosvalidar)
     printf("%4d  %.7f %.7f\n",
 	   totalepocas,errortrain,errorval)
   end
@@ -249,11 +210,11 @@ function ppal()
       printf("Guardamos pesos iteracion anterior? (S/N): ")
       tipoOLD = io.read('*l')
       if not use_adrian_mlp then
-	mlp.save(lared, filename,
+	mlp.save(trainer, filename,
 		 (tipoAB == "A" and "ascii") or "binary",
 		 (tipoOLD == "S" and "old") or nil)
       else
-	ann.mlp.all_all.save(lared, filename, 
+	ann.mlp.all_all.save(trainer, filename, 
 			     (tipoAB == "A" and "ascii") or "binary",
 			     (tipoOLD == "S" and "old") or nil)
       end
@@ -261,13 +222,13 @@ function ppal()
       printf("Cargar la red, nombre: ")
       filename = io.read('*l')
       printf('Leemos la red en "%s"\n',filename)
-      print("Antes",lared)
+      print("Antes",trainer)
       if not use_adrian_mlp then
-	lared = mlp.load(filename)
+	trainer = mlp.load(filename)
       else
-	lared = ann.mlp.all_all.load(filename, bunch_size)
+	trainer = ann.mlp.all_all.load(filename, bunch_size)
       end
-      print("Despues",lared)
+      print("Despues",trainer)
       print("Pulse intro para continuar")
       io.read('*l')
     elseif opc == 6 then
@@ -284,7 +245,7 @@ function ppal()
       -------------------------------------
       local aux_m = matrix(train_input:numPatterns())
       local aux_ds = dataset.matrix(aux_m)
-      lared:classify{
+      trainer:classify{
 	input_dataset  = train_input,
 	output_dataset = aux_ds,
       }
@@ -301,7 +262,7 @@ function ppal()
       -------------------------------------
       local aux_m = matrix(val_input:numPatterns())
       local aux_ds = dataset.matrix(aux_m)
-      lared:classify{
+      trainer:classify{
 	input_dataset  = val_input,
 	output_dataset = aux_ds,
       }

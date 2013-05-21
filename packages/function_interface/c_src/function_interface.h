@@ -26,17 +26,11 @@
 #include "logbase.h"
 #include "error_print.h"
 #include "referenced.h"
+#include "token_base.h"
 
 namespace Functions {
-
-  namespace NS_function_io {
-    /// Enum which define input/output types for functions in April.
-    enum type {
-      FLOAT=0, LOGFLOAT, DOUBLE, UNKNOWN,
-    };
-  }
   
-  /// A pure abstract templatized class that serves as interface.
+  /// A pure abstract class that serves as interface.
   /**
      A DataProducer is an abstraction of an object which produces a sequence a
      vectors of a given type, followed by a 0 indicating sequence ending. The
@@ -47,18 +41,17 @@ namespace Functions {
      without calling its destructor, forcing the object to send a 0 in the next
      get() call.
    */
-  template<typename T>
   class DataProducer : public Referenced {
   public:
     /// Returns a pointer and its property. A 0 inidicates data sequence ending.
-    virtual T *get()     = 0;
+    virtual Token *get()     = 0;
     /// Reinitialize the sequence iterator if it is possible.
     virtual void reset() = 0;
     /// It destroys the object content and forces to return a 0 on next get().
     virtual void destroy() { }
   };
 
-  /// A pure abstract templatized class that serves as interface.
+  /// A pure abstract class that serves as interface.
   /**
      A DataConsumer is an abstraction of an object which consumes a sequence of
      vectors of a given type, followed by a 0 indicating sequence ending. The
@@ -69,67 +62,36 @@ namespace Functions {
      without calling its destructor, forcing the object to send a 0 in the next
      get() call.
    */  
-  template<typename T>
   class DataConsumer : public Referenced {
   public:
     /// Receives a pointer and its property. It receive a 0 at sequence ending.
-    virtual void put(T *) = 0;
+    virtual void put(Token *) = 0;
     /// Reinitialize the sequence iterator if it is possible.
     virtual void reset()  = 0;
     /// It destroys the object content.
     virtual void destroy() { }
   };
   
-  /// A pure abstract class that serves as high level interface.
+  /// A virtual class that serves as high level interface.
   /**
-     A FunctionBase is an abstraction of an object which represents a
-     mathematical function. It has an input/output type and an input/output
-     size. This abstract class is used to store high level methods, which are
-     independent from the input/output types. Every function is feeded with an
-     input vector and produces an output vector.
-     
-     This class needs to be extended as a template (FunctionInterface class) in
-     order to fix the input/output data types.
+     A FunctionInterface is an abstraction of an object which represents a
+     mathematical function. It adds to the interface abstract methods which
+     calculates output vector given input vector, and a basic implementation of
+     a method that consumes input vectors (from a DataProducer) and produces
+     output vectros (to a DataConsumer).  Every function is feeded with an input
+     Token and produces an output Token.
    */
-  class FunctionBase : public Referenced {
+  class FunctionInterface : public Referenced {
   public:
-    FunctionBase() : Referenced() { }
-    virtual ~FunctionBase() {
+    FunctionInterface() : Referenced() { }
+    virtual ~FunctionInterface() {
     }
-    /// It returns the data type of the input (or domain).
-    virtual NS_function_io::type getInputType() const = 0;
-    /// It returns the data type of the output (or range).
-    virtual NS_function_io::type getOutputType() const = 0;
     /// It returns the input (or domain) size of the function.
     virtual unsigned int getInputSize()  const = 0;
     /// It returns the output (or range) size of the function.
     virtual unsigned int getOutputSize() const = 0;
-  };
-  
-  /// A virtual templatized class which implement some basic functionality and describe methods for functions.
-  /**
-     A FunctionInterface is an abstraction of an object which represents a
-     mathematical function, as a especialization of the FunctionBase class. It
-     adds to the interface one abstract method which calculates output vector
-     given input vector, and a basic implementation of a method that consumes
-     input vectors (from a DataProducer) and produces output vectros (to a
-     DataConsumer).
-     
-     This class needs to be instantiated, fixing input/output types, and needs
-     to be extended in order to implement abstract methods.
-   */  
-  template<typename I, typename O>
-  class FunctionInterface : public FunctionBase {
-  public:
-    virtual ~FunctionInterface() {
-    }
-    // Parent abstract methods 
-    // virtual unsigned int getInputSize()  const = 0;
-    // virtual unsigned int getOutputSize() const = 0;
-    
     /// A new abstract method that computes output vector given input vector.
-    virtual bool calculate(const I *input_vector, unsigned int input_size,
-			   O *output_vector, unsigned int output_size) = 0;
+    virtual Token *calculate(const Token *input_vector) = 0;
     
 
     /// Method for flow computation of outputs in a pipeline system.
@@ -142,50 +104,25 @@ namespace Functions {
        method, needs to be freed. Output vector pointer is property of the
        DataConsumer object.
      */
-    virtual void calculateInPipeline(DataProducer<I> *producer,
-				     unsigned int input_size,
-				     DataConsumer<O> *consumer,
-				     unsigned int output_size) {
-      unsigned int _input_size, _output_size;
-      _input_size  = getInputSize();
-      _output_size = getOutputSize();
-      if (_input_size != input_size) {
-	ERROR_PRINT("Incorrect input size!!!\n");
-      exit(128);
-      }
-      if (_output_size != input_size) {
-	ERROR_PRINT("Incorrect output size!!!\n");
-	exit(128);
-      }
-      float *input;
+    virtual void calculateInPipeline(DataProducer *producer,
+				     DataConsumer *consumer) {
+      Token *input;
       // we read from producer input until a 0
       while( (input = producer->get()) != 0) {
-	float *output = new float[output_size];
-	// computes the output vector given the input
-	calculate(input, input_size, output, output_size);
-	// we lose the output pointer property after the put
+	// we get the input increasing its reference counter
+	IncRef(input);
+	Token *output = calculate(input);
+	// we get the output increasing its reference counter
+	IncRef(output);
 	consumer->put(output);
-	// we have the input pointer property, it is deleted
-	delete[] input;
+	// we lose input and output decreasing reference counters
+	DecRef(output);
+	DecRef(input);
       }
       // is mandatory to send this 0 to the consumer when the flow of data ends
       consumer->put(0);
     }
   };
-  
-  /// Instantiation of a FunctionInterface with input=float and output=float
-  typedef FunctionInterface<float,float>      FloatFloatFunctionInterface;
-
-  /// Instantiation of a DataConsumer of floats
-  typedef DataConsumer<float>                 FloatDataConsumer;
-  /// Instantiation of a DataProducer of floats
-  typedef DataProducer<float>                 FloatDataProducer;
-  /// Instantiation of a DataConsumer of log_floats
-  typedef DataConsumer<log_float>             LogFloatDataConsumer;
-  /// Instantiation of a DataProducer of log_floats
-  typedef DataProducer<log_float>             LogFloatDataProducer;
-  /// Instantiation of a DataProducer of double
-  typedef DataProducer<double>                DoubleDataProducer;
 }
 
 #endif //FUNCTION_INTERFACE_H

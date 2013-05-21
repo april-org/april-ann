@@ -1,6 +1,5 @@
 <map id="Image" name="Image">
-<area shape="rect" id="node1" href="$group__math.html" title="Math" alt="" coords="292,5,343,35"/>
-<area shape="rect" id="node2" href="$group__util.html" title="Util" alt="" coords="296,59,339,88"/>
-<area shape="rect" id="node3" href="$group__matrix.html" title="Matrix" alt="" coords="288,112,347,141"/>
-<area shape="rect" id="node4" href="$group__imaging.html" title="Imaging" alt="" coords="7,59,73,88"/>
+<area shape="rect" id="node1" href="$group__util.html" title="Util" alt="" coords="296,5,339,35"/>
+<area shape="rect" id="node2" href="$group__matrix.html" title="Matrix" alt="" coords="288,59,347,88"/>
+<area shape="rect" id="node3" href="$group__imaging.html" title="Imaging" alt="" coords="7,32,73,61"/>
 </map>

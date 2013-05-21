@@ -1,0 +1,20 @@
+<map id="ann/loss_functions/c_src/local_fmeasure_loss_function.cc" name="ann/loss_functions/c_src/local_fmeasure_loss_function.cc">
+<area shape="rect" id="node3" href="$token__memory__block_8h.html" title="token_memory_block.h" alt="" coords="541,291,699,320"/>
+<area shape="rect" id="node62" href="$local__fmeasure__loss__function_8h.html" title="local_fmeasure_loss\l_function.h" alt="" coords="328,118,469,165"/>
+<area shape="rect" id="node72" href="$wrapper_8h.html" title="wrapper.h" alt="" coords="733,291,811,320"/>
+<area shape="rect" id="node5" href="$gpu__mirrored__memory__block_8h.html" title="gpu_mirrored_memory\l_block.h" alt="" coords="544,369,693,415"/>
+<area shape="rect" id="node34" href="$token__base_8h.html" title="token_base.h" alt="" coords="303,377,401,407"/>
+<area shape="rect" id="node9" href="$gpu__helper_8h.html" title="gpu_helper.h" alt="" coords="733,464,829,493"/>
+<area shape="rect" id="node11" href="$error__print_8h.html" title="error_print.h" alt="" coords="600,541,691,571"/>
+<area shape="rect" id="node31" href="$aligned__memory_8h.html" title="aligned_memory.h" alt="" coords="853,464,981,493"/>
+<area shape="rect" id="node17" href="$cblas__headers_8h.html" title="cblas_headers.h" alt="" coords="944,541,1061,571"/>
+<area shape="rect" id="node23" href="$vector_8h.html" title="vector.h" alt="" coords="747,541,816,571"/>
+<area shape="rect" id="node27" href="$swap_8h.html" title="swap.h" alt="" coords="665,619,729,648"/>
+<area shape="rect" id="node41" href="$table__of__token__codes_8h.html" title="table_of_token_codes.h" alt="" coords="221,541,381,571"/>
+<area shape="rect" id="node44" href="$buffer__list_8h.html" title="buffer_list.h" alt="" coords="123,464,213,493"/>
+<area shape="rect" id="node54" href="$constString_8h.html" title="constString.h" alt="" coords="48,541,147,571"/>
+<area shape="rect" id="node60" href="$referenced_8h.html" title="referenced.h" alt="" coords="5,464,99,493"/>
+<area shape="rect" id="node47" href="$logbase_8h.html" title="logbase.h" alt="" coords="59,619,136,648"/>
+<area shape="rect" id="node49" href="$logbase__standard_8h.html" title="logbase_standard.h" alt="" coords="39,696,172,725"/>
+<area shape="rect" id="node66" href="$loss__function_8h.html" title="loss_function.h" alt="" coords="389,213,499,243"/>
+</map>

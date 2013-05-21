@@ -19,6 +19,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef WRAPPER_H
+#define WRAPPER_H
 #include <cstdio>
 
 #include "cblas_headers.h"
@@ -32,13 +34,13 @@
 
 #include "gpu_mirrored_memory_block.h"
 #include "gpu_helper.h"
-#include "ann_configuration.h"
 
 #define NEAR_ZERO             1e-5f
 #define DERIVATIVE_SATURATION 17.0f
 
 // ATTENTION: In 64-bit machines is better to use exp than expf
-#define sigmoid(numerator,value) (numerator) / (exp(-(value))+1.0f)
+#define sigmoid(numerator,value) (numerator) / (expf(-(value))+1.0f)
+#define logsigmoid(value) -log1pf(expf(-(value)))
 
 #define getMatrixFlatIndex(x,lda,y) ((x)+(y)*(lda))
 #define getMatrixIndex(x,lda,y) ((x)*(lda)+(y))
@@ -46,91 +48,174 @@
 // ACTIVATION FUNCTIONS
 void applyMask(FloatGPUMirroredMemoryBlock *units,
 	       FloatGPUMirroredMemoryBlock *mask, float mask_value,
-	       unsigned int units_size,
-	       const ANNConfiguration &conf,
+	       unsigned int size,
+	       unsigned int bunch_size,
 	       bool use_gpu);
-void doApplyLogisticActivation(FloatGPUMirroredMemoryBlock *units,
-			       unsigned int units_size,
-			       const ANNConfiguration &conf,
+
+void doApplyLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
+			       FloatGPUMirroredMemoryBlock *output_units,
+			       unsigned int size,
+			       unsigned int bunch_size,
 			       bool use_gpu);
 
-void doMultiplyLogisticDerivatives(FloatGPUMirroredMemoryBlock *units,
+void doMultiplyLogisticDerivatives(FloatGPUMirroredMemoryBlock *output_units,
 				   FloatGPUMirroredMemoryBlock *input_errors,
-				   unsigned int units_size,
-				   const ANNConfiguration &conf,
+				   FloatGPUMirroredMemoryBlock *output_errors,
+				   unsigned int size,
+				   unsigned int bunch_size,
 				   bool use_gpu);
+
+void doApplyLogLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
+				  FloatGPUMirroredMemoryBlock *output_units,
+				  unsigned int size,
+				  unsigned int bunch_size,
+				  bool use_gpu);
      
-void doApplyTanhActivation(FloatGPUMirroredMemoryBlock *units,
-			   unsigned int units_size,
-			   const ANNConfiguration &conf,
+void doMultiplyLogLogisticDerivatives(FloatGPUMirroredMemoryBlock *output_units,
+				      FloatGPUMirroredMemoryBlock *input_errors,
+				      FloatGPUMirroredMemoryBlock *output_errors,
+				      unsigned int size,
+				      unsigned int bunch_size,
+				      bool use_gpu);
+
+void doApplyTanhActivation(FloatGPUMirroredMemoryBlock *input_units,
+			   FloatGPUMirroredMemoryBlock *output_units,
+			   unsigned int size,
+			   unsigned int bunch_size,
 			   bool use_gpu);
 
-void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *units,
+void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *output_units,
 			       FloatGPUMirroredMemoryBlock *input_errors,
-			       unsigned int units_size,
-			       const ANNConfiguration &conf,
+			       FloatGPUMirroredMemoryBlock *output_errors,
+			       unsigned int size,
+			       unsigned int bunch_size,
 			       bool use_gpu);
 
-void doApplySoftsignActivation(FloatGPUMirroredMemoryBlock *units,
-			       unsigned int units_size,
-			       const ANNConfiguration &conf,
+void doApplySoftsignActivation(FloatGPUMirroredMemoryBlock *input_units,
+			       FloatGPUMirroredMemoryBlock *output_units,
+			       unsigned int size,
+			       unsigned int bunch_size,
 			       bool use_gpu);
 
-void doMultiplySoftsignDerivatives(FloatGPUMirroredMemoryBlock *units,
+void doMultiplySoftsignDerivatives(FloatGPUMirroredMemoryBlock *output_units,
 				   FloatGPUMirroredMemoryBlock *input_errors,
-				   unsigned int units_size,
-				   const ANNConfiguration &conf,
+				   FloatGPUMirroredMemoryBlock *output_errors,
+				   unsigned int size,
+				   unsigned int bunch_size,
 				   bool use_gpu);
 
-void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *units,
+void doApplySoftplusActivation(FloatGPUMirroredMemoryBlock *input_units,
+			       FloatGPUMirroredMemoryBlock *output_units,
+			       unsigned int size,
+			       unsigned int bunch_size,
+			       bool use_gpu);
+
+void doMultiplySoftplusDerivatives(FloatGPUMirroredMemoryBlock *input_units,
+				   FloatGPUMirroredMemoryBlock *input_errors,
+				   FloatGPUMirroredMemoryBlock *output_errors,
+				   unsigned int size,
+				   unsigned int bunch_size,
+				   bool use_gpu);
+
+void doApplyHardtanhActivation(FloatGPUMirroredMemoryBlock *input_units,
+			       FloatGPUMirroredMemoryBlock *output_units,
+			       unsigned int size,
+			       unsigned int bunch_size,
+			       bool use_gpu);
+
+void doMultiplyHardtanhDerivatives(FloatGPUMirroredMemoryBlock *input_units,
+				   FloatGPUMirroredMemoryBlock *input_errors,
+				   FloatGPUMirroredMemoryBlock *output_errors,
+				   unsigned int size,
+				   unsigned int bunch_size,
+				   bool use_gpu);
+
+void doApplySinActivation(FloatGPUMirroredMemoryBlock *input_units,
+			  FloatGPUMirroredMemoryBlock *output_units,
+			  unsigned int size,
+			  unsigned int bunch_size,
+			  bool use_gpu);
+
+void doMultiplySinDerivatives(FloatGPUMirroredMemoryBlock *input_units,
+			      FloatGPUMirroredMemoryBlock *input_errors,
+			      FloatGPUMirroredMemoryBlock *output_errors,
+			      unsigned int size,
+			      unsigned int bunch_size,
+			      bool use_gpu);
+
+void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
+			      FloatGPUMirroredMemoryBlock *output_units,
 			      FloatGPUMirroredMemoryBlock *minimums,
 			      FloatGPUMirroredMemoryBlock *maximums,
 			      FloatGPUMirroredMemoryBlock *sums,
-			      unsigned int units_size,
-			      const ANNConfiguration &conf,
+			      unsigned int size,
+			      unsigned int bunch_size,
 			      bool use_gpu);
 
-// ERROR FUNCTIONS
-void doCalculateMSEErrorFunction(FloatGPUMirroredMemoryBlock *output,
-				 FloatGPUMirroredMemoryBlock *target_output,
-				 FloatGPUMirroredMemoryBlock *output_error,
-				 FloatGPUMirroredMemoryBlock *pattern_errors,
-				 float zero_epsilon_distance,
-				 unsigned int output_size,
-				 const ANNConfiguration &conf,
+void doApplyLogSoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
+				 FloatGPUMirroredMemoryBlock *output_units,
+				 FloatGPUMirroredMemoryBlock *minimums,
+				 FloatGPUMirroredMemoryBlock *maximums,
+				 FloatGPUMirroredMemoryBlock *sums,
+				 unsigned int size,
+				 unsigned int bunch_size,
 				 bool use_gpu);
 
-void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
-				  FloatGPUMirroredMemoryBlock *target_output,
-				  FloatGPUMirroredMemoryBlock *output_error,
-				  FloatGPUMirroredMemoryBlock *pattern_errors,
-				  unsigned int output_size,
-				  const ANNConfiguration &conf,
-				  bool use_gpu);
+// ERROR FUNCTIONS
+float doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
+			FloatGPUMirroredMemoryBlock *target,
+			float zero_epsilon_distance,
+			unsigned int size,
+			unsigned int bunch_size,
+			bool use_gpu);
 
-/*
-  float doCalculateMixtureCrossEntropy(FloatGPUMirroredMemoryBlock *output,
-  FloatGPUMirroredMemoryBlock *target_output,
-  FloatGPUMirroredMemoryBlock *output_error,
-  FloatGPUMirroredMemoryBlock *pattern_errors,
-  float EPSILON,
-  float INF,
-  unsigned int output_size,
-  const ANNConfiguration &conf,
-  bool use_gpu);
-*/
+void doComputeMSEGradient(FloatGPUMirroredMemoryBlock *input,
+			  FloatGPUMirroredMemoryBlock *target,
+			  FloatGPUMirroredMemoryBlock *error_output,
+			  float zero_epsilon_distance,
+			  unsigned int size,
+			  unsigned int bunch_size,
+			  bool use_gpu);
 
-void doCalculateLocalFMeasureErrorFunction(float alpha,
-					   FloatGPUMirroredMemoryBlock *output,
-					   FloatGPUMirroredMemoryBlock *target_output,
-					   FloatGPUMirroredMemoryBlock *output_error,
-					   FloatGPUMirroredMemoryBlock *pattern_errors,
-					   unsigned int output_size,
-					   const ANNConfiguration &conf,
+float doMAELossFunction(FloatGPUMirroredMemoryBlock *input,
+			FloatGPUMirroredMemoryBlock *target,
+			float zero_epsilon_distance,
+			unsigned int size,
+			unsigned int bunch_size,
+			bool use_gpu);
+
+void doComputeMAEGradient(FloatGPUMirroredMemoryBlock *input,
+			  FloatGPUMirroredMemoryBlock *target,
+			  FloatGPUMirroredMemoryBlock *error_output,
+			  float zero_epsilon_distance,
+			  unsigned int size,
+			  unsigned int bunch_size,
+			  bool use_gpu);
+
+float doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
+				 FloatGPUMirroredMemoryBlock *target,
+				 float epsilon,
+				 unsigned int size,
+				 unsigned int bunch_size,
+				 bool use_gpu);
+
+float doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
+					   FloatGPUMirroredMemoryBlock *target,
+					   float epsilon,
+					   unsigned int size,
+					   unsigned int bunch_size,
 					   bool use_gpu);
 
+void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
+				   FloatGPUMirroredMemoryBlock *target,
+				   FloatGPUMirroredMemoryBlock *error_output,
+				   float epsilon,
+				   unsigned int size,
+				   unsigned int bunch_size,
+				   bool use_gpu);
+
 /*
-  float doCalculateGA(FloatGPUMirroredMemoryBlock *output,
+  void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
   FloatGPUMirroredMemoryBlock *target_output,
   FloatGPUMirroredMemoryBlock *output_error,
   FloatGPUMirroredMemoryBlock *pattern_errors,
@@ -139,46 +224,23 @@ void doCalculateLocalFMeasureErrorFunction(float alpha,
   bool use_gpu);
 */
 
-void doCalculateCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *output,
-					  FloatGPUMirroredMemoryBlock *target_output,
-					  FloatGPUMirroredMemoryBlock *output_error,
-					  FloatGPUMirroredMemoryBlock *pattern_errors,
-					  float EPSILON,
-					  float INF,
-					  unsigned int output_size,
-					  const ANNConfiguration &conf,
-					  bool use_gpu);
+float doLocalFMeasureLossFunction(FloatGPUMirroredMemoryBlock *input,
+				  FloatGPUMirroredMemoryBlock *target,
+				  unsigned int size,
+				  unsigned int bunch_size,
+				  float beta,
+				  float &Gab, float &Hab,
+				  bool complement_output,
+				  bool use_gpu);
 
-void doCalculateLogisticCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *output,
-						  FloatGPUMirroredMemoryBlock *target_output,
-						  FloatGPUMirroredMemoryBlock *output_error,
-						  FloatGPUMirroredMemoryBlock *pattern_errors,
-						  float EPSILON,
-						  float INF,
-						  unsigned int output_size,
-						  const ANNConfiguration &conf,
-						  bool use_gpu);
-
-
-void doCalculateFullCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *output,
-					      FloatGPUMirroredMemoryBlock *target_output,
-					      FloatGPUMirroredMemoryBlock *output_error,
-					      FloatGPUMirroredMemoryBlock *pattern_errors,
-					      float EPSILON,
-					      float INF,
-					      unsigned int output_size,
-					      const ANNConfiguration &conf,
-					      bool use_gpu);
-
-void doCalculateFullLogisticCrossEntropyErrorFunction(FloatGPUMirroredMemoryBlock *output,
-						      FloatGPUMirroredMemoryBlock *target_output,
-						      FloatGPUMirroredMemoryBlock *output_error,
-						      FloatGPUMirroredMemoryBlock *pattern_errors,
-						      float EPSILON,
-						      float INF,
-						      unsigned int output_size,
-						      const ANNConfiguration &conf,
-						      bool use_gpu);
+void doComputeLocalFMeasureGradient(FloatGPUMirroredMemoryBlock *target,
+				    FloatGPUMirroredMemoryBlock *output_error,
+				    unsigned int size,
+				    unsigned int bunch_size,
+				    float beta,
+				    float Gab, float Hab,
+				    bool complement_output,
+				    bool use_gpu);
 
 // BLAS FUNCTIONS
 void doSgemv(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
@@ -210,7 +272,9 @@ void doSaxpy(int N, float alpha, FloatGPUMirroredMemoryBlock* x,
 void doSaxpyLoop(int N, float alpha, FloatGPUMirroredMemoryBlock* x,
 		 unsigned int x_inc, FloatGPUMirroredMemoryBlock* y,
 		 unsigned int y_inc, unsigned int times,
-		 const unsigned int stride, bool use_gpu);
+		 const unsigned int stride_x,
+		 const unsigned int stride_y,
+		 bool use_gpu);
 
 void doSgemm(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
 	     CBLAS_TRANSPOSE b_transpose, int m, int n, int k, float alpha,
@@ -254,3 +318,10 @@ void doSger(CBLAS_ORDER major_type,
             unsigned int a_shift,
             unsigned int a_inc,
             bool use_gpu);
+
+float doSnrm2(unsigned int n,
+	      FloatGPUMirroredMemoryBlock *x,
+	      unsigned int shift,
+	      unsigned int inc,
+	      bool use_gpu);
+#endif // WRAPPER_H

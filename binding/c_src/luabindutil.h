@@ -73,7 +73,7 @@ void check_table_fields(lua_State *L, int idx, ...);
 #define LUABIND_VECTOR_TO_NEW_TABLE(tipo, vector, longitud) \
   do { \
     int luabind_len = longitud; \
-    tipo *luabind_vector = vector; \
+    const tipo *luabind_vector = vector; \
     lua_createtable (L, luabind_len, 0); \
     for(int luabind_i=0; luabind_i < luabind_len; luabind_i++) { \
       lua_push##tipo(L,luabind_vector[luabind_i]); \

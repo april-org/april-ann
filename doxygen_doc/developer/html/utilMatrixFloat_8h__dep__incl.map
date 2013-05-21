@@ -1,8 +1,7 @@
 <map id="basics/matrix/c_src/utilMatrixFloat.h" name="basics/matrix/c_src/utilMatrixFloat.h">
-<area shape="rect" id="node3" href="$all__all__mlp_8cc.html" title="ann/mlp/c_src/all_all\l_mlp.cc" alt="" coords="5,102,147,149"/>
-<area shape="rect" id="node5" href="$utilMatrixFloat_8cc.html" title="basics/matrix/c_src\l/utilMatrixFloat.cc" alt="" coords="171,102,307,149"/>
-<area shape="rect" id="node7" href="$utilImageFloat_8h.html" title="imaging/image/c_src\l/utilImageFloat.h" alt="" coords="331,102,472,149"/>
-<area shape="rect" id="node9" href="$utilImageFloat_8cc.html" title="imaging/image/c_src\l/utilImageFloat.cc" alt="" coords="248,198,389,245"/>
-<area shape="rect" id="node11" href="$libpng_8h.html" title="imaging/libpng/c_src\l/libpng.h" alt="" coords="413,198,555,245"/>
-<area shape="rect" id="node13" href="$libpng_8cc.html" title="imaging/libpng/c_src\l/libpng.cc" alt="" coords="413,294,555,341"/>
+<area shape="rect" id="node3" href="$utilMatrixFloat_8cc.html" title="basics/matrix/c_src\l/utilMatrixFloat.cc" alt="" coords="5,102,141,149"/>
+<area shape="rect" id="node5" href="$utilImageFloat_8h.html" title="imaging/image/c_src\l/utilImageFloat.h" alt="" coords="165,102,307,149"/>
+<area shape="rect" id="node7" href="$utilImageFloat_8cc.html" title="imaging/image/c_src\l/utilImageFloat.cc" alt="" coords="83,198,224,245"/>
+<area shape="rect" id="node9" href="$libpng_8h.html" title="imaging/libpng/c_src\l/libpng.h" alt="" coords="248,198,389,245"/>
+<area shape="rect" id="node11" href="$libpng_8cc.html" title="imaging/libpng/c_src\l/libpng.cc" alt="" coords="248,294,389,341"/>
 </map>

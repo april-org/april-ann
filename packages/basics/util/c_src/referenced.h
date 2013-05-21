@@ -23,6 +23,11 @@
 
 #define IncRef(x) x->incRef()
 #define DecRef(x) if (x->decRef()) delete x
+#define AssignRef(dest,ref) do {					\
+    if ((dest)!=0) DecRef((dest));					\
+    (dest) = (ref);							\
+    IncRef((dest));							\
+  } while(0)
 
 class Referenced {
  protected:

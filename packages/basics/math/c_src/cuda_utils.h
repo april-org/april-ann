@@ -31,51 +31,51 @@ static __device__ void getColumnMajorBunchMatrixPositions(const dim3 &blockIdx,
   matrix_y_pos = (blockIdx.y*blockDim.y + threadIdx.y);
 }
 
-static void computeBlockAndGridSizesForAColumnMajorBunch(const ANNConfiguration &conf,
+static void computeBlockAndGridSizesForAColumnMajorBunch(unsigned int bunch_size,
 							 unsigned int size,
 							 dim3 &block, dim3 &grid) {
   const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
   
   // Number of threads on each block dimension
-  block.x = min(MAX_THREADS, conf.cur_bunch_size);
+  block.x = min(MAX_THREADS, bunch_size);
   block.y = min(MAX_THREADS/block.x, size);
   block.z = 1;
   
-  grid.x = (conf.cur_bunch_size/block.x +
-	    (conf.cur_bunch_size % block.x ? 1 : 0));
+  grid.x = (bunch_size/block.x +
+	    (bunch_size % block.x ? 1 : 0));
   grid.y = (size/block.y + (size % block.y ? 1 : 0));
   grid.z = 1;
   // TODO: FIXME: Check that the grid size does not exceed the limits of the GPU
 }
 
-static void computeBlockAndGridSizesForARowMajorBunch(const ANNConfiguration &conf,
+static void computeBlockAndGridSizesForARowMajorBunch(unsigned int bunch_size,
 						      unsigned int size,
 						      dim3 &block, dim3 &grid) {
   const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
   
   // Number of threads on each block dimension
   block.x = min(MAX_THREADS, size);
-  block.y = min(MAX_THREADS/block.x, conf.cur_bunch_size);
+  block.y = min(MAX_THREADS/block.x, bunch_size);
   block.z = 1;
   
   grid.x = (size/block.x +
 	    (size % block.x ? 1 : 0));
-  grid.y = (conf.cur_bunch_size/block.y + (conf.cur_bunch_size % block.y ? 1 : 0));
+  grid.y = (bunch_size/block.y + (bunch_size % block.y ? 1 : 0));
   grid.z = 1;
   // TODO: FIXME: Check that the grid size does not exceed the limits of the GPU
 }
 
-static void computeBlockAndGridSizesForAnArray(const ANNConfiguration &conf,
+static void computeBlockAndGridSizesForAnArray(unsigned int bunch_size,
 					       dim3 &block, dim3 &grid) {
   const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
   
   // Number of threads on each block dimension
-  block.x = min(MAX_THREADS, conf.cur_bunch_size);
+  block.x = min(MAX_THREADS, bunch_size);
   block.y = 1;
   block.z = 1;
   
-  grid.x = (conf.cur_bunch_size/block.x +
-	    (conf.cur_bunch_size % block.x ? 1 : 0));
+  grid.x = (bunch_size/block.x +
+	    (bunch_size % block.x ? 1 : 0));
   grid.y = 1;
   grid.z = 1;
   // TODO: FIXME: Check that the grid size does not exceed the limits of the GPU

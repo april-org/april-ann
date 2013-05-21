@@ -39,18 +39,22 @@ val_output   = dataset.matrix(m2,
 				circular    = {true}
 			      })
 
-thenet = ann.mlp.all_all.generate{
-  bunch_size  = 32,
-  topology    = "256 inputs 128 tanh 10 softmax",
+bunch_size = 64
+thenet = ann.mlp.all_all.generate("256 inputs 128 tanh 10 log_softmax")
+trainer = trainable.supervised_trainer(thenet,
+				       ann.loss.multi_class_cross_entropy(10),
+				       bunch_size)
+trainer:build()
+trainer:randomize_weights{
   random      = random(52324),
   use_fanin   = true,
+  use_fanout  = true,
   inf         = -1,
   sup         =  1,
 }
 thenet:set_option("learning_rate", 0.01)
 thenet:set_option("momentum",      0.01)
 thenet:set_option("weight_decay",  1e-05)
-thenet:set_error_function(ann.error_functions.logistic_cross_entropy())
 
 training_data = {
   input_dataset  = train_input,
@@ -66,24 +70,19 @@ validation_data = {
 clock = util.stopwatch()
 clock:go()
 print("# Epoch Training  Validation")
-stopping_criterion = ann.stopping_criterions.make_max_epochs_wo_imp_relative(2)
-result = ann.train_crossvalidation{ ann = thenet,
-				    training_table     = training_data,
-				    validation_table   = validation_data,
-				    min_epochs         = 4,
-				    max_epochs         = 1000,
-				    stopping_criterion = stopping_criterion,
-				    update_function    =
-				      function(t) printf("%4d %.6f %.6f (%4d %.6f)\n",
-							 t.current_epoch,
-							 t.train_error,
-							 t.validation_error,
-							 t.best_epoch,
-							 t.best_val_error) end }
--- validation_function = 
---   function(thenet, t)
---     return thenet:validate_dataset(t)
---   end
+stopping_criterion = trainable.stopping_criterions.make_max_epochs_wo_imp_relative(2)
+result = trainer:train_holdout_validation{ training_table     = training_data,
+					   validation_table   = validation_data,
+					   min_epochs         = 4,
+					   max_epochs         = 1000,
+					   stopping_criterion = stopping_criterion,
+					   update_function    =
+					     function(t) printf("%4d %.6f %.6f (%4d %.6f)\n",
+								t.current_epoch,
+								t.train_error,
+								t.validation_error,
+								t.best_epoch,
+								t.best_val_error) end }
 clock:stop()
 cpu,wall   = clock:read()
 num_epochs = result.last_epoch
