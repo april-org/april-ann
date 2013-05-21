@@ -112,6 +112,7 @@
 // Given a image return a 3-D matrix with the histogram
 // @param number of gray_levels
 // @param radius
+//DOC_END
 {
     int gray_levels;
     int radius;
@@ -128,5 +129,58 @@
 }
 //BIND_END
 
+//BIND_CLASS_METHOD ImageHistogram get_histogram
+//DOC_BEGIN
+// Fast for one shot! Returns the histogram of all the image
+//DOC_END
+{
+  LUABIND_CHECK_ARGN(==, 2);
+
+  int gray_levels;
+  ImageFloat *img;
+  LUABIND_GET_PARAMETER(1, ImageFloat, img);
+  LUABIND_GET_PARAMETER(2, int, gray_levels);
+
+  MatrixFloat *m = ImageHistogram::getHistogram(img, gray_levels);
+  LUABIND_RETURN(MatrixFloat, m);
+}
+//BIND_END
+
+//BIND_METHOD ImageHistogram get_image_histogram
+//DOC_BEGIN
+// Returns the histogram of all the image
+//DOC_END
+{
+  LUABIND_CHECK_ARGN(==, 0);
+
+  MatrixFloat *m = obj->getImageHistogram();
+  LUABIND_RETURN(MatrixFloat, m);
+}
+//BIND_END
+
+
+//BIND_METHOD ImageHistogram get_horizontal_histogram
+//DOC_BEGIN
+// Returns horizontal for a each row the image
+//DOC_END
+{
+  LUABIND_CHECK_ARGN(==, 0);
+
+  MatrixFloat *m = obj->getHorizontalHistogram();
+  LUABIND_RETURN(MatrixFloat, m);
+}
+//BIND_END
+//
+//BIND_METHOD ImageHistogram get_vertical_histogram
+//DOC_BEGIN
+// Returns vertical for a each row the image
+//DOC_END
+{
+  LUABIND_CHECK_ARGN(==, 0);
+
+  MatrixFloat *m = obj->getVerticalHistogram();
+  LUABIND_RETURN(MatrixFloat, m);
+}
+//BIND_END
 //////////////////////////////////////////////////////////////////////
 

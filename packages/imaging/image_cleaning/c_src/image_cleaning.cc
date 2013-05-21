@@ -12,7 +12,7 @@
  * This library is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * for more details.
+-- * for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with this library; if not, write to the Free Software Foundation,
@@ -23,10 +23,11 @@
 #include "error_print.h"
 #include "maxmin.h"
 #include "image_cleaning.h"
-Matrix<float> * getHistogram(const ImageFloat &img, int gray_levels) {
 
-  int width = img.width;
-  int height = img.height;
+Matrix<float> *ImageHistogram::getHistogram(const ImageFloat *img, int gray_levels) {
+
+  int width = img->width;
+  int height = img->height;
 
   int dims[1];
   
@@ -37,7 +38,7 @@ Matrix<float> * getHistogram(const ImageFloat &img, int gray_levels) {
 
   for (int i = 0; i < height; ++i) {
     for (int j = 0; j < width; ++j) {
-        int h = getIndex(img(i,j), gray_levels);
+        int h = getIndex((*img)(j,i), gray_levels);
         (*matrix)(h) += 1;      
         }
     
@@ -159,7 +160,6 @@ Matrix<float> *ImageHistogram::getWindowHistogram(int x1, int y1, int x2, int y2
 
   // Normalize by size
   int size = (bottom - top + 1)*(right-left + 1);
-
   int top_left, top_right, bottom_left, bottom_right;
   for(int h = 0; h < gray_levels; ++h) {
 
@@ -191,7 +191,49 @@ Matrix<float> *ImageHistogram::getWindowHistogram(int x1, int y1, int x2, int y2
 
 Matrix<float> * ImageHistogram::getImageHistogram() {
 
-  return getWindowHistogram(0,0, height, width);
+  return getWindowHistogram(0,0, height - 1, width - 1);
+}
+
+Matrix<float> * ImageHistogram::getHorizontalHistogram() {
+  
+  int dims[2];
+  dims[0] = this->height;
+  dims[1] = this->gray_levels;
+
+  Matrix<float> *vHist = new Matrix<float>(2,dims);
+
+  for (int i = 0; i < this->height; ++i) {
+
+    //FIXME: Memory allocation on each line
+    Matrix<float> *m = getWindowHistogram(i,0, i, width-1);
+    //TODO: Copy on efficient way
+    for (int h = 0; h < this->gray_levels; ++h)
+        (*vHist)(i,h) = (*m)(h);
+    delete m;
+  }
+
+  return vHist;
+}
+
+Matrix<float> * ImageHistogram::getVerticalHistogram() {
+
+  int dims[2];
+  dims[0] = this->width;
+  dims[1] = this->gray_levels;
+
+  Matrix<float> *vHist = new Matrix<float>(2,dims);
+
+  for (int i = 0; i < this->width; ++i) {
+
+    //FIXME: Memory allocation on each line
+    Matrix<float> *m = getWindowHistogram(0,i, height-1, i);
+    //TODO: Copy on efficient way
+    for (int h = 0; h < this->gray_levels; ++h)
+        (*vHist)(i,h) = (*m)(h);
+    delete m;
+  }
+
+  return vHist;
 }
 
 Matrix<float> * ImageHistogram::getIntegralHistogram(){

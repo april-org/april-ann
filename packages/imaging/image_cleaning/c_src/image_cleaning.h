@@ -31,9 +31,6 @@
   Class that contains the counters for calculate the histogram of a given image
 
  **/
-///Light and slow image histogram. It's used for computing the histogram of an image on a traditional way (without computing the integral interval)
-Matrix<float> * getHistogram(ImageFloat &img, int intervals);
-
 //// Given a pixel value, returns the index of histogram
 inline int getIndex(float value, int gray_levels) {
     if (value >= 1) return gray_levels - 1;
@@ -85,7 +82,38 @@ class ImageHistogram : public Referenced {
         Matrix<float> * getImageHistogram();
 
         Matrix<float> * getWindowHistogram(int x1, int y1, int x2, int y2);
+        
+        /// Returns a matrix of size Height*Levels
+        Matrix<float> *getVerticalHistogram();
+        /// Returns a matrix of size width*levels
+        Matrix<float> *getHorizontalHistogram();
 
+        ///Light and slow image histogram. It's used for computing the histogram of an image on a traditional way (without computing the integral interval)
+        static Matrix<float> * getHistogram(const ImageFloat *img, int gray_levels);/*{
+            int width = img->width;
+            int height = img->height;
+
+            int dims[1];
+
+            dims[0] = gray_levels;
+
+            Matrix<float> *matrix = new Matrix<float>(1,dims, 0.0);
+            int total = height*width;
+
+            for (int i = 0; i < height; ++i) {
+                for (int j = 0; j < width; ++j) {
+                    int h = getIndex((*img)(i,j), gray_levels);
+                    (*matrix)(h) += 1;      
+                }
+
+            }
+            //Normalize the histogram
+            for(int h = 0; h < gray_levels; ++h) {
+                (*matrix)(h) /= total;
+            }
+
+            return matrix;
+        }*/
     protected:
         /// Accessor to the integral_histogram matrix
         inline int hist(int x,int y, int h) const { 
