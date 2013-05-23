@@ -351,7 +351,7 @@ namespace InterestPoints {
                         // convertir stroke_set a Point2D
 
                         int sz = result_min.size();
-                        printf("Local maxima %d\n", sz);
+                        //printf("Local maxima %d\n", sz);
                         
                         vector<Point2D> &vec_max = *local_maxima;
                         for (int i=0;i<sz;++i) {
@@ -363,7 +363,7 @@ namespace InterestPoints {
                         ///                        return result_Point2D;
 
                         sz = result_max.size();
-                        printf("Local minima %d\n", sz);
+                        //printf("Local minima %d\n", sz);
                         //vector<Point2D> *result_Point2D_max = new vector<Point2D>(sz);
                         vector<Point2D> &vec_min = *local_minima;
                         for (int i=0;i<sz;++i) {
