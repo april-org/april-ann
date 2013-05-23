@@ -653,6 +653,43 @@ Image<T> *Image<T>::remove_blank_columns() const
 	return result;
 }
 
+/// Add top_rows at top of the images and bottom_rows at the bottom
+template<typename T>
+Image<T> *Image<T>::add_rows(int top_rows, int bottom_rows, T value) const
+{
+	// Contamos las columnas en blanco de la imagen original
+    int dimensions[2];
+    int new_height = height+top_rows+bottom_rows; 
+    dimensions[0] = new_height;
+    dimensions[1] = width;
+
+    Matrix<T> *new_mat = new Matrix<T>(2, dimensions);
+    Image<T> *result = new Image<T>(new_mat);
+
+    // Copy row by row
+    int top_image = top_rows;
+    int bottom_image = top_rows + height;
+    
+    for(int y = 0; y < top_image; ++y) {
+      for (int x = 0; x < width; x++) {
+        (*result)(x,y) = value;
+  
+      }
+    } 
+    for(int y = bottom_image; y < new_height; ++y) {
+      for (int x = 0; x < width; x++) {
+        (*result)(x,y) = value;
+      }
+    }
+
+    for (int y = 0; y < height; ++y) {
+      for (int x = 0; x < width; ++x) {
+       (*result)(x, top_image+y) = (*this)(x,y);
+      }
+    }
+
+    return result;
+}
 
 /**
  * Aplica un kernel de convolucion de 5x5 a la imagen. Devuelve el resultado
@@ -667,144 +704,144 @@ Image<T> *Image<T>::remove_blank_columns() const
 template<typename T>
 Image<T> *Image<T>::convolution5x5(float *k, T default_color) const
 {
-  int dimensions[2];
-  dimensions[0] = height; 
-  dimensions[1] = width; 
+    int dimensions[2];
+    dimensions[0] = height; 
+    dimensions[1] = width; 
 
-  Matrix<T> *new_mat = new Matrix<T>(2, dimensions);
-  Image<T> *result = new Image<T>(new_mat);
+    Matrix<T> *new_mat = new Matrix<T>(2, dimensions);
+    Image<T> *result = new Image<T>(new_mat);
 
-  for (int y=0; y<height; y++) {
-    for (int x=0; x<width; x++) {
-      T value = getpixel(x-2, y-2, default_color) * k[0] + 
-                    getpixel(x-1, y-2, default_color) * k[1] +
-                    getpixel(x  , y-2, default_color) * k[2] +
-                    getpixel(x+1, y-2, default_color) * k[3] +
-                    getpixel(x+2, y-2, default_color) * k[4] +
-                    getpixel(x-2, y-1, default_color) * k[5] + 
-                    getpixel(x-1, y-1, default_color) * k[6] +
-                    getpixel(x  , y-1, default_color) * k[7] +
-                    getpixel(x+1, y-1, default_color) * k[8] +
-                    getpixel(x+2, y-1, default_color) * k[9] +
-                    getpixel(x-2, y,   default_color) * k[10] + 
-                    getpixel(x-1, y,   default_color) * k[11] +
-                    getpixel(x  , y,   default_color) * k[12] +
-                    getpixel(x+1, y,   default_color) * k[13] +
-                    getpixel(x+2, y,   default_color) * k[14] +
-                    getpixel(x-2, y+1, default_color) * k[15] + 
-                    getpixel(x-1, y+1, default_color) * k[16] +
-                    getpixel(x  , y+1, default_color) * k[17] +
-                    getpixel(x+1, y+1, default_color) * k[18] +
-                    getpixel(x+2, y+1, default_color) * k[19] +
-                    getpixel(x-2, y+2, default_color) * k[20] + 
-                    getpixel(x-1, y+2, default_color) * k[21] +
-                    getpixel(x  , y+2, default_color) * k[22] +
-                    getpixel(x+1, y+2, default_color) * k[23] +
-                    getpixel(x+2, y+2, default_color) * k[24];
-      (*result)(x,y) = value;
+    for (int y=0; y<height; y++) {
+        for (int x=0; x<width; x++) {
+            T value = getpixel(x-2, y-2, default_color) * k[0] + 
+                getpixel(x-1, y-2, default_color) * k[1] +
+                getpixel(x  , y-2, default_color) * k[2] +
+                getpixel(x+1, y-2, default_color) * k[3] +
+                getpixel(x+2, y-2, default_color) * k[4] +
+                getpixel(x-2, y-1, default_color) * k[5] + 
+                getpixel(x-1, y-1, default_color) * k[6] +
+                getpixel(x  , y-1, default_color) * k[7] +
+                getpixel(x+1, y-1, default_color) * k[8] +
+                getpixel(x+2, y-1, default_color) * k[9] +
+                getpixel(x-2, y,   default_color) * k[10] + 
+                getpixel(x-1, y,   default_color) * k[11] +
+                getpixel(x  , y,   default_color) * k[12] +
+                getpixel(x+1, y,   default_color) * k[13] +
+                getpixel(x+2, y,   default_color) * k[14] +
+                getpixel(x-2, y+1, default_color) * k[15] + 
+                getpixel(x-1, y+1, default_color) * k[16] +
+                getpixel(x  , y+1, default_color) * k[17] +
+                getpixel(x+1, y+1, default_color) * k[18] +
+                getpixel(x+2, y+1, default_color) * k[19] +
+                getpixel(x-2, y+2, default_color) * k[20] + 
+                getpixel(x-1, y+2, default_color) * k[21] +
+                getpixel(x  , y+2, default_color) * k[22] +
+                getpixel(x+1, y+2, default_color) * k[23] +
+                getpixel(x+2, y+2, default_color) * k[24];
+            (*result)(x,y) = value;
+        }
     }
-  }
 
-  return result;
+    return result;
 }
 
 template<typename T>
 Image<T> *Image<T>::resize(int dst_width, int dst_height) const
 {
-  T default_value=T();
-  int dimensions[2];
-  dimensions[0] = dst_height;
-  dimensions[1] = dst_width;
+    T default_value=T();
+    int dimensions[2];
+    dimensions[0] = dst_height;
+    dimensions[1] = dst_width;
 
-  Matrix<T> *new_mat = new Matrix<T>(2, dimensions);
-  Image<T> *result = new Image<T>(new_mat);
+    Matrix<T> *new_mat = new Matrix<T>(2, dimensions);
+    Image<T> *result = new Image<T>(new_mat);
 
-  // we go through the destination image
-  for (int y=0; y<dst_height; y++) {
-    for (int x=0; x<dst_width; x++) {
-      // each pixel (x,y) in the destination image corresponds to a rectangle (x0,y0)-(x1,y1) in the source image
-      float x0 = (float(x)/float(dst_width)) * (width-1);
-      float x1 = (float(x+1)/float(dst_width)) * (width-1);
-      float y0 = (float(y)/float(dst_height)) * (height-1);
-      float y1 = (float(y+1)/float(dst_height)) * (height-1);
-      int ix0 = int(x0);
-      int ix1 = int(x1);
-      int iy0 = int(y0);
-      int iy1 = int(y1);
+    // we go through the destination image
+    for (int y=0; y<dst_height; y++) {
+        for (int x=0; x<dst_width; x++) {
+            // each pixel (x,y) in the destination image corresponds to a rectangle (x0,y0)-(x1,y1) in the source image
+            float x0 = (float(x)/float(dst_width)) * (width-1);
+            float x1 = (float(x+1)/float(dst_width)) * (width-1);
+            float y0 = (float(y)/float(dst_height)) * (height-1);
+            float y1 = (float(y+1)/float(dst_height)) * (height-1);
+            int ix0 = int(x0);
+            int ix1 = int(x1);
+            int iy0 = int(y0);
+            int iy1 = int(y1);
 
-      float area = ((x1-x0)*(y1-y0));
-      T sum=T();
+            float area = ((x1-x0)*(y1-y0));
+            T sum=T();
 
-      if (iy0 == iy1) {
-        // Less than one row (only a fraction)
-        float yinterp = 0.5f*(y0+y1);
-        if (ix0 == ix1) {
-          sum = (x1-x0) * getpixel_bilinear(0.5f*(x0+x1), yinterp, default_value);
-        } 
-        else {
-          sum += (float(ix0+1)-x0) * getpixel_bilinear(0.5f*(float(ix0+1)+x0), yinterp, default_value); // beginning of iy0 (possibly fractional)
-          sum += (x1-floor(x1)) * getpixel_bilinear(0.5f*(x1+floor(x1)), yinterp, default_value);    // end of iy0 (possibly fractional)
-          for (int col=ix0+1; col < ix1; col++) {
-            sum += getpixel_bilinear(col+0.5f, yinterp, default_value);
-          }
-        }
-        sum *= (y1-y0);
-      } 
-      else {
-        // Several rows
-        for (int row = iy0; row <= iy1; row++) {
-          float row_fraction, yinterp;
-          T sum_row=T();
-          if (row == iy0) {
-            row_fraction = float(iy0+1)-y0;
-            yinterp = 0.5f*(float(iy0+1)+y0);
-          }
-          else if (row == iy1) {
-            row_fraction = y1-floor(y1);
-            yinterp = 0.5f*(float(y1+floor(y1)));
-          }
-          else {
-            row_fraction=1.0f;
-            yinterp = row+0.5f;
-          }
+            if (iy0 == iy1) {
+                // Less than one row (only a fraction)
+                float yinterp = 0.5f*(y0+y1);
+                if (ix0 == ix1) {
+                    sum = (x1-x0) * getpixel_bilinear(0.5f*(x0+x1), yinterp, default_value);
+                } 
+                else {
+                    sum += (float(ix0+1)-x0) * getpixel_bilinear(0.5f*(float(ix0+1)+x0), yinterp, default_value); // beginning of iy0 (possibly fractional)
+                    sum += (x1-floor(x1)) * getpixel_bilinear(0.5f*(x1+floor(x1)), yinterp, default_value);    // end of iy0 (possibly fractional)
+                    for (int col=ix0+1; col < ix1; col++) {
+                        sum += getpixel_bilinear(col+0.5f, yinterp, default_value);
+                    }
+                }
+                sum *= (y1-y0);
+            } 
+            else {
+                // Several rows
+                for (int row = iy0; row <= iy1; row++) {
+                    float row_fraction, yinterp;
+                    T sum_row=T();
+                    if (row == iy0) {
+                        row_fraction = float(iy0+1)-y0;
+                        yinterp = 0.5f*(float(iy0+1)+y0);
+                    }
+                    else if (row == iy1) {
+                        row_fraction = y1-floor(y1);
+                        yinterp = 0.5f*(float(y1+floor(y1)));
+                    }
+                    else {
+                        row_fraction=1.0f;
+                        yinterp = row+0.5f;
+                    }
 
-          //printf("row_fraction=%f\n", row_fraction);
+                    //printf("row_fraction=%f\n", row_fraction);
 
-          if (ix0 == ix1) {
-            sum_row = (x1-x0) * getpixel_bilinear(0.5f*(x0+x1), row, default_value);
-          } 
-          else {
-            sum_row += (float(ix0+1)-x0) * getpixel_bilinear(0.5f*(float(ix0+1)+x0), yinterp, default_value); // beginning of iy0 (possibly fractional)
-            sum_row += (x1-floor(x1)) * getpixel_bilinear(0.5f*(x1+floor(x1)), yinterp, default_value);    // end of iy0 (possibly fractional)
+                    if (ix0 == ix1) {
+                        sum_row = (x1-x0) * getpixel_bilinear(0.5f*(x0+x1), row, default_value);
+                    } 
+                    else {
+                        sum_row += (float(ix0+1)-x0) * getpixel_bilinear(0.5f*(float(ix0+1)+x0), yinterp, default_value); // beginning of iy0 (possibly fractional)
+                        sum_row += (x1-floor(x1)) * getpixel_bilinear(0.5f*(x1+floor(x1)), yinterp, default_value);    // end of iy0 (possibly fractional)
 
-            for (int col=ix0+1; col < ix1; col++) {
-              sum_row += getpixel_bilinear(col+0.5f, yinterp, default_value);
+                        for (int col=ix0+1; col < ix1; col++) {
+                            sum_row += getpixel_bilinear(col+0.5f, yinterp, default_value);
+                        }
+                    }
+                    sum += row_fraction*sum_row;
+                    //printf("sum_row = %f\n", sum_row);
+                }
             }
-          }
-          sum += row_fraction*sum_row;
-          //printf("sum_row = %f\n", sum_row);
-        }
-      }
 
-      (*result)(x,y) = sum/area;
-      //printf("(%d, %d) ---> (%f, %f)-(%f, %f) area= %f, sum=%f\n", x, y, x0, y0, x1, y1, area, sum); 
+            (*result)(x,y) = sum/area;
+            //printf("(%d, %d) ---> (%f, %f)-(%f, %f) area= %f, sum=%f\n", x, y, x0, y0, x1, y1, area, sum); 
+        }
     }
-  }
-  return result;
+    return result;
 }
 
 // c and dest must have 6 elements
 template <typename T>
 void Image<T>::invert_affine_matrix(float *c, float *dest) const
 {
-  float det = c[0]*c[4] - c[1]*c[3];
-  assert("Affine matrix has no inverse" && det!=0);
-  dest[0] =  c[4]/det;
-  dest[1] = -c[1]/det;
-  dest[3] = -c[3]/det;
-  dest[4] =  c[0]/det;
-  dest[2] = -dest[0]*c[2] - dest[1]*c[5];
-  dest[5] = -dest[3]*c[2] - dest[4]*c[5];
+    float det = c[0]*c[4] - c[1]*c[3];
+    assert("Affine matrix has no inverse" && det!=0);
+    dest[0] =  c[4]/det;
+    dest[1] = -c[1]/det;
+    dest[3] = -c[3]/det;
+    dest[4] =  c[0]/det;
+    dest[2] = -dest[0]*c[2] - dest[1]*c[5];
+    dest[5] = -dest[3]*c[2] - dest[4]*c[5];
 }
 
 
@@ -820,104 +857,104 @@ void Image<T>::invert_affine_matrix(float *c, float *dest) const
 
 template <typename T>
 Image<T> *Image<T>::affine_transform(AffineTransform2D *trans, T default_value, 
-                                     int *offset_x, int *offset_y) const
+        int *offset_x, int *offset_y) const
 {
-  using april_utils::max;
-  using april_utils::min;
+    using april_utils::max;
+    using april_utils::min;
 
-  float *inverse = trans->data;
-  
-  float c[6];
-  invert_affine_matrix(inverse, c);
+    float *inverse = trans->data;
 
-  /*
-  printf("--transform-------\n");
-  printf("%1.3f %1.3f %1.3f\n", c[0], c[1], c[2]);
-  printf("%1.3f %1.3f %1.3f\n", c[3], c[4], c[5]);
-  printf("0     0     1    \n");
+    float c[6];
+    invert_affine_matrix(inverse, c);
 
-  printf("--inverse transform-------\n");
-  printf("%1.3f %1.3f %1.3f\n", inverse[0], inverse[1], inverse[2]);
-  printf("%1.3f %1.3f %1.3f\n", inverse[3], inverse[4], inverse[5]);
-  printf("0     0     1    \n");
-  */
-  // New image corners -> apply the inverse to points 0, 1, 2, 3
-  //
-  //  0 +-----+ 1
-  //    |     |
-  //  2 +-----+ 3
-  //
-  int x0 = int(roundf(inverse[2]));
-  int y0 = int(roundf(inverse[5]));
-  int x1 = int(roundf((width-1) *inverse[0] + inverse[2]));
-  int y1 = int(roundf((width-1) *inverse[3] + inverse[5]));
-  int x2 = int(roundf((height-1)*inverse[1] + inverse[2]));
-  int y2 = int(roundf((height-1)*inverse[4] + inverse[5]));
-  int x3 = int(roundf((width-1) *inverse[0] + (height-1)*inverse[1] + inverse[2]));
-  int y3 = int(roundf((width-1) *inverse[3] + (height-1)*inverse[4] + inverse[5]));
+    /*
+       printf("--transform-------\n");
+       printf("%1.3f %1.3f %1.3f\n", c[0], c[1], c[2]);
+       printf("%1.3f %1.3f %1.3f\n", c[3], c[4], c[5]);
+       printf("0     0     1    \n");
 
-  int xmax = int(roundf(max(x0, max(x1, max(x2, x3)))));
-  int xmin = int(roundf(min(x0, min(x1, min(x2, x3)))));
-  int ymax = int(roundf(max(y0, max(y1, max(y2, y3)))));
-  int ymin = int(roundf(min(y0, min(y1, min(y2, y3)))));
+       printf("--inverse transform-------\n");
+       printf("%1.3f %1.3f %1.3f\n", inverse[0], inverse[1], inverse[2]);
+       printf("%1.3f %1.3f %1.3f\n", inverse[3], inverse[4], inverse[5]);
+       printf("0     0     1    \n");
+       */
+    // New image corners -> apply the inverse to points 0, 1, 2, 3
+    //
+    //  0 +-----+ 1
+    //    |     |
+    //  2 +-----+ 3
+    //
+    int x0 = int(roundf(inverse[2]));
+    int y0 = int(roundf(inverse[5]));
+    int x1 = int(roundf((width-1) *inverse[0] + inverse[2]));
+    int y1 = int(roundf((width-1) *inverse[3] + inverse[5]));
+    int x2 = int(roundf((height-1)*inverse[1] + inverse[2]));
+    int y2 = int(roundf((height-1)*inverse[4] + inverse[5]));
+    int x3 = int(roundf((width-1) *inverse[0] + (height-1)*inverse[1] + inverse[2]));
+    int y3 = int(roundf((width-1) *inverse[3] + (height-1)*inverse[4] + inverse[5]));
 
-  int dst_width = xmax-xmin+1;
-  int dst_height = ymax-ymin+1;
+    int xmax = int(roundf(max(x0, max(x1, max(x2, x3)))));
+    int xmin = int(roundf(min(x0, min(x1, min(x2, x3)))));
+    int ymax = int(roundf(max(y0, max(y1, max(y2, y3)))));
+    int ymin = int(roundf(min(y0, min(y1, min(y2, y3)))));
 
- 
-  /*
-  fprintf(stderr,"p0=(%d, %d) p1=(%d, %d) p2=(%d, %d) p3=(%d, %d) dst_width = %d, dst_height=%d x: %d-%d, y: %d-%d\n",
-      x0, y0, x1, y1, x2, y2, x3, y3, dst_width, dst_height, xmin, xmax, ymin, ymax);
-  */
+    int dst_width = xmax-xmin+1;
+    int dst_height = ymax-ymin+1;
 
-  int dimensions[2];
-  dimensions[0] = dst_height;
-  dimensions[1] = dst_width;
 
-  Matrix<T> *new_mat = new Matrix<T>(2, dimensions);
-  Image<T> *result = new Image<T>(new_mat);
+    /*
+       fprintf(stderr,"p0=(%d, %d) p1=(%d, %d) p2=(%d, %d) p3=(%d, %d) dst_width = %d, dst_height=%d x: %d-%d, y: %d-%d\n",
+       x0, y0, x1, y1, x2, y2, x3, y3, dst_width, dst_height, xmin, xmax, ymin, ymax);
+       */
 
-  for (int y=ymin; y<=ymax; y++) {
-    for (int x=xmin; x<=xmax; x++) {
-      float srcx = c[0]*x+c[1]*y+c[2];
-      float srcy = c[3]*x+c[4]*y+c[5];
-      T value = getpixel_bilinear(srcx, srcy, default_value);
-      //printf("dst=(%d,%d) --- src = (%f, %f) value=%f\n", x, y, srcx, srcy, value);
-      (*result)(x-xmin,y-ymin) = value;
+    int dimensions[2];
+    dimensions[0] = dst_height;
+    dimensions[1] = dst_width;
+
+    Matrix<T> *new_mat = new Matrix<T>(2, dimensions);
+    Image<T> *result = new Image<T>(new_mat);
+
+    for (int y=ymin; y<=ymax; y++) {
+        for (int x=xmin; x<=xmax; x++) {
+            float srcx = c[0]*x+c[1]*y+c[2];
+            float srcy = c[3]*x+c[4]*y+c[5];
+            T value = getpixel_bilinear(srcx, srcy, default_value);
+            //printf("dst=(%d,%d) --- src = (%f, %f) value=%f\n", x, y, srcx, srcy, value);
+            (*result)(x-xmin,y-ymin) = value;
+        }
     }
-  }
 
-  if (offset_x != 0) *offset_x = xmin;
-  if (offset_y != 0) *offset_y = ymin;
+    if (offset_x != 0) *offset_x = xmin;
+    if (offset_y != 0) *offset_y = ymin;
 
-  return result;
+    return result;
 }
 
 template <typename T>
 Image<T>* Image<T>::substract_image(Image<T> *img, T low, T high) const {
-  
-  int  s_height = img->height;
-  int  s_width  = img->width;
 
-//  printf("%d %d %d %d\n", s_width, s_height, this->width, this->height);
-  assert("The images does not have the same dimension"
-          && s_width == this->width && s_height == this->height);
+    int  s_height = img->height;
+    int  s_width  = img->width;
 
-  int dims[2];
-  dims[0] = this->height;
-  dims[1] = this->width;
-  Matrix<T> *mat = new Matrix<T>(2,dims);
-  Image<T>  *res = new Image<T>(mat);
+    //  printf("%d %d %d %d\n", s_width, s_height, this->width, this->height);
+    assert("The images does not have the same dimension"
+            && s_width == this->width && s_height == this->height);
+
+    int dims[2];
+    dims[0] = this->height;
+    dims[1] = this->width;
+    Matrix<T> *mat = new Matrix<T>(2,dims);
+    Image<T>  *res = new Image<T>(mat);
 
 
-  for (int y = 0; y < this->height; y++){
-      for (int x = 0; x < this->width; x++){
-          T value = high + (*this)(x,y) -(*img)(x,y);
-          (*res)(x, y) =  april_utils::clamp(value, low, high);
-      } 
-  }
+    for (int y = 0; y < this->height; y++){
+        for (int x = 0; x < this->width; x++){
+            T value = high + (*this)(x,y) -(*img)(x,y);
+            (*res)(x, y) =  april_utils::clamp(value, low, high);
+        } 
+    }
 
-  return res;
+    return res;
 }
 
 #endif // _IMAGE_CC_
