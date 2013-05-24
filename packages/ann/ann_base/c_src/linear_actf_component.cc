@@ -51,7 +51,9 @@ namespace ANN {
   }
 
   ANNComponent *LinearActfANNComponent::clone() {
-    return new LinearActfANNComponent(name.c_str());
+    LinearActfANNComponent *obj = new LinearActfANNComponent(name.c_str());
+    obj->setOption("dropout", getOption("dropout"));
+    return obj;
   }
 
 }

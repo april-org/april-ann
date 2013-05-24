@@ -54,7 +54,9 @@ namespace ANN {
   }
 
   ANNComponent *TanhActfANNComponent::clone() {
-    return new TanhActfANNComponent(name.c_str());
+    TanhActfANNComponent *obj = new TanhActfANNComponent(name.c_str());
+    obj->setOption("dropout", getOption("dropout"));
+    return obj;
   }
 
 }

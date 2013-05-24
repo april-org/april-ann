@@ -54,7 +54,9 @@ namespace ANN {
   }
 
   ANNComponent *SinActfANNComponent::clone() {
-    return new SinActfANNComponent(name.c_str());
+    SinActfANNComponent *obj = new SinActfANNComponent(name.c_str());
+    obj->setOption("dropout", getOption("dropout"));
+    return obj;
   }
 
 }
