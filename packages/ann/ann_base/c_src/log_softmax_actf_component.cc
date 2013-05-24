@@ -77,7 +77,9 @@ namespace ANN {
   }
   
   ANNComponent *LogSoftmaxActfANNComponent::clone() {
-    return new LogSoftmaxActfANNComponent(name.c_str());
+    LogSoftmaxActfANNComponent *obj = new LogSoftmaxActfANNComponent(name.c_str());
+    obj->setOption("dropout", getOption("dropout"));
+    return obj;
   }
   
 }

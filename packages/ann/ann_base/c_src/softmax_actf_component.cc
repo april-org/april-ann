@@ -75,7 +75,9 @@ namespace ANN {
   }
 
   ANNComponent *SoftmaxActfANNComponent::clone() {
-    return new SoftmaxActfANNComponent(name.c_str());
+    SoftmaxActfANNComponent *obj = new SoftmaxActfANNComponent(name.c_str());
+    obj->setOption("dropout", getOption("dropout"));
+    return obj;
   }
 
 }
