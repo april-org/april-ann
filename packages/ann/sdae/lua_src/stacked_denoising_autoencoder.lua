@@ -626,6 +626,8 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 	   #params.layers)
     local input_size     = params.layers[#params.layers].size
     local input_actf     = params.layers[#params.layers].actf
+    local output_size    = params.supervised_layer.size
+    local output_actf    = params.supervised_layer.actf
     local global_options    = table.deep_copy(params.training_options.global)
     local layerwise_options = (params.training_options.layerwise[#params.layers] or
 				 { ann_options = {} })
@@ -658,8 +660,8 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
     local thenet = ann.mlp.all_all.generate(
       string.format("%d inputs %d %s",
 		    input_size,
-		    params.supervised_layer.size,
-		    params.supervised_layer.actf),
+		    output_size,
+		    output_actf),
       nil, params.names_prefix)
     for key,value in pairs(global_options.ann_options) do
       if layerwise_options.ann_options[key] == nil then
@@ -670,15 +672,15 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
       thenet:set_option(key, value)
     end
     local loss_function
-    if params.supervised_layer.size > 1 and
-      (params.supervised_layer.actf == "log_logistic" or
-       params.supervised_layer.actf == "log_softmax") then
-	loss_function = ann.loss.multi_class_cross_entropy(params.supervised_layer.size)
-    elseif (params.supervised_layer.size == 1 and
-	    params.supervised_layer.actf == "log_logistic") then
-      loss_function = ann.loss.cross_entropy(params.supervised_layer.size)
+    if output_size > 1 and
+      (output_actf == "log_logistic" or
+       output_actf == "log_softmax") then
+	loss_function = ann.loss.multi_class_cross_entropy(output_size)
+    elseif (output_size == 1 and
+	    output_actf == "log_logistic") then
+      loss_function = ann.loss.cross_entropy(output_size)
     else
-      loss_function = ann.loss.mse(params.supervised_layer.size)
+      loss_function = ann.loss.mse(output_size)
     end
     local thenet_trainer = trainable.supervised_trainer(thenet,
 							loss_function,
@@ -686,8 +688,8 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
     thenet_trainer:build()
     thenet_trainer:randomize_weights{
       random     = params.weights_random,
-      inf=-math.sqrt(6 / (input_size + params.supervised_layer.size)),
-      sup= math.sqrt(6 / (input_size + params.supervised_layer.size))
+      inf=-math.sqrt(6 / (input_size + output_size)),
+      sup= math.sqrt(6 / (input_size + output_size))
     }
     local best_net_trainer = thenet_trainer:train_wo_validation{
       min_epochs     = lookup("min_epochs"),
@@ -705,13 +707,13 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
     local lastn = #params.layers
     mlp_final:push( ann.components.hyperplane{
 		      input  = input_size,
-		      output = params.supervised_layer.size,
+		      output = output_size,
 		      name   = params.names_prefix.."layer" .. lastn,
 		      dot_product_name    = params.names_prefix.."w" .. lastn,
 		      bias_name           = params.names_prefix.."b" .. lastn,
 		      dot_product_weights = params.names_prefix.."w" .. lastn,
 		      bias_weights        = params.names_prefix.."b" .. lastn, })
-    mlp_final:push( ann.components.actf[params.supervised_layer.actf]{
+    mlp_final:push( ann.components.actf[output_actf]{
 		      name=params.names_prefix.."actf" .. lastn } )
     mlp_final_weights[params.names_prefix.."w" .. lastn] = wobj
     mlp_final_weights[params.names_prefix.."b"    .. lastn] = bobj

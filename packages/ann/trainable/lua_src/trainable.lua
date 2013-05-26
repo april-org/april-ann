@@ -340,9 +340,9 @@ april_set_doc("trainable.supervised_trainer.randomize_weights", {
 		    "distribution, in the range [c*inf,c*sup].",
 		    "Constant c depends on fan-in and/or fan-out fields.",
 		    "If fan-in and fan-out are false, then c=1.",
-		    "If fan-in=true and fan-out=false, then c=fanin.",
-		    "If fan-in=false and fan-out=true, then c=fanout.",
-		    "If fan-in and fan-out are true, then c=fanin + fanout.",
+		    "If fan-in=true and fan-out=false, then c=1/sqrt(fanin).",
+		    "If fan-in=false and fan-out=true, then c=1/sqrt(fanout).",
+		    "If fan-in and fan-out are true, then c=1/sqrt(fanin + fanout).",
 		  },
 		params = {
 		  ["random"] = "A random object",

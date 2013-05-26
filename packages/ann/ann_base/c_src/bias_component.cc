@@ -105,10 +105,10 @@ namespace ANN {
       }
       else bias_vector->copyToPrevVector(use_cuda);
     } // if (bias_vector->needsToComputeMomentum()) {
-  
     // update learning rule:
     // PREV_W = alpha * ERRORS + PREV_W
     const unsigned int references = bias_vector->getNumReferences();
+    assert(references > 0 && "Found 0 references of bias vector");
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
     const float norm_learn_rate =
       -(1.0f/sqrtf(static_cast<float>(references*bunch_size))) *
