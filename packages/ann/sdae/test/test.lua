@@ -76,7 +76,7 @@ params_pretrain = {
 			     vd       = 0.10,
 			     zero     = 0.0,
 			     random   = perturbation_prob } end },
-      min_epochs            = 4,
+      min_epochs            = 2,
       max_epochs            = 200,
       pretraining_percentage_stopping_criterion = 0.01,
     },
@@ -173,7 +173,7 @@ end
 
 -- we scale the weights before dropout
 for name,cnn in trainer_deep_classifier:iterate_weights("^w.*$") do
-  if name ~= "w1" then cnn:scale(1.0/dropout_factor) end
+  if name ~= "w1" then cnn:scale(1.0/(1.0 - dropout_factor)) end
 end
 
 deep_classifier:set_option("learning_rate", 0.4)
