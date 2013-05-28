@@ -92,7 +92,6 @@ namespace ANN {
 	// apply mask
 	applyMask(output_ptr, dropout_mask, 0.0f, input_size,
 		  bunch_size, use_cuda);
-	printf("DROPOUT\n");
 	delete dropout_mask;
       }
       else {
@@ -142,8 +141,13 @@ namespace ANN {
   }
 
   void ActivationFunctionANNComponent::setOption(const char *name, double value) {
-    mSetOption("dropout_factor",      dropout_factor);
-    mSetOption("dropout_seed", dropout_seed);
+    mSetOption("dropout_factor", dropout_factor);
+    mSetOption("dropout_seed",   dropout_seed);
+    if (strcmp(name, "learning_rate") != 0 &&
+	strcmp(name, "momentum") != 0 &&
+	strcmp(name, "weight_decay") != 0 &&
+	strcmp(name, "max_norm_penalty") != 0)
+      fprintf(stderr, "# WARNING!! unknown option %s\n", name);
   }
 
   bool ActivationFunctionANNComponent::hasOption(const char *name) {
