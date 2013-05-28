@@ -22,8 +22,6 @@
 #include "activation_function_component.h"
 #include "wrapper.h"
 
-// TODO: IMPLEMENT DROPOUT
-
 namespace ANN {
 
   MTRand ActivationFunctionANNComponent::dropout_random = MTRand();
@@ -141,24 +139,20 @@ namespace ANN {
   }
 
   void ActivationFunctionANNComponent::setOption(const char *name, double value) {
-    mSetOption("dropout_factor", dropout_factor);
-    mSetOption("dropout_seed",   dropout_seed);
-    if (strcmp(name, "learning_rate") != 0 &&
-	strcmp(name, "momentum") != 0 &&
-	strcmp(name, "weight_decay") != 0 &&
-	strcmp(name, "max_norm_penalty") != 0)
-      fprintf(stderr, "# WARNING!! unknown option %s\n", name);
+    mSetOption(DROPOUT_FACTOR_STRING, dropout_factor);
+    mSetOption(DROPOUT_SEED_STRING,   dropout_seed);
+    ANNComponent::setOption(name, value);
   }
 
   bool ActivationFunctionANNComponent::hasOption(const char *name) {
-    mHasOption("dropout_factor");
-    mHasOption("dropout_seed");
+    mHasOption(DROPOUT_FACTOR_STRING);
+    mHasOption(DROPOUT_SEED_STRING);
     return false;
   }
     
   double ActivationFunctionANNComponent::getOption(const char *name) {
-    mGetOption("dropout",      dropout_factor);
-    mGetOption("dropout_seed", dropout_seed);
+    mGetOption(DROPOUT_FACTOR_STRING, dropout_factor);
+    mGetOption(DROPOUT_SEED_STRING,   dropout_seed);
     return ANNComponent::getOption(name);
   }
     

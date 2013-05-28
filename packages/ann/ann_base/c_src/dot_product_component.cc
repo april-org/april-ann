@@ -374,32 +374,31 @@ namespace ANN {
   }
 
   void DotProductANNComponent::setOption(const char *name, double value) {
-    mSetOption("learning_rate", learning_rate);
-    mSetOption("momentum", momentum);
-    if (strcmp("weight_decay", name) == 0) {
+    mSetOption(LEARNING_RATE_STRING, learning_rate);
+    mSetOption(MOMENTUM_STRING,      momentum);
+    if (strcmp(WEIGHT_DECAY_STRING, name) == 0) {
       weight_decay   = static_cast<float>(value);
       c_weight_decay = 1.0f - weight_decay;
       return;
     }
-    mSetOption("max_norm_penalty",
-	       max_norm_penalty);
-    ERROR_EXIT1(140, "The option to be set does not exist: %s.\n", name);
+    mSetOption(MAX_NORM_PENALTY_STRING, max_norm_penalty);
+    ANNComponent::setOption(name, value);
   }
   
   bool DotProductANNComponent::hasOption(const char *name) {
-    mHasOption("learning_rate");
-    mHasOption("momentum");
-    mHasOption("weight_decay");
-    mHasOption("max_norm_penalty");
+    mHasOption(LEARNING_RATE_STRING);
+    mHasOption(MOMENTUM_STRING);
+    mHasOption(WEIGHT_DECAY_STRING);
+    mHasOption(MAX_NORM_PENALTY_STRING);
     return false;
   }
   
   double DotProductANNComponent::getOption(const char *name) {
-    mGetOption("learning_rate", learning_rate);
-    mGetOption("momentum", momentum);
+    mGetOption(LEARNING_RATE_STRING, learning_rate);
+    mGetOption(MOMENTUM_STRING, momentum);
     // the weight decay is always fixed to 0
-    mGetOption("weight_decay", weight_decay);
-    mGetOption("max_norm_penalty", max_norm_penalty);
+    mGetOption(WEIGHT_DECAY_STRING, weight_decay);
+    mGetOption(MAX_NORM_PENALTY_STRING, max_norm_penalty);
     return ANNComponent::getOption(name);
   }
   
