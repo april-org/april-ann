@@ -165,7 +165,7 @@ function set_dropout(trainer)
   local max=trainer:count_components("^actf.*$")
   for name,component in trainer:iterate_components("^actf.*$") do
     if name ~= "actf"..max then
-      component:set_option("dropout",dropout_factor)
+      component:set_option("dropout_factor",dropout_factor)
       component:set_option("dropout_seed", 5425)
     end
   end
