@@ -55,7 +55,7 @@ namespace ANN {
 
   ANNComponent *SoftplusActfANNComponent::clone() {
     SoftplusActfANNComponent *obj = new SoftplusActfANNComponent(name.c_str());
-    obj->setOption("dropout", getOption("dropout"));
+    obj->setOption(DROPOUT_FACTOR_STRING, getOption(DROPOUT_FACTOR_STRING));
     return obj;
   }
 

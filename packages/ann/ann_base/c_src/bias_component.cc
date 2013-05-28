@@ -153,19 +153,20 @@ namespace ANN {
   }
 
   void BiasANNComponent::setOption(const char *name, double value) {
-    mSetOption("learning_rate", learning_rate);
-    mSetOption("momentum", momentum);
+    mSetOption(LEARNING_RATE_STRING, learning_rate);
+    mSetOption(MOMENTUM_STRING,      momentum);
+    ANNComponent::setOption(name, value);
   }
 
   bool BiasANNComponent::hasOption(const char *name) {
-    mHasOption("learning_rate");
-    mHasOption("momentum");
+    mHasOption(LEARNING_RATE_STRING);
+    mHasOption(MOMENTUM_STRING);
     return false;
   }
 
   double BiasANNComponent::getOption(const char *name) {
-    mGetOption("learning_rate", learning_rate);
-    mGetOption("momentum", momentum);
+    mGetOption(LEARNING_RATE_STRING, learning_rate);
+    mGetOption(MOMENTUM_STRING,      momentum);
     return ANNComponent::getOption(name);
   }
 
