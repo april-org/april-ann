@@ -74,9 +74,25 @@ namespace ANN {
 	  if (dropout_random.rand() < dropout_factor) mask_ptr[i] = 0.0f;
 	  else mask_ptr[i] = 1.0f;
 	}
+	/*
+	  if (units_order_permutation == 0)
+	  units_order_permutation = new int[input_size];
+	  doVectorSetToZero(dropout_mask,
+	  input->getUsedSize(), 1, 0,
+	  false);
+	  unsigned int length=static_cast<unsigned int>(dropout_factor*input_size);
+	  for (unsigned int i=0; i<bunch_size; ++i) {
+	  dropout_random.shuffle(input_size, units_order_permutation);
+	  for (unsigned int j=0; j<length; ++j) {
+	  unsigned int pos = units_order_permutation[j];
+	  mask_ptr[i + pos*input_size] = 1.0f;
+	  }
+	  }
+	*/
 	// apply mask
 	applyMask(output_ptr, dropout_mask, 0.0f, input_size,
 		  bunch_size, use_cuda);
+	printf("DROPOUT\n");
 	delete dropout_mask;
       }
       else {
@@ -126,12 +142,12 @@ namespace ANN {
   }
 
   void ActivationFunctionANNComponent::setOption(const char *name, double value) {
-    mSetOption("dropout",      dropout_factor);
+    mSetOption("dropout_factor",      dropout_factor);
     mSetOption("dropout_seed", dropout_seed);
   }
 
   bool ActivationFunctionANNComponent::hasOption(const char *name) {
-    mHasOption("dropout");
+    mHasOption("dropout_factor");
     mHasOption("dropout_seed");
     return false;
   }
