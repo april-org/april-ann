@@ -47,6 +47,8 @@ namespace ANN {
     LogisticActfANNComponent(const char *name);
     virtual ~LogisticActfANNComponent();
     virtual ANNComponent *clone();
+
+    virtual char *toLuaString();
   };
 }
 

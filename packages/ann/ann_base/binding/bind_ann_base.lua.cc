@@ -233,6 +233,14 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD ANNComponent to_lua_string
+{
+  char *str = obj->toLuaString();
+  LUABIND_RETURN(string, str);
+  delete[] str;
+}
+//BIND_END
+
 //BIND_METHOD ANNComponent get_name
 {
   LUABIND_RETURN(string, obj->getName().c_str());
@@ -637,6 +645,7 @@ using namespace ANN;
   ANNComponent *component;
   LUABIND_GET_PARAMETER(1, ANNComponent, component);
   obj->pushComponent(component);
+  LUABIND_RETURN(StackANNComponent, obj);
 }
 //BIND_END
 
@@ -689,6 +698,7 @@ using namespace ANN;
   ANNComponent *component;
   LUABIND_GET_PARAMETER(1, ANNComponent, component);
   obj->addComponent(component);
+  LUABIND_RETURN(JoinANNComponent, obj);
 }
 //BIND_END
 

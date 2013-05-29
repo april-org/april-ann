@@ -46,6 +46,8 @@ namespace ANN {
     LinearActfANNComponent(const char *name);
     virtual ~LinearActfANNComponent();
     virtual ANNComponent *clone();
+
+    virtual char *toLuaString();
   };
 }
 

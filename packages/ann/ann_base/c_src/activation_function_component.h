@@ -75,6 +75,7 @@ namespace ANN {
 		       unsigned int _output_size,
 		       hash<string,Connections*> &weights_dict,
 		       hash<string,ANNComponent*> &components_dict);
+
   };
 }
 

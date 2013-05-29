@@ -453,5 +453,15 @@ namespace ANN {
 		  weights_name.c_str());
     else if (w == 0) w = weights_matrix;
   }  
+
+  char *DotProductANNComponent::toLuaString() {
+    buffer_list buffer;
+    buffer.printf("ann.components.copy{ name='%s',weights='%s',"
+		  "input=%d,output=%d,transpose=%s }",
+		  name.c_str(), weights_name.c_str(),
+		  input_size, output_size,
+		  (transpose_weights==CblasTrans)?"true":"false");
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  }
   //////////////////////////////////////////////////////////////////////////
 }

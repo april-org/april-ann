@@ -67,6 +67,8 @@ namespace ANN {
     virtual void resetConnections() {
       if (bias_vector) bias_vector->reset();
     }
+
+    virtual char *toLuaString();
   };
 }
 
