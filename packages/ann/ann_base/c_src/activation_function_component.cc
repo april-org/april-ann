@@ -168,5 +168,5 @@ namespace ANN {
 		  "sizes must be equal (component %s): %d != %d\n",
 		  name.c_str(), input_size, output_size);
   }
-
+  
 } // namespace ANN

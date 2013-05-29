@@ -2,6 +2,8 @@
 #include "mystring.h"
 
 namespace april_utils {
+
+  const char *string::NULL_STRING = "\0";
     
   string::string() { }
   
@@ -61,7 +63,10 @@ namespace april_utils {
   
   void string::pop_back() { vec.pop_back(); }
   
-  const char *string::c_str() const { return vec.begin(); }
+  const char *string::c_str() const {
+    if (vec.empty()) return NULL_STRING;
+    else return vec.begin();
+  }
   
   const char *string::data() const { return vec.begin(); }
   

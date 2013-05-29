@@ -47,6 +47,8 @@ namespace ANN {
     SoftsignActfANNComponent(const char *name);
     virtual ~SoftsignActfANNComponent();
     virtual ANNComponent *clone();
+
+    virtual char *toLuaString();
   };
 }
 

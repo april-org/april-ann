@@ -98,6 +98,9 @@ trainer_deep_classifier = trainable.supervised_trainer(deep_classifier,
 						       ann.loss[loss_name](10),
 						       bunch_size)
 trainer_deep_classifier:build()
+trainer_deep_classifier = trainable.supervised_trainer.load("jarl.net",
+							    ann.loss[loss_name](10),
+							    bunch_size)
 -- local outf = io.open("data", "w")
 -- encoded_dataset = ann.autoencoders.encode_dataset(codifier_net,
 -- 						  train_input)

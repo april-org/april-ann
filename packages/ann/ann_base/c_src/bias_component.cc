@@ -219,4 +219,11 @@ namespace ANN {
 		  weights_name.c_str());
     else if (w == 0) w = bias_vector;
   }
+
+  char *BiasANNComponent::toLuaString() {
+    buffer_list buffer;
+    buffer.printf("ann.components.bias{ name='%s', weights='%s' }",
+		  name.c_str(), weights_name.c_str());
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  }
 }

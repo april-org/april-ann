@@ -58,5 +58,11 @@ namespace ANN {
     obj->setOption(DROPOUT_FACTOR_STRING, getOption(DROPOUT_FACTOR_STRING));
     return obj;
   }
+  
+  char *HardtanhActfANNComponent::toLuaString() {
+    buffer_list buffer;
+    buffer.printf("ann.components.actf.hardtanh{ name='%s' }", name.c_str());
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  }
 
 }

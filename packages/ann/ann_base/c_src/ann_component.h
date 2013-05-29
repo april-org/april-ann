@@ -221,6 +221,13 @@ namespace ANN {
       if (this->name == name) return this;
       return 0;
     }
+    
+    virtual char *toLuaString() {
+      buffer_list buffer;
+      buffer.printf("ann.components.base{ name='%s', weights='%s', size=%d }",
+		    name.c_str(), weights_name.c_str(), input_size);
+      return buffer.to_string(buffer_list::NULL_TERMINATED);
+    }
   };
 }
 

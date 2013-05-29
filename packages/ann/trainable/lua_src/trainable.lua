@@ -110,7 +110,7 @@ april_set_doc("trainable.supervised_trainer.save", {
 		class = "method",
 		summary = "Save the model at a disk file",
 		description = {
-		  "Save the connection weights at",
+		  "Save the model and connection weights at",
 		  "a disk file.",
 		  "Only works after build method is called.",
 		},
@@ -124,7 +124,8 @@ function trainable.supervised_trainer:save(filename, binary)
   assert(#self.weights_order > 0, "The component is not built")
   local binary = binary or "binary"
   local f = io.open(filename,"w") or error("Unable to open " .. filename)
-  f:write("return {")
+  f:write("return { model=".. self.ann_component:to_lua_string() .. ",\n")
+  f:write("connections={")
   for _,wname in ipairs(self.weights_order) do
     local cobj = self.weights_table[wname]
     local w,oldw = cobj:weights()
@@ -135,42 +136,42 @@ function trainable.supervised_trainer:save(filename, binary)
     f:write("\noldw = matrix.fromString[[" .. oldw:toString(binary) .. "]],")
     f:write("\n},")
   end
-  f:write("\n}\n")
+  f:write("\n},\n}\n")
   f:close()
 end
 
 ------------------------------------------------------------------------
 
 april_set_doc("trainable.supervised_trainer.load", {
-		class = "method",
-		summary = "Load the model weiths from a disk file",
+		class = "function",
+		summary = "Load the model and weights from a disk file",
 		description = {
-		  "Load the connection weights stored at",
+		  "Load the model and connection weights stored at",
 		  "a disk file.",
-		  "Only works after build method is called.",
 		},
 		params = {
 		  "A filename string",
-		  { "A string indicating the matrix format: ascii or binary",
-		    "[optional]. By default is binary." },
+		  "Loss function [optional]",
+		  "Bunch size (mini batch) [optional]",
 		}, })
 
-function trainable.supervised_trainer:load(filename)
-  assert(#self.weights_order > 0, "The component is not built")
-  local binary = binary or "binary"
+function trainable.supervised_trainer.load(filename, loss, bunch_size)
   local f = loadfile(filename) or error("Unable to open " .. filename)
   local t = f() or error("Impossible to load chunk from file " .. filename)
-  for _,wname in ipairs(self.weights_order) do
-    local cobj = self.weights_table[wname]
-    local w,oldw = t[wname].w,t[wname].oldw
-    assert(t[wname].input == cobj:get_input_size(),
+  local obj = trainable.supervised_trainer(t.model, loss, bunch_size)
+  obj:build()
+  for _,wname in ipairs(obj.weights_order) do
+    local cobj = obj.weights_table[wname]
+    local w,oldw = t.connections[wname].w,t.connections[wname].oldw
+    assert(t.connections[wname].input == cobj:get_input_size(),
 	   string.format("Incorrect input size, expected %d, found %d\n",
-			 cobj:get_input_size(), t[wname].input))
-    assert(t[wname].output == cobj:get_output_size(),
+			 cobj:get_input_size(), t.connections[wname].input))
+    assert(t.connections[wname].output == cobj:get_output_size(),
 	   string.format("Incorrect output size, expected %d, found %d\n",
-			 cobj:get_output_size(), t[wname].output))
+			 cobj:get_output_size(), t.connections[wname].output))
     cobj:load{ w=w, oldw=oldw }
   end
+  return obj
 end
 
 ------------------------------------------------------------------------

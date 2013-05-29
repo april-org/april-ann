@@ -47,6 +47,8 @@ namespace ANN {
     LogSoftmaxActfANNComponent(const char *name);
     virtual ~LogSoftmaxActfANNComponent();
     virtual ANNComponent *clone();
+
+    virtual char *toLuaString();
   };
 }
 

@@ -78,6 +78,8 @@ namespace ANN {
       for (unsigned int i=0; i<components.size(); ++i)
 	components[i]->debugInfo();
     }
+
+    virtual char *toLuaString();
   };
 }
 
