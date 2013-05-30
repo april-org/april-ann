@@ -56,7 +56,6 @@ function trainable.supervised_trainer:__call(ann_component,
     bunch_size       = bunch_size or false,
   }
   obj = class_instance(obj, self, true)
-  -- if ann_component:get_is_built() then obj:build() end
   return obj
 end
 
@@ -136,7 +135,14 @@ function trainable.supervised_trainer:save(filename, binary)
     f:write("\noldw = matrix.fromString[[" .. oldw:toString(binary) .. "]],")
     f:write("\n},")
   end
-  f:write("\n},\n}\n")
+  f:write("\n},\n")
+  if self.loss_function then
+    local id = get_object_id(self.loss_function)
+    local sz = self.ann_component:get_output_size()
+    if id and sz then f:write("loss=" .. id .. "(".. sz .. "),\n") end
+  end
+  if self.bunch_size then f:write("bunch_size="..self.bunch_size..",\n") end
+  f:write("}\n")
   f:close()
 end
 
@@ -158,18 +164,22 @@ april_set_doc("trainable.supervised_trainer.load", {
 function trainable.supervised_trainer.load(filename, loss, bunch_size)
   local f = loadfile(filename) or error("Unable to open " .. filename)
   local t = f() or error("Impossible to load chunk from file " .. filename)
-  local obj = trainable.supervised_trainer(t.model, loss, bunch_size)
+  local model = t.model
+  local connections = t.connections
+  local bunch_size = bunch_size or t.bunch_size
+  local loss = loss or t.loss
+  local obj = trainable.supervised_trainer(model, loss, bunch_size)
   obj:build()
-  for _,wname in ipairs(obj.weights_order) do
-    local cobj = obj.weights_table[wname]
-    local w,oldw = t.connections[wname].w,t.connections[wname].oldw
-    assert(t.connections[wname].input == cobj:get_input_size(),
+  for wname,cobj in obj:iterate_weights() do
+    local w,oldw = connections[wname].w,connections[wname].oldw
+    assert(w ~= nil, "Component " .. wname .. " not found at file")
+    assert(connections[wname].input == cobj:get_input_size(),
 	   string.format("Incorrect input size, expected %d, found %d\n",
-			 cobj:get_input_size(), t.connections[wname].input))
-    assert(t.connections[wname].output == cobj:get_output_size(),
+			 cobj:get_input_size(), connections[wname].input))
+    assert(connections[wname].output == cobj:get_output_size(),
 	   string.format("Incorrect output size, expected %d, found %d\n",
-			 cobj:get_output_size(), t.connections[wname].output))
-    cobj:load{ w=w, oldw=oldw }
+			 cobj:get_output_size(), connections[wname].output))
+    cobj:load{ w=w, oldw=oldw or w }
   end
   return obj
 end
