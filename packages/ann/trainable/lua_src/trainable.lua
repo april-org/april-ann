@@ -120,7 +120,7 @@ april_set_doc("trainable.supervised_trainer.save", {
 		}, })
 
 function trainable.supervised_trainer:save(filename, binary)
-  assert(#self.weights_order > 0, "The component is not built")
+  assert(#self.components_order > 0, "The component is not built")
   local binary = binary or "binary"
   local f = io.open(filename,"w") or error("Unable to open " .. filename)
   f:write("return { model=".. self.ann_component:to_lua_string() .. ",\n")
@@ -218,7 +218,7 @@ april_set_doc("trainable.supervised_trainer.count_weights", {
 
 function trainable.supervised_trainer:count_weights(match_string)
   local match_string = match_string or ".*"
-  if #self.weights_order == 0 then
+  if #self.components_order == 0 then
     error("It is not build")
   end
   local count = 0
@@ -280,7 +280,7 @@ april_set_doc("trainable.supervised_trainer.iterate_weights", {
 
 function trainable.supervised_trainer:iterate_weights(match_string)
   local match_string = match_string or ".*"
-  if #self.weights_order == 0 then
+  if #self.components_order == 0 then
     error("It is not build")
   end
   local pos = 0
@@ -312,7 +312,7 @@ april_set_doc("trainable.supervised_trainer.component", {
 		outputs = { "A component object" } })
 
 function trainable.supervised_trainer:component(str)
-  if #self.weights_order == 0 then
+  if #self.components_order == 0 then
     error("Needs execution of build method")
   end
   return self.components_table[str]
@@ -334,7 +334,7 @@ april_set_doc("trainable.supervised_trainer.weights", {
 		outputs = { "An ann.connections object" } })
 
 function trainable.supervised_trainer:weights(str)
-  if #self.weights_order == 0 then
+  if #self.components_order == 0 then
     error("Needs execution of build method")
   end
   return self.weights_table[str]
@@ -372,7 +372,7 @@ function trainable.supervised_trainer:randomize_weights(t)
       use_fanin  = { type_match="boolean", mandatory = false, default = false },
       use_fanout = { type_match="boolean", mandatory = false, default = false },
     }, t)
-  assert(#self.weights_order > 0,
+  assert(#self.components_order > 0,
 	 "Execute build method before randomize_weights")
   for i,wname in ipairs(self.weights_order) do
     local current_inf = params.inf
