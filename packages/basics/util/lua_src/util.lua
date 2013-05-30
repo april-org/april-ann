@@ -214,6 +214,14 @@ function april_print_doc(table_name, verbosity, prefix)
   end
 end
 
+function get_object_id(obj)
+  local id = nil
+  if getmetatable(obj) then
+    id = getmetatable(obj).id
+  end
+  return id
+end
+
 -- verbosity => 0 only names, 1 only summary, 2 all
 function april_help(table_name, verbosity)
   if not table_name then table_name="" end
