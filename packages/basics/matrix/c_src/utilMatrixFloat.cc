@@ -60,10 +60,10 @@ MatrixFloat* readMatrixFloatFromStream(T &stream) {
     int i=0;
     if (formato == "ascii") {
       while (i<mat->size && (linea=stream.extract_u_line()))
-	while (i<mat->size && linea.extract_float(&mat->data[i])) { i++; }
+	while (i<mat->size && linea.extract_float(&mat->data->get(i))) { i++; }
     } else { // binary
       while (i<mat->size && (linea=stream.extract_u_line()))
-	while (i<mat->size && linea.extract_float_binary(&mat->data[i])) { i++; }
+	while (i<mat->size && linea.extract_float_binary(&mat->data->get(i))) { i++; }
     }
     if (i != mat->size) { delete mat; mat = 0; }
   } else { // version with comodin
@@ -105,8 +105,8 @@ MatrixFloat* readMatrixFloatFromStream(T &stream) {
     }
     dims[pos_comodin] = size / sizesincomodin;
     mat = new MatrixFloat(n,dims);
-      for (int i=0; i<size; i++) mat->data[i] = data[i];
-      delete[] data;
+    for (int i=0; i<size; i++) mat->data->get(i) = data[i];
+    delete[] data;
   }
   return mat;
 }
@@ -121,7 +121,7 @@ void saveMatrixFloatToFile(MatrixFloat *mat, FILE *f, bool is_ascii) {
   if (is_ascii) {
     fprintf(f,"ascii\n");
     for (i=0;i<mat->size;i++) {
-      fprintf(f,"%.5g%c",mat->data[i],
+      fprintf(f,"%.5g%c",mat->data->get(i),
 	      ((((i+1) % columns) == 0) ? '\n' : ' '));
     }
     if ((i % columns) != 0) {
@@ -132,7 +132,7 @@ void saveMatrixFloatToFile(MatrixFloat *mat, FILE *f, bool is_ascii) {
     // We substract 1 so the final '\0' is not considered
     char b[5];
     for (i=0; i<mat->size; ++i) {
-      binarizer::code_float(mat->data[i], b);
+      binarizer::code_float(mat->data->get(i), b);
       fprintf(f, "%c%c%c%c%c%c", b[0], b[1], b[2], b[3], b[4], 
 	      ((((i+1) % columns) == 0) ? '\n' : ' '));
     }
@@ -159,7 +159,7 @@ int saveMatrixFloatToString(MatrixFloat *mat, char **buffer, bool is_ascii) {
   if (is_ascii) {
     r += sprintf(r,"ascii\n");
     for (i=0;i<mat->size;i++) {
-      r += sprintf(r,"%.5g%c",mat->data[i],
+      r += sprintf(r,"%.5g%c",mat->data->get(i),
 		   ((((i+1) % columns) == 0) ? '\n' : ' '));
     }
     if ((i % columns) != 0) {
@@ -168,8 +168,9 @@ int saveMatrixFloatToString(MatrixFloat *mat, char **buffer, bool is_ascii) {
   } else { // binary
     r += sprintf(r,"binary\n");
     // We substract 1 so the final '\0' is not considered
-    r += -1 + binarizer::code_vector_float(mat->data, mat->size,
-				      r, sizedata);
+    r += -1 + binarizer::code_vector_float(mat->getData(),
+					   mat->size,
+					   r, sizedata);
   }
   *buffer = b;
   return r-b;
@@ -189,7 +190,7 @@ MatrixFloat* readMatrixFloatHEX(int width,
   dims[1] = width;
   dims[0] = height;
   MatrixFloat *mat = new MatrixFloat(2,dims);
-  float *d = mat->data;
+  float *d = mat->getData();
   int size2 = 2*width*height;
   for (int i=0; i<size2; i+=2) {
     float brillo = (hexdigit(cs[i])*16+hexdigit(cs[i+1])) * normaliza;
@@ -229,7 +230,7 @@ MatrixFloat* readMatrixFloatPNM(constString cs,
   if (formato == "P4") { // PBM BINARY
     //if (cs.len() < (npixels >> 3)) return 0;
     mat = new MatrixFloat(2,dims);
-    float *d = mat->data;
+    float *d = mat->getData();
     const char *b = cs;
     int k=0;
     int vector_pos = 0;
@@ -253,7 +254,7 @@ MatrixFloat* readMatrixFloatPNM(constString cs,
     if (forcecolor) { 
       // We make the 3 values to be equal
       mat = new MatrixFloat(3,dims);
-      float *d = mat->data;
+      float *d = mat->getData();
       const char *b = cs;
       for (unsigned int i=0;i<npixels;i++) {
 	d[0] = d[1] = d[2] = clamp(normaliza*(unsigned char)b[i],CTEBLANCO,CTENEGRO);
@@ -261,7 +262,7 @@ MatrixFloat* readMatrixFloatPNM(constString cs,
       }
     } else {
       mat = new MatrixFloat(2,dims);
-      float *d = mat->data;
+      float *d = mat->getData();
       const char *b = cs;
       for (unsigned int i=0;i<npixels;i++) {
 	float brillo = normaliza*(unsigned char)b[i];
@@ -274,7 +275,7 @@ MatrixFloat* readMatrixFloatPNM(constString cs,
     if (cs.len() < 3*npixels) return 0;
     if (forcegray) {
       mat = new MatrixFloat(2,dims);
-      float *d = mat->data;
+      float *d = mat->getData();
       const char *b = cs;
       // gray = .3 * red + .59 * green + .11 * blue
       normaliza *= 0.01;
@@ -287,7 +288,7 @@ MatrixFloat* readMatrixFloatPNM(constString cs,
       }
     } else {
       mat = new MatrixFloat(3,dims);
-      float *d = mat->data;
+      float *d = mat->getData();
       const char *b = cs;
       // This loop does not work because in both cases we have 3-tuples
       // with values of the same pixel
@@ -320,7 +321,7 @@ int saveMatrixFloatPNM(MatrixFloat *mat,
   r = b = new char[sizedata+sizeheader];
   r += sprintf(r,"%s\n%d %d\n255\n",
 	       ((prof == 1) ? "P5" : "P6"),ancho,alto);
-  float f,*v = mat->data;
+  float f,*v = mat->getData();
   for (i=0;i<sizedata;i++) {
     f = clamp((CTENEGRO - v[i]) * 1/(CTENEGRO-CTEBLANCO),CTEBLANCO,CTENEGRO);
     r[i] = clamp((unsigned char)roundf(f*255),(unsigned char)0,(unsigned char)255);
@@ -342,7 +343,7 @@ int saveMatrixFloatHEX(MatrixFloat *mat,
   sizedata2  = 2*ancho*alto;
   char *r,*b;
   r = b = new char[sizedata2+1];
-  float f,*v = mat->data;
+  float f,*v = mat->getData();
   for (i=0;i<sizedata2;i+=2) {
     f = clamp((CTENEGRO - v[i>>1]) * 1/(CTENEGRO-CTEBLANCO),CTEBLANCO,CTENEGRO);
     unsigned int aux = clamp((unsigned int)roundf(f*255),(unsigned int)0,(unsigned int)255);

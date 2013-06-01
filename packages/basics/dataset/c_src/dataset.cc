@@ -122,7 +122,7 @@ void MatrixDataSet<T>::auxGetPattern(int offsetmatrix, int d) {
   // recursiva
   if (d == matrix->numDim-1) {
     // ultima dimension, caso base
-    T *data = matrix->data + offsetmatrix*t;
+    T *data = matrix->getData() + offsetmatrix*t;
     if (circular[d]) {
       for(i = subMatrixSize[d], c = coordinate[d]; i; c++,i--) {
 	pattern[offsetpat++] = data[mod(c,t)];
@@ -173,7 +173,7 @@ void MatrixDataSet<T>::auxPutPattern(int offsetmatrix, int d) {
   // recursiva
   if (d == matrix->numDim-1) {
     // ultima dimension, caso base
-    T *data = matrix->data + offsetmatrix*t;    
+    T *data = matrix->getData() + offsetmatrix*t;    
     if (circular[d]) {
       for(i = subMatrixSize[d], c = coordinate[d]; i; c++,i--) {
 	data[mod(c,t)] = const_pattern[offsetpat++];
@@ -699,14 +699,14 @@ SparseDataset<T>::SparseDataset(Matrix<T> *m, int nump, int patsize) :
   IncRef(m);
   matrix_indexes = new int[nump];
   int	j	 = 0;
-
+  float *d = m->getData();
   for (int i=0; i<nump; ++i) {
     matrix_indexes[i]  = j;
-    int	count	       = m->data[j];
+    int	count	       = d[j];
     for (int k=0; k<count<<2; k+=2)
-      if (m->data[k] < 0 || m->data[k] >= patternsize)
+      if (d[k] < 0 || d[k] >= patternsize)
 	ERROR_EXIT2(128, "Incorrect position value %.0f at matrix,"
-		    " expected in range [0,%d]\n", m->data[k], patternsize-1);
+		    " expected in range [0,%d]\n", d[k], patternsize-1);
     j += (count<<1) + 1;
   }
   if (j > m->size) {
@@ -727,13 +727,13 @@ template <typename T>
 int SparseDataset<T>::getPattern(int index, T *pat) {
   // WARNING: inly works with float
   memset(pat, 0, sizeof(T)*patternsize);
-  
+  float *d = matrix->getData();
   int	pos   = matrix_indexes[index];
-  int	count = matrix->data[pos++];
+  int	count = d[pos++];
   
   for (int i=0; i<count; i++) {
-    pat[int(matrix->data[pos])]	 = matrix->data[pos+1];
-    pos				+= 2;
+    pat[int(d[pos])]	 = d[pos+1];
+    pos			+= 2;
   }
   return patternsize;
 }

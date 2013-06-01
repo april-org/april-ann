@@ -160,8 +160,8 @@ Image<T>* Image<T>::clone() const {
   //     for (int x=0;x<width;x++)
   //       img(x,y) = operator()(x,y);
   // 
-  T *dest   = mat->data;
-  T *source = matrix->data + offset;
+  T *dest   = mat->getData();
+  T *source = matrix->getData() + offset;
   for (int y=0;y<height;y++) {
     for (int x=0;x<width;x++)
       dest[x] = source[x];
@@ -176,7 +176,7 @@ void Image<T>::projection_v(T *v) const {
   // v has size width
   for (int x=0;x<width;x++)
     v[x] = 0;
-  T *source = matrix->data + offset;
+  T *source = matrix->getData() + offset;
   for (int y=0;y<height;y++) {
     for (int x=0;x<width;x++)
       v[x] += source[x];
@@ -189,13 +189,13 @@ void Image<T>::projection_v(Matrix<T> **m) const {
   int dims[1];
   dims[0] = width;
   *m = new Matrix<T>(1,dims);
-  projection_v((*m)->data);
+  projection_v((*m)->getData());
 }
 
 template <typename T>
 void Image<T>::projection_h(T *v) const {
   // v has size height
-  T *source = matrix->data + offset;
+  T *source = matrix->getData() + offset;
   for (int y=0;y<height;y++) {
     T aux = 0;
     for (int x=0;x<width;x++)
@@ -210,7 +210,7 @@ void Image<T>::projection_h(Matrix<T> **m) const {
   int dims[1];
   dims[0] = height;
   *m = new Matrix<T>(1,dims);
-  projection_h((*m)->data);
+  projection_h((*m)->getData());
 }
 
 /**
@@ -244,8 +244,8 @@ Image<T>* Image<T>::shear_h(double angle, T default_value) const {
 	if (angle > 0)
 	{
 		// Angle > 0
-		T *source_line = matrix->data + offset;
-		T *dest_line = mat->data;
+		T *source_line = matrix->getData() + offset;
+		T *dest_line = mat->getData();
 		for (int line=0; line<height; line++){
 			float x = line*tan(angle);
 			float izq = x-int(x);
@@ -284,8 +284,8 @@ Image<T>* Image<T>::shear_h(double angle, T default_value) const {
 		// Angle < 0
 		// Empezamos por abajo
 		angle=-angle;
-		T *source_line = matrix->data + offset + matrix_width()*(height-1);
-		T *dest_line = mat->data + dims[1]*(height-1);
+		T *source_line = matrix->getData() + offset + matrix_width()*(height-1);
+		T *dest_line = mat->getData() + dims[1]*(height-1);
 		for (int line= 0 ; line < height; line++){
 			float x = line*tan(angle);
 			float izq = x-int(x);
@@ -343,7 +343,7 @@ void Image<T>::shear_h_inplace(double angle, T default_value) {
 		
 		// Ahora la linea de origen y destino es la misma
 		// Empezamos por el final
-		T *source_line = matrix->data + offset + (height-1) * matrix_width();
+		T *source_line = matrix->getData() + offset + (height-1) * matrix_width();
 		T *dest_line = source_line;
 		
 		for (int line=0; line<height; line++){
@@ -388,7 +388,7 @@ void Image<T>::shear_h_inplace(double angle, T default_value) {
 		angle = -angle;
 		width += inc_width;
 		
-		T *source_line = matrix->data + offset + (height - 1) * matrix_width();
+		T *source_line = matrix->getData() + offset + (height - 1) * matrix_width();
 		T *dest_line = source_line;
 		
 		for (int line = 0 ; line < height; line++){
@@ -442,7 +442,7 @@ void Image<T>::min_bounding_box(float threshold, int *w, int *h, int *x, int *y)
         {
                 for (col = 0; col < width; ++col)
                 {
-                        T val = matrix->data[offset + row*matrix_width() + col];
+                        T val = matrix->getData()[offset + row*matrix_width() + col];
 			if (val < threshold)
                         {
                                 upper = row;
@@ -460,7 +460,7 @@ void Image<T>::min_bounding_box(float threshold, int *w, int *h, int *x, int *y)
         {
                 for (col = 0; col < width; ++col)
                 {
-                        T val = matrix->data[offset + row*matrix_width() + col];                  
+                        T val = matrix->getData()[offset + row*matrix_width() + col];                  
 			if (val < threshold)
                         {
                                 lower = row;
@@ -479,7 +479,7 @@ void Image<T>::min_bounding_box(float threshold, int *w, int *h, int *x, int *y)
         {
                 for (row = 0; row < height; ++row)
                 {
-                        T val = matrix->data[offset + row*matrix_width() + col]; 
+                        T val = matrix->getData()[offset + row*matrix_width() + col]; 
 			if (val < threshold)
                         {
                                 left = col;
@@ -497,7 +497,7 @@ void Image<T>::min_bounding_box(float threshold, int *w, int *h, int *x, int *y)
         {
                 for (row = 0; row < height; ++row)
                 {
-                        T val = matrix->data[offset + row*matrix_width() + col]; 
+                        T val = matrix->getData()[offset + row*matrix_width() + col]; 
 			if (val < threshold)
                         {
                                 right = col;
@@ -824,7 +824,7 @@ Image<T> *Image<T>::affine_transform(AffineTransform2D *trans, T default_value,
   using april_utils::max;
   using april_utils::min;
 
-  float *inverse = trans->data;
+  float *inverse = trans->getData();
   
   float c[6];
   invert_affine_matrix(inverse, c);
