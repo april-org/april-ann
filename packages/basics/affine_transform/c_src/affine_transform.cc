@@ -27,9 +27,9 @@ const int AffineTransform2D::dimensions[2] = {3,3};
 AffineTransform2D::AffineTransform2D():
   Matrix<float>(2, dimensions, 0.0f)
 {
-  data[0] = 1.0f;
-  data[4] = 1.0f;
-  data[8] = 1.0f;
+  (*data)[0] = 1.0f;
+  (*data)[4] = 1.0f;
+  (*data)[8] = 1.0f;
 }
 
 AffineTransform2D::AffineTransform2D(Matrix<float> *mat): Matrix<float>(mat)
@@ -40,7 +40,7 @@ AffineTransform2D::AffineTransform2D(Matrix<float> *mat): Matrix<float>(mat)
          matrixSize[1] == 3);
 
   assert("AffineTransform2D: Last row must be [0 0 1]" &&
-         data[6] == 0 && data[7] == 0 && data[8] == 1);
+         (*data)[6] == 0 && (*data)[7] == 0 && (*data)[8] == 1);
 
 }
 
@@ -48,17 +48,17 @@ AffineTransform2D *AffineTransform2D::accumulate(AffineTransform2D *other)
 {
   Matrix<float> *temp = other->multiply(this);
   for (int i=0; i<6; i++)
-    this->data[i] = temp->data[i];
+    (*this->data)[i] = (*temp->data)[i];
   return this;
 }
 
 AffineTransform2D *AffineTransform2D::rotate(float angle)
 {
   AffineTransform2D trans; // 3x3 identity
-  trans.data[0] = cosf(angle);
-  trans.data[1] = -sinf(angle);
-  trans.data[3] = sinf(angle);
-  trans.data[4] = cosf(angle);
+  (*trans.data)[0] = cosf(angle);
+  (*trans.data)[1] = -sinf(angle);
+  (*trans.data)[3] = sinf(angle);
+  (*trans.data)[4] = cosf(angle);
 
   accumulate(&trans);
   return this;
@@ -75,8 +75,8 @@ AffineTransform2D *AffineTransform2D::rotate(float angle, float center_x, float 
 AffineTransform2D *AffineTransform2D::translate(float x, float y)
 {
   AffineTransform2D trans; // 3x3 identity
-  trans.data[2] = x;
-  trans.data[5] = y;
+  (*trans.data)[2] = x;
+  (*trans.data)[5] = y;
   accumulate(&trans);
   return this;
 }
@@ -84,8 +84,8 @@ AffineTransform2D *AffineTransform2D::translate(float x, float y)
 AffineTransform2D *AffineTransform2D::scale(float x, float y)
 {
   AffineTransform2D trans; // 3x3 identity
-  trans.data[0] = x;
-  trans.data[4] = y;
+  (*trans.data)[0] = x;
+  (*trans.data)[4] = y;
   accumulate(&trans);
   return this;
 }
@@ -93,16 +93,16 @@ AffineTransform2D *AffineTransform2D::scale(float x, float y)
 AffineTransform2D *AffineTransform2D::shear(float x, float y)
 {
   AffineTransform2D trans; // 3x3 identity
-  trans.data[1] = tanf(x);
-  trans.data[3] = tanf(y);
+  (*trans.data)[1] = tanf(x);
+  (*trans.data)[3] = tanf(y);
   accumulate(&trans);
   return this;
 }
 
 void AffineTransform2D::transform(float x, float y, float *dst_x, float *dst_y) const
 {
-  float res_x = data[0]*x+data[1]*y+data[2];
-  float res_y = data[3]*x+data[4]*y+data[5];
+  float res_x = (*data)[0]*x+(*data)[1]*y+(*data)[2];
+  float res_y = (*data)[3]*x+(*data)[4]*y+(*data)[5];
 
   *dst_x=res_x;
   *dst_y=res_y;

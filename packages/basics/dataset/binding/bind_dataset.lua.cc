@@ -526,8 +526,9 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   dim[0] = obj->numPatterns();
   dim[1] = obj->patternSize();
   MatrixFloat* mat = new MatrixFloat(2,dim);
+  float *d = mat->getData();
   for (int i=0; i < dim[0]; i++)
-    obj->getPattern(i,mat->data+i*dim[1]);
+    obj->getPattern(i,d+i*dim[1]);
   LUABIND_RETURN(MatrixFloat,mat);
 }
 //BIND_END
@@ -770,7 +771,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   int histogramlength = 1 << psize;
   int dim[1]; dim[0] = histogramlength;
   MatrixFloat* mat = new MatrixFloat(1,dim);
-  float *histogram = mat->data;
+  float *histogram = mat->getData();
   for (int i=0;i<histogramlength;i++) {
     histogram[i] = 0;
   }

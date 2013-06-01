@@ -203,9 +203,11 @@ namespace ANN {
     float *prev_w              = prev_weights->getPPALForReadAndWrite();
     for (unsigned int j=0; j<num_outputs; ++j) {
       unsigned int k = j;
+      float *d = data->getData();
+      float *old_d = old_data->getData();
       for (unsigned int i=0; i<num_inputs; ++i) {
-	w[k]      = data->data[current_w_pos+i];
-	prev_w[k] = old_data->data[current_w_pos+i];
+	w[k]      = d[current_w_pos+i];
+	prev_w[k] = old_d[current_w_pos+i];
 	k += num_outputs;
       }
       current_w_pos += column_size;

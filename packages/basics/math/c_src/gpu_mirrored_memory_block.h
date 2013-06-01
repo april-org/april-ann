@@ -26,6 +26,8 @@
 #define NO_POOL
 
 #include <cassert>
+#include "referenced.h"
+#include <new>
 
 #ifdef USE_CUDA
 #include <cuda.h>
@@ -43,17 +45,17 @@
 #endif
 
 template<typename T>
-class GPUMirroredMemoryBlock {
+class GPUMirroredMemoryBlock : public Referenced {
 #ifndef NO_POOL
   const static unsigned int MAX_POOL_LIST_SIZE = 20;
   static april_utils::hash<unsigned int,april_utils::list<T*> > pool_lists;
 #endif
   unsigned int size;
-  T      *mem_ppal;
+  mutable T      *mem_ppal;
 #ifdef USE_CUDA  
-  CUdeviceptr mem_gpu;
-  char        updated; // bit 0 CPU, bit 1 GPU
-  bool        pinned;
+  mutable CUdeviceptr mem_gpu;
+  mutable char        updated; // bit 0 CPU, bit 1 GPU
+  bool    pinned;
 #endif
 
 #ifdef USE_CUDA  
@@ -143,9 +145,9 @@ class GPUMirroredMemoryBlock {
   
 public:
 
-  // WARNING!!! the memory zone is not initialized, caller must do it if
-  // needed
-  GPUMirroredMemoryBlock(unsigned int sz) : size(sz) {
+  // WARNING!!! the memory zone is not initialized by default
+  GPUMirroredMemoryBlock(unsigned int sz,
+			 bool initialize=false) : Referenced(), size(sz) {
 #ifdef USE_CUDA
     updated  = 0;
     unsetUpdatedGPU();
@@ -164,8 +166,10 @@ public:
 #else
     mem_ppal = aligned_malloc<T>(size);
 #endif
+    if (initialize) for (unsigned int i=0; i<size; ++i) new(mem_ppal+i) T();
   }
   ~GPUMirroredMemoryBlock() {
+    // for (unsigned int i=0; i<size; ++i) mem_ppal[i].~T();
 #ifdef USE_CUDA
     if (pinned) {
       if (cudaFreeHost(reinterpret_cast<void*>(mem_ppal)) != cudaSuccess)
@@ -265,6 +269,29 @@ public:
 #else
     return false;
 #endif
+  }
+
+  T &get(unsigned int pos) {
+#ifdef USE_CUDA
+    updateMemPPAL();
+    unsetUpdatedGPU();
+#endif
+    return mem_ppal[pos];
+  }
+
+  T &operator[](unsigned int pos) {
+    return get(pos);
+  }
+
+  const T &get(unsigned int pos) const {
+#ifdef USE_CUDA
+    updateMemPPAL();
+#endif
+    return mem_ppal[pos];
+  }
+
+  const T &operator[](unsigned int pos) const {
+    return get(pos);
   }
 };
 

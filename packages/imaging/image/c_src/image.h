@@ -43,11 +43,11 @@ class Image : public Referenced {
   virtual ~Image();
   //Methods
   T& operator () (int x, int y) { 
-    return matrix->data[offset+x+y*matrix_width()]; 
+    return matrix->getData()[offset+x+y*matrix_width()]; 
   }
 
   T operator () (int x, int y) const {
-    return matrix->data[offset+x+y*matrix_width()];
+    return matrix->getData()[offset+x+y*matrix_width()];
   }
 
   // Bound-checking version of operator()

@@ -60,20 +60,21 @@ using april_utils::ReferencedVectorUint;
 
 //BIND_METHOD ReferencedVectorFloat toMatrix
 {
-  LUABIND_CHECK_ARGN(<=, 1);
-  bool reuse_vector;
-  LUABIND_GET_OPTIONAL_PARAMETER(1,bool,reuse_vector,true);
+  // LUABIND_CHECK_ARGN(<=, 1);
+  // bool reuse_vector;
+  // LUABIND_GET_OPTIONAL_PARAMETER(1,bool,reuse_vector,true);
   int dim = (int)obj->size();
   MatrixFloat *mat;
-  if (reuse_vector) {
-    float *internal_data = obj->release_internal_vector();
-    mat = new MatrixFloat(1,&dim,internal_data);
-  } else {
-    mat = new MatrixFloat(1,&dim);
-    for (int i=0; i<dim;++i) {
-      mat->data[i] = (*obj)[i];
-    }
+  // if (reuse_vector) {
+  // float *internal_data = obj->release_internal_vector();
+  // mat = new MatrixFloat(1,&dim,internal_data);
+  // } else {
+  mat = new MatrixFloat(1,&dim);
+  float *d = mat->getData();
+  for (int i=0; i<dim;++i) {
+    d[i] = (*obj)[i];
   }
+  // }
   LUABIND_RETURN(MatrixFloat,mat);
 }
 //BIND_END
