@@ -57,20 +57,28 @@ class Matrix : public Referenced {
     Matrix(int numDim, const int* dim, T* data_vector,
     CBLAS_ORDER major_order = CblasRowMajor);
   */
-  int  computeRawPos(const int *dim_pos) const;
+  /// Computes the position at data array given it coordinates
+  int  computeRawPos(const int *coords) const;
+  /// Indicates if the matrix is a sub-matrix
   bool getIsSubMatrix() const;
+  /// Returns the raw position of end iterator (last valid position + 1)
   int  getEndRawPos() const;
+  /// Returns the data pointer for read and write
   T *getData() { return data->getPPALForReadAndWrite(); }
+  /// Returns the data pointer for read
   const T *getData() const { return data->getPPALForRead(); }
+  /// Returns the offset of first data value (sub-matrix)
+  int getOffset() const { return offset; }
 public:
-  /*******************************************************/
+  /********* Iterators for Matrix traversal *********/
+  // forward declaration
   class const_iterator;
   class iterator {
     friend class const_iterator;
     friend class Matrix;
     Matrix *m;
     int raw_pos;
-    int *dim_pos;
+    int *coords;
     T *data;
     iterator(Matrix *m);
     iterator(Matrix *m, int raw_pos);
@@ -89,7 +97,7 @@ public:
     friend class Matrix;
     const Matrix *m;
     int raw_pos;
-    int *dim_pos;
+    int *coords;
     const T *data;
     const_iterator(const Matrix *m);
     const_iterator(const Matrix *m, int raw_pos);
@@ -108,25 +116,26 @@ public:
     const_iterator &operator++();
     const T &operator*() const;
   };
-  /*******************************************************/
+  
+  /********** Constructors ***********/
+  /// Full constructor given numDim, dim, default_value and major_order
   Matrix(int numDim, const int* dim, T default_value=T(),
 	 CBLAS_ORDER major_order = CblasRowMajor);
-  /// Constructor with void values and CblasRowMajor
+  /// Constructor with T() values and CblasRowMajor order
   Matrix(int numDim, int d1, ...);
+  /// Constructor given other matrix, it does a shallow or deep copy (clone)
   Matrix(Matrix<T> *other, bool clone=true);
-  /*
- /// Sub-matrix constructor
- Matrix(Matrix<T> *other, const int* pos, const int *size, bool clone=true,
- CBLAS_ORDER major_order = CblasRowMajor);
-  */
-  // Destructor...
+  /// Sub-matrix constructor
+  Matrix(Matrix<T> *other,
+	 const int* coords, const int *sizes,
+	 bool clone=true,
+	 CBLAS_ORDER major_order = CblasRowMajor);
+  /// Destructor
   virtual ~Matrix();
   /* Getters and setters */
-  int getOffset() const { return offset; }
   int getNumDim() const { return numDim; }
   const int *getMatrixDimPtr() const { return subMatrixSize; }
   int getMatrixDimSize(int i) const { return subMatrixSize[i]; }
-  int getSize() const { return total_size; }
   int size() const { return total_size; }
   CBLAS_ORDER getMajorType() const { return major_order; }
   /**********************/
@@ -232,20 +241,12 @@ Matrix<T>::Matrix(int numDim,
   last_raw_position = total_size-1;
 }
 
-/*
-  template <typename T>
-  Matrix<T>::Matrix(int numDim, const int* dim, T* data_vector,
-  CBLAS_ORDER major_order) : numDim(numDim),
-  major_order(major_order) {
-  matrixSize=new int[numDim];
-  size=1;
-  for(int i=0; i<numDim; i++) {
-  size *= dim[i];
-  matrixSize[i] = dim[i];
-  }
-  data = data_vector;
-  }
-*/
+template <typename T>
+Matrix<T>::Matrix(Matrix<T> *other,
+		  const int* coords, const int *sizes,
+		  bool clone,
+		  CBLAS_ORDER major_order) {
+}
 
 template <typename T>
 Matrix<T>::Matrix(int numDim, int d1, ...) : numDim(numDim),
@@ -588,36 +589,35 @@ void Matrix<T>::minAndMax(T &min, T &max) const {
 }
 
 template <typename T>
-int Matrix<T>::computeRawPos(const int *dim_pos) const {
+int Matrix<T>::computeRawPos(const int *coords) const {
   int raw_pos;
   switch(numDim) {
   case 1:
-    assert(dim_pos[0] < subMatrixSize[0]);
-    raw_pos = dim_pos[0];
+    assert(coords[0] < subMatrixSize[0]);
+    raw_pos = coords[0];
     break;
   case 2:
-    assert(dim_pos[0] < subMatrixSize[0]);
-    assert(dim_pos[1] < subMatrixSize[1]);
+    assert(coords[0] < subMatrixSize[0]);
+    assert(coords[1] < subMatrixSize[1]);
     if (major_order == CblasRowMajor)
-      raw_pos = dim_pos[0]*matrixSize[1]+dim_pos[1];
-    else raw_pos = dim_pos[1]*matrixSize[0]+dim_pos[0];
+      raw_pos = coords[0]*matrixSize[1]+coords[1];
+    else raw_pos = coords[1]*matrixSize[0]+coords[0];
     break;
   default:
-    assert(dim_pos[0] < subMatrixSize[0]);
-    assert(dim_pos[1] < subMatrixSize[1]);
-    assert(dim_pos[2] < subMatrixSize[2]);
-    raw_pos=(dim_pos[0]*matrixSize[1]+dim_pos[1])*matrixSize[2]+dim_pos[2];
+    assert(coords[0] < subMatrixSize[0]);
+    assert(coords[1] < subMatrixSize[1]);
+    assert(coords[2] < subMatrixSize[2]);
+    raw_pos=(coords[0]*matrixSize[1]+coords[1])*matrixSize[2]+coords[2];
     for(int i=3; i<numDim; i++) {
-      assert(dim_pos[i] < subMatrixSize[i]);
+      assert(coords[i] < subMatrixSize[i]);
       raw_pos *= matrixSize[i];
-      raw_pos += dim_pos[i];
+      raw_pos += coords[i];
     }
   }
   return raw_pos + offset;
 }
 
 template <typename T>
-
 bool Matrix<T>::getIsSubMatrix() const {
   return is_submatrix;
 }
@@ -631,8 +631,8 @@ int Matrix<T>::getEndRawPos() const {
 
 template <typename T>
 Matrix<T>::iterator::iterator(Matrix *m) : m(m), raw_pos(0) {
-  dim_pos = new int[m->getNumDim()];
-  for (int i=0; i<m->getNumDim(); ++i) dim_pos[i] = 0;
+  coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) coords[i] = 0;
   raw_pos = m->getOffset();
   // IncRef(m);
   data = m->getData();
@@ -641,40 +641,40 @@ Matrix<T>::iterator::iterator(Matrix *m) : m(m), raw_pos(0) {
 template <typename T>
 Matrix<T>::iterator::iterator(Matrix *m, int raw_pos) :
   m(m), raw_pos(raw_pos) {
-  dim_pos = new int[m->getNumDim()];
-  for (int i=0; i<m->getNumDim(); ++i) dim_pos[i] = 0;
+  coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) coords[i] = 0;
   // IncRef(m);
   data = m->getData();
 }
 
 template <typename T>
-Matrix<T>::iterator::iterator() : m(0), raw_pos(0), dim_pos(0) { }
+Matrix<T>::iterator::iterator() : m(0), raw_pos(0), coords(0) { }
 
 template <typename T>
 Matrix<T>::iterator::iterator(const iterator &other) :
   m(other.m),
   raw_pos(other.raw_pos) {
-  dim_pos = new int[m->getNumDim()];
-  for (int i=0; i<m->getNumDim(); ++i) dim_pos[i] = other.dim_pos[i];
+  coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
   // IncRef(m);
   data = m->getData();
 }
 
 template <typename T>
 Matrix<T>::iterator:: ~iterator() {
-  delete[] dim_pos;
+  delete[] coords;
   // if (m) DecRef(m);
 }
 
 template <typename T>
 typename Matrix<T>::iterator &Matrix<T>::iterator::operator=(const Matrix<T>::iterator &other) {
-  delete[] dim_pos;
+  delete[] coords;
   // if (m) DecRef(m);
   m = other.m;
   // IncRef(m);
   raw_pos = other.raw_pos;
-  dim_pos = new int[m->getNumDim()];
-  for (int i=0; i<m->getNumDim(); ++i) dim_pos[i] = other.dim_pos[i];
+  coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
   data = m->getData();
   return *this;
 }
@@ -696,9 +696,9 @@ typename Matrix<T>::iterator &Matrix<T>::iterator::operator++() {
     int j = m->getNumDim();
     do {
       --j;
-      dim_pos[j] = (dim_pos[j]+1) % dims[j];
-    } while(dim_pos[j] == 0);
-    if (j == 0 && dim_pos[0] == 0) raw_pos = m->getEndRawPos();
+      coords[j] = (coords[j]+1) % dims[j];
+    } while(coords[j] == 0);
+    if (j == 0 && coords[0] == 0) raw_pos = m->getEndRawPos();
   }
   else ++raw_pos;
   return *this;
@@ -713,8 +713,8 @@ T &Matrix<T>::iterator::operator*() {
 
 template <typename T>
 Matrix<T>::const_iterator::const_iterator(const Matrix *m) : m(m), raw_pos(0) {
-  dim_pos = new int[m->getNumDim()];
-  for (int i=0; i<m->getNumDim(); ++i) dim_pos[i] = 0;
+  coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) coords[i] = 0;
   raw_pos = m->getOffset();
   data = m->getData();
 }
@@ -722,20 +722,20 @@ Matrix<T>::const_iterator::const_iterator(const Matrix *m) : m(m), raw_pos(0) {
 template <typename T>
 Matrix<T>::const_iterator::const_iterator(const Matrix *m, int raw_pos) :
   m(m), raw_pos(raw_pos) {
-  dim_pos = new int[m->getNumDim()];
-  for (int i=0; i<m->getNumDim(); ++i) dim_pos[i] = 0;
+  coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) coords[i] = 0;
   data = m->getData();
 }
 
 template <typename T>
-Matrix<T>::const_iterator::const_iterator() : m(0), raw_pos(0), dim_pos(0) { }
+Matrix<T>::const_iterator::const_iterator() : m(0), raw_pos(0), coords(0) { }
 
 template <typename T>
 Matrix<T>::const_iterator::const_iterator(const Matrix<T>::const_iterator &other) :
   m(other.m),
   raw_pos(other.raw_pos) {
-  dim_pos = new int[m->getNumDim()];
-  for (int i=0; i<m->getNumDim(); ++i) dim_pos[i] = other.dim_pos[i];
+  coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
   data = m->getData();
 }
 
@@ -743,8 +743,8 @@ template <typename T>
 Matrix<T>::const_iterator::const_iterator(const Matrix<T>::iterator &other) :
   m(other.m),
   raw_pos(other.raw_pos) {
-  dim_pos = new int[m->getNumDim()];
-  for (int i=0; i<m->getNumDim(); ++i) dim_pos[i] = other.dim_pos[i];
+  coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
   data = m->getData();
 }
 
@@ -753,34 +753,34 @@ template <typename T>
 Matrix<T>::const_iterator::const_iterator(const iterator &other) :
   m(other.m),
   raw_pos(m.raw_pos) {
-  dim_pos = new int[m->getNumDim()];
-  for (int i=0; i<m->getNumDim(); ++i) dim_pos[i] = other.dim_pos[i];
+  coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
   data = m->getData();
 }
 */
 
 template <typename T>
 Matrix<T>::const_iterator::~const_iterator() {
-  delete[] dim_pos;
+  delete[] coords;
 }
 
 template <typename T>
 typename Matrix<T>::const_iterator &Matrix<T>::const_iterator::operator=(const typename Matrix<T>::const_iterator &other) {
-  delete[] dim_pos;
+  delete[] coords;
   m = other.m;
   raw_pos = other.raw_pos;
-  dim_pos = new int[m->getNumDim()];
-  for (int i=0; i<m->getNumDim(); ++i) dim_pos[i] = other.dim_pos[i];
+  coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
   return *this;
 }
 
 template <typename T>
 typename Matrix<T>::const_iterator &Matrix<T>::const_iterator::operator=(const typename Matrix<T>::iterator &other) {
-  delete[] dim_pos;
+  delete[] coords;
   m = other.m;
   raw_pos = other.raw_pos;
-  dim_pos = new int[m->getNumDim()];
-  for (int i=0; i<m->getNumDim(); ++i) dim_pos[i] = other.dim_pos[i];
+  coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
   return *this;
 }
 
@@ -811,10 +811,10 @@ typename Matrix<T>::const_iterator &Matrix<T>::const_iterator::operator++() {
     int j = m->getNumDim();
     do {
       --j;
-      dim_pos[j] = (dim_pos[j]+1) % dims[j];
-    } while(dim_pos[j] == 0);
-    if (j == 0 && dim_pos[0] == 0) raw_pos = m->getEndRawPos();
-    else raw_pos = m->computeRawPos(dim_pos);
+      coords[j] = (coords[j]+1) % dims[j];
+    } while(coords[j] == 0);
+    if (j == 0 && coords[0] == 0) raw_pos = m->getEndRawPos();
+    else raw_pos = m->computeRawPos(coords);
   }
   else ++raw_pos;
   return *this;
