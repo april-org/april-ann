@@ -13,7 +13,7 @@ ascii
 7
 ]]
 
-c = a:multiply(b)
+c = a:mul(b)
 
 print(1*1+2*4+3*7)
 print(c:toString())
@@ -26,5 +26,9 @@ ascii
 7 8 9
 ]]
 
-e = d:multiply(d)
+print(d:toString())
+print(d:clone("col_major"):toString())
+print(d:clone("col_major", true):toString())
+
+e = d:mul(d)
 print(e:toString())

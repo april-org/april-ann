@@ -320,7 +320,7 @@ void doSger(CBLAS_ORDER major_type,
             bool use_gpu);
 
 float doSnrm2(unsigned int n,
-	      FloatGPUMirroredMemoryBlock *x,
+	      const FloatGPUMirroredMemoryBlock *x,
 	      unsigned int shift,
 	      unsigned int inc,
 	      bool use_gpu);

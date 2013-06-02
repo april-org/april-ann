@@ -326,26 +326,14 @@ int binarizer::buffer_size_64(int num, bool with_newlines) {
 }
 
 // ------------------- AUXILIAR -------------------
-
 int binarizer::code_vector_float(const float *vect,
 				 int vect_size, 
 				 char *dest_buffer,
 				 int dest_buffer_size,
 				 bool with_newlines) {
-  int i;
-  char *rb = dest_buffer;
-  if (buffer_size_32(vect_size,with_newlines) <= dest_buffer_size) {
-    i = 0;
-    while (i<vect_size) {
-      code_float(vect[i],rb);
-      rb+=5;
-      i++;
-      if (with_newlines && !(i%16)) { *rb = '\n'; rb++; }
-    }
-    if (with_newlines && (i % 16))  { *rb = '\n'; rb++; }
-    *rb = '\0'; rb++;
-  }
-  return rb-dest_buffer;
+  return code_iterator_float(vect, vect+vect_size, vect_size,
+			     dest_buffer, dest_buffer_size,
+			     with_newlines);
 }
 
 int binarizer::code_vector_int32(const int32_t *vect,

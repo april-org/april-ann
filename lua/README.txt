@@ -1,3 +1,7 @@
+02/06/2013
+-  lua.c:22 static lua_State *globalL = NULL;
++  lua.c:22 lua_State *globalL = NULL;
+
 23/04/2007
 Aplicar los cambios del parche lua_dist2april.patch
 ---------------------------------------------------

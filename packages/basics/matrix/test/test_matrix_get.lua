@@ -9,7 +9,7 @@ m:set(aux)
 for i=1,3 do
   for j=1,4 do
     for k=1,5 do
-      print(i,j,k,m:get(i,j,k))
+      print(i,j,k,m:getElement(i,j,k))
     end
   end
 end

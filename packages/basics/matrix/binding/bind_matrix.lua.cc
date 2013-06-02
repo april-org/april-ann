@@ -65,11 +65,10 @@
   }
   MatrixFloat* obj = new MatrixFloat(ndims,dim);
   if (lua_istable(L,argn)) {
-    int talla = obj->size;
-    float *data=obj->getData();
-    for (int i=1; i <= talla; i++) {
+    int i=1;
+    for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
       lua_rawgeti(L,argn,i);
-      data[i-1] = (float)luaL_checknumber(L, -1);
+      *it = (float)luaL_checknumber(L, -1);
       lua_remove(L,-1);
     }
   }
@@ -104,7 +103,7 @@
   ReadFileStream f(filename);
   if ((obj = readMatrixFloatFromStream(f)) == 0)
     LUABIND_ERROR("bad format");
-  LUABIND_RETURN(MatrixFloat,obj);
+  else LUABIND_RETURN(MatrixFloat,obj);
 }
 //BIND_END
 
@@ -129,7 +128,7 @@
   MatrixFloat *obj;
   if ((obj = readMatrixFloatFromStream(cs)) == 0)
     LUABIND_ERROR("bad format");
-  LUABIND_RETURN(MatrixFloat,obj);
+  else LUABIND_RETURN(MatrixFloat,obj);
 }
 //BIND_END
 
@@ -198,7 +197,7 @@
   MatrixFloat *obj;
   if ((obj = readMatrixFloatPNM(cs,forcecolor,forcegray))== 0)
     LUABIND_ERROR("bad format");
-  LUABIND_RETURN(MatrixFloat,obj);
+  else LUABIND_RETURN(MatrixFloat,obj);
 }
 //BIND_END
 
@@ -278,9 +277,15 @@
   LUABIND_CHECK_PARAMETER(1, table);
   int veclen;
   LUABIND_TABLE_GETN(1, veclen);
-  if (veclen != obj->size)
-    LUABIND_FERROR2("wrong size %d instead of %d",veclen,obj->size);
-  LUABIND_TABLE_TO_VECTOR(1, float, obj->getData(), veclen);
+  if (veclen != obj->getSize())
+    LUABIND_FERROR2("wrong size %d instead of %d",veclen,obj->getSize());
+  int i=1;
+  for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
+    lua_rawgeti(L,1,i);
+    *it = (float)luaL_checknumber(L, -1);
+    lua_remove(L,-1);
+  }
+  LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END
 
@@ -292,50 +297,43 @@
 //DOC_END
 {
   int argn = lua_gettop(L); // number of arguments
-  if (argn != obj->numDim)
-    LUABIND_FERROR2("wrong size %d instead of %d",argn,obj->numDim);
-
+  if (argn != obj->getNumDim())
+    LUABIND_FERROR2("wrong size %d instead of %d",argn,obj->getNumDim());
   float ret;
-  if (obj->numDim == 1) {
+  if (obj->getNumDim() == 1) {
     int v1;
     LUABIND_GET_PARAMETER(1,int,v1);
-    if (v1<1 || v1 > obj->matrixSize[0]) {
+    if (v1<1 || v1 > obj->getMatrixDimSize(0)) {
       LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-		      v1, obj->matrixSize[0]);
+		      v1, obj->getMatrixDimSize(0));
     }
     ret = (*obj)(v1-1);
   }
-  else if (obj->numDim == 2) {
+  else if (obj->getNumDim() == 2) {
     int v1, v2;
     LUABIND_GET_PARAMETER(1,int,v1);
     LUABIND_GET_PARAMETER(2,int,v2);
-    if (v1<1 || v1 > obj->matrixSize[0]) {
+    if (v1<1 || v1 > obj->getMatrixDimSize(0)) {
       LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-		      v1, obj->matrixSize[0]);
+		      v1, obj->getMatrixDimSize(0));
     }
-    if (v2<1 || v2 > obj->matrixSize[1]) {
+    if (v2<1 || v2 > obj->getMatrixDimSize(1)) {
       LUABIND_FERROR2("wrong index parameter: 2 <= %d <= %d is incorrect",
-		      v2, obj->matrixSize[1]);
+		      v2, obj->getMatrixDimSize(1));
     }
     ret = (*obj)(v1-1, v2-1);
   }
   else {
-    int value;
-    LUABIND_GET_PARAMETER(1,int,value);
-    if (value<1 || value > obj->matrixSize[0]) {
-      LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-		      value, obj->matrixSize[0]);
-    }
-    int rawpos = value-1;
-    for (int i=1; i<obj->numDim; ++i) {
-      LUABIND_GET_PARAMETER(i+1,int,value);
-      if (value<1 || value > obj->matrixSize[i]) {
+    int *coords = new int[obj->getNumDim()];
+    for (int i=0; i<obj->getNumDim(); ++i) {
+      LUABIND_GET_PARAMETER(i+1,int,coords[i]);
+      if (coords[i]<1 || coords[i] > obj->getMatrixDimSize(i)) {
 	LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-			value, obj->matrixSize[i]);
+			coords[i], obj->getMatrixDimSize(i));
       }
-      rawpos = rawpos*obj->matrixSize[i] + (value-1);
+      coords[i]--;
     }
-    ret = obj->data->get(rawpos);
+    ret = (*obj)(coords, obj->getNumDim());
   }
   LUABIND_RETURN(float, ret);
 }
@@ -351,54 +349,49 @@
 //DOC_END
 {
   int argn = lua_gettop(L); // number of arguments
-  if (argn != obj->numDim+1)
-    LUABIND_FERROR2("wrong size %d instead of %d",argn,obj->numDim+1);
+  if (argn != obj->getNumDim()+1)
+    LUABIND_FERROR2("wrong size %d instead of %d",argn,obj->getNumDim()+1);
   float f;
-  if (obj->numDim == 1) {
+  if (obj->getNumDim() == 1) {
     int v1;
     LUABIND_GET_PARAMETER(1,int,v1);
-    if (v1<1 || v1 > obj->matrixSize[0]) {
+    if (v1<1 || v1 > obj->getMatrixDimSize(0)) {
       LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-		      v1, obj->matrixSize[0]);
+		      v1, obj->getMatrixDimSize(0));
     }
-    LUABIND_GET_PARAMETER(obj->numDim+1,float,f);
+    LUABIND_GET_PARAMETER(obj->getNumDim()+1,float,f);
     (*obj)(v1-1) = f;
   }
-  else if (obj->numDim == 2) {
+  else if (obj->getNumDim() == 2) {
     int v1, v2;
     LUABIND_GET_PARAMETER(1,int,v1);
     LUABIND_GET_PARAMETER(2,int,v2);
-    if (v1<1 || v1 > obj->matrixSize[0]) {
+    if (v1<1 || v1 > obj->getMatrixDimSize(0)) {
       LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-		      v1, obj->matrixSize[0]);
+		      v1, obj->getMatrixDimSize(0));
     }
-    if (v2<1 || v2 > obj->matrixSize[1]) {
+    if (v2<1 || v2 > obj->getMatrixDimSize(1)) {
       LUABIND_FERROR2("wrong index parameter: 2 <= %d <= %d is incorrect",
-		      v2, obj->matrixSize[1]);
+		      v2, obj->getMatrixDimSize(1));
     }
-    LUABIND_GET_PARAMETER(obj->numDim+1,float,f);
+    LUABIND_GET_PARAMETER(obj->getNumDim()+1,float,f);
     (*obj)(v1-1, v2-1) = f;
   }
   else {
-    int value;
-    LUABIND_GET_PARAMETER(1,int,value);
-    if (value<1 || value > obj->matrixSize[0]) {
-      LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-		      value, obj->matrixSize[0]);
-    }
-    int rawpos = value-1;
-    for (int i=1; i<obj->numDim; ++i) {
-      LUABIND_GET_PARAMETER(i+1,int,value);
-      if (value<1 || value > obj->matrixSize[i]) {
+    int *coords = new int[obj->getNumDim()];
+    for (int i=0; i<obj->getNumDim(); ++i) {
+      LUABIND_GET_PARAMETER(i+1,int,coords[i]);
+      if (coords[i]<1 || coords[i] > obj->getMatrixDimSize(i)) {
 	LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-			value, obj->matrixSize[i]);
+			coords[i], obj->getMatrixDimSize(i));
       }
-      rawpos = rawpos*obj->matrixSize[i] + (value-1);
+      coords[i]--;
     }
     float f;
-    LUABIND_GET_PARAMETER(obj->numDim+1,float,f);
-    obj->data->get(rawpos) = f;
+    LUABIND_GET_PARAMETER(obj->getNumDim()+1,float,f);
+    (*obj)(coords, obj->getNumDim()) = f;
   }
+  LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END
 
@@ -410,11 +403,12 @@
 {
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_CHECK_PARAMETER(1, float);
-  float value,*data=obj->getData();
+  float value;
   LUABIND_GET_PARAMETER(1,float,value);
-  int talla = obj->size;
-  for (int i=0; i < talla; i++)
-    data[i] = value;
+  for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it) {
+    *it = value;
+  }
+  LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END
 
@@ -425,8 +419,8 @@
 //DOC_END
 {
   LUABIND_CHECK_ARGN(==, 0);
-  int  ndim=obj->numDim;
-  int *d   =obj->matrixSize;
+  int ndim=obj->getNumDim();
+  const int *d=obj->getMatrixDimPtr();
   LUABIND_VECTOR_TO_NEW_TABLE(int, d, ndim);
   LUABIND_RETURN_FROM_STACK(-1);
 }
@@ -438,8 +432,28 @@
 /// Devuelve un <em>clon</em> de la matriz.
 //DOC_END
 {
-  LUABIND_CHECK_ARGN(==, 0);
-  MatrixFloat *obj2 = obj->clone();
+  LUABIND_CHECK_ARGN(>=, 0);
+  LUABIND_CHECK_ARGN(<=, 2);
+  int argn;
+  argn = lua_gettop(L); // number of arguments
+  MatrixFloat *obj2;
+  switch(argn) {
+  case 0:
+    obj2 = obj->clone();
+    break;
+  default:
+    {
+      const char *major;
+      bool transpose;
+      LUABIND_GET_OPTIONAL_PARAMETER(1, string, major, "row_major");
+      LUABIND_GET_OPTIONAL_PARAMETER(2, bool, transpose, false);
+      CBLAS_ORDER order=CblasRowMajor;
+      if (strcmp(major, "col_major") == 0) order = CblasColMajor;
+      else if (strcmp(major, "row_major") != 0)
+	LUABIND_FERROR1("Incorrect major order string %s", major);
+      obj2 = obj->clone(order, transpose);
+    }
+  }
   LUABIND_RETURN(MatrixFloat,obj2);
 }
 //BIND_END
@@ -451,10 +465,10 @@
 //DOC_END
 {
   LUABIND_CHECK_ARGN(==, 0);
-  int resul = 1;
-  for (int i=0; resul && i<obj->size; i++)
+  bool resul=true;
+  for (MatrixFloat::iterator it(obj->begin()); resul && it!=obj->end(); ++it)
     //if (!isfinite(obj->data[i])) resul = 0;
-    if ((obj->data->get(i) - obj->data->get(i)) != 0.0f) resul = 0;
+    if ((*it) - (*it) != 0.0f) resul = false;
   LUABIND_RETURN(boolean,resul);
 }
 //BIND_END
@@ -472,137 +486,165 @@
   LUABIND_CHECK_PARAMETER(2, float);
   LUABIND_GET_PARAMETER(1,float,rmin);
   LUABIND_GET_PARAMETER(2,float,rmax);
-
+  
   // ajusta los valores a un rango predeterminado
-  float mmin = obj->data->get(0);
-  float mmax = obj->data->get(0);
-  for (int i=0; i<obj->size; i++) {
-    if (mmin > obj->data->get(i))
-      mmin = obj->data->get(i);
-    if (mmax < obj->data->get(i))
-      mmax = obj->data->get(i);
-  }
+  float mmin, mmax;
+  obj->minAndMax(mmin, mmax);
   if (mmax - mmin == 0) {
     // caso especial, poner todos al valor inferior
-    for (int i=0; i<obj->size; i++) {
-      obj->data->get(i) = rmin;
+    for (MatrixFloat::iterator it(obj->begin()); it!=obj->end(); ++it) {
+      *it = rmin;
     }
   } else {
     float offset = rmin-mmin;
     double ratio = (rmax-rmin)/(mmax-mmin);
-    for (int i=0; i<obj->size; i++) {
-      obj->data->get(i) = ratio*(obj->data->get(i)+offset);
+    for (MatrixFloat::iterator it(obj->begin()); it!=obj->end(); ++it) {
+      *it = ratio*((*it)+offset);
     }
   }
+  LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END
 
 //BIND_METHOD MatrixFloat toTable
 // Permite salvar una matriz en una tabla lua
 // TODO: Tener en cuenta las dimensiones de la matriz
-{
-  LUABIND_CHECK_ARGN(==, 0);
-  LUABIND_VECTOR_TO_NEW_TABLE(float, obj->getData(), obj->size);
-  LUABIND_RETURN_FROM_STACK(-1);
-}
+  {
+    LUABIND_CHECK_ARGN(==, 0);
+    LUABIND_FORWARD_CONTAINER_TO_NEW_TABLE(MatrixFloat, float, *obj);
+    LUABIND_RETURN_FROM_STACK(-1);
+  }
 //BIND_END
 
 //BIND_METHOD MatrixFloat getMinValue
-{
-  float min = obj->data->get(0);
-  for (int i=1; i<obj->size; ++i) {
-    if (obj->data->get(i) < min)
-      min = obj->data->get(i);
+  {
+    LUABIND_RETURN(float, obj->min());
   }
-  LUABIND_RETURN(float, min);
-}
 //BIND_END
 
 //BIND_METHOD MatrixFloat getMaxValue
-{
-  float max = obj->data->get(0);
-  for (int i=1; i<obj->size; ++i) {
-    if (obj->data->get(i) > max)
-      max = obj->data->get(i);
+  {
+    LUABIND_RETURN(float, obj->max());
   }
-  LUABIND_RETURN(float, max);
-}
 //BIND_END
 
 //BIND_METHOD MatrixFloat clamp
-{
-  LUABIND_CHECK_ARGN(==, 2);
-  float lower,upper;
-  LUABIND_GET_PARAMETER(1, float, lower);
-  LUABIND_GET_PARAMETER(2, float, upper);
-  obj->clamp(lower,upper);
-}
+  {
+    LUABIND_CHECK_ARGN(==, 2);
+    float lower,upper;
+    LUABIND_GET_PARAMETER(1, float, lower);
+    LUABIND_GET_PARAMETER(2, float, upper);
+    obj->clamp(lower,upper);
+    LUABIND_RETURN(MatrixFloat, obj);
+  }
 //BIND_END
 
-//BIND_METHOD MatrixFloat addition
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  MatrixFloat *mat,*resul;
-  LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
-  if (!obj->sameDim(mat))
-    LUABIND_ERROR("matrix addition wrong dimensions");
-  resul = obj->addition(mat);
-  LUABIND_RETURN(MatrixFloat, resul);
-}
+//BIND_METHOD MatrixFloat add
+  {
+    int argn;
+    argn = lua_gettop(L); // number of arguments
+    LUABIND_CHECK_ARGN(>=, 1);
+    LUABIND_CHECK_ARGN(<=, 2);
+    MatrixFloat *mat,*resul;
+    LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
+    if (!obj->sameDim(mat))
+      LUABIND_ERROR("matrix add wrong dimensions");
+    if (argn == 1) resul = obj->addition(mat);
+    else {
+      float alpha;
+      LUABIND_GET_PARAMETER(2, float, alpha);
+      resul = obj->addition(mat, alpha);
+    }
+    LUABIND_RETURN(MatrixFloat, resul);
+  }
 //BIND_END
 
-//BIND_METHOD MatrixFloat accumulate_addition
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  MatrixFloat *mat;
-  LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
-  if (!obj->sameDim(mat))
-    LUABIND_ERROR("matrix accumulate_addition wrong dimensions");
-  obj->accumulate_addition(mat);
-}
+//BIND_METHOD MatrixFloat acc_add
+  {
+    int argn;
+    argn = lua_gettop(L); // number of arguments
+    LUABIND_CHECK_ARGN(>=, 1);
+    LUABIND_CHECK_ARGN(<=, 2);
+    MatrixFloat *mat;
+    LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
+    if (!obj->sameDim(mat))
+      LUABIND_ERROR("matrix acc_add wrong dimensions");
+    if (argn == 1) obj->accumulate_addition(mat);
+    else {
+      float alpha;
+      LUABIND_GET_PARAMETER(2, float, alpha);
+      obj->accumulate_addition(mat, alpha);
+    }
+    LUABIND_RETURN(MatrixFloat, obj);
+  }
 //BIND_END
 
-//BIND_METHOD MatrixFloat substraction
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  MatrixFloat *mat,*resul;
-  LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
-  if (!obj->sameDim(mat))
-    LUABIND_ERROR("matrix substraction wrong dimensions");
-  resul = obj->substraction(mat);
-  LUABIND_RETURN(MatrixFloat, resul);
-}
+//BIND_METHOD MatrixFloat sub
+  {
+    LUABIND_CHECK_ARGN(==, 1);
+    MatrixFloat *mat,*resul;
+    LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
+    if (!obj->sameDim(mat))
+      LUABIND_ERROR("matrix sub wrong dimensions");
+    resul = obj->substraction(mat);
+    LUABIND_RETURN(MatrixFloat, resul);
+  }
 //BIND_END
 
-//BIND_METHOD MatrixFloat accumulate_substraction
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  MatrixFloat *mat;
-  LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
-  if (!obj->sameDim(mat))
-    LUABIND_ERROR("matrix accumulate_substraction wrong dimensions");
-  obj->accumulate_substraction(mat);
-}
+//BIND_METHOD MatrixFloat acc_sub
+  {
+    LUABIND_CHECK_ARGN(==, 1);
+    MatrixFloat *mat;
+    LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
+    if (!obj->sameDim(mat))
+      LUABIND_ERROR("matrix acc_sub wrong dimensions");
+    obj->accumulate_substraction(mat);
+    LUABIND_RETURN(MatrixFloat, obj);  
+  }
 //BIND_END
 
-//BIND_METHOD MatrixFloat multiply
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  MatrixFloat *mat,*resul;
-  LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
-  resul = obj->multiply(mat);
-  if (resul == 0)
-    LUABIND_ERROR("matrix multiply wrong dimensions");
-  LUABIND_RETURN(MatrixFloat, resul);
-}
+//BIND_METHOD MatrixFloat mul
+  {
+    LUABIND_CHECK_ARGN(==, 1);
+    MatrixFloat *mat,*resul;
+    LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
+    resul = obj->multiply(mat);
+    if (resul == 0)
+      LUABIND_ERROR("matrix mul wrong dimensions");
+    else LUABIND_RETURN(MatrixFloat, resul);
+  }
 //BIND_END
 
-//BIND_METHOD MatrixFloat multiply_by_scalar
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  float value;
-  LUABIND_GET_PARAMETER(1, float, value);
-  obj->multiply_by_scalar(value);
-}
+//BIND_METHOD MatrixFloat acc_mul
+  {
+    LUABIND_CHECK_ARGN(>=, 2);
+    LUABIND_CHECK_ARGN(<=, 4);
+    int argn;
+    argn = lua_gettop(L); // number of arguments
+    float alpha;
+    float beta;
+    MatrixFloat *matA,*matB;
+    LUABIND_GET_PARAMETER(1, MatrixFloat, matA);
+    LUABIND_GET_PARAMETER(2, MatrixFloat, matB);
+    LUABIND_GET_OPTIONAL_PARAMETER(3, float, alpha, 1.0f);
+    LUABIND_GET_OPTIONAL_PARAMETER(4, float, beta, 1.0f);
+    obj->accumulate_multiply(alpha, matA, matB, beta);
+    LUABIND_RETURN(MatrixFloat, obj);
+  }
 //BIND_END
 
+//BIND_METHOD MatrixFloat mul_scalar
+  {
+    LUABIND_CHECK_ARGN(==, 1);
+    float value;
+    LUABIND_GET_PARAMETER(1, float, value);
+    obj->multiply_by_scalar(value);
+    LUABIND_RETURN(MatrixFloat, obj);
+  }
+//BIND_END
+ 
+//BIND_METHOD MatrixFloat norm2
+  {
+    LUABIND_RETURN(float, obj->norm2());
+  }
+//BIND_END

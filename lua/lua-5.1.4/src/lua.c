@@ -19,7 +19,7 @@
 
 
 
-static lua_State *globalL = NULL;
+lua_State *globalL = NULL;
 
 static const char *progname = LUA_PROGNAME;
 

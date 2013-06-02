@@ -216,7 +216,7 @@ public:
   }
 #endif
   
-  const T *getPPALForRead() {
+  const T *getPPALForRead() const {
 #ifdef USE_CUDA
     updateMemPPAL();
 #endif
@@ -224,7 +224,7 @@ public:
   }
 
 #ifdef USE_CUDA
-  const T *getGPUForRead() {
+  const T *getGPUForRead() const {
     updateMemGPU();
     return reinterpret_cast<T*>(mem_gpu);
   }

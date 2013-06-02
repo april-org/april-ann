@@ -82,16 +82,16 @@ void check_table_fields(lua_State *L, int idx, ...);
   } while (0)
 
 #define LUABIND_FORWARD_CONTAINER_TO_NEW_TABLE(container_type, data_type, container) \
-  do { \
-    container_type *luabind_container = &container; \
-    lua_createtable (L, luabind_container->size(), 0); \
-    int luabind_index = 1; \
-    for (container_type::iterator luabind_i = luabind_container->begin(); \
-        luabind_i != luabind_container->end(); \
-        luabind_i++) { \
-      lua_push##data_type(L, *luabind_i); \
-      lua_rawseti(L, -2, luabind_index++); \
-    } \
+  do {									\
+    const container_type *luabind_container = &container;		\
+    lua_createtable (L, luabind_container->size(), 0);			\
+    int luabind_index = 1;						\
+    for (container_type::const_iterator luabind_i = luabind_container->begin(); \
+	 luabind_i != luabind_container->end();				\
+	 ++luabind_i) {							\
+      lua_push##data_type(L, *luabind_i);				\
+      lua_rawseti(L, -2, luabind_index++);				\
+    }									\
   } while(0)
 
 
