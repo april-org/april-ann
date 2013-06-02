@@ -66,8 +66,8 @@ class Image : public Referenced {
     return (1-fy)*h1 + fy*h2;
   }
 
-  int matrix_width()  const { return matrix->matrixSize[1]; }
-  int matrix_height() const { return matrix->matrixSize[0]; }
+  int matrix_width()  const { return matrix->getMatrixDimSize(1); }
+  int matrix_height() const { return matrix->getMatrixDimSize(0); }
   int offset_width()  const { return offset % matrix_width(); }
   int offset_height() const { return offset / matrix_width(); }
   Image<T> *clone() const;

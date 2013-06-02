@@ -70,9 +70,9 @@ using april_utils::ReferencedVectorUint;
   // mat = new MatrixFloat(1,&dim,internal_data);
   // } else {
   mat = new MatrixFloat(1,&dim);
-  float *d = mat->getData();
-  for (int i=0; i<dim;++i) {
-    d[i] = (*obj)[i];
+  MatrixFloat::iterator it(mat->begin());
+  for (int i=0; i<dim;++i, ++it) {
+    *it = (*obj)[i];
   }
   // }
   LUABIND_RETURN(MatrixFloat,mat);
@@ -117,14 +117,15 @@ using april_utils::ReferencedVectorUint;
   LUABIND_CHECK_ARGN(==, 0);
   int dim = (int)obj->size();
   MatrixFloat *mat = new MatrixFloat(1,&dim);
-  for (int i=0; i<dim;++i) {
+  MatrixFloat::iterator it(mat->begin());
+  for (int i=0; i<dim;++i, ++it) {
     uint32_t value = (*obj)[i];
     float aux = value;
     uint32_t test = aux;
     if (value != test)
       LUABIND_FERROR2("vector_uint toMatrix error: %f cannot be converted to uint %u\n",
 		      aux,test);
-    mat->data[i] = aux;
+    *it = aux;
   }
   LUABIND_RETURN(MatrixFloat,mat);
 }
