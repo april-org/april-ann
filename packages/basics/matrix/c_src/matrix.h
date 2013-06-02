@@ -129,7 +129,7 @@ public:
   Matrix(Matrix<T> *other,
 	 const int* coords, const int *sizes,
 	 bool clone=true,
-	 CBLAS_ORDER major_order = CblasRowMajor);
+	 CBLAS_ORDER major_order=CblasRowMajor);
   /// Destructor
   virtual ~Matrix();
   /* Getters and setters */
@@ -222,9 +222,9 @@ Matrix<T>::Matrix(int numDim,
 		  const int* dim,
 		  T default_value,
 		  CBLAS_ORDER major_order) : numDim(numDim),
-					    is_submatrix(false),
-					    offset(0),
-					    major_order(major_order) {
+					     is_submatrix(false),
+					     offset(0),
+					     major_order(major_order) {
   matrixSize=new int[numDim];
   subMatrixSize=new int[numDim];
   total_size=1;
@@ -245,7 +245,61 @@ template <typename T>
 Matrix<T>::Matrix(Matrix<T> *other,
 		  const int* coords, const int *sizes,
 		  bool clone,
-		  CBLAS_ORDER major_order) {
+		  CBLAS_ORDER major_order) : numDim(other->numDim),
+					     is_submatrix(true),
+					     offset(0),
+					     major_order(major_order) {
+  if (major_order == CblasColMajor && numDim != 2)
+    ERROR_EXIT(128, "Col-major order is only allowed when numDim=2\n");
+  matrixSize    = new int[numDim];
+  subMatrixSize = new int[numDim];
+  total_size    = 1;
+  if (clone) {
+    for (int i=0; i<numDim; i++) {
+      matrixSize[i] = subMatrixSize[i] = sizes[i];
+      if (sizes[i] + coords[i] > matrixSize[i])
+	ERROR_EXIT3(128, "Size + coordinates are out of matrix size: %d+%d > %d\n",
+		    sizes[i], coords[i], matrixSize[i]);
+      total_size = total_size * subMatrixSize[i];
+    }
+    allocate_memory(total_size);
+    if (major_order == other->major_order) {
+      
+    }
+    else {
+      
+    }
+  }
+  else {
+    if (major_order != other->major_order)
+      ERROR_EXIT(128, "Major orders are different, set parameter clone=true\n");
+    for (int i=0; i<numDim; i++) {
+      matrixSize[i]    = other->matrixSize[i];
+      subMatrixSize[i] = sizes[i];
+      if (sizes[i] + coords[i] > matrixSize[i])
+	ERROR_EXIT3(128, "Size + coordinates are out of matrix size: %d+%d > %d\n",
+		    sizes[i], coords[i], matrixSize[i]);
+      total_size = total_size * subMatrixSize[i];
+    }
+    offset = computeRawPos(coords);
+    data = other->data;
+    IncRef(data);
+  }
+
+  if (clone) {
+
+      matrixSize[i] = subMatrixSize[i] = other->subMatrixSize[i];
+    }
+    total_size = other->total_size;
+
+
+  }
+  else {
+    data = other->data;
+    IncRef(data);
+  }
+  
+  last_raw_position = total_size-1;  
 }
 
 template <typename T>
@@ -289,9 +343,11 @@ Matrix<T>::Matrix(Matrix<T> *other, bool clone) : numDim(other->numDim),
     }
     total_size = other->total_size;
 
-
     allocate_memory(total_size);
-    doScopy(total_size, other->data, 0, 1, data, 0, 1, other->data->getCudaFlag());
+    doScopy(total_size,
+	    other->data, 0, 1,
+	    data, 0, 1,
+	    other->data->getCudaFlag());
   }
   else {
     data = other->data;
