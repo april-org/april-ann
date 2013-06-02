@@ -152,10 +152,10 @@ int saveMatrixFloatToString(MatrixFloat *mat, char **buffer, bool is_ascii) {
   int i,sizedata,sizeheader;
   sizeheader = mat->getNumDim()*10+10; // FIXME: To put adequate values
   if (is_ascii)
-    sizedata = mat->getSize()*12; // Memory used by float in ascii
+    sizedata = mat->size()*12; // Memory used by float in ascii
 			     // including spaces, enters, etc...
   else
-    sizedata = binarizer::buffer_size_32(mat->getSize());
+    sizedata = binarizer::buffer_size_32(mat->size());
   char *r, *b;
   r = b = new char[sizedata+sizeheader];
   for (i=0;i<mat->getNumDim()-1;i++)
@@ -176,7 +176,7 @@ int saveMatrixFloatToString(MatrixFloat *mat, char **buffer, bool is_ascii) {
     // We substract 1 so the final '\0' is not considered
     r += -1 + binarizer::code_iterator_float<MatrixFloat::const_iterator>(mat->begin(),
 									  mat->end(),
-									  mat->getSize(),
+									  mat->size(),
 									  r, sizedata);
   }
   *buffer = b;

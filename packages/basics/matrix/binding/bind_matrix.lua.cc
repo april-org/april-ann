@@ -277,8 +277,8 @@
   LUABIND_CHECK_PARAMETER(1, table);
   int veclen;
   LUABIND_TABLE_GETN(1, veclen);
-  if (veclen != obj->getSize())
-    LUABIND_FERROR2("wrong size %d instead of %d",veclen,obj->getSize());
+  if (veclen != obj->size())
+    LUABIND_FERROR2("wrong size %d instead of %d",veclen,obj->size());
   int i=1;
   for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
     lua_rawgeti(L,1,i);
