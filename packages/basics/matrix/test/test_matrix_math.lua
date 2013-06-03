@@ -1,4 +1,3 @@
-
 a = matrix.fromString[[
 1 3
 ascii
@@ -13,10 +12,14 @@ ascii
 7
 ]]
 
-c = a:mul(b)
+c = a * b
 
-print(1*1+2*4+3*7)
-print(c:toString())
+print("= a")
+print(a)
+print("= b")
+print(b)
+print("= a*b = " .. 1*1+2*4+3*7)
+print(c)
 
 d = matrix.fromString[[
 3 3
@@ -26,24 +29,45 @@ ascii
 7 8 9
 ]]
 
-print(d:toString())
-print(d:clone("col_major"):toString())
-print(d:transpose():toString())
+print("= d")
+print(d)
+print("= d:clone('col_major')")
+print(d:clone("col_major"))
+print("= d:transpose()")
+print(d:transpose())
 
-e = d:mul(d)
-print(e:toString())
+e = d * d 
+print("= d:mul(d)")
+print(e)
 
 d = d:clone("col_major")
-e = d:mul(d)
-print(e:toString())
+e = d * d
+print("= d:mul(d) in col_major")
+print(e)
 
-d = d:slice({2,2},{2,2},true)
-print(d:toString())
+h = d:slice({2,2},{2,2})
+print("= d:slice({2,2},{2,2},true) in col_major")
+print(h)
 
-e = d:mul(d)
-print(e:toString())
+e = h * h
+print("= h:mul(h)")
+print(e)
 
+l = matrix(2,2,"col_major"):fill(4) + h
+print(l)
+
+print("= g")
 g = matrix(3,2,{1,2,3,
 		4,5,6})
-print(g:transpose():clone("col_major"):toString())
-print(matrix.fromString(g:transpose():clone("col_major"):toString()):clone("row_major"):toString())
+print(g)
+print("= g:transpose():clone('col_major'))")
+print(g:transpose():clone("col_major"))
+print("= g:transpose():clone('col_major'):clone('row_major')")
+print(g:transpose():clone("col_major"):clone("row_major"))
+
+print(g)
+
+print(g:transpose())
+j = g:transpose() * g
+print("= g:transpose():mul(g)")
+print(j)
