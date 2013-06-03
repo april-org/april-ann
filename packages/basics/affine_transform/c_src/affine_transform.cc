@@ -47,8 +47,13 @@ AffineTransform2D::AffineTransform2D(Matrix<float> *mat): Matrix<float>(mat)
 AffineTransform2D *AffineTransform2D::accumulate(AffineTransform2D *other)
 {
   Matrix<float> *temp = other->multiply(this);
-  for (int i=0; i<6; i++)
-    (*this->data)[i] = (*temp->data)[i];
+  Matrix<float>::iterator this_it(begin());
+  Matrix<float>::const_iterator temp_it(temp->begin());
+  for (int i=0; i<6; i++) {
+    *this_it = *temp_it;
+    ++this_it;
+    ++temp_it;
+  }
   return this;
 }
 
