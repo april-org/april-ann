@@ -178,7 +178,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
   MatrixDataSet<float> *obj = new MatrixDataSet<float>(mat);
   //parseamos la tabla con las opciones
-  int ndim          = mat->numDim;
+  int ndim          = mat->getNumDim();
   int  *int_params  = new int[ndim];
   bool *bool_params = new bool[ndim];
 
@@ -526,7 +526,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   dim[0] = obj->numPatterns();
   dim[1] = obj->patternSize();
   MatrixFloat* mat = new MatrixFloat(2,dim);
-  float *d = mat->getData();
+  float *d = mat->getRawDataAccess()->getPPALForWrite();
   for (int i=0; i < dim[0]; i++)
     obj->getPattern(i,d+i*dim[1]);
   LUABIND_RETURN(MatrixFloat,mat);
@@ -771,7 +771,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   int histogramlength = 1 << psize;
   int dim[1]; dim[0] = histogramlength;
   MatrixFloat* mat = new MatrixFloat(1,dim);
-  float *histogram = mat->getData();
+  float *histogram = mat->getRawDataAccess()->getPPALForWrite();
   for (int i=0;i<histogramlength;i++) {
     histogram[i] = 0;
   }

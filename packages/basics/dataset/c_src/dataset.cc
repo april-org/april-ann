@@ -38,8 +38,11 @@ using april_utils::clamp;
 
 template <typename T>
 MatrixDataSet<T>::MatrixDataSet(Matrix<T> *m){
+  if (!m->isSimple())
+    ERROR_EXIT(128, "Matrix need to be simple (not sub-matrix "
+	       "and in row-major)\n");
   // numdim debe ser siempre >0
-  int d        = m->numDim;	
+  int d        = m->getNumDim();	
   matrix       = m;
   IncRef(matrix); // garbage collection
   offset       = new int[d];
@@ -53,15 +56,15 @@ MatrixDataSet<T>::MatrixDataSet(Matrix<T> *m){
   defaultValue = 0;
   for (int i=0; i<d; i++) {
     offset[i]        = 0;
-    subMatrixSize[i] = m->matrixSize[i]; // ocupa todo el ancho
+    subMatrixSize[i] = m->getDimSize(i); // ocupa todo el ancho
     orderStep[i]     = d-(i+1);
     step[i]          = 1;
-    numSteps[i]      = 1 ; // m->matrixSize[i];
+    numSteps[i]      = 1 ; // m->getDimSize(i);
     circular[i]      = false;
   }
   if (d > 0) {
     subMatrixSize[0] = 1;
-    numSteps[0]      = m->matrixSize[0];
+    numSteps[0]      = m->getDimSize(0);
   }
   // calcular estos otros valores:
   numPatternsv = patternSizev = 1;
@@ -73,14 +76,14 @@ MatrixDataSet<T>::MatrixDataSet(Matrix<T> *m){
 
 template <typename T>
 void MatrixDataSet<T>::setValue(int *dest, int *orig){
-  for(int i=0;i<matrix->numDim;i++){
+  for(int i=0;i<matrix->getNumDim();i++){
     dest[i]=orig[i];
   }
 }
 
 template <typename T>
 void MatrixDataSet<T>::setValue(bool *dest, bool *orig){
-  for(int i=0;i<matrix->numDim;i++){
+  for(int i=0;i<matrix->getNumDim();i++){
     dest[i]=orig[i];
   }
 }
@@ -89,7 +92,7 @@ template <typename T>
 void MatrixDataSet<T>::setNumSteps(int *v) {
   setValue(numSteps,v);
   numPatternsv=1;
-  for(int i=0;i<matrix->numDim;i++) {
+  for(int i=0;i<matrix->getNumDim();i++) {
     if (numSteps[i] == 0) {
       fprintf(stderr,"Error: numsteps[%d] == 0\n",i);
       exit(1);
@@ -102,13 +105,13 @@ template <typename T>
 void MatrixDataSet<T>::setSubMatrixSize(int *v) {
   setValue(subMatrixSize,v);
   patternSizev=1;
-  for(int i=0;i<matrix->numDim;i++)	
+  for(int i=0;i<matrix->getNumDim();i++)	
     patternSizev=patternSizev*subMatrixSize[i];
 }
 
 template <typename T>
 void MatrixDataSet<T>::index2coordinate(int index) {
-  for (int i=0; i < matrix->numDim;i++) {
+  for (int i=0; i < matrix->getNumDim();i++) {
     int j = orderStep[i];
     coordinate[j] = offset[j] + (index % numSteps[j])*step[j];
     index=index/numSteps[j];
@@ -118,11 +121,11 @@ void MatrixDataSet<T>::index2coordinate(int index) {
 template <typename T>
 void MatrixDataSet<T>::auxGetPattern(int offsetmatrix, int d) {
   int i,c,t;
-  t = matrix->matrixSize[d];
+  t = matrix->getDimSize(d);
   // recursiva
-  if (d == matrix->numDim-1) {
+  if (d == matrix->getNumDim()-1) {
     // ultima dimension, caso base
-    T *data = matrix->getData() + offsetmatrix*t;
+    const T *data = matrix->getRawDataAccess()->getPPALForRead() + offsetmatrix*t;
     if (circular[d]) {
       for(i = subMatrixSize[d], c = coordinate[d]; i; c++,i--) {
 	pattern[offsetpat++] = data[mod(c,t)];
@@ -137,19 +140,19 @@ void MatrixDataSet<T>::auxGetPattern(int offsetmatrix, int d) {
     if (circular[d]) {
       // caso no base, es circular
       for(i = subMatrixSize[d], c = coordinate[d]; i; c++,i--) {
-	auxGetPattern(offsetmatrix*matrix->matrixSize[d+1]+mod(c,t),d+1);
+	auxGetPattern(offsetmatrix*matrix->getDimSize(d+1)+mod(c,t),d+1);
       } // cierra for caso base no circular
     } else { // caso no base, no circular
       for(i = subMatrixSize[d], c = coordinate[d]; i; c++,i--) {
 	if (c < 0 || c >= t) {
 	  // rellenar el resto de dimensiones con defaultValue
 	  int veces = 1; 
-	  for (int j = d+1; j < matrix->numDim; j++)
+	  for (int j = d+1; j < matrix->getNumDim(); j++)
 	    veces *= subMatrixSize[j];
 	  for (;veces;veces--)
 	    pattern[offsetpat++] = defaultValue;
 	} else {
-	  auxGetPattern(offsetmatrix*matrix->matrixSize[d]+c,d+1);
+	  auxGetPattern(offsetmatrix*matrix->getDimSize(d)+c,d+1);
 	}
       } // cierra for : caso base no circular
     } // cierra else : caso no base, no circular
@@ -169,11 +172,11 @@ int MatrixDataSet<T>::getPattern(int index, T *pat){
 template <typename T>
 void MatrixDataSet<T>::auxPutPattern(int offsetmatrix, int d) {
   int i,c,t;
-  t = matrix->matrixSize[d];
+  t = matrix->getDimSize(d);
   // recursiva
-  if (d == matrix->numDim-1) {
+  if (d == matrix->getNumDim()-1) {
     // ultima dimension, caso base
-    T *data = matrix->getData() + offsetmatrix*t;    
+    T *data = matrix->getRawDataAccess()->getPPALForWrite() + offsetmatrix*t;    
     if (circular[d]) {
       for(i = subMatrixSize[d], c = coordinate[d]; i; c++,i--) {
 	data[mod(c,t)] = const_pattern[offsetpat++];
@@ -190,18 +193,18 @@ void MatrixDataSet<T>::auxPutPattern(int offsetmatrix, int d) {
     if (circular[d]) {
       // caso no base, es circular
       for(i = subMatrixSize[d], c = coordinate[d]; i; c++,i--) {
-	auxPutPattern(offsetmatrix*matrix->matrixSize[d+1]+(mod(c,t)),d+1);
+	auxPutPattern(offsetmatrix*matrix->getDimSize(d+1)+(mod(c,t)),d+1);
       } // cierra for caso base no circular
     } else { // caso no base, no circular
       for(i = subMatrixSize[d], c = coordinate[d]; i; c++,i--) {
 	if (c < 0 || c >= t) { // te sales de la matriz
 	  // saltarse el resto de dimensiones
 	  int veces = 1; 
-	  for (int j = d+1; j < matrix->numDim; j++)
+	  for (int j = d+1; j < matrix->getNumDim(); j++)
 	    veces *= subMatrixSize[j];
 	  offsetpat += veces;
 	} else {
-	  auxPutPattern(offsetmatrix*matrix->matrixSize[d]+c,d+1);
+	  auxPutPattern(offsetmatrix*matrix->getDimSize(d)+c,d+1);
 	}
       } // cierra for : caso base no circular
     } // cierra else : caso no base, no circular
@@ -696,10 +699,13 @@ int BitDataSet<T>::putPattern(int index, const T *pat) {
 template <typename T>
 SparseDataset<T>::SparseDataset(Matrix<T> *m, int nump, int patsize) :
   matrix(m), numpatterns(nump), patternsize(patsize) {
+  if (!m->isSimple())
+    ERROR_EXIT(128, "Matrix need to be simple (not sub-matrix "
+	       "and in row-major)\n");
   IncRef(m);
   matrix_indexes = new int[nump];
   int	j	 = 0;
-  float *d = m->getData();
+  const float *d = m->getRawDataAccess()->getPPALForRead();
   for (int i=0; i<nump; ++i) {
     matrix_indexes[i]  = j;
     int	count	       = d[j];
@@ -709,10 +715,10 @@ SparseDataset<T>::SparseDataset(Matrix<T> *m, int nump, int patsize) :
 		    " expected in range [0,%d]\n", d[k], patternsize-1);
     j += (count<<1) + 1;
   }
-  if (j > m->size) {
+  if (j > m->size()) {
     ERROR_PRINT2("Tamanyo de matriz incorrecto para SparseDataset!!!\n"
 		 "\tSe esperaba m->size= %d, y fue %d\n",
-		 j, m->size);
+		 j, m->size());
     exit(128);
   }
 }
@@ -727,7 +733,7 @@ template <typename T>
 int SparseDataset<T>::getPattern(int index, T *pat) {
   // WARNING: inly works with float
   memset(pat, 0, sizeof(T)*patternsize);
-  float *d = matrix->getData();
+  const float *d = matrix->getRawDataAccess()->getPPALForRead();
   int	pos   = matrix_indexes[index];
   int	count = d[pos++];
   
