@@ -113,10 +113,14 @@ function interest_points.pointClassifier:__call(alto, ancho, minialto, miniancho
 end
 
 ---------------------------------------------------
--- crop_image(img, x, y, ancho, alto, tlc) -> table
+-- crop_image(img, x, y, tlc) -> table
 ---------------------------------------------------
 function interest_points.pointClassifier:crop_image(img, x, y)
-    local mat, _, _, dx, dy = img:matrix(),img:geometry() 
+    return self:applyLinearComb(img, x, y):getPattern(1)
+end
+
+function interest_points.pointClassifier:applyLinearComb(img, x, y)
+    local mat, _, _, dx, dy = img:matrix(),img:geometry()
     local ds = dataset.matrix(mat,
     {
         patternSize={self.alto,self.ancho},
@@ -124,11 +128,10 @@ function interest_points.pointClassifier:crop_image(img, x, y)
         numSteps={1,1},
         defaultValue = self.white, -- pixel blanco
     })
+    
     local dslc = dataset.linearcomb(ds,self.tlc)
-    local a = dslc:getPattern(1)
-    return a
+    return dslc
 end
-
 
 -------------------------------------------------------------------------------
 -- Given a point an mlp, return the output of the net with that point (window)
