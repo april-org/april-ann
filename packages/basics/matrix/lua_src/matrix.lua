@@ -1,3 +1,55 @@
+-- OVERWRITTING TOSTRING FUNCTION
+matrix.meta_instance.__tostring = function(self)
+  local t      = self:toTable()
+  local dims   = self:dim()
+  local major  = self:get_major_order()
+  local coords = {}
+  local out    = {}
+  local row    = {}
+  for i=1,#dims do coords[i]=0 end
+  for i=1,#t do
+    if #dims > 2 and coords[#dims-2] == 0 then
+      table.insert(out,
+		   string.format("\n# pos [%s]",
+				 table.concat(coords, ",", 1,#dims-2)))
+    end
+    local j=#dims+1
+    repeat
+      j=j-1
+      coords[j] = coords[j] + 1
+      if coords[j] >= dims[j] then coords[j] = 0 end
+    until j==1 or coords[j] ~= 0
+    table.insert(row, string.format("%g", t[i]))
+    if coords[#coords] == 0 then
+      table.insert(out, table.concat(row, " ")) row={}
+    end
+  end
+  table.insert(out, string.format("# Matrix of size [%s] in %s",
+				  table.concat(dims, ","), major))
+  return table.concat(out, "\n")
+end
+
+matrix.meta_instance.__add = function(op1, op2)
+  if not isa(op1,matrix) then op1,op2=op2,op1 end
+  return op1:add(op2)
+end
+
+matrix.meta_instance.__sub = function(op1, op2)
+  if not isa(op1,matrix) then op1,op2=op2,op1 end
+  return op1:sub(op2)
+end
+
+matrix.meta_instance.__mul = function(op1, op2)
+  if not isa(op1,matrix) then op1,op2=op2,op1 end
+  if type(op2) == "number" then return op1:mul_scalar(op2)
+  else return op1:mul(op2)
+  end
+end
+
+matrix.meta_instance.__unm = function(op)
+  return op1:mul_scalar(op, -1)
+end
+
 -- IMAGE
 
 function matrix.loadImage(filename,format)

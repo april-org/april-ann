@@ -21,6 +21,10 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
+#include <cmath>
+#include <cassert>
+#include <cstdarg>
+#include <new> // surprisingly, placement new doesn't work without this
 #include "cblas_headers.h"
 #include "wrapper.h"
 #include "gpu_mirrored_memory_block.h"
@@ -28,9 +32,6 @@
 #include "constants.h"
 #include "clamp.h"
 #include "aligned_memory.h"
-#include <cassert>
-#include <cstdarg>
-#include <new> // surprisingly, placement new doesn't work without this
 
 template <typename T>
 class Matrix : public Referenced {
@@ -46,10 +47,13 @@ class Matrix : public Referenced {
   int *matrixSize;
   /// Total size of the matrix (number of elements)
   int total_size;
+  int last_raw_pos;
   /// Pointer to data
   GPUMirroredMemoryBlock<T> *data;
   /// Major type (only when numDim=2)
   CBLAS_ORDER major_order;
+  /// For CUDA purposes
+  bool use_cuda;
   /// Constructor... -> Integer array with the size of each dimension
   /*
     Matrix(int numDim, const int* dim, T* data_vector,
@@ -65,6 +69,27 @@ class Matrix : public Referenced {
   const T *getData() const { return data->getPPALForRead(); }
   /// Returns the offset of first data value (sub-matrix)
   int getOffset() const { return offset; }
+  /// Updates with the following coordinates vector
+  static bool nextCoordVectorRowMajor(int *coords, const int *sizes,
+				      int numDim) {
+    int j = numDim;
+    do {
+      --j;
+      coords[j] = (coords[j]+1) % sizes[j];
+    } while(j>0 && coords[j] == 0);
+    if (j == 0 && coords[0] == 0) return false;
+    return true;
+  }
+  static bool nextCoordVectorColMajor(int *coords, const int *sizes,
+				      int numDim) {
+    int j = 0;
+    do {
+      coords[j] = (coords[j]+1) % sizes[j];
+    } while(j<numDim-1 && coords[j++] == 0);
+    if (j == numDim-1 && coords[numDim-1] == 0) return false;
+    return true;
+  }
+  int getLastRawPos() const { return last_raw_pos; }
 public:
   /********* Iterators for Matrix traversal *********/
   // forward declaration
@@ -139,11 +164,12 @@ public:
   int getStrideSize(int i) const { return stride[i]; }
   int size() const { return total_size; }
   CBLAS_ORDER getMajorOrder() const { return major_order; }
+  void setUseCuda(bool v) { use_cuda = v; }
   /**********************/
   iterator begin() { return iterator(this); }
-  iterator end() { return iterator(this, size()); }
+  iterator end() { return iterator(this, last_raw_pos+1); }
   const_iterator begin() const { return const_iterator(this); }
-  const_iterator end() const { return const_iterator(this, size()); }
+  const_iterator end() const { return const_iterator(this, last_raw_pos+1); }
 
   /// Transposition
   Matrix<T>* transpose();
@@ -225,6 +251,7 @@ void Matrix<T>::initialize(const int *dim) {
       matrixSize[i] = dim[i];
     }
   }
+  last_raw_pos = total_size-1;
 }
 
 /// Allocation of memory for data pointer. It is Referenced for sharing.
@@ -248,7 +275,8 @@ Matrix<T>::Matrix(int numDim,
 		  CBLAS_ORDER major_order) : numDim(numDim),
 					     is_submatrix(false),
 					     offset(0),
-					     major_order(major_order) {
+					     major_order(major_order),
+					     use_cuda(false) {
   if (major_order == CblasColMajor && numDim != 2)
     ERROR_EXIT(128, "ColMajor order is only allowed when numDim=2\n");
   stride=new int[numDim];
@@ -266,7 +294,8 @@ Matrix<T>::Matrix(Matrix<T> *other,
 		  bool clone) : numDim(other->numDim),
 				is_submatrix(true),
 				offset(0),
-				major_order(other->major_order) {
+				major_order(other->major_order),
+				use_cuda(other->use_cuda) {
   for (int i=0; i<numDim; i++) {
     if (sizes[i] + coords[i] > other->matrixSize[i])
       ERROR_EXIT3(128, "Size+coordinates are out of dimension size: %d+%d>%d\n",
@@ -277,23 +306,28 @@ Matrix<T>::Matrix(Matrix<T> *other,
   if (clone) {
     initialize(sizes);
     allocate_memory(total_size);
-    int other_offset        = other->computeRawPos(coords);
+    int other_offset = other->computeRawPos(coords);
     const float *other_data = other->data->getPPALForRead();
+    int *aux_coords = new int[numDim];
+    for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
     for (iterator it(begin()); it!=end(); ++it) {
-      int raw_pos = it.getRawPos();
-      *it = other_data[other_offset + raw_pos];
+      int other_raw_pos = other_offset + other->computeRawPos(aux_coords);
+      *it = other_data[other_raw_pos];
+      nextCoordVectorRowMajor(aux_coords, sizes, numDim);
     }
+    delete[] aux_coords;
   }
   else {
     total_size = 1;
     for (int i=0; i<numDim; i++) {
       stride[i]     = other->stride[i];
       matrixSize[i] = sizes[i];
-      total_size    = total_size * matrixSize[i];
+      total_size    = total_size * sizes[i];
     }
     offset = other->computeRawPos(coords);
     data   = other->data;
     IncRef(data);
+    last_raw_pos = offset + other->computeRawPos(sizes);
   }
 }
 
@@ -328,10 +362,12 @@ template <typename T>
 Matrix<T>::Matrix(Matrix<T> *other, bool clone) : numDim(other->numDim),
 						  is_submatrix(false),
 						  offset(0),
-						  major_order(other->major_order) {
-  stride     = new int[numDim];
-  matrixSize = new int[numDim];
-  total_size = other->total_size;
+						  major_order(other->major_order),
+						  use_cuda(other->use_cuda) {
+  stride       = new int[numDim];
+  matrixSize   = new int[numDim];
+  total_size   = other->total_size;
+  last_raw_pos = other->last_raw_pos;
   if (clone) {
     initialize(other->matrixSize);
     allocate_memory(total_size);
@@ -372,11 +408,10 @@ Matrix<T> *Matrix<T>::transpose() {
   for (int i=0; i<numDim; ++i) coords[i] = 0;
   for (iterator resul_it(resul->begin()); resul_it!=resul->end(); ++resul_it) {
     *resul_it = d[computeRawPos(coords)];
-    int j=0;
-    do {
-      coords[j] = (coords[j]+1) % matrixSize[j];
-    } while(coords[j++] == 0);
+    nextCoordVectorColMajor(coords, matrixSize, numDim);
   }
+  delete[] aux_matrix_size;
+  delete[] coords;
   return resul;
 }
 
@@ -536,11 +571,38 @@ Matrix<T>* Matrix<T>::addition(const Matrix<T> *other, float alpha) {
 
 template <typename T>
 void Matrix<T>::accumulate_addition(const Matrix<T> *other, float alpha) {
-  if (is_submatrix) ERROR_EXIT(128, "Not implemented for sub-matrix!!\n");
-  doSaxpy(total_size,
-	  alpha, other->data, 0, 1,
-	  data, 0, 1,
-	  data->getCudaFlag());
+  if (!is_submatrix && !other->is_submatrix)
+    doSaxpy(total_size,
+	    alpha, other->data, 0, 1,
+	    data, 0, 1,
+	    use_cuda);
+  else {
+    int *coords = new int[numDim];
+    for (int i=0; i<numDim; ++i) coords[i] = 0;
+    if (major_order == CblasRowMajor) {
+      do {
+	int this_pos  = computeRawPos(coords);
+	int other_pos = other->computeRawPos(coords);
+	doSaxpy(matrixSize[numDim-1],
+		alpha, other->data, other_pos, other->stride[numDim-1],
+		data, this_pos, stride[numDim-1],
+		use_cuda);
+	coords[numDim-1] = matrixSize[numDim-1]-1;
+      } while(nextCoordVectorRowMajor(coords, matrixSize, numDim));
+    }
+    else {
+      do {
+	int this_pos  = computeRawPos(coords);
+	int other_pos = other->computeRawPos(coords);
+	doSaxpy(matrixSize[0],
+		alpha, other->data, other_pos, other->stride[0],
+		data, this_pos, stride[0],
+		use_cuda);
+	coords[0] = matrixSize[0]-1;
+      } while(nextCoordVectorColMajor(coords, matrixSize, numDim));
+    }
+    delete[] coords;
+  }
 }
 
 template <typename T>
@@ -559,10 +621,10 @@ template <typename T>
 Matrix<T>* Matrix<T>::multiply(const Matrix<T> *other) const {
   if (numDim != 2 || other->numDim != 2 ||
       matrixSize[1] != other->matrixSize[0]) return 0;
-  int N = matrixSize[0];
+  int M = matrixSize[0];
   int K = matrixSize[1];
-  int M = other->matrixSize[1];
-  int dim[2] = {N, M};
+  int N = other->matrixSize[1];
+  int dim[2] = {M, N};
   Matrix<T> *resul = new Matrix<T>(2,dim,T(),major_order);
   resul->accumulate_multiply(1.0f, this, other, 0.0f);
   return resul;
@@ -584,29 +646,79 @@ void Matrix<T>::accumulate_multiply(float alpha,
 		matrixSize[0], matrixSize[1],
 		otherA->matrixSize[0], otherA->matrixSize[1],
 		otherB->matrixSize[0], otherB->matrixSize[1]);
-  int N=matrixSize[0], M=matrixSize[1], K=otherA->matrixSize[1];
+  int M=matrixSize[0], N=matrixSize[1], K=otherA->matrixSize[1];
   int lda=(major_order==CblasRowMajor)?otherA->stride[0]:otherA->stride[1];
   int ldb=(major_order==CblasRowMajor)?otherB->stride[0]:otherB->stride[1];
   int ldc=(major_order==CblasRowMajor)?stride[0]:stride[1];
   doSgemm(major_order, CblasNoTrans, CblasNoTrans,
-	  N, M, K,
+	  M, N, K,
 	  alpha, otherA->data, lda,
 	  otherB->data, ldb,
 	  beta, data, ldc,
 	  otherA->offset, otherB->offset, offset,
-	  data->getCudaFlag());
+	  use_cuda);
 }
 
 template <typename T>
 void Matrix<T>::multiply_by_scalar(T value) {
-  if (is_submatrix) ERROR_EXIT(128, "Not implemented for sub-matrix!!\n");
-  doSscal(total_size, value, data, 0, 1, data->getCudaFlag());
+  if (!is_submatrix) doSscal(total_size, value, data, 0, 1, use_cuda);
+  else {
+    int *coords = new int[numDim];
+    for (int i=0; i<numDim; ++i) coords[i] = 0;
+    if (major_order == CblasRowMajor) {
+      do {
+	int pos  = computeRawPos(coords);
+	doSscal(matrixSize[numDim-1], value,
+		data, pos, stride[numDim-1],
+		use_cuda);
+	coords[numDim-1] = matrixSize[numDim-1]-1;
+      } while(nextCoordVectorRowMajor(coords, matrixSize, numDim));
+    }
+    else {
+      do {
+	int pos  = computeRawPos(coords);
+	doSscal(matrixSize[numDim-1], value,
+		data, pos, stride[numDim-1],
+		use_cuda);
+	coords[0] = matrixSize[0]-1;
+      } while(nextCoordVectorColMajor(coords, matrixSize, numDim));
+    }
+    delete[] coords;
+  }
 }
 
 template <typename T>
 T Matrix<T>::norm2() const {
-  if (is_submatrix) ERROR_EXIT(128, "Not implemented for sub-matrix!!\n");
-  return doSnrm2(total_size, data, 0, 1, data->getCudaFlag());
+  float v;
+  if (!is_submatrix) v=doSnrm2(total_size, data, 0, 1, use_cuda);
+  else {
+    v = 0.0f;
+    int *coords = new int[numDim];
+    for (int i=0; i<numDim; ++i) coords[i] = 0;
+    if (major_order == CblasRowMajor) {
+      do {
+	int pos   = computeRawPos(coords);
+	float aux = doSnrm2(matrixSize[numDim-1],
+			    data, pos, stride[numDim-1],
+			    use_cuda);
+	v += aux*aux;
+	coords[numDim-1] = matrixSize[numDim-1]-1;
+      } while(nextCoordVectorRowMajor(coords, matrixSize, numDim));
+    }
+    else {
+      do {
+	int pos   = computeRawPos(coords);
+	float aux = doSnrm2(matrixSize[0],
+			    data, pos, stride[0],
+			    use_cuda);
+	v += aux*aux;
+	coords[0] = matrixSize[0]-1;
+      } while(nextCoordVectorColMajor(coords, matrixSize, numDim));
+    }
+    delete[] coords;
+    v = sqrtf(v);
+  }
+  return v;
 }
 
 template <typename T>
@@ -731,12 +843,8 @@ typename Matrix<T>::iterator &Matrix<T>::iterator::operator++() {
   if (m->getIsSubMatrix() || m->getMajorOrder()==CblasColMajor) {
     const int *dims    = m->getDimPtr();
     // const int *strides = m->getStridePtr();
-    int j = m->getNumDim();
-    do {
-      --j;
-      coords[j] = (coords[j]+1) % dims[j];
-    } while(j>0 && coords[j] == 0);
-    if (j == 0 && coords[0] == 0) raw_pos = m->size();
+    if (!Matrix<T>::nextCoordVectorRowMajor(coords, dims, m->getNumDim()))
+      raw_pos = m->getLastRawPos()+1;
     else raw_pos = m->computeRawPos(coords);
   }
   else ++raw_pos;
@@ -852,12 +960,8 @@ template <typename T>
 typename Matrix<T>::const_iterator &Matrix<T>::const_iterator::operator++() {
   if (m->getIsSubMatrix() || m->getMajorOrder()==CblasColMajor) {
     const int *dims = m->getDimPtr();
-    int j = m->getNumDim();
-    do {
-      --j;
-      coords[j] = (coords[j]+1) % dims[j];
-    } while(j>0 && coords[j] == 0);
-    if (j == 0 && coords[0] == 0) raw_pos = m->size();
+    if (!Matrix<T>::nextCoordVectorRowMajor(coords, dims, m->getNumDim()))
+      raw_pos = m->getLastRawPos()+1;
     else raw_pos = m->computeRawPos(coords);
   }
   else ++raw_pos;

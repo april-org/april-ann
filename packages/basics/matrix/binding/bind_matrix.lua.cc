@@ -44,7 +44,7 @@
   int i,argn;
   argn = lua_gettop(L); // number of arguments
   LUABIND_CHECK_ARGN(>=, 1);
-  int ndims = (lua_istable(L,argn)) ? argn-1 : argn;
+  int ndims = (!lua_isnumber(L,argn)) ? argn-1 : argn;
   int *dim;
   if (ndims == 0) { // caso matrix{valores}
     ndims = 1;
@@ -63,7 +63,17 @@
 	LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
     }
   }
-  MatrixFloat* obj = new MatrixFloat(ndims,dim);
+  MatrixFloat* obj;
+  if (!lua_isnumber(L,argn) && !lua_istable(L,argn)) {
+    const char *major;
+    LUABIND_GET_PARAMETER(argn, string, major);
+    CBLAS_ORDER order = CblasRowMajor;
+    if (strcmp(major, "col_major") == 0) order = CblasColMajor;
+    else if (strcmp(major, "row_major") != 0)
+      LUABIND_FERROR1("Incorrect major order string %s", major);
+    obj = new MatrixFloat(ndims,dim,0.0f,order);
+  }
+  else obj = new MatrixFloat(ndims,dim);
   if (lua_istable(L,argn)) {
     int i=1;
     for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
@@ -334,6 +344,7 @@
       coords[i]--;
     }
     ret = (*obj)(coords, obj->getNumDim());
+    delete[] coords;
   }
   LUABIND_RETURN(float, ret);
 }
@@ -390,6 +401,7 @@
     float f;
     LUABIND_GET_PARAMETER(obj->getNumDim()+1,float,f);
     (*obj)(coords, obj->getNumDim()) = f;
+    delete[] coords;
   }
   LUABIND_RETURN(MatrixFloat, obj);
 }
@@ -409,6 +421,25 @@
     *it = value;
   }
   LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat set_use_cuda
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, bool);
+  bool v;
+  LUABIND_GET_PARAMETER(1,bool, v);
+  obj->setUseCuda(v);
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat get_major_order
+{
+  if (obj->getMajorOrder() == CblasRowMajor)
+    LUABIND_RETURN(string, "row_major");
+  else LUABIND_RETURN(string, "col_major");
 }
 //BIND_END
 

@@ -99,6 +99,11 @@ function april_set_doc(table_name, docblock)
   table.insert(current, docblock)
 end
 
+function april_list(t)
+  if type(t) ~= "table" then error("Needs a table") end
+  for i,v in pairs(t) do print(i,v) end
+end
+
 function april_print_doc(table_name, verbosity, prefix)
   assert(type(table_name)=="string", "Needs a string as first argument")
   assert(type(verbosity)=="number",  "Needs a number as first argument")
