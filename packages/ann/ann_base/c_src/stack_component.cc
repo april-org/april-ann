@@ -170,4 +170,16 @@ namespace ANN {
       component = components[c]->getComponent(name);
     return component;
   }
+
+  char *StackANNComponent::toLuaString() {
+    buffer_list buffer;
+    buffer.printf("ann.components.stack{ name='%s' }", name.c_str());
+    for (unsigned int i=0; i<components.size(); ++i) {
+      // FIXME: please, this code could be improved freeing the aux array
+      char *aux = components[i]->toLuaString();
+      buffer.printf(":push(%s)", aux);
+      delete[] aux;
+    }
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  }
 }

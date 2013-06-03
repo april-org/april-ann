@@ -51,7 +51,14 @@ namespace ANN {
   }
 
   ANNComponent *LinearActfANNComponent::clone() {
-    return new LinearActfANNComponent(name.c_str());
+    LinearActfANNComponent *obj = new LinearActfANNComponent(name.c_str());
+    obj->setOption(DROPOUT_FACTOR_STRING, getOption(DROPOUT_FACTOR_STRING));
+    return obj;
   }
 
+  char *LinearActfANNComponent::toLuaString() {
+    buffer_list buffer;
+    buffer.printf("ann.components.actf.linear{ name='%s' }", name.c_str());
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  }
 }

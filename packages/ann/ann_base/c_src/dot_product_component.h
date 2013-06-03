@@ -79,6 +79,10 @@ namespace ANN {
     virtual void resetConnections() {
       if (weights_matrix) weights_matrix->reset();
     }
+
+    virtual char *toLuaString();
+    
+    bool transposed() { return transpose_weights == CblasTrans; }
   };
 }
 

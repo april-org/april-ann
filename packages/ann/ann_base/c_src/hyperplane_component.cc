@@ -154,4 +154,19 @@ namespace ANN {
     return component;
   }
 
+  char *HyperplaneANNComponent::toLuaString() {
+    buffer_list buffer;
+    buffer.printf("ann.components.hyperplane{ name='%s',"
+		  "dot_product_name='%s', bias_name='%s',"
+		  "dot_product_weights='%s', bias_weights='%s',"
+		  "input=%d, output=%d, transpose=%s }",
+		  name.c_str(),
+		  dot_product->getName().c_str(), bias->getName().c_str(),
+		  dot_product->getWeightsName().c_str(),
+		  bias->getWeightsName().c_str(),
+		  input_size, output_size,
+		  (dot_product->transposed())?"true":"false");
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  }
+
 }

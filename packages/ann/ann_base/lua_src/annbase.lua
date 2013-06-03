@@ -87,9 +87,9 @@ function ann.mlp.all_all.generate(topology, first_count, names_prefix)
     names_order = names_order,
     thenet      = thenet,
     clone = function(o)
-      local nn = ann.mlp.all_all.generate(o.description,o.first_count,o.prefix)
-      local w  = o:copy_weights()
-      nn:build{ weights = w }
+      local nn=ann.mlp.all_all.generate(o.description,o.first_count,o.prefix)
+      nn:build{ weights = table.map(o:copy_weights(),
+				    function(cnn)return cnn:clone()end) }
       return nn
     end }
   -- we make obj a wrapper of thenet, so we keep useful information as a lua
@@ -397,7 +397,7 @@ april_set_doc("ann.connections.randomize_weights",
 		params={
 		  ["random"] = "A random object",
 		  ["inf"] = "Inferior limit [optional]. By default is -1.0",
-		  ["first_pos"] = "Superior limit [optional]. By default is -1.0",
+		  ["sup"] = "Superior limit [optional]. By default is  1.0",
 		},
 	      })
 

@@ -46,6 +46,8 @@ namespace ANN {
     SinActfANNComponent(const char *name);
     virtual ~SinActfANNComponent();
     virtual ANNComponent *clone();
+
+    virtual char *toLuaString();
   };
 }
 
