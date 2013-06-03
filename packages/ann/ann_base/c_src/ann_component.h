@@ -35,6 +35,14 @@ using april_utils::string;
 #define MAX_UPDATES_WITHOUT_PRUNE 100
 #define MAX_NAME_STR 256
 
+#define LEARNING_RATE_STRING    "learning_rate"
+#define MOMENTUM_STRING         "momentum"
+#define WEIGHT_DECAY_STRING     "weight_decay"
+#define DROPOUT_FACTOR_STRING   "dropout_factor"
+#define DROPOUT_SEED_STRING     "dropout_seed"
+#define MAX_NORM_PENALTY_STRING "max_norm_penalty"
+
+
 #define mSetOption(var_name,var) if(!strcmp(name,(var_name))){(var)=value;return;}
 #define mHasOption(var_name) if(!strcmp(name,(var_name))) return true;
 #define mGetOption(var_name, var) if(!strcmp(name,(var_name)))return (var);
@@ -135,7 +143,13 @@ namespace ANN {
     virtual void setUseCuda(bool v) { use_cuda = true; }
     
     /// Virtual method for setting the value of a training parameter.
-    virtual void setOption(const char *name, double value) { }
+    virtual void setOption(const char *name, double value) {
+      if (strcmp(name, LEARNING_RATE_STRING) != 0 &&
+	  strcmp(name, MOMENTUM_STRING) != 0 &&
+	  strcmp(name, WEIGHT_DECAY_STRING) != 0 &&
+	  strcmp(name, MAX_NORM_PENALTY_STRING) != 0)
+	ERROR_EXIT1(140, "The option to be set does not exist: %s.\n", name);
+    }
 
     /// Virtual method for determining if a training parameter
     /// is being used or can be used within the network.
@@ -206,6 +220,13 @@ namespace ANN {
     virtual ANNComponent *getComponent(string &name) {
       if (this->name == name) return this;
       return 0;
+    }
+    
+    virtual char *toLuaString() {
+      buffer_list buffer;
+      buffer.printf("ann.components.base{ name='%s', weights='%s', size=%d }",
+		    name.c_str(), weights_name.c_str(), input_size);
+      return buffer.to_string(buffer_list::NULL_TERMINATED);
     }
   };
 }

@@ -22,8 +22,6 @@
 #include "activation_function_component.h"
 #include "wrapper.h"
 
-// TODO: IMPLEMENT DROPOUT
-
 namespace ANN {
 
   MTRand ActivationFunctionANNComponent::dropout_random = MTRand();
@@ -74,6 +72,21 @@ namespace ANN {
 	  if (dropout_random.rand() < dropout_factor) mask_ptr[i] = 0.0f;
 	  else mask_ptr[i] = 1.0f;
 	}
+	/*
+	  if (units_order_permutation == 0)
+	  units_order_permutation = new int[input_size];
+	  doVectorSetToZero(dropout_mask,
+	  input->getUsedSize(), 1, 0,
+	  false);
+	  unsigned int length=static_cast<unsigned int>(dropout_factor*input_size);
+	  for (unsigned int i=0; i<bunch_size; ++i) {
+	  dropout_random.shuffle(input_size, units_order_permutation);
+	  for (unsigned int j=0; j<length; ++j) {
+	  unsigned int pos = units_order_permutation[j];
+	  mask_ptr[i + pos*input_size] = 1.0f;
+	  }
+	  }
+	*/
 	// apply mask
 	applyMask(output_ptr, dropout_mask, 0.0f, input_size,
 		  bunch_size, use_cuda);
@@ -126,19 +139,20 @@ namespace ANN {
   }
 
   void ActivationFunctionANNComponent::setOption(const char *name, double value) {
-    mSetOption("dropout",      dropout_factor);
-    mSetOption("dropout_seed", dropout_seed);
+    mSetOption(DROPOUT_FACTOR_STRING, dropout_factor);
+    mSetOption(DROPOUT_SEED_STRING,   dropout_seed);
+    ANNComponent::setOption(name, value);
   }
 
   bool ActivationFunctionANNComponent::hasOption(const char *name) {
-    mHasOption("dropout");
-    mHasOption("dropout_seed");
+    mHasOption(DROPOUT_FACTOR_STRING);
+    mHasOption(DROPOUT_SEED_STRING);
     return false;
   }
     
   double ActivationFunctionANNComponent::getOption(const char *name) {
-    mGetOption("dropout",      dropout_factor);
-    mGetOption("dropout_seed", dropout_seed);
+    mGetOption(DROPOUT_FACTOR_STRING, dropout_factor);
+    mGetOption(DROPOUT_SEED_STRING,   dropout_seed);
     return ANNComponent::getOption(name);
   }
     
@@ -154,5 +168,5 @@ namespace ANN {
 		  "sizes must be equal (component %s): %d != %d\n",
 		  name.c_str(), input_size, output_size);
   }
-
+  
 } // namespace ANN

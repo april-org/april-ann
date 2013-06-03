@@ -54,7 +54,15 @@ namespace ANN {
   }
 
   ANNComponent *SinActfANNComponent::clone() {
-    return new SinActfANNComponent(name.c_str());
+    SinActfANNComponent *obj = new SinActfANNComponent(name.c_str());
+    obj->setOption(DROPOUT_FACTOR_STRING, getOption(DROPOUT_FACTOR_STRING));
+    return obj;
+  }
+
+  char *SinActfANNComponent::toLuaString() {
+    buffer_list buffer;
+    buffer.printf("ann.components.actf.sin{ name='%s' }", name.c_str());
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
 
 }

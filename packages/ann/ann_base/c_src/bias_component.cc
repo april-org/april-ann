@@ -105,10 +105,10 @@ namespace ANN {
       }
       else bias_vector->copyToPrevVector(use_cuda);
     } // if (bias_vector->needsToComputeMomentum()) {
-  
     // update learning rule:
     // PREV_W = alpha * ERRORS + PREV_W
     const unsigned int references = bias_vector->getNumReferences();
+    assert(references > 0 && "Found 0 references of bias vector");
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
     const float norm_learn_rate =
       -(1.0f/sqrtf(static_cast<float>(references*bunch_size))) *
@@ -153,19 +153,20 @@ namespace ANN {
   }
 
   void BiasANNComponent::setOption(const char *name, double value) {
-    mSetOption("learning_rate", learning_rate);
-    mSetOption("momentum", momentum);
+    mSetOption(LEARNING_RATE_STRING, learning_rate);
+    mSetOption(MOMENTUM_STRING,      momentum);
+    ANNComponent::setOption(name, value);
   }
 
   bool BiasANNComponent::hasOption(const char *name) {
-    mHasOption("learning_rate");
-    mHasOption("momentum");
+    mHasOption(LEARNING_RATE_STRING);
+    mHasOption(MOMENTUM_STRING);
     return false;
   }
 
   double BiasANNComponent::getOption(const char *name) {
-    mGetOption("learning_rate", learning_rate);
-    mGetOption("momentum", momentum);
+    mGetOption(LEARNING_RATE_STRING, learning_rate);
+    mGetOption(MOMENTUM_STRING,      momentum);
     return ANNComponent::getOption(name);
   }
 
@@ -217,5 +218,12 @@ namespace ANN {
 		  "not shared with bias_vector attribute\n",
 		  weights_name.c_str());
     else if (w == 0) w = bias_vector;
+  }
+
+  char *BiasANNComponent::toLuaString() {
+    buffer_list buffer;
+    buffer.printf("ann.components.bias{ name='%s', weights='%s' }",
+		  name.c_str(), weights_name.c_str());
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
 }
