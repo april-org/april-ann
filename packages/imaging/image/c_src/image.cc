@@ -35,6 +35,9 @@
 
 template <typename T>
 Image<T>::Image(Matrix<T> *mat) {
+  if (!mat->isSimple())
+    ERROR_EXIT(128, "Image only works with simple matrices "
+	       "(not sub-matrix, and in row-major\n");
   // if (mat->numDim != 2) { ... } // <- TODO
   matrix = mat;
   IncRef(matrix); // garbage collection
@@ -47,6 +50,9 @@ template <typename T>
 Image<T>::Image(Matrix<T> *mat, 
 		int width, int height,
 		int offset_w, int offset_h) {
+  if (!mat->isSimple())
+    ERROR_EXIT(128, "Image only works with simple matrices "
+	       "(not sub-matrix, and in row-major\n");
   matrix = mat;
   IncRef(matrix); // garbage collection
   offset = offset_w + offset_h*matrix_width();
@@ -824,7 +830,7 @@ Image<T> *Image<T>::affine_transform(AffineTransform2D *trans, T default_value,
   using april_utils::max;
   using april_utils::min;
 
-  float *inverse = trans->getData();
+  float *inverse = trans->getRawDataAccess()->getPPALForReadAndWrite();
   
   float c[6];
   invert_affine_matrix(inverse, c);

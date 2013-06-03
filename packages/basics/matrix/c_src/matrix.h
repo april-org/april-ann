@@ -35,6 +35,7 @@
 
 template <typename T>
 class Matrix : public Referenced {
+protected:
   /// Number of dimensions
   int numDim;
   /// Size of each dimension
@@ -71,24 +72,9 @@ class Matrix : public Referenced {
   int getOffset() const { return offset; }
   /// Updates with the following coordinates vector
   static bool nextCoordVectorRowMajor(int *coords, const int *sizes,
-				      int numDim) {
-    int j = numDim;
-    do {
-      --j;
-      coords[j] = (coords[j]+1) % sizes[j];
-    } while(j>0 && coords[j] == 0);
-    if (j == 0 && coords[0] == 0) return false;
-    return true;
-  }
+				      int numDim);
   static bool nextCoordVectorColMajor(int *coords, const int *sizes,
-				      int numDim) {
-    int j = 0;
-    do {
-      coords[j] = (coords[j]+1) % sizes[j];
-    } while(j<numDim-1 && coords[j++] == 0);
-    if (j == numDim-1 && coords[numDim-1] == 0) return false;
-    return true;
-  }
+				      int numDim);
   int getLastRawPos() const { return last_raw_pos; }
 public:
   /********* Iterators for Matrix traversal *********/
@@ -165,6 +151,15 @@ public:
   int size() const { return total_size; }
   CBLAS_ORDER getMajorOrder() const { return major_order; }
   void setUseCuda(bool v) { use_cuda = v; }
+  bool isSimple() {
+    bool is_simple=(!is_submatrix)&&(offset==0)&&(major_order==CblasRowMajor);
+    int aux=1;
+    for(int i=numDim-1; i>=0 && is_simple; --i) {
+      is_simple=(stride[i]==aux);
+      aux=aux*matrixSize[i];
+    }
+    return is_simple;
+  }
   /**********************/
   iterator begin() { return iterator(this); }
   iterator end() { return iterator(this, last_raw_pos+1); }
@@ -191,6 +186,10 @@ public:
   const T& operator() (int coord0, int coord1, int coord2, ...) const;
   const T& operator() (int *coords, int sz) const;
   
+  /// Function to obtain RAW access to data pointer. Be careful with it, because
+  /// you are losing sub-matrix abstraction, and the major order.
+  GPUMirroredMemoryBlock<T> *getRawDataAccess() { return data; }
+  
   bool getCol(int col, T* vec, int vecsize);
   bool putCol(int col, T *vec, int vecsize);
   bool putSubCol(int col, int first_row, T *vec, int vecsize);
@@ -202,10 +201,10 @@ public:
 
   // Returns a new matrix with the sum, assuming they have the same dimension
   // Crashes otherwise
-  Matrix<T>* addition(const Matrix<T> *other, float alpha=1.0f);
+  Matrix<T>* addition(const Matrix<T> *other, T alpha=1.0f);
 
   // The same as the previous one but accumulates the result in the matrix
-  void accumulate_addition(const Matrix<T> *other, float alpha=1.0f);
+  void accumulate_addition(const Matrix<T> *other, T alpha=1.0f);
 
   // The same as addition but substracting
   Matrix<T>* substraction(const Matrix<T> *other);
@@ -217,10 +216,10 @@ public:
   Matrix<T>* multiply(const Matrix<T> *other) const;
 
   // Matrices must be NxK and KxM, the result is NxM (this pointer)
-  void accumulate_multiply(float alpha,
+  void accumulate_multiply(T alpha,
 			   const Matrix<T> *otherA,
 			   const Matrix<T> *otherB,
-			   float beta);
+			   T beta);
   
   void multiply_by_scalar(T value);
   
@@ -283,7 +282,7 @@ Matrix<T>::Matrix(int numDim,
   matrixSize=new int[numDim];
   initialize(dim);
   allocate_memory(total_size);
-  float *d = data->getPPALForWrite();
+  T *d = data->getPPALForWrite();
   for (int i=0; i<total_size; ++i) d[i] = default_value;
 }
 
@@ -307,7 +306,7 @@ Matrix<T>::Matrix(Matrix<T> *other,
     initialize(sizes);
     allocate_memory(total_size);
     int other_offset = other->computeRawPos(coords);
-    const float *other_data = other->data->getPPALForRead();
+    const T *other_data = other->data->getPPALForRead();
     int *aux_coords = new int[numDim];
     for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
     for (iterator it(begin()); it!=end(); ++it) {
@@ -352,7 +351,7 @@ total_size *= di;
 va_end(ap);
 allocate_memory(total_size); // init with default value for type T
 T default_value=T();
-float *d = data->getPPALForWrite();
+T *d = data->getPPALForWrite();
 for (int i=0; i<total_size; ++i) d[i] = default_value;
 }
 */
@@ -403,7 +402,7 @@ Matrix<T> *Matrix<T>::transpose() {
   int *aux_matrix_size = new int[numDim];
   for (int i=0; i<numDim; ++i) aux_matrix_size[i] = matrixSize[numDim-i-1];
   Matrix<T> *resul = new Matrix<T>(numDim, aux_matrix_size, T(), major_order);
-  const float *d = data->getPPALForRead();
+  const T *d = data->getPPALForRead();
   int *coords = new int[numDim];
   for (int i=0; i<numDim; ++i) coords[i] = 0;
   for (iterator resul_it(resul->begin()); resul_it!=resul->end(); ++resul_it) {
@@ -505,7 +504,7 @@ bool Matrix<T>::getCol(int col, T* vec, int vecsize) {
   if ((col < 0) || (col >= matrixSize[1])) return false;
   // If the array length is different to the size of the matrix columns, error
   if (vecsize != matrixSize[0]) return false;
-  const float *d = data->getPPALForRead();
+  const T *d = data->getPPALForRead();
   for (int row = 0; row < matrixSize[0]; row++) {
     int coords[2] = { row, col };
     vec[row] = d[computeRawPos(coords)];
@@ -521,7 +520,7 @@ bool Matrix<T>::putCol(int col, T* vec, int vecsize) {
   if ((col < 0) || (col >= matrixSize[1])) return false;
   // If the array length is different to the size of the matrix columns, error
   if (vecsize != matrixSize[0]) return false;
-  float *d = data->getPPALForWrite();
+  T *d = data->getPPALForWrite();
   for (int row = 0; row < matrixSize[0]; row++) {
     int coords[2] = { row, col };
     d[computeRawPos(coords)] = vec[row];
@@ -539,7 +538,7 @@ bool Matrix<T>::putSubCol(int col, int first_row, T* vec, int vecsize) {
   if ((first_row < 0) || (first_row >= matrixSize[0])) return false;
   // If the array is out of range, error
   if ((first_row < 0) || (first_row+vecsize > matrixSize[0])) return false;
-  float *d = data->getPPALForWrite();
+  T *d = data->getPPALForWrite();
   for (int row = first_row; row < first_row+vecsize; row++) {
     int coords[2] = { row, col };
     d[computeRawPos(coords)] = vec[row];
@@ -549,7 +548,7 @@ bool Matrix<T>::putSubCol(int col, int first_row, T* vec, int vecsize) {
 
 template <typename T>
 void Matrix<T>::clamp(T lower, T upper) {
-  float *d = data->getPPALForReadAndWrite();
+  T *d = data->getPPALForReadAndWrite();
   for (int i=0; i<total_size; ++i)
     d[i] = april_utils::clamp(d[i],lower,upper);
 }
@@ -563,14 +562,14 @@ bool Matrix<T>::sameDim(const Matrix<T> *other) const {
 }
 
 template <typename T>
-Matrix<T>* Matrix<T>::addition(const Matrix<T> *other, float alpha) {
+Matrix<T>* Matrix<T>::addition(const Matrix<T> *other, T alpha) {
   Matrix<T> *resul = new Matrix<T>(this,true);
   resul->accumulate_addition(other, alpha);
   return resul;
 }
 
 template <typename T>
-void Matrix<T>::accumulate_addition(const Matrix<T> *other, float alpha) {
+void Matrix<T>::accumulate_addition(const Matrix<T> *other, T alpha) {
   if (!is_submatrix && !other->is_submatrix)
     doSaxpy(total_size,
 	    alpha, other->data, 0, 1,
@@ -631,10 +630,10 @@ Matrix<T>* Matrix<T>::multiply(const Matrix<T> *other) const {
 }
 
 template <typename T>
-void Matrix<T>::accumulate_multiply(float alpha,
+void Matrix<T>::accumulate_multiply(T alpha,
 				    const Matrix<T> *otherA,
 				    const Matrix<T> *otherB,
-				    float beta) {
+				    T beta) {
   if (numDim != 2 || otherA->numDim != 2 || otherB->numDim != 2 ||
       matrixSize[0] != otherA->matrixSize[0] ||
       matrixSize[1] != otherB->matrixSize[1] ||
@@ -689,7 +688,7 @@ void Matrix<T>::multiply_by_scalar(T value) {
 
 template <typename T>
 T Matrix<T>::norm2() const {
-  float v;
+  T v;
   if (!is_submatrix) v=doSnrm2(total_size, data, 0, 1, use_cuda);
   else {
     v = 0.0f;
@@ -698,9 +697,9 @@ T Matrix<T>::norm2() const {
     if (major_order == CblasRowMajor) {
       do {
 	int pos   = computeRawPos(coords);
-	float aux = doSnrm2(matrixSize[numDim-1],
-			    data, pos, stride[numDim-1],
-			    use_cuda);
+	T aux = doSnrm2(matrixSize[numDim-1],
+			data, pos, stride[numDim-1],
+			use_cuda);
 	v += aux*aux;
 	coords[numDim-1] = matrixSize[numDim-1]-1;
       } while(nextCoordVectorRowMajor(coords, matrixSize, numDim));
@@ -708,15 +707,15 @@ T Matrix<T>::norm2() const {
     else {
       do {
 	int pos   = computeRawPos(coords);
-	float aux = doSnrm2(matrixSize[0],
-			    data, pos, stride[0],
-			    use_cuda);
+	T aux = doSnrm2(matrixSize[0],
+			data, pos, stride[0],
+			use_cuda);
 	v += aux*aux;
 	coords[0] = matrixSize[0]-1;
       } while(nextCoordVectorColMajor(coords, matrixSize, numDim));
     }
     delete[] coords;
-    v = sqrtf(v);
+    v = (T)sqrtf(v);
   }
   return v;
 }
@@ -746,6 +745,29 @@ void Matrix<T>::minAndMax(T &min, T &max) const {
     if (*it < min) min = *it;
     if (*it > max) max = *it;
   }
+}
+
+template <typename T>
+bool Matrix<T>::nextCoordVectorRowMajor(int *coords, const int *sizes,
+					int numDim) {
+  int j = numDim;
+  do {
+    --j;
+    coords[j] = (coords[j]+1) % sizes[j];
+  } while(j>0 && coords[j] == 0);
+  if (j == 0 && coords[0] == 0) return false;
+  return true;
+}
+
+template <typename T>
+bool Matrix<T>::nextCoordVectorColMajor(int *coords, const int *sizes,
+					int numDim) {
+  int j = 0;
+  do {
+    coords[j] = (coords[j]+1) % sizes[j];
+  } while(j<numDim-1 && coords[j++] == 0);
+  if (j == numDim-1 && coords[numDim-1] == 0) return false;
+  return true;
 }
 
 template <typename T>

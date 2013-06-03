@@ -42,13 +42,13 @@
   MatrixFloat *mat;
   LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
   
-  if (mat->numDim != 2) {
+  if (mat->getNumDim() != 2) {
     lua_pushstring(L,"image : matrix of dimension 2 is required");
     lua_error(L);    
   }
 
-  int width=mat->matrixSize[1];
-  int height=mat->matrixSize[0];
+  int width=mat->getDimSize(1);
+  int height=mat->getDimSize(0);
   int offsetx=0;
   int offsety=0;
 

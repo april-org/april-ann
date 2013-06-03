@@ -43,14 +43,15 @@
   else {
     MatrixFloat *mat;
     LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
-    float *data = mat->getData();
-    if (mat->numDim != 2 || mat->matrixSize[0] != 3 || mat->matrixSize[1] != 3) {
+    const float *data = mat->getRawDataAccess()->getPPALForRead();
+    if (mat->getNumDim() != 2 || mat->getDimSize(0) != 3 || mat->getDimSize(1) != 3) {
       LUABIND_ERROR("2D affine transform matrix must be 3x3");
     }
 
     if (data[6] != 0 || data[7] != 0 || data[8] != 1) {
       LUABIND_FERROR3("Bottom row of the 2D affine transform matrix must be [0 0 1] "
-                      "([%f %f %f] found)", data[6], data[7], data[8]);
+                      "([%f %f %f] found)",
+		      data[6], data[7], data[8]);
     }
     obj = new AffineTransform2D(mat);
   }

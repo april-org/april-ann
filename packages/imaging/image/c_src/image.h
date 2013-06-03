@@ -43,11 +43,11 @@ class Image : public Referenced {
   virtual ~Image();
   //Methods
   T& operator () (int x, int y) { 
-    return matrix->getData()[offset+x+y*matrix_width()]; 
+    return matrix->getRawDataAccess()->getPPALForReadAndWrite()[offset+x+y*matrix_width()];
   }
-
+  
   T operator () (int x, int y) const {
-    return matrix->getData()[offset+x+y*matrix_width()];
+    return matrix->getRawDataAccess()->getPPALForRead()[offset+x+y*matrix_width()];
   }
 
   // Bound-checking version of operator()
@@ -65,9 +65,9 @@ class Image : public Referenced {
     T h2 = (1-fx)*getpixel(int(x), int(y+dy), default_value) + fx*getpixel(int(x+dx), int(y+dy), default_value);
     return (1-fy)*h1 + fy*h2;
   }
-
-  int matrix_width()  const { return matrix->getMatrixDimSize(1); }
-  int matrix_height() const { return matrix->getMatrixDimSize(0); }
+  
+  int matrix_width()  const { return matrix->getDimSize(1); }
+  int matrix_height() const { return matrix->getDimSize(0); }
   int offset_width()  const { return offset % matrix_width(); }
   int offset_height() const { return offset / matrix_width(); }
   Image<T> *clone() const;
