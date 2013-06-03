@@ -29,7 +29,7 @@ using april_utils::clamp;
 
 template <typename T>
 MatrixFloat* readMatrixFloatFromStream(T &stream) {
-  constString linea,formato,token;
+  constString linea,formato,order,token;
   // First we read the matrix dimensions
   linea = stream.extract_u_line();
   if (!linea) return 0;
@@ -55,8 +55,12 @@ MatrixFloat* readMatrixFloatFromStream(T &stream) {
   linea = stream.extract_u_line();
   formato = linea.extract_token();
   if (!formato) { return 0;}
+  order = linea.extract_token();
   if (pos_comodin == -1) { // Normal version
-    mat = new MatrixFloat(n,dims);
+    if (!order || order=="row_major")
+      mat = new MatrixFloat(n,dims);
+    else if (order == "col_major")
+      mat = new MatrixFloat(n,dims,0.0f,CblasColMajor);
     int i=0;
     MatrixFloat::iterator data_it(mat->begin());
     if (formato == "ascii") {
@@ -105,7 +109,10 @@ MatrixFloat* readMatrixFloatFromStream(T &stream) {
       delete[] data; return 0;
     }
     dims[pos_comodin] = size / sizesincomodin;
-    mat = new MatrixFloat(n,dims);
+    if (!order || order == "row_major")
+      mat = new MatrixFloat(n,dims);
+    else if (order == "col_major")
+      mat = new MatrixFloat(n,dims,0.0f,CblasColMajor);
     int i=0;
     for (MatrixFloat::iterator it(mat->begin()); it!=mat->end(); ++it, ++i)
       *it = data[i];
@@ -122,7 +129,12 @@ void saveMatrixFloatToFile(MatrixFloat *mat, FILE *f, bool is_ascii) {
     fprintf(f, "%d ",mat->getDimSize(i));
   fprintf(f,"%d\n",mat->getDimSize(mat->getNumDim()-1));
   if (is_ascii) {
-    fprintf(f,"ascii\n");
+    fprintf(f,"ascii");
+    if (mat->getMajorOrder() == CblasColMajor)
+      fprintf(f, " col_major");
+    else
+      fprintf(f, " row_major");
+    fprintf(f, "\n");
     int i=0;
     for(MatrixFloat::const_iterator it(mat->begin()); it!=mat->end();++it,++i) {
       fprintf(f,"%.5g%c",(*it),
@@ -132,7 +144,12 @@ void saveMatrixFloatToFile(MatrixFloat *mat, FILE *f, bool is_ascii) {
       fprintf(f,"\n"); 
     }
   } else { // binary
-    fprintf(f,"binary\n");
+    fprintf(f,"binary");
+    if (mat->getMajorOrder() == CblasColMajor)
+      fprintf(f, " col_major");
+    else
+      fprintf(f, " row_major");
+    fprintf(f, "\n");
     // We substract 1 so the final '\0' is not considered
     char b[5];
     int i=0;
@@ -150,7 +167,7 @@ void saveMatrixFloatToFile(MatrixFloat *mat, FILE *f, bool is_ascii) {
 int saveMatrixFloatToString(MatrixFloat *mat, char **buffer, bool is_ascii) {
   const int columns = 9;
   int i,sizedata,sizeheader;
-  sizeheader = mat->getNumDim()*10+10; // FIXME: To put adequate values
+  sizeheader = mat->getNumDim()*10+10+10; // FIXME: To put adequate values
   if (is_ascii)
     sizedata = mat->size()*12; // Memory used by float in ascii
 			     // including spaces, enters, etc...
@@ -162,7 +179,12 @@ int saveMatrixFloatToString(MatrixFloat *mat, char **buffer, bool is_ascii) {
     r += sprintf(r,"%d ",mat->getDimSize(i));
   r += sprintf(r,"%d\n",mat->getDimSize(mat->getNumDim()-1));
   if (is_ascii) {
-    r += sprintf(r,"ascii\n");
+    r += sprintf(r,"ascii");
+    if (mat->getMajorOrder() == CblasColMajor)
+      r += sprintf(r," col_major");
+    else
+      r += sprintf(r," row_major");
+    r += sprintf(r,"\n");
     int i=0;
     for (MatrixFloat::const_iterator it(mat->begin()); it!=mat->end();++it,++i){
       r += sprintf(r,"%.5g%c",(*it),
@@ -172,7 +194,12 @@ int saveMatrixFloatToString(MatrixFloat *mat, char **buffer, bool is_ascii) {
       r += sprintf(r,"\n"); 
     }
   } else { // binary
-    r += sprintf(r,"binary\n");
+    r += sprintf(r,"binary");
+    if (mat->getMajorOrder() == CblasColMajor)
+      r += sprintf(r," col_major");
+    else
+      r += sprintf(r," row_major");
+    r += sprintf(r,"\n");
     // We substract 1 so the final '\0' is not considered
     r += -1 + binarizer::code_iterator_float<MatrixFloat::const_iterator>(mat->begin(),
 									  mat->end(),
