@@ -52,6 +52,7 @@ trainer:randomize_weights{
   inf         = -1,
   sup         =  1,
 }
+trainer:save("jarl.net", "binary")
 thenet:set_option("learning_rate", 0.01)
 thenet:set_option("momentum",      0.01)
 thenet:set_option("weight_decay",  1e-05)
@@ -70,7 +71,7 @@ validation_data = {
 clock = util.stopwatch()
 clock:go()
 print("# Epoch Training  Validation")
-stopping_criterion = trainable.stopping_criterions.make_max_epochs_wo_imp_relative(2)
+stopping_criterion = trainable.stopping_criteria.make_max_epochs_wo_imp_relative(2)
 result = trainer:train_holdout_validation{ training_table     = training_data,
 					   validation_table   = validation_data,
 					   min_epochs         = 4,

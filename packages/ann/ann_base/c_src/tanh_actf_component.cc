@@ -54,7 +54,15 @@ namespace ANN {
   }
 
   ANNComponent *TanhActfANNComponent::clone() {
-    return new TanhActfANNComponent(name.c_str());
+    TanhActfANNComponent *obj = new TanhActfANNComponent(name.c_str());
+    obj->setOption(DROPOUT_FACTOR_STRING, getOption(DROPOUT_FACTOR_STRING));
+    return obj;
+  }
+
+  char *TanhActfANNComponent::toLuaString() {
+    buffer_list buffer;
+    buffer.printf("ann.components.actf.tanh{ name='%s' }", name.c_str());
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
 
 }

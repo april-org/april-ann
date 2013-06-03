@@ -54,7 +54,14 @@ namespace ANN {
   }
 
   ANNComponent *LogLogisticActfANNComponent::clone() {
-    return new LogLogisticActfANNComponent(name.c_str());
+    LogLogisticActfANNComponent *obj = new LogLogisticActfANNComponent(name.c_str());
+    obj->setOption(DROPOUT_FACTOR_STRING, getOption(DROPOUT_FACTOR_STRING));
+    return obj;
   }
 
+  char *LogLogisticActfANNComponent::toLuaString() {
+    buffer_list buffer;
+    buffer.printf("ann.components.actf.log_logistic{ name='%s' }", name.c_str());
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  }
 }

@@ -149,13 +149,7 @@ namespace ANN {
   void Connections::randomizeWeights(MTRand *rnd, float low, float high) {
     double dinf = low;
     double dsup = high;
-    /*
-      if (use_fanin) {
-      double inv_sqrt_fan_in = 1.0/sqrt(fanin);
-      dinf *= inv_sqrt_fan_in;
-      dsup *= inv_sqrt_fan_in;
-      }
-    */
+
     // assert to avoid nearzero weights
     assert(fabs(dinf) > weightnearzero);
     assert(fabs(dsup) > weightnearzero);
@@ -177,13 +171,7 @@ namespace ANN {
 					     float low, float high) {
     double dinf = low;
     double dsup = high;
-    /*
-      if (use_fanin) {
-      double inv_sqrt_fan_in = 1.0/sqrt(fanin);
-      dinf *= inv_sqrt_fan_in;
-      dsup *= inv_sqrt_fan_in;
-      }
-    */
+
     // assert to avoid nearzero weights
     assert(fabs(dinf) > weightnearzero);
     assert(fabs(dsup) > weightnearzero);
@@ -255,17 +243,18 @@ namespace ANN {
     
   // para hacer copias
   Connections *Connections::clone() {
-    Connections *conn	      = new Connections(num_inputs, num_outputs);
-    float	*other_w      = conn->weights->getPPALForWrite();
-    float	*other_prev_w = conn->prev_weights->getPPALForWrite();
-    const float *w            = weights->getPPALForRead();
-    const float *prev_w       = prev_weights->getPPALForRead();
+    Connections *conn = new Connections(num_inputs, num_outputs);
+
+    doScopy(total_size,
+	    weights, 0, 1,
+	    conn->weights, 0, 1,
+	    weights->getCudaFlag());
     
-    // Podriamos considerar hacer esto con cblas... aceleraria mucho.
-    for (unsigned int i = 0; i < total_size; i++) {
-      other_prev_w[i] = prev_w[i];
-      other_w[i]      = w[i];
-    }
+    doScopy(total_size,
+	    prev_weights, 0, 1,
+	    conn->prev_weights, 0, 1,
+	    weights->getCudaFlag());
+    
     return conn;
   }
 
@@ -280,6 +269,14 @@ namespace ANN {
     printf ("Connections %p, input=%d, output=%d, num_refs=%d, calls=%d\n",
 	    this, num_inputs, num_outputs, num_references,
 	    update_weights_calls);
+    const float *w = weights->getPPALForRead();
+    const float *prevw = prev_weights->getPPALForRead();
+    for (unsigned int i=0; i<total_size; ++i)
+      printf("%f ", w[i]);
+    printf("\n");
+    for (unsigned int i=0; i<total_size; ++i)
+      printf("%f ", prevw[i]);
+    printf("\n");
   }
   
 }

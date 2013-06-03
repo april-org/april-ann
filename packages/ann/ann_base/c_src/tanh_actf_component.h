@@ -47,6 +47,8 @@ namespace ANN {
     TanhActfANNComponent(const char *name);
     virtual ~TanhActfANNComponent();
     virtual ANNComponent *clone();
+
+    virtual char *toLuaString();
   };
 }
 

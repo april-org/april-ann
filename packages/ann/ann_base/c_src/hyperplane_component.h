@@ -87,6 +87,8 @@ namespace ANN {
       dot_product->debugInfo();
       bias->debugInfo();
     }
+
+    virtual char *toLuaString();
   };
 }
 

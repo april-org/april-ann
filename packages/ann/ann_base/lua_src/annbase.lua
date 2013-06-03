@@ -85,7 +85,13 @@ function ann.mlp.all_all.generate(topology, first_count, names_prefix)
     first_count = first_count,
     prefix      = names_prefix,
     names_order = names_order,
-    thenet      = thenet, }
+    thenet      = thenet,
+    clone = function(o)
+      local nn=ann.mlp.all_all.generate(o.description,o.first_count,o.prefix)
+      nn:build{ weights = table.map(o:copy_weights(),
+				    function(cnn)return cnn:clone()end) }
+      return nn
+    end }
   -- we make obj a wrapper of thenet, so we keep useful information as a lua
   -- table but it is like the original object from the outside
   local current = thenet
@@ -93,7 +99,7 @@ function ann.mlp.all_all.generate(topology, first_count, names_prefix)
 	 getmetatable(current).__index ~= current) do
     current = getmetatable(current).__index
     for i,v in pairs(current) do
-      if type(v) == "function" then
+      if type(v) == "function" and obj[i] == nil then
 	obj[i] =
 	  function(...)
 	    local t = arg[1]
@@ -122,7 +128,7 @@ april_set_doc("ann.mlp.all_all.save",
 		  "function.",
 		},
 		params= {
-		  { "The model object" },
+		  { "The model object (not the trainer)" },
 		  { "A filename string" },
 		  { "Matrix save mode [optional], by default 'binary'" },
 		},
@@ -391,7 +397,7 @@ april_set_doc("ann.connections.randomize_weights",
 		params={
 		  ["random"] = "A random object",
 		  ["inf"] = "Inferior limit [optional]. By default is -1.0",
-		  ["first_pos"] = "Superior limit [optional]. By default is -1.0",
+		  ["sup"] = "Superior limit [optional]. By default is  1.0",
 		},
 	      })
 

@@ -214,6 +214,14 @@ function april_print_doc(table_name, verbosity, prefix)
   end
 end
 
+function get_object_id(obj)
+  local id = nil
+  if getmetatable(obj) then
+    id = getmetatable(obj).id
+  end
+  return id
+end
+
 -- verbosity => 0 only names, 1 only summary, 2 all
 function april_help(table_name, verbosity)
   if not table_name then table_name="" end
@@ -758,7 +766,9 @@ function table.join(t1,t2)
    return result
 end
 
-function table.copy(t, lookup_table)
+-- Warning: this function makes a DEEP copy of LUA tables, but userdata objects
+-- are copied as references
+function table.deep_copy(t, lookup_table)
  local copy = {}
  for i,v in pairs(t) do
   if type(v) ~= "table" then
@@ -769,25 +779,11 @@ function table.copy(t, lookup_table)
    if lookup_table[v] then
     copy[i] = lookup_table[v] -- we already copied this table. reuse the copy.
    else
-    copy[i] = tcopy(v,lookup_table) -- not yet copied. copy it.
+    copy[i] = table.deep_copy(v,lookup_table) -- not yet copied. copy it.
    end
   end
  end
  return copy
-end
-
--- Warning: this function makes a DEEP copy of LUA tables, but userdata objects
--- are copied as references
-function table.deep_copy(t)
-  local ret = {}
-  for i,v in pairs(t) do
-    if type(v) == "table" then
-      ret[i] = table.deep_copy(v)
-    else
-      ret[i] = v
-    end
-  end
-  return ret
 end
 
 function table.expand(t)
