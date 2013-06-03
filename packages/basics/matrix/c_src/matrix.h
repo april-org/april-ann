@@ -37,15 +37,13 @@ class Matrix : public Referenced {
   /// Number of dimensions
   int numDim;
   /// Size of each dimension
-  int *matrixSize;
+  int *stride;
   /// Indication for sub-matrices
   bool is_submatrix;
-  /// Last raw position (for iterator)
-  int last_raw_position;
   /// Offset for sub-matrix
   int offset;
   /// Sub-matrix size of each dimension
-  int *subMatrixSize;
+  int *matrixSize;
   /// Total size of the matrix (number of elements)
   int total_size;
   /// Pointer to data
@@ -61,8 +59,6 @@ class Matrix : public Referenced {
   int  computeRawPos(const int *coords) const;
   /// Indicates if the matrix is a sub-matrix
   bool getIsSubMatrix() const;
-  /// Returns the raw position of end iterator (last valid position + 1)
-  int  getEndRawPos() const;
   /// Returns the data pointer for read and write
   T *getData() { return data->getPPALForReadAndWrite(); }
   /// Returns the data pointer for read
@@ -91,6 +87,7 @@ public:
     bool      operator!=(const iterator &other) const;
     iterator &operator++();
     T &operator*();
+    int getRawPos() const;
   };
   /*******************************************************/
   class const_iterator {
@@ -115,6 +112,7 @@ public:
     bool            operator!=(const iterator &other) const;
     const_iterator &operator++();
     const T &operator*() const;
+    int getRawPos() const;
   };
   
   /********** Constructors ***********/
@@ -128,24 +126,22 @@ public:
   /// Sub-matrix constructor
   Matrix(Matrix<T> *other,
 	 const int* coords, const int *sizes,
-	 bool clone=true,
-	 CBLAS_ORDER major_order=CblasRowMajor);
+	 bool clone=true);
   /// Destructor
   virtual ~Matrix();
   /* Getters and setters */
   int getNumDim() const { return numDim; }
-  const int *getMatrixDimPtr() const { return subMatrixSize; }
-  int getMatrixDimSize(int i) const { return subMatrixSize[i]; }
+  const int *getDimPtr() const { return matrixSize; }
+  int getDimSize(int i) const { return matrixSize[i]; }
+  int getStride(int i) const { return stride[i]; }
   int size() const { return total_size; }
-  CBLAS_ORDER getMajorType() const { return major_order; }
+  CBLAS_ORDER getMajorOrder() const { return major_order; }
   /**********************/
   iterator begin() { return iterator(this); }
-  iterator end() { return iterator(this, getEndRawPos()); }
+  iterator end() { return iterator(this, size()); }
   const_iterator begin() const { return const_iterator(this); }
-  const_iterator end() const { return const_iterator(this, getEndRawPos()); }
+  const_iterator end() const { return const_iterator(this, size()); }
 
-  /// Changes the major type: CblasRowMajor, CblasColMajor
-  void setMajorType(CBLAS_ORDER major_order, bool transpose);
   /// Deep copy
   Matrix<T>* clone();
   /// Deep copy with different major_order
@@ -206,17 +202,20 @@ private:
   void release_memory();
 };
 
+/// Allocation of memory for data pointer. It is Referenced for sharing.
 template <typename T>
 void Matrix<T>::allocate_memory(int size) {
   data = new GPUMirroredMemoryBlock<T>(size, true);
   IncRef(data);
 }
 
+/// Release of the memory allocated for data pointer.
 template <typename T>
 void Matrix<T>::release_memory() {
   DecRef(data);
 }
 
+/// Constructor with given default_value initialization
 template <typename T>
 Matrix<T>::Matrix(int numDim,
 		  const int* dim,
@@ -225,143 +224,129 @@ Matrix<T>::Matrix(int numDim,
 					     is_submatrix(false),
 					     offset(0),
 					     major_order(major_order) {
+  stride=new int[numDim];
   matrixSize=new int[numDim];
-  subMatrixSize=new int[numDim];
   total_size=1;
   for(int i=0; i<numDim; i++) {
     total_size *= dim[i];
-    matrixSize[i] = subMatrixSize[i] = dim[i];
+    stride[i] = matrixSize[i] = dim[i];
   }
-  
   allocate_memory(total_size);
-  
-  for (int i=0; i<total_size; ++i)
-    data->get(i) = default_value;
-  
-  last_raw_position = total_size-1;
+  float *d = data->getPPALForWrite();
+  for (int i=0; i<total_size; ++i) d[i] = default_value;
 }
 
+/// Constructor for sub-matrix building
 template <typename T>
 Matrix<T>::Matrix(Matrix<T> *other,
 		  const int* coords, const int *sizes,
-		  bool clone,
-		  CBLAS_ORDER major_order) : numDim(other->numDim),
-					     is_submatrix(true),
-					     offset(0),
-					     major_order(major_order) {
-  if (major_order == CblasColMajor && numDim != 2)
-    ERROR_EXIT(128, "Col-major order is only allowed when numDim=2\n");
-  matrixSize    = new int[numDim];
-  subMatrixSize = new int[numDim];
-  total_size    = 1;
+		  bool clone) : numDim(other->numDim),
+				is_submatrix(true),
+				offset(0),
+				major_order(other->major_order) {
+  stride     = new int[numDim];
+  matrixSize = new int[numDim];
+  total_size = 1;
   if (clone) {
+    int k=0;
     for (int i=0; i<numDim; i++) {
-      matrixSize[i] = subMatrixSize[i] = sizes[i];
-      if (sizes[i] + coords[i] > matrixSize[i])
-	ERROR_EXIT3(128, "Size + coordinates are out of matrix size: %d+%d > %d\n",
-		    sizes[i], coords[i], matrixSize[i]);
-      total_size = total_size * subMatrixSize[i];
+      stride[k] = matrixSize[k] = sizes[i];
+      if (sizes[i] + coords[i] > other->stride[i])
+	ERROR_EXIT3(128, "Size+coordinates are out of matrix stride: %d+%d>%d\n",
+		    sizes[i], coords[i], other->stride[i]);
+      // Erase dimensions with size=1, except last two
+      if (sizes[i] > 1 || i>=numDim-2) {
+	total_size = total_size * matrixSize[k];
+	++k;
+      }
     }
+    numDim = k;
     allocate_memory(total_size);
-    if (major_order == other->major_order) {
-      
-    }
-    else {
-      
+    int other_offset        = other->computeRawPos(coords);
+    const float *other_data = other->data->getPPALForRead();
+    for (iterator it(begin()); it!=end(); ++it) {
+      int raw_pos = it.getRawPos();
+      printf("%d\n", raw_pos);
+      *it = other_data[other_offset + raw_pos];
     }
   }
   else {
-    if (major_order != other->major_order)
-      ERROR_EXIT(128, "Major orders are different, set parameter clone=true\n");
     for (int i=0; i<numDim; i++) {
-      matrixSize[i]    = other->matrixSize[i];
-      subMatrixSize[i] = sizes[i];
-      if (sizes[i] + coords[i] > matrixSize[i])
-	ERROR_EXIT3(128, "Size + coordinates are out of matrix size: %d+%d > %d\n",
-		    sizes[i], coords[i], matrixSize[i]);
-      total_size = total_size * subMatrixSize[i];
+      stride[i]     = other->stride[i];
+      matrixSize[i] = sizes[i];
+      if (sizes[i] + coords[i] > other->stride[i])
+	ERROR_EXIT3(128, "Size+coordinates are out of matrix stride: %d+%d>%d\n",
+		    sizes[i], coords[i], other->stride[i]);
+      total_size = total_size * matrixSize[i];
     }
-    offset = computeRawPos(coords);
-    data = other->data;
+    offset = other->computeRawPos(coords);
+    data   = other->data;
     IncRef(data);
   }
-
-  if (clone) {
-
-      matrixSize[i] = subMatrixSize[i] = other->subMatrixSize[i];
-    }
-    total_size = other->total_size;
-
-
-  }
-  else {
-    data = other->data;
-    IncRef(data);
-  }
-  
-  last_raw_position = total_size-1;  
 }
 
+/// Constructor with T() default value initialization
 template <typename T>
 Matrix<T>::Matrix(int numDim, int d1, ...) : numDim(numDim),
 					     is_submatrix(false),
 					     offset(0),
 					     major_order(CblasRowMajor) {
+  stride    = new int[numDim];
   matrixSize = new int[numDim];
-  subMatrixSize = new int[numDim];
-
   va_list ap;
   va_start(ap, d1);
-  matrixSize[0] = d1;
+  stride[0] = d1;
   total_size = d1;
   for (int i=1; i<numDim; i++) {
     int di = va_arg(ap, int);
-    matrixSize[i] = subMatrixSize[i] = di;
+    stride[i] = matrixSize[i] = di;
     total_size *= di;
   }
   va_end(ap);
-
   allocate_memory(total_size); // init with default value for type T
   T default_value=T();
-  for (int i=0; i<total_size; ++i)
-    data->get(i) = default_value;
-
-  last_raw_position = total_size-1;
+  float *d = data->getPPALForWrite();
+  for (int i=0; i<total_size; ++i) d[i] = default_value;
 }
 
-
+/// Constructor for copy or clone other given matrix
 template <typename T>
 Matrix<T>::Matrix(Matrix<T> *other, bool clone) : numDim(other->numDim),
 						  is_submatrix(false),
 						  offset(0),
 						  major_order(other->major_order) {
-  matrixSize = new int[numDim];
-  subMatrixSize = new int[numDim];
+  stride	    = new int[numDim];
+  matrixSize	    = new int[numDim];
+  total_size	    = other->total_size;
   if (clone) {
-    for (int i=0; i<numDim; i++) {
-      matrixSize[i] = subMatrixSize[i] = other->subMatrixSize[i];
-    }
-    total_size = other->total_size;
-
+    for (int i=0; i<numDim; i++)
+      stride[i] = matrixSize[i] = other->matrixSize[i];
     allocate_memory(total_size);
-    doScopy(total_size,
-	    other->data, 0, 1,
-	    data, 0, 1,
-	    other->data->getCudaFlag());
+    iterator       this_it(begin());
+    const_iterator other_it(other->begin());
+    while(this_it != end()) {
+      *this_it = *other_it;
+      ++this_it;
+      ++other_it;
+    }
   }
   else {
-    data = other->data;
+    offset       = other->offset;
+    is_submatrix = other->is_submatrix;
+    data         = other->data;
     IncRef(data);
+    for (int i=0; i<numDim; ++i) {
+      stride[i]    = other->stride[i];
+      matrixSize[i] = other->matrixSize[i];
+    }
   }
-  
-  last_raw_position = total_size-1;
 }
 
 template <typename T>
 Matrix<T>::~Matrix() {
   release_memory();
+  delete[] stride;
   delete[] matrixSize;
-  delete[] subMatrixSize;
 }
 
 template<typename T>
@@ -369,14 +354,14 @@ Matrix<T> *Matrix<T>::clone(CBLAS_ORDER major_order, bool transpose) {
   Matrix<T> *resul;
   if (numDim != 2) ERROR_EXIT(128, "Major type not availabe when numDim!=2\n");
   if (this->major_order != major_order && transpose) {
-    resul = new Matrix<T>(numDim, matrixSize, T(), major_order);
+    resul = new Matrix<T>(numDim, stride, T(), major_order);
     if (transpose)
-      for (int i=0; i<matrixSize[0]; ++i)
-	for (int j=0; j<matrixSize[1]; ++j)
+      for (int i=0; i<stride[0]; ++i)
+	for (int j=0; j<stride[1]; ++j)
 	  (*resul)(i,j) = (*this)(i,j);
   }
   else {
-    resul = new Matrix<T>(this);
+    resul = new Matrix<T>(this,true);
     resul->major_order = major_order;
   }
   return resul;
@@ -384,12 +369,12 @@ Matrix<T> *Matrix<T>::clone(CBLAS_ORDER major_order, bool transpose) {
 
 template <typename T>
 Matrix<T>* Matrix<T>::clone() {
-  return new Matrix<T>(this);
+  return new Matrix<T>(this,true);
 }
 
 template <typename T>
 Matrix<T>* Matrix<T>::copy() {
-  return new Matrix<T>(this, false);
+  return new Matrix<T>(this,false);
 }
 
 template <typename T>
@@ -449,24 +434,15 @@ const T& Matrix<T>::operator() (int *coords, int sz) const {
 template <typename T>
 bool Matrix<T>::getCol(int col, T* vec, int vecsize) {
   // If it is not a 2D matrix, error
-  if (numDim != 2) 
-    return false;
+  if (numDim != 2) return false;
   // If the column is out of range, error
-  if ((col < 0) || (col >= matrixSize[1]))
-    return false;
+  if ((col < 0) || (col >= stride[1])) return false;
   // If the array length is different to the size of the matrix columns, error
-  if (vecsize != matrixSize[0]) 
-    return false;
-  
-  if (major_order == CblasRowMajor)
-    for (int row = 0; row < matrixSize[0]; row++) {
-      vec[row] = data->get(matrixSize[1]*row+col);
-    }
-  else {
-    int colpos = matrixSize[0]*col;
-    for (int row = 0; row < matrixSize[0]; row++) {
-      vec[row] = data->get(colpos + row);
-    }
+  if (vecsize != stride[0]) return false;
+  const float *d = data->getPPALForRead();
+  for (int row = 0; row < stride[0]; row++) {
+    int coords[2] = { row, col };
+    vec[row] = d[computeRawPos(coords)];
   }
   return true;
 }
@@ -474,55 +450,34 @@ bool Matrix<T>::getCol(int col, T* vec, int vecsize) {
 template <typename T>
 bool Matrix<T>::putCol(int col, T* vec, int vecsize) {
   // If it is not a 2D matrix, error
-  if (numDim != 2) 
-    return false;
+  if (numDim != 2) return false;
   // If the column is out of range, error
-  if ((col < 0) || (col >= matrixSize[1]))
-    return false;
+  if ((col < 0) || (col >= stride[1])) return false;
   // If the array length is different to the size of the matrix columns, error
-  if (vecsize != matrixSize[0]) 
-    return false;
-  
-  if (major_order == CblasRowMajor)
-    for (int row = 0; row < matrixSize[0]; row++) {
-      data->get(matrixSize[1]*row+col) = vec[row];
-    }
-  else {
-    int colpos = matrixSize[0]*col;
-    for (int row = 0; row < matrixSize[0]; row++) {
-      data->get(colpos + row) = vec[row];
-    }
+  if (vecsize != stride[0]) return false;
+  float *d = data->getPPALForWrite();
+  for (int row = 0; row < stride[0]; row++) {
+    int coords[2] = { row, col };
+    d[computeRawPos(coords)] = vec[row];
   }
-
   return true;
 }
 
 template <typename T>
 bool Matrix<T>::putSubCol(int col, int first_row, T* vec, int vecsize) {
   // If it is not a 2D matrix, error
-  if (numDim != 2) 
-    return false;
+  if (numDim != 2) return false;
   // If the column is out of range, error
-  if ((col < 0) || (col >= matrixSize[1]))
-    return false;
+  if ((col < 0) || (col >= stride[1])) return false;
   // If the first row is out of range, error
-  if ((first_row < 0) || (first_row >= matrixSize[0]))
-    return false;
+  if ((first_row < 0) || (first_row >= stride[0])) return false;
   // If the array is out of range, error
-  if ((first_row < 0) || (first_row+vecsize > matrixSize[0]))
-    return false;
-
-  if (major_order == CblasRowMajor)
-    for (int row = first_row; row < first_row+vecsize; row++) {
-      data[matrixSize[1]*row+col] = vec[row];
-    }
-  else {
-    int colpos = matrixSize[0]*col;
-    for (int row = first_row; row < first_row+vecsize; row++) {
-      data[colpos + row] = vec[row];
-    }
+  if ((first_row < 0) || (first_row+vecsize > stride[0])) return false;
+  float *d = data->getPPALForWrite();
+  for (int row = first_row; row < first_row+vecsize; row++) {
+    int coords[2] = { row, col };
+    d[computeRawPos(coords)] = vec[row];
   }
-  
   return true;
 }
 
@@ -543,13 +498,14 @@ bool Matrix<T>::sameDim(const Matrix<T> *other) const {
 
 template <typename T>
 Matrix<T>* Matrix<T>::addition(const Matrix<T> *other, float alpha) {
-  Matrix<T> *resul = new Matrix<T>(this);
+  Matrix<T> *resul = new Matrix<T>(this,true);
   resul->accumulate_addition(other, alpha);
   return resul;
 }
 
 template <typename T>
 void Matrix<T>::accumulate_addition(const Matrix<T> *other, float alpha) {
+  if (is_submatrix) ERROR_EXIT(128, "Not implemented for sub-matrix!!\n");
   doSaxpy(total_size,
 	  alpha, other->data, 0, 1,
 	  data, 0, 1,
@@ -558,7 +514,7 @@ void Matrix<T>::accumulate_addition(const Matrix<T> *other, float alpha) {
 
 template <typename T>
 Matrix<T>* Matrix<T>::substraction(const Matrix<T> *other) {
-  Matrix<T> *resul = new Matrix<T>(this);
+  Matrix<T> *resul = new Matrix<T>(this,true);
   resul->accumulate_substraction(other);
   return resul;
 }
@@ -571,12 +527,12 @@ void Matrix<T>::accumulate_substraction(const Matrix<T> *other) {
 template <typename T>
 Matrix<T>* Matrix<T>::multiply(const Matrix<T> *other) const {
   if (numDim != 2 || other->numDim != 2 ||
-      matrixSize[1] != other->matrixSize[0]) return 0;
-  int N = matrixSize[0];
-  int K = matrixSize[1];
-  int M = other->matrixSize[1];
+      stride[1] != other->stride[0]) return 0;
+  int N = stride[0];
+  int K = stride[1];
+  int M = other->stride[1];
   int dim[2] = {N, M};
-  Matrix<T> *resul = new Matrix<T>(2,dim);
+  Matrix<T> *resul = new Matrix<T>(2,dim,T(),major_order);
   resul->accumulate_multiply(1.0f, this, other, 0.0f);
   return resul;
 }
@@ -587,33 +543,38 @@ void Matrix<T>::accumulate_multiply(float alpha,
 				    const Matrix<T> *otherB,
 				    float beta) {
   if (numDim != 2 || otherA->numDim != 2 || otherB->numDim != 2 ||
-      matrixSize[0] != otherA->matrixSize[0] ||
-      matrixSize[1] != otherB->matrixSize[1] ||
-      otherA->matrixSize[1] != otherB->matrixSize[0] ||
+      stride[0] != otherA->stride[0] ||
+      stride[1] != otherB->stride[1] ||
+      otherA->stride[1] != otherB->stride[0] ||
       major_order != otherA->major_order ||
       otherA->major_order != otherB->major_order)
     ERROR_EXIT6(128, "Incorrect matrixes dimensions or different major types: "
 		"%dx%d + %dx%d * %dx%d\n",
-		matrixSize[0], matrixSize[1],
-		otherA->matrixSize[0], otherA->matrixSize[1],
-		otherB->matrixSize[0], otherB->matrixSize[1]);
+		stride[0], stride[1],
+		otherA->stride[0], otherA->stride[1],
+		otherB->stride[0], otherB->stride[1]);
   int N=matrixSize[0], M=matrixSize[1], K=otherA->matrixSize[1];
+  int lda=(major_order==CblasRowMajor)?otherA->stride[1]:otherA->stride[0];
+  int ldb=(major_order==CblasRowMajor)?otherB->stride[1]:otherB->stride[0];
+  int ldc=(major_order==CblasRowMajor)?stride[1]:stride[0];
   doSgemm(major_order, CblasNoTrans, CblasNoTrans,
-	  matrixSize[0], matrixSize[1], otherA->matrixSize[1],
-	  alpha, otherA->data, (major_order==CblasRowMajor)?K:N,
-	  otherB->data, (major_order==CblasRowMajor)?M:K,
-	  beta, data, (major_order==CblasRowMajor)?M:N,
-	  0, 0, 0,
+	  N, M, K,
+	  alpha, otherA->data, lda,
+	  otherB->data, ldb,
+	  beta, data, ldc,
+	  otherA->offset, otherB->offset, offset,
 	  data->getCudaFlag());
 }
 
 template <typename T>
 void Matrix<T>::multiply_by_scalar(T value) {
+  if (is_submatrix) ERROR_EXIT(128, "Not implemented for sub-matrix!!\n");
   doSscal(total_size, value, data, 0, 1, data->getCudaFlag());
 }
 
 template <typename T>
 T Matrix<T>::norm2() const {
+  if (is_submatrix) ERROR_EXIT(128, "Not implemented for sub-matrix!!\n");
   return doSnrm2(total_size, data, 0, 1, data->getCudaFlag());
 }
 
@@ -649,24 +610,24 @@ int Matrix<T>::computeRawPos(const int *coords) const {
   int raw_pos;
   switch(numDim) {
   case 1:
-    assert(coords[0] < subMatrixSize[0]);
+    assert(coords[0] < matrixSize[0]);
     raw_pos = coords[0];
     break;
   case 2:
-    assert(coords[0] < subMatrixSize[0]);
-    assert(coords[1] < subMatrixSize[1]);
+    assert(coords[0] < matrixSize[0]);
+    assert(coords[1] < matrixSize[1]);
     if (major_order == CblasRowMajor)
-      raw_pos = coords[0]*matrixSize[1]+coords[1];
-    else raw_pos = coords[1]*matrixSize[0]+coords[0];
+      raw_pos = coords[0]*stride[1]+coords[1];
+    else raw_pos = coords[1]*stride[0]+coords[0];
     break;
   default:
-    assert(coords[0] < subMatrixSize[0]);
-    assert(coords[1] < subMatrixSize[1]);
-    assert(coords[2] < subMatrixSize[2]);
-    raw_pos=(coords[0]*matrixSize[1]+coords[1])*matrixSize[2]+coords[2];
+    assert(coords[0] < matrixSize[0]);
+    assert(coords[1] < matrixSize[1]);
+    assert(coords[2] < matrixSize[2]);
+    raw_pos=(coords[0]*stride[1]+coords[1])*stride[2]+coords[2];
     for(int i=3; i<numDim; i++) {
-      assert(coords[i] < subMatrixSize[i]);
-      raw_pos *= matrixSize[i];
+      assert(coords[i] < matrixSize[i]);
+      raw_pos *= stride[i];
       raw_pos += coords[i];
     }
   }
@@ -676,11 +637,6 @@ int Matrix<T>::computeRawPos(const int *coords) const {
 template <typename T>
 bool Matrix<T>::getIsSubMatrix() const {
   return is_submatrix;
-}
-
-template <typename T>
-int Matrix<T>::getEndRawPos() const {
-  return last_raw_position + 1;
 }
 
 /*******************************************************************/
@@ -748,13 +704,13 @@ bool Matrix<T>::iterator::operator!=(const Matrix<T>::iterator &other) const {
 template <typename T>
 typename Matrix<T>::iterator &Matrix<T>::iterator::operator++() {
   if (m->getIsSubMatrix()) {
-    const int *dims = m->getMatrixDimPtr();
+    const int *dims = m->getDimPtr();
     int j = m->getNumDim();
     do {
       --j;
       coords[j] = (coords[j]+1) % dims[j];
-    } while(coords[j] == 0);
-    if (j == 0 && coords[0] == 0) raw_pos = m->getEndRawPos();
+    } while(j>0 && coords[j] == 0);
+    if (j == 0 && coords[0] == 0) raw_pos = m->size();
   }
   else ++raw_pos;
   return *this;
@@ -763,6 +719,11 @@ typename Matrix<T>::iterator &Matrix<T>::iterator::operator++() {
 template <typename T>
 T &Matrix<T>::iterator::operator*() {
   return data[raw_pos];
+}
+
+template <typename T>
+int Matrix<T>::iterator::getRawPos() const {
+  return raw_pos;
 }
 
 /*******************************************************************/
@@ -863,13 +824,13 @@ bool Matrix<T>::const_iterator::operator!=(const Matrix<T>::iterator &other) con
 template <typename T>
 typename Matrix<T>::const_iterator &Matrix<T>::const_iterator::operator++() {
   if (m->getIsSubMatrix()) {
-    const int *dims = m->getMatrixDimPtr();
+    const int *dims = m->getDimPtr();
     int j = m->getNumDim();
     do {
       --j;
       coords[j] = (coords[j]+1) % dims[j];
-    } while(coords[j] == 0);
-    if (j == 0 && coords[0] == 0) raw_pos = m->getEndRawPos();
+    } while(j>0 && coords[j] == 0);
+    if (j == 0 && coords[0] == 0) raw_pos = m->size();
     else raw_pos = m->computeRawPos(coords);
   }
   else ++raw_pos;
@@ -879,6 +840,11 @@ typename Matrix<T>::const_iterator &Matrix<T>::const_iterator::operator++() {
 template <typename T>
 const T &Matrix<T>::const_iterator::operator*() const {
   return data[raw_pos];
+}
+
+template <typename T>
+int Matrix<T>::const_iterator::getRawPos() const {
+  return raw_pos;
 }
 
 #endif // MATRIX_H

@@ -32,3 +32,13 @@ print(d:clone("col_major", true):toString())
 
 e = d:mul(d)
 print(e:toString())
+
+d = d:clone("col_major", true)
+e = d:mul(d)
+print(e:toString())
+
+d = d:slice({2,2},{2,2},true)
+print(d:toString())
+
+e = d:mul(d)
+print(e:toString())

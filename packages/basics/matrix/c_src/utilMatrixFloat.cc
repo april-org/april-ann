@@ -119,8 +119,8 @@ void saveMatrixFloatToFile(MatrixFloat *mat, FILE *f, bool is_ascii) {
   const int columns = 9;
   int i;
   for (i=0;i<mat->getNumDim()-1;i++)
-    fprintf(f, "%d ",mat->getMatrixDimSize(i));
-  fprintf(f,"%d\n",mat->getMatrixDimSize(mat->getNumDim()-1));
+    fprintf(f, "%d ",mat->getDimSize(i));
+  fprintf(f,"%d\n",mat->getDimSize(mat->getNumDim()-1));
   if (is_ascii) {
     fprintf(f,"ascii\n");
     int i=0;
@@ -159,8 +159,8 @@ int saveMatrixFloatToString(MatrixFloat *mat, char **buffer, bool is_ascii) {
   char *r, *b;
   r = b = new char[sizedata+sizeheader];
   for (i=0;i<mat->getNumDim()-1;i++)
-    r += sprintf(r,"%d ",mat->getMatrixDimSize(i));
-  r += sprintf(r,"%d\n",mat->getMatrixDimSize(mat->getNumDim()-1));
+    r += sprintf(r,"%d ",mat->getDimSize(i));
+  r += sprintf(r,"%d\n",mat->getDimSize(mat->getNumDim()-1));
   if (is_ascii) {
     r += sprintf(r,"ascii\n");
     int i=0;
@@ -320,9 +320,9 @@ int saveMatrixFloatPNM(MatrixFloat *mat,
     *buffer = 0; return 0;
   }
   int i,ancho,alto,prof,sizedata,sizeheader = 100;
-  ancho = mat->getMatrixDimSize(1);
-  alto  = mat->getMatrixDimSize(0);
-  prof = (mat->getNumDim() == 3) ? mat->getMatrixDimSize(2) : 1;
+  ancho = mat->getDimSize(1);
+  alto  = mat->getDimSize(0);
+  prof = (mat->getNumDim() == 3) ? mat->getDimSize(2) : 1;
   if (prof != 1 && prof != 3) {
     *buffer = 0; return 0;
   }
@@ -348,8 +348,8 @@ int saveMatrixFloatHEX(MatrixFloat *mat,
     *buffer = 0; return 0;
   }
   int i,ancho,alto,sizedata,sizedata2;
-  ancho = mat->getMatrixDimSize(1);
-  alto  = mat->getMatrixDimSize(0);
+  ancho = mat->getDimSize(1);
+  alto  = mat->getDimSize(0);
   sizedata   = ancho*alto;
   sizedata2  = 2*ancho*alto;
   char *r,*b;
