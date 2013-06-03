@@ -460,28 +460,27 @@
 //DOC_END
 {
   LUABIND_CHECK_ARGN(>=, 0);
-  LUABIND_CHECK_ARGN(<=, 2);
+  LUABIND_CHECK_ARGN(<=, 1);
   int argn;
   argn = lua_gettop(L); // number of arguments
   MatrixFloat *obj2;
-  switch(argn) {
-  case 0:
-    obj2 = obj->clone();
-    break;
-  default:
-    {
-      const char *major;
-      bool transpose;
-      LUABIND_GET_OPTIONAL_PARAMETER(1, string, major, "row_major");
-      LUABIND_GET_OPTIONAL_PARAMETER(2, bool, transpose, false);
-      CBLAS_ORDER order=CblasRowMajor;
-      if (strcmp(major, "col_major") == 0) order = CblasColMajor;
-      else if (strcmp(major, "row_major") != 0)
-	LUABIND_FERROR1("Incorrect major order string %s", major);
-      obj2 = obj->clone(order, transpose);
-    }
+  if (argn == 0) obj2 = obj->clone();
+  else {
+    const char *major;
+    LUABIND_GET_OPTIONAL_PARAMETER(1, string, major, "row_major");
+    CBLAS_ORDER order=CblasRowMajor;
+    if (strcmp(major, "col_major") == 0) order = CblasColMajor;
+    else if (strcmp(major, "row_major") != 0)
+      LUABIND_FERROR1("Incorrect major order string %s", major);
+    obj2 = obj->clone(order);
   }
   LUABIND_RETURN(MatrixFloat,obj2);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat transpose
+{
+  LUABIND_RETURN(MatrixFloat, obj->transpose());
 }
 //BIND_END
 

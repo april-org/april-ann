@@ -28,12 +28,12 @@ ascii
 
 print(d:toString())
 print(d:clone("col_major"):toString())
-print(d:clone("col_major", true):toString())
+print(d:transpose():toString())
 
 e = d:mul(d)
 print(e:toString())
 
-d = d:clone("col_major", true)
+d = d:clone("col_major")
 e = d:mul(d)
 print(e:toString())
 
@@ -42,3 +42,8 @@ print(d:toString())
 
 e = d:mul(d)
 print(e:toString())
+
+g = matrix(3,2,{1,2,3,
+		4,5,6})
+print(g:transpose():clone("col_major"):toString())
+print(matrix.fromString(g:transpose():clone("col_major"):toString()):clone("row_major"):toString())
