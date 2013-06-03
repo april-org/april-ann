@@ -166,8 +166,8 @@ Image<T>* Image<T>::clone() const {
   //     for (int x=0;x<width;x++)
   //       img(x,y) = operator()(x,y);
   // 
-  T *dest   = mat->getData();
-  T *source = matrix->getData() + offset;
+  T *dest   = mat->getRawDataAccess()->getPPALForReadAndWrite();
+  const T *source = matrix->getRawDataAccess()->getPPALForRead() + offset;
   for (int y=0;y<height;y++) {
     for (int x=0;x<width;x++)
       dest[x] = source[x];
@@ -182,7 +182,7 @@ void Image<T>::projection_v(T *v) const {
   // v has size width
   for (int x=0;x<width;x++)
     v[x] = 0;
-  T *source = matrix->getData() + offset;
+  const T *source = matrix->getRawDataAccess()->getPPALForRead() + offset;
   for (int y=0;y<height;y++) {
     for (int x=0;x<width;x++)
       v[x] += source[x];
@@ -195,13 +195,13 @@ void Image<T>::projection_v(Matrix<T> **m) const {
   int dims[1];
   dims[0] = width;
   *m = new Matrix<T>(1,dims);
-  projection_v((*m)->getData());
+  projection_v((*m)->getRawDataAccess()->getPPALForWrite());
 }
 
 template <typename T>
 void Image<T>::projection_h(T *v) const {
   // v has size height
-  T *source = matrix->getData() + offset;
+  const T *source = matrix->getRawDataAccess()->getPPALForRead() + offset;
   for (int y=0;y<height;y++) {
     T aux = 0;
     for (int x=0;x<width;x++)
@@ -216,309 +216,311 @@ void Image<T>::projection_h(Matrix<T> **m) const {
   int dims[1];
   dims[0] = height;
   *m = new Matrix<T>(1,dims);
-  projection_h((*m)->getData());
+  projection_h((*m)->getRawDataAccess()->getPPALForWrite());
 }
 
 /**
 
- -  angle va en radianes
- -  default_value es el color de los pixels nuevos que aparecen
-    en las esquinas
+   -  angle va en radianes
+   -  default_value es el color de los pixels nuevos que aparecen
+   en las esquinas
   
-            +-------+  +-------+
-            |       |  |\       \
-            |  OLD  |  | \  NEW  \
-            |       |  |an\       \
-            +-------+  |gle+-------+
+   +-------+  +-------+
+   |       |  |\       \
+   |  OLD  |  | \  NEW  \
+   |       |  |an\       \
+   +-------+  |gle+-------+
 */
 template <typename T>
 Image<T>* Image<T>::shear_h(double angle, T default_value) const {
-	int dims[2];
-	//printf("angle = %frad = %fdeg\n",angle, angle*180/M_PI);
-	dims[0]=height;
-	if (angle > 0)
-		dims[1]=width+int(height*tan(angle))+1;
-	else
-		dims[1]=width+int(height*tan(-angle))+1;
+  int dims[2];
+  //printf("angle = %frad = %fdeg\n",angle, angle*180/M_PI);
+  dims[0]=height;
+  if (angle > 0)
+    dims[1]=width+int(height*tan(angle))+1;
+  else
+    dims[1]=width+int(height*tan(-angle))+1;
 
-	//printf("dims = %dfilas x %dcolumnas\n", dims[0], dims[1]);
+  //printf("dims = %dfilas x %dcolumnas\n", dims[0], dims[1]);
 	
-	Matrix<T> *mat = new Matrix<T>(2,dims);
-	Image<T>  *img = new Image<T>(mat);
+  Matrix<T> *mat = new Matrix<T>(2,dims);
+  Image<T>  *img = new Image<T>(mat);
 
 	
-	if (angle > 0)
-	{
-		// Angle > 0
-		T *source_line = matrix->getData() + offset;
-		T *dest_line = mat->getData();
-		for (int line=0; line<height; line++){
-			float x = line*tan(angle);
-			float izq = x-int(x);
-			float der = 1.0-izq;
-			//printf("x=%f izq=%f der=%f\n", x, izq, der);
-			int x_int = int(x);	
-			// x contiene la posicion del pixel i-esimo
-			// por tanto, debemos poner en blanco los pixels [0,x[
-			// copiar la fila original en [x, x+width] y seguir
-			// con blanco hasta el final
+  if (angle > 0)
+    {
+      // Angle > 0
+      const T *source_line = matrix->getRawDataAccess()->getPPALForRead() + offset;
+      T *dest_line = mat->getRawDataAccess()->getPPALForReadAndWrite();
+      for (int line=0; line<height; line++){
+	float x = line*tan(angle);
+	float izq = x-int(x);
+	float der = 1.0-izq;
+	//printf("x=%f izq=%f der=%f\n", x, izq, der);
+	int x_int = int(x);	
+	// x contiene la posicion del pixel i-esimo
+	// por tanto, debemos poner en blanco los pixels [0,x[
+	// copiar la fila original en [x, x+width] y seguir
+	// con blanco hasta el final
 
-			for (int i=0; i < x_int; i++)
-				dest_line[i]=default_value;
+	for (int i=0; i < x_int; i++)
+	  dest_line[i]=default_value;
 			
-			// El primer pixel lo tratamos de forma "especial"
-			// porque se obtiene a partir del primer pixel origen y el
-			// color por defecto
+	// El primer pixel lo tratamos de forma "especial"
+	// porque se obtiene a partir del primer pixel origen y el
+	// color por defecto
 
-			dest_line[x_int]=izq*default_value+der*source_line[0];
+	dest_line[x_int]=izq*default_value+der*source_line[0];
 
-			for (int i=1; i < width; i++)
-			{
-				dest_line[x_int+i]=izq*source_line[i-1]+der*source_line[i];
-			}
+	for (int i=1; i < width; i++)
+	  {
+	    dest_line[x_int+i]=izq*source_line[i-1]+der*source_line[i];
+	  }
 
-			dest_line[x_int+width]=izq*source_line[width-1]+der*default_value;
+	dest_line[x_int+width]=izq*source_line[width-1]+der*default_value;
 
 			
-			for (int i=x_int+width+1; i<dims[1]; i++)
-				dest_line[i]=default_value;
+	for (int i=x_int+width+1; i<dims[1]; i++)
+	  dest_line[i]=default_value;
 			
-			source_line += matrix_width();
-			dest_line += dims[1];
-		}
-	} else {
-		// Angle < 0
-		// Empezamos por abajo
-		angle=-angle;
-		T *source_line = matrix->getData() + offset + matrix_width()*(height-1);
-		T *dest_line = mat->getData() + dims[1]*(height-1);
-		for (int line= 0 ; line < height; line++){
-			float x = line*tan(angle);
-			float izq = x-int(x);
-			float der = 1.0-izq;
-			int x_int = int(x);	
-			// x contiene la posicion del pixel i-esimo
-			// por tanto, debemos poner en blanco los pixels [0,x[
-			// copiar la fila original en [x, x+width] y seguir
-			// con blanco hasta el final
+	source_line += matrix_width();
+	dest_line += dims[1];
+      }
+    } else {
+    // Angle < 0
+    // Empezamos por abajo
+    angle=-angle;
+    const T *source_line = matrix->getRawDataAccess()->getPPALForRead() + offset + matrix_width()*(height-1);
+    T *dest_line = mat->getRawDataAccess()->getPPALForReadAndWrite() + dims[1]*(height-1);
+    for (int line= 0 ; line < height; line++){
+      float x = line*tan(angle);
+      float izq = x-int(x);
+      float der = 1.0-izq;
+      int x_int = int(x);	
+      // x contiene la posicion del pixel i-esimo
+      // por tanto, debemos poner en blanco los pixels [0,x[
+      // copiar la fila original en [x, x+width] y seguir
+      // con blanco hasta el final
 
-			for (int i=0; i < x_int; i++)
-				dest_line[i]=default_value;
+      for (int i=0; i < x_int; i++)
+	dest_line[i]=default_value;
 			
-			// El primer pixel lo tratamos de forma "especial"
-			// porque se obtiene a partir del primer pixel origen y el
-			// color por defecto
+      // El primer pixel lo tratamos de forma "especial"
+      // porque se obtiene a partir del primer pixel origen y el
+      // color por defecto
 
-			dest_line[x_int]=izq*default_value+der*source_line[0];
+      dest_line[x_int]=izq*default_value+der*source_line[0];
 
-			for (int i=1; i < width; i++)
-				dest_line[x_int+i]=izq*source_line[i-1]+der*source_line[i];
+      for (int i=1; i < width; i++)
+	dest_line[x_int+i]=izq*source_line[i-1]+der*source_line[i];
 
-			dest_line[x_int+width]=izq*source_line[width-1]+der*default_value;
+      dest_line[x_int+width]=izq*source_line[width-1]+der*default_value;
 			
-			for (int i=x_int+width+1; i<dims[1]; i++)
-				dest_line[i]=default_value;
+      for (int i=x_int+width+1; i<dims[1]; i++)
+	dest_line[i]=default_value;
 			
-			source_line -= matrix_width();
-			dest_line -= dims[1];
-		}
-	}
+      source_line -= matrix_width();
+      dest_line -= dims[1];
+    }
+  }
 
-	return img;
+  return img;
 }
 
 template <typename T>
 void Image<T>::shear_h_inplace(double angle, T default_value) {
 
-	// inc_width contiene el incremento de tam. en x al hacer el shear
-	// segun el signo de angle deberemos desplazar el resultado hacia
-	// un lado u otro
-	int inc_width; 
+  // inc_width contiene el incremento de tam. en x al hacer el shear
+  // segun el signo de angle deberemos desplazar el resultado hacia
+  // un lado u otro
+  int inc_width; 
 	
-	inc_width = int(height * tan(angle) + 1);
+  inc_width = int(height * tan(angle) + 1);
 	
 	
 
-	if (angle > 0)
-	{
-		// Angle > 0
-		// Tenemos que desplazar la imagen resultante hacia la izq.
-		int old_width = width;
-		offset -= inc_width;	
-		width  += inc_width;
+  if (angle > 0)
+    {
+      // Angle > 0
+      // Tenemos que desplazar la imagen resultante hacia la izq.
+      int old_width = width;
+      offset -= inc_width;	
+      width  += inc_width;
 		
-		// Ahora la linea de origen y destino es la misma
-		// Empezamos por el final
-		T *source_line = matrix->getData() + offset + (height-1) * matrix_width();
-		T *dest_line = source_line;
+      // Ahora la linea de origen y destino es la misma
+      // Empezamos por el final
+      T *source_line = matrix->getRawDataAccess()->getPPALForReadAndWrite() + offset + (height-1) * matrix_width();
+      T *dest_line = source_line;
 		
-		for (int line=0; line<height; line++){
-			float x = line*tan(angle);
-			float der = x-int(x);
-			float izq = 1.0-der;
-			//printf("x=%f izq=%f der=%f\n", x, izq, der);
-			int x_int = int(x)+1;	
-			// x contiene la posicion del pixel i-esimo
-			// por tanto, debemos copiar la fila original
-			// desde [inc_width, width[
-			// hasta [inc_width - x, width-x[
-			// y luego poner en blanco los pixels
-			// en el intervalo [width-x, width] 
+      for (int line=0; line<height; line++){
+	float x = line*tan(angle);
+	float der = x-int(x);
+	float izq = 1.0-der;
+	//printf("x=%f izq=%f der=%f\n", x, izq, der);
+	int x_int = int(x)+1;	
+	// x contiene la posicion del pixel i-esimo
+	// por tanto, debemos copiar la fila original
+	// desde [inc_width, width[
+	// hasta [inc_width - x, width-x[
+	// y luego poner en blanco los pixels
+	// en el intervalo [width-x, width] 
 
 			
-			// El primer pixel lo tratamos de forma "especial"
-			// porque se obtiene a partir del primer pixel origen y el
-			// color por defecto
+	// El primer pixel lo tratamos de forma "especial"
+	// porque se obtiene a partir del primer pixel origen y el
+	// color por defecto
 
-			dest_line[inc_width-x_int]=izq*default_value+der*source_line[inc_width];
+	dest_line[inc_width-x_int]=izq*default_value+der*source_line[inc_width];
 
-			for (int i=1; i < old_width; i++)
-				dest_line[(inc_width-x_int)+i]=izq*source_line[inc_width+i-1]+der*source_line[inc_width+i];
+	for (int i=1; i < old_width; i++)
+	  dest_line[(inc_width-x_int)+i]=izq*source_line[inc_width+i-1]+der*source_line[inc_width+i];
 
-			dest_line[(inc_width-x_int)+old_width]=izq*source_line[inc_width+old_width-1]+der*default_value;
+	dest_line[(inc_width-x_int)+old_width]=izq*source_line[inc_width+old_width-1]+der*default_value;
 			
-			for (int i=width-x_int+1; i<width; i++)
-				dest_line[i]=default_value;
+	for (int i=width-x_int+1; i<width; i++)
+	  dest_line[i]=default_value;
 			
-			source_line -= matrix_width();
-			dest_line -= matrix_width();
-		}
-	} else {
-		// Angle < 0
-		//
-		// Ahora tenemos que ir copiando las filas de der a izq
-		// para no machacar la parte de la fila que aun no hemos usado
-		//
-		// La imagen queda ahora inclinada hacia la derecha
-		int old_width=width;
-		angle = -angle;
-		width += inc_width;
+	source_line -= matrix_width();
+	dest_line -= matrix_width();
+      }
+    } else {
+    // Angle < 0
+    //
+    // Ahora tenemos que ir copiando las filas de der a izq
+    // para no machacar la parte de la fila que aun no hemos usado
+    //
+    // La imagen queda ahora inclinada hacia la derecha
+    int old_width=width;
+    angle = -angle;
+    width += inc_width;
 		
-		T *source_line = matrix->getData() + offset + (height - 1) * matrix_width();
-		T *dest_line = source_line;
+    T *source_line = matrix->getRawDataAccess()->getPPALForReadAndWrite() + offset + (height - 1) * matrix_width();
+    T *dest_line = source_line;
 		
-		for (int line = 0 ; line < height; line++){
-			float x = line*tan(angle);
-			float izq = x-int(x);
-			float der = 1.0-izq;
-			int x_int = int(x);	
-			// x contiene la posicion del pixel i-esimo
-			// yendo de derecha a izq debemos copiar
-			// desde [0,old_width] hasta [x, old_width+x]
-			// y luego rellenar [0, x[ con el color por defecto
+    for (int line = 0 ; line < height; line++){
+      float x = line*tan(angle);
+      float izq = x-int(x);
+      float der = 1.0-izq;
+      int x_int = int(x);	
+      // x contiene la posicion del pixel i-esimo
+      // yendo de derecha a izq debemos copiar
+      // desde [0,old_width] hasta [x, old_width+x]
+      // y luego rellenar [0, x[ con el color por defecto
 
 			
-			// Copiamos el ultimo pixel
-			dest_line[old_width+x_int]=izq*source_line[old_width-1]+der*default_value;
+      // Copiamos el ultimo pixel
+      dest_line[old_width+x_int]=izq*source_line[old_width-1]+der*default_value;
 
-			// Los de en medio
-			for (int i=old_width-1; i >= 1; i--)
-				dest_line[x_int+i]=izq*source_line[i-1]+der*source_line[i];
+      // Los de en medio
+      for (int i=old_width-1; i >= 1; i--)
+	dest_line[x_int+i]=izq*source_line[i-1]+der*source_line[i];
 
-			// El primero
-			dest_line[x_int]=izq*default_value+der*source_line[0];
+      // El primero
+      dest_line[x_int]=izq*default_value+der*source_line[0];
 			
-			// y rellenamos el resto con el color por defecto
-			for (int i=x_int-1; i>=0; i--)
-				dest_line[i]=default_value;
+      // y rellenamos el resto con el color por defecto
+      for (int i=x_int-1; i>=0; i--)
+	dest_line[i]=default_value;
 			
-			source_line -= matrix_width();
-			dest_line -= matrix_width();
-		}
+      source_line -= matrix_width();
+      dest_line -= matrix_width();
+    }
 		
-	}
+  }
 		
-	return;
+  return;
 }
 
 // FIXME: Mover a ocr
 template <typename T>
 void Image<T>::min_bounding_box(float threshold, int *w, int *h, int *x, int *y) const
 {
-        // Buscamos el primer pixel no-blanco (inferior al umbral) de la imagen
-        // desde arriba, abajo, izquierda y derecha y hacemos un crop.
-        int upper = 0, lower = height - 1, left = 0, right = width - 1;
-        int row, col;
-        bool found;
+  // Buscamos el primer pixel no-blanco (inferior al umbral) de la imagen
+  // desde arriba, abajo, izquierda y derecha y hacemos un crop.
+  int upper = 0, lower = height - 1, left = 0, right = width - 1;
+  int row, col;
+  bool found;
+  const float *d;
 
-        // Desde arriba
-        found = false;
-        row = 0;
-        while (row < height && !found)
-        {
-                for (col = 0; col < width; ++col)
-                {
-                        T val = matrix->getData()[offset + row*matrix_width() + col];
-			if (val < threshold)
-                        {
-                                upper = row;
-                                found = true;
-                        }
-                }
+  // Desde arriba
+  found = false;
+  row = 0;
+  d = matrix->getRawDataAccess()->getPPALForRead();
+  while (row < height && !found)
+    {
+      for (col = 0; col < width; ++col)
+	{
+	  T val = d[offset + row*matrix_width() + col];
+	  if (val < threshold)
+	    {
+	      upper = row;
+	      found = true;
+	    }
+	}
 
-                ++row;
-        }
+      ++row;
+    }
 
-        // Desde abajo
-        row = height - 1;
-        found = false;
-        while (row >= 0 && !found)
-        {
-                for (col = 0; col < width; ++col)
-                {
-                        T val = matrix->getData()[offset + row*matrix_width() + col];                  
-			if (val < threshold)
-                        {
-                                lower = row;
-                                found = true;
-                        }
+  // Desde abajo
+  row = height - 1;
+  found = false;
+  while (row >= 0 && !found)
+    {
+      for (col = 0; col < width; ++col)
+	{
+	  T val = d[offset + row*matrix_width() + col];                  
+	  if (val < threshold)
+	    {
+	      lower = row;
+	      found = true;
+	    }
 
-                }
+	}
 
-                --row;
-        }
+      --row;
+    }
 
-        // Desde la izquierda
-        col = 0;
-        found = false;
-        while (col < width && !found)
-        {
-                for (row = 0; row < height; ++row)
-                {
-                        T val = matrix->getData()[offset + row*matrix_width() + col]; 
-			if (val < threshold)
-                        {
-                                left = col;
-                                found = true;
-                        }
-                }
+  // Desde la izquierda
+  col = 0;
+  found = false;
+  while (col < width && !found)
+    {
+      for (row = 0; row < height; ++row)
+	{
+	  T val = d[offset + row*matrix_width() + col]; 
+	  if (val < threshold)
+	    {
+	      left = col;
+	      found = true;
+	    }
+	}
 
-                ++col;
-        }
+      ++col;
+    }
 
-        // Desde la derecha
-        col = width - 1;
-        found = false;
-        while (col >= 0 && !found)
-        {
-                for (row = 0; row < height; ++row)
-                {
-                        T val = matrix->getData()[offset + row*matrix_width() + col]; 
-			if (val < threshold)
-                        {
-                                right = col;
-                                found = true;
-                        }
-                }
-                --col;
-        }
+  // Desde la derecha
+  col = width - 1;
+  found = false;
+  while (col >= 0 && !found)
+    {
+      for (row = 0; row < height; ++row)
+	{
+	  T val = d[offset + row*matrix_width() + col]; 
+	  if (val < threshold)
+	    {
+	      right = col;
+	      found = true;
+	    }
+	}
+      --col;
+    }
 
-        //printf("upper=%d, lower=%d, left=%d, right=%d\n", upper, lower, left, right);
+  //printf("upper=%d, lower=%d, left=%d, right=%d\n", upper, lower, left, right);
 
-	*w = right - left + 1;
-        *h = lower - upper + 1;
-        *x = left;
-        *y = upper;
+  *w = right - left + 1;
+  *h = lower - upper + 1;
+  *x = left;
+  *y = upper;
 }
 
 // Copia la imagen src a partir de las coordenadas (dst_x, dst_y)
@@ -526,58 +528,58 @@ void Image<T>::min_bounding_box(float threshold, int *w, int *h, int *x, int *y)
 template<typename T>
 void Image<T>::copy(const Image<T> *src, int dst_x, int dst_y)
 {
-        int x0=0, y0=0;
+  int x0=0, y0=0;
 
-        if (dst_x < 0) x0 = -dst_x;
-        if (dst_y < 0) y0 = -dst_y;
+  if (dst_x < 0) x0 = -dst_x;
+  if (dst_y < 0) y0 = -dst_y;
 
-	for (int y=y0; (y < src->height) && (y+dst_y < height); ++y)
-		for (int x=x0; (x < src->width) && (x+dst_x < width); ++x) 
-			(*this)(x+dst_x, y+dst_y)=(*src)(x, y);
+  for (int y=y0; (y < src->height) && (y+dst_y < height); ++y)
+    for (int x=x0; (x < src->width) && (x+dst_x < width); ++x) 
+      (*this)(x+dst_x, y+dst_y)=(*src)(x, y);
 }
 
 
 template<typename T>
 Image<T> *Image<T>::rotate90_cw() const
 {
-	int dimensions[2];
-	dimensions[0] = width; 
-	dimensions[1] = height; 
+  int dimensions[2];
+  dimensions[0] = width; 
+  dimensions[1] = height; 
 
-	Matrix<T> *new_mat = new Matrix<T>(2, dimensions);
-	Image<T> *result = new Image<T>(new_mat);
+  Matrix<T> *new_mat = new Matrix<T>(2, dimensions);
+  Image<T> *result = new Image<T>(new_mat);
 
-	for (int y=0; y < height; ++y)
+  for (int y=0; y < height; ++y)
+    {
+      for (int x=0; x < width; ++x)
 	{
-		for (int x=0; x < width; ++x)
-		{
-			//printf("(%d, %d) ---> (%d, %d)\n",x,y,height-1-y,x);
-			(*result)(height - 1 - y, x)=(*this)(x, y);
-		}
+	  //printf("(%d, %d) ---> (%d, %d)\n",x,y,height-1-y,x);
+	  (*result)(height - 1 - y, x)=(*this)(x, y);
 	}
+    }
 	
-	return result;
+  return result;
 }
 
 template<typename T>
 Image<T> *Image<T>::rotate90_ccw() const
 {
-	int dimensions[2];
-	dimensions[0] = width; 
-	dimensions[1] = height; 
+  int dimensions[2];
+  dimensions[0] = width; 
+  dimensions[1] = height; 
 
-	Matrix<T> *new_mat = new Matrix<T>(2, dimensions);
-	Image<T> *result = new Image<T>(new_mat);
+  Matrix<T> *new_mat = new Matrix<T>(2, dimensions);
+  Image<T> *result = new Image<T>(new_mat);
 
-	for (int y=0; y < height; ++y)
+  for (int y=0; y < height; ++y)
+    {
+      for (int x=0; x < width; ++x)
 	{
-		for (int x=0; x < width; ++x)
-		{
-			(*result)(y, width - 1 - x)=(*this)(x, y);
-		}
+	  (*result)(y, width - 1 - x)=(*this)(x, y);
 	}
+    }
 	
-	return result;
+  return result;
 }
 
 
@@ -586,24 +588,24 @@ Image<T> *Image<T>::rotate90_ccw() const
 template<typename T>
 Image<T> *Image<T>::invert_colors() const
 {
-	const T WHITE(1.0f);
+  const T WHITE(1.0f);
 
-	int dimensions[2];
-	dimensions[0] = height; 
-	dimensions[1] = width; 
+  int dimensions[2];
+  dimensions[0] = height; 
+  dimensions[1] = width; 
 
-	Matrix<T> *new_mat = new Matrix<T>(2, dimensions);
-	Image<T> *result = new Image<T>(new_mat);
+  Matrix<T> *new_mat = new Matrix<T>(2, dimensions);
+  Image<T> *result = new Image<T>(new_mat);
 
-	for (int y=0; y < height; ++y)
+  for (int y=0; y < height; ++y)
+    {
+      for (int x=0; x < width; ++x)
 	{
-		for (int x=0; x < width; ++x)
-		{
-			(*result)(x, y) = WHITE - (*this)(x, y);
-		}
+	  (*result)(x, y) = WHITE - (*this)(x, y);
 	}
+    }
 	
-	return result;
+  return result;
 }
 
 
@@ -611,51 +613,51 @@ Image<T> *Image<T>::invert_colors() const
 template<typename T>
 Image<T> *Image<T>::remove_blank_columns() const
 {
-	const float UMBRAL_BINARIZADO = 0.5f;
-	// Contamos las columnas en blanco de la imagen original
-	int nblanco=0;
-	for (int x=0; x<width; ++x)
+  const float UMBRAL_BINARIZADO = 0.5f;
+  // Contamos las columnas en blanco de la imagen original
+  int nblanco=0;
+  for (int x=0; x<width; ++x)
+    {
+      bool blanco=true;
+      for(int y=0; y<height; ++y)
 	{
-		bool blanco=true;
-		for(int y=0; y<height; ++y)
-		{
-			if ((*this)(x,y)<UMBRAL_BINARIZADO)
-			{
-				blanco=false;
-				break;
-			}
-		}
-
-		if (blanco) ++nblanco;
+	  if ((*this)(x,y)<UMBRAL_BINARIZADO)
+	    {
+	      blanco=false;
+	      break;
+	    }
 	}
 
-	int dimensions[2];
-	dimensions[0]=height;
-	dimensions[1]=width - nblanco;
+      if (blanco) ++nblanco;
+    }
+
+  int dimensions[2];
+  dimensions[0]=height;
+  dimensions[1]=width - nblanco;
 	
-	Matrix<T> *new_mat = new Matrix<T>(2, dimensions);
-	Image<T> *result = new Image<T>(new_mat);
+  Matrix<T> *new_mat = new Matrix<T>(2, dimensions);
+  Image<T> *result = new Image<T>(new_mat);
 	
-	// Ahora copiamos columna a columna
-	int xdest=0;
-	for (int x=0; x<width; ++x)
+  // Ahora copiamos columna a columna
+  int xdest=0;
+  for (int x=0; x<width; ++x)
+    {
+      bool blanco=true;
+      for (int y=0; y<height;++y)
 	{
-		bool blanco=true;
-		for (int y=0; y<height;++y)
-		{
-			if ((*this)(x,y) < UMBRAL_BINARIZADO)			
-			{
-				blanco=false;
-			}
+	  if ((*this)(x,y) < UMBRAL_BINARIZADO)			
+	    {
+	      blanco=false;
+	    }
 
-			(*result)(xdest, y) = (*this)(x,y);
-		}
-
-		if (!blanco) ++xdest;
-                if (xdest == width-nblanco) break; // we're finished
+	  (*result)(xdest, y) = (*this)(x,y);
 	}
 
-	return result;
+      if (!blanco) ++xdest;
+      if (xdest == width-nblanco) break; // we're finished
+    }
+
+  return result;
 }
 
 
@@ -682,30 +684,30 @@ Image<T> *Image<T>::convolution5x5(float *k, T default_color) const
   for (int y=0; y<height; y++) {
     for (int x=0; x<width; x++) {
       T value = getpixel(x-2, y-2, default_color) * k[0] + 
-                    getpixel(x-1, y-2, default_color) * k[1] +
-                    getpixel(x  , y-2, default_color) * k[2] +
-                    getpixel(x+1, y-2, default_color) * k[3] +
-                    getpixel(x+2, y-2, default_color) * k[4] +
-                    getpixel(x-2, y-1, default_color) * k[5] + 
-                    getpixel(x-1, y-1, default_color) * k[6] +
-                    getpixel(x  , y-1, default_color) * k[7] +
-                    getpixel(x+1, y-1, default_color) * k[8] +
-                    getpixel(x+2, y-1, default_color) * k[9] +
-                    getpixel(x-2, y,   default_color) * k[10] + 
-                    getpixel(x-1, y,   default_color) * k[11] +
-                    getpixel(x  , y,   default_color) * k[12] +
-                    getpixel(x+1, y,   default_color) * k[13] +
-                    getpixel(x+2, y,   default_color) * k[14] +
-                    getpixel(x-2, y+1, default_color) * k[15] + 
-                    getpixel(x-1, y+1, default_color) * k[16] +
-                    getpixel(x  , y+1, default_color) * k[17] +
-                    getpixel(x+1, y+1, default_color) * k[18] +
-                    getpixel(x+2, y+1, default_color) * k[19] +
-                    getpixel(x-2, y+2, default_color) * k[20] + 
-                    getpixel(x-1, y+2, default_color) * k[21] +
-                    getpixel(x  , y+2, default_color) * k[22] +
-                    getpixel(x+1, y+2, default_color) * k[23] +
-                    getpixel(x+2, y+2, default_color) * k[24];
+	getpixel(x-1, y-2, default_color) * k[1] +
+	getpixel(x  , y-2, default_color) * k[2] +
+	getpixel(x+1, y-2, default_color) * k[3] +
+	getpixel(x+2, y-2, default_color) * k[4] +
+	getpixel(x-2, y-1, default_color) * k[5] + 
+	getpixel(x-1, y-1, default_color) * k[6] +
+	getpixel(x  , y-1, default_color) * k[7] +
+	getpixel(x+1, y-1, default_color) * k[8] +
+	getpixel(x+2, y-1, default_color) * k[9] +
+	getpixel(x-2, y,   default_color) * k[10] + 
+	getpixel(x-1, y,   default_color) * k[11] +
+	getpixel(x  , y,   default_color) * k[12] +
+	getpixel(x+1, y,   default_color) * k[13] +
+	getpixel(x+2, y,   default_color) * k[14] +
+	getpixel(x-2, y+1, default_color) * k[15] + 
+	getpixel(x-1, y+1, default_color) * k[16] +
+	getpixel(x  , y+1, default_color) * k[17] +
+	getpixel(x+1, y+1, default_color) * k[18] +
+	getpixel(x+2, y+1, default_color) * k[19] +
+	getpixel(x-2, y+2, default_color) * k[20] + 
+	getpixel(x-1, y+2, default_color) * k[21] +
+	getpixel(x  , y+2, default_color) * k[22] +
+	getpixel(x+1, y+2, default_color) * k[23] +
+	getpixel(x+2, y+2, default_color) * k[24];
       (*result)(x,y) = value;
     }
   }
@@ -836,15 +838,15 @@ Image<T> *Image<T>::affine_transform(AffineTransform2D *trans, T default_value,
   invert_affine_matrix(inverse, c);
 
   /*
-  printf("--transform-------\n");
-  printf("%1.3f %1.3f %1.3f\n", c[0], c[1], c[2]);
-  printf("%1.3f %1.3f %1.3f\n", c[3], c[4], c[5]);
-  printf("0     0     1    \n");
+    printf("--transform-------\n");
+    printf("%1.3f %1.3f %1.3f\n", c[0], c[1], c[2]);
+    printf("%1.3f %1.3f %1.3f\n", c[3], c[4], c[5]);
+    printf("0     0     1    \n");
 
-  printf("--inverse transform-------\n");
-  printf("%1.3f %1.3f %1.3f\n", inverse[0], inverse[1], inverse[2]);
-  printf("%1.3f %1.3f %1.3f\n", inverse[3], inverse[4], inverse[5]);
-  printf("0     0     1    \n");
+    printf("--inverse transform-------\n");
+    printf("%1.3f %1.3f %1.3f\n", inverse[0], inverse[1], inverse[2]);
+    printf("%1.3f %1.3f %1.3f\n", inverse[3], inverse[4], inverse[5]);
+    printf("0     0     1    \n");
   */
   // New image corners -> apply the inverse to points 0, 1, 2, 3
   //
@@ -871,8 +873,8 @@ Image<T> *Image<T>::affine_transform(AffineTransform2D *trans, T default_value,
 
  
   /*
-  fprintf(stderr,"p0=(%d, %d) p1=(%d, %d) p2=(%d, %d) p3=(%d, %d) dst_width = %d, dst_height=%d x: %d-%d, y: %d-%d\n",
-      x0, y0, x1, y1, x2, y2, x3, y3, dst_width, dst_height, xmin, xmax, ymin, ymax);
+    fprintf(stderr,"p0=(%d, %d) p1=(%d, %d) p2=(%d, %d) p3=(%d, %d) dst_width = %d, dst_height=%d x: %d-%d, y: %d-%d\n",
+    x0, y0, x1, y1, x2, y2, x3, y3, dst_width, dst_height, xmin, xmax, ymin, ymax);
   */
 
   int dimensions[2];

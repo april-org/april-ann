@@ -150,10 +150,10 @@ using namespace ANN;
 
   int size = static_cast<int>(obj->size());
   if (!w)    w    = new MatrixFloat(1, first_pos + size);
-  if (!oldw) oldw = new MatrixFloat(1, w->getSize());
+  if (!oldw) oldw = new MatrixFloat(1, w->size());
   
-  if (first_pos + obj->size() > static_cast<unsigned int>(w->getSize()) ||
-      first_pos + obj->size() > static_cast<unsigned int>(oldw->getSize()) )
+  if (first_pos + obj->size() > static_cast<unsigned int>(w->size()) ||
+      first_pos + obj->size() > static_cast<unsigned int>(oldw->size()) )
     LUABIND_ERROR("Incorrect matrix size!!\n");
 
   unsigned int lastpos = obj->copyWeightsTo(w, oldw, first_pos, column_size);

@@ -190,21 +190,24 @@ namespace ANN {
 					MatrixFloat *old_data,
 					unsigned int first_weight_pos,
 					unsigned int column_size) {
+    if (!data->isSimple() || !old_data->isSimple())
+      ERROR_EXIT(128, "Matrices need to be simple (not sub-matrix "
+		 "and in row-major)\n");
     unsigned int min_size =
       (total_size +
        max(0, (static_cast<int>(column_size-num_inputs)-1))*num_outputs +
        first_weight_pos);
-    if (min_size > static_cast<unsigned int>(data->getSize()))
+    if (min_size > static_cast<unsigned int>(data->size()))
       ERROR_EXIT2(24, "Incorrect matrix size, was %d, expected >= %d\n",
-		  data->getSize(), min_size);
+		  data->size(), min_size);
     if (!old_data) old_data = data;
     unsigned int current_w_pos = first_weight_pos;
     float *w                   = weights->getPPALForReadAndWrite();
     float *prev_w              = prev_weights->getPPALForReadAndWrite();
+    const float *d = data->getRawDataAccess()->getPPALForRead();
+    const float *old_d = old_data->getRawDataAccess()->getPPALForRead();
     for (unsigned int j=0; j<num_outputs; ++j) {
       unsigned int k = j;
-      float *d = data->getData();
-      float *old_d = old_data->getData();
       for (unsigned int i=0; i<num_inputs; ++i) {
 	w[k]      = d[current_w_pos+i];
 	prev_w[k] = old_d[current_w_pos+i];
@@ -219,19 +222,22 @@ namespace ANN {
 					  MatrixFloat *old_data,
 					  unsigned int first_weight_pos,
 					  unsigned int column_size) {
+    if (!data->isSimple() || !old_data->isSimple())
+      ERROR_EXIT(128, "Matrices need to be simple (not sub-matrix "
+		 "and in row-major)\n");
     unsigned int min_size =
       (total_size +
        max(0, (static_cast<int>(column_size-num_inputs)-1))*num_outputs +
        first_weight_pos);
-    if (min_size > static_cast<unsigned int>(data->getSize()))
+    if (min_size > static_cast<unsigned int>(data->size()))
       ERROR_EXIT2(24, "Incorrect matrix size, was %d, expected >= %d\n",
-		  data->getSize(), min_size);
+		  data->size(), min_size);
 
     unsigned int current_w_pos = first_weight_pos;
     const float *w             = weights->getPPALForRead();
     const float *prev_w        = prev_weights->getPPALForRead();
-    float *data_ptr = data->getData();
-    float *old_data_ptr = old_data->getData();
+    float *data_ptr = data->getRawDataAccess()->getPPALForWrite();
+    float *old_data_ptr = old_data->getRawDataAccess()->getPPALForWrite();
     for (unsigned int j=0; j<num_outputs; ++j) {
       unsigned int k = j;
       for (unsigned int i=0; i<num_inputs; ++i) {

@@ -130,11 +130,13 @@ public:
   /// Full constructor given numDim, dim, default_value and major_order
   Matrix(int numDim, const int* dim, T default_value=T(),
 	 CBLAS_ORDER major_order = CblasRowMajor);
-  /*
- /// Constructor with T() values and CblasRowMajor order
- Matrix(int numDim, int d1, ...);
-  */
-  /// Constructor given other matrix, it does a shallow or deep copy (clone)
+  
+  /// Constructor with T() values and CblasRowMajor order
+  Matrix(int numDim, int d1, ...);
+  
+  /// Constructor given other matrix, it does a shallow or deep copy (clone). By
+  /// default is a deep copy, some code pieces expect this behavior, don't
+  /// change it.
   Matrix(Matrix<T> *other, bool clone=true);
   /// Sub-matrix constructor
   Matrix(Matrix<T> *other,
@@ -330,31 +332,32 @@ Matrix<T>::Matrix(Matrix<T> *other,
   }
 }
 
-/*
+
 /// Constructor with T() default value initialization
 template <typename T>
 Matrix<T>::Matrix(int numDim, int d1, ...) : numDim(numDim),
-is_submatrix(false),
-offset(0),
-major_order(CblasRowMajor) {
-stride    = new int[numDim];
-matrixSize = new int[numDim];
-va_list ap;
-va_start(ap, d1);
-stride[0] = d1;
-total_size = d1;
-for (int i=1; i<numDim; i++) {
-int di = va_arg(ap, int);
-stride[i] = matrixSize[i] = di;
-total_size *= di;
+					     is_submatrix(false),
+					     offset(0),
+					     major_order(CblasRowMajor) {
+  int *dim   = new int[numDim];
+  stride     = new int[numDim];
+  matrixSize = new int[numDim];
+  va_list ap;
+  va_start(ap, d1);
+  dim[0]=d1;
+  for (int i=1; i<numDim; i++) {
+    int di = va_arg(ap, int);
+    dim[i] = di;
+  }
+  va_end(ap);
+  initialize(dim);
+  allocate_memory(total_size);
+  T default_value=T();
+  T *d = data->getPPALForWrite();
+  for (int i=0; i<total_size; ++i) d[i] = default_value;
+  delete[] dim;
 }
-va_end(ap);
-allocate_memory(total_size); // init with default value for type T
-T default_value=T();
-T *d = data->getPPALForWrite();
-for (int i=0; i<total_size; ++i) d[i] = default_value;
-}
-*/
+
 
 /// Constructor for copy or clone other given matrix
 template <typename T>
