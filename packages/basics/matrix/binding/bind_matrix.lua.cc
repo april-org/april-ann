@@ -265,9 +265,9 @@
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat set
+//BIND_METHOD MatrixFloat copy_from_table
 //DOC_BEGIN
-// void set(table matrix_values)
+// void copy_from_table(table matrix_values)
 /// Permite dar valores a una matriz. Require una tabla con un numero
 /// de argumentos igual al numero de elementos de la matriz.
 ///@param matrix_values Tabla con los elementos de la matriz.
@@ -289,7 +289,7 @@
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat getElement
+//BIND_METHOD MatrixFloat get
 //DOC_BEGIN
 // float get_element(coordinates)
 /// Permite ver valores de una matriz. Requiere tantos indices como dimensiones tenga la matriz.
@@ -303,9 +303,9 @@
   if (obj->getNumDim() == 1) {
     int v1;
     LUABIND_GET_PARAMETER(1,int,v1);
-    if (v1<1 || v1 > obj->getMatrixDimSize(0)) {
+    if (v1<1 || v1 > obj->getDimSize(0)) {
       LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-		      v1, obj->getMatrixDimSize(0));
+		      v1, obj->getDimSize(0));
     }
     ret = (*obj)(v1-1);
   }
@@ -313,13 +313,13 @@
     int v1, v2;
     LUABIND_GET_PARAMETER(1,int,v1);
     LUABIND_GET_PARAMETER(2,int,v2);
-    if (v1<1 || v1 > obj->getMatrixDimSize(0)) {
+    if (v1<1 || v1 > obj->getDimSize(0)) {
       LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-		      v1, obj->getMatrixDimSize(0));
+		      v1, obj->getDimSize(0));
     }
-    if (v2<1 || v2 > obj->getMatrixDimSize(1)) {
+    if (v2<1 || v2 > obj->getDimSize(1)) {
       LUABIND_FERROR2("wrong index parameter: 2 <= %d <= %d is incorrect",
-		      v2, obj->getMatrixDimSize(1));
+		      v2, obj->getDimSize(1));
     }
     ret = (*obj)(v1-1, v2-1);
   }
@@ -327,9 +327,9 @@
     int *coords = new int[obj->getNumDim()];
     for (int i=0; i<obj->getNumDim(); ++i) {
       LUABIND_GET_PARAMETER(i+1,int,coords[i]);
-      if (coords[i]<1 || coords[i] > obj->getMatrixDimSize(i)) {
+      if (coords[i]<1 || coords[i] > obj->getDimSize(i)) {
 	LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-			coords[i], obj->getMatrixDimSize(i));
+			coords[i], obj->getDimSize(i));
       }
       coords[i]--;
     }
@@ -339,7 +339,7 @@
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat setElement
+//BIND_METHOD MatrixFloat set
 //DOC_BEGIN
 // float set_element(coordinates,value)
 /// Permite cambiar el valor de un elemento en la matriz. Requiere
@@ -355,9 +355,9 @@
   if (obj->getNumDim() == 1) {
     int v1;
     LUABIND_GET_PARAMETER(1,int,v1);
-    if (v1<1 || v1 > obj->getMatrixDimSize(0)) {
+    if (v1<1 || v1 > obj->getDimSize(0)) {
       LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-		      v1, obj->getMatrixDimSize(0));
+		      v1, obj->getDimSize(0));
     }
     LUABIND_GET_PARAMETER(obj->getNumDim()+1,float,f);
     (*obj)(v1-1) = f;
@@ -366,13 +366,13 @@
     int v1, v2;
     LUABIND_GET_PARAMETER(1,int,v1);
     LUABIND_GET_PARAMETER(2,int,v2);
-    if (v1<1 || v1 > obj->getMatrixDimSize(0)) {
+    if (v1<1 || v1 > obj->getDimSize(0)) {
       LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-		      v1, obj->getMatrixDimSize(0));
+		      v1, obj->getDimSize(0));
     }
-    if (v2<1 || v2 > obj->getMatrixDimSize(1)) {
+    if (v2<1 || v2 > obj->getDimSize(1)) {
       LUABIND_FERROR2("wrong index parameter: 2 <= %d <= %d is incorrect",
-		      v2, obj->getMatrixDimSize(1));
+		      v2, obj->getDimSize(1));
     }
     LUABIND_GET_PARAMETER(obj->getNumDim()+1,float,f);
     (*obj)(v1-1, v2-1) = f;
@@ -381,9 +381,9 @@
     int *coords = new int[obj->getNumDim()];
     for (int i=0; i<obj->getNumDim(); ++i) {
       LUABIND_GET_PARAMETER(i+1,int,coords[i]);
-      if (coords[i]<1 || coords[i] > obj->getMatrixDimSize(i)) {
+      if (coords[i]<1 || coords[i] > obj->getDimSize(i)) {
 	LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
-			coords[i], obj->getMatrixDimSize(i));
+			coords[i], obj->getDimSize(i));
       }
       coords[i]--;
     }
@@ -420,9 +420,36 @@
 {
   LUABIND_CHECK_ARGN(==, 0);
   int ndim=obj->getNumDim();
-  const int *d=obj->getMatrixDimPtr();
+  const int *d=obj->getDimPtr();
   LUABIND_VECTOR_TO_NEW_TABLE(int, d, ndim);
   LUABIND_RETURN_FROM_STACK(-1);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat slice
+{
+  LUABIND_CHECK_ARGN(>=,2);
+  LUABIND_CHECK_ARGN(<=,3);
+  LUABIND_CHECK_PARAMETER(1, table);
+  LUABIND_CHECK_PARAMETER(2, table);
+  int *coords, *sizes, coords_len, sizes_len;
+  bool clone;
+  LUABIND_TABLE_GETN(1, coords_len);
+  LUABIND_TABLE_GETN(2, sizes_len);
+  if (coords_len != sizes_len || coords_len != obj->getNumDim())
+    LUABIND_FERROR3("Incorrect number of dimensions, expected %d, "
+		    "found %d and %d\n",
+		    obj->getNumDim(), coords_len, sizes_len);
+  coords = new int[coords_len];
+  sizes  = new int[sizes_len];
+  LUABIND_TABLE_TO_VECTOR(1, int, coords, coords_len);
+  LUABIND_TABLE_TO_VECTOR(2, int, sizes,  sizes_len);
+  for (int i=0; i<coords_len; ++i) --coords[i];
+  LUABIND_GET_OPTIONAL_PARAMETER(3, bool, clone, false);
+  MatrixFloat *obj2 = new MatrixFloat(obj, coords, sizes, clone);
+  LUABIND_RETURN(MatrixFloat, obj2);
+  delete[] coords;
+  delete[] sizes;
 }
 //BIND_END
 
