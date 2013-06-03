@@ -75,7 +75,15 @@ namespace ANN {
   }
 
   ANNComponent *SoftmaxActfANNComponent::clone() {
-    return new SoftmaxActfANNComponent(name.c_str());
+    SoftmaxActfANNComponent *obj = new SoftmaxActfANNComponent(name.c_str());
+    obj->setOption(DROPOUT_FACTOR_STRING, getOption(DROPOUT_FACTOR_STRING));
+    return obj;
+  }
+
+  char *SoftmaxActfANNComponent::toLuaString() {
+    buffer_list buffer;
+    buffer.printf("ann.components.actf.softmax{ name='%s' }", name.c_str());
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
 
 }

@@ -56,7 +56,6 @@ function trainable.supervised_trainer:__call(ann_component,
     bunch_size       = bunch_size or false,
   }
   obj = class_instance(obj, self, true)
-  -- if ann_component:get_is_built() then obj:build() end
   return obj
 end
 
@@ -110,7 +109,7 @@ april_set_doc("trainable.supervised_trainer.save", {
 		class = "method",
 		summary = "Save the model at a disk file",
 		description = {
-		  "Save the connection weights at",
+		  "Save the model and connection weights at",
 		  "a disk file.",
 		  "Only works after build method is called.",
 		},
@@ -121,10 +120,11 @@ april_set_doc("trainable.supervised_trainer.save", {
 		}, })
 
 function trainable.supervised_trainer:save(filename, binary)
-  assert(#self.weights_order > 0, "The component is not built")
+  assert(#self.components_order > 0, "The component is not built")
   local binary = binary or "binary"
   local f = io.open(filename,"w") or error("Unable to open " .. filename)
-  f:write("return {")
+  f:write("return { model=".. self.ann_component:to_lua_string() .. ",\n")
+  f:write("connections={")
   for _,wname in ipairs(self.weights_order) do
     local cobj = self.weights_table[wname]
     local w,oldw = cobj:weights()
@@ -135,42 +135,53 @@ function trainable.supervised_trainer:save(filename, binary)
     f:write("\noldw = matrix.fromString[[" .. oldw:toString(binary) .. "]],")
     f:write("\n},")
   end
-  f:write("\n}\n")
+  f:write("\n},\n")
+  if self.loss_function then
+    local id = get_object_id(self.loss_function)
+    local sz = self.ann_component:get_output_size()
+    if id and sz then f:write("loss=" .. id .. "(".. sz .. "),\n") end
+  end
+  if self.bunch_size then f:write("bunch_size="..self.bunch_size..",\n") end
+  f:write("}\n")
   f:close()
 end
 
 ------------------------------------------------------------------------
 
 april_set_doc("trainable.supervised_trainer.load", {
-		class = "method",
-		summary = "Load the model weiths from a disk file",
+		class = "function",
+		summary = "Load the model and weights from a disk file",
 		description = {
-		  "Load the connection weights stored at",
+		  "Load the model and connection weights stored at",
 		  "a disk file.",
-		  "Only works after build method is called.",
 		},
 		params = {
 		  "A filename string",
-		  { "A string indicating the matrix format: ascii or binary",
-		    "[optional]. By default is binary." },
+		  "Loss function [optional]",
+		  "Bunch size (mini batch) [optional]",
 		}, })
 
-function trainable.supervised_trainer:load(filename)
-  assert(#self.weights_order > 0, "The component is not built")
-  local binary = binary or "binary"
+function trainable.supervised_trainer.load(filename, loss, bunch_size)
   local f = loadfile(filename) or error("Unable to open " .. filename)
   local t = f() or error("Impossible to load chunk from file " .. filename)
-  for _,wname in ipairs(self.weights_order) do
-    local cobj = self.weights_table[wname]
-    local w,oldw = t[wname].w,t[wname].oldw
-    assert(t[wname].input == cobj:get_input_size(),
+  local model = t.model
+  local connections = t.connections
+  local bunch_size = bunch_size or t.bunch_size
+  local loss = loss or t.loss
+  local obj = trainable.supervised_trainer(model, loss, bunch_size)
+  obj:build()
+  for wname,cobj in obj:iterate_weights() do
+    local w,oldw = connections[wname].w,connections[wname].oldw
+    assert(w ~= nil, "Component " .. wname .. " not found at file")
+    assert(connections[wname].input == cobj:get_input_size(),
 	   string.format("Incorrect input size, expected %d, found %d\n",
-			 cobj:get_input_size(), t[wname].input))
-    assert(t[wname].output == cobj:get_output_size(),
+			 cobj:get_input_size(), connections[wname].input))
+    assert(connections[wname].output == cobj:get_output_size(),
 	   string.format("Incorrect output size, expected %d, found %d\n",
-			 cobj:get_output_size(), t[wname].output))
-    cobj:load{ w=w, oldw=oldw }
+			 cobj:get_output_size(), connections[wname].output))
+    cobj:load{ w=w, oldw=oldw or w }
   end
+  return obj
 end
 
 ------------------------------------------------------------------------
@@ -207,7 +218,7 @@ april_set_doc("trainable.supervised_trainer.count_weights", {
 
 function trainable.supervised_trainer:count_weights(match_string)
   local match_string = match_string or ".*"
-  if #self.weights_order == 0 then
+  if #self.components_order == 0 then
     error("It is not build")
   end
   local count = 0
@@ -269,7 +280,7 @@ april_set_doc("trainable.supervised_trainer.iterate_weights", {
 
 function trainable.supervised_trainer:iterate_weights(match_string)
   local match_string = match_string or ".*"
-  if #self.weights_order == 0 then
+  if #self.components_order == 0 then
     error("It is not build")
   end
   local pos = 0
@@ -301,7 +312,7 @@ april_set_doc("trainable.supervised_trainer.component", {
 		outputs = { "A component object" } })
 
 function trainable.supervised_trainer:component(str)
-  if #self.weights_order == 0 then
+  if #self.components_order == 0 then
     error("Needs execution of build method")
   end
   return self.components_table[str]
@@ -323,7 +334,7 @@ april_set_doc("trainable.supervised_trainer.weights", {
 		outputs = { "An ann.connections object" } })
 
 function trainable.supervised_trainer:weights(str)
-  if #self.weights_order == 0 then
+  if #self.components_order == 0 then
     error("Needs execution of build method")
   end
   return self.weights_table[str]
@@ -340,9 +351,9 @@ april_set_doc("trainable.supervised_trainer.randomize_weights", {
 		    "distribution, in the range [c*inf,c*sup].",
 		    "Constant c depends on fan-in and/or fan-out fields.",
 		    "If fan-in and fan-out are false, then c=1.",
-		    "If fan-in=true and fan-out=false, then c=fanin.",
-		    "If fan-in=false and fan-out=true, then c=fanout.",
-		    "If fan-in and fan-out are true, then c=fanin + fanout.",
+		    "If fan-in=true and fan-out=false, then c=1/sqrt(fanin).",
+		    "If fan-in=false and fan-out=true, then c=1/sqrt(fanout).",
+		    "If fan-in and fan-out are true, then c=1/sqrt(fanin + fanout).",
 		  },
 		params = {
 		  ["random"] = "A random object",
@@ -361,7 +372,7 @@ function trainable.supervised_trainer:randomize_weights(t)
       use_fanin  = { type_match="boolean", mandatory = false, default = false },
       use_fanout = { type_match="boolean", mandatory = false, default = false },
     }, t)
-  assert(#self.weights_order > 0,
+  assert(#self.components_order > 0,
 	 "Execute build method before randomize_weights")
   for i,wname in ipairs(self.weights_order) do
     local current_inf = params.inf
@@ -1068,8 +1079,8 @@ april_set_doc("trainable.supervised_trainer.train_holdout_validation", {
 		  ["max_epochs"] = "Maximum number of epochs",
 		  ["stopping_criterion"] = "A predicate function which "..
 		  "returns true if stopping criterion, false otherwise. "..
-		    "Some basic criterions are implemented at "..
-		    "trainable.stopping_criterions table."..
+		    "Some basic criteria are implemented at "..
+		    "trainable.stopping_criteria table."..
 		    "The criterion function is called as "..
 		    "stopping_criterion({ current_epoch=..., best_epoch=..., "..
 		    "best_val_error=..., train_error=..., "..
@@ -1281,17 +1292,17 @@ function trainable.supervised_trainer:train_wo_validation(t)
 end
 
 -------------------------
--- STOPPING CRITERIONS --
+-- STOPPING CRITERIA --
 -------------------------
-april_set_doc("trainable.stopping_criterions", {
+april_set_doc("trainable.stopping_criteria", {
 		class       = "namespace",
-		summary     = "Table with built-in stopping criterions", })
+		summary     = "Table with built-in stopping criteria", })
 
-trainable.stopping_criterions = trainable.stopping_criterions or {}
+trainable.stopping_criteria = trainable.stopping_criteria or {}
 
 --------------------------------------------------------------------------
 
-april_set_doc("trainable.stopping_criterions.make_max_epochs_wo_imp_absolute", {
+april_set_doc("trainable.stopping_criteria.make_max_epochs_wo_imp_absolute", {
 		class       = "function",
 		summary     = "Returns a stopping criterion based on absolute loss.",
 		description = 
@@ -1302,7 +1313,7 @@ april_set_doc("trainable.stopping_criterions.make_max_epochs_wo_imp_absolute", {
 		params = { "Absolute maximum difference (abs_max)" },
 		outputs = { "A stopping criterion function" }, })
 
-function trainable.stopping_criterions.make_max_epochs_wo_imp_absolute(abs_max)
+function trainable.stopping_criteria.make_max_epochs_wo_imp_absolute(abs_max)
   local f = function(params)
     return (params.current_epoch - params.best_epoch) >= abs_max
   end
@@ -1311,7 +1322,7 @@ end
 
 --------------------------------------------------------------------------
 
-april_set_doc("trainable.stopping_criterions.make_max_epochs_wo_imp_relative", {
+april_set_doc("trainable.stopping_criteria.make_max_epochs_wo_imp_relative", {
 		class       = "function",
 		summary     = "Returns a stopping criterion based on relative loss.",
 		description = 
@@ -1323,7 +1334,7 @@ april_set_doc("trainable.stopping_criterions.make_max_epochs_wo_imp_relative", {
 		params = { "Relative maximum difference (rel_max)" },
 		outputs = { "A stopping criterion function" }, })
 
-function trainable.stopping_criterions.make_max_epochs_wo_imp_relative(rel_max)
+function trainable.stopping_criteria.make_max_epochs_wo_imp_relative(rel_max)
   local f = function(params)
     return not (params.current_epoch/params.best_epoch < rel_max)
   end

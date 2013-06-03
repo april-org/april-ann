@@ -54,7 +54,15 @@ namespace ANN {
   }
 
   ANNComponent *SoftsignActfANNComponent::clone() {
-    return new SoftsignActfANNComponent(name.c_str());
+    SoftsignActfANNComponent *obj = new SoftsignActfANNComponent(name.c_str());
+    obj->setOption(DROPOUT_FACTOR_STRING, getOption(DROPOUT_FACTOR_STRING));
+    return obj;
+  }
+
+  char *SoftsignActfANNComponent::toLuaString() {
+    buffer_list buffer;
+    buffer.printf("ann.components.actf.softsign{ name='%s' }", name.c_str());
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
 
 }

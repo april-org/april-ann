@@ -8,6 +8,7 @@
 namespace april_utils {
 
   class string {
+    static const char *NULL_STRING;
   public:
     typedef char value_type;
     typedef vector<char> container;
