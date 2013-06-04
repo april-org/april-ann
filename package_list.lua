@@ -1,27 +1,40 @@
 return { 
---  "plotter",
+  -- BASIC PACAKGES
+  --  "plotter",
   "dataset",
   "matrix",
   "random",
   "util",
   "cmdOpt",
---   "profiler",
+  --   "profiler",
   "math",
+  "gzio",
+  
+  -- MACHINE LEARNING
   "trainable",
   -- "function_interface",
+  -- NEURAL NETWORKS
   "ann_base",
   "loss_functions",
   "trainable",
   "sdae",
+
+  -- LANGUAGE MODELS
   "fnnlm",
-  "gzio",
+  
+  -- IMAGE HANDLERS
   "image",
   "image_io",
   "libpng",
--- --  "median_filter",
-   "image_metrics",
-   "binarization_filter",
-   "image_cleaning",
-   "interest_points",
---   --"libtiff",
+  -- --  "median_filter",
+  "image_metrics",
+
+  -- IMAGE PREPROCESSING
+  "binarization_filter",
+  "image_cleaning",
+  "interest_points",
+  --   --"libtiff",
+  
+  -- HMMs
+   "hmm_trainer",
  }

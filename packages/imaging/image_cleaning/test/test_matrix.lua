@@ -24,7 +24,7 @@ printf("Image Histogram!\n")
 hist_window = myHist:generate_window_histogram(1)
 for i = 1, height do
     for j = 1, width do
-        printf("%f ", hist_window:getElement(i,j,2))
+        printf("%f ", hist_window:get(i,j,2))
     end
     printf("\n");
 end

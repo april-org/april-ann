@@ -108,6 +108,7 @@ public:
     T *data;
     iterator(Matrix *m);
     iterator(Matrix *m, int raw_pos);
+    iterator(Matrix *m, int raw_pos, int *coords);
   public:
     iterator();
     iterator(const iterator &other);
@@ -128,6 +129,7 @@ public:
     const T *data;
     const_iterator(const Matrix *m);
     const_iterator(const Matrix *m, int raw_pos);
+    const_iterator(Matrix *m, int raw_pos, int *coords);
   public:
     const_iterator();
     const_iterator(const const_iterator &other);
@@ -172,7 +174,7 @@ public:
   int size() const { return total_size; }
   CBLAS_ORDER getMajorOrder() const { return major_order; }
   void setUseCuda(bool v) { use_cuda = v; }
-  bool isSimple() {
+  bool isSimple() const {
     bool is_simple=(!is_submatrix)&&(offset==0)&&(major_order==CblasRowMajor);
     int aux=1;
     for(int i=numDim-1; i>=0 && is_simple; --i) {
@@ -183,8 +185,34 @@ public:
   }
   /**********************/
   iterator begin() { return iterator(this); }
+  iterator begin(int c0) {
+    assert(numDim==1);
+    return iterator(this, computeRawPos(&c0), &c0);
+  }
+  iterator begin(int c0, int c1) {
+    assert(numDim==2);
+    int aux[2]={c0,c1};
+    return iterator(this, computeRawPos(aux), aux);
+  }
+  iterator begin(int *coords, int len) {
+    assert(numDim==len);
+    return iterator(this, computeRawPos(coords), coords);
+  }
   iterator end() { return iterator(this, last_raw_pos+1); }
   const_iterator begin() const { return const_iterator(this); }
+  const_iterator begin(int c0) const {
+    assert(numDim==1);
+    return const_iterator(this, computeRawPos(&c0), &c0);
+  }
+  const_iterator begin(int c0, int c1) const {
+    assert(numDim==2);
+    int aux[2]={c0,c1};
+    return const_iterator(this, computeRawPos(aux), aux);
+  }
+  const_iterator begin(int *coords, int len) const {
+    assert(numDim==len);
+    return const_iterator(this, computeRawPos(coords), coords);
+  }
   const_iterator end() const { return const_iterator(this, last_raw_pos+1); }
 
   /// Transposition
@@ -210,6 +238,7 @@ public:
   /// Function to obtain RAW access to data pointer. Be careful with it, because
   /// you are losing sub-matrix abstraction, and the major order.
   GPUMirroredMemoryBlock<T> *getRawDataAccess() { return data; }
+  const GPUMirroredMemoryBlock<T> *getRawDataAccess() const { return data; }
   
   bool getCol(int col, T* vec, int vecsize);
   bool putCol(int col, T *vec, int vecsize);
@@ -982,6 +1011,15 @@ Matrix<T>::iterator::iterator(Matrix *m, int raw_pos) :
 }
 
 template <typename T>
+Matrix<T>::iterator::iterator(Matrix *m, int raw_pos, int *coords) :
+  m(m), raw_pos(raw_pos) {
+  this->coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) this->coords[i] = coords[i];
+  // IncRef(m);
+  data = m->getData();
+}
+
+template <typename T>
 Matrix<T>::iterator::iterator() : m(0), raw_pos(0), coords(0) { }
 
 template <typename T>
@@ -1061,6 +1099,14 @@ Matrix<T>::const_iterator::const_iterator(const Matrix *m, int raw_pos) :
   m(m), raw_pos(raw_pos) {
   coords = new int[m->getNumDim()];
   for (int i=0; i<m->getNumDim(); ++i) coords[i] = 0;
+  data = m->getData();
+}
+
+template <typename T>
+Matrix<T>::const_iterator::const_iterator(Matrix *m, int raw_pos, int *coords) :
+  m(m), raw_pos(raw_pos) {
+  this->coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) this->coords[i] = coords[i];
   data = m->getData();
 }
 
