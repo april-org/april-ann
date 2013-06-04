@@ -53,12 +53,13 @@ e = h * h
 print("= h:mul(h)")
 print(e)
 
-l = matrix(2,2,"col_major"):fill(4) + h
+l = matrix.col_major(2,2):fill(4) + h
 print(l)
 
 print("= g")
-g = matrix(3,2,{1,2,3,
-		4,5,6})
+g = matrix(3,2,{1,2,
+		3,4,
+		5,6})
 print(g)
 print("= g:transpose():clone('col_major'))")
 print(g:transpose():clone("col_major"))
@@ -70,4 +71,20 @@ print(g)
 print(g:transpose())
 j = g:transpose() * g
 print("= g:transpose():mul(g)")
+print(j)
+
+j = matrix(2,2):gemm{
+  trans_A=true, trans_B=false,
+  alpha=1.0, A=g, B=g,
+  beta=0.0
+}
+print("= gemm{ ... }")
+print(j)
+
+print("= col_major gemm{ ... }")
+j = matrix.col_major(2,2):gemm{
+  trans_A=true, trans_B=false,
+  alpha=1.0, A=g:clone("col_major"), B=g:clone("col_major"),
+  beta=0.0
+}
 print(j)

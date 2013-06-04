@@ -64,16 +64,54 @@
     }
   }
   MatrixFloat* obj;
-  if (!lua_isnumber(L,argn) && !lua_istable(L,argn)) {
-    const char *major;
-    LUABIND_GET_PARAMETER(argn, string, major);
-    CBLAS_ORDER order = CblasRowMajor;
-    if (strcmp(major, "col_major") == 0) order = CblasColMajor;
-    else if (strcmp(major, "row_major") != 0)
-      LUABIND_FERROR1("Incorrect major order string %s", major);
-    obj = new MatrixFloat(ndims,dim,0.0f,order);
+  obj = new MatrixFloat(ndims,dim);
+  if (lua_istable(L,argn)) {
+    int i=1;
+    for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
+      lua_rawgeti(L,argn,i);
+      *it = (float)luaL_checknumber(L, -1);
+      lua_remove(L,-1);
+    }
   }
-  else obj = new MatrixFloat(ndims,dim);
+  delete[] dim;
+  LUABIND_RETURN(MatrixFloat,obj);
+}
+//BIND_END
+
+//BIND_CLASS_METHOD MatrixFloat col_major
+//DOC_BEGIN
+// col_major_matrix(int dim1, int dim2, ..., table mat=nil)
+/// Constructor con una secuencia de valores que son las dimensiones de
+/// la matriz el ultimo argumento puede ser una tabla, en cuyo caso
+/// contiene los valores adecuadamente serializados, si solamente
+/// aparece la matriz, se trata de un vector cuya longitud viene dada
+/// implicitamente.
+//DOC_END
+{
+  int i,argn;
+  argn = lua_gettop(L); // number of arguments
+  LUABIND_CHECK_ARGN(>=, 1);
+  int ndims = (!lua_isnumber(L,argn)) ? argn-1 : argn;
+  int *dim;
+  if (ndims == 0) { // caso matrix{valores}
+    ndims = 1;
+    dim = new int[ndims];
+    LUABIND_TABLE_GETN(1, dim[0]);
+  } else {
+    dim = new int[ndims];
+    for (i=1; i <= ndims; i++) {
+      if (!lua_isnumber(L,i))
+	// TODO: Este mensaje de error parece que no es correcto... y no se todavia por que!!!
+	LUABIND_FERROR2("incorrect argument to matrix dimension (arg %d must"
+			" be a number and is a %s)",
+			i, lua_typename(L,i));
+      dim[i-1] = (int)lua_tonumber(L,i);
+      if (dim[i-1] <= 0)
+	LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
+    }
+  }
+  MatrixFloat* obj;
+  obj = new MatrixFloat(ndims,dim,0.0f,CblasColMajor);
   if (lua_istable(L,argn)) {
     int i=1;
     for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
@@ -600,39 +638,13 @@
   {
     int argn;
     argn = lua_gettop(L); // number of arguments
-    LUABIND_CHECK_ARGN(>=, 1);
-    LUABIND_CHECK_ARGN(<=, 2);
+    LUABIND_CHECK_ARGN(==, 1);
     MatrixFloat *mat,*resul;
     LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
     if (!obj->sameDim(mat))
       LUABIND_ERROR("matrix add wrong dimensions");
-    if (argn == 1) resul = obj->addition(mat);
-    else {
-      float alpha;
-      LUABIND_GET_PARAMETER(2, float, alpha);
-      resul = obj->addition(mat, alpha);
-    }
+    resul = obj->addition(mat);
     LUABIND_RETURN(MatrixFloat, resul);
-  }
-//BIND_END
-
-//BIND_METHOD MatrixFloat acc_add
-  {
-    int argn;
-    argn = lua_gettop(L); // number of arguments
-    LUABIND_CHECK_ARGN(>=, 1);
-    LUABIND_CHECK_ARGN(<=, 2);
-    MatrixFloat *mat;
-    LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
-    if (!obj->sameDim(mat))
-      LUABIND_ERROR("matrix acc_add wrong dimensions");
-    if (argn == 1) obj->accumulate_addition(mat);
-    else {
-      float alpha;
-      LUABIND_GET_PARAMETER(2, float, alpha);
-      obj->accumulate_addition(mat, alpha);
-    }
-    LUABIND_RETURN(MatrixFloat, obj);
   }
 //BIND_END
 
@@ -648,18 +660,6 @@
   }
 //BIND_END
 
-//BIND_METHOD MatrixFloat acc_sub
-  {
-    LUABIND_CHECK_ARGN(==, 1);
-    MatrixFloat *mat;
-    LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
-    if (!obj->sameDim(mat))
-      LUABIND_ERROR("matrix acc_sub wrong dimensions");
-    obj->accumulate_substraction(mat);
-    LUABIND_RETURN(MatrixFloat, obj);  
-  }
-//BIND_END
-
 //BIND_METHOD MatrixFloat mul
   {
     LUABIND_CHECK_ARGN(==, 1);
@@ -672,30 +672,50 @@
   }
 //BIND_END
 
-//BIND_METHOD MatrixFloat acc_mul
+//BIND_METHOD MatrixFloat axpy
   {
-    LUABIND_CHECK_ARGN(>=, 2);
-    LUABIND_CHECK_ARGN(<=, 4);
     int argn;
-    argn = lua_gettop(L); // number of arguments
+    LUABIND_CHECK_ARGN(==, 2);
     float alpha;
-    float beta;
-    MatrixFloat *matA,*matB;
-    LUABIND_GET_PARAMETER(1, MatrixFloat, matA);
-    LUABIND_GET_PARAMETER(2, MatrixFloat, matB);
-    LUABIND_GET_OPTIONAL_PARAMETER(3, float, alpha, 1.0f);
-    LUABIND_GET_OPTIONAL_PARAMETER(4, float, beta, 1.0f);
-    obj->accumulate_multiply(alpha, matA, matB, beta);
+    MatrixFloat *mat;
+    LUABIND_GET_PARAMETER(1, float, alpha);
+    LUABIND_GET_PARAMETER(2, MatrixFloat, mat);
+    if (!obj->sameDim(mat))
+      LUABIND_ERROR("matrix axpy wrong dimensions");
+    obj->axpy(alpha, mat);
     LUABIND_RETURN(MatrixFloat, obj);
   }
 //BIND_END
 
-//BIND_METHOD MatrixFloat mul_scalar
+//BIND_METHOD MatrixFloat gemm
+  {
+    LUABIND_CHECK_ARGN(==, 1);
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L,1, "trans_A", "trans_B", "alpha", "A", "B", "beta", 0);
+    bool trans_A, trans_B;
+    float alpha;
+    float beta;
+    MatrixFloat *matA,*matB;
+    LUABIND_GET_TABLE_PARAMETER(1, A, MatrixFloat, matA);
+    LUABIND_GET_TABLE_PARAMETER(1, B, MatrixFloat, matB);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_A, bool, trans_A, false);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_B, bool, trans_B, false);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, float, alpha, 1.0f);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f);
+    obj->gemm(trans_A ? CblasTrans : CblasNoTrans,
+	      trans_B ? CblasTrans : CblasNoTrans,
+	      alpha, matA, matB,
+	      beta);
+    LUABIND_RETURN(MatrixFloat, obj);
+  }
+//BIND_END
+
+//BIND_METHOD MatrixFloat scal
   {
     LUABIND_CHECK_ARGN(==, 1);
     float value;
     LUABIND_GET_PARAMETER(1, float, value);
-    obj->multiply_by_scalar(value);
+    obj->scal(value);
     LUABIND_RETURN(MatrixFloat, obj);
   }
 //BIND_END

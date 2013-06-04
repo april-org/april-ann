@@ -20,8 +20,8 @@ return {
   "image_io",
   "libpng",
   -- "median_filter",
-  -- "image_metrics",
-  -- "binarization_filter",
-  -- "image_cleaning",
+  "image_metrics",
+  "binarization_filter",
+  "image_cleaning",
   -- "libtiff",
 }

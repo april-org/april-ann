@@ -69,3 +69,11 @@
 35 44
 44 56
 # Matrix of size [2,2] in row_major
+= gemm{ ... }
+35 44
+44 56
+# Matrix of size [2,2] in row_major
+= col_major gemm{ ... }
+35 44
+44 56
+# Matrix of size [2,2] in col_major
