@@ -230,6 +230,14 @@ public:
 	    const Matrix<T> *otherA,
 	    const Matrix<T> *otherB,
 	    T beta);
+
+  // GEMM BLAS operation this = alpha * op(A)*op(B) + beta*this
+  void gemv(CBLAS_TRANSPOSE trans_A,
+	    CBLAS_TRANSPOSE trans_B,
+	    T alpha,
+	    const Matrix<T> *otherA,
+	    const Matrix<T> *otherB,
+	    T beta);
   
   void scal(T value);
   
