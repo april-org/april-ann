@@ -601,6 +601,16 @@
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat diag
+{
+  LUABIND_CHECK_ARGN(==,1);
+  float v;
+  LUABIND_GET_PARAMETER(1, float, v);
+  obj->diag(v);
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat toTable
 // Permite salvar una matriz en una tabla lua
 // TODO: Tener en cuenta las dimensiones de la matriz
