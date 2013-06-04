@@ -86,9 +86,9 @@ you can use this bibitem:
 
 ```bibtex
 @misc{aprilann,
-        Author = {Francisco Zamora-Mart\'inez and others},
+        Author = {Francisco Zamora-Mart\'inez and Salvador Espa\~na-Boquera and Jorge Gorbe-Moya and Joan Pastor-Pellicer and Adrian Palacios},
         Note = {{https://github.com/pakozm/april-ann}},
-        Title = {{April-ANN toolkit, A Pattern Recognizer In Lua, Artificial Neural Networks module}},
+        Title = {{April-ANN toolkit, A Pattern Recognizer In Lua with Artificial Neural Networks}},
         Year = {2013}}
 ```
 

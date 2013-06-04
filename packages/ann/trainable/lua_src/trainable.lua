@@ -356,6 +356,10 @@ april_set_doc("trainable.supervised_trainer.randomize_weights", {
 		    "If fan-in and fan-out are true, then c=1/sqrt(fanin + fanout).",
 		  },
 		params = {
+		  ["name_match"] = {
+		    "A match string [optional], if given, only the connection",
+		    "weights which match will be randomized",
+		  },
 		  ["random"] = "A random object",
 		  ["inf"]    = "Range inf value",
 		  ["sup"]    = "Range sup value",
@@ -366,6 +370,7 @@ april_set_doc("trainable.supervised_trainer.randomize_weights", {
 function trainable.supervised_trainer:randomize_weights(t)
   local params = get_table_fields(
     {
+      name_match = { type_match="string", mandatory=false, default = nil },
       random  = { isa_match = random,  mandatory = true },
       inf     = { type_match="number", mandatory = true },
       sup     = { type_match="number", mandatory = true },
@@ -375,23 +380,25 @@ function trainable.supervised_trainer:randomize_weights(t)
   assert(#self.components_order > 0,
 	 "Execute build method before randomize_weights")
   for i,wname in ipairs(self.weights_order) do
-    local current_inf = params.inf
-    local current_sup = params.sup
-    local constant    = 0
-    local connection  = self.weights_table[wname]
-    if params.use_fanin then
-      constant = constant + connection:get_input_size()
+    if not params.name_match or wname:match(params.name_match) then
+      local current_inf = params.inf
+      local current_sup = params.sup
+      local constant    = 0
+      local connection  = self.weights_table[wname]
+      if params.use_fanin then
+	constant = constant + connection:get_input_size()
+      end
+      if params.use_fanout then
+	constant = constant + connection:get_output_size()
+      end
+      if constant > 0 then
+	current_inf = current_inf / math.sqrt(constant)
+	current_sup = current_sup / math.sqrt(constant)
+      end
+      connection:randomize_weights{ random = params.random,
+				    inf    = current_inf,
+				    sup    = current_sup }
     end
-    if params.use_fanout then
-      constant = constant + connection:get_output_size()
-    end
-    if constant > 0 then
-      current_inf = current_inf / math.sqrt(constant)
-      current_sup = current_sup / math.sqrt(constant)
-    end
-    connection:randomize_weights{ random = params.random,
-				  inf    = current_inf,
-				  sup    = current_sup }
   end
 end
 
