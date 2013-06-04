@@ -280,7 +280,18 @@
 }
 //BIND_END
 
+//BIND_METHOD ImageFloat substract
+{
+  ImageFloat *img;
+  
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_GET_PARAMETER(1, ImageFloat, img);
 
+  ImageFloat *res = obj->substract_image(img, 0.0, 1.0);
+
+  LUABIND_RETURN(ImageFloat, res);
+}
+//BIND_END
 
 //BIND_METHOD ImageFloat rotate90cw
 {
@@ -323,6 +334,22 @@
 }
 //BIND_END
 
+//BIND_METHOD ImageFloat add_rows 
+{
+  LUABIND_CHECK_ARGN(==,3);
+  int top_rows, bottom_rows;
+  float value = 0.0;
+
+  LUABIND_GET_PARAMETER(1, int, top_rows);
+  LUABIND_GET_PARAMETER(2, int, bottom_rows);
+
+  LUABIND_GET_PARAMETER(3, float, value);
+  ImageFloat *res;
+  res=obj->add_rows(top_rows, bottom_rows, value);
+
+  LUABIND_RETURN(ImageFloat, res);
+}
+//BIND_END
 
 //BIND_METHOD ImageFloat convolution5x5
 {
