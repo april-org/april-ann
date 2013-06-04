@@ -221,15 +221,15 @@ void Image<T>::projection_h(Matrix<T> **m) const {
 
 /**
 
-   -  angle va en radianes
-   -  default_value es el color de los pixels nuevos que aparecen
-   en las esquinas
+ -  angle va en radianes
+ -  default_value es el color de los pixels nuevos que aparecen
+    en las esquinas
   
-   +-------+  +-------+
-   |       |  |\       \
-   |  OLD  |  | \  NEW  \
-   |       |  |an\       \
-   +-------+  |gle+-------+
+            +-------+  +-------+
+            |       |  |\       \
+            |  OLD  |  | \  NEW  \
+            |       |  |an\       \
+            +-------+  |gle+-------+
 */
 template <typename T>
 Image<T>* Image<T>::shear_h(double angle, T default_value) const {
@@ -653,13 +653,46 @@ Image<T> *Image<T>::remove_blank_columns() const
 	  (*result)(xdest, y) = (*this)(x,y);
 	}
 
-      if (!blanco) ++xdest;
-      if (xdest == width-nblanco) break; // we're finished
-    }
-
-  return result;
+	return result;
 }
 
+/// Add top_rows at top of the images and bottom_rows at the bottom
+template<typename T>
+Image<T> *Image<T>::add_rows(int top_rows, int bottom_rows, T value) const
+{
+	// Contamos las columnas en blanco de la imagen original
+    int dimensions[2];
+    int new_height = height+top_rows+bottom_rows; 
+    dimensions[0] = new_height;
+    dimensions[1] = width;
+
+    Matrix<T> *new_mat = new Matrix<T>(2, dimensions);
+    Image<T> *result = new Image<T>(new_mat);
+
+    // Copy row by row
+    int top_image = top_rows;
+    int bottom_image = top_rows + height;
+    
+    for(int y = 0; y < top_image; ++y) {
+      for (int x = 0; x < width; x++) {
+        (*result)(x,y) = value;
+  
+      }
+    } 
+    for(int y = bottom_image; y < new_height; ++y) {
+      for (int x = 0; x < width; x++) {
+        (*result)(x,y) = value;
+      }
+    }
+
+    for (int y = 0; y < height; ++y) {
+      for (int x = 0; x < width; ++x) {
+       (*result)(x, top_image+y) = (*this)(x,y);
+      }
+    }
+
+    return result;
+}
 
 /**
  * Aplica un kernel de convolucion de 5x5 a la imagen. Devuelve el resultado
@@ -681,36 +714,36 @@ Image<T> *Image<T>::convolution5x5(float *k, T default_color) const
   Matrix<T> *new_mat = new Matrix<T>(2, dimensions);
   Image<T> *result = new Image<T>(new_mat);
 
-  for (int y=0; y<height; y++) {
-    for (int x=0; x<width; x++) {
-      T value = getpixel(x-2, y-2, default_color) * k[0] + 
-	getpixel(x-1, y-2, default_color) * k[1] +
-	getpixel(x  , y-2, default_color) * k[2] +
-	getpixel(x+1, y-2, default_color) * k[3] +
-	getpixel(x+2, y-2, default_color) * k[4] +
-	getpixel(x-2, y-1, default_color) * k[5] + 
-	getpixel(x-1, y-1, default_color) * k[6] +
-	getpixel(x  , y-1, default_color) * k[7] +
-	getpixel(x+1, y-1, default_color) * k[8] +
-	getpixel(x+2, y-1, default_color) * k[9] +
-	getpixel(x-2, y,   default_color) * k[10] + 
-	getpixel(x-1, y,   default_color) * k[11] +
-	getpixel(x  , y,   default_color) * k[12] +
-	getpixel(x+1, y,   default_color) * k[13] +
-	getpixel(x+2, y,   default_color) * k[14] +
-	getpixel(x-2, y+1, default_color) * k[15] + 
-	getpixel(x-1, y+1, default_color) * k[16] +
-	getpixel(x  , y+1, default_color) * k[17] +
-	getpixel(x+1, y+1, default_color) * k[18] +
-	getpixel(x+2, y+1, default_color) * k[19] +
-	getpixel(x-2, y+2, default_color) * k[20] + 
-	getpixel(x-1, y+2, default_color) * k[21] +
-	getpixel(x  , y+2, default_color) * k[22] +
-	getpixel(x+1, y+2, default_color) * k[23] +
-	getpixel(x+2, y+2, default_color) * k[24];
-      (*result)(x,y) = value;
+    for (int y=0; y<height; y++) {
+        for (int x=0; x<width; x++) {
+            T value = getpixel(x-2, y-2, default_color) * k[0] + 
+                getpixel(x-1, y-2, default_color) * k[1] +
+                getpixel(x  , y-2, default_color) * k[2] +
+                getpixel(x+1, y-2, default_color) * k[3] +
+                getpixel(x+2, y-2, default_color) * k[4] +
+                getpixel(x-2, y-1, default_color) * k[5] + 
+                getpixel(x-1, y-1, default_color) * k[6] +
+                getpixel(x  , y-1, default_color) * k[7] +
+                getpixel(x+1, y-1, default_color) * k[8] +
+                getpixel(x+2, y-1, default_color) * k[9] +
+                getpixel(x-2, y,   default_color) * k[10] + 
+                getpixel(x-1, y,   default_color) * k[11] +
+                getpixel(x  , y,   default_color) * k[12] +
+                getpixel(x+1, y,   default_color) * k[13] +
+                getpixel(x+2, y,   default_color) * k[14] +
+                getpixel(x-2, y+1, default_color) * k[15] + 
+                getpixel(x-1, y+1, default_color) * k[16] +
+                getpixel(x  , y+1, default_color) * k[17] +
+                getpixel(x+1, y+1, default_color) * k[18] +
+                getpixel(x+2, y+1, default_color) * k[19] +
+                getpixel(x-2, y+2, default_color) * k[20] + 
+                getpixel(x-1, y+2, default_color) * k[21] +
+                getpixel(x  , y+2, default_color) * k[22] +
+                getpixel(x+1, y+2, default_color) * k[23] +
+                getpixel(x+2, y+2, default_color) * k[24];
+            (*result)(x,y) = value;
+        }
     }
-  }
 
   return result;
 }
@@ -900,5 +933,31 @@ Image<T> *Image<T>::affine_transform(AffineTransform2D *trans, T default_value,
   return result;
 }
 
+template <typename T>
+Image<T>* Image<T>::substract_image(Image<T> *img, T low, T high) const {
+
+    int  s_height = img->height;
+    int  s_width  = img->width;
+
+    //  printf("%d %d %d %d\n", s_width, s_height, this->width, this->height);
+    assert("The images does not have the same dimension"
+            && s_width == this->width && s_height == this->height);
+
+    int dims[2];
+    dims[0] = this->height;
+    dims[1] = this->width;
+    Matrix<T> *mat = new Matrix<T>(2,dims);
+    Image<T>  *res = new Image<T>(mat);
+
+
+    for (int y = 0; y < this->height; y++){
+        for (int x = 0; x < this->width; x++){
+            T value = high + (*this)(x,y) -(*img)(x,y);
+            (*res)(x, y) =  april_utils::clamp(value, low, high);
+        } 
+    }
+
+    return res;
+}
 
 #endif // _IMAGE_CC_
