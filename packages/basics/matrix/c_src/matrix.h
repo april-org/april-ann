@@ -204,6 +204,9 @@ public:
 
   // Returns true if they have the same dimension
   bool sameDim(const Matrix *other) const;
+  
+  // Set the diagonal to current value
+  void diag(T value);
 
   // Returns a new matrix with the sum, assuming they have the same dimension
   // Crashes otherwise
@@ -604,6 +607,18 @@ bool Matrix<T>::sameDim(const Matrix<T> *other) const {
 }
 
 template <typename T>
+void Matrix<T>::diag(T value) {
+  for (int i=1; i<numDim; ++i)
+    if (matrixSize[i] != matrixSize[i-1])
+      ERROR_EXIT(128, "Only allowed for squared matrices\n");
+  float *d = data->getPPALForWrite();
+  for (int i=0; i<matrixSize[0]; ++i) {
+    for (int j=0; j<numDim; ++j) aux_coords[j] = i;
+    d[computeRawPos(aux_coords)] = value;
+  }
+}
+
+template <typename T>
 Matrix<T>* Matrix<T>::addition(const Matrix<T> *other) {
   Matrix<T> *resul = this->clone();
   resul->axpy(1.0f, other);
@@ -761,7 +776,7 @@ T Matrix<T>::norm2() const {
 	aux_coords[0] = matrixSize[0]-1;
       } while(nextCoordVectorColMajor(aux_coords, matrixSize, numDim));
     }
-    v = (T)sqrtf(v);
+    v = T(sqrtf(v));
   }
   return v;
 }
