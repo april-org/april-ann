@@ -12,7 +12,7 @@ ascii
 7
 ]]
 
-c = a * b
+c = a*b
 
 print("= a")
 print(a)

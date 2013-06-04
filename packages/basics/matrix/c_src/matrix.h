@@ -33,6 +33,7 @@
 #include "clamp.h"
 #include "aligned_memory.h"
 #include "swap.h"
+#include "maxmin.h"
 
 template <typename T>
 class Matrix : public Referenced {
@@ -80,6 +81,20 @@ protected:
   static bool nextCoordVectorColMajor(int *coords, const int *sizes,
 				      int numDim);
   int getLastRawPos() const { return last_raw_pos; }
+  /// Returns if the matrix is a vector
+  bool isVector() const { return (numDim==1 ||
+				  (numDim==2 &&
+				   (matrixSize[0]==1 ||
+				    matrixSize[1]==1))); }
+  bool isColVector() const { return (numDim==2 && matrixSize[1]==1); }
+  /// Returns the size of the vector, the coordinate which is different of 1. It
+  /// only works if the matrix is a vector (precondition).
+  int getVectorSize() const {
+    return ( (numDim==1) ? matrixSize[0] :
+	     april_utils::max(matrixSize[0], matrixSize[1]) ); }
+  int getVectorStride() const {
+    return ( (numDim==1) ? stride[0] :
+	     april_utils::max(stride[0], stride[1]) ); }
 public:
   /********* Iterators for Matrix traversal *********/
   // forward declaration
@@ -231,13 +246,17 @@ public:
 	    const Matrix<T> *otherB,
 	    T beta);
 
-  // GEMM BLAS operation this = alpha * op(A)*op(B) + beta*this
+  // GEMV BLAS operation this = alpha * op(A)*X + beta*this
   void gemv(CBLAS_TRANSPOSE trans_A,
-	    CBLAS_TRANSPOSE trans_B,
 	    T alpha,
 	    const Matrix<T> *otherA,
-	    const Matrix<T> *otherB,
+	    const Matrix<T> *otherX,
 	    T beta);
+
+  // GER BLAS operation this = alpha * X*Y' + this
+  void ger(T alpha,
+	   const Matrix<T> *otherX,
+	   const Matrix<T> *otherY);
   
   void scal(T value);
   
@@ -642,15 +661,29 @@ Matrix<T>* Matrix<T>::substraction(const Matrix<T> *other) {
 
 template <typename T>
 Matrix<T>* Matrix<T>::multiply(const Matrix<T> *other) const {
-  if (numDim != 2 || other->numDim != 2 ||
-      matrixSize[1] != other->matrixSize[0]) return 0;
-  int M = matrixSize[0];
-  int K = matrixSize[1];
-  int N = other->matrixSize[1];
-  int dim[2] = {M, N};
-  Matrix<T> *resul = new Matrix<T>(2,dim,T(),major_order);
-  resul->gemm(CblasNoTrans, CblasNoTrans,
-	      1.0f, this, other, 0.0f);
+  Matrix<T> *resul = 0;
+  if (other->isVector()) {
+    if (this->isColVector()) {
+      int dim[2] = {getVectorSize(),other->getVectorSize()};
+      resul = new Matrix<T>(2, dim, T(), major_order);
+      resul->ger(1.0f, this, other);
+    }
+    else {
+      // FIXME: the dot-product is going through this code, improve this
+      int dim[2] = {matrixSize[0],1};
+      resul = new Matrix<T>(other->numDim, dim, T(), major_order);
+      resul->gemv(CblasNoTrans,
+		  1.0f, this, other,
+		  0.0f);
+    }
+  }
+  if (numDim == 2 && other->numDim == 2 &&
+      matrixSize[1] == other->matrixSize[0]) {
+    int dim[2] = {matrixSize[0], other->matrixSize[1]};
+    resul = new Matrix<T>(2,dim,T(),major_order);
+    resul->gemm(CblasNoTrans, CblasNoTrans,
+		1.0f, this, other, 0.0f);
+  }
   return resul;
 }
 
@@ -729,6 +762,65 @@ void Matrix<T>::gemm(CBLAS_TRANSPOSE trans_A,
 	  beta, data, ldc,
 	  otherA->offset, otherB->offset, offset,
 	  use_cuda);
+}
+
+template <typename T>
+void Matrix<T>::gemv(CBLAS_TRANSPOSE trans_A,
+		     T alpha,
+		     const Matrix<T> *otherA,
+		     const Matrix<T> *otherX,
+		     T beta) {
+  if (!isVector() || !otherX->isVector() || otherA->numDim != 2)
+    ERROR_EXIT(128,"Incorrect number of dimensions");
+  int row_idx_A = 0, col_idx_A = 1;
+  if (trans_A == CblasTrans) april_utils::swap(row_idx_A, col_idx_A);
+  if (getVectorSize() != otherA->matrixSize[row_idx_A] ||
+      otherA->matrixSize[col_idx_A] != otherX->getVectorSize())
+    ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx1 + %dx%d * %dx1\n",
+		getVectorSize(),
+		otherA->matrixSize[row_idx_A], otherA->matrixSize[col_idx_A],
+		otherX->getVectorSize());
+  if (major_order != otherA->major_order ||
+      otherA->major_order != otherX->major_order)
+    ERROR_EXIT(128, "Matrices with different major orders");
+  
+  int M=otherA->matrixSize[row_idx_A], N=otherA->matrixSize[col_idx_A];
+  int lda=( major_order==CblasRowMajor)?otherA->stride[0]:otherA->stride[1];
+  int ldx=otherX->getVectorStride();
+  int ldy=getVectorStride();
+  doSgemv(major_order, trans_A,
+	  M, N,
+	  alpha, otherA->data, lda,
+	  otherX->data, ldx,
+	  beta, data, ldy,
+	  otherA->offset, otherX->offset, offset,
+	  use_cuda);
+}
+
+template <typename T>
+void Matrix<T>::ger(T alpha,
+		    const Matrix<T> *otherX,
+		    const Matrix<T> *otherY) {
+  if (!otherX->isVector() || !otherY->isVector() || numDim!=2)
+    ERROR_EXIT(128,"Incorrect number of dimensions");
+  if (matrixSize[0] != otherX->getVectorSize() ||
+      matrixSize[1] != otherY->getVectorSize())
+    ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx%d + %dx1 * 1x%d\n",
+		matrixSize[0], matrixSize[1],
+		otherX->getVectorSize(), otherY->getVectorSize());
+  if (major_order != otherX->major_order ||
+      otherX->major_order != otherY->major_order)
+    ERROR_EXIT(128, "Matrices with different major orders");
+  int M=matrixSize[0], N=matrixSize[1];
+  int lda=( major_order==CblasRowMajor)?stride[0]:stride[1];
+  int ldx=otherX->getVectorStride();
+  int ldy=otherY->getVectorStride();
+  doSger(major_order,
+	 M, N,
+	 alpha, otherX->data, otherX->offset, ldx,
+	 otherY->data, otherY->offset, ldy,
+	 data, offset, lda,
+	 use_cuda);
 }
 
 template <typename T>

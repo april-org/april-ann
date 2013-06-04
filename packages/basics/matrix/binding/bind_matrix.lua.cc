@@ -720,6 +720,42 @@
   }
 //BIND_END
 
+//BIND_METHOD MatrixFloat gemv
+  {
+    LUABIND_CHECK_ARGN(==, 1);
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L,1, "trans_A", "alpha", "A", "X", "beta", 0);
+    bool trans_A;
+    float alpha;
+    float beta;
+    MatrixFloat *matA,*matX;
+    LUABIND_GET_TABLE_PARAMETER(1, A, MatrixFloat, matA);
+    LUABIND_GET_TABLE_PARAMETER(1, X, MatrixFloat, matX);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_A, bool, trans_A, false);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, float, alpha, 1.0f);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f);
+    obj->gemv(trans_A ? CblasTrans : CblasNoTrans,
+	      alpha, matA, matX,
+	      beta);
+    LUABIND_RETURN(MatrixFloat, obj);
+  }
+//BIND_END
+
+//BIND_METHOD MatrixFloat ger
+  {
+    LUABIND_CHECK_ARGN(==, 1);
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L,1, "alpha", "X", "Y", 0);
+    float alpha;
+    MatrixFloat *matX,*matY;
+    LUABIND_GET_TABLE_PARAMETER(1, X, MatrixFloat, matX);
+    LUABIND_GET_TABLE_PARAMETER(1, Y, MatrixFloat, matY);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, float, alpha, 1.0f);
+    obj->ger(alpha, matX, matY);
+    LUABIND_RETURN(MatrixFloat, obj);
+  }
+//BIND_END
+
 //BIND_METHOD MatrixFloat scal
   {
     LUABIND_CHECK_ARGN(==, 1);
