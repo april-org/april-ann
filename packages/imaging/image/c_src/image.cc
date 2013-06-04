@@ -652,7 +652,11 @@ Image<T> *Image<T>::remove_blank_columns() const
 
 	  (*result)(xdest, y) = (*this)(x,y);
 	}
+
+      if (!blanco) ++xdest;
+      if (xdest == width-nblanco) break; // we're finished
     }
+
   return result;
 }
 
