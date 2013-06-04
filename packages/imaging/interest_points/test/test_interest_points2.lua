@@ -9,6 +9,7 @@ w, h = img:geometry()
 print(mlpFile)
 mlp = ann.mlp.all_all.load(mlpFile, bunchsize)
 
+trainer = trainable.supervised_trainer(mlp, nil, bunch_size)
 mySVG = imageSVG.fromImageFile(imgFile, w, h)
 --img = img:invert_colors()
 uppers, lowers = interest_points.extract_points_from_image(img)
@@ -22,12 +23,12 @@ point = uppers[1]
 pc = interest_points.pointClassifier(500,250,50, 30, false)
 
 
-res = pc:compute_point(img, point, mlp)
-cl = pc:classify_point(img, point, mlp)
+res = pc:compute_point(img, point, trainer)
+cl = pc:classify_point(img, point, trainer)
 
 
 -- Classify uppers
-local uppers_classified = pc:classify_points(img, uppers, mlp)
+local uppers_classified = pc:classify_points(img, uppers, trainer)
 --local uppers_res  = pc:compute_points(img_inv, uppers, mlp)
 
 --- Transform in tables
@@ -40,8 +41,8 @@ for i=1, 5 do
 end
 
 -- Classify lowers
-local lowers_classified = pc:classify_points(img, lowers, mlp)
-local lower_res  = pc:compute_points(img, uppers, mlp)
+local lowers_classified = pc:classify_points(img, lowers, trainer)
+local lower_res  = pc:compute_points(img, uppers, trainer)
 
 --- Transform in tables
 tables = interest_points.sort_by_class(lowers_classified, 5)
