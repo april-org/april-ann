@@ -1,0 +1,393 @@
+
+El paquete hmm_trainer implementa un método de aprendizaje de modelos
+ocultos de Markov híbridos basado en el algoritmo "generalized EM"
+para modelos HMM con emisión en las transiciones y con transiciones
+lambda que no formen ciclos de transiciones lambda.
+
+Nos basamos en el artículo:
+
+"Estimation of Global Posteriors and Forward-Backward Training of
+Hybrid HMM/ANN Systems" de Hennebert, Ris, Bourlard, Renals and
+Morgan.
+
+@inproceedings{ hennebert97estimation,
+    author = "J. Hennebert and Christophe Ris and Herv{\"u} Bourlard and Steve Renals and Nelson Morgan",
+    title = "Estimation of Global Posteriors and Forward-Backward Training of Hybrid {HMM}/{ANN} Systems",
+    booktitle = "Proc. Eurospeech '97",
+    address = "Rhodes, Greece",
+    pages = "1951--1954",
+    year = "1997",
+    url = "citeseer.ist.psu.edu/92821.html" }
+
+
+En este artículo, la emisión que aprenden los ANN se emite en los
+estados y no en las transiciones. Para este caso, los targets para
+aprender los ANN son:
+
+                                  \alpha_n(k) \beta_n(k) 
+P(q_k^n|X,M) = \gamma_n(k) = -------------------------------
+                              \sum_l \alpha_n(l) \beta_n(l) 
+
+
+donde k es el estado y n el instante.
+
+También es necesario calcular la probabilidad a priori de cada estado:
+
+P(q_k) = (1/N) \sum_{n=1}^N \gamma_n(k)
+
+Lo que ocurre es que necesitamos adaptar estas fórmulas para el caso
+de emisiones en las transiciones.
+
+Implementaremos los algoritmos de Viterbi y de Forward-Backward
+basados en las fórmulas del libro "Statistical Methods for Speech
+Recognition" de Jelinek. Sea t una transición, L(t) denota el estado
+origen y R(t) el estado destino.
+
+Sea P{t^i=t} la probabilidad de utilizar la transición t en el
+instante i, condicionada a observar la secuencia y_1,...,y_N
+
+P*{t^i=t} = P{t^i=t}P(y_1,...,y_N) es la probabilidad conjunta de
+utilizar t en instante i y emitir la secuencia y_1,...,y_N.
+
+\alpha_i(s) es la probabilidad de que se emita y_1,...,y_i y el estado
+alcanzado en la i-ésima etapa del trellis sea s, i=0,1,...,N
+
+\beta_i(s) es la probabilidad de que se emita y_{i+1},...,y_N y el
+estado alcanzado en la i-ésima etapa del trellis sea s, i=0,1,...,N
+
+Los valores de alpha se calculan con el algoritmo Forward, los valores
+beta con el algoritmo backward. Con ellos podemos calcular:
+
+P*{t^i=t} = \alpha_i(L(t)) p(t) q(y_{i+1}) \beta_{i+1}(R(t))
+si t no es una transición lambda
+
+P*{t^i=t} = \alpha_i(L(t)) p(t) \beta_i(R(t))
+si t es una transición lambda
+
+Lo que vamos a hacer para entrenar es:
+
+Durante el algoritmo Forward calculamos los valores \alpha.
+
+Durante el algoritmo Backward, tras calcular los valores \beta de cada
+instante, hacemos lo siguiente:
+
+Para cada t:
+
+ - Calculamos P*{t^i=t} 
+
+ - Acumulamos P*{t^i=t} en la variable c*(t) asociada a t. Este
+   contador se puso a cero con el método begin_expectation.
+
+ - Acumulamos P*{t^i=t} en la variable e(t) asociada a la emisión de
+   t. Para cada tipo de emisión tenemos un contador inicializado a
+   probabilidad 0.
+
+ - Acumulamos P*{t^i=t} en el contador c*(L(t))
+
+Tras finalizar este bucle:
+
+ - Normalizar los contadores e(t) para que la masa de probabilidad sea
+   1.
+
+ - Sobreescribir estos contadores normalizados en la fila de la matriz
+   de emisión. Esta matriz recalculada se utilizará en la etapa de
+   maximización para aprender la reestimación de p(emisión|trama).
+
+Tras finalizar todas las llamadas a forward-backward para todos los
+modelos y todas las muestras, aplicamos el método end_expectation, que
+básicamente recalcula la probabilidad asociada a cada transición:
+
+
+          c*(t)
+P(t) = -----------
+        c*(L(t))
+
+----------------------------------------------------------------------
+
+Con el algoritmo de Viterbi la cosa es ligeramente diferente:
+
+ - Durante Viterbi guardamos el camino en una matriz. Una matriz con
+tantas filas como instantes y tantas columnas como estados. Guardamos,
+en la fila asociada a un instante, para cada estado, la transición que
+entra ese estado y ha sido utilizada para calcular la mayor
+probabilidad en ese (instante,estado).
+
+
+ - Tras finalizar Viterbi, recuperamos el camino de mayor probabilidad.
+
+ Ese camino tiene, en cada instante, cero o más transiciones lambda y
+ una transición no lambda.
+
+ En todo caso, para cada transición acumulamos cierta masa de
+ probabilidad (¿cuánta?) en c*(t).
+
+ De cara a reestimar la p(emision|trama) basta con devolver una matriz
+ con la longitud de la secuencia y donde se guardarían los índices de
+ las emisiones utilizadas en cada instante.
+
+----------------------------------------------------------------------
+
+Los estados iniciales vienen dados por transiciones lambda desde un
+"punto de entrada" o estado ficticio con índice 0.
+
+Los estados finales, por transiciones lambda hasta un "punto de
+salida" con índice -1.
+
+¿Qué hacemos a nivel de implementación? Representamos las
+probabilidades de ser estado inicial o final explícitamente o dejamos
+las transiciones lambda y los estados ficticios?
+
+Dejar las transiciones y los estados ficticios explícitamente permite
+reestimar las probabilidades de ser estado inicial y final de manera
+homogénea.
+
+----------------------------------------------------------------------
+
+Dado el éxito del entrenamiento de modelos HMM híbridos para reconocer
+escritura usando alineamiento forzado Viterbi con modelos lineales
+izqda-dcha, me he planteado dotar la herramienta April de un mecanismo
+para entrenar HMM de la mejor forma posible. Algo de calidad que nos
+independice para siempre de cosas tipo HTK.
+
+Implementamos lo siguiente:
+
+Una clase hmm_trainer que centraliza estados, transiciones y emisiones 
+ligadas (clases de equivalencia de los mismos). Se crearía de forma 
+parecida a:
+
+  m = hmm_trainer{ num_emisions = 10,
+                   num_states = 40,
+                   num_transitions = 250,
+                 }
+
+y tendría métodos tipo:
+
+  m:begin_expectation()
+
+  t = m:a_priori_emisions() -- devuelve una tabla
+
+  m:end_expectation()
+
+Esta clase sirve de bien poco si no creamos modelos con hmm_model
+
+  a = hmm_trainer.model{ trainer=m, -- el hmm_trainer
+                         num_states = 10,
+                         num_transitions = 25,
+                 states = {5=4, 7=4, ... },
+                 transitions = {
+                  {from=1,to=5,emision=7,prob=0.25,id=1},
+                  {from=2,to=7,emision=4,prob=0.7,id=2},
+                  ...
+                  {from=2,to=8,emision=2,prob=0.3,id=3},
+                 }
+               }
+
+  b = hmm_model{ .... }
+
+Evidentemente, haremos código lua para mecanizar esto y que no sea 
+necesario usar esta notación tan engorrosa basada en números, sino 
+operaciones cómodas y etiquetas alfanuméricas, etc.
+
+Como podéis observar, la idea es que los modelos vienen dados mayormente 
+por sus transiciones, éstas pueden estar ligadas mediante el campo "id" 
+que se refiere a un indice a las clases de transición definidas en el 
+hmm_trainer.
+
+Los estados también están ligados, todos los estados origen de
+transiciones ligadas deben estar ligados, adicionalmente el campo:
+
+    states = {7=4, ... }
+
+hace que el estado 7 sea de la clase 4 (el 7 es un estado del
+hmm_model, el valor 4 se refiere al estado en el hmm_trainer), la
+notación habitual para especificar los estados ligados es:
+
+    states = {2,4,7,...} -- done 1= 2= 3= ... están implícitos
+
+Las emisiones son valores de 1 al numero de emisiones diferentes, el valor 
+0 se utiliza para denotar transiciones lambda.
+
+Los estados origen y destino en las transiciones son valores entre 1 y
+num_states. El valor 0 sirve para denotar el punto de entrada y los
+valores negativos -1,-2,... sirven para denotar distintos puntos de
+salida del modelo. Por tanto, se deben cumplir las siguientes condiciones:
+
+ - Ninguna transición puede tener un estado origen menor que cero.
+
+ - Ninguna transición puede tener un estado destino ==0.
+
+ - Las transiciones con estado origen ==0 y estado destino <0 están
+   prohibidas.
+
+ - Las transiciones con estado origen 0 o con estado destino <0 deben
+   ser transiciones lambda, es decir, con emisión == 0.
+
+ - Todas las transiciones ligadas deben tener la misma probabilidad,
+   el mismo tipo de emisión y estados origen ligados.
+
+ - La suma de probabilidades que salen de un mismo estado debe sumar
+   1.
+
+De forma alternativa, en lugar del campo prob podemos dar un campo
+score con valor -log(prob).
+
+De momento, vamos a limitar los puntos de salida, de forma que
+solamente sirve el punto de salida -1 y los restantes -2, etc. no son
+permitidos.
+
+Los métodos disponibles para un hmm_model son:
+
+score = a:viterbi(matriz_scores_emision)
+
+score = a:forward_backward(matriz_scores_emision)
+
+matriz_scores_emision es una matriz bidimensional con tantas filas como 
+longitud de la secuencia a analizar (sí, analizamos secuencias, de momento 
+no analizamos DAGs) y tantas columnas como tipos de emision diferentes.
+
+La idea es usar estos métodos entre las llamadas a:
+
+  m:begin_expectation()
+
+y
+
+  m:end_expectation()
+
+El primero inicializa ciertos contadores que serán modificados por los 
+métodos de viterbi y de forward backward
+
+El segundo reestima las probabilidades de las transiciones y la 
+probabilidad a priori de cada tipo de emision. Esta probabilidad es 
+necesaria si utilizamos métodos discriminantes en la etapa de 
+maximización, puesto que la maximización calcula:
+
+p(emision|trama)
+
+y queremos aplicar Bayes para sacar p(trama|emision) así:
+
+
+                    p(emision|trama) p(trama)
+p(trama|emision) = -----------------------------
+                           p(emision)
+
+NOTA: p(trama) no la ponemos y sacamos valores escalados.
+
+Tanto Viterbi como Forward Backward modifican la matriz de emisiones
+para sacar los nuevos valores p(emision|trama). La p(emision) no se
+puede calcular hasta haber analizado todas las muestras de
+entrenamiento, por lo que la corrección consistente en dividir por
+p(emision) se aplica a la matriz de emision al usar viterbi o forward
+backward. En todo caso, estas prob. a priori se pueden consultar
+mediante:
+
+  t = m:a_priori_emisions() -- devuelve una tabla
+
+NOTA: Está pendiente alguna forma de pasar estos modelos de nuevo a tablas 
+lua para salvarlas, consultar probabilidades estimadas, etc.
+
+Como podéis ver, la etapa de maximización de delega en un mecanismo
+externo con capacidad discriminativa, si bien puede pasarse a valores
+de emisión p(trama|emisión) y se podría implementar un estimador de
+los valores de mixturas de gaussianas ;)
+
+La emisión en las transiciones en lugar de en los estados y el uso de 
+transiciones lambda lo hago por varios motivos:
+
+  - los modelos con expansión dinámica y otros apellidos que estoy usando 
+en mi tesis son así.
+
+  - se pueden entrenar modelos con emisión en los estados sin más que poner 
+este tipo de emisión en las transiciones que llegan a cada estado.
+
+  - tengo las fórmulas necesarias del libro de Jelinek que también asume 
+emisiones en las transiciones y transiciones lambda.
+
+Bueno, Jorge se va a dedicar a hacer el azucar sintáctico para expresar 
+cómodamente los modelos en lua.
+
+Yo estoy implementando la parte c++ y el binding. En particular,
+utilizo score(x)=-log(x), y he implementado una función addscore(x,y)
+basada en logaddition que es más de 25 veces más rápida que la
+implementación "naive" usando log y exp ;)
+
+No utilizaré beam search en estos modelos ni son modelos adecuados para 
+reconocer eficientemente, los modelos entrenados requieren un reconocedor 
+más eficiente que ya terminaré de implementar en la arquitectura dataflow.
+
+----------------------------------------------------------------------
+
+Para calcular las transiciones lambda correctamente necesitamos
+ordenar las transiciones de manera que, cuando se utilice un estado
+origen en una transición lambda, no exista ninguna transición
+posterior que tenga este estado como destino. Para que esto sea
+posible, es necesario que el grafo dirigido constituido por los
+estados y las transiciones lambda sea acíclico, de modo que un orden
+topológico sobre los estados es suficiente. A partir de este orden en
+los estados obtenemos un orden para las transiciones.
+
+Agrupamos las transiciones lambda que SALEN de cada estado y al mismo
+tiempo contamos el número de transiciones lambda que llegan a cada
+estado.
+
+Agrupamos las transiciones no lambda que LLEGAN a cada estado.
+
+Metemos en una lista aquellos estados cuya cuenta sea 0.
+
+Si la cuenta es >0 para todos los estados, necesariamente el grafo es
+cíclico y debemos reportar el error.
+
+Iteramos:
+
+ - Sacar un estado cuya cuenta sea 0, le asignamos un valor en el
+   orden topológico. 
+
+ - Recorremos las transiciones que salen de ese estado y restamos uno
+   a la cuenta de los estados destino. Si alguno de esos estados
+   decrementa su cuenta a 0, lo metemos en la lista.
+
+Una vez ordenados los estados, ordenamos las transiciones:
+
+ Recorremos los estados en el orden establecido. Para cada estado,
+ metemos:
+
+  - Primero las transiciones no lambda que LLEGAN a ese estado.
+
+----------------------------------------------------------------------
+
+Algoritmo para el constructor:
+
+ - Recibimos básicamente lo que recibe el constructor lua.
+
+ - Debemos repartir las transiciones de la manera siguiente:
+
+   * Transiciones con origen 0 deben ser lambda y sirven para acumular
+     la probabilidad inicial.
+
+   * Transiciones con destino -1 deben ser lambda y especifican la
+     probabilidad de ser un estado final.
+
+   * Las otras transiciones se guardan en una lista asociada al estado
+     origen. Cada estado tiene 2 listas, una para las transiciones
+     lambda y otra para el resto.
+
+ - Deberíamos comprobar que las transiciones tengan un estado origen
+   del mismo tipo que el especificado en la clase de transición, que
+   la suma de probabilidades que salen de cada estado vale 1.
+
+ - Por otra parte, en la construcción del hmm_trainer, no tiene por
+   qué cumplirse que la suma de probabilidades que salen de cada
+   estado sea 1, puesto que podrían estar ligadas varias transiciones
+   que salen de un mismo estado. Pero sí que tendríamos que comprobar
+   que cada estado de un tipo usa todas las transiciones y el mismo
+   número de veces >=1.
+
+ - Hemos eliminado las transiciones con origen == 0 y las que tienen
+   destino ==-1. El resto las hemos metido en sendas listas por cada
+   estado. Le toca el turno al algoritmo que obtiene el orden
+   topológico y reordena las transiciones.
+
+That's all folks!
+
+
+----------------------------------------------------------------------
+
