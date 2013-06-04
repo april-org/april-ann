@@ -1,6 +1,6 @@
 /*
- * This file is part of the Neural Network modules of the APRIL toolkit (A
- * Pattern Recognizer In Lua).
+ * This file is part of APRIL-ANN toolkit (A
+ * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
  * Copyright 2013, Joan Pastor- Pellicer, Salvador España-Boquera, Francisco
  * Zamora-Martinez
