@@ -401,6 +401,12 @@ function april_dir(t, verbosity)
   april_help(t, 0)
 end
 
+function april_print_script_header(arg)
+  printf("# HOST:\t %s\n", (io.popen("hostname", "r"):read("*l")))
+  printf("# DATE:\t %s\n", (io.popen("date", "r"):read("*l")))
+  printf("# CMD: \t %s\n",table.concat(arg, " "))
+end
+
 -- This function prepares a safe environment for call user functions
 function safe_call(f, env, ...)
   env = env or {}
@@ -700,6 +706,12 @@ string.join = table.concat
 ------------------------ TABLE UTILS --------------------------
 ---------------------------------------------------------------
 
+function table.unpack_on(t, dest)
+  for i,j in pairs(t) do
+    dest[i] = j
+  end
+end
+
 function table.invert(t)
   local n = {}
   for i,j in pairs(t) do n[j] = i end
@@ -732,6 +744,22 @@ end
 function table.map(t,f)
   local n = {}
   for i,j in pairs(t) do n[i] = f(j) end
+  return n
+end
+
+function table.imap2(t,f)
+  local n = {}
+  for i,j in ipairs(t) do
+    n[i] = f(i,j)
+  end
+  return n
+end
+
+function table.map2(t,f)
+  local n = {}
+  for i,j in pairs(t) do
+    n[i] = f(i,j)
+  end
   return n
 end
 

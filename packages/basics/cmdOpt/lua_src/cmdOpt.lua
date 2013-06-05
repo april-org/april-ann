@@ -175,8 +175,8 @@ function cmdOpt:generate_help()
       if opt.default_value == nil then
 	table.insert(message,"\t      "..(opt.description or "").."\n")
       else
-	table.insert(message,"\t      "..(opt.description or "").." DEFAULT: "..
-		       tostring(opt.default_value) .. "\n")
+	table.insert(message,"\t      "..(opt.description or "").." [DEFAULT: "..
+		       tostring(opt.default_value) .. "]\n")
       end
     end
   end
@@ -216,8 +216,8 @@ end
 -- main method, returns a string in case of error (error message)
 -- or a table with positinal and rest of arguments
 -- actions are simply executed before return
-function cmdOpt:parse_args(arguments)  
-  arguments = arguments or arg -- arg is the global variable
+function cmdOpt:parse_without_check(arguments)
+  local arguments = arguments or arg -- arg is the global variable
   local opt_list = {} -- list of options to process
   local result   = {} -- result table
   local consider_options = true
@@ -303,15 +303,43 @@ function cmdOpt:parse_args(arguments)
     if opt.index_name then result[opt.index_name] = value end
     if type(opt.action) == "function" then opt.action(value) end
   end
-  for _,opt in pairs(self.options) do
-    if opt.mode == 'always' and opt.index_name and result[opt.index_name] == nil then
-      value = opt.default_value
-      assert(value ~= nil, opt.index_name .. " option is mandataroy!!")
-      if type(opt.filter) == "function" then value = opt.filter(value) end
-      if type(opt.action) == "function" then opt.action(value) end
-      result[opt.index_name] = value
-    end
-  end
   return result
 end
 
+function cmdOpt:check_args(optargs,initial_values)
+  local initial_values = initial_values or {}
+  for _,opt in pairs(self.options) do
+    local idx = opt.index_name
+    if idx then
+      if not optargs[idx] and initial_values[idx] then
+	local value = initial_values[idx]
+	printf("# opt %s = %s\n", idx, tostring(value))
+	optargs[idx] = value
+	if type(opt.action) == "function" then opt.action(value) end
+      elseif opt.mode == 'always' and optargs[idx] == nil then
+	local value = opt.default_value
+	assert(value ~= nil, idx .. " option is mandataroy!!")
+	if type(opt.filter) == "function" then value = opt.filter(value) end
+	if type(opt.action) == "function" then opt.action(value) end
+	optargs[idx] = value
+      end
+    end
+  end
+  return optargs
+end
+
+function cmdOpt:parse_args(arguments)
+  local result = self:parse_without_check(arguments)
+  self:check_args(result)
+  return result
+end
+
+function cmdOpt:postprocess_initial_values(optargs, initial_values)
+  for name,value in pairs(initial_values) do
+    if not optargs[name] then
+      printf("# opt %s = %s\n", name, tostring(value))
+      optargs[name] = value
+    end
+  end
+  return optargs
+end
