@@ -299,6 +299,7 @@ function cmdOpt:parse_without_check(arguments)
     local opt   = optvalue[1]
     local value = optvalue[2]
     value = value or opt.default_value
+    printf("# ARG %s = %s\n", opt.index_name, tostring(value))
     if type(opt.filter) == "function" then value = opt.filter(value) end
     if opt.index_name then result[opt.index_name] = value end
     if type(opt.action) == "function" then opt.action(value) end
@@ -313,12 +314,14 @@ function cmdOpt:check_args(optargs,initial_values)
     if idx then
       if not optargs[idx] and initial_values[idx] then
 	local value = initial_values[idx]
-	printf("# opt %s = %s\n", idx, tostring(value))
-	optargs[idx] = value
+        printf("# INITIAL %s = %s\n", idx, tostring(value))
+        if type(opt.filter) == "function" then value = opt.filter(value) end
 	if type(opt.action) == "function" then opt.action(value) end
+	optargs[idx] = value
       elseif opt.mode == 'always' and optargs[idx] == nil then
 	local value = opt.default_value
-	assert(value ~= nil, idx .. " option is mandataroy!!")
+        printf("# DEFAULT %s = %s\n", idx, tostring(value))
+	assert(value ~= nil, idx .. " option is mandatory!!")
 	if type(opt.filter) == "function" then value = opt.filter(value) end
 	if type(opt.action) == "function" then opt.action(value) end
 	optargs[idx] = value
@@ -332,14 +335,4 @@ function cmdOpt:parse_args(arguments)
   local result = self:parse_without_check(arguments)
   self:check_args(result)
   return result
-end
-
-function cmdOpt:postprocess_initial_values(optargs, initial_values)
-  for name,value in pairs(initial_values) do
-    if not optargs[name] then
-      printf("# opt %s = %s\n", name, tostring(value))
-      optargs[name] = value
-    end
-  end
-  return optargs
 end

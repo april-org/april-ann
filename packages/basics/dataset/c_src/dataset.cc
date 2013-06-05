@@ -250,8 +250,7 @@ IdentityDataSet<T>::~IdentityDataSet() {
   
 template <typename T>
 int IdentityDataSet<T>::getPattern(int index, T *pat) {
-  if (index < 0 || index >= numPatterns())
-    return 0;
+  assert("Incorrect index" && index >= 0 && index < numPatterns());
   for (int i=0; i<patternsz; i++)
     pat[i] = zerovalue;
   pat[index] = onevalue;

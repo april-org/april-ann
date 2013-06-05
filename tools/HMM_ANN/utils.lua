@@ -39,7 +39,7 @@ function generate_frontiers(segmenter, mask, numFrames, a_lo_bunke)
     local img      = Image(img_m)
     local _,w,h    = img:info()
     local segments = segmenter:segment(img)
-    print("Segmentos: "..table.concat(segments," "))
+    -- print("Segments: "..table.concat(segments," "))
     -- dividimos por 20 para sacar la trama a la que corresponde este
     -- pixel
     local inc      = (a_lo_bunke == "a_lo_bunke" and 1) or (h/20)
@@ -48,7 +48,7 @@ function generate_frontiers(segmenter, mask, numFrames, a_lo_bunke)
     if ant_frames == 0 then table.insert(frontiers, ant_frames) end
     for j,pixel_pos in ipairs(segments) do
       local current = math.floor(pixel_pos/inc)
-      printf("divido %f entre %f y da %d\n",pixel_pos,inc,current)
+      -- printf("divido %f entre %f y da %d\n",pixel_pos,inc,current)
       -- si el frame no cambia, no hacemos nada
       if current ~= ant then
 	table.insert(frontiers, current + ant_frames)
@@ -196,7 +196,7 @@ function recog.load_frames(args)
     },
     the_function  =
       function (filename)
-	printf ("# Cargando MFCCs '%s'\n", filename)
+	printf ("# Loading MFCCs '%s'\n", filename)
 	collectgarbage("collect")
 	local m,size
 	if format == "png" then
@@ -489,7 +489,7 @@ function generate_new_segmentation(args)
     },
     the_function  =
       function (themodel,segmentation_matrix,contextCCdataset, nocontextDataset)
-	print ("# Segmentando... "..current)
+	print ("# Segmentation... "..current)
 	collectgarbage("collect")
 	-- matriz de salida para la red neuronal
 	local mat_full = matrix(segmentation_matrix:dim()[1],

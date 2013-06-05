@@ -21,7 +21,7 @@ valfile_mfc      = optargs.val_m
 valfile_fon      = optargs.val_f
 valfile_sgm      = optargs.val_s
 means_and_devs   = feats_norm
-dataset_step     = dataset_step
+dataset_step     = optargs.step
 format           = feats_format
 error_function   = "multi_class_cross_entropy"
 bunch_size       = 32
@@ -40,7 +40,7 @@ if not num_states and not initial_hmm then
   error ("Needs a number of states per HMM or an initial HMM file")
 end
 
-if not silences then
+if not silences or #silences==0 then
   fprintf(io.stderr, "# WARNING!!! NOT SILENCES TABLE DEFINED\n")
 end
 
@@ -52,7 +52,7 @@ end
 if var > 0 then
   dataset_perturbation_conf = {
     dataset   = nil,
-    random    = seedp,
+    random    = random(seedp),
     mean      = mean,
     variance  = var,
   }
@@ -87,22 +87,22 @@ end
 --------------------
 -- parametros RNA --
 --------------------
-ann = {}
-ann.left_context           = context
-ann.right_context          = context
-ann.num_hidden1           = h1
-ann.num_hidden2           = h2
-ann.first_learning_rate    = firstlr
-ann.num_epochs_first_lr    = epochs_firstlr
-ann.learning_rate       = lr
-ann.momentum            = mt
-ann.weight_decay           = wd
-ann.weights_seed            = seed1
-ann.shuffle_seed        = seed2
-ann.shuffle_seed_val    = seed3
-ann.replacement            = (train_r ~= 0 and train_r) or nil
-ann.replacement_val        = (val_r   ~= 0 and val_r  ) or nil
-ann.rndw                   = rndw
+ann_table = {}
+ann_table.left_context           = context
+ann_table.right_context          = context
+ann_table.num_hidden1           = h1
+ann_table.num_hidden2           = h2
+ann_table.first_learning_rate    = firstlr
+ann_table.num_epochs_first_lr    = epochs_firstlr
+ann_table.learning_rate       = lr
+ann_table.momentum            = mt
+ann_table.weight_decay           = wd
+ann_table.weights_seed            = seed1
+ann_table.shuffle_seed        = seed2
+ann_table.shuffle_seed_val    = seed3
+ann_table.replacement            = (train_r ~= 0 and train_r) or nil
+ann_table.replacement_val        = (val_r   ~= 0 and val_r  ) or nil
+ann_table.rndw                   = rndw
 
 -------------------
 -- parametros EM --
@@ -113,8 +113,8 @@ em.num_epochs_without_validation          = epochs_wo_val
 em.max_epochs_without_improvement         = epochs_wo_imp
 em.num_emiterations_without_expectation   = epochs_wo_exp
 em.num_maximization_iterations            = epochs_max
-em.num_maximization_iterations_first_em = epochs_first_max
-em.veces_em                               = em_iterations
+em.num_maximization_iterations_first_em   = epochs_first_max
+em.em_max_iterations                      = em_it
 
 --------------------------------------------------------------
 
@@ -154,48 +154,49 @@ else
 							hmmtrainer)
   num_emissions     = num_models * hmm.num_states
 end
-ann.output_dictionary = dataset.identity(num_emissions, 0.0, 1.0)
+ann_table.output_dictionary = dataset.identity(num_emissions, 0.0, 1.0)
 collectgarbage("collect")
 
 -- ENTRADAS Y SALIDAS DE LA ANN
-ann.num_entradas = hmm.num_params*(ann.left_context+ann.right_context+1)*dataset_step
-ann.num_outputs  = num_emissions
+ann_table.num_entradas = hmm.num_params*(ann_table.left_context+ann_table.right_context+1)*dataset_step
+ann_table.num_outputs  = num_emissions
 
 ------------------
 -- Red neuronal --
 ------------------
 --
 -- estructura de la red
-ann.thenet = nil
-local mlp_str    = nil
-if ann.num_hidden2 > 0 then
+ann_table.thenet    = nil
+local mlp_str = nil
+if ann_table.num_hidden2 > 0 then
   mlp_str = string.format("%d inputs %d logistic %d logistic %d log_softmax",
-			  ann.num_entradas,
-			  ann.num_hidden1,
-			  ann.num_hidden2,
-			  ann.num_outputs)
+			  ann_table.num_entradas,
+			  ann_table.num_hidden1,
+			  ann_table.num_hidden2,
+			  ann_table.num_outputs)
 else
   mlp_str = string.format("%d inputs %d logistic %d log_softmax",
-			  ann.num_entradas,
-			  ann.num_hidden1,
-			  ann.num_outputs)
+			  ann_table.num_entradas,
+			  ann_table.num_hidden1,
+			  ann_table.num_outputs)
 end
 
 -- generamos la red
 if initial_mlp then
-  ann.trainer = trainer.supervised_trainer.load(initial_mlp,
-						ann.loss[error_function],
+  ann_table.trainer = trainer.supervised_trainer.load(initial_mlp,
+						ann.loss[error_function](ann_table.num_outputs),
 						bunch_size)
-  ann.thenet  = ann.trainer:get_component()
+  ann_table.thenet  = ann_table.trainer:get_component()
 else
-  ann.thenet  = ann.mlp.all_all.generate(mlp_str)
-  ann.trainer = trainable.supervised_trainer(ann.thenet,
-					     ann.loss[error_function],
+  ann_table.thenet  = ann.mlp.all_all.generate(mlp_str)
+  ann_table.trainer = trainable.supervised_trainer(ann_table.thenet,
+					     ann.loss[error_function](ann_table.num_outputs),
 					     bunch_size)
-  ann.trainer:randomize_weights{
-    inf = ann.rndw,
-    sup = ann.rndw,
-    random = random(ann.weights_seed)
+  ann_table.trainer:build()
+  ann_table.trainer:randomize_weights{
+    inf = ann_table.rndw,
+    sup = ann_table.rndw,
+    random = random(ann_table.weights_seed)
   }
 end
 
@@ -235,9 +236,9 @@ if not string.match(corpus.filename_trn_mfc, "%.lua$") then
 		 end_sil                = end_sil,
 		 hmmtrainer                = hmmtrainer,
 		 tied                   = tied,
-		 left_context           = ann.left_context,
-		 right_context          = ann.right_context,
-		 mlp_output_dictionary  = ann.output_dictionary,
+		 left_context           = ann_table.left_context,
+		 right_context          = ann_table.right_context,
+		 mlp_output_dictionary  = ann_table.output_dictionary,
 		 models                 = models,
 		 silences               = hmm.silences,
 		 transcription_filter   = transcription_filter,
@@ -289,9 +290,9 @@ else
 		   end_sil                = end_sil,
 		   hmmtrainer                = hmmtrainer,
 		   tied                   = tied,
-		   left_context           = ann.left_context,
-		   right_context          = ann.right_context,
-		   mlp_output_dictionary  = ann.output_dictionary,
+		   left_context           = ann_table.left_context,
+		   right_context          = ann_table.right_context,
+		   mlp_output_dictionary  = ann_table.output_dictionary,
 		   models                 = models,
 		   silences               = hmm.silences,
 		   transcription_filter   = transcription_filter,
@@ -320,9 +321,9 @@ validate = corpus_from_MFC_filename{
   end_sil                = end_sil,
   hmmtrainer                = hmmtrainer,
   tied                   = tied,
-  left_context           = ann.left_context,
-  right_context          = ann.right_context,
-  mlp_output_dictionary  = ann.output_dictionary,
+  left_context           = ann_table.left_context,
+  right_context          = ann_table.right_context,
+  mlp_output_dictionary  = ann_table.output_dictionary,
   models                 = models,
   silences               = hmm.silences,
   transcription_filter   = transcription_filter,
@@ -357,13 +358,13 @@ corpus.output_ds_val = dataset.union(validate:get_field('segmentation_dataset'))
 
 printf ("\n")
 printf ("# RANDOM:     Weights: %4d Shuffle: %4d  VAL RPL shuffle: %4d\n",
-	ann.weights_seed, ann.shuffle_seed, ann.shuffle_seed_val)
+	ann_table.weights_seed, ann_table.shuffle_seed, ann_table.shuffle_seed_val)
 printf ("# ANN PARAMS: step:%d l%d r%d %d %d  lr: %f  mt: %f  wd: %g\n",
-	dataset_step, ann.left_context, ann.right_context,
-	ann.num_hidden1, ann.num_hidden2,
-	ann.learning_rate, ann.momentum, ann.weight_decay)
+	dataset_step, ann_table.left_context, ann_table.right_context,
+	ann_table.num_hidden1, ann_table.num_hidden2,
+	ann_table.learning_rate, ann_table.momentum, ann_table.weight_decay)
 printf ("#             first lr: %f    epochs: %d\n",
-	ann.first_learning_rate, ann.num_epochs_first_lr)
+	ann_table.first_learning_rate, ann_table.num_epochs_first_lr)
 printf ("# ANN STR:    %s\n", mlp_str)
 printf ("# HMM PARAMS: states: %d   numparams: %d\n",
 	hmm.num_states or 0, hmm.num_params)
@@ -373,20 +374,22 @@ printf ("# EM  PARAMS:  val: %d  stop: %d  expectation: %d  it: %d %d  em: %d\n"
 	em.num_emiterations_without_expectation,
 	em.num_maximization_iterations_first_em,
 	em.num_maximization_iterations,
-	em.veces_em)
+	em.em_max_iterations)
 if not corpus.distribution then
-  printf ("# Patrones de entrenamiento: %d\n", corpus.input_ds_trn:numPatterns())
+  printf ("# Input pattern size: %d\n", corpus.input_ds_trn:patternSize())
+  printf ("# Training num patterns: %d\n", corpus.input_ds_trn:numPatterns())
 else
-  printf ("# Patrones de entrenamiento:")
+  printf ("# Input pattern size: %d\n", corpus.distribution[1].input_dataset:patternSize())
+  printf ("# Training num patterns:")
   for i=1,#corpus.distribution do
     printf (" %d (%f)", corpus.distribution[i].input_dataset:numPatterns(),
 	    corpus.distribution[i].probability)
   end
   printf ("\n")
 end
-printf ("# Patrones de validacion: %d\n", corpus.input_ds_val:numPatterns())
-printf ("# Replacement:     %d\n", ann.replacement or 0)
-printf ("# Replacement val: %d\n", ann.replacement_val or 0)
+printf ("# Validation num patterns: %d\n", corpus.input_ds_val:numPatterns())
+printf ("# Replacement:     %d\n", ann_table.replacement or 0)
+printf ("# Replacement val: %d\n", ann_table.replacement_val or 0)
 
 -- log
 if initial_mlp then
@@ -403,7 +406,7 @@ if not trainfile_sgm then
     print("WARNING!!! training with equidistant initial segmentation")
     fprintf(flog, "# WARNING!!! training with equidistant initial segmentation\n")
   else
-    print("Ignoring initial segmentation")
+    print("# Ignoring initial segmentation")
     fprint(flog, "# Ignoring initial segmentation")
   end
 end
@@ -415,13 +418,13 @@ elseif initial_hmm then
   fprintf (flog, "# INITIAL HMM: %s\n", initial_hmm)
 end
 fprintf (flog, "# RANDOM:     Weights: %4d Shuffle: %4d VAL REPL: %4d\n",
-	 ann.weights_seed, ann.shuffle_seed, ann.shuffle_seed_val)
+	 ann_table.weights_seed, ann_table.shuffle_seed, ann_table.shuffle_seed_val)
 fprintf (flog, "# ANN PARAMS: step:%d l%d r%d %d %d  lr: %f  mt: %f  wd: %g\n",
-	 dataset_step, ann.left_context, ann.right_context,
-	 ann.num_hidden1, ann.num_hidden2,
-	 ann.learning_rate, ann.momentum, ann.weight_decay)
+	 dataset_step, ann_table.left_context, ann_table.right_context,
+	 ann_table.num_hidden1, ann_table.num_hidden2,
+	 ann_table.learning_rate, ann_table.momentum, ann_table.weight_decay)
 fprintf (flog, "#             first lr: %f    epochs: %d    err_func: %s\n",
-	 ann.first_learning_rate, ann.num_epochs_first_lr, error_function)
+	 ann_table.first_learning_rate, ann_table.num_epochs_first_lr, error_function)
 fprintf (flog, "# ANN STR:    %s\n", mlp_str)
 fprintf (flog, "# HMM PARAMS: states: %d   numparams: %d\n",
 	 hmm.num_states or 0, hmm.num_params)
@@ -431,7 +434,7 @@ fprintf (flog, "# EM  PARAMS:  val: %d  stop: %d  expectation: %d  it: %d %d  em
 	 em.num_emiterations_without_expectation,
 	 em.num_maximization_iterations_first_em,
 	 em.num_maximization_iterations,
-	 em.veces_em)
+	 em.em_max_iterations)
 if not corpus.distribution then
   fprintf (flog, "# Training num patterns: %d\n", corpus.input_ds_trn:numPatterns())
 else
@@ -443,35 +446,35 @@ else
   fprintf (flog, "\n")
 end
 fprintf (flog, "# Validation num patterns: %d\n", corpus.input_ds_val:numPatterns())
-fprintf (flog, "# Replacement:     %d\n", ann.replacement or 0)
-fprintf (flog, "# Replacement val: %d\n", ann.replacement_val or 0)
+fprintf (flog, "# Replacement:     %d\n", ann_table.replacement or 0)
+fprintf (flog, "# Replacement val: %d\n", ann_table.replacement_val or 0)
 flog:flush()
 
-ann.trainingdata = {
-  shuffle        = random(ann.shuffle_seed),
-  replacement    = ann.replacement,
+ann_table.trainingdata = {
+  shuffle        = random(ann_table.shuffle_seed),
+  replacement    = ann_table.replacement,
 }
 
 if not corpus.distribution then
-  ann.trainingdata.input_dataset  = corpus.input_ds_trn
-  ann.trainingdata.output_dataset = corpus.output_ds_trn
+  ann_table.trainingdata.input_dataset  = corpus.input_ds_trn
+  ann_table.trainingdata.output_dataset = corpus.output_ds_trn
 else
-  ann.trainingdata.distribution = corpus.distribution
+  ann_table.trainingdata.distribution = corpus.distribution
 end
 
-ann.validationdata = {
+ann_table.validationdata = {
   input_dataset  = corpus.input_ds_val,
   output_dataset = corpus.output_ds_val,
 }
 
-if ann.replacement_val then
-  ann.validationdata.replacement = ann.replacement_val
-  ann.validationdata.shuffle     = random(ann.shuffle_seed_val)
+if ann_table.replacement_val then
+  ann_table.validationdata.replacement = ann_table.replacement_val
+  ann_table.validationdata.shuffle     = random(ann_table.shuffle_seed_val)
 end
 
-ann.thenet:set_option("learning_rate", ann.first_learning_rate)
-ann.thenet:set_option("momentum",      ann.momentum)
-ann.thenet:set_option("weight_decay",  ann.weight_decay)
+ann_table.thenet:set_option("learning_rate", ann_table.first_learning_rate)
+ann_table.thenet:set_option("momentum",      ann_table.momentum)
+ann_table.thenet:set_option("weight_decay",  ann_table.weight_decay)
 
 collectgarbage("collect")
 
@@ -483,11 +486,11 @@ collectgarbage("collect")
 totaltrain = 0
 em_iteration = 1
 
-bestmse      = 1
-bestmse_em   = 1
+bestce      = 1
+bestce_em   = 1
 bestepoch    = 0
 bestepoch_em = 0
-best_trainer = ann.trainer
+best_trainer = ann_table.trainer
 
 if initial_em_epoch then
   em_iteration = initial_em_epoch
@@ -495,7 +498,7 @@ if initial_em_epoch then
   -- resegmentamos validacion
   generate_new_segmentation{
     field_manager  = validate,
-    func           = ann.trainer,
+    func           = ann_table.trainer,
     num_emissions  = num_emissions,
     do_expectation = false,
     emission_in_log_base = true,
@@ -510,7 +513,7 @@ if initial_em_epoch then
   for i=1,#training do
     generate_new_segmentation{
       field_manager  = training[i],
-      func           = ann.trainer,
+      func           = ann_table.trainer,
       num_emissions  = num_emissions,
       count_value    = count_values[i],
       do_expectation = true,
@@ -532,66 +535,66 @@ if initial_em_epoch then
 
 end
 
-while em_iteration <= em.veces_em do
+while em_iteration <= em.em_max_iterations do
   --
   -- entrenamos la red neuronal
   max = em.num_maximization_iterations
   if em_iteration == 1 then max = em.num_maximization_iterations_first_em end
   bestepoch = totaltrain
-  global_best_trainer = ann.trainer:clone()
+  global_best_trainer = ann_table.trainer:clone()
   epoch = 0
   for epoch = 1,em.num_epochs_without_validation do
     totaltrain = totaltrain+1
-    if totaltrain > ann.num_epochs_first_lr or initial_mlp then
-      ann.thenet:set_option("learning_rate", ann.learning_rate)
+    if totaltrain > ann_table.num_epochs_first_lr or initial_mlp then
+      ann_table.thenet:set_option("learning_rate", ann_table.learning_rate)
     end
-    errortrain = ann.trainer:train_dataset(ann.trainingdata)
-    errorval   = ann.trainer:validate_dataset(ann.validationdata) -- NO SE UTILIZA
-    printf("em %4d epoch %4d totalepoch %4d mse_train %.7f mse_val "..
+    errortrain = ann_table.trainer:train_dataset(ann_table.trainingdata)
+    errorval   = ann_table.trainer:validate_dataset(ann_table.validationdata) -- NO SE UTILIZA
+    printf("em %4d epoch %4d totalepoch %4d ce_train %.7f ce_val "..
 	     "%.7f %10d %.7f\n",
 	   em_iteration,epoch,totaltrain,errortrain,errorval,bestepoch,
 	   errorval)
-    fprintf(flog, "em %4d epoch %4d totalepoch %4d mse_train %.7f mse_val "..
+    fprintf(flog, "em %4d epoch %4d totalepoch %4d ce_train %.7f ce_val "..
 	      "%.7f %10d %.7f\n",
 	    em_iteration,epoch,totaltrain,errortrain,errorval,bestepoch,
 	    errorval)
     flog:flush()
   end
-  bestmse      = ann.trainer:validate_dataset(ann.validationdata)
-  firstbestmse = bestmse
-  printf ("# FIRST BEST MSE FOR EM: %.7f\n", firstbestmse)
+  bestce      = ann_table.trainer:validate_dataset(ann_table.validationdata)
+  firstbestce = bestce
+  printf ("# FIRST BEST CE FOR EM: %.7f\n", firstbestce)
   bestepoch    = totaltrain
   for epoch = em.num_epochs_without_validation+1,max do
     totaltrain = totaltrain+1
-    if totaltrain > ann.num_epochs_first_lr then
-      --ann.trainingdata.learning_rate = ann.learning_rate
+    if totaltrain > ann_table.num_epochs_first_lr then
+      --ann_table.trainingdata.learning_rate = ann_table.learning_rate
       if ( em_iteration == 1 and
 	     math.mod(totaltrain, 10) == 1 and
-	   ann.thenet:get_option("learning_rate") > 0.001 ) then
-	ann.thenet:set_option("learning_rate",
-			      ann.thenet:get_option("learning_rate") - 0.001)
+	   ann_table.thenet:get_option("learning_rate") > 0.001 ) then
+	ann_table.thenet:set_option("learning_rate",
+			      ann_table.thenet:get_option("learning_rate") - 0.001)
       end
     end
-    errortrain = ann.trainer:train_dataset(ann.trainingdata)
-    errorval   = ann.trainer:validate_dataset(ann.validationdata)
-    if errorval < bestmse then
-      bestmse    = errorval
+    errortrain = ann_table.trainer:train_dataset(ann_table.trainingdata)
+    errorval   = ann_table.trainer:validate_dataset(ann_table.validationdata)
+    if errorval < bestce then
+      bestce    = errorval
       bestepoch  = totaltrain
-      best_trainer = ann.trainer:clone()
+      best_trainer = ann_table.trainer:clone()
       collectgarbage("collect")
     end
     if totaltrain - bestepoch > em.max_epochs_without_improvement then
       --and em_iteration > 1 then
       break
     end
-    printf("em %4d epoch %4d totalepoch %4d mse_train %.7f mse_val "..
+    printf("em %4d epoch %4d totalepoch %4d ce_train %.7f ce_val "..
 	   "%.7f %10d %.7f\n",
 	 em_iteration,epoch,totaltrain,errortrain,errorval,bestepoch,
-	 bestmse)
-    fprintf(flog, "em %4d epoch %4d totalepoch %4d mse_train %.7f mse_val "..
+	 bestce)
+    fprintf(flog, "em %4d epoch %4d totalepoch %4d ce_train %.7f ce_val "..
 	    "%.7f %10d %.7f\n",
 	  em_iteration,epoch,totaltrain,errortrain,errorval,bestepoch,
-	  bestmse)
+	  bestce)
     flog:flush()
     --      if totaltrain - bestepoch > 5 and epoch > 5 then
     --     break
@@ -599,16 +602,16 @@ while em_iteration <= em.veces_em do
   end
   -- nos quedamos con la mejor red ;)
   totaltrain   = bestepoch
-  ann.trainer  = best_trainer
-  ann.thenet   = best_trainer:get_component()
+  ann_table.trainer  = best_trainer
+  ann_table.thenet   = best_trainer:get_component()
   --print("tiempo entrenar red ",os.clock() - t1)
-  if firstbestmse <= bestmse then
-    ann.trainer = global_best_trainer
-    ann.thenet  = global_best_trainer:get_component()
+  if firstbestce <= bestce then
+    ann_table.trainer = global_best_trainer
+    ann_table.thenet  = global_best_trainer:get_component()
     --    break -- BREAK DEL EM
   end
-  if bestmse < bestmse_em then
-    bestmse_em   = bestmse
+  if bestce < bestce_em then
+    bestce_em   = bestce
     bestepoch_em = bestepoch
   end
   collectgarbage("collect")
@@ -619,7 +622,7 @@ while em_iteration <= em.veces_em do
   -- resegmentamos validacion
   generate_new_segmentation{
     field_manager  = validate,
-    func           = ann.trainer,
+    func           = ann_table.trainer,
     num_emissions  = num_emissions,
     do_expectation = false,
     emission_in_log_base = true,
@@ -634,7 +637,7 @@ while em_iteration <= em.veces_em do
   for i=1,#training do
     generate_new_segmentation{
       field_manager  = training[i],
-      func           = ann.trainer,
+      func           = ann_table.trainer,
       num_emissions  = num_emissions,
       count_value    = count_values[i],
       do_expectation = true,
@@ -656,8 +659,8 @@ while em_iteration <= em.veces_em do
 
   -- salvamos a disco los modelos
   local filem = string.format(dir_hmms .. "/ci%d_cd%d_em%d.lua",
-			      ann.left_context,
-			      ann.right_context,
+			      ann_table.left_context,
+			      ann_table.right_context,
 			      em_iteration)
   print("salvando "..filem)
   local modelf = io.open(filem, "w")
@@ -681,11 +684,11 @@ while em_iteration <= em.veces_em do
   
   -- salvamos la red
   filenet = string.format(dir_redes .. "/ci%d_cd%d_em%d.net",
-			  ann.left_context,
-			  ann.right_context,
+			  ann_table.left_context,
+			  ann_table.right_context,
 			  em_iteration)
   print("salvando "..filenet)
-  ann.trainer:save(filenet,"binary")
+  ann_table.trainer:save(filenet,"binary")
   
   --
   

@@ -153,7 +153,7 @@ april_set_doc("trainable.supervised_trainer.load", {
 		summary = "Load the model and weights from a disk file",
 		description = {
 		  "Load the model and connection weights stored at",
-		  "a disk file.",
+		  "a disk file. The trainer is loaded at build state.",
 		},
 		params = {
 		  "A filename string",
@@ -849,7 +849,7 @@ function trainable.supervised_trainer:validate_dataset(t)
   if params.replacement then
     assert(params.shuffle,"shuffle is mandatory with replacement")
     for i=1,params.replacement do
-      table.insert(ds_idx_table, param.shuffle:randInt(1,num_patterns))
+      table.insert(ds_idx_table, params.shuffle:randInt(1,num_patterns))
     end
   elseif params.shuffle then
     ds_idx_table = params.shuffle:shuffle(num_patterns)
