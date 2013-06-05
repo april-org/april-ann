@@ -82,7 +82,7 @@ cmdOptTest = cmdOpt{
     end,
     argument="yes",
     mode="always",
-    default_value={},
+    default_value="",
   },
   {
     index_name="num_states",
@@ -122,7 +122,7 @@ cmdOptTest = cmdOpt{
     description="Replacement for training (0 for disable)",
     long="train-r",
     argument="yes",
-    models="always",
+    mode="always",
     default_value=300000,
     filter=tonumber,
   },
@@ -131,7 +131,7 @@ cmdOptTest = cmdOpt{
     description="Replacement for validation (0 for disable)",
     long="val-r",
     argument="yes",
-    models="always",
+    mode="always",
     default_value=0,
     filter=tonumber,
   },
@@ -145,8 +145,8 @@ cmdOptTest = cmdOpt{
     index_name  = "context",
     description = "Size of ann context",
     long        = "context",
-    argument    = "yes"
-    models="always",
+    argument    = "yes",
+    mode="always",
     default_value=4,
     filter=tonumber,
   },
@@ -170,7 +170,7 @@ cmdOptTest = cmdOpt{
     description = "Dataset step",
     long        = "step",
     argument    = "yes",
-    models="always",
+    mode="always",
     default_value=1,
     filter=tonumber,
   },
@@ -368,6 +368,8 @@ cmdOptTest = cmdOpt{
     long="silences",
     argument="yes",
     filter=string.tokenize,
+    mode="always",
+    default_value="",
   },
   {
     description = "shows this help message",
@@ -385,9 +387,9 @@ local optargs = cmdOptTest:parse_without_check()
 if type(optargs) == "string" then error(optargs) end
 
 if optargs.defopt then
-  local values = optargs.defopt optargs.defopt=nil
-  optargs = cmdOptTest:postprocess_initial_values(optargs, values)
-  optargs = cmdOptTest:check_args(optargs)
+  local values = optargs.defopt
+  optargs.defopt=nil
+  optargs = cmdOptTest:check_args(optargs, values)
 end
 
 return optargs

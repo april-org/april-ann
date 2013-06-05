@@ -595,7 +595,7 @@ log_float hmm_trainer_model::viterbi(MatrixFloat *emission,
 
   // devolver las probabilidades de cada estado al finalizar
   if (state_probabilities) {
-    assert(state_probabilities->numDim == 1 &&
+    assert(state_probabilities->getNumDim() == 1 &&
 	   state_probabilities->getDimSize(0) == num_states);
     float *st_prob_data = state_probabilities->getRawDataAccess()->getPPALForWrite();
     for (int i=0;i<num_states;i++)
