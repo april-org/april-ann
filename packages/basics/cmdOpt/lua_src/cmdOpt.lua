@@ -299,7 +299,7 @@ function cmdOpt:parse_without_check(arguments)
     local opt   = optvalue[1]
     local value = optvalue[2]
     value = value or opt.default_value
-    printf("# ARG %s = %s\n", opt.index_name, tostring(value))
+    printf("# ARG %s = %s\n", opt.index_name or "nil", tostring(value or "nil"))
     if type(opt.filter) == "function" then value = opt.filter(value) end
     if opt.index_name then result[opt.index_name] = value end
     if type(opt.action) == "function" then opt.action(value) end
@@ -314,13 +314,13 @@ function cmdOpt:check_args(optargs,initial_values)
     if idx then
       if not optargs[idx] and initial_values[idx] then
 	local value = initial_values[idx]
-        printf("# INITIAL %s = %s\n", idx, tostring(value))
+        printf("# INITIAL %s = %s\n", idx, tostring(value or "nil"))
         if type(opt.filter) == "function" then value = opt.filter(value) end
 	if type(opt.action) == "function" then opt.action(value) end
 	optargs[idx] = value
       elseif opt.mode == 'always' and optargs[idx] == nil then
 	local value = opt.default_value
-        printf("# DEFAULT %s = %s\n", idx, tostring(value))
+        printf("# DEFAULT %s = %s\n", idx, tostring(value or "nil"))
 	assert(value ~= nil, idx .. " option is mandatory!!")
 	if type(opt.filter) == "function" then value = opt.filter(value) end
 	if type(opt.action) == "function" then opt.action(value) end
