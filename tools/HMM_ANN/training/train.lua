@@ -66,9 +66,9 @@ end
 
 ------------------------------------------------------------------------------
 
-dir_models = "models"
-dir_redes  = dir_models.."/redes"
-dir_hmms   = dir_models.."/hmms"
+models_dir = "models"
+nets_dir   = models_dir.."/redes"
+hmms_dir   = models_dir.."/hmms"
 
 --------------------
 -- parametros HMM --
@@ -127,9 +127,9 @@ corpus.filename_val_fon = valfile_fon
 corpus.filename_trn_sgm = trainfile_sgm
 corpus.filename_val_sgm = valfile_sgm
 
-os.execute("mkdir "..dir_models)
-os.execute("mkdir "..dir_redes)
-os.execute("mkdir "..dir_hmms)
+os.execute("mkdir "..models_dir)
+os.execute("mkdir "..nets_dir)
+os.execute("mkdir "..hmms_dir)
 
 -- objeto con informacion sobre modelos ligados
 tied = tied_model_manager(io.open(tiedfile))
@@ -593,7 +593,7 @@ while em_iteration <= em.em_max_iterations do
   end
 
   -- salvamos a disco los modelos
-  local filem = string.format(dir_hmms .. "/ci%d_cd%d_em%d.lua",
+  local filem = string.format(hmms_dir .. "/lc%d_rc%d_em%d.lua",
 			      ann_table.left_context,
 			      ann_table.right_context,
 			      em_iteration)
@@ -618,7 +618,7 @@ while em_iteration <= em.em_max_iterations do
   collectgarbage("collect")
   
   -- salvamos la red
-  filenet = string.format(dir_redes .. "/ci%d_cd%d_em%d.net",
+  filenet = string.format(nets_dir .. "/lc%d_rc%d_em%d.net",
 			  ann_table.left_context,
 			  ann_table.right_context,
 			  em_iteration)
