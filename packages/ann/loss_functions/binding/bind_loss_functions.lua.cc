@@ -112,6 +112,12 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD MSELossFunction clone
+{
+  LUABIND_RETURN(MSELossFunction, dynamic_cast<MSELossFunction*>(obj->clone()));
+}
+//BIND_END
+
 /////////////////////////////////////////////////////
 //                       MAE                       //
 /////////////////////////////////////////////////////
@@ -128,6 +134,12 @@ using namespace ANN;
   LUABIND_GET_PARAMETER(1, uint, size);
   obj=new MAELossFunction(size);
   LUABIND_RETURN(MAELossFunction, obj);
+}
+//BIND_END
+
+//BIND_METHOD MAELossFunction clone
+{
+  LUABIND_RETURN(MAELossFunction, dynamic_cast<MAELossFunction*>(obj->clone()));
 }
 //BIND_END
 
@@ -150,6 +162,13 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD CrossEntropyLossFunction clone
+{
+  LUABIND_RETURN(CrossEntropyLossFunction,
+		 dynamic_cast<CrossEntropyLossFunction*>(obj->clone()));
+}
+//BIND_END
+
 /////////////////////////////////////////////////////
 //          MULTI-CLASS CROSS ENTROPY              //
 /////////////////////////////////////////////////////
@@ -166,6 +185,13 @@ using namespace ANN;
   LUABIND_GET_PARAMETER(1, uint, size);
   obj=new MultiClassCrossEntropyLossFunction(size);
   LUABIND_RETURN(MultiClassCrossEntropyLossFunction, obj);
+}
+//BIND_END
+
+//BIND_METHOD MultiClassCrossEntropyLossFunction clone
+{
+  LUABIND_RETURN(MultiClassCrossEntropyLossFunction,
+		 dynamic_cast<MultiClassCrossEntropyLossFunction*>(obj->clone()));
 }
 //BIND_END
 
@@ -190,5 +216,12 @@ using namespace ANN;
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, complement, bool, complement, false);
   obj=new LocalFMeasureLossFunction(size, beta, complement);
   LUABIND_RETURN(LocalFMeasureLossFunction, obj);
+}
+//BIND_END
+
+//BIND_METHOD LocalFMeasureLossFunction clone
+{
+  LUABIND_RETURN(LocalFMeasureLossFunction,
+		 dynamic_cast<LocalFMeasureLossFunction*>(obj->clone()));
 }
 //BIND_END
