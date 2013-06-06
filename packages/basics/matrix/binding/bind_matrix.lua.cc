@@ -125,11 +125,6 @@
 }
 //BIND_END
 
-//BIND_DESTRUCTOR MatrixFloat
-{
-}
-//BIND_END
-
 //BIND_CLASS_METHOD MatrixFloat fromFilename
 //DOC_BEGIN
 // matrix *fromFilename(string filename)
@@ -182,7 +177,7 @@
 
 //BIND_METHOD MatrixFloat toFilename
 //DOC_BEGIN
-// string toFilename(string filename, string type='ascii')
+// void toFilename(string filename, string type='ascii')
 /// Permite salvar una matriz con un formato tal y como se carga con el
 /// metodo fromString. El unico argumento opcional indica el tipo 'ascii'
 /// o 'binary'.
@@ -537,7 +532,7 @@
   else {
     const char *major;
     LUABIND_GET_OPTIONAL_PARAMETER(1, string, major, "row_major");
-    CBLAS_ORDER order=CblasRowMajor;
+    CBLAS_ORDER order=obj->getMajorOrder();
     if (strcmp(major, "col_major") == 0) order = CblasColMajor;
     else if (strcmp(major, "row_major") != 0)
       LUABIND_FERROR1("Incorrect major order string %s", major);
@@ -621,13 +616,13 @@
   }
 //BIND_END
 
-//BIND_METHOD MatrixFloat getMinValue
+//BIND_METHOD MatrixFloat min
   {
     LUABIND_RETURN(float, obj->min());
   }
 //BIND_END
 
-//BIND_METHOD MatrixFloat getMaxValue
+//BIND_METHOD MatrixFloat max
   {
     LUABIND_RETURN(float, obj->max());
   }

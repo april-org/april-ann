@@ -102,3 +102,472 @@ function matrix.saveRAW(matrix,filename)
   end
   f:close()
 end
+
+---------------------------
+-- BINDING DOCUMENTATION --
+---------------------------
+april_set_doc("matrix", {
+		class       = "class",
+		summary     = "Multidimensional matrix objects",
+		description ={
+		  "This class represent multidimensional matrices.",
+		  "They are used for build datasets and train machine",
+		  "learning models.",
+		  "Mathematical operations are allowed (*, -, +).",
+		  "Specific BLAS methods are binding to Lua to ensure",
+		  "efficiency."
+		}, })
+
+april_set_doc("matrix.__call", {
+		class = "method", summary = "Constructor",
+		description ={
+		  "Constructor of a multidimensional matrix.",
+		  "The data is stored at row-major order",
+		},
+		params = {
+		  "First dimension size",
+		  "Second dimension size",
+		  "...",
+		  "ith dimension size",
+		  "...",
+		  "nth dimension size",
+		  "A table with values [optional]. The values must be",
+		  "in row major order"
+		},
+		outputs = { "A matrix instantiated object" }, })
+
+april_set_doc("matrix.col_major", {
+		class = "function", summary = "constructor",
+		description ={
+		  "Constructor of a multidimensional matrix.",
+		  "The data is stored at col-major order, but from",
+		  "outside is viewed as row-major (for compatibility",
+		  "purposes).",
+		},
+		params = {
+		  "First dimension size",
+		  "Second dimension size",
+		  "...",
+		  "ith dimension size",
+		  "...",
+		  "nth dimension size",
+		  "A table with values [optional]. The values must be",
+		  "in row major order"
+		},
+		outputs = { "A matrix instantiated object" }, })
+
+april_set_doc("matrix.fromFilename", {
+		class = "function", summary = "constructor",
+		description ={
+		  "Loads a matrix from a filename.",
+		},
+		params = {
+		  "A filename path.",
+		},
+		outputs = { "A matrix instantiated object" }, })
+
+april_set_doc("matrix.toFilename", {
+		class = "method",
+		summary = "It allows to store a matrix in a file.",
+		description ={
+		  "It allows to store a matrix in a file.",
+		  "It uses the format expected by fromMatrix function.",
+		},
+		params = {
+		  "A filename path.",
+		  { "An string with the format: ascii or binary [optional].",
+		    "By default is ascii." },
+		}, })
+
+april_set_doc("matrix.loadfile", {
+		class = "function", summary = "constructor",
+		description ={
+		  "Loads a matrix from a filename.",
+		},
+		params = {
+		  "A filename path.",
+		},
+		outputs = { "A matrix instantiated object" }, })
+
+april_set_doc("matrix.savefile", {
+		class = "method",
+		summary = "It allows to store a matrix in a file.",
+		description ={
+		  "It allows to store a matrix in a file.",
+		},
+		params = {
+		  "A filename path.",
+		  { "An string with the format: ascii or binary [optional].",
+		    "By default is ascii." },
+		}, })
+
+april_set_doc("matrix.loadImage", {
+		class = "function", summary = "constructor",
+		description ={
+		  "Loads a matrix from a image filename.",
+		},
+		params = {
+		  "A filename path.",
+		},
+		outputs = { "A matrix instantiated object" }, })
+
+april_set_doc("matrix.saveImage", {
+		class = "method",
+		summary = "It allows to store a matrix in a image file.",
+		description ={
+		  "It allows to store a matrix in a file.",
+		},
+		params = {
+		  "A filename path.",
+		}, })
+
+april_set_doc("matrix.fromString", {
+		class = "function", summary = "constructor",
+		description ={
+		  "Loads a matrix from a Lua string.",
+		},
+		params = {
+		  "A Lua string.",
+		},
+		outputs = { "A matrix instantiated object" }, })
+
+april_set_doc("matrix.toString", {
+		class = "method",
+		summary = "It returns a Lua string which stores the matrix.",
+		description ={
+		  "It returns a Lua string which stores the matrix.",
+		  "It uses the format expected by fromString function.",
+		},
+		outputs = { "A Lua string" }, })
+
+april_set_doc("matrix.fromPNM", {
+		class = "function", summary = "constructor",
+		description ={
+		  "Loads a matrix from a PNM image stored at a Lua string.",
+		},
+		params = {
+		  "A Lua string.",
+		},
+		outputs = { "A matrix instantiated object" }, })
+
+april_set_doc("matrix.toPNM", {
+		class = "method",
+		summary = "It stores the matrix as a PNM image Lua string.",
+		description ={
+		  "It stores the matrix as a PNM image Lua string.",
+		},
+		outputs = { "A Lua string" }, })
+
+april_set_doc("matrix.copy_from_table", {
+		class = "method",
+		summary = "Copies the table values to the matrix.",
+		params = {
+		  "A lua table with data numbers in row-major order",
+		}, })
+
+april_set_doc("matrix.get", {
+		class = "method",
+		summary = "Returns the value stored at a given position.",
+		params = {
+		  "First dimension position",
+		  "Second dimension position",
+		  "...",
+		  "ith dimension position",
+		  "...",
+		  "nth dimension position",
+		},
+		outputs = {
+		  "A number",
+		}, })
+
+april_set_doc("matrix.set", {
+		class = "method",
+		summary = "Sets the value of a given position.",
+		params = {
+		  "First dimension position",
+		  "Second dimension position",
+		  "...",
+		  "ith dimension position",
+		  "...",
+		  "nth dimension position",
+		  "A number with the value to be set",
+		}, })
+
+april_set_doc("matrix.fill", {
+		class = "method",
+		summary = "Sets all values to a given number.",
+		description = {
+		  "Sets all values to a given number.",
+		  "This method modifies the object.",
+		},
+		params = {
+		  "A number",
+		},
+		outputs = {
+		  "The caller object (itself)",
+		}, })
+
+april_set_doc("matrix.set_use_cuda", {
+		class = "method",
+		summary = "Indicates if use or not CUDA for math operations.",
+		params = {
+		  "A boolean",
+		},
+		outputs = {
+		  "The caller object (itself)",
+		}, })
+
+april_set_doc("matrix.get_major_order", {
+		class = "method",
+		summary = "Returns the major order of internal data.",
+		outputs = {
+		  "A string with the major order",
+		}, })
+
+april_set_doc("matrix.dim", {
+		class = "method",
+		summary = "Returns a table with the size of each dimension.",
+		outputs = {
+		  "A table",
+		}, })
+
+april_set_doc("matrix.slice", {
+		class = "method",
+		summary = "Returns a sub-matrix that is a slice of caller matrix.",
+		description = {
+		  "Returns a sub-matrix that is a slice of caller matrix.",
+		  "This method returns a sub-matrix which references the",
+		  "parent matrix (not copy the data). Optionally it is possible",
+		  "to do a deep copy (clone) of the data.",
+		},
+		params = {
+		  "A table with the first position of the sub-matrix",
+		  "A table with the sizes of each dimension for the sub-matrix",
+		  { "A boolean indicating if do or not a clone [optional]. By",
+		    "default it is set to false", },
+		},
+		outputs = {
+		  "A matrix object (sub-matrix)",
+		}, })
+
+april_set_doc("matrix.clone", {
+		class = "method",
+		summary = "Returns a deep copy (clone) of the caller matrix.",
+		description = {
+		  "Returns a deep copy (clone) of the caller matrix.",
+		  "It has the possibility of indicate the major order,",
+		  "and the data will be reordered if necessary.",
+		},
+		params = {
+		  { "A string: col-major or row-major [optional]. By",
+		    "default it is the same major order as the caller matrix" },
+		},
+		outputs = {
+		  "A matrix object (cloned)",
+		}, })
+
+april_set_doc("matrix.transpose", {
+		class = "method",
+		summary = "Returns transposition of the caller matrix.",
+		description = {
+		  "Returns transposition of the caller matrix.",
+		  "The returned matrix is totally new.",
+		  "This method is only allowed for 2D matrices",
+		},
+		outputs = {
+		  "A matrix object (transposed)",
+		}, })
+
+april_set_doc("matrix.adjust_range", {
+		class = "method",
+		summary = "Modifies the matrix values to be at given range",
+		params = {
+		  "The min value of the range",
+		  "The max value of the range"
+		},
+		outputs = {
+		  "The caller matrix object (itself)",
+		}, })
+
+april_set_doc("matrix.diag", {
+		class = "method",
+		summary = "Sets diagonal positions to a given number.",
+		description = {
+		  "Sets diagonal positions to a tiven number value.",
+		  "This method modifies the object.",
+		},
+		params = {
+		  "A number",
+		},
+		outputs = {
+		  "The caller object (itself)",
+		}, })
+
+april_set_doc("matrix.toTable", {
+		class = "method",
+		summary = "Returns a Lua table with the data of the matrix.",
+		description = {
+		  "Returns a Lua table with the data of the matrix.",
+		  "The table is a copy of the data in row-major order.",
+		},
+		outputs = {
+		  "A Lua table",
+		}, })
+
+april_set_doc("matrix.min", {
+		class = "method",
+		summary = "Returns the minimum value contained at the matrix.",
+		outputs = {
+		  "A number",
+		}, })
+
+april_set_doc("matrix.max", {
+		class = "method",
+		summary = "Returns the maximum value contained at the matrix.",
+		outputs = {
+		  "A number",
+		}, })
+
+april_set_doc("matrix.clamp", {
+		class = "method",
+		summary = "Clamp matrix values to be in the given range.",
+		params = {
+		  "The min value of the range",
+		  "The max value of the range",
+		},
+		outputs = {
+		  "The caller matrix (itself)",
+		}, })
+
+april_set_doc("matrix.add", {
+		class = "method",
+		summary = "Returns the addition of caller and other matrix.",
+		description = {
+		  "Returns the addition of caller and other matrix.",
+		  "It uses BLAS operations.",
+		},
+		params = {
+		  "Another matrix",
+		},
+		outputs = {
+		  "A new matrix result of addition",
+		}, })
+
+april_set_doc("matrix.sub", {
+		class = "method",
+		summary = "Returns the subtraction of caller and other matrix.",
+		description = {
+		  "Returns the subtraction of caller and other matrix.",
+		  "It uses BLAS operations.",
+		},
+		params = {
+		  "Another matrix",
+		},
+		outputs = {
+		  "A new matrix result of subtraction",
+		}, })
+
+april_set_doc("matrix.mul", {
+		class = "method",
+		summary = "Returns the multiplication of caller and other matrix.",
+		description = {
+		  "Returns the multiplication of caller and other matrix.",
+		  "This method works with vector-vector, dot product,",
+		  "vector-matrix, and matrix-matrix multiplication, depending",
+		  "on the matrices dimensions.",
+		  "It uses BLAS operations.",
+		},
+		params = {
+		  "Another matrix (2D matrix or a vector)",
+		},
+		outputs = {
+		  "A new matrix result of multiplication",
+		}, })
+
+april_set_doc("matrix.axpy", {
+		class = "method",
+		summary = "BLAS AXPY operation: Y = Y + alpha * X.",
+		params = {
+		  "Alpha constant",
+		  "Another matrix, X",
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.gemv", {
+		class = "method",
+		summary = "BLAS GEMV operation: Y = beta * Y + alpha * A * X.",
+		params = {
+		  ["alpha"] = "Alpha constant",
+		  ["beta"]  = "Beta constant",
+		  ["trans_A"]  = {
+		    "A boolean indicating if transpose or not matrix A.",
+		    "It is [optional], by default is false",
+		  },
+		  ["A"] = "Another matrix, A (a 2D matrix)",
+		  ["X"] = "Another matrix, X (a vector)",
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.gemm", {
+		class = "method",
+		summary = "BLAS GEMM operation: C = beta * C + alpha * A * B.",
+		params = {
+		  ["alpha"] = "Alpha constant",
+		  ["beta"]  = "Beta constant",
+		  ["trans_A"]  = {
+		    "A boolean indicating if transpose or not matrix A.",
+		    "It is [optional], by default is false",
+		  },
+		  ["trans_B"]  = {
+		    "A boolean indicating if transpose or not matrix B.",
+		    "It is [optional], by default is false",
+		  },
+		  ["A"] = "Another matrix, A (a 2D matrix)",
+		  ["B"] = "Another matrix, B (a 2D matrix)",
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.ger", {
+		class = "method",
+		summary = "BLAS GER operation: Z = Z + alpha * X * Y'.",
+		params = {
+		  ["alpha"] = "Alpha constant",
+		  ["X"] = "Another matrix, X (a vector)",
+		  ["Y"] = "Another matrix, Y (a vector)",
+		},
+		outputs = {
+		  "The caller matrix, Z (itself)",
+		}, })
+
+april_set_doc("matrix.dot", {
+		class = "method",
+		summary = "BLAS DOT operation: v = dot(X,Y).",
+		params = {
+		  "Another matrix, Y (a vector)",
+		},
+		outputs = {
+		  "A number with the dot product",
+		}, })
+
+april_set_doc("matrix.scal", {
+		class = "method",
+		summary = "BLAS SCAL operation.",
+		params = {
+		  "The scale factor",
+		},
+		outputs = {
+		  "The caller matrix (itself)."
+		}, })
+
+april_set_doc("matrix.norm2", {
+		class = "method",
+		summary = "BLAS NRM2 operation.",
+		outputs = {
+		  "A number with the norm-2 of caller matrix."
+		}, })
