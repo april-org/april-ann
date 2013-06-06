@@ -811,7 +811,7 @@ function asisted_recognition(dataflow, parser, correcta, correcta_words, diction
   ------------------------------------------------------------
   local num_corrections = 0
   
-  print ("RUN")
+  print ("# RUN")
   t1 = cronometro:read()
   cronometro:go()
   resul=the_dataflow:run()
@@ -821,7 +821,7 @@ function asisted_recognition(dataflow, parser, correcta, correcta_words, diction
   print(t2-t1)
   
   if not resul then
-    print("Error al hacer dataflow:run()")
+    print("# Error al hacer dataflow:run()")
   end
   
   -- GET BESTPATH
