@@ -489,7 +489,8 @@ function generate_new_segmentation(args)
     },
     the_function  =
       function (themodel,segmentation_matrix,contextCCdataset, nocontextDataset)
-	print ("# Segmentation... "..current)
+	printf ("# Segmentation... %6d  ",current)
+	io.stdout:flush()
 	collectgarbage("collect")
 	-- matriz de salida para la red neuronal
 	local mat_full = matrix(segmentation_matrix:dim()[1],
@@ -526,7 +527,7 @@ function generate_new_segmentation(args)
 	--	string.format("tmp/mlp_matrix_%03d.pnm",
 	-- 						 current))
 	-- ahora generamos la salida de Viterbi
-	themodel:viterbi{
+	local logprob =	themodel:viterbi{
 	  input_emission       = mat_full,
 	  do_expectation       = do_expectation,
 	  output_emission_seq  = segmentation_matrix,
@@ -534,6 +535,8 @@ function generate_new_segmentation(args)
 	  emission_in_log_base = emission_in_log_base,
 	  count_value          = count_value,
 	}
+	printf("%12.4f score\n", logprob)
+	io.stdout:flush()
 	-- mat_full:adjust_range(0,1)
 	-- matrix.saveImage(mat_full, string.format("tmp/hmm_matrix_%03d.pnm",
 	--	            current))
