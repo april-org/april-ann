@@ -194,8 +194,8 @@ else
 					     bunch_size)
   ann_table.trainer:build()
   ann_table.trainer:randomize_weights{
-    inf = ann_table.rndw,
-    sup = ann_table.rndw,
+    inf =  ann_table.rndw,
+    sup = -ann_table.rndw,
     random = random(ann_table.weights_seed)
   }
 end
@@ -483,11 +483,12 @@ collectgarbage("collect")
 --------------
 -- TRAINING --
 --------------
-totaltrain = 0
+totaltrain = 1
 em_iteration = 1
 
-bestce      = 1
-bestce_em   = 1
+firstbestce = 11111111111
+bestce      = 11111111111
+bestce_em   = 11111111111
 bestepoch    = 0
 bestepoch_em = 0
 best_trainer = ann_table.trainer
@@ -542,82 +543,70 @@ while em_iteration <= em.em_max_iterations do
   if em_iteration == 1 then max = em.num_maximization_iterations_first_em end
   bestepoch = totaltrain
   global_best_trainer = ann_table.trainer:clone()
-  epoch = 0
-  for epoch = 1,em.num_epochs_without_validation do
-    totaltrain = totaltrain+1
-    if totaltrain > ann_table.num_epochs_first_lr or initial_mlp then
-      ann_table.thenet:set_option("learning_rate", ann_table.learning_rate)
-    end
-    errortrain = ann_table.trainer:train_dataset(ann_table.trainingdata)
-    errorval   = ann_table.trainer:validate_dataset(ann_table.validationdata) -- NO SE UTILIZA
-    printf("em %4d epoch %4d totalepoch %4d ce_train %.7f ce_val "..
-	     "%.7f %10d %.7f\n",
-	   em_iteration,epoch,totaltrain,errortrain,errorval,bestepoch,
-	   errorval)
-    fprintf(flog, "em %4d epoch %4d totalepoch %4d ce_train %.7f ce_val "..
-	      "%.7f %10d %.7f\n",
-	    em_iteration,epoch,totaltrain,errortrain,errorval,bestepoch,
-	    errorval)
-    flog:flush()
+  if totaltrain > ann_table.num_epochs_first_lr or initial_mlp then
+    ann_table.thenet:set_option("learning_rate", ann_table.learning_rate)
+  else
+    ann_table.thenet:set_option("learning_rate", ann_table.first_learning_rate)
   end
-  bestce      = ann_table.trainer:validate_dataset(ann_table.validationdata)
-  firstbestce = bestce
-  printf ("# FIRST BEST CE FOR EM: %.7f\n", firstbestce)
-  bestepoch    = totaltrain
-  for epoch = em.num_epochs_without_validation+1,max do
-    totaltrain = totaltrain+1
-    if totaltrain > ann_table.num_epochs_first_lr then
-      --ann_table.trainingdata.learning_rate = ann_table.learning_rate
-      if ( em_iteration == 1 and
-	     math.mod(totaltrain, 10) == 1 and
-	   ann_table.thenet:get_option("learning_rate") > 0.001 ) then
+  --------------------------------------
+  -- ANN TRAINING (MAXIMIZATION STEP) --
+  --------------------------------------
+  local result = ann_table.trainer:train_holdout_validation{
+    training_table = ann_table.trainingdata,
+    validation_table = ann_table.validationdata,
+    epochs_wo_validation = em.num_epochs_without_validation,
+    min_epochs = em.num_epochs_without_validation,
+    max_epochs = max,
+    stopping_criterion = trainable.stopping_criteria.make_max_epochs_wo_imp_absolute(em.max_epochs_without_improvement),
+    update_function = function(t)
+      printf("em %4d epoch %4d totalepoch %4d ce_train %.7f ce_val "..
+	       "%.7f %10d %.7f\n",
+	     em_iteration, t.current_epoch, totaltrain,
+	     t.train_error, t.validation_error, bestepoch,
+	     t.best_val_error)
+      fprintf(flog, "em %4d epoch %4d totalepoch %4d ce_train %.7f ce_val "..
+		"%.7f %10d %.7f\n",
+	      em_iteration, t.current_epoch, totaltrain,
+	      t.train_error, t.validation_error, bestepoch,
+	      t.best_val_error)
+      flog:flush()
+      if (t.current_epoch > em.num_epochs_without_validation and
+	    totaltrain > ann_table.num_epochs_first_lr and
+	    em_iteration == 1 and
+	    math.mod(totaltrain, 10) == 1 and
+	  ann_table.thenet:get_option("learning_rate") > ann_table.learning_rate ) then
 	ann_table.thenet:set_option("learning_rate",
-			      ann_table.thenet:get_option("learning_rate") - 0.001)
+				    ann_table.thenet:get_option("learning_rate") - 0.001)
       end
-    end
-    errortrain = ann_table.trainer:train_dataset(ann_table.trainingdata)
-    errorval   = ann_table.trainer:validate_dataset(ann_table.validationdata)
-    if errorval < bestce then
-      bestce    = errorval
-      bestepoch  = totaltrain
-      best_trainer = ann_table.trainer:clone()
-      collectgarbage("collect")
-    end
-    if totaltrain - bestepoch > em.max_epochs_without_improvement then
-      --and em_iteration > 1 then
-      break
-    end
-    printf("em %4d epoch %4d totalepoch %4d ce_train %.7f ce_val "..
-	   "%.7f %10d %.7f\n",
-	 em_iteration,epoch,totaltrain,errortrain,errorval,bestepoch,
-	 bestce)
-    fprintf(flog, "em %4d epoch %4d totalepoch %4d ce_train %.7f ce_val "..
-	    "%.7f %10d %.7f\n",
-	  em_iteration,epoch,totaltrain,errortrain,errorval,bestepoch,
-	  bestce)
-    flog:flush()
-    --      if totaltrain - bestepoch > 5 and epoch > 5 then
-    --     break
-    --      end
-  end
+      if t.current_epoch == em.num_epochs_without_validation then
+	firstbestce = t.validation_error
+	printf ("# FIRST BEST CE FOR EM: %.7f\n", firstbestce)
+      end
+      totaltrain = totaltrain + 1
+    end,
+    best_function = function(best_trainer)
+      bestepoch = totaltrain
+    end,
+  }
   -- nos quedamos con la mejor red ;)
-  totaltrain   = bestepoch
-  ann_table.trainer  = best_trainer
-  ann_table.thenet   = best_trainer:get_component()
+  totaltrain = bestepoch
+  ann_table.trainer = result.best
+  ann_table.thenet  = result.best:get_component()
   --print("tiempo entrenar red ",os.clock() - t1)
-  if firstbestce <= bestce then
+  if firstbestce <= result.best_val_error then
     ann_table.trainer = global_best_trainer
     ann_table.thenet  = global_best_trainer:get_component()
     --    break -- BREAK DEL EM
   end
-  if bestce < bestce_em then
-    bestce_em   = bestce
+  if firstbestce < bestce_em then
+    bestce_em    = result.best_val_error
     bestepoch_em = bestepoch
   end
   collectgarbage("collect")
   
-  -- AHORA USAMOS LA RED ENTRENADA PARA REALIZAR ALINEAMIENTO FORZADO
-  -- VITERBI Y RESEGMENTAR
+  ------------------------------------------
+  -- VITERBI ALIGNMENT (EXPECTATION STEP) --
+  ------------------------------------------
   
   -- resegmentamos validacion
   generate_new_segmentation{

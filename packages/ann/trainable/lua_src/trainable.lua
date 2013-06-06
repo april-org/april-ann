@@ -1081,7 +1081,11 @@ april_set_doc("trainable.supervised_trainer.train_holdout_validation", {
 		    "as validation_function(self, validation_table)",
 		  ["best_function"] = "A function to customize code execution "..
 		    "when validation loss is improved [optional]. It is "..
-		    "called as best_function(best_trainer_clone)",
+		    "called as best_function(best_trainer_clone,best_error)",
+		  ["epochs_wo_validation"] = {
+		    "Number of epochs without taking into account validation",
+		    "error [optional]. By default is 0",
+		  },
 		  ["min_epochs"] = "Minimum number of epochs",
 		  ["max_epochs"] = "Maximum number of epochs",
 		  ["stopping_criterion"] = "A predicate function which "..
@@ -1124,6 +1128,7 @@ function trainable.supervised_trainer:train_holdout_validation(t)
 			      end },
       best_function = { mandatory=false, type_match="function",
 			default=function(thenet,t) end },
+      epochs_wo_validation = { mandatory=false, type_match="number", default=0 },
       min_epochs = { mandatory=true, type_match="number" },
       max_epochs = { mandatory=true, type_match="number" },
       stopping_criterion = { mandatory=true, type_match="function" },
@@ -1152,6 +1157,10 @@ function trainable.supervised_trainer:train_holdout_validation(t)
       best_val_error = val_error
       best           = self:clone()
       params.best_function(best)
+    elseif epoch <= params.epochs_wo_validation then
+      best_epoch     = epoch
+      best_val_error = val_error
+      best           = self:clone()
     end
     params.update_function({ current_epoch    = epoch,
 			     best_epoch       = best_epoch,
