@@ -66,8 +66,6 @@ end
 
 ------------------------------------------------------------------------------
 
--- parametros LOG
-logfile    = "train.log"
 dir_models = "models"
 dir_redes  = dir_models.."/redes"
 dir_hmms   = dir_models.."/hmms"
@@ -272,11 +270,8 @@ else
     if not sgm[i][1] then
       if not initial_mlp then
 	print("WARNING!!! training with equidistant initial segmentation for " .. mfc[i][1])
-	fprintf(flog, "# WARNING!!! training with equidistant initial segmentation for %s\n",
-		mfc[i][1])
       else
 	print("Ignoring initial segmentation, MLP given")
-	fprint(flog, "# Ignoring initial segmentation, MLP given")
       end
     end
     
@@ -392,61 +387,22 @@ printf ("# Replacement:     %d\n", ann_table.replacement or 0)
 printf ("# Replacement val: %d\n", ann_table.replacement_val or 0)
 
 -- log
-if initial_mlp then
-  os.execute(string.format("mv -f %s %s.%s",
-			   logfile, logfile, os.date("%Y-%m-%d-%H:%M")))
-end
-flog = io.open(logfile, "w")
-april_print_script_header(arg,flog)
-
 if not trainfile_sgm then
   if not initial_mlp then
     print("WARNING!!! training with equidistant initial segmentation")
-    fprintf(flog, "# WARNING!!! training with equidistant initial segmentation\n")
   else
     print("# Ignoring initial segmentation")
-    fprint(flog, "# Ignoring initial segmentation")
   end
 end
 
-if initial_mlp then
-  fprintf (flog, "# CONTINUE TRAINING: %s %s %d\n",
-	   initial_mlp, initial_hmm, initial_em_epoch)
+if initial_mlp and initial_hmm then
+  printf ("# CONTINUE TRAINING: %s %s %d\n",
+	  initial_mlp, initial_hmm, initial_em_epoch)
 elseif initial_hmm then
-  fprintf (flog, "# INITIAL HMM: %s\n", initial_hmm)
+  printf ("# INITIAL HMM: %s\n", initial_hmm)
+elseif initial_mlp then
+  printf ("# INITIAL MLP: %s\n", initial_mlp)
 end
-fprintf (flog, "# RANDOM:     Weights: %4d Shuffle: %4d VAL REPL: %4d\n",
-	 ann_table.weights_seed, ann_table.shuffle_seed, ann_table.shuffle_seed_val)
-fprintf (flog, "# ANN PARAMS: step:%d l%d r%d %d %d  lr: %f  mt: %f  wd: %g\n",
-	 dataset_step, ann_table.left_context, ann_table.right_context,
-	 ann_table.num_hidden1, ann_table.num_hidden2,
-	 ann_table.learning_rate, ann_table.momentum, ann_table.weight_decay)
-fprintf (flog, "#             first lr: %f    epochs: %d    err_func: %s\n",
-	 ann_table.first_learning_rate, ann_table.num_epochs_first_lr, error_function)
-fprintf (flog, "# ANN STR:    %s\n", mlp_str)
-fprintf (flog, "# HMM PARAMS: states: %d   numparams: %d\n",
-	 hmm.num_states or 0, hmm.num_params)
-fprintf (flog, "# EM  PARAMS:  val: %d  stop: %d  expectation: %d  it: %d %d  em: %d\n",
-	 em.num_epochs_without_validation,
-	 em.max_epochs_without_improvement,
-	 em.num_emiterations_without_expectation,
-	 em.num_maximization_iterations_first_em,
-	 em.num_maximization_iterations,
-	 em.em_max_iterations)
-if not corpus.distribution then
-  fprintf (flog, "# Training num patterns: %d\n", corpus.input_ds_trn:numPatterns())
-else
-  fprintf (flog, "# Training num patterns:")
-  for i=1,#corpus.distribution do
-    fprintf (flog, " %d (%f)", corpus.distribution[i].input_dataset:numPatterns(),
-	     corpus.distribution[i].probability)
-  end
-  fprintf (flog, "\n")
-end
-fprintf (flog, "# Validation num patterns: %d\n", corpus.input_ds_val:numPatterns())
-fprintf (flog, "# Replacement:     %d\n", ann_table.replacement or 0)
-fprintf (flog, "# Replacement val: %d\n", ann_table.replacement_val or 0)
-flog:flush()
 
 ann_table.trainingdata = {
   shuffle        = random(ann_table.shuffle_seed),
@@ -562,12 +518,6 @@ while em_iteration <= em.em_max_iterations do
 	     em_iteration, t.current_epoch, totaltrain,
 	     t.train_error, t.validation_error, bestepoch,
 	     t.best_val_error)
-      fprintf(flog, "em %4d epoch %4d totalepoch %4d ce_train %.7f ce_val "..
-		"%.7f %10d %.7f\n",
-	      em_iteration, t.current_epoch, totaltrain,
-	      t.train_error, t.validation_error, bestepoch,
-	      t.best_val_error)
-      flog:flush()
       if (t.current_epoch > em.num_epochs_without_validation and
 	    totaltrain > ann_table.num_epochs_first_lr and
 	    em_iteration == 1 and
@@ -581,6 +531,7 @@ while em_iteration <= em.em_max_iterations do
 	printf ("# FIRST BEST CE FOR EM: %.7f\n", firstbestce)
       end
       totaltrain = totaltrain + 1
+      io.stdout:flush()
     end,
     best_function = function(best_trainer)
       bestepoch = totaltrain
@@ -679,10 +630,7 @@ while em_iteration <= em.em_max_iterations do
   
   --
   
-  flog:flush()
-  
   collectgarbage("collect")
   
   em_iteration = em_iteration + 1
 end
-flog:close()

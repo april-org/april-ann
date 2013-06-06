@@ -1,56 +1,76 @@
-dir = string.gsub(arg[0], string.basename(arg[0]), "")
-dir = (dir~="" and dir) or "./"
-loadfile(dir .. "utils.lua")()
+april_print_script_header(arg)
+dofile(string.get_path(arg[0]) .. "../utils.lua")
 
 cmdOptTest = cmdOpt{
   program_name = string.basename(arg[0]),
   argument_description = "",
   main_description = "Generate the MLP posterior matrix",
-  { index_name="n", -- antes filenet
+  { index_name="n",
     description = "MLP file",
     short    = "n",
     argument = "yes",
+    mode     = "always",
   },
-  { index_name="p", -- antes testfile
+  { index_name="p",
     description = "File with the corpus mfccs data",
-    short = "p",
-    argument = "yes",
+    short       = "p",
+    argument    = "yes",
+    mode        = "always",
   },
   {
     index_name  = "context", -- antes ann_context_size
-    description = "Size of ann context [default=4]",
+    description = "Size of ann context",
     long        = "context",
-    argument    = "yes"
+    argument    = "yes",
+    mode        = "always",
+    default_value=4,
+    filter=tonumber,
   },
   {
     index_name  = "feats_format",
-    description = "Format of features mat or mfc [default mat]",
+    description = "Format of features mat or mfc",
     long        = "feats-format",
     argument    = "yes",
+    mode        = "always",
+    default_value="mat",
   },
   {
     index_name  = "feats_norm",
-    description = "Table with means and devs for features [default nil]",
+    description = "Table with means and devs for features",
     long        = "feats-norm",
     argument    = "yes",
+    filter      = dofile,
   },
   {
     index_name  = "step",
-    description = "Dataset step [default 1]",
+    description = "Dataset step",
     long        = "step",
     argument    = "yes",
+    mode        = "always",
+    default_value="1",
+    filter=tonumber,
   },
   {
     index_name = "dir",
     description = "Output dir",
     long = "dir",
     argument="yes",
+    mode="always",
+    default_value="posteriors",
+  },
+  { index_name="f",
+    description = "Force overwritten output files",
+    short    = "f",
+    argument = "no",
   },
   {
     index_name = "cores",
-    description = "Number of cores [default = 2]",
+    description = "Number of cores (processes) to use",
     long = "cores",
     argument="yes",
+    mode="always",
+    default_value="2",
+    filter=tonumber,
   },
   {
     description = "shows this help message",
@@ -64,100 +84,77 @@ cmdOptTest = cmdOpt{
   }
 }
 
-optargs = cmdOptTest:parse_args()
-
+local optargs = cmdOptTest:parse_args()
 if type(optargs) == "string" then error(optargs) end
 
-if optargs.defopt then
-  local t = dofile(optargs.defopt)
-  for name,value in pairs(t) do
-    if not optargs[name] then
-      fprintf(io.stderr,"# opt %s = %s\n", name, tostring(value))
-      optargs[name] = value
-    end
-  end
-end
-
-filenet     = optargs.n -- Red neuronal
-valfile     = optargs.p or error ("Needs a list of MFCCs")
-dir         = optargs.dir or "initial_segmentation"
-context     = tonumber(optargs.context or 4)
-step        = tonumber(optargs.step or 1)
-format      = optargs.feats_format or "mat"
-cores       = tonumber(optargs.cores or 2)
-
+filenet     = optargs.n
+valfile     = optargs.p
+dir         = optargs.dir
+context     = optargs.context
+step        = optargs.step
+format      = optargs.feats_format
+cores       = optargs.cores
 feats_mean_and_devs = optargs.feats_norm
-if feats_mean_and_devs then
-  feats_mean_and_devs = dofile(feats_mean_and_devs)
+force_write = optargs.f
+
+os.execute("mkdir -p " .. dir)
+
+--
+trainer       = trainable.supervised_trainer.load(filenet, nil, 128)
+num_emissions = trainer:get_output_size()
+frames_loader = nil
+if format == "mat" then
+  frames_loader = load_matrix
+else
+  frames_loader = load_mfcc
 end
 
-if not filenet then
-  error ("Needs a MLP")
-end
+-----------------------------------------------------------------------------
 
-lared = Mlp.load{ filename = filenet }
-func  = lared
-
---------------------
--- parametros RNA --
---------------------
-ann = {}
-ann.left_context           = context
-ann.right_context          = context
-
-num_emissions = func:get_output_size()
-collectgarbage("collect")
-
-local mfcc_f = io.open(valfile)
+local feats_f = io.open(valfile)
 local list = {}
-for mfcc_filename in mfcc_f:lines() do
-  table.insert(list, mfcc_filename)
+for feats_filename in feats_f:lines() do
+  table.insert(list, feats_filename)
 end
 
 which_i_am,child_pid = util.split_process(cores)
 
 for index=which_i_am,#list,cores do
-  mfcc_filename = list[index]
   collectgarbage("collect")
-  -- cargamos el dataset correspondiente a la frase actual
-  print ("# Cargando frames:        ", mfcc_filename, index .. "/" .. #list)
-  local frames
-  if format == "mat" then
-    frames = load_matrix(mfcc_filename)
-  else
-    frames = load_mfcc(mfcc_filename)
-  end
+  local feats_filename = list[index]
+  print ("# Loading frames:      ", feats_filename, index .. "/" .. #list)
+  local frames      = frames_loader(feats_filename)
   local numFrames   = frames:dim()[1]
-  local numParams   = frames:dim()[2] -- nCCs+1
+  local numParams   = frames:dim()[2]
   local parameters = {
     patternSize = {step, numParams},
-    offset      = {0,0},  -- default value
+    offset      = {0,0},     -- default value
     stepSize    = {step, 0}, -- default value, second value is not important
     numSteps    = {numFrames/step, 1}
   }
-  local actual_ds = dataset.matrix(frames, parameters)
+  local current_ds = dataset.matrix(frames, parameters)
   if feats_mean_and_devs then
-    actual_ds:normalize_mean_deviation(feats_mean_and_devs.means,
-				       feats_mean_and_devs.devs)
+    current_ds:normalize_mean_deviation(feats_mean_and_devs.means,
+					feats_mean_and_devs.devs)
   end
-  actual_ds = dataset.contextualizer(actual_ds,
-				     ann.left_context,
-				     ann.right_context)
-  
-  local segmentation_matrix = matrix(numFrames)
-  local mat_full = matrix(numFrames, num_emissions)
-  local mat_full_ds = dataset.matrix(mat_full)
-  func:use_dataset{
-    input_dataset  = actual_ds,   -- parametrizacion
-    output_dataset = mat_full_ds        -- matriz de emisiones
+  current_ds = dataset.contextualizer(current_ds, context, context)
+  local output_mat = matrix(numFrames, num_emissions)
+  local output_ds  = dataset.matrix(output_mat)
+  trainer:use_dataset{
+    input_dataset  = current_ds,
+    output_dataset = output_ds,
   }
-  local bname = string.remove_extension(string.basename(mfcc_filename))
-  if string.match(mfcc_filename, "%.gz") then
-    bname = string.remove_extension(bname)
+  local base_name = string.remove_extension(string.basename(feats_filename))
+  if string.match(feats_filename, "%.gz") then
+    base_name = string.remove_extension(base_name)
   end
-  local outfile = string.format("%s/%s.mat.gz", dir, bname)
-  print ("# Guardando MLP output:   ", outfile)
-  matrix.savefile(mat_full, outfile, "ascii")
+  local outfile = string.format("%s/%s.mat.gz", dir, base_name)
+  print ("# Saving MLP output:   ", outfile)
+  if io.open(outfile) and not force_write then
+    error("# Output file '%s' exists, use -f to force overwritten\n", outfile)
+  else
+    matrix.savefile(output_mat, outfile, "ascii")
+  end
 end
 
 if child_pid then
