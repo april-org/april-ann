@@ -286,6 +286,9 @@ public:
   void ger(T alpha,
 	   const Matrix<T> *otherX,
 	   const Matrix<T> *otherY);
+
+  // DOT BLAS operation value = dot(this, other)
+  float dot(const Matrix<T> *other) const;
   
   void scal(T value);
   
@@ -698,13 +701,17 @@ Matrix<T>* Matrix<T>::multiply(const Matrix<T> *other) const {
       resul = new Matrix<T>(2, dim, T(), major_order);
       resul->ger(1.0f, this, other);
     }
-    else {
-      // FIXME: the dot-product is going through this code, improve this
+    else if (!this->isVector()) {
       int dim[2] = {matrixSize[0],1};
       resul = new Matrix<T>(other->numDim, dim, T(), major_order);
       resul->gemv(CblasNoTrans,
 		  1.0f, this, other,
 		  0.0f);
+    }
+    else {
+      int dim[1] = {1};
+      resul = new Matrix<T>(1, dim, T(), major_order);
+      (*resul)(0,0) = this->dot(other);
     }
   }
   if (numDim == 2 && other->numDim == 2 &&
@@ -851,6 +858,22 @@ void Matrix<T>::ger(T alpha,
 	 otherY->data, otherY->offset, ldy,
 	 data, offset, lda,
 	 use_cuda);
+}
+
+template <typename T>
+float Matrix<T>::dot(const Matrix<T> *other) const {
+  if (!this->isVector() || !other->isVector())
+    ERROR_EXIT(128,"Incorrect number of dimensions");
+  if (this->getVectorSize() != other->getVectorSize())
+    ERROR_EXIT2(128, "Incorrect dimensions: %d dot %d\n",
+		this->getVectorSize(), other->getVectorSize());
+  if (major_order != other->major_order)
+    ERROR_EXIT(128, "Matrices with different major orders");
+  float ret = doSdot(getVectorSize(),
+		     data, offset, getVectorStride(),
+		     other->data, other->offset, getVectorStride(),
+		     use_cuda);
+  return ret;
 }
 
 template <typename T>
