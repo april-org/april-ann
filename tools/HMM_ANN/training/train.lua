@@ -397,9 +397,7 @@ if initial_mlp then
 			   logfile, logfile, os.date("%Y-%m-%d-%H:%M")))
 end
 flog = io.open(logfile, "w")
-fprintf(flog,"# HOST:\t %s\n", (io.popen("hostname", "r"):read("*l")))
-fprintf(flog,"# DATE:\t %s\n", (io.popen("date", "r"):read("*l")))
-fprintf(flog,"# CMD: \t %s\n", table.concat(arg, " "))
+april_print_script_header(arg,flog)
 
 if not trainfile_sgm then
   if not initial_mlp then
@@ -651,7 +649,7 @@ while em_iteration <= em.em_max_iterations do
 			      ann_table.left_context,
 			      ann_table.right_context,
 			      em_iteration)
-  print("salvando "..filem)
+  print("# saving "..filem)
   local modelf = io.open(filem, "w")
   modelf:write("return { {\n")
   for name,model_info in pairs(models) do
@@ -676,7 +674,7 @@ while em_iteration <= em.em_max_iterations do
 			  ann_table.left_context,
 			  ann_table.right_context,
 			  em_iteration)
-  print("salvando "..filenet)
+  print("# Saving "..filenet)
   ann_table.trainer:save(filenet,"binary")
   
   --
