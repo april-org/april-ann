@@ -288,7 +288,7 @@ public:
 	   const Matrix<T> *otherY);
 
   // DOT BLAS operation value = dot(this, other)
-  float dot(const Matrix<T> *other) const;
+  T dot(const Matrix<T> *other) const;
   
   void scal(T value);
   
@@ -861,7 +861,7 @@ void Matrix<T>::ger(T alpha,
 }
 
 template <typename T>
-float Matrix<T>::dot(const Matrix<T> *other) const {
+T Matrix<T>::dot(const Matrix<T> *other) const {
   if (!this->isVector() || !other->isVector())
     ERROR_EXIT(128,"Incorrect number of dimensions");
   if (this->getVectorSize() != other->getVectorSize())
@@ -869,10 +869,10 @@ float Matrix<T>::dot(const Matrix<T> *other) const {
 		this->getVectorSize(), other->getVectorSize());
   if (major_order != other->major_order)
     ERROR_EXIT(128, "Matrices with different major orders");
-  float ret = doSdot(getVectorSize(),
-		     data, offset, getVectorStride(),
-		     other->data, other->offset, getVectorStride(),
-		     use_cuda);
+  T ret = doSdot(getVectorSize(),
+		 data, offset, getVectorStride(),
+		 other->data, other->offset, getVectorStride(),
+		 use_cuda);
   return ret;
 }
 
