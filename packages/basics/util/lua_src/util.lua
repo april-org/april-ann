@@ -401,10 +401,11 @@ function april_dir(t, verbosity)
   april_help(t, 0)
 end
 
-function april_print_script_header(arg)
-  printf("# HOST:\t %s\n", (io.popen("hostname", "r"):read("*l")))
-  printf("# DATE:\t %s\n", (io.popen("date", "r"):read("*l")))
-  printf("# CMD: \t %s\n",table.concat(arg, " "))
+function april_print_script_header(arg,file)
+  local file = file or io.stdout
+  fprintf(file,"# HOST:\t %s\n", (io.popen("hostname", "r"):read("*l")))
+  fprintf(file,"# DATE:\t %s\n", (io.popen("date", "r"):read("*l")))
+  fprintf(file,"# CMD: \t %s\n",table.concat(arg, " "))
 end
 
 -- This function prepares a safe environment for call user functions
