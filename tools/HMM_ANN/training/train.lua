@@ -67,7 +67,7 @@ end
 ------------------------------------------------------------------------------
 
 models_dir = "models"
-nets_dir   = models_dir.."/redes"
+nets_dir   = models_dir.."/nets"
 hmms_dir   = models_dir.."/hmms"
 
 --------------------
