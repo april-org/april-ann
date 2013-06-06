@@ -86,21 +86,21 @@ end
 -- parametros RNA --
 --------------------
 ann_table = {}
-ann_table.left_context           = context
-ann_table.right_context          = context
-ann_table.num_hidden1           = h1
-ann_table.num_hidden2           = h2
-ann_table.first_learning_rate    = firstlr
-ann_table.num_epochs_first_lr    = epochs_firstlr
-ann_table.learning_rate       = lr
-ann_table.momentum            = mt
-ann_table.weight_decay           = wd
-ann_table.weights_seed            = seed1
-ann_table.shuffle_seed        = seed2
-ann_table.shuffle_seed_val    = seed3
-ann_table.replacement            = (train_r ~= 0 and train_r) or nil
-ann_table.replacement_val        = (val_r   ~= 0 and val_r  ) or nil
-ann_table.rndw                   = rndw
+ann_table.left_context         = context
+ann_table.right_context        = context
+ann_table.num_hidden1          = h1
+ann_table.num_hidden2          = h2
+ann_table.first_learning_rate  = firstlr
+ann_table.num_epochs_first_lr  = epochs_firstlr
+ann_table.learning_rate        = lr
+ann_table.momentum             = mt
+ann_table.weight_decay         = wd
+ann_table.weights_seed         = seed1
+ann_table.shuffle_seed         = seed2
+ann_table.shuffle_seed_val     = seed3
+ann_table.replacement          = (train_r ~= 0 and train_r) or nil
+ann_table.replacement_val      = (val_r   ~= 0 and val_r  ) or nil
+ann_table.rndw                 = rndw
 
 -------------------
 -- parametros EM --
@@ -426,10 +426,6 @@ if ann_table.replacement_val then
   ann_table.validationdata.shuffle     = random(ann_table.shuffle_seed_val)
 end
 
-ann_table.thenet:set_option("learning_rate", ann_table.first_learning_rate)
-ann_table.thenet:set_option("momentum",      ann_table.momentum)
-ann_table.thenet:set_option("weight_decay",  ann_table.weight_decay)
-
 collectgarbage("collect")
 
 --------------------------------------------------
@@ -497,11 +493,13 @@ while em_iteration <= em.em_max_iterations do
   if em_iteration == 1 then max = em.num_maximization_iterations_first_em end
   bestepoch = totaltrain
   global_best_trainer = ann_table.trainer:clone()
-  if totaltrain > ann_table.num_epochs_first_lr or initial_mlp then
+  if em_iteration > 1 then
     ann_table.thenet:set_option("learning_rate", ann_table.learning_rate)
   else
     ann_table.thenet:set_option("learning_rate", ann_table.first_learning_rate)
   end
+  ann_table.thenet:set_option("momentum",      ann_table.momentum)
+  ann_table.thenet:set_option("weight_decay",  ann_table.weight_decay)
   --------------------------------------
   -- ANN TRAINING (MAXIMIZATION STEP) --
   --------------------------------------
@@ -514,12 +512,11 @@ while em_iteration <= em.em_max_iterations do
     stopping_criterion = trainable.stopping_criteria.make_max_epochs_wo_imp_absolute(em.max_epochs_without_improvement),
     update_function = function(t)
       printf("em %4d epoch %4d totalepoch %4d ce_train %.7f ce_val "..
-	       "%.7f %10d %.7f\n",
+	       "%.7f %10d %.7f  %.7f\n",
 	     em_iteration, t.current_epoch, totaltrain,
 	     t.train_error, t.validation_error, bestepoch,
-	     t.best_val_error)
-      if (t.current_epoch > em.num_epochs_without_validation and
-	    totaltrain > ann_table.num_epochs_first_lr and
+	     t.best_val_error, ann_table.thenet:get_option("learning_rate"))
+      if (totaltrain > ann_table.num_epochs_first_lr and
 	    em_iteration == 1 and
 	    math.mod(totaltrain, 10) == 1 and
 	  ann_table.thenet:get_option("learning_rate") > ann_table.learning_rate ) then
