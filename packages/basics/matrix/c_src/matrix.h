@@ -397,7 +397,7 @@ Matrix<T>::Matrix(Matrix<T> *other,
     offset = other->computeRawPos(coords);
     data   = other->data;
     IncRef(data);
-    last_raw_pos = offset + computeRawPos(aux_coords);
+    last_raw_pos = computeRawPos(aux_coords);
   }
 }
 
