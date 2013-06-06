@@ -756,6 +756,16 @@
   }
 //BIND_END
 
+//BIND_METHOD MatrixFloat dot
+  {
+    LUABIND_CHECK_ARGN(==, 1);
+    LUABIND_CHECK_PARAMETER(1, MatrixFloat);
+    MatrixFloat *matX;
+    LUABIND_GET_PARAMETER(1, MatrixFloat, matX);
+    LUABIND_RETURN(float, obj->dot(matX));
+  }
+//BIND_END
+
 //BIND_METHOD MatrixFloat scal
   {
     LUABIND_CHECK_ARGN(==, 1);

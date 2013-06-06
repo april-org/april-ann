@@ -319,6 +319,15 @@ void doSger(CBLAS_ORDER major_type,
             unsigned int a_inc,
             bool use_gpu);
 
+float doSdot(unsigned int size,
+	     const FloatGPUMirroredMemoryBlock *x,
+	     unsigned int x_shift,
+	     unsigned int x_inc,
+	     const FloatGPUMirroredMemoryBlock *y,
+	     unsigned int y_shift,
+	     unsigned int y_inc,
+	     bool use_gpu);
+
 float doSnrm2(unsigned int n,
 	      const FloatGPUMirroredMemoryBlock *x,
 	      unsigned int shift,
