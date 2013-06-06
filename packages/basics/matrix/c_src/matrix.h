@@ -76,9 +76,9 @@ protected:
   /// Returns the offset of first data value (sub-matrix)
   int getOffset() const { return offset; }
   /// Updates with the following coordinates vector
-  static bool nextCoordVectorRowMajor(int *coords, const int *sizes,
+  static bool nextCoordVectorRowOrder(int *coords, const int *sizes,
 				      int numDim);
-  static bool nextCoordVectorColMajor(int *coords, const int *sizes,
+  static bool nextCoordVectorColOrder(int *coords, const int *sizes,
 				      int numDim);
   int getLastRawPos() const { return last_raw_pos; }
   /// Returns if the matrix is a vector
@@ -380,7 +380,7 @@ Matrix<T>::Matrix(Matrix<T> *other,
     for (iterator it(begin()); it!=end(); ++it) {
       int other_raw_pos = other_offset + other->computeRawPos(aux_coords);
       *it = other_data[other_raw_pos];
-      nextCoordVectorRowMajor(aux_coords, sizes, numDim);
+      nextCoordVectorRowOrder(aux_coords, sizes, numDim);
     }
   }
   else {
@@ -389,11 +389,12 @@ Matrix<T>::Matrix(Matrix<T> *other,
       stride[i]     = other->stride[i];
       matrixSize[i] = sizes[i];
       total_size    = total_size * sizes[i];
+      aux_coords[i] = sizes[i]-1;
     }
     offset = other->computeRawPos(coords);
     data   = other->data;
     IncRef(data);
-    last_raw_pos = offset + other->computeRawPos(sizes);
+    last_raw_pos = offset + computeRawPos(aux_coords);
   }
 }
 
@@ -477,7 +478,7 @@ Matrix<T> *Matrix<T>::transpose() {
   for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
   for (iterator resul_it(resul->begin()); resul_it!=resul->end(); ++resul_it) {
     *resul_it = d[computeRawPos(aux_coords)];
-    nextCoordVectorColMajor(aux_coords, matrixSize, numDim);
+    nextCoordVectorColOrder(aux_coords, matrixSize, numDim);
   }
   delete[] aux_matrix_size;
   return resul;
@@ -741,7 +742,7 @@ void Matrix<T>::axpy(T alpha, const Matrix<T> *other) {
 		data, this_pos, stride[numDim-1],
 		use_cuda);
 	aux_coords[numDim-1] = matrixSize[numDim-1]-1;
-      } while(nextCoordVectorRowMajor(aux_coords, matrixSize, numDim));
+      } while(nextCoordVectorRowOrder(aux_coords, matrixSize, numDim));
     }
     else {
       do {
@@ -752,7 +753,7 @@ void Matrix<T>::axpy(T alpha, const Matrix<T> *other) {
 		data, this_pos, stride[0],
 		use_cuda);
 	aux_coords[0] = matrixSize[0]-1;
-      } while(nextCoordVectorColMajor(aux_coords, matrixSize, numDim));
+      } while(nextCoordVectorColOrder(aux_coords, matrixSize, numDim));
     }
   }
 }
@@ -864,7 +865,7 @@ void Matrix<T>::scal(T value) {
 		data, pos, stride[numDim-1],
 		use_cuda);
 	aux_coords[numDim-1] = matrixSize[numDim-1]-1;
-      } while(nextCoordVectorRowMajor(aux_coords, matrixSize, numDim));
+      } while(nextCoordVectorRowOrder(aux_coords, matrixSize, numDim));
     }
     else {
       do {
@@ -873,7 +874,7 @@ void Matrix<T>::scal(T value) {
 		data, pos, stride[numDim-1],
 		use_cuda);
 	aux_coords[0] = matrixSize[0]-1;
-      } while(nextCoordVectorColMajor(aux_coords, matrixSize, numDim));
+      } while(nextCoordVectorColOrder(aux_coords, matrixSize, numDim));
     }
   }
 }
@@ -893,7 +894,7 @@ T Matrix<T>::norm2() const {
 			use_cuda);
 	v += aux*aux;
 	aux_coords[numDim-1] = matrixSize[numDim-1]-1;
-      } while(nextCoordVectorRowMajor(aux_coords, matrixSize, numDim));
+      } while(nextCoordVectorRowOrder(aux_coords, matrixSize, numDim));
     }
     else {
       do {
@@ -903,7 +904,7 @@ T Matrix<T>::norm2() const {
 			use_cuda);
 	v += aux*aux;
 	aux_coords[0] = matrixSize[0]-1;
-      } while(nextCoordVectorColMajor(aux_coords, matrixSize, numDim));
+      } while(nextCoordVectorColOrder(aux_coords, matrixSize, numDim));
     }
     v = T(sqrtf(v));
   }
@@ -940,7 +941,7 @@ void Matrix<T>::minAndMax(T &min, T &max) const {
 /***** PRIVATE METHODS *****/
 
 template <typename T>
-bool Matrix<T>::nextCoordVectorRowMajor(int *coords, const int *sizes,
+bool Matrix<T>::nextCoordVectorRowOrder(int *coords, const int *sizes,
 					int numDim) {
   int j = numDim;
   do {
@@ -952,7 +953,7 @@ bool Matrix<T>::nextCoordVectorRowMajor(int *coords, const int *sizes,
 }
 
 template <typename T>
-bool Matrix<T>::nextCoordVectorColMajor(int *coords, const int *sizes,
+bool Matrix<T>::nextCoordVectorColOrder(int *coords, const int *sizes,
 					int numDim) {
   int j = 0;
   do {
@@ -1066,7 +1067,7 @@ typename Matrix<T>::iterator &Matrix<T>::iterator::operator++() {
   if (m->getIsSubMatrix() || m->getMajorOrder()==CblasColMajor) {
     const int *dims    = m->getDimPtr();
     // const int *strides = m->getStridePtr();
-    if (!Matrix<T>::nextCoordVectorRowMajor(coords, dims, m->getNumDim()))
+    if (!Matrix<T>::nextCoordVectorRowOrder(coords, dims, m->getNumDim()))
       raw_pos = m->getLastRawPos()+1;
     else raw_pos = m->computeRawPos(coords);
   }
@@ -1191,7 +1192,7 @@ template <typename T>
 typename Matrix<T>::const_iterator &Matrix<T>::const_iterator::operator++() {
   if (m->getIsSubMatrix() || m->getMajorOrder()==CblasColMajor) {
     const int *dims = m->getDimPtr();
-    if (!Matrix<T>::nextCoordVectorRowMajor(coords, dims, m->getNumDim()))
+    if (!Matrix<T>::nextCoordVectorRowOrder(coords, dims, m->getNumDim()))
       raw_pos = m->getLastRawPos()+1;
     else raw_pos = m->computeRawPos(coords);
   }
