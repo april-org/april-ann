@@ -1,12 +1,12 @@
 a = matrix.fromString[[
 1 3
-ascii
+ascii col_major
 1 2 3
 ]]
 
 b = matrix.fromString[[
 3 1
-ascii
+ascii col_major
 1
 4
 7
@@ -20,6 +20,9 @@ print("= b")
 print(b)
 print("= a*b = " .. 1*1+2*4+3*7)
 print(c)
+
+print("= b*a")
+print(b*a)
 
 d = matrix.fromString[[
 3 3

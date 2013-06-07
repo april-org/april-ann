@@ -93,8 +93,10 @@ protected:
     return ( (numDim==1) ? matrixSize[0] :
 	     april_utils::max(matrixSize[0], matrixSize[1]) ); }
   int getVectorStride() const {
-    return ( (numDim==1) ? stride[0] :
-	     april_utils::max(stride[0], stride[1]) ); }
+    return (numDim == 1) ? stride[0] :
+      (major_order==CblasRowMajor) ? stride[1] : stride[0];
+  }
+  
 public:
   /********* Iterators for Matrix traversal *********/
   // forward declaration
@@ -346,8 +348,8 @@ Matrix<T>::Matrix(int numDim,
 					     offset(0),
 					     major_order(major_order),
 					     use_cuda(false) {
-  if (major_order == CblasColMajor && numDim != 2)
-    ERROR_EXIT(128, "ColMajor order is only allowed when numDim=2\n");
+  if (major_order == CblasColMajor && numDim > 2)
+    ERROR_EXIT(128, "ColMajor order is only allowed when numDim<=2\n");
   stride     = new int[numDim];
   matrixSize = new int[numDim];
   aux_coords = new int[numDim];
@@ -711,7 +713,7 @@ Matrix<T>* Matrix<T>::multiply(const Matrix<T> *other) const {
     else {
       int dim[1] = {1};
       resul = new Matrix<T>(1, dim, T(), major_order);
-      (*resul)(0,0) = this->dot(other);
+      (*resul)(0) = this->dot(other);
     }
   }
   if (numDim == 2 && other->numDim == 2 &&
@@ -871,7 +873,7 @@ T Matrix<T>::dot(const Matrix<T> *other) const {
     ERROR_EXIT(128, "Matrices with different major orders");
   T ret = doSdot(getVectorSize(),
 		 data, offset, getVectorStride(),
-		 other->data, other->offset, getVectorStride(),
+		 other->data, other->offset, other->getVectorStride(),
 		 use_cuda);
   return ret;
 }
