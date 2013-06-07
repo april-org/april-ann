@@ -1,84 +1,84 @@
 = a
 1 2 3
-# Matrix of size [1,3] in col_major [0x1c39980 data= 0x1bfa820]
+# Matrix of size [1,3] in col_major [0x91a1e0 data= 0x8f4ce0]
 = b
 1
 4
 7
-# Matrix of size [3,1] in col_major [0x1c39740 data= 0x1bf9730]
+# Matrix of size [3,1] in col_major [0x919be0 data= 0x8f78b0]
 = a*b = 30
 30
-# Matrix of size [1,1] in col_major [0x1c39850 data= 0x1be6880]
+# Matrix of size [1] in col_major [0x919ca0 data= 0x8e4670]
 = b*a
 1 2 3
 4 8 12
 7 14 21
-# Matrix of size [3,3] in col_major [0x1c3d530 data= 0x1c1b490]
+# Matrix of size [3,3] in col_major [0x91c2c0 data= 0x8d8990]
 = d
 1 2 3
 4 5 6
 7 8 9
-# Matrix of size [3,3] in row_major [0x1c3dce0 data= 0x1bf6de0]
+# Matrix of size [3,3] in row_major [0x91cab0 data= 0x8fdfb0]
 = d:clone('col_major')
 1 2 3
 4 5 6
 7 8 9
-# Matrix of size [3,3] in col_major [0x1c3e4a0 data= 0x1c20e50]
+# Matrix of size [3,3] in col_major [0x91d260 data= 0x902110]
 = d:transpose()
 1 4 7
 2 5 8
 3 6 9
-# Matrix of size [3,3] in row_major [0x1c3eb40 data= 0x1c23130]
+# Matrix of size [3,3] in row_major [0x91d8f0 data= 0x900ac0]
 = d:mul(d)
 30 36 42
 66 81 96
 102 126 150
-# Matrix of size [3,3] in row_major [0x1c3f270 data= 0x1c22f10]
+# Matrix of size [3,3] in row_major [0x91e010 data= 0x8ddc10]
 = d:mul(d) in col_major
 30 36 42
 66 81 96
 102 126 150
-# Matrix of size [3,3] in col_major [0x1c3fbb0 data= 0x1c22310]
+# Matrix of size [3,3] in col_major [0x91e950 data= 0x9080a0]
 = d:slice({2,2},{2,2},true) in col_major
 5 6
 8 9
-# Matrix of size [2,2] in col_major [0x1c40350 data= 0x1c28fe0]
+# Matrix of size [2,2] in col_major [0x91f0f0 data= 0x8fe770]
 = h:mul(h)
 73 84
 112 129
-# Matrix of size [2,2] in col_major [0x1c40940 data= 0x1c0a790]
+# Matrix of size [2,2] in col_major [0x91f6e0 data= 0x8efb60]
 9 10
 12 13
-# Matrix of size [2,2] in col_major [0x1c41060 data= 0x1c2b070]
+# Matrix of size [2,2] in col_major [0x91fe00 data= 0x90ced0]
 = g
 1 2
 3 4
 5 6
-# Matrix of size [3,2] in row_major [0x1c41710 data= 0x1bf7050]
+# Matrix of size [3,2] in row_major [0x9204b0 data= 0x8f3340]
 = g:transpose():clone('col_major'))
 1 3 5
 2 4 6
-# Matrix of size [2,3] in col_major [0x1c41dd0 data= 0x1bf87b0]
+# Matrix of size [2,3] in col_major [0x920b70 data= 0x8de650]
 = g:transpose():clone('col_major'):clone('row_major')
 1 3 5
 2 4 6
-# Matrix of size [2,3] in col_major [0x1c42540 data= 0x1c1e9e0]
+# Matrix of size [2,3] in col_major [0x9212e0 data= 0x919b50]
 1 2
 3 4
 5 6
-# Matrix of size [3,2] in row_major [0x1c41710 data= 0x1bf7050]
+# Matrix of size [3,2] in row_major [0x9204b0 data= 0x8f3340]
 1 3 5
 2 4 6
-# Matrix of size [2,3] in row_major [0x1c42f80 data= 0x1c42ff0]
+# Matrix of size [2,3] in row_major [0x921cc0 data= 0x921d30]
 = g:transpose():mul(g)
 35 44
 44 56
-# Matrix of size [2,2] in row_major [0x1c436e0 data= 0x1c43730]
+# Matrix of size [2,2] in row_major [0x922420 data= 0x922470]
 = gemm{ ... }
 35 44
 44 56
-# Matrix of size [2,2] in row_major [0x1c43d80 data= 0x1c43e10]
+# Matrix of size [2,2] in row_major [0x922ac0 data= 0x922b50]
 = col_major gemm{ ... }
 35 44
 44 56
-# Matrix of size [2,2] in col_major [0x1c44530 data= 0x1c445c0]
+# Matrix of size [2,2] in col_major [0x923270 data= 0x923300]
