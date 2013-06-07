@@ -683,7 +683,7 @@
     resul = obj->multiply(mat);
     if (resul == 0)
       LUABIND_ERROR("matrix mul wrong dimensions");
-    else LUABIND_RETURN(MatrixFloat, resul);
+    LUABIND_RETURN(MatrixFloat, resul);
   }
 //BIND_END
 
