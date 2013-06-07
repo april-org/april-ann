@@ -131,8 +131,8 @@ april_set_doc("matrix.__call", {
 		  "ith dimension size",
 		  "...",
 		  "nth dimension size",
-		  "A table with values [optional]. The values must be",
-		  "in row major order"
+		  { "A table with values [optional]. The values must be",
+		    "in row major order", },
 		},
 		outputs = { "A matrix instantiated object" }, })
 
@@ -151,8 +151,8 @@ april_set_doc("matrix.col_major", {
 		  "ith dimension size",
 		  "...",
 		  "nth dimension size",
-		  "A table with values [optional]. The values must be",
-		  "in row major order"
+		  { "A table with values [optional]. The values must be",
+		    "in row major order", }
 		},
 		outputs = { "A matrix instantiated object" }, })
 
