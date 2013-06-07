@@ -716,7 +716,7 @@ Matrix<T>* Matrix<T>::multiply(const Matrix<T> *other) const {
       (*resul)(0) = this->dot(other);
     }
   }
-  if (numDim == 2 && other->numDim == 2 &&
+  else if (numDim == 2 && other->numDim == 2 &&
       matrixSize[1] == other->matrixSize[0]) {
     int dim[2] = {matrixSize[0], other->matrixSize[1]};
     resul = new Matrix<T>(2,dim,T(),major_order);
