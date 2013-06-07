@@ -1099,7 +1099,7 @@ april_set_doc("trainable.supervised_trainer.train_holdout_validation", {
 		    "as validation_function(self, validation_table)",
 		  ["best_function"] = "A function to customize code execution "..
 		    "when validation loss is improved [optional]. It is "..
-		    "called as best_function(best_trainer_clone,best_error)",
+		    "called as best_function(best_trainer_clone,best_error,best_epoch)",
 		  ["epochs_wo_validation"] = {
 		    "Number of epochs without taking into account validation",
 		    "error [optional]. By default is 0",
@@ -1174,7 +1174,7 @@ function trainable.supervised_trainer:train_holdout_validation(t)
       best_epoch     = epoch
       best_val_error = val_error
       best           = self:clone()
-      params.best_function(best)
+      params.best_function(best, best_val_error, best_epoch)
     elseif epoch <= params.epochs_wo_validation then
       best_epoch     = epoch
       best_val_error = val_error
