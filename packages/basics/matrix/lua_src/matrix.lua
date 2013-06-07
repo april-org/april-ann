@@ -24,8 +24,9 @@ matrix.meta_instance.__tostring = function(self)
       table.insert(out, table.concat(row, " ")) row={}
     end
   end
-  table.insert(out, string.format("# Matrix of size [%s] in %s",
-				  table.concat(dims, ","), major))
+  table.insert(out, string.format("# Matrix of size [%s] in %s [%s]",
+				  table.concat(dims, ","), major,
+				  self:get_reference_string()))
   return table.concat(out, "\n")
 end
 
