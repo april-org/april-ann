@@ -1,10 +1,11 @@
 return { 
   -- BASIC PACAKGES
   --  "plotter",
+  "util",
+  "statistics",
   "dataset",
   "matrix",
   "random",
-  "util",
   "cmdOpt",
   --   "profiler",
   "math",
