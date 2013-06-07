@@ -110,6 +110,7 @@ static int docall (lua_State *L, int narg, int clear) {
 
 static void print_version (void) {
   l_message(NULL, LUA_RELEASE "  " LUA_COPYRIGHT);
+  l_message(NULL, APRILANN_RELEASE "  " APRILANN_COPYRIGHT);
 }
 
 

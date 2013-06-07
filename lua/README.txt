@@ -1,3 +1,35 @@
+07/06/2013
+
+diff --git a/lua/lua-5.1.4/src/lua.c b/lua/lua-5.1.4/src/lua.c
+index a650dbd..164dc12 100644
+--- a/lua/lua-5.1.4/src/lua.c
++++ b/lua/lua-5.1.4/src/lua.c
+@@ -110,6 +110,7 @@ static int docall (lua_State *L, int narg, int clear) {
+ 
+ static void print_version (void) {
+   l_message(NULL, LUA_RELEASE "  " LUA_COPYRIGHT);
++  l_message(NULL, APRILANN_RELEASE "  " APRILANN_COPYRIGHT);
+ }
+ 
+ 
+diff --git a/lua/lua-5.1.4/src/lua.h b/lua/lua-5.1.4/src/lua.h
+index e4bdfd3..8956ab3 100644
+--- a/lua/lua-5.1.4/src/lua.h
++++ b/lua/lua-5.1.4/src/lua.h
+@@ -22,6 +22,9 @@
+ #define LUA_COPYRIGHT	"Copyright (C) 1994-2008 Lua.org, PUC-Rio"
+ #define LUA_AUTHORS 	"R. Ierusalimschy, L. H. de Figueiredo & W. Celes"
+ 
++#define APRILANN_RELEASE   "April-ANN 0.1.1 beta"
++#define APRILANN_COPYRIGHT "Copyright (C) 2012-2013 April-ANN"
++#define APRILANN_AUTHORS   "F. Zamora-Martinez, S. España-Boquera, J. Gorbe-Moya, J. Pastor & A. Palacios"
+ 
+ /* mark for precompiled code (`<esc>Lua') */
+ #define	LUA_SIGNATURE	"\033Lua"
+
+
+----------------------------------------------------------------------------
+
 02/06/2013
 -  lua.c:22 static lua_State *globalL = NULL;
 +  lua.c:22 lua_State *globalL = NULL;
