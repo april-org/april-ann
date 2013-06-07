@@ -62,11 +62,13 @@ function stats.mean_var:add(v)
   elseif type(v) == "function" then
     local vp = v()
     return self:add(vp)
-  else
+  elseif type(v) == "number" then
     local vi = v - self.assumed_mean
     self.accum_sum  = self.accum_sum + vi
     self.accum_sum2 = self.accum_sum2 + vi*vi
     self.N          = self.N + 1
+  else
+    error("Incorrect type="..type(v)..". Expected number, table or function")
   end
   return self
 end
