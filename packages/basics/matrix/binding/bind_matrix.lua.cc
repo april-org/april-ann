@@ -125,6 +125,16 @@
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat get_reference_string
+{
+  char buff[128];
+  sprintf(buff,"%p data= %p",
+	  (void*)obj,
+	  (void*)obj->getRawDataAccess());
+  LUABIND_RETURN(string, buff);
+}
+//BIND_END
+
 //BIND_CLASS_METHOD MatrixFloat fromFilename
 //DOC_BEGIN
 // matrix *fromFilename(string filename)
