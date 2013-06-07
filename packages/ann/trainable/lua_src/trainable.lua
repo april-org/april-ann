@@ -105,6 +105,24 @@ end
 
 ------------------------------------------------------------------------
 
+april_set_doc("trainable.supervised_trainer.size", {
+		class = "method",
+		summary = "Returns the model size (number of weights)",
+		outputs = { "A number" }, })
+
+function trainable.supervised_trainer:size()
+  if #self.components_order == 0 then
+    error("It is not build")
+  end
+  local sz = 0
+  for wname,cnn in pairs(self.weights_table) do
+    sz = sz + cnn:size()
+  end
+  return sz
+end
+
+------------------------------------------------------------------------
+
 april_set_doc("trainable.supervised_trainer.save", {
 		class = "method",
 		summary = "Save the model at a disk file",
