@@ -45,7 +45,7 @@ if not silences or #silences==0 then
 end
 
 if transcription_filter then
-  fprintf(io.stderr, "# Using transcription filter")
+  fprintf(io.stderr, "# Using transcription filter\n")
 end
 
 -- pasar esto como parametro
@@ -269,9 +269,9 @@ else
     
     if not sgm[i][1] then
       if not initial_mlp then
-	print("WARNING!!! training with equidistant initial segmentation for " .. mfc[i][1])
+	print("# WARNING!!! training with equidistant initial segmentation for " .. mfc[i][1])
       else
-	print("Ignoring initial segmentation, MLP given")
+	print("# Ignoring initial segmentation, MLP given")
       end
     end
     
@@ -351,7 +351,6 @@ end
 corpus.input_ds_val  = dataset.union(validate:get_field('contextCCdataset'))
 corpus.output_ds_val = dataset.union(validate:get_field('segmentation_dataset'))
 
-printf ("\n")
 printf ("# RANDOM:     Weights: %4d Shuffle: %4d  VAL RPL shuffle: %4d\n",
 	ann_table.weights_seed, ann_table.shuffle_seed, ann_table.shuffle_seed_val)
 printf ("# ANN PARAMS: step:%d l%d r%d %d %d  lr: %f  mt: %f  wd: %g\n",
