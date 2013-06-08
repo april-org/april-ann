@@ -225,9 +225,6 @@ tied = tied_model_manager(io.open(tiedfile))
 -- creamos el trainer y le metemos los modelos acusticos
 hmm_trainer = HMMTrainer.trainer()
 
--- cargamos los HMMs
-m = dofile(filem)
-
 hmm = {}
 hmm.silences = {}
 hmm.silence_tbl = {}
@@ -242,22 +239,17 @@ if end_sil and (not silences or not hmm.silences[end_sil]) then
   error ("End silence must be in --silences list")
 end
 
-hmm.models       = m[1]
-hmm.aprioris     = m[2]
-
 num_emissions = ann_trainer:get_output_size()
-emiss_to_hmm  = {}
--- anyadimos al trainer los modelos
-num_models = 0
-for name,model_info in pairs(hmm.models) do
-  model_info.model.trainer = hmm_trainer
-  for _,t in ipairs(model_info.model.transitions) do
-    emiss_to_hmm[t.emission] = name
-  end
-  hmm_trainer:add_to_dict(model_info.model, name)
-  num_models = num_models + 1
+
+-- cargamos los HMMs
+hmm.models,num_models,num_emissions_hmm_file,emiss_to_hmm =
+  load_models_from_hmm_lua_desc(filem, hmm_trainer)
+
+if num_emissions ~= num_emissions_hmm_file then
+  error(string.format("Incorrect number of emissions at HMMs file, "..
+			"expected %d and found %d",
+		      num_emissions, num_emissions_hmm_file))
 end
--- hmm_trainer.trainer:set_a_priori_emissions(hmm.aprioris)
 
 ann.output_dictionary = dataset.identity(num_emissions, 0.0, 1.0)
 collectgarbage("collect")
