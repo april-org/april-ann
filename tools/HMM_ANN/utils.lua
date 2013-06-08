@@ -74,14 +74,18 @@ function load_models_from_hmm_lua_desc(initial_hmm, hmmtrainer)
   local m             = dofile(initial_hmm)
   local models        = m[1]
   local aprioris      = m[2]
+  local emiss_to_hmm  = {}
   for name,model_info in pairs(models) do
     num_models    = num_models + 1
     num_emissions = num_emissions + #model_info.emissions
     model_info.model.trainer = hmmtrainer
+    for _,t in ipairs(model_info.model.transitions) do
+      emiss_to_hmm[t.emission] = name
+    end
     hmmtrainer:add_to_dict(model_info.model, name)
   end
-  --hmmtrainer.trainer:set_a_priori_emissions(m[2])
-  return models,num_models,num_emissions
+  hmmtrainer.trainer:set_a_priori_emissions(m[2])
+  return models,num_models,num_emissions,emiss_to_hmm
 end
 
 function generate_hmm_models_from_tiedlist(tied,
