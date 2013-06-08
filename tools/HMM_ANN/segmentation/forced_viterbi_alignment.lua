@@ -255,6 +255,8 @@ for name,model_info in pairs(hmm.models) do
   hmm_trainer:add_to_dict(model_info.model, name)
   num_models = num_models + 1
 end
+hmm_trainer.trainer:set_a_priori_emissions(hmm.aprioris)
+
 ann.output_dictionary = dataset.identity(num_emissions, 0.0, 1.0)
 collectgarbage("collect")
 
