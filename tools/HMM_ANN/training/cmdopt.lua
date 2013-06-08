@@ -391,6 +391,6 @@ if optargs.defopt then
   initial_values = optargs.defopt
   optargs.defopt=nil
 end
-optargs = cmdOptTest:check_args(optargs, values)
+optargs = cmdOptTest:check_args(optargs, initial_values)
 
 return optargs
