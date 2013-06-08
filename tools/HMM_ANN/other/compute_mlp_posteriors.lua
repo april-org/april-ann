@@ -151,7 +151,8 @@ for index=which_i_am,#list,cores do
   local outfile = string.format("%s/%s.mat.gz", dir, base_name)
   print ("# Saving MLP output:   ", outfile)
   if io.open(outfile) and not force_write then
-    error("# Output file '%s' exists, use -f to force overwritten\n", outfile)
+    error(string.format("# Output file '%s' exists, use -f to force overwritten\n",
+			outfile))
   else
     matrix.savefile(output_mat, outfile, "ascii")
   end
