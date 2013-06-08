@@ -32,7 +32,10 @@ MatrixFloat* readMatrixFloatFromStream(T &stream) {
   constString linea,formato,order,token;
   // First we read the matrix dimensions
   linea = stream.extract_u_line();
-  if (!linea) return 0;
+  if (!linea) {
+    fprintf(stderr, "empty file!!!\n");
+    return 0;
+  }
   static const int maxdim=100;
   int dims[maxdim];
   int n=0, pos_comodin=-1;
@@ -45,16 +48,23 @@ MatrixFloat* readMatrixFloatFromStream(T &stream) {
       }
       pos_comodin = n;
     } else if (!token.extract_int(&dims[n])) {
+      fprintf(stderr,"incorrect dimension %d type, expected a integer\n", n);
       return 0;
     }
     n++;
   }
-  if (n==maxdim) return 0; // Maximum allocation problem
+  if (n==maxdim) {
+    fprintf(stderr,"number of dimensions overflow\n");
+    return 0; // Maximum allocation problem
+  }
   MatrixFloat *mat = 0;
   // Now we read the type of the format
   linea = stream.extract_u_line();
   formato = linea.extract_token();
-  if (!formato) { return 0;}
+  if (!formato) {
+    fprintf(stderr,"impossible to read format token\n");
+    return 0;
+  }
   order = linea.extract_token();
   if (pos_comodin == -1) { // Normal version
     if (!order || order=="row_major")
