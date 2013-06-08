@@ -123,7 +123,7 @@ april_set_doc("matrix.__call", {
 		class = "method", summary = "Constructor",
 		description ={
 		  "Constructor of a multidimensional matrix.",
-		  "The data is stored at row-major order",
+		  "The data is stored at row_major order",
 		},
 		params = {
 		  "First dimension size",
@@ -141,8 +141,8 @@ april_set_doc("matrix.col_major", {
 		class = "function", summary = "constructor",
 		description ={
 		  "Constructor of a multidimensional matrix.",
-		  "The data is stored at col-major order, but from",
-		  "outside is viewed as row-major (for compatibility",
+		  "The data is stored at col_major order, but from",
+		  "outside is viewed as row_major (for compatibility",
 		  "purposes).",
 		},
 		params = {
@@ -263,7 +263,7 @@ april_set_doc("matrix.copy_from_table", {
 		class = "method",
 		summary = "Copies the table values to the matrix.",
 		params = {
-		  "A lua table with data numbers in row-major order",
+		  "A lua table with data numbers in row_major order",
 		}, })
 
 april_set_doc("matrix.get", {
@@ -360,7 +360,7 @@ april_set_doc("matrix.clone", {
 		  "and the data will be reordered if necessary.",
 		},
 		params = {
-		  { "A string: col-major or row-major [optional]. By",
+		  { "A string: col_major or row_major [optional]. By",
 		    "default it is the same major order as the caller matrix" },
 		},
 		outputs = {
@@ -409,7 +409,7 @@ april_set_doc("matrix.toTable", {
 		summary = "Returns a Lua table with the data of the matrix.",
 		description = {
 		  "Returns a Lua table with the data of the matrix.",
-		  "The table is a copy of the data in row-major order.",
+		  "The table is a copy of the data in row_major order.",
 		},
 		outputs = {
 		  "A Lua table",

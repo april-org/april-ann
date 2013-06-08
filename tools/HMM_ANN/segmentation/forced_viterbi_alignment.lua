@@ -15,11 +15,15 @@ cmdOptTest = cmdOpt{
     argument="yes",
     filter=dofile,
   },
+  { index_name="posteriors", -- antes filenet
+    description = "Posteriors file list",
+    long    = "posteriors",
+    argument = "yes",
+  },
   { index_name="n", -- antes filenet
     description = "MLP file",
     short    = "n",
     argument = "yes",
-    mode     = "always",
   },
   {
     index_name  = "m", -- antes filem
@@ -167,6 +171,7 @@ if optargs.defopt then
 end
 optargs = cmdOptTest:check_args(optargs, initial_values)
 
+fileposteriors = optargs.posteriors
 filenet     = optargs.n
 filem       = optargs.m
 filehmmdefs = optargs.hmmdefs
@@ -186,11 +191,14 @@ end_sil     = optargs.end_sil
 cores       = optargs.cores
 feats_mean_and_devs = optargs.feats_norm
 force_write = optargs.force
+if not fileposteriors and not filenet then
+  error("Needs --posteriors or -n arguments")
+end
 if not silences then
   fprintf(io.stderr, "# WARNING!!! NOT SILENCES TABLE DEFINED\n")
 end
 
-if (not filenet or not filem) and not fileHTK then
+if (not (filenet or fileposteriors) or not filem) and not fileHTK then
   error ("Needs a HMM/ANN or HTK file")
 end
 
@@ -198,7 +206,11 @@ if fileHTK then
   error ("Not revised!!! probably not implemented!!!")
 end
 
-ann_trainer = trainable.supervised_trainer.load( filenet, nil, 128)
+if filenet then
+  ann_trainer = trainable.supervised_trainer.load(filenet, nil, 128)
+else
+  posteriors_f=io.open(fileposteriors)or error("Unable to open "..fileposteriors)
+end
 
 --------------------
 -- parametros RNA --
@@ -239,11 +251,15 @@ if end_sil and (not silences or not hmm.silences[end_sil]) then
   error ("End silence must be in --silences list")
 end
 
-num_emissions = ann_trainer:get_output_size()
+if ann_trainer then
+  num_emissions = ann_trainer:get_output_size()
+end
 
 -- cargamos los HMMs
 hmm.models,num_models,num_emissions_hmm_file,emiss_to_hmm =
   load_models_from_hmm_lua_desc(filem, hmm_trainer)
+
+num_emissions = num_emissions or num_emissions_hmm_file
 
 if num_emissions ~= num_emissions_hmm_file then
   error(string.format("Incorrect number of emissions at HMMs file, "..
@@ -323,12 +339,21 @@ for index=which_i_am,#list,cores do
   end
   
   local segmentation_matrix = matrix(numFrames)
-  local mat_full = matrix(numFrames, num_emissions)
-  local mat_full_ds = dataset.matrix(mat_full)
-  ann_trainer:use_dataset{
-    input_dataset  = actual_ds,  -- parametrizacion
-    output_dataset = mat_full_ds -- matriz de emisiones
-  }
+  local mat_full
+
+  if ann_trainer then
+    print ("# Generating posteriors...")
+    mat_full = matrix(numFrames, num_emissions)
+    local mat_full_ds = dataset.matrix(mat_full)
+    ann_trainer:use_dataset{
+      input_dataset  = actual_ds,  -- parametrizacion
+      output_dataset = mat_full_ds -- matriz de emisiones
+    }
+  else
+    local filename = posteriors_f:read("*l")
+    print ("# Loading posteriors:    ", filename)
+    mat_full = load_matrix(filename)
+  end
 
   print("# Building HMM model")
   -- anyadimos los silencios

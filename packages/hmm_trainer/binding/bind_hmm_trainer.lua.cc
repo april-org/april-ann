@@ -61,7 +61,7 @@
   int len;
   float *vec;
   len = table_to_float_vector(L,&vec);
-  if (obj->get_num_cls_emissions() == 0) obj->check_cls_emission(len);
+  if (obj->get_num_cls_emissions() == 0) obj->check_cls_emission(len-1);
   else if (len != obj->get_num_cls_emissions()) {
     lua_pushfstring(L,"hmm_trainer set_a_priori_emission "
 		    "method: incorrect number of a prioris: "
