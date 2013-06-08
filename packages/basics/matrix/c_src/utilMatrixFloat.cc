@@ -123,12 +123,12 @@ MatrixFloat* readMatrixFloatFromStream(T &stream) {
 
 // Returns the string length (there is a '\0' that is not counted)
 void saveMatrixFloatToFile(MatrixFloat *mat, FILE *f, bool is_ascii) {
-  const int columns = 9;
   int i;
   for (i=0;i<mat->getNumDim()-1;i++)
     fprintf(f, "%d ",mat->getDimSize(i));
   fprintf(f,"%d\n",mat->getDimSize(mat->getNumDim()-1));
   if (is_ascii) {
+    const int columns = 9;
     fprintf(f,"ascii");
     if (mat->getMajorOrder() == CblasColMajor)
       fprintf(f, " col_major");
@@ -144,6 +144,7 @@ void saveMatrixFloatToFile(MatrixFloat *mat, FILE *f, bool is_ascii) {
       fprintf(f,"\n"); 
     }
   } else { // binary
+    const int columns = 16;
     fprintf(f,"binary");
     if (mat->getMajorOrder() == CblasColMajor)
       fprintf(f, " col_major");
@@ -155,8 +156,8 @@ void saveMatrixFloatToFile(MatrixFloat *mat, FILE *f, bool is_ascii) {
     int i=0;
     for(MatrixFloat::const_iterator it(mat->begin()); it!=mat->end();++it,++i) {
       binarizer::code_float(*it, b);
-      fprintf(f, "%c%c%c%c%c%c", b[0], b[1], b[2], b[3], b[4], 
-	      ((((i+1) % columns) == 0) ? '\n' : ' '));
+      fprintf(f, "%c%c%c%c%c", b[0], b[1], b[2], b[3], b[4]);
+      if ((i+1) % columns == 0) fprintf(f, "\n");
     }
     if ((i % columns) != 0)
       fprintf(f,"\n"); 
@@ -165,7 +166,6 @@ void saveMatrixFloatToFile(MatrixFloat *mat, FILE *f, bool is_ascii) {
 
 // Returns the string length (there is a '\0' that is not counted)
 int saveMatrixFloatToString(MatrixFloat *mat, char **buffer, bool is_ascii) {
-  const int columns = 9;
   int i,sizedata,sizeheader;
   sizeheader = mat->getNumDim()*10+10+10; // FIXME: To put adequate values
   if (is_ascii)
@@ -179,6 +179,7 @@ int saveMatrixFloatToString(MatrixFloat *mat, char **buffer, bool is_ascii) {
     r += sprintf(r,"%d ",mat->getDimSize(i));
   r += sprintf(r,"%d\n",mat->getDimSize(mat->getNumDim()-1));
   if (is_ascii) {
+    const int columns = 9;
     r += sprintf(r,"ascii");
     if (mat->getMajorOrder() == CblasColMajor)
       r += sprintf(r," col_major");

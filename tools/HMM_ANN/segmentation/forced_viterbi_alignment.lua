@@ -86,7 +86,7 @@ cmdOptTest = cmdOpt{
     index_name  = "context", -- antes ann_context_size
     description = "Size of ann context",
     long        = "context",
-    argument    = "yes"
+    argument    = "yes",
     filter = tonumber,
     mode = "always",
     default_value = 4,
@@ -104,6 +104,7 @@ cmdOptTest = cmdOpt{
     description = "Table with means and devs for features",
     long        = "feats-norm",
     argument    = "yes",
+    filter = dofile,
   },
   {
     index_name  = "step",
@@ -114,10 +115,11 @@ cmdOptTest = cmdOpt{
     filter = tonumber,
     default_value = "1",
   },
-  { index_name="f",
+  { index_name="force",
     description = "Force overwritten output files",
-    short    = "f",
+    long     = "force",
     argument = "no",
+    default_value = true,
   },
   {
     index_name = "dir",
@@ -163,7 +165,7 @@ if optargs.defopt then
   initial_values = optargs.defopt
   optargs.defopt=nil
 end
-optargs = cmdOptTest:check_args(optargs, values)
+optargs = cmdOptTest:check_args(optargs, initial_values)
 
 filenet     = optargs.n
 filem       = optargs.m
@@ -183,7 +185,7 @@ begin_sil   = optargs.begin_sil
 end_sil     = optargs.end_sil
 cores       = optargs.cores
 feats_mean_and_devs = optargs.feats_norm
-force_write = optargs.f
+force_write = optargs.force
 if not silences then
   fprintf(io.stderr, "# WARNING!!! NOT SILENCES TABLE DEFINED\n")
 end
@@ -243,7 +245,7 @@ num_emissions = ann_trainer:get_output_size()
 hmm.models,num_models,num_emissions_hmm_file,emiss_to_hmm =
   load_models_from_hmm_lua_desc(filem, hmm_trainer)
 
-if num_emissions ~= num_emissions2 then
+if num_emissions ~= num_emissions_hmm_file then
   error(string.format("Incorrect number of emissions at HMMs file, "..
 			"expected %d and found %d",
 		      num_emissions, num_emissions_hmm_file))
@@ -374,7 +376,8 @@ for index=which_i_am,#list,cores do
   local output_filename = dir .. "/" .. remove_extensions(string.basename(mfcc_filename)) .. ".mat"
   print ("# Saving " .. output_filename)
   if io.open(output_filename) and not force_write then
-    error("# Output file '%s' exists, use -f to force overwritten\n", output_filename)
+    error(string.format("# Output file '%s' exists, use --force to force overwritten\n",
+			output_filename))
   else
     matrix.savefile(segmentation_matrix, output_filename, "binary")
   end
@@ -382,7 +385,8 @@ for index=which_i_am,#list,cores do
     output_filename = phondir .. "/" .. remove_extensions(string.basename(mfcc_filename)) .. ".phon"
     print ("# Saving " .. output_filename)
     if io.open(output_filename) and not force_write then
-      error("# Output file '%s' exists, use -f to force overwritten\n", output_filename)
+      error(string.format("# Output file '%s' exists, use --force to force overwritten\n",
+			  output_filename))
     else
       local f = io.open(output_filename, "w")
       f:write(phon_output .. "\n")

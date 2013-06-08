@@ -104,7 +104,9 @@ function load_models_from_hmm_lua_desc(initial_hmm, hmmtrainer)
     end
     hmmtrainer:add_to_dict(model_info.model, name)
   end
-  hmmtrainer.trainer:set_a_priori_emissions(m[2])
+  if aprioris then
+    hmmtrainer.trainer:set_a_priori_emissions(aprioris)
+  end
   return models,num_models,num_emissions,emiss_to_hmm
 end
 
