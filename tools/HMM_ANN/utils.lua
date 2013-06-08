@@ -68,6 +68,26 @@ function generate_frontiers(segmenter, mask, numFrames, a_lo_bunke)
   return frontiers
 end
 
+function save_models_from_hmm_lua_desc(filem, models, hmmtrainer)
+  print("# saving "..filem)
+  local modelf = io.open(filem, "w")
+  modelf:write("return { {\n")
+  for name,model_info in pairs(models) do
+    modelf:write("['".. string.gsub(name,"'","\\'") .. "'] = {\n")
+    modelf:write("\tmodel=HMMTrainer.model.from_table(\n")
+    modelf:write(model_info.model:to_string())
+    modelf:write("),\n")
+    modelf:write("\temissions={".. table.concat(model_info.emissions,
+						",") .."}\n")
+    modelf:write("},\n")
+  end
+  modelf:write("},\n")
+  modelf:write("{".. table.concat(hmmtrainer.trainer:get_a_priori_emissions(),
+				  ",") .."}\n")
+  modelf:write("}\n")
+  modelf:close()
+end
+
 function load_models_from_hmm_lua_desc(initial_hmm, hmmtrainer)
   local num_models    = 0
   local num_emissions = 0

@@ -596,23 +596,7 @@ while em_iteration <= em.em_max_iterations do
 			      ann_table.left_context,
 			      ann_table.right_context,
 			      em_iteration)
-  print("# saving "..filem)
-  local modelf = io.open(filem, "w")
-  modelf:write("return { {\n")
-  for name,model_info in pairs(models) do
-    modelf:write("['".. string.gsub(name,"'","\\'") .. "'] = {\n")
-    modelf:write("\tmodel=HMMTrainer.model.from_table(\n")
-    modelf:write(model_info.model:to_string())
-    modelf:write("),\n")
-    modelf:write("\temissions={".. table.concat(model_info.emissions,
-						",") .."}\n")
-    modelf:write("},\n")
-  end
-  modelf:write("},\n")
-  modelf:write("{".. table.concat(hmmtrainer.trainer:get_a_priori_emissions(),
-				  ",") .."}\n")
-  modelf:write("}\n")
-  modelf:close()
+  save_models_from_hmm_lua_desc(filem, models, hmmtrainer)
   --
   collectgarbage("collect")
   
