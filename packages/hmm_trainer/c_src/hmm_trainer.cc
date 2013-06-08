@@ -515,7 +515,7 @@ log_float hmm_trainer_model::viterbi(MatrixFloat *emission,
   log_float *probnxt   = new log_float[num_states];
   log_float *vemission = new log_float[sz_emission_frame];
   const log_float *apriori = trainer->apriori_cls_emission;
-  float *femission; // recorre fila matriz emission
+  float *femission; // una fila matriz emission
   int *fpath; // recorre fila sq matriz path
 
   int sq; // recorre secuencia
@@ -527,19 +527,19 @@ log_float hmm_trainer_model::viterbi(MatrixFloat *emission,
   for (st=0; st<num_states; st++)
     probnxt[st] = log_float::zero();
   probnxt[initial_state] = log_float::one();
-
+  
+  // iterator for matrix traversal (each row is a emission frame)
+  MatrixFloat::const_iterator emiss_it(emission->begin());
   // bucle ppal:
-  for (sq=0, femission=emission->getRawDataAccess()->getPPALForReadAndWrite(), fpath=path+num_states; 
-       sq<length_sequence; 
-       sq++, femission+=sz_emission_frame, fpath+=num_states) {
-
+  for (sq=0,fpath=path+num_states; sq<length_sequence; sq++,fpath+=num_states) {
+    
     // preparar vector vemission:
     if (!emission_in_log_base) {
-      for (int i=0; i<sz_emission_frame; i++)
-	vemission[i] = log_float::from_float(femission[i]) / apriori[i];
+      for (int i=0; i<sz_emission_frame; i++, ++emiss_it)
+	vemission[i] = log_float::from_float(*emiss_it) / apriori[i];
     } else {
-      for (int i=0; i<sz_emission_frame; i++)
-        vemission[i] = log_float(femission[i]) / apriori[i];
+      for (int i=0; i<sz_emission_frame; i++, ++emiss_it)
+        vemission[i] = log_float(*emiss_it) / apriori[i];
     }
 
     // intercambiar vectores probnow <--> probnxt
@@ -597,9 +597,9 @@ log_float hmm_trainer_model::viterbi(MatrixFloat *emission,
   if (state_probabilities) {
     assert(state_probabilities->getNumDim() == 1 &&
 	   state_probabilities->getDimSize(0) == num_states);
-    float *st_prob_data = state_probabilities->getRawDataAccess()->getPPALForWrite();
-    for (int i=0;i<num_states;i++)
-      st_prob_data[i] = probnxt[i];
+    MatrixFloat::iterator st_prob_it(state_probabilities->begin());
+    for (int i=0;i<num_states;i++, ++st_prob_it)
+      *st_prob_it = probnxt[i];
   }
 
   // recuperar prob final:
