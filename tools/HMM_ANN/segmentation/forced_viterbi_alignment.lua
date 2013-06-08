@@ -114,6 +114,11 @@ cmdOptTest = cmdOpt{
     filter = tonumber,
     default_value = "1",
   },
+  { index_name="f",
+    description = "Force overwritten output files",
+    short    = "f",
+    argument = "no",
+  },
   {
     index_name = "dir",
     description = "Output dir",
@@ -178,6 +183,7 @@ begin_sil   = optargs.begin_sil
 end_sil     = optargs.end_sil
 cores       = optargs.cores
 feats_mean_and_devs = optargs.feats_norm
+force_write = optargs.f
 if not silences then
   fprintf(io.stderr, "# WARNING!!! NOT SILENCES TABLE DEFINED\n")
 end
@@ -373,14 +379,21 @@ for index=which_i_am,#list,cores do
   
   local output_filename = dir .. "/" .. remove_extensions(string.basename(mfcc_filename)) .. ".mat"
   print ("# Saving " .. output_filename)
-  matrix.savefile(segmentation_matrix, output_filename, "binary")
-  
+  if io.open(output_filename) and not force_write then
+    error("# Output file '%s' exists, use -f to force overwritten\n", output_filename)
+  else
+    matrix.savefile(segmentation_matrix, output_filename, "binary")
+  end
   if phondir then
     output_filename = phondir .. "/" .. remove_extensions(string.basename(mfcc_filename)) .. ".phon"
     print ("# Saving " .. output_filename)
-    local f = io.open(output_filename, "w")
-    f:write(phon_output .. "\n")
-    f:close()
+    if io.open(output_filename) and not force_write then
+      error("# Output file '%s' exists, use -f to force overwritten\n", output_filename)
+    else
+      local f = io.open(output_filename, "w")
+      f:write(phon_output .. "\n")
+      f:close()
+    end
   end
 end
 
