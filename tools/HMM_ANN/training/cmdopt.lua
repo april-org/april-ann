@@ -386,10 +386,11 @@ cmdOptTest = cmdOpt{
 local optargs = cmdOptTest:parse_without_check()
 if type(optargs) == "string" then error(optargs) end
 
+local initial_values
 if optargs.defopt then
-  local values = optargs.defopt
+  initial_values = optargs.defopt
   optargs.defopt=nil
-  optargs = cmdOptTest:check_args(optargs, values)
 end
+optargs = cmdOptTest:check_args(optargs, values)
 
 return optargs
