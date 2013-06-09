@@ -151,6 +151,7 @@ else
 							hmm.num_states,
 							hmmtrainer)
   num_emissions     = num_models * hmm.num_states
+  hmmtrainer.trainer:check_cls_emission(num_emissions-1)
 end
 ann_table.output_dictionary = dataset.identity(num_emissions, 0.0, 1.0)
 collectgarbage("collect")
