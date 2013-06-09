@@ -191,6 +191,10 @@ end_sil     = optargs.end_sil
 cores       = optargs.cores
 feats_mean_and_devs = optargs.feats_norm
 force_write = optargs.force
+
+os.execute("mkdir -p " .. dir)
+os.execute("mkdir -p " .. phondir)
+
 if not fileposteriors and not filenet then
   error("Needs --posteriors or -n arguments")
 end

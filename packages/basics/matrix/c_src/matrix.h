@@ -264,6 +264,14 @@ public:
   // Matrices must be NxK and KxM, the result is NxM
   Matrix<T>* multiply(const Matrix<T> *other) const;
 
+  /**** COMPONENT WISE OPERATIONS ****/
+  void log();
+  void log1p();
+  void exp();
+  void sqrt();
+  void pow(T value);
+  void tanh();
+
   /**** BLAS OPERATIONS ****/
 
   // AXPY BLAS operation this = this + alpha * other
@@ -725,6 +733,51 @@ Matrix<T>* Matrix<T>::multiply(const Matrix<T> *other) const {
   }
   return resul;
 }
+
+/**** COMPONENT WISE OPERATIONS ****/
+
+template <typename T>
+void Matrix<T>::log() {
+  for (iterator it(begin()); it!=end(); ++it) {
+    *it = logf(*it);
+  }
+}
+
+template <typename T>
+void Matrix<T>::log1p() {
+  for (iterator it(begin()); it!=end(); ++it) {
+    *it = log1pf(*it);
+  }
+}
+
+template <typename T>
+void Matrix<T>::exp() {
+  for (iterator it(begin()); it!=end(); ++it) {
+    *it = expf(*it);
+  }
+}
+
+template <typename T>
+void Matrix<T>::sqrt() {
+  for (iterator it(begin()); it!=end(); ++it) {
+    *it = sqrtf(*it);
+  }
+}
+
+template <typename T>
+void Matrix<T>::pow(T value) {
+  for (iterator it(begin()); it!=end(); ++it) {
+    *it = powf(*it, value);
+  }
+}
+
+template <typename T>
+void Matrix<T>::tanh() {
+  for (iterator it(begin()); it!=end(); ++it) {
+    *it = tanhf(*it);
+  }
+}
+
 
 /**** BLAS OPERATIONS ****/
 

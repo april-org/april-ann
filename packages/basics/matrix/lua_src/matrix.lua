@@ -485,6 +485,61 @@ april_set_doc("matrix.mul", {
 		  "A new matrix result of multiplication",
 		}, })
 
+april_set_doc("matrix.log", {
+		class = "method",
+		summary = "Component wise log operation: Y = log(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.log1p", {
+		class = "method",
+		summary = "Component wise log1p operation: Y = log1p(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.exp", {
+		class = "method",
+		summary = "Component wise exp operation: Y = exp(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.tanh", {
+		class = "method",
+		summary = "Component wise tanh operation: Y = tanh(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.sqrt", {
+		class = "method",
+		summary = "Component wise sqrt operation: Y = sqrt(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.pow", {
+		class = "method",
+		summary = "Component wise pow operation: Y = pow(Y,x)",
+		params = {
+		  "A number (x)"
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
 april_set_doc("matrix.axpy", {
 		class = "method",
 		summary = "BLAS AXPY operation: Y = Y + alpha * X.",
