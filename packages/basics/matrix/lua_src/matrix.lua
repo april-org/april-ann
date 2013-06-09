@@ -493,7 +493,7 @@ april_set_doc("matrix.axpy", {
 		  "Another matrix, X",
 		},
 		outputs = {
-		  "The caller matrix, Y (itself)",
+		  "The caller matrix (a vector), Y (itself)",
 		}, })
 
 april_set_doc("matrix.gemv", {
@@ -510,7 +510,7 @@ april_set_doc("matrix.gemv", {
 		  ["X"] = "Another matrix, X (a vector)",
 		},
 		outputs = {
-		  "The caller matrix, Y (itself)",
+		  "The caller matrix (a vector), Y (itself)",
 		}, })
 
 april_set_doc("matrix.gemm", {
@@ -531,7 +531,7 @@ april_set_doc("matrix.gemm", {
 		  ["B"] = "Another matrix, B (a 2D matrix)",
 		},
 		outputs = {
-		  "The caller matrix, Y (itself)",
+		  "The caller matrix, C (itself)",
 		}, })
 
 april_set_doc("matrix.ger", {
@@ -548,7 +548,7 @@ april_set_doc("matrix.ger", {
 
 april_set_doc("matrix.dot", {
 		class = "method",
-		summary = "BLAS DOT operation: v = dot(X,Y).",
+		summary = "BLAS DOT operation: v = X  dot  Y",
 		params = {
 		  "Another matrix, Y (a vector)",
 		},
