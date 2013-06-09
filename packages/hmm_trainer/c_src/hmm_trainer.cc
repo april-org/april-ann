@@ -488,19 +488,6 @@ log_float hmm_trainer_model::viterbi(MatrixFloat *emission,
 				     MatrixFloat *state_probabilities,
 				     char **output_str,
 				     float count_value) {
-  if (!emission->isSimple())
-    ERROR_EXIT(128, "Emission matrix must be simple "
-	       "(non-submatrix, and row-major)\n");
-  if (reest_emission && !reest_emission->isSimple())
-    ERROR_EXIT(128, "Reest-emission matrix must be simple "
-	       "(non-submatrix, and row-major)\n");
-  if (seq_reest_emission && !seq_reest_emission->isSimple())
-    ERROR_EXIT(128, "Seq-reest-emission matrix must be simple "
-	       "(non-submatrix, and row-major)\n");
-  if (state_probabilities && !state_probabilities->isSimple())
-    ERROR_EXIT(128, "State-probabilities matrix must be simple "
-	       "(non-submatrix, and row-major)\n");
-  //
   log_float logf_count_value  = log_float::from_float(count_value);
   log_double logd_count_value = log_double::from_double((double)count_value);
   //
@@ -609,12 +596,6 @@ log_float hmm_trainer_model::viterbi(MatrixFloat *emission,
   sq = length_sequence-1; fpath=path+length_sequence*num_states;
   st = final_state;
   tr = fpath[st];
-  float *seq_emiss_data = 0;
-  if (seq_reest_emission)
-    seq_emiss_data = seq_reest_emission->getRawDataAccess()->getPPALForWrite();
-  float *re_emiss_data = 0;
-  if (reest_emission)
-    re_emiss_data = reest_emission->getRawDataAccess()->getPPALForReadAndWrite();
   while (tr >= 0) {
 
     if (do_expectation) {
@@ -634,12 +615,12 @@ log_float hmm_trainer_model::viterbi(MatrixFloat *emission,
 
       // guardar la emision:
       if (seq_reest_emission)
-	seq_emiss_data[sq] = emis+1;
+	(*seq_reest_emission)(sq) = emis+1;
       if (reest_emission) {
-	femission = re_emiss_data + sq*sz_emission_frame;
-	for (int i=0;i<sz_emission_frame;i++)
-	  femission[i] = 0;
-	femission[emis] = 1.0;
+	MatrixFloat::iterator emiss_it(reest_emission->begin(sq,0));
+	for (int i=0;i<sz_emission_frame;i++,++emiss_it)
+	  *emiss_it = 0;
+	(*reest_emission)(sq,emis) = 1.0;
       }
     }
 
