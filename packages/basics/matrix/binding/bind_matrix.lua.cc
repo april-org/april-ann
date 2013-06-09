@@ -687,6 +687,51 @@
   }
 //BIND_END
 
+//BIND_METHOD MatrixFloat log
+{
+  obj->log();
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat log1p
+{
+  obj->log1p();
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat exp
+{
+  obj->exp();
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat sqrt
+{
+  obj->sqrt();
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat pow
+{
+  float value;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_GET_PARAMETER(1, float, value);
+  obj->pow(value);
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat tanh
+{
+  obj->tanh();
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat axpy
   {
     int argn;

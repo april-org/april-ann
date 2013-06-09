@@ -1170,15 +1170,11 @@ function trainable.supervised_trainer:train_holdout_validation(t)
     last_train_error,last_val_error,last_epoch = tr_error,val_error,epoch
     clock:stop()
     cpu,wall = clock:read()
-    if val_error < best_val_error then
+    if val_error < best_val_error or epoch <= params.epochs_wo_validation then
       best_epoch     = epoch
       best_val_error = val_error
       best           = self:clone()
       params.best_function(best, best_val_error, best_epoch)
-    elseif epoch <= params.epochs_wo_validation then
-      best_epoch     = epoch
-      best_val_error = val_error
-      best           = self:clone()
     end
     params.update_function({ current_epoch    = epoch,
 			     best_epoch       = best_epoch,
