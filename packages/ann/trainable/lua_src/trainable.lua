@@ -499,7 +499,7 @@ function trainable.supervised_trainer:train_step(input, target)
   local output   = self.ann_component:forward(input, true)
   local tr_loss  = self.loss_function:loss(output, target)
   local gradient = self.loss_function:gradient(output, target)
-  self.ann_component:backprop(gradient)
+  gradient=self.ann_component:backprop(gradient)
   self.ann_component:update()
   return tr_loss,gradient
 end
@@ -742,10 +742,11 @@ function trainable.supervised_trainer:train_dataset(t)
   end
   -- TRAIN USING ds_idx_table
   local k=0
+  local bunch_indexes = {}
   for i=1,#ds_idx_table,params.bunch_size do
-    local bunch_indexes = {}
     local last = math.min(i+params.bunch_size-1, #ds_idx_table)
     -- OJO j - 1
+    table.clear(bunch_indexes)
     for j=i,last do table.insert(bunch_indexes, ds_idx_table[j] - 1) end
     local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
     local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
@@ -876,8 +877,9 @@ function trainable.supervised_trainer:validate_dataset(t)
   end
   -- TRAIN USING ds_idx_table
   local k=0
+  local bunch_indexes = {}
   for i=1,#ds_idx_table,params.bunch_size do
-    local bunch_indexes = {}
+    table.clear(bunch_indexes)
     local last = math.min(i+params.bunch_size-1, #ds_idx_table)
     -- OJO j - 1
     for j=i,last do table.insert(bunch_indexes, ds_idx_table[j] - 1) end
@@ -931,8 +933,9 @@ function trainable.supervised_trainer:for_each_pattern(t)
   end
   local nump = params.input_dataset:numPatterns()
   local k=0
+  local bunch_indexes = {}
   for i=1,nump,params.bunch_size do
-    local bunch_indexes = {}
+    table.clear(bunch_indexes)
     local last = math.min(i+params.bunch_size-1, nump)
     -- OJO j - 1
     for j=i,last do table.insert(bunch_indexes, j - 1) end
@@ -1002,8 +1005,9 @@ function trainable.supervised_trainer:use_dataset(t)
     params.input_dataset = dataset.token.wrapper(params.input_dataset)
   end
   local k=0
+  local bunch_indexes = {}
   for i=1,nump,params.bunch_size do
-    local bunch_indexes = {}
+    table.clear(bunch_indexes)
     local last = math.min(i+params.bunch_size-1, nump)
     -- OJO j - 1
     for j=i,last do table.insert(bunch_indexes, j - 1) end
@@ -1043,11 +1047,8 @@ function trainable.supervised_trainer:clone()
     obj:set_loss_function(self.loss_function:clone())
   end
   if #self.weights_order > 0 then
-    local aux_weights = {}
-    for wname,cnn in pairs(self.weights_table) do
-      aux_weights[wname] = cnn:clone()
-    end
-    obj:build{ weights=aux_weights }
+    obj:build{ weights = table.map(self.weights_table,
+				   function(cnn) return cnn:clone() end) }
   end
   return obj
 end
@@ -1161,9 +1162,10 @@ function trainable.supervised_trainer:train_holdout_validation(t)
   local last_val_error   = best_val_error
   local last_train_error = 0
   local last_epoch       = 0
+  local clock            = util.stopwatch()
   for epoch=params.first_epoch,params.max_epochs do
     collectgarbage("collect")
-    local clock = util.stopwatch()
+    clock:reset()
     clock:go()
     local tr_error  = self:train_dataset(params.training_table)
     local val_error = params.validation_function(self, params.validation_table)

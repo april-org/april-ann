@@ -707,6 +707,10 @@ string.join = table.concat
 ------------------------ TABLE UTILS --------------------------
 ---------------------------------------------------------------
 
+function table.clear(t)
+  for k,v in pairs(t) do t[k] = nil end
+end
+
 function table.unpack_on(t, dest)
   for i,j in pairs(t) do
     dest[i] = j
