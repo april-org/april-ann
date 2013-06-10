@@ -150,8 +150,8 @@ else
   models,num_models = generate_hmm_models_from_tiedlist(tied,
 							hmm.num_states,
 							hmmtrainer)
-  num_emissions     = num_models * hmm.num_states
-  hmmtrainer.trainer:check_cls_emission(num_emissions-1)
+  num_emissions = num_models * hmm.num_states
+  hmmtrainer.trainer:check_cls_emission(num_emissions)
 end
 ann_table.output_dictionary = dataset.identity(num_emissions, 0.0, 1.0)
 collectgarbage("collect")
@@ -539,12 +539,12 @@ while em_iteration <= em.em_max_iterations do
   ann_table.trainer = result.best
   ann_table.thenet  = result.best:get_component()
   --print("tiempo entrenar red ",os.clock() - t1)
-  if firstbestce <= result.best_val_error then
-    ann_table.trainer = global_best_trainer
-    ann_table.thenet  = global_best_trainer:get_component()
+  if bestepoch == em.num_epochs_without_validation then
+    ann_table.trainer = global_best_trainer:clone()
+    ann_table.thenet  = ann_table.trainer:get_component()
     --    break -- BREAK DEL EM
   end
-  if firstbestce < bestce_em then
+  if result.best_val_error < bestce_em then
     bestce_em    = result.best_val_error
     bestepoch_em = bestepoch
   end
