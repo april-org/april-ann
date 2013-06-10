@@ -187,31 +187,31 @@ public:
   }
   /**********************/
   iterator begin() { return iterator(this); }
-  iterator begin(int c0) {
+  iterator iteratorAt(int c0) {
     assert(numDim==1);
     return iterator(this, computeRawPos(&c0), &c0);
   }
-  iterator begin(int c0, int c1) {
+  iterator iteratorAt(int c0, int c1) {
     assert(numDim==2);
     int aux[2]={c0,c1};
     return iterator(this, computeRawPos(aux), aux);
   }
-  iterator begin(int *coords, int len) {
+  iterator iteratorAt(int *coords, int len) {
     assert(numDim==len);
     return iterator(this, computeRawPos(coords), coords);
   }
   iterator end() { return iterator(this, last_raw_pos+1); }
   const_iterator begin() const { return const_iterator(this); }
-  const_iterator begin(int c0) const {
+  const_iterator iteratorAt(int c0) const {
     assert(numDim==1);
     return const_iterator(this, computeRawPos(&c0), &c0);
   }
-  const_iterator begin(int c0, int c1) const {
+  const_iterator iteratorAt(int c0, int c1) const {
     assert(numDim==2);
     int aux[2]={c0,c1};
     return const_iterator(this, computeRawPos(aux), aux);
   }
-  const_iterator begin(int *coords, int len) const {
+  const_iterator iteratorAt(int *coords, int len) const {
     assert(numDim==len);
     return const_iterator(this, computeRawPos(coords), coords);
   }
