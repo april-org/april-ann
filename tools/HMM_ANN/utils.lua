@@ -548,6 +548,7 @@ function generate_new_segmentation(args)
 	--	print(table.concat(mat_full_ds:getPattern(1), " "))
 	-- DEBUG END
 	
+	mat_full:exp()
 	mat_full:adjust_range(0,1)
 	matrix.saveImage(mat_full,
 	 		 string.format("tmp/mlp_matrix_%03d.pnm",
@@ -563,7 +564,6 @@ function generate_new_segmentation(args)
 	}
 	printf("%12.4f score\n", logprob)
 	io.stdout:flush()
-	mat_full:exp()
 	mat_full:adjust_range(0,1)
 	matrix.saveImage(mat_full, string.format("tmp/hmm_matrix_%03d.pnm",
 	 					 current))

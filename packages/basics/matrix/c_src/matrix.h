@@ -250,6 +250,10 @@ public:
 
   // Returns true if they have the same dimension
   bool sameDim(const Matrix *other) const;
+
+  void fill(T value);
+  void zeros();
+  void ones();
   
   // Set the diagonal to current value
   void diag(T value);
@@ -674,6 +678,27 @@ bool Matrix<T>::sameDim(const Matrix<T> *other) const {
   for (int i=0; i<numDim; ++i)
     if (matrixSize[i] != other->matrixSize[i]) return false;
   return true;
+}
+
+template <typename T>
+void Matrix<T>::fill(T value) {
+  for (iterator it(begin()); it!=end(); ++it) {
+    *it = value;
+  }  
+}
+
+template <typename T>
+void Matrix<T>::zeros() {
+  for (iterator it(begin()); it!=end(); ++it) {
+    *it = 0.0f;
+  }  
+}
+
+template <typename T>
+void Matrix<T>::ones() {
+  for (iterator it(begin()); it!=end(); ++it) {
+    *it = 1.0f;
+  }  
 }
 
 template <typename T>
