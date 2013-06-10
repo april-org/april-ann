@@ -244,8 +244,12 @@ function cmdOpt:parse_without_check(arguments)
 	if opt == nil then -- error
 	  return "ambiguous or non-existent long option: "..str
 	end
-	if opt.argument == "no" and value ~= nil then
-	  return "long option '"..key.."' has no arguments but received argument "..value
+	if opt.argument == "no" then
+	  if value ~= nil then
+	    return "long option '"..key.."' has no arguments but received argument "..value
+	  else
+	    value = true
+	  end
 	end
 	if opt.argument == "yes" and value == nil then
 	  return "long option '"..key.."' has obligatory argument"
@@ -321,7 +325,9 @@ function cmdOpt:check_args(optargs,initial_values)
       elseif opt.mode == 'always' and optargs[idx] == nil then
 	local value = opt.default_value
         printf("# DEFAULT %s = %s\n", idx, tostring(value or "nil"))
-	assert(value ~= nil, idx .. " option is mandatory!!")
+	assert(value ~= nil,
+	       (table.concat(opt.short_options or opt.long_options)..
+		  " option is mandatory!!"))
 	if type(opt.filter) == "function" then value = opt.filter(value) end
 	if type(opt.action) == "function" then opt.action(value) end
 	optargs[idx] = value

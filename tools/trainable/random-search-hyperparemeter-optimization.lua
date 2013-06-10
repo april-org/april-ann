@@ -58,7 +58,7 @@ return {
 						       "hidden", "sampling" }
   local random_hyperparam_valid_options = table.invert{"option", "tag", "values",
 						       "sampling", "prec", "filter",
-						       "type", "size" }
+						       "type", "size", "hidden" }
   local random_hyperparam_values_table_valid_options = table.invert{"min","max","step",
 								    "mean", "variance",
 								    "size" }
@@ -256,7 +256,9 @@ return {
         function put_value(option, tag, value, hidden)
           local value = tostring(value)
           if option then
-            table.insert(args_table,string.format("%s%s", option, value))
+	    local v = value
+	    if #v>0 then v = "\""..v.."\"" end
+            table.insert(args_table,string.format("%s%s", option, v))
           end
 	  if not hidden then
 	    table.insert(filename_tags,
@@ -287,7 +289,8 @@ return {
 		" hyperparams to string type values, at least this "..
 		"one: " .. tag)
 	end
-	put_value(hyperparam.option, tag, tostring(hyperparam_values[tag]))
+	put_value(hyperparam.option, tag, tostring(hyperparam_values[tag]),
+		  hyperparam.hidden)
       end
       
       filename=string.format("%s/output-%s.log", working_dir,
