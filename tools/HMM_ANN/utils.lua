@@ -548,9 +548,10 @@ function generate_new_segmentation(args)
 	--	print(table.concat(mat_full_ds:getPattern(1), " "))
 	-- DEBUG END
 	
-	mat_full:adjust_range(0,1)
-	matrix.saveImage(mat_full,
-	 		 string.format("tmp/mlp_matrix_%03d.pnm",
+	local aux = mat_full:clone():exp()
+	aux:adjust_range(0,1)
+	matrix.saveImage(aux,
+	 		 string.format("tmp-new/mlp_matrix_%03d.pnm",
 	 			       current))
 	-- ahora generamos la salida de Viterbi
 	local logprob =	themodel:viterbi{
@@ -563,9 +564,8 @@ function generate_new_segmentation(args)
 	}
 	printf("%12.4f score\n", logprob)
 	io.stdout:flush()
-	mat_full:exp()
 	mat_full:adjust_range(0,1)
-	matrix.saveImage(mat_full, string.format("tmp/hmm_matrix_%03d.pnm",
+	matrix.saveImage(mat_full, string.format("tmp-new/hmm_matrix_%03d.pnm",
 	 					 current))
 	print(segmentation_matrix)
 	current = current + 1
