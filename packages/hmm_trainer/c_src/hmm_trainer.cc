@@ -480,7 +480,7 @@ struct list_output {
   list_output *next;
 };
 
-log_float hmm_trainer_model::viterbi(MatrixFloat *emission,
+log_float hmm_trainer_model::viterbi(const MatrixFloat *emission,
 				     bool emission_in_log_base,
 				     bool do_expectation,
 				     MatrixFloat *reest_emission,
@@ -619,8 +619,8 @@ log_float hmm_trainer_model::viterbi(MatrixFloat *emission,
       if (reest_emission) {
 	MatrixFloat::iterator emiss_it(reest_emission->iteratorAt(sq,0));
 	for (int i=0;i<sz_emission_frame;i++,++emiss_it)
-	  *emiss_it = 0;
-	(*reest_emission)(sq,emis) = 1.0;
+	  *emiss_it = 0.0f;
+	(*reest_emission)(sq,emis) = 1.0f;
       }
     }
 

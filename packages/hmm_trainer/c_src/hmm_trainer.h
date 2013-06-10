@@ -171,7 +171,7 @@ class hmm_trainer_model : public Referenced {
 
   bool prepare_model(); // llamarlo una vez introducido todo
 
-  log_float viterbi(MatrixFloat *emission,
+  log_float viterbi(const MatrixFloat *emission,
 		    bool emission_in_log_base,
 		    bool do_expectation,
 		    MatrixFloat *reest_emission,
