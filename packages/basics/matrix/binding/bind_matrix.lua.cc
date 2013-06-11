@@ -460,9 +460,29 @@
   LUABIND_CHECK_PARAMETER(1, float);
   float value;
   LUABIND_GET_PARAMETER(1,float,value);
-  for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it) {
-    *it = value;
-  }
+  obj->fill(value);
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat zeros
+//DOC_BEGIN
+// void zeros(float value)
+/// Permite poner todos los valores de la matriz a un mismo valor.
+//DOC_END
+{
+  obj->zeros();
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat ones
+//DOC_BEGIN
+// void onex(float value)
+/// Permite poner todos los valores de la matriz a un mismo valor.
+//DOC_END
+{
+  obj->ones();
   LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END

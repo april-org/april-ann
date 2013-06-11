@@ -256,55 +256,20 @@
 		     "count_value",
 		     0);
   //
-  lua_pushstring(L, "input_emission");
-  lua_gettable(L,1);
-  if (lua_isnil(L,-1)) {
-    lua_pushstring(L,"hmm_trainer_model: input_emission not found");
-    lua_error(L);
-  }
-  MatrixFloat* input_matemi = lua_toMatrixFloat(L,-1);
-  lua_pop(L,1);
-  //
-  MatrixFloat* output_matemi_seq = 0;
-  lua_pushstring(L, "output_emission_seq");
-  lua_gettable(L,1);
-  if (!lua_isnil(L,-1)) {
-    output_matemi_seq = lua_toMatrixFloat(L,-1);
-  }
-  lua_pop(L,1);
-  //
-  MatrixFloat* output_matemi = 0;
-  lua_pushstring(L, "output_emission");
-  lua_gettable(L,1);
-  if (!lua_isnil(L,-1)) {
-    output_matemi = lua_toMatrixFloat(L,-1);
-  }
-  lua_pop(L,1);
-  //
-  // matriz de dim 1, talla num_states
-  MatrixFloat* state_probabilities = 0;
-  lua_pushstring(L, "state_probabilities");
-  lua_gettable(L,1);
-  if (!lua_isnil(L,-1)) {
-    state_probabilities = lua_toMatrixFloat(L,-1);
-  }
-  lua_pop(L,1);
-  //
-  bool do_expectation = false;
-  lua_pushstring(L, "do_expectation");
-  lua_gettable(L,1);
-  if (!lua_isnil(L,-1)) {
-    do_expectation = lua_toboolean(L,-1);
-  }
-  lua_pop(L,1);
-  //
-  bool emission_in_log_base = false;
-  lua_pushstring(L, "emission_in_log_base");
-  lua_gettable(L,1);
-  if (!lua_isnil(L,-1)) {
-    emission_in_log_base = lua_toboolean(L,-1);
-  }
-  lua_pop(L,1);
+  MatrixFloat *input_matemi, *output_matemi_seq, *output_matemi;
+  MatrixFloat *state_probabilities;
+  bool do_expectation, emission_in_log_base;
+  LUABIND_GET_TABLE_PARAMETER(1, input_emission, MatrixFloat, input_matemi);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, output_emission_seq,
+				       MatrixFloat, output_matemi_seq, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, output_emission,
+				       MatrixFloat, output_matemi, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, state_probabilities,
+				       MatrixFloat, state_probabilities, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, do_expectation, bool,
+				       do_expectation, false);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, emission_in_log_base, bool,
+				       emission_in_log_base, false);
   // Modificar el valor a sumar en cada cuenta, de esa forma se pueden
   // ponderar las cuentas de diferentes frases dando mas pesos a unas
   // que a otras
@@ -321,7 +286,7 @@
 				 state_probabilities,
 				 &output,
 				 count_value);
-  LUABIND_RETURN(double, resul.log()); // devuelve log(probabilidad)
+  LUABIND_RETURN(float, resul.log()); // devuelve log(probabilidad)
   LUABIND_RETURN(string, output);
   delete[] output;
 }
