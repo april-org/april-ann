@@ -182,15 +182,15 @@ end
 
 -- generamos la red
 if initial_mlp then
-  ann_table.trainer = trainer.supervised_trainer.load(initial_mlp,
-						ann.loss[error_function](ann_table.num_outputs),
-						bunch_size)
+  ann_table.trainer = trainable.supervised_trainer.load(initial_mlp,
+							ann.loss[error_function](ann_table.num_outputs),
+							bunch_size)
   ann_table.thenet  = ann_table.trainer:get_component()
 else
   ann_table.thenet  = ann.mlp.all_all.generate(mlp_str)
   ann_table.trainer = trainable.supervised_trainer(ann_table.thenet,
-					     ann.loss[error_function](ann_table.num_outputs),
-					     bunch_size)
+						   ann.loss[error_function](ann_table.num_outputs),
+						   bunch_size)
   ann_table.trainer:build()
   ann_table.trainer:randomize_weights{
     inf =  ann_table.rndw,

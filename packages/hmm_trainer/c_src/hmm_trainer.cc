@@ -589,6 +589,8 @@ log_float hmm_trainer_model::viterbi(const MatrixFloat *emission,
       *st_prob_it = probnxt[i];
   }
 
+  if (reest_emission) reest_emission->zeros();
+  
   // recuperar prob final:
   //printf("recuperar prob final\n");
   log_float output_prob = probnxt[final_state];
@@ -607,21 +609,11 @@ log_float hmm_trainer_model::viterbi(const MatrixFloat *emission,
 
     int emis  = transition_emission(tr);
     if (emis >= 0) { 
-
-      if (do_expectation) {
-	// acumular para calcular prob. a priori de las emisiones
-	trainer->acum_cls_emission[emis] += logd_count_value;
-      }
-
+      // acumular para calcular prob. a priori de las emisiones
+      if (do_expectation) trainer->acum_cls_emission[emis] += logd_count_value;
       // guardar la emision:
-      if (seq_reest_emission)
-	(*seq_reest_emission)(sq) = emis+1;
-      if (reest_emission) {
-	MatrixFloat::iterator emiss_it(reest_emission->iteratorAt(sq,0));
-	for (int i=0;i<sz_emission_frame;i++,++emiss_it)
-	  *emiss_it = 0.0f;
-	(*reest_emission)(sq,emis) = 1.0f;
-      }
+      if (seq_reest_emission) (*seq_reest_emission)(sq)  = emis+1;
+      if (reest_emission)     (*reest_emission)(sq,emis) = 1.0f;
     }
 
     // salida:
