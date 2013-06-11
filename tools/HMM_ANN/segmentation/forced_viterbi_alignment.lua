@@ -123,7 +123,7 @@ cmdOptTest = cmdOpt{
     description = "Force overwritten output files",
     long     = "force",
     argument = "no",
-    default_value = true,
+    default_value = false,
   },
   {
     index_name = "dir",
