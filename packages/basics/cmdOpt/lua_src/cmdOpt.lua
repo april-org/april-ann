@@ -178,11 +178,14 @@ function cmdOpt:generate_help()
       end
       if opt.default_value == nil then
 	table.insert(message,"\t      "..(opt.description or "")..
-		       ((not mandatory and " (optional)") or "").."\n")
+		       ((not mandatory and " "..ansi.fg["green"].."(optional)")
+			  or "")..ansi.fg["default"].."\n")
       else
 	table.insert(message,"\t      "..(opt.description or "")..
-		       ((not mandatory and " (optional)") or "").." [DEFAULT: "..
-		       tostring(opt.default_value) .. "]\n")
+		       ((not mandatory and " "..ansi.fg["green"].."(optional)")
+			  or "").." [DEFAULT: "..
+		       tostring(opt.default_value) .. "]"..
+		       ansi.fg["default"].."\n")
       end
     end
   end
