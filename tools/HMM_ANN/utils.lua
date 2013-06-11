@@ -548,26 +548,26 @@ function generate_new_segmentation(args)
 	--	print(table.concat(mat_full_ds:getPattern(1), " "))
 	-- DEBUG END
 	
-	local aux = mat_full:clone():exp()
-	aux:adjust_range(0,1)
-	matrix.saveImage(aux,
-	 		 string.format("tmp-new/mlp_matrix_%03d.pnm",
-	 			       current))
+	-- local aux = mat_full:clone():exp()
+	-- aux:adjust_range(0,1)
+	-- matrix.saveImage(aux,
+	--  		 string.format("tmp-new/mlp_matrix_%03d.pnm",
+	--  			       current))
 	-- ahora generamos la salida de Viterbi
 	local logprob =	themodel:viterbi{
 	  input_emission       = mat_full,
 	  do_expectation       = do_expectation,
 	  output_emission_seq  = segmentation_matrix,
-	  output_emission      = mat_full,              -- para DEBUG
+	  -- output_emission      = mat_full,              -- para DEBUG
 	  emission_in_log_base = emission_in_log_base,
 	  count_value          = count_value,
 	}
 	printf("%12.4f score\n", logprob)
 	io.stdout:flush()
-	mat_full:adjust_range(0,1)
-	matrix.saveImage(mat_full, string.format("tmp-new/hmm_matrix_%03d.pnm",
-	 					 current))
-	print(segmentation_matrix)
+	-- mat_full:adjust_range(0,1)
+	-- matrix.saveImage(mat_full, string.format("tmp-new/hmm_matrix_%03d.pnm",
+	--  					 current))
+	-- print(segmentation_matrix)
 	current = current + 1
       end
   }
@@ -608,16 +608,7 @@ end
 function load_matrix(MFCCfilename)
   -- cargamos la parametrizacion de MATRIX
   --if MFCCfilename == 'corpus/n02-082a-s05.fea' then os.exit() end
-  
-  local f = io.open(MFCCfilename) or
-  error ("No se ha podido encontrar "..MFCCfilename)
-  --print ("#    OPEN END")
-  local aux = f:read("*a")
-  --print ("#    READ END")
-  local ad  = matrix.fromString(aux)
-  --print ("#    MATRIX END")
-  f:close()
-  --print ("# END")
+  local ad = matrix.loadfile(MFCCfilename)
   return ad,ad:dim()[1]
 end
 
@@ -725,13 +716,13 @@ function generate_models_from_words(tbl,
   local themodel
   -- generamos el modelo a partir del diccionario fonetico, necesita
   -- name mangling
-  local tbl = string.tokenize(tr_string)
-  for i=1,#tbl do
-    if not aux_local_vars.mangling[tbl[i]] and not silences[tbl[i]] then
-      error("Word without transcription: "..tbl[i])
-    end
-    tbl[i]=aux_local_vars.mangling[tbl[i]] or tbl[i]
-  end
+
+  local tbl = table.imap(string.tokenize(tr_string),
+			 function(str)
+			   assert(aux_local_vars.mangling[str] or silences[str],
+				  "Word without transcription: " .. str)
+			   return aux_local_vars.mangling[str] or str
+			 end)
   return generate_models_from_sequences(tbl,
 					hmmtrainer,nil,silences)
 end
@@ -743,12 +734,11 @@ function generate_models_from_sequences(tbl,
 					tied,
 					silences,
 					output)
+  local w
   local result = {}
   if tied then
-    w = tied:search_triphone_sequence(tbl)
-    for i=1,#w do
-      w[i] = tied:get_model(w[i])
-    end
+    w = table.imap(tied:search_triphone_sequence(tbl),
+		   function(str) return tied:get_model(str) end)
   else w = tbl
   end
   local desc = HMMTrainer.utils.tbl2model_desc(w,

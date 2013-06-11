@@ -356,10 +356,14 @@ for index=which_i_am,#list,cores do
   else
     local filename = posteriors_f:read("*l")
     print ("# Loading posteriors:    ", filename)
-    mat_full = load_matrix(filename)
+    mat_full = frames_loader(filename)
   end
 
   print("# Building HMM model")
+  -- filtramos la transcripcion
+  if transcription_filter then
+    tr_string = transcription_filter(tr_string)
+  end
   -- anyadimos los silencios
   if begin_sil then
     tr_string = begin_sil .. " " .. tr_string
@@ -367,23 +371,18 @@ for index=which_i_am,#list,cores do
   if end_sil then 
     tr_string = tr_string .. " " .. end_sil
   end
-  -- filtramos la transcripcion
-  if transcription_filter then
-    tr_string = transcription_filter(tr_string)
-  end
   tr_string = string.gsub(tr_string, begin_sil.." "..begin_sil, begin_sil)
   tr_string = string.gsub(tr_string, end_sil.." "..end_sil, end_sil)
   local themodel
   if phdict then
     -- generamos el modelo a partir del diccionario fonetico, necesita
     -- name mangling
-    local tbl = string.tokenize(tr_string)
-    for i=1,#tbl do
-      if not mangling[tbl[i]] and not hmm.silences[tbl[i]] then
-	error("Word without transcription: "..tbl[i])
-      end
-      tbl[i]=mangling[tbl[i]] or tbl[i]
-    end
+    local tbl = table.imap(string.tokenize(tr_string),
+			   function(str)
+			     assert(mangling[str] or hmm.silences[str],
+				    "Word without transcription: " .. str)
+			     return mangling[str] or str
+			   end)
     themodel=generate_models_from_sequences(tbl,
 					    hmm_trainer,nil,hmm.silences)
   else
@@ -392,7 +391,8 @@ for index=which_i_am,#list,cores do
 					    hmm_trainer,tied,hmm.silences)
   end
   
-  print("# Segmentation")
+  printf ("# Segmentation...         ")
+  io.stdout:flush()
   -- ahora generamos la salida de Viterbi
   local logprob,phon_output = themodel:viterbi{
     input_emission       = mat_full,
@@ -400,7 +400,9 @@ for index=which_i_am,#list,cores do
     output_emission_seq  = segmentation_matrix,
     emission_in_log_base = true,
   }
-  print(logprob, phon_output)
+  printf("%12.4f score\n", logprob)
+  -- print(segmentation_matrix)
+  print(phon_output)
   
   local output_filename = dir .. "/" .. remove_extensions(string.basename(mfcc_filename)) .. ".mat"
   print ("# Saving " .. output_filename)

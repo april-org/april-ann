@@ -44,6 +44,10 @@ if not silences or #silences==0 then
   fprintf(io.stderr, "# WARNING!!! NOT SILENCES TABLE DEFINED\n")
 end
 
+if not begin_sil or not end_sil then
+  fprintf(io.stderr, "# WARNING!!! NOT BEGIN AND END SILENCE SYMBOLS DEFINED\n")
+end
+
 if transcription_filter then
   fprintf(io.stderr, "# Using transcription filter\n")
 end
