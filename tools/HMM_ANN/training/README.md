@@ -107,7 +107,7 @@ Otherwise, the option `train-phdict` could replace the transcription filter.
 
 - `val-f`: Idem as `train-f` but for for early stopping (validation).
 
-_ `h1`: Number of neurons at the first layer.
+- `h1`: Number of neurons at the first layer.
 
 - `h2`: Number of neurons at the second layer (zero is valid, only one layer
   will be used).
