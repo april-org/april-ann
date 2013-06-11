@@ -1,12 +1,16 @@
 conf=arg[1]
 
 optargs = {}
-local t = dofile(conf)
-for name,value in pairs(t) do
-  optargs[name] = value
+if io.open(conf) then
+  local t = dofile(conf)
+  for name,value in pairs(t) do
+    optargs[name] = value
+  end
+  i=2
+else
+  i=1
 end
 
-i=2
 while i <= #arg do
   local t = {}
   if string.sub(arg[i], 1, 2) == "--" then
