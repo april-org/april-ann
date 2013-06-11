@@ -522,7 +522,7 @@ while em_iteration <= em.em_max_iterations do
 	     t.best_val_error, ann_table.thenet:get_option("learning_rate"))
       if (totaltrain > ann_table.num_epochs_first_lr and
 	    em_iteration == 1 and
-	    math.mod(totaltrain, 10) == 1 and
+	    math.mod(totaltrain, 10) == 0 and
 	  ann_table.thenet:get_option("learning_rate") > ann_table.learning_rate ) then
 	ann_table.thenet:set_option("learning_rate",
 				    ann_table.thenet:get_option("learning_rate") - 0.001)
