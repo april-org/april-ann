@@ -73,30 +73,29 @@ function matrix.loadImage(filename,format)
 end
 
 function matrix.saveImage(matrix,filename)
-  local f = io.open(filename,"w")
+  local f = io.open(filename,"w") or error("Unable to open " .. filename)
   f:write(matrix:toPNM())
   f:close()
 end
 
 function matrix.loadfile(filename)
-  --local f = io.open(filename,"r")
-  --local b = f:read("*a")
-  --f:close()
-  return matrix.fromFilename(filename)
+  local f = io.open(filename,"r") or error("Unable to open " .. filename)
+  local b = f:read("*a")
+  f:close()
+  return matrix.fromString(b)
 end
 
 function matrix.savefile(matrix,filename,format)
-  --local f = io.open(filename,"w")
-  --f:write(matrix:toString(format))
-  --f:close()
-  matrix:toFilename(filename, format)
+  local f = io.open(filename,"w") or error("Unable to open " .. filename)
+  f:write(matrix:toString(format))
+  f:close()
 end
 
 -- RAW (ASCII)
 
 -- TODO: MEter esta funcion como parametro format de matrix:toString
 function matrix.saveRAW(matrix,filename)
-  local f = io.open(filename,"w")
+  local f = io.open(filename,"w") or error("Unable to open " .. filename)
   local t = matrix:toTable()
   for i=1,table.getn(t) do
      f:write(t[i] .. "\n")
@@ -184,6 +183,8 @@ april_set_doc("matrix.loadfile", {
 		class = "function", summary = "constructor",
 		description ={
 		  "Loads a matrix from a filename.",
+		  "This function supports GZ files, but needs",
+		  "to load the matrix as string before parsing it.",
 		},
 		params = {
 		  "A filename path.",
@@ -195,6 +196,8 @@ april_set_doc("matrix.savefile", {
 		summary = "It allows to store a matrix in a file.",
 		description ={
 		  "It allows to store a matrix in a file.",
+		  "This function supports GZ files, but needs",
+		  "to save the matrix as string before parsing it.",
 		},
 		params = {
 		  "A filename path.",
