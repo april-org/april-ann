@@ -520,9 +520,10 @@ while em_iteration <= em.em_max_iterations do
 	     em_iteration, t.current_epoch, totaltrain,
 	     t.train_error, t.validation_error, bestepoch,
 	     t.best_val_error, ann_table.thenet:get_option("learning_rate"))
+      totaltrain = totaltrain + 1
       if (totaltrain > ann_table.num_epochs_first_lr and
 	    em_iteration == 1 and
-	    math.mod(totaltrain, 10) == 0 and
+	    math.mod(totaltrain, 10) == 1 and
 	  ann_table.thenet:get_option("learning_rate") > ann_table.learning_rate ) then
 	ann_table.thenet:set_option("learning_rate",
 				    ann_table.thenet:get_option("learning_rate") - 0.001)
@@ -531,7 +532,6 @@ while em_iteration <= em.em_max_iterations do
 	firstbestce = t.validation_error
 	printf ("# FIRST BEST CE FOR EM: %.7f\n", firstbestce)
       end
-      totaltrain = totaltrain + 1
       io.stdout:flush()
     end,
     best_function = function(best_trainer)
