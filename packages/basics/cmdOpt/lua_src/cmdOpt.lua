@@ -106,7 +106,9 @@ function cmdOpt:generate_help()
     if opt.long_options  then total = total+#opt.long_options end
     local remains=total
     if (total>0) then
-      table.insert(message," ["..(total>1 and "(" or ""))
+      local mandatory = (opt.mode == "always" and not opt.default_value)
+      table.insert(message,
+		   ((not mandatory and " [") or " ")..(total>1 and "(" or ""))
       for j,short in ipairs(opt.short_options or {}) do
 	local str="-"..short
 	if opt.argument == "yes" then 
@@ -131,7 +133,8 @@ function cmdOpt:generate_help()
 	  table.insert(message,str)
 	end
       end
-      table.insert(message,(total>1 and ")" or "").."]")
+      table.insert(message,(total>1 and ")" or "")..
+		     ((not mandatory and "]") or " "))
     end
   end
   table.insert(message," ")
@@ -147,6 +150,7 @@ function cmdOpt:generate_help()
     if opt.long_options  then total = total+#opt.long_options end
     local remains=total
     if (total>0) then
+      local mandatory = (opt.mode == "always" and not opt.default_value)
       table.insert(message,"\t")
       for j,short in ipairs(opt.short_options or {}) do
 	local str="-"..short
@@ -173,9 +177,11 @@ function cmdOpt:generate_help()
 	end
       end
       if opt.default_value == nil then
-	table.insert(message,"\t      "..(opt.description or "").."\n")
+	table.insert(message,"\t      "..(opt.description or "")..
+		       ((not mandatory and " (optional)") or "").."\n")
       else
-	table.insert(message,"\t      "..(opt.description or "").." [DEFAULT: "..
+	table.insert(message,"\t      "..(opt.description or "")..
+		       ((not mandatory and " (optional)") or "").." [DEFAULT: "..
 		       tostring(opt.default_value) .. "]\n")
       end
     end
