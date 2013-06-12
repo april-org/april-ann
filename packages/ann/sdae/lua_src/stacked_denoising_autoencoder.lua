@@ -23,7 +23,7 @@ local function build_two_layered_codifier(names_prefix,
 					  input_actf,
 					  cod_size,
 					  cod_actf)
-  local codifier_component = ann.components.stack()
+  local codifier_component = ann.components.stack{ name=names_prefix.."stack" }
   codifier_component:push( ann.components.hyperplane{
 			     dot_product_weights = names_prefix.."w",
 			     bias_weights        = names_prefix.."b",
@@ -42,7 +42,7 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(names_prefix,
 								 cod_size,
 								 cod_actf,
 								 weights_random)
-  local autoencoder_component = ann.components.stack()
+  local autoencoder_component = ann.components.stack{ name=names_prefix.."stack" }
   autoencoder_component:push( ann.components.hyperplane{
 				name                = names_prefix.."layer1",
 				dot_product_weights = names_prefix.."w",
@@ -204,7 +204,7 @@ function ann.autoencoders.build_full_autoencoder(layers,
   local names_prefix  = names_prefix or ""
   local weights_mat   = sdae_table.weights
   local bias_mat      = sdae_table.bias
-  local sdae          = ann.components.stack()
+  local sdae          = ann.components.stack{ name=names_prefix.."stack" }
   local prev_size     = layers[1].size
   local weights_table = {}
   local k = 1
@@ -474,7 +474,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
   local bias    = {}
   -- incremental mlp
   local mlp_final_weights = {}
-  local mlp_final = ann.components.stack()
+  local mlp_final = ann.components.stack{ name=params.names_prefix.."stack" }
   -- loop for each pair of layers
   for i=2,#params.layers do
     local input_size = params.layers[i-1].size
@@ -730,7 +730,7 @@ function ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
 							 layers)
   local weights_mat   = sdae_table.weights
   local bias_mat      = sdae_table.bias
-  local codifier_net  = ann.components.stack()
+  local codifier_net  = ann.components.stack{ name="stack" }
   local weights_table = {}
   for i=2,#layers do
     local bname = "b"..(i-1)

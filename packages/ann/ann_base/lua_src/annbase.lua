@@ -55,7 +55,7 @@ april_set_doc("ann.mlp.all_all.generate",
 function ann.mlp.all_all.generate(topology, first_count, names_prefix)
   local first_count  = first_count or 1
   local names_prefix = names_prefix or ""
-  local thenet = ann.components.stack()
+  local thenet = ann.components.stack{ name="stack" }
   local name   = "layer"
   local count  = first_count
   local t      = string.tokenize(topology)
