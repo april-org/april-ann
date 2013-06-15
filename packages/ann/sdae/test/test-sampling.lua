@@ -80,7 +80,7 @@ params_pretrain = {
   }
 }
 
-n = 37
+n = 41
 sdae_table,deep_classifier = ann.autoencoders.greedy_layerwise_pretraining(params_pretrain)
 full_sdae = ann.autoencoders.build_full_autoencoder(layers_table, sdae_table)
 rnd       = random()
@@ -105,9 +105,9 @@ matrix.saveImage(matrix(16,16,output), "wop.pnm")
 output,L = ann.autoencoders.sgd_sampling{
   model   = full_sdae,
   input   = input,
-  max     = 10000,
+  max     = 1000,
   mask    = mask,
-  stop    = 1e-03,
+  stop    = 1e-04,
   verbose = false,
   alpha   = 0.1,
   clamp   = function(v) return math.max(0, math.min(1,v)) end,
