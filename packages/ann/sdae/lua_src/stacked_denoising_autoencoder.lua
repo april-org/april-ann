@@ -831,6 +831,7 @@ function ann.autoencoders.iterative_sampling(t)
     }, t)
   assert(params.model:get_input_size() == params.model:get_output_size(),
 	 "Input and output sizes must be equal!!! (it is an auto-encoder)")
+  local L
   local last_L  = 11111111111111111
   local loss    = ann.loss.mse(params.model:get_output_size())
   local trainer = trainable.supervised_trainer(params.model)
@@ -841,14 +842,13 @@ function ann.autoencoders.iterative_sampling(t)
     output = trainer:calculate(input)
     for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
     loss:reset()
-    local L = loss:loss(params.model:get_output(), params.model:get_input())
-    local diff = math.abs(last_L - L)
+    L = loss:loss(params.model:get_output(), params.model:get_input())
     if params.verbose then printf("%6d %.8f\n", i, L) end
-    if diff < params.stop then break end
+    if math.abs(last_L - L) < params.stop then break end
     last_L = L
     input  = output
   end
-  return output
+  return output,L
 end
 
 ----------------------------------------------------------------------------
@@ -899,18 +899,20 @@ function ann.autoencoders.sgd_sampling(t)
   local trainer  = trainable.supervised_trainer(params.model)
   local input    = table.deep_copy(params.input)
   local output
+  local min      = 11111111111111111
+  local result   = nil
   trainer:build()
   for i=1,params.max do
     output = trainer:calculate(input)
     for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
     loss:reset()
     local L = loss:loss(params.model:get_output(), params.model:get_input())
-    local diff = math.abs(last_L - L)
+    if L < min then min,result = L,output end
     if params.verbose then printf("%6d %.8f\n", i, L) end
-    if diff < params.stop then break end
+    if math.abs(last_L - L) < params.stop then break end
     -- GRADIENT DESCENT UPDATE OF INPUT VECTOR
-    local gradient = loss:gradient(params.model:get_output(),
-				   params.model:get_input())
+    local gradient = params.model:backprop(loss:gradient(params.model:get_output(),
+							 params.model:get_input()))
     gradient = gradient:convert_to_memblock():to_table()
     for j=1,#gradient do
       if not inv_mask[j] then
@@ -920,5 +922,5 @@ function ann.autoencoders.sgd_sampling(t)
     --
     last_L = L
   end
-  return output
+  return result,min
 end
