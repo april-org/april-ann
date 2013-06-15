@@ -842,7 +842,7 @@ function ann.autoencoders.iterative_sampling(t)
     output = trainer:calculate(input)
     for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
     loss:reset()
-    L = loss:loss(params.model:get_output(), params.model:get_input())
+    L = loss:loss(tokens.memblock(output), params.model:get_input())
     if params.verbose then printf("%6d %.8f\n", i, L) end
     if math.abs(last_L - L) < params.stop then break end
     last_L = L
@@ -906,7 +906,7 @@ function ann.autoencoders.sgd_sampling(t)
     output = trainer:calculate(input)
     for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
     loss:reset()
-    local L = loss:loss(params.model:get_output(), params.model:get_input())
+    local L = loss:loss(tokens.memblock(output), params.model:get_input())
     if L < min then min,result = L,output end
     if params.verbose then printf("%6d %.8f\n", i, L) end
     if math.abs(last_L - L) < params.stop then break end
