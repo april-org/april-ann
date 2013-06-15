@@ -34,7 +34,7 @@ namespace ANN {
     error_input(0),
     error_output(0),
     dropout_factor(0.0f),
-    units_order_permutation(0) {
+    dropout_mask(0) {
   }
 
   ActivationFunctionANNComponent::~ActivationFunctionANNComponent() {
@@ -42,7 +42,7 @@ namespace ANN {
     if (error_input)  DecRef(error_input);
     if (output)       DecRef(output);
     if (error_output) DecRef(error_output);
-    delete[] units_order_permutation;
+    delete dropout_mask;
   }
 
   Token *ActivationFunctionANNComponent::doForward(Token* _input,
@@ -65,32 +65,16 @@ namespace ANN {
     // apply dropout
     if (dropout_factor > 0.0f) {
       if (during_training) {
-	FloatGPUMirroredMemoryBlock *dropout_mask;
+	if (dropout_mask) delete dropout_mask;
 	dropout_mask    = new FloatGPUMirroredMemoryBlock(input->getUsedSize());
 	float *mask_ptr = dropout_mask->getPPALForWrite();
 	for (unsigned int i=0; i<dropout_mask->getSize(); ++i) {
 	  if (dropout_random.rand() < dropout_factor) mask_ptr[i] = 0.0f;
 	  else mask_ptr[i] = 1.0f;
 	}
-	/*
-	  if (units_order_permutation == 0)
-	  units_order_permutation = new int[input_size];
-	  doVectorSetToZero(dropout_mask,
-	  input->getUsedSize(), 1, 0,
-	  false);
-	  unsigned int length=static_cast<unsigned int>(dropout_factor*input_size);
-	  for (unsigned int i=0; i<bunch_size; ++i) {
-	  dropout_random.shuffle(input_size, units_order_permutation);
-	  for (unsigned int j=0; j<length; ++j) {
-	  unsigned int pos = units_order_permutation[j];
-	  mask_ptr[i + pos*input_size] = 1.0f;
-	  }
-	  }
-	*/
 	// apply mask
 	applyMask(output_ptr, dropout_mask, 0.0f, input_size,
 		  bunch_size, use_cuda);
-	delete dropout_mask;
       }
       else {
 	float scal_factor = 1.0f - dropout_factor;
@@ -124,6 +108,10 @@ namespace ANN {
     multiplyDerivatives(input_ptr, output_ptr,
 			error_input_ptr, error_output_ptr,
 			input_size, bunch_size);
+    if (dropout_factor > 0.0f && dropout_mask != 0)
+      // apply mask
+      applyMask(error_output_ptr, dropout_mask, 0.0f, input_size,
+		bunch_size, use_cuda);
     return error_output;
   }
 
@@ -132,10 +120,12 @@ namespace ANN {
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);
     if (error_output) DecRef(error_output);
+    if (dropout_mask) delete dropout_mask;
     input	 = 0;
     error_input	 = 0;
     output	 = 0;
     error_output = 0;
+    dropout_mask = 0;
   }
 
   void ActivationFunctionANNComponent::setOption(const char *name, double value) {

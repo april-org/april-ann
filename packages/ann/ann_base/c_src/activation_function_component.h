@@ -36,6 +36,7 @@ namespace ANN {
     unsigned int bunch_size;
     // for dropout
     float                        dropout_factor;
+    FloatGPUMirroredMemoryBlock *dropout_mask;
     int                         *units_order_permutation;
     static MTRand                dropout_random;
     static int                   dropout_seed;
