@@ -792,3 +792,133 @@ end
 function ann.autoencoders.compute_encoded_dataset_using_codifier()
   error("Deprecated, use trainable.supervised_trainer.use_dataset")
 end
+
+----------------------------------------------------------------------------
+
+april_set_doc("ann.autoencoders.iterative_sampling",
+	      {
+		class="function",
+		summary={"This function generates samples from a given autoencoder.", },
+		description=
+		  {
+		    "This function generates samples from a given autoencoder,",
+		    "iterating a until convergence. It is possible to indicate",
+		    "a mask of input positions that will be keep untouched.",
+		  },
+		params= {
+		  ["model"] = {"An autoencoder ANN component (not a trainer"},
+		  ["mask"]   = {"An array with the input positions which",
+				"will be keep untouched [optional]",},
+		  ["input"] = {"A table with the input values."},
+		  ["max"] = "Max number of iterations",
+		  ["stop"] = "Stop when MSE difference between iterations is lower than given value",
+		  ["verbose"] = "Verbosity true or false [optional].",
+		  ["alpha"] = "A number with the gradient step at each iteration.",
+		},
+		outputs= {
+		  {"A table with the input array after sampling"},
+		}
+	      })
+function ann.autoencoders.iterative_sampling(t)
+  local params = get_table_fields(
+    {
+      model      = { mandatory = true,  isa_match  = ann.components.base },
+      mask       = { mandatory = false, type_match = "table", default = {}, },
+      input      = { mandatory = true,  type_match = "table"  },
+      max        = { mandatory = true,  type_match = "number" },
+      stop       = { mandatory = true,  type_match = "number" },
+      verbose    = { mandatory = false, type_match = "boolean", default=false },
+    }, t)
+  assert(params.model:get_input_size() == params.model:get_output_size(),
+	 "Input and output sizes must be equal!!! (it is an auto-encoder)")
+  local last_L  = 11111111111111111
+  local loss    = ann.loss.mse(params.model:get_output_size())
+  local trainer = trainable.supervised_trainer(params.model)
+  local input   = table.deep_copy(params.input)
+  local output
+  trainer:build()
+  for i=1,params.max do
+    output = trainer:calculate(input)
+    for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
+    loss:reset()
+    local L = loss:loss(params.model:get_output(), params.model:get_input())
+    local diff = math.abs(last_L - L)
+    if params.verbose then printf("%6d %.8f\n", i, L) end
+    if diff < params.stop then break end
+    last_L = L
+    input  = output
+  end
+  return output
+end
+
+----------------------------------------------------------------------------
+
+april_set_doc("ann.autoencoders.sgd_sampling",
+	      {
+		class="function",
+		summary={"This function generates samples from a given autoencoder.", },
+		description=
+		  {
+		    "This function generates samples from a given autoencoder,",
+		    "using gradient descent a until convergence. It is possible to indicate",
+		    "a mask of input positions that will be keep untouched.",
+		  },
+		params= {
+		  ["model"] = {"An autoencoder ANN component (not a trainer"},
+		  ["mask"]   = {"An array with the input positions which",
+				"will be keep untouched [optional]",},
+		  ["input"] = {"A table with the input values."},
+		  ["max"] = "Max number of iterations",
+		  ["stop"] = "Stop when MSE difference between iterations is lower than given value",
+		  ["verbose"] = "Verbosity true or false [optional].",
+		  ["alpha"] = "A number with the gradient step at each iteration.",
+		  ["clamp"] = "A function to clamp sample values [optional].",
+		},
+		outputs= {
+		  {"A table with the input array after sampling"},
+		}
+	      })
+function ann.autoencoders.sgd_sampling(t)
+  local params = get_table_fields(
+    {
+      model      = { mandatory = true,  isa_match  = ann.components.base },
+      mask       = { mandatory = false, type_match = "table", default = {}, },
+      input      = { mandatory = true,  type_match = "table"  },
+      max        = { mandatory = true,  type_match = "number" },
+      stop       = { mandatory = true,  type_match = "number" },
+      verbose    = { mandatory = false, type_match = "boolean", default=false },
+      alpha      = { mandatory = true,  type_match = "number" },
+      clamp      = { mandatory = false, type_match = "function",
+		     default = function(v) return v end, }
+    }, t)
+  assert(params.model:get_input_size() == params.model:get_output_size(),
+	 "Input and output sizes must be equal!!! (it is an auto-encoder)")
+  local inv_mask = table.invert(params.mask)
+  local last_L   = 11111111111111111
+  local loss     = ann.loss.mse(params.model:get_output_size())
+  local trainer  = trainable.supervised_trainer(params.model)
+  local input    = table.deep_copy(params.input)
+  local output
+  trainer:build()
+  for i=1,params.max do
+    output = trainer:calculate(input)
+    for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
+    loss:reset()
+    local L = loss:loss(params.model:get_output(), params.model:get_input())
+    local diff = math.abs(last_L - L)
+    if params.verbose then printf("%6d %.8f\n", i, L) end
+    if diff < params.stop then break end
+    -- GRADIENT DESCENT UPDATE OF INPUT VECTOR
+    local gradient = loss:gradient(params.model:get_output(),
+				   params.model:get_input())
+    gradient = gradient:convert_to_memblock():to_table()
+    for j=1,#gradient do
+      if not inv_mask[j] then
+	input[j] = params.clamp(input[j] + params.alpha * gradient[j])
+      end
+    end
+    --
+    last_L = L
+  end
+  return output
+end
