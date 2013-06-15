@@ -80,15 +80,17 @@ params_pretrain = {
   }
 }
 
+n = 10
 sdae_table,deep_classifier = ann.autoencoders.greedy_layerwise_pretraining(params_pretrain)
 full_sdae = ann.autoencoders.build_full_autoencoder(layers_table, sdae_table)
 rnd       = random()
-input     = val_input:getPattern(10)
+input     = val_input:getPattern(n)
 mask      = {}
---for i=1,full_sdae:get_input_size() do input[i] = rnd:rand(0.1) end
-for i=1,10 do table.insert(mask, i) end
-for i=11,full_sdae:get_input_size() do input[i] = rnd:rand(0.1) end
-output = ann.autoencoders.iterative_sampling{
+loss      = ann.loss.mse(full_sdae:get_output_size())
+--for i=1,full_sdae:get_input_size() do input[i] = rnd:rand(0.2) end
+for i=1,100 do table.insert(mask, i) end
+for i=101,full_sdae:get_input_size() do input[i] = rnd:rand(0.1) end
+output,L = ann.autoencoders.iterative_sampling{
   model   = full_sdae,
   input   = input,
   max     = 1000,
@@ -96,16 +98,20 @@ output = ann.autoencoders.iterative_sampling{
   stop    = 1e-06,
   verbose = false,
 }
+print(L, loss:loss(tokens.memblock(output),
+		   tokens.memblock(val_input:getPattern(n))) )
 matrix.saveImage(matrix(16,16,output), "wop.pnm")
 
-output = ann.autoencoders.sgd_sampling{
+output,L = ann.autoencoders.sgd_sampling{
   model   = full_sdae,
   input   = input,
   max     = 1000,
   mask    = mask,
   stop    = 1e-06,
   verbose = false,
-  alpha   = 0.01,
-  --clamp   = function(v) return math.max(0, math.min(1,v)) end,
+  alpha   = 0.1,
+  clamp   = function(v) return math.max(0, math.min(1,v)) end,
 }
+print(L, loss:loss(tokens.memblock(output),
+		   tokens.memblock(val_input:getPattern(n))) )
 matrix.saveImage(matrix(16,16,output), "wop2.pnm")
