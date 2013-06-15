@@ -843,8 +843,9 @@ function ann.autoencoders.iterative_sampling(t)
     for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
     loss:reset()
     L = loss:loss(tokens.memblock(output), params.model:get_input())
-    if params.verbose then printf("%6d %.8f\n", i, L) end
-    if math.abs(last_L - L) < params.stop then break end
+    local imp = math.abs(last_L - L)/last_L
+    if params.verbose then printf("%6d %g %g\n", i, L, imp) end
+    if imp < params.stop then break end
     last_L = L
     input  = output
   end
@@ -908,8 +909,9 @@ function ann.autoencoders.sgd_sampling(t)
     loss:reset()
     local L = loss:loss(tokens.memblock(output), params.model:get_input())
     if L < min then min,result = L,output end
-    if params.verbose then printf("%6d %.8f\n", i, L) end
-    if math.abs(last_L - L) < params.stop then break end
+    local imp = math.abs(last_L - L)/last_L
+    if params.verbose then printf("%6d %g %g\n", i, L, imp) end
+    if imp < params.stop then break end
     -- GRADIENT DESCENT UPDATE OF INPUT VECTOR
     local gradient = params.model:backprop(loss:gradient(params.model:get_output(),
 							 params.model:get_input()))
