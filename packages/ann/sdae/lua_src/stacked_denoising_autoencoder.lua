@@ -824,10 +824,11 @@ april_set_doc("ann.autoencoders.iterative_sampling",
 				"will be keep untouched [optional]",},
 		  ["input"] = {"A table with the input values."},
 		  ["max"] = "Max number of iterations",
-		  ["stop"] = "Stop when MSE difference between iterations is lower than given value",
+		  ["stop"] = "Stop when loss difference between iterations is lower than given value",
 		  ["verbose"] = "Verbosity true or false [optional].",
 		  ["alpha"] = "A number with the gradient step at each iteration.",
 		  ["log"] = "A boolean indicating if the output is logarithmic [optional]",
+		  ["loss"] = "A loss function instance",
 		},
 		outputs= {
 		  {"A table with the input array after sampling, in natural",
@@ -844,6 +845,7 @@ function ann.autoencoders.iterative_sampling(t)
       stop       = { mandatory = true,  type_match = "number" },
       verbose    = { mandatory = false, type_match = "boolean", default=false },
       log        = { mandatory = false, type_match = "boolean", default=false },
+      loss       = { mandatory = true,  isa_match  = ann.loss.__base__ },
     }, t)
   assert(params.model:get_input_size() == params.model:get_output_size(),
 	 "Input and output sizes must be equal!!! (it is an auto-encoder)")
@@ -852,25 +854,19 @@ function ann.autoencoders.iterative_sampling(t)
   local trainer = trainable.supervised_trainer(params.model)
   local input   = table.deep_copy(params.input)
   local output  = input
-  local loss
-  if params.log then
-    loss = ann.loss.cross_entropy(params.model:get_output_size())
-  else
-    loss = ann.loss.mse(params.model:get_output_size())
-  end
   trainer:build()
   for i=1,params.max do
     output = trainer:calculate(input)
     for _,pos in ipairs(params.mask) do
       output[pos]=(params.log and math.log(params.input[pos]))or params.input[pos]
     end
-    loss:reset()
-    L = loss:loss(tokens.memblock(output), params.model:get_input())
+    params.loss:reset()
+    L = params.loss:loss(tokens.memblock(output), params.model:get_input())
     if params.log then
       output = table.imap(output, math.exp)
       for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
     end
-    local imp = math.abs(last_L - L)/last_L
+    local imp = math.abs(math.abs(last_L - L)/last_L)
     if params.verbose then printf("%6d %g %g\n", i, L, imp) end
     if imp < params.stop then break end
     last_L = L
@@ -897,11 +893,12 @@ april_set_doc("ann.autoencoders.sgd_sampling",
 				"will be keep untouched [optional]",},
 		  ["input"] = {"A table with the input values."},
 		  ["max"] = "Max number of iterations",
-		  ["stop"] = "Stop when MSE difference between iterations is lower than given value",
+		  ["stop"] = "Stop when loss difference between iterations is lower than given value",
 		  ["verbose"] = "Verbosity true or false [optional].",
 		  ["alpha"] = "A number with the gradient step at each iteration.",
 		  ["clamp"] = "A function to clamp sample values [optional].",
 		  ["log"] = "A boolean indicating if the output is logarithmic [optional]",
+		  ["loss"] = "A loss function instance",
 		},
 		outputs= {
 		  {"A table with the input array after sampling, in natural",
@@ -921,6 +918,7 @@ function ann.autoencoders.sgd_sampling(t)
       clamp      = { mandatory = false, type_match = "function",
 		     default = function(v) return v end, },
       log        = { mandatory = false, type_match = "boolean", default=false },
+      loss       = { mandatory = true,  isa_match  = ann.loss.__base__ },
     }, t)
   assert(params.model:get_input_size() == params.model:get_output_size(),
 	 "Input and output sizes must be equal!!! (it is an auto-encoder)")
@@ -932,12 +930,6 @@ function ann.autoencoders.sgd_sampling(t)
   local output   = input
   local result   = input
   local min      = 11111111111111111
-  local loss
-  if params.log then
-    loss = ann.loss.cross_entropy(params.model:get_output_size())
-  else
-    loss = ann.loss.mse(params.model:get_output_size())
-  end
   trainer:build()
   for i=1,params.max do
     params.model:reset()
@@ -945,19 +937,19 @@ function ann.autoencoders.sgd_sampling(t)
     for _,pos in ipairs(params.mask) do
       output[pos]=(params.log and math.log(params.input[pos]))or params.input[pos]
     end
-    loss:reset()
-    L = loss:loss(tokens.memblock(output), params.model:get_input())
+    params.loss:reset()
+    L = params.loss:loss(tokens.memblock(output), params.model:get_input())
     if params.log then
       output = table.imap(output, math.exp)
       for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
     end
     if i==1 or L <= min then min,result = L,output end
-    local imp = math.abs(last_L - L)/last_L
+    local imp = math.abs(math.abs(last_L - L)/last_L)
     if params.verbose then printf("%6d %g %g\n", i, L, imp) end
     if imp < params.stop then break end
     -- GRADIENT DESCENT UPDATE OF INPUT VECTOR
-    local gradient = params.model:backprop(loss:gradient(params.model:get_output(),
-							 params.model:get_input()))
+    local gradient = params.model:backprop(params.loss:gradient(params.model:get_output(),
+								params.model:get_input()))
     gradient = gradient:convert_to_memblock():to_table()
     for j=1,#gradient do
       if not inv_mask[j] then
