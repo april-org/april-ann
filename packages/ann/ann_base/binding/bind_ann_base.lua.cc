@@ -82,7 +82,7 @@ using namespace ANN;
   LUABIND_GET_TABLE_PARAMETER(1, input, uint, input_size);
   LUABIND_GET_TABLE_PARAMETER(1, output, uint, output_size);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, w, MatrixFloat, w, 0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, w);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, first_pos, uint, first_pos, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, column_size, uint, column_size,
 				       input_size);

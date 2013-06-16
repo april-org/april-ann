@@ -962,6 +962,31 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 
 //////////////////////////////////////////
 
+//BIND_LUACLASSNAME SaltPepperNoiseDataSetFloat dataset.salt_pepper_noise
+//BIND_CPP_CLASS    SaltPepperNoiseDataSetFloat
+//BIND_SUBCLASS_OF  SaltPepperNoiseDataSetFloat DataSetFloat
+
+//BIND_CONSTRUCTOR SaltPepperNoiseDataSetFloat
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  check_table_fields(L, 1, "dataset", "vd", "zero", "one", "random", 0);
+  DataSetFloat *ds;
+  MTRand *random;
+  double vd;
+  float zero, one;
+  LUABIND_GET_TABLE_PARAMETER(1, dataset, DataSetFloat, ds    );
+  LUABIND_GET_TABLE_PARAMETER(1, random,  MTRand,       random);
+  LUABIND_GET_TABLE_PARAMETER(1, vd,      double,       vd);
+  LUABIND_GET_TABLE_PARAMETER(1, zero,    float,        zero);
+  LUABIND_GET_TABLE_PARAMETER(1, one,     float,        one);
+  DataSetFloat *obj = new SaltPepperNoiseDataSetFloat(ds, random, vd, zero, one);
+  LUABIND_RETURN(DataSetFloat,obj);
+}
+//BIND_END
+
+//////////////////////////////////////////
+
 //BIND_LUACLASSNAME DerivDataSetFloat dataset.deriv
 //BIND_CPP_CLASS    DerivDataSetFloat
 //BIND_SUBCLASS_OF  DerivDataSetFloat DataSetFloat

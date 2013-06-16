@@ -32,6 +32,7 @@ typedef ShortListDataSet<float> ShortListDataSetFloat;
 typedef IndexFilterDataSet<float> IndexFilterDataSetFloat;
 typedef PerturbationDataSet<float> PerturbationDataSetFloat;
 typedef SaltNoiseDataSet<float> SaltNoiseDataSetFloat;
+typedef SaltPepperNoiseDataSet<float> SaltPepperNoiseDataSetFloat;
 typedef DerivDataSet<float> DerivDataSetFloat;
 typedef CacheDataSet<float> CacheDataSetFloat;
 
