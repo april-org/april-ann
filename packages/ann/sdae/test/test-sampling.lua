@@ -1,6 +1,7 @@
 n = tonumber(arg[1] or 1)     -- validation pattern (up to 200)
 p = tonumber(arg[2] or 0.5)   -- noise percentage
 a = tonumber(arg[3] or 0.004) -- SGD alpha parameter
+s = tonumber(arg[4] or 12345) -- random seed
 
 m1 = ImageIO.read("digits.png"):to_grayscale():invert_colors():matrix()
 
@@ -15,9 +16,14 @@ val_input  = dataset.matrix(m1,
 
 trainer   = trainable.supervised_trainer.load("full-sdae.net")
 full_sdae = trainer:get_component()
-rnd       = random()
+
+full_sdae:pop()
+full_sdae:push(ann.components.actf.logistic{ name = "actf-output" })
+trainer:build()
+
+rnd       = random(s)
 input     = val_input:getPattern(n)
-loss      = ann.loss.cross_entropy(full_sdae:get_output_size())
+loss      = ann.loss.local_fmeasure{ size=1, beta=2 }
 mask      = {}
 for i=1,#input do
   v = rnd:rand(1.0)
@@ -30,27 +36,29 @@ output,L = ann.autoencoders.iterative_sampling{
   input   = input,
   max     = 1000,
   mask    = mask,
-  stop    = 1e-03,
+  stop    = 1e-08,
   verbose = false,
-  log     = true,
+  log     = false,
+  loss    = loss,
 }
 matrix.saveImage(matrix(16,16,output), "wop1.pnm")
-output = table.imap(output, math.log)
+-- output = table.imap(output, math.log)
 print(loss:loss(tokens.memblock(output),
 		tokens.memblock(val_input:getPattern(n))), L)
 
 output,L = ann.autoencoders.sgd_sampling{
   model   = full_sdae,
   input   = input,
-  max     = 100,
+  max     = 1000,
   mask    = mask,
   stop    = 1e-08,
   verbose = false,
-  alpha   = 0.004,
-  log     = true,
+  alpha   = a,
+  log     = false,
   clamp   = function(v) return math.max(0, math.min(1,v)) end,
+  loss    = loss,
 }
 matrix.saveImage(matrix(16,16,output), "wop2.pnm")
-output = table.imap(output, math.log)
+-- output = table.imap(output, math.log)
 print(loss:loss(tokens.memblock(output),
 		tokens.memblock(val_input:getPattern(n))), L)
