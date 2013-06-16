@@ -3,8 +3,8 @@ loss_function = arg[2] or "cross_entropy"
 alpha         = tonumber(arg[3] or 0.01)  -- SGD alpha parameter
 seed          = tonumber(arg[4] or 12345) -- random seed
 
-num_repetitions = 10
-max_iterations  = 10
+num_repetitions = 100
+max_iterations  = 100
 stop_criterion  = 1e-08
 
 m1 = ImageIO.read("digits.png"):to_grayscale():invert_colors():matrix()
