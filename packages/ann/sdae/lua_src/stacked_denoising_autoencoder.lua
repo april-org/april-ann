@@ -543,11 +543,10 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
     end
     collectgarbage("collect")
     local loss_function
-    if input_size > 1 and (input_actf == "log_logistic" or
-			   input_actf == "log_softmax") then
-      loss_function = ann.loss.multi_class_cross_entropy(input_size)
-    elseif input_size == 1 and input_actf == "log_logistic" then
+    if input_actf == "log_logistic" then
       loss_function = ann.loss.cross_entropy(input_size)
+    elseif input_actf == "log_softmax" then
+      loss_function = ann.loss.multi_class_cross_entropy(input_size)
     else
       loss_function = ann.loss.mse(input_size)
     end
@@ -686,13 +685,10 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
       thenet:set_option(key, value)
     end
     local loss_function
-    if output_size > 1 and
-      (output_actf == "log_logistic" or
-       output_actf == "log_softmax") then
-	loss_function = ann.loss.multi_class_cross_entropy(output_size)
-    elseif (output_size == 1 and
-	    output_actf == "log_logistic") then
+    if output_actf == "log_logistic" then
       loss_function = ann.loss.cross_entropy(output_size)
+    elseif output_actf == "log_softmax" then
+      loss_function = ann.loss.multi_class_cross_entropy(output_size)
     else
       loss_function = ann.loss.mse(output_size)
     end
@@ -858,7 +854,7 @@ function ann.autoencoders.iterative_sampling(t)
   local output  = input
   local loss
   if params.log then
-    loss = ann.loss.multi_class_cross_entropy(params.model:get_output_size())
+    loss = ann.loss.cross_entropy(params.model:get_output_size())
   else
     loss = ann.loss.mse(params.model:get_output_size())
   end
@@ -938,7 +934,7 @@ function ann.autoencoders.sgd_sampling(t)
   local min      = 11111111111111111
   local loss
   if params.log then
-    loss = ann.loss.multi_class_cross_entropy(params.model:get_output_size())
+    loss = ann.loss.cross_entropy(params.model:get_output_size())
   else
     loss = ann.loss.mse(params.model:get_output_size())
   end

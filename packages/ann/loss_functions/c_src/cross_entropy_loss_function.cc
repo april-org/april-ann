@@ -26,11 +26,6 @@ namespace ANN {
 
   CrossEntropyLossFunction::CrossEntropyLossFunction(unsigned int size) :
     LossFunction(size), accumulated_loss(0.0f), N(0) {
-    if (size != 1)
-      ERROR_EXIT(128,
-		 "Cross entropy is only allowed for two-class problems "
-		 "(one output log logistic neuron). "
-		 "Use multi class cross entropy instead.\n");
   }
   
   CrossEntropyLossFunction::~CrossEntropyLossFunction() {
@@ -52,7 +47,7 @@ namespace ANN {
     unsigned int bunch_size = input_mem_token->getUsedSize() / size;
     float loss = doCrossEntropyLossFunction(input_mem_token->getMemBlock(),
 					    target_mem_block->getMemBlock(),
-					    0.0f, size, bunch_size,
+					    NEAR_ZERO, size, bunch_size,
 					    input_mem_token->getCudaFlag());
     loss = -loss/bunch_size;
     accumulated_loss += loss;
@@ -78,7 +73,7 @@ namespace ANN {
     doComputeCrossEntropyGradient(input_mem_token->getMemBlock(),
 				  target_mem_block->getMemBlock(),
 				  error_mem_block->getMemBlock(),
-				  0.0f, size, bunch_size,
+				  NEAR_ZERO, size, bunch_size,
 				  input_mem_token->getCudaFlag());
     return error_output;
   }
