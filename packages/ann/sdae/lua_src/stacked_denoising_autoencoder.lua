@@ -25,11 +25,14 @@ local function build_two_layered_codifier(names_prefix,
 					  cod_actf)
   local codifier_component = ann.components.stack{ name=names_prefix.."stack" }
   codifier_component:push( ann.components.hyperplane{
+			     name                = names_prefix.."c",
+			     dot_product_name    = names_prefix.."w",
 			     dot_product_weights = names_prefix.."w",
+			     bias_name           = names_prefix.."b",
 			     bias_weights        = names_prefix.."b",
 			     input  = input_size,
 			     output = cod_size, } )
-  codifier_component:push(ann.components.actf[cod_actf]())
+  codifier_component:push(ann.components.actf[cod_actf]{ name=names_prefix.."actf" })
   return codifier_component
 end
 
@@ -45,14 +48,18 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(names_prefix,
   local autoencoder_component = ann.components.stack{ name=names_prefix.."stack" }
   autoencoder_component:push( ann.components.hyperplane{
 				name                = names_prefix.."layer1",
+				dot_product_name    = names_prefix.."w1",
 				dot_product_weights = names_prefix.."w",
+				bias_name           = names_prefix.."b1",
 				bias_weights        = names_prefix.."b1",
 				input  = input_size,
 				output = cod_size, } )
   autoencoder_component:push(ann.components.actf[cod_actf]{ name=names_prefix.."actf1" })
   autoencoder_component:push( ann.components.hyperplane{
 				name                = names_prefix.."layer2",
+				dot_product_name    = names_prefix.."w2",
 				dot_product_weights = names_prefix.."w",
+				bias_name           = names_prefix.."b2",
 				bias_weights        = names_prefix.."b2",
 				input  = cod_size,
 				output = input_size,
@@ -213,9 +220,12 @@ function ann.autoencoders.build_full_autoencoder(layers,
     local wname , bname = names_prefix.."w" .. (i-1) , names_prefix.."b" .. k
     local actfname = names_prefix.."actf" .. k
     sdae:push( ann.components.hyperplane{
+		 name                = names_prefix.."c"..k,
 		 input               = prev_size,
 		 output              = size,
+		 dot_product_name    = wname,
 		 dot_product_weights = wname,
+		 bias_name           = bname,
 		 bias_weights        = bname })
     sdae:push( ann.components.actf[actf]{ name=actfname })
     --
@@ -224,25 +234,29 @@ function ann.autoencoders.build_full_autoencoder(layers,
 					    w=weights_mat[i-1] }
     weights_table[bname] = ann.connections{ input=1,
 					    output=size,
-					    w=weights_mat[i-1] }
+					    w=bias_mat[i-1][1] }
     prev_size = size
     k = k+1
   end
   for i=#layers-1,1,-1 do
     local size , actf   = layers[i].size,layers[i].actf
     local wname , bname = names_prefix.."w" .. i , names_prefix.."b" .. k
+    local dname = names_prefix.."w" .. k
     local actfname = names_prefix.."actf" .. k
     sdae:push( ann.components.hyperplane{
+		 name                = names_prefix.."c"..k,
 		 input               = prev_size,
 		 output              = size,
 		 transpose           = true,
 		 dot_product_weights = wname,
+		 dot_product_name    = dname,
+		 bias_name           = bname,
 		 bias_weights        = bname })
     sdae:push( ann.components.actf[actf]{ name=actfname })
     --
     weights_table[bname] = ann.connections{ input=1,
 					    output=size,
-					    w=weights_mat[i-1] }
+					    w=bias_mat[i][2] }
     prev_size = size
     k = k+1
   end
@@ -736,11 +750,14 @@ function ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
     local bname = "b"..(i-1)
     local wname = "w"..(i-1)
     codifier_net:push( ann.components.hyperplane{
+			 name   = "c" .. (i-1),
 			 input  = layers[i-1].size,
 			 output = layers[i].size,
+			 dot_product_name    = wname,
 			 dot_product_weights = wname,
+			 bias_name           = bname,
 			 bias_weights        = bname })
-    codifier_net:push( ann.components.actf[layers[i].actf]() )
+    codifier_net:push( ann.components.actf[layers[i].actf]{ name="actf"..(i-1) })
     weights_table[wname] = ann.connections{ input=layers[i-1].size,
 					    output=layers[i].size,
 					    w = weights_mat[i-1] }
@@ -814,9 +831,11 @@ april_set_doc("ann.autoencoders.iterative_sampling",
 		  ["stop"] = "Stop when MSE difference between iterations is lower than given value",
 		  ["verbose"] = "Verbosity true or false [optional].",
 		  ["alpha"] = "A number with the gradient step at each iteration.",
+		  ["log"] = "A boolean indicating if the output is logarithmic [optional]",
 		},
 		outputs= {
-		  {"A table with the input array after sampling"},
+		  {"A table with the input array after sampling, in natural",
+		   "scale (not logarithmic), even if log=true"},
 		}
 	      })
 function ann.autoencoders.iterative_sampling(t)
@@ -828,21 +847,33 @@ function ann.autoencoders.iterative_sampling(t)
       max        = { mandatory = true,  type_match = "number" },
       stop       = { mandatory = true,  type_match = "number" },
       verbose    = { mandatory = false, type_match = "boolean", default=false },
+      log        = { mandatory = false, type_match = "boolean", default=false },
     }, t)
   assert(params.model:get_input_size() == params.model:get_output_size(),
 	 "Input and output sizes must be equal!!! (it is an auto-encoder)")
-  local L
+  local L       = 11111111111111111
   local last_L  = 11111111111111111
-  local loss    = ann.loss.mse(params.model:get_output_size())
   local trainer = trainable.supervised_trainer(params.model)
   local input   = table.deep_copy(params.input)
-  local output
+  local output  = input
+  local loss
+  if params.log then
+    loss = ann.loss.multi_class_cross_entropy(params.model:get_output_size())
+  else
+    loss = ann.loss.mse(params.model:get_output_size())
+  end
   trainer:build()
   for i=1,params.max do
     output = trainer:calculate(input)
-    for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
+    for _,pos in ipairs(params.mask) do
+      output[pos]=(params.log and math.log(params.input[pos]))or params.input[pos]
+    end
     loss:reset()
     L = loss:loss(tokens.memblock(output), params.model:get_input())
+    if params.log then
+      output = table.imap(output, math.exp)
+      for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
+    end
     local imp = math.abs(last_L - L)/last_L
     if params.verbose then printf("%6d %g %g\n", i, L, imp) end
     if imp < params.stop then break end
@@ -874,9 +905,11 @@ april_set_doc("ann.autoencoders.sgd_sampling",
 		  ["verbose"] = "Verbosity true or false [optional].",
 		  ["alpha"] = "A number with the gradient step at each iteration.",
 		  ["clamp"] = "A function to clamp sample values [optional].",
+		  ["log"] = "A boolean indicating if the output is logarithmic [optional]",
 		},
 		outputs= {
-		  {"A table with the input array after sampling"},
+		  {"A table with the input array after sampling, in natural",
+		   "scale (not logarithmic), even if log=true"},
 		}
 	      })
 function ann.autoencoders.sgd_sampling(t)
@@ -890,25 +923,39 @@ function ann.autoencoders.sgd_sampling(t)
       verbose    = { mandatory = false, type_match = "boolean", default=false },
       alpha      = { mandatory = true,  type_match = "number" },
       clamp      = { mandatory = false, type_match = "function",
-		     default = function(v) return v end, }
+		     default = function(v) return v end, },
+      log        = { mandatory = false, type_match = "boolean", default=false },
     }, t)
   assert(params.model:get_input_size() == params.model:get_output_size(),
 	 "Input and output sizes must be equal!!! (it is an auto-encoder)")
   local inv_mask = table.invert(params.mask)
+  local L        = 11111111111111111
   local last_L   = 11111111111111111
-  local loss     = ann.loss.mse(params.model:get_output_size())
   local trainer  = trainable.supervised_trainer(params.model)
   local input    = table.deep_copy(params.input)
-  local output
+  local output   = input
+  local result   = input
   local min      = 11111111111111111
-  local result   = nil
+  local loss
+  if params.log then
+    loss = ann.loss.multi_class_cross_entropy(params.model:get_output_size())
+  else
+    loss = ann.loss.mse(params.model:get_output_size())
+  end
   trainer:build()
   for i=1,params.max do
+    params.model:reset()
     output = trainer:calculate(input)
-    for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
+    for _,pos in ipairs(params.mask) do
+      output[pos]=(params.log and math.log(params.input[pos]))or params.input[pos]
+    end
     loss:reset()
-    local L = loss:loss(tokens.memblock(output), params.model:get_input())
-    if L < min then min,result = L,output end
+    L = loss:loss(tokens.memblock(output), params.model:get_input())
+    if params.log then
+      output = table.imap(output, math.exp)
+      for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
+    end
+    if i==1 or L <= min then min,result = L,output end
     local imp = math.abs(last_L - L)/last_L
     if params.verbose then printf("%6d %g %g\n", i, L, imp) end
     if imp < params.stop then break end
@@ -918,7 +965,8 @@ function ann.autoencoders.sgd_sampling(t)
     gradient = gradient:convert_to_memblock():to_table()
     for j=1,#gradient do
       if not inv_mask[j] then
-	input[j] = params.clamp(input[j] + params.alpha * gradient[j])
+	input[j] = params.clamp(input[j] - params.alpha * gradient[j])
+      else input[j] = params.input[j]
       end
     end
     --

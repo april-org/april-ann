@@ -516,6 +516,33 @@ public:
   int putPattern(int index, const T *pat);
 };
 
+/// A specialization of DataSet which add a fixed size salt and pepper noise to patterns.
+template <typename T>
+class SaltPepperNoiseDataSet : public DataSet<T> {
+  /// The underlying DataSet.
+  DataSet<T> *ds;
+  /// A MTRand for random selection of pattern components
+  MTRand     *random;
+  /// Percentage of values to be modified
+  double      vd;
+  /// Value of the zero
+  const T     zero;
+  /// Value of the one
+  const T     one;
+  /// Number of zeroes: vd * patternSize
+  int         number_of_perturbations;
+  /// Vector of ints for the selected zero positions
+  int *perturbed_positions;
+public:
+  SaltPepperNoiseDataSet(DataSet<T> *ds, MTRand *random,
+		   double vd, T zero, T one);
+  virtual ~SaltPepperNoiseDataSet();
+  int numPatterns() { return ds->numPatterns(); }
+  int patternSize() { return ds->patternSize(); }
+  int getPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
+};
+
 /// A specialization of DataSet for cacheNNLMs training.
 template <typename T>
 class CacheDataSet : public DataSet<T> {

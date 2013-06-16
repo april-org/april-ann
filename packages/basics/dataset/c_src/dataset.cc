@@ -879,6 +879,44 @@ int SaltNoiseDataSet<T>::putPattern(int index, const T *pat) {
 //-------------------------------------------------------------
 
 template <typename T>
+SaltPepperNoiseDataSet<T>::SaltPepperNoiseDataSet(DataSet<T> *ds, MTRand *random,
+						  double vd,
+						  T zero,
+						  T one) :
+  ds(ds), random(random), vd(vd), zero(zero), one(one),
+  number_of_perturbations(static_cast<int>(vd*ds->patternSize())) {
+  IncRef(ds);
+  IncRef(random);
+  perturbed_positions = new int[ds->patternSize()];
+}
+
+template<typename T>
+SaltPepperNoiseDataSet<T>::~SaltPepperNoiseDataSet() {
+  DecRef(ds);
+  DecRef(random);
+  delete[] perturbed_positions;
+}
+
+template<typename T>
+int SaltPepperNoiseDataSet<T>::getPattern(int index, T *pat) {
+  int ret = ds->getPattern(index, pat);
+  int sz  = ds->patternSize();
+  random->shuffle(sz, perturbed_positions);
+  for (int i=0; i<number_of_perturbations; ++i) 
+    pat[perturbed_positions[i]] = (random->rand() < 0.5) ? zero : one;
+  return ret;
+}
+
+template<typename T>
+int SaltPepperNoiseDataSet<T>::putPattern(int index, const T *pat) {
+  ERROR_PRINT("Method putPattern forbidden for SaltPepperNoiseDataSet!!!\n");
+  exit(1);
+  return 0;  
+}
+
+//-------------------------------------------------------------
+
+template <typename T>
 DerivDataSet<T>::DerivDataSet(DataSet<T> *ds,
 			      bool deriv0, bool deriv1, bool deriv2) :
   ds(ds), deriv0(deriv0), deriv1(deriv1), deriv2(deriv2) {
