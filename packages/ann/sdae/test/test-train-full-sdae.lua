@@ -73,10 +73,9 @@ train_input_wo_noise = train_input
 train_input = params_pretrain.training_options.global.noise_pipeline[1](train_input)
 train_input = params_pretrain.training_options.global.noise_pipeline[2](train_input)
 
-full_sdae:set_option("learning_rate", 0.0002)
-full_sdae:set_option("momentum", 0.0004)
+full_sdae:set_option("learning_rate", 0.00001)
+full_sdae:set_option("momentum", 0.00002)
 full_sdae:set_option("weight_decay", 0.0)
-full_sdae:set_option("max_norm_penalty", 15)
 
 result = trainer:train_holdout_validation{
   epochs_wo_validation = 2,
