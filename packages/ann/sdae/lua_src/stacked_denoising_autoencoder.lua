@@ -854,6 +854,7 @@ function ann.autoencoders.iterative_sampling(t)
   local trainer = trainable.supervised_trainer(params.model)
   local input   = table.deep_copy(params.input)
   local output  = input
+  local chain   = {}
   trainer:build()
   for i=1,params.max do
     output = trainer:calculate(input)
@@ -866,13 +867,14 @@ function ann.autoencoders.iterative_sampling(t)
       output = table.imap(output, math.exp)
       for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
     end
+    table.insert(chain, output)
     local imp = math.abs(math.abs(last_L - L)/last_L)
     if params.verbose then printf("%6d %g %g\n", i, L, imp) end
-    if imp < params.stop then break end
+    if last_L == 0 or imp < params.stop then break end
     last_L = L
     input  = output
   end
-  return output,L
+  return output,L,chain
 end
 
 ----------------------------------------------------------------------------
@@ -930,6 +932,7 @@ function ann.autoencoders.sgd_sampling(t)
   local output   = input
   local result   = input
   local min      = 11111111111111111
+  local chain    = {}
   trainer:build()
   for i=1,params.max do
     params.model:reset()
@@ -943,10 +946,11 @@ function ann.autoencoders.sgd_sampling(t)
       output = table.imap(output, math.exp)
       for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
     end
+    table.insert(chain, output)
     if i==1 or L <= min then min,result = L,output end
     local imp = math.abs(math.abs(last_L - L)/last_L)
     if params.verbose then printf("%6d %g %g\n", i, L, imp) end
-    if imp < params.stop then break end
+    if last_L == 0 or imp < params.stop then break end
     -- GRADIENT DESCENT UPDATE OF INPUT VECTOR
     local gradient = params.model:backprop(params.loss:gradient(params.model:get_output(),
 								params.model:get_input()))
@@ -960,5 +964,5 @@ function ann.autoencoders.sgd_sampling(t)
     --
     last_L = L
   end
-  return result,min
+  return result,min,chain
 end
