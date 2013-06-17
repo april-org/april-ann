@@ -19,10 +19,17 @@ end
 april_set_doc("trainable.supervised_trainer", {
 		class       = "class",
 		summary     = "Supervised machine learning trainer",
-		description ={"This class implements methods useful to",
-			      "train, evalute and modify contents of",
-			      "ANN components or similar supervised learning",
-			      "models"}, })
+		description ={
+		  "This class implements methods useful to",
+		  "train, evalute and modify contents of",
+		  "ANN components or similar supervised learning",
+		  "models.",
+		  "IMPORTANT: Any method of this class could be overwritten",
+		  "on object instances, and the overwritten methods will be",
+		  "copied by clone method. Example:",
+		  "t = trainable.supervised_trainer(ann.components.base())",
+		  "t.train_step=function() print(\"Hola\") end",
+		}, })
 
 class("trainable.supervised_trainer")
 
@@ -1035,9 +1042,16 @@ end
 
 ------------------------------------------------------------------------
 
-april_set_doc("trainable.supervised_trainer.clone", {
+april_set_doc("trainable.supervised_trainer.clone",
+	      {
 		class = "method",
-		summary = "Returns a deep-copy of the object.", })
+		summary = "Returns a deep-copy of the object.",
+		description = {
+		  "Returns a deep-copy of the object.",
+		  "This method copies user functions on given object instance,",
+		  "so user can overwrite any of methods in this class.",
+		},
+	      })
 
 function trainable.supervised_trainer:clone()
   local obj = trainable.supervised_trainer(self.ann_component:clone(),
@@ -1049,6 +1063,10 @@ function trainable.supervised_trainer:clone()
   if #self.weights_order > 0 then
     obj:build{ weights = table.map(self.weights_table,
 				   function(cnn) return cnn:clone() end) }
+  end
+  -- add possible user functions
+  for i,v in pairs(self) do
+    if type(v) == "function" then obj[i] = v end
   end
   return obj
 end
