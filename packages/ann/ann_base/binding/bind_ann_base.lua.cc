@@ -46,6 +46,7 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "stack_component.h"
 #include "join_component.h"
 #include "copy_component.h"
+#include "gaussian_noise_component.h"
 #include "activation_function_component.h"
 #include "connection.h"
 #include "activation_function_component.h"
@@ -738,6 +739,40 @@ using namespace ANN;
 {
   LUABIND_RETURN(CopyANNComponent,
 		 dynamic_cast<CopyANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//               GaussianNoiseANNComponent                  //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME GaussianNoiseANNComponent ann.components.gaussian_noise
+//BIND_CPP_CLASS    GaussianNoiseANNComponent
+//BIND_SUBCLASS_OF  GaussianNoiseANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR GaussianNoiseANNComponent
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  const char *name=0;
+  float mean, var;
+  unsigned int size=0;
+  MTRand *random;
+  check_table_fields(L, 1, "size", "random", "mean", "var", "name", 0);
+  LUABIND_GET_TABLE_PARAMETER(1, random, MTRand, random);
+  LUABIND_GET_TABLE_PARAMETER(1, mean, float, mean);
+  LUABIND_GET_TABLE_PARAMETER(1, var, float, var);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  obj = new GaussianNoiseANNComponent(random, mean, var, name, size);
+  LUABIND_RETURN(GaussianNoiseANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD GaussianNoiseANNComponent clone
+{
+  LUABIND_RETURN(GaussianNoiseANNComponent,
+		 dynamic_cast<GaussianNoiseANNComponent*>(obj->clone()));
 }
 //BIND_END
 

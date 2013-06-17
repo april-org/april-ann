@@ -1039,7 +1039,7 @@ april_set_doc("ann.components.copy.__call",
 		description = {
 		  "The Name is generated automatically if non given.",
 		  "Sizes are set to zero by default, so it is mandatory to give",
-		  "it at build method is not given at the constructor."
+		  "it at build method if not given at the constructor."
 		},
 		params={
 		  ["times"] = {
@@ -1049,7 +1049,34 @@ april_set_doc("ann.components.copy.__call",
 		  ["input"] = "Number of component input neurons [optional]",
 		  ["output"] = "Number of component output neurons [optional]",
 		},
-		outputs= { "An instance of ann.components.join" }
+		outputs= { "An instance of ann.components.copy" }
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.gaussian_noise", {
+		class="class",
+		summary="A component which adds Gaussian noise to data",})
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.copy.__call",
+	      {
+		class="method",
+		summary="Constructor of the component",
+		description = {
+		  "The Name is generated automatically if non given.",
+		  "Size is set to zero by default, so it is mandatory to give",
+		  "it at build method if not given at the constructor."
+		},
+		params={
+		  ["name"]   = "A string with the given name [optional]",
+		  ["size"]   = "A number with the size [optional]",
+		  ["mean"]   = "Mean of the gaussian noise",
+		  ["var"]    = "Variance of the gaussian noise",
+		  ["random"] = "Random object instance",
+		},
+		outputs= { "An instance of ann.components.gaussian_noise" }
 	      })
 
 ----------------------------------------------------------------------

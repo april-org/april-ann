@@ -1,11 +1,11 @@
 pnoise        = tonumber(arg[1] or 0.5)   -- noise percentage
-loss_function = arg[2] or "cross_entropy"
+loss_function = arg[2] or "mse"
 alpha         = tonumber(arg[3] or 0.01)  -- SGD alpha parameter
 seed          = tonumber(arg[4] or 12345) -- random seed
 
 num_repetitions = 100
 max_iterations  = 100
-stop_criterion  = 1e-08
+stop_criterion  = 1e-04
 
 m1 = ImageIO.read("digits.png"):to_grayscale():invert_colors():matrix()
 
@@ -43,13 +43,27 @@ local sgd_loss_stat = stats.mean_var()
 local ite_quartiles = {}
 local sgd_quartiles = {}
 
-for ipat,input in val_input:patterns() do
+for ipat=1,val_input:numPatterns() do
   fprintf(io.stderr,"\r%3.0f%%", ipat/val_input:numPatterns()*100)
   io.stderr:flush()
   local target_class     = (ipat-1) % 10
   local current_ite_loss = 0
   local current_sgd_loss = 0
   for rep=1,num_repetitions do
+    input = val_input:getPattern(ipat)
+    mask  = {}
+    k     = 1
+    for r=1,16 do
+      local aux=math.max(0, math.min(16, math.round(pnoise*16)))
+      for c=1,aux do
+	input[k] = rnd:rand(1.0)
+	k=k+1
+      end
+      for c=aux+1,16 do
+	table.insert(mask,k)
+	k=k+1
+      end
+    end
     mask = {}
     for i=1,#input do
       v = rnd:rand(1.0)
@@ -72,7 +86,8 @@ for ipat,input in val_input:patterns() do
     -- print(loss:loss(tokens.memblock(output),
     -- tokens.memblock(val_input:getPattern(n))), L)
     loss:reset()
-    ite_L = loss:loss(tokens.memblock(output), tokens.memblock(input))
+    ite_L = loss:loss(tokens.memblock(output),
+		      tokens.memblock(val_input:getPattern(ipat)))
     ite_loss_stat:add(ite_L)
     table.insert(ite_quartiles, ite_L)
     
@@ -93,7 +108,8 @@ for ipat,input in val_input:patterns() do
     -- print(loss:loss(tokens.memblock(output),
     -- tokens.memblock(val_input:getPattern(n))), L)
     loss:reset()
-    sgd_L = loss:loss(tokens.memblock(output), tokens.memblock(input))
+    sgd_L = loss:loss(tokens.memblock(output),
+		      tokens.memblock(val_input:getPattern(ipat)))
     sgd_loss_stat:add(sgd_L)
     table.insert(sgd_quartiles, sgd_L)
   end
@@ -107,15 +123,16 @@ local q2 = math.floor(#ite_quartiles*0.5)
 local q3 = math.floor(#ite_quartiles*0.75)
 local ite_loss_mean,ite_loss_var = ite_loss_stat:compute()
 local sgd_loss_mean,sgd_loss_var = sgd_loss_stat:compute()
-printf("%.1f  ITE: m= %.4f s2= %.4f Qs= %.4f %.4f %.4f %.4f %.4f  "..
-	 "SGD: m= %.4f s2= %.4f Qs= %.4f %.4f %.4f %.4f %.4f\n",
+printf("%.1f  ITE: m= %.4f s2= %.4f Qs= %.4f %.4f %.4f %.4f %.4f\n",
        pnoise,
        ite_loss_mean, ite_loss_var,
        ite_quartiles[1],
        ite_quartiles[q1],
        ite_quartiles[q2],
        ite_quartiles[q3],
-       ite_quartiles[#ite_quartiles],
+       ite_quartiles[#ite_quartiles])
+printf("%.1f  SGD: m= %.4f s2= %.4f Qs= %.4f %.4f %.4f %.4f %.4f\n",
+       pnoise,
        sgd_loss_mean, sgd_loss_var,
        sgd_quartiles[1],
        sgd_quartiles[q1],
