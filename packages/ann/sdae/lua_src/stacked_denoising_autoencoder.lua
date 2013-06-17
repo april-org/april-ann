@@ -820,6 +820,7 @@ april_set_doc("ann.autoencoders.iterative_sampling",
 		  },
 		params= {
 		  ["model"] = {"An autoencoder ANN component (not a trainer"},
+		  ["noise"] = {"An ANN component for noise generation (not a trainer"},
 		  ["mask"]   = {"An array with the input positions which",
 				"will be keep untouched [optional]",},
 		  ["input"] = {"A table with the input values."},
@@ -839,6 +840,7 @@ function ann.autoencoders.iterative_sampling(t)
   local params = get_table_fields(
     {
       model      = { mandatory = true,  isa_match  = ann.components.base },
+      noise      = { mandatory = true,  isa_match  = ann.components.base },
       mask       = { mandatory = false, type_match = "table", default = {}, },
       input      = { mandatory = true,  type_match = "table"  },
       max        = { mandatory = true,  type_match = "number" },
@@ -872,7 +874,8 @@ function ann.autoencoders.iterative_sampling(t)
     if params.verbose then printf("%6d %g %g\n", i, L, imp) end
     if last_L == 0 or imp < params.stop then break end
     last_L = L
-    input  = output
+    params.noise:reset()
+    input = params.noise:forward(tokens.memblock(output))
   end
   return output,L,chain
 end
@@ -891,6 +894,7 @@ april_set_doc("ann.autoencoders.sgd_sampling",
 		  },
 		params= {
 		  ["model"] = {"An autoencoder ANN component (not a trainer"},
+		  ["noise"] = {"An ANN component for noise generation (not a trainer"},
 		  ["mask"]   = {"An array with the input positions which",
 				"will be keep untouched [optional]",},
 		  ["input"] = {"A table with the input values."},

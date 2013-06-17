@@ -3,7 +3,7 @@ loss_function = arg[2] or "cross_entropy"
 alpha         = tonumber(arg[3] or 0.01)  -- SGD alpha parameter
 seed          = tonumber(arg[4] or 12345) -- random seed
 
-ipat = 75
+ipat = 80
 
 num_repetitions = 100
 max_iterations  = 100
@@ -39,6 +39,9 @@ else
   trainer:build()
 end
 
+noise = ann.components.gaussian_noise{ random=random(), mean=0, var=0.4 }
+noise:build{ input=256, output=256 }
+
 input = val_input:getPattern(ipat)
 mask  = {}
 k     = 1
@@ -57,6 +60,7 @@ matrix.saveImage(matrix(16,16,input), "wop0.pnm")
 
 output,L,chain = ann.autoencoders.iterative_sampling{
   model   = full_sdae,
+  noise   = noise,
   input   = input,
   max     = max_iterations,
   mask    = mask,
