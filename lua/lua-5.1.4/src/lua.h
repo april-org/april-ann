@@ -23,7 +23,7 @@
 #define LUA_AUTHORS 	"R. Ierusalimschy, L. H. de Figueiredo & W. Celes"
 
 #define APRILANN_RELEASE   "April-ANN 0.1.1 beta"
-#define APRILANN_COPYRIGHT "Copyright (C) 2012-2013 April-ANN"
+#define APRILANN_COPYRIGHT "Copyright (C) 2012-2013 DSIC-UPV, CEU-UCH"
 #define APRILANN_AUTHORS   "F. Zamora-Martinez, S. España-Boquera, J. Gorbe-Moya, J. Pastor & A. Palacios"
 
 /* mark for precompiled code (`<esc>Lua') */
