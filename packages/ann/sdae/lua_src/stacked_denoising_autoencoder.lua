@@ -860,22 +860,29 @@ function ann.autoencoders.iterative_sampling(t)
   trainer:build()
   for i=1,params.max do
     output = trainer:calculate(input)
-    for _,pos in ipairs(params.mask) do
-      output[pos]=(params.log and math.log(params.input[pos]))or params.input[pos]
-    end
+    -- restore masked positions
+    -- for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
+    -- compute the loss of current iteration
     params.loss:reset()
-    L = params.loss:loss(tokens.memblock(output), params.model:get_input())
     if params.log then
-      output = table.imap(output, math.exp)
-      for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
+      L = params.loss:loss(tokens.memblock(table.imap(output, math.log)),
+			   params.model:get_input())
+    else
+      L = params.loss:loss(tokens.memblock(output), params.model:get_input())
     end
+    -- insert current output to the chain
     table.insert(chain, output)
+    -- improvement measure
     local imp = math.abs(math.abs(last_L - L)/last_L)
-    if params.verbose then printf("%6d %g %g\n", i, L, imp) end
+    if params.verbose then printf("%6d %6g :: %6g\n", i, L, imp) end
+    -- stop criterion
     if last_L == 0 or imp < params.stop then break end
     last_L = L
+    -- sample from noise distribution
     params.noise:reset()
-    input = params.noise:forward(tokens.memblock(output))
+    input = params.noise:forward(tokens.memblock(output)):convert_to_memblock():to_table()
+    -- restore masked positions
+    for _,pos in ipairs(params.mask) do input[pos] = params.input[pos] end
   end
   return output,L,chain
 end
@@ -902,6 +909,7 @@ april_set_doc("ann.autoencoders.sgd_sampling",
 		  ["stop"] = "Stop when loss difference between iterations is lower than given value",
 		  ["verbose"] = "Verbosity true or false [optional].",
 		  ["alpha"] = "A number with the gradient step at each iteration.",
+		  ["beta"]  = "A number for combination with iterative sampling.",
 		  ["clamp"] = "A function to clamp sample values [optional].",
 		  ["log"] = "A boolean indicating if the output is logarithmic [optional]",
 		  ["loss"] = "A loss function instance",
@@ -915,12 +923,14 @@ function ann.autoencoders.sgd_sampling(t)
   local params = get_table_fields(
     {
       model      = { mandatory = true,  isa_match  = ann.components.base },
+      noise      = { mandatory = true,  isa_match  = ann.components.base },
       mask       = { mandatory = false, type_match = "table", default = {}, },
       input      = { mandatory = true,  type_match = "table"  },
       max        = { mandatory = true,  type_match = "number" },
       stop       = { mandatory = true,  type_match = "number" },
       verbose    = { mandatory = false, type_match = "boolean", default=false },
       alpha      = { mandatory = true,  type_match = "number" },
+      beta       = { mandatory = false, type_match = "number",  default=0.0 },
       clamp      = { mandatory = false, type_match = "function",
 		     default = function(v) return v end, },
       log        = { mandatory = false, type_match = "boolean", default=false },
@@ -928,45 +938,51 @@ function ann.autoencoders.sgd_sampling(t)
     }, t)
   assert(params.model:get_input_size() == params.model:get_output_size(),
 	 "Input and output sizes must be equal!!! (it is an auto-encoder)")
-  local inv_mask = table.invert(params.mask)
   local L        = 11111111111111111
   local last_L   = 11111111111111111
   local trainer  = trainable.supervised_trainer(params.model)
-  local input    = table.deep_copy(params.input)
   local output   = input
   local result   = input
   local min      = 11111111111111111
   local chain    = {}
+  local input      = table.deep_copy(params.input)
   trainer:build()
   for i=1,params.max do
     params.model:reset()
     output = trainer:calculate(input)
-    for _,pos in ipairs(params.mask) do
-      output[pos]=(params.log and math.log(params.input[pos]))or params.input[pos]
-    end
+    -- restore masked positions
+    -- for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
+    -- compute the loss of current iteration
     params.loss:reset()
-    L = params.loss:loss(tokens.memblock(output), params.model:get_input())
     if params.log then
-      output = table.imap(output, math.exp)
-      for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
+      L = params.loss:loss(tokens.memblock(table.imap(output, math.log)),
+			   params.model:get_input())
+    else
+      L = params.loss:loss(tokens.memblock(output), params.model:get_input())
     end
     table.insert(chain, output)
-    if i==1 or L <= min then min,result = L,output end
     local imp = math.abs(math.abs(last_L - L)/last_L)
-    if params.verbose then printf("%6d %g %g\n", i, L, imp) end
+    if params.verbose then printf("%6d %6g :: %6g", i, L, imp) end
+    if i==1 or L <= min then
+      min,result = L,output
+      if params.verbose then printf(" *") end
+    end
+    if params.verbose then printf("\n") end
     if last_L == 0 or imp < params.stop then break end
     -- GRADIENT DESCENT UPDATE OF INPUT VECTOR
     local gradient = params.model:backprop(params.loss:gradient(params.model:get_output(),
 								params.model:get_input()))
     gradient = gradient:convert_to_memblock():to_table()
     for j=1,#gradient do
-      if not inv_mask[j] then
-	input[j] = params.clamp(input[j] - params.alpha * gradient[j])
-      else input[j] = params.input[j]
-      end
+      input[j] = params.clamp( params.beta*output[j] + (1.0-params.beta)*input[j] - params.alpha * gradient[j] )
     end
     --
     last_L = L
+    -- sample from noise distribution
+    params.noise:reset()
+    input = params.noise:forward(tokens.memblock(input)):convert_to_memblock():to_table()
+    -- restore masked positions
+    for _,pos in ipairs(params.mask) do input[pos] = params.input[pos] end
   end
   return result,min,chain
 end

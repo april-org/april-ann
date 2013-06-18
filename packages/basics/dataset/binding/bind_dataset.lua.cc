@@ -954,7 +954,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   LUABIND_GET_TABLE_PARAMETER(1, dataset, DataSetFloat, ds    );
   LUABIND_GET_TABLE_PARAMETER(1, random,  MTRand,       random);
   LUABIND_GET_TABLE_PARAMETER(1, vd,      double,       vd);
-  LUABIND_GET_TABLE_PARAMETER(1, zero,    float,        zero);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, zero, float, zero, 0.0f);
   DataSetFloat *obj = new SaltNoiseDataSetFloat(ds, random, vd, zero);
   LUABIND_RETURN(DataSetFloat,obj);
 }
@@ -978,8 +978,8 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   LUABIND_GET_TABLE_PARAMETER(1, dataset, DataSetFloat, ds    );
   LUABIND_GET_TABLE_PARAMETER(1, random,  MTRand,       random);
   LUABIND_GET_TABLE_PARAMETER(1, vd,      double,       vd);
-  LUABIND_GET_TABLE_PARAMETER(1, zero,    float,        zero);
-  LUABIND_GET_TABLE_PARAMETER(1, one,     float,        one);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, zero, float, zero, 0.0f);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, one,  float, one,  1.0f);
   DataSetFloat *obj = new SaltPepperNoiseDataSetFloat(ds, random, vd, zero, one);
   LUABIND_RETURN(DataSetFloat,obj);
 }

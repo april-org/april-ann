@@ -1,13 +1,13 @@
-pnoise        = tonumber(arg[1] or 0.5)   -- noise percentage
-loss_function = arg[2] or "cross_entropy"
-alpha         = tonumber(arg[3] or 0.01)  -- SGD alpha parameter
-seed          = tonumber(arg[4] or 12345) -- random seed
+pnoise        = tonumber(arg[1] or 0.3)   -- noise percentage
+loss_function = arg[2] or "mse"
+alpha         = tonumber(arg[3] or 0.1)  -- SGD alpha parameter
+beta          = tonumber(arg[4] or 0.2)
+seed          = tonumber(arg[5] or 12345) -- random seed
 
-ipat = 80
+ipat = 9
 
-num_repetitions = 100
 max_iterations  = 100
-stop_criterion  = 1e-08
+stop_criterion  = 1e-03
 
 m1 = ImageIO.read("digits.png"):to_grayscale():invert_colors():matrix()
 
@@ -39,9 +39,6 @@ else
   trainer:build()
 end
 
-noise = ann.components.gaussian_noise{ random=random(), mean=0, var=0.4 }
-noise:build{ input=256, output=256 }
-
 input = val_input:getPattern(ipat)
 mask  = {}
 k     = 1
@@ -58,6 +55,9 @@ for r=1,16 do
 end
 matrix.saveImage(matrix(16,16,input), "wop0.pnm")
 
+noise = ann.components.stack():push(ann.components.gaussian_noise{ random=random(), mean=0, var=0.2 }):push(ann.components.salt_and_pepper{ random=random(), prob=0.2 })
+noise:build{ input=256, output=256 }
+
 output,L,chain = ann.autoencoders.iterative_sampling{
   model   = full_sdae,
   noise   = noise,
@@ -72,20 +72,20 @@ output,L,chain = ann.autoencoders.iterative_sampling{
 for i,output in ipairs(chain) do
   matrix.saveImage(matrix(16,16,output), "wop1-"..string.format("%04d",i)..".pnm")
 end
--- output = table.imap(output, math.log)
--- print(loss:loss(tokens.memblock(output),
--- tokens.memblock(val_input:getPattern(n))), L)
+if log then output = table.imap(output, math.log) end
 ite_L = loss:loss(tokens.memblock(output), tokens.memblock(val_input:getPattern(ipat)))
 print(ite_L)
 
 output,L,chain = ann.autoencoders.sgd_sampling{
   model   = full_sdae,
+  noise   = noise,
   input   = input,
   max     = max_iterations,
   mask    = mask,
   stop    = stop_criterion,
   verbose = false,
   alpha   = alpha,
+  beta    = beta,
   log     = log,
   clamp   = function(v) return math.max(0, math.min(1,v)) end,
   loss    = loss,
@@ -93,6 +93,6 @@ output,L,chain = ann.autoencoders.sgd_sampling{
 for i,output in ipairs(chain) do
   matrix.saveImage(matrix(16,16,output), "wop2-"..string.format("%04d",i)..".pnm")
 end
--- matrix.saveImage(matrix(16,16,output), "wop2.pnm")
+if log then output = table.imap(output, math.log) end
 sgd_L = loss:loss(tokens.memblock(output), tokens.memblock(val_input:getPattern(ipat)))
 print(sgd_L)
