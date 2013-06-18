@@ -19,6 +19,7 @@
  *
  */
 //BIND_HEADER_C
+#include "bind_matrix.h"
 
 int token_bunch_vector_iterator_function(lua_State *L) {
   // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es
@@ -59,6 +60,7 @@ int token_sparse_iterator_function(lua_State *L) {
 //BIND_HEADER_H
 #include "token_base.h"
 #include "token_memory_block.h"
+#include "token_matrix.h"
 #include "token_vector.h"
 //BIND_END
 
@@ -74,6 +76,13 @@ int token_sparse_iterator_function(lua_State *L) {
 //BIND_METHOD Token clone
 {
   LUABIND_RETURN(Token, obj->clone());
+}
+//BIND_END
+
+//BIND_METHOD Token get_matrix
+{
+  TokenMatrixFloat *token_matrix = obj->convertTo<TokenMatrixFloat*>();
+  LUABIND_RETURN(MatrixFloat, token_matrix->getMatrix());
 }
 //BIND_END
 
@@ -125,6 +134,29 @@ int token_sparse_iterator_function(lua_State *L) {
   const float *vector = obj->getMemBlock()->getPPALForRead();
   LUABIND_VECTOR_TO_NEW_TABLE(float, vector, sz);
   LUABIND_RETURN_FROM_STACK(-1);
+}
+//BIND_END
+
+////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME TokenMatrixFloat tokens.matrix
+//BIND_CPP_CLASS    TokenMatrixFloat
+//BIND_SUBCLASS_OF  TokenMatrixFloat Token
+
+//BIND_CONSTRUCTOR TokenMatrixFloat
+{
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, MatrixFloat);
+  MatrixFloat *mat;
+  LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
+  obj = new TokenMatrixFloat(mat);
+  LUABIND_RETURN(TokenMatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD TokenMatrixFloat get_matrix
+{
+  LUABIND_RETURN(MatrixFloat, obj->getMatrix());
 }
 //BIND_END
 

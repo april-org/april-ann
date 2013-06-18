@@ -55,6 +55,7 @@ public:
   static const TokenCode token_int32         = 0x2002;
   static const TokenCode token_uint32        = 0x2003;
   static const TokenCode token_mem_block     = 0x2004;
+  static const TokenCode token_matrix        = 0x2005;
   
   // vectors:
   static const TokenCode vector_float        = 0x3000;
