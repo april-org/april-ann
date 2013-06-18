@@ -29,6 +29,7 @@
 #include "token_base.h"
 #include "aux_hash_table.h" // required for build
 #include "hash_table.h"     // required for build
+#include "matrixFloat.h"
 using april_utils::hash;    // required for build
 using april_utils::string;
 
@@ -48,7 +49,7 @@ using april_utils::string;
 #define mGetOption(var_name, var) if(!strcmp(name,(var_name)))return (var);
 
 namespace ANN {
-
+  
   /// An abstract class that defines the basic interface that
   /// the anncomponents must fulfill.
   class ANNComponent : public Referenced {
@@ -72,6 +73,18 @@ namespace ANN {
     unsigned int input_size;
     unsigned int output_size;
     bool use_cuda;
+    
+    static void getMatrixSizes(const MatrixFloat *mat,
+			       unsigned int &bunch_size,
+			       unsigned int &pat_size) {
+      switch(mat->getNumDim()) {
+      case 1: bunch_size=1; pat_size=mat->getDimSize(0); break;
+      case 2: bunch_size=mat->getDimSize(0); pat_size=mat->getDimSize(1); break;
+      default:
+	ERROR_EXIT1(128, "Incorrect matrix number of dimensions, "
+		    "expected 2, found %d\n", mat->getNumDim());
+      }
+    }
   public:
     ANNComponent(const char *name = 0, const char *weights_name = 0,
 		 unsigned int input_size = 0, unsigned int output_size = 0) :

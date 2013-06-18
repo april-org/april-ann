@@ -769,19 +769,15 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
     LUABIND_ERROR("too big patternsize");
   float  *patt = new float[psize];
   int histogramlength = 1 << psize;
-  int dim[1]; dim[0] = histogramlength;
-  MatrixFloat* mat = new MatrixFloat(1,dim);
-  float *histogram = mat->getRawDataAccess()->getPPALForWrite();
-  for (int i=0;i<histogramlength;i++) {
-    histogram[i] = 0;
-  }
+  MatrixFloat* mat = new MatrixFloat(1,&histogramlength);
+  mat->zeros();
   for (int i=1; i < npatt; i++) {
     obj->getPattern(i,patt);
     int index = 0;
     for (int j=0;j<psize;j++) {
       index = (index << 1) | ((patt[j] > threshold) ? 1 : 0);
     }
-    histogram[index] +=1;
+    (*mat)(index) += 1;
   }
   delete[] patt;
   LUABIND_RETURN(MatrixFloat,mat);

@@ -20,8 +20,6 @@
  */
 #include "error_print.h"
 #include "table_of_token_codes.h"
-#include "token_vector.h"
-#include "token_memory_block.h"
 #include "salt_and_pepper_component.h"
 #include "wrapper.h"
 
@@ -56,27 +54,25 @@ namespace ANN {
   Token *SaltAndPepperANNComponent::doForward(Token* _input, bool during_training) {
     // error checking
     if ( (_input == 0) ||
-	 (_input->getTokenCode() != table_of_token_codes::token_mem_block))
-      ERROR_EXIT(129,"Incorrect input Token type, expected token_mem_block!\n");
+	 (_input->getTokenCode() != table_of_token_codes::token_matrix))
+      ERROR_EXIT(129,"Incorrect input Token type, expected token_matrix!\n");
     // change current input by new input
-    AssignRef(input,_input->convertTo<TokenMemoryBlock*>());
+    AssignRef(input,_input->convertTo<TokenMatrixFloat*>());
     // new  output to fit the bunch
-    AssignRef(output,new TokenMemoryBlock(input->getUsedSize()));
-    // get memory blocks for tokens
-    FloatGPUMirroredMemoryBlock *input_ptr  = input->getMemBlock();
-    FloatGPUMirroredMemoryBlock *output_ptr = output->getMemBlock();
-    doScopy(input->getUsedSize(),
-	    input_ptr, 0, 1,
-	    output_ptr, 0, 1,
-	    use_cuda);
-    float *output_mem_ptr = output_ptr->getPPALForReadAndWrite();
-    for (unsigned int i=0; i<input->getUsedSize(); ++i) {
+    AssignRef(output,new TokenMatrixFloat(input->getMatrix()->clone()));
+    MatrixFloat *output_mat = output->getMatrix();
+    for (MatrixFloat::col_major_iterator it(output_mat->begin());
+	 it != output_mat->end();
+	 ++it) {
       float p = random->rand();
       if (p < prob) {
-	if (p < prob * 0.5f) output_mem_ptr[i] = zero;
-	else output_mem_ptr[i] = one;
+	if (p < prob * 0.5f) *it = zero;
+	else *it = one;
       }
     }
+#ifdef USE_CUDA
+    output->getMatrix()->setUseCuda(use_cuda);
+#endif
     return output;
   }
 

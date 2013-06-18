@@ -752,19 +752,28 @@
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat copy
+{
+  int argn;
+  LUABIND_CHECK_ARGN(==, 1);
+  MatrixFloat *mat;
+  LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
+  obj->copy(mat);
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat axpy
-  {
-    int argn;
-    LUABIND_CHECK_ARGN(==, 2);
-    float alpha;
-    MatrixFloat *mat;
-    LUABIND_GET_PARAMETER(1, float, alpha);
-    LUABIND_GET_PARAMETER(2, MatrixFloat, mat);
-    if (!obj->sameDim(mat))
-      LUABIND_ERROR("matrix axpy wrong dimensions");
-    obj->axpy(alpha, mat);
-    LUABIND_RETURN(MatrixFloat, obj);
-  }
+{
+  int argn;
+  LUABIND_CHECK_ARGN(==, 2);
+  float alpha;
+  MatrixFloat *mat;
+  LUABIND_GET_PARAMETER(1, float, alpha);
+  LUABIND_GET_PARAMETER(2, MatrixFloat, mat);
+  obj->axpy(alpha, mat);
+  LUABIND_RETURN(MatrixFloat, obj);
+}
 //BIND_END
 
 //BIND_METHOD MatrixFloat gemm

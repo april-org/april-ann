@@ -20,8 +20,6 @@
  */
 #include "error_print.h"
 #include "table_of_token_codes.h"
-#include "token_vector.h"
-#include "token_memory_block.h"
 #include "join_component.h"
 #include "wrapper.h"
 
@@ -62,25 +60,30 @@ namespace ANN {
   void JoinANNComponent::buildInputBunchVector(TokenBunchVector *&result_vector_token,
 					       Token *input_token) {
     switch(input_token->getTokenCode()) {
-    case table_of_token_codes::token_mem_block: {
+    case table_of_token_codes::token_matrix: {
       segmented_input = false;
-      TokenMemoryBlock *mem_input_token;
-      mem_input_token = input_token->convertTo<TokenMemoryBlock*>();
-      bunch_size = mem_input_token->getUsedSize() / input_size;
-      assert((bunch_size*input_size == mem_input_token->getUsedSize()) &&
-	     "Incorrect token size, is not divisible by bunch_size");
-      unsigned int pos=0;
-      for (unsigned int i=0; i<result_vector_token->size(); ++i) {
-	unsigned int sz = bunch_size * components[i]->getInputSize();
-	TokenMemoryBlock *component_mem_token = new TokenMemoryBlock(sz);
-	AssignRef((*result_vector_token)[i], component_mem_token);
-	// copy from _input to component_mem_token
-	doScopy(sz,
-		mem_input_token->getMemBlock(), pos, 1,
-		component_mem_token->getMemBlock(), 0, 1,
-		use_cuda);
-	pos += sz;
+      TokenMatrixFloat *input_mat_token;
+      input_mat_token = input_token->convertTo<TokenMatrixFloat*>();
+      MatrixFloat *input_mat = input_mat_token->getMatrix();
+      const int last_dim = input_mat->getNumDim()-1;
+      unsigned int mat_pat_size = static_cast<unsigned int>(input_mat->getDimSize(last_dim));
+      assert(mat_pat_size==input_size && "Incorrect token matrix size");
+      int *sizes  = new int[last_dim+1], *coords = new int[last_dim+1];
+      for (int i=0; i<=last_dim; ++i) {
+	sizes[i]  = input_mat->getDimSize(i);
+	coords[i] = 0;
       }
+      for (unsigned int i=0; i<result_vector_token->size(); ++i) {
+	const unsigned int sz = components[i]->getInputSize();
+	// submatrix at coords with sizes, deep copy of original matrix
+	sizes[last_dim] = sz;
+	MatrixFloat *output_mat = new MatrixFloat(input_mat,coords,sizes,true);
+	coords[last_dim] += sz;
+	TokenMatrixFloat *component_mat_token = new TokenMatrixFloat(output_mat);
+	AssignRef((*result_vector_token)[i], component_mat_token);
+      }
+      delete[] sizes;
+      delete[] coords;
       break;
     }
     case table_of_token_codes::vector_Tokens: {
@@ -103,71 +106,78 @@ namespace ANN {
   
   void JoinANNComponent::buildErrorInputBunchVector(TokenBunchVector *&vector_token,
 						    Token *token) {
-    if (token->getTokenCode() != table_of_token_codes::token_mem_block)
+    if (token->getTokenCode() != table_of_token_codes::token_matrix)
       ERROR_EXIT(128, "Incorrect token type\n");
     //
-    TokenMemoryBlock *mem_token = token->convertTo<TokenMemoryBlock*>();
-    if (bunch_size == 0) bunch_size = mem_token->getUsedSize() / output_size;
-    assert((bunch_size == (mem_token->getUsedSize() / output_size)) &&
-	   "Incorrect bunch size at input error");
-    assert((bunch_size*output_size == mem_token->getUsedSize()) &&
-	   "Incorrect input error token size, not divisible by bunch_size");
-    unsigned int pos=0;
-    for (unsigned int i=0; i<vector_token->size(); ++i) {
-      unsigned int sz = bunch_size * components[i]->getOutputSize();
-      TokenMemoryBlock *component_mem_token;
-      component_mem_token = new TokenMemoryBlock(sz);
-      AssignRef((*vector_token)[i], component_mem_token);
-      doScopy(sz,
-	      mem_token->getMemBlock(), pos, 1,
-	      component_mem_token->getMemBlock(), 0, 1,
-	      use_cuda);
-      pos += sz;
+    TokenMatrixFloat *mat_token = token->convertTo<TokenMatrixFloat*>();
+    MatrixFloat *mat = mat_token->getMatrix();
+    const int last_dim = mat->getNumDim()-1;
+    unsigned int mat_pat_size = static_cast<unsigned int>(mat->getDimSize(last_dim));
+    assert(mat_pat_size==output_size && "Incorrect token matrix size");
+    int *sizes  = new int[last_dim+1], *coords = new int[last_dim+1];
+    for (int i=0; i<=last_dim; ++i) {
+      sizes[i]  = mat->getDimSize(i);
+      coords[i] = 0;
     }
+    for (unsigned int i=0; i<vector_token->size(); ++i) {
+      const unsigned int sz = components[i]->getOutputSize();
+      // submatrix at coords with sizes
+      sizes[last_dim] = sz;
+      MatrixFloat *component_mat = new MatrixFloat(mat, coords, sizes, true);
+      coords[last_dim] += sz;
+      TokenMatrixFloat *component_mat_token = new TokenMatrixFloat(component_mat);
+      AssignRef((*vector_token)[i], component_mat_token);
+    }
+    delete[] sizes;
+    delete[] coords;
   }
   
-  TokenMemoryBlock *JoinANNComponent::buildMemoryBlockToken(TokenBunchVector *token,
+  TokenMatrixFloat *JoinANNComponent::buildMatrixFloatToken(TokenBunchVector *token,
 							    bool is_output) {
-    TokenMemoryBlock *mem_block_token;
-    if ((*token)[0]->getTokenCode() != table_of_token_codes::token_mem_block)
-      ERROR_EXIT(128, "Incorrect token type\n");
-    if (bunch_size == 0) {
-      TokenMemoryBlock *aux = (*token)[0]->convertTo<TokenMemoryBlock*>();
-      if (is_output)
-	bunch_size =aux->getUsedSize() / components[0]->getOutputSize();
-      else
-	bunch_size =aux->getUsedSize() / components[0]->getInputSize();
+    MatrixFloat *full_mat, *aux_mat;
+    if ((*token)[0]->getTokenCode() != table_of_token_codes::token_matrix)
+      ERROR_EXIT1(128,"Incorrect token type at TokenBunchVector pos %d\n",0);
+    
+    int *coords = new int[token->size()];
+    int *sizes  = new int[token->size()];
+    aux_mat  = (*token)[0]->convertTo<TokenMatrixFloat*>()->getMatrix();
+    const int last_dim = aux_mat->getNumDim() - 1;
+    for (int i=0; i<=last_dim; ++i) {
+      coords[i] = 0;
+      sizes[i]  = aux_mat->getDimSize(i);
     }
-    if (is_output)
-      mem_block_token = new TokenMemoryBlock(output_size*bunch_size);
-    else
-      mem_block_token = new TokenMemoryBlock(input_size*bunch_size);
-    unsigned int pos = 0;
+    if (is_output) sizes[last_dim] = output_size;
+    else sizes[last_dim] = input_size;
+    full_mat = new MatrixFloat(last_dim + 1, sizes, 0.0f, CblasColMajor);
+    
     for (unsigned int i=0; i<token->size(); ++i) {
-      if ((*token)[i]->getTokenCode() != table_of_token_codes::token_mem_block)
+      if ((*token)[i]->getTokenCode() != table_of_token_codes::token_matrix)
 	ERROR_EXIT(128, "Incorrect token type\n");
-      TokenMemoryBlock *component_output_mem_block;
-      component_output_mem_block = (*token)[i]->convertTo<TokenMemoryBlock*>();
-      unsigned int sz = component_output_mem_block->getUsedSize();
-      assert(pos + sz <= mem_block_token->getUsedSize());
-      // copy from component_output to output Token
-      doScopy(sz,
-	      component_output_mem_block->getMemBlock(), 0, 1,
-	      mem_block_token->getMemBlock(), pos, 1,
-	      use_cuda);
-      //
-      pos += sz;
+      aux_mat = (*token)[i]->convertTo<TokenMatrixFloat*>()->getMatrix();
+      const unsigned int sz = ( (is_output) ?
+				components[i]->getOutputSize() :
+				components[i]->getInputSize() );
+      sizes[last_dim] = sz;
+      // Destination data sub-matrix (references original data matrix)
+
+      // FIXME: This could be improved adding a rewrap method to matrix,
+      // avoiding multiple new and delete operations
+      MatrixFloat *submat = new MatrixFloat(full_mat, coords, sizes, false);
+      submat->copy(aux_mat);
+      delete submat;
     }
-    return mem_block_token;
+    delete[] coords;
+    delete[] sizes;
+    return new TokenMatrixFloat(full_mat);
   }
 
-  TokenMemoryBlock *JoinANNComponent::buildMemoryBlockToken(Token *token,
+  TokenMatrixFloat *JoinANNComponent::buildMatrixFloatToken(Token *token,
 							    bool is_output) {
     if (token->getTokenCode() != table_of_token_codes::vector_Tokens)
       ERROR_EXIT(128, "Incorrect output token type");
     //
     TokenBunchVector *vector_token = token->convertTo<TokenBunchVector*>();
-    return buildMemoryBlockToken(vector_token, is_output);
+    return buildMatrixFloatToken(vector_token, is_output);
   }
   
   Token *JoinANNComponent::doForward(Token* _input, bool during_training) {
@@ -180,7 +190,7 @@ namespace ANN {
 		components[i]->doForward((*input_vector)[i], during_training));
     // INFO: will be possible to put this method inside previous loop, but seems
     // more simpler a decoupled code
-    AssignRef(output, buildMemoryBlockToken(output_vector, true));
+    AssignRef(output, buildMatrixFloatToken(output_vector, true));
     //
     return output;
   }
@@ -191,9 +201,9 @@ namespace ANN {
       if (error_output) { DecRef(error_output); error_output = 0; }
       return 0;
     }
-    if (_error_input->getTokenCode() != table_of_token_codes::token_mem_block)
+    if (_error_input->getTokenCode() != table_of_token_codes::token_matrix)
       ERROR_EXIT(128, "Incorrect error input token type\n");
-    AssignRef(error_input, _error_input->convertTo<TokenMemoryBlock*>());
+    AssignRef(error_input, _error_input->convertTo<TokenMatrixFloat*>());
     // INFO: will be possible to put this method inside previous loop, but seems
     // more simpler a decoupled code
     buildErrorInputBunchVector(error_input_vector, _error_input);
@@ -202,12 +212,12 @@ namespace ANN {
 		components[i]->doBackprop((*error_input_vector)[i]));
     // error_output_vector has the gradients of each component stored as
     // array. Depending on the received input, this vector would be returned as
-    // it is, or gradients will be stored as a TokenMemoryBlock joining all
+    // it is, or gradients will be stored as a TokenMatrixFloat joining all
     // array positions.
     if (segmented_input) AssignRef(error_output, error_output_vector);
     // INFO: will be possible to put this method inside previous loop, but
     // seems more simpler a decoupled code
-    else AssignRef(error_output, buildMemoryBlockToken(error_output_vector,
+    else AssignRef(error_output, buildMatrixFloatToken(error_output_vector,
 						       false));
     return error_output;
   }

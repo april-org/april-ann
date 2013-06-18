@@ -22,7 +22,7 @@
 #ifndef DOTPRODUCTANNCOMPONENT_H
 #define DOTPRODUCTANNCOMPONENT_H  
 
-#include "token_memory_block.h"
+#include "token_matrix.h"
 #include "cblas_headers.h"
 #include "ann_component.h"
 #include "connection.h"
@@ -30,7 +30,7 @@
 namespace ANN {
   class DotProductANNComponent : public ANNComponent {
     Token            *input;
-    TokenMemoryBlock *error_input, *output, *error_output;
+    TokenMatrixFloat *error_input, *output, *error_output;
     Connections *weights_matrix;
     unsigned int bunch_size, num_updates_from_last_prune;
     bool sparse_input;
