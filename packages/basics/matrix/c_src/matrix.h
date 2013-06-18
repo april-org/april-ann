@@ -545,7 +545,9 @@ Matrix<T> *Matrix<T>::transpose() const {
 
 template <typename T>
 Matrix<T>* Matrix<T>::cloneOnlyDims() const {
-  return new Matrix<T>(numDim, matrixSize, T(), major_order);
+  Matrix<T> *obj = new Matrix<T>(numDim, matrixSize, T(), major_order);
+  obj->setUseCuda(use_cuda);
+  return obj;
 }
 
 template<typename T>

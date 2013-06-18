@@ -25,11 +25,11 @@
 #include "cblas_headers.h"
 #include "ann_component.h"
 #include "connection.h"
-#include "token_memory_block.h"
+#include "token_matrix.h"
 
 namespace ANN {
   class BiasANNComponent : public ANNComponent {
-    TokenMemoryBlock *input, *output, *error;
+    TokenMatrixFloat *input, *output, *error;
     Connections *bias_vector;
     unsigned int bunch_size, num_updates_from_last_prune;
     
@@ -37,10 +37,10 @@ namespace ANN {
     float learning_rate, momentum;
     
     void
-    computeBPUpdateOnPrevVectors(FloatGPUMirroredMemoryBlock *prev_weights_mat_ptr,
-				 FloatGPUMirroredMemoryBlock *input,
+    computeBPUpdateOnPrevVectors(MatrixFloat *prev_weights_mat,
+				 MatrixFloat *input,
 				 const unsigned int input_shift,
-				 FloatGPUMirroredMemoryBlock *input_error,
+				 MatrixFloat *input_error,
 				 const unsigned int input_error_shift,
 				 float beta);
     
