@@ -30,28 +30,28 @@ namespace ANN {
   Connections::Connections(unsigned int num_inputs, unsigned int num_outputs) :
     Referenced(),
     weights(0), prev_weights(0),
-    total_size(num_inputs*num_outputs),
-    num_inputs(num_inputs), num_outputs(num_outputs),
     num_references(0), update_weights_calls(0) {
-    weights      = new FloatGPUMirroredMemoryBlock(total_size);
-    prev_weights = new FloatGPUMirroredMemoryBlock(total_size);
+    weights      = new MatrixFloat(num_inputs, num_outputs, 0.0f, CblasColMajor);
+    prev_weights = new MatrixFloat(num_inputs, num_outputs, 0.0f, CblasColMajor);
     if (weights == 0 || prev_weights == 0)
       ERROR_EXIT(130, "Impossible to allocate memory\n");
+    IncRef(weights);
+    IncRef(prev_weights);
   }
 
   Connections::~Connections() {
-    delete weights;
-    delete prev_weights;
+    DecRef(weights);
+    DecRef(prev_weights);
   }
 
   bool Connections::checkInputOutputSizes(unsigned int input_size,
 					  unsigned int output_size) const {
     // TODO: comprobar error input==0 y output==0
-    if (num_inputs != input_size) {
+    if (weights->getDimSize(0) != input_size) {
       ERROR_PRINT("Incorrect input size!!!\n");
       return false;
     }
-    if (num_outputs != output_size) {
+    if (weights->getDimSize(1) != output_size) {
       ERROR_PRINT("Incorrect output size!!!\n");
       return false;
     }
@@ -87,60 +87,61 @@ namespace ANN {
 
   void Connections::
   computeMomentumOnPrevVector(float momentum, bool use_cuda) {
+#ifdef USE_CUDA
+    // FIXME: adds a setUseCuda method to set CUDA flag of the matrices
+    weights->setUseCuda(use_cuda);
+    prev_weights->setUseCuda(use_cuda);
+#endif
     // momentum learning rule
     // prev_w[i,j] = momentum * (w[i,j] - prev_w[i,j])
     //
     // but this method computes: first the complementary with saxpy:
     // prev_w[i,j] = prev_w[i,j] - 1.0f * w[i,j]
-    doSaxpy(total_size,
-	    -1.0f,
-	    weights, 0, 1,
-	    prev_weights, 0, 1,
-	    use_cuda);
+    prev_weights->saxpy(-1.0f, weights);
     // second apply momentum with sscal:
     // prev_w[i,j] = -momentum * prev_w[i,j] = -momentum*(prev_w[i,j] - w[i,j])
-    doSscal(total_size,
-	    -momentum,
-	    prev_weights, 0, 1,
-	    use_cuda);
+    prev_weights->scal(-momentum);
   }
   
   void Connections::
   computeWeightDecayOnPrevVector(float c_weight_decay, bool use_cuda) {
+#ifdef USE_CUDA
+    // FIXME: adds a setUseCuda method to set CUDA flag of the matrices
+    weights->setUseCuda(use_cuda);
+    prev_weights->setUseCuda(use_cuda);
+#endif
     // applies weight decay
     // prev_w[i,j] = c_weight_decay * w[i,j] + prev_w[i,j]
     //
-    doSaxpy(total_size,
-	    c_weight_decay,
-	    weights, 0, 1,
-	    prev_weights, 0, 1,
-	    use_cuda);
+    prev_weights->axpy(c_weight_decay, weights);
   }
 
   unsigned int Connections::size() const {
-    return total_size;
+    return weights->size();
   }
     
   void Connections::copyToPrevVector(bool use_cuda) {
-    doScopy(total_size,
-	    weights, 0, 1,
-	    prev_weights, 0, 1,
-	    use_cuda);
+#ifdef USE_CUDA
+    // FIXME: adds a setUseCuda method to set CUDA flag of the matrices
+    weights->setUseCuda(use_cuda);
+    prev_weights->setUseCuda(use_cuda);
+#endif
+    prev_weights->copy(weights);
   }
   
   void Connections::pruneSubnormalAndCheckNormal() {
-    float *w = weights->getPPALForReadAndWrite();
-    if (!april_utils::check_floats(w, total_size)) {
+    float *w = weights->getRawDataAccess();
+    if (!april_utils::check_floats(w, weights->size())) {
       assert("No finite numbers at weights matrix!!!" && false);
       ERROR_EXIT(128, "No finite numbers at weights matrix!!!\n");
     }
   }
 
-  FloatGPUMirroredMemoryBlock *Connections::getPtr() {
+  MatrixFloat *Connections::getPtr() {
     return weights;
   }
 
-  FloatGPUMirroredMemoryBlock *Connections::getPrevPtr() {
+  MatrixFloat *Connections::getPrevPtr() {
     return prev_weights;
   }
 
@@ -154,15 +155,13 @@ namespace ANN {
     assert(fabs(dinf) > weightnearzero);
     assert(fabs(dsup) > weightnearzero);
     double range  = dsup - dinf;
-    float *w      = weights->getPPALForReadAndWrite();
-    float *prev_w = prev_weights->getPPALForReadAndWrite();
-    for (unsigned int j=0; j<num_outputs; ++j) {
-      unsigned int k = j;
-      for (unsigned int i=0; i<num_inputs; ++i) {
-	rnd_weight(rnd, w[k], dinf, range, weightnearzero);
-	prev_w[k] = w[k];
-	k += num_outputs;
-      }
+    MatrixFloat::col_major_iterator w_it(weights->begin());
+    MatrixFloat::col_major_iterator prev_w_it(prev_weights->begin());
+    while(w_it != weights->end()) {
+      rnd_weight(rnd, *w_it, dinf, range, weightnearzero);
+      *prev_w_it = *w_it;
+      ++w_it;
+      ++prev_w_it;
     }
   }
     
@@ -176,13 +175,14 @@ namespace ANN {
     assert(fabs(dinf) > weightnearzero);
     assert(fabs(dsup) > weightnearzero);
     double range  = dsup - dinf;
-    float *w      = weights->getPPALForReadAndWrite();
-    float *prev_w = prev_weights->getPPALForReadAndWrite();
-    unsigned int k = col;
-    for (unsigned int i=0; i<num_inputs; ++i) {
-      rnd_weight(rnd, w[k], dinf, range, weightnearzero);
-      prev_w[k] = w[k];
-      k += num_outputs;
+    MatrixFloat::col_major_iterator w_it(weights->iteratorAt(0,col));
+    MatrixFloat::col_major_iterator prev_w_it(prev_weights->iteratorAt(0,col));
+    MatrixFloat::col_major_iterator end(weights->iteratorAt(0,col+1));
+    while(w_it != end) {
+      rnd_weight(rnd, *w_it, dinf, range, weightnearzero);
+      *prev_w_it = *w_it;
+      ++w_it;
+      ++prev_w_it;
     }
   }
   

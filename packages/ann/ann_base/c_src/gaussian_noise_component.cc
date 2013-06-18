@@ -20,8 +20,6 @@
  */
 #include "error_print.h"
 #include "table_of_token_codes.h"
-#include "token_vector.h"
-#include "token_memory_block.h"
 #include "gaussian_noise_component.h"
 #include "wrapper.h"
 
@@ -54,29 +52,20 @@ namespace ANN {
   Token *GaussianNoiseANNComponent::doForward(Token* _input, bool during_training) {
     // error checking
     if ( (_input == 0) ||
-	 (_input->getTokenCode() != table_of_token_codes::token_mem_block))
-      ERROR_EXIT(129,"Incorrect input Token type, expected token_mem_block!\n");
+	 (_input->getTokenCode() != table_of_token_codes::token_matrix))
+      ERROR_EXIT(129,"Incorrect input Token type, expected token_matrix!\n");
     // change current input by new input
-    AssignRef(input,_input->convertTo<TokenMemoryBlock*>());
+    AssignRef(input,_input->convertTo<TokenMatrixFloat*>());
     // new  output to fit the bunch
-    AssignRef(output,new TokenMemoryBlock(input->getUsedSize()));
+    AssignRef(output,new TokenMatrixFloat(input->getMatrix()->clone()));
     // get memory blocks for tokens
-    FloatGPUMirroredMemoryBlock *input_ptr  = input->getMemBlock();
-    FloatGPUMirroredMemoryBlock *output_ptr = output->getMemBlock();
-    FloatGPUMirroredMemoryBlock *noise_ptr;
-    noise_ptr = new FloatGPUMirroredMemoryBlock(input->getUsedSize());
-    float *noise_mem_ptr = noise_ptr->getPPALForWrite();
-    for (unsigned int i=0; i<input->getUsedSize(); ++i)
-      noise_mem_ptr[i] = random->randNorm(mean, variance);
-    doScopy(input->getUsedSize(),
-	    input_ptr, 0, 1,
-	    output_ptr, 0, 1,
-	    use_cuda);
-    doSaxpy(input->getUsedSize(),
-	    1.0f, noise_ptr, 0, 1,
-	    output_ptr, 0, 1,
-	    use_cuda);
-    delete noise_ptr;
+    MatrixFloat *output_mat = output->getMatrix();
+    MatrixFloat *noise_mat  = output_mat->cloneOnlyDims();
+    for (MatrixFloat::col_major_iterator it=noise_mat->begin();
+	 it!=noise_mat->end(); ++it)
+      *it = random->randNorm(mean, variance);
+    output_mat->axpy(1.0f, noise_mat);
+    delete noise_mat;
     return output;
   }
 

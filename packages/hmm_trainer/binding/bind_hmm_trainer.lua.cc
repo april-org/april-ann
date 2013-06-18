@@ -394,9 +394,7 @@
     int nsts = table_to_int_vector(L,&seq_emission);
 
     // creamos una matriz de dim 1 con npat valores:
-    int dim[1];
-    dim[0] = npat;
-    MatrixFloat* mat = new MatrixFloat(1,dim);
+    MatrixFloat* mat = new MatrixFloat(1, &npat);
 
     // repartimos los npat valores en nsts posiciones
     int cociente = npat/nsts;

@@ -24,7 +24,7 @@
 #include "vector.h"
 #include "ann_component.h"
 #include "token_vector.h"
-#include "token_memory_block.h"
+#include "token_matrix.h"
 
 using april_utils::vector;
 
@@ -35,8 +35,8 @@ namespace ANN {
     // Token pointers which contains exactly the same that was received
     Token *input, *error_output;
 
-    // This token is always a MemoryBlock
-    TokenMemoryBlock *output, *error_input;
+    // This token is always a MatrixFloat
+    TokenMatrixFloat *output, *error_input;
 
     // Auxiliar Token pointers to prepare data from and for contained components
     TokenBunchVector *input_vector,  *error_input_vector;
@@ -50,9 +50,9 @@ namespace ANN {
 			       Token *token);
     void buildErrorInputBunchVector(TokenBunchVector *&vector_token,
 				    Token *token);
-    TokenMemoryBlock *buildMemoryBlockToken(TokenBunchVector *token,
+    TokenMatrixFloat *buildMatrixFloatToken(TokenBunchVector *token,
 					    bool is_output);
-    TokenMemoryBlock *buildMemoryBlockToken(Token *token,
+    TokenMatrixFloat *buildMatrixFloatToken(Token *token,
 					    bool is_output);
     
   public:

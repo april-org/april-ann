@@ -23,8 +23,7 @@
 
 #include "vector.h"
 #include "ann_component.h"
-#include "token_vector.h"
-#include "token_memory_block.h"
+#include "token_matrix.h"
 #include "MersenneTwister.h"
 
 using april_utils::vector;
@@ -33,7 +32,7 @@ namespace ANN {
   
   class GaussianNoiseANNComponent : public ANNComponent {
     MTRand           *random;
-    TokenMemoryBlock *input, *output;
+    TokenMatrixFloat *input, *output;
     Token            *error_input, *error_output;
     float            mean, variance;
     

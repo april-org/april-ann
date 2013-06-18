@@ -75,17 +75,13 @@ protected:
   const T *getData() const { return data->getPPALForRead(); }
   /// Returns the offset of first data value (sub-matrix)
   int getOffset() const { return offset; }
-  /// Updates with the following coordinates vector
-  static bool nextCoordVectorRowOrder(int *coords, const int *sizes,
-				      int numDim);
-  static bool nextCoordVectorColOrder(int *coords, const int *sizes,
-				      int numDim);
+  
   int getLastRawPos() const { return last_raw_pos; }
   /// Returns if the matrix is a vector
   bool isVector() const { return (numDim==1 ||
 				  (numDim==2 &&
-				   (matrixSize[0]==1 ||
-				    matrixSize[1]==1))); }
+				   ( (matrixSize[0]==1) ^
+				     (matrixSize[1]==1) ))); }
   bool isColVector() const { return (numDim==2 && matrixSize[1]==1); }
   /// Returns the size of the vector, the coordinate which is different of 1. It
   /// only works if the matrix is a vector (precondition).
@@ -98,11 +94,17 @@ protected:
   }
   
 public:
+  /// Updates with the following coordinates vector
+  static bool nextCoordVectorRowOrder(int *coords, const int *sizes,
+				      int numDim);
+  static bool nextCoordVectorColOrder(int *coords, const int *sizes,
+				      int numDim);
   /********* Iterators for Matrix traversal *********/
   // forward declaration
   class const_iterator;
   class iterator {
     friend class const_iterator;
+    friend class col_major_iterator;
     friend class Matrix;
     Matrix *m;
     int raw_pos;
@@ -119,6 +121,31 @@ public:
     bool      operator==(const iterator &other) const;
     bool      operator!=(const iterator &other) const;
     iterator &operator++();
+    T &operator*();
+    int getRawPos() const;
+  };
+  /*******************************************************/
+  class col_major_iterator {
+    friend class Matrix;
+    Matrix *m;
+    int raw_pos;
+    int *coords;
+    T *data;
+    col_major_iterator(Matrix *m);
+    col_major_iterator(Matrix *m, int raw_pos);
+    col_major_iterator(Matrix *m, int raw_pos, int *coords);
+  public:
+    col_major_iterator();
+    col_major_iterator(const col_major_iterator &other);
+    col_major_iterator(const iterator &other);
+    ~col_major_iterator();
+    col_major_iterator &operator=(const col_major_iterator &other);
+    col_major_iterator &operator=(const iterator &other);
+    bool      operator==(const col_major_iterator &other) const;
+    bool      operator==(const iterator &other) const;
+    bool      operator!=(const col_major_iterator &other) const;
+    bool      operator!=(const iterator &other) const;
+    col_major_iterator &operator++();
     T &operator*();
     int getRawPos() const;
   };
@@ -219,13 +246,15 @@ public:
   const_iterator end() const { return const_iterator(this, last_raw_pos+1); }
 
   /// Transposition
-  Matrix<T>* transpose();
+  Matrix<T>* transpose() const;
+  /// Copy only sizes, but not data
+  Matrix<T>* cloneOnlyDims() const;
   /// Deep copy
   Matrix<T>* clone();
   /// Deep copy with different major_order
   Matrix<T> *clone(CBLAS_ORDER major_order);
   /// Shallow copy
-  Matrix<T>* copy();
+  Matrix<T>* shallow_copy();
   T& operator[] (int i);
   const T& operator[] (int i) const;
   // Access to independent elements, one and two dimensions are special cases
@@ -278,7 +307,13 @@ public:
   void tanh();
 
   /**** BLAS OPERATIONS ****/
+  
+  // FIXME: This operations could be improved if we take into account when the
+  // matrix data is contiguous in memory (even when it is a sub-matrix)
 
+  // SCOPY BLAS operation this = other
+  void copy(const Matrix<T> *other);
+  
   // AXPY BLAS operation this = this + alpha * other
   void axpy(T alpha, const Matrix<T> *other);
   
@@ -341,7 +376,7 @@ void Matrix<T>::initialize(const int *dim) {
 /// Allocation of memory for data pointer. It is Referenced for sharing.
 template <typename T>
 void Matrix<T>::allocate_memory(int size) {
-  data = new GPUMirroredMemoryBlock<T>(size, true);
+  data = new GPUMirroredMemoryBlock<T>(size);
   IncRef(data);
 }
 
@@ -361,15 +396,19 @@ Matrix<T>::Matrix(int numDim,
 					     offset(0),
 					     major_order(major_order),
 					     use_cuda(false) {
-  if (major_order == CblasColMajor && numDim > 2)
+  /*
+    if (major_order == CblasColMajor && numDim > 2)
     ERROR_EXIT(128, "ColMajor order is only allowed when numDim<=2\n");
+  */
   stride     = new int[numDim];
   matrixSize = new int[numDim];
   aux_coords = new int[numDim];
   initialize(dim);
   allocate_memory(total_size);
-  T *d = data->getPPALForWrite();
-  for (int i=0; i<total_size; ++i) d[i] = default_value;
+  /*
+    T *d = data->getPPALForWrite();
+    for (int i=0; i<total_size; ++i) d[i] = default_value;
+  */
 }
 
 /// Constructor for sub-matrix building
@@ -437,9 +476,11 @@ Matrix<T>::Matrix(int numDim, int d1, ...) : numDim(numDim),
   va_end(ap);
   initialize(dim);
   allocate_memory(total_size);
-  T default_value=T();
-  T *d = data->getPPALForWrite();
-  for (int i=0; i<total_size; ++i) d[i] = default_value;
+  /*
+    T default_value=T();
+    T *d = data->getPPALForWrite();
+    for (int i=0; i<total_size; ++i) d[i] = default_value;
+  */
   delete[] dim;
 }
 
@@ -488,7 +529,7 @@ Matrix<T>::~Matrix() {
 }
 
 template<typename T>
-Matrix<T> *Matrix<T>::transpose() {
+Matrix<T> *Matrix<T>::transpose() const {
   int *aux_matrix_size = new int[numDim];
   for (int i=0; i<numDim; ++i) aux_matrix_size[i] = matrixSize[numDim-i-1];
   Matrix<T> *resul = new Matrix<T>(numDim, aux_matrix_size, T(), major_order);
@@ -502,10 +543,17 @@ Matrix<T> *Matrix<T>::transpose() {
   return resul;
 }
 
+template <typename T>
+Matrix<T>* Matrix<T>::cloneOnlyDims() const {
+  return new Matrix<T>(numDim, matrixSize, T(), major_order);
+}
+
 template<typename T>
 Matrix<T> *Matrix<T>::clone(CBLAS_ORDER major_order) {
   Matrix<T> *resul;
-  if (numDim != 2) ERROR_EXIT(128, "Major type not availabe when numDim!=2\n");
+  /*
+    if (numDim != 2) ERROR_EXIT(128, "Major type not availabe when numDim!=2\n");
+  */
   if (this->major_order != major_order) {
     resul = new Matrix<T>(numDim, matrixSize, T(), major_order);
     iterator resul_it(resul->begin());
@@ -526,7 +574,7 @@ Matrix<T>* Matrix<T>::clone() {
 }
 
 template <typename T>
-Matrix<T>* Matrix<T>::copy() {
+Matrix<T>* Matrix<T>::shallow_copy() {
   return new Matrix<T>(this,false);
 }
 
@@ -808,12 +856,56 @@ void Matrix<T>::tanh() {
 /**** BLAS OPERATIONS ****/
 
 template <typename T>
+void Matrix<T>::copy(const Matrix<T> *other) {
+  if (size() != other->size())
+    ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d\n",
+		size(), other->size());
+  if (major_order != other->major_order)
+    ERROR_EXIT(128, "Matrices with different major orders\n");
+  if (! sameDim(other) )
+    ERROR_EXIT(128, "Matrices with different dimension sizes\n");
+  use_cuda = other->use_cuda;
+  if (!is_submatrix && !other->is_submatrix)
+    doScopy(total_size,
+	    other->data, 0, 1,
+	    data, 0, 1,
+	    use_cuda);
+  else {
+    for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
+    if (major_order == CblasRowMajor) {
+      do {
+	int this_pos  = computeRawPos(aux_coords);
+	int other_pos = other->computeRawPos(aux_coords);
+	doScopy(matrixSize[numDim-1],
+		other->data, other_pos, other->stride[numDim-1],
+		data, this_pos, stride[numDim-1],
+		use_cuda);
+	aux_coords[numDim-1] = matrixSize[numDim-1]-1;
+      } while(nextCoordVectorRowOrder(aux_coords, matrixSize, numDim));
+    }
+    else {
+      do {
+	int this_pos  = computeRawPos(aux_coords);
+	int other_pos = other->computeRawPos(aux_coords);
+	doScopy(matrixSize[0],
+		other->data, other_pos, other->stride[0],
+		data, this_pos, stride[0],
+		use_cuda);
+	aux_coords[0] = matrixSize[0]-1;
+      } while(nextCoordVectorColOrder(aux_coords, matrixSize, numDim));
+    }
+  }
+}
+
+template <typename T>
 void Matrix<T>::axpy(T alpha, const Matrix<T> *other) {
   if (size() != other->size())
     ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d",
 		size(), other->size());
   if (major_order != other->major_order)
     ERROR_EXIT(128, "Matrices with different major orders");
+  if (! sameDim(other) )
+    ERROR_EXIT(128, "Matrices with different dimension sizes\n");
   if (!is_submatrix && !other->is_submatrix)
     doSaxpy(total_size,
 	    alpha, other->data, 0, 1,
@@ -1042,7 +1134,7 @@ void Matrix<T>::minAndMax(T &min, T &max) const {
   }
 }
 
-/***** PRIVATE METHODS *****/
+/***** COORDINATES METHODS *****/
 
 template <typename T>
 bool Matrix<T>::nextCoordVectorRowOrder(int *coords, const int *sizes,
@@ -1062,8 +1154,8 @@ bool Matrix<T>::nextCoordVectorColOrder(int *coords, const int *sizes,
   int j = 0;
   do {
     coords[j] = (coords[j]+1) % sizes[j];
-  } while(j<numDim-1 && coords[j++] == 0);
-  if (j == numDim-1 && coords[numDim-1] == 0) return false;
+  } while(coords[j++] == 0 && j<numDim);
+  if (j == numDim && coords[numDim-1] == 0) return false;
   return true;
 }
 
@@ -1186,6 +1278,133 @@ T &Matrix<T>::iterator::operator*() {
 
 template <typename T>
 int Matrix<T>::iterator::getRawPos() const {
+  return raw_pos;
+}
+
+/*******************************************************************/
+
+template <typename T>
+Matrix<T>::col_major_iterator::col_major_iterator(Matrix *m) : m(m), raw_pos(0) {
+  coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) coords[i] = 0;
+  raw_pos = m->getOffset();
+  // IncRef(m);
+  data = m->getData();
+}
+
+template <typename T>
+Matrix<T>::col_major_iterator::col_major_iterator(Matrix *m, int raw_pos) :
+  m(m), raw_pos(raw_pos) {
+  coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) coords[i] = 0;
+  // IncRef(m);
+  data = m->getData();
+}
+
+template <typename T>
+Matrix<T>::col_major_iterator::col_major_iterator(Matrix *m, int raw_pos, int *coords) :
+  m(m), raw_pos(raw_pos) {
+  this->coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) this->coords[i] = coords[i];
+  // IncRef(m);
+  data = m->getData();
+}
+
+template <typename T>
+Matrix<T>::col_major_iterator::col_major_iterator() : m(0), raw_pos(0), coords(0) { }
+
+template <typename T>
+Matrix<T>::col_major_iterator::col_major_iterator(const col_major_iterator &other) :
+  m(other.m),
+  raw_pos(other.raw_pos) {
+  coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
+  // IncRef(m);
+  data = m->getData();
+}
+
+template <typename T>
+Matrix<T>::col_major_iterator::col_major_iterator(const iterator &other) :
+  m(other.m),
+  raw_pos(other.raw_pos) {
+  coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
+  // IncRef(m);
+  data = m->getData();
+}
+
+template <typename T>
+Matrix<T>::col_major_iterator::~col_major_iterator() {
+  delete[] coords;
+  // if (m) DecRef(m);
+}
+
+template <typename T>
+typename Matrix<T>::col_major_iterator &Matrix<T>::col_major_iterator::operator=(const Matrix<T>::col_major_iterator &other) {
+  delete[] coords;
+  // if (m) DecRef(m);
+  m = other.m;
+  // IncRef(m);
+  raw_pos = other.raw_pos;
+  coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
+  data = m->getData();
+  return *this;
+}
+
+template <typename T>
+typename Matrix<T>::col_major_iterator &Matrix<T>::col_major_iterator::operator=(const Matrix<T>::iterator &other) {
+  delete[] coords;
+  // if (m) DecRef(m);
+  m = other.m;
+  // IncRef(m);
+  raw_pos = other.raw_pos;
+  coords = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
+  data = m->getData();
+  return *this;
+}
+
+template <typename T>
+bool Matrix<T>::col_major_iterator::operator==(const Matrix<T>::col_major_iterator &other) const {
+  return m==other.m && raw_pos == other.raw_pos;
+}
+
+template <typename T>
+bool Matrix<T>::col_major_iterator::operator==(const Matrix<T>::iterator &other) const {
+  return m==other.m && raw_pos == other.raw_pos;
+}
+
+template <typename T>
+bool Matrix<T>::col_major_iterator::operator!=(const Matrix<T>::col_major_iterator &other) const {
+  return !( (*this) == other );
+}
+
+template <typename T>
+bool Matrix<T>::col_major_iterator::operator!=(const Matrix<T>::iterator &other) const {
+  return !( (*this) == other );
+}
+
+template <typename T>
+typename Matrix<T>::col_major_iterator &Matrix<T>::col_major_iterator::operator++() {
+  if (m->getIsSubMatrix() || m->getMajorOrder()==CblasRowMajor) {
+    const int *dims    = m->getDimPtr();
+    // const int *strides = m->getStridePtr();
+    if (!Matrix<T>::nextCoordVectorColOrder(coords, dims, m->getNumDim()))
+      raw_pos = m->getLastRawPos()+1;
+    else raw_pos = m->computeRawPos(coords);
+  }
+  else ++raw_pos;
+  return *this;
+}
+
+template <typename T>
+T &Matrix<T>::col_major_iterator::operator*() {
+  return data[raw_pos];
+}
+
+template <typename T>
+int Matrix<T>::col_major_iterator::getRawPos() const {
   return raw_pos;
 }
 

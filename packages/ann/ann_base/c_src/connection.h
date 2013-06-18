@@ -23,7 +23,6 @@
 #define CONNECTION_H
 
 #include <cstring>
-#include "gpu_mirrored_memory_block.h"
 #include "aligned_memory.h"
 #include "swap.h"
 #include "constants.h"
@@ -53,11 +52,8 @@ namespace ANN {
   
   class Connections : public Referenced {
   protected:
-    FloatGPUMirroredMemoryBlock *weights;
-    FloatGPUMirroredMemoryBlock *prev_weights;
-    unsigned int total_size;
-    /// numero de inputs y numero de outputs
-    unsigned int num_inputs, num_outputs;
+    MatrixFloat *weights;
+    MatrixFloat *prev_weights;
     // contador de referencias
     unsigned int num_references;
     /// numero de veces que se ha llamado al metodo
