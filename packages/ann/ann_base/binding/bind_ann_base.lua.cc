@@ -131,7 +131,7 @@ using namespace ANN;
 }
 //BIND_END
 
-//BIND_METHOD Connections weights
+//BIND_METHOD Connections copy_to
 {
   LUABIND_CHECK_ARGN(<=,1);
   int argn = lua_gettop(L);
@@ -162,6 +162,13 @@ using namespace ANN;
   LUABIND_RETURN(MatrixFloat, w);
   LUABIND_RETURN(MatrixFloat, oldw);
   LUABIND_RETURN(uint, lastpos);
+}
+//BIND_END
+
+//BIND_METHOD Connections matrix
+{
+  LUABIND_RETURN(MatrixFloat, obj->getPtr());
+  LUABIND_RETURN(MatrixFloat, obj->getPrevPtr());
 }
 //BIND_END
 

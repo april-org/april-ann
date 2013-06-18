@@ -31,8 +31,8 @@ namespace ANN {
     Referenced(),
     weights(0), prev_weights(0),
     num_references(0), update_weights_calls(0) {
-    weights      = new MatrixFloat(num_inputs, num_outputs, 0.0f, CblasColMajor);
-    prev_weights = new MatrixFloat(num_inputs, num_outputs, 0.0f, CblasColMajor);
+    weights      = new MatrixFloat(num_outputs, num_inputs, 0.0f, CblasColMajor);
+    prev_weights = new MatrixFloat(num_outputs, num_inputs, 0.0f, CblasColMajor);
     if (weights == 0 || prev_weights == 0)
       ERROR_EXIT(130, "Impossible to allocate memory\n");
     IncRef(weights);
@@ -47,12 +47,12 @@ namespace ANN {
   bool Connections::checkInputOutputSizes(unsigned int input_size,
 					  unsigned int output_size) const {
     // TODO: comprobar error input==0 y output==0
-    if (weights->getDimSize(0) != input_size) {
-      ERROR_PRINT("Incorrect input size!!!\n");
+    if (static_cast<unsigned int>(weights->getDimSize(0)) != output_size) {
+      ERROR_PRINT("Incorrect output size!!!\n");
       return false;
     }
-    if (weights->getDimSize(1) != output_size) {
-      ERROR_PRINT("Incorrect output size!!!\n");
+    if (static_cast<unsigned int>(weights->getDimSize(1)) != input_size) {
+      ERROR_PRINT("Incorrect input size!!!\n");
       return false;
     }
     return true;
@@ -97,7 +97,7 @@ namespace ANN {
     //
     // but this method computes: first the complementary with saxpy:
     // prev_w[i,j] = prev_w[i,j] - 1.0f * w[i,j]
-    prev_weights->saxpy(-1.0f, weights);
+    prev_weights->axpy(-1.0f, weights);
     // second apply momentum with sscal:
     // prev_w[i,j] = -momentum * prev_w[i,j] = -momentum*(prev_w[i,j] - w[i,j])
     prev_weights->scal(-momentum);
@@ -130,7 +130,7 @@ namespace ANN {
   }
   
   void Connections::pruneSubnormalAndCheckNormal() {
-    float *w = weights->getRawDataAccess();
+    float *w = weights->getRawDataAccess()->getPPALForReadAndWrite();
     if (!april_utils::check_floats(w, weights->size())) {
       assert("No finite numbers at weights matrix!!!" && false);
       ERROR_EXIT(128, "No finite numbers at weights matrix!!!\n");
@@ -190,6 +190,9 @@ namespace ANN {
 					MatrixFloat *old_data,
 					unsigned int first_weight_pos,
 					unsigned int column_size) {
+    const unsigned int num_outputs = static_cast<unsigned int>(weights->getDimSize(0));
+    const unsigned int num_inputs  = static_cast<unsigned int>(weights->getDimSize(1));
+    const unsigned int total_size  = static_cast<unsigned int>(weights->size());
     unsigned int min_size =
       (total_size +
        max(0, (static_cast<int>(column_size-num_inputs)-1))*num_outputs +
@@ -203,16 +206,14 @@ namespace ANN {
 		 "and in row-major)\n");
     
     unsigned int current_w_pos = first_weight_pos;
-    float *w                   = weights->getPPALForReadAndWrite();
-    float *prev_w              = prev_weights->getPPALForReadAndWrite();
+    MatrixFloat::iterator w_it(weights->begin());
+    MatrixFloat::iterator prev_w_it(prev_weights->begin());
     const float *d = data->getRawDataAccess()->getPPALForRead();
     const float *old_d = old_data->getRawDataAccess()->getPPALForRead();
     for (unsigned int j=0; j<num_outputs; ++j) {
-      unsigned int k = j;
       for (unsigned int i=0; i<num_inputs; ++i) {
-	w[k]      = d[current_w_pos+i];
-	prev_w[k] = old_d[current_w_pos+i];
-	k += num_outputs;
+	*w_it      = d[current_w_pos+i];
+	*prev_w_it = old_d[current_w_pos+i];
       }
       current_w_pos += column_size;
     }
@@ -223,6 +224,9 @@ namespace ANN {
 					  MatrixFloat *old_data,
 					  unsigned int first_weight_pos,
 					  unsigned int column_size) {
+    const unsigned int num_outputs = static_cast<unsigned int>(weights->getDimSize(0));
+    const unsigned int num_inputs  = static_cast<unsigned int>(weights->getDimSize(1));
+    const unsigned int total_size  = static_cast<unsigned int>(weights->size());
     unsigned int min_size =
       (total_size +
        max(0, (static_cast<int>(column_size-num_inputs)-1))*num_outputs +
@@ -235,16 +239,14 @@ namespace ANN {
 		 "and in row-major)\n");
     
     unsigned int current_w_pos = first_weight_pos;
-    const float *w             = weights->getPPALForRead();
-    const float *prev_w        = prev_weights->getPPALForRead();
-    float *data_ptr = data->getRawDataAccess()->getPPALForWrite();
-    float *old_data_ptr = old_data->getRawDataAccess()->getPPALForWrite();
+    MatrixFloat::const_iterator w_it(weights->begin());
+    MatrixFloat::const_iterator prev_w_it(prev_weights->begin());
     for (unsigned int j=0; j<num_outputs; ++j) {
-      unsigned int k = j;
       for (unsigned int i=0; i<num_inputs; ++i) {
-	data_ptr[current_w_pos+i]     = w[k];
-	old_data_ptr[current_w_pos+i] = prev_w[k];
-	k += num_outputs;
+	(*data)[current_w_pos+i]     = *w_it;
+	(*old_data)[current_w_pos+i] = *prev_w_it;
+	++w_it;
+	++prev_w_it;
       }
       current_w_pos += column_size;
     }
@@ -253,39 +255,33 @@ namespace ANN {
     
   // para hacer copias
   Connections *Connections::clone() {
+    const int num_outputs = weights->getDimSize(0);
+    const int num_inputs  = weights->getDimSize(1);
     Connections *conn = new Connections(num_inputs, num_outputs);
-
-    doScopy(total_size,
-	    weights, 0, 1,
-	    conn->weights, 0, 1,
-	    weights->getCudaFlag());
-    
-    doScopy(total_size,
-	    prev_weights, 0, 1,
-	    conn->prev_weights, 0, 1,
-	    weights->getCudaFlag());
-    
+    conn->weights->copy(weights);
+    conn->prev_weights->copy(prev_weights);
     return conn;
   }
 
   void Connections::scale(float alpha) {
-    doSscal(total_size, alpha, weights, 0, 1,
-	    weights->getCudaFlag());
-    doSscal(total_size, alpha, prev_weights, 0, 1,
-	    prev_weights->getCudaFlag());
+    weights->scal(alpha);
+    prev_weights->scal(alpha);
   }
   
   void Connections::printDebug() {
+    const int num_outputs = weights->getDimSize(0);
+    const int num_inputs  = weights->getDimSize(1);
     printf ("Connections %p, input=%d, output=%d, num_refs=%d, calls=%d\n",
 	    this, num_inputs, num_outputs, num_references,
 	    update_weights_calls);
-    const float *w = weights->getPPALForRead();
-    const float *prevw = prev_weights->getPPALForRead();
-    for (unsigned int i=0; i<total_size; ++i)
-      printf("%f ", w[i]);
+    for (MatrixFloat::iterator w_it(weights->begin()); w_it!=weights->end();
+	 ++w_it) 
+      printf("%f ", *w_it);
     printf("\n");
-    for (unsigned int i=0; i<total_size; ++i)
-      printf("%f ", prevw[i]);
+    for (MatrixFloat::iterator prev_w_it(prev_weights->begin());
+	 prev_w_it!=prev_weights->end();
+	 ++prev_w_it) 
+      printf("%f ", *prev_w_it);
     printf("\n");
   }
   

@@ -76,12 +76,19 @@ namespace ANN {
     // la conexion es compartida por mas de una accion
     void         countReference();
     unsigned int getNumReferences() const;
-    unsigned int getInputSize()  const { return num_inputs; }
-    unsigned int getNumInputs()  const { return num_inputs; }
-    unsigned int getOutputSize() const { return num_outputs; }
-    unsigned int getNumOutputs() const { return num_outputs; }
+    unsigned int getInputSize()  const {
+      return static_cast<unsigned int>(weights->getDimSize(1));
+    }
+    unsigned int getNumInputs()  const {
+      return static_cast<unsigned int>(weights->getDimSize(1));
+    }
+    unsigned int getOutputSize() const {
+      return static_cast<unsigned int>(weights->getDimSize(0));
+    }
+    unsigned int getNumOutputs() const {
+      return static_cast<unsigned int>(weights->getDimSize(0));
+    }
     
-
     void         beginUpdate();
     bool         endUpdate(); // return true when last update call
     bool         isFirstUpdateCall();
@@ -92,8 +99,8 @@ namespace ANN {
     void         copyToPrevVector(bool use_cuda);
     unsigned int size() const;
     void         pruneSubnormalAndCheckNormal();
-    FloatGPUMirroredMemoryBlock *getPtr();
-    FloatGPUMirroredMemoryBlock *getPrevPtr();
+    MatrixFloat *getPtr();
+    MatrixFloat *getPrevPtr();
     
     // INTERFAZ A IMPLEMENTAR
     bool checkInputOutputSizes(unsigned int input_size,
@@ -119,7 +126,7 @@ namespace ANN {
     Connections *clone();
     
     unsigned int getNumWeights() const {
-      return total_size;
+      return static_cast<unsigned int>(weights->size());
     }
     
     void scale(float alpha);

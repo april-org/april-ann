@@ -44,34 +44,30 @@ namespace ANN {
     assert(bias_vector != 0);
     // error checking
     if ( (_input == 0) ||
-	 (_input->getTokenCode() != table_of_token_codes::token_mem_block))
-      ERROR_EXIT(129,"Incorrect input Token type, expected token_mem_block!\n");
+	 (_input->getTokenCode() != table_of_token_codes::token_matrix))
+      ERROR_EXIT(129,"Incorrect input Token type, expected token_matrix!\n");
     // change current input by new input
-    AssignRef(input,_input->convertTo<TokenMemoryBlock*>());
-    // compute current bunch
-    unsigned int bunch_size = input->getUsedSize() / input_size;
-    if (input->getUsedSize() % input_size != 0)
-      ERROR_EXIT2(128, "Input memory block (size %d) is not multiple of %d\n",
-		  input->getUsedSize(), input_size);
-    this->bunch_size = bunch_size;
-    // new output to fit the bunch
-    AssignRef(output,new TokenMemoryBlock(input->getUsedSize()));
-    // get memory blocks for tokens and weights
-    FloatGPUMirroredMemoryBlock *input_ptr       = input->getMemBlock();
-    FloatGPUMirroredMemoryBlock *output_ptr      = output->getMemBlock();
-    FloatGPUMirroredMemoryBlock *bias_vector_ptr = bias_vector->getPtr();
+    AssignRef(input,_input->convertTo<TokenMatrixFloat*>());
+    MatrixFloat *input_mat = input->getMatrix();
+    int last_dim = input_mat->getNumDim() - 1;
+    assert(last_dim == 0 || last_dim == 1);
+    assert(input_mat->getDimSize(last_dim) == input_size);
     // linear transfer of input to output
-    doScopy(output_size*bunch_size,
-	    input_ptr, 0, 1,
-	    output_ptr, 0, 1,
-	    use_cuda);
-    // addition of bias vector at output
-    doSaxpyLoop(output_size, 1.0f,
-		bias_vector_ptr, 1,
-		output_ptr, bunch_size,
-		bunch_size,
-		0, 1,
-		use_cuda);
+    MatrixFloat *output_mat = input_mat->clone();
+    AssignRef(output,new TokenMatrixFloat(input_mat));
+    // bias
+    MatrixFloat *bias_ptr = bias_vector->getPtr();
+    if (last_dim == 0)
+      output_mat->axpy(1.0f, bias_ptr);
+    else {
+      // addition of bias vector at output
+      doSaxpyLoop(output_size, 1.0f,
+		  bias_ptr->getRawDataAccess(), bias_ptr->getStrideSize(1),
+		  output_mat->getRawDataAccess(), output_mat->getStrideSize(1),
+		  output_mat->getDimSize(0),
+		  0, 1,
+		  use_cuda);
+    }
     return output;
   }
 
@@ -79,10 +75,10 @@ namespace ANN {
   Token *BiasANNComponent::doBackprop(Token *_error_input)
   {
     if ( (_error_input == 0) ||
-	 (_error_input->getTokenCode() != table_of_token_codes::token_mem_block))
-      ERROR_EXIT(129,"Incorrect input error Token type, expected token_mem_block!\n");
+	 (_error_input->getTokenCode() != table_of_token_codes::token_matrix))
+      ERROR_EXIT(129,"Incorrect input error Token type, expected token_matrix!\n");
     // change current input by new input
-    AssignRef(error,_error_input->convertTo<TokenMemoryBlock*>());
+    AssignRef(error,_error_input->convertTo<TokenMatrixFloat*>());
     return error;
   }
 
@@ -92,10 +88,13 @@ namespace ANN {
     // Foces bias_vector to update internal counts for a update step
     bias_vector->beginUpdate();
   
-    FloatGPUMirroredMemoryBlock *bias_ptr      = bias_vector->getPtr();
-    FloatGPUMirroredMemoryBlock *prev_bias_ptr = bias_vector->getPrevPtr();
-    FloatGPUMirroredMemoryBlock *input_error   = error->getMemBlock();
-  
+    MatrixFloat *bias_ptr        = bias_vector->getPtr();
+    MatrixFloat *prev_bias_ptr   = bias_vector->getPrevPtr();
+    MatrixFloat *input_error_mat = error->getMatrix();
+
+    int last_dim = input_error_mat->getNumDim() - 1;
+    assert(last_dim == 0 || last_dim == 1);
+    assert(input_mat->getDimSize(last_dim) == input_size);
     // Momentum computation
     if (bias_vector->isFirstUpdateCall()) {
       if (momentum > 0.0f) {
@@ -113,16 +112,20 @@ namespace ANN {
     const float norm_learn_rate =
       -(1.0f/sqrtf(static_cast<float>(references*bunch_size))) *
       learning_rate;
-  
-    // bias update: prev_bias[j] = prev_bias[j] + \sum_b norm_learn_rate * ERROR_INPUT[b,j]
-    doSaxpyLoop(output_size,
-		norm_learn_rate,
-		input_error, bunch_size,
-		prev_bias_ptr, 1,
-		bunch_size,
-		1, 0,
-		use_cuda);
 
+    // bias update: prev_bias[j] = prev_bias[j] + \sum_b norm_learn_rate * ERROR_INPUT[b,j]
+    if (last_dim == 0)
+      prev_bias_ptr->axpy(norm_learn_rate, input_error_mat);
+    else doSaxpyLoop(output_size,
+		     norm_learn_rate,
+		     input_error_mat->getRawDataAccess(),
+		     input_error_mat->getStrideSize(1),
+		     prev_bias_ptr->getRawDataAccess(),
+		     prev_bias_ptr->getStrideSize(1),
+		     input_error_mat->getDimSize(0),
+		     1, 0,
+		     use_cuda);
+      
     // If necessary, update counts, swap vectors, and other stuff
     if (bias_vector->endUpdate()) {
       ++num_updates_from_last_prune;
