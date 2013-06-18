@@ -176,6 +176,7 @@ public:
   int size() const { return total_size; }
   CBLAS_ORDER getMajorOrder() const { return major_order; }
   void setUseCuda(bool v) { use_cuda = v; }
+  bool getCudaFlag() const { return use_cuda; }
   bool isSimple() const {
     bool is_simple=(!is_submatrix)&&(offset==0)&&(major_order==CblasRowMajor);
     int aux=1;
