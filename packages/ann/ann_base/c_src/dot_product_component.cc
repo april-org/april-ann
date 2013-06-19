@@ -218,10 +218,10 @@ namespace ANN {
 			     0.0f);
     }
     else {
-      error_input_mat->gemv(NEGATE_CBLAS_TRANSPOSE(transpose_weights),
-			    1.0f, weights_mat,
-			    error_input_mat,
-			    0.0f);
+      error_output_mat->gemv(NEGATE_CBLAS_TRANSPOSE(transpose_weights),
+			     1.0f, weights_mat,
+			     error_input_mat,
+			     0.0f);
     }
     return error_output;
   }
@@ -424,7 +424,7 @@ namespace ANN {
       if (!weights_matrix->checkInputOutputSizes(weights_input_size,
 						 weights_output_size))
 	ERROR_EXIT2(256,"The weights matrix input/output sizes are not correct, "
-		    "expected %d,%d.\n",
+		    "expected %dx%d\n",
 		    weights_input_size, weights_output_size);
     }
     else {

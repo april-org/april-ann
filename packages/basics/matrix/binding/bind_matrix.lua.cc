@@ -693,6 +693,14 @@
   }
 //BIND_END
 
+//BIND_METHOD MatrixFloat equals
+{
+  MatrixFloat *other;
+  LUABIND_GET_PARAMETER(1, MatrixFloat, other);
+  LUABIND_RETURN(boolean, obj->equals(other));
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat clamp
   {
     LUABIND_CHECK_ARGN(==, 2);

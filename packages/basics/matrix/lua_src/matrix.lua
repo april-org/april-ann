@@ -30,6 +30,10 @@ matrix.meta_instance.__tostring = function(self)
   return table.concat(out, "\n")
 end
 
+matrix.meta_instance.__eq = function(op1, op2)
+  return op1:equals(op2)
+end
+
 matrix.meta_instance.__add = function(op1, op2)
   if not isa(op1,matrix) then op1,op2=op2,op1 end
   return op1:add(op2)
@@ -47,8 +51,20 @@ matrix.meta_instance.__mul = function(op1, op2)
   end
 end
 
+matrix.meta_instance.__pow = function(op1, op2)
+  local new_mat = op1:clone()
+  return new_mat:pow(op2)
+end
+
+matrix.meta_instance.__div = function(op1, op2)
+  assert(type(op2) == "number", "Expected a number as second argument")
+  local new_mat = op:clone()
+  return new_mat:scal(op, 1/op2)
+end
+
 matrix.meta_instance.__unm = function(op)
-  return op1:mul_scalar(op, -1)
+  local new_mat = op:clone()
+  return new_mat:scal(op, -1)
 end
 
 -- IMAGE

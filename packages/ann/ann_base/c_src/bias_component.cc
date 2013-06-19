@@ -24,9 +24,10 @@
 
 namespace ANN {
 
-  BiasANNComponent::BiasANNComponent(const char *name,
+  BiasANNComponent::BiasANNComponent(unsigned int size,
+				     const char *name,
 				     const char *weights_name) :
-    ANNComponent(name, weights_name, 0, 0),
+    ANNComponent(name, weights_name, size, size),
     input(0), output(0), error(0),
     bias_vector(0), num_updates_from_last_prune(0),
     learning_rate(-1.0f), momentum(0.0f) {
@@ -59,7 +60,7 @@ namespace ANN {
     unsigned int bunch_size = input_mat->getDimSize(0);
     // linear transfer of input to output
     MatrixFloat *output_mat = input_mat->clone();
-    AssignRef(output,new TokenMatrixFloat(input_mat));
+    AssignRef(output,new TokenMatrixFloat(output_mat));
     // bias
     MatrixFloat *bias_ptr = bias_vector->getPtr();
     if (bunch_size == 1) output_mat->axpy(1.0f, bias_ptr);
@@ -151,10 +152,9 @@ namespace ANN {
   }
 
   ANNComponent *BiasANNComponent::clone() {
-    BiasANNComponent *component = new BiasANNComponent(name.c_str(),
+    BiasANNComponent *component = new BiasANNComponent(input_size,
+						       name.c_str(),
 						       weights_name.c_str());
-    component->input_size    = input_size;
-    component->output_size   = output_size;
     component->learning_rate = learning_rate;
     component->momentum      = momentum;
     return component;
@@ -230,8 +230,8 @@ namespace ANN {
 
   char *BiasANNComponent::toLuaString() {
     buffer_list buffer;
-    buffer.printf("ann.components.bias{ name='%s', weights='%s' }",
-		  name.c_str(), weights_name.c_str());
+    buffer.printf("ann.components.bias{ size=%d, name='%s', weights='%s' }",
+		  input_size, name.c_str(), weights_name.c_str());
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
 }
