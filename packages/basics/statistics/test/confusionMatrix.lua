@@ -32,3 +32,21 @@ print("Accuracy ", myConf:getAccuracy())
 for i = 1, N do
   print(i, "PR:", myConf:getPrecision(i), "RC:", myConf:getRecall(i),"FM:", myConf:getFMeasure(i))
 end
+
+print("Testing Datasets Methods")
+
+local dsPred = dataset.matrix(matrix(#myPred, myPred))
+local dsGT = dataset.matrix(matrix(#myGT, myGT))
+
+myConf:reset()
+myConf:addData(stats.confusion_matrix.twoDatasetsIterator(dsPred,dsGT))
+print("Raw Confusion Matrix")
+myConf:printConfusion()
+
+myConf:reset()
+local dsOne = dataset.join({dsPred, dsGT})
+myConf:addData(stats.confusion_matrix.oneDatasetIterator(dsOne))
+
+print("Raw Confusion Matrix")
+myConf:printConfusion()
+

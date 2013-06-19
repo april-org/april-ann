@@ -187,7 +187,30 @@ april_set_doc("stats.confunsion_matrix", {
         end
 
     end
-    -------------------------------------------------------------
+    --------------------------------------------------------------
+    function stats.confusion_matrix.oneDatasetIterator(typeDataset)
+        local i = 0
+        local n = typeDataset:numPatterns()
+
+        return function()
+            i = i+1
+
+            if i <= n then return typeDataset:getPattern(i)[1], typeDataset:getPattern(i)[2] end
+        end
+    end
+
+    function stats.confusion_matrix.twoDatasetsIterator(predDs, gtDs)
+        local i = 0
+        assert(predDs:numPatterns() == gtDs:numPatterns(), "Datasets doesn't have the same size")
+
+        local n = predDs:numPatterns()
+
+        return function()
+            i = i+1
+
+            if i <= n then return predDs:getPattern(i)[1], gtDs:getPattern(i)[1] end
+        end
+    end
     function stats.confusion_matrix:addData(param1, param2)
 
         local iterator
@@ -202,23 +225,22 @@ april_set_doc("stats.confunsion_matrix", {
 
 
         for pred, gt in iterator do
-            print (pred, gt)
             self:addSample(pred, gt)
         end
     end
 
     ---------------------------------------------------------------
     function stats.confusion_matrix:getError()
-      return self.misses/self.samples
+        return self.misses/self.samples
     end
 
     function stats.confusion_matrix:getAccuracy()
-      return self.hits/self.samples
+        return self.hits/self.samples
     end
 
     --------------------------------------------------------------
     function stats.confusion_matrix:getConfusionTables()
-      return self.confusion
+        return self.confusion
     end
     ------------------------------------------------------------
     --
@@ -234,10 +256,10 @@ april_set_doc("stats.confunsion_matrix", {
                 tp = v
 
             end
-                den = den + v
+            den = den + v
         end     
         if den == 0 then
-           return 0
+            return 0
         end
         return tp/den
     end
