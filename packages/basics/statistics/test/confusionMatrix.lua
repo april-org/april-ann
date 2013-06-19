@@ -50,3 +50,14 @@ myConf:addData(stats.confusion_matrix.oneDatasetIterator(dsOne))
 print("Raw Confusion Matrix")
 myConf:printConfusion()
 
+print("Testing Map")
+
+local tags = {"a","b","c","d"}
+local myConfMap = stats.confusion_matrix(4, tags)
+
+local myPred = { "a", "b", "c", "d", "a", "b" , "c" , "d"}
+local myGT   = { "b", "a", "b", "a", "a", "b",  "c",  "a"}
+
+myConfMap:addData(myPred, myGT)
+print("Raw Confusion Matrix")
+myConfMap:printConfusion(tags)
