@@ -37,47 +37,33 @@ namespace ANN {
   }
   
   float MultiClassCrossEntropyLossFunction::addLoss(Token *input, Token *target) {
-    if (input->getTokenCode() != table_of_token_codes::token_mem_block)
-      ERROR_EXIT(128, "Incorrect input token type, expected memory block\n");
-    if (target->getTokenCode() != table_of_token_codes::token_mem_block)
-      ERROR_EXIT(128, "Incorrect target token type, expected memory block\n");
-    //
-    TokenMemoryBlock *input_mem_token = input->convertTo<TokenMemoryBlock*>();
-    TokenMemoryBlock *target_mem_block = target->convertTo<TokenMemoryBlock*>();
-    if (input_mem_token->getUsedSize() != target_mem_block->getUsedSize())
-      ERROR_EXIT(128, "Different token sizes found\n");
-    //
-    unsigned int bunch_size = input_mem_token->getUsedSize() / size;
-    float loss = doMultiClassCrossEntropyLossFunction(input_mem_token->getMemBlock(),
-						      target_mem_block->getMemBlock(),
-						      NEAR_ZERO, size, bunch_size,
-						      input_mem_token->getCudaFlag());
-    loss = -loss/bunch_size;
+    MatrixFloat *input_mat, *target_mat;
+    throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
+    float loss = doMultiClassCrossEntropyLossFunction(input_mat->getRawDataAccess(),
+						      target_mat->getRawDataAccess(),
+						      NEAR_ZERO,
+						      input_mat->getDimSize(1),
+						      input_mat->getDimSize(0),
+						      input_mat->getCudaFlag());
+    loss = -loss/input_mat->getDimSize(0);
     accumulated_loss += loss;
     ++N;
     return loss;
   }
 
   Token *MultiClassCrossEntropyLossFunction::computeGradient(Token *input, Token *target) {
-    if (input->getTokenCode() != table_of_token_codes::token_mem_block)
-      ERROR_EXIT(128, "Incorrect token type, expected memory block\n");
-    if (target->getTokenCode() != table_of_token_codes::token_mem_block)
-      ERROR_EXIT(128, "Incorrect target token type, expected memory block\n");
-    //
-    TokenMemoryBlock *input_mem_token  = input->convertTo<TokenMemoryBlock*>();
-    TokenMemoryBlock *target_mem_block = target->convertTo<TokenMemoryBlock*>();
-    if (input_mem_token->getUsedSize() != target_mem_block->getUsedSize())
-      ERROR_EXIT(128, "Different token sizes found\n");
-    //
-    unsigned int bunch_size = input_mem_token->getUsedSize() / size;
-    TokenMemoryBlock *error_mem_block;
-    error_mem_block = new TokenMemoryBlock(input_mem_token->getUsedSize());
-    AssignRef(error_output, error_mem_block);
-    doComputeCrossEntropyGradient(input_mem_token->getMemBlock(),
-				  target_mem_block->getMemBlock(),
-				  error_mem_block->getMemBlock(),
-				  NEAR_ZERO, size, bunch_size,
-				  input_mem_token->getCudaFlag());
+    MatrixFloat *input_mat, *target_mat;
+    throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
+    MatrixFloat *error_mat = input_mat->cloneOnlyDims();
+    TokenMatrixFloat *error_mat_token = new TokenMatrixFloat(error_mat);
+    AssignRef(error_output, error_mat_token);
+    doComputeCrossEntropyGradient(input_mat->getRawDataAccess(),
+				  target_mat->getRawDataAccess(),
+				  error_mat->getRawDataAccess(),
+				  NEAR_ZERO,
+				  input_mat->getDimSize(1),
+				  input_mat->getDimSize(0),
+				  input_mat->getCudaFlag());
     return error_output;
   }
   

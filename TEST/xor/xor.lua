@@ -17,14 +17,14 @@ function show_weights(trainer, filter)
   if not filter then filter = function(x) return x end end
   print()
   for i = 1,ds_input:numPatterns() do
-    value = filter(trainer:calculate(ds_input:getPattern(i))[1])
+    value = filter(trainer:calculate(ds_input:getPattern(i)):toTable()[1])
     printf("%s\t %s\n",
 	   table.concat(ds_input:getPattern(i),","),
 	   value)
   end
   print()
   for _,wname in ipairs({ "b1", "w1", "b2", "w2" }) do
-    local w = trainer.weights_table[wname]:weights():toTable()
+    local w = trainer.weights_table[wname]:copy_to():toTable()
     print(wname, table.concat(w, " "))
   end
 end

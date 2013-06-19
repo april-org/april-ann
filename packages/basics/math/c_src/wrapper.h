@@ -161,7 +161,7 @@ void doApplyLogSoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
 				 unsigned int bunch_size,
 				 bool use_gpu);
 
-// ERROR FUNCTIONS
+// LOSS FUNCTIONS
 float doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
 			FloatGPUMirroredMemoryBlock *target,
 			float zero_epsilon_distance,

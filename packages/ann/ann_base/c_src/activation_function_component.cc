@@ -49,24 +49,29 @@ namespace ANN {
 						   bool during_training) {
     // error checking
     if ( (_input == 0) ||
-	 (_input->getTokenCode() != table_of_token_codes::token_mem_block))
-      ERROR_EXIT(129,"Incorrect input Token type, expected token_mem_block!\n");
+	 (_input->getTokenCode() != table_of_token_codes::token_matrix))
+      ERROR_EXIT(129,"Incorrect input Token type, expected token_matrix!\n");
     // change current input by new input
-    AssignRef(input,_input->convertTo<TokenMemoryBlock*>());
-    // compute bunch size
-    bunch_size = input->getUsedSize() / input_size;
+    AssignRef(input,_input->convertTo<TokenMatrixFloat*>());
+    MatrixFloat *input_mat = input->getMatrix();
+#ifdef USE_CUDA
+    input_mat->setUseCuda(use_cuda);
+#endif
+    assert(input_mat->getNumDim() == 2);
+    unsigned int bunch_size = input_mat->getDimSize(0);
     // new  output to fit the bunch
-    AssignRef(output,new TokenMemoryBlock(input->getUsedSize()));
+    MatrixFloat *output_mat = input_mat->cloneOnlyDims();
+    AssignRef(output,new TokenMatrixFloat(output_mat));
     // get memory blocks for tokens
-    FloatGPUMirroredMemoryBlock *input_ptr  = input->getMemBlock();
-    FloatGPUMirroredMemoryBlock *output_ptr = output->getMemBlock();
+    FloatGPUMirroredMemoryBlock *input_ptr  = input_mat->getRawDataAccess();
+    FloatGPUMirroredMemoryBlock *output_ptr = output_mat->getRawDataAccess();
     // execute apply activations abstract method
     applyActivation(input_ptr, output_ptr, input_size, bunch_size);
     // apply dropout
     if (dropout_factor > 0.0f) {
       if (during_training) {
 	if (dropout_mask) delete dropout_mask;
-	dropout_mask    = new FloatGPUMirroredMemoryBlock(input->getUsedSize());
+	dropout_mask    = new FloatGPUMirroredMemoryBlock(input_mat->size());
 	float *mask_ptr = dropout_mask->getPPALForWrite();
 	for (unsigned int i=0; i<dropout_mask->getSize(); ++i) {
 	  if (dropout_random.rand() < dropout_factor) mask_ptr[i] = 0.0f;
@@ -76,12 +81,7 @@ namespace ANN {
 	applyMask(output_ptr, dropout_mask, 0.0f, input_size,
 		  bunch_size, use_cuda);
       }
-      else {
-	float scal_factor = 1.0f - dropout_factor;
-	doSscal(output_ptr->getSize(), scal_factor,
-		output_ptr, 0, 1,
-		use_cuda);
-      }
+      else output_mat->scal(1.0f - dropout_factor);
     }
     return output;
   }
@@ -89,21 +89,28 @@ namespace ANN {
   Token *ActivationFunctionANNComponent::doBackprop(Token *_error_input) {
     // error checking
     if ( (_error_input == 0) ||
-	 (_error_input->getTokenCode() != table_of_token_codes::token_mem_block))
-      ERROR_EXIT(129,"Incorrect input error Token type, expected token_mem_block!\n");
+	 (_error_input->getTokenCode() != table_of_token_codes::token_matrix))
+      ERROR_EXIT(129,"Incorrect input error Token type, expected token_matrix!\n");
     // change current input by new input
-    AssignRef(error_input,_error_input->convertTo<TokenMemoryBlock*>());
-    // compute current bunch
-    unsigned int bunch_size = error_input->getUsedSize() / output_size;
-    if (bunch_size != this->bunch_size)
+    AssignRef(error_input,_error_input->convertTo<TokenMatrixFloat*>());
+    MatrixFloat *error_input_mat = error_input->getMatrix();
+#ifdef USE_CUDA
+    error_input_mat->setUseCuda(use_cuda);
+#endif
+    assert(error_input_mat->getNumDim() == 2);
+    unsigned int bunch_size = error_input_mat->getDimSize(0);
+    // new  output to fit the bunch
+    MatrixFloat *error_output_mat = error_input_mat->cloneOnlyDims();
+    AssignRef(error_output,new TokenMatrixFloat(error_output_mat));
+    if (!error_output_mat->sameDim(input->getMatrix()))
       ERROR_EXIT(129, "Different bunches found at doForward and doBackprop\n");
-    // new error output to fit the bunch
-    AssignRef(error_output,new TokenMemoryBlock(error_input->getUsedSize()));
     //
-    FloatGPUMirroredMemoryBlock *input_ptr        = input->getMemBlock();
-    FloatGPUMirroredMemoryBlock *output_ptr       = output->getMemBlock();
-    FloatGPUMirroredMemoryBlock *error_input_ptr  = error_input->getMemBlock();
-    FloatGPUMirroredMemoryBlock *error_output_ptr = error_output->getMemBlock();
+    MatrixFloat *input_mat = input->getMatrix();
+    MatrixFloat *output_mat = output->getMatrix();
+    FloatGPUMirroredMemoryBlock *input_ptr        = input_mat->getRawDataAccess();
+    FloatGPUMirroredMemoryBlock *output_ptr       = output_mat->getRawDataAccess();
+    FloatGPUMirroredMemoryBlock *error_input_ptr  = error_input_mat->getRawDataAccess();
+    FloatGPUMirroredMemoryBlock *error_output_ptr = error_output_mat->getRawDataAccess();
     // apply derivatives at gradients
     multiplyDerivatives(input_ptr, output_ptr,
 			error_input_ptr, error_output_ptr,

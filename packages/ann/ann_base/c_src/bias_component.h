@@ -31,7 +31,7 @@ namespace ANN {
   class BiasANNComponent : public ANNComponent {
     TokenMatrixFloat *input, *output, *error;
     Connections *bias_vector;
-    unsigned int bunch_size, num_updates_from_last_prune;
+    unsigned int num_updates_from_last_prune;
     
     /// learning parameters
     float learning_rate, momentum;

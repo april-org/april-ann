@@ -23,7 +23,7 @@
 #define UTILDATASETTOKEN_H
 
 #include "token_base.h"
-#include "token_memory_block.h"
+#include "token_matrix.h"
 #include "token_vector.h"
 #include "table_of_token_codes.h"
 #include "dataset.h"
@@ -41,7 +41,51 @@ public:
   /// Get the pattern index to the vector pat
   virtual Token *getPattern(int index)=0;
   /// Get the pattern index to the vector pat
-  virtual Token *getPatternBunch(const int *indexes,unsigned int bunch_size)=0;
+  virtual Token *getPatternBunch(const int *indexes,unsigned int bunch_size) {
+    Token *output;
+    Token *aux_token = getPattern(indexes[0]);
+    TokenCode token_code = aux_token->getTokenCode();
+    switch(token_code) {
+    case table_of_token_codes::token_matrix: {
+      int dims[2]   = { static_cast<int>(bunch_size),
+			patternSize() };
+      MatrixFloat *output_mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+      TokenMatrixFloat *output_mat_token  = new TokenMatrixFloat(output_mat);
+      output           = output_mat_token;
+      unsigned int i   = 0;
+      int pattern_size = patternSize();
+      do {
+	IncRef(aux_token);
+	TokenMatrixFloat *aux_mat_token;
+	aux_mat_token = aux_token->convertTo<TokenMatrixFloat*>();
+	
+	int coords[2] = { static_cast<int>(i), 0 };
+	int sizes[2]  = { 1, pattern_size };
+	MatrixFloat *submat = new MatrixFloat(output_mat, coords, sizes, false);
+	submat->copy(aux_mat_token->getMatrix());
+	delete submat;
+	
+	DecRef(aux_token);
+	if ( (++i) < bunch_size) aux_token = getPattern(indexes[i]);
+	else break;
+      } while(true);
+      break;
+    }
+    default: {
+      TokenBunchVector *output_token_vector = new TokenBunchVector(bunch_size);
+      output         = output_token_vector;
+      unsigned int i = 0;
+      do {
+	(*output_token_vector)[i] = aux_token;
+	IncRef(aux_token);
+	if ( (++i) < bunch_size) aux_token = getPattern(indexes[i]);
+	else break;
+      } while(true);
+      break;
+    }
+    }
+    return output;
+  }
   /// Put the given vector pat at pattern index
   virtual void putPattern(int index, Token *pat)=0;
   /// Put the pattern bunch
@@ -70,47 +114,6 @@ public:
     if (index < 0 || index >= numPatterns())
       return 0;
     return data[index]->clone();
-  }
-  /// Get the pattern index to the vector pat
-  virtual Token *getPatternBunch(const int *indexes,unsigned int bunch_size) {
-    Token *output;
-    Token *aux_token = getPattern(indexes[0]);
-    TokenCode token_code = aux_token->getTokenCode();
-    switch(token_code) {
-    case table_of_token_codes::token_mem_block: {
-      TokenMemoryBlock *output_mem_token;
-      output_mem_token = new TokenMemoryBlock(bunch_size * pattern_size);
-      output           = output_mem_token;
-      unsigned int i   = 0;
-      unsigned int pos = 0;
-      do {
-	IncRef(aux_token);
-	TokenMemoryBlock *aux_mem_block_token;
-	aux_mem_block_token = aux_token->convertTo<TokenMemoryBlock*>();
-	doScopy(pattern_size,
-		aux_mem_block_token->getMemBlock(), 0, 1,
-		output_mem_token->getMemBlock(), pos++, bunch_size,
-		aux_mem_block_token->getCudaFlag());
-	DecRef(aux_token);
-	if ( (++i) < bunch_size) aux_token = getPattern(indexes[i]);
-	else break;
-      } while(true);
-      break;
-    }
-    default: {
-      TokenBunchVector *output_token_vector = new TokenBunchVector(bunch_size);
-      output         = output_token_vector;
-      unsigned int i = 0;
-      do {
-	(*output_token_vector)[i] = aux_token;
-	IncRef(aux_token);
-	if ( (++i) < bunch_size) aux_token = getPattern(indexes[i]);
-	else break;
-      } while(true);
-      break;
-    }
-    }
-    return output;
   }
   /// Put the given vector pat at pattern index
   virtual void putPattern(int index, Token *pat) {
@@ -170,47 +173,6 @@ public:
     } while (izq < der-1);
     return ds_array[izq]->getPattern(index-sum_patterns[izq]);
   }
-  /// Get the pattern index to the vector pat
-  virtual Token *getPatternBunch(const int *indexes,unsigned int bunch_size) {
-    Token *output;
-    Token *aux_token = getPattern(indexes[0]);
-    TokenCode token_code = aux_token->getTokenCode();
-    switch(token_code) {
-    case table_of_token_codes::token_mem_block: {
-      TokenMemoryBlock *output_mem_token;
-      output_mem_token = new TokenMemoryBlock(bunch_size * pattern_size);
-      output           = output_mem_token;
-      unsigned int i   = 0;
-      unsigned int pos = 0;
-      do {
-	IncRef(aux_token);
-	TokenMemoryBlock *aux_mem_block_token;
-	aux_mem_block_token = aux_token->convertTo<TokenMemoryBlock*>();
-	doScopy(pattern_size,
-		aux_mem_block_token->getMemBlock(), 0, 1,
-		output_mem_token->getMemBlock(), pos++, bunch_size,
-		aux_mem_block_token->getCudaFlag());
-	DecRef(aux_token);
-	if ( (++i) < bunch_size) aux_token = getPattern(indexes[i]);
-	else break;
-      } while(true);
-      break;
-    }
-    default: {
-      TokenBunchVector *output_token_vector = new TokenBunchVector(bunch_size);
-      output         = output_token_vector;
-      unsigned int i = 0;
-      do {
-	(*output_token_vector)[i] = aux_token;
-	IncRef(aux_token);
-	if ( (++i) < bunch_size) aux_token = getPattern(indexes[i]);
-	else break;
-      } while(true);
-      break;
-    }
-    }
-    return output;
-  }
   /// Put the given vector pat at pattern index
   virtual void putPattern(int index, Token *pat) {
     ERROR_EXIT(128, "Not implemented!!!\n");
@@ -223,68 +185,61 @@ public:
 };
 
 class DataSetFloat2TokenWrapper : public DataSetToken {
-  FloatGPUMirroredMemoryBlock *aux_mem_block;
+  MatrixFloat  *aux_mat;
   DataSetFloat *ds;
-  int           pattern_size;
-  int           num_patterns;
 public:
   DataSetFloat2TokenWrapper(DataSetFloat *ds) : ds(ds) {
     IncRef(ds);
-    pattern_size  = ds->patternSize();
-    num_patterns  = ds->numPatterns();
-    aux_mem_block = new FloatGPUMirroredMemoryBlock(pattern_size);
+    int dims[2] = { 1, ds->patternSize() };
+    aux_mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
   }
   virtual ~DataSetFloat2TokenWrapper() {
     DecRef(ds);
-    delete aux_mem_block;
+    delete aux_mat;
   }
-  int numPatterns() { return num_patterns; }
-  int patternSize() { return pattern_size; }
+  int numPatterns() { return ds->numPatterns(); }
+  int patternSize() { return ds->patternSize(); }
   Token *getPattern(int index) {
-    TokenMemoryBlock *token = new TokenMemoryBlock(pattern_size);
-    FloatGPUMirroredMemoryBlock *mem_block = token->getMemBlock();
+    int dims[2] = { 1, patternSize() };
+    MatrixFloat *mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+    TokenMatrixFloat *token = new TokenMatrixFloat(mat);
+    FloatGPUMirroredMemoryBlock *mem_block = mat->getRawDataAccess();
     float *mem_ptr = mem_block->getPPALForWrite();
     ds->getPattern(index, mem_ptr);
     return token;
   }
   Token *getPatternBunch(const int *indexes, unsigned int bunch_size) {
-    TokenMemoryBlock *token = new TokenMemoryBlock(bunch_size*pattern_size);
-    FloatGPUMirroredMemoryBlock *mem_block = token->getMemBlock();
-    unsigned int mem_ptr_shift = 0;
-    for (unsigned int i=0; i<bunch_size; ++i, ++mem_ptr_shift) {
+    int dims[2] = { static_cast<int>(bunch_size), patternSize() };
+    MatrixFloat *mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+    TokenMatrixFloat *token = new TokenMatrixFloat(mat);
+    FloatGPUMirroredMemoryBlock *aux_mem_block = aux_mat->getRawDataAccess();
+    float *aux_mem = aux_mem_block->getPPALForWrite();
+    int pattern_size = patternSize();
+    int num_patterns = numPatterns();
+    for (unsigned int i=0; i<bunch_size; ++i) {
       assert(0 <= indexes[i] && indexes[i] < num_patterns);
-      ds->getPattern(indexes[i],
-		     aux_mem_block->getPPALForWrite());
-      doScopy(pattern_size, aux_mem_block, 0, 1,
-	      mem_block, mem_ptr_shift, bunch_size,
-	      false);
+      ds->getPattern(indexes[i], aux_mem);
+      int coords[2] = { static_cast<int>(i), 0 };
+      int sizes[2]  = { 1, pattern_size };
+      MatrixFloat *submat = new MatrixFloat(mat, coords, sizes, false);
+      submat->copy(aux_mat);
+      delete submat;
     }
     return token;
   }
   void putPattern(int index, Token *pat) {
-    if (pat->getTokenCode() != table_of_token_codes::token_mem_block)
-      ERROR_EXIT(128, "Incorrect token type, expected token memory block\n");
-    TokenMemoryBlock *token_mem_block = pat->convertTo<TokenMemoryBlock*>();
-    FloatGPUMirroredMemoryBlock *mem_block = token_mem_block->getMemBlock();
+    if (pat->getTokenCode() != table_of_token_codes::token_matrix)
+      ERROR_EXIT(128, "Incorrect token type, expected token matrix\n");
+    TokenMatrixFloat *token_matrix = pat->convertTo<TokenMatrixFloat*>();
+    MatrixFloat *mat = token_matrix->getMatrix();
+    FloatGPUMirroredMemoryBlock *mem_block = mat->getRawDataAccess();
     const float *v = mem_block->getPPALForRead();
     ds->putPattern(index, v);
   }
   
   void putPatternBunch(const int *indexes,unsigned int bunch_size,
 		       Token *pat) {
-    if (pat->getTokenCode() != table_of_token_codes::token_mem_block)
-      ERROR_EXIT(128, "Incorrect token type, expected token memory block\n");
-    TokenMemoryBlock *token_mem_block = pat->convertTo<TokenMemoryBlock*>();
-    FloatGPUMirroredMemoryBlock *mem_block = token_mem_block->getMemBlock();
-    unsigned int mem_ptr_shift = 0;
-    for (unsigned int i=0; i<bunch_size; ++i, ++mem_ptr_shift) {
-      assert(0 <= indexes[i] && indexes[i] < num_patterns);
-      doScopy(pattern_size,
-	      mem_block, mem_ptr_shift, bunch_size,
-	      aux_mem_block, 0, 1,
-	      false);
-      ds->putPattern(indexes[i], aux_mem_block->getPPALForRead());
-    }
+    ERROR_EXIT(128, "Not implemented!!!\n");    
   }
 };
 

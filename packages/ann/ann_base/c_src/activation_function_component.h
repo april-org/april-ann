@@ -22,7 +22,7 @@
 #ifndef ACTFCOMPONENT_H
 #define ACTFCOMPONENT_H
 
-#include "token_memory_block.h"
+#include "token_matrix.h"
 #include "ann_component.h"
 #include "gpu_mirrored_memory_block.h"
 #include "MersenneTwister.h"
@@ -32,8 +32,7 @@ namespace ANN {
   /// An abstract class that defines the basic interface that
   /// the anncomponents must fulfill.
   class ActivationFunctionANNComponent : public ANNComponent {
-    TokenMemoryBlock *input, *output, *error_input, *error_output;
-    unsigned int bunch_size;
+    TokenMatrixFloat *input, *output, *error_input, *error_output;
     // for dropout
     float                        dropout_factor;
     FloatGPUMirroredMemoryBlock *dropout_mask;

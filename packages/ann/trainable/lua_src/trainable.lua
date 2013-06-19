@@ -500,8 +500,8 @@ april_set_doc("trainable.supervised_trainer.train_step", {
 		} })
 
 function trainable.supervised_trainer:train_step(input, target)
-  if type(input)  == "table" then input  = tokens.memblock(input)  end
-  if type(target) == "table" then target = tokens.memblock(target) end
+  if type(input)  == "table" then input  = tokens.matrix(matrix.col_major(input))  end
+  if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
   self.ann_component:reset()
   local output   = self.ann_component:forward(input, true)
   local tr_loss  = self.loss_function:loss(output, target)
@@ -530,8 +530,8 @@ april_set_doc("trainable.supervised_trainer.validate_step", {
 		} })
 
 function trainable.supervised_trainer:validate_step(input, target)
-  if type(input)  == "table" then input  = tokens.memblock(input)  end
-  if type(target) == "table" then target = tokens.memblock(target) end
+  if type(input)  == "table" then input  = tokens.matrix(matrix.col_major(input))  end
+  if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
   self.ann_component:reset()
   local output   = self.ann_component:forward(input)
   local tr_loss  = self.loss_function:loss(output, target)
@@ -556,8 +556,8 @@ april_set_doc("trainable.supervised_trainer.calculate", {
 		} })
 
 function trainable.supervised_trainer:calculate(input)
-  if type(input) == "table" then input = tokens.memblock(input) end
-  return self.ann_component:forward(input):convert_to_memblock():to_table()
+  if type(input) == "table" then input = tokens.matrix(matrix.col_major(input)) end
+  return self.ann_component:forward(input):get_matrix()
 end
 
 ------------------------------------------------------------------------
