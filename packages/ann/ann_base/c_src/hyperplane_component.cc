@@ -39,7 +39,7 @@ namespace ANN {
 					   dot_product_weights_name,
 					   input_size, output_size,
 					   transpose_weights)),
-    bias(new BiasANNComponent(bias_name, bias_weights_name)) {
+    bias(new BiasANNComponent(output_size, bias_name, bias_weights_name)) {
     IncRef(dot_product);
     IncRef(bias);
   }

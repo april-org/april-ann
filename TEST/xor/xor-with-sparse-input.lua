@@ -17,7 +17,7 @@ function show_weights(trainer, filter)
   if not filter then filter = function(x) return x end end
   print()
   for i = 1,ds_input:numPatterns() do
-    local out = trainer:calculate(ds_input:getPattern(i))
+    local out = trainer:calculate(ds_input:getPattern(i)):toTable()
     value = filter(out[1])
     --printf("%s\t %s\n",
     --table.concat(ds_input:getPattern(i),","),
@@ -26,7 +26,7 @@ function show_weights(trainer, filter)
   end
   print()
   for _,wname in ipairs({ "b1", "w1", "b2", "w2" }) do
-    local w = trainer.weights_table[wname]:weights():toTable()
+    local w = trainer.weights_table[wname]:copy_to():toTable()
     print(wname, table.concat(w, " "))
   end
 end
@@ -79,16 +79,16 @@ ds_input:push_back(t)
 
 ------------------------------
 
-t = tokens.memblock({0.0})
+t = tokens.matrix( matrix.col_major(1,1,{0.0}) )
 ds_output:push_back(t)
 
-t = tokens.memblock({1.0})
+t = tokens.matrix( matrix.col_major(1,1,{1.0}) )
 ds_output:push_back(t)
 
-t = tokens.memblock({1.0})
+t = tokens.matrix( matrix.col_major(1,1,{1.0}) )
 ds_output:push_back(t)
 
-t = tokens.memblock({0.0})
+t = tokens.matrix( matrix.col_major(1,1,{0.0}) )
 ds_output:push_back(t)
 
 -----------------------

@@ -587,13 +587,15 @@ using namespace ANN;
   LUABIND_CHECK_ARGN(<=, 1);
   int argn = lua_gettop(L);
   const char *name=0, *weights_name=0;
+  unsigned int size=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", "weights", 0);
+    check_table_fields(L, 1, "name", "weights", "size", 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights_name, 0);
   }
-  obj = new BiasANNComponent(name, weights_name);
+  obj = new BiasANNComponent(size, name, weights_name);
   LUABIND_RETURN(BiasANNComponent, obj);
 }
 //BIND_END

@@ -45,7 +45,8 @@ namespace ANN {
 				 float beta);
     
   public:
-    BiasANNComponent(const char *name=0, const char *weights_name=0);
+    BiasANNComponent(unsigned int size=0,
+		     const char *name=0, const char *weights_name=0);
     virtual ~BiasANNComponent();
     virtual Token *getInput() { return input; }
     virtual Token *getOutput() { return output; }

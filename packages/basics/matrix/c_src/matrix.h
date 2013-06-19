@@ -306,6 +306,7 @@ public:
   Matrix<T>* multiply(const Matrix<T> *other) const;
 
   /**** COMPONENT WISE OPERATIONS ****/
+  bool equals(const Matrix<T> *other) const;
   void log();
   void log1p();
   void exp();
@@ -841,6 +842,19 @@ Matrix<T>* Matrix<T>::multiply(const Matrix<T> *other) const {
 /**** COMPONENT WISE OPERATIONS ****/
 
 template <typename T>
+bool Matrix<T>::equals(const Matrix<T> *other) const {
+  if (!sameDim(other)) return false;
+  Matrix<T>::const_iterator it(begin());
+  Matrix<T>::const_iterator other_it(other->begin());
+  while(it != end()) {
+    if (*it != *other_it) return false;
+    ++it;
+    ++other_it;
+  }
+  return true;
+}
+
+template <typename T>
 void Matrix<T>::log() {
   for (iterator it(begin()); it!=end(); ++it) {
     *it = logf(*it);
@@ -1022,7 +1036,7 @@ void Matrix<T>::gemv(CBLAS_TRANSPOSE trans_A,
       otherA->major_order != otherX->major_order)
     ERROR_EXIT(128, "Matrices with different major orders");
   
-  int M=otherA->matrixSize[row_idx_A], N=otherA->matrixSize[col_idx_A];
+  int M=otherA->matrixSize[0], N=otherA->matrixSize[1];
   int lda=( major_order==CblasRowMajor)?otherA->stride[0]:otherA->stride[1];
   int ldx=otherX->getVectorStride();
   int ldy=getVectorStride();

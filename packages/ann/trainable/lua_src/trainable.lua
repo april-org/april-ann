@@ -152,7 +152,7 @@ function trainable.supervised_trainer:save(filename, binary)
   f:write("connections={")
   for _,wname in ipairs(self.weights_order) do
     local cobj = self.weights_table[wname]
-    local w,oldw = cobj:weights()
+    local w,oldw = cobj:copy_to()
     f:write("\n[\"".. wname .. "\"] = {")
     f:write("\ninput = " .. cobj:get_input_size() .. ",")
     f:write("\noutput = " .. cobj:get_output_size() .. ",")
@@ -1035,7 +1035,7 @@ april_set_doc("trainable.supervised_trainer.show_weights", {
 
 function trainable.supervised_trainer:show_weights()
   for _,wname in pairs(self.weights_order) do
-    local w = self.weights_table[wname]:weights():toTable()
+    local w = self.weights_table[wname]:copy_to():toTable()
     print(wname, table.concat(w, " "))
   end
 end
