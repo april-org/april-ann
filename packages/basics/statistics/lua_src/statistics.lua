@@ -105,7 +105,7 @@ april_set_doc("stats.confunsion_matrix", {
     }, })
 
     ----------------------------------------
-    function stats.confusion_matrix:__call(num_classes)
+    function stats.confusion_matrix:__call(num_classes, map_table)
 
         local confusion = {}
         for i = 1, num_classes do
@@ -115,12 +115,27 @@ april_set_doc("stats.confunsion_matrix", {
             end
             table.insert(confusion, t)
         end
+        
+
+        if (map_table) then
+          assert(#map_table == num_classes, "The map table doesn't have the exact size")
+          map_dict = {}
+
+          for i, v in ipairs(map_table) do
+            map_dict[v] = i
+          end
+          
+        end
+
         local obj = {
             num_classes = num_classes,
             confusion = confusion,
             hits = 0,
             misses = 0,
-            samples = 0
+            samples = 0,
+            -- FIXME: IS NOT POSSIBLE USE MAP DICT AS NIL
+            map_dict = map_dict or -1
+
         }
         class_instance(obj, self, true)
         return obj
@@ -144,6 +159,11 @@ april_set_doc("stats.confunsion_matrix", {
     end
     ---------------------------------------------
     function stats.confusion_matrix:addSample(pred, gt)
+
+        if self.map_dict ~= -1 then
+          pred = map_dict[pred]
+          gt   = map_dict[gt]
+        end
         if not self:checkType(pred) or not self:checkType(gt) then
             error("The class is not correct")
         end
@@ -160,12 +180,49 @@ april_set_doc("stats.confunsion_matrix", {
 
     ------------------------------------------------
 
-    function stats.confusion_matrix:printConfusion(numClasses)
+    function stats.confusion_matrix:printConfusionRaw()
+        
         for i,v in ipairs(self.confusion) do
             print(table.concat(v, "\t"))
         end
     end
 
+    function stats.confusion_matrix:printConfusion(tags)
+
+        printf("\t|\t Predicted ")
+        for i = 1, self.num_classes do
+            printf("\t\t")
+        end
+
+        printf("|\n")
+        printf("______\t|")
+        for i = 1, self.num_classes do
+            printf("\t___\t")
+        end
+
+        printf("\t___\t|\n")
+        for i,v in ipairs(self.confusion) do
+             
+            local tag = i
+            if tags then
+                tag = tags[i]
+            end
+            printf("%s\t|\t", tag)
+
+            printf("%s\t|\t %0.4f\t|\n", table.concat(v, "\t|\t"), self:getRecall(i))
+        end
+        printf("______\t|")
+        for i = 1, self.num_classes do
+            printf("\t___\t")
+        end
+
+        printf("\t___\t|\n")
+        printf("\t|")
+        for i = 1, self.num_classes do
+            printf("\t%0.4f\t|", self:getPrecision(i))
+        end
+        printf("\t%0.4f\t|\n", self:getError())
+    end
     --------------------------------------------
     function stats.confusion_matrix.twoTablesIterator(table_pred, table_gt)
         local i = 0
