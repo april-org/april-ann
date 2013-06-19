@@ -31,12 +31,16 @@ namespace ANN {
     Referenced(),
     weights(0), prev_weights(0),
     num_references(0), update_weights_calls(0) {
-    weights      = new MatrixFloat(num_outputs, num_inputs, 0.0f, CblasColMajor);
-    prev_weights = new MatrixFloat(num_outputs, num_inputs, 0.0f, CblasColMajor);
+    int dims[2] = { static_cast<int>(num_outputs),
+		    static_cast<int>(num_inputs) };
+    weights      = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+    prev_weights = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
     if (weights == 0 || prev_weights == 0)
       ERROR_EXIT(130, "Impossible to allocate memory\n");
     IncRef(weights);
     IncRef(prev_weights);
+    weights->zeros();
+    prev_weights->zeros();
   }
 
   Connections::~Connections() {
@@ -204,16 +208,18 @@ namespace ANN {
     if (!data->isSimple() || !old_data->isSimple())
       ERROR_EXIT(128, "Matrices need to be simple (not sub-matrix "
 		 "and in row-major)\n");
+    if (data->getNumDim() != old_data->getNumDim())
+      ERROR_EXIT(128, "data and old_data has different number of dimensions\n");
     
     unsigned int current_w_pos = first_weight_pos;
     MatrixFloat::iterator w_it(weights->begin());
     MatrixFloat::iterator prev_w_it(prev_weights->begin());
-    const float *d = data->getRawDataAccess()->getPPALForRead();
-    const float *old_d = old_data->getRawDataAccess()->getPPALForRead();
     for (unsigned int j=0; j<num_outputs; ++j) {
       for (unsigned int i=0; i<num_inputs; ++i) {
-	*w_it      = d[current_w_pos+i];
-	*prev_w_it = old_d[current_w_pos+i];
+	*w_it      = (*data)[current_w_pos+i];
+	*prev_w_it = (*old_data)[current_w_pos+i];
+	++w_it;
+	++prev_w_it;
       }
       current_w_pos += column_size;
     }
@@ -237,6 +243,8 @@ namespace ANN {
     if (!data->isSimple() || !old_data->isSimple())
       ERROR_EXIT(128, "Matrices need to be simple (not sub-matrix "
 		 "and in row-major)\n");
+    if (data->getNumDim() != old_data->getNumDim())
+      ERROR_EXIT(128, "data and old_data has different number of dimensions\n");
     
     unsigned int current_w_pos = first_weight_pos;
     MatrixFloat::const_iterator w_it(weights->begin());

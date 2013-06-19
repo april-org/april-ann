@@ -43,7 +43,6 @@ using april_utils::string;
 #define DROPOUT_SEED_STRING     "dropout_seed"
 #define MAX_NORM_PENALTY_STRING "max_norm_penalty"
 
-
 #define mSetOption(var_name,var) if(!strcmp(name,(var_name))){(var)=value;return;}
 #define mHasOption(var_name) if(!strcmp(name,(var_name))) return true;
 #define mGetOption(var_name, var) if(!strcmp(name,(var_name)))return (var);
@@ -74,17 +73,6 @@ namespace ANN {
     unsigned int output_size;
     bool use_cuda;
     
-    static void getMatrixSizes(const MatrixFloat *mat,
-			       unsigned int &bunch_size,
-			       unsigned int &pat_size) {
-      switch(mat->getNumDim()) {
-      case 1: bunch_size=1; pat_size=mat->getDimSize(0); break;
-      case 2: bunch_size=mat->getDimSize(0); pat_size=mat->getDimSize(1); break;
-      default:
-	ERROR_EXIT1(128, "Incorrect matrix number of dimensions, "
-		    "expected 2, found %d\n", mat->getNumDim());
-      }
-    }
   public:
     ANNComponent(const char *name = 0, const char *weights_name = 0,
 		 unsigned int input_size = 0, unsigned int output_size = 0) :

@@ -23,6 +23,28 @@
 #include "bind_matrix.h"
 #include "bind_mtrand.h"
 #include "bind_tokens.h"
+#include "table_of_token_codes.h"
+
+bool rewrapToAtLeastDim2(Token *&tk) {
+  if (tk->getTokenCode() == table_of_token_codes::token_matrix) {
+    TokenMatrixFloat *tk_mat = tk->convertTo<TokenMatrixFloat*>();
+    MatrixFloat *m = tk_mat->getMatrix();
+    if (m->getNumDim() == 1) {
+      int dims[2] = { 1, m->getDimSize(0) };
+      tk = new TokenMatrixFloat(m->rewrap(dims, 2));
+      return true;
+    }
+  }
+  return false;
+}
+
+void unwrapToDim1(Token *&tk) {
+  TokenMatrixFloat *tk_mat = tk->convertTo<TokenMatrixFloat*>();
+  MatrixFloat *m = tk_mat->getMatrix();
+  int dim = m->getDimSize(1);
+  MatrixFloat *new_m = m->rewrap(&dim, 1);
+  tk = new TokenMatrixFloat(new_m);
+}
 
 template<typename Value, typename PushFunction>
 void pushHashTableInLuaStack(lua_State *L,
@@ -387,7 +409,10 @@ using namespace ANN;
   LUABIND_CHECK_ARGN(<=, 2);
   LUABIND_GET_PARAMETER(1, Token, input);
   LUABIND_GET_OPTIONAL_PARAMETER(2, bool, during_training, false);
-  LUABIND_RETURN(Token, obj->doForward(input, during_training));
+  bool rewrapped = rewrapToAtLeastDim2(input);
+  Token *output = obj->doForward(input, during_training);
+  if (rewrapped) unwrapToDim1(output);
+  LUABIND_RETURN(Token, output);
 }
 //BIND_END
 
@@ -396,8 +421,12 @@ using namespace ANN;
   Token *input;
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_GET_PARAMETER(1, Token, input);
+  bool rewrapped = rewrapToAtLeastDim2(input);
   Token *gradient = obj->doBackprop(input);
-  if (gradient != 0) LUABIND_RETURN(Token, gradient);
+  if (gradient != 0) {
+    if (rewrapped) unwrapToDim1(gradient);
+    LUABIND_RETURN(Token, gradient);
+  }
   else LUABIND_RETURN_NIL();
 }
 //BIND_END

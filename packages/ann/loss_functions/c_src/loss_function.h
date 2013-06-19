@@ -23,7 +23,8 @@
 
 #include "referenced.h"
 #include "token_base.h"
-#include "token_memory_block.h"
+#include "token_matrix.h"
+#include "matrixFloat.h"
 #include "error_print.h"
 
 namespace ANN {
@@ -33,6 +34,34 @@ namespace ANN {
   protected:
     Token *error_output;
     unsigned int size;
+
+    void throwErrorAndGetMatrixFromTokens(Token *input, Token *target,
+					  MatrixFloat *&input_mat,
+					  MatrixFloat *&target_mat) const {
+      if (input->getTokenCode() != table_of_token_codes::token_matrix)
+	ERROR_EXIT(128, "Incorrect input token type, expected token matrix\n");
+      if (target->getTokenCode() != table_of_token_codes::token_matrix)
+	ERROR_EXIT(128, "Incorrect target token type, expected token matrix\n");
+      //
+      TokenMatrixFloat *input_mat_token = input->convertTo<TokenMatrixFloat*>();
+      TokenMatrixFloat *target_mat_token = target->convertTo<TokenMatrixFloat*>();
+      if (input_mat_token->size() != target_mat_token->size())
+	ERROR_EXIT2(128, "Different token sizes found: input=%d vs target=%d\n",
+		    input_mat_token->size(),
+		    target_mat_token->size());
+      //
+      input_mat  = input_mat_token->getMatrix();
+      target_mat = target_mat_token->getMatrix();
+      
+      assert(input_mat->getNumDim() == 2);
+      assert(target_mat->getNumDim() == 2);
+      assert(input_mat->sameDim(target_mat));
+      assert(!input_mat->isSubmatrix());
+      assert(!target_mat->isSubmatrix());
+      assert(input_mat->getMajorOrder() == CblasColMajor);
+      assert(target_mat->getMajorOrder() == CblasColMajor);
+    }
+
   public:
     LossFunction(unsigned int size) :
     Referenced(), error_output(0), size(size) {

@@ -41,7 +41,8 @@ namespace ANN {
   }
 
   Token *BiasANNComponent::doForward(Token* _input, bool during_training) {
-    assert(bias_vector != 0);
+    if (bias_vector == 0) ERROR_EXIT1(129, "Not built component %s\n",
+				      name.c_str());
     // error checking
     if ( (_input == 0) ||
 	 (_input->getTokenCode() != table_of_token_codes::token_matrix))
@@ -49,22 +50,25 @@ namespace ANN {
     // change current input by new input
     AssignRef(input,_input->convertTo<TokenMatrixFloat*>());
     MatrixFloat *input_mat = input->getMatrix();
-    int last_dim = input_mat->getNumDim() - 1;
-    assert(last_dim == 0 || last_dim == 1);
-    assert(input_mat->getDimSize(last_dim) == input_size);
+#ifdef USE_CUDA
+    input_mat->setUseCuda(use_cuda);
+#endif
+    assert(input_mat->getNumDim() == 2);
+    assert(input_mat->getDimSize(1) == static_cast<int>(input_size));
+    assert(input_mat->getMajorOrder() == CblasColMajor);
+    unsigned int bunch_size = input_mat->getDimSize(0);
     // linear transfer of input to output
     MatrixFloat *output_mat = input_mat->clone();
     AssignRef(output,new TokenMatrixFloat(input_mat));
     // bias
     MatrixFloat *bias_ptr = bias_vector->getPtr();
-    if (last_dim == 0)
-      output_mat->axpy(1.0f, bias_ptr);
+    if (bunch_size == 1) output_mat->axpy(1.0f, bias_ptr);
     else {
       // addition of bias vector at output
       doSaxpyLoop(output_size, 1.0f,
-		  bias_ptr->getRawDataAccess(), bias_ptr->getStrideSize(1),
+		  bias_ptr->getRawDataAccess(), bias_ptr->getStrideSize(0),
 		  output_mat->getRawDataAccess(), output_mat->getStrideSize(1),
-		  output_mat->getDimSize(0),
+		  bunch_size,
 		  0, 1,
 		  use_cuda);
     }
@@ -79,6 +83,9 @@ namespace ANN {
       ERROR_EXIT(129,"Incorrect input error Token type, expected token_matrix!\n");
     // change current input by new input
     AssignRef(error,_error_input->convertTo<TokenMatrixFloat*>());
+#ifdef USE_CUDA
+    error->getMatrix()->setUseCuda(use_cuda);
+#endif
     return error;
   }
 
@@ -91,10 +98,9 @@ namespace ANN {
     MatrixFloat *bias_ptr        = bias_vector->getPtr();
     MatrixFloat *prev_bias_ptr   = bias_vector->getPrevPtr();
     MatrixFloat *input_error_mat = error->getMatrix();
-
-    int last_dim = input_error_mat->getNumDim() - 1;
-    assert(last_dim == 0 || last_dim == 1);
-    assert(input_mat->getDimSize(last_dim) == input_size);
+    assert(input_error_mat->getNumDim() == 2);
+    unsigned int bunch_size = input_error_mat->getDimSize(0);
+    assert(input_error_mat->getDimSize(1) == static_cast<int>(input_size));
     // Momentum computation
     if (bias_vector->isFirstUpdateCall()) {
       if (momentum > 0.0f) {
@@ -114,18 +120,17 @@ namespace ANN {
       learning_rate;
 
     // bias update: prev_bias[j] = prev_bias[j] + \sum_b norm_learn_rate * ERROR_INPUT[b,j]
-    if (last_dim == 0)
-      prev_bias_ptr->axpy(norm_learn_rate, input_error_mat);
+    if (bunch_size == 1) prev_bias_ptr->axpy(norm_learn_rate, input_error_mat);
     else doSaxpyLoop(output_size,
 		     norm_learn_rate,
 		     input_error_mat->getRawDataAccess(),
 		     input_error_mat->getStrideSize(1),
 		     prev_bias_ptr->getRawDataAccess(),
-		     prev_bias_ptr->getStrideSize(1),
-		     input_error_mat->getDimSize(0),
+		     prev_bias_ptr->getStrideSize(0),
+		     bunch_size,
 		     1, 0,
 		     use_cuda);
-      
+    
     // If necessary, update counts, swap vectors, and other stuff
     if (bias_vector->endUpdate()) {
       ++num_updates_from_last_prune;
@@ -135,7 +140,7 @@ namespace ANN {
       }
     }
   }
-
+  
   void BiasANNComponent::reset() {
     if (input)  DecRef(input);
     if (error)  DecRef(error);

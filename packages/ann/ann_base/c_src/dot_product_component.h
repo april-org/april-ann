@@ -32,7 +32,7 @@ namespace ANN {
     Token            *input;
     TokenMatrixFloat *error_input, *output, *error_output;
     Connections *weights_matrix;
-    unsigned int bunch_size, num_updates_from_last_prune;
+    unsigned int num_updates_from_last_prune;
     bool sparse_input;
     
     /// learning parameters
@@ -41,16 +41,9 @@ namespace ANN {
     CBLAS_TRANSPOSE transpose_weights;
 
     void
-    backpropagateErrors(FloatGPUMirroredMemoryBlock *weights_mat_ptr,
-			FloatGPUMirroredMemoryBlock *output_error,
-			const unsigned int output_error_shift,
-			FloatGPUMirroredMemoryBlock *input_error,
-			const unsigned int input_error_shift);
-    
-    void
-    computeBPUpdateOnPrevVectors(FloatGPUMirroredMemoryBlock *prev_weights_mat_ptr,
+    computeBPUpdateOnPrevVectors(MatrixFloat *prev_weights_mat,
 				 Token *input_token,
-				 FloatGPUMirroredMemoryBlock *input_error,
+				 MatrixFloat *input_error,
 				 float beta);
 
   public:

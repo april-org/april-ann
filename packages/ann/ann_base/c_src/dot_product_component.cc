@@ -66,52 +66,50 @@ namespace ANN {
   
   // The DotProductANNComponent
   Token *DotProductANNComponent::doForward(Token *_input, bool during_training) {
-    assert(weights_matrix != 0);
-    FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
+    if (weights_matrix == 0) ERROR_EXIT1(129, "Not built component %s\n",
+					 name.c_str());
+    MatrixFloat *weights_mat = weights_matrix->getPtr();
     // error checking
-    if (_input == 0)
-      ERROR_EXIT(129,"Null Token received!\n");
+    if (_input == 0) ERROR_EXIT(129,"Null Token received!\n");
+    // Three tokens are allowed: matrix, sparse, vector of sparse
     switch(_input->getTokenCode()) {
-    case table_of_token_codes::token_mem_block: {
+    case table_of_token_codes::token_matrix: {
       sparse_input = false;
       // change current input by new input
       AssignRef(input,_input);
-      TokenMemoryBlock *input_mem_token=input->convertTo<TokenMemoryBlock*>();
-      // compute current bunch
-      bunch_size = input_mem_token->getUsedSize() / input_size;
-      if (input_mem_token->getUsedSize() % input_size != 0)
-	ERROR_EXIT2(128, "Input memory block (size %d) is not multiple of %d\n",
-		    input_mem_token->getUsedSize(), input_size);
+      TokenMatrixFloat *input_mat_token=input->convertTo<TokenMatrixFloat*>();
+      MatrixFloat *input_mat=input_mat_token->getMatrix();
+#ifdef USE_CUDA
+      input_mat->setUseCuda(use_cuda);
+#endif
+      assert(input_mat->getNumDim() == 2);
+      assert(input_mat->getDimSize(1) == static_cast<int>(input_size));
+      assert(input_mat->getMajorOrder() == CblasColMajor);
+      unsigned int bunch_size = input_mat->getDimSize(0);
       // new output to fit the bunch
-      AssignRef(output,new TokenMemoryBlock(bunch_size * output_size));
-      // get memory blocks for tokens and weights
-      FloatGPUMirroredMemoryBlock *input_ptr       = input_mem_token->getMemBlock();
-      FloatGPUMirroredMemoryBlock *output_ptr      = output->getMemBlock();
-      //
+      MatrixFloat *output_mat;
+      int dims[2] = { static_cast<int>(bunch_size),
+		      static_cast<int>(output_size) };
+      output_mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+      AssignRef(output,new TokenMatrixFloat(output_mat));
+#ifdef USE_CUDA
+      output_mat->setUseCuda(use_cuda);
+#endif
       if (bunch_size == 1) {
 	// vector x matrix product
-	doSgemv(CblasColMajor, transpose_weights,
-		weights_matrix->getOutputSize(), weights_matrix->getInputSize(),
-		1.0f, weights_mat_ptr, weights_matrix->getOutputSize(),
-		input_ptr, 1,
-		0.0f, output_ptr, 1,
-		0, 0, 0,
-		use_cuda);
+	output_mat->gemv(transpose_weights,
+			 1.0f, weights_mat,
+			 input_mat,
+			 0.0f);
       } // if bunch_size==1
       else {
 	// matrix x matrix product
 	// C = \alpha op(A) op(B) + \beta C
 	// input * weights = output
-	doSgemm(CblasColMajor,
-		CblasNoTrans, NEGATE_CBLAS_TRANSPOSE(transpose_weights),
-		bunch_size, output_size, input_size, // conf.cur_bunch_size,
-		1.0f, input_ptr, bunch_size, // conf.max_bunch_size,
-		weights_mat_ptr, weights_matrix->getOutputSize(),
-		// beta = 1.0f, C matrix contains BIAS and probably other layer
-		// computations
-		0.0f, output_ptr, bunch_size, // conf.max_bunch_size,
-		0, 0, 0, // inputs->getOffset(), 0, outputs->getOffset(),
-		use_cuda); // conf.use_cuda_flag);
+	output_mat->gemm(CblasNoTrans,
+			 NEGATE_CBLAS_TRANSPOSE(transpose_weights),
+			 1.0f, input_mat, weights_mat,
+			 0.0f);
       } // if bunch_size==1 ... else
       break;
     }
@@ -120,25 +118,36 @@ namespace ANN {
       aux->push_back(_input);
       _input = aux; // is not necessary to do incref(aux) or decref(_input)
       // the incref is done at line 127
-
+      
       // continues in the next case
     }
     case table_of_token_codes::vector_Tokens: {
       sparse_input = true;
       AssignRef(input, _input);
       TokenBunchVector *input_vector_token=input->convertTo<TokenBunchVector*>();
-      bunch_size = input_vector_token->size();
-      if (bunch_size == 0) ERROR_EXIT(128, "Found bunch_size==0\n");
-      AssignRef(output,new TokenMemoryBlock(bunch_size * output_size));
-      output->setToZero(use_cuda);
-      FloatGPUMirroredMemoryBlock *output_ptr = output->getMemBlock();
+      assert(input_vector_token->size() > 0);
+      // new output to fit the bunch
+      MatrixFloat *output_mat;
+      int dims[2] = {static_cast<int>(input_vector_token->size()),
+		     static_cast<int>(output_size)};
+      output_mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+      AssignRef(output,new TokenMatrixFloat(output_mat));
+#ifdef USE_CUDA
+      output_mat->setUseCuda(use_cuda);
+#endif      
+      output_mat->zeros();
       unsigned int w_lda  = output_size;
       unsigned int w_step = 1;
       if (transpose_weights == CblasTrans) {
 	w_lda  = 1;
 	w_step = output_size;
       }
-      for (unsigned int b=0; b<bunch_size; ++b) {
+      
+      // FIXME: Improve this code using sub-matrices instead of direct raw
+      // access to matrix data
+      FloatGPUMirroredMemoryBlock *output_ptr = output_mat->getRawDataAccess();
+      FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_mat->getRawDataAccess();
+      for (unsigned int b=0; b<input_vector_token->size(); ++b) {
 	Token *current = (*input_vector_token)[b];
 	if (current->getTokenCode()!=table_of_token_codes::vector_float_sparse)
 	  ERROR_EXIT(128,"Incorrect token type, expected vector_float_sparse\n");
@@ -153,7 +162,7 @@ namespace ANN {
 	  doSaxpy(output_size,
 		  value,
 		  weights_mat_ptr, w_shift, w_step,
-		  output_ptr, b, bunch_size, use_cuda);
+		  output_ptr, b, input_vector_token->size(), use_cuda);
 	}
       }
       break;
@@ -167,10 +176,10 @@ namespace ANN {
   Token *DotProductANNComponent::doBackprop(Token *_error_input) {
     // error checking
     if ( (_error_input == 0) ||
-	 (_error_input->getTokenCode() != table_of_token_codes::token_mem_block))
-      ERROR_EXIT(129,"Incorrect input error Token type, expected token_mem_block!\n");
+	 (_error_input->getTokenCode() != table_of_token_codes::token_matrix))
+      ERROR_EXIT(129,"Incorrect input error Token type, expected token_matrix!\n");
     // change current input by new input
-    AssignRef(error_input,_error_input->convertTo<TokenMemoryBlock*>());
+    AssignRef(error_input,_error_input->convertTo<TokenMatrixFloat*>());
     if (sparse_input) {
       // If input is parse, the component needs to be an input of the ANN,
       // therefore the input is probably SO LARGE, and computing the backprop
@@ -179,45 +188,53 @@ namespace ANN {
       if (error_output) { DecRef(error_output); error_output = 0; }
       return 0;
     }
-    // compute current bunch
-    unsigned int bunch_size = error_input->getUsedSize() / output_size;
-    if (bunch_size != this->bunch_size)
+    MatrixFloat *error_input_mat = error_input->getMatrix();
+#ifdef USE_CUDA
+    error_input_mat->setUseCuda(use_cuda);
+#endif
+    if (! error_input_mat->sameDim(output->getMatrix()) )
       ERROR_EXIT(129, "Different bunches found at doForward and doBackprop\n");
     // new error output to fit the bunch
-    AssignRef(error_output,new TokenMemoryBlock(bunch_size * input_size));
+    assert(error_input_mat->getNumDim() == 2);
+    assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
+    assert(error_input_mat->getMajorOrder() == CblasColMajor);
+    unsigned int bunch_size = error_input_mat->getDimSize(0);
+    // new output to fit the bunch
+    MatrixFloat *error_output_mat;
+    int dims[2] = { static_cast<int>(bunch_size),
+		    static_cast<int>(input_size) };
+    error_output_mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+    AssignRef(error_output,new TokenMatrixFloat(error_output_mat));
+#ifdef USE_CUDA
+    output_mat->setUseCuda(use_cuda);
+#endif      
     //
-    FloatGPUMirroredMemoryBlock *error_input_ptr  = error_input->getMemBlock();
-    FloatGPUMirroredMemoryBlock *error_output_ptr = error_output->getMemBlock();
-    FloatGPUMirroredMemoryBlock *weights_mat_ptr  = weights_matrix->getPtr();
+    MatrixFloat *weights_mat = weights_matrix->getPtr();
     if (bunch_size > 1) {
       // C = alpha * A * B + beta * C
-      doSgemm(CblasColMajor,
-	      CblasNoTrans, transpose_weights,
-	      bunch_size, input_size, output_size,
-	      1.0f, error_input_ptr, bunch_size,
-	      weights_mat_ptr, weights_matrix->getOutputSize(),
-	      0.0f, error_output_ptr, bunch_size,
-	      0, 0, 0,
-	      use_cuda);
+      error_output_mat->gemm(CblasNoTrans, transpose_weights,
+			     1.0f, error_input_mat,
+			     weights_mat,
+			     0.0f);
     }
     else {
-      doSgemv(CblasColMajor, NEGATE_CBLAS_TRANSPOSE(transpose_weights),
-	      weights_matrix->getOutputSize(),
-	      weights_matrix->getInputSize(),
-	      1.0f, weights_mat_ptr, weights_matrix->getOutputSize(),
-	      error_input_ptr, 1,
-	      0.0f, error_output_ptr, 1,
-	      0, 0, 0,
-	      use_cuda);
+      error_input_mat->gemv(NEGATE_CBLAS_TRANSPOSE(transpose_weights),
+			    1.0f, weights_mat,
+			    error_input_mat,
+			    0.0f);
     }
     return error_output;
   }
   
   void DotProductANNComponent::
-  computeBPUpdateOnPrevVectors(FloatGPUMirroredMemoryBlock *prev_weights_mat_ptr,
+  computeBPUpdateOnPrevVectors(MatrixFloat *prev_weights_mat,
 			       Token *input_token,
-			       FloatGPUMirroredMemoryBlock *error_input,
+			       MatrixFloat *error_input_mat,
 			       float beta) {
+    assert(error_input_mat->getNumDim() == 2);
+    assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
+    assert(error_input_mat->getMajorOrder() == CblasColMajor);
+    unsigned int bunch_size = error_input_mat->getDimSize(0);
     // backprop learning rule:
     // PREV_W = alpha * ERRORS + PREV_W
     const unsigned int references = weights_matrix->getNumReferences();
@@ -235,6 +252,8 @@ namespace ANN {
 	w_lda  = 1;
 	w_step = output_size;
       }
+      FloatGPUMirroredMemoryBlock *error_input = error_input_mat->getRawDataAccess();
+      FloatGPUMirroredMemoryBlock *prev_weights_mat_ptr = prev_weights_mat->getRawDataAccess();
       for (unsigned int b=0; b<bunch_size; ++b) {
 	Token *current = (*input_vector_token)[b];
 	TokenSparseVectorFloat *sparse_token;
@@ -252,39 +271,23 @@ namespace ANN {
 		  use_cuda);
 	}
       }
-    } // if sparse_input
+    } // if sparse_input ... else
     else {
-      TokenMemoryBlock *input_mem_token=input_token->convertTo<TokenMemoryBlock*>();
-      FloatGPUMirroredMemoryBlock *input=input_mem_token->getMemBlock();
+      TokenMatrixFloat *input_mem_token=input_token->convertTo<TokenMatrixFloat*>();
+      MatrixFloat *input_mat=input_mem_token->getMatrix();
       if (bunch_size > 1) {
-	doSgemm(CblasColMajor, CblasTrans, CblasNoTrans,
-		weights_matrix->getOutputSize(),
-		weights_matrix->getInputSize(),
-		bunch_size,                               // dimensiones
-		norm_learn_rate,                          // alpha
-		(transpose_weights == CblasNoTrans)?error_input:input, // A
-		bunch_size,                                            // A stride
-		(transpose_weights == CblasNoTrans)?input:error_input, // B
-		bunch_size,                                            // B stride
-		beta,                                     // beta
-		prev_weights_mat_ptr,                     // C
-		weights_matrix->getOutputSize(),          // C stride
-		0, 0, 0,                                  // offsets
-		use_cuda);
+	prev_weights_mat->gemm(CblasTrans, CblasNoTrans,
+			       norm_learn_rate,
+			       (transpose_weights == CblasNoTrans)?error_input_mat:input_mat, // A
+			       (transpose_weights == CblasNoTrans)?input_mat:error_input_mat, // B
+			       beta);
       } // if bunch_size > 1 ... else
       else {
 	if (beta < 1.0f)
-	  doSscal(weights_matrix->getNumWeights(),
-		  beta, prev_weights_mat_ptr, 0, 1,
-		  use_cuda);
-	doSger(CblasColMajor,
-	       weights_matrix->getOutputSize(),
-	       weights_matrix->getInputSize(),
-	       norm_learn_rate,
-	       (transpose_weights == CblasNoTrans)?error_input:input, 0, bunch_size,
-	       (transpose_weights == CblasNoTrans)?input:error_input, 0, bunch_size,
-	       prev_weights_mat_ptr, 0, weights_matrix->getOutputSize(),
-	       use_cuda);
+	  prev_weights_mat->scal(beta);
+	prev_weights_mat->ger(norm_learn_rate,
+			      (transpose_weights == CblasNoTrans)?error_input_mat:input_mat,
+			      (transpose_weights == CblasNoTrans)?input_mat:error_input_mat);
       } // if bunch_size > 1 ... else
     } // if sparse_input ... else
   }
@@ -297,10 +300,9 @@ namespace ANN {
     // Foces weights_matrix to update internal counts for a backward step
     weights_matrix->beginUpdate();
     
-    FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_matrix->getPtr();
-    FloatGPUMirroredMemoryBlock *prev_weights_mat_ptr =
-      weights_matrix->getPrevPtr();
-    FloatGPUMirroredMemoryBlock *error_input_ptr  = error_input->getMemBlock();
+    MatrixFloat *weights_mat      = weights_matrix->getPtr();
+    MatrixFloat *prev_weights_mat = weights_matrix->getPrevPtr();
+    MatrixFloat *error_input_mat  = error_input->getMatrix();
     
     float beta_parameter_for_cblas_bp = 1.0f;
     if (weights_matrix->isFirstUpdateCall()) {
@@ -318,9 +320,9 @@ namespace ANN {
       }
     } // if (weights_matrix->needsToComputeMomentum()) {
     
-    computeBPUpdateOnPrevVectors(prev_weights_mat_ptr,
+    computeBPUpdateOnPrevVectors(prev_weights_mat,
 				 input,
-				 error_input_ptr,
+				 error_input_mat,
 				 beta_parameter_for_cblas_bp);
     
     // Forces to update counts and swap vectors if necessary at this backward
@@ -333,15 +335,12 @@ namespace ANN {
       }
       if (max_norm_penalty > 0.0) {
 	for (unsigned int i=0; i<output_size; ++i) {
-	  float norm2 = doSnrm2(input_size,
-				weights_matrix->getPtr(), i, output_size,
-				use_cuda);
-	  if (norm2 > max_norm_penalty) {
-	    float scal = max_norm_penalty/norm2;
-	    doSscal(input_size, scal,
-		    weights_matrix->getPtr(), i, output_size,
-		    use_cuda);
-	  } // if norm2 > max_norm_penalty
+	  int coords[2] = { static_cast<int>(i), 0 };
+	  int sizes[2]  = { 1, static_cast<int>(input_size) };
+	  MatrixFloat *submat = new MatrixFloat(weights_mat,coords,sizes,false);
+	  float norm2 = submat->norm2();
+	  if (norm2 > max_norm_penalty) submat->scal(max_norm_penalty/norm2);
+	  delete submat;
 	} // for (i=0; i<output_size; ++i)
       } // if max_norm_penalty > 0.0
     }

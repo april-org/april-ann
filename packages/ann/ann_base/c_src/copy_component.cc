@@ -21,7 +21,7 @@
 #include "error_print.h"
 #include "table_of_token_codes.h"
 #include "token_vector.h"
-#include "token_memory_block.h"
+#include "token_matrix.h"
 #include "copy_component.h"
 #include "wrapper.h"
 
@@ -70,36 +70,48 @@ namespace ANN {
     if (error_input->size() != times)
       ERROR_EXIT2(128, "Incorrect error input size, found %d, expected %d\n",
 		  error_input->size(), times);
-    // The first is done out, scopy of input to output
+    
+    // the first is only copied
     Token *current = (*error_input)[0];
-    if (current->getTokenCode() != table_of_token_codes::token_mem_block)
-      ERROR_EXIT(128, "Incorrect token type, expected token mem block\n");
-    TokenMemoryBlock *current_mem_block;
-    current_mem_block = current->convertTo<TokenMemoryBlock*>();
-    unsigned int sz   = current_mem_block->getUsedSize();
-    unsigned int bunch_size = sz / input_size;
-    assert((bunch_size * input_size == sz) &&
-	   "Incorrect input error token size, not divisible by bunch_size");
-    TokenMemoryBlock *error_output_mem_block = new TokenMemoryBlock(sz);
-    AssignRef(error_output, error_output_mem_block);
-    doScopy(sz,
-	    current_mem_block->getMemBlock(), 0, 1,
-	    error_output_mem_block->getMemBlock(), 0, 1,
-	    use_cuda);
+    if (current->getTokenCode() != table_of_token_codes::token_matrix)
+      ERROR_EXIT(128, "Incorrect token type, expected token matrix\n");
+    TokenMatrixFloat *current_token;
+    current_token = current->convertTo<TokenMatrixFloat*>();
+    MatrixFloat *current_mat = current_token->getMatrix();
+#ifdef USE_CUDA
+    current_mat->setUseCuda(use_cuda);
+#endif
+    assert(current_mat->getNumDim() == 2);
+    assert(current_mat->getDimSize(1) == static_cast<int>(input_size));
+    assert(current_mat->getMajorOrder() == CblasColMajor);
+    unsigned int bunch_size = current_mat->getDimSize(0);
+    
+    // output token
+    MatrixFloat *error_output_mat;
+    int dims[2] = { static_cast<int>(bunch_size),
+		    static_cast<int>(input_size) };
+    error_output_mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+#ifdef USE_CUDA
+    error_output_mat->setUseCuda(use_cuda);
+#endif
+    TokenMatrixFloat *error_output_token = new TokenMatrixFloat(error_output_mat);
+    AssignRef(error_output, error_output_token);
+    error_output_mat->copy(current_mat);
+    
     // The rest of tokens
     for (unsigned int i=1; i<times; ++i) {
       Token *current = (*error_input)[i];
-      if (current->getTokenCode() != table_of_token_codes::token_mem_block)
-	ERROR_EXIT(128, "Incorrect token type, expected token mem block\n");
-      TokenMemoryBlock *current_mem_block;
-      current_mem_block = current->convertTo<TokenMemoryBlock*>();
-      if (current_mem_block->getUsedSize() != sz)
-	ERROR_EXIT2(128, "Incorrect error input size, found %d, expected %d\n",
-		    current_mem_block->getUsedSize(), sz);
-      doSaxpy(sz,
-	      1.0f, current_mem_block->getMemBlock(), 0, 1,
-	      error_output_mem_block->getMemBlock(), 0, 1,
-	      use_cuda);
+      if (current->getTokenCode() != table_of_token_codes::token_matrix)
+	ERROR_EXIT(128, "Incorrect token type, expected token matrix\n");
+      current_token = current->convertTo<TokenMatrixFloat*>();
+      current_mat = current_token->getMatrix();
+#ifdef USE_CUDA
+      current_mat->setUseCuda(use_cuda);
+#endif
+      assert(current_mat->getNumDim() == 2);
+      assert(current_mat->getDimSize(1) == static_cast<int>(input_size));
+      assert(current_mat->getMajorOrder() == CblasColMajor);
+      error_output_mat->axpy(1.0f, current_mat);
     }
     return error_output;
   }

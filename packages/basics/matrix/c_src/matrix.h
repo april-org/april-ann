@@ -80,7 +80,7 @@ protected:
   /// Returns if the matrix is a vector
   bool isVector() const { return (numDim==1 ||
 				  (numDim==2 &&
-				   ( (matrixSize[0]==1) ^
+				   ( (matrixSize[0]==1) ||
 				     (matrixSize[1]==1) ))); }
   bool isColVector() const { return (numDim==2 && matrixSize[1]==1); }
   /// Returns the size of the vector, the coordinate which is different of 1. It
@@ -179,7 +179,8 @@ public:
   /********** Constructors ***********/
   /// Full constructor given numDim, dim, default_value and major_order
   Matrix(int numDim, const int* dim, T default_value=T(),
-	 CBLAS_ORDER major_order = CblasRowMajor);
+	 CBLAS_ORDER major_order = CblasRowMajor,
+	 GPUMirroredMemoryBlock<T> *data = 0);
   
   /// Constructor with T() values and CblasRowMajor order
   Matrix(int numDim, int d1, ...);
@@ -194,6 +195,10 @@ public:
 	 bool clone=true);
   /// Destructor
   virtual ~Matrix();
+  
+  /// Modify sizes of matrix
+  Matrix<T> *rewrap(const int *new_dims, int len);
+  
   /* Getters and setters */
   int getNumDim() const { return numDim; }
   const int *getDimPtr() const { return matrixSize; }
@@ -204,6 +209,7 @@ public:
   CBLAS_ORDER getMajorOrder() const { return major_order; }
   void setUseCuda(bool v) { use_cuda = v; }
   bool getCudaFlag() const { return use_cuda; }
+  bool isSubmatrix() const { return is_submatrix; }
   bool isSimple() const {
     bool is_simple=(!is_submatrix)&&(offset==0)&&(major_order==CblasRowMajor);
     int aux=1;
@@ -255,6 +261,7 @@ public:
   Matrix<T> *clone(CBLAS_ORDER major_order);
   /// Shallow copy
   Matrix<T>* shallow_copy();
+  /// Raw access operator []
   T& operator[] (int i);
   const T& operator[] (int i) const;
   // Access to independent elements, one and two dimensions are special cases
@@ -391,11 +398,12 @@ template <typename T>
 Matrix<T>::Matrix(int numDim,
 		  const int* dim,
 		  T default_value,
-		  CBLAS_ORDER major_order) : numDim(numDim),
-					     is_submatrix(false),
-					     offset(0),
-					     major_order(major_order),
-					     use_cuda(false) {
+		  CBLAS_ORDER major_order,
+		  GPUMirroredMemoryBlock<T> *data) : numDim(numDim),
+						     is_submatrix(false),
+						     offset(0),
+						     major_order(major_order),
+						     use_cuda(false){
   /*
     if (major_order == CblasColMajor && numDim > 2)
     ERROR_EXIT(128, "ColMajor order is only allowed when numDim<=2\n");
@@ -404,7 +412,14 @@ Matrix<T>::Matrix(int numDim,
   matrixSize = new int[numDim];
   aux_coords = new int[numDim];
   initialize(dim);
-  allocate_memory(total_size);
+  if (data == 0) allocate_memory(total_size);
+  else {
+    if (static_cast<int>(data->getSize()) != size())
+      ERROR_EXIT2(128, "Data pointer size doesn't fit, expected %d, found %d\n",
+		  size(), data->getSize());
+    this->data = data;
+    IncRef(data);
+  }
   /*
     T *d = data->getPPALForWrite();
     for (int i=0; i<total_size; ++i) d[i] = default_value;
@@ -526,6 +541,19 @@ Matrix<T>::~Matrix() {
   delete[] stride;
   delete[] matrixSize;
   delete[] aux_coords;
+}
+
+template <typename T>
+Matrix<T> *Matrix<T>::rewrap(const int *new_dims, int len) {
+  if (is_submatrix)
+    ERROR_EXIT(128, "Impossible to re-wrap a sub-matrix, a clone is needed\n");
+  int new_size = 1;
+  for (int i=0; i<len; ++i) new_size *= new_dims[i];
+  if (new_size != size())
+    ERROR_EXIT2(128, "Incorrect size, expected %d, and found %d\n",
+		size(), new_size);
+  Matrix<T> *obj = new Matrix<T>(len, new_dims, T(), major_order, data);
+  return obj;
 }
 
 template<typename T>
@@ -906,8 +934,6 @@ void Matrix<T>::axpy(T alpha, const Matrix<T> *other) {
 		size(), other->size());
   if (major_order != other->major_order)
     ERROR_EXIT(128, "Matrices with different major orders");
-  if (! sameDim(other) )
-    ERROR_EXIT(128, "Matrices with different dimension sizes\n");
   if (!is_submatrix && !other->is_submatrix)
     doSaxpy(total_size,
 	    alpha, other->data, 0, 1,
@@ -983,7 +1009,7 @@ void Matrix<T>::gemv(CBLAS_TRANSPOSE trans_A,
 		     const Matrix<T> *otherX,
 		     T beta) {
   if (!isVector() || !otherX->isVector() || otherA->numDim != 2)
-    ERROR_EXIT(128,"Incorrect number of dimensions");
+    ERROR_EXIT(128,"Incorrect number of dimensions\n");
   int row_idx_A = 0, col_idx_A = 1;
   if (trans_A == CblasTrans) april_utils::swap(row_idx_A, col_idx_A);
   if (getVectorSize() != otherA->matrixSize[row_idx_A] ||

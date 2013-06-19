@@ -125,6 +125,23 @@
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat rewrap
+{
+  LUABIND_CHECK_ARGN(>=, 1);
+  int ndims;
+  ndims = lua_gettop(L); // number of dimensions
+  int *dims = new int[ndims];
+  for (int i=1; i <= ndims; i++) {
+    LUABIND_GET_PARAMETER(i, int, dims[i-1]);
+    if (dims[i-1] <= 0)
+      LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
+  }
+  MatrixFloat *new_obj = obj->rewrap(dims, ndims);
+  delete[] dims;
+  LUABIND_RETURN(MatrixFloat,new_obj);
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat get_reference_string
 {
   char buff[128];
@@ -344,7 +361,7 @@
 
 //BIND_METHOD MatrixFloat get
 //DOC_BEGIN
-// float get_element(coordinates)
+// float get(coordinates)
 /// Permite ver valores de una matriz. Requiere tantos indices como dimensiones tenga la matriz.
 ///@param coordinates Tabla con la posición exacta del punto de la matriz que queremos obtener.
 //DOC_END
@@ -395,7 +412,7 @@
 
 //BIND_METHOD MatrixFloat set
 //DOC_BEGIN
-// float set_element(coordinates,value)
+// float set(coordinates,value)
 /// Permite cambiar el valor de un elemento en la matriz. Requiere
 /// tantos indices como dimensiones tenga la matriz y adicionalmente
 /// el valor a cambiar
@@ -447,6 +464,24 @@
     delete[] coords;
   }
   LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat raw_get
+{
+  int raw_pos;
+  LUABIND_GET_PARAMETER(1, int, raw_pos);
+  LUABIND_RETURN(float, (*obj)[raw_pos]);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat raw_set
+{
+  int raw_pos;
+  float value;
+  LUABIND_GET_PARAMETER(1, int, raw_pos);
+  LUABIND_GET_PARAMETER(2, float, value);
+  (*obj)[raw_pos] = value;
 }
 //BIND_END
 

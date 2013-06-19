@@ -56,11 +56,15 @@ namespace ANN {
       ERROR_EXIT(129,"Incorrect input Token type, expected token_matrix!\n");
     // change current input by new input
     AssignRef(input,_input->convertTo<TokenMatrixFloat*>());
+#ifdef USE_CUDA
+    input->getMatrix()->setUseCuda(use_cuda);
+#endif
     // new  output to fit the bunch
     AssignRef(output,new TokenMatrixFloat(input->getMatrix()->clone()));
     // get memory blocks for tokens
     MatrixFloat *output_mat = output->getMatrix();
     MatrixFloat *noise_mat  = output_mat->cloneOnlyDims();
+    assert(output_mat->getMajorOrder() == CblasColMajor);
     for (MatrixFloat::col_major_iterator it=noise_mat->begin();
 	 it!=noise_mat->end(); ++it)
       *it = random->randNorm(mean, variance);
