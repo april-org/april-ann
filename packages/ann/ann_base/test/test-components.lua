@@ -89,9 +89,10 @@ end
 
 c:update()
 current,old = c:copy_weights().b:matrix()
-if current:clone("row_major"):rewrap(4)~=(b-i:clone():pow(2)*learning_rate) then
+if current:clone("row_major"):rewrap(4)~=(b-i:clone():pow(2)*learning_rate):rewrap(4) then
   print(current)
   print(b - i:clone():pow(2) * learning_rate)
+  error("Error!!!")
 end
 
 ----------
@@ -105,13 +106,13 @@ if o:size() ~= 2 then
   print(o:size())
   error("Error!!!")
 end
-for _,v in o:iterate() do
-  if i:rewrap(1,4) ~= v:get_matrix() then
-    print(v:get_matrix())
-    print(i)
-    error("Error!!!")
-  end
-end
+map(function(v)
+      if i:rewrap(1,4) ~= v:get_matrix() then
+	print(v:get_matrix())
+	print(i)
+	error("Error!!!")
+      end
+    end, o.iterate, o)
 
 k = tokens.vector.bunch()
 k:push_back( tokens.matrix( i:clone("col_major"):rewrap(1,4) ) )
@@ -203,10 +204,8 @@ end
 -------------
 
 ref = i:clone():exp()
-for i=1,ref:dim()[1] do
-  r = ref:slice({i,1},{1,4})
-  r:scal(1/r:sum())
-end
+map(function(i) r=ref:slice({i,1},{1,4}) r:scal(1/r:sum()) end, range,
+    1, ref:dim()[1])
 c = ann.components.actf.softmax()
 c:build{ input=4, output=4 }
 o = c:forward( tokens.matrix( i:clone("col_major") ) ):get_matrix()
@@ -221,10 +220,8 @@ end
 -----------------
 
 ref = i:clone():exp()
-for i=1,ref:dim()[1] do
-  r = ref:slice({i,1},{1,4})
-  r:scal(1/r:sum())
-end
+map(function(i) r=ref:slice({i,1},{1,4}) r:scal(1/r:sum()) end, range,
+    1, ref:dim()[1])
 ref:log()
 c = ann.components.actf.log_softmax()
 c:build{ input=4, output=4 }

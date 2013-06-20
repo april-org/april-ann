@@ -239,7 +239,23 @@ public:
   
   void putPatternBunch(const int *indexes,unsigned int bunch_size,
 		       Token *pat) {
-    ERROR_EXIT(128, "Not implemented!!!\n");    
+    if (pat->getTokenCode() != table_of_token_codes::token_matrix)
+      ERROR_EXIT(128, "Incorrect token type, expected token matrix\n");
+    TokenMatrixFloat *token_matrix = pat->convertTo<TokenMatrixFloat*>();
+    MatrixFloat *mat = token_matrix->getMatrix();
+    if (mat->getNumDim() != 2)
+      ERROR_EXIT(128, "Only allowed for 2-dim matrices\n");
+    FloatGPUMirroredMemoryBlock *aux_mem_block = aux_mat->getRawDataAccess();
+    float *aux_mem = aux_mem_block->getPPALForWrite();
+    int pattern_size = patternSize();
+    for (unsigned int i=0; i<bunch_size; ++i) {
+      int coords[2] = { static_cast<int>(i), 0 };
+      int sizes[2]  = { 1, pattern_size };
+      MatrixFloat *submat = new MatrixFloat(mat, coords, sizes, false);
+      aux_mat->copy(submat);
+      delete submat;
+      ds->putPattern(indexes[i], aux_mem);
+    }
   }
 };
 

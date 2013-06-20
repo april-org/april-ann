@@ -285,6 +285,13 @@ april_set_doc("matrix.copy_from_table", {
 		  "A lua table with data numbers in row_major order",
 		}, })
 
+april_set_doc("matrix.copy",
+	      {
+		class = "method",
+		summary = "A shallow copy of the matrix.",
+		outputs = { "A matrix instance, shallow copied from caller" },
+	      })
+
 april_set_doc("matrix.get", {
 		class = "method",
 		summary = "Returns the value stored at a given position.",
@@ -313,12 +320,29 @@ april_set_doc("matrix.set", {
 		  "A number with the value to be set",
 		}, })
 
+april_set_doc("matrix.raw_get", {
+		class = "method",
+		summary = "Returns the value stored at a given RAW position.",
+		params = {
+		  "RAW position",
+		},
+		outputs = {
+		  "A number",
+		}, })
+
+april_set_doc("matrix.raw_set", {
+		class = "method",
+		summary = "Sets the value of a given RAW position.",
+		params = {
+		  "RAW position",
+		}, })
+
 april_set_doc("matrix.fill", {
 		class = "method",
 		summary = "Sets all values to a given number.",
 		description = {
 		  "Sets all values to a given number.",
-		  "This method modifies the object.",
+		  "This method modifies the object IN-PLACE.",
 		},
 		params = {
 		  "A number",
@@ -400,7 +424,7 @@ april_set_doc("matrix.transpose", {
 
 april_set_doc("matrix.adjust_range", {
 		class = "method",
-		summary = "Modifies the matrix values to be at given range",
+		summary = "Modifies the matrix values IN-PLACE to be at given range",
 		params = {
 		  "The min value of the range",
 		  "The max value of the range"
@@ -414,7 +438,7 @@ april_set_doc("matrix.diag", {
 		summary = "Sets diagonal positions to a given number.",
 		description = {
 		  "Sets diagonal positions to a tiven number value.",
-		  "This method modifies the object.",
+		  "This method modifies the object IN-PLACE.",
 		},
 		params = {
 		  "A number",
@@ -450,7 +474,7 @@ april_set_doc("matrix.max", {
 
 april_set_doc("matrix.clamp", {
 		class = "method",
-		summary = "Clamp matrix values to be in the given range.",
+		summary = "Clamp matrix values IN-PLACE to be in the given range.",
 		params = {
 		  "The min value of the range",
 		  "The max value of the range",
@@ -463,7 +487,7 @@ april_set_doc("matrix.add", {
 		class = "method",
 		summary = "Returns the addition of caller and other matrix.",
 		description = {
-		  "Returns the addition of caller and other matrix.",
+		  "Returns a new matrix which is addition of caller and other matrix.",
 		  "It uses BLAS operations.",
 		},
 		params = {
@@ -477,7 +501,7 @@ april_set_doc("matrix.sub", {
 		class = "method",
 		summary = "Returns the subtraction of caller and other matrix.",
 		description = {
-		  "Returns the subtraction of caller and other matrix.",
+		  "Returns a new matrix which is the subtraction of caller and other matrix.",
 		  "It uses BLAS operations.",
 		},
 		params = {
@@ -491,7 +515,7 @@ april_set_doc("matrix.mul", {
 		class = "method",
 		summary = "Returns the multiplication of caller and other matrix.",
 		description = {
-		  "Returns the multiplication of caller and other matrix.",
+		  "Returns a new matrix which is the multiplication of caller and other matrix.",
 		  "This method works with vector-vector, dot product,",
 		  "vector-matrix, and matrix-matrix multiplication, depending",
 		  "on the matrices dimensions.",
@@ -506,7 +530,7 @@ april_set_doc("matrix.mul", {
 
 april_set_doc("matrix.log", {
 		class = "method",
-		summary = "Component wise log operation: Y = log(Y)",
+		summary = "Component wise log operation IN-PLACE: Y = log(Y)",
 		params = {
 		},
 		outputs = {
@@ -515,7 +539,7 @@ april_set_doc("matrix.log", {
 
 april_set_doc("matrix.log1p", {
 		class = "method",
-		summary = "Component wise log1p operation: Y = log1p(Y)",
+		summary = "Component wise log1p operation IN-PLACE: Y = log1p(Y)",
 		params = {
 		},
 		outputs = {
@@ -524,7 +548,7 @@ april_set_doc("matrix.log1p", {
 
 april_set_doc("matrix.exp", {
 		class = "method",
-		summary = "Component wise exp operation: Y = exp(Y)",
+		summary = "Component wise exp operation IN-PLACE: Y = exp(Y)",
 		params = {
 		},
 		outputs = {
@@ -533,7 +557,7 @@ april_set_doc("matrix.exp", {
 
 april_set_doc("matrix.tanh", {
 		class = "method",
-		summary = "Component wise tanh operation: Y = tanh(Y)",
+		summary = "Component wise tanh operation IN-PLACE: Y = tanh(Y)",
 		params = {
 		},
 		outputs = {
@@ -542,7 +566,7 @@ april_set_doc("matrix.tanh", {
 
 april_set_doc("matrix.sqrt", {
 		class = "method",
-		summary = "Component wise sqrt operation: Y = sqrt(Y)",
+		summary = "Component wise sqrt operation IN-PLACE: Y = sqrt(Y)",
 		params = {
 		},
 		outputs = {
@@ -551,7 +575,7 @@ april_set_doc("matrix.sqrt", {
 
 april_set_doc("matrix.pow", {
 		class = "method",
-		summary = "Component wise pow operation: Y = pow(Y,x)",
+		summary = "Component wise pow operation IN-PLACE: Y = pow(Y,x)",
 		params = {
 		  "A number (x)"
 		},
@@ -561,7 +585,7 @@ april_set_doc("matrix.pow", {
 
 april_set_doc("matrix.axpy", {
 		class = "method",
-		summary = "BLAS AXPY operation: Y = Y + alpha * X.",
+		summary = "BLAS AXPY operation IN-PLACE: Y = Y + alpha * X.",
 		params = {
 		  "Alpha constant",
 		  "Another matrix, X",
@@ -572,7 +596,7 @@ april_set_doc("matrix.axpy", {
 
 april_set_doc("matrix.gemv", {
 		class = "method",
-		summary = "BLAS GEMV operation: Y = beta * Y + alpha * A * X.",
+		summary = "BLAS GEMV operation IN-PLACE: Y = beta * Y + alpha * A * X.",
 		params = {
 		  ["alpha"] = "Alpha constant",
 		  ["beta"]  = "Beta constant",
@@ -589,7 +613,7 @@ april_set_doc("matrix.gemv", {
 
 april_set_doc("matrix.gemm", {
 		class = "method",
-		summary = "BLAS GEMM operation: C = beta * C + alpha * A * B.",
+		summary = "BLAS GEMM operation IN-PLACE: C = beta * C + alpha * A * B.",
 		params = {
 		  ["alpha"] = "Alpha constant",
 		  ["beta"]  = "Beta constant",
@@ -610,7 +634,7 @@ april_set_doc("matrix.gemm", {
 
 april_set_doc("matrix.ger", {
 		class = "method",
-		summary = "BLAS GER operation: Z = Z + alpha * X * Y'.",
+		summary = "BLAS GER operation IN-PLACE: Z = Z + alpha * X * Y'.",
 		params = {
 		  ["alpha"] = "Alpha constant",
 		  ["X"] = "Another matrix, X (a vector)",
@@ -622,7 +646,7 @@ april_set_doc("matrix.ger", {
 
 april_set_doc("matrix.dot", {
 		class = "method",
-		summary = "BLAS DOT operation: v = X  dot  Y",
+		summary = "BLAS DOT operation IN-PLACE: v = X  dot  Y",
 		params = {
 		  "Another matrix, Y (a vector)",
 		},
@@ -632,7 +656,7 @@ april_set_doc("matrix.dot", {
 
 april_set_doc("matrix.scal", {
 		class = "method",
-		summary = "BLAS SCAL operation.",
+		summary = "BLAS SCAL operation IN-PLACE.",
 		params = {
 		  "The scale factor",
 		},

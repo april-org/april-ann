@@ -25,7 +25,7 @@ function show_weights(trainer, filter)
   if not filter then filter = function(x) return x end end
   print()
   for i = 1,ds_input:numPatterns() do
-    value = filter(trainer:calculate(ds_input:getPattern(i))[1])
+    value = filter(trainer:calculate(ds_input:getPattern(i)):toTable()[1])
     printf("%s\t %s\n",
 	   table.concat(ds_input:getPattern(i),","),
 	   value)
