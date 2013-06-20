@@ -696,8 +696,10 @@
 //BIND_METHOD MatrixFloat equals
 {
   MatrixFloat *other;
+  float epsilon;
   LUABIND_GET_PARAMETER(1, MatrixFloat, other);
-  LUABIND_RETURN(boolean, obj->equals(other));
+  LUABIND_GET_OPTIONAL_PARAMETER(2, float, epsilon, 1e-04f);
+  LUABIND_RETURN(boolean, obj->equals(other, epsilon));
 }
 //BIND_END
 
@@ -792,6 +794,12 @@
 {
   obj->tanh();
   LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat sum
+{
+  LUABIND_RETURN(float, obj->sum());
 }
 //BIND_END
 

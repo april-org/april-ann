@@ -46,7 +46,7 @@ end
 
 matrix.meta_instance.__mul = function(op1, op2)
   if not isa(op1,matrix) then op1,op2=op2,op1 end
-  if type(op2) == "number" then return op1:mul_scalar(op2)
+  if type(op2) == "number" then return op1:scal(op2)
   else return op1:mul(op2)
   end
 end
@@ -58,13 +58,13 @@ end
 
 matrix.meta_instance.__div = function(op1, op2)
   assert(type(op2) == "number", "Expected a number as second argument")
-  local new_mat = op:clone()
-  return new_mat:scal(op, 1/op2)
+  local new_mat = op1:clone()
+  return new_mat:scal(1/op2)
 end
 
 matrix.meta_instance.__unm = function(op)
   local new_mat = op:clone()
-  return new_mat:scal(op, -1)
+  return new_mat:scal(-1)
 end
 
 -- IMAGE

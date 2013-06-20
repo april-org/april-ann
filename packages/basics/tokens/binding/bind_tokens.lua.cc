@@ -205,6 +205,12 @@ int token_sparse_iterator_function(lua_State *L) {
 }
 //BIND_END
 
+//BIND_METHOD TokenBunchVector size
+{
+  LUABIND_RETURN(uint, obj->size());
+}
+//BIND_END
+
 //BIND_METHOD TokenBunchVector at
 {
   LUABIND_CHECK_ARGN(==, 1);
