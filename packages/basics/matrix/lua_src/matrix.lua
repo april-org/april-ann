@@ -285,13 +285,6 @@ april_set_doc("matrix.copy_from_table", {
 		  "A lua table with data numbers in row_major order",
 		}, })
 
-april_set_doc("matrix.copy",
-	      {
-		class = "method",
-		summary = "A shallow copy of the matrix.",
-		outputs = { "A matrix instance, shallow copied from caller" },
-	      })
-
 april_set_doc("matrix.get", {
 		class = "method",
 		summary = "Returns the value stored at a given position.",
@@ -670,3 +663,11 @@ april_set_doc("matrix.norm2", {
 		outputs = {
 		  "A number with the norm-2 of caller matrix."
 		}, })
+
+april_set_doc("matrix.copy",
+	      {
+		class = "method",
+		summary = "Copy the values from another matrix using BLAS",
+		params  = { "A source matrix" },
+		outputs = { "The caller matrix instance" },
+	      })

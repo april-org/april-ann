@@ -128,11 +128,7 @@ using namespace ANN;
 
 //BIND_METHOD Connections scale
 {
-  float alpha;
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_CHECK_PARAMETER(1, number);
-  LUABIND_GET_PARAMETER(1, float, alpha);
-  obj->scale(alpha);
+  LUABIND_ERROR("Deprecated!!! use matrix() and scal() on the matrix object");
 }
 //BIND_END
 

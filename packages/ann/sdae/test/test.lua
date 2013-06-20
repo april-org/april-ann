@@ -80,13 +80,13 @@ params_pretrain = {
       max_epochs            = 1, --200,
       pretraining_percentage_stopping_criterion = 0.01,
     },
-    -- layerwise = { { min_epochs=50 },
-    --  		  { min_epochs=20 },
-    --  		  { ann_options = { learning_rate = 0.4,
-    --  				    momentum      = 0.02,
-    --  				    weight_decay  = 4e-05 },
-    --  		    min_epochs=20 },
-    --  		  { min_epochs=10 }, },
+    layerwise = { { min_epochs=50 },
+      		  { min_epochs=20 },
+		  { ann_options = { learning_rate = 0.4,
+				    momentum      = 0.02,
+				    weight_decay  = 4e-05 },
+		    min_epochs=20 },
+		  { min_epochs=10 }, },
   }
 }
 
@@ -163,7 +163,7 @@ datosvalidar = {
 dropout_factor = 0.5
 function set_dropout(trainer)
   local max=trainer:count_components("^actf.*$")
-  for name,component in trainer:iterate_components("^actf.*$") do
+  for name,component in trainer.iterate_components(trainer, "^actf.*$") do
     if name ~= "actf"..max then
       component:set_option("dropout_factor",dropout_factor)
       component:set_option("dropout_seed", 5425)
@@ -172,8 +172,10 @@ function set_dropout(trainer)
 end
 
 -- we scale the weights before dropout
-for name,cnn in trainer_deep_classifier:iterate_weights("^w.*$") do
-  if name ~= "w1" then cnn:scale(1.0/(1.0 - dropout_factor)) end
+for _,cnn in trainer_deep_classifier:iterate_weights("^w.*$") do
+  local w,ow = cnn:matrix()
+  w:scal(1.0/(1.0-dropout_factor))
+  ow:copy(w)
 end
 
 deep_classifier:set_option("learning_rate", 0.4)
