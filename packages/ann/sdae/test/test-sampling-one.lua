@@ -1,10 +1,10 @@
-pnoise        = tonumber(arg[1] or 0.3)   -- noise percentage
+pnoise        = tonumber(arg[1] or 0.4)   -- noise percentage
 loss_function = arg[2] or "mse"
 alpha         = tonumber(arg[3] or 0.1)  -- SGD alpha parameter
 beta          = tonumber(arg[4] or 0.2)
 seed          = tonumber(arg[5] or 12345) -- random seed
 
-ipat = 9
+ipat = 4
 
 max_iterations  = 100
 stop_criterion  = 1e-03
@@ -39,41 +39,41 @@ else
   trainer:build()
 end
 
-input = val_input:getPattern(ipat)
+input = matrix(16, 16, val_input:getPattern(ipat))
 mask  = {}
-k     = 1
+local k = 1
+local number_of_blank_cols=math.max(0, math.min(16, math.round(pnoise*16)))
 for r=1,16 do
-  local aux=math.max(0, math.min(16, math.round(pnoise*16)))
-  for c=1,aux do
-    input[k] = rnd:rand(1.0)
-    k=k+1
-  end
-  for c=aux+1,16 do
-    table.insert(mask,k)
-    k=k+1
-  end
+  map(function(c) input:set(r, c, rnd:rand(1.0)) k=k+1 end,
+      range, 1, number_of_blank_cols, 1)
+  map(function(c) table.insert(mask, k) k=k+1 end,
+      range, number_of_blank_cols+1, 16, 1)
 end
-matrix.saveImage(matrix(16,16,input), "wop0.pnm")
+matrix.saveImage(input, "wop0.pnm")
 
-noise = ann.components.stack():push(ann.components.gaussian_noise{ random=random(), mean=0, var=0.2 }):push(ann.components.salt_and_pepper{ random=random(), prob=0.2 })
+noise = ann.components.stack():
+push(ann.components.gaussian_noise{ random=random(), mean=0, var=0.2 }):
+push(ann.components.salt_and_pepper{ random=random(), prob=0.2 })
+
 noise:build{ input=256, output=256 }
 
 output,L,chain = ann.autoencoders.iterative_sampling{
   model   = full_sdae,
   noise   = noise,
-  input   = input,
+  input   = input:rewrap(1,256):clone("col_major"),
   max     = max_iterations,
   mask    = mask,
   stop    = stop_criterion,
-  verbose = false,
+  verbose = true,
   log     = log,
   loss    = loss,
 }
 for i,output in ipairs(chain) do
-  matrix.saveImage(matrix(16,16,output), "wop1-"..string.format("%04d",i)..".pnm")
+  matrix.saveImage(output:clone("col_major"):rewrap(16,16), "wop1-"..string.format("%04d",i)..".pnm")
 end
-if log then output = table.imap(output, math.log) end
-ite_L = loss:loss(tokens.memblock(output), tokens.memblock(val_input:getPattern(ipat)))
+if log then output:log() end
+ite_L = loss:loss(tokens.matrix(output:rewrap(1,256)),
+		  tokens.matrix(matrix.col_major(1,256,val_input:getPattern(ipat))))
 print(ite_L)
 
 output,L,chain = ann.autoencoders.sgd_sampling{

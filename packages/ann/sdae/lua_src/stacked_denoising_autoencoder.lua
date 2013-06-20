@@ -823,7 +823,7 @@ april_set_doc("ann.autoencoders.iterative_sampling",
 		  ["noise"] = {"An ANN component for noise generation (not a trainer"},
 		  ["mask"]   = {"An array with the input positions which",
 				"will be keep untouched [optional]",},
-		  ["input"] = {"A table with the input values."},
+		  ["input"] = {"A col-major matrix with the input values."},
 		  ["max"] = "Max number of iterations",
 		  ["stop"] = "Stop when loss difference between iterations is lower than given value",
 		  ["verbose"] = "Verbosity true or false [optional].",
@@ -842,36 +842,31 @@ function ann.autoencoders.iterative_sampling(t)
       model      = { mandatory = true,  isa_match  = ann.components.base },
       noise      = { mandatory = true,  isa_match  = ann.components.base },
       mask       = { mandatory = false, type_match = "table", default = {}, },
-      input      = { mandatory = true,  type_match = "table"  },
       max        = { mandatory = true,  type_match = "number" },
       stop       = { mandatory = true,  type_match = "number" },
       verbose    = { mandatory = false, type_match = "boolean", default=false },
       log        = { mandatory = false, type_match = "boolean", default=false },
+      input      = { mandatory = true,  isa_match  = matrix  },
       loss       = { mandatory = true,  isa_match  = ann.loss.__base__ },
     }, t)
   assert(params.model:get_input_size() == params.model:get_output_size(),
 	 "Input and output sizes must be equal!!! (it is an auto-encoder)")
   local L       = 11111111111111111
   local last_L  = 11111111111111111
-  local trainer = trainable.supervised_trainer(params.model)
-  local input   = table.deep_copy(params.input)
+  local input_rewrapped = params.input:rewrap(1, params.input:size())
+  local input   = input_rewrapped:clone()
   local output  = input
   local chain   = {}
-  trainer:build()
   for i=1,params.max do
-    output = trainer:calculate(input)
+    output = params.model:forward(tokens.matrix(input))
     -- restore masked positions
     -- for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
     -- compute the loss of current iteration
     params.loss:reset()
-    if params.log then
-      L = params.loss:loss(tokens.memblock(table.imap(output, math.log)),
-			   params.model:get_input())
-    else
-      L = params.loss:loss(tokens.memblock(output), params.model:get_input())
-    end
+    L = params.loss:loss(output, params.model:get_input())
+    if params.log then output:get_matrix():exp() end
     -- insert current output to the chain
-    table.insert(chain, output)
+    table.insert(chain, output:get_matrix():rewrap(unpack(params.input:dim())))
     -- improvement measure
     local imp = math.abs(math.abs(last_L - L)/last_L)
     if params.verbose then printf("%6d %6g :: %6g\n", i, L, imp) end
@@ -880,11 +875,14 @@ function ann.autoencoders.iterative_sampling(t)
     last_L = L
     -- sample from noise distribution
     params.noise:reset()
-    input = params.noise:forward(tokens.memblock(output)):convert_to_memblock():to_table()
+    local input_token = params.noise:forward(output)
+    input = input_token:get_matrix()
     -- restore masked positions
-    for _,pos in ipairs(params.mask) do input[pos] = params.input[pos] end
+    for _,pos in ipairs(params.mask) do
+      input:set(1,pos,input_rewrapped:get(1,pos))
+    end
   end
-  return output,L,chain
+  return output:get_matrix():rewrap(unpack(params.input:dim())),L,chain
 end
 
 ----------------------------------------------------------------------------
@@ -904,7 +902,7 @@ april_set_doc("ann.autoencoders.sgd_sampling",
 		  ["noise"] = {"An ANN component for noise generation (not a trainer"},
 		  ["mask"]   = {"An array with the input positions which",
 				"will be keep untouched [optional]",},
-		  ["input"] = {"A table with the input values."},
+		  ["input"] = {"A col-major matrix with the input values."},
 		  ["max"] = "Max number of iterations",
 		  ["stop"] = "Stop when loss difference between iterations is lower than given value",
 		  ["verbose"] = "Verbosity true or false [optional].",

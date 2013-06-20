@@ -408,6 +408,28 @@ function april_print_script_header(arg,file)
   fprintf(file,"# CMD: \t %s %s\n", arg[0], table.concat(arg, " "))
 end
 
+function map(func, iterator_func, ...)
+  if not func then func = function(v) return v end end
+  local t,key,value = {}
+  for key,value in iterator_func(unpack(arg)) do
+    if not value then key,value = #t+1,key end
+    local r = func(value)
+    if r then t[key] = r end
+  end
+  return t
+end
+
+function map2(func, iterator_func, ...)
+  if not func then func = function(k,v) return v end end
+  local t,key,value = {}
+  for key,value in iterator_func(unpack(arg)) do
+    if not value then key,value = #t+1,key end
+    local r = func(key,value)
+    if r then t[key] = r end
+  end
+  return t
+end
+
 -- This function prepares a safe environment for call user functions
 function safe_call(f, env, ...)
   env = env or {}
@@ -462,27 +484,12 @@ function fprintf(file,...)
 end
 
 function range(...)
-  local inf,step,sup
-  if (arg.n == 1) then
-    inf = 1
-    step = 1
-    sup = arg[1]
-  else
-    if (arg.n == 2) then
-      inf = arg[1]
-      step = 1
-      sup = arg[2]
-    else
-      inf = arg[1]
-      sup = arg[2]
-      step = arg[3]
-    end
+  local inf,sup,step = arg[1],arg[2],arg[3] or 1
+  local i = inf - step
+  return function()
+    i = i + step
+    if i <= sup then return i end
   end
-  local t = {}
-  for i = inf,sup,step do
-    table.insert(t,i)
-  end
-  return t
 end
 
 function check_mandatory_table_fields(fields, t)
@@ -741,31 +748,19 @@ function table.search_key_from_value(t,value)
 end
 
 function table.imap(t,f)
-  local n = {}
-  for i,j in ipairs(t) do n[i] = f(j) end
-  return n
+  return map(f, ipairs, t)
 end
 
 function table.map(t,f)
-  local n = {}
-  for i,j in pairs(t) do n[i] = f(j) end
-  return n
+  return map(f, pairs, t)
 end
 
 function table.imap2(t,f)
-  local n = {}
-  for i,j in ipairs(t) do
-    n[i] = f(i,j)
-  end
-  return n
+  return map2(f, ipairs, f)
 end
 
 function table.map2(t,f)
-  local n = {}
-  for i,j in pairs(t) do
-    n[i] = f(i,j)
-  end
-  return n
+  return map2(f, pairs, f)
 end
 
 function table.ifilter(t,f)
@@ -912,6 +907,18 @@ function table.min(t)
   return min,index
 end
 
+-- devuelve el valor maximo de una tabla
+function table.argmax(t)
+  local max,index = table.max(t)
+  return index
+end
+
+-- devuelve el valor minimo de una tabla
+function table.argmin(t)
+  local max,index = table.min(t)
+  return index
+end
+
 ---------------------------------------------------------------
 --------------------------- IO UTILS --------------------------
 ---------------------------------------------------------------
@@ -1001,3 +1008,59 @@ april_set_doc("april_set_doc", {
 				  "The description string could be a table,",
 				  "which will be contatenated with ' '.", },
 		}, })
+
+april_set_doc("map",
+	      {
+		class = "function",
+		summary = "An implementation of python map function",
+		description = {
+		  "This function returns a table which is the result of",
+		  "apply a given function to all the elements of a set.",
+		  "The set of elements is traversed using iterator functions.",
+		  "The table contains as many elements as the set, and only",
+		  "keeps the first returned value of the function (or a table",
+		  "if the function returns a table).",
+		},
+		params = {
+		  { "A function to be applied to all elements values [optional].",
+		    "If not given, the identity function will be used. " },
+		  "An iterator function which returns the whole set of elements",
+		  "First argument to the iterator (normally the caller object) [optional]",
+		  "Second argument [optional]",
+		  "..."
+		},
+		outputs = {
+		  { "A table with the key,value pairs. Keys are",
+		    "the same as iterator function returns, but values",
+		    "are after application of given function",
+		  },
+		},
+	      })
+
+april_set_doc("map2",
+	      {
+		class = "function",
+		summary = "An implementation of python map function",
+		description = {
+		  "This function returns a table which is the result of",
+		  "apply a given function to all the elements of a set.",
+		  "The set of elements is traversed using iterator functions.",
+		  "The table contains as many elements as the set, and only",
+		  "keeps the first returned value of the function (or a table",
+		  "if the function returns a table).",
+		},
+		params = {
+		  { "A function to be applied to all element key,value pairs [optional].",
+		    "If not given, the identity function will be used. " },
+		  "An iterator function which returns the whole set of elements",
+		  "First argument to the iterator (normally the caller object) [optional]",
+		  "Second argument [optional]",
+		  "..."
+		},
+		outputs = {
+		  { "A table with the key,value pairs. Keys are",
+		    "the same as iterator function returns, but values",
+		    "are after application of given function",
+		  },
+		}
+	      })

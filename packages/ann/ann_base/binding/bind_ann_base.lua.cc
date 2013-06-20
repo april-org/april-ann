@@ -25,7 +25,7 @@
 #include "bind_tokens.h"
 #include "table_of_token_codes.h"
 
-bool rewrapToAtLeastDim2(Token *&tk) {
+static bool rewrapToAtLeastDim2(Token *&tk) {
   if (tk->getTokenCode() == table_of_token_codes::token_matrix) {
     TokenMatrixFloat *tk_mat = tk->convertTo<TokenMatrixFloat*>();
     MatrixFloat *m = tk_mat->getMatrix();
@@ -38,7 +38,7 @@ bool rewrapToAtLeastDim2(Token *&tk) {
   return false;
 }
 
-void unwrapToDim1(Token *&tk) {
+static void unwrapToDim1(Token *&tk) {
   if (tk->getTokenCode() == table_of_token_codes::token_matrix) {
     TokenMatrixFloat *tk_mat = tk->convertTo<TokenMatrixFloat*>();
     MatrixFloat *m = tk_mat->getMatrix();

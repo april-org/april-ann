@@ -125,6 +125,12 @@
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat size
+{
+  LUABIND_RETURN(int, obj->size());
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat rewrap
 {
   LUABIND_CHECK_ARGN(>=, 1);

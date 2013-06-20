@@ -549,14 +549,16 @@ april_set_doc("trainable.supervised_trainer.calculate", {
 		    "the computed output for the given input.",
 		  }, 
 		params = {
-		  "A table with one input pattern or a token (with one or more patterns)",
+		  "A table with one input pattern, a col-major matrix or a token (with one or more patterns)",
 		},
 		outputs = {
-		  "A table with the computed output",
+		  "A col-major matrix with the computed output",
 		} })
 
 function trainable.supervised_trainer:calculate(input)
-  if type(input) == "table" then input = tokens.matrix(matrix.col_major(input)) end
+  if type(input) == "table" then input = tokens.matrix(matrix.col_major(input))
+  elseif isa(input, matrix) then input = tokens.matrix(input)
+  end
   return self.ann_component:forward(input):get_matrix()
 end
 

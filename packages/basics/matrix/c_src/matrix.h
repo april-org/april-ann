@@ -68,6 +68,8 @@ protected:
   */
   /// Computes the position at data array given it coordinates
   int  computeRawPos(const int *coords) const;
+  /// Indicates if it is a contiguous matrix
+  bool getIsContiguous() const;
   /// Indicates if the matrix is a sub-matrix
   bool getIsSubMatrix() const;
   /// Returns the data pointer for read and write
@@ -246,13 +248,7 @@ public:
   bool getCudaFlag() const { return use_cuda; }
   bool isSubmatrix() const { return is_submatrix; }
   bool isSimple() const {
-    bool is_simple=(!is_submatrix)&&(offset==0)&&(major_order==CblasRowMajor);
-    int aux=1;
-    for(int i=numDim-1; i>=0 && is_simple; --i) {
-      is_simple=(stride[i]==aux);
-      aux=aux*matrixSize[i];
-    }
-    return is_simple;
+    return (getIsContiguous())&&(!is_submatrix)&&(offset==0)&&(major_order==CblasRowMajor);
   }
   /**********************/
   iterator begin() { return iterator(this); }
@@ -586,10 +582,16 @@ Matrix<T>::~Matrix() {
 
 template <typename T>
 Matrix<T> *Matrix<T>::rewrap(const int *new_dims, int len) {
-  if (is_submatrix)
-    ERROR_EXIT(128, "Impossible to re-wrap a sub-matrix, a clone is needed\n");
+  if (!getIsContiguous())
+    ERROR_EXIT(128, "Impossible to re-wrap non contiguous matrix, "
+	       "clone it first\n");
+  bool equal = true;
   int new_size = 1;
-  for (int i=0; i<len; ++i) new_size *= new_dims[i];
+  for (int i=0; i<len; ++i) {
+    if (i>=numDim || new_dims[i] != matrixSize[i]) equal=false;
+    new_size *= new_dims[i];
+  }
+  if (len==numDim && equal) return this;
   if (new_size != size())
     ERROR_EXIT2(128, "Incorrect size, expected %d, and found %d\n",
 		size(), new_size);
@@ -994,11 +996,29 @@ void Matrix<T>::copy(const Matrix<T> *other) {
     ERROR_EXIT(128, "Matrices with different dimension sizes\n");
 #endif
   use_cuda = other->use_cuda;
-  if (!is_submatrix && !other->is_submatrix)
+  // Contiguous memory blocks
+  if (getIsContiguous() && other->getIsContiguous())
     doScopy(total_size,
-	    other->data, 0, 1,
-	    data, 0, 1,
+	    other->data, other->offset, 1,
+	    data, offset, 1,
 	    use_cuda);
+  // Two dimmension matrices
+  else if (numDim == 2) {
+    int larger_dim = 0, shorter_dim = 1;
+    if (matrixSize[larger_dim] < matrixSize[shorter_dim])
+      april_utils::swap(larger_dim, shorter_dim);
+    int this_pos  = offset;
+    int other_pos = other->offset;
+    for (int i=0; i<matrixSize[shorter_dim]; ++i) {
+      doScopy(matrixSize[larger_dim],
+	      other->data, other_pos, other->stride[larger_dim],
+	      data, this_pos, stride[larger_dim],
+	      use_cuda);
+      this_pos  += stride[shorter_dim];
+      other_pos += other->stride[shorter_dim];
+    }
+  }
+  // General case
   else {
     for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
     if (major_order == CblasRowMajor) {
@@ -1035,11 +1055,28 @@ void Matrix<T>::axpy(T alpha, const Matrix<T> *other) {
   if (major_order != other->major_order)
     ERROR_EXIT(128, "Matrices with different major orders");
 #endif
-  if (!is_submatrix && !other->is_submatrix)
+  if (getIsContiguous() && other->getIsContiguous())
     doSaxpy(total_size,
-	    alpha, other->data, 0, 1,
-	    data, 0, 1,
+	    alpha, other->data, other->offset, 1,
+	    data, offset, 1,
 	    use_cuda);
+  // Two dimmension matrices
+  else if (numDim == 2) {
+    int larger_dim = 0, shorter_dim = 1;
+    if (matrixSize[larger_dim] < matrixSize[shorter_dim])
+      april_utils::swap(larger_dim, shorter_dim);
+    int this_pos  = offset;
+    int other_pos = other->offset;
+    for (int i=0; i<matrixSize[shorter_dim]; ++i) {
+      doSaxpy(total_size,
+	      alpha, other->data, other->offset, other->stride[larger_dim],
+	      data, offset, stride[larger_dim],
+	      use_cuda);
+      this_pos  += stride[shorter_dim];
+      other_pos += other->stride[shorter_dim];
+    }
+  }
+  // General case
   else {
     for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
     if (major_order == CblasRowMajor) {
@@ -1190,7 +1227,7 @@ T Matrix<T>::dot(const Matrix<T> *other) const {
 
 template <typename T>
 void Matrix<T>::scal(T value) {
-  if (!is_submatrix) doSscal(total_size, value, data, 0, 1, use_cuda);
+  if (getIsContiguous()) doSscal(total_size, value, data, offset, 1, use_cuda);
   else {
     for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
     if (major_order == CblasRowMajor) {
@@ -1217,7 +1254,7 @@ void Matrix<T>::scal(T value) {
 template <typename T>
 T Matrix<T>::norm2() const {
   T v;
-  if (!is_submatrix) v=doSnrm2(total_size, data, 0, 1, use_cuda);
+  if (getIsContiguous()) v=doSnrm2(total_size, data, offset, 1, use_cuda);
   else {
     v = 0.0f;
     for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
@@ -1349,6 +1386,30 @@ int Matrix<T>::computeRawPos(const int *coords) const {
 }
 
 template <typename T>
+bool Matrix<T>::getIsContiguous() const {
+  if (major_order == CblasRowMajor) {
+    int aux = 1;
+    for (int i=numDim-1; i>=0; --i) {
+      if(matrixSize[i] != 1) {
+	if(stride[i] != aux) return false;
+	else aux *= matrixSize[i];
+      }
+    }
+  }
+  else {
+    int aux = 1;
+    for (int i=0; i<numDim; ++i) {
+      if(matrixSize[i] != 1) {
+	if(stride[i] != aux) return false;
+	else aux *= matrixSize[i];
+      }
+    }
+  }
+  return true;
+}
+
+
+template <typename T>
 bool Matrix<T>::getIsSubMatrix() const {
   return is_submatrix;
 }
@@ -1426,7 +1487,7 @@ bool Matrix<T>::iterator::operator!=(const Matrix<T>::iterator &other) const {
 
 template <typename T>
 typename Matrix<T>::iterator &Matrix<T>::iterator::operator++() {
-  if (m->getIsSubMatrix() || m->getMajorOrder()==CblasColMajor) {
+  if (!m->getIsContiguous() || m->getMajorOrder()==CblasColMajor) {
     const int *dims    = m->getDimPtr();
     // const int *strides = m->getStridePtr();
     if (!Matrix<T>::nextCoordVectorRowOrder(coords, dims, m->getNumDim()))
@@ -1553,7 +1614,7 @@ bool Matrix<T>::col_major_iterator::operator!=(const Matrix<T>::iterator &other)
 
 template <typename T>
 typename Matrix<T>::col_major_iterator &Matrix<T>::col_major_iterator::operator++() {
-  if (m->getIsSubMatrix() || m->getMajorOrder()==CblasRowMajor) {
+  if (!m->getIsContiguous() || m->getMajorOrder()==CblasRowMajor) {
     const int *dims    = m->getDimPtr();
     // const int *strides = m->getStridePtr();
     if (!Matrix<T>::nextCoordVectorColOrder(coords, dims, m->getNumDim()))
@@ -1679,7 +1740,7 @@ bool Matrix<T>::const_iterator::operator!=(const Matrix<T>::iterator &other) con
 
 template <typename T>
 typename Matrix<T>::const_iterator &Matrix<T>::const_iterator::operator++() {
-  if (m->getIsSubMatrix() || m->getMajorOrder()==CblasColMajor) {
+  if (!m->getIsContiguous() || m->getMajorOrder()==CblasColMajor) {
     const int *dims = m->getDimPtr();
     if (!Matrix<T>::nextCoordVectorRowOrder(coords, dims, m->getNumDim()))
       raw_pos = m->getLastRawPos()+1;
@@ -1833,7 +1894,7 @@ bool Matrix<T>::const_col_major_iterator::operator!=(const Matrix<T>::const_iter
 
 template <typename T>
 typename Matrix<T>::const_col_major_iterator &Matrix<T>::const_col_major_iterator::operator++() {
-  if (m->getIsSubMatrix() || m->getMajorOrder()==CblasRowMajor) {
+  if (!m->getIsContiguous() || m->getMajorOrder()==CblasRowMajor) {
     const int *dims    = m->getDimPtr();
     // const int *strides = m->getStridePtr();
     if (!Matrix<T>::nextCoordVectorColOrder(coords, dims, m->getNumDim()))
