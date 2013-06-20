@@ -365,6 +365,8 @@ april_set_doc("ann.connections.matrix",
 		  {
 		    "The method returns the weight matrices pointers,",
 		    "so any change will affect the component.",
+		    "BE CAREFUL, if you modify the weights matrix,",
+		    "made sure that the previous weights matrix is coherent.",
 		  },
 		outputs = {
 		  "A matrix with the weights",

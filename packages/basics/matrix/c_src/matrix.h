@@ -797,8 +797,17 @@ void Matrix<T>::clamp(T lower, T upper) {
 template <typename T>
 bool Matrix<T>::sameDim(const Matrix<T> *other) const {
   if (numDim != other->numDim) return false;
-  for (int i=0; i<numDim; ++i)
-    if (matrixSize[i] != other->matrixSize[i]) return false;
+  switch(numDim) {
+  default:
+    for (int i=0; i<numDim; ++i)
+      if (matrixSize[i] != other->matrixSize[i]) return false;
+    break;
+  case 2:
+    if (matrixSize[1] != other->matrixSize[1]) return false;
+  case 1:
+    if (matrixSize[0] != other->matrixSize[0]) return false;
+    break;
+  }
   return true;
 }
 
@@ -986,7 +995,6 @@ void Matrix<T>::tanh() {
 
 template <typename T>
 void Matrix<T>::copy(const Matrix<T> *other) {
-#ifndef NDEBUG
   if (size() != other->size())
     ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d\n",
 		size(), other->size());
@@ -994,7 +1002,6 @@ void Matrix<T>::copy(const Matrix<T> *other) {
     ERROR_EXIT(128, "Matrices with different major orders\n");
   if (! sameDim(other) )
     ERROR_EXIT(128, "Matrices with different dimension sizes\n");
-#endif
   use_cuda = other->use_cuda;
   // Contiguous memory blocks
   if (getIsContiguous() && other->getIsContiguous())
@@ -1048,13 +1055,11 @@ void Matrix<T>::copy(const Matrix<T> *other) {
 
 template <typename T>
 void Matrix<T>::axpy(T alpha, const Matrix<T> *other) {
-#ifndef NDEBUG
   if (size() != other->size())
     ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d",
 		size(), other->size());
   if (major_order != other->major_order)
     ERROR_EXIT(128, "Matrices with different major orders");
-#endif
   if (getIsContiguous() && other->getIsContiguous())
     doSaxpy(total_size,
 	    alpha, other->data, other->offset, 1,
@@ -1111,14 +1116,11 @@ void Matrix<T>::gemm(CBLAS_TRANSPOSE trans_A,
 		     const Matrix<T> *otherA,
 		     const Matrix<T> *otherB,
 		     T beta) {
-#ifndef NDEBUG
   if (numDim != 2 || otherA->numDim != 2 || otherB->numDim != 2)
     ERROR_EXIT(128,"Incorrect number of dimensions, only allowed for numDim=2");
-#endif
   int row_idx_A = 0, col_idx_A = 1, row_idx_B = 0, col_idx_B = 1;
   if (trans_A == CblasTrans) april_utils::swap(row_idx_A, col_idx_A);
   if (trans_B == CblasTrans) april_utils::swap(row_idx_B, col_idx_B);
-#ifndef NDEBUG
   if (matrixSize[0] != otherA->matrixSize[row_idx_A] ||
       matrixSize[1] != otherB->matrixSize[col_idx_B] ||
       otherA->matrixSize[col_idx_A] != otherB->matrixSize[row_idx_B])
@@ -1129,7 +1131,6 @@ void Matrix<T>::gemm(CBLAS_TRANSPOSE trans_A,
   if (major_order != otherA->major_order ||
       otherA->major_order != otherB->major_order)
     ERROR_EXIT(128, "Matrices with different major orders");
-#endif
   
   int M=matrixSize[0], N=matrixSize[1], K=otherA->matrixSize[col_idx_A];
   int lda=(major_order==CblasRowMajor)?otherA->stride[0]:otherA->stride[1];
@@ -1150,7 +1151,6 @@ void Matrix<T>::gemv(CBLAS_TRANSPOSE trans_A,
 		     const Matrix<T> *otherA,
 		     const Matrix<T> *otherX,
 		     T beta) {
-#ifndef NDEBUG
   if (!isVector() || !otherX->isVector() || otherA->numDim != 2)
     ERROR_EXIT(128,"Incorrect number of dimensions\n");
   int row_idx_A = 0, col_idx_A = 1;
@@ -1164,7 +1164,6 @@ void Matrix<T>::gemv(CBLAS_TRANSPOSE trans_A,
   if (major_order != otherA->major_order ||
       otherA->major_order != otherX->major_order)
     ERROR_EXIT(128, "Matrices with different major orders");
-#endif
   
   int M=otherA->matrixSize[0], N=otherA->matrixSize[1];
   int lda=( major_order==CblasRowMajor)?otherA->stride[0]:otherA->stride[1];
@@ -1183,7 +1182,6 @@ template <typename T>
 void Matrix<T>::ger(T alpha,
 		    const Matrix<T> *otherX,
 		    const Matrix<T> *otherY) {
-#ifndef NDEBUG
   if (!otherX->isVector() || !otherY->isVector() || numDim!=2)
     ERROR_EXIT(128,"Incorrect number of dimensions");
   if (matrixSize[0] != otherX->getVectorSize() ||
@@ -1194,7 +1192,6 @@ void Matrix<T>::ger(T alpha,
   if (major_order != otherX->major_order ||
       otherX->major_order != otherY->major_order)
     ERROR_EXIT(128, "Matrices with different major orders");
-#endif
   int M=matrixSize[0], N=matrixSize[1];
   int lda=( major_order==CblasRowMajor)?stride[0]:stride[1];
   int ldx=otherX->getVectorStride();
@@ -1209,7 +1206,6 @@ void Matrix<T>::ger(T alpha,
 
 template <typename T>
 T Matrix<T>::dot(const Matrix<T> *other) const {
-#ifndef NDEBUG
   if (!this->isVector() || !other->isVector())
     ERROR_EXIT(128,"Incorrect number of dimensions");
   if (this->getVectorSize() != other->getVectorSize())
@@ -1217,7 +1213,6 @@ T Matrix<T>::dot(const Matrix<T> *other) const {
 		this->getVectorSize(), other->getVectorSize());
   if (major_order != other->major_order)
     ERROR_EXIT(128, "Matrices with different major orders");
-#endif
   T ret = doSdot(getVectorSize(),
 		 data, offset, getVectorStride(),
 		 other->data, other->offset, other->getVectorStride(),
@@ -1227,7 +1222,22 @@ T Matrix<T>::dot(const Matrix<T> *other) const {
 
 template <typename T>
 void Matrix<T>::scal(T value) {
+  // Contiguous memory block
   if (getIsContiguous()) doSscal(total_size, value, data, offset, 1, use_cuda);
+  // Two dimmension matrix
+  else if (numDim == 2) {
+    int larger_dim = 0, shorter_dim = 1;
+    if (matrixSize[larger_dim] < matrixSize[shorter_dim])
+      april_utils::swap(larger_dim, shorter_dim);
+    int pos  = offset;
+    for (int i=0; i<matrixSize[shorter_dim]; ++i) {
+      doSscal(matrixSize[larger_dim], value,
+	      data, pos, stride[larger_dim],
+	      use_cuda);
+      pos += stride[shorter_dim];
+    }
+  }
+  // General case
   else {
     for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
     if (major_order == CblasRowMajor) {
@@ -1242,8 +1252,8 @@ void Matrix<T>::scal(T value) {
     else {
       do {
 	int pos  = computeRawPos(aux_coords);
-	doSscal(matrixSize[numDim-1], value,
-		data, pos, stride[numDim-1],
+	doSscal(matrixSize[0], value,
+		data, pos, stride[0],
 		use_cuda);
 	aux_coords[0] = matrixSize[0]-1;
       } while(nextCoordVectorColOrder(aux_coords, matrixSize, numDim));
@@ -1254,7 +1264,25 @@ void Matrix<T>::scal(T value) {
 template <typename T>
 T Matrix<T>::norm2() const {
   T v;
+  // Contiguous memory block
   if (getIsContiguous()) v=doSnrm2(total_size, data, offset, 1, use_cuda);
+  // Two dimmension matrix
+  else if (numDim == 2) {
+    v = 0.0f;
+    int larger_dim = 0, shorter_dim = 1;
+    if (matrixSize[larger_dim] < matrixSize[shorter_dim])
+      april_utils::swap(larger_dim, shorter_dim);
+    int pos  = offset;
+    for (int i=0; i<matrixSize[shorter_dim]; ++i) {
+      T aux = doSnrm2(matrixSize[larger_dim],
+		      data, pos, stride[larger_dim],
+		      use_cuda);
+      v   += aux*aux;
+      pos += stride[shorter_dim];
+    }
+    v = T(sqrtf(v));
+  }
+  // General case
   else {
     v = 0.0f;
     for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
