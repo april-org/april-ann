@@ -159,8 +159,8 @@ namespace ANN {
     assert(fabs(dinf) > weightnearzero);
     assert(fabs(dsup) > weightnearzero);
     double range  = dsup - dinf;
-    MatrixFloat::col_major_iterator w_it(weights->begin());
-    MatrixFloat::col_major_iterator prev_w_it(prev_weights->begin());
+    MatrixFloat::iterator w_it(weights->begin());
+    MatrixFloat::iterator prev_w_it(prev_weights->begin());
     while(w_it != weights->end()) {
       rnd_weight(rnd, *w_it, dinf, range, weightnearzero);
       *prev_w_it = *w_it;
@@ -179,9 +179,9 @@ namespace ANN {
     assert(fabs(dinf) > weightnearzero);
     assert(fabs(dsup) > weightnearzero);
     double range  = dsup - dinf;
-    MatrixFloat::col_major_iterator w_it(weights->iteratorAt(0,col));
-    MatrixFloat::col_major_iterator prev_w_it(prev_weights->iteratorAt(0,col));
-    MatrixFloat::col_major_iterator end(weights->iteratorAt(0,col+1));
+    MatrixFloat::iterator w_it(weights->iteratorAt(col,0));
+    MatrixFloat::iterator prev_w_it(prev_weights->iteratorAt(col,0));
+    MatrixFloat::iterator end(weights->iteratorAt(col+1,0));
     while(w_it != end) {
       rnd_weight(rnd, *w_it, dinf, range, weightnearzero);
       *prev_w_it = *w_it;

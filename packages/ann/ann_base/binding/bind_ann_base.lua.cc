@@ -39,11 +39,13 @@ bool rewrapToAtLeastDim2(Token *&tk) {
 }
 
 void unwrapToDim1(Token *&tk) {
-  TokenMatrixFloat *tk_mat = tk->convertTo<TokenMatrixFloat*>();
-  MatrixFloat *m = tk_mat->getMatrix();
-  int dim = m->getDimSize(1);
-  MatrixFloat *new_m = m->rewrap(&dim, 1);
-  tk = new TokenMatrixFloat(new_m);
+  if (tk->getTokenCode() == table_of_token_codes::token_matrix) {
+    TokenMatrixFloat *tk_mat = tk->convertTo<TokenMatrixFloat*>();
+    MatrixFloat *m = tk_mat->getMatrix();
+    int dim = m->getDimSize(1);
+    MatrixFloat *new_m = m->rewrap(&dim, 1);
+    tk = new TokenMatrixFloat(new_m);
+  }
 }
 
 template<typename Value, typename PushFunction>

@@ -329,10 +329,10 @@ april_set_doc("ann.connections.load",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.connections.weights",
+april_set_doc("ann.connections.copy_to",
 	      {
 		class="method",
-		summary="Returns the weights as a matrix",
+		summary="Returns the weights as a CLONED matrix",
 		description=
 		  {
 		    "The method copies the weights to the given matrixes or",
@@ -352,6 +352,23 @@ april_set_doc("ann.connections.weights",
 		  "A matrix with the weights",
 		  "A matrix with the weights of previous iteration (for momentum)",
 		  "A number: first_pos + column_size*OUTPUT",
+		}
+	      })
+
+-------------------------------------------------------------------
+
+april_set_doc("ann.connections.matrix",
+	      {
+		class="method",
+		summary="Returns the weight matrices pointers",
+		description=
+		  {
+		    "The method returns the weight matrices pointers,",
+		    "so any change will affect the component.",
+		  },
+		outputs = {
+		  "A matrix with the weights",
+		  "A matrix with the weights of previous iteration (for momentum)",
 		}
 	      })
 
@@ -881,6 +898,7 @@ april_set_doc("ann.components.bias.__call",
 		  ["weights"] = {
 		    "A string with the weights name, two components with",
 		    "the same weights name share the weights matrix [optional]", },
+		  ["size"]   = "A number with the size [optional]",
 		},
 		outputs= { "An instance of ann.components.bias" }
 	      })
@@ -1060,7 +1078,7 @@ april_set_doc("ann.components.gaussian_noise", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.copy.__call",
+april_set_doc("ann.components.gaussian_noise.__call",
 	      {
 		class="method",
 		summary="Constructor of the component",
