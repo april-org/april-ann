@@ -206,7 +206,7 @@ namespace ANN {
 		  data->size(), min_size);
     if (!old_data) old_data = data;
     if (!data->isSimple() || !old_data->isSimple())
-      ERROR_EXIT(128, "Matrices need to be simple (not sub-matrix "
+      ERROR_EXIT(128, "Matrices need to be simple (contiguous "
 		 "and in row-major)\n");
     if (data->getNumDim() != old_data->getNumDim())
       ERROR_EXIT(128, "data and old_data has different number of dimensions\n");
@@ -241,7 +241,7 @@ namespace ANN {
       ERROR_EXIT2(24, "Incorrect matrix size, was %d, expected >= %d\n",
 		  data->size(), min_size);
     if (!data->isSimple() || !old_data->isSimple())
-      ERROR_EXIT(128, "Matrices need to be simple (not sub-matrix "
+      ERROR_EXIT(128, "Matrices need to be simple (contiguous "
 		 "and in row-major)\n");
     if (data->getNumDim() != old_data->getNumDim())
       ERROR_EXIT(128, "data and old_data has different number of dimensions\n");

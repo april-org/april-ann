@@ -216,6 +216,7 @@ april_set_doc("matrix.savefile", {
 		  "to save the matrix as string before parsing it.",
 		},
 		params = {
+		  "A matrix object.",
 		  "A filename path.",
 		  { "An string with the format: ascii or binary [optional].",
 		    "By default is ascii." },
