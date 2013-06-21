@@ -82,9 +82,8 @@ namespace ANN {
 #ifdef USE_CUDA
       input_mat->setUseCuda(use_cuda);
 #endif
-      assert(input_mat->getNumDim() == 2);
+      ASSERT_MATRIX(input_mat);
       assert(input_mat->getDimSize(1) == static_cast<int>(input_size));
-      assert(input_mat->getMajorOrder() == CblasColMajor);
       unsigned int bunch_size = input_mat->getDimSize(0);
       // new output to fit the bunch
       MatrixFloat *output_mat;
@@ -195,9 +194,8 @@ namespace ANN {
     if (! error_input_mat->sameDim(output->getMatrix()) )
       ERROR_EXIT(129, "Different bunches found at doForward and doBackprop\n");
     // new error output to fit the bunch
-    assert(error_input_mat->getNumDim() == 2);
+    ASSERT_MATRIX(error_input_mat);
     assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
-    assert(error_input_mat->getMajorOrder() == CblasColMajor);
     unsigned int bunch_size = error_input_mat->getDimSize(0);
     // new output to fit the bunch
     MatrixFloat *error_output_mat;
@@ -231,9 +229,8 @@ namespace ANN {
 			       Token *input_token,
 			       MatrixFloat *error_input_mat,
 			       float beta) {
-    assert(error_input_mat->getNumDim() == 2);
+    ASSERT_MATRIX(error_input_mat);
     assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
-    assert(error_input_mat->getMajorOrder() == CblasColMajor);
     unsigned int bunch_size = error_input_mat->getDimSize(0);
     // backprop learning rule:
     // PREV_W = alpha * ERRORS + PREV_W

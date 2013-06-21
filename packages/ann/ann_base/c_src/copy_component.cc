@@ -81,9 +81,7 @@ namespace ANN {
 #ifdef USE_CUDA
     current_mat->setUseCuda(use_cuda);
 #endif
-    assert(current_mat->getNumDim() == 2);
-    assert(current_mat->getDimSize(1) == static_cast<int>(input_size));
-    assert(current_mat->getMajorOrder() == CblasColMajor);
+    ASSERT_MATRIX(current_mat);
     unsigned int bunch_size = current_mat->getDimSize(0);
     
     // output token
@@ -108,9 +106,7 @@ namespace ANN {
 #ifdef USE_CUDA
       current_mat->setUseCuda(use_cuda);
 #endif
-      assert(current_mat->getNumDim() == 2);
-      assert(current_mat->getDimSize(1) == static_cast<int>(input_size));
-      assert(current_mat->getMajorOrder() == CblasColMajor);
+      ASSERT_MATRIX(current_mat);
       error_output_mat->axpy(1.0f, current_mat);
     }
     return error_output;

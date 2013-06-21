@@ -65,25 +65,27 @@ namespace ANN {
       TokenMatrixFloat *input_mat_token;
       input_mat_token = input_token->convertTo<TokenMatrixFloat*>();
       MatrixFloat *input_mat = input_mat_token->getMatrix();
-      const int last_dim = input_mat->getNumDim()-1;
-      unsigned int mat_pat_size = static_cast<unsigned int>(input_mat->getDimSize(last_dim));
+      ASSERT_MATRIX(input_mat);
+#ifdef USE_CUDA
+      input_mat->setUseCuda(use_cuda);
+#endif
+      unsigned int mat_pat_size = static_cast<unsigned int>(input_mat->getDimSize(1));
       assert(mat_pat_size==input_size && "Incorrect token matrix size");
-      int *sizes  = new int[last_dim+1], *coords = new int[last_dim+1];
-      for (int i=0; i<=last_dim; ++i) {
-	sizes[i]  = input_mat->getDimSize(i);
-	coords[i] = 0;
-      }
+      int sizes[2]  = { input_mat->getDimSize(0),
+			input_mat->getDimSize(1) };
+      int coords[2] = { 0, 0 };
       for (unsigned int i=0; i<result_vector_token->size(); ++i) {
 	const unsigned int sz = components[i]->getInputSize();
 	// submatrix at coords with sizes, deep copy of original matrix
-	sizes[last_dim] = sz;
+	sizes[1] = sz;
 	MatrixFloat *output_mat = new MatrixFloat(input_mat,coords,sizes,true);
-	coords[last_dim] += sz;
+#ifdef USE_CUDA
+	output_mat->setUseCuda(use_cuda);
+#endif
+	coords[1] += sz;
 	TokenMatrixFloat *component_mat_token = new TokenMatrixFloat(output_mat);
 	AssignRef((*result_vector_token)[i], component_mat_token);
       }
-      delete[] sizes;
-      delete[] coords;
       break;
     }
     case table_of_token_codes::vector_Tokens: {
@@ -111,25 +113,23 @@ namespace ANN {
     //
     TokenMatrixFloat *mat_token = token->convertTo<TokenMatrixFloat*>();
     MatrixFloat *mat = mat_token->getMatrix();
-    const int last_dim = mat->getNumDim()-1;
-    unsigned int mat_pat_size = static_cast<unsigned int>(mat->getDimSize(last_dim));
+    ASSERT_MATRIX(mat);
+#ifndef USE_CUDA
+    mat->setUseCuda(use_cuda);
+#endif
+    unsigned int mat_pat_size = static_cast<unsigned int>(mat->getDimSize(1));
     assert(mat_pat_size==output_size && "Incorrect token matrix size");
-    int *sizes  = new int[last_dim+1], *coords = new int[last_dim+1];
-    for (int i=0; i<=last_dim; ++i) {
-      sizes[i]  = mat->getDimSize(i);
-      coords[i] = 0;
-    }
+    int sizes[2]  = { mat->getDimSize(0), 0 };
+    int coords[2] = { 0, 0 };
     for (unsigned int i=0; i<vector_token->size(); ++i) {
       const unsigned int sz = components[i]->getOutputSize();
       // submatrix at coords with sizes
-      sizes[last_dim] = sz;
+      sizes[1] = sz;
       MatrixFloat *component_mat = new MatrixFloat(mat, coords, sizes, true);
-      coords[last_dim] += sz;
+      coords[1] += sz;
       TokenMatrixFloat *component_mat_token = new TokenMatrixFloat(component_mat);
       AssignRef((*vector_token)[i], component_mat_token);
     }
-    delete[] sizes;
-    delete[] coords;
   }
   
   TokenMatrixFloat *JoinANNComponent::buildMatrixFloatToken(TokenBunchVector *token,
@@ -137,27 +137,25 @@ namespace ANN {
     MatrixFloat *full_mat, *aux_mat;
     if ((*token)[0]->getTokenCode() != table_of_token_codes::token_matrix)
       ERROR_EXIT1(128,"Incorrect token type at TokenBunchVector pos %d\n",0);
-    
-    int *coords = new int[token->size()];
-    int *sizes  = new int[token->size()];
     aux_mat  = (*token)[0]->convertTo<TokenMatrixFloat*>()->getMatrix();
-    const int last_dim = aux_mat->getNumDim() - 1;
-    for (int i=0; i<=last_dim; ++i) {
-      coords[i] = 0;
-      sizes[i]  = aux_mat->getDimSize(i);
-    }
-    if (is_output) sizes[last_dim] = output_size;
-    else sizes[last_dim] = input_size;
-    full_mat = new MatrixFloat(last_dim + 1, sizes, 0.0f, CblasColMajor);
-    
+    int sizes[2]  = { aux_mat->getDimSize(0),
+		      (is_output) ?
+		      static_cast<int>(output_size) :
+		      static_cast<int>(input_size) };
+    int coords[2] = { 0, 0 };
+    full_mat = new MatrixFloat(2, sizes, 0.0f, CblasColMajor);
+#ifdef USE_CUDA
+    full_mat->setUseCuda(use_cuda);
+#endif
     for (unsigned int i=0; i<token->size(); ++i) {
       if ((*token)[i]->getTokenCode() != table_of_token_codes::token_matrix)
 	ERROR_EXIT(128, "Incorrect token type\n");
       aux_mat = (*token)[i]->convertTo<TokenMatrixFloat*>()->getMatrix();
+      ASSERT_MATRIX(aux_mat);
       const unsigned int sz = ( (is_output) ?
 				components[i]->getOutputSize() :
 				components[i]->getInputSize() );
-      sizes[last_dim] = sz;
+      sizes[1] = sz;
       // Destination data sub-matrix (references original data matrix)
 
       // FIXME: This could be improved adding a rewrap method to matrix,
@@ -165,9 +163,8 @@ namespace ANN {
       MatrixFloat *submat = new MatrixFloat(full_mat, coords, sizes, false);
       submat->copy(aux_mat);
       delete submat;
+      coords[1] += sz;
     }
-    delete[] coords;
-    delete[] sizes;
     return new TokenMatrixFloat(full_mat);
   }
 

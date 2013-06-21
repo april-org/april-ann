@@ -88,8 +88,8 @@ function ver_resultado()
     digito  = otrorand:randInt(0,9)
     autor   = otrorand:randInt(0,19)
     index   = 1+autor*10+digito
-    resul   = trainer:calculate(val_input:getPattern(index))
-    for i=1,#resul do resul[i]=math.exp(resul[i]) end
+    resul   = trainer:calculate(val_input:getPattern(index)):rewrap(10)
+    resul:exp()
     desired = val_output:getPattern(index)
     inputpattern  = train_input:getPattern(index)
     verdigito(inputpattern)
@@ -98,11 +98,9 @@ function ver_resultado()
     printf("Target: ")
     for i = 1,10 do printf(" %.2f",desired[i]) end; printf("\n")
     printf("Output: ")
-    max = resul[1]
-    imax = 1
-    for i= 2,10 do if resul[i]>max then max = resul[i] imax = i end end
-    clasificado = imax-1
-    for i = 1,10 do printf(" %.2f",resul[i])   end; printf("\n")
+    max,imax = resul:max()
+    clasificado = imax
+    for i = 1,10 do printf(" %.2f",resul:get(i))   end; printf("\n")
     printf("Autor %2d Digito %d\n",autor,digito)
     printf("MLP clasifica   %d %s\n",clasificado,clasificado == digito and ":)" or ":'(")
     --    printf("\n\nLos valores de las neuronas de las capas ocultas:\n%s\n\n",

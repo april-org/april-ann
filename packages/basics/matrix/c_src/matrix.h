@@ -384,8 +384,8 @@ public:
   void scal(T value);
   
   T norm2() const;
-  T min() const;
-  T max() const;
+  T min(int &arg_min) const;
+  T max(int &arg_max) const;
   void minAndMax(T &min, T &max) const;
   
 private:
@@ -1073,9 +1073,9 @@ void Matrix<T>::axpy(T alpha, const Matrix<T> *other) {
     int this_pos  = offset;
     int other_pos = other->offset;
     for (int i=0; i<matrixSize[shorter_dim]; ++i) {
-      doSaxpy(total_size,
-	      alpha, other->data, other->offset, other->stride[larger_dim],
-	      data, offset, stride[larger_dim],
+      doSaxpy(matrixSize[larger_dim],
+	      alpha, other->data, other_pos, other->stride[larger_dim],
+	      data, this_pos, stride[larger_dim],
 	      use_cuda);
       this_pos  += stride[shorter_dim];
       other_pos += other->stride[shorter_dim];
@@ -1312,34 +1312,34 @@ T Matrix<T>::norm2() const {
 }
 
 template <typename T>
-T Matrix<T>::min() const {
+T Matrix<T>::min(int &arg_min) const {
   if (major_order == CblasRowMajor) {
     const_iterator it(begin());
-    T min = *it;
-    for (; it!=end(); ++it) if (*it < min) min = *it;
-    return min;
+    const_iterator result = april_utils::argmin(it, const_iterator(end()));
+    arg_min = result.getRawPos();
+    return *result;
   }
   else {
     const_col_major_iterator it(begin());
-    T min = *it;
-    for (; it!=end(); ++it) if (*it < min) min = *it;
-    return min;
+    const_col_major_iterator result = april_utils::argmin(it, const_col_major_iterator(end()));
+    arg_min = result.getRawPos();
+    return *result;
   }
 }
 
 template <typename T>
-T Matrix<T>::max() const {
+T Matrix<T>::max(int &arg_max) const {
   if (major_order == CblasRowMajor) {
     const_iterator it(begin());
-    T max = *it;
-    for (; it!=end(); ++it) if (*it > max) max = *it;
-    return max;
+    const_iterator result = april_utils::argmax(it, const_iterator(end()));
+    arg_max = result.getRawPos();
+    return *result;
   }
   else {
     const_col_major_iterator it(begin());
-    T max = *it;
-    for (; it!=end(); ++it) if (*it > max) max = *it;
-    return max;
+    const_col_major_iterator result = april_utils::argmax(it,const_col_major_iterator(end()));
+    arg_max = result.getRawPos();
+    return *result;
   }
 }
 
