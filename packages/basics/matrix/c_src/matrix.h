@@ -43,8 +43,6 @@ protected:
   int numDim;
   /// Size of each dimension
   int *stride;
-  /// Indication for sub-matrices
-  bool is_submatrix;
   /// Offset for sub-matrix
   int offset;
   /// Sub-matrix size of each dimension
@@ -70,8 +68,6 @@ protected:
   int  computeRawPos(const int *coords) const;
   /// Indicates if it is a contiguous matrix
   bool getIsContiguous() const;
-  /// Indicates if the matrix is a sub-matrix
-  bool getIsSubMatrix() const;
   /// Returns the data pointer for read and write
   T *getData() { return data->getPPALForReadAndWrite(); }
   /// Returns the data pointer for read
@@ -217,7 +213,8 @@ public:
   /// Full constructor given numDim, dim, default_value and major_order
   Matrix(int numDim, const int* dim, T default_value=T(),
 	 CBLAS_ORDER major_order = CblasRowMajor,
-	 GPUMirroredMemoryBlock<T> *data = 0);
+	 GPUMirroredMemoryBlock<T> *data = 0,
+	 int offset = 0);
   
   /// Constructor with T() values and CblasRowMajor order
   Matrix(int numDim, int d1, ...);
@@ -246,9 +243,8 @@ public:
   CBLAS_ORDER getMajorOrder() const { return major_order; }
   void setUseCuda(bool v) { use_cuda = v; }
   bool getCudaFlag() const { return use_cuda; }
-  bool isSubmatrix() const { return is_submatrix; }
   bool isSimple() const {
-    return (getIsContiguous())&&(!is_submatrix)&&(offset==0)&&(major_order==CblasRowMajor);
+    return (getIsContiguous())&&(major_order==CblasRowMajor);
   }
   /**********************/
   iterator begin() { return iterator(this); }
@@ -433,11 +429,11 @@ Matrix<T>::Matrix(int numDim,
 		  const int* dim,
 		  T default_value,
 		  CBLAS_ORDER major_order,
-		  GPUMirroredMemoryBlock<T> *data) : numDim(numDim),
-						     is_submatrix(false),
-						     offset(0),
-						     major_order(major_order),
-						     use_cuda(false){
+		  GPUMirroredMemoryBlock<T> *data,
+		  int offset) : numDim(numDim),
+				offset(offset),
+				major_order(major_order),
+				use_cuda(false){
   /*
     if (major_order == CblasColMajor && numDim > 2)
     ERROR_EXIT(128, "ColMajor order is only allowed when numDim<=2\n");
@@ -448,7 +444,7 @@ Matrix<T>::Matrix(int numDim,
   initialize(dim);
   if (data == 0) allocate_memory(total_size);
   else {
-    if (static_cast<int>(data->getSize()) != size())
+    if (static_cast<int>(data->getSize()) < offset + size())
       ERROR_EXIT2(128, "Data pointer size doesn't fit, expected %d, found %d\n",
 		  size(), data->getSize());
     this->data = data;
@@ -465,7 +461,6 @@ template <typename T>
 Matrix<T>::Matrix(Matrix<T> *other,
 		  const int* coords, const int *sizes,
 		  bool clone) : numDim(other->numDim),
-				is_submatrix(true),
 				offset(0),
 				major_order(other->major_order),
 				use_cuda(other->use_cuda) {
@@ -517,7 +512,6 @@ Matrix<T>::Matrix(Matrix<T> *other,
 /// Constructor with T() default value initialization
 template <typename T>
 Matrix<T>::Matrix(int numDim, int d1, ...) : numDim(numDim),
-					     is_submatrix(false),
 					     offset(0),
 					     major_order(CblasRowMajor) {
   int *dim   = new int[numDim];
@@ -546,7 +540,6 @@ Matrix<T>::Matrix(int numDim, int d1, ...) : numDim(numDim),
 /// Constructor for copy or clone other given matrix
 template <typename T>
 Matrix<T>::Matrix(Matrix<T> *other, bool clone) : numDim(other->numDim),
-						  is_submatrix(false),
 						  offset(0),
 						  major_order(other->major_order),
 						  use_cuda(other->use_cuda) {
@@ -562,7 +555,6 @@ Matrix<T>::Matrix(Matrix<T> *other, bool clone) : numDim(other->numDim),
   }
   else {
     offset       = other->offset;
-    is_submatrix = other->is_submatrix;
     data         = other->data;
     IncRef(data);
     for (int i=0; i<numDim; ++i) {
@@ -595,7 +587,7 @@ Matrix<T> *Matrix<T>::rewrap(const int *new_dims, int len) {
   if (new_size != size())
     ERROR_EXIT2(128, "Incorrect size, expected %d, and found %d\n",
 		size(), new_size);
-  Matrix<T> *obj = new Matrix<T>(len, new_dims, T(), major_order, data);
+  Matrix<T> *obj = new Matrix<T>(len, new_dims, T(), major_order, data, offset);
   return obj;
 }
 
@@ -1434,12 +1426,6 @@ bool Matrix<T>::getIsContiguous() const {
     }
   }
   return true;
-}
-
-
-template <typename T>
-bool Matrix<T>::getIsSubMatrix() const {
-  return is_submatrix;
 }
 
 /***** ITERATORS *****/

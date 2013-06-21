@@ -37,7 +37,7 @@ template <typename T>
 Image<T>::Image(Matrix<T> *mat) {
   if (!mat->isSimple())
     ERROR_EXIT(128, "Image only works with simple matrices "
-	       "(not sub-matrix, and in row-major\n");
+	       "(contiguous, and in row-major\n");
   // if (mat->numDim != 2) { ... } // <- TODO
   matrix = mat;
   IncRef(matrix); // garbage collection
@@ -52,7 +52,7 @@ Image<T>::Image(Matrix<T> *mat,
 		int offset_w, int offset_h) {
   if (!mat->isSimple())
     ERROR_EXIT(128, "Image only works with simple matrices "
-	       "(not sub-matrix, and in row-major\n");
+	       "(contiguous, and in row-major\n");
   matrix = mat;
   IncRef(matrix); // garbage collection
   offset = offset_w + offset_h*matrix_width();

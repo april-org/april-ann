@@ -39,7 +39,7 @@ using april_utils::clamp;
 template <typename T>
 MatrixDataSet<T>::MatrixDataSet(Matrix<T> *m){
   if (!m->isSimple())
-    ERROR_EXIT(128, "Matrix need to be simple (not sub-matrix "
+    ERROR_EXIT(128, "Matrix need to be simple (contiguous "
 	       "and in row-major)\n");
   // numdim debe ser siempre >0
   int d        = m->getNumDim();	
@@ -699,7 +699,7 @@ template <typename T>
 SparseDataset<T>::SparseDataset(Matrix<T> *m, int nump, int patsize) :
   matrix(m), numpatterns(nump), patternsize(patsize) {
   if (!m->isSimple())
-    ERROR_EXIT(128, "Matrix need to be simple (not sub-matrix "
+    ERROR_EXIT(128, "Matrix need to be simple (contiguous "
 	       "and in row-major)\n");
   IncRef(m);
   matrix_indexes = new int[nump];
