@@ -66,8 +66,6 @@ protected:
   */
   /// Computes the position at data array given it coordinates
   int  computeRawPos(const int *coords) const;
-  /// Indicates if it is a contiguous matrix
-  bool getIsContiguous() const;
   /// Returns the data pointer for read and write
   T *getData() { return data->getPPALForReadAndWrite(); }
   /// Returns the data pointer for read
@@ -246,6 +244,8 @@ public:
   bool isSimple() const {
     return (getIsContiguous())&&(major_order==CblasRowMajor);
   }
+  /// Indicates if it is a contiguous matrix
+  bool getIsContiguous() const;
   /**********************/
   iterator begin() { return iterator(this); }
   iterator iteratorAt(int c0) {

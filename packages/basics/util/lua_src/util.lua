@@ -32,11 +32,11 @@ function class(classname, parentclass)
 end
 
 -- Converts a Lua table in an instance of the given class. An optional
--- nonmutable boolean with true indicates if the resulting table field names are
--- static (is not possible to add new fields, but yes to modify)
-function class_instance(obj, class, nonmutable)
+-- nil-safe boolean with true indicates if the resulting table field names are
+-- nil safe (is not possible to get a field which doesn't exists)
+function class_instance(obj, class, nil_safe)
   setmetatable(obj, class)
-  if nonmutable then obj.__index = class end
+  if nil_safe then obj.__index = class end
   return obj
 end
 
@@ -959,8 +959,9 @@ april_set_doc("class_instance", {
 		params = {
 		  "The table object",
 		  "The class table",
-		  { "A boolean indicating if it is nonmutable [optional], by",
-		    "default it is false" },
+		  { "A boolean indicating if it is nil-safe [optional], by",
+		    "default it is false. If true, nil fields will throw",
+		    "error" },
 		},
 		outputs = {
 		  "The table instanced as object of the given class",

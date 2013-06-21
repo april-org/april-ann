@@ -52,7 +52,7 @@ function HMMTrainer.trainer:__call()
     
   }
 
-  class_instance(o, self, false)
+  class_instance(o, self, true)
 
   return o
 end
@@ -96,7 +96,7 @@ function HMMTrainer.trainer:model(m)
 
   -- Creamos un modelo lua con las transiciones renumeradas
   local res = {}
-  class_instance(res, HMMTrainer.model, false)
+  class_instance(res, HMMTrainer.model, true)
   res.name        = m.name
   res.initial     = state_numbers[m.initial]
   res.final       = state_numbers[m.final]
