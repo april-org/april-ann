@@ -7,7 +7,7 @@ function lexClass:__call(voc_id2word)
     cobj  = _internal_lexclass_(),
     units = {}
   }
-  obj = class_instance(obj, self, false)
+  obj = class_instance(obj, self, true)
   if voc_id2word then
     for _,word in ipairs(voc_id2word) do
       obj:addPair{

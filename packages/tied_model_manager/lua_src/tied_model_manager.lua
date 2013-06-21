@@ -9,7 +9,7 @@ function tied_model_manager:__call(tiedlist_file)
     name2id  = {},
     id2name  = {},
   }
-  class_instance(obj, self, false)
+  class_instance(obj, self, true)
   local id = 1
   for line in tiedlist_file:lines() do
     local tokens = string.tokenize(line)

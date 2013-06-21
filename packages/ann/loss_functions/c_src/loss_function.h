@@ -56,8 +56,8 @@ namespace ANN {
       assert(input_mat->getNumDim() == 2);
       assert(target_mat->getNumDim() == 2);
       assert(input_mat->sameDim(target_mat));
-      assert(!input_mat->isSubmatrix());
-      assert(!target_mat->isSubmatrix());
+      assert(input_mat->getIsContiguous());
+      assert(target_mat->getIsContiguous());
       assert(input_mat->getMajorOrder() == CblasColMajor);
       assert(target_mat->getMajorOrder() == CblasColMajor);
     }
