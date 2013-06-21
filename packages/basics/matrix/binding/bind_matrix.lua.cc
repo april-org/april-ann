@@ -762,6 +762,18 @@
   }
 //BIND_END
 
+//BIND_METHOD MatrixFloat cmul
+  {
+    LUABIND_CHECK_ARGN(==, 1);
+    MatrixFloat *mat,*resul;
+    LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
+    resul = obj->cmul(mat);
+    if (resul == 0)
+      LUABIND_ERROR("matrix mul wrong dimensions");
+    LUABIND_RETURN(MatrixFloat, resul);
+  }
+//BIND_END
+
 //BIND_METHOD MatrixFloat log
 {
   obj->log();

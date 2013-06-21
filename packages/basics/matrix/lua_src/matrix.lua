@@ -522,6 +522,24 @@ april_set_doc("matrix.mul", {
 		  "A new matrix result of multiplication",
 		}, })
 
+april_set_doc("matrix.cmul", {
+		class = "method",
+		summary = "Returns the component-wise multiplication of caller and other matrix.",
+		description = {
+		  "Returns the component-wise multiplication of caller and other matrix.",
+		  "This method only works with contiguous matrices, which",
+		  "are reinterpreted as a vector.",
+		  "The returned matrix has only one dimension, however you",
+		  "can rewrap it to a different dimension sizes.",
+		  "It uses BLAS operations (sbmv).",
+		},
+		params = {
+		  "Another matrix",
+		},
+		outputs = {
+		  "A new matrix result of component-wise multiplication",
+		}, })
+
 april_set_doc("matrix.log", {
 		class = "method",
 		summary = "Component wise log operation IN-PLACE: Y = log(Y)",
