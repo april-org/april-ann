@@ -57,7 +57,7 @@ namespace ANN {
 #ifdef USE_CUDA
     input_mat->setUseCuda(use_cuda);
 #endif
-    assert(input_mat->getNumDim() == 2);
+    ASSERT_MATRIX(input_mat);
     unsigned int bunch_size = input_mat->getDimSize(0);
     // new  output to fit the bunch
     MatrixFloat *output_mat = input_mat->cloneOnlyDims();
@@ -70,7 +70,7 @@ namespace ANN {
     // apply dropout
     if (dropout_factor > 0.0f) {
       if (during_training) {
-	if (dropout_mask) delete dropout_mask;
+	delete dropout_mask;
 	dropout_mask    = new FloatGPUMirroredMemoryBlock(input_mat->size());
 	float *mask_ptr = dropout_mask->getPPALForWrite();
 	for (unsigned int i=0; i<dropout_mask->getSize(); ++i) {
@@ -97,7 +97,7 @@ namespace ANN {
 #ifdef USE_CUDA
     error_input_mat->setUseCuda(use_cuda);
 #endif
-    assert(error_input_mat->getNumDim() == 2);
+    ASSERT_MATRIX(error_input_mat);
     unsigned int bunch_size = error_input_mat->getDimSize(0);
     // new  output to fit the bunch
     MatrixFloat *error_output_mat = error_input_mat->cloneOnlyDims();
@@ -127,7 +127,7 @@ namespace ANN {
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);
     if (error_output) DecRef(error_output);
-    if (dropout_mask) delete dropout_mask;
+    delete dropout_mask;
     input	 = 0;
     error_input	 = 0;
     output	 = 0;

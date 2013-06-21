@@ -33,6 +33,16 @@
 using april_utils::hash;    // required for build
 using april_utils::string;
 
+#ifndef NDEBUG
+#define ASSERT_MATRIX(m) do {					\
+    assert( (m)->getNumDim() == 2 );				\
+    assert( (m)->getMajorOrder() == CblasColMajor );		\
+    assert( (m)->getIsContiguous() );				\
+  } while(0)
+#else
+#define ASSERT_MATRIX(m)
+#endif
+
 #define MAX_UPDATES_WITHOUT_PRUNE 100
 #define MAX_NAME_STR 256
 

@@ -54,9 +54,8 @@ namespace ANN {
 #ifdef USE_CUDA
     input_mat->setUseCuda(use_cuda);
 #endif
-    assert(input_mat->getNumDim() == 2);
+    ASSERT_MATRIX(input_mat);
     assert(input_mat->getDimSize(1) == static_cast<int>(input_size));
-    assert(input_mat->getMajorOrder() == CblasColMajor);
     unsigned int bunch_size = input_mat->getDimSize(0);
     // linear transfer of input to output
     MatrixFloat *output_mat = input_mat->clone();
@@ -99,9 +98,9 @@ namespace ANN {
     MatrixFloat *bias_ptr        = bias_vector->getPtr();
     MatrixFloat *prev_bias_ptr   = bias_vector->getPrevPtr();
     MatrixFloat *input_error_mat = error->getMatrix();
-    assert(input_error_mat->getNumDim() == 2);
-    unsigned int bunch_size = input_error_mat->getDimSize(0);
+    ASSERT_MATRIX(input_error_mat);
     assert(input_error_mat->getDimSize(1) == static_cast<int>(input_size));
+    unsigned int bunch_size = input_error_mat->getDimSize(0);
     // Momentum computation
     if (bias_vector->isFirstUpdateCall()) {
       if (momentum > 0.0f) {
