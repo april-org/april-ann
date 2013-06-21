@@ -333,4 +333,13 @@ float doSnrm2(unsigned int n,
 	      unsigned int shift,
 	      unsigned int inc,
 	      bool use_gpu);
+
+void doSsbmv(CBLAS_ORDER major_type,
+	     CBLAS_UPLO uplo,
+	     int n, int k,
+	     float alpha, FloatGPUMirroredMemoryBlock *a, unsigned int a_lda,
+	     FloatGPUMirroredMemoryBlock *x, unsigned int x_inc,
+	     float beta, FloatGPUMirroredMemoryBlock *y, unsigned int y_inc,
+	     unsigned int a_shift, unsigned int x_shift, unsigned int y_shift,
+	     bool use_gpu);
 #endif // WRAPPER_H

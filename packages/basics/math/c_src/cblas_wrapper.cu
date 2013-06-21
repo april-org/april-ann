@@ -582,3 +582,48 @@ float doSnrm2(unsigned int n,
 #endif
   return result;
 }
+
+void doSsbmv(CBLAS_ORDER major_type,
+	     CBLAS_UPLO uplo,
+	     int n, int k,
+	     float alpha, FloatGPUMirroredMemoryBlock *a, unsigned int a_lda,
+	     FloatGPUMirroredMemoryBlock *x, unsigned int x_inc,
+	     float beta, FloatGPUMirroredMemoryBlock *y, unsigned int y_inc,
+	     unsigned int a_shift, unsigned int x_shift, unsigned int y_shift,
+	     bool use_gpu) {
+  const float *a_mem, *x_mem;
+  float *y_mem;
+#ifdef USE_CUDA
+  if (use_gpu) {
+    cublasStatus_t status;
+    cublasHandle_t handle = GPUHelper::getHandler();
+    assert(major_type == CblasColMajor);
+    a_mem = a->getGPUForRead() + a_shift;
+    x_mem = x->getGPUForRead() + x_shift;
+    y_mem = y->getGPUForReadAndWrite() + y_shift;
+
+    status = cublasSetStream(handle, GPUHelper::getCurrentStream());
+    checkCublasError(status);
+    
+    status = cublasSsbmv(handle, uplo,
+			 n, k,
+			 alpha, a_mem, a_lda,
+			 x_mem, x_inc,
+			 beta, y_mem, y_inc);
+    checkCublasError(status);
+  }
+  else {
+#endif
+    a_mem = a->getPPALForRead() + a_shift;
+    x_mem = x->getPPALForRead() + x_shift;
+    y_mem = y->getPPALForReadAndWrite() + y_shift;
+
+    cblas_ssbmv(major_type, uplo,
+		n, k,
+		alpha, a_mem, a_lda,
+		x_mem, x_inc,
+		beta, y_mem, y_inc);
+#ifdef USE_CUDA
+  }
+#endif
+}

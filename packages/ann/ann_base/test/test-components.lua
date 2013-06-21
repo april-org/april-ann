@@ -124,6 +124,9 @@ if o ~= (i + i:clone():pow(2)):rewrap(1,4) then
   error("Error!!!")
 end
 
+j = matrix(2, 4, { 0.1, -0.2, 0.1, -0.3,
+		   0.4, -0.2, -0.5, 0.6 })
+
 ---------------
 -- HARD TANH --
 ---------------
@@ -170,6 +173,14 @@ if ref ~= o then
   error("Error!!!")
 end
 
+ref = (o - o:clone():pow(2)):cmul(j:clone("col_major")):rewrap(2,4)
+o = c:backprop( tokens.matrix( j:clone("col_major") ) ):get_matrix()
+
+if ref ~= o then
+  print(o)
+  print(ref)
+  error("Error!!!")
+end
 
 ------------------
 -- log_logistic --
@@ -182,6 +193,13 @@ o = c:forward( tokens.matrix( i:clone("col_major") ) ):get_matrix()
 if ref ~= o then
   print(o)
   print(ref)
+  error("Error!!!")
+end
+
+o = c:backprop( tokens.matrix( j:clone("col_major") ) ):get_matrix()
+if o ~= j then
+  print(o)
+  print(j)
   error("Error!!!")
 end
 
@@ -215,6 +233,15 @@ if ref ~= o then
   error("Error!!!")
 end
 
+ref = (o - o:clone():pow(2)):cmul(j:clone("col_major")):rewrap(2,4)
+o = c:backprop( tokens.matrix( j:clone("col_major") ) ):get_matrix()
+
+if ref ~= o then
+  print(o)
+  print(ref)
+  error("Error!!!")
+end
+
 -----------------
 -- log_softmax --
 -----------------
@@ -229,5 +256,13 @@ o = c:forward( tokens.matrix( i:clone("col_major") ) ):get_matrix()
 if ref ~= o then
   print(o)
   print(ref)
+  error("Error!!!")
+end
+
+o = c:backprop( tokens.matrix( j:clone("col_major") ) ):get_matrix()
+
+if j ~= o then
+  print(o)
+  print(j)
   error("Error!!!")
 end

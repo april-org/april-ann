@@ -342,6 +342,7 @@ public:
   void sqrt();
   void pow(T value);
   void tanh();
+  Matrix<T> *cmul(const Matrix<T> *other);
   
   /**** BLAS OPERATIONS ****/
   
@@ -981,6 +982,28 @@ void Matrix<T>::tanh() {
     for (col_major_iterator it(begin()); it!=end(); ++it) {
       *it = tanhf(*it);
     }
+}
+
+template <typename T>
+Matrix<T> *Matrix<T>::cmul(const Matrix<T> *other) {
+  if (size() != other->size())
+    ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d\n",
+		size(), other->size());
+  if (major_order != other->major_order)
+    ERROR_EXIT(128, "Matrices with different major orders\n");
+  if (! sameDim(other) )
+    ERROR_EXIT(128, "Matrices with different dimension sizes\n");
+  if (!getIsContiguous() || !other->getIsContiguous())
+    ERROR_EXIT(128, "Only allowed for contiguous matrices\n");
+  Matrix<T> *new_mat = new Matrix(1, &total_size, T(), major_order);
+  doSsbmv(major_order, CblasLower,
+	  total_size, 0,
+	  1.0f, data, 1,
+	  other->data, 1,
+	  0.0f, new_mat->data, 1,
+	  offset, other->offset, new_mat->offset,
+	  use_cuda);
+  return new_mat;
 }
 
 /**** BLAS OPERATIONS ****/
