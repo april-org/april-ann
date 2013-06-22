@@ -473,6 +473,12 @@
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat get_offset
+{
+  LUABIND_RETURN(int, obj->getOffset());
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat raw_get
 {
   int raw_pos;

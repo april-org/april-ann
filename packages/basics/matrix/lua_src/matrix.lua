@@ -208,7 +208,7 @@ april_set_doc("matrix.loadfile", {
 		outputs = { "A matrix instantiated object" }, })
 
 april_set_doc("matrix.savefile", {
-		class = "method",
+		class = "function",
 		summary = "It allows to store a matrix in a file.",
 		description ={
 		  "It allows to store a matrix in a file.",
@@ -233,12 +233,13 @@ april_set_doc("matrix.loadImage", {
 		outputs = { "A matrix instantiated object" }, })
 
 april_set_doc("matrix.saveImage", {
-		class = "method",
+		class = "function",
 		summary = "It allows to store a matrix in a image file.",
 		description ={
 		  "It allows to store a matrix in a file.",
 		},
 		params = {
+		  "A matrix object.",
 		  "A filename path.",
 		}, })
 
@@ -328,7 +329,14 @@ april_set_doc("matrix.raw_set", {
 		class = "method",
 		summary = "Sets the value of a given RAW position.",
 		params = {
-		  "RAW position",
+		  "RAW position", 
+		}, })
+
+april_set_doc("matrix.get_offset", {
+		class = "method",
+		summary = "Returns the RAW offset position of matrix data.",
+		outputs = {
+		  "A number with the RAW offset position",
 		}, })
 
 april_set_doc("matrix.fill", {
