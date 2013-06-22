@@ -302,10 +302,15 @@ april_set_doc("stats.confusion_matrix.addData",
 {
     class = "method",
     summary = "Add the info of Predicted and Ground Truth set",
-    description = {"This class recieves two tables with the predicted class and the ground truth of that class.",
-    "Also it can recieve a iterator function that returns two elements: predicted sample and groundtruth sample"},
-    params = { "This parameter can be a table of the predicted tags or an iterator function",
-    "This parameter is used if the first parameter is the Predicted table, otherwise it should be nil"},
+    description = {
+      "This class recieves two tables with the predicted class and the",
+      "ground truth of that class.",
+      "Also it can recieve a iterator function that returns two elements:",
+      "predicted sample and groundtruth sample"
+    },
+    params = {
+      "This parameter can be a table of the predicted tags or an iterator function",
+      "This parameter is used if the first parameter is the Predicted table, otherwise it should be nil"},
 })
 function stats.confusion_matrix:addData(param1, param2)
 

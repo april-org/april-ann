@@ -70,8 +70,6 @@ protected:
   T *getData() { return data->getPPALForReadAndWrite(); }
   /// Returns the data pointer for read
   const T *getData() const { return data->getPPALForRead(); }
-  /// Returns the offset of first data value (sub-matrix)
-  int getOffset() const { return offset; }
   
   int getLastRawPos() const { return last_raw_pos; }
   /// Returns if the matrix is a vector
@@ -246,6 +244,8 @@ public:
   }
   /// Indicates if it is a contiguous matrix
   bool getIsContiguous() const;
+  /// Returns the offset of first data value (sub-matrix)
+  int getOffset() const { return offset; }
   /**********************/
   iterator begin() { return iterator(this); }
   iterator iteratorAt(int c0) {
