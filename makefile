@@ -3,6 +3,18 @@ ALL: release-mkl
 document:
 	lua -l formiga build_release.lua document
 
+test-macosx:
+	lua -l formiga build_release_macosx.lua test
+
+test-mkl:
+	lua -l formiga build_mkl_release.lua test
+
+test:
+	lua -l formiga build_release.lua test
+
+test-cuda-mkl:
+	lua -l formiga build_cuda_and_mkl_release.lua test
+
 release-macosx:
 	lua -l formiga build_release_macosx.lua
 
