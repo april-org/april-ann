@@ -62,7 +62,16 @@ myConfMap:addData(myPred, myGT)
 
 print("Raw Confusion Matrix")
 myConfMap:printConfusion(tags)
+local cloneConf = myConfMap:clone()
 
 print("Deleting class c")
 myConfMap:clearGTClass(3)
 myConfMap:printConfusion(tags)
+
+print("Cloned object")
+cloneConf:printConfusion(tags)
+
+
+print("Deleting class c (Pred)")
+cloneConf:clearPredClass(3)
+cloneConf:printConfusion(tags)
