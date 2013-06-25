@@ -118,7 +118,7 @@ april_set_doc("stats.confusion_matrix.__call", {
 
     }
 })
-function stats.confusion_matrix:__call(num_classes, map_table)
+function stats.confusion_matrix:__call(num_classes, class_dict)
 
     local confusion = {}
     for i = 1, num_classes do
@@ -130,9 +130,9 @@ function stats.confusion_matrix:__call(num_classes, map_table)
     end
 
 
-    if (map_table) then
-        assert(#map_table == num_classes, "The map table doesn't have the exact size")
-        map_dict = table.invert(map_table)
+    if (class_dict) then
+        --assert(#class_dict == num_classes, "The map table doesn't have the exact size")
+        map_dict = class_dict
 
         --for i, v in ipairs(map_table) do
         --  map_dict[v] = i
@@ -147,8 +147,7 @@ function stats.confusion_matrix:__call(num_classes, map_table)
         misses = 0,
         samples = 0,
         -- FIXME: IS NOT POSSIBLE USE MAP DICT AS NIL
-        map_dict = map_dict or -1
-
+        map_dict = map_dict or false
     }
     class_instance(obj, self, true)
     return obj
@@ -177,7 +176,8 @@ end
 ---------------------------------------------
 function stats.confusion_matrix:addSample(pred, gt)
 
-    if self.map_dict ~= -1 then
+    if self.map_dict then
+
         pred = map_dict[pred]
         gt   = map_dict[gt]
     end
@@ -415,5 +415,43 @@ function stats.confusion_matrix:getFMeasure(tipo, beta)
     local RC = self:getPrecision(tipo)
 
     return (1+nBeta)*(PR*RC)/(nBeta*PR+RC)
+end
+-------------------------------------------------------
+april_set_doc("stats.confusion_matrix.clearGTClass",
+{
+    class = "method", summary = "Clear the counters of one class",
+    description= "This function is useful when you don't want to count determinated class.",
+    params = {"The index of the class to be clear"},
+})
+function stats.confusion_matrix:clearGTClass(tipo)
+
+    local n_samples = 0
+    -- Moving by columns
+    for i=1, self.num_classes do
+        n_samples = n_samples + self.confusion[tipo][i]
+        self.confusion[tipo][i] = 0
+    end
+    
+    self.samples = self.samples - n_samples
+   
+end
+
+april_set_doc("stats.confusion_matrix.clearPredClass",
+{
+    class = "method", summary = "Clear the counters of one class",
+    description= "This function is useful when you don't want to count determinated class.",
+    params = {"The index of the class to be clear"},
+})
+function stats.confusion_matrix:clearPredClass(tipo)
+
+    local n_samples = 0
+    -- Moving by Rows
+    for i=1, self.num_classes do
+        n_samples = n_samples + self.confusion[i][tipo]
+        self.confusion[i][tipo] = 0
+    end
+    
+    self.total = self.total - n_samples
+   
 end
 
