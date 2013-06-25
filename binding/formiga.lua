@@ -1147,6 +1147,43 @@ function provide_bind (t)
 end
 
 ----------------------------------------------------------------------
+--                               UNITARY TESTING
+----------------------------------------------------------------------
+
+function formiga.__execute_script(t)
+  local prop = t.target.package.properties
+  local april_binary = formiga.os.compose_dir(formiga.global_properties.build_dir,
+					      "bin",
+					      formiga.program_name)
+  if (t.file == nil) then
+    print("[execute_script]  error: file must be specified")
+    return
+  end
+  for _,tfile in ipairs(t.file) do
+    local thefiles = formiga.os.glob(formiga.expand_properties(tfile,prop))
+    for _,thefile in ipairs(thefiles) do
+      command = { april_binary, thefile }
+      -- creamos y ejecutamos el comando
+      command = table.concat(command," ")
+      printverbose(2," [execute_script] "..command)
+      local error_resul = formiga.os.execute(command, true)
+      if error_resul ~= 0 then
+	print("Unitary test '".. thefile .. "' failed: " .. t.target.package.name)
+	os.exit(256)
+      end
+    end
+  end
+end
+
+function execute_script(t)
+  t.__task__ = formiga.__execute_script
+  if type(t.file) == "string" then
+    t.file = { t.file }
+  end
+  return t
+end
+
+----------------------------------------------------------------------
 --                               BUILD_BIND
 ----------------------------------------------------------------------
 -- llama al bindeador con la plantilla .cc
