@@ -262,6 +262,7 @@ public:
     return iterator(this, computeRawPos(coords), coords);
   }
   iterator end() { return iterator(this, last_raw_pos+1); }
+  /************************/
   const_iterator begin() const { return const_iterator(this); }
   const_iterator iteratorAt(int c0) const {
     assert(numDim==1);
@@ -907,8 +908,8 @@ T Matrix<T>::sum() const {
 template <typename T>
 bool Matrix<T>::equals(const Matrix<T> *other, T epsilon) const {
   if (!sameDim(other)) return false;
-  Matrix<T>::const_iterator it(begin());
-  Matrix<T>::const_iterator other_it(other->begin());
+  const_iterator it(begin());
+  const_iterator other_it(other->begin());
   while(it != end()) {
     if (fabsf(*it - *other_it) > epsilon) return false;
     ++it;

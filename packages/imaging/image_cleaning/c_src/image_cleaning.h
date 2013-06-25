@@ -47,6 +47,7 @@ class ImageHistogram : public Referenced {
 
         /// Creator recieves and image
         ImageHistogram(ImageFloat *img, int levels) :
+	  Referenced(),
             gray_levels(levels){
                 this->width  = img->width;
                 this->height = img->height;

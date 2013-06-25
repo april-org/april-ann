@@ -51,7 +51,7 @@ Matrix<float> *ImageHistogram::getHistogram(const ImageFloat *img, int gray_leve
   return matrix;
 
 }
-ImageHistogram::ImageHistogram(const ImageHistogram &other) {
+ImageHistogram::ImageHistogram(const ImageHistogram &other) : Referenced() {
 
     width  = other.width;
     height = other.height;
