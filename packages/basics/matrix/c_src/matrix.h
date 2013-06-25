@@ -1025,6 +1025,11 @@ void Matrix<T>::copy(const Matrix<T> *other) {
 	    other->data, other->offset, 1,
 	    data, offset, 1,
 	    use_cuda);
+  else if (numDim == 1)
+    doScopy(total_size,
+	    other->data, other->offset, other->stride[0],
+	    data, offset, stride[0],
+	    use_cuda);
   // Two dimmension matrices
   else if (numDim == 2) {
     int larger_dim = 0, shorter_dim = 1;
@@ -1080,6 +1085,11 @@ void Matrix<T>::axpy(T alpha, const Matrix<T> *other) {
     doSaxpy(total_size,
 	    alpha, other->data, other->offset, 1,
 	    data, offset, 1,
+	    use_cuda);
+  else if (numDim == 1)
+    doSaxpy(total_size,
+	    alpha, other->data, other->offset, other->stride[0],
+	    data, offset, stride[0],
 	    use_cuda);
   // Two dimmension matrices
   else if (numDim == 2) {
@@ -1240,6 +1250,8 @@ template <typename T>
 void Matrix<T>::scal(T value) {
   // Contiguous memory block
   if (getIsContiguous()) doSscal(total_size, value, data, offset, 1, use_cuda);
+  else if (numDim == 1)
+    doSscal(total_size, value, data, offset, stride[0], use_cuda);
   // Two dimmension matrix
   else if (numDim == 2) {
     int larger_dim = 0, shorter_dim = 1;
@@ -1282,6 +1294,8 @@ T Matrix<T>::norm2() const {
   T v;
   // Contiguous memory block
   if (getIsContiguous()) v=doSnrm2(total_size, data, offset, 1, use_cuda);
+  else if (numDim == 1)
+    v=doSnrm2(total_size, data, offset, stride[0], use_cuda);
   // Two dimmension matrix
   else if (numDim == 2) {
     v = 0.0f;
@@ -1290,7 +1304,7 @@ T Matrix<T>::norm2() const {
       april_utils::swap(larger_dim, shorter_dim);
     int pos  = offset;
     switch(matrixSize[shorter_dim]) {
-    case 0:
+    case 1:
       v = doSnrm2(matrixSize[larger_dim],
 		  data, pos, stride[larger_dim],
 		  use_cuda);
