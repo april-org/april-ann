@@ -162,26 +162,30 @@ datosvalidar = {
 
 print(trainer_deep_classifier:validate_dataset(datosvalidar))
 
-dropout_factor = 0.5
+dropout_factor = 0.0 --0.5
 function set_dropout(trainer)
-  local max=trainer:count_components("^actf.*$")
-  for name,component in trainer.iterate_components(trainer, "^actf.*$") do
-    if name ~= "actf"..max then
-      component:set_option("dropout_factor",dropout_factor)
-      component:set_option("dropout_seed", 5425)
+  if dropout_factor > 0.0 then
+    local max=trainer:count_components("^actf.*$")
+    for name,component in trainer.iterate_components(trainer, "^actf.*$") do
+      if name ~= "actf"..max then
+	component:set_option("dropout_factor",dropout_factor)
+	component:set_option("dropout_seed", 5425)
+      end
     end
   end
 end
 
 -- we scale the weights before dropout
-for name,cnn in trainer_deep_classifier:iterate_weights("^w.*$") do
-  if name ~= "w1" then
-    if cnn.matrix then
-      local w,ow = cnn:matrix()
+if dropout_factor > 0.0 then
+  for name,cnn in trainer_deep_classifier:iterate_weights("^w.*$") do
+    if name ~= "w1" then
+      if cnn.matrix then
+	local w,ow = cnn:matrix()
       w:scal(1.0/(1.0-dropout_factor))
       ow:scal(1.0/(1.0-dropout_factor))
-    else
-      cnn:scale(1.0/(1.0-dropout_factor))
+      else
+	cnn:scale(1.0/(1.0-dropout_factor))
+      end
     end
   end
 end
@@ -195,7 +199,7 @@ trainer_deep_classifier:save("wop2.net", "ascii")
 deep_classifier:set_option("learning_rate", 0.4)
 deep_classifier:set_option("momentum", 0.2)
 deep_classifier:set_option("weight_decay", 0.0)
-deep_classifier:set_option("max_norm_penalty", 15.0);
+deep_classifier:set_option("max_norm_penalty", 15.0)
 set_dropout(trainer_deep_classifier)
 
 shallow_classifier:set_option("learning_rate", 0.4)
