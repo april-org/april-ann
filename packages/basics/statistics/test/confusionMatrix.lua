@@ -53,11 +53,25 @@ myConf:printConfusion()
 print("Testing Map")
 
 local tags = {"a","b","c","d"}
-local myConfMap = stats.confusion_matrix(4, tags)
+local myConfMap = stats.confusion_matrix(4, table.invert(tags))
 
 local myPred = { "a", "b", "c", "d", "a", "b" , "c" , "d"}
 local myGT   = { "b", "a", "b", "a", "a", "b",  "c",  "a"}
 
 myConfMap:addData(myPred, myGT)
+
 print("Raw Confusion Matrix")
 myConfMap:printConfusion(tags)
+local cloneConf = myConfMap:clone()
+
+print("Deleting class c")
+myConfMap:clearGTClass(3)
+myConfMap:printConfusion(tags)
+
+print("Cloned object")
+cloneConf:printConfusion(tags)
+
+
+print("Deleting class c (Pred)")
+cloneConf:clearPredClass(3)
+cloneConf:printConfusion(tags)
