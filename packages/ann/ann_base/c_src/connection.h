@@ -64,7 +64,8 @@ namespace ANN {
   public:
     static const double weightnearzero;
     
-    Connections(unsigned int num_inputs, unsigned int num_outputs);
+    Connections(unsigned int num_inputs, unsigned int num_outputs,
+		const MatrixFloat *w=0, const MatrixFloat *oldw=0);
     ~Connections();
     
     void reset() {
