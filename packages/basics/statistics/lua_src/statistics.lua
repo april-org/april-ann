@@ -153,6 +153,23 @@ function stats.confusion_matrix:__call(num_classes, class_dict)
     return obj
 end
 
+april_set_doc("stats.confusion_matrix.clone", {
+    class ="method",
+    summary     = "Clone onstructor of confusion matrix.",
+    description ={
+        "This class is designed to store a confusion matrix and compute main metrics for classification stats",
+    },
+    params = {
+    }
+})
+function stats.confusion_matrix:clone()
+    
+    local obj = table.deep_copy(self)
+
+    class_instance(obj, self, true)
+
+    return obj
+end
 april_set_doc("stats.confusion_matrix.reset", {
 		class = "method", summary = "Reset to 0 all the counters",
 		})
@@ -451,7 +468,7 @@ function stats.confusion_matrix:clearPredClass(tipo)
         self.confusion[i][tipo] = 0
     end
     
-    self.total = self.total - n_samples
+    self.samples = self.samples - n_samples
    
 end
 
