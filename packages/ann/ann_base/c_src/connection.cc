@@ -27,7 +27,8 @@
 namespace ANN {
   const double Connections::weightnearzero = 1e-7;
   
-  Connections::Connections(unsigned int num_inputs, unsigned int num_outputs) :
+  Connections::Connections(unsigned int num_inputs, unsigned int num_outputs,
+			   const MatrixFloat *w, const MatrixFloat *oldw) :
     Referenced(),
     weights(0), prev_weights(0),
     num_references(0), update_weights_calls(0) {
@@ -39,8 +40,10 @@ namespace ANN {
       ERROR_EXIT(130, "Impossible to allocate memory\n");
     IncRef(weights);
     IncRef(prev_weights);
-    weights->zeros();
-    prev_weights->zeros();
+    if (w) weights->copy(w);
+    else weights->zeros();
+    if (oldw) prev_weights->copy(oldw);
+    else prev_weights->zeros();
   }
 
   Connections::~Connections() {
@@ -51,11 +54,11 @@ namespace ANN {
   bool Connections::checkInputOutputSizes(unsigned int input_size,
 					  unsigned int output_size) const {
     // TODO: comprobar error input==0 y output==0
-    if (static_cast<unsigned int>(weights->getDimSize(0)) != output_size) {
+    if (getOutputSize() != output_size) {
       ERROR_PRINT("Incorrect output size!!!\n");
       return false;
     }
-    if (static_cast<unsigned int>(weights->getDimSize(1)) != input_size) {
+    if (getInputSize() != input_size) {
       ERROR_PRINT("Incorrect input size!!!\n");
       return false;
     }
@@ -265,9 +268,8 @@ namespace ANN {
   Connections *Connections::clone() {
     const int num_outputs = weights->getDimSize(0);
     const int num_inputs  = weights->getDimSize(1);
-    Connections *conn = new Connections(num_inputs, num_outputs);
-    conn->weights->copy(weights);
-    conn->prev_weights->copy(prev_weights);
+    Connections *conn = new Connections(num_inputs, num_outputs,
+					weights, prev_weights);
     return conn;
   }
 

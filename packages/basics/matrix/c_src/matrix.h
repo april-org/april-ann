@@ -1289,14 +1289,22 @@ T Matrix<T>::norm2() const {
     if (matrixSize[larger_dim] < matrixSize[shorter_dim])
       april_utils::swap(larger_dim, shorter_dim);
     int pos  = offset;
-    for (int i=0; i<matrixSize[shorter_dim]; ++i) {
-      T aux = doSnrm2(matrixSize[larger_dim],
-		      data, pos, stride[larger_dim],
-		      use_cuda);
-      v   += aux*aux;
-      pos += stride[shorter_dim];
+    switch(matrixSize[shorter_dim]) {
+    case 0:
+      v = doSnrm2(matrixSize[larger_dim],
+		  data, pos, stride[larger_dim],
+		  use_cuda);
+      break;
+    default:
+      for (int i=0; i<matrixSize[shorter_dim]; ++i) {
+	T aux = doSnrm2(matrixSize[larger_dim],
+			data, pos, stride[larger_dim],
+			use_cuda);
+	v   += aux*aux;
+	pos += stride[shorter_dim];
+      }
+      v = T(sqrtf(v));
     }
-    v = T(sqrtf(v));
   }
   // General case
   else {
