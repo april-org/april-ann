@@ -84,7 +84,7 @@ function get_replacement_dataset(randObject, replacementSize, ...)
     local mat = matrix(replacementSize)
     local numPat = arg[1]:numPatterns()
     for i=1,replacementSize do
-      mat:setElement(i,randObject:randInt(1,numPat))
+      mat:set(i,randObject:randInt(1,numPat))
     end
     local ds = dataset.matrix(mat)
     for i,v in ipairs(arg) do
@@ -158,21 +158,24 @@ local function
     local output_dataset = (output_datasets or {})[1]
     -- Generate a replacement of each dataset
     local input_repl_ds, output_repl_ds
-    -- if autoencoder, only generate one corpus replacement
-    input_repl_ds, output_repl_ds = unpack( get_replacement_dataset(shuffle_random, replacement, input_dataset, output_dataset) )
+    if replacement then
+      -- if autoencoder, only generate one corpus replacement
+      input_repl_ds, output_repl_ds = unpack( get_replacement_dataset(shuffle_random, replacement, input_dataset, output_dataset) )
+    end
     -- generate the last layer dataset
     local input_layer_dataset = mlp_final_trainer:use_dataset{
-      input_dataset = input_repl_ds
+      input_dataset = input_repl_ds or input_dataset
     }
-    -- The output is the same than the imput
-    output_dataset = (output_repl_ds or input_layer_dataset)
+    -- The output is the same than the input
+    output_dataset = (output_repl_ds or output_dataset or input_layer_dataset)
     -- Add the noise
     for _,noise_builder in ipairs(noise_pipeline) do
       input_dataset = noise_builder(input_layer_dataset)
     end
     return {
       input_dataset  = input_dataset,
-      output_dataset = output_dataset
+      output_dataset = output_dataset,
+      shuffle        = ( not replacement and shuffle_random ) or nil,
     }
   end
 end
