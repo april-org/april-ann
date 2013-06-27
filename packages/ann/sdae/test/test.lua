@@ -1,4 +1,4 @@
-m1 = ImageIO.read("digits.png"):to_grayscale():invert_colors():matrix()
+m1 = ImageIO.read("test/digits.png"):to_grayscale():invert_colors():matrix()
 
 bunch_size = 8
 
@@ -76,17 +76,10 @@ params_pretrain = {
 			     vd       = 0.10,
 			     zero     = 0.0,
 			     random   = perturbation_prob } end },
-      min_epochs            = 2,
-      max_epochs            = 200,
-      pretraining_percentage_stopping_criterion = 0.01,
+      min_epochs            =  2,
+      max_epochs            = 10,
+      pretraining_percentage_stopping_criterion = 0.1,
     },
-    layerwise = { { min_epochs=50 },
-      		  { min_epochs=20 },
-		  { ann_options = { learning_rate = 0.4,
-				    momentum      = 0.02,
-				    weight_decay  = 4e-05 },
-		    min_epochs=20 },
-		  { min_epochs=10 }, },
   }
 }
 
@@ -201,7 +194,7 @@ deep_classifier:set_option("max_norm_penalty",
 			   deep_classifier:get_option("max_norm_penalty"))
 set_dropout(trainer_deep_wo_pretraining)
 
-for i=1,200 do
+for i=1,10 do
   local mse_tr_deep = trainer_deep_classifier:train_dataset(datosentrenar_deep)
   local mse_tr_deep_wo = trainer_deep_wo_pretraining:train_dataset(datosentrenar_deep_wo)
   local mse_tr_shallow = trainer_shallow_classifier:train_dataset(datosentrenar_shallow)

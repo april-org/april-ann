@@ -137,7 +137,11 @@ namespace ANN {
 
   void ActivationFunctionANNComponent::setOption(const char *name, double value) {
     mSetOption(DROPOUT_FACTOR_STRING, dropout_factor);
-    mSetOption(DROPOUT_SEED_STRING,   dropout_seed);
+    if (strcmp(name, DROPOUT_SEED_STRING) == 0) {
+      dropout_seed = static_cast<int>(value);
+      dropout_random = MTRand(dropout_seed);
+      return;
+    }
     ANNComponent::setOption(name, value);
   }
 

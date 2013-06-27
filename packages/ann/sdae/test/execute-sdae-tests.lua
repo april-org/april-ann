@@ -1,3 +1,5 @@
+epsilon = 1e-03
+
 function assert_differences(test, results)
   local f = io.open(test)
   local r = io.open(results)
@@ -5,8 +7,12 @@ function assert_differences(test, results)
     local r_line = r:read("*l")
     local f_t = string.tokenize(f_line)
     local r_t = string.tokenize(r_line)
-    for i=1,#f_t do assert(math.abs(tonumber(f_t[i]) - tonumber(r_t[i])) < epsilon,
-			   "Incorrect value found") end
+    for i=1,#f_t do
+      if tonumber(f_t[i]) then
+	assert(math.abs(tonumber(f_t[i]) - tonumber(r_t[i])) < epsilon,
+	       "Incorrect value found")
+      end
+    end
   end
 end
 --
