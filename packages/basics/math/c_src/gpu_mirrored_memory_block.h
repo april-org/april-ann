@@ -23,7 +23,7 @@
 #define GPU_MIRRORED_MEMORY_BLOCK_H
 
 // Define NO_POOL to avoid the use of a pool of pointers
-#define NO_POOL
+// #define NO_POOL
 
 #include <cassert>
 #include "referenced.h"
@@ -47,7 +47,7 @@
 template<typename T>
 class GPUMirroredMemoryBlock : public Referenced {
 #ifndef NO_POOL
-  const static unsigned int MAX_POOL_LIST_SIZE = 20;
+  const static unsigned int MAX_POOL_LIST_SIZE = 100;
   static april_utils::hash<unsigned int,april_utils::list<T*> > pool_lists;
 #endif
   unsigned int size;
@@ -302,8 +302,8 @@ typedef GPUMirroredMemoryBlock<float> FloatGPUMirroredMemoryBlock;
 template<typename T>
 april_utils::hash<unsigned int,april_utils::list<T*> >
 GPUMirroredMemoryBlock<T>::pool_lists(1024);
-#endif
-
+#else
 #undef NO_POOL
+#endif
 
 #endif // GPU_MIRRORED_MEMORY_BLOCK_H
