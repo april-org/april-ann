@@ -395,19 +395,23 @@ private:
 template <typename T>
 void Matrix<T>::initialize(const int *dim) {
   total_size=1;
-  if (major_order == CblasRowMajor) {
+  switch(major_order) {
+  case CblasRowMajor:
     for(int i=numDim-1; i>=0; --i) {
       stride[i] = total_size;
       total_size *= dim[i];
       matrixSize[i] = dim[i];
     }
-  }
-  else {
+    break;
+  case CblasColMajor:
     for(int i=0; i<numDim; ++i) {
       stride[i] = total_size;
       total_size *= dim[i];
       matrixSize[i] = dim[i];
     }
+    break;
+  default:
+    ERROR_EXIT(128, "Incorrect major order!!!\n");
   }
   last_raw_pos = total_size-1;
 }

@@ -377,6 +377,33 @@ april_set_doc("matrix.dim", {
 		  "A table",
 		}, })
 
+april_set_doc("matrix.dim", {
+		class = "method",
+		summary = "Returns the size of a given dimension number.",
+		params = {
+		  "A number indicating the dimension, between 1 and num_dims",
+		},
+		outputs = {
+		  "A number",
+		}, })
+
+april_set_doc("matrix.stride", {
+		class = "method",
+		summary = "Returns a table with the stride size of each dimension.",
+		outputs = {
+		  "A table",
+		}, })
+
+april_set_doc("matrix.stride", {
+		class = "method",
+		summary = "Returns the stride size of a given dimension number.",
+		params = {
+		  "A number indicating the dimension, between 1 and num_dims",
+		},
+		outputs = {
+		  "A number",
+		}, })
+
 april_set_doc("matrix.slice", {
 		class = "method",
 		summary = "Returns a sub-matrix that is a slice of caller matrix.",

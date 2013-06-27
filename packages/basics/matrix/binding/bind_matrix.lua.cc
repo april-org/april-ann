@@ -554,16 +554,32 @@
 //BIND_END
 
 //BIND_METHOD MatrixFloat dim
-//DOC_BEGIN
-// table dim()
-/// Devuelve una tabla con las dimensiones de la matriz.
-//DOC_END
 {
-  LUABIND_CHECK_ARGN(==, 0);
-  int ndim=obj->getNumDim();
+  LUABIND_CHECK_ARGN(>=, 0);
+  LUABIND_CHECK_ARGN(<=, 1);
+  int pos;
   const int *d=obj->getDimPtr();
-  LUABIND_VECTOR_TO_NEW_TABLE(int, d, ndim);
-  LUABIND_RETURN_FROM_STACK(-1);
+  LUABIND_GET_OPTIONAL_PARAMETER(1, int, pos, -1);
+  if (pos < 1) {
+    LUABIND_VECTOR_TO_NEW_TABLE(int, d, obj->getNumDim());
+    LUABIND_RETURN_FROM_STACK(-1);
+  }
+  else LUABIND_RETURN(int, d[pos-1]);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat stride
+{
+  LUABIND_CHECK_ARGN(>=, 0);
+  LUABIND_CHECK_ARGN(<=, 1);
+  int pos;
+  const int *s=obj->getStridePtr();
+  LUABIND_GET_OPTIONAL_PARAMETER(1, int, pos, -1);
+  if (pos < 1) {
+    LUABIND_VECTOR_TO_NEW_TABLE(int, s, obj->getNumDim());
+    LUABIND_RETURN_FROM_STACK(-1);
+  }
+  else LUABIND_RETURN(int, s[pos-1]);
 }
 //BIND_END
 
@@ -609,7 +625,7 @@
   else {
     const char *major;
     LUABIND_GET_OPTIONAL_PARAMETER(1, string, major, "row_major");
-    CBLAS_ORDER order=obj->getMajorOrder();
+    CBLAS_ORDER order=CblasRowMajor;
     if (strcmp(major, "col_major") == 0) order = CblasColMajor;
     else if (strcmp(major, "row_major") != 0)
       LUABIND_FERROR1("Incorrect major order string %s", major);
