@@ -4,7 +4,7 @@ weight_decay   = 1e-06
 random1        = random(2134)
 random2        = random(4283)
 bunch_size     = 4
-epsilon        = 1e-03
+epsilon        = 1e-02
 
 -----------------------------------------------------------
 m_or = matrix.fromString[[
