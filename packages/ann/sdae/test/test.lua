@@ -76,8 +76,8 @@ params_pretrain = {
 			     vd       = 0.10,
 			     zero     = 0.0,
 			     random   = perturbation_prob } end },
-      min_epochs            = 1, --2,
-      max_epochs            = 1, --200,
+      min_epochs            = 2,
+      max_epochs            = 200,
       pretraining_percentage_stopping_criterion = 0.01,
     },
     layerwise = { { min_epochs=50 },
@@ -98,20 +98,6 @@ trainer_deep_classifier = trainable.supervised_trainer(deep_classifier,
 						       ann.loss[loss_name](10),
 						       bunch_size)
 trainer_deep_classifier:build()
--- local outf = io.open("data", "w")
--- encoded_dataset = ann.autoencoders.encode_dataset(codifier_net,
--- 						  train_input)
--- for ipat,pat in encoded_dataset:patterns() do
---   fprintf(outf, "Pattern %d %s\n", ipat, table.concat(pat, " "))
--- end
-
--- encoded_dataset = ann.autoencoders.encode_dataset(codifier_net,
--- 						  val_input)
--- for ipat,pat in encoded_dataset:patterns() do
---   fprintf(outf, "Pattern %d %s\n", ipat, table.concat(pat, " "))
--- end
--- outf:close()
-
 --
 shallow_classifier = ann.mlp.all_all.generate("256 inputs 256 tanh 128 tanh 10 log_softmax")
 trainer_shallow_classifier = trainable.supervised_trainer(shallow_classifier,
@@ -162,7 +148,7 @@ datosvalidar = {
 
 print(trainer_deep_classifier:validate_dataset(datosvalidar))
 
-dropout_factor = 0.0 --0.5
+dropout_factor = 0.5
 function set_dropout(trainer)
   if dropout_factor > 0.0 then
     local max=trainer:count_components("^actf.*$")
@@ -181,20 +167,14 @@ if dropout_factor > 0.0 then
     if name ~= "w1" then
       if cnn.matrix then
 	local w,ow = cnn:matrix()
-      w:scal(1.0/(1.0-dropout_factor))
-      ow:scal(1.0/(1.0-dropout_factor))
+	w:scal(1.0/(1.0-dropout_factor))
+	ow:scal(1.0/(1.0-dropout_factor))
       else
 	cnn:scale(1.0/(1.0-dropout_factor))
       end
     end
   end
 end
-
--- for _,cnn in trainer_deep_classifier:iterate_weights() do
---   local w,ow = cnn:matrix() ow:copy(w)
--- end
-
-trainer_deep_classifier:save("wop2.net", "ascii")
 
 deep_classifier:set_option("learning_rate", 0.4)
 deep_classifier:set_option("momentum", 0.2)
