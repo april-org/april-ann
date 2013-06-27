@@ -69,7 +69,8 @@ output,L,chain = ann.autoencoders.iterative_sampling{
   loss    = loss,
 }
 for i,output in ipairs(chain) do
-  matrix.saveImage(output:clone("col_major"):rewrap(16,16), "wop1-"..string.format("%04d",i)..".pnm")
+  matrix.saveImage(output:clone("row_major"):rewrap(16,16),
+		   "wop1-"..string.format("%04d",i)..".pnm")
 end
 if log then output:log() end
 ite_L = loss:loss(tokens.matrix(output:rewrap(1,256)),
