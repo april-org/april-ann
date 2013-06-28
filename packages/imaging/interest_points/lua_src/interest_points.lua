@@ -5,6 +5,7 @@ interest_points.pointClassifier.__index = interest_points.pointClassifier
 
 setmetatable(interest_points.pointClassifier, interest_points.pointClassifier)
 
+--[[
 local function argmax(tbl)
     local wmax = 1
     local max  = tbl[1]
@@ -20,7 +21,7 @@ local function argmax(tbl)
         return nil, nil
     end
 end
-
+]]
 
 function interest_points.pointClassifier:__call(alto, ancho, minialto, miniancho, reverse)
 
@@ -147,7 +148,8 @@ end
 -- Given a point return the most probable class
 -----------------------------------------------
 function interest_points.pointClassifier:classify_point(img, point, mlp)
-    return  argmax(self:compute_point(img, point, mlp))
+    --return  argmax(self:compute_point(img, point, mlp))
+    return compute_point(img, point, mlp):max()
 
 end
 -------------------------------------------------
@@ -172,8 +174,8 @@ function interest_points.pointClassifier:classify_points(img, points, mlp)
       for i, score in ipairs(scores) do
           x = points[i][1]
           y = points[i][2]
-          c = argmax(score)
-          table.insert(res, {x, y, c})
+          _, c = score:max()
+          table.insert(res, {x, y, c+1})
       end
 
       return res

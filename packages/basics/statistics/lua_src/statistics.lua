@@ -266,6 +266,24 @@ function stats.confusion_matrix:printConfusion(tags)
     printf("\t%0.4f\t|\n", self:getError())
 end
 
+function stats.confusion_matrix:printInf()
+    
+    printf("Samples %d, hits = %d, misses = %d (%0.4f)\n", self.samples, self.hits, self.misses, self.misses/self.total)
+    for i = 1, self.num_classes do
+        
+        print("Predicted %d", i)
+        local total = 0
+        for j = 1, self.num_classes do
+          total = total + self.confusion[i][j]
+        end
+
+        for j = 1, self.num_classes do
+          printf(" - class %d %d/%d (%0.4f)", j, self.confusion[i][j], total, self.confusion[i][j]/total)
+        end
+        print()
+    end
+end
+
 --------------------------------------------
 -- Datasets and Tables Iterators
 --------------------------------------------
@@ -438,6 +456,9 @@ function stats.confusion_matrix:getFMeasure(tipo, beta)
 
     return (1+nBeta)*(PR*RC)/(nBeta*PR+RC)
 end
+
+
+
 -------------------------------------------------------
 april_set_doc("stats.confusion_matrix.clearGTClass",
 {
@@ -448,16 +469,43 @@ april_set_doc("stats.confusion_matrix.clearGTClass",
 function stats.confusion_matrix:clearGTClass(tipo)
 
     local n_samples = 0
+    local hits = 0
+    local misses = 0
     -- Moving by columns
     for i=1, self.num_classes do
         n_samples = n_samples + self.confusion[tipo][i]
+        if i == tipo then
+            hits = self.confusion[tipo][i]
+        else
+            misses = misses + self.confusion[tipo][i]
+        end
         self.confusion[tipo][i] = 0
     end
     
     self.samples = self.samples - n_samples
-   
+    self.hits    = self.hits - hits
+    self.misses  = self.misses - misses
 end
 
+april_set_doc("stats.confusion_matrix.clearClass",
+{
+    class = "method", summary = "Clear the counters of one pair classes",
+    description= "This function is useful when you don't want to count determinated pair class.",
+    params = {"The index of the Ground Truth class.","The index of the predicted class"},
+})
+function stats.confusion_matrix:clearClass(gt, pred)
+
+    local samples = self.confusion[gt][pred]
+    local n_samples = 0
+        if gt == pred then
+            self.hits = self.hits - samples
+        else
+            self.misses = self.misses - samples
+        end
+        self.confusion[gt][pred] = 0
+    
+    self.samples = self.samples - samples
+end
 april_set_doc("stats.confusion_matrix.clearPredClass",
 {
     class = "method", summary = "Clear the counters of one class",
