@@ -670,22 +670,7 @@
   LUABIND_CHECK_PARAMETER(2, float);
   LUABIND_GET_PARAMETER(1,float,rmin);
   LUABIND_GET_PARAMETER(2,float,rmax);
-  
-  // ajusta los valores a un rango predeterminado
-  float mmin, mmax;
-  obj->minAndMax(mmin, mmax);
-  if (mmax - mmin == 0) {
-    // caso especial, poner todos al valor inferior
-    for (MatrixFloat::iterator it(obj->begin()); it!=obj->end(); ++it) {
-      *it = rmin;
-    }
-  } else {
-    float offset = rmin-mmin;
-    double ratio = (rmax-rmin)/(mmax-mmin);
-    for (MatrixFloat::iterator it(obj->begin()); it!=obj->end(); ++it) {
-      *it = ratio*((*it)+offset);
-    }
-  }
+  obj->adjustRange(rmin, rmax);
   LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END

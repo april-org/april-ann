@@ -87,6 +87,8 @@ protected:
     return (numDim == 1) ? stride[0] :
       (major_order==CblasRowMajor) ? stride[1] : stride[0];
   }
+
+  void scalarAdd(T s);
   
 public:
   /// Updates with the following coordinates vector
@@ -352,7 +354,8 @@ public:
   void pow(T value);
   void tanh();
   Matrix<T> *cmul(const Matrix<T> *other);
-  
+  void adjustRange(T rmin, T rmax);
+    
   /**** BLAS OPERATIONS ****/
   
   // FIXME: This operations could be improved if we take into account when the
@@ -918,6 +921,18 @@ T Matrix<T>::sum() const {
 /**** COMPONENT WISE OPERATIONS ****/
 
 template <typename T>
+void Matrix<T>::scalarAdd(T s) {
+  if (major_order == CblasRowMajor)
+    for (iterator it(begin()); it!=end(); ++it) {
+      *it = *it + s;
+    }
+  else
+    for (col_major_iterator it(begin()); it!=end(); ++it) {
+      *it = *it + s;
+    }
+}
+
+template <typename T>
 bool Matrix<T>::equals(const Matrix<T> *other, T epsilon) const {
   if (!sameDim(other)) return false;
   const_iterator it(begin());
@@ -1414,6 +1429,21 @@ void Matrix<T>::minAndMax(T &min, T &max) const {
     }
   }
 }
+
+template <typename T>
+void Matrix<T>::adjustRange(T rmin, T rmax) {
+  T mmin, mmax;
+  minAndMax(mmin, mmax);
+  // especial case, set all values to rmin
+  if (mmax - mmin == 0) fill(rmin);
+  else {
+    float ratio = (rmax-rmin)/(mmax-mmin);
+    if (mmin > 0.0f || mmin < 0.0f) scalarAdd(-mmin);
+    scal(ratio);
+    if (rmin > 0.0f || rmin < 0.0f) scalarAdd(rmin);
+  }
+}
+
 
 /***** COORDINATES METHODS *****/
 
