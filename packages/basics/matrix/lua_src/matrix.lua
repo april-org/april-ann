@@ -334,7 +334,7 @@ april_set_doc("matrix.raw_set", {
 		},
 		outputs = { "The caller matrix" }, })
 
-april_set_doc("matrix.get_offset", {
+april_set_doc("matrix.offset", {
 		class = "method",
 		summary = "Returns the RAW offset position of matrix data.",
 		outputs = {
