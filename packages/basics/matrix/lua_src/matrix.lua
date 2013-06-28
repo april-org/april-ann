@@ -313,7 +313,8 @@ april_set_doc("matrix.set", {
 		  "...",
 		  "nth dimension position",
 		  "A number with the value to be set",
-		}, })
+		},
+		outputs = { "The caller matrix" }, })
 
 april_set_doc("matrix.raw_get", {
 		class = "method",
@@ -330,7 +331,8 @@ april_set_doc("matrix.raw_set", {
 		summary = "Sets the value of a given RAW position.",
 		params = {
 		  "RAW position", 
-		}, })
+		},
+		outputs = { "The caller matrix" }, })
 
 april_set_doc("matrix.get_offset", {
 		class = "method",
