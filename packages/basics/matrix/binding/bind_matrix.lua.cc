@@ -714,7 +714,7 @@
   {
     int arg_min;
     LUABIND_RETURN(float, obj->min(arg_min));
-    LUABIND_RETURN(int, arg_min);
+    LUABIND_RETURN(int, arg_min+1);
   }
 //BIND_END
 
@@ -722,7 +722,7 @@
   {
     int arg_max;
     LUABIND_RETURN(float, obj->max(arg_max));
-    LUABIND_RETURN(int, arg_max);
+    LUABIND_RETURN(int, arg_max+1);
   }
 //BIND_END
 
