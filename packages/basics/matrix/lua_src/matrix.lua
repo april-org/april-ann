@@ -103,7 +103,7 @@ end
 
 function matrix.savefile(matrix,filename,format)
   local f = io.open(filename,"w") or error("Unable to open " .. filename)
-  f:write(matrix:toString(format))
+  f:write(matrix:toString(format or "binary"))
   f:close()
 end
 
@@ -219,7 +219,7 @@ april_set_doc("matrix.savefile", {
 		  "A matrix object.",
 		  "A filename path.",
 		  { "An string with the format: ascii or binary [optional].",
-		    "By default is ascii." },
+		    "By default is binary." },
 		}, })
 
 april_set_doc("matrix.loadImage", {
