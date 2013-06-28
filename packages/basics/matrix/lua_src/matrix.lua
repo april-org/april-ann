@@ -103,7 +103,7 @@ end
 
 function matrix.savefile(matrix,filename,format)
   local f = io.open(filename,"w") or error("Unable to open " .. filename)
-  f:write(matrix:toString(format or "binary"))
+  f:write(matrix:toString(format or "ascii"))
   f:close()
 end
 
