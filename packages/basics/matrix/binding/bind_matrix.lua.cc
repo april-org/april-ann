@@ -494,6 +494,7 @@
   LUABIND_GET_PARAMETER(1, int, raw_pos);
   LUABIND_GET_PARAMETER(2, float, value);
   (*obj)[raw_pos] = value;
+  LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END
 
