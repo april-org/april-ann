@@ -64,7 +64,7 @@ output,L,chain = ann.autoencoders.iterative_sampling{
   max     = max_iterations,
   mask    = mask,
   stop    = stop_criterion,
-  verbose = true,
+  verbose = false,
   log     = log,
   loss    = loss,
 }
@@ -80,7 +80,7 @@ print(ite_L)
 output,L,chain = ann.autoencoders.sgd_sampling{
   model   = full_sdae,
   noise   = noise,
-  input   = input,
+  input   = input:rewrap(1,256):clone("col_major"),
   max     = max_iterations,
   mask    = mask,
   stop    = stop_criterion,
@@ -88,12 +88,14 @@ output,L,chain = ann.autoencoders.sgd_sampling{
   alpha   = alpha,
   beta    = beta,
   log     = log,
-  clamp   = function(v) return math.max(0, math.min(1,v)) end,
+  clamp   = function(mat) mat:clamp(0, 1) end,
   loss    = loss,
 }
 for i,output in ipairs(chain) do
-  matrix.saveImage(matrix(16,16,output), "wop2-"..string.format("%04d",i)..".pnm")
+  matrix.saveImage(output:clone("row_major"):rewrap(16,16),
+		   "wop2-"..string.format("%04d",i)..".pnm")
 end
-if log then output = table.imap(output, math.log) end
-sgd_L = loss:loss(tokens.memblock(output), tokens.memblock(val_input:getPattern(ipat)))
+if log then output:log() end
+sgd_L = loss:loss(tokens.matrix(output:rewrap(1,256)),
+		  tokens.matrix(matrix.col_major(1,256,val_input:getPattern(ipat))))
 print(sgd_L)
