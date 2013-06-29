@@ -1,25 +1,24 @@
 -- OVERWRITTING TOSTRING FUNCTION
 matrix.meta_instance.__tostring = function(self)
-  local t      = self:toTable()
   local dims   = self:dim()
   local major  = self:get_major_order()
   local coords = {}
   local out    = {}
   local row    = {}
   for i=1,#dims do coords[i]=1 end
-  for i=1,#t do
+  for i=1,self:size() do
     if #dims > 2 and coords[#dims] == 1 and coords[#dims-1] == 1 then
       table.insert(out,
 		   string.format("\n# pos [%s]",
 				 table.concat(coords, ",")))
     end
+    table.insert(row, string.format("%g", self:get(unpack(coords))))
     local j=#dims+1
     repeat
       j=j-1
       coords[j] = coords[j] + 1
       if coords[j] > dims[j] then coords[j] = 1 end
     until j==1 or coords[j] ~= 1
-    table.insert(row, string.format("%g", t[i]))
     if coords[#coords] == 1 then
       table.insert(out, table.concat(row, " ")) row={}
     end
