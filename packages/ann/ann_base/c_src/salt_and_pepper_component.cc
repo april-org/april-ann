@@ -121,7 +121,7 @@ namespace ANN {
   
   char *SaltAndPepperANNComponent::toLuaString() {
     buffer_list buffer;
-    buffer.printf("ann.components.gaussian_noise{ name='%s',size=%d }",
+    buffer.printf("ann.components.salt_and_pepper{ name='%s',size=%d }",
 		  name.c_str(), input_size);
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
