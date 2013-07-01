@@ -869,6 +869,10 @@ function ann.autoencoders.iterative_sampling(t)
     params.loss:reset()
     L = params.loss:loss(output, params.model:get_input())
     if params.log then output:get_matrix():exp() end
+    -- restore masked positions
+    for _,pos in ipairs(params.mask) do
+      output:get_matrix():set(1,pos,input_rewrapped:get(1,pos))
+    end
     -- insert current output to the chain
     table.insert(chain, output:get_matrix():rewrap(unpack(params.input:dim())))
     -- improvement measure
@@ -957,6 +961,10 @@ function ann.autoencoders.sgd_sampling(t)
     params.loss:reset()
     L = params.loss:loss(output, params.model:get_input())
     if params.log then output:get_matrix():exp() end
+    -- restore masked positions
+    for _,pos in ipairs(params.mask) do
+      output:get_matrix():set(1,pos,input_rewrapped:get(1,pos))
+    end
     table.insert(chain, output:get_matrix():rewrap(unpack(params.input:dim())))
     local imp = math.abs(math.abs(last_L - L)/last_L)
     if params.verbose then printf("%6d %6g :: %6g", i, L, imp) end
