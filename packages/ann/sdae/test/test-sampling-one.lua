@@ -1,10 +1,10 @@
 pnoise        = tonumber(arg[1] or 0.4)   -- noise percentage
 loss_function = arg[2] or "mse"
 alpha         = tonumber(arg[3] or 0.1)  -- SGD alpha parameter
-beta          = tonumber(arg[4] or 0.2)
+beta          = tonumber(arg[4] or 0.1)
 seed          = tonumber(arg[5] or 12345) -- random seed
 
-ipat = 4
+ipat = 16
 
 max_iterations  = 100
 stop_criterion  = 1e-03
