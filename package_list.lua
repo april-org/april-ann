@@ -21,7 +21,7 @@ return {
   "sdae",
 
   -- LANGUAGE MODELS
-  "fnnlm",
+--  "fnnlm",
   
   -- IMAGE HANDLERS
   "image",
