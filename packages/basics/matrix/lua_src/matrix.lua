@@ -1,25 +1,24 @@
 -- OVERWRITTING TOSTRING FUNCTION
 matrix.meta_instance.__tostring = function(self)
-  local t      = self:toTable()
   local dims   = self:dim()
   local major  = self:get_major_order()
   local coords = {}
   local out    = {}
   local row    = {}
   for i=1,#dims do coords[i]=1 end
-  for i=1,#t do
+  for i=1,self:size() do
     if #dims > 2 and coords[#dims] == 1 and coords[#dims-1] == 1 then
       table.insert(out,
 		   string.format("\n# pos [%s]",
 				 table.concat(coords, ",")))
     end
+    table.insert(row, string.format("%g", self:get(unpack(coords))))
     local j=#dims+1
     repeat
       j=j-1
       coords[j] = coords[j] + 1
       if coords[j] > dims[j] then coords[j] = 1 end
     until j==1 or coords[j] ~= 1
-    table.insert(row, string.format("%g", t[i]))
     if coords[#coords] == 1 then
       table.insert(out, table.concat(row, " ")) row={}
     end
@@ -103,7 +102,7 @@ end
 
 function matrix.savefile(matrix,filename,format)
   local f = io.open(filename,"w") or error("Unable to open " .. filename)
-  f:write(matrix:toString(format))
+  f:write(matrix:toString(format or "ascii"))
   f:close()
 end
 
@@ -219,7 +218,7 @@ april_set_doc("matrix.savefile", {
 		  "A matrix object.",
 		  "A filename path.",
 		  { "An string with the format: ascii or binary [optional].",
-		    "By default is ascii." },
+		    "By default is binary." },
 		}, })
 
 april_set_doc("matrix.loadImage", {
@@ -313,7 +312,8 @@ april_set_doc("matrix.set", {
 		  "...",
 		  "nth dimension position",
 		  "A number with the value to be set",
-		}, })
+		},
+		outputs = { "The caller matrix" }, })
 
 april_set_doc("matrix.raw_get", {
 		class = "method",
@@ -330,9 +330,10 @@ april_set_doc("matrix.raw_set", {
 		summary = "Sets the value of a given RAW position.",
 		params = {
 		  "RAW position", 
-		}, })
+		},
+		outputs = { "The caller matrix" }, })
 
-april_set_doc("matrix.get_offset", {
+april_set_doc("matrix.offset", {
 		class = "method",
 		summary = "Returns the RAW offset position of matrix data.",
 		outputs = {
@@ -375,6 +376,33 @@ april_set_doc("matrix.dim", {
 		summary = "Returns a table with the size of each dimension.",
 		outputs = {
 		  "A table",
+		}, })
+
+april_set_doc("matrix.dim", {
+		class = "method",
+		summary = "Returns the size of a given dimension number.",
+		params = {
+		  "A number indicating the dimension, between 1 and num_dims",
+		},
+		outputs = {
+		  "A number",
+		}, })
+
+april_set_doc("matrix.stride", {
+		class = "method",
+		summary = "Returns a table with the stride size of each dimension.",
+		outputs = {
+		  "A table",
+		}, })
+
+april_set_doc("matrix.stride", {
+		class = "method",
+		summary = "Returns the stride size of a given dimension number.",
+		params = {
+		  "A number indicating the dimension, between 1 and num_dims",
+		},
+		outputs = {
+		  "A number",
 		}, })
 
 april_set_doc("matrix.slice", {

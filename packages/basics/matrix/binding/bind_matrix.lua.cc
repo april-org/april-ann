@@ -473,7 +473,7 @@
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat get_offset
+//BIND_METHOD MatrixFloat offset
 {
   LUABIND_RETURN(int, obj->getOffset());
 }
@@ -494,6 +494,7 @@
   LUABIND_GET_PARAMETER(1, int, raw_pos);
   LUABIND_GET_PARAMETER(2, float, value);
   (*obj)[raw_pos] = value;
+  LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END
 
@@ -554,16 +555,32 @@
 //BIND_END
 
 //BIND_METHOD MatrixFloat dim
-//DOC_BEGIN
-// table dim()
-/// Devuelve una tabla con las dimensiones de la matriz.
-//DOC_END
 {
-  LUABIND_CHECK_ARGN(==, 0);
-  int ndim=obj->getNumDim();
+  LUABIND_CHECK_ARGN(>=, 0);
+  LUABIND_CHECK_ARGN(<=, 1);
+  int pos;
   const int *d=obj->getDimPtr();
-  LUABIND_VECTOR_TO_NEW_TABLE(int, d, ndim);
-  LUABIND_RETURN_FROM_STACK(-1);
+  LUABIND_GET_OPTIONAL_PARAMETER(1, int, pos, -1);
+  if (pos < 1) {
+    LUABIND_VECTOR_TO_NEW_TABLE(int, d, obj->getNumDim());
+    LUABIND_RETURN_FROM_STACK(-1);
+  }
+  else LUABIND_RETURN(int, d[pos-1]);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat stride
+{
+  LUABIND_CHECK_ARGN(>=, 0);
+  LUABIND_CHECK_ARGN(<=, 1);
+  int pos;
+  const int *s=obj->getStridePtr();
+  LUABIND_GET_OPTIONAL_PARAMETER(1, int, pos, -1);
+  if (pos < 1) {
+    LUABIND_VECTOR_TO_NEW_TABLE(int, s, obj->getNumDim());
+    LUABIND_RETURN_FROM_STACK(-1);
+  }
+  else LUABIND_RETURN(int, s[pos-1]);
 }
 //BIND_END
 
@@ -609,7 +626,7 @@
   else {
     const char *major;
     LUABIND_GET_OPTIONAL_PARAMETER(1, string, major, "row_major");
-    CBLAS_ORDER order=obj->getMajorOrder();
+    CBLAS_ORDER order=CblasRowMajor;
     if (strcmp(major, "col_major") == 0) order = CblasColMajor;
     else if (strcmp(major, "row_major") != 0)
       LUABIND_FERROR1("Incorrect major order string %s", major);
@@ -653,22 +670,7 @@
   LUABIND_CHECK_PARAMETER(2, float);
   LUABIND_GET_PARAMETER(1,float,rmin);
   LUABIND_GET_PARAMETER(2,float,rmax);
-  
-  // ajusta los valores a un rango predeterminado
-  float mmin, mmax;
-  obj->minAndMax(mmin, mmax);
-  if (mmax - mmin == 0) {
-    // caso especial, poner todos al valor inferior
-    for (MatrixFloat::iterator it(obj->begin()); it!=obj->end(); ++it) {
-      *it = rmin;
-    }
-  } else {
-    float offset = rmin-mmin;
-    double ratio = (rmax-rmin)/(mmax-mmin);
-    for (MatrixFloat::iterator it(obj->begin()); it!=obj->end(); ++it) {
-      *it = ratio*((*it)+offset);
-    }
-  }
+  obj->adjustRange(rmin, rmax);
   LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END
@@ -697,7 +699,7 @@
   {
     int arg_min;
     LUABIND_RETURN(float, obj->min(arg_min));
-    LUABIND_RETURN(int, arg_min);
+    LUABIND_RETURN(int, arg_min+1);
   }
 //BIND_END
 
@@ -705,7 +707,7 @@
   {
     int arg_max;
     LUABIND_RETURN(float, obj->max(arg_max));
-    LUABIND_RETURN(int, arg_max);
+    LUABIND_RETURN(int, arg_max+1);
   }
 //BIND_END
 
