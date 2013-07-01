@@ -1113,11 +1113,17 @@ april_set_doc("trainable.supervised_trainer.train_holdout_validation", {
 		params = {
 		  ["training_table"] = "A table for training_dataset method",
 		  ["validation_table"] = "A table for validate_dataset method",
+		  ["training_function"] = "A function to customize "..
+		    "training procedure [optional]. By default it calls "..
+		    "train_dataset(training_table) and uses same loss "..
+		    "function to train and validate. The function is called "..
+		    "as train_function(trainer, training_table). It must" ..
+		    "return the loss of training epoch",
 		  ["validation_function"] = "A function to customize "..
 		    "validation procedure [optional]. By default it calls "..
 		    "validate_dataset(validation_table) and uses same loss "..
 		    "function to train and validate. The function is called "..
-		    "as validation_function(self, validation_table)",
+		    "as validation_function(trainer, validation_table)",
 		  ["best_function"] = "A function to customize code execution "..
 		    "when validation loss is improved [optional]. It is "..
 		    "called as best_function(best_trainer_clone,best_error,best_epoch)",
@@ -1160,13 +1166,17 @@ function trainable.supervised_trainer:train_holdout_validation(t)
   local params = get_table_fields(
     {
       training_table   = { mandatory=true, type_match="table" },
+      training_function = { mandatory=false, type_match="function",
+			      default=function(trainer,t)
+				return trainer:train_dataset(t)
+			      end },
       validation_table = { mandatory=true, type_match="table" },
       validation_function = { mandatory=false, type_match="function",
-			      default=function(thenet,t)
-				return thenet:validate_dataset(t)
+			      default=function(trainer,t)
+				return trainer:validate_dataset(t)
 			      end },
       best_function = { mandatory=false, type_match="function",
-			default=function(thenet,t) end },
+			default=function(trainer,t) end },
       epochs_wo_validation = { mandatory=false, type_match="number", default=0 },
       min_epochs = { mandatory=true, type_match="number" },
       max_epochs = { mandatory=true, type_match="number" },
@@ -1187,7 +1197,7 @@ function trainable.supervised_trainer:train_holdout_validation(t)
     collectgarbage("collect")
     clock:reset()
     clock:go()
-    local tr_error  = self:train_dataset(params.training_table)
+    local tr_error  = params.training_function(self, params.training_table)
     local val_error = params.validation_function(self, params.validation_table)
     last_train_error,last_val_error,last_epoch = tr_error,val_error,epoch
     clock:stop()
@@ -1256,6 +1266,11 @@ april_set_doc("trainable.supervised_trainer.train_wo_validation", {
 		  }, 
 		params = {
 		  ["training_table"] = "A table for training_dataset method",
+		  ["training_function"] = "A function to customize "..
+		    "training procedure [optional]. By default it calls "..
+		    "train_dataset(training_table). The function is called "..
+		    "as train_function(trainer, training_table). It must" ..
+		    "return the loss of training epoch",
 		  ["min_epochs"] = "Minimum number of epochs",
 		  ["max_epochs"] = "Maximum number of epochs",
 		  ["percentage_stopping_criterion"] = "A percentage of "..
@@ -1292,7 +1307,12 @@ april_set_doc("trainable.supervised_trainer.train_wo_validation", {
 		  }, 
 		params = {
 		  ["training_table"] = "A function which returns a "..
-		    "training_dataset compatible table",
+		    "train_dataset compatible table",
+		  ["training_function"] = "A function to customize "..
+		    "training procedure [optional]. By default it calls "..
+		    "train_dataset(training_table). The function is called "..
+		    "as train_function(trainer, training_table). It must" ..
+		    "return the loss of training epoch",
 		  ["min_epochs"] = "Minimum number of epochs",
 		  ["max_epochs"] = "Maximum number of epochs",
 		  ["percentage_stopping_criterion"] = "A percentage of "..
@@ -1314,6 +1334,10 @@ function trainable.supervised_trainer:train_wo_validation(t)
   local params = get_table_fields(
     {
       training_table = { mandatory=true },
+      training_function = { mandatory=false, type_match="function",
+			      default=function(trainer,t)
+				return trainer:train_dataset(t)
+			      end },
       min_epochs = { mandatory=true, type_match="number" },
       max_epochs = { mandatory=true, type_match="number" },
       update_function = { mandatory=false, type_match="function",
@@ -1327,7 +1351,7 @@ function trainable.supervised_trainer:train_wo_validation(t)
     local tr_table = params.training_table
     if type(tr_table) == "function" then tr_table = tr_table() end
     collectgarbage("collect")
-    local tr_err         = self:train_dataset(tr_table)
+    local tr_err        = params.training_function(self, tr_table)
     local tr_improvement = (prev_tr_err - tr_err)/prev_tr_err
     if (epoch > params.min_epochs and
 	tr_improvement < params.percentage_stopping_criterion) then

@@ -861,6 +861,7 @@ function ann.autoencoders.iterative_sampling(t)
   local output  = input
   local chain   = {}
   for i=1,params.max do
+    params.model:reset()
     output = params.model:forward(tokens.matrix(input))
     -- restore masked positions
     -- for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
@@ -926,7 +927,7 @@ function ann.autoencoders.sgd_sampling(t)
       model      = { mandatory = true,  isa_match  = ann.components.base },
       noise      = { mandatory = true,  isa_match  = ann.components.base },
       mask       = { mandatory = false, type_match = "table", default = {}, },
-      input      = { mandatory = true,  type_match = "table"  },
+      input      = { mandatory = true,  isa_match  = matrix },
       max        = { mandatory = true,  type_match = "number" },
       stop       = { mandatory = true,  type_match = "number" },
       verbose    = { mandatory = false, type_match = "boolean", default=false },
@@ -941,31 +942,26 @@ function ann.autoencoders.sgd_sampling(t)
 	 "Input and output sizes must be equal!!! (it is an auto-encoder)")
   local L        = 11111111111111111
   local last_L   = 11111111111111111
-  local trainer  = trainable.supervised_trainer(params.model)
+  local min      = 11111111111111111
+  local input_rewrapped = params.input:rewrap(1, params.input:size())
+  local input    = input_rewrapped:clone()
   local output   = input
   local result   = input
-  local min      = 11111111111111111
   local chain    = {}
-  local input      = table.deep_copy(params.input)
-  trainer:build()
   for i=1,params.max do
     params.model:reset()
-    output = trainer:calculate(input)
+    output = params.model:forward(tokens.matrix(input))
     -- restore masked positions
     -- for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
     -- compute the loss of current iteration
     params.loss:reset()
-    if params.log then
-      L = params.loss:loss(tokens.memblock(table.imap(output, math.log)),
-			   params.model:get_input())
-    else
-      L = params.loss:loss(tokens.memblock(output), params.model:get_input())
-    end
-    table.insert(chain, output)
+    L = params.loss:loss(output, params.model:get_input())
+    if params.log then output:get_matrix():exp() end
+    table.insert(chain, output:get_matrix():rewrap(unpack(params.input:dim())))
     local imp = math.abs(math.abs(last_L - L)/last_L)
     if params.verbose then printf("%6d %6g :: %6g", i, L, imp) end
     if i==1 or L <= min then
-      min,result = L,output
+      min,result = L,output:get_matrix()
       if params.verbose then printf(" *") end
     end
     if params.verbose then printf("\n") end
@@ -973,17 +969,23 @@ function ann.autoencoders.sgd_sampling(t)
     -- GRADIENT DESCENT UPDATE OF INPUT VECTOR
     local gradient = params.model:backprop(params.loss:gradient(params.model:get_output(),
 								params.model:get_input()))
-    gradient = gradient:convert_to_memblock():to_table()
-    for j=1,#gradient do
-      input[j] = params.clamp( params.beta*output[j] + (1.0-params.beta)*input[j] - params.alpha * gradient[j] )
-    end
+    gradient = gradient:get_matrix()
+    output   = output:get_matrix()
+    -- input = (1 - beta)*input + beta*output - alpha*gradient
+    input = ( input:clone():
+	      scal(1.0 - params.beta):
+	      axpy(params.beta, output):
+	      axpy(-params.alpha, gradient) )
+    params.clamp(input)
     --
     last_L = L
     -- sample from noise distribution
     params.noise:reset()
-    input = params.noise:forward(tokens.memblock(input)):convert_to_memblock():to_table()
+    input = params.noise:forward(tokens.matrix(input)):get_matrix()
     -- restore masked positions
-    for _,pos in ipairs(params.mask) do input[pos] = params.input[pos] end
+    for _,pos in ipairs(params.mask) do
+      input:set(1,pos,input_rewrapped:get(1,pos))
+    end
   end
   return result,min,chain
 end
