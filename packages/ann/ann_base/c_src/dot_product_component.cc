@@ -458,7 +458,7 @@ namespace ANN {
 
   char *DotProductANNComponent::toLuaString() {
     buffer_list buffer;
-    buffer.printf("ann.components.copy{ name='%s',weights='%s',"
+    buffer.printf("ann.components.dot_product{ name='%s',weights='%s',"
 		  "input=%d,output=%d,transpose=%s }",
 		  name.c_str(), weights_name.c_str(),
 		  input_size, output_size,
