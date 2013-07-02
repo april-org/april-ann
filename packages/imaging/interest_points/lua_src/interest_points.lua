@@ -23,7 +23,7 @@ local function argmax(tbl)
 end
 ]]
 
-function interest_points.pointClassifier:__call(alto, ancho, minialto, miniancho, reverse)
+function interest_points.pointClassifier:__call(ancho, alto, miniancho, minialto, reverse)
 
     -- prepara la configuracion para aplicar el ojo de pez con dataset.linear_comb
     -- local functions
@@ -175,7 +175,7 @@ function interest_points.pointClassifier:classify_points(img, points, mlp)
           x = points[i][1]
           y = points[i][2]
           _, c = score:max()
-          table.insert(res, {x, y, c+1})
+          table.insert(res, {x, y, c})
       end
 
       return res
