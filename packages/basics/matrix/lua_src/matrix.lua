@@ -45,7 +45,7 @@ end
 
 matrix.meta_instance.__mul = function(op1, op2)
   if not isa(op1,matrix) then op1,op2=op2,op1 end
-  if type(op2) == "number" then return op1:scal(op2)
+  if type(op2) == "number" then return op1:clone():scal(op2)
   else return op1:mul(op2)
   end
 end
