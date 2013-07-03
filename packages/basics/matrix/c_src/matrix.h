@@ -1216,7 +1216,7 @@ void Matrix<T>::gemv(CBLAS_TRANSPOSE trans_A,
 		otherX->getVectorSize());
   if (major_order != otherA->major_order ||
       otherA->major_order != otherX->major_order)
-    ERROR_EXIT(128, "Matrices with different major orders");
+    ERROR_EXIT(128, "Matrices with different major orders\n");
   
   int M=otherA->matrixSize[0], N=otherA->matrixSize[1];
   int lda=( major_order==CblasRowMajor)?otherA->stride[0]:otherA->stride[1];

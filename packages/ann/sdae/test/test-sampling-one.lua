@@ -1,13 +1,13 @@
 pnoise        = tonumber(arg[1] or 0.4)   -- noise percentage
-loss_function = arg[2] or "mse"
+loss_function = arg[2] or "cross_entropy"
 alpha         = tonumber(arg[3] or 0.1)  -- SGD alpha parameter
-beta          = tonumber(arg[4] or 0.1)
+beta          = tonumber(arg[4] or 0.2)
 seed          = tonumber(arg[5] or 12345) -- random seed
 
 ipat = 16
 
 max_iterations  = 100
-stop_criterion  = 1e-03
+stop_criterion  = 1e-8
 
 m1 = ImageIO.read("digits.png"):to_grayscale():invert_colors():matrix()
 
@@ -54,7 +54,6 @@ matrix.saveImage(input, "wop0.pnm")
 noise = ann.components.stack():
 push(ann.components.gaussian_noise{ random=random(), mean=0, var=0.2 }):
 push(ann.components.salt_and_pepper{ random=random(), prob=0.2 })
-
 noise:build{ input=256, output=256 }
 
 output,L,chain = ann.autoencoders.iterative_sampling{
