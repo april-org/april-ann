@@ -327,7 +327,7 @@ namespace ANN {
 
   char *JoinANNComponent::toLuaString() {
     buffer_list buffer;
-    buffer.printf("ann.components.join{ name='%s' }");
+    buffer.printf("ann.components.join{ name='%s' }", name.c_str());
     for (unsigned int i=0; i<components.size(); ++i) {
       // FIXME: please, this code could be improved freeing the aux array
       char *aux = components[i]->toLuaString();
