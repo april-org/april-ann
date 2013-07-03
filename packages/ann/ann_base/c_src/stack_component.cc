@@ -175,7 +175,7 @@ namespace ANN {
     buffer_list buffer;
     buffer.printf("ann.components.stack{ name='%s' }", name.c_str());
     for (unsigned int i=0; i<components.size(); ++i) {
-      // FIXME: please, this code could be improved freeing the aux array
+      // FIXME: this code could be improved sharing the aux array
       char *aux = components[i]->toLuaString();
       buffer.printf(":push(%s)", aux);
       delete[] aux;
