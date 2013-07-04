@@ -133,6 +133,8 @@ namespace ANN {
     void scale(float alpha);
 
     void printDebug();
+
+    char *toLuaString();
   };
 }
 #endif

@@ -23,6 +23,8 @@
 #include "connection.h"
 #include "check_floats.h"
 #include "wrapper.h"
+#include "utilMatrixFloat.h"
+#include "buffer_list.h"
 
 namespace ANN {
   const double Connections::weightnearzero = 1e-7;
@@ -293,4 +295,16 @@ namespace ANN {
     printf("\n");
   }
   
+  char *Connections::toLuaString() {
+    char *w, *oldw;
+    saveMatrixFloatToString(weights, &w, false);
+    saveMatrixFloatToString(prev_weights, &oldw, false);
+    buffer_list buffer;
+    buffer.printf("ann.connection{ input=%d, output=%d,"
+		  "w=matrix.fromString[[%s]], oldw=matrix.fromString[[%s]]}",
+		  getInputSize(), getOutputSize(), w, oldw);
+    delete[] w;
+    delete[] oldw;
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  }
 }

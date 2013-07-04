@@ -113,8 +113,12 @@ using namespace ANN;
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, column_size, uint, column_size,
 				       input_size);
   if (oldw && !w) LUABIND_ERROR("Parameter w is mandatory with oldw!!!\n");
-  obj=new Connections(input_size, output_size);
-  if (w) obj->loadWeights(w, oldw, first_pos, column_size);
+  if (w && w->getMajorOrder() == CblasColMajor)
+    obj=new Connections(input_size, output_size, w, oldw);
+  else {
+    obj=new Connections(input_size, output_size);
+    if (w) obj->loadWeights(w, oldw, first_pos, column_size);
+  }
   LUABIND_RETURN(Connections, obj);
 }
 //BIND_END
@@ -123,6 +127,14 @@ using namespace ANN;
 {
   Connections *cnn = obj->clone();
   LUABIND_RETURN(Connections, cnn);
+}
+//BIND_END
+
+//BIND_METHOD Connections to_lua_string
+{
+  char *str = obj->toLuaString();
+  LUABIND_RETURN(string, str);
+  delete[] str;
 }
 //BIND_END
 
