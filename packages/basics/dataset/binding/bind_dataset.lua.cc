@@ -1105,7 +1105,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   LUABIND_CHECK_PARAMETER(1, table);
   LUABIND_TABLE_GETN(1,bunch_size);
   indexes = new int[bunch_size];
-  LUABIND_TABLE_TO_VECTOR(1,uint,indexes,bunch_size);
+  LUABIND_TABLE_TO_VECTOR_SUB1(1,uint,indexes,bunch_size);
   Token *token = obj->getPatternBunch(indexes,bunch_size);
   delete[] indexes;
   LUABIND_RETURN(Token, token);
@@ -1138,7 +1138,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   LUABIND_GET_PARAMETER(2,Token,pattern);
   LUABIND_TABLE_GETN(1,bunch_size);
   indexes = new int[bunch_size];
-  LUABIND_TABLE_TO_VECTOR(1,uint,indexes,bunch_size);
+  LUABIND_TABLE_TO_VECTOR_SUB1(1,uint,indexes,bunch_size);
   obj->putPatternBunch(indexes,bunch_size,pattern);
   delete[] indexes;
 }

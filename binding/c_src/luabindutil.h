@@ -70,6 +70,17 @@ void check_table_fields(lua_State *L, int idx, ...);
     } \
   } while (0)
 
+#define LUABIND_TABLE_TO_VECTOR_SUB1(table, tipo, vector, longitud)	\
+  do { \
+    int luabind_len = (longitud); \
+    int luabind_table = (table); \
+    for(int luabind_i=0; luabind_i < luabind_len; luabind_i++) { \
+      lua_rawgeti(L, luabind_table, luabind_i+1); \
+      vector[luabind_i] = lua_to##tipo(L, -1) - 1; \
+      lua_pop(L,1); \
+    } \
+  } while (0)
+
 #define LUABIND_VECTOR_TO_NEW_TABLE(tipo, vector, longitud) \
   do { \
     int luabind_len = longitud; \
