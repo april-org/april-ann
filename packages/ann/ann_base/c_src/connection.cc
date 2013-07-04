@@ -41,9 +41,7 @@ namespace ANN {
     IncRef(weights);
     IncRef(prev_weights);
     if (w) weights->copy(w);
-    else weights->zeros();
     if (oldw) prev_weights->copy(oldw);
-    else prev_weights->zeros();
   }
 
   Connections::~Connections() {
