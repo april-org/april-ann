@@ -10,18 +10,18 @@ function assert_differences(test, results)
     for i=1,#f_t do
       if tonumber(f_t[i]) then
 	assert(math.abs(tonumber(f_t[i]) - tonumber(r_t[i])) < epsilon,
-	       "Incorrect value found")
+	       "Incorrect value found during " .. results)
       end
     end
   end
 end
 --
 assert(os.execute("april-ann test/test.lua > /tmp/test.log") == 0,
-       "Error executing script")
+       "Error executing script test.lua")
 assert_differences("/tmp/test.log", "test/results.log")
 --
 assert(os.execute("april-ann test/test_on_the_fly.lua > /tmp/test.log") == 0,
-       "Error executing script")
+       "Error executing script test_on_the_fly.lua")
 assert_differences("/tmp/test.log", "test/results_on_the_fly.log")
 --
 os.execute("rm -f /tmp/test.log")
