@@ -819,35 +819,6 @@ function table.deep_copy(t, lookup_table)
  return copy
 end
 
-function table.expand(t)
-   local result={}
-   for i=1,table.getn(t),2 do
-      result = table.join(result, range(t[i], t[i+1]))
-   end
-   return result
-end
-
-function table.compact(t)
-   local result={}
-   local ini=nil
-   local fin=nil
-   for i,j in pairs(t) do
-      if ini == nil then
-	 ini = j
-	 fin = j
-      elseif j-fin > 1 then
-	 table.insert(result, ini)
-	 table.insert(result, fin)
-	 ini = j
-	 fin = j
-      else fin = j
-      end
-   end
-   table.insert(result, ini)
-   table.insert(result, fin)
-   return result
-end
-
 -----
 -- to string
 -----
@@ -871,16 +842,6 @@ function table.tostring(t)
   end
   table.insert(out,"}\n")
   return table.concat(out,",")
-end
-
--- te da una nueva tabla reversa de la anterior
-function table.reverse(t)
-  local n = {}
-  local lenp1 = #t+1
-  for i = 1,#t do
-    n[lenp1-i] = t[i]
-  end
-  return n
 end
 
 -- devuelve el valor maximo de una tabla
