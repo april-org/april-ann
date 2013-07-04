@@ -938,30 +938,81 @@ Image<T> *Image<T>::affine_transform(AffineTransform2D *trans, T default_value,
 }
 
 template <typename T>
+Matrix<T> * Image<T>::comb_lineal_forward(int sx, int sy, int ancho, int alto, int miniancho, int minialto, LinearCombConf<T> *conf) {
+
+  using april_utils::max;
+  using april_utils::min;
+  int output_size = miniancho*minialto;
+
+//  printf("Preparing Combination %d\n", conf->patternsize);
+  Matrix<T> *mat = new Matrix<T>(1, output_size);
+  
+  for(int i = 0; i < output_size; ++i) (*mat)(i) = 1; 
+
+  //FIXME: This is not working correctly if ancho y alto are not multiples of 2
+  int miny = max(sy-alto/2,0);
+  int maxy = min(sy+alto/2-1, this->height);
+  int minx = max(sx-ancho/2,0);
+  int maxx = min(sx+ancho/2-1, this->width);
+  
+  int dx = (sx-ancho/2);
+  int dy = (sy-alto/2);
+
+  float th = 1-1e-5 ;
+  int desde = 0;
+  for (int y = miny; y < maxy; ++y){
+      int ly = y - dy;
+      int p = ly*ancho;
+      
+      if (p + (minx-dx) > 0)
+          desde = conf->numTuplas[p+(minx-dx)-1];
+      for (int x = minx; x < maxx; x++){
+          float value = (1-(*this)(x,y));
+          int lx = x - dx;
+/*          if (p+lx != 0) {
+            desde = conf->numTuplas[p+lx-1];
+            }
+            */
+          int hasta = conf->numTuplas[p+lx];
+
+          for (int j=desde;j<hasta;j++) {
+              if (value > th);
+              else{
+                  int dest = conf->indices[j];
+                  (*mat)(dest) -= value*conf->pesos[j];
+              }
+          }
+          desde = hasta; 
+      } 
+  }
+  return mat;
+
+}
+template <typename T>
 Image<T>* Image<T>::substract_image(Image<T> *img, T low, T high) const {
 
-  int  s_height = img->height;
-  int  s_width  = img->width;
+    int  s_height = img->height;
+    int  s_width  = img->width;
 
-  //  printf("%d %d %d %d\n", s_width, s_height, this->width, this->height);
-  assert("The images does not have the same dimension"
-	 && s_width == this->width && s_height == this->height);
+    //  printf("%d %d %d %d\n", s_width, s_height, this->width, this->height);
+    assert("The images does not have the same dimension"
+            && s_width == this->width && s_height == this->height);
 
-  int dims[2];
-  dims[0] = this->height;
-  dims[1] = this->width;
-  Matrix<T> *mat = new Matrix<T>(2,dims);
-  Image<T>  *res = new Image<T>(mat);
+    int dims[2];
+    dims[0] = this->height;
+    dims[1] = this->width;
+    Matrix<T> *mat = new Matrix<T>(2,dims, 0);
+    Image<T>  *res = new Image<T>(mat);
 
 
-  for (int y = 0; y < this->height; y++){
-    for (int x = 0; x < this->width; x++){
-      T value = high + (*this)(x,y) -(*img)(x,y);
-      (*res)(x, y) =  april_utils::clamp(value, low, high);
-    } 
-  }
+    for (int y = 0; y < this->height; y++){
+        for (int x = 0; x < this->width; x++){
+            T value = high + (*this)(x,y) -(*img)(x,y);
+            (*res)(x, y) =  april_utils::clamp(value, low, high);
+        } 
+    }
 
-  return res;
+    return res;
 }
 
 #endif // _IMAGE_CC_

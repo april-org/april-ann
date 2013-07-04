@@ -28,6 +28,9 @@
 #include "bind_matrix.h"
 #include "bind_affine_transform.h"
 #include <cmath>
+#include "datasetFloat.h"
+#include "dataset.h"
+#include "bind_dataset.h"
 //BIND_END
 
 //BIND_LUACLASSNAME ImageFloat Image
@@ -409,5 +412,21 @@
   LUABIND_RETURN(ImageFloatRGB, res);
 }
 //BIND_END
+//BIND_METHOD ImageFloat comb_lineal_forward
+{
+  LUABIND_CHECK_ARGN(==, 7);
+  int x, y, alto, ancho, minialto, miniancho, output_size;
+  LinearCombConfFloat *cl;
+  LUABIND_GET_PARAMETER(1, int, x);
+  LUABIND_GET_PARAMETER(2, int, y);
+  LUABIND_GET_PARAMETER(3, int, ancho);
+  LUABIND_GET_PARAMETER(4, int, alto);
+  LUABIND_GET_PARAMETER(5, int, miniancho);
+  LUABIND_GET_PARAMETER(6, int, minialto);
+  LUABIND_GET_PARAMETER(7, LinearCombConfFloat, cl);
 
+  MatrixFloat *res = obj->comb_lineal_forward(x,y,ancho, alto, miniancho, minialto, cl);
+  LUABIND_RETURN(MatrixFloat, res);
 
+}
+//BIND_END
