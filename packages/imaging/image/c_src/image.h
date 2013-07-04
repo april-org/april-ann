@@ -24,6 +24,7 @@
 #include "referenced.h"
 #include "matrix.h"
 #include "affine_transform.h"
+#include "dataset.h"
 #include <cmath>
 
 template <typename T>
@@ -100,8 +101,11 @@ class Image : public Referenced {
   Image<T> *remove_blank_columns() const;
   Image<T> *add_rows(int top_rows, int bottom_rows, T value) const;
   Image<T> *substract_image(Image<T> *img, T low, T high) const;
+
+  Matrix<T> *comb_lineal_forward(int x, int y, int ancho, int alto, int miniancho, int minialto, LinearCombConf<T> *cl);
  private:
   void invert_affine_matrix(float c[6], float dest[6]) const;
+  
 };
 
 /*** Implementacion ***/
