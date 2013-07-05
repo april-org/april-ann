@@ -90,7 +90,7 @@ namespace ANN {
       MatrixFloat *output_mat;
       int dims[2] = { static_cast<int>(bunch_size),
 		      static_cast<int>(output_size) };
-      output_mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+      output_mat = new MatrixFloat(2, dims, CblasColMajor);
       AssignRef(output,new TokenMatrixFloat(output_mat));
 #ifdef USE_CUDA
       output_mat->setUseCuda(use_cuda);
@@ -130,7 +130,7 @@ namespace ANN {
       MatrixFloat *output_mat;
       int dims[2] = {static_cast<int>(input_vector_token->size()),
 		     static_cast<int>(output_size)};
-      output_mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+      output_mat = new MatrixFloat(2, dims, CblasColMajor);
       AssignRef(output,new TokenMatrixFloat(output_mat));
 #ifdef USE_CUDA
       output_mat->setUseCuda(use_cuda);
@@ -207,7 +207,7 @@ namespace ANN {
     MatrixFloat *error_output_mat;
     int dims[2] = { static_cast<int>(bunch_size),
 		    static_cast<int>(input_size) };
-    error_output_mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+    error_output_mat = new MatrixFloat(2, dims, CblasColMajor);
     AssignRef(error_output,new TokenMatrixFloat(error_output_mat));
 #ifdef USE_CUDA
     output_mat->setUseCuda(use_cuda);

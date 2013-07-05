@@ -92,7 +92,7 @@ namespace ANN {
     MatrixFloat *error_output_mat;
     int dims[2] = { static_cast<int>(bunch_size),
 		    static_cast<int>(input_size) };
-    error_output_mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+    error_output_mat = new MatrixFloat(2, dims, CblasColMajor);
 #ifdef USE_CUDA
     error_output_mat->setUseCuda(use_cuda);
 #endif

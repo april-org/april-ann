@@ -36,8 +36,8 @@ namespace ANN {
     num_references(0), update_weights_calls(0) {
     int dims[2] = { static_cast<int>(num_outputs),
 		    static_cast<int>(num_inputs) };
-    weights      = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
-    prev_weights = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+    weights      = new MatrixFloat(2, dims, CblasColMajor);
+    prev_weights = new MatrixFloat(2, dims, CblasColMajor);
     if (weights == 0 || prev_weights == 0)
       ERROR_EXIT(130, "Impossible to allocate memory\n");
     IncRef(weights);
