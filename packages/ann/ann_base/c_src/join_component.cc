@@ -35,8 +35,7 @@ namespace ANN {
     error_input_vector(0),
     output_vector(0),
     error_output_vector(0),
-    segmented_input(false),
-    bunch_size(0) {
+    segmented_input(false) {
   }
   
   JoinANNComponent::~JoinANNComponent() {
@@ -92,24 +91,36 @@ namespace ANN {
       segmented_input = true;
       TokenBunchVector *input_vector_token;
       input_vector_token = input_token->convertTo<TokenBunchVector*>();
-      if (result_vector_token->size() != input_vector_token->size())
-	ERROR_EXIT2(128, "Incorrect number of components at input vector, "
-		    "expected %u and found %u\n",
-		    result_vector_token->size(), input_vector_token->size());
+      // for each component we reserve a vector for bunch_size patterns
       for (unsigned int i=0; i<result_vector_token->size(); ++i)
-	AssignRef((*result_vector_token)[i], (*input_vector_token)[i]);
-      bunch_size = 0;
+	AssignRef((*result_vector_token)[i],
+		  new TokenBunchVector(input_vector_token->size()));
+      // for each pattern
+      for (unsigned int b=0; b<input_vector_token->size(); ++b) {
+	TokenBunchVector *pattern_token;
+	pattern_token=(*input_vector_token)[b]->convertTo<TokenBunchVector*>();
+	if (result_vector_token->size() != pattern_token->size())
+	  ERROR_EXIT3(128, "Incorrect number of components at input vector, "
+		      "expected %u and found %u [%s]\n",
+		      result_vector_token->size(), pattern_token->size(),
+		      name.c_str());	  
+	// for each component
+	for (unsigned int i=0; i<result_vector_token->size(); ++i) {
+	  (*(*result_vector_token)[i]->convertTo<TokenBunchVector*>())[b] = (*pattern_token)[i];
+	  IncRef((*pattern_token)[i]);
+	}
+      }
       break;
     }
     default:
-      ERROR_EXIT(129, "Incorrect token type");
+      ERROR_EXIT1(129, "Incorrect token type [%s]", name.c_str());
     }
   }
   
   void JoinANNComponent::buildErrorInputBunchVector(TokenBunchVector *&vector_token,
 						    Token *token) {
     if (token->getTokenCode() != table_of_token_codes::token_matrix)
-      ERROR_EXIT(128, "Incorrect token type\n");
+      ERROR_EXIT1(128, "Incorrect token type [%s]\n", name.c_str());
     //
     TokenMatrixFloat *mat_token = token->convertTo<TokenMatrixFloat*>();
     MatrixFloat *mat = mat_token->getMatrix();
@@ -136,7 +147,8 @@ namespace ANN {
 							    bool is_output) {
     MatrixFloat *full_mat, *aux_mat;
     if ((*token)[0]->getTokenCode() != table_of_token_codes::token_matrix)
-      ERROR_EXIT1(128,"Incorrect token type at TokenBunchVector pos %d\n",0);
+      ERROR_EXIT2(128,"Incorrect token type at TokenBunchVector pos %d [%s]\n",
+		  0,name.c_str());
     aux_mat  = (*token)[0]->convertTo<TokenMatrixFloat*>()->getMatrix();
     int sizes[2]  = { aux_mat->getDimSize(0),
 		      (is_output) ?
@@ -149,7 +161,7 @@ namespace ANN {
 #endif
     for (unsigned int i=0; i<token->size(); ++i) {
       if ((*token)[i]->getTokenCode() != table_of_token_codes::token_matrix)
-	ERROR_EXIT(128, "Incorrect token type\n");
+	ERROR_EXIT1(128, "Incorrect token type [%s]\n", name.c_str());
       aux_mat = (*token)[i]->convertTo<TokenMatrixFloat*>()->getMatrix();
       ASSERT_MATRIX(aux_mat);
       const unsigned int sz = ( (is_output) ?
@@ -171,7 +183,7 @@ namespace ANN {
   TokenMatrixFloat *JoinANNComponent::buildMatrixFloatToken(Token *token,
 							    bool is_output) {
     if (token->getTokenCode() != table_of_token_codes::vector_Tokens)
-      ERROR_EXIT(128, "Incorrect output token type");
+      ERROR_EXIT1(128, "Incorrect output token type [%s]\n", name.c_str());
     //
     TokenBunchVector *vector_token = token->convertTo<TokenBunchVector*>();
     return buildMatrixFloatToken(vector_token, is_output);
@@ -199,7 +211,7 @@ namespace ANN {
       return 0;
     }
     if (_error_input->getTokenCode() != table_of_token_codes::token_matrix)
-      ERROR_EXIT(128, "Incorrect error input token type\n");
+      ERROR_EXIT1(128, "Incorrect error input token type [%s]\n", name.c_str());
     AssignRef(error_input, _error_input->convertTo<TokenMatrixFloat*>());
     // INFO: will be possible to put this method inside previous loop, but seems
     // more simpler a decoupled code
@@ -233,7 +245,6 @@ namespace ANN {
     error_input	 = 0;
     output	 = 0;
     error_output = 0;
-    bunch_size   = 0;
     for (unsigned int i=0; i<components.size(); ++i)
       components[i]->reset();
   }
@@ -255,8 +266,8 @@ namespace ANN {
 			weights_dict, components_dict);
     //
     if (components.size() == 0)
-      ERROR_EXIT(128, "JoinANNComponent needs one or more components, "
-		 "use addComponent method\n");
+      ERROR_EXIT1(128, "JoinANNComponent needs one or more components, "
+		  "use addComponent method [%s]\n", name.c_str());
     unsigned int computed_input_size = 0, computed_output_size = 0;
     AssignRef(input_vector, new TokenBunchVector(components.size()));
     AssignRef(output_vector, new TokenBunchVector(components.size()));
@@ -274,11 +285,13 @@ namespace ANN {
     if (input_size == 0)  input_size  = computed_input_size;
     if (output_size == 0) output_size = computed_output_size;
     if (input_size != computed_input_size)
-      ERROR_EXIT2(128, "Incorrect input sizes, components inputs sum %d but "
-		  "expected %d\n", computed_input_size, input_size);
+      ERROR_EXIT3(128, "Incorrect input sizes, components inputs sum %d but "
+		  "expected %d [%s]\n", computed_input_size, input_size,
+		  name.c_str());
     if (output_size != computed_output_size)
-      ERROR_EXIT2(128, "Incorrect output sizes, components outputs sum %d but "
-		  "expected %d\n", computed_output_size, output_size);
+      ERROR_EXIT3(128, "Incorrect output sizes, components outputs sum %d but "
+		  "expected %d [%s]\n", computed_output_size, output_size,
+		  name.c_str());
   }
   
   void JoinANNComponent::setUseCuda(bool v) {

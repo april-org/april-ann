@@ -50,7 +50,8 @@ namespace ANN {
     // error checking
     if ( (_input == 0) ||
 	 (_input->getTokenCode() != table_of_token_codes::token_matrix))
-      ERROR_EXIT(129,"Incorrect input Token type, expected token_matrix!\n");
+      ERROR_EXIT1(129,"Incorrect input Token type, expected token_matrix! [%s]\n",
+		  name.c_str());
     // change current input by new input
     AssignRef(input,_input->convertTo<TokenMatrixFloat*>());
     MatrixFloat *input_mat = input->getMatrix();
@@ -90,7 +91,8 @@ namespace ANN {
     // error checking
     if ( (_error_input == 0) ||
 	 (_error_input->getTokenCode() != table_of_token_codes::token_matrix))
-      ERROR_EXIT(129,"Incorrect input error Token type, expected token_matrix!\n");
+      ERROR_EXIT1(129,"Incorrect input error Token type, expected token_matrix! [%s]\n",
+		  name.c_str());
     // change current input by new input
     AssignRef(error_input,_error_input->convertTo<TokenMatrixFloat*>());
     MatrixFloat *error_input_mat = error_input->getMatrix();
@@ -103,7 +105,8 @@ namespace ANN {
     MatrixFloat *error_output_mat = error_input_mat->cloneOnlyDims();
     AssignRef(error_output,new TokenMatrixFloat(error_output_mat));
     if (!error_output_mat->sameDim(input->getMatrix()))
-      ERROR_EXIT(129, "Different bunches found at doForward and doBackprop\n");
+      ERROR_EXIT1(129, "Different bunches found at doForward and doBackprop [%s]\n",
+		  name.c_str());
     //
     MatrixFloat *input_mat = input->getMatrix();
     MatrixFloat *output_mat = output->getMatrix();
