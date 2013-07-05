@@ -216,8 +216,8 @@ public:
   };
   
   /********** Constructors ***********/
-  /// Full constructor given numDim, dim, default_value and major_order
-  Matrix(int numDim, const int* dim, T default_value=T(),
+  /// Full constructor given numDim, dim, and major_order
+  Matrix(int numDim, const int* dim,
 	 CBLAS_ORDER major_order = CblasRowMajor,
 	 GPUMirroredMemoryBlock<T> *data = 0,
 	 int offset = 0);
@@ -440,11 +440,10 @@ void Matrix<T>::release_memory() {
   DecRef(data);
 }
 
-/// Constructor with given default_value initialization
+/// Default constructor
 template <typename T>
 Matrix<T>::Matrix(int numDim,
 		  const int* dim,
-		  T default_value,
 		  CBLAS_ORDER major_order,
 		  GPUMirroredMemoryBlock<T> *data,
 		  int offset) : numDim(numDim),
@@ -467,10 +466,6 @@ Matrix<T>::Matrix(int numDim,
     this->data = data;
     IncRef(data);
   }
-  /*
-    T *d = data->getPPALForWrite();
-    for (int i=0; i<total_size; ++i) d[i] = default_value;
-  */
 }
 
 /// Constructor for sub-matrix building
@@ -526,7 +521,7 @@ Matrix<T>::Matrix(Matrix<T> *other,
 }
 
 
-/// Constructor with T() default value initialization
+/// Constructor with variable arguments
 template <typename T>
 Matrix<T>::Matrix(int numDim, int d1, ...) : numDim(numDim),
 					     offset(0),
@@ -545,11 +540,6 @@ Matrix<T>::Matrix(int numDim, int d1, ...) : numDim(numDim),
   va_end(ap);
   initialize(dim);
   allocate_memory(total_size);
-  /*
-    T default_value=T();
-    T *d = data->getPPALForWrite();
-    for (int i=0; i<total_size; ++i) d[i] = default_value;
-  */
   delete[] dim;
 }
 
@@ -604,7 +594,7 @@ Matrix<T> *Matrix<T>::rewrap(const int *new_dims, int len) {
   if (new_size != size())
     ERROR_EXIT2(128, "Incorrect size, expected %d, and found %d\n",
 		size(), new_size);
-  Matrix<T> *obj = new Matrix<T>(len, new_dims, T(), major_order, data, offset);
+  Matrix<T> *obj = new Matrix<T>(len, new_dims, major_order, data, offset);
   return obj;
 }
 
@@ -612,7 +602,7 @@ template<typename T>
 Matrix<T> *Matrix<T>::transpose() const {
   int *aux_matrix_size = new int[numDim];
   for (int i=0; i<numDim; ++i) aux_matrix_size[i] = matrixSize[numDim-i-1];
-  Matrix<T> *resul = new Matrix<T>(numDim, aux_matrix_size, T(), major_order);
+  Matrix<T> *resul = new Matrix<T>(numDim, aux_matrix_size, major_order);
   const T *d = data->getPPALForRead();
   for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
   for (iterator resul_it(resul->begin()); resul_it!=resul->end(); ++resul_it) {
@@ -625,7 +615,7 @@ Matrix<T> *Matrix<T>::transpose() const {
 
 template <typename T>
 Matrix<T>* Matrix<T>::cloneOnlyDims() const {
-  Matrix<T> *obj = new Matrix<T>(numDim, matrixSize, T(), major_order);
+  Matrix<T> *obj = new Matrix<T>(numDim, matrixSize, major_order);
   obj->setUseCuda(use_cuda);
   return obj;
 }
@@ -637,7 +627,7 @@ Matrix<T> *Matrix<T>::clone(CBLAS_ORDER major_order) {
     if (numDim != 2) ERROR_EXIT(128, "Major type not availabe when numDim!=2\n");
   */
   if (this->major_order != major_order) {
-    resul = new Matrix<T>(numDim, matrixSize, T(), major_order);
+    resul = new Matrix<T>(numDim, matrixSize, major_order);
     iterator resul_it(resul->begin());
     const_iterator this_it(begin());
     while(resul_it != resul->end()) {
@@ -874,13 +864,13 @@ Matrix<T>* Matrix<T>::multiply(const Matrix<T> *other) const {
   if (other->isVector()) {
     if (this->isColVector()) {
       int dim[2] = {getVectorSize(),other->getVectorSize()};
-      resul = new Matrix<T>(2, dim, T(), major_order);
+      resul = new Matrix<T>(2, dim, major_order);
       resul->zeros();
       resul->ger(1.0f, this, other);
     }
     else if (!this->isVector()) {
       int dim[2] = {matrixSize[0],1};
-      resul = new Matrix<T>(other->numDim, dim, T(), major_order);
+      resul = new Matrix<T>(other->numDim, dim, major_order);
       resul->zeros();
       resul->gemv(CblasNoTrans,
 		  1.0f, this, other,
@@ -888,14 +878,14 @@ Matrix<T>* Matrix<T>::multiply(const Matrix<T> *other) const {
     }
     else {
       int dim[1] = {1};
-      resul = new Matrix<T>(1, dim, T(), major_order);
+      resul = new Matrix<T>(1, dim, major_order);
       (*resul)(0) = this->dot(other);
     }
   }
   else if (numDim == 2 && other->numDim == 2 &&
       matrixSize[1] == other->matrixSize[0]) {
     int dim[2] = {matrixSize[0], other->matrixSize[1]};
-    resul = new Matrix<T>(2,dim,T(),major_order);
+    resul = new Matrix<T>(2,dim,major_order);
     resul->zeros();
     resul->gemm(CblasNoTrans, CblasNoTrans,
 		1.0f, this, other, 0.0f);
@@ -1023,7 +1013,7 @@ Matrix<T> *Matrix<T>::cmul(const Matrix<T> *other) {
     ERROR_EXIT(128, "Matrices with different dimension sizes\n");
   if (!getIsContiguous() || !other->getIsContiguous())
     ERROR_EXIT(128, "Only allowed for contiguous matrices\n");
-  Matrix<T> *new_mat = new Matrix(1, &total_size, T(), major_order);
+  Matrix<T> *new_mat = new Matrix(1, &total_size, major_order);
   doSsbmv(major_order, CblasLower,
 	  total_size, 0,
 	  1.0f, data, 1,

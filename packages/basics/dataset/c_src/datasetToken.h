@@ -49,7 +49,7 @@ public:
     case table_of_token_codes::token_matrix: {
       int dims[2]   = { static_cast<int>(bunch_size),
 			patternSize() };
-      MatrixFloat *output_mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+      MatrixFloat *output_mat = new MatrixFloat(2, dims, CblasColMajor);
       TokenMatrixFloat *output_mat_token  = new TokenMatrixFloat(output_mat);
       output           = output_mat_token;
       unsigned int i   = 0;
@@ -191,7 +191,7 @@ public:
   DataSetFloat2TokenWrapper(DataSetFloat *ds) : ds(ds) {
     IncRef(ds);
     int dims[2] = { 1, ds->patternSize() };
-    aux_mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+    aux_mat = new MatrixFloat(2, dims, CblasColMajor);
   }
   virtual ~DataSetFloat2TokenWrapper() {
     DecRef(ds);
@@ -201,7 +201,7 @@ public:
   int patternSize() { return ds->patternSize(); }
   Token *getPattern(int index) {
     int dims[2] = { 1, patternSize() };
-    MatrixFloat *mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+    MatrixFloat *mat = new MatrixFloat(2, dims, CblasColMajor);
     TokenMatrixFloat *token = new TokenMatrixFloat(mat);
     FloatGPUMirroredMemoryBlock *mem_block = mat->getRawDataAccess();
     float *mem_ptr = mem_block->getPPALForWrite();
@@ -210,7 +210,7 @@ public:
   }
   Token *getPatternBunch(const int *indexes, unsigned int bunch_size) {
     int dims[2] = { static_cast<int>(bunch_size), patternSize() };
-    MatrixFloat *mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+    MatrixFloat *mat = new MatrixFloat(2, dims, CblasColMajor);
     TokenMatrixFloat *token = new TokenMatrixFloat(mat);
     FloatGPUMirroredMemoryBlock *aux_mem_block = aux_mat->getRawDataAccess();
     float *aux_mem = aux_mem_block->getPPALForWrite();

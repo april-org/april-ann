@@ -25,8 +25,9 @@ const int AffineTransform2D::dimensions[2] = {3,3};
 
 /// Identity transform
 AffineTransform2D::AffineTransform2D():
-  Matrix<float>(2, dimensions, 0.0f)
+  Matrix<float>(2, dimensions)
 {
+  zeros();
   (*data)[0] = 1.0f;
   (*data)[4] = 1.0f;
   (*data)[8] = 1.0f;

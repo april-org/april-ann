@@ -155,7 +155,7 @@ namespace ANN {
 		      static_cast<int>(output_size) :
 		      static_cast<int>(input_size) };
     int coords[2] = { 0, 0 };
-    full_mat = new MatrixFloat(2, sizes, 0.0f, CblasColMajor);
+    full_mat = new MatrixFloat(2, sizes, CblasColMajor);
 #ifdef USE_CUDA
     full_mat->setUseCuda(use_cuda);
 #endif

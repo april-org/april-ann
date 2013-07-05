@@ -111,7 +111,7 @@
     }
   }
   MatrixFloat* obj;
-  obj = new MatrixFloat(ndims,dim,0.0f,CblasColMajor);
+  obj = new MatrixFloat(ndims,dim,CblasColMajor);
   if (lua_istable(L,argn)) {
     int i=1;
     for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
