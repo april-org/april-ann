@@ -300,7 +300,7 @@ namespace ANN {
     saveMatrixFloatToString(weights, &w, false);
     saveMatrixFloatToString(prev_weights, &oldw, false);
     buffer_list buffer;
-    buffer.printf("ann.connection{ input=%d, output=%d,"
+    buffer.printf("ann.connections{ input=%d, output=%d,"
 		  "w=matrix.fromString[[%s]], oldw=matrix.fromString[[%s]]}",
 		  getInputSize(), getOutputSize(), w, oldw);
     delete[] w;

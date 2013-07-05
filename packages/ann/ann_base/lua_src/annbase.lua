@@ -750,6 +750,7 @@ april_set_doc("ann.components.base.build",
 		    "at the components hierarchy."},
 		  { "A table with all the name=>ann.components found",
 		    "at the hierarchy."},
+		  { "The caller ANN component."},
 		}
 	      })
 

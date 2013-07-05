@@ -756,11 +756,11 @@ function table.map(t,f)
 end
 
 function table.imap2(t,f)
-  return map2(f, ipairs, f)
+  return map2(f, ipairs, t)
 end
 
 function table.map2(t,f)
-  return map2(f, pairs, f)
+  return map2(f, pairs, t)
 end
 
 function table.ifilter(t,f)
@@ -878,6 +878,14 @@ end
 function table.argmin(t)
   local max,index = table.min(t)
   return index
+end
+
+-- converts an unsorted dictionary in an array, throwing away the keys (the
+-- order of the array is not determined)
+function table.linearize(t)
+  local r = {}
+  for k,v in pairs(t) do table.insert(r, v) end
+  return r
 end
 
 ---------------------------------------------------------------
