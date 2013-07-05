@@ -75,11 +75,11 @@ function interest_points.pointClassifier:__call(ancho, alto, miniancho, minialto
         local inv_tlc = {}
         for i, lsources in pairs(tlc) do
             for j, v in ipairs(lsources) do
-                src, w = unpack(v)
+                local src, w = unpack(v)
 
                 if inv_tlc[src] == nil then inv_tlc[src] = {} end
                 if (w > threshold) then
-                 table.insert(inv_tlc[src], {i, w})
+                 table.insert(inv_tlc[src], {i-1, w})
                 end
             end
 
@@ -101,6 +101,7 @@ function interest_points.pointClassifier:__call(ancho, alto, miniancho, minialto
         local y1,y,pesoy = unpack(r_alto[i])
         for j=1,lenr_ancho do
             local x1,x,pesox = unpack(r_ancho[j])
+	    -- printf("x = %3d y = %3d\n",x,y)
             local minipos = (y-1)*miniancho+x -- la posicion x,y en la matriz resultante
             if tlc[minipos] == nil then tlc[minipos] = {} end
             local pos = (y1-1)*ancho+x1
@@ -266,7 +267,7 @@ end
 -- Given a image extract all the points and classify them
 -- -------------------------------------------------------
 function interest_points.pointClassifier:classify_points(img, points, mlp)
-
+   
     local dsOut = self:compute_points(img, points, mlp)
     local classes = getIndexSoftmax(dsOut)
 
@@ -291,6 +292,19 @@ function interest_points.pointClassifier:classify_points(img, points, mlp)
 
 end
 
+function interest_points.pointClassifier:extract_points(img, mlpUppers, mlpLowers)
+
+    local uppers, lowers = interest_points.extract_points_from_image(img)
+
+    -- Compute uppers
+    local uppers_classified = self:classify_points(img, uppers, mlpUppers)
+    -- Compute uppers
+    local lowers_classified = pc:classify_points(img, lowers, mlpLowers)
+
+    return uppers_classified, lowers_classified
+
+end
+
 ----------------------------------------------------------------------------
 -- table_points a (x, y, c) table where c is the majority class of the point
 -- Utility function that gets a list of points and the class of the points
@@ -311,6 +325,9 @@ function interest_points.sort_by_class(table_points, classes)
 
 
 end
+
+
+
 
 -- Returns two tables wiht the lower and bound points classified
 function interest_points.get_interest_points(img, mlpUppers, mlpLowers) 

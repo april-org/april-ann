@@ -946,8 +946,8 @@ Matrix<T> * Image<T>::comb_lineal_forward(int sx, int sy, int ancho, int alto, i
 
 //  printf("Preparing Combination %d\n", conf->patternsize);
   Matrix<T> *mat = new Matrix<T>(1, output_size);
-  
-  for(int i = 0; i < output_size; ++i) (*mat)(i) = 1; 
+ 
+  mat->fill(1);
 
   //FIXME: This is not working correctly if ancho y alto are not multiples of 2
   int miny = max(sy-alto/2,0);
@@ -958,35 +958,22 @@ Matrix<T> * Image<T>::comb_lineal_forward(int sx, int sy, int ancho, int alto, i
   int dx = (sx-ancho/2);
   int dy = (sy-alto/2);
 
-  float th = 1-1e-5 ;
-  int desde = 0;
-  for (int y = miny; y < maxy; ++y){
-      int ly = y - dy;
-      int p = ly*ancho;
-      
-      if (p + (minx-dx) > 0)
-          desde = conf->numTuplas[p+(minx-dx)-1];
-      for (int x = minx; x < maxx; x++){
-          float value = (1-(*this)(x,y));
-          int lx = x - dx;
-/*          if (p+lx != 0) {
-            desde = conf->numTuplas[p+lx-1];
-            }
-            */
-          int hasta = conf->numTuplas[p+lx];
-
-          for (int j=desde;j<hasta;j++) {
-              if (value > th);
-              else{
-                  int dest = conf->indices[j];
-                  (*mat)(dest) -= value*conf->pesos[j];
-              }
-          }
-          desde = hasta; 
-      } 
+  const float th = 1-1e-5 ;
+  int *vec_tuplas = conf->numTuplas + (miny-dy)*ancho + minx-dx;
+  for (int y = miny; y < maxy; ++y,vec_tuplas+=ancho){
+    for (int x = minx; x < maxx; x++){
+      float value = (*this)(x,y);
+      if (value < th) {
+	value = 1.0-value;
+	for (int j = vec_tuplas[x-1];j<vec_tuplas[x];j++) {
+	  int dest = conf->indices[j];
+	  // FIXME sustituir por mat[dest], ahora no funciona
+	  (*mat)(dest) -= value*conf->pesos[j];
+	}
+      }
+    } 
   }
   return mat;
-
 }
 template <typename T>
 Image<T>* Image<T>::substract_image(Image<T> *img, T low, T high) const {
