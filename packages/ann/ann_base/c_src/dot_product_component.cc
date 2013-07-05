@@ -70,7 +70,8 @@ namespace ANN {
 					 name.c_str());
     MatrixFloat *weights_mat = weights_matrix->getPtr();
     // error checking
-    if (_input == 0) ERROR_EXIT(129,"Null Token received!\n");
+    if (_input == 0) ERROR_EXIT1(129,"Null Token received! [%s]\n",
+				 name.c_str());
     // Three tokens are allowed: matrix, sparse, vector of sparse
     switch(_input->getTokenCode()) {
     case table_of_token_codes::token_matrix: {
@@ -149,7 +150,8 @@ namespace ANN {
       for (unsigned int b=0; b<input_vector_token->size(); ++b) {
 	Token *current = (*input_vector_token)[b];
 	if (current->getTokenCode()!=table_of_token_codes::vector_float_sparse)
-	  ERROR_EXIT(128,"Incorrect token type, expected vector_float_sparse\n");
+	  ERROR_EXIT1(128,"Incorrect token type, expected vector_float_sparse [%s]\n",
+		      name.c_str());
 	TokenSparseVectorFloat *sparse_token;
 	sparse_token = current->convertTo<TokenSparseVectorFloat*>();
 	for (unsigned int k=0; k<sparse_token->size(); ++k) {
@@ -157,7 +159,8 @@ namespace ANN {
 	  float value          = (*sparse_token)[k].second;
 	  unsigned int w_shift = pos*w_lda;
 	  if (pos >= input_size)
-	    ERROR_EXIT(128, "Overflow at sparse vector input pos\n");
+	    ERROR_EXIT1(128, "Overflow at sparse vector input pos [%s]\n",
+			name.c_str());
 	  doSaxpy(output_size,
 		  value,
 		  weights_mat_ptr, w_shift, w_step,
@@ -167,7 +170,8 @@ namespace ANN {
       break;
     }
     default:
-      ERROR_EXIT1(128, "Incorrect token type: %d\n", _input->getTokenCode());
+      ERROR_EXIT2(128, "Incorrect token type: %d [%s]\n", _input->getTokenCode(),
+		  name.c_str());
     };
     return output;
   }
@@ -176,7 +180,8 @@ namespace ANN {
     // error checking
     if ( (_error_input == 0) ||
 	 (_error_input->getTokenCode() != table_of_token_codes::token_matrix))
-      ERROR_EXIT(129,"Incorrect input error Token type, expected token_matrix!\n");
+      ERROR_EXIT1(129,"Incorrect input error Token type, expected token_matrix! [%s]\n",
+		  name.c_str());
     // change current input by new input
     AssignRef(error_input,_error_input->convertTo<TokenMatrixFloat*>());
     if (sparse_input) {
@@ -192,7 +197,8 @@ namespace ANN {
     error_input_mat->setUseCuda(use_cuda);
 #endif
     if (! error_input_mat->sameDim(output->getMatrix()) )
-      ERROR_EXIT(129, "Different bunches found at doForward and doBackprop\n");
+      ERROR_EXIT1(129, "Different bunches found at doForward and doBackprop [%s]\n",
+		  name.c_str());
     // new error output to fit the bunch
     ASSERT_MATRIX(error_input_mat);
     assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
@@ -260,7 +266,8 @@ namespace ANN {
 	  float value          = (*sparse_token)[k].second;
 	  unsigned int w_shift = pos*w_lda;
 	  if (pos >= input_size)
-	    ERROR_EXIT(128, "Overflow at sparse vector input pos\n");
+	    ERROR_EXIT1(128, "Overflow at sparse vector input pos [%s]\n",
+			name.c_str());
 	  doSaxpy(output_size,
 		  norm_learn_rate*value,
 		  error_input, b, bunch_size,
@@ -412,8 +419,9 @@ namespace ANN {
 			weights_dict, components_dict);
     //
     if (input_size == 0 || output_size == 0)
-      ERROR_EXIT(141, "Impossible to compute input/output "
-		 "sizes for this component\n");
+      ERROR_EXIT1(141, "Impossible to compute input/output "
+		  "sizes for this component [%s]\n",
+		  name.c_str());
     unsigned int weights_input_size  = input_size;;
     unsigned int weights_output_size = output_size;
     ////////////////////////////////////////////////////////////////////
@@ -426,9 +434,10 @@ namespace ANN {
       AssignRef(weights_matrix, w);
       if (!weights_matrix->checkInputOutputSizes(weights_input_size,
 						 weights_output_size))
-	ERROR_EXIT2(256,"The weights matrix input/output sizes are not correct, "
-		    "expected %dx%d\n",
-		    weights_input_size, weights_output_size);
+	ERROR_EXIT3(256,"The weights matrix input/output sizes are not correct, "
+		    "expected %dx%d [%s]\n",
+		    weights_input_size, weights_output_size,
+		    name.c_str());
     }
     else {
       if (weights_matrix == 0) {
@@ -447,12 +456,14 @@ namespace ANN {
 
   void DotProductANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
     if (weights_matrix == 0)
-      ERROR_EXIT(100, "Component not built, impossible execute copyWeights\n");
+      ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
+		  name.c_str());
     Connections *&w = weights_dict[weights_name];
     if (w != 0 && w != weights_matrix)
-      ERROR_EXIT1(101, "Weights dictionary contains %s weights name which is "
-		  "not shared with weights_matrix attribute\n",
-		  weights_name.c_str());
+      ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
+		  "not shared with weights_matrix attribute [%s]\n",
+		  weights_name.c_str(),
+		  name.c_str());
     else if (w == 0) w = weights_matrix;
   }  
 

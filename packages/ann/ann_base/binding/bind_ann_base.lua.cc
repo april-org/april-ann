@@ -689,6 +689,12 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD StackANNComponent size
+{
+  LUABIND_RETURN(uint, obj->size());
+}
+//BIND_END
+
 //BIND_METHOD StackANNComponent push
 {
   LUABIND_CHECK_ARGN(==, 1);

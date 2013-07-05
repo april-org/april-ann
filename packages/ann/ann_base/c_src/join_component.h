@@ -43,7 +43,6 @@ namespace ANN {
     TokenBunchVector *output_vector, *error_output_vector;
 
     bool segmented_input;
-    unsigned int bunch_size;
 
     // private auxiliar methods
     void buildInputBunchVector(TokenBunchVector *&vector_token,
