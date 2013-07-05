@@ -511,6 +511,7 @@ using namespace ANN;
   LUABIND_RETURN_FROM_STACK(-1);
   pushHashTableInLuaStack(L, weights_dict, lua_pushConnections);
   LUABIND_RETURN_FROM_STACK(-2);
+  LUABIND_RETURN(ANNComponent, obj);
 }
 //BIND_END
 
