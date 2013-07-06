@@ -1368,34 +1368,18 @@ T Matrix<T>::norm2() const {
 
 template <typename T>
 T Matrix<T>::min(int &arg_min) const {
-  if (major_order == CblasRowMajor) {
-    const_iterator it(begin());
-    const_iterator result = april_utils::argmin(it, const_iterator(end()));
-    arg_min = result.getIdx();
-    return *result;
-  }
-  else {
-    const_col_major_iterator it(begin());
-    const_col_major_iterator result = april_utils::argmin(it, const_col_major_iterator(end()));
-    arg_min = result.getIdx();
-    return *result;
-  }
+  const_iterator it(begin());
+  const_iterator result = april_utils::argmin(it, const_iterator(end()));
+  arg_min = result.getIdx();
+  return *result;
 }
 
 template <typename T>
 T Matrix<T>::max(int &arg_max) const {
-  if (major_order == CblasRowMajor) {
-    const_iterator it(begin());
-    const_iterator result = april_utils::argmax(it, const_iterator(end()));
-    arg_max = result.getIdx();
-    return *result;
-  }
-  else {
-    const_col_major_iterator it(begin());
-    const_col_major_iterator result = april_utils::argmax(it,const_col_major_iterator(end()));
-    arg_max = result.getIdx();
-    return *result;
-  }
+  const_iterator it(begin());
+  const_iterator result = april_utils::argmax(it, const_iterator(end()));
+  arg_max = result.getIdx();
+  return *result;
 }
 
 template <typename T>
