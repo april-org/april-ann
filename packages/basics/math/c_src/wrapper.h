@@ -342,4 +342,11 @@ void doSsbmv(CBLAS_ORDER major_type,
 	     float beta, FloatGPUMirroredMemoryBlock *y, unsigned int y_inc,
 	     unsigned int a_shift, unsigned int x_shift, unsigned int y_shift,
 	     bool use_gpu);
+
+void doClamp(unsigned int N,
+	     FloatGPUMirroredMemoryBlock *v,
+	     unsigned int stride,
+	     unsigned int shift,
+	     float lower,
+	     float upper);
 #endif // WRAPPER_H
