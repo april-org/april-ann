@@ -59,59 +59,79 @@ namespace ANN {
   void JoinANNComponent::buildInputBunchVector(TokenBunchVector *&result_vector_token,
 					       Token *input_token) {
     switch(input_token->getTokenCode()) {
-    case table_of_token_codes::token_matrix: {
-      segmented_input = false;
-      TokenMatrixFloat *input_mat_token;
-      input_mat_token = input_token->convertTo<TokenMatrixFloat*>();
-      MatrixFloat *input_mat = input_mat_token->getMatrix();
-      ASSERT_MATRIX(input_mat);
+    case table_of_token_codes::token_matrix:
+      {
+	segmented_input = false;
+	TokenMatrixFloat *input_mat_token;
+	input_mat_token = input_token->convertTo<TokenMatrixFloat*>();
+	MatrixFloat *input_mat = input_mat_token->getMatrix();
+	ASSERT_MATRIX(input_mat);
 #ifdef USE_CUDA
-      input_mat->setUseCuda(use_cuda);
+	input_mat->setUseCuda(use_cuda);
 #endif
-      unsigned int mat_pat_size = static_cast<unsigned int>(input_mat->getDimSize(1));
-      assert(mat_pat_size==input_size && "Incorrect token matrix size");
-      int sizes[2]  = { input_mat->getDimSize(0),
-			input_mat->getDimSize(1) };
-      int coords[2] = { 0, 0 };
-      for (unsigned int i=0; i<result_vector_token->size(); ++i) {
-	const unsigned int sz = components[i]->getInputSize();
-	// submatrix at coords with sizes, deep copy of original matrix
-	sizes[1] = sz;
-	MatrixFloat *output_mat = new MatrixFloat(input_mat,coords,sizes,true);
-#ifdef USE_CUDA
-	output_mat->setUseCuda(use_cuda);
-#endif
-	coords[1] += sz;
-	TokenMatrixFloat *component_mat_token = new TokenMatrixFloat(output_mat);
-	AssignRef((*result_vector_token)[i], component_mat_token);
-      }
-      break;
-    }
-    case table_of_token_codes::vector_Tokens: {
-      segmented_input = true;
-      TokenBunchVector *input_vector_token;
-      input_vector_token = input_token->convertTo<TokenBunchVector*>();
-      // for each component we reserve a vector for bunch_size patterns
-      for (unsigned int i=0; i<result_vector_token->size(); ++i)
-	AssignRef((*result_vector_token)[i],
-		  new TokenBunchVector(input_vector_token->size()));
-      // for each pattern
-      for (unsigned int b=0; b<input_vector_token->size(); ++b) {
-	TokenBunchVector *pattern_token;
-	pattern_token=(*input_vector_token)[b]->convertTo<TokenBunchVector*>();
-	if (result_vector_token->size() != pattern_token->size())
-	  ERROR_EXIT3(128, "Incorrect number of components at input vector, "
-		      "expected %u and found %u [%s]\n",
-		      result_vector_token->size(), pattern_token->size(),
-		      name.c_str());	  
-	// for each component
+	unsigned int mat_pat_size = static_cast<unsigned int>(input_mat->getDimSize(1));
+	assert(mat_pat_size==input_size && "Incorrect token matrix size");
+	int sizes[2]  = { input_mat->getDimSize(0),
+			  input_mat->getDimSize(1) };
+	int coords[2] = { 0, 0 };
 	for (unsigned int i=0; i<result_vector_token->size(); ++i) {
-	  (*(*result_vector_token)[i]->convertTo<TokenBunchVector*>())[b] = (*pattern_token)[i];
-	  IncRef((*pattern_token)[i]);
+	  const unsigned int sz = components[i]->getInputSize();
+	  // submatrix at coords with sizes, deep copy of original matrix
+	  sizes[1] = sz;
+	  MatrixFloat *output_mat = new MatrixFloat(input_mat,coords,sizes,true);
+#ifdef USE_CUDA
+	  output_mat->setUseCuda(use_cuda);
+#endif
+	  coords[1] += sz;
+	  TokenMatrixFloat *component_mat_token = new TokenMatrixFloat(output_mat);
+	  AssignRef((*result_vector_token)[i], component_mat_token);
 	}
+	break;
       }
-      break;
-    }
+    case table_of_token_codes::vector_Tokens:
+      {
+	segmented_input = true;
+	TokenBunchVector *input_vector_token;
+	input_vector_token = input_token->convertTo<TokenBunchVector*>();
+	switch((*input_vector_token)[0]->getTokenCode()) {
+	case table_of_token_codes::token_matrix:
+	  if (result_vector_token->size() != input_vector_token->size())
+	    ERROR_EXIT3(128, "Incorrect number of components at input vector, "
+			"expected %u and found %u [%s]\n",
+			result_vector_token->size(),
+			input_vector_token->size(),
+			name.c_str());
+	  // for each component we assign its matrix
+	  for (unsigned int i=0; i<result_vector_token->size(); ++i)
+	    AssignRef((*result_vector_token)[i], (*input_vector_token)[i]);
+	  break;
+	case table_of_token_codes::vector_Tokens:
+	  // for each component we reserve a vector for bunch_size patterns
+	  for (unsigned int i=0; i<result_vector_token->size(); ++i)
+	    AssignRef((*result_vector_token)[i],
+		      new TokenBunchVector(input_vector_token->size()));
+	  // for each pattern
+	  for (unsigned int b=0; b<input_vector_token->size(); ++b) {
+	    TokenBunchVector *pattern_token;
+	    pattern_token=(*input_vector_token)[b]->convertTo<TokenBunchVector*>();
+	    if (result_vector_token->size() != pattern_token->size())
+	      ERROR_EXIT3(128, "Incorrect number of components at input vector, "
+			  "expected %u and found %u [%s]\n",
+			  result_vector_token->size(), pattern_token->size(),
+			  name.c_str());
+	    // for each component
+	    for (unsigned int i=0; i<result_vector_token->size(); ++i) {
+	      (*(*result_vector_token)[i]->convertTo<TokenBunchVector*>())[b] = (*pattern_token)[i];
+	      IncRef((*pattern_token)[i]);
+	    }
+	  }
+	  break;
+	default:
+	  ERROR_EXIT2(128, "Incorrect token type %d [%s]\n",
+		      input_vector_token->getTokenCode(), name.c_str());
+	}
+	break;
+      }
     default:
       ERROR_EXIT1(129, "Incorrect token type [%s]", name.c_str());
     }

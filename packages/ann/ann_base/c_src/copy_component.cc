@@ -50,10 +50,34 @@ namespace ANN {
   
   Token *CopyANNComponent::doForward(Token* _input, bool during_training) {
     AssignRef(input, _input);
-    AssignRef(output, new TokenBunchVector(times));
-    for (unsigned int i=0; i<times; ++i) {
-      (*output)[i] = input;
-      IncRef(input);
+    switch(input->getTokenCode()) {
+    case table_of_token_codes::token_matrix:
+      {
+	AssignRef(output, new TokenBunchVector(times));
+	for (unsigned int i=0; i<times; ++i) {
+	  (*output)[i] = input;
+	  IncRef(input);
+	}
+      }
+      break;
+    case table_of_token_codes::vector_Tokens:
+      {
+	TokenBunchVector *input_bunch = input->convertTo<TokenBunchVector*>();
+	AssignRef(output, new TokenBunchVector(input_bunch->size()));
+	for (unsigned int i=0; i<input_bunch->size(); ++i) {
+	  TokenBunchVector *current = new TokenBunchVector(times);
+	  (*output)[i] = current;
+	  IncRef(current);
+	  for (unsigned int j=0; j<times; ++j) {
+	    (*current)[j] = (*input_bunch)[j];
+	    IncRef((*current)[j]);
+	  }
+	}
+      }
+      break;
+    default:
+      ERROR_EXIT2(128, "Incorrect input token type %d [%s]\n",
+		  input->getTokenCode(), name.c_str());
     }
     return output;
   }

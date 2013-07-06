@@ -72,6 +72,10 @@ luapkg{
       },
       use_timestamp = true,
     },
+    target{
+      name = "test",
+      depends = "build",
+    },
     target{ name = "document",
       echo{"this is documentation"},
       main_documentation{
