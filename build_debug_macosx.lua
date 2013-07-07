@@ -16,6 +16,7 @@ luapkg{
       "-DUSE_XCODE",
       "-F/System/Library/Frameworks/Accelerate.framework",
       "-pg",
+      "-DNO_POOL",
     },
     extra_libs={
       "-lpthread",

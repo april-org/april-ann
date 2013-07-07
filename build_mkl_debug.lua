@@ -18,6 +18,7 @@ luapkg{
       "-march=native",
       "-msse",
       "-pg",
+      "-DNO_POOL",
     },
     extra_libs={
       "-pg",

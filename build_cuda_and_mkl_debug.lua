@@ -22,6 +22,7 @@ luapkg{
       -- For CUDA
       "-I/usr/local/cuda/include",
       "-L/usr/local/cuda/lib",
+      "-DNO_POOL",
     },
     extra_libs={
       "-pg",

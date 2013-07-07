@@ -20,4 +20,5 @@
  *
  */
 #include "gpu_mirrored_memory_block.h"
+
 template class GPUMirroredMemoryBlock<float>;
