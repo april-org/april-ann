@@ -426,7 +426,71 @@ bool Matrix<T>::sameDim(const Matrix<T> *other) const {
 /***** COORDINATES METHODS *****/
 
 template <typename T>
-bool Matrix<T>::nextCoordVectorRowOrder(int *coords, const int *sizes,
+bool Matrix<T>::nextCoordVectorRowOrder(int *coords, int &raw_pos) const {
+  return nextCoordVectorRowOrder(coords, raw_pos, matrixSize, stride, numDim,
+				 last_raw_pos);
+}
+
+template <typename T>
+bool Matrix<T>::nextCoordVectorColOrder(int *coords, int &raw_pos) const {
+  return nextCoordVectorColOrder(coords, raw_pos, matrixSize, stride, numDim,
+				 last_raw_pos);
+}
+
+template <typename T>
+bool Matrix<T>::nextCoordVectorRowOrder(int *coords, int &raw_pos,
+					const int *sizes,
+					const int *strides,
+					const int numDim,
+					const int last_raw_pos) {
+  int j = numDim;
+  do {
+    --j;
+    coords[j] = (coords[j]+1) % sizes[j];
+    if (coords[j] == 0) raw_pos -= (sizes[j]-1) * strides[j];
+    else raw_pos += strides[j];
+  } while(j>0 && coords[j] == 0);
+  if (j == 0 && coords[0] == 0) {
+    raw_pos = last_raw_pos + 1;
+    return false;
+  }
+  return true;
+}
+
+template <typename T>
+bool Matrix<T>::nextCoordVectorColOrder(int *coords, int &raw_pos,
+					const int *sizes,
+					const int *strides,
+					const int numDim,
+					const int last_raw_pos) {
+  int j = 0;
+  do {
+    coords[j] = (coords[j]+1) % sizes[j];
+    if (coords[j] == 0) {
+      if (sizes[j] > 1) raw_pos -= (sizes[j]-1) * strides[j];
+    }
+    else raw_pos += strides[j];
+  } while(coords[j++] == 0 && j<numDim);
+  if (j == numDim && coords[numDim-1] == 0) {
+    raw_pos = last_raw_pos + 1;
+    return false;
+  }
+  return true;
+}
+
+template <typename T>
+bool Matrix<T>::nextCoordVectorRowOrder(int *coords) const {
+  return nextCoordVectorRowOrder(coords, matrixSize, numDim);
+}
+
+template <typename T>
+bool Matrix<T>::nextCoordVectorColOrder(int *coords) const {
+  return nextCoordVectorColOrder(coords, matrixSize, numDim);
+}
+
+template <typename T>
+bool Matrix<T>::nextCoordVectorRowOrder(int *coords,
+					const int *sizes,
 					int numDim) {
   int j = numDim;
   do {
@@ -438,7 +502,8 @@ bool Matrix<T>::nextCoordVectorRowOrder(int *coords, const int *sizes,
 }
 
 template <typename T>
-bool Matrix<T>::nextCoordVectorColOrder(int *coords, const int *sizes,
+bool Matrix<T>::nextCoordVectorColOrder(int *coords,
+					const int *sizes,
 					int numDim) {
   int j = 0;
   do {

@@ -93,10 +93,24 @@ protected:
   
 public:
   /// Updates with the following coordinates vector
+  bool nextCoordVectorRowOrder(int *coords, int &raw_pos) const;
+  bool nextCoordVectorColOrder(int *coords, int &raw_pos) const;
+  bool nextCoordVectorRowOrder(int *coords) const;
+  bool nextCoordVectorColOrder(int *coords) const;
   static bool nextCoordVectorRowOrder(int *coords, const int *sizes,
-				      int numDim);
+				      const int numDim);
   static bool nextCoordVectorColOrder(int *coords, const int *sizes,
-				      int numDim);
+				      const int numDim);
+  static bool nextCoordVectorRowOrder(int *coords, int &raw_pos,
+				      const int *sizes,
+				      const int *strides,
+				      const int numDim,
+				      const int last_raw_pos);
+  static bool nextCoordVectorColOrder(int *coords, int &raw_pos,
+				      const int *sizes,
+				      const int *strides,
+				      const int numDim,
+				      const int last_raw_pos);
   /********* Iterators for Matrix traversal *********/
   // forward declaration
   class const_iterator;
@@ -110,6 +124,8 @@ public:
     Matrix *m;
     int idx;
     int raw_pos;
+    /// The coords array is only used when the matrix is not congiuous
+    /// or it is in col_major order
     int *coords;
     T *data;
     iterator(Matrix *m);
@@ -133,6 +149,8 @@ public:
     Matrix *m;
     int idx;
     int raw_pos;
+    /// The coords array is only used when the matrix is not congiuous
+    /// or it is in row_major order
     int *coords;
     T *data;
     col_major_iterator(Matrix *m);
@@ -161,6 +179,8 @@ public:
     const Matrix *m;
     int idx;
     int raw_pos;
+    /// The coords array is only used when the matrix is not congiuous
+    /// or it is in col_major order
     int *coords;
     const T *data;
     const_iterator(const Matrix *m);
@@ -189,6 +209,8 @@ public:
     const Matrix *m;
     int idx;
     int raw_pos;
+    /// The coords array is only used when the matrix is not congiuous
+    /// or it is in row_major order
     int *coords;
     const T *data;
     const_col_major_iterator(const Matrix *m);
@@ -230,6 +252,7 @@ private:
       Matrix *m;
       inverse_sort_compare(Matrix *m) : m(m) { }
       bool operator()(const int &a, const int &b) {
+	// FIXME: Would be better to use a trade-off between size and stride?
 	return m->matrixSize[a] > m->matrixSize[b];
       }
     };
