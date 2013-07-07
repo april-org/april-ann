@@ -24,6 +24,7 @@
 
 // WARNING: ALL THE METHODS IMPLEMENTED HERE ARE SPECIALIZED TO FLOAT VERSION
 
+// FIXME: using WRAPPER
 template<>
 void Matrix<float>::fill(float value) {
   if (major_order == CblasRowMajor)
@@ -61,6 +62,7 @@ void Matrix<float>::ones() {
   fill(1.0f);
 }
 
+// FIXME: implement using WRAPPER
 template<>
 void Matrix<float>::diag(float value) {
   for (int i=1; i<numDim; ++i)
@@ -124,6 +126,7 @@ Matrix<float>* Matrix<float>::multiply(const Matrix<float> *other) const {
   return resul;
 }
 
+// implement using WRAPPER
 template<>
 float Matrix<float>::sum() const {
   float s = 0.0;
@@ -141,6 +144,7 @@ float Matrix<float>::sum() const {
 
 /**** COMPONENT WISE OPERATIONS ****/
 
+// implement using WRAPPER
 template<>
 void Matrix<float>::scalarAdd(float s) {
   if (major_order == CblasRowMajor)
@@ -153,19 +157,32 @@ void Matrix<float>::scalarAdd(float s) {
     }
 }
 
+// implement using WRAPPER
 template<>
 bool Matrix<float>::equals(const Matrix<float> *other, float epsilon) const {
   if (!sameDim(other)) return false;
-  const_iterator it(begin());
-  const_iterator other_it(other->begin());
-  while(it != end()) {
-    if (fabsf(*it - *other_it) > epsilon) return false;
-    ++it;
-    ++other_it;
+  if (major_order == CblasRowMajor) {
+    const_iterator it(begin());
+    const_iterator other_it(other->begin());
+    while(it != end()) {
+      if (fabsf(*it - *other_it) > epsilon) return false;
+      ++it;
+      ++other_it;
+    }
+  }
+  else {
+    const_col_major_iterator it(begin());
+    const_col_major_iterator other_it(other->begin());
+    while(it != end()) {
+      if (fabsf(*it - *other_it) > epsilon) return false;
+      ++it;
+      ++other_it;
+    }
   }
   return true;
 }
 
+// implement using WRAPPER
 template<>
 void Matrix<float>::log() {
   if (major_order == CblasRowMajor)
@@ -178,6 +195,7 @@ void Matrix<float>::log() {
     }
 }
 
+// implement using WRAPPER
 template<>
 void Matrix<float>::log1p() {
   if (major_order == CblasRowMajor)
@@ -190,6 +208,7 @@ void Matrix<float>::log1p() {
     }
 }
 
+// implement using WRAPPER
 template<>
 void Matrix<float>::exp() {
   if (major_order == CblasRowMajor)
@@ -202,6 +221,7 @@ void Matrix<float>::exp() {
     }
 }
 
+// implement using WRAPPER
 template<>
 void Matrix<float>::sqrt() {
   for (iterator it(begin()); it!=end(); ++it) {
@@ -209,6 +229,7 @@ void Matrix<float>::sqrt() {
   }
 }
 
+// implement using WRAPPER
 template<>
 void Matrix<float>::pow(float value) {
   if (major_order == CblasRowMajor)
@@ -221,6 +242,7 @@ void Matrix<float>::pow(float value) {
     }
 }
 
+// implement using WRAPPER
 template<>
 void Matrix<float>::tanh() {
   if (major_order == CblasRowMajor)
@@ -296,31 +318,19 @@ void Matrix<float>::copy(const Matrix<float> *other) {
   }
   // General case
   else {
-    int *aux_coords = new int[numDim];
-    for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
-    if (major_order == CblasRowMajor) {
-      do {
-	int this_pos  = computeRawPos(aux_coords);
-	int other_pos = other->computeRawPos(aux_coords);
-	doScopy(matrixSize[numDim-1],
-		other->data, other_pos, other->stride[numDim-1],
-		data, this_pos, stride[numDim-1],
-		use_cuda);
-	aux_coords[numDim-1] = matrixSize[numDim-1]-1;
-      } while(nextCoordVectorRowOrder(aux_coords));
+    best_span_iterator this_span_it(this), other_span_it(other);
+    while(this_span_it != end_span_iterator()) {
+      doScopy(static_cast<unsigned int>(this_span_it.getSize()),
+	      other->data,
+	      static_cast<unsigned int>(other_span_it.getOffset()),
+	      static_cast<unsigned int>(other_span_it.getStride()),
+	      data,
+	      static_cast<unsigned int>(this_span_it.getOffset()),
+	      static_cast<unsigned int>(this_span_it.getStride()),
+	      use_cuda);      
+      ++this_span_it;
+      ++other_span_it;
     }
-    else {
-      do {
-	int this_pos  = computeRawPos(aux_coords);
-	int other_pos = other->computeRawPos(aux_coords);
-	doScopy(matrixSize[0],
-		other->data, other_pos, other->stride[0],
-		data, this_pos, stride[0],
-		use_cuda);
-	aux_coords[0] = matrixSize[0]-1;
-      } while(nextCoordVectorColOrder(aux_coords));
-    }
-    delete[] aux_coords;
   }
 }
 
@@ -359,31 +369,20 @@ void Matrix<float>::axpy(float alpha, const Matrix<float> *other) {
   }
   // General case
   else {
-    int *aux_coords = new int[numDim];
-    for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
-    if (major_order == CblasRowMajor) {
-      do {
-	int this_pos  = computeRawPos(aux_coords);
-	int other_pos = other->computeRawPos(aux_coords);
-	doSaxpy(matrixSize[numDim-1],
-		alpha, other->data, other_pos, other->stride[numDim-1],
-		data, this_pos, stride[numDim-1],
+    best_span_iterator this_span_it(this), other_span_it(other);
+    while(this_span_it != end_span_iterator()) {
+	doSaxpy(static_cast<unsigned int>(this_span_it.getSize()),
+		alpha,
+		other->data,
+		static_cast<unsigned int>(other_span_it.getOffset()),
+		static_cast<unsigned int>(other_span_it.getStride()),
+		data,
+		static_cast<unsigned int>(this_span_it.getOffset()),
+		static_cast<unsigned int>(this_span_it.getStride()),
 		use_cuda);
-	aux_coords[numDim-1] = matrixSize[numDim-1]-1;
-      } while(nextCoordVectorRowOrder(aux_coords));
+      ++this_span_it;
+      ++other_span_it;
     }
-    else {
-      do {
-	int this_pos  = computeRawPos(aux_coords);
-	int other_pos = other->computeRawPos(aux_coords);
-	doSaxpy(matrixSize[0],
-		alpha, other->data, other_pos, other->stride[0],
-		data, this_pos, stride[0],
-		use_cuda);
-	aux_coords[0] = matrixSize[0]-1;
-      } while(nextCoordVectorColOrder(aux_coords));
-    }
-    delete[] aux_coords;
   }
 }
 
@@ -519,27 +518,16 @@ void Matrix<float>::scal(float value) {
   }
   // General case
   else {
-    int *aux_coords = new int[numDim];
-    for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
-    if (major_order == CblasRowMajor) {
-      do {
-	int pos  = computeRawPos(aux_coords);
-	doSscal(matrixSize[numDim-1], value,
-		data, pos, stride[numDim-1],
-		use_cuda);
-	aux_coords[numDim-1] = matrixSize[numDim-1]-1;
-      } while(nextCoordVectorRowOrder(aux_coords));
+    best_span_iterator this_span_it(this);
+    while(this_span_it != end_span_iterator()) {
+      doSscal(static_cast<unsigned int>(this_span_it.getSize()),
+	      value,
+	      data,
+	      static_cast<unsigned int>(this_span_it.getOffset()),
+	      static_cast<unsigned int>(this_span_it.getStride()),
+	      use_cuda);
+      ++this_span_it;
     }
-    else {
-      do {
-	int pos  = computeRawPos(aux_coords);
-	doSscal(matrixSize[0], value,
-		data, pos, stride[0],
-		use_cuda);
-	aux_coords[0] = matrixSize[0]-1;
-      } while(nextCoordVectorColOrder(aux_coords));
-    }
-    delete[] aux_coords;
   }
 }
 
@@ -571,40 +559,28 @@ float Matrix<float>::norm2() const {
 	v   += aux*aux;
 	pos += stride[shorter_dim];
       }
-      v = float(sqrtf(v));
+      v = sqrtf(v);
     }
   }
   // General case
   else {
-    int *aux_coords = new int[numDim];
     v = 0.0f;
-    for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
-    if (major_order == CblasRowMajor) {
-      do {
-	int pos   = computeRawPos(aux_coords);
-	float aux = doSnrm2(matrixSize[numDim-1],
-			    data, pos, stride[numDim-1],
-			    use_cuda);
-	v += aux*aux;
-	aux_coords[numDim-1] = matrixSize[numDim-1]-1;
-      } while(nextCoordVectorRowOrder(aux_coords));
+    best_span_iterator this_span_it(this);
+    while(this_span_it != end_span_iterator()) {
+      float aux = doSnrm2(static_cast<unsigned int>(this_span_it.getSize()),
+			  data,
+			  static_cast<unsigned int>(this_span_it.getOffset()),
+			  static_cast<unsigned int>(this_span_it.getStride()),	  
+			  use_cuda);
+      v += aux*aux;
+      ++this_span_it;
     }
-    else {
-      do {
-	int pos   = computeRawPos(aux_coords);
-	float aux = doSnrm2(matrixSize[0],
-			    data, pos, stride[0],
-			    use_cuda);
-	v += aux*aux;
-	aux_coords[0] = matrixSize[0]-1;
-      } while(nextCoordVectorColOrder(aux_coords));
-    }
-    v = float(sqrtf(v));
-    delete[] aux_coords;
+    v = sqrtf(v);
   }
   return v;
 }
 
+// FIXME: using WRAPPER
 template<>
 float Matrix<float>::min(int &arg_min) const {
   const_iterator it(begin());
@@ -613,6 +589,7 @@ float Matrix<float>::min(int &arg_min) const {
   return *result;
 }
 
+// FIXME: using WRAPPER
 template<>
 float Matrix<float>::max(int &arg_max) const {
   const_iterator it(begin());
@@ -621,6 +598,7 @@ float Matrix<float>::max(int &arg_max) const {
   return *result;
 }
 
+// FIXME: using WRAPPER
 template<>
 void Matrix<float>::minAndMax(float &min, float &max) const {
   if (major_order == CblasRowMajor) {
@@ -643,6 +621,7 @@ void Matrix<float>::minAndMax(float &min, float &max) const {
   }
 }
 
+// FIXME: using WRAPPER
 template<>
 void Matrix<float>::adjustRange(float rmin, float rmax) {
   float mmin, mmax;

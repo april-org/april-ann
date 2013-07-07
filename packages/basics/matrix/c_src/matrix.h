@@ -245,18 +245,18 @@ private:
   // ATTENTION: Currently it is a private iterator
   class best_span_iterator {
     friend class Matrix;
-    Matrix *m;
+    const Matrix *m;
     int raw_pos;
     int *coords, *order;
     struct inverse_sort_compare {
-      Matrix *m;
-      inverse_sort_compare(Matrix *m) : m(m) { }
+      const Matrix *m;
+      inverse_sort_compare(const Matrix *m) : m(m) { }
       bool operator()(const int &a, const int &b) {
 	// FIXME: Would be better to use a trade-off between size and stride?
 	return m->matrixSize[a] > m->matrixSize[b];
       }
     };
-    best_span_iterator(Matrix *m, int raw_pos) : m(m), raw_pos(raw_pos) {
+    best_span_iterator(const Matrix *m, int raw_pos) : m(m), raw_pos(raw_pos) {
       coords = new int[m->numDim];
       order  = new int[m->numDim];
       m->computeCoords(raw_pos, coords);
@@ -277,7 +277,7 @@ private:
 	april_utils::Sort(order, 0, m->numDim-1, inverse_sort_compare(m));
       }
     }
-    best_span_iterator(Matrix *m) : m(m), raw_pos(m->offset) {
+    best_span_iterator(const Matrix *m) : m(m), raw_pos(m->offset) {
       coords = new int[m->numDim];
       order  = new int[m->numDim];
       switch(m->numDim) {
@@ -351,7 +351,7 @@ private:
       return *this;
     }
   };
-
+  
   // const version of iterators, for fast end() iterator calls. They are
   // allocated on-demand, so if end() methods are never executed, they
   // don't waste memory space
@@ -359,7 +359,7 @@ private:
   const const_iterator end_const_iterator;
   const best_span_iterator end_best_span_iterator;
   
-  const best_span_iterator &end_span_iterator() {
+  const best_span_iterator &end_span_iterator() const {
     if (end_best_span_iterator.m == 0)
       *(const_cast<best_span_iterator*>(&end_best_span_iterator)) =
 	best_span_iterator(this, last_raw_pos+1);
