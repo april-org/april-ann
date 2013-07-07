@@ -121,16 +121,16 @@ public:
     friend class col_major_iterator;
     friend class const_col_major_iterator;
     friend class Matrix;
-    Matrix *m;
+    Matrix<T> *m;
     int idx;
     int raw_pos;
     /// The coords array is only used when the matrix is not congiuous
-    /// or it is in col_major order
+    /// or it is in col_major order, otherwise it is NULL
     int *coords;
     T *data;
-    iterator(Matrix *m);
-    iterator(Matrix *m, int raw_pos);
-    iterator(Matrix *m, int raw_pos, int *coords);
+    iterator(Matrix<T> *m);
+    iterator(Matrix<T> *m, int raw_pos);
+    iterator(Matrix<T> *m, int raw_pos, int *coords);
   public:
     iterator();
     iterator(const iterator &other);
@@ -146,16 +146,16 @@ public:
   /*******************************************************/
   class col_major_iterator {
     friend class Matrix;
-    Matrix *m;
+    Matrix<T> *m;
     int idx;
     int raw_pos;
     /// The coords array is only used when the matrix is not congiuous
-    /// or it is in row_major order
+    /// or it is in row_major order, otherwise it is NULL
     int *coords;
     T *data;
-    col_major_iterator(Matrix *m);
-    col_major_iterator(Matrix *m, int raw_pos);
-    col_major_iterator(Matrix *m, int raw_pos, int *coords);
+    col_major_iterator(Matrix<T> *m);
+    col_major_iterator(Matrix<T> *m, int raw_pos);
+    col_major_iterator(Matrix<T> *m, int raw_pos, int *coords);
   public:
     col_major_iterator();
     col_major_iterator(const col_major_iterator &other);
@@ -176,16 +176,16 @@ public:
   class const_iterator {
     friend class const_col_major_iterator;
     friend class Matrix;
-    const Matrix *m;
+    const Matrix<T> *m;
     int idx;
     int raw_pos;
     /// The coords array is only used when the matrix is not congiuous
-    /// or it is in col_major order
+    /// or it is in col_major order, otherwise it is NULL
     int *coords;
     const T *data;
-    const_iterator(const Matrix *m);
-    const_iterator(const Matrix *m, int raw_pos);
-    const_iterator(const Matrix *m, int raw_pos, int *coords);
+    const_iterator(const Matrix<T> *m);
+    const_iterator(const Matrix<T> *m, int raw_pos);
+    const_iterator(const Matrix<T> *m, int raw_pos, int *coords);
   public:
     const_iterator();
     const_iterator(const const_iterator &other);
@@ -206,16 +206,16 @@ public:
   /*******************************************************/
   class const_col_major_iterator {
     friend class Matrix;
-    const Matrix *m;
+    const Matrix<T> *m;
     int idx;
     int raw_pos;
     /// The coords array is only used when the matrix is not congiuous
-    /// or it is in row_major order
+    /// or it is in row_major order, otherwise it is NULL
     int *coords;
     const T *data;
-    const_col_major_iterator(const Matrix *m);
-    const_col_major_iterator(const Matrix *m, int raw_pos);
-    const_col_major_iterator(const Matrix *m, int raw_pos, int *coords);
+    const_col_major_iterator(const Matrix<T> *m);
+    const_col_major_iterator(const Matrix<T> *m, int raw_pos);
+    const_col_major_iterator(const Matrix<T> *m, int raw_pos, int *coords);
   public:
     const_col_major_iterator();
     const_col_major_iterator(const const_col_major_iterator &other);
@@ -237,6 +237,119 @@ public:
     int getRawPos() const;
     int getIdx() const { return idx; }
   };
+
+  /********************************************************/
+  // The sliding is a kind of iterator which traverses the matrix producing
+  // sub-matrices following a sliding window similar to dataset.matrix. This
+  // iterator couldn't account for CIRCULAR and OUTSIDE values.
+  class sliding_window : public Referenced {
+    /// A reference to the matrix
+    Matrix<T> *m;
+    /// Initial position
+    int offset;
+    /// subPattern size.
+    int *sub_matrix_size;
+    /// Step of each dimension for the sliding window.
+    int *step;
+    /// Number of movements on each dimension (number of steps).
+    int *num_steps;
+    /// Order of movement for each dimension.
+    int *order_step;
+    /// Coordinate position of the first component
+    int *coords;
+    /// Current position at the matrix of the first component
+    int raw_pos;
+    /// Clone the matrix data before extract the window
+    bool clone;
+  public:
+    sliding_window(Matrix<T> *m,
+		   const int *sub_matrix_size=0,
+		   const int *offset=0,
+		   const int *step=0,
+		   const int *num_steps=0,
+		   const int *order_step=0,
+		   bool clone=false) :
+      m(m),
+      offset(m->offset),
+      sub_matrix_size(new int[m->numDim]),
+      step(new int[m->numDim]),
+      num_steps(new int[m->numDim]),
+      order_step(new int[m->numDim]),
+      coords(new int[m->numDim]),
+      clone(clone) {
+      IncRef(m);
+      if (offset != 0) 
+	for (int i=0; i<m->numDim; ++i) {
+	  this->offset += offset[i]*m->stride[i];
+	  this->coords[i] = offset[i];
+	}
+      else
+	for (int i=0; i<m->numDim; ++i) coords[i] = 0;
+      // default values for arrays if necessary
+      if (sub_matrix_size == 0) {
+	for (int i=0; i<m->numDim; ++i)
+	  this->sub_matrix_size[i] = m->matrixSize[i];
+	sub_matrix_size[0] = 1;
+      }
+      else
+	for (int i=0; i<m->numDim; ++i)
+	  this->sub_matrix_size[i] = sub_matrix_size[i];
+      //
+      if (step == 0)
+	for (int i=0; i<m->numDim; ++i)
+	  this->step[i] = 1;
+      else
+	for (int i=0; i<m->numDim; ++i)
+	  this->step[i] = step[i];
+      //
+      if (num_steps == 0) {
+	for (int i=0; i<m->numDim; ++i)
+	  this->num_steps[i] = 1;
+	num_steps[0] = m->matrixSize[0];
+      }
+      else
+	for (int i=0; i<m->numDim; ++i)
+	  this->num_steps[i] = num_steps[i];
+      //
+      if (order_step == 0)
+	for (int i=0; i<m->numDim; ++i)
+	  this->order_step[i] = (m->numDim - (i + 1));
+      else
+	for (int i=0; i<m->numDim; ++i)
+	  this->order_step[i] = order_step[i];
+    }
+    sliding_window(const sliding_window &other) :
+      m(other.m),
+      offset(other.offset),
+      sub_matrix_size(new int[m->numDim]),
+      step(new int[m->numDim]),
+      num_steps(new int[m->numDim]),
+      order_step(new int[m->numDim]),
+      coords(new int[m->numDim]),
+      raw_pos(other.raw_pos),
+      clone(other.clone) {
+      IncRef(m);
+      for (int i=0; i<m->numDim; ++i) {
+	sub_matrix_size[i] = other.sub_matrix_size[i];
+	step[i] = other.step[i];
+	num_steps[i] = other.num_steps[i];
+	order_step[i] = other.order_step[i];
+      }
+    }
+    ~sliding_window() {
+      DecRef(m);
+      delete[] sub_matrix_size;
+      delete[] step;
+      delete[] num_steps;
+      delete[] order_step;
+      delete[] coords;
+    }
+    bool operator==(const sliding_window &other) const;
+    bool operator!=(const sliding_window &other) const;
+    sliding_window &operator=(const sliding_window &other) const;
+    sliding_window &operator++();
+    Matrix<T> *operator*();
+  };
   
 private:
   /********************************************************/
@@ -245,111 +358,29 @@ private:
   // ATTENTION: Currently it is a private iterator
   class best_span_iterator {
     friend class Matrix;
-    const Matrix *m;
+    const Matrix<T> *m;
     int raw_pos;
     int *coords, *order;
     struct inverse_sort_compare {
-      const Matrix *m;
-      inverse_sort_compare(const Matrix *m) : m(m) { }
+      const Matrix<T> *m;
+      inverse_sort_compare(const Matrix<T> *m) : m(m) { }
       bool operator()(const int &a, const int &b) {
 	// FIXME: Would be better to use a trade-off between size and stride?
 	return m->matrixSize[a] > m->matrixSize[b];
       }
     };
-    best_span_iterator(const Matrix *m, int raw_pos) : m(m), raw_pos(raw_pos) {
-      coords = new int[m->numDim];
-      order  = new int[m->numDim];
-      m->computeCoords(raw_pos, coords);
-      switch(m->numDim) {
-      case 1: order[0] = 0; break;
-      case 2:
-	if (m->matrixSize[0] > m->matrixSize[1]) {
-	  order[0] = 0;
-	  order[1] = 1;
-	}
-	else {
-	  order[0] = 1;
-	  order[1] = 0;
-	}
-	break;
-      default:
-	for (int i=0; i<m->numDim; ++i) order[i] = i;
-	april_utils::Sort(order, 0, m->numDim-1, inverse_sort_compare(m));
-      }
-    }
-    best_span_iterator(const Matrix *m) : m(m), raw_pos(m->offset) {
-      coords = new int[m->numDim];
-      order  = new int[m->numDim];
-      switch(m->numDim) {
-      case 1: order[0] = 0; coords[0] = 0; break;
-      case 2:
-	coords[0] = 0; coords[1] = 0;
-	if (m->matrixSize[0] > m->matrixSize[1]) {
-	  order[0] = 0;
-	  order[1] = 1;
-	}
-	else {
-	  order[0] = 1;
-	  order[1] = 0;
-	}
-	break;
-      default:
-	for (int i=0; i<m->numDim; ++i) {
-	  coords[i] = 0;
-	  order[i] = i;
-	}
-	april_utils::Sort(order, 0, m->numDim-1, inverse_sort_compare(m));
-      }
-    }
+    best_span_iterator(const Matrix<T> *m, int raw_pos);
+    best_span_iterator(const Matrix<T> *m);
   public:
-    best_span_iterator() : m(0), coords(0), order(0) { }
-    ~best_span_iterator() {
-      delete[] order;
-      delete[] coords;
-    }
-    int getOffset() const { return raw_pos; }
-    int getStride() const { return m->stride[order[0]]; }
-    int getSize() const { return m->matrixSize[order[0]]; }
-    best_span_iterator &operator=(const best_span_iterator &other) {
-      if (m==0 || m->numDim != other.m->numDim) {
-	delete[] coords;
-	delete[] order;
-	coords = new int[other.m->getNumDim()];
-	order = new int[other.m->getNumDim()];
-      }
-      m = other.m;
-      raw_pos = other.raw_pos;
-      for (int i=0; i<m->getNumDim(); ++i) {
-	order[i] = other.order[i];
-	coords[i] = other.coords[i];
-      }
-      return *this;
-    }
-    bool      operator==(const best_span_iterator &other) const {
-      return m==other.m && raw_pos==other.raw_pos;
-    }
-    bool      operator!=(const best_span_iterator &other) const {
-      return !((*this)==other);
-    }
-    best_span_iterator &operator++() {
-      switch(m->numDim) {
-      case 1: raw_pos = m->last_raw_pos+1; break;
-      case 2:
-	coords[1] = (coords[1]+1) % m->matrixSize[order[1]];
-	if (coords[1] > 0) raw_pos += m->stride[order[1]];
-	else raw_pos = m->last_raw_pos+1;
-	break;
-      default:
-	int j = 1, pos;
-	do {
-	  pos = order[j++];
-	  coords[pos] = (coords[pos]+1) % m->matrixSize[pos];
-	} while(j<m->numDim && coords[pos] == 0);
-	if (j == m->numDim && coords[pos] == 0) raw_pos = m->last_raw_pos+1;
-	else raw_pos = m->computeRawPos(coords);
-      }
-      return *this;
-    }
+    best_span_iterator();
+    ~best_span_iterator();
+    int getOffset() const;
+    int getStride() const;
+    int getSize() const;
+    best_span_iterator &operator=(const best_span_iterator &other);
+    bool operator==(const best_span_iterator &other) const;
+    bool operator!=(const best_span_iterator &other) const;
+    best_span_iterator &operator++();
   };
   
   // const version of iterators, for fast end() iterator calls. They are
@@ -484,7 +515,7 @@ public:
   bool putSubCol(int col, int first_row, T *vec, int vecsize);
 
   // Returns true if they have the same dimension
-  bool sameDim(const Matrix *other) const;
+  bool sameDim(const Matrix<T> *other) const;
   
   ////////////////////////////////////////////////////////////////////////////
 
