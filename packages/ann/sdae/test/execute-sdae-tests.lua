@@ -1,5 +1,7 @@
 epsilon = 1e-03
 
+tmpname = os.tmpname()
+
 function assert_differences(test, results)
   local f = io.open(test)
   local r = io.open(results)
@@ -16,12 +18,12 @@ function assert_differences(test, results)
   end
 end
 --
-assert(os.execute("april-ann test/test.lua > /tmp/test.log") == 0,
+assert(os.execute("april-ann.debug "..string.get_path(arg[0]).."/test.lua > "..tmpname) == 0,
        "Error executing script test.lua")
-assert_differences("/tmp/test.log", "test/results.log")
+assert_differences(tmpname, string.get_path(arg[0]).."test/results.log")
 --
-assert(os.execute("april-ann test/test_on_the_fly.lua > /tmp/test.log") == 0,
+assert(os.execute("april-ann.debug "..string.get_path(arg[0]).."/test_on_the_fly.lua > "..tmpname) == 0,
        "Error executing script test_on_the_fly.lua")
-assert_differences("/tmp/test.log", "test/results_on_the_fly.log")
+assert_differences(tmpname, string.get_path(arg[0]).."test/results_on_the_fly.log")
 --
-os.execute("rm -f /tmp/test.log")
+os.execute("rm -f " .. tmpname)
