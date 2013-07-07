@@ -9,11 +9,11 @@ test-macosx:
 test-mkl:
 	lua -l formiga build_mkl_debug.lua test
 
-test:
-	lua -l formiga build_debug.lua test
+#test:
+#	lua -l formiga build_debug.lua test
 
-test-cuda-mkl:
-	lua -l formiga build_cuda_and_mkl_debug.lua test
+#test-cuda-mkl:
+#	lua -l formiga build_cuda_and_mkl_debug.lua test
 
 release-macosx:
 	lua -l formiga build_release_macosx.lua
