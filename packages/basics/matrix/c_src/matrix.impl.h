@@ -224,9 +224,10 @@ Matrix<T> *Matrix<T>::transpose() const {
   const T *d = data->getPPALForRead();
   int *aux_coords = new int[numDim];
   for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
+  int raw_pos = offset;
   for (iterator resul_it(resul->begin()); resul_it!=resul->end(); ++resul_it) {
-    *resul_it = d[computeRawPos(aux_coords)];
-    nextCoordVectorColOrder(aux_coords, matrixSize, numDim);
+    *resul_it = d[raw_pos];
+    nextCoordVectorColOrder(aux_coords, raw_pos);
   }
   delete[] aux_coords;
   delete[] aux_matrix_size;
@@ -243,9 +244,6 @@ Matrix<T>* Matrix<T>::cloneOnlyDims() const {
 template<typename T>
 Matrix<T> *Matrix<T>::clone(CBLAS_ORDER major_order) {
   Matrix<T> *resul;
-  /*
-    if (numDim != 2) ERROR_EXIT(128, "Major type not availabe when numDim!=2\n");
-  */
   if (this->major_order != major_order) {
     resul = new Matrix<T>(numDim, matrixSize, major_order);
     iterator resul_it(resul->begin());
