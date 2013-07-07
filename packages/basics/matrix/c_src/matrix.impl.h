@@ -102,22 +102,24 @@ Matrix<T>::Matrix(Matrix<T> *other,
   if (clone) {
     initialize(sizes);
     allocate_memory(total_size);
-    int other_offset = other->computeRawPos(coords);
+    int other_raw_pos = other->computeRawPos(coords);
     const T *other_data = other->data->getPPALForRead();
     int *aux_coords = new int[numDim];
     for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
     if (major_order == CblasRowMajor) {
       for (iterator it(begin()); it!=end(); ++it) {
-	int other_raw_pos = other_offset + other->computeRawPos(aux_coords);
 	*it = other_data[other_raw_pos];
-	nextCoordVectorRowOrder(aux_coords, sizes, numDim);
+	nextCoordVectorRowOrder(aux_coords, other_raw_pos,
+				sizes, other->stride, numDim,
+				other->last_raw_pos);
       }
     }
     else {
       for (col_major_iterator it(begin()); it!=end(); ++it) {
-	int other_raw_pos = other_offset + other->computeRawPos(aux_coords);
 	*it = other_data[other_raw_pos];
-	nextCoordVectorColOrder(aux_coords, sizes, numDim);
+	nextCoordVectorColOrder(aux_coords, other_raw_pos,
+				sizes, other->stride, numDim,
+				other->last_raw_pos);
       }
     }
     delete[] aux_coords;

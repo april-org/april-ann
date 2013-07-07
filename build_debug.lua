@@ -11,7 +11,8 @@ luapkg{
     optimization = "no",
     platform = "unix",
     extra_flags={
-      "-pg"
+      "-pg",
+      "-DNO_POOL",
     },
     extra_libs={
       "-pg",

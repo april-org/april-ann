@@ -20,10 +20,10 @@ end
 --
 assert(os.execute("april-ann.debug "..string.get_path(arg[0]).."/test.lua > "..tmpname) == 0,
        "Error executing script test.lua")
-assert_differences(tmpname, string.get_path(arg[0]).."test/results.log")
+assert_differences(tmpname, string.get_path(arg[0]).."/results.log")
 --
 assert(os.execute("april-ann.debug "..string.get_path(arg[0]).."/test_on_the_fly.lua > "..tmpname) == 0,
        "Error executing script test_on_the_fly.lua")
-assert_differences(tmpname, string.get_path(arg[0]).."test/results_on_the_fly.log")
+assert_differences(tmpname, string.get_path(arg[0]).."/results_on_the_fly.log")
 --
 os.execute("rm -f " .. tmpname)
