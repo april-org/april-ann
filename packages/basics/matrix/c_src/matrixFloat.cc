@@ -307,7 +307,7 @@ void Matrix<float>::copy(const Matrix<float> *other) {
 		data, this_pos, stride[numDim-1],
 		use_cuda);
 	aux_coords[numDim-1] = matrixSize[numDim-1]-1;
-      } while(nextCoordVectorRowOrder(aux_coords, matrixSize, numDim));
+      } while(nextCoordVectorRowOrder(aux_coords));
     }
     else {
       do {
@@ -318,7 +318,7 @@ void Matrix<float>::copy(const Matrix<float> *other) {
 		data, this_pos, stride[0],
 		use_cuda);
 	aux_coords[0] = matrixSize[0]-1;
-      } while(nextCoordVectorColOrder(aux_coords, matrixSize, numDim));
+      } while(nextCoordVectorColOrder(aux_coords));
     }
     delete[] aux_coords;
   }
@@ -370,7 +370,7 @@ void Matrix<float>::axpy(float alpha, const Matrix<float> *other) {
 		data, this_pos, stride[numDim-1],
 		use_cuda);
 	aux_coords[numDim-1] = matrixSize[numDim-1]-1;
-      } while(nextCoordVectorRowOrder(aux_coords, matrixSize, numDim));
+      } while(nextCoordVectorRowOrder(aux_coords));
     }
     else {
       do {
@@ -381,7 +381,7 @@ void Matrix<float>::axpy(float alpha, const Matrix<float> *other) {
 		data, this_pos, stride[0],
 		use_cuda);
 	aux_coords[0] = matrixSize[0]-1;
-      } while(nextCoordVectorColOrder(aux_coords, matrixSize, numDim));
+      } while(nextCoordVectorColOrder(aux_coords));
     }
     delete[] aux_coords;
   }
@@ -528,7 +528,7 @@ void Matrix<float>::scal(float value) {
 		data, pos, stride[numDim-1],
 		use_cuda);
 	aux_coords[numDim-1] = matrixSize[numDim-1]-1;
-      } while(nextCoordVectorRowOrder(aux_coords, matrixSize, numDim));
+      } while(nextCoordVectorRowOrder(aux_coords));
     }
     else {
       do {
@@ -537,7 +537,7 @@ void Matrix<float>::scal(float value) {
 		data, pos, stride[0],
 		use_cuda);
 	aux_coords[0] = matrixSize[0]-1;
-      } while(nextCoordVectorColOrder(aux_coords, matrixSize, numDim));
+      } while(nextCoordVectorColOrder(aux_coords));
     }
     delete[] aux_coords;
   }
@@ -587,7 +587,7 @@ float Matrix<float>::norm2() const {
 			    use_cuda);
 	v += aux*aux;
 	aux_coords[numDim-1] = matrixSize[numDim-1]-1;
-      } while(nextCoordVectorRowOrder(aux_coords, matrixSize, numDim));
+      } while(nextCoordVectorRowOrder(aux_coords));
     }
     else {
       do {
@@ -597,7 +597,7 @@ float Matrix<float>::norm2() const {
 			    use_cuda);
 	v += aux*aux;
 	aux_coords[0] = matrixSize[0]-1;
-      } while(nextCoordVectorColOrder(aux_coords, matrixSize, numDim));
+      } while(nextCoordVectorColOrder(aux_coords));
     }
     v = float(sqrtf(v));
     delete[] aux_coords;
