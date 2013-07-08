@@ -36,6 +36,19 @@ int *read_vector(lua_State *L, const char *key, int num_dim) {
   lua_pop(L, 1);
   return v;
 }
+
+int sliding_window_iterator_function(lua_State *L) {
+  SlidingWindow *obj = lua_toSlidingWindow(L,1);
+  if (obj->isEnd()) {
+    lua_pushnil(L);
+    return 1;
+  }
+  MatrixFloat *mat = obj->getMatrix();
+  lua_pushMatrixFloat(L, mat);
+  obj->next();
+  return 1;
+}
+
 //BIND_END
 
 //BIND_HEADER_H
@@ -59,7 +72,29 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 
 //BIND_METHOD SlidingWindow get_matrix
 {
-  LUABIND_RETURN(MatrixFloat, obj->
+  bool clone;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, bool, clone, false);
+  LUABIND_RETURN(MatrixFloat, obj->getMatrix(clone));
+}
+//BIND_END
+
+//BIND_METHOD SlidingWindow next
+{
+  LUABIND_RETURN(SlidingWindow, obj->next());
+}
+//BIND_END
+
+//BIND_METHOD SlidingWindow is_end
+{
+  LUABIND_RETURN(bool, obj->isEnd());
+}
+//BIND_END
+
+//BIND_METHOD SlidingWindow iterate
+{
+  LUABIND_CHECK_ARGN(==, 0);
+  LUABIND_RETURN(cfunction,sliding_window_iterator_function);
+  LUABIND_RETURN(SlidingWindow,obj);
 }
 //BIND_END
 
@@ -1021,7 +1056,6 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 //BIND_METHOD MatrixFloat sliding_window
 {
   int *sub_matrix_size=0, *offset=0, *step=0, *num_steps=0, *order_step=0;
-  bool clone=false;
   int argn = lua_gettop(L); // number of arguments
   const int num_dim = obj->getNumDim();
   if (argn > 1)
@@ -1034,7 +1068,6 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 		       "step",
 		       "numSteps",
 		       "orderStep",
-		       "clone",
 		       0);
     
     offset = read_vector(L, "offset", num_dim);
@@ -1042,17 +1075,19 @@ typedef MatrixFloat::sliding_window SlidingWindow;
     step = read_vector(L, "step", num_dim);
     num_steps = read_vector(L, "numSteps", num_dim);
     order_step = read_vector(L, "orderStep", num_dim);
-
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, "clone", bool, clone, false);
   }
   SlidingWindow *window = new SlidingWindow(obj,
 					    sub_matrix_size,
 					    offset,
 					    step,
 					    num_steps,
-					    order_step,
-					    clone);
+					    order_step);
   LUABIND_RETURN(SlidingWindow, window);
+  delete[] sub_matrix_size;
+  delete[] offset;
+  delete[] step;
+  delete[] num_steps;
+  delete[] order_step;
 }
 //BIND_END
 
