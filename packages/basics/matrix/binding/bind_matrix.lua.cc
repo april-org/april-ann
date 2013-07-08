@@ -1071,10 +1071,10 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 		       0);
     
     offset = read_vector(L, "offset", num_dim, -1);
-    sub_matrix_size = read_vector(L, "size", num_dim);
-    step = read_vector(L, "step", num_dim);
-    num_steps = read_vector(L, "numSteps", num_dim);
-    order_step = read_vector(L, "orderStep", num_dim);
+    sub_matrix_size = read_vector(L, "size", num_dim, 0);
+    step = read_vector(L, "step", num_dim, 0);
+    num_steps = read_vector(L, "numSteps", num_dim, 0);
+    order_step = read_vector(L, "orderStep", num_dim, 0);
   }
   SlidingWindow *window = new SlidingWindow(obj,
 					    sub_matrix_size,
