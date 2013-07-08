@@ -22,14 +22,14 @@
 #include "bind_mtrand.h"
 #include <cmath> // para isfinite
 
-int *read_vector(lua_State *L, const char *key, int num_dim) {
+int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
   int *v=0;
   lua_getfield(L, 1, key);
   if (!lua_isnil(L, -1)) {
     v = new int[num_dim];
     for(int i=0; i < num_dim; i++) {
       lua_rawgeti(L, -1, i+1);
-      v[i] = static_cast<int>(lua_tonumber(L, -1));
+      v[i] = static_cast<int>(lua_tonumber(L, -1)) + add;
       lua_pop(L,1);
     }
   }
@@ -1011,7 +1011,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   }
 //BIND_END
 
-//BIND_METHOD MatrixFloat randi
+//BIND_METHOD MatrixFloat uniform
 {
   int lower, upper;
   MTRand *random;
@@ -1022,18 +1022,18 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   IncRef(random);
   if (obj->getMajorOrder() == CblasRowMajor)
     for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it) {
-      *it = random->randInt(upper - lower) + lower;
+      *it = static_cast<float>(random->randInt(upper - lower) + lower);
     }
   else
     for (MatrixFloat::col_major_iterator it(obj->begin());it!=obj->end();++it) {
-      *it = random->randInt(upper - lower) + lower;
+      *it = static_cast<float>(random->randInt(upper - lower) + lower);
     }
   DecRef(random);
   LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat randf
+//BIND_METHOD MatrixFloat uniformf
 {
   float lower, upper;
   MTRand *random;
@@ -1070,7 +1070,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 		       "orderStep",
 		       0);
     
-    offset = read_vector(L, "offset", num_dim);
+    offset = read_vector(L, "offset", num_dim, -1);
     sub_matrix_size = read_vector(L, "size", num_dim);
     step = read_vector(L, "step", num_dim);
     num_steps = read_vector(L, "numSteps", num_dim);

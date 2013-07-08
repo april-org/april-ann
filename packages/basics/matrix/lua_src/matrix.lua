@@ -727,7 +727,7 @@ april_set_doc("matrix.copy",
 		outputs = { "The caller matrix instance" },
 	      })
 
-april_set_doc("matrix.randi",
+april_set_doc("matrix.uniform",
 	      {
 		class = "method",
 		summary = "Initializes with random integers in range [a,b]",
@@ -737,7 +737,7 @@ april_set_doc("matrix.randi",
 		outputs = { "The caller matrix instance" },
 	      })
 
-april_set_doc("matrix.randf",
+april_set_doc("matrix.uniformf",
 	      {
 		class = "method",
 		summary = "Initializes with random floats in range [a,b]",
