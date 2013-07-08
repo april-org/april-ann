@@ -453,6 +453,8 @@ float doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
     const float *input_ptr  = input->getPPALForRead();
     const float *target_ptr = target->getPPALForRead();
     float sum = 0.0f;
+    float log_epsilon   = logf(EPSILON);
+    float log_1_epsilon = logf(1.0f - EPSILON);
     for (unsigned int i = 0; i < size; i++) {
       for (unsigned int b=0; b<bunch_size; ++b) {
 	assert(!(input_ptr[b] > 0.0f) &&
@@ -460,12 +462,14 @@ float doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
 	assert(!(target_ptr[b] < 0.0f) && !(target_ptr[b] > 1.0f) &&
 	       "Only [0,1] target patterns are allowed");
 	// compute derivative
-	float  log_o     = input_ptr[b];
-	double o         = clamp(exp(input_ptr[b]),
-				 double(EPSILON),
-				 double(1.0f - EPSILON));
-	float  log_inv_o = (o< (1.0f-EPSILON) ) ? log(1.0 - o) : log(EPSILON);
+	float  log_o     = clamp(input_ptr[b], log_epsilon, log_1_epsilon);
+	double o         = exp(input_ptr[b]);
+	float  log_inv_o = log(1.0 - o);
+	// CLAMP of reference (target)
 	float  t         = clamp(target_ptr[b], EPSILON, 1.0f - EPSILON);
+	// CLAMP of 1.0 - reference (target). We do clamp again to avoid
+	// numerical approximation problems, and to ensure correct working of
+	// inv_t > EPSILON comparison
 	float  inv_t     = clamp(1.0f - target_ptr[b], EPSILON, 1.0f - EPSILON);
 	// printf("%g * %g :: %g * %g :: %g\n", t, log_o, inv_t, log_inv_o, o);
 	if (t > EPSILON)     sum += t * log_o;
