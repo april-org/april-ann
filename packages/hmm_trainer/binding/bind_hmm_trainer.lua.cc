@@ -254,7 +254,7 @@
 		     "do_expectation",
 		     "emission_in_log_base",
 		     "count_value",
-		     0);
+		     (const char *)0);
   //
   MatrixFloat *input_matemi, *output_matemi_seq, *output_matemi;
   MatrixFloat *state_probabilities;

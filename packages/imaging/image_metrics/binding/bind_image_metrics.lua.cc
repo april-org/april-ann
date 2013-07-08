@@ -56,7 +56,8 @@
 //DOC_END
 {
   LUABIND_CHECK_ARGN(==,1);
-  check_table_fields(L, 1, "predicted", "ground_truth", "binary", "threshold", 0);
+  check_table_fields(L, 1, "predicted", "ground_truth", "binary", "threshold",
+		     (const char *)0);
   DataSetFloat *ds, *GT;
   bool binary;
   float threshold;
