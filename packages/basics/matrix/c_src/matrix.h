@@ -259,10 +259,11 @@ public:
     int *coords;
     /// Current position at the matrix of the first component
     int raw_pos;
-    /// Clone the matrix data before extract the window
-    bool clone;
     ///
     int total_size, last_raw_pos;
+    bool finished;
+    ///
+    int *num_step_by_step;
   public:
     sliding_window();
     sliding_window(Matrix<T> *m,
@@ -270,15 +271,13 @@ public:
 		   const int *offset=0,
 		   const int *step=0,
 		   const int *num_steps=0,
-		   const int *order_step=0,
-		   const bool clone=false);
+		   const int *order_step=0);
     sliding_window(const sliding_window &other);
     ~sliding_window();
-    bool operator==(const sliding_window &other) const;
-    bool operator!=(const sliding_window &other) const;
     sliding_window &operator=(const sliding_window &other);
-    sliding_window &operator++();
-    Matrix<T> *operator*();
+    sliding_window *next();
+    Matrix<T> *getMatrix(bool clone=false);
+    bool isEnd() const { return finished; }
   };
   
 private:

@@ -71,6 +71,10 @@ Matrix<T>::Matrix(int numDim, const int *stride, const int offset,
   last_raw_pos(last_raw_pos), data(data), major_order(major_order),
   use_cuda(use_cuda) {
   IncRef(data);
+  for (int i=0; i<numDim; ++i) {
+    this->stride[i] = stride[i];
+    this->matrixSize[i] = matrixSize[i];
+  }
 }
 
 /// Default constructor
