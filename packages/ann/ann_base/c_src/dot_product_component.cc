@@ -341,17 +341,17 @@ namespace ANN {
 	// we need to use the pointer because after endUpdate() method the
 	// pointers will be swapped or changed
 	weights_mat = weights_matrix->getPtr();
-	for (unsigned int i=0; i<output_size; ++i) {
-	  int coords[2] = { static_cast<int>(i), 0 };
-	  int sizes[2]	= { 1, static_cast<int>(input_size) };
-	  MatrixFloat *submat = new MatrixFloat(weights_mat,coords,sizes,false);
+	MatrixFloat::sliding_window window(weights_mat, 0, 0, 0, 0, 0);
+	while(!window.isEnd()) {
+	  MatrixFloat *submat = window.getMatrix();
 	  float norm2 = submat->norm2();
 	  if (norm2 > max_norm_penalty) {
 	    float scal_factor = max_norm_penalty/norm2;
 	    submat->scal(scal_factor);
 	  }
 	  delete submat;
-	} // for (i=0; i<output_size; ++i)
+	  window.next();
+	}
       } // if max_norm_penalty > 0.0
     }
   }

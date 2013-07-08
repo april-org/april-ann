@@ -53,22 +53,20 @@ public:
       TokenMatrixFloat *output_mat_token  = new TokenMatrixFloat(output_mat);
       output           = output_mat_token;
       unsigned int i   = 0;
-      int pattern_size = patternSize();
-      do {
+      MatrixFloat::sliding_window window(output_mat, 0, 0, 0, 0, 0);
+      while(!window.isEnd()) {
 	IncRef(aux_token);
 	TokenMatrixFloat *aux_mat_token;
 	aux_mat_token = aux_token->convertTo<TokenMatrixFloat*>();
 	
-	int coords[2] = { static_cast<int>(i), 0 };
-	int sizes[2]  = { 1, pattern_size };
-	MatrixFloat *submat = new MatrixFloat(output_mat, coords, sizes, false);
+	MatrixFloat *submat = window.getMatrix();
 	submat->copy(aux_mat_token->getMatrix());
 	delete submat;
 	
 	DecRef(aux_token);
 	if ( (++i) < bunch_size) aux_token = getPattern(indexes[i]);
-	else break;
-      } while(true);
+	window.next();
+      }
       break;
     }
     default: {
