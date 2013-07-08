@@ -59,7 +59,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 
 //BIND_METHOD SlidingWindow get_matrix
 {
-  LUABIND_RETURN(MatrixFloat, *
+  LUABIND_RETURN(MatrixFloat, obj->
 }
 //BIND_END
 
