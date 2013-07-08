@@ -165,7 +165,7 @@ __global__ void computeCrossEntropyLossFunctionKernel(const float *output,
     double o         = clip(exp(input_ptr[b]),
 			    double(epsilon),
 			    double(1.0f - epsilon));
-    float  log_inv_o = (o<1.0) ? log(1.0 - o) : log(epsilon);
+    float  log_inv_o = (o< (1.0f-epsilon) ) ? log(1.0 - o) : log(epsilon);
     float  t         = clip(target_output[index], epsilon, 1.0f - epsilon);
     float  inv_t     = clip(1.0f - target_output[index], epsilon, 1.0f - epsilon);
     if (t > epsilon) pattern_errors[index] += t * log_o;
@@ -464,7 +464,7 @@ float doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
 	double o         = clamp(exp(input_ptr[b]),
 				 double(EPSILON),
 				 double(1.0f - EPSILON));
-	float  log_inv_o = (o<1.0) ? log(1.0 - o) : log(EPSILON);
+	float  log_inv_o = (o< (1.0f-EPSILON) ) ? log(1.0 - o) : log(EPSILON);
 	float  t         = clamp(target_ptr[b], EPSILON, 1.0f - EPSILON);
 	float  inv_t     = clamp(1.0f - target_ptr[b], EPSILON, 1.0f - EPSILON);
 	// printf("%g * %g :: %g * %g :: %g\n", t, log_o, inv_t, log_inv_o, o);
