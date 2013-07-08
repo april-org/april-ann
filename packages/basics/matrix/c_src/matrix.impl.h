@@ -57,6 +57,22 @@ void Matrix<T>::release_memory() {
   DecRef(data);
 }
 
+/// Null constructor
+template <typename T>
+Matrix<T>::Matrix(int numDim, const int *stride, const int offset,
+		  const int *matrixSize,
+		  const int total_size,
+		  const int last_raw_pos,
+		  GPUMirroredMemoryBlock<T> *data,
+		  const CBLAS_ORDER major_order,
+		  const bool use_cuda) :
+  numDim(numDim), stride(new int[numDim]), offset(offset),
+  matrixSize(new int[numDim]), total_size(total_size),
+  last_raw_pos(last_raw_pos), data(data), major_order(major_order),
+  use_cuda(use_cuda) {
+  IncRef(data);
+}
+
 /// Default constructor
 template <typename T>
 Matrix<T>::Matrix(int numDim,

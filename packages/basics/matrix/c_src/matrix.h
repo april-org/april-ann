@@ -245,8 +245,8 @@ public:
   class sliding_window : public Referenced {
     /// A reference to the matrix
     Matrix<T> *m;
-    /// Initial position
-    int offset;
+    /// Offset coordinates
+    int *offset;
     /// subPattern size.
     int *sub_matrix_size;
     /// Step of each dimension for the sliding window.
@@ -261,92 +261,22 @@ public:
     int raw_pos;
     /// Clone the matrix data before extract the window
     bool clone;
+    ///
+    int total_size, last_raw_pos;
   public:
+    sliding_window();
     sliding_window(Matrix<T> *m,
 		   const int *sub_matrix_size=0,
 		   const int *offset=0,
 		   const int *step=0,
 		   const int *num_steps=0,
 		   const int *order_step=0,
-		   bool clone=false) :
-      m(m),
-      offset(m->offset),
-      sub_matrix_size(new int[m->numDim]),
-      step(new int[m->numDim]),
-      num_steps(new int[m->numDim]),
-      order_step(new int[m->numDim]),
-      coords(new int[m->numDim]),
-      clone(clone) {
-      IncRef(m);
-      if (offset != 0) 
-	for (int i=0; i<m->numDim; ++i) {
-	  this->offset += offset[i]*m->stride[i];
-	  this->coords[i] = offset[i];
-	}
-      else
-	for (int i=0; i<m->numDim; ++i) coords[i] = 0;
-      // default values for arrays if necessary
-      if (sub_matrix_size == 0) {
-	for (int i=0; i<m->numDim; ++i)
-	  this->sub_matrix_size[i] = m->matrixSize[i];
-	sub_matrix_size[0] = 1;
-      }
-      else
-	for (int i=0; i<m->numDim; ++i)
-	  this->sub_matrix_size[i] = sub_matrix_size[i];
-      //
-      if (step == 0)
-	for (int i=0; i<m->numDim; ++i)
-	  this->step[i] = 1;
-      else
-	for (int i=0; i<m->numDim; ++i)
-	  this->step[i] = step[i];
-      //
-      if (num_steps == 0) {
-	for (int i=0; i<m->numDim; ++i)
-	  this->num_steps[i] = 1;
-	num_steps[0] = m->matrixSize[0];
-      }
-      else
-	for (int i=0; i<m->numDim; ++i)
-	  this->num_steps[i] = num_steps[i];
-      //
-      if (order_step == 0)
-	for (int i=0; i<m->numDim; ++i)
-	  this->order_step[i] = (m->numDim - (i + 1));
-      else
-	for (int i=0; i<m->numDim; ++i)
-	  this->order_step[i] = order_step[i];
-    }
-    sliding_window(const sliding_window &other) :
-      m(other.m),
-      offset(other.offset),
-      sub_matrix_size(new int[m->numDim]),
-      step(new int[m->numDim]),
-      num_steps(new int[m->numDim]),
-      order_step(new int[m->numDim]),
-      coords(new int[m->numDim]),
-      raw_pos(other.raw_pos),
-      clone(other.clone) {
-      IncRef(m);
-      for (int i=0; i<m->numDim; ++i) {
-	sub_matrix_size[i] = other.sub_matrix_size[i];
-	step[i] = other.step[i];
-	num_steps[i] = other.num_steps[i];
-	order_step[i] = other.order_step[i];
-      }
-    }
-    ~sliding_window() {
-      DecRef(m);
-      delete[] sub_matrix_size;
-      delete[] step;
-      delete[] num_steps;
-      delete[] order_step;
-      delete[] coords;
-    }
+		   const bool clone=false);
+    sliding_window(const sliding_window &other);
+    ~sliding_window();
     bool operator==(const sliding_window &other) const;
     bool operator!=(const sliding_window &other) const;
-    sliding_window &operator=(const sliding_window &other) const;
+    sliding_window &operator=(const sliding_window &other);
     sliding_window &operator++();
     Matrix<T> *operator*();
   };
@@ -396,7 +326,11 @@ private:
 	best_span_iterator(this, last_raw_pos+1);
     return end_best_span_iterator;
   }
-  
+  //
+  Matrix(int numDim, const int *stride, const int offset,
+	 const int *matrixSize, const int total_size, const int last_raw_pos,
+	 GPUMirroredMemoryBlock<T> *data, const CBLAS_ORDER major_order,
+	 const bool use_cuda);
 public:
   /********** Constructors ***********/
   /// Full constructor given numDim, dim, and major_order
