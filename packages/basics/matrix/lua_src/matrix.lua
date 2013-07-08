@@ -739,7 +739,7 @@ april_set_doc("matrix.linear",
 april_set_doc("matrix.uniform",
 	      {
 		class = "method",
-		summary = "Initializes with random integers in range [a,b]",
+		summary = "Initializes with random positive integers from range [a,b]",
 		params  = { "Lower range value",
 			    "Upper range value",
 			    "A random object instance [optional]" },

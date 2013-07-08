@@ -1028,6 +1028,10 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   LUABIND_GET_PARAMETER(1, int, lower);
   LUABIND_GET_PARAMETER(2, int, upper);
   LUABIND_GET_OPTIONAL_PARAMETER(3, MTRand, random, 0);
+  if (lower < 0)
+    LUABIND_ERROR("Allowed only for positive integers");
+  if (lower > upper)
+    LUABIND_ERROR("First argument must be <= second argument");
   if (random == 0) random = new MTRand();
   IncRef(random);
   if (obj->getMajorOrder() == CblasRowMajor)
@@ -1050,6 +1054,8 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   LUABIND_GET_PARAMETER(1, float, lower);
   LUABIND_GET_PARAMETER(2, float, upper);
   LUABIND_GET_OPTIONAL_PARAMETER(3, MTRand, random, 0);
+  if (lower > upper)
+    LUABIND_ERROR("First argument must be <= second argument");
   if (random == 0) random = new MTRand();
   IncRef(random);
   if (obj->getMajorOrder() == CblasRowMajor)
