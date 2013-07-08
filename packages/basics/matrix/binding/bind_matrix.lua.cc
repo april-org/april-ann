@@ -19,17 +19,51 @@
  *
  */
 //BIND_HEADER_C
+#include "bind_mtrand.h"
 #include <cmath> // para isfinite
+
+int *read_vector(lua_State *L, const char *key, int num_dim) {
+  int *v=0;
+  lua_getfield(L, 1, key);
+  if (!lua_isnil(L, -1)) {
+    v = new int[num_dim];
+    for(int i=0; i < num_dim; i++) {
+      lua_rawgeti(L, -1, i+1);
+      v[i] = static_cast<int>(lua_tonumber(L, -1));
+      lua_pop(L,1);
+    }
+  }
+  lua_pop(L, 1);
+  return v;
+}
 //BIND_END
 
 //BIND_HEADER_H
 #include "utilMatrixFloat.h"
 #include "utilLua.h"
 #include <cmath> // para isfinite
+typedef MatrixFloat::sliding_window SlidingWindow;
 //BIND_END
 
 //BIND_LUACLASSNAME MatrixFloat matrix
 //BIND_CPP_CLASS MatrixFloat
+
+//BIND_LUACLASSNAME SlidingWindow matrix.__sliding_window__
+//BIND_CPP_CLASS SlidingWindow
+
+//BIND_CONSTRUCTOR SlidingWindow
+{
+  LUABIND_ERROR("Use matrix.sliding_window");
+}
+//BIND_END
+
+//BIND_METHOD SlidingWindow get_matrix
+{
+  LUABIND_RETURN(MatrixFloat, *
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////////
 
 //BIND_CONSTRUCTOR MatrixFloat
 //DOC_BEGIN
@@ -941,3 +975,86 @@
     LUABIND_RETURN(float, obj->norm2());
   }
 //BIND_END
+
+//BIND_METHOD MatrixFloat randi
+{
+  int lower, upper;
+  MTRand *random;
+  LUABIND_GET_PARAMETER(1, int, lower);
+  LUABIND_GET_PARAMETER(2, int, upper);
+  LUABIND_GET_OPTIONAL_PARAMETER(3, MTRand, random, 0);
+  if (random == 0) random = new MTRand();
+  IncRef(random);
+  if (obj->getMajorOrder() == CblasRowMajor)
+    for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it) {
+      *it = random->randInt(upper - lower) + lower;
+    }
+  else
+    for (MatrixFloat::col_major_iterator it(obj->begin());it!=obj->end();++it) {
+      *it = random->randInt(upper - lower) + lower;
+    }
+  DecRef(random);
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat randf
+{
+  float lower, upper;
+  MTRand *random;
+  LUABIND_GET_PARAMETER(1, float, lower);
+  LUABIND_GET_PARAMETER(2, float, upper);
+  LUABIND_GET_OPTIONAL_PARAMETER(3, MTRand, random, 0);
+  if (random == 0) random = new MTRand();
+  IncRef(random);
+  if (obj->getMajorOrder() == CblasRowMajor)
+    for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it)
+      *it = random->rand(upper - lower) + lower;
+  else
+    for (MatrixFloat::col_major_iterator it(obj->begin());it!=obj->end();++it)
+      *it = random->rand(upper - lower) + lower;
+  DecRef(random);
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat sliding_window
+{
+  int *sub_matrix_size=0, *offset=0, *step=0, *num_steps=0, *order_step=0;
+  bool clone=false;
+  int argn = lua_gettop(L); // number of arguments
+  const int num_dim = obj->getNumDim();
+  if (argn > 1)
+    LUABIND_ERROR("incorrect number of arguments");
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1,
+		       "offset",
+		       "size",
+		       "step",
+		       "numSteps",
+		       "orderStep",
+		       "clone",
+		       0);
+    
+    offset = read_vector(L, "offset", num_dim);
+    sub_matrix_size = read_vector(L, "size", num_dim);
+    step = read_vector(L, "step", num_dim);
+    num_steps = read_vector(L, "numSteps", num_dim);
+    order_step = read_vector(L, "orderStep", num_dim);
+
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, "clone", bool, clone, false);
+  }
+  SlidingWindow *window = new SlidingWindow(obj,
+					    sub_matrix_size,
+					    offset,
+					    step,
+					    num_steps,
+					    order_step,
+					    clone);
+  LUABIND_RETURN(SlidingWindow, window);
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////////
+

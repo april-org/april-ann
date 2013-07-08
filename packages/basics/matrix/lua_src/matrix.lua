@@ -726,3 +726,23 @@ april_set_doc("matrix.copy",
 		params  = { "A source matrix" },
 		outputs = { "The caller matrix instance" },
 	      })
+
+april_set_doc("matrix.randi",
+	      {
+		class = "method",
+		summary = "Initializes with random integers in range [a,b]",
+		params  = { "Lower range value",
+			    "Upper range value",
+			    "A random object instance [optional]" },
+		outputs = { "The caller matrix instance" },
+	      })
+
+april_set_doc("matrix.randf",
+	      {
+		class = "method",
+		summary = "Initializes with random floats in range [a,b]",
+		params  = { "Lower range value",
+			    "Upper range value",
+			    "A random object instance [optional]" },
+		outputs = { "The caller matrix instance" },
+	      })

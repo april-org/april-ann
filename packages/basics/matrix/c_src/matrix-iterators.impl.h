@@ -776,3 +776,206 @@ operator++() {
   }
   return *this;
 }
+
+/////////////////////////////////////////////////////////////////////////////
+
+template <typename T>
+Matrix<T>::sliding_window::sliding_window() :
+m(0), offset(0), sub_matrix_size(0), step(0),
+num_steps(0), order_step(0), coords(0), raw_pos(0),
+clone(false) { }
+
+template <typename T>
+Matrix<T>::sliding_window::sliding_window(Matrix<T> *m,
+					  const int *sub_matrix_size,
+					  const int *offset,
+					  const int *step,
+					  const int *num_steps,
+					  const int *order_step,
+					  const bool clone) :
+  m(m),
+  offset(new int[m->numDim]),
+  sub_matrix_size(new int[m->numDim]),
+  step(new int[m->numDim]),
+  num_steps(new int[m->numDim]),
+  order_step(new int[m->numDim]),
+  coords(new int[m->numDim]),
+  raw_pos(m->offset),
+  clone(clone)
+{
+  IncRef(m);
+  if (offset != 0)
+    for (int i=0; i<m->numDim; ++i) {
+      this->raw_pos += offset[i]*m->stride[i];
+      this->coords[i] = this->offset[i] = offset[i];
+    }
+  else
+    for (int i=0; i<m->numDim; ++i)
+      this->coords[i] = this->offset[i] = 0;
+  // default values for arrays if necessary
+  if (sub_matrix_size == 0) {
+    for (int i=0; i<m->numDim; ++i)
+      this->sub_matrix_size[i] = m->matrixSize[i];
+    this->sub_matrix_size[0] = 1;
+  }
+  else
+    for (int i=0; i<m->numDim; ++i)
+      this->sub_matrix_size[i] = sub_matrix_size[i];
+  //
+  last_raw_pos = 0;
+  total_size = 1;
+  for (int i=0; i<m->numDim; ++i) {
+    total_size   += sub_matrix_size[i]*total_size;
+    last_raw_pos += (sub_matrix_size[i]-1)*m->stride[i];
+  }
+  //
+  if (step == 0)
+    for (int i=0; i<m->numDim; ++i)
+      this->step[i] = 1;
+  else
+    for (int i=0; i<m->numDim; ++i)
+      this->step[i] = step[i];
+  //
+  if (num_steps == 0) {
+    for (int i=0; i<m->numDim; ++i)
+      this->num_steps[i] = 1;
+    this->num_steps[0] = m->matrixSize[0];
+  }
+  else
+    for (int i=0; i<m->numDim; ++i)
+      this->num_steps[i] = num_steps[i];
+  //
+  if (order_step == 0)
+    for (int i=0; i<m->numDim; ++i)
+      this->order_step[i] = (m->numDim - (i + 1));
+  else
+    for (int i=0; i<m->numDim; ++i)
+      this->order_step[i] = order_step[i];
+}
+
+template <typename T>
+Matrix<T>::sliding_window::sliding_window(const sliding_window &other) :
+  m(other.m),
+  offset(new int[m->numDim]),
+  sub_matrix_size(new int[m->numDim]),
+  step(new int[m->numDim]),
+  num_steps(new int[m->numDim]),
+  order_step(new int[m->numDim]),
+  coords(new int[m->numDim]),
+  raw_pos(other.raw_pos),
+  clone(other.clone),
+  total_size(total_size),
+  last_raw_pos(last_raw_pos)
+{
+  IncRef(m);
+  for (int i=0; i<m->numDim; ++i) {
+    sub_matrix_size[i] = other.sub_matrix_size[i];
+    step[i] = other.step[i];
+    num_steps[i] = other.num_steps[i];
+    order_step[i] = other.order_step[i];
+    coords[i] = other.coords[i];
+    offset[i] = other.offset[i];
+  }
+}
+
+template <typename T>
+Matrix<T>::sliding_window::~sliding_window() {
+  DecRef(m);
+  delete[] sub_matrix_size;
+  delete[] step;
+  delete[] num_steps;
+  delete[] order_step;
+  delete[] coords;
+  delete[] offset;
+}
+ 
+template <typename T>
+bool Matrix<T>::sliding_window::operator==(const sliding_window &other) const {
+  if (m != other.m || raw_pos != other.raw_pos || offset != other.offset ||
+      total_size != other.total_size || last_raw_pos != other.last_raw_pos)
+    return false;
+  /*
+    for (int i=0; i<m->numDim; ++i) {
+    if (sub_matrix_size[i] != other.sub_matrix_size[i] ||
+    step[i] != other.step[i] ||
+    num_steps[i] != other.num_steps[i] ||
+    order_step[i] != other.order_step[i] ||
+    offset[i] != other.offset[i]) return false;
+    }
+  */
+  return true;
+}
+
+template <typename T>
+bool Matrix<T>::sliding_window::operator!=(const sliding_window &other) const {
+  return !( (*this) == other );
+}
+
+template <typename T>
+typename Matrix<T>::sliding_window::sliding_window &Matrix<T>::sliding_window::
+operator=(const sliding_window &other) {
+  if (m==0 || m->numDim != other.m->numDim) {
+    delete[] sub_matrix_size;
+    delete[] step;
+    delete[] num_steps;
+    delete[] order_step;
+    delete[] coords;
+    delete[] offset;
+    sub_matrix_size	     = new int[other.m->numDim];
+    step		     = new int[other.m->numDim];
+    num_steps	     = new int[other.m->numDim];
+    order_step	     = new int[other.m->numDim];
+    coords		     = new int[other.m->numDim];
+    offset               = new int[other.m->numDim];
+  }
+  if (m) DecRef(m);
+  m			   = other.m;
+  IncRef(m);
+  offset		   = other.offset;
+  raw_pos		   = other.raw_pos;
+  clone		   = other.clone;
+  total_size           = other.total_size;
+  last_raw_pos         = other.last_raw_pos;
+  for (int i=0; i<m->numDim; ++i) {
+    sub_matrix_size[i] = other.sub_matrix_size[i];
+    step[i]		   = other.step[i];
+    num_steps[i]	   = other.num_steps[i];
+    order_step[i]	   = other.order_step[i];
+    coords[i]	   = other.coords[i];
+    offset[i]	   = other.offset[i];
+  }	
+  return *this;
+}
+
+template <typename T>
+typename Matrix<T>::sliding_window::sliding_window &Matrix<T>::sliding_window::
+operator++() {
+  int j = 0;
+  bool overflow;
+  do {
+    int pos  = order_step[j];
+    int prev = coords[pos];
+    coords[pos] += step[pos];
+    if (coords[pos] >= m->matrixSize[pos]) {
+      coords[pos] = offset[pos];
+      raw_pos -= m->stride[pos]*(prev + offset[pos]);
+      overflow = true;
+    }
+    else {
+      raw_pos += m->stride[pos]*step[pos];
+      overflow = false;
+    }
+  } while(overflow && j++<m->numDim);
+  if (j == m->numDim && overflow)
+    raw_pos = m->last_raw_pos + 1;
+  return *this;
+}
+
+template <typename T>
+Matrix<T> *Matrix<T>::sliding_window::operator*() {
+  if (clone) ERROR_EXIT(128, "NOT IMPLEMENTED");
+  return new Matrix<T>(m->numDim, m->stride,
+		       raw_pos, sub_matrix_size,
+		       total_size, last_raw_pos + raw_pos,
+		       m->data, m->major_order, m->use_cuda);
+}
