@@ -21,11 +21,20 @@
 //BIND_HEADER_C
 #include "bind_mtrand.h"
 #include <cmath> // para isfinite
+#include "luabindutil.h"
+#include "luabindmacros.h"
 
+#define FUNCTION_NAME "read_vector"
 int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
   int *v=0;
   lua_getfield(L, 1, key);
   if (!lua_isnil(L, -1)) {
+    LUABIND_CHECK_PARAMETER(-1, table);
+    int table_len;
+    LUABIND_TABLE_GETN(-1, table_len);
+    if (table_len != num_dim)
+      LUABIND_FERROR3("Table '%s' with incorrect size, expected %d, found %d",
+		      key, num_dim, table_len);
     v = new int[num_dim];
     for(int i=0; i < num_dim; i++) {
       lua_rawgeti(L, -1, i+1);
@@ -36,6 +45,7 @@ int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
   lua_pop(L, 1);
   return v;
 }
+#undef FUNCTION_NAME
 
 int sliding_window_iterator_function(lua_State *L) {
   SlidingWindow *obj = lua_toSlidingWindow(L,1);
@@ -1049,6 +1059,20 @@ typedef MatrixFloat::sliding_window SlidingWindow;
     for (MatrixFloat::col_major_iterator it(obj->begin());it!=obj->end();++it)
       *it = random->rand(upper - lower) + lower;
   DecRef(random);
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat linear
+{
+  int lower, step;
+  MTRand *random;
+  LUABIND_GET_PARAMETER(1, int, lower);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, int, step, 1);
+  int k=lower;
+  for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, k+=step) {
+    *it = static_cast<float>(k);
+  }
   LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END
