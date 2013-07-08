@@ -727,6 +727,15 @@ april_set_doc("matrix.copy",
 		outputs = { "The caller matrix instance" },
 	      })
 
+april_set_doc("matrix.linear",
+	      {
+		class = "method",
+		summary = "Initializes with linear integers",
+		params  = { "First integer value",
+			    "Step value [optional]", },
+		outputs = { "The caller matrix instance" },
+	      })
+
 april_set_doc("matrix.uniform",
 	      {
 		class = "method",
