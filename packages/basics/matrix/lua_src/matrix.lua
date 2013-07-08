@@ -731,8 +731,8 @@ april_set_doc("matrix.linear",
 	      {
 		class = "method",
 		summary = "Initializes with linear integers",
-		params  = { "First integer value",
-			    "Step value [optional]", },
+		params  = { "First integer value [optional], by default 0",
+			    "Step value [optional], by default 1", },
 		outputs = { "The caller matrix instance" },
 	      })
 

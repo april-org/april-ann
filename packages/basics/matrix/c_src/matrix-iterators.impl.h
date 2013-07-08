@@ -852,9 +852,6 @@ Matrix<T>::sliding_window::sliding_window(Matrix<T> *m,
   }
   // Final sanity check and initialization of auxiliary data structures
   for (int i=0; i<m->numDim; ++i) {
-    int last = ( this->offset[i] +
-		 this->step[i]*this->num_steps[i] +
-		 this->sub_matrix_size[i] - 1);
     if (this->step[i] < 1)
       ERROR_EXIT2(128, "Unexpected step value of %d at coordinate %d,"
 		  " it must be > 0\n",
@@ -867,6 +864,9 @@ Matrix<T>::sliding_window::sliding_window(Matrix<T> *m,
       ERROR_EXIT1(128, "Unexpected offset value at coordinate %d\n", i);
     if (this->sub_matrix_size[i] < 0)
       ERROR_EXIT1(128, "Unexpected sub_matrix_size value at coordinate %d\n", i);
+    int last = ( this->offset[i] +
+		 this->step[i]*(this->num_steps[i]-1) +
+		 this->sub_matrix_size[i]);
     if (last > m->matrixSize[i])
       ERROR_EXIT1(128, "Overflow at sliding window dimension %d!!!\n", i);
     num_step_by_step[i] = this->num_steps[i] * this->step[i];
