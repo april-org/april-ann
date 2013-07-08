@@ -941,7 +941,8 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   {
     LUABIND_CHECK_ARGN(==, 1);
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L,1, "trans_A", "trans_B", "alpha", "A", "B", "beta", 0);
+    check_table_fields(L,1, "trans_A", "trans_B", "alpha", "A", "B", "beta",
+		       (const char *)0);
     bool trans_A, trans_B;
     float alpha;
     float beta;
@@ -964,7 +965,8 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   {
     LUABIND_CHECK_ARGN(==, 1);
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L,1, "trans_A", "alpha", "A", "X", "beta", 0);
+    check_table_fields(L,1, "trans_A", "alpha", "A", "X", "beta",
+		       (const char *)0);
     bool trans_A;
     float alpha;
     float beta;
@@ -985,7 +987,8 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   {
     LUABIND_CHECK_ARGN(==, 1);
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L,1, "alpha", "X", "Y", 0);
+    check_table_fields(L,1, "alpha", "X", "Y",
+		       (const char *)0);
     float alpha;
     MatrixFloat *matX,*matY;
     LUABIND_GET_TABLE_PARAMETER(1, X, MatrixFloat, matX);
@@ -1099,7 +1102,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 		       "step",
 		       "numSteps",
 		       "orderStep",
-		       0);
+		       (const char*)0);
     
     offset = read_vector(L, "offset", num_dim, 0);
     sub_matrix_size = read_vector(L, "size", num_dim, 0);

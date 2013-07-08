@@ -111,7 +111,7 @@ using namespace Functions;
 		     "consumer",
 		     "input_size",
 		     "output_size",
-		     0);
+		     (const char *)0);
   // de tipo float => float
   FloatDataProducer *producer;
   unsigned int       input_size;
