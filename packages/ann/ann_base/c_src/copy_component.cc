@@ -55,6 +55,7 @@ namespace ANN {
       {
 	AssignRef(output, new TokenBunchVector(times));
 	for (unsigned int i=0; i<times; ++i) {
+	  // FIXME: clone or not to clone? that is the question :(
 	  (*output)[i] = input;
 	  IncRef(input);
 	}
@@ -70,6 +71,7 @@ namespace ANN {
 	  IncRef(current);
 	  for (unsigned int j=0; j<times; ++j) {
 	    (*current)[j] = (*input_bunch)[j];
+	    // FIXME: clone or not to clone? that is the question :(
 	    IncRef((*current)[j]);
 	  }
 	}

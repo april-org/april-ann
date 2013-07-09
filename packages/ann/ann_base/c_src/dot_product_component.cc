@@ -80,11 +80,15 @@ namespace ANN {
       AssignRef(input,_input);
       TokenMatrixFloat *input_mat_token=input->convertTo<TokenMatrixFloat*>();
       MatrixFloat *input_mat=input_mat_token->getMatrix();
+      ASSERT_MATRIX(input_mat);
+      assert(input_mat->getDimSize(1) == static_cast<int>(input_size));
+      if (input_mat->getStrideSize(0) > 1) {
+	input_mat = input_mat->clone();
+	AssignRef(input,new TokenMatrixFloat(input_mat));
+      }
 #ifdef USE_CUDA
       input_mat->setUseCuda(use_cuda);
 #endif
-      ASSERT_MATRIX(input_mat);
-      assert(input_mat->getDimSize(1) == static_cast<int>(input_size));
       unsigned int bunch_size = input_mat->getDimSize(0);
       // new output to fit the bunch
       MatrixFloat *output_mat;
@@ -193,15 +197,19 @@ namespace ANN {
       return 0;
     }
     MatrixFloat *error_input_mat = error_input->getMatrix();
-#ifdef USE_CUDA
-    error_input_mat->setUseCuda(use_cuda);
-#endif
     if (! error_input_mat->sameDim(output->getMatrix()) )
       ERROR_EXIT1(129, "Different bunches found at doForward and doBackprop [%s]\n",
 		  name.c_str());
     // new error output to fit the bunch
     ASSERT_MATRIX(error_input_mat);
     assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
+    if (error_input_mat->getStrideSize(0) > 1) {
+      error_input_mat = error_input_mat->clone();
+      AssignRef(error_input,new TokenMatrixFloat(error_input_mat));
+    }
+#ifdef USE_CUDA
+    error_input_mat->setUseCuda(use_cuda);
+#endif
     unsigned int bunch_size = error_input_mat->getDimSize(0);
     // new output to fit the bunch
     MatrixFloat *error_output_mat;
@@ -235,7 +243,6 @@ namespace ANN {
 			       Token *input_token,
 			       MatrixFloat *error_input_mat,
 			       float beta) {
-    ASSERT_MATRIX(error_input_mat);
     assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
     unsigned int bunch_size = error_input_mat->getDimSize(0);
     // backprop learning rule:

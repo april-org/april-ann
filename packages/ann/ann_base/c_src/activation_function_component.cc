@@ -55,10 +55,14 @@ namespace ANN {
     // change current input by new input
     AssignRef(input,_input->convertTo<TokenMatrixFloat*>());
     MatrixFloat *input_mat = input->getMatrix();
+    ASSERT_MATRIX(input_mat);
+    if (!input_mat->getIsContiguous()) {
+      input_mat = input_mat->clone();
+      AssignRef(input,new TokenMatrixFloat(input_mat));
+    }
 #ifdef USE_CUDA
     input_mat->setUseCuda(use_cuda);
 #endif
-    ASSERT_MATRIX(input_mat);
     unsigned int bunch_size = input_mat->getDimSize(0);
     // new  output to fit the bunch
     MatrixFloat *output_mat = input_mat->cloneOnlyDims();
@@ -96,10 +100,14 @@ namespace ANN {
     // change current input by new input
     AssignRef(error_input,_error_input->convertTo<TokenMatrixFloat*>());
     MatrixFloat *error_input_mat = error_input->getMatrix();
-#ifdef USE_CUDA
-    error_input_mat->setUseCuda(use_cuda);
-#endif
     ASSERT_MATRIX(error_input_mat);
+    if (!error_input_mat->getIsContiguous()) {
+      error_input_mat = error_input_mat->clone();
+      AssignRef(error_input,new TokenMatrixFloat(error_input_mat));
+    }
+#ifdef USE_CUDA
+    input_mat->setUseCuda(use_cuda);
+#endif
     unsigned int bunch_size = error_input_mat->getDimSize(0);
     // new  output to fit the bunch
     MatrixFloat *error_output_mat = error_input_mat->cloneOnlyDims();

@@ -70,7 +70,7 @@ namespace ANN {
 		  bias_ptr->getRawDataAccess(), bias_ptr->getStrideSize(0),
 		  output_mat->getRawDataAccess(), output_mat->getStrideSize(1),
 		  bunch_size,
-		  0, 1,
+		  0, output_mat->getStrideSize(0),
 		  use_cuda);
     }
     return output;
@@ -130,7 +130,7 @@ namespace ANN {
 		     prev_bias_ptr->getRawDataAccess(),
 		     prev_bias_ptr->getStrideSize(0),
 		     bunch_size,
-		     1, 0,
+		     input_error_mat->getStrideSize(0), 0,
 		     use_cuda);
     
     // If necessary, update counts, swap vectors, and other stuff
