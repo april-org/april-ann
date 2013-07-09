@@ -189,9 +189,6 @@ namespace ANN {
 				components[i]->getInputSize() );
       sizes[1] = sz;
       // Destination data sub-matrix (references original data matrix)
-
-      // FIXME: This could be improved adding a rewrap method to matrix,
-      // avoiding multiple new and delete operations
       MatrixFloat *submat = new MatrixFloat(full_mat, coords, sizes, false);
       submat->copy(aux_mat);
       delete submat;
@@ -362,7 +359,6 @@ namespace ANN {
     buffer_list buffer;
     buffer.printf("ann.components.join{ name='%s' }", name.c_str());
     for (unsigned int i=0; i<components.size(); ++i) {
-      // FIXME: please, this code could be improved freeing the aux array
       char *aux = components[i]->toLuaString();
       buffer.printf(":add(%s)", aux);
       delete[] aux;
