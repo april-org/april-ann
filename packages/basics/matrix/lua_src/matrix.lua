@@ -453,8 +453,6 @@ april_set_doc("matrix.select", {
 		params = {
 		  { "A number with the selected dimension" },
 		  { "A number with the selected index" },
-		  { "A boolean, indicating if the resulting matrix is cloned",
-		    "or not [optional]. By default is false." },
 		},
 		outputs = {
 		  "A matrix object (referencing the caller matrix)",

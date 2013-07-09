@@ -70,6 +70,7 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "stack_component.h"
 #include "join_component.h"
 #include "copy_component.h"
+#include "select_component.h"
 #include "gaussian_noise_component.h"
 #include "salt_and_pepper_component.h"
 #include "activation_function_component.h"
@@ -798,6 +799,36 @@ using namespace ANN;
 {
   LUABIND_RETURN(CopyANNComponent,
 		 dynamic_cast<CopyANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//              SelectANNComponent                 //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME SelectANNComponent ann.components.select
+//BIND_CPP_CLASS    SelectANNComponent
+//BIND_SUBCLASS_OF  SelectANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR SelectANNComponent
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  const char *name=0;
+  int dimension, index;
+  check_table_fields(L, 1, "name", "dimension", "index", (const char *)0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  LUABIND_GET_TABLE_PARAMETER(1, dimension, int, dimension);
+  LUABIND_GET_TABLE_PARAMETER(1, index, int, index);
+  obj = new SelectANNComponent(dimension, index, name);
+  LUABIND_RETURN(SelectANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD SelectANNComponent clone
+{
+  LUABIND_RETURN(SelectANNComponent,
+		 dynamic_cast<SelectANNComponent*>(obj->clone()));
 }
 //BIND_END
 

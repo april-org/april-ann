@@ -444,7 +444,7 @@ bool Matrix<T>::sameDim(const Matrix<T> *other) const {
 }
 
 template<typename T>
-Matrix<T> *Matrix<T>::select(int dim, int index, bool clone) {
+Matrix<T> *Matrix<T>::select(int dim, int index) {
   if (numDim == 1)
     ERROR_EXIT(128, "Not possible to execute select for numDim=1\n");
   Matrix<T> *result = new Matrix();
@@ -455,35 +455,21 @@ Matrix<T> *Matrix<T>::select(int dim, int index, bool clone) {
   result->matrixSize   = new int[d];
   result->stride       = new int[d];
   result->major_order  = major_order;
-  if (!clone) {
-    result->offset       = index*stride[dim];
-    result->last_raw_pos = result->offset;
-    result->data         = data;
-    IncRef(data);
-    for(int i=0; i<dim; ++i) {
-      result->stride[i]      = stride[i];
-      result->matrixSize[i]  = matrixSize[i];
-      result->last_raw_pos  += (matrixSize[i]-1)*stride[i];
-    }
-    for(int i=dim+1; i<numDim; ++i) {
-      result->stride[i-1]      = stride[i];
-      result->matrixSize[i-1]  = matrixSize[i];
-      result->last_raw_pos    += (matrixSize[i]-1)*stride[i];
-    }
-    result->total_size = total_size/matrixSize[dim];
+  result->offset       = index*stride[dim];
+  result->last_raw_pos = result->offset;
+  result->data         = data;
+  IncRef(data);
+  for(int i=0; i<dim; ++i) {
+    result->stride[i]      = stride[i];
+    result->matrixSize[i]  = matrixSize[i];
+    result->last_raw_pos  += (matrixSize[i]-1)*stride[i];
   }
-  else {
-    result->offset       = 0;
-    result->last_raw_pos = 0;
-    int *aux = new int[d];
-    for(int i=0; i<dim; ++i)
-      aux[i] = matrixSize[i];
-    for(int i=dim+1; i<numDim; ++i)
-      aux[i-1]  = matrixSize[i];
-    result->initialize(aux);
-    delete[] aux;
-    result->allocate_memory(result->total_size);
+  for(int i=dim+1; i<numDim; ++i) {
+    result->stride[i-1]      = stride[i];
+    result->matrixSize[i-1]  = matrixSize[i];
+    result->last_raw_pos    += (matrixSize[i]-1)*stride[i];
   }
+  result->total_size = total_size/matrixSize[dim];
   return result;
 }
 

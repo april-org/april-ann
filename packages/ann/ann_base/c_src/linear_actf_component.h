@@ -22,7 +22,6 @@
 #define LINEARACTFCOMPONENT_H
 
 #include "activation_function_component.h"
-#include "token_memory_block.h"
 #include "ann_component.h"
 #include "gpu_mirrored_memory_block.h"
 
