@@ -325,6 +325,8 @@ private:
 	best_span_iterator(this, last_raw_pos+1);
     return end_best_span_iterator;
   }
+  // NULL constructor
+  Matrix() { }
   //
   Matrix(int numDim, const int *stride, const int offset,
 	 const int *matrixSize, const int total_size, const int last_raw_pos,
@@ -449,6 +451,10 @@ public:
 
   // Returns true if they have the same dimension
   bool sameDim(const Matrix<T> *other) const;
+
+  // Returns a matrix of one less dimension, with the elements selected for the
+  // given dimension at the given index
+  Matrix<T> *select(int dim, int index) const;
   
   ////////////////////////////////////////////////////////////////////////////
 

@@ -424,6 +424,40 @@ april_set_doc("matrix.slice", {
 		  "A matrix object (sub-matrix)",
 		}, })
 
+april_set_doc("matrix.rewrap", {
+		class = "method",
+		summary = "Reinterprets the data as with other dimensions.",
+		description = {
+		  "Returns a matrix which references to the caller, but",
+		  "reinterpreting the internal data with the given array of",
+		  "dimension sizes.",
+		  "The caller matrix must be a contiguous chunk of data.",
+		},
+		params = {
+		  { "A table with the size of each dimension.",
+		    "The number of dimensions could be different of ",
+		    "caller matrix.", },
+		},
+		outputs = {
+		  "A matrix object (referencing the caller matrix)",
+		}, })
+
+april_set_doc("matrix.select", {
+		class = "method",
+		summary = "Returns an slice result of select given dimension at given index.",
+		description = {
+		  "Returns an slice result of select given dimension at given index.",
+		  "The matrix has one less dimension because the selected dimension",
+		  "is removed.",
+		},
+		params = {
+		  { "A number with the selected dimension" },
+		  { "A number with the selected index" },
+		},
+		outputs = {
+		  "A matrix object (referencing the caller matrix)",
+		}, })
+
 april_set_doc("matrix.clone", {
 		class = "method",
 		summary = "Returns a deep copy (clone) of the caller matrix.",
