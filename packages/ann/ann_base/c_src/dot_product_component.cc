@@ -24,7 +24,6 @@
 #include "wrapper.h"
 #include "token_base.h"
 #include "token_vector.h"
-#include "token_memory_block.h"
 #include "table_of_token_codes.h"
 
 using april_utils::swap;

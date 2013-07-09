@@ -454,7 +454,7 @@ public:
 
   // Returns a matrix of one less dimension, with the elements selected for the
   // given dimension at the given index
-  Matrix<T> *select(int dim, int index, bool clone=false);
+  Matrix<T> *select(int dim, int index);
   
   ////////////////////////////////////////////////////////////////////////////
 

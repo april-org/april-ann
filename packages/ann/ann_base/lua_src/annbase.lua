@@ -1075,6 +1075,29 @@ april_set_doc("ann.components.copy.__call",
 
 ----------------------------------------------------------------------
 
+april_set_doc("ann.components.select", {
+		class="class",
+		summary="A dummy component for select operation (see matrix.select)",})
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.select.__call",
+	      {
+		class="method",
+		summary="Constructor of the component select (see matrix.select)",
+		description = {
+		  "The Name is generated automatically if non given.",
+		},
+		params={
+		  ["name"] = "A string with the given name [optional]",
+		  ["dimension"] = "Number with the selected dimension",
+		  ["index"] = "Number with the selected index",
+		},
+		outputs= { "An instance of ann.components.select" }
+	      })
+
+----------------------------------------------------------------------
+
 april_set_doc("ann.components.gaussian_noise", {
 		class="class",
 		summary="A component which adds Gaussian noise to data",})
