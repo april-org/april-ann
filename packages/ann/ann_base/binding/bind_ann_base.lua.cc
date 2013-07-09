@@ -71,6 +71,7 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "join_component.h"
 #include "copy_component.h"
 #include "select_component.h"
+#include "rewrap_component.h"
 #include "gaussian_noise_component.h"
 #include "salt_and_pepper_component.h"
 #include "activation_function_component.h"
@@ -504,9 +505,11 @@ using namespace ANN;
       }
       // stack now contains: -1 => table (when lua_next returns 0 it pops the key
       // but does not push anything.)
-      // Pop table
-      lua_pop(L, 1);
     }
+    else if (!lua_isnil(L, -1))
+      LUABIND_ERROR("Expected a table at field weights");
+    // Pop table or nil value
+    lua_pop(L, 1);
   }
   //
   obj->build(input_size, output_size, weights_dict, components_dict);
@@ -829,6 +832,42 @@ using namespace ANN;
 {
   LUABIND_RETURN(SelectANNComponent,
 		 dynamic_cast<SelectANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//              RewrapANNComponent                 //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME RewrapANNComponent ann.components.rewrap
+//BIND_CPP_CLASS    RewrapANNComponent
+//BIND_SUBCLASS_OF  RewrapANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR RewrapANNComponent
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  const char *name=0;
+  int *size, n;
+  check_table_fields(L, 1, "name", "size", (const char *)0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  lua_getfield(L, 1, "size");
+  if (!lua_istable(L, -1))
+    LUABIND_ERROR("Expected a table at field size");
+  LUABIND_TABLE_GETN(-1, n);
+  size = new int[n];
+  LUABIND_TABLE_TO_VECTOR(-1, int, size, n);
+  lua_pop(L, 1);
+  obj = new RewrapANNComponent(size, n, name);
+  delete[] size;
+  LUABIND_RETURN(RewrapANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD RewrapANNComponent clone
+{
+  LUABIND_RETURN(RewrapANNComponent,
+		 dynamic_cast<RewrapANNComponent*>(obj->clone()));
 }
 //BIND_END
 

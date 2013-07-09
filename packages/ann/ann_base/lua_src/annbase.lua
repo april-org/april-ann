@@ -1077,7 +1077,7 @@ april_set_doc("ann.components.copy.__call",
 
 april_set_doc("ann.components.select", {
 		class="class",
-		summary="A dummy component for select operation (see matrix.select)",})
+		summary="A component for select operation (see matrix.select)",})
 
 ----------------------------------------------------------------------
 
@@ -1094,6 +1094,30 @@ april_set_doc("ann.components.select.__call",
 		  ["index"] = "Number with the selected index",
 		},
 		outputs= { "An instance of ann.components.select" }
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.rewrap", {
+		class="class",
+		summary="A component for change the dimension of matrix (see matrix.rewrap)",})
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.rewrap.__call",
+	      {
+		class="method",
+		summary="Constructor of the component rewrap (see matrix.rewrap)",
+		description = {
+		  "The Name is generated automatically if non given.",
+		},
+		params={
+		  ["name"] = "A string with the given name [optional]",
+		  ["size"] = {
+		    "A table with the sizes of re-wrapped matrix dimensions.",
+		  }
+		},
+		outputs= { "An instance of ann.components.rewrap" }
 	      })
 
 ----------------------------------------------------------------------
