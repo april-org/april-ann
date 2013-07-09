@@ -139,18 +139,11 @@ namespace ANN {
       output_mat->setUseCuda(use_cuda);
 #endif      
       output_mat->zeros();
-      unsigned int w_lda  = output_size;
-      unsigned int w_step = 1;
-      if (transpose_weights == CblasTrans) {
-	w_lda  = 1;
-	w_step = output_size;
-      }
       
-      // FIXME: Improve this code using sub-matrices instead of direct raw
-      // access to matrix data
-      FloatGPUMirroredMemoryBlock *output_ptr = output_mat->getRawDataAccess();
-      FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_mat->getRawDataAccess();
+      // dimension for select operation
+      int w_dim = (transpose_weights == CblasNoTrans) ? 1 : 0;
       for (unsigned int b=0; b<input_vector_token->size(); ++b) {
+	MatrixFloat *output_pat_mat = output_mat->select(0,static_cast<int>(b));
 	Token *current = (*input_vector_token)[b];
 	if (current->getTokenCode()!=table_of_token_codes::vector_float_sparse)
 	  ERROR_EXIT1(128,"Incorrect token type, expected vector_float_sparse [%s]\n",
@@ -160,15 +153,15 @@ namespace ANN {
 	for (unsigned int k=0; k<sparse_token->size(); ++k) {
 	  unsigned int pos     = (*sparse_token)[k].first;
 	  float value          = (*sparse_token)[k].second;
-	  unsigned int w_shift = pos*w_lda;
+	  int w_index          = static_cast<int>(pos);
 	  if (pos >= input_size)
 	    ERROR_EXIT1(128, "Overflow at sparse vector input pos [%s]\n",
 			name.c_str());
-	  doSaxpy(output_size,
-		  value,
-		  weights_mat_ptr, w_shift, w_step,
-		  output_ptr, b, input_vector_token->size(), use_cuda);
+	  MatrixFloat *w_column = weights_mat->select(w_dim, w_index);
+	  output_pat_mat->axpy(value, w_column);
+	  delete w_column;
 	}
+	delete output_pat_mat;
       }
       break;
     }
@@ -188,7 +181,7 @@ namespace ANN {
     // change current input by new input
     AssignRef(error_input,_error_input->convertTo<TokenMatrixFloat*>());
     if (sparse_input) {
-      // If input is parse, the component needs to be an input of the ANN,
+      // If input is sparse, the component needs to be an input of the ANN,
       // therefore the input is probably SO LARGE, and computing the backprop
       // will lead in HIGH computational cost ;) Because of this, the components
       // returns a NULL gradient pointer
@@ -255,31 +248,25 @@ namespace ANN {
     if (sparse_input) {
       TokenBunchVector *input_vector_token;
       input_vector_token  = input_token->convertTo<TokenBunchVector*>();
-      unsigned int w_lda  = output_size;
-      unsigned int w_step = 1;
-      if (transpose_weights == CblasTrans) {
-	w_lda  = 1;
-	w_step = output_size;
-      }
-      FloatGPUMirroredMemoryBlock *error_input = error_input_mat->getRawDataAccess();
-      FloatGPUMirroredMemoryBlock *prev_weights_mat_ptr = prev_weights_mat->getRawDataAccess();
+      int w_dim = (transpose_weights == CblasNoTrans) ? 1 : 0;
       for (unsigned int b=0; b<bunch_size; ++b) {
+	MatrixFloat *error_input_pat_mat;
+	error_input_pat_mat = error_input_mat->select(0,static_cast<int>(b));
 	Token *current = (*input_vector_token)[b];
 	TokenSparseVectorFloat *sparse_token;
 	sparse_token = current->convertTo<TokenSparseVectorFloat*>();
 	for (unsigned int k=0; k<sparse_token->size(); ++k) {
 	  unsigned int pos     = (*sparse_token)[k].first;
 	  float value          = (*sparse_token)[k].second;
-	  unsigned int w_shift = pos*w_lda;
+	  int w_index          = static_cast<int>(pos);
 	  if (pos >= input_size)
 	    ERROR_EXIT1(128, "Overflow at sparse vector input pos [%s]\n",
 			name.c_str());
-	  doSaxpy(output_size,
-		  norm_learn_rate*value,
-		  error_input, b, bunch_size,
-		  prev_weights_mat_ptr, w_shift, w_step,
-		  use_cuda);
+	  MatrixFloat *w_column = prev_weights_mat->select(w_dim, w_index);
+	  w_column->axpy(norm_learn_rate*value, error_input_pat_mat);
+	  delete w_column;
 	}
+	delete error_input_pat_mat;
       }
     } // if sparse_input ... else
     else {

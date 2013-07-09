@@ -447,6 +447,10 @@ template<typename T>
 Matrix<T> *Matrix<T>::select(int dim, int index) {
   if (numDim == 1)
     ERROR_EXIT(128, "Not possible to execute select for numDim=1\n");
+  if (dim >= numDim)
+    ERROR_EXIT(128, "Select for a dimension which doesn't exists\n");
+  if (index >= matrixSize[dim])
+    ERROR_EXIT(128, "Select for an index out of the matrix\n");
   Matrix<T> *result = new Matrix();
   int d = numDim - 1;
   // Data initialization
