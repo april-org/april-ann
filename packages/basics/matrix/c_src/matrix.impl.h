@@ -443,6 +443,36 @@ bool Matrix<T>::sameDim(const Matrix<T> *other) const {
   return true;
 }
 
+template<typename T>
+Matrix<T> *Matrix<T>::select(int dim, int index) const {
+  if (numDim == 1)
+    ERROR_EXIT(128, "Not possible to execute select for numDim=1\n");
+  Matrix<T> *result = new Matrix();
+  int d = numDim - 1;
+  // Data initialization
+  result->use_cuda     = use_cuda;
+  result->numDim       = d;
+  result->offset       = index*stride[dim];
+  result->matrixSize   = new int[d];
+  result->stride       = new int[d];
+  result->major_order  = major_order;
+  result->last_raw_pos = result->offset;
+  result->data         = data;
+  IncRef(data);
+  for(int i=0; i<dim; ++i) {
+    result->stride[i]      = stride[i];
+    result->matrixSize[i]  = matrixSize[i];
+    result->last_raw_pos  += (matrixSize[i]-1)*stride[i];
+  }
+  for(int i=dim+1; i<numDim; ++i) {
+    result->stride[i-1]      = stride[i];
+    result->matrixSize[i-1]  = matrixSize[i];
+    result->last_raw_pos    += (matrixSize[i]-1)*stride[i];
+  }
+  result->total_size = total_size/matrixSize[dim];
+  return result;
+}
+
 /***** COORDINATES METHODS *****/
 
 template <typename T>
@@ -463,18 +493,42 @@ bool Matrix<T>::nextCoordVectorRowOrder(int *coords, int &raw_pos,
 					const int *strides,
 					const int numDim,
 					const int last_raw_pos) {
-  int j = numDim;
-  do {
-    --j;
-    coords[j] = (coords[j]+1) % sizes[j];
-    if (coords[j] == 0) raw_pos -= (sizes[j]-1) * strides[j];
-    else raw_pos += strides[j];
-  } while(j>0 && coords[j] == 0);
-  if (j == 0 && coords[0] == 0) {
-    raw_pos = last_raw_pos + 1;
-    return false;
+  bool ret = true;
+  switch(numDim) {
+  case 1:
+    coords[0] = (coords[0]+1) % sizes[0];
+    if (coords[0] == 0) {
+      raw_pos = last_raw_pos + 1;
+      ret = false;
+    }
+    else raw_pos += strides[0];
+    break;
+  case 2:
+    coords[1] = (coords[1]+1) % sizes[1];
+    if (coords[1] == 0) {
+      coords[0] = (coords[0]+1) % sizes[0];
+      if (coords[0] == 0) {
+	raw_pos = last_raw_pos + 1;
+	ret = false;
+      }
+      else raw_pos += strides[0] - (sizes[1]-1)*strides[1];
+    }
+    else raw_pos += strides[1];
+    break;
+  default:
+    int j = numDim;
+    do {
+      --j;
+      coords[j] = (coords[j]+1) % sizes[j];
+      if (coords[j] == 0) raw_pos -= (sizes[j]-1) * strides[j];
+      else raw_pos += strides[j];
+    } while(j>0 && coords[j] == 0);
+    if (j == 0 && coords[0] == 0) {
+      raw_pos = last_raw_pos + 1;
+      ret = false;
+    }
   }
-  return true;
+  return ret;
 }
 
 template <typename T>
@@ -483,19 +537,43 @@ bool Matrix<T>::nextCoordVectorColOrder(int *coords, int &raw_pos,
 					const int *strides,
 					const int numDim,
 					const int last_raw_pos) {
-  int j = 0;
-  do {
-    coords[j] = (coords[j]+1) % sizes[j];
-    if (coords[j] == 0) {
-      if (sizes[j] > 1) raw_pos -= (sizes[j]-1) * strides[j];
+  bool ret = true;
+  switch(numDim) {
+  case 1:
+    coords[0] = (coords[0]+1) % sizes[0];
+    if (coords[0] == 0) {
+      raw_pos = last_raw_pos + 1;
+      ret = false;
     }
-    else raw_pos += strides[j];
-  } while(coords[j++] == 0 && j<numDim);
-  if (j == numDim && coords[numDim-1] == 0) {
-    raw_pos = last_raw_pos + 1;
-    return false;
+    else raw_pos += strides[0];
+    break;
+  case 2:
+    coords[0] = (coords[0]+1) % sizes[0];
+    if (coords[0] == 0) {
+      coords[1] = (coords[1]+1) % sizes[1];
+      if (coords[1] == 0) {
+	raw_pos = last_raw_pos + 1;
+	ret = false;
+      }
+      else raw_pos += strides[1] - (sizes[0]-1)*strides[0];
+    }
+    else raw_pos += strides[0];
+    break;
+  default:
+    int j = 0;
+    do {
+      coords[j] = (coords[j]+1) % sizes[j];
+      if (coords[j] == 0) {
+	if (sizes[j] > 1) raw_pos -= (sizes[j]-1) * strides[j];
+      }
+      else raw_pos += strides[j];
+    } while(coords[j++] == 0 && j<numDim);
+    if (j == numDim && coords[numDim-1] == 0) {
+      raw_pos = last_raw_pos + 1;
+      ret = false;
+    }
   }
-  return true;
+  return ret;
 }
 
 template <typename T>
@@ -539,7 +617,7 @@ int Matrix<T>::computeRawPos(const int *coords) const {
   switch(numDim) {
   case 1:
     assert(coords[0] < matrixSize[0]);
-    raw_pos = coords[0];
+    raw_pos = coords[0]*stride[0];
     break;
   case 2:
     assert(coords[0] < matrixSize[0]);
@@ -596,19 +674,15 @@ bool Matrix<T>::getIsContiguous() const {
   if (major_order == CblasRowMajor) {
     int aux = 1;
     for (int i=numDim-1; i>=0; --i) {
-      if(matrixSize[i] != 1) {
-	if(stride[i] != aux) return false;
-	else aux *= matrixSize[i];
-      }
+      if(stride[i] != aux) return false;
+      else aux *= matrixSize[i];
     }
   }
   else {
     int aux = 1;
     for (int i=0; i<numDim; ++i) {
-      if(matrixSize[i] != 1) {
-	if(stride[i] != aux) return false;
-	else aux *= matrixSize[i];
-      }
+      if(stride[i] != aux) return false;
+      else aux *= matrixSize[i];
     }
   }
   return true;
