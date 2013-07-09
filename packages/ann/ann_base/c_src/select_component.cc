@@ -45,7 +45,7 @@ namespace ANN {
   }
   
   Token *SelectANNComponent::doForward(Token* _input, bool during_training) {
-    if (input->getTokenCode() != table_of_token_codes::token_matrix)
+    if (_input->getTokenCode() != table_of_token_codes::token_matrix)
       ERROR_EXIT1(128, "Incorrect token found, only TokenMatrixFloat is "
 		  "allowed [%s]\n", name.c_str());
     AssignRef(input, _input->convertTo<TokenMatrixFloat*>());    
@@ -53,7 +53,11 @@ namespace ANN {
 #ifdef USE_CUDA
     input_mat->setUseCuda(use_cuda);
 #endif
-    MatrixFloat *aux_output_mat = input_mat->select(dimension, index);
+    if (input_mat->getNumDim() < 3)
+      ERROR_EXIT2(128, "At least 3 dimensional matrix is expected, found %d. "
+		  "First dimension is bunch-size, and the rest are pattern data "
+		  "[%s]", input_mat->getNumDim(), name.c_str());
+    MatrixFloat *aux_output_mat = input_mat->select(dimension+1, index);
     MatrixFloat *output_mat     = aux_output_mat->clone();
     delete aux_output_mat;
     AssignRef(output, new TokenMatrixFloat(output_mat));
@@ -77,7 +81,7 @@ namespace ANN {
     MatrixFloat *error_output_mat = input->getMatrix()->cloneOnlyDims();
     error_output_mat->zeros();
     MatrixFloat *select_error_output_mat;
-    select_error_output_mat = error_output_mat->select(dimension, index);
+    select_error_output_mat = error_output_mat->select(dimension+1, index);
     select_error_output_mat->copy(error_input_mat);
 #ifdef USE_CUDA
     select_error_output_mat->setUseCuda(use_cuda);

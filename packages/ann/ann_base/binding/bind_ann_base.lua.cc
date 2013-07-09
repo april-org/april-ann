@@ -820,7 +820,7 @@ using namespace ANN;
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   LUABIND_GET_TABLE_PARAMETER(1, dimension, int, dimension);
   LUABIND_GET_TABLE_PARAMETER(1, index, int, index);
-  obj = new SelectANNComponent(dimension, index, name);
+  obj = new SelectANNComponent(dimension-1, index-1, name);
   LUABIND_RETURN(SelectANNComponent, obj);
 }
 //BIND_END
