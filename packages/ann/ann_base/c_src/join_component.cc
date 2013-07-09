@@ -154,7 +154,7 @@ namespace ANN {
     int coords[2] = { 0, 0 };
     for (unsigned int i=0; i<vector_token->size(); ++i) {
       const unsigned int sz = components[i]->getOutputSize();
-      // submatrix at coords with sizes
+      // sub-matrix at coords with sizes
       sizes[1] = sz;
       MatrixFloat *component_mat = new MatrixFloat(mat, coords, sizes, true);
       coords[1] += sz;
