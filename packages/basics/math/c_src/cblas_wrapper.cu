@@ -39,6 +39,22 @@ cublasOperation_t getCublasOperation(CBLAS_TRANSPOSE operation) {
 ///////////////////////////////////////////////////////////
 
 #ifdef USE_CUDA
+__global__ void clampKernel(float *v, unsigned int N, unsigned int stride,
+			    float lower, float upper) {
+  unsigned int x_idx = blockIdx.x * blockDim.x + threadIdx.x;
+  if (x_idx < N) {
+    unsigned int x_pos = x_idx*stride;
+    if (v[x_pos] < lower) v[x_pos] = lower;
+    else if (v[x_pos] > upper) v[x_pos] = upper;
+  }
+}
+
+__global__ void fillKernel(float *v, unsigned int N, unsigned int stride,
+			   float value) {
+  unsigned int x_idx = blockIdx.x * blockDim.x + threadIdx.x;
+  if (x_idx < N) v[x_idx*stride] = value;
+}
+
 __global__ void scopyLoopKernel(unsigned int N,
 				const float *x_mem,
 				unsigned int x_inc,
@@ -390,45 +406,6 @@ void doSgemm(CBLAS_ORDER major_type,
 #endif
 }
 
-void doVectorSetToZero(FloatGPUMirroredMemoryBlock *v,
-		       unsigned int v_size,
-		       unsigned int inc,
-		       unsigned int shift,
-		       bool use_gpu) {
-#ifdef USE_CUDA
-  if (use_gpu) {
-    cublasStatus_t status;
-    cublasHandle_t handle = GPUHelper::getHandler();
-    float *ptr   = v->getGPUForWrite() + shift;
-    float  value = 0.0f;
-
-    status = cublasSetStream(handle, GPUHelper::getCurrentStream());
-    checkCublasError(status);
-
-    status = cublasSscal(handle, v_size, &value, ptr, inc);
-    // FIXME: To use cuMemsetD32 instead of cublasSscal
-    checkCublasError(status);
-  }
-  else {
-#endif
-    float *ptr = v->getPPALForWrite() + shift;
-    VECTOR_SSET(v_size, 0.0f, ptr, inc);
-#ifdef USE_CUDA
-  }
-#endif
-}
-
-void doVectorSet(FloatGPUMirroredMemoryBlock *v,
-		 float value,
-		 unsigned int v_size,
-		 unsigned int inc,
-		 unsigned int shift,
-		 bool use_gpu) {
-  if (use_gpu) ERROR_EXIT(128, "CUDA version not implemented yet\n");
-  float *ptr = v->getPPALForWrite() + shift;
-  VECTOR_SSET(v_size, value, ptr, inc);
-}
-
 void doSscal(unsigned int size,
 	     float alpha,
 	     FloatGPUMirroredMemoryBlock *x,
@@ -637,13 +614,39 @@ void doClamp(unsigned int N,
 	     float upper) {
 #ifdef USE_CUDA
   if (use_gpu) {
-    ERROR_EXIT(128, "CUDA version not implemented yet\n");
+    float *v_ptr = v->getGPUForReadAndWrite() + shift;
+    dim3 block, grid;
+    computeBlockAndGridSizesForAnArray(N, block, grid);
+    clampKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (v_ptr, N, stride, lower, upper);
   }
   else {
 #endif
     float *v_mem = v->getPPALForReadAndWrite() + shift;
     for (unsigned int i=0; i<N; ++i, v_mem += stride)
       *v_mem = april_utils::clamp(*v_mem,lower,upper);
+#ifdef USE_CUDA
+  }
+#endif
+}
+
+void doFill(unsigned int N,
+	    FloatGPUMirroredMemoryBlock *v,
+	    unsigned int stride,
+	    unsigned int shift,
+	    float value) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    float *v_ptr = v->getGPUForWrite() + shift;
+    dim3 block, grid;
+    computeBlockAndGridSizesForAnArray(N, block, grid);
+    fillKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (v_ptr, N, stride, value);
+  }
+  else {
+#endif
+    float *v_mem = v->getPPALForWrite() + shift;
+    VECTOR_SSET(N, value, v_mem, stride);
 #ifdef USE_CUDA
   }
 #endif

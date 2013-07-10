@@ -296,6 +296,7 @@ private:
     const Matrix<T> *m;
     int raw_pos;
     int *coords, *order;
+    int num_iterations;
     struct inverse_sort_compare {
       const Matrix<T> *m;
       inverse_sort_compare(const Matrix<T> *m) : m(m) { }
@@ -316,6 +317,8 @@ private:
     bool operator==(const best_span_iterator &other) const;
     bool operator!=(const best_span_iterator &other) const;
     best_span_iterator &operator++();
+    int numberOfIterations() const;
+    void setAtIteration(int idx);
   };
   
   // const version of iterators, for fast end() iterator calls. They are
