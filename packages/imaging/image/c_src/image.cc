@@ -960,19 +960,19 @@ Matrix<T> * Image<T>::comb_lineal_forward(int sx, int sy, int ancho, int alto, i
   int dy = (sy-alto/2);
 
   const float th = 1-1e-5 ;
-  int *vec_tuplas = conf->numTuplas + (miny-dy)*ancho + minx-dx;
+  int *vec_tuplas = conf->numTuplas + (miny-dy)*ancho -dx;
   for (int y = miny; y < maxy; ++y,vec_tuplas+=ancho){
-    for (int x = minx; x < maxx; x++){
-      float value = (*this)(x,y);
-      if (value < th) {
-	value = 1.0-value;
-	for (int j = vec_tuplas[x-1];j<vec_tuplas[x];j++) {
-	  int dest = conf->indices[j];
-	  // FIXME sustituir por mat[dest], ahora no funciona
-	  (*mat)(dest) -= value*conf->pesos[j];
-	}
-      }
-    } 
+      for (int x = minx; x < maxx; x++){
+          float value = (*this)(x,y);
+          if (value < th) {
+              value = 1.0-value;
+              for (int j = vec_tuplas[x-1];j<vec_tuplas[x];j++) {
+                  int dest = conf->indices[j];
+                  // FIXME sustituir por mat[dest], ahora no funciona
+                  (*mat)(dest) -= value*conf->pesos[j];
+              }
+          }
+      } 
   }
   return mat;
 }
