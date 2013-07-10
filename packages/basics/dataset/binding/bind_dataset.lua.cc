@@ -176,7 +176,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 		       "orderStep",
 		       "circular",
 		       "defaultValue",
-		       0);
+		       (const char *)0);
   }
 
   MatrixFloat *mat;
@@ -810,7 +810,8 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 //BIND_CLASS_METHOD DataSetFloat bit
 {
   LUABIND_CHECK_PARAMETER(1, table);
-  check_table_fields(L, 1, "numPatterns", "patternSize", "dataset", 0);
+  check_table_fields(L, 1, "numPatterns", "patternSize", "dataset",
+		     (const char *)0);
   DataSetFloat	*ds;
   int		 nump, patsize;
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, numPatterns, int, nump,    -1);
@@ -866,7 +867,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
     check_table_fields(L, 2,
 		       "patternSize",
 		       "numPatterns",
-		       0);
+		       (const char *)0);
   }
 
   MatrixFloat *mat;
@@ -886,7 +887,8 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 //BIND_CLASS_METHOD DataSetFloat short_list
 {
   DataSetFloat *ds;
-  check_table_fields(L, 1, "ds", "unk_word", "short_list_size", 0);
+  check_table_fields(L, 1, "ds", "unk_word", "short_list_size",
+		     (const char *)0);
   LUABIND_GET_TABLE_PARAMETER(1, ds, DataSetFloat, ds);
   int unk_word, short_list_size;
   LUABIND_GET_TABLE_PARAMETER(1, unk_word, int, unk_word);
@@ -924,7 +926,8 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 {
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_CHECK_PARAMETER(1, table);
-  check_table_fields(L, 1, "dataset", "mean", "variance",  "random", 0);
+  check_table_fields(L, 1, "dataset", "mean", "variance",  "random",
+		     (const char *)0);
   DataSetFloat *ds;
   MTRand *random;
   double mean, variance;
@@ -947,7 +950,8 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 {
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_CHECK_PARAMETER(1, table);
-  check_table_fields(L, 1, "dataset", "vd", "zero",  "random", 0);
+  check_table_fields(L, 1, "dataset", "vd", "zero",  "random",
+		     (const char *)0);
   DataSetFloat *ds;
   MTRand *random;
   double vd;
@@ -996,7 +1000,8 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 {
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_CHECK_PARAMETER(1, table);
-  check_table_fields(L, 1, "dataset", "deriv0", "deriv1",  "deriv2", 0);
+  check_table_fields(L, 1, "dataset", "deriv0", "deriv1",  "deriv2",
+		     (const char *)0);
   DataSetFloat *ds;
   bool deriv0, deriv1, deriv2;
   LUABIND_GET_TABLE_PARAMETER(1, dataset, DataSetFloat, ds    );
@@ -1110,7 +1115,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   LUABIND_CHECK_PARAMETER(1, table);
   LUABIND_TABLE_GETN(1,bunch_size);
   indexes = new int[bunch_size];
-  LUABIND_TABLE_TO_VECTOR(1,uint,indexes,bunch_size);
+  LUABIND_TABLE_TO_VECTOR_SUB1(1,uint,indexes,bunch_size);
   Token *token = obj->getPatternBunch(indexes,bunch_size);
   delete[] indexes;
   LUABIND_RETURN(Token, token);
@@ -1143,7 +1148,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   LUABIND_GET_PARAMETER(2,Token,pattern);
   LUABIND_TABLE_GETN(1,bunch_size);
   indexes = new int[bunch_size];
-  LUABIND_TABLE_TO_VECTOR(1,uint,indexes,bunch_size);
+  LUABIND_TABLE_TO_VECTOR_SUB1(1,uint,indexes,bunch_size);
   obj->putPatternBunch(indexes,bunch_size,pattern);
   delete[] indexes;
 }

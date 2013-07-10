@@ -207,7 +207,7 @@ using namespace ANN;
 {
   LUABIND_CHECK_ARGN(==,1);
   LUABIND_CHECK_PARAMETER(1, table);
-  check_table_fields(L, 1, "size", "beta", "complement", 0);
+  check_table_fields(L, 1, "size", "beta", "complement", (const char *)0);
   unsigned int size;
   float beta;
   bool complement;

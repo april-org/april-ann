@@ -55,7 +55,8 @@ namespace ANN {
     // error checking
     if ( (_input == 0) ||
 	 (_input->getTokenCode() != table_of_token_codes::token_matrix))
-      ERROR_EXIT(129,"Incorrect input Token type, expected token_matrix!\n");
+      ERROR_EXIT1(129,"Incorrect input Token type, expected token_matrix! [%s]\n",
+		  name.c_str());
     // change current input by new input
     AssignRef(input,_input->convertTo<TokenMatrixFloat*>());
 #ifdef USE_CUDA
@@ -115,8 +116,8 @@ namespace ANN {
     if (output_size == 0) output_size = input_size;
     if (input_size  == 0) input_size  = output_size;
     if (input_size != output_size)
-      ERROR_EXIT2(128, "Incorrect input/output sizes: input=%d output=%d\n",
-		  input_size, output_size);
+      ERROR_EXIT3(128, "Incorrect input/output sizes: input=%d output=%d [%s]\n",
+		  input_size, output_size, name.c_str());
   }
   
   char *SaltAndPepperANNComponent::toLuaString() {

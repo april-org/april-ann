@@ -37,7 +37,8 @@ namespace ANN {
     error_input(0),
     times(times) {
     if (times < 2)
-      ERROR_EXIT(128, "CopyANNComponent for less than 2 copies is forbidden");
+      ERROR_EXIT1(128, "CopyANNComponent for less than 2 copies is forbidden [%s]\n",
+		  this->name.c_str());
   }
   
   CopyANNComponent::~CopyANNComponent() {
@@ -49,10 +50,36 @@ namespace ANN {
   
   Token *CopyANNComponent::doForward(Token* _input, bool during_training) {
     AssignRef(input, _input);
-    AssignRef(output, new TokenBunchVector(times));
-    for (unsigned int i=0; i<times; ++i) {
-      (*output)[i] = input;
-      IncRef(input);
+    switch(input->getTokenCode()) {
+    case table_of_token_codes::token_matrix:
+      {
+	AssignRef(output, new TokenBunchVector(times));
+	for (unsigned int i=0; i<times; ++i) {
+	  // FIXME: clone or not to clone? that is the question :(
+	  (*output)[i] = input;
+	  IncRef(input);
+	}
+      }
+      break;
+    case table_of_token_codes::vector_Tokens:
+      {
+	TokenBunchVector *input_bunch = input->convertTo<TokenBunchVector*>();
+	AssignRef(output, new TokenBunchVector(input_bunch->size()));
+	for (unsigned int i=0; i<input_bunch->size(); ++i) {
+	  TokenBunchVector *current = new TokenBunchVector(times);
+	  (*output)[i] = current;
+	  IncRef(current);
+	  for (unsigned int j=0; j<times; ++j) {
+	    (*current)[j] = (*input_bunch)[j];
+	    // FIXME: clone or not to clone? that is the question :(
+	    IncRef((*current)[j]);
+	  }
+	}
+      }
+      break;
+    default:
+      ERROR_EXIT2(128, "Incorrect input token type %d [%s]\n",
+		  input->getTokenCode(), name.c_str());
     }
     return output;
   }
@@ -64,17 +91,20 @@ namespace ANN {
       return 0;
     }
     if (_error_input->getTokenCode() != table_of_token_codes::vector_Tokens)
-      ERROR_EXIT(128, "Incorrect error input token type, "
-		 "expected TokenBunchVector\n");
+      ERROR_EXIT1(128, "Incorrect error input token type, "
+		  "expected TokenBunchVector [%s]\n",
+		  name.c_str());
     AssignRef(error_input, _error_input->convertTo<TokenBunchVector*>());
     if (error_input->size() != times)
-      ERROR_EXIT2(128, "Incorrect error input size, found %d, expected %d\n",
-		  error_input->size(), times);
+      ERROR_EXIT3(128, "Incorrect error input size, found %d, expected %d [%s]\n",
+		  error_input->size(), times,
+		  name.c_str());
     
     // the first is only copied
     Token *current = (*error_input)[0];
     if (current->getTokenCode() != table_of_token_codes::token_matrix)
-      ERROR_EXIT(128, "Incorrect token type, expected token matrix\n");
+      ERROR_EXIT1(128, "Incorrect token type, expected token matrix [%s]\n",
+		  name.c_str());
     TokenMatrixFloat *current_token;
     current_token = current->convertTo<TokenMatrixFloat*>();
     MatrixFloat *current_mat = current_token->getMatrix();
@@ -88,7 +118,7 @@ namespace ANN {
     MatrixFloat *error_output_mat;
     int dims[2] = { static_cast<int>(bunch_size),
 		    static_cast<int>(input_size) };
-    error_output_mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+    error_output_mat = new MatrixFloat(2, dims, CblasColMajor);
 #ifdef USE_CUDA
     error_output_mat->setUseCuda(use_cuda);
 #endif
@@ -100,7 +130,8 @@ namespace ANN {
     for (unsigned int i=1; i<times; ++i) {
       Token *current = (*error_input)[i];
       if (current->getTokenCode() != table_of_token_codes::token_matrix)
-	ERROR_EXIT(128, "Incorrect token type, expected token matrix\n");
+	ERROR_EXIT1(128, "Incorrect token type, expected token matrix [%s]\n",
+		    name.c_str());
       current_token = current->convertTo<TokenMatrixFloat*>();
       current_mat = current_token->getMatrix();
 #ifdef USE_CUDA
@@ -140,8 +171,9 @@ namespace ANN {
     if (output_size == 0) output_size = input_size * times;
     if (input_size  == 0) input_size  = output_size / times;
     if (input_size * times != output_size)
-      ERROR_EXIT2(128, "Incorrect input/output sizes: input=%d output=%d\n",
-		  input_size, output_size);
+      ERROR_EXIT3(128, "Incorrect input/output sizes: input=%d output=%d [%s]\n",
+		  input_size, output_size,
+		  name.c_str());
   }
   
   char *CopyANNComponent::toLuaString() {

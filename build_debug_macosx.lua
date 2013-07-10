@@ -16,6 +16,7 @@ luapkg{
       "-DUSE_XCODE",
       "-F/System/Library/Frameworks/Accelerate.framework",
       "-pg",
+      "-DNO_POOL",
     },
     extra_libs={
       "-lpthread",
@@ -71,6 +72,10 @@ luapkg{
 	file_name = "dep_graph.dot"
       },
       use_timestamp = true,
+    },
+    target{
+      name = "test",
+      depends = "build",
     },
     target{ name = "document",
       echo{"this is documentation"},

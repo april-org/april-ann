@@ -128,8 +128,8 @@ namespace ANN {
     ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
     //////////////////////////////////////////////////////////////
     if (components.size() == 0)
-      ERROR_EXIT(128, "StackANNComponent needs one or more components, "
-		 "use pushComponent method\n");
+      ERROR_EXIT1(128, "StackANNComponent needs one or more components, "
+		  "use pushComponent method [%s]\n", name.c_str());
     //
     unsigned int current_input_size  = input_size;
     unsigned int current_output_size = 0;
@@ -144,13 +144,13 @@ namespace ANN {
     if (input_size  == 0) input_size  = components[0]->getInputSize();
     if (output_size == 0) output_size = components.back()->getOutputSize();
     else if (output_size != components.back()->getOutputSize())
-      ERROR_EXIT2(141, "StackANNComponent output size is not correct: "
-		  "%d != %d\n", output_size,
-		  components.back()->getOutputSize());
+      ERROR_EXIT3(141, "StackANNComponent output size is not correct: "
+		  "%d != %d [%s]\n", output_size,
+		  components.back()->getOutputSize(), name.c_str());
     if (input_size  == 0 || output_size == 0)
-      ERROR_EXIT2(141, "Impossible to compute input/output "
-		  "sizes for this component input=%d output=%d\n",
-		  input_size, output_size);
+      ERROR_EXIT3(141, "Impossible to compute input/output "
+		  "sizes for this component input=%d output=%d [%s]\n",
+		  input_size, output_size, name.c_str());
   }
   
   void StackANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
@@ -175,7 +175,6 @@ namespace ANN {
     buffer_list buffer;
     buffer.printf("ann.components.stack{ name='%s' }", name.c_str());
     for (unsigned int i=0; i<components.size(); ++i) {
-      // FIXME: please, this code could be improved freeing the aux array
       char *aux = components[i]->toLuaString();
       buffer.printf(":push(%s)", aux);
       delete[] aux;

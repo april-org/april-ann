@@ -18,32 +18,25 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef COPYCOMPONENT_H
-#define COPYCOMPONENT_H
+#ifndef SELECTCOMPONENT_H
+#define SELECTCOMPONENT_H
 
 #include "vector.h"
 #include "ann_component.h"
 #include "token_vector.h"
+#include "token_matrix.h"
 
 using april_utils::vector;
 
 namespace ANN {
 
-  class CopyANNComponent : public ANNComponent {
-    vector<ANNComponent*> components;
-    // Token pointers which contains exactly the same that was received
-    Token *input, *error_output;
-    
-    // These token are always a TokenBunchVector
-    TokenBunchVector *output, *error_input;
-    
-    unsigned int times;
+  class SelectANNComponent : public ANNComponent {
+    int dimension, index;
+    TokenMatrixFloat *input, *output, *error_input, *error_output;
     
   public:
-    CopyANNComponent(unsigned int times, const char *name=0,
-		     unsigned int input_size=0,
-		     unsigned int output_size=0);
-    virtual ~CopyANNComponent();
+    SelectANNComponent(int dimension, int index, const char *name=0);
+    virtual ~SelectANNComponent();
     
     virtual Token *getInput() { return input; }
     virtual Token *getOutput() { return output; }
@@ -67,4 +60,4 @@ namespace ANN {
   };
 }
 
-#endif // COPYCOMPONENT_H
+#endif // SELECTCOMPONENT_H

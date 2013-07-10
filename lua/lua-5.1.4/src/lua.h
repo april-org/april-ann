@@ -26,6 +26,8 @@
 #define APRILANN_COPYRIGHT "Copyright (C) 2012-2013 DSIC-UPV, CEU-UCH"
 #define APRILANN_AUTHORS   "F. Zamora-Martinez, S. España-Boquera, J. Gorbe-Moya, J. Pastor & A. Palacios"
 
+#define APRILANN_DISCLAIMER "This program comes with ABSOLUTELY NO WARRANTY; for details see `LICENSE.txt'.\nThis is free software, and you are welcome to redistribute it\nunder certain conditions; see 'LICENSE.txt' for details."
+
 /* mark for precompiled code (`<esc>Lua') */
 #define	LUA_SIGNATURE	"\033Lua"
 

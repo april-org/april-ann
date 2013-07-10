@@ -127,8 +127,9 @@ namespace ANN {
     ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
     //////////////////////////////////////////////////////////////
     if (input_size == 0 || output_size == 0)
-      ERROR_EXIT(141, "Impossible to compute input/output "
-		 "sizes for this component\n");
+      ERROR_EXIT1(141, "Impossible to compute input/output "
+		  "sizes for this component [%s]\n",
+		  name.c_str());
     //
     dot_product->build(input_size, output_size, weights_dict, components_dict);
     bias->build(output_size, output_size, weights_dict, components_dict);

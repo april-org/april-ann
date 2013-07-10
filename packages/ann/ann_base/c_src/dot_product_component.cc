@@ -24,7 +24,6 @@
 #include "wrapper.h"
 #include "token_base.h"
 #include "token_vector.h"
-#include "token_memory_block.h"
 #include "table_of_token_codes.h"
 
 using april_utils::swap;
@@ -70,7 +69,8 @@ namespace ANN {
 					 name.c_str());
     MatrixFloat *weights_mat = weights_matrix->getPtr();
     // error checking
-    if (_input == 0) ERROR_EXIT(129,"Null Token received!\n");
+    if (_input == 0) ERROR_EXIT1(129,"Null Token received! [%s]\n",
+				 name.c_str());
     // Three tokens are allowed: matrix, sparse, vector of sparse
     switch(_input->getTokenCode()) {
     case table_of_token_codes::token_matrix: {
@@ -79,17 +79,21 @@ namespace ANN {
       AssignRef(input,_input);
       TokenMatrixFloat *input_mat_token=input->convertTo<TokenMatrixFloat*>();
       MatrixFloat *input_mat=input_mat_token->getMatrix();
+      ASSERT_MATRIX(input_mat);
+      assert(input_mat->getDimSize(1) == static_cast<int>(input_size));
+      if (input_mat->getStrideSize(0) > 1) {
+	input_mat = input_mat->clone();
+	AssignRef(input,new TokenMatrixFloat(input_mat));
+      }
 #ifdef USE_CUDA
       input_mat->setUseCuda(use_cuda);
 #endif
-      ASSERT_MATRIX(input_mat);
-      assert(input_mat->getDimSize(1) == static_cast<int>(input_size));
       unsigned int bunch_size = input_mat->getDimSize(0);
       // new output to fit the bunch
       MatrixFloat *output_mat;
       int dims[2] = { static_cast<int>(bunch_size),
 		      static_cast<int>(output_size) };
-      output_mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+      output_mat = new MatrixFloat(2, dims, CblasColMajor);
       AssignRef(output,new TokenMatrixFloat(output_mat));
 #ifdef USE_CUDA
       output_mat->setUseCuda(use_cuda);
@@ -129,45 +133,41 @@ namespace ANN {
       MatrixFloat *output_mat;
       int dims[2] = {static_cast<int>(input_vector_token->size()),
 		     static_cast<int>(output_size)};
-      output_mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+      output_mat = new MatrixFloat(2, dims, CblasColMajor);
       AssignRef(output,new TokenMatrixFloat(output_mat));
 #ifdef USE_CUDA
       output_mat->setUseCuda(use_cuda);
 #endif      
       output_mat->zeros();
-      unsigned int w_lda  = output_size;
-      unsigned int w_step = 1;
-      if (transpose_weights == CblasTrans) {
-	w_lda  = 1;
-	w_step = output_size;
-      }
       
-      // FIXME: Improve this code using sub-matrices instead of direct raw
-      // access to matrix data
-      FloatGPUMirroredMemoryBlock *output_ptr = output_mat->getRawDataAccess();
-      FloatGPUMirroredMemoryBlock *weights_mat_ptr = weights_mat->getRawDataAccess();
+      // dimension for select operation
+      int w_dim = (transpose_weights == CblasNoTrans) ? 1 : 0;
       for (unsigned int b=0; b<input_vector_token->size(); ++b) {
+	MatrixFloat *output_pat_mat = output_mat->select(0,static_cast<int>(b));
 	Token *current = (*input_vector_token)[b];
 	if (current->getTokenCode()!=table_of_token_codes::vector_float_sparse)
-	  ERROR_EXIT(128,"Incorrect token type, expected vector_float_sparse\n");
+	  ERROR_EXIT1(128,"Incorrect token type, expected vector_float_sparse [%s]\n",
+		      name.c_str());
 	TokenSparseVectorFloat *sparse_token;
 	sparse_token = current->convertTo<TokenSparseVectorFloat*>();
 	for (unsigned int k=0; k<sparse_token->size(); ++k) {
 	  unsigned int pos     = (*sparse_token)[k].first;
 	  float value          = (*sparse_token)[k].second;
-	  unsigned int w_shift = pos*w_lda;
+	  int w_index          = static_cast<int>(pos);
 	  if (pos >= input_size)
-	    ERROR_EXIT(128, "Overflow at sparse vector input pos\n");
-	  doSaxpy(output_size,
-		  value,
-		  weights_mat_ptr, w_shift, w_step,
-		  output_ptr, b, input_vector_token->size(), use_cuda);
+	    ERROR_EXIT1(128, "Overflow at sparse vector input pos [%s]\n",
+			name.c_str());
+	  MatrixFloat *w_column = weights_mat->select(w_dim, w_index);
+	  output_pat_mat->axpy(value, w_column);
+	  delete w_column;
 	}
+	delete output_pat_mat;
       }
       break;
     }
     default:
-      ERROR_EXIT1(128, "Incorrect token type: %d\n", _input->getTokenCode());
+      ERROR_EXIT2(128, "Incorrect token type: %d [%s]\n", _input->getTokenCode(),
+		  name.c_str());
     };
     return output;
   }
@@ -176,11 +176,12 @@ namespace ANN {
     // error checking
     if ( (_error_input == 0) ||
 	 (_error_input->getTokenCode() != table_of_token_codes::token_matrix))
-      ERROR_EXIT(129,"Incorrect input error Token type, expected token_matrix!\n");
+      ERROR_EXIT1(129,"Incorrect input error Token type, expected token_matrix! [%s]\n",
+		  name.c_str());
     // change current input by new input
     AssignRef(error_input,_error_input->convertTo<TokenMatrixFloat*>());
     if (sparse_input) {
-      // If input is parse, the component needs to be an input of the ANN,
+      // If input is sparse, the component needs to be an input of the ANN,
       // therefore the input is probably SO LARGE, and computing the backprop
       // will lead in HIGH computational cost ;) Because of this, the components
       // returns a NULL gradient pointer
@@ -188,20 +189,25 @@ namespace ANN {
       return 0;
     }
     MatrixFloat *error_input_mat = error_input->getMatrix();
-#ifdef USE_CUDA
-    error_input_mat->setUseCuda(use_cuda);
-#endif
     if (! error_input_mat->sameDim(output->getMatrix()) )
-      ERROR_EXIT(129, "Different bunches found at doForward and doBackprop\n");
+      ERROR_EXIT1(129, "Different bunches found at doForward and doBackprop [%s]\n",
+		  name.c_str());
     // new error output to fit the bunch
     ASSERT_MATRIX(error_input_mat);
     assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
+    if (error_input_mat->getStrideSize(0) > 1) {
+      error_input_mat = error_input_mat->clone();
+      AssignRef(error_input,new TokenMatrixFloat(error_input_mat));
+    }
+#ifdef USE_CUDA
+    error_input_mat->setUseCuda(use_cuda);
+#endif
     unsigned int bunch_size = error_input_mat->getDimSize(0);
     // new output to fit the bunch
     MatrixFloat *error_output_mat;
     int dims[2] = { static_cast<int>(bunch_size),
 		    static_cast<int>(input_size) };
-    error_output_mat = new MatrixFloat(2, dims, 0.0f, CblasColMajor);
+    error_output_mat = new MatrixFloat(2, dims, CblasColMajor);
     AssignRef(error_output,new TokenMatrixFloat(error_output_mat));
 #ifdef USE_CUDA
     output_mat->setUseCuda(use_cuda);
@@ -229,7 +235,6 @@ namespace ANN {
 			       Token *input_token,
 			       MatrixFloat *error_input_mat,
 			       float beta) {
-    ASSERT_MATRIX(error_input_mat);
     assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
     unsigned int bunch_size = error_input_mat->getDimSize(0);
     // backprop learning rule:
@@ -243,30 +248,25 @@ namespace ANN {
     if (sparse_input) {
       TokenBunchVector *input_vector_token;
       input_vector_token  = input_token->convertTo<TokenBunchVector*>();
-      unsigned int w_lda  = output_size;
-      unsigned int w_step = 1;
-      if (transpose_weights == CblasTrans) {
-	w_lda  = 1;
-	w_step = output_size;
-      }
-      FloatGPUMirroredMemoryBlock *error_input = error_input_mat->getRawDataAccess();
-      FloatGPUMirroredMemoryBlock *prev_weights_mat_ptr = prev_weights_mat->getRawDataAccess();
+      int w_dim = (transpose_weights == CblasNoTrans) ? 1 : 0;
       for (unsigned int b=0; b<bunch_size; ++b) {
+	MatrixFloat *error_input_pat_mat;
+	error_input_pat_mat = error_input_mat->select(0,static_cast<int>(b));
 	Token *current = (*input_vector_token)[b];
 	TokenSparseVectorFloat *sparse_token;
 	sparse_token = current->convertTo<TokenSparseVectorFloat*>();
 	for (unsigned int k=0; k<sparse_token->size(); ++k) {
 	  unsigned int pos     = (*sparse_token)[k].first;
 	  float value          = (*sparse_token)[k].second;
-	  unsigned int w_shift = pos*w_lda;
+	  int w_index          = static_cast<int>(pos);
 	  if (pos >= input_size)
-	    ERROR_EXIT(128, "Overflow at sparse vector input pos\n");
-	  doSaxpy(output_size,
-		  norm_learn_rate*value,
-		  error_input, b, bunch_size,
-		  prev_weights_mat_ptr, w_shift, w_step,
-		  use_cuda);
+	    ERROR_EXIT1(128, "Overflow at sparse vector input pos [%s]\n",
+			name.c_str());
+	  MatrixFloat *w_column = prev_weights_mat->select(w_dim, w_index);
+	  w_column->axpy(norm_learn_rate*value, error_input_pat_mat);
+	  delete w_column;
 	}
+	delete error_input_pat_mat;
       }
     } // if sparse_input ... else
     else {
@@ -334,17 +334,17 @@ namespace ANN {
 	// we need to use the pointer because after endUpdate() method the
 	// pointers will be swapped or changed
 	weights_mat = weights_matrix->getPtr();
-	for (unsigned int i=0; i<output_size; ++i) {
-	  int coords[2] = { static_cast<int>(i), 0 };
-	  int sizes[2]	= { 1, static_cast<int>(input_size) };
-	  MatrixFloat *submat = new MatrixFloat(weights_mat,coords,sizes,false);
+	MatrixFloat::sliding_window window(weights_mat, 0, 0, 0, 0, 0);
+	while(!window.isEnd()) {
+	  MatrixFloat *submat = window.getMatrix();
 	  float norm2 = submat->norm2();
 	  if (norm2 > max_norm_penalty) {
 	    float scal_factor = max_norm_penalty/norm2;
 	    submat->scal(scal_factor);
 	  }
 	  delete submat;
-	} // for (i=0; i<output_size; ++i)
+	  window.next();
+	}
       } // if max_norm_penalty > 0.0
     }
   }
@@ -412,8 +412,9 @@ namespace ANN {
 			weights_dict, components_dict);
     //
     if (input_size == 0 || output_size == 0)
-      ERROR_EXIT(141, "Impossible to compute input/output "
-		 "sizes for this component\n");
+      ERROR_EXIT1(141, "Impossible to compute input/output "
+		  "sizes for this component [%s]\n",
+		  name.c_str());
     unsigned int weights_input_size  = input_size;;
     unsigned int weights_output_size = output_size;
     ////////////////////////////////////////////////////////////////////
@@ -426,9 +427,10 @@ namespace ANN {
       AssignRef(weights_matrix, w);
       if (!weights_matrix->checkInputOutputSizes(weights_input_size,
 						 weights_output_size))
-	ERROR_EXIT2(256,"The weights matrix input/output sizes are not correct, "
-		    "expected %dx%d\n",
-		    weights_input_size, weights_output_size);
+	ERROR_EXIT3(256,"The weights matrix input/output sizes are not correct, "
+		    "expected %dx%d [%s]\n",
+		    weights_input_size, weights_output_size,
+		    name.c_str());
     }
     else {
       if (weights_matrix == 0) {
@@ -447,12 +449,14 @@ namespace ANN {
 
   void DotProductANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
     if (weights_matrix == 0)
-      ERROR_EXIT(100, "Component not built, impossible execute copyWeights\n");
+      ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
+		  name.c_str());
     Connections *&w = weights_dict[weights_name];
     if (w != 0 && w != weights_matrix)
-      ERROR_EXIT1(101, "Weights dictionary contains %s weights name which is "
-		  "not shared with weights_matrix attribute\n",
-		  weights_name.c_str());
+      ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
+		  "not shared with weights_matrix attribute [%s]\n",
+		  weights_name.c_str(),
+		  name.c_str());
     else if (w == 0) w = weights_matrix;
   }  
 

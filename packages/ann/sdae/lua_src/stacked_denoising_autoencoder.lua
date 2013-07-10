@@ -954,7 +954,7 @@ function ann.autoencoders.sgd_sampling(t)
   local chain    = {}
   for i=1,params.max do
     params.model:reset()
-    output = params.model:forward(tokens.matrix(input))
+    output = params.model:forward(tokens.matrix(input)):clone()
     -- restore masked positions
     -- for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
     -- compute the loss of current iteration
@@ -975,8 +975,16 @@ function ann.autoencoders.sgd_sampling(t)
     if params.verbose then printf("\n") end
     if last_L == 0 or imp < params.stop then break end
     -- GRADIENT DESCENT UPDATE OF INPUT VECTOR
+    --aux = params.noise:forward(tokens.matrix(input)):get_matrix()
+    ---- restore masked positions
+    --for _,pos in ipairs(params.mask) do
+    --aux:set(1,pos,input_rewrapped:get(1,pos))
+    --end
+    
     local gradient = params.model:backprop(params.loss:gradient(params.model:get_output(),
-								params.model:get_input()))
+								params.model:get_input())) -- tokens.matrix(aux)))
+    -- local g = gradient:get_matrix():clone("row_major"):rewrap(16,16):pow(2):sqrt():clamp(0,1)
+    -- matrix.saveImage(g, string.format("gradient-%04d.pnm", i))
     gradient = gradient:get_matrix()
     output   = output:get_matrix()
     -- input = (1 - beta)*input + beta*output - alpha*gradient

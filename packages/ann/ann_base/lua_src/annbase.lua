@@ -750,6 +750,7 @@ april_set_doc("ann.components.base.build",
 		    "at the components hierarchy."},
 		  { "A table with all the name=>ann.components found",
 		    "at the hierarchy."},
+		  { "The caller ANN component."},
 		}
 	      })
 
@@ -1070,6 +1071,53 @@ april_set_doc("ann.components.copy.__call",
 		  ["output"] = "Number of component output neurons [optional]",
 		},
 		outputs= { "An instance of ann.components.copy" }
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.select", {
+		class="class",
+		summary="A component for select operation (see matrix.select)",})
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.select.__call",
+	      {
+		class="method",
+		summary="Constructor of the component select (see matrix.select)",
+		description = {
+		  "The Name is generated automatically if non given.",
+		},
+		params={
+		  ["name"] = "A string with the given name [optional]",
+		  ["dimension"] = "Number with the selected dimension",
+		  ["index"] = "Number with the selected index",
+		},
+		outputs= { "An instance of ann.components.select" }
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.rewrap", {
+		class="class",
+		summary="A component for change the dimension of matrix (see matrix.rewrap)",})
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.rewrap.__call",
+	      {
+		class="method",
+		summary="Constructor of the component rewrap (see matrix.rewrap)",
+		description = {
+		  "The Name is generated automatically if non given.",
+		},
+		params={
+		  ["name"] = "A string with the given name [optional]",
+		  ["size"] = {
+		    "A table with the sizes of re-wrapped matrix dimensions.",
+		  }
+		},
+		outputs= { "An instance of ann.components.rewrap" }
 	      })
 
 ----------------------------------------------------------------------

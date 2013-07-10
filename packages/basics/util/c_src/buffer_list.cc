@@ -27,7 +27,7 @@
 
 buffer_list_node::buffer_list_node(int sz, buffer_list_node *nxt) {
   size   = sz;
-  buffer = new char[size];
+  buffer = new char[size+1];
   next   = nxt;
 }
 
@@ -98,7 +98,7 @@ void buffer_list::add_formatted_string_left(const char *fmt, ...) {
     strcpy(node->buffer, buf);
   } else {
     va_start(ap, fmt);
-    n = vsnprintf (node->buffer, FORMAT_BUFFER_SIZE, fmt, ap);
+    n = vsnprintf (node->buffer, n+1, fmt, ap);
     va_end(ap);
   }
 
@@ -125,7 +125,7 @@ void buffer_list::add_formatted_string_right(const char *fmt, ...) {
     memcpy(node->buffer, buf, n);
   } else {
     va_start(ap, fmt);
-    n = vsnprintf (node->buffer, n, fmt, ap);
+    n = vsnprintf (node->buffer, n+1, fmt, ap);
     va_end(ap);
   }
 
@@ -152,7 +152,7 @@ void buffer_list::printf(const char *fmt, ...) {
     memcpy(node->buffer, buf, n);
   } else {
     va_start(ap, fmt);
-    n = vsnprintf (node->buffer, n, fmt, ap);
+    n = vsnprintf (node->buffer, n+1, fmt, ap);
     va_end(ap);
   }
 
