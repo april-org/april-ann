@@ -989,7 +989,8 @@ Image<T>* Image<T>::substract_image(Image<T> *img, T low, T high) const {
     int dims[2];
     dims[0] = this->height;
     dims[1] = this->width;
-    Matrix<T> *mat = new Matrix<T>(2,dims, 0);
+    Matrix<T> *mat = new Matrix<T>(2,dims);
+    mat->fill(0);
     Image<T>  *res = new Image<T>(mat);
 
 
