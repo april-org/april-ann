@@ -231,6 +231,10 @@ april_set_doc("stats.confusion_matrix.printConfusion", {
 		})
 function stats.confusion_matrix:printConfusion(tags)
 
+
+    local total_pred = {}
+
+
     printf("\t|\t Predicted ")
     for i = 1, self.num_classes do
         printf("\t\t")
@@ -242,7 +246,7 @@ function stats.confusion_matrix:printConfusion(tags)
         printf("\t___\t")
     end
 
-    printf("\t___\t|\n")
+    printf("\t___\t\t|\n")
     for i,v in ipairs(self.confusion) do
 
         local tag = i
@@ -250,8 +254,9 @@ function stats.confusion_matrix:printConfusion(tags)
             tag = tags[i]
         end
         printf("%s\t|\t", tag)
-
-        printf("%s\t|\t %0.4f\t|\n", table.concat(v, "\t|\t"), self:getRecall(i))
+        
+        local recall, hits, total = self:getRecall(i)
+        printf("%s\t|\t %d/%d %0.4f\t|\n", table.concat(v, "\t|\t"), hits, total, recall)
     end
     printf("______\t|")
     for i = 1, self.num_classes do
@@ -259,11 +264,13 @@ function stats.confusion_matrix:printConfusion(tags)
     end
 
     printf("\t___\t|\n")
-    printf("\t|")
+    printf("\t\t|")
     for i = 1, self.num_classes do
         printf("\t%0.4f\t|", self:getPrecision(i))
     end
-    printf("\t%0.4f\t|\n", self:getError())
+
+    local acc, hits, total = self:getAccuracy()
+    printf("\t%d/%d %0.4f\t|\n", hits, total, acc)
 end
 
 function stats.confusion_matrix:printInf()
@@ -380,7 +387,7 @@ april_set_doc("stats.confusion_matrix.getAccuracy", {
     outputs = { "The global accuracy." },
 })
 function stats.confusion_matrix:getAccuracy()
-    return self.hits/self.samples
+    return self.hits/self.samples, self.hits, self.samples
 end
 
 --------------------------------------------------------------
@@ -412,7 +419,7 @@ function stats.confusion_matrix:getPrecision(tipo)
     if den == 0 then
         return 0
     end
-    return tp/den
+    return tp/den, tp, den
 end
 
 april_set_doc("stats.confusion_matrix.getRecall",
@@ -439,7 +446,7 @@ function stats.confusion_matrix:getRecall(tipo)
     if den == 0 then
         return 0
     end
-    return tp/den
+    return tp/den, tp, den
 end
 
 april_set_doc("stats.confusion_matrix.getFMeasure",
