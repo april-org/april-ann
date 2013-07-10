@@ -284,19 +284,6 @@ void doSgemm(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
 	     unsigned int a_shift, unsigned int b_shift, unsigned int c_shift,
 	     bool use_gpu);
 
-void doVectorSetToZero(FloatGPUMirroredMemoryBlock *v,
-		       unsigned int v_size,
-		       unsigned int inc,
-		       unsigned int shift,
-		       bool use_gpu);
-
-void doVectorSet(FloatGPUMirroredMemoryBlock *v,
-		 float value,
-		 unsigned int v_size,
-		 unsigned int inc,
-		 unsigned int shift,
-		 bool use_gpu);
-
 void doSscal(unsigned int size,
 	     float alpha,
 	     FloatGPUMirroredMemoryBlock *x,
@@ -349,4 +336,10 @@ void doClamp(unsigned int N,
 	     unsigned int shift,
 	     float lower,
 	     float upper);
+
+void doFill(unsigned int N,
+	    FloatGPUMirroredMemoryBlock *v,
+	    unsigned int stride,
+	    unsigned int shift,
+	    float value);
 #endif // WRAPPER_H

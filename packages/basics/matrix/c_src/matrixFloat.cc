@@ -19,29 +19,43 @@
  *
  */
 
+#include <omp.h>
 #include "matrix.h"
 #include "matrixFloat.h"
 
 // WARNING: ALL THE METHODS IMPLEMENTED HERE ARE SPECIALIZED TO FLOAT VERSION
 
-// FIXME: using WRAPPER
 template<>
 void Matrix<float>::fill(float value) {
-  if (major_order == CblasRowMajor)
-    for (iterator it(begin()); it!=end(); ++it) {
-      *it = value;
+  best_span_iterator span_it(this);
+  if (omp_get_num_threads() > 1) {
+    const int N = span_it.numberOfIterations();
+    //#pragma omp parallel for firstprivate(span_it) firstprivate(N)
+      for (int i=0; i<N; ++i) {
+	span_it.setAtIteration(i);
+	doFill(static_cast<unsigned int>(span_it.getSize()),
+	       data,
+	       static_cast<unsigned int>(span_it.getStride()),
+	       static_cast<unsigned int>(span_it.getOffset()),
+	       value);
+      }
+  }
+  else {
+    while(span_it != end_span_iterator()) {
+      doFill(static_cast<unsigned int>(span_it.getSize()),
+	     data,
+	     static_cast<unsigned int>(span_it.getStride()),
+	     static_cast<unsigned int>(span_it.getOffset()),
+	     value);
+      ++span_it;
     }
-  else
-    for (col_major_iterator it(begin()); it!=end(); ++it) {
-      *it = value;
-    }
+  }
 }
 
 template<>
 void Matrix<float>::clamp(float lower, float upper) {
   best_span_iterator span_it(this);
   while(span_it != end_span_iterator()) {
-    int pos = span_it.getOffset();
     doClamp(static_cast<unsigned int>(span_it.getSize()),
 	    data,
 	    static_cast<unsigned int>(span_it.getStride()),

@@ -646,7 +646,7 @@ best_span_iterator(const Matrix<T> *m,int raw_pos) : m(m), raw_pos(raw_pos) {
   order  = new int[m->numDim];
   m->computeCoords(raw_pos, coords);
   switch(m->numDim) {
-  case 1: order[0] = 0; break;
+  case 1: order[0] = 0; num_iterations = 1; break;
   case 2:
     if (m->matrixSize[0] > m->matrixSize[1]) {
       order[0] = 0;
@@ -656,10 +656,14 @@ best_span_iterator(const Matrix<T> *m,int raw_pos) : m(m), raw_pos(raw_pos) {
       order[0] = 1;
       order[1] = 0;
     }
+    num_iterations = m->matrixSize[order[1]];
     break;
   default:
     for (int i=0; i<m->numDim; ++i) order[i] = i;
     april_utils::Sort(order, 0, m->numDim-1, inverse_sort_compare(m));
+    num_iterations = 1;
+    for (int i=1; i<m->numDim; ++i)
+      num_iterations *= m->matrixSize[order[i]];
   }
 }
 
@@ -669,7 +673,7 @@ Matrix<T>::best_span_iterator::best_span_iterator(const Matrix<T> *m) :
   coords = new int[m->numDim];
   order  = new int[m->numDim];
   switch(m->numDim) {
-  case 1: order[0] = 0; coords[0] = 0; break;
+  case 1: order[0] = 0; coords[0] = 0; num_iterations = 1; break;
   case 2:
     coords[0] = 0; coords[1] = 0;
     if (m->matrixSize[0] > m->matrixSize[1]) {
@@ -680,6 +684,7 @@ Matrix<T>::best_span_iterator::best_span_iterator(const Matrix<T> *m) :
       order[0] = 1;
       order[1] = 0;
     }
+    num_iterations = m->matrixSize[order[1]];
     break;
   default:
     for (int i=0; i<m->numDim; ++i) {
@@ -687,6 +692,9 @@ Matrix<T>::best_span_iterator::best_span_iterator(const Matrix<T> *m) :
       order[i] = i;
     }
     april_utils::Sort(order, 0, m->numDim-1, inverse_sort_compare(m));
+    num_iterations = 1;
+    for (int i=1; i<m->numDim; ++i)
+      num_iterations *= m->matrixSize[order[i]];
   }
 }
 
@@ -721,14 +729,15 @@ operator=(const Matrix<T>::best_span_iterator &other) {
     delete[] coords;
     delete[] order;
     coords = new int[other.m->getNumDim()];
-    order = new int[other.m->getNumDim()];
+    order  = new int[other.m->getNumDim()];
   }
   m = other.m;
   raw_pos = other.raw_pos;
   for (int i=0; i<m->getNumDim(); ++i) {
-    order[i] = other.order[i];
     coords[i] = other.coords[i];
+    order[i]  = other.order[i];
   }
+  num_iterations = other.num_iterations;
   return *this;
 }
 
@@ -763,6 +772,26 @@ operator++() {
     else raw_pos = m->computeRawPos(coords);
   }
   return *this;
+}
+
+template <typename T>
+int Matrix<T>::best_span_iterator::numberOfIterations() const {
+  return num_iterations;
+}
+
+template <typename T>
+void Matrix<T>::best_span_iterator::setAtIteration(int idx) {
+  if (idx < num_iterations) {
+    raw_pos = 0;
+    coords[order[0]] = 0;
+    for (int i=1; i < m->getNumDim(); i++) {
+      int j = order[i];
+      coords[j]  = idx % m->matrixSize[j];
+      idx        = idx / m->matrixSize[j];;
+      raw_pos   += m->stride[j]*coords[j];
+    }
+  }
+  else raw_pos = m->last_raw_pos+1;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -988,9 +1017,9 @@ void Matrix<T>::sliding_window::setAtWindow(int windex) {
     raw_pos = 0;
     for (int i=0; i < m->getNumDim();i++) {
       int j = order_step[i];
-      coords[j] = offset[j] + (windex % num_steps[j])*step[j];
-      windex    = windex / num_steps[j];
-      raw_pos   = m->stride[j]*coords[j];
+      coords[j]  = offset[j] + (windex % num_steps[j])*step[j];
+      windex     = windex / num_steps[j];
+      raw_pos   += m->stride[j]*coords[j];
     }
   }
   else finished = true;

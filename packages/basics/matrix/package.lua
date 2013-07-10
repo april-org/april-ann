@@ -28,6 +28,7 @@
        file = "c_src/*.cc",
        include_dirs = "${include_dirs}",
        --flags = "-std=c99", not valid for c++!!!
+       flags = "-fopenmp",
        dest_dir = "build",
      },
      luac{
