@@ -95,6 +95,30 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
+//BIND_METHOD SlidingWindow set_at_window
+{
+  int windex;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_GET_PARAMETER(1, int, windex);
+  if (windex < 1) LUABIND_ERROR("Index must be >= 1\n");
+  obj->setAtWindow(windex-1);
+  LUABIND_RETURN(SlidingWindow, obj);
+}
+//BIND_END
+
+//BIND_METHOD SlidingWindow num_windows
+{
+  LUABIND_RETURN(int, obj->numWindows());
+}
+//BIND_END
+
+//BIND_METHOD SlidingWindow coords
+{
+  LUABIND_VECTOR_TO_NEW_TABLE(int, obj->getCoords(), obj->getNumDim());
+  LUABIND_RETURN_FROM_STACK(-1);
+}
+//BIND_END
+
 //BIND_METHOD SlidingWindow is_end
 {
   LUABIND_RETURN(bool, obj->isEnd());
