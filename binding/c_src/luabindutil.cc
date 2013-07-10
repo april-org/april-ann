@@ -216,7 +216,7 @@ void check_table_fields(lua_State *L, int idx, ...) {
         break;
       }
 
-      word = va_arg(ap, char *);
+      word = va_arg(ap, const char *);
     }
     va_end(ap);
 

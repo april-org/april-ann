@@ -19,17 +19,97 @@
  *
  */
 //BIND_HEADER_C
+#include "bind_mtrand.h"
 #include <cmath> // para isfinite
+#include "luabindutil.h"
+#include "luabindmacros.h"
+
+#define FUNCTION_NAME "read_vector"
+int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
+  int *v=0;
+  lua_getfield(L, 1, key);
+  if (!lua_isnil(L, -1)) {
+    LUABIND_CHECK_PARAMETER(-1, table);
+    int table_len;
+    LUABIND_TABLE_GETN(-1, table_len);
+    if (table_len != num_dim)
+      LUABIND_FERROR3("Table '%s' with incorrect size, expected %d, found %d",
+		      key, num_dim, table_len);
+    v = new int[num_dim];
+    for(int i=0; i < num_dim; i++) {
+      lua_rawgeti(L, -1, i+1);
+      v[i] = static_cast<int>(lua_tonumber(L, -1)) + add;
+      lua_pop(L,1);
+    }
+  }
+  lua_pop(L, 1);
+  return v;
+}
+#undef FUNCTION_NAME
+
+int sliding_window_iterator_function(lua_State *L) {
+  SlidingWindow *obj = lua_toSlidingWindow(L,1);
+  if (obj->isEnd()) {
+    lua_pushnil(L);
+    return 1;
+  }
+  // lua_pushSlidingWindow(L, obj);
+  MatrixFloat *mat = obj->getMatrix();
+  lua_pushMatrixFloat(L, mat);
+  obj->next();
+  return 1;
+}
+
 //BIND_END
 
 //BIND_HEADER_H
 #include "utilMatrixFloat.h"
 #include "utilLua.h"
 #include <cmath> // para isfinite
+typedef MatrixFloat::sliding_window SlidingWindow;
 //BIND_END
 
 //BIND_LUACLASSNAME MatrixFloat matrix
 //BIND_CPP_CLASS MatrixFloat
+
+//BIND_LUACLASSNAME SlidingWindow matrix.__sliding_window__
+//BIND_CPP_CLASS SlidingWindow
+
+//BIND_CONSTRUCTOR SlidingWindow
+{
+  LUABIND_ERROR("Use matrix.sliding_window");
+}
+//BIND_END
+
+//BIND_METHOD SlidingWindow get_matrix
+{
+  bool clone;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, bool, clone, false);
+  LUABIND_RETURN(MatrixFloat, obj->getMatrix(clone));
+}
+//BIND_END
+
+//BIND_METHOD SlidingWindow next
+{
+  LUABIND_RETURN(SlidingWindow, obj->next());
+}
+//BIND_END
+
+//BIND_METHOD SlidingWindow is_end
+{
+  LUABIND_RETURN(bool, obj->isEnd());
+}
+//BIND_END
+
+//BIND_METHOD SlidingWindow iterate
+{
+  LUABIND_CHECK_ARGN(==, 0);
+  LUABIND_RETURN(cfunction,sliding_window_iterator_function);
+  LUABIND_RETURN(SlidingWindow,obj);
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////////
 
 //BIND_CONSTRUCTOR MatrixFloat
 //DOC_BEGIN
@@ -111,7 +191,7 @@
     }
   }
   MatrixFloat* obj;
-  obj = new MatrixFloat(ndims,dim,0.0f,CblasColMajor);
+  obj = new MatrixFloat(ndims,dim,CblasColMajor);
   if (lua_istable(L,argn)) {
     int i=1;
     for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
@@ -611,6 +691,19 @@
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat select
+{
+  LUABIND_CHECK_ARGN(==,2);
+  LUABIND_CHECK_PARAMETER(1, int);
+  LUABIND_CHECK_PARAMETER(2, int);
+  int dim, index;
+  LUABIND_GET_PARAMETER(1, int, dim);
+  LUABIND_GET_PARAMETER(2, int, index);
+  MatrixFloat *obj2 = obj->select(dim-1, index-1);
+  LUABIND_RETURN(MatrixFloat, obj2);
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat clone
 //DOC_BEGIN
 // matrix *clone()
@@ -861,7 +954,8 @@
   {
     LUABIND_CHECK_ARGN(==, 1);
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L,1, "trans_A", "trans_B", "alpha", "A", "B", "beta", 0);
+    check_table_fields(L,1, "trans_A", "trans_B", "alpha", "A", "B", "beta",
+		       (const char *)0);
     bool trans_A, trans_B;
     float alpha;
     float beta;
@@ -884,7 +978,8 @@
   {
     LUABIND_CHECK_ARGN(==, 1);
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L,1, "trans_A", "alpha", "A", "X", "beta", 0);
+    check_table_fields(L,1, "trans_A", "alpha", "A", "X", "beta",
+		       (const char *)0);
     bool trans_A;
     float alpha;
     float beta;
@@ -905,7 +1000,8 @@
   {
     LUABIND_CHECK_ARGN(==, 1);
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L,1, "alpha", "X", "Y", 0);
+    check_table_fields(L,1, "alpha", "X", "Y",
+		       (const char *)0);
     float alpha;
     MatrixFloat *matX,*matY;
     LUABIND_GET_TABLE_PARAMETER(1, X, MatrixFloat, matX);
@@ -941,3 +1037,106 @@
     LUABIND_RETURN(float, obj->norm2());
   }
 //BIND_END
+
+//BIND_METHOD MatrixFloat uniform
+{
+  int lower, upper;
+  MTRand *random;
+  LUABIND_GET_PARAMETER(1, int, lower);
+  LUABIND_GET_PARAMETER(2, int, upper);
+  LUABIND_GET_OPTIONAL_PARAMETER(3, MTRand, random, 0);
+  if (lower < 0)
+    LUABIND_ERROR("Allowed only for positive integers");
+  if (lower > upper)
+    LUABIND_ERROR("First argument must be <= second argument");
+  if (random == 0) random = new MTRand();
+  IncRef(random);
+  if (obj->getMajorOrder() == CblasRowMajor)
+    for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it) {
+      *it = static_cast<float>(random->randInt(upper - lower) + lower);
+    }
+  else
+    for (MatrixFloat::col_major_iterator it(obj->begin());it!=obj->end();++it) {
+      *it = static_cast<float>(random->randInt(upper - lower) + lower);
+    }
+  DecRef(random);
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat uniformf
+{
+  float lower, upper;
+  MTRand *random;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, float, lower, 0.0f);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, float, upper, 1.0f);
+  LUABIND_GET_OPTIONAL_PARAMETER(3, MTRand, random, 0);
+  if (lower > upper)
+    LUABIND_ERROR("First argument must be <= second argument");
+  if (random == 0) random = new MTRand();
+  IncRef(random);
+  if (obj->getMajorOrder() == CblasRowMajor)
+    for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it)
+      *it = random->rand(upper - lower) + lower;
+  else
+    for (MatrixFloat::col_major_iterator it(obj->begin());it!=obj->end();++it)
+      *it = random->rand(upper - lower) + lower;
+  DecRef(random);
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat linear
+{
+  int lower, step;
+  MTRand *random;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, int, lower, 0);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, int, step,  1);
+  int k=lower;
+  for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, k+=step) {
+    *it = static_cast<float>(k);
+  }
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat sliding_window
+{
+  int *sub_matrix_size=0, *offset=0, *step=0, *num_steps=0, *order_step=0;
+  int argn = lua_gettop(L); // number of arguments
+  const int num_dim = obj->getNumDim();
+  if (argn > 1)
+    LUABIND_ERROR("incorrect number of arguments");
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1,
+		       "offset",
+		       "size",
+		       "step",
+		       "numSteps",
+		       "orderStep",
+		       (const char*)0);
+    
+    offset = read_vector(L, "offset", num_dim, 0);
+    sub_matrix_size = read_vector(L, "size", num_dim, 0);
+    step = read_vector(L, "step", num_dim, 0);
+    num_steps = read_vector(L, "numSteps", num_dim, 0);
+    order_step = read_vector(L, "orderStep", num_dim, -1);
+  }
+  SlidingWindow *window = new SlidingWindow(obj,
+					    sub_matrix_size,
+					    offset,
+					    step,
+					    num_steps,
+					    order_step);
+  LUABIND_RETURN(SlidingWindow, window);
+  delete[] sub_matrix_size;
+  delete[] offset;
+  delete[] step;
+  delete[] num_steps;
+  delete[] order_step;
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////////
+

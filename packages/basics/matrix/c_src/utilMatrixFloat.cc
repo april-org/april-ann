@@ -70,7 +70,7 @@ MatrixFloat* readMatrixFloatFromStream(T &stream) {
     if (!order || order=="row_major")
       mat = new MatrixFloat(n,dims);
     else if (order == "col_major")
-      mat = new MatrixFloat(n,dims,0.0f,CblasColMajor);
+      mat = new MatrixFloat(n,dims,CblasColMajor);
     int i=0;
     MatrixFloat::iterator data_it(mat->begin());
     if (formato == "ascii") {
@@ -122,7 +122,7 @@ MatrixFloat* readMatrixFloatFromStream(T &stream) {
     if (!order || order == "row_major")
       mat = new MatrixFloat(n,dims);
     else if (order == "col_major")
-      mat = new MatrixFloat(n,dims,0.0f,CblasColMajor);
+      mat = new MatrixFloat(n,dims,CblasColMajor);
     int i=0;
     for (MatrixFloat::iterator it(mat->begin()); it!=mat->end(); ++it, ++i)
       *it = data[i];

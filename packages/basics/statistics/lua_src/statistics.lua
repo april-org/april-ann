@@ -375,7 +375,7 @@ end
 ---------------------------------------------------------------
 april_set_doc("stats.confusion_matrix.getError",
 {
-    class = "method", summary = "Return the global classification error (hits/total)",
+    class = "method", summary = "Return the global classification error (misses/total)",
     outputs = { "The global classification error." }, 
 })
 function stats.confusion_matrix:getError()

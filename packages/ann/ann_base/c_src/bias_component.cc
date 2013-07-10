@@ -47,7 +47,8 @@ namespace ANN {
     // error checking
     if ( (_input == 0) ||
 	 (_input->getTokenCode() != table_of_token_codes::token_matrix))
-      ERROR_EXIT(129,"Incorrect input Token type, expected token_matrix!\n");
+      ERROR_EXIT1(129,"Incorrect input Token type, expected token_matrix! [%s]\n",
+		  name.c_str());
     // change current input by new input
     AssignRef(input,_input->convertTo<TokenMatrixFloat*>());
     MatrixFloat *input_mat = input->getMatrix();
@@ -69,7 +70,7 @@ namespace ANN {
 		  bias_ptr->getRawDataAccess(), bias_ptr->getStrideSize(0),
 		  output_mat->getRawDataAccess(), output_mat->getStrideSize(1),
 		  bunch_size,
-		  0, 1,
+		  0, output_mat->getStrideSize(0),
 		  use_cuda);
     }
     return output;
@@ -80,7 +81,8 @@ namespace ANN {
   {
     if ( (_error_input == 0) ||
 	 (_error_input->getTokenCode() != table_of_token_codes::token_matrix))
-      ERROR_EXIT(129,"Incorrect input error Token type, expected token_matrix!\n");
+      ERROR_EXIT1(129,"Incorrect input error Token type, expected token_matrix! [%s]\n",
+		  name.c_str());
     // change current input by new input
     AssignRef(error,_error_input->convertTo<TokenMatrixFloat*>());
 #ifdef USE_CUDA
@@ -128,7 +130,7 @@ namespace ANN {
 		     prev_bias_ptr->getRawDataAccess(),
 		     prev_bias_ptr->getStrideSize(0),
 		     bunch_size,
-		     1, 0,
+		     input_error_mat->getStrideSize(0), 0,
 		     use_cuda);
     
     // If necessary, update counts, swap vectors, and other stuff
@@ -185,10 +187,12 @@ namespace ANN {
 			weights_dict, components_dict);
     //
     if (input_size == 0 || output_size == 0)
-      ERROR_EXIT(141, "Impossible to compute input/output "
-		 "sizes for this component\n");
+      ERROR_EXIT1(141, "Impossible to compute input/output "
+		  "sizes for this component [%s]\n",
+		  name.c_str());
     if (input_size != output_size)
-      ERROR_EXIT(142, "BiasANNComponent input/output sizes must be equal\n");
+      ERROR_EXIT1(142, "BiasANNComponent input/output sizes must be equal [%s]\n",
+		  name.c_str());
     unsigned int weights_input_size  = 1;
     unsigned int weights_output_size = output_size;
     ////////////////////////////////////////////////////////////////////
@@ -199,9 +203,10 @@ namespace ANN {
       // printf("COPY OF BIAS FROM HASH %s\n", weights_name.c_str());
       if (!bias_vector->checkInputOutputSizes(weights_input_size,
 					      weights_output_size))
-	ERROR_EXIT2(256,"The weights matrix input/output sizes are not correct, "
-		    "expected %d inputs and %d outputs.\n",
-		    weights_input_size, weights_output_size);
+	ERROR_EXIT3(256,"The weights matrix input/output sizes are not correct, "
+		    "expected %d inputs and %d outputs. [%s]\n",
+		    weights_input_size, weights_output_size,
+		    name.c_str());
     }
     else {
       if (bias_vector == 0) {
@@ -218,12 +223,14 @@ namespace ANN {
 
   void BiasANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
     if (bias_vector == 0)
-      ERROR_EXIT(100, "Component not built, impossible execute copyWeights\n");
+      ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
+		  name.c_str());
     Connections *&w = weights_dict[weights_name];
     if (w != 0 && w != bias_vector)
-      ERROR_EXIT1(101, "Weights dictionary contains %s weights name which is "
-		  "not shared with bias_vector attribute\n",
-		  weights_name.c_str());
+      ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
+		  "not shared with bias_vector attribute [%s]\n",
+		  weights_name.c_str(),
+		  name.c_str());
     else if (w == 0) w = bias_vector;
   }
 

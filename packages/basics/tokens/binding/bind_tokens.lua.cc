@@ -195,10 +195,25 @@ int token_sparse_iterator_function(lua_State *L) {
   LUABIND_CHECK_ARGN(<=, 1);
   int argn = lua_gettop(L);
   if (argn == 1) {
-    unsigned int size;
-    LUABIND_CHECK_PARAMETER(1, uint);
-    LUABIND_GET_PARAMETER(1, uint, size);
-    obj = new TokenBunchVector(size);
+    if (lua_isnumber(L, 1)) {
+      unsigned int size;
+      LUABIND_CHECK_PARAMETER(1, uint);
+      LUABIND_GET_PARAMETER(1, uint, size);
+      obj = new TokenBunchVector(size);
+    }
+    else {
+      int sz;
+      Token **v;
+      LUABIND_TABLE_GETN(1, sz);
+      v = new Token*[sz];
+      LUABIND_TABLE_TO_VECTOR(1, Token, v, sz);
+      obj = new TokenBunchVector(sz);
+      for (unsigned int i=0; i<static_cast<unsigned int>(sz); ++i) {
+	(*obj)[i] = v[i];
+	IncRef(v[i]);
+      }
+      delete[] v;
+    }
   }
   else obj = new TokenBunchVector();
   LUABIND_RETURN(TokenBunchVector, obj);
@@ -222,6 +237,21 @@ int token_sparse_iterator_function(lua_State *L) {
 }
 //BIND_END
 
+//BIND_METHOD TokenBunchVector set
+{
+  LUABIND_CHECK_ARGN(==, 2);
+  unsigned int pos;
+  Token *token;
+  LUABIND_CHECK_PARAMETER(1, uint);
+  LUABIND_CHECK_PARAMETER(2, Token);
+  LUABIND_GET_PARAMETER(1, uint, pos);
+  LUABIND_GET_PARAMETER(2, Token, token);
+  (*obj)[pos-1] = token;
+  IncRef(token);
+  LUABIND_RETURN(TokenBunchVector, obj);
+}
+//BIND_END
+
 //BIND_METHOD TokenBunchVector push_back
 {
   LUABIND_CHECK_ARGN(==, 1);
@@ -229,6 +259,7 @@ int token_sparse_iterator_function(lua_State *L) {
   LUABIND_CHECK_PARAMETER(1, Token);
   LUABIND_GET_PARAMETER(1, Token, token);
   obj->TokenBunchVector::push_back(token);
+  LUABIND_RETURN(TokenBunchVector, obj);
 }
 //BIND_END
 
@@ -279,6 +310,23 @@ int token_sparse_iterator_function(lua_State *L) {
 }
 //BIND_END
 
+//BIND_METHOD TokenSparseVectorFloat set
+{
+  LUABIND_CHECK_ARGN(==, 3);
+  unsigned int pos;
+  unsigned int idx;
+  float value;
+  LUABIND_CHECK_PARAMETER(1, uint);
+  LUABIND_CHECK_PARAMETER(2, uint);
+  LUABIND_CHECK_PARAMETER(3, float);
+  LUABIND_GET_PARAMETER(1, uint, pos);
+  LUABIND_GET_PARAMETER(2, uint, idx);
+  LUABIND_GET_PARAMETER(3, float, value);
+  (*obj)[pos-1] = april_utils::pair<unsigned int, float>(idx, value);
+  LUABIND_RETURN(TokenSparseVectorFloat, obj);
+}
+//BIND_END
+
 //BIND_METHOD TokenSparseVectorFloat push_back
 {
   LUABIND_CHECK_ARGN(==, 2);
@@ -290,6 +338,7 @@ int token_sparse_iterator_function(lua_State *L) {
   LUABIND_GET_PARAMETER(2, float, value);
   april_utils::pair<unsigned int, float> pair(pos, value);
   obj->push_back(pair);
+  LUABIND_RETURN(TokenSparseVectorFloat, obj);
 }
 //BIND_END
 

@@ -37,7 +37,6 @@ using april_utils::string;
 #define ASSERT_MATRIX(m) do {					\
     assert( (m)->getNumDim() == 2 );				\
     assert( (m)->getMajorOrder() == CblasColMajor );		\
-    assert( (m)->getIsContiguous() );				\
   } while(0)
 #else
 #define ASSERT_MATRIX(m)

@@ -11,7 +11,8 @@ luapkg{
     optimization = "no",
     platform = "unix",
     extra_flags={
-      "-pg"
+      "-pg",
+      "-DNO_POOL",
     },
     extra_libs={
       "-pg",
@@ -69,6 +70,10 @@ luapkg{
 	file_name = "dep_graph.dot"
       },
       use_timestamp = true,
+    },
+    target{
+      name = "test",
+      depends = "build",
     },
     target{ name = "document",
       echo{"this is documentation"},

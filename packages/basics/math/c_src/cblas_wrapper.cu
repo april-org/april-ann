@@ -21,6 +21,7 @@
  */
 #include <cmath>
 #include "wrapper.h"
+#include "clamp.h"
 
 #ifdef USE_CUDA
 cublasOperation_t getCublasOperation(CBLAS_TRANSPOSE operation) {
@@ -623,6 +624,26 @@ void doSsbmv(CBLAS_ORDER major_type,
 		alpha, a_mem, a_lda,
 		x_mem, x_inc,
 		beta, y_mem, y_inc);
+#ifdef USE_CUDA
+  }
+#endif
+}
+
+void doClamp(unsigned int N,
+	     FloatGPUMirroredMemoryBlock *v,
+	     unsigned int stride,
+	     unsigned int shift,
+	     float lower,
+	     float upper) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    ERROR_EXIT(128, "CUDA version not implemented yet\n");
+  }
+  else {
+#endif
+    float *v_mem = v->getPPALForReadAndWrite() + shift;
+    for (unsigned int i=0; i<N; ++i, v_mem += stride)
+      *v_mem = april_utils::clamp(*v_mem,lower,upper);
 #ifdef USE_CUDA
   }
 #endif

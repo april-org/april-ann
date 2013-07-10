@@ -78,7 +78,8 @@ Image<T>::Image(int width, int height, T value)
   int dims[2];
   dims[0] = height;
   dims[1] = width;
-  matrix = new Matrix<T>(2,dims, value);
+  matrix = new Matrix<T>(2,dims);
+  matrix->fill(value);
   IncRef(matrix);
 }
 

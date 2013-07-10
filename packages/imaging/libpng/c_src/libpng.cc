@@ -129,7 +129,8 @@ namespace LibPNG
     // Copy read data to a ImageFloatRGB
     int dims[2]={static_cast<int>(height),
 		 static_cast<int>(width)};
-    Matrix<FloatRGB> *m = new Matrix<FloatRGB>(2, dims, FloatRGB(0.0f,0.0f,0.0f));
+    Matrix<FloatRGB> *m = new Matrix<FloatRGB>(2, dims);
+    m->fill(FloatRGB(0.0f,0.0f,0.0f));
     ImageFloatRGB *res = new ImageFloatRGB(m);
 
     unsigned char *p = image_data;

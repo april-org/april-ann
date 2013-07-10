@@ -70,6 +70,8 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "stack_component.h"
 #include "join_component.h"
 #include "copy_component.h"
+#include "select_component.h"
+#include "rewrap_component.h"
 #include "gaussian_noise_component.h"
 #include "salt_and_pepper_component.h"
 #include "activation_function_component.h"
@@ -102,7 +104,8 @@ using namespace ANN;
   LUABIND_CHECK_ARGN(==,1);
   LUABIND_CHECK_PARAMETER(1, table);
   check_table_fields(L, 1, "input", "output",
-		     "w", "oldw", "first_pos", "column_size", 0);
+		     "w", "oldw", "first_pos", "column_size",
+		     (const char *)0);
   MatrixFloat *w, *oldw;
   unsigned int input_size, output_size, first_pos, column_size;
   LUABIND_GET_TABLE_PARAMETER(1, input, uint, input_size);
@@ -113,8 +116,12 @@ using namespace ANN;
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, column_size, uint, column_size,
 				       input_size);
   if (oldw && !w) LUABIND_ERROR("Parameter w is mandatory with oldw!!!\n");
-  obj=new Connections(input_size, output_size);
-  if (w) obj->loadWeights(w, oldw, first_pos, column_size);
+  if (w && w->getMajorOrder() == CblasColMajor)
+    obj=new Connections(input_size, output_size, w, oldw);
+  else {
+    obj=new Connections(input_size, output_size);
+    if (w) obj->loadWeights(w, oldw, first_pos, column_size);
+  }
   LUABIND_RETURN(Connections, obj);
 }
 //BIND_END
@@ -123,6 +130,14 @@ using namespace ANN;
 {
   Connections *cnn = obj->clone();
   LUABIND_RETURN(Connections, cnn);
+}
+//BIND_END
+
+//BIND_METHOD Connections to_lua_string
+{
+  char *str = obj->toLuaString();
+  LUABIND_RETURN(string, str);
+  delete[] str;
 }
 //BIND_END
 
@@ -136,7 +151,8 @@ using namespace ANN;
 {
   LUABIND_CHECK_ARGN(==,1);
   LUABIND_CHECK_PARAMETER(1,table);
-  check_table_fields(L, 1, "w", "oldw", "first_pos", "column_size", 0);
+  check_table_fields(L, 1, "w", "oldw", "first_pos", "column_size",
+		     (const char *)0);
 
   unsigned int	 first_pos, column_size;
   MatrixFloat	*w, *oldw;
@@ -160,7 +176,8 @@ using namespace ANN;
   
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1,table);
-    check_table_fields(L, 1, "w", "oldw", "first_pos", "column_size", 0);
+    check_table_fields(L, 1, "w", "oldw", "first_pos", "column_size",
+		       (const char *)0);
 
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, w, MatrixFloat, w, w);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, w);
@@ -214,7 +231,7 @@ using namespace ANN;
 {
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_CHECK_PARAMETER(1, table);
-  check_table_fields(L, 1, "random", "inf", "sup", 0);
+  check_table_fields(L, 1, "random", "inf", "sup", (const char *)0);
   MTRand *rnd;
   float inf, sup;
   bool use_fanin;
@@ -252,7 +269,7 @@ using namespace ANN;
   unsigned int size   = 0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", "weights", "size", 0);
+    check_table_fields(L, 1, "name", "weights", "size", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, 0);
@@ -465,7 +482,7 @@ using namespace ANN;
   hash<string,ANNComponent*> components_dict;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "input", "output", "weights", 0);
+    check_table_fields(L, 1, "input", "output", "weights", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input, uint, input_size, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, output, uint, output_size, 0);
     lua_getfield(L, 1, "weights");
@@ -488,9 +505,11 @@ using namespace ANN;
       }
       // stack now contains: -1 => table (when lua_next returns 0 it pops the key
       // but does not push anything.)
-      // Pop table
-      lua_pop(L, 1);
     }
+    else if (!lua_isnil(L, -1))
+      LUABIND_ERROR("Expected a table at field weights");
+    // Pop table or nil value
+    lua_pop(L, 1);
   }
   //
   obj->build(input_size, output_size, weights_dict, components_dict);
@@ -499,6 +518,7 @@ using namespace ANN;
   LUABIND_RETURN_FROM_STACK(-1);
   pushHashTableInLuaStack(L, weights_dict, lua_pushConnections);
   LUABIND_RETURN_FROM_STACK(-2);
+  LUABIND_RETURN(ANNComponent, obj);
 }
 //BIND_END
 
@@ -550,7 +570,7 @@ using namespace ANN;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
     check_table_fields(L, 1, "name", "weights", 
-		       "input", "output", "transpose", 0);
+		       "input", "output", "transpose", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights_name, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input, uint, input_size, 0);
@@ -588,7 +608,7 @@ using namespace ANN;
   unsigned int size=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", "weights", "size", 0);
+    check_table_fields(L, 1, "name", "weights", "size", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights_name, 0);
@@ -626,7 +646,7 @@ using namespace ANN;
     LUABIND_CHECK_PARAMETER(1, table);
     check_table_fields(L, 1, "name", "dot_product_name", "bias_name",
 		       "dot_product_weights", "bias_weights",
-		       "input", "output", "transpose", 0);
+		       "input", "output", "transpose", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, dot_product_name, string, dot_product_name, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, bias_name, string, bias_name, 0);
@@ -668,11 +688,17 @@ using namespace ANN;
   const char *name=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", 0);
+    check_table_fields(L, 1, "name", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   }
   obj = new StackANNComponent(name);
   LUABIND_RETURN(StackANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD StackANNComponent size
+{
+  LUABIND_RETURN(uint, obj->size());
 }
 //BIND_END
 
@@ -721,7 +747,7 @@ using namespace ANN;
   const char *name=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", 0);
+    check_table_fields(L, 1, "name", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   }
   obj = new JoinANNComponent(name);
@@ -762,7 +788,7 @@ using namespace ANN;
   int argn = lua_gettop(L);
   const char *name=0;
   unsigned int input_size=0, output_size=0, times;
-  check_table_fields(L, 1, "times", "name", "input", "output", 0);
+  check_table_fields(L, 1, "times", "name", "input", "output", (const char *)0);
   LUABIND_GET_TABLE_PARAMETER(1, times, uint, times);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input, uint, input_size, 0);
@@ -776,6 +802,72 @@ using namespace ANN;
 {
   LUABIND_RETURN(CopyANNComponent,
 		 dynamic_cast<CopyANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//              SelectANNComponent                 //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME SelectANNComponent ann.components.select
+//BIND_CPP_CLASS    SelectANNComponent
+//BIND_SUBCLASS_OF  SelectANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR SelectANNComponent
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  const char *name=0;
+  int dimension, index;
+  check_table_fields(L, 1, "name", "dimension", "index", (const char *)0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  LUABIND_GET_TABLE_PARAMETER(1, dimension, int, dimension);
+  LUABIND_GET_TABLE_PARAMETER(1, index, int, index);
+  obj = new SelectANNComponent(dimension-1, index-1, name);
+  LUABIND_RETURN(SelectANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD SelectANNComponent clone
+{
+  LUABIND_RETURN(SelectANNComponent,
+		 dynamic_cast<SelectANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//              RewrapANNComponent                 //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME RewrapANNComponent ann.components.rewrap
+//BIND_CPP_CLASS    RewrapANNComponent
+//BIND_SUBCLASS_OF  RewrapANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR RewrapANNComponent
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  const char *name=0;
+  int *size, n;
+  check_table_fields(L, 1, "name", "size", (const char *)0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  lua_getfield(L, 1, "size");
+  if (!lua_istable(L, -1))
+    LUABIND_ERROR("Expected a table at field size");
+  LUABIND_TABLE_GETN(-1, n);
+  size = new int[n];
+  LUABIND_TABLE_TO_VECTOR(-1, int, size, n);
+  lua_pop(L, 1);
+  obj = new RewrapANNComponent(size, n, name);
+  delete[] size;
+  LUABIND_RETURN(RewrapANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD RewrapANNComponent clone
+{
+  LUABIND_RETURN(RewrapANNComponent,
+		 dynamic_cast<RewrapANNComponent*>(obj->clone()));
 }
 //BIND_END
 
@@ -795,7 +887,8 @@ using namespace ANN;
   float mean, var;
   unsigned int size=0;
   MTRand *random;
-  check_table_fields(L, 1, "size", "random", "mean", "var", "name", 0);
+  check_table_fields(L, 1, "size", "random", "mean", "var", "name",
+		     (const char *)0);
   LUABIND_GET_TABLE_PARAMETER(1, random, MTRand, random);
   LUABIND_GET_TABLE_PARAMETER(1, mean, float, mean);
   LUABIND_GET_TABLE_PARAMETER(1, var, float, var);
@@ -829,7 +922,8 @@ using namespace ANN;
   float zero, one, prob;
   unsigned int size=0;
   MTRand *random;
-  check_table_fields(L, 1, "size", "random", "one", "zero", "prob", "name", 0);
+  check_table_fields(L, 1, "size", "random", "one", "zero", "prob", "name",
+		     (const char *)0);
   LUABIND_GET_TABLE_PARAMETER(1, random, MTRand, random);
   LUABIND_GET_TABLE_PARAMETER(1, prob, float, prob);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, zero, float,  zero, 0.0f);
@@ -884,7 +978,7 @@ using namespace ANN;
   const char *name=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", 0);
+    check_table_fields(L, 1, "name", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   }
   obj = new LogisticActfANNComponent(name);
@@ -907,7 +1001,7 @@ using namespace ANN;
   const char *name=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", 0);
+    check_table_fields(L, 1, "name", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   }
   obj = new TanhActfANNComponent(name);
@@ -930,7 +1024,7 @@ using namespace ANN;
   const char *name=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", 0);
+    check_table_fields(L, 1, "name", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   }
   obj = new SoftsignActfANNComponent(name);
@@ -953,7 +1047,7 @@ using namespace ANN;
   const char *name=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", 0);
+    check_table_fields(L, 1, "name", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   }
   obj = new LogLogisticActfANNComponent(name);
@@ -976,7 +1070,7 @@ using namespace ANN;
   const char *name=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", 0);
+    check_table_fields(L, 1, "name", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   }
   obj = new SoftmaxActfANNComponent(name);
@@ -999,7 +1093,7 @@ using namespace ANN;
   const char *name=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", 0);
+    check_table_fields(L, 1, "name", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   }
   obj = new LogSoftmaxActfANNComponent(name);
@@ -1022,7 +1116,7 @@ using namespace ANN;
   const char *name=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", 0);
+    check_table_fields(L, 1, "name", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   }
   obj = new SoftplusActfANNComponent(name);
@@ -1045,7 +1139,7 @@ using namespace ANN;
   const char *name=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", 0);
+    check_table_fields(L, 1, "name", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   }
   obj = new HardtanhActfANNComponent(name);
@@ -1068,7 +1162,7 @@ using namespace ANN;
   const char *name=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", 0);
+    check_table_fields(L, 1, "name", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   }
   obj = new SinActfANNComponent(name);
@@ -1091,7 +1185,7 @@ using namespace ANN;
   const char *name=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", 0);
+    check_table_fields(L, 1, "name", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   }
   obj = new LinearActfANNComponent(name);
