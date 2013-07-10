@@ -117,10 +117,7 @@ bool Matrix<T>::iterator::operator!=(const Matrix<T>::iterator &other) const {
 template <typename T>
 typename Matrix<T>::iterator &Matrix<T>::iterator::operator++() {
   ++idx;
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasColMajor) {
-    assert(coords != 0);
-    m->nextCoordVectorRowOrder(coords, raw_pos);
-  }
+  if (coords != 0) m->nextCoordVectorRowOrder(coords, raw_pos);
   else ++raw_pos;
   return *this;
 }
@@ -277,10 +274,7 @@ bool Matrix<T>::col_major_iterator::operator!=(const Matrix<T>::iterator &other)
 template <typename T>
 typename Matrix<T>::col_major_iterator &Matrix<T>::col_major_iterator::operator++() {
   ++idx;
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasRowMajor) {
-    assert(coords != 0);
-    m->nextCoordVectorColOrder(coords, raw_pos);
-  }
+  if (coords != 0) m->nextCoordVectorColOrder(coords, raw_pos);
   else ++raw_pos;
   return *this;
 }
@@ -427,10 +421,7 @@ bool Matrix<T>::const_iterator::operator!=(const Matrix<T>::iterator &other) con
 template <typename T>
 typename Matrix<T>::const_iterator &Matrix<T>::const_iterator::operator++() {
   ++idx;
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasColMajor) {
-    assert(coords != 0);
-    m->nextCoordVectorRowOrder(coords, raw_pos);
-  }
+  if (coords != 0) m->nextCoordVectorRowOrder(coords, raw_pos);
   else ++raw_pos;
   return *this;
 }
@@ -631,10 +622,7 @@ template <typename T>
 typename Matrix<T>::const_col_major_iterator
 &Matrix<T>::const_col_major_iterator::operator++() {
   ++idx;
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasRowMajor) {
-    assert(coords != 0);
-    m->nextCoordVectorColOrder(coords, raw_pos);
-  }
+  if (coords != 0) m->nextCoordVectorColOrder(coords, raw_pos);
   else ++raw_pos;
   return *this;
 }
@@ -781,8 +769,9 @@ operator++() {
 
 template <typename T>
 Matrix<T>::sliding_window::sliding_window() :
-m(0), offset(0), sub_matrix_size(0), step(0),
-num_steps(0), order_step(0), coords(0), raw_pos(0) { }
+  m(0), offset(0), sub_matrix_size(0), step(0),
+  num_steps(0), order_step(0), coords(0), raw_pos(0),
+  num_windows(0) { }
 
 template <typename T>
 Matrix<T>::sliding_window::sliding_window(Matrix<T> *m,
@@ -800,7 +789,8 @@ Matrix<T>::sliding_window::sliding_window(Matrix<T> *m,
   coords(new int[m->numDim]),
   raw_pos(m->offset),
   finished(false),
-  num_step_by_step(new int[m->numDim])
+  num_step_by_step(new int[m->numDim]),
+  num_windows(1)
 {
   IncRef(m);
   if (offset != 0)
@@ -870,6 +860,7 @@ Matrix<T>::sliding_window::sliding_window(Matrix<T> *m,
     if (last > m->matrixSize[i])
       ERROR_EXIT1(128, "Overflow at sliding window dimension %d!!!\n", i);
     num_step_by_step[i] = this->num_steps[i] * this->step[i];
+    num_windows *= num_steps[i];
   }  
 }
 
@@ -886,7 +877,8 @@ Matrix<T>::sliding_window::sliding_window(const sliding_window &other) :
   total_size(total_size),
   last_raw_pos(last_raw_pos),
   finished(other.finished),
-  num_step_by_step(new int[m->numDim])
+  num_step_by_step(new int[m->numDim]),
+  num_windows(other.num_windows)
 {
   IncRef(m);
   for (int i=0; i<m->numDim; ++i) {
@@ -939,6 +931,7 @@ operator=(const sliding_window &other) {
   total_size           = other.total_size;
   last_raw_pos         = other.last_raw_pos;
   finished             = other.finished;
+  num_windows          = other.num_windows;
   for (int i=0; i<m->numDim; ++i) {
     sub_matrix_size[i]	= other.sub_matrix_size[i];
     step[i]		= other.step[i];
@@ -982,4 +975,33 @@ Matrix<T> *Matrix<T>::sliding_window::getMatrix(bool clone) {
 		       raw_pos, sub_matrix_size,
 		       total_size, last_raw_pos + raw_pos,
 		       m->data, m->major_order, m->use_cuda);
+}
+
+template <typename T>
+int Matrix<T>::sliding_window::numWindows() const {
+  return num_windows;
+}
+
+template <typename T>
+void Matrix<T>::sliding_window::setAtWindow(int windex) {
+  if (windex < num_windows) {
+    raw_pos = 0;
+    for (int i=0; i < m->getNumDim();i++) {
+      int j = order_step[i];
+      coords[j] = offset[j] + (windex % num_steps[j])*step[j];
+      windex    = windex / num_steps[j];
+      raw_pos   = m->stride[j]*coords[j];
+    }
+  }
+  else finished = true;
+}
+
+template <typename T>
+const int *Matrix<T>::sliding_window::getCoords() const {
+  return coords;
+}
+
+template <typename T>
+int Matrix<T>::sliding_window::getNumDim() const {
+  return m->getNumDim();
 }
