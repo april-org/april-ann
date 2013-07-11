@@ -34,8 +34,12 @@ void applyFunctionWithSpanIterator(MatrixFloat *m,
   const int N = span_it.numberOfIterations();
   unsigned int size   = static_cast<unsigned int>(span_it.getSize());
   unsigned int stride = static_cast<unsigned int>(span_it.getStride());
+  // forward application of functor, to force execution of memory copy from GPU
+  // to PPAL or viceversa (if needed), avoiding race conditions on the following
   functor(size, stride, static_cast<unsigned int>(span_it.getOffset()));
   if (N > 1) {
+    // this if controls the execution using OMP only when the number of threads
+    // is more than 1 and the iterator size is big enough
     if (omp_utils::get_num_threads() > 1 && N > 50 && size > 50) {
 #pragma omp parallel for firstprivate(span_it) firstprivate(N)
       for (int i=1; i<N; ++i) {
@@ -44,6 +48,7 @@ void applyFunctionWithSpanIterator(MatrixFloat *m,
       }
     }
     else {
+      // sequential code, with less overhead when updating iterator
       ++span_it;
       do {
 	functor(size, stride, static_cast<unsigned int>(span_it.getOffset()));
@@ -55,7 +60,6 @@ void applyFunctionWithSpanIterator(MatrixFloat *m,
 
 // Idem but for binary functions (needs two best_span_iterators)
 // TODO:
-
 
 // WARNING: ALL THE METHODS IMPLEMENTED HERE ARE SPECIALIZED TO FLOAT VERSION
 
