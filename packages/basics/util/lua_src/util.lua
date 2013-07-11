@@ -430,6 +430,19 @@ function map2(func, iterator_func, ...)
   return t
 end
 
+function reduce(func, initial_value, iterator_func, ...)
+  assert(type(func) == "function", "Needs a function as first argument")
+  assert(type(iterator_func) == "function",
+	 "Needs an iterator function as third argument")
+  assert(initial_value ~= nil,
+	 "Needs an initial_value as second argument")
+  local accum,key,value = initial_value
+  for key,value in iterator_func(unpack(arg)) do
+    accum = func(accum, value or key)
+  end
+  return accum
+end
+
 -- This function prepares a safe environment for call user functions
 function safe_call(f, env, ...)
   env = env or {}
@@ -761,6 +774,10 @@ end
 
 function table.map2(t,f)
   return map2(f, pairs, t)
+end
+
+function table.reduce(t,f,initial_value)
+  return reduce(f, initial_value, ipairs, t)
 end
 
 function table.ifilter(t,f)
