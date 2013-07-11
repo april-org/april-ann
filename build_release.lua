@@ -19,6 +19,7 @@ luapkg{
       "-lpthread",
       "-lblas",
       "-latlas",
+      "-fopenmp",
     },
   },
   
