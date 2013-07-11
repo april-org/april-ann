@@ -19,101 +19,104 @@
  *
  */
 
-#include <omp.h>
-#include "omp_utils.h"
 #include "matrix.h"
 #include "matrixFloat.h"
+#include "matrixFloat_math_templates.h"
 
-// Auxiliary function template which applies a given FUNC object ( implements
-// operator() ) to all the elements of a Matrix, using the best_span_iterator,
-// and OMP if needed.
-template<typename FUNC>
-void applyFunctionWithSpanIterator(MatrixFloat *m,
-				   FUNC &functor) {
-  MatrixFloat::best_span_iterator span_it(m);
-  const int N = span_it.numberOfIterations();
-  unsigned int size   = static_cast<unsigned int>(span_it.getSize());
-  unsigned int stride = static_cast<unsigned int>(span_it.getStride());
-  // forward application of functor, to force execution of memory copy from GPU
-  // to PPAL or viceversa (if needed), avoiding race conditions on the following
-  functor(size, stride, static_cast<unsigned int>(span_it.getOffset()));
-  if (N > 1) {
-    // this if controls the execution using OMP only when the number of threads
-    // is more than 1 and the iterator size is big enough
-    if (omp_utils::get_num_threads() > 1 && N > 50 && size > 50) {
-#pragma omp parallel for firstprivate(span_it) firstprivate(N)
-      for (int i=1; i<N; ++i) {
-	span_it.setAtIteration(i);
-	functor(size, stride, static_cast<unsigned int>(span_it.getOffset()));
-      }
-    }
-    else {
-      // sequential code, with less overhead when updating iterator
-      ++span_it;
-      do {
-	functor(size, stride, static_cast<unsigned int>(span_it.getOffset()));
-	++span_it;
-      } while(span_it != m->end_span_iterator());
-    }
+///// COMPONENT WISE GENERIC FUNCTOR (NO ARGUMENTS) /////
+/// This class is used as FUNCTOR for the templates located at
+/// matrixFloat_math_templates.h
+template <typename MATRIX, typename Func>
+class component_wise_functor_0 {
+  Func func;
+public:
+  component_wise_functor_0(Func func) : func(func) { }
+  void operator()(MATRIX *m,
+		  unsigned int size, unsigned int stride,
+		  unsigned int offset) const {
+    func(size, m->getRawDataAccess(), stride, offset, m->getCudaFlag());
   }
+};
+/// This make class is needed to do type inference in template classes
+template <typename Func>
+component_wise_functor_0<MatrixFloat,Func> make_cwise_functor_0(Func f) {
+  return component_wise_functor_0<MatrixFloat, Func>(f);
+}
+template <typename Func>
+component_wise_functor_0<const MatrixFloat,Func>
+make_const_cwise_functor_0(Func f) {
+  return component_wise_functor_0<const MatrixFloat, Func>(f);
 }
 
-// Idem but for binary functions (needs two best_span_iterators)
-// TODO:
+///// COMPONENT WISE GENERIC FUNCTOR (ONE ARGUMENTS) /////
+/// This class is used as FUNCTOR for the templates located at
+/// matrixFloat_math_templates.h
+template <typename MATRIX, typename Func>
+class component_wise_functor_1 {
+  float value;
+  Func  func;
+public:
+  component_wise_functor_1(float value,
+			   Func func) : value(value), func(func) { }
+  void operator()(MATRIX *m,
+		  unsigned int size, unsigned int stride,
+		  unsigned int offset) const {
+    func(size, m->getRawDataAccess(), stride, offset, value, m->getCudaFlag());
+  }
+};
+/// This make class is needed to do type inference in template classes
+template <typename Func>
+component_wise_functor_1<MatrixFloat,Func> make_cwise_functor_1(float v, Func f) {
+  return component_wise_functor_1<MatrixFloat,Func>(v, f);
+}
+template <typename Func>
+component_wise_functor_1<const MatrixFloat,Func>
+make_const_cwise_functor_1(float v, Func f) {
+  return component_wise_functor_1<const MatrixFloat,Func>(v, f);
+}
 
 // WARNING: ALL THE METHODS IMPLEMENTED HERE ARE SPECIALIZED TO FLOAT VERSION
 
 /************* FILL FUNCTION **************/
-struct fill_functor {
-  FloatGPUMirroredMemoryBlock *data;
-  float value;
-  bool use_cuda;
-  fill_functor(FloatGPUMirroredMemoryBlock *data, float value, bool use_cuda) :
-    data(data), value(value), use_cuda(use_cuda) {
-  }
-  void operator()(unsigned int size, unsigned int stride, unsigned int offset) {
-    doFill(size, data, stride, offset, value, use_cuda);
-  }
-};
 template<>
 void Matrix<float>::fill(float value) {
-  fill_functor functor(data, value, use_cuda);
-  applyFunctionWithSpanIterator(this, functor);
+  applyFunctionWithSpanIterator(this, make_cwise_functor_1(value, doFill));
 }
 
 /************* CLAMP FUNCTION **************/
 struct clamp_functor {
-  FloatGPUMirroredMemoryBlock *data;
   float lower, upper;
-  bool use_cuda;
-  clamp_functor(FloatGPUMirroredMemoryBlock *data, float lower,
-		float upper, bool use_cuda) :
-    data(data), lower(lower), upper(upper), use_cuda(use_cuda) {
-  }
-  void operator()(unsigned int size, unsigned int stride, unsigned int offset) {
-    doClamp(size, data, stride, offset, lower, upper, use_cuda);
+  clamp_functor(float lower, float upper) :
+    lower(lower), upper(upper) { }
+  void operator()(MatrixFloat *m,
+		  unsigned int size, unsigned int stride,
+		  unsigned int offset) const {
+    doClamp(size, m->getRawDataAccess(), stride, offset,
+	    lower, upper, m->getCudaFlag());
   }
 };
 template<>
 void Matrix<float>::clamp(float lower, float upper) {
-  clamp_functor functor(data, lower, upper, use_cuda);
+  clamp_functor functor(lower, upper);
   applyFunctionWithSpanIterator(this, functor);
 }
 
-
+/************* ZEROS FUNCTION **************/
 template<>
 void Matrix<float>::zeros() {
   fill(0.0f);
 }
 
+/************* ONES FUNCTION **************/
 template<>
 void Matrix<float>::ones() {
   fill(1.0f);
 }
 
-// FIXME: implement using WRAPPER
+/************* DIAG FUNCTION **************/
 template<>
 void Matrix<float>::diag(float value) {
+  if (use_cuda) ERROR_EXIT(128, "DIAG OPERATION NOT IMPLENTED FOR CUDA\n");
   for (int i=1; i<numDim; ++i)
     if (matrixSize[i] != matrixSize[i-1])
       ERROR_EXIT(128, "Only allowed for squared matrices\n");
@@ -126,6 +129,7 @@ void Matrix<float>::diag(float value) {
   delete[] aux_coords;
 }
 
+/************* ADDITION FUNCTION **************/
 template<>
 Matrix<float>* Matrix<float>::addition(const Matrix<float> *other) {
   Matrix<float> *resul = this->clone();
@@ -133,6 +137,7 @@ Matrix<float>* Matrix<float>::addition(const Matrix<float> *other) {
   return resul;
 }
 
+/************* SUBSTRACTION FUNCTION **************/
 template<>
 Matrix<float>* Matrix<float>::substraction(const Matrix<float> *other) {
   Matrix<float> *resul = this->clone();
@@ -140,17 +145,20 @@ Matrix<float>* Matrix<float>::substraction(const Matrix<float> *other) {
   return resul;
 }
 
+/************* MULTIPLY FUNCTION **************/
 template<>
 Matrix<float>* Matrix<float>::multiply(const Matrix<float> *other) const {
   Matrix<float> *resul = 0;
   if (other->isVector()) {
     if (this->isColVector()) {
+      // OUTER product
       int dim[2] = {getVectorSize(),other->getVectorSize()};
       resul = new Matrix<float>(2, dim, major_order);
       resul->zeros();
       resul->ger(1.0f, this, other);
     }
     else if (!this->isVector()) {
+      // Matrix-Vector product
       int dim[2] = {matrixSize[0],1};
       resul = new Matrix<float>(other->numDim, dim, major_order);
       resul->zeros();
@@ -159,6 +167,7 @@ Matrix<float>* Matrix<float>::multiply(const Matrix<float> *other) const {
 		  0.0f);
     }
     else {
+      // DOT product
       int dim[1] = {1};
       resul = new Matrix<float>(1, dim, major_order);
       (*resul)(0) = this->dot(other);
@@ -166,6 +175,7 @@ Matrix<float>* Matrix<float>::multiply(const Matrix<float> *other) const {
   }
   else if (numDim == 2 && other->numDim == 2 &&
 	   matrixSize[1] == other->matrixSize[0]) {
+    // Matrix-Matrix product
     int dim[2] = {matrixSize[0], other->matrixSize[1]};
     resul = new Matrix<float>(2,dim,major_order);
     resul->zeros();
@@ -175,133 +185,86 @@ Matrix<float>* Matrix<float>::multiply(const Matrix<float> *other) const {
   return resul;
 }
 
-// implement using WRAPPER
+/************* SUM FUNCTION **************/
+struct sum_functor {
+  float operator()(const MatrixFloat *m,
+		   unsigned int size, unsigned int stride,
+		   unsigned int offset) const {
+    return doSum(size, m->getRawDataAccess(), stride, offset, m->getCudaFlag());
+  }
+};
 template<>
 float Matrix<float>::sum() const {
-  float s = 0.0;
-  if (major_order == CblasRowMajor)
-    for (const_iterator it(begin()); it!=end(); ++it) {
-      s += *it;
-    }
-  else
-    for (const_col_major_iterator it(begin()); it!=end(); ++it) {
-      s += *it;
-    }
-    
-  return s;
+  sum_functor functor;
+  return applySumReductionWithSpanIterator(this, functor);
 }
 
 /**** COMPONENT WISE OPERATIONS ****/
 
-// implement using WRAPPER
+
+/************* scalarAdd FUNCTION **************/
 template<>
 void Matrix<float>::scalarAdd(float s) {
-  if (major_order == CblasRowMajor)
-    for (iterator it(begin()); it!=end(); ++it) {
-      *it = *it + s;
-    }
-  else
-    for (col_major_iterator it(begin()); it!=end(); ++it) {
-      *it = *it + s;
-    }
+  applyFunctionWithSpanIterator(this, make_cwise_functor_1(s, doScalarAdd));
 }
 
-// implement using WRAPPER
+/************* equals FUNCTION **************/
+struct equals_functor {
+  float epsilon;
+  equals_functor(float epsilon) : epsilon(epsilon) { }
+  bool operator()(const MatrixFloat *m1,
+		  const MatrixFloat *m2,
+		  unsigned int size,
+		  unsigned int stride1,
+		  unsigned int stride2,
+		  unsigned int offset1,
+		  unsigned int offset2) const {
+    return doEquals(size, m1->getRawDataAccess(), m2->getRawDataAccess(),
+		    stride1, stride2, offset1, offset2, epsilon,
+		    m1->getCudaFlag() && m2->getCudaFlag());
+  }
+};
 template<>
 bool Matrix<float>::equals(const Matrix<float> *other, float epsilon) const {
   if (!sameDim(other)) return false;
-  if (major_order == CblasRowMajor) {
-    const_iterator it(begin());
-    const_iterator other_it(other->begin());
-    while(it != end()) {
-      if (fabsf(*it - *other_it) > epsilon) return false;
-      ++it;
-      ++other_it;
-    }
-  }
-  else {
-    const_col_major_iterator it(begin());
-    const_col_major_iterator other_it(other->begin());
-    while(it != end()) {
-      if (fabsf(*it - *other_it) > epsilon) return false;
-      ++it;
-      ++other_it;
-    }
-  }
-  return true;
+  equals_functor functor(epsilon);
+  return applyBinaryAndReductionWithSpanIterator(this, other, functor);
 }
 
-// implement using WRAPPER
+/************* LOG FUNCTION **************/
 template<>
 void Matrix<float>::log() {
-  if (major_order == CblasRowMajor)
-    for (iterator it(begin()); it!=end(); ++it) {
-      *it = logf(*it);
-    }
-  else
-    for (col_major_iterator it(begin()); it!=end(); ++it) {
-      *it = logf(*it);
-    }
+  applyFunctionWithSpanIterator(this, make_cwise_functor_0(doLog));
 }
 
-// implement using WRAPPER
+/************* LOG1P FUNCTION **************/
 template<>
 void Matrix<float>::log1p() {
-  if (major_order == CblasRowMajor)
-    for (iterator it(begin()); it!=end(); ++it) {
-      *it = log1pf(*it);
-    }
-  else
-    for (col_major_iterator it(begin()); it!=end(); ++it) {
-      *it = log1pf(*it);
-    }
+  applyFunctionWithSpanIterator(this, make_cwise_functor_0(doLog1p));
 }
 
-// implement using WRAPPER
+/************* EXP FUNCTION **************/
 template<>
 void Matrix<float>::exp() {
-  if (major_order == CblasRowMajor)
-    for (iterator it(begin()); it!=end(); ++it) {
-      *it = expf(*it);
-    }
-  else
-    for (col_major_iterator it(begin()); it!=end(); ++it) {
-      *it = expf(*it);
-    }
+  applyFunctionWithSpanIterator(this, make_cwise_functor_0(doExp));
 }
 
-// implement using WRAPPER
+/************* SQRT FUNCTION **************/
 template<>
 void Matrix<float>::sqrt() {
-  for (iterator it(begin()); it!=end(); ++it) {
-    *it = sqrtf(*it);
-  }
+  applyFunctionWithSpanIterator(this, make_cwise_functor_0(doSqrt));
 }
 
-// implement using WRAPPER
+/************* POW FUNCTION **************/
 template<>
 void Matrix<float>::pow(float value) {
-  if (major_order == CblasRowMajor)
-    for (iterator it(begin()); it!=end(); ++it) {
-      *it = powf(*it, value);
-    }
-  else
-    for (col_major_iterator it(begin()); it!=end(); ++it) {
-      *it = powf(*it, value);
-    }
+  applyFunctionWithSpanIterator(this, make_cwise_functor_1(value, doPow));
 }
 
-// implement using WRAPPER
+/************* TANH FUNCTION **************/
 template<>
 void Matrix<float>::tanh() {
-  if (major_order == CblasRowMajor)
-    for (iterator it(begin()); it!=end(); ++it) {
-      *it = tanhf(*it);
-    }
-  else
-    for (col_major_iterator it(begin()); it!=end(); ++it) {
-      *it = tanhf(*it);
-    }
+  applyFunctionWithSpanIterator(this, make_cwise_functor_0(doTanh));
 }
 
 template<>
@@ -327,7 +290,21 @@ Matrix<float> *Matrix<float>::cmul(const Matrix<float> *other) {
 }
 
 /**** BLAS OPERATIONS ****/
-
+struct copy_functor {
+  void operator()(MatrixFloat *dest, const MatrixFloat *orig,
+		  unsigned int size,
+		  unsigned int stride_dest,
+		  unsigned int stride_orig,
+		  unsigned int offset_dest,
+		  unsigned int offset_orig) const {
+    doScopy(size,
+	    orig->getRawDataAccess(),
+	    offset_dest, stride_dest,
+	    dest->getRawDataAccess(),
+	    offset_orig, stride_orig,
+	    orig->getCudaFlag());
+  }
+};
 template<>
 void Matrix<float>::copy(const Matrix<float> *other) {
   if (size() != other->size())
@@ -338,35 +315,27 @@ void Matrix<float>::copy(const Matrix<float> *other) {
   if (! sameDim(other) )
     ERROR_EXIT(128, "Matrices with different dimension sizes\n");
   use_cuda = other->use_cuda;
-  // Contiguous memory blocks
-  if (getIsContiguous() && other->getIsContiguous())
-    doScopy(total_size,
-	    other->data, other->offset, 1,
-	    data, offset, 1,
-	    use_cuda);
-  else if (numDim == 1)
-    doScopy(total_size,
-	    other->data, other->offset, other->stride[0],
-	    data, offset, stride[0],
-	    use_cuda);
-  // General case
-  else {
-    best_span_iterator this_span_it(this), other_span_it(other);
-    while(this_span_it != end_span_iterator()) {
-      doScopy(static_cast<unsigned int>(this_span_it.getSize()),
-	      other->data,
-	      static_cast<unsigned int>(other_span_it.getOffset()),
-	      static_cast<unsigned int>(other_span_it.getStride()),
-	      data,
-	      static_cast<unsigned int>(this_span_it.getOffset()),
-	      static_cast<unsigned int>(this_span_it.getStride()),
-	      use_cuda);      
-      ++this_span_it;
-      ++other_span_it;
-    }
-  }
+  copy_functor functor;
+  applyBinaryFunctionWithSpanIterator(this, other, functor);
 }
 
+struct axpy_functor {
+  float alpha;
+  axpy_functor(float alpha) : alpha(alpha) { }
+  void operator()(MatrixFloat *one, const MatrixFloat *other,
+		  unsigned int size,
+		  unsigned int stride_one,
+		  unsigned int stride_other,
+		  unsigned int offset_one,
+		  unsigned int offset_other) const {
+    doSaxpy(size, alpha,
+	    other->getRawDataAccess(),
+	    offset_other, stride_other,
+	    one->getRawDataAccess(),
+	    offset_one, stride_one,
+	    one->getCudaFlag());
+  }
+};
 template<>
 void Matrix<float>::axpy(float alpha, const Matrix<float> *other) {
   if (size() != other->size())
@@ -374,49 +343,8 @@ void Matrix<float>::axpy(float alpha, const Matrix<float> *other) {
 		size(), other->size());
   if (major_order != other->major_order)
     ERROR_EXIT(128, "Matrices with different major orders");
-  if (getIsContiguous() && other->getIsContiguous())
-    doSaxpy(total_size,
-	    alpha, other->data, other->offset, 1,
-	    data, offset, 1,
-	    use_cuda);
-  else if (numDim == 1)
-    doSaxpy(total_size,
-	    alpha, other->data, other->offset, other->stride[0],
-	    data, offset, stride[0],
-	    use_cuda);
-  // Two dimmension matrices
-  else if (numDim == 2) {
-    int larger_dim = 0, shorter_dim = 1;
-    if (matrixSize[larger_dim] < matrixSize[shorter_dim])
-      april_utils::swap(larger_dim, shorter_dim);
-    int this_pos  = offset;
-    int other_pos = other->offset;
-    for (int i=0; i<matrixSize[shorter_dim]; ++i) {
-      doSaxpy(matrixSize[larger_dim],
-	      alpha, other->data, other_pos, other->stride[larger_dim],
-	      data, this_pos, stride[larger_dim],
-	      use_cuda);
-      this_pos  += stride[shorter_dim];
-      other_pos += other->stride[shorter_dim];
-    }
-  }
-  // General case
-  else {
-    best_span_iterator this_span_it(this), other_span_it(other);
-    while(this_span_it != end_span_iterator()) {
-	doSaxpy(static_cast<unsigned int>(this_span_it.getSize()),
-		alpha,
-		other->data,
-		static_cast<unsigned int>(other_span_it.getOffset()),
-		static_cast<unsigned int>(other_span_it.getStride()),
-		data,
-		static_cast<unsigned int>(this_span_it.getOffset()),
-		static_cast<unsigned int>(this_span_it.getStride()),
-		use_cuda);
-      ++this_span_it;
-      ++other_span_it;
-    }
-  }
+  axpy_functor functor(alpha);
+  applyBinaryFunctionWithSpanIterator(this, other, functor);
 }
 
 template<>
@@ -530,84 +458,43 @@ float Matrix<float>::dot(const Matrix<float> *other) const {
   return ret;
 }
 
+/********** SCAL FUNCTION ***************/
 template<>
 void Matrix<float>::scal(float value) {
-  // Contiguous memory block
-  if (getIsContiguous()) doSscal(total_size, value, data, offset, 1, use_cuda);
-  else if (numDim == 1)
-    doSscal(total_size, value, data, offset, stride[0], use_cuda);
-  // Two dimmension matrix
-  else if (numDim == 2) {
-    int larger_dim = 0, shorter_dim = 1;
-    if (matrixSize[larger_dim] < matrixSize[shorter_dim])
-      april_utils::swap(larger_dim, shorter_dim);
-    int pos  = offset;
-    for (int i=0; i<matrixSize[shorter_dim]; ++i) {
-      doSscal(matrixSize[larger_dim], value,
-	      data, pos, stride[larger_dim],
-	      use_cuda);
-      pos += stride[shorter_dim];
-    }
-  }
-  // General case
-  else {
-    best_span_iterator this_span_it(this);
-    while(this_span_it != end_span_iterator()) {
-      doSscal(static_cast<unsigned int>(this_span_it.getSize()),
-	      value,
-	      data,
-	      static_cast<unsigned int>(this_span_it.getOffset()),
-	      static_cast<unsigned int>(this_span_it.getStride()),
-	      use_cuda);
-      ++this_span_it;
-    }
-  }
+  applyFunctionWithSpanIterator(this, make_cwise_functor_1(value, doSscal));
 }
 
+/********** NORM2 FUNCTION ***************/
+struct norm2_functor {
+  float operator()(const MatrixFloat *m, unsigned int size, unsigned int stride,
+		   unsigned int offset) const {
+    return doSnrm2(size, m->getRawDataAccess(), stride, offset,
+		   m->getCudaFlag());
+  }
+};
+struct norm2_reductor {
+  float operator()(float accum, float other) const {
+    return accum + other*other;
+  }
+};
+// In this method we do ad-hoc specialization of BASIC cases because
+// we avoid the SQUARE and SQRT functions
 template<>
 float Matrix<float>::norm2() const {
   float v;
   // Contiguous memory block
-  if (getIsContiguous()) v=doSnrm2(total_size, data, offset, 1, use_cuda);
+  if (getIsContiguous()) v=doSnrm2(total_size, data, 1, offset, use_cuda);
+  // One dimension
   else if (numDim == 1)
-    v=doSnrm2(total_size, data, offset, stride[0], use_cuda);
-  // Two dimmension matrix
-  else if (numDim == 2) {
-    v = 0.0f;
-    int larger_dim = 0, shorter_dim = 1;
-    if (matrixSize[larger_dim] < matrixSize[shorter_dim])
-      april_utils::swap(larger_dim, shorter_dim);
-    int pos  = offset;
-    switch(matrixSize[shorter_dim]) {
-    case 1:
-      v = doSnrm2(matrixSize[larger_dim],
-		  data, pos, stride[larger_dim],
-		  use_cuda);
-      break;
-    default:
-      for (int i=0; i<matrixSize[shorter_dim]; ++i) {
-	float aux = doSnrm2(matrixSize[larger_dim],
-			    data, pos, stride[larger_dim],
-			    use_cuda);
-	v   += aux*aux;
-	pos += stride[shorter_dim];
-      }
-      v = sqrtf(v);
-    }
-  }
+    v=doSnrm2(total_size, data, stride[0], offset, use_cuda);
   // General case
   else {
-    v = 0.0f;
-    best_span_iterator this_span_it(this);
-    while(this_span_it != end_span_iterator()) {
-      float aux = doSnrm2(static_cast<unsigned int>(this_span_it.getSize()),
-			  data,
-			  static_cast<unsigned int>(this_span_it.getOffset()),
-			  static_cast<unsigned int>(this_span_it.getStride()),	  
-			  use_cuda);
-      v += aux*aux;
-      ++this_span_it;
-    }
+    norm2_functor  functor;
+    norm2_reductor reductor;
+    v = applyReductionWithSpanIterator(this,
+				       functor,
+				       reductor,
+				       0.0f);
     v = sqrtf(v);
   }
   return v;

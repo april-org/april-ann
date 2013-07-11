@@ -863,6 +863,18 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   }
 //BIND_END
 
+//BIND_METHOD MatrixFloat scalar_add
+{
+    int argn;
+    argn = lua_gettop(L); // number of arguments
+    LUABIND_CHECK_ARGN(==, 1);
+    float scalar;
+    LUABIND_GET_PARAMETER(1, float, scalar);
+    obj->scalarAdd(scalar);
+    LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat sub
   {
     LUABIND_CHECK_ARGN(==, 1);
@@ -1159,6 +1171,12 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   delete[] step;
   delete[] num_steps;
   delete[] order_step;
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat is_contiguous
+{
+  LUABIND_RETURN(bool, obj->getIsContiguous());
 }
 //BIND_END
 
