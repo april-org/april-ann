@@ -286,11 +286,9 @@ public:
     int getNumDim() const;
   };
   
-private:
   /********************************************************/
   // The span iterator traverses the matrix allowing to do a linear
   // traversal of the largest dimension.
-  // ATTENTION: Currently it is a private iterator
   class best_span_iterator {
     friend class Matrix;
     const Matrix<T> *m;
@@ -301,14 +299,24 @@ private:
       const Matrix<T> *m;
       inverse_sort_compare(const Matrix<T> *m) : m(m) { }
       bool operator()(const int &a, const int &b) {
+	const int a_sz = m->matrixSize[a];
+	const int b_sz = m->matrixSize[b];
+	if (a_sz == b_sz) {
+	  if (m->major_order == CblasRowMajor)
+	    return b > a;
+	  else
+	    return a > b;
+	}
 	// FIXME: Would be better to use a trade-off between size and stride?
-	return m->matrixSize[a] > m->matrixSize[b];
+	else
+	  return a_sz > b_sz;
       }
     };
     best_span_iterator(const Matrix<T> *m, int raw_pos);
-    best_span_iterator(const Matrix<T> *m);
   public:
+    best_span_iterator(const Matrix<T> *m);
     best_span_iterator();
+    best_span_iterator(const best_span_iterator &other);
     ~best_span_iterator();
     int getOffset() const;
     int getStride() const;
@@ -321,6 +329,7 @@ private:
     void setAtIteration(int idx);
   };
   
+private:
   // const version of iterators, for fast end() iterator calls. They are
   // allocated on-demand, so if end() methods are never executed, they
   // don't waste memory space
@@ -328,12 +337,6 @@ private:
   const const_iterator end_const_iterator;
   const best_span_iterator end_best_span_iterator;
   
-  const best_span_iterator &end_span_iterator() const {
-    if (end_best_span_iterator.m == 0)
-      *(const_cast<best_span_iterator*>(&end_best_span_iterator)) =
-	best_span_iterator(this, last_raw_pos+1);
-    return end_best_span_iterator;
-  }
   // NULL constructor
   Matrix() { }
   //
@@ -402,6 +405,12 @@ public:
     if (end_iterator.m == 0)
       *(const_cast<iterator*>(&end_iterator)) = iterator(this, last_raw_pos+1);
     return end_iterator;
+  }
+  const best_span_iterator &end_span_iterator() const {
+    if (end_best_span_iterator.m == 0)
+      *(const_cast<best_span_iterator*>(&end_best_span_iterator)) =
+	best_span_iterator(this, last_raw_pos+1);
+    return end_best_span_iterator;
   }
   /************************/
   const_iterator begin() const { return const_iterator(this); }

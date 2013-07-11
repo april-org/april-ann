@@ -21,7 +21,7 @@ luapkg{
       "-latlas",
       "-L/opt/lib",
       "-lgfortran",
-      "-liomp5"
+      "-fopenmp",
     },
 
   },

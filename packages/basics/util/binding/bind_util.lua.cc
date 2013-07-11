@@ -26,6 +26,8 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <omp.h>
+#include "omp_utils.h"
 
 // copy paste de lualib.c
 FILE **newfile (lua_State *L) {
@@ -51,6 +53,21 @@ FILE **newfile (lua_State *L) {
 
 using namespace april_utils;
 
+//BIND_END
+
+//BIND_FUNCTION util.omp_set_num_threads
+{
+  int n;
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_GET_PARAMETER(1, int, n);
+  omp_set_num_threads(n);
+}
+//BIND_END
+
+//BIND_FUNCTION util.omp_get_num_threads
+{
+  LUABIND_RETURN(int, omp_utils::get_num_threads());
+}
 //BIND_END
 
 //BIND_FUNCTION util.gettimeofday

@@ -611,7 +611,8 @@ void doClamp(unsigned int N,
 	     unsigned int stride,
 	     unsigned int shift,
 	     float lower,
-	     float upper) {
+	     float upper,
+	     bool use_gpu) {
 #ifdef USE_CUDA
   if (use_gpu) {
     float *v_ptr = v->getGPUForReadAndWrite() + shift;
@@ -634,7 +635,8 @@ void doFill(unsigned int N,
 	    FloatGPUMirroredMemoryBlock *v,
 	    unsigned int stride,
 	    unsigned int shift,
-	    float value) {
+	    float value,
+	    bool use_gpu) {
 #ifdef USE_CUDA
   if (use_gpu) {
     float *v_ptr = v->getGPUForWrite() + shift;

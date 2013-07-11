@@ -75,5 +75,5 @@ TokenCode TokenMemoryBlock::getTokenCode() const {
 }
 
 void TokenMemoryBlock::setToZero(bool use_cuda) {
-  doFill(mem_block->getSize(), mem_block, 1, 0, use_cuda);
+  doFill(mem_block->getSize(), mem_block, 1, 0, 0.0f, use_cuda);
 }
