@@ -89,8 +89,6 @@ protected:
       (major_order==CblasRowMajor) ? stride[1] : stride[0];
   }
 
-  void scalarAdd(T s);
-  
 public:
   /// Updates with the following coordinates vector
   bool nextCoordVectorRowOrder(int *coords, int &raw_pos) const;
@@ -508,6 +506,7 @@ public:
   void adjustRange(T rmin, T rmax);
     
   /**** BLAS OPERATIONS ****/
+  void scalarAdd(T s);
   
   // FIXME: This operations could be improved if we take into account when the
   // matrix data is contiguous in memory (even when it is a sub-matrix)

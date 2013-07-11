@@ -251,7 +251,7 @@ void doSgemv(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
 	     unsigned int a_shift, unsigned int x_shift, unsigned int y_shift,
 	     bool use_gpu);
 
-void doScopy(int N, FloatGPUMirroredMemoryBlock* x,
+void doScopy(int N, const FloatGPUMirroredMemoryBlock* x,
 	     unsigned int x_shift,
 	     unsigned int x_inc,
 	     FloatGPUMirroredMemoryBlock* y,
@@ -264,7 +264,7 @@ void doScopyLoop(int N, FloatGPUMirroredMemoryBlock* x, unsigned int x_inc,
 		 unsigned int times, const unsigned int stride,
 		 bool use_gpu);
 
-void doSaxpy(int N, float alpha, FloatGPUMirroredMemoryBlock* x,
+void doSaxpy(int N, float alpha, const FloatGPUMirroredMemoryBlock* x,
 	     unsigned int x_shift, unsigned int x_inc,
 	     FloatGPUMirroredMemoryBlock* y, unsigned int y_shift,
 	     unsigned int y_inc, bool use_gpu);
@@ -285,10 +285,10 @@ void doSgemm(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
 	     bool use_gpu);
 
 void doSscal(unsigned int size,
-	     float alpha,
 	     FloatGPUMirroredMemoryBlock *x,
-	     unsigned int shift,
 	     unsigned int inc,
+	     unsigned int shift,
+	     float alpha,
 	     bool use_gpu);
 
 void doSger(CBLAS_ORDER major_type,
@@ -317,8 +317,8 @@ float doSdot(unsigned int size,
 
 float doSnrm2(unsigned int n,
 	      const FloatGPUMirroredMemoryBlock *x,
-	      unsigned int shift,
 	      unsigned int inc,
+	      unsigned int shift,
 	      bool use_gpu);
 
 void doSsbmv(CBLAS_ORDER major_type,
@@ -344,4 +344,64 @@ void doFill(unsigned int N,
 	    unsigned int shift,
 	    float value,
 	    bool use_gpu);
+
+float doSum(unsigned int N,
+	    const FloatGPUMirroredMemoryBlock *v,
+	    unsigned int stride,
+	    unsigned int shift,
+	    bool use_gpu);
+
+void doScalarAdd(unsigned int N,
+		 FloatGPUMirroredMemoryBlock *v,
+		 unsigned int stride,
+		 unsigned int shift,
+		 float value,
+		 bool use_gpu);
+
+bool doEquals(unsigned int N,
+	      const FloatGPUMirroredMemoryBlock *v1,
+	      const FloatGPUMirroredMemoryBlock *v2,
+	      unsigned int stride1,
+	      unsigned int stride2,
+	      unsigned int shift1,
+	      unsigned int shift2,
+	      float epsilon,
+	      bool use_gpu);
+
+void doLog(unsigned int N,
+	   FloatGPUMirroredMemoryBlock *v,
+	   unsigned int stride,
+	   unsigned int shift,
+	   bool use_gpu);
+
+void doLog1p(unsigned int N,
+	     FloatGPUMirroredMemoryBlock *v,
+	     unsigned int stride,
+	     unsigned int shift,
+	     bool use_gpu);
+
+void doExp(unsigned int N,
+	   FloatGPUMirroredMemoryBlock *v,
+	   unsigned int stride,
+	   unsigned int shift,
+	   bool use_gpu);
+
+void doSqrt(unsigned int N,
+	    FloatGPUMirroredMemoryBlock *v,
+	    unsigned int stride,
+	    unsigned int shift,
+	    bool use_gpu);
+
+void doTanh(unsigned int N,
+	    FloatGPUMirroredMemoryBlock *v,
+	    unsigned int stride,
+	    unsigned int shift,
+	    bool use_gpu);
+
+void doPow(unsigned int N,
+	   FloatGPUMirroredMemoryBlock *v,
+	   unsigned int stride,
+	   unsigned int shift,
+	   float value,
+	   bool use_gpu);
 #endif // WRAPPER_H

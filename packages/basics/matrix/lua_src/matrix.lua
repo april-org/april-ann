@@ -35,7 +35,11 @@ end
 
 matrix.meta_instance.__add = function(op1, op2)
   if not isa(op1,matrix) then op1,op2=op2,op1 end
-  return op1:add(op2)
+  if type(op2) == "number" then
+    return op1:clone():scalar_add(op2)
+  else
+    return op1:add(op2)
+  end
 end
 
 matrix.meta_instance.__sub = function(op1, op2)
@@ -787,6 +791,21 @@ april_set_doc("matrix.uniformf",
 		params  = { "Lower range value",
 			    "Upper range value",
 			    "A random object instance [optional]" },
+		outputs = { "The caller matrix instance" },
+	      })
+
+april_set_doc("matrix.is_congituous",
+	      {
+		class = "method",
+		summary = "Returns true if the matrix data is contiguous at memory",
+		outputs = { "A boolean" },
+	      })
+
+april_set_doc("matrix.scalar_add",
+	      {
+		class = "method",
+		summary = "Adds a scalar IN-PLACE",
+		params  = { "A number" },
 		outputs = { "The caller matrix instance" },
 	      })
 
