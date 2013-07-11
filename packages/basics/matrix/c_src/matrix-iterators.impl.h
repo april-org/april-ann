@@ -652,9 +652,19 @@ best_span_iterator(const Matrix<T> *m,int raw_pos) : m(m), raw_pos(raw_pos) {
       order[0] = 0;
       order[1] = 1;
     }
-    else {
+    else if (m->matrixSize[1] > m->matrixSize[0]) {
       order[0] = 1;
       order[1] = 0;
+    }
+    else {
+      if (m->major_order == CblasRowMajor) {
+	order[0] = 1;
+	order[1] = 0;
+      }
+      else {
+	order[0] = 0;
+	order[1] = 1;
+      }
     }
     num_iterations = m->matrixSize[order[1]];
     break;
@@ -680,9 +690,19 @@ Matrix<T>::best_span_iterator::best_span_iterator(const Matrix<T> *m) :
       order[0] = 0;
       order[1] = 1;
     }
-    else {
+    else if (m->matrixSize[1] > m->matrixSize[0]) {
       order[0] = 1;
       order[1] = 0;
+    }
+    else {
+      if (m->major_order == CblasRowMajor) {
+	order[0] = 1;
+	order[1] = 0;
+      }
+      else {
+	order[0] = 0;
+	order[1] = 1;
+      }
     }
     num_iterations = m->matrixSize[order[1]];
     break;
@@ -695,6 +715,18 @@ Matrix<T>::best_span_iterator::best_span_iterator(const Matrix<T> *m) :
     num_iterations = 1;
     for (int i=1; i<m->numDim; ++i)
       num_iterations *= m->matrixSize[order[i]];
+  }
+}
+
+template <typename T>
+Matrix<T>::best_span_iterator::
+best_span_iterator(const best_span_iterator &other) :
+  m(other.m), raw_pos(other.raw_pos), num_iterations(other.num_iterations) {
+  coords = new int[m->getNumDim()];
+  order  = new int[m->getNumDim()];
+  for (int i=0; i<m->getNumDim(); ++i) {
+    coords[i] = other.coords[i];
+    order[i]  = other.order[i];
   }
 }
 

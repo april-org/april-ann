@@ -20,49 +20,80 @@
  */
 
 #include <omp.h>
+#include "omp_utils.h"
 #include "matrix.h"
 #include "matrixFloat.h"
 
-// WARNING: ALL THE METHODS IMPLEMENTED HERE ARE SPECIALIZED TO FLOAT VERSION
-
-template<>
-void Matrix<float>::fill(float value) {
-  best_span_iterator span_it(this);
-  if (omp_get_num_threads() > 1) {
-    const int N = span_it.numberOfIterations();
-    //#pragma omp parallel for firstprivate(span_it) firstprivate(N)
-      for (int i=0; i<N; ++i) {
+// Auxiliary function template which applies a given FUNC object ( implements
+// operator() ) to all the elements of a Matrix, using the best_span_iterator,
+// and OMP if needed.
+template<typename FUNC>
+void applyFunctionWithSpanIterator(MatrixFloat *m,
+				   FUNC &functor) {
+  MatrixFloat::best_span_iterator span_it(m);
+  const int N = span_it.numberOfIterations();
+  unsigned int size   = static_cast<unsigned int>(span_it.getSize());
+  unsigned int stride = static_cast<unsigned int>(span_it.getStride());
+  functor(size, stride, static_cast<unsigned int>(span_it.getOffset()));
+  if (N > 1) {
+    if (omp_utils::get_num_threads() > 1 && N > 50 && size > 50) {
+#pragma omp parallel for firstprivate(span_it) firstprivate(N)
+      for (int i=1; i<N; ++i) {
 	span_it.setAtIteration(i);
-	doFill(static_cast<unsigned int>(span_it.getSize()),
-	       data,
-	       static_cast<unsigned int>(span_it.getStride()),
-	       static_cast<unsigned int>(span_it.getOffset()),
-	       value);
+	functor(size, stride, static_cast<unsigned int>(span_it.getOffset()));
       }
-  }
-  else {
-    while(span_it != end_span_iterator()) {
-      doFill(static_cast<unsigned int>(span_it.getSize()),
-	     data,
-	     static_cast<unsigned int>(span_it.getStride()),
-	     static_cast<unsigned int>(span_it.getOffset()),
-	     value);
+    }
+    else {
       ++span_it;
+      do {
+	functor(size, stride, static_cast<unsigned int>(span_it.getOffset()));
+	++span_it;
+      } while(span_it != m->end_span_iterator());
     }
   }
 }
 
+// Idem but for binary functions (needs two best_span_iterators)
+// TODO:
+
+
+// WARNING: ALL THE METHODS IMPLEMENTED HERE ARE SPECIALIZED TO FLOAT VERSION
+
+/************* FILL FUNCTION **************/
+struct fill_functor {
+  FloatGPUMirroredMemoryBlock *data;
+  float value;
+  bool use_cuda;
+  fill_functor(FloatGPUMirroredMemoryBlock *data, float value, bool use_cuda) :
+    data(data), value(value), use_cuda(use_cuda) {
+  }
+  void operator()(unsigned int size, unsigned int stride, unsigned int offset) {
+    doFill(size, data, stride, offset, value, use_cuda);
+  }
+};
+template<>
+void Matrix<float>::fill(float value) {
+  fill_functor functor(data, value, use_cuda);
+  applyFunctionWithSpanIterator(this, functor);
+}
+
+/************* CLAMP FUNCTION **************/
+struct clamp_functor {
+  FloatGPUMirroredMemoryBlock *data;
+  float lower, upper;
+  bool use_cuda;
+  clamp_functor(FloatGPUMirroredMemoryBlock *data, float lower,
+		float upper, bool use_cuda) :
+    data(data), lower(lower), upper(upper), use_cuda(use_cuda) {
+  }
+  void operator()(unsigned int size, unsigned int stride, unsigned int offset) {
+    doClamp(size, data, stride, offset, lower, upper, use_cuda);
+  }
+};
 template<>
 void Matrix<float>::clamp(float lower, float upper) {
-  best_span_iterator span_it(this);
-  while(span_it != end_span_iterator()) {
-    doClamp(static_cast<unsigned int>(span_it.getSize()),
-	    data,
-	    static_cast<unsigned int>(span_it.getStride()),
-	    static_cast<unsigned int>(span_it.getOffset()),
-	    lower, upper);
-    ++span_it;
-  }
+  clamp_functor functor(data, lower, upper, use_cuda);
+  applyFunctionWithSpanIterator(this, functor);
 }
 
 
@@ -314,22 +345,6 @@ void Matrix<float>::copy(const Matrix<float> *other) {
 	    other->data, other->offset, other->stride[0],
 	    data, offset, stride[0],
 	    use_cuda);
-  // Two dimmension matrices
-  else if (numDim == 2) {
-    int larger_dim = 0, shorter_dim = 1;
-    if (matrixSize[larger_dim] < matrixSize[shorter_dim])
-      april_utils::swap(larger_dim, shorter_dim);
-    int this_pos  = offset;
-    int other_pos = other->offset;
-    for (int i=0; i<matrixSize[shorter_dim]; ++i) {
-      doScopy(matrixSize[larger_dim],
-	      other->data, other_pos, other->stride[larger_dim],
-	      data, this_pos, stride[larger_dim],
-	      use_cuda);
-      this_pos  += stride[shorter_dim];
-      other_pos += other->stride[shorter_dim];
-    }
-  }
   // General case
   else {
     best_span_iterator this_span_it(this), other_span_it(other);

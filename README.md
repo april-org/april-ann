@@ -10,6 +10,7 @@ Requires the following libraries. Versions are only orientative, it could work w
 - BLAS implementation: ATLAS (v. 3) or Intel MKL (v. 10.3.6)
 - Threads posix (pthread)
 - Readline (libreadline)
+- OpenMP
 
 The following libreries are recommended, but optional:
 - [OPTIONAL] libpng: if you want to open PNG images
