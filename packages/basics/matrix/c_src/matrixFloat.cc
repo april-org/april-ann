@@ -249,9 +249,9 @@ struct copy_functor {
 		  unsigned int offset_orig) const {
     doScopy(size,
 	    orig->getRawDataAccess(),
-	    offset_dest, stride_dest,
-	    dest->getRawDataAccess(),
 	    offset_orig, stride_orig,
+	    dest->getRawDataAccess(),
+	    offset_dest, stride_dest,
 	    orig->getCudaFlag());
   }
 };

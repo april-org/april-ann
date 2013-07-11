@@ -214,14 +214,15 @@ public:
     float *aux_mem = aux_mem_block->getPPALForWrite();
     int pattern_size = patternSize();
     int num_patterns = numPatterns();
+    MatrixFloat::sliding_window window(mat, 0, 0, 0, 0, 0);
     for (unsigned int i=0; i<bunch_size; ++i) {
+      assert(!window.isEnd());
       assert(0 <= indexes[i] && indexes[i] < num_patterns);
       ds->getPattern(indexes[i], aux_mem);
-      int coords[2] = { static_cast<int>(i), 0 };
-      int sizes[2]  = { 1, pattern_size };
-      MatrixFloat *submat = new MatrixFloat(mat, coords, sizes, false);
+      MatrixFloat *submat = window.getMatrix();
       submat->copy(aux_mat);
       delete submat;
+      window.next();
     }
     return token;
   }
