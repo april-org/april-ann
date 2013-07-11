@@ -794,7 +794,7 @@ april_set_doc("matrix.uniformf",
 		outputs = { "The caller matrix instance" },
 	      })
 
-april_set_doc("matrix.is_congituous",
+april_set_doc("matrix.is_contiguous",
 	      {
 		class = "method",
 		summary = "Returns true if the matrix data is contiguous at memory",
