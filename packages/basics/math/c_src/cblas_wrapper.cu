@@ -761,8 +761,8 @@ float doSum(unsigned int N,
   else {
 #endif
     const float *v_mem = v->getPPALForRead() + shift;
-    sum = *v_mem;
-    for (unsigned int i=1; i<N; ++i, v_mem+=stride) sum += *v_mem;
+    sum = 0.0f;
+    for (unsigned int i=0; i<N; ++i, v_mem+=stride) sum += *v_mem;
 #ifdef USE_CUDA
   }
 #endif
@@ -812,7 +812,7 @@ bool doEquals(unsigned int N,
     const float *v1_mem = v1->getPPALForRead() + shift1;
     const float *v2_mem = v2->getPPALForRead() + shift2;
     for (unsigned int i=0; i<N && eq; ++i, v1_mem+=stride1, v2_mem+=stride2)
-      eq = eq && (*v1_mem == *v2_mem);
+      eq = eq && ((fabsf(*v1_mem - *v2_mem) < epsilon));
 #ifdef USE_CUDA
   }
 #endif

@@ -921,7 +921,7 @@ Matrix<T>::sliding_window::sliding_window(Matrix<T> *m,
     if (last > m->matrixSize[i])
       ERROR_EXIT1(128, "Overflow at sliding window dimension %d!!!\n", i);
     num_step_by_step[i] = this->num_steps[i] * this->step[i];
-    num_windows *= num_steps[i];
+    num_windows *= this->num_steps[i];
   }  
 }
 

@@ -21,8 +21,9 @@
 
 #include "matrix.h"
 #include "matrixFloat.h"
-#include "matrixFloat_math_templates.h"
-#include "matrixFloat_math_functors.h"
+#include "matrixFloat_math_templates.h" // functions which apply functors
+#include "matrixFloat_math_functors.h"  // standard functors
+#include "wrapper.h" // wrappers of mathematical function (for CPU/GPU)
 
 // WARNING: ALL THE METHODS IMPLEMENTED HERE ARE SPECIALIZED TO FLOAT VERSION
 
