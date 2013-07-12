@@ -379,7 +379,40 @@ april_set_doc("stats.confusion_matrix.getError",
     outputs = { "The global classification error." }, 
 })
 function stats.confusion_matrix:getError()
-    return self.misses/self.samples
+    return self.misses/self.samples, self.misses, self.samples
+end
+
+april_set_doc("stats.confusion_matrix.getWeightedError",
+{
+    class = "method", summary = "Return the classification error weighted by given values",
+    params = {"A table of size weight"},
+    outputs = { "The global classification error." }, 
+})
+function stats.confusion_matrix:getWeightedError(weights)
+    
+    local totalError = 0.0
+    for i,w in ipairs(weights) do
+        totalError = totalError+(1-w*self:getRecall(i))
+    end
+
+    return totalError
+end
+
+april_set_doc("stats.confusion_matrix.getAvgError",
+{
+    class = "method", summary = "Return the average error.",
+    outputs = { "The average classification error." }, 
+})
+function stats.confusion_matrix:getAvgError(weights)
+    
+    local totalError = 0.0
+    local w = 1.0/self.num_classes
+    local i
+    for i = 1, self.num_classes do
+        totalError = totalError+(1-self:getRecall(i))
+    end
+
+    return totalError*w
 end
 
 april_set_doc("stats.confusion_matrix.getAccuracy", {
@@ -417,7 +450,7 @@ function stats.confusion_matrix:getPrecision(tipo)
         den = den + v
     end     
     if den == 0 then
-        return 0
+        return 0, tp, den
     end
     return tp/den, tp, den
 end
@@ -444,7 +477,7 @@ function stats.confusion_matrix:getRecall(tipo)
     end 
 
     if den == 0 then
-        return 0
+        return 0, tp, den
     end
     return tp/den, tp, den
 end
