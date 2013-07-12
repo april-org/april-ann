@@ -35,7 +35,7 @@ void applyFunctionWithSpanIterator(MATRIX *m,
 				   const int N_th = 50,
 				   const unsigned int SIZE_th = 50) {
   // Contiguous memory block
-  if (m->getIsContiguous())
+  if (m->getIsContiguous() && m->size() < SIZE_th)
     functor(m, static_cast<unsigned int>(m->size()), 1,
 	    static_cast<unsigned int>(m->getOffset()));
   // One dimension
@@ -82,7 +82,7 @@ void applyBinaryFunctionWithSpanIterator(MATRIX1 *m1,
 					 const FUNC &functor,
 					 const int N_th = 50,
 					 const unsigned int SIZE_th = 50) {
-  if (m1->getIsContiguous() && m2->getIsContiguous())
+  if (m1->getIsContiguous() && m2->getIsContiguous() && m1->size() < SIZE_th)
     functor(m1, m2,
 	    static_cast<unsigned int>(m1->size()), 1, 1,
 	    static_cast<unsigned int>(m1->getOffset()),
@@ -143,7 +143,7 @@ float applySumReductionWithSpanIterator(MATRIX *m,
 					const int N_th = 50,
 					const unsigned int SIZE_th = 50) {
   // Contiguous memory block
-  if (m->getIsContiguous())
+  if (m->getIsContiguous() && m->size() < SIZE_th)
     return functor(m, static_cast<unsigned int>(m->size()), 1,
 		   static_cast<unsigned int>(m->getOffset()));
   // One dimension
@@ -193,7 +193,7 @@ bool applyBinaryAndReductionWithSpanIterator(MATRIX1 *m1,
 					     const FUNC &functor,
 					     const int N_th = 50,
 					     const unsigned int SIZE_th = 50) {
-  if (m1->getIsContiguous() && m2->getIsContiguous())
+  if (m1->getIsContiguous() && m2->getIsContiguous() && m1->size() < SIZE_th)
     return functor(m1, m2,
 		   static_cast<unsigned int>(m1->size()), 1, 1,
 		   static_cast<unsigned int>(m1->getOffset()),
@@ -256,7 +256,7 @@ T applyReductionWithSpanIterator(MATRIX *m,
 				 FUNC2 &reductor,
 				 const T initial_value) {
   // Contiguous memory block
-  if (m->getIsContiguous())
+  if (m->getIsContiguous() && m->size() < SIZE_th)
     return reductor(initial_value,
 		    functor(m, static_cast<unsigned int>(m->size()), 1,
 			    static_cast<unsigned int>(m->getOffset())));
