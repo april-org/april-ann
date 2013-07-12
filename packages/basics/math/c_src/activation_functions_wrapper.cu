@@ -19,7 +19,9 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef NO_OMP
 #include <omp.h>
+#endif
 #include <cmath>
 #include "clamp.h"
 #include "wrapper.h"
@@ -471,8 +473,10 @@ void applyMask(FloatGPUMirroredMemoryBlock *units,
     float *units_ptr      = units->getPPALForWrite();
     const float *mask_ptr = mask->getPPALForRead();
     const unsigned int sz        = size*bunch_size;
+#ifndef NO_OMP
 #ifndef USE_CUDA
 #pragma omp parallel for
+#endif
 #endif
     for (unsigned int i=0; i<sz; ++i)
       if (mask_ptr[i] < 0.5f) units_ptr[i] = mask_value;
@@ -505,8 +509,10 @@ void doApplyLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
     const float *input_units_ptr = input_units->getPPALForRead();
     float *output_units_ptr      = output_units->getPPALForWrite();
     const unsigned int sz        = size*bunch_size;
+#ifndef NO_OMP
 #ifndef USE_CUDA
 #pragma omp parallel for
+#endif
 #endif
     for (unsigned int i=0; i<sz; ++i)
       output_units_ptr[i] = sigmoid(1.0f, input_units_ptr[i]);
@@ -543,8 +549,10 @@ void doMultiplyLogisticDerivatives(FloatGPUMirroredMemoryBlock *output_units,
     const float *input_errors_ptr = input_errors->getPPALForRead();
     float *output_errors_ptr      = output_errors->getPPALForWrite();
     const unsigned int sz         = size*bunch_size;
+#ifndef NO_OMP
 #ifndef USE_CUDA
 #pragma omp parallel for
+#endif
 #endif
     for (unsigned int i=0; i<sz; ++i) {
       float value = clamp(output_units_ptr[i], NEAR_ZERO, 1.0f - NEAR_ZERO);
@@ -579,8 +587,10 @@ void doApplyLogLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
     const float *input_units_ptr = input_units->getPPALForRead();
     float *output_units_ptr      = output_units->getPPALForWrite();
     const unsigned int sz        = size*bunch_size;
+#ifndef NO_OMP
 #ifndef USE_CUDA
 #pragma omp parallel for
+#endif
 #endif
     for (unsigned int i=0; i<sz; ++i)
       output_units_ptr[i] = logsigmoid(input_units_ptr[i]);
@@ -614,8 +624,10 @@ void doApplyTanhActivation(FloatGPUMirroredMemoryBlock *input_units,
     const float *input_units_ptr = input_units->getPPALForRead();
     float *output_units_ptr      = output_units->getPPALForWrite();
     const unsigned int sz        = size*bunch_size;
+#ifndef NO_OMP
 #ifndef USE_CUDA
 #pragma omp parallel for
+#endif
 #endif
     for (unsigned int i=0; i<sz; ++i)
       output_units_ptr[i] = sigmoid(2.0f, input_units_ptr[i]) - 1.0f;
@@ -653,8 +665,10 @@ void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *output_units,
     const float *input_errors_ptr = input_errors->getPPALForRead();
     float *output_errors_ptr      = output_errors->getPPALForWrite();
     const unsigned int sz         = size*bunch_size;
+#ifndef NO_OMP
 #ifndef USE_CUDA
 #pragma omp parallel for
+#endif
 #endif
     for (unsigned int i=0; i<sz; ++i) {
       float value = clamp(output_units_ptr[i], -1.0f + NEAR_ZERO, 1.0f - NEAR_ZERO);
@@ -690,8 +704,10 @@ void doApplySoftsignActivation(FloatGPUMirroredMemoryBlock *input_units,
     const float *input_units_ptr = input_units->getPPALForRead();
     float *output_units_ptr      = output_units->getPPALForWrite();
     const unsigned int sz        = size*bunch_size;
+#ifndef NO_OMP
 #ifndef USE_CUDA
 #pragma omp parallel for
+#endif
 #endif
     for (unsigned int i=0; i<sz; ++i)
       output_units_ptr[i] = input_units_ptr[i] / (1.0f + fabsf(input_units_ptr[i]));
@@ -728,8 +744,10 @@ void doMultiplySoftsignDerivatives(FloatGPUMirroredMemoryBlock *output_units,
     const float *input_errors_ptr = input_errors->getPPALForRead();
     float *output_errors_ptr      = output_errors->getPPALForWrite();
     const unsigned int sz         = size*bunch_size;
+#ifndef NO_OMP
 #ifndef USE_CUDA
 #pragma omp parallel for
+#endif
 #endif
     for (unsigned int i=0; i<sz; ++i) {
       float value = clamp(output_units_ptr[i], -1.0f + NEAR_ZERO, 1.0f - NEAR_ZERO);
@@ -766,8 +784,10 @@ void doApplySoftplusActivation(FloatGPUMirroredMemoryBlock *input_units,
     const float *input_units_ptr = input_units->getPPALForRead();
     float *output_units_ptr      = output_units->getPPALForWrite();
     const unsigned int sz        = size*bunch_size;
+#ifndef NO_OMP
 #ifndef USE_CUDA
 #pragma omp parallel for
+#endif
 #endif
     for (unsigned int i=0; i<sz; ++i)
       output_units_ptr[i] = log1p(exp(input_units_ptr[i]));
@@ -804,8 +824,10 @@ void doMultiplySoftplusDerivatives(FloatGPUMirroredMemoryBlock *input_units,
     const float *input_errors_ptr = input_errors->getPPALForRead();
     float *output_errors_ptr      = output_errors->getPPALForWrite();
     const unsigned int sz         = size*bunch_size;
+#ifndef NO_OMP
 #ifndef USE_CUDA
 #pragma omp parallel for
+#endif
 #endif
     for (unsigned int i=0; i<sz; ++i) {
       float value = sigmoid(1.0f, input_units_ptr[i]);
@@ -841,8 +863,10 @@ void doApplyHardtanhActivation(FloatGPUMirroredMemoryBlock *input_units,
     const float *input_units_ptr = input_units->getPPALForRead();
     float *output_units_ptr      = output_units->getPPALForWrite();
     const unsigned int sz        = size*bunch_size;
+#ifndef NO_OMP
 #ifndef USE_CUDA
 #pragma omp parallel for
+#endif
 #endif
     for (unsigned int i=0; i<sz; ++i)
       output_units_ptr[i] = clamp(input_units_ptr[i], -1.0f, 1.0f);
@@ -879,8 +903,10 @@ void doMultiplyHardtanhDerivatives(FloatGPUMirroredMemoryBlock *input_units,
     const float *input_errors_ptr = input_errors->getPPALForRead();
     float *output_errors_ptr      = output_errors->getPPALForWrite();
     const unsigned int sz         = size*bunch_size;
+#ifndef NO_OMP
 #ifndef USE_CUDA
 #pragma omp parallel for
+#endif
 #endif
     for (unsigned int i=0; i<sz; ++i) {
       float value = 0.0f;
@@ -918,8 +944,10 @@ void doApplySinActivation(FloatGPUMirroredMemoryBlock *input_units,
     const float *input_units_ptr = input_units->getPPALForRead();
     float *output_units_ptr      = output_units->getPPALForWrite();
     const unsigned int sz        = size*bunch_size;
+#ifndef NO_OMP
 #ifndef USE_CUDA
 #pragma omp parallel for
+#endif
 #endif
     for (unsigned int i=0; i<sz; ++i)
       output_units_ptr[i] = sinf(input_units_ptr[i]);
@@ -956,8 +984,10 @@ void doMultiplySinDerivatives(FloatGPUMirroredMemoryBlock *input_units,
     const float *input_errors_ptr = input_errors->getPPALForRead();
     float *output_errors_ptr      = output_errors->getPPALForWrite();
     const unsigned int sz         = size*bunch_size;
+#ifndef NO_OMP
 #ifndef USE_CUDA
 #pragma omp parallel for
+#endif
 #endif
     for (unsigned int i=0; i<sz; ++i) {
       float value = cosf(input_units_ptr[i]);

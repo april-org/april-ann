@@ -19,15 +19,21 @@
  *
  */
 
+#ifndef NO_OMP
 #include <omp.h>
+#endif
 
 namespace omp_utils {
   int get_num_threads() {
+#ifndef NO_OMP
     int n;
 #pragma omp parallel
     {
       n = omp_get_num_threads();
     }
     return n;
+#else
+    return 1;
+#endif
   }
 }
