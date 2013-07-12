@@ -294,7 +294,11 @@ void Matrix<float>::axpy(float alpha, const Matrix<float> *other) {
   if (major_order != other->major_order)
     ERROR_EXIT(128, "Matrices with different major orders");
   axpy_functor functor(alpha);
+#ifdef USE_MKL
+  applyBinaryFunctionWithSpanIteratorNOPARALLEL(this, other, functor);
+#else
   applyBinaryFunctionWithSpanIterator(this, other, functor);
+#endif
 }
 
 template<>
@@ -411,8 +415,13 @@ float Matrix<float>::dot(const Matrix<float> *other) const {
 /********** SCAL FUNCTION ***************/
 template<>
 void Matrix<float>::scal(float value) {
+#ifdef USE_MKL
+  applyFunctionWithSpanIteratorNOPARALLEL(this,
+					  make_cwise_functor_1(value, doSscal));
+#else
   applyFunctionWithSpanIterator(this,
 				make_cwise_functor_1(value, doSscal));
+#endif
 }
 
 /********** NORM2 FUNCTION ***************/

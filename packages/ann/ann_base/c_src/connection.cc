@@ -273,11 +273,6 @@ namespace ANN {
     return conn;
   }
 
-  void Connections::scale(float alpha) {
-    weights->scal(alpha);
-    prev_weights->scal(alpha);
-  }
-  
   void Connections::printDebug() {
     const int num_outputs = weights->getDimSize(0);
     const int num_inputs  = weights->getDimSize(1);
