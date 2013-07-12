@@ -829,7 +829,7 @@ void Matrix<T>::best_span_iterator::setAtIteration(int idx) {
 /////////////////////////////////////////////////////////////////////////////
 
 template <typename T>
-Matrix<T>::sliding_window::sliding_window() :
+Matrix<T>::sliding_window::sliding_window() : Referenced(),
   m(0), offset(0), sub_matrix_size(0), step(0),
   num_steps(0), order_step(0), coords(0), raw_pos(0),
   num_windows(0) { }
@@ -841,6 +841,7 @@ Matrix<T>::sliding_window::sliding_window(Matrix<T> *m,
 					  const int *step,
 					  const int *num_steps,
 					  const int *order_step) :
+  Referenced(),
   m(m),
   offset(new int[m->numDim]),
   sub_matrix_size(new int[m->numDim]),
@@ -927,6 +928,7 @@ Matrix<T>::sliding_window::sliding_window(Matrix<T> *m,
 
 template <typename T>
 Matrix<T>::sliding_window::sliding_window(const sliding_window &other) :
+  Referenced(),
   m(other.m),
   offset(new int[m->numDim]),
   sub_matrix_size(new int[m->numDim]),
