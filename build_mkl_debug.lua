@@ -19,6 +19,7 @@ luapkg{
       "-msse",
       "-pg",
       "-DNO_POOL",
+      "-fopenmp",
     },
     extra_libs={
       "-pg",

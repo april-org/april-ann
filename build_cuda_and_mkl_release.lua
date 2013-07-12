@@ -19,6 +19,7 @@ luapkg{
       "-march=native",
       "-msse",
       "-DNDEBUG",
+      "-fopenmp",
       -- For CUDA
       "-I/usr/local/cuda/include",
       "-L/usr/local/cuda/lib",
