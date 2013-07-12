@@ -341,4 +341,40 @@ void applyFunctionWithSpanIteratorNOPARALLEL(MATRIX *m,
   }
 }
 
+// Idem but for binary functions (needs two matrices, and two
+// best_span_iterators), NO OMP
+template<typename FUNC, typename MATRIX1, typename MATRIX2>
+void applyBinaryFunctionWithSpanIteratorNOPARALLEL(MATRIX1 *m1,
+						   MATRIX2 *m2,
+						   const FUNC &functor) {
+  if (m1->getIsContiguous() && m2->getIsContiguous())
+    functor(m1, m2,
+	    static_cast<unsigned int>(m1->size()), 1, 1,
+	    static_cast<unsigned int>(m1->getOffset()),
+	    static_cast<unsigned int>(m2->getOffset()));
+  else if (m1->getNumDim() == 1)
+    functor(m1, m2,
+	    static_cast<unsigned int>(m1->size()),
+	    static_cast<unsigned int>(m1->getStrideSize(0)),
+	    static_cast<unsigned int>(m2->getStrideSize(0)),
+	    static_cast<unsigned int>(m1->getOffset()),
+	    static_cast<unsigned int>(m2->getOffset()));
+  else {
+    MatrixFloat::best_span_iterator span_it1(m1), span_it2(m2);
+    const int N = span_it1.numberOfIterations();
+    unsigned int size    = static_cast<unsigned int>(span_it1.getSize());
+    unsigned int stride1 = static_cast<unsigned int>(span_it1.getStride());
+    unsigned int stride2 = static_cast<unsigned int>(span_it2.getStride());
+    assert(N == span_it2.numberOfIterations());
+    assert(size == static_cast<unsigned int>(span_it2.getSize()));
+    while(span_it1 != m1->end_span_iterator()) {
+      functor(m1, m2, size, stride1, stride2,
+	      static_cast<unsigned int>(span_it1.getOffset()),
+	      static_cast<unsigned int>(span_it2.getOffset()));
+      ++span_it1;
+      ++span_it2;
+    }
+  }
+}
+
 #endif // MATRIXFLOAT_MATH_TEMPLATES_H

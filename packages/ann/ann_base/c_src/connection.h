@@ -129,8 +129,6 @@ namespace ANN {
     unsigned int getNumWeights() const {
       return static_cast<unsigned int>(weights->size());
     }
-    
-    void scale(float alpha);
 
     void printDebug();
 
