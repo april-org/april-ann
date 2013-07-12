@@ -26,16 +26,25 @@
 #include "matrix.h"
 #include "matrixFloat.h"
 
+#define DEFAULT_N_TH 100
+#define DEFAULT_SIZE_TH 100
+
+// FIXME: for unknow reason this threshold reduces efficiency of neural
+// networks, so it is set large enough to never be used
+#define DEFAULT_CONTIGUOUS_TH 10000000
+
 // Auxiliary function template which applies a given FUNC object ( implements
 // operator() ) to all the elements of a Matrix, using the best_span_iterator,
 // and OMP if needed.
 template<typename FUNC, typename MATRIX>
 void applyFunctionWithSpanIterator(MATRIX *m,
 				   const FUNC &functor,
-				   const int N_th = 50,
-				   const unsigned int SIZE_th = 50) {
+				   const int N_th = DEFAULT_N_TH,
+				   const unsigned int SIZE_th = DEFAULT_SIZE_TH,
+				   const unsigned int CONTIGUOUS_th = DEFAULT_CONTIGUOUS_TH) {
   // Contiguous memory block
-  if (m->getIsContiguous() && static_cast<unsigned int>(m->size()) < SIZE_th)
+  if (m->getIsContiguous() &&
+      static_cast<unsigned int>(m->size()) < CONTIGUOUS_th)
     functor(m, static_cast<unsigned int>(m->size()), 1,
 	    static_cast<unsigned int>(m->getOffset()));
   // One dimension
@@ -80,10 +89,11 @@ template<typename FUNC, typename MATRIX1, typename MATRIX2>
 void applyBinaryFunctionWithSpanIterator(MATRIX1 *m1,
 					 MATRIX2 *m2,
 					 const FUNC &functor,
-					 const int N_th = 50,
-					 const unsigned int SIZE_th = 50) {
+					 const int N_th = DEFAULT_N_TH,
+					 const unsigned int SIZE_th = DEFAULT_SIZE_TH,
+					 const unsigned int CONTIGUOUS_th = DEFAULT_CONTIGUOUS_TH) {
   if (m1->getIsContiguous() && m2->getIsContiguous() &&
-      static_cast<unsigned int>(m1->size()) < SIZE_th)
+      static_cast<unsigned int>(m1->size()) < CONTIGUOUS_th)
     functor(m1, m2,
 	    static_cast<unsigned int>(m1->size()), 1, 1,
 	    static_cast<unsigned int>(m1->getOffset()),
@@ -141,10 +151,12 @@ void applyBinaryFunctionWithSpanIterator(MATRIX1 *m1,
 template<typename FUNC, typename MATRIX>
 float applySumReductionWithSpanIterator(MATRIX *m,
 					const FUNC &functor,
-					const int N_th = 50,
-					const unsigned int SIZE_th = 50) {
+					const int N_th = DEFAULT_N_TH,
+					const unsigned int SIZE_th = DEFAULT_SIZE_TH,
+					const unsigned int CONTIGUOUS_th = DEFAULT_CONTIGUOUS_TH) {
   // Contiguous memory block
-  if (m->getIsContiguous() && static_cast<unsigned int>(m->size()) < SIZE_th)
+  if (m->getIsContiguous() &&
+      static_cast<unsigned int>(m->size()) < CONTIGUOUS_th)
     return functor(m, static_cast<unsigned int>(m->size()), 1,
 		   static_cast<unsigned int>(m->getOffset()));
   // One dimension
@@ -192,10 +204,11 @@ template<typename FUNC, typename MATRIX1, typename MATRIX2>
 bool applyBinaryAndReductionWithSpanIterator(MATRIX1 *m1,
 					     MATRIX2 *m2,
 					     const FUNC &functor,
-					     const int N_th = 50,
-					     const unsigned int SIZE_th = 50) {
-  if (m1->getIsContiguous() && m2->getIsContiguous() &&
-      static_cast<unsigned int>(m1->size()) < SIZE_th)
+					     const int N_th = DEFAULT_N_TH,
+					     const unsigned int SIZE_th = DEFAULT_SIZE_TH,
+					     const unsigned int CONTIGUOUS_th = DEFAULT_CONTIGUOUS_TH) {
+ if (m1->getIsContiguous() && m2->getIsContiguous()
+     && static_cast<unsigned int>(m1->size()) < CONTIGUOUS_th)
     return functor(m1, m2,
 		   static_cast<unsigned int>(m1->size()), 1, 1,
 		   static_cast<unsigned int>(m1->getOffset()),
