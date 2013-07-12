@@ -19,10 +19,11 @@ luapkg{
       "-march=native",
       "-msse",
       "-pg",
+      "-fopenmp",
+      "-DNO_POOL",
       -- For CUDA
       "-I/usr/local/cuda/include",
       "-L/usr/local/cuda/lib",
-      "-DNO_POOL",
     },
     extra_libs={
       "-pg",
