@@ -21,7 +21,9 @@
 #ifndef MATRIXFLOAT_MATH_TEMPLATES_H
 #define MATRIXFLOAT_MATH_TEMPLATES_H
 
+#ifndef NO_OMP
 #include <omp.h>
+#endif
 #include "omp_utils.h"
 #include "matrix.h"
 #include "matrixFloat.h"
@@ -59,6 +61,7 @@ void applyFunctionWithSpanIterator(MATRIX *m,
     // to PPAL or viceversa (if needed), avoiding race conditions on the following
     functor(m, size, stride, static_cast<unsigned int>(span_it.getOffset()));
     if (N > 1) {
+#ifndef NO_OMP
       // this if controls the execution using OMP only when the number of threads
       // is more than 1 and the iterator size is big enough
       if (omp_utils::get_num_threads() > 1 && N > N_th && size > SIZE_th) {
@@ -69,13 +72,16 @@ void applyFunctionWithSpanIterator(MATRIX *m,
 	}
       }
       else {
+#endif
 	// sequential code, with less overhead when updating iterator
 	++span_it;
 	do {
 	  functor(m, size, stride, static_cast<unsigned int>(span_it.getOffset()));
 	  ++span_it;
 	} while(span_it != m->end_span_iterator());
+#ifndef NO_OMP
       }
+#endif
     }
   }
 }
@@ -116,6 +122,7 @@ void applyBinaryFunctionWithSpanIterator(MATRIX1 *m1,
 	    static_cast<unsigned int>(span_it1.getOffset()),
 	    static_cast<unsigned int>(span_it2.getOffset()));
     if (N > 1) {
+#ifndef NO_OMP
       // this if controls the execution using OMP only when the number of threads
       // is more than 1 and the iterator size is big enough
       if (omp_utils::get_num_threads() > 1 && N > N_th && size > SIZE_th) {
@@ -129,6 +136,7 @@ void applyBinaryFunctionWithSpanIterator(MATRIX1 *m1,
 	}
       }
       else {
+#endif
 	// sequential code, with less overhead when updating iterator
 	++span_it1;
 	++span_it2;
@@ -139,7 +147,9 @@ void applyBinaryFunctionWithSpanIterator(MATRIX1 *m1,
 	  ++span_it1;
 	  ++span_it2;
 	} while(span_it1 != m1->end_span_iterator());
+#ifndef NO_OMP
       }
+#endif
     }
   }
 }
@@ -172,6 +182,7 @@ float applySumReductionWithSpanIterator(MATRIX *m,
     // to PPAL or viceversa (if needed), avoiding race conditions on the following
     sum = functor(m, size, stride, static_cast<unsigned int>(span_it.getOffset()));
     if (N > 1) {
+#ifndef NO_OMP
       // this if controls the execution using OMP only when the number of threads
       // is more than 1 and the iterator size is big enough
       if (omp_utils::get_num_threads() > 1 && N > N_th && size > SIZE_th) {
@@ -183,6 +194,7 @@ float applySumReductionWithSpanIterator(MATRIX *m,
 	}
       }
       else {
+#endif
 	// sequential code, with less overhead when updating iterator
 	++span_it;
 	do {
@@ -190,7 +202,9 @@ float applySumReductionWithSpanIterator(MATRIX *m,
 			 static_cast<unsigned int>(span_it.getOffset()));
 	  ++span_it;
 	} while(span_it != m->end_span_iterator());
+#ifndef NO_OMP
       }
+#endif
     }
     return sum;
   }
@@ -231,6 +245,7 @@ bool applyBinaryAndReductionWithSpanIterator(MATRIX1 *m1,
 		       static_cast<unsigned int>(span_it1.getOffset()),
 		       static_cast<unsigned int>(span_it2.getOffset()));
     if (ret && N > 1) {
+#ifndef NO_OMP
       // this if controls the execution using OMP only when the number of threads
       // is more than 1 and the iterator size is big enough
       if (omp_utils::get_num_threads() > 1 && N > N_th && size > SIZE_th) {
@@ -244,6 +259,7 @@ bool applyBinaryAndReductionWithSpanIterator(MATRIX1 *m1,
 	}
       }
       else {
+#endif
 	// sequential code, with less overhead when updating iterator
 	++span_it1;
 	++span_it2;
@@ -254,7 +270,9 @@ bool applyBinaryAndReductionWithSpanIterator(MATRIX1 *m1,
 	  ++span_it1;
 	  ++span_it2;
 	} while(ret && span_it1 != m1->end_span_iterator());
+#ifndef NO_OMP
       }
+#endif
     }
     return ret;
   }

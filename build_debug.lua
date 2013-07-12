@@ -13,6 +13,7 @@ luapkg{
     extra_flags={
       "-pg",
       "-DNO_POOL",
+      "-fopenmp",
     },
     extra_libs={
       "-pg",

@@ -28,7 +28,6 @@ package{ name = "util",
        file = "c_src/*.cc",
        dest_dir = "build",
        --       flags = "-std=c99",
-       flags = "-fopenmp",
      },
      luac{
        orig_dir = "lua_src",

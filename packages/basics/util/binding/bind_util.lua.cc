@@ -26,7 +26,9 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <unistd.h>
+#ifndef NO_OMP
 #include <omp.h>
+#endif
 #include "omp_utils.h"
 
 // copy paste de lualib.c
@@ -57,10 +59,12 @@ using namespace april_utils;
 
 //BIND_FUNCTION util.omp_set_num_threads
 {
+#ifndef NO_OMP
   int n;
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_GET_PARAMETER(1, int, n);
   omp_set_num_threads(n);
+#endif
 }
 //BIND_END
 

@@ -27,7 +27,6 @@ package{ name = "math",
      object{ 
        file = "c_src/*.cc",
        dest_dir = "build",
-       flags = "-fopenmp",
      },
      object{ 
        file = "c_src/*.cu",
