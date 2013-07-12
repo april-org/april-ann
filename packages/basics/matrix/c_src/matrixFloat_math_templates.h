@@ -28,10 +28,7 @@
 
 #define DEFAULT_N_TH 100
 #define DEFAULT_SIZE_TH 100
-
-// FIXME: for unknow reason this threshold reduces efficiency of neural
-// networks, so it is set large enough to never be used
-#define DEFAULT_CONTIGUOUS_TH 10000000
+#define DEFAULT_CONTIGUOUS_TH 200
 
 // Auxiliary function template which applies a given FUNC object ( implements
 // operator() ) to all the elements of a Matrix, using the best_span_iterator,
@@ -266,10 +263,10 @@ bool applyBinaryAndReductionWithSpanIterator(MATRIX1 *m1,
 // Similar to previous functions, but for general reduction operations (without
 // OMP)
 template<typename T, typename MATRIX, typename FUNC1, typename FUNC2>
-T applyReductionWithSpanIterator(MATRIX *m,
-				 FUNC1 &functor,
-				 FUNC2 &reductor,
-				 const T initial_value) {
+T applyReductionWithSpanIteratorNOPARALLEL(MATRIX *m,
+					   FUNC1 &functor,
+					   FUNC2 &reductor,
+					   const T initial_value) {
   // Contiguous memory block
   if (m->getIsContiguous())
     return reductor(initial_value,
@@ -296,6 +293,33 @@ T applyReductionWithSpanIterator(MATRIX *m,
       ++span_it;
     }
     return red;
+  }
+}
+
+// Auxiliary function template which applies a given FUNC object ( implements
+// operator() ) to all the elements of a Matrix, using the best_span_iterator,
+// WITHOUT OMP
+template<typename FUNC, typename MATRIX>
+void applyFunctionWithSpanIteratorNOPARALLEL(MATRIX *m,
+					     const FUNC &functor) {
+  // Contiguous memory block
+  if (m->getIsContiguous())
+    functor(m, static_cast<unsigned int>(m->size()), 1,
+	    static_cast<unsigned int>(m->getOffset()));
+  // One dimension
+  else if (m->getNumDim() == 1)
+    functor(m, static_cast<unsigned int>(m->size()),
+	    static_cast<unsigned int>(m->getStrideSize(0)),
+	    static_cast<unsigned int>(m->getOffset()));
+  // General case
+  else {
+    MatrixFloat::best_span_iterator span_it(m);
+    unsigned int size   = static_cast<unsigned int>(span_it.getSize());
+    unsigned int stride = static_cast<unsigned int>(span_it.getStride());
+    while(span_it != m->end_span_iterator()) {
+      functor(m, size, stride, static_cast<unsigned int>(span_it.getOffset()));
+      ++span_it;
+    }
   }
 }
 

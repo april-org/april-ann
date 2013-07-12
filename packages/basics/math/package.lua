@@ -27,10 +27,12 @@ package{ name = "math",
      object{ 
        file = "c_src/*.cc",
        dest_dir = "build",
+       flags = "-fopenmp",
      },
      object{ 
        file = "c_src/*.cu",
        dest_dir = "build",
+       flags = "-fopenmp",
      },
      luac{
        orig_dir = "lua_src",

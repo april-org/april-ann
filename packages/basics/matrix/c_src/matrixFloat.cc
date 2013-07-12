@@ -266,7 +266,7 @@ void Matrix<float>::copy(const Matrix<float> *other) {
     ERROR_EXIT(128, "Matrices with different dimension sizes\n");
   use_cuda = other->use_cuda;
   copy_functor functor;
-  applyBinaryFunctionWithSpanIterator(this, other, functor); //, 200, 200);
+  applyBinaryFunctionWithSpanIterator(this, other, functor);
 }
 
 struct axpy_functor {
@@ -411,7 +411,8 @@ float Matrix<float>::dot(const Matrix<float> *other) const {
 /********** SCAL FUNCTION ***************/
 template<>
 void Matrix<float>::scal(float value) {
-  applyFunctionWithSpanIterator(this, make_cwise_functor_1(value, doSscal));
+  applyFunctionWithSpanIterator(this,
+				make_cwise_functor_1(value, doSscal));
 }
 
 /********** NORM2 FUNCTION ***************/
@@ -441,10 +442,10 @@ float Matrix<float>::norm2() const {
   else {
     norm2_functor  functor;
     norm2_reductor reductor;
-    v = applyReductionWithSpanIterator(this,
-				       functor,
-				       reductor,
-				       0.0f);
+    v = applyReductionWithSpanIteratorNOPARALLEL(this,
+						 functor,
+						 reductor,
+						 0.0f);
     v = sqrtf(v);
   }
   return v;
