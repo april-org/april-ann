@@ -56,7 +56,7 @@ void applyFunctionWithSpanIterator(MATRIX *m,
       // this if controls the execution using OMP only when the number of threads
       // is more than 1 and the iterator size is big enough
       if (omp_utils::get_num_threads() > 1 && N > N_th && size > SIZE_th) {
-#pragma omp parallel for firstprivate(span_it) firstprivate(N)
+#pragma omp parallel for firstprivate(span_it)
 	for (int i=1; i<N; ++i) {
 	  span_it.setAtIteration(i);
 	  functor(m, size, stride, static_cast<unsigned int>(span_it.getOffset()));
@@ -111,7 +111,7 @@ void applyBinaryFunctionWithSpanIterator(MATRIX1 *m1,
       // this if controls the execution using OMP only when the number of threads
       // is more than 1 and the iterator size is big enough
       if (omp_utils::get_num_threads() > 1 && N > N_th && size > SIZE_th) {
-#pragma omp parallel for firstprivate(span_it1) firstprivate(span_it2) firstprivate(N)
+#pragma omp parallel for firstprivate(span_it1) firstprivate(span_it2)
 	for (int i=1; i<N; ++i) {
 	  span_it1.setAtIteration(i);
 	  span_it2.setAtIteration(i);
@@ -165,7 +165,7 @@ float applySumReductionWithSpanIterator(MATRIX *m,
       // this if controls the execution using OMP only when the number of threads
       // is more than 1 and the iterator size is big enough
       if (omp_utils::get_num_threads() > 1 && N > N_th && size > SIZE_th) {
-#pragma omp parallel for reduction(+:sum) firstprivate(span_it) firstprivate(N)
+#pragma omp parallel for reduction(+:sum) firstprivate(span_it)
 	for (int i=1; i<N; ++i) {
 	  span_it.setAtIteration(i);
 	  sum += functor(m, size, stride,
@@ -222,7 +222,7 @@ bool applyBinaryAndReductionWithSpanIterator(MATRIX1 *m1,
       // this if controls the execution using OMP only when the number of threads
       // is more than 1 and the iterator size is big enough
       if (omp_utils::get_num_threads() > 1 && N > N_th && size > SIZE_th) {
-#pragma omp parallel for reduction(&&:ret) firstprivate(span_it1) firstprivate(span_it2) firstprivate(N)
+#pragma omp parallel for reduction(&&:ret) firstprivate(span_it1) firstprivate(span_it2)
 	for (int i=1; i<N; ++i) {
 	  span_it1.setAtIteration(i);
 	  span_it2.setAtIteration(i);
