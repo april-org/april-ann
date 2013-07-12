@@ -266,7 +266,7 @@ void Matrix<float>::copy(const Matrix<float> *other) {
     ERROR_EXIT(128, "Matrices with different dimension sizes\n");
   use_cuda = other->use_cuda;
   copy_functor functor;
-  applyBinaryFunctionWithSpanIterator(this, other, functor);
+  applyBinaryFunctionWithSpanIterator(this, other, functor); //, 200, 200);
 }
 
 struct axpy_functor {

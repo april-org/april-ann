@@ -39,6 +39,7 @@
 
 template <typename T>
 class Matrix : public Referenced {
+  enum matrix_contiguous_enum_t { NONE=0, CONTIGUOUS=1, NONCONTIGUOUS=2 };
 protected:
   /// Number of dimensions
   int numDim;
@@ -57,6 +58,8 @@ protected:
   CBLAS_ORDER major_order;
   /// For CUDA purposes
   bool use_cuda;
+  /// To know if it is contiguous
+  mutable matrix_contiguous_enum_t is_contiguous;
   
   /// Constructor... -> Integer array with the size of each dimension
   /*
@@ -336,7 +339,7 @@ private:
   const best_span_iterator end_best_span_iterator;
   
   // NULL constructor
-  Matrix() { }
+  Matrix() : is_contiguous(NONE) { }
   //
   Matrix(int numDim, const int *stride, const int offset,
 	 const int *matrixSize, const int total_size, const int last_raw_pos,
