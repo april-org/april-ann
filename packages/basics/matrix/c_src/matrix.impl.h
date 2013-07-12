@@ -88,7 +88,7 @@ Matrix<T>::Matrix(int numDim,
 				offset(offset),
 				major_order(major_order),
 				use_cuda(false),
-				is_contiguous(NONE) {
+				is_contiguous(CONTIGUOUS) {
   /*
     if (major_order == CblasColMajor && numDim > 2)
     ERROR_EXIT(128, "ColMajor order is only allowed when numDim<=2\n");
@@ -114,7 +114,7 @@ Matrix<T>::Matrix(Matrix<T> *other,
 				offset(0),
 				major_order(other->major_order),
 				use_cuda(other->use_cuda),
-				is_contiguous(other->is_contiguous) {
+				is_contiguous(NONE) {
   for (int i=0; i<numDim; i++) {
     if (sizes[i] + coords[i] > other->matrixSize[i])
       ERROR_EXIT3(128, "Size+coordinates are out of dimension size: %d+%d>%d\n",
@@ -123,6 +123,7 @@ Matrix<T>::Matrix(Matrix<T> *other,
   stride     = new int[numDim];
   matrixSize = new int[numDim];
   if (clone) {
+    is_contiguous = CONTIGUOUS;
     initialize(sizes);
     allocate_memory(total_size);
     int other_raw_pos = other->computeRawPos(coords);
@@ -170,7 +171,7 @@ template <typename T>
 Matrix<T>::Matrix(int numDim, int d1, ...) : numDim(numDim),
 					     offset(0),
 					     major_order(CblasRowMajor),
-					     is_contiguous(NONE) {
+					     is_contiguous(CONTIGUOUS) {
   int *dim   = new int[numDim];
   stride     = new int[numDim];
   matrixSize = new int[numDim];
@@ -203,6 +204,7 @@ Matrix<T>::Matrix(Matrix<T> *other, bool clone) : numDim(other->numDim),
     initialize(other->matrixSize);
     allocate_memory(total_size);
     copy(other);
+    is_contiguous = CONTIGUOUS;
   }
   else {
     offset       = other->offset;
@@ -680,7 +682,7 @@ void Matrix<T>::computeCoords(const int raw_pos, int *coords) const {
 
 template <typename T>
 bool Matrix<T>::getIsContiguous() const {
-  if (is_contiguous != NONE) return is_contiguous==CONTIGUOUS;
+  if (is_contiguous != NONE) return (is_contiguous==CONTIGUOUS);
   if (major_order == CblasRowMajor) {
     int aux = 1;
     for (int i=numDim-1; i>=0; --i) {
