@@ -62,7 +62,9 @@ namespace ANN {
     IncRef(bias_matrix_2d);
     for (int b=0; b<output_dims[0]; ++b) {
       MatrixFloat *dest = bias_matrix_2d->select(0, b);
+      IncRef(dest);
       dest->copy(bias_vec);
+      DecRef(dest);
     }
     MatrixFloat *bias_matrix = bias_matrix_2d->rewrap(bias_rewrap,
 						      input_num_dims + 2);
