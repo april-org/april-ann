@@ -30,7 +30,6 @@
 #include "aux_hash_table.h" // required for build
 #include "hash_table.h"     // required for build
 #include "matrixFloat.h"
-#include "gpu_helper.h"
 
 using april_utils::hash;    // required for build
 using april_utils::string;
@@ -154,7 +153,6 @@ namespace ANN {
     /// method must call parent method before do anything.
     virtual void setUseCuda(bool v) {
 #ifdef USE_CUDA
-      GPUHelper::initHelper();
       use_cuda = v;
 #else
       ERROR_PRINT("WARNING!!! Trying to set use_cuda=true with NON "
@@ -162,6 +160,8 @@ namespace ANN {
       use_cuda = false; // always false in this case
 #endif
     }
+    
+    bool getUseCuda() const { return use_cuda; }
     
     /// Virtual method for setting the value of a training parameter.
     virtual void setOption(const char *name, double value) {

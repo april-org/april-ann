@@ -104,6 +104,9 @@ Matrix<float>* Matrix<float>::multiply(const Matrix<float> *other) const {
       // OUTER product
       int dim[2] = {getVectorSize(),other->getVectorSize()};
       resul = new Matrix<float>(2, dim, major_order);
+#ifdef USE_CUDA
+      resul->setUseCuda(use_cuda);
+#endif
       resul->zeros();
       resul->ger(1.0f, this, other);
     }
@@ -111,6 +114,9 @@ Matrix<float>* Matrix<float>::multiply(const Matrix<float> *other) const {
       // Matrix-Vector product
       int dim[2] = {matrixSize[0],1};
       resul = new Matrix<float>(other->numDim, dim, major_order);
+#ifdef USE_CUDA
+      resul->setUseCuda(use_cuda);
+#endif
       resul->zeros();
       resul->gemv(CblasNoTrans,
 		  1.0f, this, other,
@@ -120,6 +126,9 @@ Matrix<float>* Matrix<float>::multiply(const Matrix<float> *other) const {
       // DOT product
       int dim[1] = {1};
       resul = new Matrix<float>(1, dim, major_order);
+#ifdef USE_CUDA
+      resul->setUseCuda(use_cuda);
+#endif
       (*resul)(0) = this->dot(other);
     }
   }
@@ -128,6 +137,9 @@ Matrix<float>* Matrix<float>::multiply(const Matrix<float> *other) const {
     // Matrix-Matrix product
     int dim[2] = {matrixSize[0], other->matrixSize[1]};
     resul = new Matrix<float>(2,dim,major_order);
+#ifdef USE_CUDA
+      resul->setUseCuda(use_cuda);
+#endif
     resul->zeros();
     resul->gemm(CblasNoTrans, CblasNoTrans,
 		1.0f, this, other, 0.0f);
@@ -229,6 +241,9 @@ Matrix<float> *Matrix<float>::cmul(const Matrix<float> *other) {
   if (!getIsContiguous() || !other->getIsContiguous())
     ERROR_EXIT(128, "Only allowed for contiguous matrices\n");
   Matrix<float> *new_mat = new Matrix(1, &total_size, major_order);
+#ifdef USE_CUDA
+      new_mat->setUseCuda(use_cuda);
+#endif
   doSsbmv(major_order, CblasLower,
 	  total_size, 0,
 	  1.0f, data, 1,

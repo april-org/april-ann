@@ -795,16 +795,16 @@ bool doEquals(unsigned int N,
 #ifdef USE_CUDA
   if (use_gpu) {
     // TODO:
-    ERROR_EXIT(128, "CUDA VERSION NOT IMPLEMENTED\n");
+    ERROR_PRINT("CUDA VERSION NOT IMPLEMENTED\n");
   }
-  else {
+  // else {
 #endif
     const float *v1_mem = v1->getPPALForRead() + shift1;
     const float *v2_mem = v2->getPPALForRead() + shift2;
     for (unsigned int i=0; i<N && eq; ++i, v1_mem+=stride1, v2_mem+=stride2)
       eq = eq && ((fabsf(*v1_mem - *v2_mem) < epsilon));
 #ifdef USE_CUDA
-  }
+  //  }
 #endif
   return eq;
 }

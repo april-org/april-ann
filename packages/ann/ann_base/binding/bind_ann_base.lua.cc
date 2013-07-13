@@ -470,6 +470,13 @@ using namespace ANN;
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_GET_PARAMETER(1, bool, use_cuda);
   obj->setUseCuda(use_cuda);
+  LUABIND_RETURN(ANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD ANNComponent get_use_cuda
+{
+  LUABIND_RETURN(bool, obj->getUseCuda());
 }
 //BIND_END
 
@@ -732,6 +739,16 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD StackANNComponent set_use_cuda
+{
+  bool use_cuda;
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_GET_PARAMETER(1, bool, use_cuda);
+  obj->setUseCuda(use_cuda);
+  LUABIND_RETURN(StackANNComponent, obj);
+}
+//BIND_END
+
 /////////////////////////////////////////////////////
 //               JoinANNComponent                  //
 /////////////////////////////////////////////////////
@@ -770,6 +787,16 @@ using namespace ANN;
 {
   LUABIND_RETURN(JoinANNComponent,
 		 dynamic_cast<JoinANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+//BIND_METHOD JoinANNComponent set_use_cuda
+{
+  bool use_cuda;
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_GET_PARAMETER(1, bool, use_cuda);
+  obj->setUseCuda(use_cuda);
+  LUABIND_RETURN(JoinANNComponent, obj);
 }
 //BIND_END
 
