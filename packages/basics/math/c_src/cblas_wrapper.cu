@@ -23,19 +23,9 @@
 #include "wrapper.h"
 #include "clamp.h"
 #include "ceiling_power_of_two.h"
+#include "cuda_utils.h"
 
 using april_utils::ceilingPowerOfTwo;
-
-#ifdef USE_CUDA
-cublasOperation_t getCublasOperation(CBLAS_TRANSPOSE operation) {
-  if (operation == CblasNoTrans)
-    return CUBLAS_OP_N;
-  else if (operation == CblasTrans)
-    return CUBLAS_OP_T;
-  else // operation == CblasConjTrans
-    return CUBLAS_OP_C;
-}
-#endif
 
 ///////////////////////////////////////////////////////////
 /////////////////// Kernels ///////////////////////////////
@@ -52,7 +42,7 @@ __global__ void sumVectorFirstReduction(const float *v,
   if (x_idx < size && x_idx < active_reduction) {
     unsigned int x_pos = x_idx * stride;
     unsigned int passive_index = (x_idx + active_reduction) * stride;
-    if (x_idx + active_reduction < max_x)
+    if (x_idx + active_reduction < size)
       sums[x_pos] = v[x_pos] + v[passive_index];
     else
       sums[x_pos] = v[x_pos];
@@ -67,9 +57,8 @@ __global__ void sumVectorNextReduction(float *sums,
   unsigned int active_reduction = reduction_top >> 1;
 
   if (x_idx < size && x_idx < active_reduction) {
-    unsigned int index = getMatrixIndex(matrix_x_pos, lda_x, matrix_y_pos);
-    unsigned int passive_index = getMatrixIndex((matrix_x_pos + active_reduction),
-						lda_x, matrix_y_pos);
+    unsigned int index = x_idx*stride;
+    unsigned int passive_index = (x_idx+active_reduction)*stride;
     sums[index] = sums[index] + sums[passive_index];
   }
 }
@@ -104,7 +93,7 @@ __global__ void fillKernel(float *v, unsigned int N, unsigned int stride,
     unsigned int x_idx = blockIdx.x * blockDim.x + threadIdx.x;		\
     if (x_idx < N) {							\
       float *aux = v + x_idx*stride;					\
-      *v = func(*v);							\
+      *aux = func(*aux);						\
     }									\
   }
 
@@ -122,7 +111,7 @@ CWISE_FUNC_KERNEL(tanhf);
     unsigned int x_idx = blockIdx.x * blockDim.x + threadIdx.x;		\
     if (x_idx < N) {							\
       float *aux = v + x_idx*stride;					\
-      *v = func(*v, value);						\
+      *aux = func(*aux, value);						\
     }									\
   }
 
@@ -623,7 +612,7 @@ float doSnrm2(unsigned int n,
     x_mem  = x->getGPUForRead() + shift;
     status = cublasSetStream(handle, GPUHelper::getCurrentStream());
     checkCublasError(status);
-    status = cublasSnrm(handle, n, x_mem, inc, &result);
+    status = cublasSnrm2(handle, n, x_mem, inc, &result);
     checkCublasError(status);
   }
   else {
@@ -657,12 +646,13 @@ void doSsbmv(CBLAS_ORDER major_type,
 
     status = cublasSetStream(handle, GPUHelper::getCurrentStream());
     checkCublasError(status);
-    
-    status = cublasSsbmv(handle, uplo,
+    cublasFillMode_t uplo_cublas = CUBLAS_FILL_MODE_UPPER;
+    if (uplo == CblasLower) uplo_cublas = CUBLAS_FILL_MODE_LOWER;
+    status = cublasSsbmv(handle, uplo_cublas,
 			 n, k,
-			 alpha, a_mem, a_lda,
+			 &alpha, a_mem, a_lda,
 			 x_mem, x_inc,
-			 beta, y_mem, y_inc);
+			 &beta, y_mem, y_inc);
     checkCublasError(status);
   }
   else {
@@ -740,7 +730,7 @@ float doSum(unsigned int N,
     FloatGPUMirroredMemoryBlock sums(N);
     const float *v_ptr           = v->getGPUForRead() + shift;
     float *sums_ptr              = sums.getGPUForWrite();
-    unsigned int units_top       = ceilingPowerOfTwo(size);
+    unsigned int units_top       = ceilingPowerOfTwo(N);
     unsigned int top_reduction   = units_top;
     dim3 block, grid;
     computeBlockAndGridSizesForAnArray(N, block, grid);

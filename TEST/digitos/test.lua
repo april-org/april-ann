@@ -76,6 +76,9 @@ thenet = ann.mlp.all_all.generate(description)
 thenet:set_option("learning_rate", learning_rate)
 thenet:set_option("momentum",      momentum)
 thenet:set_option("weight_decay",  weight_decay)
+if utils.is_cuda_available() then
+  thenet:set_use_cuda(true)
+end
 trainer = trainable.supervised_trainer(thenet,
 				       ann.loss.multi_class_cross_entropy(10),
 				       bunch_size)

@@ -116,8 +116,8 @@ __global__ void computeMAEGradientKernel(const float *output,
     float d = output[index] - target_output[index];
     if (fabsf(d) < zero_epsilon_distance) error_output[index] = 0.0f;
     else {
-      if (d < 0.0f) error_output_ptr[index] = -invN;
-      else error_output_ptr[index] = invN;
+      if (d < 0.0f) error_output[index] = -invN;
+      else error_output[index] = invN;
     }
   }
 }
@@ -162,7 +162,7 @@ __global__ void computeCrossEntropyLossFunctionKernel(const float *output,
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
     // compute derivative
     float  log_o     = output[index];
-    double o         = clip(exp(input_ptr[b]),
+    double o         = clip(exp(output[index]),
 			    double(epsilon),
 			    double(1.0f - epsilon));
     float  log_inv_o = (o< (1.0f-epsilon) ) ? log(1.0 - o) : log(epsilon);
@@ -249,7 +249,11 @@ float doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
        bunch_size,
        bunch_size,
        size);
-    float sum = cublasSasum(pattern_errors->getSize(), pattern_errors_ptr, 1);
+    cublasHandle_t handle = GPUHelper::getHandler();
+    float sum;
+    cublasSasum(handle,
+                static_cast<int>(pattern_errors->getSize()),
+                pattern_errors_ptr, 1, &sum);
     delete pattern_errors;
     return sum;
   }
@@ -285,7 +289,7 @@ void doComputeMSEGradient(FloatGPUMirroredMemoryBlock *input,
   if (use_gpu) {    
     const float *input_ptr  = input->getGPUForRead();
     const float *target_ptr = target->getGPUForRead();
-    float *error_output_ptr = error_output_ptr->getGPUForReadAndWrite();
+    float *error_output_ptr = error_output->getGPUForReadAndWrite();
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
@@ -343,7 +347,11 @@ float doMAELossFunction(FloatGPUMirroredMemoryBlock *input,
        bunch_size,
        bunch_size,
        size);
-    float sum = cublasSasum(pattern_errors->getSize(), pattern_errors_ptr, 1);
+    cublasHandle_t handle = GPUHelper::getHandler();
+    float sum;
+    cublasSasum(handle,
+                static_cast<int>(pattern_errors->getSize()),
+                pattern_errors_ptr, 1, &sum);
     delete pattern_errors;
     return sum;
   }
@@ -381,7 +389,7 @@ void doComputeMAEGradient(FloatGPUMirroredMemoryBlock *input,
   if (use_gpu) {    
     const float *input_ptr  = input->getGPUForRead();
     const float *target_ptr = target->getGPUForRead();
-    float *error_output_ptr = error_output_ptr->getGPUForReadAndWrite();
+    float *error_output_ptr = error_output->getGPUForReadAndWrite();
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
@@ -397,7 +405,7 @@ void doComputeMAEGradient(FloatGPUMirroredMemoryBlock *input,
   }
   else {
 #endif
-    float d = 0.0f, absd = 0.0f;
+    float d = 0.0f;
     const float *input_ptr  = input->getPPALForRead();
     const float *target_ptr = target->getPPALForRead();
     float *error_output_ptr = error_output->getPPALForReadAndWrite();
@@ -444,7 +452,11 @@ float doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
        bunch_size,
        bunch_size,
        size);
-    float sum = cublasSasum(pattern_errors->getSize(), pattern_errors_ptr, 1);
+    cublasHandle_t handle = GPUHelper::getHandler();
+    float sum;
+    cublasSasum(handle,
+                static_cast<int>(pattern_errors->getSize()),
+                pattern_errors_ptr, 1, &sum);
     delete pattern_errors;
     return sum;
   }
@@ -508,7 +520,11 @@ float doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
        bunch_size,
        bunch_size,
        size);
-    float sum = cublasSasum(pattern_errors->getSize(), pattern_errors_ptr, 1);
+    cublasHandle_t handle = GPUHelper::getHandler();
+    float sum;
+    cublasSasum(handle,
+                static_cast<int>(pattern_errors->getSize()),
+                pattern_errors_ptr, 1, &sum);
     delete pattern_errors;
     return sum;
   }
@@ -548,7 +564,7 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
   if (use_gpu) {    
     const float *input_ptr  = input->getGPUForRead();
     const float *target_ptr = target->getGPUForRead();
-    float *error_output_ptr = error_output_ptr->getGPUForReadAndWrite();
+    float *error_output_ptr = error_output->getGPUForReadAndWrite();
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
@@ -563,7 +579,6 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
   }
   else {
 #endif
-    float d = 0, sum=0;
     const float *input_ptr  = input->getPPALForRead();
     const float *target_ptr = target->getPPALForRead();
     float *error_output_ptr = error_output->getPPALForReadAndWrite();

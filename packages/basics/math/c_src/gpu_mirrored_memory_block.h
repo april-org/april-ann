@@ -80,20 +80,20 @@ class GPUMirroredMemoryBlock : public Referenced {
   bool getUpdatedGPU() const {
     return updated & 0x02;    // 0000 0010
   }
-  void unsetUpdatedPPAL() {
+  void unsetUpdatedPPAL() const {
     updated = updated & 0xFE; // 1111 1110
   }
-  void unsetUpdatedGPU() {
+  void unsetUpdatedGPU() const {
     updated = updated & 0xFD; // 1111 1101
   }
-  void setUpdatedPPAL() {
+  void setUpdatedPPAL() const {
     updated = updated | 0x01; // 0000 0001
   }
-  void setUpdatedGPU() {
+  void setUpdatedGPU() const {
     updated = updated | 0x02; // 0000 0010
   }
   
-  void updateMemPPAL() {
+  void updateMemPPAL() const {
     if (!getUpdatedPPAL()) {
       CUresult result;
       setUpdatedPPAL();
@@ -117,7 +117,7 @@ class GPUMirroredMemoryBlock : public Referenced {
     }
   }
 
-  void copyPPALtoGPU() {
+  void copyPPALtoGPU() const {
     CUresult result;
 
     if (!pinned) {
@@ -137,7 +137,7 @@ class GPUMirroredMemoryBlock : public Referenced {
     }
   }
 
-  bool allocMemGPU() {
+  bool allocMemGPU() const {
     if (mem_gpu == 0) {
       CUresult result;
       result = cuMemAlloc(&mem_gpu, sizeof(T)*size);
@@ -148,7 +148,7 @@ class GPUMirroredMemoryBlock : public Referenced {
     return false;
   }
   
-  void updateMemGPU() {
+  void updateMemGPU() const {
     if (!getUpdatedGPU()) {
       allocMemGPU();
       setUpdatedGPU();

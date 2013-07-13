@@ -106,7 +106,7 @@ namespace ANN {
       AssignRef(error_input,new TokenMatrixFloat(error_input_mat));
     }
 #ifdef USE_CUDA
-    input_mat->setUseCuda(use_cuda);
+    error_input_mat->setUseCuda(use_cuda);
 #endif
     unsigned int bunch_size = error_input_mat->getDimSize(0);
     // new  output to fit the bunch

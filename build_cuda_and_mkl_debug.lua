@@ -19,7 +19,6 @@ luapkg{
       "-march=native",
       "-msse",
       "-pg",
-      "-fopenmp",
       "-DNO_POOL",
       -- For CUDA
       "-I/usr/local/cuda/include",

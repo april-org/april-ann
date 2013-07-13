@@ -210,7 +210,7 @@ namespace ANN {
     error_output_mat = new MatrixFloat(2, dims, CblasColMajor);
     AssignRef(error_output,new TokenMatrixFloat(error_output_mat));
 #ifdef USE_CUDA
-    output_mat->setUseCuda(use_cuda);
+    error_output_mat->setUseCuda(use_cuda);
 #endif      
     //
     MatrixFloat *weights_mat = weights_matrix->getPtr();
