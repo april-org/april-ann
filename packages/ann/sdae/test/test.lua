@@ -1,4 +1,4 @@
-m1 = ImageIO.read(string.get_path(arg[0]) ..  "/digits.png"):to_grayscale():invert_colors():matrix()
+m1 = ImageIO.read(string.get_path(arg[0]) ..  "digits.png"):to_grayscale():invert_colors():matrix()
 
 bunch_size = 8
 
