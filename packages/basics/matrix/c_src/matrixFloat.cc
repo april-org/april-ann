@@ -340,9 +340,17 @@ void Matrix<float>::gemm(CBLAS_TRANSPOSE trans_A,
     ERROR_EXIT(128, "Matrices with different major orders");
   
   int M=matrixSize[0], N=matrixSize[1], K=otherA->matrixSize[col_idx_A];
-  int lda=(major_order==CblasRowMajor)?otherA->stride[0]:otherA->stride[1];
-  int ldb=(major_order==CblasRowMajor)?otherB->stride[0]:otherB->stride[1];
-  int ldc=(major_order==CblasRowMajor)?stride[0]:stride[1];
+  int lda, ldb, ldc;
+  if (major_order == CblasRowMajor) {
+    lda = otherA->stride[0];
+    ldb = otherB->stride[0];
+    ldc = stride[0];
+  }
+  else {
+    lda = otherA->stride[1];
+    ldb = otherB->stride[1];
+    ldc = stride[1];
+  }
   doSgemm(major_order, trans_A, trans_B,
 	  M, N, K,
 	  alpha, otherA->data, lda,

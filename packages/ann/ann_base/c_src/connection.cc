@@ -123,6 +123,25 @@ namespace ANN {
     prev_weights->axpy(c_weight_decay, weights);
   }
 
+  void Connections::applyMaxNormPenalty(float max_norm_penalty) {
+    MatrixFloat::sliding_window window(weights, 0, 0, 0, 0, 0);
+    MatrixFloat::sliding_window window_prev(prev_weights, 0, 0, 0, 0, 0);
+    while(!window.isEnd()) {
+      MatrixFloat *submat = window.getMatrix();
+      float norm2 = submat->norm2();
+      if (norm2 > max_norm_penalty) {
+	MatrixFloat *submat_prev = window_prev.getMatrix();
+	float scal_factor = max_norm_penalty/norm2;
+	submat->scal(scal_factor);
+	submat_prev->scal(scal_factor);
+	delete submat_prev;
+      }
+      delete submat;
+      window.next();
+      window_prev.next();
+    }
+  }
+
   unsigned int Connections::size() const {
     return weights->size();
   }

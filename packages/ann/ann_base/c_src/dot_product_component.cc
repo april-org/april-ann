@@ -51,7 +51,7 @@ namespace ANN {
     weight_decay(0.0f),
     c_weight_decay(1.0f),
     max_norm_penalty(-1.0f) {
-    if (weights_name == 0) generateDefaultWeightsName("w");
+    if (weights_name == 0) generateDefaultWeightsName(this->weights_name, "w");
     this->transpose_weights = (transpose_weights) ? CblasTrans : CblasNoTrans;
   }
   
@@ -330,22 +330,8 @@ namespace ANN {
 	num_updates_from_last_prune = 0;
 	weights_matrix->pruneSubnormalAndCheckNormal();
       }
-      if (max_norm_penalty > 0.0) {
-	// we need to use the pointer because after endUpdate() method the
-	// pointers will be swapped or changed
-	weights_mat = weights_matrix->getPtr();
-	MatrixFloat::sliding_window window(weights_mat, 0, 0, 0, 0, 0);
-	while(!window.isEnd()) {
-	  MatrixFloat *submat = window.getMatrix();
-	  float norm2 = submat->norm2();
-	  if (norm2 > max_norm_penalty) {
-	    float scal_factor = max_norm_penalty/norm2;
-	    submat->scal(scal_factor);
-	  }
-	  delete submat;
-	  window.next();
-	}
-      } // if max_norm_penalty > 0.0
+      if (max_norm_penalty > 0.0)
+	weights_matrix->applyMaxNormPenalty(max_norm_penalty);
     }
   }
   

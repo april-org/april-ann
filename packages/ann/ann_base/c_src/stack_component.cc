@@ -148,9 +148,9 @@ namespace ANN {
 		  "%d != %d [%s]\n", output_size,
 		  components.back()->getOutputSize(), name.c_str());
     if (input_size  == 0 || output_size == 0)
-      ERROR_EXIT3(141, "Impossible to compute input/output "
-		  "sizes for this component input=%d output=%d [%s]\n",
-		  input_size, output_size, name.c_str());
+      ERROR_PRINT3("# WARNING: Impossible to compute input/output "
+		   "sizes for this component input=%d output=%d [%s]\n",
+		   input_size, output_size, name.c_str());
   }
   
   void StackANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
