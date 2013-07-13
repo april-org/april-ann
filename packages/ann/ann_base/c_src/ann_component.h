@@ -102,12 +102,13 @@ namespace ANN {
     
     bool getIsBuilt() const { return is_built; }
     
-    void generateDefaultWeightsName(const char *prefix=0) {
+    void generateDefaultWeightsName(string &dest,
+				    const char *prefix=0) {
       char str_id[MAX_NAME_STR+1];
       char default_prefix[2] = "w";
       if (prefix == 0) prefix = default_prefix;
       snprintf(str_id, MAX_NAME_STR, "%s%u", prefix, next_weights_id);
-      weights_name = string(str_id);
+      dest = string(str_id);
       ++next_weights_id;
     }
 

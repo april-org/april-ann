@@ -74,6 +74,7 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "rewrap_component.h"
 #include "gaussian_noise_component.h"
 #include "salt_and_pepper_component.h"
+#include "convolution_component.h"
 #include "activation_function_component.h"
 #include "connection.h"
 #include "activation_function_component.h"
@@ -239,12 +240,14 @@ using namespace ANN;
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, inf, float, inf, -1.0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, sup, float,  sup, 1.0);
   obj->randomizeWeights(rnd, inf, sup);
+  LUABIND_RETURN(Connections, obj);
 }
 //BIND_END
 
 //BIND_METHOD Connections print_debug
 {
   obj->printDebug();
+  LUABIND_RETURN(Connections, obj);
 }
 //BIND_END
 
@@ -966,6 +969,63 @@ using namespace ANN;
 {
   LUABIND_RETURN(SaltAndPepperANNComponent,
 		 dynamic_cast<SaltAndPepperANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//               ConvolutionANNComponent         //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME ConvolutionANNComponent ann.components.convolution
+//BIND_CPP_CLASS    ConvolutionANNComponent
+//BIND_SUBCLASS_OF  ConvolutionANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR ConvolutionANNComponent
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  const char *name=0, *weights=0, *bias=0;
+  int *kernel, *step, n;
+  check_table_fields(L, 1, "name", "weights", "bias", "kernel", "step", "n",
+		     (const char *)0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, bias, string, bias, 0);
+  LUABIND_GET_TABLE_PARAMETER(1, n, int, n);
+  //
+  lua_getfield(L, 1, "kernel");
+  if (!lua_istable(L, -1))
+    LUABIND_ERROR("Expected a table at field 'kernel'");
+  int size;
+  LUABIND_TABLE_GETN(-1, size);
+  kernel = new int[size];
+  step = new int[size];
+  LUABIND_TABLE_TO_VECTOR(-1, int, kernel, size);
+  lua_pop(L, 1);
+  //
+  lua_getfield(L, 1, "step");
+  if (lua_isnil(L, -1)) {
+    for (int i=0; i<size; ++i) step[i] = 1;
+  }
+  else if (!lua_istable(L, -1))
+    LUABIND_ERROR("Expected a table at field 'step'");
+  else {
+    int size2;
+    LUABIND_TABLE_GETN(-1, size2);
+    if (size != size2)
+      LUABIND_ERROR("Tables kernel and step must have the same length");
+    LUABIND_TABLE_TO_VECTOR(-1, int, step, size);
+  }
+  lua_pop(L, 1);
+  obj = new ConvolutionANNComponent(size, kernel, step, n, name, weights, bias);
+  LUABIND_RETURN(ConvolutionANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD ConvolutionANNComponent clone
+{
+  LUABIND_RETURN(ConvolutionANNComponent,
+		 dynamic_cast<ConvolutionANNComponent*>(obj->clone()));
 }
 //BIND_END
 

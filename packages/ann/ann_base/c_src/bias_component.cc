@@ -31,7 +31,7 @@ namespace ANN {
     input(0), output(0), error(0),
     bias_vector(0), num_updates_from_last_prune(0),
     learning_rate(-1.0f), momentum(0.0f) {
-    if (weights_name == 0) generateDefaultWeightsName("b");
+    if (weights_name == 0) generateDefaultWeightsName(this->weights_name, "b");
   }
 
   BiasANNComponent::~BiasANNComponent() {

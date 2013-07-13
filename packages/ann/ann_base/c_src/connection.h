@@ -97,6 +97,7 @@ namespace ANN {
 					     bool  use_cuda);
     void         computeWeightDecayOnPrevVector(float c_weight_decay,
 						bool  use_cuda);
+    void         applyMaxNormPenalty(float max_norm_penalty);
     void         copyToPrevVector(bool use_cuda);
     unsigned int size() const;
     void         pruneSubnormalAndCheckNormal();
