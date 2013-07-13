@@ -2,6 +2,45 @@ get_table_from_dotted_string("ann.mlp.all_all", true)
 
 ----------------------------------------------------------------------
 
+april_set_doc("ann.save",
+	      {
+		class="function",
+		summary="Saves a component with its weights",
+		params={
+		  "A component instance",
+		  "A filename string",
+		},
+	      })
+
+function ann.save(c, filename, format)
+  local format = format or "binary"
+  local f =  io.open(filename, "w")
+  f:write(string.format("return %s:build{ weights={\n %s\n}\n}\n",
+			c:to_lua_string(),
+			table.concat(table.linearize(table.map2(c:copy_weights(),
+								function(k,v)
+								  return string.format("[%q] = %s",
+										       k,
+										       v:to_lua_string())
+								end)), ",\n")))
+  f:close()
+end
+
+april_set_doc("ann.load",
+	      {
+		class="function",
+		summary="Loads a component and its weights, saved with ann.save",
+		params={
+		  "A filename string",
+		},
+	      })
+
+function ann.load(filename)
+  local _,_,c = dofile("jaja.net")
+  return c
+end
+----------------------------------------------------------------------
+
 april_set_doc("ann.mlp",
 	      {
 		class="namespace",
