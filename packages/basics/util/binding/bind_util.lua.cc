@@ -57,6 +57,16 @@ using namespace april_utils;
 
 //BIND_END
 
+//BIND_FUNCTION util.is_cuda_available
+{
+#ifdef USE_CUDA
+  LUABIND_RETURN(bool, true);
+#else
+  LUABIND_RETURN(bool, false);
+#endif
+}
+//BIND_END
+
 //BIND_FUNCTION util.omp_set_num_threads
 {
 #ifndef NO_OMP

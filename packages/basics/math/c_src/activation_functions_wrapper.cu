@@ -141,7 +141,7 @@ __global__ void tanhDerKernel(const float *output_units,
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
     float value = clip(output_units[index], -1.0f + NEAR_ZERO, 1.0f - NEAR_ZERO);
-    output_errors[index] = input_errors * 0.5f * (1.0f - (value * value));
+    output_errors[index] = input_errors[index] * 0.5f * (1.0f - (value * value));
   }
 }
 
@@ -253,6 +253,41 @@ __global__ void hardtanhDerKernel(const float *input_units,
     if (-1.0f < input_units[index] && input_units[index] < 1.0f)
       value = input_units[index];
     output_errors[index] = input_errors[index] * value;
+  }
+}
+
+__global__ void sinActKernel(const float *input_units,
+			     float *output_units,
+			     unsigned int max_x,
+			     unsigned int lda_x,
+			     unsigned int max_y) {
+  unsigned int matrix_x_pos, matrix_y_pos;
+  getColumnMajorBunchMatrixPositions(blockIdx,
+				     blockDim,
+				     threadIdx,
+				     matrix_x_pos,
+				     matrix_y_pos);
+  if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
+    unsigned int index  = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
+    output_units[index] = sinf(input_units[index]);
+  }
+}
+
+__global__ void sinDerKernel(const float *input_units,
+		             const float *input_errors,
+			     float *output_errors,
+			     unsigned int max_x,
+			     unsigned int lda_x,
+			     unsigned int max_y) {
+  unsigned int matrix_x_pos, matrix_y_pos;
+  getColumnMajorBunchMatrixPositions(blockIdx,
+				     blockDim,
+				     threadIdx,
+				     matrix_x_pos,
+				     matrix_y_pos);
+  if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
+    unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
+    output_errors[index] = input_errors[index] * cosf(input_units[index]);
   }
 }
 
@@ -461,7 +496,7 @@ void applyMask(FloatGPUMirroredMemoryBlock *units,
 #ifdef USE_CUDA
   if (use_gpu) {
     float *units_ptr = units->getGPUForWrite();
-    float *mask_ptr  = mask->getGPUForRead();
+    const float *mask_ptr  = mask->getGPUForRead();
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
@@ -492,8 +527,8 @@ void doApplyLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
 			       bool use_gpu) {
 #ifdef USE_CUDA
   if (use_gpu) {
-    const float *input_units_ptr = input_units_ptr->getGPUForRead();
-    float *output_units_ptr      = units->getGPUForWrite();
+    const float *input_units_ptr = input_units->getGPUForRead();
+    float *output_units_ptr      = output_units->getGPUForWrite();
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
@@ -502,7 +537,7 @@ void doApplyLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
        output_units_ptr,
        bunch_size,
        bunch_size,
-       units_size);
+       size);
   }
   else {
 #endif
@@ -531,7 +566,7 @@ void doMultiplyLogisticDerivatives(FloatGPUMirroredMemoryBlock *output_units,
   if (use_gpu) {
     const float *output_units_ptr = output_units->getGPUForRead();
     const float *input_errors_ptr = input_errors->getGPUForRead();
-    float *output_errors_ptr      = input_errors->getGPUForWrite();
+    float *output_errors_ptr      = output_errors->getGPUForWrite();
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
@@ -570,8 +605,8 @@ void doApplyLogLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
 				  bool use_gpu) {
 #ifdef USE_CUDA
   if (use_gpu) {
-    const float *input_units_ptr = input_units_ptr->getGPUForRead();
-    float *output_units_ptr      = units->getGPUForWrite();
+    const float *input_units_ptr = input_units->getGPUForRead();
+    float *output_units_ptr      = output_units->getGPUForWrite();
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
@@ -580,7 +615,7 @@ void doApplyLogLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
        output_units_ptr,
        bunch_size,
        bunch_size,
-       units_size);
+       size);
   }
   else {
 #endif
@@ -644,10 +679,9 @@ void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *output_units,
 			       bool use_gpu) {
 #ifdef USE_CUDA
   if (use_gpu) {
-    const float *input_units_ptr  = input_units->getGPUForRead();
     float *output_units_ptr       = output_units->getGPUForWrite();
     const float *input_errors_ptr = input_errors->getGPUForRead();
-    float *output_errors_ptr      = input_errors->getGPUForWrite();
+    float *output_errors_ptr      = output_errors->getGPUForWrite();
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
@@ -686,8 +720,8 @@ void doApplySoftsignActivation(FloatGPUMirroredMemoryBlock *input_units,
 			       bool use_gpu) {
 #ifdef USE_CUDA
   if (use_gpu) {
-    const float *input_units_ptr = units->getGPUForRead();
-    float *output_units_ptr      = units->getGPUForWrite();
+    const float *input_units_ptr = input_units->getGPUForRead();
+    float *output_units_ptr      = output_units->getGPUForWrite();
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
@@ -766,8 +800,8 @@ void doApplySoftplusActivation(FloatGPUMirroredMemoryBlock *input_units,
 			       bool use_gpu) {
 #ifdef USE_CUDA
   if (use_gpu) {
-    const float *input_units_ptr = units->getGPUForRead();
-    float *output_units_ptr      = units->getGPUForWrite();
+    const float *input_units_ptr = input_units->getGPUForRead();
+    float *output_units_ptr      = output_units->getGPUForWrite();
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
@@ -845,8 +879,8 @@ void doApplyHardtanhActivation(FloatGPUMirroredMemoryBlock *input_units,
 			       bool use_gpu) {
 #ifdef USE_CUDA
   if (use_gpu) {
-    const float *input_units_ptr = units->getGPUForRead();
-    float *output_units_ptr      = units->getGPUForWrite();
+    const float *input_units_ptr = input_units->getGPUForRead();
+    float *output_units_ptr      = output_units->getGPUForWrite();
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
@@ -926,8 +960,8 @@ void doApplySinActivation(FloatGPUMirroredMemoryBlock *input_units,
 			  bool use_gpu) {
 #ifdef USE_CUDA
   if (use_gpu) {
-    const float *input_units_ptr = units->getGPUForRead();
-    float *output_units_ptr      = units->getGPUForWrite();
+    const float *input_units_ptr = input_units->getGPUForRead();
+    float *output_units_ptr      = output_units->getGPUForWrite();
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);

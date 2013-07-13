@@ -22,12 +22,11 @@
 #ifndef _CUBLAS_HANDLER_H_
 #define _CUBLAS_HANDLER_H_
 
+#ifdef USE_CUDA
 #include "error_print.h"
 #include "cblas_headers.h"
 #include "vector.h"
 #include <cassert>
-using april_utils::vector;
-#ifdef USE_CUDA
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <cublas_v2.h>
@@ -38,7 +37,7 @@ class GPUHelper {
   static cudaDeviceProp properties;
   static CUdevice  device;
   static CUcontext context;
-  static vector<CUstream> streams;
+  static april_utils::vector<CUstream> streams;
   static unsigned int current_stream;
  public:
   static void initHelper() {
@@ -58,7 +57,7 @@ class GPUHelper {
       streams.push_back(0);
       current_stream = 0;
       fprintf(stderr,
-	      "# Initialized CUDA and CUBLAS for GPU capabilitites of %d.%d\n",
+	      "# Initialized CUDA and CUBLAS for GPU capabilitites of version %d.%d\n",
 	      properties.major, properties.minor);
     }
   }
