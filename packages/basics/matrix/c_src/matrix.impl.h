@@ -240,6 +240,9 @@ Matrix<T> *Matrix<T>::rewrap(const int *new_dims, int len) {
     ERROR_EXIT2(128, "Incorrect size, expected %d, and found %d\n",
 		size(), new_size);
   Matrix<T> *obj = new Matrix<T>(len, new_dims, major_order, data, offset);
+#ifdef USE_CUDA
+  obj->setUseCuda(use_cuda);
+#endif
   return obj;
 }
 
@@ -248,6 +251,9 @@ Matrix<T> *Matrix<T>::transpose() const {
   int *aux_matrix_size = new int[numDim];
   for (int i=0; i<numDim; ++i) aux_matrix_size[i] = matrixSize[numDim-i-1];
   Matrix<T> *resul = new Matrix<T>(numDim, aux_matrix_size, major_order);
+#ifdef USE_CUDA
+  resul->setUseCuda(use_cuda);
+#endif
   const T *d = data->getPPALForRead();
   int *aux_coords = new int[numDim];
   for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
@@ -264,7 +270,9 @@ Matrix<T> *Matrix<T>::transpose() const {
 template <typename T>
 Matrix<T>* Matrix<T>::cloneOnlyDims() const {
   Matrix<T> *obj = new Matrix<T>(numDim, matrixSize, major_order);
+#ifdef USE_CUDA
   obj->setUseCuda(use_cuda);
+#endif
   return obj;
 }
 
@@ -273,6 +281,9 @@ Matrix<T> *Matrix<T>::clone(CBLAS_ORDER major_order) {
   Matrix<T> *resul;
   if (this->major_order != major_order) {
     resul = new Matrix<T>(numDim, matrixSize, major_order);
+#ifdef USE_CUDA
+    resul->setUseCuda(use_cuda);
+#endif
     iterator resul_it(resul->begin());
     const_iterator this_it(begin());
     while(resul_it != resul->end()) {

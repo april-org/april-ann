@@ -639,6 +639,12 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat get_use_cuda
+{
+  LUABIND_RETURN(bool, obj->getCudaFlag());
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat set_use_cuda
 {
   LUABIND_CHECK_ARGN(==, 1);
