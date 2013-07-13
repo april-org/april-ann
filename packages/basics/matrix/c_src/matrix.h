@@ -549,6 +549,8 @@ public:
   T min(int &arg_min) const;
   T max(int &arg_max) const;
   void minAndMax(T &min, T &max) const;
+
+  MatrixFloat *maxSelDim(const int dim) const;
   
 private:
   void allocate_memory(int size);

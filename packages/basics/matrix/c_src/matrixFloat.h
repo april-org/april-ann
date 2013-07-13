@@ -124,6 +124,9 @@ float Matrix<float>::max(int &arg_max) const;
 template<>
 void Matrix<float>::minAndMax(float &min, float &max) const;
 
+template <>
+MatrixFloat *Matrix<float>::maxSelDim(const int dim) const;
+
 template<>
 void Matrix<float>::adjustRange(float rmin, float rmax);
 

@@ -49,7 +49,7 @@ namespace ANN {
     int *kernel_dims;
     /// Step at each dim of the input, input_num_dims + 1
     int *kernel_step;
-    /// Step at each dim of the output, input_num_dims + 2
+    /// Size at each dim of the output, input_num_dims + 2
     int *output_dims; // first is BUNCH, second is number of output planes)
     // INPUT SLIDING WINDOW SECTION
     /// Size of the convolution window, input_num_dims + 1
