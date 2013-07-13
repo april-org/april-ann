@@ -229,7 +229,7 @@ void Matrix<T>::minAndMax(T &min, T &max) const {
 }
 
 template <typename T>
-MatrixFloat *Matrix<T>::maxSelDim(const int dim) const {
+Matrix<T> *Matrix<T>::maxSelDim(const int dim) const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return 0;
 }

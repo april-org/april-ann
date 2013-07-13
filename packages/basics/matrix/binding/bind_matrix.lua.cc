@@ -834,6 +834,16 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   }
 //BIND_END
 
+//BIND_METHOD MatrixFloat max_sel_dim
+  {
+    LUABIND_CHECK_ARGN(==, 1);
+    int dim;
+    LUABIND_GET_PARAMETER(1, int, dim);
+    MatrixFloat *resul = obj->maxSelDim(dim-1);
+    LUABIND_RETURN(MatrixFloat, resul);
+  }
+//BIND_END
+
 //BIND_METHOD MatrixFloat equals
 {
   MatrixFloat *other;
