@@ -1019,6 +1019,8 @@ using namespace ANN;
   lua_pop(L, 1);
   obj = new ConvolutionANNComponent(size, kernel, step, n, name, weights, bias);
   LUABIND_RETURN(ConvolutionANNComponent, obj);
+  delete[] kernel;
+  delete[] step;
 }
 //BIND_END
 
