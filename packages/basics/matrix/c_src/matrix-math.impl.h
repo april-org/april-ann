@@ -229,6 +229,12 @@ void Matrix<T>::minAndMax(T &min, T &max) const {
 }
 
 template <typename T>
+MatrixFloat *Matrix<T>::maxSelDim(const int dim) const {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  return 0;
+}
+
+template <typename T>
 void Matrix<T>::adjustRange(T rmin, T rmax) {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
