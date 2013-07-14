@@ -2,13 +2,14 @@
 bunch_size     = tonumber(arg[1]) or 64
 semilla        = 1234
 weights_random = random(semilla)
-inf            = -1
-sup            =  1
+inf            = -0.6
+sup            =  0.6
 shuffle_random = random(5678)
-learning_rate  = 0.04
+learning_rate  = 0.1
 momentum       = 0.1
-weight_decay   = 1e-05
+weight_decay   = 0 --1e-05
 max_epochs     = 100
+max_norm_penalty = 2
 
 --------------------------------------------------------------
 
@@ -58,22 +59,22 @@ val_output   = dataset.matrix(m2,
 
 thenet = ann.components.stack():
 push(ann.components.rewrap{ size={ 1, 16, 16 } }):
-push(ann.components.convolution{  weights="w", kernel={1, 4, 4}, n=10 }):
+push(ann.components.convolution{ name="t", weights="w", kernel={1, 3, 3}, n=20 }):
 -- push(ann.components.max_pooling{ kernel={1,7,7} }):
 push(ann.components.actf.hardtanh()):
-push(ann.components.convolution{ name="t", kernel={10, 10, 10}, n=10 }):
+push(ann.components.convolution{ kernel={20, 7, 7}, n=40 }):
 -- push(ann.components.max_pooling{ kernel={1,3,3} }):
 push(ann.components.actf.hardtanh{ name="actf1" }):
 push(ann.components.flatten()):
-push(ann.components.hyperplane{ input=((16-4-10+2)^2)*10, output= 200 }):
-push(ann.components.actf.tanh()):
-push(ann.components.hyperplane{ input=200, output= 10 }):
+push(ann.components.hyperplane{ input=((16-3-7+2)^2)*40, output= 1000 }):
+push(ann.components.actf.tanh{ name="actf2" }):
+push(ann.components.hyperplane{ input=1000, output= 10 }):
 push(ann.components.actf.log_softmax())
 
 thenet:set_option("learning_rate", learning_rate)
 thenet:set_option("momentum",      momentum)
 thenet:set_option("weight_decay",  weight_decay)
-thenet:set_option("max_norm_penalty",  4)
+thenet:set_option("max_norm_penalty",  max_norm_penalty)
 trainer = trainable.supervised_trainer(thenet,
 				       ann.loss.multi_class_cross_entropy(10),
 				       bunch_size)
@@ -83,7 +84,9 @@ trainer:randomize_weights{
   inf         = inf,
   sup         = sup,
   use_fanin   = true,
+  use_fanout  = true,
 }
+trainer:component("actf2"):set_option("dropout_factor", 0.5)
 
 -- datos para entrenar
 datosentrenar = {
@@ -131,6 +134,8 @@ for epoch = 1,max_epochs do
   errorval    = trainer:validate_dataset(datosvalidar)
   printf("%4d  %.7f %.7f\n",
   	 totalepocas,errortrain,errorval)
+  thenet:set_option("learning_rate",
+		    thenet:get_option("learning_rate")*0.95)
 end
 
 trainer:for_each_pattern{
@@ -153,7 +158,7 @@ trainer:for_each_pattern{
 w = trainer:weights("w"):matrix()
 local k=0
 for waux in w:sliding_window():iterate() do
-  matrix.saveImage(waux:scal(1/waux:norm2()):clone("row_major"):rewrap(4,4):adjust_range(0,1),
+  matrix.saveImage(waux:scal(1/waux:norm2()):clone("row_major"):rewrap(3,3):adjust_range(0,1),
 		   "KK-"..k..".pnm")
   k=k+1
 end
