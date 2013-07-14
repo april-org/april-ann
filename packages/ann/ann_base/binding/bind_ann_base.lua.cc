@@ -72,9 +72,11 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "copy_component.h"
 #include "select_component.h"
 #include "rewrap_component.h"
+#include "flatten_component.h"
 #include "gaussian_noise_component.h"
 #include "salt_and_pepper_component.h"
 #include "convolution_component.h"
+#include "maxpooling_component.h"
 #include "activation_function_component.h"
 #include "connection.h"
 #include "activation_function_component.h"
@@ -902,6 +904,36 @@ using namespace ANN;
 //BIND_END
 
 /////////////////////////////////////////////////////
+//              FlattenANNComponent                //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME FlattenANNComponent ann.components.flatten
+//BIND_CPP_CLASS    FlattenANNComponent
+//BIND_SUBCLASS_OF  FlattenANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR FlattenANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  }
+  obj = new FlattenANNComponent(name);
+  LUABIND_RETURN(FlattenANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD FlattenANNComponent clone
+{
+  LUABIND_RETURN(FlattenANNComponent,
+		 dynamic_cast<FlattenANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
 //               GaussianNoiseANNComponent         //
 /////////////////////////////////////////////////////
 
@@ -973,7 +1005,7 @@ using namespace ANN;
 //BIND_END
 
 /////////////////////////////////////////////////////
-//               ConvolutionANNComponent         //
+//               ConvolutionANNComponent           //
 /////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME ConvolutionANNComponent ann.components.convolution
@@ -986,8 +1018,8 @@ using namespace ANN;
   LUABIND_CHECK_PARAMETER(1, table);
   const char *name=0, *weights=0, *bias=0;
   int *kernel, *step, n;
-  check_table_fields(L, 1, "name", "weights", "bias", "kernel", "step", "n",
-		     (const char *)0);
+  check_table_fields(L, 1, "name", "weights", "bias", "kernel",
+		     "step", "n", (const char *)0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, bias, string, bias, 0);
@@ -1017,7 +1049,8 @@ using namespace ANN;
     LUABIND_TABLE_TO_VECTOR(-1, int, step, size);
   }
   lua_pop(L, 1);
-  obj = new ConvolutionANNComponent(size, kernel, step, n, name, weights, bias);
+  obj = new ConvolutionANNComponent(size, kernel, step, n,
+				    name, weights, bias);
   LUABIND_RETURN(ConvolutionANNComponent, obj);
   delete[] kernel;
   delete[] step;
@@ -1028,6 +1061,62 @@ using namespace ANN;
 {
   LUABIND_RETURN(ConvolutionANNComponent,
 		 dynamic_cast<ConvolutionANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//                MaxPoolingANNComponent           //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME MaxPoolingANNComponent ann.components.max_pooling
+//BIND_CPP_CLASS    MaxPoolingANNComponent
+//BIND_SUBCLASS_OF  MaxPoolingANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR MaxPoolingANNComponent
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  const char *name=0;
+  int *kernel, *step;
+  check_table_fields(L, 1, "name", "kernel", "step",
+		     (const char *)0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  //
+  lua_getfield(L, 1, "kernel");
+  if (!lua_istable(L, -1))
+    LUABIND_ERROR("Expected a table at field 'kernel'");
+  int size;
+  LUABIND_TABLE_GETN(-1, size);
+  kernel = new int[size];
+  step = new int[size];
+  LUABIND_TABLE_TO_VECTOR(-1, int, kernel, size);
+  lua_pop(L, 1);
+  //
+  lua_getfield(L, 1, "step");
+  if (lua_isnil(L, -1)) {
+    for (int i=0; i<size; ++i) step[i] = kernel[i];
+  }
+  else if (!lua_istable(L, -1))
+    LUABIND_ERROR("Expected a table at field 'step'");
+  else {
+    int size2;
+    LUABIND_TABLE_GETN(-1, size2);
+    if (size != size2)
+      LUABIND_ERROR("Tables kernel and step must have the same length");
+    LUABIND_TABLE_TO_VECTOR(-1, int, step, size);
+  }
+  lua_pop(L, 1);
+  obj = new MaxPoolingANNComponent(size, kernel, step, name);
+  LUABIND_RETURN(MaxPoolingANNComponent, obj);
+  delete[] kernel;
+  delete[] step;
+}
+//BIND_END
+
+//BIND_METHOD MaxPoolingANNComponent clone
+{
+  LUABIND_RETURN(MaxPoolingANNComponent,
+		 dynamic_cast<MaxPoolingANNComponent*>(obj->clone()));
 }
 //BIND_END
 

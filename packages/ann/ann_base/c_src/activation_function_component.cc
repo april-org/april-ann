@@ -55,7 +55,8 @@ namespace ANN {
     // change current input by new input
     AssignRef(input,_input->convertTo<TokenMatrixFloat*>());
     MatrixFloat *input_mat = input->getMatrix();
-    ASSERT_MATRIX(input_mat);
+    assert(input_mat->getMajorOrder() == CblasColMajor);
+    assert(input_mat->getNumDim() >= 2);
     if (!input_mat->getIsContiguous()) {
       input_mat = input_mat->clone();
       AssignRef(input,new TokenMatrixFloat(input_mat));
@@ -64,14 +65,24 @@ namespace ANN {
     input_mat->setUseCuda(use_cuda);
 #endif
     unsigned int bunch_size = input_mat->getDimSize(0);
+    unsigned int current_input_size = input_mat->size() / bunch_size;
     // new  output to fit the bunch
     MatrixFloat *output_mat = input_mat->cloneOnlyDims();
     AssignRef(output,new TokenMatrixFloat(output_mat));
+    // flatten the matrices if it is necessary
+    bool flattened = false;
+    if (input_mat->getNumDim() > 2) {
+      int dims[2] = { static_cast<int>(bunch_size),
+		      static_cast<int>(current_input_size) };
+      input_mat  = input_mat->rewrap(dims, 2);
+      output_mat = output_mat->rewrap(dims, 2);
+      flattened  = true;
+    }
     // get memory blocks for tokens
     FloatGPUMirroredMemoryBlock *input_ptr  = input_mat->getRawDataAccess();
     FloatGPUMirroredMemoryBlock *output_ptr = output_mat->getRawDataAccess();
     // execute apply activations abstract method
-    applyActivation(input_ptr, output_ptr, input_size, bunch_size);
+    applyActivation(input_ptr, output_ptr, current_input_size, bunch_size);
     // apply dropout
     if (dropout_factor > 0.0f) {
       if (during_training) {
@@ -83,10 +94,14 @@ namespace ANN {
 	  else mask_ptr[i] = 1.0f;
 	}
 	// apply mask
-	applyMask(output_ptr, dropout_mask, 0.0f, input_size,
+	applyMask(output_ptr, dropout_mask, 0.0f, current_input_size,
 		  bunch_size, use_cuda);
       }
       else output_mat->scal(1.0f - dropout_factor);
+    }
+    if (flattened) {
+      delete input_mat;
+      delete output_mat;
     }
     return output;
   }
@@ -100,7 +115,8 @@ namespace ANN {
     // change current input by new input
     AssignRef(error_input,_error_input->convertTo<TokenMatrixFloat*>());
     MatrixFloat *error_input_mat = error_input->getMatrix();
-    ASSERT_MATRIX(error_input_mat);
+    assert(error_input_mat->getMajorOrder() == CblasColMajor);
+    assert(error_input_mat->getNumDim() >= 2);
     if (!error_input_mat->getIsContiguous()) {
       error_input_mat = error_input_mat->clone();
       AssignRef(error_input,new TokenMatrixFloat(error_input_mat));
@@ -109,13 +125,22 @@ namespace ANN {
     error_input_mat->setUseCuda(use_cuda);
 #endif
     unsigned int bunch_size = error_input_mat->getDimSize(0);
+    unsigned int current_input_size = error_input_mat->size() / bunch_size;
     // new  output to fit the bunch
     MatrixFloat *error_output_mat = error_input_mat->cloneOnlyDims();
     AssignRef(error_output,new TokenMatrixFloat(error_output_mat));
     if (!error_output_mat->sameDim(input->getMatrix()))
       ERROR_EXIT1(129, "Different bunches found at doForward and doBackprop [%s]\n",
 		  name.c_str());
-    //
+    // flatten the matrices if it is necessary
+    bool flattened = false;
+    if (error_input_mat->getNumDim() > 2) {
+      int dims[2] = { static_cast<int>(bunch_size),
+		      static_cast<int>(current_input_size) };
+      error_input_mat  = error_input_mat->rewrap(dims, 2);
+      error_output_mat = error_output_mat->rewrap(dims, 2);
+      flattened  = true;
+    }
     MatrixFloat *input_mat = input->getMatrix();
     MatrixFloat *output_mat = output->getMatrix();
     FloatGPUMirroredMemoryBlock *input_ptr        = input_mat->getRawDataAccess();
@@ -125,11 +150,15 @@ namespace ANN {
     // apply derivatives at gradients
     multiplyDerivatives(input_ptr, output_ptr,
 			error_input_ptr, error_output_ptr,
-			input_size, bunch_size);
+			current_input_size, bunch_size);
     if (dropout_factor > 0.0f && dropout_mask != 0)
       // apply mask
-      applyMask(error_output_ptr, dropout_mask, 0.0f, input_size,
+      applyMask(error_output_ptr, dropout_mask, 0.0f, current_input_size,
 		bunch_size, use_cuda);
+    if (flattened) {
+      delete error_input_mat;
+      delete error_output_mat;
+    }
     return error_output;
   }
 
