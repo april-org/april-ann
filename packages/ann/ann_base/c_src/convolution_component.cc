@@ -62,21 +62,33 @@ namespace ANN {
     }
   }
   
+  // A method to convert the bias vector of size Nx1 in a matrix of size
+  // BUNCHxK1xK2x...xKM being Ki the kernel size at dimension i
   MatrixFloat *ConvolutionANNComponent::prepareBiasBunch() {
+    if (bias_matrix != 0 && bias_matrix->getDimSize(0) == output_dims[0])
+      return bias_matrix;
     // this line converts the bias matrix of Nx1 in a vector of N elements
     MatrixFloat *bias_vec = bias_vector->getPtr()->select(1,0);
     IncRef(bias_vec);
+    // the output bias as a 2d matrix of BUNCHxN
     MatrixFloat *bias_matrix_2d = new MatrixFloat(2, output_dims,
 						  CblasColMajor);
     IncRef(bias_matrix_2d);
+    // for each pattern at the bunch
     for (int b=0; b<output_dims[0]; ++b) {
+      // select the row b at the output bias matrix
       MatrixFloat *dest = bias_matrix_2d->select(0, b);
       IncRef(dest);
       dest->copy(bias_vec);
       DecRef(dest);
     }
-    MatrixFloat *bias_matrix = bias_matrix_2d->rewrap(bias_rewrap,
-						      input_num_dims + 1);
+    if (bias_matrix) DecRef(bias_matrix);
+    // reinterpret the output bias matrix of BUNCHxN to fit with the output
+    // sliding window of BUNCHxK1xK2x....xKM where Ki is the kernel size at
+    // dimension i
+    bias_matrix = bias_matrix_2d->rewrap(bias_rewrap, input_num_dims + 1);
+    IncRef(bias_matrix);
+    // free the memory of auxiliary matrices
     DecRef(bias_matrix_2d);
     DecRef(bias_vec);
     return bias_matrix;
@@ -96,6 +108,7 @@ namespace ANN {
     error_output(0),
     weights_matrix(0),
     bias_vector(0),
+    bias_matrix(0),
     num_updates_from_last_prune(0),
     number_input_windows(0),
     kernel_size(1),
