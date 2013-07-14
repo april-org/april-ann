@@ -218,6 +218,14 @@ if ref ~= o then
   error("Error!!!")
 end
 
+ref = ( (-i):exp() + i:clone():fill(1) ):pow(-1):cmul(j:clone()):rewrap(2,4)
+o = c:backprop( tokens.matrix( j:clone() ) ):get_matrix()
+if o ~= ref then
+  print(o)
+  print(ref)
+  error("Error!!!")
+end
+
 -------------
 -- softmax --
 -------------
