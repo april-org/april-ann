@@ -33,6 +33,8 @@ namespace ANN {
     TokenMatrixFloat *input, *error_input, *output, *error_output;
     Connections *weights_matrix;
     Connections *bias_vector;
+    MatrixFloat *bias_matrix; // rewrapping of bias_vector matrix to fits at
+			      // output sliding window sizes
     unsigned int num_updates_from_last_prune;
     
     // parameters of the convolution
