@@ -80,19 +80,16 @@ namespace ANN {
     float learning_rate, momentum, weight_decay, c_weight_decay;
     float max_norm_penalty;
     
-    void
-    computeBPUpdateOnPrevVectors(MatrixFloat *prev_weights_mat,
-				 Token *input_token,
-				 MatrixFloat *input_error,
-				 float beta);
-
     MatrixFloat *getRewrappedMatrix(MatrixFloat *w,
 				    const int *rewrap_size,
-				    const int N) const {
+				    const int N,
+				    bool copy) const {
       MatrixFloat *w_flattened;
       if (w->getIsContiguous()) w_flattened = w->rewrap(rewrap_size, N);
       else {
-	MatrixFloat *w_clone = w->clone();
+	MatrixFloat *w_clone;
+	if (copy) w_clone = w->clone();
+	else w_clone = w->cloneOnlyDims();
 	IncRef(w_clone);
 	w_flattened = w_clone->rewrap(rewrap_size, N);
 	DecRef(w_clone);

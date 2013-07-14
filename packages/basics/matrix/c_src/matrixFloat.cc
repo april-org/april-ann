@@ -324,7 +324,7 @@ void Matrix<float>::gemm(CBLAS_TRANSPOSE trans_A,
 			 const Matrix<float> *otherB,
 			 float beta) {
   if (numDim != 2 || otherA->numDim != 2 || otherB->numDim != 2)
-    ERROR_EXIT(128,"Incorrect number of dimensions, only allowed for numDim=2");
+    ERROR_EXIT(128,"Incorrect number of dimensions, only allowed for numDim=2\n");
   int row_idx_A = 0, col_idx_A = 1, row_idx_B = 0, col_idx_B = 1;
   if (trans_A == CblasTrans) april_utils::swap(row_idx_A, col_idx_A);
   if (trans_B == CblasTrans) april_utils::swap(row_idx_B, col_idx_B);

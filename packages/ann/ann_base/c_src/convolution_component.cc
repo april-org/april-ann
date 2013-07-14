@@ -217,7 +217,7 @@ namespace ANN {
     MatrixFloat *bias_matrix = prepareBiasBunch();
     IncRef(bias_matrix);
     /////////////////////////////////////////////////////////////////////////
-    
+
     // Prepare sliding windows to compute the convolution
     MatrixFloat::sliding_window input_sw(input_mat, input_window_size,
 					 0,  // OFFSET
@@ -238,10 +238,10 @@ namespace ANN {
       IncRef(output_w);
       MatrixFloat *input_flattened  = getRewrappedMatrix(input_w,
 							 input_window_rewrap,
-							 2);
+							 2, true);
       MatrixFloat *output_flattened = getRewrappedMatrix(output_w,
 							 output_window_rewrap,
-							 2);
+							 2, false);
       IncRef(input_flattened);
       IncRef(output_flattened);
       
@@ -279,6 +279,7 @@ namespace ANN {
   }
   
   Token *ConvolutionANNComponent::doBackprop(Token *_error_input) {
+    MatrixFloat *weights_mat = weights_matrix->getPtr();
     // error checking
     if ( (_error_input == 0) ||
 	 (_error_input->getTokenCode() != table_of_token_codes::token_matrix))
@@ -286,159 +287,196 @@ namespace ANN {
 		  name.c_str());
     // change current input by new input
     AssignRef(error_input,_error_input->convertTo<TokenMatrixFloat*>());
-    return 0;
+    MatrixFloat *error_input_mat=error_input->getMatrix();
+    if (!output->getMatrix()->sameDim(error_input_mat))
+      ERROR_EXIT1(129, "Incorrect dimensions at error input matrix [%s]\n",
+		  name.c_str());
+#ifdef USE_CUDA
+    error_input_mat->setUseCuda(use_cuda);
+#endif
+    MatrixFloat *error_output_mat = input->getMatrix()->cloneOnlyDims();
+    AssignRef(error_output, new TokenMatrixFloat(error_output_mat));
+    // initialization of error_output_mat is needed because of kernel
+    // overlapping
+    error_output_mat->zeros();
 
-    /*
-      MatrixFloat *error_input_mat = error_input->getMatrix();
-      if (! error_input_mat->sameDim(output->getMatrix()) )
-      ERROR_EXIT1(129, "Different bunches found at doForward and doBackprop [%s]\n",
-      name.c_str());
-      // new error output to fit the bunch
-      ASSERT_MATRIX(error_input_mat);
-      assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
-      if (error_input_mat->getStrideSize(0) > 1) {
-      error_input_mat = error_input_mat->clone();
-      AssignRef(error_input,new TokenMatrixFloat(error_input_mat));
+    // Prepare sliding windows to compute the convolution gradient
+    MatrixFloat::sliding_window error_output_sw(error_output_mat, input_window_size,
+						0,  // OFFSET
+						kernel_step,
+						input_window_num_steps,
+						input_window_order_step);
+    MatrixFloat::sliding_window error_input_sw(error_input_mat, output_window_size,
+					       0,  // OFFSET
+					       output_window_step,
+					       output_window_num_steps,
+					       output_window_order_step);
+    assert(error_input_sw.numWindows() == number_input_windows);
+    // CONVOLUTION GRADIENT
+    while(!error_input_sw.isEnd() && !error_output_sw.isEnd()) {
+      MatrixFloat *error_input_w  = error_input_sw.getMatrix();
+      MatrixFloat *error_output_w = error_output_sw.getMatrix();
+      IncRef(error_input_w);
+      IncRef(error_output_w);
+      MatrixFloat *error_input_flattened  = getRewrappedMatrix(error_input_w,
+							       output_window_rewrap,
+							       2, true);
+      MatrixFloat *error_output_flattened = getRewrappedMatrix(error_output_w,
+							       input_window_rewrap,
+							       2, true);
+      IncRef(error_input_flattened);
+      IncRef(error_output_flattened);
+      
+      // COMPUTE MATRIX MULTIPLICATION
+      error_output_flattened->gemm(CblasNoTrans, CblasNoTrans,
+				   1.0f, error_input_flattened,
+				   weights_mat,
+				   1.0f); // accumulative operation
+      // COPY TO DESTINATION IF NEEDED
+      if (error_output_w->getRawDataAccess()!=error_output_flattened->getRawDataAccess()) {
+	// if error_output_w and error_output_flattened are pointing to
+	// different data then the copy is needed, otherwise it isn't
+	MatrixFloat *conv_error_output_rewrapped;
+	conv_error_output_rewrapped =
+	  error_output_flattened->rewrap(error_output_w->getDimPtr(),
+					 error_output_w->getNumDim());
+	IncRef(conv_error_output_rewrapped);
+	// COPY THE RESULT
+	error_output_w->copy(conv_error_output_rewrapped);
+	DecRef(conv_error_output_rewrapped);
       }
-      #ifdef USE_CUDA
-      error_input_mat->setUseCuda(use_cuda);
-      #endif
-      unsigned int bunch_size = error_input_mat->getDimSize(0);
-      // new output to fit the bunch
-      MatrixFloat *error_output_mat;
-      int dims[2] = { static_cast<int>(bunch_size),
-      static_cast<int>(input_size) };
-      error_output_mat = new MatrixFloat(2, dims, CblasColMajor);
-      AssignRef(error_output,new TokenMatrixFloat(error_output_mat));
-      #ifdef USE_CUDA
-      error_output_mat->setUseCuda(use_cuda);
-      #endif      
-      //
-      MatrixFloat *weights_mat = weights_matrix->getPtr();
-      if (bunch_size > 1) {
-      // C = alpha * A * B + beta * C
-      error_output_mat->gemm(CblasNoTrans, transpose_weights,
-      1.0f, error_input_mat,
-      weights_mat,
-      0.0f);
-      }
-      else {
-      error_output_mat->gemv(NEGATE_CBLAS_TRANSPOSE(transpose_weights),
-      1.0f, weights_mat,
-      error_input_mat,
-      0.0f);
-      }
-      return error_output;
-    */
-  }
-  
-  void ConvolutionANNComponent::
-  computeBPUpdateOnPrevVectors(MatrixFloat *prev_weights_mat,
-			       Token *input_token,
-			       MatrixFloat *error_input_mat,
-			       float beta) {
-    /*
-      assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
-      unsigned int bunch_size = error_input_mat->getDimSize(0);
-      // backprop learning rule:
-      // PREV_W = alpha * ERRORS + PREV_W
-      const unsigned int references = weights_matrix->getNumReferences();
-      assert(references > 0 && "Found 0 references of weights matrix");
-      // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
-      const float norm_learn_rate =
-      -(1.0f/sqrtf(static_cast<float>(references*bunch_size))) *
-      learning_rate;
-      if (sparse_input) {
-      TokenBunchVector *input_vector_token;
-      input_vector_token  = input_token->convertTo<TokenBunchVector*>();
-      int w_dim = (transpose_weights == CblasNoTrans) ? 1 : 0;
-      for (unsigned int b=0; b<bunch_size; ++b) {
-      MatrixFloat *error_input_pat_mat;
-      error_input_pat_mat = error_input_mat->select(0,static_cast<int>(b));
-      Token *current = (*input_vector_token)[b];
-      TokenSparseVectorFloat *sparse_token;
-      sparse_token = current->convertTo<TokenSparseVectorFloat*>();
-      for (unsigned int k=0; k<sparse_token->size(); ++k) {
-      unsigned int pos     = (*sparse_token)[k].first;
-      float value          = (*sparse_token)[k].second;
-      int w_index          = static_cast<int>(pos);
-      if (pos >= input_size)
-      ERROR_EXIT1(128, "Overflow at sparse vector input pos [%s]\n",
-      name.c_str());
-      MatrixFloat *w_column = prev_weights_mat->select(w_dim, w_index);
-      w_column->axpy(norm_learn_rate*value, error_input_pat_mat);
-      delete w_column;
-      }
-      delete error_input_pat_mat;
-      }
-      } // if sparse_input ... else
-      else {
-      TokenMatrixFloat *input_mem_token=input_token->convertTo<TokenMatrixFloat*>();
-      MatrixFloat *input_mat=input_mem_token->getMatrix();
-      if (bunch_size > 1) {
-      prev_weights_mat->gemm(CblasTrans, CblasNoTrans,
-      norm_learn_rate,
-      (transpose_weights == CblasNoTrans)?error_input_mat:input_mat, // A
-      (transpose_weights == CblasNoTrans)?input_mat:error_input_mat, // B
-      beta);
-      } // if bunch_size > 1 ... else
-      else {
-      if (beta < 1.0f)
-      prev_weights_mat->scal(beta);
-      prev_weights_mat->ger(norm_learn_rate,
-      (transpose_weights == CblasNoTrans)?error_input_mat:input_mat,
-      (transpose_weights == CblasNoTrans)?input_mat:error_input_mat);
-      } // if bunch_size > 1 ... else
-      } // if sparse_input ... else
-    */
+      
+      // Next iteration
+      error_input_sw.next();
+      error_output_sw.next();
+      
+      // Free memory
+      DecRef(error_input_flattened);
+      DecRef(error_output_flattened);
+      DecRef(error_input_w);
+      DecRef(error_output_w);
+    }
+    return error_output;
   }
      
   // The ConvolutionANNComponent
   void ConvolutionANNComponent::doUpdate() {
-    /*
-      assert(learning_rate > 0.0f &&
-      "Learning rate needs to be fixed with setOption method!!!");
-      
-      // Foces weights_matrix to update internal counts for a backward step
-      weights_matrix->beginUpdate();
-      
-      MatrixFloat *weights_mat      = weights_matrix->getPtr();
-      MatrixFloat *prev_weights_mat = weights_matrix->getPrevPtr();
-      MatrixFloat *error_input_mat  = error_input->getMatrix();
+    assert(learning_rate > 0.0f &&
+	   "Learning rate needs to be fixed with setOption method!!!");
     
-      float beta_parameter_for_cblas_bp = 1.0f;
-      if (weights_matrix->isFirstUpdateCall()) {
+    // Foces weights_matrix to update internal counts for a backward step
+    weights_matrix->beginUpdate();
+    bias_vector->beginUpdate();
+    
+    MatrixFloat *prev_weights_mat = weights_matrix->getPrevPtr();
+    MatrixFloat *prev_bias_ptr    = bias_vector->getPrevPtr();
+    MatrixFloat *input_mat        = input->getMatrix();
+    MatrixFloat *error_input_mat  = error_input->getMatrix();
+    
+    float beta_parameter_for_cblas_bp = 1.0f;
+    if (weights_matrix->isFirstUpdateCall()) {
       // Momentum computation
       if (momentum > 0.0f) {
-      // prev_w[i,j] = momentum * (w[i,j] - prev_w[i,j])
-      weights_matrix->computeMomentumOnPrevVector(momentum,
-      use_cuda);
-      weights_matrix->computeWeightDecayOnPrevVector(c_weight_decay,
-      use_cuda);
+	// prev_w[i,j] = momentum * (w[i,j] - prev_w[i,j])
+	weights_matrix->computeMomentumOnPrevVector(momentum,
+						    use_cuda);
+	weights_matrix->computeWeightDecayOnPrevVector(c_weight_decay,
+						       use_cuda);
       }
       else {
-      weights_matrix->copyToPrevVector(use_cuda);
-      beta_parameter_for_cblas_bp = c_weight_decay;
+	weights_matrix->copyToPrevVector(use_cuda);
+	beta_parameter_for_cblas_bp = c_weight_decay;
       }
-      } // if (weights_matrix->needsToComputeMomentum()) {
+    } // if (weights_matrix->needsToComputeMomentum()) {
+    
+    // BIAS MOMENTUM
+    if (bias_vector->isFirstUpdateCall()) {
+      if (momentum > 0.0f) {
+        // prev_w[i,j] = momentum * (w[i,j] - prev_w[i,j])
+        bias_vector->computeMomentumOnPrevVector(momentum, use_cuda);
+        bias_vector->computeWeightDecayOnPrevVector(1.0f,  use_cuda);
+      }
+      else bias_vector->copyToPrevVector(use_cuda);
+    } // if (bias_vector->needsToComputeMomentum()) {
+    
+    // Prepare sliding windows to compute the convolution
+    MatrixFloat::sliding_window input_sw(input_mat, input_window_size,
+					 0,  // OFFSET
+					 kernel_step,
+					 input_window_num_steps,
+					 input_window_order_step);
+    MatrixFloat::sliding_window error_input_sw(error_input_mat, output_window_size,
+					       0,  // OFFSET
+					       output_window_step,
+					       output_window_num_steps,
+					       output_window_order_step);
+    unsigned int bunch_size = error_input_mat->getDimSize(0);
+    // backprop learning rule:
+    // PREV_W = alpha * ERRORS + PREV_W
+    const unsigned int references = weights_matrix->getNumReferences();
+    assert(references > 0 && "Found 0 references of weights matrix");
+    // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
+    const float norm_learn_rate =
+      -(1.0f/sqrtf(static_cast<float>(references*bunch_size*number_input_windows))) *
+      learning_rate;
+    // CONVOLUTION OVER number_input_windows
+    while(!input_sw.isEnd() && !error_input_sw.isEnd()) {
+      MatrixFloat *input_w       = input_sw.getMatrix();
+      MatrixFloat *error_input_w = error_input_sw.getMatrix();
+      IncRef(input_w);
+      IncRef(error_input_w);
+      MatrixFloat *input_flattened = getRewrappedMatrix(input_w,
+							input_window_rewrap,
+							2, true);
+      MatrixFloat *error_input_flattened = getRewrappedMatrix(error_input_w,
+							      output_window_rewrap,
+							      2, true);
+      IncRef(input_flattened);
+      IncRef(error_input_flattened);
       
-      computeBPUpdateOnPrevVectors(prev_weights_mat,
-      input,
-      error_input_mat,
-      beta_parameter_for_cblas_bp);
+      // WEIGHTS UPDATE
+      prev_weights_mat->gemm(CblasTrans, CblasNoTrans,
+			     norm_learn_rate,
+			     error_input_flattened, // A
+			     input_flattened,       // B
+			     beta_parameter_for_cblas_bp);
+      // only apply weight decay (if needed) the first time
+      beta_parameter_for_cblas_bp = 1.0f;
+      // BIAS UPDATE
+      doSaxpyLoop(hidden_size,
+		  norm_learn_rate,
+		  error_input_flattened->getRawDataAccess(),
+		  error_input_flattened->getStrideSize(1),
+		  prev_bias_ptr->getRawDataAccess(),
+		  prev_bias_ptr->getStrideSize(0),
+		  bunch_size,
+		  error_input_flattened->getStrideSize(0), 0,
+		  use_cuda);
       
-      // Forces to update counts and swap vectors if necessary at this backward
-      // step
-      if (weights_matrix->endUpdate()) {
+      // Next iteration
+      input_sw.next();
+      error_input_sw.next();
+      
+      // Free memory
+      DecRef(input_flattened);
+      DecRef(error_input_flattened);
+      DecRef(input_w);
+      DecRef(error_input_w);
+    }
+    
+    // Forces to update counts and swap vectors if necessary at this backward
+    // step
+    if (weights_matrix->endUpdate()) {
       ++num_updates_from_last_prune;
       if (num_updates_from_last_prune > MAX_UPDATES_WITHOUT_PRUNE) {
-      num_updates_from_last_prune = 0;
-      weights_matrix->pruneSubnormalAndCheckNormal();
+	num_updates_from_last_prune = 0;
+	weights_matrix->pruneSubnormalAndCheckNormal();
+	bias_vector->pruneSubnormalAndCheckNormal();
       }
       if (max_norm_penalty > 0.0)
-      weights_matrix->applyMaxNormPenalty(max_norm_penalty);
-      }
-    */
+	weights_matrix->applyMaxNormPenalty(max_norm_penalty);
+    }
+    bias_vector->endUpdate();
   }
   
   void ConvolutionANNComponent::reset() {
