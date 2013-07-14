@@ -49,7 +49,7 @@ namespace ANN {
     int *kernel_dims;
     /// Step at each dim of the input, input_num_dims + 1
     int *kernel_step;
-    /// Size at each dim of the output, input_num_dims + 2
+    /// Size at each dim of the output, input_num_dims + 1
     int *output_dims; // first is BUNCH, second is number of output planes)
     // INPUT SLIDING WINDOW SECTION
     /// Size of the convolution window, input_num_dims + 1
@@ -61,18 +61,18 @@ namespace ANN {
     /// Translates the input window into a bi-dimensional matrix
     int *input_window_rewrap;
     // OUTPUT SLIDING WINDOW SECTION
-    /// Size of the convolution window, input_num_dims + 2
+    /// Size of the convolution window, input_num_dims + 1
     int *output_window_size;
-    /// Step between convolution windows, input_num_dims + 2
+    /// Step between convolution windows, input_num_dims + 1
     int *output_window_step;
-    /// Number of steps of the convolution window, input_num_dims + 2
+    /// Number of steps of the convolution window, input_num_dims + 1
     int *output_window_num_steps;
     /// Order for traversing the input data, prepared for col-major order
     int *output_window_order_step;
     /// Translates the output window into a bi-dimensional matrix
     int *output_window_rewrap;
     /// BIAS rewrapping vector, translates it to fit into output windows
-    int *bias_rewrap; // input_num_dims + 2
+    int *bias_rewrap; // input_num_dims + 1
     
     /// learning parameters
     float learning_rate, momentum, weight_decay, c_weight_decay;

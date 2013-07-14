@@ -38,9 +38,9 @@ namespace ANN {
     unsigned int kernel_size;
     /// The number of expected input dimensions without count BUNCH dim (first)
     const int input_num_dims;
-    /// Size at each dim of the kernel, input_num_dims
+    /// Size at each dim of the kernel, input_num_dims + 1
     int *kernel_dims;
-    /// Step at each dim of the input, input_num_dims
+    /// Step at each dim of the input, input_num_dims + 1
     int *kernel_step;
     /// Size at each dim of the output, input_num_dims + 1
     int *output_dims; // first is BUNCH
@@ -94,7 +94,6 @@ namespace ANN {
     virtual Token *doBackprop(Token *input_error);
     virtual void   reset();
     virtual ANNComponent *clone();
-    virtual void copyWeights(hash<string,Connections*> &weights_dict);
     
     virtual char *toLuaString();
 

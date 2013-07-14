@@ -36,25 +36,34 @@ namespace ANN {
     // output_dims[0] => BUNCH SIZE, output_dims[1] => HIDDEN LAYER SIZE
     bias_rewrap[0]             = input_dims[0];
     output_dims[0]	       = input_dims[0];
-    output_dims[1]	       = kernel_dims[0];
+    output_dims[1]	       = hidden_size;
     input_window_size[0]       = input_dims[0];
+    input_window_size[1]       = input_dims[1];
     input_window_num_steps[0]  = 1;
+    input_window_num_steps[1]  = 1;
     output_window_size[0]      = input_dims[0];
+    // AT CONSTRUCTOR: output_window_size[1] = hidden_size;
     output_window_num_steps[0] = 1;
     output_window_num_steps[1] = 1;
     input_window_rewrap[0]     = input_dims[0];
+    // AT CONSTRUCTOR: input_window_rewrap[1] = kernel_size;
     output_window_rewrap[0]    = input_dims[0];
-    
-    for (int i=1; i<input_num_dims+1; ++i) {
-      output_dims[i+1] = (input_dims[i] - kernel_dims[i])/kernel_step[i];
+    // AT CONSTRUCTOR: output_window_rewrap[1] = hidden_size;
+    if (input_dims[1] != kernel_dims[1])
+      ERROR_EXIT3(128, "Input matrix dim 1 must be equals to kernel dim 1,"
+		  "input_dims[1]=%d, kernel_dims[1]=%d [%s]\n",
+		  input_dims[1], kernel_dims[0], name.c_str());
+    for (int i=2; i<=input_num_dims; ++i) {
+      output_dims[i] = (input_dims[i] - kernel_dims[i])/kernel_step[i] + 1;
       
-      input_window_size[i]	   = kernel_dims[i];
-      input_window_num_steps[i]	   = output_dims[i+1];
-      output_window_num_steps[i+1] = output_dims[i+1];
+      input_window_size[i]	 = kernel_dims[i];
+      input_window_num_steps[i]  = output_dims[i];
+      output_window_num_steps[i] = output_dims[i];
     }
   }
   
   MatrixFloat *ConvolutionANNComponent::prepareBiasBunch() {
+    // this line converts the bias matrix of Nx1 in a vector of N elements
     MatrixFloat *bias_vec = bias_vector->getPtr()->select(1,0);
     IncRef(bias_vec);
     MatrixFloat *bias_matrix_2d = new MatrixFloat(2, output_dims,
@@ -67,7 +76,7 @@ namespace ANN {
       DecRef(dest);
     }
     MatrixFloat *bias_matrix = bias_matrix_2d->rewrap(bias_rewrap,
-						      input_num_dims + 2);
+						      input_num_dims + 1);
     DecRef(bias_matrix_2d);
     DecRef(bias_vec);
     return bias_matrix;
@@ -94,17 +103,17 @@ namespace ANN {
     input_num_dims(input_num_dims),
     kernel_dims(new int[input_num_dims+1]),
     kernel_step(new int[input_num_dims+1]),
-    output_dims(new int[input_num_dims+2]),
+    output_dims(new int[input_num_dims+1]),
     input_window_size(new int[input_num_dims+1]),
     input_window_num_steps(new int[input_num_dims+1]),
     input_window_order_step(new int[input_num_dims+1]),
     input_window_rewrap(new int[2]),
-    output_window_size(new int[input_num_dims+2]),
-    output_window_step(new int[input_num_dims+2]),
-    output_window_num_steps(new int[input_num_dims+2]),
-    output_window_order_step(new int[input_num_dims+2]),
+    output_window_size(new int[input_num_dims+1]),
+    output_window_step(new int[input_num_dims+1]),
+    output_window_num_steps(new int[input_num_dims+1]),
+    output_window_order_step(new int[input_num_dims+1]),
     output_window_rewrap(new int[2]),
-    bias_rewrap(new int[input_num_dims+2]),
+    bias_rewrap(new int[input_num_dims+1]),
     learning_rate(-1.0f),
     momentum(0.0f),
     weight_decay(0.0f),
@@ -119,7 +128,6 @@ namespace ANN {
     output_window_size[0] = 0;
     output_window_size[1] = static_cast<int>(hidden_size);
     output_window_order_step[0] = 0;
-    output_window_order_step[1] = 1;
     output_window_step[0] = 1;
     output_window_step[1] = 1;
     bias_rewrap[0] = 0;
@@ -129,10 +137,12 @@ namespace ANN {
       kernel_dims[i+1] = _kernel_dims[i];
       kernel_step[i+1] = _kernel_step[i];
       input_window_order_step[i+1] = i+1;
-      output_window_size[i+2] = 1;
-      output_window_order_step[i+2] = i+2;
-      output_window_step[i+2] = 1;
-      bias_rewrap[i+2] = 1;
+      output_window_order_step[i+1] = i+1;
+    }
+    for(int i=2; i<=input_num_dims; ++i) {
+      output_window_size[i] = 1;
+      output_window_step[i] = 1;
+      bias_rewrap[i] = 1;
     }
     input_window_rewrap[0]  = 0;
     input_window_rewrap[1]  = static_cast<int>(kernel_size);
@@ -185,7 +195,7 @@ namespace ANN {
     const int *input_dims = input_mat->getDimPtr();
     initializeArrays(input_dims);
     MatrixFloat *output_mat;
-    output_mat = new MatrixFloat(input_num_dims+2, output_dims, CblasColMajor);
+    output_mat = new MatrixFloat(input_num_dims+1, output_dims, CblasColMajor);
     AssignRef(output, new TokenMatrixFloat(output_mat));
 #ifdef USE_CUDA
     output_mat->setUseCuda(use_cuda);
@@ -431,7 +441,7 @@ namespace ANN {
   
   ANNComponent *ConvolutionANNComponent::clone() {
     ConvolutionANNComponent *component = new
-      ConvolutionANNComponent(input_num_dims-1, kernel_dims+1, kernel_step+1,
+      ConvolutionANNComponent(input_num_dims, kernel_dims+1, kernel_step+1,
 			      hidden_size,
 			      name.c_str(), weights_name.c_str());
     component->input_size     = input_size;
