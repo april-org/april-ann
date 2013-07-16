@@ -82,6 +82,11 @@ namespace ANN {
     unsigned int input_size;
     unsigned int output_size;
     bool use_cuda;
+
+    /// Method which computes the gradient of the weights on the given
+    /// MatrixFloat object
+    virtual void computeGradients(MatrixFloat*& weight_grads) {
+    }
     
   public:
     ANNComponent(const char *name = 0, const char *weights_name = 0,
@@ -144,6 +149,13 @@ namespace ANN {
     /// Virtual method to reset to zero gradients and outputs (inputs are not
     /// reseted)
     virtual void reset() { }
+
+    /// Method which receives a hash table with matrices where compute the
+    /// gradients.
+    virtual void computeAllGradients(hash<string,MatrixFloat*> &weight_grads_dict){
+      if (!weights_name.empty())
+	computeGradients(weight_grads_dict[weights_name]);
+    }
     
     virtual ANNComponent *clone() {
       return new ANNComponent(name.c_str(), weights_name.c_str(),

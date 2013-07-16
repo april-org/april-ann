@@ -59,6 +59,7 @@ namespace ANN {
     error_input(0),
     output(0),
     error_output(0),
+    argmax_raw_pos(0),
     number_input_windows(0),
     kernel_size(1),
     input_num_dims(input_num_dims),
@@ -155,13 +156,22 @@ namespace ANN {
 					  output_window_num_steps,
 					  output_window_order_step);
     number_input_windows = input_sw.numWindows();
+    if (during_training)
+      AssignRef(argmax_raw_pos,
+		new IntGPUMirroredMemoryBlock(input_mat->getDimSize(0)*
+					      output_sw.numWindows()));
+    else if (argmax_raw_pos) {
+      DecRef(argmax_raw_pos);
+      argmax_raw_pos = 0;
+    }
+    int k=0;
     // CONVOLUTION OVER number_input_windows
     while(!input_sw.isEnd() && !output_sw.isEnd()) {
       MatrixFloat *input_w  = input_sw.getMatrix();
       MatrixFloat *output_w = output_sw.getMatrix();
       IncRef(input_w);
       IncRef(output_w);
-      MatrixFloat *max_sel_dim = input_w->maxSelDim(0);
+      MatrixFloat *max_sel_dim = input_w->maxSelDim(0, argmax_raw_pos, k);
       IncRef(max_sel_dim);
       MatrixFloat *max_sel_dim_rewrapped;
       max_sel_dim_rewrapped = max_sel_dim->rewrap(output_w->getDimPtr(),
@@ -176,6 +186,7 @@ namespace ANN {
       DecRef(max_sel_dim);
       DecRef(input_w);
       DecRef(output_w);
+      k += input_mat->getDimSize(0);
     }
     return output;
   }
@@ -188,61 +199,59 @@ namespace ANN {
 		  name.c_str());
     // change current input by new input
     AssignRef(error_input,_error_input->convertTo<TokenMatrixFloat*>());
-    return 0;
-
-    /*
-      MatrixFloat *error_input_mat = error_input->getMatrix();
-      if (! error_input_mat->sameDim(output->getMatrix()) )
-      ERROR_EXIT1(129, "Different bunches found at doForward and doBackprop [%s]\n",
-      name.c_str());
-      // new error output to fit the bunch
-      ASSERT_MATRIX(error_input_mat);
-      assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
-      if (error_input_mat->getStrideSize(0) > 1) {
-      error_input_mat = error_input_mat->clone();
-      AssignRef(error_input,new TokenMatrixFloat(error_input_mat));
-      }
-      #ifdef USE_CUDA
-      error_input_mat->setUseCuda(use_cuda);
-      #endif
-      unsigned int bunch_size = error_input_mat->getDimSize(0);
-      // new output to fit the bunch
-      MatrixFloat *error_output_mat;
-      int dims[2] = { static_cast<int>(bunch_size),
-      static_cast<int>(input_size) };
-      error_output_mat = new MatrixFloat(2, dims, CblasColMajor);
-      AssignRef(error_output,new TokenMatrixFloat(error_output_mat));
-      #ifdef USE_CUDA
-      error_output_mat->setUseCuda(use_cuda);
-      #endif      
-      //
-      MatrixFloat *weights_mat = weights_matrix->getPtr();
-      if (bunch_size > 1) {
-      // C = alpha * A * B + beta * C
-      error_output_mat->gemm(CblasNoTrans, transpose_weights,
-      1.0f, error_input_mat,
-      weights_mat,
-      0.0f);
-      }
-      else {
-      error_output_mat->gemv(NEGATE_CBLAS_TRANSPOSE(transpose_weights),
-      1.0f, weights_mat,
-      error_input_mat,
-      0.0f);
-      }
-      return error_output;
-    */
+    MatrixFloat *error_input_mat=error_input->getMatrix();
+    if (!output->getMatrix()->sameDim(error_input_mat))
+      ERROR_EXIT1(129, "Incorrect dimensions at error input matrix [%s]\n",
+		  name.c_str());
+#ifdef USE_CUDA
+    error_input_mat->setUseCuda(use_cuda);
+#endif
+    MatrixFloat *error_output_mat = input->getMatrix()->cloneOnlyDims();
+    AssignRef(error_output, new TokenMatrixFloat(error_output_mat));
+    error_output_mat->zeros();
+    
+    // Prepare sliding windows to compute the convolution gradient
+    MatrixFloat::sliding_window error_output_sw(error_output_mat, input_window_size,
+						0,  // OFFSET
+						kernel_step,
+						input_window_num_steps,
+						input_window_order_step);
+    MatrixFloat::sliding_window error_input_sw(error_input_mat, output_window_size,
+					       0,  // OFFSET
+					       output_window_step,
+					       output_window_num_steps,
+					       output_window_order_step);
+    assert(argmax_raw_pos != 0);
+    assert(static_cast<int>(argmax_raw_pos->getSize()) == error_input_mat->size());
+    assert(error_output_sw.numWindows() == error_input_sw.numWindows());
+    const int *argmax_ints = argmax_raw_pos->getPPALForRead();
+    // CONVOLUTION GRADIENT
+    while(!error_input_sw.isEnd()) {
+      MatrixFloat *error_input_w = error_input_sw.getMatrix();
+      IncRef(error_input_w);
+      for (MatrixFloat::col_major_iterator it(error_input_w->begin());
+	   it!=error_input_w->end(); ++it, ++argmax_ints)
+	(*error_output_mat)[*argmax_ints] += *it;
+      // Next iteration
+      error_input_sw.next();
+      
+      // Free memory
+      DecRef(error_input_w);
+    }
+    return error_output;
   }
   
   void MaxPoolingANNComponent::reset() {
-    if (input)        DecRef(input);
-    if (error_input)  DecRef(error_input);
-    if (output)       DecRef(output);
-    if (error_output) DecRef(error_output);
-    input	 = 0;
-    error_input	 = 0;
-    output	 = 0;
-    error_output = 0;
+    if (input)          DecRef(input);
+    if (error_input)    DecRef(error_input);
+    if (output)         DecRef(output);
+    if (error_output)   DecRef(error_output);
+    if (argmax_raw_pos) DecRef(argmax_raw_pos);
+    input	   = 0;
+    error_input	   = 0;
+    output	   = 0;
+    error_output   = 0;
+    argmax_raw_pos = 0;
   }
   
   ANNComponent *MaxPoolingANNComponent::clone() {

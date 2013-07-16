@@ -28,6 +28,7 @@ namespace ANN {
 
   class StackANNComponent : public ANNComponent {
     april_utils::vector<ANNComponent*> components;
+
   public:
     StackANNComponent(const char *name=0);
     virtual ~StackANNComponent();
@@ -73,6 +74,7 @@ namespace ANN {
       for (unsigned int i=0; i<components.size(); ++i)
 	components[i]->resetConnections();
     }
+    virtual void computeAllGradients(hash<string,MatrixFloat*> &weight_grads_dict);
     virtual void debugInfo() {
       ANNComponent::debugInfo();
       for (unsigned int i=0; i<components.size(); ++i)

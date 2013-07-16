@@ -129,12 +129,23 @@ namespace ANN {
     while(!window.isEnd()) {
       MatrixFloat *submat = window.getMatrix();
       float norm2 = submat->norm2();
+      /*
+	assert(norm2 < 10000.0f);
+	if (norm2 > 10000.0f)
+	ERROR_EXIT(128, "WOWOWOW\n");
+      */
       if (norm2 > max_norm_penalty) {
 	MatrixFloat *submat_prev = window_prev.getMatrix();
 	float scal_factor = max_norm_penalty/norm2;
 	submat->scal(scal_factor);
 	submat_prev->scal(scal_factor);
 	delete submat_prev;
+	/*
+	  if (norm2 > 10000.0f)
+	  for (MatrixFloat::iterator it(submat->begin()); it!=submat->end(); ++it) {
+	  printf("%d %f\n", it.getIdx(), *it);
+	  }
+	*/
       }
       delete submat;
       window.next();

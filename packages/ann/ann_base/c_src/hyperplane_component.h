@@ -82,6 +82,7 @@ namespace ANN {
       dot_product->resetConnections();
       bias->resetConnections();
     }
+    virtual void computeAllGradients(hash<string,MatrixFloat*> &weight_grads_dict);
     virtual void debugInfo() {
       ANNComponent::debugInfo();
       dot_product->debugInfo();

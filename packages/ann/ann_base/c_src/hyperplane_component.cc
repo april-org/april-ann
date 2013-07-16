@@ -86,6 +86,12 @@ namespace ANN {
     dot_product->reset();
     bias->reset();
   }
+
+  void HyperplaneANNComponent::computeAllGradients(hash<string,MatrixFloat*>
+						   &weight_grads_dict) {
+    dot_product->computeAllGradients(weight_grads_dict);
+    bias->computeAllGradients(weight_grads_dict);
+  }
     
   ANNComponent *HyperplaneANNComponent::clone() {
     HyperplaneANNComponent *obj;

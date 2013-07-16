@@ -408,10 +408,10 @@ function april_print_script_header(arg,file)
   fprintf(file,"# CMD: \t %s %s\n", arg[0], table.concat(arg, " "))
 end
 
-function map(func, iterator_func, ...)
+function map(func, ...)
   if not func then func = function(v) return v end end
   local t,key,value = {}
-  for key,value in iterator_func(unpack(arg)) do
+  for key,value in unpack(arg) do
     if not value then key,value = #t+1,key end
     local r = func(value)
     if r then t[key] = r end
@@ -419,10 +419,10 @@ function map(func, iterator_func, ...)
   return t
 end
 
-function map2(func, iterator_func, ...)
+function map2(func, ...)
   if not func then func = function(k,v) return v end end
   local t,key,value = {}
-  for key,value in iterator_func(unpack(arg)) do
+  for key,value in unpack(arg) do
     if not value then key,value = #t+1,key end
     local r = func(key,value)
     if r then t[key] = r end
@@ -430,14 +430,12 @@ function map2(func, iterator_func, ...)
   return t
 end
 
-function reduce(func, initial_value, iterator_func, ...)
+function reduce(func, initial_value, ...)
   assert(type(func) == "function", "Needs a function as first argument")
-  assert(type(iterator_func) == "function",
-	 "Needs an iterator function as third argument")
   assert(initial_value ~= nil,
 	 "Needs an initial_value as second argument")
   local accum,key,value = initial_value
-  for key,value in iterator_func(unpack(arg)) do
+  for key,value in unpack(arg) do
     accum = func(accum, value or key)
   end
   return accum
@@ -765,19 +763,19 @@ function table.imap(t,f)
 end
 
 function table.map(t,f)
-  return map(f, pairs, t)
+  return map(f, pairs(t))
 end
 
 function table.imap2(t,f)
-  return map2(f, ipairs, t)
+  return map2(f, ipairs(t))
 end
 
 function table.map2(t,f)
-  return map2(f, pairs, t)
+  return map2(f, pairs(t))
 end
 
 function table.reduce(t,f,initial_value)
-  return reduce(f, initial_value, ipairs, t)
+  return reduce(f, initial_value, ipairs(t))
 end
 
 function table.ifilter(t,f)

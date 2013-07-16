@@ -820,16 +820,16 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 
 //BIND_METHOD MatrixFloat min
   {
-    int arg_min;
-    LUABIND_RETURN(float, obj->min(arg_min));
+    int arg_min, raw_pos;
+    LUABIND_RETURN(float, obj->min(arg_min, raw_pos));
     LUABIND_RETURN(int, arg_min+1);
   }
 //BIND_END
 
 //BIND_METHOD MatrixFloat max
   {
-    int arg_max;
-    LUABIND_RETURN(float, obj->max(arg_max));
+    int arg_max, raw_pos;
+    LUABIND_RETURN(float, obj->max(arg_max, raw_pos));
     LUABIND_RETURN(int, arg_max+1);
   }
 //BIND_END

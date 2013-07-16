@@ -485,19 +485,21 @@ float Matrix<float>::norm2() const {
 
 // FIXME: using WRAPPER
 template<>
-float Matrix<float>::min(int &arg_min) const {
+float Matrix<float>::min(int &arg_min, int &arg_min_raw_pos) const {
   const_iterator it(begin());
   const_iterator result = april_utils::argmin(it, const_iterator(end()));
   arg_min = result.getIdx();
+  arg_min_raw_pos = result.getRawPos();
   return *result;
 }
 
 // FIXME: using WRAPPER
 template<>
-float Matrix<float>::max(int &arg_max) const {
+float Matrix<float>::max(int &arg_max, int &arg_max_raw_pos) const {
   const_iterator it(begin());
   const_iterator result = april_utils::argmax(it, const_iterator(end()));
   arg_max = result.getIdx();
+  arg_max_raw_pos = result.getRawPos();
   return *result;
 }
 
@@ -525,10 +527,16 @@ void Matrix<float>::minAndMax(float &min, float &max) const {
 }
 
 template <>
-Matrix<float> *Matrix<float>::maxSelDim(const int dim) const {
+Matrix<float> *Matrix<float>::maxSelDim(const int dim,
+					IntGPUMirroredMemoryBlock *raw_positions,
+					int shift) const {
   if (dim < 0 || dim > numDim)
     ERROR_EXIT2(128, "Incorrect dimension %d, numDim=%d\n", dim, numDim);
   MatrixFloat *result = new MatrixFloat(1, &matrixSize[dim], major_order);;
+  int *argmax = 0;
+  if (raw_positions != 0) {
+    argmax = raw_positions->getPPALForWrite() + shift;
+  }
   switch(numDim) {
   case 1:
     ERROR_EXIT(128, "Impossible to compute maxSelDim when numDim=1\n");
@@ -540,13 +548,19 @@ Matrix<float> *Matrix<float>::maxSelDim(const int dim) const {
       result->setUseCuda(use_cuda);
 #endif
       float *res_ptr = result->getRawDataAccess()->getPPALForWrite();
+      const float *src_ptr = data->getPPALForRead();
       for (int i=0; i<matrixSize[dim]; ++i, ++res_ptr) {
-	const float *src_ptr = data->getPPALForRead() + offset + i*stride[dim];
-	*res_ptr = *src_ptr;
-	src_ptr += stride[other_dim];
-	for (int j=1; j<matrixSize[other_dim]; ++j,src_ptr+=stride[other_dim]) {
-	  *res_ptr = april_utils::max(*res_ptr, *src_ptr);
+	int current_raw_pos = offset + i*stride[dim];
+	int raw_pos_max = current_raw_pos;
+	*res_ptr = src_ptr[current_raw_pos];
+	current_raw_pos += stride[other_dim];
+	for (int j=1; j<matrixSize[other_dim]; ++j,current_raw_pos+=stride[other_dim]) {
+	  if (src_ptr[current_raw_pos] > *res_ptr) {
+	    *res_ptr    = src_ptr[current_raw_pos];
+	    raw_pos_max = current_raw_pos;
+	  }
 	}
+	if (argmax) argmax[i] = raw_pos_max;
       }
       break;
     }
@@ -558,17 +572,21 @@ Matrix<float> *Matrix<float>::maxSelDim(const int dim) const {
       result->setUseCuda(use_cuda);
 #endif
       float *res_ptr = result->getRawDataAccess()->getPPALForWrite();
+      const float *src_ptr = data->getPPALForRead();
       for (int i=0; i<matrixSize[dim]; ++i, ++res_ptr) {
+	int raw_pos_max = i*stride[dim] + offset;
+	*res_ptr = src_ptr[raw_pos_max];
 	for (int j=0; j<matrixSize[other_dim1]; ++j) {
-	  const float *src_ptr = data->getPPALForRead() + offset;
-	  src_ptr += i*stride[dim] + j*stride[other_dim1];
-	  *res_ptr = *src_ptr;
-	  src_ptr += stride[other_dim2];
-	  for (int k=1; k<matrixSize[other_dim2];
-	       ++k, src_ptr += stride[other_dim2]) {
-	    *res_ptr = april_utils::max(*res_ptr, *src_ptr);
+	  int current_raw_pos = offset + i*stride[dim] + j*stride[other_dim1];
+	  for (int k=0; k<matrixSize[other_dim2];
+	       ++k, current_raw_pos += stride[other_dim2]) {
+	    if (src_ptr[current_raw_pos] > *res_ptr) {
+	      *res_ptr    = src_ptr[current_raw_pos];
+	      raw_pos_max = current_raw_pos;
+	    }
 	  }
 	}
+	if (argmax) argmax[i] = raw_pos_max;
       }
       break;
     }
@@ -581,19 +599,23 @@ Matrix<float> *Matrix<float>::maxSelDim(const int dim) const {
       result->setUseCuda(use_cuda);
 #endif
       float *res_ptr = result->getRawDataAccess()->getPPALForWrite();
+      const float *src_ptr = data->getPPALForRead();
       for (int i=0; i<matrixSize[dim]; ++i, ++res_ptr) {
+	int raw_pos_max = i*stride[dim] + offset;
+	*res_ptr = src_ptr[raw_pos_max];
 	for (int j=0; j<matrixSize[other_dim1]; ++j) {
 	  for (int k=0; k<matrixSize[other_dim2]; ++k) {
-	    const float *src_ptr = data->getPPALForRead() + offset;
-	    src_ptr += i*stride[dim]+j*stride[other_dim1]+k*stride[other_dim2];
-	    *res_ptr = *src_ptr;
-	    src_ptr += stride[other_dim3];
-	    for (int k2=1; k2<matrixSize[other_dim3];
-		 ++k2, src_ptr += stride[other_dim3]) {
-	      *res_ptr = april_utils::max(*res_ptr, *src_ptr);
+	    int current_raw_pos=offset+i*stride[dim]+j*stride[other_dim1]+k*stride[other_dim2];
+	    for (int k2=0; k2<matrixSize[other_dim3];
+		 ++k2, current_raw_pos += stride[other_dim3]) {
+	      if (src_ptr[current_raw_pos] > *res_ptr) {
+		*res_ptr    = src_ptr[current_raw_pos];
+		raw_pos_max = current_raw_pos;
+	      }
 	    }
 	  }
 	}
+	if (argmax) argmax[i] = raw_pos_max;
       }
       break;
     }
@@ -601,9 +623,10 @@ Matrix<float> *Matrix<float>::maxSelDim(const int dim) const {
     {
       float *res_ptr = result->getRawDataAccess()->getPPALForWrite();
       for (int i=0; i<matrixSize[dim]; ++i, ++res_ptr) {
-	int argmax;
+	int aux, argmax_raw_pos;
 	MatrixFloat *current = const_cast<MatrixFloat*>(this)->select(dim, i);
-	*res_ptr = current->max(argmax);
+	current->max(aux, argmax_raw_pos);
+	if (argmax) argmax[i] = argmax_raw_pos;
 	delete current;
       }
     }

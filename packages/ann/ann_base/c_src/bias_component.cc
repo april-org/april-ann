@@ -41,6 +41,23 @@ namespace ANN {
     if (output) DecRef(output);
   }
 
+  void BiasANNComponent::computeBP(MatrixFloat *weights_mat,
+				   MatrixFloat *input_error_mat,
+				   float alpha) {
+    unsigned int bunch_size = input_error_mat->getDimSize(0);
+    // bias update: prev_bias[j] = prev_bias[j] + \sum_b norm_learn_rate * ERROR_INPUT[b,j]
+    if (bunch_size == 1) weights_mat->axpy(alpha, input_error_mat);
+    else doSaxpyLoop(output_size,
+		     alpha,
+		     input_error_mat->getRawDataAccess(),
+		     input_error_mat->getStrideSize(1),
+		     weights_mat->getRawDataAccess(),
+		     weights_mat->getStrideSize(0),
+		     bunch_size,
+		     input_error_mat->getStrideSize(0), 0,
+		     use_cuda);
+  }
+
   Token *BiasANNComponent::doForward(Token* _input, bool during_training) {
     if (bias_vector == 0) ERROR_EXIT1(129, "Not built component %s\n",
 				      name.c_str());
@@ -121,17 +138,7 @@ namespace ANN {
       -(1.0f/sqrtf(static_cast<float>(references*bunch_size))) *
       learning_rate;
 
-    // bias update: prev_bias[j] = prev_bias[j] + \sum_b norm_learn_rate * ERROR_INPUT[b,j]
-    if (bunch_size == 1) prev_bias_ptr->axpy(norm_learn_rate, input_error_mat);
-    else doSaxpyLoop(output_size,
-		     norm_learn_rate,
-		     input_error_mat->getRawDataAccess(),
-		     input_error_mat->getStrideSize(1),
-		     prev_bias_ptr->getRawDataAccess(),
-		     prev_bias_ptr->getStrideSize(0),
-		     bunch_size,
-		     input_error_mat->getStrideSize(0), 0,
-		     use_cuda);
+    computeBP(prev_bias_ptr, input_error_mat, norm_learn_rate);
     
     // If necessary, update counts, swap vectors, and other stuff
     if (bias_vector->endUpdate()) {
@@ -150,6 +157,18 @@ namespace ANN {
     input  = 0;
     error  = 0;
     output = 0;
+  }
+
+  void BiasANNComponent::computeGradients(MatrixFloat*& weight_grads) {
+    if (weight_grads == 0) {
+      weight_grads = bias_vector->getPtr()->cloneOnlyDims();
+      weight_grads->zeros();
+    }
+    else if (!weight_grads->sameDim(bias_vector->getPtr()))
+      ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
+    MatrixFloat *input_error_mat = error->getMatrix();
+    unsigned int bunch_size = input_error_mat->getDimSize(0);
+    computeBP(weight_grads, error->getMatrix(), 1.0f/bunch_size);
   }
 
   ANNComponent *BiasANNComponent::clone() {
