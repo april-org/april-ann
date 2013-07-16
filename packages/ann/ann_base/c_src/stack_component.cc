@@ -85,7 +85,13 @@ namespace ANN {
     for (unsigned int c=0; c<components.size(); ++c)
       components[c]->reset();
   }
-    
+  
+  void StackANNComponent::computeAllGradients(hash<string,MatrixFloat*>
+					      &weight_grads_dict) {
+    for (unsigned int c=0; c<components.size(); ++c)
+      components[c]->computeAllGradients(weight_grads_dict);
+  }
+
   ANNComponent *StackANNComponent::clone() {
     StackANNComponent *obj = new StackANNComponent(name.c_str());
     for (unsigned int c=0; c<components.size(); ++c)

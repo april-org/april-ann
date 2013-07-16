@@ -463,6 +463,15 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD ANNComponent compute_gradients
+{
+  hash<string,MatrixFloat*> weight_grads_dict;
+  obj->computeAllGradients(weight_grads_dict);
+  pushHashTableInLuaStack(L, weight_grads_dict, lua_pushMatrixFloat);
+  LUABIND_RETURN_FROM_STACK(-1);
+}
+//BIND_END
+
 //BIND_METHOD ANNComponent clone
 {
   LUABIND_RETURN(ANNComponent, obj->clone());

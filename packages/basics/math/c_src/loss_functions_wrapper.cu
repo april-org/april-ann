@@ -289,7 +289,7 @@ void doComputeMSEGradient(FloatGPUMirroredMemoryBlock *input,
   if (use_gpu) {    
     const float *input_ptr  = input->getGPUForRead();
     const float *target_ptr = target->getGPUForRead();
-    float *error_output_ptr = error_output->getGPUForReadAndWrite();
+    float *error_output_ptr = error_output->getGPUForWrite();
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
@@ -307,7 +307,7 @@ void doComputeMSEGradient(FloatGPUMirroredMemoryBlock *input,
     float d = 0.0f;
     const float *input_ptr  = input->getPPALForRead();
     const float *target_ptr = target->getPPALForRead();
-    float *error_output_ptr = error_output->getPPALForReadAndWrite();
+    float *error_output_ptr = error_output->getPPALForWrite();
     for (unsigned int i = 0; i < size; i++) {
       for (unsigned int b=0; b<bunch_size; ++b) {
 	d = input_ptr[b] - target_ptr[b];
@@ -389,7 +389,7 @@ void doComputeMAEGradient(FloatGPUMirroredMemoryBlock *input,
   if (use_gpu) {    
     const float *input_ptr  = input->getGPUForRead();
     const float *target_ptr = target->getGPUForRead();
-    float *error_output_ptr = error_output->getGPUForReadAndWrite();
+    float *error_output_ptr = error_output->getGPUForWrite();
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
@@ -408,7 +408,7 @@ void doComputeMAEGradient(FloatGPUMirroredMemoryBlock *input,
     float d = 0.0f;
     const float *input_ptr  = input->getPPALForRead();
     const float *target_ptr = target->getPPALForRead();
-    float *error_output_ptr = error_output->getPPALForReadAndWrite();
+    float *error_output_ptr = error_output->getPPALForWrite();
     float invN = 1.0f/size;
     for (unsigned int i = 0; i < size; i++) {
       for (unsigned int b=0; b<bunch_size; ++b) {
@@ -564,7 +564,7 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
   if (use_gpu) {    
     const float *input_ptr  = input->getGPUForRead();
     const float *target_ptr = target->getGPUForRead();
-    float *error_output_ptr = error_output->getGPUForReadAndWrite();
+    float *error_output_ptr = error_output->getGPUForWrite();
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
@@ -581,7 +581,7 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
 #endif
     const float *input_ptr  = input->getPPALForRead();
     const float *target_ptr = target->getPPALForRead();
-    float *error_output_ptr = error_output->getPPALForReadAndWrite();
+    float *error_output_ptr = error_output->getPPALForWrite();
     for (unsigned int i = 0; i < size; i++) {
       for (unsigned int b=0; b<bunch_size; ++b)
 	error_output_ptr[b] = expf(input_ptr[b]) - target_ptr[b];
@@ -607,7 +607,7 @@ void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
     const float *output_ptr        = output->getGPUForRead();
     const float *target_output_ptr = target_output->getGPUForRead();
     float *output_error_ptr        = output_error->getGPUForWrite();
-    float *pattern_errors_ptr      = pattern_errors->getGPUForReadAndWrite();
+    float *pattern_errors_ptr      = pattern_errors->getGPUForWrite();
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(conf, output_size,
 						 block, grid);
@@ -627,7 +627,7 @@ void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
     const float *output_ptr        = output->getPPALForRead();
     const float *target_output_ptr = target_output->getPPALForRead();
     float *output_error_ptr        = output_error->getPPALForWrite();
-    float *pattern_errors_ptr      = pattern_errors->getPPALForReadAndWrite();
+    float *pattern_errors_ptr      = pattern_errors->getPPALForWrite();
     
     for (unsigned int i = 0; i < output_size; i++) {
       for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
@@ -663,7 +663,7 @@ void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
   const float *output_ptr        = output->getPPALForRead();
   const float *target_output_ptr = target_output->getPPALForRead();
   float *output_error_ptr        = output_error->getPPALForWrite();
-  float *pattern_errors_ptr      = pattern_errors->getGPUForReadAndWrite();
+  float *pattern_errors_ptr      = pattern_errors->getGPUForWrite();
 
   for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
   float Z = 0.0f;
@@ -703,9 +703,6 @@ float doLocalFMeasureLossFunction(FloatGPUMirroredMemoryBlock *input,
   if (size != 1) ERROR_EXIT(128, "Multi-class version is not implemented\n");
   const float *input_ptr  = input->getPPALForRead();
   const float *target_ptr = target->getPPALForRead();
-  FloatGPUMirroredMemoryBlock *pattern_errors = 
-    new FloatGPUMirroredMemoryBlock(target->getSize());
-  float *pattern_errors_ptr = pattern_errors->getPPALForReadAndWrite();
   Gab = 0.0f;
   Hab = 0.0f;
   float beta2 = beta*beta;
@@ -748,7 +745,7 @@ void doComputeLocalFMeasureGradient(FloatGPUMirroredMemoryBlock *target,
   if (use_gpu)   ERROR_EXIT(128, "GPU VERSION NOT IMPLEMENTED!!!\n");
   if (size != 1) ERROR_EXIT(128, "Multi-class version is not implemented\n");
   const float *target_ptr = target->getPPALForRead();
-  float *output_error_ptr = output_error->getPPALForReadAndWrite();
+  float *output_error_ptr = output_error->getPPALForWrite();
   float beta2_p1  = 1.0f + beta*beta;
   if (Hab > 0.0f) {
     float inv_Hab     = 1.0f/Hab;

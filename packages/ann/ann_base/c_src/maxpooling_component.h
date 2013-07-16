@@ -25,10 +25,12 @@
 #include "cblas_headers.h"
 #include "ann_component.h"
 #include "connection.h"
+#include "gpu_mirrored_memory_block.h"
 
 namespace ANN {
   class MaxPoolingANNComponent : public ANNComponent {
     TokenMatrixFloat *input, *error_input, *output, *error_output;
+    IntGPUMirroredMemoryBlock *argmax_raw_pos;
     
     // parameters of the convolution
     
@@ -83,7 +85,7 @@ namespace ANN {
   public:
     MaxPoolingANNComponent(int input_num_dims,
 			   const int *_kernel_dims, // input_num_dims
-			   const int *_kernel_step, // step
+			   const int *_kernel_step,
 			   const char *name=0);
     virtual ~MaxPoolingANNComponent();
     virtual Token *getInput() { return input; }

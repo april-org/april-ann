@@ -540,6 +540,62 @@ end
 
 ------------------------------------------------------------------------
 
+april_set_doc("trainable.supervised_trainer.grad_check_step", {
+		class = "method",
+		summary = "Executes one gradients check step",
+		params = {
+		  "A table with one input pattern or a token (with one or more patterns)",
+		  "The corresponding target output pattern (table or token)",
+		},
+		outputs = {
+		  "A boolean, true or false if the gradient is correct or not",
+		} })
+
+function trainable.supervised_trainer:grad_check_step(input, target)
+  if type(input)  == "table" then input  = tokens.matrix(matrix.col_major(input))  end
+  if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
+  self.ann_component:reset()
+  self.loss_function:reset()
+  local output   = self.ann_component:forward(input, true)
+  local tr_loss  = self.loss_function:loss(output, target)
+  local gradient = self.loss_function:gradient(output, target)
+  gradient=self.ann_component:backprop(gradient)
+  local weight_grads = self.ann_component:compute_gradients()
+  local epsilond = 0.2
+  local ret = true
+  for wname,cnn in self:iterate_weights() do
+    local w = cnn:matrix()
+    local ann_grads = weight_grads[wname]
+    for i=1,w:size() do
+      local orig_w = w:raw_get(i-1)
+      local epsilon  = 0.2 * orig_w
+      w:raw_set(i-1, orig_w - epsilon)
+      local loss_a = self.loss_function:loss(self.ann_component:forward(input,
+									true),
+					     target)
+      w:raw_set(i-1, orig_w + epsilon)
+      local loss_b = self.loss_function:loss(self.ann_component:forward(input,
+									true),
+					     target)
+      w:raw_set(i-1, orig_w)
+      local g = (loss_b - loss_a) / (2*epsilon)
+      local ann_g = ann_grads:raw_get(i-1)
+      printf("%s[%d]  found %g expected %g\n",wname,i-1,ann_g,g)
+      if ann_g ~= 0 and g ~= 0 then
+	local err = math.abs((ann_g - g)/(ann_g+g))
+	if err > epsilond then
+	  printf("Incorrect gradient for %s[%d], found %g, expected %g (error %g)\n",
+		 wname, i-1, ann_g, g, err)
+	  ret = false
+	end
+      end
+    end
+  end
+  return ret
+end
+
+------------------------------------------------------------------------
+
 april_set_doc("trainable.supervised_trainer.calculate", {
 		class = "method",
 		summary = "Executes one forward",
@@ -765,6 +821,81 @@ function trainable.supervised_trainer:train_dataset(t)
   ds_idx_table = nil
   collectgarbage("collect")
   return self.loss_function:get_accum_loss()
+end
+
+------------------------------------------------------------------------
+
+april_set_doc("trainable.supervised_trainer.grad_check_dataset", {
+		class = "method",
+		summary = "Executes gradient check with a given dataset",
+		params = {
+		  ["input_dataset"]  = "A dataset float or dataset token",
+		  ["output_dataset"] = "A dataset float or dataset token (target output)",
+		  ["bunch_size"]     = 
+		    {
+		      "Bunch size (mini-batch). It is optional if bunch_size",
+		      "was set at constructor, otherwise it is mandatory.",
+		    },
+		  ["max_iterations"] = "Number [optional]",
+		},
+		outputs = {
+		  "A boolean",
+		} })
+
+function trainable.supervised_trainer:grad_check_dataset(t)
+  local params = get_table_fields(
+    {
+      input_dataset  = { mandatory = false, default=nil },
+      output_dataset = { mandatory = false, default=nil },
+      bunch_size     = { type_match = "number",
+			 mandatory = (self.bunch_size == false),
+			 default=self.bunch_size },
+      max_iterations = { type_match = "number",
+			 mandatory = false,
+			 default = t.input_dataset:numPatterns() },
+    }, t)
+  -- ERROR CHECKING
+  assert(params.input_dataset ~= not params.output_dataset,
+	 "input_dataset and output_dataset fields are mandatory together")
+  --
+  
+  -- TRAINING TABLES
+  
+  -- for each pattern, index in dataset
+  local ds_idx_table = {}
+  -- set to ZERO the accumulated of loss
+  self.loss_function:reset()
+  if isa(params.input_dataset, dataset) then
+    params.input_dataset  = dataset.token.wrapper(params.input_dataset)
+  end
+  if isa(params.output_dataset, dataset) then
+    params.output_dataset = dataset.token.wrapper(params.output_dataset)
+  end
+  check_dataset_sizes(params.input_dataset, params.output_dataset)
+  local num_patterns = params.input_dataset:numPatterns()
+  for i=1,num_patterns do table.insert(ds_idx_table, i) end
+  local k=0
+  local bunch_indexes = {}
+  for i=1,#ds_idx_table,params.bunch_size do
+    if i/params.bunch_size > params.max_iterations then break end
+    table.clear(bunch_indexes)
+    local last = math.min(i+params.bunch_size-1, #ds_idx_table)
+    for j=i,last do table.insert(bunch_indexes, ds_idx_table[j]) end
+    local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
+    local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
+    if not self:grad_check_step(input_bunch, output_bunch) then
+      printf("Error processing pattern bunch: %s\n",
+	     table.concat(bunch_indexes, " "))
+      ds_idx_table = nil
+      collectgarbage("collect")
+      return false
+    end
+    k=k+1
+    if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
+  end
+  ds_idx_table = nil
+  collectgarbage("collect")
+  return true
 end
 
 ------------------------------------------------------------------------

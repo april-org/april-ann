@@ -212,13 +212,13 @@ T Matrix<T>::norm2() const {
 }
 
 template <typename T>
-T Matrix<T>::min(int &arg_min) const {
+T Matrix<T>::min(int &arg_min, int &arg_min_raw_pos) const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return T();
 }
 
 template <typename T>
-T Matrix<T>::max(int &arg_max) const {
+T Matrix<T>::max(int &arg_max, int &arg_max_raw_pos) const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return T();
 }
@@ -229,7 +229,9 @@ void Matrix<T>::minAndMax(T &min, T &max) const {
 }
 
 template <typename T>
-Matrix<T> *Matrix<T>::maxSelDim(const int dim) const {
+Matrix<T> *Matrix<T>::maxSelDim(const int dim,
+				IntGPUMirroredMemoryBlock *raw_positions,
+				int shift) const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return 0;
 }

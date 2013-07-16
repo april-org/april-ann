@@ -312,6 +312,7 @@ public:
 
 // typedef for referring to float memory blocks
 typedef GPUMirroredMemoryBlock<float> FloatGPUMirroredMemoryBlock;
+typedef GPUMirroredMemoryBlock<int> IntGPUMirroredMemoryBlock;
 
 #ifndef NO_POOL
 template<typename T>

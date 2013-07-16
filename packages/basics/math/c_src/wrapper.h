@@ -35,7 +35,7 @@
 #include "gpu_mirrored_memory_block.h"
 #include "gpu_helper.h"
 
-#define NEAR_ZERO             1e-5f
+#define NEAR_ZERO             1e-6f
 #define DERIVATIVE_SATURATION 17.0f
 
 // ATTENTION: In 64-bit machines is better to use exp than expf

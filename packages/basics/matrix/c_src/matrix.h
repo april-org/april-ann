@@ -546,11 +546,13 @@ public:
   void scal(T value);
   
   T norm2() const;
-  T min(int &arg_min) const;
-  T max(int &arg_max) const;
+  T min(int &arg_min, int &arg_min_raw_pos) const;
+  T max(int &arg_max, int &arg_max_raw_pos) const;
   void minAndMax(T &min, T &max) const;
 
-  Matrix<T> *maxSelDim(const int dim) const;
+  Matrix<T> *maxSelDim(const int dim,
+		       IntGPUMirroredMemoryBlock *raw_positions=0,
+		       int shift = 0) const;
   
 private:
   void allocate_memory(int size);

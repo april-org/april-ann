@@ -414,6 +414,9 @@ namespace ANN {
     // backprop learning rule:
     // PREV_W = alpha * ERRORS + PREV_W
     const unsigned int references = weights_matrix->getNumReferences();
+    //    printf("******* ANTES %s\n", name.c_str());
+    //    weights_matrix->applyMaxNormPenalty(max_norm_penalty);
+    //    printf("******* DESPUES %s\n", name.c_str());
     assert(references > 0 && "Found 0 references of weights matrix");
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
     const float norm_learn_rate =
@@ -467,14 +470,14 @@ namespace ANN {
     // Forces to update counts and swap vectors if necessary at this backward
     // step
     if (weights_matrix->endUpdate()) {
+      if (max_norm_penalty > 0.0)
+	weights_matrix->applyMaxNormPenalty(max_norm_penalty);
       ++num_updates_from_last_prune;
       if (num_updates_from_last_prune > MAX_UPDATES_WITHOUT_PRUNE) {
 	num_updates_from_last_prune = 0;
 	weights_matrix->pruneSubnormalAndCheckNormal();
 	bias_vector->pruneSubnormalAndCheckNormal();
       }
-      if (max_norm_penalty > 0.0)
-	weights_matrix->applyMaxNormPenalty(max_norm_penalty);
     }
     bias_vector->endUpdate();
   }

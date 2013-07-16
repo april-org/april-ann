@@ -116,16 +116,18 @@ template<>
 float Matrix<float>::norm2() const;
 
 template<>
-float Matrix<float>::min(int &arg_min) const;
+float Matrix<float>::min(int &arg_min, int &arg_min_raw_pos) const;
 
 template<>
-float Matrix<float>::max(int &arg_max) const;
+float Matrix<float>::max(int &arg_max, int &arg_max_raw_pos) const;
 
 template<>
 void Matrix<float>::minAndMax(float &min, float &max) const;
 
 template <>
-Matrix<float> *Matrix<float>::maxSelDim(const int dim) const;
+Matrix<float> *Matrix<float>::maxSelDim(const int dim,
+					IntGPUMirroredMemoryBlock *raw_positions,
+					int shift) const;
 
 template<>
 void Matrix<float>::adjustRange(float rmin, float rmax);

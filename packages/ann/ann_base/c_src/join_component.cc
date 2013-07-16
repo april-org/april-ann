@@ -266,6 +266,12 @@ namespace ANN {
       components[i]->reset();
   }
   
+  void JoinANNComponent::computeAllGradients(hash<string,MatrixFloat*>
+					  &weight_grads_dict) {
+    for (unsigned int c=0; c<components.size(); ++c)
+      components[c]->computeAllGradients(weight_grads_dict);
+  }
+  
   ANNComponent *JoinANNComponent::clone() {
     JoinANNComponent *join_component = new JoinANNComponent(name.c_str());
     for (unsigned int i=0; i<components.size(); ++i)

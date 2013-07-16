@@ -1,15 +1,21 @@
 -- un generador de valores aleatorios... y otros parametros
-bunch_size     = tonumber(arg[1]) or 64
+bunch_size     = tonumber(arg[1]) or 2
 semilla        = 1234
 weights_random = random(semilla)
 inf            = -0.6
 sup            =  0.6
 shuffle_random = random(5678)
-learning_rate  = 0.1
-momentum       = 0.1
+learning_rate  = 0.08
+momentum       = 0.2
 weight_decay   = 0 --1e-05
 max_epochs     = 100
-max_norm_penalty = 2
+max_norm_penalty = 4
+
+conv1 = {1, 3, 3} nconv1=20
+maxp1 = {1, 2, 2}
+conv2 = {nconv1, 2, 2,} nconv2=40
+maxp2 = {1, 2, 2}
+hidden = 100
 
 --------------------------------------------------------------
 
@@ -56,19 +62,22 @@ val_output   = dataset.matrix(m2,
 				circular    = {true}
 			      })
 
+sz1 = math.floor((math.floor(((16 - conv1[2] + 1)/maxp1[2])) - conv2[2] + 1)/maxp2[2])
+sz2 = math.floor((math.floor(((16 - conv1[3] + 1)/maxp1[3])) - conv2[3] + 1)/maxp2[3])
 
 thenet = ann.components.stack():
 push(ann.components.rewrap{ size={ 1, 16, 16 } }):
-push(ann.components.convolution{ name="t", weights="w", kernel={1, 3, 3}, n=20 }):
--- push(ann.components.max_pooling{ kernel={1,7,7} }):
+push(ann.components.convolution{ name="conv", weights="w", bias="b1",
+				 kernel=conv1, n=nconv1 }):
+push(ann.components.max_pooling{ name="pool", kernel=maxp1 }):
 push(ann.components.actf.hardtanh()):
-push(ann.components.convolution{ kernel={20, 7, 7}, n=40 }):
--- push(ann.components.max_pooling{ kernel={1,3,3} }):
+push(ann.components.convolution{ kernel=conv2, n=nconv2,  bias="b2" }):
+push(ann.components.max_pooling{ kernel=maxp2 }):
 push(ann.components.actf.hardtanh{ name="actf1" }):
 push(ann.components.flatten()):
-push(ann.components.hyperplane{ input=((16-3-7+2)^2)*40, output= 1000 }):
+push(ann.components.hyperplane{ input=sz1*sz2*nconv2, output= hidden,  bias_weights="b3" }):
 push(ann.components.actf.tanh{ name="actf2" }):
-push(ann.components.hyperplane{ input=1000, output= 10 }):
+push(ann.components.hyperplane{ input=hidden, output= 10, bias_weights="b4" }):
 push(ann.components.actf.log_softmax())
 
 thenet:set_option("learning_rate", learning_rate)
@@ -86,7 +95,12 @@ trainer:randomize_weights{
   use_fanin   = true,
   use_fanout  = true,
 }
-trainer:component("actf2"):set_option("dropout_factor", 0.5)
+for _,cnn in trainer:iterate_weights("b.") do
+  local w,ow = cnn:matrix()
+  w:zeros()
+  ow:zeros()
+end
+-- trainer:component("actf2"):set_option("dropout_factor", 0.5)
 
 -- datos para entrenar
 datosentrenar = {
@@ -105,7 +119,7 @@ trainer:for_each_pattern{
   input_dataset = datosvalidar.input_dataset,
   bunch_size    = 1,
   func = function(idxs, trainer)
-    local c = trainer:component("t")
+    local c = trainer:component("pool")
     local o = c:get_output():get_matrix()
     local d = o:dim()
     local k = 0
@@ -131,18 +145,59 @@ for epoch = 1,max_epochs do
   collectgarbage("collect")
   totalepocas = totalepocas+1
   errortrain  = trainer:train_dataset(datosentrenar)
-  errorval    = trainer:validate_dataset(datosvalidar)
-  printf("%4d  %.7f %.7f\n",
-  	 totalepocas,errortrain,errorval)
+  --
+  norm2 = reduce(function(a,cnn)
+		   local b
+		   b = reduce(math.max, 0,
+			      pairs(
+				map(function(a) return a:norm2() end,
+				    cnn:matrix():sliding_window():iterate())
+			      )
+		   )
+		   return math.max(a,b)
+		 end,
+		 0,
+		 trainer:iterate_weights())
+  --
+  if false then
+    inp  = trainer:component("conv"):get_input():get_matrix()
+    outp = trainer:component("conv"):get_output():get_matrix()
+    err = trainer:component("conv"):get_error_input():get_matrix()
+    print("DIM", table.concat(err:dim(), " "))
+    for i=1,err:dim()[2] do
+    --   for j=1,err:dim()[1] do
+    -- 	print(inp:select(2,i):select(1,j):transpose())
+    -- 	print()
+    -- 	print(outp:select(2,i):select(1,j):transpose())
+    -- 	print()
+    -- 	print(err:select(2,i):select(1,j):transpose())
+    -- 	print()
+    --   end
+      local sum = err:select(2,i):sum()
+      print(i, sum,
+	    learning_rate/math.sqrt(bunch_size*err:dim()[3]*err:dim()[4]))
+      if sum > 40 then
+	for j=1,err:dim()[1] do
+	  print(outp:select(2,i):select(1,j):transpose())
+	  print()
+	  print(err:select(2,i):select(1,j):transpose())
+	  print()
+	end
+      end
+    end
+  end
+  printf("%4d  %.7f %.7f      %.7f\n",
+  	 totalepocas,errortrain,errorval,norm2)
   thenet:set_option("learning_rate",
 		    thenet:get_option("learning_rate")*0.95)
+  errorval    = trainer:validate_dataset(datosvalidar)
 end
 
 trainer:for_each_pattern{
   input_dataset = datosvalidar.input_dataset,
   bunch_size    = 1,
   func = function(idxs, trainer)
-    local c = trainer:component("t")
+    local c = trainer:component("pool")
     local o = c:get_output():get_matrix()
     local d = o:dim()
     local k = 0
