@@ -51,8 +51,10 @@ namespace ANN {
 		     alpha,
 		     input_error_mat->getRawDataAccess(),
 		     input_error_mat->getStrideSize(1),
+		     0,
 		     weights_mat->getRawDataAccess(),
 		     weights_mat->getStrideSize(0),
+		     0,
 		     bunch_size,
 		     input_error_mat->getStrideSize(0), 0,
 		     use_cuda);
@@ -84,8 +86,8 @@ namespace ANN {
     else {
       // addition of bias vector at output
       doSaxpyLoop(output_size, 1.0f,
-		  bias_ptr->getRawDataAccess(), bias_ptr->getStrideSize(0),
-		  output_mat->getRawDataAccess(), output_mat->getStrideSize(1),
+		  bias_ptr->getRawDataAccess(), bias_ptr->getStrideSize(0), 0,
+		  output_mat->getRawDataAccess(), output_mat->getStrideSize(1), 0,
 		  bunch_size,
 		  0, output_mat->getStrideSize(0),
 		  use_cuda);

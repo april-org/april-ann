@@ -23,6 +23,7 @@ luapkg{
       "-L/opt/lib",
       "-lgfortran",
       "-fopenmp",
+      "-rdynamic",
     },
 
   },

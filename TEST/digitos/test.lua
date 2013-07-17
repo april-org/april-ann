@@ -2,7 +2,7 @@
 bunch_size     = tonumber(arg[1]) or 64
 semilla        = 1234
 weights_random = random(semilla)
-description    = "256 inputs 256 tanh 128 tanh 10 log_logistic"
+description    = "256 inputs 256 tanh 128 tanh 10 log_softmax"
 inf            = -1.0
 sup            =  1.0
 shuffle_random = random(5678)
@@ -104,14 +104,14 @@ datosvalidar = {
 
 totalepocas = 0
 
-if not trainer:grad_check_dataset({
-				    input_dataset  = val_input,
-				    output_dataset = val_output,
-				    max_iterations = 10,
-				    bunch_size = 1,
-				  }) then
-  error("Incorrect gradients!!!")
-end
+-- if not trainer:grad_check_dataset({
+-- 				    input_dataset  = val_input,
+-- 				    output_dataset = val_output,
+-- 				    max_iterations = 10,
+-- 				    bunch_size = 2,
+-- 				  }) then
+--   error("Incorrect gradients!!!")
+-- end
 
 errorval = trainer:validate_dataset(datosvalidar)
 print("# Initial validation error:", errorval)

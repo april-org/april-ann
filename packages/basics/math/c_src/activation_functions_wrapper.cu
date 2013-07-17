@@ -943,10 +943,10 @@ void doMultiplyHardtanhDerivatives(FloatGPUMirroredMemoryBlock *input_units,
 #endif
 #endif
     for (unsigned int i=0; i<sz; ++i) {
-      float value = 0.0f;
       if (-1.0f < input_units_ptr[i] && input_units_ptr[i] < 1.0f)
-	value = input_units_ptr[i];
-      output_errors_ptr[i] = input_errors_ptr[i] * value;
+	output_errors_ptr[i] = input_errors_ptr[i];
+      else
+	output_errors_ptr[i] = 0.0f;
     }
 #ifdef USE_CUDA
   }

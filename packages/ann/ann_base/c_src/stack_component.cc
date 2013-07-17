@@ -59,7 +59,7 @@ namespace ANN {
   }
 
   Token *StackANNComponent::getErrorOutput() {
-    return components.back()->getErrorOutput();
+    return components[0]->getErrorOutput();
   }
     
   Token *StackANNComponent::doForward(Token* input, bool during_training) {

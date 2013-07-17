@@ -18,12 +18,9 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "swap.h"
 #include "convolution_component.h"
 #include "token_matrix.h"
 #include "table_of_token_codes.h"
-
-using april_utils::swap;
 
 namespace ANN {
 
@@ -34,7 +31,6 @@ namespace ANN {
   void ConvolutionANNComponent::initializeArrays(const int *input_dims) {
     // input_dims[0]  => BUNCH SIZE
     // output_dims[0] => BUNCH SIZE, output_dims[1] => HIDDEN LAYER SIZE
-    bias_rewrap[0]             = input_dims[0];
     output_dims[0]	       = input_dims[0];
     output_dims[1]	       = hidden_size;
     input_window_size[0]       = input_dims[0];
@@ -62,53 +58,18 @@ namespace ANN {
     }
   }
   
-  // A method to convert the bias vector of size Nx1 in a matrix of size
-  // BUNCHxK1xK2x...xKM being Ki the kernel size at dimension i
-  MatrixFloat *ConvolutionANNComponent::prepareBiasBunch() {
-    if (bias_matrix != 0 && bias_matrix->getDimSize(0) == output_dims[0])
-      return bias_matrix;
-    // this line converts the bias matrix of Nx1 in a vector of N elements
-    MatrixFloat *bias_vec = bias_vector->getPtr()->select(1,0);
-    IncRef(bias_vec);
-    // the output bias as a 2d matrix of BUNCHxN
-    MatrixFloat *bias_matrix_2d = new MatrixFloat(2, output_dims,
-						  CblasColMajor);
-    IncRef(bias_matrix_2d);
-    // for each pattern at the bunch
-    for (int b=0; b<output_dims[0]; ++b) {
-      // select the row b at the output bias matrix
-      MatrixFloat *dest = bias_matrix_2d->select(0, b);
-      IncRef(dest);
-      dest->copy(bias_vec);
-      DecRef(dest);
-    }
-    if (bias_matrix) DecRef(bias_matrix);
-    // reinterpret the output bias matrix of BUNCHxN to fit with the output
-    // sliding window of BUNCHxK1xK2x....xKM where Ki is the kernel size at
-    // dimension i
-    bias_matrix = bias_matrix_2d->rewrap(bias_rewrap, input_num_dims + 1);
-    IncRef(bias_matrix);
-    // free the memory of auxiliary matrices
-    DecRef(bias_matrix_2d);
-    DecRef(bias_vec);
-    return bias_matrix;
-  }
-
   ConvolutionANNComponent::ConvolutionANNComponent(int input_num_dims,
 						   const int *_kernel_dims,
 						   const int *_kernel_step,
 						   int num_output_planes,
 						   const char *name,
-						   const char *weights_name,
-						   const char *bias_name) :
+						   const char *weights_name) :
     ANNComponent(name, weights_name, 0, 0),
     input(0),
     error_input(0),
     output(0),
     error_output(0),
     weights_matrix(0),
-    bias_vector(0),
-    bias_matrix(0),
     num_updates_from_last_prune(0),
     number_input_windows(0),
     kernel_size(1),
@@ -126,14 +87,11 @@ namespace ANN {
     output_window_num_steps(new int[input_num_dims+1]),
     output_window_order_step(new int[input_num_dims+1]),
     output_window_rewrap(new int[2]),
-    bias_rewrap(new int[input_num_dims+1]),
     learning_rate(-1.0f),
     momentum(0.0f),
     weight_decay(0.0f),
     c_weight_decay(1.0f),
     max_norm_penalty(-1.0f) {
-    if (bias_name == 0) generateDefaultWeightsName(this->bias_name, "b");
-    else this->bias_name = string(bias_name);
     if (weights_name == 0) generateDefaultWeightsName(this->weights_name, "w");
     kernel_dims[0] = static_cast<int>(hidden_size);
     kernel_step[0] = 1;
@@ -143,8 +101,6 @@ namespace ANN {
     output_window_order_step[0] = 0;
     output_window_step[0] = 1;
     output_window_step[1] = 1;
-    bias_rewrap[0] = 0;
-    bias_rewrap[1] = static_cast<int>(hidden_size);
     for(int i=0; i<input_num_dims; ++i) {
       kernel_size *= _kernel_dims[i];
       kernel_dims[i+1] = _kernel_dims[i];
@@ -155,7 +111,6 @@ namespace ANN {
     for(int i=2; i<=input_num_dims; ++i) {
       output_window_size[i] = 1;
       output_window_step[i] = 1;
-      bias_rewrap[i] = 1;
     }
     input_window_rewrap[0]  = 0;
     input_window_rewrap[1]  = static_cast<int>(kernel_size);
@@ -165,7 +120,6 @@ namespace ANN {
   
   ConvolutionANNComponent::~ConvolutionANNComponent() {
     if (weights_matrix) DecRef(weights_matrix);
-    if (bias_vector) DecRef(bias_vector);
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);
@@ -182,7 +136,6 @@ namespace ANN {
     delete[] output_window_order_step;
     delete[] input_window_rewrap;
     delete[] output_window_rewrap;
-    delete[] bias_rewrap;
   }
   
   // The ConvolutionANNComponent
@@ -214,8 +167,6 @@ namespace ANN {
     output_mat->setUseCuda(use_cuda);
 #endif
     
-    MatrixFloat *bias_matrix = prepareBiasBunch();
-    IncRef(bias_matrix);
     /////////////////////////////////////////////////////////////////////////
 
     // Prepare sliding windows to compute the convolution
@@ -261,8 +212,6 @@ namespace ANN {
 	output_w->copy(conv_output_rewrapped);
 	DecRef(conv_output_rewrapped);
       }
-      // ADD BIAS
-      output_w->axpy(1.0f, bias_matrix);
       
       // Next iteration
       input_sw.next();
@@ -274,7 +223,6 @@ namespace ANN {
       DecRef(input_w);
       DecRef(output_w);
     }
-    DecRef(bias_matrix);
     return output;
   }
   
@@ -366,10 +314,8 @@ namespace ANN {
     
     // Foces weights_matrix to update internal counts for a backward step
     weights_matrix->beginUpdate();
-    bias_vector->beginUpdate();
     
     MatrixFloat *prev_weights_mat = weights_matrix->getPrevPtr();
-    MatrixFloat *prev_bias_ptr    = bias_vector->getPrevPtr();
     MatrixFloat *input_mat        = input->getMatrix();
     MatrixFloat *error_input_mat  = error_input->getMatrix();
     
@@ -389,27 +335,6 @@ namespace ANN {
       }
     } // if (weights_matrix->needsToComputeMomentum()) {
     
-    // BIAS MOMENTUM
-    if (bias_vector->isFirstUpdateCall()) {
-      if (momentum > 0.0f) {
-        // prev_w[i,j] = momentum * (w[i,j] - prev_w[i,j])
-        bias_vector->computeMomentumOnPrevVector(momentum, use_cuda);
-        bias_vector->computeWeightDecayOnPrevVector(1.0f,  use_cuda);
-      }
-      else bias_vector->copyToPrevVector(use_cuda);
-    } // if (bias_vector->needsToComputeMomentum()) {
-    
-    // Prepare sliding windows to compute the convolution
-    MatrixFloat::sliding_window input_sw(input_mat, input_window_size,
-					 0,  // OFFSET
-					 kernel_step,
-					 input_window_num_steps,
-					 input_window_order_step);
-    MatrixFloat::sliding_window error_input_sw(error_input_mat, output_window_size,
-					       0,  // OFFSET
-					       output_window_step,
-					       output_window_num_steps,
-					       output_window_order_step);
     unsigned int bunch_size = error_input_mat->getDimSize(0);
     // backprop learning rule:
     // PREV_W = alpha * ERRORS + PREV_W
@@ -423,6 +348,42 @@ namespace ANN {
       -(1.0f/sqrtf(static_cast<float>(references*bunch_size*number_input_windows))) *
       learning_rate;
     // CONVOLUTION OVER number_input_windows
+    computeBP(prev_weights_mat,
+	      input_mat,
+	      error_input_mat,
+	      norm_learn_rate,
+	      beta_parameter_for_cblas_bp);
+    
+    // Forces to update counts and swap vectors if necessary at this backward
+    // step
+    if (weights_matrix->endUpdate()) {
+      if (max_norm_penalty > 0.0)
+	weights_matrix->applyMaxNormPenalty(max_norm_penalty);
+      ++num_updates_from_last_prune;
+      if (num_updates_from_last_prune > MAX_UPDATES_WITHOUT_PRUNE) {
+	num_updates_from_last_prune = 0;
+	weights_matrix->pruneSubnormalAndCheckNormal();
+      }
+    }
+  }
+
+  void ConvolutionANNComponent::computeBP(MatrixFloat *weights_mat,
+					  MatrixFloat *input_mat,
+					  MatrixFloat *error_input_mat,
+					  const float alpha,
+					  float beta) {
+    // Prepare sliding windows to compute the convolution
+    MatrixFloat::sliding_window input_sw(input_mat, input_window_size,
+					 0,  // OFFSET
+					 kernel_step,
+					 input_window_num_steps,
+					 input_window_order_step);
+    MatrixFloat::sliding_window error_input_sw(error_input_mat, output_window_size,
+					       0,  // OFFSET
+					       output_window_step,
+					       output_window_num_steps,
+					       output_window_order_step);
+    unsigned int bunch_size = error_input_mat->getDimSize(0);
     while(!input_sw.isEnd() && !error_input_sw.isEnd()) {
       MatrixFloat *input_w       = input_sw.getMatrix();
       MatrixFloat *error_input_w = error_input_sw.getMatrix();
@@ -438,23 +399,13 @@ namespace ANN {
       IncRef(error_input_flattened);
       
       // WEIGHTS UPDATE
-      prev_weights_mat->gemm(CblasTrans, CblasNoTrans,
-			     norm_learn_rate,
-			     error_input_flattened, // A
-			     input_flattened,       // B
-			     beta_parameter_for_cblas_bp);
+      weights_mat->gemm(CblasTrans, CblasNoTrans,
+			alpha,
+			error_input_flattened, // A
+			input_flattened,       // B
+			beta);
       // only apply weight decay (if needed) the first time
-      beta_parameter_for_cblas_bp = 1.0f;
-      // BIAS UPDATE
-      doSaxpyLoop(hidden_size,
-		  norm_learn_rate,
-		  error_input_flattened->getRawDataAccess(),
-		  error_input_flattened->getStrideSize(1),
-		  prev_bias_ptr->getRawDataAccess(),
-		  prev_bias_ptr->getStrideSize(0),
-		  bunch_size,
-		  error_input_flattened->getStrideSize(0), 0,
-		  use_cuda);
+      beta = 1.0f;
       
       // Next iteration
       input_sw.next();
@@ -466,21 +417,20 @@ namespace ANN {
       DecRef(input_w);
       DecRef(error_input_w);
     }
-    
-    // Forces to update counts and swap vectors if necessary at this backward
-    // step
-    if (weights_matrix->endUpdate()) {
-      if (max_norm_penalty > 0.0)
-	weights_matrix->applyMaxNormPenalty(max_norm_penalty);
-      ++num_updates_from_last_prune;
-      if (num_updates_from_last_prune > MAX_UPDATES_WITHOUT_PRUNE) {
-	num_updates_from_last_prune = 0;
-	weights_matrix->pruneSubnormalAndCheckNormal();
-	bias_vector->pruneSubnormalAndCheckNormal();
-      }
-    }
-    bias_vector->endUpdate();
   }
+
+  void ConvolutionANNComponent::computeGradients(MatrixFloat*& weight_grads) {
+    if (weight_grads == 0) {
+      weight_grads = weights_matrix->getPtr()->cloneOnlyDims();
+      weight_grads->zeros();
+    }
+    computeBP(weight_grads,
+	      input->getMatrix(),
+	      error_input->getMatrix(),
+	      1.0f,
+	      1.0f);
+  }
+
   
   void ConvolutionANNComponent::reset() {
     if (input)        DecRef(input);
@@ -570,22 +520,6 @@ namespace ANN {
       w = weights_matrix;
     }
     weights_matrix->countReference();
-    /////////////////////////////////////////////////////////////////
-    Connections *&b = weights_dict[bias_name];
-    if (b != 0) {
-      AssignRef(bias_vector, b);
-      if (!bias_vector->checkInputOutputSizes(1,hidden_size))
-	ERROR_EXIT2(256,"The bias vector input/output sizes are not correct, "
-		    "expected 1x%d [%s]\n", hidden_size, name.c_str());
-    }
-    else {
-      if (bias_vector == 0) {
-	bias_vector = new Connections(1, hidden_size);
-	IncRef(bias_vector);
-      }
-      b = bias_vector;
-    }
-    bias_vector->countReference();
   }
 
   void ConvolutionANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
@@ -599,20 +533,13 @@ namespace ANN {
 		  weights_name.c_str(),
 		  name.c_str());
     else if (w == 0) w = weights_matrix;
-    Connections *&b = weights_dict[bias_name];
-    if (b != 0 && b != bias_vector)
-      ERROR_EXIT2(101, "Weights dictionary contains %s bias name which is "
-		  "not shared with bias_vector attribute [%s]\n",
-		  bias_name.c_str(),
-		  name.c_str());
-    else if (b == 0) b = bias_vector;
   }  
 
   char *ConvolutionANNComponent::toLuaString() {
     buffer_list buffer;
-    buffer.printf("ann.components.convolution{ name='%s',weights='%s',bias='%s',"
+    buffer.printf("ann.components.convolution{ name='%s',weights='%s',"
 		  "n=%d, kernel={", name.c_str(), weights_name.c_str(),
-		  bias_name.c_str(), hidden_size);
+		  hidden_size);
     for (int i=0; i<input_num_dims; ++i)
       buffer.printf("%d,", kernel_dims[i+1]);
     buffer.printf("}, step={");

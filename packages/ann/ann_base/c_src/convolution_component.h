@@ -28,11 +28,8 @@
 
 namespace ANN {
   class ConvolutionANNComponent : public ANNComponent {
-    april_utils::string bias_name;
-    //
     TokenMatrixFloat *input, *error_input, *output, *error_output;
     Connections *weights_matrix;
-    Connections *bias_vector;
     MatrixFloat *bias_matrix; // rewrapping of bias_vector matrix to fits at
 			      // output sliding window sizes
     unsigned int num_updates_from_last_prune;
@@ -73,8 +70,6 @@ namespace ANN {
     int *output_window_order_step;
     /// Translates the output window into a bi-dimensional matrix
     int *output_window_rewrap;
-    /// BIAS rewrapping vector, translates it to fit into output windows
-    int *bias_rewrap; // input_num_dims + 1
     
     /// learning parameters
     float learning_rate, momentum, weight_decay, c_weight_decay;
@@ -98,14 +93,23 @@ namespace ANN {
     }
     
     void initializeArrays(const int *input_dims);
-    MatrixFloat *prepareBiasBunch();
+    
+    void computeBP(MatrixFloat *weights_mat,
+		   MatrixFloat *input_mat,
+		   MatrixFloat *error_input_mat,
+		   const float alpha,
+		   float beta);
+    
+  protected:
+
+    virtual void computeGradients(MatrixFloat*& weight_grads);
+
   public:
     ConvolutionANNComponent(int input_num_dims,
 			    const int *_kernel_dims, // input_num_dims
 			    const int *_kernel_step, // step
 			    int num_output_planes,   // hidden layer size
-			    const char *name=0, const char *weights_name=0,
-			    const char *bias_name=0);
+			    const char *name=0, const char *weights_name=0);
     virtual ~ConvolutionANNComponent();
     virtual Token *getInput() { return input; }
     virtual Token *getOutput() { return output; }

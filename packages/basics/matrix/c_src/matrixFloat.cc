@@ -19,6 +19,7 @@
  *
  */
 
+#include "swap.h"
 #include "matrix.h"
 #include "matrixFloat.h"
 #include "matrixFloat_math_templates.h" // functions which apply functors
@@ -30,7 +31,12 @@
 /************* FILL FUNCTION **************/
 template<>
 void Matrix<float>::fill(float value) {
+#ifdef USE_MKL
+  applyFunctionWithSpanIteratorNOPARALLEL(this, make_cwise_functor_1(value, doFill));
+#else
+  // FIXME: THIS FUNCTION INTRODUCES NANs WITH MKL :SSSSS
   applyFunctionWithSpanIterator(this, make_cwise_functor_1(value, doFill));
+#endif
 }
 
 /************* CLAMP FUNCTION **************/
@@ -281,7 +287,11 @@ void Matrix<float>::copy(const Matrix<float> *other) {
     ERROR_EXIT(128, "Matrices with different dimension sizes\n");
   use_cuda = other->use_cuda;
   copy_functor functor;
+  //#ifdef USE_MKL
+  //  applyBinaryFunctionWithSpanIteratorNOPARALLEL(this, other, functor);
+  //#else
   applyBinaryFunctionWithSpanIterator(this, other, functor);
+  //#endif
 }
 
 struct axpy_functor {
@@ -566,8 +576,10 @@ Matrix<float> *Matrix<float>::maxSelDim(const int dim,
     }
   case 3:
     {
-      const int other_dim1 = (dim+1)%3;
-      const int other_dim2 = (dim+2)%3;
+      int other_dim1 = (dim+1)%3;
+      int other_dim2 = (dim+2)%3;
+      if (other_dim2 < other_dim1)
+	april_utils::swap(other_dim1, other_dim2);
 #ifdef USE_CUDA
       result->setUseCuda(use_cuda);
 #endif
@@ -592,9 +604,16 @@ Matrix<float> *Matrix<float>::maxSelDim(const int dim,
     }
   case 4:
     {
-      const int other_dim1 = (dim+1)%4;
-      const int other_dim2 = (dim+2)%4;
-      const int other_dim3 = (dim+3)%4;
+      int other_dim1 = (dim+1)%4;
+      int other_dim2 = (dim+2)%4;
+      int other_dim3 = (dim+3)%4;
+      if (other_dim1 > other_dim2)
+	april_utils::swap(other_dim1, other_dim2);
+      if (other_dim2 > other_dim3) {
+	april_utils::swap(other_dim2, other_dim3);
+	if (other_dim1 > other_dim2)
+	  april_utils::swap(other_dim1, other_dim2);
+      }
 #ifdef USE_CUDA
       result->setUseCuda(use_cuda);
 #endif

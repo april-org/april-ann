@@ -883,7 +883,7 @@ Matrix<T>::sliding_window::sliding_window(Matrix<T> *m,
   if (num_steps == 0) {
     for (int i=0; i<m->numDim; ++i)
       this->num_steps[i] = 1;
-    this->num_steps[0] = (m->matrixSize[0]-this->sub_matrix_size[0]+1)/this->step[0];
+    this->num_steps[0] = (m->matrixSize[0]-this->sub_matrix_size[0])/this->step[0] + 1;
   }
   else
     for (int i=0; i<m->numDim; ++i)

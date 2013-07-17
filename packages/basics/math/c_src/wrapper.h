@@ -269,9 +269,12 @@ void doSaxpy(int N, float alpha, const FloatGPUMirroredMemoryBlock* x,
 	     FloatGPUMirroredMemoryBlock* y, unsigned int y_shift,
 	     unsigned int y_inc, bool use_gpu);
 
-void doSaxpyLoop(int N, float alpha, FloatGPUMirroredMemoryBlock* x,
-		 unsigned int x_inc, FloatGPUMirroredMemoryBlock* y,
-		 unsigned int y_inc, unsigned int times,
+void doSaxpyLoop(int N, float alpha,
+		 FloatGPUMirroredMemoryBlock* x,
+		 unsigned int x_inc, unsigned int x_shift,
+		 FloatGPUMirroredMemoryBlock* y,
+		 unsigned int y_inc, unsigned int y_shift,
+		 unsigned int times,
 		 const unsigned int stride_x,
 		 const unsigned int stride_y,
 		 bool use_gpu);
