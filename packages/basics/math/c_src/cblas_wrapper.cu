@@ -351,8 +351,10 @@ void doSaxpyLoop(int N,
 		 float alpha,
 		 FloatGPUMirroredMemoryBlock* x,
 		 unsigned int x_inc,
+		 unsigned int x_shift,
 		 FloatGPUMirroredMemoryBlock* y,
 		 unsigned int y_inc,
+		 unsigned int y_shift,
 		 unsigned int times,
 		 const unsigned int x_stride,
 		 const unsigned int y_stride,
@@ -362,8 +364,8 @@ void doSaxpyLoop(int N,
   float *y_mem;
 #ifdef USE_CUDA
   if (use_gpu) {
-    x_mem = x->getGPUForRead();
-    y_mem = y->getGPUForReadAndWrite();
+    x_mem = x->getGPUForRead() + x_shift;
+    y_mem = y->getGPUForReadAndWrite() + y_shift;
 
     const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
     dim3 block, grid;
@@ -386,8 +388,8 @@ void doSaxpyLoop(int N,
 #ifndef USE_CUDA
     //printf("Doing a saxpy loop with comp=0 & cuda=0\n");
 #endif
-    x_mem = x->getPPALForRead();
-    y_mem = y->getPPALForReadAndWrite();
+    x_mem = x->getPPALForRead() + x_shift;
+    y_mem = y->getPPALForReadAndWrite() + y_shift;
 
     for (unsigned int i = 0; i < times; i++)
       cblas_saxpy(N, alpha,

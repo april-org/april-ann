@@ -133,6 +133,10 @@ namespace ANN {
 #ifdef USE_CUDA
     input_mat->setUseCuda(use_cuda);
 #endif
+    if (!input_mat->getIsContiguous()) {
+      input_mat = input_mat->clone();
+      AssignRef(input,new TokenMatrixFloat(input_mat));
+    }
     const int *input_dims = input_mat->getDimPtr();
     initializeArrays(input_dims);
     MatrixFloat *output_mat;
@@ -156,6 +160,7 @@ namespace ANN {
 					  output_window_num_steps,
 					  output_window_order_step);
     number_input_windows = input_sw.numWindows();
+    assert(number_input_windows == output_sw.numWindows());
     if (during_training)
       AssignRef(argmax_raw_pos,
 		new IntGPUMirroredMemoryBlock(input_mat->getDimSize(0)*
@@ -225,13 +230,27 @@ namespace ANN {
     assert(static_cast<int>(argmax_raw_pos->getSize()) == error_input_mat->size());
     assert(error_output_sw.numWindows() == error_input_sw.numWindows());
     const int *argmax_ints = argmax_raw_pos->getPPALForRead();
+    float *error_output_ptr = error_output_mat->getRawDataAccess()->getPPALForReadAndWrite();
     // CONVOLUTION GRADIENT
     while(!error_input_sw.isEnd()) {
       MatrixFloat *error_input_w = error_input_sw.getMatrix();
+      
       IncRef(error_input_w);
-      for (MatrixFloat::col_major_iterator it(error_input_w->begin());
-	   it!=error_input_w->end(); ++it, ++argmax_ints)
+      for (MatrixFloat::const_iterator it(error_input_w->begin());
+	   it!=error_input_w->end(); ++it, ++argmax_ints) {
 	(*error_output_mat)[*argmax_ints] += *it;
+	/*
+	  int jaja[4];
+	  error_output_w->computeCoords(*argmax_ints, jaja);
+	  printf ("ERROR_OUTPUT-W[");
+	  for (int i=0; i<4; ++i) printf (" %d", jaja[i]);
+	  printf(" ] :: %d => %g\n", *argmax_ints, *it);
+	  error_output_mat->computeCoords(*argmax_ints, jaja);
+	  printf ("ERROR_OUTPUT-M[");
+	  for (int i=0; i<4; ++i) printf (" %d", jaja[i]);
+	  printf(" ] :: %d => %g\n", *argmax_ints, *it);
+	*/
+      }
       // Next iteration
       error_input_sw.next();
       

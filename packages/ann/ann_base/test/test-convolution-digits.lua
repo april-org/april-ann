@@ -1,21 +1,31 @@
--- un generador de valores aleatorios... y otros parametros
-bunch_size     = tonumber(arg[1]) or 2
-semilla        = 1234
-weights_random = random(semilla)
-inf            = -0.6
-sup            =  0.6
-shuffle_random = random(5678)
-learning_rate  = 0.08
-momentum       = 0.2
-weight_decay   = 0 --1e-05
-max_epochs     = 100
+bunch_size       = tonumber(arg[1]) or 64
+semilla          = 1234
+weights_random   = random(semilla)
+inf              = -0.6
+sup              =  0.6
+shuffle_random   = random(5678)
+learning_rate    = 0.1
+momentum         = 0.2
+weight_decay     = 0.0 -- 1e-05
+max_epochs       = 5
 max_norm_penalty = 4
+check_grandients = false
+check_tokens     = false
 
-conv1 = {1, 3, 3} nconv1=20
+conv1 = {1, 3, 3} nconv1=10
 maxp1 = {1, 2, 2}
-conv2 = {nconv1, 2, 2,} nconv2=40
+conv2 = {nconv1, 2, 2,} nconv2=20
 maxp2 = {1, 2, 2}
 hidden = 100
+
+sz1_1 = 16 - conv1[2] + 1
+sz2_1 = 16 - conv1[3] + 1
+sz1_2 = math.floor(sz1_1/maxp1[2])
+sz2_2 = math.floor(sz2_1/maxp1[3])
+sz1_3 = sz1_2 - conv2[2] + 1
+sz2_3 = sz2_2 - conv2[3] + 1
+sz1_4 = math.floor(sz1_3/maxp2[2])
+sz2_4 = math.floor(sz2_3/maxp2[3])
 
 --------------------------------------------------------------
 
@@ -62,23 +72,38 @@ val_output   = dataset.matrix(m2,
 				circular    = {true}
 			      })
 
-sz1 = math.floor((math.floor(((16 - conv1[2] + 1)/maxp1[2])) - conv2[2] + 1)/maxp2[2])
-sz2 = math.floor((math.floor(((16 - conv1[3] + 1)/maxp1[3])) - conv2[3] + 1)/maxp2[3])
-
-thenet = ann.components.stack():
-push(ann.components.rewrap{ size={ 1, 16, 16 } }):
-push(ann.components.convolution{ name="conv", weights="w", bias="b1",
-				 kernel=conv1, n=nconv1 }):
-push(ann.components.max_pooling{ name="pool", kernel=maxp1 }):
-push(ann.components.actf.hardtanh()):
-push(ann.components.convolution{ kernel=conv2, n=nconv2,  bias="b2" }):
-push(ann.components.max_pooling{ kernel=maxp2 }):
-push(ann.components.actf.hardtanh{ name="actf1" }):
-push(ann.components.flatten()):
-push(ann.components.hyperplane{ input=sz1*sz2*nconv2, output= hidden,  bias_weights="b3" }):
-push(ann.components.actf.tanh{ name="actf2" }):
-push(ann.components.hyperplane{ input=hidden, output= 10, bias_weights="b4" }):
-push(ann.components.actf.log_softmax())
+thenet = ann.components.stack{ name="stack" }:
+push( ann.components.rewrap{ size={ 1, 16, 16 },
+			     name="rewrap" } ):
+push( ann.components.convolution{ kernel=conv1, n=nconv1,
+				  name="conv-w1", weights="w1" } ):
+push( ann.components.convolution_bias{ n=nconv1, ndims=#conv1,
+				       name="conv-b1", weights="b1" } ):
+push( ann.components.actf.hardtanh{ name="actf-1" } ):
+push( ann.components.max_pooling{ kernel=maxp1,
+				  name="pool-1" } ):
+push( ann.components.convolution{ kernel=conv2, n=nconv2,
+                                  name="conv-w2", weights="w2" } ):
+push( ann.components.convolution_bias{ n=nconv2, ndims=#conv2,
+				       name="conv-b2", weights="b2" } ):
+push( ann.components.actf.hardtanh{ name="actf-2" } ):
+push( ann.components.max_pooling{ kernel=maxp2,
+				  name="pool-2" } ):
+push( ann.components.flatten{ name="flatten" } ):
+push( ann.components.hyperplane{ input=sz1_4*sz2_4*nconv2, output=hidden,
+				 name="hyp-1",
+				 bias_name="b3",
+				 dot_product_name="w3",
+				 bias_weights="b3",
+                                 dot_product_weights="w3" } ):
+push( ann.components.actf.tanh{ name="actf-3" } ):
+push( ann.components.hyperplane{ input=hidden, output= 10,
+				 name="hyp-2",
+				 bias_name="b4",
+				 dot_product_name="w4",
+				 bias_weights="b4",
+				 dot_product_weights="w4" } ):
+push( ann.components.actf.log_softmax{ name="actf-4" } )
 
 thenet:set_option("learning_rate", learning_rate)
 thenet:set_option("momentum",      momentum)
@@ -95,6 +120,9 @@ trainer:randomize_weights{
   use_fanin   = true,
   use_fanout  = true,
 }
+--for _,c in trainer:iterate_components("conv-b*") do
+--  c:set_option("learning_rate", 0.0001)
+--end
 for _,cnn in trainer:iterate_weights("b.") do
   local w,ow = cnn:matrix()
   w:zeros()
@@ -106,7 +134,7 @@ end
 datosentrenar = {
   input_dataset  = train_input,
   output_dataset = train_output,
-  shuffle        = shuffle_random,
+  -- shuffle        = shuffle_random,
 }
 
 datosvalidar = {
@@ -114,12 +142,21 @@ datosvalidar = {
   output_dataset = val_output,
 }
 
+if check_grandients then
+  trainer:grad_check_dataset({
+			       input_dataset  = val_input,
+			       output_dataset = val_output,
+			       max_iterations = 10,
+			       bunch_size = 1,
+			       verbose = true,
+			     })
+end
 
 trainer:for_each_pattern{
   input_dataset = datosvalidar.input_dataset,
   bunch_size    = 1,
   func = function(idxs, trainer)
-    local c = trainer:component("pool")
+    local c = trainer:component("pool-1")
     local o = c:get_output():get_matrix()
     local d = o:dim()
     local k = 0
@@ -139,6 +176,24 @@ errorval = trainer:validate_dataset(datosvalidar)
 
 clock = util.stopwatch()
 clock:go()
+
+if check_tokens then
+  function trainer:train_step(input, output)
+    trainable.supervised_trainer.train_step(self,input,output)
+    for name,c in self:iterate_components() do -- ("w[34]") do
+      print("\n================== "..name.." ==================")
+      print("\n++++++++++ input ++++++++++")
+      print(c:get_input():get_matrix())
+      print("\n++++++++++ output ++++++++++")
+      print(c:get_output():get_matrix())
+      print("\n++++++++++ error input ++++++++++")
+      print(c:get_error_input():get_matrix())
+      print("\n++++++++++ error output ++++++++++")
+      print(c:get_error_output():get_matrix())
+      print("\n======================================")
+    end
+  end
+end
 
 -- print("Epoch Training  Validation")
 for epoch = 1,max_epochs do
@@ -197,7 +252,7 @@ trainer:for_each_pattern{
   input_dataset = datosvalidar.input_dataset,
   bunch_size    = 1,
   func = function(idxs, trainer)
-    local c = trainer:component("pool")
+    local c = trainer:component("pool-1")
     local o = c:get_output():get_matrix()
     local d = o:dim()
     local k = 0
@@ -210,7 +265,7 @@ trainer:for_each_pattern{
   end
 }
 
-w = trainer:weights("w"):matrix()
+w = trainer:weights("w1"):matrix()
 local k=0
 for waux in w:sliding_window():iterate() do
   matrix.saveImage(waux:scal(1/waux:norm2()):clone("row_major"):rewrap(3,3):adjust_range(0,1),

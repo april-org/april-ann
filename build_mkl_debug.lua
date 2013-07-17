@@ -24,6 +24,7 @@ luapkg{
     extra_libs={
       "-pg",
       "-lpthread",
+      "-rdynamic",
       -- For Intel MKL :)
       "-L/opt/MKL/lib",
       "-lmkl_intel_lp64",

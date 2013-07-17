@@ -76,6 +76,7 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "gaussian_noise_component.h"
 #include "salt_and_pepper_component.h"
 #include "convolution_component.h"
+#include "convolution_bias_component.h"
 #include "maxpooling_component.h"
 #include "activation_function_component.h"
 #include "connection.h"
@@ -1025,13 +1026,12 @@ using namespace ANN;
 {
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_CHECK_PARAMETER(1, table);
-  const char *name=0, *weights=0, *bias=0;
+  const char *name=0, *weights=0;
   int *kernel, *step, n;
-  check_table_fields(L, 1, "name", "weights", "bias", "kernel",
+  check_table_fields(L, 1, "name", "weights", "kernel",
 		     "step", "n", (const char *)0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights, 0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, bias, string, bias, 0);
   LUABIND_GET_TABLE_PARAMETER(1, n, int, n);
   //
   lua_getfield(L, 1, "kernel");
@@ -1059,7 +1059,7 @@ using namespace ANN;
   }
   lua_pop(L, 1);
   obj = new ConvolutionANNComponent(size, kernel, step, n,
-				    name, weights, bias);
+				    name, weights);
   LUABIND_RETURN(ConvolutionANNComponent, obj);
   delete[] kernel;
   delete[] step;
@@ -1070,6 +1070,38 @@ using namespace ANN;
 {
   LUABIND_RETURN(ConvolutionANNComponent,
 		 dynamic_cast<ConvolutionANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//           ConvolutionBiasANNComponent           //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME ConvolutionBiasANNComponent ann.components.convolution_bias
+//BIND_CPP_CLASS    ConvolutionBiasANNComponent
+//BIND_SUBCLASS_OF  ConvolutionBiasANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR ConvolutionBiasANNComponent
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  const char *name=0, *weights=0;
+  int n, ndims;
+  check_table_fields(L, 1, "name", "weights", "n", "ndims", (const char *)0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights, 0);
+  LUABIND_GET_TABLE_PARAMETER(1, n, int, n);
+  LUABIND_GET_TABLE_PARAMETER(1, ndims, int, ndims);
+  //
+  obj = new ConvolutionBiasANNComponent(ndims, n, name, weights);
+  LUABIND_RETURN(ConvolutionBiasANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD ConvolutionBiasANNComponent clone
+{
+  LUABIND_RETURN(ConvolutionBiasANNComponent,
+		 dynamic_cast<ConvolutionBiasANNComponent*>(obj->clone()));
 }
 //BIND_END
 

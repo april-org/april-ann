@@ -546,12 +546,13 @@ april_set_doc("trainable.supervised_trainer.grad_check_step", {
 		params = {
 		  "A table with one input pattern or a token (with one or more patterns)",
 		  "The corresponding target output pattern (table or token)",
+		  "A boolean, true if you want high verbosity level [optional]",
 		},
 		outputs = {
 		  "A boolean, true or false if the gradient is correct or not",
 		} })
 
-function trainable.supervised_trainer:grad_check_step(input, target)
+function trainable.supervised_trainer:grad_check_step(input, target, verbose)
   if type(input)  == "table" then input  = tokens.matrix(matrix.col_major(input))  end
   if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
   self.ann_component:reset()
@@ -568,7 +569,12 @@ function trainable.supervised_trainer:grad_check_step(input, target)
     local ann_grads = weight_grads[wname]
     for i=1,w:size() do
       local orig_w = w:raw_get(i-1)
-      local epsilon  = 0.2 * orig_w
+      local epsilon
+      if math.abs(orig_w) > 0.0 then
+	epsilon = 0.2 * orig_w
+      else
+	epsilon = 1e-03
+      end
       w:raw_set(i-1, orig_w - epsilon)
       local loss_a = self.loss_function:loss(self.ann_component:forward(input,
 									true),
@@ -580,11 +586,16 @@ function trainable.supervised_trainer:grad_check_step(input, target)
       w:raw_set(i-1, orig_w)
       local g = (loss_b - loss_a) / (2*epsilon)
       local ann_g = ann_grads:raw_get(i-1)
-      printf("%s[%d]  found %g expected %g\n",wname,i-1,ann_g,g)
-      if ann_g ~= 0 and g ~= 0 then
+      if verbose then
+	fprintf(io.stderr,
+		"CHECK GRADIENT %s[%d], found %g, expected %g\n",
+		wname, i-1, ann_g, g)
+      end
+      if ann_g ~= 0 or g ~= 0 then
 	local err = math.abs((ann_g - g)/(ann_g+g))
 	if err > epsilond then
-	  printf("Incorrect gradient for %s[%d], found %g, expected %g (error %g)\n",
+	  fprintf(io.stderr,
+		  "INCORRECT GRADIENT FOR %s[%d], found %g, expected %g (error %g)\n",
 		 wname, i-1, ann_g, g, err)
 	  ret = false
 	end
@@ -837,6 +848,7 @@ april_set_doc("trainable.supervised_trainer.grad_check_dataset", {
 		      "was set at constructor, otherwise it is mandatory.",
 		    },
 		  ["max_iterations"] = "Number [optional]",
+		  ["verbose"] = "A boolean, true if you want high verbosity [optiona]",
 		},
 		outputs = {
 		  "A boolean",
@@ -853,6 +865,8 @@ function trainable.supervised_trainer:grad_check_dataset(t)
       max_iterations = { type_match = "number",
 			 mandatory = false,
 			 default = t.input_dataset:numPatterns() },
+      verbose        = { type_match = "boolean",
+			 mandatory = false, default=false },
     }, t)
   -- ERROR CHECKING
   assert(params.input_dataset ~= not params.output_dataset,
@@ -883,7 +897,7 @@ function trainable.supervised_trainer:grad_check_dataset(t)
     for j=i,last do table.insert(bunch_indexes, ds_idx_table[j]) end
     local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
     local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
-    if not self:grad_check_step(input_bunch, output_bunch) then
+    if not self:grad_check_step(input_bunch, output_bunch, params.verbose) then
       printf("Error processing pattern bunch: %s\n",
 	     table.concat(bunch_indexes, " "))
       ds_idx_table = nil

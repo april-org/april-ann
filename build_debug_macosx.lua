@@ -25,6 +25,7 @@ luapkg{
       "/System/Library/Frameworks/Accelerate.framework/Versions/A/Accelerate",
       "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib",
       "-pg",
+      "-rdynamic",
     },
   },
   

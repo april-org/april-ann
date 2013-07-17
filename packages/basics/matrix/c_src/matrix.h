@@ -66,10 +66,6 @@ protected:
     Matrix(int numDim, const int* dim, T* data_vector,
     CBLAS_ORDER major_order = CblasRowMajor);
   */
-  /// Computes the position at data array given it coordinates
-  int  computeRawPos(const int *coords) const;
-  /// Computes the coordinates given the raw data position
-  void computeCoords(const int raw_pos, int *coords) const;
   /// Returns the data pointer for read and write
   T *getData() { return data->getPPALForReadAndWrite(); }
   /// Returns the data pointer for read
@@ -93,6 +89,10 @@ protected:
   }
 
 public:
+  /// Computes the position at data array given it coordinates
+  int  computeRawPos(const int *coords) const;
+  /// Computes the coordinates given the raw data position
+  void computeCoords(const int raw_pos, int *coords) const;
   /// Updates with the following coordinates vector
   bool nextCoordVectorRowOrder(int *coords, int &raw_pos) const;
   bool nextCoordVectorColOrder(int *coords, int &raw_pos) const;

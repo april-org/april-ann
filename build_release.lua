@@ -21,6 +21,7 @@ luapkg{
       "-lblas",
       "-latlas",
       "-fopenmp",
+      "-rdynamic",
     },
   },
   
