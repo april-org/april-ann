@@ -42,7 +42,9 @@ extern "C" {
 extern "C" {
 #include <atlas/cblas.h>
 }
+#ifndef NO_MM_MALLOC
 #include <mm_malloc.h>
+#endif
 #define VECTOR_SSET(n, value, vec, step) catlas_sset((n), (value), (vec), (step))
 #define VECTOR_DSET(n, value, vec, step) catlas_dset((n), (value), (vec), (step))
 #endif
