@@ -1508,6 +1508,17 @@ function trainable.supervised_trainer:train_wo_validation(t)
   return best
 end
 
+function trainable.supervised_trainer:norm2(match_string)
+  local norm2 = 0
+  for _,cnn in self:iterate_weights(match_string) do
+    norm2 = math.max(norm2,
+		     reduce(function(a,b)
+			      return math.max(a,b:norm2())
+			    end, 0, cnn:matrix():sliding_window():iterate()))
+  end
+  return norm2
+end
+
 -------------------------
 -- STOPPING CRITERIA --
 -------------------------

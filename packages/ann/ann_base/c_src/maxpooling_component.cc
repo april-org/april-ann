@@ -42,11 +42,18 @@ namespace ANN {
     input_window_rewrap[0]     = input_dims[0];
     output_window_rewrap[0]    = input_dims[0];
     for (int i=1; i<=input_num_dims; ++i) {
-      output_dims[i] = (input_dims[i] - kernel_dims[i])/kernel_step[i] + 1;
-      
-      input_window_size[i]       = kernel_dims[i];
-      input_window_num_steps[i]  = output_dims[i];
-      output_window_num_steps[i] = output_dims[i];
+      if (kernel_dims[i] == 0) {
+	output_dims[i]             = 1;
+	input_window_size[i]       = input_dims[i];
+	input_window_num_steps[i]  = output_dims[i];
+	output_window_num_steps[i] = output_dims[i];
+      }
+      else {
+	output_dims[i] = (input_dims[i] - kernel_dims[i])/kernel_step[i] + 1;
+	input_window_size[i]       = kernel_dims[i];
+	input_window_num_steps[i]  = output_dims[i];
+	output_window_num_steps[i] = output_dims[i];
+      }
     }
   }
   
@@ -275,7 +282,7 @@ namespace ANN {
   
   ANNComponent *MaxPoolingANNComponent::clone() {
     MaxPoolingANNComponent *component = new
-      MaxPoolingANNComponent(input_num_dims-1, kernel_dims+1, kernel_step+1,
+      MaxPoolingANNComponent(input_num_dims, kernel_dims+1, kernel_step+1,
 			     name.c_str());
     component->input_size     = input_size;
     component->output_size    = output_size;

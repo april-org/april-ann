@@ -30,13 +30,13 @@ extern "C" {
 #include <mkl_service.h>
 }
 // if you compile with MKL you do not need atlas
-#define VECTOR_SSET(n, value, vec, step) for(unsigned int _i_=0;_i_<(n);_i_+=(step))(vec)[_i_]=(value)
-#define VECTOR_DSET(n, value, vec, step) for(unsigned int _i_=0;_i_<(n);_i_+=(step))(vec)[_i_]=(value)
+#define VECTOR_SSET(n, value, vec, step) for(unsigned int _i_=0,_j_=0;_j_<(n);++_j_,_i_+=(step))(vec)[_i_]=(value)
+#define VECTOR_DSET(n, value, vec, step) for(unsigned int _i_=0,_j_=0;_j_<(n);++_j_,_i_+=(step))(vec)[_i_]=(value)
 #elif USE_XCODE
 #include <Accelerate/Accelerate.h>
 #include <mm_malloc.h>
-#define VECTOR_SSET(n, value, vec, step) for(unsigned int _i_=0;_i_<(n);_i_+=(step))(vec)[_i_]=(value)
-#define VECTOR_DSET(n, value, vec, step) for(unsigned int _i_=0;_i_<(n);_i_+=(step))(vec)[_i_]=(value)
+#define VECTOR_SSET(n, value, vec, step) for(unsigned int _i_=0,_j_=0;_j_<(n);++_j_,_i_+=(step))(vec)[_i_]=(value)
+#define VECTOR_DSET(n, value, vec, step) for(unsigned int _i_=0,_j_=0;_j_<(n);++_j_,_i_+=(step))(vec)[_i_]=(value)
 #else
 //#error "JARL"
 extern "C" {

@@ -790,18 +790,23 @@ operator++() {
   switch(m->numDim) {
   case 1: raw_pos = m->last_raw_pos+1; break;
   case 2:
-    coords[1] = (coords[1]+1) % m->matrixSize[order[1]];
-    if (coords[1] > 0) raw_pos += m->stride[order[1]];
-    else raw_pos = m->last_raw_pos+1;
-    break;
+    {
+      int j = order[1];
+      coords[j] = (coords[j]+1) % m->matrixSize[j];
+      if (coords[j] > 0) raw_pos += m->stride[j];
+      else raw_pos = m->last_raw_pos+1;
+      break;
+    }
   default:
-    int j = 1, pos;
-    do {
-      pos = order[j++];
-      coords[pos] = (coords[pos]+1) % m->matrixSize[pos];
-    } while(j<m->numDim && coords[pos] == 0);
-    if (j == m->numDim && coords[pos] == 0) raw_pos = m->last_raw_pos+1;
-    else raw_pos = m->computeRawPos(coords);
+    {
+      int j = 1, pos;
+      do {
+	pos = order[j++];
+	coords[pos] = (coords[pos]+1) % m->matrixSize[pos];
+      } while(j<m->numDim && coords[pos] == 0);
+      if (j == m->numDim && coords[pos] == 0) raw_pos = m->last_raw_pos+1;
+      else raw_pos = m->computeRawPos(coords);
+    }
   }
   return *this;
 }

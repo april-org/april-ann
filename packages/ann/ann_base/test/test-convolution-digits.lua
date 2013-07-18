@@ -7,7 +7,7 @@ shuffle_random   = random(5678)
 learning_rate    = 0.1
 momentum         = 0.2
 weight_decay     = 0.0 -- 1e-05
-max_epochs       = 5
+max_epochs       = 100
 max_norm_penalty = 4
 check_grandients = false
 check_tokens     = false
@@ -140,6 +140,7 @@ datosentrenar = {
 datosvalidar = {
   input_dataset  = val_input,
   output_dataset = val_output,
+  bunch_size = 128,
 }
 
 if check_grandients then
@@ -148,7 +149,7 @@ if check_grandients then
 			       output_dataset = val_output,
 			       max_iterations = 10,
 			       bunch_size = 1,
-			       verbose = true,
+			       verbose = false,
 			     })
 end
 
@@ -172,7 +173,7 @@ trainer:for_each_pattern{
 totalepocas = 0
 
 errorval = trainer:validate_dataset(datosvalidar)
--- print("# Initial validation error:", errorval)
+print("# Initial validation error:", errorval)
 
 clock = util.stopwatch()
 clock:go()
@@ -200,19 +201,10 @@ for epoch = 1,max_epochs do
   collectgarbage("collect")
   totalepocas = totalepocas+1
   errortrain  = trainer:train_dataset(datosentrenar)
+  errorval    = trainer:validate_dataset(datosvalidar)
   --
-  norm2 = reduce(function(a,cnn)
-		   local b
-		   b = reduce(math.max, 0,
-			      pairs(
-				map(function(a) return a:norm2() end,
-				    cnn:matrix():sliding_window():iterate())
-			      )
-		   )
-		   return math.max(a,b)
-		 end,
-		 0,
-		 trainer:iterate_weights())
+  norm2_w = trainer:norm2(".*w.*")
+  norm2_b = trainer:norm2(".*b.*")
   --
   if false then
     inp  = trainer:component("conv"):get_input():get_matrix()
@@ -241,11 +233,10 @@ for epoch = 1,max_epochs do
       end
     end
   end
-  printf("%4d  %.7f %.7f      %.7f\n",
-  	 totalepocas,errortrain,errorval,norm2)
+  printf("%4d  %.7f %.7f      %.7f %.7f\n",
+  	 totalepocas,errortrain,errorval,norm2_w,norm2_b)
   thenet:set_option("learning_rate",
 		    thenet:get_option("learning_rate")*0.95)
-  errorval    = trainer:validate_dataset(datosvalidar)
 end
 
 trainer:for_each_pattern{
