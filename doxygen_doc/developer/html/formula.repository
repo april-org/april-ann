@@ -1,8 +1,0 @@
-\form#0:\[ a_i = f(y_i) = \frac{1}{1 + e^{-y_i}} \]
-\form#1:\[ a_i = f(y_o) = \frac{2}{1 + e^{-y_i}} - 1 \]
-\form#2:\[ a_i = \frac{e^{y_i}}{\sum_{j} e^{y_j}} \]
-\form#3:\[ a_i = f(y_i | y_1, y_2, \ldots y_n) \]
-\form#4:$a_i$
-\form#5:$i$
-\form#6:$y_i$
-\form#7:\[ \delta_i = \delta_i \cdot \frac{\partial a_i}{\partial y_i} \]

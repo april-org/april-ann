@@ -1,9 +1,0 @@
-<map id="basics/affine_transform/c_src/affine_transform.h" name="basics/affine_transform/c_src/affine_transform.h">
-<area shape="rect" id="node3" href="$affine__transform_8cc.html" title="basics/affine_transform\l/c_src/affine_transform.cc" alt="" coords="5,102,179,149"/>
-<area shape="rect" id="node5" href="$image_8h.html" title="imaging/image/c_src\l/image.h" alt="" coords="203,102,344,149"/>
-<area shape="rect" id="node7" href="$image_8cc.html" title="imaging/image/c_src\l/image.cc" alt="" coords="203,198,344,245"/>
-<area shape="rect" id="node10" href="$utilImageFloat_8h.html" title="imaging/image/c_src\l/utilImageFloat.h" alt="" coords="368,198,509,245"/>
-<area shape="rect" id="node12" href="$utilImageFloat_8cc.html" title="imaging/image/c_src\l/utilImageFloat.cc" alt="" coords="285,294,427,341"/>
-<area shape="rect" id="node14" href="$libpng_8h.html" title="imaging/libpng/c_src\l/libpng.h" alt="" coords="451,294,592,341"/>
-<area shape="rect" id="node16" href="$libpng_8cc.html" title="imaging/libpng/c_src\l/libpng.cc" alt="" coords="451,390,592,437"/>
-</map>

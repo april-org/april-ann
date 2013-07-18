@@ -1,6 +1,0 @@
-<map id="ANN::TimeSeriesErrorFunction" name="ANN::TimeSeriesErrorFunction">
-<area shape="rect" id="node5" href="$classANN_1_1AbsoluteError.html" title="ANN::AbsoluteError" alt="" coords="5,160,144,189"/>
-<area shape="rect" id="node7" href="$classANN_1_1NormalizedRootMSE.html" title="ANN::NormalizedRootMSE" alt="" coords="168,160,349,189"/>
-<area shape="rect" id="node9" href="$classANN_1_1RootMSE.html" title="ANN::RootMSE" alt="" coords="373,160,488,189"/>
-<area shape="rect" id="node2" href="$classReferenced.html" title="Referenced" alt="" coords="215,5,303,35"/>
-</map>

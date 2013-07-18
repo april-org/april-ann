@@ -1,8 +1,0 @@
-<map id="basics/affine_transform/c_src/affine_transform.cc" name="basics/affine_transform/c_src/affine_transform.cc">
-<area shape="rect" id="node3" href="$affine__transform_8h.html" title="affine_transform.h" alt="" coords="329,101,455,131"/>
-<area shape="rect" id="node5" href="$matrix_8h.html" title="matrix.h" alt="" coords="357,179,427,208"/>
-<area shape="rect" id="node7" href="$referenced_8h.html" title="referenced.h" alt="" coords="5,256,99,285"/>
-<area shape="rect" id="node9" href="$constants_8h.html" title="constants.h" alt="" coords="123,256,213,285"/>
-<area shape="rect" id="node11" href="$clamp_8h.html" title="clamp.h" alt="" coords="237,256,304,285"/>
-<area shape="rect" id="node13" href="$aligned__memory_8h.html" title="aligned_memory.h" alt="" coords="328,256,456,285"/>
-</map>
