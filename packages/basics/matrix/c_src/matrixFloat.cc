@@ -31,12 +31,7 @@
 /************* FILL FUNCTION **************/
 template<>
 void Matrix<float>::fill(float value) {
-#ifdef USE_MKL
-  applyFunctionWithSpanIteratorNOPARALLEL(this, make_cwise_functor_1(value, doFill));
-#else
-  // FIXME: THIS FUNCTION INTRODUCES NANs WITH MKL :SSSSS
   applyFunctionWithSpanIterator(this, make_cwise_functor_1(value, doFill));
-#endif
 }
 
 /************* CLAMP FUNCTION **************/
@@ -287,11 +282,7 @@ void Matrix<float>::copy(const Matrix<float> *other) {
     ERROR_EXIT(128, "Matrices with different dimension sizes\n");
   use_cuda = other->use_cuda;
   copy_functor functor;
-  //#ifdef USE_MKL
-  //  applyBinaryFunctionWithSpanIteratorNOPARALLEL(this, other, functor);
-  //#else
   applyBinaryFunctionWithSpanIterator(this, other, functor);
-  //#endif
 }
 
 struct axpy_functor {

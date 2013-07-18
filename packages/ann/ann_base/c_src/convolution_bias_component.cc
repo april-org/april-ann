@@ -105,6 +105,7 @@ namespace ANN {
     delete[] window_size;
     delete[] window_step;
     delete[] window_num_steps;
+    if (bias_matrix) DecRef(bias_matrix);
   }
   
   // The ConvolutionBiasANNComponent

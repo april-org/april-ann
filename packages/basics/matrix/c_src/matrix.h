@@ -304,9 +304,9 @@ public:
 	const int b_sz = m->matrixSize[b];
 	if (a_sz == b_sz) {
 	  if (m->major_order == CblasRowMajor)
-	    return b > a;
+	    return b < a;
 	  else
-	    return a > b;
+	    return a < b;
 	}
 	// FIXME: Would be better to use a trade-off between size and stride?
 	else
