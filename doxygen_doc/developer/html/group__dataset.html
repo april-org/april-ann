@@ -95,6 +95,9 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSaltNoiseDataSet.html">SaltNoiseDataSet&lt; T &gt;</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A specialization of <a class="el" href="classDataSet.html" title="A pure abstract templatized class that serves as interface.">DataSet</a> which add a fixed size salt noise to patterns.  <a href="classSaltNoiseDataSet.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classSaltPepperNoiseDataSet.html">SaltPepperNoiseDataSet&lt; T &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A specialization of <a class="el" href="classDataSet.html" title="A pure abstract templatized class that serves as interface.">DataSet</a> which add a fixed size salt and pepper noise to patterns.  <a href="classSaltPepperNoiseDataSet.html#details">More...</a><br/></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classCacheDataSet.html">CacheDataSet&lt; T &gt;</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A specialization of <a class="el" href="classDataSet.html" title="A pure abstract templatized class that serves as interface.">DataSet</a> for cacheNNLMs training.  <a href="classCacheDataSet.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -135,6 +138,9 @@ Typedefs</h2></td></tr>
 <tr class="separator:gaf79a89f151b02444a16c4d994e7ef259"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga3c1aeff9d802471d39e280b08b863c9b"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classSaltNoiseDataSet.html">SaltNoiseDataSet</a>&lt; float &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dataset.html#ga3c1aeff9d802471d39e280b08b863c9b">SaltNoiseDataSetFloat</a></td></tr>
 <tr class="separator:ga3c1aeff9d802471d39e280b08b863c9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga44ac0351d59edb8d488f6b092e39c860"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classSaltPepperNoiseDataSet.html">SaltPepperNoiseDataSet</a><br class="typebreak"/>
+&lt; float &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dataset.html#ga44ac0351d59edb8d488f6b092e39c860">SaltPepperNoiseDataSetFloat</a></td></tr>
+<tr class="separator:ga44ac0351d59edb8d488f6b092e39c860"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gacedee82fad42806ad4d7d20b47ac1a72"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classDerivDataSet.html">DerivDataSet</a>&lt; float &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dataset.html#gacedee82fad42806ad4d7d20b47ac1a72">DerivDataSetFloat</a></td></tr>
 <tr class="separator:gacedee82fad42806ad4d7d20b47ac1a72"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gabe73de15ae64291fbe5f675df2908516"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classCacheDataSet.html">CacheDataSet</a>&lt; float &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dataset.html#gabe73de15ae64291fbe5f675df2908516">CacheDataSetFloat</a></td></tr>
@@ -293,6 +299,14 @@ Functions</h2></td></tr>
 <tr class="separator:gab07a3fe1f59d02f3e3fe402516ce6b4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac4c8579e2efe9739be904b3f45cf2f7e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dataset.html#gac4c8579e2efe9739be904b3f45cf2f7e">SaltNoiseDataSet&lt; T &gt;::putPattern</a> (int index, const T *pat)</td></tr>
 <tr class="separator:gac4c8579e2efe9739be904b3f45cf2f7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaafabf939bd44953373ab91f90bed3bd7"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dataset.html#gaafabf939bd44953373ab91f90bed3bd7">SaltPepperNoiseDataSet&lt; T &gt;::SaltPepperNoiseDataSet</a> (<a class="el" href="classDataSet.html">DataSet</a>&lt; T &gt; *ds, <a class="el" href="classMTRand.html">MTRand</a> *random, double vd, T zero, T one)</td></tr>
+<tr class="separator:gaafabf939bd44953373ab91f90bed3bd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gabb8fdef29070a8e88ee857e5b2575b4e"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dataset.html#gabb8fdef29070a8e88ee857e5b2575b4e">SaltPepperNoiseDataSet&lt; T &gt;::~SaltPepperNoiseDataSet</a> ()</td></tr>
+<tr class="separator:gabb8fdef29070a8e88ee857e5b2575b4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga40aa805d78fd1d785a7a8b291be83914"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dataset.html#ga40aa805d78fd1d785a7a8b291be83914">SaltPepperNoiseDataSet&lt; T &gt;::getPattern</a> (int index, T *pat)</td></tr>
+<tr class="separator:ga40aa805d78fd1d785a7a8b291be83914"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaa66b849b633b9bba8e84da9e2072d1ef"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dataset.html#gaa66b849b633b9bba8e84da9e2072d1ef">SaltPepperNoiseDataSet&lt; T &gt;::putPattern</a> (int index, const T *pat)</td></tr>
+<tr class="separator:gaa66b849b633b9bba8e84da9e2072d1ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac87e0ecf94bba69f869dd3cdea6783e5"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dataset.html#gac87e0ecf94bba69f869dd3cdea6783e5">DerivDataSet&lt; T &gt;::DerivDataSet</a> (<a class="el" href="classDataSet.html">DataSet</a>&lt; T &gt; *ds, bool deriv0, bool deriv1, bool deriv2)</td></tr>
 <tr class="separator:gac87e0ecf94bba69f869dd3cdea6783e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga4142d205b75a8aeba19614ddee9df861"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__dataset.html#ga4142d205b75a8aeba19614ddee9df861">DerivDataSet&lt; T &gt;::~DerivDataSet</a> ()</td></tr>
@@ -433,6 +447,18 @@ Functions</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">typedef <a class="el" href="classSaltNoiseDataSet.html">SaltNoiseDataSet</a>&lt;float&gt; <a class="el" href="group__dataset.html#ga3c1aeff9d802471d39e280b08b863c9b">SaltNoiseDataSetFloat</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ga44ac0351d59edb8d488f6b092e39c860"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef <a class="el" href="classSaltPepperNoiseDataSet.html">SaltPepperNoiseDataSet</a>&lt;float&gt; <a class="el" href="group__dataset.html#ga44ac0351d59edb8d488f6b092e39c860">SaltPepperNoiseDataSetFloat</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -1509,6 +1535,45 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a class="anchor" id="ga40aa805d78fd1d785a7a8b291be83914"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int <a class="el" href="classSaltPepperNoiseDataSet.html">SaltPepperNoiseDataSet</a>&lt; T &gt;::getPattern </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>index</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">T *&#160;</td>
+          <td class="paramname"><em>pat</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Get the pattern index to the vector pat. The function call returns the <a class="el" href="classSaltPepperNoiseDataSet.html#a868eb549ac700985d7a204055ccdd296" title="Size of each pattern.">patternSize()</a>. </p>
+
+<p>Implements <a class="el" href="classDataSet.html#a299518e2b4b12cef98e4247b4db3481d">DataSet&lt; T &gt;</a>.</p>
+
+</div>
+</div>
 <a class="anchor" id="ga4dbf408c2eed21cdc3949ceb9c28c140"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1787,7 +1852,7 @@ template&lt;typename T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>References <a class="el" href="group__util.html#gaee8c908dd2bea7674e4c19493005ce68">IncRef</a>, <a class="el" href="classMatrix.html#a7cd4cd2a391b06b500bf4dc34fd7fe68">Matrix&lt; T &gt;::matrixSize</a>, and <a class="el" href="classMatrix.html#aef11a29f4777b4745224a9c159b3722b">Matrix&lt; T &gt;::numDim</a>.</p>
+<p>References <a class="el" href="group__util.html#ga7c141183788078513c128e5f0bb15f48">ERROR_EXIT</a>, <a class="el" href="classMatrix.html#a514be7a24ac5d63fa217241d6d0ea577">Matrix&lt; T &gt;::getDimSize()</a>, <a class="el" href="classMatrix.html#a909d775fbc0ba6592b2b02defce2901d">Matrix&lt; T &gt;::getNumDim()</a>, <a class="el" href="group__util.html#gaee8c908dd2bea7674e4c19493005ce68">IncRef</a>, and <a class="el" href="classMatrix.html#af82f52d01b52a430eaac6ac626bb0594">Matrix&lt; T &gt;::isSimple()</a>.</p>
 
 </div>
 </div>
@@ -2428,6 +2493,47 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a class="anchor" id="gaa66b849b633b9bba8e84da9e2072d1ef"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int <a class="el" href="classSaltPepperNoiseDataSet.html">SaltPepperNoiseDataSet</a>&lt; T &gt;::putPattern </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>index</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const T *&#160;</td>
+          <td class="paramname"><em>pat</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Put the given vector pat at pattern index. The function returns the <a class="el" href="classSaltPepperNoiseDataSet.html#a868eb549ac700985d7a204055ccdd296" title="Size of each pattern.">patternSize()</a>. </p>
+
+<p>Implements <a class="el" href="classDataSet.html#a4a8514a1c6327975a7bbaab30f3e4d1d">DataSet&lt; T &gt;</a>.</p>
+
+<p>References <a class="el" href="group__util.html#ga67ef1a4a9e547e0d05a132d5eebc8355">ERROR_PRINT</a>.</p>
+
+</div>
+</div>
 <a class="anchor" id="ga823de97197608942bd157eb4e761e0b9"></a>
 <div class="memitem">
 <div class="memproto">
@@ -2549,6 +2655,54 @@ template&lt;typename T &gt; </div>
 </div><div class="memdoc">
 
 <p>References <a class="el" href="group__util.html#gaee8c908dd2bea7674e4c19493005ce68">IncRef</a>, <a class="el" href="classDataSet.html#ad12fa3f9e669aa8e0e9bb1616735c6e2">DataSet&lt; T &gt;::patternSize()</a>, and <a class="el" href="classSaltNoiseDataSet.html#a0cee3e8c482f51a84de207851fd12239">SaltNoiseDataSet&lt; T &gt;::zero_positions</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="gaafabf939bd44953373ab91f90bed3bd7"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSaltPepperNoiseDataSet.html">SaltPepperNoiseDataSet</a>&lt; T &gt;::<a class="el" href="classSaltPepperNoiseDataSet.html">SaltPepperNoiseDataSet</a> </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classDataSet.html">DataSet</a>&lt; T &gt; *&#160;</td>
+          <td class="paramname"><em>ds</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="classMTRand.html">MTRand</a> *&#160;</td>
+          <td class="paramname"><em>random</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>vd</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">T&#160;</td>
+          <td class="paramname"><em>zero</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">T&#160;</td>
+          <td class="paramname"><em>one</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>References <a class="el" href="group__util.html#gaee8c908dd2bea7674e4c19493005ce68">IncRef</a>, <a class="el" href="classDataSet.html#ad12fa3f9e669aa8e0e9bb1616735c6e2">DataSet&lt; T &gt;::patternSize()</a>, and <a class="el" href="classSaltPepperNoiseDataSet.html#a55db7a1a85431d008ecb00ccc12d96c2">SaltPepperNoiseDataSet&lt; T &gt;::perturbed_positions</a>.</p>
 
 </div>
 </div>
@@ -2734,7 +2888,7 @@ template&lt;typename T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>References <a class="el" href="classMatrix.html#aa25e877277174b699a6f7f953dbd7b38">Matrix&lt; T &gt;::data</a>, <a class="el" href="group__util.html#ga9d428e23770aa851b611478d4e4a4db4">ERROR_EXIT2</a>, <a class="el" href="group__util.html#gacbbe63e904c19474ccf97d62cdc82a50">ERROR_PRINT2</a>, <a class="el" href="group__util.html#gaee8c908dd2bea7674e4c19493005ce68">IncRef</a>, <a class="el" href="classSparseDataset.html#acb1051cfb750385ab68105f7fa0a3d14">SparseDataset&lt; T &gt;::matrix_indexes</a>, <a class="el" href="classSparseDataset.html#ab65b71caa8f8758556577568388acc64">SparseDataset&lt; T &gt;::patternsize</a>, and <a class="el" href="classMatrix.html#a86c3d30dba56b848d644b2a581981c6f">Matrix&lt; T &gt;::size</a>.</p>
+<p>References <a class="el" href="group__util.html#ga7c141183788078513c128e5f0bb15f48">ERROR_EXIT</a>, <a class="el" href="group__util.html#ga9d428e23770aa851b611478d4e4a4db4">ERROR_EXIT2</a>, <a class="el" href="group__util.html#gacbbe63e904c19474ccf97d62cdc82a50">ERROR_PRINT2</a>, <a class="el" href="classMatrix.html#a45d8524afaf7efbf2d66d16f21febebc">Matrix&lt; T &gt;::getRawDataAccess()</a>, <a class="el" href="group__util.html#gaee8c908dd2bea7674e4c19493005ce68">IncRef</a>, <a class="el" href="classMatrix.html#af82f52d01b52a430eaac6ac626bb0594">Matrix&lt; T &gt;::isSimple()</a>, <a class="el" href="classSparseDataset.html#acb1051cfb750385ab68105f7fa0a3d14">SparseDataset&lt; T &gt;::matrix_indexes</a>, <a class="el" href="classSparseDataset.html#ab65b71caa8f8758556577568388acc64">SparseDataset&lt; T &gt;::patternsize</a>, and <a class="el" href="classMatrix.html#a29b33c4f5767d78d2a90a9459a1aa5a9">Matrix&lt; T &gt;::size()</a>.</p>
 
 </div>
 </div>
@@ -3194,6 +3348,33 @@ template&lt;typename T &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classSaltNoiseDataSet.html">SaltNoiseDataSet</a>&lt; T &gt;::~<a class="el" href="classSaltNoiseDataSet.html">SaltNoiseDataSet</a> </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>References <a class="el" href="group__util.html#ga8c98d69d8cb49abf771260810b9717e4">DecRef</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="gabb8fdef29070a8e88ee857e5b2575b4e"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classSaltPepperNoiseDataSet.html">SaltPepperNoiseDataSet</a>&lt; T &gt;::~<a class="el" href="classSaltPepperNoiseDataSet.html">SaltPepperNoiseDataSet</a> </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>

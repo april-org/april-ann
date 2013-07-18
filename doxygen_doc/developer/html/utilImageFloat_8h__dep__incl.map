@@ -1,5 +1,11 @@
 <map id="imaging/image/c_src/utilImageFloat.h" name="imaging/image/c_src/utilImageFloat.h">
-<area shape="rect" id="node3" href="$utilImageFloat_8cc.html" title="imaging/image/c_src\l/utilImageFloat.cc" alt="" coords="5,102,147,149"/>
-<area shape="rect" id="node5" href="$libpng_8h.html" title="imaging/libpng/c_src\l/libpng.h" alt="" coords="171,102,312,149"/>
-<area shape="rect" id="node7" href="$libpng_8cc.html" title="imaging/libpng/c_src\l/libpng.cc" alt="" coords="171,198,312,245"/>
+<area shape="rect" id="node3" href="$binarization_8h.html" title="imaging/binarization\l_filter/c_src/binarization.h" alt="" coords="9,102,180,149"/>
+<area shape="rect" id="node7" href="$utilImageFloat_8cc.html" title="imaging/image/c_src\l/utilImageFloat.cc" alt="" coords="204,102,345,149"/>
+<area shape="rect" id="node9" href="$image__cleaning_8h.html" title="imaging/image_cleaning\l/c_src/image_cleaning.h" alt="" coords="369,102,532,149"/>
+<area shape="rect" id="node13" href="$interest__points_8h.html" title="imaging/interest_points\l/c_src/interest_points.h" alt="" coords="556,102,713,149"/>
+<area shape="rect" id="node15" href="$interest__points_8cc.html" title="imaging/interest_points\l/c_src/interest_points.cc" alt="" coords="579,198,744,245"/>
+<area shape="rect" id="node18" href="$libpng_8h.html" title="imaging/libpng/c_src\l/libpng.h" alt="" coords="788,102,929,149"/>
+<area shape="rect" id="node5" href="$binarization_8cc.html" title="imaging/binarization\l_filter/c_src/binarization.cc" alt="" coords="5,198,184,245"/>
+<area shape="rect" id="node11" href="$image__cleaning_8cc.html" title="imaging/image_cleaning\l/c_src/image_cleaning.cc" alt="" coords="365,198,536,245"/>
+<area shape="rect" id="node20" href="$libpng_8cc.html" title="imaging/libpng/c_src\l/libpng.cc" alt="" coords="788,198,929,245"/>
 </map>

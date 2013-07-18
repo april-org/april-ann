@@ -67,9 +67,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a1fe5b447eacae1edd750cada4ca5577c"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="classToken.html">Token</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDataSetTokenVector.html#a1fe5b447eacae1edd750cada4ca5577c">getPattern</a> (int index)</td></tr>
 <tr class="memdesc:a1fe5b447eacae1edd750cada4ca5577c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the pattern index to the vector pat.  <a href="#a1fe5b447eacae1edd750cada4ca5577c">More...</a><br/></td></tr>
 <tr class="separator:a1fe5b447eacae1edd750cada4ca5577c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1bc3770f41034f03eda38b9257ba9166"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="classToken.html">Token</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDataSetTokenVector.html#a1bc3770f41034f03eda38b9257ba9166">getPatternBunch</a> (const int *indexes, unsigned int bunch_size)</td></tr>
-<tr class="memdesc:a1bc3770f41034f03eda38b9257ba9166"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the pattern index to the vector pat.  <a href="#a1bc3770f41034f03eda38b9257ba9166">More...</a><br/></td></tr>
-<tr class="separator:a1bc3770f41034f03eda38b9257ba9166"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af150411df8e1daadc8ceefff8648219f"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDataSetTokenVector.html#af150411df8e1daadc8ceefff8648219f">putPattern</a> (int index, <a class="el" href="classToken.html">Token</a> *pat)</td></tr>
 <tr class="memdesc:af150411df8e1daadc8ceefff8648219f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Put the given vector pat at pattern index.  <a href="#af150411df8e1daadc8ceefff8648219f">More...</a><br/></td></tr>
 <tr class="separator:af150411df8e1daadc8ceefff8648219f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -79,6 +76,9 @@ Public Member Functions</h2></td></tr>
 <tr class="inherit_header pub_methods_classDataSetToken"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classDataSetToken')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classDataSetToken.html">DataSetToken</a></td></tr>
 <tr class="memitem:a7cec3b6d326b1d94d1cd0df7813a1f0d inherit pub_methods_classDataSetToken"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDataSetToken.html#a7cec3b6d326b1d94d1cd0df7813a1f0d">~DataSetToken</a> ()</td></tr>
 <tr class="separator:a7cec3b6d326b1d94d1cd0df7813a1f0d inherit pub_methods_classDataSetToken"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab2c3a9df06ef38a8490794150a4fbfa0 inherit pub_methods_classDataSetToken"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="classToken.html">Token</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDataSetToken.html#ab2c3a9df06ef38a8490794150a4fbfa0">getPatternBunch</a> (const int *indexes, unsigned int bunch_size)</td></tr>
+<tr class="memdesc:ab2c3a9df06ef38a8490794150a4fbfa0 inherit pub_methods_classDataSetToken"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the pattern index to the vector pat.  <a href="#ab2c3a9df06ef38a8490794150a4fbfa0">More...</a><br/></td></tr>
+<tr class="separator:ab2c3a9df06ef38a8490794150a4fbfa0 inherit pub_methods_classDataSetToken"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classReferenced"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classReferenced')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classReferenced.html">Referenced</a></td></tr>
 <tr class="memitem:ga8654116c264068ee611850bbee8209d4 inherit pub_methods_classReferenced"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga8654116c264068ee611850bbee8209d4">Referenced</a> ()</td></tr>
 <tr class="separator:ga8654116c264068ee611850bbee8209d4 inherit pub_methods_classReferenced"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -180,48 +180,6 @@ Additional Inherited Members</h2></td></tr>
 <p>Implements <a class="el" href="classDataSetToken.html#a3070aaff1abc2012171a2ae75c30fa84">DataSetToken</a>.</p>
 
 <p>References <a class="el" href="classDataSetTokenVector.html#a15aad77987fc9002cddb51c64afa7b72">data</a>, and <a class="el" href="classDataSetTokenVector.html#aed4c9ddaf3054f20d8cb7a89cfbaf69b">numPatterns()</a>.</p>
-
-<p>Referenced by <a class="el" href="classDataSetTokenVector.html#a1bc3770f41034f03eda38b9257ba9166">getPatternBunch()</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="a1bc3770f41034f03eda38b9257ba9166"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual <a class="el" href="classToken.html">Token</a>* DataSetTokenVector::getPatternBunch </td>
-          <td>(</td>
-          <td class="paramtype">const int *&#160;</td>
-          <td class="paramname"><em>indexes</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned int&#160;</td>
-          <td class="paramname"><em>bunch_size</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Get the pattern index to the vector pat. </p>
-
-<p>Implements <a class="el" href="classDataSetToken.html#a3c80760dabb8595cf6a7cbb9d0a919ef">DataSetToken</a>.</p>
-
-<p>References <a class="el" href="classToken.html#a32e166dc64c69b047413ad514525741a">Token::convertTo()</a>, <a class="el" href="group__util.html#ga8c98d69d8cb49abf771260810b9717e4">DecRef</a>, <a class="el" href="group__math.html#ga465ca9d24f8dc92bdcaf9a5f7f0d10d9">doScopy()</a>, <a class="el" href="classTokenMemoryBlock.html#a5cdaf8f2bf317493e57a2e2a16395315">TokenMemoryBlock::getCudaFlag()</a>, <a class="el" href="classTokenMemoryBlock.html#a8fda1f7a423c5e087f8f7dab19458b8f">TokenMemoryBlock::getMemBlock()</a>, <a class="el" href="classDataSetTokenVector.html#a1fe5b447eacae1edd750cada4ca5577c">getPattern()</a>, <a class="el" href="classToken.html#a24752a29d9ed86e1fb6d62770a46aba7">Token::getTokenCode()</a>, <a class="el" href="group__util.html#gaee8c908dd2bea7674e4c19493005ce68">IncRef</a>, <a class="el" href="classDataSetTokenVector.html#a21631373d2e7615441664a1931fcb80b">pattern_size</a>, and <a class="el" href="classtable__of__token__codes.html#a3b06d7c5ac66f52b45ac645f6ce50ccd">table_of_token_codes::token_mem_block</a>.</p>
 
 </div>
 </div>
@@ -438,7 +396,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Referenced by <a class="el" href="classDataSetTokenVector.html#a1bc3770f41034f03eda38b9257ba9166">getPatternBunch()</a>, and <a class="el" href="classDataSetTokenVector.html#ad77e26780ce475eadeb174d66387b9d5">patternSize()</a>.</p>
+<p>Referenced by <a class="el" href="classDataSetTokenVector.html#ad77e26780ce475eadeb174d66387b9d5">patternSize()</a>.</p>
 
 </div>
 </div>

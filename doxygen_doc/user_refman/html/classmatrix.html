@@ -50,39 +50,112 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a1b8bd2b3460e7a215c1303f06223e893"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a88345080dc514a1e1ab874f46437ef73"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a88345080dc514a1e1ab874f46437ef73">matrix_open_constructor</a> (lua_State *L)</td></tr>
 <tr class="separator:a88345080dc514a1e1ab874f46437ef73"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a013033f5923ed6318a7beac9d0917aaf"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a013033f5923ed6318a7beac9d0917aaf">toHEX</a> ()</td></tr>
-<tr class="separator:a013033f5923ed6318a7beac9d0917aaf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad3c7fcbcecb4bb3add6c554faf150805"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#ad3c7fcbcecb4bb3add6c554faf150805">euclideandistance</a> (table={<a class="el" href="classmatrix.html">matrix</a> *m})</td></tr>
-<tr class="separator:ad3c7fcbcecb4bb3add6c554faf150805"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abfa4837ec0b68632b6546755898c0d30"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#abfa4837ec0b68632b6546755898c0d30">euclideandistance</a> (table={<a class="el" href="classmatrix.html">matrix</a> *m, <a class="el" href="classmatrix.html">matrix</a> *mask})</td></tr>
-<tr class="separator:abfa4837ec0b68632b6546755898c0d30"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a744e5687a56d9265c578b9626a9c225b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a744e5687a56d9265c578b9626a9c225b">multiply_by_scalar</a> (lua_State *L)</td></tr>
-<tr class="separator:a744e5687a56d9265c578b9626a9c225b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a86ead5084a39317896de42492171b721"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a86ead5084a39317896de42492171b721">set_element</a> (coordinates, value)</td></tr>
-<tr class="separator:a86ead5084a39317896de42492171b721"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae5b544cc69c24b006b2a825b964a3ffe"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#ae5b544cc69c24b006b2a825b964a3ffe">accumulate_substraction</a> (lua_State *L)</td></tr>
-<tr class="separator:ae5b544cc69c24b006b2a825b964a3ffe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad692697938ee57f4b6b7bd9482cc308f"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#ad692697938ee57f4b6b7bd9482cc308f">get_element</a> (coordinates)</td></tr>
-<tr class="separator:ad692697938ee57f4b6b7bd9482cc308f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa6568b4570d888147d33094bda91a8f4"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#aa6568b4570d888147d33094bda91a8f4">toPNM</a> ()</td></tr>
-<tr class="separator:aa6568b4570d888147d33094bda91a8f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9a85527f914276416825a6549a7bf84c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a9a85527f914276416825a6549a7bf84c">adjust_range</a> (float min, float max)</td></tr>
-<tr class="separator:a9a85527f914276416825a6549a7bf84c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a931d273e167040c6ead46aea7981e6e5"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a931d273e167040c6ead46aea7981e6e5">rewrap</a> (lua_State *L)</td></tr>
+<tr class="separator:a931d273e167040c6ead46aea7981e6e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af281e168a0d468785def33eccd5885a4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#af281e168a0d468785def33eccd5885a4">gemv</a> (lua_State *L)</td></tr>
+<tr class="separator:af281e168a0d468785def33eccd5885a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa99ddec43adfe8321d5838c54ed5ce0a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#aa99ddec43adfe8321d5838c54ed5ce0a">set_use_cuda</a> (lua_State *L)</td></tr>
+<tr class="separator:aa99ddec43adfe8321d5838c54ed5ce0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12ebe5551af192a09c80e6df62d3fdf0"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a12ebe5551af192a09c80e6df62d3fdf0">toTable</a> (lua_State *L)</td></tr>
+<tr class="separator:a12ebe5551af192a09c80e6df62d3fdf0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66938286ec9e8928877ea9c3050f1ad8"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a66938286ec9e8928877ea9c3050f1ad8">slice</a> (lua_State *L)</td></tr>
+<tr class="separator:a66938286ec9e8928877ea9c3050f1ad8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0df2e261034e083006ebf07dd092ef44"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a0df2e261034e083006ebf07dd092ef44">get_use_cuda</a> (lua_State *L)</td></tr>
+<tr class="separator:a0df2e261034e083006ebf07dd092ef44"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afbcfd37058784ad6d3b40f6e2e5fe585"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#afbcfd37058784ad6d3b40f6e2e5fe585">dot</a> (lua_State *L)</td></tr>
+<tr class="separator:afbcfd37058784ad6d3b40f6e2e5fe585"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ac57d9ad5a0b31a3830f2050473fbc5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classmatrix.html">matrix</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a1ac57d9ad5a0b31a3830f2050473fbc5">clone</a> ()</td></tr>
+<tr class="memdesc:a1ac57d9ad5a0b31a3830f2050473fbc5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Devuelve un <em>clon</em> de la matriz.  <a href="#a1ac57d9ad5a0b31a3830f2050473fbc5">More...</a><br/></td></tr>
+<tr class="separator:a1ac57d9ad5a0b31a3830f2050473fbc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad6dfc7d842f16b17dd6bcdfd3998e78"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#aad6dfc7d842f16b17dd6bcdfd3998e78">linear</a> (lua_State *L)</td></tr>
+<tr class="separator:aad6dfc7d842f16b17dd6bcdfd3998e78"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a194767e559346d1f94c06879e7569649"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a194767e559346d1f94c06879e7569649">get_reference_string</a> (lua_State *L)</td></tr>
+<tr class="separator:a194767e559346d1f94c06879e7569649"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a74d3514fe5042567120c1e0942cc9037"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a74d3514fe5042567120c1e0942cc9037">fill</a> (float value)</td></tr>
 <tr class="memdesc:a74d3514fe5042567120c1e0942cc9037"><td class="mdescLeft">&#160;</td><td class="mdescRight">Permite poner todos los valores de la matriz a un mismo valor.  <a href="#a74d3514fe5042567120c1e0942cc9037">More...</a><br/></td></tr>
 <tr class="separator:a74d3514fe5042567120c1e0942cc9037"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a62529c9e38f04c770ceafe1f3d936e2c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a62529c9e38f04c770ceafe1f3d936e2c">clamp</a> (lua_State *L)</td></tr>
-<tr class="separator:a62529c9e38f04c770ceafe1f3d936e2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4ec6542c8f972fed666143b788f244cf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a4ec6542c8f972fed666143b788f244cf">set</a> (table matrix_values)</td></tr>
-<tr class="separator:a4ec6542c8f972fed666143b788f244cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adc30055e9e6116bf51530527132b1819"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#adc30055e9e6116bf51530527132b1819">multiply</a> (lua_State *L)</td></tr>
-<tr class="separator:adc30055e9e6116bf51530527132b1819"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af6f37253845510ac9bd69d25cbbc1ab1"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#af6f37253845510ac9bd69d25cbbc1ab1">getMinValue</a> (lua_State *L)</td></tr>
-<tr class="separator:af6f37253845510ac9bd69d25cbbc1ab1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab1c3758da98ca54e049b581166bf70cc"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#ab1c3758da98ca54e049b581166bf70cc">substraction</a> (lua_State *L)</td></tr>
-<tr class="separator:ab1c3758da98ca54e049b581166bf70cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9bc42576d281286b6e06118f1f4082b6"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a9bc42576d281286b6e06118f1f4082b6">offset</a> (lua_State *L)</td></tr>
+<tr class="separator:a9bc42576d281286b6e06118f1f4082b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7f8ef8a0ccb902333ecf146367552d29"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a7f8ef8a0ccb902333ecf146367552d29">tanh</a> (lua_State *L)</td></tr>
+<tr class="separator:a7f8ef8a0ccb902333ecf146367552d29"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6568b4570d888147d33094bda91a8f4"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#aa6568b4570d888147d33094bda91a8f4">toPNM</a> ()</td></tr>
+<tr class="separator:aa6568b4570d888147d33094bda91a8f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace33fd446b00843e2eabc4fa5042cbdf"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#ace33fd446b00843e2eabc4fa5042cbdf">set</a> (coordinates, value)</td></tr>
+<tr class="separator:ace33fd446b00843e2eabc4fa5042cbdf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeb0e867260f7832399aa6de48168a2d3"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#aeb0e867260f7832399aa6de48168a2d3">max</a> (lua_State *L)</td></tr>
+<tr class="separator:aeb0e867260f7832399aa6de48168a2d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:add9fbc634af445ef8e396211b6a7ee9e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#add9fbc634af445ef8e396211b6a7ee9e">sqrt</a> (lua_State *L)</td></tr>
+<tr class="separator:add9fbc634af445ef8e396211b6a7ee9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6477c71726a28b68be447f8e6118253"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#aa6477c71726a28b68be447f8e6118253">uniform</a> (lua_State *L)</td></tr>
+<tr class="separator:aa6477c71726a28b68be447f8e6118253"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8ac2f5f6d4ccda4bd449145ff6b5f0eb"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a8ac2f5f6d4ccda4bd449145ff6b5f0eb">toString</a> (string type='ascii')</td></tr>
 <tr class="separator:a8ac2f5f6d4ccda4bd449145ff6b5f0eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a27c69efa386d9161d026fd735c35e23b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a27c69efa386d9161d026fd735c35e23b">onex</a> (float value)</td></tr>
+<tr class="memdesc:a27c69efa386d9161d026fd735c35e23b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Permite poner todos los valores de la matriz a un mismo valor.  <a href="#a27c69efa386d9161d026fd735c35e23b">More...</a><br/></td></tr>
+<tr class="separator:a27c69efa386d9161d026fd735c35e23b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2ff06bfcc898a1c7f6552c0810ee7880"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a2ff06bfcc898a1c7f6552c0810ee7880">mul</a> (lua_State *L)</td></tr>
+<tr class="separator:a2ff06bfcc898a1c7f6552c0810ee7880"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac03fc3f3270f1f665535a0b029b20954"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#ac03fc3f3270f1f665535a0b029b20954">dim</a> (lua_State *L)</td></tr>
+<tr class="separator:ac03fc3f3270f1f665535a0b029b20954"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9521daff61c5cc4c371ea113b5254429"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a9521daff61c5cc4c371ea113b5254429">norm2</a> (lua_State *L)</td></tr>
+<tr class="separator:a9521daff61c5cc4c371ea113b5254429"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a281a04fb1c30fc2b407a8e46ebf28b48"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a281a04fb1c30fc2b407a8e46ebf28b48">zeros</a> (float value)</td></tr>
+<tr class="memdesc:a281a04fb1c30fc2b407a8e46ebf28b48"><td class="mdescLeft">&#160;</td><td class="mdescRight">Permite poner todos los valores de la matriz a un mismo valor.  <a href="#a281a04fb1c30fc2b407a8e46ebf28b48">More...</a><br/></td></tr>
+<tr class="separator:a281a04fb1c30fc2b407a8e46ebf28b48"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5151c2da575cb1d340320145b9387b47"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a5151c2da575cb1d340320145b9387b47">gemm</a> (lua_State *L)</td></tr>
+<tr class="separator:a5151c2da575cb1d340320145b9387b47"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a44c45ff49c1d6a2bb236f8c4e5b816a2"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a44c45ff49c1d6a2bb236f8c4e5b816a2">scal</a> (lua_State *L)</td></tr>
+<tr class="separator:a44c45ff49c1d6a2bb236f8c4e5b816a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac6cf2480c4eed6a1688da510e1eb59d6"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#ac6cf2480c4eed6a1688da510e1eb59d6">get</a> (coordinates)</td></tr>
+<tr class="separator:ac6cf2480c4eed6a1688da510e1eb59d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a013033f5923ed6318a7beac9d0917aaf"><td class="memItemLeft" align="right" valign="top">string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a013033f5923ed6318a7beac9d0917aaf">toHEX</a> ()</td></tr>
+<tr class="separator:a013033f5923ed6318a7beac9d0917aaf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a38a333a7e8e9ef2e9325836a5fe7dd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a6a38a333a7e8e9ef2e9325836a5fe7dd">axpy</a> (lua_State *L)</td></tr>
+<tr class="separator:a6a38a333a7e8e9ef2e9325836a5fe7dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a99ef28a0e39732b35b5517970d8051a9"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a99ef28a0e39732b35b5517970d8051a9">log</a> (lua_State *L)</td></tr>
+<tr class="separator:a99ef28a0e39732b35b5517970d8051a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aada5266f0b91a324d962cdd721e62d8b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#aada5266f0b91a324d962cdd721e62d8b">exp</a> (lua_State *L)</td></tr>
+<tr class="separator:aada5266f0b91a324d962cdd721e62d8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a765cd0ab19ba524fc3b5b4d993612bdc"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a765cd0ab19ba524fc3b5b4d993612bdc">copy</a> (lua_State *L)</td></tr>
+<tr class="separator:a765cd0ab19ba524fc3b5b4d993612bdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9196fbd09e93ecaf8cec47328efd1561"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a9196fbd09e93ecaf8cec47328efd1561">sum</a> (lua_State *L)</td></tr>
+<tr class="separator:a9196fbd09e93ecaf8cec47328efd1561"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8338a7fbaa5996c15326ba0a5877290d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a8338a7fbaa5996c15326ba0a5877290d">pow</a> (lua_State *L)</td></tr>
+<tr class="separator:a8338a7fbaa5996c15326ba0a5877290d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50590198dac997d9daf0d09cc06f3f72"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a50590198dac997d9daf0d09cc06f3f72">cmul</a> (lua_State *L)</td></tr>
+<tr class="separator:a50590198dac997d9daf0d09cc06f3f72"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa7ad1c0f5b92bcb2018a1714bf607966"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#aa7ad1c0f5b92bcb2018a1714bf607966">log1p</a> (lua_State *L)</td></tr>
+<tr class="separator:aa7ad1c0f5b92bcb2018a1714bf607966"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1dd2eeb8ffdf3f884d54e290e1a52e1f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a1dd2eeb8ffdf3f884d54e290e1a52e1f">ger</a> (lua_State *L)</td></tr>
+<tr class="separator:a1dd2eeb8ffdf3f884d54e290e1a52e1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af75ed731a7b6740647f3dfc64367d5ad"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#af75ed731a7b6740647f3dfc64367d5ad">raw_get</a> (lua_State *L)</td></tr>
+<tr class="separator:af75ed731a7b6740647f3dfc64367d5ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a62529c9e38f04c770ceafe1f3d936e2c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a62529c9e38f04c770ceafe1f3d936e2c">clamp</a> (lua_State *L)</td></tr>
+<tr class="separator:a62529c9e38f04c770ceafe1f3d936e2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3cb7a08562417c7f7efa8cc717c14b31"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a3cb7a08562417c7f7efa8cc717c14b31">diag</a> (lua_State *L)</td></tr>
+<tr class="separator:a3cb7a08562417c7f7efa8cc717c14b31"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9e0a0eb0397b575bb7620a3c1c114c2b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a9e0a0eb0397b575bb7620a3c1c114c2b">scalar_add</a> (lua_State *L)</td></tr>
+<tr class="separator:a9e0a0eb0397b575bb7620a3c1c114c2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a85527f914276416825a6549a7bf84c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a9a85527f914276416825a6549a7bf84c">adjust_range</a> (float <a class="el" href="classmatrix.html#a33e73a4b59728cdddcce27e9f561d660">min</a>, float <a class="el" href="classmatrix.html#aeb0e867260f7832399aa6de48168a2d3">max</a>)</td></tr>
+<tr class="separator:a9a85527f914276416825a6549a7bf84c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a412d995cf56f25e498ad603a2f83eb91"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a412d995cf56f25e498ad603a2f83eb91">toFilename</a> (string filename, string type='ascii')</td></tr>
+<tr class="separator:a412d995cf56f25e498ad603a2f83eb91"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af369fccd399c6c03253aa161671d9df0"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#af369fccd399c6c03253aa161671d9df0">sub</a> (lua_State *L)</td></tr>
+<tr class="separator:af369fccd399c6c03253aa161671d9df0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aadaf3e67969ad0001e3079b24a43b557"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#aadaf3e67969ad0001e3079b24a43b557">equals</a> (lua_State *L)</td></tr>
+<tr class="separator:aadaf3e67969ad0001e3079b24a43b557"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac4334717cd84450b58299523fa61e34a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#ac4334717cd84450b58299523fa61e34a">max_sel_dim</a> (lua_State *L)</td></tr>
+<tr class="separator:ac4334717cd84450b58299523fa61e34a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a33e73a4b59728cdddcce27e9f561d660"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a33e73a4b59728cdddcce27e9f561d660">min</a> (lua_State *L)</td></tr>
+<tr class="separator:a33e73a4b59728cdddcce27e9f561d660"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a369a9dbc0ad7aa81c1934e2c39770fa2"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a369a9dbc0ad7aa81c1934e2c39770fa2">select</a> (lua_State *L)</td></tr>
+<tr class="separator:a369a9dbc0ad7aa81c1934e2c39770fa2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a915303ce621f9de62d7c603919682d9b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a915303ce621f9de62d7c603919682d9b">is_contiguous</a> (lua_State *L)</td></tr>
+<tr class="separator:a915303ce621f9de62d7c603919682d9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1df67fc3645eb2ec1cd74c5bb117b4b5"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a1df67fc3645eb2ec1cd74c5bb117b4b5">get_major_order</a> (lua_State *L)</td></tr>
+<tr class="separator:a1df67fc3645eb2ec1cd74c5bb117b4b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a50de812d3ede572ceca18ea79a6c82ec"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classmatrix.html#a50de812d3ede572ceca18ea79a6c82ec">copy_from_table</a> (table matrix_values)</td></tr>
+<tr class="separator:a50de812d3ede572ceca18ea79a6c82ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="aeae37a20c7d6ae91fa1ed4c89c226b57"></a>
@@ -157,30 +230,6 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="ae5b544cc69c24b006b2a825b964a3ffe"></a>
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">int matrix::accumulate_substraction </td>
-          <td>(</td>
-          <td class="paramtype">lua_State *&#160;</td>
-          <td class="paramname"><em>L</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a class="anchor" id="a9a85527f914276416825a6549a7bf84c"></a>
 <div class="memitem">
 <div class="memproto">
@@ -216,6 +265,30 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a6a38a333a7e8e9ef2e9325836a5fe7dd"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::axpy </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="a62529c9e38f04c770ceafe1f3d936e2c"></a>
 <div class="memitem">
 <div class="memproto">
@@ -240,7 +313,7 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ad3c7fcbcecb4bb3add6c554faf150805"></a>
+<a class="anchor" id="a1ac57d9ad5a0b31a3830f2050473fbc5"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -248,10 +321,9 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">float matrix::euclideandistance </td>
+          <td class="memname"><a class="el" href="classmatrix.html">matrix</a>* matrix::clone </td>
           <td>(</td>
-          <td class="paramtype">table&#160;</td>
-          <td class="paramname"> = <code>{<a class="el" href="classmatrix.html">matrix</a>&#160;*m}</code></td><td>)</td>
+          <td class="paramname"></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -261,11 +333,12 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Distancia euclidea entre dos matrices. También admite otra matriz como máscara para calcular la distancia. las matrices deben tener el mismo tamaño y dimensiones </p>
+
+<p>Devuelve un <em>clon</em> de la matriz. </p>
 
 </div>
 </div>
-<a class="anchor" id="abfa4837ec0b68632b6546755898c0d30"></a>
+<a class="anchor" id="a50590198dac997d9daf0d09cc06f3f72"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -273,10 +346,10 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">float matrix::euclideandistance </td>
+          <td class="memname">int matrix::cmul </td>
           <td>(</td>
-          <td class="paramtype">table&#160;</td>
-          <td class="paramname"> = <code>{<a class="el" href="classmatrix.html">matrix</a>&#160;*m,&#160;<a class="el" href="classmatrix.html">matrix</a>&#160;*mask}</code></td><td>)</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -286,7 +359,181 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Distancia euclidea entre dos matrices. La otra matriz es una máscara que por cada posición de la matriz tiene un valor entre [0,1] y sirve para indicar en que porcentaje afecta esa posición al cálculo de la distancia euclidea. Las matrices deben tener el mismo tamaño y dimensiones. </p>
+
+</div>
+</div>
+<a class="anchor" id="a765cd0ab19ba524fc3b5b4d993612bdc"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::copy </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a50de812d3ede572ceca18ea79a6c82ec"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void matrix::copy_from_table </td>
+          <td>(</td>
+          <td class="paramtype">table&#160;</td>
+          <td class="paramname"><em>matrix_values</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Permite dar valores a una matriz. Require una tabla con un numero de argumentos igual al numero de elementos de la matriz. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">matrix_values</td><td>Tabla con los elementos de la matriz. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a3cb7a08562417c7f7efa8cc717c14b31"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::diag </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ac03fc3f3270f1f665535a0b029b20954"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::dim </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="afbcfd37058784ad6d3b40f6e2e5fe585"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::dot </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="aadaf3e67969ad0001e3079b24a43b557"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::equals </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="aada5266f0b91a324d962cdd721e62d8b"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::exp </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -316,7 +563,7 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ad692697938ee57f4b6b7bd9482cc308f"></a>
+<a class="anchor" id="a5151c2da575cb1d340320145b9387b47"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -324,7 +571,79 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">float matrix::get_element </td>
+          <td class="memname">int matrix::gemm </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="af281e168a0d468785def33eccd5885a4"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::gemv </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a1dd2eeb8ffdf3f884d54e290e1a52e1f"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::ger </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ac6cf2480c4eed6a1688da510e1eb59d6"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float matrix::get </td>
           <td>(</td>
           <td class="paramtype">coordinates&#160;</td>
           <td class="paramname"></td><td>)</td>
@@ -347,7 +666,7 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="af6f37253845510ac9bd69d25cbbc1ab1"></a>
+<a class="anchor" id="a1df67fc3645eb2ec1cd74c5bb117b4b5"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -355,7 +674,151 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">int matrix::getMinValue </td>
+          <td class="memname">int matrix::get_major_order </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a194767e559346d1f94c06879e7569649"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::get_reference_string </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a0df2e261034e083006ebf07dd092ef44"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::get_use_cuda </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a915303ce621f9de62d7c603919682d9b"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::is_contiguous </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="aad6dfc7d842f16b17dd6bcdfd3998e78"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::linear </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a99ef28a0e39732b35b5517970d8051a9"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::log </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="aa7ad1c0f5b92bcb2018a1714bf607966"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::log1p </td>
           <td>(</td>
           <td class="paramtype">lua_State *&#160;</td>
           <td class="paramname"><em>L</em></td><td>)</td>
@@ -387,7 +850,7 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="adc30055e9e6116bf51530527132b1819"></a>
+<a class="anchor" id="aeb0e867260f7832399aa6de48168a2d3"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -395,7 +858,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">int matrix::multiply </td>
+          <td class="memname">int matrix::max </td>
           <td>(</td>
           <td class="paramtype">lua_State *&#160;</td>
           <td class="paramname"><em>L</em></td><td>)</td>
@@ -411,7 +874,7 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a744e5687a56d9265c578b9626a9c225b"></a>
+<a class="anchor" id="ac4334717cd84450b58299523fa61e34a"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -419,7 +882,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">int matrix::multiply_by_scalar </td>
+          <td class="memname">int matrix::max_sel_dim </td>
           <td>(</td>
           <td class="paramtype">lua_State *&#160;</td>
           <td class="paramname"><em>L</em></td><td>)</td>
@@ -435,7 +898,7 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a4ec6542c8f972fed666143b788f244cf"></a>
+<a class="anchor" id="a33e73a4b59728cdddcce27e9f561d660"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -443,10 +906,10 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void matrix::set </td>
+          <td class="memname">int matrix::min </td>
           <td>(</td>
-          <td class="paramtype">table&#160;</td>
-          <td class="paramname"><em>matrix_values</em></td><td>)</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -456,17 +919,10 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Permite dar valores a una matriz. Require una tabla con un numero de argumentos igual al numero de elementos de la matriz. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">matrix_values</td><td>Tabla con los elementos de la matriz. </td></tr>
-  </table>
-  </dd>
-</dl>
 
 </div>
 </div>
-<a class="anchor" id="a86ead5084a39317896de42492171b721"></a>
+<a class="anchor" id="a2ff06bfcc898a1c7f6552c0810ee7880"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -474,7 +930,249 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">float matrix::set_element </td>
+          <td class="memname">int matrix::mul </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a9521daff61c5cc4c371ea113b5254429"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::norm2 </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a9bc42576d281286b6e06118f1f4082b6"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::offset </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a27c69efa386d9161d026fd735c35e23b"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void matrix::onex </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>value</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Permite poner todos los valores de la matriz a un mismo valor. </p>
+
+</div>
+</div>
+<a class="anchor" id="a8338a7fbaa5996c15326ba0a5877290d"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::pow </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="af75ed731a7b6740647f3dfc64367d5ad"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::raw_get </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a931d273e167040c6ead46aea7981e6e5"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::rewrap </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a44c45ff49c1d6a2bb236f8c4e5b816a2"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::scal </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a9e0a0eb0397b575bb7620a3c1c114c2b"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::scalar_add </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a369a9dbc0ad7aa81c1934e2c39770fa2"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::select </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ace33fd446b00843e2eabc4fa5042cbdf"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">float matrix::set </td>
           <td>(</td>
           <td class="paramtype">coordinates&#160;</td>
           <td class="paramname">, </td>
@@ -507,7 +1205,7 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ab1c3758da98ca54e049b581166bf70cc"></a>
+<a class="anchor" id="aa99ddec43adfe8321d5838c54ed5ce0a"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -515,7 +1213,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">int matrix::substraction </td>
+          <td class="memname">int matrix::set_use_cuda </td>
           <td>(</td>
           <td class="paramtype">lua_State *&#160;</td>
           <td class="paramname"><em>L</em></td><td>)</td>
@@ -528,6 +1226,168 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a66938286ec9e8928877ea9c3050f1ad8"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::slice </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="add9fbc634af445ef8e396211b6a7ee9e"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::sqrt </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="af369fccd399c6c03253aa161671d9df0"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::sub </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a9196fbd09e93ecaf8cec47328efd1561"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::sum </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a7f8ef8a0ccb902333ecf146367552d29"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::tanh </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a412d995cf56f25e498ad603a2f83eb91"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void matrix::toFilename </td>
+          <td>(</td>
+          <td class="paramtype">string&#160;</td>
+          <td class="paramname"><em>filename</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">string&#160;</td>
+          <td class="paramname"><em>type</em> = <code>'ascii'</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Permite salvar una matriz con un formato tal y como se carga con el metodo fromString. El unico argumento opcional indica el tipo 'ascii' o 'binary'. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>Indica el nombre del fichero. </td></tr>
+    <tr><td class="paramname">type</td><td>Parametro opcional. Puede ser 'ascii' o 'binary', y por defecto es 'ascii'. </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -606,6 +1466,80 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a class="anchor" id="a12ebe5551af192a09c80e6df62d3fdf0"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::toTable </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="aa6477c71726a28b68be447f8e6118253"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int matrix::uniform </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a281a04fb1c30fc2b407a8e46ebf28b48"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void matrix::zeros </td>
+          <td>(</td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>value</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Permite poner todos los valores de la matriz a un mismo valor. </p>
 
 </div>
 </div>

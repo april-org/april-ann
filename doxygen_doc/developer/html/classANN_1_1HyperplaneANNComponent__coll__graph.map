@@ -1,13 +1,16 @@
 <map id="ANN::HyperplaneANNComponent" name="ANN::HyperplaneANNComponent">
-<area shape="rect" id="node2" href="$classANN_1_1ANNComponent.html" title="ANN::ANNComponent" alt="" coords="397,328,552,357"/>
-<area shape="rect" id="node12" href="$classANN_1_1BiasANNComponent.html" title="ANN::BiasANNComponent" alt="" coords="273,459,455,488"/>
-<area shape="rect" id="node26" href="$classANN_1_1DotProductANNComponent.html" title="ANN::DotProductANNComponent" alt="" coords="28,459,249,488"/>
-<area shape="rect" id="node4" href="$classReferenced.html" title="Referenced" alt="" coords="292,111,380,140"/>
-<area shape="rect" id="node17" href="$classToken.html" title="Token" alt="" coords="5,216,64,245"/>
-<area shape="rect" id="node22" href="$classANN_1_1Connections.html" title="ANN::Connections" alt="" coords="236,328,367,357"/>
-<area shape="rect" id="node6" href="$classapril__utils_1_1string.html" title="april_utils::string" alt="" coords="424,216,541,245"/>
-<area shape="rect" id="node8" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; char \&gt;" alt="" coords="423,102,543,149"/>
-<area shape="rect" id="node10" href="$classapril__utils_1_1vector.html" title="april_utils::vector\&lt; T \&gt;" alt="" coords="407,5,559,35"/>
-<area shape="rect" id="node15" href="$classTokenMemoryBlock.html" title="TokenMemoryBlock" alt="" coords="67,328,205,357"/>
-<area shape="rect" id="node20" href="$classGPUMirroredMemoryBlock.html" title="GPUMirroredMemoryBlock\&lt; T \&gt;" alt="" coords="88,216,299,245"/>
+<area shape="rect" id="node2" href="$classANN_1_1ANNComponent.html" title="ANN::ANNComponent" alt="" coords="861,25,1016,55"/>
+<area shape="rect" id="node12" href="$classANN_1_1BiasANNComponent.html" title="ANN::BiasANNComponent" alt="" coords="1177,113,1359,143"/>
+<area shape="rect" id="node32" href="$classANN_1_1DotProductANNComponent.html" title="ANN::DotProductANNComponent" alt="" coords="1157,196,1379,225"/>
+<area shape="rect" id="node4" href="$classReferenced.html" title="Referenced" alt="" coords="297,293,385,323"/>
+<area shape="rect" id="node17" href="$classToken.html" title="Token" alt="" coords="640,263,699,292"/>
+<area shape="rect" id="node20" href="$classANN_1_1Connections.html" title="ANN::Connections" alt="" coords="873,344,1004,373"/>
+<area shape="rect" id="node23" href="$classMatrix.html" title="Matrix\&lt; T \&gt;" alt="" coords="624,385,715,415"/>
+<area shape="rect" id="node6" href="$classapril__utils_1_1string.html" title="april_utils::string" alt="" coords="611,25,728,55"/>
+<area shape="rect" id="node8" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; char \&gt;" alt="" coords="281,17,401,63"/>
+<area shape="rect" id="node10" href="$classapril__utils_1_1vector.html" title="april_utils::vector\&lt; T \&gt;" alt="" coords="7,25,159,55"/>
+<area shape="rect" id="node15" href="$classTokenMatrix.html" title="TokenMatrix\&lt; T \&gt;" alt="" coords="876,196,1001,225"/>
+<area shape="rect" id="node26" href="$classMatrix_1_1best__span__iterator.html" title="Matrix\&lt; T \&gt;::best_span\l_iterator" alt="" coords="263,370,420,417"/>
+<area shape="rect" id="node28" href="$classMatrix_1_1iterator.html" title="Matrix\&lt; T \&gt;::iterator" alt="" coords="272,440,411,469"/>
+<area shape="rect" id="node30" href="$classMatrix_1_1const__iterator.html" title="Matrix\&lt; T \&gt;::const\l_iterator" alt="" coords="276,493,407,539"/>
 </map>

@@ -48,6 +48,7 @@
       <li><a href="functions_vars_0x67.html#index_g"><span>g</span></a></li>
       <li><a href="functions_vars_0x68.html#index_h"><span>h</span></a></li>
       <li><a href="functions_vars_0x69.html#index_i"><span>i</span></a></li>
+      <li><a href="functions_vars_0x6b.html#index_k"><span>k</span></a></li>
       <li><a href="functions_vars_0x6c.html#index_l"><span>l</span></a></li>
       <li><a href="functions_vars_0x6d.html#index_m"><span>m</span></a></li>
       <li><a href="functions_vars_0x6e.html#index_n"><span>n</span></a></li>
@@ -59,6 +60,8 @@
       <li><a href="functions_vars_0x75.html#index_u"><span>u</span></a></li>
       <li><a href="functions_vars_0x76.html#index_v"><span>v</span></a></li>
       <li><a href="functions_vars_0x77.html#index_w"><span>w</span></a></li>
+      <li><a href="functions_vars_0x78.html#index_x"><span>x</span></a></li>
+      <li><a href="functions_vars_0x79.html#index_y"><span>y</span></a></li>
       <li><a href="functions_vars_0x7a.html#index_z"><span>z</span></a></li>
     </ul>
   </div>
@@ -67,24 +70,38 @@
 &#160;
 
 <h3><a class="anchor" id="index_e"></a>- e -</h3><ul>
+<li>emission
+: <a class="el" href="structhmm__trainer__cls__transition.html#a67e9889c8d9aeca4d0b7acc5992878de">hmm_trainer_cls_transition</a>
+, <a class="el" href="structhmm__aux__transition.html#a6b8c141f88135bf31ae746a9c8d02b11">hmm_aux_transition</a>
+</li>
 <li>empty_key
 : <a class="el" href="classapril__utils_1_1open__addr__hash.html#a2323452c5391a0fd5bc180ac7620caf2">april_utils::open_addr_hash&lt; KeyType, DataType, HashFcn, EqualKey &gt;</a>
 </li>
 <li>end
 : <a class="el" href="classapril__utils_1_1context.html#a900eecb51ac95b9d7e1cf4ee656190c2">april_utils::context&lt; T &gt;</a>
 </li>
+<li>end_best_span_iterator
+: <a class="el" href="classMatrix.html#a7370490b4fa3f5dba30bc09fbcb45807">Matrix&lt; T &gt;</a>
+</li>
+<li>end_const_iterator
+: <a class="el" href="classMatrix.html#a93642e2747239fbf4da6f41eadacd65b">Matrix&lt; T &gt;</a>
+</li>
 <li>end_iterator
-: <a class="el" href="classapril__utils_1_1hash.html#a37c75648363da1590b807ee0a2f35ed5">april_utils::hash&lt; KeyType, DataType, HashFcn, EqualKey &gt;</a>
+: <a class="el" href="classapril__utils_1_1cache__open__addr__hash.html#a2179b4a4e08cb2c97e102861e126b065">april_utils::cache_open_addr_hash&lt; KeyType, DataType, HashFcn, EqualKey &gt;</a>
+, <a class="el" href="classapril__utils_1_1hash.html#a37c75648363da1590b807ee0a2f35ed5">april_utils::hash&lt; KeyType, DataType, HashFcn, EqualKey &gt;</a>
 , <a class="el" href="classapril__utils_1_1open__addr__hash.html#a59df5a9f2a0e756f112f91e78f60bd8d">april_utils::open_addr_hash&lt; KeyType, DataType, HashFcn, EqualKey &gt;</a>
-, <a class="el" href="classapril__utils_1_1cache__open__addr__hash.html#a2179b4a4e08cb2c97e102861e126b065">april_utils::cache_open_addr_hash&lt; KeyType, DataType, HashFcn, EqualKey &gt;</a>
 , <a class="el" href="classapril__utils_1_1open__addr__hash__timestamp.html#a9e8574b3b183d1f75ddd34742599d58d">april_utils::open_addr_hash_timestamp&lt; KeyType, DataType, HashFcn, EqualKey &gt;</a>
 , <a class="el" href="classapril__utils_1_1open__addr__hash__fast__it.html#ab6f2c36e6a231c224c0527fb8371375e">april_utils::open_addr_hash_fast_it&lt; KeyType, DataType, HashFcn, EqualKey &gt;</a>
+, <a class="el" href="classMatrix.html#a7da7c15b900981fe9e9a029a645c87d6">Matrix&lt; T &gt;</a>
 </li>
 <li>end_token_id
 : <a class="el" href="classCacheDataSet.html#aa991af7539ce2af29c8ab36edf095eba">CacheDataSet&lt; T &gt;</a>
 </li>
 <li>endianness
 : <a class="el" href="group__util.html#ga2aead92710f8c73fc04f300875e5c21e">binarizer</a>
+</li>
+<li>epsilon
+: <a class="el" href="structequals__functor.html#afd1bd8b69d61109ab741482eca455865">equals_functor</a>
 </li>
 <li>equal_key
 : <a class="el" href="classapril__utils_1_1cache__open__addr__hash.html#a31827a3207e1dc0a31743982f3bfc034">april_utils::cache_open_addr_hash&lt; KeyType, DataType, HashFcn, EqualKey &gt;</a>
@@ -94,24 +111,39 @@
 , <a class="el" href="classapril__utils_1_1open__addr__hash__fast__it.html#a6ba43110dd54034067ce9e5387221724">april_utils::open_addr_hash_fast_it&lt; KeyType, DataType, HashFcn, EqualKey &gt;</a>
 </li>
 <li>error
-: <a class="el" href="classtable__of__token__codes.html#a110e46ebb9f2c942552eb64931c68095">table_of_token_codes</a>
-, <a class="el" href="classANN_1_1BiasANNComponent.html#a0138d2e09f472edf7ea8b5316c3ebbcc">ANN::BiasANNComponent</a>
+: <a class="el" href="classANN_1_1BiasANNComponent.html#a6e9d9de945280239006a3d0b682c8ca0">ANN::BiasANNComponent</a>
+, <a class="el" href="classANN_1_1ConvolutionBiasANNComponent.html#a17de7ebfa2747ff5a9e3751fa588bb4c">ANN::ConvolutionBiasANNComponent</a>
+, <a class="el" href="classtable__of__token__codes.html#a110e46ebb9f2c942552eb64931c68095">table_of_token_codes</a>
 </li>
 <li>error_input
-: <a class="el" href="classANN_1_1ActivationFunctionANNComponent.html#a24c1659be7e85ab06c93796484c4a6bd">ANN::ActivationFunctionANNComponent</a>
+: <a class="el" href="classANN_1_1DotProductANNComponent.html#a6b7630bfc6abb2af0e9528a93fae6d2a">ANN::DotProductANNComponent</a>
+, <a class="el" href="classANN_1_1RewrapANNComponent.html#a5b58d554d3c364d7156635e10b74b275">ANN::RewrapANNComponent</a>
+, <a class="el" href="classANN_1_1SaltAndPepperANNComponent.html#a817a9148cc2b9275138584efed554016">ANN::SaltAndPepperANNComponent</a>
+, <a class="el" href="classANN_1_1SelectANNComponent.html#a3f80afa33465ada1b5438fc50659c5d5">ANN::SelectANNComponent</a>
+, <a class="el" href="classANN_1_1MaxPoolingANNComponent.html#a26f4d1e4dc7e7540f1714be9c42971e4">ANN::MaxPoolingANNComponent</a>
+, <a class="el" href="classANN_1_1ActivationFunctionANNComponent.html#a1a733addcd67cfad7bc7187301994363">ANN::ActivationFunctionANNComponent</a>
+, <a class="el" href="classANN_1_1ConvolutionANNComponent.html#afef5c093bbd17e245cb8c6ead188448e">ANN::ConvolutionANNComponent</a>
 , <a class="el" href="classANN_1_1CopyANNComponent.html#a936cecf317d602e07f67d49e43620c17">ANN::CopyANNComponent</a>
-, <a class="el" href="classANN_1_1DotProductANNComponent.html#ab22512f5d845d9feb6dba6e05cf020b2">ANN::DotProductANNComponent</a>
-, <a class="el" href="classANN_1_1JoinANNComponent.html#a9966fef18587af09fee6b400fb973194">ANN::JoinANNComponent</a>
+, <a class="el" href="classANN_1_1FlattenANNComponent.html#a2766ead3d3931c3eee964b9bb194bcfe">ANN::FlattenANNComponent</a>
+, <a class="el" href="classANN_1_1GaussianNoiseANNComponent.html#abef68e7967a5a4af0a4bbb9fbd34b2d8">ANN::GaussianNoiseANNComponent</a>
+, <a class="el" href="classANN_1_1JoinANNComponent.html#a8063ce8d3aa78ed6c50c32268f41d015">ANN::JoinANNComponent</a>
 </li>
 <li>error_input_vector
 : <a class="el" href="classANN_1_1JoinANNComponent.html#a6e4e3426d647b2f4183f211e50bce460">ANN::JoinANNComponent</a>
 </li>
 <li>error_output
-: <a class="el" href="classANN_1_1CopyANNComponent.html#abad89bc49f0f833de2afd18a57ad0c81">ANN::CopyANNComponent</a>
+: <a class="el" href="classANN_1_1MaxPoolingANNComponent.html#aea4ac022d599f14b077784a7a4d5ce9f">ANN::MaxPoolingANNComponent</a>
+, <a class="el" href="classANN_1_1GaussianNoiseANNComponent.html#a8e37e08aebfce03a803e65bb3dcf6159">ANN::GaussianNoiseANNComponent</a>
 , <a class="el" href="classANN_1_1JoinANNComponent.html#a23ab587c8e90d59abb7c54a563dbedb8">ANN::JoinANNComponent</a>
+, <a class="el" href="classANN_1_1ActivationFunctionANNComponent.html#a560b25ac82f9a4449f5afcff2e0cc267">ANN::ActivationFunctionANNComponent</a>
+, <a class="el" href="classANN_1_1DotProductANNComponent.html#aabe452fbde07daec99ac009ed61e4f3f">ANN::DotProductANNComponent</a>
+, <a class="el" href="classANN_1_1FlattenANNComponent.html#ab023c8bba817201aeda1bdad107a89c2">ANN::FlattenANNComponent</a>
 , <a class="el" href="classANN_1_1LossFunction.html#abcfc96777c2dd68120173245dfb043d5">ANN::LossFunction</a>
-, <a class="el" href="classANN_1_1DotProductANNComponent.html#a3c60a3a7cf5a69b2d1248389bea06552">ANN::DotProductANNComponent</a>
-, <a class="el" href="classANN_1_1ActivationFunctionANNComponent.html#a411a016e404f52aa42a467d375a436b8">ANN::ActivationFunctionANNComponent</a>
+, <a class="el" href="classANN_1_1RewrapANNComponent.html#aa47ce00eb96ed4a92bc350ff12b572ae">ANN::RewrapANNComponent</a>
+, <a class="el" href="classANN_1_1SelectANNComponent.html#a13651ffc0dd9a028ec618a9d3cee560f">ANN::SelectANNComponent</a>
+, <a class="el" href="classANN_1_1ConvolutionANNComponent.html#a0f706bc58523881aa39a740b61d22bb2">ANN::ConvolutionANNComponent</a>
+, <a class="el" href="classANN_1_1CopyANNComponent.html#abad89bc49f0f833de2afd18a57ad0c81">ANN::CopyANNComponent</a>
+, <a class="el" href="classANN_1_1SaltAndPepperANNComponent.html#a26020b4800bf53ab47e05255d1d55b58">ANN::SaltAndPepperANNComponent</a>
 </li>
 <li>error_output_vector
 : <a class="el" href="classANN_1_1JoinANNComponent.html#a6190012acbce7aaa6e528ecd74928fdd">ANN::JoinANNComponent</a>

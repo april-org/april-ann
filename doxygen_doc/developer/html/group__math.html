@@ -24,7 +24,8 @@
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#define-members">Macros</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle">
 <div class="title">Math<div class="ingroups"><a class="el" href="group__basics.html">Basics</a></div></div>  </div>
 </div><!--header-->
@@ -51,9 +52,7 @@ Macros</h2></td></tr>
 <tr class="separator:gaeda11729879e85c9ef67ec646cd0d804"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga935a9abe5bfecaebabef9e0165547382"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga935a9abe5bfecaebabef9e0165547382">NEGATE_CBLAS_TRANSPOSE</a>(trans)&#160;&#160;&#160;((trans) == CblasNoTrans)?CblasTrans:CblasNoTrans</td></tr>
 <tr class="separator:ga935a9abe5bfecaebabef9e0165547382"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga8d279672dc4197c9a4cb5b70e87bd607"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga8d279672dc4197c9a4cb5b70e87bd607">NO_POOL</a></td></tr>
-<tr class="separator:ga8d279672dc4197c9a4cb5b70e87bd607"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaa82721cfddefc166d37d08b4b6929a07"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#gaa82721cfddefc166d37d08b4b6929a07">NEAR_ZERO</a>&#160;&#160;&#160;1e-5f</td></tr>
+<tr class="memitem:gaa82721cfddefc166d37d08b4b6929a07"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#gaa82721cfddefc166d37d08b4b6929a07">NEAR_ZERO</a>&#160;&#160;&#160;1e-6f</td></tr>
 <tr class="separator:gaa82721cfddefc166d37d08b4b6929a07"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga48c1622948a37b3d8bce4c1bc73b8627"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga48c1622948a37b3d8bce4c1bc73b8627">DERIVATIVE_SATURATION</a>&#160;&#160;&#160;17.0f</td></tr>
 <tr class="separator:ga48c1622948a37b3d8bce4c1bc73b8627"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -71,6 +70,9 @@ Typedefs</h2></td></tr>
 <tr class="memitem:ga69731d455c34809dc174535f8a5d55c0"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classGPUMirroredMemoryBlock.html">GPUMirroredMemoryBlock</a><br class="typebreak"/>
 &lt; float &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a></td></tr>
 <tr class="separator:ga69731d455c34809dc174535f8a5d55c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga90c39620f2065827027f241f9e23ea5f"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classGPUMirroredMemoryBlock.html">GPUMirroredMemoryBlock</a><br class="typebreak"/>
+&lt; int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga90c39620f2065827027f241f9e23ea5f">IntGPUMirroredMemoryBlock</a></td></tr>
+<tr class="separator:ga90c39620f2065827027f241f9e23ea5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
@@ -112,6 +114,10 @@ Functions</h2></td></tr>
 <tr class="separator:gadd1ccc6a13d6174a47d72f4aca6db0d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gad4a10a53b21dd86b2a4c959feae86c69"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#gad4a10a53b21dd86b2a4c959feae86c69">doComputeMSEGradient</a> (<a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *input, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *target, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *error_output, float zero_epsilon_distance, unsigned int size, unsigned int bunch_size, bool use_gpu)</td></tr>
 <tr class="separator:gad4a10a53b21dd86b2a4c959feae86c69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaadee409f54ce6199d5b19d7aca233342"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#gaadee409f54ce6199d5b19d7aca233342">doMAELossFunction</a> (<a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *input, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *target, float zero_epsilon_distance, unsigned int size, unsigned int bunch_size, bool use_gpu)</td></tr>
+<tr class="separator:gaadee409f54ce6199d5b19d7aca233342"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga612993d8e56b8afb1056f22c47f00ecd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga612993d8e56b8afb1056f22c47f00ecd">doComputeMAEGradient</a> (<a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *input, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *target, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *error_output, float zero_epsilon_distance, unsigned int size, unsigned int bunch_size, bool use_gpu)</td></tr>
+<tr class="separator:ga612993d8e56b8afb1056f22c47f00ecd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga768f9bc3f079f817585be299f812a4ad"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga768f9bc3f079f817585be299f812a4ad">doCrossEntropyLossFunction</a> (<a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *input, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *target, float epsilon, unsigned int size, unsigned int bunch_size, bool use_gpu)</td></tr>
 <tr class="separator:ga768f9bc3f079f817585be299f812a4ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga82b5633c1333af0050cb0e9535e217d1"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga82b5633c1333af0050cb0e9535e217d1">doMultiClassCrossEntropyLossFunction</a> (<a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *input, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *target, float epsilon, unsigned int size, unsigned int bunch_size, bool use_gpu)</td></tr>
@@ -124,26 +130,55 @@ Functions</h2></td></tr>
 <tr class="separator:ga2b92ab2053ea12d327cfc460005962a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga096eb9e028918d1b6170244bfbb9db12"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga096eb9e028918d1b6170244bfbb9db12">doSgemv</a> (CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose, int m, int n, float alpha, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *a, unsigned int a_inc, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *x, unsigned int x_inc, float beta, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *y, unsigned int y_inc, unsigned int a_shift, unsigned int x_shift, unsigned int y_shift, bool use_gpu)</td></tr>
 <tr class="separator:ga096eb9e028918d1b6170244bfbb9db12"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga465ca9d24f8dc92bdcaf9a5f7f0d10d9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga465ca9d24f8dc92bdcaf9a5f7f0d10d9">doScopy</a> (int N, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *x, unsigned int x_shift, unsigned int x_inc, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *y, unsigned int y_shift, unsigned int y_inc, bool use_gpu)</td></tr>
-<tr class="separator:ga465ca9d24f8dc92bdcaf9a5f7f0d10d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga9c45c4798c22f12ad488850f858e9e90"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga9c45c4798c22f12ad488850f858e9e90">doScopy</a> (int N, const <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *x, unsigned int x_shift, unsigned int x_inc, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *y, unsigned int y_shift, unsigned int y_inc, bool use_gpu)</td></tr>
+<tr class="separator:ga9c45c4798c22f12ad488850f858e9e90"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga4aa04d20d4ce5c85eaa7693474959679"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga4aa04d20d4ce5c85eaa7693474959679">doScopyLoop</a> (int N, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *x, unsigned int x_inc, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *y, unsigned int y_inc, unsigned int times, const unsigned int stride, bool use_gpu)</td></tr>
 <tr class="separator:ga4aa04d20d4ce5c85eaa7693474959679"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga506b8bdedf5f8fa88c73f4d27205280a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga506b8bdedf5f8fa88c73f4d27205280a">doSaxpy</a> (int N, float alpha, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *x, unsigned int x_shift, unsigned int x_inc, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *y, unsigned int y_shift, unsigned int y_inc, bool use_gpu)</td></tr>
-<tr class="separator:ga506b8bdedf5f8fa88c73f4d27205280a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaf4deb5e2bb05d425e4bc82af5c20de36"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#gaf4deb5e2bb05d425e4bc82af5c20de36">doSaxpyLoop</a> (int N, float alpha, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *x, unsigned int x_inc, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *y, unsigned int y_inc, unsigned int times, const unsigned int stride_x, const unsigned int stride_y, bool use_gpu)</td></tr>
-<tr class="separator:gaf4deb5e2bb05d425e4bc82af5c20de36"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad3a194e023ae0ac04e07f621f35e2c30"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#gad3a194e023ae0ac04e07f621f35e2c30">doSaxpy</a> (int N, float alpha, const <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *x, unsigned int x_shift, unsigned int x_inc, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *y, unsigned int y_shift, unsigned int y_inc, bool use_gpu)</td></tr>
+<tr class="separator:gad3a194e023ae0ac04e07f621f35e2c30"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac22c59f3172b0874b92680fb52e6df39"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#gac22c59f3172b0874b92680fb52e6df39">doSaxpyLoop</a> (int N, float alpha, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *x, unsigned int x_inc, unsigned int x_shift, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *y, unsigned int y_inc, unsigned int y_shift, unsigned int times, const unsigned int stride_x, const unsigned int stride_y, bool use_gpu)</td></tr>
+<tr class="separator:gac22c59f3172b0874b92680fb52e6df39"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga2d92297df165198d09d368140dead7e8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga2d92297df165198d09d368140dead7e8">doSgemm</a> (CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose, CBLAS_TRANSPOSE b_transpose, int m, int n, int k, float alpha, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *a, unsigned int a_inc, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *b, unsigned int b_inc, float beta, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *c, unsigned int c_inc, unsigned int a_shift, unsigned int b_shift, unsigned int c_shift, bool use_gpu)</td></tr>
 <tr class="separator:ga2d92297df165198d09d368140dead7e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga0975b65dfc0580001f919006f000711f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga0975b65dfc0580001f919006f000711f">doVectorSetToZero</a> (<a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *v, unsigned int v_size, unsigned int inc, unsigned int shift, bool use_gpu)</td></tr>
-<tr class="separator:ga0975b65dfc0580001f919006f000711f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga9828fe5150bf6d19515369fc1cd6cf58"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga9828fe5150bf6d19515369fc1cd6cf58">doVectorSet</a> (<a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *v, float value, unsigned int v_size, unsigned int inc, unsigned int shift, bool use_gpu)</td></tr>
-<tr class="separator:ga9828fe5150bf6d19515369fc1cd6cf58"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga1ab7f4f6e3f83020cff30b9cfc990876"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga1ab7f4f6e3f83020cff30b9cfc990876">doSscal</a> (unsigned int size, float alpha, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *x, unsigned int shift, unsigned int inc, bool use_gpu)</td></tr>
-<tr class="separator:ga1ab7f4f6e3f83020cff30b9cfc990876"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gabfeb979129493d52171273b916032a53"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#gabfeb979129493d52171273b916032a53">doSscal</a> (unsigned int size, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *x, unsigned int inc, unsigned int shift, float alpha, bool use_gpu)</td></tr>
+<tr class="separator:gabfeb979129493d52171273b916032a53"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaa621c057bc2338e9f321f84c7925ee1d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#gaa621c057bc2338e9f321f84c7925ee1d">doSger</a> (CBLAS_ORDER major_type, unsigned int m, unsigned int n, float alpha, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *x, unsigned int x_shift, unsigned int x_inc, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *y, unsigned int y_shift, unsigned int y_inc, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *a, unsigned int a_shift, unsigned int a_inc, bool use_gpu)</td></tr>
 <tr class="separator:gaa621c057bc2338e9f321f84c7925ee1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gafad8d6583d04911d76de234ce0084b79"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#gafad8d6583d04911d76de234ce0084b79">doSnrm2</a> (unsigned int n, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *x, unsigned int shift, unsigned int inc, bool use_gpu)</td></tr>
-<tr class="separator:gafad8d6583d04911d76de234ce0084b79"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae9e54d1385a6c112cb93d9c276927259"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#gae9e54d1385a6c112cb93d9c276927259">doSdot</a> (unsigned int size, const <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *x, unsigned int x_shift, unsigned int x_inc, const <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *y, unsigned int y_shift, unsigned int y_inc, bool use_gpu)</td></tr>
+<tr class="separator:gae9e54d1385a6c112cb93d9c276927259"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga2b4801b09936b8d41a5ec8c5f55ef43f"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga2b4801b09936b8d41a5ec8c5f55ef43f">doSnrm2</a> (unsigned int n, const <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *x, unsigned int inc, unsigned int shift, bool use_gpu)</td></tr>
+<tr class="separator:ga2b4801b09936b8d41a5ec8c5f55ef43f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga88254ed1ed9cdd5514827726f68e2b9f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga88254ed1ed9cdd5514827726f68e2b9f">doSsbmv</a> (CBLAS_ORDER major_type, CBLAS_UPLO uplo, int n, int k, float alpha, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *a, unsigned int a_lda, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *x, unsigned int x_inc, float beta, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *y, unsigned int y_inc, unsigned int a_shift, unsigned int x_shift, unsigned int y_shift, bool use_gpu)</td></tr>
+<tr class="separator:ga88254ed1ed9cdd5514827726f68e2b9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga176ed394b2fddcb89ee099f2aafcdbda"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga176ed394b2fddcb89ee099f2aafcdbda">doClamp</a> (unsigned int N, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *v, unsigned int stride, unsigned int shift, float lower, float upper, bool use_gpu)</td></tr>
+<tr class="separator:ga176ed394b2fddcb89ee099f2aafcdbda"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf676836539fad29a5f1c38644bde7277"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#gaf676836539fad29a5f1c38644bde7277">doFill</a> (unsigned int N, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *v, unsigned int stride, unsigned int shift, float value, bool use_gpu)</td></tr>
+<tr class="separator:gaf676836539fad29a5f1c38644bde7277"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga3bb537b3a992771898a272f82339faac"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga3bb537b3a992771898a272f82339faac">doSum</a> (unsigned int N, const <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *v, unsigned int stride, unsigned int shift, bool use_gpu)</td></tr>
+<tr class="separator:ga3bb537b3a992771898a272f82339faac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga055587996bb90fb1552c2f50153f1c85"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga055587996bb90fb1552c2f50153f1c85">doScalarAdd</a> (unsigned int N, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *v, unsigned int stride, unsigned int shift, float value, bool use_gpu)</td></tr>
+<tr class="separator:ga055587996bb90fb1552c2f50153f1c85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad300d254a1b092799e088dec58fb7e93"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#gad300d254a1b092799e088dec58fb7e93">doEquals</a> (unsigned int N, const <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *v1, const <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *v2, unsigned int stride1, unsigned int stride2, unsigned int shift1, unsigned int shift2, float epsilon, bool use_gpu)</td></tr>
+<tr class="separator:gad300d254a1b092799e088dec58fb7e93"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaca54b9b09f03a4a18b9ac0a2d52e7dcc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#gaca54b9b09f03a4a18b9ac0a2d52e7dcc">doLog</a> (unsigned int N, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *v, unsigned int stride, unsigned int shift, bool use_gpu)</td></tr>
+<tr class="separator:gaca54b9b09f03a4a18b9ac0a2d52e7dcc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga28e581f473e588b76d8bc2988da71654"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga28e581f473e588b76d8bc2988da71654">doLog1p</a> (unsigned int N, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *v, unsigned int stride, unsigned int shift, bool use_gpu)</td></tr>
+<tr class="separator:ga28e581f473e588b76d8bc2988da71654"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga410578107a78bac8d2d6bac69d8d0947"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga410578107a78bac8d2d6bac69d8d0947">doExp</a> (unsigned int N, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *v, unsigned int stride, unsigned int shift, bool use_gpu)</td></tr>
+<tr class="separator:ga410578107a78bac8d2d6bac69d8d0947"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gafebd0b854b0e557d7673800956c70238"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#gafebd0b854b0e557d7673800956c70238">doSqrt</a> (unsigned int N, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *v, unsigned int stride, unsigned int shift, bool use_gpu)</td></tr>
+<tr class="separator:gafebd0b854b0e557d7673800956c70238"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga82b48fd8403348408c1fabb75de5b41a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga82b48fd8403348408c1fabb75de5b41a">doTanh</a> (unsigned int N, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *v, unsigned int stride, unsigned int shift, bool use_gpu)</td></tr>
+<tr class="separator:ga82b48fd8403348408c1fabb75de5b41a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga53c00c5f603571beb071891145fc3175"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#ga53c00c5f603571beb071891145fc3175">doPow</a> (unsigned int N, <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *v, unsigned int stride, unsigned int shift, float value, bool use_gpu)</td></tr>
+<tr class="separator:ga53c00c5f603571beb071891145fc3175"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:gaa455a743d855d5960904a9c5daaa8ca6"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classapril__utils_1_1hash.html">april_utils::hash</a><br class="typebreak"/>
+&lt; unsigned int, <br class="typebreak"/>
+<a class="el" href="classapril__utils_1_1list.html">april_utils::list</a>&lt; T * &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__math.html#gaa455a743d855d5960904a9c5daaa8ca6">GPUMirroredMemoryBlock&lt; T &gt;::pool_lists</a></td></tr>
+<tr class="separator:gaa455a743d855d5960904a9c5daaa8ca6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <h2 class="groupheader">Macro Definition Documentation</h2>
@@ -244,10 +279,12 @@ Functions</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define NEAR_ZERO&#160;&#160;&#160;1e-5f</td>
+          <td class="memname">#define NEAR_ZERO&#160;&#160;&#160;1e-6f</td>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Referenced by <a class="el" href="classANN_1_1MultiClassCrossEntropyLossFunction.html#a853aaa86c59ea821e64b8b7dcc902860">ANN::MultiClassCrossEntropyLossFunction::addLoss()</a>, <a class="el" href="classANN_1_1CrossEntropyLossFunction.html#a6b0a4f134778972de24d9435f2c7b330">ANN::CrossEntropyLossFunction::addLoss()</a>, <a class="el" href="classANN_1_1MAELossFunction.html#adf7e39e39408d2f1605b89830465e28d">ANN::MAELossFunction::computeGradient()</a>, <a class="el" href="classANN_1_1MultiClassCrossEntropyLossFunction.html#af7c2d1730f65c12b6166eb202a31dfe6">ANN::MultiClassCrossEntropyLossFunction::computeGradient()</a>, and <a class="el" href="classANN_1_1CrossEntropyLossFunction.html#a9beebb7f8031f4ca820a836ce596873d">ANN::CrossEntropyLossFunction::computeGradient()</a>.</p>
 
 </div>
 </div>
@@ -266,18 +303,6 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Referenced by <a class="el" href="classANN_1_1DotProductANNComponent.html#a50d9cf5084cbe26dcfc6a518c21a85a1">ANN::DotProductANNComponent::doBackprop()</a>, and <a class="el" href="classANN_1_1DotProductANNComponent.html#a67a387a6760653e5ad043ccf7fc886c5">ANN::DotProductANNComponent::doForward()</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="ga8d279672dc4197c9a4cb5b70e87bd607"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define NO_POOL</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
 
 </div>
 </div>
@@ -396,6 +421,18 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ga90c39620f2065827027f241f9e23ea5f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef <a class="el" href="classGPUMirroredMemoryBlock.html">GPUMirroredMemoryBlock</a>&lt;int&gt; <a class="el" href="group__math.html#ga90c39620f2065827027f241f9e23ea5f">IntGPUMirroredMemoryBlock</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="gaff1e4c209a53d616aace1d9524278e9b"></a>
 <div class="memitem">
@@ -445,7 +482,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Referenced by <a class="el" href="classANN_1_1ActivationFunctionANNComponent.html#a603e2d177c96dc2fe741b955ea005af3">ANN::ActivationFunctionANNComponent::doForward()</a>.</p>
+<p>Referenced by <a class="el" href="classANN_1_1ActivationFunctionANNComponent.html#ad02eb2f698af9e5da8d66431415bcbdf">ANN::ActivationFunctionANNComponent::doBackprop()</a>, and <a class="el" href="classANN_1_1ActivationFunctionANNComponent.html#a603e2d177c96dc2fe741b955ea005af3">ANN::ActivationFunctionANNComponent::doForward()</a>.</p>
 
 </div>
 </div>
@@ -899,6 +936,64 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ga176ed394b2fddcb89ee099f2aafcdbda"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void doClamp </td>
+          <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>N</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>v</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>stride</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>shift</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>lower</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>upper</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>use_gpu</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Referenced by <a class="el" href="structclamp__functor.html#a80d2c73de90431dc1e825ea20d1b43ba">clamp_functor::operator()()</a>.</p>
+
+</div>
+</div>
 <a class="anchor" id="ga2f3751dcaf38a44ce257299b8788115d"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1027,6 +1122,64 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ga612993d8e56b8afb1056f22c47f00ecd"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void doComputeMAEGradient </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>input</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>target</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>error_output</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>zero_epsilon_distance</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>bunch_size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>use_gpu</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Referenced by <a class="el" href="classANN_1_1MAELossFunction.html#adf7e39e39408d2f1605b89830465e28d">ANN::MAELossFunction::computeGradient()</a>.</p>
+
+</div>
+</div>
 <a class="anchor" id="gad4a10a53b21dd86b2a4c959feae86c69"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1137,6 +1290,174 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="gad300d254a1b092799e088dec58fb7e93"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool doEquals </td>
+          <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>N</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>v1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>v2</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>stride1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>stride2</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>shift1</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>shift2</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>epsilon</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>use_gpu</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Referenced by <a class="el" href="structequals__functor.html#aaf59f73181f08fb6fd6372503ae73647">equals_functor::operator()()</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ga410578107a78bac8d2d6bac69d8d0947"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void doExp </td>
+          <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>N</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>v</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>stride</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>shift</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>use_gpu</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Referenced by <a class="el" href="group__matrix.html#gab6f2f87bbded93f3592fde865597094a">Matrix&lt; float &gt;::exp()</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="gaf676836539fad29a5f1c38644bde7277"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void doFill </td>
+          <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>N</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>v</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>stride</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>shift</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>value</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>use_gpu</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Referenced by <a class="el" href="group__matrix.html#gac255da475227b8dc41411c4680276b1c">Matrix&lt; float &gt;::fill()</a>, and <a class="el" href="group__tokens.html#gac5f91b65b78b669f8bb0474ef7742f22">TokenMemoryBlock::setToZero()</a>.</p>
+
+</div>
+</div>
 <a class="anchor" id="ga0dfb204d6e970be79a9c1bcf42acf945"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1204,6 +1525,150 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Referenced by <a class="el" href="classANN_1_1LocalFMeasureLossFunction.html#aff83209415b74e0f16d416090a9b8b29">ANN::LocalFMeasureLossFunction::addLoss()</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="gaca54b9b09f03a4a18b9ac0a2d52e7dcc"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void doLog </td>
+          <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>N</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>v</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>stride</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>shift</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>use_gpu</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Referenced by <a class="el" href="group__matrix.html#gaefcf8286c759040094ac912515e3f36f">Matrix&lt; float &gt;::log()</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ga28e581f473e588b76d8bc2988da71654"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void doLog1p </td>
+          <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>N</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>v</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>stride</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>shift</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>use_gpu</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Referenced by <a class="el" href="group__matrix.html#ga3fce5c1abd601acf57d9a791320f3101">Matrix&lt; float &gt;::log1p()</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="gaadee409f54ce6199d5b19d7aca233342"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float doMAELossFunction </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>input</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>target</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>zero_epsilon_distance</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>bunch_size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>use_gpu</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Referenced by <a class="el" href="classANN_1_1MAELossFunction.html#afab9bb577971bb447afeeba162ebcd5a">ANN::MAELossFunction::addLoss()</a>.</p>
 
 </div>
 </div>
@@ -1673,7 +2138,59 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga506b8bdedf5f8fa88c73f4d27205280a"></a>
+<a class="anchor" id="ga53c00c5f603571beb071891145fc3175"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void doPow </td>
+          <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>N</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>v</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>stride</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>shift</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>value</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>use_gpu</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Referenced by <a class="el" href="group__matrix.html#ga54ce3dfdb52ec63e4534476174ad4ce1">Matrix&lt; float &gt;::pow()</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="gad3a194e023ae0ac04e07f621f35e2c30"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -1692,7 +2209,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramtype">const <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
           <td class="paramname"><em>x</em>, </td>
         </tr>
         <tr>
@@ -1739,11 +2256,11 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Referenced by <a class="el" href="classANN_1_1DotProductANNComponent.html#aba052375fbda519e3ce0983175d94e7a">ANN::DotProductANNComponent::computeBPUpdateOnPrevVectors()</a>, <a class="el" href="classANN_1_1Connections.html#a68fb3ea6c134af71cbf1b71b6820e622">ANN::Connections::computeMomentumOnPrevVector()</a>, <a class="el" href="classANN_1_1Connections.html#ab89dbad09b2e0a814ef8749dad7ae4d1">ANN::Connections::computeWeightDecayOnPrevVector()</a>, <a class="el" href="classANN_1_1CopyANNComponent.html#ab62f27aa5412cec570832017f1c89358">ANN::CopyANNComponent::doBackprop()</a>, and <a class="el" href="classANN_1_1DotProductANNComponent.html#a67a387a6760653e5ad043ccf7fc886c5">ANN::DotProductANNComponent::doForward()</a>.</p>
+<p>Referenced by <a class="el" href="structaxpy__functor.html#acd1200d9a8441862f4e4811f3ada7789">axpy_functor::operator()()</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="gaf4deb5e2bb05d425e4bc82af5c20de36"></a>
+<a class="anchor" id="gac22c59f3172b0874b92680fb52e6df39"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -1774,6 +2291,12 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>x_shift</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
           <td class="paramname"><em>y</em>, </td>
         </tr>
@@ -1782,6 +2305,12 @@ Functions</h2></td></tr>
           <td></td>
           <td class="paramtype">unsigned int&#160;</td>
           <td class="paramname"><em>y_inc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>y_shift</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1815,11 +2344,63 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Referenced by <a class="el" href="classANN_1_1BiasANNComponent.html#af7f48523166e1f6be31cbe8b62d1d8b6">ANN::BiasANNComponent::doForward()</a>, and <a class="el" href="classANN_1_1BiasANNComponent.html#a6c48e2bbecc15497c7a94eccc1eed065">ANN::BiasANNComponent::doUpdate()</a>.</p>
+<p>Referenced by <a class="el" href="classANN_1_1BiasANNComponent.html#ac35a17896632df362e74a7a4d8dd14d4">ANN::BiasANNComponent::computeBP()</a>, <a class="el" href="classANN_1_1ConvolutionBiasANNComponent.html#a30acc32ec3a8f77b8b5d458b96c04322">ANN::ConvolutionBiasANNComponent::computeBP()</a>, and <a class="el" href="classANN_1_1BiasANNComponent.html#af7f48523166e1f6be31cbe8b62d1d8b6">ANN::BiasANNComponent::doForward()</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="ga465ca9d24f8dc92bdcaf9a5f7f0d10d9"></a>
+<a class="anchor" id="ga055587996bb90fb1552c2f50153f1c85"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void doScalarAdd </td>
+          <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>N</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>v</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>stride</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>shift</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>value</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>use_gpu</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Referenced by <a class="el" href="group__matrix.html#ga9fdc5b41bf45498a025903982de4f543">Matrix&lt; float &gt;::scalarAdd()</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ga9c45c4798c22f12ad488850f858e9e90"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -1832,7 +2413,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramtype">const <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
           <td class="paramname"><em>x</em>, </td>
         </tr>
         <tr>
@@ -1879,7 +2460,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Referenced by <a class="el" href="classANN_1_1LinearActfANNComponent.html#a696b779808f29412dfac827e83c0a411">ANN::LinearActfANNComponent::applyActivation()</a>, <a class="el" href="classANN_1_1JoinANNComponent.html#aafc95923c731444f1709b781db7876f1">ANN::JoinANNComponent::buildErrorInputBunchVector()</a>, <a class="el" href="classANN_1_1JoinANNComponent.html#ae75ab071704e18ae0168c6e5d324b75e">ANN::JoinANNComponent::buildInputBunchVector()</a>, <a class="el" href="classANN_1_1JoinANNComponent.html#a3bf717aed94838144383a48b02c35213">ANN::JoinANNComponent::buildMemoryBlockToken()</a>, <a class="el" href="group__tokens.html#ga6bac731107f62ef6a7003e5937723cc4">TokenMemoryBlock::clone()</a>, <a class="el" href="classANN_1_1Connections.html#aaeff830d7496c65025a7f49be0c73f43">ANN::Connections::copyToPrevVector()</a>, <a class="el" href="classANN_1_1CopyANNComponent.html#ab62f27aa5412cec570832017f1c89358">ANN::CopyANNComponent::doBackprop()</a>, <a class="el" href="classANN_1_1BiasANNComponent.html#af7f48523166e1f6be31cbe8b62d1d8b6">ANN::BiasANNComponent::doForward()</a>, <a class="el" href="classDataSetTokenVector.html#a1bc3770f41034f03eda38b9257ba9166">DataSetTokenVector::getPatternBunch()</a>, <a class="el" href="classUnionDataSetToken.html#a85a98b1ec90fca517d72f90899cc37fa">UnionDataSetToken::getPatternBunch()</a>, <a class="el" href="classDataSetFloat2TokenWrapper.html#a58429656f2ef97f0668a5761e376c681">DataSetFloat2TokenWrapper::getPatternBunch()</a>, <a class="el" href="classANN_1_1LinearActfANNComponent.html#a524057bcd2560c1bce240f3020890871">ANN::LinearActfANNComponent::multiplyDerivatives()</a>, <a class="el" href="classANN_1_1LogLogisticActfANNComponent.html#a4a01c95f08b7c0349fd6c3de3bd7c71c">ANN::LogLogisticActfANNComponent::multiplyDerivatives()</a>, <a class="el" href="classANN_1_1LogSoftmaxActfANNComponent.html#a95a6ce0f5457d6dcc906570cfe3d245c">ANN::LogSoftmaxActfANNComponent::multiplyDerivatives()</a>, and <a class="el" href="classDataSetFloat2TokenWrapper.html#abe222dfa6e0a1ac1f1a6bab97f121713">DataSetFloat2TokenWrapper::putPatternBunch()</a>.</p>
+<p>Referenced by <a class="el" href="classANN_1_1LinearActfANNComponent.html#a696b779808f29412dfac827e83c0a411">ANN::LinearActfANNComponent::applyActivation()</a>, <a class="el" href="group__tokens.html#ga6bac731107f62ef6a7003e5937723cc4">TokenMemoryBlock::clone()</a>, <a class="el" href="classANN_1_1LinearActfANNComponent.html#a524057bcd2560c1bce240f3020890871">ANN::LinearActfANNComponent::multiplyDerivatives()</a>, <a class="el" href="classANN_1_1LogSoftmaxActfANNComponent.html#a95a6ce0f5457d6dcc906570cfe3d245c">ANN::LogSoftmaxActfANNComponent::multiplyDerivatives()</a>, <a class="el" href="classANN_1_1LogLogisticActfANNComponent.html#a4a01c95f08b7c0349fd6c3de3bd7c71c">ANN::LogLogisticActfANNComponent::multiplyDerivatives()</a>, and <a class="el" href="structcopy__functor.html#a93f6a616643712c20b955279e80c3929">copy_functor::operator()()</a>.</p>
 
 </div>
 </div>
@@ -1942,6 +2523,70 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="gae9e54d1385a6c112cb93d9c276927259"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float doSdot </td>
+          <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>x</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>x_shift</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>x_inc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>y</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>y_shift</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>y_inc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>use_gpu</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Referenced by <a class="el" href="group__matrix.html#ga1cfee57583a779dc03a4694be2f10f02">Matrix&lt; float &gt;::dot()</a>.</p>
 
 </div>
 </div>
@@ -2065,7 +2710,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Referenced by <a class="el" href="classANN_1_1DotProductANNComponent.html#aba052375fbda519e3ce0983175d94e7a">ANN::DotProductANNComponent::computeBPUpdateOnPrevVectors()</a>, <a class="el" href="classANN_1_1DotProductANNComponent.html#a50d9cf5084cbe26dcfc6a518c21a85a1">ANN::DotProductANNComponent::doBackprop()</a>, and <a class="el" href="classANN_1_1DotProductANNComponent.html#a67a387a6760653e5ad043ccf7fc886c5">ANN::DotProductANNComponent::doForward()</a>.</p>
+<p>Referenced by <a class="el" href="group__matrix.html#ga56fbb5e4175a2ce6e11311df5c03b63c">Matrix&lt; float &gt;::gemm()</a>.</p>
 
 </div>
 </div>
@@ -2177,7 +2822,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Referenced by <a class="el" href="classANN_1_1DotProductANNComponent.html#a50d9cf5084cbe26dcfc6a518c21a85a1">ANN::DotProductANNComponent::doBackprop()</a>, and <a class="el" href="classANN_1_1DotProductANNComponent.html#a67a387a6760653e5ad043ccf7fc886c5">ANN::DotProductANNComponent::doForward()</a>.</p>
+<p>Referenced by <a class="el" href="group__matrix.html#ga3e5b9ba9e3dbea85b59020634e740f97">Matrix&lt; float &gt;::gemv()</a>.</p>
 
 </div>
 </div>
@@ -2277,11 +2922,11 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Referenced by <a class="el" href="classANN_1_1DotProductANNComponent.html#aba052375fbda519e3ce0983175d94e7a">ANN::DotProductANNComponent::computeBPUpdateOnPrevVectors()</a>.</p>
+<p>Referenced by <a class="el" href="group__matrix.html#gacf10773e77553ace68bdfb1ba32d586d">Matrix&lt; float &gt;::ger()</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="gafad8d6583d04911d76de234ce0084b79"></a>
+<a class="anchor" id="ga2b4801b09936b8d41a5ec8c5f55ef43f"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -2294,20 +2939,20 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramtype">const <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
           <td class="paramname"><em>x</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">unsigned int&#160;</td>
-          <td class="paramname"><em>shift</em>, </td>
+          <td class="paramname"><em>inc</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">unsigned int&#160;</td>
-          <td class="paramname"><em>inc</em>, </td>
+          <td class="paramname"><em>shift</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -2323,11 +2968,169 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Referenced by <a class="el" href="classANN_1_1DotProductANNComponent.html#a886c97c494e11068d8a7bddfda57df02">ANN::DotProductANNComponent::doUpdate()</a>.</p>
+<p>Referenced by <a class="el" href="group__matrix.html#gad4e42c92fdb84dfdb8bb96f3dee14a8f">Matrix&lt; float &gt;::norm2()</a>, and <a class="el" href="structnorm2__functor.html#ab3fd350340bb45b50dc7fcd132c62d0e">norm2_functor::operator()()</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="ga1ab7f4f6e3f83020cff30b9cfc990876"></a>
+<a class="anchor" id="gafebd0b854b0e557d7673800956c70238"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void doSqrt </td>
+          <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>N</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>v</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>stride</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>shift</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>use_gpu</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Referenced by <a class="el" href="group__matrix.html#ga0a388e3cc9530bf4b891c99634f1a9e4">Matrix&lt; float &gt;::sqrt()</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ga88254ed1ed9cdd5514827726f68e2b9f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void doSsbmv </td>
+          <td>(</td>
+          <td class="paramtype">CBLAS_ORDER&#160;</td>
+          <td class="paramname"><em>major_type</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">CBLAS_UPLO&#160;</td>
+          <td class="paramname"><em>uplo</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>n</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>k</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>alpha</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>a</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>a_lda</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>x</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>x_inc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">float&#160;</td>
+          <td class="paramname"><em>beta</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>y</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>y_inc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>a_shift</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>x_shift</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>y_shift</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>use_gpu</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Referenced by <a class="el" href="group__matrix.html#ga24ebd8c063abaa48a581ebc7f11a7150">Matrix&lt; float &gt;::cmul()</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="gabfeb979129493d52171273b916032a53"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -2340,12 +3143,6 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">float&#160;</td>
-          <td class="paramname"><em>alpha</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
           <td class="paramname"><em>x</em>, </td>
         </tr>
@@ -2353,59 +3150,59 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">unsigned int&#160;</td>
-          <td class="paramname"><em>shift</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned int&#160;</td>
           <td class="paramname"><em>inc</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>use_gpu</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Referenced by <a class="el" href="classANN_1_1DotProductANNComponent.html#aba052375fbda519e3ce0983175d94e7a">ANN::DotProductANNComponent::computeBPUpdateOnPrevVectors()</a>, <a class="el" href="classANN_1_1Connections.html#a68fb3ea6c134af71cbf1b71b6820e622">ANN::Connections::computeMomentumOnPrevVector()</a>, <a class="el" href="classANN_1_1ActivationFunctionANNComponent.html#a603e2d177c96dc2fe741b955ea005af3">ANN::ActivationFunctionANNComponent::doForward()</a>, <a class="el" href="classANN_1_1DotProductANNComponent.html#a886c97c494e11068d8a7bddfda57df02">ANN::DotProductANNComponent::doUpdate()</a>, and <a class="el" href="classANN_1_1Connections.html#a20529dfbe7011e2863d9b49ce706f808">ANN::Connections::scale()</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="ga9828fe5150bf6d19515369fc1cd6cf58"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void doVectorSet </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
-          <td class="paramname"><em>v</em>, </td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>shift</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">float&#160;</td>
-          <td class="paramname"><em>value</em>, </td>
+          <td class="paramname"><em>alpha</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>use_gpu</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Referenced by <a class="el" href="group__matrix.html#gae60fa0c31c7d993f4348c6299951be7f">Matrix&lt; float &gt;::scal()</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ga3bb537b3a992771898a272f82339faac"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">float doSum </td>
+          <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>N</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
+          <td class="paramname"><em>v</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">unsigned int&#160;</td>
-          <td class="paramname"><em>v_size</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned int&#160;</td>
-          <td class="paramname"><em>inc</em>, </td>
+          <td class="paramname"><em>stride</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -2427,15 +3224,23 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>Referenced by <a class="el" href="structsum__functor.html#a769a82f17b58a88f6ec8defec64732e0">sum_functor::operator()()</a>.</p>
+
 </div>
 </div>
-<a class="anchor" id="ga0975b65dfc0580001f919006f000711f"></a>
+<a class="anchor" id="ga82b48fd8403348408c1fabb75de5b41a"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void doVectorSetToZero </td>
+          <td class="memname">void doTanh </td>
           <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>N</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype"><a class="el" href="group__math.html#ga69731d455c34809dc174535f8a5d55c0">FloatGPUMirroredMemoryBlock</a> *&#160;</td>
           <td class="paramname"><em>v</em>, </td>
         </tr>
@@ -2443,13 +3248,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">unsigned int&#160;</td>
-          <td class="paramname"><em>v_size</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned int&#160;</td>
-          <td class="paramname"><em>inc</em>, </td>
+          <td class="paramname"><em>stride</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -2471,7 +3270,32 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Referenced by <a class="el" href="group__tokens.html#gac5f91b65b78b669f8bb0474ef7742f22">TokenMemoryBlock::setToZero()</a>.</p>
+<p>Referenced by <a class="el" href="group__matrix.html#ga7be7b917a6f1a72500e12bd8ed7faebb">Matrix&lt; float &gt;::tanh()</a>.</p>
+
+</div>
+</div>
+<h2 class="groupheader">Variable Documentation</h2>
+<a class="anchor" id="gaa455a743d855d5960904a9c5daaa8ca6"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classapril__utils_1_1hash.html">april_utils::hash</a>&lt; unsigned int, <a class="el" href="classapril__utils_1_1list.html">april_utils::list</a>&lt; T * &gt; &gt; <a class="el" href="classGPUMirroredMemoryBlock.html">GPUMirroredMemoryBlock</a>&lt; T &gt;::pool_lists</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Referenced by <a class="el" href="classGPUMirroredMemoryBlock.html#a537d5d10328aa9001cfd3cc4a9ca3ae3">GPUMirroredMemoryBlock&lt; float &gt;::GPUMirroredMemoryBlock()</a>, <a class="el" href="classGPUMirroredMemoryBlock.html#a009287e82555d0070480cdfdf48c8017">GPUMirroredMemoryBlock&lt; float &gt;::~GPUMirroredMemoryBlock()</a>, and <a class="el" href="classGPUMirroredMemoryBlock_1_1PoolFreeBeforeExit.html#a0f302012823189a5ce6eba792e057c71">GPUMirroredMemoryBlock&lt; T &gt;::PoolFreeBeforeExit::~PoolFreeBeforeExit()</a>.</p>
 
 </div>
 </div>

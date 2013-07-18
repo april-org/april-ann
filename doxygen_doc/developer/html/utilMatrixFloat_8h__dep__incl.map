@@ -1,7 +1,14 @@
 <map id="basics/matrix/c_src/utilMatrixFloat.h" name="basics/matrix/c_src/utilMatrixFloat.h">
-<area shape="rect" id="node3" href="$utilMatrixFloat_8cc.html" title="basics/matrix/c_src\l/utilMatrixFloat.cc" alt="" coords="5,102,141,149"/>
-<area shape="rect" id="node5" href="$utilImageFloat_8h.html" title="imaging/image/c_src\l/utilImageFloat.h" alt="" coords="165,102,307,149"/>
-<area shape="rect" id="node7" href="$utilImageFloat_8cc.html" title="imaging/image/c_src\l/utilImageFloat.cc" alt="" coords="83,198,224,245"/>
-<area shape="rect" id="node9" href="$libpng_8h.html" title="imaging/libpng/c_src\l/libpng.h" alt="" coords="248,198,389,245"/>
-<area shape="rect" id="node11" href="$libpng_8cc.html" title="imaging/libpng/c_src\l/libpng.cc" alt="" coords="248,294,389,341"/>
+<area shape="rect" id="node3" href="$connection_8cc.html" title="ann/ann_base/c_src\l/connection.cc" alt="" coords="5,102,144,149"/>
+<area shape="rect" id="node5" href="$utilMatrixFloat_8cc.html" title="basics/matrix/c_src\l/utilMatrixFloat.cc" alt="" coords="168,102,304,149"/>
+<area shape="rect" id="node7" href="$utilImageFloat_8h.html" title="imaging/image/c_src\l/utilImageFloat.h" alt="" coords="603,102,744,149"/>
+<area shape="rect" id="node21" href="$interest__points_8cc.html" title="imaging/interest_points\l/c_src/interest_points.cc" alt="" coords="475,294,640,341"/>
+<area shape="rect" id="node9" href="$binarization_8h.html" title="imaging/binarization\l_filter/c_src/binarization.h" alt="" coords="776,198,947,245"/>
+<area shape="rect" id="node13" href="$utilImageFloat_8cc.html" title="imaging/image/c_src\l/utilImageFloat.cc" alt="" coords="379,198,520,245"/>
+<area shape="rect" id="node15" href="$image__cleaning_8h.html" title="imaging/image_cleaning\l/c_src/image_cleaning.h" alt="" coords="1137,198,1300,245"/>
+<area shape="rect" id="node19" href="$interest__points_8h.html" title="imaging/interest_points\l/c_src/interest_points.h" alt="" coords="595,198,752,245"/>
+<area shape="rect" id="node24" href="$libpng_8h.html" title="imaging/libpng/c_src\l/libpng.h" alt="" coords="971,198,1112,245"/>
+<area shape="rect" id="node11" href="$binarization_8cc.html" title="imaging/binarization\l_filter/c_src/binarization.cc" alt="" coords="768,294,947,341"/>
+<area shape="rect" id="node17" href="$image__cleaning_8cc.html" title="imaging/image_cleaning\l/c_src/image_cleaning.cc" alt="" coords="1136,294,1307,341"/>
+<area shape="rect" id="node26" href="$libpng_8cc.html" title="imaging/libpng/c_src\l/libpng.cc" alt="" coords="971,294,1112,341"/>
 </map>

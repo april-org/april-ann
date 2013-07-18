@@ -29,6 +29,7 @@
     <ul class="tablist">
       <li><a href="functions.html"><span>All</span></a></li>
       <li class="current"><a href="functions_func.html"><span>Functions</span></a></li>
+      <li><a href="functions_vars.html"><span>Variables</span></a></li>
     </ul>
   </div>
   <div id="navrow4" class="tabs3">
@@ -55,6 +56,7 @@
       <li><a href="functions_func_0x75.html#index_u"><span>u</span></a></li>
       <li><a href="functions_func_0x76.html#index_v"><span>v</span></a></li>
       <li><a href="functions_func_0x77.html#index_w"><span>w</span></a></li>
+      <li><a href="functions_func_0x7a.html#index_z"><span>z</span></a></li>
       <li class="current"><a href="functions_func_0x7e.html#index_0x7e"><span>~</span></a></li>
     </ul>
   </div>
@@ -68,12 +70,18 @@
 , <a class="el" href="classann_1_1loss_1_1____base____.html#a2078cbe9f9b603d6674666d09599a30f">ann::loss::__base__</a>
 , <a class="el" href="classtokens_1_1vector_1_1____base____.html#a7b1209df0858b538889115f1bbfa6d7a">tokens::vector::__base__</a>
 </li>
+<li>~__sliding_window__()
+: <a class="el" href="classmatrix_1_1____sliding__window____.html#a79c2d27deaae808e2591c77ae85ae76a">matrix::__sliding_window__</a>
+</li>
+<li>~_internal_lexclass_()
+: <a class="el" href="class__internal__lexclass__.html#a9bdb3370102324f4958105d9005671b2">_internal_lexclass_</a>
+</li>
 <li>~AffineTransform2D()
 : <a class="el" href="classAffineTransform2D.html#a4980208b0300472afff3e938dba8f872">AffineTransform2D</a>
 </li>
 <li>~base()
-: <a class="el" href="classann_1_1components_1_1base.html#ad87cd42df9773413057e063336a8b1a9">ann::components::base</a>
-, <a class="el" href="classtokens_1_1base.html#a55afc54bb461e9aff02da13b516a784d">tokens::base</a>
+: <a class="el" href="classtokens_1_1base.html#a55afc54bb461e9aff02da13b516a784d">tokens::base</a>
+, <a class="el" href="classann_1_1components_1_1base.html#ad87cd42df9773413057e063336a8b1a9">ann::components::base</a>
 </li>
 <li>~bias()
 : <a class="el" href="classann_1_1components_1_1bias.html#ad0d961c9a1d878bbf683438d7c17cef4">ann::components::bias</a>
@@ -86,6 +94,12 @@
 </li>
 <li>~connections()
 : <a class="el" href="classann_1_1connections.html#a4e7f7fef6c13d6a3edf89eed6d3f8e2e">ann::connections</a>
+</li>
+<li>~convolution()
+: <a class="el" href="classann_1_1components_1_1convolution.html#a831bb2c490bd793e856cb87004695ee6">ann::components::convolution</a>
+</li>
+<li>~convolution_bias()
+: <a class="el" href="classann_1_1components_1_1convolution__bias.html#a49742afffb0e2c96a76279ebd2a6200c">ann::components::convolution_bias</a>
 </li>
 <li>~copy()
 : <a class="el" href="classann_1_1components_1_1copy.html#a637d3e02cd13389f223eb3f7bf247e72">ann::components::copy</a>
@@ -105,14 +119,32 @@
 <li>~dot_product()
 : <a class="el" href="classann_1_1components_1_1dot__product.html#aab18b9c5ddc345e804a7d84147e35581">ann::components::dot_product</a>
 </li>
+<li>~flatten()
+: <a class="el" href="classann_1_1components_1_1flatten.html#a0eb227d3c0073130203c4fd983391cf2">ann::components::flatten</a>
+</li>
+<li>~gaussian_noise()
+: <a class="el" href="classann_1_1components_1_1gaussian__noise.html#aa53f510cfc9d824cad265f4651377b13">ann::components::gaussian_noise</a>
+</li>
 <li>~hardtanh()
 : <a class="el" href="classann_1_1components_1_1actf_1_1hardtanh.html#a08f48f653a1226c39c31add4b985f630">ann::components::actf::hardtanh</a>
+</li>
+<li>~hmm_trainer()
+: <a class="el" href="classhmm__trainer.html#ab607b61221138fc5274c9a7d90f125dd">hmm_trainer</a>
+</li>
+<li>~hmm_trainer_model()
+: <a class="el" href="classhmm__trainer__model.html#a5e7626d6903d08719eed0da7e8146c84">hmm_trainer_model</a>
 </li>
 <li>~hyperplane()
 : <a class="el" href="classann_1_1components_1_1hyperplane.html#a8c2dcac48a126b04885a5f52b5414b94">ann::components::hyperplane</a>
 </li>
 <li>~Image()
 : <a class="el" href="classImage.html#a25f30151704226c121da62b01b9efef3">Image</a>
+</li>
+<li>~image_histogram()
+: <a class="el" href="classimage_1_1image__histogram.html#a1f63f7800943f7c49e299c08bf4ef092">image::image_histogram</a>
+</li>
+<li>~image_metrics()
+: <a class="el" href="classimage_1_1image__metrics.html#a70b3ef09736aa6cbb46e1879847fe7ac">image::image_metrics</a>
 </li>
 <li>~ImageRGB()
 : <a class="el" href="classImageRGB.html#aab530ed8e7cc8ef97aaadf52cb20c814">ImageRGB</a>
@@ -141,8 +173,15 @@
 <li>~logistic()
 : <a class="el" href="classann_1_1components_1_1actf_1_1logistic.html#a4ad1b8c09be8012e58b3ced27e115217">ann::components::actf::logistic</a>
 </li>
+<li>~mae()
+: <a class="el" href="classann_1_1loss_1_1mae.html#a5d6b35c27dc31b156e347838cb835c4c">ann::loss::mae</a>
+</li>
 <li>~matrix()
 : <a class="el" href="classmatrix.html#a1b8bd2b3460e7a215c1303f06223e893">matrix</a>
+, <a class="el" href="classtokens_1_1matrix.html#a9e372528b813cf7929d63a797ba54bfc">tokens::matrix</a>
+</li>
+<li>~max_pooling()
+: <a class="el" href="classann_1_1components_1_1max__pooling.html#acd5ae06032ffd0ccc64021e4a3845b95">ann::components::max_pooling</a>
 </li>
 <li>~memblock()
 : <a class="el" href="classtokens_1_1memblock.html#ac86a2c8ef44209a7ca1248f40e9aa338">tokens::memblock</a>
@@ -162,8 +201,20 @@
 <li>~random()
 : <a class="el" href="classrandom.html#ae855c8d746f087017d2c3d86811f426d">random</a>
 </li>
+<li>~rewrap()
+: <a class="el" href="classann_1_1components_1_1rewrap.html#a12863f8bb40b72fbe373930f8b1c18f5">ann::components::rewrap</a>
+</li>
+<li>~salt_and_pepper()
+: <a class="el" href="classann_1_1components_1_1salt__and__pepper.html#afadfd8abcff9afd996008cde418a0695">ann::components::salt_and_pepper</a>
+</li>
 <li>~salt_noise()
 : <a class="el" href="classdataset_1_1salt__noise.html#aea1d6672dd411a080fea192f3f552673">dataset::salt_noise</a>
+</li>
+<li>~salt_pepper_noise()
+: <a class="el" href="classdataset_1_1salt__pepper__noise.html#acd58800c311a69f170b7ffd05c25f1fc">dataset::salt_pepper_noise</a>
+</li>
+<li>~select()
+: <a class="el" href="classann_1_1components_1_1select.html#a0c62d2d0dc1bdbdc6916b275cabc252c">ann::components::select</a>
 </li>
 <li>~sin()
 : <a class="el" href="classann_1_1components_1_1actf_1_1sin.html#aaa85c9bda9451ad4415b7c27873a0cbc">ann::components::actf::sin</a>

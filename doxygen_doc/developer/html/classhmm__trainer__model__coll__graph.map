@@ -1,0 +1,10 @@
+<map id="hmm_trainer_model" name="hmm_trainer_model">
+<area shape="rect" id="node2" href="$classReferenced.html" title="Referenced" alt="" coords="5,101,93,131"/>
+<area shape="rect" id="node4" href="$classhmm__trainer.html" title="hmm_trainer" alt="" coords="273,208,367,237"/>
+<area shape="rect" id="node7" href="$structhmm__trainer__cls__state.html" title="hmm_trainer_cls_state" alt="" coords="117,101,272,131"/>
+<area shape="rect" id="node9" href="$structhmm__trainer__cls__transition.html" title="hmm_trainer_cls_transition" alt="" coords="464,101,643,131"/>
+<area shape="rect" id="node11" href="$classlog__double.html" title="log_double" alt="" coords="348,5,431,35"/>
+<area shape="rect" id="node13" href="$classlog__float.html" title="log_float" alt="" coords="656,5,725,35"/>
+<area shape="rect" id="node19" href="$structhmm__aux__transition.html" title="hmm_aux_transition" alt="" coords="745,155,884,184"/>
+<area shape="rect" id="node17" href="$structhmm__trainer__transition.html" title="hmm_trainer_transition" alt="" coords="528,208,683,237"/>
+</map>

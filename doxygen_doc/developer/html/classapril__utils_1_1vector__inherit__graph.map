@@ -1,10 +1,14 @@
 <map id="april_utils::vector&lt; T &gt;" name="april_utils::vector&lt; T &gt;">
-<area shape="rect" id="node3" href="$classapril__utils_1_1ReferencedVector.html" title="april_utils::ReferencedVector\&lt; T \&gt;" alt="" coords="380,5,601,35"/>
-<area shape="rect" id="node5" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; DataSetToken * \&gt;" alt="" coords="421,58,560,105"/>
-<area shape="rect" id="node7" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; int \&gt;" alt="" coords="431,127,551,174"/>
-<area shape="rect" id="node9" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; unsigned int \&gt;" alt="" coords="431,197,551,243"/>
-<area shape="rect" id="node11" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; int32_t \&gt;" alt="" coords="431,266,551,313"/>
-<area shape="rect" id="node13" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; ANN::ANNComponent * \&gt;" alt="" coords="397,335,584,382"/>
-<area shape="rect" id="node15" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; char \&gt;" alt="" coords="431,405,551,451"/>
-<area shape="rect" id="node17" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; Token * \&gt;" alt="" coords="431,474,551,521"/>
+<area shape="rect" id="node3" href="$classapril__utils_1_1ReferencedVector.html" title="april_utils::ReferencedVector\&lt; T \&gt;" alt="" coords="380,8,601,37"/>
+<area shape="rect" id="node5" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; april_utils::pair \&gt;" alt="" coords="425,61,556,107"/>
+<area shape="rect" id="node7" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; DataSetToken * \&gt;" alt="" coords="421,130,560,177"/>
+<area shape="rect" id="node9" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; uint32_t \&gt;" alt="" coords="431,199,551,246"/>
+<area shape="rect" id="node11" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; int \&gt;" alt="" coords="431,269,551,315"/>
+<area shape="rect" id="node13" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; unsigned int \&gt;" alt="" coords="431,338,551,385"/>
+<area shape="rect" id="node15" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; int32_t \&gt;" alt="" coords="431,407,551,454"/>
+<area shape="rect" id="node17" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; april_utils::LexClass\l::data_t \&gt;" alt="" coords="415,477,567,541"/>
+<area shape="rect" id="node19" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; ANN::ANNComponent * \&gt;" alt="" coords="397,565,584,611"/>
+<area shape="rect" id="node21" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; char \&gt;" alt="" coords="431,634,551,681"/>
+<area shape="rect" id="node23" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; char * \&gt;" alt="" coords="431,703,551,750"/>
+<area shape="rect" id="node25" href="$classapril__utils_1_1vector.html" title="april_utils::vector\l\&lt; Token * \&gt;" alt="" coords="431,773,551,819"/>
 </map>

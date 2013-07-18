@@ -44,6 +44,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classToken.html">Token</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTokenMatrix.html">TokenMatrix&lt; T &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTokenMemoryBlock.html">TokenMemoryBlock</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classTokenVectorGeneric.html">TokenVectorGeneric</a></td></tr>
@@ -56,6 +58,8 @@ Typedefs</h2></td></tr>
 <tr class="memitem:ga24dc24faaad7bf975dc97793ace8420b"><td class="memItemLeft" align="right" valign="top">typedef uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__tokens.html#ga24dc24faaad7bf975dc97793ace8420b">TokenCode</a></td></tr>
 <tr class="memdesc:ga24dc24faaad7bf975dc97793ace8420b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Definition of TokenCode type.  <a href="#ga24dc24faaad7bf975dc97793ace8420b">More...</a><br/></td></tr>
 <tr class="separator:ga24dc24faaad7bf975dc97793ace8420b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga4bd065d317f901fb06db76bd75d2f2fc"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classTokenMatrix.html">TokenMatrix</a>&lt; float &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__tokens.html#ga4bd065d317f901fb06db76bd75d2f2fc">TokenMatrixFloat</a></td></tr>
+<tr class="separator:ga4bd065d317f901fb06db76bd75d2f2fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gae082a93af27f6288cd6457822f4237fe"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classTokenVector.html">TokenVector</a>&lt; float &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__tokens.html#gae082a93af27f6288cd6457822f4237fe">TokenVectorFloat</a></td></tr>
 <tr class="separator:gae082a93af27f6288cd6457822f4237fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga316a3d3f363b2bcb8581c222ab8120bb"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="classTokenVector.html">TokenVector</a>&lt; double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__tokens.html#ga316a3d3f363b2bcb8581c222ab8120bb">TokenVectorDouble</a></td></tr>
@@ -75,12 +79,26 @@ int, float &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:gafe5ef63109b0603e88acf2b1037d6667"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__tokens.html#gafe5ef63109b0603e88acf2b1037d6667">concatBunchOfTokens</a> (<a class="el" href="classToken.html">Token</a> *&amp;result, <a class="el" href="group__tokens.html#ga7a5324efec0bb77c28dc9565d4fd8de0">TokenBunchVector</a> *bunch)</td></tr>
-<tr class="separator:gafe5ef63109b0603e88acf2b1037d6667"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaa3c5868ba4115f3189df6b2ac5b36f39"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__tokens.html#gaa3c5868ba4115f3189df6b2ac5b36f39">Token::Token</a> ()</td></tr>
 <tr class="separator:gaa3c5868ba4115f3189df6b2ac5b36f39"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga3d7d59eaac1535df1433357d5d372f84"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__tokens.html#ga3d7d59eaac1535df1433357d5d372f84">Token::~Token</a> ()</td></tr>
 <tr class="separator:ga3d7d59eaac1535df1433357d5d372f84"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga44cf45f678eac5cb539827f70d37efe4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__tokens.html#ga44cf45f678eac5cb539827f70d37efe4">TokenMatrix&lt; T &gt;::TokenMatrix</a> (<a class="el" href="classMatrix.html">Matrix</a>&lt; T &gt; *mat)</td></tr>
+<tr class="separator:ga44cf45f678eac5cb539827f70d37efe4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaeea96b5c2a3f1a7cd730f46774f0e2aa"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__tokens.html#gaeea96b5c2a3f1a7cd730f46774f0e2aa">TokenMatrix&lt; T &gt;::~TokenMatrix</a> ()</td></tr>
+<tr class="separator:gaeea96b5c2a3f1a7cd730f46774f0e2aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga1d996028727e73e4b54871cb8a89b239"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classToken.html">Token</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__tokens.html#ga1d996028727e73e4b54871cb8a89b239">TokenMatrix&lt; T &gt;::clone</a> () const </td></tr>
+<tr class="memdesc:ga1d996028727e73e4b54871cb8a89b239"><td class="mdescLeft">&#160;</td><td class="mdescRight">This method implements a deep copy.  <a href="#ga1d996028727e73e4b54871cb8a89b239">More...</a><br/></td></tr>
+<tr class="separator:ga1d996028727e73e4b54871cb8a89b239"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaa3e4ad001ee5862a4102652e43b12ba1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structbuffer__list.html">buffer_list</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__tokens.html#gaa3e4ad001ee5862a4102652e43b12ba1">TokenMatrix&lt; T &gt;::toString</a> ()</td></tr>
+<tr class="memdesc:gaa3e4ad001ee5862a4102652e43b12ba1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract method for serialization purposes.  <a href="#gaa3e4ad001ee5862a4102652e43b12ba1">More...</a><br/></td></tr>
+<tr class="separator:gaa3e4ad001ee5862a4102652e43b12ba1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga7a19d42f83b2b6b9bc827d11fe9c18cb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structbuffer__list.html">buffer_list</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__tokens.html#ga7a19d42f83b2b6b9bc827d11fe9c18cb">TokenMatrix&lt; T &gt;::debugString</a> (const char *prefix, int debugLevel)</td></tr>
+<tr class="memdesc:ga7a19d42f83b2b6b9bc827d11fe9c18cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">FOR DEBUG PURPOSES.  <a href="#ga7a19d42f83b2b6b9bc827d11fe9c18cb">More...</a><br/></td></tr>
+<tr class="separator:ga7a19d42f83b2b6b9bc827d11fe9c18cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga996b9bb4eb8055e7b5ba560aa3574fc3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__tokens.html#ga24dc24faaad7bf975dc97793ace8420b">TokenCode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__tokens.html#ga996b9bb4eb8055e7b5ba560aa3574fc3">TokenMatrix&lt; T &gt;::getTokenCode</a> () const </td></tr>
+<tr class="memdesc:ga996b9bb4eb8055e7b5ba560aa3574fc3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abstract method which indicates the TokenCode of child <a class="el" href="classToken.html">Token</a> classes.  <a href="#ga996b9bb4eb8055e7b5ba560aa3574fc3">More...</a><br/></td></tr>
+<tr class="separator:ga996b9bb4eb8055e7b5ba560aa3574fc3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga909adb3afc1927a6c16c61fbbe421bc4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__tokens.html#ga909adb3afc1927a6c16c61fbbe421bc4">TokenMemoryBlock::TokenMemoryBlock</a> ()</td></tr>
 <tr class="separator:ga909adb3afc1927a6c16c61fbbe421bc4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaad3d4b8fdeace734e080e0bb1e9f37d0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__tokens.html#gaad3d4b8fdeace734e080e0bb1e9f37d0">TokenMemoryBlock::TokenMemoryBlock</a> (unsigned int size)</td></tr>
@@ -158,6 +176,18 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ga4bd065d317f901fb06db76bd75d2f2fc"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef <a class="el" href="classTokenMatrix.html">TokenMatrix</a>&lt;float&gt; <a class="el" href="group__tokens.html#ga4bd065d317f901fb06db76bd75d2f2fc">TokenMatrixFloat</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="gac4b1fe689fabb41d7db06fb4a47bc2ae"></a>
 <div class="memitem">
 <div class="memproto">
@@ -231,6 +261,35 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
+<a class="anchor" id="ga1d996028727e73e4b54871cb8a89b239"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classToken.html">Token</a> * <a class="el" href="classTokenMatrix.html">TokenMatrix</a>&lt; T &gt;::clone </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>This method implements a deep copy. </p>
+
+<p>Implements <a class="el" href="classToken.html#a6136c2b334400b13fc0c0c5570edbd1c">Token</a>.</p>
+
+</div>
+</div>
 <a class="anchor" id="ga6bac731107f62ef6a7003e5937723cc4"></a>
 <div class="memitem">
 <div class="memproto">
@@ -256,7 +315,7 @@ Functions</h2></td></tr>
 
 <p>Implements <a class="el" href="classToken.html#a6136c2b334400b13fc0c0c5570edbd1c">Token</a>.</p>
 
-<p>References <a class="el" href="group__math.html#ga465ca9d24f8dc92bdcaf9a5f7f0d10d9">doScopy()</a>, <a class="el" href="classGPUMirroredMemoryBlock.html#a0947dbed046623f58620a51564d9a053">GPUMirroredMemoryBlock&lt; T &gt;::getSize()</a>, <a class="el" href="classTokenMemoryBlock.html#a8adbb7042ad93dab5513c9a8fdec1259">TokenMemoryBlock::mem_block</a>, <a class="el" href="group__tokens.html#ga909adb3afc1927a6c16c61fbbe421bc4">TokenMemoryBlock::TokenMemoryBlock()</a>, and <a class="el" href="classTokenMemoryBlock.html#aff7d3c9ed9e7aeb31c69677af9ff119e">TokenMemoryBlock::used_size</a>.</p>
+<p>References <a class="el" href="group__math.html#ga9c45c4798c22f12ad488850f858e9e90">doScopy()</a>, <a class="el" href="classGPUMirroredMemoryBlock.html#a0947dbed046623f58620a51564d9a053">GPUMirroredMemoryBlock&lt; T &gt;::getSize()</a>, <a class="el" href="classTokenMemoryBlock.html#a8adbb7042ad93dab5513c9a8fdec1259">TokenMemoryBlock::mem_block</a>, <a class="el" href="group__tokens.html#ga909adb3afc1927a6c16c61fbbe421bc4">TokenMemoryBlock::TokenMemoryBlock()</a>, and <a class="el" href="classTokenMemoryBlock.html#aff7d3c9ed9e7aeb31c69677af9ff119e">TokenMemoryBlock::used_size</a>.</p>
 
 </div>
 </div>
@@ -289,21 +348,26 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="gafe5ef63109b0603e88acf2b1037d6667"></a>
+<a class="anchor" id="ga7a19d42f83b2b6b9bc827d11fe9c18cb"></a>
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void concatBunchOfTokens </td>
+          <td class="memname"><a class="el" href="structbuffer__list.html">buffer_list</a> * <a class="el" href="classTokenMatrix.html">TokenMatrix</a>&lt; T &gt;::debugString </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classToken.html">Token</a> *&amp;&#160;</td>
-          <td class="paramname"><em>result</em>, </td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>prefix</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="group__tokens.html#ga7a5324efec0bb77c28dc9565d4fd8de0">TokenBunchVector</a> *&#160;</td>
-          <td class="paramname"><em>bunch</em>&#160;</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>debugLevel</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -311,8 +375,16 @@ template&lt;typename T &gt; </div>
           <td></td><td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
-<p>Function which takes a vector of <a class="el" href="classTokenMemoryBlock.html">TokenMemoryBlock</a> and produces a block with all the bunch concatenated </p>
+
+<p>FOR DEBUG PURPOSES. </p>
+
+<p>Implements <a class="el" href="classToken.html#a371bb14e2b61de846442f7175e340a57">Token</a>.</p>
 
 </div>
 </div>
@@ -422,6 +494,37 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a class="anchor" id="ga996b9bb4eb8055e7b5ba560aa3574fc3"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="group__tokens.html#ga24dc24faaad7bf975dc97793ace8420b">TokenCode</a> <a class="el" href="classTokenMatrix.html">TokenMatrix</a>&lt; T &gt;::getTokenCode </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Abstract method which indicates the TokenCode of child <a class="el" href="classToken.html">Token</a> classes. </p>
+
+<p>Implements <a class="el" href="classToken.html#a24752a29d9ed86e1fb6d62770a46aba7">Token</a>.</p>
+
+<p>References <a class="el" href="classtable__of__token__codes.html#a0c74ceb2591f230212abc039a2419ad8">table_of_token_codes::token_matrix</a>.</p>
+
+</div>
+</div>
 <a class="anchor" id="ga9f16a3db70771a80440e4849122f0a66"></a>
 <div class="memitem">
 <div class="memproto">
@@ -479,6 +582,8 @@ template&lt;typename T &gt; </div>
 <p>Implements <a class="el" href="classToken.html#a24752a29d9ed86e1fb6d62770a46aba7">Token</a>.</p>
 
 <p>References <a class="el" href="classtable__of__token__codes.html#a110e46ebb9f2c942552eb64931c68095">table_of_token_codes::error</a>.</p>
+
+<p>Referenced by <a class="el" href="classANN_1_1JoinANNComponent.html#ae75ab071704e18ae0168c6e5d324b75e">ANN::JoinANNComponent::buildInputBunchVector()</a>.</p>
 
 </div>
 </div>
@@ -544,9 +649,7 @@ template&lt;typename T &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p>References <a class="el" href="group__math.html#ga0975b65dfc0580001f919006f000711f">doVectorSetToZero()</a>, <a class="el" href="classGPUMirroredMemoryBlock.html#a0947dbed046623f58620a51564d9a053">GPUMirroredMemoryBlock&lt; T &gt;::getSize()</a>, and <a class="el" href="classTokenMemoryBlock.html#a8adbb7042ad93dab5513c9a8fdec1259">TokenMemoryBlock::mem_block</a>.</p>
-
-<p>Referenced by <a class="el" href="classANN_1_1DotProductANNComponent.html#a67a387a6760653e5ad043ccf7fc886c5">ANN::DotProductANNComponent::doForward()</a>.</p>
+<p>References <a class="el" href="group__math.html#gaf676836539fad29a5f1c38644bde7277">doFill()</a>, <a class="el" href="classGPUMirroredMemoryBlock.html#a0947dbed046623f58620a51564d9a053">GPUMirroredMemoryBlock&lt; T &gt;::getSize()</a>, and <a class="el" href="classTokenMemoryBlock.html#a8adbb7042ad93dab5513c9a8fdec1259">TokenMemoryBlock::mem_block</a>.</p>
 
 </div>
 </div>
@@ -562,6 +665,26 @@ template&lt;typename T &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="ga44cf45f678eac5cb539827f70d37efe4"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classTokenMatrix.html">TokenMatrix</a>&lt; T &gt;::<a class="el" href="classTokenMatrix.html">TokenMatrix</a> </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classMatrix.html">Matrix</a>&lt; T &gt; *&#160;</td>
+          <td class="paramname"><em>mat</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>References <a class="el" href="group__util.html#gaee8c908dd2bea7674e4c19493005ce68">IncRef</a>.</p>
 
 </div>
 </div>
@@ -681,6 +804,35 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a class="anchor" id="gaa3e4ad001ee5862a4102652e43b12ba1"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structbuffer__list.html">buffer_list</a> * <a class="el" href="classTokenMatrix.html">TokenMatrix</a>&lt; T &gt;::toString </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Abstract method for serialization purposes. </p>
+
+<p>Implements <a class="el" href="classToken.html#a2323845ee8f57e4fca1d5b5481182ec0">Token</a>.</p>
+
+</div>
+</div>
 <a class="anchor" id="ga64ce7d0418cba6771f8abfbca3950450"></a>
 <div class="memitem">
 <div class="memproto">
@@ -757,6 +909,25 @@ template&lt;typename T &gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="gaeea96b5c2a3f1a7cd730f46774f0e2aa"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classTokenMatrix.html">TokenMatrix</a>&lt; T &gt;::~<a class="el" href="classTokenMatrix.html">TokenMatrix</a> </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>References <a class="el" href="group__util.html#ga8c98d69d8cb49abf771260810b9717e4">DecRef</a>.</p>
 
 </div>
 </div>

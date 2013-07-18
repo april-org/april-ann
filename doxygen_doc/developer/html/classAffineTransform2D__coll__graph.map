@@ -1,5 +1,20 @@
 <map id="AffineTransform2D" name="AffineTransform2D">
-<area shape="rect" id="node2" href="$classMatrix.html" title="Matrix\&lt; float \&gt;" alt="" coords="17,181,124,211"/>
-<area shape="rect" id="node4" href="$classReferenced.html" title="Referenced" alt="" coords="33,5,121,35"/>
-<area shape="rect" id="node6" href="$classMatrix.html" title="Matrix\&lt; T \&gt;" alt="" coords="87,85,177,115"/>
+<area shape="rect" id="node2" href="$classMatrix.html" title="Matrix\&lt; float \&gt;" alt="" coords="2424,232,2531,261"/>
+<area shape="rect" id="node4" href="$classReferenced.html" title="Referenced" alt="" coords="1516,348,1604,377"/>
+<area shape="rect" id="node10" href="$classGPUMirroredMemoryBlock.html" title="GPUMirroredMemoryBlock\l\&lt; float \&gt;" alt="" coords="2144,387,2323,434"/>
+<area shape="rect" id="node36" href="$classGPUMirroredMemoryBlock.html" title="GPUMirroredMemoryBlock\&lt; T \&gt;" alt="" coords="1744,425,1955,455"/>
+<area shape="rect" id="node48" href="$classMatrix.html" title="Matrix\&lt; T \&gt;" alt="" coords="2188,187,2279,216"/>
+<area shape="rect" id="node6" href="$classMatrix_1_1best__span__iterator.html" title="Matrix\&lt; T \&gt;::best_span\l_iterator" alt="" coords="1771,5,1928,51"/>
+<area shape="rect" id="node8" href="$classMatrix_1_1iterator.html" title="Matrix\&lt; T \&gt;::iterator" alt="" coords="1780,115,1919,144"/>
+<area shape="rect" id="node13" href="$classapril__utils_1_1hash.html" title="april_utils::hash\&lt;\l unsigned int, april\l_utils::list\&lt; float * \&gt; \&gt;" alt="" coords="1487,605,1633,669"/>
+<area shape="rect" id="node15" href="$structapril__utils_1_1hash_1_1node.html" title="april_utils::hash\&lt;\l KeyType, DataType,\l HashFcn, EqualKey \&gt;::node" alt="" coords="543,503,732,567"/>
+<area shape="rect" id="node22" href="$classapril__utils_1_1hash_1_1iterator.html" title="april_utils::hash\&lt;\l KeyType, DataType,\l HashFcn, EqualKey \&gt;\l::iterator" alt="" coords="803,550,957,631"/>
+<area shape="rect" id="node24" href="$classapril__utils_1_1hash.html" title="april_utils::hash\&lt;\l KeyType, DataType,\l HashFcn, EqualKey \&gt;" alt="" coords="1129,511,1284,575"/>
+<area shape="rect" id="node39" href="$classapril__utils_1_1hash.html" title="april_utils::hash\&lt;\l unsigned int, april\l_utils::list\&lt; T * \&gt; \&gt;" alt="" coords="1495,413,1625,477"/>
+<area shape="rect" id="node17" href="$structapril__utils_1_1pair.html" title="april_utils::pair\&lt;\l const key_type, data\l_type \&gt;" alt="" coords="308,503,455,567"/>
+<area shape="rect" id="node19" href="$structapril__utils_1_1pair.html" title="april_utils::pair\&lt;\l T1, T2 \&gt;" alt="" coords="5,511,120,558"/>
+<area shape="rect" id="node29" href="$structapril__utils_1_1default__hash__function_3_01unsigned_01int_01_4.html" title="april_utils::default\l_hash_function\&lt; unsigned int \&gt;" alt="" coords="1105,434,1308,481"/>
+<area shape="rect" id="node31" href="$structapril__utils_1_1default__equality__comparison__function.html" title="april_utils::default\l_equality_comparison\l_function\&lt; unsigned int \&gt;" alt="" coords="1123,688,1291,752"/>
+<area shape="rect" id="node33" href="$structapril__utils_1_1default__equality__comparison__function.html" title="april_utils::default\l_equality_comparison\l_function\&lt; T \&gt;" alt="" coords="807,688,953,752"/>
+<area shape="rect" id="node46" href="$classMatrix_1_1const__iterator.html" title="Matrix\&lt; T \&gt;::const\l_iterator" alt="" coords="1784,249,1915,295"/>
 </map>

@@ -1,0 +1,37 @@
+<map id="imaging/image_cleaning/c_src/image_cleaning.cc" name="imaging/image_cleaning/c_src/image_cleaning.cc">
+<area shape="rect" id="node5" href="$error__print_8h.html" title="error_print.h" alt="" coords="771,816,861,845"/>
+<area shape="rect" id="node11" href="$maxmin_8h.html" title="maxmin.h" alt="" coords="1373,488,1451,517"/>
+<area shape="rect" id="node15" href="$image__cleaning_8h.html" title="image_cleaning.h" alt="" coords="1448,101,1571,131"/>
+<area shape="rect" id="node19" href="$referenced_8h.html" title="referenced.h" alt="" coords="1849,661,1943,691"/>
+<area shape="rect" id="node21" href="$datasetFloat_8h.html" title="datasetFloat.h" alt="" coords="1940,179,2044,208"/>
+<area shape="rect" id="node27" href="$matrix_8h.html" title="matrix.h" alt="" coords="995,411,1064,440"/>
+<area shape="rect" id="node123" href="$utilImageFloat_8h.html" title="utilImageFloat.h" alt="" coords="1396,179,1511,208"/>
+<area shape="rect" id="node23" href="$dataset_8h.html" title="dataset.h" alt="" coords="2015,333,2089,363"/>
+<area shape="rect" id="node97" href="$referenced__vector_8h.html" title="referenced_vector.h" alt="" coords="2001,575,2137,604"/>
+<area shape="rect" id="node103" href="$MersenneTwister_8h.html" title="MersenneTwister.h" alt="" coords="2411,575,2544,604"/>
+<area shape="rect" id="node115" href="$dataset_8cc.html" title="dataset.cc" alt="" coords="2089,411,2172,440"/>
+<area shape="rect" id="node35" href="$cblas__headers_8h.html" title="cblas_headers.h" alt="" coords="93,575,211,604"/>
+<area shape="rect" id="node41" href="$wrapper_8h.html" title="wrapper.h" alt="" coords="357,488,435,517"/>
+<area shape="rect" id="node46" href="$gpu__mirrored__memory__block_8h.html" title="gpu_mirrored_memory\l_block.h" alt="" coords="645,566,795,613"/>
+<area shape="rect" id="node54" href="$aligned__memory_8h.html" title="aligned_memory.h" alt="" coords="333,661,461,691"/>
+<area shape="rect" id="node72" href="$swap_8h.html" title="swap.h" alt="" coords="1129,816,1193,845"/>
+<area shape="rect" id="node81" href="$constants_8h.html" title="constants.h" alt="" coords="560,488,651,517"/>
+<area shape="rect" id="node83" href="$clamp_8h.html" title="clamp.h" alt="" coords="1627,488,1693,517"/>
+<area shape="rect" id="node88" href="$qsort_8h.html" title="qsort.h" alt="" coords="1169,575,1231,604"/>
+<area shape="rect" id="node91" href="$matrix_8impl_8h.html" title="matrix.impl.h" alt="" coords="675,488,771,517"/>
+<area shape="rect" id="node93" href="$matrix-iterators_8impl_8h.html" title="matrix&#45;iterators.impl.h" alt="" coords="795,488,941,517"/>
+<area shape="rect" id="node95" href="$matrix-math_8impl_8h.html" title="matrix&#45;math.impl.h" alt="" coords="965,488,1096,517"/>
+<area shape="rect" id="node51" href="$gpu__helper_8h.html" title="gpu_helper.h" alt="" coords="587,661,683,691"/>
+<area shape="rect" id="node57" href="$hash__table_8h.html" title="hash_table.h" alt="" coords="993,661,1089,691"/>
+<area shape="rect" id="node59" href="$aux__hash__table_8h.html" title="aux_hash_table.h" alt="" coords="808,739,931,768"/>
+<area shape="rect" id="node75" href="$list_8h.html" title="list.h" alt="" coords="1024,739,1075,768"/>
+<area shape="rect" id="node70" href="$vector_8h.html" title="vector.h" alt="" coords="1432,739,1501,768"/>
+<area shape="rect" id="node65" href="$constString_8h.html" title="constString.h" alt="" coords="1661,816,1760,845"/>
+<area shape="rect" id="node125" href="$utilMatrixFloat_8h.html" title="utilMatrixFloat.h" alt="" coords="1599,256,1713,285"/>
+<area shape="rect" id="node135" href="$image_8h.html" title="image.h" alt="" coords="1360,256,1427,285"/>
+<area shape="rect" id="node151" href="$floatrgb_8h.html" title="floatrgb.h" alt="" coords="1476,256,1551,285"/>
+<area shape="rect" id="node128" href="$matrixFloat_8h.html" title="matrixFloat.h" alt="" coords="1443,333,1541,363"/>
+<area shape="rect" id="node131" href="$read__file__stream_8h.html" title="read_file_stream.h" alt="" coords="1667,411,1795,440"/>
+<area shape="rect" id="node139" href="$affine__transform_8h.html" title="affine_transform.h" alt="" coords="1168,333,1293,363"/>
+<area shape="rect" id="node143" href="$image_8cc.html" title="image.cc" alt="" coords="1451,411,1525,440"/>
+</map>

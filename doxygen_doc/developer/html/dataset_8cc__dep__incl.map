@@ -1,7 +1,11 @@
 <map id="basics/dataset/c_src/dataset.cc" name="basics/dataset/c_src/dataset.cc">
-<area shape="rect" id="node3" href="$dataset_8h.html" title="basics/dataset/c_src\l/dataset.h" alt="" coords="59,102,200,149"/>
-<area shape="rect" id="node6" href="$datasetFloat_8h.html" title="basics/dataset/c_src\l/datasetFloat.h" alt="" coords="113,198,255,245"/>
+<area shape="rect" id="node3" href="$dataset_8h.html" title="basics/dataset/c_src\l/dataset.h" alt="" coords="103,102,244,149"/>
+<area shape="rect" id="node6" href="$datasetFloat_8h.html" title="basics/dataset/c_src\l/datasetFloat.h" alt="" coords="171,198,312,245"/>
 <area shape="rect" id="node8" href="$datasetToken_8h.html" title="basics/dataset/c_src\l/datasetToken.h" alt="" coords="5,294,147,341"/>
 <area shape="rect" id="node10" href="$fmeasure_8h.html" title="basics/dataset/c_src\l/fmeasure.h" alt="" coords="171,294,312,341"/>
-<area shape="rect" id="node12" href="$fmeasure_8cc.html" title="basics/dataset/c_src\l/fmeasure.cc" alt="" coords="171,390,312,437"/>
+<area shape="rect" id="node14" href="$image__cleaning_8h.html" title="imaging/image_cleaning\l/c_src/image_cleaning.h" alt="" coords="336,294,499,341"/>
+<area shape="rect" id="node18" href="$image__metrics_8h.html" title="imaging/image_metrics\l/c_src/image_metrics.h" alt="" coords="527,294,684,341"/>
+<area shape="rect" id="node12" href="$fmeasure_8cc.html" title="basics/dataset/c_src\l/fmeasure.cc" alt="" coords="167,390,308,437"/>
+<area shape="rect" id="node16" href="$image__cleaning_8cc.html" title="imaging/image_cleaning\l/c_src/image_cleaning.cc" alt="" coords="332,390,503,437"/>
+<area shape="rect" id="node20" href="$image__metrics_8cc.html" title="imaging/image_metrics\l/c_src/image_metrics.cc" alt="" coords="527,390,692,437"/>
 </map>

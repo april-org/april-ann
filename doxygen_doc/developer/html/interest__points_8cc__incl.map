@@ -1,0 +1,37 @@
+<map id="imaging/interest_points/c_src/interest_points.cc" name="imaging/interest_points/c_src/interest_points.cc">
+<area shape="rect" id="node3" href="$interest__points_8h.html" title="interest_points.h" alt="" coords="1651,101,1768,131"/>
+<area shape="rect" id="node66" href="$pair_8h.html" title="pair.h" alt="" coords="1863,816,1916,845"/>
+<area shape="rect" id="node74" href="$vector_8h.html" title="vector.h" alt="" coords="1773,739,1843,768"/>
+<area shape="rect" id="node77" href="$swap_8h.html" title="swap.h" alt="" coords="1653,816,1717,845"/>
+<area shape="rect" id="node117" href="$utilImageFloat_8h.html" title="utilImageFloat.h" alt="" coords="1229,179,1344,208"/>
+<area shape="rect" id="node119" href="$utilMatrixFloat_8h.html" title="utilMatrixFloat.h" alt="" coords="1548,256,1663,285"/>
+<area shape="rect" id="node140" href="$max__min__finder_8h.html" title="max_min_finder.h" alt="" coords="1797,179,1923,208"/>
+<area shape="rect" id="node5" href="$image_8h.html" title="image.h" alt="" coords="476,256,543,285"/>
+<area shape="rect" id="node7" href="$referenced_8h.html" title="referenced.h" alt="" coords="401,661,495,691"/>
+<area shape="rect" id="node9" href="$matrix_8h.html" title="matrix.h" alt="" coords="833,411,903,440"/>
+<area shape="rect" id="node105" href="$affine__transform_8h.html" title="affine_transform.h" alt="" coords="672,333,797,363"/>
+<area shape="rect" id="node109" href="$image_8cc.html" title="image.cc" alt="" coords="261,411,336,440"/>
+<area shape="rect" id="node19" href="$cblas__headers_8h.html" title="cblas_headers.h" alt="" coords="589,575,707,604"/>
+<area shape="rect" id="node25" href="$wrapper_8h.html" title="wrapper.h" alt="" coords="829,488,907,517"/>
+<area shape="rect" id="node35" href="$gpu__mirrored__memory__block_8h.html" title="gpu_mirrored_memory\l_block.h" alt="" coords="1044,566,1193,613"/>
+<area shape="rect" id="node43" href="$aligned__memory_8h.html" title="aligned_memory.h" alt="" coords="689,661,817,691"/>
+<area shape="rect" id="node87" href="$constants_8h.html" title="constants.h" alt="" coords="1032,488,1123,517"/>
+<area shape="rect" id="node89" href="$clamp_8h.html" title="clamp.h" alt="" coords="144,488,211,517"/>
+<area shape="rect" id="node93" href="$maxmin_8h.html" title="maxmin.h" alt="" coords="336,488,413,517"/>
+<area shape="rect" id="node96" href="$qsort_8h.html" title="qsort.h" alt="" coords="1608,575,1669,604"/>
+<area shape="rect" id="node99" href="$matrix_8impl_8h.html" title="matrix.impl.h" alt="" coords="1147,488,1243,517"/>
+<area shape="rect" id="node101" href="$matrix-iterators_8impl_8h.html" title="matrix&#45;iterators.impl.h" alt="" coords="1267,488,1413,517"/>
+<area shape="rect" id="node103" href="$matrix-math_8impl_8h.html" title="matrix&#45;math.impl.h" alt="" coords="1437,488,1568,517"/>
+<area shape="rect" id="node30" href="$error__print_8h.html" title="error_print.h" alt="" coords="1036,816,1127,845"/>
+<area shape="rect" id="node40" href="$gpu__helper_8h.html" title="gpu_helper.h" alt="" coords="993,661,1089,691"/>
+<area shape="rect" id="node46" href="$hash__table_8h.html" title="hash_table.h" alt="" coords="1265,661,1361,691"/>
+<area shape="rect" id="node48" href="$aux__hash__table_8h.html" title="aux_hash_table.h" alt="" coords="1248,739,1371,768"/>
+<area shape="rect" id="node80" href="$list_8h.html" title="list.h" alt="" coords="1547,739,1597,768"/>
+<area shape="rect" id="node56" href="$constString_8h.html" title="constString.h" alt="" coords="1364,816,1463,845"/>
+<area shape="rect" id="node60" href="$logbase_8h.html" title="logbase.h" alt="" coords="1348,893,1425,923"/>
+<area shape="rect" id="node62" href="$logbase__standard_8h.html" title="logbase_standard.h" alt="" coords="1119,971,1252,1000"/>
+<area shape="rect" id="node68" href="$null__types_8h.html" title="null_types.h" alt="" coords="1844,893,1935,923"/>
+<area shape="rect" id="node130" href="$floatrgb_8h.html" title="floatrgb.h" alt="" coords="43,333,117,363"/>
+<area shape="rect" id="node122" href="$matrixFloat_8h.html" title="matrixFloat.h" alt="" coords="1188,333,1287,363"/>
+<area shape="rect" id="node125" href="$read__file__stream_8h.html" title="read_file_stream.h" alt="" coords="1643,411,1771,440"/>
+</map>

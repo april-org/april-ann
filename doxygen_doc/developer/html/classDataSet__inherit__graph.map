@@ -1,22 +1,23 @@
 <map id="DataSet&lt; T &gt;" name="DataSet&lt; T &gt;">
-<area shape="rect" id="node5" href="$classAccumulateDataSet.html" title="A specialization of DataSet for data accumulation using putPattern." alt="" coords="304,5,475,35"/>
-<area shape="rect" id="node7" href="$classBitDataSet.html" title="BitDataSet\&lt; T \&gt;" alt="" coords="331,59,448,88"/>
-<area shape="rect" id="node9" href="$classByteDataSet.html" title="ByteDataSet\&lt; T \&gt;" alt="" coords="325,112,453,141"/>
-<area shape="rect" id="node11" href="$classCacheDataSet.html" title="A specialization of DataSet for cacheNNLMs training." alt="" coords="320,165,459,195"/>
-<area shape="rect" id="node13" href="$classContextualizerDataSet.html" title="A specialization of DataSet which takes a DataSet and adds context to its patterns." alt="" coords="296,219,483,248"/>
-<area shape="rect" id="node15" href="$classDerivDataSet.html" title="DerivDataSet\&lt; T \&gt;" alt="" coords="323,272,456,301"/>
-<area shape="rect" id="node17" href="$classIdentityDataSet.html" title="DataSet specialization which serves to getPatterns from an IdentityMatrix." alt="" coords="317,325,461,355"/>
-<area shape="rect" id="node19" href="$classIndexDataSet.html" title="A specialization of DataSet which takes a general sub set from other." alt="" coords="323,379,456,408"/>
-<area shape="rect" id="node21" href="$classIndexFilterDataSet.html" title="Similar to IndexedDataSet but using a vector of unsigned int as indexes." alt="" coords="308,432,471,461"/>
-<area shape="rect" id="node23" href="$classJoinDataSet.html" title="A specialization of DataSet which join outputs from several DataSets." alt="" coords="327,485,452,515"/>
-<area shape="rect" id="node25" href="$classLinearCombDataSet.html" title="A specialization of DataSet, takes a DataSet and outputs a linear combination of its patterns..." alt="" coords="304,539,475,568"/>
-<area shape="rect" id="node27" href="$classMatrixDataSet.html" title="DataSet specialization to put or get patterns from a Matrix object." alt="" coords="320,592,459,621"/>
-<area shape="rect" id="node29" href="$classPerturbationDataSet.html" title="A specialization of DataSet which add gaussian noise to patterns." alt="" coords="304,645,475,675"/>
-<area shape="rect" id="node31" href="$classSaltNoiseDataSet.html" title="A specialization of DataSet which add a fixed size salt noise to patterns." alt="" coords="311,699,468,728"/>
-<area shape="rect" id="node33" href="$classShortListDataSet.html" title="A specialization DataSet for shortlist approach in NNLMs." alt="" coords="312,752,467,781"/>
-<area shape="rect" id="node35" href="$classSparseDataset.html" title="A specialization of DataSet for use sparse data representation." alt="" coords="319,805,460,835"/>
-<area shape="rect" id="node37" href="$classSplitDataSet.html" title="A specialization of DataSet which takes an split of other DataSet." alt="" coords="325,859,453,888"/>
-<area shape="rect" id="node39" href="$classSubDataSet.html" title="A DataSet specialization which takes an interval of patterns from other." alt="" coords="327,912,452,941"/>
-<area shape="rect" id="node41" href="$classUnionDataSet.html" title="DataSet specialization to put or get patterns from a union of DataSets." alt="" coords="321,965,457,995"/>
-<area shape="rect" id="node2" href="$classReferenced.html" title="Referenced" alt="" coords="7,485,95,515"/>
+<area shape="rect" id="node5" href="$classAccumulateDataSet.html" title="A specialization of DataSet for data accumulation using putPattern." alt="" coords="311,5,481,35"/>
+<area shape="rect" id="node7" href="$classBitDataSet.html" title="BitDataSet\&lt; T \&gt;" alt="" coords="337,59,455,88"/>
+<area shape="rect" id="node9" href="$classByteDataSet.html" title="ByteDataSet\&lt; T \&gt;" alt="" coords="332,112,460,141"/>
+<area shape="rect" id="node11" href="$classCacheDataSet.html" title="A specialization of DataSet for cacheNNLMs training." alt="" coords="327,165,465,195"/>
+<area shape="rect" id="node13" href="$classContextualizerDataSet.html" title="A specialization of DataSet which takes a DataSet and adds context to its patterns." alt="" coords="303,219,489,248"/>
+<area shape="rect" id="node15" href="$classDerivDataSet.html" title="DerivDataSet\&lt; T \&gt;" alt="" coords="329,272,463,301"/>
+<area shape="rect" id="node17" href="$classIdentityDataSet.html" title="DataSet specialization which serves to getPatterns from an IdentityMatrix." alt="" coords="324,325,468,355"/>
+<area shape="rect" id="node19" href="$classIndexDataSet.html" title="A specialization of DataSet which takes a general sub set from other." alt="" coords="329,379,463,408"/>
+<area shape="rect" id="node21" href="$classIndexFilterDataSet.html" title="Similar to IndexedDataSet but using a vector of unsigned int as indexes." alt="" coords="315,432,477,461"/>
+<area shape="rect" id="node23" href="$classJoinDataSet.html" title="A specialization of DataSet which join outputs from several DataSets." alt="" coords="333,485,459,515"/>
+<area shape="rect" id="node25" href="$classLinearCombDataSet.html" title="A specialization of DataSet, takes a DataSet and outputs a linear combination of its patterns..." alt="" coords="311,539,481,568"/>
+<area shape="rect" id="node27" href="$classMatrixDataSet.html" title="DataSet specialization to put or get patterns from a Matrix object." alt="" coords="327,592,465,621"/>
+<area shape="rect" id="node29" href="$classPerturbationDataSet.html" title="A specialization of DataSet which add gaussian noise to patterns." alt="" coords="311,645,481,675"/>
+<area shape="rect" id="node31" href="$classSaltNoiseDataSet.html" title="A specialization of DataSet which add a fixed size salt noise to patterns." alt="" coords="317,699,475,728"/>
+<area shape="rect" id="node33" href="$classSaltPepperNoiseDataSet.html" title="A specialization of DataSet which add a fixed size salt and pepper noise to patterns." alt="" coords="296,752,496,781"/>
+<area shape="rect" id="node35" href="$classShortListDataSet.html" title="A specialization DataSet for shortlist approach in NNLMs." alt="" coords="319,805,473,835"/>
+<area shape="rect" id="node37" href="$classSparseDataset.html" title="A specialization of DataSet for use sparse data representation." alt="" coords="325,859,467,888"/>
+<area shape="rect" id="node39" href="$classSplitDataSet.html" title="A specialization of DataSet which takes an split of other DataSet." alt="" coords="332,912,460,941"/>
+<area shape="rect" id="node41" href="$classSubDataSet.html" title="A DataSet specialization which takes an interval of patterns from other." alt="" coords="333,965,459,995"/>
+<area shape="rect" id="node43" href="$classUnionDataSet.html" title="DataSet specialization to put or get patterns from a union of DataSets." alt="" coords="328,1019,464,1048"/>
+<area shape="rect" id="node2" href="$classReferenced.html" title="Referenced" alt="" coords="7,512,95,541"/>
 </map>

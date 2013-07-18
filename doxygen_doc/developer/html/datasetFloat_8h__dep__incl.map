@@ -1,5 +1,9 @@
 <map id="basics/dataset/c_src/datasetFloat.h" name="basics/dataset/c_src/datasetFloat.h">
 <area shape="rect" id="node3" href="$datasetToken_8h.html" title="basics/dataset/c_src\l/datasetToken.h" alt="" coords="5,102,147,149"/>
 <area shape="rect" id="node5" href="$fmeasure_8h.html" title="basics/dataset/c_src\l/fmeasure.h" alt="" coords="171,102,312,149"/>
-<area shape="rect" id="node7" href="$fmeasure_8cc.html" title="basics/dataset/c_src\l/fmeasure.cc" alt="" coords="171,198,312,245"/>
+<area shape="rect" id="node9" href="$image__cleaning_8h.html" title="imaging/image_cleaning\l/c_src/image_cleaning.h" alt="" coords="336,102,499,149"/>
+<area shape="rect" id="node13" href="$image__metrics_8h.html" title="imaging/image_metrics\l/c_src/image_metrics.h" alt="" coords="527,102,684,149"/>
+<area shape="rect" id="node7" href="$fmeasure_8cc.html" title="basics/dataset/c_src\l/fmeasure.cc" alt="" coords="167,198,308,245"/>
+<area shape="rect" id="node11" href="$image__cleaning_8cc.html" title="imaging/image_cleaning\l/c_src/image_cleaning.cc" alt="" coords="332,198,503,245"/>
+<area shape="rect" id="node15" href="$image__metrics_8cc.html" title="imaging/image_metrics\l/c_src/image_metrics.cc" alt="" coords="527,198,692,245"/>
 </map>

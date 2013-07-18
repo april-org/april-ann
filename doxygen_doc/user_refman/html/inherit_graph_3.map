@@ -1,8 +1,8 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$classdataset.html" title="dataset" alt="" coords="7,112,71,141"/>
-<area shape="rect" id="node3" href="$classdataset_1_1cache.html" title="dataset::cache" alt="" coords="137,5,244,35"/>
-<area shape="rect" id="node5" href="$classdataset_1_1deriv.html" title="dataset::deriv" alt="" coords="140,59,241,88"/>
-<area shape="rect" id="node7" href="$classdataset_1_1index__filter.html" title="dataset::index_filter" alt="" coords="123,112,259,141"/>
-<area shape="rect" id="node9" href="$classdataset_1_1perturbation.html" title="dataset::perturbation" alt="" coords="120,165,261,195"/>
-<area shape="rect" id="node11" href="$classdataset_1_1salt__noise.html" title="dataset::salt_noise" alt="" coords="125,219,256,248"/>
+<area shape="rect" id="node1" href="$classann_1_1loss_1_1____base____.html" title="ann::loss::__base__" alt="" coords="5,112,144,141"/>
+<area shape="rect" id="node3" href="$classann_1_1loss_1_1cross__entropy.html" title="ann::loss::cross_entropy" alt="" coords="195,5,360,35"/>
+<area shape="rect" id="node5" href="$classann_1_1loss_1_1local__fmeasure.html" title="ann::loss::local_fmeasure" alt="" coords="192,59,363,88"/>
+<area shape="rect" id="node7" href="$classann_1_1loss_1_1mae.html" title="ann::loss::mae" alt="" coords="224,112,331,141"/>
+<area shape="rect" id="node9" href="$classann_1_1loss_1_1mse.html" title="ann::loss::mse" alt="" coords="224,165,331,195"/>
+<area shape="rect" id="node11" href="$classann_1_1loss_1_1multi__class__cross__entropy.html" title="ann::loss::multi_class\l_cross_entropy" alt="" coords="203,218,352,265"/>
 </map>

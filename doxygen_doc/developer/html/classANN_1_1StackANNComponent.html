@@ -104,8 +104,14 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a588cea8147d624ec644e92de9c973436"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad853c3feef3065bb18c65f970e0e34cb"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classANN_1_1StackANNComponent.html#ad853c3feef3065bb18c65f970e0e34cb">resetConnections</a> ()</td></tr>
 <tr class="separator:ad853c3feef3065bb18c65f970e0e34cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98a57c20bdd85a8656b913f186715e81"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classANN_1_1StackANNComponent.html#a98a57c20bdd85a8656b913f186715e81">computeAllGradients</a> (<a class="el" href="classapril__utils_1_1hash.html">hash</a>&lt; <a class="el" href="classapril__utils_1_1string.html">string</a>, <a class="el" href="group__matrix.html#ga635261f1d8d7943ab3cfd5b3f24abd26">MatrixFloat</a> * &gt; &amp;weight_grads_dict)</td></tr>
+<tr class="separator:a98a57c20bdd85a8656b913f186715e81"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae2b704c0fe428b9789fbcb01d439c752"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classANN_1_1StackANNComponent.html#ae2b704c0fe428b9789fbcb01d439c752">debugInfo</a> ()</td></tr>
 <tr class="separator:ae2b704c0fe428b9789fbcb01d439c752"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9ae85bbb9716cef6eff59108469a0d6d"><td class="memItemLeft" align="right" valign="top">virtual char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classANN_1_1StackANNComponent.html#a9ae85bbb9716cef6eff59108469a0d6d">toLuaString</a> ()</td></tr>
+<tr class="separator:a9ae85bbb9716cef6eff59108469a0d6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a133f9ea41ee597db7f9133aa170bd057"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classANN_1_1StackANNComponent.html#a133f9ea41ee597db7f9133aa170bd057">size</a> ()</td></tr>
+<tr class="separator:a133f9ea41ee597db7f9133aa170bd057"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classANN_1_1ANNComponent"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classANN_1_1ANNComponent')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classANN_1_1ANNComponent.html">ANN::ANNComponent</a></td></tr>
 <tr class="memitem:a29c0ebfafdf3b16deb9324c4f7937766 inherit pub_methods_classANN_1_1ANNComponent"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classANN_1_1ANNComponent.html#a29c0ebfafdf3b16deb9324c4f7937766">ANNComponent</a> (const char *<a class="el" href="classANN_1_1ANNComponent.html#afea7a7b3f0bcfa8c2b1da142121721e2">name</a>=0, const char *<a class="el" href="classANN_1_1ANNComponent.html#a7e601a105d55316c40c40d3a7314807b">weights_name</a>=0, unsigned int <a class="el" href="classANN_1_1ANNComponent.html#a6796ad80df6011c354fcea2afb92fd1e">input_size</a>=0, unsigned int <a class="el" href="classANN_1_1ANNComponent.html#ac1ad80279943db89cec87df01d8a6f47">output_size</a>=0)</td></tr>
 <tr class="separator:a29c0ebfafdf3b16deb9324c4f7937766 inherit pub_methods_classANN_1_1ANNComponent"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -119,12 +125,14 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a86e4157243e6dd10f8f4f56e9960f097 inherit pub_methods_classANN_1_1ANNComponent"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa6f49b1d90ba4e99796a574716756383 inherit pub_methods_classANN_1_1ANNComponent"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classANN_1_1ANNComponent.html#aa6f49b1d90ba4e99796a574716756383">getIsBuilt</a> () const </td></tr>
 <tr class="separator:aa6f49b1d90ba4e99796a574716756383 inherit pub_methods_classANN_1_1ANNComponent"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a847779c589cba7bbfa31c613a7b3885b inherit pub_methods_classANN_1_1ANNComponent"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classANN_1_1ANNComponent.html#a847779c589cba7bbfa31c613a7b3885b">generateDefaultWeightsName</a> ()</td></tr>
-<tr class="separator:a847779c589cba7bbfa31c613a7b3885b inherit pub_methods_classANN_1_1ANNComponent"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d2572db5efabb3a8bbb1acd804df22e inherit pub_methods_classANN_1_1ANNComponent"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classANN_1_1ANNComponent.html#a0d2572db5efabb3a8bbb1acd804df22e">generateDefaultWeightsName</a> (<a class="el" href="classapril__utils_1_1string.html">string</a> &amp;dest, const char *prefix=0)</td></tr>
+<tr class="separator:a0d2572db5efabb3a8bbb1acd804df22e inherit pub_methods_classANN_1_1ANNComponent"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7775c56a2a815bf2ca3a1cd3f5acc761 inherit pub_methods_classANN_1_1ANNComponent"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classANN_1_1ANNComponent.html#a7775c56a2a815bf2ca3a1cd3f5acc761">getInputSize</a> () const </td></tr>
 <tr class="separator:a7775c56a2a815bf2ca3a1cd3f5acc761 inherit pub_methods_classANN_1_1ANNComponent"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a30ec0166b97c13aaad139d933868fdc6 inherit pub_methods_classANN_1_1ANNComponent"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classANN_1_1ANNComponent.html#a30ec0166b97c13aaad139d933868fdc6">getOutputSize</a> () const </td></tr>
 <tr class="separator:a30ec0166b97c13aaad139d933868fdc6 inherit pub_methods_classANN_1_1ANNComponent"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae7a4909b90382f009ee01c97a15e8a16 inherit pub_methods_classANN_1_1ANNComponent"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classANN_1_1ANNComponent.html#ae7a4909b90382f009ee01c97a15e8a16">getUseCuda</a> () const </td></tr>
+<tr class="separator:ae7a4909b90382f009ee01c97a15e8a16 inherit pub_methods_classANN_1_1ANNComponent"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classReferenced"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classReferenced')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classReferenced.html">Referenced</a></td></tr>
 <tr class="memitem:ga8654116c264068ee611850bbee8209d4 inherit pub_methods_classReferenced"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__util.html#ga8654116c264068ee611850bbee8209d4">Referenced</a> ()</td></tr>
 <tr class="separator:ga8654116c264068ee611850bbee8209d4 inherit pub_methods_classReferenced"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -143,6 +151,9 @@ Private Attributes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pro_methods_classANN_1_1ANNComponent"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classANN_1_1ANNComponent')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classANN_1_1ANNComponent.html">ANN::ANNComponent</a></td></tr>
+<tr class="memitem:ad2b644271d6829c182d544d55fb15897 inherit pro_methods_classANN_1_1ANNComponent"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classANN_1_1ANNComponent.html#ad2b644271d6829c182d544d55fb15897">computeGradients</a> (<a class="el" href="group__matrix.html#ga635261f1d8d7943ab3cfd5b3f24abd26">MatrixFloat</a> *&amp;weight_grads)</td></tr>
+<tr class="separator:ad2b644271d6829c182d544d55fb15897 inherit pro_methods_classANN_1_1ANNComponent"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_classANN_1_1ANNComponent"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_classANN_1_1ANNComponent')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="classANN_1_1ANNComponent.html">ANN::ANNComponent</a></td></tr>
 <tr class="memitem:afea7a7b3f0bcfa8c2b1da142121721e2 inherit pro_attribs_classANN_1_1ANNComponent"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classapril__utils_1_1string.html">string</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classANN_1_1ANNComponent.html#afea7a7b3f0bcfa8c2b1da142121721e2">name</a></td></tr>
 <tr class="separator:afea7a7b3f0bcfa8c2b1da142121721e2 inherit pro_attribs_classANN_1_1ANNComponent"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -252,7 +263,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Reimplemented from <a class="el" href="classANN_1_1ANNComponent.html#a014114fe1203bc06b1cbec550227b480">ANN::ANNComponent</a>.</p>
 
-<p>References <a class="el" href="classANN_1_1ANNComponent.html#a014114fe1203bc06b1cbec550227b480">ANN::ANNComponent::build()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#af486ef1d6e6a073c5ac7878b78423bf3">components</a>, <a class="el" href="group__util.html#ga7c141183788078513c128e5f0bb15f48">ERROR_EXIT</a>, <a class="el" href="classANN_1_1ANNComponent.html#a7775c56a2a815bf2ca3a1cd3f5acc761">ANN::ANNComponent::getInputSize()</a>, <a class="el" href="classANN_1_1ANNComponent.html#a6796ad80df6011c354fcea2afb92fd1e">ANN::ANNComponent::input_size</a>, and <a class="el" href="classANN_1_1ANNComponent.html#ac1ad80279943db89cec87df01d8a6f47">ANN::ANNComponent::output_size</a>.</p>
+<p>References <a class="el" href="classANN_1_1ANNComponent.html#a014114fe1203bc06b1cbec550227b480">ANN::ANNComponent::build()</a>, <a class="el" href="classapril__utils_1_1string.html#a6e9c4120256391daecf0dc8cf926f8b0">april_utils::string::c_str()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#af486ef1d6e6a073c5ac7878b78423bf3">components</a>, <a class="el" href="group__util.html#ga524c7d374e03f0c7c3f6c32d4715c2a9">ERROR_EXIT1</a>, <a class="el" href="group__util.html#ga81a0b288ba0b69ec068dc2da0693445b">ERROR_EXIT3</a>, <a class="el" href="classANN_1_1ANNComponent.html#a7775c56a2a815bf2ca3a1cd3f5acc761">ANN::ANNComponent::getInputSize()</a>, <a class="el" href="classANN_1_1ANNComponent.html#a6796ad80df6011c354fcea2afb92fd1e">ANN::ANNComponent::input_size</a>, <a class="el" href="classANN_1_1ANNComponent.html#afea7a7b3f0bcfa8c2b1da142121721e2">ANN::ANNComponent::name</a>, and <a class="el" href="classANN_1_1ANNComponent.html#ac1ad80279943db89cec87df01d8a6f47">ANN::ANNComponent::output_size</a>.</p>
 
 </div>
 </div>
@@ -280,6 +291,35 @@ Additional Inherited Members</h2></td></tr>
 <p>Reimplemented from <a class="el" href="classANN_1_1ANNComponent.html#acbf9a992f6eff9a5df596f09443c40e5">ANN::ANNComponent</a>.</p>
 
 <p>References <a class="el" href="classapril__utils_1_1string.html#a6e9c4120256391daecf0dc8cf926f8b0">april_utils::string::c_str()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#af486ef1d6e6a073c5ac7878b78423bf3">components</a>, <a class="el" href="classANN_1_1ANNComponent.html#a6796ad80df6011c354fcea2afb92fd1e">ANN::ANNComponent::input_size</a>, <a class="el" href="classANN_1_1ANNComponent.html#afea7a7b3f0bcfa8c2b1da142121721e2">ANN::ANNComponent::name</a>, <a class="el" href="classANN_1_1ANNComponent.html#ac1ad80279943db89cec87df01d8a6f47">ANN::ANNComponent::output_size</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a0331c9c614bde3c297ada05a38c8d56a">pushComponent()</a>, and <a class="el" href="classANN_1_1StackANNComponent.html#a8e96af09b11a81df354bdd375d429837">StackANNComponent()</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a98a57c20bdd85a8656b913f186715e81"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ANN::StackANNComponent::computeAllGradients </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classapril__utils_1_1hash.html">hash</a>&lt; <a class="el" href="classapril__utils_1_1string.html">string</a>, <a class="el" href="group__matrix.html#ga635261f1d8d7943ab3cfd5b3f24abd26">MatrixFloat</a> * &gt; &amp;&#160;</td>
+          <td class="paramname"><em>weight_grads_dict</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Method which receives a hash table with matrices where compute the gradients. </p>
+
+<p>Reimplemented from <a class="el" href="classANN_1_1ANNComponent.html#a9600548921691804c8c12cab54631aa1">ANN::ANNComponent</a>.</p>
+
+<p>References <a class="el" href="classANN_1_1StackANNComponent.html#af486ef1d6e6a073c5ac7878b78423bf3">components</a>.</p>
 
 </div>
 </div>
@@ -675,7 +715,7 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>References <a class="el" href="classANN_1_1StackANNComponent.html#af486ef1d6e6a073c5ac7878b78423bf3">components</a>, and <a class="el" href="group__util.html#ga8c98d69d8cb49abf771260810b9717e4">DecRef</a>.</p>
+<p>References <a class="el" href="classANN_1_1StackANNComponent.html#af486ef1d6e6a073c5ac7878b78423bf3">components</a>, <a class="el" href="group__util.html#ga8c98d69d8cb49abf771260810b9717e4">DecRef</a>, and <a class="el" href="classANN_1_1ANNComponent.html#ac1ad80279943db89cec87df01d8a6f47">ANN::ANNComponent::output_size</a>.</p>
 
 </div>
 </div>
@@ -823,6 +863,58 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a133f9ea41ee597db7f9133aa170bd057"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int ANN::StackANNComponent::size </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>References <a class="el" href="classANN_1_1StackANNComponent.html#af486ef1d6e6a073c5ac7878b78423bf3">components</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a9ae85bbb9716cef6eff59108469a0d6d"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">char * ANN::StackANNComponent::toLuaString </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Reimplemented from <a class="el" href="classANN_1_1ANNComponent.html#af46e147eff8ce0139d3e296390955642">ANN::ANNComponent</a>.</p>
+
+<p>References <a class="el" href="classapril__utils_1_1string.html#a6e9c4120256391daecf0dc8cf926f8b0">april_utils::string::c_str()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#af486ef1d6e6a073c5ac7878b78423bf3">components</a>, <a class="el" href="classANN_1_1ANNComponent.html#afea7a7b3f0bcfa8c2b1da142121721e2">ANN::ANNComponent::name</a>, <a class="el" href="structbuffer__list.html#ab85e3abc9e95f72458c31da5ba9c082ba6a9f65e11aa9562d71cbdc11590d96d6">buffer_list::NULL_TERMINATED</a>, <a class="el" href="group__util.html#gaafbb2949a07b7801a2eed0fb1441cf75">buffer_list::printf()</a>, and <a class="el" href="group__util.html#ga1e7b0333730ae460ba261a214455ca5c">buffer_list::to_string()</a>.</p>
+
+</div>
+</div>
 <a class="anchor" id="a961a0bef746e0e472beb9ae5a4581978"></a>
 <div class="memitem">
 <div class="memproto">
@@ -859,7 +951,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Referenced by <a class="el" href="classANN_1_1StackANNComponent.html#a715284c0087d67d74570b8a7c1438478">build()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a0ceb2d39df1b5c14da16306d8844b68a">clone()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#aa759464fd9fb7ec42c348d18bb0f2001">copyComponents()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#aa3ecd36eec476f4e9ff223bf60a0e513">copyWeights()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#ae2b704c0fe428b9789fbcb01d439c752">debugInfo()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a0e03ee7670cec2fcc7b932d30810fe81">doBackprop()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#abec18f00f14c345b8c80ca1239ede834">doForward()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#af8575a39aa6de0d9e032570c46c9207e">doUpdate()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a588cea8147d624ec644e92de9c973436">getComponent()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#af5cf66f2b095850a2796eede06f227b4">getErrorInput()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a8f31a1b3078333a5c1708d774064b807">getErrorOutput()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a08e7b2089a2e8514a793348b3b433e06">getInput()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#ac1031a3a82e7f14cdcfc5402cdec96a7">getOption()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a7edd4bb9963728f21434967779cd05c0">getOutput()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#aa3905de9f2429bfea9780628cd895ca1">hasOption()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#abd6a6233f67dc852b716d5fc21e98e38">popComponent()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a0331c9c614bde3c297ada05a38c8d56a">pushComponent()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#af840d21d3962aad6eea7e60308708522">reset()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#ad853c3feef3065bb18c65f970e0e34cb">resetConnections()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a2169e1dc8a99fcf82ab3e1ce23537476">setOption()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#ae013c48c4a2aed8acc89948e779a3ba9">setUseCuda()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a961a0bef746e0e472beb9ae5a4581978">topComponent()</a>, and <a class="el" href="classANN_1_1StackANNComponent.html#a37b8bee4f6b6f0c38717bb023687287a">~StackANNComponent()</a>.</p>
+<p>Referenced by <a class="el" href="classANN_1_1StackANNComponent.html#a715284c0087d67d74570b8a7c1438478">build()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a0ceb2d39df1b5c14da16306d8844b68a">clone()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a98a57c20bdd85a8656b913f186715e81">computeAllGradients()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#aa759464fd9fb7ec42c348d18bb0f2001">copyComponents()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#aa3ecd36eec476f4e9ff223bf60a0e513">copyWeights()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#ae2b704c0fe428b9789fbcb01d439c752">debugInfo()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a0e03ee7670cec2fcc7b932d30810fe81">doBackprop()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#abec18f00f14c345b8c80ca1239ede834">doForward()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#af8575a39aa6de0d9e032570c46c9207e">doUpdate()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a588cea8147d624ec644e92de9c973436">getComponent()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#af5cf66f2b095850a2796eede06f227b4">getErrorInput()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a8f31a1b3078333a5c1708d774064b807">getErrorOutput()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a08e7b2089a2e8514a793348b3b433e06">getInput()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#ac1031a3a82e7f14cdcfc5402cdec96a7">getOption()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a7edd4bb9963728f21434967779cd05c0">getOutput()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#aa3905de9f2429bfea9780628cd895ca1">hasOption()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#abd6a6233f67dc852b716d5fc21e98e38">popComponent()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a0331c9c614bde3c297ada05a38c8d56a">pushComponent()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#af840d21d3962aad6eea7e60308708522">reset()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#ad853c3feef3065bb18c65f970e0e34cb">resetConnections()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a2169e1dc8a99fcf82ab3e1ce23537476">setOption()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#ae013c48c4a2aed8acc89948e779a3ba9">setUseCuda()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a133f9ea41ee597db7f9133aa170bd057">size()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a9ae85bbb9716cef6eff59108469a0d6d">toLuaString()</a>, <a class="el" href="classANN_1_1StackANNComponent.html#a961a0bef746e0e472beb9ae5a4581978">topComponent()</a>, and <a class="el" href="classANN_1_1StackANNComponent.html#a37b8bee4f6b6f0c38717bb023687287a">~StackANNComponent()</a>.</p>
 
 </div>
 </div>

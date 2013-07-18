@@ -59,6 +59,7 @@
       <li><a href="functions_func_0x75.html#index_u"><span>u</span></a></li>
       <li><a href="functions_func_0x76.html#index_v"><span>v</span></a></li>
       <li><a href="functions_func_0x77.html#index_w"><span>w</span></a></li>
+      <li><a href="functions_func_0x78.html#index_x"><span>x</span></a></li>
       <li><a href="functions_func_0x7a.html#index_z"><span>z</span></a></li>
       <li><a href="functions_func_0x7e.html#index_0x7e"><span>~</span></a></li>
     </ul>
@@ -85,11 +86,13 @@
 , <a class="el" href="classANN_1_1HyperplaneANNComponent.html#a4abd1a679a3ad0c277d5ae10790137be">ANN::HyperplaneANNComponent</a>
 </li>
 <li>debugString()
-: <a class="el" href="classTokenVector.html#acb14ebc34bf81bf449d4571f920975ab">TokenVector&lt; T &gt;</a>
+: <a class="el" href="classTokenVector.html#a05736a33ffa57e26d5b61191d402310b">TokenVector&lt; T &gt;</a>
 , <a class="el" href="classToken.html#a371bb14e2b61de846442f7175e340a57">Token</a>
-, <a class="el" href="classTokenVector.html#a4342c43a3b9c186c885a37bad8cc7ba7">TokenVector&lt; T &gt;</a>
+, <a class="el" href="classTokenVector.html#a4a5ac86838fda9ca14e781a06a60bbd6">TokenVector&lt; T &gt;</a>
+, <a class="el" href="group__tokens.html#ga7a19d42f83b2b6b9bc827d11fe9c18cb">TokenMatrix&lt; T &gt;</a>
+, <a class="el" href="classTokenVector.html#afd368f918defd784996203aced3dd028">TokenVector&lt; T &gt;</a>
 , <a class="el" href="group__tokens.html#gae9e1a574cbff870e9ff6ca9a9bd95d1e">TokenMemoryBlock</a>
-, <a class="el" href="classTokenVector.html#a05736a33ffa57e26d5b61191d402310b">TokenVector&lt; T &gt;</a>
+, <a class="el" href="classTokenVector.html#acb14ebc34bf81bf449d4571f920975ab">TokenVector&lt; T &gt;</a>
 </li>
 <li>decode_double()
 : <a class="el" href="group__util.html#ga1e02040fee82c9ea087779664e76eb8a">binarizer</a>
@@ -127,39 +130,63 @@
 <li>DerivDataSet()
 : <a class="el" href="group__dataset.html#gac87e0ecf94bba69f869dd3cdea6783e5">DerivDataSet&lt; T &gt;</a>
 </li>
+<li>diag()
+: <a class="el" href="group__matrix.html#gaa25019e56ade6291117266517225119e">Matrix&lt; T &gt;</a>
+</li>
 <li>dice()
 : <a class="el" href="group__random.html#gaaccdd470b4a5bc6a78251e2f11fb586b">dice</a>
 </li>
 <li>doBackprop()
-: <a class="el" href="classANN_1_1ActivationFunctionANNComponent.html#ad02eb2f698af9e5da8d66431415bcbdf">ANN::ActivationFunctionANNComponent</a>
+: <a class="el" href="classANN_1_1SaltAndPepperANNComponent.html#abaf0b4280405bdd66fdce5d8c8586fb0">ANN::SaltAndPepperANNComponent</a>
+, <a class="el" href="classANN_1_1CopyANNComponent.html#ab62f27aa5412cec570832017f1c89358">ANN::CopyANNComponent</a>
+, <a class="el" href="classANN_1_1ActivationFunctionANNComponent.html#ad02eb2f698af9e5da8d66431415bcbdf">ANN::ActivationFunctionANNComponent</a>
 , <a class="el" href="classANN_1_1ANNComponent.html#a3e628cae5fd1d552eeb0e0854eff0a87">ANN::ANNComponent</a>
 , <a class="el" href="classANN_1_1BiasANNComponent.html#ad89858229c4391faa27d3001be94b026">ANN::BiasANNComponent</a>
+, <a class="el" href="classANN_1_1ConvolutionBiasANNComponent.html#acde39ef4e9211f797a6a1da7e6659793">ANN::ConvolutionBiasANNComponent</a>
+, <a class="el" href="classANN_1_1ConvolutionANNComponent.html#a64d4666cb305899f820050f7c1f632e7">ANN::ConvolutionANNComponent</a>
 , <a class="el" href="classANN_1_1DotProductANNComponent.html#a50d9cf5084cbe26dcfc6a518c21a85a1">ANN::DotProductANNComponent</a>
+, <a class="el" href="classANN_1_1FlattenANNComponent.html#aa6b6b5167c00622cc3de80e4c1cfd9a5">ANN::FlattenANNComponent</a>
+, <a class="el" href="classANN_1_1GaussianNoiseANNComponent.html#a73658e0294cf8f408a47e1181b4e394a">ANN::GaussianNoiseANNComponent</a>
 , <a class="el" href="classANN_1_1HyperplaneANNComponent.html#a9e68f20a1edd319c5f69eae0c24e82d5">ANN::HyperplaneANNComponent</a>
 , <a class="el" href="classANN_1_1JoinANNComponent.html#a72675a0bf760b97f02ddc73c538e2468">ANN::JoinANNComponent</a>
-, <a class="el" href="classANN_1_1CopyANNComponent.html#ab62f27aa5412cec570832017f1c89358">ANN::CopyANNComponent</a>
+, <a class="el" href="classANN_1_1MaxPoolingANNComponent.html#a13c9aae493729816dd0764599a372468">ANN::MaxPoolingANNComponent</a>
+, <a class="el" href="classANN_1_1RewrapANNComponent.html#adfd86e76d75245ca9f0883adfa70dbdf">ANN::RewrapANNComponent</a>
+, <a class="el" href="classANN_1_1SelectANNComponent.html#aa323c9d6c5b597371cb78ac6e6d7323c">ANN::SelectANNComponent</a>
 , <a class="el" href="classANN_1_1StackANNComponent.html#a0e03ee7670cec2fcc7b932d30810fe81">ANN::StackANNComponent</a>
 </li>
 <li>doForward()
-: <a class="el" href="classANN_1_1JoinANNComponent.html#a1ed4641943c5254ddc38bbda5f3f6006">ANN::JoinANNComponent</a>
+: <a class="el" href="classANN_1_1ConvolutionBiasANNComponent.html#acd4bef70b90c70145528c8658c88514f">ANN::ConvolutionBiasANNComponent</a>
+, <a class="el" href="classANN_1_1SaltAndPepperANNComponent.html#a1528db3349eb5b217a339bcc34b86504">ANN::SaltAndPepperANNComponent</a>
 , <a class="el" href="classANN_1_1HyperplaneANNComponent.html#ac3b003717ec811ee7be77ca3b9b70770">ANN::HyperplaneANNComponent</a>
 , <a class="el" href="classANN_1_1DotProductANNComponent.html#a67a387a6760653e5ad043ccf7fc886c5">ANN::DotProductANNComponent</a>
-, <a class="el" href="classANN_1_1BiasANNComponent.html#af7f48523166e1f6be31cbe8b62d1d8b6">ANN::BiasANNComponent</a>
-, <a class="el" href="classANN_1_1CopyANNComponent.html#ac91f58a88f68b8d481f556fcf360869b">ANN::CopyANNComponent</a>
-, <a class="el" href="classANN_1_1ActivationFunctionANNComponent.html#a603e2d177c96dc2fe741b955ea005af3">ANN::ActivationFunctionANNComponent</a>
-, <a class="el" href="classANN_1_1ANNComponent.html#a08adb56d61024c837990670756450e8f">ANN::ANNComponent</a>
+, <a class="el" href="classANN_1_1FlattenANNComponent.html#a152659b18ca68c6566c615b7ef83afc3">ANN::FlattenANNComponent</a>
+, <a class="el" href="classANN_1_1JoinANNComponent.html#a1ed4641943c5254ddc38bbda5f3f6006">ANN::JoinANNComponent</a>
+, <a class="el" href="classANN_1_1SelectANNComponent.html#a6c55b3653b8eeb62fa715c25a623e069">ANN::SelectANNComponent</a>
+, <a class="el" href="classANN_1_1MaxPoolingANNComponent.html#ad58f63e635b4a9da22314f6d67cda649">ANN::MaxPoolingANNComponent</a>
 , <a class="el" href="classANN_1_1StackANNComponent.html#abec18f00f14c345b8c80ca1239ede834">ANN::StackANNComponent</a>
+, <a class="el" href="classANN_1_1RewrapANNComponent.html#acbb73199ca5a412beb771381b8696b6f">ANN::RewrapANNComponent</a>
+, <a class="el" href="classANN_1_1ConvolutionANNComponent.html#aecd6593f9233986f062f9c67f3f4c10a">ANN::ConvolutionANNComponent</a>
+, <a class="el" href="classANN_1_1GaussianNoiseANNComponent.html#aac299c458ded020ecdf54327c24507b9">ANN::GaussianNoiseANNComponent</a>
+, <a class="el" href="classANN_1_1CopyANNComponent.html#ac91f58a88f68b8d481f556fcf360869b">ANN::CopyANNComponent</a>
+, <a class="el" href="classANN_1_1ANNComponent.html#a08adb56d61024c837990670756450e8f">ANN::ANNComponent</a>
+, <a class="el" href="classANN_1_1BiasANNComponent.html#af7f48523166e1f6be31cbe8b62d1d8b6">ANN::BiasANNComponent</a>
+, <a class="el" href="classANN_1_1ActivationFunctionANNComponent.html#a603e2d177c96dc2fe741b955ea005af3">ANN::ActivationFunctionANNComponent</a>
+</li>
+<li>dot()
+: <a class="el" href="group__matrix.html#ga1cfee57583a779dc03a4694be2f10f02">Matrix&lt; T &gt;</a>
 </li>
 <li>DotProductANNComponent()
 : <a class="el" href="classANN_1_1DotProductANNComponent.html#acd7e95a02528684d3474bcd7c60f84ff">ANN::DotProductANNComponent</a>
 </li>
 <li>doUpdate()
 : <a class="el" href="classANN_1_1JoinANNComponent.html#aa553ff41c4c302e5c5c213c5bc96f4a5">ANN::JoinANNComponent</a>
-, <a class="el" href="classANN_1_1HyperplaneANNComponent.html#a38883f87f018a0f7e16fd02c623b156a">ANN::HyperplaneANNComponent</a>
 , <a class="el" href="classANN_1_1StackANNComponent.html#af8575a39aa6de0d9e032570c46c9207e">ANN::StackANNComponent</a>
+, <a class="el" href="classANN_1_1ConvolutionBiasANNComponent.html#a544e94f352bc49b323fc0076afde5a15">ANN::ConvolutionBiasANNComponent</a>
+, <a class="el" href="classANN_1_1HyperplaneANNComponent.html#a38883f87f018a0f7e16fd02c623b156a">ANN::HyperplaneANNComponent</a>
+, <a class="el" href="classANN_1_1BiasANNComponent.html#a6c48e2bbecc15497c7a94eccc1eed065">ANN::BiasANNComponent</a>
 , <a class="el" href="classANN_1_1DotProductANNComponent.html#a886c97c494e11068d8a7bddfda57df02">ANN::DotProductANNComponent</a>
 , <a class="el" href="classANN_1_1ANNComponent.html#a78a67e120f739682faa811b75605d350">ANN::ANNComponent</a>
-, <a class="el" href="classANN_1_1BiasANNComponent.html#a6c48e2bbecc15497c7a94eccc1eed065">ANN::BiasANNComponent</a>
+, <a class="el" href="classANN_1_1ConvolutionANNComponent.html#acaee33347cd83b7b497cf58716cd558a">ANN::ConvolutionANNComponent</a>
 </li>
 <li>drop()
 : <a class="el" href="classapril__utils_1_1fifo__block.html#a97f2d2676409fc92fe08917bcbaf3191">april_utils::fifo_block&lt; T, fifo_block_size &gt;</a>

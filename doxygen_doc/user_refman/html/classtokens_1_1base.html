@@ -43,7 +43,7 @@ Inheritance diagram for tokens::base:</div>
 <div class="dyncontent">
 <div class="center"><img src="classtokens_1_1base__inherit__graph.png" border="0" usemap="#tokens_1_1base_inherit__map" alt="Inheritance graph"/></div>
 <map name="tokens_1_1base_inherit__map" id="tokens_1_1base_inherit__map">
-<area shape="rect" id="node3" href="classtokens_1_1memblock.html" title="tokens::memblock" alt="" coords="5,83,133,112"/><area shape="rect" id="node5" href="classtokens_1_1vector_1_1____base____.html" title="tokens::vector::__base__" alt="" coords="157,83,325,112"/><area shape="rect" id="node7" href="classtokens_1_1vector_1_1bunch.html" title="tokens::vector::bunch" alt="" coords="81,160,228,189"/><area shape="rect" id="node9" href="classtokens_1_1vector_1_1sparse.html" title="tokens::vector::sparse" alt="" coords="252,160,404,189"/></map>
+<area shape="rect" id="node3" href="classtokens_1_1matrix.html" title="tokens::matrix" alt="" coords="5,83,109,112"/><area shape="rect" id="node5" href="classtokens_1_1memblock.html" title="tokens::memblock" alt="" coords="133,83,261,112"/><area shape="rect" id="node7" href="classtokens_1_1vector_1_1____base____.html" title="tokens::vector::__base__" alt="" coords="285,83,453,112"/><area shape="rect" id="node9" href="classtokens_1_1vector_1_1bunch.html" title="tokens::vector::bunch" alt="" coords="209,160,356,189"/><area shape="rect" id="node11" href="classtokens_1_1vector_1_1sparse.html" title="tokens::vector::sparse" alt="" coords="380,160,532,189"/></map>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -54,12 +54,14 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a55afc54bb461e9aff02da13b516a784d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afaae7eb82e1508dcf632f437c00d6836"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtokens_1_1base.html#afaae7eb82e1508dcf632f437c00d6836">base_open_constructor</a> (lua_State *L)</td></tr>
 <tr class="separator:afaae7eb82e1508dcf632f437c00d6836"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af7fc19040ab9a1df97969150975a784d"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtokens_1_1base.html#af7fc19040ab9a1df97969150975a784d">get_matrix</a> (lua_State *L)</td></tr>
+<tr class="separator:af7fc19040ab9a1df97969150975a784d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a022e0c24cbbb615df4769d73c993656b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtokens_1_1base.html#a022e0c24cbbb615df4769d73c993656b">convert_to_memblock</a> (lua_State *L)</td></tr>
+<tr class="separator:a022e0c24cbbb615df4769d73c993656b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afbe0c62cea411fb5b3b75776fab78643"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtokens_1_1base.html#afbe0c62cea411fb5b3b75776fab78643">convert_to_sparse</a> (lua_State *L)</td></tr>
 <tr class="separator:afbe0c62cea411fb5b3b75776fab78643"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa9b488c1fa2cc0e0a613f700c3e4860e"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtokens_1_1base.html#aa9b488c1fa2cc0e0a613f700c3e4860e">convert_to_bunch_vector</a> (lua_State *L)</td></tr>
 <tr class="separator:aa9b488c1fa2cc0e0a613f700c3e4860e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a022e0c24cbbb615df4769d73c993656b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtokens_1_1base.html#a022e0c24cbbb615df4769d73c993656b">convert_to_memblock</a> (lua_State *L)</td></tr>
-<tr class="separator:a022e0c24cbbb615df4769d73c993656b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeb0fed3daf860ede1653899ad8981405"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classtokens_1_1base.html#aeb0fed3daf860ede1653899ad8981405">clone</a> (lua_State *L)</td></tr>
 <tr class="separator:aeb0fed3daf860ede1653899ad8981405"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -210,6 +212,30 @@ Public Member Functions</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">int tokens::base::convert_to_sparse </td>
+          <td>(</td>
+          <td class="paramtype">lua_State *&#160;</td>
+          <td class="paramname"><em>L</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="af7fc19040ab9a1df97969150975a784d"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int tokens::base::get_matrix </td>
           <td>(</td>
           <td class="paramtype">lua_State *&#160;</td>
           <td class="paramname"><em>L</em></td><td>)</td>
