@@ -121,6 +121,7 @@ Includes these sources
 - Luiz's lstrip for Lua 5.1: http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/5.1/lstrip.tar.gz
 - MersenneTwister: http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
 - GZIO: http://luaforge.net/projects/gzio/
+- Median filter from Simon Perreault and P. Hébert, "Median Filtering in Constant Time", IEEE TIP
 
 Doxygen documentation
 ---------------------
