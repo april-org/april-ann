@@ -26,10 +26,11 @@ ImageFloat* medianFilter(ImageFloat *img, int radio) {
   dims[1] = img->width;
   MatrixFloat *mat   = new MatrixFloat(2,dims);
   ImageFloat  *resul = new ImageFloat(mat);
-  
-  for (int i=0;i<numpixels; ++i)
-    mat->data[i] = dst[i]/255.0f;
 
+  int i=0;
+  for (MatrixFloat::iterator it(mat->begin()); it!=mat->end(); ++it, ++i)
+    *it = dst[i]/255.0f;
+  
   delete[] src;
   delete[] dst;
 
