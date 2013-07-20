@@ -28,6 +28,9 @@
 #include "connection.h"
 
 namespace ANN {
+  
+  /// This components computes, for every I output neuron, the dot product
+  /// between input neurons and the weights of the neuron I.
   class DotProductANNComponent : public ANNComponent {
     Token            *input;
     TokenMatrixFloat *error_input, *output, *error_output;

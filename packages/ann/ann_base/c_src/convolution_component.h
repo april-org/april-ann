@@ -27,6 +27,9 @@
 #include "connection.h"
 
 namespace ANN {
+
+  /// A component which computes a convolutional layer using given kernel size
+  /// and step, and the given number of output planes.
   class ConvolutionANNComponent : public ANNComponent {
     TokenMatrixFloat *input, *error_input, *output, *error_output;
     Connections *weights_matrix;

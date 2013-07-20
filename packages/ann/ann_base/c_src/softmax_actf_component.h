@@ -28,8 +28,8 @@
 
 namespace ANN {
 
-  /// An abstract class that defines the basic interface that
-  /// the anncomponents must fulfill.
+  /// Component for the SoftMax activation function. Softmax is applied over
+  /// first dimension of the input matrix (the bunch size).
   class SoftmaxActfANNComponent : public ActivationFunctionANNComponent {
   protected:
     virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,

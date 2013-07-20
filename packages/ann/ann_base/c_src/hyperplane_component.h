@@ -28,6 +28,8 @@
 
 namespace ANN {
 
+  /// This component is an stack of DotProductANNComponent and BiasANNComponent,
+  /// because this two components are used together in almost every ANN.
   class HyperplaneANNComponent : public ANNComponent {
     DotProductANNComponent *dot_product;
     BiasANNComponent       *bias;

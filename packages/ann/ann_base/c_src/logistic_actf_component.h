@@ -28,8 +28,7 @@
 
 namespace ANN {
 
-  /// An abstract class that defines the basic interface that
-  /// the anncomponents must fulfill.
+  /// This component implements the logistic activation function.
   class LogisticActfANNComponent : public ActivationFunctionANNComponent {
   protected:
     virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,
