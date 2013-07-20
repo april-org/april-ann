@@ -28,6 +28,11 @@
 #include "gpu_mirrored_memory_block.h"
 
 namespace ANN {
+
+  /// This component implements the Max-Pooling operation of convolutional
+  /// neural networks (CNNs). It is configured with a given kernel size and
+  /// kernel step, and outputs the maximum value of each possible window at
+  /// input matrix.
   class MaxPoolingANNComponent : public ANNComponent {
     TokenMatrixFloat *input, *error_input, *output, *error_output;
     IntGPUMirroredMemoryBlock *argmax_raw_pos;

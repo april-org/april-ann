@@ -27,6 +27,9 @@
 #include "connection.h"
 
 namespace ANN {
+
+  /// A component which adds a convolutional bias given the number of output
+  /// planes. Exists one bias per each output plane.
   class ConvolutionBiasANNComponent : public ANNComponent {
     TokenMatrixFloat *input, *error, *output;
     Connections *bias_vector;

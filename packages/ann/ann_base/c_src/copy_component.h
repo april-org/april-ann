@@ -28,7 +28,8 @@
 using april_utils::vector;
 
 namespace ANN {
-
+  
+  /// This component replicates its input a given number of times.
   class CopyANNComponent : public ANNComponent {
     vector<ANNComponent*> components;
     // Token pointers which contains exactly the same that was received

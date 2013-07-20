@@ -28,8 +28,8 @@
 
 namespace ANN {
 
-  /// An abstract class that defines the basic interface that
-  /// the anncomponents must fulfill.
+  /// This component implements the LogLogistic activation function. This
+  /// activation only works with CrossEntropy LossFunction (and viceversa).
   class LogLogisticActfANNComponent : public ActivationFunctionANNComponent {
   protected:
     virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,

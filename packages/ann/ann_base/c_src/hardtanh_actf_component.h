@@ -27,8 +27,8 @@
 
 namespace ANN {
 
-  /// An abstract class that defines the basic interface that
-  /// the anncomponents must fulfill.
+  /// Component which computes the HardTanh activation function. It is useful
+  /// for deep ANNs and CNNs.
   class HardtanhActfANNComponent : public ActivationFunctionANNComponent {
   protected:
     virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,
