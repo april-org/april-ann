@@ -29,14 +29,30 @@ namespace ANN {
   ///////////////////////////////////////////
 
   void ConvolutionANNComponent::initializeArrays(const int *input_dims) {
+    for (int i=1; i<input_planes_dim; ++i) {
+      output_dims[i+1] = (input_dims[i] - kernel_dims[i])/kernel_step[i] + 1;
+      input_window_num_steps[i]    = output_dims[i+1];
+      output_window_num_steps[i+1] = output_dims[i+1];
+    }
+    for (int i=input_planes_dim+1; i<=input_num_dims; ++i) {
+      output_dims[i] = (input_dims[i] - kernel_dims[i])/kernel_step[i] + 1;
+      input_window_num_steps[i]  = output_dims[i];
+      output_window_num_steps[i] = output_dims[i];
+    }
+    /*
+      for (int i=1; i<=input_num_dims; ++i) {
+      output_dims[i] = (input_dims[i] - kernel_dims[i])/kernel_step[i] + 1;
+      input_window_num_steps[i]  = output_dims[i];
+      output_window_num_steps[i] = output_dims[i];
+      }
+    */
     // input_dims[0]  => BUNCH SIZE
     // output_dims[0] => BUNCH SIZE, output_dims[1] => HIDDEN LAYER SIZE
     output_dims[0]	       = input_dims[0];
     output_dims[1]	       = hidden_size;
     input_window_size[0]       = input_dims[0];
-    input_window_size[1]       = input_dims[1];
     input_window_num_steps[0]  = 1;
-    input_window_num_steps[1]  = 1;
+    input_window_num_steps[input_planes_dim] = 1;
     output_window_size[0]      = input_dims[0];
     // AT CONSTRUCTOR: output_window_size[1] = hidden_size;
     output_window_num_steps[0] = 1;
@@ -45,22 +61,19 @@ namespace ANN {
     // AT CONSTRUCTOR: input_window_rewrap[1] = kernel_size;
     output_window_rewrap[0]    = input_dims[0];
     // AT CONSTRUCTOR: output_window_rewrap[1] = hidden_size;
-    if (input_dims[1] != kernel_dims[1])
-      ERROR_EXIT3(128, "Input matrix dim 1 must be equals to kernel dim 1,"
-		  "input_dims[1]=%d, kernel_dims[1]=%d [%s]\n",
-		  input_dims[1], kernel_dims[0], name.c_str());
-    for (int i=2; i<=input_num_dims; ++i) {
-      output_dims[i] = (input_dims[i] - kernel_dims[i])/kernel_step[i] + 1;
-      
-      input_window_size[i]	 = kernel_dims[i];
-      input_window_num_steps[i]  = output_dims[i];
-      output_window_num_steps[i] = output_dims[i];
-    }
+    if (input_dims[input_planes_dim] != kernel_dims[input_planes_dim])
+      ERROR_EXIT7(128, "Input matrix dim %d must be equals to kernel dim %d,"
+		  "input_dims[%d]=%d, kernel_dims[%d]=%d [%s]\n",
+		  input_planes_dim, input_planes_dim,
+		  input_planes_dim, input_dims[input_planes_dim],
+		  input_planes_dim, kernel_dims[input_planes_dim],
+		  name.c_str());
   }
   
   ConvolutionANNComponent::ConvolutionANNComponent(int input_num_dims,
 						   const int *_kernel_dims,
 						   const int *_kernel_step,
+						   const int input_planes_dim,
 						   int num_output_planes,
 						   const char *name,
 						   const char *weights_name) :
@@ -71,6 +84,7 @@ namespace ANN {
     error_output(0),
     weights_matrix(0),
     num_updates_from_last_prune(0),
+    input_planes_dim(input_planes_dim),
     number_input_windows(0),
     kernel_size(1),
     hidden_size(num_output_planes),
@@ -107,6 +121,7 @@ namespace ANN {
       kernel_step[i+1] = _kernel_step[i];
       input_window_order_step[i+1] = i+1;
       output_window_order_step[i+1] = i+1;
+      input_window_size[i+1] = kernel_dims[i+1];
     }
     for(int i=2; i<=input_num_dims; ++i) {
       output_window_size[i] = 1;
@@ -446,7 +461,7 @@ namespace ANN {
   ANNComponent *ConvolutionANNComponent::clone() {
     ConvolutionANNComponent *component = new
       ConvolutionANNComponent(input_num_dims, kernel_dims+1, kernel_step+1,
-			      hidden_size,
+			      input_planes_dim, hidden_size,
 			      name.c_str(), weights_name.c_str());
     component->input_size     = input_size;
     component->output_size    = output_size;
