@@ -306,7 +306,7 @@ if new_output == nil then
 end
 oldprint = print
 print = function(...)
-	   new_output:write(unpack(arg),"\n")
+	   new_output:write(...,"\n")
 	end 
 
 -- ejecutamos

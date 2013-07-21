@@ -38,7 +38,7 @@ $$HEADER_C$$
    function lua_setdottedname(dottedname)
       local cpp_str = {
                          "\nbool exists = false;\n",
-                         "lua_pushvalue(L,LUA_GLOBALSINDEX);\n"
+                         "lua_pushvalue(L,LUA_RIDX_GLOBALS);\n"
 	              }
       for subName in string.gmatch(dottedname, "([%w_]+)[%.]*") do
 	 table.insert(cpp_str, string.format([[
@@ -303,7 +303,7 @@ void luaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L){
 	  /* Esto no hace falta
 	     lua_pushstring(L,"$$(LUANAME[ClassName] or ClassName)$$");
 	     lua_pushvalue(L,class_table);
-	     lua_rawset(L,LUA_GLOBALSINDEX);
+	     lua_rawset(L,LUA_RIDX_GLOBALS);
 	  */
 	  
 	  lua_pop(L,1);  // luabind_classes

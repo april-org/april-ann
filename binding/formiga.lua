@@ -369,7 +369,7 @@ function formiga.os.execute(command,continueaftererror)
     error("Error "..(resul or"nil").." in "..formiga.os.basedir..
 	    "\nwhen executing command "..command.."\n")
   end
-  return resul
+  return ok
 end
 
 -- execute popen from formiga.os.basedir
@@ -964,7 +964,7 @@ function formiga .__object__ (t)
       -- creamos y ejecutamos el comando
       command = table.concat(command," ")
       printverbose(2," [object] "..command)
-      local ok,_,error_resul = formiga.os.execute(command, true)
+      local ok = formiga.os.execute(command, true)
       if not ok then
 	os.execute("rm -Rf " .. build_dir)
 	error("ERROR")

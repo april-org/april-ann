@@ -3,7 +3,7 @@ formiga.build_dir = "build_mkl_release"
 
 luapkg{
   program_name = "april-ann",
-  verbosity_level = 2,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
+  verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
   packages = dofile "package_list.lua",
   global_flags = {
     debug="no",
