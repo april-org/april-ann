@@ -40,7 +40,7 @@ $$HEADER_C$$
                          "\nbool exists = false;\n",
                          "lua_pushvalue(L,LUA_GLOBALSINDEX);\n"
 	              }
-      for subName in string.gfind(dottedname, "([%w_]+)[%.]*") do
+      for subName in string.gmatch(dottedname, "([%w_]+)[%.]*") do
 	 table.insert(cpp_str, string.format([[
   // stack: tablevieja
   lua_pushstring(L,"%s");

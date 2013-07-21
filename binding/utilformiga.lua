@@ -232,7 +232,7 @@ function graph:reverse_top_order(useful_node)
   return top_order
 end
 
-function graph.__newindex(t,k,v)
-  error("attempt to modify graph class")
-end
+-- function graph.__newindex(t,k,v)
+--   error("attempt to modify graph class")
+-- end
 
