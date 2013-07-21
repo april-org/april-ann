@@ -285,6 +285,12 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_FUNCTION ann.components.reset_id_counters
+{
+  ANNComponent::resetIdCounters();
+}
+//BIND_END
+
 //BIND_METHOD ANNComponent to_lua_string
 {
   char *str = obj->toLuaString();

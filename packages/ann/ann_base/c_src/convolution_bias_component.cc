@@ -270,7 +270,9 @@ namespace ANN {
       weight_grads = bias_vector->getPtr()->cloneOnlyDims();
       weight_grads->zeros();
     }
-    computeBP(weight_grads, error->getMatrix(), 1.0f);
+    MatrixFloat *input_error_mat = error->getMatrix();
+    unsigned int bunch_size = input_error_mat->getDimSize(0)*number_input_windows;
+    computeBP(weight_grads, error->getMatrix(), 1.0f/bunch_size);
   }
 
   

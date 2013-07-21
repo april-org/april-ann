@@ -439,10 +439,12 @@ namespace ANN {
       weight_grads = weights_matrix->getPtr()->cloneOnlyDims();
       weight_grads->zeros();
     }
+    MatrixFloat *input_error_mat = error_input->getMatrix();
+    unsigned int bunch_size = input_error_mat->getDimSize(0);
     computeBP(weight_grads,
 	      input->getMatrix(),
 	      error_input->getMatrix(),
-	      1.0f,
+	      1.0f/bunch_size,
 	      1.0f);
   }
 

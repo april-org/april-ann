@@ -563,18 +563,13 @@ function trainable.supervised_trainer:grad_check_step(input, target, verbose)
   gradient=self.ann_component:backprop(gradient)
   local weight_grads = self.ann_component:compute_gradients()
   local epsilond = 0.2
+  local epsilon  = 1e-03
   local ret = true
   for wname,cnn in self:iterate_weights() do
     local w = cnn:matrix()
     local ann_grads = weight_grads[wname]
     for i=1,w:size() do
       local orig_w = w:raw_get(i-1)
-      local epsilon
-      if math.abs(orig_w) > 0.0 then
-	epsilon = 0.2 * orig_w
-      else
-	epsilon = 1e-03
-      end
       w:raw_set(i-1, orig_w - epsilon)
       local loss_a = self.loss_function:loss(self.ann_component:forward(input,
 									true),
@@ -592,11 +587,13 @@ function trainable.supervised_trainer:grad_check_step(input, target, verbose)
 		wname, i-1, ann_g, g)
       end
       if ann_g ~= 0 or g ~= 0 then
-	local err = math.abs((ann_g - g)/(ann_g+g))
-	if err > epsilond then
+	local abs_err = math.abs(ann_g - g)
+	local err = abs_err/math.abs(ann_g+g)
+	if err > epsilond and abs_err > 1e-03 then
 	  fprintf(io.stderr,
-		  "INCORRECT GRADIENT FOR %s[%d], found %g, expected %g (error %g)\n",
-		 wname, i-1, ann_g, g, err)
+		  "INCORRECT GRADIENT FOR %s[%d], found %g, expected %g "..
+		    "(error %g, abs error %g)\n",
+		  wname, i-1, ann_g, g, err, abs_err)
 	  ret = false
 	end
       end
