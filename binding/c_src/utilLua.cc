@@ -44,14 +44,9 @@ bool leer_bool_params(lua_State *L, const char *name, bool *v, int n) {
 // toma una tabla en la pila y devuelve la longitud de la misma
 // la pila se queda igual, con la tabla en el tope
 int table_getn(lua_State *L) {
-  lua_pushstring(L,"table");
-  lua_gettable(L, LUA_GLOBALSINDEX);
-  lua_pushstring(L,"getn");
-  lua_gettable(L, -2);
-  lua_pushvalue(L,-3);
-  lua_call(L,1,1);
-  int l = (int)lua_tonumber(L,-1);
-  lua_pop(L,2);
+  lua_len(L, -1);
+  int l = (int)lua_tonumber(L, -1);
+  lua_pop(L, -1);
   return l;
 }
 

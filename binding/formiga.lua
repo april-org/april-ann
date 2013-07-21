@@ -284,7 +284,7 @@ end
 
 
 function string.tokenize(str,sep)
-  sep = sep or ' \t'
+  local sep = sep or ' \t'
   local list = {}
   for token in string.gmatch(str, '[^'..sep..']+') do
     table.insert(list,token)
@@ -301,7 +301,7 @@ end
 -- obtains the timestamp of a given directory
 function formiga.os.get_directory_timestamp(path)
   local f=io.popen("find " .. path .. " -printf '%h/%f %T@\n' 2>/dev/null | " ..
-                   "grep  -v '.*/\\..*' | " ..
+		     "grep  -v '.*/\\..*' | " ..
                      "cut -d' ' -f2 | sort -n | tail -n 1")
   local timestamp=tonumber(f:read("*l"))
   f:close()
@@ -314,7 +314,7 @@ end
 -- obtains the timestamp of a given file
 function formiga.os.get_file_timestamp(file)
   local f=io.popen("stat -c %Y "..file ..
-                   " 2> /dev/null || echo 0")
+		     " 2> /dev/null || echo 0")
   local timestamp=tonumber(f:read("*l"))
   f:close()
   printverbose(1, "timestamp ["..file.."] =",timestamp)
@@ -332,7 +332,7 @@ end
 -- in some of the arguments
 -- WARNING: depends on formiga.os.SEPDIR
 function formiga.os.compose_dir(...)
-  return table.concat(arg,formiga.os.SEPDIR)
+  return table.concat({...},formiga.os.SEPDIR)
 end
 
 -- currently uses pwd and popen to obtain the cwd
@@ -359,16 +359,15 @@ end
 function formiga.os.execute(command,continueaftererror)
   io.stdout:flush() -- to get things appear in order
   io.stderr:flush() -- to get things appear in order
-  local resul
+  local ok,what,resul
   -- la invocacion precedida por un cd basedir
-  resul = os.execute("cd "..formiga.os.basedir.."; "..command)
+  ok,what,resul = os.execute("cd "..formiga.os.basedir.."; "..command)
   io.stdout:flush() -- to get things appear in order
   io.stderr:flush() -- to get things appear in order
   if resul ~= 0 and not continueaftererror then
     -- report error and stop everything
-    io.stderr:write("Error "..resul.." in "..formiga.os.basedir..
-                    "\nwhen executing command "..command.."\n")
-    os.exit(256)
+    error("Error "..(resul or"nil").." in "..formiga.os.basedir..
+	    "\nwhen executing command "..command.."\n")
   end
   return resul
 end
@@ -397,7 +396,7 @@ function formiga.os.glob(expr)
   local r = {}
   for _,e in ipairs(expr) do
     local f = io.popen("cd ".. formiga.os.basedir ..
-		       "; ls "..e.." 2>/dev/null")
+			 "; ls "..e.." 2>/dev/null")
     for i in f:lines() do table.insert(r,i) end
     f:close()
   end
@@ -432,7 +431,7 @@ function formiga.initialize ()
     formiga.lua_path=formiga.os.compose_dir(formiga.os.cwd,"lua","lua-5.1.2")
   end
 end
-  
+
 ----------------------------------------------------------------------
 --                  cosas especificas de Formiga:
 ----------------------------------------------------------------------
@@ -501,10 +500,10 @@ function formiga.exec_package(package_name,target,global_timestamp)
     --
     if the_package.compile_mark then
       printverbosecolor(1,"yellow", nil, "[package] "..the_package.name,
-	  "\tCompile: " .. tostring(the_package.compile_mark))
+			"\tCompile: " .. tostring(the_package.compile_mark))
     else
       printverbosecolor(1,"green", nil, "[package] "..the_package.name,
-	  "\tCompile: " .. tostring(the_package.compile_mark))
+			"\tCompile: " .. tostring(the_package.compile_mark))
     end
     if target == nil then target = the_package.default_target end
     local thetarget = the_package.target_table[target]
@@ -528,9 +527,8 @@ function package (t)
   formiga.initialize()
   local build_dir = formiga.os.compose_dir(formiga.global_properties.build_dir, formiga.os.basedir)
   if formiga.package_table[t.name] ~= nil then
-    print("Error: package "..t.name.." already exists. " ..
-	  "package_directory='" .. formiga.current_package_dir .. "'\n")
-    os.exit(256)
+    error("Error: package "..t.name.." already exists. " ..
+	    "package_directory='" .. formiga.current_package_dir .. "'\n")
   end
   formiga.package_table[t.name] = t
   -- set up the timestamp
@@ -610,8 +608,8 @@ function formiga.__target__ (t)
   end
   --
   if t.name == "build" then
-     -- solo para targets tipo build
-     generate_package_register_file(t.package,package_register_functions)
+    -- solo para targets tipo build
+    generate_package_register_file(t.package,package_register_functions)
   end
 end
 
@@ -644,7 +642,7 @@ function formiga.expand_properties(thing,tbl)
 		    function (x)
 		      if not tbl[x] and not formiga.global_properties[x] then
 			print("Error, property '"..
-			      x.."' doesn't exist!!")
+				x.."' doesn't exist!!")
 			pause_warning()
 			return ""
 		      end
@@ -791,15 +789,15 @@ function formiga .__program__ (t)
   local thefiles = formiga.os.glob(formiga.expand_properties(t.file,prop))
   for _,thefile in pairs(thefiles) do
     command = { formiga.compiler.CPPcompiler, formiga.compiler.wall,
-      table.concat(formiga.compiler.extra_flags, " ") }
+		table.concat(formiga.compiler.extra_flags, " ") }
     local path,file,extension,debug,optimization,otherflags
     path,file,extension = formiga.os.path_file_extension(thefile)
     if formiga.compiler.global_flags.debug == "yes" or
-      formiga.expand_properties(t.debug,prop) == "yes" then
+    formiga.expand_properties(t.debug,prop) == "yes" then
       table.insert(command,formiga.compiler.debug)
     end
     if global_flags.optimization == "yes" or
-      formiga.expand_properties(t.optimization,prop) == "yes" then
+    formiga.expand_properties(t.optimization,prop) == "yes" then
       table.insert(command,formiga.compiler.optimization)
     end
     otherflags = formiga.expand_properties(t.flags,prop) or ""
@@ -812,14 +810,14 @@ function formiga .__program__ (t)
     table.insert(command,thefile) -- like objects but without "-c "
     local dest_dir = formiga.os.compose_dir(build_dir, formiga.expand_properties(t.dest_dir,prop) or path)
     table.insert(command,formiga.compiler.destination.." "
-		 ..dest_dir..SEPDIR..file..".o")
+		   ..dest_dir..SEPDIR..file..".o")
     -- directory inclusion
     -- the directory where the file is
     table.insert(command,formiga.compiler.include_dir..path)
     local directory
     if t.include_dirs then
       for _,directory in pairs(t.include_dirs) do
-        for w in string.gfind(formiga.expand_properties(directory,prop),"[^"..formiga.os.SEPPATH.."]+") do
+        for w in string.gmatch(formiga.expand_properties(directory,prop),"[^"..formiga.os.SEPPATH.."]+") do
           table.insert(command,formiga.compiler.include_dir..w)
         end
       end
@@ -827,7 +825,7 @@ function formiga .__program__ (t)
     -- library inclusion
     if t.libraries then
       for _,libr in pairs(t.libraries) do
-        for w in string.gfind(formiga.expand_properties(directory,prop),"w+") do
+        for w in string.gmatch(formiga.expand_properties(directory,prop),"w+") do
           table.insert(command,formiga.compiler.library_inclusion..w)
         end
       end
@@ -837,7 +835,7 @@ function formiga .__program__ (t)
     local directory
     if t.object_dirs then
       for _,directory in pairs(t.object_dirs) do
-        for w in string.gfind(formiga.expand_properties(directory,prop),"[^"..formiga.os.SEPPATH.."]+") do
+        for w in string.gmatch(formiga.expand_properties(directory,prop),"[^"..formiga.os.SEPPATH.."]+") do
           table.insert(command,formiga.compiler.object_dir..w) 
         end
       end
@@ -882,11 +880,11 @@ function formiga .__object__ (t)
       local path,file,extension,debug,optimization,otherflags
       path,file,extension = formiga.os.path_file_extension(thefile)
       if formiga.compiler.global_flags.debug == "yes" or
-        formiga.expand_properties(t.debug,prop) == "yes" then
+      formiga.expand_properties(t.debug,prop) == "yes" then
 	table.insert(command,formiga.compiler.debug)
       end
       if formiga.compiler.global_flags.optimization == "yes" or
-        formiga.expand_properties(t.optimization,prop) == "yes" then
+      formiga.expand_properties(t.optimization,prop) == "yes" then
 	table.insert(command,formiga.compiler.optimization)
       end
       otherflags = formiga.expand_properties(t.flags,prop) or ""
@@ -928,7 +926,7 @@ function formiga .__object__ (t)
       -- inclusion de librerias
       if t.libraries then
         for _,libr in pairs(t.libraries) do
-          for w in string.gfind(formiga.expand_properties(directory,prop),"w+") do
+          for w in string.gmatch(formiga.expand_properties(directory,prop),"w+") do
             table.insert(command,formiga.compiler.library_inclusion..w) 
           end
         end
@@ -938,24 +936,25 @@ function formiga .__object__ (t)
       table.insert(command,formiga.compiler.include_dir..formiga.global_properties.lua_include_dir) -- the directory where lua headers are
       if t.include_dirs then
         for _,directory in pairs(t.include_dirs) do
-          for w in string.gfind(formiga.expand_properties(directory,prop),"[^"..formiga.os.SEPPATH.."]+") do
+          for w in string.gmatch(formiga.expand_properties(directory,prop),
+				 "[^"..formiga.os.SEPPATH.."]+") do
 	    if string.sub(w,1,1) == "/" then 
               table.insert(command,formiga.compiler.include_dir..w)
             else
               table.insert(command,formiga.compiler.include_dir..
-                                formiga.os.compose_dir(build_dir, w))
+			     formiga.os.compose_dir(build_dir, w))
             end
           end
         end
       end
       -- Incluimos las dependencias indirectas...
       for i,directory in ipairs(formiga.package_dependencies[formiga.current_package_name]) do
-        for w in string.gfind(formiga.expand_properties(directory,prop),"[^"..formiga.os.SEPPATH.."]+") do
+        for w in string.gmatch(formiga.expand_properties(directory,prop),"[^"..formiga.os.SEPPATH.."]+") do
           local basedir = formiga.package_table[w].basedir
           table.insert(command, formiga.compiler.include_dir..
-                       formiga.os.compose_dir(formiga.global_properties.build_dir,
-					      basedir,
-					      "include"))
+			 formiga.os.compose_dir(formiga.global_properties.build_dir,
+						basedir,
+						"include"))
           table.insert(command, formiga.pkgconfig_flags[w])
         end
       end
@@ -965,10 +964,10 @@ function formiga .__object__ (t)
       -- creamos y ejecutamos el comando
       command = table.concat(command," ")
       printverbose(2," [object] "..command)
-      local error_resul = formiga.os.execute(command, true)
-      if error_resul ~= 0 then
+      local ok,_,error_resul = formiga.os.execute(command, true)
+      if not ok then
 	os.execute("rm -Rf " .. build_dir)
-	os.exit(256)
+	error("ERROR")
       end
     end
   end
@@ -1014,21 +1013,19 @@ end
 
 function formiga.__luacode__ (t)
   local prop = t.target.package.properties
-  local f,error,command,orig_dir,dest_dir,reg_function
+  local f,command,orig_dir,dest_dir,reg_function
   local thefile,luafiles
   local build_dir = formiga.os.compose_dir(formiga.global_properties.build_dir, formiga.os.basedir)
   orig_dir = formiga.expand_properties(t.orig_dir,prop)
   luafiles = t.file or "*.lua"
   if type(orig_dir) ~= "string" then
-    print("Error: luac action needs an orig_dir field of type string\n")
-    os.exit(256)
+    error("Error: luac action needs an orig_dir field of type string\n")
   end
   if type(luafiles) == 'string' then luafiles = { luafiles } end
   local files_list = {}
   for _,luafil in ipairs(luafiles) do
     if type(luafil) ~= 'string' then
-      print("Error: luac action field orig_dir is wrong\n")
-      os.exit(256)
+      error("Error: luac action field orig_dir is wrong\n")
     end
     table.append(files_list,
 		 formiga.os.glob(formiga.os.compose_dir(orig_dir,luafil)))
@@ -1068,7 +1065,7 @@ function formiga.__luacode__ (t)
 	      #include <lua.h>
 		#include <lauxlib.h>
 		int ]]..reg_function..
-	    '(lua_State *L) {\nluaL_loadbuffer(L,\n"'..
+	  '(lua_State *L) {\nluaL_loadbuffer(L,\n"'..
 	    formiga.bin2Cstring(lua_data_string)..'",'..
 	    string.len(lua_data_string)..
 	    ',"'..t.target.package.name..'");\nlua_call(L,0,0);\nreturn 0;\n}\n')
@@ -1082,9 +1079,9 @@ function formiga.__luacode__ (t)
 			   "-I lua/include/",
 			   table.concat(formiga.compiler.extra_flags, " "),
 			 }, " ")
-  if os.execute(command) ~= 0 then
-    print("Error en el comando: " .. command)
-    os.exit(128)
+  local ok,what,error_resul = os.execute(command)
+  if not ok then
+    error("Error en el comando: " .. command)
   end
   os.execute("rm "..thefile..".c")
   
@@ -1168,8 +1165,7 @@ function formiga.__execute_script(t)
       printverbose(2," [execute_script] "..command)
       local error_resul = formiga.os.execute(command, true)
       if error_resul ~= 0 then
-	print("Unitary test '".. thefile .. "' failed: " .. t.target.package.name)
-	os.exit(256)
+	error("Unitary test '".. thefile .. "' failed: " .. t.target.package.name)
       end
     end
   end
@@ -1234,8 +1230,8 @@ function formiga.__build_bind__ (t)
       formiga.os.compose_dir(build_dir,"include")..formiga.os.SEPPATH..
       formiga.os.compose_dir(build_dir,"include", "binding")..formiga.os.SEPPATH..
       formiga.os.compose_dir(formiga.os.cwd,"binding","c_src")
-    for w in string.gfind(formiga.expand_properties(id,prop),
-			  "[^"..formiga.os.SEPPATH.."]+") do
+    for w in string.gmatch(formiga.expand_properties(id,prop),
+			   "[^"..formiga.os.SEPPATH.."]+") do
       table.insert(command,"-I"..w) 
     end
 
@@ -1244,41 +1240,40 @@ function formiga.__build_bind__ (t)
 		 formiga.pkgconfig_flags[formiga.current_package_name])
 
     if formiga.compiler.global_flags.debug == "yes" or
-      formiga.expand_properties(t.debug,prop) == "yes" then
+    formiga.expand_properties(t.debug,prop) == "yes" then
       table.insert(command,"-g") 
     end
     if formiga.compiler.global_flags.optimization == "yes" or
-      formiga.expand_properties(t.optimization,prop) == "yes" then
+    formiga.expand_properties(t.optimization,prop) == "yes" then
       table.insert(command,"-O3")
     end
     otherflags = formiga.expand_properties(t.flags,prop) or ""
     if string.len(otherflags) > 0 then 
       table.insert(command,otherflags)
     end
-
     -- Incluimos las dependencias indirectas...
     for i,directory in ipairs(formiga.package_dependencies[formiga.current_package_name]) do
-      for w in string.gfind(formiga.expand_properties(directory,prop),
-			    "[^"..formiga.os.SEPPATH.."]+") do   
+      for w in string.gmatch(formiga.expand_properties(directory,prop),
+			     "[^"..formiga.os.SEPPATH.."]+") do   
         local basedir = formiga.package_table[w].basedir
         table.insert(command, "-I"..
-                     formiga.os.compose_dir(formiga.global_properties.build_dir,
-					    basedir,
-					    "include"))
+		       formiga.os.compose_dir(formiga.global_properties.build_dir,
+					      basedir,
+					      "include"))
         table.insert(command, "-I"..
-                     formiga.os.compose_dir(formiga.global_properties.build_dir,
-					    basedir,
-					    "include", "binding"))
+		       formiga.os.compose_dir(formiga.global_properties.build_dir,
+					      basedir,
+					      "include", "binding"))
       end
     end
     --
     
     command = table.concat(command," ")
     printverbose(2,"          "..command)
-    local error_resul = formiga.os.execute(command, true)
-    if error_resul ~= 0 then
+    local ok,what,error_resul = formiga.os.execute(command, true)
+    if not ok then
       os.execute("rm -Rf " .. build_dir)
-      os.exit(256)
+      error("ERROR")
     end
 
   end
@@ -1445,7 +1440,7 @@ function formiga.__dot_graph__ (t)
   dotfile:write("rankdir=LR;\n")
   for origpkg,_ in formiga.pkg_graph:nodes_iterator() do
     if origpkg ~= formiga.main_package_name and
-	formiga.set_of_packages[origpkg] then
+    formiga.set_of_packages[origpkg] then
       dotfile:write(origpkg .. " [label=" .. origpkg .. "];\n")      
       for _,destpkg in formiga.pkg_graph:next_iterator(origpkg) do
 	dotfile:write(origpkg .. " -> " .. destpkg .. ";\n")
@@ -1588,8 +1583,7 @@ function formiga.__document_bind__ (t)
       formiga.os.execute(command)
       local f = io.open(destfile,"r")
       if f == nil then
-	print("Error: "..destfile.." file not found\n")
-	os.exit(256)
+	error("Error: "..destfile.." file not found\n")
       end
       local content = f:read("*a")
       f:close()
@@ -1743,7 +1737,7 @@ end
 -- funcion auxiliar
 function formiga.__make_redirect_page__ (title,wait,urldest)
   return 
-  '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">\n'..
+    '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">\n'..
     '<html><head>\n'..
     '<meta http-equiv="Refresh" content="'..wait..
     '; url='..urldest..'">\n'..
@@ -1788,7 +1782,7 @@ function formiga.__main_documentation__ (t)
     end
     if tbl.PROJECT_NAME == nil then
       tbl.PROJECT_NAME = '"'..formiga.program_name..({ " (user reference manual)",
-						  " (developer manual)"})[i]..'"'
+						       " (developer manual)"})[i]..'"'
     end
     if tbl.OUTPUT_DIRECTORY == nil then
       tbl.OUTPUT_DIRECTORY = dest_dir
@@ -1830,8 +1824,7 @@ function formiga.__main_documentation__ (t)
     local doxygen_conf = {}
     local f = io.open(doxygen_template_filename,"r")
     if f == nil then
-      print("Error: "..doxygen_template_filename.." file not found\n")
-      os.exit(256)
+      error("Error: "..doxygen_template_filename.." file not found\n")
     end
     for line in f:lines() do
       -- procesar las lineas y ver si son de la forma
@@ -1848,8 +1841,7 @@ function formiga.__main_documentation__ (t)
     f:close()
     f = io.open(doxygen_aux_file,"w")
     if f == nil then
-      print("Error: "..doxygen_template_filename.." file cannot be created\n")
-      os.exit(256)
+      error("Error: "..doxygen_template_filename.." file cannot be created\n")
     end
     f:write(table.concat(doxygen_conf,"\n"))
     f:close()
@@ -1857,15 +1849,13 @@ function formiga.__main_documentation__ (t)
     if formiga.verbosity_level < 2 then
       command = command.." >/dev/null 2>/dev/null"
     end    
-    local resul
     os.execute("mkdir -p "..dest_dir)
     print("ejecutamos",command)
-    resul = os.execute(command)
-    if resul ~= 0 then
+    local ok,what,resul = os.execute(command)
+    if not ok then
       -- report error and stop everything
-      io.stderr:write("Error "..resul..
-		      "\nwhen executing command "..command.."\n")
-      os.exit(256)
+      error("Error "..resul..
+	      "\nwhen executing command "..command.."\n")
     end
   end
 end
@@ -1987,16 +1977,16 @@ function generate_package_register_file(package,package_register_functions)
   local f = io.open(thefile..".c", "w")
   if not f then
     error ("The directory 'build' must be created in package: "..
-           package.name)
+	     package.name)
   end
   f:write("#include <lua.h>\n#include <lauxlib.h>\n"..
-          "#include <lualib.h>\n\n")
+	    "#include <lualib.h>\n\n")
   for i,func in ipairs(package_register_functions) do
     f:write("void " .. func .. "(lua_State *L);\n")
   end
   f:write("\n")
   f:write("void register_package_lua_and_binding_".. package.name ..
-          "(lua_State *L) {\n")
+	    "(lua_State *L) {\n")
   for i,func in ipairs(package_register_functions) do
     f:write("\t"..func .. "(L);\n")
   end
@@ -2014,10 +2004,9 @@ function generate_package_register_file(package,package_register_functions)
 					      " ")
 			       },
 			       " ")
-  
-  if os.execute(command) ~= 0 then
-    print("Error en el comando: " .. command)
-    os.exit(128)
+  local ok,what,resul = os.execute(command)
+  if not ok then
+    error("Error en el comando: " .. command)
   end
 end
 
@@ -2062,7 +2051,7 @@ end
 ------------------------------------------------------------------------
 
 function luapkg (t)
--- formiga.initialize para obtener formiga.os.basedir, etc.
+  -- formiga.initialize para obtener formiga.os.basedir, etc.
   formiga.initialize()
 
   formiga.verbosity_level = t.verbosity_level or 2
@@ -2117,7 +2106,7 @@ function luapkg (t)
       printverbose(2,"DEBUG Componente ",i,j)
       if components.nodes_graph[j]:size() > 1 then
 	print("WARNING: a component of strongly c.c. with "..
-	      components.nodes_graph[j]:size() .. " nodes:")
+		components.nodes_graph[j]:size() .. " nodes:")
 	for k,h in components.nodes_graph[j]:nodes_iterator() do
 	  print("",k)
 	end
@@ -2127,9 +2116,9 @@ function luapkg (t)
 	table.insert(formiga.order_to_process_packages,k)
       end
     end
-  
+    
     printverbosecolor(1, "blue", nil, "[Reverse Topologic Order] " ..
-		  table.concat(formiga.order_to_process_packages,","))
+			table.concat(formiga.order_to_process_packages,","))
     
     -- sacamos el timestamp del script lua y del program_name
     local programnm = formiga.os.compose_dir(formiga.global_properties.build_dir,"bin",formiga.program_name)
@@ -2153,12 +2142,12 @@ function luapkg (t)
       else package_string = "OK!"
       end
       writeverbosecolor(0, "bright_green", nil, string.format("\r[%3d/%3d (%3.1f%%) done]: %-"
-                                                               ..tostring(#prev_package_string).."s",
-                                                               i, #order, 100*(i/#order), package_string))
+								..tostring(#prev_package_string).."s",
+							      i, #order, 100*(i/#order), package_string))
     end
     io.write("\n")
   end
 end
-  
+
 
 

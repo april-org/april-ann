@@ -2,6 +2,13 @@
 #include <cstring>
 #include <cstdarg>
 
+int lua_strlen(lua_State *L, int idx) {
+  lua_len(L, idx);
+  int len = lua_toint(L, -1);
+  lua_pop(L, 1);
+  return len;
+}
+
 bool lua_isFILE(lua_State *L, int idx) {
   void *ud;
   luaL_checkany(L, idx);

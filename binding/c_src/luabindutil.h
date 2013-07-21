@@ -13,6 +13,8 @@ int equaluserdata(lua_State *L);
 
 typedef char* NEW_STRING;
 
+int lua_strlen(lua_State *L, int idx);
+
 bool   lua_tobool(lua_State *L, int idx);
 int    lua_toint(lua_State *L, int idx);
 int64_t lua_toint64(lua_State *L, int idx);
