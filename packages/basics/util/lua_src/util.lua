@@ -441,6 +441,13 @@ function reduce(func, initial_value, ...)
   return accum
 end
 
+function apply(func, ...)
+  if not func then func = function() end end
+  for key,value in unpack(arg) do
+    func(key,value)
+  end
+end
+
 -- This function prepares a safe environment for call user functions
 function safe_call(f, env, ...)
   env = env or {}
