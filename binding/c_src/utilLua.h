@@ -16,7 +16,7 @@ bool leer_bool_params(lua_State *L, const char *name, bool *v, int n);
 
 // toma una tabla en la pila y devuelve la longitud de la misma
 // la pila se queda igual, con la tabla en el tope
-int table_getn(lua_State *L);
+#define table_getn(L) luaL_len((L),-1);
 
 // cargan una tabla que contiene valores de tipo int, float o double
 // devuelve el tamaño del vector reservado usando new tipo[...]  que
