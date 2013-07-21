@@ -15,10 +15,11 @@ function get_table_from_dotted_string(dotted_string, create, basetable)
   return current
 end
 
-function check_version(num)
-  assert(num == util.version(),
-	 string.format("Incorrect version number, expected %d, found %d",
-		       num, util.version()))
+function check_version(major_num,minor_num)
+  local major_v,minor_v = util.version()
+  assert(major_num == major_v and minor_num == minor_v,
+	 string.format("Incorrect version number, expected %d.%d, found %d.%d",
+		       major_num, minor_num, major_v, minor_v))
 end
 
 -- Convert a table in a class, and it receives an optional parent class to

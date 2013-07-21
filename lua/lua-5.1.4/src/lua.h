@@ -22,7 +22,8 @@
 #define LUA_COPYRIGHT	"Copyright (C) 1994-2008 Lua.org, PUC-Rio"
 #define LUA_AUTHORS 	"R. Ierusalimschy, L. H. de Figueiredo & W. Celes"
 
-#define APRILANN_VERSION_NUM 000200
+#define APRILANN_VERSION_MAJOR 0
+#define APRILANN_VERSION_MINOR 2
 #define APRILANN_RELEASE   "April-ANN v0.2.0-beta"
 #define APRILANN_COPYRIGHT "Copyright (C) 2012-2013 DSIC-UPV, CEU-UCH"
 #define APRILANN_AUTHORS   "F. Zamora-Martinez, S. España-Boquera, J. Gorbe-Moya, J. Pastor & A. Palacios"
