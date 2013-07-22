@@ -10,6 +10,38 @@
 
 #include "lua.h"
 
+/*
+** {======================================================
+** lua_popen spawns a new process connected to the current
+** one through the file streams.
+** =======================================================
+*/
+
+#if !defined(lua_popen)	/* { */
+
+#if defined(LUA_USE_POPEN)	/* { */
+
+#define lua_popen(L,c,m)	((void)L, fflush(NULL), popen(c,m))
+#define lua_pclose(L,file)	((void)L, pclose(file))
+
+#elif defined(LUA_WIN)		/* }{ */
+
+#define lua_popen(L,c,m)		((void)L, _popen(c,m))
+#define lua_pclose(L,file)		((void)L, _pclose(file))
+
+
+#else				/* }{ */
+
+#define lua_popen(L,c,m)		((void)((void)c, m),  \
+		luaL_error(L, LUA_QL("popen") " not supported"), (FILE*)0)
+#define lua_pclose(L,file)		((void)((void)L, file), -1)
+
+
+#endif				/* } */
+
+#endif			/* } */
+
+/* }====================================================== */
 
 
 LUAMOD_API int (luaopen_base) (lua_State *L);

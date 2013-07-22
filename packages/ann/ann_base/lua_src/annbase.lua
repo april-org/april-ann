@@ -141,6 +141,7 @@ function ann.mlp.all_all.generate(topology, first_count, names_prefix)
       if type(v) == "function" and obj[i] == nil then
 	obj[i] =
 	  function(...)
+	    local arg = { ... }
 	    local t = arg[1]
 	    if t == obj then
 	      table.remove(arg, 1)

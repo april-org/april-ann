@@ -1,4 +1,13 @@
 /*
+ * Modified by Francisco Zamora-Martinez
+ *
+ * Copyright (C) 2013 Francisco Zamora-Martinez
+ *
+ * Adapted to work with lua 5.2.2
+ *
+ */
+
+/*
  * gzip file I/O library
  *
  * Copyright (C) 2007 Judge Maygarden
@@ -42,7 +51,6 @@
 
 #include "lauxlib.h"
 #include "lualib.h"
-
 
 #define LUA_GZIOLIBNAME   "gzio"
 #define LUA_GZFILEHANDLE  "gzFile"
@@ -163,15 +171,18 @@ static int io_fclose (lua_State *L) {
 
 
 static int aux_close (lua_State *L) {
-  lua_getfenv(L, 1);
+  lua_getuservalue(L, 1);
+  // lua_getfenv(L, 1);
   lua_getfield(L, -1, "__close");
   return (lua_tocfunction(L, -1))(L);
 }
 
 
 static int io_close (lua_State *L) {
-  if (lua_isnone(L, 1))
-    lua_rawgeti(L, LUA_ENVIRONINDEX, IO_OUTPUT);
+  if (lua_isnone(L, 1)) {
+    lua_getuservalue(L, -1);
+    lua_rawgeti(L, -1, IO_OUTPUT);
+  }
   tofile(L);  /* make sure argument is a file */
   return aux_close(L);
 }
@@ -226,7 +237,8 @@ static int io_tmpfile (lua_State *L) {
 
 static gzFile getiofile (lua_State *L, int findex) {
   gzFile f;
-  lua_rawgeti(L, LUA_ENVIRONINDEX, findex);
+  lua_getuservalue(L, -1);
+  lua_rawgeti(L, -1, findex);
   f = *(gzFile *)lua_touserdata(L, -1);
   if (f == NULL)
     luaL_error(L, "standard %s file is closed", fnames[findex - 1]);
@@ -594,7 +606,8 @@ GZIO_API int luaopen_gzio (lua_State *L) {
   lua_createtable(L, 0, 1);
   lua_pushcfunction(L, io_pclose);
   lua_setfield(L, -2, "__close");
-  lua_setfenv(L, -2);
+  lua_setuservalue(L, -2);
+  // lua_setfenv(L, -2);
   lua_pop(L, 1);  /* pop 'popen' */
 
   /* set default close function */
