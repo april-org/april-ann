@@ -1163,8 +1163,8 @@ function formiga.__execute_script(t)
       -- creamos y ejecutamos el comando
       command = table.concat(command," ")
       printverbose(2," [execute_script] "..command)
-      local error_resul = formiga.os.execute(command, true)
-      if error_resul ~= 0 then
+      local ok,what,error_resul = formiga.os.execute(command, true)
+      if not ok then
 	error("Unitary test '".. thefile .. "' failed: " .. t.target.package.name)
       end
     end

@@ -652,11 +652,11 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 // recibe 2 tablas, la primera con medias, la segunda con las
 // desviaciones típicas
 {
-  unsigned int psize = obj->patternSize();
+  int psize = obj->patternSize();
   int npatt = obj->numPatterns();
   LUABIND_CHECK_ARGN(==, 2);
-  if (!lua_istable(L,1) || psize != lua_objlen(L,1) ||
-      !lua_istable(L,2) || psize != lua_objlen(L,2))
+  if (!lua_istable(L,1) || psize != luaL_len(L,1) ||
+      !lua_istable(L,2) || psize != luaL_len(L,2))
     LUABIND_ERROR("dataset normalize_mean_deviation: wrong arguments");
 
   float  *patt   = new float[psize];
@@ -667,7 +667,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   // LUABIND_TABLE_TO_VECTOR(table, tipo, vector, longitud)
   LUABIND_TABLE_TO_VECTOR(1, float, mean,   psize);
   LUABIND_TABLE_TO_VECTOR(2, float, invdev, psize);
-  for (unsigned int i=0; i < psize; i++) {
+  for (int i=0; i < psize; i++) {
     if (invdev[i] <= 0)
       LUABIND_FERROR2("dataset normalize_mean_deviation method dev[%d] == %f",
 		      i,invdev[i]);
@@ -678,7 +678,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   // normalizar:
   for (int i=0; i < npatt; i++) {
     obj->getPattern(i,patt);
-    for (unsigned int j=0;j<psize;j++) {
+    for (int j=0;j<psize;j++) {
       patt[j] = (patt[j]-mean[j])*invdev[j];
     }
     obj->putPattern(i,patt);
