@@ -57,6 +57,13 @@ using namespace april_utils;
 
 //BIND_END
 
+//BIND_FUNCTION util.version
+{
+  LUABIND_RETURN(int, APRILANN_VERSION_MAJOR);
+  LUABIND_RETURN(int, APRILANN_VERSION_MINOR);
+}
+//BIND_END
+
 //BIND_FUNCTION util.is_cuda_available
 {
 #ifdef USE_CUDA

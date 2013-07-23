@@ -105,6 +105,8 @@ namespace ANN {
     const string &getWeightsName() const { return weights_name; }
     bool hasWeightsName() const { return !weights_name.empty(); }
     
+    static void resetIdCounters() { next_name_id=0; next_weights_id=0; }
+    
     bool getIsBuilt() const { return is_built; }
     
     void generateDefaultWeightsName(string &dest,

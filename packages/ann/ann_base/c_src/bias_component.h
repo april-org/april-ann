@@ -28,6 +28,8 @@
 #include "token_matrix.h"
 
 namespace ANN {
+
+  /// A component which adds a bias to the given bi-dimensional input matrix.
   class BiasANNComponent : public ANNComponent {
     TokenMatrixFloat *input, *output, *error;
     Connections *bias_vector;

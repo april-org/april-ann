@@ -58,6 +58,8 @@ function trainable.supervised_trainer:__call(ann_component,
     loss_function    = loss_function or false,
     weights_table    = {},
     components_table = {},
+    component2weights_dict = {},
+    weights2component_dict = {},
     weights_order    = {},
     components_order = {},
     bunch_size       = bunch_size or false,
@@ -471,11 +473,42 @@ function trainable.supervised_trainer:build(t)
   end
   table.sort(self.weights_order)
   self.components_order = {}
-  for name,_ in pairs(self.components_table) do
+  self.component2weights_dict = {}
+  self.weights2component_dict = {}
+  for name,c in pairs(self.components_table) do
     table.insert(self.components_order, name)
+    if c:has_weigths_name() then
+      local wname = c:get_weights_name()
+      self.component2weights_dict[name]  = c:get_weights_name()
+      self.weights2component_dict[wname] = self.weights2component_dict[wname] or {}
+      table.insert(self.weights2component_dict[wname], c)
+    end
   end
   table.sort(self.components_order)
   return self.weights_table,self.components_table
+end
+
+------------------------------------------------------------------------
+
+april_set_doc("trainable.supervised_trainer.get_weights_of", {
+		class = "method",
+		summary = "Returns a the object connections related to given component name",
+		params = { "A string with the component name" },
+		outputs = { "An instance of ann.connections" }, })
+
+function trainable.supervised_trainer:get_weights_of(name)
+  return self.weights_table[self.component2weights_dict[name]]
+end
+
+april_set_doc("trainable.supervised_trainer.get_components_of", {
+		class = "method",
+		summary = "Returns a table with the components related to given weights name",
+		params = { "A string with the weights name" },
+		outputs = { "A table of ann.components instances" }, })
+
+
+function trainable.supervised_trainer:get_components_of(wname)
+  return self.weights2component_dict[wname] or {}
 end
 
 ------------------------------------------------------------------------
@@ -563,18 +596,13 @@ function trainable.supervised_trainer:grad_check_step(input, target, verbose)
   gradient=self.ann_component:backprop(gradient)
   local weight_grads = self.ann_component:compute_gradients()
   local epsilond = 0.2
+  local epsilon  = 1e-03
   local ret = true
   for wname,cnn in self:iterate_weights() do
     local w = cnn:matrix()
     local ann_grads = weight_grads[wname]
     for i=1,w:size() do
       local orig_w = w:raw_get(i-1)
-      local epsilon
-      if math.abs(orig_w) > 0.0 then
-	epsilon = 0.2 * orig_w
-      else
-	epsilon = 1e-03
-      end
       w:raw_set(i-1, orig_w - epsilon)
       local loss_a = self.loss_function:loss(self.ann_component:forward(input,
 									true),
@@ -592,11 +620,13 @@ function trainable.supervised_trainer:grad_check_step(input, target, verbose)
 		wname, i-1, ann_g, g)
       end
       if ann_g ~= 0 or g ~= 0 then
-	local err = math.abs((ann_g - g)/(ann_g+g))
-	if err > epsilond then
+	local abs_err = math.abs(ann_g - g)
+	local err = abs_err/math.abs(ann_g+g)
+	if err > epsilond and abs_err > 1e-03 then
 	  fprintf(io.stderr,
-		  "INCORRECT GRADIENT FOR %s[%d], found %g, expected %g (error %g)\n",
-		 wname, i-1, ann_g, g, err)
+		  "INCORRECT GRADIENT FOR %s[%d], found %g, expected %g "..
+		    "(error %g, abs error %g)\n",
+		  wname, i-1, ann_g, g, err, abs_err)
 	  ret = false
 	end
       end

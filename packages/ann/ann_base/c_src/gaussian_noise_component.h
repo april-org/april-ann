@@ -29,7 +29,10 @@
 using april_utils::vector;
 
 namespace ANN {
-  
+
+  /// A component which adds gaussian noise, with the given mean and variance,
+  /// to the input matrix. The size and dimensions of input matrix are not
+  /// restricted.
   class GaussianNoiseANNComponent : public ANNComponent {
     MTRand           *random;
     TokenMatrixFloat *input, *output;

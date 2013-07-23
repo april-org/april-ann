@@ -30,6 +30,9 @@ using april_utils::vector;
 
 namespace ANN {
 
+  /// This component receives a multidimensional input matrix and reinterprets
+  /// its data like to be a bi-dimensional matrix (bunch size X number of
+  /// neurons).
   class FlattenANNComponent : public ANNComponent {
     int flatten_dims[2];
     TokenMatrixFloat *input, *output, *error_input, *error_output;

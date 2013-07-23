@@ -29,14 +29,30 @@ namespace ANN {
   ///////////////////////////////////////////
 
   void ConvolutionANNComponent::initializeArrays(const int *input_dims) {
+    for (int i=1; i<input_planes_dim; ++i) {
+      output_dims[i+1] = (input_dims[i] - kernel_dims[i])/kernel_step[i] + 1;
+      input_window_num_steps[i]    = output_dims[i+1];
+      output_window_num_steps[i+1] = output_dims[i+1];
+    }
+    for (int i=input_planes_dim+1; i<=input_num_dims; ++i) {
+      output_dims[i] = (input_dims[i] - kernel_dims[i])/kernel_step[i] + 1;
+      input_window_num_steps[i]  = output_dims[i];
+      output_window_num_steps[i] = output_dims[i];
+    }
+    /*
+      for (int i=1; i<=input_num_dims; ++i) {
+      output_dims[i] = (input_dims[i] - kernel_dims[i])/kernel_step[i] + 1;
+      input_window_num_steps[i]  = output_dims[i];
+      output_window_num_steps[i] = output_dims[i];
+      }
+    */
     // input_dims[0]  => BUNCH SIZE
     // output_dims[0] => BUNCH SIZE, output_dims[1] => HIDDEN LAYER SIZE
     output_dims[0]	       = input_dims[0];
     output_dims[1]	       = hidden_size;
     input_window_size[0]       = input_dims[0];
-    input_window_size[1]       = input_dims[1];
     input_window_num_steps[0]  = 1;
-    input_window_num_steps[1]  = 1;
+    input_window_num_steps[input_planes_dim] = 1;
     output_window_size[0]      = input_dims[0];
     // AT CONSTRUCTOR: output_window_size[1] = hidden_size;
     output_window_num_steps[0] = 1;
@@ -45,22 +61,19 @@ namespace ANN {
     // AT CONSTRUCTOR: input_window_rewrap[1] = kernel_size;
     output_window_rewrap[0]    = input_dims[0];
     // AT CONSTRUCTOR: output_window_rewrap[1] = hidden_size;
-    if (input_dims[1] != kernel_dims[1])
-      ERROR_EXIT3(128, "Input matrix dim 1 must be equals to kernel dim 1,"
-		  "input_dims[1]=%d, kernel_dims[1]=%d [%s]\n",
-		  input_dims[1], kernel_dims[0], name.c_str());
-    for (int i=2; i<=input_num_dims; ++i) {
-      output_dims[i] = (input_dims[i] - kernel_dims[i])/kernel_step[i] + 1;
-      
-      input_window_size[i]	 = kernel_dims[i];
-      input_window_num_steps[i]  = output_dims[i];
-      output_window_num_steps[i] = output_dims[i];
-    }
+    if (input_dims[input_planes_dim] != kernel_dims[input_planes_dim])
+      ERROR_EXIT7(128, "Input matrix dim %d must be equals to kernel dim %d,"
+		  "input_dims[%d]=%d, kernel_dims[%d]=%d [%s]\n",
+		  input_planes_dim, input_planes_dim,
+		  input_planes_dim, input_dims[input_planes_dim],
+		  input_planes_dim, kernel_dims[input_planes_dim],
+		  name.c_str());
   }
   
   ConvolutionANNComponent::ConvolutionANNComponent(int input_num_dims,
 						   const int *_kernel_dims,
 						   const int *_kernel_step,
+						   const int input_planes_dim,
 						   int num_output_planes,
 						   const char *name,
 						   const char *weights_name) :
@@ -71,6 +84,7 @@ namespace ANN {
     error_output(0),
     weights_matrix(0),
     num_updates_from_last_prune(0),
+    input_planes_dim(input_planes_dim),
     number_input_windows(0),
     kernel_size(1),
     hidden_size(num_output_planes),
@@ -107,6 +121,7 @@ namespace ANN {
       kernel_step[i+1] = _kernel_step[i];
       input_window_order_step[i+1] = i+1;
       output_window_order_step[i+1] = i+1;
+      input_window_size[i+1] = kernel_dims[i+1];
     }
     for(int i=2; i<=input_num_dims; ++i) {
       output_window_size[i] = 1;
@@ -182,11 +197,14 @@ namespace ANN {
 					  output_window_order_step);
     number_input_windows = input_sw.numWindows();
     // CONVOLUTION OVER number_input_windows
+    MatrixFloat *input_w  = input_sw.getMatrix();
+    MatrixFloat *output_w = output_sw.getMatrix();
+    IncRef(input_w);
+    IncRef(output_w);
     while(!input_sw.isEnd() && !output_sw.isEnd()) {
-      MatrixFloat *input_w  = input_sw.getMatrix();
-      MatrixFloat *output_w = output_sw.getMatrix();
-      IncRef(input_w);
-      IncRef(output_w);
+      // reusing the same MatrixFloat across all the possible windows
+      input_sw.getMatrix(input_w);
+      output_sw.getMatrix(output_w);
       MatrixFloat *input_flattened  = getRewrappedMatrix(input_w,
 							 input_window_rewrap,
 							 2, true);
@@ -220,9 +238,9 @@ namespace ANN {
       // Free memory
       DecRef(input_flattened);
       DecRef(output_flattened);
-      DecRef(input_w);
-      DecRef(output_w);
     }
+    DecRef(input_w);
+    DecRef(output_w);
     return output;
   }
   
@@ -261,11 +279,14 @@ namespace ANN {
 					       output_window_order_step);
     assert(error_input_sw.numWindows() == number_input_windows);
     // CONVOLUTION GRADIENT
+    MatrixFloat *error_input_w  = error_input_sw.getMatrix();
+    MatrixFloat *error_output_w = error_output_sw.getMatrix();
+    IncRef(error_input_w);
+    IncRef(error_output_w);
     while(!error_input_sw.isEnd() && !error_output_sw.isEnd()) {
-      MatrixFloat *error_input_w  = error_input_sw.getMatrix();
-      MatrixFloat *error_output_w = error_output_sw.getMatrix();
-      IncRef(error_input_w);
-      IncRef(error_output_w);
+      // reuse the same MatrixFloat across all possible windows
+      error_input_sw.getMatrix(error_input_w);
+      error_output_sw.getMatrix(error_output_w);
       MatrixFloat *error_input_flattened  = getRewrappedMatrix(error_input_w,
 							       output_window_rewrap,
 							       2, true);
@@ -301,9 +322,9 @@ namespace ANN {
       // Free memory
       DecRef(error_input_flattened);
       DecRef(error_output_flattened);
-      DecRef(error_input_w);
-      DecRef(error_output_w);
     }
+    DecRef(error_input_w);
+    DecRef(error_output_w);
     return error_output;
   }
      
@@ -384,11 +405,13 @@ namespace ANN {
 					       output_window_num_steps,
 					       output_window_order_step);
     unsigned int bunch_size = error_input_mat->getDimSize(0);
+    MatrixFloat *input_w       = input_sw.getMatrix();
+    MatrixFloat *error_input_w = error_input_sw.getMatrix();
+    IncRef(input_w);
+    IncRef(error_input_w);
     while(!input_sw.isEnd() && !error_input_sw.isEnd()) {
-      MatrixFloat *input_w       = input_sw.getMatrix();
-      MatrixFloat *error_input_w = error_input_sw.getMatrix();
-      IncRef(input_w);
-      IncRef(error_input_w);
+      input_sw.getMatrix(input_w);
+      error_input_sw.getMatrix(error_input_w);
       MatrixFloat *input_flattened = getRewrappedMatrix(input_w,
 							input_window_rewrap,
 							2, true);
@@ -414,9 +437,9 @@ namespace ANN {
       // Free memory
       DecRef(input_flattened);
       DecRef(error_input_flattened);
-      DecRef(input_w);
-      DecRef(error_input_w);
     }
+    DecRef(input_w);
+    DecRef(error_input_w);
   }
 
   void ConvolutionANNComponent::computeGradients(MatrixFloat*& weight_grads) {
@@ -424,10 +447,12 @@ namespace ANN {
       weight_grads = weights_matrix->getPtr()->cloneOnlyDims();
       weight_grads->zeros();
     }
+    MatrixFloat *input_error_mat = error_input->getMatrix();
+    unsigned int bunch_size = input_error_mat->getDimSize(0);
     computeBP(weight_grads,
 	      input->getMatrix(),
 	      error_input->getMatrix(),
-	      1.0f,
+	      1.0f/bunch_size,
 	      1.0f);
   }
 
@@ -446,7 +471,7 @@ namespace ANN {
   ANNComponent *ConvolutionANNComponent::clone() {
     ConvolutionANNComponent *component = new
       ConvolutionANNComponent(input_num_dims, kernel_dims+1, kernel_step+1,
-			      hidden_size,
+			      input_planes_dim, hidden_size,
 			      name.c_str(), weights_name.c_str());
     component->input_size     = input_size;
     component->output_size    = output_size;

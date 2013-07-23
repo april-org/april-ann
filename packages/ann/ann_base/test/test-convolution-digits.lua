@@ -134,13 +134,13 @@ end
 datosentrenar = {
   input_dataset  = train_input,
   output_dataset = train_output,
-  -- shuffle        = shuffle_random,
+  shuffle        = shuffle_random,
 }
 
 datosvalidar = {
   input_dataset  = val_input,
   output_dataset = val_output,
-  bunch_size = 128,
+  --  bunch_size = 128,
 }
 
 if check_grandients then

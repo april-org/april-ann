@@ -1,277 +1,205 @@
-learning_rate = 0.1
+verbose = false
+rnd     = random(1234)
 
------------------
--- DOT PRODUCT --
------------------
-
-w = matrix.col_major(3, 2, {1, 2,
-			    3, 4,
-			    5, 6})
-c = ann.components.dot_product{ input=2, output=3, weights="w" }
-c:set_option("learning_rate", learning_rate)
-c:build{ weights = { w = ann.connections{ input=2, output=3, w = w } } }
-i = matrix.col_major(2, 2, {5, 6,
-			    7, 8})
-o = c:forward(tokens.matrix( i:clone() )):get_matrix()
-
-if o ~= (i*w:transpose()) then
-  print(o)
-  print(i*w:transpose())
-  error("Error!!!")
+function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
+  if verbose then
+    fprintf(io.stderr, "\nGradients %s (%d,%d,%d,%s)\n",
+	    desc,i,o,b,loss_name)
+  end
+  ann.components.reset_id_counters()
+  local c = component_builder_func()
+  trainer = trainable.supervised_trainer(c, ann.loss[loss_name](o), b)
+  trainer:build()
+  trainer:randomize_weights{ inf = -1, sup = 1, random = rnd }
+  input  = matrix.col_major(b, i):uniformf(-1,1,rnd)
+  if (loss_name == "cross_entropy" or
+      loss_name == "multi_class_cross_entropy") then
+    target = matrix.col_major(b, o):uniformf(0,1,rnd)
+  else
+    target = matrix.col_major(b, o):uniformf(-1,1,rnd)
+  end
+  if norm then
+    apply(function(m) m:scal(1/m:sum()) end,
+	  target:sliding_window():iterate())
+  end
+  result = trainer:grad_check_step(tokens.matrix(input),
+				   tokens.matrix(target),
+				   verbose)
+  if not result then
+    print("---- INPUT ----")
+    print(input)
+    print("---- TARGET ----")
+    print(target)
+    for name,c in trainer:iterate_components() do
+      print("---- " .. name .. " ----")
+      print(c:get_input():get_matrix())
+      print(c:get_output():get_matrix())
+      print(c:get_error_input():get_matrix())
+      print(c:get_error_output():get_matrix())
+    end
+    error(string.format("Error at %s (%d,%d,%d,%s) !!!",desc,i,o,b,loss_name))
+  end
 end
 
-j = matrix.col_major(2, 3, {1, 2, 3,
-			    4, 5, 6})
-o = c:backprop(tokens.matrix( j:clone() )):get_matrix()
-if o ~= (j*w)then
-  print(o)
-  print(j*w)
-  error("Error!!!")
+------------------------
+-- DOT PRODUCT + BIAS --
+------------------------
+
+for i=2,4 do
+  for o=2,4 do
+    for b=1,4 do
+      check_component(function()
+			return ann.components.stack():
+			push( ann.components.dot_product{ input=i, output=o } ):
+			push( ann.components.bias{ size=o } )
+		      end,
+		      "mse", i, o, b, "DOTPRODUCT + BIAS")
+    end
+  end
 end
 
-c:update()
-w  = w - learning_rate/math.sqrt(2) * j:transpose() * i
-cw = c:copy_weights().w:matrix()
-if w ~= cw then
-  print(cw)
-  print(w)
-  error("Error!!!")
+-------------------------------
+-- CONVOLUTION + MAX POOLING --
+-------------------------------
+
+for n=1,4 do
+  for b=1,4 do
+    check_component(function()
+		      return ann.components.stack():
+		      push( ann.components.rewrap{ size={1, 8, 8} } ):
+		      push( ann.components.convolution{ kernel={1, 3, 3}, n=n } ):
+		      --push( ann.components.convolution_bias{ n=n, ndims=3 } ):
+		      push( ann.components.max_pooling{ kernel={n, 2, 2} } ):
+		      push( ann.components.flatten() )
+		    end,
+		    "mse", 64, 9, b, "CONVOLUTION "..n)
+  end
 end
 
-i = matrix.col_major(1, 2, {10, 15})
-o = c:forward(tokens.matrix( i:clone() )):get_matrix()
+-------------------------------
+-- COPY + JOIN + DOT PRODUCT --
+-------------------------------
 
-if o ~= (i*w:transpose()) then
-  print(o)
-  print(i*w:transpose())
-  error("Error!!!")
-end
-
-j = matrix.col_major(1, 3, {10, 15, 20})
-o = c:backprop(tokens.matrix( j:clone() )):get_matrix()
-if o ~= (j*w)then
-  print(o)
-  print(j*w)
-  error("Error!!!")
-end
-
-c:update()
-w  = w - learning_rate * j:transpose() * i
-cw = c:copy_weights().w:matrix()
-if w ~= cw then
-  print(cw)
-  print(w)
-  error("Error!!!")
-end
-
-----------
--- BIAS --
-----------
-
-b = matrix.col_major(4, {1, 2, 3, 4})
-c = ann.components.bias{ size=4, weights="b" }
-c:set_option("learning_rate", learning_rate)
-c:build{ weights = { b = ann.connections{ input=1, output=4,
-					  w = b:rewrap(4,1) } } }
-i = matrix.col_major(4, {5, 6, 7, 8})
-o = c:forward(tokens.matrix( i:clone() )):get_matrix()
-if o ~= (b+i) then
-  print(o)
-  print(b+i)
-  error("Error!!!")
-end
-
-o = c:backprop(tokens.matrix( i:clone():pow(2) )):get_matrix()
-if o ~= i:clone():pow(2) then
-  print(o)
-  print(i:clone():pow(2))
-  error("Error!!!")
-end
-
-c:update()
-current,old = c:copy_weights().b:matrix()
-if current:clone("row_major"):rewrap(4)~=(b-i:clone():pow(2)*learning_rate):rewrap(4) then
-  print(current)
-  print(b - i:clone():pow(2) * learning_rate)
-  error("Error!!!")
-end
-
-----------
--- COPY --
-----------
-
-c = ann.components.copy{ input=4, times=2 }
-c:build()
-o = c:forward(tokens.matrix( i:clone() )):convert_to_bunch_vector()
-if o:size() ~= 2 then
-  print(o:size())
-  error("Error!!!")
-end
-map(function(v)
-      if i:rewrap(1,4) ~= v:get_matrix() then
-	print(v:get_matrix())
-	print(i)
-	error("Error!!!")
+for t=2,4 do
+  for i=2,4 do
+    for o=2,4 do
+      for b=1,4 do
+	check_component(function()
+			  local j = ann.components.join()
+			  for k=1,t do
+			    j:add( ann.components.dot_product{ input=i,
+							       output=o,
+							       weights="w" } )
+			  end
+			  return ann.components.stack():
+			  push( ann.components.copy{ input=i, times=t } ):
+			  push( j )
+			end,
+			"mse", i, o*t, b, "COPY "..t)
       end
-    end, o.iterate, o)
-
-k = tokens.vector.bunch()
-k:push_back( tokens.matrix( i:clone():rewrap(1,4) ) )
-k:push_back( tokens.matrix( i:clone():pow(2):rewrap(1,4) ) )
-o = c:backprop( k ):get_matrix()
-if o ~= (i + i:clone():pow(2)):rewrap(1,4) then
-  print(o)
-  print(i + i:clone():pow(2))
-  error("Error!!!")
+    end
+  end
 end
 
-j = matrix.col_major(2, 4, { 0.1, -0.2, 0.1, -0.3,
-			     0.4, -0.2, -0.5, 0.6 })
+--------------
+-- LOGISTIC --
+--------------
 
----------------
--- HARD TANH --
----------------
+for i=1,4 do
+  for o=1,4 do
+    for b=1,4 do
+      check_component(function()
+			return ann.components.stack():
+			push( ann.components.dot_product{ input=i, output=o } ):
+			push( ann.components.actf.logistic() )
+		      end,
+		      "mse", i, o, b, "LOGISTIC")
+    end
+  end
+end
 
-i = matrix.col_major(2, 4, {-0.1, 0.1, 0.8, -0.8,
-			    1, -1, 2, -2})
-ref = matrix.col_major(2, 4, {-0.1, 0.1, 0.8, -0.8,
-			      1, -1, 1, -1})
-c = ann.components.actf.hardtanh()
-c:build{ input=4, output=4 }
-o = c:forward( tokens.matrix( i:clone() ) ):get_matrix()
+------------------
+-- LOG_LOGISTIC --
+------------------
 
-if ref ~= o then
-  print(o)
-  print(ref)
-  error("Error!!!")
+for i=1,4 do
+  for o=1,4 do
+    for b=1,4 do
+      check_component(function()
+			return ann.components.stack():
+			push( ann.components.dot_product{ input=i, output=o } ):
+			push( ann.components.actf.log_logistic() )
+		      end,
+		      "cross_entropy", i, o, b, "LOG_LOGISTIC")
+    end
+  end
 end
 
 ----------
 -- TANH --
 ----------
 
-ref = i:clone():scal(0.5):tanh()
-c = ann.components.actf.tanh()
-c:build{ input=4, output=4 }
-o = c:forward( tokens.matrix( i:clone() ) ):get_matrix()
-if ref ~= o then
-  print(o)
-  print(ref)
-  error("Error!!!")
+for i=1,4 do
+  for o=1,4 do
+    for b=1,4 do
+      check_component(function()
+			return ann.components.stack():
+			push( ann.components.dot_product{ input=i, output=o } ):
+			push( ann.components.actf.tanh() )
+		      end,
+		      "mse", i, o, b, "TANH")
+    end
+  end
 end
 
 --------------
--- logistic --
+-- SOFTPLUS --
 --------------
 
-ref = ( (-i):exp() + i:clone():fill(1) ):pow(-1)
-c = ann.components.actf.logistic()
-c:build{ input=4, output=4 }
-o = c:forward( tokens.matrix( i:clone() ) ):get_matrix()
-if ref ~= o then
-  print(o)
-  print(ref)
-  error("Error!!!")
-end
-
-ref = (o - o:clone():pow(2)):cmul(j:clone()):rewrap(2,4)
-o = c:backprop( tokens.matrix( j:clone() ) ):get_matrix()
-
-if ref ~= o then
-  print(o)
-  print(ref)
-  error("Error!!!")
-end
-
-------------------
--- log_logistic --
-------------------
-
-ref = ( (-i):exp() + i:clone():fill(1) ):pow(-1):log()
-c = ann.components.actf.log_logistic()
-c:build{ input=4, output=4 }
-o = c:forward( tokens.matrix( i:clone() ) ):get_matrix()
-if ref ~= o then
-  print(o)
-  print(ref)
-  error("Error!!!")
-end
-
-o = c:backprop( tokens.matrix( j:clone() ) ):get_matrix()
-if o ~= j then
-  print(o)
-  print(j)
-  error("Error!!!")
-end
-
---------------
--- softplus --
---------------
-
-ref = i:clone():exp():log1p()
-c = ann.components.actf.softplus()
-c:build{ input=4, output=4 }
-o = c:forward( tokens.matrix( i:clone() ) ):get_matrix()
-if ref ~= o then
-  print(o)
-  print(ref)
-  error("Error!!!")
-end
-
-ref = ( (-i):exp() + i:clone():fill(1) ):pow(-1):cmul(j:clone()):rewrap(2,4)
-o = c:backprop( tokens.matrix( j:clone() ) ):get_matrix()
-if o ~= ref then
-  print(o)
-  print(ref)
-  error("Error!!!")
+for i=1,4 do
+  for o=1,4 do
+    for b=1,4 do
+      check_component(function()
+			return ann.components.stack():
+			push( ann.components.dot_product{ input=i, output=o } ):
+			push( ann.components.actf.softplus() )
+		      end,
+		      "mse", i, o, b, "SOFTPLUS")
+    end
+  end
 end
 
 -------------
--- softmax --
+-- SOFTMAX --
 -------------
 
-ref = i:clone():exp()
-for w in ref:sliding_window():iterate() do w:scal(1/w:sum()) end
-
-c = ann.components.actf.softmax()
-c:build{ input=4, output=4 }
-o = c:forward( tokens.matrix( i:clone() ) ):get_matrix()
-if ref ~= o then
-  print(o)
-  print(ref)
-  error("Error!!!")
-end
-
-ref = (o - o:clone():pow(2)):cmul(j:clone()):rewrap(2,4)
-o = c:backprop( tokens.matrix( j:clone() ) ):get_matrix()
-
-if ref ~= o then
-  print(o)
-  print(ref)
-  error("Error!!!")
+for i=1,4 do
+  for o=3,6 do
+    for b=1,4 do
+      check_component(function()
+			return ann.components.stack():
+			push( ann.components.dot_product{ input=i, output=o } ):
+			push( ann.components.actf.softmax() )
+		      end,
+		      "mse", i, o, b, "SOFTMAX")
+    end
+  end
 end
 
 -----------------
--- log_softmax --
+-- LOG_SOFTMAX --
 -----------------
 
-ref = i:clone():exp()
-map(function(i) r=ref:slice({i,1},{1,4}) r:scal(1/r:sum()) end, range,
-    1, ref:dim()[1])
-ref:log()
-c = ann.components.actf.log_softmax()
-c:build{ input=4, output=4 }
-o = c:forward( tokens.matrix( i:clone() ) ):get_matrix()
-if ref ~= o then
-  print(o)
-  print(ref)
-  error("Error!!!")
-end
-
-o = c:backprop( tokens.matrix( j:clone() ) ):get_matrix()
-
-if j ~= o then
-  print(o)
-  print(j)
-  error("Error!!!")
+for i=1,4 do
+  for o=3,6 do
+    for b=1,4 do
+      check_component(function()
+			return ann.components.stack():
+			push( ann.components.dot_product{ input=i, output=o } ):
+			push( ann.components.actf.log_softmax() )
+		      end,
+		      "multi_class_cross_entropy", i, o, b, "LOG_SOFTMAX",
+		      true)
+    end
+  end
 end

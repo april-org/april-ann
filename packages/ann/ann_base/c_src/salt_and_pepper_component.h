@@ -30,6 +30,10 @@ using april_utils::vector;
 
 namespace ANN {
   
+  /// This component adds to the input matrix Salt and Pepper noise, using a
+  /// given random object, the noise probability (50% is this is for zero, and
+  /// 50% for one), and the float values of zero and one. The matrix size and
+  /// dimensions are not restricted.
   class SaltAndPepperANNComponent : public ANNComponent {
     MTRand           *random;
     TokenMatrixFloat *input, *output;

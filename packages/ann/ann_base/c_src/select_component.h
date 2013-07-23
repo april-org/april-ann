@@ -30,6 +30,10 @@ using april_utils::vector;
 
 namespace ANN {
 
+  /// This component has a dimension and index properties, and applies the
+  /// matrix::select(dimension, index) method to the input matrix. The size and
+  /// dimensions of the input matrix are not restricted, only the given
+  /// dimension property and index must be valid at the input matrix.
   class SelectANNComponent : public ANNComponent {
     int dimension, index;
     TokenMatrixFloat *input, *output, *error_input, *error_output;

@@ -30,6 +30,10 @@ using april_utils::vector;
 
 namespace ANN {
 
+  /// This component modifies the input matrix to be reinterpreted as the given
+  /// dimension sizes array. If the input matrix is not contiguous in memory, it
+  /// will be cloned. If it is contiguous, the output of this component is a
+  /// reinterpretation of input matrix, but the memory pointer will be shared.
   class RewrapANNComponent : public ANNComponent {
     int *rewrap_dims, n;
     TokenMatrixFloat *input, *output, *error_input, *error_output;
