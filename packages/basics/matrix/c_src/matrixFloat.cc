@@ -305,10 +305,10 @@ struct axpy_functor {
 template<>
 void Matrix<float>::axpy(float alpha, const Matrix<float> *other) {
   if (size() != other->size())
-    ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d",
+    ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d\n",
 		size(), other->size());
   if (major_order != other->major_order)
-    ERROR_EXIT(128, "Matrices with different major orders");
+    ERROR_EXIT(128, "Matrices with different major orders\n");
   axpy_functor functor(alpha);
 #ifdef USE_MKL
   applyBinaryFunctionWithSpanIteratorNOPARALLEL(this, other, functor);

@@ -58,6 +58,8 @@ function trainable.supervised_trainer:__call(ann_component,
     loss_function    = loss_function or false,
     weights_table    = {},
     components_table = {},
+    component2weights_dict = {},
+    weights2component_dict = {},
     weights_order    = {},
     components_order = {},
     bunch_size       = bunch_size or false,
@@ -471,11 +473,42 @@ function trainable.supervised_trainer:build(t)
   end
   table.sort(self.weights_order)
   self.components_order = {}
-  for name,_ in pairs(self.components_table) do
+  self.component2weights_dict = {}
+  self.weights2component_dict = {}
+  for name,c in pairs(self.components_table) do
     table.insert(self.components_order, name)
+    if c:has_weigths_name() then
+      local wname = c:get_weights_name()
+      self.component2weights_dict[name]  = c:get_weights_name()
+      self.weights2component_dict[wname] = self.weights2component_dict[wname] or {}
+      table.insert(self.weights2component_dict[wname], c)
+    end
   end
   table.sort(self.components_order)
   return self.weights_table,self.components_table
+end
+
+------------------------------------------------------------------------
+
+april_set_doc("trainable.supervised_trainer.get_weights_of", {
+		class = "method",
+		summary = "Returns a the object connections related to given component name",
+		params = { "A string with the component name" },
+		outputs = { "An instance of ann.connections" }, })
+
+function trainable.supervised_trainer:get_weights_of(name)
+  return self.weights_table[self.component2weights_dict[name]]
+end
+
+april_set_doc("trainable.supervised_trainer.get_components_of", {
+		class = "method",
+		summary = "Returns a table with the components related to given weights name",
+		params = { "A string with the weights name" },
+		outputs = { "A table of ann.components instances" }, })
+
+
+function trainable.supervised_trainer:get_components_of(wname)
+  return self.weights2component_dict[wname] or {}
 end
 
 ------------------------------------------------------------------------
