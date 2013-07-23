@@ -152,6 +152,13 @@ void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
 			      unsigned int bunch_size,
 			      bool use_gpu);
 
+void doMultiplySoftmaxDerivatives(FloatGPUMirroredMemoryBlock *output_units,
+				  FloatGPUMirroredMemoryBlock *input_errors,
+				  FloatGPUMirroredMemoryBlock *output_errors,
+				  unsigned int size,
+				  unsigned int bunch_size,
+				  bool use_gpu);
+
 void doApplyLogSoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
 				 FloatGPUMirroredMemoryBlock *output_units,
 				 FloatGPUMirroredMemoryBlock *minimums,

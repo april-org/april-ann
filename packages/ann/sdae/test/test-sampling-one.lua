@@ -4,7 +4,7 @@ alpha         = tonumber(arg[3] or 0.1)  -- SGD alpha parameter
 beta          = tonumber(arg[4] or 0.2)
 seed          = tonumber(arg[5] or 12345) -- random seed
 
-ipat = 16
+ipat = 35
 
 max_iterations  = 100
 stop_criterion  = 1e-8
@@ -45,15 +45,15 @@ local k = 1
 local number_of_blank_cols=math.max(0, math.min(16, math.round(pnoise*16)))
 for r=1,16 do
   map(function(c) input:set(r, c, rnd:rand(1.0)) k=k+1 end,
-      range, 1, number_of_blank_cols, 1)
+      range(1, number_of_blank_cols, 1))
   map(function(c) table.insert(mask, k) k=k+1 end,
-      range, number_of_blank_cols+1, 16, 1)
+      range(number_of_blank_cols+1, 16, 1))
 end
 matrix.saveImage(input, "wop0.pnm")
 
 noise = ann.components.stack():
-push(ann.components.gaussian_noise{ random=random(), mean=0, var=0.2 }):
-push(ann.components.salt_and_pepper{ random=random(), prob=0.2 })
+push(ann.components.gaussian_noise{ random=random(), mean=0, var=0.6 }):
+push(ann.components.salt_and_pepper{ random=random(), prob=0.3 })
 noise:build{ input=256, output=256 }
 
 output,L,chain = ann.autoencoders.iterative_sampling{

@@ -15,6 +15,13 @@ function get_table_from_dotted_string(dotted_string, create, basetable)
   return current
 end
 
+function check_version(major_num,minor_num)
+  local major_v,minor_v = util.version()
+  assert(major_num == major_v and minor_num == minor_v,
+	 string.format("Incorrect version number, expected %d.%d, found %d.%d",
+		       major_num, minor_num, major_v, minor_v))
+end
+
 -- Convert a table in a class, and it receives an optional parent class to
 -- implement simple heritance
 function class(classname, parentclass)
@@ -439,6 +446,13 @@ function reduce(func, initial_value, ...)
     accum = func(accum, value or key)
   end
   return accum
+end
+
+function apply(func, ...)
+  if not func then func = function() end end
+  for key,value in unpack(arg) do
+    func(key,value)
+  end
 end
 
 -- This function prepares a safe environment for call user functions

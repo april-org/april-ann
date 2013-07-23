@@ -27,15 +27,18 @@
 #include "connection.h"
 
 namespace ANN {
+
+  /// A component which computes a convolutional layer using given kernel size
+  /// and step, and the given number of output planes.
   class ConvolutionANNComponent : public ANNComponent {
     TokenMatrixFloat *input, *error_input, *output, *error_output;
     Connections *weights_matrix;
-    MatrixFloat *bias_matrix; // rewrapping of bias_vector matrix to fits at
-			      // output sliding window sizes
     unsigned int num_updates_from_last_prune;
     
     // parameters of the convolution
     
+    /// Dimension where input planes are located
+    const int input_planes_dim;
     /// The number of convolutions computed during last forward
     int number_input_windows;
     /// The size of one kernel (number of inputs of one hidden neuron)
@@ -106,9 +109,11 @@ namespace ANN {
 
   public:
     ConvolutionANNComponent(int input_num_dims,
-			    const int *_kernel_dims, // input_num_dims
-			    const int *_kernel_step, // step
-			    int num_output_planes,   // hidden layer size
+			    const int *_kernel_dims,  // input_num_dims
+			    const int *_kernel_step,  // step
+			    const int input_planes_dim, // dimension where input
+						        // planes are located
+			    int num_output_planes,      // hidden layer size
 			    const char *name=0, const char *weights_name=0);
     virtual ~ConvolutionANNComponent();
     virtual Token *getInput() { return input; }

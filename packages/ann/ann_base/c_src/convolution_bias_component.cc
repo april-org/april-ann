@@ -152,20 +152,22 @@ namespace ANN {
 					  window_num_steps);
     number_input_windows = input_sw.numWindows();
     // CONVOLUTION OVER number_input_windows
+    MatrixFloat *input_w  = input_sw.getMatrix();
+    MatrixFloat *output_w = output_sw.getMatrix();
+    IncRef(input_w);
+    IncRef(output_w);
     while(!input_sw.isEnd() && !output_sw.isEnd()) {
-      MatrixFloat *input_w  = input_sw.getMatrix();
-      MatrixFloat *output_w = output_sw.getMatrix();
-      IncRef(input_w);
-      IncRef(output_w);
+      input_sw.getMatrix(input_w);
+      output_sw.getMatrix(output_w);
       // ADD BIAS
       output_w->axpy(1.0f, bias_matrix);
       // Next iteration
       input_sw.next();
       output_sw.next();
-      // Free memory
-      DecRef(input_w);
-      DecRef(output_w);
     }
+    // Free memory
+    DecRef(input_w);
+    DecRef(output_w);
     DecRef(bias_matrix);
     return output;
   }
@@ -243,9 +245,10 @@ namespace ANN {
 					 window_num_steps);
     unsigned int bunch_size = error_mat->getDimSize(0);
     assert(error_sw.numWindows() == number_input_windows);
+    MatrixFloat *error_w = error_sw.getMatrix();
+    IncRef(error_w);
     while(!error_sw.isEnd()) {
-      MatrixFloat *error_w = error_sw.getMatrix();
-      IncRef(error_w);
+      error_sw.getMatrix(error_w);
       // BIAS UPDATE
       doSaxpyLoop(hidden_size,
 		  alpha,
@@ -260,9 +263,9 @@ namespace ANN {
 		  use_cuda);
       // Next iteration
       error_sw.next();
-      // Free memory
-      DecRef(error_w);
     }
+    // Free memory
+    DecRef(error_w);
   }
 
   void ConvolutionBiasANNComponent::computeGradients(MatrixFloat*& weight_grads) {
@@ -270,7 +273,9 @@ namespace ANN {
       weight_grads = bias_vector->getPtr()->cloneOnlyDims();
       weight_grads->zeros();
     }
-    computeBP(weight_grads, error->getMatrix(), 1.0f);
+    MatrixFloat *input_error_mat = error->getMatrix();
+    unsigned int bunch_size = input_error_mat->getDimSize(0)*number_input_windows;
+    computeBP(weight_grads, error->getMatrix(), 1.0f/bunch_size);
   }
 
   

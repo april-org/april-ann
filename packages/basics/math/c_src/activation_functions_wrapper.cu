@@ -943,10 +943,10 @@ void doMultiplyHardtanhDerivatives(FloatGPUMirroredMemoryBlock *input_units,
 #endif
 #endif
     for (unsigned int i=0; i<sz; ++i) {
-      if (-1.0f < input_units_ptr[i] && input_units_ptr[i] < 1.0f)
-	output_errors_ptr[i] = input_errors_ptr[i];
-      else
+      if (input_units_ptr[i] < -1.0f || input_units_ptr[i] > 1.0f)
 	output_errors_ptr[i] = 0.0f;
+      else
+	output_errors_ptr[i] = input_errors_ptr[i];
     }
 #ifdef USE_CUDA
   }
@@ -1137,6 +1137,7 @@ void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
 	float prev_unit = input_units_ptr[cur_pos];
 	cur_pos += bunch_size;
 	float cur_unit = input_units_ptr[cur_pos];
+	cur_pos += bunch_size;
 	if (prev_unit < cur_unit) {
 	  if (prev_unit < minimum) minimum = prev_unit;
 	  if (cur_unit > maximum) maximum = cur_unit;
@@ -1144,14 +1145,13 @@ void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
 	  if (cur_unit < minimum) minimum = cur_unit;
 	  if (prev_unit > maximum) maximum = prev_unit;
 	}
-	cur_pos += bunch_size;
       }
-      if ((size & 1) == 0) { // si es par
-	unsigned int max_pos = (size - 1) * bunch_size;
-	if (input_units_ptr[max_pos] < minimum)
-	  minimum = input_units_ptr[max_pos];
-	if (input_units_ptr[max_pos] > maximum)
-	  maximum = input_units_ptr[max_pos];
+      if ((size & 1) == 0) { // si es impar
+	unsigned int last_pos = (size - 1) * bunch_size;
+	if (input_units_ptr[last_pos] < minimum)
+	  minimum = input_units_ptr[last_pos];
+	if (input_units_ptr[last_pos] > maximum)
+	  maximum = input_units_ptr[last_pos];
       }
       if ((maximum - minimum) > 30.0f) minimum = maximum - 30.0f;
       double addition = 0;
@@ -1169,6 +1169,44 @@ void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
     }
 #ifdef USE_CUDA
   }
+#endif
+}
+
+void doMultiplySoftmaxDerivatives(FloatGPUMirroredMemoryBlock *output_units,
+				  FloatGPUMirroredMemoryBlock *input_errors,
+				  FloatGPUMirroredMemoryBlock *output_errors,
+				  unsigned int size,
+				  unsigned int bunch_size,
+				  bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    ERROR_PRINT("NOT IMPLEMENTED FOR CUDA!!!\n");
+  }
+  // else {
+#endif
+  const float *output_units_ptr = output_units->getPPALForRead();
+  const float *input_errors_ptr = input_errors->getPPALForRead();
+  float *output_errors_ptr      = output_errors->getPPALForWrite();
+
+  for (unsigned int b = 0; b < bunch_size; ++b) {
+    float sum = 0.0f;
+    unsigned int cur_pos = 0;
+    for (unsigned int i = 0; i < size; i++) {
+      sum += output_units_ptr[cur_pos] * input_errors_ptr[cur_pos];
+      cur_pos += bunch_size;
+    }
+    cur_pos = 0;
+    for (unsigned int i = 0; i < size; i++) {
+      output_errors_ptr[cur_pos] = ( output_units_ptr[cur_pos] *
+				     ( input_errors_ptr[cur_pos] - sum ) );
+      cur_pos += bunch_size;
+    }
+    output_units_ptr++;
+    input_errors_ptr++;
+    output_errors_ptr++;
+  }
+#ifdef USE_CUDA
+  //  }
 #endif
 }
 
