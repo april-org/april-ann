@@ -83,9 +83,9 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 
 //BIND_METHOD SlidingWindow get_matrix
 {
-  bool clone;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, bool, clone, false);
-  LUABIND_RETURN(MatrixFloat, obj->getMatrix(clone));
+  MatrixFloat *dest;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, MatrixFloat, dest, 0);
+  LUABIND_RETURN(MatrixFloat, obj->getMatrix(dest));
 }
 //BIND_END
 
