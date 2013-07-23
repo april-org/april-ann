@@ -1036,13 +1036,19 @@ next() {
 }
 
 template <typename T>
-Matrix<T> *Matrix<T>::sliding_window::getMatrix(bool clone) {
-  if (finished) return 0;
-  if (clone) ERROR_EXIT(128, "NOT IMPLEMENTED");
-  return new Matrix<T>(m->numDim, m->stride,
-		       raw_pos, sub_matrix_size,
-		       total_size, last_raw_pos + raw_pos,
-		       m->data, m->major_order, m->use_cuda);
+Matrix<T> *Matrix<T>::sliding_window::getMatrix(Matrix<T> *dest) {
+  if (finished) return dest;
+  if (dest == 0)
+    return new Matrix<T>(m->numDim, m->stride,
+			 raw_pos, sub_matrix_size,
+			 total_size, last_raw_pos + raw_pos,
+			 m->data, m->major_order, m->use_cuda);
+  else {
+    assert(dest->getRawDataAccess() == m->getRawDataAccess());
+    dest->changeSubMatrixData(raw_pos, last_raw_pos + raw_pos);
+    return dest;
+  }
+  return 0; // this never happens
 }
 
 template <typename T>

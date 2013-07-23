@@ -89,6 +89,9 @@ protected:
   }
 
 public:
+  class sliding_window;
+  friend class sliding_window;
+  
   /// Computes the position at data array given it coordinates
   int  computeRawPos(const int *coords) const;
   /// Computes the coordinates given the raw data position
@@ -279,7 +282,11 @@ public:
     ~sliding_window();
     sliding_window &operator=(const sliding_window &other);
     sliding_window *next();
-    Matrix<T> *getMatrix(bool clone=false);
+    /// This method returns the matrix at the current window position. If a
+    /// matrix is given, it must be created before using previous execution of
+    /// getMatrix method. WARNING, the matrix is not check to be correct, so be
+    /// careful.
+    Matrix<T> *getMatrix(Matrix<T> *dest=0);
     bool isEnd() const { return finished; }
     int numWindows() const;
     void setAtWindow(int windex);
@@ -345,6 +352,17 @@ private:
 	 const int *matrixSize, const int total_size, const int last_raw_pos,
 	 GPUMirroredMemoryBlock<T> *data, const CBLAS_ORDER major_order,
 	 const bool use_cuda);
+
+  /// Modifies the offset of the matrix. WARNING, this method doesn't check the
+  /// new data position, so be sure that it fits in the data pointer size
+  void changeSubMatrixData(const int new_offset, const int new_last_raw_pos) {
+    offset	 = new_offset;
+    last_raw_pos = new_last_raw_pos;
+    const_cast<iterator*>(&end_iterator)->m			= 0;
+    const_cast<const_iterator*>(&end_const_iterator)->m		= 0;
+    const_cast<best_span_iterator*>(&end_best_span_iterator)->m = 0;
+  }
+
 public:
   /********** Constructors ***********/
   /// Full constructor given numDim, dim, and major_order

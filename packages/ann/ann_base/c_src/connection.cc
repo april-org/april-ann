@@ -126,8 +126,12 @@ namespace ANN {
   void Connections::applyMaxNormPenalty(float max_norm_penalty) {
     MatrixFloat::sliding_window window(weights, 0, 0, 0, 0, 0);
     MatrixFloat::sliding_window window_prev(prev_weights, 0, 0, 0, 0, 0);
+    MatrixFloat *submat = window.getMatrix();
+    MatrixFloat *submat_prev = window_prev.getMatrix();
+    IncRef(submat);
+    IncRef(submat_prev);
     while(!window.isEnd()) {
-      MatrixFloat *submat = window.getMatrix();
+      window.getMatrix(submat);
       float norm2 = submat->norm2();
       /*
 	assert(norm2 < 10000.0f);
@@ -135,11 +139,10 @@ namespace ANN {
 	ERROR_EXIT(128, "WOWOWOW\n");
       */
       if (norm2 > max_norm_penalty) {
-	MatrixFloat *submat_prev = window_prev.getMatrix();
+	window_prev.getMatrix(submat_prev);
 	float scal_factor = max_norm_penalty/norm2;
 	submat->scal(scal_factor);
 	submat_prev->scal(scal_factor);
-	delete submat_prev;
 	/*
 	  if (norm2 > 10000.0f)
 	  for (MatrixFloat::iterator it(submat->begin()); it!=submat->end(); ++it) {
@@ -147,10 +150,11 @@ namespace ANN {
 	  }
 	*/
       }
-      delete submat;
       window.next();
       window_prev.next();
     }
+    DecRef(submat);
+    DecRef(submat_prev);
   }
 
   unsigned int Connections::size() const {
