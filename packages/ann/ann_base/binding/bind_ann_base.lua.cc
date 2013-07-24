@@ -88,6 +88,7 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "softmax_actf_component.h"
 #include "log_softmax_actf_component.h"
 #include "softplus_actf_component.h"
+#include "relu_actf_component.h"
 #include "hardtanh_actf_component.h"
 #include "sin_actf_component.h"
 #include "linear_actf_component.h"
@@ -1349,6 +1350,29 @@ using namespace ANN;
   }
   obj = new SoftplusActfANNComponent(name);
   LUABIND_RETURN(SoftplusActfANNComponent, obj);  
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//            ReLUActfANNComponent                 //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME ReLUActfANNComponent ann.components.actf.relu
+//BIND_CPP_CLASS    ReLUActfANNComponent
+//BIND_SUBCLASS_OF  ReLUActfANNComponent ActivationFunctionANNComponent
+
+//BIND_CONSTRUCTOR ReLUActfANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  }
+  obj = new ReLUActfANNComponent(name);
+  LUABIND_RETURN(ReLUActfANNComponent, obj);  
 }
 //BIND_END
 
