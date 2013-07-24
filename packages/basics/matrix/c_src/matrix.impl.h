@@ -446,52 +446,72 @@ bool Matrix<T>::putSubCol(int col, int first_row, T* vec, int vecsize) {
 
 template <typename T>
 bool Matrix<T>::sameDim(const Matrix<T> *other) const {
-  if (numDim != other->numDim) return false;
+  return sameDim(other->matrixSize, other->numDim);
+}
+
+template <typename T>
+bool Matrix<T>::sameDim(const int *dims, const int len) const {
+  if (numDim != len) return false;
   switch(numDim) {
   default:
     for (int i=0; i<numDim; ++i)
-      if (matrixSize[i] != other->matrixSize[i]) return false;
+      if (matrixSize[i] != dims[i]) return false;
     break;
-  case 2:
-    if (matrixSize[1] != other->matrixSize[1]) return false;
-  case 1:
-    if (matrixSize[0] != other->matrixSize[0]) return false;
+#define CASE(i,j) case i: if (matrixSize[j] != dims[j]) return false
+    CASE(6,5);
+    CASE(5,4);
+    CASE(4,3);
+    CASE(3,2);
+    CASE(2,1);
+    CASE(1,0);
     break;
+#undef CASE
   }
   return true;
 }
 
 template<typename T>
-Matrix<T> *Matrix<T>::select(int dim, int index) {
+Matrix<T> *Matrix<T>::select(int dim, int index, Matrix<T> *dest) {
   if (numDim == 1)
     ERROR_EXIT(128, "Not possible to execute select for numDim=1\n");
   if (dim >= numDim)
     ERROR_EXIT(128, "Select for a dimension which doesn't exists\n");
   if (index >= matrixSize[dim])
     ERROR_EXIT(128, "Select for an index out of the matrix\n");
-  Matrix<T> *result = new Matrix();
-  int d = numDim - 1;
-  // Data initialization
-  result->use_cuda     = use_cuda;
-  result->numDim       = d;
-  result->matrixSize   = new int[d];
-  result->stride       = new int[d];
-  result->major_order  = major_order;
-  result->offset       = index*stride[dim];
-  result->last_raw_pos = result->offset;
-  result->data         = data;
-  IncRef(data);
-  for(int i=0; i<dim; ++i) {
-    result->stride[i]      = stride[i];
-    result->matrixSize[i]  = matrixSize[i];
-    result->last_raw_pos  += (matrixSize[i]-1)*stride[i];
+  Matrix<T> *result;
+  if (dest == 0) {
+    result = new Matrix();
+    int d = numDim - 1;
+    // Data initialization
+    result->use_cuda     = use_cuda;
+    result->numDim       = d;
+    result->matrixSize   = new int[d];
+    result->stride       = new int[d];
+    result->major_order  = major_order;
+    result->offset       = index*stride[dim]; // the select implies an offset
+    result->last_raw_pos = result->offset;
+    result->data         = data;
+    IncRef(data);
+    for(int i=0; i<dim; ++i) {
+      result->stride[i]      = stride[i];
+      result->matrixSize[i]  = matrixSize[i];
+      result->last_raw_pos  += (matrixSize[i]-1)*stride[i];
+    }
+    for(int i=dim+1; i<numDim; ++i) {
+      result->stride[i-1]      = stride[i];
+      result->matrixSize[i-1]  = matrixSize[i];
+      result->last_raw_pos    += (matrixSize[i]-1)*stride[i];
+    }
+    result->total_size = total_size/matrixSize[dim];
   }
-  for(int i=dim+1; i<numDim; ++i) {
-    result->stride[i-1]      = stride[i];
-    result->matrixSize[i-1]  = matrixSize[i];
-    result->last_raw_pos    += (matrixSize[i]-1)*stride[i];
+  else {
+    //
+    assert(dest->total_size == total_size/matrixSize[dim]);
+    assert(dest->numDim == numDim-1);
+    //
+    dest->offset = index*stride[dim];
+    result = dest;
   }
-  result->total_size = total_size/matrixSize[dim];
   return result;
 }
 

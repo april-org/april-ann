@@ -486,12 +486,15 @@ public:
   bool putCol(int col, T *vec, int vecsize);
   bool putSubCol(int col, int first_row, T *vec, int vecsize);
 
-  // Returns true if they have the same dimension
+  /// Returns true if they have the same dimension
   bool sameDim(const Matrix<T> *other) const;
+  bool sameDim(const int *dims, const int len) const;
 
-  // Returns a matrix of one less dimension, with the elements selected for the
-  // given dimension at the given index
-  Matrix<T> *select(int dim, int index);
+  /// Returns a matrix of one less dimension, with the elements selected for the
+  /// given dimension at the given index.  If a matrix is given, it must be
+  /// created before using previous execution of select method over the same
+  /// dimension. WARNING, the matrix is not check to be correct, so be careful.
+  Matrix<T> *select(int dim, int index, Matrix<T> *dest=0);
   
   ////////////////////////////////////////////////////////////////////////////
 
