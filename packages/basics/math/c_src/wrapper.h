@@ -117,6 +117,19 @@ void doMultiplySoftplusDerivatives(FloatGPUMirroredMemoryBlock *input_units,
 				   unsigned int bunch_size,
 				   bool use_gpu);
 
+void doApplyReLUActivation(FloatGPUMirroredMemoryBlock *input_units,
+			   FloatGPUMirroredMemoryBlock *output_units,
+			   unsigned int size,
+			   unsigned int bunch_size,
+			   bool use_gpu);
+
+void doMultiplyReLUDerivatives(FloatGPUMirroredMemoryBlock *input_units,
+			       FloatGPUMirroredMemoryBlock *input_errors,
+			       FloatGPUMirroredMemoryBlock *output_errors,
+			       unsigned int size,
+			       unsigned int bunch_size,
+			       bool use_gpu);
+
 void doApplyHardtanhActivation(FloatGPUMirroredMemoryBlock *input_units,
 			       FloatGPUMirroredMemoryBlock *output_units,
 			       unsigned int size,
