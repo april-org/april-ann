@@ -723,13 +723,16 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 
 //BIND_METHOD MatrixFloat select
 {
-  LUABIND_CHECK_ARGN(==,2);
+  LUABIND_CHECK_ARGN(>=,2);
+  LUABIND_CHECK_ARGN(<=,3);
   LUABIND_CHECK_PARAMETER(1, int);
   LUABIND_CHECK_PARAMETER(2, int);
   int dim, index;
+  MatrixFloat *dest;
   LUABIND_GET_PARAMETER(1, int, dim);
   LUABIND_GET_PARAMETER(2, int, index);
-  MatrixFloat *obj2 = obj->select(dim-1, index-1);
+  LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixFloat, dest, 0);
+  MatrixFloat *obj2 = obj->select(dim-1, index-1, dest);
   LUABIND_RETURN(MatrixFloat, obj2);
 }
 //BIND_END
