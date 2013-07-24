@@ -1356,7 +1356,7 @@ function trainable.supervised_trainer:train_holdout_validation(t)
 			     default=function(t) return end },
       first_epoch        = { mandatory=false, type_match="number", default=1 },
     }, t)
-  local best_epoch       = params.first_epoch
+  local best_epoch       = params.first_epoch-1
   local best             = self:clone()
   local best_val_error   = params.validation_function(self,
 						      params.validation_table)

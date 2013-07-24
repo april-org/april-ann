@@ -37,7 +37,9 @@ inline
 void aligned_free(T *ptr) {
   _mm_free(ptr);
 }
+
 #else
+
 #include <cstdlib>
 template<typename T>
 inline
