@@ -1356,7 +1356,7 @@ function trainable.supervised_trainer:train_holdout_validation(t)
 			     default=function(t) return end },
       first_epoch        = { mandatory=false, type_match="number", default=1 },
     }, t)
-  local best_epoch       = params.first_epoch
+  local best_epoch       = params.first_epoch-1
   local best             = self:clone()
   local best_val_error   = params.validation_function(self,
 						      params.validation_table)
@@ -1379,6 +1379,11 @@ function trainable.supervised_trainer:train_holdout_validation(t)
       best           = self:clone()
       params.best_function(best, best_val_error, best_epoch)
     end
+    print(self:validate_dataset(params.validation_table))
+    print(self:clone():validate_dataset(params.validation_table))
+    print(self:clone():clone():validate_dataset(params.validation_table))
+    print(best:validate_dataset(params.validation_table))
+    print(best:clone():validate_dataset(params.validation_table))
     params.update_function({ current_epoch    = epoch,
 			     best_epoch       = best_epoch,
 			     best_val_error   = best_val_error,
@@ -1397,6 +1402,7 @@ function trainable.supervised_trainer:train_holdout_validation(t)
       break						  
     end
   end
+  print(best:validate_dataset(params.validation_table))
   return { best             = best,
 	   best_val_error   = best_val_error,
 	   best_epoch       = best_epoch,
