@@ -10,6 +10,7 @@ return {
   --   "profiler",
   "math",
   "gzio",
+  "matlab",
   
   -- MACHINE LEARNING
   "trainable",
