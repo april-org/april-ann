@@ -36,8 +36,8 @@ using april_utils::string;
 
 #ifndef NDEBUG
 #define ASSERT_MATRIX(m) do {					\
-    assert( (m)->getNumDim() == 2 );				\
-    assert( (m)->getMajorOrder() == CblasColMajor );		\
+    april_assert( (m)->getNumDim() == 2 );				\
+    april_assert( (m)->getMajorOrder() == CblasColMajor );		\
   } while(0)
 #else
 #define ASSERT_MATRIX(m)

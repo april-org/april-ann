@@ -277,7 +277,7 @@ namespace ANN {
 					       output_window_step,
 					       output_window_num_steps,
 					       output_window_order_step);
-    assert(error_input_sw.numWindows() == number_input_windows);
+    april_assert(error_input_sw.numWindows() == number_input_windows);
     // CONVOLUTION GRADIENT
     MatrixFloat *error_input_w  = error_input_sw.getMatrix();
     MatrixFloat *error_output_w = error_output_sw.getMatrix();
@@ -330,7 +330,7 @@ namespace ANN {
      
   // The ConvolutionANNComponent
   void ConvolutionANNComponent::doUpdate() {
-    assert(learning_rate > 0.0f &&
+    april_assert(learning_rate > 0.0f &&
 	   "Learning rate needs to be fixed with setOption method!!!");
     
     // Foces weights_matrix to update internal counts for a backward step
@@ -363,7 +363,7 @@ namespace ANN {
     //    printf("******* ANTES %s\n", name.c_str());
     //    weights_matrix->applyMaxNormPenalty(max_norm_penalty);
     //    printf("******* DESPUES %s\n", name.c_str());
-    assert(references > 0 && "Found 0 references of weights matrix");
+    april_assert(references > 0 && "Found 0 references of weights matrix");
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
     const float norm_learn_rate =
       -(1.0f/sqrtf(static_cast<float>(references*bunch_size*number_input_windows))) *

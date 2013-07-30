@@ -21,7 +21,7 @@
 #ifndef LOGBASE_ASSERT_H
 #define LOGBASE_ASSERT_H
 
-#include <cassert>
+#include "april_assert.h"
 #include <cmath>
 #include <cstdio>
 
@@ -59,7 +59,7 @@ class log_float {
 
   log_float raise_to(float exponent) {
     float aux = raw_value*exponent;
-    assert(aux >= rawscorezero);
+    april_assert(aux >= rawscorezero);
     return log_float(aux);
   }
 
@@ -79,28 +79,28 @@ class log_float {
 
   log_float operator += (const log_float &y) {
     *this = *this + y;
-    assert(raw_value >= rawscorezero);
+    april_assert(raw_value >= rawscorezero);
     return *this;
   }
   log_float operator += (const log_double &y);
 
   log_float operator *= (const log_float &y) {
     *this = *this * y;
-    assert(raw_value >= rawscorezero);
+    april_assert(raw_value >= rawscorezero);
     return *this;
   }
   log_float operator *= (const log_double &y);
 
   log_float operator /= (const log_float &y) {
     *this = *this / y;
-    assert(raw_value >= rawscorezero);
+    april_assert(raw_value >= rawscorezero);
     return *this;
   }
   log_float operator /= (const log_double &y);
 
   log_float operator -= (const log_float &y) {
     *this = *this - y;
-    assert(raw_value >= rawscorezero);
+    april_assert(raw_value >= rawscorezero);
     return *this;
   }
   log_float operator -= (const log_double &y);
@@ -138,12 +138,12 @@ class log_float {
   // assignment
   log_float &operator = (float &value) {
     raw_value = value;
-    assert(raw_value >= rawscorezero);
+    april_assert(raw_value >= rawscorezero);
     return *this;
   }
   log_float &operator = (double &value) {
     raw_value = value;
-    assert(raw_value >= rawscorezero);
+    april_assert(raw_value >= rawscorezero);
     return *this;
   }
   log_float &operator = (const log_double &value);
@@ -182,7 +182,7 @@ class log_double {
 
   log_double raise_to(double exponent) {
     double aux = raw_value*exponent;
-    assert(aux >= rawscorezero);
+    april_assert(aux >= rawscorezero);
     return log_double(aux);
   }
 
@@ -200,22 +200,22 @@ class log_double {
   
   log_double operator += (const log_double &y) {
     *this = *this * y;
-    assert(raw_value >= rawscorezero);
+    april_assert(raw_value >= rawscorezero);
     return *this;
   }
   log_double operator *= (const log_double &y) {
     *this = *this * y;
-    assert(raw_value >= rawscorezero);
+    april_assert(raw_value >= rawscorezero);
     return *this;
   }
   log_double operator /= (const log_double &y) {
     *this = *this / y;
-    assert(raw_value >= rawscorezero);
+    april_assert(raw_value >= rawscorezero);
     return *this;
   }
   log_double operator -= (const log_double &y) {
     *this = *this - y;
-    assert(raw_value >= rawscorezero);
+    april_assert(raw_value >= rawscorezero);
     return *this;
   }
   
@@ -255,17 +255,17 @@ class log_double {
   // assignment
   log_double &operator = (double &value) {
     raw_value = value;
-    assert(raw_value >= rawscorezero);
+    april_assert(raw_value >= rawscorezero);
     return *this;
   }
   log_double &operator = (float &value) {
     raw_value = (double)value;
-    assert(raw_value >= rawscorezero);
+    april_assert(raw_value >= rawscorezero);
     return *this;
   }
   log_double &operator = (log_float &value) {
     raw_value = (float)value;
-    assert(raw_value >= rawscorezero);
+    april_assert(raw_value >= rawscorezero);
     return *this;
   }
 
@@ -305,7 +305,7 @@ bool operator <  (const log_double &x, const log_double &y);
 
 inline log_float& log_float::operator = (const log_double &value) {
   raw_value = (float)value.raw_value;
-  assert(raw_value >= rawscorezero);
+  april_assert(raw_value >= rawscorezero);
   return *this;
 }
 
@@ -376,7 +376,7 @@ inline log_double operator + (const log_double &x, const log_double &y) {
   log_double result = (x.raw_value > y.raw_value) ?
     log_double(x.raw_value + logadd1(y.raw_value - x.raw_value)) :
     log_double(y.raw_value + logadd1(x.raw_value - y.raw_value));
-  assert(result >= log_float::zero());
+  april_assert(result >= log_float::zero());
   return result;
 }
 inline log_double operator - (const log_double &x, const log_double &y) {
@@ -385,17 +385,17 @@ inline log_double operator - (const log_double &x, const log_double &y) {
   }
   log_double result = log_double(x.raw_value + 
 				 log1sub(y.raw_value - x.raw_value));
-  assert(result >= log_float::zero());
+  april_assert(result >= log_float::zero());
   return result;
 }
 inline log_double operator * (const log_double &x, const log_double &y) {
   log_double result = log_double(x.raw_value + y.raw_value);
-  assert(result >= log_float::zero());
+  april_assert(result >= log_float::zero());
   return result;
 }
 inline log_double operator / (const log_double &x, const log_double &y) {
   log_double result = log_double(x.raw_value - y.raw_value);
-  assert(result >= log_float::zero());
+  april_assert(result >= log_float::zero());
   return result;
 }
 
@@ -422,22 +422,22 @@ inline bool operator >  (const log_double &x, const log_double &y) {
 // special cases:
 inline log_float log_float::operator += (const log_double &y) {
   *this = log_double(*this) + y;
-  assert(raw_value >= rawscorezero);
+  april_assert(raw_value >= rawscorezero);
   return *this;
 }
 inline log_float log_float::operator *= (const log_double &y) {
   *this = log_double(*this) * y;
-  assert(raw_value >= rawscorezero);
+  april_assert(raw_value >= rawscorezero);
   return *this;
 }
 inline log_float log_float::operator /= (const log_double &y) {
   *this = log_double(*this) / y;
-  assert(raw_value >= rawscorezero);
+  april_assert(raw_value >= rawscorezero);
   return *this;
 }
 inline log_float log_float::operator -= (const log_double &y) {
   *this = log_double(*this) - y;
-  assert(raw_value >= rawscorezero);
+  april_assert(raw_value >= rawscorezero);
   return *this;
 }
 

@@ -24,9 +24,12 @@
 #include <cstdio>
 #include <stdint.h>
 #include "matrixFloat.h"
+#include "matrixString.h"
+#include "list.h"
 
 #define MAX_NAME_SIZE    256
 #define HEADER_SIZE      128
+#define HEADER_TEXT_SIZE 124
 #define TAG_SIZE         8
 #define SMALL_TAG_SIZE   4
 #define SMALL_DATA_SIZE  4
@@ -35,7 +38,8 @@
 #define DATA_TYPE 0
 #define NUMBER_OF_BYTES 1
 
-class MatFileReader {
+class MatFileReader : public Referenced {
+public:
   enum MatFileDataTypes {
     INT8=1, UINT8=2, INT16=3, UINT16=4, INT32=5, UINT32=6,
     SINGLE=7, RESERVED1=8, DOUBLE=9, RESERVED2=10, RESERVED3=11,
@@ -43,78 +47,143 @@ class MatFileReader {
     COMPRESSED=15, UTF8=16, UTF16=17, UTF32=18,
     NUMBER_OF_DATA_TYPES,
   };
+  
   enum MatFileClasses {
     CL_CELL_ARRAY=1, CL_STRUCTURE=2, CL_OBJECT=3, CL_CHAR=4, CL_SPARSE=5,
     CL_DOUBLE=6, CL_SINGLE=7, CL_INT8, CL_UINT8,
-    L_INT16, CL_UINT16, CL_INT32, CL_UINT32,
+    CL_INT16, CL_UINT16, CL_INT32, CL_UINT32,
     NUMBER_OF_CLASSES,
   };
-
+private:
   struct HeaderType {
-    const char text[HEADER_TEXT_SIZE];
-    const uint16_t version;
-    const uint16_t magic;
-  };
-  class DataElement {
-  public:
-    virtual ~DataElement() { }
-    virtual uint32_t getDataType() = 0;
-    virtual uint32_t getNumberOfBytes() = 0;
-  };
-  struct FullDataElement : public DataElement {
-    union {
-      const char hbytes[4];
-      const uint32_t data_type;
-    };
-    union {
-      const char lbytes[4];
-      const uint32_t number_of_bytes;
-    };
-  public:
-    const void *data;
-    virtual uint32_t getDataType() { return data_type; }
-    virtual uint32_t getNumberOfBytes() { return number_of_bytes }
-    bool isSmall() const {
-      return (data->hbytes[2] != 0 || data->hbytes[3] != 0);
-    }
-  };
-  struct SmallDataElement : public DataElement {
-    union {
-      const char hbytes[2];
-      const uint16_t data_type;
-    };
-    union {
-      const char lbytes[2];
-      const uint16_t number_of_bytes;
-    };
-  public:
-    const void *data;
-    virtual uint32_t getDataType() { return static_cast<uint32_t>(data_type); }
-    virtual uint32_t getNumberOfBytes() { return static_cast<uint32_t>(number_of_bytes); }
+    char text[HEADER_TEXT_SIZE];
+    uint16_t version;
+    uint16_t magic;
   };
   
-  size_t mmapped_data_pos;
-  char *mmapped_data;
-  int   fd;
-  headerType *header;
-  
-  char header_text[HEADER_TEXT_SIZE+1];
-  int16_t version;
+  struct FullDataTag {
+    union {
+      char hbytes[4];
+      uint32_t data_type;
+    };
+    union {
+      char lbytes[4];
+      uint32_t number_of_bytes;
+    };
+  };
 
-  bool swap_bytes;
-  uint32_t current_data_tag_header[2];
-  bool readNextDataBlock();
-  void decreaseNumBytes(uint32_t n);
-  uint32_t getNumBytes() const { return current_data_tag_header[NUMBER_OF_BYTES]; }
+  struct SmallDataTag {
+    union {
+      char hbytes[2];
+      uint16_t data_type;
+    };
+    union {
+      char lbytes[2];
+      uint16_t number_of_bytes;
+    };
+  };
+
+  /************* DATA ELEMENTS ****************/
+public:
+  class CellArrayDataElement;
+
+  class DataElement : public Referenced {
+    friend class MatFileReader;
+  protected:
+    const char *data;
+    size_t data_pos;
+    DataElement(const char *ptr) :
+    Referenced(), data(ptr), data_pos(0) { }
+  public:
+    DataElement() : data(0), data_pos(0) { }
+    virtual ~DataElement() { }
+    virtual uint32_t getDataType() const = 0;
+    virtual uint32_t getNumberOfBytes() const = 0;
+    virtual size_t   getSizeOf() const = 0;
+    template<typename T>
+    T getData() const { return reinterpret_cast<T>(data); }
+    void reset() { data_pos = 0; }
+    // SUB-ELEMENTS
+    DataElement *getNextSubElement();
+    // ONLY IF MATRIX ARRAY
+    MatrixFloat *getMatrix(char *name, size_t maxsize, bool col_major=false);
+    uint32_t getClass();
+    // ONLY IF CELL ARRAY
+    CellArrayDataElement *getCellArray(char *name, size_t maxsize);
+    // ONLY IF CHAR ARRAY
+    MatrixString *getMatrixString(char *name, size_t maxsize);
+  };
+
+  class CellArrayDataElement : public Referenced {
+    int *dims, *stride, num_dims, total_size;
+    DataElement **elements;
+    int computeRawPos(const int *coords);
+  public:
+    CellArrayDataElement(const int *dims, int num_dims);
+    ~CellArrayDataElement();
+    DataElement *getElementAt(const int *coords, int n);
+    DataElement *getElementAt(int raw_idx);
+    void setElementAt(const int *coords, int n, DataElement *e);
+    void setElementAt(int raw_idx, DataElement *e);
+    int getNumDim() const { return num_dims; }
+    int getDimSize(int i) const { return dims[i]; }
+    const int *getDimPtr() const { return dims; }
+    int getSize() const { return total_size; }
+  };
   
+private:
+  struct FullDataElement : public DataElement {
+    const FullDataTag *tag;
+  public:
+    FullDataElement(const char *ptr) :
+      DataElement(ptr+TAG_SIZE),
+    tag(reinterpret_cast<const FullDataTag*>(ptr)) { }
+    virtual uint32_t getDataType() const { return tag->data_type; }
+    virtual uint32_t getNumberOfBytes() const { return tag->number_of_bytes; }
+    virtual size_t   getSizeOf() const { return tag->number_of_bytes+TAG_SIZE; }
+    bool isSmall() const { return (tag->hbytes[2]!=0 || tag->hbytes[3]!=0); }
+  };
+  
+  struct SmallDataElement : public DataElement {
+    const SmallDataTag *tag;
+  public:
+    SmallDataElement(const char *ptr) :
+      DataElement(ptr+SMALL_TAG_SIZE),
+    tag(reinterpret_cast<const SmallDataTag*>(ptr)) { }
+    virtual uint32_t getDataType() const { return static_cast<uint32_t>(tag->data_type); }
+    virtual uint32_t getNumberOfBytes() const { return static_cast<uint32_t>(tag->number_of_bytes); }
+    virtual size_t   getSizeOf() const { return TAG_SIZE; }
+  };
+
+  /********************************************/
+  
+  /************** PROPERTIES *****************/
+  char   *mmapped_data;
+  size_t  mmapped_data_size;
+  size_t  mmapped_data_pos;
+  int     fd;
+  const HeaderType *header;
+  bool swap_bytes;
+  april_utils::list<char*> decompressed_buffers;
+  
+  /** MMAPPED DATA POINTER ACCESS **/
   template<typename T>
-  T getCurrent() { return static_cast<T>(mmapped_data + mmapped_data_pos); }
-  void  addToCurrent(size_t p) { mmapped_data_pos += p; }
+  T getCurrent() { return reinterpret_cast<T>(mmapped_data+mmapped_data_pos); }
+  void addToCurrent(size_t p) {
+    mmapped_data_pos += p;
+    april_assert(mmapped_data_pos <= mmapped_data_size);
+  }
+  /*********************************/
   
 public:
+  
   MatFileReader(const char *path);
   ~MatFileReader();
-  MatrixFloat *readNextMatrix(char *name, bool col_major=false);
+  DataElement *getNextDataElement();
+  void reset() { mmapped_data_pos = 0; }
+
+  static DataElement *getDataElement(const char *ptr);
+  
 };
 
 #endif // MATLAB_H

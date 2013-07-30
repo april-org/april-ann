@@ -128,6 +128,11 @@ T &Matrix<T>::iterator::operator*() {
 }
 
 template <typename T>
+T *Matrix<T>::iterator::operator->() {
+  return &data[raw_pos];
+}
+
+template <typename T>
 int Matrix<T>::iterator::getRawPos() const {
   return raw_pos;
 }
@@ -285,6 +290,11 @@ T &Matrix<T>::col_major_iterator::operator*() {
 }
 
 template <typename T>
+T *Matrix<T>::col_major_iterator::operator->() {
+  return &data[raw_pos];
+}
+
+template <typename T>
 int Matrix<T>::col_major_iterator::getRawPos() const {
   return raw_pos;
 }
@@ -429,6 +439,11 @@ typename Matrix<T>::const_iterator &Matrix<T>::const_iterator::operator++() {
 template <typename T>
 const T &Matrix<T>::const_iterator::operator*() const {
   return data[raw_pos];
+}
+
+template <typename T>
+const T *Matrix<T>::const_iterator::operator->() const {
+  return &data[raw_pos];
 }
 
 template <typename T>
@@ -630,6 +645,11 @@ typename Matrix<T>::const_col_major_iterator
 template <typename T>
 const T &Matrix<T>::const_col_major_iterator::operator*() const {
   return data[raw_pos];
+}
+
+template <typename T>
+const T *Matrix<T>::const_col_major_iterator::operator->() const {
+  return &data[raw_pos];
 }
 
 template <typename T>
@@ -1044,7 +1064,7 @@ Matrix<T> *Matrix<T>::sliding_window::getMatrix(Matrix<T> *dest) {
 			 total_size, last_raw_pos + raw_pos,
 			 m->data, m->major_order, m->use_cuda);
   else {
-    assert(dest->getRawDataAccess() == m->getRawDataAccess());
+    april_assert(dest->getRawDataAccess() == m->getRawDataAccess());
     dest->changeSubMatrixData(raw_pos, last_raw_pos + raw_pos);
     return dest;
   }

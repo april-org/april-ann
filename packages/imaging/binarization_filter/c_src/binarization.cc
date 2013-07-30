@@ -23,8 +23,8 @@
 
 ImageFloat *binarize_niblack(const ImageFloat *src, int windowRadius, float k, float minThreshold, float maxThreshold)
 {
-  assert(src->width  > 0 && "Zero-sized image!");
-  assert(src->height > 0 && "Zero-sized image!");
+  april_assert(src->width  > 0 && "Zero-sized image!");
+  april_assert(src->height > 0 && "Zero-sized image!");
 
   ImageFloat *result       = new ImageFloat(src->width, src->height);
   ImageFloat *sum          = new ImageFloat(src->width, src->height);
@@ -119,8 +119,8 @@ ImageFloat *binarize_niblack(const ImageFloat *src, int windowRadius, float k, f
 
 ImageFloat *binarize_niblack_simple(const ImageFloat *src, int windowRadius, float k)
 {
-    assert(src->width  > 0 && "Zero-sized image!");
-    assert(src->height > 0 && "Zero-sized image!");
+    april_assert(src->width  > 0 && "Zero-sized image!");
+    april_assert(src->height > 0 && "Zero-sized image!");
     // Image Integral Matrix
     ImageFloat *result = new ImageFloat(src->width, src->height);
     double **M = new double*[src->width];
@@ -205,8 +205,8 @@ ImageFloat *binarize_niblack_simple(const ImageFloat *src, int windowRadius, flo
 
 ImageFloat *binarize_otsus(const ImageFloat *src)
 {
-    assert(src->width  > 0 && "Zero-sized image!");
-    assert(src->height > 0 && "Zero-sized image!");
+    april_assert(src->width  > 0 && "Zero-sized image!");
+    april_assert(src->height > 0 && "Zero-sized image!");
     //Image Integral Matrix
     ImageFloat *result       = new ImageFloat(src->width, src->height);
 
@@ -279,8 +279,8 @@ ImageFloat *binarize_otsus(const ImageFloat *src)
 
 ImageFloat *binarize_threshold(const ImageFloat *src, double threshold) {
 
-    assert(src->width  > 0 && "Zero-sized image!");
-    assert(src->height > 0 && "Zero-sized image!");
+    april_assert(src->width  > 0 && "Zero-sized image!");
+    april_assert(src->height > 0 && "Zero-sized image!");
     //Image Integral Matrix
     ImageFloat *result       = new ImageFloat(src->width, src->height);
 

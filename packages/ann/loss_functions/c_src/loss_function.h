@@ -53,13 +53,13 @@ namespace ANN {
       input_mat  = input_mat_token->getMatrix();
       target_mat = target_mat_token->getMatrix();
       
-      assert(input_mat->getNumDim() == 2);
-      assert(target_mat->getNumDim() == 2);
-      assert(input_mat->sameDim(target_mat));
-      assert(input_mat->getIsContiguous());
-      assert(target_mat->getIsContiguous());
-      assert(input_mat->getMajorOrder() == CblasColMajor);
-      assert(target_mat->getMajorOrder() == CblasColMajor);
+      april_assert(input_mat->getNumDim() == 2);
+      april_assert(target_mat->getNumDim() == 2);
+      april_assert(input_mat->sameDim(target_mat));
+      april_assert(input_mat->getIsContiguous());
+      april_assert(target_mat->getIsContiguous());
+      april_assert(input_mat->getMajorOrder() == CblasColMajor);
+      april_assert(target_mat->getMajorOrder() == CblasColMajor);
     }
 
   public:

@@ -25,7 +25,7 @@
 // Define NO_POOL to avoid the use of a pool of pointers
 // #define NO_POOL
 
-#include <cassert>
+#include "april_assert.h"
 #include "referenced.h"
 #include <new>
 
@@ -97,7 +97,7 @@ class GPUMirroredMemoryBlock : public Referenced {
     if (!getUpdatedPPAL()) {
       CUresult result;
       setUpdatedPPAL();
-      assert(mem_gpu != 0);
+      april_assert(mem_gpu != 0);
 
       if (!pinned) {
 	result = cuMemcpyDtoH(mem_ppal, mem_gpu, sizeof(T)*size);

@@ -200,7 +200,7 @@ namespace ANN {
      
   // The ConvolutionBiasANNComponent
   void ConvolutionBiasANNComponent::doUpdate() {
-    assert(learning_rate > 0.0f &&
+    april_assert(learning_rate > 0.0f &&
 	   "Learning rate needs to be fixed with setOption method!!!");
     
     // Foces weights_matrix to update internal counts for a backward step
@@ -223,7 +223,7 @@ namespace ANN {
     // backprop learning rule:
     // PREV_W = alpha * ERRORS + PREV_W
     const unsigned int references = bias_vector->getNumReferences();
-    assert(references > 0 && "Found 0 references of weights matrix");
+    april_assert(references > 0 && "Found 0 references of weights matrix");
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
     const float norm_learn_rate =
       -(1.0f/sqrtf(static_cast<float>(references*bunch_size*number_input_windows))) *
@@ -252,7 +252,7 @@ namespace ANN {
 					 window_step,
 					 window_num_steps);
     unsigned int bunch_size = error_mat->getDimSize(0);
-    assert(error_sw.numWindows() == number_input_windows);
+    april_assert(error_sw.numWindows() == number_input_windows);
     MatrixFloat *error_w = error_sw.getMatrix();
     IncRef(error_w);
     while(!error_sw.isEnd()) {
