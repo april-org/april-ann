@@ -21,7 +21,7 @@
 #ifndef MAX_MIN_H
 #define MAX_MIN_H
 
-#include <cassert>
+#include "april_assert.h"
 
 namespace april_utils {
   template<typename T>
@@ -37,7 +37,7 @@ namespace april_utils {
   // argmax, argmin, max, min for arrays
   template<typename T>
   int argmax(const T *v, int size) {
-    assert(size > 0);
+    april_assert(size > 0);
     int p = 0;
     for (int i=1; i<size; ++i)
       if (v[p]<v[i])
@@ -47,7 +47,7 @@ namespace april_utils {
   
   template<typename T>
   int argmin(const T *v, int size) {
-    assert(size > 0);
+    april_assert(size > 0);
     int p = 0;
     for (int i=1; i<size; ++i)
       if (v[i]<v[p])

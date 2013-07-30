@@ -11,6 +11,7 @@ return {
   "math",
   "gzio",
   "matlab",
+  "matrixString",
   
   -- MACHINE LEARNING
   "trainable",

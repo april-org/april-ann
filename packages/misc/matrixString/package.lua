@@ -1,8 +1,7 @@
-package{ name = "matlab",
+package{ name = "matrixString",
    version = "1.0",
-   depends = { "matrix", "matrixString", "util" },
+   depends = { "matrix", "util" },
    keywords = { },
-   link_libraries = { "z" },
    description = "",
    -- targets como en ant
    target{
@@ -19,7 +18,7 @@ package{ name = "matlab",
      name = "provide",
      depends = "init",
      copy{ file= "c_src/*.h", dest_dir = "include" },
-     provide_bind{ file = "binding/bind_matlab.lua.cc" , dest_dir = "include" },
+     provide_bind{ file = "binding/bind_matrix_string.lua.cc" , dest_dir = "include" },
    },
    target{
      name = "build",
@@ -34,7 +33,7 @@ package{ name = "matlab",
        orig_dir = "lua_src",
        dest_dir = "build",
      },
-     build_bind{ file = "binding/bind_matlab.lua.cc", dest_dir = "build" },
+     build_bind{ file = "binding/bind_matrix_string.lua.cc", dest_dir = "build" },
    },
    target{
      name = "document",
