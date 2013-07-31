@@ -24,6 +24,7 @@ function matlab.tolua(element,col_major)
     error(string.format("Not implemented yet for type '%s'",
 			matlab.types[element:get_type()]))
   end
+  collectgarbage("collect")
 end
 
 -----------------------------
