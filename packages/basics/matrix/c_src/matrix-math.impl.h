@@ -34,14 +34,7 @@ void Matrix<T>::fill(T value) {
 
 template <typename T>
 void Matrix<T>::clamp(T lower, T upper) {
-  T *d = data->getPPALForReadAndWrite();
-  best_span_iterator span_it(this);
-  while(span_it != end_span_iterator()) {
-    int pos = span_it.getOffset();
-    for (int i=0; i<span_it.getSize(); ++i, pos += span_it.getStride())
-      d[pos] = april_utils::clamp(d[pos], lower, upper);
-    ++span_it;
-  }
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
 
@@ -89,31 +82,28 @@ Matrix<T>* Matrix<T>::multiply(const Matrix<T> *other) const {
 
 template <typename T>
 T Matrix<T>::sum() const {
-  T s = 0.0;
-  if (major_order == CblasRowMajor)
-    for (const_iterator it(begin()); it!=end(); ++it) {
-      s += *it;
-    }
-  else
-    for (const_col_major_iterator it(begin()); it!=end(); ++it) {
-      s += *it;
-    }
-    
-  return s;
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  return T();
 }
 
 /**** COMPONENT WISE OPERATIONS ****/
 
 template <typename T>
 void Matrix<T>::scalarAdd(T s) {
-  if (major_order == CblasRowMajor)
-    for (iterator it(begin()); it!=end(); ++it) {
-      *it = *it + s;
-    }
-  else
-    for (col_major_iterator it(begin()); it!=end(); ++it) {
-      *it = *it + s;
-    }
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
+void Matrix<T>::copy(const Matrix<T> *other) {
+  if (!sameDim(other))
+    ERROR_EXIT(128, "Not equal matrix dimensions\n");
+  Matrix<T>::const_iterator it_orig(other->begin());
+  Matrix<T>::iterator it_dest(this->begin());
+  while(it_orig != other->end()) {
+    *it_dest = *it_orig;
+    ++it_orig;
+    ++it_dest;
+  }
 }
 
 template <typename T>
@@ -156,11 +146,6 @@ template <typename T>
 Matrix<T> *Matrix<T>::cmul(const Matrix<T> *other) {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return 0;
-}
-
-template <typename T>
-void Matrix<T>::copy(const Matrix<T> *other) {
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
 template <typename T>

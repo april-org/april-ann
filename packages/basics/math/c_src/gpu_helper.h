@@ -26,7 +26,7 @@
 #include "error_print.h"
 #include "cblas_headers.h"
 #include "vector.h"
-#include <cassert>
+#include "april_assert.h"
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <cublas_v2.h>
@@ -104,11 +104,11 @@ class GPUHelper {
       streams.pop_back();
     }
     current_stream = 0;
-    assert(streams.size() == 1);
+    april_assert(streams.size() == 1);
   }
   
   static void setCurrentStream(unsigned int i) {
-    assert(i < streams.size());
+    april_assert(i < streams.size());
     current_stream = i;
   }
   

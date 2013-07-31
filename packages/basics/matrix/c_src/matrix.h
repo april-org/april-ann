@@ -23,7 +23,7 @@
 #define MATRIX_H
 
 #include <cmath>
-#include <cassert>
+#include "april_assert.h"
 #include <cstdarg>
 #include <new> // surprisingly, placement new doesn't work without this
 #include "cblas_headers.h"
@@ -144,6 +144,7 @@ public:
     bool      operator!=(const iterator &other) const;
     iterator &operator++();
     T &operator*();
+    T *operator->();
     int getRawPos() const;
     int getIdx() const { return idx; }
   };
@@ -173,6 +174,7 @@ public:
     bool      operator!=(const iterator &other) const;
     col_major_iterator &operator++();
     T &operator*();
+    T *operator->();
     int getRawPos() const;
     int getIdx() const { return idx; }
   };
@@ -204,6 +206,7 @@ public:
     bool            operator!=(const iterator &other) const;
     const_iterator &operator++();
     const T &operator*() const;
+    const T *operator->() const;
     int getRawPos() const;
     int getIdx() const { return idx; }
   };
@@ -238,6 +241,7 @@ public:
     bool            operator!=(const const_iterator &other) const;
     const_col_major_iterator &operator++();
     const T &operator*() const;
+    const T *operator->() const;
     int getRawPos() const;
     int getIdx() const { return idx; }
   };
@@ -408,16 +412,16 @@ public:
   /**********************/
   iterator begin() { return iterator(this); }
   iterator iteratorAt(int c0) {
-    assert(numDim==1);
+    april_assert(numDim==1);
     return iterator(this, computeRawPos(&c0), &c0);
   }
   iterator iteratorAt(int c0, int c1) {
-    assert(numDim==2);
+    april_assert(numDim==2);
     int aux[2]={c0,c1};
     return iterator(this, computeRawPos(aux), aux);
   }
   iterator iteratorAt(int *coords, int len) {
-    assert(numDim==len);
+    april_assert(numDim==len);
     return iterator(this, computeRawPos(coords), coords);
   }
   const iterator &end() {
@@ -434,16 +438,16 @@ public:
   /************************/
   const_iterator begin() const { return const_iterator(this); }
   const_iterator iteratorAt(int c0) const {
-    assert(numDim==1);
+    april_assert(numDim==1);
     return const_iterator(this, computeRawPos(&c0), &c0);
   }
   const_iterator iteratorAt(int c0, int c1) const {
-    assert(numDim==2);
+    april_assert(numDim==2);
     int aux[2]={c0,c1};
     return const_iterator(this, computeRawPos(aux), aux);
   }
   const_iterator iteratorAt(int *coords, int len) const {
-    assert(numDim==len);
+    april_assert(numDim==len);
     return const_iterator(this, computeRawPos(coords), coords);
   }
   const const_iterator &end() const {

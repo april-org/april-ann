@@ -167,7 +167,7 @@ namespace ANN {
 					  output_window_num_steps,
 					  output_window_order_step);
     number_input_windows = input_sw.numWindows();
-    assert(number_input_windows == output_sw.numWindows());
+    april_assert(number_input_windows == output_sw.numWindows());
     if (during_training)
       AssignRef(argmax_raw_pos,
 		new IntGPUMirroredMemoryBlock(input_mat->getDimSize(0)*
@@ -235,9 +235,9 @@ namespace ANN {
 					       output_window_step,
 					       output_window_num_steps,
 					       output_window_order_step);
-    assert(argmax_raw_pos != 0);
-    assert(static_cast<int>(argmax_raw_pos->getSize()) == error_input_mat->size());
-    assert(error_output_sw.numWindows() == error_input_sw.numWindows());
+    april_assert(argmax_raw_pos != 0);
+    april_assert(static_cast<int>(argmax_raw_pos->getSize()) == error_input_mat->size());
+    april_assert(error_output_sw.numWindows() == error_input_sw.numWindows());
     const int *argmax_ints = argmax_raw_pos->getPPALForRead();
     float *error_output_ptr = error_output_mat->getRawDataAccess()->getPPALForReadAndWrite();
     // CONVOLUTION GRADIENT

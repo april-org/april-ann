@@ -250,7 +250,7 @@ IdentityDataSet<T>::~IdentityDataSet() {
   
 template <typename T>
 int IdentityDataSet<T>::getPattern(int index, T *pat) {
-  assert("Incorrect index" && index >= 0 && index < numPatterns());
+  april_assert("Incorrect index" && index >= 0 && index < numPatterns());
   for (int i=0; i<patternsz; i++)
     pat[i] = zerovalue;
   pat[index] = onevalue;
@@ -466,7 +466,7 @@ int IndexDataSet<T>::getPattern(int index, T *pat) {
   indices->getPattern(index,patternindices);
   for (int i=0; i < numdiccionarios; i++) {
     int idx = static_cast<int>(patternindices[i])-firstindex;
-    assert("Incorrect index at IndexDataSet" && idx >= 0);
+    april_assert("Incorrect index at IndexDataSet" && idx >= 0);
     pos += diccionarios[i]->getPattern((int)idx,pat+pos);
   }
   return patternSize();
