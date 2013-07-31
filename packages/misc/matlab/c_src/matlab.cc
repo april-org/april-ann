@@ -37,7 +37,8 @@ using april_utils::swap_bytes_in_place;
 using april_utils::string;
 
 int inflate(const void *src, int srcLen, void *dst, int dstLen) {
-  z_stream strm  = {0};
+  z_stream strm;
+  strm.next_in   = 0;
   strm.total_in  = strm.avail_in  = srcLen;
   strm.total_out = strm.avail_out = dstLen;
   strm.next_in   = (Bytef *) src;
