@@ -67,7 +67,7 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 //BIND_LUACLASSNAME MatrixChar matrixChar
 //BIND_CPP_CLASS MatrixChar
 
-//BIND_LUACLASSNAME SlidingWindowMatrixChar matrix.__sliding_window__
+//BIND_LUACLASSNAME SlidingWindowMatrixChar matrix.__sliding_window_char__
 //BIND_CPP_CLASS SlidingWindowMatrixChar
 
 //BIND_CONSTRUCTOR SlidingWindowMatrixChar

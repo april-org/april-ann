@@ -68,7 +68,7 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 //BIND_LUACLASSNAME MatrixInt32 matrixInt32
 //BIND_CPP_CLASS MatrixInt32
 
-//BIND_LUACLASSNAME SlidingWindowMatrixInt32 matrix.__sliding_window__
+//BIND_LUACLASSNAME SlidingWindowMatrixInt32 matrix.__sliding_window_int32__
 //BIND_CPP_CLASS SlidingWindowMatrixInt32
 
 //BIND_CONSTRUCTOR SlidingWindowMatrixInt32
