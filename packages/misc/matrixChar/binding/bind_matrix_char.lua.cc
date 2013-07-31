@@ -565,6 +565,7 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
   lua_createtable(L, window->numWindows(), 0);
   int index = 1;
   do {
+    window->getMatrix(m);
     int i=0;
     for (MatrixChar::const_iterator it(m->begin()); it!=m->end(); ++it)
       str[i++] = *it;
