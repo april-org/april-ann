@@ -95,7 +95,6 @@ void Matrix<T>::scalarAdd(T s) {
 
 template <typename T>
 void Matrix<T>::copy(const Matrix<T> *other) {
-  printf("EO\n");
   if (!sameDim(other))
     ERROR_EXIT(128, "Not equal matrix dimensions\n");
   Matrix<T>::const_iterator it_orig(other->begin());
