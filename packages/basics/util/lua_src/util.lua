@@ -22,6 +22,29 @@ function check_version(major_num,minor_num)
 		       major_num, minor_num, major_v, minor_v))
 end
 
+-- makes a FAKE wrapper around a class, so you can re-implement the functions
+function class_wrapper(obj,wrapper)
+  local wrapper = wrapper or {}
+  local current = obj
+  while (getmetatable(current) and getmetatable(current).__index and
+	 getmetatable(current).__index ~= current) do
+    current = getmetatable(current).__index
+    for i,v in pairs(current) do
+      if type(v) == "function" and wrapper[i] == nil then
+	wrapper[i] =
+	  function(first, ...)
+	    if first == wrapper then
+	      return obj[i](obj, ...)
+	    else
+	      return objt[i](...)
+	    end
+	  end
+      end
+    end
+  end
+  return wrapper
+end
+
 -- Convert a table in a class, and it receives an optional parent class to
 -- implement simple heritance
 function class(classname, parentclass)
@@ -773,7 +796,7 @@ function table.search_key_from_value(t,value)
 end
 
 function table.imap(t,f)
-  return map(f, ipairs, t)
+  return map(f, ipairs(t))
 end
 
 function table.map(t,f)

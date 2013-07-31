@@ -318,14 +318,14 @@ const T& Matrix<T>::operator[] (int i) const {
 
 template <typename T>
 T& Matrix<T>::operator() (int i) {
-  assert(numDim == 1);
+  april_assert(numDim == 1);
   int raw_pos = computeRawPos(&i);
   return data->get(raw_pos);
 }
 
 template <typename T>
 T& Matrix<T>::operator() (int row, int col) {
-  assert(numDim == 2);
+  april_assert(numDim == 2);
   int pos[2]={row,col};
   int raw_pos = computeRawPos(pos);
   return data->get(raw_pos);
@@ -350,21 +350,21 @@ T& Matrix<T>::operator() (int coord0, int coord1, int coord2, ...) {
 
 template <typename T>
 T& Matrix<T>::operator() (int *coords, int sz) {
-  assert(numDim == sz);
+  april_assert(numDim == sz);
   int raw_pos = computeRawPos(coords);
   return data->get(raw_pos);
 }
 
 template <typename T>
 const T& Matrix<T>::operator() (int i) const {
-  assert(numDim == 1);
+  april_assert(numDim == 1);
   int raw_pos = computeRawPos(&i);
   return data->get(raw_pos);
 }
 
 template <typename T>
 const T& Matrix<T>::operator() (int row, int col) const {
-  assert(numDim == 2);
+  april_assert(numDim == 2);
   int pos[2]={row,col};
   int raw_pos = computeRawPos(pos);
   return data->get(raw_pos);
@@ -389,7 +389,7 @@ const T& Matrix<T>::operator() (int coord0, int coord1, int coord2, ...) const {
 
 template <typename T>
 const T& Matrix<T>::operator() (int *coords, int sz) const {
-  assert(numDim == sz);
+  april_assert(numDim == sz);
   int raw_pos = computeRawPos(coords);
   return data->get(raw_pos);
 }
@@ -506,8 +506,8 @@ Matrix<T> *Matrix<T>::select(int dim, int index, Matrix<T> *dest) {
   }
   else {
     //
-    assert(dest->total_size == total_size/matrixSize[dim]);
-    assert(dest->numDim == numDim-1);
+    april_assert(dest->total_size == total_size/matrixSize[dim]);
+    april_assert(dest->numDim == numDim-1);
     //
     dest->offset = index*stride[dim];
     result = dest;
@@ -658,18 +658,18 @@ int Matrix<T>::computeRawPos(const int *coords) const {
   int raw_pos;
   switch(numDim) {
   case 1:
-    assert(coords[0] < matrixSize[0]);
+    april_assert(coords[0] < matrixSize[0]);
     raw_pos = coords[0]*stride[0];
     break;
   case 2:
-    assert(coords[0] < matrixSize[0]);
-    assert(coords[1] < matrixSize[1]);
+    april_assert(coords[0] < matrixSize[0]);
+    april_assert(coords[1] < matrixSize[1]);
     raw_pos = coords[0]*stride[0]+coords[1]*stride[1];
     break;
   default:
     raw_pos=0;
     for(int i=0; i<numDim; i++) {
-      assert(coords[i] < matrixSize[i]);
+      april_assert(coords[i] < matrixSize[i]);
       raw_pos += stride[i]*coords[i];
     }
   }

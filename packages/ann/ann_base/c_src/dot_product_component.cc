@@ -80,7 +80,7 @@ namespace ANN {
       TokenMatrixFloat *input_mat_token=input->convertTo<TokenMatrixFloat*>();
       MatrixFloat *input_mat=input_mat_token->getMatrix();
       ASSERT_MATRIX(input_mat);
-      assert(input_mat->getDimSize(1) == static_cast<int>(input_size));
+      april_assert(input_mat->getDimSize(1) == static_cast<int>(input_size));
       if (input_mat->getStrideSize(0) > 1) {
 	input_mat = input_mat->clone();
 	AssignRef(input,new TokenMatrixFloat(input_mat));
@@ -128,7 +128,7 @@ namespace ANN {
       sparse_input = true;
       AssignRef(input, _input);
       TokenBunchVector *input_vector_token=input->convertTo<TokenBunchVector*>();
-      assert(input_vector_token->size() > 0);
+      april_assert(input_vector_token->size() > 0);
       // new output to fit the bunch
       MatrixFloat *output_mat;
       int dims[2] = {static_cast<int>(input_vector_token->size()),
@@ -194,7 +194,7 @@ namespace ANN {
 		  name.c_str());
     // new error output to fit the bunch
     ASSERT_MATRIX(error_input_mat);
-    assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
+    april_assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
     if (error_input_mat->getStrideSize(0) > 1) {
       error_input_mat = error_input_mat->clone();
       AssignRef(error_input,new TokenMatrixFloat(error_input_mat));
@@ -282,7 +282,7 @@ namespace ANN {
   
   // The DotProductANNComponent
   void DotProductANNComponent::doUpdate() {
-    assert(learning_rate > 0.0f &&
+    april_assert(learning_rate > 0.0f &&
 	   "Learning rate needs to be fixed with setOption method!!!");
     
     // Foces weights_matrix to update internal counts for a backward step
@@ -309,12 +309,12 @@ namespace ANN {
     } // if (weights_matrix->needsToComputeMomentum()) {
     
     // COMPUTE BP
-    assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
+    april_assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
     unsigned int bunch_size = error_input_mat->getDimSize(0);
     // backprop learning rule:
     // PREV_W = alpha * ERRORS + PREV_W
     const unsigned int references = weights_matrix->getNumReferences();
-    assert(references > 0 && "Found 0 references of weights matrix");
+    april_assert(references > 0 && "Found 0 references of weights matrix");
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
     const float norm_learn_rate =
       -(1.0f/sqrtf(static_cast<float>(references*bunch_size))) *
