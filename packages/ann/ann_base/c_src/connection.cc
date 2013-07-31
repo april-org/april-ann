@@ -134,7 +134,7 @@ namespace ANN {
       window.getMatrix(submat);
       float norm2 = submat->norm2();
       /*
-	assert(norm2 < 10000.0f);
+	april_assert(norm2 < 10000.0f);
 	if (norm2 > 10000.0f)
 	ERROR_EXIT(128, "WOWOWOW\n");
       */
@@ -173,7 +173,7 @@ namespace ANN {
   void Connections::pruneSubnormalAndCheckNormal() {
     float *w = weights->getRawDataAccess()->getPPALForReadAndWrite();
     if (!april_utils::check_floats(w, weights->size())) {
-      assert("No finite numbers at weights matrix!!!" && false);
+      april_assert("No finite numbers at weights matrix!!!" && false);
       ERROR_EXIT(128, "No finite numbers at weights matrix!!!\n");
     }
   }
@@ -193,8 +193,8 @@ namespace ANN {
     double dsup = high;
 
     // assert to avoid nearzero weights
-    assert(fabs(dinf) > weightnearzero);
-    assert(fabs(dsup) > weightnearzero);
+    april_assert(fabs(dinf) > weightnearzero);
+    april_assert(fabs(dsup) > weightnearzero);
     double range  = dsup - dinf;
     MatrixFloat::iterator w_it(weights->begin());
     MatrixFloat::iterator prev_w_it(prev_weights->begin());
@@ -213,8 +213,8 @@ namespace ANN {
     double dsup = high;
 
     // assert to avoid nearzero weights
-    assert(fabs(dinf) > weightnearzero);
-    assert(fabs(dsup) > weightnearzero);
+    april_assert(fabs(dinf) > weightnearzero);
+    april_assert(fabs(dsup) > weightnearzero);
     double range  = dsup - dinf;
     MatrixFloat::iterator w_it(weights->iteratorAt(col,0));
     MatrixFloat::iterator prev_w_it(prev_weights->iteratorAt(col,0));

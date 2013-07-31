@@ -20,7 +20,7 @@
  */
 #include "buffer_list.h"
 #include <cstdarg>
-#include <cassert>
+#include "april_assert.h"
 #include <cstdio>
 #include <cstring>
 #include "binarizer.h"
@@ -89,7 +89,7 @@ void buffer_list::add_formatted_string_left(const char *fmt, ...) {
   n = vsnprintf (buf, FORMAT_BUFFER_SIZE, fmt, ap);
   va_end(ap);
 
-  assert(n>=0);
+  april_assert(n>=0);
 
   // n doesn't include the terminating '\0'
   node = new buffer_list_node(n+1,0);
@@ -115,7 +115,7 @@ void buffer_list::add_formatted_string_right(const char *fmt, ...) {
   n = vsnprintf (buf, FORMAT_BUFFER_SIZE, fmt, ap);
   va_end(ap);
 
-  assert(n>=0);
+  april_assert(n>=0);
 
   // n doesn't include the terminating '\0'
   // but we don't want a null-terminated string anyway
@@ -142,7 +142,7 @@ void buffer_list::printf(const char *fmt, ...) {
   n = vsnprintf (buf, FORMAT_BUFFER_SIZE, fmt, ap);
   va_end(ap);
 
-  assert(n>=0);
+  april_assert(n>=0);
 
   // n doesn't include the terminating '\0'
   // but we don't want a null-terminated string anyway
