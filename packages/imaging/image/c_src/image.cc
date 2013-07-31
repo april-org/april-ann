@@ -92,7 +92,7 @@ Image<T>::~Image() {
 template <typename T>
 Image<T>* Image<T>::crop(int width, int height,
 			 int offset_w, int offset_h) const {
-  assert("Cropping region must be contained in source image" &&
+  april_assert("Cropping region must be contained in source image" &&
 	 (offset_w >= 0 && offset_h >=0 &&
 	  offset_w+width <= this->width && 
 	  offset_h+height <= this->height));
@@ -843,7 +843,7 @@ template <typename T>
 void Image<T>::invert_affine_matrix(float *c, float *dest) const
 {
   float det = c[0]*c[4] - c[1]*c[3];
-  assert("Affine matrix has no inverse" && det!=0);
+  april_assert("Affine matrix has no inverse" && det!=0);
   dest[0] =  c[4]/det;
   dest[1] = -c[1]/det;
   dest[3] = -c[3]/det;
@@ -945,7 +945,7 @@ Image<T>* Image<T>::substract_image(Image<T> *img, T low, T high) const {
   int  s_width  = img->width;
 
   //  printf("%d %d %d %d\n", s_width, s_height, this->width, this->height);
-  assert("The images does not have the same dimension"
+  april_assert("The images does not have the same dimension"
 	 && s_width == this->width && s_height == this->height);
 
   int dims[2];

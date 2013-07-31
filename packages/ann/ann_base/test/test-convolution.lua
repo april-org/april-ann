@@ -36,7 +36,7 @@ for b=1,output:dim()[1] do
   for i=1,output:dim()[2] do
     aux = output:select(1,b):select(1,i):clone()
     aux = aux:rewrap(x*y):clone("row_major"):rewrap(y,x):adjust_range(0,1)
-    matrix.saveImage(aux, "output-" .. b .. "-" .. i .. ".pnm")
+    ImageIO.write(Image(aux), "output-" .. b .. "-" .. i .. ".png")
   end
 end
 

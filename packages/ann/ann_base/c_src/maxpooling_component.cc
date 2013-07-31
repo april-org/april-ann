@@ -167,7 +167,7 @@ namespace ANN {
 					  output_window_num_steps,
 					  output_window_order_step);
     number_input_windows = input_sw.numWindows();
-    assert(number_input_windows == output_sw.numWindows());
+    april_assert(number_input_windows == output_sw.numWindows());
     if (during_training)
       AssignRef(argmax_raw_pos,
 		new IntGPUMirroredMemoryBlock(input_mat->getDimSize(0)*
@@ -178,11 +178,13 @@ namespace ANN {
     }
     int k=0;
     // CONVOLUTION OVER number_input_windows
+    MatrixFloat *input_w  = input_sw.getMatrix();
+    MatrixFloat *output_w = output_sw.getMatrix();
+    IncRef(input_w);
+    IncRef(output_w);
     while(!input_sw.isEnd() && !output_sw.isEnd()) {
-      MatrixFloat *input_w  = input_sw.getMatrix();
-      MatrixFloat *output_w = output_sw.getMatrix();
-      IncRef(input_w);
-      IncRef(output_w);
+      input_sw.getMatrix(input_w);
+      output_sw.getMatrix(output_w);
       MatrixFloat *max_sel_dim = input_w->maxSelDim(0, argmax_raw_pos, k);
       IncRef(max_sel_dim);
       MatrixFloat *max_sel_dim_rewrapped;
@@ -196,10 +198,10 @@ namespace ANN {
       // Free memory
       DecRef(max_sel_dim_rewrapped);
       DecRef(max_sel_dim);
-      DecRef(input_w);
-      DecRef(output_w);
       k += input_mat->getDimSize(0);
     }
+    DecRef(input_w);
+    DecRef(output_w);
     return output;
   }
   
@@ -233,16 +235,16 @@ namespace ANN {
 					       output_window_step,
 					       output_window_num_steps,
 					       output_window_order_step);
-    assert(argmax_raw_pos != 0);
-    assert(static_cast<int>(argmax_raw_pos->getSize()) == error_input_mat->size());
-    assert(error_output_sw.numWindows() == error_input_sw.numWindows());
+    april_assert(argmax_raw_pos != 0);
+    april_assert(static_cast<int>(argmax_raw_pos->getSize()) == error_input_mat->size());
+    april_assert(error_output_sw.numWindows() == error_input_sw.numWindows());
     const int *argmax_ints = argmax_raw_pos->getPPALForRead();
     float *error_output_ptr = error_output_mat->getRawDataAccess()->getPPALForReadAndWrite();
     // CONVOLUTION GRADIENT
+    MatrixFloat *error_input_w = error_input_sw.getMatrix();
+    IncRef(error_input_w);
     while(!error_input_sw.isEnd()) {
-      MatrixFloat *error_input_w = error_input_sw.getMatrix();
-      
-      IncRef(error_input_w);
+      error_input_sw.getMatrix(error_input_w);
       for (MatrixFloat::const_iterator it(error_input_w->begin());
 	   it!=error_input_w->end(); ++it, ++argmax_ints) {
 	(*error_output_mat)[*argmax_ints] += *it;
@@ -260,10 +262,9 @@ namespace ANN {
       }
       // Next iteration
       error_input_sw.next();
-      
-      // Free memory
-      DecRef(error_input_w);
     }
+    // Free memory
+    DecRef(error_input_w);
     return error_output;
   }
   

@@ -1337,6 +1337,21 @@ april_set_doc("ann.components.actf.softplus.__call", {
 
 ----------------------------------------------------------------------
 
+april_set_doc("ann.components.actf.relu", {
+		class="class",
+		summary="Rectifier Linear Unit (ReLU) activation function", })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.actf.relu.__call", {
+		class="method",
+		summary="Constructor of the component",
+		params={
+		  ["name"] = "The name of the component [optional].",
+		}, })
+
+----------------------------------------------------------------------
+
 april_set_doc("ann.components.actf.sin", {
 		class="class",
 		summary="Sin activation function", })

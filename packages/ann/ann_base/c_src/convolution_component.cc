@@ -197,11 +197,14 @@ namespace ANN {
 					  output_window_order_step);
     number_input_windows = input_sw.numWindows();
     // CONVOLUTION OVER number_input_windows
+    MatrixFloat *input_w  = input_sw.getMatrix();
+    MatrixFloat *output_w = output_sw.getMatrix();
+    IncRef(input_w);
+    IncRef(output_w);
     while(!input_sw.isEnd() && !output_sw.isEnd()) {
-      MatrixFloat *input_w  = input_sw.getMatrix();
-      MatrixFloat *output_w = output_sw.getMatrix();
-      IncRef(input_w);
-      IncRef(output_w);
+      // reusing the same MatrixFloat across all the possible windows
+      input_sw.getMatrix(input_w);
+      output_sw.getMatrix(output_w);
       MatrixFloat *input_flattened  = getRewrappedMatrix(input_w,
 							 input_window_rewrap,
 							 2, true);
@@ -235,9 +238,9 @@ namespace ANN {
       // Free memory
       DecRef(input_flattened);
       DecRef(output_flattened);
-      DecRef(input_w);
-      DecRef(output_w);
     }
+    DecRef(input_w);
+    DecRef(output_w);
     return output;
   }
   
@@ -274,13 +277,16 @@ namespace ANN {
 					       output_window_step,
 					       output_window_num_steps,
 					       output_window_order_step);
-    assert(error_input_sw.numWindows() == number_input_windows);
+    april_assert(error_input_sw.numWindows() == number_input_windows);
     // CONVOLUTION GRADIENT
+    MatrixFloat *error_input_w  = error_input_sw.getMatrix();
+    MatrixFloat *error_output_w = error_output_sw.getMatrix();
+    IncRef(error_input_w);
+    IncRef(error_output_w);
     while(!error_input_sw.isEnd() && !error_output_sw.isEnd()) {
-      MatrixFloat *error_input_w  = error_input_sw.getMatrix();
-      MatrixFloat *error_output_w = error_output_sw.getMatrix();
-      IncRef(error_input_w);
-      IncRef(error_output_w);
+      // reuse the same MatrixFloat across all possible windows
+      error_input_sw.getMatrix(error_input_w);
+      error_output_sw.getMatrix(error_output_w);
       MatrixFloat *error_input_flattened  = getRewrappedMatrix(error_input_w,
 							       output_window_rewrap,
 							       2, true);
@@ -316,15 +322,15 @@ namespace ANN {
       // Free memory
       DecRef(error_input_flattened);
       DecRef(error_output_flattened);
-      DecRef(error_input_w);
-      DecRef(error_output_w);
     }
+    DecRef(error_input_w);
+    DecRef(error_output_w);
     return error_output;
   }
      
   // The ConvolutionANNComponent
   void ConvolutionANNComponent::doUpdate() {
-    assert(learning_rate > 0.0f &&
+    april_assert(learning_rate > 0.0f &&
 	   "Learning rate needs to be fixed with setOption method!!!");
     
     // Foces weights_matrix to update internal counts for a backward step
@@ -357,7 +363,7 @@ namespace ANN {
     //    printf("******* ANTES %s\n", name.c_str());
     //    weights_matrix->applyMaxNormPenalty(max_norm_penalty);
     //    printf("******* DESPUES %s\n", name.c_str());
-    assert(references > 0 && "Found 0 references of weights matrix");
+    april_assert(references > 0 && "Found 0 references of weights matrix");
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
     const float norm_learn_rate =
       -(1.0f/sqrtf(static_cast<float>(references*bunch_size*number_input_windows))) *
@@ -399,11 +405,13 @@ namespace ANN {
 					       output_window_num_steps,
 					       output_window_order_step);
     unsigned int bunch_size = error_input_mat->getDimSize(0);
+    MatrixFloat *input_w       = input_sw.getMatrix();
+    MatrixFloat *error_input_w = error_input_sw.getMatrix();
+    IncRef(input_w);
+    IncRef(error_input_w);
     while(!input_sw.isEnd() && !error_input_sw.isEnd()) {
-      MatrixFloat *input_w       = input_sw.getMatrix();
-      MatrixFloat *error_input_w = error_input_sw.getMatrix();
-      IncRef(input_w);
-      IncRef(error_input_w);
+      input_sw.getMatrix(input_w);
+      error_input_sw.getMatrix(error_input_w);
       MatrixFloat *input_flattened = getRewrappedMatrix(input_w,
 							input_window_rewrap,
 							2, true);
@@ -429,9 +437,9 @@ namespace ANN {
       // Free memory
       DecRef(input_flattened);
       DecRef(error_input_flattened);
-      DecRef(input_w);
-      DecRef(error_input_w);
     }
+    DecRef(input_w);
+    DecRef(error_input_w);
   }
 
   void ConvolutionANNComponent::computeGradients(MatrixFloat*& weight_grads) {

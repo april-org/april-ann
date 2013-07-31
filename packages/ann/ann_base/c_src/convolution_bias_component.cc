@@ -37,8 +37,13 @@ namespace ANN {
   // A method to convert the bias vector of size Nx1 in a matrix of size
   // BUNCHxK1xK2x...xKM being Ki the kernel size at dimension i
   MatrixFloat *ConvolutionBiasANNComponent::prepareBiasBunch() {
-    if (bias_matrix != 0 && bias_matrix->getDimSize(0) == window_size[0])
+    /*
+      FIXME: When the following improvement is set, the performance of the ANN
+      degenerates...
+      
+      if (bias_matrix != 0 && bias_matrix->sameDim(window_size, num_dims + 1))
       return bias_matrix;
+    */
     // this line converts the bias matrix of Nx1 in a vector of N elements
     MatrixFloat *bias_vec = bias_vector->getPtr()->select(1,0);
     IncRef(bias_vec);
@@ -46,14 +51,17 @@ namespace ANN {
     MatrixFloat *bias_matrix_2d = new MatrixFloat(2, window_size,
 						  CblasColMajor);
     IncRef(bias_matrix_2d);
-    // for each pattern at the bunch
-    for (int b=0; b<window_size[0]; ++b) {
+    // first pattern is done out of the loop
+    MatrixFloat *dest = bias_matrix_2d->select(0, 0);
+    IncRef(dest);
+    dest->copy(bias_vec);
+    // for the rest of patterns at the bunch
+    for (int b=1; b<window_size[0]; ++b) {
       // select the row b at the output bias matrix
-      MatrixFloat *dest = bias_matrix_2d->select(0, b);
-      IncRef(dest);
+      bias_matrix_2d->select(0, b, dest);
       dest->copy(bias_vec);
-      DecRef(dest);
     }
+    DecRef(dest);
     if (bias_matrix) DecRef(bias_matrix);
     // reinterpret the output bias matrix of BUNCHxN to fit with the output
     // sliding window of BUNCHxK1xK2x....xKM where Ki is the kernel size at
@@ -152,20 +160,22 @@ namespace ANN {
 					  window_num_steps);
     number_input_windows = input_sw.numWindows();
     // CONVOLUTION OVER number_input_windows
+    MatrixFloat *input_w  = input_sw.getMatrix();
+    MatrixFloat *output_w = output_sw.getMatrix();
+    IncRef(input_w);
+    IncRef(output_w);
     while(!input_sw.isEnd() && !output_sw.isEnd()) {
-      MatrixFloat *input_w  = input_sw.getMatrix();
-      MatrixFloat *output_w = output_sw.getMatrix();
-      IncRef(input_w);
-      IncRef(output_w);
+      input_sw.getMatrix(input_w);
+      output_sw.getMatrix(output_w);
       // ADD BIAS
       output_w->axpy(1.0f, bias_matrix);
       // Next iteration
       input_sw.next();
       output_sw.next();
-      // Free memory
-      DecRef(input_w);
-      DecRef(output_w);
     }
+    // Free memory
+    DecRef(input_w);
+    DecRef(output_w);
     DecRef(bias_matrix);
     return output;
   }
@@ -190,7 +200,7 @@ namespace ANN {
      
   // The ConvolutionBiasANNComponent
   void ConvolutionBiasANNComponent::doUpdate() {
-    assert(learning_rate > 0.0f &&
+    april_assert(learning_rate > 0.0f &&
 	   "Learning rate needs to be fixed with setOption method!!!");
     
     // Foces weights_matrix to update internal counts for a backward step
@@ -213,7 +223,7 @@ namespace ANN {
     // backprop learning rule:
     // PREV_W = alpha * ERRORS + PREV_W
     const unsigned int references = bias_vector->getNumReferences();
-    assert(references > 0 && "Found 0 references of weights matrix");
+    april_assert(references > 0 && "Found 0 references of weights matrix");
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
     const float norm_learn_rate =
       -(1.0f/sqrtf(static_cast<float>(references*bunch_size*number_input_windows))) *
@@ -242,10 +252,11 @@ namespace ANN {
 					 window_step,
 					 window_num_steps);
     unsigned int bunch_size = error_mat->getDimSize(0);
-    assert(error_sw.numWindows() == number_input_windows);
+    april_assert(error_sw.numWindows() == number_input_windows);
+    MatrixFloat *error_w = error_sw.getMatrix();
+    IncRef(error_w);
     while(!error_sw.isEnd()) {
-      MatrixFloat *error_w = error_sw.getMatrix();
-      IncRef(error_w);
+      error_sw.getMatrix(error_w);
       // BIAS UPDATE
       doSaxpyLoop(hidden_size,
 		  alpha,
@@ -260,9 +271,9 @@ namespace ANN {
 		  use_cuda);
       // Next iteration
       error_sw.next();
-      // Free memory
-      DecRef(error_w);
     }
+    // Free memory
+    DecRef(error_w);
   }
 
   void ConvolutionBiasANNComponent::computeGradients(MatrixFloat*& weight_grads) {

@@ -53,11 +53,19 @@ april_set_doc("trainable.supervised_trainer.__call", {
 function trainable.supervised_trainer:__call(ann_component,
 					     loss_function,
 					     bunch_size)
+  if loss_function and not isa(loss_function, ann.loss.__base__) then
+    error("The second parameter must be an instance of ann.loss")
+  end
+  if bunch_size and not tonumber(bunch_size) then
+    error("The third parameter must be a number")
+  end
   local obj = {
     ann_component    = assert(ann_component,"Needs an ANN component object"),
     loss_function    = loss_function or false,
     weights_table    = {},
     components_table = {},
+    component2weights_dict = {},
+    weights2component_dict = {},
     weights_order    = {},
     components_order = {},
     bunch_size       = bunch_size or false,
@@ -471,11 +479,42 @@ function trainable.supervised_trainer:build(t)
   end
   table.sort(self.weights_order)
   self.components_order = {}
-  for name,_ in pairs(self.components_table) do
+  self.component2weights_dict = {}
+  self.weights2component_dict = {}
+  for name,c in pairs(self.components_table) do
     table.insert(self.components_order, name)
+    if c:has_weigths_name() then
+      local wname = c:get_weights_name()
+      self.component2weights_dict[name]  = c:get_weights_name()
+      self.weights2component_dict[wname] = self.weights2component_dict[wname] or {}
+      table.insert(self.weights2component_dict[wname], c)
+    end
   end
   table.sort(self.components_order)
   return self.weights_table,self.components_table
+end
+
+------------------------------------------------------------------------
+
+april_set_doc("trainable.supervised_trainer.get_weights_of", {
+		class = "method",
+		summary = "Returns a the object connections related to given component name",
+		params = { "A string with the component name" },
+		outputs = { "An instance of ann.connections" }, })
+
+function trainable.supervised_trainer:get_weights_of(name)
+  return self.weights_table[self.component2weights_dict[name]]
+end
+
+april_set_doc("trainable.supervised_trainer.get_components_of", {
+		class = "method",
+		summary = "Returns a table with the components related to given weights name",
+		params = { "A string with the weights name" },
+		outputs = { "A table of ann.components instances" }, })
+
+
+function trainable.supervised_trainer:get_components_of(wname)
+  return self.weights2component_dict[wname] or {}
 end
 
 ------------------------------------------------------------------------
@@ -1323,7 +1362,7 @@ function trainable.supervised_trainer:train_holdout_validation(t)
 			     default=function(t) return end },
       first_epoch        = { mandatory=false, type_match="number", default=1 },
     }, t)
-  local best_epoch       = params.first_epoch
+  local best_epoch       = params.first_epoch-1
   local best             = self:clone()
   local best_val_error   = params.validation_function(self,
 						      params.validation_table)
