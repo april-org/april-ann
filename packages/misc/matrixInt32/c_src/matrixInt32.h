@@ -18,6 +18,10 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "matrixString.h"
+#ifndef MATRIX_INT32_H
+#define MATRIX_INT32_H
+#include "matrix.h"
 
-template class Matrix<april_utils::string>;
+typedef Matrix<int32_t> MatrixInt32;
+
+#endif // MATRIX_INT_H
