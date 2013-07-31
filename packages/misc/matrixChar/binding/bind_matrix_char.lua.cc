@@ -579,5 +579,16 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 }
 //BIND_END
 
+//BIND_METHOD MatrixChar copy
+{
+  int argn;
+  LUABIND_CHECK_ARGN(==, 1);
+  MatrixChar *mat;
+  LUABIND_GET_PARAMETER(1, MatrixChar, mat);
+  obj->copy(mat);
+  LUABIND_RETURN(MatrixChar, obj);
+}
+//BIND_END
+
 //////////////////////////////////////////////////////////////////////
 

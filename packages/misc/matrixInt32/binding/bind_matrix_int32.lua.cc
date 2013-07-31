@@ -567,5 +567,16 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 }
 //BIND_END
 
+//BIND_METHOD MatrixInt32 copy
+{
+  int argn;
+  LUABIND_CHECK_ARGN(==, 1);
+  MatrixInt32 *mat;
+  LUABIND_GET_PARAMETER(1, MatrixInt32, mat);
+  obj->copy(mat);
+  LUABIND_RETURN(MatrixInt32, obj);
+}
+//BIND_END
+
 //////////////////////////////////////////////////////////////////////
 
