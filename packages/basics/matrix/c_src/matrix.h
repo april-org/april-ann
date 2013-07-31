@@ -23,7 +23,7 @@
 #define MATRIX_H
 
 #include <cmath>
-#include <cassert>
+#include "april_assert.h"
 #include <cstdarg>
 #include <new> // surprisingly, placement new doesn't work without this
 #include "cblas_headers.h"
@@ -89,6 +89,9 @@ protected:
   }
 
 public:
+  class sliding_window;
+  friend class sliding_window;
+  
   /// Computes the position at data array given it coordinates
   int  computeRawPos(const int *coords) const;
   /// Computes the coordinates given the raw data position
@@ -141,6 +144,7 @@ public:
     bool      operator!=(const iterator &other) const;
     iterator &operator++();
     T &operator*();
+    T *operator->();
     int getRawPos() const;
     int getIdx() const { return idx; }
   };
@@ -170,6 +174,7 @@ public:
     bool      operator!=(const iterator &other) const;
     col_major_iterator &operator++();
     T &operator*();
+    T *operator->();
     int getRawPos() const;
     int getIdx() const { return idx; }
   };
@@ -201,6 +206,7 @@ public:
     bool            operator!=(const iterator &other) const;
     const_iterator &operator++();
     const T &operator*() const;
+    const T *operator->() const;
     int getRawPos() const;
     int getIdx() const { return idx; }
   };
@@ -235,6 +241,7 @@ public:
     bool            operator!=(const const_iterator &other) const;
     const_col_major_iterator &operator++();
     const T &operator*() const;
+    const T *operator->() const;
     int getRawPos() const;
     int getIdx() const { return idx; }
   };
@@ -279,7 +286,11 @@ public:
     ~sliding_window();
     sliding_window &operator=(const sliding_window &other);
     sliding_window *next();
-    Matrix<T> *getMatrix(bool clone=false);
+    /// This method returns the matrix at the current window position. If a
+    /// matrix is given, it must be created before using previous execution of
+    /// getMatrix method. WARNING, the matrix is not check to be correct, so be
+    /// careful.
+    Matrix<T> *getMatrix(Matrix<T> *dest=0);
     bool isEnd() const { return finished; }
     int numWindows() const;
     void setAtWindow(int windex);
@@ -345,6 +356,17 @@ private:
 	 const int *matrixSize, const int total_size, const int last_raw_pos,
 	 GPUMirroredMemoryBlock<T> *data, const CBLAS_ORDER major_order,
 	 const bool use_cuda);
+
+  /// Modifies the offset of the matrix. WARNING, this method doesn't check the
+  /// new data position, so be sure that it fits in the data pointer size
+  void changeSubMatrixData(const int new_offset, const int new_last_raw_pos) {
+    offset	 = new_offset;
+    last_raw_pos = new_last_raw_pos;
+    const_cast<iterator*>(&end_iterator)->m			= 0;
+    const_cast<const_iterator*>(&end_const_iterator)->m		= 0;
+    const_cast<best_span_iterator*>(&end_best_span_iterator)->m = 0;
+  }
+
 public:
   /********** Constructors ***********/
   /// Full constructor given numDim, dim, and major_order
@@ -390,16 +412,16 @@ public:
   /**********************/
   iterator begin() { return iterator(this); }
   iterator iteratorAt(int c0) {
-    assert(numDim==1);
+    april_assert(numDim==1);
     return iterator(this, computeRawPos(&c0), &c0);
   }
   iterator iteratorAt(int c0, int c1) {
-    assert(numDim==2);
+    april_assert(numDim==2);
     int aux[2]={c0,c1};
     return iterator(this, computeRawPos(aux), aux);
   }
   iterator iteratorAt(int *coords, int len) {
-    assert(numDim==len);
+    april_assert(numDim==len);
     return iterator(this, computeRawPos(coords), coords);
   }
   const iterator &end() {
@@ -416,16 +438,16 @@ public:
   /************************/
   const_iterator begin() const { return const_iterator(this); }
   const_iterator iteratorAt(int c0) const {
-    assert(numDim==1);
+    april_assert(numDim==1);
     return const_iterator(this, computeRawPos(&c0), &c0);
   }
   const_iterator iteratorAt(int c0, int c1) const {
-    assert(numDim==2);
+    april_assert(numDim==2);
     int aux[2]={c0,c1};
     return const_iterator(this, computeRawPos(aux), aux);
   }
   const_iterator iteratorAt(int *coords, int len) const {
-    assert(numDim==len);
+    april_assert(numDim==len);
     return const_iterator(this, computeRawPos(coords), coords);
   }
   const const_iterator &end() const {
@@ -468,12 +490,15 @@ public:
   bool putCol(int col, T *vec, int vecsize);
   bool putSubCol(int col, int first_row, T *vec, int vecsize);
 
-  // Returns true if they have the same dimension
+  /// Returns true if they have the same dimension
   bool sameDim(const Matrix<T> *other) const;
+  bool sameDim(const int *dims, const int len) const;
 
-  // Returns a matrix of one less dimension, with the elements selected for the
-  // given dimension at the given index
-  Matrix<T> *select(int dim, int index);
+  /// Returns a matrix of one less dimension, with the elements selected for the
+  /// given dimension at the given index.  If a matrix is given, it must be
+  /// created before using previous execution of select method over the same
+  /// dimension. WARNING, the matrix is not check to be correct, so be careful.
+  Matrix<T> *select(int dim, int index, Matrix<T> *dest=0);
   
   ////////////////////////////////////////////////////////////////////////////
 

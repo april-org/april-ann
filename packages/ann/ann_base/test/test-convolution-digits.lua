@@ -79,14 +79,14 @@ push( ann.components.convolution{ kernel=conv1, n=nconv1,
 				  name="conv-w1", weights="w1" } ):
 push( ann.components.convolution_bias{ n=nconv1, ndims=#conv1,
 				       name="conv-b1", weights="b1" } ):
-push( ann.components.actf.hardtanh{ name="actf-1" } ):
+push( ann.components.actf.relu{ name="actf-1" } ):
 push( ann.components.max_pooling{ kernel=maxp1,
 				  name="pool-1" } ):
 push( ann.components.convolution{ kernel=conv2, n=nconv2,
                                   name="conv-w2", weights="w2" } ):
 push( ann.components.convolution_bias{ n=nconv2, ndims=#conv2,
 				       name="conv-b2", weights="b2" } ):
-push( ann.components.actf.hardtanh{ name="actf-2" } ):
+push( ann.components.actf.relu{ name="actf-2" } ):
 push( ann.components.max_pooling{ kernel=maxp2,
 				  name="pool-2" } ):
 push( ann.components.flatten{ name="flatten" } ):

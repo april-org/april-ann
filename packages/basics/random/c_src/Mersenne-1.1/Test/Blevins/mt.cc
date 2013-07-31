@@ -48,7 +48,7 @@
 */
 
 #include <iostream>
-#include <cassert>
+#include "april_assert.h"
 
 #include "mt.h"
 
@@ -70,11 +70,11 @@ MersenneTwister::MersenneTwister(void):
  */
 MersenneTwister::~MersenneTwister(void)
 {
-    assert(mt_ != NULL);
+    april_assert(mt_ != NULL);
     delete[] mt_;
     mt_ = NULL;
 
-    assert(init_key_ != NULL);
+    april_assert(init_key_ != NULL);
     delete[] init_key_;
     init_key_ = NULL;
 }

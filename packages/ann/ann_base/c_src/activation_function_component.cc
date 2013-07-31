@@ -55,8 +55,8 @@ namespace ANN {
     // change current input by new input
     AssignRef(input,_input->convertTo<TokenMatrixFloat*>());
     MatrixFloat *input_mat = input->getMatrix();
-    assert(input_mat->getMajorOrder() == CblasColMajor);
-    assert(input_mat->getNumDim() >= 2);
+    april_assert(input_mat->getMajorOrder() == CblasColMajor);
+    april_assert(input_mat->getNumDim() >= 2);
     if (!input_mat->getIsContiguous()) {
       input_mat = input_mat->clone();
       AssignRef(input,new TokenMatrixFloat(input_mat));
@@ -115,8 +115,8 @@ namespace ANN {
     // change current input by new input
     AssignRef(error_input,_error_input->convertTo<TokenMatrixFloat*>());
     MatrixFloat *error_input_mat = error_input->getMatrix();
-    assert(error_input_mat->getMajorOrder() == CblasColMajor);
-    assert(error_input_mat->getNumDim() >= 2);
+    april_assert(error_input_mat->getMajorOrder() == CblasColMajor);
+    april_assert(error_input_mat->getNumDim() >= 2);
     if (!error_input_mat->getIsContiguous()) {
       error_input_mat = error_input_mat->clone();
       AssignRef(error_input,new TokenMatrixFloat(error_input_mat));

@@ -138,7 +138,7 @@ function load_data(filename)
 
    -- Comprueba si una clase existe y si no la inicializa
    local function check_class(ClassName)
-      if not CLASSES[ClassName] then
+     if not CLASSES[ClassName] then
 	if not LUANAME[ClassName] then LUANAME[ClassName] = ClassName end
 	 CLASSES[ClassName] = {
 	    methods={},

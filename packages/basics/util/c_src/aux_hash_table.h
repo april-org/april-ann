@@ -23,7 +23,7 @@
 
 #include <stdint.h>
 #include <cstring> // strcmp
-#include <cassert>
+#include "april_assert.h"
 #include "error_print.h"
 #include "constString.h"
 #include "pair.h"

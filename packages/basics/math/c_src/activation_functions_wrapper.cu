@@ -218,6 +218,41 @@ __global__ void softplusDerKernel(const float *input_units,
   }
 }
 
+__global__ void reLUActKernel(const float *input_units,
+			      float *output_units,
+			      unsigned int max_x,
+			      unsigned int lda_x,
+			      unsigned int max_y) {
+  unsigned int matrix_x_pos, matrix_y_pos;
+  getColumnMajorBunchMatrixPositions(blockIdx,
+				     blockDim,
+				     threadIdx,
+				     matrix_x_pos,
+				     matrix_y_pos);
+  if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
+    unsigned int index  = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
+    output_units[index] = (input_units[index]>0.0f) ? input_units[index] : 0.0f;
+  }
+}
+
+__global__ void reLUDerKernel(const float *input_units,
+			      const float *input_errors,
+			      float *output_errors,
+			      unsigned int max_x,
+			      unsigned int lda_x,
+			      unsigned int max_y) {
+  unsigned int matrix_x_pos, matrix_y_pos;
+  getColumnMajorBunchMatrixPositions(blockIdx,
+				     blockDim,
+				     threadIdx,
+				     matrix_x_pos,
+				     matrix_y_pos);
+  if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
+    unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
+    output_errors[index] = (input_units[index]>0.0f)?input_errors[index]:0.0f;
+  }
+}
+
 __global__ void hardtanhActKernel(const float *input_units,
 				  float *output_units,
 				  unsigned int max_x,
@@ -866,6 +901,84 @@ void doMultiplySoftplusDerivatives(FloatGPUMirroredMemoryBlock *input_units,
     for (unsigned int i=0; i<sz; ++i) {
       float value = sigmoid(1.0f, input_units_ptr[i]);
       output_errors_ptr[i] = input_errors_ptr[i] * value;
+    }
+#ifdef USE_CUDA
+  }
+#endif
+}
+
+void doApplyReLUActivation(FloatGPUMirroredMemoryBlock *input_units,
+			   FloatGPUMirroredMemoryBlock *output_units,
+			   unsigned int size,
+			   unsigned int bunch_size,
+			   bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    const float *input_units_ptr = input_units->getGPUForRead();
+    float *output_units_ptr      = output_units->getGPUForWrite();
+    dim3 block, grid;
+    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
+						 block, grid);
+    
+    reLUActKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (input_units_ptr,
+       output_units_ptr,
+       bunch_size,
+       bunch_size,
+       size);
+  }
+  else {
+#endif
+    const float *input_units_ptr = input_units->getPPALForRead();
+    float *output_units_ptr      = output_units->getPPALForWrite();
+    const unsigned int sz        = size*bunch_size;
+#ifndef NO_OMP
+#ifndef USE_CUDA
+#pragma omp parallel for
+#endif
+#endif
+    for (unsigned int i=0; i<sz; ++i)
+      output_units_ptr[i] = (input_units_ptr[i]>0.0f)?input_units_ptr[i]:0.0f;
+#ifdef USE_CUDA
+  }
+#endif
+}
+
+void doMultiplyReLUDerivatives(FloatGPUMirroredMemoryBlock *input_units,
+			       FloatGPUMirroredMemoryBlock *input_errors,
+			       FloatGPUMirroredMemoryBlock *output_errors,
+			       unsigned int size,
+			       unsigned int bunch_size,
+			       bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    float *input_units_ptr        = input_units->getGPUForWrite();
+    const float *input_errors_ptr = input_errors->getGPUForRead();
+    float *output_errors_ptr      = output_errors->getGPUForWrite();
+    dim3 block, grid;
+    computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
+						 block, grid);
+    reLUDerKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (input_units_ptr,
+       input_errors_ptr,
+       output_errors_ptr,
+       bunch_size,
+       bunch_size,
+       size);
+  }
+  else {
+#endif
+    const float *input_units_ptr  = input_units->getPPALForRead();
+    const float *input_errors_ptr = input_errors->getPPALForRead();
+    float *output_errors_ptr      = output_errors->getPPALForWrite();
+    const unsigned int sz         = size*bunch_size;
+#ifndef NO_OMP
+#ifndef USE_CUDA
+#pragma omp parallel for
+#endif
+#endif
+    for (unsigned int i=0; i<sz; ++i) {
+      output_errors_ptr[i] = (input_units_ptr[i]>0.0f)?input_errors_ptr[i]:0.0f;
     }
 #ifdef USE_CUDA
   }

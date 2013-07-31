@@ -21,7 +21,7 @@
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
-#include <cassert>
+#include "april_assert.h"
 #include <cstdio>
 
 /* april_utils::context<T>
@@ -138,7 +138,7 @@ namespace april_utils {
     {
       // cuando comparamos un elemento y el siguiente del array
       // necesitamos al menos un array de tam = 2
-      assert(before+after > 0); 
+      april_assert(before+after > 0); 
       
       vec = new T* [vec_size];
       
@@ -246,12 +246,12 @@ namespace april_utils {
     // 1, 2... representan los elementos posteriores
     const T& operator[] (int t) const {
       // Condicion de ready para el caso de fin de entrada
-      assert(!end || ((num_shifts <= after) && (num_shifts <= num_inserts)) );
+      april_assert(!end || ((num_shifts <= after) && (num_shifts <= num_inserts)) );
       // Condicion de "ready" para el caso de acceso antes de llenar after
-      assert(end || num_inserts > after || t <= num_inserts);
+      april_assert(end || num_inserts > after || t <= num_inserts);
       // Comprobaciones de rango
-      assert(t<=after);
-      assert(t>=-before);
+      april_assert(t<=after);
+      april_assert(t>=-before);
       return *vec[before+t];
     }    
   };
