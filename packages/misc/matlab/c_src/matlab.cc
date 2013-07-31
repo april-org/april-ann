@@ -82,21 +82,33 @@ void readMatrixData(MatrixFloat::col_major_iterator &m_it,
 }
 
 template<typename T>
-void readMatrixData(MatrixString::col_major_iterator &m_it,
-		    MatrixString::col_major_iterator &end,
+void readMatrixData(MatrixChar::col_major_iterator &m_it,
+		    MatrixChar::col_major_iterator &end,
 		    const T *ptr, const uint32_t nbytes) {
   for (uint32_t ptr_pos=0; ptr_pos < nbytes; ptr_pos += sizeof(T), ++ptr) {
     april_assert(m_it != end);
-    *m_it = string(*ptr);
+    *m_it = *ptr;
     ++m_it;
   }
 }
 
-///////////////////////////// DataElement //////////////////////////////////////
+template<typename T>
+void readMatrixData(MatrixInt32::col_major_iterator &m_it,
+		    MatrixInt32::col_major_iterator &end,
+		    const T *ptr, const uint32_t nbytes) {
+  for (uint32_t ptr_pos=0; ptr_pos < nbytes; ptr_pos += sizeof(T), ++ptr) {
+    april_assert(m_it != end);
+    *m_it = *ptr;
+    ++m_it;
+  }
+}
 
-MatFileReader::DataElement *MatFileReader::DataElement::getNextSubElement() {
+///////////////////////// TaggedDataElement //////////////////////////////////
+
+MatFileReader::TaggedDataElement *MatFileReader::TaggedDataElement::
+getNextSubElement() {
   if (data_pos < getSizeOf() - TAG_SIZE) {
-    DataElement *sub_element = getDataElement(data + data_pos);
+    TaggedDataElement *sub_element = getDataElement(data + data_pos);
     data_pos += sub_element->getSizeOf();
     // FOR THE PADDING OF 64 BITS (8 BYTES)
     size_t mod8 = MOD8(data_pos);
@@ -107,14 +119,14 @@ MatFileReader::DataElement *MatFileReader::DataElement::getNextSubElement() {
   else return 0;
 }
 
-uint32_t MatFileReader::DataElement::getClass() {
+uint32_t MatFileReader::TaggedDataElement::getClass() {
   if (getDataType() != MATRIX) {
     ERROR_PRINT1("Impossible to get CLASS from a non "
 		 "Matrix element (type %d)\n", getDataType());
     return 0;
   }
   int old_data_pos = data_pos;
-  DataElement *array_flags = getNextSubElement();
+  TaggedDataElement *array_flags = getNextSubElement();
   data_pos = old_data_pos;
   const char *flags = array_flags->getData<const char*>();
   // CHECK: [0] only for little_endian
@@ -123,7 +135,7 @@ uint32_t MatFileReader::DataElement::getClass() {
   return cl;
 }
 
-MatFileReader::CellArrayDataElement *MatFileReader::DataElement::
+MatFileReader::CellArrayDataElement *MatFileReader::TaggedDataElement::
 getCellArray(char *name, size_t maxsize) {
   if (getDataType() != MATRIX) {
     ERROR_PRINT1("Impossible to get a Matrix from a non "
@@ -132,25 +144,26 @@ getCellArray(char *name, size_t maxsize) {
   }
   if (getClass() != CL_CELL_ARRAY) {
     ERROR_PRINT1("Impossible to get a cell array from a non cell array "
-		 "element(class %d)\n", getClass());
+		 "element (class %d)\n", getClass());
     return 0;
   }
-  DataElement *array_flags = getNextSubElement();
-  DataElement *dims_array  = getNextSubElement();
-  DataElement *array_name  = getNextSubElement();
+  TaggedDataElement *array_flags = getNextSubElement();
+  TaggedDataElement *dims_array  = getNextSubElement();
+  TaggedDataElement *array_name  = getNextSubElement();
   if (array_flags==0 || dims_array==0 || array_name==0)
     ERROR_EXIT(128, "Impossible to found all ARRAY elements\n");
   int num_dims = dims_array->getNumberOfBytes()/sizeof(int32_t);
   const int32_t *dims = dims_array->getData<const int32_t*>();
   CellArrayDataElement *cell_array = new CellArrayDataElement(dims, num_dims);
-  DataElement *cell;
+  TaggedDataElement *cell;
   int idx=0;
   while( (cell = getNextSubElement()) != 0 && idx < cell_array->getSize())
     cell_array->setElementAt(idx++, cell);
   if (array_name->getNumberOfBytes() > maxsize-1)
     ERROR_EXIT2(128, "Overflow at array name, found %u, maximum %lu\n",
 		array_name->getNumberOfBytes(), maxsize);
-  strncpy(name, array_name->getData<const char*>(), array_name->getNumberOfBytes());
+  strncpy(name, array_name->getData<const char*>(),
+	  array_name->getNumberOfBytes());
   name[array_name->getNumberOfBytes()] = '\0';
   delete array_flags;
   delete dims_array;
@@ -158,9 +171,59 @@ getCellArray(char *name, size_t maxsize) {
   return cell_array;
 }
 
+MatFileReader::StructureDataElement *MatFileReader::TaggedDataElement::
+getStructure(char *name, size_t maxsize) {
+  if (getDataType() != MATRIX) {
+    ERROR_PRINT1("Impossible to get a Matrix from a non "
+		 "Matrix element (type %d)\n", getDataType());
+    return 0;
+  }
+  if (getClass() != CL_STRUCTURE) {
+    ERROR_PRINT1("Impossible to get a structure from a non structure "
+		 "element (class %d)\n", getClass());
+    return 0;
+  }
+  TaggedDataElement *array_flags  = getNextSubElement();
+  TaggedDataElement *dims_array   = getNextSubElement();
+  TaggedDataElement *array_name   = getNextSubElement();
+  TaggedDataElement *fname_length = getNextSubElement();
+  TaggedDataElement *fnames       = getNextSubElement();
+  if (array_flags==0 || dims_array==0 || array_name==0 ||
+      fname_length == 0 || fnames == 0)
+    ERROR_EXIT(128, "Impossible to found all ARRAY elements\n");
+  StructureDataElement *structure = new StructureDataElement();
+  TaggedDataElement *field;
+  // size of every name
+  int32_t fname_length_value = fname_length->getData<const int32_t*>()[0];
+  // compute the number of fields (size)
+  int size = fnames->getNumberOfBytes()/fname_length_value;
+  // pointer to the current name
+  const char *current_name=fnames->getData<const char*>();
+  for (int i=0; i<size; ++i) {
+    field = getNextSubElement();
+    if (field == 0)
+      ERROR_EXIT2(128, "Incorrect number of fields, found %d, expected %d\n",
+		  i, size);
+    structure->setElementByName(current_name, field);
+    current_name += fname_length_value;
+  }
+  if (array_name->getNumberOfBytes() > maxsize-1)
+    ERROR_EXIT2(128, "Overflow at array name, found %u, maximum %lu\n",
+		array_name->getNumberOfBytes(), maxsize);
+  strncpy(name, array_name->getData<const char*>(),
+	  array_name->getNumberOfBytes());
+  name[array_name->getNumberOfBytes()] = '\0';
+  delete array_flags;
+  delete dims_array;
+  delete array_name;
+  delete fname_length;
+  delete fnames;
+  return structure;
+}
+
 // ONLY IF CHAR ARRAY
-MatrixString *MatFileReader::DataElement::
-getMatrixString(char *name, size_t maxsize) {
+MatrixChar *MatFileReader::TaggedDataElement::
+getMatrixChar(char *name, size_t maxsize) {
   if (getDataType() != MATRIX) {
     ERROR_PRINT1("Impossible to get a Matrix from a non "
 		 "Matrix element (type %d)\n", getDataType());
@@ -171,10 +234,10 @@ getMatrixString(char *name, size_t maxsize) {
     ERROR_PRINT1("Incorrect array class type: %d\n", cl);
     return 0;
   }
-  DataElement *array_flags = getNextSubElement();
-  DataElement *dims_array  = getNextSubElement();
-  DataElement *array_name  = getNextSubElement();
-  DataElement *real_part   = getNextSubElement();
+  TaggedDataElement *array_flags = getNextSubElement();
+  TaggedDataElement *dims_array  = getNextSubElement();
+  TaggedDataElement *array_name  = getNextSubElement();
+  TaggedDataElement *real_part   = getNextSubElement();
   if (array_flags==0 || dims_array==0 || array_name==0 || real_part==0)
     ERROR_EXIT(128, "Impossible to found all ARRAY elements\n");
   int num_dims = dims_array->getNumberOfBytes()/sizeof(int32_t);
@@ -182,19 +245,19 @@ getMatrixString(char *name, size_t maxsize) {
   const int32_t *const_dims = dims_array->getData<const int32_t*>();
   for (int i=0; i<num_dims; ++i)
     dims[i] = static_cast<int>(const_dims[i]);
-  MatrixString *m;
-  m = new MatrixString(num_dims, dims);
+  MatrixChar *m;
+  m = new MatrixChar(num_dims, dims);
   delete[] dims;
   // traversing in col_major the real/img part of the matrix will be traversed
   // last, so it is possible add all real components in a first step, and in a
   // second step to add all the imaginary components
-  MatrixString::col_major_iterator it(m->begin());
-  MatrixString::col_major_iterator end(m->end());
+  MatrixChar::col_major_iterator it(m->begin());
+  MatrixChar::col_major_iterator end(m->end());
   // this loop traverses all the real components, and later all the imaginary
   // components (if any)
   switch(real_part->getDataType()) {
   case UTF8:
-    readMatrixData(it, end, real_part->getData<const char* const *>(),
+    readMatrixData(it, end, real_part->getData<const char*>(),
 		   real_part->getNumberOfBytes());
     break;
   case UTF16:
@@ -208,7 +271,8 @@ getMatrixString(char *name, size_t maxsize) {
   if (array_name->getNumberOfBytes() > maxsize-1)
     ERROR_EXIT2(128, "Overflow at array name, found %u, maximum %lu\n",
 		array_name->getNumberOfBytes(), maxsize);
-  strncpy(name, array_name->getData<const char*>(), array_name->getNumberOfBytes());
+  strncpy(name, array_name->getData<const char*>(),
+	  array_name->getNumberOfBytes());
   name[array_name->getNumberOfBytes()] = '\0';
   delete array_flags;
   delete dims_array;
@@ -217,8 +281,9 @@ getMatrixString(char *name, size_t maxsize) {
   return m;  
 }
 
-MatrixFloat *MatFileReader::DataElement::getMatrix(char *name, size_t maxsize,
-						   bool col_major) {
+MatrixFloat *MatFileReader::TaggedDataElement::getMatrix(char *name,
+							 size_t maxsize,
+							 bool col_major) {
   if (getDataType() != MATRIX) {
     ERROR_PRINT1("Impossible to get a Matrix from a non "
 		 "Matrix element (type %d)\n", getDataType());
@@ -236,11 +301,11 @@ MatrixFloat *MatFileReader::DataElement::getMatrix(char *name, size_t maxsize,
   default:
     ;
   }
-  DataElement *array_flags = getNextSubElement();
-  DataElement *dims_array  = getNextSubElement();
-  DataElement *array_name  = getNextSubElement();
-  DataElement *real_part   = getNextSubElement();
-  DataElement *img_part    = getNextSubElement();
+  TaggedDataElement *array_flags = getNextSubElement();
+  TaggedDataElement *dims_array  = getNextSubElement();
+  TaggedDataElement *array_name  = getNextSubElement();
+  TaggedDataElement *real_part   = getNextSubElement();
+  TaggedDataElement *img_part    = getNextSubElement();
   if (array_flags==0 || dims_array==0 || array_name==0 || real_part==0)
     ERROR_EXIT(128, "Impossible to found all ARRAY elements\n");
   int num_dims = dims_array->getNumberOfBytes()/sizeof(int32_t);
@@ -258,13 +323,12 @@ MatrixFloat *MatFileReader::DataElement::getMatrix(char *name, size_t maxsize,
   MatrixFloat *m;
   m = new MatrixFloat(num_dims+((img_part!=0)?1:0), dims,
 		      (col_major)?CblasColMajor:CblasRowMajor);
-  delete[] dims;
   // traversing in col_major the real/img part of the matrix will be traversed
   // last, so it is possible add all real components in a first step, and in a
   // second step to add all the imaginary components
   MatrixFloat::col_major_iterator it(m->begin());
   MatrixFloat::col_major_iterator end(m->end());
-  DataElement *numeric_elems[2] = { real_part, img_part };
+  TaggedDataElement *numeric_elems[2] = { real_part, img_part };
   // this loop traverses all the real components, and later all the imaginary
   // components (if any)
   for (int i=0; i<dims[num_dims]; ++i) {
@@ -277,6 +341,97 @@ MatrixFloat *MatFileReader::DataElement::getMatrix(char *name, size_t maxsize,
       readMatrixData(it, end, numeric_elems[i]->getData<const double*>(),
 		     numeric_elems[i]->getNumberOfBytes());
       break;
+    case INT8:
+      readMatrixData(it, end, numeric_elems[i]->getData<const int8_t*>(),
+		     numeric_elems[i]->getNumberOfBytes());
+      break;
+    case UINT8:
+      readMatrixData(it, end, numeric_elems[i]->getData<const uint8_t*>(),
+		     numeric_elems[i]->getNumberOfBytes());
+      break;
+    case INT16:
+      readMatrixData(it, end, numeric_elems[i]->getData<const int16_t*>(),
+		     numeric_elems[i]->getNumberOfBytes());
+      break;
+    case UINT16:
+      readMatrixData(it, end, numeric_elems[i]->getData<const uint16_t*>(),
+		     numeric_elems[i]->getNumberOfBytes());
+      break;
+    case INT32:
+    case UINT32:
+    case INT64:
+    case UINT64:
+    default:
+      ERROR_EXIT1(128,"Data type %d not supported\n",
+		  numeric_elems[i]->getDataType());
+    }
+  }
+  if (array_name->getNumberOfBytes() > maxsize-1)
+    ERROR_EXIT2(128, "Overflow at array name, found %u, maximum %lu\n",
+		array_name->getNumberOfBytes(), maxsize);
+  strncpy(name, array_name->getData<const char*>(),
+	  array_name->getNumberOfBytes());
+  name[array_name->getNumberOfBytes()] = '\0';
+  delete array_flags;
+  delete dims_array;
+  delete array_name;
+  delete real_part;
+  delete img_part;
+  delete[] dims;
+  return m;
+}
+
+MatrixInt32 *MatFileReader::TaggedDataElement::getMatrixInt32(char *name,
+							      size_t maxsize) {
+  if (getDataType() != MATRIX) {
+    ERROR_PRINT1("Impossible to get a Matrix from a non "
+		 "Matrix element (type %d)\n", getDataType());
+    return 0;
+  }
+  uint32_t cl = getClass();
+  switch(cl) {
+  case CL_CELL_ARRAY:
+  case CL_STRUCTURE:
+  case CL_OBJECT:
+  case CL_CHAR:
+  case CL_SPARSE:
+    ERROR_PRINT1("Incorrect array class type: %d\n", cl);
+    return 0;
+  default:
+    ;
+  }
+  TaggedDataElement *array_flags = getNextSubElement();
+  TaggedDataElement *dims_array  = getNextSubElement();
+  TaggedDataElement *array_name  = getNextSubElement();
+  TaggedDataElement *real_part   = getNextSubElement();
+  TaggedDataElement *img_part    = getNextSubElement();
+  if (array_flags==0 || dims_array==0 || array_name==0 || real_part==0)
+    ERROR_EXIT(128, "Impossible to found all ARRAY elements\n");
+  int num_dims = dims_array->getNumberOfBytes()/sizeof(int32_t);
+  int *dims = new int[num_dims+1];
+  const int32_t *const_dims = dims_array->getData<const int32_t*>();
+  for (int i=0; i<num_dims; ++i)
+    dims[i] = static_cast<int>(const_dims[i]);
+  // if it has imaginary part, the resulting matrix will had another last
+  // dimension of size 2, where position 0 contains the real part, and position
+  // 1 the imaginary part
+  if (img_part != 0) {
+    dims[num_dims] = 2;
+  }
+  else dims[num_dims] = 1;
+  MatrixInt32 *m;
+  m = new MatrixInt32(num_dims+((img_part!=0)?1:0), dims);
+  delete[] dims;
+  // traversing in col_major the real/img part of the matrix will be traversed
+  // last, so it is possible add all real components in a first step, and in a
+  // second step to add all the imaginary components
+  MatrixInt32::col_major_iterator it(m->begin());
+  MatrixInt32::col_major_iterator end(m->end());
+  TaggedDataElement *numeric_elems[2] = { real_part, img_part };
+  // this loop traverses all the real components, and later all the imaginary
+  // components (if any)
+  for (int i=0; i<dims[num_dims]; ++i) {
+    switch(numeric_elems[i]->getDataType()) {
     case INT8:
       readMatrixData(it, end, numeric_elems[i]->getData<const int8_t*>(),
 		     numeric_elems[i]->getNumberOfBytes());
@@ -309,15 +464,18 @@ MatrixFloat *MatFileReader::DataElement::getMatrix(char *name, size_t maxsize,
       readMatrixData(it, end, numeric_elems[i]->getData<const uint64_t*>(),
 		     numeric_elems[i]->getNumberOfBytes());
       break;
+    case SINGLE:
+    case DOUBLE:
     default:
-      ERROR_EXIT1(128, "Data type %d not supported, use only SINGLE or DOUBLE\n",
+      ERROR_EXIT1(128,"Data type %d not supported\n",
 		  numeric_elems[i]->getDataType());
     }
   }
   if (array_name->getNumberOfBytes() > maxsize-1)
     ERROR_EXIT2(128, "Overflow at array name, found %u, maximum %lu\n",
 		array_name->getNumberOfBytes(), maxsize);
-  strncpy(name, array_name->getData<const char*>(), array_name->getNumberOfBytes());
+  strncpy(name, array_name->getData<const char*>(),
+	  array_name->getNumberOfBytes());
   name[array_name->getNumberOfBytes()] = '\0';
   delete array_flags;
   delete dims_array;
@@ -330,7 +488,7 @@ MatrixFloat *MatFileReader::DataElement::getMatrix(char *name, size_t maxsize,
 //////////////////////// CellArrayDataElement //////////////////////////////////
 MatFileReader::CellArrayDataElement::
 CellArrayDataElement(const int *dims, int num_dims) :
-  Referenced(),
+  DataElementInterface(),
   dims(new int[num_dims]), stride(new int[num_dims]), num_dims(num_dims),
   total_size(1) {
   for (int i=0; i<num_dims; ++i) {
@@ -338,7 +496,7 @@ CellArrayDataElement(const int *dims, int num_dims) :
     this->stride[i] = total_size;
     total_size     *= dims[i];
   }
-  elements = new DataElement*[total_size];
+  elements = new TaggedDataElement*[total_size];
   for (int i=0; i<total_size; ++i) elements[i] = 0;
 }
 
@@ -357,7 +515,7 @@ int MatFileReader::CellArrayDataElement::computeRawPos(const int *coords) {
 }
 
 void MatFileReader::CellArrayDataElement::setElementAt(const int *coords, int n,
-						       DataElement *e) {
+						       TaggedDataElement *e) {
   if (n != num_dims)
     ERROR_EXIT2(128, "Incorrect size of coords vector, found %d, expected %d\n",
 		n, num_dims);
@@ -365,7 +523,7 @@ void MatFileReader::CellArrayDataElement::setElementAt(const int *coords, int n,
 }
 
 void MatFileReader::CellArrayDataElement::
-setElementAt(int raw_idx, DataElement *e) {
+setElementAt(int raw_idx, TaggedDataElement *e) {
   assert(raw_idx >= 0 && raw_idx < total_size);
   if (elements[raw_idx] != 0)
     ERROR_EXIT(128, "The given position is not empty\n");
@@ -373,7 +531,7 @@ setElementAt(int raw_idx, DataElement *e) {
   IncRef(e);
 }
 
-MatFileReader::DataElement *MatFileReader::CellArrayDataElement::
+MatFileReader::TaggedDataElement *MatFileReader::CellArrayDataElement::
 getElementAt(const int *coords, int n) {
   if (n != num_dims)
     ERROR_EXIT2(128, "Incorrect size of coords vector, found %d, expected %d\n",
@@ -381,10 +539,37 @@ getElementAt(const int *coords, int n) {
   return getElementAt(computeRawPos(coords));
 }
 
-MatFileReader::DataElement *MatFileReader::CellArrayDataElement::
+MatFileReader::TaggedDataElement *MatFileReader::CellArrayDataElement::
 getElementAt(int raw_idx) {
   assert(raw_idx >= 0 && raw_idx < total_size);
   return elements[raw_idx];
+}
+
+//////////////////////// StructureDataElement //////////////////////////////////
+MatFileReader::StructureDataElement::StructureDataElement() :
+  DataElementInterface() {
+}
+
+MatFileReader::StructureDataElement::
+~StructureDataElement() {
+  for (HashType::iterator it=elements.begin(); it!=elements.end(); ++it)
+    DecRef(it->second);
+}
+
+void MatFileReader::StructureDataElement::
+setElementByName(const char *name, TaggedDataElement *e) {
+  string key(name);
+  TaggedDataElement *&value = elements[key];
+  if (value != 0)
+    ERROR_EXIT1(128, "The given name '%s' is occupied\n", name);
+  value = e;
+  IncRef(value);
+}
+
+MatFileReader::TaggedDataElement *MatFileReader::StructureDataElement::
+getElementByName(const char *name) {
+  string key(name);
+  return elements[key];
 }
 
 //////////////////////////// MatFileReader /////////////////////////////////////
@@ -428,10 +613,10 @@ MatFileReader::~MatFileReader() {
   }
 }
 
-MatFileReader::DataElement *MatFileReader::getNextDataElement() {
+MatFileReader::TaggedDataElement *MatFileReader::getNextDataElement() {
   if (mmapped_data_pos < mmapped_data_size) {
-    DataElement *element = getDataElement(getCurrent<char*>());
-    if (element->getDataType() != MATRIX && element->getDataType() != COMPRESSED)
+    TaggedDataElement *element = getDataElement(getCurrent<char*>());
+    if (element->getDataType()!=MATRIX && element->getDataType()!=COMPRESSED)
       ERROR_EXIT1(128, "Incorrect data type, expected MATRIX or "
 		  "COMPRESSED, found %d\n", element->getDataType());
     addToCurrent(element->getSizeOf());
@@ -443,9 +628,9 @@ MatFileReader::DataElement *MatFileReader::getNextDataElement() {
 	len = len << 1;
 	delete[] buff;
 	buff = new char[len];
-      } while( (err=inflate(element->getData<const void*>(),
-			    element->getNumberOfBytes(),
-			    reinterpret_cast<void*>(buff), len)) == Z_BUF_ERROR );
+      } while((err=inflate(element->getData<const void*>(),
+			   element->getNumberOfBytes(),
+			   reinterpret_cast<void*>(buff),len)) == Z_BUF_ERROR);
       delete element;
       element = getDataElement(buff);
       decompressed_buffers.push_front(buff);
@@ -455,14 +640,15 @@ MatFileReader::DataElement *MatFileReader::getNextDataElement() {
   else return 0;
 }
 
-MatFileReader::DataElement *MatFileReader::getDataElement(const char *ptr)
+MatFileReader::TaggedDataElement *MatFileReader::
+getDataElement(const char *ptr)
 {
-  DataElement *ret;
-  FullDataElement *full_data;
-  full_data = new FullDataElement(ptr);
+  TaggedDataElement *ret;
+  FullTagDataElement *full_data;
+  full_data = new FullTagDataElement(ptr);
   if (full_data->isSmall()) {
     delete full_data;
-    ret = new SmallDataElement(ptr);
+    ret = new SmallTagDataElement(ptr);
   }
   else ret = full_data;
   return ret;

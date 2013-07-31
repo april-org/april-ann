@@ -20,15 +20,17 @@
  */
 //BIND_HEADER_C
 #include "bind_matrix.h"
+#include "bind_matrix_char.h"
+#include "bind_matrix_int32.h"
 
 int elements_iterator_function(lua_State *L) {
   MatFileReader *obj = lua_toMatFileReader(L,1);
-  MatDataElement *element = obj->getNextDataElement();
+  MatTaggedDataElement *element = obj->getNextDataElement();
   if (element == 0) {
     lua_pushnil(L);
     return 1;
   }
-  lua_pushMatDataElement(L, element);
+  lua_pushMatTaggedDataElement(L, element);
   return 1;
 }
 
@@ -36,18 +38,25 @@ int elements_iterator_function(lua_State *L) {
 
 //BIND_HEADER_H
 #include "matlab.h"
-typedef MatFileReader::DataElement MatDataElement;
+typedef MatFileReader::DataElementInterface MatDataElementInterface;
+typedef MatFileReader::TaggedDataElement    MatTaggedDataElement;
 typedef MatFileReader::CellArrayDataElement MatCellArrayDataElement;
+typedef MatFileReader::StructureDataElement MatStructureDataElement;
 //BIND_END
 
 //BIND_LUACLASSNAME MatFileReader matlab.reader
 //BIND_CPP_CLASS    MatFileReader
 
-//BIND_LUACLASSNAME MatDataElement matlab.element
-//BIND_CPP_CLASS    MatDataElement
+//BIND_LUACLASSNAME MatDataElementInterface matlab.__element_interface__
+//BIND_CPP_CLASS    MatDataElementInterface
+
+//BIND_LUACLASSNAME MatTaggedDataElement matlab.tagged_element
+//BIND_CPP_CLASS    MatTaggedDataElement
+//BIND_SUBCLASS_OF  MatTaggedDataElement MatDataElementInterface
 
 //BIND_LUACLASSNAME MatCellArrayDataElement matlab.cell_array
 //BIND_CPP_CLASS    MatCellArrayDataElement
+//BIND_SUBCLASS_OF  MatCellArrayDataElement MatDataElementInterface
 
 //BIND_ENUM_CONSTANT matlab.types.matrix MatFileReader::MATRIX
 //BIND_ENUM_CONSTANT matlab.types.int8   MatFileReader::INT8
@@ -77,6 +86,30 @@ typedef MatFileReader::CellArrayDataElement MatCellArrayDataElement;
 //BIND_ENUM_CONSTANT matlab.classes.uint16     MatFileReader::CL_UINT16
 //BIND_ENUM_CONSTANT matlab.classes.int32      MatFileReader::CL_INT32
 //BIND_ENUM_CONSTANT matlab.classes.uint32     MatFileReader::CL_UINT32
+//BIND_ENUM_CONSTANT matlab.classes.int64      MatFileReader::CL_INT64
+//BIND_ENUM_CONSTANT matlab.classes.uint64     MatFileReader::CL_UINT64
+
+/////////////////////////////////////////////////////////////////////////////
+
+//BIND_CONSTRUCTOR MatDataElementInterface
+{
+  LUABIND_ERROR("Abstract class");
+}
+//BIND_END
+
+//BIND_METHOD MatDataElementInterface get_type
+{
+  LUABIND_RETURN(uint, obj->getDataType());
+}
+//BIND_END
+
+//BIND_METHOD MatDataElementInterface get_class
+{
+  LUABIND_RETURN(uint, obj->getClass());
+}
+//BIND_END
+
+/////////////////////////////////////////////////////////////////////////////
 
 //BIND_CONSTRUCTOR MatFileReader
 {
@@ -96,8 +129,8 @@ typedef MatFileReader::CellArrayDataElement MatCellArrayDataElement;
 
 //BIND_METHOD MatFileReader get_next_element
 {
-  MatDataElement *element = obj->getNextDataElement();
-  LUABIND_RETURN(MatDataElement, element);
+  MatTaggedDataElement *element = obj->getNextDataElement();
+  LUABIND_RETURN(MatTaggedDataElement, element);
 }
 //BIND_END
 
@@ -110,34 +143,42 @@ typedef MatFileReader::CellArrayDataElement MatCellArrayDataElement;
 
 ////////////////////////////////////////////////////////////////////////////
 
-//BIND_CONSTRUCTOR MatDataElement
+//BIND_CONSTRUCTOR MatTaggedDataElement
 {
   LUABIND_ERROR("abstract class");
 }
 //BIND_END
 
-//BIND_METHOD MatDataElement get_type
+//BIND_METHOD MatTaggedDataElement get_matrix
 {
-  LUABIND_RETURN(uint, obj->getDataType());
-}
-//BIND_END
-
-//BIND_METHOD MatDataElement get_class
-{
-  LUABIND_RETURN(uint, obj->getClass());
-}
-//BIND_END
-
-//BIND_METHOD MatDataElement get_matrix
-{
+  bool col_major;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, bool, col_major, false);
   char name[MAX_NAME_SIZE];
-  MatrixFloat *m = obj->getMatrix(name, MAX_NAME_SIZE, false);
+  MatrixFloat *m = obj->getMatrix(name, MAX_NAME_SIZE, col_major);
   LUABIND_RETURN(MatrixFloat, m);
   LUABIND_RETURN(string, name);
 }
 //BIND_END
 
-//BIND_METHOD MatDataElement get_cell_array
+//BIND_METHOD MatTaggedDataElement get_matrix_char
+{
+  char name[MAX_NAME_SIZE];
+  MatrixChar *m = obj->getMatrixChar(name, MAX_NAME_SIZE);
+  LUABIND_RETURN(MatrixChar, m);
+  LUABIND_RETURN(string, name);
+}
+//BIND_END
+
+//BIND_METHOD MatTaggedDataElement get_matrix_int32
+{
+  char name[MAX_NAME_SIZE];
+  MatrixInt32 *m = obj->getMatrixInt32(name, MAX_NAME_SIZE);
+  LUABIND_RETURN(MatrixInt32, m);
+  LUABIND_RETURN(string, name);
+}
+//BIND_END
+
+//BIND_METHOD MatTaggedDataElement get_cell_array
 {
   char name[MAX_NAME_SIZE];
   MatCellArrayDataElement *c = obj->getCellArray(name, MAX_NAME_SIZE);
@@ -146,22 +187,41 @@ typedef MatFileReader::CellArrayDataElement MatCellArrayDataElement;
 }
 //BIND_END
 
-//BIND_METHOD MatDataElement reset
+//BIND_METHOD MatTaggedDataElement get_structure
+{
+  char name[MAX_NAME_SIZE];
+  MatStructureDataElement *s = obj->getStructure(name, MAX_NAME_SIZE);
+  lua_createtable(L, 0, s->size());
+  for (MatStructureDataElement::HashType::iterator it=s->begin();
+       it != s->end(); ++it) {
+    const char *ename = it->first.c_str();
+    MatTaggedDataElement *e = it->second;
+    lua_pushstring(L, ename);
+    lua_pushMatTaggedDataElement(L, e);
+    lua_rawset(L, -3);
+  }
+  LUABIND_RETURN_FROM_STACK(-1);
+  LUABIND_RETURN(string, name);
+  delete s;
+}
+//BIND_END
+
+//BIND_METHOD MatTaggedDataElement reset
 {
   obj->reset();
 }
 //BIND_END
 
-//BIND_METHOD MatDataElement get_num_bytes
+//BIND_METHOD MatTaggedDataElement get_num_bytes
 {
   LUABIND_RETURN(uint, obj->getNumberOfBytes());
 }
 //BIND_END
 
-//BIND_METHOD MatDataElement get_next_subelement
+//BIND_METHOD MatTaggedDataElement get_next_subelement
 {
   if (obj->getNextSubElement() != 0)
-    LUABIND_RETURN(MatDataElement, obj->getNextSubElement());
+    LUABIND_RETURN(MatTaggedDataElement, obj->getNextSubElement());
   else
     LUABIND_RETURN_NIL();
 }
@@ -172,6 +232,34 @@ typedef MatFileReader::CellArrayDataElement MatCellArrayDataElement;
 //BIND_CONSTRUCTOR MatCellArrayDataElement
 {
   LUABIND_ERROR("abstract class\n");
+}
+//BIND_END
+
+//BIND_METHOD MatCellArrayDataElement compute_coords
+{
+  LUABIND_CHECK_ARGN(==,1);
+  int raw_idx;
+  LUABIND_GET_PARAMETER(1, int, raw_idx);
+  int *coords = new int[obj->getNumDim()];
+  obj->computeCoords(raw_idx, coords);
+  for (int i=0; i<obj->getNumDim(); ++i) coords[i]++;
+  LUABIND_VECTOR_TO_NEW_TABLE(int, coords, obj->getNumDim());
+  LUABIND_RETURN_FROM_STACK(-1);
+}
+//BIND_END
+
+//BIND_METHOD MatCellArrayDataElement raw_get
+{
+  LUABIND_CHECK_ARGN(==,1);
+  int raw_idx;
+  LUABIND_GET_PARAMETER(1, int, raw_idx);
+  LUABIND_RETURN(MatTaggedDataElement, obj->getElementAt(raw_idx));
+}
+//BIND_END
+
+//BIND_METHOD MatCellArrayDataElement size
+{
+  LUABIND_RETURN(int, obj->getSize());
 }
 //BIND_END
 
@@ -189,9 +277,9 @@ typedef MatFileReader::CellArrayDataElement MatCellArrayDataElement;
     }
     coords[i]--;
   }
-  MatDataElement *e = obj->getElementAt(coords, argn);
+  MatTaggedDataElement *e = obj->getElementAt(coords, argn);
   delete[] coords;
-  LUABIND_RETURN(MatDataElement, e);
+  LUABIND_RETURN(MatTaggedDataElement, e);
 }
 //BIND_END
 
@@ -208,5 +296,13 @@ typedef MatFileReader::CellArrayDataElement MatCellArrayDataElement;
     LUABIND_VECTOR_TO_NEW_TABLE(int, d, obj->getNumDim());
     LUABIND_RETURN_FROM_STACK(-1);
   }
+}
+//BIND_END
+
+/////////////////////////////////////////////////////////////////////////////
+
+//BIND_CONSTRUCTOR MatStructureDataElement
+{
+  LUABIND_ERROR("abstract class\n");
 }
 //BIND_END

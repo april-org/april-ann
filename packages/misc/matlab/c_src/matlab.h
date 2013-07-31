@@ -18,14 +18,25 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+
+/******************************************************************
+ *
+ * Readers of MAT format of Matlab
+ * http://www.mathworks.com/help/pdf_doc/matlab/matfile_format.pdf
+ *
+ ******************************************************************/
+
 #ifndef MATLAB_H
 #define MATLAB_H
 
 #include <cstdio>
 #include <stdint.h>
 #include "matrixFloat.h"
-#include "matrixString.h"
+#include "matrixChar.h"
+#include "matrixInt32.h"
 #include "list.h"
+#include "hash_table.h"
+#include "mystring.h"
 
 #define MAX_NAME_SIZE    256
 #define HEADER_SIZE      128
@@ -50,8 +61,9 @@ public:
   
   enum MatFileClasses {
     CL_CELL_ARRAY=1, CL_STRUCTURE=2, CL_OBJECT=3, CL_CHAR=4, CL_SPARSE=5,
-    CL_DOUBLE=6, CL_SINGLE=7, CL_INT8, CL_UINT8,
-    CL_INT16, CL_UINT16, CL_INT32, CL_UINT32,
+    CL_DOUBLE=6, CL_SINGLE=7, CL_INT8=8, CL_UINT8=9,
+    CL_INT16=10, CL_UINT16=11, CL_INT32=12, CL_UINT32=13,
+    CL_INT64=14, CL_UINT64=15,
     NUMBER_OF_CLASSES,
   };
 private:
@@ -85,18 +97,29 @@ private:
 
   /************* DATA ELEMENTS ****************/
 public:
-  class CellArrayDataElement;
+  
+  class DataElementInterface : public Referenced {
+  public:
+    DataElementInterface() : Referenced() { }
+    virtual ~DataElementInterface() { }
+    virtual uint32_t getDataType() const = 0;
+    virtual uint32_t getClass() = 0;
+  };
 
-  class DataElement : public Referenced {
+  // forward declaration
+  class CellArrayDataElement;
+  class StructureDataElement;
+  
+  class TaggedDataElement : public DataElementInterface {
     friend class MatFileReader;
   protected:
     const char *data;
     size_t data_pos;
-    DataElement(const char *ptr) :
-    Referenced(), data(ptr), data_pos(0) { }
+    TaggedDataElement(const char *ptr) :
+    DataElementInterface(), data(ptr), data_pos(0) { }
   public:
-    DataElement() : data(0), data_pos(0) { }
-    virtual ~DataElement() { }
+    TaggedDataElement() : data(0), data_pos(0) { }
+    virtual ~TaggedDataElement() { }
     virtual uint32_t getDataType() const = 0;
     virtual uint32_t getNumberOfBytes() const = 0;
     virtual size_t   getSizeOf() const = 0;
@@ -104,39 +127,68 @@ public:
     T getData() const { return reinterpret_cast<T>(data); }
     void reset() { data_pos = 0; }
     // SUB-ELEMENTS
-    DataElement *getNextSubElement();
-    // ONLY IF MATRIX ARRAY
+    TaggedDataElement *getNextSubElement();
+    // FOR NUMERIC TYPES (casting)
     MatrixFloat *getMatrix(char *name, size_t maxsize, bool col_major=false);
-    uint32_t getClass();
+    virtual uint32_t getClass();
     // ONLY IF CELL ARRAY
     CellArrayDataElement *getCellArray(char *name, size_t maxsize);
+    // ONLY IF STRUCTURE
+    StructureDataElement *getStructure(char *name, size_t maxsize);
     // ONLY IF CHAR ARRAY
-    MatrixString *getMatrixString(char *name, size_t maxsize);
+    MatrixChar *getMatrixChar(char *name, size_t maxsize);
+    // FOR NUMERIC TYPES (casting)
+    MatrixInt32 *getMatrixInt32(char *name, size_t maxsize);
   };
 
-  class CellArrayDataElement : public Referenced {
+  class CellArrayDataElement : public DataElementInterface {
     int *dims, *stride, num_dims, total_size;
-    DataElement **elements;
+    TaggedDataElement **elements;
     int computeRawPos(const int *coords);
   public:
     CellArrayDataElement(const int *dims, int num_dims);
     ~CellArrayDataElement();
-    DataElement *getElementAt(const int *coords, int n);
-    DataElement *getElementAt(int raw_idx);
-    void setElementAt(const int *coords, int n, DataElement *e);
-    void setElementAt(int raw_idx, DataElement *e);
+    TaggedDataElement *getElementAt(const int *coords, int n);
+    TaggedDataElement *getElementAt(int raw_idx);
+    void setElementAt(const int *coords, int n, TaggedDataElement *e);
+    void setElementAt(int raw_idx, TaggedDataElement *e);
     int getNumDim() const { return num_dims; }
     int getDimSize(int i) const { return dims[i]; }
     const int *getDimPtr() const { return dims; }
     int getSize() const { return total_size; }
+    virtual uint32_t getDataType() const { return MATRIX; }
+    virtual uint32_t getClass() { return CL_CELL_ARRAY; }
+    void computeCoords(int raw_pos, int *coords) {
+      for (int i=num_dims-1; i>=0; --i) {
+	coords[i] = raw_pos / stride[i];
+	raw_pos = raw_pos % stride[i];
+      }
+    }
+  };
+
+  class StructureDataElement : public DataElementInterface {
+  public:
+    typedef april_utils::hash<april_utils::string, TaggedDataElement*> HashType;
+  private:
+    HashType elements;
+  public:
+    StructureDataElement();
+    ~StructureDataElement();
+    TaggedDataElement *getElementByName(const char *name);
+    void setElementByName(const char *name, TaggedDataElement *e);
+    virtual uint32_t getDataType() const { return MATRIX; }
+    virtual uint32_t getClass() { return CL_STRUCTURE; }
+    HashType::iterator begin() { return elements.begin(); }
+    HashType::iterator end() { return elements.end(); }
+    unsigned int size() const { return elements.size(); }
   };
   
 private:
-  struct FullDataElement : public DataElement {
+  struct FullTagDataElement : public TaggedDataElement {
     const FullDataTag *tag;
   public:
-    FullDataElement(const char *ptr) :
-      DataElement(ptr+TAG_SIZE),
+    FullTagDataElement(const char *ptr) :
+    TaggedDataElement(ptr+TAG_SIZE),
     tag(reinterpret_cast<const FullDataTag*>(ptr)) { }
     virtual uint32_t getDataType() const { return tag->data_type; }
     virtual uint32_t getNumberOfBytes() const { return tag->number_of_bytes; }
@@ -144,11 +196,11 @@ private:
     bool isSmall() const { return (tag->hbytes[2]!=0 || tag->hbytes[3]!=0); }
   };
   
-  struct SmallDataElement : public DataElement {
+  struct SmallTagDataElement : public TaggedDataElement {
     const SmallDataTag *tag;
   public:
-    SmallDataElement(const char *ptr) :
-      DataElement(ptr+SMALL_TAG_SIZE),
+    SmallTagDataElement(const char *ptr) :
+    TaggedDataElement(ptr+SMALL_TAG_SIZE),
     tag(reinterpret_cast<const SmallDataTag*>(ptr)) { }
     virtual uint32_t getDataType() const { return static_cast<uint32_t>(tag->data_type); }
     virtual uint32_t getNumberOfBytes() const { return static_cast<uint32_t>(tag->number_of_bytes); }
@@ -179,10 +231,10 @@ public:
   
   MatFileReader(const char *path);
   ~MatFileReader();
-  DataElement *getNextDataElement();
+  TaggedDataElement *getNextDataElement();
   void reset() { mmapped_data_pos = 0; }
 
-  static DataElement *getDataElement(const char *ptr);
+  static TaggedDataElement *getDataElement(const char *ptr);
   
 };
 
