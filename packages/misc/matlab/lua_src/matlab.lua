@@ -22,7 +22,7 @@ function matlab.tolua(element,col_major)
     end
   else
     error(string.format("Not implemented yet for type '%s'",
-			matlab.types[element:get_type()]))
+			matlab.types[element:get_type()] or tostring(element:get_type()) or "nil"))
   end
   collectgarbage("collect")
 end

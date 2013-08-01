@@ -248,6 +248,7 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
   for (int i=0; i<obj->getNumDim(); ++i) coords[i]++;
   LUABIND_VECTOR_TO_NEW_TABLE(int, coords, obj->getNumDim());
   LUABIND_RETURN_FROM_STACK(-1);
+  delete[] coords;
 }
 //BIND_END
 

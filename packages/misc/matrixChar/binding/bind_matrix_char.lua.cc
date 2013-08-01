@@ -560,7 +560,9 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 //BIND_METHOD MatrixChar to_string_table
 {
   SlidingWindowMatrixChar *window = new SlidingWindowMatrixChar(obj);
+  IncRef(window);
   MatrixChar *m = window->getMatrix();
+  IncRef(m);
   char *str = new char[m->size()+1];
   lua_createtable(L, window->numWindows(), 0);
   int index = 1;
@@ -574,7 +576,9 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
     lua_rawseti(L, -2, index++);
     window->next();
   } while(!window->isEnd());
-  delete m;
+  DecRef(window);
+  DecRef(m);
+  delete[] str;
   LUABIND_RETURN_FROM_STACK(-1);
 }
 //BIND_END
