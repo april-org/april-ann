@@ -289,7 +289,10 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
   if (argn == 1) {
     int idx;
     LUABIND_GET_PARAMETER(1, int, idx);
-    LUABIND_RETURN(int, obj->getDimSize(idx));
+    if (idx < 1 || idx > obj->getNumDim())
+      LUABIND_FERROR3("Incorrect dimension number, found %d, expected "
+		      "between [%d,%d]", idx, 1, obj->getNumDim());
+    LUABIND_RETURN(int, obj->getDimSize(idx-1));
   }
   else {
     const int *d = obj->getDimPtr();
