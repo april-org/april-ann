@@ -173,6 +173,7 @@ getCellArray(char *name, size_t maxsize) {
   delete array_flags;
   delete dims_array;
   delete array_name;
+  reset();
   return cell_array;
 }
 
@@ -223,6 +224,7 @@ getStructure(char *name, size_t maxsize) {
   delete array_name;
   delete fname_length;
   delete fnames;
+  reset();
   return structure;
 }
 
@@ -283,6 +285,7 @@ getMatrixChar(char *name, size_t maxsize) {
   delete dims_array;
   delete array_name;
   delete real_part;
+  reset();
   return m;  
 }
 
@@ -383,6 +386,7 @@ MatrixFloat *MatFileReader::TaggedDataElement::getMatrix(char *name,
   delete real_part;
   delete img_part;
   delete[] dims;
+  reset();
   return m;
 }
 
@@ -487,6 +491,7 @@ MatrixInt32 *MatFileReader::TaggedDataElement::getMatrixInt32(char *name,
   delete array_name;
   delete real_part;
   delete img_part;
+  reset();
   return m;
 }
 
@@ -547,7 +552,6 @@ getElementAt(const int *coords, int n) {
 MatFileReader::TaggedDataElement *MatFileReader::CellArrayDataElement::
 getElementAt(int raw_idx) {
   assert(raw_idx >= 0 && raw_idx < total_size);
-  elements[raw_idx]->reset();
   return elements[raw_idx];
 }
 
@@ -575,7 +579,6 @@ setElementByName(const char *name, TaggedDataElement *e) {
 MatFileReader::TaggedDataElement *MatFileReader::StructureDataElement::
 getElementByName(const char *name) {
   string key(name);
-  elements[key]->reset();
   return elements[key];
 }
 
