@@ -126,8 +126,12 @@ uint32_t MatFileReader::TaggedDataElement::getClass() {
 		 "Matrix element (type %d)\n", getDataType());
     return 0;
   }
+  // ugly hack to force the extraction of array_flags from the first sub-element
   int old_data_pos = data_pos;
+  data_pos = 0;
+  // end of hack
   TaggedDataElement *array_flags = getNextSubElement();
+  // returning data_pos to its original position
   data_pos = old_data_pos;
   const char *flags = array_flags->getData<const char*>();
   // CHECK: [0] only for little_endian
@@ -543,6 +547,7 @@ getElementAt(const int *coords, int n) {
 MatFileReader::TaggedDataElement *MatFileReader::CellArrayDataElement::
 getElementAt(int raw_idx) {
   assert(raw_idx >= 0 && raw_idx < total_size);
+  elements[raw_idx]->reset();
   return elements[raw_idx];
 }
 
@@ -570,6 +575,7 @@ setElementByName(const char *name, TaggedDataElement *e) {
 MatFileReader::TaggedDataElement *MatFileReader::StructureDataElement::
 getElementByName(const char *name) {
   string key(name);
+  elements[key]->reset();
   return elements[key];
 }
 
