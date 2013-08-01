@@ -38,7 +38,7 @@ public:
   }
 };
 /// This make class is needed to do type inference in template classes
-template <typename T, typename T>
+template <typename T, typename Func>
 component_wise_functor_0<T, Func> make_cwise_functor_0(Func f) {
   return component_wise_functor_0<T, Func>(f);
 }
