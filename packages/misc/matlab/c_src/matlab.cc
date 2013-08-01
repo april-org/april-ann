@@ -109,7 +109,7 @@ void readMatrixData(MatrixInt32::col_major_iterator &m_it,
 MatFileReader::TaggedDataElement *MatFileReader::TaggedDataElement::
 getNextSubElement() {
   if (data_pos < getSizeOf() - TAG_SIZE) {
-    TaggedDataElement *sub_element = getDataElement(data + data_pos);
+    TaggedDataElement *sub_element = getDataElement(reader, data + data_pos);
     data_pos += sub_element->getSizeOf();
     // FOR THE PADDING OF 64 BITS (8 BYTES)
     size_t mod8 = MOD8(data_pos);
@@ -159,7 +159,8 @@ getCellArray(char *name, size_t maxsize) {
     ERROR_EXIT(128, "Impossible to found all ARRAY elements\n");
   int num_dims = dims_array->getNumberOfBytes()/sizeof(int32_t);
   const int32_t *dims = dims_array->getData<const int32_t*>();
-  CellArrayDataElement *cell_array = new CellArrayDataElement(dims, num_dims);
+  CellArrayDataElement *cell_array = new CellArrayDataElement(reader,
+							      dims, num_dims);
   TaggedDataElement *cell;
   int idx=0;
   while( (cell = getNextSubElement()) != 0 && idx < cell_array->getSize())
@@ -197,7 +198,7 @@ getStructure(char *name, size_t maxsize) {
   if (array_flags==0 || dims_array==0 || array_name==0 ||
       fname_length == 0 || fnames == 0)
     ERROR_EXIT(128, "Impossible to found all ARRAY elements\n");
-  StructureDataElement *structure = new StructureDataElement();
+  StructureDataElement *structure = new StructureDataElement(reader);
   TaggedDataElement *field;
   // size of every name
   int32_t fname_length_value = fname_length->getData<const int32_t*>()[0];
@@ -430,7 +431,6 @@ MatrixInt32 *MatFileReader::TaggedDataElement::getMatrixInt32(char *name,
   else dims[num_dims] = 1;
   MatrixInt32 *m;
   m = new MatrixInt32(num_dims+((img_part!=0)?1:0), dims);
-  delete[] dims;
   // traversing in col_major the real/img part of the matrix will be traversed
   // last, so it is possible add all real components in a first step, and in a
   // second step to add all the imaginary components
@@ -486,6 +486,7 @@ MatrixInt32 *MatFileReader::TaggedDataElement::getMatrixInt32(char *name,
   strncpy(name, array_name->getData<const char*>(),
 	  array_name->getNumberOfBytes());
   name[array_name->getNumberOfBytes()] = '\0';
+  delete[] dims;
   delete array_flags;
   delete dims_array;
   delete array_name;
@@ -497,8 +498,8 @@ MatrixInt32 *MatFileReader::TaggedDataElement::getMatrixInt32(char *name,
 
 //////////////////////// CellArrayDataElement //////////////////////////////////
 MatFileReader::CellArrayDataElement::
-CellArrayDataElement(const int *dims, int num_dims) :
-  DataElementInterface(),
+CellArrayDataElement(MatFileReader *reader, const int *dims, int num_dims) :
+  DataElementInterface(reader),
   dims(new int[num_dims]), stride(new int[num_dims]), num_dims(num_dims),
   total_size(1) {
   for (int i=0; i<num_dims; ++i) {
@@ -556,8 +557,8 @@ getElementAt(int raw_idx) {
 }
 
 //////////////////////// StructureDataElement //////////////////////////////////
-MatFileReader::StructureDataElement::StructureDataElement() :
-  DataElementInterface() {
+MatFileReader::StructureDataElement::StructureDataElement(MatFileReader *reader) :
+  DataElementInterface(reader) {
 }
 
 MatFileReader::StructureDataElement::
@@ -625,7 +626,7 @@ MatFileReader::~MatFileReader() {
 
 MatFileReader::TaggedDataElement *MatFileReader::getNextDataElement() {
   if (mmapped_data_pos < mmapped_data_size) {
-    TaggedDataElement *element = getDataElement(getCurrent<char*>());
+    TaggedDataElement *element = getDataElement(this, getCurrent<char*>());
     if (element->getDataType()!=MATRIX && element->getDataType()!=COMPRESSED)
       ERROR_EXIT1(128, "Incorrect data type, expected MATRIX or "
 		  "COMPRESSED, found %d\n", element->getDataType());
@@ -642,7 +643,7 @@ MatFileReader::TaggedDataElement *MatFileReader::getNextDataElement() {
 			   element->getNumberOfBytes(),
 			   reinterpret_cast<void*>(buff),len)) == Z_BUF_ERROR);
       delete element;
-      element = getDataElement(buff);
+      element = getDataElement(this, buff);
       decompressed_buffers.push_front(buff);
     }
     return element; 
@@ -651,14 +652,14 @@ MatFileReader::TaggedDataElement *MatFileReader::getNextDataElement() {
 }
 
 MatFileReader::TaggedDataElement *MatFileReader::
-getDataElement(const char *ptr)
+getDataElement(MatFileReader *reader, const char *ptr)
 {
   TaggedDataElement *ret;
   FullTagDataElement *full_data;
-  full_data = new FullTagDataElement(ptr);
+  full_data = new FullTagDataElement(reader, ptr);
   if (full_data->isSmall()) {
     delete full_data;
-    ret = new SmallTagDataElement(ptr);
+    ret = new SmallTagDataElement(reader, ptr);
   }
   else ret = full_data;
   return ret;
