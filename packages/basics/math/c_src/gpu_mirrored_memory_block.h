@@ -27,6 +27,7 @@
 
 #include "april_assert.h"
 #include "referenced.h"
+#include "complex_number.h"
 #include <new>
 
 #ifdef USE_CUDA
@@ -313,6 +314,7 @@ public:
 // typedef for referring to float memory blocks
 typedef GPUMirroredMemoryBlock<float> FloatGPUMirroredMemoryBlock;
 typedef GPUMirroredMemoryBlock<int> IntGPUMirroredMemoryBlock;
+typedef GPUMirroredMemoryBlock<ComplexF> ComplexFGPUMirroredMemoryBlock;
 
 #ifndef NO_POOL
 template<typename T>

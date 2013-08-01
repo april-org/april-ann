@@ -31,7 +31,9 @@
 /************* FILL FUNCTION **************/
 template<>
 void Matrix<float>::fill(float value) {
-  applyFunctionWithSpanIterator<float>(this, make_cwise_functor_1(value, doFill));
+  applyFunctionWithSpanIterator<float>(this,
+				       make_cwise_functor_1<float>(value,
+								   doFill));
 }
 
 /************* CLAMP FUNCTION **************/
@@ -197,37 +199,43 @@ bool Matrix<float>::equals(const Matrix<float> *other, float epsilon) const {
 /************* LOG FUNCTION **************/
 template<>
 void Matrix<float>::log() {
-  applyFunctionWithSpanIterator<float>(this, make_cwise_functor_0(doLog));
+  applyFunctionWithSpanIterator<float>(this,
+				       make_cwise_functor_0<float>(doLog));
 }
 
 /************* LOG1P FUNCTION **************/
 template<>
 void Matrix<float>::log1p() {
-  applyFunctionWithSpanIterator<float>(this, make_cwise_functor_0(doLog1p));
+  applyFunctionWithSpanIterator<float>(this,
+				       make_cwise_functor_0<float>(doLog1p));
 }
 
 /************* EXP FUNCTION **************/
 template<>
 void Matrix<float>::exp() {
-  applyFunctionWithSpanIterator<float>(this, make_cwise_functor_0(doExp));
+  applyFunctionWithSpanIterator<float>(this,
+				       make_cwise_functor_0<float>(doExp));
 }
 
 /************* SQRT FUNCTION **************/
 template<>
 void Matrix<float>::sqrt() {
-  applyFunctionWithSpanIterator<float>(this, make_cwise_functor_0(doSqrt));
+  applyFunctionWithSpanIterator<float>(this,
+				       make_cwise_functor_0<float>(doSqrt));
 }
 
 /************* POW FUNCTION **************/
 template<>
 void Matrix<float>::pow(float value) {
-  applyFunctionWithSpanIterator<float>(this, make_cwise_functor_1(value, doPow));
+  applyFunctionWithSpanIterator<float>(this,
+				       make_cwise_functor_1<float>(value, doPow));
 }
 
 /************* TANH FUNCTION **************/
 template<>
 void Matrix<float>::tanh() {
-  applyFunctionWithSpanIterator<float>(this, make_cwise_functor_0(doTanh));
+  applyFunctionWithSpanIterator<float>(this,
+				       make_cwise_functor_0<float>(doTanh));
 }
 
 template<>
@@ -441,10 +449,10 @@ template<>
 void Matrix<float>::scal(float value) {
 #ifdef USE_MKL
   applyFunctionWithSpanIteratorNOPARALLEL<float>(this,
-						 make_cwise_functor_1(value, doSscal));
+						 make_cwise_functor_1<float>(value, doSscal));
 #else
   applyFunctionWithSpanIterator<float>(this,
-				       make_cwise_functor_1(value, doSscal));
+				       make_cwise_functor_1<float>(value, doSscal));
 #endif
 }
 

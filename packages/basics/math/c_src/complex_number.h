@@ -18,8 +18,38 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef COMPLEX_NUMBER_H
+#define COMPLEX_NUMBER_H
 #define REAL_IDX 0
 #define IMG_IDX  1
 struct ComplexF {
   float data[2];
+  ComplexF operator*(const ComplexF &other) const {
+    ComplexF result;
+    result.data[REAL_IDX] = (this->data[REAL_IDX]*other.data[REAL_IDX] +
+			     this->data[IMG_IDX]*other.data[IMG_IDX]);
+    result.data[IMG_IDX]  = (this->data[REAL_IDX]*other.data[IMG_IDX] +
+			     this->data[IMG_IDX]*other.data[REAL_IDX]);
+  }
+  ComplexF operator+(const ComplexF &other) const {
+    ComplexF result;
+    result.data[REAL_IDX] = this->data[REAL_IDX]+other.data[REAL_IDX];
+    result.data[IMG_IDX]  = this->data[IMG_IDX]+other.data[IMG_IDX];
+  }
 };
+struct ComplexD {
+  double data[2];
+  ComplexD operator*(const ComplexD &other) const {
+    ComplexD result;
+    result.data[REAL_IDX] = (this->data[REAL_IDX]*other.data[REAL_IDX] +
+			     this->data[IMG_IDX]*other.data[IMG_IDX]);
+    result.data[IMG_IDX]  = (this->data[REAL_IDX]*other.data[IMG_IDX] +
+			     this->data[IMG_IDX]*other.data[REAL_IDX]);
+  }
+  ComplexD operator+(const ComplexD &other) const {
+    ComplexD result;
+    result.data[REAL_IDX] = this->data[REAL_IDX]+other.data[REAL_IDX];
+    result.data[IMG_IDX]  = this->data[IMG_IDX]+other.data[IMG_IDX];
+  }
+};
+#endif // COMPLEX_NUMBER_H

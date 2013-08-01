@@ -153,6 +153,74 @@ void applyBinaryFunctionWithSpanIterator(Matrix<T> *m1,
   }
 }
 
+// Idem but for binary functions (needs two matrices, and two
+// best_span_iterators)
+template<typename T, typename FUNC>
+void applyBinaryFunctionWithSpanIterator(Matrix<T> *m1,
+					 const Matrix<T> *m2,
+					 const FUNC &functor,
+					 const int N_th = DEFAULT_N_TH,
+					 const unsigned int SIZE_th = DEFAULT_SIZE_TH,
+					 const unsigned int CONTIGUOUS_th = DEFAULT_CONTIGUOUS_TH) {
+  if (m1->getIsContiguous() && m2->getIsContiguous() &&
+      static_cast<unsigned int>(m1->size()) < CONTIGUOUS_th)
+    functor(m1, m2,
+	    static_cast<unsigned int>(m1->size()), 1, 1,
+	    static_cast<unsigned int>(m1->getOffset()),
+	    static_cast<unsigned int>(m2->getOffset()));
+  else if (m1->getNumDim() == 1)
+    functor(m1, m2,
+	    static_cast<unsigned int>(m1->size()),
+	    static_cast<unsigned int>(m1->getStrideSize(0)),
+	    static_cast<unsigned int>(m2->getStrideSize(0)),
+	    static_cast<unsigned int>(m1->getOffset()),
+	    static_cast<unsigned int>(m2->getOffset()));
+  else {
+    typename Matrix<T>::best_span_iterator span_it1(m1), span_it2(m2);
+    const int N = span_it1.numberOfIterations();
+    unsigned int size    = static_cast<unsigned int>(span_it1.getSize());
+    unsigned int stride1 = static_cast<unsigned int>(span_it1.getStride());
+    unsigned int stride2 = static_cast<unsigned int>(span_it2.getStride());
+    april_assert(N == span_it2.numberOfIterations());
+    april_assert(size == static_cast<unsigned int>(span_it2.getSize()));
+    // forward application of functor, to force execution of memory copy from GPU
+    // to PPAL or viceversa (if needed), avoiding race conditions on the following
+    functor(m1, m2, size, stride1, stride2,
+	    static_cast<unsigned int>(span_it1.getOffset()),
+	    static_cast<unsigned int>(span_it2.getOffset()));
+    if (N > 1) {
+#ifndef NO_OMP
+      // this if controls the execution using OMP only when the number of threads
+      // is more than 1 and the iterator size is big enough
+      if (omp_utils::get_num_threads() > 1 && N > N_th && size > SIZE_th) {
+#pragma omp parallel for firstprivate(span_it1) firstprivate(span_it2)
+	for (int i=1; i<N; ++i) {
+	  span_it1.setAtIteration(i);
+	  span_it2.setAtIteration(i);
+	  functor(m1, m2, size, stride1, stride2,
+		  static_cast<unsigned int>(span_it1.getOffset()),
+		  static_cast<unsigned int>(span_it2.getOffset()));
+	}
+      }
+      else {
+#endif
+	// sequential code, with less overhead when updating iterator
+	++span_it1;
+	++span_it2;
+	do {
+	  functor(m1, m2, size, stride1, stride2,
+		  static_cast<unsigned int>(span_it1.getOffset()),
+		  static_cast<unsigned int>(span_it2.getOffset()));
+	  ++span_it1;
+	  ++span_it2;
+	} while(span_it1 != m1->end_span_iterator());
+#ifndef NO_OMP
+      }
+#endif
+    }
+  }
+}
+
 // Similar to previous functions, but for sum-reduction operations
 template<typename T, typename FUNC>
 T applySumReductionWithSpanIterator(const Matrix<T> *m,
@@ -280,7 +348,7 @@ bool applyBinaryAndReductionWithSpanIterator(const Matrix<T> *m1,
 // Similar to previous functions, but for general reduction operations (without
 // OMP)
 template<typename T, typename FUNC1, typename FUNC2>
-T applyReductionWithSpanIteratorNOPARALLEL(Matrix<T> *m,
+T applyReductionWithSpanIteratorNOPARALLEL(const Matrix<T> *m,
 					   FUNC1 &functor,
 					   FUNC2 &reductor,
 					   const T initial_value) {
@@ -345,6 +413,42 @@ void applyFunctionWithSpanIteratorNOPARALLEL(Matrix<T> *m,
 template<typename T, typename FUNC>
 void applyBinaryFunctionWithSpanIteratorNOPARALLEL(Matrix<T> *m1,
 						   Matrix<T> *m2,
+						   const FUNC &functor) {
+  if (m1->getIsContiguous() && m2->getIsContiguous())
+    functor(m1, m2,
+	    static_cast<unsigned int>(m1->size()), 1, 1,
+	    static_cast<unsigned int>(m1->getOffset()),
+	    static_cast<unsigned int>(m2->getOffset()));
+  else if (m1->getNumDim() == 1)
+    functor(m1, m2,
+	    static_cast<unsigned int>(m1->size()),
+	    static_cast<unsigned int>(m1->getStrideSize(0)),
+	    static_cast<unsigned int>(m2->getStrideSize(0)),
+	    static_cast<unsigned int>(m1->getOffset()),
+	    static_cast<unsigned int>(m2->getOffset()));
+  else {
+    typename Matrix<T>::best_span_iterator span_it1(m1), span_it2(m2);
+    const int N = span_it1.numberOfIterations();
+    unsigned int size    = static_cast<unsigned int>(span_it1.getSize());
+    unsigned int stride1 = static_cast<unsigned int>(span_it1.getStride());
+    unsigned int stride2 = static_cast<unsigned int>(span_it2.getStride());
+    april_assert(N == span_it2.numberOfIterations());
+    april_assert(size == static_cast<unsigned int>(span_it2.getSize()));
+    while(span_it1 != m1->end_span_iterator()) {
+      functor(m1, m2, size, stride1, stride2,
+	      static_cast<unsigned int>(span_it1.getOffset()),
+	      static_cast<unsigned int>(span_it2.getOffset()));
+      ++span_it1;
+      ++span_it2;
+    }
+  }
+}
+
+// Idem but for binary functions (needs two matrices, and two
+// best_span_iterators), NO OMP
+template<typename T, typename FUNC>
+void applyBinaryFunctionWithSpanIteratorNOPARALLEL(Matrix<T> *m1,
+						   const Matrix<T> *m2,
 						   const FUNC &functor) {
   if (m1->getIsContiguous() && m2->getIsContiguous())
     functor(m1, m2,
