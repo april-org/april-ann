@@ -22,8 +22,8 @@
 #include "swap.h"
 #include "matrix.h"
 #include "matrixFloat.h"
-#include "matrixFloat_math_templates.h" // functions which apply functors
-#include "matrixFloat_math_functors.h"  // standard functors
+#include "matrix_generic_math_templates.h" // functions which apply functors
+#include "matrix_generic_math_functors.h"  // standard functors
 #include "wrapper.h" // wrappers of mathematical function (for CPU/GPU)
 
 // WARNING: ALL THE METHODS IMPLEMENTED HERE ARE SPECIALIZED TO FLOAT VERSION
@@ -31,7 +31,7 @@
 /************* FILL FUNCTION **************/
 template<>
 void Matrix<float>::fill(float value) {
-  applyFunctionWithSpanIterator(this, make_cwise_functor_1(value, doFill));
+  applyFunctionWithSpanIterator<float>(this, make_cwise_functor_1(value, doFill));
 }
 
 /************* CLAMP FUNCTION **************/
@@ -49,7 +49,7 @@ struct clamp_functor {
 template<>
 void Matrix<float>::clamp(float lower, float upper) {
   clamp_functor functor(lower, upper);
-  applyFunctionWithSpanIterator(this, functor);
+  applyFunctionWithSpanIterator<float>(this, functor);
 }
 
 /************* ZEROS FUNCTION **************/
@@ -139,7 +139,7 @@ Matrix<float>* Matrix<float>::multiply(const Matrix<float> *other) const {
     int dim[2] = {matrixSize[0], other->matrixSize[1]};
     resul = new Matrix<float>(2,dim,major_order);
 #ifdef USE_CUDA
-      resul->setUseCuda(use_cuda);
+    resul->setUseCuda(use_cuda);
 #endif
     resul->zeros();
     resul->gemm(CblasNoTrans, CblasNoTrans,
@@ -159,7 +159,7 @@ struct sum_functor {
 template<>
 float Matrix<float>::sum() const {
   sum_functor functor;
-  return applySumReductionWithSpanIterator(this, functor);
+  return applySumReductionWithSpanIterator<float>(this, functor);
 }
 
 /**** COMPONENT WISE OPERATIONS ****/
@@ -168,7 +168,7 @@ float Matrix<float>::sum() const {
 /************* scalarAdd FUNCTION **************/
 template<>
 void Matrix<float>::scalarAdd(float s) {
-  applyFunctionWithSpanIterator(this, make_cwise_functor_1(s, doScalarAdd));
+  applyFunctionWithSpanIterator<float>(this, make_cwise_functor_1(s, doScalarAdd));
 }
 
 /************* equals FUNCTION **************/
@@ -191,43 +191,43 @@ template<>
 bool Matrix<float>::equals(const Matrix<float> *other, float epsilon) const {
   if (!sameDim(other)) return false;
   equals_functor functor(epsilon);
-  return applyBinaryAndReductionWithSpanIterator(this, other, functor);
+  return applyBinaryAndReductionWithSpanIterator<float>(this, other, functor);
 }
 
 /************* LOG FUNCTION **************/
 template<>
 void Matrix<float>::log() {
-  applyFunctionWithSpanIterator(this, make_cwise_functor_0(doLog));
+  applyFunctionWithSpanIterator<float>(this, make_cwise_functor_0(doLog));
 }
 
 /************* LOG1P FUNCTION **************/
 template<>
 void Matrix<float>::log1p() {
-  applyFunctionWithSpanIterator(this, make_cwise_functor_0(doLog1p));
+  applyFunctionWithSpanIterator<float>(this, make_cwise_functor_0(doLog1p));
 }
 
 /************* EXP FUNCTION **************/
 template<>
 void Matrix<float>::exp() {
-  applyFunctionWithSpanIterator(this, make_cwise_functor_0(doExp));
+  applyFunctionWithSpanIterator<float>(this, make_cwise_functor_0(doExp));
 }
 
 /************* SQRT FUNCTION **************/
 template<>
 void Matrix<float>::sqrt() {
-  applyFunctionWithSpanIterator(this, make_cwise_functor_0(doSqrt));
+  applyFunctionWithSpanIterator<float>(this, make_cwise_functor_0(doSqrt));
 }
 
 /************* POW FUNCTION **************/
 template<>
 void Matrix<float>::pow(float value) {
-  applyFunctionWithSpanIterator(this, make_cwise_functor_1(value, doPow));
+  applyFunctionWithSpanIterator<float>(this, make_cwise_functor_1(value, doPow));
 }
 
 /************* TANH FUNCTION **************/
 template<>
 void Matrix<float>::tanh() {
-  applyFunctionWithSpanIterator(this, make_cwise_functor_0(doTanh));
+  applyFunctionWithSpanIterator<float>(this, make_cwise_functor_0(doTanh));
 }
 
 template<>
@@ -243,7 +243,7 @@ Matrix<float> *Matrix<float>::cmul(const Matrix<float> *other) {
     ERROR_EXIT(128, "Only allowed for contiguous matrices\n");
   Matrix<float> *new_mat = new Matrix(1, &total_size, major_order);
 #ifdef USE_CUDA
-      new_mat->setUseCuda(use_cuda);
+  new_mat->setUseCuda(use_cuda);
 #endif
   doSsbmv(major_order, CblasLower,
 	  total_size, 0,
@@ -282,7 +282,7 @@ void Matrix<float>::copy(const Matrix<float> *other) {
     ERROR_EXIT(128, "Matrices with different dimension sizes\n");
   use_cuda = other->use_cuda;
   copy_functor functor;
-  applyBinaryFunctionWithSpanIterator(this, other, functor);
+  applyBinaryFunctionWithSpanIterator<float>(this, other, functor);
 }
 
 struct axpy_functor {
@@ -311,9 +311,9 @@ void Matrix<float>::axpy(float alpha, const Matrix<float> *other) {
     ERROR_EXIT(128, "Matrices with different major orders\n");
   axpy_functor functor(alpha);
 #ifdef USE_MKL
-  applyBinaryFunctionWithSpanIteratorNOPARALLEL(this, other, functor);
+  applyBinaryFunctionWithSpanIteratorNOPARALLEL<float>(this, other, functor);
 #else
-  applyBinaryFunctionWithSpanIterator(this, other, functor);
+  applyBinaryFunctionWithSpanIterator<float>(this, other, functor);
 #endif
 }
 
@@ -440,11 +440,11 @@ float Matrix<float>::dot(const Matrix<float> *other) const {
 template<>
 void Matrix<float>::scal(float value) {
 #ifdef USE_MKL
-  applyFunctionWithSpanIteratorNOPARALLEL(this,
-					  make_cwise_functor_1(value, doSscal));
+  applyFunctionWithSpanIteratorNOPARALLEL<float>(this,
+						 make_cwise_functor_1(value, doSscal));
 #else
-  applyFunctionWithSpanIterator(this,
-				make_cwise_functor_1(value, doSscal));
+  applyFunctionWithSpanIterator<float>(this,
+				       make_cwise_functor_1(value, doSscal));
 #endif
 }
 
@@ -475,10 +475,10 @@ float Matrix<float>::norm2() const {
   else {
     norm2_functor  functor;
     norm2_reductor reductor;
-    v = applyReductionWithSpanIteratorNOPARALLEL(this,
-						 functor,
-						 reductor,
-						 0.0f);
+    v = applyReductionWithSpanIteratorNOPARALLEL<float>(this,
+							functor,
+							reductor,
+							0.0f);
     v = sqrtf(v);
   }
   return v;
