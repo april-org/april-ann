@@ -240,6 +240,9 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
   LUABIND_CHECK_ARGN(==,1);
   int raw_idx;
   LUABIND_GET_PARAMETER(1, int, raw_idx);
+  if (raw_idx < 0 || raw_idx >= obj->getSize())
+    LUABIND_FERROR3("Incorrect raw index, found %d, expected betwen [%d,%d]",
+		    raw_idx, 0, obj->getSize());
   int *coords = new int[obj->getNumDim()];
   obj->computeCoords(raw_idx, coords);
   for (int i=0; i<obj->getNumDim(); ++i) coords[i]++;
@@ -253,6 +256,9 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
   LUABIND_CHECK_ARGN(==,1);
   int raw_idx;
   LUABIND_GET_PARAMETER(1, int, raw_idx);
+  if (raw_idx < 0 || raw_idx >= obj->getSize())
+    LUABIND_FERROR3("Incorrect raw index, found %d, expected betwen [%d,%d]",
+		    raw_idx, 0, obj->getSize());
   LUABIND_RETURN(MatTaggedDataElement, obj->getElementAt(raw_idx));
 }
 //BIND_END
