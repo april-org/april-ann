@@ -35,6 +35,11 @@ local function tomatrix(e,col_major)
   print("# Loading matrix float element: ", name)
   return elem,name
 end
+local function tomatrixdouble(e)
+  local elem,name = e:get_matrix_double()
+  print("# Loading matrix double element: ", name)
+  return elem,name
+end
 local function tomatrixint32(e)
   local elem,name = e:get_matrix_int32()
   print("# Loading matrix int32 element: ", name)
@@ -68,12 +73,13 @@ end
 
 -- addition of all the functions to class_tolua_table
 -- FLOAT matrix
-add_wrapper(matlab.classes.double, tomatrix)
 add_wrapper(matlab.classes.single, tomatrix)
 add_wrapper(matlab.classes.int8,   tomatrix)
 add_wrapper(matlab.classes.uint8,  tomatrix)
 add_wrapper(matlab.classes.int16,  tomatrix)
 add_wrapper(matlab.classes.uint16, tomatrix)
+-- DOUBLE matrix
+add_wrapper(matlab.classes.double, tomatrixdouble)
 -- INT matrix
 add_wrapper(matlab.classes.int32,  tomatrixint32)
 add_wrapper(matlab.classes.int64,  tomatrixint32)

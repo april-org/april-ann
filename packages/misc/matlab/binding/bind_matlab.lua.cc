@@ -22,6 +22,7 @@
 #include "bind_matrix.h"
 #include "bind_matrix_char.h"
 #include "bind_matrix_int32.h"
+#include "bind_matrix_double.h"
 
 int elements_iterator_function(lua_State *L) {
   MatFileReader *obj = lua_toMatFileReader(L,1);
@@ -156,6 +157,15 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
   char name[MAX_NAME_SIZE];
   MatrixFloat *m = obj->getMatrix(name, MAX_NAME_SIZE, col_major);
   LUABIND_RETURN(MatrixFloat, m);
+  LUABIND_RETURN(string, name);
+}
+//BIND_END
+
+//BIND_METHOD MatTaggedDataElement get_matrix_double
+{
+  char name[MAX_NAME_SIZE];
+  MatrixDouble *m = obj->getMatrixDouble(name, MAX_NAME_SIZE);
+  LUABIND_RETURN(MatrixDouble, m);
   LUABIND_RETURN(string, name);
 }
 //BIND_END
