@@ -76,7 +76,7 @@ void wrapperCblasCopy(int N, const float *x_mem, unsigned int x_inc,
 
 void wrapperCblasCopy(int N, const ComplexF *x_mem, unsigned int x_inc,
 		      ComplexF *y_mem, unsigned int y_inc) {
-  cblas_scopy(N, x_mem, x_inc, y_mem, y_inc);
+  cblas_ccopy(N, x_mem, x_inc, y_mem, y_inc);
 }
 
 /***************************************
@@ -124,10 +124,11 @@ void doCopy(int N, const GPUMirroredMemoryBlock<T>* x,
 #endif
 }
 
+template<typename T>
 void doScopyLoop(int N,
-		 GPUMirroredMemoryBlock* x,
+		 GPUMirroredMemoryBlock<T>* x,
 		 unsigned int x_inc,
-		 GPUMirroredMemoryBlock* y,
+		 GPUMirroredMemoryBlock<T>* y,
 		 unsigned int y_inc,
 		 unsigned int times,
 		 const unsigned int stride,
