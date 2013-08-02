@@ -122,6 +122,34 @@ function matrix.saveRAW(matrix,filename)
   f:close()
 end
 
+-----------------------------------------------------------------------------
+
+util.vector_uint.meta_instance.__tostring = function(self)
+  local out = {}
+  local sz = self:size()
+  local NCOLS = 9
+  for i=1,sz do
+    if i%NCOLS == 0 then table.insert(out, "\n") end
+    table.insert(out, string.format("%8d ",self:get(i)))
+  end
+  table.insert(out, string.format("\n# vector_uint of size %d",
+				  self:size()))
+  return table.concat(out, "")
+end
+
+util.vector_float.meta_instance.__tostring = function(self)
+  local out = {}
+  local sz = self:size()
+  local NCOLS = 9
+  for i=1,sz do
+    if i%NCOLS == 0 then table.insert(out, "\n") end
+    table.insert(out, string.format("% -13.8g ",self:get(i)))
+  end
+  table.insert(out, string.format("\n# vector_float of size %d",
+				  self:size()))
+  return table.concat(out, " ")
+end
+
 ---------------------------
 -- BINDING DOCUMENTATION --
 ---------------------------

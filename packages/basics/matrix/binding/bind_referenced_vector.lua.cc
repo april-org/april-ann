@@ -42,10 +42,36 @@ using april_utils::ReferencedVectorUint;
 }
 //BIND_END
 
-//BIND_METHOD ReferencedVectorFloat get_size
+//BIND_METHOD ReferencedVectorFloat size
 {
   LUABIND_CHECK_ARGN(==, 0);
   LUABIND_RETURN(int, (int)obj->size());
+}
+//BIND_END
+
+//BIND_METHOD ReferencedVectorFloat get
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  uint idx;
+  LUABIND_GET_PARAMETER(1, uint, idx);
+  if (idx > obj->size())
+    LUABIND_FERROR2("Incorrect index, found %d, maximum size %d\n",
+		    idx, obj->size());
+  LUABIND_RETURN(float, (*obj)[idx-1]);
+}
+//BIND_END
+
+//BIND_METHOD ReferencedVectorFloat set
+{
+  LUABIND_CHECK_ARGN(==, 2);
+  uint idx;
+  float value;
+  LUABIND_GET_PARAMETER(1, uint, idx);
+  LUABIND_GET_PARAMETER(2, float, value);
+  if (idx > obj->size())
+    LUABIND_FERROR2("Incorrect index, found %d, maximum size %d\n",
+		    idx, obj->size());
+  (*obj)[idx-1] = value;
 }
 //BIND_END
 
@@ -95,10 +121,35 @@ using april_utils::ReferencedVectorUint;
 }
 //BIND_END
 
-//BIND_METHOD ReferencedVectorUint get_size
+//BIND_METHOD ReferencedVectorUint size
 {
   LUABIND_CHECK_ARGN(==, 0);
   LUABIND_RETURN(int, (int)obj->size());
+}
+//BIND_END
+
+//BIND_METHOD ReferencedVectorUint get
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  uint idx;
+  LUABIND_GET_PARAMETER(1, uint, idx);
+  if (idx > obj->size())
+    LUABIND_FERROR2("Incorrect index, found %d, maximum size %d\n",
+		    idx, obj->size());
+  LUABIND_RETURN(uint, (*obj)[idx-1]);
+}
+//BIND_END
+
+//BIND_METHOD ReferencedVectorUint set
+{
+  LUABIND_CHECK_ARGN(==, 2);
+  uint idx, value;
+  LUABIND_GET_PARAMETER(1, uint, idx);
+  LUABIND_GET_PARAMETER(2, uint, value);
+  if (idx > obj->size())
+    LUABIND_FERROR2("Incorrect index, found %d, maximum size %d\n",
+		    idx, obj->size());
+  (*obj)[idx-1] = value;
 }
 //BIND_END
 
