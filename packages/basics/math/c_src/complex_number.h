@@ -20,36 +20,56 @@
  */
 #ifndef COMPLEX_NUMBER_H
 #define COMPLEX_NUMBER_H
+
 #define REAL_IDX 0
 #define IMG_IDX  1
-struct ComplexF {
-  float data[2];
-  ComplexF operator*(const ComplexF &other) const {
-    ComplexF result;
-    result.data[REAL_IDX] = (this->data[REAL_IDX]*other.data[REAL_IDX] +
+
+template<typename T>
+struct Complex {
+  T data[2];
+  Complex<T> operator*(const Complex<T> &other) const {
+    Complex<T> result;
+    result.data[REAL_IDX] = (this->data[REAL_IDX]*other.data[REAL_IDX] -
 			     this->data[IMG_IDX]*other.data[IMG_IDX]);
     result.data[IMG_IDX]  = (this->data[REAL_IDX]*other.data[IMG_IDX] +
 			     this->data[IMG_IDX]*other.data[REAL_IDX]);
   }
-  ComplexF operator+(const ComplexF &other) const {
-    ComplexF result;
-    result.data[REAL_IDX] = this->data[REAL_IDX]+other.data[REAL_IDX];
-    result.data[IMG_IDX]  = this->data[IMG_IDX]+other.data[IMG_IDX];
-  }
-};
-struct ComplexD {
-  double data[2];
-  ComplexD operator*(const ComplexD &other) const {
-    ComplexD result;
+  Complex<T> operator/(const Complex<T> &other) const {
+    T c2_d2 = ( other.data[REAL_IDX]* other.data[REAL_IDX] +
+		other.data[IMG_IDX] * other.data[IMG_IDX] );
+    Complex<T> result;
     result.data[REAL_IDX] = (this->data[REAL_IDX]*other.data[REAL_IDX] +
-			     this->data[IMG_IDX]*other.data[IMG_IDX]);
-    result.data[IMG_IDX]  = (this->data[REAL_IDX]*other.data[IMG_IDX] +
-			     this->data[IMG_IDX]*other.data[REAL_IDX]);
+			     this->data[IMG_IDX]*other.data[IMG_IDX]) / c2_d2;
+    result.data[IMG_IDX]  = (this->data[IMG_IDX]*other.data[REAL_IDX] -
+			     this->data[REAL_IDX]*other.data[IMG_IDX]) / c2_d2;
   }
-  ComplexD operator+(const ComplexD &other) const {
-    ComplexD result;
+  Complex<T> operator+(const Complex<T> &other) const {
+    Complex<T> result;
     result.data[REAL_IDX] = this->data[REAL_IDX]+other.data[REAL_IDX];
     result.data[IMG_IDX]  = this->data[IMG_IDX]+other.data[IMG_IDX];
   }
+  Complex<T> operator-(const Complex<T> &other) const {
+    Complex<T> result;
+    result.data[REAL_IDX] = this->data[REAL_IDX]-other.data[REAL_IDX];
+    result.data[IMG_IDX]  = this->data[IMG_IDX]-other.data[IMG_IDX];
+  }
+  Complex<T> operator-() const {
+    Complex<T> result;
+    result.data[REAL_IDX] = -this->data[REAL_IDX];
+    result.data[IMG_IDX]  = -this->data[IMG_IDX];
+  }
+  void conjugate() {
+    data[IMG_IDX] = -data[IMG_IDX];
+  }
+  T real() const { return data[REAL_IDX]; }
+  T &real() { return data[REAL_IDX]; }
+  T img() const { return data[IMG_IDX]; }
+  T &img() { return data[IMG_IDX]; }
+  T abs() const { return sqrt( data[REAL_IDX]*data[REAL_IDX] +
+			       data[IMG_IDX]*data[IMG_IDX] ); }
+  Complex<T> sqrt() const { sqrt( (data[REAL_IDX] + abs()) / 2.0 ); }
 };
+
+typedef Complex<float> ComplexF;
+typedef Complex<double> ComplexD;
 #endif // COMPLEX_NUMBER_H
