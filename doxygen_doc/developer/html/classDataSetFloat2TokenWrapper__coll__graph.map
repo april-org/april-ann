@@ -1,9 +1,0 @@
-<map id="DataSetFloat2TokenWrapper" name="DataSetFloat2TokenWrapper">
-<area shape="rect" id="node2" href="$classDataSetToken.html" title="DataSetToken" alt="" coords="355,5,461,35"/>
-<area shape="rect" id="node4" href="$classReferenced.html" title="Referenced" alt="" coords="41,40,129,69"/>
-<area shape="rect" id="node6" href="$classDataSet.html" title="A pure abstract templatized class that serves as interface." alt="" coords="357,59,459,88"/>
-<area shape="rect" id="node9" href="$classMatrix.html" title="Matrix\&lt; T \&gt;" alt="" coords="363,112,453,141"/>
-<area shape="rect" id="node12" href="$classMatrix_1_1best__span__iterator.html" title="Matrix\&lt; T \&gt;::best_span\l_iterator" alt="" coords="7,97,164,143"/>
-<area shape="rect" id="node14" href="$classMatrix_1_1iterator.html" title="Matrix\&lt; T \&gt;::iterator" alt="" coords="16,167,155,196"/>
-<area shape="rect" id="node16" href="$classMatrix_1_1const__iterator.html" title="Matrix\&lt; T \&gt;::const\l_iterator" alt="" coords="20,219,151,266"/>
-</map>

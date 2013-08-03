@@ -1,5 +1,0 @@
-<map id="Activation_function" name="Activation_function">
-<area shape="rect" id="node1" href="$group__ann.html" title="Ann" alt="" coords="5,32,51,61"/>
-<area shape="rect" id="node2" href="$group__mlp.html" title="Mlp" alt="" coords="331,5,373,35"/>
-<area shape="rect" id="node3" href="$group__ann__base.html" title="Ann_base" alt="" coords="312,59,392,88"/>
-</map>

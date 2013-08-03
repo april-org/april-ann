@@ -1,7 +1,0 @@
-<map id="ANN::Connections" name="ANN::Connections">
-<area shape="rect" id="node2" href="$classReferenced.html" title="Referenced" alt="" coords="5,15,93,44"/>
-<area shape="rect" id="node4" href="$classMatrix.html" title="Matrix\&lt; T \&gt;" alt="" coords="151,120,241,149"/>
-<area shape="rect" id="node7" href="$classMatrix_1_1best__span__iterator.html" title="Matrix\&lt; T \&gt;::best_span\l_iterator" alt="" coords="117,6,275,53"/>
-<area shape="rect" id="node9" href="$classMatrix_1_1iterator.html" title="Matrix\&lt; T \&gt;::iterator" alt="" coords="299,15,437,44"/>
-<area shape="rect" id="node11" href="$classMatrix_1_1const__iterator.html" title="Matrix\&lt; T \&gt;::const\l_iterator" alt="" coords="461,6,592,53"/>
-</map>
