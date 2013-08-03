@@ -4,7 +4,7 @@
  *
  * Copyright 2013, Francisco Zamora-Martinez
  *
- * The APRIL-MLP toolkit is free software; you can redistribute it and/or modify it
+ * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
  * published by the Free Software Foundation
  *
