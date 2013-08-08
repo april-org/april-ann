@@ -53,6 +53,12 @@ april_set_doc("trainable.supervised_trainer.__call", {
 function trainable.supervised_trainer:__call(ann_component,
 					     loss_function,
 					     bunch_size)
+  if loss_function and not isa(loss_function, ann.loss.__base__) then
+    error("The second parameter must be an instance of ann.loss")
+  end
+  if bunch_size and not tonumber(bunch_size) then
+    error("The third parameter must be a number")
+  end
   local obj = {
     ann_component    = assert(ann_component,"Needs an ANN component object"),
     loss_function    = loss_function or false,

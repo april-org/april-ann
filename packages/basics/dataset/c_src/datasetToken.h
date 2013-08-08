@@ -216,8 +216,8 @@ public:
     int num_patterns = numPatterns();
     MatrixFloat::sliding_window window(mat, 0, 0, 0, 0, 0);
     for (unsigned int i=0; i<bunch_size; ++i) {
-      assert(!window.isEnd());
-      assert(0 <= indexes[i] && indexes[i] < num_patterns);
+      april_assert(!window.isEnd());
+      april_assert(0 <= indexes[i] && indexes[i] < num_patterns);
       ds->getPattern(indexes[i], aux_mem);
       MatrixFloat *submat = window.getMatrix();
       submat->copy(aux_mat);
