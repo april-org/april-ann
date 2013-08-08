@@ -142,6 +142,7 @@ april_set_doc("image.image_cleaning.getCleanParameters",
         "- median = ... size of the side of a sliding window around the pixel where the median value is computed",
         "- vertical = ... if defined generates features of the vertical column of each pixel.",
         "- horizontal = ... if defined generates features of the vertical column of each pixel.",
+        "- random_perturbation = ... adds a gaussian perturbation of mean 0.5",
 		  },
 		},
 		outputs= {
@@ -251,14 +252,14 @@ function image.image_cleaning.getCleanParameters(img, params)
   local ds_sucia = dataset.join(table_datasets)
   -- 5. Añadir perturbación
   -- anyadimos un ruido gaussiano a la imagen sucia
-
-  ds_sucia = dataset.perturbation{
-      dataset   = ds_sucia,
-      random    = params.random_perturbation or 123,
-      mean      = 0,                     -- de la gaussiana
-      variance  = params.variance_perturbation or 0.1, -- de la gaussiana
-  }
-
+  if params.random_perturbation then
+      ds_sucia = dataset.perturbation{
+          dataset   = ds_sucia,
+          random    = params.random_perturbation or 123,
+          mean      = 0,                     -- de la gaussiana
+          variance  = params.variance_perturbation or 0.001, -- de la gaussiana
+      }
+  end
   return ds_sucia
 
 end
