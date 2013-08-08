@@ -114,8 +114,8 @@ void applyBinaryFunctionWithSpanIterator(MATRIX1 *m1,
     unsigned int size    = static_cast<unsigned int>(span_it1.getSize());
     unsigned int stride1 = static_cast<unsigned int>(span_it1.getStride());
     unsigned int stride2 = static_cast<unsigned int>(span_it2.getStride());
-    assert(N == span_it2.numberOfIterations());
-    assert(size == static_cast<unsigned int>(span_it2.getSize()));
+    april_assert(N == span_it2.numberOfIterations());
+    april_assert(size == static_cast<unsigned int>(span_it2.getSize()));
     // forward application of functor, to force execution of memory copy from GPU
     // to PPAL or viceversa (if needed), avoiding race conditions on the following
     functor(m1, m2, size, stride1, stride2,
@@ -237,8 +237,8 @@ bool applyBinaryAndReductionWithSpanIterator(MATRIX1 *m1,
     unsigned int size    = static_cast<unsigned int>(span_it1.getSize());
     unsigned int stride1 = static_cast<unsigned int>(span_it1.getStride());
     unsigned int stride2 = static_cast<unsigned int>(span_it2.getStride());
-    assert(N == span_it2.numberOfIterations());
-    assert(size == static_cast<unsigned int>(span_it2.getSize()));
+    april_assert(N == span_it2.numberOfIterations());
+    april_assert(size == static_cast<unsigned int>(span_it2.getSize()));
     // forward application of functor, to force execution of memory copy from GPU
     // to PPAL or viceversa (if needed), avoiding race conditions on the following
     bool ret = functor(m1, m2, size, stride1, stride2,
@@ -365,8 +365,8 @@ void applyBinaryFunctionWithSpanIteratorNOPARALLEL(MATRIX1 *m1,
     unsigned int size    = static_cast<unsigned int>(span_it1.getSize());
     unsigned int stride1 = static_cast<unsigned int>(span_it1.getStride());
     unsigned int stride2 = static_cast<unsigned int>(span_it2.getStride());
-    assert(N == span_it2.numberOfIterations());
-    assert(size == static_cast<unsigned int>(span_it2.getSize()));
+    april_assert(N == span_it2.numberOfIterations());
+    april_assert(size == static_cast<unsigned int>(span_it2.getSize()));
     while(span_it1 != m1->end_span_iterator()) {
       functor(m1, m2, size, stride1, stride2,
 	      static_cast<unsigned int>(span_it1.getOffset()),

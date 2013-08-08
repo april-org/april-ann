@@ -5,6 +5,8 @@ extern "C" {
 
 extern lua_State *globalL;
 
+#define MAX_FRAMES     256
+#define FUNC_NAME_SIZE 256
 
 // stacktrace.h (c) 2008, Timo Bingmann from http://idlebox.net/
 // published under the WTFPL v2.0
@@ -14,12 +16,11 @@ extern lua_State *globalL;
 #include <cxxabi.h>
 
 /** Print a demangled stack backtrace of the caller function to FILE* out. */
-static inline void print_stacktrace(FILE *out = stderr,
-				    unsigned int max_frames = 256) {
+void print_CPP_stacktrace(FILE *out) {
   fprintf(out, "C/C++ stack trace:\n");
   
   // storage array for stack trace address data
-  void* addrlist[max_frames+1];
+  void* addrlist[MAX_FRAMES+1];
 
   // retrieve current stack addresses
   int addrlen = backtrace(addrlist, sizeof(addrlist) / sizeof(void*));
@@ -34,7 +35,7 @@ static inline void print_stacktrace(FILE *out = stderr,
   char** symbollist = backtrace_symbols(addrlist, addrlen);
 
   // allocate string which will be filled with the demangled function name
-  size_t funcnamesize = 256;
+  size_t funcnamesize = FUNC_NAME_SIZE;
   char* funcname = (char*)malloc(funcnamesize);
 
   // iterate over the returned symbol lines. skip the first, it is the
@@ -95,8 +96,8 @@ static inline void print_stacktrace(FILE *out = stderr,
 }
 //////////////////////////////////////////////////////////////////////////////
 
-void print_tracebak() {
-  print_stacktrace();
+void print_CPP_LUA_stacktrace_and_exit() {
+  print_CPP_stacktrace();
   lua_pushstring(globalL, "");
   lua_error(globalL);
 }

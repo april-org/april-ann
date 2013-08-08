@@ -75,7 +75,7 @@ namespace ANN {
     input_mat->setUseCuda(use_cuda);
 #endif
     ASSERT_MATRIX(input_mat);
-    assert(input_mat->getDimSize(1) == static_cast<int>(input_size));
+    april_assert(input_mat->getDimSize(1) == static_cast<int>(input_size));
     unsigned int bunch_size = input_mat->getDimSize(0);
     // linear transfer of input to output
     MatrixFloat *output_mat = input_mat->clone();
@@ -111,7 +111,7 @@ namespace ANN {
   }
 
   void BiasANNComponent::doUpdate() {
-    assert(learning_rate > 0.0f &&
+    april_assert(learning_rate > 0.0f &&
 	   "Learning rate needs to be fixed with setOption method!!!");
     // Foces bias_vector to update internal counts for a update step
     bias_vector->beginUpdate();
@@ -120,7 +120,7 @@ namespace ANN {
     MatrixFloat *prev_bias_ptr   = bias_vector->getPrevPtr();
     MatrixFloat *input_error_mat = error->getMatrix();
     ASSERT_MATRIX(input_error_mat);
-    assert(input_error_mat->getDimSize(1) == static_cast<int>(input_size));
+    april_assert(input_error_mat->getDimSize(1) == static_cast<int>(input_size));
     unsigned int bunch_size = input_error_mat->getDimSize(0);
     // Momentum computation
     if (bias_vector->isFirstUpdateCall()) {
@@ -134,7 +134,7 @@ namespace ANN {
     // update learning rule:
     // PREV_W = alpha * ERRORS + PREV_W
     const unsigned int references = bias_vector->getNumReferences();
-    assert(references > 0 && "Found 0 references of bias vector");
+    april_assert(references > 0 && "Found 0 references of bias vector");
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
     const float norm_learn_rate =
       -(1.0f/sqrtf(static_cast<float>(references*bunch_size))) *

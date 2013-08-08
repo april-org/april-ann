@@ -12,7 +12,7 @@ matrix.meta_instance.__tostring = function(self)
 		   string.format("\n# pos [%s]",
 				 table.concat(coords, ",")))
     end
-    table.insert(row, string.format("%g", self:get(unpack(coords))))
+    table.insert(row, string.format("% -11.6g", self:get(unpack(coords))))
     local j=#dims+1
     repeat
       j=j-1
@@ -120,6 +120,34 @@ function matrix.saveRAW(matrix,filename)
      f:write(t[i] .. "\n")
   end
   f:close()
+end
+
+-----------------------------------------------------------------------------
+
+util.vector_uint.meta_instance.__tostring = function(self)
+  local out = {}
+  local sz = self:size()
+  local NCOLS = 9
+  for i=1,sz do
+    if i%NCOLS == 0 then table.insert(out, "\n") end
+    table.insert(out, string.format("%8d ",self:get(i)))
+  end
+  table.insert(out, string.format("\n# vector_uint of size %d",
+				  self:size()))
+  return table.concat(out, "")
+end
+
+util.vector_float.meta_instance.__tostring = function(self)
+  local out = {}
+  local sz = self:size()
+  local NCOLS = 9
+  for i=1,sz do
+    if i%NCOLS == 0 then table.insert(out, "\n") end
+    table.insert(out, string.format("% -13.8g ",self:get(i)))
+  end
+  table.insert(out, string.format("\n# vector_float of size %d",
+				  self:size()))
+  return table.concat(out, " ")
 end
 
 ---------------------------

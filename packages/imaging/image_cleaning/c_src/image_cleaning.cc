@@ -104,7 +104,7 @@ MatrixFloat * ImageHistogram::generateWindowHistogram(int radius) {
     using april_utils::min;
 
     MatrixFloat *matrix = new MatrixFloat(3,dims);
-    assert(width > (2*radius+1) && height > (2*radius+1) && "The window is bigger than the image limits");
+    april_assert(width > (2*radius+1) && height > (2*radius+1) && "The window is bigger than the image limits");
     matrix->zeros();
 
     for (int i = 0; i < height; ++i) {

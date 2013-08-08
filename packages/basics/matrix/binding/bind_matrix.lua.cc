@@ -25,7 +25,7 @@
 #include "luabindmacros.h"
 
 #define FUNCTION_NAME "read_vector"
-int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
+static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
   int *v=0;
   lua_getfield(L, 1, key);
   if (!lua_isnil(L, -1)) {
@@ -568,7 +568,6 @@ typedef MatrixFloat::sliding_window SlidingWindow;
       }
       coords[i]--;
     }
-    float f;
     LUABIND_GET_PARAMETER(obj->getNumDim()+1,float,f);
     (*obj)(coords, obj->getNumDim()) = f;
     delete[] coords;
