@@ -121,7 +121,34 @@ function image.image_cleaning.getSingleDataset(img, vecinos_salida)
 end
 
 
-
+april_set_doc("image.image_cleaning.getCleanParameters",
+	      {
+		class="function",
+		summary="Function to generete a sets of parameters given an image. ",
+		description=
+		  {
+		    "This function takes an image and generates feature for each pixel",
+		    "Some parameters include raw pixels values around the desired pixels",
+		    "other have agreggated values like histogram or median filter.",
+        "The given dataset is optimized in order to do not have copies of duplicated features."
+		  },
+		params= {
+		  { "A image object."},
+		  { "A table with parameters with the features to be extracted.",
+      "All the features are optional and only will be generated the given features in the table",
+        "- window = ... size of the side of a sliding window set to each pixel",
+        "- histogram_levels = ... number of the values in the histogram, each the values is  computed in range 1/histogram_levels",
+        "- histogram_radio = ... size of the side of a sliding window around the pixel where the histogram will be computed",
+        "- median = ... size of the side of a sliding window around the pixel where the median value is computed",
+        "- vertical = ... if defined generates features of the vertical column of each pixel.",
+        "- horizontal = ... if defined generates features of the vertical column of each pixel.",
+		  },
+		},
+		outputs= {
+		  {"It returns a width*height length dataset with the features for each pixel."
+		    },
+		}
+})
 function image.image_cleaning.getCleanParameters(img, params)
 
   local function getWindowDataset(img, vecinos)
