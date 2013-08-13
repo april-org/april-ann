@@ -8,9 +8,8 @@ baseline=$5
 maxnbest=$6
 confidence=$7 # by default 0.95
 
-tools=/home/experimentos/HERRAMIENTAS
-april_tools=/home/experimentos/HERRAMIENTAS/april_tools
-april=$tools/bin/april
+april_tools=$APRIL_TOOLS_DIR
+april=$APRIL_EXEC
 
 refs2=`mktemp /tmp/april_XXXXXXX`
 refs3=`mktemp /tmp/april_XXXXXXX`
@@ -35,57 +34,34 @@ fi
 
 scores=`mktemp /tmp/april_XXXXXXX`
 feats=`mktemp /tmp/april_XXXXXXX`
-
-scores2=""
-feats2=""
-
-scorer=""
+scores2=`mktemp /tmp/april_XXXXXXX`
+feats2=`mktemp /tmp/april_XXXXXXX`
 
 if [ $score = "WER" ]; then
-    scorer="$april $april_tools/HMM_ANN/extract_WER_weights.lua"  
-    $scorer -r $refs \
-	-S $scores \
-	-F $feats \
-	-n $nbest || exit
+    scorer="$april $april_tools/HMM_ANN/evaluation/extract_WER_weights.lua"  
+    $scorer -r $refs -S $scores -F $feats -n $nbest || exit
     if [ ! -z $baseline ]; then
-	scores2=`mktemp /tmp/april_XXXXXXX`
-	feats2=`mktemp /tmp/april_XXXXXXX`
-	$scorer -r $refs \
-	    -S $scores2 \
-	    -F $feats2 \
-	    -n $baseline  || exit
+	$scorer -r $refs -S $scores2 -F $feats2 -n $baseline  || exit
     fi
 elif [ $score = "CER" ]; then
-    scorer="$april $april_tools/HMM_ANN/extract_WER_weights.lua -t CER"  
-    $scorer -r $refs \
-	-S $scores \
-	-F $feats \
-	-n $nbest || exit
+    scorer="$april $april_tools/HMM_ANN/evaluation/extract_WER_weights.lua -t CER"  
+    $scorer -r $refs -S $scores -F $feats -n $nbest || exit
     if [ ! -z $baseline ]; then
-	scores2=`mktemp /tmp/april_XXXXXXX`
-	feats2=`mktemp /tmp/april_XXXXXXX`
-	$scorer -r $refs \
-	    -S $scores2 \
-	    -F $feats2 \
-	    -n $baseline  || exit
+	$scorer -r $refs -S $scores2 -F $feats2 -n $baseline  || exit
     fi
     score="WER"
 elif [ $score = "SER" ]; then
-    scorer="$april $april_tools/HMM_ANN/extract_WER_weights.lua -t SER"
-    $scorer -r $refs \
-	-S $scores \
-	-F $feats \
-	-n $nbest || exit
+    scorer="$april $april_tools/HMM_ANN/evaluation/extract_WER_weights.lua -t SER"
+    $scorer -r $refs -S $scores -F $feats -n $nbest || exit
     if [ ! -z $baseline ]; then
 	scores2=`mktemp /tmp/april_XXXXXXX`
 	feats2=`mktemp /tmp/april_XXXXXXX`
-	$scorer -r $refs \
-	    -S $scores2 \
-	    -F $feats2 \
-	    -n $baseline  || exit
+	$scorer -r $refs -S $scores2 -F $feats2 -n $baseline  || exit
     fi
     score="WER"
 elif [ $score = "TER" ]; then
+    echo "NOT IMPLEMENTED"
+    exit -1
     scorer="$april_tools/MT/compute_TER.sh"
     $scorer $refs $nbest $scores  || exit
     $april $april_tools/MT/add_head_to_scorer_from_nbest.lua $scores $nbest > $scores.2
@@ -98,6 +74,8 @@ elif [ $score = "TER" ]; then
 	mv -f $scores.2 $scores2
     fi
 elif [ $score = "BLEU" ]; then
+    echo "NOT IMPLEMENTED"
+    exit -1
     scorer="$tools/bin/extractor"
     $scorer -r $refs \
 	--scconfig "reflen:closest" \
