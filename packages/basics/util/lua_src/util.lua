@@ -630,6 +630,15 @@ function math.clamp(value,lower,upper)
   return math.max(lower,math.min(value,upper))
 end
 
+function math.median(t, ini, fin)
+  local mpos   = math.floor(#t/2)
+  local median = t[mpos]
+  if #t % 2 ~= 0 then
+    median = (median + t[mpos+1])/2
+  end
+  return median
+end
+
 -- calcula la media de una tabla, o subtabla
 function math.mean(t, ini, fin)
    local total=0

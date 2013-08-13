@@ -1,5 +1,5 @@
 scores  = arg[1]
-type    = arg[2]
+objfunc = arg[2]
 num_rep = tonumber(arg[3] or 0)
 baseline = arg[4]
 maxnbest = arg[5]
@@ -13,21 +13,20 @@ sizes   = {}
 nscores = 0
 score_func = nil
 
--- calcula la correspondiente funcion
-if type == "WER" then
-  -- el orden es: Acc Sub Ins Del
+if objfunc == "WER" then
+  -- the scores order is: Acc Sub Ins Del
   score_func = function(data)
 		 return (data[2]+data[3]+data[4]) / (data[1]+data[2]+data[4])
 	       end
   nscores = 4
-elseif type == "TER" then
-  -- el orden es: Errores / Longitud
+elseif objfunc == "TER" then
+  -- the scores order is: Errors / Length
   score_func = function(data)
 		 return data[1] / data[2]
 	       end
   nscores = 2
-elseif type == "BLEU" then
-  -- el orden es: 1gr TGT-1gr 2gr TGT-2gr 3gr TGT-3gr 4gr TGT-4gr 1gr-REF
+elseif objfunc == "BLEU" then
+  -- the scores order is: 1gr TGT-1gr 2gr TGT-2gr 3gr TGT-3gr 4gr TGT-4gr 1gr-REF
   score_func = function(data)
 		 local logBP = 0
 		 if data[2] <= data[9] then
@@ -45,7 +44,7 @@ elseif type == "BLEU" then
 	       end  
   nscores = 9
 else
-  error ("Tipo de score incorrecto: " .. type)
+  error ("Incorrect objective function: " .. objfunc)
 end
 
 fprintf(io.stderr, "Loading data and errors\n")
@@ -93,22 +92,13 @@ function load_data(filename)
   return results, sentences_data, sizes
 end
 
-function median(points)
-  local mpos = math.floor(#points/2)
-  local median = points[mpos]
-  if #points % 2 ~= 0 then
-    median = (median + points[mpos+1])/2
-  end
-  return median
-end
-
 -- this function receives a sorted list of points and computes the confidence
 -- interval
 function compute_confidence_interval(points, confidence)
   local ic,size = (1 - confidence) / 2, #points
   local pos = math.round(ic * size)
   local a,b = points[pos+1],points[size-pos+1]
-  local median = median(points)
+  local median = math.median(points)
   return { median, (b-a)/2 }
 end
 
@@ -121,10 +111,7 @@ end
 -- this function receives pair of sorted point lists and computes the 
 -- confidence for which the intervals are not overlapped
 function compute_significance(p1, p2)
-  local p2 = p2 or {}
-  if #p2 == 0 then
-    for i=1,#p1 do table.insert(p2, 0) end
-  end
+  local p2 = p2 or map(function() return 0 end, ipairs(p1))
   assert(#p1 == #p2, "Incorrect list sizes")
   local median_pos = math.round(#p1/2)
   local sz = #p1
@@ -300,7 +287,7 @@ for i=1,#results do -- for each Nbest
 
   local r = score_func(data)
   local r2 = (intervals[i] or {0,0})[1]
-  if type == "BLEU" then r = 1 - r r2 = 1 - r2 end
+  if objfunc == "BLEU" then r = 1 - r r2 = 1 - r2 end
   printf("%d\t%8.4f %8.4f %8.4f", i, r*100, r2*100, (intervals[i] or {0,0})[2]*100)
   if baseline then
     local data = {}
@@ -312,7 +299,7 @@ for i=1,#results do -- for each Nbest
     local r = score_func(data)
     local r2 = (baseline_intervals[i] or {0,0})[1]
     local p = (pairwise[i] or {0,0})[1]
-    if type == "BLEU" then r = 1 - r r2 = 1 - r2 end
+    if objfunc == "BLEU" then r = 1 - r r2 = 1 - r2 end
     printf(" bs: % -10g % -10g % -10g", r*100,
 	   r2*100, (baseline_intervals[i] or {0,0})[2]*100)
     printf(" pw: % -10g % -10g", p*100,
