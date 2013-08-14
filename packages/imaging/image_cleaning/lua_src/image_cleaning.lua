@@ -263,3 +263,77 @@ function image.image_cleaning.getCleanParameters(img, params)
   return ds_sucia
 
 end
+
+function image.image_cleaning.getParametersFromString(param_str)
+  
+    params = {}
+    
+    -- window
+    v = string.match(param_str, "_v(%d+)_")
+    if v then
+        params.window = tonumber(v)
+    end
+    levels = string.match(param_str, "_levels_(%d+)_")
+    -- histogram_levels
+    if levels then
+        params.histogram_levels = tonumber(levels)
+    end
+    -- histogram_radio
+    histogram = string.match(param_str, "_hist_(%d+)_")
+    if histogram then
+        params.histogram_radio = tonumber(histogram)
+    end
+    -- median
+    median = string.match(param_str, "_median_(%d+)_")
+    if median then
+        params.median = tonumber(median)
+    end
+    -- vertical
+    vertical = string.match(param_str, "_vertical_(%d+)_")
+    if vertical then
+        params.vertical = tonumber(vertical)
+    end
+    -- horizontal
+    horizontal = string.match(param_str, "_horizontal_(%d+)_")
+    if horizontal then
+        params.horizontal = tonumber(horizontal)
+    end
+    --[[for i, v in pairs(params) do
+        
+        print(i,v)
+    end
+    ]]
+    return params
+end
+
+
+function image.image_cleaning.clean_image(img, net, params) 
+
+    -- Generates the parameters
+
+    local dsInput = image.image_cleaning.getCleanParameters(img, params)
+
+    local img_dims = img:matrix():dim()
+    local mClean = matrix(img_dims[1], img_dims[2])
+    local paramsClean = {
+        patternSize  = {1, 1},
+        stepSize     = {1, 1},
+        numSteps     = { img_dims[1], img_dims[2] },
+        defaultValue = 0,
+    }
+
+    local dsClean = dataset.matrix(mClean, paramsClean)
+
+
+    -- Use the dataset
+    net:use_dataset {
+        input_dataset = dsInput,
+        output_dataset = dsClean
+    }
+    -- Returns the image
+    local imgClean = Image(mClean)
+
+    return imgClean
+
+end
+
