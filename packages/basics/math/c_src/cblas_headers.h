@@ -25,7 +25,10 @@
 #include "aligned_memory.h"
 
 #ifdef USE_MKL
-#ifdef USE_XCODE || NO_BLAS
+#ifdef USE_XCODE
+#error "USE ONLY ONE OF: USE_MKL, USE_XCODE, NO_BLAS, or none of this"
+#endif
+#ifdef NO_BLAS
 #error "USE ONLY ONE OF: USE_MKL, USE_XCODE, NO_BLAS, or none of this"
 #endif
 /////////////////////////////////// MKL ///////////////////////////////////////

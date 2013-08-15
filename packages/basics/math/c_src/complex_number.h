@@ -21,6 +21,8 @@
 #ifndef COMPLEX_NUMBER_H
 #define COMPLEX_NUMBER_H
 
+#include <cmath>
+
 #define REAL_IDX 0
 #define IMG_IDX  1
 
@@ -33,6 +35,7 @@ struct Complex {
 			     this->data[IMG_IDX]*other.data[IMG_IDX]);
     result.data[IMG_IDX]  = (this->data[REAL_IDX]*other.data[IMG_IDX] +
 			     this->data[IMG_IDX]*other.data[REAL_IDX]);
+    return result;
   }
   Complex<T> operator/(const Complex<T> &other) const {
     T c2_d2 = ( other.data[REAL_IDX]* other.data[REAL_IDX] +
@@ -42,21 +45,25 @@ struct Complex {
 			     this->data[IMG_IDX]*other.data[IMG_IDX]) / c2_d2;
     result.data[IMG_IDX]  = (this->data[IMG_IDX]*other.data[REAL_IDX] -
 			     this->data[REAL_IDX]*other.data[IMG_IDX]) / c2_d2;
+    return result;
   }
   Complex<T> operator+(const Complex<T> &other) const {
     Complex<T> result;
     result.data[REAL_IDX] = this->data[REAL_IDX]+other.data[REAL_IDX];
     result.data[IMG_IDX]  = this->data[IMG_IDX]+other.data[IMG_IDX];
+    return result;
   }
   Complex<T> operator-(const Complex<T> &other) const {
     Complex<T> result;
     result.data[REAL_IDX] = this->data[REAL_IDX]-other.data[REAL_IDX];
     result.data[IMG_IDX]  = this->data[IMG_IDX]-other.data[IMG_IDX];
+    return result;
   }
   Complex<T> operator-() const {
     Complex<T> result;
     result.data[REAL_IDX] = -this->data[REAL_IDX];
     result.data[IMG_IDX]  = -this->data[IMG_IDX];
+    return result;
   }
   void conjugate() {
     data[IMG_IDX] = -data[IMG_IDX];
@@ -67,7 +74,7 @@ struct Complex {
   T &img() { return data[IMG_IDX]; }
   T abs() const { return sqrt( data[REAL_IDX]*data[REAL_IDX] +
 			       data[IMG_IDX]*data[IMG_IDX] ); }
-  Complex<T> sqrt() const { sqrt( (data[REAL_IDX] + abs()) / 2.0 ); }
+  T sqrtc() const { return sqrt( (data[REAL_IDX] + abs()) / 2.0 ); }
 };
 
 typedef Complex<float> ComplexF;
