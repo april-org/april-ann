@@ -811,6 +811,25 @@ bool doEquals(unsigned int N,
   return eq;
 }
 
+void doPLogP(unsigned int N,
+	     FloatGPUMirroredMemoryBlock *v,
+	     unsigned int stride,
+	     unsigned int shift,
+	     bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    ERROR_PRINT("CUDA VERSION NOT IMPLEMENTED\n");
+  }
+  //  else {
+#endif
+  float *v_mem = v->getPPALForReadAndWrite() + shift;
+  for (unsigned int i=0; i<N; ++i, v_mem += stride)
+    if (*v_mem > 0.0f || *v_mem < 0.0f) *v_mem = (*v_mem) * logf(*v_mem);
+#ifdef USE_CUDA
+    //  }
+#endif  
+}
+
 void doLog(unsigned int N,
 	   FloatGPUMirroredMemoryBlock *v,
 	   unsigned int stride,

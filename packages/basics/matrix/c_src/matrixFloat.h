@@ -58,6 +58,9 @@ template<>
 bool Matrix<float>::equals(const Matrix<float> *other, float epsilon) const;
 
 template<>
+void Matrix<float>::plogp();
+
+template<>
 void Matrix<float>::log();
 
 template<>

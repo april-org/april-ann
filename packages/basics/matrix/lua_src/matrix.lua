@@ -642,6 +642,15 @@ april_set_doc("matrix.cmul", {
 		  "A new matrix result of component-wise multiplication",
 		}, })
 
+april_set_doc("matrix.plogp", {
+		class = "method",
+		summary = "Component wise p*log(p) operation IN-PLACE: Y = Y*log(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
 april_set_doc("matrix.log", {
 		class = "method",
 		summary = "Component wise log operation IN-PLACE: Y = log(Y)",

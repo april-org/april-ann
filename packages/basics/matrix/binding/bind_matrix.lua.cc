@@ -173,6 +173,9 @@ typedef MatrixFloat::sliding_window SlidingWindow;
     int i=1;
     for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
       lua_rawgeti(L,argn,i);
+      if (!lua_isnumber(L, -1))
+	LUABIND_FERROR1("The given table has a no number value at position %d, "
+			"the table could be smaller than matrix size", i);
       *it = (float)luaL_checknumber(L, -1);
       lua_remove(L,-1);
     }
@@ -220,6 +223,9 @@ typedef MatrixFloat::sliding_window SlidingWindow;
     int i=1;
     for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
       lua_rawgeti(L,argn,i);
+      if (!lua_isnumber(L, -1))
+	LUABIND_FERROR1("The given table has a no number value at position %d, "
+			"the table could be smaller than matrix size", i);
       *it = (float)luaL_checknumber(L, -1);
       lua_remove(L,-1);
     }
@@ -462,6 +468,9 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   int i=1;
   for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
     lua_rawgeti(L,1,i);
+    if (!lua_isnumber(L, -1))
+      LUABIND_FERROR1("The given table has a no number value at position %d, "
+		      "the table could be smaller than matrix size", i);
     *it = (float)luaL_checknumber(L, -1);
     lua_remove(L,-1);
   }
@@ -927,6 +936,13 @@ typedef MatrixFloat::sliding_window SlidingWindow;
       LUABIND_ERROR("matrix mul wrong dimensions");
     LUABIND_RETURN(MatrixFloat, resul);
   }
+//BIND_END
+
+//BIND_METHOD MatrixFloat plogp
+{
+  obj->plogp();
+  LUABIND_RETURN(MatrixFloat, obj);
+}
 //BIND_END
 
 //BIND_METHOD MatrixFloat log
