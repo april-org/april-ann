@@ -78,7 +78,7 @@ void wrapperCblasGemm(CBLAS_ORDER &major_type,
 		      float alpha,
 		      const float *a_mem, unsigned int a_inc,
 		      const float *b_mem, unsigned int b_inc,
-		      float *c_mem, unsigned int c_inc) {
+		      float beta, float *c_mem, unsigned int c_inc) {
   cblas_sgemm(major_type, a_transpose, b_transpose,
 	      m, n, k,
 	      alpha, a_mem, a_inc,
@@ -93,7 +93,7 @@ void wrapperCblasGemm(CBLAS_ORDER &major_type,
 		      ComplexF alpha,
 		      const ComplexF *a_mem, unsigned int a_inc,
 		      const ComplexF *b_mem, unsigned int b_inc,
-		      ComplexF *c_mem, unsigned int c_inc) {
+		      ComplexF beta, ComplexF *c_mem, unsigned int c_inc) {
   cblas_cgemm(major_type, a_transpose, b_transpose,
 	      m, n, k,
 	      &alpha, a_mem, a_inc,
