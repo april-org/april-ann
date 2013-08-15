@@ -391,6 +391,12 @@ bool doEquals(unsigned int N,
 	      float epsilon,
 	      bool use_gpu);
 
+void doPLogP(unsigned int N,
+	     FloatGPUMirroredMemoryBlock *v,
+	     unsigned int stride,
+	     unsigned int shift,
+	     bool use_gpu);
+
 void doLog(unsigned int N,
 	   FloatGPUMirroredMemoryBlock *v,
 	   unsigned int stride,

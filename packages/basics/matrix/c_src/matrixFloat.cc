@@ -196,6 +196,12 @@ bool Matrix<float>::equals(const Matrix<float> *other, float epsilon) const {
 
 /************* LOG FUNCTION **************/
 template<>
+void Matrix<float>::plogp() {
+  applyFunctionWithSpanIterator(this, make_cwise_functor_0(doPLogP));
+}
+
+/************* LOG FUNCTION **************/
+template<>
 void Matrix<float>::log() {
   applyFunctionWithSpanIterator(this, make_cwise_functor_0(doLog));
 }

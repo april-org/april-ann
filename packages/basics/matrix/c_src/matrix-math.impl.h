@@ -113,6 +113,11 @@ bool Matrix<T>::equals(const Matrix<T> *other, T epsilon) const {
 }
 
 template <typename T>
+void Matrix<T>::plogp() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
 void Matrix<T>::log() {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }

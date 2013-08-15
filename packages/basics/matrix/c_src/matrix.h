@@ -524,6 +524,7 @@ public:
   
   /**** COMPONENT WISE OPERATIONS ****/
   bool equals(const Matrix<T> *other, T epsilon) const;
+  void plogp();
   void log();
   void log1p();
   void exp();
