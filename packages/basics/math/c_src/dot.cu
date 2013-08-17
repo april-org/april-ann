@@ -61,8 +61,7 @@ cublasStatus_t wrapperCublasDot(cublasHandle_t &handle,
  ************* CBLAS SECTION ***********
  ***************************************/
 
-float wrapperCblasDot(CBLAS_ORDER &major_type,
-		      unsigned int size,
+float wrapperCblasDot(unsigned int size,
 		      const float *x_mem, unsigned int x_inc,
 		      const float *y_mem, unsigned int y_inc) {
   return cblas_sdot(size,
@@ -70,8 +69,7 @@ float wrapperCblasDot(CBLAS_ORDER &major_type,
 		    y_mem, y_inc);
 }
 
-ComplexF wrapperCblasDot(CBLAS_ORDER &major_type,
-			 unsigned int size,
+ComplexF wrapperCblasDot(unsigned int size,
 			 const ComplexF *x_mem, unsigned int x_inc,
 			 const ComplexF *y_mem, unsigned int y_inc) {
   ComplexF ret;
@@ -123,3 +121,21 @@ T doDot(unsigned int size,
 #endif
   return ret;
 }
+
+template float doDot<float>(unsigned int size,
+			    const GPUMirroredMemoryBlock<float> *x,
+			    unsigned int x_shift,
+			    unsigned int x_inc,
+			    const GPUMirroredMemoryBlock<float> *y,
+			    unsigned int y_shift,
+			    unsigned int y_inc,
+			    bool use_gpu);
+
+template ComplexF doDot<ComplexF>(unsigned int size,
+				  const GPUMirroredMemoryBlock<ComplexF> *x,
+				  unsigned int x_shift,
+				  unsigned int x_inc,
+				  const GPUMirroredMemoryBlock<ComplexF> *y,
+				  unsigned int y_shift,
+				  unsigned int y_inc,
+				  bool use_gpu);

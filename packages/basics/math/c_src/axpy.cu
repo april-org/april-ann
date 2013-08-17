@@ -192,3 +192,49 @@ void doAxpyLoop(int N,
   }
 #endif
 }
+
+template void doAxpy<float>(int N,
+			    float alpha,
+                    	    const GPUMirroredMemoryBlock<float>* x,
+			    unsigned int x_shift,
+			    unsigned int x_inc,
+			    GPUMirroredMemoryBlock<float>* y,
+			    unsigned int y_shift,
+			    unsigned int y_inc,
+			    bool use_gpu);
+
+template void doAxpy<ComplexF>(int N,
+			       ComplexF alpha,
+			       const GPUMirroredMemoryBlock<ComplexF>* x,
+			       unsigned int x_shift,
+			       unsigned int x_inc,
+			       GPUMirroredMemoryBlock<ComplexF>* y,
+			       unsigned int y_shift,
+			       unsigned int y_inc,
+			       bool use_gpu);
+
+template void doAxpyLoop<float>(int N,
+				float alpha,
+				GPUMirroredMemoryBlock<float>* x,
+				unsigned int x_inc,
+				unsigned int x_shift,
+				GPUMirroredMemoryBlock<float>* y,
+				unsigned int y_inc,
+				unsigned int y_shift,
+				unsigned int times,
+				const unsigned int x_stride,
+				const unsigned int y_stride,
+				bool use_gpu);
+
+template void doAxpyLoop<ComplexF>(int N,
+				   ComplexF alpha,
+				   GPUMirroredMemoryBlock<ComplexF>* x,
+				   unsigned int x_inc,
+				   unsigned int x_shift,
+				   GPUMirroredMemoryBlock<ComplexF>* y,
+				   unsigned int y_inc,
+				   unsigned int y_shift,
+				   unsigned int times,
+				   const unsigned int x_stride,
+				   const unsigned int y_stride,
+				   bool use_gpu);

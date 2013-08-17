@@ -145,3 +145,33 @@ void doGer(CBLAS_ORDER major_type,
   }
 #endif
 }
+
+template void doGer<float>(CBLAS_ORDER major_type,
+			   unsigned int m,
+			   unsigned int n,
+			   float alpha,
+			   GPUMirroredMemoryBlock<float> *x,
+			   unsigned int x_shift,
+			   unsigned int x_inc,
+			   GPUMirroredMemoryBlock<float> *y,
+			   unsigned int y_shift,
+			   unsigned int y_inc,
+			   GPUMirroredMemoryBlock<float> *a,
+			   unsigned int a_shift,
+			   unsigned int a_inc,
+			   bool use_gpu);
+
+template void doGer<ComplexF>(CBLAS_ORDER major_type,
+			      unsigned int m,
+			      unsigned int n,
+			      ComplexF alpha,
+			      GPUMirroredMemoryBlock<ComplexF> *x,
+			      unsigned int x_shift,
+			      unsigned int x_inc,
+			      GPUMirroredMemoryBlock<ComplexF> *y,
+			      unsigned int y_shift,
+			      unsigned int y_inc,
+			      GPUMirroredMemoryBlock<ComplexF> *a,
+			      unsigned int a_shift,
+			      unsigned int a_inc,
+			      bool use_gpu);

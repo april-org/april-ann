@@ -21,83 +21,20 @@
  */
 #include <cmath>
 #include "wrapper.h"
-#include "clamp.h"
-#include "ceiling_power_of_two.h"
 #include "cuda_utils.h"
-
-using april_utils::ceilingPowerOfTwo;
 
 ///////////////////////////////////////////////////////////
 /////////////////// Kernels ///////////////////////////////
 ///////////////////////////////////////////////////////////
 
 #ifdef USE_CUDA
-template<typename T>
-__global__ void sumVectorFirstReduction(const float *v,
-					float *sums,
-					unsigned int reduction_top,
-					unsigned int size,
-					unsigned int stride) {
-  unsigned int x_idx = blockIdx.x * blockDim.x + threadIdx.x;
-  unsigned int active_reduction = reduction_top >> 1;
-  if (x_idx < size && x_idx < active_reduction) {
-    unsigned int x_pos = x_idx * stride;
-    unsigned int passive_index = (x_idx + active_reduction) * stride;
-    if (x_idx + active_reduction < size)
-      sums[x_pos] = v[x_pos] + v[passive_index];
-    else
-      sums[x_pos] = v[x_pos];
-  }
-}
 
-template<typename T>
-__global__ void sumVectorNextReduction(float *sums,
-				       unsigned int reduction_top,
-				       unsigned int size,
-				       unsigned int stride) {
-  unsigned int x_idx = blockIdx.x * blockDim.x + threadIdx.x;
-  unsigned int active_reduction = reduction_top >> 1;
-
-  if (x_idx < size && x_idx < active_reduction) {
-    unsigned int index = x_idx*stride;
-    unsigned int passive_index = (x_idx+active_reduction)*stride;
-    sums[index] = sums[index] + sums[passive_index];
-  }
-}
-
-template<typename T>
-__global__ void clampKernel(float *v, unsigned int N, unsigned int stride,
-			    float lower, float upper) {
-  unsigned int x_idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (x_idx < N) {
-    unsigned int x_pos = x_idx*stride;
-    if (v[x_pos] < lower) v[x_pos] = lower;
-    else if (v[x_pos] > upper) v[x_pos] = upper;
-  }
-}
-
-template<typename T>
-__global__ void scalarAddKernel(float *v, unsigned int N, unsigned int stride,
-				float value) {
-  unsigned int x_idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (x_idx < N) {
-    float *aux = v + x_idx*stride;
-    *aux += value;
-  }
-}
-
-template<typename T>
-__global__ void fillKernel(float *v, unsigned int N, unsigned int stride,
-			   float value) {
-  unsigned int x_idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (x_idx < N) v[x_idx*stride] = value;
-}
-
-#define CWISE_FUNC_KERNEL(func) __global__ void				\
-  func##FuncKernel(float *v, unsigned int N, unsigned int stride) {	\
+#define CWISE_FUNC_KERNEL(func) template<typename T>			\
+  __global__ void							\
+  func##FuncKernel(T *v, unsigned int N, unsigned int stride) {		\
     unsigned int x_idx = blockIdx.x * blockDim.x + threadIdx.x;		\
     if (x_idx < N) {							\
-      float *aux = v + x_idx*stride;					\
+      T *aux = v + x_idx*stride;					\
       *aux = func(*aux);						\
     }									\
   }
@@ -108,12 +45,13 @@ CWISE_FUNC_KERNEL(sqrtf);
 CWISE_FUNC_KERNEL(tanhf);
 #undef CWISE_FUNC_KERNEL
 
-#define CWISE_FUNC_KERNEL(func) __global__ void				\
-  func##FuncKernel(float *v, unsigned int N, unsigned int stride,	\
-		   float value) {					\
+#define CWISE_FUNC_KERNEL(func) template<typename T>			\
+  __global__ void							\
+  func##FuncKernel(T *v, unsigned int N, unsigned int stride,		\
+		   T value) {						\
     unsigned int x_idx = blockIdx.x * blockDim.x + threadIdx.x;		\
     if (x_idx < N) {							\
-      float *aux = v + x_idx*stride;					\
+      T *aux = v + x_idx*stride;					\
       *aux = func(*aux, value);						\
     }									\
   }
@@ -125,190 +63,6 @@ CWISE_FUNC_KERNEL(powf);
 ///////////////////////////////////////////////////////////
 //////////////////// BLAS wrappers ////////////////////////
 ///////////////////////////////////////////////////////////
-
-void doSsbmv(CBLAS_ORDER major_type,
-	     CBLAS_UPLO uplo,
-	     int n, int k,
-	     float alpha, FloatGPUMirroredMemoryBlock *a, unsigned int a_lda,
-	     FloatGPUMirroredMemoryBlock *x, unsigned int x_inc,
-	     float beta, FloatGPUMirroredMemoryBlock *y, unsigned int y_inc,
-	     unsigned int a_shift, unsigned int x_shift, unsigned int y_shift,
-	     bool use_gpu) {
-  const float *a_mem, *x_mem;
-  float *y_mem;
-#ifdef USE_CUDA
-  if (use_gpu) {
-    cublasStatus_t status;
-    cublasHandle_t handle = GPUHelper::getHandler();
-    assert(major_type == CblasColMajor);
-    a_mem = a->getGPUForRead() + a_shift;
-    x_mem = x->getGPUForRead() + x_shift;
-    y_mem = y->getGPUForReadAndWrite() + y_shift;
-
-    status = cublasSetStream(handle, GPUHelper::getCurrentStream());
-    checkCublasError(status);
-    cublasFillMode_t uplo_cublas = CUBLAS_FILL_MODE_UPPER;
-    if (uplo == CblasLower) uplo_cublas = CUBLAS_FILL_MODE_LOWER;
-    status = cublasSsbmv(handle, uplo_cublas,
-			 n, k,
-			 &alpha, a_mem, a_lda,
-			 x_mem, x_inc,
-			 &beta, y_mem, y_inc);
-    checkCublasError(status);
-  }
-  else {
-#endif
-    a_mem = a->getPPALForRead() + a_shift;
-    x_mem = x->getPPALForRead() + x_shift;
-    y_mem = y->getPPALForReadAndWrite() + y_shift;
-
-    cblas_ssbmv(major_type, uplo,
-		n, k,
-		alpha, a_mem, a_lda,
-		x_mem, x_inc,
-		beta, y_mem, y_inc);
-#ifdef USE_CUDA
-  }
-#endif
-}
-
-void doClamp(unsigned int N,
-	     FloatGPUMirroredMemoryBlock *v,
-	     unsigned int stride,
-	     unsigned int shift,
-	     float lower,
-	     float upper,
-	     bool use_gpu) {
-#ifdef USE_CUDA
-  if (use_gpu) {
-    float *v_ptr = v->getGPUForReadAndWrite() + shift;
-    dim3 block, grid;
-    computeBlockAndGridSizesForAnArray(N, block, grid);
-    clampKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-      (v_ptr, N, stride, lower, upper);
-  }
-  else {
-#endif
-    float *v_mem = v->getPPALForReadAndWrite() + shift;
-    for (unsigned int i=0; i<N; ++i, v_mem += stride)
-      *v_mem = april_utils::clamp(*v_mem,lower,upper);
-#ifdef USE_CUDA
-  }
-#endif
-}
-
-void doFill(unsigned int N,
-	    FloatGPUMirroredMemoryBlock *v,
-	    unsigned int stride,
-	    unsigned int shift,
-	    float value,
-	    bool use_gpu) {
-#ifdef USE_CUDA
-  if (use_gpu) {
-    float *v_ptr = v->getGPUForWrite() + shift;
-    dim3 block, grid;
-    computeBlockAndGridSizesForAnArray(N, block, grid);
-    fillKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-      (v_ptr, N, stride, value);
-  }
-  else {
-#endif
-    float *v_mem = v->getPPALForWrite() + shift;
-    VECTOR_SSET(N, value, v_mem, stride);
-#ifdef USE_CUDA
-  }
-#endif
-}
-
-float doSum(unsigned int N,
-	    const FloatGPUMirroredMemoryBlock *v,
-	    unsigned int stride,
-	    unsigned int shift,
-	    bool use_gpu) {
-  float sum;
-#ifdef USE_CUDA
-  if (use_gpu) {
-    FloatGPUMirroredMemoryBlock sums(N);
-    const float *v_ptr           = v->getGPUForRead() + shift;
-    float *sums_ptr              = sums.getGPUForWrite();
-    unsigned int units_top       = ceilingPowerOfTwo(N);
-    unsigned int top_reduction   = units_top;
-    dim3 block, grid;
-    computeBlockAndGridSizesForAnArray(N, block, grid);
-    sumVectorFirstReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-      (v_ptr,
-       sums_ptr,
-       top_reduction,
-       N, stride);
-    for (top_reduction >>= 1; top_reduction != 1; top_reduction >>= 1) {
-      computeBlockAndGridSizesForAnArray(top_reduction, block, grid);
-      sumVectorNextReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-        (sums_ptr,
-         top_reduction,
-	 N, stride);
-    }
-    sum = sums_ptr[0];
-  }
-  else {
-#endif
-    const float *v_mem = v->getPPALForRead() + shift;
-    sum = 0.0f;
-    for (unsigned int i=0; i<N; ++i, v_mem+=stride) sum += *v_mem;
-#ifdef USE_CUDA
-  }
-#endif
-  return sum;
-}
-
-void doScalarAdd(unsigned int N,
-		 FloatGPUMirroredMemoryBlock *v,
-		 unsigned int stride,
-		 unsigned int shift,
-		 float value,
-		 bool use_gpu) {
-#ifdef USE_CUDA
-  if (use_gpu) {
-    float *v_ptr = v->getGPUForReadAndWrite() + shift;
-    dim3 block, grid;
-    computeBlockAndGridSizesForAnArray(N, block, grid);
-    scalarAddKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-      (v_ptr, N, stride, value);
-  }
-  else {
-#endif
-    float *v_mem = v->getPPALForReadAndWrite() + shift;
-    for (unsigned int i=0; i<N; ++i, v_mem+=stride) *v_mem = *v_mem + value;
-#ifdef USE_CUDA
-  }
-#endif
-}
-
-bool doEquals(unsigned int N,
-	      const FloatGPUMirroredMemoryBlock *v1,
-	      const FloatGPUMirroredMemoryBlock *v2,
-	      unsigned int stride1,
-	      unsigned int stride2,
-	      unsigned int shift1,
-	      unsigned int shift2,
-	      float epsilon,
-	      bool use_gpu) {
-  bool eq = true;
-#ifdef USE_CUDA
-  if (use_gpu) {
-    // TODO:
-    ERROR_PRINT("CUDA VERSION NOT IMPLEMENTED\n");
-  }
-  // else {
-#endif
-    const float *v1_mem = v1->getPPALForRead() + shift1;
-    const float *v2_mem = v2->getPPALForRead() + shift2;
-    for (unsigned int i=0; i<N && eq; ++i, v1_mem+=stride1, v2_mem+=stride2)
-      eq = eq && ((fabsf(*v1_mem - *v2_mem) < epsilon));
-#ifdef USE_CUDA
-  //  }
-#endif
-  return eq;
-}
 
 void doLog(unsigned int N,
 	   FloatGPUMirroredMemoryBlock *v,

@@ -46,13 +46,13 @@ cublasStatus_t wrapperCublasCopy(cublasHandle_t &handle,
 }
 
 template<typename T>
-__global__ void scopyLoopKernel(unsigned int N,
-				const T *x_mem,
-				unsigned int x_inc,
-				T *y_mem,
-				unsigned int y_inc,
-				unsigned int times,
-				unsigned int y_ld) {
+__global__ void copyLoopKernel(unsigned int N,
+			       const T *x_mem,
+			       unsigned int x_inc,
+			       T *y_mem,
+			       unsigned int y_inc,
+			       unsigned int times,
+			       unsigned int y_ld) {
   unsigned int matrix_x_pos, matrix_y_pos;
   matrix_x_pos = blockIdx.x*blockDim.x + threadIdx.x;
   matrix_y_pos = blockIdx.y*blockDim.y + threadIdx.y;
@@ -125,14 +125,14 @@ void doCopy(int N, const GPUMirroredMemoryBlock<T>* x,
 }
 
 template<typename T>
-void doScopyLoop(int N,
-		 GPUMirroredMemoryBlock<T>* x,
-		 unsigned int x_inc,
-		 GPUMirroredMemoryBlock<T>* y,
-		 unsigned int y_inc,
-		 unsigned int times,
-		 const unsigned int stride,
-		 bool use_gpu)
+void doCopyLoop(int N,
+		GPUMirroredMemoryBlock<T>* x,
+		unsigned int x_inc,
+		GPUMirroredMemoryBlock<T>* y,
+		unsigned int y_inc,
+		unsigned int times,
+		const unsigned int stride,
+		bool use_gpu)
 {
   const T *x_mem;
   T *y_mem;
@@ -154,7 +154,7 @@ void doScopyLoop(int N,
     grid.y = (N/block.y + (N % block.y ? 1 : 0));
     grid.z = 1;
 
-    scopyLoopKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+    copyLoopKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
       (N, x_mem, x_inc, y_mem, y_inc, times, stride);
   }
   else {
@@ -174,3 +174,35 @@ void doScopyLoop(int N,
   }
 #endif
 }
+
+template void doCopy<float>(int N, const GPUMirroredMemoryBlock<float>* x,
+			    unsigned int x_shift,
+			    unsigned int x_inc,
+			    GPUMirroredMemoryBlock<float>* y,
+			    unsigned int y_shift,
+			    unsigned int y_inc,
+			    bool use_gpu);
+template void doCopy<ComplexF>(int N, const GPUMirroredMemoryBlock<ComplexF>* x,
+			       unsigned int x_shift,
+			       unsigned int x_inc,
+			       GPUMirroredMemoryBlock<ComplexF>* y,
+			       unsigned int y_shift,
+			       unsigned int y_inc,
+			       bool use_gpu);
+
+template void doCopyLoop<float>(int N,
+				GPUMirroredMemoryBlock<float>* x,
+				unsigned int x_inc,
+				GPUMirroredMemoryBlock<float>* y,
+				unsigned int y_inc,
+				unsigned int times,
+				const unsigned int stride,
+				bool use_gpu);
+template void doCopyLoop<ComplexF>(int N,
+				   GPUMirroredMemoryBlock<ComplexF>* x,
+				   unsigned int x_inc,
+				   GPUMirroredMemoryBlock<ComplexF>* y,
+				   unsigned int y_inc,
+				   unsigned int times,
+				   const unsigned int stride,
+				   bool use_gpu);

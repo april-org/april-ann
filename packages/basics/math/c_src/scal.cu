@@ -66,7 +66,7 @@ void doScal(unsigned int size,
 	    GPUMirroredMemoryBlock<T> *x,
 	    unsigned int inc,
 	    unsigned int shift,
-	    float alpha,
+	    T alpha,
 	    bool use_gpu) {
   T *x_mem;
 #ifdef USE_CUDA
@@ -90,3 +90,17 @@ void doScal(unsigned int size,
   }
 #endif
 }
+
+template void doScal<float>(unsigned int size,
+			    GPUMirroredMemoryBlock<float> *x,
+			    unsigned int inc,
+			    unsigned int shift,
+			    float alpha,
+			    bool use_gpu);
+
+template void doScal<ComplexF>(unsigned int size,
+			       GPUMirroredMemoryBlock<ComplexF> *x,
+			       unsigned int inc,
+			       unsigned int shift,
+			       ComplexF alpha,
+			       bool use_gpu);
