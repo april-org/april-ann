@@ -34,6 +34,7 @@
 
 #include "gpu_mirrored_memory_block.h"
 #include "gpu_helper.h"
+#include "complex_number.h"
 
 #define NEAR_ZERO             1e-6f
 #define DERIVATIVE_SATURATION 17.0f
@@ -263,127 +264,144 @@ void doComputeLocalFMeasureGradient(FloatGPUMirroredMemoryBlock *target,
 				    bool use_gpu);
 
 // BLAS FUNCTIONS
-void doSgemv(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
-	     int m, int n,
-	     float alpha, FloatGPUMirroredMemoryBlock *a, unsigned int a_inc,
-	     FloatGPUMirroredMemoryBlock *x, unsigned int x_inc,
-	     float beta, FloatGPUMirroredMemoryBlock *y, unsigned int y_inc,
-	     unsigned int a_shift, unsigned int x_shift, unsigned int y_shift,
-	     bool use_gpu);
+template<typename T>
+void doGemv(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
+	    int m, int n,
+	    T alpha, GPUMirroredMemoryBlock<T> *a, unsigned int a_inc,
+	    GPUMirroredMemoryBlock<T> *x, unsigned int x_inc,
+	    T beta, GPUMirroredMemoryBlock<T> *y, unsigned int y_inc,
+	    unsigned int a_shift, unsigned int x_shift, unsigned int y_shift,
+	    bool use_gpu);
 
-void doScopy(int N, const FloatGPUMirroredMemoryBlock* x,
-	     unsigned int x_shift,
-	     unsigned int x_inc,
-	     FloatGPUMirroredMemoryBlock* y,
-	     unsigned int y_shift,
-	     unsigned int y_inc,
-	     bool use_gpu);
+template<typename T>
+void doCopy(int N, const GPUMirroredMemoryBlock<T>* x,
+	    unsigned int x_shift,
+	    unsigned int x_inc,
+	    GPUMirroredMemoryBlock<T>* y,
+	    unsigned int y_shift,
+	    unsigned int y_inc,
+	    bool use_gpu);
 
-void doScopyLoop(int N, FloatGPUMirroredMemoryBlock* x, unsigned int x_inc,
-		 FloatGPUMirroredMemoryBlock* y, unsigned int y_inc,
-		 unsigned int times, const unsigned int stride,
-		 bool use_gpu);
+template<typename T>
+void doCopyLoop(int N, GPUMirroredMemoryBlock<T>* x, unsigned int x_inc,
+		GPUMirroredMemoryBlock<T>* y, unsigned int y_inc,
+		unsigned int times, const unsigned int stride,
+		bool use_gpu);
 
-void doSaxpy(int N, float alpha, const FloatGPUMirroredMemoryBlock* x,
-	     unsigned int x_shift, unsigned int x_inc,
-	     FloatGPUMirroredMemoryBlock* y, unsigned int y_shift,
-	     unsigned int y_inc, bool use_gpu);
+template<typename T>
+void doAxpy(int N, T alpha, const GPUMirroredMemoryBlock<T>* x,
+	    unsigned int x_shift, unsigned int x_inc,
+	    GPUMirroredMemoryBlock<T>* y, unsigned int y_shift,
+	    unsigned int y_inc, bool use_gpu);
 
-void doSaxpyLoop(int N, float alpha,
-		 FloatGPUMirroredMemoryBlock* x,
-		 unsigned int x_inc, unsigned int x_shift,
-		 FloatGPUMirroredMemoryBlock* y,
-		 unsigned int y_inc, unsigned int y_shift,
-		 unsigned int times,
-		 const unsigned int stride_x,
-		 const unsigned int stride_y,
-		 bool use_gpu);
+template<typename T>
+void doAxpyLoop(int N, T alpha,
+		GPUMirroredMemoryBlock<T>* x,
+		unsigned int x_inc, unsigned int x_shift,
+		GPUMirroredMemoryBlock<T>* y,
+		unsigned int y_inc, unsigned int y_shift,
+		unsigned int times,
+		const unsigned int stride_x,
+		const unsigned int stride_y,
+		bool use_gpu);
 
-void doSgemm(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
-	     CBLAS_TRANSPOSE b_transpose, int m, int n, int k, float alpha,
-	     FloatGPUMirroredMemoryBlock* a, unsigned int a_inc,
-	     FloatGPUMirroredMemoryBlock* b, unsigned int b_inc, float beta,
-	     FloatGPUMirroredMemoryBlock* c, unsigned int c_inc,
-	     unsigned int a_shift, unsigned int b_shift, unsigned int c_shift,
-	     bool use_gpu);
+template<typename T>
+void doGemm(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
+	    CBLAS_TRANSPOSE b_transpose, int m, int n, int k, T alpha,
+	    GPUMirroredMemoryBlock<T>* a, unsigned int a_inc,
+	    GPUMirroredMemoryBlock<T>* b, unsigned int b_inc, T beta,
+	    GPUMirroredMemoryBlock<T>* c, unsigned int c_inc,
+	    unsigned int a_shift, unsigned int b_shift, unsigned int c_shift,
+	    bool use_gpu);
 
-void doSscal(unsigned int size,
-	     FloatGPUMirroredMemoryBlock *x,
+template<typename T>
+void doScal(unsigned int size,
+	    GPUMirroredMemoryBlock<T> *x,
+	    unsigned int inc,
+	    unsigned int shift,
+	    T alpha,
+	    bool use_gpu);
+
+template<typename T>
+void doGer(CBLAS_ORDER major_type,
+	   unsigned int m,
+	   unsigned int n,
+	   T alpha,
+	   GPUMirroredMemoryBlock<T> *x,
+	   unsigned int x_shift,
+	   unsigned int x_inc,
+	   GPUMirroredMemoryBlock<T> *y,
+	   unsigned int y_shift,
+	   unsigned int y_inc,
+	   GPUMirroredMemoryBlock<T> *a,
+	   unsigned int a_shift,
+	   unsigned int a_inc,
+	   bool use_gpu);
+
+template<typename T>
+T doDot(unsigned int size,
+	const GPUMirroredMemoryBlock<T> *x,
+	unsigned int x_shift,
+	unsigned int x_inc,
+	const GPUMirroredMemoryBlock<T> *y,
+	unsigned int y_shift,
+	unsigned int y_inc,
+	bool use_gpu);
+
+template<typename T>
+float doNrm2(unsigned int n,
+	     const GPUMirroredMemoryBlock<T> *x,
 	     unsigned int inc,
 	     unsigned int shift,
-	     float alpha,
 	     bool use_gpu);
 
-void doSger(CBLAS_ORDER major_type,
-            unsigned int m,
-            unsigned int n,
-            float alpha,
-            FloatGPUMirroredMemoryBlock *x,
-            unsigned int x_shift,
-            unsigned int x_inc,
-            FloatGPUMirroredMemoryBlock *y,
-            unsigned int y_shift,
-            unsigned int y_inc,
-            FloatGPUMirroredMemoryBlock *a,
-            unsigned int a_shift,
-            unsigned int a_inc,
-            bool use_gpu);
+template<typename T>
+void doSbmv(CBLAS_ORDER major_type,
+	    CBLAS_UPLO uplo,
+	    int n, int k,
+	    T alpha, GPUMirroredMemoryBlock<T> *a, unsigned int a_lda,
+	    GPUMirroredMemoryBlock<T> *x, unsigned int x_inc,
+	    T beta, GPUMirroredMemoryBlock<T> *y, unsigned int y_inc,
+	    unsigned int a_shift, unsigned int x_shift, unsigned int y_shift,
+	    bool use_gpu);
 
-float doSdot(unsigned int size,
-	     const FloatGPUMirroredMemoryBlock *x,
-	     unsigned int x_shift,
-	     unsigned int x_inc,
-	     const FloatGPUMirroredMemoryBlock *y,
-	     unsigned int y_shift,
-	     unsigned int y_inc,
-	     bool use_gpu);
-
-float doSnrm2(unsigned int n,
-	      const FloatGPUMirroredMemoryBlock *x,
-	      unsigned int inc,
-	      unsigned int shift,
-	      bool use_gpu);
-
-void doSsbmv(CBLAS_ORDER major_type,
-	     CBLAS_UPLO uplo,
-	     int n, int k,
-	     float alpha, FloatGPUMirroredMemoryBlock *a, unsigned int a_lda,
-	     FloatGPUMirroredMemoryBlock *x, unsigned int x_inc,
-	     float beta, FloatGPUMirroredMemoryBlock *y, unsigned int y_inc,
-	     unsigned int a_shift, unsigned int x_shift, unsigned int y_shift,
-	     bool use_gpu);
-
+template<typename T>
 void doClamp(unsigned int N,
-	     FloatGPUMirroredMemoryBlock *v,
+	     GPUMirroredMemoryBlock<T> *v,
 	     unsigned int stride,
 	     unsigned int shift,
-	     float lower,
-	     float upper,
+	     T lower,
+	     T upper,
 	     bool use_gpu);
 
+template<typename T>
 void doFill(unsigned int N,
-	    FloatGPUMirroredMemoryBlock *v,
+	    GPUMirroredMemoryBlock<T> *v,
 	    unsigned int stride,
 	    unsigned int shift,
-	    float value,
+	    T value,
 	    bool use_gpu);
 
-float doSum(unsigned int N,
-	    const FloatGPUMirroredMemoryBlock *v,
-	    unsigned int stride,
-	    unsigned int shift,
-	    bool use_gpu);
+template<typename T>
+T doSum(unsigned int N,
+	const GPUMirroredMemoryBlock<T> *v,
+	unsigned int stride,
+	unsigned int shift,
+	bool use_gpu,
+	T zero);
 
+template<typename T>
 void doScalarAdd(unsigned int N,
-		 FloatGPUMirroredMemoryBlock *v,
+		 GPUMirroredMemoryBlock<T> *v,
 		 unsigned int stride,
 		 unsigned int shift,
-		 float value,
+		 T value,
 		 bool use_gpu);
 
+template<typename T>
 bool doEquals(unsigned int N,
-	      const FloatGPUMirroredMemoryBlock *v1,
-	      const FloatGPUMirroredMemoryBlock *v2,
+	      const GPUMirroredMemoryBlock<T> *v1,
+	      const GPUMirroredMemoryBlock<T> *v2,
 	      unsigned int stride1,
 	      unsigned int stride2,
 	      unsigned int shift1,

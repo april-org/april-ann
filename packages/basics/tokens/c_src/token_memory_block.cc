@@ -53,10 +53,10 @@ void TokenMemoryBlock::resize(unsigned int size) {
 Token *TokenMemoryBlock::clone() const {
   TokenMemoryBlock *token = new TokenMemoryBlock(mem_block->getSize());
   token->used_size = used_size;
-  doScopy(mem_block->getSize(),
-	  mem_block, 0, 1,
-	  token->mem_block, 0, 1,
-	  false);
+  doCopy(mem_block->getSize(),
+	 mem_block, 0, 1,
+	 token->mem_block, 0, 1,
+	 false);
   return token;
 }
 

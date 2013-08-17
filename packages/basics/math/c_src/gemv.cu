@@ -142,3 +142,19 @@ void doGemv(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
   }
 #endif
 }
+
+template void doGemv<float>(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
+			    int m, int n,
+			    float alpha, GPUMirroredMemoryBlock<float> *a, unsigned int a_inc,
+			    GPUMirroredMemoryBlock<float> *x, unsigned int x_inc,
+			    float beta, GPUMirroredMemoryBlock<float> *y, unsigned int y_inc,
+			    unsigned int a_shift, unsigned int x_shift, unsigned int y_shift,
+			    bool use_gpu);
+
+template void doGemv<ComplexF>(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
+			       int m, int n,
+			       ComplexF alpha, GPUMirroredMemoryBlock<ComplexF> *a, unsigned int a_inc,
+			       GPUMirroredMemoryBlock<ComplexF> *x, unsigned int x_inc,
+			       ComplexF beta, GPUMirroredMemoryBlock<ComplexF> *y, unsigned int y_inc,
+			       unsigned int a_shift, unsigned int x_shift, unsigned int y_shift,
+			       bool use_gpu);

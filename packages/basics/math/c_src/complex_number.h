@@ -47,6 +47,11 @@ struct Complex {
 			     this->data[REAL_IDX]*other.data[IMG_IDX]) / c2_d2;
     return result;
   }
+  Complex<T> &operator+=(const Complex<T> &other) {
+    this->data[REAL_IDX] += other.data[REAL_IDX];
+    this->data[IMG_IDX]  += other.data[IMG_IDX];
+    return *this;
+  }
   Complex<T> operator+(const Complex<T> &other) const {
     Complex<T> result;
     result.data[REAL_IDX] = this->data[REAL_IDX]+other.data[REAL_IDX];

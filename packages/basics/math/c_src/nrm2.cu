@@ -35,11 +35,11 @@ cublasStatus_t wrapperCublasNrm2(cublasHandle_t &handle,
   return cublas_Snrm2(handle, n, x_mem, inc, &result);
 }
 
-cublasStatus_t wrapperCublasDot(cublasHandle_t &handle,
-				unsigned int size,
-				const ComplexF *x_mem,
-				unsigned int x_inc,
-				ComplexF *ret) {
+cublasStatus_t wrapperCublasNrm2(cublasHandle_t &handle,
+				 unsigned int size,
+				 const ComplexF *x_mem,
+				 unsigned int x_inc,
+				 ComplexF *ret) {
   return cublas_Scnrm2(handle, n, x_mem, inc, &result);
 }
 
@@ -49,18 +49,14 @@ cublasStatus_t wrapperCublasDot(cublasHandle_t &handle,
  ************* CBLAS SECTION ***********
  ***************************************/
 
-float wrapperCblasNrm2(CBLAS_ORDER &major_type,
-		      unsigned int size,
-		      const float *x_mem, unsigned int x_inc) {
+float wrapperCblasNrm2(unsigned int size,
+		       const float *x_mem, unsigned int x_inc) {
   return cblas_snrm2(size, x_mem, x_inc);
 }
 
-ComplexF wrapperCblasNrm2(CBLAS_ORDER &major_type,
-			  unsigned int size,
-			  const ComplexF *x_mem, unsigned int x_inc) {
-  ComplexF ret;
-  cblas_zdotu_sub(size, x_mem, x_inc, &ret);
-  return ret;
+float wrapperCblasNrm2(unsigned int size,
+		       const ComplexF *x_mem, unsigned int x_inc) {
+  return cblas_scnrm2(size, x_mem, x_inc);
 }
 
 /***************************************
@@ -73,7 +69,7 @@ float doNrm2(unsigned int n,
 	     unsigned int inc,
 	     unsigned int shift,
 	     bool use_gpu) {
-  T result;
+  float result;
   const T *x_mem;
 #ifdef USE_CUDA
   if (use_gpu) {
@@ -94,3 +90,15 @@ float doNrm2(unsigned int n,
 #endif
   return result;
 }
+
+template float doNrm2<float>(unsigned int n,
+			     const GPUMirroredMemoryBlock<float> *x,
+			     unsigned int inc,
+			     unsigned int shift,
+			     bool use_gpu);
+
+template float doNrm2<ComplexF>(unsigned int n,
+				const GPUMirroredMemoryBlock<ComplexF> *x,
+				unsigned int inc,
+				unsigned int shift,
+				bool use_gpu);

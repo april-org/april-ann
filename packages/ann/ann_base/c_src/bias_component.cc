@@ -47,17 +47,17 @@ namespace ANN {
     unsigned int bunch_size = input_error_mat->getDimSize(0);
     // bias update: prev_bias[j] = prev_bias[j] + \sum_b norm_learn_rate * ERROR_INPUT[b,j]
     if (bunch_size == 1) weights_mat->axpy(alpha, input_error_mat);
-    else doSaxpyLoop(output_size,
-		     alpha,
-		     input_error_mat->getRawDataAccess(),
-		     input_error_mat->getStrideSize(1),
-		     0,
-		     weights_mat->getRawDataAccess(),
-		     weights_mat->getStrideSize(0),
-		     0,
-		     bunch_size,
-		     input_error_mat->getStrideSize(0), 0,
-		     use_cuda);
+    else doAxpyLoop(output_size,
+		    alpha,
+		    input_error_mat->getRawDataAccess(),
+		    input_error_mat->getStrideSize(1),
+		    0,
+		    weights_mat->getRawDataAccess(),
+		    weights_mat->getStrideSize(0),
+		    0,
+		    bunch_size,
+		    input_error_mat->getStrideSize(0), 0,
+		    use_cuda);
   }
 
   Token *BiasANNComponent::doForward(Token* _input, bool during_training) {
@@ -85,12 +85,12 @@ namespace ANN {
     if (bunch_size == 1) output_mat->axpy(1.0f, bias_ptr);
     else {
       // addition of bias vector at output
-      doSaxpyLoop(output_size, 1.0f,
-		  bias_ptr->getRawDataAccess(), bias_ptr->getStrideSize(0), 0,
-		  output_mat->getRawDataAccess(), output_mat->getStrideSize(1), 0,
-		  bunch_size,
-		  0, output_mat->getStrideSize(0),
-		  use_cuda);
+      doAxpyLoop(output_size, 1.0f,
+		 bias_ptr->getRawDataAccess(), bias_ptr->getStrideSize(0), 0,
+		 output_mat->getRawDataAccess(), output_mat->getStrideSize(1), 0,
+		 bunch_size,
+		 0, output_mat->getStrideSize(0),
+		 use_cuda);
     }
     return output;
   }
