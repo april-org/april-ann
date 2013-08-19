@@ -238,6 +238,22 @@ void Matrix<float>::tanh() {
 				       MAKE_CWISE_FUNCTOR_0(doTanh,float));;
 }
 
+/************* SIN FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doSin,float);
+template<>
+void Matrix<float>::sin() {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doSin,float));;
+}
+
+/************* COS FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doCos,float);
+template<>
+void Matrix<float>::cos() {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doCos,float));;
+}
+
 template<>
 Matrix<float> *Matrix<float>::cmul(const Matrix<float> *other) {
   if (size() != other->size())

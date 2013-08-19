@@ -999,9 +999,31 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat sin
+{
+  obj->sin();
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat cos
+{
+  obj->cos();
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat sum
 {
-  LUABIND_RETURN(float, obj->sum());
+  int argn = lua_gettop(L); // number of arguments
+  if (argn == 1) {
+    int dim;
+    LUABIND_GET_PARAMETER(1, int, dim);
+    MatrixFloat *result = obj->sum(dim-1);
+    LUABIND_RETURN(MatrixFloat, result);
+  }
+  else if (argn == 0) LUABIND_RETURN(float, obj->sum());
+  else LUABIND_ERROR("Incorrect number of arguments");
 }
 //BIND_END
 

@@ -75,6 +75,12 @@ void Matrix<float>::pow(float value);
 template<>
 void Matrix<float>::tanh();
 
+template <>
+void Matrix<float>::cos();
+
+template <>
+void Matrix<float>::sin();
+
 template<>
 Matrix<float> *Matrix<float>::cmul(const Matrix<float> *other);
 

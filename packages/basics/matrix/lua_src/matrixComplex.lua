@@ -96,7 +96,7 @@ april_set_doc("matrixComplex", {
 		  "This class represent multidimensional matrices as matrix.",
 		  "But this is not available for build datasets and train machine",
 		  "learning models. In the last instance, you need always to",
-		  "transform this to a vanilla matrix."
+		  "transform this to a vanilla matrix.",
 		  "Mathematical operations are allowed (*, -, +).",
 		  "Specific BLAS methods are binding to Lua to ensure",
 		  "efficiency."
@@ -219,6 +219,21 @@ april_set_doc("matrixComplex.copy_from_table", {
 		params = {
 		  "A lua table with data numbers in row_major order",
 		}, })
+
+april_set_doc("matrixComplex.sum",
+	      {
+		class="method",
+		summary"Computes the sum of all the elements.",
+		outputs={"A number"},
+	      })
+
+april_set_doc("matrixComplex.sum",
+	      {
+		class="method",
+		summary"Computes the sum of all the elements over the given dimension.",
+		params={"A number, the dimension"},
+		outputs={"A matrix"},
+	      })
 
 april_set_doc("matrixComplex.get", {
 		class = "method",
@@ -657,6 +672,20 @@ april_set_doc("matrixComplex.img",
 	      {
 		class = "method",
 		summary = "Returns the imaginary part of the caller matrix",
+		outputs = { "A matrix instance" },
+	      })
+
+april_set_doc("matrixComplex.abs",
+	      {
+		class = "method",
+		summary = "Returns the abs of the polar representation",
+		outputs = { "A matrix instance" },
+	      })
+
+april_set_doc("matrixComplex.angle",
+	      {
+		class = "method",
+		summary = "Returns the angle of the polar representation",
 		outputs = { "A matrix instance" },
 	      })
 

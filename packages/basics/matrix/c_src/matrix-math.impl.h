@@ -88,6 +88,41 @@ T Matrix<T>::sum() const {
   return T();
 }
 
+// the argument indicates over which dimension the sum must be performed
+template <typename T>
+Matrix<T>* Matrix<T>::sum(int dim) {
+  int *result_dims = new int[numDim];
+  /**** THIS sliding window ****/
+  int *this_w_size = new int[numDim];
+  int *this_w_num_steps   = new int[numDim];
+  for (int i=0; i<dim; ++i) {
+    this_w_size[i] = 1;
+    result_dims[i] = this_w_num_steps[i] = matrixSize[i];
+  }
+  result_dims[dim] = 1;
+  this_w_size[dim] = matrixSize[dim];
+  this_w_num_steps[dim] = 1;
+  for (int i=dim+1; i<numDim; ++i) {
+    this_w_size[i] = 1;
+    result_dims[i] = this_w_num_steps[i] = matrixSize[i];
+  }
+  Matrix<T>::sliding_window this_w(this,this_w_size,0,0,this_w_num_steps,0);
+  Matrix<T> *slice = this_w.getMatrix();
+  IncRef(slice);
+  /******************************/
+  Matrix<T> *result = new Matrix<T>(numDim, result_dims, major_order);
+  // traverse in row major order
+  for (Matrix<T>::iterator it(result->begin()); it!=result->end(); ++it) {
+    this_w.getMatrix(slice);
+    *it = slice->sum();
+    this_w.next();
+  }
+  DecRef(slice);
+  delete[] this_w_size;
+  delete[] this_w_num_steps;
+  return result;
+}
+
 /**** COMPONENT WISE OPERATIONS ****/
 
 template <typename T>
@@ -146,6 +181,16 @@ void Matrix<T>::pow(T value) {
 
 template <typename T>
 void Matrix<T>::tanh() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
+void Matrix<T>::cos() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
+void Matrix<T>::sin() {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 

@@ -106,5 +106,7 @@ MatrixFloat *convertFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat);
 void applyConjugateInPlace(MatrixComplexF *mat);
 MatrixFloat *realPartFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat);
 MatrixFloat *imgPartFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat);
+MatrixFloat *absFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat);
+MatrixFloat *angleFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat);
 
 #endif // UTILMATRIXCOMPLEXF_H
