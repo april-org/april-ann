@@ -25,6 +25,12 @@
 #include "aligned_memory.h"
 
 #ifdef USE_MKL
+#ifdef USE_XCODE
+#error "USE ONLY ONE OF: USE_MKL, USE_XCODE, NO_BLAS, or none of this"
+#endif
+#ifdef NO_BLAS
+#error "USE ONLY ONE OF: USE_MKL, USE_XCODE, NO_BLAS, or none of this"
+#endif
 /////////////////////////////////// MKL ///////////////////////////////////////
 extern "C" {
 #include <mkl.h>
@@ -37,6 +43,9 @@ extern "C" {
 #define VECTOR_DSET(n, value, vec, step) for(unsigned int _i_=0,_j_=0;_j_<(n);++_j_,_i_+=(step))(vec)[_i_]=(value)
 /*****************************************************************************/
 #elif USE_XCODE
+#ifdef NO_BLAS
+#error "USE ONLY ONE OF: USE_MKL, USE_XCODE, NO_BLAS, or none of this"
+#endif
 ////////////////////////////////// XCODE //////////////////////////////////////
 #include <Accelerate/Accelerate.h>
 #define VECTOR_SSET(n, value, vec, step) for(unsigned int _i_=0,_j_=0;_j_<(n);++_j_,_i_+=(step))(vec)[_i_]=(value)
@@ -55,6 +64,9 @@ extern "C" {
 #else
 ///////////////////////////////// AD-HOC //////////////////////////////////////
 #define ADHOC_BLAS
+
+#define VECTOR_SSET(n, value, vec, step) for(unsigned int _i_=0,_j_=0;_j_<(n);++_j_,_i_+=(step))(vec)[_i_]=(value)
+#define VECTOR_DSET(n, value, vec, step) for(unsigned int _i_=0,_j_=0;_j_<(n);++_j_,_i_+=(step))(vec)[_i_]=(value)
 
 enum CBLAS_ORDER     { CblasRowMajor = 0, CblasColMajor = 1 };
 enum CBLAS_TRANSPOSE { CblasNoTrans  = 0, CblasTrans    = 1 };

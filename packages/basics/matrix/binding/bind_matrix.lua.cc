@@ -19,6 +19,8 @@
  *
  */
 //BIND_HEADER_C
+#include "utilMatrixIO.h"
+#include "utilMatrixFloat.h"
 #include "bind_mtrand.h"
 #include <cmath> // para isfinite
 #include "luabindutil.h"
@@ -63,7 +65,7 @@ int sliding_window_iterator_function(lua_State *L) {
 //BIND_END
 
 //BIND_HEADER_H
-#include "utilMatrixFloat.h"
+#include "matrixFloat.h"
 #include "utilLua.h"
 #include <cmath> // para isfinite
 typedef MatrixFloat::sliding_window SlidingWindow;
@@ -171,6 +173,11 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   obj = new MatrixFloat(ndims,dim);
   if (lua_istable(L,argn)) {
     int i=1;
+    int len;
+    LUABIND_TABLE_GETN(argn, len);
+    if (len != obj->size())
+      LUABIND_FERROR2("Incorrect number of elements at the given table, "
+		      "found %d, expected %d", len, obj->size());
     for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
       lua_rawgeti(L,argn,i);
       if (!lua_isnumber(L, -1))
@@ -221,6 +228,11 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   obj = new MatrixFloat(ndims,dim,CblasColMajor);
   if (lua_istable(L,argn)) {
     int i=1;
+    int len;
+    LUABIND_TABLE_GETN(argn, len);
+    if (len != obj->size())
+      LUABIND_FERROR2("Incorrect number of elements at the given table, "
+		      "found %d, expected %d", len, obj->size());
     for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
       lua_rawgeti(L,argn,i);
       if (!lua_isnumber(L, -1))
@@ -286,8 +298,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   const char *filename;
   LUABIND_GET_PARAMETER(1,string,filename);
   MatrixFloat *obj;
-  ReadFileStream f(filename);
-  if ((obj = readMatrixFloatFromStream(f)) == 0)
+  if ((obj = readMatrixFloatFromFile(filename)) == 0)
     LUABIND_ERROR("bad format");
   else LUABIND_RETURN(MatrixFloat,obj);
 }
@@ -312,7 +323,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   constString cs;
   LUABIND_GET_PARAMETER(1,constString,cs);
   MatrixFloat *obj;
-  if ((obj = readMatrixFloatFromStream(cs)) == 0)
+  if ((obj = readMatrixFloatFromString(cs)) == 0)
     LUABIND_ERROR("bad format");
   else LUABIND_RETURN(MatrixFloat,obj);
 }
@@ -335,9 +346,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   LUABIND_GET_PARAMETER(1, string, filename);
   LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("ascii"));
   bool is_ascii = (cs == "ascii");
-  FILE *f = fopen(filename, "w");
-  saveMatrixFloatToFile(obj,f,is_ascii);
-  fclose(f);
+  writeMatrixFloatToFile(obj, filename, is_ascii);
 }
 //BIND_END
 
@@ -354,11 +363,11 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   constString cs;
   LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("ascii"));
   bool is_ascii = (cs == "ascii");
-  char *buffer;
-  int longitud = saveMatrixFloatToString(obj,&buffer,is_ascii);
-  lua_pushlstring(L,buffer,longitud);
-  delete[] buffer;
+  int len;
+  char *buffer = writeMatrixFloatToString(obj, is_ascii, len);
+  lua_pushlstring(L,buffer,len);
   LUABIND_RETURN_FROM_STACK(-1);
+  delete[] buffer;
 }
 //BIND_END
 

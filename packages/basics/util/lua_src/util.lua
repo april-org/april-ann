@@ -630,6 +630,15 @@ function math.clamp(value,lower,upper)
   return math.max(lower,math.min(value,upper))
 end
 
+function math.median(t, ini, fin)
+  local mpos   = math.floor(#t/2)
+  local median = t[mpos]
+  if #t % 2 ~= 0 then
+    median = (median + t[mpos+1])/2
+  end
+  return median
+end
+
 -- calcula la media de una tabla, o subtabla
 function math.mean(t, ini, fin)
    local total=0
@@ -662,16 +671,19 @@ end
 
 function string.truncate(str, columns, prefix)
   local columns = columns - #prefix - 1
-  local words   = string.tokenize(str, " ")
+  local lines   = string.tokenize(str, "\n")
   local out     = { { } }
-  local size    = 0
-  for i,w in ipairs(words) do
-    if #w + size > columns then
-      size = 0
-      table.insert(out, { prefix })
+  for _,line in ipairs(lines) do
+    local words   = string.tokenize(line, " ")
+    local size    = 0
+    for i,w in ipairs(words) do
+      if #w + size > columns then
+	size = 0
+	table.insert(out, { prefix })
+      end
+      table.insert(out[#out], w)
+      size = size + #w
     end
-    table.insert(out[#out], w)
-    size = size + #w
   end
   for i=1,#out do out[i] = table.concat(out[i], " ") end
   return table.concat(out, "\n")

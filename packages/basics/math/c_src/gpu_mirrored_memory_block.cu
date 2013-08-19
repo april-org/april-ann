@@ -23,3 +23,4 @@
 
 template class GPUMirroredMemoryBlock<float>;
 template class GPUMirroredMemoryBlock<int>;
+template class GPUMirroredMemoryBlock<ComplexF>;
