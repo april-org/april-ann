@@ -93,9 +93,10 @@ april_set_doc("matrixComplex", {
 		class       = "class",
 		summary     = "Multidimensional matrixComplex objects",
 		description ={
-		  "This class represent multidimensional matrices.",
-		  "They are used for build datasets and train machine",
-		  "learning models.",
+		  "This class represent multidimensional matrices as matrix.",
+		  "But this is not available for build datasets and train machine",
+		  "learning models. In the last instance, you need always to",
+		  "transform this to a vanilla matrix."
 		  "Mathematical operations are allowed (*, -, +).",
 		  "Specific BLAS methods are binding to Lua to ensure",
 		  "efficiency."
@@ -115,7 +116,9 @@ april_set_doc("matrixComplex.__call", {
 		  "...",
 		  "nth dimension size",
 		  { "A table with values [optional]. The values must be",
-		    "in row major order", },
+		    "in row major order. A valid value is a number, which is",
+		    "taken as real part only, a complex object instance, or a",
+		    "string with the complex number.", },
 		},
 		outputs = { "A matrixComplex instantiated object" }, })
 
@@ -135,7 +138,9 @@ april_set_doc("matrixComplex.col_major", {
 		  "...",
 		  "nth dimension size",
 		  { "A table with values [optional]. The values must be",
-		    "in row major order", }
+		    "in row major order. A valid value is a number, which is",
+		    "taken as real part only, a complex object instance, or a",
+		    "string with the complex number.", },
 		},
 		outputs = { "A matrixComplex instantiated object" }, })
 
@@ -483,6 +488,22 @@ april_set_doc("matrixComplex.mul", {
 		},
 		outputs = {
 		  "A new matrixComplex result of multiplication",
+		}, })
+
+april_set_doc("matrix.cmul", {
+		class = "method",
+		summary = "Returns the component-wise multiplication of caller and other matrix.",
+		description = {
+		  "Returns the component-wise multiplication of caller and other matrix.",
+		  "The matrices must have the same size, but they are reinterpreted",
+		  " as a vector.",
+		  "The returned matrix has the same size as given matrices",
+		},
+		params = {
+		  "Another matrix",
+		},
+		outputs = {
+		  "A new matrix result of component-wise multiplication",
 		}, })
 
 april_set_doc("matrixComplex.axpy", {

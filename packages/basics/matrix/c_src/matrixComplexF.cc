@@ -114,6 +114,25 @@ Matrix<ComplexF>* Matrix<ComplexF>::multiply(const Matrix<ComplexF> *other) cons
   return resul;
 }
 
+template<>
+Matrix<ComplexF> *Matrix<ComplexF>::cmul(const Matrix<ComplexF> *other) {
+  if (!sameDim(other))
+    ERROR_EXIT(256, "The matrices must be of equal size\n");
+  if (use_cuda)
+    ERROR_PRINT("Warning, the cmul operation is not implemented for CUDA\n");
+  MatrixComplexF *result = new MatrixComplexF(numDim, matrixSize, major_order);
+  MatrixComplexF::const_iterator this_it(this->begin());
+  MatrixComplexF::const_iterator other_it(other->begin());
+  MatrixComplexF::iterator result_it(result->begin());
+  while(result_it != result->end()) {
+    *result_it = (*this_it) * (*other_it);
+    ++result_it;
+    ++other_it;
+    ++this_it;
+  }
+  return result;
+}
+
 /************* SUM FUNCTION **************/
 struct sum_functor {
   ComplexF operator()(const MatrixComplexF *m,
