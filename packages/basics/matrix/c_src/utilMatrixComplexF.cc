@@ -125,3 +125,31 @@ void applyConjugateInPlace(MatrixComplexF *mat) {
     it->conj();
   }
 }
+
+MatrixFloat *realPartFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
+  MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
+					 mat->getDimPtr(),
+					 mat->getMajorOrder());
+  MatrixComplexF::const_iterator orig_it(mat->begin());
+  MatrixFloat::iterator dest_it(new_mat->begin());
+  while(orig_it != mat->end()) {
+    *dest_it = orig_it->real();
+    ++orig_it;
+    ++dest_it;
+  }
+  return new_mat;
+}
+
+MatrixFloat *imgPartFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
+  MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
+					 mat->getDimPtr(),
+					 mat->getMajorOrder());
+  MatrixComplexF::const_iterator orig_it(mat->begin());
+  MatrixFloat::iterator dest_it(new_mat->begin());
+  while(orig_it != mat->end()) {
+    *dest_it = orig_it->img();
+    ++orig_it;
+    ++dest_it;
+  }
+  return new_mat;
+}

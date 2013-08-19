@@ -60,56 +60,75 @@ void lua_pushComplexF(lua_State *L, const ComplexF &number) {
 #include "constString.h"
 
 struct LuaComplexFNumber : public Referenced {
+private:
+  // Automaton which interprets a string like this regexp: N?[+-]N?i
+  enum STATES { INITIAL, NUMBER, SIGN, NUMBER_SIGN, NUMBER_NUMBER,
+		FINAL, ERROR };
+  enum TOKENS { TOKEN_FLOAT, TOKEN_SIGN, TOKEN_I, TOKEN_UNKOWN, TOKEN_END };
+  TOKENS getToken(constString &cs, float &num, char &sign) {
+    if (cs.empty()) return TOKEN_END;
+    char ch;
+    if (cs.extract_float(&num)) return TOKEN_FLOAT;
+    if (cs.extract_char(&ch)) {
+      if (ch == '+' || ch == '-') { sign=ch; return TOKEN_SIGN; }
+      else if (ch == 'i') return TOKEN_I;
+    }
+    return TOKEN_UNKOWN;
+  }
+  
+public:
   ComplexF number;
+  
   LuaComplexFNumber(const ComplexF &number) : Referenced(), number(number) { }
   LuaComplexFNumber(const char *str) : Referenced() {
+    float num;
+    char  sign='+'; // initialized to avoid compilation warning
     constString cs(str);
-    float a, b;
-    char i;
-    if (!cs.extract_float(&a)) {
-      char sgn;
-      // not number: only allowed i, +i or -i
-      number.real() = 0.0f;
-      if (!cs.extract_char(&sgn))
-	ERROR_EXIT1(256, "Incorrect complex string format '%s'\n",str);
-      // not signed
-      if (sgn == 'i') number.img() = 1.0f;
-      else {
-	// signed
-	if (sgn!='-' && sgn!='+')
-	  ERROR_EXIT1(256, "Incorrect complex string format '%s'\n",str);
-	if (!cs.extract_char(&i))
-	  ERROR_EXIT1(256, "Incorrect complex string format '%s'\n",str);
-	if (i != 'i')
-	  ERROR_EXIT1(256, "Incorrect complex string format '%s'\n",str);
-	if (sgn == '-') number.img() = -1.0f;
-	else number.img() = 1.0f;
+    STATES state = INITIAL;
+    TOKENS token;
+    while(state != FINAL && state != ERROR) {
+      token = getToken(cs,num,sign);
+      switch(state) {
+      case INITIAL:
+	switch(token) {
+	case TOKEN_FLOAT: number.real()=num; state=NUMBER; break;
+	case TOKEN_I: number.real()=0.0f; number.img()=1.0f; state=FINAL; break;
+	case TOKEN_SIGN: number.real()=0.0f; state=SIGN; break;
+	default: state=ERROR;
+	}
+	break;
+      case NUMBER:
+	switch(token) {
+	case TOKEN_FLOAT: number.img()=num; state=NUMBER_NUMBER; break;
+	case TOKEN_I: number.img()=number.real(); number.real()=0.0f; state=FINAL; break;
+	case TOKEN_SIGN: state=NUMBER_SIGN; break;
+	case TOKEN_END: number.img()=0.0f; state=FINAL; break;
+	default: state=ERROR;
+	}
+	break;
+      case SIGN:
+	switch(token) {
+	case TOKEN_I: number.img()=(sign=='+')?1.0f:-1.0f; state=FINAL; break;
+	default: state=ERROR;
+	}
+	break;
+      case NUMBER_NUMBER:
+	switch(token) {
+	case TOKEN_I: state=FINAL; break;
+	default: state=ERROR;
+	}
+	break;
+      case NUMBER_SIGN:
+	switch(token) {
+	case TOKEN_I: number.img()=(sign=='+')?1.0f:-1.0f; state=FINAL; break;
+	default: state=ERROR;
+	}
+	break;
+      default: state=ERROR;
       }
     }
-    else if (!cs.extract_float(&b)) {
-      // only one number
-      if (!cs.extract_char(&i)) {
-	// without i char
-	number.real() = a;
-	number.img()  = 0.0f;
-      }
-      else {
-	if (i != 'i')
-	  ERROR_EXIT1(256, "Incorrect complex string format '%s'\n",str);
-	// with i char
-	number.real() = 0.0f;
-	number.img()  = a;
-      }
-    }
-    else {
-      // two numbers
-      if (!cs.extract_char(&i))
-	ERROR_EXIT1(256, "Incorrect complex string format '%s'\n",str);
-      if (i != 'i')
-	ERROR_EXIT1(256, "Incorrect complex string format '%s'\n",str);
-      number.real() = a;
-      number.img()  = b;
-    }
+    if (state == ERROR || !cs.empty())
+      ERROR_EXIT1(256, "Incorrect complex string format '%s'\n",str);
   }
 };
 

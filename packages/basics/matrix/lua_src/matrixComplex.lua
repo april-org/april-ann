@@ -625,6 +625,20 @@ april_set_doc("matrixComplex.conj",
 		outputs = { "The caller matrixComplex instance" },
 	      })
 
+april_set_doc("matrixComplex.real",
+	      {
+		class = "method",
+		summary = "Returns the real part of the caller matrix",
+		outputs = { "A matrix instance" },
+	      })
+
+april_set_doc("matrixComplex.img",
+	      {
+		class = "method",
+		summary = "Returns the imaginary part of the caller matrix",
+		outputs = { "A matrix instance" },
+	      })
+
 april_set_doc("matrixComplex.sliding_window",
 	      {
 		class = "method",

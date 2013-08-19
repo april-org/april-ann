@@ -104,5 +104,7 @@ MatrixComplexF *readMatrixComplexFFromString(constString &cs);
 
 MatrixFloat *convertFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat);
 void applyConjugateInPlace(MatrixComplexF *mat);
+MatrixFloat *realPartFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat);
+MatrixFloat *imgPartFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat);
 
 #endif // UTILMATRIXCOMPLEXF_H
