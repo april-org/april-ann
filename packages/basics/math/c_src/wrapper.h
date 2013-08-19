@@ -445,6 +445,18 @@ void doTanh(unsigned int N,
 	    unsigned int shift,
 	    bool use_gpu);
 
+void doSin(unsigned int N,
+	   FloatGPUMirroredMemoryBlock *v,
+	   unsigned int stride,
+	   unsigned int shift,
+	   bool use_gpu);
+
+void doCos(unsigned int N,
+	   FloatGPUMirroredMemoryBlock *v,
+	   unsigned int stride,
+	   unsigned int shift,
+	   bool use_gpu);
+
 void doPow(unsigned int N,
 	   FloatGPUMirroredMemoryBlock *v,
 	   unsigned int stride,

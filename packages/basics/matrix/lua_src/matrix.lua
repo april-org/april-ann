@@ -333,6 +333,21 @@ april_set_doc("matrix.get", {
 		  "A number",
 		}, })
 
+april_set_doc("matrix.sum",
+	      {
+		class="method",
+		summary"Computes the sum of all the elements.",
+		outputs={"A number"},
+	      })
+
+april_set_doc("matrix.sum",
+	      {
+		class="method",
+		summary"Computes the sum of all the elements over the given dimension.",
+		params={"A number, the dimension"},
+		outputs={"A matrix"},
+	      })
+
 april_set_doc("matrix.set", {
 		class = "method",
 		summary = "Sets the value of a given position.",
@@ -681,6 +696,24 @@ april_set_doc("matrix.exp", {
 april_set_doc("matrix.tanh", {
 		class = "method",
 		summary = "Component wise tanh operation IN-PLACE: Y = tanh(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.sin", {
+		class = "method",
+		summary = "Component wise sin operation IN-PLACE: Y = sin(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.cos", {
+		class = "method",
+		summary = "Component wise cos operation IN-PLACE: Y = cos(Y)",
 		params = {
 		},
 		outputs = {

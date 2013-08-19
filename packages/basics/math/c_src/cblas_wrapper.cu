@@ -44,6 +44,8 @@ CWISE_FUNC_KERNEL(log1pf);
 CWISE_FUNC_KERNEL(expf);
 CWISE_FUNC_KERNEL(sqrtf);
 CWISE_FUNC_KERNEL(tanhf);
+CWISE_FUNC_KERNEL(sinf);
+CWISE_FUNC_KERNEL(cosf);
 
 #undef CWISE_FUNC_KERNEL
 
@@ -192,6 +194,50 @@ void doTanh(unsigned int N,
 #endif
     float *v_mem = v->getPPALForReadAndWrite() + shift;
     for (unsigned int i=0; i<N; ++i, v_mem += stride) *v_mem = tanhf(*v_mem);
+#ifdef USE_CUDA
+  }
+#endif
+}
+
+void doSin(unsigned int N,
+	   FloatGPUMirroredMemoryBlock *v,
+	   unsigned int stride,
+	   unsigned int shift,
+	   bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    float *v_ptr = v->getGPUForReadAndWrite() + shift;
+    dim3 block, grid;
+    computeBlockAndGridSizesForAnArray(N, block, grid);
+    sinfFuncKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (v_ptr, N, stride);
+  }
+  else {
+#endif
+    float *v_mem = v->getPPALForReadAndWrite() + shift;
+    for (unsigned int i=0; i<N; ++i, v_mem += stride) *v_mem = sinf(*v_mem);
+#ifdef USE_CUDA
+  }
+#endif
+}
+
+void doCos(unsigned int N,
+	   FloatGPUMirroredMemoryBlock *v,
+	   unsigned int stride,
+	   unsigned int shift,
+	   bool use_gpu) {
+#ifdef USE_CUDA
+  if (use_gpu) {
+    float *v_ptr = v->getGPUForReadAndWrite() + shift;
+    dim3 block, grid;
+    computeBlockAndGridSizesForAnArray(N, block, grid);
+    cosfFuncKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (v_ptr, N, stride);
+  }
+  else {
+#endif
+    float *v_mem = v->getPPALForReadAndWrite() + shift;
+    for (unsigned int i=0; i<N; ++i, v_mem += stride) *v_mem = cosf(*v_mem);
 #ifdef USE_CUDA
   }
 #endif

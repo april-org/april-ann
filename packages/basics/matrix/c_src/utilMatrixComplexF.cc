@@ -153,3 +153,31 @@ MatrixFloat *imgPartFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
   }
   return new_mat;
 }
+
+MatrixFloat *absFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
+  MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
+					 mat->getDimPtr(),
+					 mat->getMajorOrder());
+  MatrixComplexF::const_iterator orig_it(mat->begin());
+  MatrixFloat::iterator dest_it(new_mat->begin());
+  while(orig_it != mat->end()) {
+    *dest_it = orig_it->abs();
+    ++orig_it;
+    ++dest_it;
+  }
+  return new_mat;
+}
+
+MatrixFloat *angleFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
+  MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
+					 mat->getDimPtr(),
+					 mat->getMajorOrder());
+  MatrixComplexF::const_iterator orig_it(mat->begin());
+  MatrixFloat::iterator dest_it(new_mat->begin());
+  while(orig_it != mat->end()) {
+    *dest_it = orig_it->angle();
+    ++orig_it;
+    ++dest_it;
+  }
+  return new_mat;
+}

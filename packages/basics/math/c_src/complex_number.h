@@ -119,14 +119,19 @@ struct Complex {
   T abs() const { return sqrt( data[REAL_IDX]*data[REAL_IDX] +
 			       data[IMG_IDX]*data[IMG_IDX] ); }
   T sqrtc() const { return sqrt( (data[REAL_IDX] + abs()) / 2.0 ); }
-  void polar(T &r, T &phi) const {
-    r = abs();
+  T angle() const {
+    T phi;
     if (real() > 0)                     phi = atan(img()/real());
     else if (real() <  0 && img() >= 0) phi = atan(img()/real()) + M_PI;
     else if (real() <  0 && img() <  0) phi = atan(img()/real()) - M_PI;
     else if (real() == 0 && img() >  0) phi =  M_PI/2;
     else if (real() == 0 && img() <  0) phi = -M_PI/2;
     else phi = NAN;
+    return phi;
+  }
+  void polar(T &r, T &phi) const {
+    r = abs();
+    phi = angle();
   }
   // POINTER ACCESS
   T *ptr() { return data; }

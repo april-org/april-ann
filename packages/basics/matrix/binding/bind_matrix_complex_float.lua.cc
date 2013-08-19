@@ -801,15 +801,20 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 
 //BIND_METHOD MatrixComplexF sum
 {
-  ComplexF sum = obj->sum();
-  LUABIND_RETURN(float, sum.real());
-  LUABIND_RETURN(float, sum.img());
+  int argn = lua_gettop(L); // number of arguments
+  if (argn == 1) {
+    int dim;
+    LUABIND_GET_PARAMETER(1, int, dim);
+    MatrixComplexF *result = obj->sum(dim-1);
+    LUABIND_RETURN(MatrixComplexF, result);
+  }
+  else if (argn == 0) LUABIND_RETURN(ComplexF, obj->sum());
+  else LUABIND_ERROR("Incorrect number of arguments");
 }
 //BIND_END
 
 //BIND_METHOD MatrixComplexF copy
 {
-  int argn;
   LUABIND_CHECK_ARGN(==, 1);
   MatrixComplexF *mat;
   LUABIND_GET_PARAMETER(1, MatrixComplexF, mat);
@@ -820,7 +825,6 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 
 //BIND_METHOD MatrixComplexF axpy
 {
-  int argn;
   LUABIND_CHECK_ARGN(==, 2);
   ComplexF alpha;
   MatrixComplexF *mat;
@@ -1029,6 +1033,18 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 //BIND_METHOD MatrixComplexF img
 {
   LUABIND_RETURN(MatrixFloat, imgPartFromMatrixComplexFToMatrixFloat(obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplexF abs
+{
+  LUABIND_RETURN(MatrixFloat, absFromMatrixComplexFToMatrixFloat(obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplexF angle
+{
+  LUABIND_RETURN(MatrixFloat, angleFromMatrixComplexFToMatrixFloat(obj));
 }
 //BIND_END
 
