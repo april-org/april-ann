@@ -1008,5 +1008,17 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 }
 //BIND_END
 
+//BIND_METHOD MatrixComplexF real
+{
+  LUABIND_RETURN(MatrixFloat, realPartFromMatrixComplexFToMatrixFloat(obj));
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplexF img
+{
+  LUABIND_RETURN(MatrixFloat, imgPartFromMatrixComplexFToMatrixFloat(obj));
+}
+//BIND_END
+
 //////////////////////////////////////////////////////////////////////
 
