@@ -37,15 +37,12 @@ template<>
 void Matrix<float>::ones();
 
 template<>
-void Matrix<float>::diag(float value);
+Matrix<float> *Matrix<float>::addition(const Matrix<float> *other);
 
 template<>
-Matrix<float>* Matrix<float>::addition(const Matrix<float> *other);
+Matrix<float> *Matrix<float>::substraction(const Matrix<float> *other);
 
-template<>
-Matrix<float>* Matrix<float>::substraction(const Matrix<float> *other);
-
-template<>
+template <>
 Matrix<float>* Matrix<float>::multiply(const Matrix<float> *other) const;
 
 template<>
@@ -131,6 +128,8 @@ Matrix<float> *Matrix<float>::maxSelDim(const int dim,
 
 template<>
 void Matrix<float>::adjustRange(float rmin, float rmax);
+
+////////////////////////////////////////////////////////////////////////////
 
 typedef Matrix<float> MatrixFloat;
 

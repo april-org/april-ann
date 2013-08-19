@@ -67,40 +67,21 @@ void Matrix<float>::ones() {
   fill(1.0f);
 }
 
-/************* DIAG FUNCTION **************/
-template<>
-void Matrix<float>::diag(float value) {
-  if (use_cuda) ERROR_EXIT(128, "DIAG OPERATION NOT IMPLENTED FOR CUDA\n");
-  for (int i=1; i<numDim; ++i)
-    if (matrixSize[i] != matrixSize[i-1])
-      ERROR_EXIT(128, "Only allowed for squared matrices\n");
-  float *d = data->getPPALForWrite();
-  int *aux_coords = new int[numDim];
-  for (int i=0; i<matrixSize[0]; ++i) {
-    for (int j=0; j<numDim; ++j) aux_coords[j] = i;
-    d[computeRawPos(aux_coords)] = value;
-  }
-  delete[] aux_coords;
-}
-
-/************* ADDITION FUNCTION **************/
-template<>
+template <>
 Matrix<float>* Matrix<float>::addition(const Matrix<float> *other) {
   Matrix<float> *resul = this->clone();
   resul->axpy(1.0f, other);
   return resul;
 }
 
-/************* SUBSTRACTION FUNCTION **************/
-template<>
+template <>
 Matrix<float>* Matrix<float>::substraction(const Matrix<float> *other) {
   Matrix<float> *resul = this->clone();
   resul->axpy(-1.0f, other);
   return resul;
 }
 
-/************* MULTIPLY FUNCTION **************/
-template<>
+template <>
 Matrix<float>* Matrix<float>::multiply(const Matrix<float> *other) const {
   Matrix<float> *resul = 0;
   if (other->isVector()) {
@@ -499,10 +480,10 @@ float Matrix<float>::norm2() const {
   else {
     norm2_functor  functor;
     norm2_reductor reductor;
-    v = applyReductionWithSpanIteratorNOPARALLEL<float>(this,
-							functor,
-							reductor,
-							0.0f);
+    v = applyReductionWithSpanIteratorNOPARALLEL<float,float>(this,
+							      functor,
+							      reductor,
+							      0.0f);
     v = sqrtf(v);
   }
   return v;

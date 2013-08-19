@@ -523,7 +523,7 @@ public:
   T sum() const;
   
   /**** COMPONENT WISE OPERATIONS ****/
-  bool equals(const Matrix<T> *other, T epsilon) const;
+  bool equals(const Matrix<T> *other, float epsilon) const;
   void log();
   void log1p();
   void exp();
@@ -570,7 +570,7 @@ public:
   
   void scal(T value);
   
-  T norm2() const;
+  float norm2() const;
   T min(int &arg_min, int &arg_min_raw_pos) const;
   T max(int &arg_max, int &arg_max_raw_pos) const;
   void minAndMax(T &min, T &max) const;
