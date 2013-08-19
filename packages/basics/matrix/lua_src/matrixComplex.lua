@@ -603,6 +603,28 @@ april_set_doc("matrixComplex.scalar_add",
 		outputs = { "The caller matrixComplex instance" },
 	      })
 
+
+april_set_doc("matrixComplex.to_float",
+	      {
+		class = "method",
+		summary = "Returns a matrix (with float resolution)",
+		description = {
+		  "Converts the given matrixComplex to a matrix (with float)",
+		  "with the one additional dimension of size two, where the",
+		  "real and imaginary part will be stored together.",
+		  "The extra dimension will be the last if the original",
+		  "matrix is in row_major, or the first if its in col_major.",
+		},
+		outputs = { "A matrix instance" },
+	      })
+
+april_set_doc("matrixComplex.conj",
+	      {
+		class = "method",
+		summary = "Applies the conjugate of all the elements IN-PLACE",
+		outputs = { "The caller matrixComplex instance" },
+	      })
+
 april_set_doc("matrixComplex.sliding_window",
 	      {
 		class = "method",

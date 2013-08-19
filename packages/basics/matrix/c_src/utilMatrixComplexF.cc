@@ -118,3 +118,10 @@ MatrixFloat *convertFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
   delete[] dims;
   return new_mat;
 }
+
+void applyConjugateInPlace(MatrixComplexF *mat) {
+  for (MatrixComplexF::iterator it(mat->begin());
+       it != mat->end(); ++it) {
+    it->conj();
+  }
+}

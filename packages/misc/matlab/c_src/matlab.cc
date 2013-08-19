@@ -83,6 +83,30 @@ void readMatrixData(MatrixFloat::col_major_iterator &m_it,
 }
 
 template<typename T>
+void readMatrixData(MatrixComplexF::col_major_iterator &m_it,
+		    MatrixComplexF::col_major_iterator &end,
+		    const T *ptr_real, const T *ptr_img,
+		    const uint32_t nbytes) {
+  if (ptr_img != 0) {
+    for (uint32_t ptr_pos=0; ptr_pos < nbytes;
+	 ptr_pos += sizeof(T), ++ptr_real, ++ptr_img) {
+      april_assert(m_it != end);
+      *m_it = ComplexF(static_cast<float>(*ptr_real),
+		       static_cast<float>(*ptr_img));
+      ++m_it;
+    }
+  }
+  else {
+    for (uint32_t ptr_pos=0; ptr_pos < nbytes;
+	 ptr_pos += sizeof(T), ++ptr_real) {
+      april_assert(m_it != end);
+      *m_it = ComplexF(static_cast<float>(*ptr_real), 0.0f);
+      ++m_it;
+    }
+  }
+}
+
+template<typename T>
 void readMatrixData(MatrixDouble::col_major_iterator &m_it,
 		    MatrixDouble::col_major_iterator &end,
 		    const T *ptr, const uint32_t nbytes) {
@@ -326,6 +350,15 @@ MatrixFloat *MatFileReader::TaggedDataElement::getMatrix(char *name,
   TaggedDataElement *array_name  = getNextSubElement();
   TaggedDataElement *real_part   = getNextSubElement();
   TaggedDataElement *img_part    = getNextSubElement();
+  if (img_part != 0) {
+    delete array_flags;
+    delete dims_array;
+    delete array_name;
+    delete real_part;
+    delete img_part;
+    reset();
+    return 0;
+  }
   if (array_flags==0 || dims_array==0 || array_name==0 || real_part==0)
     ERROR_EXIT(128, "Impossible to found all ARRAY elements\n");
   int num_dims = dims_array->getNumberOfBytes()/sizeof(int32_t);
@@ -333,55 +366,142 @@ MatrixFloat *MatFileReader::TaggedDataElement::getMatrix(char *name,
   const int32_t *const_dims = dims_array->getData<const int32_t*>();
   for (int i=0; i<num_dims; ++i)
     dims[i] = static_cast<int>(const_dims[i]);
-  // if it has imaginary part, the resulting matrix will had another last
-  // dimension of size 2, where position 0 contains the real part, and position
-  // 1 the imaginary part
-  if (img_part != 0) {
-    dims[num_dims] = 2;
-  }
-  else dims[num_dims] = 1;
   MatrixFloat *m;
-  m = new MatrixFloat(num_dims+((img_part!=0)?1:0), dims,
+  m = new MatrixFloat(num_dims, dims,
 		      (col_major)?CblasColMajor:CblasRowMajor);
-  // traversing in col_major the real/img part of the matrix will be traversed
-  // last, so it is possible add all real components in a first step, and in a
-  // second step to add all the imaginary components
+  // traversing in col_major
   MatrixFloat::col_major_iterator it(m->begin());
   MatrixFloat::col_major_iterator end(m->end());
-  TaggedDataElement *numeric_elems[2] = { real_part, img_part };
-  // this loop traverses all the real components, and later all the imaginary
-  // components (if any)
-  for (int i=0; i<dims[num_dims]; ++i) {
-    switch(numeric_elems[i]->getDataType()) {
+  switch(real_part->getDataType()) {
+  case SINGLE:
+    readMatrixData(it, end, real_part->getData<const float*>(),
+		   real_part->getNumberOfBytes());
+    break;
+  case INT8:
+    readMatrixData(it, end, real_part->getData<const int8_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
+  case UINT8:
+    readMatrixData(it, end, real_part->getData<const uint8_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
+  case INT16:
+    readMatrixData(it, end, real_part->getData<const int16_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
+  case UINT16:
+    readMatrixData(it, end, real_part->getData<const uint16_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
+  case DOUBLE:
+  case INT32:
+  case UINT32:
+  case INT64:
+  case UINT64:
+  default:
+    ERROR_EXIT1(128,"Data type %d not supported\n",
+		real_part->getDataType());
+  }
+  if (array_name->getNumberOfBytes() > maxsize-1)
+    ERROR_EXIT2(128, "Overflow at array name, found %u, maximum %lu\n",
+		array_name->getNumberOfBytes(), maxsize);
+  strncpy(name, array_name->getData<const char*>(),
+	  array_name->getNumberOfBytes());
+  name[array_name->getNumberOfBytes()] = '\0';
+  delete array_flags;
+  delete dims_array;
+  delete array_name;
+  delete real_part;
+  delete img_part;
+  delete[] dims;
+  reset();
+  return m;
+}
+
+MatrixComplexF *MatFileReader::TaggedDataElement::
+getMatrixComplexF(char *name, size_t maxsize, bool col_major) {
+  if (getDataType() != MATRIX) {
+    ERROR_PRINT1("Impossible to get a Matrix from a non "
+		 "Matrix element (type %d)\n", getDataType());
+    return 0;
+  }
+  uint32_t cl = getClass();
+  switch(cl) {
+  case CL_CELL_ARRAY:
+  case CL_STRUCTURE:
+  case CL_OBJECT:
+  case CL_CHAR:
+  case CL_SPARSE:
+    ERROR_PRINT1("Incorrect array class type: %d\n", cl);
+    return 0;
+  default:
+    ;
+  }
+  TaggedDataElement *array_flags = getNextSubElement();
+  TaggedDataElement *dims_array  = getNextSubElement();
+  TaggedDataElement *array_name  = getNextSubElement();
+  TaggedDataElement *real_part   = getNextSubElement();
+  TaggedDataElement *img_part    = getNextSubElement();
+  if (array_flags==0 || dims_array==0 || array_name==0 || real_part==0)
+    ERROR_EXIT(128, "Impossible to found all ARRAY elements\n");
+  int num_dims = dims_array->getNumberOfBytes()/sizeof(int32_t);
+  int *dims = new int[num_dims];
+  const int32_t *const_dims = dims_array->getData<const int32_t*>();
+  for (int i=0; i<num_dims; ++i)
+    dims[i] = static_cast<int>(const_dims[i]);
+  MatrixComplexF *m;
+  m = new MatrixComplexF(num_dims, dims,
+			 (col_major)?CblasColMajor:CblasRowMajor);
+  // traversing in col_major
+  MatrixComplexF::col_major_iterator it(m->begin());
+  MatrixComplexF::col_major_iterator end(m->end());
+  if (real_part->getDataType() != img_part->getDataType())
+    ERROR_EXIT(256, "Found different data-type for real and imaginary part\n");
+  switch(real_part->getDataType()) {
     case SINGLE:
-      readMatrixData(it, end, numeric_elems[i]->getData<const float*>(),
-		     numeric_elems[i]->getNumberOfBytes());
+      readMatrixData(it, end,
+		     real_part->getData<const float*>(),
+		     img_part->getData<const float*>(),
+		     real_part->getNumberOfBytes());
       break;
     case INT8:
-      readMatrixData(it, end, numeric_elems[i]->getData<const int8_t*>(),
-		     numeric_elems[i]->getNumberOfBytes());
+      readMatrixData(it, end,
+		     real_part->getData<const int8_t*>(),
+		     img_part->getData<const int8_t*>(),
+		     real_part->getNumberOfBytes());
       break;
     case UINT8:
-      readMatrixData(it, end, numeric_elems[i]->getData<const uint8_t*>(),
-		     numeric_elems[i]->getNumberOfBytes());
+      readMatrixData(it, end,
+		     real_part->getData<const uint8_t*>(),
+		     img_part->getData<const uint8_t*>(),
+		     real_part->getNumberOfBytes());
       break;
     case INT16:
-      readMatrixData(it, end, numeric_elems[i]->getData<const int16_t*>(),
-		     numeric_elems[i]->getNumberOfBytes());
+      readMatrixData(it, end,
+		     real_part->getData<const int16_t*>(),
+		     img_part->getData<const int16_t*>(),
+		     real_part->getNumberOfBytes());
       break;
     case UINT16:
-      readMatrixData(it, end, numeric_elems[i]->getData<const uint16_t*>(),
-		     numeric_elems[i]->getNumberOfBytes());
+      readMatrixData(it, end,
+		     real_part->getData<const uint16_t*>(),
+		     img_part->getData<const uint16_t*>(),
+		     real_part->getNumberOfBytes());
       break;
     case DOUBLE:
+      ERROR_PRINT("Warning, casting from double to float\n");
+      readMatrixData(it, end,
+		     real_part->getData<const double*>(),
+		     img_part->getData<const double*>(),
+		     real_part->getNumberOfBytes());
+      break;
     case INT32:
     case UINT32:
     case INT64:
     case UINT64:
     default:
       ERROR_EXIT1(128,"Data type %d not supported\n",
-		  numeric_elems[i]->getDataType());
-    }
+		  real_part->getDataType());
   }
   if (array_name->getNumberOfBytes() > maxsize-1)
     ERROR_EXIT2(128, "Overflow at array name, found %u, maximum %lu\n",
@@ -425,47 +545,42 @@ MatrixDouble *MatFileReader::TaggedDataElement::getMatrixDouble(char *name,
   TaggedDataElement *img_part    = getNextSubElement();
   if (array_flags==0 || dims_array==0 || array_name==0 || real_part==0)
     ERROR_EXIT(128, "Impossible to found all ARRAY elements\n");
+  if (img_part != 0) {
+    delete array_flags;
+    delete dims_array;
+    delete array_name;
+    delete real_part;
+    delete img_part;
+    reset();
+    return 0;
+  }
   int num_dims = dims_array->getNumberOfBytes()/sizeof(int32_t);
-  int *dims = new int[num_dims+1];
+  int *dims = new int[num_dims];
   const int32_t *const_dims = dims_array->getData<const int32_t*>();
   for (int i=0; i<num_dims; ++i)
     dims[i] = static_cast<int>(const_dims[i]);
-  // if it has imaginary part, the resulting matrix will had another last
-  // dimension of size 2, where position 0 contains the real part, and position
-  // 1 the imaginary part
-  if (img_part != 0) {
-    dims[num_dims] = 2;
-  }
-  else dims[num_dims] = 1;
   MatrixDouble *m;
-  m = new MatrixDouble(num_dims+((img_part!=0)?1:0), dims);
-  // traversing in col_major the real/img part of the matrix will be traversed
-  // last, so it is possible add all real components in a first step, and in a
-  // second step to add all the imaginary components
+  m = new MatrixDouble(num_dims, dims);
+  // traversing in col_major
   MatrixDouble::col_major_iterator it(m->begin());
   MatrixDouble::col_major_iterator end(m->end());
-  TaggedDataElement *numeric_elems[2] = { real_part, img_part };
-  // this loop traverses all the real components, and later all the imaginary
-  // components (if any)
-  for (int i=0; i<dims[num_dims]; ++i) {
-    switch(numeric_elems[i]->getDataType()) {
-    case DOUBLE:
-      readMatrixData(it, end, numeric_elems[i]->getData<const double*>(),
-		     numeric_elems[i]->getNumberOfBytes());
-      break;
-    case SINGLE:
-    case INT8:
-    case UINT8:
-    case INT16:
-    case UINT16:
-    case INT32:
-    case UINT32:
-    case INT64:
-    case UINT64:
-    default:
-      ERROR_EXIT1(128,"Data type %d not supported\n",
-		  numeric_elems[i]->getDataType());
-    }
+  switch(real_part->getDataType()) {
+  case DOUBLE:
+    readMatrixData(it, end, real_part->getData<const double*>(),
+		   real_part->getNumberOfBytes());
+    break;
+  case SINGLE:
+  case INT8:
+  case UINT8:
+  case INT16:
+  case UINT16:
+  case INT32:
+  case UINT32:
+  case INT64:
+  case UINT64:
+  default:
+    ERROR_EXIT1(128,"Data type %d not supported\n",
+		real_part->getDataType());
   }
   if (array_name->getNumberOfBytes() > maxsize-1)
     ERROR_EXIT2(128, "Overflow at array name, found %u, maximum %lu\n",
@@ -509,68 +624,66 @@ MatrixInt32 *MatFileReader::TaggedDataElement::getMatrixInt32(char *name,
   TaggedDataElement *img_part    = getNextSubElement();
   if (array_flags==0 || dims_array==0 || array_name==0 || real_part==0)
     ERROR_EXIT(128, "Impossible to found all ARRAY elements\n");
+  if (img_part != 0) {
+    delete array_flags;
+    delete dims_array;
+    delete array_name;
+    delete real_part;
+    delete img_part;
+    reset();
+    return 0;    
+  }
   int num_dims = dims_array->getNumberOfBytes()/sizeof(int32_t);
-  int *dims = new int[num_dims+1];
+  int *dims = new int[num_dims];
   const int32_t *const_dims = dims_array->getData<const int32_t*>();
   for (int i=0; i<num_dims; ++i)
     dims[i] = static_cast<int>(const_dims[i]);
-  // if it has imaginary part, the resulting matrix will had another last
-  // dimension of size 2, where position 0 contains the real part, and position
-  // 1 the imaginary part
-  if (img_part != 0) {
-    dims[num_dims] = 2;
-  }
-  else dims[num_dims] = 1;
   MatrixInt32 *m;
-  m = new MatrixInt32(num_dims+((img_part!=0)?1:0), dims);
-  // traversing in col_major the real/img part of the matrix will be traversed
-  // last, so it is possible add all real components in a first step, and in a
-  // second step to add all the imaginary components
+  m = new MatrixInt32(num_dims, dims);
+  // traversing in col_major
   MatrixInt32::col_major_iterator it(m->begin());
   MatrixInt32::col_major_iterator end(m->end());
-  TaggedDataElement *numeric_elems[2] = { real_part, img_part };
-  // this loop traverses all the real components, and later all the imaginary
-  // components (if any)
-  for (int i=0; i<dims[num_dims]; ++i) {
-    switch(numeric_elems[i]->getDataType()) {
-    case INT8:
-      readMatrixData(it, end, numeric_elems[i]->getData<const int8_t*>(),
-		     numeric_elems[i]->getNumberOfBytes());
-      break;
-    case UINT8:
-      readMatrixData(it, end, numeric_elems[i]->getData<const uint8_t*>(),
-		     numeric_elems[i]->getNumberOfBytes());
-      break;
-    case INT16:
-      readMatrixData(it, end, numeric_elems[i]->getData<const int16_t*>(),
-		     numeric_elems[i]->getNumberOfBytes());
-      break;
-    case UINT16:
-      readMatrixData(it, end, numeric_elems[i]->getData<const uint16_t*>(),
-		     numeric_elems[i]->getNumberOfBytes());
-      break;
-    case INT32:
-      readMatrixData(it, end, numeric_elems[i]->getData<const int32_t*>(),
-		     numeric_elems[i]->getNumberOfBytes());
-      break;
-    case UINT32:
-      readMatrixData(it, end, numeric_elems[i]->getData<const uint32_t*>(),
-		     numeric_elems[i]->getNumberOfBytes());
-      break;
-    case INT64:
-      readMatrixData(it, end, numeric_elems[i]->getData<const int64_t*>(),
-		     numeric_elems[i]->getNumberOfBytes());
-      break;
-    case UINT64:
-      readMatrixData(it, end, numeric_elems[i]->getData<const uint64_t*>(),
-		     numeric_elems[i]->getNumberOfBytes());
-      break;
-    case SINGLE:
-    case DOUBLE:
-    default:
-      ERROR_EXIT1(128,"Data type %d not supported\n",
-		  numeric_elems[i]->getDataType());
-    }
+  switch(real_part->getDataType()) {
+  case INT8:
+    readMatrixData(it, end, real_part->getData<const int8_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
+  case UINT8:
+    readMatrixData(it, end, real_part->getData<const uint8_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
+  case INT16:
+    readMatrixData(it, end, real_part->getData<const int16_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
+  case UINT16:
+    readMatrixData(it, end, real_part->getData<const uint16_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
+  case INT32:
+    readMatrixData(it, end, real_part->getData<const int32_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
+  case UINT32:
+    ERROR_PRINT("Warning, casting from uint32 to int32\n");
+    readMatrixData(it, end, real_part->getData<const uint32_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
+  case INT64:
+    ERROR_PRINT("Warning, casting from int64 to int32\n");
+    readMatrixData(it, end, real_part->getData<const int64_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
+  case UINT64:
+    ERROR_PRINT("Warning, casting from uint64 to int32\n");
+    readMatrixData(it, end, real_part->getData<const uint64_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
+  case SINGLE:
+  case DOUBLE:
+  default:
+    ERROR_EXIT1(128,"Data type %d not supported\n",
+		real_part->getDataType());
   }
   if (array_name->getNumberOfBytes() > maxsize-1)
     ERROR_EXIT2(128, "Overflow at array name, found %u, maximum %lu\n",
