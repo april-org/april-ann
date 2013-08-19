@@ -223,14 +223,14 @@ april_set_doc("matrixComplex.copy_from_table", {
 april_set_doc("matrixComplex.sum",
 	      {
 		class="method",
-		summary"Computes the sum of all the elements.",
+		summary="Computes the sum of all the elements.",
 		outputs={"A number"},
 	      })
 
 april_set_doc("matrixComplex.sum",
 	      {
 		class="method",
-		summary"Computes the sum of all the elements over the given dimension.",
+		summary="Computes the sum of all the elements over the given dimension.",
 		params={"A number, the dimension"},
 		outputs={"A matrix"},
 	      })
