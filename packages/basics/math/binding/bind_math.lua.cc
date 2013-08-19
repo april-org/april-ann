@@ -41,6 +41,11 @@ ComplexF lua_toComplexF(lua_State *L, int n) {
     LuaComplexFNumber aux(str);
     return aux.number;
   }
+  else if (lua_isnumber(L, n)) {
+    float aux;
+    LUABIND_GET_PARAMETER(n, float, aux);
+    return ComplexF(aux, 0.0f);
+  }
   else LUABIND_ERROR("Incorrect Lua complex representation, use string "
 		     "or complex object");
   return ComplexF();

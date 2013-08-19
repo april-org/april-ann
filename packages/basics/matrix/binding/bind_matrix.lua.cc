@@ -942,7 +942,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
     LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
     resul = obj->cmul(mat);
     if (resul == 0)
-      LUABIND_ERROR("matrix mul wrong dimensions");
+      LUABIND_ERROR("matrix cmul wrong dimensions");
     LUABIND_RETURN(MatrixFloat, resul);
   }
 //BIND_END
