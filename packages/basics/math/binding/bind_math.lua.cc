@@ -276,6 +276,12 @@ void lua_pushComplexF(lua_State *L, const ComplexF &number);
 }
 //BIND_END
 
+//BIND_METHOD LuaComplexFNumber angle
+{
+  LUABIND_RETURN(float, obj->number.angle());
+}
+//BIND_END
+
 //BIND_METHOD LuaComplexFNumber sqrt
 {
   LUABIND_RETURN(float, obj->number.sqrtc());
