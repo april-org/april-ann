@@ -2,7 +2,7 @@
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
- * Copyright 2012, Salvador Espa�a-Boquera
+ * Copyright 2012, Salvador España-Boquera
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
@@ -19,12 +19,14 @@
  *
  */
 //BIND_HEADER_C
+#include "bind_matrix.h"
 #include "utilMatrixIO.h"
-#include "utilMatrixFloat.h"
+#include "utilMatrixComplexF.h"
 #include "bind_mtrand.h"
 #include <cmath> // para isfinite
 #include "luabindutil.h"
 #include "luabindmacros.h"
+#include "bind_math.h"
 
 #define FUNCTION_NAME "read_vector"
 static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
@@ -49,15 +51,15 @@ static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
 }
 #undef FUNCTION_NAME
 
-int sliding_window_iterator_function(lua_State *L) {
-  SlidingWindow *obj = lua_toSlidingWindow(L,1);
+int sliding_window_matrix_complex_iterator_function(lua_State *L) {
+  SlidingWindowComplexF *obj = lua_toSlidingWindowComplexF(L,1);
   if (obj->isEnd()) {
     lua_pushnil(L);
     return 1;
   }
   // lua_pushSlidingWindow(L, obj);
-  MatrixFloat *mat = obj->getMatrix();
-  lua_pushMatrixFloat(L, mat);
+  MatrixComplexF *mat = obj->getMatrix();
+  lua_pushMatrixComplexF(L, mat);
   obj->next();
   return 1;
 }
@@ -65,81 +67,81 @@ int sliding_window_iterator_function(lua_State *L) {
 //BIND_END
 
 //BIND_HEADER_H
-#include "matrixFloat.h"
+#include "matrixComplexF.h"
 #include "utilLua.h"
 #include <cmath> // para isfinite
-typedef MatrixFloat::sliding_window SlidingWindow;
+typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 //BIND_END
 
-//BIND_LUACLASSNAME MatrixFloat matrix
-//BIND_CPP_CLASS MatrixFloat
+//BIND_LUACLASSNAME MatrixComplexF matrixComplex
+//BIND_CPP_CLASS MatrixComplexF
 
-//BIND_LUACLASSNAME SlidingWindow matrix.__sliding_window__
-//BIND_CPP_CLASS SlidingWindow
+//BIND_LUACLASSNAME SlidingWindowComplexF matrix.__sliding_window_complex__
+//BIND_CPP_CLASS SlidingWindowComplexF
 
-//BIND_CONSTRUCTOR SlidingWindow
+//BIND_CONSTRUCTOR SlidingWindowComplexF
 {
-  LUABIND_ERROR("Use matrix.sliding_window");
+  LUABIND_ERROR("Use matrixComplex.sliding_window");
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindow get_matrix
+//BIND_METHOD SlidingWindowComplexF get_matrix
 {
-  MatrixFloat *dest;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, MatrixFloat, dest, 0);
-  LUABIND_RETURN(MatrixFloat, obj->getMatrix(dest));
+  MatrixComplexF *dest;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, MatrixComplexF, dest, 0);
+  LUABIND_RETURN(MatrixComplexF, obj->getMatrix(dest));
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindow next
+//BIND_METHOD SlidingWindowComplexF next
 {
-  LUABIND_RETURN(SlidingWindow, obj->next());
+  LUABIND_RETURN(SlidingWindowComplexF, obj->next());
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindow set_at_window
+//BIND_METHOD SlidingWindowComplexF set_at_window
 {
   int windex;
   LUABIND_CHECK_ARGN(==,1);
   LUABIND_GET_PARAMETER(1, int, windex);
   if (windex < 1) LUABIND_ERROR("Index must be >= 1\n");
   obj->setAtWindow(windex-1);
-  LUABIND_RETURN(SlidingWindow, obj);
+  LUABIND_RETURN(SlidingWindowComplexF, obj);
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindow num_windows
+//BIND_METHOD SlidingWindowComplexF num_windows
 {
   LUABIND_RETURN(int, obj->numWindows());
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindow coords
+//BIND_METHOD SlidingWindowComplexF coords
 {
   LUABIND_VECTOR_TO_NEW_TABLE(int, obj->getCoords(), obj->getNumDim());
   LUABIND_RETURN_FROM_STACK(-1);
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindow is_end
+//BIND_METHOD SlidingWindowComplexF is_end
 {
   LUABIND_RETURN(bool, obj->isEnd());
 }
 //BIND_END
 
-//BIND_METHOD SlidingWindow iterate
+//BIND_METHOD SlidingWindowComplexF iterate
 {
   LUABIND_CHECK_ARGN(==, 0);
-  LUABIND_RETURN(cfunction,sliding_window_iterator_function);
-  LUABIND_RETURN(SlidingWindow,obj);
+  LUABIND_RETURN(cfunction,sliding_window_matrix_complex_iterator_function);
+  LUABIND_RETURN(SlidingWindowComplexF,obj);
 }
 //BIND_END
 
 //////////////////////////////////////////////////////////////////////
 
-//BIND_CONSTRUCTOR MatrixFloat
+//BIND_CONSTRUCTOR MatrixComplexF
 //DOC_BEGIN
-// matrix(int dim1, int dim2, ..., table mat=nil)
+// matrixComplex(int dim1, int dim2, ..., table mat=nil)
 /// Constructor con una secuencia de valores que son las dimensiones de
 /// la matriz el ultimo argumento puede ser una tabla, en cuyo caso
 /// contiene los valores adecuadamente serializados, si solamente
@@ -169,27 +171,26 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 	LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
     }
   }
-  MatrixFloat* obj;
-  obj = new MatrixFloat(ndims,dim);
+  MatrixComplexF* obj;
+  obj = new MatrixComplexF(ndims,dim);
   if (lua_istable(L,argn)) {
-    int i=1;
     int len;
     LUABIND_TABLE_GETN(argn, len);
     if (len != obj->size())
       LUABIND_FERROR2("Incorrect number of elements at the given table, "
 		      "found %d, expected %d", len, obj->size());
-    for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
+    int i=1;
+    for (MatrixComplexF::iterator it(obj->begin()); it != obj->end(); ++it,++i) {
       lua_rawgeti(L,argn,i);
-      *it = (float)luaL_checknumber(L, -1);
-      lua_remove(L,-1);
+      *it = lua_toComplexF(L, -1);
     }
   }
   delete[] dim;
-  LUABIND_RETURN(MatrixFloat,obj);
+  LUABIND_RETURN(MatrixComplexF,obj);
 }
 //BIND_END
 
-//BIND_CLASS_METHOD MatrixFloat col_major
+//BIND_CLASS_METHOD MatrixComplexF col_major
 //DOC_BEGIN
 // col_major_matrix(int dim1, int dim2, ..., table mat=nil)
 /// Constructor con una secuencia de valores que son las dimensiones de
@@ -221,33 +222,32 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 	LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
     }
   }
-  MatrixFloat* obj;
-  obj = new MatrixFloat(ndims,dim,CblasColMajor);
+  MatrixComplexF* obj;
+  obj = new MatrixComplexF(ndims,dim,CblasColMajor);
   if (lua_istable(L,argn)) {
-    int i=1;
     int len;
     LUABIND_TABLE_GETN(argn, len);
     if (len != obj->size())
       LUABIND_FERROR2("Incorrect number of elements at the given table, "
 		      "found %d, expected %d", len, obj->size());
-    for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
+    int i=1;
+    for (MatrixComplexF::iterator it(obj->begin()); it != obj->end(); ++it,++i) {
       lua_rawgeti(L,argn,i);
-      *it = (float)luaL_checknumber(L, -1);
-      lua_remove(L,-1);
+      *it = lua_toComplexF(L, -1);
     }
   }
   delete[] dim;
-  LUABIND_RETURN(MatrixFloat,obj);
+  LUABIND_RETURN(MatrixComplexF,obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat size
+//BIND_METHOD MatrixComplexF size
 {
   LUABIND_RETURN(int, obj->size());
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat rewrap
+//BIND_METHOD MatrixComplexF rewrap
 {
   LUABIND_CHECK_ARGN(>=, 1);
   int ndims;
@@ -258,13 +258,13 @@ typedef MatrixFloat::sliding_window SlidingWindow;
     if (dims[i-1] <= 0)
       LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
   }
-  MatrixFloat *new_obj = obj->rewrap(dims, ndims);
+  MatrixComplexF *new_obj = obj->rewrap(dims, ndims);
   delete[] dims;
-  LUABIND_RETURN(MatrixFloat,new_obj);
+  LUABIND_RETURN(MatrixComplexF,new_obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat get_reference_string
+//BIND_METHOD MatrixComplexF get_reference_string
 {
   char buff[128];
   sprintf(buff,"%p data= %p",
@@ -274,7 +274,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
-//BIND_CLASS_METHOD MatrixFloat fromFilename
+//BIND_CLASS_METHOD MatrixComplexF fromFilename
 //DOC_BEGIN
 // matrix *fromFilename(string filename)
 /// Constructor con un argumento que es un fichero que contiene la matriz.  Pueden haber
@@ -291,15 +291,15 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   LUABIND_CHECK_PARAMETER(1, string);
   const char *filename;
   LUABIND_GET_PARAMETER(1,string,filename);
-  MatrixFloat *obj;
-  if ((obj = readMatrixFloatFromFile(filename)) == 0)
+  MatrixComplexF *obj;
+  if ((obj = readMatrixComplexFFromFile(filename)) == 0)
     LUABIND_ERROR("bad format");
-  else LUABIND_RETURN(MatrixFloat,obj);
+  else LUABIND_RETURN(MatrixComplexF,obj);
 }
 //BIND_END
 
 
-//BIND_CLASS_METHOD MatrixFloat fromString
+//BIND_CLASS_METHOD MatrixComplexF fromString
 //DOC_BEGIN
 // matrix *fromString(string description)
 /// Constructor con un argumento que es una cadena.  Pueden haber
@@ -316,14 +316,14 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   LUABIND_CHECK_PARAMETER(1, string);
   constString cs;
   LUABIND_GET_PARAMETER(1,constString,cs);
-  MatrixFloat *obj;
-  if ((obj = readMatrixFloatFromString(cs)) == 0)
+  MatrixComplexF *obj;
+  if ((obj = readMatrixComplexFFromString(cs)) == 0)
     LUABIND_ERROR("bad format");
-  else LUABIND_RETURN(MatrixFloat,obj);
+  else LUABIND_RETURN(MatrixComplexF,obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat toFilename
+//BIND_METHOD MatrixComplexF toFilename
 //DOC_BEGIN
 // void toFilename(string filename, string type='ascii')
 /// Permite salvar una matriz con un formato tal y como se carga con el
@@ -340,17 +340,17 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   LUABIND_GET_PARAMETER(1, string, filename);
   LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("ascii"));
   bool is_ascii = (cs == "ascii");
-  writeMatrixFloatToFile(obj, filename, is_ascii);
+  writeMatrixComplexFToFile(obj, filename, is_ascii);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat toString
+//BIND_METHOD MatrixComplexF toString
 //DOC_BEGIN
 // string toString(string type='ascii')
 /// Permite salvar una matriz con un formato tal y como se carga con el
 /// metodo fromString. El unico argumento opcional indica el tipo 'ascii'
 /// o 'binary'.
-///@param type Parámetro opcional. Puede ser 'ascii' o 'binary', y por defecto es 'ascii'.
+///@param type ParÃ¡metro opcional. Puede ser 'ascii' o 'binary', y por defecto es 'ascii'.
 //DOC_END
 {
   LUABIND_CHECK_ARGN(<=, 1);
@@ -358,103 +358,14 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("ascii"));
   bool is_ascii = (cs == "ascii");
   int len;
-  char *buffer = writeMatrixFloatToString(obj, is_ascii, len);
+  char *buffer = writeMatrixComplexFToString(obj, is_ascii, len);
   lua_pushlstring(L,buffer,len);
   LUABIND_RETURN_FROM_STACK(-1);
   delete[] buffer;
 }
 //BIND_END
 
-//BIND_CLASS_METHOD MatrixFloat fromPNM
-//DOC_BEGIN
-// matrix *fromPNM(string pnm_image)
-/// constructor con un argumento que es una cadena con una imagen en
-/// formato de netpbm P5 o P6 (binario PGM o PNM)
-///@param pnm_image String que contiene la imagen.
-//DOC_END
-// TODO: poder forzar niveles de gris o color, poder leer PBM
-{
-  LUABIND_CHECK_ARGN(>=, 1);
-  LUABIND_CHECK_ARGN(<=, 2);
-  LUABIND_CHECK_PARAMETER(1, string);
-  bool forcecolor=false,forcegray=false;
-  constString cs,csopt;
-  LUABIND_GET_PARAMETER(1,constString,cs);
-  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,csopt,constString());
-  if (csopt == "color") forcecolor = true;
-  if (csopt == "gray")  forcegray  = true;
-  MatrixFloat *obj;
-  if ((obj = readMatrixFloatPNM(cs,forcecolor,forcegray))== 0)
-    LUABIND_ERROR("bad format");
-  else LUABIND_RETURN(MatrixFloat,obj);
-}
-//BIND_END
-
-//BIND_CLASS_METHOD MatrixFloat fromHEX
-//DOC_BEGIN
-// matrix *fromHEX(width, height, string hex_image)
-/// constructor con 3 argumentos que es una cadena con una imagen en
-/// escala de grises, 2 caracteres hexadecimales por pixel
-///@param width
-///@param height
-///@param hex_image
-//DOC_END
-{
-  LUABIND_CHECK_ARGN(==, 3);
-  LUABIND_CHECK_PARAMETER(1, int);
-  LUABIND_CHECK_PARAMETER(1, int);
-  LUABIND_CHECK_PARAMETER(1, string);
-  int width,height;
-  constString cs;
-  LUABIND_GET_PARAMETER(1,int,width);
-  LUABIND_GET_PARAMETER(2,int,height);
-  LUABIND_GET_PARAMETER(3,constString,cs);
-  MatrixFloat *obj;
-  obj = readMatrixFloatHEX(width,height,cs);
-  LUABIND_RETURN(MatrixFloat,obj);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat toHEX
-//DOC_BEGIN
-// string toHEX()
-//DOC_END
-{
-  char *buffer;
-  int   width, height;
-  int   longitud = saveMatrixFloatHEX(obj,&buffer, &width, &height);
-  if (!buffer)
-    LUABIND_ERROR("bad format");
-  LUABIND_RETURN(int, width);
-  LUABIND_RETURN(int, height);
-  lua_pushlstring(L,buffer,longitud);
-  delete[] buffer;
-  LUABIND_RETURN_FROM_STACK(-1);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat toPNM
-//DOC_BEGIN
-// string toPNM()
-/// Devuelve una cadena correspondiente a un fichero PNM (P5 o P6).  La
-/// matriz debe ser de dimension 2 o, si es de dimension 3, la tercera
-/// dimension debe tener 3 componentes correspondientes respectivamente
-/// a los colores RGB. El 0 se interpreta como negro, el 1 como blanco
-/// y saturan (es decir, un -1 es como 0 y un 5 es como 1).
-//DOC_END
-{
-  LUABIND_CHECK_ARGN(==, 0);
-  char *buffer;
-  int longitud = saveMatrixFloatPNM(obj,&buffer);
-  if (!buffer)
-    LUABIND_ERROR("bad format");
-  lua_pushlstring(L,buffer,longitud);
-  delete[] buffer;
-  LUABIND_RETURN_FROM_STACK(-1);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat copy_from_table
+//BIND_METHOD MatrixComplexF copy_from_table
 //DOC_BEGIN
 // void copy_from_table(table matrix_values)
 /// Permite dar valores a una matriz. Require una tabla con un numero
@@ -469,26 +380,25 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   if (veclen != obj->size())
     LUABIND_FERROR2("wrong size %d instead of %d",veclen,obj->size());
   int i=1;
-  for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
+  for (MatrixComplexF::iterator it(obj->begin()); it != obj->end(); ++it,++i) {
     lua_rawgeti(L,1,i);
-    *it = (float)luaL_checknumber(L, -1);
-    lua_remove(L,-1);
+    *it = lua_toComplexF(L, -1);
   }
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_RETURN(MatrixComplexF, obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat get
+//BIND_METHOD MatrixComplexF get
 //DOC_BEGIN
-// float get(coordinates)
+// ComplexF get(coordinates)
 /// Permite ver valores de una matriz. Requiere tantos indices como dimensiones tenga la matriz.
-///@param coordinates Tabla con la posici�n exacta del punto de la matriz que queremos obtener.
+///@param coordinates Tabla con la posición exacta del punto de la matriz que queremos obtener.
 //DOC_END
 {
   int argn = lua_gettop(L); // number of arguments
   if (argn != obj->getNumDim())
     LUABIND_FERROR2("wrong size %d instead of %d",argn,obj->getNumDim());
-  float ret;
+  ComplexF ret;
   if (obj->getNumDim() == 1) {
     int v1;
     LUABIND_GET_PARAMETER(1,int,v1);
@@ -525,23 +435,23 @@ typedef MatrixFloat::sliding_window SlidingWindow;
     ret = (*obj)(coords, obj->getNumDim());
     delete[] coords;
   }
-  LUABIND_RETURN(float, ret);
+  LUABIND_RETURN(ComplexF, ret);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat set
+//BIND_METHOD MatrixComplexF set
 //DOC_BEGIN
-// float set(coordinates,value)
+// ComplexF set(coordinates,realvalue,imgvalue)
 /// Permite cambiar el valor de un elemento en la matriz. Requiere
 /// tantos indices como dimensiones tenga la matriz y adicionalmente
 /// el valor a cambiar
-///@param coordinates Tabla con la posici�n exacta del punto de la matriz que queremos obtener.
+///@param coordinates Tabla con la posición exacta del punto de la matriz que queremos obtener.
 //DOC_END
 {
   int argn = lua_gettop(L); // number of arguments
   if (argn != obj->getNumDim()+1)
-    LUABIND_FERROR2("wrong size %d instead of %d",argn,obj->getNumDim()+1);
-  float f;
+    LUABIND_FERROR2("wrong size %d instead of %d",argn,obj->getNumDim()+2);
+  ComplexF f;
   if (obj->getNumDim() == 1) {
     int v1;
     LUABIND_GET_PARAMETER(1,int,v1);
@@ -549,7 +459,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
       LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
 		      v1, obj->getDimSize(0));
     }
-    LUABIND_GET_PARAMETER(obj->getNumDim()+1,float,f);
+    LUABIND_GET_PARAMETER(obj->getNumDim()+1,ComplexF,f);
     (*obj)(v1-1) = f;
   }
   else if (obj->getNumDim() == 2) {
@@ -564,7 +474,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
       LUABIND_FERROR2("wrong index parameter: 2 <= %d <= %d is incorrect",
 		      v2, obj->getDimSize(1));
     }
-    LUABIND_GET_PARAMETER(obj->getNumDim()+1,float,f);
+    LUABIND_GET_PARAMETER(obj->getNumDim()+1,ComplexF,f);
     (*obj)(v1-1, v2-1) = f;
   }
   else {
@@ -577,94 +487,94 @@ typedef MatrixFloat::sliding_window SlidingWindow;
       }
       coords[i]--;
     }
-    LUABIND_GET_PARAMETER(obj->getNumDim()+1,float,f);
+    LUABIND_GET_PARAMETER(obj->getNumDim()+1,ComplexF,f);
     (*obj)(coords, obj->getNumDim()) = f;
     delete[] coords;
   }
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_RETURN(MatrixComplexF, obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat offset
+//BIND_METHOD MatrixComplexF offset
 {
   LUABIND_RETURN(int, obj->getOffset());
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat raw_get
+//BIND_METHOD MatrixComplexF raw_get
 {
   int raw_pos;
   LUABIND_GET_PARAMETER(1, int, raw_pos);
-  LUABIND_RETURN(float, (*obj)[raw_pos]);
+  const ComplexF &aux = (*obj)[raw_pos];
+  LUABIND_RETURN(ComplexF, aux);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat raw_set
+//BIND_METHOD MatrixComplexF raw_set
 {
   int raw_pos;
-  float value;
+  ComplexF value;
   LUABIND_GET_PARAMETER(1, int, raw_pos);
-  LUABIND_GET_PARAMETER(2, float, value);
+  LUABIND_GET_PARAMETER(2, ComplexF, value);
   (*obj)[raw_pos] = value;
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_RETURN(MatrixComplexF, obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat fill
+//BIND_METHOD MatrixComplexF fill
 //DOC_BEGIN
-// void fill(float value)
+// void fill(realvalue, imgvalue)
 /// Permite poner todos los valores de la matriz a un mismo valor.
 //DOC_END
 {
   LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, float);
-  float value;
-  LUABIND_GET_PARAMETER(1,float,value);
+  ComplexF value;
+  LUABIND_GET_PARAMETER(1,ComplexF,value);
   obj->fill(value);
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_RETURN(MatrixComplexF, obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat zeros
+//BIND_METHOD MatrixComplexF zeros
 //DOC_BEGIN
-// void zeros(float value)
+// void zeros(ComplexF value)
 /// Permite poner todos los valores de la matriz a un mismo valor.
 //DOC_END
 {
   obj->zeros();
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_RETURN(MatrixComplexF, obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat ones
+//BIND_METHOD MatrixComplexF ones
 //DOC_BEGIN
-// void onex(float value)
+// void ones(ComplexF value)
 /// Permite poner todos los valores de la matriz a un mismo valor.
 //DOC_END
 {
   obj->ones();
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_RETURN(MatrixComplexF, obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat get_use_cuda
+//BIND_METHOD MatrixComplexF get_use_cuda
 {
   LUABIND_RETURN(bool, obj->getCudaFlag());
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat set_use_cuda
+//BIND_METHOD MatrixComplexF set_use_cuda
 {
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_CHECK_PARAMETER(1, bool);
   bool v;
   LUABIND_GET_PARAMETER(1,bool, v);
   obj->setUseCuda(v);
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_RETURN(MatrixComplexF, obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat get_major_order
+//BIND_METHOD MatrixComplexF get_major_order
 {
   if (obj->getMajorOrder() == CblasRowMajor)
     LUABIND_RETURN(string, "row_major");
@@ -672,7 +582,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat dim
+//BIND_METHOD MatrixComplexF dim
 {
   LUABIND_CHECK_ARGN(>=, 0);
   LUABIND_CHECK_ARGN(<=, 1);
@@ -687,7 +597,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat stride
+//BIND_METHOD MatrixComplexF stride
 {
   LUABIND_CHECK_ARGN(>=, 0);
   LUABIND_CHECK_ARGN(<=, 1);
@@ -702,7 +612,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat slice
+//BIND_METHOD MatrixComplexF slice
 {
   LUABIND_CHECK_ARGN(>=,2);
   LUABIND_CHECK_ARGN(<=,3);
@@ -722,30 +632,30 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   LUABIND_TABLE_TO_VECTOR(2, int, sizes,  sizes_len);
   for (int i=0; i<coords_len; ++i) --coords[i];
   LUABIND_GET_OPTIONAL_PARAMETER(3, bool, clone, false);
-  MatrixFloat *obj2 = new MatrixFloat(obj, coords, sizes, clone);
-  LUABIND_RETURN(MatrixFloat, obj2);
+  MatrixComplexF *obj2 = new MatrixComplexF(obj, coords, sizes, clone);
+  LUABIND_RETURN(MatrixComplexF, obj2);
   delete[] coords;
   delete[] sizes;
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat select
+//BIND_METHOD MatrixComplexF select
 {
   LUABIND_CHECK_ARGN(>=,2);
   LUABIND_CHECK_ARGN(<=,3);
   LUABIND_CHECK_PARAMETER(1, int);
   LUABIND_CHECK_PARAMETER(2, int);
   int dim, index;
-  MatrixFloat *dest;
+  MatrixComplexF *dest;
   LUABIND_GET_PARAMETER(1, int, dim);
   LUABIND_GET_PARAMETER(2, int, index);
-  LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixFloat, dest, 0);
-  MatrixFloat *obj2 = obj->select(dim-1, index-1, dest);
-  LUABIND_RETURN(MatrixFloat, obj2);
+  LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixComplexF, dest, 0);
+  MatrixComplexF *obj2 = obj->select(dim-1, index-1, dest);
+  LUABIND_RETURN(MatrixComplexF, obj2);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat clone
+//BIND_METHOD MatrixComplexF clone
 //DOC_BEGIN
 // matrix *clone()
 /// Devuelve un <em>clon</em> de la matriz.
@@ -755,7 +665,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   LUABIND_CHECK_ARGN(<=, 1);
   int argn;
   argn = lua_gettop(L); // number of arguments
-  MatrixFloat *obj2;
+  MatrixComplexF *obj2;
   if (argn == 0) obj2 = obj->clone();
   else {
     const char *major;
@@ -766,17 +676,17 @@ typedef MatrixFloat::sliding_window SlidingWindow;
       LUABIND_FERROR1("Incorrect major order string %s", major);
     obj2 = obj->clone(order);
   }
-  LUABIND_RETURN(MatrixFloat,obj2);
+  LUABIND_RETURN(MatrixComplexF,obj2);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat transpose
+//BIND_METHOD MatrixComplexF transpose
 {
-  LUABIND_RETURN(MatrixFloat, obj->transpose());
+  LUABIND_RETURN(MatrixComplexF, obj->transpose());
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat isfinite
+//BIND_METHOD MatrixComplexF isfinite
 //DOC_BEGIN
 // bool isfinite
 /// Devuelve false si algun valor es nan o infinito.
@@ -784,324 +694,222 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 {
   LUABIND_CHECK_ARGN(==, 0);
   bool resul=true;
-  for (MatrixFloat::iterator it(obj->begin()); resul && it!=obj->end(); ++it)
+  for (MatrixComplexF::iterator it(obj->begin()); resul && it!=obj->end(); ++it)
     //if (!isfinite(obj->data[i])) resul = 0;
-    if ((*it) - (*it) != 0.0f) resul = false;
+    if (((*it) - (*it)) != ComplexF::zero_zero()) resul = false;
   LUABIND_RETURN(boolean,resul);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat adjust_range
-//DOC_BEGIN
-// void adjust_range(float min, float max)
-/// Ajusta el rango de valores de la matriz para que esté en [min,
-/// max].
-//DOC_END
-{
-  float rmin,rmax;
-  LUABIND_CHECK_ARGN(==, 2);
-  LUABIND_CHECK_PARAMETER(1, float);
-  LUABIND_CHECK_PARAMETER(2, float);
-  LUABIND_GET_PARAMETER(1,float,rmin);
-  LUABIND_GET_PARAMETER(2,float,rmax);
-  obj->adjustRange(rmin, rmax);
-  LUABIND_RETURN(MatrixFloat, obj);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat diag
+//BIND_METHOD MatrixComplexF diag
 {
   LUABIND_CHECK_ARGN(==,1);
-  float v;
-  LUABIND_GET_PARAMETER(1, float, v);
+  ComplexF v;
+  LUABIND_GET_PARAMETER(1, ComplexF, v);
   obj->diag(v);
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_RETURN(MatrixComplexF, obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat toTable
+//BIND_METHOD MatrixComplexF toTable
 // Permite salvar una matriz en una tabla lua
 // TODO: Tener en cuenta las dimensiones de la matriz
   {
     LUABIND_CHECK_ARGN(==, 0);
-    LUABIND_FORWARD_CONTAINER_TO_NEW_TABLE(MatrixFloat, float, *obj);
+    lua_createtable (L, obj->size()<<1, 0);
+    int index = 1;
+    for (MatrixComplexF::const_iterator it(obj->begin());
+	 it != obj->end();
+	 ++it) {
+      lua_pushComplexF(L, *it);
+      lua_rawseti(L, -2, index++);
+    }
     LUABIND_RETURN_FROM_STACK(-1);
   }
 //BIND_END
 
-//BIND_METHOD MatrixFloat min
-  {
-    int arg_min, raw_pos;
-    LUABIND_RETURN(float, obj->min(arg_min, raw_pos));
-    LUABIND_RETURN(int, arg_min+1);
-  }
-//BIND_END
-
-//BIND_METHOD MatrixFloat max
-  {
-    int arg_max, raw_pos;
-    LUABIND_RETURN(float, obj->max(arg_max, raw_pos));
-    LUABIND_RETURN(int, arg_max+1);
-  }
-//BIND_END
-
-//BIND_METHOD MatrixFloat max_sel_dim
-  {
-    LUABIND_CHECK_ARGN(==, 1);
-    int dim;
-    LUABIND_GET_PARAMETER(1, int, dim);
-    MatrixFloat *resul = obj->maxSelDim(dim-1);
-    LUABIND_RETURN(MatrixFloat, resul);
-  }
-//BIND_END
-
-//BIND_METHOD MatrixFloat equals
+//BIND_METHOD MatrixComplexF equals
 {
-  MatrixFloat *other;
+  MatrixComplexF *other;
   float epsilon;
-  LUABIND_GET_PARAMETER(1, MatrixFloat, other);
+  LUABIND_GET_PARAMETER(1, MatrixComplexF, other);
   LUABIND_GET_OPTIONAL_PARAMETER(2, float, epsilon, 1e-04f);
   LUABIND_RETURN(boolean, obj->equals(other, epsilon));
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat clamp
-  {
-    LUABIND_CHECK_ARGN(==, 2);
-    float lower,upper;
-    LUABIND_GET_PARAMETER(1, float, lower);
-    LUABIND_GET_PARAMETER(2, float, upper);
-    obj->clamp(lower,upper);
-    LUABIND_RETURN(MatrixFloat, obj);
-  }
-//BIND_END
-
-//BIND_METHOD MatrixFloat add
+//BIND_METHOD MatrixComplexF add
   {
     int argn;
     argn = lua_gettop(L); // number of arguments
     LUABIND_CHECK_ARGN(==, 1);
-    MatrixFloat *mat,*resul;
-    LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
+    MatrixComplexF *mat,*resul;
+    LUABIND_GET_PARAMETER(1, MatrixComplexF, mat);
     if (!obj->sameDim(mat))
       LUABIND_ERROR("matrix add wrong dimensions");
     resul = obj->addition(mat);
-    LUABIND_RETURN(MatrixFloat, resul);
+    LUABIND_RETURN(MatrixComplexF, resul);
   }
 //BIND_END
 
-//BIND_METHOD MatrixFloat scalar_add
+//BIND_METHOD MatrixComplexF scalar_add
 {
     int argn;
-    argn = lua_gettop(L); // number of arguments
     LUABIND_CHECK_ARGN(==, 1);
-    float scalar;
-    LUABIND_GET_PARAMETER(1, float, scalar);
+    ComplexF scalar;
+    LUABIND_GET_PARAMETER(1, ComplexF, scalar);
     obj->scalarAdd(scalar);
-    LUABIND_RETURN(MatrixFloat, obj);
+    LUABIND_RETURN(MatrixComplexF, obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat sub
+//BIND_METHOD MatrixComplexF sub
   {
     LUABIND_CHECK_ARGN(==, 1);
-    MatrixFloat *mat,*resul;
-    LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
+    MatrixComplexF *mat,*resul;
+    LUABIND_GET_PARAMETER(1, MatrixComplexF, mat);
     if (!obj->sameDim(mat))
       LUABIND_ERROR("matrix sub wrong dimensions");
     resul = obj->substraction(mat);
-    LUABIND_RETURN(MatrixFloat, resul);
+    LUABIND_RETURN(MatrixComplexF, resul);
   }
 //BIND_END
 
-//BIND_METHOD MatrixFloat mul
+//BIND_METHOD MatrixComplexF mul
   {
     LUABIND_CHECK_ARGN(==, 1);
-    MatrixFloat *mat,*resul;
-    LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
+    MatrixComplexF *mat,*resul;
+    LUABIND_GET_PARAMETER(1, MatrixComplexF, mat);
     resul = obj->multiply(mat);
     if (resul == 0)
       LUABIND_ERROR("matrix mul wrong dimensions");
-    LUABIND_RETURN(MatrixFloat, resul);
+    LUABIND_RETURN(MatrixComplexF, resul);
   }
 //BIND_END
 
-//BIND_METHOD MatrixFloat cmul
-  {
-    LUABIND_CHECK_ARGN(==, 1);
-    MatrixFloat *mat,*resul;
-    LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
-    resul = obj->cmul(mat);
-    if (resul == 0)
-      LUABIND_ERROR("matrix mul wrong dimensions");
-    LUABIND_RETURN(MatrixFloat, resul);
-  }
-//BIND_END
-
-//BIND_METHOD MatrixFloat log
+//BIND_METHOD MatrixComplexF sum
 {
-  obj->log();
-  LUABIND_RETURN(MatrixFloat, obj);
+  ComplexF sum = obj->sum();
+  LUABIND_RETURN(float, sum.real());
+  LUABIND_RETURN(float, sum.img());
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat log1p
-{
-  obj->log1p();
-  LUABIND_RETURN(MatrixFloat, obj);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat exp
-{
-  obj->exp();
-  LUABIND_RETURN(MatrixFloat, obj);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat sqrt
-{
-  obj->sqrt();
-  LUABIND_RETURN(MatrixFloat, obj);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat pow
-{
-  float value;
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_GET_PARAMETER(1, float, value);
-  obj->pow(value);
-  LUABIND_RETURN(MatrixFloat, obj);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat tanh
-{
-  obj->tanh();
-  LUABIND_RETURN(MatrixFloat, obj);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat sum
-{
-  LUABIND_RETURN(float, obj->sum());
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat copy
+//BIND_METHOD MatrixComplexF copy
 {
   int argn;
   LUABIND_CHECK_ARGN(==, 1);
-  MatrixFloat *mat;
-  LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
+  MatrixComplexF *mat;
+  LUABIND_GET_PARAMETER(1, MatrixComplexF, mat);
   obj->copy(mat);
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_RETURN(MatrixComplexF, obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat axpy
+//BIND_METHOD MatrixComplexF axpy
 {
   int argn;
   LUABIND_CHECK_ARGN(==, 2);
-  float alpha;
-  MatrixFloat *mat;
-  LUABIND_GET_PARAMETER(1, float, alpha);
-  LUABIND_GET_PARAMETER(2, MatrixFloat, mat);
+  ComplexF alpha;
+  MatrixComplexF *mat;
+  LUABIND_GET_PARAMETER(1, ComplexF, alpha);
+  LUABIND_GET_PARAMETER(2, MatrixComplexF, mat);
   obj->axpy(alpha, mat);
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_RETURN(MatrixComplexF, obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat gemm
+//BIND_METHOD MatrixComplexF gemm
   {
     LUABIND_CHECK_ARGN(==, 1);
     LUABIND_CHECK_PARAMETER(1, table);
     check_table_fields(L,1, "trans_A", "trans_B", "alpha", "A", "B", "beta",
 		       (const char *)0);
     bool trans_A, trans_B;
-    float alpha;
-    float beta;
-    MatrixFloat *matA,*matB;
-    LUABIND_GET_TABLE_PARAMETER(1, A, MatrixFloat, matA);
-    LUABIND_GET_TABLE_PARAMETER(1, B, MatrixFloat, matB);
+    ComplexF alpha;
+    ComplexF beta;
+    MatrixComplexF *matA,*matB;
+    LUABIND_GET_TABLE_PARAMETER(1, A, MatrixComplexF, matA);
+    LUABIND_GET_TABLE_PARAMETER(1, B, MatrixComplexF, matB);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_A, bool, trans_A, false);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_B, bool, trans_B, false);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, float, alpha, 1.0f);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, ComplexF, alpha,
+					 ComplexF::one_zero());
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, ComplexF, beta,
+					 ComplexF::one_zero());
     obj->gemm(trans_A ? CblasTrans : CblasNoTrans,
 	      trans_B ? CblasTrans : CblasNoTrans,
 	      alpha, matA, matB,
 	      beta);
-    LUABIND_RETURN(MatrixFloat, obj);
+    LUABIND_RETURN(MatrixComplexF, obj);
   }
 //BIND_END
 
-//BIND_METHOD MatrixFloat gemv
+//BIND_METHOD MatrixComplexF gemv
   {
     LUABIND_CHECK_ARGN(==, 1);
     LUABIND_CHECK_PARAMETER(1, table);
     check_table_fields(L,1, "trans_A", "alpha", "A", "X", "beta",
 		       (const char *)0);
     bool trans_A;
-    float alpha;
-    float beta;
-    MatrixFloat *matA,*matX;
-    LUABIND_GET_TABLE_PARAMETER(1, A, MatrixFloat, matA);
-    LUABIND_GET_TABLE_PARAMETER(1, X, MatrixFloat, matX);
+    ComplexF alpha;
+    ComplexF beta;
+    MatrixComplexF *matA,*matX;
+    LUABIND_GET_TABLE_PARAMETER(1, A, MatrixComplexF, matA);
+    LUABIND_GET_TABLE_PARAMETER(1, X, MatrixComplexF, matX);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_A, bool, trans_A, false);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, float, alpha, 1.0f);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, ComplexF, alpha, ComplexF::one_zero());
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, ComplexF, beta, ComplexF::one_zero());
     obj->gemv(trans_A ? CblasTrans : CblasNoTrans,
 	      alpha, matA, matX,
 	      beta);
-    LUABIND_RETURN(MatrixFloat, obj);
+    LUABIND_RETURN(MatrixComplexF, obj);
   }
 //BIND_END
 
-//BIND_METHOD MatrixFloat ger
+//BIND_METHOD MatrixComplexF ger
   {
     LUABIND_CHECK_ARGN(==, 1);
     LUABIND_CHECK_PARAMETER(1, table);
     check_table_fields(L,1, "alpha", "X", "Y",
 		       (const char *)0);
-    float alpha;
-    MatrixFloat *matX,*matY;
-    LUABIND_GET_TABLE_PARAMETER(1, X, MatrixFloat, matX);
-    LUABIND_GET_TABLE_PARAMETER(1, Y, MatrixFloat, matY);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, float, alpha, 1.0f);
+    ComplexF alpha;
+    MatrixComplexF *matX,*matY;
+    LUABIND_GET_TABLE_PARAMETER(1, X, MatrixComplexF, matX);
+    LUABIND_GET_TABLE_PARAMETER(1, Y, MatrixComplexF, matY);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, ComplexF, alpha, ComplexF::one_zero());
     obj->ger(alpha, matX, matY);
-    LUABIND_RETURN(MatrixFloat, obj);
+    LUABIND_RETURN(MatrixComplexF, obj);
   }
 //BIND_END
 
-//BIND_METHOD MatrixFloat dot
+//BIND_METHOD MatrixComplexF dot
   {
     LUABIND_CHECK_ARGN(==, 1);
-    LUABIND_CHECK_PARAMETER(1, MatrixFloat);
-    MatrixFloat *matX;
-    LUABIND_GET_PARAMETER(1, MatrixFloat, matX);
-    LUABIND_RETURN(float, obj->dot(matX));
+    LUABIND_CHECK_PARAMETER(1, MatrixComplexF);
+    MatrixComplexF *matX;
+    LUABIND_GET_PARAMETER(1, MatrixComplexF, matX);
+    LUABIND_RETURN(ComplexF, obj->dot(matX));
   }
 //BIND_END
 
-//BIND_METHOD MatrixFloat scal
+//BIND_METHOD MatrixComplexF scal
   {
     LUABIND_CHECK_ARGN(==, 1);
-    float value;
-    LUABIND_GET_PARAMETER(1, float, value);
+    ComplexF value;
+    LUABIND_GET_PARAMETER(1, ComplexF, value);
     obj->scal(value);
-    LUABIND_RETURN(MatrixFloat, obj);
+    LUABIND_RETURN(MatrixComplexF, obj);
   }
 //BIND_END
  
-//BIND_METHOD MatrixFloat norm2
+//BIND_METHOD MatrixComplexF norm2
   {
     LUABIND_RETURN(float, obj->norm2());
   }
 //BIND_END
 
-//BIND_METHOD MatrixFloat uniform
+//BIND_METHOD MatrixComplexF uniform
 {
   int lower, upper;
   MTRand *random;
@@ -1115,55 +923,35 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   if (random == 0) random = new MTRand();
   IncRef(random);
   if (obj->getMajorOrder() == CblasRowMajor)
-    for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it) {
-      *it = static_cast<float>(random->randInt(upper - lower) + lower);
+    for (MatrixComplexF::iterator it(obj->begin()); it != obj->end(); ++it) {
+      *it = ComplexF(static_cast<float>(random->randInt(upper - lower) + lower),
+		     0.0f);
     }
   else
-    for (MatrixFloat::col_major_iterator it(obj->begin());it!=obj->end();++it) {
-      *it = static_cast<float>(random->randInt(upper - lower) + lower);
+    for (MatrixComplexF::col_major_iterator it(obj->begin());it!=obj->end();++it) {
+      *it = ComplexF(static_cast<float>(random->randInt(upper - lower) + lower),
+		     0.0f);
     }
   DecRef(random);
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_RETURN(MatrixComplexF, obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat uniformf
-{
-  float lower, upper;
-  MTRand *random;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, float, lower, 0.0f);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, float, upper, 1.0f);
-  LUABIND_GET_OPTIONAL_PARAMETER(3, MTRand, random, 0);
-  if (lower > upper)
-    LUABIND_ERROR("First argument must be <= second argument");
-  if (random == 0) random = new MTRand();
-  IncRef(random);
-  if (obj->getMajorOrder() == CblasRowMajor)
-    for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it)
-      *it = random->rand(upper - lower) + lower;
-  else
-    for (MatrixFloat::col_major_iterator it(obj->begin());it!=obj->end();++it)
-      *it = random->rand(upper - lower) + lower;
-  DecRef(random);
-  LUABIND_RETURN(MatrixFloat, obj);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat linear
+//BIND_METHOD MatrixComplexF linear
 {
   int lower, step;
   MTRand *random;
   LUABIND_GET_OPTIONAL_PARAMETER(1, int, lower, 0);
   LUABIND_GET_OPTIONAL_PARAMETER(2, int, step,  1);
   int k=lower;
-  for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, k+=step) {
-    *it = static_cast<float>(k);
+  for (MatrixComplexF::iterator it(obj->begin()); it != obj->end(); ++it, k+=step) {
+    *it = ComplexF(static_cast<float>(k), 0.0f);
   }
-  LUABIND_RETURN(MatrixFloat, obj);
+  LUABIND_RETURN(MatrixComplexF, obj);
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat sliding_window
+//BIND_METHOD MatrixComplexF sliding_window
 {
   int *sub_matrix_size=0, *offset=0, *step=0, *num_steps=0, *order_step=0;
   int argn = lua_gettop(L); // number of arguments
@@ -1186,13 +974,13 @@ typedef MatrixFloat::sliding_window SlidingWindow;
     num_steps = read_vector(L, "numSteps", num_dim, 0);
     order_step = read_vector(L, "orderStep", num_dim, -1);
   }
-  SlidingWindow *window = new SlidingWindow(obj,
-					    sub_matrix_size,
-					    offset,
-					    step,
-					    num_steps,
-					    order_step);
-  LUABIND_RETURN(SlidingWindow, window);
+  SlidingWindowComplexF *window = new SlidingWindowComplexF(obj,
+							    sub_matrix_size,
+							    offset,
+							    step,
+							    num_steps,
+							    order_step);
+  LUABIND_RETURN(SlidingWindowComplexF, window);
   delete[] sub_matrix_size;
   delete[] offset;
   delete[] step;
@@ -1201,9 +989,15 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat is_contiguous
+//BIND_METHOD MatrixComplexF is_contiguous
 {
   LUABIND_RETURN(bool, obj->getIsContiguous());
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplexF to_float
+{
+  LUABIND_RETURN(MatrixFloat, convertFromMatrixComplexFToMatrixFloat(obj));
 }
 //BIND_END
 

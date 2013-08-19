@@ -277,6 +277,44 @@ T applySumReductionWithSpanIterator(const Matrix<T> *m,
   }
 }
 
+// Similar to previous functions, but for sum-reduction operations
+template<typename T, typename FUNC>
+T applySumReductionWithSpanIteratorNOPARALLEL(const Matrix<T> *m,
+					      const FUNC &functor,
+					      const int N_th = DEFAULT_N_TH,
+					      const unsigned int SIZE_th = DEFAULT_SIZE_TH,
+					      const unsigned int CONTIGUOUS_th = DEFAULT_CONTIGUOUS_TH) {
+  // Contiguous memory block
+  if (m->getIsContiguous() &&
+      static_cast<unsigned int>(m->size()) < CONTIGUOUS_th)
+    return functor(m, static_cast<unsigned int>(m->size()), 1,
+		   static_cast<unsigned int>(m->getOffset()));
+  // One dimension
+  else if (m->getNumDim() == 1)
+    return functor(m, static_cast<unsigned int>(m->size()),
+		   static_cast<unsigned int>(m->getStrideSize(0)),
+		   static_cast<unsigned int>(m->getOffset()));
+  // General case
+  else {
+    typename Matrix<T>::best_span_iterator span_it(m);
+    const int N = span_it.numberOfIterations();
+    unsigned int size   = static_cast<unsigned int>(span_it.getSize());
+    unsigned int stride = static_cast<unsigned int>(span_it.getStride());
+    T sum;
+    // forward application of functor, to force execution of memory copy from GPU
+    // to PPAL or viceversa (if needed), avoiding race conditions on the following
+    sum = functor(m, size, stride, static_cast<unsigned int>(span_it.getOffset()));
+    // sequential code, with less overhead when updating iterator
+    ++span_it;
+    do {
+      sum += functor(m, size, stride,
+		     static_cast<unsigned int>(span_it.getOffset()));
+      ++span_it;
+    } while(span_it != m->end_span_iterator());
+    return sum;
+  }
+}
+
 // Similar to previous functions, but for AND-reduction operations (binary)
 template<typename T, typename FUNC>
 bool applyBinaryAndReductionWithSpanIterator(const Matrix<T> *m1,
@@ -347,11 +385,11 @@ bool applyBinaryAndReductionWithSpanIterator(const Matrix<T> *m1,
 
 // Similar to previous functions, but for general reduction operations (without
 // OMP)
-template<typename T, typename FUNC1, typename FUNC2>
-T applyReductionWithSpanIteratorNOPARALLEL(const Matrix<T> *m,
+template<typename T, typename R, typename FUNC1, typename FUNC2>
+R applyReductionWithSpanIteratorNOPARALLEL(const Matrix<T> *m,
 					   FUNC1 &functor,
 					   FUNC2 &reductor,
-					   const T initial_value) {
+					   const R initial_value) {
   // Contiguous memory block
   if (m->getIsContiguous())
     return reductor(initial_value,
@@ -369,10 +407,10 @@ T applyReductionWithSpanIteratorNOPARALLEL(const Matrix<T> *m,
     const int N = span_it.numberOfIterations();
     unsigned int size   = static_cast<unsigned int>(span_it.getSize());
     unsigned int stride = static_cast<unsigned int>(span_it.getStride());
-    T red(initial_value);
+    R red(initial_value);
     // sequential code
     while(span_it != m->end_span_iterator()) { 
-      T result = functor(m, size, stride,
+      R result = functor(m, size, stride,
 			 static_cast<unsigned int>(span_it.getOffset()));
       red = reductor(red, result);
       ++span_it;
