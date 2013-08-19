@@ -50,6 +50,7 @@ void Matrix<T>::ones() {
 
 template <typename T>
 void Matrix<T>::diag(T value) {
+  if (use_cuda) ERROR_PRINT("WARNING! DIAG OPERATION NOT IMPLENTED FOR CUDA\n");
   for (int i=1; i<numDim; ++i)
     if (matrixSize[i] != matrixSize[i-1])
       ERROR_EXIT(128, "Only allowed for squared matrices\n");
@@ -61,6 +62,7 @@ void Matrix<T>::diag(T value) {
   }
   delete[] aux_coords;
 }
+
 
 template <typename T>
 Matrix<T>* Matrix<T>::addition(const Matrix<T> *other) {
@@ -107,7 +109,7 @@ void Matrix<T>::copy(const Matrix<T> *other) {
 }
 
 template <typename T>
-bool Matrix<T>::equals(const Matrix<T> *other, T epsilon) const {
+bool Matrix<T>::equals(const Matrix<T> *other, float epsilon) const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return false;
 }
@@ -187,7 +189,7 @@ void Matrix<T>::ger(T alpha,
 template <typename T>
 T Matrix<T>::dot(const Matrix<T> *other) const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-  return T();
+  return 0.0f;
 }
 
 template <typename T>
@@ -196,9 +198,9 @@ void Matrix<T>::scal(T value) {
 }
 
 template <typename T>
-T Matrix<T>::norm2() const {
+float Matrix<T>::norm2() const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-  return T();
+  return 0.0f;
 }
 
 template <typename T>

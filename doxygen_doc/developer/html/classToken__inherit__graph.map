@@ -1,7 +1,0 @@
-<map id="Token" name="Token">
-<area shape="rect" id="node5" href="$classTokenMatrix.html" title="TokenMatrix\&lt; T \&gt;" alt="" coords="5,160,131,189"/>
-<area shape="rect" id="node7" href="$classTokenMemoryBlock.html" title="TokenMemoryBlock" alt="" coords="155,160,293,189"/>
-<area shape="rect" id="node9" href="$classTokenVectorGeneric.html" title="TokenVectorGeneric" alt="" coords="317,160,459,189"/>
-<area shape="rect" id="node2" href="$classReferenced.html" title="Referenced" alt="" coords="180,5,268,35"/>
-<area shape="rect" id="node11" href="$classTokenVector.html" title="TokenVector\&lt; T \&gt;" alt="" coords="324,237,452,267"/>
-</map>

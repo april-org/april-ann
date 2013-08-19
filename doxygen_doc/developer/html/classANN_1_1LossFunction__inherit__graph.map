@@ -1,8 +1,0 @@
-<map id="ANN::LossFunction" name="ANN::LossFunction">
-<area shape="rect" id="node5" href="$classANN_1_1CrossEntropyLossFunction.html" title="ANN::CrossEntropyLossFunction" alt="" coords="336,5,552,35"/>
-<area shape="rect" id="node7" href="$classANN_1_1LocalFMeasureLossFunction.html" title="ANN::LocalFMeasureLossFunction" alt="" coords="331,59,557,88"/>
-<area shape="rect" id="node9" href="$classANN_1_1MAELossFunction.html" title="ANN::MAELossFunction" alt="" coords="361,112,527,141"/>
-<area shape="rect" id="node11" href="$classANN_1_1MSELossFunction.html" title="ANN::MSELossFunction" alt="" coords="361,165,527,195"/>
-<area shape="rect" id="node13" href="$classANN_1_1MultiClassCrossEntropyLossFunction.html" title="ANN::MultiClassCrossEntropy\lLossFunction" alt="" coords="344,218,544,265"/>
-<area shape="rect" id="node2" href="$classReferenced.html" title="Referenced" alt="" coords="7,112,95,141"/>
-</map>

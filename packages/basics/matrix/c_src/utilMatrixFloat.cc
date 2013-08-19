@@ -2,6 +2,7 @@
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
+ * Copyright 2013, Salvador España-Boquera, Francisco Zamora-Martinez
  * Copyright 2012, Salvador España-Boquera
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
@@ -18,7 +19,6 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "read_file_stream.h"
 #include "utilMatrixFloat.h"
 #include "binarizer.h"
 #include "clamp.h"
@@ -26,200 +26,6 @@
 #include <cstdio>
 
 using april_utils::clamp;
-
-template <typename T>
-MatrixFloat* readMatrixFloatFromStream(T &stream) {
-  constString linea,formato,order,token;
-  // First we read the matrix dimensions
-  linea = stream.extract_u_line();
-  if (!linea) {
-    fprintf(stderr, "empty file!!!\n");
-    return 0;
-  }
-  static const int maxdim=100;
-  int dims[maxdim];
-  int n=0, pos_comodin=-1;
-  while (n<maxdim && (token = linea.extract_token())) {
-    if (token == "*") {
-      if (pos_comodin != -1) {
-	// Error, more than one comodin
-	fprintf(stderr,"more than one '*' reading a matrix\n");
-	return 0;
-      }
-      pos_comodin = n;
-    } else if (!token.extract_int(&dims[n])) {
-      fprintf(stderr,"incorrect dimension %d type, expected a integer\n", n);
-      return 0;
-    }
-    n++;
-  }
-  if (n==maxdim) {
-    fprintf(stderr,"number of dimensions overflow\n");
-    return 0; // Maximum allocation problem
-  }
-  MatrixFloat *mat = 0;
-  // Now we read the type of the format
-  linea = stream.extract_u_line();
-  formato = linea.extract_token();
-  if (!formato) {
-    fprintf(stderr,"impossible to read format token\n");
-    return 0;
-  }
-  order = linea.extract_token();
-  if (pos_comodin == -1) { // Normal version
-    if (!order || order=="row_major")
-      mat = new MatrixFloat(n,dims);
-    else if (order == "col_major")
-      mat = new MatrixFloat(n,dims,CblasColMajor);
-    int i=0;
-    MatrixFloat::iterator data_it(mat->begin());
-    if (formato == "ascii") {
-      while (data_it!=mat->end() && (linea=stream.extract_u_line()))
-	while (data_it!=mat->end() && linea.extract_float( &(*data_it) )) { ++data_it; }
-    } else { // binary
-      while (data_it!=mat->end() && (linea=stream.extract_u_line()))
-	while (data_it!=mat->end() && linea.extract_float_binary( &(*data_it) )) { ++data_it; }
-    }
-    if (data_it!=mat->end()) { delete mat; mat = 0; }
-  } else { // version with comodin
-    int size=0,maxsize=4096;
-    float *data = new float[maxsize];
-    if (formato == "ascii") {
-      while ( (linea=stream.extract_u_line()) )
-	while (linea.extract_float(&data[size])) { 
-	  size++; 
-	  if (size == maxsize) { // resize data vector
-	    float *aux = new float[2*maxsize];
-	    for (int a=0;a<maxsize;a++)
-	      aux[a] = data[a];
-	    maxsize *= 2;
-	    delete[] data; data = aux;
-	  }
-	}
-    } else { // binary
-      while ( (linea=stream.extract_u_line()) )
-	while (linea.extract_float_binary(&data[size])) { 
-	  size++; 
-	  if (size == maxsize) { // resize data vector
-	    float *aux = new float[2*maxsize];
-	    for (int a=0;a<maxsize;a++)
-	      aux[a] = data[a];
-	    maxsize *= 2;
-	    delete[] data; data = aux;
-	  }
-	}
-    }
-    int sizesincomodin = 1;
-    for (int i=0;i<n;i++)
-      if (i != pos_comodin)
-	sizesincomodin *= dims[i];
-    if ((size % sizesincomodin) != 0) {
-      // Error: The size of the data does not coincide
-      fprintf(stderr,"data size is not valid reading a matrix with '*'\n");
-      delete[] data; return 0;
-    }
-    dims[pos_comodin] = size / sizesincomodin;
-    if (!order || order == "row_major")
-      mat = new MatrixFloat(n,dims);
-    else if (order == "col_major")
-      mat = new MatrixFloat(n,dims,CblasColMajor);
-    int i=0;
-    for (MatrixFloat::iterator it(mat->begin()); it!=mat->end(); ++it, ++i)
-      *it = data[i];
-    delete[] data;
-  }
-  return mat;
-}
-
-// Returns the string length (there is a '\0' that is not counted)
-void saveMatrixFloatToFile(MatrixFloat *mat, FILE *f, bool is_ascii) {
-  int i;
-  for (i=0;i<mat->getNumDim()-1;i++)
-    fprintf(f, "%d ",mat->getDimSize(i));
-  fprintf(f,"%d\n",mat->getDimSize(mat->getNumDim()-1));
-  if (is_ascii) {
-    const int columns = 9;
-    fprintf(f,"ascii");
-    if (mat->getMajorOrder() == CblasColMajor)
-      fprintf(f, " col_major");
-    else
-      fprintf(f, " row_major");
-    fprintf(f, "\n");
-    int i=0;
-    for(MatrixFloat::const_iterator it(mat->begin()); it!=mat->end();++it,++i) {
-      fprintf(f,"%.5g%c",(*it),
-	      ((((i+1) % columns) == 0) ? '\n' : ' '));
-    }
-    if ((i % columns) != 0) {
-      fprintf(f,"\n"); 
-    }
-  } else { // binary
-    const int columns = 16;
-    fprintf(f,"binary");
-    if (mat->getMajorOrder() == CblasColMajor)
-      fprintf(f, " col_major");
-    else
-      fprintf(f, " row_major");
-    fprintf(f, "\n");
-    // We substract 1 so the final '\0' is not considered
-    char b[5];
-    int i=0;
-    for(MatrixFloat::const_iterator it(mat->begin()); it!=mat->end();++it,++i) {
-      binarizer::code_float(*it, b);
-      fprintf(f, "%c%c%c%c%c", b[0], b[1], b[2], b[3], b[4]);
-      if ((i+1) % columns == 0) fprintf(f, "\n");
-    }
-    if ((i % columns) != 0)
-      fprintf(f,"\n"); 
-  }
-}
-
-// Returns the string length (there is a '\0' that is not counted)
-int saveMatrixFloatToString(MatrixFloat *mat, char **buffer, bool is_ascii) {
-  int i,sizedata,sizeheader;
-  sizeheader = mat->getNumDim()*10+10+10; // FIXME: To put adequate values
-  if (is_ascii)
-    sizedata = mat->size()*12; // Memory used by float in ascii
-			     // including spaces, enters, etc...
-  else
-    sizedata = binarizer::buffer_size_32(mat->size());
-  char *r, *b;
-  r = b = new char[sizedata+sizeheader];
-  for (i=0;i<mat->getNumDim()-1;i++)
-    r += sprintf(r,"%d ",mat->getDimSize(i));
-  r += sprintf(r,"%d\n",mat->getDimSize(mat->getNumDim()-1));
-  if (is_ascii) {
-    const int columns = 9;
-    r += sprintf(r,"ascii");
-    if (mat->getMajorOrder() == CblasColMajor)
-      r += sprintf(r," col_major");
-    else
-      r += sprintf(r," row_major");
-    r += sprintf(r,"\n");
-    int i=0;
-    for (MatrixFloat::const_iterator it(mat->begin()); it!=mat->end();++it,++i){
-      r += sprintf(r,"%.5g%c",(*it),
-		   ((((i+1) % columns) == 0) ? '\n' : ' '));
-    }
-    if ((i % columns) != 0) {
-      r += sprintf(r,"\n"); 
-    }
-  } else { // binary
-    r += sprintf(r,"binary");
-    if (mat->getMajorOrder() == CblasColMajor)
-      r += sprintf(r," col_major");
-    else
-      r += sprintf(r," row_major");
-    r += sprintf(r,"\n");
-    // We substract 1 so the final '\0' is not considered
-    r += -1 + binarizer::code_iterator_float<MatrixFloat::const_iterator>(mat->begin(),
-									  mat->end(),
-									  mat->size(),
-									  r, sizedata);
-  }
-  *buffer = b;
-  return r-b;
-}
 
 inline int hexdigit(char c) {
   if ('0'<=c && c<='9') return c-'0';
@@ -405,5 +211,63 @@ int saveMatrixFloatHEX(MatrixFloat *mat,
   return sizedata2+(r-b);
 }
 
-template MatrixFloat *readMatrixFloatFromStream<constString>(constString &stream);
-template MatrixFloat *readMatrixFloatFromStream<ReadFileStream>(ReadFileStream &stream);
+template class FloatAsciiCoder<WriteBufferWrapper>;
+template class FloatBinaryCoder<WriteBufferWrapper>;
+template class FloatAsciiCoder<WriteFileWrapper>;
+template class FloatBinaryCoder<WriteFileWrapper>;
+
+template MatrixFloat *readMatrixFromStream(constString &,
+					   FloatAsciiExtractor,
+					   FloatBinaryExtractor);
+template MatrixFloat *readMatrixFromStream(ReadFileStream &,
+					   FloatAsciiExtractor,
+					   FloatBinaryExtractor);
+template int writeMatrixToStream(MatrixFloat *,
+				 WriteBufferWrapper &,
+				 FloatAsciiSizer,
+				 FloatBinarySizer,
+				 FloatAsciiCoder<WriteBufferWrapper>,
+				 FloatBinaryCoder<WriteBufferWrapper>,
+				 bool is_ascii);
+template int writeMatrixToStream(MatrixFloat *,
+				 WriteFileWrapper &,
+				 FloatAsciiSizer,
+				 FloatBinarySizer,
+				 FloatAsciiCoder<WriteFileWrapper>,
+				 FloatBinaryCoder<WriteFileWrapper>,
+				 bool is_ascii);
+ 
+void writeMatrixFloatToFile(MatrixFloat *mat,
+			    const char *filename,
+			    bool is_ascii) {
+  WriteFileWrapper wrapper(filename);
+  writeMatrixToStream(mat, wrapper, FloatAsciiSizer(), FloatBinarySizer(),
+		      FloatAsciiCoder<WriteFileWrapper>(),
+		      FloatBinaryCoder<WriteFileWrapper>(),
+		      is_ascii);
+}
+
+char *writeMatrixFloatToString(MatrixFloat *mat,
+			       bool is_ascii,
+			       int &len) {
+  WriteBufferWrapper wrapper;
+  len = writeMatrixToStream(mat, wrapper,
+			    FloatAsciiSizer(),
+			    FloatBinarySizer(),
+			    FloatAsciiCoder<WriteBufferWrapper>(),
+			    FloatBinaryCoder<WriteBufferWrapper>(),
+			    is_ascii);
+  return wrapper.getBufferProperty();
+}
+
+MatrixFloat *readMatrixFloatFromFile(const char *filename) {
+  ReadFileStream f(filename);
+  return readMatrixFromStream<ReadFileStream, float>(f, FloatAsciiExtractor(),
+						     FloatBinaryExtractor());
+}
+
+MatrixFloat *readMatrixFloatFromString(constString &cs) {
+  return readMatrixFromStream<constString, float>(cs,
+						  FloatAsciiExtractor(),
+						  FloatBinaryExtractor());
+}

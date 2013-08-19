@@ -1,8 +1,0 @@
-<map id="Functions::FunctionInterface&lt; I, O &gt;" name="Functions::FunctionInterface&lt; I, O &gt;">
-<area shape="rect" id="node7" href="$classTrainable_1_1TrainableSupervised.html" title="Trainable::TrainableSupervised\l\&lt; float, float \&gt;" alt="" coords="5,257,205,303"/>
-<area shape="rect" id="node2" href="$classFunctions_1_1FunctionBase.html" title="A pure abstract class that serves as high level interface." alt="" coords="23,83,188,112"/>
-<area shape="rect" id="node4" href="$classReferenced.html" title="Referenced" alt="" coords="61,5,149,35"/>
-<area shape="rect" id="node9" href="$classANN_1_1ANNBase.html" title="ANN::ANNBase" alt="" coords="47,352,164,381"/>
-<area shape="rect" id="node11" href="$classANN_1_1MLP.html" title="ANN::MLP" alt="" coords="63,429,148,459"/>
-<area shape="rect" id="node13" href="$classANN_1_1AllAllMLP.html" title="Class that represents a neural network with all&#45;all connections." alt="" coords="48,507,163,536"/>
-</map>

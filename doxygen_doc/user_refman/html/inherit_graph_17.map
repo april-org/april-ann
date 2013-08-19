@@ -1,8 +1,0 @@
-<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$classtokens_1_1base.html" title="tokens::base" alt="" coords="7,59,103,88"/>
-<area shape="rect" id="node3" href="$classtokens_1_1matrix.html" title="tokens::matrix" alt="" coords="185,5,289,35"/>
-<area shape="rect" id="node5" href="$classtokens_1_1memblock.html" title="tokens::memblock" alt="" coords="173,59,301,88"/>
-<area shape="rect" id="node7" href="$classtokens_1_1vector_1_1____base____.html" title="tokens::vector::__base__" alt="" coords="153,112,321,141"/>
-<area shape="rect" id="node9" href="$classtokens_1_1vector_1_1bunch.html" title="tokens::vector::bunch" alt="" coords="373,85,520,115"/>
-<area shape="rect" id="node11" href="$classtokens_1_1vector_1_1sparse.html" title="tokens::vector::sparse" alt="" coords="371,139,523,168"/>
-</map>

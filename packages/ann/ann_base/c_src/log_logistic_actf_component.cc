@@ -47,10 +47,10 @@ namespace ANN {
 							unsigned int bunch_size) {
     // This activation function derivative is cancelled by cross-entropy
     // derivative. It only could be used with cross entropy loss function.
-    doScopy(input_errors->getSize(),
-	    input_errors, 0, 1,
-	    output_errors, 0, 1,
-	    use_cuda);
+    doCopy(input_errors->getSize(),
+	   input_errors, 0, 1,
+	   output_errors, 0, 1,
+	   use_cuda);
   }
 
   ANNComponent *LogLogisticActfANNComponent::clone() {

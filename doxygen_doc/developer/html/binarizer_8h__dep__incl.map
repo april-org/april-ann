@@ -1,8 +1,0 @@
-<map id="basics/util/c_src/binarizer.h" name="basics/util/c_src/binarizer.h">
-<area shape="rect" id="node3" href="$utilMatrixFloat_8cc.html" title="basics/matrix/c_src\l/utilMatrixFloat.cc" alt="" coords="5,83,141,130"/>
-<area shape="rect" id="node5" href="$token__vector_8cc.html" title="basics/tokens/c_src\l/token_vector.cc" alt="" coords="165,83,304,130"/>
-<area shape="rect" id="node7" href="$binarizer_8cc.html" title="basics/util/c_src/binarizer.cc" alt="" coords="328,92,515,121"/>
-<area shape="rect" id="node9" href="$buffer__list_8cc.html" title="basics/util/c_src/buffer\l_list.cc" alt="" coords="539,83,693,130"/>
-<area shape="rect" id="node11" href="$constString_8cc.html" title="basics/util/c_src/constString.cc" alt="" coords="717,92,923,121"/>
-<area shape="rect" id="node13" href="$mfset_8h.html" title="basics/util/c_src/mfset.h" alt="" coords="947,92,1112,121"/>
-</map>
