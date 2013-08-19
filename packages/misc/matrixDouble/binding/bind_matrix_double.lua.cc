@@ -68,7 +68,7 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 //BIND_LUACLASSNAME MatrixDouble matrixDouble
 //BIND_CPP_CLASS MatrixDouble
 
-//BIND_LUACLASSNAME SlidingWindowMatrixDouble matrix.__sliding_window_double__
+//BIND_LUACLASSNAME SlidingWindowMatrixDouble matrixDouble.__sliding_window_double__
 //BIND_CPP_CLASS SlidingWindowMatrixDouble
 
 //BIND_CONSTRUCTOR SlidingWindowMatrixDouble
