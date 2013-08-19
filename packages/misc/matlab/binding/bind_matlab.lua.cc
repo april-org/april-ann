@@ -20,6 +20,7 @@
  */
 //BIND_HEADER_C
 #include "bind_matrix.h"
+#include "bind_matrix_complex_float.h"
 #include "bind_matrix_char.h"
 #include "bind_matrix_int32.h"
 #include "bind_matrix_double.h"
@@ -156,7 +157,20 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
   LUABIND_GET_OPTIONAL_PARAMETER(1, bool, col_major, false);
   char name[MAX_NAME_SIZE];
   MatrixFloat *m = obj->getMatrix(name, MAX_NAME_SIZE, col_major);
-  LUABIND_RETURN(MatrixFloat, m);
+  if (m != 0) {
+    LUABIND_RETURN(MatrixFloat, m);
+    LUABIND_RETURN(string, name);
+  }
+}
+//BIND_END
+
+//BIND_METHOD MatTaggedDataElement get_matrix_complex
+{
+  bool col_major;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, bool, col_major, false);
+  char name[MAX_NAME_SIZE];
+  MatrixComplexF *m = obj->getMatrixComplexF(name, MAX_NAME_SIZE, col_major);
+  LUABIND_RETURN(MatrixComplexF, m);
   LUABIND_RETURN(string, name);
 }
 //BIND_END
@@ -165,8 +179,10 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
 {
   char name[MAX_NAME_SIZE];
   MatrixDouble *m = obj->getMatrixDouble(name, MAX_NAME_SIZE);
-  LUABIND_RETURN(MatrixDouble, m);
-  LUABIND_RETURN(string, name);
+  if (m != 0) {
+    LUABIND_RETURN(MatrixDouble, m);
+    LUABIND_RETURN(string, name);
+  }
 }
 //BIND_END
 
@@ -183,8 +199,10 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
 {
   char name[MAX_NAME_SIZE];
   MatrixInt32 *m = obj->getMatrixInt32(name, MAX_NAME_SIZE);
-  LUABIND_RETURN(MatrixInt32, m);
-  LUABIND_RETURN(string, name);
+  if (m != 0) {
+    LUABIND_RETURN(MatrixInt32, m);
+    LUABIND_RETURN(string, name);
+  }
 }
 //BIND_END
 

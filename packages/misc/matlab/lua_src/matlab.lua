@@ -32,17 +32,31 @@ end
 -----------------------------
 local function tomatrix(e,col_major)
   local elem,name = e:get_matrix(col_major)
-  print("# Loading matrix float element: ", name)
+  if elem ~= nil then
+    print("# Loading matrix float element: ", name)
+  else
+    elem,name = e:get_matrix_complex(col_major)
+    print("# Loading matrix complex element: ", name)
+  end
   return elem,name
 end
-local function tomatrixdouble(e)
+local function tomatrixdouble(e,col_major)
   local elem,name = e:get_matrix_double()
-  print("# Loading matrix double element: ", name)
+  if elem ~= nil then
+    print("# Loading matrix double element: ", name)
+  else
+    elem,name = e:get_matrix_complex(col_major)
+    print("# Loading matrix complex (casted from double) element: ", name)
+  end
   return elem,name
 end
 local function tomatrixint32(e)
   local elem,name = e:get_matrix_int32()
-  print("# Loading matrix int32 element: ", name)
+  if elem ~= nil then
+    print("# Loading matrix int32 element: ", name)
+  else
+    error("Not supported complex numbers for integer data types")
+  end
   return elem,name
 end
 local function tomatrixchar(e)

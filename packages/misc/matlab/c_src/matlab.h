@@ -32,6 +32,7 @@
 #include <cstdio>
 #include <stdint.h>
 #include "matrixFloat.h"
+#include "matrixComplexF.h"
 #include "matrixChar.h"
 #include "matrixInt32.h"
 #include "matrixDouble.h"
@@ -136,6 +137,9 @@ public:
     TaggedDataElement *getNextSubElement();
     // FOR NUMERIC TYPES (casting)
     MatrixFloat *getMatrix(char *name, size_t maxsize, bool col_major=false);
+    // FOR NUMERIC TYPES (casting)
+    MatrixComplexF *getMatrixComplexF(char *name, size_t maxsize,
+				      bool col_major=false);
     // FOR NUMERIC TYPES (casting)
     MatrixDouble *getMatrixDouble(char *name, size_t maxsize);
     virtual uint32_t getClass();

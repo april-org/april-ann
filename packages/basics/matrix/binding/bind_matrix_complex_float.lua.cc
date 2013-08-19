@@ -1001,5 +1001,12 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 }
 //BIND_END
 
+//BIND_METHOD MatrixComplexF conj
+{
+  applyConjugateInPlace(obj);
+  LUABIND_RETURN(MatrixComplexF, obj);
+}
+//BIND_END
+
 //////////////////////////////////////////////////////////////////////
 

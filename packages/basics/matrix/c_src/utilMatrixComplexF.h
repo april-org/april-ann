@@ -103,5 +103,6 @@ MatrixComplexF *readMatrixComplexFFromFile(const char *filename);
 MatrixComplexF *readMatrixComplexFFromString(constString &cs);
 
 MatrixFloat *convertFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat);
+void applyConjugateInPlace(MatrixComplexF *mat);
 
 #endif // UTILMATRIXCOMPLEXF_H
