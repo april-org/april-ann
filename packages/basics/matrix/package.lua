@@ -19,6 +19,9 @@
      copy{ file= "c_src/*.h", dest_dir = "include" },
      provide_bind{ file = "binding/bind_matrix.lua.cc", dest_dir = "include" },
      provide_bind{ file = "binding/bind_matrix_complex_float.lua.cc", dest_dir = "include" },
+     provide_bind{ file = "binding/bind_matrix_double.lua.cc", dest_dir = "include" },
+     provide_bind{ file = "binding/bind_matrix_int32.lua.cc", dest_dir = "include" },
+     provide_bind{ file = "binding/bind_matrix_char.lua.cc", dest_dir = "include" },
      provide_bind{ file = "binding/bind_referenced_vector.lua.cc", dest_dir = "include" }
    },
    target{
@@ -41,6 +44,18 @@
      },
      build_bind{
 	file = "binding/bind_matrix_complex_float.lua.cc",
+	dest_dir = "build",
+     },
+     build_bind{
+	file = "binding/bind_matrix_double.lua.cc",
+	dest_dir = "build",
+     },
+     build_bind{
+	file = "binding/bind_matrix_int32.lua.cc",
+	dest_dir = "build",
+     },
+     build_bind{
+	file = "binding/bind_matrix_char.lua.cc",
 	dest_dir = "build",
      },
      build_bind{
