@@ -106,13 +106,13 @@ Matrix<T>* Matrix<T>::sum(int dim) {
     this_w_size[i] = 1;
     result_dims[i] = this_w_num_steps[i] = matrixSize[i];
   }
-  Matrix<T>::sliding_window this_w(this,this_w_size,0,0,this_w_num_steps,0);
+  sliding_window this_w(this,this_w_size,0,0,this_w_num_steps,0);
   Matrix<T> *slice = this_w.getMatrix();
   IncRef(slice);
   /******************************/
   Matrix<T> *result = new Matrix<T>(numDim, result_dims, major_order);
   // traverse in row major order
-  for (Matrix<T>::iterator it(result->begin()); it!=result->end(); ++it) {
+  for (iterator it(result->begin()); it!=result->end(); ++it) {
     this_w.getMatrix(slice);
     *it = slice->sum();
     this_w.next();
@@ -134,8 +134,8 @@ template <typename T>
 void Matrix<T>::copy(const Matrix<T> *other) {
   if (!sameDim(other))
     ERROR_EXIT(128, "Not equal matrix dimensions\n");
-  Matrix<T>::const_iterator it_orig(other->begin());
-  Matrix<T>::iterator it_dest(this->begin());
+  const_iterator it_orig(other->begin());
+  iterator it_dest(this->begin());
   while(it_orig != other->end()) {
     *it_dest = *it_orig;
     ++it_orig;
