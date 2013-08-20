@@ -76,7 +76,7 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 //BIND_LUACLASSNAME MatrixComplexF matrixComplex
 //BIND_CPP_CLASS MatrixComplexF
 
-//BIND_LUACLASSNAME SlidingWindowComplexF matrixComplex.__sliding_window_complex__
+//BIND_LUACLASSNAME SlidingWindowComplexF matrixComplex.__sliding_window__
 //BIND_CPP_CLASS SlidingWindowComplexF
 
 //BIND_CONSTRUCTOR SlidingWindowComplexF

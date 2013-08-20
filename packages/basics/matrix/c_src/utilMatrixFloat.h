@@ -66,7 +66,7 @@ struct FloatBinaryCoder {
   void operator()(const float &value, StreamType &stream) {
     char b[5];
     binarizer::code_float(value, b);
-    stream.printf("%s", b);
+    stream.printf("%c%c%c%c%c", b[0],b[1],b[2],b[3],b[4]);
   }
 };
 
