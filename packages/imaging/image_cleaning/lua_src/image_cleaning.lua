@@ -1,11 +1,8 @@
 image = image or {}
 image.image_cleaning = image.image_cleaning or {}
 
-
 -- Apply neural filter to an image
 function image.image_cleaning.apply_filter_std(img, neighbors, clean_net)
-  
-
   -- Generate the dataset
   local mImg = img:matrix()
   local tDim = mImg:dim()
