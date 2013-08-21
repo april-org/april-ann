@@ -88,7 +88,9 @@ struct ComplexFBinaryCoder {
     char b1[5],b2[5];
     binarizer::code_float(value.real(), b1);
     binarizer::code_float(value.img(),  b2);
-    stream.printf("%s%s", b1,b2);
+    stream.printf("%c%c%c%c%c%c%c%c%c%c",
+		  b1[0],b1[1],b1[2],b1[3],b1[4],
+		  b2[0],b2[1],b2[2],b2[3],b2[4]);
   }
 };
 

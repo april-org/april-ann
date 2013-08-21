@@ -253,7 +253,7 @@ int writeMatrixToStream(Matrix<MatrixType> *mat,
   // new lines, etc...
   if (is_ascii) sizedata = ascii_sizer(mat);
   else sizedata = bin_sizer(mat);
-  stream.setExpectedSize(sizedata+sizeheader);
+  stream.setExpectedSize(sizedata+sizeheader+1);
   for (int i=0;i<mat->getNumDim()-1;i++) stream.printf("%d ",mat->getDimSize(i));
   stream.printf("%d\n",mat->getDimSize(mat->getNumDim()-1));
   if (is_ascii) {

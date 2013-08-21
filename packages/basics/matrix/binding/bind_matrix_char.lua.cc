@@ -19,6 +19,7 @@
  *
  */
 //BIND_HEADER_C
+#include "utilMatrixChar.h"
 #include "luabindutil.h"
 #include "luabindmacros.h"
 
@@ -67,7 +68,7 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 //BIND_LUACLASSNAME MatrixChar matrixChar
 //BIND_CPP_CLASS MatrixChar
 
-//BIND_LUACLASSNAME SlidingWindowMatrixChar matrixChar.__sliding_window_char__
+//BIND_LUACLASSNAME SlidingWindowMatrixChar matrixChar.__sliding_window__
 //BIND_CPP_CLASS SlidingWindowMatrixChar
 
 //BIND_CONSTRUCTOR SlidingWindowMatrixChar
@@ -207,13 +208,53 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 }
 //BIND_END
 
+//BIND_CLASS_METHOD MatrixChar fromFilename
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, string);
+  const char *filename;
+  LUABIND_GET_PARAMETER(1,string,filename);
+  MatrixChar *obj;
+  if ((obj = readMatrixCharFromFile(filename)) == 0)
+    LUABIND_ERROR("bad format");
+  else LUABIND_RETURN(MatrixChar,obj);
+}
+//BIND_END
+
+
+//BIND_CLASS_METHOD MatrixChar fromString
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, string);
+  constString cs;
+  LUABIND_GET_PARAMETER(1,constString,cs);
+  MatrixChar *obj;
+  if ((obj = readMatrixCharFromString(cs)) == 0)
+    LUABIND_ERROR("bad format");
+  else LUABIND_RETURN(MatrixChar,obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixChar toFilename
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  const char *filename;
+  LUABIND_GET_PARAMETER(1, string, filename);
+  writeMatrixCharToFile(obj, filename);
+}
+//BIND_END
+
+//BIND_METHOD MatrixChar toString
+{
+  int len;
+  char *buffer = writeMatrixCharToString(obj, len);
+  lua_pushlstring(L,buffer,len);
+  LUABIND_RETURN_FROM_STACK(-1);
+  delete[] buffer;
+}
+//BIND_END
+
 //BIND_METHOD MatrixChar copy_from_table
-//DOC_BEGIN
-// void copy_from_table(table matrix_values)
-/// Permite dar valores a una matriz. Require una tabla con un numero
-/// de argumentos igual al numero de elementos de la matriz.
-///@param matrix_values Tabla con los elementos de la matriz.
-//DOC_END
 {
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_CHECK_PARAMETER(1, table);
@@ -238,7 +279,7 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 
 //BIND_METHOD MatrixChar get
 //DOC_BEGIN
-// float get(coordinates)
+// char get(coordinates)
 /// Permite ver valores de una matriz. Requiere tantos indices como dimensiones tenga la matriz.
 ///@param coordinates Tabla con la posición exacta del punto de la matriz que queremos obtener.
 //DOC_END
@@ -289,7 +330,7 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 
 //BIND_METHOD MatrixChar set
 //DOC_BEGIN
-// float set(coordinates,value)
+// char set(coordinates,value)
 /// Permite cambiar el valor de un elemento en la matriz. Requiere
 /// tantos indices como dimensiones tenga la matriz y adicionalmente
 /// el valor a cambiar
@@ -370,7 +411,7 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 
 //BIND_METHOD MatrixChar fill
 //DOC_BEGIN
-// void fill(float value)
+// void fill(char value)
 /// Permite poner todos los valores de la matriz a un mismo valor.
 //DOC_END
 {
