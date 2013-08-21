@@ -72,11 +72,35 @@ int inflate(const void *src, int srcLen, void *dst, int dstLen) {
 }
 
 template<typename T>
+inline void sanity_check_float_precision(T num) {
+  if (num >= 16777216 || num <= -16777216)
+    ERROR_PRINT("The integer part can't be represented "
+		"using float precision\n");
+}
+template<> inline void sanity_check_float_precision<int8_t>(int8_t num) { }
+template<> inline void sanity_check_float_precision<uint8_t>(uint8_t num) { }
+template<> inline void sanity_check_float_precision<int16_t>(int16_t num) { }
+template<> inline void sanity_check_float_precision<uint16_t>(uint16_t num) { }
+template<> inline void sanity_check_float_precision<float>(float num) { }
+
+template<typename T>
+inline void sanity_check_int32_precision(T num) {
+  if (llabs(num) >= 2147483648)
+    ERROR_PRINT("The integer can't be represented using int32 precision\n");
+}
+template<> inline void sanity_check_int32_precision<int8_t>(int8_t num) { }
+template<> inline void sanity_check_int32_precision<uint8_t>(uint8_t num) { }
+template<> inline void sanity_check_int32_precision<int16_t>(int16_t num) { }
+template<> inline void sanity_check_int32_precision<uint16_t>(uint16_t num) { }
+template<> inline void sanity_check_int32_precision<int32_t>(int32_t num) { }
+
+template<typename T>
 void readMatrixData(MatrixFloat::col_major_iterator &m_it,
 		    MatrixFloat::col_major_iterator &end,
 		    const T *ptr, const uint32_t nbytes) {
   for (uint32_t ptr_pos=0; ptr_pos < nbytes; ptr_pos += sizeof(T), ++ptr) {
     april_assert(m_it != end);
+    sanity_check_float_precision(*ptr);
     *m_it = static_cast<float>(*ptr);
     ++m_it;
   }
@@ -91,6 +115,8 @@ void readMatrixData(MatrixComplexF::col_major_iterator &m_it,
     for (uint32_t ptr_pos=0; ptr_pos < nbytes;
 	 ptr_pos += sizeof(T), ++ptr_real, ++ptr_img) {
       april_assert(m_it != end);
+      sanity_check_float_precision(*ptr_real);
+      sanity_check_float_precision(*ptr_img);
       *m_it = ComplexF(static_cast<float>(*ptr_real),
 		       static_cast<float>(*ptr_img));
       ++m_it;
@@ -100,6 +126,7 @@ void readMatrixData(MatrixComplexF::col_major_iterator &m_it,
     for (uint32_t ptr_pos=0; ptr_pos < nbytes;
 	 ptr_pos += sizeof(T), ++ptr_real) {
       april_assert(m_it != end);
+      sanity_check_float_precision(*ptr_real);
       *m_it = ComplexF(static_cast<float>(*ptr_real), 0.0f);
       ++m_it;
     }
@@ -134,6 +161,7 @@ void readMatrixData(MatrixInt32::col_major_iterator &m_it,
 		    const T *ptr, const uint32_t nbytes) {
   for (uint32_t ptr_pos=0; ptr_pos < nbytes; ptr_pos += sizeof(T), ++ptr) {
     april_assert(m_it != end);
+    sanity_check_int32_precision(*ptr);
     *m_it = static_cast<int32_t>(*ptr);
     ++m_it;
   }
