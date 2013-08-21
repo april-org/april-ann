@@ -979,29 +979,40 @@ Matrix<T> * Image<T>::comb_lineal_forward(int sx, int sy, int ancho, int alto, i
 template <typename T>
 Image<T>* Image<T>::substract_image(Image<T> *img, T low, T high) const {
 
-    int  s_height = img->height;
-    int  s_width  = img->width;
+  int  s_height = img->height;
+  int  s_width  = img->width;
 
-    //  printf("%d %d %d %d\n", s_width, s_height, this->width, this->height);
-    assert("The images does not have the same dimension"
-            && s_width == this->width && s_height == this->height);
+  //  printf("%d %d %d %d\n", s_width, s_height, this->width, this->height);
+  april_assert("The images does not have the same dimension"
+	 && s_width == this->width && s_height == this->height);
 
-    int dims[2];
-    dims[0] = this->height;
-    dims[1] = this->width;
-    Matrix<T> *mat = new Matrix<T>(2,dims);
-    mat->fill(0);
-    Image<T>  *res = new Image<T>(mat);
+  int dims[2];
+  dims[0] = this->height;
+  dims[1] = this->width;
+  Matrix<T> *mat = new Matrix<T>(2,dims);
+  Image<T>  *res = new Image<T>(mat);
 
 
-    for (int y = 0; y < this->height; y++){
-        for (int x = 0; x < this->width; x++){
-            T value = high + (*this)(x,y) -(*img)(x,y);
-            (*res)(x, y) =  april_utils::clamp(value, low, high);
-        } 
-    }
+  for (int y = 0; y < this->height; y++){
+    for (int x = 0; x < this->width; x++){
+      T value = high + (*this)(x,y) -(*img)(x,y);
+      (*res)(x, y) =  april_utils::clamp(value, low, high);
+    } 
+  }
 
-    return res;
+  return res;
+}
+
+template <typename T>
+void Image<T>::threshold_image(T threshold_low, T threshold_high, T value_low, T value_high ){
+
+  for (int y = 0; y < this->height; y++){
+    for (int x = 0; x < this->width; x++){
+        T value = (*this)(x,y);
+        if (value < threshold_low) (*this)(x,y) = value_low;
+        else if (value > threshold_high) (*this)(x,y) = value_high;
+    } 
+  }
 }
 
 #endif // _IMAGE_CC_

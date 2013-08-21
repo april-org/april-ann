@@ -21,7 +21,7 @@
 #ifndef TUPLE_H
 #define TUPLE_H
 
-#include <cassert>
+#include "april_assert.h"
 #include <cstddef>
 
 namespace april_utils {
@@ -47,7 +47,7 @@ namespace april_utils {
     }
     
     tuple(int tuple_size) {
-      assert(tuple_size >= 0);
+      april_assert(tuple_size >= 0);
       this->tuple_size = tuple_size;
       vec = new T[tuple_size];
     }

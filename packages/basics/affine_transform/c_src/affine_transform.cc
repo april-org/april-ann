@@ -35,12 +35,12 @@ AffineTransform2D::AffineTransform2D():
 
 AffineTransform2D::AffineTransform2D(Matrix<float> *mat): Matrix<float>(mat)
 {
-  assert("AffineTransform2D: Matrix must be 3x3" && 
+  april_assert("AffineTransform2D: Matrix must be 3x3" && 
          numDim == 2 && 
          matrixSize[0] == 3 &&
          matrixSize[1] == 3);
 
-  assert("AffineTransform2D: Last row must be [0 0 1]" &&
+  april_assert("AffineTransform2D: Last row must be [0 0 1]" &&
          (*data)[6] == 0 && (*data)[7] == 0 && (*data)[8] == 1);
 
 }

@@ -23,7 +23,7 @@
 #define MATRIX_H
 
 #include <cmath>
-#include <cassert>
+#include "april_assert.h"
 #include <cstdarg>
 #include <new> // surprisingly, placement new doesn't work without this
 #include "cblas_headers.h"
@@ -39,6 +39,7 @@
 
 template <typename T>
 class Matrix : public Referenced {
+  enum matrix_contiguous_enum_t { NONE=0, CONTIGUOUS=1, NONCONTIGUOUS=2 };
 protected:
   /// Number of dimensions
   int numDim;
@@ -57,16 +58,14 @@ protected:
   CBLAS_ORDER major_order;
   /// For CUDA purposes
   bool use_cuda;
+  /// To know if it is contiguous
+  mutable matrix_contiguous_enum_t is_contiguous;
   
   /// Constructor... -> Integer array with the size of each dimension
   /*
     Matrix(int numDim, const int* dim, T* data_vector,
     CBLAS_ORDER major_order = CblasRowMajor);
   */
-  /// Computes the position at data array given it coordinates
-  int  computeRawPos(const int *coords) const;
-  /// Computes the coordinates given the raw data position
-  void computeCoords(const int raw_pos, int *coords) const;
   /// Returns the data pointer for read and write
   T *getData() { return data->getPPALForReadAndWrite(); }
   /// Returns the data pointer for read
@@ -89,9 +88,14 @@ protected:
       (major_order==CblasRowMajor) ? stride[1] : stride[0];
   }
 
-  void scalarAdd(T s);
-  
 public:
+  class sliding_window;
+  friend class sliding_window;
+  
+  /// Computes the position at data array given it coordinates
+  int  computeRawPos(const int *coords) const;
+  /// Computes the coordinates given the raw data position
+  void computeCoords(const int raw_pos, int *coords) const;
   /// Updates with the following coordinates vector
   bool nextCoordVectorRowOrder(int *coords, int &raw_pos) const;
   bool nextCoordVectorColOrder(int *coords, int &raw_pos) const;
@@ -140,6 +144,7 @@ public:
     bool      operator!=(const iterator &other) const;
     iterator &operator++();
     T &operator*();
+    T *operator->();
     int getRawPos() const;
     int getIdx() const { return idx; }
   };
@@ -169,6 +174,7 @@ public:
     bool      operator!=(const iterator &other) const;
     col_major_iterator &operator++();
     T &operator*();
+    T *operator->();
     int getRawPos() const;
     int getIdx() const { return idx; }
   };
@@ -200,6 +206,7 @@ public:
     bool            operator!=(const iterator &other) const;
     const_iterator &operator++();
     const T &operator*() const;
+    const T *operator->() const;
     int getRawPos() const;
     int getIdx() const { return idx; }
   };
@@ -234,6 +241,7 @@ public:
     bool            operator!=(const const_iterator &other) const;
     const_col_major_iterator &operator++();
     const T &operator*() const;
+    const T *operator->() const;
     int getRawPos() const;
     int getIdx() const { return idx; }
   };
@@ -278,7 +286,11 @@ public:
     ~sliding_window();
     sliding_window &operator=(const sliding_window &other);
     sliding_window *next();
-    Matrix<T> *getMatrix(bool clone=false);
+    /// This method returns the matrix at the current window position. If a
+    /// matrix is given, it must be created before using previous execution of
+    /// getMatrix method. WARNING, the matrix is not check to be correct, so be
+    /// careful.
+    Matrix<T> *getMatrix(Matrix<T> *dest=0);
     bool isEnd() const { return finished; }
     int numWindows() const;
     void setAtWindow(int windex);
@@ -286,28 +298,37 @@ public:
     int getNumDim() const;
   };
   
-private:
   /********************************************************/
   // The span iterator traverses the matrix allowing to do a linear
   // traversal of the largest dimension.
-  // ATTENTION: Currently it is a private iterator
   class best_span_iterator {
     friend class Matrix;
     const Matrix<T> *m;
     int raw_pos;
     int *coords, *order;
+    int num_iterations;
     struct inverse_sort_compare {
       const Matrix<T> *m;
       inverse_sort_compare(const Matrix<T> *m) : m(m) { }
       bool operator()(const int &a, const int &b) {
+	const int a_sz = m->matrixSize[a];
+	const int b_sz = m->matrixSize[b];
+	if (a_sz == b_sz) {
+	  if (m->major_order == CblasRowMajor)
+	    return b < a;
+	  else
+	    return a < b;
+	}
 	// FIXME: Would be better to use a trade-off between size and stride?
-	return m->matrixSize[a] > m->matrixSize[b];
+	else
+	  return a_sz > b_sz;
       }
     };
     best_span_iterator(const Matrix<T> *m, int raw_pos);
-    best_span_iterator(const Matrix<T> *m);
   public:
+    best_span_iterator(const Matrix<T> *m);
     best_span_iterator();
+    best_span_iterator(const best_span_iterator &other);
     ~best_span_iterator();
     int getOffset() const;
     int getStride() const;
@@ -316,8 +337,11 @@ private:
     bool operator==(const best_span_iterator &other) const;
     bool operator!=(const best_span_iterator &other) const;
     best_span_iterator &operator++();
+    int numberOfIterations() const;
+    void setAtIteration(int idx);
   };
   
+private:
   // const version of iterators, for fast end() iterator calls. They are
   // allocated on-demand, so if end() methods are never executed, they
   // don't waste memory space
@@ -325,19 +349,24 @@ private:
   const const_iterator end_const_iterator;
   const best_span_iterator end_best_span_iterator;
   
-  const best_span_iterator &end_span_iterator() const {
-    if (end_best_span_iterator.m == 0)
-      *(const_cast<best_span_iterator*>(&end_best_span_iterator)) =
-	best_span_iterator(this, last_raw_pos+1);
-    return end_best_span_iterator;
-  }
   // NULL constructor
-  Matrix() { }
+  Matrix() : is_contiguous(NONE) { }
   //
   Matrix(int numDim, const int *stride, const int offset,
 	 const int *matrixSize, const int total_size, const int last_raw_pos,
 	 GPUMirroredMemoryBlock<T> *data, const CBLAS_ORDER major_order,
 	 const bool use_cuda);
+
+  /// Modifies the offset of the matrix. WARNING, this method doesn't check the
+  /// new data position, so be sure that it fits in the data pointer size
+  void changeSubMatrixData(const int new_offset, const int new_last_raw_pos) {
+    offset	 = new_offset;
+    last_raw_pos = new_last_raw_pos;
+    const_cast<iterator*>(&end_iterator)->m			= 0;
+    const_cast<const_iterator*>(&end_const_iterator)->m		= 0;
+    const_cast<best_span_iterator*>(&end_best_span_iterator)->m = 0;
+  }
+
 public:
   /********** Constructors ***********/
   /// Full constructor given numDim, dim, and major_order
@@ -383,16 +412,16 @@ public:
   /**********************/
   iterator begin() { return iterator(this); }
   iterator iteratorAt(int c0) {
-    assert(numDim==1);
+    april_assert(numDim==1);
     return iterator(this, computeRawPos(&c0), &c0);
   }
   iterator iteratorAt(int c0, int c1) {
-    assert(numDim==2);
+    april_assert(numDim==2);
     int aux[2]={c0,c1};
     return iterator(this, computeRawPos(aux), aux);
   }
   iterator iteratorAt(int *coords, int len) {
-    assert(numDim==len);
+    april_assert(numDim==len);
     return iterator(this, computeRawPos(coords), coords);
   }
   const iterator &end() {
@@ -400,19 +429,25 @@ public:
       *(const_cast<iterator*>(&end_iterator)) = iterator(this, last_raw_pos+1);
     return end_iterator;
   }
+  const best_span_iterator &end_span_iterator() const {
+    if (end_best_span_iterator.m == 0)
+      *(const_cast<best_span_iterator*>(&end_best_span_iterator)) =
+	best_span_iterator(this, last_raw_pos+1);
+    return end_best_span_iterator;
+  }
   /************************/
   const_iterator begin() const { return const_iterator(this); }
   const_iterator iteratorAt(int c0) const {
-    assert(numDim==1);
+    april_assert(numDim==1);
     return const_iterator(this, computeRawPos(&c0), &c0);
   }
   const_iterator iteratorAt(int c0, int c1) const {
-    assert(numDim==2);
+    april_assert(numDim==2);
     int aux[2]={c0,c1};
     return const_iterator(this, computeRawPos(aux), aux);
   }
   const_iterator iteratorAt(int *coords, int len) const {
-    assert(numDim==len);
+    april_assert(numDim==len);
     return const_iterator(this, computeRawPos(coords), coords);
   }
   const const_iterator &end() const {
@@ -455,12 +490,15 @@ public:
   bool putCol(int col, T *vec, int vecsize);
   bool putSubCol(int col, int first_row, T *vec, int vecsize);
 
-  // Returns true if they have the same dimension
+  /// Returns true if they have the same dimension
   bool sameDim(const Matrix<T> *other) const;
+  bool sameDim(const int *dims, const int len) const;
 
-  // Returns a matrix of one less dimension, with the elements selected for the
-  // given dimension at the given index
-  Matrix<T> *select(int dim, int index);
+  /// Returns a matrix of one less dimension, with the elements selected for the
+  /// given dimension at the given index.  If a matrix is given, it must be
+  /// created before using previous execution of select method over the same
+  /// dimension. WARNING, the matrix is not check to be correct, so be careful.
+  Matrix<T> *select(int dim, int index, Matrix<T> *dest=0);
   
   ////////////////////////////////////////////////////////////////////////////
 
@@ -483,19 +521,26 @@ public:
   Matrix<T>* multiply(const Matrix<T> *other) const;
 
   T sum() const;
-  
+
+  // the argument indicates over which dimension the sum must be performed
+  Matrix<T>* sum(int dim);
+
   /**** COMPONENT WISE OPERATIONS ****/
-  bool equals(const Matrix<T> *other, T epsilon) const;
+  bool equals(const Matrix<T> *other, float epsilon) const;
+  void plogp();
   void log();
   void log1p();
   void exp();
   void sqrt();
   void pow(T value);
   void tanh();
+  void sin();
+  void cos();
   Matrix<T> *cmul(const Matrix<T> *other);
   void adjustRange(T rmin, T rmax);
     
   /**** BLAS OPERATIONS ****/
+  void scalarAdd(T s);
   
   // FIXME: This operations could be improved if we take into account when the
   // matrix data is contiguous in memory (even when it is a sub-matrix)
@@ -531,10 +576,14 @@ public:
   
   void scal(T value);
   
-  T norm2() const;
-  T min(int &arg_min) const;
-  T max(int &arg_max) const;
+  float norm2() const;
+  T min(int &arg_min, int &arg_min_raw_pos) const;
+  T max(int &arg_max, int &arg_max_raw_pos) const;
   void minAndMax(T &min, T &max) const;
+
+  Matrix<T> *maxSelDim(const int dim,
+		       IntGPUMirroredMemoryBlock *raw_positions=0,
+		       int shift = 0) const;
   
 private:
   void allocate_memory(int size);

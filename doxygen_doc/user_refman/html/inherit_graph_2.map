@@ -1,7 +1,0 @@
-<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$classann_1_1loss_1_1____base____.html" title="ann::loss::__base__" alt="" coords="5,85,144,115"/>
-<area shape="rect" id="node3" href="$classann_1_1loss_1_1cross__entropy.html" title="ann::loss::cross_entropy" alt="" coords="195,5,360,35"/>
-<area shape="rect" id="node5" href="$classann_1_1loss_1_1local__fmeasure.html" title="ann::loss::local_fmeasure" alt="" coords="192,59,363,88"/>
-<area shape="rect" id="node7" href="$classann_1_1loss_1_1mse.html" title="ann::loss::mse" alt="" coords="224,112,331,141"/>
-<area shape="rect" id="node9" href="$classann_1_1loss_1_1multi__class__cross__entropy.html" title="ann::loss::multi_class\l_cross_entropy" alt="" coords="203,165,352,211"/>
-</map>

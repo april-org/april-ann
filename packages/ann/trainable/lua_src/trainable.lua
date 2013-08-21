@@ -53,11 +53,19 @@ april_set_doc("trainable.supervised_trainer.__call", {
 function trainable.supervised_trainer:__call(ann_component,
 					     loss_function,
 					     bunch_size)
+  if loss_function and not isa(loss_function, ann.loss.__base__) then
+    error("The second parameter must be an instance of ann.loss")
+  end
+  if bunch_size and not tonumber(bunch_size) then
+    error("The third parameter must be a number")
+  end
   local obj = {
     ann_component    = assert(ann_component,"Needs an ANN component object"),
     loss_function    = loss_function or false,
     weights_table    = {},
     components_table = {},
+    component2weights_dict = {},
+    weights2component_dict = {},
     weights_order    = {},
     components_order = {},
     bunch_size       = bunch_size or false,
@@ -471,11 +479,42 @@ function trainable.supervised_trainer:build(t)
   end
   table.sort(self.weights_order)
   self.components_order = {}
-  for name,_ in pairs(self.components_table) do
+  self.component2weights_dict = {}
+  self.weights2component_dict = {}
+  for name,c in pairs(self.components_table) do
     table.insert(self.components_order, name)
+    if c:has_weigths_name() then
+      local wname = c:get_weights_name()
+      self.component2weights_dict[name]  = c:get_weights_name()
+      self.weights2component_dict[wname] = self.weights2component_dict[wname] or {}
+      table.insert(self.weights2component_dict[wname], c)
+    end
   end
   table.sort(self.components_order)
   return self.weights_table,self.components_table
+end
+
+------------------------------------------------------------------------
+
+april_set_doc("trainable.supervised_trainer.get_weights_of", {
+		class = "method",
+		summary = "Returns a the object connections related to given component name",
+		params = { "A string with the component name" },
+		outputs = { "An instance of ann.connections" }, })
+
+function trainable.supervised_trainer:get_weights_of(name)
+  return self.weights_table[self.component2weights_dict[name]]
+end
+
+april_set_doc("trainable.supervised_trainer.get_components_of", {
+		class = "method",
+		summary = "Returns a table with the components related to given weights name",
+		params = { "A string with the weights name" },
+		outputs = { "A table of ann.components instances" }, })
+
+
+function trainable.supervised_trainer:get_components_of(wname)
+  return self.weights2component_dict[wname] or {}
 end
 
 ------------------------------------------------------------------------
@@ -536,6 +575,70 @@ function trainable.supervised_trainer:validate_step(input, target)
   local output   = self.ann_component:forward(input)
   local tr_loss  = self.loss_function:loss(output, target)
   return tr_loss
+end
+
+------------------------------------------------------------------------
+
+april_set_doc("trainable.supervised_trainer.grad_check_step", {
+		class = "method",
+		summary = "Executes one gradients check step",
+		params = {
+		  "A table with one input pattern or a token (with one or more patterns)",
+		  "The corresponding target output pattern (table or token)",
+		  "A boolean, true if you want high verbosity level [optional]",
+		},
+		outputs = {
+		  "A boolean, true or false if the gradient is correct or not",
+		} })
+
+function trainable.supervised_trainer:grad_check_step(input, target, verbose)
+  if type(input)  == "table" then input  = tokens.matrix(matrix.col_major(input))  end
+  if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
+  self.ann_component:reset()
+  self.loss_function:reset()
+  local output   = self.ann_component:forward(input, true)
+  local tr_loss  = self.loss_function:loss(output, target)
+  local gradient = self.loss_function:gradient(output, target)
+  gradient=self.ann_component:backprop(gradient)
+  local weight_grads = self.ann_component:compute_gradients()
+  local epsilond = 0.2
+  local epsilon  = 1e-03
+  local ret = true
+  for wname,cnn in self:iterate_weights() do
+    local w = cnn:matrix()
+    local ann_grads = weight_grads[wname]
+    for i=1,w:size() do
+      local orig_w = w:raw_get(i-1)
+      w:raw_set(i-1, orig_w - epsilon)
+      local loss_a = self.loss_function:loss(self.ann_component:forward(input,
+									true),
+					     target)
+      w:raw_set(i-1, orig_w + epsilon)
+      local loss_b = self.loss_function:loss(self.ann_component:forward(input,
+									true),
+					     target)
+      w:raw_set(i-1, orig_w)
+      local g = (loss_b - loss_a) / (2*epsilon)
+      local ann_g = ann_grads:raw_get(i-1)
+      if verbose then
+	fprintf(io.stderr,
+		"CHECK GRADIENT %s[%d], found %g, expected %g\n",
+		wname, i-1, ann_g, g)
+      end
+      if ann_g ~= 0 or g ~= 0 then
+	local abs_err = math.abs(ann_g - g)
+	local err = abs_err/math.abs(ann_g+g)
+	if err > epsilond and abs_err > 1e-03 then
+	  fprintf(io.stderr,
+		  "INCORRECT GRADIENT FOR %s[%d], found %g, expected %g "..
+		    "(error %g, abs error %g)\n",
+		  wname, i-1, ann_g, g, err, abs_err)
+	  ret = false
+	end
+      end
+    end
+  end
+  return ret
 end
 
 ------------------------------------------------------------------------
@@ -765,6 +868,84 @@ function trainable.supervised_trainer:train_dataset(t)
   ds_idx_table = nil
   collectgarbage("collect")
   return self.loss_function:get_accum_loss()
+end
+
+------------------------------------------------------------------------
+
+april_set_doc("trainable.supervised_trainer.grad_check_dataset", {
+		class = "method",
+		summary = "Executes gradient check with a given dataset",
+		params = {
+		  ["input_dataset"]  = "A dataset float or dataset token",
+		  ["output_dataset"] = "A dataset float or dataset token (target output)",
+		  ["bunch_size"]     = 
+		    {
+		      "Bunch size (mini-batch). It is optional if bunch_size",
+		      "was set at constructor, otherwise it is mandatory.",
+		    },
+		  ["max_iterations"] = "Number [optional]",
+		  ["verbose"] = "A boolean, true if you want high verbosity [optiona]",
+		},
+		outputs = {
+		  "A boolean",
+		} })
+
+function trainable.supervised_trainer:grad_check_dataset(t)
+  local params = get_table_fields(
+    {
+      input_dataset  = { mandatory = false, default=nil },
+      output_dataset = { mandatory = false, default=nil },
+      bunch_size     = { type_match = "number",
+			 mandatory = (self.bunch_size == false),
+			 default=self.bunch_size },
+      max_iterations = { type_match = "number",
+			 mandatory = false,
+			 default = t.input_dataset:numPatterns() },
+      verbose        = { type_match = "boolean",
+			 mandatory = false, default=false },
+    }, t)
+  -- ERROR CHECKING
+  assert(params.input_dataset ~= not params.output_dataset,
+	 "input_dataset and output_dataset fields are mandatory together")
+  --
+  
+  -- TRAINING TABLES
+  
+  -- for each pattern, index in dataset
+  local ds_idx_table = {}
+  -- set to ZERO the accumulated of loss
+  self.loss_function:reset()
+  if isa(params.input_dataset, dataset) then
+    params.input_dataset  = dataset.token.wrapper(params.input_dataset)
+  end
+  if isa(params.output_dataset, dataset) then
+    params.output_dataset = dataset.token.wrapper(params.output_dataset)
+  end
+  check_dataset_sizes(params.input_dataset, params.output_dataset)
+  local num_patterns = params.input_dataset:numPatterns()
+  for i=1,num_patterns do table.insert(ds_idx_table, i) end
+  local k=0
+  local bunch_indexes = {}
+  for i=1,#ds_idx_table,params.bunch_size do
+    if i/params.bunch_size > params.max_iterations then break end
+    table.clear(bunch_indexes)
+    local last = math.min(i+params.bunch_size-1, #ds_idx_table)
+    for j=i,last do table.insert(bunch_indexes, ds_idx_table[j]) end
+    local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
+    local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
+    if not self:grad_check_step(input_bunch, output_bunch, params.verbose) then
+      printf("Error processing pattern bunch: %s\n",
+	     table.concat(bunch_indexes, " "))
+      ds_idx_table = nil
+      collectgarbage("collect")
+      return false
+    end
+    k=k+1
+    if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
+  end
+  ds_idx_table = nil
+  collectgarbage("collect")
+  return true
 end
 
 ------------------------------------------------------------------------
@@ -1181,7 +1362,7 @@ function trainable.supervised_trainer:train_holdout_validation(t)
 			     default=function(t) return end },
       first_epoch        = { mandatory=false, type_match="number", default=1 },
     }, t)
-  local best_epoch       = params.first_epoch
+  local best_epoch       = params.first_epoch-1
   local best             = self:clone()
   local best_val_error   = params.validation_function(self,
 						      params.validation_table)
@@ -1361,6 +1542,17 @@ function trainable.supervised_trainer:train_wo_validation(t)
     prev_tr_err = tr_err
   end
   return best
+end
+
+function trainable.supervised_trainer:norm2(match_string)
+  local norm2 = 0
+  for _,cnn in self:iterate_weights(match_string) do
+    norm2 = math.max(norm2,
+		     reduce(function(a,b)
+			      return math.max(a,b:norm2())
+			    end, 0, cnn:matrix():sliding_window():iterate()))
+  end
+  return norm2
 end
 
 -------------------------

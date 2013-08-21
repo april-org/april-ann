@@ -21,6 +21,7 @@
 #ifndef ALIGNED_MEMORY_H
 #define ALIGNED_MEMORY_H
 
+#ifndef NO_MM_MALLOC
 #include <mm_malloc.h>
 
 #define VECTOR_ALIGNMENT 16
@@ -36,5 +37,21 @@ inline
 void aligned_free(T *ptr) {
   _mm_free(ptr);
 }
+
+#else
+
+#include <cstdlib>
+template<typename T>
+inline
+T* aligned_malloc(size_t nmemb) {
+  return (T*)malloc(sizeof(T)*nmemb);
+}
+
+template<typename T>
+inline
+void aligned_free(T *ptr) {
+  free(ptr);
+}
+#endif
 
 #endif // ALIGNED_MEMORY_H

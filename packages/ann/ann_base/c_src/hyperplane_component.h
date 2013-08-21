@@ -28,6 +28,8 @@
 
 namespace ANN {
 
+  /// This component is an stack of DotProductANNComponent and BiasANNComponent,
+  /// because this two components are used together in almost every ANN.
   class HyperplaneANNComponent : public ANNComponent {
     DotProductANNComponent *dot_product;
     BiasANNComponent       *bias;
@@ -82,6 +84,7 @@ namespace ANN {
       dot_product->resetConnections();
       bias->resetConnections();
     }
+    virtual void computeAllGradients(hash<string,MatrixFloat*> &weight_grads_dict);
     virtual void debugInfo() {
       ANNComponent::debugInfo();
       dot_product->debugInfo();

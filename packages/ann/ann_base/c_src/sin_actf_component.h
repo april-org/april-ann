@@ -27,8 +27,7 @@
 
 namespace ANN {
 
-  /// An abstract class that defines the basic interface that
-  /// the anncomponents must fulfill.
+  /// A component which computes the Sin activation function.
   class SinActfANNComponent : public ActivationFunctionANNComponent {
   protected:
     virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,

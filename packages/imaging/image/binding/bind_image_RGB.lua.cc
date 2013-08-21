@@ -110,7 +110,21 @@
 //BIND_METHOD ImageFloatRGB matrix
 {
   LUABIND_CHECK_ARGN(==,0);
-  LUABIND_ERROR("Not implemented");
+  Matrix<FloatRGB> *img_rgb = obj->matrix;
+  int dims[3] = { img_rgb->getDimSize(0), img_rgb->getDimSize(1), 3 };
+  MatrixFloat *output = new MatrixFloat(3, dims, img_rgb->getMajorOrder());
+  Matrix<FloatRGB>::iterator img_it(img_rgb->begin());
+  MatrixFloat::iterator output_it(output->begin());
+  for (int i=0; i<dims[0]; ++i) {
+    for (int j=0; j<dims[1]; ++j) {
+      FloatRGB rgb = *img_it;
+      *output_it = rgb.r; ++output_it;
+      *output_it = rgb.g; ++output_it;
+      *output_it = rgb.b; ++output_it;
+      ++img_it;
+    }
+  }
+  LUABIND_RETURN(MatrixFloat, output);
 }
 //BIND_END
 

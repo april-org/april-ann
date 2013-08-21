@@ -24,7 +24,7 @@
 #include <cstdio>
 #include <cstdlib> // para exit
 #include <cstring>
-#include <cassert>
+#include "april_assert.h"
 
 hmm_trainer::hmm_trainer() {
 
@@ -582,7 +582,7 @@ log_float hmm_trainer_model::viterbi(const MatrixFloat *emission,
 
   // devolver las probabilidades de cada estado al finalizar
   if (state_probabilities) {
-    assert(state_probabilities->getNumDim() == 1 &&
+    april_assert(state_probabilities->getNumDim() == 1 &&
 	   state_probabilities->getDimSize(0) == num_states);
     MatrixFloat::iterator st_prob_it(state_probabilities->begin());
     for (int i=0;i<num_states;i++, ++st_prob_it)

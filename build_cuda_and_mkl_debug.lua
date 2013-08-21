@@ -19,14 +19,15 @@ luapkg{
       "-march=native",
       "-msse",
       "-pg",
+      "-DNO_POOL",
       -- For CUDA
       "-I/usr/local/cuda/include",
       "-L/usr/local/cuda/lib",
-      "-DNO_POOL",
     },
     extra_libs={
       "-pg",
       "-lpthread",
+      "-rdynamic",
       -- For Intel MKL :)
       "-L/opt/MKL/lib",
       "-lmkl_intel_lp64",

@@ -34,14 +34,7 @@ void Matrix<T>::fill(T value) {
 
 template <typename T>
 void Matrix<T>::clamp(T lower, T upper) {
-  T *d = data->getPPALForReadAndWrite();
-  best_span_iterator span_it(this);
-  while(span_it != end_span_iterator()) {
-    int pos = span_it.getOffset();
-    for (int i=0; i<span_it.getSize(); ++i, pos += span_it.getStride())
-      d[pos] = april_utils::clamp(d[pos], lower, upper);
-    ++span_it;
-  }
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
 
@@ -57,6 +50,7 @@ void Matrix<T>::ones() {
 
 template <typename T>
 void Matrix<T>::diag(T value) {
+  if (use_cuda) ERROR_PRINT("WARNING! DIAG OPERATION NOT IMPLENTED FOR CUDA\n");
   for (int i=1; i<numDim; ++i)
     if (matrixSize[i] != matrixSize[i-1])
       ERROR_EXIT(128, "Only allowed for squared matrices\n");
@@ -68,6 +62,7 @@ void Matrix<T>::diag(T value) {
   }
   delete[] aux_coords;
 }
+
 
 template <typename T>
 Matrix<T>* Matrix<T>::addition(const Matrix<T> *other) {
@@ -89,37 +84,74 @@ Matrix<T>* Matrix<T>::multiply(const Matrix<T> *other) const {
 
 template <typename T>
 T Matrix<T>::sum() const {
-  T s = 0.0;
-  if (major_order == CblasRowMajor)
-    for (const_iterator it(begin()); it!=end(); ++it) {
-      s += *it;
-    }
-  else
-    for (const_col_major_iterator it(begin()); it!=end(); ++it) {
-      s += *it;
-    }
-    
-  return s;
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  return T();
+}
+
+// the argument indicates over which dimension the sum must be performed
+template <typename T>
+Matrix<T>* Matrix<T>::sum(int dim) {
+  int *result_dims = new int[numDim];
+  /**** THIS sliding window ****/
+  int *this_w_size = new int[numDim];
+  int *this_w_num_steps   = new int[numDim];
+  for (int i=0; i<dim; ++i) {
+    this_w_size[i] = 1;
+    result_dims[i] = this_w_num_steps[i] = matrixSize[i];
+  }
+  result_dims[dim] = 1;
+  this_w_size[dim] = matrixSize[dim];
+  this_w_num_steps[dim] = 1;
+  for (int i=dim+1; i<numDim; ++i) {
+    this_w_size[i] = 1;
+    result_dims[i] = this_w_num_steps[i] = matrixSize[i];
+  }
+  sliding_window this_w(this,this_w_size,0,0,this_w_num_steps,0);
+  Matrix<T> *slice = this_w.getMatrix();
+  IncRef(slice);
+  /******************************/
+  Matrix<T> *result = new Matrix<T>(numDim, result_dims, major_order);
+  // traverse in row major order
+  for (iterator it(result->begin()); it!=result->end(); ++it) {
+    this_w.getMatrix(slice);
+    *it = slice->sum();
+    this_w.next();
+  }
+  DecRef(slice);
+  delete[] this_w_size;
+  delete[] this_w_num_steps;
+  return result;
 }
 
 /**** COMPONENT WISE OPERATIONS ****/
 
 template <typename T>
 void Matrix<T>::scalarAdd(T s) {
-  if (major_order == CblasRowMajor)
-    for (iterator it(begin()); it!=end(); ++it) {
-      *it = *it + s;
-    }
-  else
-    for (col_major_iterator it(begin()); it!=end(); ++it) {
-      *it = *it + s;
-    }
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
 template <typename T>
-bool Matrix<T>::equals(const Matrix<T> *other, T epsilon) const {
+void Matrix<T>::copy(const Matrix<T> *other) {
+  if (!sameDim(other))
+    ERROR_EXIT(128, "Not equal matrix dimensions\n");
+  const_iterator it_orig(other->begin());
+  iterator it_dest(this->begin());
+  while(it_orig != other->end()) {
+    *it_dest = *it_orig;
+    ++it_orig;
+    ++it_dest;
+  }
+}
+
+template <typename T>
+bool Matrix<T>::equals(const Matrix<T> *other, float epsilon) const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return false;
+}
+
+template <typename T>
+void Matrix<T>::plogp() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
 template <typename T>
@@ -153,14 +185,19 @@ void Matrix<T>::tanh() {
 }
 
 template <typename T>
-Matrix<T> *Matrix<T>::cmul(const Matrix<T> *other) {
+void Matrix<T>::cos() {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-  return 0;
 }
 
 template <typename T>
-void Matrix<T>::copy(const Matrix<T> *other) {
+void Matrix<T>::sin() {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
+Matrix<T> *Matrix<T>::cmul(const Matrix<T> *other) {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  return 0;
 }
 
 template <typename T>
@@ -197,7 +234,7 @@ void Matrix<T>::ger(T alpha,
 template <typename T>
 T Matrix<T>::dot(const Matrix<T> *other) const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-  return T();
+  return 0.0f;
 }
 
 template <typename T>
@@ -206,19 +243,19 @@ void Matrix<T>::scal(T value) {
 }
 
 template <typename T>
-T Matrix<T>::norm2() const {
+float Matrix<T>::norm2() const {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  return 0.0f;
+}
+
+template <typename T>
+T Matrix<T>::min(int &arg_min, int &arg_min_raw_pos) const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return T();
 }
 
 template <typename T>
-T Matrix<T>::min(int &arg_min) const {
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-  return T();
-}
-
-template <typename T>
-T Matrix<T>::max(int &arg_max) const {
+T Matrix<T>::max(int &arg_max, int &arg_max_raw_pos) const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return T();
 }
@@ -226,6 +263,14 @@ T Matrix<T>::max(int &arg_max) const {
 template <typename T>
 void Matrix<T>::minAndMax(T &min, T &max) const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
+Matrix<T> *Matrix<T>::maxSelDim(const int dim,
+				IntGPUMirroredMemoryBlock *raw_positions,
+				int shift) const {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  return 0;
 }
 
 template <typename T>

@@ -37,15 +37,12 @@ template<>
 void Matrix<float>::ones();
 
 template<>
-void Matrix<float>::diag(float value);
+Matrix<float> *Matrix<float>::addition(const Matrix<float> *other);
 
 template<>
-Matrix<float>* Matrix<float>::addition(const Matrix<float> *other);
+Matrix<float> *Matrix<float>::substraction(const Matrix<float> *other);
 
-template<>
-Matrix<float>* Matrix<float>::substraction(const Matrix<float> *other);
-
-template<>
+template <>
 Matrix<float>* Matrix<float>::multiply(const Matrix<float> *other) const;
 
 template<>
@@ -56,6 +53,9 @@ void Matrix<float>::scalarAdd(float s);
 
 template<>
 bool Matrix<float>::equals(const Matrix<float> *other, float epsilon) const;
+
+template<>
+void Matrix<float>::plogp();
 
 template<>
 void Matrix<float>::log();
@@ -74,6 +74,12 @@ void Matrix<float>::pow(float value);
 
 template<>
 void Matrix<float>::tanh();
+
+template <>
+void Matrix<float>::cos();
+
+template <>
+void Matrix<float>::sin();
 
 template<>
 Matrix<float> *Matrix<float>::cmul(const Matrix<float> *other);
@@ -116,16 +122,23 @@ template<>
 float Matrix<float>::norm2() const;
 
 template<>
-float Matrix<float>::min(int &arg_min) const;
+float Matrix<float>::min(int &arg_min, int &arg_min_raw_pos) const;
 
 template<>
-float Matrix<float>::max(int &arg_max) const;
+float Matrix<float>::max(int &arg_max, int &arg_max_raw_pos) const;
 
 template<>
 void Matrix<float>::minAndMax(float &min, float &max) const;
 
+template <>
+Matrix<float> *Matrix<float>::maxSelDim(const int dim,
+					IntGPUMirroredMemoryBlock *raw_positions,
+					int shift) const;
+
 template<>
 void Matrix<float>::adjustRange(float rmin, float rmax);
+
+////////////////////////////////////////////////////////////////////////////
 
 typedef Matrix<float> MatrixFloat;
 

@@ -24,7 +24,7 @@
 /* Implementacion de un mfset, permite find(), merge(), toString() y
    fromString() */
 
-#include <cassert>
+#include "april_assert.h"
 #include <stdint.h>
 #include "constString.h"
 #include "binarizer.h"
@@ -81,7 +81,7 @@ namespace april_utils {
     // busca un valor en el mfset, y devuelve el conjunto ROOT al que
     // pertence
     int32_t find(const int32_t value) {
-      assert(value < vector_size);
+      april_assert(value < vector_size);
       int32_t r = data[value];
       while (r != data[r]) {
 	data[r] = data[data[r]];

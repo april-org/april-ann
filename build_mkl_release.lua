@@ -18,9 +18,11 @@ luapkg{
       "-march=native",
       "-msse",
       "-DNDEBUG",
+      "-fopenmp",
     },
     extra_libs={
       "-lpthread",
+      "-rdynamic",
       -- For Intel MKL :)
       "-L/opt/MKL/lib",
       "-lmkl_intel_lp64",
@@ -28,7 +30,7 @@ luapkg{
       "-lmkl_intel_thread",
       "-lmkl_core",
       "-Wl,--end-group",
-      "-liomp5"
+      "-liomp5",
     },
   },
   

@@ -30,13 +30,14 @@
 #include "aux_hash_table.h" // required for build
 #include "hash_table.h"     // required for build
 #include "matrixFloat.h"
+
 using april_utils::hash;    // required for build
 using april_utils::string;
 
 #ifndef NDEBUG
 #define ASSERT_MATRIX(m) do {					\
-    assert( (m)->getNumDim() == 2 );				\
-    assert( (m)->getMajorOrder() == CblasColMajor );		\
+    april_assert( (m)->getNumDim() == 2 );				\
+    april_assert( (m)->getMajorOrder() == CblasColMajor );		\
   } while(0)
 #else
 #define ASSERT_MATRIX(m)
@@ -81,6 +82,11 @@ namespace ANN {
     unsigned int input_size;
     unsigned int output_size;
     bool use_cuda;
+
+    /// Method which computes the gradient of the weights on the given
+    /// MatrixFloat object
+    virtual void computeGradients(MatrixFloat*& weight_grads) {
+    }
     
   public:
     ANNComponent(const char *name = 0, const char *weights_name = 0,
@@ -99,14 +105,17 @@ namespace ANN {
     const string &getWeightsName() const { return weights_name; }
     bool hasWeightsName() const { return !weights_name.empty(); }
     
+    static void resetIdCounters() { next_name_id=0; next_weights_id=0; }
+    
     bool getIsBuilt() const { return is_built; }
     
-    void generateDefaultWeightsName(const char *prefix=0) {
+    void generateDefaultWeightsName(string &dest,
+				    const char *prefix=0) {
       char str_id[MAX_NAME_STR+1];
       char default_prefix[2] = "w";
       if (prefix == 0) prefix = default_prefix;
       snprintf(str_id, MAX_NAME_STR, "%s%u", prefix, next_weights_id);
-      weights_name = string(str_id);
+      dest = string(str_id);
       ++next_weights_id;
     }
 
@@ -142,6 +151,13 @@ namespace ANN {
     /// Virtual method to reset to zero gradients and outputs (inputs are not
     /// reseted)
     virtual void reset() { }
+
+    /// Method which receives a hash table with matrices where compute the
+    /// gradients.
+    virtual void computeAllGradients(hash<string,MatrixFloat*> &weight_grads_dict){
+      if (!weights_name.empty())
+	computeGradients(weight_grads_dict[weights_name]);
+    }
     
     virtual ANNComponent *clone() {
       return new ANNComponent(name.c_str(), weights_name.c_str(),
@@ -150,7 +166,17 @@ namespace ANN {
     
     /// Virtual method to set use_cuda option. All childs which rewrite this
     /// method must call parent method before do anything.
-    virtual void setUseCuda(bool v) { use_cuda = true; }
+    virtual void setUseCuda(bool v) {
+#ifdef USE_CUDA
+      use_cuda = v;
+#else
+      ERROR_PRINT("WARNING!!! Trying to set use_cuda=true with NON "
+		  "cuda compilation\n");
+      use_cuda = false; // always false in this case
+#endif
+    }
+    
+    bool getUseCuda() const { return use_cuda; }
     
     /// Virtual method for setting the value of a training parameter.
     virtual void setOption(const char *name, double value) {

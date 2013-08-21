@@ -27,8 +27,7 @@
 
 namespace ANN {
 
-  /// An abstract class that defines the basic interface that
-  /// the anncomponents must fulfill.
+  /// This component implements the linear activation function.
   class LinearActfANNComponent : public ActivationFunctionANNComponent {
   protected:
     virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,

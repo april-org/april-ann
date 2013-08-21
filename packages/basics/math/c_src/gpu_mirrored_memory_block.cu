@@ -22,3 +22,5 @@
 #include "gpu_mirrored_memory_block.h"
 
 template class GPUMirroredMemoryBlock<float>;
+template class GPUMirroredMemoryBlock<int>;
+template class GPUMirroredMemoryBlock<ComplexF>;

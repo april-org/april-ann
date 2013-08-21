@@ -26,14 +26,24 @@
 
 namespace ANN {
 
+  /// ANN component for STACK several components. The output of one component is
+  /// the input of the next. The input and output size of this component depends
+  /// on the input of the first stacked component and the output of the last
+  /// stacked component. If it is zero, then the stack accepts (or produces) a
+  /// non determined number of neurons.
   class StackANNComponent : public ANNComponent {
+    /// Vector with the stack
     april_utils::vector<ANNComponent*> components;
+
   public:
     StackANNComponent(const char *name=0);
     virtual ~StackANNComponent();
 
+    /// Method to push a new component at the top of the stack
     void pushComponent(ANNComponent *component);
+    /// Returns the component at the top of the stack
     ANNComponent *topComponent();
+    /// Removes the component at the top of the stack
     void popComponent();
 
     virtual Token *getInput();
@@ -73,6 +83,7 @@ namespace ANN {
       for (unsigned int i=0; i<components.size(); ++i)
 	components[i]->resetConnections();
     }
+    virtual void computeAllGradients(hash<string,MatrixFloat*> &weight_grads_dict);
     virtual void debugInfo() {
       ANNComponent::debugInfo();
       for (unsigned int i=0; i<components.size(); ++i)

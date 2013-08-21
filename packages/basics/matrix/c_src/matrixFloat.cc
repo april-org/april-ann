@@ -19,106 +19,112 @@
  *
  */
 
+#include "swap.h"
 #include "matrix.h"
 #include "matrixFloat.h"
+#include "matrix_generic_math_templates.h" // functions which apply functors
+#include "matrix_generic_math_functors.h"  // standard functors
+#include "wrapper.h" // wrappers of mathematical function (for CPU/GPU)
 
 // WARNING: ALL THE METHODS IMPLEMENTED HERE ARE SPECIALIZED TO FLOAT VERSION
 
-// FIXME: using WRAPPER
+/************* FILL FUNCTION **************/
+DEF_CWISE_FUNCTOR_1(doFill,float);
 template<>
 void Matrix<float>::fill(float value) {
-  if (major_order == CblasRowMajor)
-    for (iterator it(begin()); it!=end(); ++it) {
-      *it = value;
-    }
-  else
-    for (col_major_iterator it(begin()); it!=end(); ++it) {
-      *it = value;
-    }
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_1(doFill,float,
+							    value));
 }
 
+/************* CLAMP FUNCTION **************/
+struct clamp_functor {
+  float lower, upper;
+  clamp_functor(float lower, float upper) :
+    lower(lower), upper(upper) { }
+  void operator()(MatrixFloat *m,
+		  unsigned int size, unsigned int stride,
+		  unsigned int offset) const {
+    doClamp(size, m->getRawDataAccess(), stride, offset,
+	    lower, upper, m->getCudaFlag());
+  }
+};
 template<>
 void Matrix<float>::clamp(float lower, float upper) {
-  best_span_iterator span_it(this);
-  while(span_it != end_span_iterator()) {
-    int pos = span_it.getOffset();
-    doClamp(static_cast<unsigned int>(span_it.getSize()),
-	    data,
-	    static_cast<unsigned int>(span_it.getStride()),
-	    static_cast<unsigned int>(span_it.getOffset()),
-	    lower, upper);
-    ++span_it;
-  }
+  clamp_functor functor(lower, upper);
+  applyFunctionWithSpanIterator<float>(this, functor);
 }
 
-
+/************* ZEROS FUNCTION **************/
 template<>
 void Matrix<float>::zeros() {
   fill(0.0f);
 }
 
+/************* ONES FUNCTION **************/
 template<>
 void Matrix<float>::ones() {
   fill(1.0f);
 }
 
-// FIXME: implement using WRAPPER
-template<>
-void Matrix<float>::diag(float value) {
-  for (int i=1; i<numDim; ++i)
-    if (matrixSize[i] != matrixSize[i-1])
-      ERROR_EXIT(128, "Only allowed for squared matrices\n");
-  float *d = data->getPPALForWrite();
-  int *aux_coords = new int[numDim];
-  for (int i=0; i<matrixSize[0]; ++i) {
-    for (int j=0; j<numDim; ++j) aux_coords[j] = i;
-    d[computeRawPos(aux_coords)] = value;
-  }
-  delete[] aux_coords;
-}
-
-template<>
+template <>
 Matrix<float>* Matrix<float>::addition(const Matrix<float> *other) {
   Matrix<float> *resul = this->clone();
   resul->axpy(1.0f, other);
   return resul;
 }
 
-template<>
+template <>
 Matrix<float>* Matrix<float>::substraction(const Matrix<float> *other) {
   Matrix<float> *resul = this->clone();
   resul->axpy(-1.0f, other);
   return resul;
 }
 
-template<>
+template <>
 Matrix<float>* Matrix<float>::multiply(const Matrix<float> *other) const {
   Matrix<float> *resul = 0;
   if (other->isVector()) {
     if (this->isColVector()) {
+      // OUTER product
       int dim[2] = {getVectorSize(),other->getVectorSize()};
       resul = new Matrix<float>(2, dim, major_order);
+#ifdef USE_CUDA
+      resul->setUseCuda(use_cuda);
+#endif
       resul->zeros();
       resul->ger(1.0f, this, other);
     }
     else if (!this->isVector()) {
+      // Matrix-Vector product
       int dim[2] = {matrixSize[0],1};
       resul = new Matrix<float>(other->numDim, dim, major_order);
+#ifdef USE_CUDA
+      resul->setUseCuda(use_cuda);
+#endif
       resul->zeros();
       resul->gemv(CblasNoTrans,
 		  1.0f, this, other,
 		  0.0f);
     }
     else {
+      // DOT product
       int dim[1] = {1};
       resul = new Matrix<float>(1, dim, major_order);
+#ifdef USE_CUDA
+      resul->setUseCuda(use_cuda);
+#endif
       (*resul)(0) = this->dot(other);
     }
   }
   else if (numDim == 2 && other->numDim == 2 &&
 	   matrixSize[1] == other->matrixSize[0]) {
+    // Matrix-Matrix product
     int dim[2] = {matrixSize[0], other->matrixSize[1]};
     resul = new Matrix<float>(2,dim,major_order);
+#ifdef USE_CUDA
+    resul->setUseCuda(use_cuda);
+#endif
     resul->zeros();
     resul->gemm(CblasNoTrans, CblasNoTrans,
 		1.0f, this, other, 0.0f);
@@ -126,133 +132,126 @@ Matrix<float>* Matrix<float>::multiply(const Matrix<float> *other) const {
   return resul;
 }
 
-// implement using WRAPPER
+/************* SUM FUNCTION **************/
+struct sum_functor {
+  float operator()(const MatrixFloat *m,
+		   unsigned int size, unsigned int stride,
+		   unsigned int offset) const {
+    return doSum(size, m->getRawDataAccess(), stride, offset,
+		 m->getCudaFlag(), 0.0f);
+  }
+};
 template<>
 float Matrix<float>::sum() const {
-  float s = 0.0;
-  if (major_order == CblasRowMajor)
-    for (const_iterator it(begin()); it!=end(); ++it) {
-      s += *it;
-    }
-  else
-    for (const_col_major_iterator it(begin()); it!=end(); ++it) {
-      s += *it;
-    }
-    
-  return s;
+  sum_functor functor;
+  return applySumReductionWithSpanIterator<float>(this, functor);
 }
 
 /**** COMPONENT WISE OPERATIONS ****/
 
-// implement using WRAPPER
+
+/************* scalarAdd FUNCTION **************/
+DEF_CWISE_FUNCTOR_1(doScalarAdd,float);
 template<>
 void Matrix<float>::scalarAdd(float s) {
-  if (major_order == CblasRowMajor)
-    for (iterator it(begin()); it!=end(); ++it) {
-      *it = *it + s;
-    }
-  else
-    for (col_major_iterator it(begin()); it!=end(); ++it) {
-      *it = *it + s;
-    }
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_1(doScalarAdd,
+							    float,s));
 }
 
-// implement using WRAPPER
+/************* equals FUNCTION **************/
+struct equals_functor {
+  float epsilon;
+  equals_functor(float epsilon) : epsilon(epsilon) { }
+  bool operator()(const MatrixFloat *m1,
+		  const MatrixFloat *m2,
+		  unsigned int size,
+		  unsigned int stride1,
+		  unsigned int stride2,
+		  unsigned int offset1,
+		  unsigned int offset2) const {
+    return doEquals(size, m1->getRawDataAccess(), m2->getRawDataAccess(),
+		    stride1, stride2, offset1, offset2, epsilon,
+		    m1->getCudaFlag() && m2->getCudaFlag());
+  }
+};
 template<>
 bool Matrix<float>::equals(const Matrix<float> *other, float epsilon) const {
   if (!sameDim(other)) return false;
-  if (major_order == CblasRowMajor) {
-    const_iterator it(begin());
-    const_iterator other_it(other->begin());
-    while(it != end()) {
-      if (fabsf(*it - *other_it) > epsilon) return false;
-      ++it;
-      ++other_it;
-    }
-  }
-  else {
-    const_col_major_iterator it(begin());
-    const_col_major_iterator other_it(other->begin());
-    while(it != end()) {
-      if (fabsf(*it - *other_it) > epsilon) return false;
-      ++it;
-      ++other_it;
-    }
-  }
-  return true;
+  equals_functor functor(epsilon);
+  return applyBinaryAndReductionWithSpanIterator<float>(this, other, functor);
 }
 
-// implement using WRAPPER
+/************* LOG FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doPLogP,float);
+template<>
+void Matrix<float>::plogp() {
+  applyFunctionWithSpanIterator(this, MAKE_CWISE_FUNCTOR_0(doPLogP,float));
+}
+
+/************* LOG FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doLog,float);
 template<>
 void Matrix<float>::log() {
-  if (major_order == CblasRowMajor)
-    for (iterator it(begin()); it!=end(); ++it) {
-      *it = logf(*it);
-    }
-  else
-    for (col_major_iterator it(begin()); it!=end(); ++it) {
-      *it = logf(*it);
-    }
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doLog,float));
 }
 
-// implement using WRAPPER
+/************* LOG1P FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doLog1p,float);
 template<>
 void Matrix<float>::log1p() {
-  if (major_order == CblasRowMajor)
-    for (iterator it(begin()); it!=end(); ++it) {
-      *it = log1pf(*it);
-    }
-  else
-    for (col_major_iterator it(begin()); it!=end(); ++it) {
-      *it = log1pf(*it);
-    }
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doLog1p,float));
+
 }
 
-// implement using WRAPPER
+/************* EXP FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doExp,float);
 template<>
 void Matrix<float>::exp() {
-  if (major_order == CblasRowMajor)
-    for (iterator it(begin()); it!=end(); ++it) {
-      *it = expf(*it);
-    }
-  else
-    for (col_major_iterator it(begin()); it!=end(); ++it) {
-      *it = expf(*it);
-    }
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doExp,float));
 }
 
-// implement using WRAPPER
+/************* SQRT FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doSqrt,float);
 template<>
 void Matrix<float>::sqrt() {
-  for (iterator it(begin()); it!=end(); ++it) {
-    *it = sqrtf(*it);
-  }
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doSqrt,float));
 }
 
-// implement using WRAPPER
+/************* POW FUNCTION **************/
+DEF_CWISE_FUNCTOR_1(doPow,float);
 template<>
 void Matrix<float>::pow(float value) {
-  if (major_order == CblasRowMajor)
-    for (iterator it(begin()); it!=end(); ++it) {
-      *it = powf(*it, value);
-    }
-  else
-    for (col_major_iterator it(begin()); it!=end(); ++it) {
-      *it = powf(*it, value);
-    }
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_1(doPow,float,value));
 }
 
-// implement using WRAPPER
+/************* TANH FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doTanh,float);
 template<>
 void Matrix<float>::tanh() {
-  if (major_order == CblasRowMajor)
-    for (iterator it(begin()); it!=end(); ++it) {
-      *it = tanhf(*it);
-    }
-  else
-    for (col_major_iterator it(begin()); it!=end(); ++it) {
-      *it = tanhf(*it);
-    }
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doTanh,float));;
+}
+
+/************* SIN FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doSin,float);
+template<>
+void Matrix<float>::sin() {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doSin,float));;
+}
+
+/************* COS FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doCos,float);
+template<>
+void Matrix<float>::cos() {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doCos,float));;
 }
 
 template<>
@@ -267,18 +266,35 @@ Matrix<float> *Matrix<float>::cmul(const Matrix<float> *other) {
   if (!getIsContiguous() || !other->getIsContiguous())
     ERROR_EXIT(128, "Only allowed for contiguous matrices\n");
   Matrix<float> *new_mat = new Matrix(1, &total_size, major_order);
-  doSsbmv(major_order, CblasLower,
-	  total_size, 0,
-	  1.0f, data, 1,
-	  other->data, 1,
-	  0.0f, new_mat->data, 1,
-	  offset, other->offset, new_mat->offset,
-	  use_cuda);
+#ifdef USE_CUDA
+  new_mat->setUseCuda(use_cuda);
+#endif
+  doSbmv(major_order, CblasLower,
+	 total_size, 0,
+	 1.0f, data, 1,
+	 other->data, 1,
+	 0.0f, new_mat->data, 1,
+	 offset, other->offset, new_mat->offset,
+	 use_cuda);
   return new_mat;
 }
 
 /**** BLAS OPERATIONS ****/
-
+struct copy_functor {
+  void operator()(MatrixFloat *dest, const MatrixFloat *orig,
+		  unsigned int size,
+		  unsigned int stride_dest,
+		  unsigned int stride_orig,
+		  unsigned int offset_dest,
+		  unsigned int offset_orig) const {
+    doCopy(size,
+	   orig->getRawDataAccess(),
+	   offset_orig, stride_orig,
+	   dest->getRawDataAccess(),
+	   offset_dest, stride_dest,
+	   orig->getCudaFlag());
+  }
+};
 template<>
 void Matrix<float>::copy(const Matrix<float> *other) {
   if (size() != other->size())
@@ -289,101 +305,40 @@ void Matrix<float>::copy(const Matrix<float> *other) {
   if (! sameDim(other) )
     ERROR_EXIT(128, "Matrices with different dimension sizes\n");
   use_cuda = other->use_cuda;
-  // Contiguous memory blocks
-  if (getIsContiguous() && other->getIsContiguous())
-    doScopy(total_size,
-	    other->data, other->offset, 1,
-	    data, offset, 1,
-	    use_cuda);
-  else if (numDim == 1)
-    doScopy(total_size,
-	    other->data, other->offset, other->stride[0],
-	    data, offset, stride[0],
-	    use_cuda);
-  // Two dimmension matrices
-  else if (numDim == 2) {
-    int larger_dim = 0, shorter_dim = 1;
-    if (matrixSize[larger_dim] < matrixSize[shorter_dim])
-      april_utils::swap(larger_dim, shorter_dim);
-    int this_pos  = offset;
-    int other_pos = other->offset;
-    for (int i=0; i<matrixSize[shorter_dim]; ++i) {
-      doScopy(matrixSize[larger_dim],
-	      other->data, other_pos, other->stride[larger_dim],
-	      data, this_pos, stride[larger_dim],
-	      use_cuda);
-      this_pos  += stride[shorter_dim];
-      other_pos += other->stride[shorter_dim];
-    }
-  }
-  // General case
-  else {
-    best_span_iterator this_span_it(this), other_span_it(other);
-    while(this_span_it != end_span_iterator()) {
-      doScopy(static_cast<unsigned int>(this_span_it.getSize()),
-	      other->data,
-	      static_cast<unsigned int>(other_span_it.getOffset()),
-	      static_cast<unsigned int>(other_span_it.getStride()),
-	      data,
-	      static_cast<unsigned int>(this_span_it.getOffset()),
-	      static_cast<unsigned int>(this_span_it.getStride()),
-	      use_cuda);      
-      ++this_span_it;
-      ++other_span_it;
-    }
-  }
+  copy_functor functor;
+  applyBinaryFunctionWithSpanIterator<float>(this, other, functor);
 }
 
+struct axpy_functor {
+  float alpha;
+  axpy_functor(float alpha) : alpha(alpha) { }
+  void operator()(MatrixFloat *one, const MatrixFloat *other,
+		  unsigned int size,
+		  unsigned int stride_one,
+		  unsigned int stride_other,
+		  unsigned int offset_one,
+		  unsigned int offset_other) const {
+    doAxpy(size, alpha,
+	   other->getRawDataAccess(),
+	   offset_other, stride_other,
+	   one->getRawDataAccess(),
+	   offset_one, stride_one,
+	   one->getCudaFlag());
+  }
+};
 template<>
 void Matrix<float>::axpy(float alpha, const Matrix<float> *other) {
   if (size() != other->size())
-    ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d",
+    ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d\n",
 		size(), other->size());
   if (major_order != other->major_order)
-    ERROR_EXIT(128, "Matrices with different major orders");
-  if (getIsContiguous() && other->getIsContiguous())
-    doSaxpy(total_size,
-	    alpha, other->data, other->offset, 1,
-	    data, offset, 1,
-	    use_cuda);
-  else if (numDim == 1)
-    doSaxpy(total_size,
-	    alpha, other->data, other->offset, other->stride[0],
-	    data, offset, stride[0],
-	    use_cuda);
-  // Two dimmension matrices
-  else if (numDim == 2) {
-    int larger_dim = 0, shorter_dim = 1;
-    if (matrixSize[larger_dim] < matrixSize[shorter_dim])
-      april_utils::swap(larger_dim, shorter_dim);
-    int this_pos  = offset;
-    int other_pos = other->offset;
-    for (int i=0; i<matrixSize[shorter_dim]; ++i) {
-      doSaxpy(matrixSize[larger_dim],
-	      alpha, other->data, other_pos, other->stride[larger_dim],
-	      data, this_pos, stride[larger_dim],
-	      use_cuda);
-      this_pos  += stride[shorter_dim];
-      other_pos += other->stride[shorter_dim];
-    }
-  }
-  // General case
-  else {
-    best_span_iterator this_span_it(this), other_span_it(other);
-    while(this_span_it != end_span_iterator()) {
-	doSaxpy(static_cast<unsigned int>(this_span_it.getSize()),
-		alpha,
-		other->data,
-		static_cast<unsigned int>(other_span_it.getOffset()),
-		static_cast<unsigned int>(other_span_it.getStride()),
-		data,
-		static_cast<unsigned int>(this_span_it.getOffset()),
-		static_cast<unsigned int>(this_span_it.getStride()),
-		use_cuda);
-      ++this_span_it;
-      ++other_span_it;
-    }
-  }
+    ERROR_EXIT(128, "Matrices with different major orders\n");
+  axpy_functor functor(alpha);
+#ifdef USE_MKL
+  applyBinaryFunctionWithSpanIteratorNOPARALLEL<float>(this, other, functor);
+#else
+  applyBinaryFunctionWithSpanIterator<float>(this, other, functor);
+#endif
 }
 
 template<>
@@ -394,7 +349,7 @@ void Matrix<float>::gemm(CBLAS_TRANSPOSE trans_A,
 			 const Matrix<float> *otherB,
 			 float beta) {
   if (numDim != 2 || otherA->numDim != 2 || otherB->numDim != 2)
-    ERROR_EXIT(128,"Incorrect number of dimensions, only allowed for numDim=2");
+    ERROR_EXIT(128,"Incorrect number of dimensions, only allowed for numDim=2\n");
   int row_idx_A = 0, col_idx_A = 1, row_idx_B = 0, col_idx_B = 1;
   if (trans_A == CblasTrans) april_utils::swap(row_idx_A, col_idx_A);
   if (trans_B == CblasTrans) april_utils::swap(row_idx_B, col_idx_B);
@@ -410,16 +365,24 @@ void Matrix<float>::gemm(CBLAS_TRANSPOSE trans_A,
     ERROR_EXIT(128, "Matrices with different major orders");
   
   int M=matrixSize[0], N=matrixSize[1], K=otherA->matrixSize[col_idx_A];
-  int lda=(major_order==CblasRowMajor)?otherA->stride[0]:otherA->stride[1];
-  int ldb=(major_order==CblasRowMajor)?otherB->stride[0]:otherB->stride[1];
-  int ldc=(major_order==CblasRowMajor)?stride[0]:stride[1];
-  doSgemm(major_order, trans_A, trans_B,
-	  M, N, K,
-	  alpha, otherA->data, lda,
-	  otherB->data, ldb,
-	  beta, data, ldc,
-	  otherA->offset, otherB->offset, offset,
-	  use_cuda);
+  int lda, ldb, ldc;
+  if (major_order == CblasRowMajor) {
+    lda = otherA->stride[0];
+    ldb = otherB->stride[0];
+    ldc = stride[0];
+  }
+  else {
+    lda = otherA->stride[1];
+    ldb = otherB->stride[1];
+    ldc = stride[1];
+  }
+  doGemm(major_order, trans_A, trans_B,
+	 M, N, K,
+	 alpha, otherA->data, lda,
+	 otherB->data, ldb,
+	 beta, data, ldc,
+	 otherA->offset, otherB->offset, offset,
+	 use_cuda);
 }
 
 template<>
@@ -446,13 +409,13 @@ void Matrix<float>::gemv(CBLAS_TRANSPOSE trans_A,
   int lda=( major_order==CblasRowMajor)?otherA->stride[0]:otherA->stride[1];
   int ldx=otherX->getVectorStride();
   int ldy=getVectorStride();
-  doSgemv(major_order, trans_A,
-	  M, N,
-	  alpha, otherA->data, lda,
-	  otherX->data, ldx,
-	  beta, data, ldy,
-	  otherA->offset, otherX->offset, offset,
-	  use_cuda);
+  doGemv(major_order, trans_A,
+	 M, N,
+	 alpha, otherA->data, lda,
+	 otherX->data, ldx,
+	 beta, data, ldy,
+	 otherA->offset, otherX->offset, offset,
+	 use_cuda);
 }
 
 template<>
@@ -473,12 +436,12 @@ void Matrix<float>::ger(float alpha,
   int lda=( major_order==CblasRowMajor)?stride[0]:stride[1];
   int ldx=otherX->getVectorStride();
   int ldy=otherY->getVectorStride();
-  doSger(major_order,
-	 M, N,
-	 alpha, otherX->data, otherX->offset, ldx,
-	 otherY->data, otherY->offset, ldy,
-	 data, offset, lda,
-	 use_cuda);
+  doGer(major_order,
+	M, N,
+	alpha, otherX->data, otherX->offset, ldx,
+	otherY->data, otherY->offset, ldy,
+	data, offset, lda,
+	use_cuda);
 }
 
 template<>
@@ -490,91 +453,60 @@ float Matrix<float>::dot(const Matrix<float> *other) const {
 		this->getVectorSize(), other->getVectorSize());
   if (major_order != other->major_order)
     ERROR_EXIT(128, "Matrices with different major orders");
-  float ret = doSdot(getVectorSize(),
-		     data, offset, getVectorStride(),
-		     other->data, other->offset, other->getVectorStride(),
-		     use_cuda);
+  float ret = doDot(getVectorSize(),
+		    data, offset, getVectorStride(),
+		    other->data, other->offset, other->getVectorStride(),
+		    use_cuda);
   return ret;
 }
 
+/********** SCAL FUNCTION ***************/
+DEF_CWISE_FUNCTOR_1(doScal,float);
 template<>
 void Matrix<float>::scal(float value) {
-  // Contiguous memory block
-  if (getIsContiguous()) doSscal(total_size, value, data, offset, 1, use_cuda);
-  else if (numDim == 1)
-    doSscal(total_size, value, data, offset, stride[0], use_cuda);
-  // Two dimmension matrix
-  else if (numDim == 2) {
-    int larger_dim = 0, shorter_dim = 1;
-    if (matrixSize[larger_dim] < matrixSize[shorter_dim])
-      april_utils::swap(larger_dim, shorter_dim);
-    int pos  = offset;
-    for (int i=0; i<matrixSize[shorter_dim]; ++i) {
-      doSscal(matrixSize[larger_dim], value,
-	      data, pos, stride[larger_dim],
-	      use_cuda);
-      pos += stride[shorter_dim];
-    }
-  }
-  // General case
-  else {
-    best_span_iterator this_span_it(this);
-    while(this_span_it != end_span_iterator()) {
-      doSscal(static_cast<unsigned int>(this_span_it.getSize()),
-	      value,
-	      data,
-	      static_cast<unsigned int>(this_span_it.getOffset()),
-	      static_cast<unsigned int>(this_span_it.getStride()),
-	      use_cuda);
-      ++this_span_it;
-    }
-  }
+#ifdef USE_MKL
+  applyFunctionWithSpanIteratorNOPARALLEL<float>(this,
+						 MAKE_CWISE_FUNCTOR_1(doScal,
+								      float,
+								      value));
+#else
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_1(doScal,float,
+							    value));
+#endif
 }
 
+/********** NORM2 FUNCTION ***************/
+struct norm2_functor {
+  float operator()(const MatrixFloat *m, unsigned int size, unsigned int stride,
+		   unsigned int offset) const {
+    return doNrm2(size, m->getRawDataAccess(), stride, offset,
+		  m->getCudaFlag());
+  }
+};
+struct norm2_reductor {
+  float operator()(float accum, float other) const {
+    return accum + other*other;
+  }
+};
+// In this method we do ad-hoc specialization of BASIC cases because
+// we avoid the SQUARE and SQRT functions
 template<>
 float Matrix<float>::norm2() const {
   float v;
   // Contiguous memory block
-  if (getIsContiguous()) v=doSnrm2(total_size, data, offset, 1, use_cuda);
+  if (getIsContiguous()) v=doNrm2(total_size, data, 1, offset, use_cuda);
+  // One dimension
   else if (numDim == 1)
-    v=doSnrm2(total_size, data, offset, stride[0], use_cuda);
-  // Two dimmension matrix
-  else if (numDim == 2) {
-    v = 0.0f;
-    int larger_dim = 0, shorter_dim = 1;
-    if (matrixSize[larger_dim] < matrixSize[shorter_dim])
-      april_utils::swap(larger_dim, shorter_dim);
-    int pos  = offset;
-    switch(matrixSize[shorter_dim]) {
-    case 1:
-      v = doSnrm2(matrixSize[larger_dim],
-		  data, pos, stride[larger_dim],
-		  use_cuda);
-      break;
-    default:
-      for (int i=0; i<matrixSize[shorter_dim]; ++i) {
-	float aux = doSnrm2(matrixSize[larger_dim],
-			    data, pos, stride[larger_dim],
-			    use_cuda);
-	v   += aux*aux;
-	pos += stride[shorter_dim];
-      }
-      v = sqrtf(v);
-    }
-  }
+    v=doNrm2(total_size, data, stride[0], offset, use_cuda);
   // General case
   else {
-    v = 0.0f;
-    best_span_iterator this_span_it(this);
-    while(this_span_it != end_span_iterator()) {
-      float aux = doSnrm2(static_cast<unsigned int>(this_span_it.getSize()),
-			  data,
-			  static_cast<unsigned int>(this_span_it.getOffset()),
-			  static_cast<unsigned int>(this_span_it.getStride()),	  
-			  use_cuda);
-      v += aux*aux;
-      ++this_span_it;
-    }
+    norm2_functor  functor;
+    norm2_reductor reductor;
+    v = applyReductionWithSpanIteratorNOPARALLEL<float,float>(this,
+							      functor,
+							      reductor,
+							      0.0f);
     v = sqrtf(v);
   }
   return v;
@@ -582,19 +514,21 @@ float Matrix<float>::norm2() const {
 
 // FIXME: using WRAPPER
 template<>
-float Matrix<float>::min(int &arg_min) const {
+float Matrix<float>::min(int &arg_min, int &arg_min_raw_pos) const {
   const_iterator it(begin());
   const_iterator result = april_utils::argmin(it, const_iterator(end()));
   arg_min = result.getIdx();
+  arg_min_raw_pos = result.getRawPos();
   return *result;
 }
 
 // FIXME: using WRAPPER
 template<>
-float Matrix<float>::max(int &arg_max) const {
+float Matrix<float>::max(int &arg_max, int &arg_max_raw_pos) const {
   const_iterator it(begin());
   const_iterator result = april_utils::argmax(it, const_iterator(end()));
   arg_max = result.getIdx();
+  arg_max_raw_pos = result.getRawPos();
   return *result;
 }
 
@@ -619,6 +553,123 @@ void Matrix<float>::minAndMax(float &min, float &max) const {
       if (*it > max) max = *it;
     }
   }
+}
+
+template <>
+Matrix<float> *Matrix<float>::maxSelDim(const int dim,
+					IntGPUMirroredMemoryBlock *raw_positions,
+					int shift) const {
+  if (dim < 0 || dim > numDim)
+    ERROR_EXIT2(128, "Incorrect dimension %d, numDim=%d\n", dim, numDim);
+  MatrixFloat *result = new MatrixFloat(1, &matrixSize[dim], major_order);;
+  int *argmax = 0;
+  if (raw_positions != 0) {
+    argmax = raw_positions->getPPALForWrite() + shift;
+  }
+  switch(numDim) {
+  case 1:
+    ERROR_EXIT(128, "Impossible to compute maxSelDim when numDim=1\n");
+    break;
+  case 2:
+    {
+      const int other_dim = 1 - dim;
+#ifdef USE_CUDA
+      result->setUseCuda(use_cuda);
+#endif
+      float *res_ptr = result->getRawDataAccess()->getPPALForWrite();
+      const float *src_ptr = data->getPPALForRead();
+      for (int i=0; i<matrixSize[dim]; ++i, ++res_ptr) {
+	int current_raw_pos = offset + i*stride[dim];
+	int raw_pos_max = current_raw_pos;
+	*res_ptr = src_ptr[current_raw_pos];
+	current_raw_pos += stride[other_dim];
+	for (int j=1; j<matrixSize[other_dim]; ++j,current_raw_pos+=stride[other_dim]) {
+	  if (src_ptr[current_raw_pos] > *res_ptr) {
+	    *res_ptr    = src_ptr[current_raw_pos];
+	    raw_pos_max = current_raw_pos;
+	  }
+	}
+	if (argmax) argmax[i] = raw_pos_max;
+      }
+      break;
+    }
+  case 3:
+    {
+      int other_dim1 = (dim+1)%3;
+      int other_dim2 = (dim+2)%3;
+      if (other_dim2 < other_dim1)
+	april_utils::swap(other_dim1, other_dim2);
+#ifdef USE_CUDA
+      result->setUseCuda(use_cuda);
+#endif
+      float *res_ptr = result->getRawDataAccess()->getPPALForWrite();
+      const float *src_ptr = data->getPPALForRead();
+      for (int i=0; i<matrixSize[dim]; ++i, ++res_ptr) {
+	int raw_pos_max = i*stride[dim] + offset;
+	*res_ptr = src_ptr[raw_pos_max];
+	for (int j=0; j<matrixSize[other_dim1]; ++j) {
+	  int current_raw_pos = offset + i*stride[dim] + j*stride[other_dim1];
+	  for (int k=0; k<matrixSize[other_dim2];
+	       ++k, current_raw_pos += stride[other_dim2]) {
+	    if (src_ptr[current_raw_pos] > *res_ptr) {
+	      *res_ptr    = src_ptr[current_raw_pos];
+	      raw_pos_max = current_raw_pos;
+	    }
+	  }
+	}
+	if (argmax) argmax[i] = raw_pos_max;
+      }
+      break;
+    }
+  case 4:
+    {
+      int other_dim1 = (dim+1)%4;
+      int other_dim2 = (dim+2)%4;
+      int other_dim3 = (dim+3)%4;
+      if (other_dim1 > other_dim2)
+	april_utils::swap(other_dim1, other_dim2);
+      if (other_dim2 > other_dim3) {
+	april_utils::swap(other_dim2, other_dim3);
+	if (other_dim1 > other_dim2)
+	  april_utils::swap(other_dim1, other_dim2);
+      }
+#ifdef USE_CUDA
+      result->setUseCuda(use_cuda);
+#endif
+      float *res_ptr = result->getRawDataAccess()->getPPALForWrite();
+      const float *src_ptr = data->getPPALForRead();
+      for (int i=0; i<matrixSize[dim]; ++i, ++res_ptr) {
+	int raw_pos_max = i*stride[dim] + offset;
+	*res_ptr = src_ptr[raw_pos_max];
+	for (int j=0; j<matrixSize[other_dim1]; ++j) {
+	  for (int k=0; k<matrixSize[other_dim2]; ++k) {
+	    int current_raw_pos=offset+i*stride[dim]+j*stride[other_dim1]+k*stride[other_dim2];
+	    for (int k2=0; k2<matrixSize[other_dim3];
+		 ++k2, current_raw_pos += stride[other_dim3]) {
+	      if (src_ptr[current_raw_pos] > *res_ptr) {
+		*res_ptr    = src_ptr[current_raw_pos];
+		raw_pos_max = current_raw_pos;
+	      }
+	    }
+	  }
+	}
+	if (argmax) argmax[i] = raw_pos_max;
+      }
+      break;
+    }
+  default:
+    {
+      float *res_ptr = result->getRawDataAccess()->getPPALForWrite();
+      for (int i=0; i<matrixSize[dim]; ++i, ++res_ptr) {
+	int aux, argmax_raw_pos;
+	MatrixFloat *current = const_cast<MatrixFloat*>(this)->select(dim, i);
+	current->max(aux, argmax_raw_pos);
+	if (argmax) argmax[i] = argmax_raw_pos;
+	delete current;
+      }
+    }
+  }
+  return result;
 }
 
 // FIXME: using WRAPPER

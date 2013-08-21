@@ -123,6 +123,40 @@ namespace ANN {
     prev_weights->axpy(c_weight_decay, weights);
   }
 
+  void Connections::applyMaxNormPenalty(float max_norm_penalty) {
+    MatrixFloat::sliding_window window(weights, 0, 0, 0, 0, 0);
+    MatrixFloat::sliding_window window_prev(prev_weights, 0, 0, 0, 0, 0);
+    MatrixFloat *submat = window.getMatrix();
+    MatrixFloat *submat_prev = window_prev.getMatrix();
+    IncRef(submat);
+    IncRef(submat_prev);
+    while(!window.isEnd()) {
+      window.getMatrix(submat);
+      float norm2 = submat->norm2();
+      /*
+	april_assert(norm2 < 10000.0f);
+	if (norm2 > 10000.0f)
+	ERROR_EXIT(128, "WOWOWOW\n");
+      */
+      if (norm2 > max_norm_penalty) {
+	window_prev.getMatrix(submat_prev);
+	float scal_factor = max_norm_penalty/norm2;
+	submat->scal(scal_factor);
+	submat_prev->scal(scal_factor);
+	/*
+	  if (norm2 > 10000.0f)
+	  for (MatrixFloat::iterator it(submat->begin()); it!=submat->end(); ++it) {
+	  printf("%d %f\n", it.getIdx(), *it);
+	  }
+	*/
+      }
+      window.next();
+      window_prev.next();
+    }
+    DecRef(submat);
+    DecRef(submat_prev);
+  }
+
   unsigned int Connections::size() const {
     return weights->size();
   }
@@ -139,7 +173,7 @@ namespace ANN {
   void Connections::pruneSubnormalAndCheckNormal() {
     float *w = weights->getRawDataAccess()->getPPALForReadAndWrite();
     if (!april_utils::check_floats(w, weights->size())) {
-      assert("No finite numbers at weights matrix!!!" && false);
+      april_assert("No finite numbers at weights matrix!!!" && false);
       ERROR_EXIT(128, "No finite numbers at weights matrix!!!\n");
     }
   }
@@ -159,8 +193,8 @@ namespace ANN {
     double dsup = high;
 
     // assert to avoid nearzero weights
-    assert(fabs(dinf) > weightnearzero);
-    assert(fabs(dsup) > weightnearzero);
+    april_assert(fabs(dinf) > weightnearzero);
+    april_assert(fabs(dsup) > weightnearzero);
     double range  = dsup - dinf;
     MatrixFloat::iterator w_it(weights->begin());
     MatrixFloat::iterator prev_w_it(prev_weights->begin());
@@ -179,8 +213,8 @@ namespace ANN {
     double dsup = high;
 
     // assert to avoid nearzero weights
-    assert(fabs(dinf) > weightnearzero);
-    assert(fabs(dsup) > weightnearzero);
+    april_assert(fabs(dinf) > weightnearzero);
+    april_assert(fabs(dsup) > weightnearzero);
     double range  = dsup - dinf;
     MatrixFloat::iterator w_it(weights->iteratorAt(col,0));
     MatrixFloat::iterator prev_w_it(prev_weights->iteratorAt(col,0));
@@ -273,11 +307,6 @@ namespace ANN {
     return conn;
   }
 
-  void Connections::scale(float alpha) {
-    weights->scal(alpha);
-    prev_weights->scal(alpha);
-  }
-  
   void Connections::printDebug() {
     const int num_outputs = weights->getDimSize(0);
     const int num_inputs  = weights->getDimSize(1);
@@ -296,11 +325,11 @@ namespace ANN {
   }
   
   char *Connections::toLuaString() {
-    char *w, *oldw;
-    saveMatrixFloatToString(weights, &w, false);
-    saveMatrixFloatToString(prev_weights, &oldw, false);
+    int len_w, len_oldw;
+    char *w    = writeMatrixFloatToString(weights,      false, len_w);
+    char *oldw = writeMatrixFloatToString(prev_weights, false, len_oldw);
     buffer_list buffer;
-    buffer.printf("ann.connections{ input=%d, output=%d,"
+    buffer.printf("ann.connections{ input=%d, output=%d, "
 		  "w=matrix.fromString[[%s]], oldw=matrix.fromString[[%s]]}",
 		  getInputSize(), getOutputSize(), w, oldw);
     delete[] w;

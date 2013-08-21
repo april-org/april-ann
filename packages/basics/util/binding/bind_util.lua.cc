@@ -26,6 +26,10 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <unistd.h>
+#ifndef NO_OMP
+#include <omp.h>
+#endif
+#include "omp_utils.h"
 
 // copy paste de lualib.c
 FILE **newfile (lua_State *L) {
@@ -51,6 +55,40 @@ FILE **newfile (lua_State *L) {
 
 using namespace april_utils;
 
+//BIND_END
+
+//BIND_FUNCTION util.version
+{
+  LUABIND_RETURN(int, APRILANN_VERSION_MAJOR);
+  LUABIND_RETURN(int, APRILANN_VERSION_MINOR);
+}
+//BIND_END
+
+//BIND_FUNCTION util.is_cuda_available
+{
+#ifdef USE_CUDA
+  LUABIND_RETURN(bool, true);
+#else
+  LUABIND_RETURN(bool, false);
+#endif
+}
+//BIND_END
+
+//BIND_FUNCTION util.omp_set_num_threads
+{
+#ifndef NO_OMP
+  int n;
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_GET_PARAMETER(1, int, n);
+  omp_set_num_threads(n);
+#endif
+}
+//BIND_END
+
+//BIND_FUNCTION util.omp_get_num_threads
+{
+  LUABIND_RETURN(int, omp_utils::get_num_threads());
+}
 //BIND_END
 
 //BIND_FUNCTION util.gettimeofday

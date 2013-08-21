@@ -27,6 +27,6 @@ cublasHandle_t GPUHelper::handler;
 cudaDeviceProp GPUHelper::properties;
 CUdevice GPUHelper::device;
 CUcontext GPUHelper::context;
-vector<CUstream> GPUHelper::streams;
+april_utils::vector<CUstream> GPUHelper::streams;
 unsigned int GPUHelper::current_stream = 0;
 #endif

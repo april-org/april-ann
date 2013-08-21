@@ -59,7 +59,7 @@ namespace ANN {
   }
 
   Token *StackANNComponent::getErrorOutput() {
-    return components.back()->getErrorOutput();
+    return components[0]->getErrorOutput();
   }
     
   Token *StackANNComponent::doForward(Token* input, bool during_training) {
@@ -85,7 +85,13 @@ namespace ANN {
     for (unsigned int c=0; c<components.size(); ++c)
       components[c]->reset();
   }
-    
+  
+  void StackANNComponent::computeAllGradients(hash<string,MatrixFloat*>
+					      &weight_grads_dict) {
+    for (unsigned int c=0; c<components.size(); ++c)
+      components[c]->computeAllGradients(weight_grads_dict);
+  }
+
   ANNComponent *StackANNComponent::clone() {
     StackANNComponent *obj = new StackANNComponent(name.c_str());
     for (unsigned int c=0; c<components.size(); ++c)
@@ -147,10 +153,12 @@ namespace ANN {
       ERROR_EXIT3(141, "StackANNComponent output size is not correct: "
 		  "%d != %d [%s]\n", output_size,
 		  components.back()->getOutputSize(), name.c_str());
-    if (input_size  == 0 || output_size == 0)
-      ERROR_EXIT3(141, "Impossible to compute input/output "
-		  "sizes for this component input=%d output=%d [%s]\n",
-		  input_size, output_size, name.c_str());
+    /*
+      if (input_size  == 0 || output_size == 0)
+      ERROR_PRINT3("# WARNING: Impossible to compute input/output "
+      "sizes for this component input=%d output=%d [%s]\n",
+      input_size, output_size, name.c_str());
+    */
   }
   
   void StackANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {

@@ -70,7 +70,7 @@ namespace ANN {
 	input_mat->setUseCuda(use_cuda);
 #endif
 	unsigned int mat_pat_size = static_cast<unsigned int>(input_mat->getDimSize(1));
-	assert(mat_pat_size==input_size && "Incorrect token matrix size");
+	april_assert(mat_pat_size==input_size && "Incorrect token matrix size");
 	int sizes[2]  = { input_mat->getDimSize(0),
 			  input_mat->getDimSize(1) };
 	int coords[2] = { 0, 0 };
@@ -149,7 +149,7 @@ namespace ANN {
     mat->setUseCuda(use_cuda);
 #endif
     unsigned int mat_pat_size = static_cast<unsigned int>(mat->getDimSize(1));
-    assert(mat_pat_size==output_size && "Incorrect token matrix size");
+    april_assert(mat_pat_size==output_size && "Incorrect token matrix size");
     int sizes[2]  = { mat->getDimSize(0), 0 };
     int coords[2] = { 0, 0 };
     for (unsigned int i=0; i<vector_token->size(); ++i) {
@@ -264,6 +264,12 @@ namespace ANN {
     error_output = 0;
     for (unsigned int i=0; i<components.size(); ++i)
       components[i]->reset();
+  }
+  
+  void JoinANNComponent::computeAllGradients(hash<string,MatrixFloat*>
+					  &weight_grads_dict) {
+    for (unsigned int c=0; c<components.size(); ++c)
+      components[c]->computeAllGradients(weight_grads_dict);
   }
   
   ANNComponent *JoinANNComponent::clone() {
