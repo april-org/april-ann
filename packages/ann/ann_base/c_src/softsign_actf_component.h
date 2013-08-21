@@ -28,8 +28,7 @@
 
 namespace ANN {
 
-  /// An abstract class that defines the basic interface that
-  /// the anncomponents must fulfill.
+  /// Component for the SoftSign activation function.
   class SoftsignActfANNComponent : public ActivationFunctionANNComponent {
   protected:
     virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,

@@ -1,6 +1,6 @@
 pnoise        = tonumber(arg[1] or 0.4)   -- noise percentage
-loss_function = arg[2] or "cross_entropy"
-alpha         = tonumber(arg[3] or 0.1)  -- SGD alpha parameter
+loss_function = arg[2] or "mse"
+alpha         = tonumber(arg[3] or 0.2)  -- SGD alpha parameter
 beta          = tonumber(arg[4] or 0.2)  -- SGD beta parameter
 seed          = tonumber(arg[5] or 12345) -- random seed
 
@@ -11,7 +11,7 @@ stop_criterion  = 1e-04
 rnd = random(seed)
 
 noise = ann.components.stack():
-push(ann.components.gaussian_noise{ random=rnd, mean=0, var=0.2 }):
+push(ann.components.gaussian_noise{ random=rnd, mean=0, var=0.4 }):
 push(ann.components.salt_and_pepper{ random=rnd, prob=0.2 })
 noise:build{ input=256, output=256 }
 
@@ -33,7 +33,7 @@ if loss_function == "local_fmeasure" then
   full_sdae:pop()
   full_sdae:push(ann.components.actf.logistic{ name = "actf-output" })
   trainer:build()
-elseif loss_function ~= "mse" then
+elseif loss_function == "cross_entropy" then
   loss = ann.loss[loss_function](full_sdae:get_output_size())
   log  = true
 else
@@ -63,9 +63,9 @@ for ipat=1,val_input:numPatterns() do
     local number_of_blank_cols=math.max(0, math.min(16, math.round(pnoise*16)))
     for r=1,16 do
       map(function(c) input:set(r, c, rnd:rand(1.0)) k=k+1 end,
-	  range, 1, number_of_blank_cols, 1)
+	  range(1, number_of_blank_cols, 1))
       map(function(c) table.insert(mask, k) k=k+1 end,
-	  range, number_of_blank_cols+1, 16, 1)
+	  range(number_of_blank_cols+1, 16, 1))
     end
     output,L = ann.autoencoders.iterative_sampling{
       model   = full_sdae,

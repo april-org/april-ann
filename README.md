@@ -1,4 +1,4 @@
-april-ann
+April-ANN
 =========
 
 Requirements
@@ -10,6 +10,7 @@ Requires the following libraries. Versions are only orientative, it could work w
 - BLAS implementation: ATLAS (v. 3) or Intel MKL (v. 10.3.6)
 - Threads posix (pthread)
 - Readline (libreadline)
+- OpenMP
 
 The following libreries are recommended, but optional:
 - [OPTIONAL] libpng: if you want to open PNG images
@@ -120,6 +121,15 @@ Includes these sources
 - Luiz's lstrip for Lua 5.1: http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/5.1/lstrip.tar.gz
 - MersenneTwister: http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
 - GZIO: http://luaforge.net/projects/gzio/
+- Median filter from Simon Perreault: http://nomis80.org/ctmf.html
+
+
+Wiki documentation
+------------------
+
+- [PDF version](https://rawgithub.com/wiki/pakozm/april-ann/WIKI.pdf)
+- [HTML one-page](https://rawgithub.com/wiki/pakozm/april-ann/WIKI.html)
+
 
 Doxygen documentation
 ---------------------

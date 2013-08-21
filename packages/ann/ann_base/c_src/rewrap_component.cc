@@ -58,7 +58,7 @@ namespace ANN {
 #endif
     rewrap_dims[0] = input_mat->getDimSize(0);
     if (input_mat->getNumDim() < 2)
-      ERROR_EXIT2(128, "At 2-dimensional matrix is expected, found %d. "
+      ERROR_EXIT2(128, "At least 2-dimensional matrix is expected, found %d. "
 		  "[%s]", input_mat->getNumDim(), name.c_str());
     if (!input_mat->getIsContiguous()) {
       input_mat = input_mat->clone();

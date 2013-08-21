@@ -13,6 +13,7 @@ luapkg{
     extra_flags={
       "-pg",
       "-DNO_POOL",
+      "-fopenmp",
     },
     extra_libs={
       "-pg",
@@ -21,6 +22,8 @@ luapkg{
       "-latlas",
       "-L/opt/lib",
       "-lgfortran",
+      "-fopenmp",
+      "-rdynamic",
     },
 
   },

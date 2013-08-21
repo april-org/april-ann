@@ -28,6 +28,9 @@
 #include "connection.h"
 
 namespace ANN {
+  
+  /// This components computes, for every I output neuron, the dot product
+  /// between input neurons and the weights of the neuron I.
   class DotProductANNComponent : public ANNComponent {
     Token            *input;
     TokenMatrixFloat *error_input, *output, *error_output;
@@ -39,12 +42,16 @@ namespace ANN {
     float learning_rate, momentum, weight_decay, c_weight_decay;
     float max_norm_penalty;
     CBLAS_TRANSPOSE transpose_weights;
+    
+    void computeBP(MatrixFloat *weights_mat,
+		   Token *input_token,
+		   MatrixFloat *error_input_mat,
+		   const float alpha,
+		   const float beta);
 
-    void
-    computeBPUpdateOnPrevVectors(MatrixFloat *prev_weights_mat,
-				 Token *input_token,
-				 MatrixFloat *input_error,
-				 float beta);
+  protected:
+
+    virtual void computeGradients(MatrixFloat*& weight_grads);
 
   public:
     DotProductANNComponent(const char *name=0, const char *weights_name=0,

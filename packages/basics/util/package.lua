@@ -27,8 +27,7 @@ package{ name = "util",
      object{ 
        file = "c_src/*.cc",
        dest_dir = "build",
---       flags = "-std=c99",
-
+       --       flags = "-std=c99",
      },
      luac{
        orig_dir = "lua_src",

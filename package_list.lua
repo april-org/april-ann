@@ -10,6 +10,8 @@ return {
   --   "profiler",
   "math",
   "gzio",
+  "matlab",
+  "mutual_information",
   
   -- MACHINE LEARNING
   "trainable",
@@ -27,7 +29,7 @@ return {
   "image",
   "image_io",
   "libpng",
-  -- --  "median_filter",
+  "median_filter",
   "image_metrics",
 
   -- IMAGE PREPROCESSING
@@ -38,4 +40,5 @@ return {
   
   -- HMMs
    "hmm_trainer",
+   "rates",
  }

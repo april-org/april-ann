@@ -69,7 +69,8 @@ Matrix<T>::Matrix(int numDim, const int *stride, const int offset,
   numDim(numDim), stride(new int[numDim]), offset(offset),
   matrixSize(new int[numDim]), total_size(total_size),
   last_raw_pos(last_raw_pos), data(data), major_order(major_order),
-  use_cuda(use_cuda) {
+  use_cuda(use_cuda),
+  is_contiguous(NONE) {
   IncRef(data);
   for (int i=0; i<numDim; ++i) {
     this->stride[i] = stride[i];
@@ -86,7 +87,8 @@ Matrix<T>::Matrix(int numDim,
 		  int offset) : numDim(numDim),
 				offset(offset),
 				major_order(major_order),
-				use_cuda(false){
+				use_cuda(false),
+				is_contiguous(CONTIGUOUS) {
   /*
     if (major_order == CblasColMajor && numDim > 2)
     ERROR_EXIT(128, "ColMajor order is only allowed when numDim<=2\n");
@@ -111,7 +113,8 @@ Matrix<T>::Matrix(Matrix<T> *other,
 		  bool clone) : numDim(other->numDim),
 				offset(0),
 				major_order(other->major_order),
-				use_cuda(other->use_cuda) {
+				use_cuda(other->use_cuda),
+				is_contiguous(NONE) {
   for (int i=0; i<numDim; i++) {
     if (sizes[i] + coords[i] > other->matrixSize[i])
       ERROR_EXIT3(128, "Size+coordinates are out of dimension size: %d+%d>%d\n",
@@ -120,6 +123,7 @@ Matrix<T>::Matrix(Matrix<T> *other,
   stride     = new int[numDim];
   matrixSize = new int[numDim];
   if (clone) {
+    is_contiguous = CONTIGUOUS;
     initialize(sizes);
     allocate_memory(total_size);
     int other_raw_pos = other->computeRawPos(coords);
@@ -166,7 +170,8 @@ Matrix<T>::Matrix(Matrix<T> *other,
 template <typename T>
 Matrix<T>::Matrix(int numDim, int d1, ...) : numDim(numDim),
 					     offset(0),
-					     major_order(CblasRowMajor) {
+					     major_order(CblasRowMajor),
+					     is_contiguous(CONTIGUOUS) {
   int *dim   = new int[numDim];
   stride     = new int[numDim];
   matrixSize = new int[numDim];
@@ -189,7 +194,8 @@ template <typename T>
 Matrix<T>::Matrix(Matrix<T> *other, bool clone) : numDim(other->numDim),
 						  offset(0),
 						  major_order(other->major_order),
-						  use_cuda(other->use_cuda) {
+						  use_cuda(other->use_cuda),
+						  is_contiguous(other->is_contiguous){
   stride       = new int[numDim];
   matrixSize   = new int[numDim];
   total_size   = other->total_size;
@@ -198,6 +204,7 @@ Matrix<T>::Matrix(Matrix<T> *other, bool clone) : numDim(other->numDim),
     initialize(other->matrixSize);
     allocate_memory(total_size);
     copy(other);
+    is_contiguous = CONTIGUOUS;
   }
   else {
     offset       = other->offset;
@@ -233,6 +240,9 @@ Matrix<T> *Matrix<T>::rewrap(const int *new_dims, int len) {
     ERROR_EXIT2(128, "Incorrect size, expected %d, and found %d\n",
 		size(), new_size);
   Matrix<T> *obj = new Matrix<T>(len, new_dims, major_order, data, offset);
+#ifdef USE_CUDA
+  obj->setUseCuda(use_cuda);
+#endif
   return obj;
 }
 
@@ -241,6 +251,9 @@ Matrix<T> *Matrix<T>::transpose() const {
   int *aux_matrix_size = new int[numDim];
   for (int i=0; i<numDim; ++i) aux_matrix_size[i] = matrixSize[numDim-i-1];
   Matrix<T> *resul = new Matrix<T>(numDim, aux_matrix_size, major_order);
+#ifdef USE_CUDA
+  resul->setUseCuda(use_cuda);
+#endif
   const T *d = data->getPPALForRead();
   int *aux_coords = new int[numDim];
   for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
@@ -257,7 +270,9 @@ Matrix<T> *Matrix<T>::transpose() const {
 template <typename T>
 Matrix<T>* Matrix<T>::cloneOnlyDims() const {
   Matrix<T> *obj = new Matrix<T>(numDim, matrixSize, major_order);
+#ifdef USE_CUDA
   obj->setUseCuda(use_cuda);
+#endif
   return obj;
 }
 
@@ -266,6 +281,9 @@ Matrix<T> *Matrix<T>::clone(CBLAS_ORDER major_order) {
   Matrix<T> *resul;
   if (this->major_order != major_order) {
     resul = new Matrix<T>(numDim, matrixSize, major_order);
+#ifdef USE_CUDA
+    resul->setUseCuda(use_cuda);
+#endif
     iterator resul_it(resul->begin());
     const_iterator this_it(begin());
     while(resul_it != resul->end()) {
@@ -300,14 +318,14 @@ const T& Matrix<T>::operator[] (int i) const {
 
 template <typename T>
 T& Matrix<T>::operator() (int i) {
-  assert(numDim == 1);
+  april_assert(numDim == 1);
   int raw_pos = computeRawPos(&i);
   return data->get(raw_pos);
 }
 
 template <typename T>
 T& Matrix<T>::operator() (int row, int col) {
-  assert(numDim == 2);
+  april_assert(numDim == 2);
   int pos[2]={row,col};
   int raw_pos = computeRawPos(pos);
   return data->get(raw_pos);
@@ -332,21 +350,21 @@ T& Matrix<T>::operator() (int coord0, int coord1, int coord2, ...) {
 
 template <typename T>
 T& Matrix<T>::operator() (int *coords, int sz) {
-  assert(numDim == sz);
+  april_assert(numDim == sz);
   int raw_pos = computeRawPos(coords);
   return data->get(raw_pos);
 }
 
 template <typename T>
 const T& Matrix<T>::operator() (int i) const {
-  assert(numDim == 1);
+  april_assert(numDim == 1);
   int raw_pos = computeRawPos(&i);
   return data->get(raw_pos);
 }
 
 template <typename T>
 const T& Matrix<T>::operator() (int row, int col) const {
-  assert(numDim == 2);
+  april_assert(numDim == 2);
   int pos[2]={row,col};
   int raw_pos = computeRawPos(pos);
   return data->get(raw_pos);
@@ -371,7 +389,7 @@ const T& Matrix<T>::operator() (int coord0, int coord1, int coord2, ...) const {
 
 template <typename T>
 const T& Matrix<T>::operator() (int *coords, int sz) const {
-  assert(numDim == sz);
+  april_assert(numDim == sz);
   int raw_pos = computeRawPos(coords);
   return data->get(raw_pos);
 }
@@ -428,52 +446,72 @@ bool Matrix<T>::putSubCol(int col, int first_row, T* vec, int vecsize) {
 
 template <typename T>
 bool Matrix<T>::sameDim(const Matrix<T> *other) const {
-  if (numDim != other->numDim) return false;
+  return sameDim(other->matrixSize, other->numDim);
+}
+
+template <typename T>
+bool Matrix<T>::sameDim(const int *dims, const int len) const {
+  if (numDim != len) return false;
   switch(numDim) {
   default:
     for (int i=0; i<numDim; ++i)
-      if (matrixSize[i] != other->matrixSize[i]) return false;
+      if (matrixSize[i] != dims[i]) return false;
     break;
-  case 2:
-    if (matrixSize[1] != other->matrixSize[1]) return false;
-  case 1:
-    if (matrixSize[0] != other->matrixSize[0]) return false;
+#define CASE(i,j) case i: if (matrixSize[j] != dims[j]) return false
+    CASE(6,5);
+    CASE(5,4);
+    CASE(4,3);
+    CASE(3,2);
+    CASE(2,1);
+    CASE(1,0);
     break;
+#undef CASE
   }
   return true;
 }
 
 template<typename T>
-Matrix<T> *Matrix<T>::select(int dim, int index) {
+Matrix<T> *Matrix<T>::select(int dim, int index, Matrix<T> *dest) {
   if (numDim == 1)
     ERROR_EXIT(128, "Not possible to execute select for numDim=1\n");
   if (dim >= numDim)
     ERROR_EXIT(128, "Select for a dimension which doesn't exists\n");
   if (index >= matrixSize[dim])
     ERROR_EXIT(128, "Select for an index out of the matrix\n");
-  Matrix<T> *result = new Matrix();
-  int d = numDim - 1;
-  // Data initialization
-  result->use_cuda     = use_cuda;
-  result->numDim       = d;
-  result->matrixSize   = new int[d];
-  result->stride       = new int[d];
-  result->major_order  = major_order;
-  result->offset       = index*stride[dim];
-  result->last_raw_pos = result->offset;
-  result->data         = data;
-  IncRef(data);
-  for(int i=0; i<dim; ++i) {
-    result->stride[i]      = stride[i];
-    result->matrixSize[i]  = matrixSize[i];
-    result->last_raw_pos  += (matrixSize[i]-1)*stride[i];
+  Matrix<T> *result;
+  if (dest == 0) {
+    result = new Matrix();
+    int d = numDim - 1;
+    // Data initialization
+    result->use_cuda     = use_cuda;
+    result->numDim       = d;
+    result->matrixSize   = new int[d];
+    result->stride       = new int[d];
+    result->major_order  = major_order;
+    result->offset       = index*stride[dim]; // the select implies an offset
+    result->last_raw_pos = result->offset;
+    result->data         = data;
+    IncRef(data);
+    for(int i=0; i<dim; ++i) {
+      result->stride[i]      = stride[i];
+      result->matrixSize[i]  = matrixSize[i];
+      result->last_raw_pos  += (matrixSize[i]-1)*stride[i];
+    }
+    for(int i=dim+1; i<numDim; ++i) {
+      result->stride[i-1]      = stride[i];
+      result->matrixSize[i-1]  = matrixSize[i];
+      result->last_raw_pos    += (matrixSize[i]-1)*stride[i];
+    }
+    result->total_size = total_size/matrixSize[dim];
   }
-  for(int i=dim+1; i<numDim; ++i) {
-    result->stride[i-1]      = stride[i];
-    result->matrixSize[i-1]  = matrixSize[i];
-    result->last_raw_pos    += (matrixSize[i]-1)*stride[i];
+  else {
+    //
+    april_assert(dest->total_size == total_size/matrixSize[dim]);
+    april_assert(dest->numDim == numDim-1);
+    //
+    dest->offset = index*stride[dim];
+    result = dest;
   }
-  result->total_size = total_size/matrixSize[dim];
   return result;
 }
 
@@ -620,18 +658,18 @@ int Matrix<T>::computeRawPos(const int *coords) const {
   int raw_pos;
   switch(numDim) {
   case 1:
-    assert(coords[0] < matrixSize[0]);
+    april_assert(coords[0] < matrixSize[0]);
     raw_pos = coords[0]*stride[0];
     break;
   case 2:
-    assert(coords[0] < matrixSize[0]);
-    assert(coords[1] < matrixSize[1]);
+    april_assert(coords[0] < matrixSize[0]);
+    april_assert(coords[1] < matrixSize[1]);
     raw_pos = coords[0]*stride[0]+coords[1]*stride[1];
     break;
   default:
     raw_pos=0;
     for(int i=0; i<numDim; i++) {
-      assert(coords[i] < matrixSize[i]);
+      april_assert(coords[i] < matrixSize[i]);
       raw_pos += stride[i]*coords[i];
     }
   }
@@ -675,19 +713,27 @@ void Matrix<T>::computeCoords(const int raw_pos, int *coords) const {
 
 template <typename T>
 bool Matrix<T>::getIsContiguous() const {
+  if (is_contiguous != NONE) return (is_contiguous==CONTIGUOUS);
   if (major_order == CblasRowMajor) {
     int aux = 1;
     for (int i=numDim-1; i>=0; --i) {
-      if(stride[i] != aux) return false;
+      if(stride[i] != aux) {
+	is_contiguous = NONCONTIGUOUS;
+	return false;
+      }
       else aux *= matrixSize[i];
     }
   }
   else {
     int aux = 1;
     for (int i=0; i<numDim; ++i) {
-      if(stride[i] != aux) return false;
+      if(stride[i] != aux) {
+	is_contiguous = NONCONTIGUOUS;
+	return false;
+      }
       else aux *= matrixSize[i];
     }
   }
+  is_contiguous = CONTIGUOUS;
   return true;
 }

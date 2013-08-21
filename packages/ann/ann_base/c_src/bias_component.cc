@@ -31,7 +31,7 @@ namespace ANN {
     input(0), output(0), error(0),
     bias_vector(0), num_updates_from_last_prune(0),
     learning_rate(-1.0f), momentum(0.0f) {
-    if (weights_name == 0) generateDefaultWeightsName("b");
+    if (weights_name == 0) generateDefaultWeightsName(this->weights_name, "b");
   }
 
   BiasANNComponent::~BiasANNComponent() {
@@ -39,6 +39,25 @@ namespace ANN {
     if (input) DecRef(input);
     if (error) DecRef(error);
     if (output) DecRef(output);
+  }
+
+  void BiasANNComponent::computeBP(MatrixFloat *weights_mat,
+				   MatrixFloat *input_error_mat,
+				   float alpha) {
+    unsigned int bunch_size = input_error_mat->getDimSize(0);
+    // bias update: prev_bias[j] = prev_bias[j] + \sum_b norm_learn_rate * ERROR_INPUT[b,j]
+    if (bunch_size == 1) weights_mat->axpy(alpha, input_error_mat);
+    else doAxpyLoop(output_size,
+		    alpha,
+		    input_error_mat->getRawDataAccess(),
+		    input_error_mat->getStrideSize(1),
+		    0,
+		    weights_mat->getRawDataAccess(),
+		    weights_mat->getStrideSize(0),
+		    0,
+		    bunch_size,
+		    input_error_mat->getStrideSize(0), 0,
+		    use_cuda);
   }
 
   Token *BiasANNComponent::doForward(Token* _input, bool during_training) {
@@ -56,7 +75,7 @@ namespace ANN {
     input_mat->setUseCuda(use_cuda);
 #endif
     ASSERT_MATRIX(input_mat);
-    assert(input_mat->getDimSize(1) == static_cast<int>(input_size));
+    april_assert(input_mat->getDimSize(1) == static_cast<int>(input_size));
     unsigned int bunch_size = input_mat->getDimSize(0);
     // linear transfer of input to output
     MatrixFloat *output_mat = input_mat->clone();
@@ -66,12 +85,12 @@ namespace ANN {
     if (bunch_size == 1) output_mat->axpy(1.0f, bias_ptr);
     else {
       // addition of bias vector at output
-      doSaxpyLoop(output_size, 1.0f,
-		  bias_ptr->getRawDataAccess(), bias_ptr->getStrideSize(0),
-		  output_mat->getRawDataAccess(), output_mat->getStrideSize(1),
-		  bunch_size,
-		  0, output_mat->getStrideSize(0),
-		  use_cuda);
+      doAxpyLoop(output_size, 1.0f,
+		 bias_ptr->getRawDataAccess(), bias_ptr->getStrideSize(0), 0,
+		 output_mat->getRawDataAccess(), output_mat->getStrideSize(1), 0,
+		 bunch_size,
+		 0, output_mat->getStrideSize(0),
+		 use_cuda);
     }
     return output;
   }
@@ -92,7 +111,7 @@ namespace ANN {
   }
 
   void BiasANNComponent::doUpdate() {
-    assert(learning_rate > 0.0f &&
+    april_assert(learning_rate > 0.0f &&
 	   "Learning rate needs to be fixed with setOption method!!!");
     // Foces bias_vector to update internal counts for a update step
     bias_vector->beginUpdate();
@@ -101,7 +120,7 @@ namespace ANN {
     MatrixFloat *prev_bias_ptr   = bias_vector->getPrevPtr();
     MatrixFloat *input_error_mat = error->getMatrix();
     ASSERT_MATRIX(input_error_mat);
-    assert(input_error_mat->getDimSize(1) == static_cast<int>(input_size));
+    april_assert(input_error_mat->getDimSize(1) == static_cast<int>(input_size));
     unsigned int bunch_size = input_error_mat->getDimSize(0);
     // Momentum computation
     if (bias_vector->isFirstUpdateCall()) {
@@ -115,23 +134,13 @@ namespace ANN {
     // update learning rule:
     // PREV_W = alpha * ERRORS + PREV_W
     const unsigned int references = bias_vector->getNumReferences();
-    assert(references > 0 && "Found 0 references of bias vector");
+    april_assert(references > 0 && "Found 0 references of bias vector");
     // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
     const float norm_learn_rate =
       -(1.0f/sqrtf(static_cast<float>(references*bunch_size))) *
       learning_rate;
 
-    // bias update: prev_bias[j] = prev_bias[j] + \sum_b norm_learn_rate * ERROR_INPUT[b,j]
-    if (bunch_size == 1) prev_bias_ptr->axpy(norm_learn_rate, input_error_mat);
-    else doSaxpyLoop(output_size,
-		     norm_learn_rate,
-		     input_error_mat->getRawDataAccess(),
-		     input_error_mat->getStrideSize(1),
-		     prev_bias_ptr->getRawDataAccess(),
-		     prev_bias_ptr->getStrideSize(0),
-		     bunch_size,
-		     input_error_mat->getStrideSize(0), 0,
-		     use_cuda);
+    computeBP(prev_bias_ptr, input_error_mat, norm_learn_rate);
     
     // If necessary, update counts, swap vectors, and other stuff
     if (bias_vector->endUpdate()) {
@@ -150,6 +159,18 @@ namespace ANN {
     input  = 0;
     error  = 0;
     output = 0;
+  }
+
+  void BiasANNComponent::computeGradients(MatrixFloat*& weight_grads) {
+    if (weight_grads == 0) {
+      weight_grads = bias_vector->getPtr()->cloneOnlyDims();
+      weight_grads->zeros();
+    }
+    else if (!weight_grads->sameDim(bias_vector->getPtr()))
+      ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
+    MatrixFloat *input_error_mat = error->getMatrix();
+    unsigned int bunch_size = input_error_mat->getDimSize(0);
+    computeBP(weight_grads, error->getMatrix(), 1.0f/bunch_size);
   }
 
   ANNComponent *BiasANNComponent::clone() {

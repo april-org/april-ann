@@ -66,12 +66,12 @@ namespace ANN {
 						    FloatGPUMirroredMemoryBlock *output_errors,
 						    unsigned int size,
 						    unsigned int bunch_size) {
-    doMultiplyLogisticDerivatives(output_units,
-				  input_errors,
-				  output_errors,
-				  size,
-				  bunch_size,
-				  use_cuda);
+    doMultiplySoftmaxDerivatives(output_units,
+				 input_errors,
+				 output_errors,
+				 size,
+				 bunch_size,
+				 use_cuda);
   }
 
   ANNComponent *SoftmaxActfANNComponent::clone() {

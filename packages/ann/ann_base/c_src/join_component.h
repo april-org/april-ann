@@ -30,6 +30,11 @@ using april_utils::vector;
 
 namespace ANN {
 
+  /// A container component which distributes its input over the contained
+  /// components. So, the input is spliced, and the input size must be the sum
+  /// of components input sizes. The output is a join of all the components
+  /// outputs.
+
   class JoinANNComponent : public ANNComponent {
     vector<ANNComponent*> components;
     // Token pointers which contains exactly the same that was received
@@ -97,6 +102,7 @@ namespace ANN {
       for (unsigned int i=0; i<components.size(); ++i)
 	components[i]->resetConnections();
     }
+    virtual void computeAllGradients(hash<string,MatrixFloat*> &weight_grads_dict);
     virtual void debugInfo() {
       ANNComponent::debugInfo();
       for (unsigned int i=0; i<components.size(); ++i)

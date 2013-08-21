@@ -21,7 +21,7 @@
 #ifndef TOKEN_BASE_H
 #define TOKEN_BASE_H
 
-#include <cassert>
+#include "april_assert.h"
 #include <typeinfo>
 #include <stdint.h>
 #include "table_of_token_codes.h"
@@ -58,7 +58,7 @@ class Token : public Referenced {
   /// class
   template <typename T> T convertTo() {
     T result = dynamic_cast<T>(this);
-    assert(result != 0);
+    april_assert(result != 0);
     return result;
   }
   
@@ -66,7 +66,7 @@ class Token : public Referenced {
   /// Token child class
   template <typename T> const T convertTo() const {
     T result = dynamic_cast<const T>(this);
-    assert(result != 0);
+    april_assert(result != 0);
     return result;
   }
 };

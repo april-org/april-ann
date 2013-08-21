@@ -51,7 +51,7 @@ namespace ANN {
     weight_decay(0.0f),
     c_weight_decay(1.0f),
     max_norm_penalty(-1.0f) {
-    if (weights_name == 0) generateDefaultWeightsName("w");
+    if (weights_name == 0) generateDefaultWeightsName(this->weights_name, "w");
     this->transpose_weights = (transpose_weights) ? CblasTrans : CblasNoTrans;
   }
   
@@ -80,7 +80,7 @@ namespace ANN {
       TokenMatrixFloat *input_mat_token=input->convertTo<TokenMatrixFloat*>();
       MatrixFloat *input_mat=input_mat_token->getMatrix();
       ASSERT_MATRIX(input_mat);
-      assert(input_mat->getDimSize(1) == static_cast<int>(input_size));
+      april_assert(input_mat->getDimSize(1) == static_cast<int>(input_size));
       if (input_mat->getStrideSize(0) > 1) {
 	input_mat = input_mat->clone();
 	AssignRef(input,new TokenMatrixFloat(input_mat));
@@ -128,7 +128,7 @@ namespace ANN {
       sparse_input = true;
       AssignRef(input, _input);
       TokenBunchVector *input_vector_token=input->convertTo<TokenBunchVector*>();
-      assert(input_vector_token->size() > 0);
+      april_assert(input_vector_token->size() > 0);
       // new output to fit the bunch
       MatrixFloat *output_mat;
       int dims[2] = {static_cast<int>(input_vector_token->size()),
@@ -194,7 +194,7 @@ namespace ANN {
 		  name.c_str());
     // new error output to fit the bunch
     ASSERT_MATRIX(error_input_mat);
-    assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
+    april_assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
     if (error_input_mat->getStrideSize(0) > 1) {
       error_input_mat = error_input_mat->clone();
       AssignRef(error_input,new TokenMatrixFloat(error_input_mat));
@@ -210,7 +210,7 @@ namespace ANN {
     error_output_mat = new MatrixFloat(2, dims, CblasColMajor);
     AssignRef(error_output,new TokenMatrixFloat(error_output_mat));
 #ifdef USE_CUDA
-    output_mat->setUseCuda(use_cuda);
+    error_output_mat->setUseCuda(use_cuda);
 #endif      
     //
     MatrixFloat *weights_mat = weights_matrix->getPtr();
@@ -230,21 +230,12 @@ namespace ANN {
     return error_output;
   }
   
-  void DotProductANNComponent::
-  computeBPUpdateOnPrevVectors(MatrixFloat *prev_weights_mat,
-			       Token *input_token,
-			       MatrixFloat *error_input_mat,
-			       float beta) {
-    assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
+  void DotProductANNComponent::computeBP(MatrixFloat *weights_mat,
+					 Token *input_token,
+					 MatrixFloat *error_input_mat,
+					 const float alpha,
+					 const float beta) {
     unsigned int bunch_size = error_input_mat->getDimSize(0);
-    // backprop learning rule:
-    // PREV_W = alpha * ERRORS + PREV_W
-    const unsigned int references = weights_matrix->getNumReferences();
-    assert(references > 0 && "Found 0 references of weights matrix");
-    // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
-    const float norm_learn_rate =
-      -(1.0f/sqrtf(static_cast<float>(references*bunch_size))) *
-      learning_rate;
     if (sparse_input) {
       TokenBunchVector *input_vector_token;
       input_vector_token  = input_token->convertTo<TokenBunchVector*>();
@@ -262,36 +253,36 @@ namespace ANN {
 	  if (pos >= input_size)
 	    ERROR_EXIT1(128, "Overflow at sparse vector input pos [%s]\n",
 			name.c_str());
-	  MatrixFloat *w_column = prev_weights_mat->select(w_dim, w_index);
-	  w_column->axpy(norm_learn_rate*value, error_input_pat_mat);
+	  MatrixFloat *w_column = weights_mat->select(w_dim, w_index);
+	  w_column->axpy(alpha*value, error_input_pat_mat);
 	  delete w_column;
 	}
 	delete error_input_pat_mat;
       }
     } // if sparse_input ... else
     else {
-      TokenMatrixFloat *input_mem_token=input_token->convertTo<TokenMatrixFloat*>();
-      MatrixFloat *input_mat=input_mem_token->getMatrix();
+      TokenMatrixFloat *input_mat_token=input_token->convertTo<TokenMatrixFloat*>();
+      MatrixFloat *input_mat=input_mat_token->getMatrix();
       if (bunch_size > 1) {
-	prev_weights_mat->gemm(CblasTrans, CblasNoTrans,
-			       norm_learn_rate,
-			       (transpose_weights == CblasNoTrans)?error_input_mat:input_mat, // A
-			       (transpose_weights == CblasNoTrans)?input_mat:error_input_mat, // B
-			       beta);
+	weights_mat->gemm(CblasTrans, CblasNoTrans,
+			  alpha,
+			  (transpose_weights == CblasNoTrans)?error_input_mat:input_mat, // A
+			  (transpose_weights == CblasNoTrans)?input_mat:error_input_mat, // B
+			  beta);
       } // if bunch_size > 1 ... else
       else {
 	if (beta < 1.0f)
-	  prev_weights_mat->scal(beta);
-	prev_weights_mat->ger(norm_learn_rate,
-			      (transpose_weights == CblasNoTrans)?error_input_mat:input_mat,
-			      (transpose_weights == CblasNoTrans)?input_mat:error_input_mat);
+	  weights_mat->scal(beta);
+	weights_mat->ger(alpha,
+			 (transpose_weights == CblasNoTrans)?error_input_mat:input_mat,
+			 (transpose_weights == CblasNoTrans)?input_mat:error_input_mat);
       } // if bunch_size > 1 ... else
     } // if sparse_input ... else
   }
   
   // The DotProductANNComponent
   void DotProductANNComponent::doUpdate() {
-    assert(learning_rate > 0.0f &&
+    april_assert(learning_rate > 0.0f &&
 	   "Learning rate needs to be fixed with setOption method!!!");
     
     // Foces weights_matrix to update internal counts for a backward step
@@ -317,38 +308,52 @@ namespace ANN {
       }
     } // if (weights_matrix->needsToComputeMomentum()) {
     
-    computeBPUpdateOnPrevVectors(prev_weights_mat,
-				 input,
-				 error_input_mat,
-				 beta_parameter_for_cblas_bp);
+    // COMPUTE BP
+    april_assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
+    unsigned int bunch_size = error_input_mat->getDimSize(0);
+    // backprop learning rule:
+    // PREV_W = alpha * ERRORS + PREV_W
+    const unsigned int references = weights_matrix->getNumReferences();
+    april_assert(references > 0 && "Found 0 references of weights matrix");
+    // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
+    const float norm_learn_rate =
+      -(1.0f/sqrtf(static_cast<float>(references*bunch_size))) *
+      learning_rate;
+    computeBP(prev_weights_mat,
+	      input,
+	      error_input_mat,
+	      norm_learn_rate,
+	      beta_parameter_for_cblas_bp);
     
     // Forces to update counts and swap vectors if necessary at this backward
     // step
     if (weights_matrix->endUpdate()) {
+      if (max_norm_penalty > 0.0)
+	weights_matrix->applyMaxNormPenalty(max_norm_penalty);
       ++num_updates_from_last_prune;
       if (num_updates_from_last_prune > MAX_UPDATES_WITHOUT_PRUNE) {
 	num_updates_from_last_prune = 0;
 	weights_matrix->pruneSubnormalAndCheckNormal();
       }
-      if (max_norm_penalty > 0.0) {
-	// we need to use the pointer because after endUpdate() method the
-	// pointers will be swapped or changed
-	weights_mat = weights_matrix->getPtr();
-	MatrixFloat::sliding_window window(weights_mat, 0, 0, 0, 0, 0);
-	while(!window.isEnd()) {
-	  MatrixFloat *submat = window.getMatrix();
-	  float norm2 = submat->norm2();
-	  if (norm2 > max_norm_penalty) {
-	    float scal_factor = max_norm_penalty/norm2;
-	    submat->scal(scal_factor);
-	  }
-	  delete submat;
-	  window.next();
-	}
-      } // if max_norm_penalty > 0.0
     }
   }
   
+  void DotProductANNComponent::computeGradients(MatrixFloat*& weight_grads) {
+    if (weight_grads == 0) {
+      weight_grads = weights_matrix->getPtr()->cloneOnlyDims();
+      weight_grads->zeros();
+    }
+    else if (!weight_grads->sameDim(weights_matrix->getPtr()))
+      ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
+    MatrixFloat *input_error_mat = error_input->getMatrix();
+    unsigned int bunch_size = input_error_mat->getDimSize(0);
+    computeBP(weight_grads,
+	      input,
+	      error_input->getMatrix(),
+	      1.0f/bunch_size,
+	      1.0f);
+  }
+
   void DotProductANNComponent::reset() {
     if (input)        DecRef(input);
     if (error_input)  DecRef(error_input);

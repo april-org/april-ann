@@ -28,6 +28,8 @@
 #include "token_matrix.h"
 
 namespace ANN {
+
+  /// A component which adds a bias to the given bi-dimensional input matrix.
   class BiasANNComponent : public ANNComponent {
     TokenMatrixFloat *input, *output, *error;
     Connections *bias_vector;
@@ -36,13 +38,13 @@ namespace ANN {
     /// learning parameters
     float learning_rate, momentum;
     
-    void
-    computeBPUpdateOnPrevVectors(MatrixFloat *prev_weights_mat,
-				 MatrixFloat *input,
-				 const unsigned int input_shift,
-				 MatrixFloat *input_error,
-				 const unsigned int input_error_shift,
-				 float beta);
+    void computeBP(MatrixFloat *weights_mat,
+		   MatrixFloat *input_error_mat,
+		   const float alpha);
+
+  protected:
+    
+    virtual void computeGradients(MatrixFloat*& weight_grads);
     
   public:
     BiasANNComponent(unsigned int size=0,

@@ -16,7 +16,12 @@
    },
    target{
      name = "test",
-     execute_script{ file="test/*.lua" },
+     execute_script{
+       file={
+	 "test/test-components.lua",
+	 "test/test-digits.lua"
+       },
+     },
    },
    target{
      name = "provide",

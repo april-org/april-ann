@@ -1,9 +1,9 @@
-formiga.build_dir = "build_experimental_release"
+formiga.build_dir = "build_release_pi"
 
 luapkg{
-  program_name = "april-ann.experimental",
+  program_name = "april-ann.pi",
   verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
-  packages = dofile "package_list.lua",
+  packages = dofile "package_list.pi.lua",
   global_flags = {
     debug="no",
     use_lstrip = "no",
@@ -11,24 +11,16 @@ luapkg{
     optimization = "yes",
     platform = "unix",
     extra_flags={
-      -- For Intel MKL :)
-      "-DUSE_MKL",
-      "-I/opt/MKL/include",
-      --------------------
-      "-march=native",
-      "-msse",
       "-DNDEBUG",
+      "-DNO_POOL",
+      "-DNO_OMP",
+      "-DNO_MM_MALLOC",
     },
     extra_libs={
       "-lpthread",
-      -- For Intel MKL :)
-      "-L/opt/MKL/lib",
-      "-lmkl_intel_lp64",
-      "-Wl,--start-group",
-      "-lmkl_intel_thread",
-      "-lmkl_core",
-      "-Wl,--end-group",
-      "-liomp5"
+      "-lblas",
+      "-latlas",
+      "-rdynamic",
     },
   },
   

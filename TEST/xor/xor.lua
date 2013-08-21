@@ -76,6 +76,12 @@ ds_output2 = dataset.matrix(m_xor,{
 			      patternSize={1,1},
 			      numSteps={1,1}})
 
+if not trainer:grad_check_dataset{ input_dataset  = ds_input,
+				   output_dataset = ds_output,
+				   bunch_size     = 4 } then
+  error("Incorrect gradients!!!")
+end
+
 -----------------------
 -- Valores iniciales --
 -----------------------

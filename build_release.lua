@@ -14,11 +14,14 @@ luapkg{
       "-march=native",
       "-msse",
       "-DNDEBUG",
+      "-fopenmp",
     },
     extra_libs={
       "-lpthread",
       "-lblas",
       "-latlas",
+      "-fopenmp",
+      "-rdynamic",
     },
   },
   

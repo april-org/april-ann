@@ -3,8 +3,8 @@ bunch_size     = tonumber(arg[1]) or 64
 semilla        = 1234
 weights_random = random(semilla)
 description    = "256 inputs 256 tanh 128 tanh 10 log_softmax"
-inf            = -1
-sup            =  1
+inf            = -1.0
+sup            =  1.0
 shuffle_random = random(5678)
 learning_rate  = 0.08
 momentum       = 0.01
@@ -76,6 +76,9 @@ thenet = ann.mlp.all_all.generate(description)
 thenet:set_option("learning_rate", learning_rate)
 thenet:set_option("momentum",      momentum)
 thenet:set_option("weight_decay",  weight_decay)
+if util.is_cuda_available() then
+  thenet:set_use_cuda(true)
+end
 trainer = trainable.supervised_trainer(thenet,
 				       ann.loss.multi_class_cross_entropy(10),
 				       bunch_size)
@@ -100,6 +103,15 @@ datosvalidar = {
 }
 
 totalepocas = 0
+
+-- if not trainer:grad_check_dataset({
+-- 				    input_dataset  = val_input,
+-- 				    output_dataset = val_output,
+-- 				    max_iterations = 10,
+-- 				    bunch_size = 2,
+-- 				  }) then
+--   error("Incorrect gradients!!!")
+-- end
 
 errorval = trainer:validate_dataset(datosvalidar)
 print("# Initial validation error:", errorval)

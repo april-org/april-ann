@@ -72,8 +72,12 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "copy_component.h"
 #include "select_component.h"
 #include "rewrap_component.h"
+#include "flatten_component.h"
 #include "gaussian_noise_component.h"
 #include "salt_and_pepper_component.h"
+#include "convolution_component.h"
+#include "convolution_bias_component.h"
+#include "maxpooling_component.h"
 #include "activation_function_component.h"
 #include "connection.h"
 #include "activation_function_component.h"
@@ -84,6 +88,7 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "softmax_actf_component.h"
 #include "log_softmax_actf_component.h"
 #include "softplus_actf_component.h"
+#include "relu_actf_component.h"
 #include "hardtanh_actf_component.h"
 #include "sin_actf_component.h"
 #include "linear_actf_component.h"
@@ -239,12 +244,14 @@ using namespace ANN;
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, inf, float, inf, -1.0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, sup, float,  sup, 1.0);
   obj->randomizeWeights(rnd, inf, sup);
+  LUABIND_RETURN(Connections, obj);
 }
 //BIND_END
 
 //BIND_METHOD Connections print_debug
 {
   obj->printDebug();
+  LUABIND_RETURN(Connections, obj);
 }
 //BIND_END
 
@@ -276,6 +283,12 @@ using namespace ANN;
   }
   obj = new ANNComponent(name, weights, size, size);
   LUABIND_RETURN(ANNComponent, obj);
+}
+//BIND_END
+
+//BIND_FUNCTION ann.components.reset_id_counters
+{
+  ANNComponent::resetIdCounters();
 }
 //BIND_END
 
@@ -458,6 +471,15 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD ANNComponent compute_gradients
+{
+  hash<string,MatrixFloat*> weight_grads_dict;
+  obj->computeAllGradients(weight_grads_dict);
+  pushHashTableInLuaStack(L, weight_grads_dict, lua_pushMatrixFloat);
+  LUABIND_RETURN_FROM_STACK(-1);
+}
+//BIND_END
+
 //BIND_METHOD ANNComponent clone
 {
   LUABIND_RETURN(ANNComponent, obj->clone());
@@ -470,6 +492,13 @@ using namespace ANN;
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_GET_PARAMETER(1, bool, use_cuda);
   obj->setUseCuda(use_cuda);
+  LUABIND_RETURN(ANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD ANNComponent get_use_cuda
+{
+  LUABIND_RETURN(bool, obj->getUseCuda());
 }
 //BIND_END
 
@@ -732,6 +761,16 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD StackANNComponent set_use_cuda
+{
+  bool use_cuda;
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_GET_PARAMETER(1, bool, use_cuda);
+  obj->setUseCuda(use_cuda);
+  LUABIND_RETURN(StackANNComponent, obj);
+}
+//BIND_END
+
 /////////////////////////////////////////////////////
 //               JoinANNComponent                  //
 /////////////////////////////////////////////////////
@@ -770,6 +809,16 @@ using namespace ANN;
 {
   LUABIND_RETURN(JoinANNComponent,
 		 dynamic_cast<JoinANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+//BIND_METHOD JoinANNComponent set_use_cuda
+{
+  bool use_cuda;
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_GET_PARAMETER(1, bool, use_cuda);
+  obj->setUseCuda(use_cuda);
+  LUABIND_RETURN(JoinANNComponent, obj);
 }
 //BIND_END
 
@@ -872,6 +921,36 @@ using namespace ANN;
 //BIND_END
 
 /////////////////////////////////////////////////////
+//              FlattenANNComponent                //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME FlattenANNComponent ann.components.flatten
+//BIND_CPP_CLASS    FlattenANNComponent
+//BIND_SUBCLASS_OF  FlattenANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR FlattenANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  }
+  obj = new FlattenANNComponent(name);
+  LUABIND_RETURN(FlattenANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD FlattenANNComponent clone
+{
+  LUABIND_RETURN(FlattenANNComponent,
+		 dynamic_cast<FlattenANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
 //               GaussianNoiseANNComponent         //
 /////////////////////////////////////////////////////
 
@@ -939,6 +1018,156 @@ using namespace ANN;
 {
   LUABIND_RETURN(SaltAndPepperANNComponent,
 		 dynamic_cast<SaltAndPepperANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//               ConvolutionANNComponent           //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME ConvolutionANNComponent ann.components.convolution
+//BIND_CPP_CLASS    ConvolutionANNComponent
+//BIND_SUBCLASS_OF  ConvolutionANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR ConvolutionANNComponent
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  const char *name=0, *weights=0;
+  int *kernel, *step, n, input_planes_dim;
+  check_table_fields(L, 1, "name", "weights", "kernel", "input_planes_dim",
+		     "step", "n", (const char *)0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input_planes_dim, int,
+				       input_planes_dim, 1);
+  LUABIND_GET_TABLE_PARAMETER(1, n, int, n);
+  //
+  lua_getfield(L, 1, "kernel");
+  if (!lua_istable(L, -1))
+    LUABIND_ERROR("Expected a table at field 'kernel'");
+  int size;
+  LUABIND_TABLE_GETN(-1, size);
+  kernel = new int[size];
+  step = new int[size];
+  LUABIND_TABLE_TO_VECTOR(-1, int, kernel, size);
+  lua_pop(L, 1);
+  //
+  lua_getfield(L, 1, "step");
+  if (lua_isnil(L, -1)) {
+    for (int i=0; i<size; ++i) step[i] = 1;
+  }
+  else if (!lua_istable(L, -1))
+    LUABIND_ERROR("Expected a table at field 'step'");
+  else {
+    int size2;
+    LUABIND_TABLE_GETN(-1, size2);
+    if (size != size2)
+      LUABIND_ERROR("Tables kernel and step must have the same length");
+    LUABIND_TABLE_TO_VECTOR(-1, int, step, size);
+  }
+  lua_pop(L, 1);
+  obj = new ConvolutionANNComponent(size, kernel, step,
+				    input_planes_dim, n,
+				    name, weights);
+  LUABIND_RETURN(ConvolutionANNComponent, obj);
+  delete[] kernel;
+  delete[] step;
+}
+//BIND_END
+
+//BIND_METHOD ConvolutionANNComponent clone
+{
+  LUABIND_RETURN(ConvolutionANNComponent,
+		 dynamic_cast<ConvolutionANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//           ConvolutionBiasANNComponent           //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME ConvolutionBiasANNComponent ann.components.convolution_bias
+//BIND_CPP_CLASS    ConvolutionBiasANNComponent
+//BIND_SUBCLASS_OF  ConvolutionBiasANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR ConvolutionBiasANNComponent
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  const char *name=0, *weights=0;
+  int n, ndims;
+  check_table_fields(L, 1, "name", "weights", "n", "ndims", (const char *)0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights, string, weights, 0);
+  LUABIND_GET_TABLE_PARAMETER(1, n, int, n);
+  LUABIND_GET_TABLE_PARAMETER(1, ndims, int, ndims);
+  //
+  obj = new ConvolutionBiasANNComponent(ndims, n, name, weights);
+  LUABIND_RETURN(ConvolutionBiasANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD ConvolutionBiasANNComponent clone
+{
+  LUABIND_RETURN(ConvolutionBiasANNComponent,
+		 dynamic_cast<ConvolutionBiasANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//                MaxPoolingANNComponent           //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME MaxPoolingANNComponent ann.components.max_pooling
+//BIND_CPP_CLASS    MaxPoolingANNComponent
+//BIND_SUBCLASS_OF  MaxPoolingANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR MaxPoolingANNComponent
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  const char *name=0;
+  int *kernel, *step;
+  check_table_fields(L, 1, "name", "kernel", "step",
+		     (const char *)0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  //
+  lua_getfield(L, 1, "kernel");
+  if (!lua_istable(L, -1))
+    LUABIND_ERROR("Expected a table at field 'kernel'");
+  int size;
+  LUABIND_TABLE_GETN(-1, size);
+  kernel = new int[size];
+  step = new int[size];
+  LUABIND_TABLE_TO_VECTOR(-1, int, kernel, size);
+  lua_pop(L, 1);
+  //
+  lua_getfield(L, 1, "step");
+  if (lua_isnil(L, -1)) {
+    for (int i=0; i<size; ++i) step[i] = kernel[i];
+  }
+  else if (!lua_istable(L, -1))
+    LUABIND_ERROR("Expected a table at field 'step'");
+  else {
+    int size2;
+    LUABIND_TABLE_GETN(-1, size2);
+    if (size != size2)
+      LUABIND_ERROR("Tables kernel and step must have the same length");
+    LUABIND_TABLE_TO_VECTOR(-1, int, step, size);
+  }
+  lua_pop(L, 1);
+  obj = new MaxPoolingANNComponent(size, kernel, step, name);
+  LUABIND_RETURN(MaxPoolingANNComponent, obj);
+  delete[] kernel;
+  delete[] step;
+}
+//BIND_END
+
+//BIND_METHOD MaxPoolingANNComponent clone
+{
+  LUABIND_RETURN(MaxPoolingANNComponent,
+		 dynamic_cast<MaxPoolingANNComponent*>(obj->clone()));
 }
 //BIND_END
 
@@ -1121,6 +1350,29 @@ using namespace ANN;
   }
   obj = new SoftplusActfANNComponent(name);
   LUABIND_RETURN(SoftplusActfANNComponent, obj);  
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//            ReLUActfANNComponent                 //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME ReLUActfANNComponent ann.components.actf.relu
+//BIND_CPP_CLASS    ReLUActfANNComponent
+//BIND_SUBCLASS_OF  ReLUActfANNComponent ActivationFunctionANNComponent
+
+//BIND_CONSTRUCTOR ReLUActfANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  }
+  obj = new ReLUActfANNComponent(name);
+  LUABIND_RETURN(ReLUActfANNComponent, obj);  
 }
 //BIND_END
 

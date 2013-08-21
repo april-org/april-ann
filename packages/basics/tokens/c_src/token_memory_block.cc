@@ -53,10 +53,10 @@ void TokenMemoryBlock::resize(unsigned int size) {
 Token *TokenMemoryBlock::clone() const {
   TokenMemoryBlock *token = new TokenMemoryBlock(mem_block->getSize());
   token->used_size = used_size;
-  doScopy(mem_block->getSize(),
-	  mem_block, 0, 1,
-	  token->mem_block, 0, 1,
-	  false);
+  doCopy(mem_block->getSize(),
+	 mem_block, 0, 1,
+	 token->mem_block, 0, 1,
+	 false);
   return token;
 }
 
@@ -75,5 +75,5 @@ TokenCode TokenMemoryBlock::getTokenCode() const {
 }
 
 void TokenMemoryBlock::setToZero(bool use_cuda) {
-  doVectorSetToZero(mem_block, mem_block->getSize(), 1, 0, use_cuda);
+  doFill(mem_block->getSize(), mem_block, 1, 0, 0.0f, use_cuda);
 }

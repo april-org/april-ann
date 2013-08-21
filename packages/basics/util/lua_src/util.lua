@@ -15,6 +15,36 @@ function get_table_from_dotted_string(dotted_string, create, basetable)
   return current
 end
 
+function check_version(major_num,minor_num)
+  local major_v,minor_v = util.version()
+  assert(major_num == major_v and minor_num == minor_v,
+	 string.format("Incorrect version number, expected %d.%d, found %d.%d",
+		       major_num, minor_num, major_v, minor_v))
+end
+
+-- makes a FAKE wrapper around a class, so you can re-implement the functions
+function class_wrapper(obj,wrapper)
+  local wrapper = wrapper or {}
+  local current = obj
+  while (getmetatable(current) and getmetatable(current).__index and
+	 getmetatable(current).__index ~= current) do
+    current = getmetatable(current).__index
+    for i,v in pairs(current) do
+      if type(v) == "function" and wrapper[i] == nil then
+	wrapper[i] =
+	  function(first, ...)
+	    if first == wrapper then
+	      return obj[i](obj, ...)
+	    else
+	      return objt[i](...)
+	    end
+	  end
+      end
+    end
+  end
+  return wrapper
+end
+
 -- Convert a table in a class, and it receives an optional parent class to
 -- implement simple heritance
 function class(classname, parentclass)
@@ -408,10 +438,10 @@ function april_print_script_header(arg,file)
   fprintf(file,"# CMD: \t %s %s\n", arg[0], table.concat(arg, " "))
 end
 
-function map(func, iterator_func, ...)
+function map(func, ...)
   if not func then func = function(v) return v end end
   local t,key,value = {}
-  for key,value in iterator_func(unpack(arg)) do
+  for key,value in unpack(arg) do
     if not value then key,value = #t+1,key end
     local r = func(value)
     if r then t[key] = r end
@@ -419,15 +449,33 @@ function map(func, iterator_func, ...)
   return t
 end
 
-function map2(func, iterator_func, ...)
+function map2(func, ...)
   if not func then func = function(k,v) return v end end
   local t,key,value = {}
-  for key,value in iterator_func(unpack(arg)) do
+  for key,value in unpack(arg) do
     if not value then key,value = #t+1,key end
     local r = func(key,value)
     if r then t[key] = r end
   end
   return t
+end
+
+function reduce(func, initial_value, ...)
+  assert(type(func) == "function", "Needs a function as first argument")
+  assert(initial_value ~= nil,
+	 "Needs an initial_value as second argument")
+  local accum,key,value = initial_value
+  for key,value in unpack(arg) do
+    accum = func(accum, value or key)
+  end
+  return accum
+end
+
+function apply(func, ...)
+  if not func then func = function() end end
+  for key,value in unpack(arg) do
+    func(key,value)
+  end
 end
 
 -- This function prepares a safe environment for call user functions
@@ -582,6 +630,15 @@ function math.clamp(value,lower,upper)
   return math.max(lower,math.min(value,upper))
 end
 
+function math.median(t, ini, fin)
+  local mpos   = math.floor(#t/2)
+  local median = t[mpos]
+  if #t % 2 ~= 0 then
+    median = (median + t[mpos+1])/2
+  end
+  return median
+end
+
 -- calcula la media de una tabla, o subtabla
 function math.mean(t, ini, fin)
    local total=0
@@ -614,16 +671,19 @@ end
 
 function string.truncate(str, columns, prefix)
   local columns = columns - #prefix - 1
-  local words   = string.tokenize(str, " ")
+  local lines   = string.tokenize(str, "\n")
   local out     = { { } }
-  local size    = 0
-  for i,w in ipairs(words) do
-    if #w + size > columns then
-      size = 0
-      table.insert(out, { prefix })
+  for _,line in ipairs(lines) do
+    local words   = string.tokenize(line, " ")
+    local size    = 0
+    for i,w in ipairs(words) do
+      if #w + size > columns then
+	size = 0
+	table.insert(out, { prefix })
+      end
+      table.insert(out[#out], w)
+      size = size + #w
     end
-    table.insert(out[#out], w)
-    size = size + #w
   end
   for i=1,#out do out[i] = table.concat(out[i], " ") end
   return table.concat(out, "\n")
@@ -748,19 +808,23 @@ function table.search_key_from_value(t,value)
 end
 
 function table.imap(t,f)
-  return map(f, ipairs, t)
+  return map(f, ipairs(t))
 end
 
 function table.map(t,f)
-  return map(f, pairs, t)
+  return map(f, pairs(t))
 end
 
 function table.imap2(t,f)
-  return map2(f, ipairs, t)
+  return map2(f, ipairs(t))
 end
 
 function table.map2(t,f)
-  return map2(f, pairs, t)
+  return map2(f, pairs(t))
+end
+
+function table.reduce(t,f,initial_value)
+  return reduce(f, initial_value, ipairs(t))
 end
 
 function table.ifilter(t,f)
