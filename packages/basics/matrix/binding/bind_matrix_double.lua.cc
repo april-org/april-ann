@@ -20,6 +20,7 @@
  */
 //BIND_HEADER_C
 #include "bind_matrix.h"
+#include "utilMatrixDouble.h"
 #include "luabindutil.h"
 #include "luabindmacros.h"
 
@@ -68,7 +69,7 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 //BIND_LUACLASSNAME MatrixDouble matrixDouble
 //BIND_CPP_CLASS MatrixDouble
 
-//BIND_LUACLASSNAME SlidingWindowMatrixDouble matrixDouble.__sliding_window_double__
+//BIND_LUACLASSNAME SlidingWindowMatrixDouble matrixDouble.__sliding_window__
 //BIND_CPP_CLASS SlidingWindowMatrixDouble
 
 //BIND_CONSTRUCTOR SlidingWindowMatrixDouble
@@ -204,6 +205,60 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 }
 //BIND_END
 
+//BIND_CLASS_METHOD MatrixDouble fromFilename
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, string);
+  const char *filename;
+  LUABIND_GET_PARAMETER(1,string,filename);
+  MatrixDouble *obj;
+  if ((obj = readMatrixDoubleFromFile(filename)) == 0)
+    LUABIND_ERROR("bad format");
+  else LUABIND_RETURN(MatrixDouble,obj);
+}
+//BIND_END
+
+
+//BIND_CLASS_METHOD MatrixDouble fromString
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, string);
+  constString cs;
+  LUABIND_GET_PARAMETER(1,constString,cs);
+  MatrixDouble *obj;
+  if ((obj = readMatrixDoubleFromString(cs)) == 0)
+    LUABIND_ERROR("bad format");
+  else LUABIND_RETURN(MatrixDouble,obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble toFilename
+{
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_CHECK_ARGN(<=, 2);
+  const char *filename;
+  constString cs;
+  LUABIND_GET_PARAMETER(1, string, filename);
+  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("ascii"));
+  bool is_ascii = (cs == "ascii");
+  writeMatrixDoubleToFile(obj, filename, is_ascii);
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble toString
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  constString cs;
+  LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("ascii"));
+  bool is_ascii = (cs == "ascii");
+  int len;
+  char *buffer = writeMatrixDoubleToString(obj, is_ascii, len);
+  lua_pushlstring(L,buffer,len);
+  LUABIND_RETURN_FROM_STACK(-1);
+  delete[] buffer;
+}
+//BIND_END
+
 //BIND_METHOD MatrixDouble copy_from_table
 //DOC_BEGIN
 // void copy_from_table(table matrix_values)
@@ -231,7 +286,7 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 
 //BIND_METHOD MatrixDouble get
 //DOC_BEGIN
-// float get(coordinates)
+// double get(coordinates)
 /// Permite ver valores de una matriz. Requiere tantos indices como dimensiones tenga la matriz.
 ///@param coordinates Tabla con la posición exacta del punto de la matriz que queremos obtener.
 //DOC_END
@@ -282,7 +337,7 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 
 //BIND_METHOD MatrixDouble set
 //DOC_BEGIN
-// float set(coordinates,value)
+// double set(coordinates,value)
 /// Permite cambiar el valor de un elemento en la matriz. Requiere
 /// tantos indices como dimensiones tenga la matriz y adicionalmente
 /// el valor a cambiar
@@ -363,7 +418,7 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 
 //BIND_METHOD MatrixDouble fill
 //DOC_BEGIN
-// void fill(float value)
+// void fill(double value)
 /// Permite poner todos los valores de la matriz a un mismo valor.
 //DOC_END
 {
@@ -553,17 +608,8 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 {
   bool col_major;
   LUABIND_GET_OPTIONAL_PARAMETER(1, bool, col_major, false);
-  MatrixFloat *new_mat=new MatrixFloat(obj->getNumDim(),
-				       obj->getDimPtr(),
-				       (col_major)?CblasColMajor:CblasRowMajor);
-  MatrixDouble::const_iterator orig_it(obj->begin());
-  MatrixFloat::iterator dest_it(new_mat->begin());
-  while(orig_it != obj->end()) {
-    *dest_it = static_cast<float>(*orig_it);
-    ++orig_it;
-    ++dest_it;
-  }
-  LUABIND_RETURN(MatrixFloat, new_mat);
+  LUABIND_RETURN(MatrixFloat,
+		 convertFromMatrixDoubleToMatrixFloat(obj, col_major));
 }
 //BIND_END
 
