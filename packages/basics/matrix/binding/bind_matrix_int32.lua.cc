@@ -20,6 +20,7 @@
  */
 //BIND_HEADER_C
 #include "bind_matrix.h"
+#include "utilMatrixInt32.h"
 #include "luabindutil.h"
 #include "luabindmacros.h"
 
@@ -68,7 +69,7 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 //BIND_LUACLASSNAME MatrixInt32 matrixInt32
 //BIND_CPP_CLASS MatrixInt32
 
-//BIND_LUACLASSNAME SlidingWindowMatrixInt32 matrixInt32.__sliding_window_int32__
+//BIND_LUACLASSNAME SlidingWindowMatrixInt32 matrixInt32.__sliding_window__
 //BIND_CPP_CLASS SlidingWindowMatrixInt32
 
 //BIND_CONSTRUCTOR SlidingWindowMatrixInt32
@@ -201,6 +202,60 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 	  (void*)obj,
 	  (void*)obj->getRawDataAccess());
   LUABIND_RETURN(string, buff);
+}
+//BIND_END
+
+//BIND_CLASS_METHOD MatrixInt32 fromFilename
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, string);
+  const char *filename;
+  LUABIND_GET_PARAMETER(1,string,filename);
+  MatrixInt32 *obj;
+  if ((obj = readMatrixInt32FromFile(filename)) == 0)
+    LUABIND_ERROR("bad format");
+  else LUABIND_RETURN(MatrixInt32,obj);
+}
+//BIND_END
+
+
+//BIND_CLASS_METHOD MatrixInt32 fromString
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, string);
+  constString cs;
+  LUABIND_GET_PARAMETER(1,constString,cs);
+  MatrixInt32 *obj;
+  if ((obj = readMatrixInt32FromString(cs)) == 0)
+    LUABIND_ERROR("bad format");
+  else LUABIND_RETURN(MatrixInt32,obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixInt32 toFilename
+{
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_CHECK_ARGN(<=, 2);
+  const char *filename;
+  constString cs;
+  LUABIND_GET_PARAMETER(1, string, filename);
+  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("ascii"));
+  bool is_ascii = (cs == "ascii");
+  writeMatrixInt32ToFile(obj, filename, is_ascii);
+}
+//BIND_END
+
+//BIND_METHOD MatrixInt32 toString
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  constString cs;
+  LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("ascii"));
+  bool is_ascii = (cs == "ascii");
+  int len;
+  char *buffer = writeMatrixInt32ToString(obj, is_ascii, len);
+  lua_pushlstring(L,buffer,len);
+  LUABIND_RETURN_FROM_STACK(-1);
+  delete[] buffer;
 }
 //BIND_END
 
@@ -553,17 +608,8 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 {
   bool col_major;
   LUABIND_GET_OPTIONAL_PARAMETER(1, bool, col_major, false);
-  MatrixFloat *new_mat=new MatrixFloat(obj->getNumDim(),
-				       obj->getDimPtr(),
-				       (col_major)?CblasColMajor:CblasRowMajor);
-  MatrixInt32::const_iterator orig_it(obj->begin());
-  MatrixFloat::iterator dest_it(new_mat->begin());
-  while(orig_it != obj->end()) {
-    *dest_it = static_cast<float>(*orig_it);
-    ++orig_it;
-    ++dest_it;
-  }
-  LUABIND_RETURN(MatrixFloat, new_mat);
+  LUABIND_RETURN(MatrixFloat,
+		 convertFromMatrixInt32ToMatrixFloat(obj, col_major));
 }
 //BIND_END
 
