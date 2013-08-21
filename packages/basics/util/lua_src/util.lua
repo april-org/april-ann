@@ -888,24 +888,20 @@ end
 -----
 
 function table.tostring(t)
-  local out = {"{"}
+  local out = {}
   for i,v in pairs(t) do
     local key
-    if type(i)=="number" or tonumber(i) then
-      table.insert(out,"["..i.."]".."=")
-    else
-      table.insert(out,string.format("[%q]=",i))
+    local value
+    if tonumber(i) then key = "["..i.."]".."="
+    else key = string.format("[%q]=",i)
     end
-    if type(v) == "table" then
-      table.insert(out,"\n"..table.tostring(v))
-    elseif type(v) == "string" then
-      table.insert(out,string.format("%q",v))
-    else
-      table.insert(out,tostring(v))
+    if type(v) == "table" then value = "\n"..table.tostring(v)
+    elseif type(v) == "string" then value = string.format("%q",v)
+    else value = tostring(v)
     end
+    table.insert(out, key .. value)
   end
-  table.insert(out,"}\n")
-  return table.concat(out,",")
+  return "{\n"..table.concat(out,",").."\n}"
 end
 
 -- devuelve el valor maximo de una tabla
