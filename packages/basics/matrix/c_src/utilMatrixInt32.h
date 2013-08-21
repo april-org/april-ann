@@ -70,7 +70,7 @@ template<typename StreamType>
 struct Int32AsciiCoder {
   // puts to the stream the given value
   void operator()(const int32_t &value, StreamType &stream) {
-    stream.printf("%10d", value);
+    stream.printf("%d", value);
   }
 };
 
