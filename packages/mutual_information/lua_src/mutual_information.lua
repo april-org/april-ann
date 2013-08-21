@@ -25,6 +25,10 @@ april_set_doc("MI.entropy",
 		  "Computes the entropy of a given matrix or histogram.",
 		  "The two arguments are optional, but one of them must be",
 		  "present.",
+		  "If the matrix is given (and not the histogram),",
+		  "the entropy is computed interpreting the matrix data",
+		  "as a continuum sequence of data points, making i.i.d.",
+		  "assumptions.",
 		},
 		params = {
 		  "A matrix [optional], ignored if given a histogram",
@@ -50,13 +54,15 @@ function MI.entropy(m, histogram, levels)
   return -histogram:clone():plogp():sum()/math.log(2)
 end
 
-april_set_doc("MI.entropy",
+april_set_doc("MI.mutual_information",
 	      {
 		class = "function",
 		summary = "Computes the Mutual Information between two matrices",
 		description = {
 		  "Computes the Mutual Information between two matrices.",
-		  "The two matrices must have the same size.",
+		  "The two matrices must have the same size. The MI is",
+		  "computed interpreting the matrix data as a continuum",
+		  "sequence of data points, making i.i.d. assumptions.",
 		},
 		params = {
 		  "A matrix",
