@@ -102,6 +102,7 @@ class Image : public Referenced {
   Image<T> *add_rows(int top_rows, int bottom_rows, T value) const;
   Image<T> *substract_image(Image<T> *img, T low, T high) const;
 
+  Matrix<T> *comb_lineal_forward(int x, int y, int ancho, int alto, int miniancho, int minialto, LinearCombConf<T> *cl);
   void threshold_image(T low, T high, T value_low, T value_high);
  private:
   void invert_affine_matrix(float c[6], float dest[6]) const;
