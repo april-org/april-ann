@@ -11,6 +11,7 @@ return {
   "math",
   "gzio",
   "matlab",
+  "mutual_information",
   
   -- MACHINE LEARNING
   "trainable",
@@ -39,4 +40,5 @@ return {
   
   -- HMMs
    "hmm_trainer",
+   "rates",
  }

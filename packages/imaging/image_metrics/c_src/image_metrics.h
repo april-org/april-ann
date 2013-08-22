@@ -24,6 +24,7 @@
 
 #include "referenced.h"
 #include "datasetFloat.h"
+#include "utilImageFloat.h"
 
 /**
  Class that contains the counters for calculate the metrics on two different

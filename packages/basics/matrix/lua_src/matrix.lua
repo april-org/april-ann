@@ -122,6 +122,34 @@ function matrix.saveRAW(matrix,filename)
   f:close()
 end
 
+-----------------------------------------------------------------------------
+
+util.vector_uint.meta_instance.__tostring = function(self)
+  local out = {}
+  local sz = self:size()
+  local NCOLS = 9
+  for i=1,sz do
+    if i%NCOLS == 0 then table.insert(out, "\n") end
+    table.insert(out, string.format("%8d ",self:get(i)))
+  end
+  table.insert(out, string.format("\n# vector_uint of size %d",
+				  self:size()))
+  return table.concat(out, "")
+end
+
+util.vector_float.meta_instance.__tostring = function(self)
+  local out = {}
+  local sz = self:size()
+  local NCOLS = 9
+  for i=1,sz do
+    if i%NCOLS == 0 then table.insert(out, "\n") end
+    table.insert(out, string.format("% -13.8g ",self:get(i)))
+  end
+  table.insert(out, string.format("\n# vector_float of size %d",
+				  self:size()))
+  return table.concat(out, " ")
+end
+
 ---------------------------
 -- BINDING DOCUMENTATION --
 ---------------------------
@@ -304,6 +332,21 @@ april_set_doc("matrix.get", {
 		outputs = {
 		  "A number",
 		}, })
+
+april_set_doc("matrix.sum",
+	      {
+		class="method",
+		summary="Computes the sum of all the elements.",
+		outputs={"A number"},
+	      })
+
+april_set_doc("matrix.sum",
+	      {
+		class="method",
+		summary="Computes the sum of all the elements over the given dimension.",
+		params={"A number, the dimension"},
+		outputs={"A matrix"},
+	      })
 
 april_set_doc("matrix.set", {
 		class = "method",
@@ -614,6 +657,15 @@ april_set_doc("matrix.cmul", {
 		  "A new matrix result of component-wise multiplication",
 		}, })
 
+april_set_doc("matrix.plogp", {
+		class = "method",
+		summary = "Component wise p*log(p) operation IN-PLACE: Y = Y*log(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
 april_set_doc("matrix.log", {
 		class = "method",
 		summary = "Component wise log operation IN-PLACE: Y = log(Y)",
@@ -644,6 +696,24 @@ april_set_doc("matrix.exp", {
 april_set_doc("matrix.tanh", {
 		class = "method",
 		summary = "Component wise tanh operation IN-PLACE: Y = tanh(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.sin", {
+		class = "method",
+		summary = "Component wise sin operation IN-PLACE: Y = sin(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.cos", {
+		class = "method",
+		summary = "Component wise cos operation IN-PLACE: Y = cos(Y)",
 		params = {
 		},
 		outputs = {

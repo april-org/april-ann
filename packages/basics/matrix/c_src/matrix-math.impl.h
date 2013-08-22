@@ -50,6 +50,7 @@ void Matrix<T>::ones() {
 
 template <typename T>
 void Matrix<T>::diag(T value) {
+  if (use_cuda) ERROR_PRINT("WARNING! DIAG OPERATION NOT IMPLENTED FOR CUDA\n");
   for (int i=1; i<numDim; ++i)
     if (matrixSize[i] != matrixSize[i-1])
       ERROR_EXIT(128, "Only allowed for squared matrices\n");
@@ -61,6 +62,7 @@ void Matrix<T>::diag(T value) {
   }
   delete[] aux_coords;
 }
+
 
 template <typename T>
 Matrix<T>* Matrix<T>::addition(const Matrix<T> *other) {
@@ -86,6 +88,41 @@ T Matrix<T>::sum() const {
   return T();
 }
 
+// the argument indicates over which dimension the sum must be performed
+template <typename T>
+Matrix<T>* Matrix<T>::sum(int dim) {
+  int *result_dims = new int[numDim];
+  /**** THIS sliding window ****/
+  int *this_w_size = new int[numDim];
+  int *this_w_num_steps   = new int[numDim];
+  for (int i=0; i<dim; ++i) {
+    this_w_size[i] = 1;
+    result_dims[i] = this_w_num_steps[i] = matrixSize[i];
+  }
+  result_dims[dim] = 1;
+  this_w_size[dim] = matrixSize[dim];
+  this_w_num_steps[dim] = 1;
+  for (int i=dim+1; i<numDim; ++i) {
+    this_w_size[i] = 1;
+    result_dims[i] = this_w_num_steps[i] = matrixSize[i];
+  }
+  sliding_window this_w(this,this_w_size,0,0,this_w_num_steps,0);
+  Matrix<T> *slice = this_w.getMatrix();
+  IncRef(slice);
+  /******************************/
+  Matrix<T> *result = new Matrix<T>(numDim, result_dims, major_order);
+  // traverse in row major order
+  for (iterator it(result->begin()); it!=result->end(); ++it) {
+    this_w.getMatrix(slice);
+    *it = slice->sum();
+    this_w.next();
+  }
+  DecRef(slice);
+  delete[] this_w_size;
+  delete[] this_w_num_steps;
+  return result;
+}
+
 /**** COMPONENT WISE OPERATIONS ****/
 
 template <typename T>
@@ -97,8 +134,8 @@ template <typename T>
 void Matrix<T>::copy(const Matrix<T> *other) {
   if (!sameDim(other))
     ERROR_EXIT(128, "Not equal matrix dimensions\n");
-  Matrix<T>::const_iterator it_orig(other->begin());
-  Matrix<T>::iterator it_dest(this->begin());
+  const_iterator it_orig(other->begin());
+  iterator it_dest(this->begin());
   while(it_orig != other->end()) {
     *it_dest = *it_orig;
     ++it_orig;
@@ -107,9 +144,14 @@ void Matrix<T>::copy(const Matrix<T> *other) {
 }
 
 template <typename T>
-bool Matrix<T>::equals(const Matrix<T> *other, T epsilon) const {
+bool Matrix<T>::equals(const Matrix<T> *other, float epsilon) const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return false;
+}
+
+template <typename T>
+void Matrix<T>::plogp() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
 template <typename T>
@@ -139,6 +181,16 @@ void Matrix<T>::pow(T value) {
 
 template <typename T>
 void Matrix<T>::tanh() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
+void Matrix<T>::cos() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
+void Matrix<T>::sin() {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
@@ -182,7 +234,7 @@ void Matrix<T>::ger(T alpha,
 template <typename T>
 T Matrix<T>::dot(const Matrix<T> *other) const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-  return T();
+  return 0.0f;
 }
 
 template <typename T>
@@ -191,9 +243,9 @@ void Matrix<T>::scal(T value) {
 }
 
 template <typename T>
-T Matrix<T>::norm2() const {
+float Matrix<T>::norm2() const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-  return T();
+  return 0.0f;
 }
 
 template <typename T>

@@ -325,9 +325,9 @@ namespace ANN {
   }
   
   char *Connections::toLuaString() {
-    char *w, *oldw;
-    saveMatrixFloatToString(weights, &w, false);
-    saveMatrixFloatToString(prev_weights, &oldw, false);
+    int len_w, len_oldw;
+    char *w    = writeMatrixFloatToString(weights,      false, len_w);
+    char *oldw = writeMatrixFloatToString(prev_weights, false, len_oldw);
     buffer_list buffer;
     buffer.printf("ann.connections{ input=%d, output=%d, "
 		  "w=matrix.fromString[[%s]], oldw=matrix.fromString[[%s]]}",

@@ -158,7 +158,37 @@
 }
 //BIND_END
 
+//BIND_METHOD ImageFloat get_horizontal_histogram
+//DOC_BEGIN
+// Returns horizontal for a each row the image
+//DOC_END
+{
+  LUABIND_CHECK_ARGN(==, 1);
 
+  int gray_levels;
+  LUABIND_GET_PARAMETER(1, int, gray_levels);
+  ImageHistogram *hist = new ImageHistogram(obj, gray_levels);
+  MatrixFloat *m = hist->getHorizontalHistogram();
+  delete hist;
+  LUABIND_RETURN(MatrixFloat, m);
+}
+//BIND_END
+//
+//BIND_METHOD ImageFloat get_vertical_histogram
+//DOC_BEGIN
+// Returns vertical for a each row the image
+//DOC_END
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  int gray_levels;
+  LUABIND_GET_PARAMETER(1, int, gray_levels);
+  ImageHistogram *hist = new ImageHistogram(obj, gray_levels);
+  MatrixFloat *m = hist->getVerticalHistogram();
+  delete hist;
+  LUABIND_RETURN(MatrixFloat, m);
+}
+//BIND_END
+//
 //BIND_METHOD ImageHistogram get_horizontal_histogram
 //DOC_BEGIN
 // Returns horizontal for a each row the image

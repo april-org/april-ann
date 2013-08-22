@@ -23,3 +23,38 @@ function image.image_metrics.printMetrics(metrics, range, params)
     printf("\n")
 end
 
+function image.image_metrics:processImages(clean_img, gt_img)
+  -- Load a dataset over the image and call process_dataset
+    
+    local dim_clean = clean_img:matrix():dim()  
+
+    local clean_params = {
+        patternSize   = {1, 1},
+        offset        = {0,0},
+        stepSize      = {1,1},
+        numSteps      = dim_clean,
+        defaultValue  = 1, -- 1 es blanco
+        circular={false,false}
+    }
+    
+    local dim_gt = gt_img:matrix():dim()  
+
+    local gt_params   = {
+        patternSize   = {1, 1},
+        stepSize      = {1,1},
+        numSteps      = dim_gt,
+        defaultValue  = 1, -- 1 es blanco
+        circular={false,false}
+    }
+
+    local ds_gt  = dataset.matrix(clean_img:matrix(), clean_params)
+    local ds_clean = dataset.matrix(gt_img:matrix(), gt_params)
+
+    self:process_dataset(
+      { predicted = ds_clean,
+        ground_truth = ds_gt,
+      }
+    )
+end
+
+

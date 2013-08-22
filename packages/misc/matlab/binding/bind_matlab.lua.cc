@@ -20,8 +20,10 @@
  */
 //BIND_HEADER_C
 #include "bind_matrix.h"
+#include "bind_matrix_complex_float.h"
 #include "bind_matrix_char.h"
 #include "bind_matrix_int32.h"
+#include "bind_matrix_double.h"
 
 int elements_iterator_function(lua_State *L) {
   MatFileReader *obj = lua_toMatFileReader(L,1);
@@ -155,8 +157,32 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
   LUABIND_GET_OPTIONAL_PARAMETER(1, bool, col_major, false);
   char name[MAX_NAME_SIZE];
   MatrixFloat *m = obj->getMatrix(name, MAX_NAME_SIZE, col_major);
-  LUABIND_RETURN(MatrixFloat, m);
+  if (m != 0) {
+    LUABIND_RETURN(MatrixFloat, m);
+    LUABIND_RETURN(string, name);
+  }
+}
+//BIND_END
+
+//BIND_METHOD MatTaggedDataElement get_matrix_complex
+{
+  bool col_major;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, bool, col_major, false);
+  char name[MAX_NAME_SIZE];
+  MatrixComplexF *m = obj->getMatrixComplexF(name, MAX_NAME_SIZE, col_major);
+  LUABIND_RETURN(MatrixComplexF, m);
   LUABIND_RETURN(string, name);
+}
+//BIND_END
+
+//BIND_METHOD MatTaggedDataElement get_matrix_double
+{
+  char name[MAX_NAME_SIZE];
+  MatrixDouble *m = obj->getMatrixDouble(name, MAX_NAME_SIZE);
+  if (m != 0) {
+    LUABIND_RETURN(MatrixDouble, m);
+    LUABIND_RETURN(string, name);
+  }
 }
 //BIND_END
 
@@ -173,8 +199,10 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
 {
   char name[MAX_NAME_SIZE];
   MatrixInt32 *m = obj->getMatrixInt32(name, MAX_NAME_SIZE);
-  LUABIND_RETURN(MatrixInt32, m);
-  LUABIND_RETURN(string, name);
+  if (m != 0) {
+    LUABIND_RETURN(MatrixInt32, m);
+    LUABIND_RETURN(string, name);
+  }
 }
 //BIND_END
 
@@ -240,11 +268,15 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
   LUABIND_CHECK_ARGN(==,1);
   int raw_idx;
   LUABIND_GET_PARAMETER(1, int, raw_idx);
+  if (raw_idx < 0 || raw_idx >= obj->getSize())
+    LUABIND_FERROR3("Incorrect raw index, found %d, expected betwen [%d,%d]",
+		    raw_idx, 0, obj->getSize());
   int *coords = new int[obj->getNumDim()];
   obj->computeCoords(raw_idx, coords);
   for (int i=0; i<obj->getNumDim(); ++i) coords[i]++;
   LUABIND_VECTOR_TO_NEW_TABLE(int, coords, obj->getNumDim());
   LUABIND_RETURN_FROM_STACK(-1);
+  delete[] coords;
 }
 //BIND_END
 
@@ -253,6 +285,9 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
   LUABIND_CHECK_ARGN(==,1);
   int raw_idx;
   LUABIND_GET_PARAMETER(1, int, raw_idx);
+  if (raw_idx < 0 || raw_idx >= obj->getSize())
+    LUABIND_FERROR3("Incorrect raw index, found %d, expected betwen [%d,%d]",
+		    raw_idx, 0, obj->getSize());
   LUABIND_RETURN(MatTaggedDataElement, obj->getElementAt(raw_idx));
 }
 //BIND_END
@@ -289,7 +324,10 @@ typedef MatFileReader::StructureDataElement MatStructureDataElement;
   if (argn == 1) {
     int idx;
     LUABIND_GET_PARAMETER(1, int, idx);
-    LUABIND_RETURN(int, obj->getDimSize(idx));
+    if (idx < 1 || idx > obj->getNumDim())
+      LUABIND_FERROR3("Incorrect dimension number, found %d, expected "
+		      "between [%d,%d]", idx, 1, obj->getNumDim());
+    LUABIND_RETURN(int, obj->getDimSize(idx-1));
   }
   else {
     const int *d = obj->getDimPtr();

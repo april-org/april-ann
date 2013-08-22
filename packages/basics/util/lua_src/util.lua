@@ -17,9 +17,12 @@ end
 
 function check_version(major_num,minor_num)
   local major_v,minor_v = util.version()
-  assert(major_num == major_v and minor_num == minor_v,
-	 string.format("Incorrect version number, expected %d.%d, found %d.%d",
-		       major_num, minor_num, major_v, minor_v))
+  if major_num == major_v and minor_num == minor_v then return true
+  else
+    fprintf(io.stderr,
+	    "Incorrect version number, expected %d.%d, found %d.%d",
+	    major_num, minor_num, major_v, minor_v)
+  end
 end
 
 -- makes a FAKE wrapper around a class, so you can re-implement the functions
@@ -42,7 +45,7 @@ function class_wrapper(obj,wrapper)
       end
     end
   end
-  return wrapper
+  return class_instance(wrapper,getmetatable(obj))
 end
 
 -- Convert a table in a class, and it receives an optional parent class to
@@ -434,7 +437,7 @@ end
 function april_print_script_header(arg,file)
   local file = file or io.stdout
   fprintf(file,"# HOST:\t %s\n", (io.popen("hostname", "r"):read("*l")))
-  fprintf(file,"# DATE:\t %s\n", (io.popen("date", "r"):read("*l")))
+  fprintf(file,"# DATE:\t %s\n", os.date())
   fprintf(file,"# CMD: \t %s %s\n", arg[0], table.concat(arg, " "))
 end
 
@@ -633,30 +636,39 @@ function math.clamp(value,lower,upper)
   return math.max(lower,math.min(value,upper))
 end
 
+function math.median(t, ini, fin)
+  local ini,fin = ini or 1, fin or #t
+  local len     = fin-ini+1
+  local mpos    = math.floor((ini+fin-1)/2)
+  local median  = t[mpos]
+  if len % 2 ~= 0 then
+    median = (median + t[mpos+1])/2
+  end
+  return median
+end
+
 -- calcula la media de una tabla, o subtabla
 function math.mean(t, ini, fin)
-   local total=0
-   local suma=0
-   if not ini then ini = 1 end
-   if not fin then fin = #t end
-   total = fin - ini + 1
-   for i=ini,fin do
-      suma = suma + t[i]
-   end
-   return suma/total,total
+  local ini,fin = ini or 1, fin or #t
+  local total=0
+  local suma=0
+  total = fin - ini + 1
+  for i=ini,fin do
+    suma = suma + t[i]
+  end
+  return suma/total,total
 end
 
 -- calcula la desviacion tipica de una tabla o subtabla
 function math.std(t, ini, fin)
-   local mean,total = math.mean(t, ini, fin)
-   local suma_sqr=0
-   if not ini then ini = 1 end
-   if not fin then fin = #t end
-   for i=ini,fin do
-      local value = mean - t[i]
-      suma_sqr = suma_sqr + value*value
-   end
-   return math.sqrt(suma_sqr/(total-1)),total
+  local ini,fin = ini or 1, fin or #t
+  local mean,total = math.mean(t, ini, fin)
+  local suma_sqr=0
+  for i=ini,fin do
+    local value = mean - t[i]
+    suma_sqr = suma_sqr + value*value
+  end
+  return math.sqrt(suma_sqr/(total-1)),total
 end
 
 ---------------------------------------------------------------
@@ -665,16 +677,19 @@ end
 
 function string.truncate(str, columns, prefix)
   local columns = columns - #prefix - 1
-  local words   = string.tokenize(str, " ")
+  local lines   = string.tokenize(str, "\n")
   local out     = { { } }
-  local size    = 0
-  for i,w in ipairs(words) do
-    if #w + size > columns then
-      size = 0
-      table.insert(out, { prefix })
+  for _,line in ipairs(lines) do
+    local words   = string.tokenize(line, " ")
+    local size    = 0
+    for i,w in ipairs(words) do
+      if #w + size > columns then
+	size = 0
+	table.insert(out, { prefix })
+      end
+      table.insert(out[#out], w)
+      size = size + #w
     end
-    table.insert(out[#out], w)
-    size = size + #w
   end
   for i=1,#out do out[i] = table.concat(out[i], " ") end
   return table.concat(out, "\n")
@@ -879,24 +894,20 @@ end
 -----
 
 function table.tostring(t)
-  local out = {"{"}
+  local out = {}
   for i,v in pairs(t) do
     local key
-    if type(i)=="number" or tonumber(i) then
-      table.insert(out,"["..i.."]".."=")
-    else
-      table.insert(out,string.format("[%q]=",i))
+    local value
+    if tonumber(i) then key = "["..i.."]".."="
+    else key = string.format("[%q]=",i)
     end
-    if type(v) == "table" then
-      table.insert(out,"\n"..table.tostring(v))
-    elseif type(v) == "string" then
-      table.insert(out,string.format("%q",v))
-    else
-      table.insert(out,tostring(v))
+    if type(v) == "table" then value = "\n"..table.tostring(v)
+    elseif type(v) == "string" then value = string.format("%q",v)
+    else value = tostring(v)
     end
+    table.insert(out, key .. value)
   end
-  table.insert(out,"}\n")
-  return table.concat(out,",")
+  return "{\n"..table.concat(out,",").."\n}"
 end
 
 -- devuelve el valor maximo de una tabla
