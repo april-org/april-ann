@@ -40,7 +40,8 @@ cublasStatus_t wrapperCublasScal(cublasHandle_t &handle,
 				 ComplexF *alpha,
 				 ComplexF *x_mem,
 				 unsigned int x_inc) {
-  return cublasCscal(handle, N, alpha, x_mem, x_inc);
+  return cublasCscal(handle, N, reinterpret_cast<cuComplex*>(alpha),
+                     reinterpret_cast<cuComplex*>(x_mem), x_inc);
 }
 #endif
 
