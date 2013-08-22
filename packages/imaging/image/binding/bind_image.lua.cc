@@ -293,6 +293,21 @@
 }
 //BIND_END
 
+//BIND_METHOD ImageFloat threshold
+{
+  
+  LUABIND_CHECK_ARGN(==,2);
+  float low, high;
+
+  LUABIND_GET_PARAMETER(1, float, low);
+  LUABIND_GET_PARAMETER(2, float, high);
+  
+  obj->threshold_image(low, high,0.0, 1.0);
+
+  return 0;
+}
+//BIND_END
+
 //BIND_METHOD ImageFloat rotate90cw
 {
   int param; // must be +1 or -1

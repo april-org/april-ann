@@ -965,4 +965,16 @@ Image<T>* Image<T>::substract_image(Image<T> *img, T low, T high) const {
   return res;
 }
 
+template <typename T>
+void Image<T>::threshold_image(T threshold_low, T threshold_high, T value_low, T value_high ){
+
+  for (int y = 0; y < this->height; y++){
+    for (int x = 0; x < this->width; x++){
+        T value = (*this)(x,y);
+        if (value < threshold_low) (*this)(x,y) = value_low;
+        else if (value > threshold_high) (*this)(x,y) = value_high;
+    } 
+  }
+}
+
 #endif // _IMAGE_CC_

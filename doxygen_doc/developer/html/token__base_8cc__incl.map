@@ -1,9 +1,0 @@
-<map id="basics/tokens/c_src/token_base.cc" name="basics/tokens/c_src/token_base.cc">
-<area shape="rect" id="node5" href="$token__base_8h.html" title="token_base.h" alt="" coords="200,101,299,131"/>
-<area shape="rect" id="node12" href="$table__of__token__codes_8h.html" title="table_of_token_codes.h" alt="" coords="327,256,487,285"/>
-<area shape="rect" id="node15" href="$buffer__list_8h.html" title="buffer_list.h" alt="" coords="147,179,237,208"/>
-<area shape="rect" id="node26" href="$constString_8h.html" title="constString.h" alt="" coords="68,256,167,285"/>
-<area shape="rect" id="node32" href="$referenced_8h.html" title="referenced.h" alt="" coords="261,179,355,208"/>
-<area shape="rect" id="node18" href="$logbase_8h.html" title="logbase.h" alt="" coords="165,333,243,363"/>
-<area shape="rect" id="node20" href="$logbase__standard_8h.html" title="logbase_standard.h" alt="" coords="147,411,280,440"/>
-</map>

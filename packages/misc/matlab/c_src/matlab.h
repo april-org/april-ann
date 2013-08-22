@@ -32,8 +32,10 @@
 #include <cstdio>
 #include <stdint.h>
 #include "matrixFloat.h"
+#include "matrixComplexF.h"
 #include "matrixChar.h"
 #include "matrixInt32.h"
+#include "matrixDouble.h"
 #include "list.h"
 #include "hash_table.h"
 #include "mystring.h"
@@ -99,9 +101,15 @@ private:
 public:
   
   class DataElementInterface : public Referenced {
+  protected:
+    MatFileReader *reader;
   public:
-    DataElementInterface() : Referenced() { }
-    virtual ~DataElementInterface() { }
+    DataElementInterface(MatFileReader *reader) : Referenced(),reader(reader) {
+      IncRef(reader);
+    }
+    virtual ~DataElementInterface() {
+      DecRef(reader);
+    }
     virtual uint32_t getDataType() const = 0;
     virtual uint32_t getClass() = 0;
   };
@@ -115,10 +123,9 @@ public:
   protected:
     const char *data;
     size_t data_pos;
-    TaggedDataElement(const char *ptr) :
-    DataElementInterface(), data(ptr), data_pos(0) { }
+    TaggedDataElement(MatFileReader *reader, const char *ptr) :
+    DataElementInterface(reader), data(ptr), data_pos(0) { }
   public:
-    TaggedDataElement() : data(0), data_pos(0) { }
     virtual ~TaggedDataElement() { }
     virtual uint32_t getDataType() const = 0;
     virtual uint32_t getNumberOfBytes() const = 0;
@@ -130,6 +137,11 @@ public:
     TaggedDataElement *getNextSubElement();
     // FOR NUMERIC TYPES (casting)
     MatrixFloat *getMatrix(char *name, size_t maxsize, bool col_major=false);
+    // FOR NUMERIC TYPES (casting)
+    MatrixComplexF *getMatrixComplexF(char *name, size_t maxsize,
+				      bool col_major=false);
+    // FOR NUMERIC TYPES (casting)
+    MatrixDouble *getMatrixDouble(char *name, size_t maxsize);
     virtual uint32_t getClass();
     // ONLY IF CELL ARRAY
     CellArrayDataElement *getCellArray(char *name, size_t maxsize);
@@ -146,7 +158,7 @@ public:
     TaggedDataElement **elements;
     int computeRawPos(const int *coords);
   public:
-    CellArrayDataElement(const int *dims, int num_dims);
+    CellArrayDataElement(MatFileReader *reader, const int *dims, int num_dims);
     ~CellArrayDataElement();
     TaggedDataElement *getElementAt(const int *coords, int n);
     TaggedDataElement *getElementAt(int raw_idx);
@@ -172,7 +184,7 @@ public:
   private:
     HashType elements;
   public:
-    StructureDataElement();
+    StructureDataElement(MatFileReader *reader);
     ~StructureDataElement();
     TaggedDataElement *getElementByName(const char *name);
     void setElementByName(const char *name, TaggedDataElement *e);
@@ -187,8 +199,8 @@ private:
   struct FullTagDataElement : public TaggedDataElement {
     const FullDataTag *tag;
   public:
-    FullTagDataElement(const char *ptr) :
-    TaggedDataElement(ptr+TAG_SIZE),
+    FullTagDataElement(MatFileReader *reader, const char *ptr) :
+      TaggedDataElement(reader, ptr+TAG_SIZE),
     tag(reinterpret_cast<const FullDataTag*>(ptr)) { }
     virtual uint32_t getDataType() const { return tag->data_type; }
     virtual uint32_t getNumberOfBytes() const { return tag->number_of_bytes; }
@@ -199,8 +211,8 @@ private:
   struct SmallTagDataElement : public TaggedDataElement {
     const SmallDataTag *tag;
   public:
-    SmallTagDataElement(const char *ptr) :
-    TaggedDataElement(ptr+SMALL_TAG_SIZE),
+    SmallTagDataElement(MatFileReader *reader, const char *ptr) :
+      TaggedDataElement(reader, ptr+SMALL_TAG_SIZE),
     tag(reinterpret_cast<const SmallDataTag*>(ptr)) { }
     virtual uint32_t getDataType() const { return static_cast<uint32_t>(tag->data_type); }
     virtual uint32_t getNumberOfBytes() const { return static_cast<uint32_t>(tag->number_of_bytes); }
@@ -234,7 +246,8 @@ public:
   TaggedDataElement *getNextDataElement();
   void reset() { mmapped_data_pos = 0; }
 
-  static TaggedDataElement *getDataElement(const char *ptr);
+  static TaggedDataElement *getDataElement(MatFileReader *reader,
+					   const char *ptr);
   
 };
 

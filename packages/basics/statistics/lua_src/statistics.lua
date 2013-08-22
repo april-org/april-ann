@@ -50,18 +50,21 @@ april_set_doc("stats.mean_var.add", {
 
 april_set_doc("stats.mean_var.add", {
 		class = "method",
-		summary = "Adds a value or values from a function call",
+		summary = "Adds a sequence of values from an iterator function",
 		params = {
-		  "A Lua function",
+		  "An iterator function",
 		},
 		outputs = { "The caller mean_var object (itself)" }, })
 
-function stats.mean_var:add(v)
+function stats.mean_var:add(...)
+  local arg = { ... }
+  local v = arg[1]
   if type(v) == "table" then
-    for _,vp in ipairs(v) do return self:add(vp) end
+    return self:add(ipairs(v))
   elseif type(v) == "function" then
-    local vp = v()
-    return self:add(vp)
+    for key,value in unpack(arg) do
+      self:add(value or key)
+    end
   elseif type(v) == "number" then
     local vi = v - self.assumed_mean
     self.accum_sum  = self.accum_sum + vi
@@ -71,6 +74,17 @@ function stats.mean_var:add(v)
     error("Incorrect type="..type(v)..". Expected number, table or function")
   end
   return self
+end
+
+-----------------------------------------------------------------------------
+
+april_set_doc("stats.mean_var.size", {
+		class = "method",
+		summary = "Return the number of elements added",
+		outputs = { "The number of elements added" }, })
+
+function stats.mean_var:size()
+  return self.N
 end
 
 -----------------------------------------------------------------------------

@@ -1,5 +1,0 @@
-<map id="ann::__activation_function__" name="ann::__activation_function__">
-<area shape="rect" id="node3" href="$classann_1_1activations_1_1logistic.html" title="ann::activations::logistic" alt="" coords="5,83,168,112"/>
-<area shape="rect" id="node5" href="$classann_1_1activations_1_1softmax.html" title="ann::activations::softmax" alt="" coords="192,83,360,112"/>
-<area shape="rect" id="node7" href="$classann_1_1activations_1_1tanh.html" title="ann::activations::tanh" alt="" coords="384,83,531,112"/>
-</map>

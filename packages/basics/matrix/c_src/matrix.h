@@ -521,15 +521,21 @@ public:
   Matrix<T>* multiply(const Matrix<T> *other) const;
 
   T sum() const;
-  
+
+  // the argument indicates over which dimension the sum must be performed
+  Matrix<T>* sum(int dim);
+
   /**** COMPONENT WISE OPERATIONS ****/
-  bool equals(const Matrix<T> *other, T epsilon) const;
+  bool equals(const Matrix<T> *other, float epsilon) const;
+  void plogp();
   void log();
   void log1p();
   void exp();
   void sqrt();
   void pow(T value);
   void tanh();
+  void sin();
+  void cos();
   Matrix<T> *cmul(const Matrix<T> *other);
   void adjustRange(T rmin, T rmax);
     
@@ -570,7 +576,7 @@ public:
   
   void scal(T value);
   
-  T norm2() const;
+  float norm2() const;
   T min(int &arg_min, int &arg_min_raw_pos) const;
   T max(int &arg_max, int &arg_max_raw_pos) const;
   void minAndMax(T &min, T &max) const;

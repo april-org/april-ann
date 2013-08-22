@@ -258,17 +258,17 @@ namespace ANN {
     while(!error_sw.isEnd()) {
       error_sw.getMatrix(error_w);
       // BIAS UPDATE
-      doSaxpyLoop(hidden_size,
-		  alpha,
-		  error_w->getRawDataAccess(),
-		  error_w->getStrideSize(1),
-		  error_w->getOffset(),
-		  weights_mat->getRawDataAccess(),
-		  weights_mat->getStrideSize(0),
-		  0,
-		  bunch_size,
-		  error_w->getStrideSize(0), 0,
-		  use_cuda);
+      doAxpyLoop(hidden_size,
+		 alpha,
+		 error_w->getRawDataAccess(),
+		 error_w->getStrideSize(1),
+		 error_w->getOffset(),
+		 weights_mat->getRawDataAccess(),
+		 weights_mat->getStrideSize(0),
+		 0,
+		 bunch_size,
+		 error_w->getStrideSize(0), 0,
+		 use_cuda);
       // Next iteration
       error_sw.next();
     }

@@ -1,6 +1,6 @@
 package{ name = "matlab",
    version = "1.0",
-   depends = { "matrix", "util", "matrixChar", "matrixInt32" },
+   depends = { "matrix", "util" },
    keywords = { },
    link_libraries = { "z" },
    description = "",

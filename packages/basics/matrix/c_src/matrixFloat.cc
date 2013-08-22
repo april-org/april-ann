@@ -22,16 +22,19 @@
 #include "swap.h"
 #include "matrix.h"
 #include "matrixFloat.h"
-#include "matrixFloat_math_templates.h" // functions which apply functors
-#include "matrixFloat_math_functors.h"  // standard functors
+#include "matrix_generic_math_templates.h" // functions which apply functors
+#include "matrix_generic_math_functors.h"  // standard functors
 #include "wrapper.h" // wrappers of mathematical function (for CPU/GPU)
 
 // WARNING: ALL THE METHODS IMPLEMENTED HERE ARE SPECIALIZED TO FLOAT VERSION
 
 /************* FILL FUNCTION **************/
+DEF_CWISE_FUNCTOR_1(doFill,float);
 template<>
 void Matrix<float>::fill(float value) {
-  applyFunctionWithSpanIterator(this, make_cwise_functor_1(value, doFill));
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_1(doFill,float,
+							    value));
 }
 
 /************* CLAMP FUNCTION **************/
@@ -49,7 +52,7 @@ struct clamp_functor {
 template<>
 void Matrix<float>::clamp(float lower, float upper) {
   clamp_functor functor(lower, upper);
-  applyFunctionWithSpanIterator(this, functor);
+  applyFunctionWithSpanIterator<float>(this, functor);
 }
 
 /************* ZEROS FUNCTION **************/
@@ -64,40 +67,21 @@ void Matrix<float>::ones() {
   fill(1.0f);
 }
 
-/************* DIAG FUNCTION **************/
-template<>
-void Matrix<float>::diag(float value) {
-  if (use_cuda) ERROR_EXIT(128, "DIAG OPERATION NOT IMPLENTED FOR CUDA\n");
-  for (int i=1; i<numDim; ++i)
-    if (matrixSize[i] != matrixSize[i-1])
-      ERROR_EXIT(128, "Only allowed for squared matrices\n");
-  float *d = data->getPPALForWrite();
-  int *aux_coords = new int[numDim];
-  for (int i=0; i<matrixSize[0]; ++i) {
-    for (int j=0; j<numDim; ++j) aux_coords[j] = i;
-    d[computeRawPos(aux_coords)] = value;
-  }
-  delete[] aux_coords;
-}
-
-/************* ADDITION FUNCTION **************/
-template<>
+template <>
 Matrix<float>* Matrix<float>::addition(const Matrix<float> *other) {
   Matrix<float> *resul = this->clone();
   resul->axpy(1.0f, other);
   return resul;
 }
 
-/************* SUBSTRACTION FUNCTION **************/
-template<>
+template <>
 Matrix<float>* Matrix<float>::substraction(const Matrix<float> *other) {
   Matrix<float> *resul = this->clone();
   resul->axpy(-1.0f, other);
   return resul;
 }
 
-/************* MULTIPLY FUNCTION **************/
-template<>
+template <>
 Matrix<float>* Matrix<float>::multiply(const Matrix<float> *other) const {
   Matrix<float> *resul = 0;
   if (other->isVector()) {
@@ -139,7 +123,7 @@ Matrix<float>* Matrix<float>::multiply(const Matrix<float> *other) const {
     int dim[2] = {matrixSize[0], other->matrixSize[1]};
     resul = new Matrix<float>(2,dim,major_order);
 #ifdef USE_CUDA
-      resul->setUseCuda(use_cuda);
+    resul->setUseCuda(use_cuda);
 #endif
     resul->zeros();
     resul->gemm(CblasNoTrans, CblasNoTrans,
@@ -153,22 +137,26 @@ struct sum_functor {
   float operator()(const MatrixFloat *m,
 		   unsigned int size, unsigned int stride,
 		   unsigned int offset) const {
-    return doSum(size, m->getRawDataAccess(), stride, offset, m->getCudaFlag());
+    return doSum(size, m->getRawDataAccess(), stride, offset,
+		 m->getCudaFlag(), 0.0f);
   }
 };
 template<>
 float Matrix<float>::sum() const {
   sum_functor functor;
-  return applySumReductionWithSpanIterator(this, functor);
+  return applySumReductionWithSpanIterator<float>(this, functor);
 }
 
 /**** COMPONENT WISE OPERATIONS ****/
 
 
 /************* scalarAdd FUNCTION **************/
+DEF_CWISE_FUNCTOR_1(doScalarAdd,float);
 template<>
 void Matrix<float>::scalarAdd(float s) {
-  applyFunctionWithSpanIterator(this, make_cwise_functor_1(s, doScalarAdd));
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_1(doScalarAdd,
+							    float,s));
 }
 
 /************* equals FUNCTION **************/
@@ -191,43 +179,79 @@ template<>
 bool Matrix<float>::equals(const Matrix<float> *other, float epsilon) const {
   if (!sameDim(other)) return false;
   equals_functor functor(epsilon);
-  return applyBinaryAndReductionWithSpanIterator(this, other, functor);
+  return applyBinaryAndReductionWithSpanIterator<float>(this, other, functor);
 }
 
 /************* LOG FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doPLogP,float);
+template<>
+void Matrix<float>::plogp() {
+  applyFunctionWithSpanIterator(this, MAKE_CWISE_FUNCTOR_0(doPLogP,float));
+}
+
+/************* LOG FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doLog,float);
 template<>
 void Matrix<float>::log() {
-  applyFunctionWithSpanIterator(this, make_cwise_functor_0(doLog));
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doLog,float));
 }
 
 /************* LOG1P FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doLog1p,float);
 template<>
 void Matrix<float>::log1p() {
-  applyFunctionWithSpanIterator(this, make_cwise_functor_0(doLog1p));
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doLog1p,float));
+
 }
 
 /************* EXP FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doExp,float);
 template<>
 void Matrix<float>::exp() {
-  applyFunctionWithSpanIterator(this, make_cwise_functor_0(doExp));
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doExp,float));
 }
 
 /************* SQRT FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doSqrt,float);
 template<>
 void Matrix<float>::sqrt() {
-  applyFunctionWithSpanIterator(this, make_cwise_functor_0(doSqrt));
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doSqrt,float));
 }
 
 /************* POW FUNCTION **************/
+DEF_CWISE_FUNCTOR_1(doPow,float);
 template<>
 void Matrix<float>::pow(float value) {
-  applyFunctionWithSpanIterator(this, make_cwise_functor_1(value, doPow));
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_1(doPow,float,value));
 }
 
 /************* TANH FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doTanh,float);
 template<>
 void Matrix<float>::tanh() {
-  applyFunctionWithSpanIterator(this, make_cwise_functor_0(doTanh));
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doTanh,float));;
+}
+
+/************* SIN FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doSin,float);
+template<>
+void Matrix<float>::sin() {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doSin,float));;
+}
+
+/************* COS FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doCos,float);
+template<>
+void Matrix<float>::cos() {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doCos,float));;
 }
 
 template<>
@@ -243,15 +267,15 @@ Matrix<float> *Matrix<float>::cmul(const Matrix<float> *other) {
     ERROR_EXIT(128, "Only allowed for contiguous matrices\n");
   Matrix<float> *new_mat = new Matrix(1, &total_size, major_order);
 #ifdef USE_CUDA
-      new_mat->setUseCuda(use_cuda);
+  new_mat->setUseCuda(use_cuda);
 #endif
-  doSsbmv(major_order, CblasLower,
-	  total_size, 0,
-	  1.0f, data, 1,
-	  other->data, 1,
-	  0.0f, new_mat->data, 1,
-	  offset, other->offset, new_mat->offset,
-	  use_cuda);
+  doSbmv(major_order, CblasLower,
+	 total_size, 0,
+	 1.0f, data, 1,
+	 other->data, 1,
+	 0.0f, new_mat->data, 1,
+	 offset, other->offset, new_mat->offset,
+	 use_cuda);
   return new_mat;
 }
 
@@ -263,12 +287,12 @@ struct copy_functor {
 		  unsigned int stride_orig,
 		  unsigned int offset_dest,
 		  unsigned int offset_orig) const {
-    doScopy(size,
-	    orig->getRawDataAccess(),
-	    offset_orig, stride_orig,
-	    dest->getRawDataAccess(),
-	    offset_dest, stride_dest,
-	    orig->getCudaFlag());
+    doCopy(size,
+	   orig->getRawDataAccess(),
+	   offset_orig, stride_orig,
+	   dest->getRawDataAccess(),
+	   offset_dest, stride_dest,
+	   orig->getCudaFlag());
   }
 };
 template<>
@@ -282,7 +306,7 @@ void Matrix<float>::copy(const Matrix<float> *other) {
     ERROR_EXIT(128, "Matrices with different dimension sizes\n");
   use_cuda = other->use_cuda;
   copy_functor functor;
-  applyBinaryFunctionWithSpanIterator(this, other, functor);
+  applyBinaryFunctionWithSpanIterator<float>(this, other, functor);
 }
 
 struct axpy_functor {
@@ -294,12 +318,12 @@ struct axpy_functor {
 		  unsigned int stride_other,
 		  unsigned int offset_one,
 		  unsigned int offset_other) const {
-    doSaxpy(size, alpha,
-	    other->getRawDataAccess(),
-	    offset_other, stride_other,
-	    one->getRawDataAccess(),
-	    offset_one, stride_one,
-	    one->getCudaFlag());
+    doAxpy(size, alpha,
+	   other->getRawDataAccess(),
+	   offset_other, stride_other,
+	   one->getRawDataAccess(),
+	   offset_one, stride_one,
+	   one->getCudaFlag());
   }
 };
 template<>
@@ -311,9 +335,9 @@ void Matrix<float>::axpy(float alpha, const Matrix<float> *other) {
     ERROR_EXIT(128, "Matrices with different major orders\n");
   axpy_functor functor(alpha);
 #ifdef USE_MKL
-  applyBinaryFunctionWithSpanIteratorNOPARALLEL(this, other, functor);
+  applyBinaryFunctionWithSpanIteratorNOPARALLEL<float>(this, other, functor);
 #else
-  applyBinaryFunctionWithSpanIterator(this, other, functor);
+  applyBinaryFunctionWithSpanIterator<float>(this, other, functor);
 #endif
 }
 
@@ -352,13 +376,13 @@ void Matrix<float>::gemm(CBLAS_TRANSPOSE trans_A,
     ldb = otherB->stride[1];
     ldc = stride[1];
   }
-  doSgemm(major_order, trans_A, trans_B,
-	  M, N, K,
-	  alpha, otherA->data, lda,
-	  otherB->data, ldb,
-	  beta, data, ldc,
-	  otherA->offset, otherB->offset, offset,
-	  use_cuda);
+  doGemm(major_order, trans_A, trans_B,
+	 M, N, K,
+	 alpha, otherA->data, lda,
+	 otherB->data, ldb,
+	 beta, data, ldc,
+	 otherA->offset, otherB->offset, offset,
+	 use_cuda);
 }
 
 template<>
@@ -385,13 +409,13 @@ void Matrix<float>::gemv(CBLAS_TRANSPOSE trans_A,
   int lda=( major_order==CblasRowMajor)?otherA->stride[0]:otherA->stride[1];
   int ldx=otherX->getVectorStride();
   int ldy=getVectorStride();
-  doSgemv(major_order, trans_A,
-	  M, N,
-	  alpha, otherA->data, lda,
-	  otherX->data, ldx,
-	  beta, data, ldy,
-	  otherA->offset, otherX->offset, offset,
-	  use_cuda);
+  doGemv(major_order, trans_A,
+	 M, N,
+	 alpha, otherA->data, lda,
+	 otherX->data, ldx,
+	 beta, data, ldy,
+	 otherA->offset, otherX->offset, offset,
+	 use_cuda);
 }
 
 template<>
@@ -412,12 +436,12 @@ void Matrix<float>::ger(float alpha,
   int lda=( major_order==CblasRowMajor)?stride[0]:stride[1];
   int ldx=otherX->getVectorStride();
   int ldy=otherY->getVectorStride();
-  doSger(major_order,
-	 M, N,
-	 alpha, otherX->data, otherX->offset, ldx,
-	 otherY->data, otherY->offset, ldy,
-	 data, offset, lda,
-	 use_cuda);
+  doGer(major_order,
+	M, N,
+	alpha, otherX->data, otherX->offset, ldx,
+	otherY->data, otherY->offset, ldy,
+	data, offset, lda,
+	use_cuda);
 }
 
 template<>
@@ -429,22 +453,26 @@ float Matrix<float>::dot(const Matrix<float> *other) const {
 		this->getVectorSize(), other->getVectorSize());
   if (major_order != other->major_order)
     ERROR_EXIT(128, "Matrices with different major orders");
-  float ret = doSdot(getVectorSize(),
-		     data, offset, getVectorStride(),
-		     other->data, other->offset, other->getVectorStride(),
-		     use_cuda);
+  float ret = doDot(getVectorSize(),
+		    data, offset, getVectorStride(),
+		    other->data, other->offset, other->getVectorStride(),
+		    use_cuda);
   return ret;
 }
 
 /********** SCAL FUNCTION ***************/
+DEF_CWISE_FUNCTOR_1(doScal,float);
 template<>
 void Matrix<float>::scal(float value) {
 #ifdef USE_MKL
-  applyFunctionWithSpanIteratorNOPARALLEL(this,
-					  make_cwise_functor_1(value, doSscal));
+  applyFunctionWithSpanIteratorNOPARALLEL<float>(this,
+						 MAKE_CWISE_FUNCTOR_1(doScal,
+								      float,
+								      value));
 #else
-  applyFunctionWithSpanIterator(this,
-				make_cwise_functor_1(value, doSscal));
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_1(doScal,float,
+							    value));
 #endif
 }
 
@@ -452,8 +480,8 @@ void Matrix<float>::scal(float value) {
 struct norm2_functor {
   float operator()(const MatrixFloat *m, unsigned int size, unsigned int stride,
 		   unsigned int offset) const {
-    return doSnrm2(size, m->getRawDataAccess(), stride, offset,
-		   m->getCudaFlag());
+    return doNrm2(size, m->getRawDataAccess(), stride, offset,
+		  m->getCudaFlag());
   }
 };
 struct norm2_reductor {
@@ -467,18 +495,18 @@ template<>
 float Matrix<float>::norm2() const {
   float v;
   // Contiguous memory block
-  if (getIsContiguous()) v=doSnrm2(total_size, data, 1, offset, use_cuda);
+  if (getIsContiguous()) v=doNrm2(total_size, data, 1, offset, use_cuda);
   // One dimension
   else if (numDim == 1)
-    v=doSnrm2(total_size, data, stride[0], offset, use_cuda);
+    v=doNrm2(total_size, data, stride[0], offset, use_cuda);
   // General case
   else {
     norm2_functor  functor;
     norm2_reductor reductor;
-    v = applyReductionWithSpanIteratorNOPARALLEL(this,
-						 functor,
-						 reductor,
-						 0.0f);
+    v = applyReductionWithSpanIteratorNOPARALLEL<float,float>(this,
+							      functor,
+							      reductor,
+							      0.0f);
     v = sqrtf(v);
   }
   return v;

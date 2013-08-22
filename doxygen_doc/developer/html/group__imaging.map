@@ -1,8 +1,0 @@
-<map id="Imaging" name="Imaging">
-<area shape="rect" id="node1" href="$group__libpng.html" title="Libpng" alt="" coords="155,5,213,35"/>
-<area shape="rect" id="node2" href="$group__binarization__filter.html" title="Binarization_filter" alt="" coords="123,59,245,88"/>
-<area shape="rect" id="node4" href="$group__image__cleaning.html" title="Image_cleaning" alt="" coords="128,112,240,141"/>
-<area shape="rect" id="node5" href="$group__image.html" title="Image" alt="" coords="155,165,213,195"/>
-<area shape="rect" id="node6" href="$group__interest__points.html" title="Interest_points" alt="" coords="131,219,237,248"/>
-<area shape="rect" id="node7" href="$group__image__metrics.html" title="Image_metrics" alt="" coords="131,272,237,301"/>
-</map>

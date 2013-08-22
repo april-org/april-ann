@@ -22,7 +22,7 @@ function matlab.tolua(element,col_major)
     end
   else
     error(string.format("Not implemented yet for type '%s'",
-			matlab.types[element:get_type()]))
+			matlab.types[element:get_type()] or tostring(element:get_type()) or "nil"))
   end
   collectgarbage("collect")
 end
@@ -32,12 +32,31 @@ end
 -----------------------------
 local function tomatrix(e,col_major)
   local elem,name = e:get_matrix(col_major)
-  print("# Loading matrix float element: ", name)
+  if elem ~= nil then
+    print("# Loading matrix float element: ", name)
+  else
+    elem,name = e:get_matrix_complex(col_major)
+    print("# Loading matrix complex element: ", name)
+  end
+  return elem,name
+end
+local function tomatrixdouble(e,col_major)
+  local elem,name = e:get_matrix_double()
+  if elem ~= nil then
+    print("# Loading matrix double element: ", name)
+  else
+    elem,name = e:get_matrix_complex(col_major)
+    print("# Loading matrix complex (casted from double) element: ", name)
+  end
   return elem,name
 end
 local function tomatrixint32(e)
   local elem,name = e:get_matrix_int32()
-  print("# Loading matrix int32 element: ", name)
+  if elem ~= nil then
+    print("# Loading matrix int32 element: ", name)
+  else
+    error("Not supported complex numbers for integer data types")
+  end
   return elem,name
 end
 local function tomatrixchar(e)
@@ -68,12 +87,13 @@ end
 
 -- addition of all the functions to class_tolua_table
 -- FLOAT matrix
-add_wrapper(matlab.classes.double, tomatrix)
 add_wrapper(matlab.classes.single, tomatrix)
 add_wrapper(matlab.classes.int8,   tomatrix)
 add_wrapper(matlab.classes.uint8,  tomatrix)
 add_wrapper(matlab.classes.int16,  tomatrix)
 add_wrapper(matlab.classes.uint16, tomatrix)
+-- DOUBLE matrix
+add_wrapper(matlab.classes.double, tomatrixdouble)
 -- INT matrix
 add_wrapper(matlab.classes.int32,  tomatrixint32)
 add_wrapper(matlab.classes.int64,  tomatrixint32)
