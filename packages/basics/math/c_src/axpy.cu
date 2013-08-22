@@ -44,7 +44,10 @@ cublasStatus_t wrapperCublasAxpy(cublasHandle_t &handle,
 				 unsigned int x_inc,
 				 ComplexF *y_mem,
 				 unsigned int y_inc) {
-  return cublasCaxpy(handle, N, alpha, x_mem, x_inc, y_mem, y_inc);
+  return cublasCaxpy(handle, N,
+                     reinterpret_cast<const cuComplex*>(alpha),
+                     reinterpret_cast<const cuComplex*>(x_mem), x_inc,
+                     reinterpret_cast<cuComplex*>(y_mem), y_inc);
 }
 
 template<typename T>

@@ -41,9 +41,9 @@ cublasStatus_t wrapperCublasGemm(cublasHandle_t &handle,
 				 unsigned int c_inc) {
   return cublasSgemm(handle, cublas_a_transpose, cublas_b_transpose,
 		     m, n, k,
-		     &alpha, a_mem, a_inc,
+		     alpha, a_mem, a_inc,
 		     b_mem, b_inc,
-		     &beta, c_mem, c_inc);
+		     beta, c_mem, c_inc);
 }
 
 cublasStatus_t wrapperCublasGemm(cublasHandle_t &handle,
@@ -60,9 +60,11 @@ cublasStatus_t wrapperCublasGemm(cublasHandle_t &handle,
 				 unsigned int c_inc) {
   return cublasCgemm(handle, cublas_a_transpose, cublas_b_transpose,
 		     m, n, k,
-		     &alpha, a_mem, a_inc,
-		     b_mem, b_inc,
-		     &beta, c_mem, c_inc);
+		     reinterpret_cast<const cuComplex*>(alpha),
+		     reinterpret_cast<const cuComplex*>(a_mem), a_inc,
+		     reinterpret_cast<const cuComplex*>(b_mem), b_inc,
+		     reinterpret_cast<const cuComplex*>(beta),
+                     reinterpret_cast<cuComplex*>(c_mem), c_inc);
 }
 
 #endif
