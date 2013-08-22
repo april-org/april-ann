@@ -437,7 +437,7 @@ end
 function april_print_script_header(arg,file)
   local file = file or io.stdout
   fprintf(file,"# HOST:\t %s\n", (io.popen("hostname", "r"):read("*l")))
-  fprintf(file,"# DATE:\t %s\n", (io.popen("date", "r"):read("*l")))
+  fprintf(file,"# DATE:\t %s\n", os.date())
   fprintf(file,"# CMD: \t %s %s\n", arg[0], table.concat(arg, " "))
 end
 
