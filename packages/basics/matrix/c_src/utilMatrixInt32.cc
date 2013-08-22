@@ -95,6 +95,9 @@ MatrixFloat *convertFromMatrixInt32ToMatrixFloat(MatrixInt32 *mat,
   MatrixFloat *new_mat=new MatrixFloat(mat->getNumDim(),
 				       mat->getDimPtr(),
 				       (col_major)?CblasColMajor:CblasRowMajor);
+#ifdef USE_CUDA
+  new_mat->setUseCuda(mat->getCudaFlag());
+#endif
   MatrixInt32::const_iterator orig_it(mat->begin());
   MatrixFloat::iterator dest_it(new_mat->begin());
   while(orig_it != mat->end()) {

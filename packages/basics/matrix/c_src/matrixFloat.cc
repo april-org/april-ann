@@ -562,6 +562,9 @@ Matrix<float> *Matrix<float>::maxSelDim(const int dim,
   if (dim < 0 || dim > numDim)
     ERROR_EXIT2(128, "Incorrect dimension %d, numDim=%d\n", dim, numDim);
   MatrixFloat *result = new MatrixFloat(1, &matrixSize[dim], major_order);;
+#ifdef USE_CUDA
+  result->setUseCuda(use_cuda);
+#endif
   int *argmax = 0;
   if (raw_positions != 0) {
     argmax = raw_positions->getPPALForWrite() + shift;
@@ -573,9 +576,6 @@ Matrix<float> *Matrix<float>::maxSelDim(const int dim,
   case 2:
     {
       const int other_dim = 1 - dim;
-#ifdef USE_CUDA
-      result->setUseCuda(use_cuda);
-#endif
       float *res_ptr = result->getRawDataAccess()->getPPALForWrite();
       const float *src_ptr = data->getPPALForRead();
       for (int i=0; i<matrixSize[dim]; ++i, ++res_ptr) {
