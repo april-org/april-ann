@@ -30,7 +30,6 @@
 #include "wrapper.h"
 #include "gpu_mirrored_memory_block.h"
 #include "referenced.h"
-#include "constants.h"
 #include "clamp.h"
 #include "aligned_memory.h"
 #include "swap.h"
