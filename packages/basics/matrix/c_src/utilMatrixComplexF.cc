@@ -106,6 +106,9 @@ MatrixFloat *convertFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
     for (int i=0; i<N; ++i) dims[i+1] = mat->getDimPtr()[i];
   }
   new_mat=new MatrixFloat(N+1, dims, mat->getMajorOrder());
+#ifdef USE_CUDA
+  new_mat->setUseCuda(mat->getCudaFlag());
+#endif
   MatrixComplexF::const_iterator orig_it(mat->begin());
   MatrixFloat::iterator dest_it(new_mat->begin());
   while(orig_it != mat->end()) {
@@ -130,6 +133,9 @@ MatrixFloat *realPartFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
   MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
 					 mat->getDimPtr(),
 					 mat->getMajorOrder());
+#ifdef USE_CUDA
+  new_mat->setUseCuda(mat->getCudaFlag());
+#endif
   MatrixComplexF::const_iterator orig_it(mat->begin());
   MatrixFloat::iterator dest_it(new_mat->begin());
   while(orig_it != mat->end()) {
@@ -144,6 +150,9 @@ MatrixFloat *imgPartFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
   MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
 					 mat->getDimPtr(),
 					 mat->getMajorOrder());
+#ifdef USE_CUDA
+  new_mat->setUseCuda(mat->getCudaFlag());
+#endif
   MatrixComplexF::const_iterator orig_it(mat->begin());
   MatrixFloat::iterator dest_it(new_mat->begin());
   while(orig_it != mat->end()) {
@@ -158,6 +167,9 @@ MatrixFloat *absFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
   MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
 					 mat->getDimPtr(),
 					 mat->getMajorOrder());
+#ifdef USE_CUDA
+  new_mat->setUseCuda(mat->getCudaFlag());
+#endif
   MatrixComplexF::const_iterator orig_it(mat->begin());
   MatrixFloat::iterator dest_it(new_mat->begin());
   while(orig_it != mat->end()) {
@@ -172,6 +184,9 @@ MatrixFloat *angleFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
   MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
 					 mat->getDimPtr(),
 					 mat->getMajorOrder());
+#ifdef USE_CUDA
+  new_mat->setUseCuda(mat->getCudaFlag());
+#endif
   MatrixComplexF::const_iterator orig_it(mat->begin());
   MatrixFloat::iterator dest_it(new_mat->begin());
   while(orig_it != mat->end()) {
