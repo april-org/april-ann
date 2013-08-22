@@ -17,9 +17,12 @@ end
 
 function check_version(major_num,minor_num)
   local major_v,minor_v = util.version()
-  assert(major_num == major_v and minor_num == minor_v,
-	 string.format("Incorrect version number, expected %d.%d, found %d.%d",
-		       major_num, minor_num, major_v, minor_v))
+  if major_num == major_v and minor_num == minor_v then return true
+  else
+    fprintf(io.stderr,
+	    "Incorrect version number, expected %d.%d, found %d.%d",
+	    major_num, minor_num, major_v, minor_v)
+  end
 end
 
 -- makes a FAKE wrapper around a class, so you can re-implement the functions
@@ -42,7 +45,7 @@ function class_wrapper(obj,wrapper)
       end
     end
   end
-  return wrapper
+  return class_instance(wrapper,getmetatable(obj))
 end
 
 -- Convert a table in a class, and it receives an optional parent class to
@@ -631,9 +634,11 @@ function math.clamp(value,lower,upper)
 end
 
 function math.median(t, ini, fin)
-  local mpos   = math.floor(#t/2)
-  local median = t[mpos]
-  if #t % 2 ~= 0 then
+  local ini,fin = ini or 1, fin or #t
+  local len     = fin-ini+1
+  local mpos    = math.floor((ini+fin-1)/2)
+  local median  = t[mpos]
+  if len % 2 ~= 0 then
     median = (median + t[mpos+1])/2
   end
   return median
@@ -641,28 +646,26 @@ end
 
 -- calcula la media de una tabla, o subtabla
 function math.mean(t, ini, fin)
-   local total=0
-   local suma=0
-   if not ini then ini = 1 end
-   if not fin then fin = #t end
-   total = fin - ini + 1
-   for i=ini,fin do
-      suma = suma + t[i]
-   end
-   return suma/total,total
+  local ini,fin = ini or 1, fin or #t
+  local total=0
+  local suma=0
+  total = fin - ini + 1
+  for i=ini,fin do
+    suma = suma + t[i]
+  end
+  return suma/total,total
 end
 
 -- calcula la desviacion tipica de una tabla o subtabla
 function math.std(t, ini, fin)
-   local mean,total = math.mean(t, ini, fin)
-   local suma_sqr=0
-   if not ini then ini = 1 end
-   if not fin then fin = #t end
-   for i=ini,fin do
-      local value = mean - t[i]
-      suma_sqr = suma_sqr + value*value
-   end
-   return math.sqrt(suma_sqr/(total-1)),total
+  local ini,fin = ini or 1, fin or #t
+  local mean,total = math.mean(t, ini, fin)
+  local suma_sqr=0
+  for i=ini,fin do
+    local value = mean - t[i]
+    suma_sqr = suma_sqr + value*value
+  end
+  return math.sqrt(suma_sqr/(total-1)),total
 end
 
 ---------------------------------------------------------------
