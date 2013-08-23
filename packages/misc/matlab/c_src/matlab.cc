@@ -593,17 +593,17 @@ MatrixDouble *MatFileReader::TaggedDataElement::getMatrixDouble(char *name,
   MatrixDouble::col_major_iterator it(m->begin());
   MatrixDouble::col_major_iterator end(m->end());
   switch(real_part->getDataType()) {
-  case DOUBLE:
-    readMatrixData(it, end, real_part->getData<const double*>(),
-		   real_part->getNumberOfBytes());
-    break;
-  case SINGLE:
   case INT8:
   case UINT8:
   case INT16:
   case UINT16:
   case INT32:
   case UINT32:
+  case DOUBLE:
+    readMatrixData(it, end, real_part->getData<const double*>(),
+		   real_part->getNumberOfBytes());
+    break;
+  case SINGLE:
   case INT64:
   case UINT64:
   default:
