@@ -137,8 +137,13 @@ Doxygen documentation
 - [Developer manual](http://pakozm.github.com/april-ann/doxygen_doc/developer/html/index.html)
 - [Reference manual](http://pakozm.github.com/april-ann/doxygen_doc/user_refman/html/index.html)
 
-MAC OS X
---------
+LINUX installation
+------------------
 
-- Install libpng
-- Install findutils in /usr using --prefix=/usr
+Install g++, libatlas-dev, libreadline-dev, libpng-dev, libtiff-dev, libz-dev, libopenmp-dev.
+
+MAC OS X installation
+---------------------
+
+- Install libpng, from (sourceforge)[http://sourceforge.net/projects/libpng/files/]. Follow INSTALL information.
+- Install findutils, from (GNU)[http://ftp.gnu.org/pub/gnu/findutils/]. Follow INSTALL instructions. Execute `./configure --prefix=/usr` in order to substitute BSD find of your MacOS.
