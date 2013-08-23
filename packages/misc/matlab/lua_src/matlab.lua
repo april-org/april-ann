@@ -88,17 +88,17 @@ end
 -- addition of all the functions to class_tolua_table
 -- FLOAT matrix
 add_wrapper(matlab.classes.single, tomatrix)
-add_wrapper(matlab.classes.int8,   tomatrix)
-add_wrapper(matlab.classes.uint8,  tomatrix)
-add_wrapper(matlab.classes.int16,  tomatrix)
-add_wrapper(matlab.classes.uint16, tomatrix)
 -- DOUBLE matrix
 add_wrapper(matlab.classes.double, tomatrixdouble)
 -- INT matrix
+add_wrapper(matlab.classes.int8,   tomatrixint32)
+add_wrapper(matlab.classes.uint8,  tomatrixint32)
+add_wrapper(matlab.classes.int16,  tomatrixint32)
+add_wrapper(matlab.classes.uint16, tomatrixint32)
 add_wrapper(matlab.classes.int32,  tomatrixint32)
+add_wrapper(matlab.classes.uint32, tomatrixint32)
 add_wrapper(matlab.classes.int64,  tomatrixint32)
 add_wrapper(matlab.classes.uint64, tomatrixint32)
-add_wrapper(matlab.classes.uint32, tomatrixint32)
 -- CHAR matrix
 add_wrapper(matlab.classes.char, tomatrixchar)
 -- CELL array
