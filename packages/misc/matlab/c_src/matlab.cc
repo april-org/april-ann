@@ -95,6 +95,17 @@ template<> inline void sanity_check_int32_precision<uint16_t>(uint16_t num) { }
 template<> inline void sanity_check_int32_precision<int32_t>(int32_t num) { }
 
 template<typename T>
+inline void sanity_check_double_precision(T num) { }
+template<> inline void sanity_check_double_precision<int64_t>(int64_t num) {
+  if (num >= 9007199254740991 || num <= -9007199254740991)
+    ERROR_PRINT("The integer can't be represented using double precision\n");
+}
+template<> inline void sanity_check_double_precision<uint64_t>(uint64_t num) {
+  if (num >= 9007199254740991)
+    ERROR_PRINT("The integer can't be represented using double precision\n");
+}
+
+template<typename T>
 void readMatrixData(MatrixFloat::col_major_iterator &m_it,
 		    MatrixFloat::col_major_iterator &end,
 		    const T *ptr, const uint32_t nbytes) {
@@ -139,6 +150,7 @@ void readMatrixData(MatrixDouble::col_major_iterator &m_it,
 		    const T *ptr, const uint32_t nbytes) {
   for (uint32_t ptr_pos=0; ptr_pos < nbytes; ptr_pos += sizeof(T), ++ptr) {
     april_assert(m_it != end);
+    sanity_check_double_precision(*ptr);
     *m_it = static_cast<double>(*ptr);
     ++m_it;
   }
@@ -594,18 +606,45 @@ MatrixDouble *MatFileReader::TaggedDataElement::getMatrixDouble(char *name,
   MatrixDouble::col_major_iterator end(m->end());
   switch(real_part->getDataType()) {
   case INT8:
+    readMatrixData(it, end, real_part->getData<const int8_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
   case UINT8:
+    readMatrixData(it, end, real_part->getData<const uint8_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
   case INT16:
+    readMatrixData(it, end, real_part->getData<const int16_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
   case UINT16:
+    readMatrixData(it, end, real_part->getData<const uint16_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
   case INT32:
+    readMatrixData(it, end, real_part->getData<const int32_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
   case UINT32:
+    readMatrixData(it, end, real_part->getData<const uint32_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
+  case INT64:
+    readMatrixData(it, end, real_part->getData<const int64_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
+  case UINT64:
+    readMatrixData(it, end, real_part->getData<const uint64_t*>(),
+		   real_part->getNumberOfBytes());
+    break;
   case DOUBLE:
     readMatrixData(it, end, real_part->getData<const double*>(),
 		   real_part->getNumberOfBytes());
     break;
   case SINGLE:
-  case INT64:
-  case UINT64:
+    readMatrixData(it, end, real_part->getData<const float*>(),
+		   real_part->getNumberOfBytes());
+    break;
   default:
     ERROR_EXIT1(128,"Data type %d not supported\n",
 		real_part->getDataType());
