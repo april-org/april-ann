@@ -15,7 +15,7 @@ Requires the following libraries. Versions are only orientative, it could work w
 The following libreries are recommended, but optional:
 - [OPTIONAL] libpng: if you want to open PNG images
 - [OPTIONAL] libtiff: if you want to open TIFF images
-- [OPTIONAL] libz: if you want to poen GZIPED files
+- [OPTIONAL] libz: if you want to open GZIPPED files
 
 For perform computation on GPU, this optional library:
 - [OPTIONAL] CUDA and CUBLAS: release 4.2.6
