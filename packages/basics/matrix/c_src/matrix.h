@@ -584,6 +584,9 @@ public:
 		       IntGPUMirroredMemoryBlock *raw_positions=0,
 		       int shift = 0) const;
   
+  /**** LAPACK OPERATIONS ****/
+  Matrix<T> *inv();
+
 private:
   void allocate_memory(int size);
   void release_memory();

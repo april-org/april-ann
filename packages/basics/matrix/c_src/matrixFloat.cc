@@ -687,4 +687,31 @@ void Matrix<float>::adjustRange(float rmin, float rmax) {
   }
 }
 
+// FIXME: using WRAPPER for generalized CULA, LAPACK, float and complex numbers
+template<>
+Matrix<float> *Matrix<float>::inv() {
+  if (numDim != 2)
+    ERROR_EXIT(128, "Only bi-dimensional matrices are allowed\n");
+  if (matrixSize[0] != matrixSize[1])
+    ERROR_EXIT(128, "Only square matrices are allowed\n");
+  MatrixFloat *A = this->clone(CblasColMajor);
+  int *IPIV = new int[numDim+1];
+  int LWORK = numDim*numDim;
+  float *WORK = new float[LWORK];
+  int INFO;
+  sgetrf_(&A->numDim,&A->numDim,A->getData(),&A->stride[1],IPIV,&INFO);
+  checkLapackInfo(INFO);
+  sgetri_(&A->numDim,A->getData(),&A->stride[1],IPIV,WORK,&LWORK,&INFO);
+  checkLapackInfo(INFO);
+  delete IPIV;
+  delete WORK;
+  MatrixFloat *ret;
+  if (major_order != CblasColMajor) {
+    ret = A->clone(CblasRowMajor);
+    delete A;
+  }
+  else ret = A;
+  return ret;
+}
+
 template class Matrix<float>;
