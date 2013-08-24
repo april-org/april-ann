@@ -20,10 +20,33 @@
  */
 #include "lapack_headers.h"
 #include "error_print.h"
+
+#if defined(USE_MKL) || defined(USE_XCODE)
+#include "cblas_headers.h"
+int clapack_sgetrf(const int Order, const int M, const int N,
+                   float *A, const int lda, int *ipiv) {
+  if (Order != CblasColMajor)
+    ERROR_EXIT(256, "Only col_major order is allowed\n");
+  int INFO;
+  sgetrf_(&M,&N,A,&lda,ipiv,&INFO);
+  return INFO;
+}
+int clapack_sgetri(const int Order, const int N,
+                   float *A, const int lda, int *ipiv) {
+  if (Order != CblasColMajor)
+    ERROR_EXIT(256, "Only col_major order is allowed\n");
+  int INFO;
+  int LWORK = N*N;
+  float *WORK = new float[LWORK];
+  sgetri_(&N,A,&lda,ipiv,WORK,&LWORK,&INFO);
+  delete[] WORK;
+  return INFO;
+}
+#endif
+
 void checkLapackInfo(int info) {
-  if (info == 0) return;
-  else if (info < 0)
+  if (info < 0)
     ERROR_EXIT1(128, "The %d argument had an ilegal value\n", -info);
-  else
-    ERROR_EXIT(128, "Singular matrix\n");
+  else if (info > 0)
+    ERROR_EXIT(128, "The matrix is singular and inverse can't be computed\n");
 }

@@ -696,15 +696,14 @@ Matrix<float> *Matrix<float>::inv() {
     ERROR_EXIT(128, "Only square matrices are allowed\n");
   MatrixFloat *A = this->clone(CblasColMajor);
   int *IPIV = new int[numDim+1];
-  int LWORK = numDim*numDim;
-  float *WORK = new float[LWORK];
   int INFO;
-  sgetrf_(&A->numDim,&A->numDim,A->getData(),&A->stride[1],IPIV,&INFO);
+  INFO = clapack_sgetrf(CblasColMajor,
+			A->numDim,A->numDim,A->getData(),A->stride[1],IPIV);
   checkLapackInfo(INFO);
-  sgetri_(&A->numDim,A->getData(),&A->stride[1],IPIV,WORK,&LWORK,&INFO);
+  INFO = clapack_sgetri(CblasColMajor,
+			A->numDim,A->getData(),A->stride[1],IPIV);
   checkLapackInfo(INFO);
   delete IPIV;
-  delete WORK;
   MatrixFloat *ret;
   if (major_order != CblasColMajor) {
     ret = A->clone(CblasRowMajor);

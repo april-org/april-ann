@@ -34,9 +34,16 @@ extern "C" {
 #else
 ////////////////////////////////// ATLAS //////////////////////////////////////
 extern "C" {
-#include <atlas/lapack.h>
+#include <atlas/clapack.h>
 }
 /*****************************************************************************/
+#endif
+
+#if defined(USE_MKL) || defined(USE_XCODE)
+int clapack_sgetrf(const int Order, const int M, const int N,
+                   float *A, const int lda, int *ipiv);
+int clapack_sgetri(const int Order, const int N,
+                   float *A, const int lda, int *ipiv);
 #endif
 
 void checkLapackInfo(int info);
