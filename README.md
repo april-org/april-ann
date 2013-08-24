@@ -7,10 +7,11 @@ Requirements
 Requires the following libraries. Versions are only orientative, it could work with older and newer versions.
 
 - GNU C++ compiler (g++): v 4.7.2
-- BLAS implementation: ATLAS (v. 3) or Intel MKL (v. 10.3.6)
+- BLAS implementation: ATLAS (v. 3), Intel MKL (v. 10.3.6), MacOS Accelerate Framework
 - Threads posix (pthread)
 - Readline (libreadline)
 - OpenMP
+- LAPACK library, offered by liblapack_atlas, mkl_lapack, or MacOS Accelerate Framework
 
 The following libreries are recommended, but optional:
 - [OPTIONAL] libpng: if you want to open PNG images
