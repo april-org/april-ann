@@ -24,6 +24,7 @@ luapkg{
       "-lgfortran",
       "-fopenmp",
       "-rdynamic",
+      "-llapack_atlas",
     },
 
   },
