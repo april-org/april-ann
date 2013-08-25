@@ -40,17 +40,24 @@ class GZFileWrapper : public Referenced {
   bool resizeAndFillBuffer();
   bool trim(const char *delim);
   
+  void setBufferAsFull() {
+    // forces to read from the file in the next getToken
+    buffer_pos = max_buffer_len;
+    buffer_len = max_buffer_len;
+  }
+
 public:
   GZFileWrapper(const char *path, const char *mode);
   ~GZFileWrapper();
   
   void close();
   void flush();
-  void seek(int whence, int offset);
+  int seek(int whence, int offset);
   
   /** Lua methods **/
   int readAndPushNumberToLua(lua_State *L);
   //  int readAndPushCharToLua(lua_State *L);
+  int readAndPushStringToLua(lua_State *L, int size);
   int readAndPushLineToLua(lua_State *L);
   int readAndPushAllToLua(lua_State *L);
   /*****************/
@@ -58,6 +65,8 @@ public:
   /** For matrix Read/Write C++ interface **/
 
   // char getChar();
+  // be careful, this method returns a pointer to internal buffer
+  constString getToken(int size);
   // be careful, this method returns a pointer to internal buffer
   constString getToken(const char *delim);
   // be careful, this method returns a pointer to internal buffer
