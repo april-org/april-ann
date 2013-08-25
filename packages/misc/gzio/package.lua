@@ -25,7 +25,7 @@
      depends = "provide",
      use_timestamp = true,
      object{ 
-       file = "c_src/*.c",
+       file = "c_src/*.cc",
        include_dirs = "${include_dirs}",
        dest_dir = "build",
      },

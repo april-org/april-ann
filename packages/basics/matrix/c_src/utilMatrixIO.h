@@ -44,7 +44,7 @@ public:
     total_bytes += vfprintf(f, format, args);
     va_end(args);
   }
-  void setExpectedSize(int sz) { }
+  void setExpectedSize(int sz) const { }
   int getTotalBytes() const { return total_bytes; }
 };
 
