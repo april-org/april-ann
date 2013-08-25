@@ -25,7 +25,6 @@
 #include <cstring>
 #include "aligned_memory.h"
 #include "swap.h"
-#include "constants.h"
 #include "referenced.h"
 #include "MersenneTwister.h"
 #include "matrixFloat.h"

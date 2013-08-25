@@ -37,9 +37,9 @@ cublasStatus_t wrapperCublasSbmv(cublasHandle_t &handle,
 				 float *y_mem, unsigned int y_inc) {
   return cublasSsbmv(handle, uplo_cublas,
 		     n, k,
-		     &alpha, a_mem, a_lda,
+		     alpha, a_mem, a_lda,
 		     x_mem, x_inc,
-		     &beta, y_mem, y_inc);
+		     beta, y_mem, y_inc);
 }
 #endif
 

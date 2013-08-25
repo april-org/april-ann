@@ -879,6 +879,22 @@ april_set_doc("matrix.scalar_add",
 		outputs = { "The caller matrix instance" },
 	      })
 
+april_set_doc("matrix.inv",
+	      {
+		class = "method",
+		summary = "Computes the inverse of a matrix",
+		description = {
+		  "This method computes the inverse of matrix.",
+		  "Check that your matrix is not singular, otherwise",
+		  "the returned matrix won't be correct.",
+		  "It is adapted to work with row_major matrices, but",
+		  "internally they are transformed to col_major, so",
+		  "it is more efficient to compute the inverse over",
+		  "col_major matrices.",
+		},
+		outputs = { "The matrix inverse" },
+	      })
+
 april_set_doc("matrix.sliding_window",
 	      {
 		class = "method",
