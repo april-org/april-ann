@@ -30,7 +30,6 @@
 #include "wrapper.h"
 #include "gpu_mirrored_memory_block.h"
 #include "referenced.h"
-#include "constants.h"
 #include "clamp.h"
 #include "aligned_memory.h"
 #include "swap.h"
@@ -585,6 +584,9 @@ public:
 		       IntGPUMirroredMemoryBlock *raw_positions=0,
 		       int shift = 0) const;
   
+  /**** LAPACK OPERATIONS ****/
+  Matrix<T> *inv();
+
 private:
   void allocate_memory(int size);
   void release_memory();

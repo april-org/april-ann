@@ -1245,5 +1245,11 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat inv
+{
+  LUABIND_RETURN(MatrixFloat, obj->inv());
+}
+//BIND_END
+
 //////////////////////////////////////////////////////////////////////
 

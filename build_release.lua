@@ -22,6 +22,7 @@ luapkg{
       "-latlas",
       "-fopenmp",
       "-rdynamic",
+      "-llapack_atlas",
     },
   },
   

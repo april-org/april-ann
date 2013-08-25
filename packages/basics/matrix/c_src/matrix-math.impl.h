@@ -277,3 +277,8 @@ template <typename T>
 void Matrix<T>::adjustRange(T rmin, T rmax) {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
+
+template <typename T>
+Matrix<T> *Matrix<T>::inv() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}

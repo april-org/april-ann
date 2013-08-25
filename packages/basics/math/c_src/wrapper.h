@@ -23,6 +23,7 @@
 #define WRAPPER_H
 #include <cstdio>
 
+#include "lapack_headers.h"
 #include "cblas_headers.h"
 #include "error_print.h"
 
