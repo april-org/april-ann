@@ -1,5 +1,0 @@
-Pruebas Joan
--- Packages added:
-  median_filter: check public availability
-  image_metrics: add_doc, 
-  binarization_filter: add_doc
