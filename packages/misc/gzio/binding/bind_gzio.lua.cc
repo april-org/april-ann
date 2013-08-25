@@ -69,7 +69,12 @@
     int_whence = SEEK_END;
     LUABIND_FERROR1("Not supported whence '%s'", whence);
   }
-  obj->seek(int_whence, offset);
+  int ret = obj->seek(int_whence, offset);
+  if (ret < 0) {
+    LUABIND_RETURN_NIL();
+    LUABIND_RETURN(string, "Impossible to execute seek");
+  }
+  else LUABIND_RETURN(int, ret);
 }
 //BIND_END
 
@@ -88,21 +93,35 @@
     reads nothing and returns an empty string, or nil on end of file.
   */
   int argn = lua_gettop(L); // number of arguments
-  for (int i=1; i<=argn; ++i) {
-    const char *format;
-    LUABIND_GET_PARAMETER(i, string, format);
-    // a number
-    if (strcmp(format, "*n") == 0)
-      obj->readAndPushNumberToLua(L);
-    // the whole file
-    else if (strcmp(format, "*a") == 0)
-      obj->readAndPushAllToLua(L);
-    // a line
-    else if (strcmp(format, "*l") == 0)
-      obj->readAndPushLineToLua(L);
+  int num_returned_values=0;
+  if (argn == 0)
+    obj->readAndPushLineToLua(L);
+  else {
+    for (int i=1; i<=argn; ++i) {
+      if (lua_isnumber(L, i)) {
+	int size;
+	LUABIND_GET_PARAMETER(i, int, size);
+	num_returned_values += obj->readAndPushStringToLua(L, size);
+      }
+      else {
+	const char *format;
+	LUABIND_GET_PARAMETER(i, string, format);
+	// a number
+	if (strcmp(format, "*n") == 0)
+	  num_returned_values += obj->readAndPushNumberToLua(L);
+	// the whole file
+	else if (strcmp(format, "*a") == 0)
+	  num_returned_values += obj->readAndPushAllToLua(L);
+	// a line
+	else if (strcmp(format, "*l") == 0)
+	  num_returned_values += obj->readAndPushLineToLua(L);
+	else
+	  LUABIND_FERROR1("Unrecognized format string '%s'", format);
+      }
+    }
   }
   // avoid the default return of LUABIND
-  return argn;
+  return num_returned_values;
 }
 //BIND_END
 

@@ -99,8 +99,7 @@ GZFileWrapper::GZFileWrapper(const char *path, const char *mode) : Referenced(){
   total_bytes    = 0;
   buffer         = new char[DEFAULT_BUFFER_LEN];
   max_buffer_len = DEFAULT_BUFFER_LEN;
-  buffer_pos     = max_buffer_len;
-  buffer_len     = max_buffer_len;
+  setBufferAsFull();
   f              = gzopen(path, mode);
   if (f == 0) ERROR_EXIT2(256, "Unable to open path %s with mode %s\n",
 			  path, mode);
@@ -111,17 +110,36 @@ GZFileWrapper::~GZFileWrapper() {
 }
 
 void GZFileWrapper::close() {
-  delete[] buffer;
-  gzclose(f);
-  f = 0;
+  if (buffer != 0) {
+    delete[] buffer;
+    buffer = 0;
+    gzclose(f);
+  }
 }
 
 void GZFileWrapper::flush() {
   gzflush(f, Z_SYNC_FLUSH);
 }
 
-void GZFileWrapper::seek(int whence, int offset) {
-  gzseek(f, offset, whence);
+int GZFileWrapper::seek(int whence, int offset) {
+  switch(whence) {
+  case SEEK_SET:
+    setBufferAsFull();
+    return gzseek(f, offset, whence);
+    break;
+  case SEEK_CUR:
+    if (offset > buffer_len - buffer_pos) {
+      offset -= buffer_len - buffer_pos;
+      return gzseek(f, offset, whence);
+    }
+    else {
+      buffer_pos += offset;
+      return gzseek(f, 0, SEEK_CUR) - buffer_len + buffer_pos;
+    }
+    break;
+  default:
+    ERROR_EXIT1(256, "Incorrect whence value %d to seek method\n", whence);
+  }
 }
 
 int GZFileWrapper::readAndPushNumberToLua(lua_State *L) {
@@ -130,6 +148,13 @@ int GZFileWrapper::readAndPushNumberToLua(lua_State *L) {
   if (!token.extract_double(&number))
     ERROR_EXIT(256, "Impossible to extract a number from current file pos\n");
   lua_pushnumber(L, number);
+  return 1;
+}
+
+
+int GZFileWrapper::readAndPushStringToLua(lua_State *L, int size) {
+  constString token = getToken(size);
+  lua_pushlstring(L, (const char *)(token), token.len());
   return 1;
 }
 
@@ -168,6 +193,39 @@ int GZFileWrapper::readAndPushAllToLua(lua_State *L) {
   return ch;
   }
 */
+
+constString GZFileWrapper::getToken(int size) {
+  if (buffer_len == 0) return constString();
+  // comprobamos que haya datos en el buffer
+  if (buffer_pos >= buffer_len && !moveAndFillBuffer()) return constString();
+  // last_pos apuntara al fina de la ejecucion al primer caracter
+  // delimitador encontrado
+  int last_pos = buffer_pos;
+  do {
+    ++last_pos;
+    // si llegamos al final del buffer
+    if (last_pos >= buffer_len) {
+      // podemos hacer dos cosas, si se puede primero mover a la
+      // izquierda y rellenar lo que queda, si no se puede entonces
+      // aumentar el tamanyo del buffer y rellenar
+      if (buffer_pos > 0) {
+	last_pos -= buffer_pos;
+	if (!moveAndFillBuffer()) break;
+      }
+      else if (!resizeAndFillBuffer()) break;
+    }
+    // printf ("buffer[%d] = %c -- buffer[%d] = %c\n", buffer_pos, buffer[buffer_pos],
+    // last_pos, buffer[last_pos]);
+  } while(last_pos - buffer_pos + 1 < size);
+  // en este momento last_pos apunta al primer caracter delimitador,
+  // o al ultimo caracter del buffer
+  // printf ("%d %d %d\n", buffer_pos, last_pos, buffer_len);
+  const char *returned_buffer = buffer + buffer_pos;
+  size_t len   = last_pos - buffer_pos + 1;
+  total_bytes += len;
+  buffer_pos   = last_pos + 1;
+  return constString(returned_buffer, len);
+}
 
 constString GZFileWrapper::getToken(const char *delim) {
   if (buffer_len == 0) return constString();
