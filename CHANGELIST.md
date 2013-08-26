@@ -4,6 +4,8 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Dynamic loading of C modules is working now.
+
 - Added support for GZipped matrices load and save from C++, so functions
   `matrix.savefile` and `matrix.loadfile` (and its correspondence for complex
   numbers, double, int32, and char) were removed. Methods `matrix.fromFilename`
