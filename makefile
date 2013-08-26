@@ -1,40 +1,40 @@
 ALL: release-mkl
 
 document:
-	lua -l formiga build_release.lua document
+	lua build_release.lua document
 
 test-macosx:
-	lua -l formiga build_debug_macosx.lua test
+	lua build_debug_macosx.lua test
 
 test-mkl:
-	lua -l formiga build_mkl_debug.lua test
+	lua build_mkl_debug.lua test
 
 #test:
-#	lua -l formiga build_debug.lua test
+#	lua build_debug.lua test
 
 #test-cuda-mkl:
-#	lua -l formiga build_cuda_and_mkl_debug.lua test
+#	lua build_cuda_and_mkl_debug.lua test
 
 release-macosx:
-	lua -l formiga build_release_macosx.lua
+	lua build_release_macosx.lua
 
 release-mkl:
-	lua -l formiga build_mkl_release.lua
+	lua build_mkl_release.lua
 
 release:
-	lua -l formiga build_release.lua
+	lua build_release.lua
 
 release-cuda-mkl:
-	lua -l formiga build_cuda_and_mkl_release.lua
+	lua build_cuda_and_mkl_release.lua
 
 debug-macosx:
-	lua -l formiga build_debug_macosx.lua
+	lua build_debug_macosx.lua
 
 debug-mkl:
-	lua -l formiga build_mkl_debug.lua
+	lua build_mkl_debug.lua
 
 debug:
-	lua -l formiga build_debug.lua
+	lua build_debug.lua
 
 debug-cuda-mkl:
-	lua -l formiga build_cuda_and_mkl_debug.lua
+	lua build_cuda_and_mkl_debug.lua
