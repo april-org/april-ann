@@ -388,7 +388,7 @@ function recog.load_initial_hmm_emission_sequence(args)
     the_function  =
       function (sgm_filename,numframes)
 	print("# Loading initial segmentation " .. sgm_filename)
-	local m = matrix.loadfile(sgm_filename)
+	local m = matrix.fromFilename(sgm_filename)
 	local t = m:toTable()
 	collectgarbage("collect")
 	return t
@@ -608,7 +608,7 @@ end
 function load_matrix(MFCCfilename)
   -- cargamos la parametrizacion de MATRIX
   --if MFCCfilename == 'corpus/n02-082a-s05.fea' then os.exit() end
-  local ad = matrix.loadfile(MFCCfilename)
+  local ad = matrix.fromFilename(MFCCfilename)
   return ad,ad:dim()[1]
 end
 

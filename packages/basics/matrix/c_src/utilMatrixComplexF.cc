@@ -31,7 +31,7 @@ void writeMatrixComplexFToFile(MatrixComplexF *mat,
 			       const char *filename,
 			       bool is_ascii) {
   if (GZFileWrapper::isGZ(filename)) {
-    GZFileWrapper f(filename, "r");
+    GZFileWrapper f(filename, "w");
     writeMatrixToStream(mat, f, ComplexFAsciiSizer(), ComplexFBinarySizer(),
 			ComplexFAsciiCoder<GZFileWrapper>(),
 			ComplexFBinaryCoder<GZFileWrapper>(),
