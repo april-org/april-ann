@@ -35,10 +35,10 @@ different libraries. It is simple, you do
 
 where TARGET is one of the following, depending on which version you want:
 
-- ATLAS: release/debug
-- Intel MKL: release-mkl/debug-mkl
-- Intel MKL + CUDA: release-cuda-mkl/debug-cuda-mkl
-- Mac OS X Accelerate Framework: release-macosx/debug-macosx
+- ATLAS: make release (use build_release.lua), make debug (build_debug.lua)
+- Intel MKL: make or make release-mkl (build_mkl_release.lua), make debug-mkl (build_mkl_debug.lua)
+- Intel MKL + CUDA: make release-cuda-mkl (build_cuda_and_mkl_release.lua), make debug-cuda-mkl (build_cuda_and_mkl_debug.lua)
+- Mac OS X Accelerate Framework: make release-macosx (build_release_macosx.lua), make debug-macosx (build_debug_macosx.lua)
 
 Each of this targets will need a little configuration depending on your library
 installation. For example, in order to compile with MKL, the file build_mkl_release.lua contains
@@ -118,10 +118,9 @@ erase the package name from this list to avoid its compilation.
 
 Includes these sources
 ----------------------
-- LUA virtual machine 5.1.4: http://www.lua.org/
-- Luiz's lstrip for Lua 5.1: http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/5.1/lstrip.tar.gz
+- LUA virtual machine 5.2.2: http://www.lua.org/
+- Luiz's lstrip for Lua 5.1, adapted to compile with Lua 5.2.2: http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/5.1/lstrip.tar.gz
 - MersenneTwister: http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
-- GZIO: http://luaforge.net/projects/gzio/
 - Median filter from Simon Perreault: http://nomis80.org/ctmf.html
 - RuningStat class for efficient and stable computation of mean and variance: http://www.johndcook.com/standard_deviation.html
 
