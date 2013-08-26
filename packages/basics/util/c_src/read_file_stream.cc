@@ -23,6 +23,8 @@
 #include <cstdio>
 #include <cstdlib>
 
+#define DEFAULT_BUFFER_LEN 4096
+
 bool ReadFileStream::moveAndFillBuffer() {
   // printf ("------------- MOVE ------------ %d %d\n", buffer_pos, buffer_len);
   int diff = buffer_len - buffer_pos;

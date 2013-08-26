@@ -1,5 +1,3 @@
-gzio_init()
-
 -- modificamos el io.open
 io.old_open = io.open
 io.open = function(name, mode)
