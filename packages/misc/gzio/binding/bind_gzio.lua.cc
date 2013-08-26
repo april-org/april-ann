@@ -95,10 +95,12 @@
   int argn = lua_gettop(L); // number of arguments
   int num_returned_values=0;
   if (argn == 0)
-    obj->readAndPushLineToLua(L);
+    num_returned_values += obj->readAndPushLineToLua(L);
   else {
     for (int i=1; i<=argn; ++i) {
-      if (lua_isnumber(L, i)) {
+      if (lua_isnil(L, i))
+	num_returned_values += obj->readAndPushLineToLua(L);
+      else if (lua_isnumber(L, i)) {
 	int size;
 	LUABIND_GET_PARAMETER(i, int, size);
 	num_returned_values += obj->readAndPushStringToLua(L, size);
@@ -120,8 +122,8 @@
       }
     }
   }
-  // avoid the default return of LUABIND
-  return num_returned_values;
+  if (num_returned_values == 0) LUABIND_RETURN_NIL();
+  else LUABIND_INCREASE_NUM_RETURNS(num_returned_values);
 }
 //BIND_END
 
