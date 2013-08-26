@@ -97,17 +97,12 @@ function matrix.saveImage(matrix,filename)
   f:close()
 end
 
-function matrix.loadfile(filename)
-  local f = io.open(filename,"r") or error("Unable to open " .. filename)
-  local b = f:read("*a")
-  f:close()
-  return matrix.fromString(b)
+function matrix.loadfile()
+  error("Deprecated, use fromFilename method")
 end
 
-function matrix.savefile(matrix,filename,format)
-  local f = io.open(filename,"w") or error("Unable to open " .. filename)
-  f:write(matrix:toString(format or "ascii"))
-  f:close()
+function matrix.savefile()
+  error("Deprecated, use toFilename method")
 end
 
 -- RAW (ASCII)
@@ -224,33 +219,6 @@ april_set_doc("matrix.toFilename", {
 		  "A filename path.",
 		  { "An string with the format: ascii or binary [optional].",
 		    "By default is ascii." },
-		}, })
-
-april_set_doc("matrix.loadfile", {
-		class = "function", summary = "constructor",
-		description ={
-		  "Loads a matrix from a filename.",
-		  "This function supports GZ files, but needs",
-		  "to load the matrix as string before parsing it.",
-		},
-		params = {
-		  "A filename path.",
-		},
-		outputs = { "A matrix instantiated object" }, })
-
-april_set_doc("matrix.savefile", {
-		class = "function",
-		summary = "It allows to store a matrix in a file.",
-		description ={
-		  "It allows to store a matrix in a file.",
-		  "This function supports GZ files, but needs",
-		  "to save the matrix as string before parsing it.",
-		},
-		params = {
-		  "A matrix object.",
-		  "A filename path.",
-		  { "An string with the format: ascii or binary [optional].",
-		    "By default is binary." },
 		}, })
 
 april_set_doc("matrix.loadImage", {

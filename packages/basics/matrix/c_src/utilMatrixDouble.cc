@@ -23,43 +23,27 @@
 #include "binarizer.h"
 #include "clamp.h"
 #include "matrixFloat.h"
+#include "gzfile_wrapper.h"
 #include <cmath>
 #include <cstdio>
-
-template class DoubleAsciiCoder<WriteBufferWrapper>;
-template class DoubleBinaryCoder<WriteBufferWrapper>;
-template class DoubleAsciiCoder<WriteFileWrapper>;
-template class DoubleBinaryCoder<WriteFileWrapper>;
-
-template MatrixDouble *readMatrixFromStream(constString &,
-					    DoubleAsciiExtractor,
-					    DoubleBinaryExtractor);
-template MatrixDouble *readMatrixFromStream(ReadFileStream &,
-					    DoubleAsciiExtractor,
-					    DoubleBinaryExtractor);
-template int writeMatrixToStream(MatrixDouble *,
-				 WriteBufferWrapper &,
-				 DoubleAsciiSizer,
-				 DoubleBinarySizer,
-				 DoubleAsciiCoder<WriteBufferWrapper>,
-				 DoubleBinaryCoder<WriteBufferWrapper>,
-				 bool is_ascii);
-template int writeMatrixToStream(MatrixDouble *,
-				 WriteFileWrapper &,
-				 DoubleAsciiSizer,
-				 DoubleBinarySizer,
-				 DoubleAsciiCoder<WriteFileWrapper>,
-				 DoubleBinaryCoder<WriteFileWrapper>,
-				 bool is_ascii);
 
 void writeMatrixDoubleToFile(MatrixDouble *mat,
 			     const char *filename,
 			     bool is_ascii) {
-  WriteFileWrapper wrapper(filename);
-  writeMatrixToStream(mat, wrapper, DoubleAsciiSizer(), DoubleBinarySizer(),
-		      DoubleAsciiCoder<WriteFileWrapper>(),
-		      DoubleBinaryCoder<WriteFileWrapper>(),
-		      is_ascii);
+  if (GZFileWrapper::isGZ(filename)) {
+    GZFileWrapper f(filename, "r");
+    writeMatrixToStream(mat, f, DoubleAsciiSizer(), DoubleBinarySizer(),
+			DoubleAsciiCoder<GZFileWrapper>(),
+			DoubleBinaryCoder<GZFileWrapper>(),
+			is_ascii);
+  }
+  else {
+    WriteFileWrapper wrapper(filename);
+    writeMatrixToStream(mat, wrapper, DoubleAsciiSizer(), DoubleBinarySizer(),
+			DoubleAsciiCoder<WriteFileWrapper>(),
+			DoubleBinaryCoder<WriteFileWrapper>(),
+			is_ascii);
+  }
 }
 
 char *writeMatrixDoubleToString(MatrixDouble *mat,
@@ -76,10 +60,18 @@ char *writeMatrixDoubleToString(MatrixDouble *mat,
 }
 
 MatrixDouble *readMatrixDoubleFromFile(const char *filename) {
-  ReadFileStream f(filename);
-  return readMatrixFromStream<ReadFileStream,
-			      double>(f, DoubleAsciiExtractor(),
-				      DoubleBinaryExtractor());
+  if (GZFileWrapper::isGZ(filename)) {
+    GZFileWrapper f(filename, "r");
+    return readMatrixFromStream<GZFileWrapper,
+				double>(f, DoubleAsciiExtractor(),
+					DoubleBinaryExtractor());
+  }
+  else {
+    ReadFileStream f(filename);
+    return readMatrixFromStream<ReadFileStream,
+				double>(f, DoubleAsciiExtractor(),
+					DoubleBinaryExtractor());
+  }
 }
 
 MatrixDouble *readMatrixDoubleFromString(constString &cs) {

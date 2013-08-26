@@ -23,44 +23,28 @@
 #include "binarizer.h"
 #include "clamp.h"
 #include "matrixFloat.h"
+#include "gzfile_wrapper.h"
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 
-template class Int32AsciiCoder<WriteBufferWrapper>;
-template class Int32BinaryCoder<WriteBufferWrapper>;
-template class Int32AsciiCoder<WriteFileWrapper>;
-template class Int32BinaryCoder<WriteFileWrapper>;
-
-template MatrixInt32 *readMatrixFromStream(constString &,
-					   Int32AsciiExtractor,
-					   Int32BinaryExtractor);
-template MatrixInt32 *readMatrixFromStream(ReadFileStream &,
-					   Int32AsciiExtractor,
-					   Int32BinaryExtractor);
-template int writeMatrixToStream(MatrixInt32 *,
-				 WriteBufferWrapper &,
-				 Int32AsciiSizer,
-				 Int32BinarySizer,
-				 Int32AsciiCoder<WriteBufferWrapper>,
-				 Int32BinaryCoder<WriteBufferWrapper>,
-				 bool is_ascii);
-template int writeMatrixToStream(MatrixInt32 *,
-				 WriteFileWrapper &,
-				 Int32AsciiSizer,
-				 Int32BinarySizer,
-				 Int32AsciiCoder<WriteFileWrapper>,
-				 Int32BinaryCoder<WriteFileWrapper>,
-				 bool is_ascii);
-
 void writeMatrixInt32ToFile(MatrixInt32 *mat,
 			    const char *filename,
 			    bool is_ascii) {
-  WriteFileWrapper wrapper(filename);
-  writeMatrixToStream(mat, wrapper, Int32AsciiSizer(), Int32BinarySizer(),
-		      Int32AsciiCoder<WriteFileWrapper>(),
-		      Int32BinaryCoder<WriteFileWrapper>(),
-		      is_ascii);
+  if (GZFileWrapper::isGZ(filename)) {
+    GZFileWrapper f(filename, "w");
+    writeMatrixToStream(mat, f, Int32AsciiSizer(), Int32BinarySizer(),
+			Int32AsciiCoder<GZFileWrapper>(),
+			Int32BinaryCoder<GZFileWrapper>(),
+			is_ascii);
+  }
+  else {
+    WriteFileWrapper wrapper(filename);
+    writeMatrixToStream(mat, wrapper, Int32AsciiSizer(), Int32BinarySizer(),
+			Int32AsciiCoder<WriteFileWrapper>(),
+			Int32BinaryCoder<WriteFileWrapper>(),
+			is_ascii);
+  }
 }
 
 char *writeMatrixInt32ToString(MatrixInt32 *mat,
@@ -77,10 +61,18 @@ char *writeMatrixInt32ToString(MatrixInt32 *mat,
 }
 
 MatrixInt32 *readMatrixInt32FromFile(const char *filename) {
-  ReadFileStream f(filename);
-  return readMatrixFromStream<ReadFileStream,
-			      int32_t>(f, Int32AsciiExtractor(),
-				       Int32BinaryExtractor());
+  if (GZFileWrapper::isGZ(filename)) {
+    GZFileWrapper f(filename, "r");
+    return readMatrixFromStream<GZFileWrapper,
+				int32_t>(f, Int32AsciiExtractor(),
+					 Int32BinaryExtractor());
+  }
+  else {
+    ReadFileStream f(filename);
+    return readMatrixFromStream<ReadFileStream,
+				int32_t>(f, Int32AsciiExtractor(),
+					 Int32BinaryExtractor());
+  }
 }
 
 MatrixInt32 *readMatrixInt32FromString(constString &cs) {

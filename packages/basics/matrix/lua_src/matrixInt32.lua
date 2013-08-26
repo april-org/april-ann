@@ -28,15 +28,10 @@ matrixInt32.meta_instance.__tostring = function(self)
   return table.concat(out, "\n")
 end
 
-function matrixInt32.loadfile(filename)
-  local f = io.open(filename,"r") or error("Unable to open " .. filename)
-  local b = f:read("*a")
-  f:close()
-  return matrixInt32.fromString(b)
+function matrixInt32.loadfile()
+  error("Deprecated, use fromFilename method")
 end
 
-function matrixInt32.savefile(matrixInt32,filename,format)
-  local f = io.open(filename,"w") or error("Unable to open " .. filename)
-  f:write(matrixInt32:toString(format or "ascii"))
-  f:close()
+function matrixInt32.savefile()
+  error("Deprecated, use toFilename method")
 end
