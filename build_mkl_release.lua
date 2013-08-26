@@ -1,3 +1,4 @@
+dofile("binding/formiga.lua")
 formiga.build_dir = "build_mkl_release"
 
 luapkg{

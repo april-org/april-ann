@@ -13,6 +13,9 @@ int equaluserdata(lua_State *L);
 
 typedef char* NEW_STRING;
 
+
+#define lua_strlen(L,idx) luaL_len((L),(idx))
+
 bool   lua_tobool(lua_State *L, int idx);
 int    lua_toint(lua_State *L, int idx);
 int64_t lua_toint64(lua_State *L, int idx);
@@ -56,7 +59,7 @@ void check_table_fields(lua_State *L, int idx, ...);
 
 #define LUABIND_TABLE_GETN(idx, var) \
   do { \
-    var = (int)lua_objlen(L,idx); \
+    var = (int)luaL_len(L,idx); \
   } while (0)
 
 #define LUABIND_TABLE_TO_VECTOR(table, tipo, vector, longitud)	\

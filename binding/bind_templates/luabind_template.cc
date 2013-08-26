@@ -38,9 +38,9 @@ $$HEADER_C$$
    function lua_setdottedname(dottedname)
       local cpp_str = {
                          "\nbool exists = false;\n",
-                         "lua_pushvalue(L,LUA_GLOBALSINDEX);\n"
+                         "lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);\n"
 	              }
-      for subName in string.gfind(dottedname, "([%w_]+)[%.]*") do
+      for subName in string.gmatch(dottedname, "([%w_]+)[%.]*") do
 	 table.insert(cpp_str, string.format([[
   // stack: tablevieja
   lua_pushstring(L,"%s");
@@ -184,11 +184,19 @@ int lua_new_$$ClassName$$_$$FILENAME2$$(lua_State *L) {
 
 int lua_delete_$$ClassName$$_$$FILENAME2$$(lua_State *L){
   $$ClassName$$ *obj = lua_rawget$$ClassName$$_$$FILENAME2$$(L,1);
-  DEBUG_OBJ("lua_delete_$$ClassName$$ (begin)",obj);
-  $$class.destructor$$
+  if (obj != 0) {
+    DEBUG_OBJ("lua_delete_$$ClassName$$ (begin)",obj);
+    $$class.destructor$$
     DEBUG_OBJ("lua_delete_$$ClassName$$ (end)",obj);
-  // Hacemos un DecRef para borrar la referencia a este objeto
-  DecRef(obj);
+    // Hacemos un DecRef para borrar la referencia a este objeto
+    DecRef(obj);
+  }
+  // FIXME: This warning is due to the META_INSTANCE table, which is a metatable
+  // of itself and has a __gc method, so at the end of APRIL execution, the __gc
+  // is executed with a NULL pointer
+  else {
+    DEBUG_OBJ("lua_delete_$$ClassName$$ WARNING!! NULL pointer", obj);
+  }
   return 0;
 }
 
@@ -303,7 +311,7 @@ void luaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L){
 	  /* Esto no hace falta
 	     lua_pushstring(L,"$$(LUANAME[ClassName] or ClassName)$$");
 	     lua_pushvalue(L,class_table);
-	     lua_rawset(L,LUA_GLOBALSINDEX);
+	     lua_rawset(L,LUA_RIDX_GLOBALS);
 	  */
 	  
 	  lua_pop(L,1);  // luabind_classes

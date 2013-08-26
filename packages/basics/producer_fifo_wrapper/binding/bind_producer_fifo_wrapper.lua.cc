@@ -42,7 +42,7 @@
 //BIND_METHOD ProducerFifoWrapper put
 {
   LUABIND_CHECK_ARGN(==, 1);
-  int    vec_size = lua_objlen(L, 1);
+  int    vec_size = luaL_len(L, 1);
   double *vec      = new double[vec_size];
   LUABIND_TABLE_TO_VECTOR(1, double, vec, vec_size);
   obj->put(vec);

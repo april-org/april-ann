@@ -444,7 +444,7 @@ end
 function map(func, ...)
   if not func then func = function(v) return v end end
   local t,key,value = {}
-  for key,value in unpack(arg) do
+  for key,value in ... do
     if not value then key,value = #t+1,key end
     local r = func(value)
     if r then t[key] = r end
@@ -455,7 +455,7 @@ end
 function map2(func, ...)
   if not func then func = function(k,v) return v end end
   local t,key,value = {}
-  for key,value in unpack(arg) do
+  for key,value in ... do
     if not value then key,value = #t+1,key end
     local r = func(key,value)
     if r then t[key] = r end
@@ -468,7 +468,7 @@ function reduce(func, initial_value, ...)
   assert(initial_value ~= nil,
 	 "Needs an initial_value as second argument")
   local accum,key,value = initial_value
-  for key,value in unpack(arg) do
+  for key,value in ... do
     accum = func(accum, value or key)
   end
   return accum
@@ -476,7 +476,7 @@ end
 
 function apply(func, ...)
   if not func then func = function() end end
-  for key,value in unpack(arg) do
+  for key,value in ... do
     func(key,value)
   end
 end
@@ -494,7 +494,7 @@ function safe_call(f, env, ...)
   env.io = { stderr = io.stderr,
 	     stdout = io.stdout }
   setfenv(f, env)
-  local status,result_or_error = pcall(f, unpack(arg))
+  local status,result_or_error = pcall(f, ...)
   if not status then
     print(result_or_error)
     error("Incorrect function call")
@@ -504,7 +504,7 @@ end
 
 function glob(...)
   local r = {}
-  for i,expr in ipairs(arg) do
+  for i,expr in ipairs(...) do
     local f = io.popen("ls -d "..expr)
     for i in f:lines() do table.insert(r,i) end
     f:close()
@@ -527,14 +527,15 @@ function clrscr()
 end
 
 function printf(...)
-  io.write(string.format(unpack(arg)))
+  io.write(string.format(...))
 end
 
 function fprintf(file,...)
-  file:write(string.format(unpack(arg)))
+  file:write(string.format(...))
 end
 
 function range(...)
+  local arg = { ... }
   local inf,sup,step = arg[1],arg[2],arg[3] or 1
   local i = inf - step
   return function()
@@ -601,6 +602,7 @@ function get_table_fields(params, t)
 end
 
 function get_table_fields_ipairs(...)
+  local arg = { ... }
   return function(t)
     local ret = {}
     for i,v in ipairs(t) do
@@ -611,6 +613,7 @@ function get_table_fields_ipairs(...)
 end
 
 function get_table_fields_recursive(...)
+  local arg = { ... }
   return function(t)
     return get_table_fields(unpack(arg), t)
   end

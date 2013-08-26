@@ -23,7 +23,6 @@
 
 #include "constString.h"
 
-#define DEFAULT_BUFFER_LEN 4096
 class ReadFileStream {
   char *buffer;
   int max_buffer_len, buffer_pos, buffer_len;
