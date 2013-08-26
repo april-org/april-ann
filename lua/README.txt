@@ -1,115 +1,186 @@
 2013/06/08: Lua 5.2.2 update
 
+- Changes of Lua 5.2.2
+
+diff --git a/lua/lua-5.2.2/src/liolib.c b/lua/lua-5.2.2/src/liolib.c
+index 3f80db1..d49d1db 100644
+--- a/lua/lua-5.2.2/src/liolib.c
++++ b/lua/lua-5.2.2/src/liolib.c
+@@ -46,40 +46,6 @@
+ 
+ /*
+ ** {======================================================
+-** lua_popen spawns a new process connected to the current
+-** one through the file streams.
+-** =======================================================
+-*/
+-
+-#if !defined(lua_popen)	/* { */
+-
+-#if defined(LUA_USE_POPEN)	/* { */
+-
+-#define lua_popen(L,c,m)	((void)L, fflush(NULL), popen(c,m))
+-#define lua_pclose(L,file)	((void)L, pclose(file))
+-
+-#elif defined(LUA_WIN)		/* }{ */
+-
+-#define lua_popen(L,c,m)		((void)L, _popen(c,m))
+-#define lua_pclose(L,file)		((void)L, _pclose(file))
+-
+-
+-#else				/* }{ */
+-
+-#define lua_popen(L,c,m)		((void)((void)c, m),  \
+-		luaL_error(L, LUA_QL("popen") " not supported"), (FILE*)0)
+-#define lua_pclose(L,file)		((void)((void)L, file), -1)
+-
+-
+-#endif				/* } */
+-
+-#endif			/* } */
+-
+-/* }====================================================== */
+-
+-
+-/*
+-** {======================================================
+ ** lua_fseek/lua_ftell: configuration for longer offsets
+ ** =======================================================
+ */
+
+diff --git a/lua/lua-5.2.2/src/llex.c b/lua/lua-5.2.2/src/llex.c
+index 1a32e34..877dc34 100644
+--- a/lua/lua-5.2.2/src/llex.c
++++ b/lua/lua-5.2.2/src/llex.c
+@@ -33,7 +33,7 @@
+ 
+ 
+ /* ORDER RESERVED */
+-static const char *const luaX_tokens [] = {
++const char *const luaX_tokens [] = {
+     "and", "break", "do", "else", "elseif",
+     "end", "false", "for", "function", "goto", "if",
+     "in", "local", "nil", "not", "or", "repeat",
+
+diff --git a/lua/lua-5.2.2/src/lua.h b/lua/lua-5.2.2/src/lua.h
+index f6fe0d4..c675516 100644
+--- a/lua/lua-5.2.2/src/lua.h
++++ b/lua/lua-5.2.2/src/lua.h
+@@ -28,7 +28,7 @@
+ 
+ #define APRILANN_VERSION_MAJOR "0"
+ #define APRILANN_VERSION_MINOR "2"
+-#define APRILANN_VERSION_RELEASE "0"
++#define APRILANN_VERSION_RELEASE "1"
+ #define APRILANN_RELEASE   "April-ANN v" APRILANN_VERSION_MAJOR "." APRILANN_VERSION_MINOR "." APRILANN_VERSION_RELEASE "-beta"
+ #define APRILANN_COPYRIGHT "Copyright (C) 2012-2013 DSIC-UPV, CEU-UCH"
+ #define APRILANN_AUTHORS   "F. Zamora-Martinez, S. España-Boquera, J. Gorbe-Moya, J. Pastor & A. Palacios"
+
+diff --git a/lua/lua-5.2.2/src/lualib.h b/lua/lua-5.2.2/src/lualib.h
+index 9fd126b..f5977cb 100644
+--- a/lua/lua-5.2.2/src/lualib.h
++++ b/lua/lua-5.2.2/src/lualib.h
+@@ -10,6 +10,38 @@
+ 
+ #include "lua.h"
+ 
++/*
++** {======================================================
++** lua_popen spawns a new process connected to the current
++** one through the file streams.
++** =======================================================
++*/
++
++#if !defined(lua_popen)	/* { */
++
++#if defined(LUA_USE_POPEN)	/* { */
++
++#define lua_popen(L,c,m)	((void)L, fflush(NULL), popen(c,m))
++#define lua_pclose(L,file)	((void)L, pclose(file))
++
++#elif defined(LUA_WIN)		/* }{ */
++
++#define lua_popen(L,c,m)		((void)L, _popen(c,m))
++#define lua_pclose(L,file)		((void)L, _pclose(file))
++
++
++#else				/* }{ */
++
++#define lua_popen(L,c,m)		((void)((void)c, m),  \
++		luaL_error(L, LUA_QL("popen") " not supported"), (FILE*)0)
++#define lua_pclose(L,file)		((void)((void)L, file), -1)
++
++
++#endif				/* } */
++
++#endif			/* } */
++
++/* }====================================================== */
+ 
+ 
+ LUAMOD_API int (luaopen_base) (lua_State *L);
+
 - Changes for compilation of lstrip/lstrip.c with Lua 5.2.2
 
-15 +#define lua_open()  luaL_newstate()
-16 +
-@@
-36 +extern const char *const luaX_tokens [];
-37 +
-@@
-187 -Proto *luaY_parser(lua_State *L, ZIO *z, Mbuffer *buff, const char *name)
-191 +Closure *luaY_parser(lua_State *L, ZIO *z, Mbuffer *buff,
-192 +         Dyndata *dyd, const char *name, int firstchar)
-193 {
-194   LexState X;
-195   FuncState F;
-196 + Closure *cl = luaF_newLclosure(L, 1);  /* create main closure */
-197 + /* anchor closure (to avoid being collected) */
-198 + setclLvalue(L, L->top, cl);
-199 + incr_top(L);
-200   X.buff=buff;
-201 - luaX_setinput(L,&X,z,luaS_new(L,name));
-202 + F.f = cl->l.p = luaF_newproto(L);
-203 + F.f->source = luaS_new(L, name);  /* create and anchor TString */
-204 + X.buff = buff;
-205 + X.dyd = dyd;
-206 + dyd->actvar.n = dyd->gt.n = dyd->label.n = 0;
-207 + luaX_setinput(L, &X, z, F.f->source, firstchar);
-208   X.fs=&F;
-209 - X.fs->h=luaH_new(L,0,0);
-210 + X.fs->h=luaH_new(L);
-@@
-203 - return luaF_newproto(L);
-217 + return cl;  /* it's on the stack too */
-@@
-
-- Changes at lua-5.2.2/src/liolib.c
-
-49 -** lua_popen spawns a new process connected to the current
-50 -** one through the file streams.
-51 -** =======================================================
-52 -*/
-53 -
-54 -#if !defined(lua_popen)  /* { */
-55 -
-56 -#if defined(LUA_USE_POPEN)  /* { */
-57 -
-58 -#define lua_popen(L,c,m)  ((void)L, fflush(NULL), popen(c,m))
-59 -#define lua_pclose(L,file)  ((void)L, pclose(file))
-60 -
-61 -#elif defined(LUA_WIN)    /* }{ */
-62 -
-63 -#define lua_popen(L,c,m)    ((void)L, _popen(c,m))
-64 -#define lua_pclose(L,file)    ((void)L, _pclose(file))
-65 -
-66 -
-67 -#else        /* }{ */
-68 -
-69 -#define lua_popen(L,c,m)    ((void)((void)c, m),  \
-70 -    luaL_error(L, LUA_QL("popen") " not supported"), (FILE*)0)
-71 -#define lua_pclose(L,file)    ((void)((void)L, file), -1)
-72 -
-73 -
-74 -#endif        /* } */
-75 -
-76 -#endif      /* } */
-77 -
-78 -/* }====================================================== */
-79 -
-80 -
-81 -/*
-82 -** {======================================================
-
-- Changes at lua-5.2.2/src/llex.c
-
-36 - static const char *const luaX_tokens [] = {
-36 +const char *const luaX_tokens [] = {
-
-- Changes at lua-5.2.2/src/liolib.h
-
-13 +/*
-14 +** {======================================================
-15 +** lua_popen spawns a new process connected to the current
-16 +** one through the file streams.
-17 +** =======================================================
-18 +*/
-19 +
-20 +#if !defined(lua_popen)  /* { */
-21 +
-22 +#if defined(LUA_USE_POPEN)  /* { */
-23 +
-24 +#define lua_popen(L,c,m)  ((void)L, fflush(NULL), popen(c,m))
-25 +#define lua_pclose(L,file)  ((void)L, pclose(file))
-26 +
-27 +#elif defined(LUA_WIN)    /* }{ */
-28 +
-29 +#define lua_popen(L,c,m)    ((void)L, _popen(c,m))
-30 +#define lua_pclose(L,file)    ((void)L, _pclose(file))
-31 +
-32 +
-33 +#else        /* }{ */
-34 +
-35 +#define lua_popen(L,c,m)    ((void)((void)c, m),  \
-36 +    luaL_error(L, LUA_QL("popen") " not supported"), (FILE*)0)
-37 +#define lua_pclose(L,file)    ((void)((void)L, file), -1)
-38 +
-39 +
-40 +#endif        /* } */
-41 +
-42 +#endif      /* } */
-43 +
-44 +/* }====================================================== */
+diff --git a/lua/lstrip/lstrip.c b/lua/lstrip/lstrip.c
+index 715f3b6..b99fa2b 100644
+--- a/lua/lstrip/lstrip.c
++++ b/lua/lstrip/lstrip.c
+@@ -12,6 +12,8 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
++#define lua_open()  luaL_newstate()
++
+ #define LUA_CORE
+ 
+ #include "lua.h"
+@@ -31,6 +33,8 @@ static const char* progname=PROGNAME;	/* actual program name */
+ static int preserve=0;			/* preserve line breaks? */
+ static int dump=0;			/* dump instead of stripping? */
+ 
++extern const char *const luaX_tokens [];
++
+ static void fatal(const char* message)
+ {
+  fprintf(stderr,"%s: %s\n",progname,message);
+@@ -184,14 +188,24 @@ static void dostrip(LexState *X)
+  }
+ }
+ 
+-Proto *luaY_parser(lua_State *L, ZIO *z, Mbuffer *buff, const char *name)
++Closure *luaY_parser(lua_State *L, ZIO *z, Mbuffer *buff,
++		     Dyndata *dyd, const char *name, int firstchar)
+ {
+  LexState X;
+  FuncState F;
++ Closure *cl = luaF_newLclosure(L, 1);  /* create main closure */
++ /* anchor closure (to avoid being collected) */
++ setclLvalue(L, L->top, cl);
++ incr_top(L);
+  X.buff=buff;
+- luaX_setinput(L,&X,z,luaS_new(L,name));
++ F.f = cl->l.p = luaF_newproto(L);
++ F.f->source = luaS_new(L, name);  /* create and anchor TString */
++ X.buff = buff;
++ X.dyd = dyd;
++ dyd->actvar.n = dyd->gt.n = dyd->label.n = 0;
++ luaX_setinput(L, &X, z, F.f->source, firstchar);
+  X.fs=&F;
+- X.fs->h=luaH_new(L,0,0);
++ X.fs->h=luaH_new(L);
+  sethvalue2s(L,L->top,X.fs->h);
+  incr_top(L);
+  if (dump)
+@@ -200,7 +214,7 @@ Proto *luaY_parser(lua_State *L, ZIO *z, Mbuffer *buff, const char *name)
+   dodump(&X);
+  }
+  else dostrip(&X);
+- return luaF_newproto(L);
++ return cl;  /* it's on the stack too */
+ }
+ 
+ static void strip(lua_State *L, const char *file)
 
 -------------------------------------
 -- CHANGES BEFORE LUA 5.2.2 UPDATE --
@@ -290,4 +361,3 @@ luapkg
 .
 .
 .
-
