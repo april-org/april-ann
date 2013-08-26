@@ -154,7 +154,7 @@ for index=which_i_am,#list,cores do
     error(string.format("# Output file '%s' exists, use -f to force overwritten\n",
 			outfile))
   else
-    matrix.savefile(output_mat, outfile, "ascii")
+    output_mat:toFilename(outfile, "ascii")
   end
 end
 

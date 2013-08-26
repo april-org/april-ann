@@ -31,7 +31,7 @@ void writeMatrixDoubleToFile(MatrixDouble *mat,
 			     const char *filename,
 			     bool is_ascii) {
   if (GZFileWrapper::isGZ(filename)) {
-    GZFileWrapper f(filename, "r");
+    GZFileWrapper f(filename, "w");
     writeMatrixToStream(mat, f, DoubleAsciiSizer(), DoubleBinarySizer(),
 			DoubleAsciiCoder<GZFileWrapper>(),
 			DoubleBinaryCoder<GZFileWrapper>(),
