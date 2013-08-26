@@ -115,7 +115,7 @@ mingw:
 	$(MAKE) "LUAC_T=luac.exe" luac.exe
 
 posix:
-	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_POSIX" SYSLIBS="-lreadline"
+	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_POSIX -DLUA_USE_DLOPEN" SYSLIBS="-Wl,-E -ldl -lreadline"
 
 solaris:
 	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_POSIX -DLUA_USE_DLOPEN" SYSLIBS="-ldl"
