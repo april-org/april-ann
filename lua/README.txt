@@ -1,3 +1,120 @@
+2013/06/08: Lua 5.2.2 update
+
+- Changes for compilation of lstrip/lstrip.c with Lua 5.2.2
+
+15 +#define lua_open()  luaL_newstate()
+16 +
+@@
+36 +extern const char *const luaX_tokens [];
+37 +
+@@
+187 -Proto *luaY_parser(lua_State *L, ZIO *z, Mbuffer *buff, const char *name)
+191 +Closure *luaY_parser(lua_State *L, ZIO *z, Mbuffer *buff,
+192 +         Dyndata *dyd, const char *name, int firstchar)
+193 {
+194   LexState X;
+195   FuncState F;
+196 + Closure *cl = luaF_newLclosure(L, 1);  /* create main closure */
+197 + /* anchor closure (to avoid being collected) */
+198 + setclLvalue(L, L->top, cl);
+199 + incr_top(L);
+200   X.buff=buff;
+201 - luaX_setinput(L,&X,z,luaS_new(L,name));
+202 + F.f = cl->l.p = luaF_newproto(L);
+203 + F.f->source = luaS_new(L, name);  /* create and anchor TString */
+204 + X.buff = buff;
+205 + X.dyd = dyd;
+206 + dyd->actvar.n = dyd->gt.n = dyd->label.n = 0;
+207 + luaX_setinput(L, &X, z, F.f->source, firstchar);
+208   X.fs=&F;
+209 - X.fs->h=luaH_new(L,0,0);
+210 + X.fs->h=luaH_new(L);
+@@
+203 - return luaF_newproto(L);
+217 + return cl;  /* it's on the stack too */
+@@
+
+- Changes at lua-5.2.2/src/liolib.c
+
+49 -** lua_popen spawns a new process connected to the current
+50 -** one through the file streams.
+51 -** =======================================================
+52 -*/
+53 -
+54 -#if !defined(lua_popen)  /* { */
+55 -
+56 -#if defined(LUA_USE_POPEN)  /* { */
+57 -
+58 -#define lua_popen(L,c,m)  ((void)L, fflush(NULL), popen(c,m))
+59 -#define lua_pclose(L,file)  ((void)L, pclose(file))
+60 -
+61 -#elif defined(LUA_WIN)    /* }{ */
+62 -
+63 -#define lua_popen(L,c,m)    ((void)L, _popen(c,m))
+64 -#define lua_pclose(L,file)    ((void)L, _pclose(file))
+65 -
+66 -
+67 -#else        /* }{ */
+68 -
+69 -#define lua_popen(L,c,m)    ((void)((void)c, m),  \
+70 -    luaL_error(L, LUA_QL("popen") " not supported"), (FILE*)0)
+71 -#define lua_pclose(L,file)    ((void)((void)L, file), -1)
+72 -
+73 -
+74 -#endif        /* } */
+75 -
+76 -#endif      /* } */
+77 -
+78 -/* }====================================================== */
+79 -
+80 -
+81 -/*
+82 -** {======================================================
+
+- Changes at lua-5.2.2/src/llex.c
+
+36 - static const char *const luaX_tokens [] = {
+36 +const char *const luaX_tokens [] = {
+
+- Changes at lua-5.2.2/src/liolib.h
+
+13 +/*
+14 +** {======================================================
+15 +** lua_popen spawns a new process connected to the current
+16 +** one through the file streams.
+17 +** =======================================================
+18 +*/
+19 +
+20 +#if !defined(lua_popen)  /* { */
+21 +
+22 +#if defined(LUA_USE_POPEN)  /* { */
+23 +
+24 +#define lua_popen(L,c,m)  ((void)L, fflush(NULL), popen(c,m))
+25 +#define lua_pclose(L,file)  ((void)L, pclose(file))
+26 +
+27 +#elif defined(LUA_WIN)    /* }{ */
+28 +
+29 +#define lua_popen(L,c,m)    ((void)L, _popen(c,m))
+30 +#define lua_pclose(L,file)    ((void)L, _pclose(file))
+31 +
+32 +
+33 +#else        /* }{ */
+34 +
+35 +#define lua_popen(L,c,m)    ((void)((void)c, m),  \
+36 +    luaL_error(L, LUA_QL("popen") " not supported"), (FILE*)0)
+37 +#define lua_pclose(L,file)    ((void)((void)L, file), -1)
+38 +
+39 +
+40 +#endif        /* } */
+41 +
+42 +#endif      /* } */
+43 +
+44 +/* }====================================================== */
+
+-------------------------------------
+-- CHANGES BEFORE LUA 5.2.2 UPDATE --
+-------------------------------------
+
 07/06/2013
 
 diff --git a/lua/lua-5.1.4/src/lua.c b/lua/lua-5.1.4/src/lua.c
