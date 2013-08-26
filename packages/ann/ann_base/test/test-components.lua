@@ -8,6 +8,7 @@ function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
   end
   ann.components.reset_id_counters()
   local c = component_builder_func()
+  if util.is_cuda_available() then c:set_use_cuda(true) end
   trainer = trainable.supervised_trainer(c, ann.loss[loss_name](o), b)
   trainer:build()
   trainer:randomize_weights{ inf = -1, sup = 1, random = rnd }

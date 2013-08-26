@@ -41,6 +41,7 @@ val_output   = dataset.matrix(m2,
 
 bunch_size = 64
 thenet = ann.mlp.all_all.generate("256 inputs 128 tanh 10 log_softmax")
+if util.is_cuda_available() then thenet:set_use_cuda(true) end
 trainer = trainable.supervised_trainer(thenet,
 				       ann.loss.multi_class_cross_entropy(10),
 				       bunch_size)

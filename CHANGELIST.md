@@ -4,6 +4,9 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added sanity check to cross-entropy and multi-class cross-entropy
+  loss functions, to detect the use of non logarithmic outputs.
+- Solved problems with CUDA, it is working again.
 - Dynamic loading of C modules is working now.
 - Added support for GZipped matrices load and save from C++, so functions
   `matrix.savefile` and `matrix.loadfile` (and its correspondence for complex

@@ -73,6 +73,7 @@ val_output   = dataset.matrix(m2,
 
 
 thenet = ann.mlp.all_all.generate(description)
+if util.is_cuda_available() then thenet:set_use_cuda(true) end
 thenet:set_option("learning_rate", learning_rate)
 thenet:set_option("momentum",      momentum)
 thenet:set_option("weight_decay",  weight_decay)
