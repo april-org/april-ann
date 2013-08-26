@@ -428,7 +428,7 @@ function formiga.initialize ()
     os.execute("mkdir -p "..formiga.os.compose_dir(formiga.global_properties.build_dir,"bin"))
 
     formiga.lua_dot_c_path = formiga.os.get_lua_dot_c_path()
-    formiga.lua_path=formiga.os.compose_dir(formiga.os.cwd,"lua","lua-5.1.2")
+    formiga.lua_path=formiga.os.compose_dir(formiga.os.cwd,"lua","lua-5.2.2")
   end
 end
 
