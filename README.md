@@ -12,11 +12,11 @@ Requires the following libraries. Versions are only orientative, it could work w
 - Readline (libreadline)
 - OpenMP
 - LAPACK library, offered by liblapack_atlas, mkl_lapack, or MacOS Accelerate Framework
+- libz: support for open of GZIPPED files
 
 The following libreries are recommended, but optional:
 - [OPTIONAL] libpng: if you want to open PNG images
 - [OPTIONAL] libtiff: if you want to open TIFF images
-- [OPTIONAL] libz: if you want to open GZIPPED files
 
 For perform computation on GPU, this optional library:
 - [OPTIONAL] CUDA and CUBLAS: release 4.2.6

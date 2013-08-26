@@ -23,42 +23,26 @@
 #include "binarizer.h"
 #include "clamp.h"
 #include "matrixFloat.h"
+#include "gzfile_wrapper.h"
 #include <cmath>
 #include <cstdio>
 
-template class CharAsciiCoder<WriteBufferWrapper>;
-template class CharBinaryCoder<WriteBufferWrapper>;
-template class CharAsciiCoder<WriteFileWrapper>;
-template class CharBinaryCoder<WriteFileWrapper>;
-
-template MatrixChar *readMatrixFromStream(constString &,
-					  CharAsciiExtractor,
-					  CharBinaryExtractor);
-template MatrixChar *readMatrixFromStream(ReadFileStream &,
-					  CharAsciiExtractor,
-					  CharBinaryExtractor);
-template int writeMatrixToStream(MatrixChar *,
-				 WriteBufferWrapper &,
-				 CharAsciiSizer,
-				 CharBinarySizer,
-				 CharAsciiCoder<WriteBufferWrapper>,
-				 CharBinaryCoder<WriteBufferWrapper>,
-				 bool is_ascii);
-template int writeMatrixToStream(MatrixChar *,
-				 WriteFileWrapper &,
-				 CharAsciiSizer,
-				 CharBinarySizer,
-				 CharAsciiCoder<WriteFileWrapper>,
-				 CharBinaryCoder<WriteFileWrapper>,
-				 bool is_ascii);
-
 void writeMatrixCharToFile(MatrixChar *mat,
 			   const char *filename) {
-  WriteFileWrapper wrapper(filename);
-  writeMatrixToStream(mat, wrapper, CharAsciiSizer(), CharBinarySizer(),
-		      CharAsciiCoder<WriteFileWrapper>(),
-		      CharBinaryCoder<WriteFileWrapper>(),
-		      true);
+  if (GZFileWrapper::isGZ(filename)) {
+    GZFileWrapper f(filename, "w");
+    writeMatrixToStream(mat, f, CharAsciiSizer(), CharBinarySizer(),
+			CharAsciiCoder<GZFileWrapper>(),
+			CharBinaryCoder<GZFileWrapper>(),
+			true);
+  }
+  else {
+    WriteFileWrapper wrapper(filename);
+    writeMatrixToStream(mat, wrapper, CharAsciiSizer(), CharBinarySizer(),
+			CharAsciiCoder<WriteFileWrapper>(),
+			CharBinaryCoder<WriteFileWrapper>(),
+			true);
+  }
 }
 
 char *writeMatrixCharToString(MatrixChar *mat,
@@ -74,10 +58,18 @@ char *writeMatrixCharToString(MatrixChar *mat,
 }
 
 MatrixChar *readMatrixCharFromFile(const char *filename) {
-  ReadFileStream f(filename);
-  return readMatrixFromStream<ReadFileStream,
-			      char>(f, CharAsciiExtractor(),
-				    CharBinaryExtractor());
+  if (GZFileWrapper::isGZ(filename)) {
+    GZFileWrapper f(filename, "r");
+    return readMatrixFromStream<GZFileWrapper,
+				char>(f, CharAsciiExtractor(),
+				      CharBinaryExtractor());
+  }
+  else {
+    ReadFileStream f(filename);
+    return readMatrixFromStream<ReadFileStream,
+				char>(f, CharAsciiExtractor(),
+				      CharBinaryExtractor());
+  }
 }
 
 MatrixChar *readMatrixCharFromString(constString &cs) {
