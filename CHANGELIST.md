@@ -1,16 +1,16 @@
 ChangeList
 ==========
 
-Master branch
--------------
+Master branch unstable release
+------------------------------
 
 - Added support for GZipped matrices load and save from C++, so functions
   `matrix.savefile` and `matrix.loadfile` (and its correspondence for complex
   numbers, double, int32, and char) were removed. Methods `matrix.fromFilename`
   and `matrix.toFilename` accept '.gz' extension.
 
-v0.2.1-beta
------------
+v0.2.1-beta relase
+------------------
 
 - matrices with float (matrix), complex numbers (matrixComplex), double
   (matrixDouble), int32 (matrixInt32), and char (matrixChar).
