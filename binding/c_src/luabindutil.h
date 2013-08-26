@@ -127,6 +127,8 @@ void check_table_fields(lua_State *L, int idx, ...);
     ++luabind_num_returned_values; \
   } while (0)
 
+#define LUABIND_INCREASE_NUM_RETURNS(value) luabind_num_returned_values+=(value)
+
 
 #endif // LUABINDUTIL_H
 

@@ -144,6 +144,7 @@ int GZFileWrapper::seek(int whence, int offset) {
 
 int GZFileWrapper::readAndPushNumberToLua(lua_State *L) {
   constString token = getToken(" ,;\t\n\r");
+  if (token.empty()) return 0;
   double number;
   if (!token.extract_double(&number))
     ERROR_EXIT(256, "Impossible to extract a number from current file pos\n");
@@ -154,6 +155,7 @@ int GZFileWrapper::readAndPushNumberToLua(lua_State *L) {
 
 int GZFileWrapper::readAndPushStringToLua(lua_State *L, int size) {
   constString token = getToken(size);
+  if (token.empty()) return 0;
   lua_pushlstring(L, (const char *)(token), token.len());
   return 1;
 }
@@ -168,15 +170,18 @@ int GZFileWrapper::readAndPushStringToLua(lua_State *L, int size) {
 
 int GZFileWrapper::readAndPushLineToLua(lua_State *L) {
   constString line = extract_line();
+  if (line.empty()) return 0;
   lua_pushlstring(L, (const char *)(line), line.len());
   return 1;
 }
 
 int GZFileWrapper::readAndPushAllToLua(lua_State *L) {
+  constString line = getToken(1024);
+  if (line.empty()) return 0;
   luaL_Buffer lua_buffer;
-  constString line;
   luaL_buffinit(L, &lua_buffer);
-  while((line = extract_line()) && !line.empty())
+  luaL_addlstring(&lua_buffer, (const char*)(line), line.len());
+  while((line = getToken(1024)) && !line.empty())
     luaL_addlstring(&lua_buffer, (const char*)(line), line.len());
   luaL_pushresult(&lua_buffer);
   return 1;
