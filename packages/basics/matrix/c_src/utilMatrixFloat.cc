@@ -21,7 +21,8 @@
  */
 #include "utilMatrixFloat.h"
 #include "binarizer.h"
-#include "gzfile_wrapper.h"
+#include "buffered_gzfile.h"
+#include "buffered_file.h"
 #include "clamp.h"
 #include <cmath>
 #include <cstdio>
@@ -216,17 +217,17 @@ void writeMatrixFloatToFile(MatrixFloat *mat,
 			    const char *filename,
 			    bool is_ascii) {
   if (GZFileWrapper::isGZ(filename)) {
-    GZFileWrapper f(filename, "w");
+    BufferedGZFile f(filename, "w");
     writeMatrixToStream(mat, f, FloatAsciiSizer(), FloatBinarySizer(),
-			FloatAsciiCoder<GZFileWrapper>(),
-			FloatBinaryCoder<GZFileWrapper>(),
+			FloatAsciiCoder<BufferedGZFile>(),
+			FloatBinaryCoder<BufferedGZFile>(),
 			is_ascii);
   }
   else {
-    WriteFileWrapper wrapper(filename);
-    writeMatrixToStream(mat, wrapper, FloatAsciiSizer(), FloatBinarySizer(),
-			FloatAsciiCoder<WriteFileWrapper>(),
-			FloatBinaryCoder<WriteFileWrapper>(),
+    BufferedFile f(filename, "w");
+    writeMatrixToStream(mat, f, FloatAsciiSizer(), FloatBinarySizer(),
+			FloatAsciiCoder<BufferedFile>(),
+			FloatBinaryCoder<BufferedFile>(),
 			is_ascii);
   }
 }
@@ -246,14 +247,14 @@ char *writeMatrixFloatToString(MatrixFloat *mat,
 
 MatrixFloat *readMatrixFloatFromFile(const char *filename) {
   if (GZFileWrapper::isGZ(filename)) {
-    GZFileWrapper f(filename, "r");
-    return readMatrixFromStream<GZFileWrapper, float>(f, FloatAsciiExtractor(),
-						      FloatBinaryExtractor());
+    BufferedGZFile f(filename, "r");
+    return readMatrixFromStream<BufferedGZFile, float>(f, FloatAsciiExtractor(),
+						       FloatBinaryExtractor());
   }
   else {
-    ReadFileStream f(filename);
-    return readMatrixFromStream<ReadFileStream, float>(f, FloatAsciiExtractor(),
-						       FloatBinaryExtractor());
+    BufferedFile f(filename, "r");
+    return readMatrixFromStream<BufferedFile, float>(f, FloatAsciiExtractor(),
+						     FloatBinaryExtractor());
   }
 }
 

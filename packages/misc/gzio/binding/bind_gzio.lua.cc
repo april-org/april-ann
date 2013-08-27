@@ -22,41 +22,41 @@
 //BIND_END
 
 //BIND_HEADER_H
-#include "gzfile_wrapper.h"
+#include "buffered_gzfile.h"
 //BIND_END
 
-//BIND_LUACLASSNAME GZFileWrapper gzio
-//BIND_CPP_CLASS    GZFileWrapper
+//BIND_LUACLASSNAME BufferedGZFile gzio
+//BIND_CPP_CLASS    BufferedGZFile
 
-//BIND_CONSTRUCTOR GZFileWrapper
+//BIND_CONSTRUCTOR BufferedGZFile
 {
   LUABIND_ERROR("Use open class method instead of the constructor");
 }
 //BIND_END
 
-//BIND_CLASS_METHOD GZFileWrapper open
+//BIND_CLASS_METHOD BufferedGZFile open
 {
   const char *path, *mode;
   LUABIND_GET_PARAMETER(1, string, path);
   LUABIND_GET_OPTIONAL_PARAMETER(2, string, mode, "r");
-  GZFileWrapper *obj = new GZFileWrapper(path, mode);
-  LUABIND_RETURN(GZFileWrapper, obj);
+  BufferedGZFile *obj = new BufferedGZFile(path, mode);
+  LUABIND_RETURN(BufferedGZFile, obj);
 }
 //BIND_END
 
-//BIND_METHOD GZFileWrapper close
+//BIND_METHOD BufferedGZFile close
 {
   obj->close();
 }
 //BIND_END
 
-//BIND_METHOD GZFileWrapper flush
+//BIND_METHOD BufferedGZFile flush
 {
   obj->flush();
 }
 //BIND_END
 
-//BIND_METHOD GZFileWrapper seek
+//BIND_METHOD BufferedGZFile seek
 {
   int offset;
   const char *whence;
@@ -78,7 +78,7 @@
 }
 //BIND_END
 
-//BIND_METHOD GZFileWrapper read
+//BIND_METHOD BufferedGZFile read
 {
   /*
     "*n" reads a number; this is the only format that returns a number instead
@@ -127,7 +127,7 @@
 }
 //BIND_END
 
-//BIND_METHOD GZFileWrapper write
+//BIND_METHOD BufferedGZFile write
 {
   int argn = lua_gettop(L); // number of arguments
   for (int i=1; i<=argn; ++i) {
