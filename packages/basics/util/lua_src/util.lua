@@ -1,5 +1,14 @@
 local COLWIDTH=70
 
+function cpp_class_binding_extension(class_table, key, value)
+  if class_table.meta_instance and
+  type(class_table.meta_instance.__index) == "table" then
+    class_table.meta_instance.__index[key] = value
+  else
+    error("The table is not a CPP class binding")
+  end
+end
+
 function get_table_from_dotted_string(dotted_string, create, basetable)
   local create    = create or false
   local basetable = basetable or _G

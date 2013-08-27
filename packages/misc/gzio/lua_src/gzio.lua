@@ -22,7 +22,7 @@ io.lines = function(name, ...)
   else return io_old_lines(name, ...) end
 end
 
-function gzio.meta_instance.lines(self, ...)
+local function gzio_lines(self, ...)
   local arg = { ... }
   return function()
     local values = { self:read(unpack(arg)) }
@@ -30,3 +30,6 @@ function gzio.meta_instance.lines(self, ...)
     return unpack(values)
   end
 end
+cpp_class_binding_extension(gzio,
+			    "lines",
+			    gzio_lines)
