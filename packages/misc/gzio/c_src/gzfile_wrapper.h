@@ -83,85 +83,8 @@ public:
   // be careful, this method returns a pointer to internal buffer
   constString extract_u_line();
   
-  void printf(const char *format) {
-    total_bytes += gzprintf(f, format);
-  }
+  void printf(const char *format, ...);
 
-  template<typename T>
-  void printf(const char *format, const T &data) {
-    total_bytes += gzprintf(f, format, data);
-  }
-  
-  template<typename T1, typename T2>
-  void printf(const char *format, const T1 &data1, const T2 &data2) {
-    total_bytes += gzprintf(f, format, data1, data2);
-  }
-  
-  template<typename T1, typename T2, typename T3>
-  void printf(const char *format, const T1 &data1, const T2 &data2,
-	      const T3 &data3) {
-    total_bytes += gzprintf(f, format, data1, data2, data3);
-  }
-
-  template<typename T1, typename T2, typename T3, typename T4>
-  void printf(const char *format, const T1 &data1, const T2 &data2,
-	      const T3 &data3, const T4 &data4) {
-    total_bytes += gzprintf(f, format, data1, data2, data3, data4);
-  }
-
-  template<typename T1, typename T2, typename T3, typename T4, typename T5>
-  void printf(const char *format, const T1 &data1, const T2 &data2,
-	      const T3 &data3, const T4 &data4, const T5 &data5) {
-    total_bytes += gzprintf(f, format, data1, data2, data3, data4, data5);
-  }
-
-  template<typename T1, typename T2, typename T3, typename T4, typename T5,
-	   typename T6>
-  void printf(const char *format, const T1 &data1, const T2 &data2,
-	      const T3 &data3, const T4 &data4, const T5 &data5,
-	      const T6 &data6) {
-    total_bytes += gzprintf(f, format, data1, data2, data3, data4, data5,
-			    data6);
-  }
-
-  template<typename T1, typename T2, typename T3, typename T4, typename T5,
-	   typename T6, typename T7>
-  void printf(const char *format, const T1 &data1, const T2 &data2,
-	      const T3 &data3, const T4 &data4, const T5 &data5,
-	      const T6 &data6, const T7 &data7) {
-    total_bytes += gzprintf(f, format, data1, data2, data3, data4, data5,
-			    data6, data7);
-  }
-
-  template<typename T1, typename T2, typename T3, typename T4, typename T5,
-	   typename T6, typename T7, typename T8>
-  void printf(const char *format, const T1 &data1, const T2 &data2,
-	      const T3 &data3, const T4 &data4, const T5 &data5,
-	      const T6 &data6, const T7 &data7, const T8 data8) {
-    total_bytes += gzprintf(f, format, data1, data2, data3, data4, data5,
-			    data6, data7, data8);
-  }
-
-  template<typename T1, typename T2, typename T3, typename T4, typename T5,
-	   typename T6, typename T7, typename T8, typename T9>
-  void printf(const char *format, const T1 &data1, const T2 &data2,
-	      const T3 &data3, const T4 &data4, const T5 &data5,
-	      const T6 &data6, const T7 &data7, const T8 data8,
-	      const T9 &data9) {
-    total_bytes += gzprintf(f, format, data1, data2, data3, data4, data5,
-			    data6, data7, data8, data9);
-  }
-
-  template<typename T1, typename T2, typename T3, typename T4, typename T5,
-	   typename T6, typename T7, typename T8, typename T9, typename T10>
-  void printf(const char *format, const T1 &data1, const T2 &data2,
-	      const T3 &data3, const T4 &data4, const T5 &data5,
-	      const T6 &data6, const T7 &data7, const T8 data8,
-	      const T9 &data9, const T10 &data10) {
-    total_bytes += gzprintf(f, format, data1, data2, data3, data4, data5,
-			    data6, data7, data8, data9, data10);
-  }
-  
   void setExpectedSize(int sz) const { }
   
   int getTotalBytes() const { return total_bytes; }

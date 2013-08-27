@@ -21,6 +21,7 @@
 
 // This wrapper is inspired by GZIO http://luaforge.net/projects/gzio/
 
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include "error_print.h"
@@ -279,4 +280,17 @@ constString GZFileWrapper::extract_u_line() {
     aux = getToken("\r\n");
   } while ((aux.len() > 0) && (aux[0] == '#'));
   return aux;
+}
+
+void GZFileWrapper::printf(const char *format, ...) {
+  va_list ap;
+  va_start(ap, format);
+  char *aux_buffer;
+  size_t len;
+  if (vasprintf(&aux_buffer, format, ap) < 0)
+    ERROR_EXIT(256, "Problem creating auxiliary buffer\n");
+  len = strlen(aux_buffer);
+  if (len > 0) total_bytes += gzwrite(f, aux_buffer, len);
+  free(aux_buffer);
+  va_end(ap);
 }

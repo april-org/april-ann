@@ -1,6 +1,6 @@
  package{ name = "tied_model_manager",
    version = "1.0",
-   depends = { },
+   depends = { "util" },
    keywords = { "tied_model_manager" },
    description = "",
    -- targets como en ant
