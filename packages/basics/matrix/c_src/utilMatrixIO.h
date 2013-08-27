@@ -21,32 +21,11 @@
  */
 #ifndef UTILMATRIXIO_H
 #define UTILMATRIXIO_H
-#include "read_file_stream.h"
+#include "constString.h"
 #include "binarizer.h"
 #include "error_print.h"
 #include <cmath>
 #include <cstdio>
-
-class WriteFileWrapper {
-  int total_bytes;
-  FILE *f;
-public:
-  WriteFileWrapper(const char *path) :
-  total_bytes(0),
-  f(fopen(path, "w")) {
-    if (f == 0) ERROR_EXIT1(256, "Unable to open file %s\n", path);
-  }
-  WriteFileWrapper(FILE *f) : f(f) { }
-  ~WriteFileWrapper() { fclose(f); }
-  void printf(const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    total_bytes += vfprintf(f, format, args);
-    va_end(args);
-  }
-  void setExpectedSize(int sz) const { }
-  int getTotalBytes() const { return total_bytes; }
-};
 
 class WriteBufferWrapper {
   char *buffer;

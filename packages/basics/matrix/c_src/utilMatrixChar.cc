@@ -23,24 +23,25 @@
 #include "binarizer.h"
 #include "clamp.h"
 #include "matrixFloat.h"
-#include "gzfile_wrapper.h"
+#include "buffered_gzfile.h"
+#include "buffered_file.h"
 #include <cmath>
 #include <cstdio>
 
 void writeMatrixCharToFile(MatrixChar *mat,
 			   const char *filename) {
   if (GZFileWrapper::isGZ(filename)) {
-    GZFileWrapper f(filename, "w");
+    BufferedGZFile f(filename, "w");
     writeMatrixToStream(mat, f, CharAsciiSizer(), CharBinarySizer(),
-			CharAsciiCoder<GZFileWrapper>(),
-			CharBinaryCoder<GZFileWrapper>(),
+			CharAsciiCoder<BufferedGZFile>(),
+			CharBinaryCoder<BufferedGZFile>(),
 			true);
   }
   else {
-    WriteFileWrapper wrapper(filename);
-    writeMatrixToStream(mat, wrapper, CharAsciiSizer(), CharBinarySizer(),
-			CharAsciiCoder<WriteFileWrapper>(),
-			CharBinaryCoder<WriteFileWrapper>(),
+    BufferedFile f(filename, "w");
+    writeMatrixToStream(mat, f, CharAsciiSizer(), CharBinarySizer(),
+			CharAsciiCoder<BufferedFile>(),
+			CharBinaryCoder<BufferedFile>(),
 			true);
   }
 }
@@ -59,14 +60,14 @@ char *writeMatrixCharToString(MatrixChar *mat,
 
 MatrixChar *readMatrixCharFromFile(const char *filename) {
   if (GZFileWrapper::isGZ(filename)) {
-    GZFileWrapper f(filename, "r");
-    return readMatrixFromStream<GZFileWrapper,
+    BufferedGZFile f(filename, "r");
+    return readMatrixFromStream<BufferedGZFile,
 				char>(f, CharAsciiExtractor(),
 				      CharBinaryExtractor());
   }
   else {
-    ReadFileStream f(filename);
-    return readMatrixFromStream<ReadFileStream,
+    BufferedFile f(filename, "r");
+    return readMatrixFromStream<BufferedFile,
 				char>(f, CharAsciiExtractor(),
 				      CharBinaryExtractor());
   }

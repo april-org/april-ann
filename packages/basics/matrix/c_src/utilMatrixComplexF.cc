@@ -23,7 +23,8 @@
 #include "binarizer.h"
 #include "clamp.h"
 #include "matrixFloat.h"
-#include "gzfile_wrapper.h"
+#include "buffered_gzfile.h"
+#include "buffered_file.h"
 #include <cmath>
 #include <cstdio>
 
@@ -31,17 +32,17 @@ void writeMatrixComplexFToFile(MatrixComplexF *mat,
 			       const char *filename,
 			       bool is_ascii) {
   if (GZFileWrapper::isGZ(filename)) {
-    GZFileWrapper f(filename, "w");
+    BufferedGZFile f(filename, "w");
     writeMatrixToStream(mat, f, ComplexFAsciiSizer(), ComplexFBinarySizer(),
-			ComplexFAsciiCoder<GZFileWrapper>(),
-			ComplexFBinaryCoder<GZFileWrapper>(),
+			ComplexFAsciiCoder<BufferedGZFile>(),
+			ComplexFBinaryCoder<BufferedGZFile>(),
 			is_ascii);
   }
   else {
-    WriteFileWrapper wrapper(filename);
-    writeMatrixToStream(mat, wrapper, ComplexFAsciiSizer(), ComplexFBinarySizer(),
-			ComplexFAsciiCoder<WriteFileWrapper>(),
-			ComplexFBinaryCoder<WriteFileWrapper>(),
+    BufferedFile f(filename, "w");
+    writeMatrixToStream(mat, f, ComplexFAsciiSizer(), ComplexFBinarySizer(),
+			ComplexFAsciiCoder<BufferedFile>(),
+			ComplexFBinaryCoder<BufferedFile>(),
 			is_ascii);
   }
 }
@@ -61,14 +62,14 @@ char *writeMatrixComplexFToString(MatrixComplexF *mat,
 
 MatrixComplexF *readMatrixComplexFFromFile(const char *filename) {
   if (GZFileWrapper::isGZ(filename)) {
-    GZFileWrapper f(filename, "r");
-    return readMatrixFromStream<GZFileWrapper,
+    BufferedGZFile f(filename, "r");
+    return readMatrixFromStream<BufferedGZFile,
 				ComplexF>(f, ComplexFAsciiExtractor(),
 					  ComplexFBinaryExtractor());
   }
   else {
-    ReadFileStream f(filename);
-    return readMatrixFromStream<ReadFileStream,
+    BufferedFile f(filename, "r");
+    return readMatrixFromStream<BufferedFile,
 				ComplexF>(f, ComplexFAsciiExtractor(),
 					  ComplexFBinaryExtractor());
   }

@@ -4,8 +4,11 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
-- Added sanity check to cross-entropy and multi-class cross-entropy
-  loss functions, to detect the use of non logarithmic outputs.
+- The C++ routines to write and read files is generalized to work with streams,
+  under the BufferedStream template, and it is instantiated to FILE and gzFile
+  formats.
+- Added sanity check to cross-entropy and multi-class cross-entropy loss
+  functions, to detect the use of non logarithmic outputs.
 - Solved problems with CUDA, it is working again.
 - Dynamic loading of C modules is working now.
 - Added support for GZipped matrices load and save from C++, so functions

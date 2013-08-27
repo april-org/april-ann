@@ -18,11 +18,9 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef GZFILE_WRAPPER_H
-#define GZFILE_WRAPPER_H
+#ifndef BUFFERED_STREAM_H
+#define BUFFERED_STREAM_H
 
-#include <zlib.h>
-#include <cstring>
 #include "referenced.h"
 #include "constString.h"
 extern "C" {
@@ -31,11 +29,29 @@ extern "C" {
 #include "lua.h"
 }
 
-class GZFileWrapper : public Referenced {
+/**
+   The STREAM_TYPE must complain with this interface
+   
+   STREAM_TYPE() default constructor
+   bool   openS(const char *path, const char *mode);
+   void   closeS();
+   size_t readS(void *ptr, size_t size, size_t nmemb) = 0;
+   size_t writeS(const void *ptr, size_t size, size_t nmemb) = 0;
+   int    seekS(long offset, int whence) = 0;
+   void   flushS() = 0;
+   int    printfS(const char *format, va_list &arg) = 0;
+   bool   eofS() = 0;
+**/
+
+/// This class is useful to define classes for input/output routines, as for
+/// FILE or gzFile formats. The STREAM_TYPE must be a class or struct which
+/// complains the interface defined in the file buffered_stream.h
+template<typename STREAM_TYPE>
+class BufferedStream : public Referenced {
   int total_bytes;
   char *buffer;
   int max_buffer_len, buffer_pos, buffer_len;
-  gzFile f;
+  STREAM_TYPE stream;
   
   bool moveAndFillBuffer();
   bool resizeAndFillBuffer();
@@ -49,15 +65,8 @@ class GZFileWrapper : public Referenced {
 
 public:
 
-  static bool isGZ(const char *filename) {
-    int len = strlen(filename);
-    return (len > 3 && filename[len-3] == '.' &&
-	    filename[len-2] == 'g' &&
-	    filename[len-1] == 'z');
-  }
-  
-  GZFileWrapper(const char *path, const char *mode);
-  ~GZFileWrapper();
+  BufferedStream(const char *path, const char *mode);
+  ~BufferedStream();
   
   void close();
   void flush();
@@ -91,5 +100,7 @@ public:
   /**************************************/
 };
 
-#endif // GZFILE_WRAPPER_H
+// Includes the implementation
+#include "buffered_stream.impl.h"
 
+#endif // BUFFERED_STREAM_H
