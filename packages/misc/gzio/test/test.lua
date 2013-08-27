@@ -10,8 +10,10 @@ f:close()
 
 for line in io.lines("test.gz") do assert(line, "Hello, World.") end
 
+os.remove("test.gz")
+
 -- the tar module reads tar files, can be used with gzio in order to read tgz
-f=gzio.open("a.tar.gz")
+f=gzio.open(string.get_path(arg[0]).."a.tar.gz")
 t=tar.open(f)
 
 data = {
