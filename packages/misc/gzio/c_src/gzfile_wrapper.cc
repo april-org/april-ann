@@ -206,7 +206,7 @@ constString GZFileWrapper::getToken(int size) {
   // last_pos apuntara al fina de la ejecucion al primer caracter
   // delimitador encontrado
   int last_pos = buffer_pos;
-  do {
+  while(last_pos - buffer_pos + 1 < size) {
     ++last_pos;
     // si llegamos al final del buffer
     if (last_pos >= buffer_len) {
@@ -221,7 +221,7 @@ constString GZFileWrapper::getToken(int size) {
     }
     // printf ("buffer[%d] = %c -- buffer[%d] = %c\n", buffer_pos, buffer[buffer_pos],
     // last_pos, buffer[last_pos]);
-  } while(last_pos - buffer_pos + 1 < size);
+  }
   // en este momento last_pos apunta al primer caracter delimitador,
   // o al ultimo caracter del buffer
   // printf ("%d %d %d\n", buffer_pos, last_pos, buffer_len);
@@ -229,6 +229,7 @@ constString GZFileWrapper::getToken(int size) {
   size_t len   = last_pos - buffer_pos + 1;
   total_bytes += len;
   buffer_pos   = last_pos + 1;
+  ++last_pos;
   return constString(returned_buffer, len);
 }
 
