@@ -6,7 +6,9 @@ document:
 test-macosx:
 	lua build_debug_macosx.lua test
 
-test-mkl:
+test: test-mkl
+
+test-mkl: debug-mkl
 	lua build_mkl_debug.lua test
 
 #test:
