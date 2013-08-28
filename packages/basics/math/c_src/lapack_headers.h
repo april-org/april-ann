@@ -39,11 +39,16 @@ extern "C" {
 /*****************************************************************************/
 #endif
 
-#if defined(USE_MKL) || defined(USE_XCODE)
+#if defined(USE_MKL)
 int clapack_sgetrf(const int Order, const int M, const int N,
                    float *A, const int lda, int *ipiv);
 int clapack_sgetri(const int Order, const int N,
                    float *A, const int lda, int *ipiv);
+#elif defined(USE_XCODE)
+int clapack_sgetrf(int Order, int M, int N,
+                   float *A, int lda, int *ipiv);
+int clapack_sgetri(int Order, int N,
+                   float *A, int lda, int *ipiv);
 #endif
 
 void checkLapackInfo(int info);

@@ -1,4 +1,4 @@
- /*
+/*
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
@@ -21,7 +21,7 @@
 #include "lapack_headers.h"
 #include "error_print.h"
 
-#if defined(USE_MKL) || defined(USE_XCODE)
+#if defined(USE_MKL)
 #include "cblas_headers.h"
 int clapack_sgetrf(const int Order, const int M, const int N,
                    float *A, const int lda, int *ipiv) {
@@ -33,6 +33,27 @@ int clapack_sgetrf(const int Order, const int M, const int N,
 }
 int clapack_sgetri(const int Order, const int N,
                    float *A, const int lda, int *ipiv) {
+  if (Order != CblasColMajor)
+    ERROR_EXIT(256, "Only col_major order is allowed\n");
+  int INFO;
+  int LWORK = N*N;
+  float *WORK = new float[LWORK];
+  sgetri_(&N,A,&lda,ipiv,WORK,&LWORK,&INFO);
+  delete[] WORK;
+  return INFO;
+}
+#elif defined(USE_XCODE)
+#include "cblas_headers.h"
+int clapack_sgetrf(int Order, int M, int N,
+                   float *A, int lda, int *ipiv) {
+  if (Order != CblasColMajor)
+    ERROR_EXIT(256, "Only col_major order is allowed\n");
+  int INFO;
+  sgetrf_(&M,&N,A,&lda,ipiv,&INFO);
+  return INFO;
+}
+int clapack_sgetri(int Order, int N,
+                   float *A, int lda, int *ipiv) {
   if (Order != CblasColMajor)
     ERROR_EXIT(256, "Only col_major order is allowed\n");
   int INFO;
