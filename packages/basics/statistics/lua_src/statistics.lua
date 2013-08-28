@@ -77,7 +77,7 @@ function stats.mean_var:add(...)
   if type(v) == "table" then
     return self:add(ipairs(v))
   elseif type(v) == "function" then
-    for key,value in unpack(arg) do
+    for key,value in table.unpack(arg) do
       self:add(value or key)
     end
   elseif type(v) == "number" then

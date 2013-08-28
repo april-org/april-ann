@@ -78,7 +78,7 @@ function TarInternalFile:read(...)
       break
     end
   end
-  return unpack(t)
+  return table.unpack(t)
 end
 
 -----------------------------------------------------------------------------

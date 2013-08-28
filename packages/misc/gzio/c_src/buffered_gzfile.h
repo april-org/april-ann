@@ -23,16 +23,7 @@
 
 #include <zlib.h>
 #include <cstring>
-#include "referenced.h"
-#include "constString.h"
-extern "C" {
-#include "lauxlib.h"
-#include "lualib.h"
-#include "lua.h"
-}
-
-#include <cstdlib>
-#include "buffered_stream.h"
+#include "buffered_memory.h"
 
 class GZFileWrapper {
   gzFile f;
@@ -85,7 +76,7 @@ public:
   }
 };
 
-typedef BufferedStream<GZFileWrapper> BufferedGZFile;
+typedef BufferedMemory<GZFileWrapper> BufferedGZFile;
 
 #endif // BUFFERED_GZFILE_H
 

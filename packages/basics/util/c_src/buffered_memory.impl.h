@@ -23,96 +23,106 @@
 #include <cstdlib>
 #include <cstring>
 #include "error_print.h"
-#include "buffered_stream.h"
+#include "buffered_memory.h"
 
 #define DEFAULT_BUFFER_LEN 4096
 
-template<typename STREAM_TYPE>
-bool BufferedStream<STREAM_TYPE>::moveAndFillBuffer() {
-  // printf ("------------- MOVE ------------ %d %d\n", buffer_pos, buffer_len);
+template<typename MEMORY_TYPE>
+bool BufferedMemory<MEMORY_TYPE>::moveAndFillBuffer() {
+  // move to the left the remaining data
   int diff = buffer_len - buffer_pos;
   for (int i=0; i<diff; ++i) buffer[i] = buffer[buffer_pos + i];
-  if (!stream.eofS())
-    buffer_len = stream.readS(buffer + diff, sizeof(char), buffer_pos) + diff;
+  if (!memory.eofS())
+    // fill the right part with read data
+    buffer_len = memory.readS(buffer + diff, sizeof(char), buffer_pos) + diff;
   else buffer_len = 0;
   buffer_pos = 0;
+  // returns false if the buffer is empty, true otherwise
   return buffer_len != 0;
 }
 
-template<typename STREAM_TYPE>
-bool BufferedStream<STREAM_TYPE>::resizeAndFillBuffer() {
-  // printf ("------------- RESIZE ------------\n");
-  if (stream.eofS()) return false;
+template<typename MEMORY_TYPE>
+bool BufferedMemory<MEMORY_TYPE>::resizeAndFillBuffer() {
+  // returns false if EOF
+  if (memory.eofS()) return false;
   unsigned int old_max_len = max_buffer_len;
-  max_buffer_len *= 2;
+  max_buffer_len <<= 1;
   char *new_buffer = new char[max_buffer_len + 1];
+  // copies the data to the new buffer
   memcpy(new_buffer, buffer, old_max_len);
-  buffer_len += stream.readS(new_buffer + buffer_len,
+  // fills the right part with read data
+  buffer_len += memory.readS(new_buffer + buffer_len,
 			     sizeof(char), (max_buffer_len - buffer_len));
   delete[] buffer;
   buffer = new_buffer;
+  // returns true if not EOF
   return true;
 }
 
-template<typename STREAM_TYPE>
-bool BufferedStream<STREAM_TYPE>::trim(const char *delim) {
+template<typename MEMORY_TYPE>
+bool BufferedMemory<MEMORY_TYPE>::trim(const char *delim) {
   while(strchr(delim, buffer[buffer_pos])) {
     ++buffer_pos;
+    // returns false if EOF
     if (buffer_pos >= buffer_len && !moveAndFillBuffer()) return false;
   }
+  // returns true if not EOF
   return true;
 }
 
-template<typename STREAM_TYPE>
-BufferedStream<STREAM_TYPE>::BufferedStream(const char *path, const char *mode) : Referenced(){
+template<typename MEMORY_TYPE>
+BufferedMemory<MEMORY_TYPE>::BufferedMemory(const char *path, const char *mode) :
+  Referenced(), memory() {
   total_bytes    = 0;
   buffer         = new char[DEFAULT_BUFFER_LEN];
   max_buffer_len = DEFAULT_BUFFER_LEN;
   setBufferAsFull();
-  if (!stream.openS(path, mode))
+  if (!memory.openS(path, mode))
     ERROR_EXIT2(256, "Unable to open path %s with mode %s\n",
 		path, mode);
 }
 
-template<typename STREAM_TYPE>
-BufferedStream<STREAM_TYPE>::~BufferedStream() {
+template<typename MEMORY_TYPE>
+BufferedMemory<MEMORY_TYPE>::~BufferedMemory() {
   close();
 }
 
-template<typename STREAM_TYPE>
-void BufferedStream<STREAM_TYPE>::close() {
+template<typename MEMORY_TYPE>
+void BufferedMemory<MEMORY_TYPE>::close() {
   if (buffer != 0) {
     delete[] buffer;
     buffer = 0;
-    stream.closeS();
+    memory.closeS();
   }
 }
 
-template<typename STREAM_TYPE>
-void BufferedStream<STREAM_TYPE>::flush() {
-  stream.flushS();
+template<typename MEMORY_TYPE>
+void BufferedMemory<MEMORY_TYPE>::flush() {
+  memory.flushS();
 }
 
-template<typename STREAM_TYPE>
-int BufferedStream<STREAM_TYPE>::seek(int whence, int offset) {
+template<typename MEMORY_TYPE>
+int BufferedMemory<MEMORY_TYPE>::seek(int whence, int offset) {
   switch(whence) {
   case SEEK_SET:
+    // In this case, a position in the memory is indicated, so it is easy to
+    // throw away the buffer and move the memory cursor
     setBufferAsFull();
-    return stream.seekS(offset, whence);
+    return memory.seekS(offset, whence);
     break;
   case SEEK_CUR:
     if (offset > buffer_len - buffer_pos) {
       offset -= buffer_len - buffer_pos;
-      return stream.seekS(offset, whence);
+      return memory.seekS(offset, whence);
     }
     else {
       buffer_pos += offset;
-      return stream.seekS(0, SEEK_CUR) - buffer_len + buffer_pos;
+      return memory.seekS(0, SEEK_CUR) - buffer_len + buffer_pos;
     }
     break;
   case SEEK_END:
     setBufferAsFull();
-    return stream.seekS(offset, whence);
+    return memory.seekS(offset, whence);
     break;
   default:
     ERROR_EXIT1(256, "Incorrect whence value %d to seek method\n", whence);
@@ -120,8 +130,8 @@ int BufferedStream<STREAM_TYPE>::seek(int whence, int offset) {
   return 0;
 }
 
-template<typename STREAM_TYPE>
-int BufferedStream<STREAM_TYPE>::readAndPushNumberToLua(lua_State *L) {
+template<typename MEMORY_TYPE>
+int BufferedMemory<MEMORY_TYPE>::readAndPushNumberToLua(lua_State *L) {
   constString token = getToken(" ,;\t\n\r");
   if (token.empty()) return 0;
   double number;
@@ -131,8 +141,8 @@ int BufferedStream<STREAM_TYPE>::readAndPushNumberToLua(lua_State *L) {
   return 1;
 }
 
-template<typename STREAM_TYPE>
-int BufferedStream<STREAM_TYPE>::readAndPushStringToLua(lua_State *L, int size) {
+template<typename MEMORY_TYPE>
+int BufferedMemory<MEMORY_TYPE>::readAndPushStringToLua(lua_State *L, int size) {
   constString token = getToken(size);
   if (token.empty()) return 0;
   lua_pushlstring(L, (const char *)(token), token.len());
@@ -140,23 +150,23 @@ int BufferedStream<STREAM_TYPE>::readAndPushStringToLua(lua_State *L, int size) 
 }
 
 /*
-  int BufferedStream<STREAM_TYPE>::readAndPushCharToLua(lua_State *L) {
+  int BufferedMemory<MEMORY_TYPE>::readAndPushCharToLua(lua_State *L) {
   char ch = getChar();
   lua_pushlstring(L, &ch, 1);
   return 1;
   }
 */
 
-template<typename STREAM_TYPE>
-int BufferedStream<STREAM_TYPE>::readAndPushLineToLua(lua_State *L) {
+template<typename MEMORY_TYPE>
+int BufferedMemory<MEMORY_TYPE>::readAndPushLineToLua(lua_State *L) {
   constString line = extract_line();
   if (line.empty()) return 0;
   lua_pushlstring(L, (const char *)(line), line.len());
   return 1;
 }
 
-template<typename STREAM_TYPE>
-int BufferedStream<STREAM_TYPE>::readAndPushAllToLua(lua_State *L) {
+template<typename MEMORY_TYPE>
+int BufferedMemory<MEMORY_TYPE>::readAndPushAllToLua(lua_State *L) {
   constString line = getToken(1024);
   if (line.empty()) return 0;
   luaL_Buffer lua_buffer;
@@ -169,7 +179,7 @@ int BufferedStream<STREAM_TYPE>::readAndPushAllToLua(lua_State *L) {
 }
 
 /*
-  char BufferedStream<STREAM_TYPE>::getChar() {
+  char BufferedMemory<MEMORY_TYPE>::getChar() {
   if (buffer_len == 0) return EOF;
   // comprobamos que haya datos en el buffer
   if (buffer_pos >= buffer_len && !moveAndFillBuffer()) return EOF;
@@ -180,8 +190,8 @@ int BufferedStream<STREAM_TYPE>::readAndPushAllToLua(lua_State *L) {
   }
 */
 
-template<typename STREAM_TYPE>
-constString BufferedStream<STREAM_TYPE>::getToken(int size) {
+template<typename MEMORY_TYPE>
+constString BufferedMemory<MEMORY_TYPE>::getToken(int size) {
   if (buffer_len == 0) return constString();
   // comprobamos que haya datos en el buffer
   if (buffer_pos >= buffer_len && !moveAndFillBuffer()) return constString();
@@ -215,8 +225,8 @@ constString BufferedStream<STREAM_TYPE>::getToken(int size) {
   return constString(returned_buffer, len);
 }
 
-template<typename STREAM_TYPE>
-constString BufferedStream<STREAM_TYPE>::getToken(const char *delim) {
+template<typename MEMORY_TYPE>
+constString BufferedMemory<MEMORY_TYPE>::getToken(const char *delim) {
   if (buffer_len == 0) return constString();
   // comprobamos que haya datos en el buffer
   if (buffer_pos >= buffer_len && !moveAndFillBuffer()) return constString();
@@ -252,13 +262,13 @@ constString BufferedStream<STREAM_TYPE>::getToken(const char *delim) {
   return constString(returned_buffer);
 }
 
-template<typename STREAM_TYPE>
-constString BufferedStream<STREAM_TYPE>::extract_line() {
+template<typename MEMORY_TYPE>
+constString BufferedMemory<MEMORY_TYPE>::extract_line() {
   return getToken("\n\r");
 }
 
-template<typename STREAM_TYPE>
-constString BufferedStream<STREAM_TYPE>::extract_u_line() {
+template<typename MEMORY_TYPE>
+constString BufferedMemory<MEMORY_TYPE>::extract_u_line() {
   constString aux;
   do {
     aux = getToken("\r\n");
@@ -266,10 +276,10 @@ constString BufferedStream<STREAM_TYPE>::extract_u_line() {
   return aux;
 }
 
-template<typename STREAM_TYPE>
-void BufferedStream<STREAM_TYPE>::printf(const char *format, ...) {
+template<typename MEMORY_TYPE>
+void BufferedMemory<MEMORY_TYPE>::printf(const char *format, ...) {
   va_list ap;
   va_start(ap, format);
-  stream.printfS(format, ap);
+  memory.printfS(format, ap);
   va_end(ap);
 }

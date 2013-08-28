@@ -91,6 +91,7 @@ struct CharBinaryCoder {
 
 void writeMatrixCharToFile(MatrixChar *mat, const char *filename);
 char *writeMatrixCharToString(MatrixChar *mat, int &len);
+void writeMatrixCharToLuaString(MatrixChar *mat, lua_State *L, bool is_ascii);
 MatrixChar *readMatrixCharFromFile(const char *filename);
 MatrixChar *readMatrixCharFromString(constString &cs);
 

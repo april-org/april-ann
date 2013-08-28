@@ -83,9 +83,9 @@ function interest_points.pointClassifier:__call(alto, ancho, minialto, miniancho
     local lenr_alto  = #r_alto
     local tlc = {} -- tabla linear combination
     for i=1,lenr_alto do
-        local y1,y,pesoy = unpack(r_alto[i])
+        local y1,y,pesoy = table.unpack(r_alto[i])
         for j=1,lenr_ancho do
-            local x1,x,pesox = unpack(r_ancho[j])
+            local x1,x,pesox = table.unpack(r_ancho[j])
             local minipos = (y-1)*miniancho+x -- la posicion x,y en la matriz resultante
             if tlc[minipos] == nil then tlc[minipos] = {} end
             local pos = (y1-1)*ancho+x1
@@ -138,7 +138,7 @@ end
 -- Given a point an mlp, return the output of the net with that point (window)
 -----------------------------------------------------------------------------
 function interest_points.pointClassifier:compute_point(img, point, mlp)
-    local x, y = unpack(point)
+    local x, y = table.unpack(point)
     local data = self:crop_image(img,x,y)
     local salida = mlp:calculate(data)
     return salida 
@@ -193,7 +193,7 @@ function interest_points.sort_by_class(table_points, classes)
     end
     
     for _, point in ipairs(table_points) do
-       x, y, c = unpack(point)
+       x, y, c = table.unpack(point)
        table.insert(res[c], {x,y}) 
     end
 

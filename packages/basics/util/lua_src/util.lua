@@ -615,7 +615,7 @@ function get_table_fields_ipairs(...)
   return function(t)
     local ret = {}
     for i,v in ipairs(t) do
-      table.insert(ret, get_table_fields(unpack(arg), v))
+      table.insert(ret, get_table_fields(table.unpack(arg), v))
     end
     return ret
 	 end
@@ -624,7 +624,7 @@ end
 function get_table_fields_recursive(...)
   local arg = { ... }
   return function(t)
-    return get_table_fields(unpack(arg), t)
+    return get_table_fields(table.unpack(arg), t)
   end
 end
 

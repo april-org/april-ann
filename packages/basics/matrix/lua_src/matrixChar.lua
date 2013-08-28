@@ -8,7 +8,7 @@ matrixChar.meta_instance.__tostring = function(self)
   for i=1,self:size() do
     table.insert(out, string.format("[%s] = %s",
 				    table.concat(coords, ","),
-				    self:get(unpack(coords))))
+				    self:get(table.unpack(coords))))
     local j=#dims+1
     repeat
       j=j-1

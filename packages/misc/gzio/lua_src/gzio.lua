@@ -15,9 +15,9 @@ io.lines = function(name, ...)
     local arg = { ... }
     local f = gzio.open(name)
     return function()
-      local values = { f:read(unpack(arg)) }
+      local values = { f:read(table.unpack(arg)) }
       if #values == 0 or values[1] == nil then f:close() return nil end
-      return unpack(values)
+      return table.unpack(values)
     end
   else return io_old_lines(name, ...) end
 end
@@ -25,9 +25,9 @@ end
 local function gzio_lines(self, ...)
   local arg = { ... }
   return function()
-    local values = { self:read(unpack(arg)) }
+    local values = { self:read(table.unpack(arg)) }
     if values[1] == nil then return nil end
-    return unpack(values)
+    return table.unpack(values)
   end
 end
 cpp_class_binding_extension(gzio,

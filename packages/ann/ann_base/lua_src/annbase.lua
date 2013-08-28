@@ -145,9 +145,9 @@ function ann.mlp.all_all.generate(topology, first_count, names_prefix)
 	    local t = arg[1]
 	    if t == obj then
 	      table.remove(arg, 1)
-	      return obj.thenet[i](obj.thenet, unpack(arg))
+	      return obj.thenet[i](obj.thenet, table.unpack(arg))
 	    else
-	      return obj.thenet[i](unpack(arg))
+	      return obj.thenet[i](table.unpack(arg))
 	    end
 	  end
       end
