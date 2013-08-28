@@ -4,6 +4,7 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- MacOS compilation problems solved.
 - Matrix fromString and toString Lua methods have been improved to write/read
   directly from Lua string buffer, so the memory print has been reduced.
 - The C++ routines to write and read files is generalized to work with streams,
