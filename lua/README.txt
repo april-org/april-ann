@@ -1,3 +1,14 @@
+2013/08/28: Modified Lua makefile, added this:
+
+UNAME = `uname`
+PLAT= DetectOs
+DetectOs:
+	-@make $(UNAME)
+Linux: linux
+Darwin: macosx
+
+
+
 2013/06/08: Lua 5.2.2 update
 
 - Changes of Lua 5.2.2

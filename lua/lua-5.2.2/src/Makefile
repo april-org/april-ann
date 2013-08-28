@@ -51,6 +51,10 @@ ALL_A= $(LUA_A)
 DetectOs:
 	-@make $(UNAME)
 
+Linux: linux
+
+Darwin: macosx
+
 default: $(PLAT)
 
 all:	$(ALL_T)
@@ -106,12 +110,8 @@ freebsd:
 
 generic: $(ALL)
 
-Linux: linux
-
 linux:
-	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_DLOPEN -DLUA_USE_LINUX" SYSLIBS="-Wl,-E -ldl -lreadline"
-
-Darwin: macosx
+	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_LINUX" SYSLIBS="-Wl,-E -ldl -lreadline"
 
 macosx:
 	$(MAKE) $(ALL) SYSCFLAGS="-DLUA_USE_MACOSX" SYSLIBS="-ldl -lreadline"
