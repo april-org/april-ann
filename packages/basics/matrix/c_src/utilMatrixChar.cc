@@ -25,6 +25,7 @@
 #include "matrixFloat.h"
 #include "buffered_gzfile.h"
 #include "buffered_file.h"
+#include "ignore_result.h"
 #include <cmath>
 #include <cstdio>
 
@@ -56,6 +57,19 @@ char *writeMatrixCharToString(MatrixChar *mat,
 			    CharBinaryCoder<WriteBufferWrapper>(),
 			    true);
   return wrapper.getBufferProperty();
+}
+
+void writeMatrixCharToLuaString(MatrixChar *mat,
+				lua_State *L,
+				bool is_ascii) {
+  WriteLuaBufferWrapper wrapper(L);
+  IGNORE_RESULT(writeMatrixToStream(mat, wrapper,
+				    CharAsciiSizer(),
+				    CharBinarySizer(),
+				    CharAsciiCoder<WriteLuaBufferWrapper>(),
+				    CharBinaryCoder<WriteLuaBufferWrapper>(),
+				    is_ascii));
+  wrapper.finish();
 }
 
 MatrixChar *readMatrixCharFromFile(const char *filename) {

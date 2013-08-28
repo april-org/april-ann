@@ -25,6 +25,7 @@
 #include "matrixFloat.h"
 #include "buffered_gzfile.h"
 #include "buffered_file.h"
+#include "ignore_result.h"
 #include <cmath>
 #include <cstdio>
 
@@ -60,26 +61,39 @@ char *writeMatrixComplexFToString(MatrixComplexF *mat,
   return wrapper.getBufferProperty();
 }
 
+void writeMatrixComplexFToLuaString(MatrixComplexF *mat,
+				    lua_State *L,
+				    bool is_ascii) {
+  WriteLuaBufferWrapper wrapper(L);
+  IGNORE_RESULT(writeMatrixToStream(mat, wrapper,
+				    ComplexFAsciiSizer(),
+				    ComplexFBinarySizer(),
+				    ComplexFAsciiCoder<WriteLuaBufferWrapper>(),
+				    ComplexFBinaryCoder<WriteLuaBufferWrapper>(),
+				    is_ascii));
+  wrapper.finish();
+}
+
 MatrixComplexF *readMatrixComplexFFromFile(const char *filename) {
   if (GZFileWrapper::isGZ(filename)) {
     BufferedGZFile f(filename, "r");
     return readMatrixFromStream<BufferedGZFile,
-				ComplexF>(f, ComplexFAsciiExtractor(),
-					  ComplexFBinaryExtractor());
+      ComplexF>(f, ComplexFAsciiExtractor(),
+		ComplexFBinaryExtractor());
   }
   else {
     BufferedFile f(filename, "r");
     return readMatrixFromStream<BufferedFile,
-				ComplexF>(f, ComplexFAsciiExtractor(),
-					  ComplexFBinaryExtractor());
+      ComplexF>(f, ComplexFAsciiExtractor(),
+		ComplexFBinaryExtractor());
   }
 }
 
 MatrixComplexF *readMatrixComplexFFromString(constString &cs) {
   return readMatrixFromStream<constString,
-			      ComplexF>(cs,
-					ComplexFAsciiExtractor(),
-					ComplexFBinaryExtractor());
+    ComplexF>(cs,
+	      ComplexFAsciiExtractor(),
+	      ComplexFBinaryExtractor());
 }
 
 MatrixFloat *convertFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {

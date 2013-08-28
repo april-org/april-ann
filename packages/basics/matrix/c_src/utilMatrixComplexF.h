@@ -101,6 +101,7 @@ struct ComplexFBinaryCoder {
 void writeMatrixComplexFToFile(MatrixComplexF *mat, const char *filename,
 			       bool is_ascii);
 char *writeMatrixComplexFToString(MatrixComplexF *mat, bool is_ascii, int &len);
+void writeMatrixComplexFToLuaString(MatrixComplexF *mat, lua_State *L, bool is_ascii);
 MatrixComplexF *readMatrixComplexFFromFile(const char *filename);
 MatrixComplexF *readMatrixComplexFFromString(constString &cs);
 

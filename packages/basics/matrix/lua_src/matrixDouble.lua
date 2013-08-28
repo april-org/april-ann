@@ -11,7 +11,7 @@ matrixDouble.meta_instance.__tostring = function(self)
 		   string.format("\n# pos [%s]",
 				 table.concat(coords, ",")))
     end
-    table.insert(row, string.format("% -11.6g", self:get(unpack(coords))))
+    table.insert(row, string.format("% -11.6g", self:get(table.unpack(coords))))
     local j=#dims+1
     repeat
       j=j-1

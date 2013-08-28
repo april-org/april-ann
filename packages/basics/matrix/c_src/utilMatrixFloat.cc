@@ -24,6 +24,7 @@
 #include "buffered_gzfile.h"
 #include "buffered_file.h"
 #include "clamp.h"
+#include "ignore_result.h"
 #include <cmath>
 #include <cstdio>
 
@@ -243,6 +244,19 @@ char *writeMatrixFloatToString(MatrixFloat *mat,
 			    FloatBinaryCoder<WriteBufferWrapper>(),
 			    is_ascii);
   return wrapper.getBufferProperty();
+}
+
+void writeMatrixFloatToLuaString(MatrixFloat *mat,
+				 lua_State *L,
+				 bool is_ascii) {
+  WriteLuaBufferWrapper wrapper(L);
+  IGNORE_RESULT(writeMatrixToStream(mat, wrapper,
+				    FloatAsciiSizer(),
+				    FloatBinarySizer(),
+				    FloatAsciiCoder<WriteLuaBufferWrapper>(),
+				    FloatBinaryCoder<WriteLuaBufferWrapper>(),
+				    is_ascii));
+  wrapper.finish();
 }
 
 MatrixFloat *readMatrixFloatFromFile(const char *filename) {

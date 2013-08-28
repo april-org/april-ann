@@ -13,7 +13,7 @@ matrixComplex.meta_instance.__tostring = function(self)
 				 table.concat(coords, ",")))
     end
     table.insert(row, string.format("%12s",
-				    tostring(self:get(unpack(coords)))))
+				    tostring(self:get(table.unpack(coords)))))
     local j=#dims+1
     repeat
       j=j-1

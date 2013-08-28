@@ -20,4 +20,4 @@
  */
 #include "buffered_gzfile.h"
 
-template class BufferedStream<GZFileWrapper>;
+template class BufferedMemory<GZFileWrapper>;

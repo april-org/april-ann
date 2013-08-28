@@ -94,6 +94,7 @@ struct DoubleBinaryCoder {
 void writeMatrixDoubleToFile(MatrixDouble *mat, const char *filename,
 			     bool is_ascii);
 char *writeMatrixDoubleToString(MatrixDouble *mat, bool is_ascii, int &len);
+void writeMatrixDoubleToLuaString(MatrixDouble *mat, lua_State *L, bool is_ascii);
 MatrixDouble *readMatrixDoubleFromFile(const char *filename);
 MatrixDouble *readMatrixDoubleFromString(constString &cs);
 

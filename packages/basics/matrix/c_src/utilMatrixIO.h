@@ -24,6 +24,11 @@
 #include "constString.h"
 #include "binarizer.h"
 #include "error_print.h"
+extern "C" {
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+}
 #include <cmath>
 #include <cstdio>
 
@@ -47,6 +52,36 @@ public:
   char *getBufferProperty() { char *aux = buffer; buffer = 0; return aux; }
 };
 
+class WriteLuaBufferWrapper {
+  lua_State *L;
+  luaL_Buffer lua_buffer;
+  char *buffer_ptr;
+  int total_bytes;
+public:
+  WriteLuaBufferWrapper(lua_State *L) : L(L), buffer_ptr(0), total_bytes(0) {
+    luaL_buffinit(L, &lua_buffer);
+  }
+  ~WriteLuaBufferWrapper() { }
+  void printf(const char *format, ...) {
+    april_assert(buffer_ptr != 0);
+    va_list args;
+    va_start(args, format);
+    int len = vsprintf(buffer_ptr, format, args);
+    if (len < 0) ERROR_EXIT(256, "Problem creating auxiliary buffer\n");
+    va_end(args);
+    total_bytes += len;
+    buffer_ptr  += len;
+  }
+  void setExpectedSize(int sz) {
+    buffer_ptr = luaL_prepbuffsize(&lua_buffer, sz);
+    if (buffer_ptr == 0) ERROR_EXIT(256, "Impossible to get the buffer\n");
+  }
+  int getTotalBytes() const { return total_bytes; }
+  void finish() {
+    luaL_addsize(&lua_buffer, total_bytes);
+    luaL_pushresult(&lua_buffer);
+  }
+};
 
 /*** The ASCII or BINARY extractor are like this functor struct:
 struct DummyAsciiExtractor {

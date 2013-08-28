@@ -20,4 +20,4 @@
  */
 #include "buffered_file.h"
 
-template class BufferedStream<FileWrapper>;
+template class BufferedMemory<FileWrapper>;

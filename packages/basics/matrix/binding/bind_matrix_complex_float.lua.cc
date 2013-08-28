@@ -357,11 +357,8 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
   constString cs;
   LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("ascii"));
   bool is_ascii = (cs == "ascii");
-  int len;
-  char *buffer = writeMatrixComplexFToString(obj, is_ascii, len);
-  lua_pushlstring(L,buffer,len);
-  LUABIND_RETURN_FROM_STACK(-1);
-  delete[] buffer;
+  writeMatrixComplexFToLuaString(obj, L, is_ascii);
+  LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
 

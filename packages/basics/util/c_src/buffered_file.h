@@ -22,7 +22,7 @@
 #define BUFFERED_FILE_H
 
 #include <cstdlib>
-#include "buffered_stream.h"
+#include "buffered_memory.h"
 
 class FileWrapper {
   FILE *f;
@@ -59,6 +59,6 @@ public:
   }
 };
 
-typedef BufferedStream<FileWrapper> BufferedFile;
+typedef BufferedMemory<FileWrapper> BufferedFile;
 
 #endif // BUFFERED_FILE_H
