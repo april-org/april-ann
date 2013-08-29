@@ -4,6 +4,7 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added max and min methods over a given dimension for `matrix`.
 - MacOS compilation problems solved.
 - Matrix fromString and toString Lua methods have been improved to write/read
   directly from Lua string buffer, so the memory print has been reduced.
