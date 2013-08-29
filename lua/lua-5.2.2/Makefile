@@ -4,7 +4,8 @@
 # == CHANGE THE SETTINGS BELOW TO SUIT YOUR ENVIRONMENT =======================
 
 # Your platform. See PLATS for possible values.
-PLAT= posix
+UNAME = `uname`
+PLAT= DetectOS
 
 # Where to install. The installation starts in the src and doc directories,
 # so take care if INSTALL_TOP is not an absolute path. See the local target.
@@ -36,7 +37,7 @@ RM= rm -f
 # == END OF USER SETTINGS -- NO NEED TO CHANGE ANYTHING BELOW THIS LINE =======
 
 # Convenience platforms targets.
-PLATS= aix ansi bsd freebsd generic linux macosx mingw posix solaris
+PLATS= DetectOS Darwin Linux aix ansi bsd freebsd generic linux macosx mingw posix solaris
 
 # What to install.
 TO_BIN= lua luac
