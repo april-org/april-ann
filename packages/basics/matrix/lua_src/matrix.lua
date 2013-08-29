@@ -312,8 +312,11 @@ april_set_doc("matrix.sum",
 	      {
 		class="method",
 		summary="Computes the sum of all the elements over the given dimension.",
-		params={"A number, the dimension"},
-		outputs={"A matrix"},
+		params={
+		  "A number, the dimension",
+		  "A matrix where to store the result [optional]",
+		},
+		outputs={"A matrix with the result"},
 	      })
 
 april_set_doc("matrix.set", {
@@ -544,11 +547,33 @@ april_set_doc("matrix.min", {
 		  "A number",
 		}, })
 
+april_set_doc("matrix.min", {
+		class = "method",
+		summary = "Returns a matrix with minimum values over given dimension.",
+		params = {
+		  "A number with the dimension",
+		  "A matrix where to store the result [optional]",
+		},
+		outputs = {
+		  "A matrix with the result",
+		}, })
+
 april_set_doc("matrix.max", {
 		class = "method",
 		summary = "Returns the maximum value contained at the matrix.",
 		outputs = {
 		  "A number",
+		}, })
+
+april_set_doc("matrix.max", {
+		class = "method",
+		summary = "Returns a matrix with maximum values over given dimension.",
+		params = {
+		  "A number with the dimension",
+		  "A matrix where to store the result [optional]",
+		},
+		outputs = {
+		  "A matrix with the result",
 		}, })
 
 april_set_doc("matrix.clamp", {

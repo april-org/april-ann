@@ -837,17 +837,47 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 
 //BIND_METHOD MatrixFloat min
   {
-    int arg_min, raw_pos;
-    LUABIND_RETURN(float, obj->min(arg_min, raw_pos));
-    LUABIND_RETURN(int, arg_min+1);
+    LUABIND_CHECK_ARGN(>=,0);
+    LUABIND_CHECK_ARGN(<=,2);
+    int argn = lua_gettop(L);
+    if (argn > 0) {
+      int dim;
+      MatrixFloat *dest;
+      LUABIND_GET_PARAMETER(1, int, dim);
+      LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
+      if (dim < 1 || dim > obj->getNumDim())
+	LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
+			dim, obj->getNumDim());
+      LUABIND_RETURN(MatrixFloat, obj->min(dim-1, dest));
+    }
+    else {
+      int arg_min, raw_pos;
+      LUABIND_RETURN(float, obj->min(arg_min, raw_pos));
+      LUABIND_RETURN(int, arg_min+1);
+    }
   }
 //BIND_END
 
 //BIND_METHOD MatrixFloat max
   {
-    int arg_max, raw_pos;
-    LUABIND_RETURN(float, obj->max(arg_max, raw_pos));
-    LUABIND_RETURN(int, arg_max+1);
+    LUABIND_CHECK_ARGN(>=,0);
+    LUABIND_CHECK_ARGN(<=,2);
+    int argn = lua_gettop(L);
+    if (argn > 0) {
+      int dim;
+      MatrixFloat *dest;
+      LUABIND_GET_PARAMETER(1, int, dim);
+      LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
+      if (dim < 1 || dim > obj->getNumDim())
+	LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
+			dim, obj->getNumDim());
+      LUABIND_RETURN(MatrixFloat, obj->max(dim-1, dest));
+    }
+    else {
+      int arg_max, raw_pos;
+      LUABIND_RETURN(float, obj->max(arg_max, raw_pos));
+      LUABIND_RETURN(int, arg_max+1);
+    }
   }
 //BIND_END
 
@@ -1012,15 +1042,21 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 
 //BIND_METHOD MatrixFloat sum
 {
+  LUABIND_CHECK_ARGN(>=, 0);
+  LUABIND_CHECK_ARGN(<=, 2);
   int argn = lua_gettop(L); // number of arguments
-  if (argn == 1) {
+  if (argn >= 1) {
     int dim;
+    MatrixFloat *dest;
     LUABIND_GET_PARAMETER(1, int, dim);
-    MatrixFloat *result = obj->sum(dim-1);
+    LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
+    if (dim < 1 || dim > obj->getNumDim())
+      LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
+		      dim, obj->getNumDim());
+    MatrixFloat *result = obj->sum(dim-1, dest);
     LUABIND_RETURN(MatrixFloat, result);
   }
-  else if (argn == 0) LUABIND_RETURN(float, obj->sum());
-  else LUABIND_ERROR("Incorrect number of arguments");
+  else LUABIND_RETURN(float, obj->sum());
 }
 //BIND_END
 
