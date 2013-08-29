@@ -136,6 +136,9 @@ public:
   /// Writes a set of values following the given format. Equals to C printf.
   void printf(const char *format, ...);
   
+  /// Writes a buffer of chars, given its length, similar to fwrite
+  void write(const void *buffer, size_t len);
+  
   /// Some objects needs to know the expected size before begin to write things,
   /// so this method is where this size is given.
   void setExpectedSize(int sz) const { }
