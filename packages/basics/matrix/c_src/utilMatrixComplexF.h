@@ -85,12 +85,10 @@ template<typename StreamType>
 struct ComplexFBinaryCoder {
   // puts to the stream the given value
   void operator()(const ComplexF &value, StreamType &stream) {
-    char b1[5],b2[5];
-    binarizer::code_float(value.real(), b1);
-    binarizer::code_float(value.img(),  b2);
-    stream.printf("%c%c%c%c%c%c%c%c%c%c",
-		  b1[0],b1[1],b1[2],b1[3],b1[4],
-		  b2[0],b2[1],b2[2],b2[3],b2[4]);
+    char b[10];
+    binarizer::code_float(value.real(), b);
+    binarizer::code_float(value.img(),  b+5);
+    stream.write(b, sizeof(char)*10);
   }
 };
 

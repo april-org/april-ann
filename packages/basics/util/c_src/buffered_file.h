@@ -42,7 +42,7 @@ public:
   size_t readS(void *ptr, size_t size, size_t nmemb) {
     return fread(ptr, size, nmemb, f);
   }
-  size_t writeS(void *ptr, size_t size, size_t nmemb) {
+  size_t writeS(const void *ptr, size_t size, size_t nmemb) {
     return fwrite(ptr, size, nmemb, f);
   }
   int seekS(long offset, int whence) {

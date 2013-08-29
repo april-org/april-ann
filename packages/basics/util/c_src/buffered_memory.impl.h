@@ -280,6 +280,11 @@ template<typename MEMORY_TYPE>
 void BufferedMemory<MEMORY_TYPE>::printf(const char *format, ...) {
   va_list ap;
   va_start(ap, format);
-  memory.printfS(format, ap);
+  total_bytes += memory.printfS(format, ap);
   va_end(ap);
+}
+
+template<typename MEMORY_TYPE>
+void BufferedMemory<MEMORY_TYPE>::write(const void *buffer, size_t len) {
+  total_bytes += memory.writeS(buffer, sizeof(char), len);
 }

@@ -236,7 +236,7 @@ bool constString::extract_double_binary(double *resul) {
       buffer[4] == 0 || buffer[5] == 0 || buffer[6] == 0 ||
       buffer[7] == 0 || buffer[8] == 0 || buffer[9] == 0) 
     return false;
-  *resul = binarizer::decode_float(buffer);
+  *resul = binarizer::decode_double(buffer);
   skip(10);
   return true;  
 }

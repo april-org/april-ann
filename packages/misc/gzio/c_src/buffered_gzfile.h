@@ -50,7 +50,7 @@ public:
   size_t readS(void *ptr, size_t size, size_t nmemb) {
     return gzread(f, ptr, size*nmemb);
   }
-  size_t writeS(void *ptr, size_t size, size_t nmemb) {
+  size_t writeS(const void *ptr, size_t size, size_t nmemb) {
     return gzwrite(f, ptr, size*nmemb);
   }
   int seekS(long offset, int whence) {

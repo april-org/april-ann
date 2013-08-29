@@ -82,8 +82,7 @@ struct DoubleBinaryCoder {
   void operator()(const double &value, StreamType &stream) {
     char b[10];
     binarizer::code_double(value, b);
-    stream.printf("%c%c%c%c%c%c%c%c%c%c",
-		  b[0],b[1],b[2],b[3],b[4],b[5],b[6],b[7],b[8],b[9]);
+    stream.write(b, sizeof(char)*10);
   }
 };
 
