@@ -30,6 +30,7 @@
 #include <omp.h>
 #endif
 #include "omp_utils.h"
+#include "binarizer.h"
 
 // copy paste de lualib.c
 FILE **newfile (lua_State *L) {
@@ -56,6 +57,12 @@ FILE **newfile (lua_State *L) {
 
 using namespace april_utils;
 
+//BIND_END
+
+//BIND_STATIC_CONSTRUCTOR utils_static_constructor
+{
+  binarizer::init();
+}
 //BIND_END
 
 //BIND_FUNCTION util.version

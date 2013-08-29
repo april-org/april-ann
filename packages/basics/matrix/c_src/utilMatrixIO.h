@@ -44,6 +44,10 @@ public:
     pos += vsprintf(pos, format, args);
     va_end(args);
   }
+  void write(const char *ptr, size_t len) {
+    memcpy(pos, ptr, len);
+    pos += len;
+  }
   void setExpectedSize(int sz) {
     buffer = new char[sz];
     pos = buffer;
@@ -69,6 +73,11 @@ public:
     int len = vsprintf(buffer_ptr, format, args);
     if (len < 0) ERROR_EXIT(256, "Problem creating auxiliary buffer\n");
     va_end(args);
+    total_bytes += len;
+    buffer_ptr  += len;
+  }
+  void write(const char *ptr, size_t len) {
+    memcpy(buffer_ptr, ptr, len);
     total_bytes += len;
     buffer_ptr  += len;
   }
