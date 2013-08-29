@@ -4,6 +4,7 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Solved bug at constString when extracting double numbers in binary format.
 - Added max and min methods over a given dimension for `matrix`.
 - MacOS compilation problems solved.
 - Matrix fromString and toString Lua methods have been improved to write/read
