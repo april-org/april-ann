@@ -5,7 +5,7 @@
 
 # Your platform. See PLATS for possible values.
 UNAME = `uname`
-PLAT= DetectOs
+PLAT= DetectOS
 
 CC= gcc
 CFLAGS= -O2 -Wall -DLUA_COMPAT_ALL $(SYSCFLAGS) $(MYCFLAGS)
@@ -27,7 +27,7 @@ MYOBJS=
 
 # == END OF USER SETTINGS -- NO NEED TO CHANGE ANYTHING BELOW THIS LINE =======
 
-PLATS= aix ansi bsd freebsd generic linux macosx mingw posix solaris
+PLATS= DetectOS Darwin Linux aix ansi bsd freebsd generic linux macosx mingw posix solaris
 
 LUA_A=	liblua.a
 CORE_O=	lapi.o lcode.o lctype.o ldebug.o ldo.o ldump.o lfunc.o lgc.o llex.o \
@@ -48,7 +48,7 @@ ALL_T= $(LUA_A) $(LUA_T) $(LUAC_T)
 ALL_A= $(LUA_A)
 
 # Targets start here.
-DetectOs:
+DetectOS:
 	-@make $(UNAME)
 
 Linux: linux
