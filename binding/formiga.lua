@@ -300,8 +300,8 @@ end
 
 -- obtains the timestamp of a given directory
 function formiga.os.get_directory_timestamp(path)
-  local f=io.popen("find " .. path .. " -printf '%h/%f %T@\n' 2>/dev/null | " ..
-		     "grep  -v '.*/\\..*' | " ..
+  local f=io.popen("find " .. path .. " -type f -printf '%h/%f %T@\n' 2>/dev/null | " ..
+		     "grep  -v '.*/\\..*' | grep -v 'gmon.out' | " ..
                      "cut -d' ' -f2 | sort -n | tail -n 1")
   local timestamp=tonumber(f:read("*l"))
   f:close()
