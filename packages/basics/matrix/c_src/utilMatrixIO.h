@@ -31,7 +31,7 @@ extern "C" {
 }
 #include <cmath>
 #include <cstdio>
-
+#include <cstring>
 class WriteBufferWrapper {
   char *buffer;
   char *pos;
