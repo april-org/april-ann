@@ -987,7 +987,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 
 //////////////////////////////////////////
 
-//BIND_LUACLASSNAME StepDataSet dataset.step
+//BIND_LUACLASSNAME StepDataSetFloat dataset.step
 //BIND_CPP_CLASS    StepDataSetFloat
 //BIND_SUBCLASS_OF  StepDataSetFloat DataSetFloat
 

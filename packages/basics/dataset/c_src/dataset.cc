@@ -918,6 +918,7 @@ int SaltPepperNoiseDataSet<T>::putPattern(int index, const T *pat) {
 
 template <typename T>
 StepDataSet<T>::StepDataSet(DataSet<T> *ds, int step):ds(ds), step(step){
+  IncRef(ds);
 }
 
 template<typename T>
@@ -927,15 +928,14 @@ StepDataSet<T>::~StepDataSet() {
 template<typename T> int StepDataSet<T>::getPattern(int index, T *pat) {
 
   // The original position in the dataset
-  int dst_index = (index * this->step)%this->ds->numPatterns();
+  int dst_index = (index * this->step);
   
   int ret = this->ds->getPattern(dst_index,pat);
   return ret;
 }
 
 template<typename T> int StepDataSet<T>::putPattern(int index, const T *pat) {
-  ERROR_PRINT("Method putPattern forbidden for StepDataset!!\n");
-  exit(1);
+  ERROR_EXIT(1, "Method putPattern forbidden for StepDataset!!\n");
   return 0;
 }
 //-------------------------------------------------------------
