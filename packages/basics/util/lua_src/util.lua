@@ -513,7 +513,7 @@ end
 
 function glob(...)
   local r = {}
-  for i,expr in ipairs(...) do
+  for i,expr in ipairs(table.pack(...)) do
     local f = io.popen("ls -d "..expr)
     for i in f:lines() do table.insert(r,i) end
     f:close()
@@ -544,7 +544,7 @@ function fprintf(file,...)
 end
 
 function range(...)
-  local arg = { ... }
+  local arg = table.pack(...)
   local inf,sup,step = arg[1],arg[2],arg[3] or 1
   local i = inf - step
   return function()
@@ -611,7 +611,7 @@ function get_table_fields(params, t)
 end
 
 function get_table_fields_ipairs(...)
-  local arg = { ... }
+  local arg = table.pack(...)
   return function(t)
     local ret = {}
     for i,v in ipairs(t) do
@@ -622,7 +622,7 @@ function get_table_fields_ipairs(...)
 end
 
 function get_table_fields_recursive(...)
-  local arg = { ... }
+  local arg = table.pack(...)
   return function(t)
     return get_table_fields(table.unpack(arg), t)
   end
