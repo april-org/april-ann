@@ -77,9 +77,11 @@ BufferedMemory<MEMORY_TYPE>::BufferedMemory(const char *path, const char *mode) 
   buffer         = new char[DEFAULT_BUFFER_LEN];
   max_buffer_len = DEFAULT_BUFFER_LEN;
   setBufferAsFull();
-  if (!memory.openS(path, mode))
-    ERROR_EXIT2(256, "Unable to open path %s with mode %s\n",
-		path, mode);
+  if (!memory.openS(path, mode)) {
+    ERROR_PRINT2("Unable to open path %s with mode %s\n", path, mode);
+    is_opened = false;
+  }
+  else is_opened = true;
 }
 
 template<typename MEMORY_TYPE>
