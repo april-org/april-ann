@@ -987,6 +987,28 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 
 //////////////////////////////////////////
 
+//BIND_LUACLASSNAME StepDataSet dataset.step
+//BIND_CPP_CLASS    StepDataSetFloat
+//BIND_SUBCLASS_OF  StepDataSetFloat DataSetFloat
+
+//BIND_CONSTRUCTOR StepDataSetFloat
+{
+  LUABIND_CHECK_ARGN(==, 2);
+  LUABIND_CHECK_PARAMETER(1, DataSetFloat);
+  LUABIND_CHECK_PARAMETER(2, int);
+
+  DataSetFloat *ds;
+  int step;
+
+  LUABIND_GET_PARAMETER(1, DataSetFloat, ds);
+  LUABIND_GET_PARAMETER(2, int, step);
+  DataSetFloat *obj = new StepDataSetFloat(ds, step);
+  LUABIND_RETURN(DataSetFloat,obj);
+}
+//BIND_END
+
+//////////////////////////////////////////
+
 //BIND_LUACLASSNAME DerivDataSetFloat dataset.deriv
 //BIND_CPP_CLASS    DerivDataSetFloat
 //BIND_SUBCLASS_OF  DerivDataSetFloat DataSetFloat
@@ -999,7 +1021,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 		     (const char *)0);
   DataSetFloat *ds;
   bool deriv0, deriv1, deriv2;
-  LUABIND_GET_TABLE_PARAMETER(1, dataset, DataSetFloat, ds    );
+  LUABIND_GET_TABLE_PARAMETER(1, dataset, DataSetFloat, ds);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, deriv0, bool, deriv0, true);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, deriv1, bool, deriv1, true);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, deriv2, bool, deriv2, true);
