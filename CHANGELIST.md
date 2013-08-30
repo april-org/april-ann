@@ -4,6 +4,7 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added stepDataset.
 - Solved bug at glob function.
 - Added binarizer::init() to a binded static_constructor, it is needed to
   execute init() before decode/encode double numbers, because of endianism.
