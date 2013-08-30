@@ -59,6 +59,30 @@ for i=2,4 do
   end
 end
 
+----------------------------
+-- DENOISING AUTO-ENCODER --
+----------------------------
+
+for i=2,4 do
+  for o=2,4 do
+    for b=1,4 do
+      check_component(function()
+			return ann.components.stack():
+			push( ann.components.dot_product{ weights="w1",
+							  input=i, output=o } ):
+			push( ann.components.bias{ size=o } ):
+			push( ann.components.actf.logistic() ):
+			push( ann.components.dot_product{ weights="w1",
+							  input=o, output=i,
+							  transpose=true } ):
+			push( ann.components.bias{ size=i } ):
+			push( ann.components.actf.logistic() )
+		      end,
+		      "mse", i, i, b, "DOTPRODUCT + BIAS")
+    end
+  end
+end
+
 -------------------------------
 -- CONVOLUTION + MAX POOLING --
 -------------------------------
