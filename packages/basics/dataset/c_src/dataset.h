@@ -553,7 +553,8 @@ class StepDataSet : public DataSet<T> {
 public:
   StepDataSet(DataSet<T> *ds, int step);
   virtual ~StepDataSet();
-  int numPatterns() { return ds->numPatterns()/step; }
+  int numPatterns() { 
+      return (int)ceil((float)ds->numPatterns()/step); }
   int patternSize() { return ds->patternSize(); }
   int getPattern(int index, T *pat);
   int putPattern(int index, const T *pat);
