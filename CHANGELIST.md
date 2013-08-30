@@ -24,7 +24,6 @@ Master branch unstable release
   `matrix.savefile` and `matrix.loadfile` (and its correspondence for complex
   numbers, double, int32, and char) were removed. Methods `matrix.fromFilename`
   and `matrix.toFilename` accept '.gz' extension.
-- Added stepDataset.
 
 v0.2.1-beta relase
 ------------------
