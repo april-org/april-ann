@@ -4,6 +4,9 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Solved bug at glob function.
+- Added binarizer::init() to a binded static_constructor, it is needed to
+  execute init() before decode/encode double numbers, because of endianism.
 - Solved bug at constString when extracting double numbers in binary format.
 - Added max and min methods over a given dimension for `matrix`.
 - MacOS compilation problems solved.
