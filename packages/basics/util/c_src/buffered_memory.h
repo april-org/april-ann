@@ -48,6 +48,7 @@ extern "C" {
 /// complains the interface defined in the file buffered_memory.h
 template<typename MEMORY_TYPE>
 class BufferedMemory : public Referenced {
+  bool is_opened;
   /// It measures the number of bytes written or read
   int total_bytes;
   /// Reading buffer, writings are done directly
@@ -80,6 +81,8 @@ public:
   BufferedMemory(const char *path, const char *mode);
   ~BufferedMemory();
   
+  /// Returns if the file was opened correctly
+  bool isOpened() const { return is_opened; }
   /// Closes the memory
   void close();
   /// Forces to write pending data
