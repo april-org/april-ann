@@ -733,7 +733,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   for (int i=0; i<sizes_len; ++i)
     if (coords[i] < 0 || sizes[i] < 1 ||
 	sizes[i]+coords[i] > obj->getDimSize(i))
-      LUABIND_FERROR1("Incorrect size or coord at position %d\n", i);
+      LUABIND_FERROR1("Incorrect size or coord at position %d\n", i+1);
   MatrixFloat *obj2 = new MatrixFloat(obj, coords, sizes, clone);
   LUABIND_RETURN(MatrixFloat, obj2);
   delete[] coords;
