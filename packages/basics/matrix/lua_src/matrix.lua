@@ -205,6 +205,11 @@ april_set_doc("matrix.fromFilename", {
 		},
 		params = {
 		  "A filename path.",
+		  { "A string with 'row_major', 'col_major' or 'no_order'",
+		    "[optional]. It modifies the order specified by content",
+		    "in the file. By default is 'no_order', so the result",
+		    "matrix will has the order specified by the file.",
+		  },
 		},
 		outputs = { "A matrix instantiated object" }, })
 

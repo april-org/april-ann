@@ -89,7 +89,7 @@ void writeMatrixFloatToFile(MatrixFloat *mat, const char *filename,
 			    bool is_ascii);
 char *writeMatrixFloatToString(MatrixFloat *mat, bool is_ascii, int &len);
 void writeMatrixFloatToLuaString(MatrixFloat *mat, lua_State *L, bool is_ascii);
-MatrixFloat *readMatrixFloatFromFile(const char *filename);
+MatrixFloat *readMatrixFloatFromFile(const char *filename, constString order);
 MatrixFloat *readMatrixFloatFromString(constString &cs);
 
 #endif // UTILMATRIXFLOAT_H
