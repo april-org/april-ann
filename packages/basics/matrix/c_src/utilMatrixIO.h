@@ -157,7 +157,6 @@ readMatrixFromStream(StreamType &stream,
   }
   order = line.extract_token();
   if (given_order != 0) order = given_order;
-  printf("%s %s\n", (const char *)(order), (const char *)(given_order));
   if (pos_comodin == -1) { // Normal version
     if (!order || order=="row_major")
       mat = new Matrix<MatrixType>(n,dims);
