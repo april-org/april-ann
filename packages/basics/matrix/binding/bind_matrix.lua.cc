@@ -293,12 +293,15 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 ///@param filename Es un string que indica el nombre del fichero.
 //DOC_END
 {
-  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_CHECK_ARGN(<=, 2);
   LUABIND_CHECK_PARAMETER(1, string);
   const char *filename;
+  constString order;
   LUABIND_GET_PARAMETER(1,string,filename);
+  LUABIND_GET_OPTIONAL_PARAMETER(1, constString, order, "no_order");
   MatrixFloat *obj;
-  if ((obj = readMatrixFloatFromFile(filename)) == 0)
+  if ((obj = readMatrixFloatFromFile(filename, order)) == 0)
     LUABIND_ERROR("bad format");
   else LUABIND_RETURN(MatrixFloat,obj);
 }

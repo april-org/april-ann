@@ -116,7 +116,8 @@ template <typename StreamType, typename MatrixType,
 Matrix<MatrixType>*
 readMatrixFromStream(StreamType &stream,
 		     AsciiExtractFunctor ascii_extractor,
-		     BinaryExtractorFunctor bin_extractor) {
+		     BinaryExtractorFunctor bin_extractor,
+		     constString given_order="no_order") {
   
   constString line,format,order,token;
   // First we read the matrix dimensions
@@ -155,11 +156,16 @@ readMatrixFromStream(StreamType &stream,
     return 0;
   }
   order = line.extract_token();
+  if (given_order != "no_order") order = given_order;
   if (pos_comodin == -1) { // Normal version
     if (!order || order=="row_major")
       mat = new Matrix<MatrixType>(n,dims);
     else if (order == "col_major")
       mat = new Matrix<MatrixType>(n,dims,CblasColMajor);
+    else {
+      ERROR_PRINT("Impossible to determine the order\n");
+      return 0;
+    }
     int i=0;
     typename Matrix<MatrixType>::iterator data_it(mat->begin());
     if (format == "ascii") {
