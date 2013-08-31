@@ -297,9 +297,9 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   LUABIND_CHECK_ARGN(<=, 2);
   LUABIND_CHECK_PARAMETER(1, string);
   const char *filename;
-  constString order;
+  const char *order;
   LUABIND_GET_PARAMETER(1,string,filename);
-  LUABIND_GET_OPTIONAL_PARAMETER(1, constString, order, "no_order");
+  LUABIND_GET_OPTIONAL_PARAMETER(2, string, order, 0);
   MatrixFloat *obj;
   if ((obj = readMatrixFloatFromFile(filename, order)) == 0)
     LUABIND_ERROR("bad format");

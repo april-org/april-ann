@@ -207,7 +207,7 @@ april_set_doc("matrix.fromFilename", {
 		  "A filename path.",
 		  { "A string with 'row_major', 'col_major' or 'no_order'",
 		    "[optional]. It modifies the order specified by content",
-		    "in the file. By default is 'no_order', so the result",
+		    "in the file. By default is nil, so the result",
 		    "matrix will has the order specified by the file.",
 		  },
 		},

@@ -117,7 +117,7 @@ Matrix<MatrixType>*
 readMatrixFromStream(StreamType &stream,
 		     AsciiExtractFunctor ascii_extractor,
 		     BinaryExtractorFunctor bin_extractor,
-		     constString given_order="no_order") {
+		     const char *given_order=0) {
   
   constString line,format,order,token;
   // First we read the matrix dimensions
@@ -152,11 +152,12 @@ readMatrixFromStream(StreamType &stream,
   line = stream.extract_u_line();
   format = line.extract_token();
   if (!format) {
-    fprintf(stderr,"impossible to read format token\n");
+    ERROR_PRINT("impossible to read format token\n");
     return 0;
   }
   order = line.extract_token();
-  if (given_order != "no_order") order = given_order;
+  if (given_order != 0) order = given_order;
+  printf("%s %s\n", (const char *)(order), (const char *)(given_order));
   if (pos_comodin == -1) { // Normal version
     if (!order || order=="row_major")
       mat = new Matrix<MatrixType>(n,dims);
