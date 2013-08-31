@@ -259,7 +259,7 @@ void writeMatrixFloatToLuaString(MatrixFloat *mat,
   wrapper.finish();
 }
 
-MatrixFloat *readMatrixFloatFromFile(const char *filename, constString order) {
+MatrixFloat *readMatrixFloatFromFile(const char *filename, const char *order) {
   if (GZFileWrapper::isGZ(filename)) {
     BufferedGZFile f(filename, "r");
     return readMatrixFromStream<BufferedGZFile, float>(f, FloatAsciiExtractor(),
