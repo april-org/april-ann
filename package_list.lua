@@ -7,7 +7,7 @@ return {
   "matrix",
   "random",
   "cmdOpt",
-  --   "profiler",
+  "profiler",
   "math",
   "gzio",
   "matlab",
