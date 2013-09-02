@@ -282,7 +282,14 @@ class LinearCombConf : public Referenced {
   /// Weights of the combinations.
   T *pesos;
 
-  virtual ~LinearCombConf() { delete[] numTuplas; delete[] indices; delete[] pesos; }
+  LinearCombConf(int pattsz, int numpairs) {
+    patternsize = pattsz;
+    numTuplas = (new int[pattsz+1])+1;
+    numTuplas[-1] = 0;
+    indices = new int[numpairs];
+    pesos = new T[numpairs];
+  }
+  virtual ~LinearCombConf() { delete[] (numTuplas-1); delete[] indices; delete[] pesos; }
 };
 
 /// A specialization of DataSet, takes a DataSet and outputs a linear combination of its patterns.

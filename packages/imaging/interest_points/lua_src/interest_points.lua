@@ -1,29 +1,24 @@
 interest_points = interest_points or {}
 
-interest_points.pointClassifier = interest_points.pointClassifier or {}
-interest_points.pointClassifier.__index = interest_points.pointClassifier
+class("interest_points.pointClassifier")
 
-setmetatable(interest_points.pointClassifier, interest_points.pointClassifier)
+april_set_doc("interest_points.pointClassifier", {
+		class       = "class",
+		summary     = "Util for computing EyeFish transformation",
+		description ={
+		  "This class prepare the linear transformation.",
+		}, })
 
---[[
-local function argmax(tbl)
-    local wmax = 1
-    local max  = tbl[1]
-    for i,j in ipairs(tbl) do
-        if j > max then
-            wmax = i
-            max  = j
-        end
-    end
-    if max ~= nil then
-        return wmax,max
-    else 
-        return nil, nil
-    end
-end
-]]
 
-function interest_points.pointClassifier:__call(alto, ancho, minialto, miniancho, reverse)
+april_set_doc("interest_points.pointClassifier.__Call", {
+		class       = "method",
+		summary     = "Constructor",
+		description ={
+		  "This class prepare the linear transformation.",
+		},
+    outputs = {"A Point Classifier object"},
+})
+function interest_points.pointClassifier:__call(ancho, alto, miniancho, minialto, reverse)
 
     -- prepara la configuracion para aplicar el ojo de pez con dataset.linear_comb
     -- local functions
@@ -73,6 +68,26 @@ function interest_points.pointClassifier:__call(alto, ancho, minialto, miniancho
         return v
     end
 
+    -- Funcion para invertir_tlc (Forwar tlc)
+    local function invertir_tlc(tlc)
+        
+        local threshold = 0
+        local inv_tlc = {}
+        for i, lsources in pairs(tlc) do
+            for j, v in ipairs(lsources) do
+                local src, w = unpack(v)
+
+                if inv_tlc[src] == nil then inv_tlc[src] = {} end
+                if (w > threshold) then
+                 table.insert(inv_tlc[src], {i-1, w})
+                end
+            end
+
+        end
+
+
+        return inv_tlc
+    end
     -- function body
     local vancho = crear_vector_estrecho(ancho)
     local valto = crear_vector_suave(alto)
@@ -83,9 +98,9 @@ function interest_points.pointClassifier:__call(alto, ancho, minialto, miniancho
     local lenr_alto  = #r_alto
     local tlc = {} -- tabla linear combination
     for i=1,lenr_alto do
-        local y1,y,pesoy = table.unpack(r_alto[i])
+        local y1,y,pesoy = unpack(r_alto[i])
         for j=1,lenr_ancho do
-            local x1,x,pesox = table.unpack(r_ancho[j])
+            local x1,x,pesox = unpack(r_ancho[j])
             local minipos = (y-1)*miniancho+x -- la posicion x,y en la matriz resultante
             if tlc[minipos] == nil then tlc[minipos] = {} end
             local pos = (y1-1)*ancho+x1
@@ -106,6 +121,10 @@ function interest_points.pointClassifier:__call(alto, ancho, minialto, miniancho
     local obj = { }
     obj.ancho = ancho
     obj.alto = alto
+    obj.miniancho = miniancho
+    obj.minialto = minialto
+    obj.table_inv = invertir_tlc(tlc)
+    obj.inv_tlc = dataset.linear_comb_conf(obj.table_inv)
     obj.tlc = dataset.linear_comb_conf(tlc)
     obj.white = (reverse and 0) or 1
     setmetatable(obj, self)
@@ -118,6 +137,28 @@ end
 ---------------------------------------------------
 function interest_points.pointClassifier:crop_image(img, x, y)
     return self:applyLinearComb(img, x, y):getPattern(1)
+end
+
+
+april_set_doc("interest_points.pointClassifier.getFishDs", {
+		class       = "method",
+		summary     = "Main function for obtaining the FishEye Dataset",
+		description ={
+		  "Recieves an image and a point a generates the corresponding dataset",
+		},
+    params = {
+      "An Image object",
+      "X coordinate of the point",
+      "Y coordinate of the point"
+    },
+    outputs = {"A Point Classifier object"},
+})
+function interest_points.pointClassifier:getFishDs(img, x, y)
+
+    local mFish = img:comb_lineal_forward(x,y, self.ancho, self.alto, self.miniancho, self.minialto, self.inv_tlc)
+    local dsFish = dataset.matrix(mFish, {patternSize={self.miniancho*self.minialto},stepSize={self.miniancho*self.minialto}, numSteps={1} })
+
+    return dsFish
 end
 
 function interest_points.pointClassifier:applyLinearComb(img, x, y)
@@ -137,48 +178,130 @@ end
 -------------------------------------------------------------------------------
 -- Given a point an mlp, return the output of the net with that point (window)
 -----------------------------------------------------------------------------
-function interest_points.pointClassifier:compute_point(img, point, mlp)
-    local x, y = table.unpack(point)
-    local data = self:crop_image(img,x,y)
-    local salida = mlp:calculate(data)
-    return salida 
+april_set_doc("interest_points.pointClassifier.compute_point", {
+		class       = "method",
+		summary     = "Gets the net output for one point",
+		description ={
+      "Given a point and mlp, return the output of the net for that point",
+		},
+    params = {
+      "An Image object",
+      "X coordinate of the point",
+      "Y coordinate of the point"
+    },
+    outputs = {"Table with the values of the softmax"},
+})
+function interest_points.pointClassifier:compute_point(img, x, y, mlp)
+
+    local dsPoint = self:getFishDs(img, x, y)
+    
+    local dsOut = mlp:use_dataset{
+      input_dataset = dsPoint 
+    }
+    return dsOut:getPattern(1)
 end
 
------------------------------------------------
--- Given a point return the most probable class
------------------------------------------------
-function interest_points.pointClassifier:classify_point(img, point, mlp)
-    --return  argmax(self:compute_point(img, point, mlp))
-    return compute_point(img, point, mlp):max()
+april_set_doc("interest_points.pointClassifier.getPointClass", {
+		class       = "method",
+		summary     = "Gets the corresponding class for the point",
+		description ={
+      "Given a point and mlp, return the max index for that point",
+		},
+    params = {
+      "An Image object",
+      "X coordinate of the point",
+      "Y coordinate of the point"
+    },
+    outputs = {"Integer of the winning class"},
+})
+function interest_points.pointClassifier:getPointClass(img, x, y, mlp)
+    return self.compute_point(img, x, y, mlp):max()
 
 end
--------------------------------------------------
--- Return a table with the triplets (x, y, class)
--------------------------------------------------
-function interest_points.pointClassifier:compute_points(img, points_table, mlp)
-  
-    local res = {}
-    for i, point in ipairs(points_table) do
-      table.insert(res,self:compute_point(img, point, mlp))
+
+--Gets a dataset and returns a table with the indexes of the major class
+local function getIndexSoftmax(dsOut)
+    local tResult = {}
+
+    for i, v in dsOut:patterns() do
+        _, p = table.max(v)
+        table.insert(tResult, p)
+
+    end
+    return tResult
+end
+april_set_doc("interest_points.pointClassifier.compute_points", {
+		class       = "method",
+		summary     = "Return a dataset with the output of the net",
+		description ={
+      "Given a list of points and mlp, return the dataset corresponding to output of the mlp to that set of points",
+		},
+    params = {
+      "An Image object",
+      "List of points Tuples(x,y)",
+      "Trainable Object"
+    },
+    outputs = {"Dataset of size Num_Classes x Num_Points"},
+})
+function interest_points.pointClassifier:compute_points(img, points, mlp)
+
+    --Compute the matrix (Forward)
+    local fishEyes = {}
+
+    for i, point in ipairs(points) do
+        x,y = unpack(point)
+        local dsFish = self:getFishDs(img, x, y)
+
+        table.insert(fishEyes, dsFish)
     end
 
-    return res
+    local dsFishes = dataset.union(fishEyes)
+    -- Classify the datasets
+    local dsOut = mlp:use_dataset({input_dataset=dsFishes})
+
+    return dsOut
 end
 
 ----------------------------------------------------------
 -- Given a image extract all the points and classify them
 -- -------------------------------------------------------
 function interest_points.pointClassifier:classify_points(img, points, mlp)
-      local scores = self:compute_points(img, points, mlp)
-      local res = {}
-      for i, score in ipairs(scores) do
-          x = points[i][1]
-          y = points[i][2]
-          _, c = score:max()
-          table.insert(res, {x, y, c+1})
-      end
+   
+    local dsOut = self:compute_points(img, points, mlp)
+    local classes = getIndexSoftmax(dsOut)
 
-      return res
+    local res = {}
+    for i, c in ipairs(classes) do
+        x, y = unpack(points[i])
+        table.insert(res,  {x,y,c})
+    end
+
+    return res
+
+    --[[  local scores = self:compute_points(img, points, mlp)
+    local res = {}
+    for i, score in ipairs(scores) do
+    x = points[i][1]
+    y = points[i][2]
+    _, c = score:max()
+    table.insert(res, {x, y, c})
+    end
+    return res
+    --]]
+
+end
+
+function interest_points.pointClassifier:extract_points(img, mlpUppers, mlpLowers)
+
+    local uppers, lowers = interest_points.extract_points_from_image(img)
+
+    -- Compute uppers
+    local uppers_classified = self:classify_points(img, uppers, mlpUppers)
+    -- Compute uppers
+    local lowers_classified = pc:classify_points(img, lowers, mlpLowers)
+
+    return uppers_classified, lowers_classified
+
 end
 
 ----------------------------------------------------------------------------
@@ -193,8 +316,8 @@ function interest_points.sort_by_class(table_points, classes)
     end
     
     for _, point in ipairs(table_points) do
-       x, y, c = table.unpack(point)
-       table.insert(res[c], {x,y}) 
+        x, y, c = unpack(point)
+        table.insert(res[c], {x,y}) 
     end
 
     return res
