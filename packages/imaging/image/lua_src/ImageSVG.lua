@@ -133,7 +133,10 @@ function imageSVG_methods:addSquare(point, params)
 
     local side = params.side or 1
     local color = params.color or "green"
-
+    
+    if params.cls then
+      color = colors[params.cls]
+    end
     local x = point[1]
     local y = point[2]
 

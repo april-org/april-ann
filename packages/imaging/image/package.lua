@@ -1,6 +1,6 @@
  package{ name = "image",
    version = "1.0",
-   depends = { "util", "matrix", "affine_transform" },
+   depends = { "util", "matrix", "affine_transform", "dataset" },
    keywords = { "image" },
    description = "Image processing module",
    -- targets como en ant
