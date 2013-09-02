@@ -30,6 +30,6 @@ local function gzio_lines(self, ...)
     return table.unpack(values)
   end
 end
-cpp_class_binding_extension(gzio,
-			    "lines",
-			    gzio_lines)
+class_extension(gzio,
+		"lines",
+		gzio_lines)

@@ -1,21 +1,22 @@
 -- wrapper para field_manager
 
-class("field_manager")
+local field_manager_methods,
+field_manager_class_metatable = class("field_manager")
 
 -- constructor
-function field_manager:__call()
+function field_manager_class_metatable:__call()
   local obj = { fields = {} }
   obj = class_instance(obj, self, true)
   return obj
 end
 
 -- devuelve un campo del field_manager
-function field_manager:get_field(name)
+function field_manager_methods:get_field(name)
    return self.fields[name]
 end
 
 --
-function field_manager:load_lines(s)
+function field_manager_methods:load_lines(s)
   if type(s) ~= 'table' or
     type(s.filename) ~= 'string' or type(s.field) ~= 'string' then
     error("Error in field_manager load_lines method incorrect arguments\n")
@@ -28,7 +29,7 @@ function field_manager:load_lines(s)
 end
 
 --
-function field_manager:apply(s)
+function field_manager_methods:apply(s)
   -- comprobar argumentos
   if type(s) ~= 'table' or
     type(s.output_fields)~= 'table' or
@@ -74,7 +75,7 @@ function field_manager:apply(s)
   end
 end
 
-function field_manager:delete_field(fieldname)
+function field_manager_methods:delete_field(fieldname)
   self.fields[fieldname] = nil
 end
 

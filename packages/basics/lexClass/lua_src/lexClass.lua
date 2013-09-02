@@ -1,8 +1,7 @@
-class("lexClass")
+local lexClass_methods,
+lexClass_class_table = class("lexClass")
 
-lexClass.__tostring = function () return "lexClass" end
-
-function lexClass:__call(voc_id2word)
+function lexClass_class_table:__call(voc_id2word)
   local obj = {
     cobj  = _internal_lexclass_(),
     units = {}
@@ -18,7 +17,7 @@ function lexClass:__call(voc_id2word)
   return obj
 end
 
-function lexClass:addPair(t)
+function lexClass_methods:addPair(t)
   local word   = t.word   or error ("Falta definir word")
   local outsym = t.outsym or word
   local prob   = t.prob or 1.0
@@ -32,27 +31,27 @@ function lexClass:addPair(t)
   return rid
 end
 
-function lexClass:getWordFromPairId(pairid)
+function lexClass_methods:getWordFromPairId(pairid)
   return self.cobj:getWordFromPairId(pairid)
 end
 
-function lexClass:getWordFromWordId(wid)
+function lexClass_methods:getWordFromWordId(wid)
   return self.cobj:getWordFromWordId(wid)
 end
 
-function lexClass:getOutSymFromPairId(pairid)
+function lexClass_methods:getOutSymFromPairId(pairid)
   return self.cobj:getOutSymFromPairId(pairid)
 end
 
-function lexClass:getOutSymFromOutSymId(oid)
+function lexClass_methods:getOutSymFromOutSymId(oid)
   return self.cobj:getOutSymFromOutSymId(oid)
 end
 
-function lexClass:getWordId(word)
+function lexClass_methods:getWordId(word)
   return self.cobj:getWordId(word)
 end
 
-function lexClass:getOutSymId(outsym)
+function lexClass_methods:getOutSymId(outsym)
   return self.cobj:getOutSymId(outsym)
 end
 
@@ -94,7 +93,7 @@ function lexClass.load(dict_file)
 end
 
 -- para guardar en disco
-function lexClass:save(f)
+function lexClass_methods:save(f)
 --   for pairid=1,self.cobj:size() do
 --     local info = self.cobj:getInfo(pairid)
 --     --
@@ -109,7 +108,7 @@ function lexClass:save(f)
   error("Deprecated!!! :'( hay que actualizar esta funcion")
 end
 
-function lexClass:getWordVocabulary()
+function lexClass_methods:getWordVocabulary()
   local t = {}
   for i=1,self.cobj:wordTblSize() do
     table.insert(t, self.cobj:getWordFromWordId(i))
@@ -117,7 +116,7 @@ function lexClass:getWordVocabulary()
   return t
 end
 
-function lexClass:getOutSymVocabulary()
+function lexClass_methods:getOutSymVocabulary()
   local t = {}
   for i=1,self.cobj:outsymTblSize() do
     table.insert(t, self.cobj:getOutSymFromOutSymId(i))
@@ -125,7 +124,7 @@ function lexClass:getOutSymVocabulary()
   return t
 end
 
-function lexClass:searchWordsSequenceFromWIDs(wordid_seq)
+function lexClass_methods:searchWordsSequenceFromWIDs(wordid_seq)
   local words={}
   for i,id in ipairs(wordid_seq) do
     if id ~= 0 then
@@ -135,7 +134,7 @@ function lexClass:searchWordsSequenceFromWIDs(wordid_seq)
   return words
 end
 
-function lexClass:searchWordsSequence(pairid_seq)
+function lexClass_methods:searchWordsSequence(pairid_seq)
   local words={}
   for i,id in ipairs(pairid_seq) do
     local word = self.cobj:getWordFromPairId(id)
@@ -150,7 +149,7 @@ function lexClass:searchWordsSequence(pairid_seq)
   return words
 end
 
-function lexClass:searchOutSymsSequenceFromOIDs(outsym_seq)
+function lexClass_methods:searchOutSymsSequenceFromOIDs(outsym_seq)
   error ("Deprecated!!!!")
   --   local outsyms={}
   --   for i,id in ipairs(outsym_seq) do
@@ -159,7 +158,7 @@ function lexClass:searchOutSymsSequenceFromOIDs(outsym_seq)
   --   return outsyms
 end
 
-function lexClass:searchOutSymsSequence(pairid_seq)
+function lexClass_methods:searchOutSymsSequence(pairid_seq)
   local outsyms={}
   for i,id in ipairs(pairid_seq) do
     local word = self.cobj:getOutSymFromPairId(id)
@@ -174,7 +173,7 @@ function lexClass:searchOutSymsSequence(pairid_seq)
   return outsyms
 end
 
-function lexClass:searchWordIdSequence(words, unk_id)
+function lexClass_methods:searchWordIdSequence(words, unk_id)
   local ids={}
   for i,w in ipairs(words) do
     local wid = self.cobj:getWordId(w) or unk_id
@@ -183,7 +182,7 @@ function lexClass:searchWordIdSequence(words, unk_id)
   return ids
 end
 
-function lexClass:searchWordIdSequenceFromPairID(pairid_seq)
+function lexClass_methods:searchWordIdSequenceFromPairID(pairid_seq)
   local ids={}
   for i,pid in ipairs(pairid_seq) do
     local wid = self.cobj:getPairData(pid).word
@@ -192,7 +191,7 @@ function lexClass:searchWordIdSequenceFromPairID(pairid_seq)
   return ids
 end
 
-function lexClass:searchOutSymIdSequenceFromPairID(pairid_seq)
+function lexClass_methods:searchOutSymIdSequenceFromPairID(pairid_seq)
   local ids={}
   for i,pid in ipairs(pairid_seq) do
     local oid = self.cobj:getPairData(pid).outsym
@@ -201,33 +200,33 @@ function lexClass:searchOutSymIdSequenceFromPairID(pairid_seq)
   return ids
 end
 
-function lexClass:wordTblSize()
+function lexClass_methods:wordTblSize()
   return self.cobj:wordTblSize()
 end
 
-function lexClass:outsymTblSize()
+function lexClass_methods:outsymTblSize()
   return self.cobj:outsymTblSize()
 end
 
-function lexClass:pairsTblSize()
+function lexClass_methods:pairsTblSize()
   return self.cobj:size()
 end
 
-function lexClass:size()
+function lexClass_methods:size()
   error("OBSOLOTE: lexClass:size()")
 end
 
-function lexClass:getCObject()
+function lexClass_methods:getCObject()
   return self.cobj
 end
 
-function lexClass:getData(pair_id)
+function lexClass_methods:getData(pair_id)
   local t = self.cobj:getPairData(pair_id)
   t.units = self.units[pair_id] or {}
   return t
 end
 
-function lexClass:getPair(pair_id)
+function lexClass_methods:getPair(pair_id)
   local wid,oid
   local t = self.cobj:getPairData(pair_id)
   wid,oid = t.word,t.outsym

@@ -1,9 +1,10 @@
-class("tied_model_manager")
+local tied_model_manager_methods,
+tied_model_manager_class_metatable=class("tied_model_manager")
 
 ----------------------------
 -- Constructor
 ----------------------------
-function tied_model_manager:__call(tiedlist_file)
+function tied_model_manager_class_metatable:__call(tiedlist_file)
   local obj = {
     tiedlist = {},
     name2id  = {},
@@ -26,14 +27,14 @@ function tied_model_manager:__call(tiedlist_file)
   return obj
 end
 
-function tied_model_manager:get_model(phone)
+function tied_model_manager_methods:get_model(phone)
   return self.tiedlist[phone]
 end
 
 -- Searchs a triphone. search_triphone("a","b","c") looks for
 -- "a-b+c", falling back to diphones and monophones if it's not
 -- found
-function tied_model_manager:search_triphone(left, phone, right)
+function tied_model_manager_methods:search_triphone(left, phone, right)
   local selected
   if left and right then
     -- both contexts
@@ -83,7 +84,7 @@ function tied_model_manager:search_triphone(left, phone, right)
   return self.tiedlist[selected]
 end
 
-function tied_model_manager:search_triphone_sequence(sequence)
+function tied_model_manager_methods:search_triphone_sequence(sequence)
   local result = {}
   for i=1,#sequence do
     local left = nil

@@ -36,9 +36,10 @@
 -- 		generate_hmm3st_desc -> crea descripcion de modelo lineal de 3 estados
 -- 		str2model_desc -> crea una descripcion de modelo a partir de una palabra
 
-class("HMMTrainer.trainer")
+local trainer_methods,
+trainer_class_metatable = class("HMMTrainer.trainer")
 
-function HMMTrainer.trainer:__call()
+function trainer_class_metatable:__call()
   local o = {
     trainer    = hmm_trainer(), -- Objeto trainer en C
     
@@ -57,9 +58,9 @@ function HMMTrainer.trainer:__call()
   return o
 end
 
-class("HMMTrainer.model")
+local model_methods = class("HMMTrainer.model")
 
-function HMMTrainer.trainer:model(m)
+function trainer_methods:model(m)
   -- Creamos una tabla lua con las transiciones de m, 
   -- sustituyendo los nombres de los estados en .from y .to
   -- por numeros
@@ -107,23 +108,21 @@ function HMMTrainer.trainer:model(m)
   return res
 end
 
-function HMMTrainer.model:update_probs()
+function model_methods:update_probs()
   for i,t in ipairs(self.transitions) do
     t.lprob = self.trainer:get_cls_transition_logprob(t.id)
   end
 end
 
 function HMMTrainer.model.from_table(t)
-  local obj = t
-  setmetatable(obj, HMMTrainer.model)
-  return obj
+  return class_instance(t, HMMTrainer.model)
 end
 
-function HMMTrainer.model:to_string()
+function model_methods:to_string()
   local str = {}
   table.insert(str, "{\n")
   table.insert(str, "\tname        = '".. string.gsub(self.name,"'","\\'")
-	       .. "',")
+		 .. "',")
   table.insert(str, "\tinitial     = " .. self.initial    .. ",")
   table.insert(str, "\tfinal       = " .. self.final      .. ",")
   table.insert(str, "\tnum_states  = " .. self.num_states .. ",")
@@ -136,11 +135,11 @@ function HMMTrainer.model:to_string()
     table.insert(str, "\t\t\tlprob    = " .. t.lprob    ..",")
     if t.id then
       table.insert(str, "\t\t\tid       = '" .. string.gsub(t.id,"'","\\'")
-		   .."',")
+		     .."',")
     end
     if t.output then
       table.insert(str, "\t\t\toutput   = '" ..
-		   string.gsub(t.output,"'","\\'").."'")
+		     string.gsub(t.output,"'","\\'").."'")
     end
     table.insert(str,"\t\t},")
   end
@@ -170,7 +169,7 @@ end
 --     J=5 S=5 E=4
 --     J=6 S=5 E=1
 
-function HMMTrainer.model:to_slf()
+function model_methods:to_slf()
   local next_state      = 1
   local next_transition = 1
   local str             = {}
@@ -243,7 +242,7 @@ function HMMTrainer.model:to_slf()
   return table.concat(str2, "\n").."\n"..table.concat(str, "\n").."\n"
 end
 
-function HMMTrainer.trainer:add_to_dict(m, name)
+function trainer_methods:add_to_dict(m, name)
   if name==nil then
     name = m.name
   end
@@ -251,7 +250,7 @@ function HMMTrainer.trainer:add_to_dict(m, name)
   self.models[name] = m
 end
 
-function HMMTrainer.trainer:get_cls_transition_prob(tr_id)
+function trainer_methods:get_cls_transition_prob(tr_id)
   if self.linked_ids[tr_id] then
     local index = self.linked_ids[tr_id][2] -- cls_t
     return self.trainer:get_transition_probability(index)
@@ -264,7 +263,7 @@ function HMMTrainer.trainer:get_cls_transition_prob(tr_id)
   end
 end
 
-function HMMTrainer.trainer:get_cls_transition_logprob(tr_id)
+function trainer_methods:get_cls_transition_logprob(tr_id)
   if self.linked_ids[tr_id] then
     local index = self.linked_ids[tr_id][2] -- cls_t
     return self.trainer:get_transition_logprobability(index)
@@ -279,8 +278,8 @@ end
 
 -- Expande recursivamente el modelo C referenciado por c_obj
 -- utilizando el modelo lua m
-function HMMTrainer.trainer:expand(m, c_obj, upper_prob, ini, fin, 
-				   cls_ini, cls_fin, upper_output)
+function trainer_methods:expand(m, c_obj, upper_prob, ini, fin, 
+				cls_ini, cls_fin, upper_output)
   local indices={
     [m.initial]=ini,
     [m.final]=fin,
@@ -306,7 +305,7 @@ function HMMTrainer.trainer:expand(m, c_obj, upper_prob, ini, fin,
     if t.id == "fixed" then
       if (cls_s ~= nil and cls_s ~= -1) then
 	print("warning conflicto en transicion de tipo fixed modelo "..
-	      m.name.." transicion "..orig.."->"..dest.."cls_s = "..cls_s)
+		m.name.." transicion "..orig.."->"..dest.."cls_s = "..cls_s)
       end
       cls_states[orig] = -1
       cls_s = -1
@@ -358,7 +357,7 @@ function HMMTrainer.trainer:expand(m, c_obj, upper_prob, ini, fin,
   return cls_states[ini],cls_states[fin]
 end
 
-function HMMTrainer.model:generate_C_model()
+function model_methods:generate_C_model()
   -- genera un objeto C de tipo hmm_trainer_model a
   -- partir de un objeto Lua tipo HMMTrainer.model
   -- expandiendo las transiciones sobre la marcha directamente en C
@@ -406,7 +405,7 @@ function HMMTrainer.utils.generate_allograph_hmm_desc(name,allographs,emissions,
 		 to   = name.."1",
 		 prob = 1,
 		 emission = 0
-	       })
+			    })
   -- primera transicion, siempre es necesaria
   table.insert(transitions, {
 		 from = name.."1",
@@ -414,7 +413,7 @@ function HMMTrainer.utils.generate_allograph_hmm_desc(name,allographs,emissions,
 		 prob = 1,
 		 emission = emissions[1],
 		 id   = name.."1_2"
-	       })
+			    })
   
   for j=2,num_emissions do
     local pskip = 0.0
@@ -429,7 +428,7 @@ function HMMTrainer.utils.generate_allograph_hmm_desc(name,allographs,emissions,
 		       prob = pskips[j-1],
 		       emission = 0,
 		       id   = name .. tostring(j) .. "_" .. tostring(j+2)
-		     })
+				  })
 	pskip = pskips[j-1]
       end
     end
@@ -440,7 +439,7 @@ function HMMTrainer.utils.generate_allograph_hmm_desc(name,allographs,emissions,
 		   prob = ploops[j-1],
 		   emission = emissions[j-1],
 		   id   = name .. tostring(j) .. "_" .. tostring(j)
-		 })
+			      })
     -- de j a j+1
     table.insert(transitions, {
 		   from = name .. tostring(j),
@@ -448,7 +447,7 @@ function HMMTrainer.utils.generate_allograph_hmm_desc(name,allographs,emissions,
 		   prob = 1-ploops[j-1]-pskip,
 		   emission = emissions[j],
 		   id   = name .. tostring(j) .. "_" .. tostring(j+1)
-		 })
+			      })
   end
   -- loop sobre num_emissions + 1
   table.insert(transitions, {
@@ -465,7 +464,7 @@ function HMMTrainer.utils.generate_allograph_hmm_desc(name,allographs,emissions,
 		 emission = 0,
 		 id   = name .. tostring(num_emissions+1) .. "_fin",
 		 output = output
-	       })
+			    })
   result.transitions = transitions
   result.initial = name.."ini"
   result.final   = name.."fin"
@@ -485,7 +484,7 @@ function HMMTrainer.utils.generate_lr_hmm_desc(name,emissions,ploops,pskips,outp
 		 to   = name.."1",
 		 prob = 1,
 		 emission = 0
-	       })
+			    })
   -- primera transicion, siempre es necesaria
   table.insert(transitions, {
 		 from = name.."1",
@@ -493,7 +492,7 @@ function HMMTrainer.utils.generate_lr_hmm_desc(name,emissions,ploops,pskips,outp
 		 prob = 1,
 		 emission = emissions[1],
 		 id   = name.."1_2"
-	       })
+			    })
   
   for j=2,num_emissions do
     local pskip = 0.0
@@ -508,7 +507,7 @@ function HMMTrainer.utils.generate_lr_hmm_desc(name,emissions,ploops,pskips,outp
 		       prob = pskips[j-1],
 		       emission = 0,
 		       id   = name .. tostring(j) .. "_" .. tostring(j+2)
-		     })
+				  })
 	pskip = pskips[j-1]
       end
     end
@@ -519,7 +518,7 @@ function HMMTrainer.utils.generate_lr_hmm_desc(name,emissions,ploops,pskips,outp
 		   prob = ploops[j-1],
 		   emission = emissions[j-1],
 		   id   = name .. tostring(j) .. "_" .. tostring(j)
-		 })
+			      })
     -- de j a j+1
     table.insert(transitions, {
 		   from = name .. tostring(j),
@@ -527,7 +526,7 @@ function HMMTrainer.utils.generate_lr_hmm_desc(name,emissions,ploops,pskips,outp
 		   prob = 1-ploops[j-1]-pskip,
 		   emission = emissions[j],
 		   id   = name .. tostring(j) .. "_" .. tostring(j+1)
-		 })
+			      })
   end
   -- loop sobre num_emissions + 1
   table.insert(transitions, {
@@ -544,7 +543,7 @@ function HMMTrainer.utils.generate_lr_hmm_desc(name,emissions,ploops,pskips,outp
 		 emission = 0,
 		 id   = name .. tostring(num_emissions+1) .. "_fin",
 		 output = output
-	       })
+			    })
   result.transitions = transitions
   result.initial = name.."ini"
   result.final   = name.."fin"
@@ -593,7 +592,7 @@ function HMMTrainer.utils.str2model_desc(str,optional_symbols,output)
       -- la ultima transición emite el output
       table.insert(result.transitions,
 		   {from=tostring(i-1), to=tostring(i), prob=1, emission=chr, id="fixed",
-		     output = output } )
+		    output = output } )
     else
       table.insert(result.transitions,
 		   {from=tostring(i-1), to=tostring(i), prob=1, emission=chr, id="fixed"} )
@@ -602,14 +601,14 @@ function HMMTrainer.utils.str2model_desc(str,optional_symbols,output)
       if i==stringlen and output ~= nil then
 	table.insert(result.transitions,
 		     {from=tostring(i-1), to=tostring(i),
-		       prob=optional_symbols[chr],
-		       emission=0, id="fixed",
-		       output = output} )
+		      prob=optional_symbols[chr],
+		      emission=0, id="fixed",
+		      output = output} )
       else
 	table.insert(result.transitions,
 		     {from=tostring(i-1), to=tostring(i),
-		       prob=optional_symbols[chr],
-		       emission=0, id="fixed"} )
+		      prob=optional_symbols[chr],
+		      emission=0, id="fixed"} )
       end
     end
   end
@@ -633,7 +632,7 @@ function HMMTrainer.utils.tbl2model_desc(tbl,optional_symbols,output)
       -- la ultima transición emite el output
       table.insert(result.transitions,
 		   {from=tostring(i-1), to=tostring(i), prob=1, emission=chr, id="fixed",
-		     output = output } )
+		    output = output } )
     else
       if output == nil then
 	table.insert(result.transitions,
@@ -647,9 +646,9 @@ function HMMTrainer.utils.tbl2model_desc(tbl,optional_symbols,output)
       if i==stringlen and output ~= nil then
 	table.insert(result.transitions,
 		     {from=tostring(i-1), to=tostring(i),
-		       prob=optional_symbols[chr],
-		       emission=0, id="fixed",
-		       output = output} )
+		      prob=optional_symbols[chr],
+		      emission=0, id="fixed",
+		      output = output} )
       else
 	table.insert(result.transitions,
 		     {from=tostring(i-1), to=tostring(i),
@@ -825,9 +824,9 @@ function HMMTrainer.utils.strtable2tree(str_tbl, voc, exclude_words)
 	if not exists_transition(result, ant_prefix, cur_prefix) then
 	  table.insert(result.transitions,
 		       {from=ant_prefix,
-			 to=cur_prefix,
-			 emission=cur_chr,
-			 prob=1, id="fixed"} )
+			to=cur_prefix,
+			emission=cur_chr,
+			prob=1, id="fixed"} )
 	end
 	i=i+1
       end
@@ -838,10 +837,10 @@ function HMMTrainer.utils.strtable2tree(str_tbl, voc, exclude_words)
 	if voc then out = voc[invert_str_tbl[cur_prefix]] end
 	table.insert(result.transitions,
 		     {from=cur_prefix,
-		       to="__final",
-		       emission=0,
-		       prob=1, id="fixed",
-		       output=out} )
+		      to="__final",
+		      emission=0,
+		      prob=1, id="fixed",
+		      output=out} )
       end
     end
   end
@@ -851,66 +850,66 @@ end
 
 function HMMTrainer.utils.dictionary2tree(dictionary, tied, exclude_words)
   error ("DEPRECATED")
---   if not exclude_words then exclude_words = {} end
---   -- Funcion auxiliar que comprueba si ya existe una transicion en el
---   -- modelo desde from hasta to
---   function exists_transition(model, from, to)
---     for _, t in pairs(model.transitions) do
---       if t.from==from and t.to==to then
--- 	return true
---       end
---     end
---     return false
---   end
+  --   if not exclude_words then exclude_words = {} end
+  --   -- Funcion auxiliar que comprueba si ya existe una transicion en el
+  --   -- modelo desde from hasta to
+  --   function exists_transition(model, from, to)
+  --     for _, t in pairs(model.transitions) do
+  --       if t.from==from and t.to==to then
+  -- 	return true
+  --       end
+  --     end
+  --     return false
+  --   end
   
---   local result={}
---   result.name="prefixtree" -- FIXME: Cambiar?
---   result.initial="__initial"
---   result.final="__final"
---   result.transitions={}
+  --   local result={}
+  --   result.name="prefixtree" -- FIXME: Cambiar?
+  --   result.initial="__initial"
+  --   result.final="__final"
+  --   result.transitions={}
 
---   for word, word_info in pairs(dictionary.lex) do
---     if not exclude_words[word] then
---       for _,word_phones in ipairs(word_info.units) do
--- 	local word_tied_phones = word_phones
--- 	if tied then
--- 	  word_tied_phones = tied:search_triphone_sequence(word_phones)
--- 	end
--- 	-- Recorremos los prefijos de word_tied_phones y vamos creando
--- 	-- transiciones segun sea necesario
--- 	i=1
--- 	local cur_prefix="__initial"
--- 	local ant_prefix
--- 	local cur_chr
--- 	while i<=#word_tied_phones do
--- 	  ant_prefix=cur_prefix
--- 	  cur_prefix=table.concat(word_tied_phones, "", 1, i-1)
--- 	  cur_chr=HMMTrainer.utils.name_mangling_unit(word_tied_phones[i])
--- 	  if not exists_transition(result, ant_prefix, cur_prefix) then
--- 	    table.insert(result.transitions,
--- 			 {from=ant_prefix,
--- 			   to=cur_prefix,
--- 			   emission=cur_chr,
--- 			   prob=1, id="fixed"} )
--- 	  end
--- 	  i=i+1
--- 	end
-	
--- 	-- La ultima transicion lleva como output la palabra
--- 	if not exists_transition(result, cur_prefix, "__final") then
--- 	  local out = word_info.outsym
--- 	  table.insert(result.transitions,
--- 		       {from=cur_prefix,
--- 			 to="__final",
--- 			 emission=0,
--- 			 prob=1, id="fixed",
--- 			 output=out} )
--- 	end
---       end
---     end
---   end
+  --   for word, word_info in pairs(dictionary.lex) do
+  --     if not exclude_words[word] then
+  --       for _,word_phones in ipairs(word_info.units) do
+  -- 	local word_tied_phones = word_phones
+  -- 	if tied then
+  -- 	  word_tied_phones = tied:search_triphone_sequence(word_phones)
+  -- 	end
+  -- 	-- Recorremos los prefijos de word_tied_phones y vamos creando
+  -- 	-- transiciones segun sea necesario
+  -- 	i=1
+  -- 	local cur_prefix="__initial"
+  -- 	local ant_prefix
+  -- 	local cur_chr
+  -- 	while i<=#word_tied_phones do
+  -- 	  ant_prefix=cur_prefix
+  -- 	  cur_prefix=table.concat(word_tied_phones, "", 1, i-1)
+  -- 	  cur_chr=HMMTrainer.utils.name_mangling_unit(word_tied_phones[i])
+  -- 	  if not exists_transition(result, ant_prefix, cur_prefix) then
+  -- 	    table.insert(result.transitions,
+  -- 			 {from=ant_prefix,
+  -- 			   to=cur_prefix,
+  -- 			   emission=cur_chr,
+  -- 			   prob=1, id="fixed"} )
+  -- 	  end
+  -- 	  i=i+1
+  -- 	end
+  
+  -- 	-- La ultima transicion lleva como output la palabra
+  -- 	if not exists_transition(result, cur_prefix, "__final") then
+  -- 	  local out = word_info.outsym
+  -- 	  table.insert(result.transitions,
+  -- 		       {from=cur_prefix,
+  -- 			 to="__final",
+  -- 			 emission=0,
+  -- 			 prob=1, id="fixed",
+  -- 			 output=out} )
+  -- 	end
+  --       end
+  --     end
+  --   end
 
---   return result
+  --   return result
 end
 
 -- DE MOMENTO ESTA FUNCION SOLO GENERA MODELOS LR CON SKIPS
@@ -950,7 +949,7 @@ function  HMMTrainer.utils.generate_hmm_desc_from_transP(name,
 		       prob     = prob,
 		       emission = emissions[emissid] or 0,
 		       id       = name .. tostring(state) .. "_" .. tostring(deststate)
-		     })
+				  })
 	-- Guardamos las transiciones que llegan al último estado
 	-- (emitirán el output)
 	if deststate == numstates then table.insert(transitions_to_last_state,
@@ -972,7 +971,7 @@ function  HMMTrainer.utils.generate_hmm_desc_from_transP(name,
 		   prob     = 1,
 		   emission = 0,
 		   output   = output,
-		 })
+			      })
     -- el nuevo estado será el final
     fin = name..tostring(numstates+1)
   else

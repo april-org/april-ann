@@ -13,9 +13,10 @@
 -- the void long option "--" can be used to stop option list
 
 -- a lua class:
-class("cmdOpt")
+local cmdopt_methods,
+cmdopt_class_metatable = class("cmdOpt")
 
-function cmdOpt:add_option(option)
+function cmdopt_methods:add_option(option)
   -- option is a table with the following parameters:
   --  index_name -> name of option in result table
   --  description -> useful to generate help description
@@ -75,8 +76,8 @@ end
 -- posix_mode -> true in order to stop
 -- program_name -> a string
 -- argument_description -> string, description of positional arguments
-  -- the "vector part" of tbl are just options to add with add_option
-function cmdOpt:__call(tbl)
+-- the "vector part" of tbl are just options to add with add_option
+function cmdopt_class_metatable:__call(tbl)
   local obj = {
     options       = {}, -- lista de opciones
     short_options = {}, -- diccionario opciones cortas
@@ -97,7 +98,7 @@ function cmdOpt:__call(tbl)
 end
 
 -- cool function to generate the help text
-function cmdOpt:generate_help()
+function cmdopt_methods:generate_help()
   local message = {}
   table.insert(message,"USAGE:\n\t"..self.program_name)
   for i,opt in ipairs(self.options) do
@@ -202,7 +203,7 @@ function cmdOpt:generate_help()
 end
 
 -- auxiliary method
-function cmdOpt:search_long_option(str)
+function cmdopt_methods:search_long_option(str)
   -- prefer exact match
   if self.long_options[str] then
     return self.long_options[str]
@@ -225,7 +226,7 @@ end
 -- main method, returns a string in case of error (error message)
 -- or a table with positinal and rest of arguments
 -- actions are simply executed before return
-function cmdOpt:parse_without_check(arguments)
+function cmdopt_methods:parse_without_check(arguments)
   local arguments = arguments or arg -- arg is the global variable
   local opt_list = {} -- list of options to process
   local result   = {} -- result table
@@ -320,7 +321,7 @@ function cmdOpt:parse_without_check(arguments)
   return result
 end
 
-function cmdOpt:check_args(optargs,initial_values)
+function cmdopt_methods:check_args(optargs,initial_values)
   local initial_values = initial_values or {}
   for _,opt in pairs(self.options) do
     local idx = opt.index_name
@@ -346,7 +347,7 @@ function cmdOpt:check_args(optargs,initial_values)
   return optargs
 end
 
-function cmdOpt:parse_args(arguments)
+function cmdopt_methods:parse_args(arguments)
   local result = self:parse_without_check(arguments)
   self:check_args(result)
   return result
