@@ -92,7 +92,7 @@ Image<T>::~Image() {
 template <typename T>
 Image<T>* Image<T>::crop(int width, int height,
 			 int offset_w, int offset_h) const {
-  april_assert("Cropping region must be contained in source image" &&
+  assert("Cropping region must be contained in source image" &&
 	 (offset_w >= 0 && offset_h >=0 &&
 	  offset_w+width <= this->width && 
 	  offset_h+height <= this->height));
@@ -843,7 +843,7 @@ template <typename T>
 void Image<T>::invert_affine_matrix(float *c, float *dest) const
 {
   float det = c[0]*c[4] - c[1]*c[3];
-  april_assert("Affine matrix has no inverse" && det!=0);
+  assert("Affine matrix has no inverse" && det!=0);
   dest[0] =  c[4]/det;
   dest[1] = -c[1]/det;
   dest[3] = -c[3]/det;
@@ -938,6 +938,44 @@ Image<T> *Image<T>::affine_transform(AffineTransform2D *trans, T default_value,
   return result;
 }
 
+template <typename T>
+Matrix<T> * Image<T>::comb_lineal_forward(int sx, int sy, int ancho, int alto, int miniancho, int minialto, LinearCombConf<T> *conf) {
+
+  using april_utils::max;
+  using april_utils::min;
+  int output_size = miniancho*minialto;
+
+//  printf("Preparing Combination %d\n", conf->patternsize);
+  Matrix<T> *mat = new Matrix<T>(1, output_size);
+ 
+  mat->fill(1);
+
+  //FIXME: This is not working correctly if ancho y alto are not multiples of 2
+  int miny = max(sy-alto/2,0);
+  int maxy = min(sy+alto/2-1, this->height);
+  int minx = max(sx-ancho/2,0);
+  int maxx = min(sx+ancho/2-1, this->width);
+  
+  int dx = (sx-ancho/2);
+  int dy = (sy-alto/2);
+
+  const float th = 1-1e-5 ;
+  int *vec_tuplas = conf->numTuplas + (miny-dy)*ancho -dx;
+  for (int y = miny; y < maxy; ++y,vec_tuplas+=ancho){
+      for (int x = minx; x < maxx; x++){
+          float value = (*this)(x,y);
+          if (value < th) {
+              value = 1.0-value;
+              for (int j = vec_tuplas[x-1];j<vec_tuplas[x];j++) {
+                  int dest = conf->indices[j];
+                  // FIXME sustituir por mat[dest], ahora no funciona
+                  (*mat)(dest) -= value*conf->pesos[j];
+              }
+          }
+      } 
+  }
+  return mat;
+}
 template <typename T>
 Image<T>* Image<T>::substract_image(Image<T> *img, T low, T high) const {
 
