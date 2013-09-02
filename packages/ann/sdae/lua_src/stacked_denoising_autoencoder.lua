@@ -80,6 +80,8 @@ end
 --auxiliar function to generate a replacement
 function get_replacement_dataset(randObject, replacementSize, ...)
   local resul = {}
+
+  local arg = table.pack(...)
   if #arg > 0 then
     local mat = matrix(replacementSize)
     local numPat = arg[1]:numPatterns()
@@ -158,6 +160,7 @@ local function
     local output_dataset = (output_datasets or {})[1]
     -- Generate a replacement of each dataset
     local input_repl_ds, output_repl_ds
+
     if replacement then
       -- if autoencoder, only generate one corpus replacement
       input_repl_ds, output_repl_ds = table.unpack( get_replacement_dataset(shuffle_random, replacement, input_dataset, output_dataset) )
