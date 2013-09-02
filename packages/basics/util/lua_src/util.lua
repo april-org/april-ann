@@ -66,7 +66,8 @@ function class(classname, parentclass)
   if type(parentclass) == "string" then
     parentclass = get_table_from_dotted_string(parentclass)
   end
-  assert(parentclass==nil or is_class(parentclass))
+  assert(parentclass==nil or is_class(parentclass),
+	 "The parentclass must be defined by 'class' function")
   local t = string.tokenize(classname,".")
   --
   local meta_instance = {
@@ -79,8 +80,7 @@ function class(classname, parentclass)
     id         = classname,
   }
   if parentclass then
-    setmetatable(meta_instance.__index,
-		 { __index=getmetatable(parentclass.meta_instance) })
+    setmetatable(meta_instance.__index, parentclass.meta_instance)
   end
   -- 
   current.meta_instance = meta_instance
@@ -117,6 +117,15 @@ function isa( object_instance, base_class_table )
     object_table = t
   end
   return _isa
+end
+
+-- calls the method of the directly super class
+function super(self, methodname, ...)
+  local super_instance = getmetatable(self).__index
+  assert(super_instance, "The given object hasn't a super-class")
+  local aux = super_instance[methodname]
+  assert(aux~=nil, "Method " .. methodname .. " not found")
+  return super_instance[methodname](...)
 end
 
 -- help documentation
