@@ -978,14 +978,16 @@ end
 ---------------------------------------------------------------
 
 function io.uncommented_lines(filename)
-  local f = (filename and io.open(filename, "r")) or io.stdin
+  local f = io.open(filename, "r")
+  if filename~=nil and not f then error("Unable to open " .. filename) end
+  f = f or io.stdin
   return function()
     local line = nil
     repeat
       line = f:read("*l")
     until not line or not string.match(line, "^%s*#.*$") 
     return line
-	 end
+  end
 end
 
 -------------------
