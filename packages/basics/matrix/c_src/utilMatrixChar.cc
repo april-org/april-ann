@@ -23,42 +23,28 @@
 #include "binarizer.h"
 #include "clamp.h"
 #include "matrixFloat.h"
+#include "buffered_gzfile.h"
+#include "buffered_file.h"
+#include "ignore_result.h"
 #include <cmath>
 #include <cstdio>
 
-template class CharAsciiCoder<WriteBufferWrapper>;
-template class CharBinaryCoder<WriteBufferWrapper>;
-template class CharAsciiCoder<WriteFileWrapper>;
-template class CharBinaryCoder<WriteFileWrapper>;
-
-template MatrixChar *readMatrixFromStream(constString &,
-					  CharAsciiExtractor,
-					  CharBinaryExtractor);
-template MatrixChar *readMatrixFromStream(ReadFileStream &,
-					  CharAsciiExtractor,
-					  CharBinaryExtractor);
-template int writeMatrixToStream(MatrixChar *,
-				 WriteBufferWrapper &,
-				 CharAsciiSizer,
-				 CharBinarySizer,
-				 CharAsciiCoder<WriteBufferWrapper>,
-				 CharBinaryCoder<WriteBufferWrapper>,
-				 bool is_ascii);
-template int writeMatrixToStream(MatrixChar *,
-				 WriteFileWrapper &,
-				 CharAsciiSizer,
-				 CharBinarySizer,
-				 CharAsciiCoder<WriteFileWrapper>,
-				 CharBinaryCoder<WriteFileWrapper>,
-				 bool is_ascii);
-
 void writeMatrixCharToFile(MatrixChar *mat,
 			   const char *filename) {
-  WriteFileWrapper wrapper(filename);
-  writeMatrixToStream(mat, wrapper, CharAsciiSizer(), CharBinarySizer(),
-		      CharAsciiCoder<WriteFileWrapper>(),
-		      CharBinaryCoder<WriteFileWrapper>(),
-		      true);
+  if (GZFileWrapper::isGZ(filename)) {
+    BufferedGZFile f(filename, "w");
+    writeMatrixToStream(mat, f, CharAsciiSizer(), CharBinarySizer(),
+			CharAsciiCoder<BufferedGZFile>(),
+			CharBinaryCoder<BufferedGZFile>(),
+			true);
+  }
+  else {
+    BufferedFile f(filename, "w");
+    writeMatrixToStream(mat, f, CharAsciiSizer(), CharBinarySizer(),
+			CharAsciiCoder<BufferedFile>(),
+			CharBinaryCoder<BufferedFile>(),
+			true);
+  }
 }
 
 char *writeMatrixCharToString(MatrixChar *mat,
@@ -73,11 +59,32 @@ char *writeMatrixCharToString(MatrixChar *mat,
   return wrapper.getBufferProperty();
 }
 
+void writeMatrixCharToLuaString(MatrixChar *mat,
+				lua_State *L,
+				bool is_ascii) {
+  WriteLuaBufferWrapper wrapper(L);
+  IGNORE_RESULT(writeMatrixToStream(mat, wrapper,
+				    CharAsciiSizer(),
+				    CharBinarySizer(),
+				    CharAsciiCoder<WriteLuaBufferWrapper>(),
+				    CharBinaryCoder<WriteLuaBufferWrapper>(),
+				    is_ascii));
+  wrapper.finish();
+}
+
 MatrixChar *readMatrixCharFromFile(const char *filename) {
-  ReadFileStream f(filename);
-  return readMatrixFromStream<ReadFileStream,
-			      char>(f, CharAsciiExtractor(),
-				    CharBinaryExtractor());
+  if (GZFileWrapper::isGZ(filename)) {
+    BufferedGZFile f(filename, "r");
+    return readMatrixFromStream<BufferedGZFile,
+				char>(f, CharAsciiExtractor(),
+				      CharBinaryExtractor());
+  }
+  else {
+    BufferedFile f(filename, "r");
+    return readMatrixFromStream<BufferedFile,
+				char>(f, CharAsciiExtractor(),
+				      CharBinaryExtractor());
+  }
 }
 
 MatrixChar *readMatrixCharFromString(constString &cs) {

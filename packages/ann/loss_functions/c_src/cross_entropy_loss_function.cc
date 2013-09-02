@@ -63,6 +63,8 @@ namespace ANN {
   }
   
   float CrossEntropyLossFunction::getAccumLoss() {
+    if (accumulated_loss < 0)
+      ERROR_EXIT(128, "Found negative loss, check if output is log_logistic\n");
     return accumulated_loss/N;
   }
    

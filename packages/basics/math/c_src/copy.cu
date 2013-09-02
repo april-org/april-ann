@@ -42,7 +42,8 @@ cublasStatus_t wrapperCublasCopy(cublasHandle_t &handle,
 				 unsigned int x_inc,
 				 ComplexF *y_mem,
 				 unsigned int y_inc) {
-  return cublasCcopy(handle, N, x_mem, x_inc, y_mem, y_inc);
+  return cublasCcopy(handle, N, reinterpret_cast<const cuComplex*>(x_mem), x_inc,
+                     reinterpret_cast<cuComplex*>(y_mem), y_inc);
 }
 
 template<typename T>

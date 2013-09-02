@@ -38,7 +38,7 @@
 #define LUABIND_GET_OPTIONAL_PARAMETER(i, type, var, default_value) \
   do { \
     int luabind_pos = (i); \
-    if (lua_type(L, luabind_pos) == LUA_TNONE) var = default_value; \
+    if (lua_type(L, luabind_pos) == LUA_TNONE || lua_isnil(L, luabind_pos)) var = default_value; \
     else { \
       if (!lua_is##type(L, luabind_pos)) { \
        lua_pushfstring(L, FUNCTION_NAME "() requires a %s as its %d%s parameter", \

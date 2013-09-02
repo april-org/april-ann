@@ -21,15 +21,60 @@
 #ifndef MATRIX_GENERIC_MATH_TEMPLATES_H
 #define MATRIX_GENERIC_MATH_TEMPLATES_H
 
-#ifndef NO_OMP
-#include <omp.h>
-#endif
 #include "omp_utils.h"
 #include "matrix.h"
 
 #define DEFAULT_N_TH 100
 #define DEFAULT_SIZE_TH 100
 #define DEFAULT_CONTIGUOUS_TH 200
+
+// Auxiliary function template which applies a FUNCTOR REDUCTION over a given
+// matrix, so the functor is called as FUNC(a matrix), and returns a type O,
+// the type of the destination matrix
+template<typename T, typename O, typename FUNC>
+Matrix<O> *applyFunctorOverDimension(FUNC func,
+				     Matrix<T> *orig,
+				     int dim,
+				     Matrix<O> *dest=0) {
+  const int numDim      = orig->getNumDim();
+  const int *matrixSize = orig->getDimPtr();
+  int *result_dims      = new int[numDim];
+  /**** ORIG sliding window ****/
+  int *orig_w_size      = new int[numDim];
+  int *orig_w_num_steps = new int[numDim];
+  for (int i=0; i<dim; ++i) {
+    orig_w_size[i] = 1;
+    result_dims[i] = orig_w_num_steps[i] = matrixSize[i];
+  }
+  result_dims[dim] = 1;
+  orig_w_size[dim] = matrixSize[dim];
+  orig_w_num_steps[dim] = 1;
+  for (int i=dim+1; i<numDim; ++i) {
+    orig_w_size[i] = 1;
+    result_dims[i] = orig_w_num_steps[i] = matrixSize[i];
+  }
+  typename Matrix<T>::sliding_window orig_w(orig,orig_w_size,0,0,orig_w_num_steps,0);
+  Matrix<T> *slice = orig_w.getMatrix();
+  IncRef(slice);
+  /******************************/
+  Matrix<O> *result = dest;
+  if (result == 0) result = new Matrix<O>(numDim, result_dims,
+					  orig->getMajorOrder());
+  else if (!dest->sameDim(result_dims, numDim))
+    ERROR_EXIT(256, "Incorrect size at the given dest matrtix\n");
+  // traverse in row major order
+  for (typename Matrix<O>::iterator it(result->begin());
+       it!=result->end(); ++it) {
+    orig_w.getMatrix(slice);
+    *it = func(slice);
+    orig_w.next();
+  }
+  DecRef(slice);
+  delete[] orig_w_size;
+  delete[] orig_w_num_steps;
+  delete[] result_dims;
+  return result;
+}
 
 // Auxiliary function template which applies a given FUNC object ( implements
 // operator() ) to all the elements of a Matrix, using the best_span_iterator,

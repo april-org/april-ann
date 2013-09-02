@@ -8,6 +8,7 @@ function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
   end
   ann.components.reset_id_counters()
   local c = component_builder_func()
+  if util.is_cuda_available() then c:set_use_cuda(true) end
   trainer = trainable.supervised_trainer(c, ann.loss[loss_name](o), b)
   trainer:build()
   trainer:randomize_weights{ inf = -1, sup = 1, random = rnd }
@@ -54,6 +55,30 @@ for i=2,4 do
 			push( ann.components.bias{ size=o } )
 		      end,
 		      "mse", i, o, b, "DOTPRODUCT + BIAS")
+    end
+  end
+end
+
+----------------------------
+-- DENOISING AUTO-ENCODER --
+----------------------------
+
+for i=2,4 do
+  for o=2,4 do
+    for b=1,4 do
+      check_component(function()
+			return ann.components.stack():
+			push( ann.components.dot_product{ weights="w1",
+							  input=i, output=o } ):
+			push( ann.components.bias{ size=o } ):
+			push( ann.components.actf.logistic() ):
+			push( ann.components.dot_product{ weights="w1",
+							  input=o, output=i,
+							  transpose=true } ):
+			push( ann.components.bias{ size=i } ):
+			push( ann.components.actf.logistic() )
+		      end,
+		      "mse", i, i, b, "DOTPRODUCT + BIAS")
     end
   end
 end

@@ -101,7 +101,6 @@ function interest_points.pointClassifier:__call(ancho, alto, miniancho, minialto
         local y1,y,pesoy = unpack(r_alto[i])
         for j=1,lenr_ancho do
             local x1,x,pesox = unpack(r_ancho[j])
-	    -- printf("x = %3d y = %3d\n",x,y)
             local minipos = (y-1)*miniancho+x -- la posicion x,y en la matriz resultante
             if tlc[minipos] == nil then tlc[minipos] = {} end
             local pos = (y1-1)*ancho+x1
@@ -118,7 +117,7 @@ function interest_points.pointClassifier:__call(ancho, alto, miniancho, minialto
             l[2] = l[2]/total
         end
     end
-
+    
     local obj = { }
     obj.ancho = ancho
     obj.alto = alto
@@ -171,7 +170,7 @@ function interest_points.pointClassifier:applyLinearComb(img, x, y)
         numSteps={1,1},
         defaultValue = self.white, -- pixel blanco
     })
-
+    
     local dslc = dataset.linearcomb(ds,self.tlc)
     return dslc
 end
@@ -313,9 +312,9 @@ function interest_points.sort_by_class(table_points, classes)
 
     local res = {}
     for c = 1, classes do
-        table.insert(res, {})
+      table.insert(res, {})
     end
-
+    
     for _, point in ipairs(table_points) do
         x, y, c = unpack(point)
         table.insert(res[c], {x,y}) 
@@ -325,9 +324,6 @@ function interest_points.sort_by_class(table_points, classes)
 
 
 end
-
-
-
 
 -- Returns two tables wiht the lower and bound points classified
 function interest_points.get_interest_points(img, mlpUppers, mlpLowers) 

@@ -550,6 +550,22 @@ public:
   int putPattern(int index, const T *pat);
 };
 
+/// A specialization of DataSet which takes samples on a defined step size.
+template <typename T>
+class StepDataSet : public DataSet<T> {
+  /// The underlying DataSet.
+  DataSet<T> *ds;
+  /// A MTRand for random selection of pattern components
+  int step;
+public:
+  StepDataSet(DataSet<T> *ds, int step);
+  virtual ~StepDataSet();
+  int numPatterns() { 
+      return (int)ceil((float)ds->numPatterns()/step); }
+  int patternSize() { return ds->patternSize(); }
+  int getPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
+};
 /// A specialization of DataSet for cacheNNLMs training.
 template <typename T>
 class CacheDataSet : public DataSet<T> {

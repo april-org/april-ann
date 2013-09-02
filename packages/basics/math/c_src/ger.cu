@@ -36,7 +36,7 @@ cublasStatus_t wrapperCublasGer(cublasHandle_t &handle,
 				unsigned int y_inc,
 				float *a_mem,
 				unsigned int a_inc) {
-  return cublasSger(handle, m, n, &alpha, x_mem, x_inc,
+  return cublasSger(handle, m, n, alpha, x_mem, x_inc,
 		    y_mem, y_inc,
 		    a_mem, a_inc);
 }
@@ -50,9 +50,7 @@ cublasStatus_t wrapperCublasGer(cublasHandle_t &handle,
 				unsigned int y_inc,
 				ComplexF *a_mem,
 				unsigned int a_inc) {
-  return cublasCger(handle, m, n, &alpha, x_mem, x_inc,
-		    y_mem, y_inc,
-		    a_mem, a_inc);
+  ERROR_EXIT(256, "Ger operation not implemented in CUDA\n");
 }
 #endif
 

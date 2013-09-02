@@ -2,7 +2,7 @@
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
- * Copyright 2012, Salvador España-Boquera
+ * Copyright 2013, Francisco Zamora-Martinez
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
@@ -357,11 +357,8 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
   constString cs;
   LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("ascii"));
   bool is_ascii = (cs == "ascii");
-  int len;
-  char *buffer = writeMatrixComplexFToString(obj, is_ascii, len);
-  lua_pushlstring(L,buffer,len);
-  LUABIND_RETURN_FROM_STACK(-1);
-  delete[] buffer;
+  writeMatrixComplexFToLuaString(obj, L, is_ascii);
+  LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
 
@@ -628,9 +625,12 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 		    obj->getNumDim(), coords_len, sizes_len);
   coords = new int[coords_len];
   sizes  = new int[sizes_len];
-  LUABIND_TABLE_TO_VECTOR(1, int, coords, coords_len);
+  LUABIND_TABLE_TO_VECTOR_SUB1(1, int, coords, coords_len);
   LUABIND_TABLE_TO_VECTOR(2, int, sizes,  sizes_len);
-  for (int i=0; i<coords_len; ++i) --coords[i];
+  for (int i=0; i<sizes_len; ++i)
+    if (coords[i] < 0 || sizes[i] < 1 ||
+	sizes[i]+coords[i] > obj->getDimSize(i))
+      LUABIND_FERROR1("Incorrect size or coord at position %d\n", i+1);
   LUABIND_GET_OPTIONAL_PARAMETER(3, bool, clone, false);
   MatrixComplexF *obj2 = new MatrixComplexF(obj, coords, sizes, clone);
   LUABIND_RETURN(MatrixComplexF, obj2);

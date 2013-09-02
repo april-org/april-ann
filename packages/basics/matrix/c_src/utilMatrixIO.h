@@ -21,33 +21,17 @@
  */
 #ifndef UTILMATRIXIO_H
 #define UTILMATRIXIO_H
-#include "read_file_stream.h"
+#include "constString.h"
 #include "binarizer.h"
 #include "error_print.h"
+extern "C" {
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
+}
 #include <cmath>
 #include <cstdio>
-
-class WriteFileWrapper {
-  int total_bytes;
-  FILE *f;
-public:
-  WriteFileWrapper(const char *path) :
-  total_bytes(0),
-  f(fopen(path, "w")) {
-    if (f == 0) ERROR_EXIT1(256, "Unable to open file %s\n", path);
-  }
-  WriteFileWrapper(FILE *f) : f(f) { }
-  ~WriteFileWrapper() { fclose(f); }
-  void printf(const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    total_bytes += vfprintf(f, format, args);
-    va_end(args);
-  }
-  void setExpectedSize(int sz) { }
-  int getTotalBytes() const { return total_bytes; }
-};
-
+#include <cstring>
 class WriteBufferWrapper {
   char *buffer;
   char *pos;
@@ -60,6 +44,10 @@ public:
     pos += vsprintf(pos, format, args);
     va_end(args);
   }
+  void write(const char *ptr, size_t len) {
+    memcpy(pos, ptr, len);
+    pos += len;
+  }
   void setExpectedSize(int sz) {
     buffer = new char[sz];
     pos = buffer;
@@ -68,6 +56,41 @@ public:
   char *getBufferProperty() { char *aux = buffer; buffer = 0; return aux; }
 };
 
+class WriteLuaBufferWrapper {
+  lua_State *L;
+  luaL_Buffer lua_buffer;
+  char *buffer_ptr;
+  int total_bytes;
+public:
+  WriteLuaBufferWrapper(lua_State *L) : L(L), buffer_ptr(0), total_bytes(0) {
+    luaL_buffinit(L, &lua_buffer);
+  }
+  ~WriteLuaBufferWrapper() { }
+  void printf(const char *format, ...) {
+    april_assert(buffer_ptr != 0);
+    va_list args;
+    va_start(args, format);
+    int len = vsprintf(buffer_ptr, format, args);
+    if (len < 0) ERROR_EXIT(256, "Problem creating auxiliary buffer\n");
+    va_end(args);
+    total_bytes += len;
+    buffer_ptr  += len;
+  }
+  void write(const char *ptr, size_t len) {
+    memcpy(buffer_ptr, ptr, len);
+    total_bytes += len;
+    buffer_ptr  += len;
+  }
+  void setExpectedSize(int sz) {
+    buffer_ptr = luaL_prepbuffsize(&lua_buffer, sz);
+    if (buffer_ptr == 0) ERROR_EXIT(256, "Impossible to get the buffer\n");
+  }
+  int getTotalBytes() const { return total_bytes; }
+  void finish() {
+    luaL_addsize(&lua_buffer, total_bytes);
+    luaL_pushresult(&lua_buffer);
+  }
+};
 
 /*** The ASCII or BINARY extractor are like this functor struct:
 struct DummyAsciiExtractor {
@@ -93,7 +116,8 @@ template <typename StreamType, typename MatrixType,
 Matrix<MatrixType>*
 readMatrixFromStream(StreamType &stream,
 		     AsciiExtractFunctor ascii_extractor,
-		     BinaryExtractorFunctor bin_extractor) {
+		     BinaryExtractorFunctor bin_extractor,
+		     const char *given_order=0) {
   
   constString line,format,order,token;
   // First we read the matrix dimensions
@@ -128,15 +152,20 @@ readMatrixFromStream(StreamType &stream,
   line = stream.extract_u_line();
   format = line.extract_token();
   if (!format) {
-    fprintf(stderr,"impossible to read format token\n");
+    ERROR_PRINT("impossible to read format token\n");
     return 0;
   }
   order = line.extract_token();
+  if (given_order != 0) order = given_order;
   if (pos_comodin == -1) { // Normal version
     if (!order || order=="row_major")
       mat = new Matrix<MatrixType>(n,dims);
     else if (order == "col_major")
       mat = new Matrix<MatrixType>(n,dims,CblasColMajor);
+    else {
+      ERROR_PRINT("Impossible to determine the order\n");
+      return 0;
+    }
     int i=0;
     typename Matrix<MatrixType>::iterator data_it(mat->begin());
     if (format == "ascii") {

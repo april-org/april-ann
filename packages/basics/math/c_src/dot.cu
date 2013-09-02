@@ -48,11 +48,7 @@ cublasStatus_t wrapperCublasDot(cublasHandle_t &handle,
 				const ComplexF *y_mem,
 				unsigned int y_inc,
 				ComplexF *ret) {
-  return cublasScdotu(handle,
-		      size,
-		      x_mem, x_inc,
-		      y_mem, y_inc,
-		      ret);
+  ERROR_EXIT(256, "Dot product for complex numbers not implemented with CUDA\n");
 }
 
 #endif

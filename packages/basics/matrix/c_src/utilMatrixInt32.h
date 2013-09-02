@@ -70,7 +70,7 @@ template<typename StreamType>
 struct Int32AsciiCoder {
   // puts to the stream the given value
   void operator()(const int32_t &value, StreamType &stream) {
-    stream.printf("%10d", value);
+    stream.printf("%d", value);
   }
 };
 
@@ -93,6 +93,7 @@ struct Int32BinaryCoder {
 void writeMatrixInt32ToFile(MatrixInt32 *mat, const char *filename,
 			    bool is_ascii);
 char *writeMatrixInt32ToString(MatrixInt32 *mat, bool is_ascii, int &len);
+void writeMatrixInt32ToLuaString(MatrixInt32 *mat, lua_State *L, bool is_ascii);
 MatrixInt32 *readMatrixInt32FromFile(const char *filename);
 MatrixInt32 *readMatrixInt32FromString(constString &cs);
 

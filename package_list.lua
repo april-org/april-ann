@@ -7,7 +7,7 @@ return {
   "matrix",
   "random",
   "cmdOpt",
-  --   "profiler",
+  "profiler",
   "math",
   "gzio",
   "matlab",
@@ -23,7 +23,7 @@ return {
   "sdae",
 
   -- LANGUAGE MODELS
---  "fnnlm",
+  --  "fnnlm",
   
   -- IMAGE HANDLERS
   "image",
@@ -39,6 +39,6 @@ return {
   --   --"libtiff",
   
   -- HMMs
-   "hmm_trainer",
-   "rates",
- }
+  "hmm_trainer",
+  "rates",
+}

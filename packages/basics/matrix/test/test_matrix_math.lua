@@ -14,15 +14,13 @@ ascii col_major
 
 c = a*b
 
-print("= a")
-print(a)
-print("= b")
-print(b)
-print("= a*b = " .. 1*1+2*4+3*7)
-print(c)
+assert(c:get(1) == 1*1+2*4+3*7)
 
-print("= b*a")
-print(b*a)
+assert((b*a):equals(matrix.col_major(3,3,{
+				       1,  2,  3,
+				       4,  8, 12,
+				       7, 14, 21,
+					 })))
 
 d = matrix.fromString[[
 3 3
@@ -32,62 +30,86 @@ ascii
 7 8 9
 ]]
 
-print("= d")
-print(d)
-print("= d:clone('col_major')")
-print(d:clone("col_major"))
-print("= d:transpose()")
-print(d:transpose())
-
+assert(d:clone("col_major"):equals(matrix.col_major(3,3,{
+						      1, 2, 3,
+						      4, 5, 6,
+						      7, 8, 9,
+							})))
+assert(d:transpose():equals(matrix(3,3,{
+				     1, 4, 7,
+				     2, 5, 8,
+				     3, 6, 9,
+				       })))
 e = d * d 
-print("= d:mul(d)")
-print(e)
+assert(e:equals(matrix(3,3,{
+			 30,   36,  42,
+			 66,   81,  96,
+			 102, 126, 150,
+			   })))
 
 d = d:clone("col_major")
 e = d * d
-print("= d:mul(d) in col_major")
-print(e)
+assert(e:equals(matrix.col_major(3,3,{
+				   30,   36,  42,
+				   66,   81,  96,
+				   102, 126, 150,
+				     })))
 
 h = d:slice({2,2},{2,2})
-print("= d:slice({2,2},{2,2},true) in col_major")
-print(h)
+assert(h:equals(matrix.col_major(2,2,{
+				   5, 6,
+				   8, 9,
+				     })))
 
 e = h * h
-print("= h:mul(h)")
-print(e)
+assert(e:equals(matrix.col_major(2,2,{
+				    73,  84,
+				   112, 129,
+				     })))
 
 l = matrix.col_major(2,2):fill(4) + h
-print(l)
+assert(l:equals(matrix.col_major(2,2,{
+				    9, 10,
+				   12, 13,
+				     })))
 
-print("= g")
 g = matrix(3,2,{1,2,
 		3,4,
 		5,6})
-print(g)
-print("= g:transpose():clone('col_major'))")
-print(g:transpose():clone("col_major"))
-print("= g:transpose():clone('col_major'):clone('row_major')")
-print(g:transpose():clone("col_major"):clone("row_major"))
-
-print(g)
-
-print(g:transpose())
+assert(g:transpose():clone("col_major"):equals(matrix.col_major(2,3,{
+								  1, 3, 5,
+								  2, 4, 6,
+								    })))
+assert(g:transpose():clone("col_major"):clone("row_major"):equals(matrix(2,3,{
+									   1, 3, 5,
+									   2, 4, 6,
+									     })))
+assert(g:transpose():equals(matrix(2,3,{
+				     1, 3, 5,
+				     2, 4, 6,
+				       })))
 j = g:transpose() * g
-print("= g:transpose():mul(g)")
-print(j)
+assert(j:equals(matrix(2,2,{
+			 35, 44,
+			 44, 56,
+			   })))
 
 j = matrix(2,2):gemm{
   trans_A=true, trans_B=false,
   alpha=1.0, A=g, B=g,
   beta=0.0
 }
-print("= gemm{ ... }")
-print(j)
+assert(j:equals(matrix(2,2,{
+			 35, 44,
+			 44, 56,
+			   })))
 
-print("= col_major gemm{ ... }")
 j = matrix.col_major(2,2):gemm{
   trans_A=true, trans_B=false,
   alpha=1.0, A=g:clone("col_major"), B=g:clone("col_major"),
   beta=0.0
 }
-print(j)
+assert(j:equals(matrix.col_major(2,2,{
+				   35, 44,
+				   44, 56,
+				     })))

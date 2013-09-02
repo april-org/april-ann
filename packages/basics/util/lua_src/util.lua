@@ -1,5 +1,14 @@
 local COLWIDTH=70
 
+function cpp_class_binding_extension(class_table, key, value)
+  if class_table.meta_instance and
+  type(class_table.meta_instance.__index) == "table" then
+    class_table.meta_instance.__index[key] = value
+  else
+    error("The table is not a CPP class binding")
+  end
+end
+
 function get_table_from_dotted_string(dotted_string, create, basetable)
   local create    = create or false
   local basetable = basetable or _G
@@ -17,9 +26,12 @@ end
 
 function check_version(major_num,minor_num)
   local major_v,minor_v = util.version()
-  assert(major_num == major_v and minor_num == minor_v,
-	 string.format("Incorrect version number, expected %d.%d, found %d.%d",
-		       major_num, minor_num, major_v, minor_v))
+  if major_num == major_v and minor_num == minor_v then return true
+  else
+    fprintf(io.stderr,
+	    "Incorrect version number, expected %d.%d, found %d.%d",
+	    major_num, minor_num, major_v, minor_v)
+  end
 end
 
 -- makes a FAKE wrapper around a class, so you can re-implement the functions
@@ -42,7 +54,7 @@ function class_wrapper(obj,wrapper)
       end
     end
   end
-  return wrapper
+  return class_instance(wrapper,getmetatable(obj))
 end
 
 -- Convert a table in a class, and it receives an optional parent class to
@@ -434,14 +446,14 @@ end
 function april_print_script_header(arg,file)
   local file = file or io.stdout
   fprintf(file,"# HOST:\t %s\n", (io.popen("hostname", "r"):read("*l")))
-  fprintf(file,"# DATE:\t %s\n", (io.popen("date", "r"):read("*l")))
+  fprintf(file,"# DATE:\t %s\n", os.date())
   fprintf(file,"# CMD: \t %s %s\n", arg[0], table.concat(arg, " "))
 end
 
 function map(func, ...)
   if not func then func = function(v) return v end end
   local t,key,value = {}
-  for key,value in unpack(arg) do
+  for key,value in ... do
     if not value then key,value = #t+1,key end
     local r = func(value)
     if r then t[key] = r end
@@ -452,7 +464,7 @@ end
 function map2(func, ...)
   if not func then func = function(k,v) return v end end
   local t,key,value = {}
-  for key,value in unpack(arg) do
+  for key,value in ... do
     if not value then key,value = #t+1,key end
     local r = func(key,value)
     if r then t[key] = r end
@@ -465,7 +477,7 @@ function reduce(func, initial_value, ...)
   assert(initial_value ~= nil,
 	 "Needs an initial_value as second argument")
   local accum,key,value = initial_value
-  for key,value in unpack(arg) do
+  for key,value in ... do
     accum = func(accum, value or key)
   end
   return accum
@@ -473,7 +485,7 @@ end
 
 function apply(func, ...)
   if not func then func = function() end end
-  for key,value in unpack(arg) do
+  for key,value in ... do
     func(key,value)
   end
 end
@@ -491,7 +503,7 @@ function safe_call(f, env, ...)
   env.io = { stderr = io.stderr,
 	     stdout = io.stdout }
   setfenv(f, env)
-  local status,result_or_error = pcall(f, unpack(arg))
+  local status,result_or_error = pcall(f, ...)
   if not status then
     print(result_or_error)
     error("Incorrect function call")
@@ -501,7 +513,7 @@ end
 
 function glob(...)
   local r = {}
-  for i,expr in ipairs(arg) do
+  for i,expr in ipairs(table.pack(...)) do
     local f = io.popen("ls -d "..expr)
     for i in f:lines() do table.insert(r,i) end
     f:close()
@@ -524,14 +536,15 @@ function clrscr()
 end
 
 function printf(...)
-  io.write(string.format(unpack(arg)))
+  io.write(string.format(...))
 end
 
 function fprintf(file,...)
-  file:write(string.format(unpack(arg)))
+  file:write(string.format(...))
 end
 
 function range(...)
+  local arg = table.pack(...)
   local inf,sup,step = arg[1],arg[2],arg[3] or 1
   local i = inf - step
   return function()
@@ -598,18 +611,20 @@ function get_table_fields(params, t)
 end
 
 function get_table_fields_ipairs(...)
+  local arg = table.pack(...)
   return function(t)
     local ret = {}
     for i,v in ipairs(t) do
-      table.insert(ret, get_table_fields(unpack(arg), v))
+      table.insert(ret, get_table_fields(table.unpack(arg), v))
     end
     return ret
 	 end
 end
 
 function get_table_fields_recursive(...)
+  local arg = table.pack(...)
   return function(t)
-    return get_table_fields(unpack(arg), t)
+    return get_table_fields(table.unpack(arg), t)
   end
 end
 
@@ -631,9 +646,11 @@ function math.clamp(value,lower,upper)
 end
 
 function math.median(t, ini, fin)
-  local mpos   = math.floor(#t/2)
-  local median = t[mpos]
-  if #t % 2 ~= 0 then
+  local ini,fin = ini or 1, fin or #t
+  local len     = fin-ini+1
+  local mpos    = math.floor((ini+fin-1)/2)
+  local median  = t[mpos]
+  if len % 2 ~= 0 then
     median = (median + t[mpos+1])/2
   end
   return median
@@ -641,28 +658,26 @@ end
 
 -- calcula la media de una tabla, o subtabla
 function math.mean(t, ini, fin)
-   local total=0
-   local suma=0
-   if not ini then ini = 1 end
-   if not fin then fin = #t end
-   total = fin - ini + 1
-   for i=ini,fin do
-      suma = suma + t[i]
-   end
-   return suma/total,total
+  local ini,fin = ini or 1, fin or #t
+  local total=0
+  local suma=0
+  total = fin - ini + 1
+  for i=ini,fin do
+    suma = suma + t[i]
+  end
+  return suma/total,total
 end
 
 -- calcula la desviacion tipica de una tabla o subtabla
 function math.std(t, ini, fin)
-   local mean,total = math.mean(t, ini, fin)
-   local suma_sqr=0
-   if not ini then ini = 1 end
-   if not fin then fin = #t end
-   for i=ini,fin do
-      local value = mean - t[i]
-      suma_sqr = suma_sqr + value*value
-   end
-   return math.sqrt(suma_sqr/(total-1)),total
+  local ini,fin = ini or 1, fin or #t
+  local mean,total = math.mean(t, ini, fin)
+  local suma_sqr=0
+  for i=ini,fin do
+    local value = mean - t[i]
+    suma_sqr = suma_sqr + value*value
+  end
+  return math.sqrt(suma_sqr/(total-1)),total
 end
 
 ---------------------------------------------------------------
@@ -888,24 +903,20 @@ end
 -----
 
 function table.tostring(t)
-  local out = {"{"}
+  local out = {}
   for i,v in pairs(t) do
     local key
-    if type(i)=="number" or tonumber(i) then
-      table.insert(out,"["..i.."]".."=")
-    else
-      table.insert(out,string.format("[%q]=",i))
+    local value
+    if tonumber(i) then key = "["..i.."]".."="
+    else key = string.format("[%q]=",i)
     end
-    if type(v) == "table" then
-      table.insert(out,"\n"..table.tostring(v))
-    elseif type(v) == "string" then
-      table.insert(out,string.format("%q",v))
-    else
-      table.insert(out,tostring(v))
+    if type(v) == "table" then value = "\n"..table.tostring(v)
+    elseif type(v) == "string" then value = string.format("%q",v)
+    else value = tostring(v)
     end
+    table.insert(out, key .. value)
   end
-  table.insert(out,"}\n")
-  return table.concat(out,",")
+  return "{\n"..table.concat(out,",").."\n}"
 end
 
 -- devuelve el valor maximo de una tabla

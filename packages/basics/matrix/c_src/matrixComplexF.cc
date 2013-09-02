@@ -121,6 +121,9 @@ Matrix<ComplexF> *Matrix<ComplexF>::cmul(const Matrix<ComplexF> *other) {
   if (use_cuda)
     ERROR_PRINT("Warning, the cmul operation is not implemented for CUDA\n");
   MatrixComplexF *result = new MatrixComplexF(numDim, matrixSize, major_order);
+#ifdef USE_CUDA
+  result->setUseCuda(use_cuda);
+#endif
   MatrixComplexF::const_iterator this_it(this->begin());
   MatrixComplexF::const_iterator other_it(other->begin());
   MatrixComplexF::iterator result_it(result->begin());

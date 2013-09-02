@@ -293,12 +293,15 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 ///@param filename Es un string que indica el nombre del fichero.
 //DOC_END
 {
-  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_CHECK_ARGN(<=, 2);
   LUABIND_CHECK_PARAMETER(1, string);
   const char *filename;
+  const char *order;
   LUABIND_GET_PARAMETER(1,string,filename);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, string, order, 0);
   MatrixFloat *obj;
-  if ((obj = readMatrixFloatFromFile(filename)) == 0)
+  if ((obj = readMatrixFloatFromFile(filename, order)) == 0)
     LUABIND_ERROR("bad format");
   else LUABIND_RETURN(MatrixFloat,obj);
 }
@@ -363,11 +366,8 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   constString cs;
   LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("ascii"));
   bool is_ascii = (cs == "ascii");
-  int len;
-  char *buffer = writeMatrixFloatToString(obj, is_ascii, len);
-  lua_pushlstring(L,buffer,len);
-  LUABIND_RETURN_FROM_STACK(-1);
-  delete[] buffer;
+  writeMatrixFloatToLuaString(obj, L, is_ascii);
+  LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
 
@@ -727,10 +727,13 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 		    obj->getNumDim(), coords_len, sizes_len);
   coords = new int[coords_len];
   sizes  = new int[sizes_len];
-  LUABIND_TABLE_TO_VECTOR(1, int, coords, coords_len);
+  LUABIND_TABLE_TO_VECTOR_SUB1(1, int, coords, coords_len);
   LUABIND_TABLE_TO_VECTOR(2, int, sizes,  sizes_len);
-  for (int i=0; i<coords_len; ++i) --coords[i];
   LUABIND_GET_OPTIONAL_PARAMETER(3, bool, clone, false);
+  for (int i=0; i<sizes_len; ++i)
+    if (coords[i] < 0 || sizes[i] < 1 ||
+	sizes[i]+coords[i] > obj->getDimSize(i))
+      LUABIND_FERROR1("Incorrect size or coord at position %d\n", i+1);
   MatrixFloat *obj2 = new MatrixFloat(obj, coords, sizes, clone);
   LUABIND_RETURN(MatrixFloat, obj2);
   delete[] coords;
@@ -840,17 +843,47 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 
 //BIND_METHOD MatrixFloat min
   {
-    int arg_min, raw_pos;
-    LUABIND_RETURN(float, obj->min(arg_min, raw_pos));
-    LUABIND_RETURN(int, arg_min+1);
+    LUABIND_CHECK_ARGN(>=,0);
+    LUABIND_CHECK_ARGN(<=,2);
+    int argn = lua_gettop(L);
+    if (argn > 0) {
+      int dim;
+      MatrixFloat *dest;
+      LUABIND_GET_PARAMETER(1, int, dim);
+      LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
+      if (dim < 1 || dim > obj->getNumDim())
+	LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
+			dim, obj->getNumDim());
+      LUABIND_RETURN(MatrixFloat, obj->min(dim-1, dest));
+    }
+    else {
+      int arg_min, raw_pos;
+      LUABIND_RETURN(float, obj->min(arg_min, raw_pos));
+      LUABIND_RETURN(int, arg_min+1);
+    }
   }
 //BIND_END
 
 //BIND_METHOD MatrixFloat max
   {
-    int arg_max, raw_pos;
-    LUABIND_RETURN(float, obj->max(arg_max, raw_pos));
-    LUABIND_RETURN(int, arg_max+1);
+    LUABIND_CHECK_ARGN(>=,0);
+    LUABIND_CHECK_ARGN(<=,2);
+    int argn = lua_gettop(L);
+    if (argn > 0) {
+      int dim;
+      MatrixFloat *dest;
+      LUABIND_GET_PARAMETER(1, int, dim);
+      LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
+      if (dim < 1 || dim > obj->getNumDim())
+	LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
+			dim, obj->getNumDim());
+      LUABIND_RETURN(MatrixFloat, obj->max(dim-1, dest));
+    }
+    else {
+      int arg_max, raw_pos;
+      LUABIND_RETURN(float, obj->max(arg_max, raw_pos));
+      LUABIND_RETURN(int, arg_max+1);
+    }
   }
 //BIND_END
 
@@ -1015,15 +1048,21 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 
 //BIND_METHOD MatrixFloat sum
 {
+  LUABIND_CHECK_ARGN(>=, 0);
+  LUABIND_CHECK_ARGN(<=, 2);
   int argn = lua_gettop(L); // number of arguments
-  if (argn == 1) {
+  if (argn >= 1) {
     int dim;
+    MatrixFloat *dest;
     LUABIND_GET_PARAMETER(1, int, dim);
-    MatrixFloat *result = obj->sum(dim-1);
+    LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
+    if (dim < 1 || dim > obj->getNumDim())
+      LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
+		      dim, obj->getNumDim());
+    MatrixFloat *result = obj->sum(dim-1, dest);
     LUABIND_RETURN(MatrixFloat, result);
   }
-  else if (argn == 0) LUABIND_RETURN(float, obj->sum());
-  else LUABIND_ERROR("Incorrect number of arguments");
+  else LUABIND_RETURN(float, obj->sum());
 }
 //BIND_END
 
@@ -1242,6 +1281,12 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 //BIND_METHOD MatrixFloat is_contiguous
 {
   LUABIND_RETURN(bool, obj->getIsContiguous());
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat inv
+{
+  LUABIND_RETURN(MatrixFloat, obj->inv());
 }
 //BIND_END
 

@@ -13,7 +13,7 @@ matrixComplex.meta_instance.__tostring = function(self)
 				 table.concat(coords, ",")))
     end
     table.insert(row, string.format("%12s",
-				    tostring(self:get(unpack(coords)))))
+				    tostring(self:get(table.unpack(coords)))))
     local j=#dims+1
     repeat
       j=j-1
@@ -71,17 +71,12 @@ matrixComplex.meta_instance.__unm = function(op)
   return new_mat:scal(-1)
 end
 
-function matrixComplex.loadfile(filename)
-  local f = io.open(filename,"r") or error("Unable to open " .. filename)
-  local b = f:read("*a")
-  f:close()
-  return matrixComplex.fromString(b)
+function matrixComplex.loadfile()
+  error("Deprecated, use fromFilename method")
 end
 
-function matrixComplex.savefile(matrixComplex,filename,format)
-  local f = io.open(filename,"w") or error("Unable to open " .. filename)
-  f:write(matrixComplex:toString(format or "ascii"))
-  f:close()
+function matrixComplex.savefile()
+  error("Deprecated, use toFilename method")
 end
 
 -----------------------------------------------------------------------------
@@ -165,33 +160,6 @@ april_set_doc("matrixComplex.toFilename", {
 		  "A filename path.",
 		  { "An string with the format: ascii or binary [optional].",
 		    "By default is ascii." },
-		}, })
-
-april_set_doc("matrixComplex.loadfile", {
-		class = "function", summary = "constructor",
-		description ={
-		  "Loads a matrixComplex from a filename.",
-		  "This function supports GZ files, but needs",
-		  "to load the matrixComplex as string before parsing it.",
-		},
-		params = {
-		  "A filename path.",
-		},
-		outputs = { "A matrixComplex instantiated object" }, })
-
-april_set_doc("matrixComplex.savefile", {
-		class = "function",
-		summary = "It allows to store a matrixComplex in a file.",
-		description ={
-		  "It allows to store a matrixComplex in a file.",
-		  "This function supports GZ files, but needs",
-		  "to save the matrixComplex as string before parsing it.",
-		},
-		params = {
-		  "A matrixComplex object.",
-		  "A filename path.",
-		  { "An string with the format: ascii or binary [optional].",
-		    "By default is binary." },
 		}, })
 
 april_set_doc("matrixComplex.fromString", {

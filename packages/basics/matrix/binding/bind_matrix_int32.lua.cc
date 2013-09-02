@@ -251,11 +251,8 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
   constString cs;
   LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("ascii"));
   bool is_ascii = (cs == "ascii");
-  int len;
-  char *buffer = writeMatrixInt32ToString(obj, is_ascii, len);
-  lua_pushlstring(L,buffer,len);
-  LUABIND_RETURN_FROM_STACK(-1);
-  delete[] buffer;
+  writeMatrixInt32ToLuaString(obj, L, is_ascii);
+  LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
 
@@ -477,9 +474,12 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 		    obj->getNumDim(), coords_len, sizes_len);
   coords = new int[coords_len];
   sizes  = new int[sizes_len];
-  LUABIND_TABLE_TO_VECTOR(1, int, coords, coords_len);
+  LUABIND_TABLE_TO_VECTOR_SUB1(1, int, coords, coords_len);
   LUABIND_TABLE_TO_VECTOR(2, int, sizes,  sizes_len);
-  for (int i=0; i<coords_len; ++i) --coords[i];
+  for (int i=0; i<sizes_len; ++i)
+    if (coords[i] < 0 || sizes[i] < 1 ||
+	sizes[i]+coords[i] > obj->getDimSize(i))
+      LUABIND_FERROR1("Incorrect size or coord at position %d\n", i+1);
   LUABIND_GET_OPTIONAL_PARAMETER(3, bool, clone, false);
   MatrixInt32 *obj2 = new MatrixInt32(obj, coords, sizes, clone);
   LUABIND_RETURN(MatrixInt32, obj2);

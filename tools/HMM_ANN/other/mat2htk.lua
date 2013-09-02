@@ -22,7 +22,7 @@ for mat_filename in io.lines(index_list) do
   -- cargamos el dataset correspondiente a la frase actual
   -- local basename = string.remove_extension(string.basename(mat_filename))
   print ("# loading matrix", mat_filename)
-  local mat = matrix.loadfile(mat_filename)
+  local mat = matrix.fromFilename(mat_filename)
   local basename = string.basename(mat_filename)
   local extension = string.get_extension(basename)
   basename  = string.remove_extension(basename)

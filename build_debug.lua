@@ -1,3 +1,4 @@
+dofile("binding/formiga.lua")
 formiga.build_dir = "build_debug"
 
 luapkg{
@@ -13,7 +14,7 @@ luapkg{
     extra_flags={
       "-pg",
       "-DNO_POOL",
-      "-fopenmp",
+      "-DNO_OMP",
     },
     extra_libs={
       "-pg",
@@ -22,8 +23,8 @@ luapkg{
       "-latlas",
       "-L/opt/lib",
       "-lgfortran",
-      "-fopenmp",
       "-rdynamic",
+      "-llapack_atlas",
     },
 
   },

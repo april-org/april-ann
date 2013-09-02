@@ -141,7 +141,7 @@ for line in io.lines(file_name_frames) do
     tbl = segmentation.crop(tbl, espace_index, espace_index)
     tbl = segmentation.save_hmm_seq(tbl, numframes, dest_numstates)
     m = tab2mat(tbl)
-    matrix.savefile(m,destiny_directory .. "/" .. filename,"ascii")
+    m:toFilename(destiny_directory .. "/" .. filename,"ascii")
   end
   --os.exit()
 end

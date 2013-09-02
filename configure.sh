@@ -1,4 +1,4 @@
-export LUA_DIR="`pwd`"/lua/lua-5.1.4
+export LUA_DIR="`pwd`"/lua/lua-5.2.2
 make -C $LUA_DIR
 make -C $LUA_DIR install
 make -C "`pwd`"/lua/lstrip

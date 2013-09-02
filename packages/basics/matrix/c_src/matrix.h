@@ -30,7 +30,6 @@
 #include "wrapper.h"
 #include "gpu_mirrored_memory_block.h"
 #include "referenced.h"
-#include "constants.h"
 #include "clamp.h"
 #include "aligned_memory.h"
 #include "swap.h"
@@ -523,7 +522,7 @@ public:
   T sum() const;
 
   // the argument indicates over which dimension the sum must be performed
-  Matrix<T>* sum(int dim);
+  Matrix<T>* sum(int dim, Matrix<T> *dest=0);
 
   /**** COMPONENT WISE OPERATIONS ****/
   bool equals(const Matrix<T> *other, float epsilon) const;
@@ -580,11 +579,18 @@ public:
   T min(int &arg_min, int &arg_min_raw_pos) const;
   T max(int &arg_max, int &arg_max_raw_pos) const;
   void minAndMax(T &min, T &max) const;
+  
+  // Min and max over given dimension
+  Matrix<T> *min(int dim, Matrix<T> *dest=0);
+  Matrix<T> *max(int dim, Matrix<T> *dest=0);
 
   Matrix<T> *maxSelDim(const int dim,
 		       IntGPUMirroredMemoryBlock *raw_positions=0,
 		       int shift = 0) const;
   
+  /**** LAPACK OPERATIONS ****/
+  Matrix<T> *inv();
+
 private:
   void allocate_memory(int size);
   void release_memory();

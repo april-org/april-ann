@@ -21,8 +21,8 @@
 #ifndef REFERENCED_H
 #define REFERENCED_H
 
-#define IncRef(x) x->incRef()
-#define DecRef(x) if (x->decRef()) delete x
+#define IncRef(x) (x)->incRef()
+#define DecRef(x) if ((x)->decRef()) delete (x)
 #define AssignRef(dest,ref) do {					\
     if ((dest)!=0) DecRef((dest));					\
     (dest) = (ref);							\

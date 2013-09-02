@@ -23,44 +23,30 @@
 #include "binarizer.h"
 #include "clamp.h"
 #include "matrixFloat.h"
+#include "buffered_gzfile.h"
+#include "buffered_file.h"
+#include "ignore_result.h"
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 
-template class Int32AsciiCoder<WriteBufferWrapper>;
-template class Int32BinaryCoder<WriteBufferWrapper>;
-template class Int32AsciiCoder<WriteFileWrapper>;
-template class Int32BinaryCoder<WriteFileWrapper>;
-
-template MatrixInt32 *readMatrixFromStream(constString &,
-					   Int32AsciiExtractor,
-					   Int32BinaryExtractor);
-template MatrixInt32 *readMatrixFromStream(ReadFileStream &,
-					   Int32AsciiExtractor,
-					   Int32BinaryExtractor);
-template int writeMatrixToStream(MatrixInt32 *,
-				 WriteBufferWrapper &,
-				 Int32AsciiSizer,
-				 Int32BinarySizer,
-				 Int32AsciiCoder<WriteBufferWrapper>,
-				 Int32BinaryCoder<WriteBufferWrapper>,
-				 bool is_ascii);
-template int writeMatrixToStream(MatrixInt32 *,
-				 WriteFileWrapper &,
-				 Int32AsciiSizer,
-				 Int32BinarySizer,
-				 Int32AsciiCoder<WriteFileWrapper>,
-				 Int32BinaryCoder<WriteFileWrapper>,
-				 bool is_ascii);
-
 void writeMatrixInt32ToFile(MatrixInt32 *mat,
 			    const char *filename,
 			    bool is_ascii) {
-  WriteFileWrapper wrapper(filename);
-  writeMatrixToStream(mat, wrapper, Int32AsciiSizer(), Int32BinarySizer(),
-		      Int32AsciiCoder<WriteFileWrapper>(),
-		      Int32BinaryCoder<WriteFileWrapper>(),
-		      is_ascii);
+  if (GZFileWrapper::isGZ(filename)) {
+    BufferedGZFile f(filename, "w");
+    writeMatrixToStream(mat, f, Int32AsciiSizer(), Int32BinarySizer(),
+			Int32AsciiCoder<BufferedGZFile>(),
+			Int32BinaryCoder<BufferedGZFile>(),
+			is_ascii);
+  }
+  else {
+    BufferedFile f(filename, "w");
+    writeMatrixToStream(mat, f, Int32AsciiSizer(), Int32BinarySizer(),
+			Int32AsciiCoder<BufferedFile>(),
+			Int32BinaryCoder<BufferedFile>(),
+			is_ascii);
+  }
 }
 
 char *writeMatrixInt32ToString(MatrixInt32 *mat,
@@ -76,11 +62,32 @@ char *writeMatrixInt32ToString(MatrixInt32 *mat,
   return wrapper.getBufferProperty();
 }
 
+void writeMatrixInt32ToLuaString(MatrixInt32 *mat,
+				 lua_State *L,
+				 bool is_ascii) {
+  WriteLuaBufferWrapper wrapper(L);
+  IGNORE_RESULT(writeMatrixToStream(mat, wrapper,
+				    Int32AsciiSizer(),
+				    Int32BinarySizer(),
+				    Int32AsciiCoder<WriteLuaBufferWrapper>(),
+				    Int32BinaryCoder<WriteLuaBufferWrapper>(),
+				    is_ascii));
+  wrapper.finish();
+}
+
 MatrixInt32 *readMatrixInt32FromFile(const char *filename) {
-  ReadFileStream f(filename);
-  return readMatrixFromStream<ReadFileStream,
-			      int32_t>(f, Int32AsciiExtractor(),
-				       Int32BinaryExtractor());
+  if (GZFileWrapper::isGZ(filename)) {
+    BufferedGZFile f(filename, "r");
+    return readMatrixFromStream<BufferedGZFile,
+				int32_t>(f, Int32AsciiExtractor(),
+					 Int32BinaryExtractor());
+  }
+  else {
+    BufferedFile f(filename, "r");
+    return readMatrixFromStream<BufferedFile,
+				int32_t>(f, Int32AsciiExtractor(),
+					 Int32BinaryExtractor());
+  }
 }
 
 MatrixInt32 *readMatrixInt32FromString(constString &cs) {
@@ -95,6 +102,9 @@ MatrixFloat *convertFromMatrixInt32ToMatrixFloat(MatrixInt32 *mat,
   MatrixFloat *new_mat=new MatrixFloat(mat->getNumDim(),
 				       mat->getDimPtr(),
 				       (col_major)?CblasColMajor:CblasRowMajor);
+#ifdef USE_CUDA
+  new_mat->setUseCuda(mat->getCudaFlag());
+#endif
   MatrixInt32::const_iterator orig_it(mat->begin());
   MatrixFloat::iterator dest_it(new_mat->begin());
   while(orig_it != mat->end()) {

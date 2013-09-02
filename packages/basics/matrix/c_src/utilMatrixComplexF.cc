@@ -23,43 +23,29 @@
 #include "binarizer.h"
 #include "clamp.h"
 #include "matrixFloat.h"
+#include "buffered_gzfile.h"
+#include "buffered_file.h"
+#include "ignore_result.h"
 #include <cmath>
 #include <cstdio>
-
-template class ComplexFAsciiCoder<WriteBufferWrapper>;
-template class ComplexFBinaryCoder<WriteBufferWrapper>;
-template class ComplexFAsciiCoder<WriteFileWrapper>;
-template class ComplexFBinaryCoder<WriteFileWrapper>;
-
-template MatrixComplexF *readMatrixFromStream(constString &,
-					      ComplexFAsciiExtractor,
-					      ComplexFBinaryExtractor);
-template MatrixComplexF *readMatrixFromStream(ReadFileStream &,
-					      ComplexFAsciiExtractor,
-					      ComplexFBinaryExtractor);
-template int writeMatrixToStream(MatrixComplexF *,
-				 WriteBufferWrapper &,
-				 ComplexFAsciiSizer,
-				 ComplexFBinarySizer,
-				 ComplexFAsciiCoder<WriteBufferWrapper>,
-				 ComplexFBinaryCoder<WriteBufferWrapper>,
-				 bool is_ascii);
-template int writeMatrixToStream(MatrixComplexF *,
-				 WriteFileWrapper &,
-				 ComplexFAsciiSizer,
-				 ComplexFBinarySizer,
-				 ComplexFAsciiCoder<WriteFileWrapper>,
-				 ComplexFBinaryCoder<WriteFileWrapper>,
-				 bool is_ascii);
 
 void writeMatrixComplexFToFile(MatrixComplexF *mat,
 			       const char *filename,
 			       bool is_ascii) {
-  WriteFileWrapper wrapper(filename);
-  writeMatrixToStream(mat, wrapper, ComplexFAsciiSizer(), ComplexFBinarySizer(),
-		      ComplexFAsciiCoder<WriteFileWrapper>(),
-		      ComplexFBinaryCoder<WriteFileWrapper>(),
-		      is_ascii);
+  if (GZFileWrapper::isGZ(filename)) {
+    BufferedGZFile f(filename, "w");
+    writeMatrixToStream(mat, f, ComplexFAsciiSizer(), ComplexFBinarySizer(),
+			ComplexFAsciiCoder<BufferedGZFile>(),
+			ComplexFBinaryCoder<BufferedGZFile>(),
+			is_ascii);
+  }
+  else {
+    BufferedFile f(filename, "w");
+    writeMatrixToStream(mat, f, ComplexFAsciiSizer(), ComplexFBinarySizer(),
+			ComplexFAsciiCoder<BufferedFile>(),
+			ComplexFBinaryCoder<BufferedFile>(),
+			is_ascii);
+  }
 }
 
 char *writeMatrixComplexFToString(MatrixComplexF *mat,
@@ -75,18 +61,39 @@ char *writeMatrixComplexFToString(MatrixComplexF *mat,
   return wrapper.getBufferProperty();
 }
 
+void writeMatrixComplexFToLuaString(MatrixComplexF *mat,
+				    lua_State *L,
+				    bool is_ascii) {
+  WriteLuaBufferWrapper wrapper(L);
+  IGNORE_RESULT(writeMatrixToStream(mat, wrapper,
+				    ComplexFAsciiSizer(),
+				    ComplexFBinarySizer(),
+				    ComplexFAsciiCoder<WriteLuaBufferWrapper>(),
+				    ComplexFBinaryCoder<WriteLuaBufferWrapper>(),
+				    is_ascii));
+  wrapper.finish();
+}
+
 MatrixComplexF *readMatrixComplexFFromFile(const char *filename) {
-  ReadFileStream f(filename);
-  return readMatrixFromStream<ReadFileStream,
-			      ComplexF>(f, ComplexFAsciiExtractor(),
-					ComplexFBinaryExtractor());
+  if (GZFileWrapper::isGZ(filename)) {
+    BufferedGZFile f(filename, "r");
+    return readMatrixFromStream<BufferedGZFile,
+      ComplexF>(f, ComplexFAsciiExtractor(),
+		ComplexFBinaryExtractor());
+  }
+  else {
+    BufferedFile f(filename, "r");
+    return readMatrixFromStream<BufferedFile,
+      ComplexF>(f, ComplexFAsciiExtractor(),
+		ComplexFBinaryExtractor());
+  }
 }
 
 MatrixComplexF *readMatrixComplexFFromString(constString &cs) {
   return readMatrixFromStream<constString,
-			      ComplexF>(cs,
-					ComplexFAsciiExtractor(),
-					ComplexFBinaryExtractor());
+    ComplexF>(cs,
+	      ComplexFAsciiExtractor(),
+	      ComplexFBinaryExtractor());
 }
 
 MatrixFloat *convertFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
@@ -106,6 +113,9 @@ MatrixFloat *convertFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
     for (int i=0; i<N; ++i) dims[i+1] = mat->getDimPtr()[i];
   }
   new_mat=new MatrixFloat(N+1, dims, mat->getMajorOrder());
+#ifdef USE_CUDA
+  new_mat->setUseCuda(mat->getCudaFlag());
+#endif
   MatrixComplexF::const_iterator orig_it(mat->begin());
   MatrixFloat::iterator dest_it(new_mat->begin());
   while(orig_it != mat->end()) {
@@ -130,6 +140,9 @@ MatrixFloat *realPartFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
   MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
 					 mat->getDimPtr(),
 					 mat->getMajorOrder());
+#ifdef USE_CUDA
+  new_mat->setUseCuda(mat->getCudaFlag());
+#endif
   MatrixComplexF::const_iterator orig_it(mat->begin());
   MatrixFloat::iterator dest_it(new_mat->begin());
   while(orig_it != mat->end()) {
@@ -144,6 +157,9 @@ MatrixFloat *imgPartFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
   MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
 					 mat->getDimPtr(),
 					 mat->getMajorOrder());
+#ifdef USE_CUDA
+  new_mat->setUseCuda(mat->getCudaFlag());
+#endif
   MatrixComplexF::const_iterator orig_it(mat->begin());
   MatrixFloat::iterator dest_it(new_mat->begin());
   while(orig_it != mat->end()) {
@@ -158,6 +174,9 @@ MatrixFloat *absFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
   MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
 					 mat->getDimPtr(),
 					 mat->getMajorOrder());
+#ifdef USE_CUDA
+  new_mat->setUseCuda(mat->getCudaFlag());
+#endif
   MatrixComplexF::const_iterator orig_it(mat->begin());
   MatrixFloat::iterator dest_it(new_mat->begin());
   while(orig_it != mat->end()) {
@@ -172,6 +191,9 @@ MatrixFloat *angleFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
   MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
 					 mat->getDimPtr(),
 					 mat->getMajorOrder());
+#ifdef USE_CUDA
+  new_mat->setUseCuda(mat->getCudaFlag());
+#endif
   MatrixComplexF::const_iterator orig_it(mat->begin());
   MatrixFloat::iterator dest_it(new_mat->begin());
   while(orig_it != mat->end()) {

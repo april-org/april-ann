@@ -20,6 +20,8 @@
  *
  */
 
+#include "matrix_generic_math_templates.h"
+
 template <typename T>
 void Matrix<T>::fill(T value) {
   if (major_order == CblasRowMajor)
@@ -89,38 +91,13 @@ T Matrix<T>::sum() const {
 }
 
 // the argument indicates over which dimension the sum must be performed
+template<typename T>
+struct sum_dim_functor {
+  T operator()(const Matrix<T> *slice) { return slice->sum(); }
+};
 template <typename T>
-Matrix<T>* Matrix<T>::sum(int dim) {
-  int *result_dims = new int[numDim];
-  /**** THIS sliding window ****/
-  int *this_w_size = new int[numDim];
-  int *this_w_num_steps   = new int[numDim];
-  for (int i=0; i<dim; ++i) {
-    this_w_size[i] = 1;
-    result_dims[i] = this_w_num_steps[i] = matrixSize[i];
-  }
-  result_dims[dim] = 1;
-  this_w_size[dim] = matrixSize[dim];
-  this_w_num_steps[dim] = 1;
-  for (int i=dim+1; i<numDim; ++i) {
-    this_w_size[i] = 1;
-    result_dims[i] = this_w_num_steps[i] = matrixSize[i];
-  }
-  sliding_window this_w(this,this_w_size,0,0,this_w_num_steps,0);
-  Matrix<T> *slice = this_w.getMatrix();
-  IncRef(slice);
-  /******************************/
-  Matrix<T> *result = new Matrix<T>(numDim, result_dims, major_order);
-  // traverse in row major order
-  for (iterator it(result->begin()); it!=result->end(); ++it) {
-    this_w.getMatrix(slice);
-    *it = slice->sum();
-    this_w.next();
-  }
-  DecRef(slice);
-  delete[] this_w_size;
-  delete[] this_w_num_steps;
-  return result;
+Matrix<T>* Matrix<T>::sum(int dim, Matrix<T> *dest) {
+  return applyFunctorOverDimension<T,T>(sum_dim_functor<T>(), this, dim, dest);
 }
 
 /**** COMPONENT WISE OPERATIONS ****/
@@ -247,22 +224,42 @@ float Matrix<T>::norm2() const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return 0.0f;
 }
-
+ 
 template <typename T>
 T Matrix<T>::min(int &arg_min, int &arg_min_raw_pos) const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return T();
 }
-
+ 
 template <typename T>
 T Matrix<T>::max(int &arg_max, int &arg_max_raw_pos) const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return T();
 }
-
+ 
 template <typename T>
 void Matrix<T>::minAndMax(T &min, T &max) const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+// the argument indicates over which dimension the sum must be performed
+template <typename T>
+struct max_dim_functor {
+  T operator()(const Matrix<T> *slice) { int a,b; return slice->max(a,b); }
+};
+template <typename T>
+Matrix<T>* Matrix<T>::max(int dim, Matrix<T> *dest) {
+  return applyFunctorOverDimension<T, T>(max_dim_functor<T>(), this, dim, dest);
+}
+
+// the argument indicates over which dimension the sum must be performed
+template <typename T>
+struct min_dim_functor {
+  T operator()(const Matrix<T> *slice) { int a,b; return slice->min(a,b); }
+};
+template <typename T>
+Matrix<T>* Matrix<T>::min(int dim, Matrix<T> *dest) {
+  return applyFunctorOverDimension<T,T>(min_dim_functor<T>(), this, dim, dest);
 }
 
 template <typename T>
@@ -275,5 +272,10 @@ Matrix<T> *Matrix<T>::maxSelDim(const int dim,
 
 template <typename T>
 void Matrix<T>::adjustRange(T rmin, T rmax) {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
+Matrix<T> *Matrix<T>::inv() {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }

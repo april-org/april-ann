@@ -21,15 +21,30 @@ april_set_doc("stats.mean_var.__call", {
 		},
 		outputs = { "A mean_var object" }, })
 
-function stats.mean_var:__call(assumed_mean)
+function stats.mean_var:__call()
   local obj = {
-    assumed_mean = assumed_mean or 0,
-    accum_sum    = 0,
-    accum_sum2   = 0,
-    N            = 0,
+    old_m = 0,
+    old_s = 0,
+    new_m = 0,
+    new_s = 0,
+    N     = 0,
   }
   class_instance(obj, self, true)
   return obj
+end
+
+-----------------------------------------------------------------------------
+
+april_set_doc("stats.mean_var.clear", {
+		class = "method",
+		summary = "Re-initializes the object" })
+
+function stats.mean_var:clear()
+  self.old_m = 0
+  self.old_s = 0
+  self.new_m = 0
+  self.new_s = 0
+  self.N     = 0
 end
 
 -----------------------------------------------------------------------------
@@ -50,27 +65,50 @@ april_set_doc("stats.mean_var.add", {
 
 april_set_doc("stats.mean_var.add", {
 		class = "method",
-		summary = "Adds a value or values from a function call",
+		summary = "Adds a sequence of values from an iterator function",
 		params = {
-		  "A Lua function",
+		  "An iterator function",
 		},
 		outputs = { "The caller mean_var object (itself)" }, })
 
-function stats.mean_var:add(v)
+function stats.mean_var:add(...)
+  local arg = { ... }
+  local v = arg[1]
   if type(v) == "table" then
-    for _,vp in ipairs(v) do return self:add(vp) end
+    return self:add(ipairs(v))
   elseif type(v) == "function" then
-    local vp = v()
-    return self:add(vp)
+    for key,value in table.unpack(arg) do
+      self:add(value or key)
+    end
   elseif type(v) == "number" then
-    local vi = v - self.assumed_mean
-    self.accum_sum  = self.accum_sum + vi
-    self.accum_sum2 = self.accum_sum2 + vi*vi
-    self.N          = self.N + 1
+    self.N = self.N + 1
+    -- see Knuth TAOCP vol 2, 3rd edition, page 232
+    if self.N == 1 then
+      self.old_m,self.new_m = v,v
+      self.old_s = 0.0
+    else
+      local old_diff = (v - self.old_m)
+      self.new_m = self.old_m + old_diff/self.N
+      self.new_s = self.old_s + old_diff*(v - self.new_m)
+      -- setup for next iteration
+      self.old_m = self.new_m
+      self.old_s = self.new_s
+    end
   else
     error("Incorrect type="..type(v)..". Expected number, table or function")
   end
   return self
+end
+
+-----------------------------------------------------------------------------
+
+april_set_doc("stats.mean_var.size", {
+		class = "method",
+		summary = "Return the number of elements added",
+		outputs = { "The number of elements added" }, })
+
+function stats.mean_var:size()
+  return self.N
 end
 
 -----------------------------------------------------------------------------
@@ -84,11 +122,7 @@ april_set_doc("stats.mean_var.compute", {
 		}, })
 
 function stats.mean_var:compute()
-  local mean,var
-  local aux_mean = self.accum_sum / self.N
-  mean = self.assumed_mean + aux_mean
-  var  = (self.accum_sum2 - self.N * aux_mean * aux_mean) / (self.N - 1)
-  return mean,var
+  return self.new_m,self.new_s/(self.N-1)
 end
 
 --------------------

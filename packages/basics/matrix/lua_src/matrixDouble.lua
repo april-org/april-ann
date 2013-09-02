@@ -11,7 +11,7 @@ matrixDouble.meta_instance.__tostring = function(self)
 		   string.format("\n# pos [%s]",
 				 table.concat(coords, ",")))
     end
-    table.insert(row, string.format("% -11.6g", self:get(unpack(coords))))
+    table.insert(row, string.format("% -11.6g", self:get(table.unpack(coords))))
     local j=#dims+1
     repeat
       j=j-1
@@ -28,15 +28,10 @@ matrixDouble.meta_instance.__tostring = function(self)
   return table.concat(out, "\n")
 end
 
-function matrixDouble.loadfile(filename)
-  local f = io.open(filename,"r") or error("Unable to open " .. filename)
-  local b = f:read("*a")
-  f:close()
-  return matrixDouble.fromString(b)
+function matrixDouble.loadfile()
+  error("Deprecated, use fromFilename method")
 end
 
-function matrixDouble.savefile(matrixDouble,filename,format)
-  local f = io.open(filename,"w") or error("Unable to open " .. filename)
-  f:write(matrixDouble:toString(format or "ascii"))
-  f:close()
+function matrixDouble.savefile()
+  error("Deprecated, use toFilename method")
 end

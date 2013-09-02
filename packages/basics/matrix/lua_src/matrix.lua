@@ -12,7 +12,7 @@ matrix.meta_instance.__tostring = function(self)
 		   string.format("\n# pos [%s]",
 				 table.concat(coords, ",")))
     end
-    table.insert(row, string.format("% -11.6g", self:get(unpack(coords))))
+    table.insert(row, string.format("% -11.6g", self:get(table.unpack(coords))))
     local j=#dims+1
     repeat
       j=j-1
@@ -97,17 +97,12 @@ function matrix.saveImage(matrix,filename)
   f:close()
 end
 
-function matrix.loadfile(filename)
-  local f = io.open(filename,"r") or error("Unable to open " .. filename)
-  local b = f:read("*a")
-  f:close()
-  return matrix.fromString(b)
+function matrix.loadfile()
+  error("Deprecated, use fromFilename method")
 end
 
-function matrix.savefile(matrix,filename,format)
-  local f = io.open(filename,"w") or error("Unable to open " .. filename)
-  f:write(matrix:toString(format or "ascii"))
-  f:close()
+function matrix.savefile()
+  error("Deprecated, use toFilename method")
 end
 
 -- RAW (ASCII)
@@ -210,6 +205,11 @@ april_set_doc("matrix.fromFilename", {
 		},
 		params = {
 		  "A filename path.",
+		  { "A string with 'row_major', 'col_major' or 'no_order'",
+		    "[optional]. It modifies the order specified by content",
+		    "in the file. By default is nil, so the result",
+		    "matrix will has the order specified by the file.",
+		  },
 		},
 		outputs = { "A matrix instantiated object" }, })
 
@@ -224,33 +224,6 @@ april_set_doc("matrix.toFilename", {
 		  "A filename path.",
 		  { "An string with the format: ascii or binary [optional].",
 		    "By default is ascii." },
-		}, })
-
-april_set_doc("matrix.loadfile", {
-		class = "function", summary = "constructor",
-		description ={
-		  "Loads a matrix from a filename.",
-		  "This function supports GZ files, but needs",
-		  "to load the matrix as string before parsing it.",
-		},
-		params = {
-		  "A filename path.",
-		},
-		outputs = { "A matrix instantiated object" }, })
-
-april_set_doc("matrix.savefile", {
-		class = "function",
-		summary = "It allows to store a matrix in a file.",
-		description ={
-		  "It allows to store a matrix in a file.",
-		  "This function supports GZ files, but needs",
-		  "to save the matrix as string before parsing it.",
-		},
-		params = {
-		  "A matrix object.",
-		  "A filename path.",
-		  { "An string with the format: ascii or binary [optional].",
-		    "By default is binary." },
 		}, })
 
 april_set_doc("matrix.loadImage", {
@@ -344,8 +317,11 @@ april_set_doc("matrix.sum",
 	      {
 		class="method",
 		summary="Computes the sum of all the elements over the given dimension.",
-		params={"A number, the dimension"},
-		outputs={"A matrix"},
+		params={
+		  "A number, the dimension",
+		  "A matrix where to store the result [optional]",
+		},
+		outputs={"A matrix with the result"},
 	      })
 
 april_set_doc("matrix.set", {
@@ -576,11 +552,33 @@ april_set_doc("matrix.min", {
 		  "A number",
 		}, })
 
+april_set_doc("matrix.min", {
+		class = "method",
+		summary = "Returns a matrix with minimum values over given dimension.",
+		params = {
+		  "A number with the dimension",
+		  "A matrix where to store the result [optional]",
+		},
+		outputs = {
+		  "A matrix with the result",
+		}, })
+
 april_set_doc("matrix.max", {
 		class = "method",
 		summary = "Returns the maximum value contained at the matrix.",
 		outputs = {
 		  "A number",
+		}, })
+
+april_set_doc("matrix.max", {
+		class = "method",
+		summary = "Returns a matrix with maximum values over given dimension.",
+		params = {
+		  "A number with the dimension",
+		  "A matrix where to store the result [optional]",
+		},
+		outputs = {
+		  "A matrix with the result",
 		}, })
 
 april_set_doc("matrix.clamp", {
@@ -877,6 +875,22 @@ april_set_doc("matrix.scalar_add",
 		summary = "Adds a scalar IN-PLACE",
 		params  = { "A number" },
 		outputs = { "The caller matrix instance" },
+	      })
+
+april_set_doc("matrix.inv",
+	      {
+		class = "method",
+		summary = "Computes the inverse of a matrix",
+		description = {
+		  "This method computes the inverse of matrix.",
+		  "Check that your matrix is not singular, otherwise",
+		  "the returned matrix won't be correct.",
+		  "It is adapted to work with row_major matrices, but",
+		  "internally they are transformed to col_major, so",
+		  "it is more efficient to compute the inverse over",
+		  "col_major matrices.",
+		},
+		outputs = { "The matrix inverse" },
 	      })
 
 april_set_doc("matrix.sliding_window",
