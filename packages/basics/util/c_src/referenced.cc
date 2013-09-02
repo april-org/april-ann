@@ -26,6 +26,7 @@
 #include "referenced.h"
 #ifdef __DEBUG__
 #include <cstdio>
+#include "error_print.h"
 #endif
 #ifdef _debugrefsno0_
 #include <cstdio>
@@ -34,12 +35,14 @@
 Referenced::Referenced() {
 #ifdef __DEBUG__
   fprintf(stderr," DEBUG Creating %p\n",this);
+  print_CPP_stacktrace();
 #endif
   refs = 0;
 }
 Referenced::~Referenced() {
 #ifdef __DEBUG__
   fprintf(stderr," DEBUG Destroying %p with reference %d\n",this,refs);
+  print_CPP_stacktrace();
 #endif
 #ifdef _debugrefsno0_
   if (refs != 0)
@@ -50,12 +53,16 @@ void Referenced::incRef() {
   refs++; 
 #ifdef __DEBUG__
   fprintf(stderr," DEBUG IncRef %p to reference %d\n",this,refs);
+  if (refs > 1000)
+    print_CPP_LUA_stacktrace_and_exit();
+  else print_CPP_stacktrace();
 #endif
 }
 bool Referenced::decRef() { 
   refs--;
 #ifdef __DEBUG__
   fprintf(stderr," DEBUG DecRef %p to reference %d\n",this,refs);
+  print_CPP_stacktrace();
 #endif
   return (refs <= 0); 
 }

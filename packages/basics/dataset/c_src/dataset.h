@@ -606,6 +606,24 @@ class DerivDataSet : public DataSet<T> {
   int putPattern(int index, const T *pat);
 };
 
+/// A specialization of DataSet which performs sub, and div normalization
+template <typename T>
+class SubAndDivNormalizationDataSet : public DataSet<T> {
+  /// The underlying DataSet.
+  DataSet<T> *ds;
+  /// The vector with sub values
+  T          *sub;
+  /// The vector with div values
+  T          *div;
+ public:
+  SubAndDivNormalizationDataSet(DataSet<T> *ds, T *sub, T *div);
+  virtual ~SubAndDivNormalizationDataSet();
+  int numPatterns() { return ds->numPatterns(); }
+  int patternSize() { return ds->patternSize(); }
+  int getPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
+};
+
 /*** Implementacion ***/
 #include "dataset.cc"
 

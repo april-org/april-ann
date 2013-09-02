@@ -30,6 +30,7 @@
 #include "clamp.h"
 #include "error_print.h"
 #include "maxmin.h"
+#include "april_assert.h"
 
 using april_utils::mod;
 using april_utils::clamp;
@@ -93,10 +94,8 @@ void MatrixDataSet<T>::setNumSteps(int *v) {
   setValue(numSteps,v);
   numPatternsv=1;
   for(int i=0;i<matrix->getNumDim();i++) {
-    if (numSteps[i] == 0) {
-      fprintf(stderr,"Error: numsteps[%d] == 0\n",i);
-      exit(1);
-    }
+    if (numSteps[i] == 0)
+      ERROR_EXIT1(1, "Error: numsteps[%d] == 0\n",i);
     numPatternsv=numPatternsv*numSteps[i];
   }
 }
@@ -278,8 +277,7 @@ UnionDataSet<T>::UnionDataSet(int n, DataSet<T> **v) {
     if (patternsz != v[i]->patternSize()) {
       // ERROR!!!!
       // todo: comprobar esto en el binding
-      fprintf(stderr,"ERROR dataset.union: one of datasets has wrong patternsize\n");
-      exit(1);
+      ERROR_EXIT(1,"ERROR dataset.union: one of datasets has wrong patternsize\n");
     }
     d[i+1] = d[i] + v[i]->numPatterns();
   }
@@ -398,8 +396,7 @@ JoinDataSet<T>::JoinDataSet(int n, DataSet<T> **v) {
     IncRef(v[i]); // garbage collection
     if (ps != v[i]->numPatterns()) {
       // ERROR!!!!
-      fprintf(stderr,"Error in JoinDataSet constructor\n");
-      exit(0);
+      ERROR_EXIT(1,"Error in JoinDataSet constructor\n");
     }
     d[i+1] = d[i] + v[i]->patternSize();
   }
@@ -439,8 +436,7 @@ IndexDataSet<T>::IndexDataSet(DataSet<T> **datasets, int firstindex) {
   diccionarios = new DataSet<T>*[numdiccionarios];
   patternindices = new T[numdiccionarios];
   if (numdiccionarios == 0) {
-    fprintf(stderr,"error: indexDataSet needs at least 1 dictionary\n");
-    exit(1);
+    ERROR_EXIT(1,"error: indexDataSet needs at least 1 dictionary\n");
   }
   patternsize = 0;
   for (int i=0; i < numdiccionarios; i++) {
@@ -715,10 +711,10 @@ SparseDataset<T>::SparseDataset(Matrix<T> *m, int nump, int patsize) :
     j += (count<<1) + 1;
   }
   if (j > m->size()) {
-    ERROR_PRINT2("Tamanyo de matriz incorrecto para SparseDataset!!!\n"
-		 "\tSe esperaba m->size= %d, y fue %d\n",
-		 j, m->size());
-    exit(128);
+    ERROR_EXIT2(128,
+		"Tamanyo de matriz incorrecto para SparseDataset!!!\n"
+		"\tSe esperaba m->size= %d, y fue %d\n",
+		j, m->size());
   }
 }
 
@@ -745,8 +741,7 @@ int SparseDataset<T>::getPattern(int index, T *pat) {
 
 template <typename T>
 int SparseDataset<T>::putPattern(int index, const T *pat) {
-  ERROR_PRINT("Method putPattern forbidden for SparseDataset!!!\n");
-  exit(1);
+  ERROR_EXIT(1,"Method putPattern forbidden for SparseDataset!!!\n");
   return 0;
 }
 
@@ -802,8 +797,7 @@ int IndexFilterDataSet<T>::getPattern(int index, T *pat) {
 
 template<typename T>
 int IndexFilterDataSet<T>::putPattern(int index, const T *pat) {
-  ERROR_PRINT("Method putPattern forbidden for IndexFilterDataSet!!!\n");
-  exit(1);
+  ERROR_EXIT(1,"Method putPattern forbidden for IndexFilterDataSet!!!\n");
   return 0;  
 }
 
@@ -835,8 +829,7 @@ int PerturbationDataSet<T>::getPattern(int index, T *pat) {
 
 template<typename T>
 int PerturbationDataSet<T>::putPattern(int index, const T *pat) {
-  ERROR_PRINT("Method putPattern forbidden for PerturbationDataSet!!!\n");
-  exit(1);
+  ERROR_EXIT(1,"Method putPattern forbidden for PerturbationDataSet!!!\n");
   return 0;  
 }
 
@@ -871,8 +864,7 @@ int SaltNoiseDataSet<T>::getPattern(int index, T *pat) {
 
 template<typename T>
 int SaltNoiseDataSet<T>::putPattern(int index, const T *pat) {
-  ERROR_PRINT("Method putPattern forbidden for SaltNoiseDataSet!!!\n");
-  exit(1);
+  ERROR_EXIT(1,"Method putPattern forbidden for SaltNoiseDataSet!!!\n");
   return 0;  
 }
 
@@ -909,8 +901,7 @@ int SaltPepperNoiseDataSet<T>::getPattern(int index, T *pat) {
 
 template<typename T>
 int SaltPepperNoiseDataSet<T>::putPattern(int index, const T *pat) {
-  ERROR_PRINT("Method putPattern forbidden for SaltPepperNoiseDataSet!!!\n");
-  exit(1);
+  ERROR_EXIT(1,"Method putPattern forbidden for SaltPepperNoiseDataSet!!!\n");
   return 0;  
 }
 
@@ -1000,8 +991,7 @@ int DerivDataSet<T>::getPattern(int index, T *pat) {
 
 template<typename T>
 int DerivDataSet<T>::putPattern(int index, const T *pat) {
-  ERROR_PRINT("Method putPattern forbidden for DerivDataSet!!!\n");
-  exit(1);
+  ERROR_EXIT(1,"Method putPattern forbidden for DerivDataSet!!!\n");
   return 0;  
 }
 
@@ -1035,8 +1025,7 @@ CacheDataSet<T>::CacheDataSet(DataSet<T> *ds, int **word2cache,
     if (max_decay < decays[i]) max_decay = decays[i];
   max_history = log(near_zero)/log(max_decay);
   if (ds->patternSize() > 1) {
-    ERROR_PRINT("Incorrect dataset size!!!\n");
-    exit(1);
+    ERROR_EXIT(1,"Incorrect dataset size!!!\n");
   }
 }
 
@@ -1098,12 +1087,47 @@ int CacheDataSet<T>::getPattern(int index, T *pat) {
 
 template<typename T>
 int CacheDataSet<T>::putPattern(int index, const T *pat) {
-  ERROR_PRINT("Method putPattern forbidden for CacheDataSet!!!\n");
-  exit(1);
+  ERROR_EXIT(1,"Method putPattern forbidden for CacheDataSet!!!\n");
   return 0;
 }
 
 //-------------------------------------------------------------
 
+template <typename T>
+SubAndDivNormalizationDataSet<T>::
+SubAndDivNormalizationDataSet(DataSet<T> *ds, T *sub, T *div) :
+  ds(ds) {
+  IncRef(ds);
+  const int psize=ds->patternSize();
+  this->sub = new T[psize];
+  memcpy(this->sub, sub, sizeof(T)*psize);
+  this->div = new T[psize];
+  for (int i=0; i<psize; ++i) this->div[i] = 1.0/div[i];
+}
+
+template<typename T>
+SubAndDivNormalizationDataSet<T>::~SubAndDivNormalizationDataSet() {
+  DecRef(ds);
+  delete[] sub;
+  delete[] div;
+}
+
+template<typename T>
+int SubAndDivNormalizationDataSet<T>::getPattern(int index, T *pat) {
+  const int ret = ds->getPattern(index, pat);
+  const int sz  = ds->patternSize();
+  april_assert(ret==sz);
+  for (int i=0; i<sz; ++i)
+    pat[i] = (pat[i]-sub[i])*div[i];
+  return ret;
+}
+
+template<typename T>
+int SubAndDivNormalizationDataSet<T>::putPattern(int index, const T *pat) {
+  ERROR_EXIT(1,"Method putPattern forbidden for SubAndDivNormalizationDataSet!!!\n");
+  return 0;  
+}
+
+//----------------------------------------------------------
 
 #endif // DATASET_CC_H

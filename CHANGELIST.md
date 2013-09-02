@@ -4,6 +4,8 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added SubAndDivNormalizationDataSet, applies a substraction and a division of
+  the feature vectors.
 - Added stepDataset.
 - Solved bug at glob function.
 - Added binarizer::init() to a binded static_constructor, it is needed to

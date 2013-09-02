@@ -10,10 +10,11 @@ lista = arg[1]
 
 local ds = {}
 for fichero in io.lines(lista) do
-  fprintf(io.stderr, "%s\n", fichero)
+  fprintf(io.stderr, "# Loading: %s\n", fichero)
   local f   = io.open(fichero) or error ("File not found: " .. fichero)
-  local mat = matrix.fromFilename(fichero)
+  local mat = matrix.fromFilename(fichero, "row_major")
   table.insert(ds, dataset.matrix(mat))
+  f:close()
 end
 ds         = dataset.union(ds)
 means,devs = ds:mean_deviation()
