@@ -36,7 +36,7 @@ april_set_doc("ann.load",
 	      })
 
 function ann.load(filename)
-  local _,_,c = dofile("jaja.net")
+  local _,_,c = dofile(filename)
   return c
 end
 ----------------------------------------------------------------------
