@@ -4,6 +4,8 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Replaced `cpp_class_binding_extension` by `class_extension` function,
+  adding Lua classes support besides to CPP binded classes.
 - Modified `class` and `class_instance` functions to be more homogeneous
   with C++ binding.
 - Added SubAndDivNormalizationDataSet, applies a substraction and a division of
