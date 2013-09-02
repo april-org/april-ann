@@ -87,22 +87,27 @@ int datasetToken_iterator_function(lua_State *L) {
   // la tabla (L,1) contiene un vector de tablas
   // cada una de ellas contiene tuplas (indice,valor)
   LUABIND_CHECK_PARAMETER(1, table);
-  obj = new LinearCombConfFloat;
-  LUABIND_TABLE_GETN(1, obj->patternsize);
-  obj->numTuplas = new int[obj->patternsize];
+  int patternsize;
+  LUABIND_TABLE_GETN(1, patternsize);
   // vamos a calcular el total de pares (peso,valor)
   int i,j,total = 0,contador;
-  for (i=1; i <= obj->patternsize; i++) {
+  for (i=1; i <= patternsize; i++) {
     lua_rawgeti(L,1,i); // tabla i-esima
-    LUABIND_TABLE_GETN(2, obj->numTuplas[i-1]);
-    total += obj->numTuplas[i-1];
+    int aux;
+    LUABIND_TABLE_GETN(2, aux);
+    total += aux;
     lua_pop(L,1); // la quitamos de la pila
   }
-  obj->indices = new int[total];
-  obj->pesos = new float[total];
+  // creamos el objeto
+  obj = new LinearCombConfFloat(patternsize,total);
   // rellenamos vectores de indices y de pesos
+  for (i=1; i <= patternsize; i++) {
+    lua_rawgeti(L,1,i); // tabla i-esima
+    LUABIND_TABLE_GETN(2, obj->numTuplas[i-1]);
+    lua_pop(L,1); // la quitamos de la pila
+  }
   contador = 0;
-  for (i=1; i <= obj->patternsize; i++) {
+  for (i=1; i <= patternsize; i++) {
     lua_rawgeti(L,1,i); // tabla i-esima
     for (j=1;j <= obj->numTuplas[i-1]; j++) { // recorremos la tabla i-esima
       lua_rawgeti(L,-1,j); // tupla j-esima de tabla i-esima
@@ -117,7 +122,7 @@ int datasetToken_iterator_function(lua_State *L) {
     lua_pop(L,1); // la quitamos de la pila la tabla i-esima
   }
   // ponemos en obj->numTuplas los valores "acumulados"
-  for (i=1; i < obj->patternsize; i++) {
+  for (i=1; i < patternsize; i++) {
     obj->numTuplas[i] += obj->numTuplas[i-1];
   }
 

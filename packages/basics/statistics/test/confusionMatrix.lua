@@ -29,6 +29,9 @@ print("Results")
 print("Error ", myConf:getError())
 print("Accuracy ", myConf:getAccuracy())
 
+print("AverageError", myConf:getAvgError())
+
+print("Weighted Error 0.5 0.1 0.1 0.3", myConf:getWeightedError({0.5, 0.1, 0.1, 0.3}))
 for i = 1, N do
   print(i, "PR:", myConf:getPrecision(i), "RC:", myConf:getRecall(i),"FM:", myConf:getFMeasure(i))
 end

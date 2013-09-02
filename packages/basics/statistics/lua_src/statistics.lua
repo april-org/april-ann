@@ -267,6 +267,9 @@ april_set_doc("stats.confusion_matrix.printConfusion", {
 		})
 function confus_matrix_methods:printConfusion(tags)
 
+    local total_pred = {}
+
+
     printf("\t|\t Predicted ")
     for i = 1, self.num_classes do
         printf("\t\t")
@@ -278,7 +281,7 @@ function confus_matrix_methods:printConfusion(tags)
         printf("\t___\t")
     end
 
-    printf("\t___\t|\n")
+    printf("\t___\t\t|\n")
     for i,v in ipairs(self.confusion) do
 
         local tag = i
@@ -286,8 +289,9 @@ function confus_matrix_methods:printConfusion(tags)
             tag = tags[i]
         end
         printf("%s\t|\t", tag)
-
-        printf("%s\t|\t %0.4f\t|\n", table.concat(v, "\t|\t"), self:getRecall(i))
+        
+        local recall, hits, total = self:getRecall(i)
+        printf("%s\t|\t %d/%d %0.4f\t|\n", table.concat(v, "\t|\t"), hits, total, recall)
     end
     printf("______\t|")
     for i = 1, self.num_classes do
@@ -295,11 +299,13 @@ function confus_matrix_methods:printConfusion(tags)
     end
 
     printf("\t___\t|\n")
-    printf("\t|")
+    printf("\t\t|")
     for i = 1, self.num_classes do
         printf("\t%0.4f\t|", self:getPrecision(i))
     end
-    printf("\t%0.4f\t|\n", self:getError())
+
+    local acc, hits, total = self:getAccuracy()
+    printf("\t%d/%d %0.4f\t|\n", hits, total, acc)
 end
 
 function confus_matrix_methods:printInf()
@@ -408,7 +414,40 @@ april_set_doc("stats.confusion_matrix.getError",
     outputs = { "The global classification error." }, 
 })
 function confus_matrix_methods:getError()
-    return self.misses/self.samples
+    return self.misses/self.samples, self.misses, self.samples
+end
+
+april_set_doc("stats.confusion_matrix.getWeightedError",
+{
+    class = "method", summary = "Return the classification error weighted by given values",
+    params = {"A table of size weight"},
+    outputs = { "The global classification error." }, 
+})
+function confus_matrix_methods:getWeightedError(weights)
+    
+    local totalError = 0.0
+    for i,w in ipairs(weights) do
+        totalError = totalError+(1-w*self:getRecall(i))
+    end
+
+    return totalError
+end
+
+april_set_doc("stats.confusion_matrix.getAvgError",
+{
+    class = "method", summary = "Return the average error.",
+    outputs = { "The average classification error." }, 
+})
+function confus_matrix_methods:getAvgError(weights)
+    
+    local totalError = 0.0
+    local w = 1.0/self.num_classes
+    local i
+    for i = 1, self.num_classes do
+        totalError = totalError+(1-self:getRecall(i))
+    end
+
+    return totalError*w
 end
 
 april_set_doc("stats.confusion_matrix.getAccuracy", {
@@ -416,7 +455,7 @@ april_set_doc("stats.confusion_matrix.getAccuracy", {
     outputs = { "The global accuracy." },
 })
 function confus_matrix_methods:getAccuracy()
-    return self.hits/self.samples
+    return self.hits/self.samples, self.hits, self.samples
 end
 
 --------------------------------------------------------------
@@ -446,9 +485,9 @@ function confus_matrix_methods:getPrecision(tipo)
         den = den + v
     end     
     if den == 0 then
-        return 0
+        return 0, tp, den
     end
-    return tp/den
+    return tp/den, tp, den
 end
 
 april_set_doc("stats.confusion_matrix.getRecall",
@@ -473,9 +512,9 @@ function confus_matrix_methods:getRecall(tipo)
     end 
 
     if den == 0 then
-        return 0
+        return 0, tp, den
     end
-    return tp/den
+    return tp/den, tp, den
 end
 
 april_set_doc("stats.confusion_matrix.getFMeasure",
