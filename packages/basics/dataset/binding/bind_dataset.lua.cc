@@ -1090,6 +1090,36 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 
 //////////////////////////////////////////
 
+//BIND_LUACLASSNAME SubAndDivNormalizationDataSetFloat dataset.sub_and_div_normalization
+//BIND_CPP_CLASS    SubAndDivNormalizationDataSetFloat
+//BIND_SUBCLASS_OF  SubAndDivNormalizationDataSetFloat DataSetFloat
+
+//BIND_CONSTRUCTOR SubAndDivNormalizationDataSetFloat
+{
+  LUABIND_CHECK_ARGN(==, 3);
+  LUABIND_CHECK_PARAMETER(1, DataSetFloat);
+  LUABIND_CHECK_PARAMETER(2, table);
+  LUABIND_CHECK_PARAMETER(3, table);
+  DataSetFloat *ds;
+  LUABIND_GET_PARAMETER(1, DataSetFloat, ds);
+  int n,m;
+  LUABIND_TABLE_GETN(2,n);
+  LUABIND_TABLE_GETN(3,m);
+  if (n != ds->patternSize() || m != ds->patternSize())
+    LUABIND_ERROR("Incorrect size in table arguments\n");
+  float *sub = new float[n];
+  float *div = new float[n];
+  LUABIND_TABLE_TO_VECTOR(2, float, sub, n);
+  LUABIND_TABLE_TO_VECTOR(3, float, div, n);
+  obj = new SubAndDivNormalizationDataSet<float>(ds,sub,div);
+  delete[] sub;
+  delete[] div;
+  LUABIND_RETURN(SubAndDivNormalizationDataSetFloat,obj);
+}
+//BIND_END
+
+//////////////////////////////////////////
+
 //BIND_LUACLASSNAME DataSetToken dataset.token
 //BIND_CPP_CLASS    DataSetToken
 

@@ -36,5 +36,6 @@ typedef SaltPepperNoiseDataSet<float> SaltPepperNoiseDataSetFloat;
 typedef StepDataSet<float> StepDataSetFloat;
 typedef DerivDataSet<float> DerivDataSetFloat;
 typedef CacheDataSet<float> CacheDataSetFloat;
+typedef SubAndDivNormalizationDataSet<float> SubAndDivNormalizationDataSetFloat;
 
 #endif // UTILDATASETFLOAT_H
