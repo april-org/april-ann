@@ -79,7 +79,8 @@ function class(classname, parentclass)
     id         = classname,
   }
   if parentclass then
-    setmetatable(meta_instance.__index, { __index=parentclass.meta_instance })
+    setmetatable(meta_instance.__index,
+		 { __index=getmetatable(parentclass.meta_instance) })
   end
   -- 
   current.meta_instance = meta_instance

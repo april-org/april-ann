@@ -14,7 +14,7 @@ return {
     { option="--o2=",  value=20,  tag="o2", sampling="fixed" },
     { option="--r1",   tag="r1", sampling = "log-uniform",
       type="integer",
-      values= { { min=1, max=10 }, { min=20, max=100, step=10} },
+      values= { { min=1, max=10 }, { min=20, max=100 } },
       filter = function(hyperparams) hyperparams["r1"] = "200" return true end },
     { option="--r2=", tag="r2", sampling = "uniform", values= { 1, 2, 3, 4, 5 } },
     { option="--r3=", tag="r3", prec=3,
@@ -207,8 +207,8 @@ return {
     local chunk_func=loadstring(arg[i]) or error("Impossible to load string: "..
                                                  arg[i])
     -- execute the chunk
-    safe_call(chunk_func, { all_hyperparams = all_hyperparams,
-                            global_vars     = global_vars })
+    chunk_func{ all_hyperparams = all_hyperparams,
+		global_vars     = global_vars }
     --
     printf("# Executed chunk string: %s\n", arg[i])
   end
@@ -279,9 +279,9 @@ return {
 	    end
             v = sample(hyperparam, rnd)
             hyperparam_values[hyperparam.tag] = v
-          until safe_call(hyperparam.filter, {}, hyperparam_values)
+          until hyperparam.filter(hyperparam_values)
         end
-      until safe_call(filter, {}, hyperparam_values)
+      until filter(hyperparam_values)
       for _,hyperparam in ipairs(hyperparams_conf_tbl) do
 	local tag = hyperparam.tag
 	if type(hyperparam_values[tag]) ~= "string" then
