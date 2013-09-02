@@ -1,10 +1,9 @@
-class("imageSVG")
-
-imageSVG.__tostring = function() return "imageSVG" end
+local imageSVG_methods,
+imageSVG_class_metatable = class("imageSVG")
 
 local colors = { "red", "blue", "green", "orange", "purple"}
 
-function imageSVG:__call(params)
+function imageSVG_class_metatable:__call(params)
 
     local obj = {}
 
@@ -22,7 +21,7 @@ function imageSVG:__call(params)
 
 end
 
-function imageSVG:setHeader()
+function imageSVG_methods:setHeader()
 
     self.header = {}
     table.insert(self.header, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
@@ -36,13 +35,13 @@ function imageSVG:setHeader()
     table.insert(self.header,string.format("<svg width=\"%s\" height=\"%s\"\nxmlns:xlink=\"http://www.w3.org/1999/xlink\" >\n", swidth, sheight))
 end
 
-function imageSVG:setFooter()
+function imageSVG_methods:setFooter()
     self.footer = {}
     table.insert(self.footer, "</svg>")
 end
 
 -- Recieves a table with points x,y
-function imageSVG:addPathFromTable(path, params)
+function imageSVG_methods:addPathFromTable(path, params)
     --params treatment
 
     local id = params.id or ""
@@ -66,19 +65,19 @@ function imageSVG:addPathFromTable(path, params)
     table.insert(self.body, table.concat(buffer))
 end
 
-function imageSVG:getHeader()
+function imageSVG_methods:getHeader()
     return table.concat(self.header, "\n") 
 end
-function imageSVG:getBody()
+function imageSVG_methods:getBody()
     return table.concat(self.body, "\n") 
 end
-function imageSVG:getFooter()
+function imageSVG_methods:getFooter()
     return table.concat(self.footer, "\n") 
 end
-function imageSVG:getString()
+function imageSVG_methods:getString()
     return table.concat({self:getHeader(), self:getBody(), self:getFooter()})
 end
-function imageSVG:write(filename)
+function imageSVG_methods:write(filename)
     file = io.open(filename, "w")
     file:write(self:getHeader())
     file:write(self:getBody())
@@ -86,7 +85,7 @@ function imageSVG:write(filename)
 end
 
 -- Each element of the table is a path
-function imageSVG:addPaths(paths)
+function imageSVG_methods:addPaths(paths)
     for i, path in ipairs(paths) do
         local color = "black"
         if (i <= #colors) then
@@ -100,7 +99,7 @@ end
 
 
 -- Given a table with table of points, draw
-function imageSVG:addPointsFromTables(tables, size)
+function imageSVG_methods:addPointsFromTables(tables, size)
 
     for i, points in ipairs(tables) do
         local color = "black"
@@ -113,13 +112,13 @@ function imageSVG:addPointsFromTables(tables, size)
         end
     end
 end
-function imageSVG:resize(height, width)
+function imageSVG_methods:resize(height, width)
     self.height = height
     self.width = width
 end
 
 -- Point is a table with two coordinates
-function imageSVG:addCircle(point, params)
+function imageSVG_methods:addCircle(point, params)
 
     local radius = params.radius or 1
     local color = params.color or "green"
@@ -130,7 +129,7 @@ function imageSVG:addCircle(point, params)
 end
 
 -- Point is a table with two coordinates
-function imageSVG:addSquare(point, params)
+function imageSVG_methods:addSquare(point, params)
 
     local side = params.side or 1
     local color = params.color or "green"
@@ -141,12 +140,12 @@ function imageSVG:addSquare(point, params)
     table.insert(self.body,string.format("<rect x=\"%d\" y=\"%d\" width=\"%f\" height=\"%f\" fill=\"%s\"/>", x, y, side,side, color))
 end
 
-function imageSVG:addPoint(point, params)
+function imageSVG_methods:addPoint(point, params)
     self:addSquare(point, params)
 end
 
 -- Extra image function
-function imageSVG:addImage(filename, width, height, offsetX, offsetY)
+function imageSVG_methods:addImage(filename, width, height, offsetX, offsetY)
 
     table.insert(self.body, string.format("<image x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\" xlink:href=\"%s\">\n</image>", offsetX, offsetY, width, height, filename))
 

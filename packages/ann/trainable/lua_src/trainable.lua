@@ -31,7 +31,8 @@ april_set_doc("trainable.supervised_trainer", {
 		  "t.train_step=function() print(\"Hola\") end",
 		}, })
 
-class("trainable.supervised_trainer")
+local trainable_supervised_trainer_methods,
+trainable_supervised_trainer_class_metatable=class("trainable.supervised_trainer")
 
 ------------------------------------------------------------------------
 
@@ -50,9 +51,9 @@ april_set_doc("trainable.supervised_trainer.__call", {
 			   "Bunch size (mini batch) [optional]" },
 		outputs = { "Instantiated object" }, })
 
-function trainable.supervised_trainer:__call(ann_component,
-					     loss_function,
-					     bunch_size)
+function trainable_supervised_trainer_class_metatable:__call(ann_component,
+							     loss_function,
+							     bunch_size)
   if loss_function and not isa(loss_function, ann.loss.__base__) then
     error("The second parameter must be an instance of ann.loss")
   end
@@ -81,7 +82,7 @@ april_set_doc("trainable.supervised_trainer.get_component", {
 		summary = "Returns an instance of ann.components",
 		outputs = { "An instance of ann.components" }, })
 
-function trainable.supervised_trainer:get_component()
+function trainable_supervised_trainer_methods:get_component()
   return self.ann_component
 end
 
@@ -92,7 +93,7 @@ april_set_doc("trainable.supervised_trainer.set_loss_function", {
 		summary = "Modifies the loss function property",
 		params = { "Loss function" }, })
 
-function trainable.supervised_trainer:set_loss_function(loss_function)
+function trainable_supervised_trainer_methods:set_loss_function(loss_function)
   self.loss_function = loss_function
 end
 
@@ -103,7 +104,7 @@ april_set_doc("trainable.supervised_trainer.get_input_size", {
 		summary = "Gets the input size of its component",
 		outputs = { "The input size (a number)" }, })
 
-function trainable.supervised_trainer:get_input_size()
+function trainable_supervised_trainer_methods:get_input_size()
   return self.ann_component:get_input_size()
 end
 
@@ -114,7 +115,7 @@ april_set_doc("trainable.supervised_trainer.get_output_size", {
 		summary = "Gets the output size of its component",
 		outputs = { "The output size (a number)" }, })
 
-function trainable.supervised_trainer:get_output_size()
+function trainable_supervised_trainer_methods:get_output_size()
   return self.ann_component:get_output_size()
 end
 
@@ -125,7 +126,7 @@ april_set_doc("trainable.supervised_trainer.size", {
 		summary = "Returns the model size (number of weights)",
 		outputs = { "A number" }, })
 
-function trainable.supervised_trainer:size()
+function trainable_supervised_trainer_methods:size()
   if #self.components_order == 0 then
     error("It is not build")
   end
@@ -152,7 +153,7 @@ april_set_doc("trainable.supervised_trainer.save", {
 		    "[optional]. By default is binary." },
 		}, })
 
-function trainable.supervised_trainer:save(filename, binary)
+function trainable_supervised_trainer_methods:save(filename, binary)
   assert(#self.components_order > 0, "The component is not built")
   local binary = binary or "binary"
   local f = io.open(filename,"w") or error("Unable to open " .. filename)
@@ -227,7 +228,7 @@ april_set_doc("trainable.supervised_trainer.count_components", {
 		    "which match [optional], by default is '.*'" },
 		}, })
 
-function trainable.supervised_trainer:count_components(match_string)
+function trainable_supervised_trainer_methods:count_components(match_string)
   local match_string = match_string or ".*"
   if #self.components_order == 0 then
     error("It is not build")
@@ -249,7 +250,7 @@ april_set_doc("trainable.supervised_trainer.count_weights", {
 		    "which match [optional], by default is '.*'" },
 		}, })
 
-function trainable.supervised_trainer:count_weights(match_string)
+function trainable_supervised_trainer_methods:count_weights(match_string)
   local match_string = match_string or ".*"
   if #self.components_order == 0 then
     error("It is not build")
@@ -277,7 +278,7 @@ april_set_doc("trainable.supervised_trainer.iterate_components", {
 		    "which match [optional], by default is '.*'" },
 		}, })
 
-function trainable.supervised_trainer:iterate_components(match_string)
+function trainable_supervised_trainer_methods:iterate_components(match_string)
   local match_string = match_string or ".*"
   if #self.components_order == 0 then
     error("It is not build")
@@ -311,7 +312,7 @@ april_set_doc("trainable.supervised_trainer.iterate_weights", {
 		    "which match [optional], by default is '.*'" },
 		}, })
 
-function trainable.supervised_trainer:iterate_weights(match_string)
+function trainable_supervised_trainer_methods:iterate_weights(match_string)
   local match_string = match_string or ".*"
   if #self.components_order == 0 then
     error("It is not build")
@@ -344,7 +345,7 @@ april_set_doc("trainable.supervised_trainer.component", {
 		params = { "A string with the component name" },
 		outputs = { "A component object" } })
 
-function trainable.supervised_trainer:component(str)
+function trainable_supervised_trainer_methods:component(str)
   if #self.components_order == 0 then
     error("Needs execution of build method")
   end
@@ -366,7 +367,7 @@ april_set_doc("trainable.supervised_trainer.weights", {
 		params = { "A string with the connections name" },
 		outputs = { "An ann.connections object" } })
 
-function trainable.supervised_trainer:weights(str)
+function trainable_supervised_trainer_methods:weights(str)
   if #self.components_order == 0 then
     error("Needs execution of build method")
   end
@@ -400,7 +401,7 @@ april_set_doc("trainable.supervised_trainer.randomize_weights", {
 		  ["use_fanout"] = "An optional boolean, by default false",
 		}, })
 
-function trainable.supervised_trainer:randomize_weights(t)
+function trainable_supervised_trainer_methods:randomize_weights(t)
   local params = get_table_fields(
     {
       name_match = { type_match="string", mandatory=false, default = nil },
@@ -459,7 +460,7 @@ april_set_doc("trainable.supervised_trainer.build", {
 		  "Components table, associates component_name => ann.components object",
 		} })
 
-function trainable.supervised_trainer:build(t)
+function trainable_supervised_trainer_methods:build(t)
   local params = get_table_fields(
     {
       weights = { type_match="table",  mandatory = false, default=nil },
@@ -502,7 +503,7 @@ april_set_doc("trainable.supervised_trainer.get_weights_of", {
 		params = { "A string with the component name" },
 		outputs = { "An instance of ann.connections" }, })
 
-function trainable.supervised_trainer:get_weights_of(name)
+function trainable_supervised_trainer_methods:get_weights_of(name)
   return self.weights_table[self.component2weights_dict[name]]
 end
 
@@ -513,7 +514,7 @@ april_set_doc("trainable.supervised_trainer.get_components_of", {
 		outputs = { "A table of ann.components instances" }, })
 
 
-function trainable.supervised_trainer:get_components_of(wname)
+function trainable_supervised_trainer_methods:get_components_of(wname)
   return self.weights2component_dict[wname] or {}
 end
 
@@ -538,7 +539,7 @@ april_set_doc("trainable.supervised_trainer.train_step", {
 		  "A token with the gradient of loss function at component inputs",
 		} })
 
-function trainable.supervised_trainer:train_step(input, target)
+function trainable_supervised_trainer_methods:train_step(input, target)
   if type(input)  == "table" then input  = tokens.matrix(matrix.col_major(input))  end
   if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
   self.ann_component:reset()
@@ -568,7 +569,7 @@ april_set_doc("trainable.supervised_trainer.validate_step", {
 		  "A number with the loss of the training step",
 		} })
 
-function trainable.supervised_trainer:validate_step(input, target)
+function trainable_supervised_trainer_methods:validate_step(input, target)
   if type(input)  == "table" then input  = tokens.matrix(matrix.col_major(input))  end
   if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
   self.ann_component:reset()
@@ -591,7 +592,7 @@ april_set_doc("trainable.supervised_trainer.grad_check_step", {
 		  "A boolean, true or false if the gradient is correct or not",
 		} })
 
-function trainable.supervised_trainer:grad_check_step(input, target, verbose)
+function trainable_supervised_trainer_methods:grad_check_step(input, target, verbose)
   if type(input)  == "table" then input  = tokens.matrix(matrix.col_major(input))  end
   if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
   self.ann_component:reset()
@@ -658,7 +659,7 @@ april_set_doc("trainable.supervised_trainer.calculate", {
 		  "A col-major matrix with the computed output",
 		} })
 
-function trainable.supervised_trainer:calculate(input)
+function trainable_supervised_trainer_methods:calculate(input)
   if type(input) == "table" then input = tokens.matrix(matrix.col_major(input))
   elseif isa(input, matrix) then input = tokens.matrix(input)
   end
@@ -767,7 +768,7 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 		  "A number with the mean loss of each training step",
 		} })
 
-function trainable.supervised_trainer:train_dataset(t)
+function trainable_supervised_trainer_methods:train_dataset(t)
   local params = get_table_fields(
     {
       input_dataset  = { mandatory = false, default=nil },
@@ -890,7 +891,7 @@ april_set_doc("trainable.supervised_trainer.grad_check_dataset", {
 		  "A boolean",
 		} })
 
-function trainable.supervised_trainer:grad_check_dataset(t)
+function trainable_supervised_trainer_methods:grad_check_dataset(t)
   local params = get_table_fields(
     {
       input_dataset  = { mandatory = false, default=nil },
@@ -1023,7 +1024,7 @@ april_set_doc("trainable.supervised_trainer.validate_dataset", {
 		  "A number with the mean loss of each validate step",
 		} })
 
-function trainable.supervised_trainer:validate_dataset(t)
+function trainable_supervised_trainer_methods:validate_dataset(t)
   local params = get_table_fields(
     {
       input_dataset  = { mandatory = true },
@@ -1107,7 +1108,7 @@ april_set_doc("trainable.supervised_trainer.for_each_pattern", {
 		    }, 
 		}, })
 
-function trainable.supervised_trainer:for_each_pattern(t)
+function trainable_supervised_trainer_methods:for_each_pattern(t)
   local params = get_table_fields(
     {
       input_dataset  = { mandatory = true },
@@ -1165,7 +1166,7 @@ april_set_doc("trainable.supervised_trainer.use_dataset", {
 		  "The output_dataset with input_dataset:numPatterns().",
 		} })
 
-function trainable.supervised_trainer:use_dataset(t)
+function trainable_supervised_trainer_methods:use_dataset(t)
   local params = get_table_fields(
     {
       input_dataset  = { mandatory = true },
@@ -1212,7 +1213,7 @@ april_set_doc("trainable.supervised_trainer.show_weights", {
 		class = "method",
 		summary = "Print connection weights (for debug purposes).", })
 
-function trainable.supervised_trainer:show_weights()
+function trainable_supervised_trainer_methods:show_weights()
   for _,wname in pairs(self.weights_order) do
     local w = self.weights_table[wname]:copy_to():toTable()
     print(wname, table.concat(w, " "))
@@ -1232,7 +1233,7 @@ april_set_doc("trainable.supervised_trainer.clone",
 		},
 	      })
 
-function trainable.supervised_trainer:clone()
+function trainable_supervised_trainer_methods:clone()
   local obj = trainable.supervised_trainer(self.ann_component:clone(),
 					   nil,
 					   self.bunch_size)
@@ -1339,7 +1340,7 @@ april_set_doc("trainable.supervised_trainer.train_holdout_validation", {
 		  ["last_val_error"] = "The validation loss achieved at last epoch",
 		}, })
 
-function trainable.supervised_trainer:train_holdout_validation(t)
+function trainable_supervised_trainer_methods:train_holdout_validation(t)
   local params = get_table_fields(
     {
       training_table   = { mandatory=true, type_match="table" },
@@ -1507,7 +1508,7 @@ april_set_doc("trainable.supervised_trainer.train_wo_validation", {
 		  "A trainable.supervised_trainer object"
 		}, })
 
-function trainable.supervised_trainer:train_wo_validation(t)
+function trainable_supervised_trainer_methods:train_wo_validation(t)
   local params = get_table_fields(
     {
       training_table = { mandatory=true },
@@ -1544,7 +1545,7 @@ function trainable.supervised_trainer:train_wo_validation(t)
   return best
 end
 
-function trainable.supervised_trainer:norm2(match_string)
+function trainable_supervised_trainer_methods:norm2(match_string)
   local norm2 = 0
   for _,cnn in self:iterate_weights(match_string) do
     norm2 = math.max(norm2,

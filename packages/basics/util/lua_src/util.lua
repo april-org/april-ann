@@ -58,35 +58,33 @@ function class_wrapper(obj,wrapper)
 end
 
 -- Convert a table in a class, and it receives an optional parent class to
--- implement simple heritance, and an optional constructor function. It returns
--- a table which will contain the methods of the class.
-function class(classname, parentclass, constructor)
+-- implement simple heritance. It returns
+-- a table which will contain the methods of the object, and the metatable
+-- of the class, so in the metatable could be defined __call constructor.
+function class(classname, parentclass)
   local current = get_table_from_dotted_string(classname, true)
-  local t = string.tokenize(classname,".")
-  if not parentclass then
-    current.__index = current
-  else
-    current.__index = parentclass
+  if type(parentclass) == "string" then
+    parentclass = get_table_from_dotted_string(parentclass)
   end
+  assert(parentclass==nil or is_class(parentclass))
+  local t = string.tokenize(classname,".")
   --
   local meta_instance = {
     id = classname,
     __tostring = function(self) return "instance of " .. classname end,
     __index = { }
   }
-  local class_meta_table = {
-    __call     = constructor,
+  local class_metatable = {
     __tostring = function() return "class ".. classname .. " class" end,
     id         = classname,
   }
   if parentclass then
-    setmetatable(meta_instance, { __index=parentclass.meta_instance })
+    setmetatable(meta_instance.__index, { __index=parentclass.meta_instance })
   end
   -- 
-  local constructor = constructor or function()return class_instance({},current)end
   current.meta_instance = meta_instance
-  setmetatable(current, class_meta_table)
-  return current.meta_instance.__index
+  setmetatable(current, class_metatable)
+  return current.meta_instance.__index,class_metatable
 end
 
 -- Converts a Lua table in an instance of the given class. An optional
@@ -98,6 +96,11 @@ function class_instance(obj, class, nil_safe)
     setmetatable(class.meta_instance, class.meta_instance)
   end
   return obj
+end
+
+-- returns true if the given table is a class table (not instance)
+function is_class(t)
+  return t.meta_instance and t.meta_instance.id ~= nil
 end
 
 -- Predicate which returns true if a given object instance is a subclass of a
@@ -506,27 +509,6 @@ function apply(func, ...)
   for key,value in ... do
     func(key,value)
   end
-end
-
--- This function prepares a safe environment for call user functions
-function safe_call(f, env, ...)
-  env = env or {}
-  env.os         = nil    env.io        = nil     env.file     = nil
-  env.debug      = nil    env.load      = nil     env.loadfile = nil
-  env.load       = nil    env.dofile    = nil     env.math     = math
-  env.table      = table  env.string    = string  env.tonumber = tonumber
-  env.loadstring = nil    env.courutine = nil     env.print    = print
-  env.pairs      = pairs  env.ipairs    = ipairs  env.tostring = tostring
-  env.printf     = printf
-  env.io = { stderr = io.stderr,
-	     stdout = io.stdout }
-  setfenv(f, env)
-  local status,result_or_error = pcall(f, ...)
-  if not status then
-    print(result_or_error)
-    error("Incorrect function call")
-  end
-  return result_or_error
 end
 
 function glob(...)

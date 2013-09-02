@@ -1,4 +1,5 @@
-class("stats.mean_var")
+local mean_var_methods,
+mean_var_class_metatable = class("stats.mean_var")
 
 april_set_doc("stats.mean_var", {
 		class       = "class",
@@ -21,7 +22,7 @@ april_set_doc("stats.mean_var.__call", {
 		},
 		outputs = { "A mean_var object" }, })
 
-function stats.mean_var:__call()
+function mean_var_class_metatable:__call()
   local obj = {
     old_m = 0,
     old_s = 0,
@@ -39,7 +40,7 @@ april_set_doc("stats.mean_var.clear", {
 		class = "method",
 		summary = "Re-initializes the object" })
 
-function stats.mean_var:clear()
+function mean_var_class_metatable:clear()
   self.old_m = 0
   self.old_s = 0
   self.new_m = 0
@@ -71,7 +72,7 @@ april_set_doc("stats.mean_var.add", {
 		},
 		outputs = { "The caller mean_var object (itself)" }, })
 
-function stats.mean_var:add(...)
+function mean_var_class_metatable:add(...)
   local arg = { ... }
   local v = arg[1]
   if type(v) == "table" then
@@ -107,7 +108,7 @@ april_set_doc("stats.mean_var.size", {
 		summary = "Return the number of elements added",
 		outputs = { "The number of elements added" }, })
 
-function stats.mean_var:size()
+function mean_var_class_metatable:size()
   return self.N
 end
 
@@ -121,14 +122,15 @@ april_set_doc("stats.mean_var.compute", {
 		  "A number, the variance of the data",
 		}, })
 
-function stats.mean_var:compute()
+function mean_var_class_metatable:compute()
   return self.new_m,self.new_s/(self.N-1)
 end
 
 --------------------
 -- Confusion Matrix
 -- -----------------
-class("stats.confusion_matrix")
+local confus_matrix_methods,
+confus_matrix_class_metatable = class("stats.confusion_matrix")
 
 
 april_set_doc("stats.confusion_matrix", {
@@ -152,7 +154,7 @@ april_set_doc("stats.confusion_matrix.__call", {
 
     }
 })
-function stats.confusion_matrix:__call(num_classes, class_dict)
+function confus_matrix_class_metatable:__call(num_classes, class_dict)
 
     local confusion = {}
     for i = 1, num_classes do
@@ -196,7 +198,7 @@ april_set_doc("stats.confusion_matrix.clone", {
     params = {
     }
 })
-function stats.confusion_matrix:clone()
+function confus_matrix_methods:clone()
     
     local obj = table.deep_copy(self)
 
@@ -207,7 +209,7 @@ end
 april_set_doc("stats.confusion_matrix.reset", {
 		class = "method", summary = "Reset to 0 all the counters",
 		})
-function stats.confusion_matrix:reset()
+function confus_matrix_methods:reset()
 
     for i = 1, self.num_classes do
         local t = {}
@@ -220,12 +222,12 @@ function stats.confusion_matrix:reset()
     self.samples = 0
 end
 
-function stats.confusion_matrix:checkType(clase)
+function confus_matrix_methods:checkType(clase)
     return type(clase) == "number" and clase >= 1 and clase <= self.num_classes or false
 end
 
 ---------------------------------------------
-function stats.confusion_matrix:addSample(pred, gt)
+function confus_matrix_methods:addSample(pred, gt)
 
     if self.map_dict then
 
@@ -252,7 +254,7 @@ end
 april_set_doc("stats.confusion_matrix.printConfusionRaw", {
 		class = "method", summary = "Print the counters for each class",
 		})
-function stats.confusion_matrix:printConfusionRaw()
+function confus_matrix_methods:printConfusionRaw()
 
     for i,v in ipairs(self.confusion) do
         print(table.concat(v, "\t"))
@@ -263,7 +265,7 @@ april_set_doc("stats.confusion_matrix.printConfusion", {
 		class = "method", summary = "Print the counters for each class and PR and RC",
     params = { "A num_classes string table [optional] with the tags of each class",}
 		})
-function stats.confusion_matrix:printConfusion(tags)
+function confus_matrix_methods:printConfusion(tags)
 
     printf("\t|\t Predicted ")
     for i = 1, self.num_classes do
@@ -300,7 +302,7 @@ function stats.confusion_matrix:printConfusion(tags)
     printf("\t%0.4f\t|\n", self:getError())
 end
 
-function stats.confusion_matrix:printInf()
+function confus_matrix_methods:printInf()
     
     printf("Samples %d, hits = %d, misses = %d (%0.4f)\n", self.samples, self.hits, self.misses, self.misses/self.total)
     for i = 1, self.num_classes do
@@ -381,7 +383,7 @@ april_set_doc("stats.confusion_matrix.addData",
       "This parameter can be a table of the predicted tags or an iterator function",
       "This parameter is used if the first parameter is the Predicted table, otherwise it should be nil"},
 })
-function stats.confusion_matrix:addData(param1, param2)
+function confus_matrix_methods:addData(param1, param2)
 
     local iterator
     if( type(param1) == 'function') then
@@ -405,7 +407,7 @@ april_set_doc("stats.confusion_matrix.getError",
     class = "method", summary = "Return the global classification error (misses/total)",
     outputs = { "The global classification error." }, 
 })
-function stats.confusion_matrix:getError()
+function confus_matrix_methods:getError()
     return self.misses/self.samples
 end
 
@@ -413,12 +415,12 @@ april_set_doc("stats.confusion_matrix.getAccuracy", {
     class = "method", summary = "Return the accuracy (hits/total)",
     outputs = { "The global accuracy." },
 })
-function stats.confusion_matrix:getAccuracy()
+function confus_matrix_methods:getAccuracy()
     return self.hits/self.samples
 end
 
 --------------------------------------------------------------
-function stats.confusion_matrix:getConfusionTables()
+function confus_matrix_methods:getConfusionTables()
     return self.confusion
 end
 ------------------------------------------------------------
@@ -429,7 +431,7 @@ april_set_doc("stats.confusion_matrix.getPrecision",
     params = {"The index of the class for computing the Precision"},
     outputs = { "The selected class Precision." },
 })
-function stats.confusion_matrix:getPrecision(tipo)
+function confus_matrix_methods:getPrecision(tipo)
 
     local tp = 0
     local den = 0
@@ -455,7 +457,7 @@ april_set_doc("stats.confusion_matrix.getRecall",
     params = {"The index of the class for computing the Recall"},
     outputs = { "The selected class Recall." },
 })
-function stats.confusion_matrix:getRecall(tipo)
+function confus_matrix_methods:getRecall(tipo)
 
     local tp = 0
     local den = 0
@@ -482,7 +484,7 @@ april_set_doc("stats.confusion_matrix.getFMeasure",
     params = {"The index of the class for computing the Precision"},
     outputs = { "The selected class Precision." },
 })
-function stats.confusion_matrix:getFMeasure(tipo, beta)
+function confus_matrix_methods:getFMeasure(tipo, beta)
     local nBeta = beta or 1
     nBeta = nBeta*nBeta
     local PR = self:getRecall(tipo)
@@ -500,7 +502,7 @@ april_set_doc("stats.confusion_matrix.clearGTClass",
     description= "This function is useful when you don't want to count determinated class.",
     params = {"The index of the class to be clear"},
 })
-function stats.confusion_matrix:clearGTClass(tipo)
+function confus_matrix_methods:clearGTClass(tipo)
 
     local n_samples = 0
     local hits = 0
@@ -527,7 +529,7 @@ april_set_doc("stats.confusion_matrix.clearClass",
     description= "This function is useful when you don't want to count determinated pair class.",
     params = {"The index of the Ground Truth class.","The index of the predicted class"},
 })
-function stats.confusion_matrix:clearClass(gt, pred)
+function confus_matrix_methods:clearClass(gt, pred)
 
     local samples = self.confusion[gt][pred]
     local n_samples = 0
@@ -546,7 +548,7 @@ april_set_doc("stats.confusion_matrix.clearPredClass",
     description= "This function is useful when you don't want to count determinated class.",
     params = {"The index of the class to be clear"},
 })
-function stats.confusion_matrix:clearPredClass(tipo)
+function confus_matrix_methods:clearPredClass(tipo)
 
     local n_samples = 0
     -- Moving by Rows
