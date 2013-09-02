@@ -410,7 +410,7 @@ for index=which_i_am,#list,cores do
     error(string.format("# Output file '%s' exists, use --force to force overwritten\n",
 			output_filename))
   else
-    matrix.savefile(segmentation_matrix, output_filename, "binary")
+    segmentation_matrix:toFilename(output_filename, "binary")
   end
   if phondir then
     output_filename = phondir .. "/" .. remove_extensions(string.basename(mfcc_filename)) .. ".phon"

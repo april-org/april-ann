@@ -65,7 +65,7 @@ function field_manager:apply(s)
       table.insert(argumentos,self.fields[s.input_fields[j]][i])
     end
     table.insert(argumentos,i)
-    local resul = {s.the_function(unpack(argumentos))}
+    local resul = {s.the_function(table.unpack(argumentos))}
     if table.getn(resul) ~= num_results then
        error(string.format("Error in field_manager apply method at index %d",i))
     end

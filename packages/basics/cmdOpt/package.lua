@@ -1,6 +1,6 @@
  package{ name = "cmdOpt",
    version = "1.0",
-   depends = { },
+   depends = { "util" },
    keywords = { },
    description = "",
    -- targets como en ant

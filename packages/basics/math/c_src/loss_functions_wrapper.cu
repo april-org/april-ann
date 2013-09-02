@@ -141,7 +141,8 @@ __global__ void computeMultiClassCrossEntropyLossFunctionKernel(const float *out
     // float o = clip(output[index], inf, epsilon, 1.0f - epsilon);
     float log_o = output[index];
     float t = clip(target_output[index], epsilon, 1.0f - epsilon);
-    if (t > epsilon) pattern_errors[index] += t * log_o;
+    if (t > epsilon) pattern_errors[index] = t * log_o;
+    else pattern_errors[index] = 0.0f;
   }
 }
 
@@ -161,14 +162,13 @@ __global__ void computeCrossEntropyLossFunctionKernel(const float *output,
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
     // compute derivative
-    float  log_o     = output[index];
-    double o         = clip(exp(output[index]),
-			    double(epsilon),
-			    double(1.0f - epsilon));
-    float  log_inv_o = (o< (1.0f-epsilon) ) ? log(1.0 - o) : log(epsilon);
+    float  log_o     = clip(output[index], logf(epsilon), logf(1.0 - epsilon));
+    double o         = exp(output[index]);
+    float  log_inv_o = log(1.0 - o);
     float  t         = clip(target_output[index], epsilon, 1.0f - epsilon);
     float  inv_t     = clip(1.0f - target_output[index], epsilon, 1.0f - epsilon);
-    if (t > epsilon) pattern_errors[index] += t * log_o;
+    if (t > epsilon) pattern_errors[index] = t * log_o;
+    else pattern_errors[index] = 0.0f;
     if (inv_t > epsilon) pattern_errors[index] += inv_t * log_inv_o;
   }
 }
@@ -214,7 +214,7 @@ __global__ void applyTanhErrorFunctionKernel(const float *output,
     else if (d > 0.9999999f)
       output_error[index] =  DERIVATIVE_SATURATION;
     else output_error[index] = log((1.0f+output_error[index])/(1.0f-output_error[index]));
-    pattern_errors[index] += d*d;
+    pattern_errors[index] = d*d;
   }
 }
 
@@ -458,7 +458,7 @@ float doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
                 static_cast<int>(pattern_errors->getSize()),
                 pattern_errors_ptr, 1, &sum);
     delete pattern_errors;
-    return sum;
+    return -sum;
   }
   else {
 #endif
@@ -503,7 +503,7 @@ float doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
 					   unsigned int bunch_size,
 					   bool use_gpu) {
 #ifdef USE_CUDA
-  if (use_gpu) {    
+  if (use_gpu) {
     const float *input_ptr  = input->getGPUForRead();
     const float *target_ptr = target->getGPUForRead();
     FloatGPUMirroredMemoryBlock *pattern_errors = 
@@ -512,7 +512,8 @@ float doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
     dim3 block, grid;
     computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
-    computeMultiClassCrossEntropyLossFunctionKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+    computeMultiClassCrossEntropyLossFunctionKernel<<<grid, block, 0,
+                                                      GPUHelper::getCurrentStream()>>>
       (input_ptr,
        target_ptr,
        pattern_errors_ptr,
@@ -526,7 +527,7 @@ float doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
                 static_cast<int>(pattern_errors->getSize()),
                 pattern_errors_ptr, 1, &sum);
     delete pattern_errors;
-    return sum;
+    return -sum;
   }
   else {
 #endif

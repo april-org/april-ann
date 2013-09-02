@@ -180,7 +180,7 @@
   } else if (lua_istable(L,1)) {
     // recibimos una tabla tipo vector y devolvemos otra con los
     // mismos elementos pero permutados
-    size = lua_objlen(L,1);
+    size = luaL_len(L,1);
     is_number = false;
   } else LUABIND_ERROR("random shuffle: an int or a table expected");
   vector = new int[size];
@@ -216,7 +216,7 @@
   if (!lua_istable(L,1)) {
     LUABIND_ERROR("random choose: a table expected");
   }
-  int len   = lua_objlen(L,-1);
+  int len   = luaL_len(L,-1);
   if (len > 0) {
     int which = 1+obj->randInt(len-1);
     lua_rawgeti(L,-1,which);

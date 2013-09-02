@@ -1,3 +1,4 @@
+dofile("binding/formiga.lua")
 formiga.build_dir = "build_release_macosx"
 
 luapkg{
@@ -23,6 +24,7 @@ luapkg{
       "-lpng",
       "/System/Library/Frameworks/Accelerate.framework/Versions/A/Accelerate",
       "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib",
+      "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libLAPACK.dylib",
       "-rdynamic",
     },
   },

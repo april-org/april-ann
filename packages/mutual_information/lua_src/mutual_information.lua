@@ -1,4 +1,5 @@
-MI = MI or {}
+stats = stats or {}
+stats.MI = stats.MI or {}
 
 local LEVELS  = 256
 local EPSILON = 1e-03
@@ -17,7 +18,7 @@ local function get_histogram_from_matrix(m, levels)
 end
 
 
-april_set_doc("MI.entropy",
+april_set_doc("stats.MI.entropy",
 	      {
 		class = "function",
 		summary = "Computes the entropy of a given matrix or histogram",
@@ -39,7 +40,7 @@ april_set_doc("MI.entropy",
 	      })
 
 -- computes the entropy given a matrix or a histogram
-function MI.entropy(m, histogram, levels)
+function stats.MI.entropy(m, histogram, levels)
   assert(not histogram or histogram:is_contiguous(),
 	 "Histogram must be contiguous matrix")
   if histogram then
@@ -54,7 +55,7 @@ function MI.entropy(m, histogram, levels)
   return -histogram:clone():plogp():sum()/math.log(2)
 end
 
-april_set_doc("MI.mutual_information",
+april_set_doc("stats.MI.mutual_information",
 	      {
 		class = "function",
 		summary = "Computes the Mutual Information between two matrices",
@@ -77,7 +78,7 @@ april_set_doc("MI.mutual_information",
 
 -- this function computes the mutual information between two matrices of the
 -- same size
-function MI.mutual_information(m1, m2, levels)
+function stats.MI.mutual_information(m1, m2, levels)
   local levels = levels or LEVELS
   assert(m1:size() == m2:size(), "Two matrices must be of the same size")
   -- the matrices are first adjusted to be between 0.0 and levels-1, and
@@ -103,9 +104,9 @@ function MI.mutual_information(m1, m2, levels)
     h1:axpy(1.0, h12:select(2, i)) -- by columns
     h2:axpy(1.0, h12:select(1, i)) -- by rows
   end
-  local entropy1  = MI.entropy(nil, h1)
-  local entropy2  = MI.entropy(nil, h2)
-  local entropy12 = MI.entropy(nil, h12)
+  local entropy1  = stats.MI.entropy(nil, h1)
+  local entropy2  = stats.MI.entropy(nil, h2)
+  local entropy12 = stats.MI.entropy(nil, h12)
   -- returns the Mutual Information and Normalized Mutual Information
   return entropy1+entropy2-entropy12 , (entropy1+entropy2)/entropy12
 end

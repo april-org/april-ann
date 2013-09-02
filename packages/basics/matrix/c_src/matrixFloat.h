@@ -138,6 +138,9 @@ Matrix<float> *Matrix<float>::maxSelDim(const int dim,
 template<>
 void Matrix<float>::adjustRange(float rmin, float rmax);
 
+template<>
+Matrix<float> *Matrix<float>::inv();
+
 ////////////////////////////////////////////////////////////////////////////
 
 typedef Matrix<float> MatrixFloat;

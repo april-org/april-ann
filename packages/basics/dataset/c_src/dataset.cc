@@ -917,6 +917,29 @@ int SaltPepperNoiseDataSet<T>::putPattern(int index, const T *pat) {
 //-------------------------------------------------------------
 
 template <typename T>
+StepDataSet<T>::StepDataSet(DataSet<T> *ds, int step):ds(ds), step(step){
+  IncRef(ds);
+}
+
+template<typename T>
+StepDataSet<T>::~StepDataSet() {
+  DecRef(ds);
+}
+template<typename T> int StepDataSet<T>::getPattern(int index, T *pat) {
+
+  // The original position in the dataset
+  int dst_index = (index * this->step);
+  
+  int ret = this->ds->getPattern(dst_index,pat);
+  return ret;
+}
+
+template<typename T> int StepDataSet<T>::putPattern(int index, const T *pat) {
+  ERROR_EXIT(1, "Method putPattern forbidden for StepDataset!!\n");
+  return 0;
+}
+//-------------------------------------------------------------
+template <typename T>
 DerivDataSet<T>::DerivDataSet(DataSet<T> *ds,
 			      bool deriv0, bool deriv1, bool deriv2) :
   ds(ds), deriv0(deriv0), deriv1(deriv1), deriv2(deriv2) {

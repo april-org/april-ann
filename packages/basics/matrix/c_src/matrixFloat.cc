@@ -562,6 +562,9 @@ Matrix<float> *Matrix<float>::maxSelDim(const int dim,
   if (dim < 0 || dim > numDim)
     ERROR_EXIT2(128, "Incorrect dimension %d, numDim=%d\n", dim, numDim);
   MatrixFloat *result = new MatrixFloat(1, &matrixSize[dim], major_order);;
+#ifdef USE_CUDA
+  result->setUseCuda(use_cuda);
+#endif
   int *argmax = 0;
   if (raw_positions != 0) {
     argmax = raw_positions->getPPALForWrite() + shift;
@@ -573,9 +576,6 @@ Matrix<float> *Matrix<float>::maxSelDim(const int dim,
   case 2:
     {
       const int other_dim = 1 - dim;
-#ifdef USE_CUDA
-      result->setUseCuda(use_cuda);
-#endif
       float *res_ptr = result->getRawDataAccess()->getPPALForWrite();
       const float *src_ptr = data->getPPALForRead();
       for (int i=0; i<matrixSize[dim]; ++i, ++res_ptr) {
@@ -685,6 +685,32 @@ void Matrix<float>::adjustRange(float rmin, float rmax) {
     scal(ratio);
     if (rmin > 0.0f || rmin < 0.0f) scalarAdd(rmin);
   }
+}
+
+// FIXME: using WRAPPER for generalized CULA, LAPACK, float and complex numbers
+template<>
+Matrix<float> *Matrix<float>::inv() {
+  if (numDim != 2)
+    ERROR_EXIT(128, "Only bi-dimensional matrices are allowed\n");
+  if (matrixSize[0] != matrixSize[1])
+    ERROR_EXIT(128, "Only square matrices are allowed\n");
+  MatrixFloat *A = this->clone(CblasColMajor);
+  int *IPIV = new int[numDim+1];
+  int INFO;
+  INFO = clapack_sgetrf(CblasColMajor,
+			A->numDim,A->numDim,A->getData(),A->stride[1],IPIV);
+  checkLapackInfo(INFO);
+  INFO = clapack_sgetri(CblasColMajor,
+			A->numDim,A->getData(),A->stride[1],IPIV);
+  checkLapackInfo(INFO);
+  delete IPIV;
+  MatrixFloat *ret;
+  if (major_order != CblasColMajor) {
+    ret = A->clone(CblasRowMajor);
+    delete A;
+  }
+  else ret = A;
+  return ret;
 }
 
 template class Matrix<float>;

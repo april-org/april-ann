@@ -12,7 +12,7 @@ local ds = {}
 for fichero in io.lines(lista) do
   fprintf(io.stderr, "%s\n", fichero)
   local f   = io.open(fichero) or error ("File not found: " .. fichero)
-  local mat = matrix.fromString(f:read("*a"))
+  local mat = matrix.fromFilename(fichero)
   table.insert(ds, dataset.matrix(mat))
 end
 ds         = dataset.union(ds)

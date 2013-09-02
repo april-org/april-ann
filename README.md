@@ -7,15 +7,16 @@ Requirements
 Requires the following libraries. Versions are only orientative, it could work with older and newer versions.
 
 - GNU C++ compiler (g++): v 4.7.2
-- BLAS implementation: ATLAS (v. 3) or Intel MKL (v. 10.3.6)
+- BLAS implementation: ATLAS (v. 3), Intel MKL (v. 10.3.6), MacOS Accelerate Framework
 - Threads posix (pthread)
 - Readline (libreadline)
 - OpenMP
+- LAPACK library, offered by liblapack_atlas, mkl_lapack, or MacOS Accelerate Framework
+- libz: support for open of GZIPPED files
 
 The following libreries are recommended, but optional:
 - [OPTIONAL] libpng: if you want to open PNG images
 - [OPTIONAL] libtiff: if you want to open TIFF images
-- [OPTIONAL] libz: if you want to poen GZIPED files
 
 For perform computation on GPU, this optional library:
 - [OPTIONAL] CUDA and CUBLAS: release 4.2.6
@@ -34,10 +35,10 @@ different libraries. It is simple, you do
 
 where TARGET is one of the following, depending on which version you want:
 
-- ATLAS: release/debug
-- Intel MKL: release-mkl/debug-mkl
-- Intel MKL + CUDA: release-cuda-mkl/debug-cuda-mkl
-- Mac OS X Accelerate Framework: release-macosx/debug-macosx
+- ATLAS: make release (use build_release.lua), make debug (build_debug.lua)
+- Intel MKL: make or make release-mkl (build_mkl_release.lua), make debug-mkl (build_mkl_debug.lua)
+- Intel MKL + CUDA: make release-cuda-mkl (build_cuda_and_mkl_release.lua), make debug-cuda-mkl (build_cuda_and_mkl_debug.lua)
+- Mac OS X Accelerate Framework: make release-macosx (build_release_macosx.lua), make debug-macosx (build_debug_macosx.lua)
 
 Each of this targets will need a little configuration depending on your library
 installation. For example, in order to compile with MKL, the file build_mkl_release.lua contains
@@ -117,11 +118,11 @@ erase the package name from this list to avoid its compilation.
 
 Includes these sources
 ----------------------
-- LUA virtual machine 5.1.4: http://www.lua.org/
-- Luiz's lstrip for Lua 5.1: http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/5.1/lstrip.tar.gz
+- LUA virtual machine 5.2.2: http://www.lua.org/
+- Luiz's lstrip for Lua 5.1, adapted to compile with Lua 5.2.2: http://www.tecgraf.puc-rio.br/~lhf/ftp/lua/5.1/lstrip.tar.gz
 - MersenneTwister: http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
-- GZIO: http://luaforge.net/projects/gzio/
 - Median filter from Simon Perreault: http://nomis80.org/ctmf.html
+- RuningStat class for efficient and stable computation of mean and variance: http://www.johndcook.com/standard_deviation.html
 
 
 Wiki documentation
@@ -136,8 +137,13 @@ Doxygen documentation
 - [Developer manual](http://pakozm.github.com/april-ann/doxygen_doc/developer/html/index.html)
 - [Reference manual](http://pakozm.github.com/april-ann/doxygen_doc/user_refman/html/index.html)
 
-MAC OS X
---------
+LINUX installation
+------------------
 
-- Install libpng
-- Install findutils in /usr using --prefix=/usr
+Install g++, libatlas-dev, libreadline-dev, libpng-dev, libtiff-dev, libz-dev, libopenmp-dev.
+
+MAC OS X installation
+---------------------
+
+- Install libpng, from (sourceforge)[http://sourceforge.net/projects/libpng/files/]. Follow INSTALL information.
+- Install findutils, from (GNU)[http://ftp.gnu.org/pub/gnu/findutils/]. Follow INSTALL instructions. Execute `./configure --prefix=/usr` in order to substitute BSD find of your MacOS.

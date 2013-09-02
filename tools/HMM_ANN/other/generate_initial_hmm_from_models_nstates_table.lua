@@ -11,7 +11,7 @@ tied = tied_model_manager(io.open(tiedfile))
 
 local model2nstates = {}
 for line in io.lines(nstates_file) do
-  local model_name, nstates = unpack(string.tokenize(line))
+  local model_name, nstates = table.unpack(string.tokenize(line))
   name = tied:get_model(model_name)
   if model2nstates[name] and
     model2nstates[name] ~= tonumber(nstates) then

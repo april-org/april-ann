@@ -109,6 +109,7 @@ namespace ANN {
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);
     if (error_output) DecRef(error_output);
+    if (argmax_raw_pos) DecRef(argmax_raw_pos);
     delete[] kernel_dims;
     delete[] kernel_step;
     delete[] output_dims;

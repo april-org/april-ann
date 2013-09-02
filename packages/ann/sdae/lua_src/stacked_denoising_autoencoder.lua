@@ -160,7 +160,7 @@ local function
     local input_repl_ds, output_repl_ds
     if replacement then
       -- if autoencoder, only generate one corpus replacement
-      input_repl_ds, output_repl_ds = unpack( get_replacement_dataset(shuffle_random, replacement, input_dataset, output_dataset) )
+      input_repl_ds, output_repl_ds = table.unpack( get_replacement_dataset(shuffle_random, replacement, input_dataset, output_dataset) )
     end
     -- generate the last layer dataset
     local input_layer_dataset = mlp_final_trainer:use_dataset{
@@ -874,7 +874,7 @@ function ann.autoencoders.iterative_sampling(t)
       output:get_matrix():set(1,pos,input_rewrapped:get(1,pos))
     end
     -- insert current output to the chain
-    table.insert(chain, output:get_matrix():rewrap(unpack(params.input:dim())))
+    table.insert(chain, output:get_matrix():rewrap(table.unpack(params.input:dim())))
     -- improvement measure
     local imp = math.abs(math.abs(last_L - L)/last_L)
     if params.verbose then printf("%6d %6g :: %6g\n", i, L, imp) end
@@ -890,7 +890,7 @@ function ann.autoencoders.iterative_sampling(t)
       input:set(1,pos,input_rewrapped:get(1,pos))
     end
   end
-  return output:get_matrix():rewrap(unpack(params.input:dim())),L,chain
+  return output:get_matrix():rewrap(table.unpack(params.input:dim())),L,chain
 end
 
 ----------------------------------------------------------------------------
@@ -965,7 +965,7 @@ function ann.autoencoders.sgd_sampling(t)
     for _,pos in ipairs(params.mask) do
       output:get_matrix():set(1,pos,input_rewrapped:get(1,pos))
     end
-    table.insert(chain, output:get_matrix():rewrap(unpack(params.input:dim())))
+    table.insert(chain, output:get_matrix():rewrap(table.unpack(params.input:dim())))
     local imp = math.abs(math.abs(last_L - L)/last_L)
     if params.verbose then printf("%6d %6g :: %6g", i, L, imp) end
     if i==1 or L <= min then

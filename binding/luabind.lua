@@ -276,7 +276,7 @@ function load_data(filename)
 end
 
 -- MAIN
-if table.getn(arg) < 3 then
+if #arg < 3 then
    io.stderr:write(
 		   "USO: "..arg[-1].." "..arg[0].." file_output plantilla fichero_to_bind1 [fichero_to_bind2 ...]\n")
    os.exit(1)
@@ -284,7 +284,7 @@ end
 
 f = io.open(arg[2])
 plantilla = expand_text( f:read("*a") )
-for i=3,table.getn(arg) do
+for i=3,#arg do
    load_data( arg[i] )
 end
 
@@ -306,7 +306,7 @@ if new_output == nil then
 end
 oldprint = print
 print = function(...)
-	   new_output:write(unpack(arg),"\n")
+	   new_output:write(...,"\n")
 	end 
 
 -- ejecutamos

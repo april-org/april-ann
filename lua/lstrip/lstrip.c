@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define lua_open()  luaL_newstate()
+
 #define LUA_CORE
 
 #include "lua.h"
@@ -30,6 +32,8 @@
 static const char* progname=PROGNAME;	/* actual program name */
 static int preserve=0;			/* preserve line breaks? */
 static int dump=0;			/* dump instead of stripping? */
+
+extern const char *const luaX_tokens [];
 
 static void fatal(const char* message)
 {
@@ -184,14 +188,24 @@ static void dostrip(LexState *X)
  }
 }
 
-Proto *luaY_parser(lua_State *L, ZIO *z, Mbuffer *buff, const char *name)
+Closure *luaY_parser(lua_State *L, ZIO *z, Mbuffer *buff,
+		     Dyndata *dyd, const char *name, int firstchar)
 {
  LexState X;
  FuncState F;
+ Closure *cl = luaF_newLclosure(L, 1);  /* create main closure */
+ /* anchor closure (to avoid being collected) */
+ setclLvalue(L, L->top, cl);
+ incr_top(L);
  X.buff=buff;
- luaX_setinput(L,&X,z,luaS_new(L,name));
+ F.f = cl->l.p = luaF_newproto(L);
+ F.f->source = luaS_new(L, name);  /* create and anchor TString */
+ X.buff = buff;
+ X.dyd = dyd;
+ dyd->actvar.n = dyd->gt.n = dyd->label.n = 0;
+ luaX_setinput(L, &X, z, F.f->source, firstchar);
  X.fs=&F;
- X.fs->h=luaH_new(L,0,0);
+ X.fs->h=luaH_new(L);
  sethvalue2s(L,L->top,X.fs->h);
  incr_top(L);
  if (dump)
@@ -200,7 +214,7 @@ Proto *luaY_parser(lua_State *L, ZIO *z, Mbuffer *buff, const char *name)
   dodump(&X);
  }
  else dostrip(&X);
- return luaF_newproto(L);
+ return cl;  /* it's on the stack too */
 }
 
 static void strip(lua_State *L, const char *file)

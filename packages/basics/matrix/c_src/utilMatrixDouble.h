@@ -82,8 +82,7 @@ struct DoubleBinaryCoder {
   void operator()(const double &value, StreamType &stream) {
     char b[10];
     binarizer::code_double(value, b);
-    stream.printf("%c%c%c%c%c%c%c%c%c%c",
-		  b[0],b[1],b[2],b[3],b[4],b[5],b[6],b[7],b[8],b[9]);
+    stream.write(b, sizeof(char)*10);
   }
 };
 
@@ -94,6 +93,7 @@ struct DoubleBinaryCoder {
 void writeMatrixDoubleToFile(MatrixDouble *mat, const char *filename,
 			     bool is_ascii);
 char *writeMatrixDoubleToString(MatrixDouble *mat, bool is_ascii, int &len);
+void writeMatrixDoubleToLuaString(MatrixDouble *mat, lua_State *L, bool is_ascii);
 MatrixDouble *readMatrixDoubleFromFile(const char *filename);
 MatrixDouble *readMatrixDoubleFromString(constString &cs);
 

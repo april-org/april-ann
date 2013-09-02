@@ -31,16 +31,16 @@ cublasStatus_t wrapperCublasNrm2(cublasHandle_t &handle,
 				 unsigned int n,
 				 const float *x_mem,
 				 unsigned int x_inc,
-				 float *ret) {
-  return cublas_Snrm2(handle, n, x_mem, inc, &result);
+				 float *result) {
+  return cublasSnrm2(handle, n, x_mem, x_inc, result);
 }
 
 cublasStatus_t wrapperCublasNrm2(cublasHandle_t &handle,
 				 unsigned int size,
 				 const ComplexF *x_mem,
 				 unsigned int x_inc,
-				 ComplexF *ret) {
-  return cublas_Scnrm2(handle, n, x_mem, inc, &result);
+				 float *result) {
+  ERROR_EXIT(256, "Nrm2 for complex numbers not implemented in CUDA\n");
 }
 
 #endif

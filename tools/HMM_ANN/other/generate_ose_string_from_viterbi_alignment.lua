@@ -111,7 +111,7 @@ for orig_filename in vit_file:lines() do
   
   local orig_phn_filename = phn_file:read("*l")
   local phn               = filter(io.open(orig_phn_filename):read("*l"))
-  local mat               = matrix.loadfile(orig_filename)
+  local mat               = matrix.fromFilename(orig_filename)
   local ds                = dataset.matrix(mat)
   phn                     = string.tokenize(phn)
   local words             = { }
