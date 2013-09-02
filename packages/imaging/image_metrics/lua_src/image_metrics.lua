@@ -57,5 +57,5 @@ function processImages(self, clean_img, gt_img)
     )
 end
 
-cpp_class_binding_extension(image.image_metrics, "processImages",processImages)
+class_extension(image.image_metrics, "processImages",processImages)
 
