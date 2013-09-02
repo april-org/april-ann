@@ -4,6 +4,8 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Modified `class` and `class_instance` functions to be more homogeneous
+  with C++ binding.
 - Added SubAndDivNormalizationDataSet, applies a substraction and a division of
   the feature vectors.
 - Added stepDataset.
