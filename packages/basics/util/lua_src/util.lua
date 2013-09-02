@@ -1,11 +1,11 @@
 local COLWIDTH=70
 
-function cpp_class_binding_extension(class_table, key, value)
+function class_extension(class_table, key, value)
   if class_table.meta_instance and
   type(class_table.meta_instance.__index) == "table" then
     class_table.meta_instance.__index[key] = value
   else
-    error("The table is not a CPP class binding")
+    error("The table is not a class")
   end
 end
 
@@ -58,8 +58,9 @@ function class_wrapper(obj,wrapper)
 end
 
 -- Convert a table in a class, and it receives an optional parent class to
--- implement simple heritance
-function class(classname, parentclass)
+-- implement simple heritance, and an optional constructor function. It returns
+-- a table which will contain the methods of the class.
+function class(classname, parentclass, constructor)
   local current = get_table_from_dotted_string(classname, true)
   local t = string.tokenize(classname,".")
   if not parentclass then
@@ -67,18 +68,35 @@ function class(classname, parentclass)
   else
     current.__index = parentclass
   end
-  -- To be coherent with C++ binded classes
-  current.meta_instance = { __index = current }
-  current.id = classname
-  setmetatable(current, current)
+  --
+  local meta_instance = {
+    id = classname,
+    __tostring = function(self) return "instance of " .. classname end,
+    __index = { }
+  }
+  local class_meta_table = {
+    __call     = constructor,
+    __tostring = function() return "class ".. classname .. " class" end,
+    id         = classname,
+  }
+  if parentclass then
+    setmetatable(meta_instance, { __index=parentclass.meta_instance })
+  end
+  -- 
+  local constructor = constructor or function()return class_instance({},current)end
+  current.meta_instance = meta_instance
+  setmetatable(current, class_meta_table)
+  return current.meta_instance.__index
 end
 
 -- Converts a Lua table in an instance of the given class. An optional
 -- nil-safe boolean with true indicates if the resulting table field names are
 -- nil safe (is not possible to get a field which doesn't exists)
 function class_instance(obj, class, nil_safe)
-  setmetatable(obj, class)
-  if nil_safe then obj.__index = class end
+  setmetatable(obj, class.meta_instance)
+  if nil_safe and not getmetatable(class.meta_instance.__index) then
+    setmetatable(class.meta_instance, class.meta_instance)
+  end
   return obj
 end
 
