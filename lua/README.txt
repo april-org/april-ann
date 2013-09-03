@@ -1,3 +1,8 @@
+2013/09/03: Modified luaconf.h:
+
+- #define LUA_ROOT	"/usr/local/"
++ #define LUA_ROOT	"/usr/"
+
 2013/08/28: Modified Lua makefile, added this:
 
 UNAME = `uname`
