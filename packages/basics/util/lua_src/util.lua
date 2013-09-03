@@ -77,7 +77,7 @@ function class(classname, parentclass)
   }
   local class_metatable = {
     __tostring = function() return "class ".. classname .. " class" end,
-    id         = classname,
+    id         = classname .. " class",
   }
   if parentclass then
     setmetatable(meta_instance.__index, parentclass.meta_instance)
