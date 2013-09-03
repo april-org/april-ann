@@ -1,6 +1,6 @@
 interest_points = interest_points or {}
 
-class("interest_points.pointClassifier")
+local methods, class_metatable = class("interest_points.pointClassifier")
 
 april_set_doc("interest_points.pointClassifier", {
 		class       = "class",
@@ -18,7 +18,7 @@ april_set_doc("interest_points.pointClassifier.__Call", {
 		},
     outputs = {"A Point Classifier object"},
 })
-function interest_points.pointClassifier:__call(ancho, alto, miniancho, minialto, reverse)
+function class_metatable:__call(ancho, alto, miniancho, minialto, reverse)
 
     -- prepara la configuracion para aplicar el ojo de pez con dataset.linear_comb
     -- local functions
@@ -127,7 +127,8 @@ function interest_points.pointClassifier:__call(ancho, alto, miniancho, minialto
     obj.inv_tlc = dataset.linear_comb_conf(obj.table_inv)
     obj.tlc = dataset.linear_comb_conf(tlc)
     obj.white = (reverse and 0) or 1
-    setmetatable(obj, self)
+    
+    obj = class_instance(obj, self, true)
     return obj
 
 end
@@ -135,7 +136,7 @@ end
 ---------------------------------------------------
 -- crop_image(img, x, y, tlc) -> table
 ---------------------------------------------------
-function interest_points.pointClassifier:crop_image(img, x, y)
+function methods:crop_image(img, x, y)
     return self:applyLinearComb(img, x, y):getPattern(1)
 end
 
@@ -153,7 +154,7 @@ april_set_doc("interest_points.pointClassifier.getFishDs", {
     },
     outputs = {"A Point Classifier object"},
 })
-function interest_points.pointClassifier:getFishDs(img, x, y)
+function methods:getFishDs(img, x, y)
 
     local mFish = img:comb_lineal_forward(x,y, self.ancho, self.alto, self.miniancho, self.minialto, self.inv_tlc)
     local dsFish = dataset.matrix(mFish, {patternSize={self.miniancho*self.minialto},stepSize={self.miniancho*self.minialto}, numSteps={1} })
@@ -161,7 +162,7 @@ function interest_points.pointClassifier:getFishDs(img, x, y)
     return dsFish
 end
 
-function interest_points.pointClassifier:applyLinearComb(img, x, y)
+function methods:applyLinearComb(img, x, y)
     local mat, _, _, dx, dy = img:matrix(),img:geometry()
     local ds = dataset.matrix(mat,
     {
@@ -201,7 +202,7 @@ function interest_points.pointClassifier:compute_point(img, x, y, mlp)
     return dsOut:getPattern(1)
 end
 
-april_set_doc("interest_points.pointClassifier.getPointClass", {
+april_set_doc("methods.getPointClass", {
 		class       = "method",
 		summary     = "Gets the corresponding class for the point",
 		description ={
@@ -214,7 +215,7 @@ april_set_doc("interest_points.pointClassifier.getPointClass", {
     },
     outputs = {"Integer of the winning class"},
 })
-function interest_points.pointClassifier:getPointClass(img, x, y, mlp)
+function methods:getPointClass(img, x, y, mlp)
     return self.compute_point(img, x, y, mlp):max()
 
 end
@@ -243,7 +244,7 @@ april_set_doc("interest_points.pointClassifier.compute_points", {
     },
     outputs = {"Dataset of size Num_Classes x Num_Points"},
 })
-function interest_points.pointClassifier:compute_points(img, points, mlp)
+function methods:compute_points(img, points, mlp)
 
     --Compute the matrix (Forward)
     local fishEyes = {}
@@ -265,7 +266,7 @@ end
 ----------------------------------------------------------
 -- Given a image extract all the points and classify them
 -- -------------------------------------------------------
-function interest_points.pointClassifier:classify_points(img, points, mlp)
+function methods:classify_points(img, points, mlp)
    
     local dsOut = self:compute_points(img, points, mlp)
     local classes = getIndexSoftmax(dsOut)
@@ -291,7 +292,7 @@ function interest_points.pointClassifier:classify_points(img, points, mlp)
 
 end
 
-function interest_points.pointClassifier:extract_points(img, mlpUppers, mlpLowers)
+function methods:extract_points(img, mlpUppers, mlpLowers)
 
     local uppers, lowers = interest_points.extract_points_from_image(img)
 
