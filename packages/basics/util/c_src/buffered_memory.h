@@ -40,7 +40,7 @@ extern "C" {
    int    seekS(long offset, int whence) = 0;
    void   flushS() = 0;
    int    printfS(const char *format, va_list &arg) = 0;
-   bool   eofS() = 0;
+   bool   eofS() const = 0;
 **/
 
 /// This class is useful to define classes for input/output routines, as for
@@ -81,8 +81,8 @@ public:
   BufferedMemory(const char *path, const char *mode);
   ~BufferedMemory();
   
-  /// Returns if the file was opened correctly
-  bool isOpened() const { return is_opened; }
+  /// Returns if the file was opened correctly, and not is EOF
+  bool good() const { return is_opened && !memory.eofS(); }
   /// Closes the memory
   void close();
   /// Forces to write pending data

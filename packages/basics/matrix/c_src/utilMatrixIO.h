@@ -54,6 +54,7 @@ public:
   }
   int getTotalBytes() const { return pos - buffer; }
   char *getBufferProperty() { char *aux = buffer; buffer = 0; return aux; }
+  bool good() const { return buffer != 0; }
 };
 
 class WriteLuaBufferWrapper {
@@ -90,6 +91,7 @@ public:
     luaL_addsize(&lua_buffer, total_bytes);
     luaL_pushresult(&lua_buffer);
   }
+  bool good() const { return buffer_ptr!=0; }
 };
 
 /*** The ASCII or BINARY extractor are like this functor struct:
@@ -118,12 +120,15 @@ readMatrixFromStream(StreamType &stream,
 		     AsciiExtractFunctor ascii_extractor,
 		     BinaryExtractorFunctor bin_extractor,
 		     const char *given_order=0) {
-  
+  if (!stream.good()) {
+    ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
+    return 0;
+  }
   constString line,format,order,token;
   // First we read the matrix dimensions
   line = stream.extract_u_line();
   if (!line) {
-    fprintf(stderr, "empty file!!!\n");
+    ERROR_PRINT("empty file!!!\n");
     return 0;
   }
   static const int maxdim=100;
@@ -133,18 +138,18 @@ readMatrixFromStream(StreamType &stream,
     if (token == "*") {
       if (pos_comodin != -1) {
 	// Error, more than one comodin
-	fprintf(stderr,"more than one '*' reading a matrix\n");
+	ERROR_PRINT("more than one '*' reading a matrix\n");
 	return 0;
       }
       pos_comodin = n;
     } else if (!token.extract_int(&dims[n])) {
-      fprintf(stderr,"incorrect dimension %d type, expected a integer\n", n);
+      ERROR_PRINT1("incorrect dimension %d type, expected a integer\n", n);
       return 0;
     }
     n++;
   }
   if (n==maxdim) {
-    fprintf(stderr,"number of dimensions overflow\n");
+    ERROR_PRINT("number of dimensions overflow\n");
     return 0; // Maximum allocation problem
   }
   Matrix<MatrixType> *mat = 0;
@@ -215,7 +220,7 @@ readMatrixFromStream(StreamType &stream,
 	sizesincomodin *= dims[i];
     if ((size % sizesincomodin) != 0) {
       // Error: The size of the data does not coincide
-      fprintf(stderr,"data size is not valid reading a matrix with '*'\n");
+      ERROR_PRINT("data size is not valid reading a matrix with '*'\n");
       delete[] data; return 0;
     }
     dims[pos_comodin] = size / sizesincomodin;
@@ -283,6 +288,9 @@ int writeMatrixToStream(Matrix<MatrixType> *mat,
   if (is_ascii) sizedata = ascii_sizer(mat);
   else sizedata = bin_sizer(mat);
   stream.setExpectedSize(sizedata+sizeheader+1);
+  if (!stream.good()) {
+    ERROR_EXIT(256, "The stream is not prepared, it is empty, or EOF\n");
+  }
   for (int i=0;i<mat->getNumDim()-1;i++) stream.printf("%d ",mat->getDimSize(i));
   stream.printf("%d\n",mat->getDimSize(mat->getNumDim()-1));
   if (is_ascii) {
