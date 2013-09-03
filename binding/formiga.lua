@@ -967,7 +967,8 @@ function formiga .__object__ (t)
       local ok = formiga.os.execute(command, true)
       if not ok then
 	os.execute("rm -Rf " .. build_dir)
-	error("ERROR")
+	-- error("ERROR")
+	os.exit(1)
       end
     end
   end
@@ -1273,7 +1274,8 @@ function formiga.__build_bind__ (t)
     local ok,what,error_resul = formiga.os.execute(command, true)
     if not ok then
       os.execute("rm -Rf " .. build_dir)
-      error("ERROR")
+      -- error("ERROR")
+      os.exit(1)
     end
 
   end
