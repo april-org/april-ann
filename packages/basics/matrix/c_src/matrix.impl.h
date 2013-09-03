@@ -510,6 +510,12 @@ Matrix<T> *Matrix<T>::select(int dim, int index, Matrix<T> *dest) {
     april_assert(dest->numDim == numDim-1);
     //
     dest->offset = index*stride[dim];
+    dest->last_raw_pos = dest->offset;
+    for(int i=0; i<dim; ++i)
+      dest->last_raw_pos += (matrixSize[i]-1)*stride[i];
+    for(int i=dim+1; i<numDim; ++i)
+      dest->last_raw_pos += (matrixSize[i]-1)*stride[i];
+    //
     result = dest;
   }
   return result;
