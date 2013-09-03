@@ -53,9 +53,8 @@ function trainer_class_metatable:__call()
     
   }
 
-  class_instance(o, self, true)
+  return class_instance(o, self, true)
 
-  return o
 end
 
 local model_methods = class("HMMTrainer.model")
@@ -97,7 +96,7 @@ function trainer_methods:model(m)
 
   -- Creamos un modelo lua con las transiciones renumeradas
   local res = {}
-  class_instance(res, HMMTrainer.model, true)
+  res = class_instance(res, HMMTrainer.model, false)
   res.name        = m.name
   res.initial     = state_numbers[m.initial]
   res.final       = state_numbers[m.final]
