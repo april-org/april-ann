@@ -60,7 +60,7 @@ Matrix<O> *applyFunctorOverDimension(FUNC func,
   Matrix<O> *result = dest;
   if (result == 0) result = new Matrix<O>(numDim, result_dims,
 					  orig->getMajorOrder());
-  else if (!dest->sameDim(result_dims, numDim))
+  else if (!result->sameDim(result_dims, numDim))
     ERROR_EXIT(256, "Incorrect size at the given dest matrtix\n");
   // traverse in row major order
   for (typename Matrix<O>::iterator it(result->begin());
