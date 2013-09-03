@@ -30,8 +30,7 @@ function mean_var_class_metatable:__call()
     new_s = 0,
     N     = 0,
   }
-  class_instance(obj, self, true)
-  return obj
+  return class_instance(obj, self, true)
 end
 
 -----------------------------------------------------------------------------
@@ -185,8 +184,7 @@ function confus_matrix_class_metatable:__call(num_classes, class_dict)
         -- FIXME: IS NOT POSSIBLE USE MAP DICT AS NIL
         map_dict = map_dict or false
     }
-    class_instance(obj, self, true)
-    return obj
+    return class_instance(obj, self, true)
 end
 
 april_set_doc("stats.confusion_matrix.clone", {
@@ -202,9 +200,7 @@ function confus_matrix_methods:clone()
     
     local obj = table.deep_copy(self)
 
-    class_instance(obj, self, true)
-
-    return obj
+    return class_instance(obj, self, true)
 end
 april_set_doc("stats.confusion_matrix.reset", {
 		class = "method", summary = "Reset to 0 all the counters",
