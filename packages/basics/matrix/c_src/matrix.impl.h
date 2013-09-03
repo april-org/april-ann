@@ -509,7 +509,14 @@ Matrix<T> *Matrix<T>::select(int dim, int index, Matrix<T> *dest) {
     april_assert(dest->total_size == total_size/matrixSize[dim]);
     april_assert(dest->numDim == numDim-1);
     //
-    dest->offset = index*stride[dim];
+    int dest_offset = index*stride[dim];
+    int dest_last_raw_pos = dest_offset;
+    for(int i=0; i<dim; ++i)
+      dest_last_raw_pos += (matrixSize[i]-1)*stride[i];
+    for(int i=dim+1; i<numDim; ++i)
+      dest_last_raw_pos += (matrixSize[i]-1)*stride[i];
+    dest->changeSubMatrixData(dest_offset, dest_last_raw_pos);
+    //
     result = dest;
   }
   return result;
