@@ -33,7 +33,7 @@ class constString {
 	constString(const char *s);
 	constString(const char *s, size_t n);
 	operator bool()   { return  length>0 &&  buffer; }
-	bool empty()      { return length<=0 || !buffer; }
+	bool empty() const{ return length<=0 || !buffer; }
 	bool operator !() { return length<=0 || !buffer; }
 	size_t len() const { return length; }
 	// ojito, este método NO añade el \0 al final
@@ -103,6 +103,7 @@ class constString {
 	bool extract_int64_binary(int64_t *resul);
 #endif
 	void print(FILE *F=stdout);
+        bool good() const { return !empty(); }
 };
 
 char *copystr(const char *c);

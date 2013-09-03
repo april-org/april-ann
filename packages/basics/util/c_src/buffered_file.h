@@ -54,7 +54,7 @@ public:
   int printfS(const char *format, va_list &arg) {
     return vfprintf(f, format, arg);
   }
-  bool eofS() {
+  bool eofS() const {
     return feof(f) != 0;
   }
 };

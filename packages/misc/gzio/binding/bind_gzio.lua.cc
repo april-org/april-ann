@@ -40,7 +40,7 @@
   LUABIND_GET_PARAMETER(1, string, path);
   LUABIND_GET_OPTIONAL_PARAMETER(2, string, mode, "r");
   BufferedGZFile *obj = new BufferedGZFile(path, mode);
-  if (obj->isOpened())
+  if (obj->good())
     LUABIND_RETURN(BufferedGZFile, obj);
   else {
     LUABIND_RETURN_NIL();

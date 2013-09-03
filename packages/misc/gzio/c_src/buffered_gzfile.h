@@ -71,7 +71,7 @@ public:
     free(aux_buffer);
     return len;
   }
-  bool eofS() {
+  bool eofS() const {
     return gzeof(f) != 0;
   }
 };
