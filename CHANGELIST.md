@@ -4,6 +4,8 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Solved bugs at Matrix template constructor which affects to `rewrap` lua
+  method, and to select method, which affects to `select` lua method.
 - Configured Lua package path to be in /usr/ instead of /usr/local/. It is
   the default place in Ubuntu.
 - Replaced `cpp_class_binding_extension` by `class_extension` function,

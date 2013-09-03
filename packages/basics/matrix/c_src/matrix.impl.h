@@ -96,6 +96,7 @@ Matrix<T>::Matrix(int numDim,
   stride     = new int[numDim];
   matrixSize = new int[numDim];
   initialize(dim);
+  last_raw_pos += offset;
   if (data == 0) allocate_memory(total_size);
   else {
     if (static_cast<int>(data->getSize()) < offset + size())
