@@ -4,6 +4,10 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- `replacement` parameter in SDAE doesn't force `on_the_fly` parameter, they are
+  independent.
+- SDAE training has been changed in order to allow the use of LUA datasets,
+  improving-
 - Solved bugs at Matrix template constructor which affects to `rewrap` lua
   method, and to select method, which affects to `select` lua method.
 - Configured Lua package path to be in /usr/ instead of /usr/local/. It is
