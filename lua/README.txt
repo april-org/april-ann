@@ -1,7 +1,25 @@
+2013/09/04: Finally, here is the luaconf.h section for LUA_PATH and LUA_CPATH:
+
+#define LUA_CDIR_32     LUA_ROOT "lib/i386-linux-gnu/lua/" LUA_VDIR
+#define LUA_CDIR_64     LUA_ROOT "lib/x86_64-linux-gnu/lua/" LUA_VDIR
+#define LUA_PATH_DEFAULT  \
+  LUA_LDIR"?.lua;"  LUA_LDIR"?/init.lua;"		\
+  LUA_CDIR"?.lua;"  LUA_CDIR"?/init.lua;" "./?.lua"
+#define LUA_CPATH_DEFAULT				\
+  LUA_CDIR"?.so;" LUA_CDIR"loadall.so;"			\
+  LUA_CDIR_32"?.so;" LUA_CDIR_32"loadall.so;"		\
+  LUA_CDIR_64"?.so;" LUA_CDIR_64"loadall.so;"		\
+  "./?.so;"
+#endif			/* } */
+
+----------------------------------------------------------------------------
+
 2013/09/03: Modified luaconf.h:
 
 - #define LUA_ROOT	"/usr/local/"
 + #define LUA_ROOT	"/usr/"
+
+----------------------------------------------------------------------------
 
 2013/08/28: Modified Lua makefile, added this:
 
@@ -12,7 +30,7 @@ DetectOs:
 Linux: linux
 Darwin: macosx
 
-
+----------------------------------------------------------------------------
 
 2013/06/08: Lua 5.2.2 update
 
