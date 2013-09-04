@@ -1,8 +1,17 @@
 local COLWIDTH=70
 
+function class_get_value_of_key(class_table, key)
+  if class_table.meta_instance and
+  luatype(class_table.meta_instance.__index) == "table" then
+    return class_table.meta_instance.__index[key]
+  else
+    error("The table is not a class")
+  end
+end
+
 function class_extension(class_table, key, value)
   if class_table.meta_instance and
-  type(class_table.meta_instance.__index) == "table" then
+  luatype(class_table.meta_instance.__index) == "table" then
     class_table.meta_instance.__index[key] = value
   else
     error("The table is not a class")
@@ -145,24 +154,24 @@ function april_set_doc(table_name, docblock)
     }, docblock)
   assert(allowed_classes[docblock.class], "Incorrect class: " .. docblock.class)
   _APRIL_DOC_TABLE_ = _APRIL_DOC_TABLE_ or {}
-  if type(docblock.summary) == "table" then
+  if luatype(docblock.summary) == "table" then
     docblock.summary = table.concat(docblock.summary, " ")
   end
-  assert(type(docblock.summary) == "string", "Incorrect summary type")
-  if type(docblock.description) == "table" then
+  assert(luatype(docblock.summary) == "string", "Incorrect summary type")
+  if luatype(docblock.description) == "table" then
     docblock.description = table.concat(docblock.description, " ")
   end
-  assert(type(docblock.description) == "string", "Incorrect description type")
+  assert(luatype(docblock.description) == "string", "Incorrect description type")
   if docblock.params then
     for i,v in pairs(docblock.params) do
-      if type(v) == "table" then
+      if luatype(v) == "table" then
 	docblock.params[i] = table.concat(v, " ")
       end
     end
   end
   if docblock.outputs then
     for i,v in pairs(docblock.outputs) do
-      if type(v) == "table" then
+      if luatype(v) == "table" then
 	docblock.outputs[i] = table.concat(v, " ")
       end
     end
@@ -173,7 +182,7 @@ function april_set_doc(table_name, docblock)
 end
 
 function april_list(t)
-  if type(t) ~= "table" then error("Needs a table") end
+  if luatype(t) ~= "table" then error("Needs a table") end
   for i,v in pairs(t) do print(i,v) end
 end
 
@@ -303,12 +312,12 @@ end
 -- verbosity => 0 only names, 1 only summary, 2 all
 function april_help(table_name, verbosity)
   if not table_name then table_name="" end
-  if (type(table_name) ~= "string" and
+  if (luatype(table_name) ~= "string" and
       getmetatable(table_name) and
       getmetatable(table_name).id) then
     table_name = getmetatable(table_name).id
   end
-  assert(type(table_name) == "string", "Expected string as first argument")
+  assert(luatype(table_name) == "string", "Expected string as first argument")
   local t
   if #table_name == 0 then t = _G
   else
@@ -332,11 +341,11 @@ function april_help(table_name, verbosity)
   end
   local verbosity = verbosity or 2
   local obj = false
-  if type(t) == "function" then
+  if luatype(t) == "function" then
     april_print_doc(table_name, verbosity)
     -- printf("No more recursive help for %s\n", table_name)
     return
-  elseif type(t) ~= "table" then
+  elseif luatype(t) ~= "table" then
     if getmetatable(t) and getmetatable(t).__index then
       local id = getmetatable(t).id
       t = get_table_from_dotted_string(id)
@@ -353,9 +362,9 @@ function april_help(table_name, verbosity)
   local names      = {}
   local vars       = {}
   for i,v in pairs(t) do
-    if type(v) == "function" then
-      table.insert(funcs, {i, string.format("%8s",type(v))})
-    elseif type(v) == "table" then
+    if luatype(v) == "function" then
+      table.insert(funcs, {i, string.format("%8s",luatype(v))})
+    elseif luatype(v) == "table" then
       if i ~= "meta_instance" then
 	if getmetatable(v) and getmetatable(v).id then
 	  if i~="__index" then table.insert(classes, i) end
@@ -363,12 +372,12 @@ function april_help(table_name, verbosity)
 	  if not getmetatable(v) or not getmetatable(v).__call then
 	    table.insert(names, i)
 	  else
-	    table.insert(funcs, {i, string.format("%8s",type(v))})
+	    table.insert(funcs, {i, string.format("%8s",luatype(v))})
 	  end
 	end
       end
     else
-      table.insert(vars, {i, string.format("%8s",type(v))})
+      table.insert(vars, {i, string.format("%8s",luatype(v))})
     end
   end
   if #vars > 0 then
@@ -420,13 +429,13 @@ function april_help(table_name, verbosity)
     print(ansi.fg["cyan"].." -- methods"..ansi.fg["default"])
     local aux = {}
     for i,v in pairs(t.meta_instance.__index) do
-      if type(v) == "function" then
+      if luatype(v) == "function" then
 	table.insert(aux, i)
       end
     end
     if getmetatable(t) then
       for i,v in pairs(getmetatable(t)) do
-	if type(v) == "function" then
+	if luatype(v) == "function" then
 	  table.insert(aux, i)
 	end
       end
@@ -453,7 +462,7 @@ function april_help(table_name, verbosity)
 	      superclass_name..ansi.fg["default"])
       local aux = {}
       for i,v in pairs(t) do
-	if type(v) == "function" then
+	if luatype(v) == "function" then
 	  table.insert(aux, i)
 	end
       end
@@ -893,7 +902,7 @@ end
 function table.deep_copy(t, lookup_table)
  local copy = {}
  for i,v in pairs(t) do
-  if type(v) ~= "table" then
+  if luatype(v) ~= "table" then
    copy[i] = v
   else
    lookup_table = lookup_table or {}
@@ -920,8 +929,8 @@ function table.tostring(t)
     if tonumber(i) then key = "["..i.."]".."="
     else key = string.format("[%q]=",i)
     end
-    if type(v) == "table" then value = "\n"..table.tostring(v)
-    elseif type(v) == "string" then value = string.format("%q",v)
+    if luatype(v) == "table" then value = "\n"..table.tostring(v)
+    elseif luatype(v) == "string" then value = string.format("%q",v)
     else value = tostring(v)
     end
     table.insert(out, key .. value)
