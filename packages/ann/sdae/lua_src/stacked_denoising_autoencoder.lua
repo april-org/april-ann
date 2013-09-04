@@ -532,7 +532,12 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
   params.training_options.layerwise = params.training_options.layerwise or {}
   --------------------------------------
   -- on the fly. Do not generate all the dataset for each layer
-  local on_the_fly = params.replacement or params.on_the_fly
+  local on_the_fly = params.on_the_fly
+  if params.replacement and not params.on_the_fly then
+    fprintf(io.stderr,
+	    "WARNING!!!! THE REPLACEMENT PARAMETER IS NOT FORCING "..
+	      "ON_THE_FLY, THEY ARE INDEPENDENT\n")
+  end
   if on_the_fly and params.distribution then
     error("On the fly mode is not working with dataset distribution")
   end
@@ -676,13 +681,17 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 	  -- compute code for each distribution dataset
 	  for _,v in ipairs(current_dataset_params.distribution) do
 	    v.input_dataset = cod_trainer:use_dataset{
-	      input_dataset = v.input_dataset
+	      input_dataset = v.input_dataset,
+	      output_dataset = dataset.matrix(matrix(v.input_dataset:numPatterns(),
+						     cod_size)),
 	    }
 	  end
 	else
 	  -- compute code for input dataset
 	  local ds = cod_trainer:use_dataset{
-	    input_dataset = current_dataset_params.input_dataset
+	    input_dataset = current_dataset_params.input_dataset,
+	    output_dataset = dataset.matrix(matrix(current_dataset_params.input_dataset:numPatterns(),
+						   cod_size)),
 	  }
 	  current_dataset_params.input_dataset = ds
 	end -- if distribution ... else
