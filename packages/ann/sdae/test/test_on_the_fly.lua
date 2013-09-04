@@ -49,7 +49,8 @@ layers_table = {
 perturbation_prob = random(9283424)
 params_pretrain = {
   input_dataset         = train_input,
-  on_the_fly            = true,
+  replacement           = train_input:numPatterns(),
+  -- on_the_fly            = true, -- it is true if replacement
   shuffle_random        = random(1234),
   weights_random        = random(7890),
   

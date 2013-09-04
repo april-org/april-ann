@@ -77,10 +77,58 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(names_prefix,
   return autoencoder_component
 end
 
+-- FAKE DATASET INDEXED
+local fake_indexed_methods,
+fake_indexed_metatable = class("fake_dataset_indexed", "datasetToken")
+function fake_indexed_metatable:__call(ds, dict)
+  assert(isa(ds,dataset), "The first argument must be a dataset")
+  local obj = { ds=ds, dict=dict, num_pats=dict[1]:numPatterns() }
+  local pat_size = 0
+  for i=1,#dict do
+    pat_size = pat_size + dict[i]:patternSize()
+    if isa(dict[i], dataset) then
+      obj.dict[i] = dataset.token.wrapper(dict[i])
+    end
+  end
+  obj.pat_size = pat_size
+  return class_instance(obj,self)
+end
+function fake_indexed_methods:patternSize()
+  return self.pat_size
+end
+function fake_indexed_methods:numPatterns()
+  return self.num_pats
+end
+function fake_indexed_methods:getPattern(idx)
+  if #self.dict == 1 then
+    return self.dict[1]:getPattern(self.ds:getPattern(idx)[1])
+  else
+    local m = matrix(1, self.pat_size)
+    local col_pos=1
+    local index = self.ds:getPattern(idx)
+    for i=1,#self.dict do
+      local current_pat_size = self.dict[i]:patternSize()
+      local current_token = self.dict[i]:getPattern(index[i])
+      m:slice({1,col_pos},{1,current_pat_size}):copy(current_token:get_matrix())
+      col_pos = col_pos + current_pat_size
+    end
+    return tokens.matrix(m)
+  end
+end
+function fake_indexed_methods:getPatternBunch(idxs)
+  if #self.dict == 1 then
+    local idxs = table.imap(idxs,
+			    function(idx) return self.ds:getPattern(idx)[1] end)
+    return self.dict[1]:getPatternBunch(idxs)
+  else
+    error("NOT IMPLEMTENTED YET")
+  end
+end
+--------------------------------------------------------------------------------
+
 --auxiliar function to generate a replacement
 function get_replacement_dataset(randObject, replacementSize, ...)
   local resul = {}
-
   local arg = table.pack(...)
   if #arg > 0 then
     local mat = matrix(replacementSize)
@@ -94,7 +142,7 @@ function get_replacement_dataset(randObject, replacementSize, ...)
 	if v:numPatterns() ~= numPat then
 	  error("Datasets have differnet number of patterns")
 	end
-	table.insert(resul,dataset.indexed(ds,{v}))
+	table.insert(resul,fake_dataset_indexed(ds,{v}))
       end
     end
   end
@@ -166,8 +214,12 @@ local function
       input_repl_ds, output_repl_ds = table.unpack( get_replacement_dataset(shuffle_random, replacement, input_dataset, output_dataset) )
     end
     -- generate the last layer dataset
-    local input_layer_dataset = mlp_final_trainer:use_dataset{
-      input_dataset = input_repl_ds or input_dataset
+    local aux_input = input_repl_ds or input_dataset
+    local input_layer_dataset = dataset.matrix(matrix(aux_input:numPatterns(),
+						      mlp_final_trainer:get_output_size()))
+    mlp_final_trainer:use_dataset{
+      input_dataset  = aux_input,
+      output_dataset = input_layer_dataset,
     }
     -- The output is the same than the input
     output_dataset = (output_repl_ds or output_dataset or input_layer_dataset)

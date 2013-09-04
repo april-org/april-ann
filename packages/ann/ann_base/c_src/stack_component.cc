@@ -43,7 +43,9 @@ namespace ANN {
   void StackANNComponent::popComponent() {
     DecRef(components.back());
     components.pop_back();
-    output_size = components.back()->getOutputSize();
+    if (components.size() > 0)
+      output_size = components.back()->getOutputSize();
+    else output_size = 0;
   }
 
   Token *StackANNComponent::getInput() {
