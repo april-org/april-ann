@@ -683,7 +683,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 	    v.input_dataset = cod_trainer:use_dataset{
 	      input_dataset = v.input_dataset,
 	      output_dataset = dataset.matrix(matrix(v.input_dataset:numPatterns(),
-						     cod_size)),
+						     cod_trainer:get_output_size())),
 	    }
 	  end
 	else
@@ -691,7 +691,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 	  local ds = cod_trainer:use_dataset{
 	    input_dataset = current_dataset_params.input_dataset,
 	    output_dataset = dataset.matrix(matrix(current_dataset_params.input_dataset:numPatterns(),
-						   cod_size)),
+						   cod_trainer:get_output_size())),
 	  }
 	  current_dataset_params.input_dataset = ds
 	end -- if distribution ... else
