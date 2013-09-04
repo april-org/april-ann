@@ -3,7 +3,7 @@ ALL: release-mkl
 document:
 	lua build_release.lua document
 
-test-macosx:
+test-macosx: debug-macosx
 	lua build_debug_macosx.lua test
 
 test: test-mkl
