@@ -345,7 +345,13 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   LUABIND_GET_PARAMETER(1,DataSetFloat,ds);
   LUABIND_GET_PARAMETER(2,int,ini);
   LUABIND_GET_PARAMETER(3,int,fin);
-  DataSetFloat *obj = new SplitDataSet<float>(ini,fin,ds);
+  if (fin < ini)
+    LUABIND_ERROR("Impossible interval, initial position is after end position");
+  if (fin < 1 || ini < 1)
+    LUABIND_ERROR("Initial end end positions start counting from 1");
+  if (ini > ds->patternSize() || fin > ds->patternSize())
+    LUABIND_ERROR("The interval values are greater than the patternSize()");
+  DataSetFloat *obj = new SplitDataSet<float>(ini-1,fin-1,ds);
   LUABIND_RETURN(DataSetFloat,obj);
 }
 //BIND_END
