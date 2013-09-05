@@ -75,7 +75,7 @@ cmdOptTest = cmdOpt{
   },
   {
     index_name="count_values",
-    descriptioon="Blank separated list of Viterbi count values, for use with multiple corpora",
+    description="Blank separated list of Viterbi count values, for use with multiple corpora",
     long="count-values",
     filter=function(s)
       return table.imap(string.tokenize(s, " ,\t\n\r"),tonumber)

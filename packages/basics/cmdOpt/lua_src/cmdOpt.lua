@@ -27,16 +27,32 @@ function cmdopt_methods:add_option(option)
   --  mode -> 'usergiven' 'always', default 'usergiven'
   --  argument -> 'yes','no','optional'
   --  default_value -> default value when argument ~= 'no'
-  local opt = {}
+  local opt = get_table_fields(
+    {
+      filter = { type_match="function", default=nil },
+      action = { type_match="function", default=nil },
+      index_name = { type_match="string" },
+      description = { mandatory=true, type_match="string" },
+      argument = { mandatory=true, type_match="string" },
+      argument_name = { type_match="string", default="VALUE" },
+      mode = { type_match="string", default="usergiven" },
+      default_value = { default=nil },
+      short = { default=nil },
+      long = { default=nil },
+    }, option)
+  assert(opt.argument=="yes" or opt.argument=="no" or opt.argument=="optional" or opt.argument==nil,
+	 "Expected 'yes', 'no', 'optional' or nil in argument field")
+  assert(opt.short or opt.long,
+	 "It is mandatory to give a long or a short field")
+  opt.short,opt.long=nil,nil
   table.insert(self.options,opt) -- insert options in list
-  opt.filter        = option.filter
-  opt.action        = option.action
-  opt.index_name    = option.index_name
-  opt.description   = option.description
-  opt.argument      = option.argument
-  opt.argument_name = option.argument_name or "VALUE"
-  opt.mode          = option.mode or 'usergiven'
-  opt.default_value = option.default_value
+  --
+  assert(opt.mode=="always" or opt.mode=="usergiven",
+	 "Given incorrect mode '"..opt.mode.."'. Use 'usegiven' or 'always'")
+  --
+  if opt.default_value and not opt.mode=="always" then
+    error("default_value only allowed if mode='always', otherwise is forbidden")
+  end
   --
   local shorts = option.short
   if shorts then
@@ -349,6 +365,7 @@ end
 
 function cmdopt_methods:parse_args(arguments)
   local result = self:parse_without_check(arguments)
+  if type(result) == "string" then error(result) end
   self:check_args(result)
   return result
 end
