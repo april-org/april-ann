@@ -618,7 +618,7 @@ function get_table_fields(params, t)
       error("Mandatory field not found: " .. key)
     end
     if v ~= nil and data.type_match and type(v) ~= data.type_match then
-      error("Incorrect field type: " .. key)
+      error("Incorrect type '" .. type(v) .. "' for field '" .. key .. "'")
     end
     if v ~= nil and data.isa_match and not isa(v, data.isa_match) then
       error("Incorrect field isa_match predicate: " .. key)

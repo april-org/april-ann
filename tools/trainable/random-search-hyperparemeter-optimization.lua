@@ -178,7 +178,7 @@ return {
 
   conf_table = (dofile(arg[1] or error("Needs a configuration file")) or
                 error("Impossible to load configuration file"))
-  local global_vars = {}
+  global_vars = {}
   global_vars.n = conf_table.n or error ("The configuration file needs "..
                                          "a n option")
   global_vars.seed          = tonumber(conf_table.seed or sample_random_from_bash())
@@ -207,8 +207,7 @@ return {
     local chunk_func=loadstring(arg[i]) or error("Impossible to load string: "..
                                                  arg[i])
     -- execute the chunk
-    chunk_func{ all_hyperparams = all_hyperparams,
-		global_vars     = global_vars }
+    chunk_func
     --
     printf("# Executed chunk string: %s\n", arg[i])
   end
