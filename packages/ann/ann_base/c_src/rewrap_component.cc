@@ -18,6 +18,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "unused_variable.h"
 #include "error_print.h"
 #include "table_of_token_codes.h"
 #include "token_vector.h"
@@ -48,6 +49,7 @@ namespace ANN {
   }
   
   Token *RewrapANNComponent::doForward(Token* _input, bool during_training) {
+    UNUSED_VARIABLE(during_training);
     if (_input->getTokenCode() != table_of_token_codes::token_matrix)
       ERROR_EXIT1(128, "Incorrect token found, only TokenMatrixFloat is "
 		  "allowed [%s]\n", name.c_str());

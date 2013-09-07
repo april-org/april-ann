@@ -18,6 +18,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "unused_variable.h"
 #include "convolution_component.h"
 #include "token_matrix.h"
 #include "table_of_token_codes.h"
@@ -155,6 +156,7 @@ namespace ANN {
   
   // The ConvolutionANNComponent
   Token *ConvolutionANNComponent::doForward(Token *_input, bool during_training) {
+    UNUSED_VARIABLE(during_training);
     if (weights_matrix == 0) ERROR_EXIT1(129, "Not built component %s\n",
 					 name.c_str());
     MatrixFloat *weights_mat = weights_matrix->getPtr();

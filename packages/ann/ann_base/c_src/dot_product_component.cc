@@ -19,6 +19,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "unused_variable.h"
 #include "swap.h"
 #include "dot_product_component.h"
 #include "wrapper.h"
@@ -65,6 +66,7 @@ namespace ANN {
   
   // The DotProductANNComponent
   Token *DotProductANNComponent::doForward(Token *_input, bool during_training) {
+    UNUSED_VARIABLE(during_training);
     if (weights_matrix == 0) ERROR_EXIT1(129, "Not built component %s\n",
 					 name.c_str());
     MatrixFloat *weights_mat = weights_matrix->getPtr();

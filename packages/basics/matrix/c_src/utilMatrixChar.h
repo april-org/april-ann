@@ -41,6 +41,8 @@ struct CharAsciiExtractor {
 struct CharBinaryExtractor {
   // returns true if success, false otherwise
   bool operator()(constString &line, char &destination) {
+    UNUSED_VARIABLE(line);
+    UNUSED_VARIABLE(destination);
     ERROR_EXIT(128, "Char type has not binary option\n");
     return false;
   }
@@ -60,6 +62,7 @@ struct CharAsciiSizer {
 struct CharBinarySizer {
   // returns the number of bytes needed for all matrix data (plus spaces)
   int operator()(const Matrix<char> *mat) {
+    UNUSED_VARIABLE(mat);
     ERROR_EXIT(128, "Char type has not binary option\n");
     return 0;
   }
@@ -81,6 +84,8 @@ template<typename StreamType>
 struct CharBinaryCoder {
   // puts to the stream the given value
   void operator()(const char &value, StreamType &stream) {
+    UNUSED_VARIABLE(value);
+    UNUSED_VARIABLE(stream);
     ERROR_EXIT(128, "Char type has not binary option\n");
   }
 };

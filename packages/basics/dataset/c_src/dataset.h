@@ -23,6 +23,7 @@
 #define DATASET_H
 
 #include <cmath>
+#include "unused_variable.h"
 #include "referenced.h"
 #include "matrix.h"
 #include "referenced_vector.h"
@@ -211,7 +212,11 @@ class SplitDataSet : public DataSet<T> {
   int numPatterns() { return ds->numPatterns(); }
   int patternSize() { return size; }
   int getPattern(int index, T *pat);
-  int putPattern(int index, const T *pat) { return 0; } // NO DEFINIDO
+  int putPattern(int index, const T *pat) {
+    UNUSED_VARIABLE(index);
+    UNUSED_VARIABLE(pat);
+    return 0;
+  } // NO DEFINIDO
 };
 
 /// A specialization of DataSet which join outputs from several DataSets.
@@ -316,7 +321,11 @@ class LinearCombDataSet : public DataSet<T> {
   int numPatterns() { return ds->numPatterns(); }
   int patternSize() { return conf->patternsize; }
   int getPattern(int index, T *pat);
-  int putPattern(int index, const T *pat) { return 0; } // undefined method
+  int putPattern(int index, const T *pat) {
+    UNUSED_VARIABLE(index);
+    UNUSED_VARIABLE(pat);
+    return 0;
+  }
 };
 
 /// A specialization of DataSet which takes a DataSet and adds context to its patterns.

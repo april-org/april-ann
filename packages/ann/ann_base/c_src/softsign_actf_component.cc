@@ -18,6 +18,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "unused_variable.h"
 #include "cblas_headers.h"
 #include "softsign_actf_component.h"
 #include "wrapper.h"
@@ -45,6 +46,7 @@ namespace ANN {
 						     FloatGPUMirroredMemoryBlock *output_errors,
 						     unsigned int size,
 						     unsigned int bunch_size) {
+    UNUSED_VARIABLE(input_units);
     doMultiplySoftsignDerivatives(output_units,
 				  input_errors,
 				  output_errors,

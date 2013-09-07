@@ -4,6 +4,8 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Removed warning of clang about unused variables, adding a new macro
+  `UNUSED_VARIABLE(x)` defined in the header `utils/c_src/unused_variable.h`.
 - Added `iterable_map` and `multiple_ipairs` functions to the Lua utilities.
 - `replacement` parameter in SDAE doesn't force `on_the_fly` parameter, they are
   independent.

@@ -21,6 +21,7 @@
  */
 #include "wrapper.h"
 #include "cuda_utils.h"
+#include "unused_variable.h"
 
 /***************************************
  ************* CBLAS SECTION ***********
@@ -40,6 +41,9 @@ bool doEquals(unsigned int N,
 	      float epsilon,
 	      bool use_gpu) {
   bool eq = true;
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     ERROR_PRINT("CUDA VERSION NOT IMPLEMENTED\n");

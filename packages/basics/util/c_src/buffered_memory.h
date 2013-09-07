@@ -21,6 +21,7 @@
 #ifndef BUFFERED_MEMORY_H
 #define BUFFERED_MEMORY_H
 
+#include "unused_variable.h"
 #include "referenced.h"
 #include "constString.h"
 extern "C" {
@@ -144,7 +145,9 @@ public:
   
   /// Some objects needs to know the expected size before begin to write things,
   /// so this method is where this size is given.
-  void setExpectedSize(int sz) const { }
+  void setExpectedSize(int sz) const {
+    UNUSED_VARIABLE(sz);
+  }
   
   /// Returns the value of the counter of read/written bytes.
   int getTotalBytes() const { return total_bytes; }

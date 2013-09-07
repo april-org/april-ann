@@ -21,6 +21,7 @@
  */
 #include "wrapper.h"
 #include "cuda_utils.h"
+#include "unused_variable.h"
 
 #ifdef USE_CUDA
 /***************************************
@@ -95,6 +96,9 @@ void doCopy(int N, const GPUMirroredMemoryBlock<T>* x,
 {
   const T *x_mem;
   T *y_mem;
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     cublasStatus_t status;
@@ -137,6 +141,9 @@ void doCopyLoop(int N,
 {
   const T *x_mem;
   T *y_mem;
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     //printf("Doing a scopy with comp=1 & cuda=1\n");

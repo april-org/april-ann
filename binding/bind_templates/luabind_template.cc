@@ -7,6 +7,10 @@ extern "C" {
 	#include "lauxlib.h"
 }
 
+#ifndef UNUSED_VARIABLE
+#define UNUSED_VARIABLE(x) (void)(x)
+#endif
+
 #include "$$string.gsub(FILENAME,".*/([%w_]+).cc","%1.h")$$"
 #include <cstring> // para strerror
 #include <cstdlib> // para utilizar exit
@@ -424,6 +428,7 @@ static int lua_call_$$string.gsub(func_name,"%p","_")$$(lua_State *L){
 //LUA end
 
 int lua_register_tables_$$FILENAME2$$(lua_State *L){
+  UNUSED_VARIABLE(L);
   DEBUG("lua_register_tables_$$FILENAME2$$ (begin)");
   //LUA for table_name in pairs(TABLES) do
   {
@@ -487,9 +492,10 @@ int lua_register_tables_$$FILENAME2$$(lua_State *L){
 }
 
 int lua_register_subclasses_$$FILENAME2$$(lua_State *L){
+  UNUSED_VARIABLE(L);
   DEBUG("lua_register_subclasses_$$FILENAME2$$ (begin)");
   //LUA for childclass, parentclass in pairs(PARENT_CLASS) do
-
+  
   // buscamos la metatabla de la clase child
   lua_pushstring(L,"luabind_classes");
   // pila =  ... "luabind_clases"
@@ -536,6 +542,7 @@ int lua_register_subclasses_$$FILENAME2$$(lua_State *L){
 //LUA for name,code in pairs(STATIC_CONSTRUCTOR) do
 
 int lua_execute_static_constructor_$$FILENAME2$$_$$name$$(lua_State *L) {
+  UNUSED_VARIABLE(L);
   DEBUG("lua_execute_static_constructor_$$FILENAME2$$_$$name$$ (begin)");
   $$code$$
   DEBUG("lua_execute_static_constructor_$$FILENAME2$$_$$name$$ (end)");

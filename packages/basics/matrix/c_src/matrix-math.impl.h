@@ -36,6 +36,8 @@ void Matrix<T>::fill(T value) {
 
 template <typename T>
 void Matrix<T>::clamp(T lower, T upper) {
+  UNUSED_VARIABLE(lower);
+  UNUSED_VARIABLE(upper);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
@@ -68,18 +70,21 @@ void Matrix<T>::diag(T value) {
 
 template <typename T>
 Matrix<T>* Matrix<T>::addition(const Matrix<T> *other) {
+  UNUSED_VARIABLE(other);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return 0;
 }
 
 template <typename T>
 Matrix<T>* Matrix<T>::substraction(const Matrix<T> *other) {
+  UNUSED_VARIABLE(other);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return 0;
 }
 
 template <typename T>
 Matrix<T>* Matrix<T>::multiply(const Matrix<T> *other) const {
+  UNUSED_VARIABLE(other);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return 0;
 }
@@ -104,11 +109,13 @@ Matrix<T>* Matrix<T>::sum(int dim, Matrix<T> *dest) {
 
 template <typename T>
 void Matrix<T>::scalarAdd(T s) {
+  UNUSED_VARIABLE(s);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
 template <typename T>
 void Matrix<T>::copy(const Matrix<T> *other) {
+  UNUSED_VARIABLE(other);
   if (!sameDim(other))
     ERROR_EXIT(128, "Not equal matrix dimensions\n");
   const_iterator it_orig(other->begin());
@@ -122,6 +129,8 @@ void Matrix<T>::copy(const Matrix<T> *other) {
 
 template <typename T>
 bool Matrix<T>::equals(const Matrix<T> *other, float epsilon) const {
+  UNUSED_VARIABLE(other);
+  UNUSED_VARIABLE(epsilon);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return false;
 }
@@ -153,6 +162,7 @@ void Matrix<T>::sqrt() {
 
 template <typename T>
 void Matrix<T>::pow(T value) {
+  UNUSED_VARIABLE(value);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
@@ -173,12 +183,15 @@ void Matrix<T>::sin() {
 
 template <typename T>
 Matrix<T> *Matrix<T>::cmul(const Matrix<T> *other) {
+  UNUSED_VARIABLE(other);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return 0;
 }
 
 template <typename T>
 void Matrix<T>::axpy(T alpha, const Matrix<T> *other) {
+  UNUSED_VARIABLE(alpha);
+  UNUSED_VARIABLE(other);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
@@ -189,6 +202,12 @@ void Matrix<T>::gemm(CBLAS_TRANSPOSE trans_A,
 		     const Matrix<T> *otherA,
 		     const Matrix<T> *otherB,
 		     T beta) {
+  UNUSED_VARIABLE(trans_A);
+  UNUSED_VARIABLE(trans_B);
+  UNUSED_VARIABLE(alpha);
+  UNUSED_VARIABLE(otherA);
+  UNUSED_VARIABLE(otherB);
+  UNUSED_VARIABLE(beta);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
@@ -198,6 +217,11 @@ void Matrix<T>::gemv(CBLAS_TRANSPOSE trans_A,
 		     const Matrix<T> *otherA,
 		     const Matrix<T> *otherX,
 		     T beta) {
+  UNUSED_VARIABLE(trans_A);
+  UNUSED_VARIABLE(alpha);
+  UNUSED_VARIABLE(otherA);
+  UNUSED_VARIABLE(otherX);
+  UNUSED_VARIABLE(beta);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
@@ -205,17 +229,22 @@ template <typename T>
 void Matrix<T>::ger(T alpha,
 		    const Matrix<T> *otherX,
 		    const Matrix<T> *otherY) {
+  UNUSED_VARIABLE(alpha);
+  UNUSED_VARIABLE(otherX);
+  UNUSED_VARIABLE(otherY);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
 template <typename T>
 T Matrix<T>::dot(const Matrix<T> *other) const {
+  UNUSED_VARIABLE(other);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return 0.0f;
 }
 
 template <typename T>
 void Matrix<T>::scal(T value) {
+  UNUSED_VARIABLE(value);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
@@ -227,18 +256,24 @@ float Matrix<T>::norm2() const {
  
 template <typename T>
 T Matrix<T>::min(int &arg_min, int &arg_min_raw_pos) const {
+  UNUSED_VARIABLE(arg_min);
+  UNUSED_VARIABLE(arg_min_raw_pos);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return T();
 }
  
 template <typename T>
 T Matrix<T>::max(int &arg_max, int &arg_max_raw_pos) const {
+  UNUSED_VARIABLE(arg_max);
+  UNUSED_VARIABLE(arg_max_raw_pos);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return T();
 }
  
 template <typename T>
 void Matrix<T>::minAndMax(T &min, T &max) const {
+  UNUSED_VARIABLE(min);
+  UNUSED_VARIABLE(max);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
@@ -266,12 +301,17 @@ template <typename T>
 Matrix<T> *Matrix<T>::maxSelDim(const int dim,
 				IntGPUMirroredMemoryBlock *raw_positions,
 				int shift) const {
+  UNUSED_VARIABLE(dim);
+  UNUSED_VARIABLE(raw_positions);
+  UNUSED_VARIABLE(shift);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return 0;
 }
 
 template <typename T>
 void Matrix<T>::adjustRange(T rmin, T rmax) {
+  UNUSED_VARIABLE(rmin);
+  UNUSED_VARIABLE(rmax);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 

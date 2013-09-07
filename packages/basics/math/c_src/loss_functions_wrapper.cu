@@ -23,6 +23,7 @@
 #include "clamp.h"
 #include "error_print.h"
 #include "wrapper.h"
+#include "unused_variable.h"
 
 using april_utils::clamp;
 
@@ -231,6 +232,9 @@ float doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
 			unsigned int size,
 			unsigned int bunch_size,
 			bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {    
     const float *input_ptr  = input->getGPUForRead();
@@ -285,6 +289,9 @@ void doComputeMSEGradient(FloatGPUMirroredMemoryBlock *input,
 			  unsigned int size,
 			  unsigned int bunch_size,
 			  bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {    
     const float *input_ptr  = input->getGPUForRead();
@@ -329,6 +336,9 @@ float doMAELossFunction(FloatGPUMirroredMemoryBlock *input,
 			unsigned int size,
 			unsigned int bunch_size,
 			bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {    
     const float *input_ptr  = input->getGPUForRead();
@@ -385,6 +395,9 @@ void doComputeMAEGradient(FloatGPUMirroredMemoryBlock *input,
 			  unsigned int size,
 			  unsigned int bunch_size,
 			  bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {    
     const float *input_ptr  = input->getGPUForRead();
@@ -434,6 +447,9 @@ float doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
 				 unsigned int size,
 				 unsigned int bunch_size,
 				 bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {    
     const float *input_ptr  = input->getGPUForRead();
@@ -502,6 +518,9 @@ float doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
 					   unsigned int size,
 					   unsigned int bunch_size,
 					   bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     const float *input_ptr  = input->getGPUForRead();
@@ -561,6 +580,9 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
 				   unsigned int size,
 				   unsigned int bunch_size,
 				   bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {    
     const float *input_ptr  = input->getGPUForRead();
@@ -580,6 +602,7 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
   }
   else {
 #endif
+    UNUSED_VARIABLE(EPSILON);
     const float *input_ptr  = input->getPPALForRead();
     const float *target_ptr = target->getPPALForRead();
     float *error_output_ptr = error_output->getPPALForWrite();

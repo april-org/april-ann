@@ -18,6 +18,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "unused_variable.h"
 #include "cblas_headers.h"
 #include "linear_actf_component.h"
 #include "wrapper.h"
@@ -37,13 +38,15 @@ namespace ANN {
 	   output_units, 0, 1,
 	   use_cuda);
   }
-
+  
   void LinearActfANNComponent::multiplyDerivatives(FloatGPUMirroredMemoryBlock *input_units,
 						   FloatGPUMirroredMemoryBlock *output_units,
 						   FloatGPUMirroredMemoryBlock *input_errors,
 						   FloatGPUMirroredMemoryBlock *output_errors,
 						   unsigned int size,
 						   unsigned int bunch_size) {
+    UNUSED_VARIABLE(input_units);
+    UNUSED_VARIABLE(output_units);
     doCopy(size*bunch_size,
 	   input_errors, 0, 1,
 	   output_errors, 0, 1,

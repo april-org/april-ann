@@ -18,6 +18,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "unused_variable.h"
 #include "cblas_headers.h"
 #include "log_softmax_actf_component.h"
 #include "wrapper.h"
@@ -68,6 +69,10 @@ namespace ANN {
 		      FloatGPUMirroredMemoryBlock *output_errors,
 		      unsigned int size,
 		      unsigned int bunch_size) {
+    UNUSED_VARIABLE(input_units);
+    UNUSED_VARIABLE(output_units);
+    UNUSED_VARIABLE(bunch_size);
+    UNUSED_VARIABLE(size);
     // This activation function derivative is cancelled by cross-entropy
     // derivative. It only could be used with cross entropy loss function.
     doCopy(input_errors->getSize(),

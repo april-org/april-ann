@@ -18,8 +18,9 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include <cstdlib>
+#include "unused_variable.h"
 #include "token_vector.h"
-#include <stdlib.h>
 #include "binarizer.h"
 #include "table_of_token_codes.h"
 
@@ -62,6 +63,7 @@ buffer_list* TokenVector<T>::toString() {
 template <typename T>
 buffer_list* TokenVector<T>::debugString(const char *prefix,
 					 int debugLevel) {
+  UNUSED_VARIABLE(debugLevel);
   buffer_list *resul = new buffer_list;
   resul->add_formatted_string_right("%s TokenVector of generic type\n",prefix);
   return resul;
@@ -74,6 +76,7 @@ TokenCode TokenVector<T>::getTokenCode() const {
 
 template <typename T>
 Token *TokenVector<T>::fromString(constString &cs) {
+  UNUSED_VARIABLE(cs);
   return 0; // no hay un fromString generico
 }
 
@@ -90,6 +93,7 @@ template<>
 buffer_list* TokenVector<float>::debugString(const char *prefix,
 					     int debugLevel) {
   // TODO: de momento ignoramos debugLevel
+  UNUSED_VARIABLE(debugLevel);
   buffer_list *resul = new buffer_list;
   resul->add_formatted_string_right("%s TokenVector_float with %d values\n",
 				    prefix,vec.size());
@@ -131,6 +135,7 @@ template <>
 buffer_list* TokenVector<double>::debugString(const char *prefix,
 					      int debugLevel) {
   // TODO: de momento ignoramos debugLevel
+  UNUSED_VARIABLE(debugLevel);
   buffer_list *resul = new buffer_list;
   resul->add_formatted_string_right("%s TokenVector_double with %u values\n",
 				    prefix,vec.size());
@@ -172,6 +177,7 @@ template <>
 buffer_list* TokenVector<int32_t>::debugString(const char *prefix,
 					       int debugLevel) {
   // TODO: de momento ignoramos debugLevel
+  UNUSED_VARIABLE(debugLevel);
   buffer_list *resul = new buffer_list;
   resul->add_formatted_string_right("%s TokenVector_int32 with %d values\n",
 				    prefix,vec.size());
@@ -213,6 +219,7 @@ template <>
 buffer_list* TokenVector<uint32_t>::debugString(const char *prefix,
 						int debugLevel) {
   // TODO: de momento ignoramos debugLevel
+  UNUSED_VARIABLE(debugLevel);
   buffer_list *resul = new buffer_list;
   resul->add_formatted_string_right("%s TokenVector_uint32 with %d values\n",
 				    prefix,vec.size());
@@ -254,6 +261,7 @@ template <>
 buffer_list* TokenVector<char>::debugString(const char *prefix,
 					    int debugLevel) {
   // TODO: de momento ignoramos debugLevel
+  UNUSED_VARIABLE(debugLevel);
   buffer_list *resul = new buffer_list;
   resul->add_formatted_string_right("%s TokenVector_char with %d values\n",
 				    prefix,vec.size());
@@ -327,6 +335,7 @@ template <>
 buffer_list* TokenVector<Token*>::debugString(const char *prefix,
 					    int debugLevel) {
   // TODO: de momento ignoramos debugLevel
+  UNUSED_VARIABLE(debugLevel);
   buffer_list *resul = new buffer_list;
   resul->add_formatted_string_right("%s TokenVector_Token with %d values\n",
 				    prefix,vec.size());
@@ -340,6 +349,7 @@ TokenCode TokenVector<Token*>::getTokenCode() const {
 
 template <>
 Token *TokenVector<Token*>::fromString(constString &cs) {
+  UNUSED_VARIABLE(cs);
   /*
     uint32_t size;
     cs.extract_uint32_binary(&size);
@@ -377,6 +387,7 @@ template <>
 buffer_list* TokenVector<pair<unsigned int, float> >::debugString(const char *prefix,
 								  int debugLevel) {
   // TODO: de momento ignoramos debugLevel
+  UNUSED_VARIABLE(debugLevel);
   buffer_list *resul = new buffer_list;
   resul->add_formatted_string_right("%s TokenSparseVectorFloat with %d values\n",
 				    prefix,vec.size());
@@ -391,6 +402,7 @@ TokenCode TokenVector<pair<unsigned int, float> >::getTokenCode() const {
 // TODO: implement
 template <>
 Token *TokenVector<pair<unsigned int, float> >::fromString(constString &cs) {
+  UNUSED_VARIABLE(cs);
   /*
     uint32_t size;
     cs.extract_uint32_binary(&size);

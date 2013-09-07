@@ -22,6 +22,7 @@
 #include "wrapper.h"
 #include "cuda_utils.h"
 #include "ceiling_power_of_two.h"
+#include "unused_variable.h"
 using april_utils::ceilingPowerOfTwo;
 
 #ifdef USE_CUDA
@@ -76,6 +77,9 @@ T doSum(unsigned int N,
 	bool use_gpu,
 	T zero) {
   T sum(zero);
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     GPUMirroredMemoryBlock<T> sums(N);

@@ -21,6 +21,7 @@
  */
 #include "wrapper.h"
 #include "cuda_utils.h"
+#include "unused_variable.h"
 
 #ifdef USE_CUDA
 /***************************************
@@ -40,6 +41,11 @@ cublasStatus_t wrapperCublasNrm2(cublasHandle_t &handle,
 				 const ComplexF *x_mem,
 				 unsigned int x_inc,
 				 float *result) {
+  UNUSED_VARIABLE(handle);
+  UNUSED_VARIABLE(size);
+  UNUSED_VARIABLE(x_mem);
+  UNUSED_VARIABLE(x_inc);
+  UNUSED_VARIABLE(result);
   ERROR_EXIT(256, "Nrm2 for complex numbers not implemented in CUDA\n");
 }
 
@@ -71,6 +77,9 @@ float doNrm2(unsigned int n,
 	     bool use_gpu) {
   float result;
   const T *x_mem;
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     cublasStatus_t status;

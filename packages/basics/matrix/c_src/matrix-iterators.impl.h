@@ -20,6 +20,8 @@
  *
  */
 
+#include "unused_variable.h"
+
 /***** ITERATORS *****/
 
 template <typename T>
@@ -962,8 +964,8 @@ Matrix<T>::sliding_window::sliding_window(const sliding_window &other) :
   order_step(new int[m->numDim]),
   coords(new int[m->numDim]),
   raw_pos(other.raw_pos),
-  total_size(total_size),
-  last_raw_pos(last_raw_pos),
+  total_size(other.total_size),
+  last_raw_pos(other.last_raw_pos),
   finished(other.finished),
   num_step_by_step(new int[m->numDim]),
   num_windows(other.num_windows)

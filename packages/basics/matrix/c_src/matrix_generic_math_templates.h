@@ -21,6 +21,7 @@
 #ifndef MATRIX_GENERIC_MATH_TEMPLATES_H
 #define MATRIX_GENERIC_MATH_TEMPLATES_H
 
+#include "unused_variable.h"
 #include "omp_utils.h"
 #include "matrix.h"
 
@@ -85,6 +86,10 @@ void applyFunctionWithSpanIterator(Matrix<T> *m,
 				   const int N_th = DEFAULT_N_TH,
 				   const unsigned int SIZE_th = DEFAULT_SIZE_TH,
 				   const unsigned int CONTIGUOUS_th = DEFAULT_CONTIGUOUS_TH) {
+#ifdef NO_OMP
+  UNUSED_VARIABLE(N_th);
+  UNUSED_VARIABLE(SIZE_th);
+#endif
   // Contiguous memory block
   if (m->getIsContiguous() &&
       static_cast<unsigned int>(m->size()) < CONTIGUOUS_th)
@@ -139,6 +144,10 @@ void applyBinaryFunctionWithSpanIterator(Matrix<T> *m1,
 					 const int N_th = DEFAULT_N_TH,
 					 const unsigned int SIZE_th = DEFAULT_SIZE_TH,
 					 const unsigned int CONTIGUOUS_th = DEFAULT_CONTIGUOUS_TH) {
+#ifdef NO_OMP
+  UNUSED_VARIABLE(N_th);
+  UNUSED_VARIABLE(SIZE_th);
+#endif
   if (m1->getIsContiguous() && m2->getIsContiguous() &&
       static_cast<unsigned int>(m1->size()) < CONTIGUOUS_th)
     functor(m1, m2,
@@ -207,6 +216,10 @@ void applyBinaryFunctionWithSpanIterator(Matrix<T> *m1,
 					 const int N_th = DEFAULT_N_TH,
 					 const unsigned int SIZE_th = DEFAULT_SIZE_TH,
 					 const unsigned int CONTIGUOUS_th = DEFAULT_CONTIGUOUS_TH) {
+#ifdef NO_OMP
+  UNUSED_VARIABLE(N_th);
+  UNUSED_VARIABLE(SIZE_th);
+#endif
   if (m1->getIsContiguous() && m2->getIsContiguous() &&
       static_cast<unsigned int>(m1->size()) < CONTIGUOUS_th)
     functor(m1, m2,
@@ -273,6 +286,10 @@ T applySumReductionWithSpanIterator(const Matrix<T> *m,
 				    const int N_th = DEFAULT_N_TH,
 				    const unsigned int SIZE_th = DEFAULT_SIZE_TH,
 				    const unsigned int CONTIGUOUS_th = DEFAULT_CONTIGUOUS_TH) {
+#ifdef NO_OMP
+  UNUSED_VARIABLE(N_th);
+  UNUSED_VARIABLE(SIZE_th);
+#endif
   // Contiguous memory block
   if (m->getIsContiguous() &&
       static_cast<unsigned int>(m->size()) < CONTIGUOUS_th)
@@ -326,8 +343,6 @@ T applySumReductionWithSpanIterator(const Matrix<T> *m,
 template<typename T, typename FUNC>
 T applySumReductionWithSpanIteratorNOPARALLEL(const Matrix<T> *m,
 					      const FUNC &functor,
-					      const int N_th = DEFAULT_N_TH,
-					      const unsigned int SIZE_th = DEFAULT_SIZE_TH,
 					      const unsigned int CONTIGUOUS_th = DEFAULT_CONTIGUOUS_TH) {
   // Contiguous memory block
   if (m->getIsContiguous() &&
@@ -368,6 +383,10 @@ bool applyBinaryAndReductionWithSpanIterator(const Matrix<T> *m1,
 					     const int N_th = DEFAULT_N_TH,
 					     const unsigned int SIZE_th = DEFAULT_SIZE_TH,
 					     const unsigned int CONTIGUOUS_th = DEFAULT_CONTIGUOUS_TH) {
+#ifdef NO_OMP
+  UNUSED_VARIABLE(N_th);
+  UNUSED_VARIABLE(SIZE_th);
+#endif
  if (m1->getIsContiguous() && m2->getIsContiguous()
      && static_cast<unsigned int>(m1->size()) < CONTIGUOUS_th)
     return functor(m1, m2,

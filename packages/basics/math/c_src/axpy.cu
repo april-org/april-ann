@@ -19,6 +19,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "unused_variable.h"
 #include "wrapper.h"
 #include "cuda_utils.h"
 
@@ -112,6 +113,9 @@ void doAxpy(int N,
 {
   const T *x_mem;
   T *y_mem;
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     cublasStatus_t status;
@@ -158,6 +162,9 @@ void doAxpyLoop(int N,
 {
   const T *x_mem;
   T *y_mem;
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     x_mem = x->getGPUForRead() + x_shift;

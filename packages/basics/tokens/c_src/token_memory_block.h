@@ -21,6 +21,7 @@
 #ifndef TOKEN_MEMORY_BLOCK_H
 #define TOKEN_MEMORY_BLOCK_H
 
+#include "unused_variable.h"
 #include "gpu_mirrored_memory_block.h"
 #include "token_base.h"
 
@@ -42,6 +43,7 @@ public:
   TokenCode getTokenCode() const;
   static Token *fromString(constString &cs) {
     // NOT IMPLEMENTED
+    UNUSED_VARIABLE(cs);
     return 0;
   }
   void clear() { used_size = 0; }

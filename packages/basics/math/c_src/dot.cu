@@ -21,6 +21,7 @@
  */
 #include "wrapper.h"
 #include "cuda_utils.h"
+#include "unused_variable.h"
 
 #ifdef USE_CUDA
 /***************************************
@@ -92,6 +93,9 @@ T doDot(unsigned int size,
   const T *x_mem;
   const T *y_mem;
   T ret;
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     cublasStatus_t status;
