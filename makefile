@@ -40,3 +40,6 @@ debug:
 
 debug-cuda-mkl:
 	lua build_cuda_and_mkl_debug.lua
+
+clean:
+	./clean.sh
