@@ -7,7 +7,7 @@ luapkg{
   packages = dofile "package_list.lua",
   global_flags = {
     debug="no",
-    use_lstrip = "no",
+    use_lstrip = "yes",
     use_readline="no",
     optimization = "yes",
     platform = "unix",
