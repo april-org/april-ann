@@ -22,6 +22,7 @@
 #define ANNCOMPONENT_H
 
 #include <cstring>
+#include "unused_variable.h"
 #include "mystring.h"
 #include "connection.h"
 #include "referenced.h"
@@ -86,6 +87,7 @@ namespace ANN {
     /// Method which computes the gradient of the weights on the given
     /// MatrixFloat object
     virtual void computeGradients(MatrixFloat*& weight_grads) {
+      UNUSED_VARIABLE(weight_grads);
     }
     
   public:
@@ -135,6 +137,7 @@ namespace ANN {
     /// block of connections when performing the forward step of the
     /// Backpropagation algorithm, and returns its output Token
     virtual Token *doForward(Token* input, bool during_training) {
+      UNUSED_VARIABLE(during_training);
       return input;
     }
 
@@ -170,6 +173,7 @@ namespace ANN {
 #ifdef USE_CUDA
       use_cuda = v;
 #else
+      UNUSED_VARIABLE(v);
       ERROR_PRINT("WARNING!!! Trying to set use_cuda=true with NON "
 		  "cuda compilation\n");
       use_cuda = false; // always false in this case
@@ -180,6 +184,7 @@ namespace ANN {
     
     /// Virtual method for setting the value of a training parameter.
     virtual void setOption(const char *name, double value) {
+      UNUSED_VARIABLE(value);
       if (strcmp(name, LEARNING_RATE_STRING) != 0 &&
 	  strcmp(name, MOMENTUM_STRING) != 0 &&
 	  strcmp(name, WEIGHT_DECAY_STRING) != 0 &&
@@ -189,7 +194,7 @@ namespace ANN {
 
     /// Virtual method for determining if a training parameter
     /// is being used or can be used within the network.
-    virtual bool hasOption(const char *name) { return false; }
+    virtual bool hasOption(const char *name) { UNUSED_VARIABLE(name); return false; }
     
     /// Virtual method for getting the value of a training parameter. All childs
     /// which rewrite this method must call parent method after their process,
@@ -206,6 +211,7 @@ namespace ANN {
 		       unsigned int _output_size,
 		       hash<string,Connections*> &weights_dict,
 		       hash<string,ANNComponent*> &components_dict) {
+      UNUSED_VARIABLE(weights_dict);
       // if (is_built) ERROR_EXIT(128, "Rebuild is forbidden!!!!\n");
       is_built = true;
       ////////////////////////////////////////////////////////////////////
@@ -229,7 +235,9 @@ namespace ANN {
     }
     
     /// Abstract method to retrieve Connections objects from ANNComponents
-    virtual void copyWeights(hash<string,Connections*> &weights_dict) { }
+    virtual void copyWeights(hash<string,Connections*> &weights_dict) {
+      UNUSED_VARIABLE(weights_dict);
+    }
 
     /// Abstract method to retrieve ANNComponents objects. All childs which
     /// rewrite this method must call parent method before do anything.

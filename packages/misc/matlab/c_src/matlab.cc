@@ -26,6 +26,7 @@
 #include <cstring>
 #include <cstdio>
 #include <zlib.h>
+#include "unused_variable.h"
 #include "matlab.h"
 #include "endianism.h"
 #include "ignore_result.h"
@@ -77,25 +78,47 @@ inline void sanity_check_float_precision(T num) {
     ERROR_PRINT("The integer part can't be represented "
 		"using float precision\n");
 }
-template<> inline void sanity_check_float_precision<int8_t>(int8_t num) { }
-template<> inline void sanity_check_float_precision<uint8_t>(uint8_t num) { }
-template<> inline void sanity_check_float_precision<int16_t>(int16_t num) { }
-template<> inline void sanity_check_float_precision<uint16_t>(uint16_t num) { }
-template<> inline void sanity_check_float_precision<float>(float num) { }
+template<> inline void sanity_check_float_precision<int8_t>(int8_t num) {
+  UNUSED_VARIABLE(num);
+}
+template<> inline void sanity_check_float_precision<uint8_t>(uint8_t num) {
+  UNUSED_VARIABLE(num);
+}
+template<> inline void sanity_check_float_precision<int16_t>(int16_t num) {
+  UNUSED_VARIABLE(num);
+}
+template<> inline void sanity_check_float_precision<uint16_t>(uint16_t num) {
+  UNUSED_VARIABLE(num);
+}
+template<> inline void sanity_check_float_precision<float>(float num) {
+  UNUSED_VARIABLE(num);
+}
 
 template<typename T>
 inline void sanity_check_int32_precision(T num) {
   if (llabs(num) >= 2147483648)
     ERROR_PRINT("The integer can't be represented using int32 precision\n");
 }
-template<> inline void sanity_check_int32_precision<int8_t>(int8_t num) { }
-template<> inline void sanity_check_int32_precision<uint8_t>(uint8_t num) { }
-template<> inline void sanity_check_int32_precision<int16_t>(int16_t num) { }
-template<> inline void sanity_check_int32_precision<uint16_t>(uint16_t num) { }
-template<> inline void sanity_check_int32_precision<int32_t>(int32_t num) { }
+template<> inline void sanity_check_int32_precision<int8_t>(int8_t num) {
+  UNUSED_VARIABLE(num);
+}
+template<> inline void sanity_check_int32_precision<uint8_t>(uint8_t num) {
+  UNUSED_VARIABLE(num);
+}
+template<> inline void sanity_check_int32_precision<int16_t>(int16_t num) {
+  UNUSED_VARIABLE(num);
+}
+template<> inline void sanity_check_int32_precision<uint16_t>(uint16_t num) {
+  UNUSED_VARIABLE(num);
+}
+template<> inline void sanity_check_int32_precision<int32_t>(int32_t num) {
+  UNUSED_VARIABLE(num);
+}
 
 template<typename T>
-inline void sanity_check_double_precision(T num) { }
+inline void sanity_check_double_precision(T num) {
+  UNUSED_VARIABLE(num);
+}
 template<> inline void sanity_check_double_precision<int64_t>(int64_t num) {
   if (num >= 9007199254740991 || num <= -9007199254740991)
     ERROR_PRINT("The integer can't be represented using double precision\n");

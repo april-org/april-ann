@@ -18,6 +18,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "unused_variable.h"
 #include "error_print.h"
 #include "table_of_token_codes.h"
 #include "token_vector.h"
@@ -49,6 +50,7 @@ namespace ANN {
   }
   
   Token *CopyANNComponent::doForward(Token* _input, bool during_training) {
+    UNUSED_VARIABLE(during_training);
     AssignRef(input, _input);
     switch(input->getTokenCode()) {
     case table_of_token_codes::token_matrix:

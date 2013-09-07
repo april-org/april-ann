@@ -23,6 +23,7 @@
 #include <omp.h>
 #endif
 #include <cmath>
+#include "unused_variable.h"
 #include "clamp.h"
 #include "wrapper.h"
 #include "ceiling_power_of_two.h"
@@ -528,6 +529,9 @@ void applyMask(FloatGPUMirroredMemoryBlock *units,
 	       unsigned int size,
 	       unsigned int bunch_size,
 	       bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     float *units_ptr = units->getGPUForWrite();
@@ -560,6 +564,9 @@ void doApplyLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
 			       unsigned int size,
 			       unsigned int bunch_size,
 			       bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     const float *input_units_ptr = input_units->getGPUForRead();
@@ -597,6 +604,9 @@ void doMultiplyLogisticDerivatives(FloatGPUMirroredMemoryBlock *output_units,
 				   unsigned int size,
 				   unsigned int bunch_size,
 				   bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     const float *output_units_ptr = output_units->getGPUForRead();
@@ -638,6 +648,9 @@ void doApplyLogLogisticActivation(FloatGPUMirroredMemoryBlock *input_units,
 				  unsigned int size,
 				  unsigned int bunch_size,
 				  bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     const float *input_units_ptr = input_units->getGPUForRead();
@@ -674,6 +687,9 @@ void doApplyTanhActivation(FloatGPUMirroredMemoryBlock *input_units,
 			   unsigned int size,
 			   unsigned int bunch_size,
 			   bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     const float *input_units_ptr = input_units->getGPUForRead();
@@ -712,6 +728,9 @@ void doMultiplyTanhDerivatives(FloatGPUMirroredMemoryBlock *output_units,
 			       unsigned int size,
 			       unsigned int bunch_size,
 			       bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     float *output_units_ptr       = output_units->getGPUForWrite();
@@ -753,6 +772,9 @@ void doApplySoftsignActivation(FloatGPUMirroredMemoryBlock *input_units,
 			       unsigned int size,
 			       unsigned int bunch_size,
 			       bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     const float *input_units_ptr = input_units->getGPUForRead();
@@ -791,6 +813,9 @@ void doMultiplySoftsignDerivatives(FloatGPUMirroredMemoryBlock *output_units,
 				   unsigned int size,
 				   unsigned int bunch_size,
 				   bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     float *output_units_ptr       = output_units->getGPUForWrite();
@@ -833,6 +858,9 @@ void doApplySoftplusActivation(FloatGPUMirroredMemoryBlock *input_units,
 			       unsigned int size,
 			       unsigned int bunch_size,
 			       bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     const float *input_units_ptr = input_units->getGPUForRead();
@@ -871,6 +899,9 @@ void doMultiplySoftplusDerivatives(FloatGPUMirroredMemoryBlock *input_units,
 				   unsigned int size,
 				   unsigned int bunch_size,
 				   bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     float *input_units_ptr        = input_units->getGPUForWrite();
@@ -912,6 +943,9 @@ void doApplyReLUActivation(FloatGPUMirroredMemoryBlock *input_units,
 			   unsigned int size,
 			   unsigned int bunch_size,
 			   bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     const float *input_units_ptr = input_units->getGPUForRead();
@@ -950,6 +984,9 @@ void doMultiplyReLUDerivatives(FloatGPUMirroredMemoryBlock *input_units,
 			       unsigned int size,
 			       unsigned int bunch_size,
 			       bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     float *input_units_ptr        = input_units->getGPUForWrite();
@@ -990,6 +1027,9 @@ void doApplyHardtanhActivation(FloatGPUMirroredMemoryBlock *input_units,
 			       unsigned int size,
 			       unsigned int bunch_size,
 			       bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     const float *input_units_ptr = input_units->getGPUForRead();
@@ -1028,6 +1068,9 @@ void doMultiplyHardtanhDerivatives(FloatGPUMirroredMemoryBlock *input_units,
 				   unsigned int size,
 				   unsigned int bunch_size,
 				   bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     float *input_units_ptr        = input_units->getGPUForWrite();
@@ -1071,6 +1114,9 @@ void doApplySinActivation(FloatGPUMirroredMemoryBlock *input_units,
 			  unsigned int size,
 			  unsigned int bunch_size,
 			  bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     const float *input_units_ptr = input_units->getGPUForRead();
@@ -1109,6 +1155,9 @@ void doMultiplySinDerivatives(FloatGPUMirroredMemoryBlock *input_units,
 			      unsigned int size,
 			      unsigned int bunch_size,
 			      bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     float *input_units_ptr        = input_units->getGPUForWrite();
@@ -1153,6 +1202,12 @@ void doApplySoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
 			      unsigned int size,
 			      unsigned int bunch_size,
 			      bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(minimums);
+  UNUSED_VARIABLE(maximums);
+  UNUSED_VARIABLE(sums);
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     const float *input_units_ptr = input_units->getGPUForRead();
@@ -1291,6 +1346,9 @@ void doMultiplySoftmaxDerivatives(FloatGPUMirroredMemoryBlock *output_units,
 				  unsigned int size,
 				  unsigned int bunch_size,
 				  bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     ERROR_PRINT("NOT IMPLEMENTED FOR CUDA!!!\n");
@@ -1331,6 +1389,12 @@ void doApplyLogSoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
 				 unsigned int size,
 				 unsigned int bunch_size,
 				 bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(minimums);
+  UNUSED_VARIABLE(maximums);
+  UNUSED_VARIABLE(sums);
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     const float *input_units_ptr = input_units->getGPUForRead();

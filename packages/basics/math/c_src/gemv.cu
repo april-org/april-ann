@@ -21,6 +21,7 @@
  */
 #include "wrapper.h"
 #include "cuda_utils.h"
+#include "unused_variable.h"
 
 #ifdef USE_CUDA
 /***************************************
@@ -109,6 +110,9 @@ void doGemv(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
 	    bool use_gpu) {
   const T *a_mem, *x_mem;
   T *y_mem;
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     cublasStatus_t status;

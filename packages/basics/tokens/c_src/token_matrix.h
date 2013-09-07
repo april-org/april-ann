@@ -21,6 +21,7 @@
 #ifndef TOKEN_MATRIX_H
 #define TOKEN_MATRIX_H
 
+#include "unused_variable.h"
 #include "matrix.h"
 #include "token_base.h"
 
@@ -39,6 +40,7 @@ public:
   TokenCode getTokenCode() const;
   static Token *fromString(constString &cs) {
     // NOT IMPLEMENTED
+    UNUSED_VARIABLE(cs);
     return 0;
   }
   bool getCudaFlag() { return mat->getCudaFlag(); }
@@ -78,6 +80,8 @@ buffer_list* TokenMatrix<T>::toString() {
 template<typename T>
 buffer_list* TokenMatrix<T>::debugString(const char *prefix, int debugLevel) {
   // NOT IMPLEMENTED
+  UNUSED_VARIABLE(prefix);
+  UNUSED_VARIABLE(debugLevel);
   return 0;
 }
 

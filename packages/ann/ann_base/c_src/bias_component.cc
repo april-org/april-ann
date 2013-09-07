@@ -21,6 +21,7 @@
  */
 #include "bias_component.h"  
 #include "wrapper.h"
+#include "unused_variable.h"
 
 namespace ANN {
 
@@ -61,6 +62,7 @@ namespace ANN {
   }
 
   Token *BiasANNComponent::doForward(Token* _input, bool during_training) {
+    UNUSED_VARIABLE(during_training);
     if (bias_vector == 0) ERROR_EXIT1(129, "Not built component %s\n",
 				      name.c_str());
     // error checking

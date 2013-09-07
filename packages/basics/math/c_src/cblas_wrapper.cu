@@ -5,7 +5,7 @@
  * Copyright 2012, Salvador España-Boquera, Adrian Palacios Corella, Francisco
  * Zamora-Martinez
  *
- * The APRIL-MLP toolkit is free software; you can redistribute it and/or modify it
+ * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
  * published by the Free Software Foundation
  *
@@ -20,6 +20,7 @@
  *
  */
 #include <cmath>
+#include "unused_variable.h"
 #include "wrapper.h"
 #include "cuda_utils.h"
 
@@ -75,6 +76,9 @@ void doPLogP(unsigned int N,
 	     unsigned int stride,
 	     unsigned int shift,
 	     bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     ERROR_PRINT("CUDA VERSION NOT IMPLEMENTED\n");
@@ -94,6 +98,9 @@ void doLog(unsigned int N,
 	   unsigned int stride,
 	   unsigned int shift,
 	   bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     float *v_ptr = v->getGPUForReadAndWrite() + shift;
@@ -116,6 +123,9 @@ void doLog1p(unsigned int N,
 	     unsigned int stride,
 	     unsigned int shift,
 	     bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     float *v_ptr = v->getGPUForReadAndWrite() + shift;
@@ -138,6 +148,9 @@ void doExp(unsigned int N,
 	   unsigned int stride,
 	   unsigned int shift,
 	   bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     float *v_ptr = v->getGPUForReadAndWrite() + shift;
@@ -160,6 +173,9 @@ void doSqrt(unsigned int N,
 	    unsigned int stride,
 	    unsigned int shift,
 	    bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     float *v_ptr = v->getGPUForReadAndWrite() + shift;
@@ -182,6 +198,9 @@ void doTanh(unsigned int N,
 	    unsigned int stride,
 	    unsigned int shift,
 	    bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     float *v_ptr = v->getGPUForReadAndWrite() + shift;
@@ -204,6 +223,9 @@ void doSin(unsigned int N,
 	   unsigned int stride,
 	   unsigned int shift,
 	   bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     float *v_ptr = v->getGPUForReadAndWrite() + shift;
@@ -226,6 +248,9 @@ void doCos(unsigned int N,
 	   unsigned int stride,
 	   unsigned int shift,
 	   bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     float *v_ptr = v->getGPUForReadAndWrite() + shift;
@@ -249,6 +274,9 @@ void doPow(unsigned int N,
 	   unsigned int shift,
 	   float value,
 	   bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     float *v_ptr = v->getGPUForReadAndWrite() + shift;

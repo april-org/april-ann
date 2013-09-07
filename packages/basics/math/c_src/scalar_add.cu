@@ -21,6 +21,7 @@
  */
 #include "wrapper.h"
 #include "cuda_utils.h"
+#include "unused_variable.h"
 
 #ifdef USE_CUDA
 /***************************************
@@ -50,6 +51,9 @@ void doScalarAdd(unsigned int N,
 		 unsigned int shift,
 		 T value,
 		 bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
 #ifdef USE_CUDA
   if (use_gpu) {
     T *v_ptr = v->getGPUForReadAndWrite() + shift;

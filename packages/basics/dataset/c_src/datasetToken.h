@@ -22,6 +22,7 @@
 #ifndef UTILDATASETTOKEN_H
 #define UTILDATASETTOKEN_H
 
+#include "unused_variable.h"
 #include "token_base.h"
 #include "token_matrix.h"
 #include "token_vector.h"
@@ -121,6 +122,9 @@ public:
   /// Put the pattern bunch
   virtual void putPatternBunch(const int *indexes,unsigned int bunch_size,
 			       Token *pat) {
+    UNUSED_VARIABLE(indexes);
+    UNUSED_VARIABLE(bunch_size);
+    UNUSED_VARIABLE(pat);
     ERROR_EXIT(128, "Not implemented!!!\n");    
   }
 };
@@ -173,11 +177,16 @@ public:
   }
   /// Put the given vector pat at pattern index
   virtual void putPattern(int index, Token *pat) {
+    UNUSED_VARIABLE(index);
+    UNUSED_VARIABLE(pat);
     ERROR_EXIT(128, "Not implemented!!!\n");
   }
   /// Put the pattern bunch
   virtual void putPatternBunch(const int *indexes,unsigned int bunch_size,
 			       Token *pat) {
+    UNUSED_VARIABLE(indexes);
+    UNUSED_VARIABLE(bunch_size);
+    UNUSED_VARIABLE(pat);
     ERROR_EXIT(128, "Not implemented!!!\n");
   }
 };

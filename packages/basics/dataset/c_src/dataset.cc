@@ -258,6 +258,8 @@ int IdentityDataSet<T>::getPattern(int index, T *pat) {
 
 template <typename T>
 int IdentityDataSet<T>::putPattern(int index, const T *pat) {
+  UNUSED_VARIABLE(index);
+  UNUSED_VARIABLE(pat);
   return 0;
 }
 
@@ -580,6 +582,7 @@ AccumulateDataSet<T>::~AccumulateDataSet() {
 
 template <typename T>
 int AccumulateDataSet<T>::getPattern(int index, T *pat) {
+  UNUSED_VARIABLE(index);
   //   if (index < 0 || index >= numpatterns)
   //     return 0;
   for (int i=0; i<patternsize; i++)
@@ -589,6 +592,7 @@ int AccumulateDataSet<T>::getPattern(int index, T *pat) {
 
 template <typename T>
 int AccumulateDataSet<T>::putPattern(int index, const T *pat) {
+  UNUSED_VARIABLE(index);
   //   if (index < 0 || index >= numpatterns)
   //     return 0;
   for (int i=0; i<patternsize; i++)
@@ -741,6 +745,8 @@ int SparseDataset<T>::getPattern(int index, T *pat) {
 
 template <typename T>
 int SparseDataset<T>::putPattern(int index, const T *pat) {
+  UNUSED_VARIABLE(index);
+  UNUSED_VARIABLE(pat);
   ERROR_EXIT(1,"Method putPattern forbidden for SparseDataset!!!\n");
   return 0;
 }
@@ -761,6 +767,7 @@ ShortListDataSet<T>::~ShortListDataSet() {
 
 template<typename T>
 int ShortListDataSet<T>::getPattern(int index, T *pat) {
+  UNUSED_VARIABLE(index);
   //int aux = ds->getPattern(index, pat);
   for (int i=0; i<patsize; ++i)
     if (pat[i] > short_list_size) pat[i] = unk_word;
@@ -797,6 +804,8 @@ int IndexFilterDataSet<T>::getPattern(int index, T *pat) {
 
 template<typename T>
 int IndexFilterDataSet<T>::putPattern(int index, const T *pat) {
+  UNUSED_VARIABLE(index);
+  UNUSED_VARIABLE(pat);
   ERROR_EXIT(1,"Method putPattern forbidden for IndexFilterDataSet!!!\n");
   return 0;  
 }
@@ -829,6 +838,8 @@ int PerturbationDataSet<T>::getPattern(int index, T *pat) {
 
 template<typename T>
 int PerturbationDataSet<T>::putPattern(int index, const T *pat) {
+  UNUSED_VARIABLE(index);
+  UNUSED_VARIABLE(pat);
   ERROR_EXIT(1,"Method putPattern forbidden for PerturbationDataSet!!!\n");
   return 0;  
 }
@@ -864,6 +875,8 @@ int SaltNoiseDataSet<T>::getPattern(int index, T *pat) {
 
 template<typename T>
 int SaltNoiseDataSet<T>::putPattern(int index, const T *pat) {
+  UNUSED_VARIABLE(index);
+  UNUSED_VARIABLE(pat);
   ERROR_EXIT(1,"Method putPattern forbidden for SaltNoiseDataSet!!!\n");
   return 0;  
 }
@@ -901,6 +914,8 @@ int SaltPepperNoiseDataSet<T>::getPattern(int index, T *pat) {
 
 template<typename T>
 int SaltPepperNoiseDataSet<T>::putPattern(int index, const T *pat) {
+  UNUSED_VARIABLE(index);
+  UNUSED_VARIABLE(pat);
   ERROR_EXIT(1,"Method putPattern forbidden for SaltPepperNoiseDataSet!!!\n");
   return 0;  
 }
@@ -926,6 +941,8 @@ template<typename T> int StepDataSet<T>::getPattern(int index, T *pat) {
 }
 
 template<typename T> int StepDataSet<T>::putPattern(int index, const T *pat) {
+  UNUSED_VARIABLE(index);
+  UNUSED_VARIABLE(pat);
   ERROR_EXIT(1, "Method putPattern forbidden for StepDataset!!\n");
   return 0;
 }
@@ -991,6 +1008,8 @@ int DerivDataSet<T>::getPattern(int index, T *pat) {
 
 template<typename T>
 int DerivDataSet<T>::putPattern(int index, const T *pat) {
+  UNUSED_VARIABLE(index);
+  UNUSED_VARIABLE(pat);
   ERROR_EXIT(1,"Method putPattern forbidden for DerivDataSet!!!\n");
   return 0;  
 }
@@ -1087,6 +1106,8 @@ int CacheDataSet<T>::getPattern(int index, T *pat) {
 
 template<typename T>
 int CacheDataSet<T>::putPattern(int index, const T *pat) {
+  UNUSED_VARIABLE(index);
+  UNUSED_VARIABLE(pat);
   ERROR_EXIT(1,"Method putPattern forbidden for CacheDataSet!!!\n");
   return 0;
 }
@@ -1124,6 +1145,8 @@ int SubAndDivNormalizationDataSet<T>::getPattern(int index, T *pat) {
 
 template<typename T>
 int SubAndDivNormalizationDataSet<T>::putPattern(int index, const T *pat) {
+  UNUSED_VARIABLE(index);
+  UNUSED_VARIABLE(pat);
   ERROR_EXIT(1,"Method putPattern forbidden for SubAndDivNormalizationDataSet!!!\n");
   return 0;  
 }

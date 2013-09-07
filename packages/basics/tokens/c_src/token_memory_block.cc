@@ -67,6 +67,8 @@ buffer_list* TokenMemoryBlock::toString() {
 
 buffer_list* TokenMemoryBlock::debugString(const char *prefix, int debugLevel) {
   // NOT IMPLEMENTED
+  UNUSED_VARIABLE(prefix);
+  UNUSED_VARIABLE(debugLevel);
   return 0;
 }
 

@@ -18,6 +18,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "unused_variable.h"
 #include "cblas_headers.h"
 #include "logistic_actf_component.h"
 #include "wrapper.h"
@@ -38,13 +39,14 @@ namespace ANN {
 			      bunch_size,
 			      use_cuda);
   }
-
+  
   void LogisticActfANNComponent::multiplyDerivatives(FloatGPUMirroredMemoryBlock *input_units,
 						     FloatGPUMirroredMemoryBlock *output_units,
 						     FloatGPUMirroredMemoryBlock *input_errors,
 						     FloatGPUMirroredMemoryBlock *output_errors,
 						     unsigned int size,
 						     unsigned int bunch_size) {
+    UNUSED_VARIABLE(input_units);
     doMultiplyLogisticDerivatives(output_units,
 				  input_errors,
 				  output_errors,

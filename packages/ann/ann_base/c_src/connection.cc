@@ -94,6 +94,9 @@ namespace ANN {
 
   void Connections::
   computeMomentumOnPrevVector(float momentum, bool use_cuda) {
+#ifndef USE_CUDA
+    UNUSED_VARIABLE(use_cuda);
+#endif
 #ifdef USE_CUDA
     // FIXME: adds a setUseCuda method to set CUDA flag of the matrices
     weights->setUseCuda(use_cuda);
@@ -112,6 +115,9 @@ namespace ANN {
   
   void Connections::
   computeWeightDecayOnPrevVector(float c_weight_decay, bool use_cuda) {
+#ifndef USE_CUDA
+    UNUSED_VARIABLE(use_cuda);
+#endif
 #ifdef USE_CUDA
     // FIXME: adds a setUseCuda method to set CUDA flag of the matrices
     weights->setUseCuda(use_cuda);
@@ -162,6 +168,9 @@ namespace ANN {
   }
     
   void Connections::copyToPrevVector(bool use_cuda) {
+#ifndef USE_CUDA
+    UNUSED_VARIABLE(use_cuda);
+#endif
 #ifdef USE_CUDA
     // FIXME: adds a setUseCuda method to set CUDA flag of the matrices
     weights->setUseCuda(use_cuda);

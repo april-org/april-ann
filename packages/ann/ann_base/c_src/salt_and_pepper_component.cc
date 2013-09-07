@@ -18,6 +18,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "unused_variable.h"
 #include "error_print.h"
 #include "table_of_token_codes.h"
 #include "salt_and_pepper_component.h"
@@ -52,6 +53,7 @@ namespace ANN {
   }
   
   Token *SaltAndPepperANNComponent::doForward(Token* _input, bool during_training) {
+    UNUSED_VARIABLE(during_training);
     // error checking
     if ( (_input == 0) ||
 	 (_input->getTokenCode() != table_of_token_codes::token_matrix))
