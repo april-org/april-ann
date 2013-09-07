@@ -4,6 +4,7 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added `iterable_map` and `multiple_ipairs` functions to the Lua utilities.
 - `replacement` parameter in SDAE doesn't force `on_the_fly` parameter, they are
   independent.
 - SDAE training has been changed in order to allow the use of LUA datasets,
