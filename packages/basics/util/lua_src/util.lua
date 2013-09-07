@@ -490,6 +490,51 @@ function april_print_script_header(arg,file)
   fprintf(file,"# CMD: \t %s %s\n", arg[0], table.concat(arg, " "))
 end
 
+-- http://lua-users.org/wiki/IteratorsTutorial
+function multiple_ipairs(...)
+  local t = {...}
+  local tmp = {...}
+  -- if nothing to iterate over just return a dummy iterator
+  if #tmp==0 then
+    return function() end, nil, nil
+  end
+  local function mult_ipairs_it(t, i)
+    i = i+1
+    local all_nil = true
+    for j=1,#t do
+      local val = t[j][i]
+      if val ~= nil then all_nil = false end
+      tmp[j] = val
+    end
+    if all_nil then return nil end
+    return i, unpack(tmp)
+  end
+  return mult_ipairs_it, t, 0
+end
+
+-- FROM: http://www.corsix.org/content/mapping-and-lua-iterators
+function iterable_map(func, f, s, v)
+  local done
+  local function maybeyield(...)
+    if ... ~= nil then
+      coroutine.yield(...)
+    end
+  end
+  local function domap(...)
+    v = ...
+    if v ~= nil then
+      return maybeyield(func(...))
+    else
+      done = true
+    end
+  end
+  return coroutine.wrap(function()
+			  repeat
+			    domap(f(s,v))
+			  until done
+			end)
+end
+
 function map(func, ...)
   if not func then func = function(v) return v end end
   local t,key,value = {}
