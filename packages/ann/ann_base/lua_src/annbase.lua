@@ -133,27 +133,7 @@ function ann.mlp.all_all.generate(topology, first_count, names_prefix)
     end }
   -- we make obj a wrapper of thenet, so we keep useful information as a lua
   -- table but it is like the original object from the outside
-  local current = thenet
-  while (getmetatable(current) and getmetatable(current).__index and
-	 getmetatable(current).__index ~= current) do
-    current = getmetatable(current).__index
-    for i,v in pairs(current) do
-      if type(v) == "function" and obj[i] == nil then
-	obj[i] =
-	  function(...)
-	    local arg = { ... }
-	    local t = arg[1]
-	    if t == obj then
-	      table.remove(arg, 1)
-	      return obj.thenet[i](obj.thenet, table.unpack(arg))
-	    else
-	      return obj.thenet[i](table.unpack(arg))
-	    end
-	  end
-      end
-    end
-  end
-  return obj
+  return class_wrapper(thenet, obj)
 end
 
 -------------------------------------------------------------------
