@@ -51,19 +51,31 @@ function class_wrapper(obj,wrapper)
 	 getmetatable(current).__index ~= current) do
     current = getmetatable(current).__index
     for i,v in pairs(current) do
-      if type(v) == "function" and wrapper[i] == nil then
-	wrapper[i] =
-	  function(first, ...)
-	    if first == wrapper then
-	      return obj[i](obj, ...)
-	    else
-	      return objt[i](...)
-	    end
-	  end
-      end
+      if wrapper[i] == nil then
+	if type(v) == "function" then
+	  wrapper[i] =
+	    function(first, ...)
+	      if first == wrapper then
+		return obj[i](obj, ...)
+	      else
+		return obj[i](...)
+	      end
+	    end -- function
+	else -- if type(v) == "function"
+	  wrapper[i] = v
+	end -- if type(v) == "function" ... else
+      end -- if wrapper[i] == nil
+    end -- for
+  end -- while
+  if getmetatable(wrapper) and getmetatable(wrapper).__index then
+    if getmetatable(getmetatable(wrapper).__index) then
+      error("class_wrapper not works with derived or nil_safe objects")
+    else
+      setmetatable(getmetatable(wrapper).__index, getmetatable(obj))
     end
+  else wrapper = class_instance(wrapper, getmetatable(obj))
   end
-  return class_instance(wrapper,getmetatable(obj))
+  return wrapper
 end
 
 -- Convert a table in a class, and it receives an optional parent class to
