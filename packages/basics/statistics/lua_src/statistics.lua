@@ -39,7 +39,7 @@ april_set_doc("stats.mean_var.clear", {
 		class = "method",
 		summary = "Re-initializes the object" })
 
-function mean_var_class_metatable:clear()
+function mean_var_methods:clear()
   self.old_m = 0
   self.old_s = 0
   self.new_m = 0
@@ -71,7 +71,7 @@ april_set_doc("stats.mean_var.add", {
 		},
 		outputs = { "The caller mean_var object (itself)" }, })
 
-function mean_var_class_metatable:add(...)
+function mean_var_methods:add(...)
   local arg = { ... }
   local v = arg[1]
   if type(v) == "table" then
@@ -107,7 +107,7 @@ april_set_doc("stats.mean_var.size", {
 		summary = "Return the number of elements added",
 		outputs = { "The number of elements added" }, })
 
-function mean_var_class_metatable:size()
+function mean_var_methods:size()
   return self.N
 end
 
@@ -121,7 +121,7 @@ april_set_doc("stats.mean_var.compute", {
 		  "A number, the variance of the data",
 		}, })
 
-function mean_var_class_metatable:compute()
+function mean_var_methods:compute()
   return self.new_m,self.new_s/(self.N-1)
 end
 
