@@ -4,6 +4,8 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added serialization to `parallel_foreach`, allowing to produce outputs which
+  could be loaded by the caller process.
 - Declaration of `luatype` function as global, it wasn't.
 - Added BIND_STRING_CONSTANT to luabind, so it is possible to export C string
   constants to Lua.
