@@ -487,6 +487,41 @@ int lua_register_tables_$$FILENAME2$$(lua_State *L){
   lua_pop(L,1);
   //LUA end
 
+
+  //LUA for varsTblName,vars in pairs(STRING_CONSTANT) do
+  {
+    $$lua_setdottedname(varsTblName)$$
+  }
+  //LUA for varName,varValue in pairs(vars) do
+  // stack: table
+  lua_pushstring(L, "$$varName$$");
+  // stack: string table
+  lua_pushstring(L, $$varValue$$);
+  // stack: value string table
+  lua_rawset(L, -3);
+  // stack: table
+  lua_pushstring(L, $$varValue$$);
+  // stack: value table
+  lua_rawget(L, -2);
+  if (lua_isnil(L, -1)) {
+    // stack: nil table
+    lua_pop(L,1);
+    // stack: table
+    lua_pushstring(L, $$varValue$$);
+    // stack: value table
+    lua_pushstring(L, "$$varName$$");
+    // stack: string value table
+    lua_rawset(L, -3);
+    // stack: table
+  }
+  else {
+    fprintf(stderr, "STRING_CONSTANT value is repeated: $$varsTblName$$.$$varName$$\n");
+    exit(10);
+  }
+  //LUA end
+  lua_pop(L,1);
+  //LUA end
+
   DEBUG("lua_register_tables_$$FILENAME2$$ (end)");
   return 0;
 }

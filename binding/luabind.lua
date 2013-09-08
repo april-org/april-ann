@@ -99,6 +99,7 @@ LUANAME = {}
 PARENT_CLASS = {}
 STATIC_CONSTRUCTOR = {}
 ENUM_CONSTANT = {}
+STRING_CONSTANT = {}
 function load_data(filename)
    local f,_error = io.open(filename)
    if (f == nil) then
@@ -251,6 +252,21 @@ function load_data(filename)
 			  os.exit(10)
 			end
 			ENUM_CONSTANT[tbl][name] = varValue
+		      end,
+
+      -- Esta macro permite exportar a Lua valores de STRINGS o MACROS
+      -- de C/C++. OJO!!! al ser CONSTANTES, los valores siempre hacen
+      -- referencia a CONST CHAR *, y no se
+      -- permite que dos o mas compartan el mismo valor.
+      STRING_CONSTANT = function(varName, varValue)
+			local tbl=string.gsub(varName, "^(.*)%.[^%.]*$", "%1")
+			local name=string.gsub(varName, "^.*%.([^%.]*)$", "%1")
+			STRING_CONSTANT[tbl] = STRING_CONSTANT[tbl] or {}
+			if STRING_CONSTANT[tbl][name] then
+			  io.stderr:write("STRING_CONSTANT " .. varName .. " is repeated!!!\n")
+			  os.exit(10)
+			end
+			STRING_CONSTANT[tbl][name] = varValue
 		      end,
 
     }

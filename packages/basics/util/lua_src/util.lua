@@ -116,6 +116,8 @@ end
 -- Predicate which returns true if a given object instance is a subclass of a
 -- given Lua table (it works for Lua class(...) and C++ binding)
 function isa( object_instance, base_class_table )
+  assert(luatype(base_class_table) == "table",
+	 "The second argument must be a class table")
   local base_class_meta = (base_class_table.meta_instance or {}).__index
   local object_table    = object_instance
   local _isa            = false

@@ -4,6 +4,9 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Declaration of `luatype` function as global, it wasn't.
+- Added BIND_STRING_CONSTANT to luabind, so it is possible to export C string
+  constants to Lua.
 - Removed warning of clang about unused variables, adding a new macro
   `UNUSED_VARIABLE(x)` defined in the header `utils/c_src/unused_variable.h`.
 - Added `iterable_map` and `multiple_ipairs` functions to the Lua utilities.
