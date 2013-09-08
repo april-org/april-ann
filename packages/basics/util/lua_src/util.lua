@@ -587,12 +587,47 @@ function glob(...)
   return r
 end
 
-function parallel_foreach(num_processes, list, func)
-  id = util.split_process(num_processes)-1
-  for index, value in ipairs(list) do
-    if (index%num_processes) == id then
-      func(value)
+function parallel_foreach(num_processes, list, func, output_serialization_function)
+  local outputs
+  if output_serialization_function then
+    outputs = map(function(idx)
+		    return os.tmpname(string.format("parallel-%05d",idx))
+		  end,
+		  range(1,num_processes))
+  end
+  local id = util.split_process(num_processes)-1
+  if outputs then
+    local f = io.open(outputs[id+1], "w")
+    fprintf(f, "return {\n")
+    for index, value in ipairs(list) do
+      if (index%num_processes) == id then
+	local ret = func(value)
+	fprintf(f,"[%d] = %s,\n",index,
+		output_serialization_function(ret) or "nil")
+      end
     end
+    fprintf(f, "}\n")
+    f:close()
+    if id ~= 0 then os.exit(0) end
+    util.wait()
+    -- maps all the outputs to a table
+    return map(function(v)return v end,
+	       iterable_map(function(index,filename)
+			      local t = dofile(filename)
+			      os.remove(filename)
+			      -- multiple outputs from this filename
+			      apply(coroutine.yield, pairs(t))
+			    end,
+			    -- iterate over each output filename
+			    ipairs(outputs)))
+  else
+    for index, value in ipairs(list) do
+      if (index%num_processes) == id then
+	local ret = func(value)
+      end
+    end
+    if id ~= 0 then os.exit(0) end
+    util.wait()
   end
 end
 
