@@ -590,9 +590,7 @@ end
 function parallel_foreach(num_processes, list, func, output_serialization_function)
   local outputs
   if output_serialization_function then
-    outputs = map(function(idx)
-		    return os.tmpname(string.format("parallel-%05d",idx))
-		  end,
+    outputs = map(function(idx) return os.tmpname() end,
 		  range(1,num_processes))
   end
   local id = util.split_process(num_processes)-1
