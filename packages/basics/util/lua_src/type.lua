@@ -1,4 +1,4 @@
-local luatype = type
+luatype = type
 
 function type(x)
     local real_type = luatype(x)
