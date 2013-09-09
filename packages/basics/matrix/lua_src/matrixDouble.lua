@@ -1,4 +1,10 @@
 -- OVERWRITTING TOSTRING FUNCTION
+class_extension(matrixDouble, "to_lua_string",
+                function(self, format)
+                  return string.format("matrixDouble.fromString[[%s]]",
+                                       self:toString(format or "string"))
+                end)
+
 matrixDouble.meta_instance.__tostring = function(self)
   local dims   = self:dim()
   local coords = {}

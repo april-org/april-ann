@@ -185,11 +185,10 @@ function ann.mlp.all_all.save(model, filename, mode, old)
     pos = pos - 1
   end
   local f = io.open(filename,"w")
-  f:write("return {\n\""..model.description.."\",\nmatrix.fromString[["..
-	    wmatrix:toString(mode).."]],")
+  f:write("return {\n\""..model.description.."\",\n"..
+	    wmatrix:to_lua_string(mode)..",")
   if old == "old" then 
-    f:write("\nmatrix.fromString[[\n"..
-	      oldwmatrix:toString(mode).."]],\n")
+    f:write("\n".. oldwmatrix:to_lua_string(mode)..",\n")
   end
   f:write("first_count=" .. model.first_count .. ",\n")
   f:write("prefix='" .. model.prefix .. "',\n")
