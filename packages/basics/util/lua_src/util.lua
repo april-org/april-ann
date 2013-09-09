@@ -528,14 +528,13 @@ end
 
 function iterable_filter(func, f, s, v)
   return function(s,v)
-    local tmp
-    repeat
-      tmp = table.pack(f(s,v))
+    local tmp = table.pack(f(s,v))
+    while tmp[1] ~= nil and not func(table.unpack(tmp)) do
       v = tmp[1]
-      if v == nil then return nil end
-    until func(table.unpack(tmp))
+      tmp = table.pack(f(s,v))
+    end
     return table.unpack(tmp)
-  end
+  end, s, v
 end
 
 -- FROM: http://www.corsix.org/content/mapping-and-lua-iterators
@@ -596,11 +595,11 @@ end
 function mapn(func, f, s, v)
   if not func then func = function(k,...) return ... end end
   local t = {}
-  repeat
-    local tmp = table.pack(f(s,v))
-    v = tmp[1]
-    if v ~= nil then t[v] = func(table.unpack(tmp)) end
-  until v == nil
+  local tmp = table.pack(f(s,v))
+  while tmp[1] ~= nil do
+    t[v] = func(table.unpack(tmp))
+    tmp = table.pack(f(s,tmp[1]))
+  end
   return t
 end
 
@@ -616,11 +615,11 @@ end
 
 function apply(func, f, s, v)
   if not func then func = function() end end
-  repeat
-    local tmp = table.pack(f(s,v))
-    v = tmp[1]
-    if v ~= nil then func(table.unpack(tmp)) end
-  until v == nil
+  local tmp = table.pack(f(s,v))
+  while tmp[1] ~= nil do
+    func(table.unpack(tmp))
+    tmp = table.pack(f(s,tmp[1]))
+  end
 end
 
 function glob(...)
@@ -1159,6 +1158,16 @@ end
 
 function iterator_methods:reduce(func, initial_value)
   return reduce(func, initial_value, self:get())
+end
+
+function iterator_methods:concat(sep1,sep2)
+  local sep1,sep2 = sep1 or "",sep2 or sep1 or ""
+  local t = {}
+  self:apply(function(...)
+	       local arg = table.pack(...)
+	       table.insert(t, string.format("%s", table.concat(arg, sep1)))
+	     end)
+  return table.concat(t, sep2)
 end
 
 -------------------

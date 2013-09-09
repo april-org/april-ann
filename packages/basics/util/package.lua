@@ -21,6 +21,14 @@ package{ name = "util",
      provide_bind{ file = "binding/bind_util.lua.cc" , dest_dir = "include" },
    },
    target{
+     name = "test",
+     execute_script{
+       file={
+	 "test/test-functional-programming.lua",
+       },
+     },
+   },
+   target{
      name = "build",
      depends = "provide",
      use_timestamp = true,
