@@ -526,6 +526,18 @@ function multiple_ipairs(...)
   return mult_ipairs_it, t, 0
 end
 
+function iterable_filter(func, f, s, v)
+  return function(s,v)
+    local tmp
+    repeat
+      tmp = table.pack(f(s,v))
+      v = tmp[1]
+      if v == nil then return nil end
+    until func(table.unpack(tmp))
+    return table.unpack(tmp)
+  end
+end
+
 -- FROM: http://www.corsix.org/content/mapping-and-lua-iterators
 function iterable_map(func, f, s, v)
   local done
@@ -547,6 +559,16 @@ function iterable_map(func, f, s, v)
 			    domap(f(s,v))
 			  until done
 			end)
+end
+
+function filter(func, ...)
+  assert(func, "Needs a function as first argument")
+  local t,key,value = {}
+  for key,value in ... do
+    local v = value or key
+    if func(v) then table.insert(t,v) end
+  end
+  return t
 end
 
 function map(func, ...)
@@ -571,8 +593,18 @@ function map2(func, ...)
   return t
 end
 
+function mapn(func, f, s, v)
+  if not func then func = function(k,...) return ... end end
+  local t = {}
+  repeat
+    local tmp = table.pack(f(s,v))
+    v = tmp[1]
+    if v ~= nil then t[v] = func(table.unpack(tmp)) end
+  until v == nil
+  return t
+end
+
 function reduce(func, initial_value, ...)
-  assert(type(func) == "function", "Needs a function as first argument")
   assert(initial_value ~= nil,
 	 "Needs an initial_value as second argument")
   local accum,key,value = initial_value
@@ -582,11 +614,13 @@ function reduce(func, initial_value, ...)
   return accum
 end
 
-function apply(func, ...)
+function apply(func, f, s, v)
   if not func then func = function() end end
-  for key,value in ... do
-    func(key,value)
-  end
+  repeat
+    local tmp = table.pack(f(s,v))
+    v = tmp[1]
+    if v ~= nil then func(table.unpack(tmp)) end
+  until v == nil
 end
 
 function glob(...)
@@ -1089,6 +1123,42 @@ function io.uncommented_lines(filename)
     until not line or not string.match(line, "^%s*#.*$") 
     return line
   end
+end
+
+---------------------------------------------------------------
+---------------------- ITERATOR CLASS -------------------------
+---------------------------------------------------------------
+
+-- The iterator class is useful to simplify the syntax of map, filter, reduce,
+-- and apply functions, introducing a more natural order of application of the
+-- functions.
+
+local iterator_methods,
+iterator_class_metatable = class("iterator")
+
+function iterator_class_metatable:__call(...)
+  local obj = { data=table.pack(...) }
+  return class_instance(obj, iterator, true)
+end
+
+function iterator.meta_instance:__call() return table.unpack(self.data) end
+
+function iterator_methods:get() return table.unpack(self.data) end
+
+function iterator_methods:map(func)
+  return iterator(iterable_map(func, self:get()))
+end
+
+function iterator_methods:filter(func)
+  return iterator(iterable_filter(func, self:get()))
+end
+
+function iterator_methods:apply(func)
+  apply(func, self:get())
+end
+
+function iterator_methods:reduce(func, initial_value)
+  return reduce(func, initial_value, self:get())
 end
 
 -------------------
