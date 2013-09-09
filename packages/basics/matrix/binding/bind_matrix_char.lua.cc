@@ -246,11 +246,8 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 
 //BIND_METHOD MatrixChar toString
 {
-  LUABIND_CHECK_ARGN(<=, 1);
-  constString cs;
-  LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("ascii"));
-  bool is_ascii = (cs == "ascii");
-  writeMatrixCharToLuaString(obj, L, is_ascii);
+  LUABIND_CHECK_ARGN(==, 0);
+  writeMatrixCharToLuaString(obj, L, true);
   LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END

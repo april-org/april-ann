@@ -4,6 +4,10 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- `trainable` and `ann.mlp.all_all` are using `matrix:to_lua_string()`
+  method.
+- Added method `to_lua_string()` in all matrix types, so the method produce
+  a Lua chunk which is loadable and produce a matrix.
 - Added `iterator` class, which is a wrapper around Lua iterators, but
   provides a more natural interface with functional programming procedures
   as `map`, `filter`, `apply`, or `reduce`.

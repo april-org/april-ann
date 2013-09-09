@@ -1,4 +1,10 @@
 -- OVERWRITTING TOSTRING FUNCTION
+class_extension(matrix, "to_lua_string",
+                function(self, format)
+                  return string.format("matrix.fromString[[%s]]",
+                                       self:toString(format or "binary"))
+                end)
+
 matrix.meta_instance.__tostring = function(self)
   local dims   = self:dim()
   local major  = self:get_major_order()
@@ -264,6 +270,12 @@ april_set_doc("matrix.toString", {
 		  "It returns a Lua string which stores the matrix.",
 		  "It uses the format expected by fromString function.",
 		},
+		outputs = { "A Lua string" }, })
+
+april_set_doc("matrix.to_lua_string", {
+		class = "method",
+		summary = "It returns a Lua chunk string which is loadable.",
+                params  = { "The format [optional]. By default is binary." },
 		outputs = { "A Lua string" }, })
 
 april_set_doc("matrix.fromPNM", {
