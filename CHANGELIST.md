@@ -4,6 +4,9 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added `iterator` class, which is a wrapper around Lua iterators, but
+  provides a more natural interface with functional programming procedures
+  as `map`, `filter`, `apply`, or `reduce`.
 - Added serialization to `parallel_foreach`, allowing to produce outputs which
   could be loaded by the caller process.
 - Declaration of `luatype` function as global, it wasn't.
