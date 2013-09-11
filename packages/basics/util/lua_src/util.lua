@@ -122,7 +122,7 @@ end
 
 -- returns true if the given table is a class table (not instance)
 function is_class(t)
-  return t.meta_instance and t.meta_instance.id ~= nil
+  return luatype(t) == "table" and t.meta_instance and t.meta_instance.id ~= nil
 end
 
 -- Predicate which returns true if a given object instance is a subclass of a
@@ -207,6 +207,7 @@ function april_print_doc(table_name, verbosity, prefix)
   local current_table
   if #table_name==0 then current_table=_APRIL_DOC_TABLE_
   else
+    table_name=table_name:gsub(" class","")
     current_table = get_table_from_dotted_string(table_name, true,
 						 _APRIL_DOC_TABLE_)
   end
@@ -327,11 +328,11 @@ end
 function april_help(table_name, verbosity)
   if not table_name then table_name="" end
   if (luatype(table_name) ~= "string" and
-      getmetatable(table_name) and
-      getmetatable(table_name).id) then
-    table_name = getmetatable(table_name).id
+      get_object_id(table_name)) then
+    table_name = get_object_id(table_name):gsub(" class","")
   end
-  assert(luatype(table_name) == "string", "Expected string as first argument")
+  assert(luatype(table_name) == "string",
+	 "Expected string as first argument")
   local t
   if #table_name == 0 then t = _G
   else
@@ -359,14 +360,10 @@ function april_help(table_name, verbosity)
     april_print_doc(table_name, verbosity)
     -- printf("No more recursive help for %s\n", table_name)
     return
-  elseif luatype(t) ~= "table" then
-    if getmetatable(t) and getmetatable(t).__index then
-      local id = getmetatable(t).id
-      t = get_table_from_dotted_string(id)
-      april_print_doc(id, verbosity)
-    else
-      april_print_doc(table_name, verbosity)
-    end
+  elseif is_class(t) then
+    local id = get_object_id(t):gsub(" class","")
+    t = get_table_from_dotted_string(id)
+    april_print_doc(id, verbosity)
   else
     april_print_doc(table_name, verbosity)
   end
@@ -376,20 +373,13 @@ function april_help(table_name, verbosity)
   local names      = {}
   local vars       = {}
   for i,v in pairs(t) do
-    if luatype(v) == "function" then
+    if is_class(v) then
+      local id = get_object_id(v):gsub(" class","")
+      table.insert(classes, i)
+    elseif luatype(v) == "function" or (luatype(v) == "table" and v.__call) then
       table.insert(funcs, {i, string.format("%8s",luatype(v))})
     elseif luatype(v) == "table" then
-      if i ~= "meta_instance" then
-	if getmetatable(v) and getmetatable(v).id then
-	  if i~="__index" then table.insert(classes, i) end
-	else
-	  if not getmetatable(v) or not getmetatable(v).__call then
-	    table.insert(names, i)
-	  else
-	    table.insert(funcs, {i, string.format("%8s",luatype(v))})
-	  end
-	end
-      end
+      table.insert(names, i)
     else
       table.insert(vars, {i, string.format("%8s",luatype(v))})
     end
@@ -427,7 +417,7 @@ function april_help(table_name, verbosity)
     end
     print("")
   end
-  if getmetatable(t) ~= t and #funcs > 0 then
+  if #funcs > 0 then
     print(ansi.fg["cyan"].." -- static functions or tables"..ansi.fg["default"])
     table.sort(funcs, function(a,b) return a[1] < b[1] end)
     for i,v in ipairs(funcs) do
@@ -469,7 +459,7 @@ function april_help(table_name, verbosity)
     t = t.meta_instance.__index
     while (getmetatable(t) and getmetatable(t).__index and
 	   getmetatable(t).__index ~= t) do
-      local superclass_name = getmetatable(t).id
+      local superclass_name = getmetatable(t).id:gsub(" class","")
       t = getmetatable(t).__index
       print(ansi.fg["cyan"]..
 	      " -- inherited methods from " ..
