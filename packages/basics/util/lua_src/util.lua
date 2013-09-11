@@ -1301,3 +1301,32 @@ april_set_doc("map2",
 		  },
 		}
 	      })
+
+april_set_doc("signal.register",
+	      {
+		class="function",
+		summary="Registers execution of Lua function with a given signal",
+		description = {
+		  "This function fails if the given signal was registered before",
+		  "by other function different than this.",
+		  "If a nil value is given for the function, the signal will",
+		  "be ignored.",
+		},
+		params = {
+		  "A signal number, use the helpers signal.SIG...",
+		  "A lua function",
+		},
+	      })
+
+april_set_doc("signal.release",
+	      {
+		class="function",
+		summary="Releases the Lua function associated with the given signal",
+		description = {
+		  "This function fails if the given signal was registered before",
+		  "by other function different than signal.register(...).",
+		},
+		params = {
+		  "A signal number, use the helpers signal.SIG_...",
+		},
+	      })
