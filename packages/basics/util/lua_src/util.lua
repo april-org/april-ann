@@ -397,7 +397,7 @@ function april_help(table_name, verbosity)
   if #vars > 0 then
     print(ansi.fg["cyan"].." -- basic variables (string, number)"..
 	ansi.fg["default"])
-    table.sort(vars, function(a,b) return a[1] < b[1] end)
+    table.sort(vars, function(a,b) return tostring(a[1]) < tostring(b[1]) end)
     for i,v in pairs(vars) do
       april_print_doc(table_name .. "." .. v[1], math.min(1, verbosity),
 		      ansi.fg["cyan"].."   * "..
