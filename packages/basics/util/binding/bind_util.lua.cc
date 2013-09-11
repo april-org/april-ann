@@ -20,6 +20,7 @@
  */
 //BIND_HEADER_C
 
+#include <csignal>
 #include <errno.h>
 #include <stdio.h>
 #include <sys/time.h>
@@ -53,6 +54,7 @@ FILE **newfile (lua_State *L) {
 #include <cmath>
 #include <ctime>
 #include "popen2.h"
+#include "signal_handler.h"
 #include <cstdlib>
 
 using namespace april_utils;
@@ -62,6 +64,7 @@ using namespace april_utils;
 //BIND_STATIC_CONSTRUCTOR utils_static_constructor
 {
   binarizer::init();
+  SignalHandler::initialize(L);
 }
 //BIND_END
 
@@ -630,3 +633,58 @@ using namespace april_utils;
 
 //////////////////////////////////////////////////////////////////////
 
+//BIND_ENUM_CONSTANT signal.SIGHUP     SIGHUP
+//BIND_ENUM_CONSTANT signal.SIGINT     SIGINT
+//BIND_ENUM_CONSTANT signal.SIGQUIT    SIGQUIT
+//BIND_ENUM_CONSTANT signal.SIGILL     SIGILL
+//BIND_ENUM_CONSTANT signal.SIGTRAP    SIGTRAP
+//BIND_ENUM_CONSTANT signal.SIGABRT    SIGABRT   
+//BIND_ENUM_CONSTANT signal.SIGEMT     SIGEMT    
+//BIND_ENUM_CONSTANT signal.SIGFPE     SIGFPE    
+//BIND_ENUM_CONSTANT signal.SIGKILL    SIGKILL   
+//BIND_ENUM_CONSTANT signal.SIGBUS     SIGBUS    
+//BIND_ENUM_CONSTANT signal.SIGSEGV    SIGSEGV   
+//BIND_ENUM_CONSTANT signal.SIGSYS     SIGSYS    
+//BIND_ENUM_CONSTANT signal.SIGPIPE    SIGPIPE   
+//BIND_ENUM_CONSTANT signal.SIGALRM    SIGALRM   
+//BIND_ENUM_CONSTANT signal.SIGTERM    SIGTERM   
+//BIND_ENUM_CONSTANT signal.SIGURG     SIGURG    
+//BIND_ENUM_CONSTANT signal.SIGSTOP    SIGSTOP   
+//BIND_ENUM_CONSTANT signal.SIGTSTP    SIGTSTP   
+//BIND_ENUM_CONSTANT signal.SIGCONT    SIGCONT   
+//BIND_ENUM_CONSTANT signal.SIGCHLD    SIGCHLD   
+//BIND_ENUM_CONSTANT signal.SIGTTIN    SIGTTIN   
+//BIND_ENUM_CONSTANT signal.SIGTTOU    SIGTTOU   
+//BIND_ENUM_CONSTANT signal.SIGIO      SIGIO     
+//BIND_ENUM_CONSTANT signal.SIGXCPU    SIGXCPU   
+//BIND_ENUM_CONSTANT signal.SIGXFSZ    SIGXFSZ   
+//BIND_ENUM_CONSTANT signal.SIGVTALRM  SIGVTALRM 
+//BIND_ENUM_CONSTANT signal.SIGPROF    SIGPROF   
+//BIND_ENUM_CONSTANT signal.SIGWINCH   SIGWINCH  
+//BIND_ENUM_CONSTANT signal.SIGINFO    SIGINFO   
+//BIND_ENUM_CONSTANT signal.SIGUSR1    SIGUSR1   
+//BIND_ENUM_CONSTANT signal.SIGUSR2    SIGUSR2   
+
+
+//BIND_FUNCTION signal.register
+{
+  int sgn;
+  LUABIND_CHECK_ARGN(==,2);
+  LUABIND_CHECK_PARAMETER(1, int);
+  LUABIND_CHECK_PARAMETER(2, function);
+  LUABIND_GET_PARAMETER(1, int, sgn);
+  SignalHandler::register_signal(sgn);
+}
+//BIND_END
+
+//BIND_FUNCTION signal.release
+{
+  int sgn;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, int);
+  LUABIND_GET_PARAMETER(1, int, sgn);
+  SignalHandler::release_signal(sgn);
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////////
