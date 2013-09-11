@@ -77,8 +77,13 @@ function mean_var_methods:add(...)
   if type(v) == "table" then
     return self:add(ipairs(v))
   elseif type(v) == "function" then
-    for key,value in table.unpack(arg) do
-      self:add(value or key)
+    local f,s,v = table.unpack(arg)
+    local tmp = table.pack(f(s,v))
+    while tmp[1] ~= nil do
+      v = tmp[1]
+      if #tmp > 1 then table.remove(tmp,1) end
+      for _,aux in ipairs(tmp) do self:add(aux) end
+      tmp = table.pack(f(s,v))
     end
   elseif type(v) == "number" then
     self.N = self.N + 1
