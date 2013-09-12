@@ -146,6 +146,41 @@
 }
 //BIND_END
 
+//BIND_METHOD ImageFloat get_horizontal_histogram
+//DOC_BEGIN
+// Returns horizontal for a each row the image
+//DOC_END
+{
+  LUABIND_CHECK_ARGN(>=, 1);
+
+  int radius;
+  LUABIND_GET_OPTIONAL_PARAMETER(2, int, radius, 0);
+  int gray_levels;
+  LUABIND_GET_PARAMETER(1, int, gray_levels);
+  ImageHistogram *hist = new ImageHistogram(obj, gray_levels);
+  MatrixFloat *m = hist->getHorizontalHistogram(radius);
+  delete hist;
+  LUABIND_RETURN(MatrixFloat, m);
+}
+//BIND_END
+//
+//BIND_METHOD ImageFloat get_vertical_histogram
+//DOC_BEGIN
+// Returns vertical for a each row the image
+//DOC_END
+{
+  LUABIND_CHECK_ARGN(>=, 1);
+  int radius;
+  LUABIND_GET_OPTIONAL_PARAMETER(2, int, radius, 0);
+  int gray_levels;
+  LUABIND_GET_PARAMETER(1, int, gray_levels);
+  ImageHistogram *hist = new ImageHistogram(obj, gray_levels);
+  MatrixFloat *m = hist->getVerticalHistogram(radius);
+  delete hist;
+  LUABIND_RETURN(MatrixFloat, m);
+}
+//BIND_END
+
 //BIND_METHOD ImageHistogram get_image_histogram
 //DOC_BEGIN
 // Returns the histogram of all the image
@@ -158,45 +193,16 @@
 }
 //BIND_END
 
-//BIND_METHOD ImageFloat get_horizontal_histogram
-//DOC_BEGIN
-// Returns horizontal for a each row the image
-//DOC_END
-{
-  LUABIND_CHECK_ARGN(==, 1);
-
-  int gray_levels;
-  LUABIND_GET_PARAMETER(1, int, gray_levels);
-  ImageHistogram *hist = new ImageHistogram(obj, gray_levels);
-  MatrixFloat *m = hist->getHorizontalHistogram();
-  delete hist;
-  LUABIND_RETURN(MatrixFloat, m);
-}
-//BIND_END
-//
-//BIND_METHOD ImageFloat get_vertical_histogram
-//DOC_BEGIN
-// Returns vertical for a each row the image
-//DOC_END
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  int gray_levels;
-  LUABIND_GET_PARAMETER(1, int, gray_levels);
-  ImageHistogram *hist = new ImageHistogram(obj, gray_levels);
-  MatrixFloat *m = hist->getVerticalHistogram();
-  delete hist;
-  LUABIND_RETURN(MatrixFloat, m);
-}
-//BIND_END
-//
 //BIND_METHOD ImageHistogram get_horizontal_histogram
 //DOC_BEGIN
 // Returns horizontal for a each row the image
 //DOC_END
 {
-  LUABIND_CHECK_ARGN(==, 0);
+  LUABIND_CHECK_ARGN(>=, 0);
 
-  MatrixFloat *m = obj->getHorizontalHistogram();
+  int radius;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, int, radius, 0);
+  MatrixFloat *m = obj->getHorizontalHistogram(radius);
   LUABIND_RETURN(MatrixFloat, m);
 }
 //BIND_END
@@ -206,9 +212,10 @@
 // Returns vertical for a each row the image
 //DOC_END
 {
-  LUABIND_CHECK_ARGN(==, 0);
-
-  MatrixFloat *m = obj->getVerticalHistogram();
+  LUABIND_CHECK_ARGN(>=, 0);
+  int radius;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, int, radius, 0);
+  MatrixFloat *m = obj->getVerticalHistogram(radius);
   LUABIND_RETURN(MatrixFloat, m);
 }
 //BIND_END

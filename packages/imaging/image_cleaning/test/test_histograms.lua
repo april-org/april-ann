@@ -41,6 +41,15 @@ for i = 1, height do
     end
 end
 
+print("Horizontal Radio Histogram Computation")
+hist = myHist:get_horizontal_histogram(1)
+
+for i = 1, height do
+    for l =1, levels do
+        print(i,l, hist:get(i,l))
+    end
+end
+
 print("Vertical Histogram Computation")
 hist = myHist:get_vertical_histogram()
 
@@ -49,3 +58,15 @@ for i = 1, width do
         print(i,l, hist:get(i,l))
     end
 end
+
+
+print("Vertical window histogram Computation")
+hist = myHist:get_vertical_histogram(1)
+
+for i = 1, width do
+    for l =1, levels do
+        print(i,l, hist:get(i,l))
+    end
+end
+
+
