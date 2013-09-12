@@ -41,6 +41,7 @@ namespace april_utils {
     lua_getfield(globalL, LUA_REGISTRYINDEX, TABLE_NAME);
     lua_rawgeti(globalL, -1, signal_handlers[sgn]);
     lua_call(globalL, 0, 0);
+    lua_pop(globalL, 1);
   }
 
   /// Initialization of all the mappings to LUA_REFNIL, captures the lua_State,
@@ -49,7 +50,8 @@ namespace april_utils {
     if (globalL != 0)
       ERROR_EXIT(256, "Trying to initialize twice\n");
     globalL = L;
-    for (int i=0; i<MAX_SIGNALS; ++i) signal_handlers[i] = LUA_REFNIL;
+    for (int i=0; i<MAX_SIGNALS; ++i)
+      signal_handlers[i] = LUA_REFNIL;
     lua_newtable(globalL);
     lua_setfield(globalL, LUA_REGISTRYINDEX, TABLE_NAME);
   }
@@ -58,30 +60,29 @@ namespace april_utils {
   /// when signal sgn arrives
   void SignalHandler::register_signal(int sgn) {
     if (signal_handlers[sgn] != LUA_REFNIL) {
-      ERROR_PRINT("Trying to register previously registered signal\n");
+      ERROR_PRINT("Trying to register previously registered signal (it will be overwritten)\n");
       release_signal(sgn);
     }
+    sig_t handler_func;
+    int ref;
     if (lua_isnil(globalL,-1)) {
-      signal_handlers[sgn] = LUA_REFNIL;
-      sig_t ret = signal(sgn, SIG_IGN);
-      if (ret == SIG_ERR)
-	ERROR_EXIT1(128, "%s\n", strerror(errno));
-      else if (ret != SIG_IGN && ret != SIG_DFL)
-	ERROR_EXIT(128, "Registering a signal which was previously "
-		   "registered by a C handler\n");
+      ref = LUA_REFNIL;
+      handler_func = SIG_IGN;
     }
     else {
       lua_getfield(globalL, LUA_REGISTRYINDEX, TABLE_NAME);
       lua_pushvalue(globalL, -2);
-      signal_handlers[sgn] = luaL_ref(globalL, -2);
+      ref = luaL_ref(globalL, -2);
       lua_pop(globalL, -1);
-      sig_t ret = signal(sgn, sig_handler);
-      if (ret == SIG_ERR)
-	ERROR_EXIT1(128, "%s\n", strerror(errno));
-      else if (ret != SIG_IGN && ret != SIG_DFL)
-	ERROR_EXIT(128, "Registering a signal which was previously "
-		   "registered by a C handler\n");
+      handler_func = SignalHandler::sig_handler;
     }
+    signal_handlers[sgn] = ref;
+    sig_t ret = signal(sgn, handler_func);
+    if (ret == SIG_ERR)
+      ERROR_EXIT1(128, "%s\n", strerror(errno));
+    else if (ret != SIG_IGN && ret != SIG_DFL)
+      ERROR_PRINT("Registering a signal which was previously "
+		  "registered by a third (it will be overwritten)\n");
   }
 
   /// Releases the function associated with the given signal
@@ -91,8 +92,7 @@ namespace april_utils {
       ERROR_EXIT1(128, "%s\n", strerror(errno));
     else if (signal_handlers[sgn] == LUA_REFNIL &&
 	     ret != SIG_IGN)
-      ERROR_EXIT(256, "Trying to release a signal registered by "
-		 "other function\n");
+      ERROR_EXIT(256, "Releasing a signal registered by a third\n");
     lua_getfield(globalL, LUA_REGISTRYINDEX, TABLE_NAME);
     lua_pushvalue(globalL, -2);
     luaL_unref(globalL, -2, signal_handlers[sgn]);
