@@ -716,7 +716,9 @@ local valid_get_table_fields_params_attributes = { type_match = true,
 						   getter     = true,
 						   default    = true }
 function get_table_fields(params, t)
-  local ret = {}
+  local params = params or {}
+  local t      = t or {}
+  local ret    = {}
   for key,value in pairs(t) do
     if not params[key] then error("Unknown field: " .. key) end
   end
@@ -747,6 +749,7 @@ end
 function get_table_fields_ipairs(...)
   local arg = table.pack(...)
   return function(t)
+    local t   = t or {}
     local ret = {}
     for i,v in ipairs(t) do
       table.insert(ret, get_table_fields(table.unpack(arg), v))
@@ -758,6 +761,7 @@ end
 function get_table_fields_recursive(...)
   local arg = table.pack(...)
   return function(t)
+    local t = t or {}
     return get_table_fields(table.unpack(arg), t)
   end
 end
