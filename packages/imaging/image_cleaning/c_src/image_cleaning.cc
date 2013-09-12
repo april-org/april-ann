@@ -175,8 +175,6 @@ MatrixFloat *ImageHistogram::getWindowHistogram(int x1, int y1, int x2, int y2){
           top_right = hist(top-1, right, h);
       }
       else if (top == 0 && left == 0);
-
-
       else if (top == 0) {
           bottom_left = hist(bottom, left-1, h);
       }
@@ -197,8 +195,10 @@ MatrixFloat * ImageHistogram::getImageHistogram() {
   return getWindowHistogram(0,0, height - 1, width - 1);
 }
 
-MatrixFloat * ImageHistogram::getHorizontalHistogram() {
+MatrixFloat * ImageHistogram::getHorizontalHistogram(int radius) {
   
+  using april_utils::max;
+  using april_utils::min;
   int dims[2];
   dims[0] = this->height;
   dims[1] = this->gray_levels;
@@ -208,7 +208,8 @@ MatrixFloat * ImageHistogram::getHorizontalHistogram() {
   for (int i = 0; i < this->height; ++i) {
 
     //FIXME: Memory allocation on each line
-    MatrixFloat *m = getWindowHistogram(i,0, i, width-1);
+    
+    MatrixFloat *m = getWindowHistogram(max(i - radius,0) ,0, min(height-1, i + radius), width-1);
     //TODO: Copy on efficient way
     for (int h = 0; h < this->gray_levels; ++h)
         (*vHist)(i,h) = (*m)(h);
@@ -218,8 +219,10 @@ MatrixFloat * ImageHistogram::getHorizontalHistogram() {
   return vHist;
 }
 
-MatrixFloat * ImageHistogram::getVerticalHistogram() {
+MatrixFloat * ImageHistogram::getVerticalHistogram(int radius) {
 
+  using april_utils::max;
+  using april_utils::min;
   int dims[2];
   dims[0] = this->width;
   dims[1] = this->gray_levels;
@@ -228,31 +231,33 @@ MatrixFloat * ImageHistogram::getVerticalHistogram() {
 
   for (int i = 0; i < this->width; ++i) {
 
-    //FIXME: Memory allocation on each line
-    MatrixFloat *m = getWindowHistogram(0,i, height-1, i);
-    //TODO: Copy on efficient way
-    for (int h = 0; h < this->gray_levels; ++h)
-        (*vHist)(i,h) = (*m)(h);
-    delete m;
+      //FIXME: Memory allocation on each line
+      MatrixFloat *m = getWindowHistogram(0,max(0, i-radius), height-1, min(width-1,i+radius));
+      //TODO: Copy on efficient way
+      for (int h = 0; h < this->gray_levels; ++h)
+          (*vHist)(i,h) = (*m)(h);
+      delete m;
   }
 
   return vHist;
 }
 
 MatrixFloat * ImageHistogram::getIntegralHistogram(){
-    int dims[3];
-    dims[0] = height;
-    dims[1] = width;
-    dims[2] = gray_levels;
-    MatrixFloat *matrix = new MatrixFloat(3, dims);
+  using april_utils::max;
+  using april_utils::min;
+  int dims[3];
+  dims[0] = height;
+  dims[1] = width;
+  dims[2] = gray_levels;
+  MatrixFloat *matrix = new MatrixFloat(3, dims);
 
-    for (int i = 0; i < height; ++i) {
-        for (int j = 0; j < width; ++j) {
-            for(int h = 0; h < gray_levels; ++h) {
-                (*matrix)(i, j, h) = (float)hist(i, j, h); 
-            }
-        }
-    }
-    return matrix;
+  for (int i = 0; i < height; ++i) {
+      for (int j = 0; j < width; ++j) {
+          for(int h = 0; h < gray_levels; ++h) {
+              (*matrix)(i, j, h) = (float)hist(i, j, h); 
+          }
+      }
+  }
+  return matrix;
 }
 
