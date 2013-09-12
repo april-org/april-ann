@@ -119,6 +119,9 @@ template<>
 void Matrix<float>::scal(float value);
 
 template<>
+void Matrix<float>::div(float value);
+
+template<>
 float Matrix<float>::norm2() const;
 
 template<>

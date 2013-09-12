@@ -249,6 +249,12 @@ void Matrix<T>::scal(T value) {
 }
 
 template <typename T>
+void Matrix<T>::div(T value) {
+  UNUSED_VARIABLE(value);
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
 float Matrix<T>::norm2() const {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return 0.0f;

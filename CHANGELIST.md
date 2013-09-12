@@ -4,6 +4,7 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added `div` method to `matrix`.
 - Added `signal.register` and `signal.receive` functions to Lua.
 - Implemented SignalHandler class in C++.
 - `trainable` and `ann.mlp.all_all` are using `matrix:to_lua_string()`
