@@ -537,7 +537,7 @@ public:
   void cos();
   Matrix<T> *cmul(const Matrix<T> *other);
   void adjustRange(T rmin, T rmax);
-    
+  
   /**** BLAS OPERATIONS ****/
   void scalarAdd(T s);
   
@@ -574,6 +574,8 @@ public:
   T dot(const Matrix<T> *other) const;
   
   void scal(T value);
+
+  void div(T value);
   
   float norm2() const;
   T min(int &arg_min, int &arg_min_raw_pos) const;

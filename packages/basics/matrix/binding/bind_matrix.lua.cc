@@ -1171,6 +1171,16 @@ typedef MatrixFloat::sliding_window SlidingWindow;
     LUABIND_RETURN(MatrixFloat, obj);
   }
 //BIND_END
+
+//BIND_METHOD MatrixFloat div
+  {
+    LUABIND_CHECK_ARGN(==, 1);
+    float value;
+    LUABIND_GET_PARAMETER(1, float, value);
+    obj->div(value);
+    LUABIND_RETURN(MatrixFloat, obj);
+  }
+//BIND_END
  
 //BIND_METHOD MatrixFloat norm2
   {

@@ -324,6 +324,14 @@ void doScal(unsigned int size,
 	    bool use_gpu);
 
 template<typename T>
+void doDiv(unsigned int N,
+	   GPUMirroredMemoryBlock<T> *v,
+	   unsigned int stride,
+	   unsigned int shift,
+	   T value,
+	   bool use_gpu);
+
+template<typename T>
 void doGer(CBLAS_ORDER major_type,
 	   unsigned int m,
 	   unsigned int n,

@@ -66,9 +66,19 @@ matrix.meta_instance.__pow = function(op1, op2)
 end
 
 matrix.meta_instance.__div = function(op1, op2)
-  assert(type(op2) == "number", "Expected a number as second argument")
-  local new_mat = op1:clone()
-  return new_mat:scal(1/op2)
+  if type(op2) == "number" then
+    local new_mat = op1:clone()
+    return new_mat:scal(1/op2)
+  elseif type(op1) == "number" then
+    local new_mat = op2:clone()
+    return new_mat:div(op1)
+  else
+    assert(isa(op1,matrix) and isa(op2,matrix),
+	   "Expected a matrix and a number or two matrices")
+    local new_mat1 = op1:clone()
+    local new_mat2 = op2:clone():div(1)
+    return new_mat1:axpy(1.0, new_mat2)
+  end
 end
 
 matrix.meta_instance.__unm = function(op)
@@ -825,6 +835,16 @@ april_set_doc("matrix.scal", {
 		summary = "BLAS SCAL operation IN-PLACE.",
 		params = {
 		  "The scale factor",
+		},
+		outputs = {
+		  "The caller matrix (itself)."
+		}, })
+
+april_set_doc("matrix.div", {
+		class = "method",
+		summary = "Inverse to scal operation IN-PLACE, produces A = value/A.",
+		params = {
+		  "The div factor",
 		},
 		outputs = {
 		  "The caller matrix (itself)."

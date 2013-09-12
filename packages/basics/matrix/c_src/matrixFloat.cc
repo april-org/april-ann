@@ -476,6 +476,15 @@ void Matrix<float>::scal(float value) {
 #endif
 }
 
+/********** DIV FUNCTION ***************/
+DEF_CWISE_FUNCTOR_1(doDiv,float);
+template<>
+void Matrix<float>::div(float value) {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_1(doDiv,float,
+							    value));
+}
+
 /********** NORM2 FUNCTION ***************/
 struct norm2_functor {
   float operator()(const MatrixFloat *m, unsigned int size, unsigned int stride,
