@@ -1164,6 +1164,37 @@ function iterator_methods:concat(sep1,sep2)
   return table.concat(t, sep2)
 end
 
+function iterator_methods:field(...)
+  local f,s,v = self:get()
+  local arg   = table.pack(...)
+  return iterator(function(s)
+		    local tmp = table.pack(f(s,v))
+		    if tmp[1] == nil then return nil end
+		    v = tmp[1]
+		    local ret = { }
+		    for i=1,#tmp do
+		      for j=1,#arg do
+			table.insert(ret, tmp[i][arg[j]])
+		      end
+		    end
+		    return table.unpack(ret)
+		  end,s)
+end
+
+function iterator_methods:select(...)
+  local f,s,v = self:get()
+  local arg   = table.pack(...)
+  for i=1,#arg do arg[i]=tonumber(arg[i]) assert(arg[i],"Expected a number") end
+  return iterator(function(s)
+		    local tmp = table.pack(f(s,v))
+		    if tmp[1] == nil then return nil end
+		    v = tmp[1]
+		    local selected = {}
+		    for i=1,#arg do selected[i] = tmp[arg[i]] end
+		    return table.unpack(selected)
+		  end,s)
+end
+
 -------------------
 -- DOCUMENTATION --
 -------------------

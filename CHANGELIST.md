@@ -4,6 +4,7 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Methods `field` and `select` added to `iterator` class.
 - Added `div` method to `matrix`.
 - Added `signal.register` and `signal.receive` functions to Lua.
 - Implemented SignalHandler class in C++.
