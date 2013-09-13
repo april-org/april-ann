@@ -228,6 +228,7 @@ __global__ void applyTanhErrorFunctionKernel(const float *output,
 
 float doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
 			FloatGPUMirroredMemoryBlock *target,
+			FloatGPUMirroredMemoryBlock *loss_output,
 			float zero_epsilon_distance,
 			unsigned int size,
 			unsigned int bunch_size,
@@ -253,13 +254,13 @@ float doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
        bunch_size,
        bunch_size,
        size);
-    cublasHandle_t handle = GPUHelper::getHandler();
-    float sum;
-    cublasSasum(handle,
-                static_cast<int>(pattern_errors->getSize()),
-                pattern_errors_ptr, 1, &sum);
+    cublasHandle_t handle  = GPUHelper::getHandler();
+    float *loss_output_ptr = loss_output->getGPUForWrite();
+    for (int i=0; i<bunch_size; ++i)
+      cublasSasum(handle,
+		  static_cast<int>(pattern_errors->getSize()),
+		  pattern_errors_ptr+i, bunch_size, loss_output_ptr + i);
     delete pattern_errors;
-    return sum;
   }
   else {
 #endif
@@ -332,6 +333,7 @@ void doComputeMSEGradient(FloatGPUMirroredMemoryBlock *input,
 
 float doMAELossFunction(FloatGPUMirroredMemoryBlock *input,
 			FloatGPUMirroredMemoryBlock *target,
+			FloatGPUMirroredMemoryBlock *loss_output,
 			float zero_epsilon_distance,
 			unsigned int size,
 			unsigned int bunch_size,
@@ -358,12 +360,11 @@ float doMAELossFunction(FloatGPUMirroredMemoryBlock *input,
        bunch_size,
        size);
     cublasHandle_t handle = GPUHelper::getHandler();
-    float sum;
-    cublasSasum(handle,
-                static_cast<int>(pattern_errors->getSize()),
-                pattern_errors_ptr, 1, &sum);
+    for (int i=0; i<bunch_size; ++i)
+      cublasSasum(handle,
+		  static_cast<int>(pattern_errors->getSize()),
+		  pattern_errors_ptr+i, bunch_size, loss_output_ptr + i);
     delete pattern_errors;
-    return sum;
   }
   else {
 #endif
@@ -443,6 +444,7 @@ void doComputeMAEGradient(FloatGPUMirroredMemoryBlock *input,
 
 float doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
 				 FloatGPUMirroredMemoryBlock *target,
+				 FloatGPUMirroredMemoryBlock *loss_output,
 				 float EPSILON,
 				 unsigned int size,
 				 unsigned int bunch_size,
@@ -469,12 +471,11 @@ float doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
        bunch_size,
        size);
     cublasHandle_t handle = GPUHelper::getHandler();
-    float sum;
-    cublasSasum(handle,
-                static_cast<int>(pattern_errors->getSize()),
-                pattern_errors_ptr, 1, &sum);
+    for (int i=0; i<bunch_size; ++i)
+      cublasSasum(handle,
+		  static_cast<int>(pattern_errors->getSize()),
+		  pattern_errors_ptr+i, bunch_size, loss_output_ptr + i);
     delete pattern_errors;
-    return -sum;
   }
   else {
 #endif
@@ -541,12 +542,11 @@ float doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
        bunch_size,
        size);
     cublasHandle_t handle = GPUHelper::getHandler();
-    float sum;
-    cublasSasum(handle,
-                static_cast<int>(pattern_errors->getSize()),
-                pattern_errors_ptr, 1, &sum);
+    for (int i=0; i<bunch_size; ++i)
+      cublasSasum(handle,
+		  static_cast<int>(pattern_errors->getSize()),
+		  pattern_errors_ptr+i, bunch_size, loss_output_ptr + i);
     delete pattern_errors;
-    return -sum;
   }
   else {
 #endif
@@ -717,6 +717,7 @@ void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
 // Hab = sum( o_i + beta^2 * t_i )
 float doLocalFMeasureLossFunction(FloatGPUMirroredMemoryBlock *input,
 				  FloatGPUMirroredMemoryBlock *target,
+				  FloatGPUMirroredMemoryBlock *loss_output,
 				  unsigned int size,
 				  unsigned int bunch_size,
 				  float beta,

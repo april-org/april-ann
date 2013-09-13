@@ -26,15 +26,17 @@
 #include "token_matrix.h"
 #include "matrixFloat.h"
 #include "error_print.h"
+#include "mean_deviation.h"
 
 namespace ANN {
   /// An abstract class that defines the basic interface that
   /// the loss_functions must complain.
   class LossFunction : public Referenced {
+    april_utils::RunningStat acc_loss;
   protected:
     Token *error_output;
     unsigned int size;
-
+        
     void throwErrorAndGetMatrixFromTokens(Token *input, Token *target,
 					  MatrixFloat *&input_mat,
 					  MatrixFloat *&target_mat) const {
@@ -60,25 +62,43 @@ namespace ANN {
       april_assert(target_mat->getIsContiguous());
       april_assert(input_mat->getMajorOrder() == CblasColMajor);
       april_assert(target_mat->getMajorOrder() == CblasColMajor);
+      april_assert(size==0 || input_mat->getDimSize(0)==size);
     }
-
+    
+    // To be implemented by derived classes
+    virtual float  computeLoss(Token *input, Token *target) = 0;
+    ////////////////////////////////////////////////////////////////
+    
   public:
     LossFunction(unsigned int size) :
     Referenced(), error_output(0), size(size) {
-      if (size == 0)
-	ERROR_EXIT(128, "Impossible to build ZERO size LossFunction\n");
     }
     virtual ~LossFunction() {
       if (error_output) DecRef(error_output);
     }
-    virtual float  addLoss(Token *input, Token *target) = 0;
-    virtual Token *computeGradient(Token *input, Token *target) = 0;
-    virtual float  getAccumLoss() = 0;
-    virtual void   reset() {
+    virtual float getAccumLoss() {
+      return static_cast<float>(acc_loss.Mean());
+    }
+    virtual float getAccumLossVariance() {
+      return static_cast<float>(acc_loss.Variance());
+    }
+    virtual void reset() {
       if (error_output) DecRef(error_output);
       error_output = 0;
+      acc_loss.Clear();
     }
+    virtual float addLoss(Token *input, Token *target) {
+      MatrixFloat *loss_data = computeLoss(input, target);
+      april_assert(loss_data.getNumDim() == 1);
+      for (MatrixFloat::iterator it(loss_data->begin());
+	   it!=loss_data->end(); ++it)
+	acc_loss.Push(static_cast<double>(*it));
+      delete loss_data;
+    }
+    // To be implemented by derived classes
+    virtual Token *computeGradient(Token *input, Token *target) = 0;
     virtual LossFunction *clone() = 0;
+    /////////////////////////////////////////////////////////////////
   };
 }
 
