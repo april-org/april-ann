@@ -207,7 +207,7 @@ return {
     local chunk_func=loadstring(arg[i]) or error("Impossible to load string: "..
                                                  arg[i])
     -- execute the chunk
-    chunk_func
+    chunk_func()
     --
     printf("# Executed chunk string: %s\n", arg[i])
   end
