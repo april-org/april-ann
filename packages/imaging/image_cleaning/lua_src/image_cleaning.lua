@@ -167,7 +167,6 @@ function image.image_cleaning.getCleanParameters(img, params)
 
   local function getHistogramDataset(img, levels, radio)
 
-
       local mHist  = img:get_window_histogram(levels, radio)
 
       local params_sucia_hist = {
@@ -181,8 +180,8 @@ function image.image_cleaning.getCleanParameters(img, params)
       return dataset.matrix(mHist, params_sucia_hist)
   end
 
-  local function getVerticalHistogram(img, levels)
-      local mVert = img:get_vertical_histogram(levels)
+  local function getVerticalHistogram(img, levels, radius)
+      local mVert = img:get_vertical_histogram(levels, radius)
       local params_vert_hist = {
           patternSize = {1, 8},
           stepSize = {0, 1, 0},
@@ -194,8 +193,8 @@ function image.image_cleaning.getCleanParameters(img, params)
       return dataset.matrix(mVert, params_vert_hist)
   end
 
-  local function getHorizontalHistogram(img, levels)
-      local mHor = img:get_horizontal_histogram(levels)
+  local function getHorizontalHistogram(img, levels, radius)
+      local mHor = img:get_horizontal_histogram(levels, radius)
       local params_hor_hist = {
           patternSize = {1, 8},
           stepSize = {1,0,0},
@@ -238,11 +237,11 @@ function image.image_cleaning.getCleanParameters(img, params)
       table.insert(table_datasets, ds_median)
   end
   if params.horizontal then
-      local ds_hor = getHorizontalHistogram(img, params.horizontal)
+      local ds_hor = getHorizontalHistogram(img, params.histogram_levels, params.horizontal)
       table.insert(table_datasets, ds_hor)
   end
   if params.vertical then
-      local ds_ver = getVerticalHistogram(img, params.vertical)
+      local ds_ver = getVerticalHistogram(img, params.histogram_levels, params.vertical)
       table.insert(table_datasets, ds_ver)
   end
 

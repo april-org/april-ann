@@ -85,9 +85,9 @@ class ImageHistogram : public Referenced {
         Matrix<float> * getWindowHistogram(int x1, int y1, int x2, int y2);
         
         /// Returns a matrix of size Height*Levels
-        Matrix<float> *getVerticalHistogram();
+        Matrix<float> *getVerticalHistogram(int radius = 0);
         /// Returns a matrix of size width*levels
-        Matrix<float> *getHorizontalHistogram();
+        Matrix<float> *getHorizontalHistogram(int radius = 0);
 
         ///Light and slow image histogram. It's used for computing the histogram of an image on a traditional way (without computing the integral interval)
         static Matrix<float> * getHistogram(const ImageFloat *img, int gray_levels);/*{

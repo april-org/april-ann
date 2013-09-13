@@ -274,7 +274,7 @@ function methods:classify_points(img, points, mlp)
     local res = {}
     for i, c in ipairs(classes) do
         x, y = unpack(points[i])
-        table.insert(res,  {x,y,c})
+        table.insert(res,  {x,y,c, dsOut:getPattern(i)})
     end
 
     return res
