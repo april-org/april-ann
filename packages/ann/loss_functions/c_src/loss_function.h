@@ -65,7 +65,7 @@ namespace ANN {
       april_assert(target_mat->getIsContiguous());
       april_assert(input_mat->getMajorOrder() == CblasColMajor);
       april_assert(target_mat->getMajorOrder() == CblasColMajor);
-      april_assert(size==0 || input_mat->getDimSize(1)==size);
+      april_assert(size==0 || input_mat->getDimSize(1)==static_cast<int>(size));
     }
     
     // To be implemented by derived classes
@@ -98,7 +98,7 @@ namespace ANN {
     }
     virtual MatrixFloat *addLoss(Token *input, Token *target) {
       MatrixFloat *loss_data = computeLossBunch(input, target);
-      april_assert(loss_data.getNumDim() == 1);
+      april_assert(loss_data->getNumDim() == 1);
       for (MatrixFloat::iterator it(loss_data->begin());
 	   it!=loss_data->end(); ++it)
 	acc_loss.Push(static_cast<double>(*it));

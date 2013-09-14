@@ -34,17 +34,15 @@ april_set_doc("ann.loss.__base__.loss",
 		summary="Computes the loss between two tokens (input and target)",
 		description={
 		  "The loss is computed for a given input and target tokens.",
-		  "This method returns the loss for the given pair of patterns",
-		  "(or for the",
-		  "given bunch if more than one pattern is represented at the",
-		  "tokens), and accumulates the loss in its internal state.",
+		  "This method returns a matrix with the loss for every given pair of patterns,",
+		  "and accumulates the loss in its internal state.",
 		},
 		params={
 		  "Input token",
 		  "Target token",
 		},
 		outputs = {
-		  "The loss computed for this pair of tokens",
+		  "A matrix with the loss computed for every pair of patterns (tokens)",
 		},
 	      })
 
@@ -78,6 +76,7 @@ april_set_doc("ann.loss.__base__.get_accum_loss",
 		summary="Returns the mean loss from the last reset call",
 		outputs = {
 		  "The mean loss",
+		  "The sample variance of the loss",
 		},
 	      })
 
