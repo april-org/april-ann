@@ -59,6 +59,9 @@ namespace april_utils {
   /// Registers a Lua function (which is on the top of the stack) to be executed
   /// when signal sgn arrives
   void SignalHandler::register_signal(int sgn) {
+    if (sgn < 0 || sgn >= MAX_SIGNALS)
+      ERROR_EXIT2(256,"Unknown signal number, found %d, expected to be in "
+		  "range [0,%d]\n", sgn, MAX_SIGNALS-1);
     if (signal_handlers[sgn] != LUA_REFNIL) {
       ERROR_PRINT("Trying to register previously registered signal (it will be overwritten)\n");
       release_signal(sgn);
@@ -87,6 +90,9 @@ namespace april_utils {
 
   /// Releases the function associated with the given signal
   void SignalHandler::release_signal(int sgn) {
+    if (sgn < 0 || sgn >= MAX_SIGNALS)
+      ERROR_EXIT2(256,"Unknown signal number, found %d, expected to be in "
+		  "range [0,%d]\n", sgn, MAX_SIGNALS-1);
     sig_t ret = signal(sgn, SIG_DFL);
     if (ret == SIG_ERR)
       ERROR_EXIT1(128, "%s\n", strerror(errno));

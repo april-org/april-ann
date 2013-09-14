@@ -4,6 +4,9 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added `loss`  parameter to `trainable.supervised_trainer` methods.
+- Added `math.add`, `math.sub`, `math.mul`, `math.div` functions.
+- Methods `field` and `select` added to `iterator` class.
 - Added `div` method to `matrix`.
 - Added `signal.register` and `signal.receive` functions to Lua.
 - Implemented SignalHandler class in C++.
