@@ -397,8 +397,8 @@ april_set_doc("trainable.supervised_trainer.randomize_weights", {
 		  ["random"] = "A random object",
 		  ["inf"]    = "Range inf value",
 		  ["sup"]    = "Range sup value",
-		  ["use_fanin"] = "An optional boolean, by default false",
-		  ["use_fanout"] = "An optional boolean, by default false",
+		  ["use_fanin"] = "An [optional] boolean, by default false",
+		  ["use_fanout"] = "An [optional] boolean, by default false",
 		}, })
 
 function trainable_supervised_trainer_methods:randomize_weights(t)
@@ -533,19 +533,21 @@ april_set_doc("trainable.supervised_trainer.train_step", {
 		params = {
 		  "A table with one input pattern or a token (with one or more patterns)",
 		  "The corresponding target output pattern (table or token)",
+		  "The loss function [optional]",
 		},
 		outputs = {
 		  "A number with the loss of the training step",
 		  "A token with the gradient of loss function at component inputs",
 		} })
 
-function trainable_supervised_trainer_methods:train_step(input, target)
+function trainable_supervised_trainer_methods:train_step(input, target, loss)
   if type(input)  == "table" then input  = tokens.matrix(matrix.col_major(input))  end
   if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
+  local loss = loss or self.loss_function
   self.ann_component:reset()
   local output   = self.ann_component:forward(input, true)
-  local tr_loss  = self.loss_function:loss(output, target)
-  local gradient = self.loss_function:gradient(output, target)
+  local tr_loss  = loss:loss(output, target)
+  local gradient = loss:gradient(output, target)
   gradient=self.ann_component:backprop(gradient)
   self.ann_component:update()
   return tr_loss,gradient
@@ -564,17 +566,19 @@ april_set_doc("trainable.supervised_trainer.validate_step", {
 		params = {
 		  "A table with one input pattern or a token (with one or more patterns)",
 		  "The corresponding target output pattern (table or token)",
+		  "The loss function [optional]",
 		},
 		outputs = {
 		  "A number with the loss of the training step",
 		} })
 
-function trainable_supervised_trainer_methods:validate_step(input, target)
+function trainable_supervised_trainer_methods:validate_step(input, target, loss)
   if type(input)  == "table" then input  = tokens.matrix(matrix.col_major(input))  end
   if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
+  local loss = loss or self.loss_function
   self.ann_component:reset()
   local output   = self.ann_component:forward(input)
-  local tr_loss  = self.loss_function:loss(output, target)
+  local tr_loss  = loss:loss(output, target)
   return tr_loss
 end
 
@@ -587,19 +591,21 @@ april_set_doc("trainable.supervised_trainer.grad_check_step", {
 		  "A table with one input pattern or a token (with one or more patterns)",
 		  "The corresponding target output pattern (table or token)",
 		  "A boolean, true if you want high verbosity level [optional]",
+                  "The loss function [optional].",
 		},
 		outputs = {
 		  "A boolean, true or false if the gradient is correct or not",
 		} })
 
-function trainable_supervised_trainer_methods:grad_check_step(input, target, verbose)
+function trainable_supervised_trainer_methods:grad_check_step(input, target, verbose, loss)
   if type(input)  == "table" then input  = tokens.matrix(matrix.col_major(input))  end
   if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
+  local loss = loss or self.loss_function
   self.ann_component:reset()
-  self.loss_function:reset()
+  loss:reset()
   local output   = self.ann_component:forward(input, true)
-  local tr_loss  = self.loss_function:loss(output, target)
-  local gradient = self.loss_function:gradient(output, target)
+  local tr_loss  = loss:loss(output, target)
+  local gradient = loss:gradient(output, target)
   gradient=self.ann_component:backprop(gradient)
   local weight_grads = self.ann_component:compute_gradients()
   local epsilond = 0.2
@@ -611,11 +617,11 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
     for i=1,w:size() do
       local orig_w = w:raw_get(i-1)
       w:raw_set(i-1, orig_w - epsilon)
-      local loss_a = self.loss_function:loss(self.ann_component:forward(input,
+      local loss_a = loss:loss(self.ann_component:forward(input,
 									true),
 					     target)
       w:raw_set(i-1, orig_w + epsilon)
-      local loss_b = self.loss_function:loss(self.ann_component:forward(input,
+      local loss_b = loss:loss(self.ann_component:forward(input,
 									true),
 					     target)
       w:raw_set(i-1, orig_w)
@@ -681,9 +687,10 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 		params = {
 		  ["input_dataset"]  = "A dataset float or dataset token",
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
+		  ["loss"]           = "A loss function. It is [optional] if loss given at constructor",
 		  ["bunch_size"]     = 
 		    {
-		      "Bunch size (mini-batch). It is optional if bunch_size",
+		      "Bunch size (mini-batch). It is [optional] if bunch_size",
 		      "was set at constructor, otherwise it is mandatory.",
 		    }, 
 		},
@@ -705,9 +712,10 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 		  ["input_dataset"]  = "A dataset float or dataset token",
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
 		  ["shuffle"]        = "A random object used to shuffle patterns before training",
+		  ["loss"]           = "A loss function. It is [optional] if loss given at constructor",
 		  ["bunch_size"]     = 
 		    {
-		      "Bunch size (mini-batch). It is optional if bunch_size",
+		      "Bunch size (mini-batch). It is [optional] if bunch_size",
 		      "was set at constructor, otherwise it is mandatory.",
 		    }, 
 		},
@@ -731,9 +739,10 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
 		  ["shuffle"]        = "A random object used to shuffle patterns before training",
 		  ["replacement"]    = "A number with the size of replacement training",
+		  ["loss"]           = "A loss function. It is [optional] if loss given at constructor",
 		  ["bunch_size"]     = 
 		    {
-		      "Bunch size (mini-batch). It is optional if bunch_size",
+		      "Bunch size (mini-batch). It is [optional] if bunch_size",
 		      "was set at constructor, otherwise it is mandatory.",
 		    }, 
 		},
@@ -758,9 +767,10 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 		    " output_dataset and probability fields",
 		  ["shuffle"]        = "A random object used to shuffle patterns before training",
 		  ["replacement"]    = "A number with the size of replacement training",
+		  ["loss"]           = "A loss function. It is [optional] if loss given at constructor",
 		  ["bunch_size"]     = 
 		    {
-		      "Bunch size (mini-batch). It is optional if bunch_size",
+		      "Bunch size (mini-batch). It is [optional] if bunch_size",
 		      "was set at constructor, otherwise it is mandatory.",
 		    }, 
 		},
@@ -784,6 +794,8 @@ function trainable_supervised_trainer_methods:train_dataset(t)
       bunch_size     = { type_match = "number",
 			 mandatory = (self.bunch_size == false),
 			 default=self.bunch_size },
+      loss           = { isa_match  = ann.loss.__base__,
+                         mandatory = (self.loss_function==false), default=self.loss_function },
       shuffle        = { isa_match  = random,   mandatory = false, default=nil },
       replacement    = { type_match = "number", mandatory = false, default=nil },
     }, t)
@@ -799,7 +811,7 @@ function trainable_supervised_trainer_methods:train_dataset(t)
   -- for each pattern, index in dataset
   local ds_idx_table = {}
   -- set to ZERO the accumulated of loss
-  self.loss_function:reset()
+  params.loss:reset()
   if params.distribution then
     -- Training with distribution: given a table of datasets the patterns are
     -- sampled following the given apriory probability
@@ -862,13 +874,13 @@ function trainable_supervised_trainer_methods:train_dataset(t)
     for j=i,last do table.insert(bunch_indexes, ds_idx_table[j]) end
     local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
     local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
-    self:train_step(input_bunch, output_bunch)
+    self:train_step(input_bunch, output_bunch, loss)
     k=k+1
     if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
   end
   ds_idx_table = nil
   collectgarbage("collect")
-  return self.loss_function:get_accum_loss()
+  return params.loss:get_accum_loss()
 end
 
 ------------------------------------------------------------------------
@@ -879,9 +891,10 @@ april_set_doc("trainable.supervised_trainer.grad_check_dataset", {
 		params = {
 		  ["input_dataset"]  = "A dataset float or dataset token",
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
+		  ["loss"]           = "A loss function. It is [optional] if loss given at constructor",
 		  ["bunch_size"]     = 
 		    {
-		      "Bunch size (mini-batch). It is optional if bunch_size",
+		      "Bunch size (mini-batch). It is [optional] if bunch_size",
 		      "was set at constructor, otherwise it is mandatory.",
 		    },
 		  ["max_iterations"] = "Number [optional]",
@@ -899,6 +912,8 @@ function trainable_supervised_trainer_methods:grad_check_dataset(t)
       bunch_size     = { type_match = "number",
 			 mandatory = (self.bunch_size == false),
 			 default=self.bunch_size },
+      loss           = { isa_match  = ann.loss.__base__,
+                         mandatory = (self.loss_function==false), default=self.loss_function },
       max_iterations = { type_match = "number",
 			 mandatory = false,
 			 default = t.input_dataset:numPatterns() },
@@ -915,7 +930,7 @@ function trainable_supervised_trainer_methods:grad_check_dataset(t)
   -- for each pattern, index in dataset
   local ds_idx_table = {}
   -- set to ZERO the accumulated of loss
-  self.loss_function:reset()
+  params.loss:reset()
   if isa(params.input_dataset, dataset) then
     params.input_dataset  = dataset.token.wrapper(params.input_dataset)
   end
@@ -934,7 +949,7 @@ function trainable_supervised_trainer_methods:grad_check_dataset(t)
     for j=i,last do table.insert(bunch_indexes, ds_idx_table[j]) end
     local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
     local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
-    if not self:grad_check_step(input_bunch, output_bunch, params.verbose) then
+    if not self:grad_check_step(input_bunch, output_bunch, params.verbose, params.loss) then
       printf("Error processing pattern bunch: %s\n",
 	     table.concat(bunch_indexes, " "))
       ds_idx_table = nil
@@ -964,9 +979,10 @@ april_set_doc("trainable.supervised_trainer.validate_dataset", {
 		params = {
 		  ["input_dataset"]  = "A dataset float or dataset token",
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
+		  ["loss"]           = "A loss function. It is [optional] if loss given at constructor",
 		  ["bunch_size"]     = 
 		    {
-		      "Bunch size (mini-batch). It is optional if bunch_size",
+		      "Bunch size (mini-batch). It is [optional] if bunch_size",
 		      "was set at constructor, otherwise it is mandatory.",
 		    }, 
 		},
@@ -988,9 +1004,10 @@ april_set_doc("trainable.supervised_trainer.validate_dataset", {
 		  ["input_dataset"]  = "A dataset float or dataset token",
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
 		  ["shuffle"]        = "A random object used to shuffle patterns before validate",
+		  ["loss"]           = "A loss function. It is [optional] if loss given at constructor",
 		  ["bunch_size"]     = 
 		    {
-		      "Bunch size (mini-batch). It is optional if bunch_size",
+		      "Bunch size (mini-batch). It is [optional] if bunch_size",
 		      "was set at constructor, otherwise it is mandatory.",
 		    }, 
 		},
@@ -1014,9 +1031,10 @@ april_set_doc("trainable.supervised_trainer.validate_dataset", {
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
 		  ["shuffle"]        = "A random object used to shuffle patterns before validate",
 		  ["replacement"]    = "A number with the size of replacement validate",
+		  ["loss"]           = "A loss function. It is [optional] if loss given at constructor",
 		  ["bunch_size"]     = 
 		    {
-		      "Bunch size (mini-batch). It is optional if bunch_size",
+		      "Bunch size (mini-batch). It is [optional] if bunch_size",
 		      "was set at constructor, otherwise it is mandatory.",
 		    }, 
 		},
@@ -1032,6 +1050,8 @@ function trainable_supervised_trainer_methods:validate_dataset(t)
       bunch_size     = { type_match = "number",
 			 mandatory = (self.bunch_size == false),
 			 default=self.bunch_size },
+      loss           = { isa_match  = ann.loss.__base__,
+                         mandatory = (self.loss_funcion==false), default=self.loss_function },
       shuffle        = { isa_match  = random, mandatory = false, default=nil },
       replacement    = { type_match = "number", mandatory = false, default=nil },
     }, t)
@@ -1044,7 +1064,7 @@ function trainable_supervised_trainer_methods:validate_dataset(t)
   
   -- for each pattern, index in corresponding datasets
   local ds_idx_table = {}
-  self.loss_function:reset()
+  params.loss:reset()
   if isa(params.input_dataset, dataset) then
     params.input_dataset  = dataset.token.wrapper(params.input_dataset)
   end
@@ -1074,13 +1094,13 @@ function trainable_supervised_trainer_methods:validate_dataset(t)
     for j=i,last do table.insert(bunch_indexes, ds_idx_table[j]) end
     local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
     local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
-    self:validate_step(input_bunch, output_bunch)
+    self:validate_step(input_bunch, output_bunch, params.loss)
     k=k+1
     if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
   end
   ds_idx_table = nil
   collectgarbage("collect")
-  return self.loss_function:get_accum_loss()
+  return params.loss:get_accum_loss()
 end
 
 ------------------------------------------------------------------------
@@ -1158,7 +1178,7 @@ april_set_doc("trainable.supervised_trainer.use_dataset", {
 		  ["output_dataset"] = "A dataset float or dataset token [optional].",
 		  ["bunch_size"]     = 
 		    {
-		      "Bunch size (mini-batch). It is optional if bunch_size",
+		      "Bunch size (mini-batch). It is [optional] if bunch_size",
 		      "was set at constructor, otherwise it is mandatory.",
 		    }, 
 		},
