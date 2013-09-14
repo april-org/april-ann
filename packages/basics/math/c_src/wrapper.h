@@ -184,12 +184,13 @@ void doApplyLogSoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
 				 bool use_gpu);
 
 // LOSS FUNCTIONS
-float doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
-			FloatGPUMirroredMemoryBlock *target,
-			float zero_epsilon_distance,
-			unsigned int size,
-			unsigned int bunch_size,
-			bool use_gpu);
+void doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
+		       FloatGPUMirroredMemoryBlock *target,
+		       FloatGPUMirroredMemoryBlock *loss_output,
+		       float zero_epsilon_distance,
+		       unsigned int size,
+		       unsigned int bunch_size,
+		       bool use_gpu);
 
 void doComputeMSEGradient(FloatGPUMirroredMemoryBlock *input,
 			  FloatGPUMirroredMemoryBlock *target,
@@ -199,12 +200,13 @@ void doComputeMSEGradient(FloatGPUMirroredMemoryBlock *input,
 			  unsigned int bunch_size,
 			  bool use_gpu);
 
-float doMAELossFunction(FloatGPUMirroredMemoryBlock *input,
-			FloatGPUMirroredMemoryBlock *target,
-			float zero_epsilon_distance,
-			unsigned int size,
-			unsigned int bunch_size,
-			bool use_gpu);
+void doMAELossFunction(FloatGPUMirroredMemoryBlock *input,
+		       FloatGPUMirroredMemoryBlock *target,
+		       FloatGPUMirroredMemoryBlock *loss_output,
+		       float zero_epsilon_distance,
+		       unsigned int size,
+		       unsigned int bunch_size,
+		       bool use_gpu);
 
 void doComputeMAEGradient(FloatGPUMirroredMemoryBlock *input,
 			  FloatGPUMirroredMemoryBlock *target,
@@ -214,19 +216,21 @@ void doComputeMAEGradient(FloatGPUMirroredMemoryBlock *input,
 			  unsigned int bunch_size,
 			  bool use_gpu);
 
-float doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
-				 FloatGPUMirroredMemoryBlock *target,
-				 float epsilon,
-				 unsigned int size,
-				 unsigned int bunch_size,
-				 bool use_gpu);
+void doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
+				FloatGPUMirroredMemoryBlock *target,
+				FloatGPUMirroredMemoryBlock *loss_output,
+				float epsilon,
+				unsigned int size,
+				unsigned int bunch_size,
+				bool use_gpu);
 
-float doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
-					   FloatGPUMirroredMemoryBlock *target,
-					   float epsilon,
-					   unsigned int size,
-					   unsigned int bunch_size,
-					   bool use_gpu);
+void doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
+					  FloatGPUMirroredMemoryBlock *target,
+					  FloatGPUMirroredMemoryBlock *loss_output,
+					  float epsilon,
+					  unsigned int size,
+					  unsigned int bunch_size,
+					  bool use_gpu);
 
 void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
 				   FloatGPUMirroredMemoryBlock *target,
@@ -246,14 +250,15 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
   bool use_gpu);
 */
 
-float doLocalFMeasureLossFunction(FloatGPUMirroredMemoryBlock *input,
-				  FloatGPUMirroredMemoryBlock *target,
-				  unsigned int size,
-				  unsigned int bunch_size,
-				  float beta,
-				  float &Gab, float &Hab,
-				  bool complement_output,
-				  bool use_gpu);
+void doLocalFMeasureLossFunction(FloatGPUMirroredMemoryBlock *input,
+				 FloatGPUMirroredMemoryBlock *target,
+				 FloatGPUMirroredMemoryBlock *loss_output,
+				 unsigned int size,
+				 unsigned int bunch_size,
+				 float beta,
+				 float &Gab, float &Hab,
+				 bool complement_output,
+				 bool use_gpu);
 
 void doComputeLocalFMeasureGradient(FloatGPUMirroredMemoryBlock *target,
 				    FloatGPUMirroredMemoryBlock *output_error,

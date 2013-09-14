@@ -39,7 +39,8 @@ namespace ANN {
         
     void throwErrorAndGetMatrixFromTokens(Token *input, Token *target,
 					  MatrixFloat *&input_mat,
-					  MatrixFloat *&target_mat) const {
+					  MatrixFloat *&target_mat,
+					  bool check_target_size=true) const {
       if (input->getTokenCode() != table_of_token_codes::token_matrix)
 	ERROR_EXIT(128, "Incorrect input token type, expected token matrix\n");
       if (target->getTokenCode() != table_of_token_codes::token_matrix)
@@ -47,27 +48,35 @@ namespace ANN {
       //
       TokenMatrixFloat *input_mat_token = input->convertTo<TokenMatrixFloat*>();
       TokenMatrixFloat *target_mat_token = target->convertTo<TokenMatrixFloat*>();
-      if (input_mat_token->size() != target_mat_token->size())
+      if (check_target_size && input_mat_token->size()!=target_mat_token->size())
 	ERROR_EXIT2(128, "Different token sizes found: input=%d vs target=%d\n",
 		    input_mat_token->size(),
 		    target_mat_token->size());
       //
       input_mat  = input_mat_token->getMatrix();
       target_mat = target_mat_token->getMatrix();
-      
+      //
       april_assert(input_mat->getNumDim() == 2);
-      april_assert(target_mat->getNumDim() == 2);
-      april_assert(input_mat->sameDim(target_mat));
+      if (check_target_size) {
+	april_assert(target_mat->getNumDim() == 2);
+	april_assert(input_mat->sameDim(target_mat));
+      }
       april_assert(input_mat->getIsContiguous());
       april_assert(target_mat->getIsContiguous());
       april_assert(input_mat->getMajorOrder() == CblasColMajor);
       april_assert(target_mat->getMajorOrder() == CblasColMajor);
-      april_assert(size==0 || input_mat->getDimSize(0)==size);
+      april_assert(size==0 || input_mat->getDimSize(1)==size);
     }
     
     // To be implemented by derived classes
-    virtual float  computeLoss(Token *input, Token *target) = 0;
+    virtual MatrixFloat *computeLossBunch(Token *input, Token *target) = 0;
     ////////////////////////////////////////////////////////////////
+
+    LossFunction(LossFunction *other) :
+    acc_loss(other->acc_loss),
+    error_output(0),
+    size(other->size) {
+    }
     
   public:
     LossFunction(unsigned int size) :
@@ -87,13 +96,13 @@ namespace ANN {
       error_output = 0;
       acc_loss.Clear();
     }
-    virtual float addLoss(Token *input, Token *target) {
-      MatrixFloat *loss_data = computeLoss(input, target);
+    virtual MatrixFloat *addLoss(Token *input, Token *target) {
+      MatrixFloat *loss_data = computeLossBunch(input, target);
       april_assert(loss_data.getNumDim() == 1);
       for (MatrixFloat::iterator it(loss_data->begin());
 	   it!=loss_data->end(); ++it)
 	acc_loss.Push(static_cast<double>(*it));
-      delete loss_data;
+      return loss_data;
     }
     // To be implemented by derived classes
     virtual Token *computeGradient(Token *input, Token *target) = 0;

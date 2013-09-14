@@ -18,15 +18,15 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "token_memory_block.h"
+#include "token_matrix.h"
 #include "multiclass_cross_entropy_loss_function.h"
 #include "wrapper.h"
 
 namespace ANN {
 
   MultiClassCrossEntropyLossFunction::MultiClassCrossEntropyLossFunction(unsigned int size) :
-    LossFunction(size), accumulated_loss(0.0f), N(0) {
-    if (size < 3)
+    LossFunction(size) {
+    if (size > 0 && size < 3)
       ERROR_EXIT(128,
 		 "Multi class cross entropy is only allowed for multi-class "
 		 "problems (three or more output log softmax neurons). "
@@ -35,20 +35,21 @@ namespace ANN {
   
   MultiClassCrossEntropyLossFunction::~MultiClassCrossEntropyLossFunction() {
   }
-  
-  float MultiClassCrossEntropyLossFunction::addLoss(Token *input, Token *target) {
+
+  MatrixFloat *MultiClassCrossEntropyLossFunction::computeLossBunch(Token *input,
+								    Token *target) {
     MatrixFloat *input_mat, *target_mat;
     throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
-    float loss = doMultiClassCrossEntropyLossFunction(input_mat->getRawDataAccess(),
-						      target_mat->getRawDataAccess(),
-						      NEAR_ZERO,
-						      input_mat->getDimSize(1),
-						      input_mat->getDimSize(0),
-						      input_mat->getCudaFlag());
-    loss = -loss/input_mat->getDimSize(0);
-    accumulated_loss += loss;
-    ++N;
-    return loss;
+    int dim = input_mat->getDimSize(0);
+    MatrixFloat *loss_output = new MatrixFloat(1, &dim, CblasColMajor);
+    doMultiClassCrossEntropyLossFunction(input_mat->getRawDataAccess(),
+					 target_mat->getRawDataAccess(),
+					 loss_output->getRawDataAccess(),
+					 NEAR_ZERO,
+					 input_mat->getDimSize(1),
+					 input_mat->getDimSize(0),
+					 input_mat->getCudaFlag());
+    return loss_output;
   }
 
   Token *MultiClassCrossEntropyLossFunction::computeGradient(Token *input, Token *target) {
@@ -66,16 +67,5 @@ namespace ANN {
 				  input_mat->getCudaFlag());
     return error_output;
   }
-  
-  float MultiClassCrossEntropyLossFunction::getAccumLoss() {
-    if (accumulated_loss < 0)
-      ERROR_EXIT(128, "Found negative loss, check if output is log_softmax\n");
-    return accumulated_loss/N;
-  }
-   
-  void MultiClassCrossEntropyLossFunction::reset() {
-    LossFunction::reset();
-    accumulated_loss = 0.0f;
-    N = 0;
-  }
+
 }

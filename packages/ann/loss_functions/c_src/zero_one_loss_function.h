@@ -27,19 +27,19 @@
 
 namespace ANN {
   class ZeroOneLossFunction : public LossFunction {
-    float accumulated_loss;
-    unsigned int N;
-    ZeroOneLossFunction(unsigned int size, float accumulated_loss, unsigned int N) :
-      LossFunction(size), accumulated_loss(accumulated_loss), N(N) { }
+    /// Threshold for take the neuron as activated. It is only necessary when
+    /// the neural network has one logistic output neuron, so it is solving a
+    /// two-class problem.
+    float TH;
+    ZeroOneLossFunction(ZeroOneLossFunction *other) : LossFunction(other),
+						      TH(other->TH) { }
+    virtual MatrixFloat *computeLossBunch(Token *input, Token *target);
   public:
-    ZeroOneLossFunction(unsigned int size);
+    ZeroOneLossFunction(unsigned int size, float TH=0.5f);
     virtual ~ZeroOneLossFunction();
-    virtual float  addLoss(Token *input, Token *target);
     virtual Token *computeGradient(Token *input, Token *target);
-    virtual float  getAccumLoss();
-    virtual void reset();
     virtual LossFunction *clone() {
-      return new ZeroOneLossFunction(size, accumulated_loss, N);
+      return new ZeroOneLossFunction(this);
     }
   };
 }

@@ -25,25 +25,26 @@
 namespace ANN {
 
   CrossEntropyLossFunction::CrossEntropyLossFunction(unsigned int size) :
-    LossFunction(size), accumulated_loss(0.0f), N(0) {
+    LossFunction(size) {
   }
   
   CrossEntropyLossFunction::~CrossEntropyLossFunction() {
   }
   
-  float CrossEntropyLossFunction::addLoss(Token *input, Token *target) {
+  MatrixFloat *CrossEntropyLossFunction::computeLossBunch(Token *input,
+							  Token *target) {
     MatrixFloat *input_mat, *target_mat;
     throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
-    float loss = doCrossEntropyLossFunction(input_mat->getRawDataAccess(),
-					    target_mat->getRawDataAccess(),
-					    NEAR_ZERO,
-					    input_mat->getDimSize(1),
-					    input_mat->getDimSize(0),
-					    input_mat->getCudaFlag());
-    loss = -loss/input_mat->getDimSize(0);
-    accumulated_loss += loss;
-    ++N;
-    return loss;
+    int dim = input_mat->getDimSize(0);
+    MatrixFloat *loss_output = new MatrixFloat(1, &dim, CblasColMajor);
+    doCrossEntropyLossFunction(input_mat->getRawDataAccess(),
+			       target_mat->getRawDataAccess(),
+			       loss_output->getRawDataAccess(),
+			       NEAR_ZERO,
+			       input_mat->getDimSize(1),
+			       input_mat->getDimSize(0),
+			       input_mat->getCudaFlag());
+    return loss_output;
   }
 
   Token *CrossEntropyLossFunction::computeGradient(Token *input, Token *target) {
@@ -63,14 +64,10 @@ namespace ANN {
   }
   
   float CrossEntropyLossFunction::getAccumLoss() {
-    if (accumulated_loss < 0)
+    float ret = LossFunction::getAccumLoss();
+    if (ret < 0)
       ERROR_EXIT(128, "Found negative loss, check if output is log_logistic\n");
-    return accumulated_loss/N;
+    return ret;
   }
-   
-  void CrossEntropyLossFunction::reset() {
-    LossFunction::reset();
-    accumulated_loss = 0.0f;
-    N = 0;
-  }
+
 }

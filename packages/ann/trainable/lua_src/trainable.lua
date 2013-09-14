@@ -604,7 +604,8 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
   self.ann_component:reset()
   loss:reset()
   local output   = self.ann_component:forward(input, true)
-  local tr_loss  = loss:loss(output, target)
+  loss:loss(output, target)
+  local tr_loss  = loss:get_accum_loss()
   local gradient = loss:gradient(output, target)
   gradient=self.ann_component:backprop(gradient)
   local weight_grads = self.ann_component:compute_gradients()
@@ -617,13 +618,13 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
     for i=1,w:size() do
       local orig_w = w:raw_get(i-1)
       w:raw_set(i-1, orig_w - epsilon)
-      local loss_a = loss:loss(self.ann_component:forward(input,
-									true),
-					     target)
+      loss:reset()
+      loss:loss(self.ann_component:forward(input, true), target)
+      local loss_a = loss:get_accum_loss()
       w:raw_set(i-1, orig_w + epsilon)
-      local loss_b = loss:loss(self.ann_component:forward(input,
-									true),
-					     target)
+      loss:reset()
+      loss:loss(self.ann_component:forward(input, true), target)
+      local loss_b = loss:get_accum_loss()
       w:raw_set(i-1, orig_w)
       local g = (loss_b - loss_a) / (2*epsilon)
       local ann_g = ann_grads:raw_get(i-1)
@@ -696,6 +697,7 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 		},
 		outputs = {
 		  "A number with the mean loss of each training step",
+		  "A number with the sample variance of the loss",
 		} })
 
 april_set_doc("trainable.supervised_trainer.train_dataset", {
@@ -721,6 +723,7 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 		},
 		outputs = {
 		  "A number with the mean loss of each training step",
+		  "A number with the sample variance of the loss",
 		} })
 
 april_set_doc("trainable.supervised_trainer.train_dataset", {
@@ -748,6 +751,7 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 		},
 		outputs = {
 		  "A number with the mean loss of each training step",
+		  "A number with the sample variance of the loss",
 		} })
 
 april_set_doc("trainable.supervised_trainer.train_dataset", {
@@ -776,6 +780,7 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 		},
 		outputs = {
 		  "A number with the mean loss of each training step",
+		  "A number with the sample variance of the loss",
 		} })
 
 function trainable_supervised_trainer_methods:train_dataset(t)
@@ -988,6 +993,7 @@ april_set_doc("trainable.supervised_trainer.validate_dataset", {
 		},
 		outputs = {
 		  "A number with the mean loss of each validate step",
+		  "A number with the sample variance of the loss",
 		} })
 
 april_set_doc("trainable.supervised_trainer.validate_dataset", {
@@ -1013,6 +1019,7 @@ april_set_doc("trainable.supervised_trainer.validate_dataset", {
 		},
 		outputs = {
 		  "A number with the mean loss of each validate step",
+		  "A number with the sample variance of the loss",
 		} })
 
 april_set_doc("trainable.supervised_trainer.validate_dataset", {
@@ -1040,6 +1047,7 @@ april_set_doc("trainable.supervised_trainer.validate_dataset", {
 		},
 		outputs = {
 		  "A number with the mean loss of each validate step",
+		  "A number with the sample variance of the loss",
 		} })
 
 function trainable_supervised_trainer_methods:validate_dataset(t)

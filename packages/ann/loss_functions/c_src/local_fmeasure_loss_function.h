@@ -29,26 +29,20 @@ namespace ANN {
   class LocalFMeasureLossFunction : public LossFunction {
     float beta, Gab, Hab;
     bool  complement_output;
-    float accumulated_loss;
-    unsigned int N;
-    LocalFMeasureLossFunction(unsigned int size, float beta, float Gab,
-			      float Hab, bool complement_output,
-			      float accumulated_loss, unsigned int N) :
-      LossFunction(size), beta(beta), Gab(Gab), Hab(Hab),
-      complement_output(complement_output), accumulated_loss(accumulated_loss),
-      N(N) { }
+    
+    LocalFMeasureLossFunction(LocalFMeasureLossFunction *other) :
+    LossFunction(other), beta(other->beta), Gab(other->Gab),
+    Hab(other->Hab), complement_output(other->complement_output) { }
+    
+  protected:
+    virtual MatrixFloat *computeLossBunch(Token *input, Token *target);
   public:
     LocalFMeasureLossFunction(unsigned int size, float beta=1.0f,
 			      bool complement_output=false);
     virtual ~LocalFMeasureLossFunction();
-    virtual float  addLoss(Token *input, Token *target);
     virtual Token *computeGradient(Token *input, Token *target);
-    virtual float  getAccumLoss();
-    virtual void reset();
     virtual LossFunction *clone() {
-      return new LocalFMeasureLossFunction(size, beta, Gab, Hab,
-					   complement_output,
-					   accumulated_loss, N);
+      return new LocalFMeasureLossFunction(this);
     }
   };
 }

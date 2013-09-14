@@ -27,19 +27,15 @@
 
 namespace ANN {
   class MAELossFunction : public LossFunction {
-    float accumulated_loss;
-    unsigned int N;
-    MAELossFunction(unsigned int size, float accumulated_loss, unsigned int N) :
-      LossFunction(size), accumulated_loss(accumulated_loss), N(N) { }
+    MAELossFunction(MAELossFunction *other) : LossFunction(other) { }
+  protected:
+    virtual MatrixFloat *computeLossBunch(Token *input, Token *target);
   public:
     MAELossFunction(unsigned int size);
     virtual ~MAELossFunction();
-    virtual float  addLoss(Token *input, Token *target);
     virtual Token *computeGradient(Token *input, Token *target);
-    virtual float  getAccumLoss();
-    virtual void reset();
     virtual LossFunction *clone() {
-      return new MAELossFunction(size, accumulated_loss, N);
+      return new MAELossFunction(this);
     }
   };
 }

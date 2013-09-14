@@ -27,20 +27,16 @@
 
 namespace ANN {
   class MultiClassCrossEntropyLossFunction : public LossFunction {
-    float accumulated_loss;
-    unsigned int N;
-    MultiClassCrossEntropyLossFunction(unsigned int size,
-				       float accumulated_loss, unsigned int N) :
-      LossFunction(size), accumulated_loss(accumulated_loss), N(N) { }
+    MultiClassCrossEntropyLossFunction(MultiClassCrossEntropyLossFunction *other) :
+    LossFunction(other) { }
+  protected:
+    virtual MatrixFloat *computeLossBunch(Token *input, Token *target);
   public:
     MultiClassCrossEntropyLossFunction(unsigned int size);
     virtual ~MultiClassCrossEntropyLossFunction();
-    virtual float  addLoss(Token *input, Token *target);
     virtual Token *computeGradient(Token *input, Token *target);
-    virtual float  getAccumLoss();
-    virtual void   reset();
     virtual LossFunction *clone() {
-      return new MultiClassCrossEntropyLossFunction(size, accumulated_loss, N);
+      return new MultiClassCrossEntropyLossFunction(this);
     }
   };
 }
