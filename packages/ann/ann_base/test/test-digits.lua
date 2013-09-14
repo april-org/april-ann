@@ -24,7 +24,7 @@ errors = {
   {0.1094717, 0.1413695},
   {0.0995687, 0.1391480}
 }
-epsilon = 1e-04
+epsilon = 1e-01
 
 --------------------------------------------------------------
 
@@ -114,8 +114,8 @@ for epoch = 1,max_epochs do
   totalepocas = totalepocas+1
   errortrain  = trainer:train_dataset(datosentrenar)
   errorval    = trainer:validate_dataset(datosvalidar)
-  --  printf("%4d  %.7f %.7f\n",
-  --	 totalepocas,errortrain,errorval)
+  printf("%4d  %.7f %.7f\n",
+  	 totalepocas,errortrain,errorval)
   if math.abs(errortrain - errors[epoch][1]) > epsilon then
     error(string.format("Training error %g is not equal enough to "..
 			  "reference error %g",
@@ -130,6 +130,6 @@ end
 
 clock:stop()
 cpu,wall = clock:read()
--- printf("Wall total time: %.3f    per epoch: %.3f\n", wall, wall/max_epochs)
--- printf("CPU  total time: %.3f    per epoch: %.3f\n", cpu, cpu/max_epochs)
+printf("Wall total time: %.3f    per epoch: %.3f\n", wall, wall/max_epochs)
+printf("CPU  total time: %.3f    per epoch: %.3f\n", cpu, cpu/max_epochs)
 -- print("Test passed! OK!")
