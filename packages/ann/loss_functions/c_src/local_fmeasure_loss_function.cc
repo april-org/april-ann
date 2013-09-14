@@ -18,7 +18,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "token_memory_block.h"
+#include "token_matrix.h"
 #include "local_fmeasure_loss_function.h"
 #include "wrapper.h"
 
@@ -27,28 +27,29 @@ namespace ANN {
   LocalFMeasureLossFunction::LocalFMeasureLossFunction(unsigned int size,
 						       float beta,
 						       bool complement_output) :
-    LossFunction(size), beta(beta), complement_output(complement_output),
-    accumulated_loss(0.0f), N(0) {
+    LossFunction(size), beta(beta), complement_output(complement_output) {
   }
   
   LocalFMeasureLossFunction::~LocalFMeasureLossFunction() {
   }
-  
-  float LocalFMeasureLossFunction::addLoss(Token *input, Token *target) {
+
+  MatrixFloat *LocalFMeasureLossFunction::computeLossBunch(Token *input,
+							   Token *target) {
     MatrixFloat *input_mat, *target_mat;
     throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
+    int dim = 1;
+    MatrixFloat *loss_output = new MatrixFloat(1, &dim, CblasColMajor);
     Gab = 0.0f;
     Hab = 0.0f;
-    float loss = doLocalFMeasureLossFunction(input_mat->getRawDataAccess(),
-					     target_mat->getRawDataAccess(),
-					     input_mat->getDimSize(1),
-					     input_mat->getDimSize(0),
-					     beta, Gab, Hab,
-					     complement_output,
-					     input_mat->getCudaFlag());
-    accumulated_loss += loss;
-    ++N;
-    return loss;
+    doLocalFMeasureLossFunction(input_mat->getRawDataAccess(),
+				target_mat->getRawDataAccess(),
+				loss_output->getRawDataAccess(),
+				input_mat->getDimSize(1),
+				input_mat->getDimSize(0),
+				beta, Gab, Hab,
+				complement_output,
+				input_mat->getCudaFlag());
+    return loss_output;
   }
   
   Token *LocalFMeasureLossFunction::computeGradient(Token *input, Token *target) {
@@ -66,13 +67,4 @@ namespace ANN {
     return error_output;
   }
   
-  float LocalFMeasureLossFunction::getAccumLoss() {
-    return accumulated_loss/N;
-  }
-  
-  void LocalFMeasureLossFunction::reset() {
-    LossFunction::reset();
-    accumulated_loss = 0.0f;
-    N = 0;
-  }
 }

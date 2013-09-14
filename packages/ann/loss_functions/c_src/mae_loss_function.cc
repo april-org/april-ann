@@ -18,32 +18,33 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "token_memory_block.h"
+#include "token_matrix.h"
 #include "mae_loss_function.h"
 #include "wrapper.h"
 
 namespace ANN {
 
   MAELossFunction::MAELossFunction(unsigned int size) :
-    LossFunction(size), accumulated_loss(0.0f), N(0) {
+    LossFunction(size) {
   }
   
   MAELossFunction::~MAELossFunction() {
   }
   
-  float MAELossFunction::addLoss(Token *input, Token *target) {
+  MatrixFloat *MAELossFunction::computeLossBunch(Token *input, Token *target) {
     MatrixFloat *input_mat, *target_mat;
     throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
-    float loss = doMAELossFunction(input_mat->getRawDataAccess(),
-				   target_mat->getRawDataAccess(),
-				   0.0f,
-				   input_mat->getDimSize(1),
-				   input_mat->getDimSize(0),
-				   input_mat->getCudaFlag());
-    loss = loss/input_mat->getDimSize(0);
-    accumulated_loss += loss;
-    ++N;
-    return loss;
+    int dim = input_mat->getDimSize(0);
+    MatrixFloat *loss_output = new MatrixFloat(1, &dim, CblasColMajor);
+    doMAELossFunction(input_mat->getRawDataAccess(),
+		      target_mat->getRawDataAccess(),
+		      loss_output->getRawDataAccess(),
+		      0.0f,
+		      input_mat->getDimSize(1),
+		      input_mat->getDimSize(0),
+		      input_mat->getCudaFlag());
+    loss_output->scal(1.0f/dim);
+    return loss_output;
   }
 
   Token *MAELossFunction::computeGradient(Token *input, Token *target) {
@@ -62,13 +63,4 @@ namespace ANN {
     return error_output;
   }
   
-  float MAELossFunction::getAccumLoss() {
-    return accumulated_loss/N;
-  }
-   
-  void MAELossFunction::reset() {
-    LossFunction::reset();
-    accumulated_loss = 0.0f;
-    N = 0;
-  }
 }

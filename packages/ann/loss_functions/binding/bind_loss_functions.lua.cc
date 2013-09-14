@@ -21,6 +21,7 @@
  */
 //BIND_HEADER_C
 #include "bind_tokens.h"
+#include "bind_matrix.h"
 //BIND_END
 
 //BIND_HEADER_H
@@ -56,8 +57,8 @@ using namespace ANN;
   Token *input, *target;
   LUABIND_GET_PARAMETER(1, Token, input);
   LUABIND_GET_PARAMETER(2, Token, target);
-  float loss = obj->addLoss(input, target);
-  LUABIND_RETURN(float, loss);
+  MatrixFloat *loss = obj->addLoss(input, target);
+  LUABIND_RETURN(MatrixFloat, loss);
 }
 //BIND_END
 
@@ -77,7 +78,9 @@ using namespace ANN;
 //BIND_METHOD LossFunction get_accum_loss
 {
   float loss = obj->getAccumLoss();
+  float variance = obj->getAccumLossVariance();
   LUABIND_RETURN(float, loss);
+  LUABIND_RETURN(float, variance);
 }
 //BIND_END
 

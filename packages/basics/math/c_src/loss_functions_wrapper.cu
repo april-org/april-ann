@@ -5,7 +5,7 @@
  * Copyright 2012, Salvador España-Boquera, Adrian Palacios Corella, Francisco
  * Zamora-Martinez
  *
- * The APRIL-MLP toolkit is free software; you can redistribute it and/or modify it
+ * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
  * published by the Free Software Foundation
  *
@@ -24,6 +24,7 @@
 #include "error_print.h"
 #include "wrapper.h"
 #include "unused_variable.h"
+#include "april_assert.h"
 
 using april_utils::clamp;
 
@@ -219,6 +220,17 @@ __global__ void applyTanhErrorFunctionKernel(const float *output,
   }
 }
 
+void sumBunchPatternErrors(float *loss_output_ptr,
+			   const float *pattern_errors_ptr,
+			   unsigned int bunch_size, unsigned int size) {
+  cublasHandle_t handle  = GPUHelper::getHandler();
+  int aux_size = static_cast<int>(size);
+  for (unsigned int i=0; i<bunch_size; ++i)
+    cublasSasum(handle, aux_size,
+		pattern_errors_ptr+i, bunch_size,
+		loss_output_ptr + i);
+}
+
 #endif
 
 
@@ -226,13 +238,36 @@ __global__ void applyTanhErrorFunctionKernel(const float *output,
 ///////////////// Error functions wrappers ////////////////
 ///////////////////////////////////////////////////////////
 
-float doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
-			FloatGPUMirroredMemoryBlock *target,
-			FloatGPUMirroredMemoryBlock *loss_output,
-			float zero_epsilon_distance,
-			unsigned int size,
-			unsigned int bunch_size,
-			bool use_gpu) {
+/// Generic macro for expansion of loss functions code which are computed as a
+/// sum of the loss for every position of input/target matrices.
+#define COMPUTE_LOSS(input,target,loss_output,size,bunch_size,CODE,var)	\
+  do {									\
+    const float *input_ptr  = (input)->getPPALForRead();		\
+    const float *target_ptr = (target)->getPPALForRead();		\
+    float *loss_output_ptr  = (loss_output)->getPPALForWrite();		\
+    for (unsigned int b=0; b<(bunch_size); ++b) {			\
+      CODE;								\
+      loss_output_ptr[b] = (var);					\
+    }									\
+    input_ptr  += bunch_size;						\
+    target_ptr += bunch_size;						\
+    for (unsigned int i = 1; i < (size); i++) {				\
+      for (unsigned int b=0; b<(bunch_size); ++b) {			\
+	CODE;								\
+	loss_output_ptr[b] += (var);					\
+      }									\
+      input_ptr  += bunch_size;						\
+      target_ptr += bunch_size;						\
+    }									\
+  } while(0)
+
+void doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
+		       FloatGPUMirroredMemoryBlock *target,
+		       FloatGPUMirroredMemoryBlock *loss_output,
+		       float zero_epsilon_distance,
+		       unsigned int size,
+		       unsigned int bunch_size,
+		       bool use_gpu) {
 #ifndef USE_CUDA
   UNUSED_VARIABLE(use_gpu);
 #endif
@@ -254,29 +289,18 @@ float doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
        bunch_size,
        bunch_size,
        size);
-    cublasHandle_t handle  = GPUHelper::getHandler();
-    float *loss_output_ptr = loss_output->getGPUForWrite();
-    for (int i=0; i<bunch_size; ++i)
-      cublasSasum(handle,
-		  static_cast<int>(pattern_errors->getSize()),
-		  pattern_errors_ptr+i, bunch_size, loss_output_ptr + i);
+    sumBunchPatternErrors(loss_output->getGPUForWrite(),
+			  pattern_errors_ptr,
+			  bunch_size, size);
     delete pattern_errors;
   }
   else {
 #endif
-    float d = 0.0f, sum=0.0f;
-    const float *input_ptr  = input->getPPALForRead();
-    const float *target_ptr = target->getPPALForRead();
-    for (unsigned int i = 0; i < size; i++) {
-      for (unsigned int b=0; b<bunch_size; ++b) {
-	d = input_ptr[b] - target_ptr[b];
-	if (fabsf(d) < zero_epsilon_distance) d = 0.0f;
-	sum += d*d;
-      }
-      input_ptr  += bunch_size;
-      target_ptr += bunch_size;
-    }
-    return sum;
+    COMPUTE_LOSS(input,target,loss_output,size,bunch_size,
+		 float d = input_ptr[b] - target_ptr[b];
+		 if (fabs(d) < zero_epsilon_distance) d = 0.0f;
+		 else d = d*d,
+		 d);
 #ifdef USE_CUDA
   }
 #endif
@@ -331,13 +355,13 @@ void doComputeMSEGradient(FloatGPUMirroredMemoryBlock *input,
 #endif
 }
 
-float doMAELossFunction(FloatGPUMirroredMemoryBlock *input,
-			FloatGPUMirroredMemoryBlock *target,
-			FloatGPUMirroredMemoryBlock *loss_output,
-			float zero_epsilon_distance,
-			unsigned int size,
-			unsigned int bunch_size,
-			bool use_gpu) {
+void doMAELossFunction(FloatGPUMirroredMemoryBlock *input,
+		       FloatGPUMirroredMemoryBlock *target,
+		       FloatGPUMirroredMemoryBlock *loss_output,
+		       float zero_epsilon_distance,
+		       unsigned int size,
+		       unsigned int bunch_size,
+		       bool use_gpu) {
 #ifndef USE_CUDA
   UNUSED_VARIABLE(use_gpu);
 #endif
@@ -359,30 +383,19 @@ float doMAELossFunction(FloatGPUMirroredMemoryBlock *input,
        bunch_size,
        bunch_size,
        size);
-    cublasHandle_t handle = GPUHelper::getHandler();
-    for (int i=0; i<bunch_size; ++i)
-      cublasSasum(handle,
-		  static_cast<int>(pattern_errors->getSize()),
-		  pattern_errors_ptr+i, bunch_size, loss_output_ptr + i);
+    sumBunchPatternErrors(loss_output->getGPUForWrite(),
+			  pattern_errors_ptr,
+			  bunch_size, size);
     delete pattern_errors;
   }
   else {
 #endif
-    float absd = 0.0f, sum=0.0f;
-    const float *input_ptr  = input->getPPALForRead();
-    const float *target_ptr = target->getPPALForRead();
-    for (unsigned int i = 0; i < size; i++) {
-      float mae = 0.0f;
-      for (unsigned int b=0; b<bunch_size; ++b) {
-	absd = fabsf(input_ptr[b] - target_ptr[b]);
-	if (absd < zero_epsilon_distance) absd = 0.0f;
-	mae += absd;
-      }
-      sum += mae/size;
-      input_ptr  += bunch_size;
-      target_ptr += bunch_size;
-    }
-    return sum;
+
+    COMPUTE_LOSS(input,target,loss_output,size,bunch_size,
+		 float absd = fabsf(input_ptr[b] - target_ptr[b]);
+		 if (absd < zero_epsilon_distance) absd = 0.0f,
+		 absd);
+    
 #ifdef USE_CUDA
   }
 #endif
@@ -442,13 +455,13 @@ void doComputeMAEGradient(FloatGPUMirroredMemoryBlock *input,
 #endif
 }
 
-float doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
-				 FloatGPUMirroredMemoryBlock *target,
-				 FloatGPUMirroredMemoryBlock *loss_output,
-				 float EPSILON,
-				 unsigned int size,
-				 unsigned int bunch_size,
-				 bool use_gpu) {
+void doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
+				FloatGPUMirroredMemoryBlock *target,
+				FloatGPUMirroredMemoryBlock *loss_output,
+				float EPSILON,
+				unsigned int size,
+				unsigned int bunch_size,
+				bool use_gpu) {
 #ifndef USE_CUDA
   UNUSED_VARIABLE(use_gpu);
 #endif
@@ -470,55 +483,49 @@ float doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
        bunch_size,
        bunch_size,
        size);
-    cublasHandle_t handle = GPUHelper::getHandler();
-    for (int i=0; i<bunch_size; ++i)
-      cublasSasum(handle,
-		  static_cast<int>(pattern_errors->getSize()),
-		  pattern_errors_ptr+i, bunch_size, loss_output_ptr + i);
+    sumBunchPatternErrors(loss_output->getGPUForWrite(),
+			  pattern_errors_ptr,
+			  bunch_size, size);
     delete pattern_errors;
   }
   else {
 #endif
-    const float *input_ptr  = input->getPPALForRead();
-    const float *target_ptr = target->getPPALForRead();
-    float sum = 0.0f;
     float log_epsilon   = logf(EPSILON);
     float log_1_epsilon = logf(1.0f - EPSILON);
-    for (unsigned int i = 0; i < size; i++) {
-      for (unsigned int b=0; b<bunch_size; ++b) {
-	assert(!(input_ptr[b] > 0.0f) &&
-	       "Only log-based activation functions are allowed");
-	assert(!(target_ptr[b] < 0.0f) && !(target_ptr[b] > 1.0f) &&
-	       "Only [0,1] target patterns are allowed");
-	// compute derivative
-	float  log_o     = clamp(input_ptr[b], log_epsilon, log_1_epsilon);
-	double o         = exp(input_ptr[b]);
-	float  log_inv_o = log(1.0 - o);
-	// CLAMP of reference (target)
-	float  t         = clamp(target_ptr[b], EPSILON, 1.0f - EPSILON);
-	// CLAMP of 1.0 - reference (target). We do clamp again to avoid
-	// numerical approximation problems, and to ensure correct working of
-	// inv_t > EPSILON comparison
-	float  inv_t     = clamp(1.0f - target_ptr[b], EPSILON, 1.0f - EPSILON);
-	// printf("%g * %g :: %g * %g :: %g\n", t, log_o, inv_t, log_inv_o, o);
-	if (t > EPSILON)     sum += t * log_o;
-	if (inv_t > EPSILON) sum += inv_t * log_inv_o;
-      }
-      input_ptr += bunch_size;
-      target_ptr += bunch_size;
-    }
-    return sum;
+
+    COMPUTE_LOSS(input,target,loss_output,size,bunch_size,
+		 april_assert(!(input_ptr[b] > 0.0f) &&
+			      "Only log-based activation functions are allowed");
+		 april_assert(!(target_ptr[b] < 0.0f) && !(target_ptr[b] > 1.0f) &&
+			      "Only [0,1] target patterns are allowed");
+		 // compute derivative
+		 float  log_o     = clamp(input_ptr[b], log_epsilon, log_1_epsilon);
+		 double o         = exp(input_ptr[b]);
+		 float  log_inv_o = log(1.0 - o);
+		 // CLAMP of reference (target)
+		 float  t         = clamp(target_ptr[b], EPSILON, 1.0f - EPSILON);
+		 // CLAMP of 1.0 - reference (target). We do clamp again to avoid
+		 // numerical approximation problems, and to ensure correct working of
+		 // inv_t > EPSILON comparison
+		 float  inv_t     = clamp(1.0f - target_ptr[b], EPSILON, 1.0f - EPSILON);
+		 // printf("%g * %g :: %g * %g :: %g\n", t, log_o, inv_t, log_inv_o, o);
+		 float sum;
+		 if (t > EPSILON) sum = -t * log_o;
+		 else sum = 0.0f;
+		 if (inv_t > EPSILON) sum -= inv_t * log_inv_o,
+		 sum);
 #ifdef USE_CUDA
   }
 #endif
 }
 
-float doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
-					   FloatGPUMirroredMemoryBlock *target,
-					   float EPSILON,
-					   unsigned int size,
-					   unsigned int bunch_size,
-					   bool use_gpu) {
+void doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
+					  FloatGPUMirroredMemoryBlock *target,
+					  FloatGPUMirroredMemoryBlock *loss_output,
+					  float EPSILON,
+					  unsigned int size,
+					  unsigned int bunch_size,
+					  bool use_gpu) {
 #ifndef USE_CUDA
   UNUSED_VARIABLE(use_gpu);
 #endif
@@ -533,7 +540,7 @@ float doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
     computeBlockAndGridSizesForAColumnMajorBunch(bunch_size, size,
 						 block, grid);
     computeMultiClassCrossEntropyLossFunctionKernel<<<grid, block, 0,
-                                                      GPUHelper::getCurrentStream()>>>
+      GPUHelper::getCurrentStream()>>>
       (input_ptr,
        target_ptr,
        pattern_errors_ptr,
@@ -541,33 +548,25 @@ float doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
        bunch_size,
        bunch_size,
        size);
-    cublasHandle_t handle = GPUHelper::getHandler();
-    for (int i=0; i<bunch_size; ++i)
-      cublasSasum(handle,
-		  static_cast<int>(pattern_errors->getSize()),
-		  pattern_errors_ptr+i, bunch_size, loss_output_ptr + i);
+    sumBunchPatternErrors(loss_output->getGPUForWrite(),
+			  pattern_errors_ptr,
+			  bunch_size, size);
     delete pattern_errors;
   }
   else {
 #endif
-    const float *input_ptr  = input->getPPALForRead();
-    const float *target_ptr = target->getPPALForRead();
-    float sum = 0.0f;
-    for (unsigned int i = 0; i < size; i++) {
-      for (unsigned int b=0; b<bunch_size; ++b) {
-	assert(!(input_ptr[b] > 0.0f) &&
-	       "Only log-based activation functions are allowed");
-	assert(!(target_ptr[b] < 0.0f) && !(target_ptr[b] > 1.0f) &&
-	       "Only [0,1] target patterns are allowed");
-	// compute derivative
-	float log_o = input_ptr[b];
-	float t = clamp(target_ptr[b], EPSILON, 1.0f - EPSILON);
-	if (t > EPSILON) sum += t * log_o;
-      }
-      input_ptr  += bunch_size;
-      target_ptr += bunch_size;
-    }
-    return sum;
+    COMPUTE_LOSS(input,target,loss_output,size,bunch_size,
+		 april_assert(!(input_ptr[b] > 0.0f) &&
+			      "Only log-based activation functions are allowed");
+		 april_assert(!(target_ptr[b] < 0.0f) && !(target_ptr[b] > 1.0f) &&
+			      "Only [0,1] target patterns are allowed");
+		 // compute derivative
+		 float log_o = input_ptr[b];
+		 float t = clamp(target_ptr[b], EPSILON, 1.0f - EPSILON);
+		 float sum;
+		 if (t > EPSILON) sum = -t * log_o;
+		 else sum = 0.0f,
+		 sum);
 #ifdef USE_CUDA
   }
 #endif
@@ -619,59 +618,59 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
 }
 
 /*
-void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
-				  FloatGPUMirroredMemoryBlock *target_output,
-				  FloatGPUMirroredMemoryBlock *output_error,
-				  FloatGPUMirroredMemoryBlock *pattern_errors,
-				  unsigned int output_size,
-				  const ANNConfiguration &conf,
-				  bool use_gpu) {
-#ifdef USE_CUDA
+  void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
+  FloatGPUMirroredMemoryBlock *target_output,
+  FloatGPUMirroredMemoryBlock *output_error,
+  FloatGPUMirroredMemoryBlock *pattern_errors,
+  unsigned int output_size,
+  const ANNConfiguration &conf,
+  bool use_gpu) {
+  #ifdef USE_CUDA
   if (use_gpu) {
-    const float *output_ptr        = output->getGPUForRead();
-    const float *target_output_ptr = target_output->getGPUForRead();
-    float *output_error_ptr        = output_error->getGPUForWrite();
-    float *pattern_errors_ptr      = pattern_errors->getGPUForWrite();
-    dim3 block, grid;
-    computeBlockAndGridSizesForAColumnMajorBunch(conf, output_size,
-						 block, grid);
+  const float *output_ptr        = output->getGPUForRead();
+  const float *target_output_ptr = target_output->getGPUForRead();
+  float *output_error_ptr        = output_error->getGPUForWrite();
+  float *pattern_errors_ptr      = pattern_errors->getGPUForWrite();
+  dim3 block, grid;
+  computeBlockAndGridSizesForAColumnMajorBunch(conf, output_size,
+  block, grid);
   
-    applyTanhErrorFunctionKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-      (output_ptr,
-       target_output_ptr,
-       output_error_ptr,
-       pattern_errors_ptr,
-       conf.cur_bunch_size,
-       conf.max_bunch_size,
-       output_size);
+  applyTanhErrorFunctionKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+  (output_ptr,
+  target_output_ptr,
+  output_error_ptr,
+  pattern_errors_ptr,
+  conf.cur_bunch_size,
+  conf.max_bunch_size,
+  output_size);
   }
   else {
-#endif
-    float d = 0;
-    const float *output_ptr        = output->getPPALForRead();
-    const float *target_output_ptr = target_output->getPPALForRead();
-    float *output_error_ptr        = output_error->getPPALForWrite();
-    float *pattern_errors_ptr      = pattern_errors->getPPALForWrite();
+  #endif
+  float d = 0;
+  const float *output_ptr        = output->getPPALForRead();
+  const float *target_output_ptr = target_output->getPPALForRead();
+  float *output_error_ptr        = output_error->getPPALForWrite();
+  float *pattern_errors_ptr      = pattern_errors->getPPALForWrite();
     
-    for (unsigned int i = 0; i < output_size; i++) {
-      for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
-        d = output_error_ptr[b] = output_ptr[b] - target_output_ptr[b];
-        if (d < -0.9999999f)
-          output_error_ptr[b] = -DERIVATIVE_SATURATION;
-        else if (d > 0.9999999f)
-          output_error_ptr[b] =  DERIVATIVE_SATURATION;
-        else output_error_ptr[b] = log((1.0f+output_error_ptr[b])/(1.0f-output_error_ptr[b]));
-	pattern_errors_ptr[b] += d*d;
-      }
-      output_ptr         += conf.max_bunch_size;
-      target_output_ptr  += conf.max_bunch_size;
-      output_error_ptr   += conf.max_bunch_size;
-      pattern_errors_ptr += conf.max_bunch_size;
-    }
-#ifdef USE_CUDA
+  for (unsigned int i = 0; i < output_size; i++) {
+  for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
+  d = output_error_ptr[b] = output_ptr[b] - target_output_ptr[b];
+  if (d < -0.9999999f)
+  output_error_ptr[b] = -DERIVATIVE_SATURATION;
+  else if (d > 0.9999999f)
+  output_error_ptr[b] =  DERIVATIVE_SATURATION;
+  else output_error_ptr[b] = log((1.0f+output_error_ptr[b])/(1.0f-output_error_ptr[b]));
+  pattern_errors_ptr[b] += d*d;
   }
-#endif
-}
+  output_ptr         += conf.max_bunch_size;
+  target_output_ptr  += conf.max_bunch_size;
+  output_error_ptr   += conf.max_bunch_size;
+  pattern_errors_ptr += conf.max_bunch_size;
+  }
+  #ifdef USE_CUDA
+  }
+  #endif
+  }
 */
 
 /*
@@ -715,19 +714,20 @@ void doCalculateTanhErrorFunction(FloatGPUMirroredMemoryBlock *output,
 // F(o,t) = (1 + beta^2) * sum o_i * t_i / sum( o_i + beta^2 * t_i )
 // Gab = (1 + beta^2) sum o_i * t_i
 // Hab = sum( o_i + beta^2 * t_i )
-float doLocalFMeasureLossFunction(FloatGPUMirroredMemoryBlock *input,
-				  FloatGPUMirroredMemoryBlock *target,
-				  FloatGPUMirroredMemoryBlock *loss_output,
-				  unsigned int size,
-				  unsigned int bunch_size,
-				  float beta,
-				  float &Gab, float &Hab,
-				  bool complement_output,
-				  bool use_gpu) {
+void doLocalFMeasureLossFunction(FloatGPUMirroredMemoryBlock *input,
+				 FloatGPUMirroredMemoryBlock *target,
+				 FloatGPUMirroredMemoryBlock *loss_output,
+				 unsigned int size,
+				 unsigned int bunch_size,
+				 float beta,
+				 float &Gab, float &Hab,
+				 bool complement_output,
+				 bool use_gpu) {
   if (use_gpu)   ERROR_EXIT(128, "GPU VERSION NOT IMPLEMENTED YET!!!\n");
   if (size != 1) ERROR_EXIT(128, "Multi-class version is not implemented\n");
   const float *input_ptr  = input->getPPALForRead();
   const float *target_ptr = target->getPPALForRead();
+  float *loss_output_ptr  = loss_output->getPPALForWrite();
   Gab = 0.0f;
   Hab = 0.0f;
   float beta2 = beta*beta;
@@ -755,7 +755,7 @@ float doLocalFMeasureLossFunction(FloatGPUMirroredMemoryBlock *input,
   if (Hab > 0.0f)
     error = -Gab/Hab;
   else error = -1.0f;
-  return error;
+  *loss_output_ptr = error;
 }
 
 // F'(o,t) = (1 + beta^2)*t_i / Hab - Gab/Hab
@@ -788,7 +788,7 @@ void doComputeLocalFMeasureGradient(FloatGPUMirroredMemoryBlock *target,
 }
 
 /*
-  float doCalculateGA(FloatGPUMirroredMemoryBlock *output,
+  void doCalculateGA(FloatGPUMirroredMemoryBlock *output,
   FloatGPUMirroredMemoryBlock *target_output,
   FloatGPUMirroredMemoryBlock *output_error,
   FloatGPUMirroredMemoryBlock *pattern_errors,
