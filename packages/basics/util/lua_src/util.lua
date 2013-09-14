@@ -770,6 +770,43 @@ end
 ------------------------ MATH UTILS ---------------------------
 ---------------------------------------------------------------
 
+-- auxiliary function for fast development of reductions
+function math.add(a,b)
+  if a and b then return a+b end
+  if not a and not b then return function(a,b) return a+b end end
+  if b == nil then
+    return function(b) return a+b end
+  end
+end
+-- auxiliary function for fast development of reductions
+function math.sub(a,b)
+  if a and b then return a-b end
+  if not a and not b then return function(a,b) return a-b end end
+  if b == nil then
+    return function(b) return a-b end
+  elseif a == nil then
+    return function(a) return a-b end
+  end
+end
+-- auxiliary function for fast development of reductions
+function math.mul(a,b)
+  if a and b then return a*b end
+  if not a and not b then return function(a,b) return a*b end end
+  if b == nil then
+    return function(b) return a*b end
+  end
+end
+-- auxiliary function for fast development of reductions
+function math.div(a,b)
+  if a and b then return a/b end
+  if not a and not b then return function(a,b) return a/b end end
+  if b == nil then
+    return function(b) return a/b end
+  elseif a == nil then
+    return function(a) return a/b end
+  end
+end
+
 -- Redondea un valor real
 function math.round(val)
   if val > 0 then
@@ -1162,6 +1199,37 @@ function iterator_methods:concat(sep1,sep2)
 	       table.insert(t, string.format("%s", table.concat(arg, sep1)))
 	     end)
   return table.concat(t, sep2)
+end
+
+function iterator_methods:field(...)
+  local f,s,v = self:get()
+  local arg   = table.pack(...)
+  return iterator(function(s)
+		    local tmp = table.pack(f(s,v))
+		    if tmp[1] == nil then return nil end
+		    v = tmp[1]
+		    local ret = { }
+		    for i=1,#tmp do
+		      for j=1,#arg do
+			table.insert(ret, tmp[i][arg[j]])
+		      end
+		    end
+		    return table.unpack(ret)
+		  end,s)
+end
+
+function iterator_methods:select(...)
+  local f,s,v = self:get()
+  local arg   = table.pack(...)
+  for i=1,#arg do arg[i]=tonumber(arg[i]) assert(arg[i],"Expected a number") end
+  return iterator(function(s)
+		    local tmp = table.pack(f(s,v))
+		    if tmp[1] == nil then return nil end
+		    v = tmp[1]
+		    local selected = {}
+		    for i=1,#arg do selected[i] = tmp[arg[i]] end
+		    return table.unpack(selected)
+		  end,s)
 end
 
 -------------------

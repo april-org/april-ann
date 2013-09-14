@@ -82,7 +82,7 @@ local fake_indexed_methods,
 fake_indexed_metatable = class("fake_dataset_indexed", "datasetToken")
 function fake_indexed_metatable:__call(ds, dict)
   assert(isa(ds,dataset), "The first argument must be a dataset")
-  local obj = { ds=ds, dict=dict, num_pats=dict[1]:numPatterns() }
+  local obj = { ds=ds, dict=dict, num_pats=ds:numPatterns() }
   local pat_size = 0
   for i=1,#dict do
     pat_size = pat_size + dict[i]:patternSize()
