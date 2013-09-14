@@ -114,7 +114,7 @@ april_set_doc("ann.loss.mse.__call",
 		class="method",
 		summary="Constructor",
 		params={
-		  "The expected pattern size"
+		  "The expected pattern size, 0 for a dynamic size layer"
 		},
 		outputs={ "An instance of ann.loss.mse" },
 	      })
@@ -135,7 +135,7 @@ april_set_doc("ann.loss.mae.__call",
 		class="method",
 		summary="Constructor",
 		params={
-		  "The expected pattern size"
+		  "The expected pattern size, 0 for a dynamic size layer"
 		},
 		outputs={ "An instance of ann.loss.mae" },
 	      })
@@ -149,8 +149,7 @@ april_set_doc("ann.loss.cross_entropy",
 		description={
 		  "The cross-entropy loss function computes",
 		  "1/N*\\sum_i [ t^(i) log o^(i) + (1-t^(i)) log (1-o^(i)).",
-		  "It only works with log_logistic activation funtions,",
-		  "and is mandataory to have only one output unit (two-classes)",
+		  "It only works with log_logistic activation funtions.",
 		}
 	      })
 
@@ -159,7 +158,7 @@ april_set_doc("ann.loss.cross_entropy.__call",
 		class="method",
 		summary="Constructor",
 		params={
-		  "The expected pattern size"
+		  "The expected pattern size, 0 for a dynamic size layer"
 		},
 		outputs={ "An instance of ann.loss.cross_entropy" },
 	      })
@@ -184,7 +183,7 @@ april_set_doc("ann.loss.multi_class_cross_entropy.__call",
 		class="method",
 		summary="Constructor",
 		params={
-		  "The expected pattern size"
+		  "The expected pattern size, 0 for a dynamic size layer"
 		},
 		outputs={ "An instance of ann.loss.multi_class_cross_entropy" },
 	      })
