@@ -1232,6 +1232,20 @@ function iterator_methods:select(...)
 		  end,s)
 end
 
+function iterator_methods:table(func)
+  local t = {}
+  local func = func or function(idx) return idx end
+  local idx = 1
+  self:apply(function(...)
+	       local arg = ...
+	       if select("#",...) > 1 then arg = table.pack(...) end
+	       t[func(idx)] = arg
+	       idx = idx + 1
+	     end)
+  return t
+end
+  
+
 -------------------
 -- DOCUMENTATION --
 -------------------
