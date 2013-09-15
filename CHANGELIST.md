@@ -5,7 +5,8 @@ Master branch unstable release
 ------------------------------
 
 - Added a new version of `loss` function, which computes mean and
-  sample variance of the loss.
+  sample variance of the loss. Besides, the loss computation is done
+  with doubles, being more accurated than before.
 - Added `loss`  parameter to `trainable.supervised_trainer` methods.
 - Added `math.add`, `math.sub`, `math.mul`, `math.div` functions.
 - Methods `field` and `select` added to `iterator` class.
