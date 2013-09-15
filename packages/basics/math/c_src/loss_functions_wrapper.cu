@@ -239,7 +239,19 @@ void sumBunchPatternErrors(float *loss_output_ptr,
 ///////////////////////////////////////////////////////////
 
 /// Generic macro for expansion of loss functions code which are computed as a
-/// sum of the loss for every position of input/target matrices.
+/// sum of the loss for every position of input/target matrices. The sum is
+/// computed in two loops, and traversing in col-major (first by bunch_size).
+/// The first loop computes the loss of the first component of all the patterns,
+/// and stores it at the loss_output_ptr. The second loop computes the loss of
+/// the rest of components, adding it to the loss_output_ptr.
+/// The parameters of the macro are:
+/// @param[in]  input   A FloatGPUMirroredMemoryBlock pointer.
+/// @param[in]  target  A FloatGPUMirroredMemoryBlock pointer.
+/// @param[out] loss_output  A FloatGPUMirroredMemoryBlock pointer.
+/// @param[in]  size  The number of components in one pattern.
+/// @param[in]  bunch_size  The number of patterns.
+/// @param[in]  CODE  The code which will be executed.
+/// @param[in]  var  The variable where the CODE stores the loss.
 #define COMPUTE_LOSS(input,target,loss_output,size,bunch_size,CODE,var)	\
   do {									\
     const float *input_ptr  = (input)->getPPALForRead();		\
@@ -247,6 +259,7 @@ void sumBunchPatternErrors(float *loss_output_ptr,
     float *loss_output_ptr  = (loss_output)->getPPALForWrite();		\
     for (unsigned int b=0; b<(bunch_size); ++b) {			\
       CODE;								\
+      printf("%f\n", (var));						\
       loss_output_ptr[b] = (var);					\
     }									\
     input_ptr  += bunch_size;						\
@@ -254,6 +267,7 @@ void sumBunchPatternErrors(float *loss_output_ptr,
     for (unsigned int i = 1; i < (size); i++) {				\
       for (unsigned int b=0; b<(bunch_size); ++b) {			\
 	CODE;								\
+	printf("%f\n", (var));						\
 	loss_output_ptr[b] += (var);					\
       }									\
       input_ptr  += bunch_size;						\
