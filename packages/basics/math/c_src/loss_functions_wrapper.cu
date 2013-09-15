@@ -259,7 +259,6 @@ void sumBunchPatternErrors(float *loss_output_ptr,
     float *loss_output_ptr  = (loss_output)->getPPALForWrite();		\
     for (unsigned int b=0; b<(bunch_size); ++b) {			\
       CODE;								\
-      printf("%f\n", (var));						\
       loss_output_ptr[b] = (var);					\
     }									\
     input_ptr  += bunch_size;						\
@@ -267,7 +266,6 @@ void sumBunchPatternErrors(float *loss_output_ptr,
     for (unsigned int i = 1; i < (size); i++) {				\
       for (unsigned int b=0; b<(bunch_size); ++b) {			\
 	CODE;								\
-	printf("%f\n", (var));						\
 	loss_output_ptr[b] += (var);					\
       }									\
       input_ptr  += bunch_size;						\

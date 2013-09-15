@@ -3,8 +3,8 @@ bunch_size     = tonumber(arg[1]) or 64
 semilla        = 1234
 weights_random = random(semilla)
 description    = "256 inputs 256 tanh 128 tanh 10 log_softmax"
-inf            = -1.0
-sup            =  1.0
+inf            = -1
+sup            =  1
 shuffle_random = random(5678)
 learning_rate  = 0.08
 momentum       = 0.01
@@ -13,22 +13,22 @@ max_epochs     = 10
 
 -- training and validation
 errors = {
-  {2.2699234, 2.0364990},
-  {1.6727996, 1.2317111},
-  {0.9137920, 0.5743981},
-  {0.5094233, 0.3587638},
-  {0.3098969, 0.2858882},
-  {0.2155668, 0.1911811},
-  {0.1612766, 0.1525298},
-  {0.1280116, 0.1290455},
-  {0.1094717, 0.1413695},
-  {0.0995687, 0.1391480}
+  {2.2762842, 2.0276833},
+  {1.6794761, 1.2444804},
+  {0.9245928, 0.6157830},
+  {0.5167769, 0.3807266},
+  {0.3109381, 0.3248250},
+  {0.2184281, 0.2167415},
+  {0.1626369, 0.1783843},
+  {0.1271410, 0.1495624},
+  {0.1077118, 0.1718368},
+  {0.0960633, 0.1591717},
 }
 epsilon = 1e-04
 
 --------------------------------------------------------------
 
-m1 = ImageIO.read("digits.png"):to_grayscale():invert_colors():matrix()
+m1 = ImageIO.read(string.get_path(arg[0]) .. "digits.png"):to_grayscale():invert_colors():matrix()
 train_input = dataset.matrix(m1,
 			     {
 			       patternSize = {16,16},
@@ -73,12 +73,10 @@ val_output   = dataset.matrix(m2,
 
 
 thenet = ann.mlp.all_all.generate(description)
+if util.is_cuda_available() then thenet:set_use_cuda(true) end
 thenet:set_option("learning_rate", learning_rate)
 thenet:set_option("momentum",      momentum)
 thenet:set_option("weight_decay",  weight_decay)
-if util.is_cuda_available() then
-  thenet:set_use_cuda(true)
-end
 trainer = trainable.supervised_trainer(thenet,
 				       ann.loss.multi_class_cross_entropy(10),
 				       bunch_size)
@@ -104,29 +102,20 @@ datosvalidar = {
 
 totalepocas = 0
 
--- if not trainer:grad_check_dataset({
--- 				    input_dataset  = val_input,
--- 				    output_dataset = val_output,
--- 				    max_iterations = 10,
--- 				    bunch_size = 2,
--- 				  }) then
---   error("Incorrect gradients!!!")
--- end
-
 errorval = trainer:validate_dataset(datosvalidar)
-print("# Initial validation error:", errorval)
+-- print("# Initial validation error:", errorval)
 
 clock = util.stopwatch()
 clock:go()
 
-print("Epoch Training  Validation")
+-- print("Epoch Training  Validation")
 for epoch = 1,max_epochs do
   collectgarbage("collect")
   totalepocas = totalepocas+1
-  errortrain  = trainer:train_dataset(datosentrenar)
-  errorval    = trainer:validate_dataset(datosvalidar)
-  printf("%4d  %.7f %.7f\n",
-	 totalepocas,errortrain,errorval)
+  errortrain,vartrain  = trainer:train_dataset(datosentrenar)
+  errorval,varval      = trainer:validate_dataset(datosvalidar)
+  printf("%4d  %.7f %.7f :: %.7f %.7f\n",
+  	 totalepocas,errortrain,errorval,vartrain,varval)
   if math.abs(errortrain - errors[epoch][1]) > epsilon then
     error(string.format("Training error %g is not equal enough to "..
 			  "reference error %g",
@@ -143,4 +132,4 @@ clock:stop()
 cpu,wall = clock:read()
 printf("Wall total time: %.3f    per epoch: %.3f\n", wall, wall/max_epochs)
 printf("CPU  total time: %.3f    per epoch: %.3f\n", cpu, cpu/max_epochs)
-print("Test passed! OK!")
+-- print("Test passed! OK!")
