@@ -105,7 +105,7 @@ data={
 trainer:train_dataset(data)
 show_weights(trainer)
 
-print ("\After forward of (0,1)")
+print ("\nAfter forward of (0,1)")
 data={
   input_dataset  = ds_input2,
   output_dataset = ds_output2,
