@@ -47,7 +47,6 @@ namespace april_utils {
   // standard deviation and get an exception for taking the square
   // root of a negative number.
 
-
   class RunningStat {
     int m_n;
     double m_oldM, m_newM, m_oldS, m_newS;
