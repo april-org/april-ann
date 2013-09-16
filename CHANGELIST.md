@@ -4,6 +4,7 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- `table.insert` returns the table, which is useful for reduction operations.
 - Added `table` method to `iterator` class.
 - Added a new version of `loss` function, which computes mean and
   sample variance of the loss. Besides, the loss computation is done
