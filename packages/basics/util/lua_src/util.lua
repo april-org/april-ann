@@ -1138,6 +1138,12 @@ function table.linearize(t)
   return r
 end
 
+table.luainsert = table.insert
+function table.insert(t,v)
+  table.luainsert(t,v)
+  return t
+end
+
 ---------------------------------------------------------------
 --------------------------- IO UTILS --------------------------
 ---------------------------------------------------------------
