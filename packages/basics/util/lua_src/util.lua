@@ -551,7 +551,7 @@ function iterable_map(func, f, s, v)
 end
 
 function filter(func, ...)
-  assert(func, "Needs a function as first argument")
+  assert(func, "filter: needs a function as first argument")
   local t,key,value = {}
   for key,value in ... do
     local v = value or key
@@ -595,7 +595,7 @@ end
 
 function reduce(func, initial_value, ...)
   assert(initial_value ~= nil,
-	 "Needs an initial_value as second argument")
+	 "reduce: needs an initial_value as second argument")
   local accum,key,value = initial_value
   for key,value in ... do
     accum = func(accum, value or key)
@@ -1221,7 +1221,7 @@ end
 function iterator_methods:select(...)
   local f,s,v = self:get()
   local arg   = table.pack(...)
-  for i=1,#arg do arg[i]=tonumber(arg[i]) assert(arg[i],"Expected a number") end
+  for i=1,#arg do arg[i]=tonumber(arg[i]) assert(arg[i],"select: expected a number") end
   return iterator(function(s)
 		    local tmp = table.pack(f(s,v))
 		    if tmp[1] == nil then return nil end
