@@ -1398,7 +1398,12 @@ function formiga.__link_main_program__ (t)
   end
   pkgconfig_libs_list = table.concat(pkgconfig_libs_list," ")
 
+  local commit_count = io.popen("git rev-list HEAD --count"):read("*l")
+  if not tonumber(commit_count) then commit_count="UNKNOWN" end
+
   local command = table.concat({ formiga.compiler.CPPcompiler,
+				 string.format("-DAPRILANN_COMMIT=%d",
+					       commit_count),
 				 formiga.compiler.wall,
 				 formiga.compiler.destination,
 				 formiga.os.compose_dir(formiga.global_properties.build_dir,
