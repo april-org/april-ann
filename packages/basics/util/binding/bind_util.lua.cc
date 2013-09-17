@@ -72,6 +72,7 @@ using namespace april_utils;
 {
   LUABIND_RETURN(int, atoi(APRILANN_VERSION_MAJOR));
   LUABIND_RETURN(int, atoi(APRILANN_VERSION_MINOR));
+  LUABIND_RETURN(string, TOSTRING(APRILANN_COMMIT));
 }
 //BIND_END
 

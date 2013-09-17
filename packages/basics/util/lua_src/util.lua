@@ -33,13 +33,18 @@ function get_table_from_dotted_string(dotted_string, create, basetable)
   return current
 end
 
-function check_version(major_num,minor_num)
-  local major_v,minor_v = util.version()
-  if major_num == major_v and minor_num == minor_v then return true
+function check_version(major_num,minor_num,commit_num)
+  local major_v,minor_v,commit_v = util.version()
+  local major_num  = major_num  or major_v
+  local minor_num  = minor_num  or minor_v
+  local commit_num = commit_num or commit_v
+  if major_num == major_v and minor_num == minor_v and commit_num==commit_v then
+    return true
   else
     fprintf(io.stderr,
-	    "Incorrect version number, expected %d.%d, found %d.%d",
-	    major_num, minor_num, major_v, minor_v)
+	    "Incorrect version number, expected %d.%d commit %d, found %d.%d commit %d\n",
+	    major_num, minor_num, commit_num, major_v, minor_v, commit_v)
+    return false
   end
 end
 
