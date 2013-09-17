@@ -1362,6 +1362,7 @@ function formiga.__link_main_program__ (t)
   f:write('#include <lualib.h>\n')
   --f:write('#include <locale.h>\n')
   f:write('}\n')
+  f:write('const char *__COMMIT_NUMBER__ = TOSTRING(APRILANN_COMMIT);\n')
   -- 
   f:write('extern "C" {\n')
   for _,funcname in pairs(formiga.lua_dot_c_register_functions) do
