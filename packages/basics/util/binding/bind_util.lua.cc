@@ -59,6 +59,8 @@ FILE **newfile (lua_State *L) {
 
 using namespace april_utils;
 
+extern const char *__COMMIT_NUMBER__;
+
 //BIND_END
 
 //BIND_STATIC_CONSTRUCTOR utils_static_constructor
@@ -72,7 +74,7 @@ using namespace april_utils;
 {
   LUABIND_RETURN(int, atoi(APRILANN_VERSION_MAJOR));
   LUABIND_RETURN(int, atoi(APRILANN_VERSION_MINOR));
-  LUABIND_RETURN(string, TOSTRING(APRILANN_COMMIT));
+  LUABIND_RETURN(string, __COMMIT_NUMBER__);
 }
 //BIND_END
 
