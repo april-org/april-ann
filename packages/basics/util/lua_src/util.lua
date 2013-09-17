@@ -1245,7 +1245,8 @@ function iterator_methods:table(func)
   self:apply(function(...)
 	       local arg = ...
 	       if select("#",...) > 1 then arg = table.pack(...) end
-	       t[func(idx,...)] = arg
+	       local k,v = func(idx,...)
+	       t[k] = v or arg
 	       idx = idx + 1
 	     end)
   return t
