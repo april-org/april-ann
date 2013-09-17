@@ -75,6 +75,9 @@
 
 dofile("binding/utilformiga.lua")
 
+local commit_count = io.popen("git rev-list HEAD --count"):read("*l")
+if not tonumber(commit_count) then commit_count="UNKNOWN" end
+
 -----------------------------------------------------------------
 -- table used to avoid using "other" global variables
 formiga = {
@@ -103,7 +106,7 @@ formiga = {
     CPPcompiler = os.getenv("CXX") or "g++",
     Ccompiler = os.getenv("CC") or "gcc",
     extra_libs = {"-ldl"},
-    extra_flags = {},
+    extra_flags = { string.format("-DAPRILANN_COMMIT=%d", commit_count), },
     language_by_extension = {
       c = "c", cc = "c++", cxx = "c++", CC = "c++", cpp = "c++",
       cu = "nvcc",
@@ -119,7 +122,7 @@ formiga = {
     wall              = "-Wall -Wextra -Wno-unused",
 
     -- global flags for all packages
-    global_flags = {},
+    global_flags = { },
 
   },
 
@@ -1398,12 +1401,7 @@ function formiga.__link_main_program__ (t)
   end
   pkgconfig_libs_list = table.concat(pkgconfig_libs_list," ")
 
-  local commit_count = io.popen("git rev-list HEAD --count"):read("*l")
-  if not tonumber(commit_count) then commit_count="UNKNOWN" end
-
   local command = table.concat({ formiga.compiler.CPPcompiler,
-				 string.format("-DAPRILANN_COMMIT=%d",
-					       commit_count),
 				 formiga.compiler.wall,
 				 formiga.compiler.destination,
 				 formiga.os.compose_dir(formiga.global_properties.build_dir,
