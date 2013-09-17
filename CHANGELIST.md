@@ -4,6 +4,7 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Modified `lua.h` to incorporate the GIT commit number in the disclaimer.
 - `table.insert` returns the table, which is useful for reduction operations.
 - Added `table` method to `iterator` class.
 - Added a new version of `loss` function, which computes mean and

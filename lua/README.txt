@@ -1,3 +1,28 @@
+2013/09/17: Modified lua.h to incorporate the commit number
+
+diff --git a/lua/lua-5.2.2/src/lua.h b/lua/lua-5.2.2/src/lua.h
+index c675516..027bc17 100644
+--- a/lua/lua-5.2.2/src/lua.h
++++ b/lua/lua-5.2.2/src/lua.h
+@@ -26,10 +26,15 @@
+ #define LUA_COPYRIGHT	LUA_RELEASE "  Copyright (C) 1994-2013 Lua.org, PUC-Rio"
+ #define LUA_AUTHORS	"R. Ierusalimschy, L. H. de Figueiredo, W. Celes"
+ 
++#ifndef APRILANN_COMMIT
++#define APRILANN_COMMIT UNKNOWN
++#endif
++#define STRINGFY(X) #X
++#define TOSTRING(X) STRINGFY(X)
+ #define APRILANN_VERSION_MAJOR "0"
+ #define APRILANN_VERSION_MINOR "2"
+ #define APRILANN_VERSION_RELEASE "1"
+-#define APRILANN_RELEASE   "April-ANN v" APRILANN_VERSION_MAJOR "." APRILANN_VERSION_MINOR "." APRILANN_VERSION_RELEASE "-beta"
++#define APRILANN_RELEASE   "April-ANN PRIVATE v" APRILANN_VERSION_MAJOR "." APRILANN_VERSION_MINOR "." APRILANN_VERSION_RELEASE "-beta COMMIT " TOSTRING(APRILANN_COMMIT)
+ #define APRILANN_COPYRIGHT "Copyright (C) 2012-2013 DSIC-UPV, CEU-UCH"
+ #define APRILANN_AUTHORS   "F. Zamora-Martinez, S. España-Boquera, J. Gorbe-Moya, J. Pastor & A. Palacios"
+
+------------------------------------------------------------------------------
+
 2013/09/04: Finally, here is the luaconf.h section for LUA_PATH and LUA_CPATH:
 
 #define LUA_CDIR_32     LUA_ROOT "lib/i386-linux-gnu/lua/" LUA_VDIR
