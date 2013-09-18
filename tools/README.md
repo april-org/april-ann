@@ -14,6 +14,8 @@ tools/
   |-- HMM_ANN/    Scripts to train HMM/ANN models.
   |
   |-- statistics/ Different statistic measures for confidence computation and other stuff.
+  |
+  |-- april_utilities Utilities to deal with the april structure.
   \
    -- trainable/  Utilities to do meta-training as hyper-parameter optimization.
 ```
