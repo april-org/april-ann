@@ -30,17 +30,27 @@ using namespace april_utils;
 
 class ImageConnectedComponents: public Referenced{
 
-  // Matrix of the size of the image that is used to 
-  vector <int> pixelComponents;
-  vector <int> components;
-  vector <int> indexComponents;
-  const ImageFloat *img; 
-  public:
-      int size;
-      ImageConnectedComponents(const ImageFloat *img);
-      ~ImageConnectedComponents(){};
-      MatrixInt32 *getPixelMatrix();
-  private:
-      void dfs_component(int x, int y, int current_component);
+    // Matrix of the size of the image that is used to 
+    vector <int> pixelComponents;
+
+    // Vector that stores the black pixels sorted by components 
+    vector <int> components;
+
+    // index that delimites the CCs in components
+    vector <int> indexComponents;
+    const ImageFloat *img; 
+    public:
+    int size;
+    ImageConnectedComponents(const ImageFloat *img);
+    ~ImageConnectedComponents(){};
+
+    private:
+    void dfs_component(int x, int y, int current_component, int &current_pixel);
+
+    public:
+    MatrixInt32 *getPixelMatrix();
+    bool connected(int x1, int y1, int x2, int y2);
+
+    ImageFloatRGB  *getColoredImage();
 };
 #endif

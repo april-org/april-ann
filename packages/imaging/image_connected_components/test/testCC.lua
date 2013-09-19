@@ -18,5 +18,8 @@ local comps = image.connected_components(myImg)
 
 local index_matrix = comps:get_pixel_matrix()
 
-print (m)
+local color_matrix = comps:get_colored_image()
+
+
+ImageIO.write(color_matrix, "matrix.png", "png")
 print (index_matrix)

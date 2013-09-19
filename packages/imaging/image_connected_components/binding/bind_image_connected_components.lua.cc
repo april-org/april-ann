@@ -25,9 +25,11 @@
 #include <cstdio>
 #include "bind_dataset.h"
 #include "bind_image.h"
+#include "bind_image_RGB.h"
 #include "bind_matrix_int32.h"
 #include "image_connected_components.h"
 #include "utilImageFloat.h"
+#include "utilMatrixFloat.h"
 //BIND_END
 
 //BIND_FUNCTION image.test_connected_components
@@ -54,6 +56,7 @@
   LUABIND_GET_PARAMETER(1, ImageFloat, img);
 
   ImageConnectedComponents *obj = new ImageConnectedComponents(img);
+  obj->getColoredImage();
   LUABIND_RETURN(ImageConnectedComponents, obj);
 }
 //BIND_END
@@ -64,6 +67,11 @@
 }
 //BIND_END
 
+//BIND_METHOD ImageConnectedComponents get_colored_image
+{
+  LUABIND_RETURN(ImageFloatRGB, obj->getColoredImage());
+}
+//BIND_END
 
 //BIND_METHOD ImageConnectedComponents get_pixel_matrix
 {
@@ -71,3 +79,16 @@
 }
 //BIND_END
 
+//BIND_METHOD ImageConnectedComponents connected
+{
+  LUABIND_CHECK_ARGN(==, 4);
+  int x1, y1, x2, y2;
+
+  LUABIND_GET_PARAMETER(1, int, x1);
+  LUABIND_GET_PARAMETER(2, int, y1);
+  LUABIND_GET_PARAMETER(3, int, x2);
+  LUABIND_GET_PARAMETER(4, int, y2);
+
+  LUABIND_RETURN(bool, obj->connected(x1, y1, x2, y2));
+}
+//BIND_END
