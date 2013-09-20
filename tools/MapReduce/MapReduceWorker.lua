@@ -58,10 +58,12 @@ end
 ---------------------------------------------------------------
 local message_reply = {
   PING = function(conn,name)
+    name=name:gsub("%s","")
     return (name==WORKER_NAME and "PONG") or "ERROR"
   end,
   EXIT = "EXIT",
   LOADAVG = function(conn,name)
+    name=name:gsub("%s","")
     if name ~= WORKER_NAME then return "ERROR" end
     local f = io.popen("uptime")
     local loadavg = f:read("*l")
