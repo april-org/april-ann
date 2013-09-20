@@ -6,6 +6,29 @@ common = {}
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
+local function send_wrapper(sock, data)
+  local len     = #data
+  local len_str = binarizer.code.uint32(len)
+  if len > 256 then
+    sock:send(len_str)
+    sock:send(data)
+  else
+    sock:send(len_str..data)
+  end
+end
+
+local function recv_wrapper(sock)
+  local msg  = sock:receive("5")
+  if not msg then return nil end
+  local len  = binarizer.decode.uint32(msg)
+  local data = sock:receive(len)
+  return data
+end
+
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+
 local logger_methods,
 logger_class_metatable = class("common.logger")
 
@@ -48,14 +71,13 @@ function common.make_connection_handler(select_handler,message_reply,
     local action
     if data then
       print("# RECEIVED DATA: ", data)
-      data = string.tokenize(data)
-      action = table.remove(data, 1)
+      action,data = data:match("^([^%s]*)%s(.*)$")
       if message_reply[action] == nil then
 	select_handler:send(conn, "UNKNOWN ACTION")
       elseif type(message_reply[action]) == "string" then
 	select_handler:send(conn, message_reply[action])
       else
-	local ans = message_reply[action](conn, table.unpack(data))
+	local ans = message_reply[action](conn, data)
 	select_handler:send(conn, ans)
       end
       if action == "EXIT" then
@@ -119,7 +141,7 @@ function select_methods:send(conn, func)
   self.send_query[conn] = true
   self.data[conn] = self.data[conn] or {}
   table.insert(self.data[conn],
-	       { op = "send", func=function() return func():gsub("\n","") end })
+	       { op = "send", func=function() return func() end })
 end
 
 function select_methods:close(conn, func)
@@ -134,7 +156,7 @@ local process = {
   
   receive = function(conn,func,recv_map,send_map)
     if recv_map[conn] then
-      func(conn, conn:receive("*l"))
+      func(conn, recv_wrapper(conn) )
       recv_map[conn] = nil
       return true
     end
@@ -154,7 +176,7 @@ local process = {
   
   send = function(conn,func,recv_map,send_map)
     if send_map[conn] then
-      conn:send( func(conn) .. "\n")
+      send_wrapper(conn, func(conn) .. "\n")
       send_map[conn] = nil
       return true
     end

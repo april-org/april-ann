@@ -39,6 +39,7 @@ end
 
 local message_reply = {
   PING = function(conn,name)
+    name=name:gsub("%s","")
     return (inv_workers[name] and "PONG") or "ERROR"
   end,
   
@@ -47,7 +48,8 @@ local message_reply = {
   -- A task is defined in a Lua script. This script must be a path to a filename
   -- located in a shared disk between cluster nodes.
   -- TODO: allow to send a Lua code string, instead of a filename path
-  TASK = function(conn,name,script)
+  TASK = function(conn,msg)
+    local name,script = table.unpack(string.tokenize(msg))
     local address = conn:getsockname()
     logger:print("Recevied TASK action:", address, name, script)
     if task ~= nil then
@@ -60,7 +62,8 @@ local message_reply = {
   end,
   
   WORKER =
-    function(conn,name,port,nump,mem)
+    function(conn,msg)
+      local name,port,nump,mem = table.unpack(string.tokenize(msg))
       local address = conn:getsockname()
       logger:print("Received WORKER action:", address, name, port, nump, mem)
       local w = inv_workers[name]
