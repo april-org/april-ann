@@ -1,13 +1,14 @@
 package.path = string.format("%s?.lua;%s", string.get_path(arg[0]), package.path)
 --
-require "MapReduceCommon"
-worker = MapReduceCommon.worker
+require "master"
+require "common"
 --
 local MASTER_BIND = arg[1] or "*"
 local MASTER_PORT = arg[2] or "8888"
 --
+local BIND_TIMEOUT      = 10
 local TIMEOUT           = 1    -- in seconds
-local WORKER_PING_TIMER = 15   -- in seconds
+local WORKER_PING_TIMER = 60   -- in seconds
 --
 
 -- function map(key, value) do stuff coroutine.yield(key, value) end
@@ -15,28 +16,64 @@ local WORKER_PING_TIMER = 15   -- in seconds
 
 local workers          = {} -- a table with registered workers
 local inv_workers      = {} -- the inverted dictionary
-local connections      = {} -- a table with running connections
-local dead_connections = {} -- a table with dead connections
 -- handler for I/O
-local select_handler   = MapReduceCommon.select_handler(WORKER_PING_TIMER)
-local master           = socket.tcp() -- the main socket
+local select_handler   = common.select_handler(WORKER_PING_TIMER)
+local connections      = common.connections_set()
+local mastersock       = socket.tcp() -- the main socket
+local logger           = common.logger()
+
+---------------------------------------------------------------
+---------------------------------------------------------------
+---------------------------------------------------------------
+
+local task       = nil
+local task_count = 0
+function make_task_id(name)
+  task_count = task_count+1
+  return string.format("%s-%09d",name,task_count)
+end
 
 ---------------------------------------------------------------
 ------------------- CONNECTION HANDLER ------------------------
 ---------------------------------------------------------------
 
 local message_reply = {
-  PING = "PONG",
+  PING = function(conn,name)
+    return (inv_workers[name] and "PONG") or "ERROR"
+  end,
+  
   EXIT = "EXIT",
+  
+  -- A task is defined in a Lua script. This script must be a path to a filename
+  -- located in a shared disk between cluster nodes.
+  -- TODO: allow to send a Lua code string, instead of a filename path
+  TASK = function(conn,name,script)
+    local address = conn:getsockname()
+    logger:print("Recevied TASK action:", address, name, script)
+    if task ~= nil then
+      logger:warningf("The cluster is busy\n")
+      return "ERROR"
+    end
+    local ID = make_task_id(name)
+    task = master.task(ID, script)
+    return ID
+  end,
+  
   WORKER =
-    function(address,name,port)
-      print("# Received WORKER action: ", address, name, port)
-      if inv_workers[name] then
-	print("# Updating WORKER data: ", address, name, port)
-	inv_workers[name]:update(address,port)
+    function(conn,name,port,nump,mem)
+      local address = conn:getsockname()
+      logger:print("Received WORKER action:", address, name, port, nump, mem)
+      local w = inv_workers[name]
+      if w then
+	local _,_,_,old_nump,old_mem = w:get()
+	logger:print("Updating WORKER")
+	w:update(address,port,nump)
       else
-	table.insert(workers, worker(name,address,port))
+	logger:print("Creating WORKER")
+	local w = master.worker(name,address,port,nump,mem)
+	table.insert(workers, w)
 	inv_workers[name] = workers[#workers]
+	w:ping(select_handler, TIMEOUT)
       end
       return "OK"
     end,
@@ -46,77 +83,35 @@ local message_reply = {
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
--- creates a new coroutine and adds it to the previous table
-function add_connection(conn)
-  table.insert(connections, conn)
-end
-function mark_as_dead(conn)
-  dead_connections[conn] = true
-end
-
 function check_workers(t, inv_t)
   local dead_workers = iterator(ipairs(t)):
   -- filter the dead ones
   filter(function(i,w) return w:dead() end):
+  -- take the index
   table(function(IDX,i,w) return IDX,i end)
   --
-  iterator(ipairs(dead_workers)):
   -- removes dead workers
-  apply(function(_,i)
-	  local data = table.pack(t[i]:get())
-	  print("# Removing dead WORKER: ", table.unpack(data))
-	  table.remove(t,i)
-	  inv_t[data[1]] = nil
-	end)
-end
-
-function connection_handler(conn,data,error_msg,partial)
-  local action
-  if data then
-    print("# RECEIVED DATA: ", data)
-    data = string.tokenize(data)
-    action = table.remove(data, 1)
-    if message_reply[action] == nil then
-      select_handler:send(conn, "UNKNOWN ACTION")
-    elseif type(message_reply[action]) == "string" then
-      select_handler:send(conn, message_reply[action])
-    else
-      local ans = message_reply[action](conn:getsockname(), table.unpack(data))
-      select_handler:send(conn, ans)
-    end
-    if action == "EXIT" then
-      -- following instruction allows chaining of several actions
-      select_handler:close(conn, function() mark_as_dead(conn) end)
-    else
-      -- following instruction allows chaining of several actions
-      select_handler:receive(conn, connection_handler)
-    end
+  for i=#dead_workers,1,-1 do
+    local data = table.pack(t[i]:get())
+    logger:print("Removing dead WORKER: ", table.unpack(data))
+    table.remove(t,i)
+    inv_t[data[1]] = nil
   end
 end
 
-function remove_dead_conections()
-  -- list of connections to be removed (by index)
-  local remove = iterator(ipairs(connections)):
-  filter(function(k,v) return dead_connections[v] end):select(1):
-  reduce(table.insert, {})
-  -- remove the listed connections
-  for i=#remove,1,-1 do
-    local pos = remove[i]
-    dead_connections[pos] = nil
-    table.remove(connections, pos)
-  end
-end
-
-function master_func(master,conn)
+function master_func(mastersock,conn)
   if conn then
     local a,b = conn:getsockname()
     local c,d = conn:getpeername()
-    printf ("# Connection received at %s:%d from %s:%d\n",a,b,c,d)
-    add_connection(conn)
-    select_handler:receive(conn, connection_handler)
+    logger:printf("Connection received at %s:%d from %s:%d\n",a,b,c,d)
+    connections:add(conn)
+    select_handler:receive(conn,
+			   common.make_connection_handler(select_handler,
+							  message_reply,
+							  connections))
   end
   -- following instruction allows action chains
-  select_handler:accept(master, master_func)
+  select_handler:accept(mastersock, master_func)
 end
 
 -------------------------------------------------------------------------------
@@ -124,26 +119,32 @@ end
 -------------------------------------------------------------------------------
 
 function main()
-  printf("# Running master binded to %s:%s\n", MASTER_BIND, MASTER_PORT)
+  logger:printf("Running master binded to %s:%s\n", MASTER_BIND, MASTER_PORT)
   
-  master:bind(MASTER_BIND, MASTER_PORT)
-  master:listen()
-  master:settimeout(TIMEOUT)
+  local ok,msg = mastersock:bind(MASTER_BIND, MASTER_PORT)
+  while not ok do
+    logger:warningf("ERROR: %s\n", msg)
+    util.sleep(BIND_TIMEOUT)
+    ok,msg = mastersock:bind(MASTER_BIND, MASTER_PORT)
+  end
+  ok,msg = mastersock:listen()
+  if not ok then error(msg) end
+  mastersock:settimeout(TIMEOUT)
   
   -- register SIGINT handler for safe master stop
   signal.register(signal.SIGINT,
 		  function()
-		    print("\n# Closing master")
-		    iterator(ipairs(connections)):apply(function(i,c)c:close()end)
-		    if master then master:close() master = nil end
+		    logger:raw_print("\n# Closing master")
+		    connections:close()
+		    if master then mastersock:close() mastersock = nil end
 		    collectgarbage("collect")
 		    os.exit(0)
 		  end)
   
-  print("# Ok")
+  logger:print("Ok")
   
   -- appends accept
-  select_handler:accept(master, master_func)
+  select_handler:accept(mastersock, master_func)
 
   local clock = util.stopwatch()
   clock:go()
@@ -151,15 +152,20 @@ function main()
     collectgarbage("collect")
     local cpu,wall = clock:read()
     if wall > WORKER_PING_TIMER then
-      for i=1,#workers do workers[i]:ping(select_handler, TIMEOUT) end
-      clock:stop()
+      --
+      iterator(ipairs(workers)):
+      select(2):
+      filter(function(w)return not w:dead() end):
+      apply(function(w) w:ping(select_handler, TIMEOUT) end)
+      --
       check_workers(workers, inv_workers)
+      clock:stop()
       clock:reset()
       clock:go()
     end
     -- execute pending operations
     select_handler:execute(TIMEOUT)
-    remove_dead_conections()
+    connections:remove_dead_conections()
   end
 end
 
