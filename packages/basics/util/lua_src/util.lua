@@ -1091,13 +1091,13 @@ function table.tostring(t)
     if tonumber(i) then key = "["..i.."]".."="
     else key = string.format("[%q]=",i)
     end
-    if luatype(v) == "table" then value = "\n"..table.tostring(v)
+    if luatype(v) == "table" then value = table.tostring(v)
     elseif luatype(v) == "string" then value = string.format("%q",v)
     else value = tostring(v)
     end
     table.insert(out, key .. value)
   end
-  return "{\n"..table.concat(out,",").."\n}"
+  return "{"..table.concat(out,",").."}"
 end
 
 -- devuelve el valor maximo de una tabla
