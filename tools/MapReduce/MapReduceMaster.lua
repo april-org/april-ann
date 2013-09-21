@@ -8,7 +8,7 @@ local MASTER_PORT = arg[2] or "8888"
 --
 local BIND_TIMEOUT      = 10
 local TIMEOUT           = 1    -- in seconds
-local WORKER_PING_TIMER = 60   -- in seconds
+local WORKER_PING_TIMER = 10   -- in seconds
 --
 
 -- function map(key, value) do stuff coroutine.yield(key, value) end
@@ -39,7 +39,7 @@ end
 
 local message_reply = {
   PING = function(conn,name)
-    name=name:gsub("%s","")
+    local name = table.concat(string.tokenize(name or ""))
     return (inv_workers[name] and "PONG") or "ERROR"
   end,
   
@@ -49,7 +49,7 @@ local message_reply = {
   -- located in a shared disk between cluster nodes.
   -- TODO: allow to send a Lua code string, instead of a filename path
   TASK = function(conn,msg)
-    local name,script = table.unpack(string.tokenize(msg))
+    local name,script = table.unpack(string.tokenize(msg or ""))
     local address = conn:getsockname()
     logger:print("Recevied TASK action:", address, name, script)
     if task ~= nil then
@@ -57,13 +57,17 @@ local message_reply = {
       return "ERROR"
     end
     local ID = make_task_id(name)
-    task = master.task(ID, script)
+    task = master.task(logger, select_handler, conn, ID, script)
+    if not task then return "ERROR" end
+    if not task:prepare_map_plan(workers) then
+      return "ERROR"
+    end
     return ID
   end,
-  
+
   WORKER =
     function(conn,msg)
-      local name,port,nump,mem = table.unpack(string.tokenize(msg))
+      local name,port,nump,mem = table.unpack(string.tokenize(msg or ""))
       local address = conn:getsockname()
       logger:print("Received WORKER action:", address, name, port, nump, mem)
       local w = inv_workers[name]
@@ -166,7 +170,23 @@ function main()
       clock:reset()
       clock:go()
     end
-    -- execute pending operations
+    if task then
+      local state = task:state()
+      if state == "ERROR" then task = nil
+      elseif state == "PREPARED" then
+	task:do_map()
+      elseif state == "MAP_FINISHED" then
+	task:do_reduce()
+      elseif state == "REDUCE_FINISHED" then
+	task:do_sequential()
+      elseif state == "SEQUENTIAL_FINISHED" then
+	task:do_loop()
+      elseif state == "FINISHED" then
+	task = nil
+      else
+	logger:warningf("Unknown task state: %s\n", state)
+      end
+    end
     select_handler:execute(TIMEOUT)
     connections:remove_dead_conections()
   end

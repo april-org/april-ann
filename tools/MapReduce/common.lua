@@ -6,6 +6,28 @@ common = {}
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
+function common.load(logger,str)
+  local f,t
+  if str:match(".*%.lua$") then f = loadfile(str, "t")
+  else f = load(str, nil, "t") end
+  if not f then
+    logger:warningf("Impossible to load the given task\n")
+    return nil
+  end
+  local r  = table.pack(pcall(f))
+  local ok = table.remove(r,1)
+  if not ok then
+    -- result has the error message
+    logger:warningf("Impossible to load the given task: %s\n", r[1])
+    return nil
+  end
+  return table.unpack(r)
+end
+
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+
 -- A wrapper which sends a string of data throughout a socket as a packet formed
 -- by a header of 5 bytes (a uint32 encoded using our binarizer), and after that
 -- the message.
@@ -43,7 +65,7 @@ function logger_class_metatable:__call()
   return class_instance(obj,self,true)
 end
 
-function logger_methods:debug(format,...)
+function logger_methods:debugf(format,...)
   fprintf(io.stderr, format, ...)
 end
 
@@ -75,6 +97,7 @@ function common.make_connection_handler(select_handler,message_reply,
 					connections)
   return function(conn,data,error_msg,partial)
     local action
+    local receive_at_end = true
     if data then
       print("# RECEIVED DATA: ", data)
       action,data = data:match("^([^%s]*)%s(.*)$")
@@ -84,12 +107,14 @@ function common.make_connection_handler(select_handler,message_reply,
 	select_handler:send(conn, message_reply[action])
       else
 	local ans = message_reply[action](conn, data)
-	select_handler:send(conn, ans)
+	if ans == nil then receive_at_end = false
+	else select_handler:send(conn, ans)
+	end
       end
       if action == "EXIT" then
 	-- following instruction allows chaining of several actions
 	select_handler:close(conn, function() connections:mark_as_dead(conn) end)
-      else
+      elseif receive_at_end then
 	-- following instruction allows chaining of several actions
 	select_handler:receive(conn,
 			       common.make_connection_handler(select_handler,
@@ -160,9 +185,11 @@ end
 
 local process = {
   
+  -- CAUTION, the returned string contains a \n at the end
   receive = function(conn,func,recv_map,send_map)
     if recv_map[conn] then
-      func(conn, recv_wrapper(conn) )
+      local msg = recv_wrapper(conn)
+      func(conn, msg)
       recv_map[conn] = nil
       return true
     end

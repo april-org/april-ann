@@ -761,7 +761,7 @@ function get_table_fields_ipairs(...)
       table.insert(ret, get_table_fields(table.unpack(arg), v))
     end
     return ret
-	 end
+  end
 end
 
 function get_table_fields_recursive(...)
@@ -886,8 +886,8 @@ function string.truncate(str, columns, prefix)
 end
 
 function string.basename(path)
-        local name = string.match(path, "([^/]+)$")
-        return name
+  local name = string.match(path, "([^/]+)$")
+  return name
 end
 
 function string.remove_extension(path)
@@ -896,12 +896,12 @@ function string.remove_extension(path)
 end
 
 function string.get_extension(path)
-        local ext = string.match(path, ".*[.]([^.]*)$")
-        return ext
+  local ext = string.match(path, ".*[.]([^.]*)$")
+  return ext
 end
 
 function string.get_path(path_with_filename, sep)
-  sep=sep or'/'
+  local sep=sep or'/'
   return path_with_filename:match("(.*"..sep..")") or ""
 end
 
@@ -921,7 +921,7 @@ function string.chars_of(s)
 end
 
 function string.tokenize(str,sep)
-  sep = sep or ' \t'
+  local sep = sep or ' \t\n\r'
   local list = {}
   for token in string.gmatch(str, '[^'..sep..']+') do
     table.insert(list,token)
@@ -930,7 +930,7 @@ function string.tokenize(str,sep)
 end
 
 function string.tokenize_width(str,width)
-  width = width or 1
+  local width = width or 1
   local list = {}
   for i = 1,string.len(str)-width+1,width do
     table.insert(list, string.sub(str,i,i+width-1))
@@ -1042,41 +1042,41 @@ function table.filter(t,f)
   end
   return n
 end
-      
+
 function table.join(t1,t2)
-   local result={}
-   local k=1
-   if t1 and #t1 > 0 then
-      for _,j in ipairs(t1) do
-	 table.insert(result, j)
-      end
-   end
-   if t2 and #t2 > 0 then
-      for _,j in ipairs(t2) do
-	 table.insert(result, j)
-      end
-   end
-   return result
+  local result={}
+  local k=1
+  if t1 and #t1 > 0 then
+    for _,j in ipairs(t1) do
+      table.insert(result, j)
+    end
+  end
+  if t2 and #t2 > 0 then
+    for _,j in ipairs(t2) do
+      table.insert(result, j)
+    end
+  end
+  return result
 end
 
 -- Warning: this function makes a DEEP copy of LUA tables, but userdata objects
 -- are copied as references
 function table.deep_copy(t, lookup_table)
- local copy = {}
- for i,v in pairs(t) do
-  if luatype(v) ~= "table" then
-   copy[i] = v
-  else
-   lookup_table = lookup_table or {}
-   lookup_table[t] = copy
-   if lookup_table[v] then
-    copy[i] = lookup_table[v] -- we already copied this table. reuse the copy.
-   else
-    copy[i] = table.deep_copy(v,lookup_table) -- not yet copied. copy it.
-   end
+  local copy = {}
+  for i,v in pairs(t) do
+    if luatype(v) ~= "table" then
+      copy[i] = v
+    else
+      lookup_table = lookup_table or {}
+      lookup_table[t] = copy
+      if lookup_table[v] then
+	copy[i] = lookup_table[v] -- we already copied this table. reuse the copy.
+      else
+	copy[i] = table.deep_copy(v,lookup_table) -- not yet copied. copy it.
+      end
+    end
   end
- end
- return copy
+  return copy
 end
 
 -----
@@ -1268,7 +1268,7 @@ function iterator_methods:table(func)
 	     end)
   return t
 end
-  
+
 
 -------------------
 -- DOCUMENTATION --

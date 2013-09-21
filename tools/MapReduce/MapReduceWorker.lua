@@ -1,5 +1,6 @@
 package.path = string.format("%s?.lua;%s", string.get_path(arg[0]), package.path)
 require "common"
+require "worker"
 --
 local MASTER_ADDRESS = arg[1] or error("Needs a master address")
 local MASTER_PORT    = arg[2] or error("Needs a master port")
@@ -11,7 +12,7 @@ local MEM            = tonumber(arg[7] or error("Needs a memory number in GB"))
 --
 local BIND_TIMEOUT      = 10
 local TIMEOUT           =  1  -- in seconds
-local MASTER_PING_TIMER = 60  -- in seconds
+local MASTER_PING_TIMER = 10  -- in seconds
 --
 
 local MASTER_IS_ALIVE  = false
@@ -19,6 +20,7 @@ local connections      = common.connections_set()
 local select_handler   = common.select_handler(MASTER_PING_TIMER)
 local workersock       = socket.tcp()
 local logger           = common.logger()
+local forked_task      = nil
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
@@ -41,6 +43,7 @@ function register_to_master(name,port,master_address,master_port,nump,mem)
 				       name, port, nump, mem))
   select_handler:receive(s,
 			 function(conn,msg)
+			   local msg = table.unpack(string.tokenize(msg or ""))
 			   if msg ~= "OK" then
 			     select_handler:close(s, function() pending=false end)
 			   end
@@ -48,6 +51,7 @@ function register_to_master(name,port,master_address,master_port,nump,mem)
   select_handler:send(s, "EXIT")
   select_handler:receive(s,
 			 function(conn,msg)
+			   local msg = table.unpack(string.tokenize(msg or ""))
 			   if msg == "EXIT" then MASTER_IS_ALIVE = true end
 			 end)
   select_handler:close(s, function() pending=false end)
@@ -57,19 +61,31 @@ end
 ------------------- CONNECTION HANDLER ------------------------
 ---------------------------------------------------------------
 local message_reply = {
+  
   PING = function(conn,name)
-    name=name:gsub("%s","")
+    local name = table.concat(string.tokenize(name or ""))
     return (name==WORKER_NAME and "PONG") or "ERROR"
   end,
+  
   EXIT = "EXIT",
+  
   LOADAVG = function(conn,name)
-    name=name:gsub("%s","")
+    local name = table.concat(string.tokenize(name or ""))
     if name ~= WORKER_NAME then return "ERROR" end
     local f = io.popen("uptime")
     local loadavg = f:read("*l")
     f:close()
     loadavg = loadavg:match("^.*: .* (%d.%d%d).* .*$"):gsub(",",".")
     return loadavg
+  end,
+  
+  MAP = function(conn,msg)
+    local mapkey,job = msg:match("^([^%s]+) (.*)$")
+    job = common.load(job)
+    if not job then
+      return "ERROR"
+    end
+    return nil
   end,
 }
 
@@ -99,6 +115,7 @@ function check_master(select_handler, timeout)
     select_handler:send(s, "PING " .. WORKER_NAME)
     select_handler:receive(s,
 			   function(conn, msg)
+			     local msg = table.unpack(string.tokenize(msg or ""))
 			     if msg ~= "PONG" then
 			       MASTER_IS_ALIVE = false
 			       select_handler:close(s)

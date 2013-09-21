@@ -49,6 +49,7 @@ function worker_methods:ping(select_handler, timeout)
   select_handler:send(s, "PING " .. self.name)
   select_handler:receive(s,
 			 function(conn, msg)
+			   local msg = table.unpack(string.tokenize(msg or ""))
 			   if msg ~= "PONG" then
 			     self:set_dead()
 			     select_handler:close(s)
@@ -57,6 +58,7 @@ function worker_methods:ping(select_handler, timeout)
   select_handler:send(s, "LOADAVG " .. self.name)
   select_handler:receive(s,
 			 function(conn, msg)
+			   local msg = table.unpack(string.tokenize(msg or ""))
 			   self.load_avg = tonumber(msg)
 			   if not self.load_avg then
 			     self:set_dead()
@@ -105,6 +107,59 @@ function worker_methods:dead()
   return self.is_dead
 end
 
+function worker_methods:send_script(task,select_handler,logger,script)
+  local s = worker_methods:connect()
+  if not s then return false end
+  select_handler:send( s, string.format("SCRIPT %s",script) )
+  -- MAP_RESULT
+  select_handler:receive(s,
+			 function(conn,msg)
+			   local msg = table.concat(string.tokenize(msg))
+			   if msg ~= "OK" then return "ERROR" end
+			   return "OK"
+			 end)
+  select_handler:send(s, "EXIT")
+  select_handler:receive(s)
+  select_handler:close(s)
+end
+
+function worker_methods:do_map(task,select_handler,logger,map_key,job)
+  local s = worker_methods:connect()
+  if not s then return false end
+  select_handler:send( s, string.format("MAP %s %s", map_key,
+					table.tostring(job)) )
+  -- MAP_RESULT
+  select_handler:receive(s,
+			 function(conn,msg)
+			   local taskid,map_key,result = common.load(logger,msg)
+			   if not result then return "ERROR" end
+			   local ok = task:process_map_result(taskid,map_key,result)
+			   if not ok then return "ERROR" end
+			   return "OK"
+			 end)
+  select_handler:send(s, "EXIT")
+  select_handler:receive(s)
+  select_handler:close(s)
+end
+
+function worker_methods:do_reduce(task,select_handler,logger,key,value)
+  local s = worker_methods:connect()
+  if not s then return false end
+  select_handler:send(s, string.format("REDUCE %s %s", key, value))
+  -- REDUCE_RESULT
+  select_handler:receive(s,
+			 function(conn,msg)
+			   local taskid,key,result = common.load(logger,msg)
+			   if not result then return "ERROR" end
+			   local ok = task:process_reduce_result(taskid,key,result)
+			   if not ok then return "ERROR" end
+			   return "OK"
+			 end)
+  select_handler:send(s, "EXIT")
+  select_handler:receive(s)
+  select_handler:close(s)
+end
+
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
@@ -113,21 +168,29 @@ local task_methods,
 task_class_metatable = class("master.task")
 
 -- state stores the working state of the task, it could be STOPPED, PREPARED,
--- MAP, REDUCE, SEQUENTIAL, LOOP, FINISHED
-function task_class_metatable:__call(id, script)
-  local obj = { id=id, script=script, plan = {}, state = "STOPPED" }
-  local f,t
-  if script:match(".*%.lua$") then f = loadfile(script, "t")
-  else f = load(script, nil, "t") end
-  if not f then
-    fprintf(io.stderr, "Impossible to load the given task\n")
-    return nil
-  end
-  local ok,t = pcall(f)
-  if not ok then
-    fprintf(io.stderr, "Impossible to load the given task: %s\n", t)
-    return nil
-  end
+-- ERROR, MAP, MAP_FINISHED, REDUCE, REDUCE_FINISHED, SEQUENTIAL,
+-- SEQUENTIAL_FINISHED, LOOP, FINISHED
+function task_class_metatable:__call(logger, select_handler, conn, id, script)
+  local obj = {
+    logger = logger,
+    select_handler = select_handler,
+    conn=conn,
+    id=id,
+    script=script,
+    map_plan = {},
+    map_done = {},
+    map_plan_size = 0,
+    map_plan_count = 0,
+    state = "STOPPED",
+    reduction = {},
+    reduction_pending_list = {},
+    reduce_done = {},
+    reduce_size = 0,
+    reduce_count = 0,
+    reduce_worker = {},
+    map_reduce_result = {},
+  }
+  local t   = common.load(logger, script)
   -- data is a table with pairs of:
   -- { WHATEVER, size }
   --
@@ -135,8 +198,9 @@ function task_class_metatable:__call(id, script)
   -- chunk of data, or a table, matrix, dataset, ...  In case that the
   -- split_function is present, it is possible to split the data to fit better
   -- the number of given cores.
-  obj.split_function = t.split_function
-  obj.data           = t.data
+  obj.split_function  = t.split_function or function(value,first,last) return value,last-first+1 end
+  obj.decode_function = t.decode_function or function(value) return value end
+  obj.data            = t.data
   if not t.data then
     fprintf(io.stderr, "data field not found\n")
   end
@@ -148,7 +212,12 @@ function task_methods:state() return self.state end
 
 -- the split_function will receive a data table field (with the pair { WHATEVER,
 -- size }), and a slice first,last
-function task_methods:prepare_plan(logger, select_handler, workers)
+
+-- This method prepares a static plan for map jobs, so the map is repeated
+-- equals during the global loop. If an error occurs, and a worker dies, then
+-- the plan will be recomputed
+function task_methods:prepare_map_plan(workers)
+  local logger,select_handler = self.logger,self.select_handler
   local memory = iterator(ipairs(workers)):select(2):field(mem):reduce(math.add(),0)
   local cores = iterator(ipairs(workers)):select(2):field(nump):reduce(math.add(),0)
   
@@ -157,8 +226,8 @@ function task_methods:prepare_plan(logger, select_handler, workers)
   local data,split_function = self.data,self.split_function
   local size = iterator(ipairs(data)):select(2):field(2):reduce(math.add(),0)
   local rel_size_memory = size/memory
-  local plan = { }
-  local plan_size = 0
+  local map_plan = { }
+  local map_plan_size = 0
   -- the data is sorted by memory size, workers are sorted by the memory
   -- available per core, in order to give larger data jobs to the machine which
   -- has more memory available by core.
@@ -172,110 +241,200 @@ function task_methods:prepare_plan(logger, select_handler, workers)
     for i=1,#workers do
       local w = workers[i]
       local wname = w:get_name()
-      plan[wname] = {}
       local worker_mem_nump = w:get_rel_mem_nump()
       local worker_job_size = math.ceil(rel_size_memory * worker_mem_nump)
       for i=1,w:get_nump() do
+	local map_key   = wname .. "-" .. i
 	local free_size = worker_job_size
-	plan[wname][i] = {}
+	map_plan[map_key] = { worker = w, job = {} }
+	local job = map_plan[map_key].job
 	while free_size > 0 and data_i <= #data do
-	  table.insert(plan[wname][i], data[data_i][1])
+	  table.insert(job, data[data_i][1])
 	  free_size = free_size - data[data_i]
+	  logger:debugf("MAP_JOB %s %d\n", map_key, data_i)
 	  data_i = data_i + 1
 	end -- while free_size and data_i
-	plan_size = plan_size + 1
+	map_plan_size = map_plan_size + 1
 	if data_i > #data then break end
       end -- for each free processor at current worker
     end -- for each worker
-  else
-    for i=1,#workers do
-      local w = workers[i]
-      local wname = w:get_name()
-      plan[wname] = {}
-      local worker_mem_nump = w:get_rel_mem_nump()
-      local worker_job_size = math.ceil(rel_size_memory * worker_mem_nump)
-      for i=1,w:get_nump() do
-	local free_size = worker_job_size
-	plan[wname][i] = {}
-	while free_size > 0 and data_i <= #data do
-	  table.insert(plan[wname][i], data[data_i][1])
-	  free_size = free_size - data[data_i]
-	  data_i = data_i + 1
-	end -- while free_size and data_i
-	plan_size = plan_size + 1
-	if data_i > #data then break end
-      end -- for each free processor at current worker
-    end -- for each worker
-  end -- if not split_function
+  else -- if not split_function ... then
+    -- the work could be splitted
+    error("NOT IMPLEMENTED YET")
+  end -- if not split_function ... else
   if data_i ~= #data+1 then
-    logger:warning("Impossible to prepare the plan")
+    logger:warning("Impossible to prepare the map_plan")
+    self.state = "ERROR"
     return
   end
-  -- plan has how the work was divided between all the available workers
-  self.plan = plan
-  self.plan_size = plan_size
+  -- map_plan has how the work was divided between all the available workers
+  self.map_plan = map_plan
+  self.map_plan_size = map_plan_size
   self.state = "PREPARED"
-  return plan,plan_size
+  return map_plan,map_plan_size
 end
 
-function task_methods:execute(logger, select_handler, workers, inv_workers)
-  if not self.plan or #self.plan == 0 then
-    logger:warningf("Imposible to execute a non existing plan\n")
+-- ask the workers to do a map job
+function task_methods:do_map()
+  local logger,select_handler = self.logger,self.select_handler
+  if not self.map_plan or #self.map_plan == 0 then
+    logger:warningf("Imposible to execute a non existing map_plan\n")
+    self.state = "ERROR"
     return
   end
   --
-  local count = 0
-  local reduce_size = 0
-  local reduce_work = {}
-  for wname,jobs in pairs(self.plan) do
-    local worker = inv_workers[wname]
-    for i=1,#jobs do
-      worker:start_job(select_handler, i, jobs[i],
-		       function(key,value)
-			 if not reduce_work[key] then
-			   count = count + 1
-			   reduce_work[key] = {}
-			 end
-			 table.insert(reduce_work[key], value)
-		       end,
-		       function()
-			 count = count + 1
-			 if count == self.plan_size then
-			   count = 0
-			   return true
-			 end
-			 return false
-		       end)
+  self.map_plan_count = 0
+  for map_key,data in pairs(self.map_plan) do
+    local worker = data.worker
+    local job    = data.job
+    worker:do_map(self, select_handler, logger, map_key, job)
+  end
+  self.state = "MAP"
+  self.map_done = {}
+  self.reduction = {}
+end
+
+function task_methods:process_map_result(taskid,map_key,result)
+  local logger,select_handler = self.logger,self.select_handler
+  if taskid ~= self.id then
+    logger:warningf("Incorrect task id, found %s, expected %s\n",
+		    taskid, self.id)
+    return
+  end
+  if not self.map_plan[map_key] then
+    logger:warningf("Incorrect map_key %s\n", map_key)
+    return
+  end
+  if self.map_done[map_key] then
+    logger:warningf("Job %s already done\n", map_key)
+    return
+  end
+  -- mark the job as done
+  self.map_done[map_key] = true
+  self.map_plan_count    = self.map_plan_count + 1
+  --
+  if not type(result) == "table" then
+    logger:warningf("Incorrect map result type, expected a table\n")
+    return
+  end
+  self.reduction = iterator(ipairs(result)):select(2):
+  reduction(function(acc,t)
+	      acc[t[1]] = table.insert(acc[t[1]] or {}, t[2])
+	      return acc
+	    end,
+	    self.reduction)
+  if self.map_plan_count == self.map_plan_size then
+    self.state = "MAP_FINISHED"
+  end
+  return true
+end
+
+-- ask the workers to do a map job
+function task_methods:do_reduce(workers)
+  local logger,select_handler = self.logger,self.select_handler
+  if #self.reduction == 0 then
+    logger:warningf("Impossible to execute a void reduction\n")
+    self.state = "ERROR"
+    return
+  end
+  --
+  self.reduction_pending_list = {}
+  self.reduce_done = {}
+  self.reduce_worker = {}
+  local id = 0
+  for key,value in pairs(self.reduction) do
+    id = id + 1
+    local worker = workers[id]
+    self.reduce_worker[key] = worker
+    if id > #workers then
+      table.insert(self.reduction_pending_list, key)
+    else
+      worker:do_reduce(self, select_handler, logger, key, value)
     end
   end
+  self.reduce_size  = id
+  self.reduce_count = 0
+  self.map_reduce_result = {}
+  self.state = "REDUCE"
 end
 
-function worker_methods:start_job(select_handler, taskid,
-				  wname, idx, job,
-				  map_result,
-				  map_counter,
-				  reduce_counter)
-  local conn = worker:connect()
-  assert(conn, "Unexpected problem while connecting with worker " .. wname)
+function task_methods:process_reduce_result(taskid,key,result)
+  local logger,select_handler = self.logger,self.select_handler
+  if taskid ~= self.id then
+    logger:warningf("Incorrect task id, found %s, expected %s\n",
+		    taskid, self.id)
+    return
+  end
+  if not self.reduction[key] then
+    logger:warningf("Incorrect key %s\n", key)
+    return
+  end
+  if self.reduce_done[key] then
+    logger:warningf("Reduce key %s already done\n", key)
+    return
+  end
+  -- mark the key as done
+  self.reduce_done[key]  = true
+  self.reduce_count      = self.reduce_count + 1
   --
-  select_handler:send(conn,
-		      string.format("MAP %s %s %d %s", taskid, wname, idx,
-				    table.tostring(job)))
-  local reduce_works
-  select_handler:receive(conn,
-			 function(conn, msg)
-			   if msg == "MAPPED" then
-			     if map_counter() then
-			       select_handler:send(conn,
-						   string.format("REDUCE blah"))
-			       select_handler:receive(conn,
-						      function(conn, msg)
-							
-						      end)
-			     end
-			   else
-			     local key,value = msg:match("^([^%s]*) (.*)$")
-			     map_result(key,value)
-			   end
-			 end)
+  self.map_reduce_result[key] = result
+  -- if any reduce work is pending, give it to the current worker
+  if #self.reduction_pending_list > 0 then
+    local job_key   = table.remove(self.reduction_pending_list, 1)
+    local job_value = self.reduction[job_key]
+    self.reduce_worker[key],
+    self.reduce_worker[job_key] = nil,self.reduce_worker[key]
+    self.reduce_worker[job_key]:do_reduce(self,
+					  select_handler,
+					  logger,
+					  job_key, job_value)
+  end
+  if self.reduce_count == self.reduce_size then
+    self.state = "REDUCE_FINISHED"
+  end
+  return true
+end
+
+function task_methods:do_sequential()
+  self.select_handler:send(self.conn,
+			   string.format("SEQUENTIAL %s",
+					 table.tostring(map_reduce_result)))
+  self.select_handler:receive(self.conn,
+			      function(conn,msg)
+				local msg = table.unpack(string.tokenize(msg or ""))
+				if msg ~= "SEQUENTIAL_DONE" then
+				  self.state = "ERROR"
+				  return "ERROR"
+				else
+				  self:process_sequential()
+				  return "OK"
+				end
+			      end)
+  self.state = "SEQUENTIAL"
+end
+
+function task_methods:process_sequential()
+  self.state = "SEQUENTIAL_FINISHED"
+end
+
+function task_methods:do_loop()
+  self.select_handler:send(self.conn,
+			   string.format("LOOP %s", self.id))
+  self.select_handler:receive(self.conn,
+			      function(conn,msg)
+				local result = common.load(logger,msg)
+				if not result then return "ERROR" end
+				task:process_loop(result)
+				return "OK"
+			      end)
+  self.state = "LOOP"
+end
+
+function task_methods:process_loop(result)
+  if result then self.state = "PREPARED"
+  else
+    self.select_handler:send(self.conn, "EXIT")
+    self.select_handler:receive(self.conn)
+    self.select_handler:close(self.conn, function() self.state = "FINISHED" end)
+  end
 end
