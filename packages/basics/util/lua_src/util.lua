@@ -1203,6 +1203,17 @@ function iterator_methods:reduce(func, initial_value)
   return reduce(func, initial_value, self:get())
 end
 
+function iterator_methods:iterate(iterator_func)
+  return self:map(function(...)
+		    local f,s,v = iterator_func(...)
+		    local tmp   = table.pack(f(s,v))
+		    while tmp[1] ~= nil do
+		      coroutine.yield(table.unpack(tmp))
+		      tmp = table.pack(f(s,tmp[1]))
+		    end
+		  end)
+end
+
 function iterator_methods:concat(sep1,sep2)
   local sep1,sep2 = sep1 or "",sep2 or sep1 or ""
   local t = {}
