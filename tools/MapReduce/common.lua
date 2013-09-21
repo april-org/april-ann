@@ -6,6 +6,9 @@ common = {}
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
+-- A wrapper which sends a string of data throughout a socket as a packet formed
+-- by a header of 5 bytes (a uint32 encoded using our binarizer), and after that
+-- the message.
 local function send_wrapper(sock, data)
   local len     = #data
   local len_str = binarizer.code.uint32(len)
@@ -17,6 +20,9 @@ local function send_wrapper(sock, data)
   end
 end
 
+-- A wrapper which receives data send following the previous function, so the
+-- length of the message is decoded reading the first 5 bytes, and then the
+-- whole message is read.
 local function recv_wrapper(sock)
   local msg  = sock:receive("5")
   if not msg then return nil end

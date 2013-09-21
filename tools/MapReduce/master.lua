@@ -148,7 +148,7 @@ function task_methods:state() return self.state end
 
 -- the split_function will receive a data table field (with the pair { WHATEVER,
 -- size }), and a slice first,last
-function task_methods:prepare_plan(select_handler, workers)
+function task_methods:prepare_plan(logger, select_handler, workers)
   local memory = iterator(ipairs(workers)):select(2):field(mem):reduce(math.add(),0)
   local cores = iterator(ipairs(workers)):select(2):field(nump):reduce(math.add(),0)
   
@@ -159,13 +159,16 @@ function task_methods:prepare_plan(select_handler, workers)
   local rel_size_memory = size/memory
   local plan = { }
   local plan_size = 0
+  -- the data is sorted by memory size, workers are sorted by the memory
+  -- available per core, in order to give larger data jobs to the machine which
+  -- has more memory available by core.
+  table.sort(data, function(a,b) return a[2] > b[2] end)
+  table.sort(workers, function(a,b) return a:get_rel_mem_nump() > b:get_rel_mem_nump() end)
+  local data_i = 1
   if not split_function then
-    -- the data is sorted by memory size, workers by the memory available per
-    -- core, in order to give larger data jobs to the machine which has more
-    -- memory available by core.
-    table.sort(data, function(a,b) return a[2] > b[2] end)
-    table.sort(workers, function(a,b) return a:get_rel_mem_nump() > b:get_rel_mem_nump() end)
-    local data_i = 1
+    -- if it is not possible to split the data, then a greedy algorithm
+    -- traverses the sorted machines list and the sorted data list, taking first
+    -- the larger data and machines
     for i=1,#workers do
       local w = workers[i]
       local wname = w:get_name()
@@ -185,7 +188,28 @@ function task_methods:prepare_plan(select_handler, workers)
       end -- for each free processor at current worker
     end -- for each worker
   else
-    error("SPLIT NOT IMPLEMENTED")
+    for i=1,#workers do
+      local w = workers[i]
+      local wname = w:get_name()
+      plan[wname] = {}
+      local worker_mem_nump = w:get_rel_mem_nump()
+      local worker_job_size = math.ceil(rel_size_memory * worker_mem_nump)
+      for i=1,w:get_nump() do
+	local free_size = worker_job_size
+	plan[wname][i] = {}
+	while free_size > 0 and data_i <= #data do
+	  table.insert(plan[wname][i], data[data_i][1])
+	  free_size = free_size - data[data_i]
+	  data_i = data_i + 1
+	end -- while free_size and data_i
+	plan_size = plan_size + 1
+	if data_i > #data then break end
+      end -- for each free processor at current worker
+    end -- for each worker
+  end -- if not split_function
+  if data_i ~= #data+1 then
+    logger:warning("Impossible to prepare the plan")
+    return
   end
   -- plan has how the work was divided between all the available workers
   self.plan = plan
