@@ -92,7 +92,7 @@ function worker_methods:get_mem()
 end
 
 function worker_methods:get_nump()
-  return math.max(0, self.nump - self.load_avg)
+  return math.round(math.max(0, self.nump - self.load_avg))
 end
 
 function worker_methods:get_rel_mem_nump()
@@ -107,15 +107,16 @@ function worker_methods:dead()
   return self.is_dead
 end
 
-function worker_methods:task(select_handler,logger,taskid,script)
+function worker_methods:task(select_handler,logger,taskid,arg,script,nump)
   local s = worker_methods:connect()
   if not s then return false end
-  select_handler:send( s, string.format("TASK %s %s",taskid,script) )
+  select_handler:send( s, string.format("TASK %s %d %s %s",taskid,nump,arg,script) )
   select_handler:receive(s,
 			 function(conn,msg)
 			   local msg = table.concat(string.tokenize(msg))
-			   if msg ~= "OK" then return "ERROR" end
-			   return "OK"
+			   -- TODO: THROW ERROR TO MASTER THREAD
+			   --if msg ~= "OK" then
+			   --return
 			 end)
   select_handler:close(s)
 end
@@ -125,15 +126,7 @@ function worker_methods:do_map(task,select_handler,logger,map_key,job)
   if not s then return false end
   select_handler:send( s, string.format("MAP %s return %s", map_key,
 					table.tostring(job)) )
-  -- MAP_RESULT
-  select_handler:receive(s,
-			 function(conn,msg)
-			   local taskid,map_key,result = common.load(msg,logger)
-			   if not result then return "ERROR" end
-			   local ok = task:process_map_result(taskid,map_key,result)
-			   if not ok then return "ERROR" end
-			   return "OK"
-			 end)
+  select_handler:receive(s)
   select_handler:close(s)
 end
 
@@ -141,15 +134,15 @@ function worker_methods:do_reduce(task,select_handler,logger,key,value)
   local s = worker_methods:connect()
   if not s then return false end
   select_handler:send(s, string.format("REDUCE %s %s", key, value))
-  -- REDUCE_RESULT
-  select_handler:receive(s,
-			 function(conn,msg)
-			   local taskid,key,result = common.load(msg,logger)
-			   if not result then return "ERROR" end
-			   local ok = task:process_reduce_result(taskid,key,result)
-			   if not ok then return "ERROR" end
-			   return "OK"
-			 end)
+  select_handler:receive(s)
+  select_handler:close(s)
+end
+
+function worker_methods:share(select_handler, logger, data)
+  local s = worker_methods:connect()
+  if not s then return false end
+  select_handler:send(s, string.format("SHARE %s", data))
+  select_handler:receive(s)
   select_handler:close(s)
 end
 
@@ -163,27 +156,29 @@ task_class_metatable = class("master.task")
 -- state stores the working state of the task, it could be STOPPED, PREPARED,
 -- ERROR, MAP, MAP_FINISHED, REDUCE, REDUCE_FINISHED, SEQUENTIAL,
 -- SEQUENTIAL_FINISHED, LOOP, FINISHED
-function task_class_metatable:__call(logger, select_handler, conn, id, script)
+function task_class_metatable:__call(logger, select_handler, conn, id, script, arg)
   local obj = {
     logger = logger,
     select_handler = select_handler,
     conn=conn,
     id=id,
     script=script,
+    arg = arg,
     map_plan = {},
     map_done = {},
     map_plan_size = 0,
     map_plan_count = 0,
     state = "STOPPED",
     reduction = {},
-    reduction_pending_list = {},
     reduce_done = {},
     reduce_size = 0,
     reduce_count = 0,
     reduce_worker = {},
     map_reduce_result = {},
+    worker_nump = {},
   }
-  local t   = common.load(script,logger)
+  local arg = common.load(arg,logger)
+  local t = common.load(script,logger,table.unpack(arg))
   -- data is a table with pairs of:
   -- { WHATEVER, size }
   --
@@ -191,8 +186,8 @@ function task_class_metatable:__call(logger, select_handler, conn, id, script)
   -- chunk of data, or a table, matrix, dataset, ...  In case that the
   -- split_function is present, it is possible to split the data to fit better
   -- the number of given cores.
-  obj.split_function  = t.split_function or function(value,first,last) return value,last-first+1 end
-  obj.decode_function = t.decode_function or function(value) return value end
+  obj.decode          = t.decode or function(...) end
+  obj.split           = t.split or function(value,data_size,first,last) return value,data_size end
   obj.data            = t.data
   if not t.data then
     fprintf(io.stderr, "data field not found\n")
@@ -201,7 +196,7 @@ function task_class_metatable:__call(logger, select_handler, conn, id, script)
   return class_instance(obj,self,true)
 end
 
-function task_methods:state() return self.state end
+function task_methods:get_state() return self.state end
 
 -- the split_function will receive a data table field (with the pair { WHATEVER,
 -- size }), and a slice first,last
@@ -216,7 +211,7 @@ function task_methods:prepare_map_plan(workers)
   
   -- it is assumed that the data fits in the memory of the cluster, if the work
   -- is correctly divided.
-  local data,split_function = self.data,self.split_function
+  local data,decode,split = self.data,self.decode,self.split
   local size = iterator(ipairs(data)):select(2):field(2):reduce(math.add(),0)
   local rel_size_memory = size/memory
   local map_plan = { }
@@ -226,37 +221,59 @@ function task_methods:prepare_map_plan(workers)
   -- has more memory available by core.
   table.sort(data, function(a,b) return a[2] > b[2] end)
   table.sort(workers, function(a,b) return a:get_rel_mem_nump() > b:get_rel_mem_nump() end)
+  -- A greedy algorithm traverses the sorted machines list and the sorted data
+  -- list, taking first the larger data and machines, and splitting it if
+  -- necessary
+  function get_data(idx)
+    local encoded_data = data[idx][1]
+    local encoded_data_size = data[idx][2]
+    local decoded_data,decoded_data_size = decode(encoded_data,encoded_data_size)
+    local data_size = decoded_data_size or encoded_data_size
+    local first,last = 1,data_size
+    return decoded_data, data_size, first, last
+  end
   local data_i = 1
-  if not split_function then
-    -- if it is not possible to split the data, then a greedy algorithm
-    -- traverses the sorted machines list and the sorted data list, taking first
-    -- the larger data and machines
-    for i=1,#workers do
-      local w = workers[i]
-      local wname = w:get_name()
-      local worker_mem_nump = w:get_rel_mem_nump()
-      local worker_job_size = math.ceil(rel_size_memory * worker_mem_nump)
-      for i=1,w:get_nump() do
-	local map_key   = wname .. "-" .. i
-	local free_size = worker_job_size
-	map_plan[map_key] = { worker = w, job = {} }
-	local job = map_plan[map_key].job
-	while free_size > 0 and data_i <= #data do
-	  table.insert(job, data[data_i][1])
-	  free_size = free_size - data[data_i]
-	  logger:debugf("MAP_JOB %s %d\n", map_key, data_i)
+  local data_size, first, last = get_data(data_i)
+  for i=1,#workers do
+    collectgarbage("collect")
+    local w = workers[i]
+    local wname = w:get_name()
+    local worker_mem_nump = w:get_rel_mem_nump()
+    print(worker_mem_nump, rel_size_memory)
+    local worker_job_size = math.ceil(rel_size_memory * worker_mem_nump)
+    print(w:get_nump())
+    for j=1,w:get_nump() do
+      print(j)
+      -- data split
+      local free_size = worker_job_size      
+      print(free_size, data_i, #data, free_size > 0 and data_i <= #data)
+      while free_size > 0 and data_i <= #data do
+	last = math.min(first+free_size-1,data_size)
+	local splitted_data,size = split(decoded_data,data_size,first,last)
+	last = first + size - 1
+	print(data_i,first,last)
+	local map_key   = string.format("%s-%d-%d[%d:%d]",
+					wname, j, data_i, first, last)
+	map_plan[map_key] = { worker=w, job = splitted_data }
+	free_size = free_size - size
+	logger:debugf("MAP_JOB %s\n", map_key)
+	first = last + 1
+	if first > data_size then
 	  data_i = data_i + 1
-	end -- while free_size and data_i
+	  if data_i <= #data then
+	    data_size, first, last = get_data(data_i)
+	  end
+	end
 	map_plan_size = map_plan_size + 1
-	if data_i > #data then break end
-      end -- for each free processor at current worker
-    end -- for each worker
-  else -- if not split_function ... then
-    -- the work could be splitted
-    error("NOT IMPLEMENTED YET")
-  end -- if not split_function ... else
+      end -- while free_size and data_i
+      if data_i > #data then break end
+    end -- for each free processor at current worker
+    w:task(select_handler,logger,self.id,arg,script,w:get_nump())
+    self.worker_nump[i] = w:get_nump()
+  end -- for each worker
   if data_i ~= #data+1 then
-    logger:warning("Impossible to prepare the map_plan")
+    print(data_i,#data)
+    logger:warningf("Impossible to prepare the map_plan\n")
     self.state = "ERROR"
     return
   end
@@ -331,19 +348,17 @@ function task_methods:do_reduce(workers)
     return
   end
   --
-  self.reduction_pending_list = {}
   self.reduce_done = {}
   self.reduce_worker = {}
   local id = 0
   for key,value in pairs(self.reduction) do
     id = id + 1
-    local worker = workers[id]
-    self.reduce_worker[key] = worker
-    if id > #workers then
-      table.insert(self.reduction_pending_list, key)
-    else
+    if self.worker_nump[id] > 0 then
+      local worker = workers[id]
+      self.reduce_worker[key] = worker
       worker:do_reduce(self, select_handler, logger, key, value)
     end
+    id = id % #workers
   end
   self.reduce_size  = id
   self.reduce_count = 0
@@ -371,45 +386,36 @@ function task_methods:process_reduce_result(taskid,key,result)
   self.reduce_count      = self.reduce_count + 1
   --
   self.map_reduce_result[key] = result
-  -- if any reduce work is pending, give it to the current worker
-  if #self.reduction_pending_list > 0 then
-    local job_key   = table.remove(self.reduction_pending_list, 1)
-    local job_value = self.reduction[job_key]
-    self.reduce_worker[key],
-    self.reduce_worker[job_key] = nil,self.reduce_worker[key]
-    self.reduce_worker[job_key]:do_reduce(self,
-					  select_handler,
-					  logger,
-					  job_key, job_value)
-  end
+  --
   if self.reduce_count == self.reduce_size then
     self.state = "REDUCE_FINISHED"
   end
   return true
 end
 
-function task_methods:do_sequential(workers)
+function task_methods:do_sequential()
   self.select_handler:send(self.conn,
 			   string.format("SEQUENTIAL return %s",
 					 table.tostring(map_reduce_result)))
   self.select_handler:receive(self.conn,
 			      function(conn,msg)
-				local action,data = msg:match("([^%s]+) (.*)$")
+				local action,data = msg:match("^%s*([^%s]+)%s*(.*)$")
 				if action ~= "SEQUENTIAL_DONE" then
 				  self.state = "ERROR"
 				  return "ERROR"
 				else
-				  self:process_sequential(workers,data)
+				  self:process_sequential(data)
 				  return "OK"
 				end
 			      end)
   self.state = "SEQUENTIAL"
 end
 
-function task_methods:process_sequential(workers,data)
+function task_methods:process_sequential(data)
+  local select_handler,logger = self.select_handler,self.logger
   for i=1,#workers do
     local w = workers[i]
-    w:share(self.select_handler, logger, data)
+    w:share(select_handler, logger, data)
   end
   self.state = "SEQUENTIAL_FINISHED"
 end

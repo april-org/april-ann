@@ -22,16 +22,16 @@ function common.cache(key, load_func)
 end
 
 -- Loads a string or a Lua script, depending on the content of str.
-function common.load(str,logger)
+function common.load(str,logger, ...)
   local logger = logger or common.logger()
-  local f,t
-  if str:match(".*%.lua$") then f = loadfile(str, "t")
-  else f = load(str, nil, "t") end
+  local f,t,msg
+  if str:match(".*%.lua$") then f,msg = loadfile(str)
+  else f,msg = load(str, nil) end
   if not f then
-    logger:warningf("Impossible to load the given task\n")
+    logger:warningf("Impossible to load the given task: %s\n", msg)
     return nil
   end
-  local r  = table.pack(pcall(f))
+  local r  = table.pack(pcall(f, ...))
   local ok = table.remove(r,1)
   if not ok then
     -- result has the error message
@@ -57,6 +57,7 @@ local function send_wrapper(sock, data)
   else
     sock:send(len_str..data)
   end
+  print("SEND",data)
 end
 
 -- A wrapper which receives data send following the previous function, so the
@@ -67,6 +68,7 @@ local function recv_wrapper(sock)
   if not msg then return nil end
   local len  = binarizer.decode.uint32(msg)
   local data = sock:receive(len)
+  print("RECV",data)
   return data
 end
 
@@ -116,8 +118,8 @@ function common.make_connection_handler(select_handler,message_reply,
     local action
     local receive_at_end = true
     if data then
-      print("# RECEIVED DATA: ", data)
-      action,data = data:match("^([^%s]*)%s(.*)$")
+      action,data = data:match("^([^%s]*)(.*)$")
+      print("# RECEIVED DATA: ", action)
       if message_reply[action] == nil then
 	select_handler:send(conn, "UNKNOWN ACTION")
       elseif type(message_reply[action]) == "string" then
@@ -202,7 +204,6 @@ end
 
 local process = {
   
-  -- CAUTION, the returned string contains a \n at the end
   receive = function(conn,func,recv_map,send_map)
     if recv_map[conn] then
       local msg = recv_wrapper(conn)

@@ -1,7 +1,7 @@
 package.path = string.format("%s?.lua;%s", string.get_path(arg[0]), package.path)
 require "common"
 local task_script = table.remove(arg,1)
-task              = common.load(task_script) or error("Error loading the script")
+task              = common.load(task_script,nil,table.unpack(arg)) or error("Error loading the script")
 data              = task.data   or error("Needs a data table")
 mmap              = task.map    or error("Needs a map function")
 mreduce           = task.reduce or error("Needs a reduce function")

@@ -5,29 +5,31 @@ worker = {}
 
 local function execute(core)
   local logger = core.logger
-  local mmap,mreduce = core.map,core.reduce
+  local mmap,mreduce,share = core.map,core.reduce,core.share
   while true do
     collectgarbage("collect")
     local msg = core:read()
-    local action,data = msg:match("([^%s]+) (.*)")
+    local action,data = msg:match("^%s*([^%s]+)%s*(.*)")
     print(action)
-
+    
     if action == "CLOSE" then core:close() break
 
     elseif action == "MAP" then
-      local map_key,job = data:match("([^%s]*) (.*)")
-      job = common.load(job,logger)
-      -- TODO: check job error
-      local map_result = mmap(map_key,job)
-      self:write(table.tostring(map_result))
-
+      local map_key,value = data:match("^%s*([^%s]*)%s*(.*)")
+      value = common.load(value,logger)
+      -- TODO: check value error
+      local map_result = mmap(map_key,value)
+      self:printf("return %s",table.tostring(map_result))
+      
     elseif action == "REDUCE" then
-      local key,values = data:match("([^%s]*) (.*)")
+      local key,values = data:match("^%s*([^%s]*)%s*(.*)")
       values = common.load(values,logger)
       -- TODO: check reduce values error
       local key,result = mreduce(key,values)
-      self:write(key)
-      self:write(result)
+      self:printf("return %s %s",key,result)
+      
+    elseif action == "SHARE" then
+      share(data)
     end
   end
   os.exit(0)
@@ -41,14 +43,16 @@ end
 -- unlock() and busy() use the temporal file to control the state of the object.
 local core_methods,core_class_metatable = class("worker.core")
 
-function core_class_metatable:__call(logger,tmpname,script,taskid)
+function core_class_metatable:__call(logger,tmpname,script,arg,taskid)
   local tochild  = table.pack(util.pipe())
   local toparent = table.pack(util.pipe())
   local obj,who = { tmpname=tmpname, logger=logger, taskid=taskid }
-  local t = common.load(script,logger)
+  local arg = common.load(arg)
+  local t = common.load(script,logger,table.unpack(arg))
   -- TODO: check script error
   self.map    = t.map
   self.reduce = t.reduce
+  self.share  = t.share or function() end
   self:unlock()
   --
   who,obj.pid = util.split_process(2)
@@ -100,10 +104,11 @@ function core_methods:write(msg)
   local len = binarizer.code.uint32(#msg)
   self.OUT:write(len)
   self.OUT:write(msg)
+  self.OUT:flush()
 end
 
 function core_methods:print(...)
-  self.OUT:write(table.concat(...,"\t").."\n")
+  self:write(table.concat(...,"\t").."\n")
 end
 
 function core_methods:printf(format,...)
@@ -111,8 +116,10 @@ function core_methods:printf(format,...)
 end
 
 function core_methods:read()
+  self.IN:flush()
   local len = binarizer.decode.uint32(self.IN:read(5))
-  return self.IN:read(len)
+  local msg = self.IN:read(len)
+  return msg
 end
 
 function core_methods:lock(msg)
@@ -131,23 +138,35 @@ function core_methods:busy()
   return false
 end
 
--- remember to mark as dead the given connection
-function core_methods:do_map(conn,select_handler,map_key,job)
+function core_methods:do_map(master_address,master_port,
+			     map_key,value,
+			     pending_pids)
   self:lock("MAP\n")
   if self.pid then
     local _,pid = util.split_process(2)
     if pid then
       -- parent
-      select_handler:close(conn)
+      table.insert(pending_pids, pid)
     else
       -- child
       local taskid = self.taskid
-      self:printf("MAP %s %s\n", map_key, job)
+      self:printf("MAP %s %s\n", map_key, value)
       local result = self:read()
+      -- CONNECTION WITH MASTER
+      local ok,error_msg,conn,data = true
+      conn,error_msg = socket.tcp()
+      -- TODO: check error
+      -- if not check_error(s,error_msg) then return false end
+      ok,error_msg=conn:connect(master_address,master_port)
+      -- TODO: check error
+      --if not check_error(ok,error_msg) then return false end
       common.send_wrapper(conn,
-			  string.format("%s %s %s",
+			  string.format("MAP_RESULT %s %s %s",
 					taskid, map_key, result))
-      conn:close()	
+      local ok = common.recv_wrapper(conn)
+      -- TODO: throw error if ok~="EXIT"
+      common.send_wrapper(conn, "EXIT")
+      conn:close()
       self:unlock()
       os.exit(0)
     end
@@ -155,24 +174,44 @@ function core_methods:do_map(conn,select_handler,map_key,job)
 end
 
 -- remember to mark as dead the given connection
-function core_methods:do_reduce(conn,select_handler,key,values)
+function core_methods:do_reduce(master_address,master_port,
+				key,values,
+				pending_pids)
   self:lock("REDUCE\n")
   if self.pid then
     local _,pid = util.split_process(2)
     if pid then
       -- parent
-      select_handler:close(conn)
+      table.insert(pending_pids, pid)
     else
       -- child
       local taskid = self.taskid
       self:printf("REDUCE %s %s\n", key, values)
-      local key,result = self:read(),self:read()
+      local msg = self:read()
+      local key,value = msg:match("^%s*([^%s]+)%s*(.*)$")
+      -- CONNECTION WITH MASTER
+      local ok,error_msg,conn,data = true
+      conn,error_msg = socket.tcp()
+      -- TODO: check error
+      -- if not check_error(s,error_msg) then return false end
+      ok,error_msg=conn:connect(master_address,master_port)
+      -- TODO: check error
+      --if not check_error(ok,error_msg) then return false end
       common.send_wrapper(conn,
-			  string.format("%s %s %s",
-					taskid, key, result))
+			  string.format("REDUCE_RESULT %s %s %s",
+					taskid, key, value))
+      local ok = common.recv_wrapper(conn)
+      -- TODO: throw error if ok~="EXIT"
+      common.send_wrapper(conn, "EXIT")
       conn:close()
       self:unlock()
       os.exit(0)
     end
+  end
+end
+
+function core_methods:share(data)
+  if self.pid then
+    self:printf("SHARE %s",data)
   end
 end

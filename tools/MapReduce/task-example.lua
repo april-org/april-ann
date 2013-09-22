@@ -1,6 +1,6 @@
--- arg variable is an upvalue of the caller script, so it is possible to use
--- cmdOpt with it in order to parse the arguments, or to build the data table or
--- other functions depending on the given arguments.
+-- arg is available as a vararg argument when the script is loaded by loadfile
+-- or load functions. Please, use arg to parse arguments with cmdOpt.
+local arg = { ... }
 
 require "common"
 -- NOTE that common, worker, and master are tables used by MapReduce paradigm,
@@ -8,14 +8,16 @@ require "common"
 -- other names
 
 -- the data size could be nil, but then it is mandatory to produce a data size
--- in decode function.
+-- in decode function. Please, use absolute paths, instead of relative, and
+-- remember that in any case the data is loaded in the workers.
+dir = "/home/pako/programas/april-ann/tools/MapReduce/"
 local data = {
-  { "data/text1.txt", 20 },
-  { "data/text2.txt", 20 },
-  { "data/text3.txt", 20 },
-  { "data/text4.txt", 20 },
-  { "data/text5.txt", 20 },
-  { "data/text6.txt",  9 },
+  { dir.."data/text1.txt", 20 },
+  { dir.."data/text2.txt", 20 },
+  { dir.."data/text3.txt", 20 },
+  { dir.."data/text4.txt", 20 },
+  { dir.."data/text5.txt", 20 },
+  { dir.."data/text6.txt",  9 },
 }
 
 if #arg > 0 then

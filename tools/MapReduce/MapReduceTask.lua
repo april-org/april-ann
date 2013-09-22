@@ -1,19 +1,25 @@
 package.path = string.format("%s?.lua;%s", string.get_path(arg[0]), package.path)
 require "common"
 if #arg < 3 then
-  error("Incorrect syntax, execute the program with at least 4 arguments: "
-	"NAME MASTER_ADDRESS  MASTER_PORT  TASK_SCRIPT")
+  error("Incorrect syntax, execute the program with at least 4 arguments: "..
+	"NAME  MASTER_ADDRESS  MASTER_PORT  TASK_SCRIPT")
 end
 --
 local BIND_TIMEOUT      = 10
 local TIMEOUT           = 1    -- in seconds
-local WORKER_PING_TIMER = 10   -- in seconds
+local MASTER_PING_TIMER = 10   -- in seconds
 --
 local NAME           = table.remove(arg,1)
 local MASTER_ADDRESS = table.remove(arg,1)
 local MASTER_PORT    = table.remove(arg,1)
 local TASK_SCRIPT    = table.remove(arg,1)
-task              = common.load(TASK_SCRIPT) or error("Error loading the script")
+local aux            = io.popen(string.format("readlink -f %s",TASK_SCRIPT))
+TASK_SCRIPT          = aux:read("*l")
+aux:close()
+--
+local logger         = common.logger()
+--
+task              = common.load(TASK_SCRIPT,logger,table.unpack(arg)) or error("Error loading the script")
 data              = task.data   or error("Needs a data table")
 mmap              = task.map    or error("Needs a map function")
 mreduce           = task.reduce or error("Needs a reduce function")
@@ -25,7 +31,10 @@ split             = task.split or
   function(data,data_size,first,last)
     return data,data_size
   end
-
+--
+local aux = io.open(TASK_SCRIPT)
+local TASK_SCRIPT_CONTENT = aux:read("*a")
+aux:close()
 --
 local MASTER_CONN = nil -- persistent connection with the master
 local TASK_ID = nil
@@ -42,7 +51,7 @@ local function check_error(p,msg)
 end
 
 local pending = false
-function send_task_to_master(name,master_address,master_port,script)
+function send_task_to_master(name,master_address,master_port,arg,script)
   if pending then return end
   local ok,error_msg,s,data = true
   s,error_msg = socket.tcp()
@@ -50,7 +59,8 @@ function send_task_to_master(name,master_address,master_port,script)
   ok,error_msg=s:connect(master_address,master_port)
   if not check_error(ok,error_msg) then return false end
   pending = true
-  select_handler:send(s, string.format("TASK %s %s", name, script))
+  select_handler:send(s, string.format("TASK %s return %s %s",
+				       name, table.tostring(arg), script))
   select_handler:receive(s,
 			 function(conn,msg)
 			   local msg = table.unpack(string.tokenize(msg or ""))
@@ -71,18 +81,21 @@ local message_reply = {
   PING = "PONG",
   
   EXIT = "EXIT",
-  
+
+  -- TODO: Execute sequential function in a forked process?
   SEQUENTIAL = function(conn,msg)
-    local map_reduce_result = common.load(msg)
+    local map_reduce_result = common.load(msg,logger)
     if not map_reduce_result then return "ERROR" end
-    local shared = sequential(map_reduce_result)
+    -- SEQUENTIAL
+    local shared = sequential(map_reduce_result) -- it is supposed to be fast
     shared = (type(shared)=="table" and table.tostring(shared)) or tostring(shared)
     return string.format("SEQUENTIAL_DONE return %s", shared)
   end,
   
+  -- TODO: Execute loop function in a forked process?
   LOOP = function(conn,msg)
     -- TODO: check the TASKID
-    local ret = loop()
+    local ret = loop() -- it is supposed to be a fast
     if ret then return "return true"
     else return "return false"
     end
@@ -97,7 +110,7 @@ function check_master(select_handler, timeout)
   if not MASTER_IS_ALIVE then
     connections = common.connections_set()
     logger:warningf("Master is dead\n")
-    MASTER_CONN = send_task_to_master(NAME, MASTER_ADDRESS, MASTER_PORT, TASK_SCRIPT)
+    MASTER_CONN = send_task_to_master(NAME, MASTER_ADDRESS, MASTER_PORT, arg, TASK_SCRIPT_CONTENT)
     connections:add(MASTER_CONN, common.make_connection_handler(select_handler,
 								message_reply,
 								connections))
@@ -172,46 +185,3 @@ end
 ------------------------------------------------------------------------------
 
 main()
-
-
-repeat
-  local reduction = {}
-  for i=1,#data do
-    collectgarbage("collect")
-    -- data decoding
-    local encoded_data = data[i][1]
-    local encoded_data_size = data[i][2]
-    local decoded_data,decoded_data_size = decode(encoded_data,encoded_data_size)
-    local N = total_size / 4
-    local data_size = decoded_data_size or encoded_data_size
-    -- data split
-    local first,last = 1,math.min(N,data_size)
-    repeat
-      local splitted_data,size = split(decoded_data,data_size,first,last)
-      last = first + size - 1
-      -- MAP
-      local key = string.format("#%d#%d#%d#",i,first,last)
-      local map_result = mmap(key,splitted_data)
-      -- store map result in reduction table, accumulating all the values with
-      -- the same key
-      reduction = iterator(ipairs(map_result)):select(2):
-      reduce(function(acc,t)
-	       acc[t[1]] = table.insert(acc[t[1]] or {}, t[2])
-	       return acc
-	     end,
-	     reduction)
-      --
-      first = last + 1
-      last  = math.min(last + N,data_size)
-    until first > data_size
-  end
-  local result = {}
-  for key,values in pairs(reduction) do
-    collectgarbage("collect")
-    -- REDUCE
-    local k,v = mreduce(key,values)
-    result[k] = v
-  end
-  local value = sequential(result)
-  shared(value)
-until not loop()
