@@ -1,0 +1,20 @@
+This page describe the utilities to build and train ANNs. Four main sections are
+written: a desciprion of ANN concepts in April-ANN, the easy building procedure
+for MLPs, the training helpers, and finally the manual way to train any kind of
+ANN.
+
+Inspired by other toolkits (as Torch 7 or pyBrain), ANNs are described as a
+composition of blocks call ANN components, so one component is a neural network
+itself. A list of all available components appears executing:
+
+Nevertheless, the composition procedure will be explained later. An ANN
+component is identified by a name string (which will be automatically generated
+if not given). The name must be unique. Some components contains weights in
+their core, which are estimated by gradient descent algorithm
+(backpropagation). Connection weights objects are identified by a weights name
+parameter, which could be reused. If two components have the same weights name,
+then they share the same connections object.
+
+All components have an input and output size, which defines the number of weights
+(if needed) and the fan-in/fan-out of the component. Components need to be
+build (build method) once they are constructed. Build procedure allocates

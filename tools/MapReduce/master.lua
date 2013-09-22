@@ -128,7 +128,7 @@ function worker_methods:do_map(task,select_handler,logger,map_key,job)
   -- MAP_RESULT
   select_handler:receive(s,
 			 function(conn,msg)
-			   local taskid,map_key,result = common.load(logger,msg)
+			   local taskid,map_key,result = common.load(msg,logger)
 			   if not result then return "ERROR" end
 			   local ok = task:process_map_result(taskid,map_key,result)
 			   if not ok then return "ERROR" end
@@ -144,7 +144,7 @@ function worker_methods:do_reduce(task,select_handler,logger,key,value)
   -- REDUCE_RESULT
   select_handler:receive(s,
 			 function(conn,msg)
-			   local taskid,key,result = common.load(logger,msg)
+			   local taskid,key,result = common.load(msg,logger)
 			   if not result then return "ERROR" end
 			   local ok = task:process_reduce_result(taskid,key,result)
 			   if not ok then return "ERROR" end
@@ -183,7 +183,7 @@ function task_class_metatable:__call(logger, select_handler, conn, id, script)
     reduce_worker = {},
     map_reduce_result = {},
   }
-  local t   = common.load(logger, script)
+  local t   = common.load(script,logger)
   -- data is a table with pairs of:
   -- { WHATEVER, size }
   --
@@ -415,7 +415,7 @@ function task_methods:do_loop()
 			   string.format("LOOP %s", self.id))
   self.select_handler:receive(self.conn,
 			      function(conn,msg)
-				local result = common.load(logger,msg)
+				local result = common.load(msg,logger)
 				if not result then return "ERROR" end
 				task:process_loop(result)
 				return "OK"

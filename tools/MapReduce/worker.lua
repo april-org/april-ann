@@ -5,7 +5,7 @@ worker = {}
 
 local function execute(core)
   local logger = core.logger
-  local map,reduce
+  local mmap,mreduce = core.map,core.reduce
   while true do
     collectgarbage("collect")
     local msg = core:read()
@@ -16,16 +16,16 @@ local function execute(core)
 
     elseif action == "MAP" then
       local map_key,job = data:match("([^%s]*) (.*)")
-      job = common.load(logger,job)
+      job = common.load(job,logger)
       -- TODO: check job error
-      local map_result = map(map_key,job)
+      local map_result = mmap(map_key,job)
       self:write(table.tostring(map_result))
 
     elseif action == "REDUCE" then
       local key,values = data:match("([^%s]*) (.*)")
-      values = common.load(logger,values)
+      values = common.load(values,logger)
       -- TODO: check reduce values error
-      local key,result = reduce(key,values)
+      local key,result = mreduce(key,values)
       self:write(key)
       self:write(result)
     end
@@ -45,10 +45,10 @@ function core_class_metatable:__call(logger,tmpname,script,taskid)
   local tochild  = table.pack(util.pipe())
   local toparent = table.pack(util.pipe())
   local obj,who = { tmpname=tmpname, logger=logger, taskid=taskid }
-  local t = common.load(logger,script)
+  local t = common.load(script,logger)
   -- TODO: check script error
-  map    = t.map
-  reduce = t.reduce
+  self.map    = t.map
+  self.reduce = t.reduce
   self:unlock()
   --
   who,obj.pid = util.split_process(2)
