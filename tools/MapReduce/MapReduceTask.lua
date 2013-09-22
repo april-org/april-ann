@@ -13,9 +13,6 @@ local NAME           = table.remove(arg,1)
 local MASTER_ADDRESS = table.remove(arg,1)
 local MASTER_PORT    = table.remove(arg,1)
 local TASK_SCRIPT    = table.remove(arg,1)
-local aux            = io.popen(string.format("readlink -f %s",TASK_SCRIPT))
-TASK_SCRIPT          = aux:read("*l")
-aux:close()
 --
 local logger         = common.logger()
 --
@@ -68,6 +65,7 @@ function send_task_to_master(name,master_address,master_port,arg,script)
 			     select_handler:close(s, function() pending=false end)
 			   else
 			     TASK_ID = msg
+			     MASTER_IS_ALIVE = true
 			   end
 			 end)
   return s
@@ -127,7 +125,7 @@ function check_master(select_handler, timeout)
       return false
     end
     --
-    select_handler:send(s, "PING " .. WORKER_NAME)
+    select_handler:send(s, "PING " .. NAME)
     select_handler:receive(s,
 			   function(conn, msg)
 			     local msg = table.unpack(string.tokenize(msg or ""))

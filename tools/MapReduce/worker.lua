@@ -19,14 +19,14 @@ local function execute(core)
       value = common.load(value,logger)
       -- TODO: check value error
       local map_result = mmap(map_key,value)
-      self:printf("return %s",table.tostring(map_result))
+      core:printf("return %s",table.tostring(map_result))
       
     elseif action == "REDUCE" then
       local key,values = data:match("^%s*([^%s]*)%s*(.*)")
       values = common.load(values,logger)
       -- TODO: check reduce values error
       local key,result = mreduce(key,values)
-      self:printf("return %s %s",key,result)
+      core:printf("return %s %s",key,result)
       
     elseif action == "SHARE" then
       share(data)
@@ -46,28 +46,31 @@ local core_methods,core_class_metatable = class("worker.core")
 function core_class_metatable:__call(logger,tmpname,script,arg,taskid)
   local tochild  = table.pack(util.pipe())
   local toparent = table.pack(util.pipe())
-  local obj,who = { tmpname=tmpname, logger=logger, taskid=taskid }
+  local obj = { tmpname=tmpname, logger=logger, taskid=taskid }
   local arg = common.load(arg)
   local t = common.load(script,logger,table.unpack(arg))
   -- TODO: check script error
-  self.map    = t.map
-  self.reduce = t.reduce
-  self.share  = t.share or function() end
-  self:unlock()
+  obj.map    = t.map
+  obj.reduce = t.reduce
+  obj.share  = t.share or function() end
   --
   who,obj.pid = util.split_process(2)
   if obj.pid then
     -- the parent
     obj.IN  = toparent[1]
     obj.OUT = tochild[2]
-    return class_instance(obj,self)
+    obj = class_instance(obj,self)
+    obj:unlock()
   else
     -- the child
+    signal.release(signal.SIGINT)
     obj.IN  = tochild[1]
     obj.OUT = toparent[2]
     obj = class_instance(obj,self)
     execute(obj)
+    os.exit(0)
   end
+  return obj
 end
 
 -- static method
@@ -149,6 +152,7 @@ function core_methods:do_map(master_address,master_port,
       table.insert(pending_pids, pid)
     else
       -- child
+      signal.release(signal.SIGINT)
       local taskid = self.taskid
       self:printf("MAP %s %s\n", map_key, value)
       local result = self:read()
@@ -185,6 +189,7 @@ function core_methods:do_reduce(master_address,master_port,
       table.insert(pending_pids, pid)
     else
       -- child
+      signal.release(signal.SIGINT)
       local taskid = self.taskid
       self:printf("REDUCE %s %s\n", key, values)
       local msg = self:read()

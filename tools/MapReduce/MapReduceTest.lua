@@ -22,10 +22,9 @@ repeat
     collectgarbage("collect")
     -- data decoding
     local encoded_data = data[i][1]
-    local encoded_data_size = data[i][2]
-    local decoded_data,decoded_data_size = decode(encoded_data,encoded_data_size)
+    local data_size = data[i][2]
+    local decoded_data = decode(encoded_data,data_size)
     local N = total_size / 4
-    local data_size = decoded_data_size or encoded_data_size
     -- data split
     local first,last = 1,math.min(N,data_size)
     repeat
