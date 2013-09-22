@@ -123,7 +123,7 @@ end
 function worker_methods:do_map(task,select_handler,logger,map_key,job)
   local s = worker_methods:connect()
   if not s then return false end
-  select_handler:send( s, string.format("MAP %s %s", map_key,
+  select_handler:send( s, string.format("MAP %s return %s", map_key,
 					table.tostring(job)) )
   -- MAP_RESULT
   select_handler:receive(s,
@@ -388,25 +388,29 @@ function task_methods:process_reduce_result(taskid,key,result)
   return true
 end
 
-function task_methods:do_sequential()
+function task_methods:do_sequential(workers)
   self.select_handler:send(self.conn,
-			   string.format("SEQUENTIAL %s",
+			   string.format("SEQUENTIAL return %s",
 					 table.tostring(map_reduce_result)))
   self.select_handler:receive(self.conn,
 			      function(conn,msg)
-				local msg = table.unpack(string.tokenize(msg or ""))
-				if msg ~= "SEQUENTIAL_DONE" then
+				local action,data = msg:match("([^%s]+) (.*)$")
+				if action ~= "SEQUENTIAL_DONE" then
 				  self.state = "ERROR"
 				  return "ERROR"
 				else
-				  self:process_sequential()
+				  self:process_sequential(workers,data)
 				  return "OK"
 				end
 			      end)
   self.state = "SEQUENTIAL"
 end
 
-function task_methods:process_sequential()
+function task_methods:process_sequential(workers,data)
+  for i=1,#workers do
+    local w = workers[i]
+    w:share(self.select_handler, logger, data)
+  end
   self.state = "SEQUENTIAL_FINISHED"
 end
 
@@ -416,7 +420,7 @@ function task_methods:do_loop()
   self.select_handler:receive(self.conn,
 			      function(conn,msg)
 				local result = common.load(msg,logger)
-				if not result then return "ERROR" end
+				if result==nil then return "ERROR" end
 				task:process_loop(result)
 				return "OK"
 			      end)

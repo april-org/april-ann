@@ -18,6 +18,10 @@ local data = {
   { "data/text6.txt",  9 },
 }
 
+if #arg > 0 then
+  data = iterator(ipairs(arg)):select(2):map(function(v) return {v,nil} end):table()
+end
+
 -- Loads the data if it was necessary, so the master executes decoding, and
 -- workers receives the decoded data. The decoded_data could be a Lua string
 -- which has the ability to load the data, or directly a data value. The size of

@@ -14,20 +14,20 @@ split             = task.split or
     return data,data_size
   end
 
+local total_size = iterator(ipairs(data)):select(2):field(2):reduce(math.add(),0)
+
 repeat
   local reduction = {}
   for i=1,#data do
     collectgarbage("collect")
     -- data decoding
     local encoded_data = data[i][1]
-    local data_size    = data[i][2]
-    local decoded_data,decoded_data_size = decode(encoded_data,data_size)
-    deocoded_data = decoded_data      or encoded_data
-    data_size     = decoded_data_size or data_size
-    --
+    local encoded_data_size = data[i][2]
+    local decoded_data,decoded_data_size = decode(encoded_data,encoded_data_size)
+    local N = total_size / 4
+    local data_size = decoded_data_size or encoded_data_size
     -- data split
-    local N            = 5 -- splits in portions of size 5 (for testing is enough)
-    local first,last   = 1,math.min(5,data_size)
+    local first,last = 1,math.min(N,data_size)
     repeat
       local splitted_data,size = split(decoded_data,data_size,first,last)
       last = first + size - 1
@@ -44,7 +44,7 @@ repeat
 	     reduction)
       --
       first = last + 1
-      last  = last + N
+      last  = math.min(last + N,data_size)
     until first > data_size
   end
   local result = {}

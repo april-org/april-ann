@@ -62,7 +62,6 @@ local message_reply = {
     if not task:prepare_map_plan(workers) then
       return "ERROR"
     end
-    for i=1,#workers do workers[i]:task(ID,script)
     return ID
   end,
 
