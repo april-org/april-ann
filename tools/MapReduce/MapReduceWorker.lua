@@ -14,13 +14,16 @@ local BIND_TIMEOUT      = 10
 local TIMEOUT           =  1  -- in seconds
 local MASTER_PING_TIMER = 10  -- in seconds
 --
-
 local MASTER_IS_ALIVE  = false
 local connections      = common.connections_set()
 local select_handler   = common.select_handler(MASTER_PING_TIMER)
 local workersock       = socket.tcp()
 local logger           = common.logger()
-local forked_task      = nil
+local cores            = { }
+local free_cores       = { }
+local aux_free_cores_dict = { }
+local mapkey2core      = { }
+local core_tmp_names   = iterator(range(1,NUMP)):map(os.tmpname):table()
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
@@ -79,12 +82,54 @@ local message_reply = {
     return loadavg
   end,
   
+  TASK = function(conn,msg)
+    local taskid,script = msg:match("^([^%s]+) (.*)$")
+    cores = {}
+    free_cores = {}
+    mapkey2core = {}
+    aux_free_cores_dict = {}
+    collectgarbage("collect")
+    for i=1,NUMP do
+      cores[i] = worker.core(logger,
+			     core_tmp_names[i],
+			     script,
+			     taskid)
+      free_cores[i] = cores[i]
+      aux_free_cores_dict[cores[i]] = true
+    end
+  end,
+
   MAP = function(conn,msg)
     local mapkey,job = msg:match("^([^%s]+) (.*)$")
-    job = common.load(job)
-    if not job then
-      return "ERROR"
+    -- job = common.load(job)
+    -- if not job then
+    --  return "ERROR"
+    -- end
+    local c = mapkey2core[mapkey]
+    if not c then
+      -- TODO: error if not free cores
+      c = table.remove(free_cores, 1)
+      mapkey2core[mapkey] = c
+      aux_free_cores_dict[c] = nil
     end
+    c:write(string.format("MAP %s %s",
+			  mapkey, job))
+    c:flush()
+    return nil
+  end,
+
+  REDUCE = function(conn,msg)
+    local key,values = msg:match("^([^%s]+) (.*)$")
+    -- job = common.load(job)
+    -- if not job then
+    --  return "ERROR"
+    -- end
+    -- TODO: error if not free cores
+    local c = table.remove(free_cores, 1)
+    aux_free_cores_dict[c] = nil
+    c:write(string.format("MAP %s %s",
+			  mapkey, job))
+    c:flush()
     return nil
   end,
 }
@@ -178,18 +223,30 @@ function main()
   
   local clock = util.stopwatch()
   clock:go()
-  check_master(select_handler, timeout)
+  check_master(select_handler, TIMEOUT)
   while true do
     collectgarbage("collect")
     local cpu,wall = clock:read()
     if wall > MASTER_PING_TIMER then
-      check_master(select_handler, timeout)
+      check_master(select_handler, TIMEOUT)
       clock:stop()
       clock:reset()
       clock:go()
     end
-    -- execute pending operations
-    select_handler:execute(TIMEOUT)
+    if #cores > 0 then
+      for i=1,#cores do
+	local c = cores[i]
+	if not aux_free_cores_dict[c] and not cores:busy() then
+	  aux_free_cores_dict[c] = true
+	  table.insert(free_cores, c)
+	end
+      end
+      -- execute pending operations
+      select_handler:execute(0.1)
+    else
+      -- execute pending operations
+      select_handler:execute(TIMEOUT)
+    end
     connections:remove_dead_conections()
   end
 end

@@ -209,7 +209,7 @@ local process = {
   
   send = function(conn,func,recv_map,send_map)
     if send_map[conn] then
-      send_wrapper(conn, func(conn) .. "\n")
+      send_wrapper(conn, func(conn))
       send_map[conn] = nil
       return true
     end

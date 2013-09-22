@@ -107,19 +107,16 @@ function worker_methods:dead()
   return self.is_dead
 end
 
-function worker_methods:send_script(task,select_handler,logger,script)
+function worker_methods:task(select_handler,logger,taskid,script)
   local s = worker_methods:connect()
   if not s then return false end
-  select_handler:send( s, string.format("SCRIPT %s",script) )
-  -- MAP_RESULT
+  select_handler:send( s, string.format("TASK %s %s",taskid,script) )
   select_handler:receive(s,
 			 function(conn,msg)
 			   local msg = table.concat(string.tokenize(msg))
 			   if msg ~= "OK" then return "ERROR" end
 			   return "OK"
 			 end)
-  select_handler:send(s, "EXIT")
-  select_handler:receive(s)
   select_handler:close(s)
 end
 
@@ -137,8 +134,6 @@ function worker_methods:do_map(task,select_handler,logger,map_key,job)
 			   if not ok then return "ERROR" end
 			   return "OK"
 			 end)
-  select_handler:send(s, "EXIT")
-  select_handler:receive(s)
   select_handler:close(s)
 end
 
@@ -155,8 +150,6 @@ function worker_methods:do_reduce(task,select_handler,logger,key,value)
 			   if not ok then return "ERROR" end
 			   return "OK"
 			 end)
-  select_handler:send(s, "EXIT")
-  select_handler:receive(s)
   select_handler:close(s)
 end
 
