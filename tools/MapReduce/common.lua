@@ -6,7 +6,24 @@ common = {}
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
-function common.load(logger,str)
+local cache = {}
+-- This function receives a key, and a function which loads the value. The
+-- cached value is returned if it exists, avoiding execution of load_func
+-- function. Otherwise, load_func is executed and the returned value is cached
+-- for following calls to this function.
+function common.cache(key, load_func)
+  local v = cache[key]
+  if not v then
+    -- cache the value
+    v = load_func()
+    cache[key] = v
+  end
+  return v
+end
+
+-- Loads a string or a Lua script, depending on the content of str.
+function common.load(str,logger)
+  local logger = logger or common.logger()
   local f,t
   if str:match(".*%.lua$") then f = loadfile(str, "t")
   else f = load(str, nil, "t") end

@@ -8,7 +8,23 @@ local WORKER_NAME    = arg[3] or error("Needs a worker name")
 local WORKER_BIND    = arg[4] or error("Needs a worker bind address")
 local WORKER_PORT    = arg[5] or error("Needs a worker bind port")
 local NUMP           = tonumber(arg[6] or error("Needs a number of cores"))
-local MEM            = tonumber(arg[7] or error("Needs a memory number in GB"))
+local MEM            = arg[7] or error("Needs a memory number, use any suffix B,K,M,G,T,P,E,Z,Y for 1024 powers")
+local suffix_powers = {
+  B = 1/(1024*1024),
+  K = 1/1024,
+  M = 1,
+  G = 1024,
+  T = 1024*1024,
+  P = 1024*1024*1024,
+  E = 1024*1024*1024*1024,
+  Z = 1024*1024*1024*1024*1024,
+  Y = 1024*1024*1024*1024*1024*1024,
+}
+local MEM,suffix = MEM:match("([0-9]+)(.)")
+if not suffix or not suffix_powers[suffix] then
+  error("The memory size needs a valid suffix: B,K,M,G,T,P,E,Z,Y")
+end
+MEM = tonumber(MEM) * suffix_powers[suffix]
 --
 local BIND_TIMEOUT      = 10
 local TIMEOUT           =  1  -- in seconds
@@ -192,7 +208,9 @@ end
 -------------------------------------------------------------------------------
 
 function main()
-  logger:printf("Running worker %s registred to master %s:%s and binded to %s:%s\n",
+  logger:printf("Running worker with %d cores and %fM memory, %s registred "..
+		  "to master %s:%s and binded to %s:%s\n",
+		NUMP, MEM,
 		WORKER_NAME, MASTER_ADDRESS, MASTER_PORT,
 		WORKER_BIND, WORKER_PORT)
   
