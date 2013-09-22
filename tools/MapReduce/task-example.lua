@@ -7,9 +7,8 @@ require "common"
 -- also note that map and reduce functions are defined by April-ANN, so use
 -- other names
 
--- the data size could be nil, but then it is mandatory to produce a data size
--- in decode function. Please, use absolute paths, instead of relative, and
--- remember that in any case the data is loaded in the workers.
+-- the data size is mandatory. Please, use absolute paths, instead of relative,
+-- and remember that in any case the data is loaded in the workers.
 dir = "/home/pako/programas/april-ann/tools/MapReduce/"
 local data = {
   { dir.."data/text1.txt", 20 },
@@ -26,25 +25,24 @@ end
 
 -- Loads the data if it was necessary, so the master executes decoding, and
 -- workers receives the decoded data. The decoded_data could be a Lua string
--- which has the ability to load the data, or directly a data value. The size of
--- the data could be different after decoding.
+-- which has the ability to load the data, or directly a data value. The
+-- returned value will be passed to the split function in order to split it.
 local function decode(encoded_data,data_size)
   local f = io.open(encoded_data)
-  local all = string.tokenize(f:read("*a"),"\n")
+  local decoded_data = string.tokenize(f:read("*a"),"\n")
   f:close()
-  local data = string.format("return %s", table.tostring(all))
-  return data,#all
+  return decoded_data -- an array of lines
 end
 
 -- This function receives a decoded data, its size, and splits it by the given
 -- first,last pair of values, and returns the data value split and the size of
 -- the split (it is possible to be different from the indicated last-first+1
--- size).
+-- size). The returned values are automatically converted using tostring()
+-- function. So, it is possible to return a string, a table with strings, or a
+-- value convertible to string, or a table with values convertible to string.
 local function split(decoded_data,data_size,first,last)
-  local data = loadstring(decoded_data)()
-  local data = table.slice(data, first, last)
-  local data_str = string.format("return %s", table.tostring(data))
-  return data_str,#data
+  local slice_data = table.slice(decoded_data, first, last)
+  return slice_data,#slice_data -- a slice of the given array of lines
 end
 
 -- Receives a key,value pair, and produces an array of key,value string (or able
@@ -54,7 +52,7 @@ end
 -- useful for this purpose. Please, be careful because all cached values will be
 -- keep at memory of the machine where the task was executed.
 local function mmap(key,value)
-  local value = common.cache(key, function() return loadstring(value)() end)
+  local value = common.cache(key, value)
   -- iterate over data lines, and line tokenization
   local out = iterator(ipairs(value)):select(2):map(string.tokenize):
   -- word iterator and reduction

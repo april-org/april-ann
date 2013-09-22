@@ -12,6 +12,10 @@ local cache = {}
 -- function. Otherwise, load_func is executed and the returned value is cached
 -- for following calls to this function.
 function common.cache(key, load_func)
+  if type(load_func) ~= "function" then
+    local aux = load_func
+    load_func = function() return aux end
+  end
   local v = cache[key]
   if not v then
     -- cache the value
@@ -48,7 +52,7 @@ end
 -- A wrapper which sends a string of data throughout a socket as a packet formed
 -- by a header of 5 bytes (a uint32 encoded using our binarizer), and after that
 -- the message.
-local function send_wrapper(sock, data)
+function common.send_wrapper(sock, data)
   local len     = #data
   local len_str = binarizer.code.uint32(len)
   if len > 256 then
@@ -63,7 +67,7 @@ end
 -- A wrapper which receives data send following the previous function, so the
 -- length of the message is decoded reading the first 5 bytes, and then the
 -- whole message is read.
-local function recv_wrapper(sock)
+function common.recv_wrapper(sock)
   local msg  = sock:receive("5")
   if not msg then return nil end
   local len  = binarizer.decode.uint32(msg)
@@ -85,7 +89,7 @@ function logger_class_metatable:__call()
 end
 
 function logger_methods:debugf(format,...)
-  fprintf(io.stderr, format, ...)
+  -- fprintf(io.stderr, format, ...)
 end
 
 function logger_methods:warningf(format,...)
@@ -206,7 +210,7 @@ local process = {
   
   receive = function(conn,func,recv_map,send_map)
     if recv_map[conn] then
-      local msg = recv_wrapper(conn)
+      local msg = common.recv_wrapper(conn)
       func(conn, msg)
       recv_map[conn] = nil
       return true
@@ -227,7 +231,7 @@ local process = {
   
   send = function(conn,func,recv_map,send_map)
     if send_map[conn] then
-      send_wrapper(conn, func(conn))
+      common.send_wrapper(conn, func(conn))
       send_map[conn] = nil
       return true
     end

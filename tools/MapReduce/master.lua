@@ -64,7 +64,7 @@ function worker_methods:ping(select_handler, timeout)
 			     self:set_dead()
 			     select_handler:close(s)
 			   elseif not self:dead() then
-			     self.rel_mem_nump = math.round(self:get_nump()/self:get_mem())
+			     self.rel_mem_nump = self:get_mem()/self:get_nump()
 			   end
 			 end)
   select_handler:send(s, "EXIT")
@@ -107,8 +107,8 @@ function worker_methods:dead()
   return self.is_dead
 end
 
-function worker_methods:task(select_handler,logger,taskid,arg,script,nump)
-  local s = worker_methods:connect()
+function worker_methods:task(select_handler,logger,taskid,script,arg,nump)
+  local s = self:connect()
   if not s then return false end
   select_handler:send( s, string.format("TASK %s %d %s %s",taskid,nump,arg,script) )
   select_handler:receive(s,
@@ -122,16 +122,20 @@ function worker_methods:task(select_handler,logger,taskid,arg,script,nump)
 end
 
 function worker_methods:do_map(task,select_handler,logger,map_key,job)
-  local s = worker_methods:connect()
+  local s = self:connect()
   if not s then return false end
-  select_handler:send( s, string.format("MAP %s return %s", map_key,
-					table.tostring(job)) )
+  if type(job) == "table" then
+    job = table.tostring(job)
+  else
+    job = tostring(job)
+  end
+  select_handler:send( s, string.format("MAP %s return %s", map_key, job) )
   select_handler:receive(s)
   select_handler:close(s)
 end
 
 function worker_methods:do_reduce(task,select_handler,logger,key,value)
-  local s = worker_methods:connect()
+  local s = self:connect()
   if not s then return false end
   select_handler:send(s, string.format("REDUCE %s %s", key, value))
   select_handler:receive(s)
@@ -139,7 +143,7 @@ function worker_methods:do_reduce(task,select_handler,logger,key,value)
 end
 
 function worker_methods:share(select_handler, logger, data)
-  local s = worker_methods:connect()
+  local s = self:connect()
   if not s then return false end
   select_handler:send(s, string.format("SHARE %s", data))
   select_handler:receive(s)
@@ -177,8 +181,8 @@ function task_class_metatable:__call(logger, select_handler, conn, id, script, a
     map_reduce_result = {},
     worker_nump = {},
   }
-  local arg = common.load(arg,logger)
-  local t = common.load(script,logger,table.unpack(arg))
+  local arg_table = common.load(arg,logger)
+  local t = common.load(script,logger,table.unpack(arg_table))
   -- data is a table with pairs of:
   -- { WHATEVER, size }
   --
@@ -205,9 +209,12 @@ function task_methods:get_state() return self.state end
 -- equals during the global loop. If an error occurs, and a worker dies, then
 -- the plan will be recomputed
 function task_methods:prepare_map_plan(workers)
+  print("NUM WORKERS",#workers)
   local logger,select_handler = self.logger,self.select_handler
-  local memory = iterator(ipairs(workers)):select(2):field(mem):reduce(math.add(),0)
-  local cores = iterator(ipairs(workers)):select(2):field(nump):reduce(math.add(),0)
+  local memory = iterator(pairs(workers)):select(2):
+  map(function(v) return v:get_mem() end):reduce(math.add(),0)
+  local cores = iterator(pairs(workers)):select(2):
+  map(function(v) return v:get_nump() end):reduce(math.add(),0)
   
   -- it is assumed that the data fits in the memory of the cluster, if the work
   -- is correctly divided.
@@ -226,53 +233,53 @@ function task_methods:prepare_map_plan(workers)
   -- necessary
   function get_data(idx)
     local encoded_data = data[idx][1]
-    local encoded_data_size = data[idx][2]
-    local decoded_data,decoded_data_size = decode(encoded_data,encoded_data_size)
-    local data_size = decoded_data_size or encoded_data_size
+    local data_size    = tonumber(data[idx][2])
+    local decoded_data = decode(encoded_data,data_size)
     local first,last = 1,data_size
     return decoded_data, data_size, first, last
   end
   local data_i = 1
-  local data_size, first, last = get_data(data_i)
+  local decoded_data, data_size, first, last = get_data(data_i)
   for i=1,#workers do
     collectgarbage("collect")
     local w = workers[i]
     local wname = w:get_name()
     local worker_mem_nump = w:get_rel_mem_nump()
-    print(worker_mem_nump, rel_size_memory)
-    local worker_job_size = math.ceil(rel_size_memory * worker_mem_nump)
-    print(w:get_nump())
+    local worker_job_size = math.round(rel_size_memory * worker_mem_nump)
     for j=1,w:get_nump() do
-      print(j)
       -- data split
-      local free_size = worker_job_size      
-      print(free_size, data_i, #data, free_size > 0 and data_i <= #data)
+      local free_size = worker_job_size
       while free_size > 0 and data_i <= #data do
 	last = math.min(first+free_size-1,data_size)
 	local splitted_data,size = split(decoded_data,data_size,first,last)
-	last = first + size - 1
-	print(data_i,first,last)
-	local map_key   = string.format("%s-%d-%d[%d:%d]",
-					wname, j, data_i, first, last)
-	map_plan[map_key] = { worker=w, job = splitted_data }
-	free_size = free_size - size
-	logger:debugf("MAP_JOB %s\n", map_key)
-	first = last + 1
+	if size > 0 then
+	  last = first + size - 1
+	  local map_key   = string.format("%s-%d-%d[%d:%d]",
+					  wname, j, data_i, first, last)
+	  map_plan[map_key] = { worker=w, job = splitted_data }
+	  free_size = free_size - size
+	  logger:debugf("MAP_JOB %s\n", map_key)
+	  first = last + 1
+	else
+	  -- forces to finish current data position
+	  logger:debugf("Sizes in data table are not correct, please check it. "..
+			  "Found %d, expected %d\n", first-1, data_size)
+	  first = data_size+1
+	end
 	if first > data_size then
 	  data_i = data_i + 1
 	  if data_i <= #data then
-	    data_size, first, last = get_data(data_i)
+	    decoded_data, data_size, first, last = get_data(data_i)
 	  end
 	end
 	map_plan_size = map_plan_size + 1
       end -- while free_size and data_i
       if data_i > #data then break end
     end -- for each free processor at current worker
-    w:task(select_handler,logger,self.id,arg,script,w:get_nump())
+    w:task(select_handler,logger,self.id,self.script,self.arg,w:get_nump())
     self.worker_nump[i] = w:get_nump()
   end -- for each worker
   if data_i ~= #data+1 then
-    print(data_i,#data)
     logger:warningf("Impossible to prepare the map_plan\n")
     self.state = "ERROR"
     return
@@ -287,7 +294,7 @@ end
 -- ask the workers to do a map job
 function task_methods:do_map()
   local logger,select_handler = self.logger,self.select_handler
-  if not self.map_plan or #self.map_plan == 0 then
+  if not self.map_plan or self.map_plan_size == 0 then
     logger:warningf("Imposible to execute a non existing map_plan\n")
     self.state = "ERROR"
     return
@@ -305,6 +312,7 @@ function task_methods:do_map()
 end
 
 function task_methods:process_map_result(taskid,map_key,result)
+  local result = common.load(result)
   local logger,select_handler = self.logger,self.select_handler
   if taskid ~= self.id then
     logger:warningf("Incorrect task id, found %s, expected %s\n",
@@ -322,17 +330,18 @@ function task_methods:process_map_result(taskid,map_key,result)
   -- mark the job as done
   self.map_done[map_key] = true
   self.map_plan_count    = self.map_plan_count + 1
+  print("COUNTING", self.map_plan_count, self.map_plan_size)
   --
-  if not type(result) == "table" then
+  if type(result) ~= "table" then
     logger:warningf("Incorrect map result type, expected a table\n")
     return
   end
   self.reduction = iterator(ipairs(result)):select(2):
-  reduction(function(acc,t)
-	      acc[t[1]] = table.insert(acc[t[1]] or {}, t[2])
-	      return acc
-	    end,
-	    self.reduction)
+  reduce(function(acc,t)
+	   acc[t[1]] = table.insert(acc[t[1]] or {}, t[2])
+	   return acc
+	 end,
+	 self.reduction)
   if self.map_plan_count == self.map_plan_size then
     self.state = "MAP_FINISHED"
   end
@@ -351,8 +360,10 @@ function task_methods:do_reduce(workers)
   self.reduce_done = {}
   self.reduce_worker = {}
   local id = 0
+  local count = 0
   for key,value in pairs(self.reduction) do
     id = id + 1
+    count = count + 1
     if self.worker_nump[id] > 0 then
       local worker = workers[id]
       self.reduce_worker[key] = worker
@@ -360,7 +371,7 @@ function task_methods:do_reduce(workers)
     end
     id = id % #workers
   end
-  self.reduce_size  = id
+  self.reduce_size  = count
   self.reduce_count = 0
   self.map_reduce_result = {}
   self.state = "REDUCE"

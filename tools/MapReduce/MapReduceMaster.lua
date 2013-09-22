@@ -59,9 +59,6 @@ local message_reply = {
     local ID = make_task_id(name)
     task = master.task(logger, select_handler, conn, ID, script, arg)
     if not task then return "ERROR" end
-    if not task:prepare_map_plan(workers) then
-      return "ERROR"
-    end
     return ID
   end,
 
@@ -191,6 +188,11 @@ function main()
     if task then
       local state = task:get_state()
       if state == "ERROR" then task = nil
+      elseif state == "STOPPED" then
+	if #workers > 0 then
+	  -- TODO: throw an error
+	  task:prepare_map_plan(workers)
+	end
       elseif state == "PREPARED" then
 	task:do_map()
       elseif state == "MAP_FINISHED" then
@@ -201,7 +203,7 @@ function main()
 	task:do_loop()
       elseif state == "FINISHED" then
 	task = nil
-      else
+      elseif state ~= "MAP" and state ~= "REDUCE" and state ~= "SEQUENTIAL" and state ~= "LOOP" then
 	logger:warningf("Unknown task state: %s\n", state)
       end
     end

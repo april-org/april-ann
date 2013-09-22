@@ -191,8 +191,7 @@ function worker_func(master,conn)
   select_handler:accept(workersock, worker_func)
 end
 
--- job_type is MAP or REDUCE
-function execute_pending_job(job_type, pending_jobs, method, cache)
+function execute_pending_job(pending_jobs, method, cache)
   local idx   = 1
   local cache = cache or {}
   while #free_cores > 0 and #pending_jobs > 0 do
@@ -264,7 +263,7 @@ function main()
     if #cores > 0 then
       for i=1,#cores do
 	local c = cores[i]
-	if not aux_free_cores_dict[c] and not cores:busy() then
+	if not aux_free_cores_dict[c] and not c:busy() then
 	  aux_free_cores_dict[c] = true
 	  table.insert(free_cores, c)
 	end
