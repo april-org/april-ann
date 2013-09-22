@@ -40,6 +40,9 @@ local free_cores       = { }
 local aux_free_cores_dict = { }
 local mapkey2core      = { }
 local core_tmp_names   = iterator(range(1,NUMP)):map(os.tmpname):table()
+local map_pending_jobs = {}
+local reduce_pending_jobs = {}
+local pending_pids = {}
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
@@ -99,54 +102,39 @@ local message_reply = {
   end,
   
   TASK = function(conn,msg)
-    local taskid,script = msg:match("^([^%s]+) (.*)$")
-    cores = {}
-    free_cores = {}
+    local taskid,nump,arg,script = msg:match("^%s*([^%s]+)%s*([^%s]+)%s*(return %b{})%s*(.*)$")
+    cores       = {}
+    free_cores  = {}
     mapkey2core = {}
     aux_free_cores_dict = {}
+    map_pending_jobs    = {}
+    reduce_pending_jobs = {}
     collectgarbage("collect")
-    for i=1,NUMP do
+    for i=1,tonumber(nump) do
       cores[i] = worker.core(logger,
 			     core_tmp_names[i],
 			     script,
+			     arg,
 			     taskid)
       free_cores[i] = cores[i]
       aux_free_cores_dict[cores[i]] = true
     end
+    return "OK"
   end,
 
   MAP = function(conn,msg)
-    local mapkey,job = msg:match("^([^%s]+) (.*)$")
-    -- job = common.load(job)
-    -- if not job then
-    --  return "ERROR"
-    -- end
-    local c = mapkey2core[mapkey]
-    if not c then
-      -- TODO: error if not free cores
-      c = table.remove(free_cores, 1)
-      mapkey2core[mapkey] = c
-      aux_free_cores_dict[c] = nil
-    end
-    c:write(string.format("MAP %s %s",
-			  mapkey, job))
-    c:flush()
-    return nil
+    table.insert(map_pending_jobs, msg)
+    return "EXIT"
   end,
 
   REDUCE = function(conn,msg)
-    local key,values = msg:match("^([^%s]+) (.*)$")
-    -- job = common.load(job)
-    -- if not job then
-    --  return "ERROR"
-    -- end
-    -- TODO: error if not free cores
-    local c = table.remove(free_cores, 1)
-    aux_free_cores_dict[c] = nil
-    c:write(string.format("MAP %s %s",
-			  mapkey, job))
-    c:flush()
-    return nil
+    table.insert(reduce_pending_jobs, msg)
+    return "EXIT"
+  end,
+
+  SHARE = function(conn,msg)
+    for i=1,#cores do cores[i]:share(msg) end
+    return "EXIT"
   end,
 }
 
@@ -201,6 +189,28 @@ function worker_func(master,conn)
   end
   -- following instruction allows action chains
   select_handler:accept(workersock, worker_func)
+end
+
+-- job_type is MAP or REDUCE
+function execute_pending_job(job_type, pending_jobs, method, cache)
+  local idx   = 1
+  local cache = cache or {}
+  while #free_cores > 0 and #pending_jobs > 0 do
+    local msg = pending_jobs[idx]
+    local key,value = msg:match("^%s*([^%s]+)%s*(.*)$")
+    local c = cache[key]
+    if not c then
+      c = table.remove(free_cores, 1)
+      cache[key] = c
+      aux_free_cores_dict[c] = nil
+    end
+    if not c:busy() then
+      c[method](c, MASTER_ADDRESS, MASTER_PORT, key, value, pending_pids)
+      c:flush()
+      table.remove(pending_jobs, idx)
+    else idx = idx + 1
+    end
+  end
 end
 
 -------------------------------------------------------------------------------
@@ -259,6 +269,8 @@ function main()
 	  table.insert(free_cores, c)
 	end
       end
+      execute_pending_job(map_pending_jobs, "do_map", mapkey2core)
+      execute_pending_job(reduce_pending_jobs, "do_reduce")
       -- execute pending operations
       select_handler:execute(0.1)
     else

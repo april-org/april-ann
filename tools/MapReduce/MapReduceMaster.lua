@@ -49,15 +49,15 @@ local message_reply = {
   -- located in a shared disk between cluster nodes.
   -- TODO: allow to send a Lua code string, instead of a filename path
   TASK = function(conn,msg)
-    local name,script = table.unpack(string.tokenize(msg or ""))
+    local name,arg,script = msg:match("^%s*([^%s]+)%s*(return %b{})%s*(.*)")
     local address = conn:getsockname()
-    logger:print("Recevied TASK action:", address, name)
+    logger:print("Received TASK action:", address, arg)
     if task ~= nil then
       logger:warningf("The cluster is busy\n")
       return "ERROR"
     end
     local ID = make_task_id(name)
-    task = master.task(logger, select_handler, conn, ID, script)
+    task = master.task(logger, select_handler, conn, ID, script, arg)
     if not task then return "ERROR" end
     if not task:prepare_map_plan(workers) then
       return "ERROR"
@@ -72,9 +72,8 @@ local message_reply = {
       logger:print("Received WORKER action:", address, name, port, nump, mem)
       local w = inv_workers[name]
       if w then
-	local _,_,_,old_nump,old_mem = w:get()
 	logger:print("Updating WORKER")
-	w:update(address,port,nump)
+	w:update(address,port,nump,mem)
       else
 	logger:print("Creating WORKER")
 	local w = master.worker(name,address,port,nump,mem)
@@ -84,6 +83,25 @@ local message_reply = {
       end
       return "OK"
     end,
+
+  MAP_RESULT = function(conn,msg)
+    local taskid,map_key,result = msg:match("^%s*([^%s]+)%s*([^%s]+)%s*(.*)$")
+    -- TODO: throw error if result is not well formed??
+    local ok = task:process_map_result(taskid,map_key,result)
+    -- TODO: throw error
+    -- if not ok then return "ERROR" end
+    return "OK"
+  end,
+
+  REDUCE_RESULT = function(conn,msg)
+    local taskid,key,value = msg:match("^%s*([^%s]+)%s*([^%s]+)%s*(.*)$")
+    -- TODO: throw error if result is not well formed??
+    local ok = task:process_reduce_result(taskid,key,value)
+    -- TODO: throw error
+    -- if not ok then return "ERROR" end
+    return "OK"
+  end,
+
 }
 
 -------------------------------------------------------------------------------
@@ -171,7 +189,7 @@ function main()
       clock:go()
     end
     if task then
-      local state = task:state()
+      local state = task:get_state()
       if state == "ERROR" then task = nil
       elseif state == "PREPARED" then
 	task:do_map()
