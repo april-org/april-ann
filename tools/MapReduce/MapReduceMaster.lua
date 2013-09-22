@@ -51,7 +51,7 @@ local message_reply = {
   TASK = function(conn,msg)
     local name,script = table.unpack(string.tokenize(msg or ""))
     local address = conn:getsockname()
-    logger:print("Recevied TASK action:", address, name, script)
+    logger:print("Recevied TASK action:", address, name)
     if task ~= nil then
       logger:warningf("The cluster is busy\n")
       return "ERROR"
@@ -62,6 +62,7 @@ local message_reply = {
     if not task:prepare_map_plan(workers) then
       return "ERROR"
     end
+    for i=1,#workers do workers[i]:task(ID,script)
     return ID
   end,
 

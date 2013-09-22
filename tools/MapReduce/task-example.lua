@@ -18,7 +18,7 @@ decode_function = nil
 split_function = nil
 
 -- receives an array of key,value pairs, and produces an array of key,value
--- pairs
+-- string (or able to be string-converted by Lua) pairs
 function map(list)
   -- iterator over all key,value pairs
   local out = iterator(iparis(list)):select(2):
@@ -33,7 +33,8 @@ function map(list)
   return iterator(pairs(out)):table()
 end
 
--- receive a key and an array of values, and produces a pair key,value
+-- receive a key and an array of values, and produces a pair of strings
+-- key,value (or able to be string-converted by Lua) pairs
 function reduce(key,values)
   return key,iterator(ipairs(values)):select(2):reduce(math.add(),0)
 end
