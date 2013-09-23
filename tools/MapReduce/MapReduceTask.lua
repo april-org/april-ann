@@ -6,7 +6,7 @@ if #arg < 3 then
 end
 --
 local BIND_TIMEOUT      = 10
-local TIMEOUT           = 1    -- in seconds
+local TIMEOUT           = 10   -- in seconds
 local MASTER_PING_TIMER = 10   -- in seconds
 --
 local NAME           = table.remove(arg,1)
@@ -14,9 +14,10 @@ local MASTER_ADDRESS = table.remove(arg,1)
 local MASTER_PORT    = table.remove(arg,1)
 local TASK_SCRIPT    = table.remove(arg,1)
 --
-local logger         = common.logger()
+local logger         = common.logger(false,io.stderr)
 --
-task              = common.load(TASK_SCRIPT,logger,table.unpack(arg)) or error("Error loading the script")
+task              = assert(common.load(TASK_SCRIPT,logger,table.unpack(arg)),
+			   "Error loading the script")
 data              = task.data   or error("Needs a data table")
 mmap              = task.map    or error("Needs a map function")
 mreduce           = task.reduce or error("Needs a reduce function")
@@ -38,6 +39,40 @@ local TASK_ID = nil
 local MASTER_IS_ALIVE  = false
 local connections      = common.connections_set()
 local select_handler   = common.select_handler(MASTER_PING_TIMER)
+
+---------------------------------------------------------------
+------------------- CONNECTION HANDLER ------------------------
+---------------------------------------------------------------
+
+local LOOP_RETURN = true
+local FINISHED    = false
+
+local message_reply = {
+  PING = "PONG",
+  
+  EXIT = function() FINISHED=true return "EXIT" end,
+
+  -- TODO: Execute sequential function in a forked process?
+  SEQUENTIAL = function(conn,msg)
+    local map_reduce_result = common.load(msg,logger)
+    if not map_reduce_result then return "ERROR" end
+    -- SEQUENTIAL
+    local shared = sequential(map_reduce_result) -- it is supposed to be fast
+    shared = common.tostring(shared)
+    return string.format("SEQUENTIAL_DONE return %s", shared)
+  end,
+  
+  -- TODO: Execute loop function in a forked process?
+  LOOP = function(conn,msg)
+    -- TODO: check the TASKID
+    local ret = loop() -- it is supposed to be a fast
+    LOOP_RETURN = ret
+    if ret then return "return true"
+    else return "return false"
+    end
+  end,
+}
+
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
@@ -57,7 +92,7 @@ function send_task_to_master(name,master_address,master_port,arg,script)
   if not check_error(ok,error_msg) then return false end
   pending = true
   select_handler:send(s, string.format("TASK %s return %s %s",
-				       name, table.tostring(arg), script))
+				       name, common.tostring(arg), script))
   select_handler:receive(s,
 			 function(conn,msg)
 			   local msg = table.unpack(string.tokenize(msg or ""))
@@ -66,39 +101,16 @@ function send_task_to_master(name,master_address,master_port,arg,script)
 			   else
 			     TASK_ID = msg
 			     MASTER_IS_ALIVE = true
+			     select_handler:send(s, "OK")
+			     select_handler:receive(conn,
+						    common.make_connection_handler(select_handler,
+										   message_reply,
+										   connections))
+
 			   end
 			 end)
   return s
 end
-
----------------------------------------------------------------
-------------------- CONNECTION HANDLER ------------------------
----------------------------------------------------------------
-
-local message_reply = {
-  PING = "PONG",
-  
-  EXIT = "EXIT",
-
-  -- TODO: Execute sequential function in a forked process?
-  SEQUENTIAL = function(conn,msg)
-    local map_reduce_result = common.load(msg,logger)
-    if not map_reduce_result then return "ERROR" end
-    -- SEQUENTIAL
-    local shared = sequential(map_reduce_result) -- it is supposed to be fast
-    shared = (type(shared)=="table" and table.tostring(shared)) or tostring(shared)
-    return string.format("SEQUENTIAL_DONE return %s", shared)
-  end,
-  
-  -- TODO: Execute loop function in a forked process?
-  LOOP = function(conn,msg)
-    -- TODO: check the TASKID
-    local ret = loop() -- it is supposed to be a fast
-    if ret then return "return true"
-    else return "return false"
-    end
-  end,
-}
 
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
@@ -109,9 +121,7 @@ function check_master(select_handler, timeout)
     connections = common.connections_set()
     logger:warningf("Master is dead\n")
     MASTER_CONN = send_task_to_master(NAME, MASTER_ADDRESS, MASTER_PORT, arg, TASK_SCRIPT_CONTENT)
-    connections:add(MASTER_CONN, common.make_connection_handler(select_handler,
-								message_reply,
-								connections))
+    connections:add(MASTER_CONN)
     return false
   else
     logger:print("Master is alive, ping")
@@ -132,6 +142,8 @@ function check_master(select_handler, timeout)
 			     if msg ~= "PONG" then
 			       MASTER_IS_ALIVE = false
 			       select_handler:close(s)
+			     else
+			       MASTER_IS_ALIVE = true
 			     end
 			   end)
     select_handler:send(s, "EXIT")
@@ -146,7 +158,7 @@ end
 -------------------------------------------------------------------------------
 
 function main()
-  logger:printf("Running task %s, at master %s:%d\n",
+  logger:debugf("Running task %s, at master %s:%d\n",
 		NAME, MASTER_ADDRESS, MASTER_PORT)
   
   -- TODO: control SIGINT signal
@@ -165,7 +177,7 @@ function main()
   local clock = util.stopwatch()
   clock:go()
   check_master(select_handler, TIMEOUT)
-  while true do
+  while LOOP_RETURN do
     collectgarbage("collect")
     local cpu,wall = clock:read()
     if wall > MASTER_PING_TIMER then
@@ -178,6 +190,12 @@ function main()
     select_handler:execute(TIMEOUT)
     connections:remove_dead_conections()
   end
+  while not FINISHED do
+    -- execute pending operations
+    select_handler:execute(TIMEOUT)
+    connections:remove_dead_conections()
+  end
+  select_handler:execute(TIMEOUT)
 end
 
 ------------------------------------------------------------------------------

@@ -20,7 +20,13 @@ local data = {
 }
 
 if #arg > 0 then
-  data = iterator(ipairs(arg)):select(2):map(function(v) return {v,nil} end):table()
+  data = iterator(ipairs(arg)):select(2):
+  map(function(v)
+	local f = io.popen("wc -l " .. v)
+	local n = tonumber(f:read("*l"))
+	return {v,n}
+      end):
+  table()
 end
 
 -- Loads the data if it was necessary, so the master executes decoding, and
@@ -28,10 +34,7 @@ end
 -- which has the ability to load the data, or directly a data value. The
 -- returned value will be passed to the split function in order to split it.
 local function decode(encoded_data,data_size)
-  local f = io.open(encoded_data)
-  local decoded_data = string.tokenize(f:read("*a"),"\n")
-  f:close()
-  return decoded_data -- an array of lines
+  return encoded_data
 end
 
 -- This function receives a decoded data, its size, and splits it by the given
@@ -41,8 +44,7 @@ end
 -- function. So, it is possible to return a string, a table with strings, or a
 -- value convertible to string, or a table with values convertible to string.
 local function split(decoded_data,data_size,first,last)
-  local slice_data = table.slice(decoded_data, first, last)
-  return slice_data,#slice_data -- a slice of the given array of lines
+  return string.format("return %q,%d,%d",decoded_data,first,last), last-first+1
 end
 
 -- Receives a key,value pair, and produces an array of key,value string (or able
@@ -52,14 +54,18 @@ end
 -- useful for this purpose. Please, be careful because all cached values will be
 -- keep at memory of the machine where the task was executed.
 local function mmap(key,value)
-  local value = common.cache(key, value)
-  -- iterate over data lines, and line tokenization
-  local out = iterator(ipairs(value)):select(2):map(string.tokenize):
-  -- word iterator and reduction
-  iterate(ipairs):select(2):reduce(function(acc,w)
-				     acc[w] = (acc[w] or 0) + 1
-				     return acc
-				   end, {})
+  -- local value = common.cache(key, value)
+  local data,first,last = load(value)()
+  local out = iterator(io.lines(data)):
+  enumerate():
+  filter(function(i,line) return (first<=i and i<=last) end):
+  select(2):
+  map(string.tokenize):
+  iterate(ipairs):select(2):
+  reduce(function(acc,w)
+	   acc[w] = (acc[w] or 0) + 1
+	   return acc
+	 end, {})
   -- returns an array of key,value pairs
   return iterator(pairs(out)):table()
 end
@@ -79,12 +85,12 @@ end
 -- between all workers, and shows the result on user screen
 local function sequential(list)
   iterator(pairs(list)):apply(function(k,v)print(v,k)end)
-  return
+  return {1,2,3,4}
 end
 
 -- this function receives the shared value returned by sequential function
 local function shared(value)
-  return
+  return value
 end
 
 return {

@@ -27,8 +27,9 @@ end
 MEM = tonumber(MEM) * suffix_powers[suffix]
 --
 local BIND_TIMEOUT      = 10
-local TIMEOUT           =  1  -- in seconds
+local TIMEOUT           = 10  -- in seconds
 local MASTER_PING_TIMER = 10  -- in seconds
+local PENDING_TH        = 50  -- number of computed results
 --
 local MASTER_IS_ALIVE  = false
 local connections      = common.connections_set()
@@ -42,7 +43,7 @@ local mapkey2core      = { }
 local core_tmp_names   = iterator(range(1,NUMP)):map(os.tmpname):table()
 local map_pending_jobs = {}
 local reduce_pending_jobs = {}
-local pending_pids = {}
+local pending_results  = { }
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
@@ -109,6 +110,7 @@ local message_reply = {
     aux_free_cores_dict = {}
     map_pending_jobs    = {}
     reduce_pending_jobs = {}
+    pending_results     = {}
     collectgarbage("collect")
     for i=1,tonumber(nump) do
       cores[i] = worker.core(logger,
@@ -150,7 +152,7 @@ function check_master(select_handler, timeout)
 		       NUMP, MEM)    
     return false
   else
-    logger:print("Master is alive, ping")
+    logger:debug("Master is alive, ping")
     local ok,error_msg,s,data = true
     s,error_msg = socket.tcp()
     s:settimeout(timeout)
@@ -181,7 +183,7 @@ function worker_func(master,conn)
   if conn then
     local a,b = conn:getsockname()
     local c,d = conn:getpeername()
-    logger:printf("Connection received at %s:%d from %s:%d\n",a,b,c,d)
+    logger:debugf("Connection received at %s:%d from %s:%d\n",a,b,c,d)
     connections:add(conn)
     select_handler:receive(conn, common.make_connection_handler(select_handler,
 								message_reply,
@@ -191,25 +193,53 @@ function worker_func(master,conn)
   select_handler:accept(workersock, worker_func)
 end
 
+function append_result(c, t)
+  local result = c:read_result()
+  if result then table.insert(t, result) end
+end
+
 function execute_pending_job(pending_jobs, method, cache)
-  local idx   = 1
-  local cache = cache or {}
-  while #free_cores > 0 and #pending_jobs > 0 do
-    local msg = pending_jobs[idx]
-    local key,value = msg:match("^%s*([^%s]+)%s*(.*)$")
-    local c = cache[key]
-    if not c then
-      c = table.remove(free_cores, 1)
-      cache[key] = c
-      aux_free_cores_dict[c] = nil
-    end
-    if not c:busy() then
-      c[method](c, MASTER_ADDRESS, MASTER_PORT, key, value, pending_pids)
-      c:flush()
-      table.remove(pending_jobs, idx)
-    else idx = idx + 1
+  if #pending_jobs > 0 then
+    local idx   = 1
+    local cache = cache or {}
+    while #free_cores > 0 and #pending_jobs > 0 do
+      local msg = pending_jobs[idx]
+      local str = msg:match("^%s*(return .*)$")
+      key,value = common.load(str,logger)
+      local c = cache[key]
+      if not c then
+	c = table.remove(free_cores, 1)
+	cache[key] = c
+	aux_free_cores_dict[c] = nil
+      end
+      if not c:busy() then
+	c[method](c, str)
+	c:flush()
+	table.remove(pending_jobs, idx)
+      else idx = idx + 1
+      end
     end
   end
+end
+
+function process_pending_results(pending_results)
+  -- CONNECTION WITH MASTER
+  local ok,error_msg,conn,data = true
+  conn,error_msg = socket.tcp()
+  -- TODO: check error
+  -- if not check_error(s,error_msg) then return false end
+  ok,error_msg=conn:connect(MASTER_ADDRESS, MASTER_PORT)
+  -- TODO: check error
+  --if not check_error(ok,error_msg) then return false end
+  for _,result in ipairs(pending_results) do
+    select_handler:send(conn, result)
+    -- TODO: throw error if ok~="EXIT"
+    select_handler:receive(conn)
+  end
+  select_handler:send(conn, "EXIT")
+  select_handler:receive(conn)
+  select_handler:close(conn)
+  return {}
 end
 
 -------------------------------------------------------------------------------
@@ -239,6 +269,7 @@ function main()
 		    logger:raw_print("\n# Closing worker")
 		    connections:close()
 		    if workersock then workersock:close() workersock = nil end
+		    iterator(ipairs(core_tmp_names)):select(2):apply(os.remove)
 		    collectgarbage("collect")
 		    os.exit(0)
 		  end)
@@ -266,6 +297,13 @@ function main()
 	if not aux_free_cores_dict[c] and not c:busy() then
 	  aux_free_cores_dict[c] = true
 	  table.insert(free_cores, c)
+	  append_result(c, pending_results)
+	end
+      end
+      local n = #pending_results
+      if n > 0 then
+	if n > PENDING_TH or #cores == #free_cores then
+	  pending_results = process_pending_results(pending_results)
 	end
       end
       execute_pending_job(map_pending_jobs, "do_map", mapkey2core)
