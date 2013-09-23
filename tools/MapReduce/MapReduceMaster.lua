@@ -7,7 +7,7 @@ local MASTER_BIND = arg[1] or "*"
 local MASTER_PORT = arg[2] or "8888"
 --
 local BIND_TIMEOUT      = 10
-local TIMEOUT           = 1    -- in seconds
+local TIMEOUT           = 10   -- in seconds
 local WORKER_PING_TIMER = 10   -- in seconds
 --
 
@@ -38,10 +38,9 @@ end
 ---------------------------------------------------------------
 
 local message_reply = {
-  PING = function(conn,name)
-    local name = table.concat(string.tokenize(name or ""))
-    return (inv_workers[name] and "PONG") or "ERROR"
-  end,
+  OK   = function() return end,
+  
+  PING = "PONG",
   
   EXIT = "EXIT",
   
@@ -66,7 +65,7 @@ local message_reply = {
     function(conn,msg)
       local name,port,nump,mem = table.unpack(string.tokenize(msg or ""))
       local address = conn:getsockname()
-      logger:print("Received WORKER action:", address, name, port, nump, mem)
+      logger:debug("Received WORKER action:", address, name, port, nump, mem)
       local w = inv_workers[name]
       if w then
 	logger:print("Updating WORKER")
@@ -82,18 +81,22 @@ local message_reply = {
     end,
 
   MAP_RESULT = function(conn,msg)
-    local taskid,map_key,result = msg:match("^%s*([^%s]+)%s*([^%s]+)%s*(.*)$")
+    local map_key,map_result = msg:match("^%s*(%b{})%s*(return .*)$")
+    local address = conn:getsockname()
+    map_key = common.load(string.sub(map_key,2,#map_key-1),logger)
+    logger:debug("Received MAP_RESULT action: ", address, map_key)
     -- TODO: throw error if result is not well formed??
-    local ok = task:process_map_result(taskid,map_key,result)
+    local ok = task:process_map_result(map_key,map_result)
     -- TODO: throw error
     -- if not ok then return "ERROR" end
     return "OK"
   end,
 
   REDUCE_RESULT = function(conn,msg)
-    local taskid,key,value = msg:match("^%s*([^%s]+)%s*([^%s]+)%s*(.*)$")
+    local key_and_value = msg:match("^%s*(return .*)$")
+    local key,value = common.load(key_and_value,logger)
     -- TODO: throw error if result is not well formed??
-    local ok = task:process_reduce_result(taskid,key,value)
+    local ok = task:process_reduce_result(key,value)
     -- TODO: throw error
     -- if not ok then return "ERROR" end
     return "OK"
@@ -125,7 +128,7 @@ function master_func(mastersock,conn)
   if conn then
     local a,b = conn:getsockname()
     local c,d = conn:getpeername()
-    logger:printf("Connection received at %s:%d from %s:%d\n",a,b,c,d)
+    logger:debugf("Connection received at %s:%d from %s:%d\n",a,b,c,d)
     connections:add(conn)
     select_handler:receive(conn,
 			   common.make_connection_handler(select_handler,
@@ -194,11 +197,11 @@ function main()
 	  task:prepare_map_plan(workers)
 	end
       elseif state == "PREPARED" then
-	task:do_map()
+	task:do_map(workers)
       elseif state == "MAP_FINISHED" then
-	task:do_reduce()
+	task:do_reduce(workers)
       elseif state == "REDUCE_FINISHED" then
-	task:do_sequential()
+	task:do_sequential(workers)
       elseif state == "SEQUENTIAL_FINISHED" then
 	task:do_loop()
       elseif state == "FINISHED" then
@@ -206,8 +209,10 @@ function main()
       elseif state ~= "MAP" and state ~= "REDUCE" and state ~= "SEQUENTIAL" and state ~= "LOOP" then
 	logger:warningf("Unknown task state: %s\n", state)
       end
+      select_handler:execute(0.1)
+    else
+      select_handler:execute(TIMEOUT)
     end
-    select_handler:execute(TIMEOUT)
     connections:remove_dead_conections()
   end
 end

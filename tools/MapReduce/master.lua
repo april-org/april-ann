@@ -12,7 +12,8 @@ local worker_methods,worker_class_metatable = class("master.worker")
 
 function worker_class_metatable:__call(name,address,port,nump,mem)
   local obj = { name=name, address=address, port=port, nump=nump, mem=mem,
-		is_dead=false, number_of_attemps=0 }
+		is_dead=false, number_of_attemps=0,
+		pending_map = {}, pending_reduce = {} }
   obj.rel_mem_nump = mem/nump
   obj.load_avg = 0
   return class_instance(obj,self,true)
@@ -92,7 +93,7 @@ function worker_methods:get_mem()
 end
 
 function worker_methods:get_nump()
-  return math.round(math.max(0, self.nump - self.load_avg))
+  return math.ceil(math.max(0, self.nump - self.load_avg))
 end
 
 function worker_methods:get_rel_mem_nump()
@@ -121,25 +122,48 @@ function worker_methods:task(select_handler,logger,taskid,script,arg,nump)
   select_handler:close(s)
 end
 
-function worker_methods:do_map(task,select_handler,logger,map_key,job)
-  local s = self:connect()
-  if not s then return false end
-  if type(job) == "table" then
-    job = table.tostring(job)
-  else
-    job = tostring(job)
+function worker_methods:do_map(task,select_handler,logger)
+  if #self.pending_map > 0 then
+    local s = self:connect()
+    if not s then return false end
+    local t = self.pending_map
+    for i=1,#t do
+      local job = t[i]
+      select_handler:send( s, job )
+      select_handler:receive(s)
+    end
+    select_handler:close(s)
+    self.pending_map = {}
   end
-  select_handler:send( s, string.format("MAP %s return %s", map_key, job) )
-  select_handler:receive(s)
-  select_handler:close(s)
 end
 
-function worker_methods:do_reduce(task,select_handler,logger,key,value)
-  local s = self:connect()
-  if not s then return false end
-  select_handler:send(s, string.format("REDUCE %s %s", key, value))
-  select_handler:receive(s)
-  select_handler:close(s)
+function worker_methods:append_map(task,select_handler,logger,map_key,job)
+  local map_key = common.tostring(map_key, true)
+  local job     = common.tostring(job)
+  table.insert(self.pending_map,
+	       string.format("MAP return %s,%s", map_key, job))
+end
+
+function worker_methods:do_reduce(task,select_handler,logger)
+  if #self.pending_reduce > 0 then
+    local s = self:connect()
+    if not s then return false end
+    local t = self.pending_reduce
+    for i=1,#t do
+      local job = t[i]
+      select_handler:send(s, job)
+      select_handler:receive(s)
+    end
+    select_handler:close(s)
+    self.pending_reduce = {}
+  end
+end
+
+function worker_methods:append_reduce(task,select_handler,logger,key,value)
+  local key   = common.tostring(key)
+  local value = common.tostring(value)
+  table.insert(self.pending_reduce,
+	       string.format("REDUCE return %s,%s", key, value))
 end
 
 function worker_methods:share(select_handler, logger, data)
@@ -209,7 +233,6 @@ function task_methods:get_state() return self.state end
 -- equals during the global loop. If an error occurs, and a worker dies, then
 -- the plan will be recomputed
 function task_methods:prepare_map_plan(workers)
-  print("NUM WORKERS",#workers)
   local logger,select_handler = self.logger,self.select_handler
   local memory = iterator(pairs(workers)):select(2):
   map(function(v) return v:get_mem() end):reduce(math.add(),0)
@@ -260,6 +283,7 @@ function task_methods:prepare_map_plan(workers)
 	  free_size = free_size - size
 	  logger:debugf("MAP_JOB %s\n", map_key)
 	  first = last + 1
+	  map_plan_size = map_plan_size + 1
 	else
 	  -- forces to finish current data position
 	  logger:debugf("Sizes in data table are not correct, please check it. "..
@@ -272,7 +296,6 @@ function task_methods:prepare_map_plan(workers)
 	    decoded_data, data_size, first, last = get_data(data_i)
 	  end
 	end
-	map_plan_size = map_plan_size + 1
       end -- while free_size and data_i
       if data_i > #data then break end
     end -- for each free processor at current worker
@@ -292,7 +315,7 @@ function task_methods:prepare_map_plan(workers)
 end
 
 -- ask the workers to do a map job
-function task_methods:do_map()
+function task_methods:do_map(workers)
   local logger,select_handler = self.logger,self.select_handler
   if not self.map_plan or self.map_plan_size == 0 then
     logger:warningf("Imposible to execute a non existing map_plan\n")
@@ -304,21 +327,19 @@ function task_methods:do_map()
   for map_key,data in pairs(self.map_plan) do
     local worker = data.worker
     local job    = data.job
-    worker:do_map(self, select_handler, logger, map_key, job)
+    worker:append_map(self, select_handler, logger, map_key, job)
+  end
+  for i=1,#workers do
+    workers[i]:do_map(self, select_handler, logger)
   end
   self.state = "MAP"
   self.map_done = {}
   self.reduction = {}
 end
 
-function task_methods:process_map_result(taskid,map_key,result)
+function task_methods:process_map_result(map_key,result)
   local result = common.load(result)
   local logger,select_handler = self.logger,self.select_handler
-  if taskid ~= self.id then
-    logger:warningf("Incorrect task id, found %s, expected %s\n",
-		    taskid, self.id)
-    return
-  end
   if not self.map_plan[map_key] then
     logger:warningf("Incorrect map_key %s\n", map_key)
     return
@@ -330,7 +351,6 @@ function task_methods:process_map_result(taskid,map_key,result)
   -- mark the job as done
   self.map_done[map_key] = true
   self.map_plan_count    = self.map_plan_count + 1
-  print("COUNTING", self.map_plan_count, self.map_plan_size)
   --
   if type(result) ~= "table" then
     logger:warningf("Incorrect map result type, expected a table\n")
@@ -351,11 +371,7 @@ end
 -- ask the workers to do a map job
 function task_methods:do_reduce(workers)
   local logger,select_handler = self.logger,self.select_handler
-  if #self.reduction == 0 then
-    logger:warningf("Impossible to execute a void reduction\n")
-    self.state = "ERROR"
-    return
-  end
+  -- TODO: check reduction size
   --
   self.reduce_done = {}
   self.reduce_worker = {}
@@ -367,9 +383,12 @@ function task_methods:do_reduce(workers)
     if self.worker_nump[id] > 0 then
       local worker = workers[id]
       self.reduce_worker[key] = worker
-      worker:do_reduce(self, select_handler, logger, key, value)
+      worker:append_reduce(self, select_handler, logger, key, value)
     end
     id = id % #workers
+  end
+  for i=1,#workers do
+    workers[i]:do_reduce(self, select_handler, logger)
   end
   self.reduce_size  = count
   self.reduce_count = 0
@@ -377,13 +396,8 @@ function task_methods:do_reduce(workers)
   self.state = "REDUCE"
 end
 
-function task_methods:process_reduce_result(taskid,key,result)
+function task_methods:process_reduce_result(key,result)
   local logger,select_handler = self.logger,self.select_handler
-  if taskid ~= self.id then
-    logger:warningf("Incorrect task id, found %s, expected %s\n",
-		    taskid, self.id)
-    return
-  end
   if not self.reduction[key] then
     logger:warningf("Incorrect key %s\n", key)
     return
@@ -404,25 +418,25 @@ function task_methods:process_reduce_result(taskid,key,result)
   return true
 end
 
-function task_methods:do_sequential()
+function task_methods:do_sequential(workers)
   self.select_handler:send(self.conn,
 			   string.format("SEQUENTIAL return %s",
-					 table.tostring(map_reduce_result)))
+					 table.tostring(self.map_reduce_result)))
   self.select_handler:receive(self.conn,
 			      function(conn,msg)
-				local action,data = msg:match("^%s*([^%s]+)%s*(.*)$")
+				local action,data = msg:match("^%s*([^%s]+)%s*(return .*)$")
 				if action ~= "SEQUENTIAL_DONE" then
 				  self.state = "ERROR"
 				  return "ERROR"
 				else
-				  self:process_sequential(data)
+				  self:process_sequential(data,workers)
 				  return "OK"
 				end
 			      end)
   self.state = "SEQUENTIAL"
 end
 
-function task_methods:process_sequential(data)
+function task_methods:process_sequential(data,workers)
   local select_handler,logger = self.select_handler,self.logger
   for i=1,#workers do
     local w = workers[i]
@@ -438,7 +452,7 @@ function task_methods:do_loop()
 			      function(conn,msg)
 				local result = common.load(msg,logger)
 				if result==nil then return "ERROR" end
-				task:process_loop(result)
+				self:process_loop(result)
 				return "OK"
 			      end)
   self.state = "LOOP"

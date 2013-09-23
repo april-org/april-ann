@@ -1203,6 +1203,14 @@ function iterator_methods:reduce(func, initial_value)
   return reduce(func, initial_value, self:get())
 end
 
+function iterator_methods:enumerate()
+  local id = 0
+  return self:map(function(...)
+		    id = id + 1
+		    return id, ...
+		  end)
+end
+
 function iterator_methods:iterate(iterator_func)
   return self:map(function(...)
 		    local f,s,v = iterator_func(...)

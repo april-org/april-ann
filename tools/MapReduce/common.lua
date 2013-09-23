@@ -25,6 +25,19 @@ function common.cache(key, load_func)
   return v
 end
 
+-- converts to a Lua string
+function common.tostring(data,force_string)
+  local t = type(data)
+  if t == "table" then
+    data = table.tostring(data)
+  elseif t == "string" or force_string then
+    data = string.format("%q", tostring(data))
+  else
+    data = tostring(data)
+  end
+  return data
+end
+
 -- Loads a string or a Lua script, depending on the content of str.
 function common.load(str,logger, ...)
   local logger = logger or common.logger()
@@ -61,7 +74,7 @@ function common.send_wrapper(sock, data)
   else
     sock:send(len_str..data)
   end
-  print("SEND",data)
+  -- print("SEND",data)
 end
 
 -- A wrapper which receives data send following the previous function, so the
@@ -72,7 +85,7 @@ function common.recv_wrapper(sock)
   if not msg then return nil end
   local len  = binarizer.decode.uint32(msg)
   local data = sock:receive(len)
-  print("RECV",data)
+  -- print("RECV",data)
   return data
 end
 
@@ -83,33 +96,54 @@ end
 local logger_methods,
 logger_class_metatable = class("common.logger")
 
-function logger_class_metatable:__call()
-  local obj = {}
+function logger_class_metatable:__call(stdout,stderr)
+  if stdout == nil then stdout = io.stdout end
+  if stderr == nil then stderr = io.stderr end  
+  local obj = { stdout = stdout, stderr = stderr }
   return class_instance(obj,self,true)
 end
 
+function logger_methods:debug(...)
+  if self.stderr then
+    --
+  end
+end
+
 function logger_methods:debugf(format,...)
-  -- fprintf(io.stderr, format, ...)
+  if self.stderr then
+    -- self.stderr:write(string.format(format, ...))
+  end
 end
 
 function logger_methods:warningf(format,...)
-  fprintf(io.stderr, format, ...)
+  if self.stderr then
+    self.stderr:write(string.format(format, ...))
+  end
 end
 
 function logger_methods:print(...)
-  print("#", ...)
+  if self.stdout then
+    local arg = table.pack(...)
+    self.stdout:write("#\t" .. table.concat(arg,"\t") .. "\n")
+  end
 end
 
 function logger_methods:raw_print(...)
-  print(...)
+  if self.stdout then
+    self.stdout:write(table.concat(arg,"\t") .. "\n")
+  end
 end
 
 function logger_methods:printf(format,...)
-  printf("#\t" .. format, ...)
+  if self.stdout then
+    self.stdout:write(string.format("#\t"..format, ...))
+  end
 end
 
 function logger_methods:raw_printf(format,...)
-  printf(format, ...)
+  if self.stdout then
+    self.stdout:write(string.format(format, ...))
+  end
 end
 
 -------------------------------------------------------------------------------
@@ -123,7 +157,6 @@ function common.make_connection_handler(select_handler,message_reply,
     local receive_at_end = true
     if data then
       action,data = data:match("^([^%s]*)(.*)$")
-      print("# RECEIVED DATA: ", action)
       if message_reply[action] == nil then
 	select_handler:send(conn, "UNKNOWN ACTION")
       elseif type(message_reply[action]) == "string" then
@@ -239,7 +272,6 @@ local process = {
   end,
   
   close = function(conn,func,recv_map,send_map)
-    printf("# Closing connection %s:%d\n", conn:getsockname())
     conn:close()
     func(conn)
     return "close"
