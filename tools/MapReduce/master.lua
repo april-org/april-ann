@@ -144,8 +144,9 @@ function worker_methods:do_reduce(task,select_handler,logger)
     for i=1,#t do
       local job = t[i]
       select_handler:send(s, job)
-      select_handler:receive(s)
     end
+    select_handler:send(s, "REDUCE_READY")
+    select_handler:receive(s)
     select_handler:close(s)
     self.pending_reduce = {}
   end
@@ -227,6 +228,8 @@ function task_methods:send_error_message(select_handler)
 end
 
 function task_methods:get_state() return self.state end
+
+function task_methods:get_id() return self.id end
 
 -- the split_function will receive a data table field (with the pair { WHATEVER,
 -- size }), and a slice first,last
@@ -360,12 +363,12 @@ function task_methods:process_map_result(map_key,result)
     logger:warningf("Incorrect map result type, expected a table\n")
     return
   end
-  self.reduction = iterator(ipairs(result)):select(2):
-  reduce(function(acc,t)
-	   acc[t[1]] = table.insert(acc[t[1]] or {}, t[2])
-	   return acc
-	 end,
-	 self.reduction)
+  local reduction = self.reduction or {}
+  for i=1,#result do
+    local k,v = table.unpack(result[i])
+    reduction[k] = table.insert(reduction[k] or {}, v)
+  end
+  self.reduction = reduction
   if self.map_plan_count == self.map_plan_size then
     self.state = "MAP_FINISHED"
   end
