@@ -14,7 +14,7 @@ local worker_methods,worker_class_metatable = class("master.worker")
 function worker_class_metatable:__call(name,address,port,nump,mem)
   local obj = { name=name, address=address, port=port, nump=nump, mem=mem,
 		is_dead=false, number_of_attemps=0,
-		pending_map = {}, pending_reduce = {},
+		pending_map = {}, pending_reduce = { "BUNCH " },
 		pending_reduce_size = 0 }
   obj.rel_mem_nump = mem/nump
   obj.load_avg = 0
@@ -131,11 +131,11 @@ function worker_methods:do_map(task,select_handler,logger)
   end
 end
 
-function worker_methods:append_map(task,select_handler,logger,map_key,job)
+function worker_methods:append_map(task,select_handler,logger,core,map_key,job)
   local map_key = common.tostring(map_key, true)
   local job     = common.tostring(job)
   table.insert(self.pending_map,
-	       string.format("MAP return %s,%s", map_key, job))
+	       string.format("MAP %d return %s,%s", core, map_key, job))
 end
 
 function worker_methods:do_reduce(task,select_handler,logger)
@@ -151,7 +151,7 @@ function worker_methods:do_reduce(task,select_handler,logger)
     select_handler:send(s, "REDUCE_READY")
     select_handler:receive(s)
     select_handler:close(s)
-    self.pending_reduce = {}
+    self.pending_reduce = { "BUNCH " }
     self.pending_reduce_size = 0
   end
 end
@@ -163,7 +163,7 @@ function worker_methods:append_reduce(task,select_handler,logger,key,value)
   table.insert(self.pending_reduce,
 	       string.format("%s%s", binarizer.code.uint32(#msg), msg))
   self.pending_reduce_size = self.pending_reduce_size + #msg + 5
-  if self.size > REDUCE_PENDING_TH then
+  if self.pending_reduce_size > REDUCE_PENDING_TH then
     self:do_reduce(task,select_handler,logger)
   end
 end
@@ -293,7 +293,7 @@ function task_methods:prepare_map_plan(workers)
 	  last = first + size - 1
 	  local map_key   = string.format("%s-%d-%d[%d:%d]",
 					  wname, j, data_i, first, last)
-	  map_plan[map_key] = { worker=w, job = splitted_data }
+	  map_plan[map_key] = { worker=w, core=j, job = splitted_data }
 	  free_size = free_size - size
 	  logger:debugf("MAP_JOB %s\n", map_key)
 	  first = last + 1
@@ -343,7 +343,8 @@ function task_methods:do_map(workers)
   for map_key,data in pairs(self.map_plan) do
     local worker = data.worker
     local job    = data.job
-    worker:append_map(self, select_handler, logger, map_key, job)
+    local core   = data.core
+    worker:append_map(self, select_handler, logger, core, map_key, job)
   end
   for i=1,#workers do
     workers[i]:do_map(self, select_handler, logger)
