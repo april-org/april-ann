@@ -127,6 +127,7 @@ function common.send_wrapper(sock, data)
     local ok,msg = send_loop(sock, aux)
     if not ok then return false,msg end
   end
+  --print("SEND",data)
   return true
 end
 
@@ -140,6 +141,7 @@ function common.recv_wrapper(sock)
   local len  = binarizer.decode.uint32(data)
   local data,msg = recv_loop(sock, len)
   if not data then return false,msg end
+  --print("RECV",data)
   return data
 end
 
@@ -208,9 +210,8 @@ function common.make_connection_handler(select_handler,message_reply,
 					connections)
   return function(conn,data)
     local action
-    local receive_at_end = true
     if data then
-      action,data = data:match("^([^%s]*)(.*)$")
+      action,data = data:match("^([^%s]*)%s*(.*)$")
       local send_msg,continue
       if message_reply[action] == nil then
 	send_msg = "UNKNOWN ACTION"
@@ -220,14 +221,13 @@ function common.make_connection_handler(select_handler,message_reply,
 	send_msg,continue = message_reply[action](conn, data)
       end
       if send_msg then
-	receive_at_end=true
+	continue = true
 	select_handler:send(conn, send_msg)
-      elseif not continue then receive_at_end = false
       end
       if action == "EXIT" then
 	-- following instruction allows chaining of several actions
 	select_handler:close(conn, function() connections:mark_as_dead(conn) end)
-      elseif receive_at_end then
+      elseif continue then
 	-- following instruction allows chaining of several actions
 	select_handler:receive(conn,
 			       common.make_connection_handler(select_handler,
@@ -368,48 +368,48 @@ function select_methods:execute(timeout)
   clock:go()
   local cpu,wall = clock:read()
   local next_query
-  repeat
-    next_query = false
-    local recv_list = iterator(pairs(self.recv_query)):select(1):table()
-    local send_list = iterator(pairs(self.send_query)):select(1):table()
-    --
-    local recv_list,send_list,msg = socket.select(recv_list, send_list,
-						  timeout)
-    if msg == "timeout" then return end
-    local recv_map = recv_list -- table.invert(recv_list)
-    local send_map = send_list -- table.invert(send_list)
-    --
-    for conn,data in pairs(self.data) do
-      if #data == 0 then
-	self.send_query[conn] = nil
-	self.recv_query[conn] = nil
+  -- repeat
+  next_query = false
+  local recv_list = iterator(pairs(self.recv_query)):select(1):table()
+  local send_list = iterator(pairs(self.send_query)):select(1):table()
+  --
+  local recv_list,send_list,msg = socket.select(recv_list, send_list,
+						timeout)
+  if msg == "timeout" then return end
+  local recv_map = recv_list -- table.invert(recv_list)
+  local send_map = send_list -- table.invert(send_list)
+  --
+  for conn,data in pairs(self.data) do
+    if #data == 0 then
+      self.send_query[conn] = nil
+      self.recv_query[conn] = nil
+      self.data[conn] = nil
+    else
+      local d = data[1]
+      local processed = process[d.op](conn,d.func or d.co,recv_map,send_map)
+      if processed == "close" then
 	self.data[conn] = nil
-      else
-	local d = data[1]
-	local processed = process[d.op](conn,d.func or d.co,recv_map,send_map)
-	if processed == "close" then
-	  self.data[conn] = nil
-	  self.recv_query[conn] = nil
-	  self.send_query[conn] = nil
-	elseif processed then table.remove(self.data[conn], 1)
-	end
+	self.recv_query[conn] = nil
+	self.send_query[conn] = nil
+      elseif processed then table.remove(self.data[conn], 1)
       end
-      --
-      iterator(ipairs(self.data[conn] or {})):select(2):field("op"):
-      apply(function(v)
-	      if v=="accept" then
-		self.recv_query[conn] = true
-	      elseif v=="receive" then
-		self.recv_query[conn] = true
-		next_query = true
-	      elseif v == "send" then
-		self.send_query[conn] = true
-		next_query = true
-	      end
-	    end)
     end
-    cpu,wall = clock:read()
-  until not next_query or wall > timeout
+    --
+    iterator(ipairs(self.data[conn] or {})):select(2):field("op"):
+    apply(function(v)
+	    if v=="accept" then
+	      self.recv_query[conn] = true
+	    elseif v=="receive" then
+	      self.recv_query[conn] = true
+	      next_query = true
+	    elseif v == "send" then
+	      self.send_query[conn] = true
+	      next_query = true
+	    end
+	  end)
+  end
+  cpu,wall = clock:read()
+  -- until not next_query or wall > timeout
 end
 
 -----------------------------------------------------------------------------

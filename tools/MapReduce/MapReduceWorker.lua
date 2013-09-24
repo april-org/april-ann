@@ -83,7 +83,7 @@ end
 ---------------------------------------------------------------
 ------------------- CONNECTION HANDLER ------------------------
 ---------------------------------------------------------------
-local message_reply = {
+message_reply = {
   
   PING = function(conn,name)
     local name = table.concat(string.tokenize(name or ""))
@@ -152,14 +152,15 @@ local message_reply = {
   BUNCH = function(conn,msg)
     local read_size = 0
     local msg_len,result,continue = #msg
-    while read_size < len do
+    while read_size < msg_len do
       local current_len = binarizer.decode.uint32(msg:sub(read_size+1,read_size+5))
       read_size = read_size + 5
       local current_msg = msg:sub(read_size+1, read_size + current_len)
       read_size = read_size + current_len
-      local action,data = data:match("^([^%s]*)(.*)$")
-      local result,continue = message_reply[action]
+      local action,data = current_msg:match("^([^%s]*)(.*)$")
+      local result,continue = message_reply[action] or "UNKNOWN ACTION"
       if type(result) == "function" then result,continue = result(conn,data) end
+      -- print(read_size, action, data, result, continue)
     end
     if result then
       select_handler:send(conn, send_msg)
@@ -227,7 +228,7 @@ function worker_func(workersock,conn)
 end
 
 function send_result_to_master(c)
-  print("Sending result of ", c.pid)
+  -- print("Sending result of ", c.pid)
   -- CONNECTION WITH MASTER
   local conn = common.connections_set.connect(MASTER_ADDRESS, MASTER_PORT)
   -- TODO: check error
@@ -246,22 +247,23 @@ function execute_pending_map(pending_jobs, cache)
   if #pending_jobs > 0 then
     local idx   = 1
     local cache = cache or {}
-    while #free_cores > 0 and #pending_jobs > 0 do
-      local str = pending_jobs[idx]
+    while #free_cores > 0 and #pending_jobs >= idx do
+      local core,str = pending_jobs[idx]:match("%s*(%d+)%s*(return .*)")
+      core = tonumber(core)
       key,value = common.load(str,logger)
-      local c = cache[key]
-      if not c then
-	c = table.remove(free_cores, 1)
-	cache[key] = c
-	aux_free_cores_dict[c] = nil
-      end
+      local c = cores[core]
+      cache[key] = c
       if not c:busy() then
 	c:do_map(str)
 	c:flush()
 	table.remove(pending_jobs, idx)
+	if aux_free_cores_dict[c] then
+	  aux_free_cores_dict[c] = nil
+	end
       else idx = idx + 1
       end
     end
+    free_cores = iterator(pairs(aux_free_cores_dict)):select(1):table()
   end
 end
 
@@ -342,14 +344,16 @@ function main()
     if #cores > 0 then
       for i=1,#cores do
 	local c = cores[i]
+	--print(c, aux_free_cores_dict[c], c:busy())
 	if not aux_free_cores_dict[c] and not c:busy() then
+	  --print("SENDING!!!!")
 	  aux_free_cores_dict[c] = true
 	  table.insert(free_cores, c)
 	  send_result_to_master(c)
 	end
       end
       execute_pending_map(map_pending_jobs, mapkey2core)
-      print(reduce_ready, #reduce_pending_jobs, #free_cores)
+      --print(reduce_ready, #reduce_pending_jobs, #free_cores)
       if reduce_ready or #reduce_pending_jobs > PENDING_TH * #free_cores then
 	execute_pending_reduce(reduce_pending_jobs)
       end
