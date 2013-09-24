@@ -25,22 +25,14 @@ local function check_error(p,msg)
 end
 
 function worker_methods:connect()
-  local ok,error_msg,s,data = true
-  s,error_msg = socket.tcp()
-  s:settimeout(timeout)
-  if not check_error(s,error_msg) then self:set_dead() return false end
-  ok,error_msg=s:connect(self.address,self.port)
-  if not check_error(ok,error_msg) then self:set_dead() return false end
-  return s
+  local conn = common.connections_set.connect(self.address,self.port)
+  if not conn then self:set_dead() end
+  return conn
 end
 
-function worker_methods:ping(select_handler, timeout)
-  local ok,error_msg,s,data = true
-  s,error_msg = socket.tcp()
-  s:settimeout(timeout)
-  if not check_error(s,error_msg) then self:set_dead() return false end
-  ok,error_msg=s:connect(self.address,self.port)
-  if not check_error(ok,error_msg) then
+function worker_methods:ping(select_handler)
+  local s = self:connect()
+  if not s then
     self.number_of_attemps = self.number_of_attemps + 1
     if self.number_of_attemps > MAX_NUMBER_OF_ATTEMPS then self:set_dead() end
     return false
@@ -197,6 +189,7 @@ function task_class_metatable:__call(logger, select_handler, conn, id, script, a
     map_plan_size = 0,
     map_plan_count = 0,
     state = "STOPPED",
+    state_msg = "",
     reduction = {},
     reduce_done = {},
     reduce_size = 0,
@@ -222,6 +215,15 @@ function task_class_metatable:__call(logger, select_handler, conn, id, script, a
   end
   --
   return class_instance(obj,self,true)
+end
+
+function task_methods:send_error_message(select_handler)
+  select_handler:send(self.conn,
+		      string.format("ERROR %s",self.state_msg))
+  select_handler:receive(self.conn)
+  select_handler:send(self.conn, "EXIT")
+  select_handler:receive(self.conn)
+  select_handler:close(self.conn)
 end
 
 function task_methods:get_state() return self.state end
@@ -268,7 +270,7 @@ function task_methods:prepare_map_plan(workers)
     local w = workers[i]
     local wname = w:get_name()
     local worker_mem_nump = w:get_rel_mem_nump()
-    local worker_job_size = math.round(rel_size_memory * worker_mem_nump)
+    local worker_job_size = math.ceil(rel_size_memory * worker_mem_nump)
     for j=1,w:get_nump() do
       -- data split
       local free_size = worker_job_size
@@ -305,6 +307,7 @@ function task_methods:prepare_map_plan(workers)
   if data_i ~= #data+1 then
     logger:warningf("Impossible to prepare the map_plan\n")
     self.state = "ERROR"
+    self.state_msg = "Impossible to prepare the map_plan"
     return
   end
   -- map_plan has how the work was divided between all the available workers
@@ -320,6 +323,7 @@ function task_methods:do_map(workers)
   if not self.map_plan or self.map_plan_size == 0 then
     logger:warningf("Imposible to execute a non existing map_plan\n")
     self.state = "ERROR"
+    self.state_msg = "Imposible to execute a non existing map_plan"
     return
   end
   --
@@ -427,6 +431,7 @@ function task_methods:do_sequential(workers)
 				local action,data = msg:match("^%s*([^%s]+)%s*(return .*)$")
 				if action ~= "SEQUENTIAL_DONE" then
 				  self.state = "ERROR"
+				  self.state_msg = "Error receiving sequential message"
 				  return "ERROR"
 				else
 				  self:process_sequential(data,workers)
@@ -451,9 +456,11 @@ function task_methods:do_loop()
   self.select_handler:receive(self.conn,
 			      function(conn,msg)
 				local result = common.load(msg,logger)
-				if result==nil then return "ERROR" end
+				if result==nil then
+				  self.state = "ERROR"
+				  self.state_msg = "Error receiving LOOP"
+				end
 				self:process_loop(result)
-				return "OK"
 			      end)
   self.state = "LOOP"
 end

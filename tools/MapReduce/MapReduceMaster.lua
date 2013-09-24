@@ -17,7 +17,7 @@ local WORKER_PING_TIMER = 10   -- in seconds
 local workers          = {} -- a table with registered workers
 local inv_workers      = {} -- the inverted dictionary
 -- handler for I/O
-local select_handler   = common.select_handler(WORKER_PING_TIMER)
+local select_handler   = common.select_handler()
 local connections      = common.connections_set()
 local mastersock       = socket.tcp() -- the main socket
 local logger           = common.logger()
@@ -50,7 +50,6 @@ local message_reply = {
   TASK = function(conn,msg)
     local name,arg,script = msg:match("^%s*([^%s]+)%s*(return %b{})%s*(.*)")
     local address = conn:getsockname()
-    logger:print("Received TASK action:", address, arg)
     if task ~= nil then
       logger:warningf("The cluster is busy\n")
       return "ERROR"
@@ -58,6 +57,8 @@ local message_reply = {
     local ID = make_task_id(name)
     task = master.task(logger, select_handler, conn, ID, script, arg)
     if not task then return "ERROR" end
+    logger:printf("Running TASK %s executed by client %s at %s\n",
+		  ID, name, address)
     return ID
   end,
 
@@ -65,7 +66,7 @@ local message_reply = {
     function(conn,msg)
       local name,port,nump,mem = table.unpack(string.tokenize(msg or ""))
       local address = conn:getsockname()
-      logger:debug("Received WORKER action:", address, name, port, nump, mem)
+      logger:print("Received WORKER action:", address, name, port, nump, mem)
       local w = inv_workers[name]
       if w then
 	logger:print("Updating WORKER")
@@ -75,7 +76,7 @@ local message_reply = {
 	local w = master.worker(name,address,port,nump,mem)
 	table.insert(workers, w)
 	inv_workers[name] = workers[#workers]
-	w:ping(select_handler, TIMEOUT)
+	w:ping(select_handler)
       end
       return "OK"
     end,
@@ -154,7 +155,6 @@ function main()
   end
   ok,msg = mastersock:listen()
   if not ok then error(msg) end
-  mastersock:settimeout(TIMEOUT)
   
   -- register SIGINT handler for safe master stop
   signal.register(signal.SIGINT,
@@ -181,7 +181,7 @@ function main()
       iterator(ipairs(workers)):
       select(2):
       filter(function(w)return not w:dead() end):
-      apply(function(w) w:ping(select_handler, TIMEOUT) end)
+      apply(function(w) w:ping(select_handler) end)
       --
       check_workers(workers, inv_workers)
       clock:stop()
@@ -190,7 +190,9 @@ function main()
     end
     if task then
       local state = task:get_state()
-      if state == "ERROR" then task = nil
+      if state == "ERROR" then
+	task:send_error_message(select_handler)
+	task = nil
       elseif state == "STOPPED" then
 	if #workers > 0 then
 	  -- TODO: throw an error
@@ -209,10 +211,8 @@ function main()
       elseif state ~= "MAP" and state ~= "REDUCE" and state ~= "SEQUENTIAL" and state ~= "LOOP" then
 	logger:warningf("Unknown task state: %s\n", state)
       end
-      select_handler:execute(0.1)
-    else
-      select_handler:execute(TIMEOUT)
     end
+    select_handler:execute(TIMEOUT)
     connections:remove_dead_conections()
   end
 end

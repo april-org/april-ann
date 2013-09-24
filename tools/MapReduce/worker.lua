@@ -22,8 +22,10 @@ local function execute(core)
       core:write_result(string.format("MAP_RESULT {return %s} return %s",
 				      common.tostring(map_key,true),
 				      map_result))
+      
       --
       core:unlock()
+      core:wakeup_worker()
     
     elseif action == "REDUCE" then
       local str = data:match('^%s*(return .*)')
@@ -55,13 +57,16 @@ end
 -- unlock() and busy() use the temporal file to control the state of the object.
 local core_methods,core_class_metatable = class("worker.core")
 
-function core_class_metatable:__call(logger,tmpname,script,arg,taskid)
+function core_class_metatable:__call(logger,tmpname,script,arg,taskid,
+				     workersock,connections,
+				     port)
   local tochild  = table.pack(util.pipe())
   local obj = {
     tmpname=tmpname,
     result_tmpname=tmpname.."_result",
     logger=logger,
-    taskid=taskid
+    taskid=taskid,
+    port=port,
   }
   local arg = common.load(arg)
   local t = common.load(script,logger,table.unpack(arg))
@@ -78,6 +83,8 @@ function core_class_metatable:__call(logger,tmpname,script,arg,taskid)
     obj:unlock()
   else
     -- the child
+    workersock:close()
+    connections:close()
     signal.release(signal.SIGINT)
     obj.IN  = tochild[1]
     obj = class_instance(obj,self)
@@ -97,6 +104,27 @@ end
 function worker.core.meta_instance:__gc()
   if self.pid then
     self:close()
+  end
+end
+
+function core_methods:wakeup_worker()
+  if not self.pid then
+    local conn = common.connections_set.connect("localhost",self.port,120)
+    local co = coroutine.create(function()
+				  common.send_wrapper(conn,"EXIT")
+				  return true
+				end)
+    repeat
+      ok,msg = coroutine.resume(co)
+    until not ok or msg==true
+    local co = coroutine.create(function()
+				  common.recv_wrapper(conn)
+				  return true
+				end)
+    repeat
+      ok,ret,msg = coroutine.resume(co)
+    until not ok or ret==true
+    conn:close()
   end
 end
 

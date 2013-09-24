@@ -6,7 +6,7 @@ if #arg < 3 then
 end
 --
 local BIND_TIMEOUT      = 10
-local TIMEOUT           = 10   -- in seconds
+local TIMEOUT           =  1   -- in seconds
 local MASTER_PING_TIMER = 10   -- in seconds
 --
 local NAME           = table.remove(arg,1)
@@ -38,7 +38,7 @@ local MASTER_CONN = nil -- persistent connection with the master
 local TASK_ID = nil
 local MASTER_IS_ALIVE  = false
 local connections      = common.connections_set()
-local select_handler   = common.select_handler(MASTER_PING_TIMER)
+local select_handler   = common.select_handler()
 
 ---------------------------------------------------------------
 ------------------- CONNECTION HANDLER ------------------------
@@ -48,6 +48,12 @@ local LOOP_RETURN = true
 local FINISHED    = false
 
 local message_reply = {
+  ERROR = function(conn,msg)
+    FINISHED = true
+    logger:warningf("ERROR, master says: %s\n",msg)
+    return "OK"
+  end,
+
   PING = "PONG",
   
   EXIT = function() FINISHED=true return "EXIT" end,
@@ -116,10 +122,10 @@ end
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
-function check_master(select_handler, timeout)
+function check_master(select_handler)
   if not MASTER_IS_ALIVE then
     connections = common.connections_set()
-    logger:warningf("Master is dead\n")
+    logger:warningf("Master is dead?\n")
     MASTER_CONN = send_task_to_master(NAME, MASTER_ADDRESS, MASTER_PORT, arg, TASK_SCRIPT_CONTENT)
     connections:add(MASTER_CONN)
     return false
@@ -127,7 +133,6 @@ function check_master(select_handler, timeout)
     logger:print("Master is alive, ping")
     local ok,error_msg,s,data = true
     s,error_msg = socket.tcp()
-    s:settimeout(timeout)
     if not check_error(s,error_msg) then MASTER_IS_ALIVE=false return false end
     ok,error_msg=s:connect(MASTER_ADDRESS,MASTER_PORT)
     if not check_error(ok,error_msg) then
@@ -176,12 +181,12 @@ function main()
 
   local clock = util.stopwatch()
   clock:go()
-  check_master(select_handler, TIMEOUT)
-  while LOOP_RETURN do
+  check_master(select_handler)
+  while LOOP_RETURN and not FINISHED do
     collectgarbage("collect")
     local cpu,wall = clock:read()
     if wall > MASTER_PING_TIMER then
-      check_master(select_handler, TIMEOUT)
+      check_master(select_handler)
       clock:stop()
       clock:reset()
       clock:go()
