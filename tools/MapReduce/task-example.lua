@@ -9,14 +9,14 @@ require "common"
 
 -- the data size is mandatory. Please, use absolute paths, instead of relative,
 -- and remember that in any case the data is loaded in the workers.
-dir = "/home/pako/programas/april-ann/tools/MapReduce/"
+dir = os.getenv("APRIL_TOOLS_DIR") .. "MapReduce/data/"
 local data = {
-  { dir.."data/text1.txt", 20 },
-  { dir.."data/text2.txt", 20 },
-  { dir.."data/text3.txt", 20 },
-  { dir.."data/text4.txt", 20 },
-  { dir.."data/text5.txt", 20 },
-  { dir.."data/text6.txt",  9 },
+  { dir.."text1.txt", 20 },
+  { dir.."text2.txt", 20 },
+  { dir.."text3.txt", 20 },
+  { dir.."text4.txt", 20 },
+  { dir.."text5.txt", 20 },
+  { dir.."text6.txt",  9 },
 }
 
 if #arg > 0 then

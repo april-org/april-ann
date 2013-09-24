@@ -2,6 +2,8 @@ socket = require "socket"
 -- module common
 common = {}
 
+local HEADER_LEN = 5
+
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
@@ -62,30 +64,71 @@ end
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
+local function send(sock, data, pos)
+  local r, status, last = sock:send(data, pos)
+  return r or last, status
+end
+
+local function recv(sock, len)
+  local r, status, partial = sock:receive(len)
+  return r or partial, status
+end
+
+local function recv_loop(sock, len)
+  local data,r,status = ""
+  while #data < len do
+    r,status = recv(sock, len - #data)
+    if status == "timeout" then coroutine.yield("timeout")
+    elseif status == "closed" or not r then data=false break
+    end
+    data = data .. r
+  end
+  return data,status
+end
+
+local function send_loop(sock, data)
+  local len = #data
+  local send_len,status,ok = 0,nil,true
+  while send_len < len do
+    send_len,status = send(sock, data, send_len + 1)
+    if status == "timeout" then coroutine.yield(status)
+    elseif status == "closed" or not send_len then ok=false break
+    end
+  end
+  return ok,status
+end
+
 -- A wrapper which sends a string of data throughout a socket as a packet formed
 -- by a header of 5 bytes (a uint32 encoded using our binarizer), and after that
 -- the message.
 function common.send_wrapper(sock, data)
+  sock:settimeout(0) -- do not block
   local len     = #data
   local len_str = binarizer.code.uint32(len)
+  assert(#len_str == HEADER_LEN, "Unexpected header length")
   if len > 256 then
-    sock:send(len_str)
-    sock:send(data)
+    local ok,msg = send_loop(sock, len_str)
+    if not ok then return false,msg end
+    local ok,msg = send_loop(sock, data)
+    if not ok then return false,msg end
   else
-    sock:send(len_str..data)
+    local aux = len_str..data
+    local ok,msg = send_loop(sock, aux)
+    if not ok then return false,msg end
   end
-  -- print("SEND",data)
+  return true
 end
 
 -- A wrapper which receives data send following the previous function, so the
 -- length of the message is decoded reading the first 5 bytes, and then the
 -- whole message is read.
 function common.recv_wrapper(sock)
-  local msg  = sock:receive("5")
-  if not msg then return nil end
-  local len  = binarizer.decode.uint32(msg)
-  local data = sock:receive(len)
-  -- print("RECV",data)
+  sock:settimeout(0) -- do not block
+  local data,msg = recv_loop(sock, HEADER_LEN)
+  if not data then return false,msg end
+  local len  = binarizer.decode.uint32(data)
+  local data,msg = recv_loop(sock, len)
+  if not data then return false,msg end
   return data
 end
 
@@ -152,7 +195,7 @@ end
 
 function common.make_connection_handler(select_handler,message_reply,
 					connections)
-  return function(conn,data,error_msg,partial)
+  return function(conn,data)
     local action
     local receive_at_end = true
     if data then
@@ -187,9 +230,8 @@ end
 
 local select_methods,select_class_metatable=class("common.select_handler")
 
-function select_class_metatable:__call(select_timeout)
+function select_class_metatable:__call()
   local obj =  {
-    select_timeout = select_timeout,
     data = {},
     recv_query  = {},
     send_query  = {},
@@ -208,7 +250,10 @@ function select_methods:accept(conn, func)
   self.recv_query[conn] = true
   self.data[conn] = self.data[conn] or {}
   table.insert(self.data[conn],
-	       { op = "accept", func=func })
+	       {
+		 op   = "accept",
+		 func = func,
+	       })
 end
 
 function select_methods:receive(conn, func)
@@ -216,7 +261,12 @@ function select_methods:receive(conn, func)
   self.recv_query[conn] = true
   self.data[conn] = self.data[conn] or {}
   table.insert(self.data[conn],
-	       { op = "receive", func=func })
+	       {
+		 op = "receive",
+		 co = coroutine.create(function()
+					 return func(conn,common.recv_wrapper(conn))
+				       end),
+	       })
 end
 
 function select_methods:send(conn, func)
@@ -228,7 +278,12 @@ function select_methods:send(conn, func)
   self.send_query[conn] = true
   self.data[conn] = self.data[conn] or {}
   table.insert(self.data[conn],
-	       { op = "send", func=function() return func() end })
+	       {
+		 op = "send",
+		 co = coroutine.create(function()
+					 return common.send_wrapper(conn,func())
+				       end),
+	       })
 end
 
 function select_methods:close(conn, func)
@@ -241,11 +296,16 @@ end
 
 local process = {
   
-  receive = function(conn,func,recv_map,send_map)
+  receive = function(conn,co,recv_map,send_map)
     if recv_map[conn] then
-      local msg = common.recv_wrapper(conn)
-      func(conn, msg)
+      local ok,ret,msg = coroutine.resume(co)
+      local msg = msg or ret
+      assert(ok, "Error in receive function: " .. tostring(msg))
+      if msg == "timeout" then return false end
       recv_map[conn] = nil
+      -- TODO: make an error message when closing
+      if msg == "closed" then return "close" end
+      -- TODO: check error
       return true
     end
     return false
@@ -253,8 +313,13 @@ local process = {
   
   accept = function(conn,func,recv_map,send_map)
     if recv_map[conn] then
-      local new_conn = conn:accept()
-      new_conn:settimeout(TIMEOUT)
+      conn:settimeout(0)
+      local new_conn,msg = conn:accept()
+      if msg == "timeout" then return false end
+      if not new_conn then
+	fprintf(io.stderr, "Error at accept function: %s\n", msg)
+	return false
+      end
       func(conn, new_conn)
       recv_map[conn] = nil
       return true
@@ -262,10 +327,15 @@ local process = {
     return false
   end,
   
-  send = function(conn,func,recv_map,send_map)
+  send = function(conn,co,recv_map,send_map)
     if send_map[conn] then
-      common.send_wrapper(conn, func(conn))
+      local ok,msg = coroutine.resume(co)
+      assert(ok, "Error in send function: " .. tostring(msg))
+      if msg == "timeout" then return false end
       send_map[conn] = nil
+      -- TODO: make an error message when closing
+      if msg == false then return "close" end
+      -- TODO: check error
       return true
     end
     return false
@@ -280,50 +350,52 @@ local process = {
 
 
 function select_methods:execute(timeout)
-  local recv_list = iterator(pairs(self.recv_query)):select(1):table()
-  local send_list = iterator(pairs(self.send_query)):select(1):table()
-  --
-  local recv_list,send_list = socket.select(recv_list, send_list,
-					    self.select_timeout)
-  --
-  local recv_map = iterator(ipairs(recv_list)):select(2):
-  reduce(function(acc,a) acc[a] = true return acc end, {})
-  --
-  local send_map = iterator(ipairs(send_list)):select(2):
-  reduce(function(acc,a) acc[a] = true return acc end, {})
-  --
-  for conn,data in pairs(self.data) do
-    if #data == 0 then
-      self.send_query[conn] = nil
-      self.recv_query[conn] = nil
-      self.data[conn] = nil
-    else
-      local remove = {}
-      for i=1,#data do
-	local d = data[i]
-	local processed = process[d.op](conn,d.func,recv_map,send_map)
-	if processed == "close" then 
-	  remove = {}
+  local clock = util.stopwatch()
+  clock:go()
+  local cpu,wall = clock:read()
+  local next_query
+  repeat
+    next_query = false
+    local recv_list = iterator(pairs(self.recv_query)):select(1):table()
+    local send_list = iterator(pairs(self.send_query)):select(1):table()
+    --
+    local recv_list,send_list,msg = socket.select(recv_list, send_list,
+						  timeout)
+    if msg == "timeout" then break end
+    local recv_map = recv_list -- table.invert(recv_list)
+    local send_map = send_list -- table.invert(send_list)
+    --
+    for conn,data in pairs(self.data) do
+      if #data == 0 then
+	self.send_query[conn] = nil
+	self.recv_query[conn] = nil
+	self.data[conn] = nil
+      else
+	local d = data[1]
+	local processed = process[d.op](conn,d.func or d.co,recv_map,send_map)
+	if processed == "close" then
 	  self.data[conn] = nil
 	  self.recv_query[conn] = nil
 	  self.send_query[conn] = nil
-	  break
-	elseif processed then table.insert(remove, i)
-	else break
+	elseif processed then table.remove(self.data[conn], 1)
 	end
       end
-      for j=#remove,1,-1 do table.remove(self.data[conn], remove[j]) end
       --
       iterator(ipairs(self.data[conn] or {})):select(2):field("op"):
       apply(function(v)
-	      if v=="accept" or v=="receive" then
+	      if v=="accept" then
 		self.recv_query[conn] = true
+	      elseif v=="receive" then
+		self.recv_query[conn] = true
+		next_query = true
 	      elseif v == "send" then
 		self.send_query[conn] = true
+		next_query = true
 	      end
 	    end)
     end
-  end
+    cpu,wall = clock:read()
+  until not next_query or wall > timeout
 end
 
 -----------------------------------------------------------------------------
@@ -336,6 +408,15 @@ connections_set_class_metatable = class("common.connections_set")
 function connections_set_class_metatable:__call()
   local obj = { connections = {}, dead_connections = {} }
   return class_instance(obj,self,true)
+end
+
+function common.connections_set.connect(address,port)
+  local ok,error_msg,s,data = true
+  s,error_msg = socket.tcp()
+  if not s then fprintf(io.stderr, "ERROR: %s\n", error_msg) return false,error_msg end
+  ok,error_msg=s:connect(address,port)
+  if not ok then fprintf(io.stderr, "ERROR: %s\n", error_msg) return false,error_msg end
+  return s
 end
 
 -- creates a new coroutine and adds it to the previous table

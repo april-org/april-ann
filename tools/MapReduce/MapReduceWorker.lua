@@ -33,7 +33,7 @@ local PENDING_TH        = 50  -- number of computed results
 --
 local MASTER_IS_ALIVE  = false
 local connections      = common.connections_set()
-local select_handler   = common.select_handler(MASTER_PING_TIMER)
+local select_handler   = common.select_handler()
 local workersock       = socket.tcp()
 local logger           = common.logger()
 local cores            = { }
@@ -56,11 +56,8 @@ end
 local pending = false
 function register_to_master(name,port,master_address,master_port,nump,mem)
   if pending then return end
-  local ok,error_msg,s,data = true
-  s,error_msg = socket.tcp()
-  if not check_error(s,error_msg) then return false end
-  ok,error_msg=s:connect(master_address,master_port)
-  if not check_error(ok,error_msg) then return false end
+  local s,msg = common.connections_set.connect(master_address, master_port)
+  if not check_error(s,msg) then return false end
   pending = true
   select_handler:send(s, string.format("WORKER %s %s %d %f",
 				       name, port, nump, mem))
@@ -117,10 +114,14 @@ local message_reply = {
 			     core_tmp_names[i],
 			     script,
 			     arg,
-			     taskid)
+			     taskid,
+			     workersock,
+			     connections,
+			     WORKER_PORT)
       free_cores[i] = cores[i]
       aux_free_cores_dict[cores[i]] = true
     end
+    logger:printf("Received TASK %s to be executed in %d cores\n",taskid,nump)
     return "OK"
   end,
 
@@ -144,21 +145,18 @@ local message_reply = {
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
-function check_master(select_handler, timeout)
+function check_master(select_handler)
   if not MASTER_IS_ALIVE then
-    logger:warningf("Master is dead\n")
+    logger:warningf("Master is dead?\n")
     register_to_master(WORKER_NAME, WORKER_PORT,
 		       MASTER_ADDRESS, MASTER_PORT,
 		       NUMP, MEM)    
     return false
   else
     logger:debug("Master is alive, ping")
-    local ok,error_msg,s,data = true
-    s,error_msg = socket.tcp()
-    s:settimeout(timeout)
-    if not check_error(s,error_msg) then MASTER_IS_ALIVE=false return false end
-    ok,error_msg=s:connect(MASTER_ADDRESS,MASTER_PORT)
-    if not check_error(ok,error_msg) then
+    local s,error_msg = common.connections_set.connect(MASTER_ADDRESS,
+						       MASTER_PORT)
+    if not check_error(s,error_msg) then
       MASTER_IS_ALIVE=false
       return false
     end
@@ -179,7 +177,7 @@ function check_master(select_handler, timeout)
   return true
 end
 
-function worker_func(master,conn)
+function worker_func(workersock,conn)
   if conn then
     local a,b = conn:getsockname()
     local c,d = conn:getpeername()
@@ -224,11 +222,7 @@ end
 
 function process_pending_results(pending_results)
   -- CONNECTION WITH MASTER
-  local ok,error_msg,conn,data = true
-  conn,error_msg = socket.tcp()
-  -- TODO: check error
-  -- if not check_error(s,error_msg) then return false end
-  ok,error_msg=conn:connect(MASTER_ADDRESS, MASTER_PORT)
+  local conn = common.connections_set.connect(MASTER_ADDRESS, MASTER_PORT)
   -- TODO: check error
   --if not check_error(ok,error_msg) then return false end
   for _,result in ipairs(pending_results) do
@@ -261,7 +255,6 @@ function main()
   end
   ok,msg = workersock:listen()
   if not ok then error(msg) end
-  workersock:settimeout(TIMEOUT)
   
   -- register SIGINT handler for safe worker stop
   signal.register(signal.SIGINT,
@@ -281,12 +274,12 @@ function main()
   
   local clock = util.stopwatch()
   clock:go()
-  check_master(select_handler, TIMEOUT)
+  check_master(select_handler)
   while true do
     collectgarbage("collect")
     local cpu,wall = clock:read()
     if wall > MASTER_PING_TIMER then
-      check_master(select_handler, TIMEOUT)
+      check_master(select_handler)
       clock:stop()
       clock:reset()
       clock:go()
@@ -308,12 +301,9 @@ function main()
       end
       execute_pending_job(map_pending_jobs, "do_map", mapkey2core)
       execute_pending_job(reduce_pending_jobs, "do_reduce")
-      -- execute pending operations
-      select_handler:execute(0.1)
-    else
-      -- execute pending operations
-      select_handler:execute(TIMEOUT)
     end
+    -- execute pending operations
+    select_handler:execute(TIMEOUT)
     connections:remove_dead_conections()
   end
 end
