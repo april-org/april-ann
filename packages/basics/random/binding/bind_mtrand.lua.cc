@@ -327,7 +327,7 @@
   double *v;
   int length = table_to_double_vector(L, &v);
   for (int i=0; i<length; i++) {
-    if (v[i] <= 0.0) {
+    if (v[i] < 0.0) {
       LUABIND_ERROR("random.dice values should be positive");
       // FIXME cambiar cuando exista version de error con formato
       //LUABIND_ERROR("random.dice at index %d value should be positive",i+1);
