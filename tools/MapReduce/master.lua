@@ -138,6 +138,14 @@ function worker_methods:append_map(task,select_handler,logger,core,map_key,job)
 	       string.format("MAP %d return %s,%s", core, map_key, job))
 end
 
+function worker_methods:send_reduce_ready(task,select_handler,logger)
+  local s = self:connect()
+  if not s then return false end
+  select_handler:send(s, "REDUCE_READY")
+  select_handler:receive(s)
+  select_handler:close(s)
+end
+
 function worker_methods:do_reduce(task,select_handler,logger)
   if #self.pending_reduce > 0 then
     local s = self:connect()
@@ -148,11 +156,11 @@ function worker_methods:do_reduce(task,select_handler,logger)
     --      select_handler:send(s, job)
     --    end
     select_handler:send(s, table.concat(t, ""))
-    select_handler:send(s, "REDUCE_READY")
-    select_handler:receive(s)
-    select_handler:close(s)
     self.pending_reduce = { "BUNCH " }
     self.pending_reduce_size = 0
+    select_handler:send(s, "EXIT")
+    select_handler:receive(s)
+    select_handler:close(s)
   end
 end
 
@@ -404,6 +412,7 @@ function task_methods:do_reduce(workers)
   end
   for i=1,#workers do
     workers[i]:do_reduce(self, select_handler, logger)
+    workers[i]:send_reduce_ready(self, select_handler, logger)
   end
   self.reduce_size  = count
   self.reduce_count = 0
