@@ -148,6 +148,30 @@ local message_reply = {
     for i=1,#cores do cores[i]:share(msg) end
     return "EXIT"
   end,
+  
+  BUNCH = function(conn,msg)
+    local read_size = 0
+    local msg_len,result,continue = #msg
+    while read_size < len do
+      local current_len = binarizer.decode.uint32(msg:sub(read_size+1,read_size+5))
+      read_size = read_size + 5
+      local current_msg = msg:sub(read_size+1, read_size + current_len)
+      read_size = read_size + current_len
+      local action,data = data:match("^([^%s]*)(.*)$")
+      local result,continue = message_reply[action]
+      if type(result) == "function" then result,continue = result(conn,data) end
+    end
+    if result then
+      select_handler:send(conn, send_msg)
+      continue = true
+    end
+    if continue then
+      select_handler:receive(conn,
+			     common.make_connection_handler(select_handler,
+							    message_reply,
+							    connections))
+    end
+  end,
 }
 
 -------------------------------------------------------------------------------

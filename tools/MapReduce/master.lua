@@ -3,6 +3,7 @@ require "socket"
 master = {}
 
 local MAX_NUMBER_OF_ATTEMPS = 20
+local REDUCE_PENDING_TH = 4*1024*1024 -- 4M
 
 ------------------------------------------------------------
 ------------------- WORKERS HANDLER ------------------------
@@ -13,7 +14,8 @@ local worker_methods,worker_class_metatable = class("master.worker")
 function worker_class_metatable:__call(name,address,port,nump,mem)
   local obj = { name=name, address=address, port=port, nump=nump, mem=mem,
 		is_dead=false, number_of_attemps=0,
-		pending_map = {}, pending_reduce = {} }
+		pending_map = {}, pending_reduce = {},
+		pending_reduce_size = 0 }
   obj.rel_mem_nump = mem/nump
   obj.load_avg = 0
   return class_instance(obj,self,true)
@@ -141,22 +143,29 @@ function worker_methods:do_reduce(task,select_handler,logger)
     local s = self:connect()
     if not s then return false end
     local t = self.pending_reduce
-    for i=1,#t do
-      local job = t[i]
-      select_handler:send(s, job)
-    end
+    --    for i=1,#t do
+    --      local job = t[i]
+    --      select_handler:send(s, job)
+    --    end
+    select_handler:send(s, table.concat(t, ""))
     select_handler:send(s, "REDUCE_READY")
     select_handler:receive(s)
     select_handler:close(s)
     self.pending_reduce = {}
+    self.pending_reduce_size = 0
   end
 end
 
 function worker_methods:append_reduce(task,select_handler,logger,key,value)
   local key   = common.tostring(key)
   local value = common.tostring(value)
+  local msg   = string.format("REDUCE return %s,%s", key, value)
   table.insert(self.pending_reduce,
-	       string.format("REDUCE return %s,%s", key, value))
+	       string.format("%s%s", binarizer.code.uint32(#msg), msg))
+  self.pending_reduce_size = self.pending_reduce_size + #msg + 5
+  if self.size > REDUCE_PENDING_TH then
+    self:do_reduce(task,select_handler,logger)
+  end
 end
 
 function worker_methods:share(select_handler, logger, data)
@@ -385,13 +394,11 @@ function task_methods:do_reduce(workers)
   local id = 0
   local count = 0
   for key,value in pairs(self.reduction) do
-    id = id + 1
     count = count + 1
-    if self.worker_nump[id] > 0 then
-      local worker = workers[id]
-      self.reduce_worker[key] = worker
-      worker:append_reduce(self, select_handler, logger, key, value)
-    end
+    repeat id = id + 1 until self.worker_nump[id] > 0
+    local worker = workers[id]
+    self.reduce_worker[key] = worker
+    worker:append_reduce(self, select_handler, logger, key, value)
     id = id % #workers
   end
   for i=1,#workers do
