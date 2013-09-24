@@ -6,28 +6,31 @@ worker = {}
 local function execute(core)
   local logger = core.logger
   local mmap,mreduce,share = core.map,core.reduce,core.share
+  local N = 0
   while true do
-    collectgarbage("collect")
+    N = N + 1 if N > 100 then collectgarbage("collect") N = 0 end
     local msg = core:read()
     local action,data = msg:match("^%s*([^%s]+)%s*(.*)")
     
     if action == "CLOSE" then core:close() break
-
+      
     elseif action == "MAP" then
       local str = data:match("^%s*(return .*)")
       local map_key,value = common.load(str,logger)
       -- TODO: check value error
       local map_result = mmap(map_key,value)
       map_result = common.tostring(map_result)
+      core:open_result_file()
       core:write_result(string.format("MAP_RESULT {return %s} return %s",
 				      common.tostring(map_key,true),
 				      map_result))
-      
+      core:close_result_file()
       --
       core:unlock()
       core:wakeup_worker()
-    
+      
     elseif action == "REDUCE" then
+      core:open_result_file()
       local str = data:match('^%s*(return .*)')
       local key,values = common.load(str,logger)
       -- TODO: check reduce values error
@@ -35,8 +38,11 @@ local function execute(core)
       key=common.tostring(key)
       result=common.tostring(result)
       core:write_result(string.format("REDUCE_RESULT return %s,%s",key,result))
-      --
+      
+    elseif action == "REDUCE_READY" then
+      core:close_result_file()
       core:unlock()
+      core:wakeup_worker()
       
     elseif action == "SHARE" then
       local data = common.load(data)
@@ -67,6 +73,7 @@ function core_class_metatable:__call(logger,tmpname,script,arg,taskid,
     logger=logger,
     taskid=taskid,
     port=port,
+    result_f="closed"
   }
   local arg = common.load(arg)
   local t = common.load(script,logger,table.unpack(arg))
@@ -85,7 +92,7 @@ function core_class_metatable:__call(logger,tmpname,script,arg,taskid,
     -- the child
     workersock:close()
     connections:close()
-    signal.release(signal.SIGINT)
+    -- signal.release(signal.SIGINT)
     obj.IN  = tochild[1]
     obj = class_instance(obj,self)
     execute(obj)
@@ -109,21 +116,7 @@ end
 
 function core_methods:wakeup_worker()
   if not self.pid then
-    local conn = common.connections_set.connect("localhost",self.port,120)
-    local co = coroutine.create(function()
-				  common.send_wrapper(conn,"EXIT")
-				  return true
-				end)
-    repeat
-      ok,msg = coroutine.resume(co)
-    until not ok or msg==true
-    local co = coroutine.create(function()
-				  common.recv_wrapper(conn)
-				  return true
-				end)
-    repeat
-      ok,ret,msg = coroutine.resume(co)
-    until not ok or ret==true
+    local conn = common.connections_set.connect("localhost",self.port)
     conn:close()
   end
 end
@@ -187,22 +180,39 @@ function core_methods:busy()
   return false
 end
 
+function core_methods:open_result_file()
+  if not self.pid then
+    if self.result_f == "closed" then
+      self.result_f = io.open(self.result_tmpname, "w")
+    end
+  end
+end
+
 function core_methods:write_result(result)
   if not self.pid then
-    local f = io.open(self.result_tmpname, "w")
+    local f = self.result_f
+    local len = binarizer.code.uint32(#result)
+    f:write(len)
     f:write(result)
-    f:close()
+  end
+end
+
+function core_methods:close_result_file()
+  if not self.pid then
+    self.result_f:close()
+    self.result_f = "closed"
   end
 end
 
 function core_methods:read_result()
   if self.pid then
     local f = io.open(self.result_tmpname)
-    if not f then return nil end
-    local result = f:read("*a")
-    f:close()
-    os.remove(self.result_tmpname)
-    return result
+    if not f then return function() end end
+    return function()
+      local len = f:read(5)
+      if not len then f:close() os.remove(self.result_tmpname) return nil end
+      return f:read(binarizer.decode.uint32(len))
+    end
   end
 end
 
@@ -214,10 +224,21 @@ function core_methods:do_map(map_key_and_value)
 end
 
 -- remember to mark as dead the given connection
-function core_methods:do_reduce(key_and_value)
+function core_methods:begin_reduce_bunch()
   if self.pid then
     self:lock("REDUCE\n")
+  end
+end
+
+function core_methods:append_reduce_bunch(key_and_value)
+  if self.pid then
     self:printf("REDUCE %s\n", key_and_value)
+  end
+end
+
+function core_methods:end_reduce_bunch()
+  if self.pid then
+    self:printf("REDUCE_READY")
   end
 end
 

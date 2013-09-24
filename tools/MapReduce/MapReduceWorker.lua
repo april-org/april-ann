@@ -2,13 +2,15 @@ package.path = string.format("%s?.lua;%s", string.get_path(arg[0]), package.path
 require "common"
 require "worker"
 --
-local MASTER_ADDRESS = arg[1] or error("Needs a master address")
-local MASTER_PORT    = arg[2] or error("Needs a master port")
-local WORKER_NAME    = arg[3] or error("Needs a worker name")
-local WORKER_BIND    = arg[4] or error("Needs a worker bind address")
-local WORKER_PORT    = arg[5] or error("Needs a worker bind port")
-local NUMP           = tonumber(arg[6] or error("Needs a number of cores"))
-local MEM            = arg[7] or error("Needs a memory number, use any suffix B,K,M,G,T,P,E,Z,Y for 1024 powers")
+local conf = common.load_configuration("/etc/APRIL-ANN-MAPREDUCE/worker.lua")
+--
+local MASTER_ADDRESS = conf.master_address or "localhost"
+local MASTER_PORT    = conf.master_port or 8888
+local WORKER_NAME    = conf.name or io.popen("hostname"):read("*l")
+local WORKER_BIND    = conf.bind_address or '*'
+local WORKER_PORT    = conf.port or 4000
+local NUMP           = conf.nump or 1
+local MEM            = conf.mem  or "4G"
 local suffix_powers = {
   B = 1/(1024*1024),
   K = 1/1024,
@@ -26,10 +28,10 @@ if not suffix or not suffix_powers[suffix] then
 end
 MEM = tonumber(MEM) * suffix_powers[suffix]
 --
-local BIND_TIMEOUT      = 10
-local TIMEOUT           = 10  -- in seconds
-local MASTER_PING_TIMER = 10  -- in seconds
-local PENDING_TH        = 50  -- number of computed results
+local BIND_TIMEOUT      = conf.bind_timeout or 10
+local TIMEOUT           = conf.timeout      or 10  -- in seconds
+local MASTER_PING_TIMER = conf.ping_timer   or 10  -- in seconds
+local PENDING_TH        = conf.th or 50  -- number of computed results
 --
 local MASTER_IS_ALIVE  = false
 local connections      = common.connections_set()
@@ -42,8 +44,9 @@ local aux_free_cores_dict = { }
 local mapkey2core      = { }
 local core_tmp_names   = iterator(range(1,NUMP)):map(os.tmpname):table()
 local map_pending_jobs = {}
-local reduce_pending_jobs = {}
-local pending_results  = { }
+local reduce_pending_jobs  = {}
+local pending_results      = { }
+local reduce_ready         = false
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
@@ -57,7 +60,7 @@ local pending = false
 function register_to_master(name,port,master_address,master_port,nump,mem)
   if pending then return end
   local s,msg = common.connections_set.connect(master_address, master_port)
-  if not check_error(s,msg) then return false end
+  if not s then return false end
   pending = true
   select_handler:send(s, string.format("WORKER %s %s %d %f",
 				       name, port, nump, mem))
@@ -104,10 +107,11 @@ local message_reply = {
     cores       = {}
     free_cores  = {}
     mapkey2core = {}
-    aux_free_cores_dict = {}
-    map_pending_jobs    = {}
-    reduce_pending_jobs = {}
-    pending_results     = {}
+    aux_free_cores_dict  = {}
+    map_pending_jobs     = {}
+    reduce_pending_jobs  = {}
+    pending_results      = {}
+    reduce_ready         = false
     collectgarbage("collect")
     for i=1,tonumber(nump) do
       cores[i] = worker.core(logger,
@@ -132,6 +136,11 @@ local message_reply = {
 
   REDUCE = function(conn,msg)
     table.insert(reduce_pending_jobs, msg)
+    return nil,true
+  end,
+
+  REDUCE_READY = function(conn,msg)
+    reduce_ready = true
     return "EXIT"
   end,
 
@@ -153,7 +162,6 @@ function check_master(select_handler)
 		       NUMP, MEM)    
     return false
   else
-    logger:debug("Master is alive, ping")
     local s,error_msg = common.connections_set.connect(MASTER_ADDRESS,
 						       MASTER_PORT)
     if not check_error(s,error_msg) then
@@ -168,6 +176,9 @@ function check_master(select_handler)
 			     if msg ~= "PONG" then
 			       MASTER_IS_ALIVE = false
 			       select_handler:close(s)
+			     else
+			       MASTER_IS_ALIVE = true
+			       logger:warningf("Master is alive, ping\n")
 			     end
 			   end)
     select_handler:send(s, "EXIT")
@@ -191,18 +202,28 @@ function worker_func(workersock,conn)
   select_handler:accept(workersock, worker_func)
 end
 
-function append_result(c, t)
-  local result = c:read_result()
-  if result then table.insert(t, result) end
+function send_result_to_master(c)
+  print("Sending result of ", c.pid)
+  -- CONNECTION WITH MASTER
+  local conn = common.connections_set.connect(MASTER_ADDRESS, MASTER_PORT)
+  -- TODO: check error
+  --if not check_error(ok,error_msg) then return false end
+  for result in c:read_result() do
+    select_handler:send(conn, result)
+    -- TODO: throw error if ok~="EXIT"
+    select_handler:receive(conn)
+  end
+  select_handler:send(conn, "EXIT")
+  select_handler:receive(conn)
+  select_handler:close(conn)
 end
 
-function execute_pending_job(pending_jobs, method, cache)
+function execute_pending_map(pending_jobs, cache)
   if #pending_jobs > 0 then
     local idx   = 1
     local cache = cache or {}
     while #free_cores > 0 and #pending_jobs > 0 do
-      local msg = pending_jobs[idx]
-      local str = msg:match("^%s*(return .*)$")
+      local str = pending_jobs[idx]
       key,value = common.load(str,logger)
       local c = cache[key]
       if not c then
@@ -211,7 +232,7 @@ function execute_pending_job(pending_jobs, method, cache)
 	aux_free_cores_dict[c] = nil
       end
       if not c:busy() then
-	c[method](c, str)
+	c:do_map(str)
 	c:flush()
 	table.remove(pending_jobs, idx)
       else idx = idx + 1
@@ -220,21 +241,31 @@ function execute_pending_job(pending_jobs, method, cache)
   end
 end
 
-function process_pending_results(pending_results)
-  -- CONNECTION WITH MASTER
-  local conn = common.connections_set.connect(MASTER_ADDRESS, MASTER_PORT)
-  -- TODO: check error
-  --if not check_error(ok,error_msg) then return false end
-  for _,result in ipairs(pending_results) do
-    select_handler:send(conn, result)
-    -- TODO: throw error if ok~="EXIT"
-    select_handler:receive(conn)
+function execute_pending_reduce(pending_jobs)
+  if #pending_jobs > 0 and #free_cores > 0 then
+    local core_i = 0
+    local N = #free_cores
+    for i=1,N do
+      local c = free_cores[i]
+      c:begin_reduce_bunch()
+      aux_free_cores_dict[c] = nil
+    end
+    for idx=1,#pending_jobs do
+      core_i = core_i + 1
+      local str = pending_jobs[idx]
+      local c   = free_cores[core_i]
+      c:append_reduce_bunch(str)
+      core_i = core_i % N
+    end
+    for i=1,N do
+      local c = free_cores[i]
+      c:end_reduce_bunch()
+      c:flush()
+    end
+    free_cores = {}
   end
-  select_handler:send(conn, "EXIT")
-  select_handler:receive(conn)
-  select_handler:close(conn)
-  return {}
 end
+
 
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
@@ -276,9 +307,9 @@ function main()
   clock:go()
   check_master(select_handler)
   while true do
-    collectgarbage("collect")
     local cpu,wall = clock:read()
     if wall > MASTER_PING_TIMER then
+      collectgarbage("collect")
       check_master(select_handler)
       clock:stop()
       clock:reset()
@@ -290,17 +321,14 @@ function main()
 	if not aux_free_cores_dict[c] and not c:busy() then
 	  aux_free_cores_dict[c] = true
 	  table.insert(free_cores, c)
-	  append_result(c, pending_results)
+	  send_result_to_master(c)
 	end
       end
-      local n = #pending_results
-      if n > 0 then
-	if n > PENDING_TH or #cores == #free_cores then
-	  pending_results = process_pending_results(pending_results)
-	end
+      execute_pending_map(map_pending_jobs, mapkey2core)
+      print(reduce_ready, #reduce_pending_jobs, #free_cores)
+      if reduce_ready or #reduce_pending_jobs > PENDING_TH * #free_cores then
+	execute_pending_reduce(reduce_pending_jobs)
       end
-      execute_pending_job(map_pending_jobs, "do_map", mapkey2core)
-      execute_pending_job(reduce_pending_jobs, "do_reduce")
     end
     -- execute pending operations
     select_handler:execute(TIMEOUT)

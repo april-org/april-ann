@@ -1,18 +1,20 @@
 package.path = string.format("%s?.lua;%s", string.get_path(arg[0]), package.path)
 require "common"
-if #arg < 3 then
-  error("Incorrect syntax, execute the program with at least 4 arguments: "..
-	"NAME  MASTER_ADDRESS  MASTER_PORT  TASK_SCRIPT")
+--
+local conf = common.load_configuration("/etc/APRIL-ANN-MAPREDUCE/task.lua")
+--
+if #arg < 1 then
+  error("Incorrect syntax, execute the program with at least 1 arguments:  "..
+	  "TASK_SCRIPT  [ SCRIPT ARGUMENTS ]")
 end
 --
-local BIND_TIMEOUT      = 10
-local TIMEOUT           =  1   -- in seconds
-local MASTER_PING_TIMER = 10   -- in seconds
+local BIND_TIMEOUT      = conf.bind_timeout or 10
+local TIMEOUT           = conf.timeout      or 1   -- in seconds
+local MASTER_PING_TIMER = conf.ping_timer   or 10   -- in seconds
 --
-local NAME           = table.remove(arg,1)
-local MASTER_ADDRESS = table.remove(arg,1)
-local MASTER_PORT    = table.remove(arg,1)
-local TASK_SCRIPT    = table.remove(arg,1)
+local MASTER_ADDRESS = assert(conf.master_address, "Needs a master_address field at conf file")
+local MASTER_PORT    = assert(conf.master_port, "Needs a master_port field at conf file")
+local TASK_SCRIPT    = table.remove(arg, 1)
 --
 local logger         = common.logger(false,io.stderr)
 --
@@ -29,6 +31,7 @@ split             = task.split or
   function(data,data_size,first,last)
     return data,data_size
   end
+NAME              = assert(task.name, "Needs a name field at the task file")
 --
 local aux = io.open(TASK_SCRIPT)
 local TASK_SCRIPT_CONTENT = aux:read("*a")
@@ -88,6 +91,7 @@ local function check_error(p,msg)
   return p
 end
 
+local attempts = 0
 local pending = false
 function send_task_to_master(name,master_address,master_port,arg,script)
   if pending then return end
@@ -97,14 +101,19 @@ function send_task_to_master(name,master_address,master_port,arg,script)
   ok,error_msg=s:connect(master_address,master_port)
   if not check_error(ok,error_msg) then return false end
   pending = true
-  select_handler:send(s, string.format("TASK %s return %s %s",
-				       name, common.tostring(arg), script))
+  select_handler:send(s,
+		      function()
+			logger:print("Sending TASK")
+			return string.format("TASK %s return %s %s",
+					     name, common.tostring(arg), script)
+		      end)
   select_handler:receive(s,
 			 function(conn,msg)
 			   local msg = table.unpack(string.tokenize(msg or ""))
 			   if msg == "ERROR" then
 			     select_handler:close(s, function() pending=false end)
 			   else
+			     attempts = 0
 			     TASK_ID = msg
 			     MASTER_IS_ALIVE = true
 			     select_handler:send(s, "OK")
@@ -125,12 +134,12 @@ end
 function check_master(select_handler)
   if not MASTER_IS_ALIVE then
     connections = common.connections_set()
-    logger:warningf("Master is dead?\n")
     MASTER_CONN = send_task_to_master(NAME, MASTER_ADDRESS, MASTER_PORT, arg, TASK_SCRIPT_CONTENT)
-    connections:add(MASTER_CONN)
+    logger:warningf("Master is dead?\n")
+    attemts = attempts + 1
+    if MASTER_CONN then connections:add(MASTER_CONN) end
     return false
   else
-    logger:print("Master is alive, ping")
     local ok,error_msg,s,data = true
     s,error_msg = socket.tcp()
     if not check_error(s,error_msg) then MASTER_IS_ALIVE=false return false end
@@ -148,6 +157,7 @@ function check_master(select_handler)
 			       MASTER_IS_ALIVE = false
 			       select_handler:close(s)
 			     else
+			       logger:warningf("Master is alive, ping\n")
 			       MASTER_IS_ALIVE = true
 			     end
 			   end)
@@ -167,15 +177,14 @@ function main()
 		NAME, MASTER_ADDRESS, MASTER_PORT)
   
   -- TODO: control SIGINT signal
-  -- -- register SIGINT handler for safe worker stop
-  -- signal.register(signal.SIGINT,
-  -- 		  function()
-  -- 		    logger:raw_print("\n# Closing worker")
-  -- 		    connections:close()
-  -- 		    if workersock then workersock:close() workersock = nil end
-  -- 		    collectgarbage("collect")
-  -- 		    os.exit(0)
-  -- 		  end)
+  -- register SIGINT handler for safe worker stop
+  signal.register(signal.SIGINT,
+   		  function()
+		    logger:raw_print("\n# Closing worker")
+		    connections:close()
+		    collectgarbage("collect")
+  		    os.exit(0)
+  		  end)
 
   logger:print("Ok")
 
@@ -183,9 +192,9 @@ function main()
   clock:go()
   check_master(select_handler)
   while LOOP_RETURN and not FINISHED do
-    collectgarbage("collect")
     local cpu,wall = clock:read()
     if wall > MASTER_PING_TIMER then
+      collectgarbage("collect")
       check_master(select_handler)
       clock:stop()
       clock:reset()
@@ -194,6 +203,7 @@ function main()
     -- execute pending operations
     select_handler:execute(TIMEOUT)
     connections:remove_dead_conections()
+    if attempts > 20 then break end
   end
   while not FINISHED do
     -- execute pending operations
