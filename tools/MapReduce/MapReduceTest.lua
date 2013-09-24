@@ -35,12 +35,11 @@ repeat
       local map_result = mmap(key,splitted_data)
       -- store map result in reduction table, accumulating all the values with
       -- the same key
-      reduction = iterator(ipairs(map_result)):select(2):
-      reduce(function(acc,t)
-	       acc[t[1]] = table.insert(acc[t[1]] or {}, t[2])
-	       return acc
-	     end,
-	     reduction)
+      reduction = reduction or {}
+      for i=1,#map_result do
+	local k,v = table.unpack(map_result[i])
+	reduction[k] = table.insert(reduction[k] or {}, v)
+      end
       --
       first = last + 1
       last  = math.min(last + N,data_size)

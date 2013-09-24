@@ -44,8 +44,13 @@ end
 function common.load(str,logger, ...)
   local logger = logger or common.logger()
   local f,t,msg
-  if str:match(".*%.lua$") then f,msg = loadfile(str)
-  else f,msg = load(str, nil) end
+  local aux = io.open(str)
+  if str:sub(#str-3,#str) == ".lua" and aux then
+    aux:close()
+    f,msg = loadfile(str)
+  else
+    f,msg = load(str, nil)
+  end
   if not f then
     logger:warningf("Impossible to load the given task: %s\n", msg)
     return nil
@@ -58,6 +63,12 @@ function common.load(str,logger, ...)
     return nil
   end
   return table.unpack(r)
+end
+
+function common.load_configuration(conf)
+  conf = common.load(conf)
+  if not conf then return {} end
+  return conf
 end
 
 -------------------------------------------------------------------------------
@@ -200,15 +211,18 @@ function common.make_connection_handler(select_handler,message_reply,
     local receive_at_end = true
     if data then
       action,data = data:match("^([^%s]*)(.*)$")
+      local send_msg,continue
       if message_reply[action] == nil then
-	select_handler:send(conn, "UNKNOWN ACTION")
+	send_msg = "UNKNOWN ACTION"
       elseif type(message_reply[action]) == "string" then
-	select_handler:send(conn, message_reply[action])
+	send_msg,continue = message_reply[action]
       else
-	local ans = message_reply[action](conn, data)
-	if ans == nil then receive_at_end = false
-	else select_handler:send(conn, ans)
-	end
+	send_msg,continue = message_reply[action](conn, data)
+      end
+      if send_msg then
+	receive_at_end=true
+	select_handler:send(conn, send_msg)
+      elseif not continue then receive_at_end = false
       end
       if action == "EXIT" then
 	-- following instruction allows chaining of several actions
@@ -361,7 +375,7 @@ function select_methods:execute(timeout)
     --
     local recv_list,send_list,msg = socket.select(recv_list, send_list,
 						  timeout)
-    if msg == "timeout" then break end
+    if msg == "timeout" then return end
     local recv_map = recv_list -- table.invert(recv_list)
     local send_map = send_list -- table.invert(send_list)
     --

@@ -9,7 +9,7 @@ require "common"
 
 -- the data size is mandatory. Please, use absolute paths, instead of relative,
 -- and remember that in any case the data is loaded in the workers.
-dir = os.getenv("APRIL_TOOLS_DIR") .. "MapReduce/data/"
+dir = os.getenv("APRIL_TOOLS_DIR") .. "/MapReduce/data/"
 local data = {
   { dir.."text1.txt", 20 },
   { dir.."text2.txt", 20 },
@@ -23,7 +23,7 @@ if #arg > 0 then
   data = iterator(ipairs(arg)):select(2):
   map(function(v)
 	local f = io.popen("wc -l " .. v)
-	local n = tonumber(f:read("*l"))
+	local n = tonumber(f:read("*l"):match("^([%d]+)"))
 	return {v,n}
       end):
   table()
@@ -56,10 +56,10 @@ end
 local function mmap(key,value)
   -- local value = common.cache(key, value)
   local data,first,last = load(value)()
-  local out = iterator(io.lines(data)):
-  enumerate():
-  filter(function(i,line) return (first<=i and i<=last) end):
-  select(2):
+  local f = io.open(data)
+  for i=1,first-1 do f:read("*l") end
+  local out = iterator(range(first,last)):
+  map(function(i) return f:read("*l") or "" end):
   map(string.tokenize):
   iterate(ipairs):select(2):
   reduce(function(acc,w)
@@ -73,7 +73,8 @@ end
 -- receive a key and an array of values, and produces a pair of strings
 -- key,value (or able to be string-converted by Lua) pairs
 local function mreduce(key,values)
-  return key,iterator(ipairs(values)):select(2):reduce(math.add(),0)
+  local sum = 0 for i=1,#values do sum=sum+values[i] end
+  return key,sum
 end
 
 -- Check for running, return true for continue, false for stop
@@ -94,6 +95,7 @@ local function shared(value)
 end
 
 return {
+  name="EXAMPLE",
   data=data,
   decode=decode,
   split=split,

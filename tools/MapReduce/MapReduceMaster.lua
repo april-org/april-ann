@@ -3,12 +3,14 @@ package.path = string.format("%s?.lua;%s", string.get_path(arg[0]), package.path
 require "master"
 require "common"
 --
-local MASTER_BIND = arg[1] or "*"
-local MASTER_PORT = arg[2] or "8888"
+local conf = common.load_configuration("/etc/APRIL-ANN-MAPREDUCE/master.lua")
 --
-local BIND_TIMEOUT      = 10
-local TIMEOUT           = 10   -- in seconds
-local WORKER_PING_TIMER = 10   -- in seconds
+local MASTER_BIND = conf.bind_address or '*'
+local MASTER_PORT = conf.port or 8888
+--
+local BIND_TIMEOUT      = conf.bind_timeout or 10
+local TIMEOUT           = conf.timeout      or 10   -- in seconds
+local WORKER_PING_TIMER = conf.ping_timer   or 10   -- in seconds
 --
 
 -- function map(key, value) do stuff coroutine.yield(key, value) end
@@ -174,9 +176,9 @@ function main()
   local clock = util.stopwatch()
   clock:go()
   while true do
-    collectgarbage("collect")
     local cpu,wall = clock:read()
     if wall > WORKER_PING_TIMER then
+      collectgarbage("collect")
       --
       iterator(ipairs(workers)):
       select(2):
@@ -199,14 +201,19 @@ function main()
 	  task:prepare_map_plan(workers)
 	end
       elseif state == "PREPARED" then
+	logger:print("MAP",task:get_id())
 	task:do_map(workers)
       elseif state == "MAP_FINISHED" then
+	logger:print("REDUCE",task:get_id())
 	task:do_reduce(workers)
       elseif state == "REDUCE_FINISHED" then
+	logger:print("SEQUENTIAL AND SHARE",task:get_id())
 	task:do_sequential(workers)
       elseif state == "SEQUENTIAL_FINISHED" then
+	logger:print("LOOP",task:get_id())
 	task:do_loop()
       elseif state == "FINISHED" then
+	logger:print("FINISHED",task:get_id())
 	task = nil
       elseif state ~= "MAP" and state ~= "REDUCE" and state ~= "SEQUENTIAL" and state ~= "LOOP" then
 	logger:warningf("Unknown task state: %s\n", state)
