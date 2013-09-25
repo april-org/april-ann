@@ -136,7 +136,7 @@ message_reply = {
 
   REDUCE = function(conn,msg)
     table.insert(reduce_pending_jobs, msg)
-    return nil,true
+    return "OK"
   end,
 
   REDUCE_READY = function(conn,msg)
@@ -149,30 +149,6 @@ message_reply = {
     return "EXIT"
   end,
   
-  BUNCH = function(conn,msg)
-    local read_size = 0
-    local msg_len,result,continue = #msg
-    while read_size < msg_len do
-      local current_len = binarizer.decode.uint32(msg:sub(read_size+1,read_size+5))
-      read_size = read_size + 5
-      local current_msg = msg:sub(read_size+1, read_size + current_len)
-      read_size = read_size + current_len
-      local action,data = current_msg:match("^([^%s]*)(.*)$")
-      local result,continue = message_reply[action] or "UNKNOWN ACTION"
-      if type(result) == "function" then result,continue = result(conn,data) end
-      -- print(read_size, action, data, result, continue)
-    end
-    if result then
-      select_handler:send(conn, send_msg)
-      continue = true
-    end
-    if continue then
-      select_handler:receive(conn,
-			     common.make_connection_handler(select_handler,
-							    message_reply,
-							    connections))
-    end
-  end,
 }
 
 -------------------------------------------------------------------------------
@@ -228,19 +204,17 @@ function worker_func(workersock,conn)
 end
 
 function send_result_to_master(c)
-  -- print("Sending result of ", c.pid)
-  -- CONNECTION WITH MASTER
-  local conn = common.connections_set.connect(MASTER_ADDRESS, MASTER_PORT)
   -- TODO: check error
-  --if not check_error(ok,error_msg) then return false end
-  for result in c:read_result() do
-    select_handler:send(conn, result)
-    -- TODO: throw error if ok~="EXIT"
+  local result = c:read_result()
+  if result then
+    local conn = common.connections_set.connect(MASTER_ADDRESS, MASTER_PORT)
+    select_handler:send(conn, string.format("BUNCH %s", result))
     select_handler:receive(conn)
+    select_handler:send(conn, "EXIT")
+    select_handler:receive(conn)
+    -- TODO: throw error if not received "EXIT"
+    select_handler:close(conn)
   end
-  select_handler:send(conn, "EXIT")
-  select_handler:receive(conn)
-  select_handler:close(conn)
 end
 
 function execute_pending_map(pending_jobs, cache)
@@ -253,7 +227,8 @@ function execute_pending_map(pending_jobs, cache)
       key,value = common.load(str,logger)
       local c = cores[core]
       cache[key] = c
-      if not c:busy() then
+      if not c:busy() and not c:read_pending() then
+	-- print("EXECUTING MAP", key, core, c:busy(), aux_free_cores_dict[c])
 	c:do_map(str)
 	c:flush()
 	table.remove(pending_jobs, idx)
@@ -276,12 +251,15 @@ function execute_pending_reduce(pending_jobs)
       c:begin_reduce_bunch()
       aux_free_cores_dict[c] = nil
     end
-    for idx=1,#pending_jobs do
-      core_i = core_i + 1
-      local str = pending_jobs[idx]
-      local c   = free_cores[core_i]
-      c:append_reduce_bunch(str)
-      core_i = core_i % N
+    if N > 0 then
+      for idx=1,#pending_jobs do
+	core_i = core_i + 1
+	local str = pending_jobs[idx]
+	local c   = free_cores[core_i]
+	c:append_reduce_bunch(str)
+	core_i = core_i % N
+      end
+      table.clear(pending_jobs)
     end
     for i=1,N do
       local c = free_cores[i]
@@ -345,7 +323,7 @@ function main()
       for i=1,#cores do
 	local c = cores[i]
 	--print(c, aux_free_cores_dict[c], c:busy())
-	if not aux_free_cores_dict[c] and not c:busy() then
+	if not c:busy() and c:read_pending() then
 	  --print("SENDING!!!!")
 	  aux_free_cores_dict[c] = true
 	  table.insert(free_cores, c)
