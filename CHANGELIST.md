@@ -4,6 +4,7 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added method `iterate` to iterator Lua class.
 - Modified `lua.h` to incorporate the GIT commit number in the disclaimer.
 - `table.insert` returns the table, which is useful for reduction operations.
 - Added `table` method to `iterator` class.
