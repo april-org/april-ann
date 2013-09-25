@@ -9,7 +9,7 @@ if #arg < 1 then
 end
 --
 local BIND_TIMEOUT      = conf.bind_timeout or 10
-local TIMEOUT           = conf.timeout      or 1   -- in seconds
+local TIMEOUT           = conf.timeout      or 10   -- in seconds
 local MASTER_PING_TIMER = conf.ping_timer   or 10   -- in seconds
 --
 local MASTER_ADDRESS = assert(conf.master_address, "Needs a master_address field at conf file")

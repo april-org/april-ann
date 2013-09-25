@@ -113,6 +113,8 @@ function worker_methods:task(select_handler,logger,taskid,script,arg,nump)
 			   --if msg ~= "OK" then
 			   --return
 			 end)
+  select_handler:send(s, "EXIT")
+  select_handler:receive(s)
   select_handler:close(s)
 end
 
@@ -126,6 +128,8 @@ function worker_methods:do_map(task,select_handler,logger)
       select_handler:send( s, job )
       select_handler:receive(s)
     end
+    select_handler:send( s, "EXIT" )
+    select_handler:receive(s)
     select_handler:close(s)
     self.pending_map = {}
   end
@@ -138,29 +142,29 @@ function worker_methods:append_map(task,select_handler,logger,core,map_key,job)
 	       string.format("MAP %d return %s,%s", core, map_key, job))
 end
 
-function worker_methods:send_reduce_ready(task,select_handler,logger)
-  local s = self:connect()
-  if not s then return false end
-  select_handler:send(s, "REDUCE_READY")
-  select_handler:receive(s)
-  select_handler:close(s)
-end
-
-function worker_methods:do_reduce(task,select_handler,logger)
-  if #self.pending_reduce > 0 then
+function worker_methods:do_reduce(task,select_handler,logger,send_ready)
+  if #self.pending_reduce > 0 or send_ready then
     local s = self:connect()
     if not s then return false end
-    local t = self.pending_reduce
-    --    for i=1,#t do
-    --      local job = t[i]
-    --      select_handler:send(s, job)
-    --    end
-    select_handler:send(s, table.concat(t, ""))
-    self.pending_reduce = { "BUNCH " }
-    self.pending_reduce_size = 0
+    if #self.pending_reduce > 0 then
+      local t = self.pending_reduce
+      --    for i=1,#t do
+      --      local job = t[i]
+      --      select_handler:send(s, job)
+      --    end
+      select_handler:send(s, table.concat(t, ""))
+      self.pending_reduce = { "BUNCH " }
+      self.pending_reduce_size = 0
+      select_handler:receive(s)
+    end
+    if send_ready then
+      select_handler:send(s, "REDUCE_READY")
+      select_handler:receive(s)
+    end
     select_handler:send(s, "EXIT")
     select_handler:receive(s)
     select_handler:close(s)
+    collectgarbage("collect")
   end
 end
 
@@ -180,6 +184,8 @@ function worker_methods:share(select_handler, logger, data)
   local s = self:connect()
   if not s then return false end
   select_handler:send(s, string.format("SHARE %s", data))
+  select_handler:receive(s)
+  select_handler:send(s, "EXIT")
   select_handler:receive(s)
   select_handler:close(s)
 end
@@ -209,7 +215,6 @@ function task_class_metatable:__call(logger, select_handler, conn, id, script, a
     state = "STOPPED",
     state_msg = "",
     reduction = {},
-    reduce_done = {},
     reduce_size = 0,
     reduce_count = 0,
     reduce_worker = {},
@@ -398,7 +403,6 @@ function task_methods:do_reduce(workers)
   local logger,select_handler = self.logger,self.select_handler
   -- TODO: check reduction size
   --
-  self.reduce_done = {}
   self.reduce_worker = {}
   local id = 0
   local count = 0
@@ -411,8 +415,7 @@ function task_methods:do_reduce(workers)
     id = id % #workers
   end
   for i=1,#workers do
-    workers[i]:do_reduce(self, select_handler, logger)
-    workers[i]:send_reduce_ready(self, select_handler, logger)
+    workers[i]:do_reduce(self, select_handler, logger, true)
   end
   self.reduce_size  = count
   self.reduce_count = 0
@@ -426,14 +429,11 @@ function task_methods:process_reduce_result(key,result)
     logger:warningf("Incorrect key %s\n", key)
     return
   end
-  if self.reduce_done[key] then
+  if self.map_reduce_result[key] then
     logger:warningf("Reduce key %s already done\n", key)
     return
   end
-  -- mark the key as done
-  self.reduce_done[key]  = true
-  self.reduce_count      = self.reduce_count + 1
-  --
+  self.reduce_count           = self.reduce_count + 1
   self.map_reduce_result[key] = result
   --
   if self.reduce_count == self.reduce_size then

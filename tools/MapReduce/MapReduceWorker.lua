@@ -29,8 +29,8 @@ end
 MEM = tonumber(MEM) * suffix_powers[suffix]
 --
 local BIND_TIMEOUT      = conf.bind_timeout or 10
-local TIMEOUT           = conf.timeout      or 10  -- in seconds
-local MASTER_PING_TIMER = conf.ping_timer   or 10  -- in seconds
+local TIMEOUT           = conf.timeout      or 60  -- in seconds
+local MASTER_PING_TIMER = conf.ping_timer   or 60  -- in seconds
 local PENDING_TH        = conf.th or 50  -- number of computed results
 --
 local MASTER_IS_ALIVE  = false
@@ -47,6 +47,7 @@ local map_pending_jobs = {}
 local reduce_pending_jobs  = {}
 local pending_results      = { }
 local reduce_ready         = false
+iterator(ipairs(core_tmp_names)):apply(function(i,v)os.execute("rm -f "..v)end)
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
@@ -98,7 +99,7 @@ message_reply = {
     local f = io.popen("uptime")
     local loadavg = f:read("*l")
     f:close()
-    loadavg = loadavg:match("^.*: .* (%d.%d%d).* .*$"):gsub(",",".")
+    loadavg = loadavg:match("^.*: (%d.%d%d).* .* .*$"):gsub(",",".")
     return loadavg
   end,
   
@@ -131,7 +132,7 @@ message_reply = {
 
   MAP = function(conn,msg)
     table.insert(map_pending_jobs, msg)
-    return "EXIT"
+    return "OK"
   end,
 
   REDUCE = function(conn,msg)
@@ -141,12 +142,12 @@ message_reply = {
 
   REDUCE_READY = function(conn,msg)
     reduce_ready = true
-    return "EXIT"
+    return "OK"
   end,
 
   SHARE = function(conn,msg)
     for i=1,#cores do cores[i]:share(msg) end
-    return "EXIT"
+    return "OK"
   end,
   
 }
