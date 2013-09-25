@@ -102,7 +102,7 @@ local message_reply = {
     local ok = task:process_reduce_result(key,value)
     -- TODO: throw error
     -- if not ok then return "ERROR" end
-    return "OK"
+    return nil,true
   end,
 
 }

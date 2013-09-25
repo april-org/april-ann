@@ -209,16 +209,33 @@ end
 function common.make_connection_handler(select_handler,message_reply,
 					connections)
   return function(conn,data)
-    local action
+    local action,send_msg,continue
     if data then
       action,data = data:match("^([^%s]*)%s*(.*)$")
-      local send_msg,continue
-      if message_reply[action] == nil then
-	send_msg = "UNKNOWN ACTION"
-      elseif type(message_reply[action]) == "string" then
-	send_msg,continue = message_reply[action]
+      
+      if action == "BUNCH" then
+	local msg = data
+  	local read_size = 0
+	local msg_len,result = #msg
+	while read_size < msg_len do
+	  local current_len = binarizer.decode.uint32(msg:sub(read_size+1,read_size+5))
+	  read_size = read_size + 5
+	  local current_msg = msg:sub(read_size+1, read_size + current_len)
+	  read_size = read_size + current_len
+	  local action,data = current_msg:match("^([^%s]*)(.*)$")
+	  result,continue = message_reply[action] or "UNKNOWN ACTION"
+	  if type(result) == "function" then result,continue = result(conn,data) end
+	  -- print(read_size, action, data, result, continue)
+	end
+	send_msg = result
       else
-	send_msg,continue = message_reply[action](conn, data)
+	if message_reply[action] == nil then
+	  send_msg = "UNKNOWN ACTION"
+	elseif type(message_reply[action]) == "string" then
+	  send_msg,continue = message_reply[action]
+	else
+	  send_msg,continue = message_reply[action](conn, data)
+	end
       end
       if send_msg then
 	continue = true
@@ -227,7 +244,8 @@ function common.make_connection_handler(select_handler,message_reply,
       if action == "EXIT" then
 	-- following instruction allows chaining of several actions
 	select_handler:close(conn, function() connections:mark_as_dead(conn) end)
-      elseif continue then
+      end
+      if continue then
 	-- following instruction allows chaining of several actions
 	select_handler:receive(conn,
 			       common.make_connection_handler(select_handler,

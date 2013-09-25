@@ -1088,8 +1088,10 @@ function table.tostring(t)
   for i,v in pairs(t) do
     local key
     local value
-    if tonumber(i) then key = "\n["..i.."]".."="
-    else key = string.format("\n[%q]=",i)
+    if luatype(i) == "string" then
+      key = string.format("[%q]=",i)
+    elseif tonumber(i) then key = "["..i.."]".."="
+    else key = string.format("[%q]=",tostring(i))
     end
     if luatype(v) == "table" then value = table.tostring(v)
     elseif luatype(v) == "string" then value = string.format("%q",v)

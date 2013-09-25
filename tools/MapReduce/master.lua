@@ -165,7 +165,7 @@ function worker_methods:do_reduce(task,select_handler,logger)
 end
 
 function worker_methods:append_reduce(task,select_handler,logger,key,value)
-  local key   = common.tostring(key)
+  local key   = common.tostring(key, true)
   local value = common.tostring(value)
   local msg   = string.format("REDUCE return %s,%s", key, value)
   table.insert(self.pending_reduce,

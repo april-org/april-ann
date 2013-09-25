@@ -35,7 +35,7 @@ local function execute(core)
       local key,values = common.load(str,logger)
       -- TODO: check reduce values error
       local key,result = mreduce(key,values)
-      key=common.tostring(key)
+      key=common.tostring(key, true)
       result=common.tostring(result)
       core:write_result(string.format("REDUCE_RESULT return %s,%s",key,result))
       
@@ -171,11 +171,18 @@ function core_methods:lock(msg)
 end
 
 function core_methods:unlock()
-  os.remove(self.tmpname)
+  -- FIXME: Is not working, why??? os.remove(self.tmpname)
+  os.execute("rm -f " .. self.tmpname)
 end
 
 function core_methods:busy()
   local f = io.open(self.tmpname)
+  if f then f:close() return true end
+  return false
+end
+
+function core_methods:read_pending()
+  local f = io.open(self.result_tmpname)
   if f then f:close() return true end
   return false
 end
@@ -207,12 +214,12 @@ end
 function core_methods:read_result()
   if self.pid then
     local f = io.open(self.result_tmpname)
-    if not f then return function() end end
-    return function()
-      local len = f:read(5)
-      if not len then f:close() os.remove(self.result_tmpname) return nil end
-      return f:read(binarizer.decode.uint32(len))
-    end
+    if not f then return nil end
+    local result = f:read("*a")
+    f:close()
+    -- FIXME: It is not working... why???? print(os.remove(self.result_tmpname))
+    os.execute("rm -f " .. self.result_tmpname)
+    return result
   end
 end
 
