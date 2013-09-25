@@ -1,0 +1,83 @@
+1) CLIENT => MASTER
+
+    (send) TASK name arguments script
+    (recv) ERROR | TASK_ID
+
+2) MASTER => WORKER
+
+    (send) TASK task_id nump arguments script
+    (recv) ERROR | OK
+
+3) MASTER => WORKER
+    
+    (send) MAP map_key_and_value
+    (recv) ERROR | OK
+
+4) WORKER => CORE
+   
+    (write) MAP map_key_and_value
+    (FILE)  MAP_RESULT map_result
+
+5) WORKER => MASTER
+
+    (send) MAP_RESULT %{map_key%} map_result
+    (recv) ERROR | OK
+
+6) MASTER => WORKER
+
+    (send) REDUCE key_and_value
+    (recv) ERROR | OK
+
+7) WORKER => CORE
+
+    (write) REDUCE key_and_value
+    (FILE)  REDUCE_RESULT key_and_value
+
+8) WORKER => MASTER
+
+    (send) REDUCE key_and_value
+    (recv) ERROR | OK
+
+9) MASTER => CLIENT
+
+    (send) SEQUENTIAL map_reduce_result
+    (recv) SEQUENTIAL_DONE shared
+
+10) MASTER => WORKER
+
+    (send) SHARE shared
+    (recv) ERROR | OK
+
+11) MASTER => CLIENT
+
+    (send) LOOP task_id
+    (recv) return nil | return true | return false
+
+12) MASTER => CLIENT
+
+    (send) EXIT
+    (recv) EXIT
+
+------------------------------------------------------------------------------
+
+EXPRESSIONS:
+
+task_id:   [^%s]+
+
+name:      [^%s]+
+
+arguments: %b{}
+
+script:    .*
+
+map_key:   return .*
+
+map_key_and_value: return .*
+
+map_result: return .*
+
+key_and_value: return .*
+
+map_reduce_result: return %b{}
+
+shared: return .*

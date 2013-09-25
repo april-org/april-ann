@@ -20,6 +20,7 @@
  */
 //BIND_HEADER_C
 
+#include <cstring>
 #include <csignal>
 #include <errno.h>
 #include <stdio.h>
@@ -33,13 +34,20 @@
 #include "omp_utils.h"
 #include "binarizer.h"
 
-// copy paste de lualib.c
+// COPIED FROM liolib.c:168
+static int io_fclose (lua_State *L) {
+  luaL_Stream *p = ((luaL_Stream *)luaL_checkudata(L, 1, LUA_FILEHANDLE));
+  int res = fclose(p->f);
+  return luaL_fileresult(L, (res == 0), NULL);
+}
+
+// COPIED FROM liolib.c, newprefile and newfile functions
 FILE **newfile (lua_State *L) {
-  FILE **pf = (FILE **)lua_newuserdata(L, sizeof(FILE *));
-  *pf = NULL;  /* file handle is currently `closed' */
-  luaL_getmetatable(L, LUA_FILEHANDLE);
-  lua_setmetatable(L, -2);
-  return pf;
+  luaL_Stream *p = (luaL_Stream *)lua_newuserdata(L, sizeof(luaL_Stream));
+  p->closef  = &io_fclose;
+  p->f       = NULL;
+  luaL_setmetatable(L, LUA_FILEHANDLE);
+  return &p->f;
 }
 
 //BIND_END
@@ -173,6 +181,35 @@ extern const char *__COMMIT_NUMBER__;
 //DOC_END
 {
     LUABIND_RETURN(bool, isatty(1));
+}
+//BIND_END
+
+//BIND_FUNCTION util.pipe
+{
+  int fd[2];
+  bool iserror = false;
+  int en; // = errno
+  FILE **fpin, **fpout;
+  if (pipe(fd) < 0) {
+    iserror = true; en = errno;
+  }
+  else {
+    fpin  = newfile(L);
+    fpout = newfile(L);
+    *fpin = fdopen(fd[0], "r");
+    if (*fpin==NULL) {
+      iserror=true; en=errno;
+    }
+    else {
+      *fpout = fdopen(fd[1], "w");
+      if (*fpout==NULL) {
+	iserror=true; en=errno;
+      }
+      else LUABIND_INCREASE_NUM_RETURNS(2);
+    }
+  }
+  if (iserror)
+    LUABIND_FERROR1("Error opening the pipe: %s", strerror(en));
 }
 //BIND_END
 
@@ -691,3 +728,49 @@ extern const char *__COMMIT_NUMBER__;
 //BIND_END
 
 //////////////////////////////////////////////////////////////////////
+
+//BIND_FUNCTION binarizer.code.int32
+{
+  int n;
+  char b[6];
+  LUABIND_GET_PARAMETER(1, int, n);
+  binarizer::code_int32(n, b);
+  b[5]='\0';
+  LUABIND_RETURN(string,b);
+}
+//BIND_END
+
+//BIND_FUNCTION binarizer.code.uint32
+{
+  unsigned int n;
+  char b[6];
+  LUABIND_GET_PARAMETER(1, uint, n);
+  binarizer::code_uint32(n, b);
+  b[5]='\0';
+  LUABIND_RETURN(string,b);
+}
+//BIND_END
+
+//BIND_FUNCTION binarizer.decode.int32
+{
+  const char *b;
+  LUABIND_GET_PARAMETER(1, string, b);
+  if (strlen(b) != 5)
+    LUABIND_ERROR("A string of len=5 is expected");
+  int n = binarizer::
+    decode_int32( reinterpret_cast<char const *>(b) );
+  LUABIND_RETURN(int,n);
+}
+//BIND_END
+
+//BIND_FUNCTION binarizer.decode.uint32
+{
+  const char *b;
+  LUABIND_GET_PARAMETER(1, string, b);
+  if (strlen(b) != 5)
+    LUABIND_ERROR("A string of len=5 is expected");
+  unsigned int n = binarizer::
+    decode_uint32( reinterpret_cast<char const *>(b) );
+  LUABIND_RETURN(uint,n);
+}
+//BIND_END

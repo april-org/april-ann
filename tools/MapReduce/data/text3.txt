@@ -1,0 +1,20 @@
+(layer1 and layer2), and finally two dot_product components (w1 and w2) which
+contains weight matrixes.
+
+It is also possible to iterate over all weigths names:
+
+So, our MLP contains two bias vectors (b1 and b2, corresponding with b1 and b2
+components), and two weights matrixes (w1 and w2, corresponding with w1 and w2
+components). All MLPs generated automatically assign this names to its
+components and weights.
+
+
+One time the component is build by using a trainer instance, the trainer exposes
+two interesting methods `trainer:component(COMPONENT_NAME_STRING)` which returns
+the component given its name, and `trainer:weights(WEIGTHS_NAME_STRING)` which
+returns the connection weigths object given its weigths_name attribute.
+
+More info about `trainable.supervised_trainer` doing:
+
+Two save/load schemes are implemented for all-all MLPs. The first is related to
+the component all-all (generated throught function `ann.mlp.all_all.generate`).
