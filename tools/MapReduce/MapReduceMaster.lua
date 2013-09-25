@@ -9,8 +9,8 @@ local MASTER_BIND = conf.bind_address or '*'
 local MASTER_PORT = conf.port or 8888
 --
 local BIND_TIMEOUT      = conf.bind_timeout or 10
-local TIMEOUT           = conf.timeout      or 10   -- in seconds
-local WORKER_PING_TIMER = conf.ping_timer   or 10   -- in seconds
+local TIMEOUT           = conf.timeout      or 60   -- in seconds
+local WORKER_PING_TIMER = conf.ping_timer   or 60   -- in seconds
 --
 
 -- function map(key, value) do stuff coroutine.yield(key, value) end
@@ -102,7 +102,7 @@ local message_reply = {
     local ok = task:process_reduce_result(key,value)
     -- TODO: throw error
     -- if not ok then return "ERROR" end
-    return nil,true
+    return "OK"
   end,
 
 }
@@ -195,6 +195,7 @@ function main()
       if state == "ERROR" then
 	task:send_error_message(select_handler)
 	task = nil
+	collectgarbage("collect")
       elseif state == "STOPPED" then
 	if #workers > 0 then
 	  -- TODO: throw an error
@@ -215,6 +216,7 @@ function main()
       elseif state == "FINISHED" then
 	logger:print("FINISHED",task:get_id())
 	task = nil
+	collectgarbage("collect")
       elseif state ~= "MAP" and state ~= "REDUCE" and state ~= "SEQUENTIAL" and state ~= "LOOP" then
 	logger:warningf("Unknown task state: %s\n", state)
       end

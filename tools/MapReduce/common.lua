@@ -413,6 +413,8 @@ function select_methods:execute(timeout)
       end
     end
     --
+    self.send_query[conn] = nil
+    self.recv_query[conn] = nil
     iterator(ipairs(self.data[conn] or {})):select(2):field("op"):
     apply(function(v)
 	    if v=="accept" then
