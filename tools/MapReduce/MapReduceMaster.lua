@@ -51,7 +51,7 @@ local message_reply = {
   -- TODO: allow to send a Lua code string, instead of a filename path
   TASK = function(conn,msg)
     local name,arg,script = msg:match("^%s*([^%s]+)%s*(return %b{})%s*(.*)")
-    local address = conn:getsockname()
+    local address = conn:getpeername()
     if task ~= nil then
       logger:warningf("The cluster is busy\n")
       return "ERROR"
@@ -67,7 +67,7 @@ local message_reply = {
   WORKER =
     function(conn,msg)
       local name,port,nump,mem = table.unpack(string.tokenize(msg or ""))
-      local address = conn:getsockname()
+      local address = conn:getpeername()
       logger:print("Received WORKER action:", address, name, port, nump, mem)
       local w = inv_workers[name]
       if w then
@@ -85,7 +85,7 @@ local message_reply = {
 
   MAP_RESULT = function(conn,msg)
     local map_key,map_result = msg:match("^%s*(%b{})%s*(return .*)$")
-    local address = conn:getsockname()
+    local address = conn:getpeername()
     map_key = common.load(string.sub(map_key,2,#map_key-1),logger)
     logger:debug("Received MAP_RESULT action: ", address, map_key)
     -- TODO: throw error if result is not well formed??
