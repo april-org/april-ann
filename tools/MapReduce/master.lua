@@ -2,7 +2,7 @@ require "socket"
 -- module master
 master = {}
 
-local MAX_NUMBER_OF_ATTEMPS = 20
+local MAX_NUMBER_OF_ATTEMPS = 2
 local REDUCE_PENDING_TH = 4*1024*1024 -- 4M
 
 ------------------------------------------------------------
@@ -28,7 +28,7 @@ end
 
 function worker_methods:connect()
   local conn = common.connections_set.connect(self.address,self.port)
-  if not conn then self:set_dead() end
+  if not conn then return false end
   return conn
 end
 
@@ -59,7 +59,10 @@ function worker_methods:ping(select_handler)
 			     self:set_dead()
 			     select_handler:close(s)
 			   elseif not self:dead() then
-			     self.rel_mem_nump = self:get_mem()/self:get_nump()
+			     local nump = self:get_nump()
+			     if nump == 0 then self.rel_mem_nump = 0
+			     else self.rel_mem_nump = self:get_mem()/nump
+			     end
 			   end
 			 end)
   select_handler:send(s, "EXIT")
@@ -87,7 +90,7 @@ function worker_methods:get_mem()
 end
 
 function worker_methods:get_nump()
-  return math.ceil(math.max(0, self.nump - self.load_avg))
+  return math.ceil(math.max(0, self.nump - (self.load_avg or 0.0)))
 end
 
 function worker_methods:get_rel_mem_nump()
@@ -108,8 +111,9 @@ function worker_methods:task(select_handler,logger,taskid,script,arg,nump)
   select_handler:send( s, string.format("TASK %s %d %s %s",taskid,nump,arg,script) )
   select_handler:receive(s,
 			 function(conn,msg)
-			   local msg = table.concat(string.tokenize(msg))
 			   -- TODO: THROW ERROR TO MASTER THREAD
+			   -- print(conn,msg)
+			   -- local msg = table.concat(string.tokenize(msg))
 			   --if msg ~= "OK" then
 			   --return
 			 end)
@@ -133,6 +137,7 @@ function worker_methods:do_map(task,select_handler,logger)
     select_handler:close(s)
     self.pending_map = {}
   end
+  return true
 end
 
 function worker_methods:append_map(task,select_handler,logger,core,map_key,job)
@@ -140,6 +145,7 @@ function worker_methods:append_map(task,select_handler,logger,core,map_key,job)
   local job     = common.tostring(job)
   table.insert(self.pending_map,
 	       string.format("MAP %d return %s,%s", core, map_key, job))
+  return true
 end
 
 function worker_methods:do_reduce(task,select_handler,logger,send_ready)
@@ -166,6 +172,7 @@ function worker_methods:do_reduce(task,select_handler,logger,send_ready)
     select_handler:close(s)
     collectgarbage("collect")
   end
+  return true
 end
 
 function worker_methods:append_reduce(task,select_handler,logger,key,value)
@@ -178,16 +185,27 @@ function worker_methods:append_reduce(task,select_handler,logger,key,value)
   if self.pending_reduce_size > REDUCE_PENDING_TH then
     self:do_reduce(task,select_handler,logger)
   end
+  return true
 end
 
 function worker_methods:share(select_handler, logger, data)
   local s = self:connect()
-  if not s then return false end
+  if not s then self:set_dead() return false end
   select_handler:send(s, string.format("SHARE %s", data))
   select_handler:receive(s)
   select_handler:send(s, "EXIT")
   select_handler:receive(s)
   select_handler:close(s)
+  return true
+end
+
+function worker_methods:send_error(select_handler, logger, error_msg)
+  local s = self:connect()
+  if not s then self:set_dead() return false end
+  select_handler:send(s, string.format("ERROR %s", error_msg))
+  select_handler:receive(s)
+  select_handler:close(s)
+  return true
 end
 
 -----------------------------------------------------------------------------
@@ -200,7 +218,8 @@ task_class_metatable = class("master.task")
 -- state stores the working state of the task, it could be STOPPED, PREPARED,
 -- ERROR, MAP, MAP_FINISHED, REDUCE, REDUCE_FINISHED, SEQUENTIAL,
 -- SEQUENTIAL_FINISHED, LOOP, FINISHED
-function task_class_metatable:__call(logger, select_handler, conn, id, script, arg)
+function task_class_metatable:__call(logger, select_handler, conn, id, script,
+				     arg, master_port)
   local obj = {
     logger = logger,
     select_handler = select_handler,
@@ -220,6 +239,7 @@ function task_class_metatable:__call(logger, select_handler, conn, id, script, a
     reduce_worker = {},
     map_reduce_result = {},
     worker_nump = {},
+    master_port = master_port,
   }
   local arg_table = common.load(arg,logger)
   local t = common.load(script,logger,table.unpack(arg_table))
@@ -240,13 +260,43 @@ function task_class_metatable:__call(logger, select_handler, conn, id, script, a
   return class_instance(obj,self,true)
 end
 
-function task_methods:send_error_message(select_handler)
+function task_methods:throw_error(msg)
+  self.state             = "ERROR"
+  self.state_msg         = msg
+  self.map_plan          = {}
+  self.map_done          = {}
+  self.map_plan_size     = 0
+  self.map_plan_count    = 0
+  self.reduction         = {}
+  self.reduce_size       = 0
+  self.reduce_count      = 0
+  self.reduce_worker     = {}
+  self.map_reduce_result = {}
+  self.worker_nump       = {}
+  local conn = common.connections_set.connect("localhost",self.master_port)
+  if conn then
+    conn:close()
+  else
+    -- TODO: ERROR
+  end
+end
+
+function task_methods:send_error_message(workers)
+  local select_handler = self.select_handler
+  local logger = self.logger
   select_handler:send(self.conn,
 		      string.format("ERROR %s",self.state_msg))
   select_handler:receive(self.conn)
   select_handler:send(self.conn, "EXIT")
   select_handler:receive(self.conn)
   select_handler:close(self.conn)
+  if workers then
+    for i=1,#workers do
+      if not workers[i]:send_error(select_handler, logger, self.state_msg) then
+	logger:printf("Worker %s is dead\n", workers[i]:get_name())
+      end
+    end
+  end
 end
 
 function task_methods:get_state() return self.state end
@@ -331,8 +381,7 @@ function task_methods:prepare_map_plan(workers)
   end -- for each worker
   if data_i ~= #data+1 then
     logger:warningf("Impossible to prepare the map_plan\n")
-    self.state = "ERROR"
-    self.state_msg = "Impossible to prepare the map_plan"
+    self:throw_error("Impossible to prepare the map_plan")
     return
   end
   -- map_plan has how the work was divided between all the available workers
@@ -347,8 +396,7 @@ function task_methods:do_map(workers)
   local logger,select_handler = self.logger,self.select_handler
   if not self.map_plan or self.map_plan_size == 0 then
     logger:warningf("Imposible to execute a non existing map_plan\n")
-    self.state = "ERROR"
-    self.state_msg = "Imposible to execute a non existing map_plan"
+    self:throw_error("Imposible to execute a non existing map_plan")
     return
   end
   --
@@ -360,7 +408,10 @@ function task_methods:do_map(workers)
     worker:append_map(self, select_handler, logger, core, map_key, job)
   end
   for i=1,#workers do
-    workers[i]:do_map(self, select_handler, logger)
+    if not workers[i]:do_map(self, select_handler, logger) then
+      self:throw_error("The worker " .. workers[i]:get_name() .. " is not responding")
+      return
+    end
   end
   self.state = "MAP"
   self.map_done = {}
@@ -415,7 +466,10 @@ function task_methods:do_reduce(workers)
     id = id % #workers
   end
   for i=1,#workers do
-    workers[i]:do_reduce(self, select_handler, logger, true)
+    if not workers[i]:do_reduce(self, select_handler, logger, true) then
+      self:throw_error("The worker " .. workers[i]:get_name() .. " is not responding")
+      return
+    end
   end
   self.reduce_size  = count
   self.reduce_count = 0
@@ -450,8 +504,7 @@ function task_methods:do_sequential(workers)
 			      function(conn,msg)
 				local action,data = msg:match("^%s*([^%s]+)%s*(return .*)$")
 				if action ~= "SEQUENTIAL_DONE" then
-				  self.state = "ERROR"
-				  self.state_msg = "Error receiving sequential message"
+				  self:throw_error("Error receiving sequential message")
 				  return "ERROR"
 				else
 				  self:process_sequential(data,workers)
@@ -477,8 +530,7 @@ function task_methods:do_loop()
 			      function(conn,msg)
 				local result = common.load(msg,logger)
 				if result==nil then
-				  self.state = "ERROR"
-				  self.state_msg = "Error receiving LOOP"
+				  self:throw_error("Error receiving LOOP")
 				end
 				self:process_loop(result)
 			      end)

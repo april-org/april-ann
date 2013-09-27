@@ -52,6 +52,20 @@ iterator(ipairs(core_tmp_names)):apply(function(i,v)os.execute("rm -f "..v)end)
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 
+function initialize()
+  iterator(ipairs(core_tmp_names)):apply(function(i,v)os.execute("rm -f "..v)end)
+  cores       = {}
+  free_cores  = {}
+  mapkey2core = {}
+  aux_free_cores_dict  = {}
+  map_pending_jobs     = {}
+  reduce_pending_jobs  = {}
+  pending_results      = {}
+  reduce_ready         = false
+  connections:close()
+  collectgarbage("collect")
+end
+
 local function check_error(p,msg)
   if not p then logger:warningf("ERROR: %s\n",msg) end
   return p
@@ -92,6 +106,12 @@ message_reply = {
   end,
   
   EXIT = "EXIT",
+
+  ERROR = function(conn,msg)
+    logger:print("TASK stopped, received ERROR: " .. msg)
+    initialize()
+    return "EXIT"
+  end,
   
   LOADAVG = function(conn,name)
     local name = table.concat(string.tokenize(name or ""))
@@ -99,21 +119,17 @@ message_reply = {
     local f = io.popen("uptime")
     local loadavg = f:read("*l")
     f:close()
-    loadavg = loadavg:match("^.*: (%d.%d%d).* .* .*$"):gsub(",",".")
+    if not loadavg then
+      loadavg = "0.00"
+    else
+      loadavg = loadavg:match("^.*: (%d.%d%d).* .* .*$"):gsub(",",".")
+    end
     return loadavg
   end,
   
   TASK = function(conn,msg)
     local taskid,nump,arg,script = msg:match("^%s*([^%s]+)%s*([^%s]+)%s*(return %b{})%s*(.*)$")
-    cores       = {}
-    free_cores  = {}
-    mapkey2core = {}
-    aux_free_cores_dict  = {}
-    map_pending_jobs     = {}
-    reduce_pending_jobs  = {}
-    pending_results      = {}
-    reduce_ready         = false
-    collectgarbage("collect")
+    initialize()
     for i=1,tonumber(nump) do
       cores[i] = worker.core(logger,
 			     core_tmp_names[i],
@@ -209,6 +225,12 @@ function send_result_to_master(c)
   local result = c:read_result()
   if result then
     local conn = common.connections_set.connect(MASTER_ADDRESS, MASTER_PORT)
+    if not conn then
+      logger:warningf("IMPOSSIBLE TO CONNECT WITH MASTER\n")
+      logger:warningf("TASK stopped\n")
+      initialize()
+      return
+    end
     select_handler:send(conn, string.format("BUNCH %s", result))
     select_handler:receive(conn)
     select_handler:send(conn, "EXIT")

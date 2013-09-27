@@ -16,16 +16,27 @@ local function execute(core)
       
     elseif action == "MAP" then
       local str = data:match("^%s*(return .*)")
-      local map_key,value = common.load(str,logger)
-      -- TODO: check value error
-      local map_result = mmap(map_key,value)
-      map_result = common.tostring(map_result)
       core:open_result_file()
-      core:write_result(string.format("MAP_RESULT {return %s} return %s",
-				      common.tostring(map_key,true),
-				      map_result))
+      local map_key,value = common.load(str,logger)
+      if not map_key then
+	-- value has an error message
+	core:write_result(string.format("KEY_VALUE_ERROR MAP %s",value))
+      else
+	-- TODO: check value error
+	local ok,map_result = pcall(mmap,map_key,value)
+	if not ok then
+	  -- map_result has an error message
+	  core:write_result(string.format("RUNTIME_ERROR MAP %s %s",
+					  map_key, map_result))
+	else
+	  map_result = common.tostring(map_result)
+	  core:write_result(string.format("MAP_RESULT {return %s} return %s",
+					  common.tostring(map_key,true),
+					  map_result))
+	end
+	--
+      end
       core:close_result_file()
-      --
       core:unlock()
       core:wakeup_worker()
       
@@ -33,11 +44,22 @@ local function execute(core)
       core:open_result_file()
       local str = data:match('^%s*(return .*)')
       local key,values = common.load(str,logger)
-      -- TODO: check reduce values error
-      local key,result = mreduce(key,values)
-      key=common.tostring(key, true)
-      result=common.tostring(result)
-      core:write_result(string.format("REDUCE_RESULT return %s,%s",key,result))
+      if not key then
+	-- values has an error message
+	core:write_result(string.format("KEY_VALUE_ERROR REDUCE %s",values))
+      else
+	-- TODO: check reduce values error
+	local ok,out_key,result = pcall(mreduce,key,values)
+	if not ok then
+	  -- out_key has an error message
+	  core:write_result(string.format("RUNTIME_ERROR REDUCE %s %s",
+					  key, out_key))
+	else
+	  key=common.tostring(out_key, true)
+	  result=common.tostring(result)
+	  core:write_result(string.format("REDUCE_RESULT return %s,%s",key,result))
+	end
+      end
       
     elseif action == "REDUCE_READY" then
       core:close_result_file()
@@ -45,11 +67,23 @@ local function execute(core)
       core:wakeup_worker()
       
     elseif action == "SHARE" then
-      local data = common.load(data)
-      -- TODO: check error
-      share(data)
+      local data,msg = common.load(data)
+      if not data then
+	core:open_result_file()
+	core:write_result(string.format("KEY_VALUE_ERROR SHARE %s", msg))
+	core:close_result_file()
+      else
+	-- TODO: check error
+	local ok,msg = pcall(share,data)
+	if not ok then
+	  core:open_result_file()
+	  core:write_result(string.format("RUNTIME_ERROR SHARE %s", msg))
+	  core:close_result_file()
+	end
+      end
       --
       core:unlock()
+      core:wakeup_worker()
     end
   end
   os.exit(0)
@@ -117,7 +151,11 @@ end
 function core_methods:wakeup_worker()
   if not self.pid then
     local conn = common.connections_set.connect("localhost",self.port)
-    conn:close()
+    if conn then
+      conn:close()
+    else
+      -- TODO: ERROR
+    end
   end
 end
 
