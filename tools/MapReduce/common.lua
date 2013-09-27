@@ -53,14 +53,14 @@ function common.load(str,logger, ...)
   end
   if not f then
     logger:warningf("Impossible to load the given task: %s\n", msg)
-    return nil
+    return nil,msg
   end
   local r  = table.pack(pcall(f, ...))
   local ok = table.remove(r,1)
   if not ok then
     -- result has the error message
     logger:warningf("Impossible to load the given task: %s\n", r[1])
-    return nil
+    return nil,"Error executing loading Lua code"
   end
   return table.unpack(r)
 end
@@ -88,7 +88,9 @@ end
 local function recv_loop(sock, len)
   local data,r,status = ""
   while #data < len do
+    --print("READING", sock, len, #data)
     r,status = recv(sock, len - #data)
+    --print("READ   ", sock, len, #data, r, status)
     if status == "timeout" then coroutine.yield("timeout")
     elseif status == "closed" or not r then data=false break
     end
@@ -137,9 +139,11 @@ end
 function common.recv_wrapper(sock)
   sock:settimeout(0) -- do not block
   local data,msg = recv_loop(sock, HEADER_LEN)
+  --print("FIRST LOOP", sock, data)
   if not data then return false,msg end
   local len  = binarizer.decode.uint32(data)
   local data,msg = recv_loop(sock, len)
+  --print("SECOND LOOP", data)
   if not data then return false,msg end
   --print("RECV",data)
   return data
@@ -209,7 +213,8 @@ end
 function common.make_connection_handler(select_handler,message_reply,
 					connections)
   return function(conn,data)
-    local action,send_msg,continue
+    local continue =  true
+    local action,send_msg
     if data then
       action,data = data:match("^([^%s]*)%s*(.*)$")
       
@@ -226,9 +231,9 @@ function common.make_connection_handler(select_handler,message_reply,
 	  result,continue = message_reply[action] or "UNKNOWN ACTION"
 	  if type(result) == "function" then result,continue = result(conn,data) end
 	  -- print(read_size, action, data, result, continue)
-	end
+	end -- while read_size < msg_len
 	send_msg = result
-      else
+      else -- if action == "BUNCH" then
 	if message_reply[action] == nil then
 	  send_msg = "UNKNOWN ACTION"
 	elseif type(message_reply[action]) == "string" then
@@ -236,7 +241,7 @@ function common.make_connection_handler(select_handler,message_reply,
 	else
 	  send_msg,continue = message_reply[action](conn, data)
 	end
-      end
+      end -- if action == "BUNCH" then .. else
       if send_msg then
 	continue = true
 	select_handler:send(conn, send_msg)
@@ -245,13 +250,13 @@ function common.make_connection_handler(select_handler,message_reply,
 	-- following instruction allows chaining of several actions
 	select_handler:close(conn, function() connections:mark_as_dead(conn) end)
       end
-      if continue then
-	-- following instruction allows chaining of several actions
-	select_handler:receive(conn,
-			       common.make_connection_handler(select_handler,
-							      message_reply,
-							      connections))
-      end
+    end -- if data then
+    if continue then
+      -- following instruction allows chaining of several actions
+      select_handler:receive(conn,
+			     common.make_connection_handler(select_handler,
+							    message_reply,
+							    connections))
     end
   end
 end
@@ -307,6 +312,7 @@ function select_methods:send(conn, func)
     local str = func
     func = function() return str end
   end
+  --print("SENDING TO", conn, func())
   self.send_query[conn] = true
   self.data[conn] = self.data[conn] or {}
   table.insert(self.data[conn],
@@ -319,6 +325,7 @@ function select_methods:send(conn, func)
 end
 
 function select_methods:close(conn, func)
+  --print("CLOSE ", conn)
   local func = func or function() end
   if type(func) == "string" then func = function() return func end end
   self.data[conn] = self.data[conn] or {}
@@ -330,7 +337,9 @@ local process = {
   
   receive = function(conn,co,recv_map,send_map)
     if recv_map[conn] then
+      --print("RESUME")
       local ok,ret,msg = coroutine.resume(co)
+      --print(ok,ret,msg)
       local msg = msg or ret
       assert(ok, "Error in receive function: " .. tostring(msg))
       if msg == "timeout" then return false end

@@ -3,7 +3,9 @@ package.path = string.format("%s?.lua;%s", string.get_path(arg[0]), package.path
 require "master"
 require "common"
 --
-local conf = common.load_configuration("/etc/APRIL-ANN-MAPREDUCE/master.lua")
+local conf_path = "/etc/APRIL-ANN-MAPREDUCE/master.lua"
+local conf,error_msg = common.load_configuration(conf_path)
+if not conf then error("Error loading " .. conf_path .. ": "..error_msg) end
 --
 local MASTER_BIND = conf.bind_address or '*'
 local MASTER_PORT = conf.port or 8888
@@ -40,7 +42,7 @@ end
 ---------------------------------------------------------------
 
 local message_reply = {
-  OK   = function() return end,
+  OK   = function() return nil end,
   
   PING = "PONG",
   
@@ -57,7 +59,7 @@ local message_reply = {
       return "ERROR"
     end
     local ID = make_task_id(name)
-    task = master.task(logger, select_handler, conn, ID, script, arg)
+    task = master.task(logger, select_handler, conn, ID, script, arg, MASTER_PORT)
     if not task then return "ERROR" end
     logger:printf("Running TASK %s executed by client %s at %s\n",
 		  ID, name, address)
@@ -84,18 +86,26 @@ local message_reply = {
     end,
 
   MAP_RESULT = function(conn,msg)
-    local map_key,map_result = msg:match("^%s*(%b{})%s*(return .*)$")
+    if not task then return "OK" end
+    local map_key,map_result,error_msg = msg:match("^%s*(%b{})%s*(return .*)$")
     local address = conn:getpeername()
-    map_key = common.load(string.sub(map_key,2,#map_key-1),logger)
-    logger:debug("Received MAP_RESULT action: ", address, map_key)
-    -- TODO: throw error if result is not well formed??
-    local ok = task:process_map_result(map_key,map_result)
-    -- TODO: throw error
-    -- if not ok then return "ERROR" end
-    return "OK"
+    map_key,error_msg = common.load(string.sub(map_key,2,#map_key-1),logger)
+    if not map_key then
+      logger:debug("Error in MAP_RESULT action: ", error_msg)
+      task:throw_error(string.format("MAP_RESULT %s", error_msg))
+      return "ERROR"
+    else
+      logger:debug("Received MAP_RESULT action: ", address, map_key)
+      -- TODO: throw error if result is not well formed??
+      local ok = task:process_map_result(map_key,map_result)
+      -- TODO: throw error
+      -- if not ok then return "ERROR" end
+      return "OK"
+    end
   end,
 
   REDUCE_RESULT = function(conn,msg)
+    if not task then return "OK" end
     local key_and_value = msg:match("^%s*(return .*)$")
     local key,value = common.load(key_and_value,logger)
     -- TODO: throw error if result is not well formed??
@@ -103,6 +113,18 @@ local message_reply = {
     -- TODO: throw error
     -- if not ok then return "ERROR" end
     return "OK"
+  end,
+
+  KEY_VALUE_ERROR = function(conn,msg)
+    local where,error_msg = msg:match("^%s*([^%s]+)%s*(.*)$")
+    task:throw_error(msg)
+    return "ERROR"
+  end,
+
+  RUNTIME_ERROR = function(conn,msg)
+    local where,error_msg = msg:match("^%s*([^%s]+)%s*(.*)$")
+    task:throw_error(msg)
+    return "ERROR"
   end,
 
 }
@@ -120,10 +142,12 @@ function check_workers(t, inv_t)
   --
   -- removes dead workers
   for i=#dead_workers,1,-1 do
-    local data = table.pack(t[i]:get())
-    logger:print("Removing dead WORKER: ", table.unpack(data))
-    table.remove(t,i)
-    inv_t[data[1]] = nil
+    local p = dead_workers[i]
+    local name = t[p]:get_name()
+    logger:print("Removing dead WORKER: ", name)
+    table.remove(t,p)
+    inv_t[name] = nil
+    if task then task:throw_error("WORKER " .. name .. " is dead") end
   end
 end
 
@@ -190,10 +214,11 @@ function main()
       clock:reset()
       clock:go()
     end
+    -- print(task and task:get_state())
     if task then
       local state = task:get_state()
       if state == "ERROR" then
-	task:send_error_message(select_handler)
+	task:send_error_message(select_handler, workers)
 	task = nil
 	collectgarbage("collect")
       elseif state == "STOPPED" then
