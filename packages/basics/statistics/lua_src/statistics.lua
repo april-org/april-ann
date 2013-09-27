@@ -601,3 +601,101 @@ function confus_matrix_methods:clearPredClass(tipo)
    
 end
 
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+april_set_doc("stats.bootstrap_resampling",
+	      {
+		class = "function",
+		summary = "Produces a bootstrap resampling",
+		description= {
+		  "This function is useful to compute confidence intervals",
+		  "by using bootstrapping technique. The function receives",
+		  "a population size, a sampling function which returns an",
+		  "individual sample from the source population every time",
+		  "it is called, a reducer object or table with methods add,",
+		  "compute, and clear. The function applies the reducer to",
+		  "every sample and returns in a table the computation of",
+		  "the reducer value for every possible population.",
+		},
+		params = {
+		  population_size = "Size of the population",
+		  repetitions = "Number of repetitions, recommended minimum of 1000",
+		  sampling_func = {"A function which every time is called",
+				   "returns a random element of the",
+				   "population"},
+		  
+		},
+		outputs = {
+		  "A table with the reducer output for every repetition."
+		},
+	      })
+-- Receives a class or a table with methods: clear(), add(), compute()
+function stats.bootstrap_resampling(params)
+  local params = get_table_fields(
+    {
+      population_size = { mandatory = true },
+      repetitions     = { type_match = "number",   mandatory = true },
+      sampling_func   = { type_match = "function", mandatory = true },
+      reducer         = { mandatory = true },
+    },
+    params)
+  assert(params.reducer.clear and params.reducer.add and params.reducer.compute,
+	 "Needs a class or table in 'reducer' field with methods: clear, add, compute")
+  local population_size  = params.population_size
+  local repetitions      = params.repetitions
+  local sampling_func    = params.sampling_func
+  local reducer          = params.reducer
+  local result           = {}
+  for i=1,repetitions do
+    collectgarbage("collect")
+    for p=1,population_size do
+      reducer:add(sampling_func())
+    end
+    local r = table.pack(reducer:compute())
+    if #r == 1 then r = table.unpack(r) end
+    table.insert(result, r)
+    reducer:clear()
+  end
+  return result
+end
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+local pearson_methods,
+pearson_class_metatable = class("stats.correlation.pearson")
+
+function pearson_class_metatable:__call()
+  local obj = { mean_var_x  = stats.mean_var(),
+		mean_var_y  = stats.mean_var(),
+		xy_sum      = 0 }
+  return class_instance(obj, self)
+end
+
+function pearson_methods:clear()
+  self.mean_var_x:clear()
+  self.mean_var_y:clear()
+  self.xy_sum = 0
+end
+
+function pearson_methods:add(x,y)
+  local x,y = x,y
+  if not y then
+    if type(x) == "table" then x,y = table.unpack(x) end
+  end
+  assert(x and y, "Needs two values or an array table with two components")
+  self.mean_var_x:add(x)
+  self.mean_var_y:add(y)
+  self.xy_sum = self.xy_sum + x*y
+end
+
+function pearson_methods:compute()
+  local N          = self.mean_var_x:size()
+  local mu_x,s_x   = self.mean_var_x:compute()
+  local mu_y,s_y   = self.mean_var_y:compute()
+  local rxy = N*(self.xy_sum - mu_x*mu_y) / (s_x * s_y)
+  return rxy
+end
