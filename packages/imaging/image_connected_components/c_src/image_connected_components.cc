@@ -43,7 +43,6 @@ namespace rgb_colors {
         return colors[index%BLACK];
     }
 }
-static const float BLACK_THRESHOLD = 0.3;
 
 inline int to_index(const ImageFloat *img, int x, int y) {
   return y*img->width + x;
@@ -68,7 +67,7 @@ void ImageConnectedComponents::dfs_component(int x, int y, int current_component
       int newx = x + directions[i][0];
       int newy = y + directions[i][1];
       int new_index = to_index(img, newx, newy);
-      if (newx < 0 || newx >= img->width || newy < 0 || newy >= img->height || (*img)(newx, newy) >= BLACK_THRESHOLD || pixelComponents[new_index])
+      if (newx < 0 || newx >= img->width || newy < 0 || newy >= img->height || (*img)(newx, newy) >= threshold || pixelComponents[new_index])
          continue;      
       pixelComponents[new_index]  = current_component;
       components[current_pixel++] = new_index; 
@@ -77,13 +76,13 @@ void ImageConnectedComponents::dfs_component(int x, int y, int current_component
 
 }
 
-ImageConnectedComponents::ImageConnectedComponents(const ImageFloat *img) {
+ImageConnectedComponents::ImageConnectedComponents(const ImageFloat *img, float threshold):threshold(threshold) {
     // 1. Create a Integer Matrix of the same size of the original image
     this->img = img;
     pixelComponents = vector<int>(img->width*img->height, 0);
     
     // 2. Count the number of black pixels
-    int black_pixels = img->count_black_pixels(BLACK_THRESHOLD);
+    int black_pixels = img->count_black_pixels(threshold);
 
     // 3. Create a component of the size black pixels
     components = vector<int>(black_pixels);
@@ -97,7 +96,7 @@ ImageConnectedComponents::ImageConnectedComponents(const ImageFloat *img) {
        for (int x = 0; x < img->width; ++x) {
           int index = to_index(img, x, y);
           float value = (*img)(x,y);
-          if ((*img)(x,y) < BLACK_THRESHOLD && !pixelComponents[index]) {
+          if ((*img)(x,y) < threshold && !pixelComponents[index]) {
              pixelComponents[index] = ++current_component;
              components[current_pixel++] = index;
              //DFS over the pixel

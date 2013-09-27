@@ -38,10 +38,13 @@ class ImageConnectedComponents: public Referenced{
 
     // index that delimites the CCs in components
     vector <int> indexComponents;
-    const ImageFloat *img; 
+
+    //black threshold
+    float threshold;
+    const ImageFloat *img;
     public:
     int size;
-    ImageConnectedComponents(const ImageFloat *img);
+    ImageConnectedComponents(const ImageFloat *img, float threshold = 0.7);
     ~ImageConnectedComponents(){};
 
     private:

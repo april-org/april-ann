@@ -88,9 +88,7 @@ end
 function imageSVG_methods:addPaths(paths)
     for i, path in ipairs(paths) do
         local color = "black"
-        if (i <= #colors) then
-            color = colors[i]
-        end
+            color = colors[i%#colors+1]
         --        print(i, color, #path)
         self:addPathFromTable(path,{stroke = color, id = tostring(i)})
     end

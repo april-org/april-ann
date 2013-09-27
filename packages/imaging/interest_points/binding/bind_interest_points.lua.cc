@@ -146,7 +146,6 @@ using namespace InterestPoints;
  if (elems > 4) {
    lua_rawgeti(L, -1, 4+c);
    log_prob = lua_tonumber(L,-1);
-   printf("log_prob %f(%d)\n", log_prob, c);
  }
  obj->addPoint(x, y, c, class_type, log_prob);
 
