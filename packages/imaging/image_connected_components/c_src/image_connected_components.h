@@ -51,6 +51,7 @@ class ImageConnectedComponents: public Referenced{
     MatrixInt32 *getPixelMatrix();
     bool connected(int x1, int y1, int x2, int y2);
 
+    int getComponent(int x, int y);
     ImageFloatRGB  *getColoredImage();
 };
 #endif

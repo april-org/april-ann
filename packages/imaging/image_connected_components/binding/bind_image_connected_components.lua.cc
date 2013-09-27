@@ -92,3 +92,4 @@
   LUABIND_RETURN(bool, obj->connected(x1, y1, x2, y2));
 }
 //BIND_END
+

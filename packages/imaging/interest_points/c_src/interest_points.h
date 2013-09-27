@@ -24,9 +24,11 @@
 #define INTEREST_POINTS_H
 
 #include "image.h"
+#include "image_connected_components.h"
 #include "utilImageFloat.h"
 #include "pair.h"
 #include "vector.h"
+using april_utils::vector;
 
 namespace InterestPoints
 {
@@ -55,5 +57,53 @@ namespace InterestPoints
    * @param[in] duplicate_interval The minimum distance of locals within the same stroke
    */
   void extract_points_from_image(ImageFloat *pimg, april_utils::vector<Point2D> *local_minima, april_utils::vector<Point2D> *local_maxima, float threshold_white= 0.4, float threshold_black = 0.6, int local_context = 6, int duplicate_interval = 3);
+
+  
+ struct interest_point {
+   int x;
+   int y;
+   bool natural_type;
+   int point_class;
+   float log_prob;
+   
+   interest_point() {}
+   interest_point(int x, int y, int point_class, bool type, float log_prob):
+       x(x), y(y), natural_type(type), point_class(point_class), log_prob(log_prob) {}
+   bool operator< (interest_point &ip)
+   {
+       return this->log_prob > ip.log_prob;
+   }
+ };
+
+ class ConnectedPoints: public Referenced {
+
+     private:
+         vector< vector<interest_point> > *ccPoints;
+         ImageConnectedComponents *imgCCs;
+
+         int num_points;
+
+     public:
+         ConnectedPoints(ImageFloat *img);
+         void addPoint(interest_point ip);
+         void addPoint(int x, int y, int c, bool natural_type, float log_prob = 0.0) {
+             addPoint(interest_point(x,y,c,natural_type,log_prob));
+         };
+         int getNumPoints() { return num_points;}; 
+         void print_components();
+         void sort_by_confidence();
+         void sort_by_x();
+         const vector <vector <interest_point> > *getComponents() {
+           return ccPoints;
+         }
+         ~ConnectedPoints(){
+             delete imgCCs;
+             delete ccPoints;
+         };
+
+         
+ };
+
+
 }
 #endif

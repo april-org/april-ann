@@ -24,20 +24,23 @@
 
 
 namespace rgb_colors {
-    typedef enum { RED, GREEN, BLUE, YELLOW, ORANGE, PURPLE } COLOR;
+    typedef enum { RED, GREEN, BLUE, YELLOW, ORANGE, PURPLE, PINK, BROWN, BLACK } COLOR;
 
-    float colors[PURPLE+1][3] = {
+    float colors[BLACK+1][3] = {
         { 1, 0, 0},
         { 0, 1, 0},
         { 0, 0, 1},
         { 0, 1, 1},
         { 1, 0.5, 1},
-        {1, 1, 0}
+        {1, 1, 0},
+        {1, 0, 1},
+        {0.4, 0.2, 0.5},
+        {0, 0, 0},
+
     };
 
     float * getIndexColor(int index) {
-
-        return colors[index%PURPLE];
+        return colors[index%BLACK];
     }
 }
 static const float BLACK_THRESHOLD = 0.3;
@@ -127,9 +130,10 @@ ImageFloatRGB *ImageConnectedComponents::getColoredImage() {
 
   using rgb_colors::getIndexColor;
 
-  Matrix<FloatRGB> *m = new Matrix<FloatRGB>(2, img->width, img->height);
+  Matrix<FloatRGB> *m = new Matrix<FloatRGB>(2, img->height, img->width);
+  m->fill(FloatRGB(1, 1, 1));
   ImageFloatRGB *result = new ImageFloatRGB(m);
-
+  
   int first = 0;
   for (int cc = 0; cc < size; ++cc) {
 //    printf("Component %d %d\n", cc, indexComponents[cc]); 
@@ -148,8 +152,8 @@ ImageFloatRGB *ImageConnectedComponents::getColoredImage() {
 
 bool ImageConnectedComponents::connected(int x1, int y1, int x2, int y2) {
   
-   april_assert(x1 <= img->width && x1 > 0 && y1 <= img->height && y1 > 0 && "X1, Y1 point out of bounds")
-   april_assert(x2 <= img->width && x2 > 0 && y2 <= img->height && y2 > 0 && "X1, Y1 point out of bounds")
+   april_assert(x1 <= img->width && x1 > 0 && y1 <= img->height && y1 > 0 && "X1, Y1 point out of bounds");
+   april_assert(x2 <= img->width && x2 > 0 && y2 <= img->height && y2 > 0 && "X2, Y2 point out of bounds");
   
    int index1 = to_index(img, x1, y1);
    int index2 = to_index(img, x2, y2);
@@ -161,3 +165,9 @@ bool ImageConnectedComponents::connected(int x1, int y1, int x2, int y2) {
   
    return pixelComponents[index1] == pixelComponents[index2]; 
 }
+
+int ImageConnectedComponents::getComponent(int x, int y) {
+  int index = to_index(img, x, y);
+  return pixelComponents[index] -1;
+}
+
