@@ -740,8 +740,10 @@ function get_table_fields(params, t)
     if v == nil and data.mandatory then
       error("Mandatory field not found: " .. key)
     end
-    if v ~= nil and data.type_match and type(v) ~= data.type_match then
-      error("Incorrect type '" .. type(v) .. "' for field '" .. key .. "'")
+    if v ~= nil and data.type_match and (luatype(v) ~= data.type_match or type(v) ~= data.type_match) then
+      if data.type_match ~= "function" or (luatype(v) == "table" and not v.__call) then
+	error("Incorrect type '" .. type(v) .. "' for field '" .. key .. "'")
+      end
     end
     if v ~= nil and data.isa_match and not isa(v, data.isa_match) then
       error("Incorrect field isa_match predicate: " .. key)

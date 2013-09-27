@@ -1,6 +1,6 @@
 if #arg ~= 5 then
   print("Syntax error!")
-  printf("\t%s FILENAME NUMCOL1 NUMCOL2 SEED CONF\n", arg[0])
+  printf("\t%s [FILENAME | -] NUMCOL1 NUMCOL2 SEED CONF\n", arg[0])
   printf("\t\tuse - as FILENAME for stdin\n")
   printf("\t\tNUMCOL1 and NUMCOL2 are column indexes of your data\n")
   printf("\t\tSEED is a random number generator seed for bootstrap confidences\n")
@@ -74,7 +74,7 @@ for rep=1,reps do
   table.insert(data,{ rxy = rxy, sx = sx, sy = sy,
 		      y_sum = y_sum,
 		      x_sum = x_sum })
-  if math.mod(rep,100)==0 then fprintf(io.stderr, "\r%3.0f%%", rep/reps*100) end
+  if rep % 100 == 0 then fprintf(io.stderr, "\r%3.0f%%", rep/reps*100) end
   io.stderr:flush()
 end
 fprintf(io.stderr, " done\n")
