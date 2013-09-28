@@ -115,15 +115,9 @@ local function mmap(key,value)
     output_dataset = out_ds,
     shuffle        = shuffle_random,
   }
-  
-  local result = iterator( trainer:iterate_weights() ):
-  map(function(name,cnn)
-	local w,oldw   = cnn:copy_to()
-	local w_str    = w:to_lua_string()
-	local oldw_str = oldw:to_lua_string()
-	return {name, { "return " .. w_str, "return " .. oldw_str } }
-      end):
-  table()
+  -- the weights
+  local result = common.map_trainer_weights(trainer)
+  -- the loss
   table.insert(result, { LOSS_STR, data_loss })
   return result
 end
@@ -132,28 +126,15 @@ end
 -- key,value (or able to be string-converted by Lua) pairs
 local function mreduce(key,values)
   if key == LOSS_STR then
-    return key,iterator(ipairs(values)):select(2):reduce(math.add(),0)
+    -- the loss
+    return key, iterator(ipairs(values)):select(2):reduce(math.add(),0)
   else
-    local N    = #values
-    local w    = load(values[1][1])()
-    local oldw = load(values[1][2])()
-    for i=2,N do
-      w:axpy(1.0,    load(values[i][1])())
-      oldw:axpy(1.0, load(values[i][2])())
-    end
-    w:scal(1/N)
-    oldw:scal(1/N)
-    return key,{ "return " .. w:to_lua_string(),
-		 "return " .. oldw:to_lua_string() }
+    -- the weights
+    return key, common.reduce_trainer_weights(values)
   end
 end
 
--- Check for running, return true for continue, false for stop
 local count = 0
-local function loop()
-  return count < max_epochs
-end
-
 -- receives a dictionary of [key]=>value, produces a value which is shared
 -- between all workers, and shows the result on user screen
 local function sequential(list)
@@ -169,33 +150,28 @@ local function sequential(list)
 						   return
 						     table.pack(load_dataset_from_offset_and_steps(m, {1280,0}, {20,10}))
 						 end))
-  iterator(pairs(list)):
-  filter(function(k,v) return k ~= LOSS_STR end):
-  apply(function(k,v)
-	  trainer:weights(k):load({
-				    w    = load(v[1])(),
-				    oldw = load(v[2])(),
-				  })
-	end)
+  common.load_trainer_weights(trainer, list)
+  
+  -- validation
   local val_loss = trainer:validate_dataset{
     input_dataset  = in_ds,
     output_dataset = out_ds
   }
   count = count + 1
+  -- print training detail
   print(count, list[LOSS_STR], val_loss)
+  -- returns the weights list, which will be loaded at share function
   return list
 end
 
--- this function receives the shared value returned by sequential function
-local function shared(value)
-  iterator(pairs(value)):
-  filter(function(k,v) return k ~= LOSS_STR end):
-  apply(function(k,v)
-	  trainer:weights(k):load({
-				    w    = load(v[1])(),
-				    oldw = load(v[2])(),
-				  })
-	end)
+-- this function receives the shared list returned by sequential function
+local function shared(list)
+  common.load_trainer_weights(trainer, list)
+end
+
+-- Check for running, return true for continue, false for stop
+local function loop()
+  return count < max_epochs
 end
 
 return {

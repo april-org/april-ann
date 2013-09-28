@@ -8,6 +8,45 @@ local HEADER_LEN = 5
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
+function common.map_trainer_weights(trainer)
+  return iterator( trainer:iterate_weights() ):
+  map(function(name,cnn)
+	local w,oldw   = cnn:copy_to()
+	local w_str    = w:to_lua_string()
+	local oldw_str = oldw:to_lua_string()
+	return {name, { "return " .. w_str, "return " .. oldw_str } }
+      end):
+  table()
+end
+
+function common.reduce_trainer_weights(values)
+  local N    = #values
+  local w    = load(values[1][1])()
+  local oldw = load(values[1][2])()
+  for i=2,N do
+    w:axpy(1.0,    load(values[i][1])())
+    oldw:axpy(1.0, load(values[i][2])())
+  end
+  local scal_ratio = 1/N
+  w:scal(scal_ratio)
+  oldw:scal(scal_ratio)
+  return { "return " .. w:to_lua_string(),
+	   "return " .. oldw:to_lua_string() }
+end
+
+function common.load_trainer_weights(trainer, list)
+  iterator(pairs(list)):
+  apply(function(k,v)
+	  local cnn = trainer:weights(k)
+	  if cnn then
+	    cnn:load({
+		       w    = load(v[1])(),
+		       oldw = load(v[2])(),
+		     })
+	  end
+	end)
+end
+
 local cache = {}
 -- This function receives a key, and a function which loads the value. The
 -- cached value is returned if it exists, avoiding execution of load_func
