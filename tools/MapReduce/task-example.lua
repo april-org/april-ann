@@ -67,7 +67,7 @@ local function mmap(key,value)
 	   return acc
 	 end, {})
   -- returns an array of key,value pairs
-  return iterator(pairs(out)):table()
+  return iterator(pairs(out)):enumerate():table()
 end
 
 -- receive a key and an array of values, and produces a pair of strings

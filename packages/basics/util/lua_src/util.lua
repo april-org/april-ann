@@ -1267,15 +1267,18 @@ function iterator_methods:select(...)
 		  end,s)
 end
 
-function iterator_methods:table(func)
+function iterator_methods:table()
   local t = {}
-  local func = func or function(idx) return idx end
   local idx = 1
   self:apply(function(...)
-	       local arg = ...
-	       if select("#",...) > 1 then arg = table.pack(...) end
-	       local k,v = func(idx,...)
-	       t[k] = v or arg
+	       local v = table.pack(...)
+	       local k = table.remove(v, 1)
+	       if #v == 0 then
+		 k,v = idx,k
+	       elseif #v == 1 then
+		 v = v[1]
+	       end
+	       t[k] = v
 	       idx = idx + 1
 	     end)
   return t
