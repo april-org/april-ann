@@ -33,9 +33,12 @@ repeat
       -- MAP
       local key = string.format("#%d#%d#%d#",i,first,last)
       local map_result = mmap(key,splitted_data)
+      if #map_result == 0 then
+	print("WARNING!!! check that the map function is returning an array "..
+		" and not a dictionary")
+      end
       -- store map result in reduction table, accumulating all the values with
       -- the same key
-      reduction = reduction or {}
       for i=1,#map_result do
 	local k,v = table.unpack(map_result[i])
 	reduction[k] = table.insert(reduction[k] or {}, v)
