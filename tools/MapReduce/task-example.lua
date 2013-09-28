@@ -77,11 +77,6 @@ local function mreduce(key,values)
   return key,sum
 end
 
--- Check for running, return true for continue, false for stop
-local function loop()
-  return false
-end
-
 -- receives a dictionary of [key]=>value, produces a value which is shared
 -- between all workers, and shows the result on user screen
 local function sequential(list)
@@ -92,6 +87,11 @@ end
 -- this function receives the shared value returned by sequential function
 local function shared(value)
   return value
+end
+
+-- Check for running, return true for continue, false for stop
+local function loop()
+  return false
 end
 
 return {
