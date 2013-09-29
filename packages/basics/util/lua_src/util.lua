@@ -78,7 +78,8 @@ function class_wrapper(obj,wrapper)
     else
       setmetatable(getmetatable(wrapper).__index, getmetatable(obj))
     end
-  else wrapper = class_instance(wrapper, getmetatable(obj))
+  else wrapper = class_instance(wrapper,
+				get_table_from_dotted_string(get_object_id(obj)))
   end
   return wrapper
 end

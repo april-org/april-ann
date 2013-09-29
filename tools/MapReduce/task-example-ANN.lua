@@ -7,25 +7,22 @@ require "common"
 -- also note that map and reduce functions are defined by April-ANN, so use
 -- other names
 
-util.omp_set_num_threads(1)
-
-local bunch_size     = 12
+local bunch_size     = 32
+local replacement    = 192
 local semilla        = 1234
 local weights_random = random(semilla)
 local description    = "256 inputs 256 tanh 128 tanh 10 log_softmax"
 local inf            = -1
 local sup            =  1
-local shuffle_random = random(5678)
+local shuffle_random = random() -- TOTALLY RANDOM FOR EACH WORKER
 local learning_rate  = 0.08
 local momentum       = 0.01
 local weight_decay   = 1e-05
 local max_epochs     = 100
 local LOSS_STR       = "LOSS"
+local epoch          = 0
 
 local thenet = ann.mlp.all_all.generate(description)
-thenet:set_option("learning_rate", learning_rate)
-thenet:set_option("momentum",      momentum)
-thenet:set_option("weight_decay",  weight_decay)
 local trainer = trainable.supervised_trainer(thenet,
 					     ann.loss.multi_class_cross_entropy(10),
 					     bunch_size)
@@ -105,15 +102,24 @@ end
 -- useful for this purpose. Please, be careful because all cached values will be
 -- keep at memory of the machine where the task was executed.
 local function mmap(key,value)
+  util.omp_set_num_threads(1)
   local in_ds,out_ds = table.unpack(common.cache(key,
 						 function()
 						   return load_dataset_from_value(value)
 						 end))
-  
+  -- clone the trainer because the same WORKER CORE could be used to MAP
+  -- different datasets, and we want this function not to modify the initial
+  -- network weights
+  local trainer = trainer:clone()
+  trainer.ann_component:set_option("learning_rate", learning_rate)
+  trainer.ann_component:set_option("momentum",      momentum)
+  trainer.ann_component:set_option("weight_decay",  weight_decay)
+  --
   local data_loss  = trainer:train_dataset{
     input_dataset  = in_ds,
     output_dataset = out_ds,
-    shuffle        = shuffle_random,
+    shuffle        = random(), -- shuffle_random,
+    replacement    = replacement,
   }
   -- the weights
   local result = common.map_trainer_weights(trainer)
@@ -125,19 +131,22 @@ end
 -- receive a key and an array of values, and produces a pair of strings
 -- key,value (or able to be string-converted by Lua) pairs
 local function mreduce(key,values)
+  util.omp_set_num_threads(1)
   if key == LOSS_STR then
     -- the loss
-    return key, iterator(ipairs(values)):select(2):reduce(math.add(),0)
+    local scal = 1/#values
+    return key, scal * iterator(ipairs(values)):select(2):reduce(math.add(),0)
   else
     -- the weights
     return key, common.reduce_trainer_weights(values)
   end
 end
 
-local count = 0
 -- receives a dictionary of [key]=>value, produces a value which is shared
 -- between all workers, and shows the result on user screen
 local function sequential(list)
+  util.omp_set_num_threads(4)
+  epoch = epoch + 1
   local m = common.cache("VALIDATION_MATRIX",
 			 function()
 			   return ImageIO.read(data[1][1]):
@@ -151,15 +160,13 @@ local function sequential(list)
 						     table.pack(load_dataset_from_offset_and_steps(m, {1280,0}, {20,10}))
 						 end))
   common.load_trainer_weights(trainer, list)
-  
   -- validation
   local val_loss = trainer:validate_dataset{
     input_dataset  = in_ds,
     output_dataset = out_ds
   }
-  count = count + 1
   -- print training detail
-  print(count, list[LOSS_STR], val_loss)
+  print(epoch, list[LOSS_STR], val_loss)
   -- returns the weights list, which will be loaded at share function
   return list
 end
@@ -171,7 +178,7 @@ end
 
 -- Check for running, return true for continue, false for stop
 local function loop()
-  return count < max_epochs
+  return epoch < max_epochs
 end
 
 return {
