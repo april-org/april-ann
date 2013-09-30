@@ -131,15 +131,43 @@ end
 
 ------------------------------------------------------------------------
 
+april_set_doc("trainable.supervised_trainer.set_option", {
+		class = "method",
+		summary = "Sets a global option of the optimizer",
+		params  = {
+		  "An string with the option name",
+		  "A number with the value",
+		}, })
+
 function trainable_supervised_trainer_methods:set_option(name,value)
   local opt = assert(self.optimizer, "The optimizer has not been defined")
   opt:set_option(name,value)
 end
 
+april_set_doc("trainable.supervised_trainer.get_option", {
+		class = "method",
+		summary = "Gets a global option of the optimizer",
+		params  = {
+		  "An string with the option name",
+		},
+		outputs = {
+		  "A number with the option value",
+		} })
+
 function trainable_supervised_trainer_methods:get_option(name)
   local opt = assert(self.optimizer, "The optimizer has not been defined")
   return opt:get_option(name)
 end
+
+april_set_doc("trainable.supervised_trainer.has_option", {
+		class = "method",
+		summary = "Returns true/false depending on the existence of a global option of the optimizer",
+		params  = {
+		  "An string with the option name",
+		},
+		outputs = {
+		  "A boolean",
+		} })
 
 function trainable_supervised_trainer_methods:has_option(name)
   local opt = assert(self.optimizer, "The optimizer has not been defined")
@@ -148,17 +176,85 @@ end
 
 ------------------------------------------------------------------------
 
+april_set_doc("trainable.supervised_trainer.set_layerwise_option", {
+		class = "method",
+		summary = "Sets an specific weights layer option of the optimizer",
+		description = {
+		  "Sets the value of an optimizer option specifying the",
+		  "layer name by a Lua regular expression, so the option is set",
+		  "for all weight layers which match the given name",
+		},
+		params  = {
+		  "An string with the Lua regular expression",
+		  "An string with the option name",
+		  "A number with the value",
+		}, })
+
 function trainable_supervised_trainer_methods:set_layerwise_option(layer_match,
-								   name,value)
+								   name,
+								   value)
   local opt = assert(self.optimizer, "The optimizer has not been defined")
   for cnn_name,cnn in self:iterate_weights(layer_match) do
     opt:set_layerwise_option(cnn_name,name,value)
   end
 end
 
+april_set_doc("trainable.supervised_trainer.get_option_of", {
+		class = "method",
+		summary = "Returns the optimizer option value for a given layer name",
+		description = {
+		  "If the layer has a layer-wise option, it will be returned,",
+		  "otherwise the global option value will be returned",
+		},
+		params  = {
+		  "An string with the Lua regular expression",
+		  "An string with the option name",
+		},
+		outputs = { "A number with the value", }, })
+
 function trainable_supervised_trainer_methods:get_option_of(layer_name,name)
   local opt = assert(self.optimizer, "The optimizer has not been defined")
   return opt:get_option_of(layer_name,name)
+end
+
+------------------------------------------------------------------------
+
+april_set_doc("trainable.supervised_trainer.set_component_option", {
+		class = "method",
+		summary = "Sets an specific component option",
+		description = {
+		  "Sets the value of a component option specifying the",
+		  "component name by a Lua regular expression, so the option is set",
+		  "for all components which match the given name",
+		},
+		params  = {
+		  "An string with the Lua regular expression",
+		  "An string with the option name",
+		  "A number with the value",
+		}, })
+
+
+function trainable_supervised_trainer_methods:set_component_option(cname_match,
+								   name,
+								   value)
+  for cname,c in self:iterate_components(cname_match) do
+    c:set_option(name,value)
+  end
+end
+
+april_set_doc("trainable.supervised_trainer.get_component_option", {
+		class = "method",
+		summary = "Returns the option value of a given component name",
+		params  = {
+		  "An string with the component name",
+		  "An string with the option name",
+		},
+		outputs = { "A number with the value", }, })
+
+function trainable_supervised_trainer_methods:get_component_option(cname,
+								   oname)
+  local c = self.components_table[cname]
+  return c and c:get_option(oname)
 end
 
 ------------------------------------------------------------------------
@@ -629,7 +725,7 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
 		      --
 		      self.weight_grads =
 			self.ann_component:compute_gradients(self.weight_grads)
-		      return tr_loss_matrix,output:get_matrix(),self.weight_grads
+		      return self.weight_grads,tr_loss_matrix:dim(1)
 		    end,
 		    self.weights_table)
   return tr_loss,gradient
@@ -662,6 +758,44 @@ function trainable_supervised_trainer_methods:validate_step(input, target, loss)
   local output   = self.ann_component:forward(input)
   local tr_loss  = loss:loss(output, target)
   return tr_loss
+end
+
+------------------------------------------------------------------------
+
+april_set_doc("trainable.supervised_trainer.compute_gradients_step", {
+		class = "method",
+		summary = "Executes one gradients computation step",
+		params = {
+		  "A table with one input pattern or a token (with one or more patterns)",
+		  "The corresponding target output pattern (table or token)",
+                  "The loss function [optional].",
+		  "A table with matrices where to store the gradients [optional]",
+		},
+		outputs = {
+		  "A table with the gradient matrices.",
+		  "A matrix with the loss of each pattern.",
+		} })
+
+function trainable_supervised_trainer_methods:compute_gradients_step(input,
+								     target,
+								     loss,
+								     weight_grads)
+  if type(input)  == "table" then input  = tokens.matrix(matrix.col_major(input))  end
+  if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
+  local loss         = loss or self.loss_function
+  local weight_grads = weight_grads or {}
+  local tr_loss,gradient
+  self.ann_component:reset()
+  local output = self.ann_component:forward(input, true)
+  tr_loss_matrix = loss:loss(output, target)
+  gradient = loss:gradient(output, target)
+  gradient = self.ann_component:backprop(gradient)
+  --
+  iterator(pairs(weight_grads)):
+  apply(function(name,mat)mat:zeros()end)
+  --
+  weight_grads = self.ann_component:compute_gradients(weight_grads)
+  return weight_grads,tr_loss_matrix
 end
 
 ------------------------------------------------------------------------

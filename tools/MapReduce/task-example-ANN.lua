@@ -26,6 +26,8 @@ local thenet = ann.mlp.all_all.generate(description)
 local trainer = trainable.supervised_trainer(thenet,
 					     ann.loss.multi_class_cross_entropy(10),
 					     bunch_size)
+local optimizer = trainer:get_optimizer()
+
 trainer:build()
 trainer:randomize_weights{
   random      = weights_random,
@@ -33,6 +35,12 @@ trainer:randomize_weights{
   sup         = sup,
   use_fanin   = true,
 }
+
+trainer:set_option("learning_rate", learning_rate)
+trainer:set_option("momentum",      momentum)
+trainer:set_option("weight_decay",  weight_decay)
+-- it is better to avoid BIAS regularization 
+trainer:set_layerwise_option("b.", "weight_decay", 0)
 
 -- the data size is mandatory. Please, use absolute paths, instead of relative,
 -- and remember that in any case the data is loaded in the workers.
@@ -60,7 +68,7 @@ function load_dataset_from_offset_and_steps(m, offset, numSteps)
 				  stepSize    = {-1},
 				  circular    = {true}
 				})
-  return in_ds, out_ds
+  return dataset.token.wrapper(in_ds), dataset.token.wrapper(out_ds)
 end
 
 function load_dataset_from_value(value)
@@ -107,24 +115,21 @@ local function mmap(key,value)
 						 function()
 						   return load_dataset_from_value(value)
 						 end))
-  -- clone the trainer because the same WORKER CORE could be used to MAP
-  -- different datasets, and we want this function not to modify the initial
-  -- network weights
-  local trainer = trainer:clone()
-  trainer.ann_component:set_option("learning_rate", learning_rate)
-  trainer.ann_component:set_option("momentum",      momentum)
-  trainer.ann_component:set_option("weight_decay",  weight_decay)
-  --
-  local data_loss  = trainer:train_dataset{
-    input_dataset  = in_ds,
-    output_dataset = out_ds,
-    shuffle        = random(), -- shuffle_random,
-    replacement    = replacement,
-  }
+  local bunch = iterator(range(1,bunch_size)):map(function()
+						    shuffle_random:choose(in_ds:numPatterns())
+						  end)
+  local input  = in_ds:getPatternBunch(bunch)
+  local target = out_ds:getPatternBunch(bunch)
+  local weight_grads,loss_matrix = trainer:compute_gradients_step(input,target)
   -- the weights
-  local result = common.map_trainer_weights(trainer)
+  local result = iterator( pairs(weight_grads) ):
+  map(function(name,mat)
+	local mat_str = mat:to_lua_string()
+	return {name, "return " .. mat_str }
+      end):
+  table()
   -- the loss
-  table.insert(result, { LOSS_STR, data_loss })
+  table.insert(result, { LOSS_STR, "return " .. loss_matrix:to_lua_string() })
   return result
 end
 
@@ -134,11 +139,20 @@ local function mreduce(key,values)
   util.omp_set_num_threads(1)
   if key == LOSS_STR then
     -- the loss
-    local scal = 1/#values
-    return key, scal * iterator(ipairs(values)):select(2):reduce(math.add(),0)
+    local N,sum = 0,0
+    for i=1,#values do
+      local v = load(values[i])()
+      sum = sum + v:sum()
+    end
+    return key, sum/N
   else
-    -- the weights
-    return key, common.reduce_trainer_weights(values)
+    -- the gradients
+    local g = load(values[1])()
+    for i=2,#values do
+      local v = load(values[i])()
+      g:axpy(1.0, v)
+    end
+    return key, "return " .. g:to_lua_string()
   end
 end
 
@@ -159,6 +173,9 @@ local function sequential(list)
 						   return
 						     table.pack(load_dataset_from_offset_and_steps(m, {1280,0}, {20,10}))
 						 end))
+  optimizer:execute(function()
+		      return matrix.col_major({ list[LOSS_STR] },
+					      
   common.load_trainer_weights(trainer, list)
   -- validation
   local val_loss = trainer:validate_dataset{
