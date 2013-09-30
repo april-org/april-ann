@@ -53,10 +53,11 @@ net_component=ann.mlp.all_all.generate("2 inputs 2 tanh 1 log_logistic")
 trainer=trainable.supervised_trainer(net_component,
 				     ann.loss.cross_entropy(1),
 				     bunch_size)
+trainer:build()
 trainer:set_option("learning_rate", learning_rate)
 trainer:set_option("momentum",      momentum)
 trainer:set_option("weight_decay",  weight_decay)
-trainer:build()
+trainer:set_layerwise_option("b.", "weight_decay", 0)
 trainer:randomize_weights{
   random = random1,
   inf    = -0.1,

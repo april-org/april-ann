@@ -105,14 +105,18 @@ push( ann.components.hyperplane{ input=hidden, output= 10,
 				 dot_product_weights="w4" } ):
 push( ann.components.actf.log_softmax{ name="actf-4" } )
 
-thenet:set_option("learning_rate", learning_rate)
-thenet:set_option("momentum",      momentum)
-thenet:set_option("weight_decay",  weight_decay)
-thenet:set_option("max_norm_penalty",  max_norm_penalty)
+
 trainer = trainable.supervised_trainer(thenet,
 				       ann.loss.multi_class_cross_entropy(10),
 				       bunch_size)
 trainer:build()
+
+trainer:set_option("learning_rate", learning_rate)
+trainer:set_option("momentum",      momentum)
+trainer:set_option("weight_decay",  weight_decay)
+trainer:set_option("max_norm_penalty",  max_norm_penalty)
+trainer:set_layerwise_option(".*b[0-9]", "weight_decay", 0)
+
 trainer:randomize_weights{
   random      = weights_random,
   inf         = inf,
@@ -123,11 +127,10 @@ trainer:randomize_weights{
 --for _,c in trainer:iterate_components("conv-b*") do
 --  c:set_option("learning_rate", 0.0001)
 --end
-for _,cnn in trainer:iterate_weights("b.") do
-  local w,ow = cnn:matrix()
-  w:zeros()
-  ow:zeros()
-end
+iterator(trainer:iterate_weights("b.")):
+map(function(name,cnn)return{cnn:matrix()}end):
+iterate(ipairs):
+apply(function(i,w)w:zeros()end)
 -- trainer:component("actf2"):set_option("dropout_factor", 0.5)
 
 -- datos para entrenar
@@ -235,8 +238,8 @@ for epoch = 1,max_epochs do
   end
   printf("%4d  %.7f %.7f      %.7f %.7f\n",
   	 totalepocas,errortrain,errorval,norm2_w,norm2_b)
-  thenet:set_option("learning_rate",
-		    thenet:get_option("learning_rate")*0.95)
+  trainer:set_option("learning_rate",
+		     trainer:get_option("learning_rate")*0.95)
 end
 
 trainer:for_each_pattern{
