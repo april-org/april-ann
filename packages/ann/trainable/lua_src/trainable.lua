@@ -240,7 +240,7 @@ function trainable_supervised_trainer_methods:save(filename, binary)
     if id and sz then f:write("loss=" .. id .. "(".. sz .. "),\n") end
   end
   if self.optimizer then
-    if id and sz then f:write("optimizer=" .. self.optimizer:to_lua_string() .. ",\n") end
+    f:write("optimizer=" .. self.optimizer:to_lua_string() .. ",\n")
   end
   if self.bunch_size then f:write("bunch_size="..self.bunch_size..",\n") end
   f:write("}\n")
@@ -270,7 +270,7 @@ function trainable.supervised_trainer.load(filename, loss, bunch_size, optimizer
   local connections = t.connections
   local bunch_size = bunch_size or t.bunch_size
   local loss = loss or t.loss
-  local optional = optimizer or t.optimizer
+  local optimizer = optimizer or t.optimizer
   local obj = trainable.supervised_trainer(model, loss, bunch_size, optimizer)
   obj:build()
   for wname,cobj in obj:iterate_weights() do
