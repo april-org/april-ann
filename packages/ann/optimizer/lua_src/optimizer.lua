@@ -55,8 +55,8 @@ function optimizer_methods:get_option_of(layer_name,name)
 	     self.global_options[name] )
 end
 
--- eval is a function which returns the loss, the function result (a matrix) and
--- its derivatives, and second derivatives (if needed)
+-- eval is a function which returns the data needed by the optimizer (at least,
+-- the gradients and the bunch size)
 --
 -- cnn_table is a dictionary of connections objects, indexed by its names.
 function optimizer_methods:execute(eval, cnn_table)
@@ -144,8 +144,7 @@ end
 
 function sgd_methods:execute(eval, cnn_table)
   local arg = table.pack( eval() )
-  local loss_matrix,output_matrix,gradients = table.unpack(arg)
-  local bunch_size = output_matrix:dim(1) -- mini-batch or bunch size
+  local gradients,bunch_size = table.unpack(arg)
   for cname,cnn in pairs(cnn_table) do
     local w,oldw     = cnn:matrix()
     local grad       = gradients[cname]

@@ -131,7 +131,7 @@ iterator(trainer:iterate_weights("b.")):
 map(function(name,cnn)return{cnn:matrix()}end):
 iterate(ipairs):
 apply(function(i,w)w:zeros()end)
--- trainer:component("actf2"):set_option("dropout_factor", 0.5)
+-- trainer:set_component_option("actf2", "dropout_factor", 0.5)
 
 -- datos para entrenar
 datosentrenar = {
