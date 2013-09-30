@@ -77,11 +77,6 @@ namespace ANN {
     return output;
   }
     
-  void HyperplaneANNComponent::doUpdate() {
-    bias->doUpdate();
-    dot_product->doUpdate();
-  }
-
   void HyperplaneANNComponent::reset() {
     dot_product->reset();
     bias->reset();

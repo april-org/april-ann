@@ -84,7 +84,6 @@ namespace ANN {
     output(0),
     error_output(0),
     weights_matrix(0),
-    num_updates_from_last_prune(0),
     input_planes_dim(input_planes_dim),
     number_input_windows(0),
     kernel_size(1),
@@ -101,12 +100,7 @@ namespace ANN {
     output_window_step(new int[input_num_dims+1]),
     output_window_num_steps(new int[input_num_dims+1]),
     output_window_order_step(new int[input_num_dims+1]),
-    output_window_rewrap(new int[2]),
-    learning_rate(-1.0f),
-    momentum(0.0f),
-    weight_decay(0.0f),
-    c_weight_decay(1.0f),
-    max_norm_penalty(-1.0f) {
+    output_window_rewrap(new int[2]) {
     if (weights_name == 0) generateDefaultWeightsName(this->weights_name, "w");
     kernel_dims[0] = static_cast<int>(hidden_size);
     kernel_step[0] = 1;
@@ -329,72 +323,15 @@ namespace ANN {
     DecRef(error_output_w);
     return error_output;
   }
-     
-  // The ConvolutionANNComponent
-  void ConvolutionANNComponent::doUpdate() {
-    april_assert(learning_rate > 0.0f &&
-	   "Learning rate needs to be fixed with setOption method!!!");
-    
-    // Foces weights_matrix to update internal counts for a backward step
-    weights_matrix->beginUpdate();
-    
-    MatrixFloat *prev_weights_mat = weights_matrix->getPrevPtr();
-    MatrixFloat *input_mat        = input->getMatrix();
-    MatrixFloat *error_input_mat  = error_input->getMatrix();
-    
-    float beta_parameter_for_cblas_bp = 1.0f;
-    if (weights_matrix->isFirstUpdateCall()) {
-      // Momentum computation
-      if (momentum > 0.0f) {
-	// prev_w[i,j] = momentum * (w[i,j] - prev_w[i,j])
-	weights_matrix->computeMomentumOnPrevVector(momentum,
-						    use_cuda);
-	weights_matrix->computeWeightDecayOnPrevVector(c_weight_decay,
-						       use_cuda);
-      }
-      else {
-	weights_matrix->copyToPrevVector(use_cuda);
-	beta_parameter_for_cblas_bp = c_weight_decay;
-      }
-    } // if (weights_matrix->needsToComputeMomentum()) {
-    
-    unsigned int bunch_size = error_input_mat->getDimSize(0);
-    // backprop learning rule:
-    // PREV_W = alpha * ERRORS + PREV_W
-    const unsigned int references = weights_matrix->getNumReferences();
-    //    printf("******* ANTES %s\n", name.c_str());
-    //    weights_matrix->applyMaxNormPenalty(max_norm_penalty);
-    //    printf("******* DESPUES %s\n", name.c_str());
-    april_assert(references > 0 && "Found 0 references of weights matrix");
-    // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
-    const float norm_learn_rate =
-      -(1.0f/sqrtf(static_cast<float>(references*bunch_size*number_input_windows))) *
-      learning_rate;
-    // CONVOLUTION OVER number_input_windows
-    computeBP(prev_weights_mat,
-	      input_mat,
-	      error_input_mat,
-	      norm_learn_rate,
-	      beta_parameter_for_cblas_bp);
-    
-    // Forces to update counts and swap vectors if necessary at this backward
-    // step
-    if (weights_matrix->endUpdate()) {
-      if (max_norm_penalty > 0.0)
-	weights_matrix->applyMaxNormPenalty(max_norm_penalty);
-      ++num_updates_from_last_prune;
-      if (num_updates_from_last_prune > MAX_UPDATES_WITHOUT_PRUNE) {
-	num_updates_from_last_prune = 0;
-	weights_matrix->pruneSubnormalAndCheckNormal();
-      }
+  
+  void ConvolutionANNComponent::computeGradients(MatrixFloat *&grads_mat) {
+    weights_matrix->addToSharedCount(number_input_windows);
+    if (grads_mat == 0) {
+      grads_mat = weights_matrix->getPtr()->cloneOnlyDims();
+      grads_mat->zeros();
     }
-  }
-
-  void ConvolutionANNComponent::computeBP(MatrixFloat *weights_mat,
-					  MatrixFloat *input_mat,
-					  MatrixFloat *error_input_mat,
-					  const float alpha,
-					  float beta) {
+    MatrixFloat *input_mat       = input->getMatrix();
+    MatrixFloat *error_input_mat = error_input->getMatrix();
     // Prepare sliding windows to compute the convolution
     MatrixFloat::sliding_window input_sw(input_mat, input_window_size,
 					 0,  // OFFSET
@@ -424,13 +361,11 @@ namespace ANN {
       IncRef(error_input_flattened);
       
       // WEIGHTS UPDATE
-      weights_mat->gemm(CblasTrans, CblasNoTrans,
-			alpha,
-			error_input_flattened, // A
-			input_flattened,       // B
-			beta);
-      // only apply weight decay (if needed) the first time
-      beta = 1.0f;
+      grads_mat->gemm(CblasTrans, CblasNoTrans,
+		      1.0f,
+		      error_input_flattened, // A
+		      input_flattened,       // B
+		      1.0f);
       
       // Next iteration
       input_sw.next();
@@ -444,21 +379,6 @@ namespace ANN {
     DecRef(error_input_w);
   }
 
-  void ConvolutionANNComponent::computeGradients(MatrixFloat*& weight_grads) {
-    if (weight_grads == 0) {
-      weight_grads = weights_matrix->getPtr()->cloneOnlyDims();
-      weight_grads->zeros();
-    }
-    MatrixFloat *input_error_mat = error_input->getMatrix();
-    unsigned int bunch_size = input_error_mat->getDimSize(0);
-    computeBP(weight_grads,
-	      input->getMatrix(),
-	      error_input->getMatrix(),
-	      1.0f/bunch_size,
-	      1.0f);
-  }
-
-  
   void ConvolutionANNComponent::reset() {
     if (input)        DecRef(input);
     if (error_input)  DecRef(error_input);
@@ -468,6 +388,7 @@ namespace ANN {
     error_input	 = 0;
     output	 = 0;
     error_output = 0;
+    weights_matrix->resetSharedCount();
   }
   
   ANNComponent *ConvolutionANNComponent::clone() {
@@ -477,43 +398,9 @@ namespace ANN {
 			      name.c_str(), weights_name.c_str());
     component->input_size     = input_size;
     component->output_size    = output_size;
-    component->learning_rate  = learning_rate;
-    component->momentum       = momentum;
-    component->weight_decay   = weight_decay;
-    component->c_weight_decay = c_weight_decay;
-    component->max_norm_penalty = max_norm_penalty;
     return component;
   }
 
-  void ConvolutionANNComponent::setOption(const char *name, double value) {
-    mSetOption(LEARNING_RATE_STRING, learning_rate);
-    mSetOption(MOMENTUM_STRING,      momentum);
-    if (strcmp(WEIGHT_DECAY_STRING, name) == 0) {
-      weight_decay   = static_cast<float>(value);
-      c_weight_decay = 1.0f - weight_decay;
-      return;
-    }
-    mSetOption(MAX_NORM_PENALTY_STRING, max_norm_penalty);
-    ANNComponent::setOption(name, value);
-  }
-  
-  bool ConvolutionANNComponent::hasOption(const char *name) {
-    mHasOption(LEARNING_RATE_STRING);
-    mHasOption(MOMENTUM_STRING);
-    mHasOption(WEIGHT_DECAY_STRING);
-    mHasOption(MAX_NORM_PENALTY_STRING);
-    return false;
-  }
-  
-  double ConvolutionANNComponent::getOption(const char *name) {
-    mGetOption(LEARNING_RATE_STRING, learning_rate);
-    mGetOption(MOMENTUM_STRING, momentum);
-    // the weight decay is always fixed to 0
-    mGetOption(WEIGHT_DECAY_STRING, weight_decay);
-    mGetOption(MAX_NORM_PENALTY_STRING, max_norm_penalty);
-    return ANNComponent::getOption(name);
-  }
-  
   void ConvolutionANNComponent::build(unsigned int _input_size,
 				     unsigned int _output_size,
 				     hash<string,Connections*> &weights_dict,
@@ -546,7 +433,6 @@ namespace ANN {
       // else printf("USING PREVIOUS WEIGHTS %s\n", weights_name.c_str());
       w = weights_matrix;
     }
-    weights_matrix->countReference();
   }
 
   void ConvolutionANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {

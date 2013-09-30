@@ -59,9 +59,9 @@ for i=2,4 do
   end
 end
 
-----------------------------
--- DENOISING AUTO-ENCODER --
-----------------------------
+------------------
+-- AUTO-ENCODER --
+------------------
 
 for i=2,4 do
   for o=2,4 do
@@ -78,7 +78,7 @@ for i=2,4 do
 			push( ann.components.bias{ size=i } ):
 			push( ann.components.actf.logistic() )
 		      end,
-		      "mse", i, i, b, "DOTPRODUCT + BIAS")
+		      "mse", i, i, b, "AUTO-ENCODER")
     end
   end
 end

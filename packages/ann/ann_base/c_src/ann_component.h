@@ -36,7 +36,7 @@ using april_utils::hash;    // required for build
 using april_utils::string;
 
 #ifndef NDEBUG
-#define ASSERT_MATRIX(m) do {					\
+#define ASSERT_MATRIX(m) do {						\
     april_assert( (m)->getNumDim() == 2 );				\
     april_assert( (m)->getMajorOrder() == CblasColMajor );		\
   } while(0)
@@ -44,7 +44,6 @@ using april_utils::string;
 #define ASSERT_MATRIX(m)
 #endif
 
-#define MAX_UPDATES_WITHOUT_PRUNE 100
 #define MAX_NAME_STR 256
 
 #define LEARNING_RATE_STRING    "learning_rate"
@@ -148,9 +147,6 @@ namespace ANN {
       return input_error;
     }
     
-    /// Virtual method that update weights given gradients and input/output
-    /// data
-    virtual void doUpdate() { }
     /// Virtual method to reset to zero gradients and outputs (inputs are not
     /// reseted)
     virtual void reset() { }
@@ -185,11 +181,16 @@ namespace ANN {
     /// Virtual method for setting the value of a training parameter.
     virtual void setOption(const char *name, double value) {
       UNUSED_VARIABLE(value);
-      if (strcmp(name, LEARNING_RATE_STRING) != 0 &&
-	  strcmp(name, MOMENTUM_STRING) != 0 &&
-	  strcmp(name, WEIGHT_DECAY_STRING) != 0 &&
-	  strcmp(name, MAX_NORM_PENALTY_STRING) != 0)
-	ERROR_EXIT1(140, "The option to be set does not exist: %s.\n", name);
+      if (strcmp(name,"learning_rate")==0 ||
+	  strcmp(name,"momentum")==0      ||
+	  strcmp(name,"weight_decay")==0  ||
+	  strcmp(name,"max_norm_penalty")==0) {
+	ERROR_EXIT(128, "DEPRECATED: learning_rate, momentum, weight_decay and "
+		   "max_norm_penalty learning parameters are available "
+		   "through ann.optimizer objects, or via "
+		   "trainable.supervised_trainer helper\n");
+      }
+      ERROR_EXIT1(140, "The option to be set does not exist: %s.\n", name);
     }
 
     /// Virtual method for determining if a training parameter
@@ -244,9 +245,6 @@ namespace ANN {
     virtual void copyComponents(hash<string,ANNComponent*> &components_dict) {
       components_dict[name] = this;
     }
-    
-    /// 
-    virtual void resetConnections() { }
     
     ///
     virtual void debugInfo() {

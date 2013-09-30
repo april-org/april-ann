@@ -48,14 +48,20 @@ april_set_doc("trainable.supervised_trainer.__call", {
 		},
 		params = { "ANN component or similar supervised learning model",
 			   "Loss function [optional]",
-			   "Bunch size (mini batch) [optional]" },
+			   "Bunch size (mini batch) [optional]",
+			   "An optimizer [option], by default is ann.optimizer.sgd"},
 		outputs = { "Instantiated object" }, })
 
 function trainable_supervised_trainer_class_metatable:__call(ann_component,
 							     loss_function,
-							     bunch_size)
+							     bunch_size,
+							     optimizer)
+  local optimizer = optimizer or ann.optimizer.sgd()
   if loss_function and not isa(loss_function, ann.loss.__base__) then
     error("The second parameter must be an instance of ann.loss")
+  end
+  if optimizer and not isa(optimizer, ann.optimizer) then
+    error("The fourth parameter must be an instance of ann.optimizer")
   end
   if bunch_size and not tonumber(bunch_size) then
     error("The third parameter must be a number")
@@ -63,6 +69,7 @@ function trainable_supervised_trainer_class_metatable:__call(ann_component,
   local obj = {
     ann_component    = assert(ann_component,"Needs an ANN component object"),
     loss_function    = loss_function or false,
+    optimizer        = optimizer,
     weights_table    = {},
     components_table = {},
     component2weights_dict = {},
@@ -70,6 +77,7 @@ function trainable_supervised_trainer_class_metatable:__call(ann_component,
     weights_order    = {},
     components_order = {},
     bunch_size       = bunch_size or false,
+    weight_grads     = {},
   }
   obj = class_instance(obj, self, true)
   return obj
@@ -94,7 +102,63 @@ april_set_doc("trainable.supervised_trainer.set_loss_function", {
 		params = { "Loss function" }, })
 
 function trainable_supervised_trainer_methods:set_loss_function(loss_function)
+  assert(isa(loss_function, ann.loss.__base__, "Needs an instance of ann.loss"))
   self.loss_function = loss_function
+end
+
+------------------------------------------------------------------------
+
+april_set_doc("trainable.supervised_trainer.set_optimizer", {
+		class = "method",
+		summary = "Modifies the optimizer property",
+		params = { "An instance of ann.optimizer" }, })
+
+function trainable_supervised_trainer_methods:set_optimizer(optimizer)
+  assert(isa(optimizer, ann.optimizer, "Needs an instance of ann.optimizer"))
+  self.optimizer = optimizer
+end
+
+------------------------------------------------------------------------
+
+april_set_doc("trainable.supervised_trainer.get_optimizer", {
+		class = "method",
+		summary = "Returns the optimizer property",
+		outputs = { "An instance of ann.optimizer" }, })
+
+function trainable_supervised_trainer_methods:get_optimizer()
+  return self.optimizer
+end
+
+------------------------------------------------------------------------
+
+function trainable_supervised_trainer_methods:set_option(name,value)
+  local opt = assert(self.optimizer, "The optimizer has not been defined")
+  opt:set_option(name,value)
+end
+
+function trainable_supervised_trainer_methods:get_option(name)
+  local opt = assert(self.optimizer, "The optimizer has not been defined")
+  return opt:get_option(name)
+end
+
+function trainable_supervised_trainer_methods:has_option(name)
+  local opt = assert(self.optimizer, "The optimizer has not been defined")
+  opt:het_option(name,value)
+end
+
+------------------------------------------------------------------------
+
+function trainable_supervised_trainer_methods:set_layerwise_option(layer_match,
+								   name,value)
+  local opt = assert(self.optimizer, "The optimizer has not been defined")
+  for cnn_name,cnn in self:iterate_weights(layer_match) do
+    opt:set_layerwise_option(cnn_name,name,value)
+  end
+end
+
+function trainable_supervised_trainer_methods:get_option_of(layer_name,name)
+  local opt = assert(self.optimizer, "The optimizer has not been defined")
+  return opt:get_option_of(layer_name,name)
 end
 
 ------------------------------------------------------------------------
@@ -175,6 +239,9 @@ function trainable_supervised_trainer_methods:save(filename, binary)
     local sz = self.ann_component:get_output_size()
     if id and sz then f:write("loss=" .. id .. "(".. sz .. "),\n") end
   end
+  if self.optimizer then
+    if id and sz then f:write("optimizer=" .. self.optimizer:to_lua_string() .. ",\n") end
+  end
   if self.bunch_size then f:write("bunch_size="..self.bunch_size..",\n") end
   f:write("}\n")
   f:close()
@@ -193,16 +260,18 @@ april_set_doc("trainable.supervised_trainer.load", {
 		  "A filename string",
 		  "Loss function [optional]",
 		  "Bunch size (mini batch) [optional]",
+		  "An optimizer, instance of ann.optimizer [optional]",
 		}, })
 
-function trainable.supervised_trainer.load(filename, loss, bunch_size)
+function trainable.supervised_trainer.load(filename, loss, bunch_size, optimizer)
   local f = loadfile(filename) or error("Unable to open " .. filename)
   local t = f() or error("Impossible to load chunk from file " .. filename)
   local model = t.model
   local connections = t.connections
   local bunch_size = bunch_size or t.bunch_size
   local loss = loss or t.loss
-  local obj = trainable.supervised_trainer(model, loss, bunch_size)
+  local optional = optimizer or t.optimizer
+  local obj = trainable.supervised_trainer(model, loss, bunch_size, optimizer)
   obj:build()
   for wname,cobj in obj:iterate_weights() do
     local w,oldw = connections[wname].w,connections[wname].oldw
@@ -467,8 +536,8 @@ function trainable_supervised_trainer_methods:build(t)
       input   = { type_match="number", mandatory = false, default=nil },
       output  = { type_match="number", mandatory = false, default=nil },
     }, t or {})
+  self.weight_grads  = {}
   self.weights_table = params.weights or {}
-  self.ann_component:reset_connections()
   self.weights_table,
   self.components_table = self.ann_component:build{
     input   = params.input,
@@ -534,22 +603,35 @@ april_set_doc("trainable.supervised_trainer.train_step", {
 		  "A table with one input pattern or a token (with one or more patterns)",
 		  "The corresponding target output pattern (table or token)",
 		  "The loss function [optional]",
+		  "An optimizer [optional]",
 		},
 		outputs = {
 		  "A number with the loss of the training step",
 		  "A token with the gradient of loss function at component inputs",
 		} })
 
-function trainable_supervised_trainer_methods:train_step(input, target, loss)
+function trainable_supervised_trainer_methods:train_step(input, target, loss,
+							 optimizer)
   if type(input)  == "table" then input  = tokens.matrix(matrix.col_major(input))  end
   if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
-  local loss = loss or self.loss_function
-  self.ann_component:reset()
-  local output   = self.ann_component:forward(input, true)
-  local tr_loss  = loss:loss(output, target)
-  local gradient = loss:gradient(output, target)
-  gradient=self.ann_component:backprop(gradient)
-  self.ann_component:update()
+  local loss      = loss or self.loss_function
+  local optimizer = optimizer or self.optimizer
+  local tr_loss,gradient
+  optimizer:execute(function()
+		      self.ann_component:reset()
+		      local output = self.ann_component:forward(input, true)
+		      tr_loss_matrix = loss:loss(output, target)
+		      gradient = loss:gradient(output, target)
+		      gradient = self.ann_component:backprop(gradient)
+		      --
+		      iterator(pairs(self.weight_grads)):
+		      apply(function(name,mat)mat:zeros()end)
+		      --
+		      self.weight_grads =
+			self.ann_component:compute_gradients(self.weight_grads)
+		      return tr_loss_matrix,output:get_matrix(),self.weight_grads
+		    end,
+		    self.weights_table)
   return tr_loss,gradient
 end
 
@@ -608,13 +690,16 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
   local tr_loss  = loss:get_accum_loss()
   local gradient = loss:gradient(output, target)
   gradient=self.ann_component:backprop(gradient)
-  local weight_grads = self.ann_component:compute_gradients()
+  self.weight_grads = self.ann_component:compute_gradients(self.weight_grads)
   local epsilond = 0.2
   local epsilon  = 1e-03
-  local ret = true
+  local ret      = true
+  local bunch_size = input:get_matrix():dim(1)
   for wname,cnn in self:iterate_weights() do
     local w = cnn:matrix()
-    local ann_grads = weight_grads[wname]
+    -- The shared parameter has no effect in gradients check, only bunch_size
+    local ratio = 1/bunch_size
+    local ann_grads = self.weight_grads[wname]
     for i=1,w:size() do
       local orig_w = w:raw_get(i-1)
       w:raw_set(i-1, orig_w - epsilon)
@@ -627,7 +712,7 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
       local loss_b = loss:get_accum_loss()
       w:raw_set(i-1, orig_w)
       local g = (loss_b - loss_a) / (2*epsilon)
-      local ann_g = ann_grads:raw_get(i-1)
+      local ann_g = ann_grads:raw_get(i-1)*ratio
       if verbose then
 	fprintf(io.stderr,
 		"CHECK GRADIENT %s[%d], found %g, expected %g\n",
@@ -689,6 +774,7 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 		  ["input_dataset"]  = "A dataset float or dataset token",
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
 		  ["loss"]           = "A loss function. It is [optional] if loss given at constructor",
+		  ["optimizer"]      = "An optimizer. It is [optional] if optimizer is given at constructor",
 		  ["bunch_size"]     = 
 		    {
 		      "Bunch size (mini-batch). It is [optional] if bunch_size",
@@ -715,6 +801,7 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
 		  ["shuffle"]        = "A random object used to shuffle patterns before training",
 		  ["loss"]           = "A loss function. It is [optional] if loss given at constructor",
+		  ["optimizer"]      = "An optimizer. It is [optional] if optimizer is given at constructor",
 		  ["bunch_size"]     = 
 		    {
 		      "Bunch size (mini-batch). It is [optional] if bunch_size",
@@ -743,6 +830,7 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 		  ["shuffle"]        = "A random object used to shuffle patterns before training",
 		  ["replacement"]    = "A number with the size of replacement training",
 		  ["loss"]           = "A loss function. It is [optional] if loss given at constructor",
+		  ["optimizer"]      = "An optimizer. It is [optional] if optimizer is given at constructor",
 		  ["bunch_size"]     = 
 		    {
 		      "Bunch size (mini-batch). It is [optional] if bunch_size",
@@ -772,6 +860,7 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 		  ["shuffle"]        = "A random object used to shuffle patterns before training",
 		  ["replacement"]    = "A number with the size of replacement training",
 		  ["loss"]           = "A loss function. It is [optional] if loss given at constructor",
+		  ["optimizer"]      = "An optimizer. It is [optional] if optimizer is given at constructor",
 		  ["bunch_size"]     = 
 		    {
 		      "Bunch size (mini-batch). It is [optional] if bunch_size",
@@ -800,7 +889,11 @@ function trainable_supervised_trainer_methods:train_dataset(t)
 			 mandatory = (self.bunch_size == false),
 			 default=self.bunch_size },
       loss           = { isa_match  = ann.loss.__base__,
-                         mandatory = (self.loss_function==false), default=self.loss_function },
+                         mandatory  = (self.loss_function==false),
+			 default=self.loss_function },
+      optimizer      = { isa_match  = ann.optimizer,
+			 mandatory  = (not self.optimizer),
+			 default=self.optimizer },
       shuffle        = { isa_match  = random,   mandatory = false, default=nil },
       replacement    = { type_match = "number", mandatory = false, default=nil },
     }, t)
@@ -879,7 +972,7 @@ function trainable_supervised_trainer_methods:train_dataset(t)
     for j=i,last do table.insert(bunch_indexes, ds_idx_table[j]) end
     local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
     local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
-    self:train_step(input_bunch, output_bunch, loss)
+    self:train_step(input_bunch, output_bunch, params.loss, params.optimizer)
     k=k+1
     if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
   end
@@ -918,7 +1011,8 @@ function trainable_supervised_trainer_methods:grad_check_dataset(t)
 			 mandatory = (self.bunch_size == false),
 			 default=self.bunch_size },
       loss           = { isa_match  = ann.loss.__base__,
-                         mandatory = (self.loss_function==false), default=self.loss_function },
+                         mandatory = (self.loss_function==false),
+			 default=self.loss_function },
       max_iterations = { type_match = "number",
 			 mandatory = false,
 			 default = t.input_dataset:numPatterns() },
@@ -954,7 +1048,8 @@ function trainable_supervised_trainer_methods:grad_check_dataset(t)
     for j=i,last do table.insert(bunch_indexes, ds_idx_table[j]) end
     local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
     local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
-    if not self:grad_check_step(input_bunch, output_bunch, params.verbose, params.loss) then
+    if not self:grad_check_step(input_bunch, output_bunch, params.verbose,
+				params.loss) then
       printf("Error processing pattern bunch: %s\n",
 	     table.concat(bunch_indexes, " "))
       ds_idx_table = nil
@@ -1059,7 +1154,8 @@ function trainable_supervised_trainer_methods:validate_dataset(t)
 			 mandatory = (self.bunch_size == false),
 			 default=self.bunch_size },
       loss           = { isa_match  = ann.loss.__base__,
-                         mandatory = (self.loss_funcion==false), default=self.loss_function },
+                         mandatory = (self.loss_funcion==false),
+			 default=self.loss_function },
       shuffle        = { isa_match  = random, mandatory = false, default=nil },
       replacement    = { type_match = "number", mandatory = false, default=nil },
     }, t)
@@ -1264,9 +1360,13 @@ april_set_doc("trainable.supervised_trainer.clone",
 function trainable_supervised_trainer_methods:clone()
   local obj = trainable.supervised_trainer(self.ann_component:clone(),
 					   nil,
-					   self.bunch_size)
+					   self.bunch_size,
+					   nil)
   if self.loss_function then
     obj:set_loss_function(self.loss_function:clone())
+  end
+  if self.optimizer then
+    obj:set_optimizer(self.optimizer:clone())
   end
   if #self.weights_order > 0 then
     obj:build{ weights = table.map(self.weights_table,

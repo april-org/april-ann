@@ -74,8 +74,6 @@ namespace ANN {
 
     virtual Token *doBackprop(Token *input_error);
     
-    virtual void doUpdate();
-
     virtual void reset();
     
     virtual ANNComponent *clone();
@@ -98,10 +96,6 @@ namespace ANN {
     virtual void copyComponents(hash<string,ANNComponent*> &components_dict);
     
     virtual ANNComponent *getComponent(string &name);
-    virtual void resetConnections() {
-      for (unsigned int i=0; i<components.size(); ++i)
-	components[i]->resetConnections();
-    }
     virtual void computeAllGradients(hash<string,MatrixFloat*> &weight_grads_dict);
     virtual void debugInfo() {
       ANNComponent::debugInfo();

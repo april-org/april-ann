@@ -74,10 +74,6 @@ namespace ANN {
     /// Translates the output window into a bi-dimensional matrix
     int *output_window_rewrap;
     
-    /// learning parameters
-    float learning_rate, momentum, weight_decay, c_weight_decay;
-    float max_norm_penalty;
-    
     MatrixFloat *getRewrappedMatrix(MatrixFloat *w,
 				    const int *rewrap_size,
 				    const int N,
@@ -97,15 +93,9 @@ namespace ANN {
     
     void initializeArrays(const int *input_dims);
     
-    void computeBP(MatrixFloat *weights_mat,
-		   MatrixFloat *input_mat,
-		   MatrixFloat *error_input_mat,
-		   const float alpha,
-		   float beta);
-    
   protected:
 
-    virtual void computeGradients(MatrixFloat*& weight_grads);
+    virtual void computeGradients(MatrixFloat*& grads_mat);
 
   public:
     ConvolutionANNComponent(int input_num_dims,
@@ -122,20 +112,13 @@ namespace ANN {
     virtual Token *getErrorOutput() { return error_output; }
     virtual Token *doForward(Token* input, bool during_training);
     virtual Token *doBackprop(Token *input_error);
-    virtual void   doUpdate();
     virtual void   reset();
     virtual ANNComponent *clone();
-    virtual void setOption(const char *name, double value);
-    virtual bool hasOption(const char *name);
-    virtual double getOption(const char *name);
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
 		       hash<string,Connections*> &weights_dict,
 		       hash<string,ANNComponent*> &components_dict);
     virtual void copyWeights(hash<string,Connections*> &weights_dict);
-    virtual void resetConnections() {
-      if (weights_matrix) weights_matrix->reset();
-    }
 
     virtual char *toLuaString();
 
