@@ -18,8 +18,7 @@ function optimizer_class_metatable:__call(valid_options,
 			       layerwise_options = {},
 			       count             = count or 0,
 			     },
-			     self,
-			     true)
+			     self)
   for name,value in pairs(g_options) do obj:set_option(name,value) end
   for wname,options in pairs(l_options) do
     for name,value in pairs(options) do
