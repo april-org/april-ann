@@ -74,13 +74,17 @@ val_output   = dataset.matrix(m2,
 
 thenet = ann.mlp.all_all.generate(description)
 if util.is_cuda_available() then thenet:set_use_cuda(true) end
-thenet:set_option("learning_rate", learning_rate)
-thenet:set_option("momentum",      momentum)
-thenet:set_option("weight_decay",  weight_decay)
 trainer = trainable.supervised_trainer(thenet,
 				       ann.loss.multi_class_cross_entropy(10),
 				       bunch_size)
 trainer:build()
+
+trainer:set_option("learning_rate", learning_rate)
+trainer:set_option("momentum",      momentum)
+trainer:set_option("weight_decay",  weight_decay)
+-- bias has weight_decay of ZERO
+trainer:set_layerwise_option("b.", "weight_decay", 0)
+
 trainer:randomize_weights{
   random      = weights_random,
   inf         = inf,
@@ -114,18 +118,18 @@ for epoch = 1,max_epochs do
   totalepocas = totalepocas+1
   errortrain,vartrain  = trainer:train_dataset(datosentrenar)
   errorval,varval      = trainer:validate_dataset(datosvalidar)
-  --printf("%4d  %.7f %.7f :: %.7f %.7f\n",
-  --	 totalepocas,errortrain,errorval,vartrain,varval)
-  if math.abs(errortrain - errors[epoch][1]) > epsilon then
-    error(string.format("Training error %g is not equal enough to "..
+  printf("%4d  %.7f %.7f :: %.7f %.7f\n",
+  	 totalepocas,errortrain,errorval,vartrain,varval)
+ if math.abs(errortrain - errors[epoch][1]) > epsilon then
+   error(string.format("Training error %g is not equal enough to "..
 			  "reference error %g",
 			errortrain, errors[epoch][1]))
-  end
-  if math.abs(errorval - errors[epoch][2]) > epsilon then
-    error(string.format("Validation error %g is not equal enough to "..
+ end
+ if math.abs(errorval - errors[epoch][2]) > epsilon then
+   error(string.format("Validation error %g is not equal enough to "..
 			  "reference error %g",
 			errorval, errors[epoch][2]))
-  end
+ end
 end
 
 clock:stop()

@@ -1,9 +1,8 @@
- package{ name = "trainable",
+ package{ name = "optimizer",
    version = "1.0",
-   depends = { "util", "dataset", "random", "ann_base",
-	       "loss_functions", "optimizer" },
-   keywords = { "Trainable" },
-   description = "Define a wrapper with common methods of trainable models",
+   depends = { "util", "ann_base", "matrix" },
+   keywords = { "ANN optimization algorithms" },
+   description = "",
    -- targets como en ant
    target{
      name = "init",
@@ -14,11 +13,20 @@
      delete{ dir = "build" },
      delete{ dir = "include" },
    },
+   -- target{
+   --   name = "test",
+   --   execute_script{
+   --     file={
+   -- 	 "test/test-components.lua",
+   -- 	 "test/test-digits.lua"
+   --     },
+   --   },
+   -- },
    target{
      name = "provide",
      depends = "init",
      -- copy{ file= "c_src/*.h", dest_dir = "include" },
-     -- provide_bind{ file = "binding/bind_trainablesuper.lua.cc", dest_dir = "include" }
+     -- provide_bind{ file = "binding/bind_ann_base.lua.cc", dest_dir = "include" }
    },
    target{
      name = "build",
@@ -34,8 +42,8 @@
        dest_dir = "build",
      },
      -- build_bind{
-     --   file = "binding/bind_trainablesuper.lua.cc",
-     --   dest_dir = "build",
+     --    file = "binding/bind_ann_base.lua.cc",
+     --    dest_dir = "build",
      -- }
    },
    target{
