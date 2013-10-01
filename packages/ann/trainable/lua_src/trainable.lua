@@ -726,11 +726,11 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
   if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
   local loss      = loss or self.loss_function
   local optimizer = optimizer or self.optimizer
-  local tr_loss,gradient
+  local tr_loss_matrix,gradient
   optimizer:execute(function()
 		      self.ann_component:reset()
 		      local output = self.ann_component:forward(input, true)
-		      tr_loss_matrix = loss:loss(output, target)
+		      tr_loss_matrix = loss:compute_loss(output, target)
 		      gradient = loss:gradient(output, target)
 		      gradient = self.ann_component:backprop(gradient)
 		      --
@@ -742,7 +742,8 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
 		      return self.weight_grads,tr_loss_matrix:dim(1),tr_loss_matrix
 		    end,
 		    self.weights_table)
-  return tr_loss,gradient
+  loss:accum_loss(tr_loss_matrix)
+  return tr_loss_matrix,gradient
 end
 
 ------------------------------------------------------------------------
@@ -770,7 +771,7 @@ function trainable_supervised_trainer_methods:validate_step(input, target, loss)
   local loss = loss or self.loss_function
   self.ann_component:reset()
   local output   = self.ann_component:forward(input)
-  local tr_loss  = loss:loss(output, target)
+  local tr_loss  = loss:accum_loss( loss:compute_loss(output, target) )
   return tr_loss
 end
 
@@ -801,7 +802,7 @@ function trainable_supervised_trainer_methods:compute_gradients_step(input,
   local tr_loss,gradient
   self.ann_component:reset()
   local output = self.ann_component:forward(input, true)
-  tr_loss_matrix = loss:loss(output, target)
+  tr_loss_matrix = loss:accum_loss( loss:compute_loss(output, target) )
   gradient = loss:gradient(output, target)
   gradient = self.ann_component:backprop(gradient)
   --
@@ -834,7 +835,7 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
   self.ann_component:reset()
   loss:reset()
   local output   = self.ann_component:forward(input, true)
-  loss:loss(output, target)
+  loss:accum_loss( loss:compute_loss(output, target) )
   local tr_loss  = loss:get_accum_loss()
   local gradient = loss:gradient(output, target)
   gradient=self.ann_component:backprop(gradient)
@@ -852,11 +853,13 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
       local orig_w = w:raw_get(i-1)
       w:raw_set(i-1, orig_w - epsilon)
       loss:reset()
-      loss:loss(self.ann_component:forward(input, true), target)
+      loss:accum_loss( loss:compute_loss(self.ann_component:forward(input, true),
+					 target) )
       local loss_a = loss:get_accum_loss()
       w:raw_set(i-1, orig_w + epsilon)
       loss:reset()
-      loss:loss(self.ann_component:forward(input, true), target)
+      loss:accum_loss( loss:compute_loss(self.ann_component:forward(input, true),
+					 target) )
       local loss_b = loss:get_accum_loss()
       w:raw_set(i-1, orig_w)
       local g = (loss_b - loss_a) / (2*epsilon)

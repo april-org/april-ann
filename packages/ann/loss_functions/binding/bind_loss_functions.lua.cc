@@ -49,7 +49,7 @@ using namespace ANN;
 }
 //BIND_END
 
-//BIND_METHOD LossFunction loss
+//BIND_METHOD LossFunction compute_loss
 {
   LUABIND_CHECK_ARGN(==,2);
   LUABIND_CHECK_PARAMETER(1, Token);
@@ -57,7 +57,18 @@ using namespace ANN;
   Token *input, *target;
   LUABIND_GET_PARAMETER(1, Token, input);
   LUABIND_GET_PARAMETER(2, Token, target);
-  MatrixFloat *loss = obj->addLoss(input, target);
+  MatrixFloat *loss = obj->computeLoss(input, target);
+  LUABIND_RETURN(MatrixFloat, loss);
+}
+//BIND_END
+
+//BIND_METHOD LossFunction accum_loss
+{
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, MatrixFloat);
+  MatrixFloat *loss;
+  LUABIND_GET_PARAMETER(1, MatrixFloat, loss);
+  obj->accumLoss(loss);
   LUABIND_RETURN(MatrixFloat, loss);
 }
 //BIND_END
