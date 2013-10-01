@@ -187,6 +187,12 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD Connections prune_subnormal_and_check_normal
+{
+  obj->pruneSubnormalAndCheckNormal();
+}
+//BIND_END
+
 //BIND_METHOD Connections copy_to
 {
   LUABIND_CHECK_ARGN(<=,1);

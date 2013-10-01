@@ -168,6 +168,9 @@ function sgd_methods:execute(eval, cnn_table)
     -- swap current and old weight matrices
     cnn:swap()
     --
+    if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
+      cnn:prune_subnormal_and_check_normal()
+    end
   end
   -- count one more update iteration
   self:count_one()
