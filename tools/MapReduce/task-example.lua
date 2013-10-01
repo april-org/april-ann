@@ -85,7 +85,7 @@ local function sequential(list)
 end
 
 -- this function receives the shared value returned by sequential function
-local function shared(value)
+local function share(value)
   return value
 end
 
@@ -102,6 +102,6 @@ return {
   map=mmap,
   reduce=mreduce,
   sequential=sequential,
-  shared=shared,
+  share=share,
   loop=loop,
 }

@@ -150,6 +150,15 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD Connections set_shared_count
+{
+  unsigned int count;
+  LUABIND_GET_PARAMETER(1,uint,count);
+  obj->resetSharedCount();
+  obj->addToSharedCount(count);
+}
+//BIND_END
+
 //BIND_METHOD Connections to_lua_string
 {
   char *str = obj->toLuaString();

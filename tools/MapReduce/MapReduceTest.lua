@@ -7,7 +7,7 @@ mmap              = task.map    or error("Needs a map function")
 mreduce           = task.reduce or error("Needs a reduce function")
 decode            = task.decode or function(...) return ... end
 sequential        = task.sequential or function(...) print(...) end
-shared            = task.shared or function(...) return ... end
+share             = task.share or function(...) return ... end
 loop              = task.loop or function() return false end
 split             = task.split or
   function(data,data_size,first,last)
@@ -56,5 +56,5 @@ repeat
     result[k] = v
   end
   local value = sequential(result)
-  shared(value)
+  share(value)
 until not loop()
