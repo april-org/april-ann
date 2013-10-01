@@ -8,13 +8,13 @@ local HEADER_LEN = 5
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
-function common.map_trainer_weights(trainer)
+function common.share_trainer_weights(trainer)
   return iterator( trainer:iterate_weights() ):
   map(function(name,cnn)
 	local w,oldw   = cnn:copy_to()
 	local w_str    = w:to_lua_string()
 	local oldw_str = oldw:to_lua_string()
-	return {name, { "return " .. w_str, "return " .. oldw_str } }
+	return name, { "return " .. w_str, "return " .. oldw_str }
       end):
   table()
 end

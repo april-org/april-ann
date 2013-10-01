@@ -7,10 +7,9 @@ require "common"
 -- also note that map and reduce functions are defined by April-ANN, so use
 -- other names
 
-local bunch_size     = 128
+local bunch_size     = 32
 local replacement    = 192
-local semilla        = 1234
-local weights_random = random(semilla)
+local weights_random = random(1234)
 local description    = "256 inputs 256 tanh 128 tanh 10 log_softmax"
 local inf            = -1
 local sup            =  1
@@ -21,6 +20,11 @@ local weight_decay   = 1e-04
 local max_epochs     = 400
 local LOSS_STR       = "LOSS"
 local epoch          = 0
+local best_epoch     = 0
+local best_val_loss  = 1111111111111
+local tr_loss
+local val_loss
+local min_epochs     = 20
 
 local thenet = ann.mlp.all_all.generate(description)
 local trainer = trainable.supervised_trainer(thenet,
@@ -127,7 +131,10 @@ local function mmap(key,value)
   local result = iterator( pairs(weight_grads) ):
   map(function(name,mat)
 	local mat_str = mat:to_lua_string()
-	return {name, "return " .. mat_str }
+	return {name, { "return " .. mat_str,
+			-- get the number of times this weights are being shared
+			-- between different components
+			trainer:weights(name):get_shared_count() } }
       end):
   table()
   -- the loss
@@ -141,31 +148,20 @@ local function mreduce(key,values)
   util.omp_set_num_threads(1)
   if key == LOSS_STR then
     -- the loss
-    values = iterator(ipairs(values)):
-    select(2):
-    map(function(v) return load(v)() end):
-    table()
-    --
-    local N = iterator(ipairs(values)):
-    select(2):
-    map(function(m)return m:dim(1) end):
-    reduce(math.add(),0)
-    local loss_matrix = matrix.col_major(N)
-    local p = 1
-    for i=1,#values do
-      local v = values[i]
-      loss_matrix:slice({p},{v:dim(1)}):copy(v)
-      p = p + v:dim(1)
-    end
+    local loss_matrix = load(values[1])()
+    for i=2,#values do loss_matrix:axpy(1.0, load(values[i])()) end
+    loss_matrix:scal(1/#values)
     return key, "return " .. loss_matrix:to_lua_string()
   else
     -- the gradients
-    local g = load(values[1])()
+    local N = values[1][2] -- accumulate here the shared count
+    local g = load(values[1][1])()
     for i=2,#values do
-      local v = load(values[i])()
+      local v = load(values[i][1])()
       g:axpy(1.0, v)
+      N = N + values[i][2]
     end
-    return key, "return " .. g:to_lua_string()
+    return key, { "return " .. g:to_lua_string(), N }
   end
 end
 
@@ -186,37 +182,54 @@ local function sequential(list)
 						   return
 						     table.pack(load_dataset_from_offset_and_steps(m, {1280,0}, {20,10}))
 						 end))
-  local loss_matrix = load(list[LOSS_STR])()
-  local bunch_size  = loss_matrix:dim(1)
-  local weighs_grad = iterator(pairs(list)):
+  local loss_matrix  = load(list[LOSS_STR])()
+  local weights_grad = iterator(pairs(list)):
   filter(function(key,value) return key ~= LOSS_STR end):
-  map(function(key,value) return key,load(value)() end):
+  map(function(key,value)
+	-- set the number of times this weights are being shared between
+	-- different components
+	trainer:weights(key):set_shared_count(value[2])
+	return key,load(value[1])()
+      end):
   table()
   --
-  optimizer:execute(function() return weighs_grad, bunch_size, loss_matrix end,
+  optimizer:execute(function() return weights_grad, bunch_size, loss_matrix end,
 		    trainer:get_weights_table())
   --
   -- trainer:save(string.format("net-%04d.lua", epoch), "ascii")
   --
   -- validation
-  local val_loss = trainer:validate_dataset{
+  val_loss = trainer:validate_dataset{
     input_dataset  = in_ds,
     output_dataset = out_ds
   }
+  if val_loss < best_val_loss then
+    best_val_loss,best_epoch = val_loss,epoch
+  end
   -- print training detail
-  print(epoch, loss_matrix:sum()/loss_matrix:dim(1), val_loss)
+  tr_loss = loss_matrix:sum()/loss_matrix:dim(1)
+  print(epoch, tr_loss, val_loss)
   -- returns the weights list, which will be loaded at share function
-  return common.map_trainer_weights(trainer)
+  return common.share_trainer_weights(trainer)
 end
 
 -- this function receives the shared list returned by sequential function
-local function shared(list)
+local function share(list)
   common.load_trainer_weights(trainer, list)
 end
 
 -- Check for running, return true for continue, false for stop
+local stop_criterion =
+  trainable.stopping_criteria.make_max_epochs_wo_imp_relative(2)
 local function loop()
-  return epoch < max_epochs
+  return epoch < min_epochs or
+    not stop_criterion({
+			 current_epoch  = epoch,
+			 best_epoch     = best_epoch,
+			 best_val_error = best_val_loss,
+			 train_error    = tr_loss,
+			 validate_error = val_loss,
+		       })
 end
 
 return {
@@ -227,6 +240,6 @@ return {
   map=mmap,
   reduce=mreduce,
   sequential=sequential,
-  shared=shared,
+  share=share,
   loop=loop,
 }
