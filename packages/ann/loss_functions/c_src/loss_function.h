@@ -96,12 +96,16 @@ namespace ANN {
       error_output = 0;
       acc_loss.Clear();
     }
-    virtual MatrixFloat *addLoss(Token *input, Token *target) {
-      MatrixFloat *loss_data = computeLossBunch(input, target);
+    virtual MatrixFloat *accumLoss(MatrixFloat *loss_data) {
       april_assert(loss_data->getNumDim() == 1);
       for (MatrixFloat::iterator it(loss_data->begin());
 	   it!=loss_data->end(); ++it)
 	acc_loss.Push(static_cast<double>(*it));
+      return loss_data;
+    }
+    virtual MatrixFloat *computeLoss(Token *input, Token *target) {
+      MatrixFloat *loss_data = computeLossBunch(input, target);
+      april_assert(loss_data->getNumDim() == 1);
       return loss_data;
     }
     // To be implemented by derived classes
