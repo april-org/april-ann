@@ -181,14 +181,14 @@ namespace ANN {
     /// Virtual method for setting the value of a training parameter.
     virtual void setOption(const char *name, double value) {
       UNUSED_VARIABLE(value);
-      if (strcmp(name,"learning_rate")==0 ||
-	  strcmp(name,"momentum")==0      ||
-	  strcmp(name,"weight_decay")==0  ||
-	  strcmp(name,"max_norm_penalty")==0) {
+      if (strcmp(name,LEARNING_RATE_STRING)==0 ||
+	  strcmp(name,MOMENTUM_STRING)==0      ||
+	  strcmp(name,WEIGHT_DECAY_STRING)==0  ||
+	  strcmp(name,MAX_NORM_PENALTY_STRING)==0) {
 	ERROR_EXIT(128, "DEPRECATED: learning_rate, momentum, weight_decay and "
 		   "max_norm_penalty learning parameters are available "
-		   "through ann.optimizer objects, or via "
-		   "trainable.supervised_trainer helper\n");
+		   "through ann.optimizer:set_option(...) objects, or via "
+		   "trainable.supervised_trainer:set_option(...) method\n");
       }
       ERROR_EXIT1(140, "The option to be set does not exist: %s.\n", name);
     }
