@@ -7,7 +7,7 @@ require "common"
 -- also note that map and reduce functions are defined by April-ANN, so use
 -- other names
 
-local bunch_size     = 32
+local bunch_size     = 128
 local replacement    = 192
 local semilla        = 1234
 local weights_random = random(semilla)
@@ -15,10 +15,10 @@ local description    = "256 inputs 256 tanh 128 tanh 10 log_softmax"
 local inf            = -1
 local sup            =  1
 local shuffle_random = random() -- TOTALLY RANDOM FOR EACH WORKER
-local learning_rate  = 0.08
-local momentum       = 0.01
-local weight_decay   = 1e-05
-local max_epochs     = 100
+local learning_rate  = 0.04
+local momentum       = 0.02
+local weight_decay   = 1e-04
+local max_epochs     = 400
 local LOSS_STR       = "LOSS"
 local epoch          = 0
 
@@ -115,9 +115,11 @@ local function mmap(key,value)
 						 function()
 						   return load_dataset_from_value(value)
 						 end))
-  local bunch = iterator(range(1,bunch_size)):map(function()
-						    shuffle_random:choose(in_ds:numPatterns())
-						  end)
+  --
+  local bunch = iterator(range(1,bunch_size)):
+  map(function() return shuffle_random:randInt(1,in_ds:numPatterns()) end):
+  table()
+  --
   local input  = in_ds:getPatternBunch(bunch)
   local target = out_ds:getPatternBunch(bunch)
   local weight_grads,loss_matrix = trainer:compute_gradients_step(input,target)
@@ -129,7 +131,7 @@ local function mmap(key,value)
       end):
   table()
   -- the loss
-  table.insert(result, { LOSS_STR, "return " .. loss_matrix:to_lua_string() })
+  table.insert(result, { LOSS_STR,  "return " .. loss_matrix:to_lua_string() })
   return result
 end
 
@@ -139,12 +141,23 @@ local function mreduce(key,values)
   util.omp_set_num_threads(1)
   if key == LOSS_STR then
     -- the loss
-    local N,sum = 0,0
+    values = iterator(ipairs(values)):
+    select(2):
+    map(function(v) return load(v)() end):
+    table()
+    --
+    local N = iterator(ipairs(values)):
+    select(2):
+    map(function(m)return m:dim(1) end):
+    reduce(math.add(),0)
+    local loss_matrix = matrix.col_major(N)
+    local p = 1
     for i=1,#values do
-      local v = load(values[i])()
-      sum = sum + v:sum()
+      local v = values[i]
+      loss_matrix:slice({p},{v:dim(1)}):copy(v)
+      p = p + v:dim(1)
     end
-    return key, sum/N
+    return key, "return " .. loss_matrix:to_lua_string()
   else
     -- the gradients
     local g = load(values[1])()
@@ -173,19 +186,27 @@ local function sequential(list)
 						   return
 						     table.pack(load_dataset_from_offset_and_steps(m, {1280,0}, {20,10}))
 						 end))
-  optimizer:execute(function()
-		      return matrix.col_major({ list[LOSS_STR] },
-					      
-  common.load_trainer_weights(trainer, list)
+  local loss_matrix = load(list[LOSS_STR])()
+  local bunch_size  = loss_matrix:dim(1)
+  local weighs_grad = iterator(pairs(list)):
+  filter(function(key,value) return key ~= LOSS_STR end):
+  map(function(key,value) return key,load(value)() end):
+  table()
+  --
+  optimizer:execute(function() return weighs_grad, bunch_size, loss_matrix end,
+		    trainer:get_weights_table())
+  --
+  -- trainer:save(string.format("net-%04d.lua", epoch), "ascii")
+  --
   -- validation
   local val_loss = trainer:validate_dataset{
     input_dataset  = in_ds,
     output_dataset = out_ds
   }
   -- print training detail
-  print(epoch, list[LOSS_STR], val_loss)
+  print(epoch, loss_matrix:sum()/loss_matrix:dim(1), val_loss)
   -- returns the weights list, which will be loaded at share function
-  return list
+  return common.map_trainer_weights(trainer)
 end
 
 -- this function receives the shared list returned by sequential function

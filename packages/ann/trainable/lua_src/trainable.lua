@@ -541,6 +541,20 @@ end
 
 ------------------------------------------------------------------------
 
+april_set_doc("trainable.supervised_trainer.get_weights_table", {
+		class = "method",
+		summary = "Returns the table with all weights",
+		outputs = { "A table with all the weights, indexed by names" } })
+
+function trainable_supervised_trainer_methods:get_weights_table()
+  if #self.components_order == 0 then
+    error("Needs execution of build method")
+  end
+  return self.weights_table
+end
+
+------------------------------------------------------------------------
+
 april_set_doc("trainable.supervised_trainer.randomize_weights", {
 		class = "method",
 		summary = "Initializes randomly model weights and biases",
@@ -725,7 +739,7 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
 		      --
 		      self.weight_grads =
 			self.ann_component:compute_gradients(self.weight_grads)
-		      return self.weight_grads,tr_loss_matrix:dim(1)
+		      return self.weight_grads,tr_loss_matrix:dim(1),tr_loss_matrix
 		    end,
 		    self.weights_table)
   return tr_loss,gradient
