@@ -502,6 +502,7 @@ function generate_new_segmentation(args)
   local without_context = args.without_context or false
   local current        = 1
   local count_value    = args.count_value
+  local total_score    = 0
   --
   -- resegmentamos validacion
   corpus_data:apply{
@@ -563,6 +564,7 @@ function generate_new_segmentation(args)
 	  count_value          = count_value,
 	}
 	printf("%12.4f score\n", logprob)
+	total_score = total_score + logprob
 	io.stdout:flush()
 	-- mat_full:adjust_range(0,1)
 	-- matrix.saveImage(mat_full, string.format("tmp-new/hmm_matrix_%03d.pnm",
@@ -572,6 +574,7 @@ function generate_new_segmentation(args)
       end
   }
   --
+  return total_score
 end
 
 -------------------------------------------------
