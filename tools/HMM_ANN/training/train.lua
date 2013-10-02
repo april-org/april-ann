@@ -451,7 +451,7 @@ if initial_em_epoch then
   em_iteration = initial_em_epoch
   
   -- resegmentamos validacion
-  generate_new_segmentation{
+  local va_score = generate_new_segmentation{
     field_manager  = validate,
     func           = ann_table.trainer,
     num_emissions  = num_emissions,
@@ -465,8 +465,9 @@ if initial_em_epoch then
   -- EXPECTATION
   --
   -- resegmentamos training con expectacion
+  local tr_score = 0
   for i=1,#training do
-    generate_new_segmentation{
+    local sc = generate_new_segmentation{
       field_manager  = training[i],
       func           = ann_table.trainer,
       num_emissions  = num_emissions,
@@ -474,7 +475,11 @@ if initial_em_epoch then
       do_expectation = true,
       emission_in_log_base = true,
     }
+    tr_score = tr_score + sc
   end
+  
+  print("# INITIAL HMM SCORE TR= ", tr_score)
+  print("# INITIAL HMM SCORE VA= ", va_score)
   
   --
   collectgarbage("collect")
@@ -523,7 +528,7 @@ while em_iteration <= em.em_max_iterations do
       totaltrain = totaltrain + 1
       if (totaltrain > ann_table.num_epochs_first_lr and
 	    em_iteration == 1 and
-	    math.mod(totaltrain, 10) == 1 and
+	    totaltrain % 10 == 1 and
 	  ann_table.thenet:get_option("learning_rate") > ann_table.learning_rate ) then
 	ann_table.thenet:set_option("learning_rate",
 				    ann_table.thenet:get_option("learning_rate") - 0.001)
@@ -559,7 +564,7 @@ while em_iteration <= em.em_max_iterations do
   ------------------------------------------
   
   -- resegmentamos validacion
-  generate_new_segmentation{
+  local va_score = generate_new_segmentation{
     field_manager  = validate,
     func           = ann_table.trainer,
     num_emissions  = num_emissions,
@@ -573,8 +578,9 @@ while em_iteration <= em.em_max_iterations do
   -- EXPECTATION
   --
   -- resegmentamos training con expectacion
+  local tr_score = 0
   for i=1,#training do
-    generate_new_segmentation{
+    local sc = generate_new_segmentation{
       field_manager  = training[i],
       func           = ann_table.trainer,
       num_emissions  = num_emissions,
@@ -582,8 +588,12 @@ while em_iteration <= em.em_max_iterations do
       do_expectation = true,
       emission_in_log_base = true,
     }
+    tr_score = tr_score + sc
   end
 
+  print("# HMM SCORE TR= ", tr_score)
+  print("# HMM SCORE VA= ", va_score)
+  
   --
   collectgarbage("collect")
   --

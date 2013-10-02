@@ -39,7 +39,7 @@ function field_manager:apply(s)
     error("Error in field_manager apply method incorrect arguments\n")
   end
   -- comprobar que el campo input_fields tiene al menos un campo
-  local num_fields = table.getn(s.input_fields)
+  local num_fields = #s.input_fields
   if num_fields == 0 then
     error("Error in field_manager apply method at least one input field is needed\n")
   end
@@ -50,7 +50,7 @@ function field_manager:apply(s)
 			  "data_field %s not found incorrect arguments\n",fieldname))
     end
   end
-  local num_results = table.getn(s.output_fields)
+  local num_results = #s.output_fields
   -- crear las tablas de resultados si hace falta:
   for j=1,num_results do
     if self.fields[s.output_fields[j]] == nil then
@@ -58,7 +58,7 @@ function field_manager:apply(s)
     end
   end
   -- iterar sobre los datos
-  local size_data = table.getn(self.fields[s.input_fields[1]])
+  local size_data = #self.fields[s.input_fields[1]]
   for i = 1,size_data do -- aplicar funcion al dato i-esimo
     local argumentos = {}
     for j=1,num_fields do
@@ -66,7 +66,7 @@ function field_manager:apply(s)
     end
     table.insert(argumentos,i)
     local resul = {s.the_function(table.unpack(argumentos))}
-    if table.getn(resul) ~= num_results then
+    if #resul ~= num_results then
        error(string.format("Error in field_manager apply method at index %d",i))
     end
     -- meter los datos

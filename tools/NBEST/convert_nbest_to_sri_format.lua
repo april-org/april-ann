@@ -13,7 +13,7 @@ log10_cte = 1.0/math.log(10)
 for line in nbestf:lines() do
   local n,sentence,probs,score = string.match(line, "(.*)|||(.*)|||(.*)|||%s*(.*)%s*")
   probs = string.tokenize(probs, " ")
-  if math.mod(i, 1000) then collectgarbage("collect") end
+  if i % 1000 == 0 then collectgarbage("collect") end
   i = i + 1
   if tonumber(n) ~= tonumber(prevn) then
     printf("%d\n", n) prevn=n
