@@ -48,7 +48,8 @@
 template<typename T>
 class GPUMirroredMemoryBlock : public Referenced {
 #ifndef NO_POOL
-  const static unsigned int MAX_POOL_LIST_SIZE = 100;
+  const static size_t MAX_POOL_LIST_SIZE = 100*1024*1024; // 100 Megabytes
+  static size_t pool_size;
   static april_utils::hash<unsigned int,april_utils::list<T*> > pool_lists;
   // FIXME: This static class is not working... therefore the memory allocated
   // by pool pointers is never freed. 
@@ -178,6 +179,7 @@ public:
     else {
       mem_ppal = *(l.begin());
       l.pop_front();
+      pool_size -= size*sizeof(T);
     }
 #else
     mem_ppal = aligned_malloc<T>(size);
@@ -195,7 +197,10 @@ public:
     else {
 #ifndef NO_POOL
       april_utils::list<T*> &l = pool_lists[size];
-      if (l.size() < MAX_POOL_LIST_SIZE) l.push_front(mem_ppal);
+      if (pool_size < MAX_POOL_LIST_SIZE) {
+	pool_size += size*sizeof(T);
+	l.push_front(mem_ppal);
+      }
       else aligned_free(mem_ppal);
 #else
       aligned_free(mem_ppal);
@@ -210,7 +215,10 @@ public:
 #else
 #ifndef NO_POOL
     april_utils::list<T*> &l = pool_lists[size];
-    if (l.size() < MAX_POOL_LIST_SIZE) l.push_front(mem_ppal);
+    if (pool_size < MAX_POOL_LIST_SIZE) {
+      pool_size += size*sizeof(T);
+      l.push_front(mem_ppal);
+    }
     else aligned_free(mem_ppal);
 #else
     aligned_free(mem_ppal);
@@ -317,6 +325,8 @@ typedef GPUMirroredMemoryBlock<int> IntGPUMirroredMemoryBlock;
 typedef GPUMirroredMemoryBlock<ComplexF> ComplexFGPUMirroredMemoryBlock;
 
 #ifndef NO_POOL
+template<typename T>
+size_t GPUMirroredMemoryBlock<T>::pool_size = 0;
 template<typename T>
 april_utils::hash<unsigned int,april_utils::list<T*> >
 GPUMirroredMemoryBlock<T>::pool_lists(1024);
