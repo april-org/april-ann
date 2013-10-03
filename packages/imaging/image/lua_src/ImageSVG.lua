@@ -141,6 +141,21 @@ function imageSVG_methods:addSquare(point, params)
     table.insert(self.body,string.format("<rect x=\"%d\" y=\"%d\" width=\"%f\" height=\"%f\" fill=\"%s\"/>", x, y, side,side, color))
 end
 
+function imageSVG_methods:addRect(rect, params)
+
+    local color = params.color or "black"
+    
+    if params.cls then
+      color = colors[params.cls]
+    end
+
+    local x = rect[1]
+    local y = rect[2]
+    local w = rect[3] - rect[1]
+    local h = rect[4] - rect[2]
+    table.insert(self.body,string.format("<rect x=\"%d\" y=\"%d\" width=\"%f\" height=\"%f\" stroke=\"%s\" fill-opacity=\"0\"/> ", x, y, w, h, color))
+end
+
 function imageSVG_methods:addPoint(point, params)
     self:addSquare(point, params)
 end

@@ -28,6 +28,15 @@
 
 using namespace april_utils;
 
+struct bounding_box {
+  int x1, y1;
+  int x2, y2;
+
+  bounding_box(){};
+  bounding_box(int x1, int y1, int x2, int y2):
+      x1(x1),y1(y1),x2(x2),y2(y2){}
+};
+
 class ImageConnectedComponents: public Referenced{
 
     // Matrix of the size of the image that is used to 
@@ -56,5 +65,8 @@ class ImageConnectedComponents: public Referenced{
 
     int getComponent(int x, int y);
     ImageFloatRGB  *getColoredImage();
+    bounding_box getComponentBoundingBox(int component);
+    vector<bounding_box> *getBoundingBoxes();    
+
 };
 #endif

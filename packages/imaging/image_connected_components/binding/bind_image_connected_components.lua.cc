@@ -93,3 +93,30 @@
 }
 //BIND_END
 
+//BIND_METHOD ImageConnectedComponents get_bounding_boxes
+{
+  LUABIND_CHECK_ARGN(==, 0);
+  int size;  
+
+  vector<bounding_box> *bbs = obj->getBoundingBoxes();
+  size = (int) bbs->size();
+
+  lua_createtable(L, size, 0);
+  for (size_t i = 0; i < bbs->size(); ++i) {
+      lua_createtable(L, 4, 0);
+      lua_pushint(L,(*bbs)[i].x1);
+      lua_rawseti(L, -2, 1);
+      lua_pushint(L, (*bbs)[i].y1);
+      lua_rawseti(L, -2, 2);
+      lua_pushint(L, (*bbs)[i].x2);
+      lua_rawseti(L, -2, 3);
+      lua_pushint(L, (*bbs)[i].y2);
+      lua_rawseti(L, -2, 4);
+      lua_rawseti(L, -2, i+1);
+  }
+  
+  delete bbs;
+  LUABIND_RETURN_FROM_STACK(-1);
+}
+//BIND_END
+

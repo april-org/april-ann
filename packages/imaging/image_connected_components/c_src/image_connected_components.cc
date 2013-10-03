@@ -67,11 +67,15 @@ void ImageConnectedComponents::dfs_component(int x, int y, int current_component
       int newx = x + directions[i][0];
       int newy = y + directions[i][1];
       int new_index = to_index(img, newx, newy);
-      if (newx < 0 || newx >= img->width || newy < 0 || newy >= img->height || (*img)(newx, newy) >= threshold || pixelComponents[new_index])
+      if (newx < 0 || newx >= img->width || newy < 0 || newy >= img->height || pixelComponents[new_index])
          continue;      
-      pixelComponents[new_index]  = current_component;
-      components[current_pixel++] = new_index; 
-      dfs_component(newx, newy, current_component, current_pixel); 
+      if ((*img)(newx, newy) < threshold) {// If it is black
+          components[current_pixel++] = new_index; 
+      }
+      if ((*img)(x, y) < threshold || (*img)(newx, newy) < threshold) {
+          pixelComponents[new_index]  = current_component;
+          dfs_component(newx, newy, current_component, current_pixel); 
+      }
    }  
 
 }
@@ -80,30 +84,30 @@ ImageConnectedComponents::ImageConnectedComponents(const ImageFloat *img, float 
     // 1. Create a Integer Matrix of the same size of the original image
     this->img = img;
     pixelComponents = vector<int>(img->width*img->height, 0);
-    
+
     // 2. Count the number of black pixels
     int black_pixels = img->count_black_pixels(threshold);
 
     // 3. Create a component of the size black pixels
     components = vector<int>(black_pixels);
     indexComponents = vector<int>();
-      
+
 
     int current_component = 0;
     int current_pixel     = 0;
     // 4. Compute the connected components.
     for (int y = 0; y < img->height; ++y) {
-       for (int x = 0; x < img->width; ++x) {
-          int index = to_index(img, x, y);
-          float value = (*img)(x,y);
-          if ((*img)(x,y) < threshold && !pixelComponents[index]) {
-             pixelComponents[index] = ++current_component;
-             components[current_pixel++] = index;
-             //DFS over the pixel
-             dfs_component(x, y, current_component, current_pixel);
-             indexComponents.push_back(current_pixel);
-          }
-       }
+        for (int x = 0; x < img->width; ++x) {
+            int index = to_index(img, x, y);
+            float value = (*img)(x,y);
+            if ((*img)(x,y) < threshold && !pixelComponents[index]) {
+                pixelComponents[index] = ++current_component;
+                components[current_pixel++] = index;
+                //DFS over the pixel
+                dfs_component(x, y, current_component, current_pixel);
+                indexComponents.push_back(current_pixel);
+            }
+        }
     }
 
     size = current_component;
@@ -111,62 +115,95 @@ ImageConnectedComponents::ImageConnectedComponents(const ImageFloat *img, float 
 }
 
 MatrixInt32 * ImageConnectedComponents::getPixelMatrix(){
-  
-  int dims[] = {img->height, img->width};
-  
-  MatrixInt32 *m = new MatrixInt32(2,dims);
-  for (int y = 0; y < img->height; ++y) {
-      for (int x = 0; x < img->width; ++x) {
-          int index = to_index(img, x, y);
-          int value = pixelComponents[index];
-          (*m)(y,x) = value;
-      }
-   }
-   return m;
+
+    int dims[] = {img->height, img->width};
+
+    MatrixInt32 *m = new MatrixInt32(2,dims);
+    for (int y = 0; y < img->height; ++y) {
+        for (int x = 0; x < img->width; ++x) {
+            int index = to_index(img, x, y);
+            int value = pixelComponents[index];
+            (*m)(y,x) = value;
+        }
+    }
+    return m;
 }
 
 ImageFloatRGB *ImageConnectedComponents::getColoredImage() {
 
-  using rgb_colors::getIndexColor;
+    using rgb_colors::getIndexColor;
 
-  Matrix<FloatRGB> *m = new Matrix<FloatRGB>(2, img->height, img->width);
-  m->fill(FloatRGB(1, 1, 1));
-  ImageFloatRGB *result = new ImageFloatRGB(m);
-  
-  int first = 0;
-  for (int cc = 0; cc < size; ++cc) {
-//    printf("Component %d %d\n", cc, indexComponents[cc]); 
-    for (int i = first; i < indexComponents[cc]; ++i) {
-      float *color = getIndexColor(cc);
-      int index = components[i];
-      int x, y;
-      to_coords(img, index, x, y);
-      (*m)(y,x) = FloatRGB(color[0], color[1], color[2]);
+    Matrix<FloatRGB> *m = new Matrix<FloatRGB>(2, img->height, img->width);
+    m->fill(FloatRGB(1, 1, 1));
+    ImageFloatRGB *result = new ImageFloatRGB(m);
+
+    int first = 0;
+    for (int cc = 0; cc < size; ++cc) {
+        //    printf("Component %d %d\n", cc, indexComponents[cc]); 
+        for (int i = first; i < indexComponents[cc]; ++i) {
+            float *color = getIndexColor(cc);
+            int index = components[i];
+            int x, y;
+            to_coords(img, index, x, y);
+            (*m)(y,x) = FloatRGB(color[0], color[1], color[2]);
+        }
+        first = indexComponents[cc];
     }
-    first = indexComponents[cc];
-  }
 
-  return result;
+    return result;
 }
 
 bool ImageConnectedComponents::connected(int x1, int y1, int x2, int y2) {
-  
-   april_assert(x1 <= img->width && x1 > 0 && y1 <= img->height && y1 > 0 && "X1, Y1 point out of bounds");
-   april_assert(x2 <= img->width && x2 > 0 && y2 <= img->height && y2 > 0 && "X2, Y2 point out of bounds");
-  
-   int index1 = to_index(img, x1, y1);
-   int index2 = to_index(img, x2, y2);
 
-   if (!pixelComponents[index1] && !pixelComponents[index2]) {
-      fprintf(stderr, "Warning! One of the point is not in a component\n");
-      return false;
-   }
-  
-   return pixelComponents[index1] == pixelComponents[index2]; 
+    april_assert(x1 <= img->width && x1 > 0 && y1 <= img->height && y1 > 0 && "X1, Y1 point out of bounds");
+    april_assert(x2 <= img->width && x2 > 0 && y2 <= img->height && y2 > 0 && "X2, Y2 point out of bounds");
+
+    int index1 = to_index(img, x1, y1);
+    int index2 = to_index(img, x2, y2);
+
+    if (!pixelComponents[index1] && !pixelComponents[index2]) {
+        fprintf(stderr, "Warning! One of the point is not in a component\n");
+        return false;
+    }
+
+    return pixelComponents[index1] == pixelComponents[index2]; 
 }
 
 int ImageConnectedComponents::getComponent(int x, int y) {
-  int index = to_index(img, x, y);
-  return pixelComponents[index] -1;
+    int index = to_index(img, x, y);
+    return pixelComponents[index] -1;
 }
 
+bounding_box ImageConnectedComponents::getComponentBoundingBox(int component) {
+  assert(component >= 0 && component < size && "The component is not corrected"); 
+  
+  int from = component ? indexComponents[component-1] : 0;
+  int to = indexComponents[component];
+
+  int x1 = img->width;
+  int y1 = img->height;
+  int x2 = 0;
+  int y2 = 0;
+  for (int i = from; i < to; ++i) {
+    int x, y;
+    int pointIndex = components[i];
+    to_coords(img, pointIndex, x, y);
+    x1 = min(x1, x);
+    y1 = min(y1, y);
+
+    x2 = max(x2, x);
+    y2 = max(y2, y);
+  }
+
+  return bounding_box(x1,y1, x2, y2);
+}
+
+    vector<bounding_box> * ImageConnectedComponents::getBoundingBoxes() {
+  
+    vector<bounding_box> *bbs = new vector<bounding_box>();
+    for (int i = 0; i < size; ++i) {
+      bbs->push_back(getComponentBoundingBox(i));
+    }
+
+    return bbs;
+}
