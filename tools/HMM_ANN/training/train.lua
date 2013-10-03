@@ -24,7 +24,6 @@ means_and_devs   = feats_norm
 dataset_step     = optargs.step
 format           = feats_format
 error_function   = "multi_class_cross_entropy"
-bunch_size       = 32
 
 if trainfile_sgm and not valfile_sgm then
   error ("Needed validation initial segmentation")
@@ -53,13 +52,28 @@ if transcription_filter then
 end
 
 -- pasar esto como parametro
+local perturbation_random = random(seedp)
 if var > 0 then
-  dataset_perturbation_conf = {
-    dataset   = nil,
-    random    = random(seedp),
-    mean      = mean,
-    variance  = var,
-  }
+  dataset_perturbation_function = function(ds)
+    return dataset.perturbation{
+      dataset   = ds,
+      random    = perturbation_random,
+      mean      = mean,
+      variance  = var,
+    }
+  end
+end
+
+if salt > 0 then
+  local old_dataset_perturbation_function = dataset_perturbation_function
+  dataset_perturbation_function = function(ds)
+    return dataset.salt_noise{
+      dataset   = old_dataset_perturbation_function(ds),
+      vd        = salt,
+      zero      = 0,
+      random    = perturbation_random,
+    }
+  end
 end
 
 if initial_mlp or initial_em_epoch then
@@ -302,7 +316,7 @@ if not string.match(corpus.filename_trn_mfc, "%.lua$") then
 		 hmm_name_mangling      = false,
 		 dataset_step           = dataset_step,
 		 means_and_devs         = means_and_devs,
-		 dataset_perturbation_conf = dataset_perturbation_conf,
+		 dataset_perturbation_function = dataset_perturbation_function,
 		 format = format,
 	       })
 else
@@ -353,7 +367,7 @@ else
 		   hmm_name_mangling      = false,
 		   dataset_step           = dataset_step,
 		   means_and_devs         = means_and_devs,
-		   dataset_perturbation_conf = dataset_perturbation_conf,
+		   dataset_perturbation_function = dataset_perturbation_function,
 		   format = format,
 		 })
     table.insert(corpus.distribution, {
@@ -566,9 +580,10 @@ while em_iteration <= em.em_max_iterations do
   if dropout > 0 then
     iterator(ipairs(dropout_list)):
     iterate(function(i,name)
-	      return iterator(ann_table.trainer:iterate_components(name))
+	      return ann_table.trainer:iterate_components(name)
 	    end):
     apply(function(cname,component)
+	    printf("# DROPOUT OF COMPONENT %s\n", cname)
 	    component:set_option("dropout_factor", dropout)
 	    component:set_option("dropout_seed",   dropout_seed)
 	  end)
