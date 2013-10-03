@@ -10,6 +10,14 @@ cmdOptTest = cmdOpt{
     filter=dofile,
   },
   {
+    index_name="bunch_size",
+    description="Bunch size (mini-batch size)",
+    long="bunch-size",
+    argument="yes",
+    mode="always",
+    default_value=32,
+  },
+  {
     index_name="train_m",
     description="MFCC file for training set",
     long="train-m",
@@ -190,6 +198,15 @@ cmdOptTest = cmdOpt{
     argument    = "yes",
     mode="always",
     default_value=0.015,
+    filter=tonumber,
+  },
+  {
+    index_name  = "salt",
+    description = "Salt noise percentage",
+    long        = "salt",
+    argument    = "yes",
+    mode="always",
+    default_value=0,
     filter=tonumber,
   },
   {
