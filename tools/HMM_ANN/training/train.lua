@@ -98,6 +98,7 @@ ann_table.first_learning_rate  = firstlr
 ann_table.num_epochs_first_lr  = epochs_firstlr
 ann_table.learning_rate        = lr
 ann_table.momentum             = mt
+ann_table.max_norm_penalty     = mp
 ann_table.weight_decay         = wd
 ann_table.weights_seed         = seed1
 ann_table.shuffle_seed         = seed2
@@ -169,39 +170,92 @@ ann_table.num_outputs  = num_emissions
 ------------------
 --
 -- estructura de la red
-ann_table.thenet    = nil
-local mlp_str = nil
-if ann_table.num_hidden2 > 0 then
-  mlp_str = string.format("%d inputs %d logistic %d logistic %d log_softmax",
-			  ann_table.num_entradas,
-			  ann_table.num_hidden1,
-			  ann_table.num_hidden2,
-			  ann_table.num_outputs)
-else
-  mlp_str = string.format("%d inputs %d logistic %d log_softmax",
-			  ann_table.num_entradas,
-			  ann_table.num_hidden1,
-			  ann_table.num_outputs)
+local best_trainer
+local global_best_trainer
+local mlp_str
+local weights_random = random(ann_table.weights_seed)
+function initialize_neural_network()
+  print("# INITIALIZING THE ANN")
+  ann_table.thenet = nil
+  mlp_str = nil
+  if ann_table.num_hidden2 > 0 then
+    mlp_str = string.format("%d inputs %d logistic %d logistic",
+			    ann_table.num_entradas,
+			    ann_table.num_hidden1,
+			    ann_table.num_hidden2)
+  else
+    mlp_str = string.format("%d inputs %d logistic",
+			    ann_table.num_entradas,
+			    ann_table.num_hidden1)
+  end
+  -- generamos la red
+  if initial_mlp then
+    mlp_str = initial_mlp
+    ann_table.trainer = trainable.supervised_trainer.load(initial_mlp,
+							  ann.loss[error_function](ann_table.num_outputs),
+							  bunch_size)
+    ann_table.thenet  = ann_table.trainer:get_component()
+  elseif pretrained_mlp then
+    mlp_str = pretrained_mlp
+    ann_table.trainer = trainable.supervised_trainer.load(pretrained_mlp,
+							  ann.loss[error_function](ann_table.num_outputs),
+							  bunch_size)
+    ann_table.thenet  = ann_table.trainer:get_component()
+  else
+    ann_table.thenet = ann.components.stack()
+    mlp_str = string.format("%d inputs",ann_table.num_entradas)
+    --
+    if ann_table.num_hidden1 > 0 then
+      mlp_str = string.format("%s %d logistic", mlp_str, ann_table.num_hidden1)
+      ann_table.thenet:push(ann.components.hyperplane{
+			      dot_product_name="w1",
+			      bias_name="b1",
+			      dot_product_weights="w1",
+			      bias_weights="b1",
+			      input = ann_table.num_entradas,
+			      output = ann_table.num_hidden1,
+						     }):
+      push(ann.components.actf.logistic{ name="actf1" })
+    end
+    --
+    if ann_table.num_hidden2 > 0 then
+      mlp_str = string.format("%s %d logistic", mlp_str, ann_table.num_hidden2)
+      ann_table.thenet:push(ann.components.hyperplane{
+			      dot_product_name="w2",
+			      bias_name="b2",
+			      dot_product_weights="w2",
+			      bias_weights="b2",
+			      input = ann_table.num_hidden1,
+			      output = ann_table.num_hidden2,
+						     }):
+      push(ann.components.actf.logistic{ name="actf2" })
+    end
+    --
+    mlp_str = string.format("%s %d log_softmax", mlp_str, ann_table.num_outputs)
+    ann_table.thenet:push(ann.components.hyperplane{
+			    dot_product_name="wN",
+			    bias_name="bN",
+			    dot_product_weights="wN",
+			    bias_weights="bN",
+			    output = ann_table.num_outputs,
+						   }):
+    push(ann.components.actf.log_softmax{ name="OUPUT" })
+    --
+    ann_table.trainer = trainable.supervised_trainer(ann_table.thenet,
+						     ann.loss[error_function](ann_table.num_outputs),
+						     bunch_size)
+    ann_table.trainer:build()
+    ann_table.trainer:randomize_weights{
+      inf =  ann_table.rndw,
+      sup = -ann_table.rndw,
+      random = weights_random
+    }
+  end
+  best_trainer = ann_table.trainer
+  global_best_trainer = ann_table.trainer
 end
 
--- generamos la red
-if initial_mlp then
-  ann_table.trainer = trainable.supervised_trainer.load(initial_mlp,
-							ann.loss[error_function](ann_table.num_outputs),
-							bunch_size)
-  ann_table.thenet  = ann_table.trainer:get_component()
-else
-  ann_table.thenet  = ann.mlp.all_all.generate(mlp_str)
-  ann_table.trainer = trainable.supervised_trainer(ann_table.thenet,
-						   ann.loss[error_function](ann_table.num_outputs),
-						   bunch_size)
-  ann_table.trainer:build()
-  ann_table.trainer:randomize_weights{
-    inf =  ann_table.rndw,
-    sup = -ann_table.rndw,
-    random = random(ann_table.weights_seed)
-  }
-end
+initialize_neural_network()
 
 collectgarbage("collect")
 
@@ -445,7 +499,6 @@ bestce      = 11111111111
 bestce_em   = 11111111111
 bestepoch    = 0
 bestepoch_em = 0
-best_trainer = ann_table.trainer
 
 if initial_em_epoch then
   em_iteration = initial_em_epoch
@@ -507,8 +560,19 @@ while em_iteration <= em.em_max_iterations do
   else
     ann_table.thenet:set_option("learning_rate", ann_table.first_learning_rate)
   end
-  ann_table.thenet:set_option("momentum",      ann_table.momentum)
-  ann_table.thenet:set_option("weight_decay",  ann_table.weight_decay)
+  ann_table.thenet:set_option("momentum",         ann_table.momentum)
+  ann_table.thenet:set_option("weight_decay",     ann_table.weight_decay)
+  ann_table.thenet:set_option("max_norm_penalty", ann_table.max_norm_penalty)
+  if dropout > 0 then
+    iterator(ipairs(dropout_list)):
+    iterate(function(i,name)
+	      return iterator(ann_table.trainer:iterate_components(name))
+	    end):
+    apply(function(cname,component)
+	    component:set_option("dropout_factor", dropout)
+	    component:set_option("dropout_seed",   dropout_seed)
+	  end)
+  end
   --------------------------------------
   -- ANN TRAINING (MAXIMIZATION STEP) --
   --------------------------------------
@@ -622,10 +686,15 @@ while em_iteration <= em.em_max_iterations do
 			  em_iteration)
   print("# Saving "..filenet)
   ann_table.trainer:save(filenet,"binary")
-  
   --
   
   collectgarbage("collect")
   
   em_iteration = em_iteration + 1
+
+
+  if em_iteration <= dropped_em_iterations then
+    initialize_neural_network()
+  end
+
 end
