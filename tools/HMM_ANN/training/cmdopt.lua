@@ -399,15 +399,6 @@ cmdOptTest = cmdOpt{
     filter=tonumber,
   },
   {
-    index_name = "",
-    description = "Number of EM iterations (default 100)",
-    long ="scratch",
-    argument="yes",
-    mode="always",
-    default_value=100,
-    filter=tonumber,
-  },
-  {
     index_name="pretrained_mlp",
     description="Initial pretrained MLP",
     long="pretrained-mlp",

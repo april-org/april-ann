@@ -171,6 +171,12 @@ else
 							hmmtrainer)
   num_emissions = num_models * hmm.num_states
   hmmtrainer.trainer:check_cls_emission(num_emissions)
+  --
+  local aprioris = iterator(range(1,num_emissions)):
+  map(function()return 1/num_emissions end):
+  table()
+  --
+  hmmtrainer.trainer:set_a_priori_emissions(aprioris)
 end
 ann_table.output_dictionary = dataset.identity(num_emissions, 0.0, 1.0)
 collectgarbage("collect")
