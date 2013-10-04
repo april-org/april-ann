@@ -75,20 +75,20 @@ namespace InterestPoints
    }
  };
 
- class ConnectedPoints: public Referenced {
-
-     private:
+ class SetPoints: public Referenced {
+     protected:
          vector< vector<interest_point> > *ccPoints;
-         ImageConnectedComponents *imgCCs;
-
+         int size;
          int num_points;
+         ImageFloat *img;
 
      public:
-         ConnectedPoints(ImageFloat *img);
-         void addPoint(interest_point ip);
-         void addPoint(int x, int y, int c, bool natural_type, float log_prob = 0.0) {
-             addPoint(interest_point(x,y,c,natural_type,log_prob));
+         SetPoints(ImageFloat *img);
+         void addPoint(int component, interest_point ip);
+         void addPoint(int component, int x, int y, int c, bool natural_type, float log_prob = 0.0) {
+             addPoint(component, interest_point(x,y,c,natural_type,log_prob));
          };
+
          int getNumPoints() { return num_points;}; 
          void print_components();
          void sort_by_confidence();
@@ -96,14 +96,27 @@ namespace InterestPoints
          const vector <vector <interest_point> > *getComponents() {
            return ccPoints;
          }
-         ~ConnectedPoints(){
-             delete imgCCs;
+         ~SetPoints(){
              delete ccPoints;
          };
-
-         
  };
 
+ class ConnectedPoints: public SetPoints {
+
+     private:
+         ImageConnectedComponents *imgCCs;
+
+     public:
+         ConnectedPoints(ImageFloat *img);
+         void addPoint(interest_point ip);
+         void addPoint(int x, int y, int c, bool natural_type, float log_prob = 0.0) {
+             addPoint(interest_point(x,y,c,natural_type,log_prob));
+         };
+
+          ~ConnectedPoints() {
+             delete imgCCs;
+          };
+ };
 
 }
 #endif

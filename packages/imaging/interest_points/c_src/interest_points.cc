@@ -449,13 +449,29 @@ namespace InterestPoints {
 
   }
 
+  // Class Set Points
+  SetPoints::SetPoints(ImageFloat *img) {
+      // Compute connected components of the image
+      this->img = img;
+      ccPoints = new vector< vector<interest_point> >();
+      int size = 0;
+      num_points = 0;
+  }
+  
+  void SetPoints::addPoint(int component, interest_point ip){
+    if (component >= 0 && component < size)
+        return;
+    (*ccPoints)[component].push_back(ip);
+    ++num_points;
 
+  }
+  
   // Class Interest Points
-  ConnectedPoints::ConnectedPoints(ImageFloat *img) {
-
+  ConnectedPoints::ConnectedPoints(ImageFloat *img):  SetPoints::SetPoints(img){
       // Compute connected components of the image
       imgCCs = new ImageConnectedComponents(img);
-      ccPoints = new vector< vector<interest_point> >(imgCCs->size);
+      ccPoints->resize(imgCCs->size);
+      size = imgCCs->size;
 
       fprintf(stderr, "Hay %d componentes\n", imgCCs->size);
       num_points = 0;
@@ -476,9 +492,8 @@ namespace InterestPoints {
           }
 
       int component = this->imgCCs->getComponent(x,y);
-
       if (component >= 0) {
-          (*ccPoints)[component].push_back(ip);
+          SetPoints::addPoint(component,ip);
           ++num_points;
       }
       else {
@@ -504,10 +519,10 @@ namespace InterestPoints {
     return v1.x < v2.x;
   }
 
-  void ConnectedPoints::sort_by_confidence() {
+  void SetPoints::sort_by_confidence() {
 
-     if (!ccPoints->size()) return;
-     for (int i = 0; i < imgCCs->size; ++i) {
+     if (!size) return;
+     for (int i = 0; i < size; ++i) {
 
          if ((*ccPoints)[i].size() > 0)
            april_utils::Sort(&((*ccPoints)[i])[0], (int)(*ccPoints)[i].size());
@@ -518,20 +533,20 @@ namespace InterestPoints {
     
   }
 
-  void ConnectedPoints::sort_by_x() {
+  void SetPoints::sort_by_x() {
       // Sort first by confidence and then sort by x each component
       sort_by_confidence();
 
-      for (int i = 0; i < imgCCs->size; ++i) {
+      for (int i = 0; i < size; ++i) {
         
           if ((*ccPoints)[i].size()) {
             april_utils::Sort(&((*ccPoints)[i])[0], (int)(*ccPoints)[i].size(), interestPointXComparator);
           }
       }
   }
-  void ConnectedPoints::print_components() {
+  void SetPoints::print_components() {
 
-      for(int i = 0; i < imgCCs->size; ++i) {
+      for(int i = 0; i < size; ++i) {
           printf("Component %d\n", i);
           printf("\t size %ld\n", (*ccPoints)[i].size());
           for (vector<interest_point>::iterator it = (*ccPoints)[i].begin(); it != (*ccPoints)[i].end(); ++it) {
