@@ -229,6 +229,16 @@ april_set_doc("matrix.fromFilename", {
 		},
 		outputs = { "A matrix instantiated object" }, })
 
+april_set_doc("matrix.fromMMap", {
+		class = "function", summary = "constructor",
+		description ={
+		  "Loads a matrix from a mmaped filename.",
+		},
+		params = {
+		  "A filename path.",
+		},
+		outputs = { "A matrix instantiated object" }, })
+
 april_set_doc("matrix.toFilename", {
 		class = "method",
 		summary = "It allows to store a matrix in a file.",
@@ -240,6 +250,17 @@ april_set_doc("matrix.toFilename", {
 		  "A filename path.",
 		  { "An string with the format: ascii or binary [optional].",
 		    "By default is ascii." },
+		}, })
+
+april_set_doc("matrix.toMMap", {
+		class = "method",
+		summary = "It allows to store a matrix in a mmapped file.",
+		description ={
+		  "It allows to store a matrix in a mmapped file.",
+		  "It uses the format expected by fromMMap function.",
+		},
+		params = {
+		  "A filename path.",
 		}, })
 
 april_set_doc("matrix.loadImage", {

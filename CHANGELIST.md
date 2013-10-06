@@ -4,6 +4,7 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added `fromMMap` and `toMMap` for `matrix` class, currently only with floats.
 - Added basic MapReduce implementation in Lua.
 - Added `stats.correlation.pearson` Lua class.
 - Added `stats.bootstrap_resampling` function.
