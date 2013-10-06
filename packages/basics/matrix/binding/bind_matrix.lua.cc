@@ -332,6 +332,22 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
+//BIND_CLASS_METHOD MatrixFloat fromMMap
+//DOC_END
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, string);
+  const char *filename;
+  LUABIND_GET_PARAMETER(1,string,filename);
+  april_utils::MMappedDataReader *mmapped_data;
+  mmapped_data = new april_utils::MMappedDataReader(filename);
+  IncRef(mmapped_data);
+  MatrixFloat *obj = MatrixFloat::fromMMappedDataReader(mmapped_data);
+  DecRef(mmapped_data);
+  LUABIND_RETURN(MatrixFloat,obj);
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat toFilename
 //DOC_BEGIN
 // void toFilename(string filename, string type='ascii')
@@ -368,6 +384,19 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   bool is_ascii = (cs == "ascii");
   writeMatrixFloatToLuaString(obj, L, is_ascii);
   LUABIND_INCREASE_NUM_RETURNS(1);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat toMMap
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  const char *filename;
+  LUABIND_GET_PARAMETER(1, string, filename);
+  april_utils::MMappedDataWriter *mmapped_data;
+  mmapped_data = new april_utils::MMappedDataWriter(filename);
+  IncRef(mmapped_data);
+  obj->toMMappedDataWriter(mmapped_data);
+  DecRef(mmapped_data);
 }
 //BIND_END
 

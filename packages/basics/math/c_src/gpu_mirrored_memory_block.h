@@ -38,12 +38,19 @@
 #include "gpu_helper.h"
 #include "error_print.h"
 #include "aligned_memory.h"
+#include "mmapped_data.h"
 
 #ifndef NO_POOL
 #include "hash_table.h"
 #include "aux_hash_table.h"
 #include "list.h"
 #endif
+
+#define PPAL_MASK  0x01
+#define GPU_MASK   0x02
+#define CONST_MASK 0x04
+#define ALLOC_MASK 0x08
+#define MMAP_MASK  0x16
 
 template<typename T>
 class GPUMirroredMemoryBlock : public Referenced {
@@ -68,34 +75,68 @@ class GPUMirroredMemoryBlock : public Referenced {
   const static PoolFreeBeforeExit pool_free_before_exit();
 #endif
   unsigned int size;
-  mutable T      *mem_ppal;
+  union {
+    T *mem_ppal;
+    const T *const_mem_ppal;
+  };
 #ifdef USE_CUDA  
-  mutable CUdeviceptr mem_gpu;
-  mutable char        updated; // bit 0 CPU, bit 1 GPU
+  CUdeviceptr mem_gpu;
   bool    pinned;
 #endif
+  char    status; // bit 0 CPU, bit 1 GPU, bit 2 CONST, bit 3 ALLOCATED
+  april_utils::MMappedDataReader *mmapped_data;
+
+  void setConst() {
+    status = status | CONST_MASK;
+  }
+
+  bool isConst() const {
+    return status & CONST_MASK;
+  }
+
+  void setAllocated() {
+    status = status | ALLOC_MASK;
+  }
+
+  bool isAllocated() const {
+    return status & ALLOC_MASK;
+  }
+
+  void setMMapped() {
+    status = status | MMAP_MASK;
+  }
+
+  bool isMMapped() const {
+    return status & MMAP_MASK;
+  }
 
 #ifdef USE_CUDA  
   bool getUpdatedPPAL() const {
-    return updated & 0x01;    // 0000 0001
+    return status & PPAL_MASK;
   }
   bool getUpdatedGPU() const {
-    return updated & 0x02;    // 0000 0010
+    return status & GPU_MASK;
   }
   void unsetUpdatedPPAL() const {
-    updated = updated & 0xFE; // 1111 1110
+    status = status & (!PPAL_MASK);
   }
   void unsetUpdatedGPU() const {
-    updated = updated & 0xFD; // 1111 1101
+    status = status & (!GPU_MASK);
   }
   void setUpdatedPPAL() const {
-    updated = updated | 0x01; // 0000 0001
+    status = status | PPAL_MASK;
   }
   void setUpdatedGPU() const {
-    updated = updated | 0x02; // 0000 0010
+    status = status | GPU_MASK;
   }
   
   void updateMemPPAL() const {
+    if (!getUpdatedPPAL())
+      ERROR_EXIT(128, "You need first to update the "
+		 "memory in a non const pointer\n");
+  }
+
+  void updateMemPPAL() {
     if (!getUpdatedPPAL()) {
       CUresult result;
       setUpdatedPPAL();
@@ -120,6 +161,11 @@ class GPUMirroredMemoryBlock : public Referenced {
   }
 
   void copyPPALtoGPU() const {
+    ERROR_EXIT(128, "You need first to update the "
+	       "memory in a non const pointer\n");
+  }
+
+  void copyPPALtoGPU() {
     CUresult result;
 
     if (!pinned) {
@@ -140,6 +186,11 @@ class GPUMirroredMemoryBlock : public Referenced {
   }
 
   bool allocMemGPU() const {
+    ERROR_EXIT(128, "You need first to update the "
+	       "memory in a non const pointer\n");
+  }
+
+  bool allocMemGPU() {
     if (mem_gpu == 0) {
       CUresult result;
       result = cuMemAlloc(&mem_gpu, sizeof(T)*size);
@@ -149,24 +200,100 @@ class GPUMirroredMemoryBlock : public Referenced {
     }
     return false;
   }
+#endif
+
+  GPUMirroredMemoryBlock() { }
   
+public:
+
+
+#ifdef USE_CUDA  
   void updateMemGPU() const {
+    if (!getUpdatedGPU()) {
+      ERROR_EXIT(128, "You need first to update the "
+		 "memory in a non const pointer\n");
+    }
+  }
+
+  void updateMemGPU() {
     if (!getUpdatedGPU()) {
       allocMemGPU();
       setUpdatedGPU();
       copyPPALtoGPU();
     }
   }
-
 #endif
-  
-public:
+
+  void toMMappedDataWriter(april_utils::MMappedDataWriter *mmapped_data) const {
+#ifdef USE_CUDA
+    if (!getUpdatedPPAL())
+      ERROR_EXIT(128, "Impossible to update memory from a const pointer\n");
+#endif
+    mmapped_data->put(&size);
+    mmapped_data->put(mem_ppal, size);
+  }
+
+  void toMMappedDataWriter(april_utils::MMappedDataWriter *mmapped_data) {
+#ifdef USE_CUDA
+    updateMemPPAL();
+#endif
+    mmapped_data->put(&size);
+    mmapped_data->put(mem_ppal, size);
+  }
+
+  static GPUMirroredMemoryBlock<T> *
+  fromMMappedDataReader(april_utils::MMappedDataReader *mmapped_data) {
+    GPUMirroredMemoryBlock<T> *obj = new GPUMirroredMemoryBlock<T>();
+    obj->size     = *(mmapped_data->get<unsigned int>());
+    obj->mem_ppal = mmapped_data->get<T>(obj->size);
+    obj->mmapped_data = mmapped_data;
+    IncRef(mmapped_data);
+    obj->status = 0;
+    obj->setMMapped();
+#ifdef USE_CUDA
+    obj->unsetUpdatedGPU();
+    obj->setUpdatedPPAL();
+    obj->mem_gpu = 0;
+    obj->pinned  = false;
+#endif
+    return obj;
+  }
+
+
+  GPUMirroredMemoryBlock(unsigned int sz,
+			 T *mem) : Referenced(), size(sz),
+				   mem_ppal(mem) {
+    status = 0;
+    mmapped_data = 0;
+#ifdef USE_CUDA
+    unsetUpdatedGPU();
+    setUpdatedPPAL();
+    mem_gpu  = 0;
+    pinned   = false;
+#endif
+  }
+
+  GPUMirroredMemoryBlock(unsigned int sz,
+			 const T *mem) : Referenced(), size(sz),
+					 const_mem_ppal(mem) {
+    status = 0;
+    mmapped_data = 0;
+    setConst();
+#ifdef USE_CUDA
+    unsetUpdatedGPU();
+    setUpdatedPPAL();
+    mem_gpu  = 0;
+    pinned   = false;
+#endif
+  }
 
   // WARNING!!! the memory zone is not initialized by default
   GPUMirroredMemoryBlock(unsigned int sz,
 			 bool initialize=false) : Referenced(), size(sz) {
+    status = 0;
+    mmapped_data = 0;
+    setAllocated();
 #ifdef USE_CUDA
-    updated  = 0;
     unsetUpdatedGPU();
     setUpdatedPPAL();
     mem_gpu  = 0;
@@ -195,6 +322,27 @@ public:
 		    cudaGetErrorString(cudaGetLastError()));
     }
     else {
+      if (isAllocated()) {
+#ifndef NO_POOL
+	april_utils::list<T*> &l = pool_lists[size];
+	if (pool_size < MAX_POOL_LIST_SIZE) {
+	  pool_size += size*sizeof(T);
+	  l.push_front(mem_ppal);
+	}
+	else aligned_free(mem_ppal);
+#else
+	aligned_free(mem_ppal);
+#endif
+      }
+    }
+    if (mem_gpu != 0) {
+      CUresult result;
+      result = cuMemFree(mem_gpu);
+      if (result != CUDA_SUCCESS)
+        ERROR_EXIT(163, "Could not free memory from device.\n");
+    }
+#else
+    if (isAllocated()) {
 #ifndef NO_POOL
       april_utils::list<T*> &l = pool_lists[size];
       if (pool_size < MAX_POOL_LIST_SIZE) {
@@ -206,30 +354,21 @@ public:
       aligned_free(mem_ppal);
 #endif
     }
-    if (mem_gpu != 0) {
-      CUresult result;
-      result = cuMemFree(mem_gpu);
-      if (result != CUDA_SUCCESS)
-        ERROR_EXIT(163, "Could not free memory from device.\n");
-    }
-#else
-#ifndef NO_POOL
-    april_utils::list<T*> &l = pool_lists[size];
-    if (pool_size < MAX_POOL_LIST_SIZE) {
-      pool_size += size*sizeof(T);
-      l.push_front(mem_ppal);
-    }
-    else aligned_free(mem_ppal);
-#else
-    aligned_free(mem_ppal);
 #endif
-#endif
+    if (isMMapped()) DecRef(mmapped_data);
   }
 
   unsigned int getSize() const { return size; }
   
 #ifdef USE_CUDA
-  void pinnedMemoryPageLock() {
+  void pinnedMemoryPageLock() const {
+    ERROR_EXIT(128, "Execute it from a non const pointer\n");
+  }
+
+  void pinnedMemoryPageLock() const {
+    if (isConst() || isMMapped()) {
+      ERROR_EXIT(128, "Impossible to set as pinned a const or mmapped memory block\n");
+    }
     if (mem_ppal) aligned_free(mem_ppal);
     void *ptr;
     if (cudaHostAlloc(&ptr, sizeof(T)*size, 0) != cudaSuccess)
@@ -242,28 +381,46 @@ public:
   
   const T *getPPALForRead() const {
 #ifdef USE_CUDA
+    if (!getUpdatedPPAL())
+      ERROR_EXIT(128, "Update the memory from a non const pointer\n");
+#endif
+    return const_mem_ppal;
+  }
+
+  const T *getPPALForRead() {
+#ifdef USE_CUDA
     updateMemPPAL();
 #endif
-    return mem_ppal;
+    return const_mem_ppal;
   }
 
 #ifdef USE_CUDA
   const T *getGPUForRead() const {
+    if (!getUpdatedGPU())
+      ERROR_EXIT(128, "Update the memory from a non const pointer\n");
+    return reinterpret_cast<T*>(mem_gpu);
+  }
+
+  const T *getGPUForRead() {
     updateMemGPU();
     return reinterpret_cast<T*>(mem_gpu);
   }
 #endif
 
   T *getPPALForWrite() {
+    if (isConst())
+      ERROR_EXIT(128, "Impossible to write in a const memory block\n");
 #ifdef USE_CUDA
     setUpdatedPPAL();
     unsetUpdatedGPU();
 #endif
     return mem_ppal;
   }
-
+  
 #ifdef USE_CUDA
   T *getGPUForWrite() {
+    if (isConst())
+      ERROR_EXIT(128, "Impossible to write in a const memory block\n");
     if (allocMemGPU()) copyPPALtoGPU();
     setUpdatedGPU();
     unsetUpdatedPPAL();
@@ -272,6 +429,8 @@ public:
 #endif
   
   T *getPPALForReadAndWrite() {
+    if (isConst())
+      ERROR_EXIT(128, "Impossible to write in a const memory block\n");
 #ifdef USE_CUDA
     updateMemPPAL();
     unsetUpdatedGPU();
@@ -281,13 +440,15 @@ public:
 
 #ifdef USE_CUDA
   T *getGPUForReadAndWrite() {
+    if (isConst())
+      ERROR_EXIT(128, "Impossible to write in a const memory block\n");
     updateMemGPU();
     unsetUpdatedPPAL();
     return reinterpret_cast<T*>(mem_gpu);
   }
 #endif
 
-  bool getCudaFlag() {
+  bool getCudaFlag() const {
 #ifdef USE_CUDA
     return getUpdatedGPU();
 #else
@@ -320,8 +481,8 @@ public:
 };
 
 // typedef for referring to float memory blocks
-typedef GPUMirroredMemoryBlock<float> FloatGPUMirroredMemoryBlock;
-typedef GPUMirroredMemoryBlock<int> IntGPUMirroredMemoryBlock;
+typedef GPUMirroredMemoryBlock<float>    FloatGPUMirroredMemoryBlock;
+typedef GPUMirroredMemoryBlock<int>      IntGPUMirroredMemoryBlock;
 typedef GPUMirroredMemoryBlock<ComplexF> ComplexFGPUMirroredMemoryBlock;
 
 #ifndef NO_POOL
