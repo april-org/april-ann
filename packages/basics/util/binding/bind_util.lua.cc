@@ -785,8 +785,8 @@ extern const char *__COMMIT_NUMBER__;
 {
   const char *path;
   bool write, shared;
-  LUABIND_CHECK_ARGN(>=1);
-  LUABIND_CHECK_ARGN(<=3);
+  LUABIND_CHECK_ARGN(>=,1);
+  LUABIND_CHECK_ARGN(<=,3);
   LUABIND_GET_PARAMETER(1, string, path);
   LUABIND_GET_OPTIONAL_PARAMETER(2, bool, write,  true);
   LUABIND_GET_OPTIONAL_PARAMETER(3, bool, shared, true);
@@ -801,7 +801,7 @@ extern const char *__COMMIT_NUMBER__;
 //BIND_CONSTRUCTOR MMappedDataWriter
 {
   const char *path;
-  LUABIND_CHECK_ARGN(==1);
+  LUABIND_CHECK_ARGN(==,1);
   LUABIND_GET_PARAMETER(1, string, path);
   obj = new MMappedDataWriter(path);
   LUABIND_RETURN(MMappedDataWriter, obj);
