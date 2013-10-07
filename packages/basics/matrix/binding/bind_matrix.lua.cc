@@ -335,12 +335,16 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 //BIND_CLASS_METHOD MatrixFloat fromMMap
 //DOC_END
 {
-  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_CHECK_ARGN(<=, 3);
   LUABIND_CHECK_PARAMETER(1, string);
   const char *filename;
+  bool write, shared;
   LUABIND_GET_PARAMETER(1,string,filename);
+  LUABIND_GET_OPTIONAL_PARAMETER(2,bool,write,true);
+  LUABIND_GET_OPTIONAL_PARAMETER(3,bool,shared,true);
   april_utils::MMappedDataReader *mmapped_data;
-  mmapped_data = new april_utils::MMappedDataReader(filename);
+  mmapped_data = new april_utils::MMappedDataReader(filename,write,shared);
   IncRef(mmapped_data);
   MatrixFloat *obj = MatrixFloat::fromMMappedDataReader(mmapped_data);
   DecRef(mmapped_data);

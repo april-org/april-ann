@@ -64,6 +64,7 @@ FILE **newfile (lua_State *L) {
 #include "popen2.h"
 #include "signal_handler.h"
 #include <cstdlib>
+#include "mmapped_data.h"
 
 using namespace april_utils;
 
@@ -772,5 +773,37 @@ extern const char *__COMMIT_NUMBER__;
   unsigned int n = binarizer::
     decode_uint32( reinterpret_cast<char const *>(b) );
   LUABIND_RETURN(uint,n);
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME MMappedDataReader util.mmap.reader
+//BIND_CPP_CLASS    MMappedDataReader
+
+//BIND_CONSTRUCTOR MMappedDataReader
+{
+  const char *path;
+  bool write, shared;
+  LUABIND_CHECK_ARGN(>=1);
+  LUABIND_CHECK_ARGN(<=3);
+  LUABIND_GET_PARAMETER(1, string, path);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, bool, write,  true);
+  LUABIND_GET_OPTIONAL_PARAMETER(3, bool, shared, true);
+  obj = new MMappedDataReader(path,write,shared);
+  LUABIND_RETURN(MMappedDataReader, obj);
+}
+//BIND_END
+
+//BIND_LUACLASSNAME MMappedDataWriter util.mmap.writer
+//BIND_CPP_CLASS    MMappedDataWriter
+
+//BIND_CONSTRUCTOR MMappedDataWriter
+{
+  const char *path;
+  LUABIND_CHECK_ARGN(==1);
+  LUABIND_GET_PARAMETER(1, string, path);
+  obj = new MMappedDataWriter(path);
+  LUABIND_RETURN(MMappedDataWriter, obj);
 }
 //BIND_END
