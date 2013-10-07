@@ -460,8 +460,10 @@ namespace InterestPoints {
   }
   
   void SetPoints::addPoint(int component, interest_point ip){
-    if (component >= 0 && component < size)
+    if (component < 0 || component > size){
+        fprintf(stderr, "Warning the component %d does not exist!! (Total components %d\n", component, size);    
         return;
+    }
     (*ccPoints)[component].push_back(ip);
     ++num_points;
 
