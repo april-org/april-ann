@@ -236,6 +236,15 @@ april_set_doc("matrix.fromMMap", {
 		},
 		params = {
 		  "A filename path.",
+		  {
+		    "A boolean indicating if writing is allowed [optional].",
+		    "By default it is true",
+		  },
+		  {
+		    "A boolean indicating if memory map is shared [optional].",
+		    "By default it is true",
+		  },
+		  
 		},
 		outputs = { "A matrix instantiated object" }, })
 
