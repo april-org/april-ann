@@ -41,7 +41,7 @@ namespace april_utils {
     size_t  pos;
     int     fd;
   public:
-    MMappedDataReader(const char *path) {
+    MMappedDataReader(const char *path, bool write=true, bool shared=true) {
       if ((fd = open(path, O_RDWR)) < 0)
 	ERROR_EXIT1(128,"Unable to open file %s\n", path);
       // find size of input file
@@ -51,9 +51,13 @@ namespace april_utils {
       }
       // mmap the input file
       mmapped_data_size = statbuf.st_size;
+      int prot = PROT_READ;
+      if (write) prot = prot | PROT_WRITE;
+      int flags;
+      if (shared) flags = MAP_SHARED;
+      else flags = MAP_PRIVATE;
       if ((mmapped_data = static_cast<char*>(mmap(0, mmapped_data_size,
-						  PROT_READ | PROT_WRITE,
-						  MAP_SHARED,
+						  prot, flags,
 						  fd, 0)))  == (caddr_t)-1)
 	ERROR_EXIT(128, "mmap error\n");
       int magic = *(reinterpret_cast<int*>(mmapped_data));
