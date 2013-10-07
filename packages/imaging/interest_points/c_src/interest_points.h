@@ -23,6 +23,7 @@
 #ifndef INTEREST_POINTS_H
 #define INTEREST_POINTS_H
 
+#include <cmath>
 #include "image.h"
 #include "image_connected_components.h"
 #include "utilImageFloat.h"
@@ -73,6 +74,14 @@ namespace InterestPoints
    {
        return this->log_prob > ip.log_prob;
    }
+
+   float angle(interest_point &ip) {
+      float deltaY = ip.y - this->y;
+      float deltaX = ip.x - this->x;
+      
+      return atan2(deltaY, deltaY);
+   } 
+
  };
 
  class SetPoints: public Referenced {
@@ -88,7 +97,7 @@ namespace InterestPoints
          void addPoint(int component, int x, int y, int c, bool natural_type, float log_prob = 0.0) {
              addPoint(component, interest_point(x,y,c,natural_type,log_prob));
          };
-
+         void addComponent();
          int getNumPoints() { return num_points;}; 
          void print_components();
          void sort_by_confidence();
@@ -99,20 +108,23 @@ namespace InterestPoints
          ~SetPoints(){
              delete ccPoints;
          };
+         float component_affinity(int component, interest_point &ip);
+         float similarity(interest_point &ip1, interest_point &ip2);
  };
 
  class ConnectedPoints: public SetPoints {
 
      private:
          ImageConnectedComponents *imgCCs;
-
      public:
          ConnectedPoints(ImageFloat *img);
          void addPoint(interest_point ip);
          void addPoint(int x, int y, int c, bool natural_type, float log_prob = 0.0) {
              addPoint(interest_point(x,y,c,natural_type,log_prob));
          };
+         
 
+         SetPoints *computePoints();
           ~ConnectedPoints() {
              delete imgCCs;
           };

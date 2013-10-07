@@ -39,6 +39,7 @@ using april_utils::min_finder;
 using april_utils::swap;
 using InterestPoints::Point2D;
 
+
 namespace InterestPoints {
 
   struct xy
@@ -465,7 +466,11 @@ namespace InterestPoints {
     ++num_points;
 
   }
-  
+   
+  void SetPoints::addComponent() {
+    (*ccPoints).push_back(vector<interest_point>());
+
+  } 
   // Class Interest Points
   ConnectedPoints::ConnectedPoints(ImageFloat *img):  SetPoints::SetPoints(img){
       // Compute connected components of the image
@@ -490,7 +495,6 @@ namespace InterestPoints {
               y = ip.y - 1;
 
           }
-
       int component = this->imgCCs->getComponent(x,y);
       if (component >= 0) {
           SetPoints::addPoint(component,ip);
@@ -555,6 +559,88 @@ namespace InterestPoints {
 
       }
   }
-}
-// namespace InterestPoints
+
+  // Takes
+  float SetPoints::component_affinity(int component, interest_point &ip) {
+      if (component >= 0 && component < size)
+          return 0.0;
+      // If the component is empty the affinity is the probability of the point (logscale)
+
+      vector<interest_point> &cc = (*ccPoints)[component];
+      float score_max = 0.0;
+      if (cc.size() == 0)
+          return ip.log_prob;
+      for (vector<interest_point>::iterator it = cc.begin(); cc.end(); ++it) {
+      
+      }
+
+      return score_max;
+  }
+
+  float SetPoints::similarity(interest_point &ip1, interest_point &ip2) {
+
+      float alpha_threshold = M_PI/2;      
+      interest_point &a = ip1;
+      interest_point &b = ip2;
+
+      // Two cases
+      // Are the same class
+      if (ip1.point_class == ip2.point_class) {
+          if (a.x > b.x){
+              a = ip2;
+              b = ip1;
+          }
+          if (fmod(a.angle(b) + alpha_threshold/2,(2*M_PI)) <= alpha_threshold)
+              return 1.0;
+      }
+      else {
+        // They're are different classes
+
+      }
+      return 0.0;
+
+  }
+
+
+  SetPoints * ConnectedPoints::computePoints() {
+
+      SetPoints * mySet = new SetPoints(img);
+      int cini = -1;
+      int cfin = 0;
+
+      // Process each connected component
+      for (int cc = 0; cc < size; ++cc) {
+          //Add an empty set
+          ++cini;
+          cfin = cini;
+          mySet->addComponent();
+          for (vector<interest_point>::iterator it = (*ccPoints)[cc].begin(); ccPoints->end(); ++it) {
+              bool added = false;
+
+              
+              // for (interest_point ip : (*ccPoints)[cc]) {
+              for (int current_set = cini; current_set < cfin; ++cc) {
+                  if (component_affinity(cc, (*it))){
+                      //Add the point
+                      mySet->addPoint(cc, (*it));
+                      added = true;
+                      break;
+                  } //added                
+              } //components
+
+              if (!added) {
+                // Check if it is the firs point
+                if ((*ccPoints)[cc].size()) {
+                  ++cfin;
+                  mySet->addComponent();
+                }
+                mySet->addPoint(cc, (*it));
+              }
+                
+          }//Point
+          } 
+          return mySet;
+      }
+  }
+  // namespace InterestPoints
 
