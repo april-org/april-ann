@@ -145,6 +145,7 @@ void readMatrixData(MatrixComplexF::col_major_iterator &m_it,
 		    MatrixComplexF::col_major_iterator &end,
 		    const T *ptr_real, const T *ptr_img,
 		    const uint32_t nbytes) {
+  UNUSED_VARIABLE(end);
   if (ptr_img != 0) {
     for (uint32_t ptr_pos=0; ptr_pos < nbytes;
 	 ptr_pos += sizeof(T), ++ptr_real, ++ptr_img) {
@@ -171,6 +172,7 @@ template<typename T>
 void readMatrixData(MatrixDouble::col_major_iterator &m_it,
 		    MatrixDouble::col_major_iterator &end,
 		    const T *ptr, const uint32_t nbytes) {
+  UNUSED_VARIABLE(end);
   for (uint32_t ptr_pos=0; ptr_pos < nbytes; ptr_pos += sizeof(T), ++ptr) {
     april_assert(m_it != end);
     sanity_check_double_precision(*ptr);
@@ -183,6 +185,7 @@ template<typename T>
 void readMatrixData(MatrixChar::col_major_iterator &m_it,
 		    MatrixChar::col_major_iterator &end,
 		    const T *ptr, const uint32_t nbytes) {
+  UNUSED_VARIABLE(end);
   for (uint32_t ptr_pos=0; ptr_pos < nbytes; ptr_pos += sizeof(T), ++ptr) {
     april_assert(m_it != end);
     *m_it = *ptr;
@@ -194,6 +197,7 @@ template<typename T>
 void readMatrixData(MatrixInt32::col_major_iterator &m_it,
 		    MatrixInt32::col_major_iterator &end,
 		    const T *ptr, const uint32_t nbytes) {
+  UNUSED_VARIABLE(end);
   for (uint32_t ptr_pos=0; ptr_pos < nbytes; ptr_pos += sizeof(T), ++ptr) {
     april_assert(m_it != end);
     sanity_check_int32_precision(*ptr);
