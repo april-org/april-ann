@@ -15,6 +15,7 @@ cmdOptTest = cmdOpt{
     long="bunch-size",
     argument="yes",
     mode="always",
+    filter=tonumber,
     default_value=32,
   },
   {
