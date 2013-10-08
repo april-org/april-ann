@@ -22,6 +22,7 @@ luapkg{
       "-lblas",
       "-latlas",
       "-rdynamic",
+      "-llapack_atlas",
     },
   },
   
