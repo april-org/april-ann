@@ -36,6 +36,7 @@
 #include "maxmin.h"
 #include "qsort.h"
 #include "mmapped_data.h"
+#include "unused_variable.h"
 
 template <typename T>
 class Matrix : public Referenced {
@@ -433,6 +434,7 @@ public:
     return iterator(this, computeRawPos(aux), aux);
   }
   iterator iteratorAt(int *coords, int len) {
+    UNUSED_VARIABLE(len);
     april_assert(numDim==len);
     return iterator(this, computeRawPos(coords), coords);
   }
@@ -459,6 +461,7 @@ public:
     return const_iterator(this, computeRawPos(aux), aux);
   }
   const_iterator iteratorAt(int *coords, int len) const {
+    UNUSED_VARIABLE(len);
     april_assert(numDim==len);
     return const_iterator(this, computeRawPos(coords), coords);
   }
