@@ -405,6 +405,7 @@ T& Matrix<T>::operator() (int coord0, int coord1, int coord2, ...) {
 
 template <typename T>
 T& Matrix<T>::operator() (int *coords, int sz) {
+  UNUSED_VARIABLE(sz);
   april_assert(numDim == sz);
   int raw_pos = computeRawPos(coords);
   return data->get(raw_pos);
@@ -444,6 +445,7 @@ const T& Matrix<T>::operator() (int coord0, int coord1, int coord2, ...) const {
 
 template <typename T>
 const T& Matrix<T>::operator() (int *coords, int sz) const {
+  UNUSED_VARIABLE(sz);
   april_assert(numDim == sz);
   int raw_pos = computeRawPos(coords);
   return data->get(raw_pos);
