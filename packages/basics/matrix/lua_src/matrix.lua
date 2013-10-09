@@ -5,6 +5,9 @@ class_extension(matrix, "to_lua_string",
                                        self:toString(format or "binary"))
                 end)
 
+-- the constructor
+matrix.row_major = getmetatable(matrix).__call
+
 matrix.meta_instance.__tostring = function(self)
   local dims   = self:dim()
   local major  = self:get_major_order()
