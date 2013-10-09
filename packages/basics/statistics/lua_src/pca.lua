@@ -26,9 +26,9 @@ function stats.iterative_pca(params)
     print("# Warning, M < N, probably matrix need to be transposed")
   end
   local major_order = X:get_major_order()
-  local T = matrix[major_order](matrix,M,K):zeros() -- left eigenvectors
-  local P = matrix[major_order](matrix,N,K):zeros() -- right eigenvectors
-  local L = matrix[major_order](matrix,K,1):zeros() -- eigenvalues
+  local T = matrix[major_order](M,K):zeros() -- left eigenvectors
+  local P = matrix[major_order](N,K):zeros() -- right eigenvectors
+  local L = matrix[major_order](K,1):zeros() -- eigenvalues
   local R = X:clone()                        -- residual
   -- U is the sum over all columns
   local U,auxR = R:sum(2)
