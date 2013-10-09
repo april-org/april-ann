@@ -6,7 +6,9 @@ class_extension(matrix, "to_lua_string",
                 end)
 
 -- the constructor
-matrix.row_major = getmetatable(matrix).__call
+matrix.row_major = function(...)
+  return matrix(...)
+end
 
 matrix.meta_instance.__tostring = function(self)
   local dims   = self:dim()
