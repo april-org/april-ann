@@ -132,6 +132,7 @@ template<typename T>
 void readMatrixData(MatrixFloat::col_major_iterator &m_it,
 		    MatrixFloat::col_major_iterator &end,
 		    const T *ptr, const uint32_t nbytes) {
+  UNUSED_VARIABLE(end);
   for (uint32_t ptr_pos=0; ptr_pos < nbytes; ptr_pos += sizeof(T), ++ptr) {
     april_assert(m_it != end);
     sanity_check_float_precision(*ptr);
