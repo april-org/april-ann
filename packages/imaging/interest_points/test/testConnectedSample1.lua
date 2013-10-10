@@ -31,7 +31,6 @@ t = cps:getComponentPoints()
 
 print("I have ", #t, "components")
 
-
 for i,component in ipairs(t) do
     print ("Component ", i) --component, #component)
     for j, point in ipairs(component) do
@@ -45,3 +44,12 @@ width, height = img:geometry()
 mySVG = imageSVG.fromImageFile(imgFile, width, height)
 mySVG:addPaths(t)
 mySVG:write("sample2.svg")
+
+print("Computing components")
+
+sp = cps:computeComponents()
+
+print(sp:getNumPoints())
+
+print("New component\n")
+sp:printComponents()

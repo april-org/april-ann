@@ -79,7 +79,7 @@ namespace InterestPoints
       float deltaY = ip.y - this->y;
       float deltaX = ip.x - this->x;
       
-      return atan2(deltaY, deltaY);
+      return atan2(deltaY, deltaX);
    } 
 
  };
@@ -98,7 +98,9 @@ namespace InterestPoints
              addPoint(component, interest_point(x,y,c,natural_type,log_prob));
          };
          void addComponent();
-         int getNumPoints() { return num_points;}; 
+         int getNumPoints() { return num_points;};
+         int getSize() { return size;}
+
          void print_components();
          void sort_by_confidence();
          void sort_by_x();

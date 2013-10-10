@@ -455,13 +455,13 @@ namespace InterestPoints {
       // Compute connected components of the image
       this->img = img;
       ccPoints = new vector< vector<interest_point> >();
-      int size = 0;
+      size = 0;
       num_points = 0;
   }
   
   void SetPoints::addPoint(int component, interest_point ip){
-    if (component < 0 || component > size){
-        fprintf(stderr, "Warning the component %d does not exist!! (Total components %d\n", component, size);    
+    if (component < 0 || component >= size){
+        fprintf(stderr, "Warning the component %d does not exist!! (Total components %d)\n", component, size);    
         return;
     }
     (*ccPoints)[component].push_back(ip);
@@ -470,8 +470,12 @@ namespace InterestPoints {
   }
    
   void SetPoints::addComponent() {
+    if (size != ccPoints->size())
+        fprintf(stderr, "Size sincronization error %d %d\n", size, ccPoints->size());
+    april_assert("Size sincronization error" && size == ccPoints->size());
+    
     (*ccPoints).push_back(vector<interest_point>());
-
+    ++size;
   } 
   // Class Interest Points
   ConnectedPoints::ConnectedPoints(ImageFloat *img):  SetPoints::SetPoints(img){
@@ -558,22 +562,26 @@ namespace InterestPoints {
           for (vector<interest_point>::iterator it = (*ccPoints)[i].begin(); it != (*ccPoints)[i].end(); ++it) {
               printf("\t%d %d %d (%f)\n", it->x, it->y, it->point_class, it->log_prob);
           }
-
       }
   }
 
   // Takes
   float SetPoints::component_affinity(int component, interest_point &ip) {
-      if (component >= 0 && component < size)
-          return 0.0;
+      if (component < 0 || component >= size){
+        fprintf(stderr, "Warning (similarity)! The component %d does not exist!! (Total components %d\n", component, size);    
+        return 0.0;
+      }
       // If the component is empty the affinity is the probability of the point (logscale)
 
       vector<interest_point> &cc = (*ccPoints)[component];
       float score_max = 0.0;
       if (cc.size() == 0)
           return ip.log_prob;
-      for (vector<interest_point>::iterator it = cc.begin(); cc.end(); ++it) {
-      
+
+
+      for (size_t p = 0; p < cc.size(); ++p){
+         
+         score_max = max(score_max, similarity(cc[p], ip));
       }
 
       return score_max;
@@ -581,18 +589,20 @@ namespace InterestPoints {
 
   float SetPoints::similarity(interest_point &ip1, interest_point &ip2) {
 
-      float alpha_threshold = M_PI/2;      
-      interest_point &a = ip1;
-      interest_point &b = ip2;
+      float alpha_threshold = M_PI/8;      
+      interest_point *a = &ip1;
+      interest_point *b = &ip2;
 
       // Two cases
       // Are the same class
       if (ip1.point_class == ip2.point_class) {
-          if (a.x > b.x){
-              a = ip2;
-              b = ip1;
+          if (a->x > b->x){
+              a = &ip2;
+              b = &ip1;
           }
-          if (fmod(a.angle(b) + alpha_threshold/2,(2*M_PI)) <= alpha_threshold)
+          float alpha = fmod(a->angle(*b)+2*M_PI + alpha_threshold/2, (2*M_PI));
+          fprintf(stderr, "alpha %f, %f\n", a->angle(*b), alpha);
+          if (alpha < alpha_threshold)
               return 1.0;
       }
       else {
@@ -603,42 +613,41 @@ namespace InterestPoints {
 
   }
 
-
   SetPoints * ConnectedPoints::computePoints() {
 
       SetPoints * mySet = new SetPoints(img);
       int cini = -1;
       int cfin = 0;
-
+      int threshold = 1.0;
       // Process each connected component
       for (int cc = 0; cc < size; ++cc) {
+          printf("Computing connected component %d/%d\n", cc, size);
           //Add an empty set
-          ++cini;
-          cfin = cini;
+          cini = cfin;
+          cfin++;
           mySet->addComponent();
-          for (vector<interest_point>::iterator it = (*ccPoints)[cc].begin(); ccPoints->end(); ++it) {
+          for (size_t p = 0; p < (*ccPoints)[cc].size(); ++p) {
               bool added = false;
-
-              
               // for (interest_point ip : (*ccPoints)[cc]) {
-              for (int current_set = cini; current_set < cfin; ++cc) {
-                  if (component_affinity(cc, (*it))){
+              for (int current_set = cini; current_set < cfin; ++current_set) {
+                  float affinity = mySet->component_affinity(current_set, (*ccPoints)[cc][p]);
+                  if (affinity >= threshold){
                       //Add the point
-                      mySet->addPoint(cc, (*it));
+                      mySet->addPoint(current_set, (*ccPoints)[cc][p]);
                       added = true;
                       break;
                   } //added                
               } //components
 
               if (!added) {
-                // Check if it is the firs point
-                if ((*ccPoints)[cc].size()) {
-                  ++cfin;
-                  mySet->addComponent();
-                }
-                mySet->addPoint(cc, (*it));
+                  // Check if it is the first point
+                  if (p) {
+                      ++cfin;
+                      mySet->addComponent();
+                  }
+                  mySet->addPoint(cfin-1, (*ccPoints)[cc][p]);
               }
-                
+
           }//Point
           } 
           return mySet;

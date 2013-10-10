@@ -171,6 +171,12 @@ using namespace InterestPoints;
 }
 //BIND_END
 
+//BIND_METHOD SetPoints getSize
+{
+    LUABIND_RETURN(int, obj->getSize());
+}
+//BIND_END
+
 //BIND_METHOD SetPoints getComponentPoints
 {
     // Devuelve una lista de listas de tuplas ;)
@@ -179,7 +185,7 @@ using namespace InterestPoints;
     
     // Outer list
     lua_createtable (L, v->size(), 0);
-    
+    fprintf(stderr, "GetComponent Size %d (%d) Points: %d\n", v->size(), obj->getSize(), obj->getNumPoints()); 
     for(int i=0; i < (int)v->size(); ++i) 
     {   
         int component_size = (*v)[i].size();
@@ -204,6 +210,7 @@ using namespace InterestPoints;
     LUABIND_RETURN_FROM_STACK(-1);
 }
 //BIND_END
+
 
 /*** Connected Points ***/
 
@@ -265,3 +272,12 @@ using namespace InterestPoints;
 
 //BIND_END
 
+//BIND_METHOD ConnectedPoints computeComponents
+
+ LUABIND_CHECK_ARGN(==,0);
+
+ SetPoints *sp = obj->computePoints();
+
+ LUABIND_RETURN(SetPoints, sp);
+
+//BIND_END
