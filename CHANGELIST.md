@@ -4,6 +4,9 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Solved bug at method `matrix::best_span_iterator::setAtWindow`. Becaose of It
+  the method didn't works when the matrix was a sub-matrix (slice) of other
+  matrix.
 - Added `matrix.join` method.
 - Added PCA-GS algorithm for efficient computation of PCA (iterative algorithm),
   `stats.iterative_pca` Lua function.

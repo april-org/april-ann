@@ -841,7 +841,7 @@ int Matrix<T>::best_span_iterator::numberOfIterations() const {
 template <typename T>
 void Matrix<T>::best_span_iterator::setAtIteration(int idx) {
   if (idx < num_iterations) {
-    raw_pos = 0;
+    raw_pos = m->offset;
     coords[order[0]] = 0;
     for (int i=1; i < m->getNumDim(); i++) {
       int j = order[i];
