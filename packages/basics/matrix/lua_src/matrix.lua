@@ -5,6 +5,11 @@ class_extension(matrix, "to_lua_string",
                                        self:toString(format or "binary"))
                 end)
 
+-- the constructor
+matrix.row_major = function(...)
+  return matrix(...)
+end
+
 matrix.meta_instance.__tostring = function(self)
   local dims   = self:dim()
   local major  = self:get_major_order()
@@ -229,17 +234,73 @@ april_set_doc("matrix.fromFilename", {
 		},
 		outputs = { "A matrix instantiated object" }, })
 
+april_set_doc("matrix.fromTabFilename", {
+		class = "function", summary = "constructor",
+		description ={
+		  "Loads a matrix from a filename tabuled by lines and spaces.",
+		},
+		params = {
+		  "A filename path.",
+		  { "A string with 'row_major', 'col_major' or 'no_order'",
+		    "[optional]. It modifies the order specified by content",
+		    "in the file. By default is nil, so the result",
+		    "matrix will has the order specified by the file.",
+		  },
+		},
+		outputs = { "A matrix instantiated object" }, })
+
+april_set_doc("matrix.fromMMap", {
+		class = "function", summary = "constructor",
+		description ={
+		  "Loads a matrix from a mmaped filename.",
+		},
+		params = {
+		  "A filename path.",
+		  {
+		    "A boolean indicating if writing is allowed [optional].",
+		    "By default it is true",
+		  },
+		  {
+		    "A boolean indicating if memory map is shared [optional].",
+		    "By default it is true",
+		  },
+		  
+		},
+		outputs = { "A matrix instantiated object" }, })
+
 april_set_doc("matrix.toFilename", {
 		class = "method",
 		summary = "It allows to store a matrix in a file.",
 		description ={
 		  "It allows to store a matrix in a file.",
-		  "It uses the format expected by fromMatrix function.",
+		  "It uses the format expected by fromFilename function.",
 		},
 		params = {
 		  "A filename path.",
 		  { "An string with the format: ascii or binary [optional].",
 		    "By default is ascii." },
+		}, })
+
+april_set_doc("matrix.toTabFilename", {
+		class = "method",
+		summary = "It allows to store a matrix in a file tabuled by lines and spaces.",
+		description ={
+		  "It allows to store a matrix in a file tabuled by lines and spaces.",
+		  "It uses the format expected by fromTabFilename function.",
+		},
+		params = {
+		  "A filename path.",
+		}, })
+
+april_set_doc("matrix.toMMap", {
+		class = "method",
+		summary = "It allows to store a matrix in a mmapped file.",
+		description ={
+		  "It allows to store a matrix in a mmapped file.",
+		  "It uses the format expected by fromMMap function.",
+		},
+		params = {
+		  "A filename path.",
 		}, })
 
 april_set_doc("matrix.loadImage", {

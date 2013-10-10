@@ -13,7 +13,7 @@ local prevn  = nil
 local outf   = nil
 for line in nbestf:lines() do
   local n,sentence,score = string.match(line, "(.*)|||(.*)|||.*|||%s*(.*)%s*")
-  if math.mod(i, 1000) then collectgarbage("collect") end
+  if i % 1000 == 0 then collectgarbage("collect") end
   i = i + 1
   if tonumber(n) ~= tonumber(prevn) then
     fprintf(io.stderr, "Converting to SRI format nbest list %d\n", n) prevn=n

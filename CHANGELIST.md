@@ -4,6 +4,9 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added PCA-GS algorithm for efficient computation of PCA (iterative algorithm),
+  `stats.iterative_pca` Lua function.
+- Added `fromMMap` and `toMMap` for `matrix` class, currently only with floats.
 - Loss functions `ann.loss` API has been changed, now the loss computation is
   done in two separated steps:
       - `matrix = loss:compute_loss(output,target)`: which returns a matrix with

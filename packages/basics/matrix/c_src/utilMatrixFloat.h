@@ -92,4 +92,8 @@ void writeMatrixFloatToLuaString(MatrixFloat *mat, lua_State *L, bool is_ascii);
 MatrixFloat *readMatrixFloatFromFile(const char *filename, const char *order);
 MatrixFloat *readMatrixFloatFromString(constString &cs);
 
+void writeMatrixFloatToTabFile(MatrixFloat *mat, const char *filename);
+MatrixFloat *readMatrixFloatFromTabFile(const char *filename,
+					const char *order = "row_major");
+
 #endif // UTILMATRIXFLOAT_H

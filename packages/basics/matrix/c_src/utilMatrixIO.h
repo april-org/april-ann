@@ -336,4 +336,101 @@ int writeMatrixToStream(Matrix<MatrixType> *mat,
   return stream.getTotalBytes();
 }
 
+/*** The ASCII extractor are like this functor struct:
+struct DummyAsciiExtractor {
+  // returns true if success, false otherwise
+  bool operator()(constString &line, MatrixType &destination) {
+    READ FROM LINE OR RETURN FALSE;
+    WRITE AT DESTINATION OR RETURN FALSE;
+    RETURN TRUE;
+  }
+};
+****************************************************************/
+
+template <typename StreamType, typename MatrixType,
+	  typename AsciiExtractFunctor>
+Matrix<MatrixType>*
+readMatrixFromTabStream(const int rows, const int cols,
+			StreamType &stream,
+			AsciiExtractFunctor ascii_extractor,
+			const char *given_order) {
+  if (!stream.good()) {
+    ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
+    return 0;
+  }
+  constString line,order(given_order),token;
+  int dims[2] = { rows, cols };
+  Matrix<MatrixType> *mat = 0;
+  if (order=="row_major")
+    mat = new Matrix<MatrixType>(2,dims);
+  else if (order == "col_major")
+    mat = new Matrix<MatrixType>(2,dims,CblasColMajor);
+  else {
+    ERROR_PRINT("Impossible to determine the order\n");
+    return 0;
+  }
+  int i=0;
+  typename Matrix<MatrixType>::iterator data_it(mat->begin());
+  while (data_it!=mat->end() && (line=stream.extract_u_line())) {
+    int num_cols_size_count = 0;
+    while (data_it!=mat->end() &&
+	   ascii_extractor(line, *data_it)) { ++data_it; ++num_cols_size_count; }
+    if (num_cols_size_count != cols)
+      ERROR_EXIT3(128, "Incorrect number of elements at line %d, "
+		  "expected %d, found %d\n", i, cols, num_cols_size_count);
+    ++i;
+  }
+  if (data_it!=mat->end()) {
+    ERROR_PRINT("Impossible to fill all the matrix components\n");
+    delete mat; mat = 0;
+  }
+  return mat;
+}
+
+/*** Functor examples
+
+struct DummyAsciiSizer {
+  // returns the number of bytes needed for all matrix data (plus spaces)
+  int operator()(const Matrix<MatrixType> *mat) {
+    RETURN 12 * mat->size();
+  }
+};
+template<typename StreamType>
+struct DummyAsciiCoder {
+  // puts to the stream the given value
+  void operator()(const MatrixType &value, StreamType &stream) {
+    stream.printf("%.5g", value);
+  }
+};
+****************************************************************/
+
+// Returns the number of chars written (there is a '\0' that is not counted)
+template <typename StreamType, typename MatrixType,
+	  typename AsciiSizeFunctor, typename AsciiCodeFunctor>
+int writeMatrixToTabStream(Matrix<MatrixType> *mat,
+			   StreamType &stream,
+			   AsciiSizeFunctor ascii_sizer,
+			   AsciiCodeFunctor ascii_coder) {
+  if (mat->getNumDim() != 2)
+    ERROR_EXIT(128, "Needs a matrix with 2 dimensions");
+  
+  int sizedata;
+  sizedata = ascii_sizer(mat);
+  stream.setExpectedSize(sizedata+1);
+  if (!stream.good()) {
+    ERROR_EXIT(256, "The stream is not prepared, it is empty, or EOF\n");
+  }
+  const int columns = mat->getDimSize(1);
+  int i=0;
+  for(typename Matrix<MatrixType>::const_iterator it(mat->begin());
+      it!=mat->end();++it,++i) {
+    ascii_coder(*it, stream);
+    stream.printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
+  }
+  if ((i % columns) != 0) {
+    stream.printf("\n"); 
+  }
+  return stream.getTotalBytes();
+}
+
 #endif // UTILMATRIXIO_H
