@@ -279,3 +279,59 @@ MatrixFloat *readMatrixFloatFromString(constString &cs) {
 						  FloatAsciiExtractor(),
 						  FloatBinaryExtractor());
 }
+
+//////////////////////////////////////////////////////////////////////////////
+
+void writeMatrixFloatToTabFile(MatrixFloat *mat, const char *filename) {
+  if (GZFileWrapper::isGZ(filename)) {
+    BufferedGZFile f(filename, "w");
+    writeMatrixToTabStream(mat, f, FloatAsciiSizer(),
+			   FloatAsciiCoder<BufferedGZFile>());
+  }
+  else {
+    BufferedFile f(filename, "w");
+    writeMatrixToTabStream(mat, f, FloatAsciiSizer(),
+			   FloatAsciiCoder<BufferedFile>());
+  }
+}
+
+MatrixFloat *readMatrixFloatFromTabFile(const char *filename,
+					const char *order) {
+  if (GZFileWrapper::isGZ(filename)) {
+    int ncols=0, nrows=0;
+    do {
+      BufferedGZFile  f(filename, "r");
+      FloatAsciiExtractor extractor;
+      constString     line;
+      while (f.good()) {
+	line = f.extract_u_line();
+	++nrows;
+      }
+      float value;
+      while(extractor(line,value)) ++ncols;
+    } while(false);
+    BufferedGZFile f(filename, "r");
+    return readMatrixFromTabStream<BufferedGZFile, float>(nrows, ncols, f,
+							  FloatAsciiExtractor(),
+							  order);
+  }
+  else {
+    int ncols=0, nrows=0;
+    do {
+      BufferedFile    f(filename, "r");
+      FloatAsciiExtractor extractor;
+      constString     line;
+      while (f.good()) {
+	line = f.extract_u_line();
+	++nrows;
+      }
+      float value;
+      while(extractor(line,value)) ++ncols;
+    } while(false);
+    BufferedFile f(filename, "r");
+    return readMatrixFromTabStream<BufferedFile, float>(nrows, ncols, f,
+							FloatAsciiExtractor(),
+							order);
+  }
+  return 0;
+}
