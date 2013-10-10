@@ -4,6 +4,8 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added PCA-GS algorithm for efficient computation of PCA (iterative algorithm),
+  `stats.iterative_pca` Lua function.
 - Added `fromMMap` and `toMMap` for `matrix` class, currently only with floats.
 - Added basic MapReduce implementation in Lua.
 - Added `stats.correlation.pearson` Lua class.
