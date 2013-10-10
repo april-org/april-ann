@@ -91,6 +91,40 @@ matrix.meta_instance.__unm = function(op)
   return new_mat:scal(-1)
 end
 
+function matrix.join(dim, ...)
+  local arg  = table.pack(...)
+  local size = arg[1]:dim()
+  -- ERROR CHECK
+  assert(dim >= 1 and dim <= #size,
+	 "Incorrect given dimension number, or incorrect first matrix size")
+  size[dim]  = 0
+  for i=1,#arg do
+    local m = arg[i]
+    local d = m:dim()
+    assert(#d == #size,
+	   "All the matrices must have the same number of dimensions")
+    size[dim] = size[dim] + d[dim]
+    for j=1,dim-1 do
+      assert(size[j] == d[j], "Incorrect dimension size")
+    end
+    for j=dim+1,#size do
+      assert(size[j] == d[j], "Incorrect dimension size")
+    end
+  end
+  -- JOIN
+  local outm   = matrix(table.unpack(size))
+  local offset = iterator(range(1,#size)):map(function()return 1 end):table()
+  for i=1,#arg do
+    local m = arg[i]
+    local d = m:dim()
+    size[dim] = d[dim]
+    local outm_slice = outm:slice(offset, size)
+    outm_slice:copy(arg[i])
+    offset[dim] = offset[dim] + size[dim]
+  end
+  return outm
+end
+
 -- IMAGE
 
 function matrix.loadImage(filename,format)
@@ -562,6 +596,25 @@ april_set_doc("matrix.select", {
 		},
 		outputs = {
 		  "A matrix object (referencing the caller matrix)",
+		}, })
+
+april_set_doc("matrix.join", {
+		class = "method",
+		summary = "Produce a matrix which is the join of a given set of matrices.",
+		description = {
+		  "Joins a given set of matrices, given the dimension where they differ.",
+		  "Be careful, this method duplicates the memory needed, because all the",
+		  "matrices will be copied to the destination.",
+		},
+		params = {
+		  { "A number with the dimension where matrices differ." },
+		  { "The 1st matrix" },
+		  { "The 2nd matrix" },
+		  { "..." },
+		  { "The Nth matrix" },
+		},
+		outputs = {
+		  "A new matrix object",
 		}, })
 
 april_set_doc("matrix.clone", {
