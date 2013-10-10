@@ -112,15 +112,15 @@ function matrix.join(dim, ...)
     end
   end
   -- JOIN
-  local outm   = matrix(table.unpack(size))
-  local offset = iterator(range(1,#size)):map(function()return 1 end):table()
+  local outm  = matrix(table.unpack(size))
+  local first = matrix(#size):ones():toTable()
   for i=1,#arg do
     local m = arg[i]
     local d = m:dim()
     size[dim] = d[dim]
-    local outm_slice = outm:slice(offset, size)
-    outm_slice:copy(arg[i])
-    offset[dim] = offset[dim] + size[dim]
+    local outm_slice = outm:slice(first, size)
+    outm_slice:copy(m)
+    first[dim] = first[dim] + size[dim]
   end
   return outm
 end
