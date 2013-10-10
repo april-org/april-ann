@@ -307,6 +307,22 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
+//BIND_CLASS_METHOD MatrixFloat fromTabFilename
+{
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_CHECK_ARGN(<=, 2);
+  LUABIND_CHECK_PARAMETER(1, string);
+  const char *filename;
+  const char *order;
+  LUABIND_GET_PARAMETER(1,string,filename);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, string, order, "row_major");
+  MatrixFloat *obj;
+  if ((obj = readMatrixFloatFromTabFile(filename, order)) == 0)
+    LUABIND_ERROR("bad format");
+  else LUABIND_RETURN(MatrixFloat,obj);
+}
+//BIND_END
+
 
 //BIND_CLASS_METHOD MatrixFloat fromString
 //DOC_BEGIN
@@ -332,6 +348,26 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
+//BIND_CLASS_METHOD MatrixFloat fromMMap
+//DOC_END
+{
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_CHECK_ARGN(<=, 3);
+  LUABIND_CHECK_PARAMETER(1, string);
+  const char *filename;
+  bool write, shared;
+  LUABIND_GET_PARAMETER(1,string,filename);
+  LUABIND_GET_OPTIONAL_PARAMETER(2,bool,write,true);
+  LUABIND_GET_OPTIONAL_PARAMETER(3,bool,shared,true);
+  april_utils::MMappedDataReader *mmapped_data;
+  mmapped_data = new april_utils::MMappedDataReader(filename,write,shared);
+  IncRef(mmapped_data);
+  MatrixFloat *obj = MatrixFloat::fromMMappedDataReader(mmapped_data);
+  DecRef(mmapped_data);
+  LUABIND_RETURN(MatrixFloat,obj);
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat toFilename
 //DOC_BEGIN
 // void toFilename(string filename, string type='ascii')
@@ -353,6 +389,15 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat toTabFilename
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  const char *filename;
+  LUABIND_GET_PARAMETER(1, string, filename);
+  writeMatrixFloatToTabFile(obj, filename);
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat toString
 //DOC_BEGIN
 // string toString(string type='ascii')
@@ -368,6 +413,19 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   bool is_ascii = (cs == "ascii");
   writeMatrixFloatToLuaString(obj, L, is_ascii);
   LUABIND_INCREASE_NUM_RETURNS(1);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat toMMap
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  const char *filename;
+  LUABIND_GET_PARAMETER(1, string, filename);
+  april_utils::MMappedDataWriter *mmapped_data;
+  mmapped_data = new april_utils::MMappedDataWriter(filename);
+  IncRef(mmapped_data);
+  obj->toMMappedDataWriter(mmapped_data);
+  DecRef(mmapped_data);
 }
 //BIND_END
 

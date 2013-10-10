@@ -35,6 +35,8 @@
 #include "swap.h"
 #include "maxmin.h"
 #include "qsort.h"
+#include "mmapped_data.h"
+#include "unused_variable.h"
 
 template <typename T>
 class Matrix : public Referenced {
@@ -53,6 +55,7 @@ protected:
   int last_raw_pos;
   /// Pointer to data
   GPUMirroredMemoryBlock<T> *data;
+  april_utils::MMappedDataReader *mmapped_data;
   /// Major type (only when numDim=2)
   CBLAS_ORDER major_order;
   /// For CUDA purposes
@@ -388,6 +391,12 @@ public:
   /// Destructor
   virtual ~Matrix();
   
+  /// Constructor from a MMAP file
+  static Matrix<T> *fromMMappedDataReader(april_utils::MMappedDataReader
+					  *mmapped_data);
+  /// Writes to a file
+  void toMMappedDataWriter(april_utils::MMappedDataWriter *mmapped_data) const;
+
   /// Modify sizes of matrix
   Matrix<T> *rewrap(const int *new_dims, int len);
   
@@ -399,7 +408,12 @@ public:
   int getStrideSize(int i) const { return stride[i]; }
   int size() const { return total_size; }
   CBLAS_ORDER getMajorOrder() const { return major_order; }
-  void setUseCuda(bool v) { use_cuda = v; }
+  void setUseCuda(bool v) {
+    use_cuda = v;
+#ifdef USE_CUDA
+    if (use_cuda) data->updateMemGPU();
+#endif
+  }
   bool getCudaFlag() const { return use_cuda; }
   bool isSimple() const {
     return (getIsContiguous())&&(major_order==CblasRowMajor);
@@ -420,6 +434,7 @@ public:
     return iterator(this, computeRawPos(aux), aux);
   }
   iterator iteratorAt(int *coords, int len) {
+    UNUSED_VARIABLE(len);
     april_assert(numDim==len);
     return iterator(this, computeRawPos(coords), coords);
   }
@@ -446,6 +461,7 @@ public:
     return const_iterator(this, computeRawPos(aux), aux);
   }
   const_iterator iteratorAt(int *coords, int len) const {
+    UNUSED_VARIABLE(len);
     april_assert(numDim==len);
     return const_iterator(this, computeRawPos(coords), coords);
   }

@@ -397,7 +397,7 @@ function HMMTrainer.utils.generate_allograph_hmm_desc(name,allographs,emissions,
   local result = {
     name = name
   }
-  local num_emissions = table.getn(emissions)
+  local num_emissions = #emissions
   -- transicion estado inicial
   table.insert(transitions, {
 		 from = name.."ini",
@@ -476,7 +476,7 @@ function HMMTrainer.utils.generate_lr_hmm_desc(name,emissions,ploops,pskips,outp
   local result = {
     name = name
   }
-  local num_emissions = table.getn(emissions)
+  local num_emissions = #emissions
   -- transicion estado inicial
   table.insert(transitions, {
 		 from = name.."ini",

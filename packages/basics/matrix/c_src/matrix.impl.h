@@ -20,6 +20,13 @@
  *
  */
 
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include "error_print.h"
+#include "ignore_result.h"
+
 template <typename T>
 void Matrix<T>::initialize(const int *dim) {
   total_size=1;
@@ -68,7 +75,8 @@ Matrix<T>::Matrix(int numDim, const int *stride, const int offset,
 		  const bool use_cuda) :
   numDim(numDim), stride(new int[numDim]), offset(offset),
   matrixSize(new int[numDim]), total_size(total_size),
-  last_raw_pos(last_raw_pos), data(data), major_order(major_order),
+  last_raw_pos(last_raw_pos), data(data), mmapped_data(0),
+  major_order(major_order),
   use_cuda(use_cuda),
   is_contiguous(NONE) {
   IncRef(data);
@@ -86,6 +94,7 @@ Matrix<T>::Matrix(int numDim,
 		  GPUMirroredMemoryBlock<T> *data,
 		  int offset) : numDim(numDim),
 				offset(offset),
+				mmapped_data(0),
 				major_order(major_order),
 				use_cuda(false),
 				is_contiguous(CONTIGUOUS) {
@@ -113,6 +122,7 @@ Matrix<T>::Matrix(Matrix<T> *other,
 		  const int* coords, const int *sizes,
 		  bool clone) : numDim(other->numDim),
 				offset(0),
+				mmapped_data(0),
 				major_order(other->major_order),
 				use_cuda(other->use_cuda),
 				is_contiguous(NONE) {
@@ -171,6 +181,7 @@ Matrix<T>::Matrix(Matrix<T> *other,
 template <typename T>
 Matrix<T>::Matrix(int numDim, int d1, ...) : numDim(numDim),
 					     offset(0),
+					     mmapped_data(0),
 					     major_order(CblasRowMajor),
 					     is_contiguous(CONTIGUOUS) {
   int *dim   = new int[numDim];
@@ -194,6 +205,7 @@ Matrix<T>::Matrix(int numDim, int d1, ...) : numDim(numDim),
 template <typename T>
 Matrix<T>::Matrix(Matrix<T> *other, bool clone) : numDim(other->numDim),
 						  offset(0),
+						  mmapped_data(0),
 						  major_order(other->major_order),
 						  use_cuda(other->use_cuda),
 						  is_contiguous(other->is_contiguous){
@@ -219,10 +231,52 @@ Matrix<T>::Matrix(Matrix<T> *other, bool clone) : numDim(other->numDim),
 }
 
 template <typename T>
+Matrix<T> *Matrix<T>::fromMMappedDataReader(april_utils::MMappedDataReader
+					    *mmapped_data) {
+  Matrix<T> *obj = new Matrix();
+  //
+  obj->data = GPUMirroredMemoryBlock<T>::fromMMappedDataReader(mmapped_data);
+  IncRef(obj->data);
+  //
+  int N = *(mmapped_data->get<int>());
+  obj->numDim        = N;
+  obj->stride        = mmapped_data->get<int>(N);
+  obj->offset        = *(mmapped_data->get<int>());
+  obj->matrixSize    = mmapped_data->get<int>(N);
+  obj->total_size    = *(mmapped_data->get<int>());
+  obj->last_raw_pos  = *(mmapped_data->get<int>());
+  obj->major_order   = *(mmapped_data->get<CBLAS_ORDER>());
+  // NON MAPPED DATA
+  obj->use_cuda      = false;
+  obj->is_contiguous = NONE;
+  // THE MMAP POINTER
+  obj->mmapped_data  = mmapped_data;
+  IncRef(obj->mmapped_data);
+  //
+  return obj;
+}
+
+template <typename T>
+void Matrix<T>::toMMappedDataWriter(april_utils::MMappedDataWriter
+				    *mmapped_data) const {
+  data->toMMappedDataWriter(mmapped_data);
+  mmapped_data->put(&numDim);
+  mmapped_data->put(stride, numDim);
+  mmapped_data->put(&offset);
+  mmapped_data->put(matrixSize, numDim);
+  mmapped_data->put(&total_size);
+  mmapped_data->put(&last_raw_pos);
+  mmapped_data->put(&major_order);
+}
+
+template <typename T>
 Matrix<T>::~Matrix() {
   release_memory();
-  delete[] stride;
-  delete[] matrixSize;
+  if (mmapped_data == 0) {
+    delete[] stride;
+    delete[] matrixSize;
+  }
+  else DecRef(mmapped_data);
 }
 
 template <typename T>
@@ -351,6 +405,7 @@ T& Matrix<T>::operator() (int coord0, int coord1, int coord2, ...) {
 
 template <typename T>
 T& Matrix<T>::operator() (int *coords, int sz) {
+  UNUSED_VARIABLE(sz);
   april_assert(numDim == sz);
   int raw_pos = computeRawPos(coords);
   return data->get(raw_pos);
@@ -390,6 +445,7 @@ const T& Matrix<T>::operator() (int coord0, int coord1, int coord2, ...) const {
 
 template <typename T>
 const T& Matrix<T>::operator() (int *coords, int sz) const {
+  UNUSED_VARIABLE(sz);
   april_assert(numDim == sz);
   int raw_pos = computeRawPos(coords);
   return data->get(raw_pos);
@@ -492,6 +548,7 @@ Matrix<T> *Matrix<T>::select(int dim, int index, Matrix<T> *dest) {
     result->offset       = index*stride[dim]; // the select implies an offset
     result->last_raw_pos = result->offset;
     result->data         = data;
+    result->mmapped_data = 0;
     IncRef(data);
     for(int i=0; i<dim; ++i) {
       result->stride[i]      = stride[i];

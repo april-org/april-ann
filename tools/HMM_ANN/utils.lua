@@ -13,7 +13,7 @@ local valid_recog_parameters=table.invert{
   "models", "left_context", "right_context",
   "mlp_output_dictionary",  "format",
   "hmm_name_mangling", "means_and_devs",
-  "dataset_perturbation_conf",
+  "dataset_perturbation_function",
   "dataset_step", "begin_sil", "end_sil", "phdict"
 }
 function check_params(args)
@@ -404,7 +404,7 @@ function recog.generate_datasets(args)
   local right_context         = args.right_context
   local corpus_data_manager   = args.corpus_data_manager
   local means_and_devs        = args.means_and_devs
-  local dataset_perturbation_conf = args.dataset_perturbation_conf
+  local dataset_perturbation_function = args.dataset_perturbation_function
   local dataset_step              = args.dataset_step
   --------------------------
   -- creamos los datasets --
@@ -422,7 +422,7 @@ function recog.generate_datasets(args)
 				  left_context,
 				  right_context,
 				  means_and_devs,
-				  dataset_perturbation_conf,
+				  dataset_perturbation_function,
 				  dataset_step)
 	return Cds,ds
       end
@@ -502,6 +502,7 @@ function generate_new_segmentation(args)
   local without_context = args.without_context or false
   local current        = 1
   local count_value    = args.count_value
+  local total_score    = 0
   --
   -- resegmentamos validacion
   corpus_data:apply{
@@ -563,6 +564,7 @@ function generate_new_segmentation(args)
 	  count_value          = count_value,
 	}
 	printf("%12.4f score\n", logprob)
+	total_score = total_score + logprob
 	io.stdout:flush()
 	-- mat_full:adjust_range(0,1)
 	-- matrix.saveImage(mat_full, string.format("tmp-new/hmm_matrix_%03d.pnm",
@@ -572,6 +574,7 @@ function generate_new_segmentation(args)
       end
   }
   --
+  return total_score
 end
 
 -------------------------------------------------
@@ -604,11 +607,13 @@ function load_frontiers(w, h, frames_size)
   return t
 end
 
+local MFCC_cache = {}
 -- carga la matriz de CCs a partir de un nombre de fichero
 function load_matrix(MFCCfilename)
   -- cargamos la parametrizacion de MATRIX
   --if MFCCfilename == 'corpus/n02-082a-s05.fea' then os.exit() end
-  local ad = matrix.fromFilename(MFCCfilename)
+  local ad = MFCC_cache[MFCCfilename] or matrix.fromFilename(MFCCfilename)
+  MFCC_cache[MFCCfilename] = ad
   return ad,ad:dim()[1]
 end
 
@@ -758,7 +763,7 @@ end
 
 
 -- contextualiza la parametrizacion
-function contextCCdataset(m,leftcontext,rightcontext,means_and_devs,dataset_perturbation_conf,dataset_step)
+function contextCCdataset(m,leftcontext,rightcontext,means_and_devs,dataset_perturbation_function,dataset_step)
   local numFrames = m:dim()[1]
   local numParams = m:dim()[2] -- nCCs+1
   local parameters = {
@@ -772,9 +777,8 @@ function contextCCdataset(m,leftcontext,rightcontext,means_and_devs,dataset_pert
     --print(means_and_devs.means,#means_and_devs.means,means_and_devs.devs,#means_and_devs.devs)
     orig_ds:normalize_mean_deviation(means_and_devs.means,
 				     means_and_devs.devs) end
-  if dataset_perturbation_conf then
-    dataset_perturbation_conf.dataset = orig_ds
-    orig_ds = dataset.perturbation(dataset_perturbation_conf)
+  if dataset_perturbation_function then
+    orig_ds = dataset_perturbation_function(orig_ds)
   end
   local ds = dataset.contextualizer (orig_ds,leftcontext,rightcontext)
   return ds,orig_ds
