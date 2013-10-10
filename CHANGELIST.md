@@ -4,6 +4,7 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added `matrix.join` method.
 - Added PCA-GS algorithm for efficient computation of PCA (iterative algorithm),
   `stats.iterative_pca` Lua function.
 - Added `fromMMap` and `toMMap` for `matrix` class, currently only with floats.
