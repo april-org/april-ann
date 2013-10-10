@@ -21,9 +21,9 @@ april_set_doc("stats.iterative_pca",
 		  epsilon  = "A number with the convergence criterion [optional], by default 1e-07",
 		},
 		outputs = {
-		  "The scores matrix, size MxK",
-		  "The loads matrix, size NxK",
-		  "The residuals matrix, size MxN",
+		  "The T scores matrix, size MxK",
+		  "The P loads matrix, size NxK",
+		  "The R residuals matrix, size MxN",
 		},
 	      })
 -- EXTRACTED FROM:
