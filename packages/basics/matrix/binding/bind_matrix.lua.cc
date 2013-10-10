@@ -307,6 +307,22 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
+//BIND_CLASS_METHOD MatrixFloat fromTabFilename
+{
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_CHECK_ARGN(<=, 2);
+  LUABIND_CHECK_PARAMETER(1, string);
+  const char *filename;
+  const char *order;
+  LUABIND_GET_PARAMETER(1,string,filename);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, string, order, "row_major");
+  MatrixFloat *obj;
+  if ((obj = readMatrixFloatFromTabFile(filename, order)) == 0)
+    LUABIND_ERROR("bad format");
+  else LUABIND_RETURN(MatrixFloat,obj);
+}
+//BIND_END
+
 
 //BIND_CLASS_METHOD MatrixFloat fromString
 //DOC_BEGIN
@@ -370,6 +386,15 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("ascii"));
   bool is_ascii = (cs == "ascii");
   writeMatrixFloatToFile(obj, filename, is_ascii);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat toTabFilename
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  const char *filename;
+  LUABIND_GET_PARAMETER(1, string, filename);
+  writeMatrixFloatToTabFile(obj, filename);
 }
 //BIND_END
 
