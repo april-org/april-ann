@@ -230,12 +230,36 @@ void Matrix<float>::pow(float value) {
 				       MAKE_CWISE_FUNCTOR_1(doPow,float,value));
 }
 
+/************* TAN FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doTan,float);
+template<>
+void Matrix<float>::tan() {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doTan,float));;
+}
+
 /************* TANH FUNCTION **************/
 DEF_CWISE_FUNCTOR_0(doTanh,float);
 template<>
 void Matrix<float>::tanh() {
   applyFunctionWithSpanIterator<float>(this,
 				       MAKE_CWISE_FUNCTOR_0(doTanh,float));;
+}
+
+/************* ATAN FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doAtan,float);
+template<>
+void Matrix<float>::atan() {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doAtan,float));;
+}
+
+/************* ATANH FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doAtanh,float);
+template<>
+void Matrix<float>::atanh() {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doAtanh,float));;
 }
 
 /************* SIN FUNCTION **************/
@@ -246,12 +270,60 @@ void Matrix<float>::sin() {
 				       MAKE_CWISE_FUNCTOR_0(doSin,float));;
 }
 
+/************* SINH FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doSinh,float);
+template<>
+void Matrix<float>::sinh() {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doSinh,float));;
+}
+
+/************* ASIN FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doAsin,float);
+template<>
+void Matrix<float>::asin() {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doAsin,float));;
+}
+
+/************* ASINH FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doAsinh,float);
+template<>
+void Matrix<float>::asinh() {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doAsinh,float));;
+}
+
 /************* COS FUNCTION **************/
 DEF_CWISE_FUNCTOR_0(doCos,float);
 template<>
 void Matrix<float>::cos() {
   applyFunctionWithSpanIterator<float>(this,
 				       MAKE_CWISE_FUNCTOR_0(doCos,float));;
+}
+
+/************* COSH FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doCosh,float);
+template<>
+void Matrix<float>::cosh() {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doCosh,float));;
+}
+
+/************* ACOS FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doAcos,float);
+template<>
+void Matrix<float>::acos() {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doAcos,float));;
+}
+
+/************* ACOSH FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doAcosh,float);
+template<>
+void Matrix<float>::acosh() {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doAcosh,float));;
 }
 
 /************* ABS FUNCTION **************/
