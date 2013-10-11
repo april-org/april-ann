@@ -854,6 +854,15 @@ april_set_doc("matrix.cos", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
+april_set_doc("matrix.abs", {
+		class = "method",
+		summary = "Component wise abs operation IN-PLACE: Y = abs(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
 april_set_doc("matrix.sqrt", {
 		class = "method",
 		summary = "Component wise sqrt operation IN-PLACE: Y = sqrt(Y)",

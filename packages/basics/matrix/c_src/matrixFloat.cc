@@ -254,6 +254,14 @@ void Matrix<float>::cos() {
 				       MAKE_CWISE_FUNCTOR_0(doCos,float));;
 }
 
+/************* ABS FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doAbs,float);
+template<>
+void Matrix<float>::abs() {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doAbs,float));;
+}
+
 template<>
 Matrix<float> *Matrix<float>::cmul(const Matrix<float> *other) {
   if (size() != other->size())

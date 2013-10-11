@@ -1104,6 +1104,13 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat abs
+{
+  obj->abs();
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat sum
 {
   LUABIND_CHECK_ARGN(>=, 0);
