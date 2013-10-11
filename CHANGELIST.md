@@ -4,7 +4,8 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
-- Added `matrix.abs`.
+- Added `matrix.abs`, `matrix.tan`, `matrix.atan`, `matrix.atanh`, `matrix.sinh`,
+  `matrix.asin`, `matrix.asinh`, `matrix.cosh`, `matrix.acos`, `matrix.acosh`.
 - Solved bug at method `matrix::best_span_iterator::setAtWindow`. Becaose of It
   the method didn't works when the matrix was a sub-matrix (slice) of other
   matrix.

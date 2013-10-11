@@ -827,9 +827,36 @@ april_set_doc("matrix.exp", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
+april_set_doc("matrix.tan", {
+		class = "method",
+		summary = "Component wise tanh operation IN-PLACE: Y = tan(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
 april_set_doc("matrix.tanh", {
 		class = "method",
 		summary = "Component wise tanh operation IN-PLACE: Y = tanh(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.atan", {
+		class = "method",
+		summary = "Component wise atanh operation IN-PLACE: Y = atan(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.atanh", {
+		class = "method",
+		summary = "Component wise atanh operation IN-PLACE: Y = atanh(Y)",
 		params = {
 		},
 		outputs = {
@@ -845,9 +872,63 @@ april_set_doc("matrix.sin", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
+april_set_doc("matrix.sinh", {
+		class = "method",
+		summary = "Component wise sinh operation IN-PLACE: Y = sinh(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.asin", {
+		class = "method",
+		summary = "Component wise asin operation IN-PLACE: Y = asin(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.asinh", {
+		class = "method",
+		summary = "Component wise asinh operation IN-PLACE: Y = asinh(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
 april_set_doc("matrix.cos", {
 		class = "method",
 		summary = "Component wise cos operation IN-PLACE: Y = cos(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.cosh", {
+		class = "method",
+		summary = "Component wise cosh operation IN-PLACE: Y = cosh(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.acos", {
+		class = "method",
+		summary = "Component wise acos operation IN-PLACE: Y = acos(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.acosh", {
+		class = "method",
+		summary = "Component wise acosh operation IN-PLACE: Y = acosh(Y)",
 		params = {
 		},
 		outputs = {

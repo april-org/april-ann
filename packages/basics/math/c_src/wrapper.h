@@ -389,13 +389,6 @@ void doClamp(unsigned int N,
 	     bool use_gpu);  
 
 template<typename T>
-void doAbs(unsigned int N,
-	   GPUMirroredMemoryBlock<T> *v,
-	   unsigned int stride,
-	   unsigned int shift,
-	   bool use_gpu);
-
-template<typename T>
 void doFill(unsigned int N,
 	    GPUMirroredMemoryBlock<T> *v,
 	    unsigned int stride,
@@ -460,11 +453,35 @@ void doSqrt(unsigned int N,
 	    unsigned int shift,
 	    bool use_gpu);
 
+void doTan(unsigned int N,
+	   FloatGPUMirroredMemoryBlock *v,
+	   unsigned int stride,
+	   unsigned int shift,
+	   bool use_gpu);
+
 void doTanh(unsigned int N,
 	    FloatGPUMirroredMemoryBlock *v,
 	    unsigned int stride,
 	    unsigned int shift,
 	    bool use_gpu);
+
+void doAtan(unsigned int N,
+	    FloatGPUMirroredMemoryBlock *v,
+	    unsigned int stride,
+	    unsigned int shift,
+	    bool use_gpu);
+
+void doAtanh(unsigned int N,
+	     FloatGPUMirroredMemoryBlock *v,
+	     unsigned int stride,
+	     unsigned int shift,
+	     bool use_gpu);
+
+void doAbs(unsigned int N,
+	   FloatGPUMirroredMemoryBlock *v,
+	   unsigned int stride,
+	   unsigned int shift,
+	   bool use_gpu);
 
 void doSin(unsigned int N,
 	   FloatGPUMirroredMemoryBlock *v,
@@ -472,11 +489,47 @@ void doSin(unsigned int N,
 	   unsigned int shift,
 	   bool use_gpu);
 
+void doSinh(unsigned int N,
+	    FloatGPUMirroredMemoryBlock *v,
+	    unsigned int stride,
+	    unsigned int shift,
+	    bool use_gpu);
+
+void doAsin(unsigned int N,
+	    FloatGPUMirroredMemoryBlock *v,
+	    unsigned int stride,
+	    unsigned int shift,
+	    bool use_gpu);
+
+void doAsinh(unsigned int N,
+	     FloatGPUMirroredMemoryBlock *v,
+	     unsigned int stride,
+	     unsigned int shift,
+	     bool use_gpu);
+
 void doCos(unsigned int N,
 	   FloatGPUMirroredMemoryBlock *v,
 	   unsigned int stride,
 	   unsigned int shift,
 	   bool use_gpu);
+
+void doCosh(unsigned int N,
+	    FloatGPUMirroredMemoryBlock *v,
+	    unsigned int stride,
+	    unsigned int shift,
+	    bool use_gpu);
+
+void doAcos(unsigned int N,
+	    FloatGPUMirroredMemoryBlock *v,
+	    unsigned int stride,
+	    unsigned int shift,
+	    bool use_gpu);
+
+void doAcosh(unsigned int N,
+	     FloatGPUMirroredMemoryBlock *v,
+	     unsigned int stride,
+	     unsigned int shift,
+	     bool use_gpu);
 
 void doPow(unsigned int N,
 	   FloatGPUMirroredMemoryBlock *v,

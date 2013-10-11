@@ -486,7 +486,7 @@ april_set_doc("matrixComplex.mul", {
 		  "A new matrixComplex result of multiplication",
 		}, })
 
-april_set_doc("matrix.cmul", {
+april_set_doc("matrixComplex.cmul", {
 		class = "method",
 		summary = "Returns the component-wise multiplication of caller and other matrix.",
 		description = {
