@@ -386,7 +386,14 @@ void doClamp(unsigned int N,
 	     unsigned int shift,
 	     T lower,
 	     T upper,
-	     bool use_gpu);
+	     bool use_gpu);  
+
+template<typename T>
+void doAbs(unsigned int N,
+	   GPUMirroredMemoryBlock<T> *v,
+	   unsigned int stride,
+	   unsigned int shift,
+	   bool use_gpu);
 
 template<typename T>
 void doFill(unsigned int N,

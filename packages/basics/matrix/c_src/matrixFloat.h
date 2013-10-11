@@ -81,6 +81,9 @@ void Matrix<float>::cos();
 template <>
 void Matrix<float>::sin();
 
+template <>
+void Matrix<float>::abs();
+
 template<>
 Matrix<float> *Matrix<float>::cmul(const Matrix<float> *other);
 

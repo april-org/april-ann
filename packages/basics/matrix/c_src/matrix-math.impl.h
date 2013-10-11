@@ -182,6 +182,11 @@ void Matrix<T>::sin() {
 }
 
 template <typename T>
+void Matrix<T>::abs() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
 Matrix<T> *Matrix<T>::cmul(const Matrix<T> *other) {
   UNUSED_VARIABLE(other);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");

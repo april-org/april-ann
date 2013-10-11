@@ -4,6 +4,7 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added `matrix.abs`.
 - Solved bug at method `matrix::best_span_iterator::setAtWindow`. Becaose of It
   the method didn't works when the matrix was a sub-matrix (slice) of other
   matrix.

@@ -551,6 +551,7 @@ public:
   void tanh();
   void sin();
   void cos();
+  void abs();
   Matrix<T> *cmul(const Matrix<T> *other);
   void adjustRange(T rmin, T rmax);
   
