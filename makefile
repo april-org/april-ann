@@ -1,3 +1,6 @@
+LUALIB=/usr/lib/lua/5.2
+BIN=/usr/bin
+
 ALL: release-mkl
 
 document:
@@ -43,3 +46,11 @@ debug-cuda-mkl:
 
 clean:
 	./clean.sh
+
+install:
+	install lib/aprilann.so ${LUALIB}
+	install bin/april-ann ${BINLIB}
+
+uninstall:
+	rm -f ${LUALIB}/aprilann.so
+	rm -f ${BIN}/april-ann
