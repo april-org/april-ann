@@ -106,6 +106,7 @@ formiga = {
     CPPcompiler = os.getenv("CXX") or "g++",
     Ccompiler = os.getenv("CC") or "gcc",
     extra_libs = {"-ldl"},
+    shared_extra_libs = {"-shared"},
     extra_flags = { string.format("-DAPRILANN_COMMIT=%d", commit_count), },
     language_by_extension = {
       c = "c", cc = "c++", cxx = "c++", CC = "c++", cpp = "c++",
@@ -517,8 +518,8 @@ function formiga.exec_package(package_name,target,global_timestamp)
 	thetarget.__target__(thetarget)
       end
       table.insert(formiga.lua_dot_c_register_functions,
-		   --"register_package_lua_and_binding_"..
-		   "luaopen_april_"..
+		   "register_package_lua_and_binding_"..
+		     -- "luaopen_april_"..
 		     the_package.name)
     end
   end -- if the_package ~= nil
@@ -1370,12 +1371,16 @@ function formiga.__link_main_program__ (t)
     f:write('int '..funcname..'(lua_State *L);\n')
   end
   --
-  f:write('int luaopen_april(lua_State *L) { \n')
+  f:write('int luaopen_aprilann(lua_State *L) { \n')
   for _,funcname in pairs(formiga.lua_dot_c_register_functions) do
     f:write('  '..funcname..'(L);\n')
   end
   --f:write('void set_C_locale();\\\n')
-  f:write("  return 0;\n")
+  f:write("  lua_newtable(L);\n")
+  f:write("  lua_pushstring(L, \"APRIL_LOADED\");\n")
+  f:write("  lua_pushboolean(L, true);\n")
+  f:write("  lua_rawset(L, -3);\n")
+  f:write("  return 1;\n")
   f:write('}\n')
   --f:write('void set_C_locale() { setlocale(LC_NUMERIC, "C"); }\n}\n')
   f:write('}\n')
@@ -1438,6 +1443,41 @@ function formiga.__link_main_program__ (t)
   io.stdout:flush() -- para que las cosas salgan en un orden apropiado
   io.stderr:flush() -- para que las cosas salgan en un orden apropiado
   formiga.os.execute(command)
+
+  -- We generate a shared library which could be loaded in any Lua interperter
+  local shared_lib_dest_dir = formiga.os.compose_dir(formiga.global_properties.build_dir,
+						     "lib")
+  os.execute("mkdir -p " .. shared_lib_dest_dir)
+  local command = table.concat({ formiga.compiler.CPPcompiler,
+				 formiga.compiler.wall,
+				 formiga.compiler.destination,
+				 string.format("%s/%s.so",
+					       shared_lib_dest_dir,
+					       formiga.program_name:gsub("%-",""),
+					       ".so"),
+				 formiga.os.compose_dir(formiga.global_properties.build_dir,
+							"luapkgMain.cc"),
+				 --formiga.compiler.include_dir,
+				 formiga.get_all_objects(),
+				 formiga.os.compose_dir(formiga.global_properties.build_dir,"binding","c_src","*.o"),
+                                 package_library_paths_str,
+                                 package_link_libraries_str,
+				 table.concat(formiga.compiler.extra_libs,
+					      " "),
+				 table.concat(formiga.compiler.shared_extra_libs,
+					      " "),
+				 table.concat(formiga.compiler.extra_flags,
+					      " "),
+				 pkgconfig_libs_list,
+				 ' -lm -I'..formiga.os.compose_dir(formiga.os.cwd,"lua","include")..' -I'..
+				   formiga.lua_dot_c_path},
+			       " ")
+  --
+  printverbose(2,'['..command..']')
+  io.stdout:flush() -- para que las cosas salgan en un orden apropiado
+  io.stderr:flush() -- para que las cosas salgan en un orden apropiado
+  formiga.os.execute(command)
+
 end
 
 function link_main_program (t)
@@ -2000,14 +2040,15 @@ function generate_package_register_file(package,package_register_functions)
     f:write("void " .. func .. "(lua_State *L);\n")
   end
   f:write("\n")
-  --  f:write("void register_package_lua_and_binding_".. package.name ..
-  --	    "(lua_State *L) {\n")
-  f:write("int luaopen_april_".. package.name ..
+  f:write("void register_package_lua_and_binding_".. package.name ..
 	    "(lua_State *L) {\n")
+  --f:write("int luaopen_april_".. package.name ..
+  --"(lua_State *L) {\n")
   for i,func in ipairs(package_register_functions) do
     f:write("\t"..func .. "(L);\n")
   end
-  f:write("return 0;\n}\n")
+  -- f:write("return 0;\n")
+  f:write("}\n")
   f:close()
   
   local command = table.concat({ formiga.compiler.Ccompiler,
@@ -2057,6 +2098,9 @@ function manage_specific_global_flags()
   if t.Ccompiler   then formiga.compiler.Ccompiler = t.Ccompiler end
   if t.extra_libs  then 
     table.append(formiga.compiler.extra_libs,t.extra_libs)
+  end
+  if t.shared_extra_libs then
+    table.append(formiga.compiler.shared_extra_libs,t.shared_extra_libs)
   end
   if t.extra_flags then
     table.append(formiga.compiler.extra_flags,t.extra_flags)

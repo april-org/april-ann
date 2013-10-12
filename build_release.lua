@@ -3,7 +3,7 @@ formiga.build_dir = "build_release"
 
 luapkg{
   program_name = "april-ann",
-  verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
+  verbosity_level = 2,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
   packages = dofile "package_list.lua",
   global_flags = {
     debug="no",
@@ -16,14 +16,19 @@ luapkg{
       "-msse",
       "-DNDEBUG",
       "-fopenmp",
+      "-fPIC",
     },
     extra_libs={
+      "-fPIC",
       "-lpthread",
       "-lblas",
       "-latlas",
       "-fopenmp",
       "-rdynamic",
       "-llapack_atlas",
+    },
+    shared_extra_libs={
+      "-llua5.2",
     },
   },
   
