@@ -3,7 +3,7 @@ formiga.build_dir = "build_release_macosx"
 
 luapkg{
   program_name = "april-ann",
-  verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
+  verbosity_level = 2,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
   packages = dofile "package_list.lua",
   global_flags = {
     debug="no",
@@ -18,6 +18,8 @@ luapkg{
       "-DUSE_XCODE",
       "-F/System/Library/Frameworks/Accelerate.framework",
       "-DNO_OMP",
+      "-dynamic",
+      "-fPIC",
     },
     extra_libs={
       "-lpthread",
@@ -26,6 +28,9 @@ luapkg{
       "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib",
       "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libLAPACK.dylib",
       "-rdynamic",
+      "-shared",
+      "-fPIC",
+      "-dynamiclib",
     },
   },
   

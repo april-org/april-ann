@@ -517,7 +517,8 @@ function formiga.exec_package(package_name,target,global_timestamp)
 	thetarget.__target__(thetarget)
       end
       table.insert(formiga.lua_dot_c_register_functions,
-		   "register_package_lua_and_binding_"..
+		   --"register_package_lua_and_binding_"..
+		   "luaopen_april_"..
 		     the_package.name)
     end
   end -- if the_package ~= nil
@@ -1366,8 +1367,16 @@ function formiga.__link_main_program__ (t)
   -- 
   f:write('extern "C" {\n')
   for _,funcname in pairs(formiga.lua_dot_c_register_functions) do
-    f:write('void '..funcname..'(lua_State *L);\n')
+    f:write('int '..funcname..'(lua_State *L);\n')
   end
+  --
+  f:write('int luaopen_april(lua_State *L) { \n')
+  for _,funcname in pairs(formiga.lua_dot_c_register_functions) do
+    f:write('  '..funcname..'(L);\n')
+  end
+  --f:write('void set_C_locale();\\\n')
+  f:write("  return 0;\n")
+  f:write('}\n')
   --f:write('void set_C_locale() { setlocale(LC_NUMERIC, "C"); }\n}\n')
   f:write('}\n')
   -- 
@@ -1376,7 +1385,7 @@ function formiga.__link_main_program__ (t)
     f:write(' '..funcname..'(L); \\\n')
   end
   --f:write('void set_C_locale();\\\n')
-  f:write('\n')  
+  f:write('\n')
   --
   f:write('#include <lua.c>\n')
   f:close()
@@ -1991,12 +2000,14 @@ function generate_package_register_file(package,package_register_functions)
     f:write("void " .. func .. "(lua_State *L);\n")
   end
   f:write("\n")
-  f:write("void register_package_lua_and_binding_".. package.name ..
+  --  f:write("void register_package_lua_and_binding_".. package.name ..
+  --	    "(lua_State *L) {\n")
+  f:write("int luaopen_april_".. package.name ..
 	    "(lua_State *L) {\n")
   for i,func in ipairs(package_register_functions) do
     f:write("\t"..func .. "(L);\n")
   end
-  f:write("}\n")
+  f:write("return 0;\n}\n")
   f:close()
   
   local command = table.concat({ formiga.compiler.Ccompiler,
