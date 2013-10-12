@@ -5,6 +5,8 @@ luapkg{
   program_name = "april-ann",
   verbosity_level = 2,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
   packages = dofile "package_list.lua",
+  version_flags = dofile "VERSION.lua",
+  disclaimer_strings = dofile "DISCLAIMER.lua",
   global_flags = {
     debug="no",
     use_lstrip = "yes",
@@ -18,7 +20,6 @@ luapkg{
       "-DUSE_XCODE",
       "-F/System/Library/Frameworks/Accelerate.framework",
       "-DNO_OMP",
-      "-dynamic",
       "-fPIC",
     },
     extra_libs={
@@ -28,9 +29,10 @@ luapkg{
       "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib",
       "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libLAPACK.dylib",
       "-rdynamic",
-      "-shared",
       "-fPIC",
-      "-dynamiclib",
+    },
+    shared_extra_libs={
+      "-llua5.2",
     },
   },
   
