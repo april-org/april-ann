@@ -186,11 +186,6 @@ static int docall (lua_State *L, int narg, int nres) {
 static void print_version (void) {
   luai_writestring(LUA_COPYRIGHT, strlen(LUA_COPYRIGHT));
   luai_writeline();
-  luai_writestring(APRILANN_RELEASE "  " APRILANN_COPYRIGHT,
-		   strlen(APRILANN_RELEASE "  " APRILANN_COPYRIGHT));
-  luai_writeline();
-  luai_writestring(APRILANN_DISCLAIMER, strlen(APRILANN_DISCLAIMER));
-  luai_writeline();
 }
 
 
