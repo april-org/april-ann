@@ -1,5 +1,7 @@
-LUALIB=/usr/lib/lua/5.2
-BIN=/usr/bin
+LINUX_LUALIB = /usr/lib/lua/5.2
+DARWIN_LUALIB = /opt/local/lib/lua/5.2
+BIN = /usr/bin
+UNAME = `uname`
 
 ALL: release-mkl
 
@@ -48,9 +50,25 @@ clean:
 	./clean.sh
 
 install:
-	install lib/aprilann.so ${LUALIB}
-	install bin/april-ann ${BINLIB}
+	make install-$(UNAME)
 
 uninstall:
-	rm -f ${LUALIB}/aprilann.so
+	make uninstall-$(UNAME)
+
+install-Darwin:
+	mkdir -p ${DARWIN_LUALIB}
+	install lib/aprilann.so ${DARWIN_LUALIB}
+	install bin/april-ann ${BIN}
+
+install-Linux:
+	mkdir -p ${LINUX_LUALIB}
+	install lib/aprilann.so ${LINUX_LUALIB}
+	install bin/april-ann ${BIN}
+
+uninstall-Darwin:
+	rm -f ${DARWIN_LUALIB}/aprilann.so
+	rm -f ${BIN}/april-ann
+
+uninstall-Linux:
+	rm -f ${LINUX_LUALIB}/aprilann.so
 	rm -f ${BIN}/april-ann
