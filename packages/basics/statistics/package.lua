@@ -21,6 +21,15 @@
      --provide_bind{ file = "binding/bind_dataset.lua.cc", dest_dir = "include" }
    },
    target{
+     name = "test",
+     execute_script{
+       file={
+	 "test/test_bootstrap.lua",
+	 "test/test-gs-pca.lua",
+       },
+     },
+   },
+   target{
      name = "build",
      depends = "provide",
      use_timestamp = true,
