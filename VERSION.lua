@@ -1,0 +1,5 @@
+return {
+  '-DAPRILANN_VERSION_MAJOR=\'"0"\'',
+  '-DAPRILANN_VERSION_MINOR=\'"2"\'',
+  '-DAPRILANN_VERSION_RELEASE=\'"1"\'',
+}
