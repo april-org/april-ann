@@ -1359,7 +1359,7 @@ end
 function formiga.__link_main_program__ (t)
   -- crear programa ppal
   --formiga.exec_package("luapkg_main","build")
-  local module_name = formiga.program_name:gsub("%-","")
+  local module_name = formiga.program_name:gsub("%-",""):gsub("%.","")
   
   local f = io.open(formiga.os.compose_dir(formiga.global_properties.build_dir, "luapkgMain.cc"),"w")
   --
