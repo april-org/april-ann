@@ -56,19 +56,19 @@ uninstall:
 	make uninstall-$(UNAME)
 
 install-Darwin:
-	mkdir -p ${DARWIN_LUALIB}
-	install lib/aprilann.so ${DARWIN_LUALIB}
-	install bin/april-ann ${BIN}
+	mkdir -p $(DARWIN_LUALIB)
+	install lib/aprilann.so $(DARWIN_LUALIB)
+	install bin/april-ann $(BIN)
 
 install-Linux:
-	mkdir -p ${LINUX_LUALIB}
-	install lib/aprilann.so ${LINUX_LUALIB}
-	install bin/april-ann ${BIN}
+	mkdir -p $(LINUX_LUALIB)
+	install lib/aprilann.so $(LINUX_LUALIB)
+	install bin/april-ann $(BIN)
 
 uninstall-Darwin:
-	rm -f ${DARWIN_LUALIB}/aprilann.so
-	rm -f ${BIN}/april-ann
+	rm -f $(DARWIN_LUALIB)/aprilann.so
+	rm -f $(BIN)/april-ann
 
 uninstall-Linux:
-	rm -f ${LINUX_LUALIB}/aprilann.so
-	rm -f ${BIN}/april-ann
+	rm -f $(LINUX_LUALIB)/aprilann.so
+	rm -f $(BIN)/april-ann
