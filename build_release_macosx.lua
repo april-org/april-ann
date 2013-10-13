@@ -3,7 +3,7 @@ formiga.build_dir = "build_release_macosx"
 
 luapkg{
   program_name = "april-ann",
-  verbosity_level = 2,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
+  verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
   packages = dofile "package_list.lua",
   version_flags = dofile "VERSION.lua",
   disclaimer_strings = dofile "DISCLAIMER.lua",

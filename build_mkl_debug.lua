@@ -5,6 +5,8 @@ luapkg{
   program_name = "april-ann.debug",
   verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
   packages = dofile "package_list.lua",
+  version_flags = dofile "VERSION.lua",
+  disclaimer_strings = dofile "DISCLAIMER.lua",
   global_flags = {
     debug="yes",
     use_lstrip = "no",
@@ -21,8 +23,10 @@ luapkg{
       "-pg",
       "-DNO_POOL",
       "-fopenmp",
+      "-fPIC",
     },
     extra_libs={
+      "-fPIC",
       "-pg",
       "-lpthread",
       "-rdynamic",
@@ -34,6 +38,9 @@ luapkg{
       "-lmkl_core",
       "-Wl,--end-group",
       "-liomp5"
+    },
+    shared_extra_libs={
+      "-llua5.2",
     },
   },
   
@@ -118,6 +125,6 @@ formiga.os.execute("cp -f "..formiga.os.compose_dir(formiga.build_dir,"bin",form
                    .." "..formiga.os.compose_dir(arg[2], "bin", formiga.program_name))
 formiga.os.execute("cp -R "..formiga.os.compose_dir(formiga.build_dir,"lib")
                    .." "..arg[2])
-formiga.os.execute("cp -R "..formiga.os.compose_dir(formiga.build_dir,"include","april")
+formiga.os.execute("cp -R "..formiga.os.compose_dir(formiga.build_dir,"include","april-ann.debug")
                    .." "..formiga.os.compose_dir(arg[2], "include"))
 

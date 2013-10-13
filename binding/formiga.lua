@@ -1165,8 +1165,8 @@ end
 function formiga.__execute_script(t)
   local prop = t.target.package.properties
   local program_binary = formiga.os.compose_dir(formiga.global_properties.build_dir,
-					      "bin",
-					      formiga.program_name)
+						"bin",
+						formiga.program_name)
   if (t.file == nil) then
     print("[execute_script]  error: file must be specified")
     return
@@ -1174,13 +1174,14 @@ function formiga.__execute_script(t)
   for _,tfile in ipairs(t.file) do
     local thefiles = formiga.os.glob(formiga.expand_properties(tfile,prop))
     for _,thefile in ipairs(thefiles) do
-      command = { program_binary, thefile }
+      command = { program_binary, thefile, "> /dev/null" }
       -- creamos y ejecutamos el comando
       command = table.concat(command," ")
       printverbose(2," [execute_script] "..command)
       local ok,what,error_resul = formiga.os.execute(command, true)
       if not ok then
-	error("Unitary test '".. thefile .. "' failed: " .. t.target.package.name)
+	print("Unitary test '".. thefile .. "' failed: " .. t.target.package.name)
+	os.exit(1)
       end
     end
   end
