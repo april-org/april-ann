@@ -520,8 +520,9 @@ function formiga.exec_package(package_name,target,global_timestamp)
 	thetarget.__target__(thetarget)
       end
       table.insert(formiga.lua_dot_c_register_functions,
-		   "luaopen_" .. formiga.module_name .. "_"..
-		     the_package.name)
+		   { the_package.name,
+		     "luaopen_" .. formiga.module_name .. "_"..
+		       the_package.luaopen_name })
     end
   end -- if the_package ~= nil
   return the_package.compile_mark
@@ -537,6 +538,7 @@ function package (t)
 	    "package_directory='" .. formiga.current_package_dir .. "'\n")
   end
   formiga.package_table[t.name] = t
+  formiga.package_table[t.name].luaopen_name = t.name:gsub("%-",""):gsub("%.","_")
   -- set up the timestamp
   t.timestamp = formiga.os.get_directory_timestamp(build_dir)
   t.src_timestamp = formiga.os.get_directory_timestamp(formiga.os.basedir)
@@ -1060,7 +1062,7 @@ function formiga.__luacode__ (t)
   end
   dest_dir = t.dest_dir or t.orig_dir
   reg_function = t.reg_function or
-    "lua_register_"..t.target.package.name
+    "lua_register_"..t.target.package.luaopen_name
   io.stdout:flush()
   -- TODO: abrir fichero y guardar en 'el el bytecode como cadena C
   -- SUPERTODO: ver si se puede poner la linea ahora comentada:
@@ -1079,7 +1081,7 @@ function formiga.__luacode__ (t)
 	  '(lua_State *L) {\nluaL_loadbuffer(L,\n"'..
 	    formiga.bin2Cstring(lua_data_string)..'",'..
 	    string.len(lua_data_string)..
-	    ',"'..t.target.package.name..'");\nlua_call(L,0,0);\nreturn 0;\n}\n')
+	    ',"'..t.target.package.luaopen_name..'");\nlua_call(L,0,0);\nreturn 0;\n}\n')
   f:close()
   command = table.concat({
 			   formiga.compiler.Ccompiler,
@@ -1161,7 +1163,7 @@ end
 
 function formiga.__execute_script(t)
   local prop = t.target.package.properties
-  local april_binary = formiga.os.compose_dir(formiga.global_properties.build_dir,
+  local program_binary = formiga.os.compose_dir(formiga.global_properties.build_dir,
 					      "bin",
 					      formiga.program_name)
   if (t.file == nil) then
@@ -1171,7 +1173,7 @@ function formiga.__execute_script(t)
   for _,tfile in ipairs(t.file) do
     local thefiles = formiga.os.glob(formiga.expand_properties(tfile,prop))
     for _,thefile in ipairs(thefiles) do
-      command = { april_binary, thefile }
+      command = { program_binary, thefile }
       -- creamos y ejecutamos el comando
       command = table.concat(command," ")
       printverbose(2," [execute_script] "..command)
@@ -1333,7 +1335,7 @@ function formiga.__copy_header_files__ (t)
                                  "include",
                                  "*")
     dest_dir = formiga.os.compose_dir(formiga.global_properties.build_dir,
-                                      "include","april",pkg)
+                                      "include",formiga.program_name,pkg)
     os.execute("mkdir -p "..dest_dir)
     files = formiga.os.glob(dir)
     for _,f in ipairs(files) do
@@ -1357,10 +1359,6 @@ end
 ----------------------------------------------------------------------
 --                           LINK_MAIN_PROGRAM
 ----------------------------------------------------------------------
-
-function get_module_name(filename)
-  return filename:match("luaopen_(.*)"):gsub("_",".")
-end
 
 function formiga.__link_main_program__ (t)
   -- crear programa ppal
@@ -1389,14 +1387,14 @@ function formiga.__link_main_program__ (t)
   f:write('const char *__COMMIT_NUMBER__ = TOSTRING(GIT_COMMIT);\n')
   -- 
   f:write('extern "C" {\n')
-  for _,funcname in pairs(formiga.lua_dot_c_register_functions) do
-    f:write('extern int '..funcname..'(lua_State *L);\n')
+  for _,data in pairs(formiga.lua_dot_c_register_functions) do
+    f:write('extern int '..data[2]..'(lua_State *L);\n')
   end
   --
   f:write('int luaopen_' .. module_name .. '(lua_State *L) { \n')
-  for _,funcname in pairs(formiga.lua_dot_c_register_functions) do
+  for _,data in pairs(formiga.lua_dot_c_register_functions) do
     -- f:write('  '..funcname..'(L);\n')
-    f:write('  luaL_requiref(L, "' .. get_module_name(funcname) .. '", ' .. funcname .. ', 0);\n')
+    f:write('  luaL_requiref(L, "' .. data[1] .. '", ' .. data[2] .. ', 0);\n')
   end
   f:write('  if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {\n')
   for i,_ in ipairs(formiga.disclaimer_strings) do
@@ -2067,10 +2065,15 @@ function generate_package_register_file(package,package_register_functions)
     f:write("void " .. func .. "(lua_State *L);\n")
   end
   f:write("\n")
-  f:write("int luaopen_" .. formiga.module_name .. "_" .. package.name ..
+  for i,v in ipairs(package.depends or {}) do
+    f:write('extern int luaopen_' .. formiga.module_name .. '_' .. v:gsub("%-",""):gsub("%.","_") .. '(lua_State *L);\n')
+  end
+  f:write("\n")
+  f:write("int luaopen_" .. formiga.module_name .. "_" .. package.luaopen_name ..
 	    "(lua_State *L) {\n")
-  --f:write("int luaopen_april_".. package.name ..
-  --"(lua_State *L) {\n")
+  for i,v in ipairs(package.depends or {}) do
+    f:write('  luaL_requiref(L, "' .. v .. '", luaopen_' .. formiga.module_name .. '_' .. v:gsub("%-",""):gsub("%.","_") .. ', 0);\n')
+  end
   for i,func in ipairs(package_register_functions) do
     f:write("\t"..func .. "(L);\n")
   end

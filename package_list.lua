@@ -11,7 +11,7 @@ return {
   "math",
   "gzio",
   "matlab",
-  "mutual_information",
+  "stats.MI",
   
   -- MACHINE LEARNING
   "trainable",
