@@ -78,7 +78,58 @@ You need to especify the `-I` option to the compiler, and all the extra_libs stu
 Exists one build file for each possible target: build_release.lua, build_debug.lua, build_mkl_release.lua,
 build_mkl_debug.lua, ... and so on.
 
+The binary will be generated at `bin/april-ann`, which incorporates the Lua 5.2
+interpreter and works without any dependency in Lua.  Besides, a shared library
+will be generated at `lib/aprilann.so`, so it is possible to use `require` from
+Lua to load April-ANN in a standard Lua 5.2 interpreter.
+
 ENJOY!
+
+Installation
+------------
+
+The installation is done executing:
+
+```
+$ sudo make install
+```
+
+This procedure copies the binary to system location in `/usr` (or in
+`/opt/local` for Mac OS X via MacPorts). The shared library is copied
+to Lua default directory, in order to load it by using `require` function.
+
+Use
+---
+
+- You can execute the standalone binary:
+
+```
+$ april-ann
+April-ANN v0.2.1-beta COMMIT 920  Copyright (C) 2012-2013 DSIC-UPV, CEU-UCH
+This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE.txt.
+This is free software, and you are welcome to redistribute it
+under certain conditions; see LICENSE.txt for details.
+Lua 5.2.2  Copyright (C) 1994-2013 Lua.org, PUC-Rio
+> print "Hello World!"
+Hello World!
+```
+
+- It is possible to use April-ANN as a Lua module, loading only the packages
+  which you need (i.e. `require("aprilann.matrix")`), or loading the full
+  library (`require("aprilann")`) :
+
+```
+$ lua
+Lua 5.2.2  Copyright (C) 1994-2013 Lua.org, PUC-Rio
+> require "aprilann.matrix"
+> require "aprilann"
+April-ANN v0.2.1-beta COMMIT 920  Copyright (C) 2012-2013 DSIC-UPV, CEU-UCH
+This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE.txt.
+This is free software, and you are welcome to redistribute it
+under certain conditions; see LICENSE.txt for details.
+> print "Hello World!"
+Hello World!
+```
 
 Citation
 --------
