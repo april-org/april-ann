@@ -1,4 +1,4 @@
- package{ name = "mutual_information",
+ package{ name = "stats.MI",
    version = "1.0",
    depends = { "util", "matrix", "image_cleaning" },
    keywords = { "mutual_information" },
