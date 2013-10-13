@@ -42,7 +42,7 @@ $$HEADER_C$$
    function lua_setdottedname(dottedname)
       local cpp_str = {
                          "\nbool exists = false;\n",
-                         "lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);\n"
+			 "lua_pushglobaltable(L);\n"
 	              }
       for subName in string.gmatch(dottedname, "([%w_]+)[%.]*") do
 	 table.insert(cpp_str, string.format([[
