@@ -1,7 +1,7 @@
- package{ name = "statistics",
+ package{ name = "stats",
    version = "1.0",
    depends = { "util" },
-   keywords = { "statistics" },
+   keywords = { "stats" },
    description = "no description available",
    -- targets como en ant
    target{

@@ -192,6 +192,7 @@ formiga = {
 
   -- program_name
   program_name = "default",
+  module_name  = "default",
 
   -- color output
   color_output = false,
@@ -370,8 +371,9 @@ function formiga.os.execute(command,continueaftererror)
   io.stderr:flush() -- to get things appear in order
   if resul ~= 0 and not continueaftererror then
     -- report error and stop everything
-    error("Error "..(resul or"nil").." in "..formiga.os.basedir..
+    print("Error "..(resul or"nil").." in "..formiga.os.basedir..
 	    "\nwhen executing command "..command.."\n")
+    os.exit(1)
   end
   return ok
 end
@@ -518,7 +520,7 @@ function formiga.exec_package(package_name,target,global_timestamp)
 	thetarget.__target__(thetarget)
       end
       table.insert(formiga.lua_dot_c_register_functions,
-		   "register_package_lua_and_binding_"..
+		   "luaopen_" .. formiga.module_name .. "_"..
 		     the_package.name)
     end
   end -- if the_package ~= nil
@@ -1356,11 +1358,14 @@ end
 --                           LINK_MAIN_PROGRAM
 ----------------------------------------------------------------------
 
+function get_module_name(filename)
+  return filename:match("luaopen_(.*)"):gsub("_",".")
+end
+
 function formiga.__link_main_program__ (t)
   -- crear programa ppal
   --formiga.exec_package("luapkg_main","build")
-  local module_name = formiga.program_name:gsub("%-",""):gsub("%.","")
-  
+  local module_name = formiga.module_name
   local f = io.open(formiga.os.compose_dir(formiga.global_properties.build_dir, "luapkgMain.cc"),"w")
   --
   f:write('#define lua_c\n')
@@ -1385,12 +1390,13 @@ function formiga.__link_main_program__ (t)
   -- 
   f:write('extern "C" {\n')
   for _,funcname in pairs(formiga.lua_dot_c_register_functions) do
-    f:write('int '..funcname..'(lua_State *L);\n')
+    f:write('extern int '..funcname..'(lua_State *L);\n')
   end
   --
   f:write('int luaopen_' .. module_name .. '(lua_State *L) { \n')
   for _,funcname in pairs(formiga.lua_dot_c_register_functions) do
-    f:write('  '..funcname..'(L);\n')
+    -- f:write('  '..funcname..'(L);\n')
+    f:write('  luaL_requiref(L, "' .. get_module_name(funcname) .. '", ' .. funcname .. ', 0);\n')
   end
   f:write('  if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {\n')
   for i,_ in ipairs(formiga.disclaimer_strings) do
@@ -1400,14 +1406,14 @@ function formiga.__link_main_program__ (t)
   end
   f:write('  }\n')
   f:write("  lua_newtable(L);\n")
-  f:write("  lua_pushstring(L, \"APRIL_LOADED\");\n")
-  f:write("  lua_pushboolean(L, true);\n")
+  f:write("  lua_pushstring(L, \"" .. module_name:upper() .. "\");\n")
+  f:write("  lua_pushboolean(L, 1);\n")
   f:write("  lua_rawset(L, -3);\n")
   f:write("  return 1;\n")
   f:write('}\n')
   f:write('}\n')
   -- 
-  f:write('#define lua_userinit(L)   luaopen_' .. module_name .. '(L)\n')
+  f:write('#define lua_userinit(L)   luaL_requiref(L, "' .. module_name .. '", luaopen_' .. module_name .. ', 0)\n')
   --
   f:write('#include <lua.c>\n')
   f:close()
@@ -2061,14 +2067,18 @@ function generate_package_register_file(package,package_register_functions)
     f:write("void " .. func .. "(lua_State *L);\n")
   end
   f:write("\n")
-  f:write("void register_package_lua_and_binding_".. package.name ..
+  f:write("int luaopen_" .. formiga.module_name .. "_" .. package.name ..
 	    "(lua_State *L) {\n")
   --f:write("int luaopen_april_".. package.name ..
   --"(lua_State *L) {\n")
   for i,func in ipairs(package_register_functions) do
     f:write("\t"..func .. "(L);\n")
   end
-  -- f:write("return 0;\n")
+  f:write("  lua_newtable(L);\n")
+  f:write("  lua_pushstring(L, \"" .. package.name:upper() .. "\");\n")
+  f:write("  lua_pushboolean(L, 1);\n")
+  f:write("  lua_rawset(L, -3);\n")
+  f:write("  return 1;\n")
   f:write("}\n")
   f:close()
   
@@ -2085,7 +2095,8 @@ function generate_package_register_file(package,package_register_functions)
 			       " ")
   local ok,what,resul = os.execute(command)
   if not ok then
-    error("Error en el comando: " .. command)
+    print("Error en el comando: " .. command)
+    os.exit(1)
   end
 end
 
@@ -2162,6 +2173,7 @@ function luapkg (t)
 			    t.packages)
   
   formiga.program_name = t.program_name
+  formiga.module_name  = t.program_name:gsub("[%-%.%_]","")
 
   formiga.compiler.global_flags = t.global_flags or {}
 
