@@ -16,7 +16,7 @@ $$HEADER_H$$
 #define LUA_BIND_$$ClassName$$_$$FILENAME2$$_H
 
 extern "C" {
-  void luaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L);
+  void bindluaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L);
 }
 
 //LUA if CREATE_CLASS[ClassName] then
@@ -27,7 +27,7 @@ void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj);
 
 /*LUA 
 -- las lineas de salida estandar que empiecen por "...register:" se utilizan para registrar ciertas funciones
-oldprint("...register:luaopen_"..ClassName.."_"..FILENAME2)
+oldprint("...register:bindluaopen_"..ClassName.."_"..FILENAME2)
 */
 
 #endif
