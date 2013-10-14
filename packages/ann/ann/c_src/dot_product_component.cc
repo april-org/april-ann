@@ -45,13 +45,7 @@ namespace ANN {
     error_input(0),
     output(0),
     error_output(0),
-    weights_matrix(0),
-    num_updates_from_last_prune(0),
-    learning_rate(-1.0f),
-    momentum(0.0f),
-    weight_decay(0.0f),
-    c_weight_decay(1.0f),
-    max_norm_penalty(-1.0f) {
+    weights_matrix(0) {
     if (weights_name == 0) generateDefaultWeightsName(this->weights_name, "w");
     this->transpose_weights = (transpose_weights) ? CblasTrans : CblasNoTrans;
   }
@@ -232,15 +226,19 @@ namespace ANN {
     return error_output;
   }
   
-  void DotProductANNComponent::computeBP(MatrixFloat *weights_mat,
-					 Token *input_token,
-					 MatrixFloat *error_input_mat,
-					 const float alpha,
-					 const float beta) {
+  void DotProductANNComponent::computeGradients(MatrixFloat*& grads_mat) {
+    weights_matrix->addToSharedCount();
+    if (grads_mat == 0) {
+      grads_mat = weights_matrix->getPtr()->cloneOnlyDims();
+      grads_mat->zeros();
+    }
+    else if (!grads_mat->sameDim(weights_matrix->getPtr()))
+      ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
+    MatrixFloat *error_input_mat = error_input->getMatrix();
     unsigned int bunch_size = error_input_mat->getDimSize(0);
     if (sparse_input) {
       TokenBunchVector *input_vector_token;
-      input_vector_token  = input_token->convertTo<TokenBunchVector*>();
+      input_vector_token  = input->convertTo<TokenBunchVector*>();
       int w_dim = (transpose_weights == CblasNoTrans) ? 1 : 0;
       for (unsigned int b=0; b<bunch_size; ++b) {
 	MatrixFloat *error_input_pat_mat;
@@ -255,105 +253,29 @@ namespace ANN {
 	  if (pos >= input_size)
 	    ERROR_EXIT1(128, "Overflow at sparse vector input pos [%s]\n",
 			name.c_str());
-	  MatrixFloat *w_column = weights_mat->select(w_dim, w_index);
-	  w_column->axpy(alpha*value, error_input_pat_mat);
+	  MatrixFloat *w_column = grads_mat->select(w_dim, w_index);
+	  w_column->axpy(value, error_input_pat_mat);
 	  delete w_column;
 	}
 	delete error_input_pat_mat;
       }
     } // if sparse_input ... else
     else {
-      TokenMatrixFloat *input_mat_token=input_token->convertTo<TokenMatrixFloat*>();
+      TokenMatrixFloat *input_mat_token=input->convertTo<TokenMatrixFloat*>();
       MatrixFloat *input_mat=input_mat_token->getMatrix();
       if (bunch_size > 1) {
-	weights_mat->gemm(CblasTrans, CblasNoTrans,
-			  alpha,
-			  (transpose_weights == CblasNoTrans)?error_input_mat:input_mat, // A
-			  (transpose_weights == CblasNoTrans)?input_mat:error_input_mat, // B
-			  beta);
+	grads_mat->gemm(CblasTrans, CblasNoTrans,
+			1.0f,
+			(transpose_weights == CblasNoTrans)?error_input_mat:input_mat, // A
+			(transpose_weights == CblasNoTrans)?input_mat:error_input_mat, // B
+			1.0f);
       } // if bunch_size > 1 ... else
       else {
-	if (beta < 1.0f)
-	  weights_mat->scal(beta);
-	weights_mat->ger(alpha,
-			 (transpose_weights == CblasNoTrans)?error_input_mat:input_mat,
-			 (transpose_weights == CblasNoTrans)?input_mat:error_input_mat);
+	grads_mat->ger(1.0f,
+		       (transpose_weights == CblasNoTrans)?error_input_mat:input_mat,
+		       (transpose_weights == CblasNoTrans)?input_mat:error_input_mat);
       } // if bunch_size > 1 ... else
     } // if sparse_input ... else
-  }
-  
-  // The DotProductANNComponent
-  void DotProductANNComponent::doUpdate() {
-    april_assert(learning_rate > 0.0f &&
-	   "Learning rate needs to be fixed with setOption method!!!");
-    
-    // Foces weights_matrix to update internal counts for a backward step
-    weights_matrix->beginUpdate();
-    
-    MatrixFloat *weights_mat      = weights_matrix->getPtr();
-    MatrixFloat *prev_weights_mat = weights_matrix->getPrevPtr();
-    MatrixFloat *error_input_mat  = error_input->getMatrix();
-    
-    float beta_parameter_for_cblas_bp = 1.0f;
-    if (weights_matrix->isFirstUpdateCall()) {
-      // Momentum computation
-      if (momentum > 0.0f) {
-	// prev_w[i,j] = momentum * (w[i,j] - prev_w[i,j])
-	weights_matrix->computeMomentumOnPrevVector(momentum,
-						    use_cuda);
-	weights_matrix->computeWeightDecayOnPrevVector(c_weight_decay,
-						       use_cuda);
-      }
-      else {
-	weights_matrix->copyToPrevVector(use_cuda);
-	beta_parameter_for_cblas_bp = c_weight_decay;
-      }
-    } // if (weights_matrix->needsToComputeMomentum()) {
-    
-    // COMPUTE BP
-    april_assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
-    unsigned int bunch_size = error_input_mat->getDimSize(0);
-    // backprop learning rule:
-    // PREV_W = alpha * ERRORS + PREV_W
-    const unsigned int references = weights_matrix->getNumReferences();
-    april_assert(references > 0 && "Found 0 references of weights matrix");
-    // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
-    const float norm_learn_rate =
-      -(1.0f/sqrtf(static_cast<float>(references*bunch_size))) *
-      learning_rate;
-    computeBP(prev_weights_mat,
-	      input,
-	      error_input_mat,
-	      norm_learn_rate,
-	      beta_parameter_for_cblas_bp);
-    
-    // Forces to update counts and swap vectors if necessary at this backward
-    // step
-    if (weights_matrix->endUpdate()) {
-      if (max_norm_penalty > 0.0)
-	weights_matrix->applyMaxNormPenalty(max_norm_penalty);
-      ++num_updates_from_last_prune;
-      if (num_updates_from_last_prune > MAX_UPDATES_WITHOUT_PRUNE) {
-	num_updates_from_last_prune = 0;
-	weights_matrix->pruneSubnormalAndCheckNormal();
-      }
-    }
-  }
-  
-  void DotProductANNComponent::computeGradients(MatrixFloat*& weight_grads) {
-    if (weight_grads == 0) {
-      weight_grads = weights_matrix->getPtr()->cloneOnlyDims();
-      weight_grads->zeros();
-    }
-    else if (!weight_grads->sameDim(weights_matrix->getPtr()))
-      ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
-    MatrixFloat *input_error_mat = error_input->getMatrix();
-    unsigned int bunch_size = input_error_mat->getDimSize(0);
-    computeBP(weight_grads,
-	      input,
-	      error_input->getMatrix(),
-	      1.0f/bunch_size,
-	      1.0f);
   }
 
   void DotProductANNComponent::reset() {
@@ -365,6 +287,7 @@ namespace ANN {
     error_input	 = 0;
     output	 = 0;
     error_output = 0;
+    weights_matrix->resetSharedCount();
   }
   
   ANNComponent *DotProductANNComponent::clone() {
@@ -374,41 +297,7 @@ namespace ANN {
 			     (transpose_weights == CblasTrans));
     component->input_size     = input_size;
     component->output_size    = output_size;
-    component->learning_rate  = learning_rate;
-    component->momentum       = momentum;
-    component->weight_decay   = weight_decay;
-    component->c_weight_decay = c_weight_decay;
-    component->max_norm_penalty = max_norm_penalty;
     return component;
-  }
-
-  void DotProductANNComponent::setOption(const char *name, double value) {
-    mSetOption(LEARNING_RATE_STRING, learning_rate);
-    mSetOption(MOMENTUM_STRING,      momentum);
-    if (strcmp(WEIGHT_DECAY_STRING, name) == 0) {
-      weight_decay   = static_cast<float>(value);
-      c_weight_decay = 1.0f - weight_decay;
-      return;
-    }
-    mSetOption(MAX_NORM_PENALTY_STRING, max_norm_penalty);
-    ANNComponent::setOption(name, value);
-  }
-  
-  bool DotProductANNComponent::hasOption(const char *name) {
-    mHasOption(LEARNING_RATE_STRING);
-    mHasOption(MOMENTUM_STRING);
-    mHasOption(WEIGHT_DECAY_STRING);
-    mHasOption(MAX_NORM_PENALTY_STRING);
-    return false;
-  }
-  
-  double DotProductANNComponent::getOption(const char *name) {
-    mGetOption(LEARNING_RATE_STRING, learning_rate);
-    mGetOption(MOMENTUM_STRING, momentum);
-    // the weight decay is always fixed to 0
-    mGetOption(WEIGHT_DECAY_STRING, weight_decay);
-    mGetOption(MAX_NORM_PENALTY_STRING, max_norm_penalty);
-    return ANNComponent::getOption(name);
   }
   
   void DotProductANNComponent::build(unsigned int _input_size,
@@ -449,9 +338,6 @@ namespace ANN {
       // else printf("USING PREVIOUS WEIGHTS %s\n", weights_name.c_str());
       w = weights_matrix;
     }
-    // TODO: compute fan-in
-    // outputs->increaseFanIn(inputs->numNeurons());
-    weights_matrix->countReference();
   }
 
   void DotProductANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {

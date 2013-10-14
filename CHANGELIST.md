@@ -20,6 +20,18 @@ Master branch unstable release
 - Added GS-PCA algorithm for efficient computation of PCA (iterative algorithm),
   `stats.iterative_pca` Lua function.
 - Added `fromMMap` and `toMMap` for `matrix` class, currently only with floats.
+- Loss functions `ann.loss` API has been changed, now the loss computation is
+  done in two separated steps:
+      - `matrix = loss:compute_loss(output,target)`: which returns a matrix with
+        the loss of every pair of patterns, allowing to perform several loss
+		computations without taken them into account.
+      - `matrix = loss:accum_loss(matrix)`: which accumulates the loss in the
+	    internal state of the class.
+- Added `ann.optimizer` package, which has the implementation of weight update
+  based on weight gradient. So, the ANN components only compute gradients.
+  This allows to implement different optimization methods (as "Conjugate
+  Gradient", or "Linear Search Brack-Propagation") with the same gradient
+  computation.
 - Added basic MapReduce implementation in Lua.
 - Added `stats.correlation.pearson` Lua class.
 - Added `stats.bootstrap_resampling` function.

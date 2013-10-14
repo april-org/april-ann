@@ -162,7 +162,7 @@ message_reply = {
   end,
 
   SHARE = function(conn,msg)
-    for i=1,#cores do cores[i]:share(msg) end
+    for i=1,#cores do cores[i]:do_share(msg) end
     return "OK"
   end,
   

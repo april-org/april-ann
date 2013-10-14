@@ -67,7 +67,8 @@ local function execute(core)
       core:wakeup_worker()
       
     elseif action == "SHARE" then
-      local data,msg = common.load(data)
+      local str  = data:match('^%s*(return .*)')
+      local data = common.load(str)
       if not data then
 	core:open_result_file()
 	core:write_result(string.format("KEY_VALUE_ERROR SHARE %s", msg))
@@ -287,7 +288,7 @@ function core_methods:end_reduce_bunch()
   end
 end
 
-function core_methods:share(data)
+function core_methods:do_share(data)
   if self.pid then
     self:lock("SHARE")
     self:printf("SHARE %s",data)

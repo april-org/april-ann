@@ -7,9 +7,9 @@ trainer:randomize_weights{
   inf        = -0.1,
   sup        =  0.1 }
 
-thenet:set_option("learning_rate", 8.0)
-thenet:set_option("momentum",      0.5)
-thenet:set_option("weight_decay",  1e-05)
+trainer:set_option("learning_rate", 8.0)
+trainer:set_option("momentum",      0.5)
+trainer:set_option("weight_decay",  1e-05)
 
 m_xor = matrix.fromString[[
     4 3

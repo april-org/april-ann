@@ -72,6 +72,13 @@ thenet  = ann.mlp.all_all.generate(description)
 trainer = trainable.supervised_trainer(thenet,
 				       ann.loss.multi_class_cross_entropy(10))
 trainer:build()
+
+trainer:set_option("learning_rate", 0.04)
+trainer:set_option("momentum",      0.02)
+trainer:set_option("weight_decay",  1e-05)
+-- bias has weight_decay of ZERO
+trainer:set_layerwise_option("b.", "weight_decay", 0)
+
 trainer:randomize_weights{
   random = aleat,
   inf    = inf,
@@ -125,10 +132,6 @@ datosvalidar = {
   output_dataset = val_output,
   bunch_size     = bunch_size,
 }
-
-thenet:set_option("learning_rate", 0.04)
-thenet:set_option("momentum",      0.02)
-thenet:set_option("weight_decay",  1e-05)
 
 -- datos para guardar una matriz de salida de la red
 msalida = matrix(200,10)

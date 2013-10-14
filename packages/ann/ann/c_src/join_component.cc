@@ -248,11 +248,6 @@ namespace ANN {
     return error_output;
   }
 
-  void JoinANNComponent::doUpdate() {
-    for (unsigned int i=0; i<components.size(); ++i)
-      components[i]->doUpdate();
-  }
-  
   void JoinANNComponent::reset() {
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
