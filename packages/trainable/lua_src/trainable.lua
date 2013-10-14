@@ -716,7 +716,7 @@ april_set_doc("trainable.supervised_trainer.train_step", {
 		  "An optimizer [optional]",
 		},
 		outputs = {
-		  "A number with the loss of the training step",
+		  "A matrix with the loss of every given pattern",
 		  "A token with the gradient of loss function at component inputs",
 		} })
 
@@ -763,7 +763,7 @@ april_set_doc("trainable.supervised_trainer.validate_step", {
 		  "The loss function [optional]",
 		},
 		outputs = {
-		  "A number with the loss of the training step",
+		  "A matrix with the loss of every pattern",
 		} })
 
 function trainable_supervised_trainer_methods:validate_step(input, target, loss)

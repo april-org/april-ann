@@ -442,7 +442,7 @@ void Matrix<float>::gemm(CBLAS_TRANSPOSE trans_A,
 		otherB->matrixSize[row_idx_B], otherB->matrixSize[col_idx_B]);
   if (major_order != otherA->major_order ||
       otherA->major_order != otherB->major_order)
-    ERROR_EXIT(128, "Matrices with different major orders");
+    ERROR_EXIT(128, "Matrices with different major orders\n");
   
   int M=matrixSize[0], N=matrixSize[1], K=otherA->matrixSize[col_idx_A];
   int lda, ldb, ldc;
