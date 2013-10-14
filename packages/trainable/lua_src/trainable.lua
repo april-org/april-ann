@@ -730,6 +730,7 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
   optimizer:execute(function()
 		      self.ann_component:reset()
 		      local output = self.ann_component:forward(input, true)
+		      local output_mat = output:get_matrix()
 		      tr_loss_matrix = loss:compute_loss(output, target)
 		      gradient = loss:gradient(output, target)
 		      gradient = self.ann_component:backprop(gradient)
@@ -739,7 +740,7 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
 		      --
 		      self.weight_grads =
 			self.ann_component:compute_gradients(self.weight_grads)
-		      return self.weight_grads,tr_loss_matrix:dim(1),tr_loss_matrix
+		      return self.weight_grads,output_mat:dim(1),tr_loss_matrix
 		    end,
 		    self.weights_table)
   loss:accum_loss(tr_loss_matrix)

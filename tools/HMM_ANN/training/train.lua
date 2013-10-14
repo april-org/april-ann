@@ -576,13 +576,14 @@ while em_iteration <= em.em_max_iterations do
   bestepoch = totaltrain
   global_best_trainer = ann_table.trainer:clone()
   if em_iteration > 1 then
-    ann_table.thenet:set_option("learning_rate", ann_table.learning_rate)
+    ann_table.trainer:set_option("learning_rate", ann_table.learning_rate)
   else
-    ann_table.thenet:set_option("learning_rate", ann_table.first_learning_rate)
+    ann_table.trainer:set_option("learning_rate", ann_table.first_learning_rate)
   end
-  ann_table.thenet:set_option("momentum",         ann_table.momentum)
-  ann_table.thenet:set_option("weight_decay",     ann_table.weight_decay)
-  ann_table.thenet:set_option("max_norm_penalty", ann_table.max_norm_penalty)
+  ann_table.trainer:set_option("momentum",         ann_table.momentum)
+  ann_table.trainer:set_option("weight_decay",     ann_table.weight_decay)
+  ann_table.trainer:set_option("max_norm_penalty", ann_table.max_norm_penalty)
+  ann_table.trainer:set_layerwise_option("b.*", "weight_decay", 0.0)
   if dropout > 0 then
     iterator(ipairs(dropout_list)):
     iterate(function(i,name)
@@ -615,8 +616,8 @@ while em_iteration <= em.em_max_iterations do
 	    em_iteration == 1 and
 	    totaltrain % 10 == 1 and
 	  ann_table.thenet:get_option("learning_rate") > ann_table.learning_rate ) then
-	ann_table.thenet:set_option("learning_rate",
-				    ann_table.thenet:get_option("learning_rate") - 0.001)
+	ann_table.trainer:set_option("learning_rate",
+				     ann_table.trainer:get_option("learning_rate") - 0.001)
       end
       if t.current_epoch == em.num_epochs_without_validation then
 	firstbestce = t.validation_error

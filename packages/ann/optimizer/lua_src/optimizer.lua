@@ -209,155 +209,155 @@ function sgd_methods:to_lua_string()
   return table.concat(str_t, "")
 end
 
----------------------------------------
---------- CONJUGATE GRADIENT ----------
----------------------------------------
+-- ---------------------------------------
+-- --------- CONJUGATE GRADIENT ----------
+-- ---------------------------------------
 
--- This implementation is based in the code of optim package of Torch 7:
--- http://github.com/torch/optim/blob/master/cg.lua
+-- -- This implementation is based in the code of optim package of Torch 7:
+-- -- http://github.com/torch/optim/blob/master/cg.lua
 
-local cg_methods, cg_class_metatable = class("ann.optimizer.cg",
-					     ann.optimizer)
+-- local cg_methods, cg_class_metatable = class("ann.optimizer.cg",
+-- 					     ann.optimizer)
 
-function cg_class_metatable:__call(g_options, l_options, count)
-  -- the base optimizer, with the supported learning parameters
-  local obj = ann.optimizer({
-			      "max_eval",
-			      "max_iter",
-			      "rho",
-			      "sig",
-			      "int",
-			      "ext",
-			      "ratio",
-			      "learning_rate",
-			      "momentum",
-			      "weight_decay",
-			      "max_norm_penalty"
-			    },
-			    g_options,
-			    l_options,
-			    count)
-  obj = class_instance(obj, self)
-  return obj
-end
+-- function cg_class_metatable:__call(g_options, l_options, count)
+--   -- the base optimizer, with the supported learning parameters
+--   local obj = ann.optimizer({
+-- 			      "max_eval",
+-- 			      "max_iter",
+-- 			      "rho",
+-- 			      "sig",
+-- 			      "int",
+-- 			      "ext",
+-- 			      "ratio",
+-- 			      "learning_rate",
+-- 			      "momentum",
+-- 			      "weight_decay",
+-- 			      "max_norm_penalty"
+-- 			    },
+-- 			    g_options,
+-- 			    l_options,
+-- 			    count)
+--   obj = class_instance(obj, self)
+--   return obj
+-- end
 
-local function clone_matrix(t)
-  return iterator(pairs(t)):map(function(name,c)return name,(c:matrix()):clone()end):table()
-end
+-- local function clone_matrix(t)
+--   return iterator(pairs(t)):map(function(name,c)return name,(c:matrix()):clone()end):table()
+-- end
 
-local function clone(t)
-  return iterator(pairs(t)):map(function(name,c)return name,c:clone()end):table()
-end
+-- local function clone(t)
+--   return iterator(pairs(t)):map(function(name,c)return name,c:clone()end):table()
+-- end
 
-local function copy(orig,dest)
-  apply(function(name,origc,destc)
-	  local orig_w,orig_oldw = origc:matrix()
-	  local dest_w,dest_oldw = destc:matrix()
-	  dest_w:copy(orig_w)
-	  dest_oldw:copy(orig_oldw)
-	end)
-end
+-- local function copy(orig,dest)
+--   apply(function(name,origc,destc)
+-- 	  local orig_w,orig_oldw = origc:matrix()
+-- 	  local dest_w,dest_oldw = destc:matrix()
+-- 	  dest_w:copy(orig_w)
+-- 	  dest_oldw:copy(orig_oldw)
+-- 	end)
+-- end
 
-local function table_apply(t, func)
-  iterator(pairs(t)):select(2):apply(func)
-end
+-- local function table_apply(t, func)
+--   iterator(pairs(t)):select(2):apply(func)
+-- end
 
-function cg_methods:execute(eval, cnn_table)
-  local rho = self:get_option("rho") or 0.01
-  local sig = self:get_option("sig") or 0.5
-  local int = self:get_option("int") or 0.1
-  local ext = self:get_option("ext") or 3.0
-  local max_iter = self:get_option("max_iter") or 20
-  local max_eval = self:get_option("max_eval") or max_iter*1.25
-  local ratio = self:get_option("ratio") or 100
-  local verbose = self:get_option("verbose")
-  local red = 1
+-- function cg_methods:execute(eval, cnn_table)
+--   local rho = self:get_option("rho") or 0.01
+--   local sig = self:get_option("sig") or 0.5
+--   local int = self:get_option("int") or 0.1
+--   local ext = self:get_option("ext") or 3.0
+--   local max_iter = self:get_option("max_iter") or 20
+--   local max_eval = self:get_option("max_eval") or max_iter*1.25
+--   local ratio = self:get_option("ratio") or 100
+--   local verbose = self:get_option("verbose")
+--   local red = 1
   
-  local i = 0
-  local ls_failed = false
-  local fx = {}
+--   local i = 0
+--   local ls_failed = false
+--   local fx = {}
   
-  -- three points for the interpolation/extrapolation
-  local z1,z2,z3=0,0,0
-  local d1,d2,d3=0,0,0
-  local f1,f2,f3=0,0,0
+--   -- three points for the interpolation/extrapolation
+--   local z1,z2,z3=0,0,0
+--   local d1,d2,d3=0,0,0
+--   local f1,f2,f3=0,0,0
   
-  local df1 = self.df1 or clone_matrix(cnn_table)
-  local df2 = self.df2 or clone_matrix(cnn_table)
-  local df3 = self.df3 or clone_matrix(cnn_table)
-  local tdf
+--   local df1 = self.df1 or clone_matrix(cnn_table)
+--   local df2 = self.df2 or clone_matrix(cnn_table)
+--   local df3 = self.df3 or clone_matrix(cnn_table)
+--   local tdf
   
-  -- search direction
-  local s = clone_matrix(cnn_table)
+--   -- search direction
+--   local s = clone_matrix(cnn_table)
   
-  -- temporal storage for the connections
-  local x0 = clone(cnn_table)
-  local f0 = 0
-  local df0 = self.df0 or clone_matrix(cnn_table)
+--   -- temporal storage for the connections
+--   local x0 = clone(cnn_table)
+--   local f0 = 0
+--   local df0 = self.df0 or clone_matrix(cnn_table)
   
-  -- evaluate at initial point
-  local arg = table.pack( eval() )
-  local gradients,bunch_size,tr_loss_matrix = table.unpack(arg)
+--   -- evaluate at initial point
+--   local arg = table.pack( eval() )
+--   local gradients,bunch_size,tr_loss_matrix = table.unpack(arg)
 
-  table.insert(fx, tr_loss_matrix:sum()/bunch_size)
-  copy(df1, gradients)
-  i=i+1
+--   table.insert(fx, tr_loss_matrix:sum()/bunch_size)
+--   copy(df1, gradients)
+--   i=i+1
   
-  -- initial search direction
-  copy(df1, s)
-  table_apply(s, function(name,m) m:scal(-1) end)
+--   -- initial search direction
+--   copy(df1, s)
+--   table_apply(s, function(name,m) m:scal(-1) end)
   
-  d1 = -s:dot
+--   d1 = -s:dot
   
 
-  for cname,cnn in pairs(cnn_table) do
-    local w,oldw     = cnn:matrix()
-    local grad       = gradients[cname]
-    local N          = cnn:get_shared_count()
-    local lr         = assert(self:get_option_of(cname, "learning_rate"),
-			      "The learning_rate parameter needs to be set")
-    local mt         = self:get_option_of(cname, "momentum")     or 0.0
-    local wd         = self:get_option_of(cname, "weight_decay") or 0.0
-    local cwd        = 1.0 - wd
-    local mp         = self:get_option_of(cname, "max_norm_penalty") or -1.0
-    --
-    ann.optimizer.apply_momentum(oldw, mt, w)
-    ann.optimizer.apply_weight_decay(oldw, cwd, w)
-    --
-    -- apply back-propagation learning rule
-    local norm_lr_rate = -1.0/math.sqrt( N * bunch_size ) * lr
-    oldw:axpy(norm_lr_rate, grad)
-    --
-    ann.optimizer.apply_max_norm_penalty(oldw, w, mp)
-    --
-    -- swap current and old weight matrices
-    cnn:swap()
-    --
-    if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
-      cnn:prune_subnormal_and_check_normal()
-    end
-  end
-  -- count one more update iteration
-  self:count_one()
-  -- returns the same as returned by eval()
-  return table.unpack(arg)
-end
+--   for cname,cnn in pairs(cnn_table) do
+--     local w,oldw     = cnn:matrix()
+--     local grad       = gradients[cname]
+--     local N          = cnn:get_shared_count()
+--     local lr         = assert(self:get_option_of(cname, "learning_rate"),
+-- 			      "The learning_rate parameter needs to be set")
+--     local mt         = self:get_option_of(cname, "momentum")     or 0.0
+--     local wd         = self:get_option_of(cname, "weight_decay") or 0.0
+--     local cwd        = 1.0 - wd
+--     local mp         = self:get_option_of(cname, "max_norm_penalty") or -1.0
+--     --
+--     ann.optimizer.apply_momentum(oldw, mt, w)
+--     ann.optimizer.apply_weight_decay(oldw, cwd, w)
+--     --
+--     -- apply back-propagation learning rule
+--     local norm_lr_rate = -1.0/math.sqrt( N * bunch_size ) * lr
+--     oldw:axpy(norm_lr_rate, grad)
+--     --
+--     ann.optimizer.apply_max_norm_penalty(oldw, w, mp)
+--     --
+--     -- swap current and old weight matrices
+--     cnn:swap()
+--     --
+--     if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
+--       cnn:prune_subnormal_and_check_normal()
+--     end
+--   end
+--   -- count one more update iteration
+--   self:count_one()
+--   -- returns the same as returned by eval()
+--   return table.unpack(arg)
+-- end
 
-function cg_methods:clone()
-  local obj = ann.optimizer.cg()
-  obj.count             = self.count
-  obj.layerwise_options = table.deep_copy(self.layerwise_options)
-  obj.global_options    = table.deep_copy(self.global_options)
-  return obj
-end
+-- function cg_methods:clone()
+--   local obj = ann.optimizer.cg()
+--   obj.count             = self.count
+--   obj.layerwise_options = table.deep_copy(self.layerwise_options)
+--   obj.global_options    = table.deep_copy(self.global_options)
+--   return obj
+-- end
 
-function cg_methods:to_lua_string()
-  local str_t = { "ann.optimizer.cg(",
-		  table.tostring(self.global_options),
-		  ",",
-		  table.tostring(self.layerwise_options),
-		  ",",
-		  tostring(self.count),
-		  ")" }
-  return table.concat(str_t, "")
-end
+-- function cg_methods:to_lua_string()
+--   local str_t = { "ann.optimizer.cg(",
+-- 		  table.tostring(self.global_options),
+-- 		  ",",
+-- 		  table.tostring(self.layerwise_options),
+-- 		  ",",
+-- 		  tostring(self.count),
+-- 		  ")" }
+--   return table.concat(str_t, "")
+-- end
