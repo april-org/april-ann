@@ -1,6 +1,6 @@
  package{ name = "trainable",
    version = "1.0",
-   depends = { "util", "dataset", "random", "ann_base", "loss_functions" },
+   depends = { "util", "dataset", "random", "ann", "ann.loss" },
    keywords = { "Trainable" },
    description = "Define a wrapper with common methods of trainable models",
    -- targets como en ant

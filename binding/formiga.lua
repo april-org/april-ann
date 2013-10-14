@@ -1397,7 +1397,7 @@ function formiga.__link_main_program__ (t)
   for _,data in pairs(formiga.lua_dot_c_register_functions) do
     -- f:write('  '..funcname..'(L);\n')
     f:write('  luaL_requiref(L, "' .. data[1] .. '", ' .. data[2] .. ', 0);\n')
-    f:write('  lua_pop(L, 1);')
+    f:write('  lua_pop(L, 1);\n')
   end
   f:write('  if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {\n')
   for i,_ in ipairs(formiga.disclaimer_strings) do
@@ -2091,9 +2091,21 @@ function generate_package_register_file(package,package_register_functions)
   end
   f:write('  }\n')
   f:write('  lua_pop(L,2);\n')
-  f:write('  lua_newtable(L);\n')
-  f:write('  lua_pushstring(L, "' .. package.name:upper() .. '");\n')
-  f:write('  lua_pushboolean(L, 1);\n')
+  local tokens = string.tokenize(package.name, ".")
+  f:write('  lua_getglobal(L, "' .. tokens[1] .. '");\n')
+  for i=2,#tokens do
+    f:write('  lua_getfield(L, -1, "' .. tokens[i] .. '");\n')
+    f:write('  lua_remove(L, -2);\n')
+  end
+  f:write('  if (lua_isnil(L, -1)) {\n')
+  f:write('    lua_pop(L, 1);\n')
+  f:write('    lua_newtable(L);\n')
+  f:write('  }\n')
+  f:write('  lua_pushstring(L, "_VERSION");\n')
+  f:write('  lua_pushstring(L, "' ..  (package.version or "none") .. '");\n')
+  f:write('  lua_rawset(L, -3);\n')
+  f:write('  lua_pushstring(L, "_NAME");\n')
+  f:write('  lua_pushstring(L, "' .. package.name .. '");\n')
   f:write('  lua_rawset(L, -3);\n')
   f:write('  return 1;\n')
   --  f:write('  return 0;\n')

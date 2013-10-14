@@ -4,6 +4,11 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Changed package `sdae` to `ann.autoencoders`.
+- Changed package `loss_functions` to `ann.loss`.
+- Splitted `mathcore` package into `mathcore` and `complex` packages.
+- Renamed `math` package to `mathcore` to avoid the collision with Lua standard
+  math library.
 - April-ANN is deployed as a standalone executable and as a shared library for
   Lua 5.2.
 - Added `matrix.abs`, `matrix.tan`, `matrix.atan`, `matrix.atanh`, `matrix.sinh`,
@@ -12,7 +17,7 @@ Master branch unstable release
   the method didn't works when the matrix was a sub-matrix (slice) of other
   matrix.
 - Added `matrix.join` method.
-- Added PCA-GS algorithm for efficient computation of PCA (iterative algorithm),
+- Added GS-PCA algorithm for efficient computation of PCA (iterative algorithm),
   `stats.iterative_pca` Lua function.
 - Added `fromMMap` and `toMMap` for `matrix` class, currently only with floats.
 - Added basic MapReduce implementation in Lua.

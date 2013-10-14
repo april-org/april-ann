@@ -1,6 +1,6 @@
- package{ name = "sdae",
+ package{ name = "ann.autoencoders",
    version = "1.0",
-   depends = { "ann_base", "dataset", "matrix", "util" },
+   depends = { "ann", "dataset", "matrix", "util", "trainable" },
    keywords = { "Stacked Denoising Auto-Encoders" },
    description = "Implements a LUA function for training Stacked Denoising Auto-Encoers",
    -- targets como en ant

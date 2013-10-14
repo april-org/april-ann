@@ -26,7 +26,7 @@
 #include <cmath> // para isfinite
 #include "luabindutil.h"
 #include "luabindmacros.h"
-#include "bind_math.h"
+#include "bind_complex.h"
 
 #define FUNCTION_NAME "read_vector"
 static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
