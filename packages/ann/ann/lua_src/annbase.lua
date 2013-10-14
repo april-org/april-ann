@@ -523,8 +523,7 @@ april_set_doc("ann.components.base.set_option",
 		  {
 		    "This method changes the value of an option.",
 		    "Not all components implement the same options.",
-		    "Implemented options are: learning_rate, momentum,",
-		    "weight_decay, max_norm_penalty, dropout_factor, and",
+		    "Implemented options are: dropout_factor, and",
 		    "dropout_seed.",
 		  },
 		params = {

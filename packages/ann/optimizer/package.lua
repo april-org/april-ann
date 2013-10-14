@@ -1,6 +1,6 @@
- package{ name = "optimizer",
+ package{ name = "ann.optimizer",
    version = "1.0",
-   depends = { "util", "ann_base", "matrix" },
+   depends = { "util", "ann", "matrix" },
    keywords = { "ANN optimization algorithms" },
    description = "",
    -- targets como en ant

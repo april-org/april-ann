@@ -10,6 +10,7 @@ trainer:randomize_weights{
 trainer:set_option("learning_rate", 8.0)
 trainer:set_option("momentum",      0.5)
 trainer:set_option("weight_decay",  1e-05)
+trainer:set_layerwise_option("b.*", "weight_decay", 0.0)
 
 m_xor = matrix.fromString[[
     4 3
