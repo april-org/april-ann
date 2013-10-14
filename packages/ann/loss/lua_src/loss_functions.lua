@@ -28,14 +28,28 @@ april_set_doc("ann.loss.__base__",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.__base__.loss",
+april_set_doc("ann.loss.__base__.accum_loss",
 	      {
 		class="method",
-		summary="Computes the loss between two tokens (input and target)",
+		summary="Receives a loss matrix and accumulates it",
+		params={
+		  "The loss matrix computed by compute_loss method.",
+		},
+		outputs = {
+		  "The given loss matrix",
+		}
+	      })
+
+-------------------------------------------------------------------
+
+april_set_doc("ann.loss.__base__.compute_loss",
+	      {
+		class="method",
+		summary="Computes the loss between two tokens (input and target), but doesn't accumulate it",
 		description={
 		  "The loss is computed for a given input and target tokens.",
 		  "This method returns a matrix with the loss for every given pair of patterns,",
-		  "and accumulates the loss in its internal state.",
+		  "but it is not accumulated. Call to accum_loss to accumulate it to the internal state.",
 		},
 		params={
 		  "Input token",

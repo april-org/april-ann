@@ -35,7 +35,6 @@ namespace ANN {
     Connections *bias_vector;
     MatrixFloat *bias_matrix; // rewrapping of bias_vector matrix to fits at
 			      // input window sizes
-    unsigned int num_updates_from_last_prune;
 
     /// The number of convolutions computed during last forward
     int number_input_windows;
@@ -47,19 +46,12 @@ namespace ANN {
     int *window_step;
     int *window_num_steps;
     
-    /// learning parameters
-    float learning_rate, momentum;
-    
     void initializeArrays(const int *input_dims);
     MatrixFloat *prepareBiasBunch();
 
-    void computeBP(MatrixFloat *weights_mat,
-		   MatrixFloat *error_mat,
-		   const float alpha);
-    
   protected:
 
-    virtual void computeGradients(MatrixFloat*& weight_grads);
+    virtual void computeGradients(MatrixFloat*& grads_mat);
 
   public:
     ConvolutionBiasANNComponent(int input_num_dims,
@@ -73,21 +65,13 @@ namespace ANN {
     virtual Token *getErrorOutput() { return error; }
     virtual Token *doForward(Token* input, bool during_training);
     virtual Token *doBackprop(Token *input_error);
-    virtual void   doUpdate();
     virtual void   reset();
     virtual ANNComponent *clone();
-    virtual void setOption(const char *name, double value);
-    virtual bool hasOption(const char *name);
-    virtual double getOption(const char *name);
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
 		       hash<string,Connections*> &weights_dict,
 		       hash<string,ANNComponent*> &components_dict);
     virtual void copyWeights(hash<string,Connections*> &weights_dict);
-    virtual void resetConnections() {
-      if (bias_vector) bias_vector->reset();
-    }
-
     virtual char *toLuaString();
 
   };

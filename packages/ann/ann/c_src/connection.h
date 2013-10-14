@@ -53,12 +53,8 @@ namespace ANN {
   protected:
     MatrixFloat *weights;
     MatrixFloat *prev_weights;
-    // contador de referencias
-    unsigned int num_references;
-    /// numero de veces que se ha llamado al metodo
-    /// update_weights_call, se inicia a 0 cuando este valor llega a
-    /// getNumReferences()
-    unsigned int update_weights_calls;
+    // Counts the number of ANN components which shares this weight matrices
+    unsigned int shared_count;
     
   public:
     static const double weightnearzero;
@@ -67,15 +63,26 @@ namespace ANN {
 		const MatrixFloat *w=0, const MatrixFloat *oldw=0);
     ~Connections();
     
-    void reset() {
-      num_references       = 0;
-      update_weights_calls = 0;
+    // This method must be executed during the forward step
+    void resetSharedCount() {
+      shared_count = 0;
     }
     
-    // contamos el numero de veces que nos referencian, asi sabemos si
-    // la conexion es compartida por mas de una accion
-    void         countReference();
-    unsigned int getNumReferences() const;
+    // This method must be executed during the backprop step
+    void addToSharedCount(unsigned int count=1) {
+      shared_count += count;
+    }
+
+    //
+    unsigned int getSharedCount() const {
+      if (shared_count == 0)
+	ERROR_EXIT(128, "Found ZERO in shared_count of connections, check that "
+		   "all ANN components are using properly resetSharedCount() "
+		   "and addToSharedCount(...) methods\n");
+      return shared_count;
+    }
+    
+    //
     unsigned int getInputSize()  const {
       return static_cast<unsigned int>(weights->getDimSize(1));
     }
@@ -89,15 +96,6 @@ namespace ANN {
       return static_cast<unsigned int>(weights->getDimSize(0));
     }
     
-    void         beginUpdate();
-    bool         endUpdate(); // return true when last update call
-    bool         isFirstUpdateCall();
-    void         computeMomentumOnPrevVector(float momentum,
-					     bool  use_cuda);
-    void         computeWeightDecayOnPrevVector(float c_weight_decay,
-						bool  use_cuda);
-    void         applyMaxNormPenalty(float max_norm_penalty);
-    void         copyToPrevVector(bool use_cuda);
     unsigned int size() const;
     void         pruneSubnormalAndCheckNormal();
     MatrixFloat *getPtr();
@@ -125,14 +123,12 @@ namespace ANN {
 			       unsigned int column_size);
     // para hacer copias
     Connections *clone();
-    
-    unsigned int getNumWeights() const {
-      return static_cast<unsigned int>(weights->size());
-    }
 
     void printDebug();
 
     char *toLuaString();
+    
+    void swap();
   };
 }
 #endif

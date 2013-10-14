@@ -78,11 +78,6 @@ namespace ANN {
     return aux_token;
   }
     
-  void StackANNComponent::doUpdate() {
-    for (unsigned int c=components.size(); c>0; --c)
-      components[c-1]->doUpdate();
-  }
-
   void StackANNComponent::reset() {
     for (unsigned int c=0; c<components.size(); ++c)
       components[c]->reset();

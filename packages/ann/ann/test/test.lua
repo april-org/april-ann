@@ -50,13 +50,14 @@ end
 -- print("#######################################################")
 -- print("# All All Test => stack, hyperplane and actf components#")
 net_component=ann.mlp.all_all.generate("2 inputs 2 tanh 1 log_logistic")
-net_component:set_option("learning_rate", learning_rate)
-net_component:set_option("momentum",      momentum)
-net_component:set_option("weight_decay",  weight_decay)
 trainer=trainable.supervised_trainer(net_component,
 				     ann.loss.cross_entropy(1),
 				     bunch_size)
 trainer:build()
+trainer:set_option("learning_rate", learning_rate)
+trainer:set_option("momentum",      momentum)
+trainer:set_option("weight_decay",  weight_decay)
+trainer:set_layerwise_option("b.", "weight_decay", 0)
 trainer:randomize_weights{
   random = random1,
   inf    = -0.1,
@@ -88,12 +89,12 @@ check_result(trainer, math.exp,
 --print("#######################################################")
 --print("# All All Test  with replacement                      #")
 net_component=ann.mlp.all_all.generate("2 inputs 2 tanh 1 log_logistic")
-net_component:set_option("learning_rate", learning_rate)
-net_component:set_option("momentum",      momentum)
-net_component:set_option("weight_decay",  weight_decay)
 trainer=trainable.supervised_trainer(net_component,
 				     ann.loss.cross_entropy(1),
 				     bunch_size)
+trainer:set_option("learning_rate", learning_rate)
+trainer:set_option("momentum",      momentum)
+trainer:set_option("weight_decay",  weight_decay)
 trainer:build()
 trainer:randomize_weights{
   random = random1,
@@ -131,12 +132,12 @@ check_result(trainer, math.exp,
 --print("#######################################################")
 --print("# All All Test  with distribution                     #")
 net_component=ann.mlp.all_all.generate("2 inputs 2 tanh 1 log_logistic")
-net_component:set_option("learning_rate", learning_rate)
-net_component:set_option("momentum",      momentum)
-net_component:set_option("weight_decay",  weight_decay)
 trainer=trainable.supervised_trainer(net_component,
 				     ann.loss.cross_entropy(1),
 				     bunch_size)
+trainer:set_option("learning_rate", learning_rate)
+trainer:set_option("momentum",      momentum)
+trainer:set_option("weight_decay",  weight_decay)
 trainer:build()
 trainer:randomize_weights{
   random = random1,
@@ -190,12 +191,12 @@ join:add( ann.components.base{ size=2 } )
 net_component:push( ann.components.hyperplane{ input=4, output=1 })
 net_component:push( ann.components.actf.log_logistic() )
 
-net_component:set_option("learning_rate", learning_rate)
-net_component:set_option("momentum",      momentum)
-net_component:set_option("weight_decay",  weight_decay)
 trainer=trainable.supervised_trainer(net_component,
 				     ann.loss.cross_entropy(1),
 				     bunch_size)
+trainer:set_option("learning_rate", learning_rate)
+trainer:set_option("momentum",      momentum)
+trainer:set_option("weight_decay",  weight_decay)
 trainer:build()
 trainer:randomize_weights{
   random = random1,
@@ -346,12 +347,12 @@ for idx,actf in ipairs({"softsign", "softplus", "sin", "hardtanh", "linear"}) do
   --printf("# %s Test                                       #\n", actf)
   net_component=ann.mlp.all_all.generate(string.format("2 inputs 2 %s 2 %s 1 log_logistic",
 						       actf, actf))
-  net_component:set_option("learning_rate", learning_rate)
-  net_component:set_option("momentum",      momentum)
-  net_component:set_option("weight_decay",  weight_decay)
   trainer=trainable.supervised_trainer(net_component,
 				       ann.loss.cross_entropy(1),
 				       bunch_size)
+  trainer:set_option("learning_rate", learning_rate)
+  trainer:set_option("momentum",      momentum)
+  trainer:set_option("weight_decay",  weight_decay)
   trainer:build()
   trainer:randomize_weights{
     random = random1,

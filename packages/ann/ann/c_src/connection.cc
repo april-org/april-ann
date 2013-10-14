@@ -33,7 +33,7 @@ namespace ANN {
 			   const MatrixFloat *w, const MatrixFloat *oldw) :
     Referenced(),
     weights(0), prev_weights(0),
-    num_references(0), update_weights_calls(0) {
+    shared_count(0) {
     int dims[2] = { static_cast<int>(num_outputs),
 		    static_cast<int>(num_inputs) };
     weights      = new MatrixFloat(2, dims, CblasColMajor);
@@ -65,120 +65,10 @@ namespace ANN {
     return true;
   }
 
-  void Connections::countReference() {
-    ++num_references;
-  }
-    
-  unsigned int Connections::getNumReferences() const {
-    return num_references;
-  }
-    
-  void Connections::beginUpdate() {
-    ++update_weights_calls;
-  }
-    
-  bool Connections::endUpdate() {
-    // if it is the last call
-    if (update_weights_calls == num_references) {
-      // Swap(w, prev_w)
-      april_utils::swap(weights, prev_weights);
-      update_weights_calls = 0;
-      return true;
-    }
-    return false;
-  }
-    
-  bool Connections::isFirstUpdateCall() {
-    return update_weights_calls == 1;
-  }
-
-  void Connections::
-  computeMomentumOnPrevVector(float momentum, bool use_cuda) {
-#ifndef USE_CUDA
-    UNUSED_VARIABLE(use_cuda);
-#endif
-#ifdef USE_CUDA
-    // FIXME: adds a setUseCuda method to set CUDA flag of the matrices
-    weights->setUseCuda(use_cuda);
-    prev_weights->setUseCuda(use_cuda);
-#endif
-    // momentum learning rule
-    // prev_w[i,j] = momentum * (w[i,j] - prev_w[i,j])
-    //
-    // but this method computes: first the complementary with saxpy:
-    // prev_w[i,j] = prev_w[i,j] - 1.0f * w[i,j]
-    prev_weights->axpy(-1.0f, weights);
-    // second apply momentum with sscal:
-    // prev_w[i,j] = -momentum * prev_w[i,j] = -momentum*(prev_w[i,j] - w[i,j])
-    prev_weights->scal(-momentum);
-  }
-  
-  void Connections::
-  computeWeightDecayOnPrevVector(float c_weight_decay, bool use_cuda) {
-#ifndef USE_CUDA
-    UNUSED_VARIABLE(use_cuda);
-#endif
-#ifdef USE_CUDA
-    // FIXME: adds a setUseCuda method to set CUDA flag of the matrices
-    weights->setUseCuda(use_cuda);
-    prev_weights->setUseCuda(use_cuda);
-#endif
-    // applies weight decay
-    // prev_w[i,j] = c_weight_decay * w[i,j] + prev_w[i,j]
-    //
-    prev_weights->axpy(c_weight_decay, weights);
-  }
-
-  void Connections::applyMaxNormPenalty(float max_norm_penalty) {
-    MatrixFloat::sliding_window window(weights, 0, 0, 0, 0, 0);
-    MatrixFloat::sliding_window window_prev(prev_weights, 0, 0, 0, 0, 0);
-    MatrixFloat *submat = window.getMatrix();
-    MatrixFloat *submat_prev = window_prev.getMatrix();
-    IncRef(submat);
-    IncRef(submat_prev);
-    while(!window.isEnd()) {
-      window.getMatrix(submat);
-      float norm2 = submat->norm2();
-      /*
-	april_assert(norm2 < 10000.0f);
-	if (norm2 > 10000.0f)
-	ERROR_EXIT(128, "WOWOWOW\n");
-      */
-      if (norm2 > max_norm_penalty) {
-	window_prev.getMatrix(submat_prev);
-	float scal_factor = max_norm_penalty/norm2;
-	submat->scal(scal_factor);
-	submat_prev->scal(scal_factor);
-	/*
-	  if (norm2 > 10000.0f)
-	  for (MatrixFloat::iterator it(submat->begin()); it!=submat->end(); ++it) {
-	  printf("%d %f\n", it.getIdx(), *it);
-	  }
-	*/
-      }
-      window.next();
-      window_prev.next();
-    }
-    DecRef(submat);
-    DecRef(submat_prev);
-  }
-
   unsigned int Connections::size() const {
     return weights->size();
   }
     
-  void Connections::copyToPrevVector(bool use_cuda) {
-#ifndef USE_CUDA
-    UNUSED_VARIABLE(use_cuda);
-#endif
-#ifdef USE_CUDA
-    // FIXME: adds a setUseCuda method to set CUDA flag of the matrices
-    weights->setUseCuda(use_cuda);
-    prev_weights->setUseCuda(use_cuda);
-#endif
-    prev_weights->copy(weights);
-  }
-  
   void Connections::pruneSubnormalAndCheckNormal() {
     float *w = weights->getRawDataAccess()->getPPALForReadAndWrite();
     if (!april_utils::check_floats(w, weights->size())) {
@@ -319,9 +209,8 @@ namespace ANN {
   void Connections::printDebug() {
     const int num_outputs = weights->getDimSize(0);
     const int num_inputs  = weights->getDimSize(1);
-    printf ("Connections %p, input=%d, output=%d, num_refs=%d, calls=%d\n",
-	    this, num_inputs, num_outputs, num_references,
-	    update_weights_calls);
+    printf ("Connections %p, input=%d, output=%d, shared_count=%d\n",
+	    this, num_inputs, num_outputs, shared_count);
     for (MatrixFloat::iterator w_it(weights->begin()); w_it!=weights->end();
 	 ++w_it) 
       printf("%f ", *w_it);
@@ -345,4 +234,9 @@ namespace ANN {
     delete[] oldw;
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
+
+  void Connections::swap() {
+    april_utils::swap(weights, prev_weights);
+  }
+
 }

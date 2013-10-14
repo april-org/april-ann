@@ -35,23 +35,14 @@ namespace ANN {
     Token            *input;
     TokenMatrixFloat *error_input, *output, *error_output;
     Connections *weights_matrix;
-    unsigned int num_updates_from_last_prune;
     bool sparse_input;
     
     /// learning parameters
-    float learning_rate, momentum, weight_decay, c_weight_decay;
-    float max_norm_penalty;
     CBLAS_TRANSPOSE transpose_weights;
     
-    void computeBP(MatrixFloat *weights_mat,
-		   Token *input_token,
-		   MatrixFloat *error_input_mat,
-		   const float alpha,
-		   const float beta);
-
   protected:
 
-    virtual void computeGradients(MatrixFloat*& weight_grads);
+    virtual void computeGradients(MatrixFloat*& grads_mat);
 
   public:
     DotProductANNComponent(const char *name=0, const char *weights_name=0,
@@ -65,21 +56,14 @@ namespace ANN {
     virtual Token *getErrorOutput() { return error_output; }
     virtual Token *doForward(Token* input, bool during_training);
     virtual Token *doBackprop(Token *input_error);
-    virtual void   doUpdate();
     virtual void   reset();
     virtual ANNComponent *clone();
-    virtual void setOption(const char *name, double value);
-    virtual bool hasOption(const char *name);
-    virtual double getOption(const char *name);
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
 		       hash<string,Connections*> &weights_dict,
 		       hash<string,ANNComponent*> &components_dict);
     virtual void copyWeights(hash<string,Connections*> &weights_dict);
-    virtual void resetConnections() {
-      if (weights_matrix) weights_matrix->reset();
-    }
-
+    
     virtual char *toLuaString();
     
     bool transposed() { return transpose_weights == CblasTrans; }

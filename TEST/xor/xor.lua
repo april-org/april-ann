@@ -39,10 +39,10 @@ end
 -----------------------------------------------------------
 
 net_component=ann.mlp.all_all.generate("2 inputs 2 logistic 1 logistic")
-net_component:set_option("learning_rate", learning_rate)
-net_component:set_option("momentum",      momentum)
-net_component:set_option("weight_decay",  weight_decay)
 trainer=trainable.supervised_trainer(net_component)
+trainer:set_option("learning_rate", learning_rate)
+trainer:set_option("momentum",      momentum)
+trainer:set_option("weight_decay",  weight_decay)
 trainer:build()
 trainer:set_loss_function(ann.loss.mse(net_component:get_output_size()))
 load_initial_weights(trainer.weights_table)

@@ -86,14 +86,11 @@ namespace ANN {
     output(0),
     bias_vector(0),
     bias_matrix(0),
-    num_updates_from_last_prune(0),
     hidden_size(num_output_planes),
     num_dims(num_dims),
     window_size(new int[num_dims+1]),
     window_step(new int[num_dims+1]),
-    window_num_steps(new int[num_dims+1]),
-    learning_rate(-1.0f),
-    momentum(0.0f) {
+    window_num_steps(new int[num_dims+1]) {
     if (bias_name == 0) generateDefaultWeightsName(this->weights_name, "b");
     window_size[1]     = static_cast<int>(hidden_size);
     window_step[0]     = 1;
@@ -179,6 +176,7 @@ namespace ANN {
     DecRef(input_w);
     DecRef(output_w);
     DecRef(bias_matrix);
+    //
     return output;
   }
   
@@ -197,63 +195,24 @@ namespace ANN {
 #ifdef USE_CUDA
     error_mat->setUseCuda(use_cuda);
 #endif
+    //
     return error;
   }
      
-  // The ConvolutionBiasANNComponent
-  void ConvolutionBiasANNComponent::doUpdate() {
-    april_assert(learning_rate > 0.0f &&
-	   "Learning rate needs to be fixed with setOption method!!!");
-    
-    // Foces weights_matrix to update internal counts for a backward step
-    bias_vector->beginUpdate();
-    
-    MatrixFloat *prev_bias_ptr = bias_vector->getPrevPtr();
-    MatrixFloat *error_mat     = error->getMatrix();
-    
-    // BIAS MOMENTUM
-    if (bias_vector->isFirstUpdateCall()) {
-      if (momentum > 0.0f) {
-        // prev_w[i,j] = momentum * (w[i,j] - prev_w[i,j])
-        bias_vector->computeMomentumOnPrevVector(momentum, use_cuda);
-        bias_vector->computeWeightDecayOnPrevVector(1.0f,  use_cuda);
-      }
-      else bias_vector->copyToPrevVector(use_cuda);
-    } // if (bias_vector->needsToComputeMomentum()) {
-    
-    unsigned int bunch_size = error_mat->getDimSize(0);
-    // backprop learning rule:
-    // PREV_W = alpha * ERRORS + PREV_W
-    const unsigned int references = bias_vector->getNumReferences();
-    april_assert(references > 0 && "Found 0 references of weights matrix");
-    // prev_w[i,j] = -learning_rate*1/sqrt(N*bsize) * ERROR_INPUT[j] + prev_w[i,j]
-    const float norm_learn_rate =
-      -(1.0f/sqrtf(static_cast<float>(references*bunch_size*number_input_windows))) *
-      learning_rate;
-    
-    // CONVOLUTION OVER number_input_windows
-    computeBP(prev_bias_ptr, error_mat, norm_learn_rate);
-    
-    // Forces to update counts and swap vectors if necessary at this backward
-    // step
-    if (bias_vector->endUpdate()) {
-      ++num_updates_from_last_prune;
-      if (num_updates_from_last_prune > MAX_UPDATES_WITHOUT_PRUNE) {
-	num_updates_from_last_prune = 0;
-	bias_vector->pruneSubnormalAndCheckNormal();
-      }
+  void ConvolutionBiasANNComponent::computeGradients(MatrixFloat *&grads_mat) {
+    // reset shared counter
+    bias_vector->addToSharedCount(number_input_windows);
+    if (grads_mat == 0) {
+      grads_mat = bias_vector->getPtr()->cloneOnlyDims();
+      grads_mat->zeros();
     }
-  }
-
-  void ConvolutionBiasANNComponent::computeBP(MatrixFloat *weights_mat,
-					      MatrixFloat *error_mat,
-					      const float alpha) {
+    MatrixFloat *input_error_mat = error->getMatrix();
     // Prepare sliding windows to compute the convolution
-    MatrixFloat::sliding_window error_sw(error_mat, window_size,
+    MatrixFloat::sliding_window error_sw(input_error_mat, window_size,
 					 0,  // OFFSET
 					 window_step,
 					 window_num_steps);
-    unsigned int bunch_size = error_mat->getDimSize(0);
+    unsigned int bunch_size = input_error_mat->getDimSize(0);
     april_assert(error_sw.numWindows() == number_input_windows);
     MatrixFloat *error_w = error_sw.getMatrix();
     IncRef(error_w);
@@ -261,12 +220,12 @@ namespace ANN {
       error_sw.getMatrix(error_w);
       // BIAS UPDATE
       doAxpyLoop(hidden_size,
-		 alpha,
+		 1.0f,
 		 error_w->getRawDataAccess(),
 		 error_w->getStrideSize(1),
 		 error_w->getOffset(),
-		 weights_mat->getRawDataAccess(),
-		 weights_mat->getStrideSize(0),
+		 grads_mat->getRawDataAccess(),
+		 grads_mat->getStrideSize(0),
 		 0,
 		 bunch_size,
 		 error_w->getStrideSize(0), 0,
@@ -278,17 +237,6 @@ namespace ANN {
     DecRef(error_w);
   }
 
-  void ConvolutionBiasANNComponent::computeGradients(MatrixFloat*& weight_grads) {
-    if (weight_grads == 0) {
-      weight_grads = bias_vector->getPtr()->cloneOnlyDims();
-      weight_grads->zeros();
-    }
-    MatrixFloat *input_error_mat = error->getMatrix();
-    unsigned int bunch_size = input_error_mat->getDimSize(0)*number_input_windows;
-    computeBP(weight_grads, error->getMatrix(), 1.0f/bunch_size);
-  }
-
-  
   void ConvolutionBiasANNComponent::reset() {
     if (input)        DecRef(input);
     if (error)        DecRef(error);
@@ -296,6 +244,8 @@ namespace ANN {
     input	 = 0;
     error 	 = 0;
     output	 = 0;
+    // reset shared counter
+    bias_vector->resetSharedCount();
   }
   
   ANNComponent *ConvolutionBiasANNComponent::clone() {
@@ -304,29 +254,9 @@ namespace ANN {
 				  name.c_str(), weights_name.c_str());
     component->input_size     = input_size;
     component->output_size    = output_size;
-    component->learning_rate  = learning_rate;
-    component->momentum       = momentum;
     return component;
   }
 
-  void ConvolutionBiasANNComponent::setOption(const char *name, double value) {
-    mSetOption(LEARNING_RATE_STRING, learning_rate);
-    mSetOption(MOMENTUM_STRING,      momentum);
-    ANNComponent::setOption(name, value);
-  }
-  
-  bool ConvolutionBiasANNComponent::hasOption(const char *name) {
-    mHasOption(LEARNING_RATE_STRING);
-    mHasOption(MOMENTUM_STRING);
-    return false;
-  }
-  
-  double ConvolutionBiasANNComponent::getOption(const char *name) {
-    mGetOption(LEARNING_RATE_STRING, learning_rate);
-    mGetOption(MOMENTUM_STRING, momentum);
-    return ANNComponent::getOption(name);
-  }
-  
   void ConvolutionBiasANNComponent::build(unsigned int _input_size,
 					  unsigned int _output_size,
 					  hash<string,Connections*> &weights_dict,
@@ -348,7 +278,6 @@ namespace ANN {
       }
       b = bias_vector;
     }
-    bias_vector->countReference();
   }
 
   void ConvolutionBiasANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {

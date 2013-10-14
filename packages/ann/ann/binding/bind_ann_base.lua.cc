@@ -138,17 +138,32 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD Connections swap
+{
+  obj->swap();
+}
+//BIND_END
+
+//BIND_METHOD Connections get_shared_count
+{
+  LUABIND_RETURN(uint, obj->getSharedCount());
+}
+//BIND_END
+
+//BIND_METHOD Connections set_shared_count
+{
+  unsigned int count;
+  LUABIND_GET_PARAMETER(1,uint,count);
+  obj->resetSharedCount();
+  obj->addToSharedCount(count);
+}
+//BIND_END
+
 //BIND_METHOD Connections to_lua_string
 {
   char *str = obj->toLuaString();
   LUABIND_RETURN(string, str);
   delete[] str;
-}
-//BIND_END
-
-//BIND_METHOD Connections scale
-{
-  LUABIND_ERROR("Deprecated!!! use matrix() and scal() on the matrix object");
 }
 //BIND_END
 
@@ -169,6 +184,12 @@ using namespace ANN;
 				       obj->getNumInputs());
 
   LUABIND_RETURN(uint, obj->loadWeights(w, oldw, first_pos, column_size));
+}
+//BIND_END
+
+//BIND_METHOD Connections prune_subnormal_and_check_normal
+{
+  obj->pruneSubnormalAndCheckNormal();
 }
 //BIND_END
 
@@ -324,12 +345,6 @@ using namespace ANN;
 }
 //BIND_END
 
-//BIND_METHOD ANNComponent reset_connections
-{
-  obj->resetConnections();
-}
-//BIND_END
-
 //BIND_METHOD ANNComponent debug_info
 {
   obj->debugInfo();
@@ -459,12 +474,6 @@ using namespace ANN;
 }
 //BIND_END
 
-//BIND_METHOD ANNComponent update
-{
-  obj->doUpdate();
-}
-//BIND_END
-
 //BIND_METHOD ANNComponent reset
 {
   obj->reset();
@@ -473,7 +482,34 @@ using namespace ANN;
 
 //BIND_METHOD ANNComponent compute_gradients
 {
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
   hash<string,MatrixFloat*> weight_grads_dict;
+  if (argn == 1) {
+    if (lua_istable(L, 1)) {
+      lua_pushvalue(L, 1);
+      // stack now contains: -1 => table
+      lua_pushnil(L);
+      // stack now contains: -1 => nil; -2 => table
+      while (lua_next(L, -2)) {
+	// copy the key so that lua_tostring does not modify the original
+	lua_pushvalue(L, -2);
+	// stack now contains: -1 => value; -2 => key; -3 => table
+	string key(lua_tostring(L, -1));
+	// stack now contains: -1 => key; -2 => value; -3 => key; -4 => table
+	MatrixFloat *value     = lua_toMatrixFloat(L, -2);
+	weight_grads_dict[key] = value;
+	// pop value + copy of key, leaving original key
+	lua_pop(L, 2);
+	// stack now contains: -1 => key; -2 => table
+      }
+      // stack now contains: -1 => table (when lua_next returns 0 it pops the key
+      // but does not push anything.)
+    }
+    else if (!lua_isnil(L, 1))
+      LUABIND_ERROR("Expected a table with a dictionary of weights matrices");
+  }
+  //
   obj->computeAllGradients(weight_grads_dict);
   pushHashTableInLuaStack(L, weight_grads_dict, lua_pushMatrixFloat);
   LUABIND_RETURN_FROM_STACK(-1);
