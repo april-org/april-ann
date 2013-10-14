@@ -122,7 +122,12 @@ namespace ANN {
 				 unsigned int _output_size,
 				 hash<string,Connections*> &weights_dict,
 				 hash<string,ANNComponent*> &components_dict) {
-    ANNComponent::build(_input_size, _output_size,
+    unsigned int sz = 1;
+    for (int i=1; i<this->n; ++i) sz *= rewrap_dims[i];
+    if (_output_size != 0 && _output_size != sz)
+      ERROR_EXIT2(256, "Incorrect output size, expected %d, found %d\n",
+		  sz, _output_size);
+    ANNComponent::build(_input_size, sz,
 			weights_dict, components_dict);
   }
   
