@@ -164,7 +164,7 @@ function sgd_methods:execute(eval, cnn_table)
     --
     if (wd > 0.0 or mp > -1.0) and w:dim(2) == 1 then
       fprintf(io.stderr,
-	      "# WARNING!!! Possible weight decay > 0 in bias connection: %s\n",
+	      "# WARNING!!! Possible weight_decay or max_norm_penalty > 0 in bias connection: %s\n",
 	      cname)
     end
     --
