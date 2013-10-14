@@ -1,6 +1,6 @@
 package{ name = "tokens",
    version = "1.0",
-   depends = { "util", "math", "matrix" },
+   depends = { "util", "mathcore", "matrix" },
    keywords = { },
    description = "",
    -- targets como en ant

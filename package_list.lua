@@ -8,7 +8,7 @@ return {
   "random",
   "cmdOpt",
   "profiler",
-  "math",
+  "mathcore",
   "gzio",
   "matlab",
   "stats.MI",
@@ -17,10 +17,10 @@ return {
   "trainable",
   -- "function_interface",
   -- NEURAL NETWORKS
-  "ann_base",
-  "loss_functions",
+  "ann",
+  "ann.loss",
   "trainable",
-  "sdae",
+  "ann.autoencoders",
 
   -- LANGUAGE MODELS
   --  "fnnlm",

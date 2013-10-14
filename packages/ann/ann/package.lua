@@ -1,8 +1,8 @@
- package{ name = "loss_functions",
+ package{ name = "ann",
    version = "1.0",
-   depends = { "util", "tokens", "math", "matrix" },
-   keywords = { "Loss functions ANNs" },
-   description = "Define loss functions for gradient descent ANN training",
+   depends = { "util", "tokens", "random", "matrix" },
+   keywords = { "ANN interfaces" },
+   description = "Define ANNs classes and interfaces",
    -- targets como en ant
    target{
      name = "init",
@@ -14,10 +14,19 @@
      delete{ dir = "include" },
    },
    target{
+     name = "test",
+     execute_script{
+       file={
+	 "test/test-components.lua",
+	 "test/test-digits.lua"
+       },
+     },
+   },
+   target{
      name = "provide",
      depends = "init",
      copy{ file= "c_src/*.h", dest_dir = "include" },
-     provide_bind{ file = "binding/bind_loss_functions.lua.cc", dest_dir = "include" }
+     provide_bind{ file = "binding/bind_ann_base.lua.cc", dest_dir = "include" }
    },
    target{
      name = "build",
@@ -33,7 +42,7 @@
        dest_dir = "build",
      },
      build_bind{
-        file = "binding/bind_loss_functions.lua.cc",
+        file = "binding/bind_ann_base.lua.cc",
         dest_dir = "build",
      }
    },
@@ -45,3 +54,5 @@
      },
    },
  }
+ 
+ 
