@@ -46,14 +46,23 @@
 #include "list.h"
 #endif
 
-#define PPAL_MASK  0x01
-#define GPU_MASK   0x02
-#define CONST_MASK 0x04
-#define ALLOC_MASK 0x08
-#define MMAP_MASK  0x16
+#define PPAL_MASK  0x01 // bit 0 = 1
+#define GPU_MASK   0x02 // bit 1 = 2
+#define CONST_MASK 0x04 // bit 2 = 4
+#define ALLOC_MASK 0x08 // bit 3 = 8
+#define MMAP_MASK  0x10 // bit 4 = 16
+
+class GPUMirroredMemoryBlockBase : public Referenced {
+protected:
+  static bool use_mmap_allocation;
+public:
+  GPUMirroredMemoryBlockBase() : Referenced() { }
+  virtual ~GPUMirroredMemoryBlockBase() { }
+  static void setUseMMapAllocation(bool v) { use_mmap_allocation = v; }
+};
 
 template<typename T>
-class GPUMirroredMemoryBlock : public Referenced {
+class GPUMirroredMemoryBlock : public GPUMirroredMemoryBlockBase {
 #ifndef NO_POOL
   const static size_t MAX_POOL_LIST_SIZE = 100*1024*1024; // 100 Megabytes
   static size_t pool_size;
@@ -83,7 +92,7 @@ class GPUMirroredMemoryBlock : public Referenced {
   CUdeviceptr mem_gpu;
   bool    pinned;
 #endif
-  char    status; // bit 0 CPU, bit 1 GPU, bit 2 CONST, bit 3 ALLOCATED
+  unsigned char status; // bit 0 CPU, bit 1 GPU, bit 2 CONST, bit 3 ALLOCATED
   april_utils::MMappedDataReader *mmapped_data;
 
   void setConst() {
@@ -261,7 +270,7 @@ public:
 
 
   GPUMirroredMemoryBlock(unsigned int sz,
-			 T *mem) : Referenced(), size(sz),
+			 T *mem) : GPUMirroredMemoryBlockBase(), size(sz),
 				   mem_ppal(mem) {
     status = 0;
     mmapped_data = 0;
@@ -274,7 +283,7 @@ public:
   }
 
   GPUMirroredMemoryBlock(unsigned int sz,
-			 const T *mem) : Referenced(), size(sz),
+			 const T *mem) : GPUMirroredMemoryBlockBase(), size(sz),
 					 const_mem_ppal(mem) {
     status = 0;
     mmapped_data = 0;
@@ -289,7 +298,8 @@ public:
 
   // WARNING!!! the memory zone is not initialized by default
   GPUMirroredMemoryBlock(unsigned int sz,
-			 bool initialize=false) : Referenced(), size(sz) {
+			 bool initialize=false) : GPUMirroredMemoryBlockBase(),
+						  size(sz) {
     status = 0;
     mmapped_data = 0;
     setAllocated();
@@ -301,18 +311,32 @@ public:
 #endif
 #ifndef NO_POOL
     april_utils::list<T*> &l = pool_lists[size];
-    if (l.empty())
-      mem_ppal = aligned_malloc<T>(size);
+    if (l.empty()) {
+      if (!use_mmap_allocation) {
+	mem_ppal = aligned_malloc<T>(size);
+      }
+      else {
+	setMMapped();
+	mem_ppal = (T*)mmap(NULL, sz, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
+      }
+    }
     else {
       mem_ppal = *(l.begin());
       l.pop_front();
       pool_size -= size*sizeof(T);
     }
 #else
-    mem_ppal = aligned_malloc<T>(size);
+    if (!use_mmap_allocation) {
+      mem_ppal = aligned_malloc<T>(size);
+    }
+    else {
+      setMMapped();
+      mem_ppal = (T*)mmap(NULL, sz, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
+    }
 #endif
     if (initialize) for (unsigned int i=0; i<size; ++i) new(mem_ppal+i) T();
   }
+  
   ~GPUMirroredMemoryBlock() {
     // for (unsigned int i=0; i<size; ++i) mem_ppal[i].~T();
 #ifdef USE_CUDA
@@ -323,6 +347,30 @@ public:
     }
     else {
       if (isAllocated()) {
+	if (!isMMapped()) {
+#ifndef NO_POOL
+	  april_utils::list<T*> &l = pool_lists[size];
+	  if (pool_size < MAX_POOL_LIST_SIZE) {
+	    pool_size += size*sizeof(T);
+	    l.push_front(mem_ppal);
+	  }
+	  else aligned_free(mem_ppal);
+#else
+	  aligned_free(mem_ppal);
+#endif
+	}
+	else munmap(mem_ppal, size);
+      }
+    }
+    if (mem_gpu != 0) {
+      CUresult result;
+      result = cuMemFree(mem_gpu);
+      if (result != CUDA_SUCCESS)
+        ERROR_EXIT(163, "Could not free memory from device.\n");
+    }
+#else
+    if (isAllocated()) {
+      if (!isMMapped()) {
 #ifndef NO_POOL
 	april_utils::list<T*> &l = pool_lists[size];
 	if (pool_size < MAX_POOL_LIST_SIZE) {
@@ -334,28 +382,10 @@ public:
 	aligned_free(mem_ppal);
 #endif
       }
-    }
-    if (mem_gpu != 0) {
-      CUresult result;
-      result = cuMemFree(mem_gpu);
-      if (result != CUDA_SUCCESS)
-        ERROR_EXIT(163, "Could not free memory from device.\n");
-    }
-#else
-    if (isAllocated()) {
-#ifndef NO_POOL
-      april_utils::list<T*> &l = pool_lists[size];
-      if (pool_size < MAX_POOL_LIST_SIZE) {
-	pool_size += size*sizeof(T);
-	l.push_front(mem_ppal);
-      }
-      else aligned_free(mem_ppal);
-#else
-      aligned_free(mem_ppal);
-#endif
+      else munmap(mem_ppal, size);
     }
 #endif
-    if (isMMapped()) DecRef(mmapped_data);
+    if (isMMapped() && mmapped_data != 0) DecRef(mmapped_data);
   }
 
   unsigned int getSize() const { return size; }
@@ -482,6 +512,7 @@ public:
 
 // typedef for referring to float memory blocks
 typedef GPUMirroredMemoryBlock<float>    FloatGPUMirroredMemoryBlock;
+typedef GPUMirroredMemoryBlock<double>   DoubleGPUMirroredMemoryBlock;
 typedef GPUMirroredMemoryBlock<int>      IntGPUMirroredMemoryBlock;
 typedef GPUMirroredMemoryBlock<ComplexF> ComplexFGPUMirroredMemoryBlock;
 
