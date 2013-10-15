@@ -72,6 +72,7 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "copy_component.h"
 #include "select_component.h"
 #include "rewrap_component.h"
+#include "slice_component.h"
 #include "flatten_component.h"
 #include "gaussian_noise_component.h"
 #include "salt_and_pepper_component.h"
@@ -953,6 +954,53 @@ using namespace ANN;
 {
   LUABIND_RETURN(RewrapANNComponent,
 		 dynamic_cast<RewrapANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//              SliceANNComponent                 //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME SliceANNComponent ann.components.slice
+//BIND_CPP_CLASS    SliceANNComponent
+//BIND_SUBCLASS_OF  SliceANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR SliceANNComponent
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  const char *name=0;
+  int *size, *pos, n;
+  check_table_fields(L, 1, "name", "pos", "size", (const char *)0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  //
+  lua_getfield(L, 1, "pos");
+  if (!lua_istable(L, -1))
+    LUABIND_ERROR("Expected a table at field pos");
+  LUABIND_TABLE_GETN(-1, n);
+  pos = new int[n];
+  LUABIND_TABLE_TO_VECTOR_SUB1(-1, int, pos, n);
+  lua_pop(L, 1);
+  //
+  lua_getfield(L, 1, "size");
+  if (!lua_istable(L, -1))
+    LUABIND_ERROR("Expected a table at field size");
+  LUABIND_TABLE_GETN(-1, n);
+  size = new int[n];
+  LUABIND_TABLE_TO_VECTOR(-1, int, size, n);
+  lua_pop(L, 1);
+  //
+  obj = new SliceANNComponent(pos, size, n, name);
+  delete[] pos;
+  delete[] size;
+  LUABIND_RETURN(SliceANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD SliceANNComponent clone
+{
+  LUABIND_RETURN(SliceANNComponent,
+		 dynamic_cast<SliceANNComponent*>(obj->clone()));
 }
 //BIND_END
 

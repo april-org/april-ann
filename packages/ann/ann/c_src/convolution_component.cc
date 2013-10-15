@@ -63,7 +63,7 @@ namespace ANN {
     output_window_rewrap[0]    = input_dims[0];
     // AT CONSTRUCTOR: output_window_rewrap[1] = hidden_size;
     if (input_dims[input_planes_dim] != kernel_dims[input_planes_dim])
-      ERROR_EXIT7(128, "Input matrix dim %d must be equals to kernel dim %d,"
+      ERROR_EXIT7(128, "Input matrix dim %d must be equals to kernel dim %d, "
 		  "input_dims[%d]=%d, kernel_dims[%d]=%d [%s]\n",
 		  input_planes_dim, input_planes_dim,
 		  input_planes_dim, input_dims[input_planes_dim],
@@ -451,8 +451,8 @@ namespace ANN {
   char *ConvolutionANNComponent::toLuaString() {
     buffer_list buffer;
     buffer.printf("ann.components.convolution{ name='%s',weights='%s',"
-		  "n=%d, kernel={", name.c_str(), weights_name.c_str(),
-		  hidden_size);
+		  "n=%d, input_planes_dim=%d, kernel={", name.c_str(), weights_name.c_str(),
+		  hidden_size, input_planes_dim);
     for (int i=0; i<input_num_dims; ++i)
       buffer.printf("%d,", kernel_dims[i+1]);
     buffer.printf("}, step={");
