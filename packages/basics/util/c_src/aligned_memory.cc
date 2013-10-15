@@ -1,11 +1,10 @@
 /*
- * This file is part of the Neural Network modules of the APRIL toolkit (A
- * Pattern Recognizer In Lua).
+ * This file is part of APRIL-ANN toolkit (A
+ * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
- * Copyright 2012, Salvador España-Boquera, Adrian Palacios Corella, Francisco
- * Zamora-Martinez
+ * Copyright 2012, Salvador España-Boquera, Jorge Gorbe Moya, Francisco Zamora-Martinez
  *
- * The APRIL-MLP toolkit is free software; you can redistribute it and/or modify it
+ * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
  * published by the Free Software Foundation
  *
@@ -19,11 +18,5 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "gpu_mirrored_memory_block.h"
 
-bool GPUMirroredMemoryBlockBase::use_mmap_allocation = false;
-
-template class GPUMirroredMemoryBlock<float>;
-template class GPUMirroredMemoryBlock<double>;
-template class GPUMirroredMemoryBlock<int>;
-template class GPUMirroredMemoryBlock<ComplexF>;
+bool use_mmap_memory_allocation=false;
