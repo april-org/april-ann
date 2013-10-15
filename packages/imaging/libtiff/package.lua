@@ -1,6 +1,6 @@
  package{ name = "libtiff",
    version = "1.0",
-   depends = { "image", "util", "image_io" },
+   depends = { "Image", "util", "ImageIO" },
    keywords = { "libtiff" },
    description = "loads and saves TIFF images",
    link_libraries = { "tiff" },

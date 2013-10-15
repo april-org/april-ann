@@ -26,8 +26,8 @@ return {
   --  "fnnlm",
   
   -- IMAGE HANDLERS
-  "image",
-  "image_io",
+  "Image",
+  "ImageIO",
   "libpng",
   "median_filter",
   "image_metrics",

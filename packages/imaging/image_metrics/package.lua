@@ -1,6 +1,6 @@
  package{ name = "image_metrics",
    version = "1.0",
-   depends = { "dataset", "image" },
+   depends = { "dataset", "Image" },
    keywords = { "image", "f-measure", "mse" },
    description = "some metrics to measure image enhancement, cleaning or binarization",
    -- targets como en ant

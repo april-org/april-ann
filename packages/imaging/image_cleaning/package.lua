@@ -1,6 +1,6 @@
  package{ name = "image_cleaning",
    version = "1.0",
-   depends = { "dataset", "image" },
+   depends = { "dataset", "Image" },
    keywords = { "image", "cleaning", "tools" },
    description = "some util classes and functions to measure image enhancement, cleaning or binarization",
 

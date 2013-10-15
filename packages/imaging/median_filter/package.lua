@@ -1,6 +1,6 @@
  package{ name = "median_filter",
    version = "1.0",
-   depends = { "image" },
+   depends = { "Image" },
    keywords = { "image", "median filter" },
    description = "Filter of images represented as matrix using datasets",
    -- targets como en ant
