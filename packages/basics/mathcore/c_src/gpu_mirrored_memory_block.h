@@ -25,6 +25,11 @@
 // Define NO_POOL to avoid the use of a pool of pointers
 // #define NO_POOL
 
+extern "C" {
+#include <stdio.h>
+#include <errno.h>
+}
+
 #include "april_assert.h"
 #include "referenced.h"
 #include "complex_number.h"
@@ -318,6 +323,8 @@ public:
       else {
 	setMMapped();
 	mem_ppal = (T*)mmap(NULL, sz, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
+	if (mem_ppal == MAP_FAILED)
+	  ERROR_EXIT1(128, "Impossible to open required mmap memory: %s\n", strerror(errno));
       }
     }
     else {
@@ -332,6 +339,8 @@ public:
     else {
       setMMapped();
       mem_ppal = (T*)mmap(NULL, sz, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
+      if (mem_ppal == MAP_FAILED)
+	ERROR_EXIT1(128, "Impossible to open required mmap memory: %s\n", strerror(errno));
     }
 #endif
     if (initialize) for (unsigned int i=0; i<size; ++i) new(mem_ppal+i) T();
