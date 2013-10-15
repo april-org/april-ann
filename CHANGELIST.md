@@ -4,6 +4,8 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added `mathcore.set_mmap_allocation` function, which allows to forces the
+  use of mmap for `matrix` memory allocation.
 - Added `ann.components.slice`.
 - Changed package `sdae` to `ann.autoencoders`.
 - Changed package `loss_functions` to `ann.loss`.
