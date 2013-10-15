@@ -162,7 +162,7 @@ function sgd_methods:execute(eval, cnn_table)
     local cwd        = 1.0 - wd
     local mp         = self:get_option_of(cname, "max_norm_penalty") or -1.0
     --
-    if (wd > 0.0 or mp > -1.0) and w:dim(2) == 1 then
+    if (wd > 0.0 or mp > 0.0) and w:dim(2) == 1 then
       fprintf(io.stderr,
 	      "# WARNING!!! Possible weight_decay or max_norm_penalty > 0 in bias connection: %s\n",
 	      cname)
