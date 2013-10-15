@@ -1140,6 +1140,33 @@ april_set_doc("ann.components.rewrap.__call",
 
 ----------------------------------------------------------------------
 
+april_set_doc("ann.components.slice", {
+		class="class",
+		summary="A component which takes a slice of a matrix (see matrix.slice)",})
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.slice.__call",
+	      {
+		class="method",
+		summary="Constructor of the component slice (see matrix.slice)",
+		description = {
+		  "The name is generated automatically if non given.",
+		},
+		params={
+		  ["name"] = "A string with the given name [optional]",
+		  ["pos"] = {
+		    "A table with the coordinates of the slice.",
+		  },
+		  ["size"] = {
+		    "A table with the slice size.",
+		  }
+		},
+		outputs= { "An instance of ann.components.slice" }
+	      })
+
+----------------------------------------------------------------------
+
 april_set_doc("ann.components.gaussian_noise", {
 		class="class",
 		summary="A component which adds Gaussian noise to data",})

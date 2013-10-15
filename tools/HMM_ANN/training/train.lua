@@ -584,6 +584,7 @@ while em_iteration <= em.em_max_iterations do
   ann_table.trainer:set_option("weight_decay",     ann_table.weight_decay)
   ann_table.trainer:set_option("max_norm_penalty", ann_table.max_norm_penalty)
   ann_table.trainer:set_layerwise_option("b.*", "weight_decay", 0.0)
+  ann_table.trainer:set_layerwise_option("b.*", "max_norm_penalty", 0.0)
   if dropout > 0 then
     iterator(ipairs(dropout_list)):
     iterate(function(i,name)
@@ -610,12 +611,12 @@ while em_iteration <= em.em_max_iterations do
 	       "%.7f %10d %.7f  %.7f\n",
 	     em_iteration, t.current_epoch, totaltrain,
 	     t.train_error, t.validation_error, bestepoch,
-	     t.best_val_error, ann_table.thenet:get_option("learning_rate"))
+	     t.best_val_error, ann_table.trainer:get_option("learning_rate"))
       totaltrain = totaltrain + 1
       if (totaltrain > ann_table.num_epochs_first_lr and
 	    em_iteration == 1 and
 	    totaltrain % 10 == 1 and
-	  ann_table.thenet:get_option("learning_rate") > ann_table.learning_rate ) then
+	  ann_table.trainer:get_option("learning_rate") > ann_table.learning_rate ) then
 	ann_table.trainer:set_option("learning_rate",
 				     ann_table.trainer:get_option("learning_rate") - 0.001)
       end

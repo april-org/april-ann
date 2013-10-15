@@ -4,6 +4,7 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added `ann.components.slice`.
 - Changed package `sdae` to `ann.autoencoders`.
 - Changed package `loss_functions` to `ann.loss`.
 - Splitted `mathcore` package into `mathcore` and `complex` packages.
