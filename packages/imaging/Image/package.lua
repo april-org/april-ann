@@ -1,4 +1,4 @@
- package{ name = "image",
+ package{ name = "Image",
    version = "1.0",
    depends = { "util", "matrix", "affine_transform", "dataset" },
    keywords = { "image" },

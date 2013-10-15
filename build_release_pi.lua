@@ -2,7 +2,7 @@ dofile("binding/formiga.lua")
 formiga.build_dir = "build_release_pi"
 
 luapkg{
-  program_name = "april-ann.pi",
+  program_name = "april-ann",
   verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
   packages = dofile "package_list.pi.lua",
   version_flags = dofile "VERSION.lua",
@@ -114,6 +114,6 @@ formiga.os.execute("cp -f "..formiga.os.compose_dir(formiga.build_dir,"bin",form
                    .." "..formiga.os.compose_dir(arg[2], "bin", formiga.program_name))
 formiga.os.execute("cp -R "..formiga.os.compose_dir(formiga.build_dir,"lib")
                    .." "..arg[2])
-formiga.os.execute("cp -R "..formiga.os.compose_dir(formiga.build_dir,"include","april-ann.pi")
+formiga.os.execute("cp -R "..formiga.os.compose_dir(formiga.build_dir,"include","april-ann")
                    .." "..formiga.os.compose_dir(arg[2], "include"))
 

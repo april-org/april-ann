@@ -1,6 +1,6 @@
- package{ name = "image_io",
+ package{ name = "ImageIO",
    version = "1.0",
-   depends = { "image" },
+   depends = { "Image" },
    keywords = { "image reader, image" },
    description = "loads and saves RGB images",
    -- targets como en ant
