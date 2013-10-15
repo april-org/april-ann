@@ -25,8 +25,9 @@
 // Define NO_POOL to avoid the use of a pool of pointers
 // #define NO_POOL
 
+#include <cstring>
+#include <cstdio>
 extern "C" {
-#include <stdio.h>
 #include <errno.h>
 }
 
@@ -322,7 +323,9 @@ public:
       }
       else {
 	setMMapped();
-	mem_ppal = (T*)mmap(NULL, sz, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
+	mem_ppal = (T*)mmap(NULL, sz*sizeof(T),
+			    PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED,
+			    -1, 0);
 	if (mem_ppal == MAP_FAILED)
 	  ERROR_EXIT1(128, "Impossible to open required mmap memory: %s\n", strerror(errno));
       }
@@ -338,7 +341,9 @@ public:
     }
     else {
       setMMapped();
-      mem_ppal = (T*)mmap(NULL, sz, PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED, -1, 0);
+      mem_ppal = (T*)mmap(NULL, sz*sizeof(T),
+			  PROT_READ | PROT_WRITE, MAP_ANON | MAP_SHARED,
+			  -1, 0);
       if (mem_ppal == MAP_FAILED)
 	ERROR_EXIT1(128, "Impossible to open required mmap memory: %s\n", strerror(errno));
     }
@@ -368,7 +373,7 @@ public:
 	  aligned_free(mem_ppal);
 #endif
 	}
-	else munmap(mem_ppal, size);
+	else munmap(mem_ppal, size*sizeof(T));
       }
     }
     if (mem_gpu != 0) {
@@ -391,7 +396,7 @@ public:
 	aligned_free(mem_ppal);
 #endif
       }
-      else munmap(mem_ppal, size);
+      else munmap(mem_ppal, size*sizeof(T));
     }
 #endif
     if (isMMapped() && mmapped_data != 0) DecRef(mmapped_data);
