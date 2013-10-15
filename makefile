@@ -11,10 +11,13 @@ document:
 test-macosx: debug-macosx
 	lua build_debug_macosx.lua test
 
-test: test-mkl
+test: test-debug
 
 test-mkl: debug-mkl
 	lua build_mkl_debug.lua test
+
+test-debug: debug
+	lua build_debug.lua test
 
 #test:
 #	lua build_debug.lua test
@@ -33,6 +36,9 @@ release:
 
 release-cuda-mkl:
 	lua build_cuda_and_mkl_release.lua
+
+release-pi:
+	lua build_release_pi.lua
 
 debug-macosx:
 	lua build_debug_macosx.lua
