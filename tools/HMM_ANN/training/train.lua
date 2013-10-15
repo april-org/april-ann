@@ -11,7 +11,7 @@
 april_print_script_header(arg)
 
 dofile(string.get_path(arg[0]) .. "../utils.lua")
-optargs = dofile(string.get_path(arg[0]) .. "/cmdopt.lua")
+optargs,dropout_table = dofile(string.get_path(arg[0]) .. "/cmdopt.lua")
 
 table.unpack_on(optargs, _G)
 trainfile_mfc    = optargs.train_m
@@ -585,17 +585,16 @@ while em_iteration <= em.em_max_iterations do
   ann_table.trainer:set_option("max_norm_penalty", ann_table.max_norm_penalty)
   ann_table.trainer:set_layerwise_option("b.*", "weight_decay", 0.0)
   ann_table.trainer:set_layerwise_option("b.*", "max_norm_penalty", 0.0)
-  if dropout > 0 then
-    iterator(ipairs(dropout_list)):
-    iterate(function(i,name)
-	      return ann_table.trainer:iterate_components(name)
-	    end):
-    apply(function(cname,component)
-	    printf("# DROPOUT OF COMPONENT %s\n", cname)
-	    component:set_option("dropout_factor", dropout)
-	    component:set_option("dropout_seed",   dropout_seed)
-	  end)
-  end
+  --
+  iterator(ipairs(dropout_table)):
+  apply(function(i,data)
+	  iterator(ann_table.trainer:iterate_components(data.name)):
+	  apply(function(cname,c)
+		  printf("# DROPOUT OF COMPONENT %s = %f\n", cname, data.value)
+		  c:set_option("dropout_factor", data.value)
+		  c:set_option("dropout_seed",   dropout_seed)
+		end)
+	end)
   --------------------------------------
   -- ANN TRAINING (MAXIMIZATION STEP) --
   --------------------------------------
