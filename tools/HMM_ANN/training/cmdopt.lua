@@ -1,3 +1,7 @@
+dropout_table = {
+  layers = { }
+}
+
 cmdOptTest = cmdOpt{
   program_name = string.basename(arg[0]),
   argument_description = "",
@@ -275,12 +279,15 @@ cmdOptTest = cmdOpt{
   },
   {
     index_name = "dropout",
-    description = "Dropout value",
+    description = "Dropout: layer_name|||value",
     long ="dropout",
     argument="yes",
     mode="always",
-    default_value=0,
-    filter=tonumber,
+    default_value="",
+    action=function(name_and_value)
+      local name,value = name_and_value:match("^(.*)|||(.*)$")
+      table.insert(dropout_table, { name=name, value=value })
+    end,
   },
   {
     index_name = "dropout_seed",
@@ -290,15 +297,6 @@ cmdOptTest = cmdOpt{
     mode="always",
     default_value=82975,
     filter=tonumber,
-  },
-  {
-    index_name = "dropout_list",
-    description = "Dropout list of activations separated by commas (allows Lua regular expresions)",
-    long ="dropout-list",
-    argument="yes",
-    mode="always",
-    default_value="actf.*",
-    filter=function(str) return string.tokenize(str,",") end,
   },
   {
     index_name="rndw",
@@ -462,4 +460,4 @@ if optargs.defopt then
 end
 optargs = cmdOptTest:check_args(optargs, initial_values)
 
-return optargs
+return optargs,dropout_table
