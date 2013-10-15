@@ -118,7 +118,7 @@ if arg[1] ~= "document" and arg[1] ~= "test" then
 		       .." "..formiga.os.compose_dir(arg[2], "bin", formiga.program_name))
   formiga.os.execute("cp -R "..formiga.os.compose_dir(formiga.build_dir,"lib")
 		       .." "..arg[2])
-  formiga.os.execute("cp -R "..formiga.os.compose_dir(formiga.build_dir,"include","april")
+  formiga.os.execute("cp -R "..formiga.os.compose_dir(formiga.build_dir,"include","april-ann")
 		       .." "..formiga.os.compose_dir(arg[2], "include"))
 
 end
