@@ -1089,7 +1089,7 @@ function formiga.__luacode__ (t)
 			   thefile..".c",
 			   formiga.compiler.destination,
 			   thefile..".o",
-			   "-I lua/include/",
+			   formiga.compiler.include_dir.." lua/include/",
 			   table.concat(formiga.compiler.extra_flags, " "),
 			   table.concat(formiga.version_flags, " "),
 			 }, " ")
@@ -1235,9 +1235,10 @@ function formiga.__build_bind__ (t)
     command = {
       formiga.compiler.CPPcompiler,
       formiga.compiler.wall,
-      "-c",
+      formiga.compiler.compile_object,
       dest_cfile,
-      "-o", dest_objfile,
+      formiga.compiler.destination,
+      dest_objfile,
       table.concat(formiga.compiler.extra_flags, " "),
       table.concat(formiga.version_flags, " ")}
     local prop = t.target.package.properties
@@ -1249,7 +1250,7 @@ function formiga.__build_bind__ (t)
       formiga.os.compose_dir(formiga.os.cwd,"binding","c_src")
     for w in string.gmatch(formiga.expand_properties(id,prop),
 			   "[^"..formiga.os.SEPPATH.."]+") do
-      table.insert(command,"-I"..w) 
+      table.insert(command,formiga.compiler.include_dir..w) 
     end
 
     -- y anyadimos tb las de pkgconfig_flags
@@ -1258,11 +1259,11 @@ function formiga.__build_bind__ (t)
 
     if formiga.compiler.global_flags.debug == "yes" or
     formiga.expand_properties(t.debug,prop) == "yes" then
-      table.insert(command,"-g") 
+      table.insert(command, formiga.compiler.debug) 
     end
     if formiga.compiler.global_flags.optimization == "yes" or
     formiga.expand_properties(t.optimization,prop) == "yes" then
-      table.insert(command,"-O3")
+      table.insert(command, formiga.compiler.optimization)
     end
     otherflags = formiga.expand_properties(t.flags,prop) or ""
     if string.len(otherflags) > 0 then 
@@ -1273,11 +1274,11 @@ function formiga.__build_bind__ (t)
       for w in string.gmatch(formiga.expand_properties(directory,prop),
 			     "[^"..formiga.os.SEPPATH.."]+") do   
         local basedir = formiga.package_table[w].basedir
-        table.insert(command, "-I"..
+        table.insert(command, formiga.compiler.include_dir..
 		       formiga.os.compose_dir(formiga.global_properties.build_dir,
 					      basedir,
 					      "include"))
-        table.insert(command, "-I"..
+        table.insert(command, formiga.compiler.include_dir..
 		       formiga.os.compose_dir(formiga.global_properties.build_dir,
 					      basedir,
 					      "include", "binding"))
@@ -1467,7 +1468,7 @@ function formiga.__link_main_program__ (t)
 				 table.concat(formiga.version_flags,
 					      " "),
 				 pkgconfig_libs_list,
-				 ' -lm -I'..formiga.os.compose_dir(formiga.os.cwd,"lua","include")..' -I'..
+				 ' -lm '..formiga.compiler.include_dir..formiga.os.compose_dir(formiga.os.cwd,"lua","include")..' '.. formiga.compiler.include_dir ..
 				   formiga.lua_dot_c_path},
 			       " ")
   --
@@ -1503,7 +1504,7 @@ function formiga.__link_main_program__ (t)
 				 table.concat(formiga.version_flags,
 					      " "),
 				 pkgconfig_libs_list,
-				 ' -lm -I'..formiga.os.compose_dir(formiga.os.cwd,"lua","include")..' -I'..
+				 ' -lm '.. formiga.compiler.include_dir ..formiga.os.compose_dir(formiga.os.cwd,"lua","include")..' '.. formiga.compiler.include_dir ..
 				   formiga.lua_dot_c_path},
 			       " ")
   --
