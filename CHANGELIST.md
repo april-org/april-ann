@@ -4,6 +4,8 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added `matrix.map` and `matrix.contiguous` methods.
+- Solved bug at matrix iterators operator=.
 - Added `mathcore.set_mmap_allocation` function, which allows to forces the
   use of mmap for `matrix` memory allocation.
 - Added `ann.components.slice`.

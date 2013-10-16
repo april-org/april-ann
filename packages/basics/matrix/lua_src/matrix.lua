@@ -1129,6 +1129,44 @@ april_set_doc("matrix.inv",
 		outputs = { "The matrix inverse" },
 	      })
 
+april_set_doc("matrix.contiguous",
+	      {
+		class = "method",
+		summary = "Returns a contiguous version of the caller matrix",
+		description = {
+		  "Returns a contiguous version of the caller matrix.",
+		  "If the matrix is contiguous, returns itself.",
+		  "Otherwise, returns a copy of the caller.",
+		},
+		outputs = { "A matrix instance" },
+	      })
+
+april_set_doc("matrix.map",
+	      {
+		class = "method",
+		summary = "Maps the matrix values by a given list of matrices and a Lua map function",
+		description = {
+		  "Maps the matrix values by a given list of matrices",
+		  "and a Lua map function.",
+		  "The Lua function will be called for every possible",
+		  "matrix position. The Lua function receives the caller matrix",
+		  "value at the given position, the value of the second matrix,",
+		  "the value of the third matrix, and so on.",
+		  "The Lua function returns ONLY one value, which will be",
+		  "assigned to the caller matrix IN-PLACE.",
+		  "All the matrices must have the same dimension sizes.",
+		  "The number of given matrices could be >= 0",
+		},
+		params = {
+		  "A second matrix",
+		  "A third matrix",
+		  "...",
+		  "A Nth matrix",
+		  "A Lua function which applies the map computation.",
+		},
+		outputs = { "The caller matrix" },
+	      })
+
 april_set_doc("matrix.sliding_window",
 	      {
 		class = "method",
