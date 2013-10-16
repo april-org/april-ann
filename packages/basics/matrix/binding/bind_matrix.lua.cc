@@ -302,7 +302,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   LUABIND_GET_OPTIONAL_PARAMETER(2, string, order, 0);
   MatrixFloat *obj;
   if ((obj = readMatrixFloatFromFile(filename, order)) == 0)
-    LUABIND_ERROR("bad format");
+    LUABIND_FERROR1("Error happens reading from %s", filename);
   else LUABIND_RETURN(MatrixFloat,obj);
 }
 //BIND_END
@@ -318,7 +318,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   LUABIND_GET_OPTIONAL_PARAMETER(2, string, order, "row_major");
   MatrixFloat *obj;
   if ((obj = readMatrixFloatFromTabFile(filename, order)) == 0)
-    LUABIND_ERROR("bad format");
+    LUABIND_FERROR1("Error happens reading from %s", filename);
   else LUABIND_RETURN(MatrixFloat,obj);
 }
 //BIND_END
