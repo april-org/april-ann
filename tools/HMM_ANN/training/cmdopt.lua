@@ -439,6 +439,20 @@ cmdOptTest = cmdOpt{
     default_value="",
   },
   {
+    index_name="clamp_lower",
+    description="Indicates the lower value for input clamp (after normalization)",
+    long="clamp-lower",
+    argument="yes",
+    filter=tonumber,
+  },
+  {
+    index_name="clamp_upper",
+    description="Indicates the upper value for input clamp (after normalization)",
+    long="clamp-upper",
+    argument="yes",
+    filter=tonumber,
+  },
+  {
     description = "shows this help message",
     short = "h",
     long = "help",
