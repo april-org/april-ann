@@ -59,6 +59,30 @@ for i=2,4 do
   end
 end
 
+--------------------------------
+-- SLICE + DOT PRODUCT + BIAS --
+--------------------------------
+
+for p=2,4 do
+  for s=2,4 do
+    for o=2,4 do
+      for b=1,4 do
+	check_component(function()
+			  return ann.components.stack():
+			  push( ann.components.rewrap{ size={12, 10} } ):
+			  push( ann.components.slice{ pos={ p, p+1 },
+						      size={s+1, s} }):
+			  push( ann.components.rewrap{ size={(s+1)*s} } ):
+			  push( ann.components.dot_product{ input=(s+1)*s,
+							    output=o } ):
+			  push( ann.components.bias{ size=o } )
+			end,
+			"mse", 120, o, b, "SLICE + DOTPRODUCT + BIAS")
+      end
+    end
+  end
+end
+
 ------------------
 -- AUTO-ENCODER --
 ------------------
@@ -83,21 +107,22 @@ for i=2,4 do
   end
 end
 
--------------------------------
--- CONVOLUTION + MAX POOLING --
--------------------------------
+--------------------------------------
+-- CONVOLUTION + ACTF + MAX POOLING --
+--------------------------------------
 
 for n=1,4 do
   for b=1,4 do
     check_component(function()
 		      return ann.components.stack():
-		      push( ann.components.rewrap{ size={1, 8, 8} } ):
-		      push( ann.components.convolution{ kernel={1, 3, 3}, n=n } ):
-		      --push( ann.components.convolution_bias{ n=n, ndims=3 } ):
-		      push( ann.components.max_pooling{ kernel={n, 2, 2} } ):
+		      push( ann.components.rewrap{ size={1, 8, 10} } ):
+		      push( ann.components.convolution{ kernel={1, 3, 5}, n=n } ):
+		      push( ann.components.convolution_bias{ n=n, ndims=3 } ):
+		      push( ann.components.actf.logistic() ):
+		      push( ann.components.max_pooling{ kernel={n, 2, 3} } ):
 		      push( ann.components.flatten() )
 		    end,
-		    "mse", 64, 9, b, "CONVOLUTION "..n)
+		    "mse", 80, 6, b, "CONVOLUTION "..n)
   end
 end
 
