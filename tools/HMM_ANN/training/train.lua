@@ -113,6 +113,7 @@ ann_table.num_epochs_first_lr  = epochs_firstlr
 ann_table.learning_rate        = lr
 ann_table.momentum             = mt
 ann_table.max_norm_penalty     = mp
+ann_table.l1_norm              = l1
 ann_table.weight_decay         = wd
 ann_table.weights_seed         = seed1
 ann_table.shuffle_seed         = seed2
@@ -435,10 +436,11 @@ corpus.output_ds_val = dataset.union(validate:get_field('segmentation_dataset'))
 
 printf ("# RANDOM:     Weights: %4d Shuffle: %4d  VAL RPL shuffle: %4d\n",
 	ann_table.weights_seed, ann_table.shuffle_seed, ann_table.shuffle_seed_val)
-printf ("# ANN PARAMS: step:%d l%d r%d %d %d  lr: %f  mt: %f  wd: %g\n",
+printf ("# ANN PARAMS: step:%d l%d r%d %d %d  lr: %f  mt: %f  wd: %g  mp: %g  l1: %g\n",
 	dataset_step, ann_table.left_context, ann_table.right_context,
 	ann_table.num_hidden1, ann_table.num_hidden2,
-	ann_table.learning_rate, ann_table.momentum, ann_table.weight_decay)
+	ann_table.learning_rate, ann_table.momentum, ann_table.weight_decay,
+	ann_table.max_norm_penalty, ann_table.l1_norm)
 printf ("#             first lr: %f    epochs: %d\n",
 	ann_table.first_learning_rate, ann_table.num_epochs_first_lr)
 printf ("# ANN STR:    %s\n", mlp_str)
@@ -586,8 +588,10 @@ while em_iteration <= em.em_max_iterations do
   ann_table.trainer:set_option("momentum",         ann_table.momentum)
   ann_table.trainer:set_option("weight_decay",     ann_table.weight_decay)
   ann_table.trainer:set_option("max_norm_penalty", ann_table.max_norm_penalty)
+  ann_table.trainer:set_option("L1_norm", ann_table.l1_norm)
   ann_table.trainer:set_layerwise_option("b.*", "weight_decay", 0.0)
   ann_table.trainer:set_layerwise_option("b.*", "max_norm_penalty", 0.0)
+  ann_table.trainer:set_layerwise_option("b.*", "L1_norm", 0.0)
   --
   iterator(ipairs(dropout_table)):
   apply(function(i,data)
@@ -610,10 +614,11 @@ while em_iteration <= em.em_max_iterations do
     stopping_criterion = trainable.stopping_criteria.make_max_epochs_wo_imp_absolute(em.max_epochs_without_improvement),
     update_function = function(t)
       printf("em %4d epoch %4d totalepoch %4d ce_train %.7f ce_val "..
-	       "%.7f %10d %.7f  %.7f\n",
+	       "%.7f %10d %.7f  %.7f :: %.7f  %.7f\n",
 	     em_iteration, t.current_epoch, totaltrain,
 	     t.train_error, t.validation_error, bestepoch,
-	     t.best_val_error, ann_table.trainer:get_option("learning_rate"))
+	     t.best_val_error, ann_table.trainer:get_option("learning_rate"),
+	     ann_table.trainer:norm2("w.*"), ann_table.trainer:norm2("b.*"))
       totaltrain = totaltrain + 1
       if (totaltrain > ann_table.num_epochs_first_lr and
 	    em_iteration == 1 and

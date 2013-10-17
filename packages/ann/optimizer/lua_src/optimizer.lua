@@ -4,6 +4,57 @@ local MAX_UPDATES_WITHOUT_PRUNE=100
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 
+local function ann_optimizer_regularizations_weight_decay(oldw, cwd, w)
+  -- sum current weights by applying the complementary of weight decay term
+  oldw:axpy(cwd, w)  
+end
+
+------------------------------------------------------------------------------
+
+get_table_from_dotted_string("ann.optimizer.regularizations", true)
+
+function ann.optimizer.regularizations.L1_norm(oldw, value, w)
+  if value > 0.0 then
+    -- sum current weights by applying the complementary of weight decay term
+    oldw:map(function(x)
+	       print(x)
+	       if x > 0 then return x-value
+	       elseif x < 0 then return x+value
+	       else return 0
+	       end
+	     end)
+  end
+end
+
+------------------------------------------------------------------------------
+
+get_table_from_dotted_string("ann.optimizer.constraints", true)
+
+function ann.optimizer.constraints.max_norm_penalty(oldw, w, mp)
+  if mp > 0.0 then
+    local old_sw     = oldw:sliding_window()
+    local old_window = nil
+    local sw         = w:sliding_window()
+    local window     = nil
+    while not sw:is_end() do
+      old_window  = old_sw:get_matrix(old_window)
+      local norm2 = old_window:norm2()
+      if norm2 > mp then
+	local scal_factor = mp / norm2
+	window = sw:get_matrix(window)
+	old_window:scal(scal_factor)
+	window:scal(scal_factor)
+      end
+      old_sw:next()
+      sw:next()
+    end
+  end
+end
+
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+
 local optimizer_methods,
 optimizer_class_metatable = class("ann.optimizer")
 
@@ -13,10 +64,12 @@ function optimizer_class_metatable:__call(valid_options,
 					  count)
   local g_options, l_options = g_options or {}, l_options or {}
   local obj = class_instance({
-			       valid_options     = table.invert(valid_options or {}),
+			       valid_options     = iterator(ipairs(valid_options or {})):map(function(i,name)return name,true end):table(),
 			       global_options    = {},
 			       layerwise_options = {},
 			       count             = count or 0,
+			       regularizations   = {},
+			       constraints       = {},
 			     },
 			     self)
   for name,value in pairs(g_options) do obj:set_option(name,value) end
@@ -28,8 +81,59 @@ function optimizer_class_metatable:__call(valid_options,
   return obj
 end
 
+
+-- regularization functions has the API:
+-- func(oldw, value, w, ann_component) where oldw is the destination matrix
+function optimizer_methods:add_regularization(hyperparameter_name, func)
+  assert(not self.valid_options[hyperparameter_name],
+	 "Redefinition of hyperparameter " .. hyperparameter_name)
+  self.valid_options[hyperparameter_name] = true
+  self.regularizations[hyperparameter_name] = func or ann.optimizer.regularizations[hyperparameter_name]
+end
+
+-- constraint functions has the API:
+-- func(oldw, value, w, ann_component) => remember to apply the same constraint to oldw and w
+function optimizer_methods:add_constraint(hyperparameter_name, func)
+  assert(not self.valid_options[hyperparameter_name],
+	 "Redefinition of hyperparameter " .. hyperparameter_name)
+  self.valid_options[hyperparameter_name] = true
+  self.constraints[hyperparameter_name] = func or ann.optimizer.constraints[hyperparameter_name]
+end
+
+local function ann_optimizer_apply_regularizations(opt,
+						   wname, oldw, w,
+						   ann_component)
+  for hypname,func in ipairs(opt.regularizations) do
+    local v = opt:get_option_of(wname, hypname)
+    if v then
+      if v > 0.0 and w:dim(2) == 1 then
+	fprintf(io.stderr,
+		"# WARNING!!! Possible " .. hypname .. " > 0 in bias connection: %s\n",
+		wname)
+      end
+      func(oldw, v, w, ann_component)
+    end
+  end
+end
+
+local function ann_optimizer_apply_constraints(opt,
+					       wname, oldw, w,
+					       ann_component)
+  for hypname,func in ipairs(opt.constraints) do
+    local v = opt:get_option_of(wname, hypname)
+    if v then
+      if v > 0.0 and w:dim(2) == 1 then
+	fprintf(io.stderr,
+		"# WARNING!!! Possible " .. hypname .. " > 0 in bias connection: %s\n",
+		wname)
+      end
+      func(oldw, v, w, ann_component)
+    end
+  end
+end
+
 function optimizer_methods:show_options()
-  local t = table.invert(self.valid_options)
+  local t = iterator(pairs(self.valid_options)):select(1):enumerate():table()
   table.sort(t)
   iterator(ipairs(t)):apply(print)
 end
@@ -62,7 +166,7 @@ function optimizer_methods:get_option_of(layer_name,name)
 end
 
 -- eval is a function which returns the data needed by the optimizer (at least,
--- the gradients, the bunch size, and the loss matrix)
+-- the gradients, the bunch size, the loss matrix, and the ANN component)
 --
 -- cnn_table is a dictionary of connections objects, indexed by its names.
 function optimizer_methods:execute(eval, cnn_table)
@@ -87,7 +191,7 @@ end
 ------------------------------------------------
 ------------------------------------------------
 
-function ann.optimizer.apply_momentum(oldw, mt, w)
+local function ann_optimizer_apply_momentum(oldw, mt, w)
   if mt > 0.0 then
     -- intertia is computed between current and old weight matrices, but with
     -- inverted sign
@@ -97,32 +201,6 @@ function ann.optimizer.apply_momentum(oldw, mt, w)
   else
     -- sets to ZERO the old matrix
     oldw:zeros()
-  end
-end
-
-function ann.optimizer.apply_weight_decay(oldw, cwd, w)
-  -- sum current weights by applying the complementary of weight decay term
-  oldw:axpy(cwd, w)
-end
-
-function ann.optimizer.apply_max_norm_penalty(oldw, w, mp)
-  if mp > 0.0 then
-    local old_sw     = oldw:sliding_window()
-    local old_window = nil
-    local sw         = w:sliding_window()
-    local window     = nil
-    while not sw:is_end() do
-      old_window  = old_sw:get_matrix(old_window)
-      local norm2 = old_window:norm2()
-      if norm2 > mp then
-	local scal_factor = mp / norm2
-	window = sw:get_matrix(window)
-	old_window:scal(scal_factor)
-	window:scal(scal_factor)
-      end
-      old_sw:next()
-      sw:next()
-    end
   end
 end
 
@@ -139,18 +217,20 @@ function sgd_class_metatable:__call(g_options, l_options, count)
 			      "learning_rate",
 			      "momentum",
 			      "weight_decay",
-			      "max_norm_penalty"
 			    },
 			    g_options,
 			    l_options,
 			    count)
   obj = class_instance(obj, self)
+  -- standard regularization and constraints
+  obj:add_constraint("max_norm_penalty")
+  obj:add_regularization("L1_norm")
   return obj
 end
 
 function sgd_methods:execute(eval, cnn_table)
   local arg = table.pack( eval() )
-  local gradients,bunch_size,tr_loss_matrix = table.unpack(arg)
+  local gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
   for cname,cnn in pairs(cnn_table) do
     local w,oldw     = cnn:matrix()
     local grad       = gradients[cname]
@@ -160,22 +240,22 @@ function sgd_methods:execute(eval, cnn_table)
     local mt         = self:get_option_of(cname, "momentum")     or 0.0
     local wd         = self:get_option_of(cname, "weight_decay") or 0.0
     local cwd        = 1.0 - wd
-    local mp         = self:get_option_of(cname, "max_norm_penalty") or -1.0
     --
-    if (wd > 0.0 or mp > 0.0) and w:dim(2) == 1 then
+    if wd > 0.0 and w:dim(2) == 1 then
       fprintf(io.stderr,
-	      "# WARNING!!! Possible weight_decay or max_norm_penalty > 0 in bias connection: %s\n",
+	      "# WARNING!!! Possible weight_decay > 0 in bias connection: %s\n",
 	      cname)
     end
     --
-    ann.optimizer.apply_momentum(oldw, mt, w)
-    ann.optimizer.apply_weight_decay(oldw, cwd, w)
+    ann_optimizer_apply_momentum(oldw, mt, w)
+    ann_optimizer_regularizations_weight_decay(oldw, cwd, w)
     --
+    ann_optimizer_apply_regularizations(self, cname, oldw, w, ann_component)
     -- apply back-propagation learning rule
     local norm_lr_rate = -1.0/math.sqrt( N * bunch_size ) * lr
     oldw:axpy(norm_lr_rate, grad)
     --
-    ann.optimizer.apply_max_norm_penalty(oldw, w, mp)
+    ann_optimizer_apply_constraints(self, cname, oldw, w, ann_component)
     --
     -- swap current and old weight matrices
     cnn:swap()

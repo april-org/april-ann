@@ -269,6 +269,15 @@ cmdOptTest = cmdOpt{
     filter=tonumber,
   },
   {
+    index_name = "l1",
+    description = "L1 norm regularization",
+    long ="l1",
+    argument="yes",
+    mode="always",
+    default_value=0.0,
+    filter=tonumber,
+  },
+  {
     index_name = "mp",
     description = "Max normalization penalty, a negative value to disable it",
     long ="mp",
