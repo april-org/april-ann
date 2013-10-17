@@ -322,6 +322,7 @@ if not string.match(corpus.filename_trn_mfc, "%.lua$") then
 		 hmm_name_mangling      = false,
 		 dataset_step           = dataset_step,
 		 means_and_devs         = means_and_devs,
+		 clamp                  = { clamp_lower, clamp_upper },
 		 dataset_perturbation_function = dataset_perturbation_function,
 		 format = format,
 	       })
@@ -373,6 +374,7 @@ else
 		   hmm_name_mangling      = false,
 		   dataset_step           = dataset_step,
 		   means_and_devs         = means_and_devs,
+		   clamp                  = { clamp_lower, clamp_upper },
 		   dataset_perturbation_function = dataset_perturbation_function,
 		   format = format,
 		 })
@@ -404,6 +406,7 @@ validate = corpus_from_MFC_filename{
   hmm_name_mangling      = false,
   dataset_step           = dataset_step,
   means_and_devs         = means_and_devs,
+  clamp                  = { clamp_lower, clamp_upper },
   format = format,
 }
 

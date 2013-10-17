@@ -12,7 +12,7 @@ local valid_recog_parameters=table.invert{
   "silences", "transcription_filter", "hmmtrainer", "tied",
   "models", "left_context", "right_context",
   "mlp_output_dictionary",  "format",
-  "hmm_name_mangling", "means_and_devs",
+  "hmm_name_mangling", "means_and_devs", "clamp",
   "dataset_perturbation_function",
   "dataset_step", "begin_sil", "end_sil", "phdict"
 }
@@ -404,6 +404,7 @@ function recog.generate_datasets(args)
   local right_context         = args.right_context
   local corpus_data_manager   = args.corpus_data_manager
   local means_and_devs        = args.means_and_devs
+  local clamp                 = args.clamp
   local dataset_perturbation_function = args.dataset_perturbation_function
   local dataset_step              = args.dataset_step
   --------------------------
@@ -423,7 +424,8 @@ function recog.generate_datasets(args)
 				  right_context,
 				  means_and_devs,
 				  dataset_perturbation_function,
-				  dataset_step)
+				  dataset_step,
+				  clamp)
 	return Cds,ds
       end
   }
@@ -763,7 +765,7 @@ end
 
 
 -- contextualiza la parametrizacion
-function contextCCdataset(m,leftcontext,rightcontext,means_and_devs,dataset_perturbation_function,dataset_step)
+function contextCCdataset(m,leftcontext,rightcontext,means_and_devs,dataset_perturbation_function,dataset_step,clamp)
   local numFrames = m:dim()[1]
   local numParams = m:dim()[2] -- nCCs+1
   local parameters = {
@@ -777,6 +779,9 @@ function contextCCdataset(m,leftcontext,rightcontext,means_and_devs,dataset_pert
     --print(means_and_devs.means,#means_and_devs.means,means_and_devs.devs,#means_and_devs.devs)
     orig_ds:normalize_mean_deviation(means_and_devs.means,
 				     means_and_devs.devs) end
+  if clamp[1] and clamp[2] then
+    orig_ds = dataset.clamp(orig_ds, clamp[1], clamp[2])
+  end
   if dataset_perturbation_function then
     orig_ds = dataset_perturbation_function(orig_ds)
   end
