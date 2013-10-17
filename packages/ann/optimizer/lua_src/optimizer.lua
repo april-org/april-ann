@@ -5,7 +5,8 @@ local MAX_UPDATES_WITHOUT_PRUNE=100
 ------------------------------------------------------------------------------
 
 local function ann_optimizer_regularizations_weight_decay(oldw, cwd, w)
-  -- sum current weights by applying the complementary of weight decay term
+  -- sum current weights by applying the complementary of weight decay term. We
+  -- derive w, and left the result on oldw
   oldw:axpy(cwd, w)  
 end
 
@@ -16,10 +17,15 @@ get_table_from_dotted_string("ann.optimizer.regularizations", true)
 function ann.optimizer.regularizations.L1_norm(oldw, value, w)
   if value > 0.0 then
     -- sum current weights by applying the complementary of weight decay term
-    oldw:map(function(x)
-	       if x > value then return x-value
-	       elseif x < -value then return x+value
-	       else return 0
+    oldw:map(w,
+	     function(x, y)
+	       -- We derive over y, and left the result on x. So, if y=0.0 we
+	       -- return the weight (which only has the momentum applied to it
+	       -- because if y=0.0, then the gradient is zero and the weight
+	       -- decay is also zero)
+	       if     y > 0 then return math.max(0.0, x-value)
+	       elseif y < 0 then return math.min(0.0, x+value)
+	       else return x
 	       end
 	     end)
   end
@@ -82,7 +88,8 @@ end
 
 
 -- regularization functions has the API:
--- func(oldw, value, w, ann_component) where oldw is the destination matrix
+-- func(oldw, value, w, ann_component)
+-- where oldw is the destination weights matrix, and w the current weights matrix
 function optimizer_methods:add_regularization(hyperparameter_name, func)
   local func = assert(func or ann.optimizer.regularizations[hyperparameter_name],
 		      "Problem with hyperparemter function of " .. hyperparameter_name)
@@ -94,6 +101,7 @@ end
 
 -- constraint functions has the API:
 -- func(oldw, value, w, ann_component) => remember to apply the same constraint to oldw and w
+-- where oldw is the next weights matrix, and w the current weights matrix
 function optimizer_methods:add_constraint(hyperparameter_name, func)
   local func = assert(func or ann.optimizer.constraints[hyperparameter_name],
 		      "Problem with hyperparemter function of " .. hyperparameter_name)
@@ -109,6 +117,7 @@ local function ann_optimizer_apply_regularizations(opt,
   for hypname,func in pairs(opt.regularizations) do
     local v = opt:get_option_of(wname, hypname)
     if v then
+      -- sanity check
       if v > 0.0 and w:dim(2) == 1 then
 	fprintf(io.stderr,
 		"# WARNING!!! Possible " .. hypname .. " > 0 in bias connection: %s\n",
@@ -125,6 +134,7 @@ local function ann_optimizer_apply_constraints(opt,
   for hypname,func in pairs(opt.constraints) do
     local v = opt:get_option_of(wname, hypname)
     if v then
+      -- sanity check
       if v > 0.0 and w:dim(2) == 1 then
 	fprintf(io.stderr,
 		"# WARNING!!! Possible " .. hypname .. " > 0 in bias connection: %s\n",
