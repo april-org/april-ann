@@ -735,12 +735,19 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
 		      gradient = loss:gradient(output, target)
 		      gradient = self.ann_component:backprop(gradient)
 		      --
-		      iterator(pairs(self.weight_grads)):
-		      apply(function(name,mat)mat:zeros()end)
+		      for name,mat in pairs(self.weight_grads) do mat:zeros() end
 		      --
 		      self.weight_grads =
 			self.ann_component:compute_gradients(self.weight_grads)
-		      return self.weight_grads,output_mat:dim(1),tr_loss_matrix
+		      return
+			-- the gradients
+			self.weight_grads,
+		      -- the bunch_size
+		      tr_loss_matrix:dim(1),
+		      -- the loss matrix
+		      tr_loss_matrix,
+		      -- the ANN component
+		      self.ann_component
 		    end,
 		    self.weights_table)
   loss:accum_loss(tr_loss_matrix)

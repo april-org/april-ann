@@ -114,9 +114,11 @@ trainer:build()
 trainer:set_option("learning_rate", learning_rate)
 trainer:set_option("momentum",      momentum)
 trainer:set_option("weight_decay",  weight_decay)
+trainer:set_option("L1_norm",       0.01)
 trainer:set_option("max_norm_penalty",  max_norm_penalty)
 trainer:set_layerwise_option("b.", "weight_decay", 0.0)
-trainer:set_layerwise_option("b.", "max_norm_penalty", -1.0)
+trainer:set_layerwise_option("b.", "max_norm_penalty", 0.0)
+trainer:set_layerwise_option("b.", "L1_norm", 0.0)
 
 trainer:randomize_weights{
   random      = weights_random,
