@@ -1151,6 +1151,38 @@ int SubAndDivNormalizationDataSet<T>::putPattern(int index, const T *pat) {
   return 0;  
 }
 
+//-------------------------------------------------------------
+
+template <typename T>
+ClampDataSet<T>::
+ClampDataSet(DataSet<T> *ds, float lower, float upper) :
+  ds(ds), lower(lower), upper(upper) {
+  IncRef(ds);
+}
+
+template<typename T>
+ClampDataSet<T>::~ClampDataSet() {
+  DecRef(ds);
+}
+
+template<typename T>
+int ClampDataSet<T>::getPattern(int index, T *pat) {
+  const int ret = ds->getPattern(index, pat);
+  const int sz  = ds->patternSize();
+  april_assert(ret==sz);
+  for (int i=0; i<sz; ++i)
+    pat[i] = clamp(pat[i], lower, upper);
+  return ret;
+}
+
+template<typename T>
+int ClampDataSet<T>::putPattern(int index, const T *pat) {
+  UNUSED_VARIABLE(index);
+  UNUSED_VARIABLE(pat);
+  ERROR_EXIT(1,"Method putPattern forbidden for ClampDataSet!!!\n");
+  return 0;  
+}
+
 //----------------------------------------------------------
 
 #endif // DATASET_CC_H

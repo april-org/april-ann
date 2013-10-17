@@ -1131,6 +1131,28 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 
 //////////////////////////////////////////
 
+//BIND_LUACLASSNAME ClampDataSetFloat dataset.clamp
+//BIND_CPP_CLASS    ClampDataSetFloat
+//BIND_SUBCLASS_OF  ClampDataSetFloat DataSetFloat
+
+//BIND_CONSTRUCTOR ClampDataSetFloat
+{
+  LUABIND_CHECK_ARGN(==, 3);
+  LUABIND_CHECK_PARAMETER(1, DataSetFloat);
+  LUABIND_CHECK_PARAMETER(2, float);
+  LUABIND_CHECK_PARAMETER(3, float);
+  DataSetFloat *ds;
+  float lower, upper;
+  LUABIND_GET_PARAMETER(1, DataSetFloat, ds);
+  LUABIND_GET_PARAMETER(2, float, lower);
+  LUABIND_GET_PARAMETER(3, float, upper);
+  obj = new ClampDataSetFloat(ds,lower,upper);
+  LUABIND_RETURN(ClampDataSetFloat,obj);
+}
+//BIND_END
+
+//////////////////////////////////////////
+
 //BIND_LUACLASSNAME DataSetToken dataset.token
 //BIND_CPP_CLASS    DataSetToken
 
