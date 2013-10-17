@@ -6,9 +6,10 @@ sup              =  0.6
 shuffle_random   = random(5678)
 learning_rate    = 0.1
 momentum         = 0.2
-weight_decay     = 0.0 -- 1e-05
-max_epochs       = 100
+weight_decay     = 1e-05
+L1_norm          = 0.0000004
 max_norm_penalty = 4
+max_epochs       = 100
 check_grandients = false
 check_tokens     = false
 
@@ -111,10 +112,10 @@ trainer = trainable.supervised_trainer(thenet,
 				       bunch_size)
 trainer:build()
 
-trainer:set_option("learning_rate", learning_rate)
-trainer:set_option("momentum",      momentum)
-trainer:set_option("weight_decay",  weight_decay)
-trainer:set_option("L1_norm",       0.01)
+trainer:set_option("learning_rate",     learning_rate)
+trainer:set_option("momentum",          momentum)
+trainer:set_option("weight_decay",      weight_decay)
+trainer:set_option("L1_norm",           L1_norm)
 trainer:set_option("max_norm_penalty",  max_norm_penalty)
 trainer:set_layerwise_option("b.", "weight_decay", 0.0)
 trainer:set_layerwise_option("b.", "max_norm_penalty", 0.0)

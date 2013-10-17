@@ -17,9 +17,8 @@ function ann.optimizer.regularizations.L1_norm(oldw, value, w)
   if value > 0.0 then
     -- sum current weights by applying the complementary of weight decay term
     oldw:map(function(x)
-	       print(x)
-	       if x > 0 then return x-value
-	       elseif x < 0 then return x+value
+	       if x > value then return x-value
+	       elseif x < -value then return x+value
 	       else return 0
 	       end
 	     end)
@@ -30,7 +29,7 @@ end
 
 get_table_from_dotted_string("ann.optimizer.constraints", true)
 
-function ann.optimizer.constraints.max_norm_penalty(oldw, w, mp)
+function ann.optimizer.constraints.max_norm_penalty(oldw, mp, w)
   if mp > 0.0 then
     local old_sw     = oldw:sliding_window()
     local old_window = nil
@@ -85,25 +84,29 @@ end
 -- regularization functions has the API:
 -- func(oldw, value, w, ann_component) where oldw is the destination matrix
 function optimizer_methods:add_regularization(hyperparameter_name, func)
+  local func = assert(func or ann.optimizer.regularizations[hyperparameter_name],
+		      "Problem with hyperparemter function of " .. hyperparameter_name)
   assert(not self.valid_options[hyperparameter_name],
 	 "Redefinition of hyperparameter " .. hyperparameter_name)
   self.valid_options[hyperparameter_name] = true
-  self.regularizations[hyperparameter_name] = func or ann.optimizer.regularizations[hyperparameter_name]
+  self.regularizations[hyperparameter_name] = func
 end
 
 -- constraint functions has the API:
 -- func(oldw, value, w, ann_component) => remember to apply the same constraint to oldw and w
 function optimizer_methods:add_constraint(hyperparameter_name, func)
+  local func = assert(func or ann.optimizer.constraints[hyperparameter_name],
+		      "Problem with hyperparemter function of " .. hyperparameter_name)
   assert(not self.valid_options[hyperparameter_name],
 	 "Redefinition of hyperparameter " .. hyperparameter_name)
   self.valid_options[hyperparameter_name] = true
-  self.constraints[hyperparameter_name] = func or ann.optimizer.constraints[hyperparameter_name]
+  self.constraints[hyperparameter_name] = func
 end
 
 local function ann_optimizer_apply_regularizations(opt,
 						   wname, oldw, w,
 						   ann_component)
-  for hypname,func in ipairs(opt.regularizations) do
+  for hypname,func in pairs(opt.regularizations) do
     local v = opt:get_option_of(wname, hypname)
     if v then
       if v > 0.0 and w:dim(2) == 1 then
@@ -119,7 +122,7 @@ end
 local function ann_optimizer_apply_constraints(opt,
 					       wname, oldw, w,
 					       ann_component)
-  for hypname,func in ipairs(opt.constraints) do
+  for hypname,func in pairs(opt.constraints) do
     local v = opt:get_option_of(wname, hypname)
     if v then
       if v > 0.0 and w:dim(2) == 1 then
@@ -223,8 +226,8 @@ function sgd_class_metatable:__call(g_options, l_options, count)
 			    count)
   obj = class_instance(obj, self)
   -- standard regularization and constraints
-  obj:add_constraint("max_norm_penalty")
   obj:add_regularization("L1_norm")
+  obj:add_constraint("max_norm_penalty")
   return obj
 end
 
