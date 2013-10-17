@@ -4,6 +4,7 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added naive `L1_norm` regularization.
 - Added `dataset.clamp`.
 - Added `matrix.map` and `matrix.contiguous` methods.
 - Solved bug at matrix iterators operator=.
