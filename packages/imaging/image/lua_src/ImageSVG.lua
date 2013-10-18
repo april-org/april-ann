@@ -43,7 +43,6 @@ end
 -- Recieves a table with points x,y
 function imageSVG_methods:addPathFromTable(path, params)
     --params treatment
-
     local id = params.id or ""
     local stroke = params.stroke or "black"
     local stroke_width = params.stroke_width or "2"
@@ -51,7 +50,6 @@ function imageSVG_methods:addPathFromTable(path, params)
     local buffer = {}
 
     table.insert(buffer, string.format("<path id = \"%s\" d = \"", id))
-
     for i, v in ipairs(path) do
         if (i == 1) then
             table.insert(buffer, string.format("M %d %d ", v[1], v[2]))
@@ -95,6 +93,31 @@ function imageSVG_methods:addPaths(paths)
 end
 
 
+-- Each element of the table is a path
+function imageSVG_methods:addInterestPointPaths(paths, ...)
+    
+    params = arg[1] or {}
+    local num_classes = params.num_class or 5
+    for i, path in ipairs(paths) do
+        -- Process the component
+        --
+        local color = "black"
+        color = colors[i%#colors+1]
+
+        -- Separate by classes
+        local t = {}
+        for i = 1,num_classes do
+          table.insert(t, {})
+        end
+        for i, v in ipairs(paths[i]) do
+            table.insert(t[v[3]], v)
+        end
+        -- Draw a path for each class
+        for i = 1, num_classes do
+          self:addPathFromTable(t[i],{stroke = color, id = tostring(i)})
+        end
+    end
+end
 
 -- Given a table with table of points, draw
 function imageSVG_methods:addPointsFromTables(tables, size)

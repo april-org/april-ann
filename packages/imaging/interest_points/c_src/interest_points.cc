@@ -587,6 +587,12 @@ namespace InterestPoints {
       return score_max;
   }
 
+  float angle_diff(interest_point &a, interest_point &b) {
+
+       float alpha = a.angle(b);
+       return min(fabs(alpha), fabs(2*M_PI-alpha));
+  }
+
   float SetPoints::similarity(interest_point &ip1, interest_point &ip2) {
 
       float alpha_threshold = M_PI/8;      
@@ -600,13 +606,14 @@ namespace InterestPoints {
               a = &ip2;
               b = &ip1;
           }
-          float alpha = fmod(a->angle(*b)+2*M_PI + alpha_threshold/2, (2*M_PI));
-          fprintf(stderr, "alpha %f, %f\n", a->angle(*b), alpha);
+          //float alpha = fmod(a->angle(*b)+2*M_PI + alpha_threshold/2, (2*M_PI));
+          float alpha = angle_diff(*a, *b);
           if (alpha < alpha_threshold)
               return 1.0;
       }
       else {
         // They're are different classes
+        return 1.0;
 
       }
       return 0.0;
@@ -622,6 +629,9 @@ namespace InterestPoints {
       // Process each connected component
       for (int cc = 0; cc < size; ++cc) {
           printf("Computing connected component %d/%d\n", cc, size);
+
+          if (!(*ccPoints)[cc].size())
+              continue;
           //Add an empty set
           cini = cfin;
           cfin++;
