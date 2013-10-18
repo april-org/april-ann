@@ -62,6 +62,13 @@ extern "C" {
 #include <sys/stat.h>
 #include <unistd.h>
 }
+#include "unused_variable.h"
+
+char breaks[] = " \t\n\"\\'><=;:+-*/%^~#{}()[].,";
+extern int   rl_completion_suppress_append;
+extern char *rl_basic_word_break_characters;
+/* Static copy of Lua state, as readline has no per-use state */
+static lua_State *storedL;
 
 /* Lua 5.2 compatibility */
 #if LUA_VERSION_NUM > 501
@@ -72,9 +79,6 @@ static int luaL_typerror(lua_State *L, int narg, const char *tname)
   return luaL_argerror(L, narg, msg);
 }
 #endif
-
-/* Static copy of Lua state, as readline has no per-use state */
-static lua_State *storedL;
 
 /* Directory iterator */
 static int dir_iter (lua_State *L) {
@@ -94,6 +98,7 @@ static int dir_iter (lua_State *L) {
    do_completion, each time returning one element from the Lua table. */
 static char *iterator(const char* text, int state)
 {
+  UNUSED_VARIABLE(text);
   size_t len;
   const char *str;
   char *result;
@@ -217,7 +222,7 @@ public:
 //BIND_STATIC_CONSTRUCTOR rlcompleter
 {
   storedL = L;
-  rl_basic_word_break_characters = " \t\n\"\\'><=;:+-*/%^~#{}()[].,";
+  rl_basic_word_break_characters = breaks;
   rl_attempted_completion_function = do_completion;
 }
 //BIND_END
