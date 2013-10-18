@@ -76,12 +76,16 @@ rlcompleter._set(
               end
             end
 	    if getmetatable(v) then
-	      local mt = getmetatable(v)
-	      if mt.__index and luatype(mt.__index) == 'table' then
-		for k,v in pairs(mt.__index) do
-		  add(k)
+	      local aux = v
+	      repeat
+		local mt = getmetatable(aux)
+		if mt.__index and luatype(mt.__index) == 'table' then
+		  for k,v in pairs(mt.__index) do
+		    add(k)
+		  end
 		end
-	      end
+		aux = mt.__index
+	      until not aux or not getmetatable(aux)
 	    end
           elseif sep == '[' then
             if t == 'table' then
@@ -149,9 +153,9 @@ rlcompleter._set(
     if #matches == 1 and word == matches[1] then
       print("\n----------------- DOCUMENTATION ----------------------")
       local m  = matches[1]
-      local id = expr
+      local id = expr or ""
       local mt
-      if #expr > 0 then
+      if expr and #expr > 0 then
 	local v = load("return " .. expr)
 	if v then	
 	  v = v()
