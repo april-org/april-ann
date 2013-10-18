@@ -1,10 +1,13 @@
 dofile("binding/formiga.lua")
 formiga.build_dir = "build_mkl_release"
 
+local packages = dofile "package_list.lua"
+table.insert(packages, "rlcompleter") -- AUTOCOMPLETION => needs READLINE
+
 luapkg{
   program_name = "april-ann",
   verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
-  packages = dofile "package_list.lua",
+  packages = packages,
   version_flags = dofile "VERSION.lua",
   disclaimer_strings = dofile "DISCLAIMER.lua",
   global_flags = {

@@ -154,18 +154,21 @@ function load_data(filename)
    -- Funciones para cada una de las marcas
    local dolabel = {
       STATIC_CONSTRUCTOR = function(name)
+	assert(name, "STATIC_CONSTRUCTOR needs a name")
 			      last_className = "static_constructor_for_"..name
 			      last_table, last_key = STATIC_CONSTRUCTOR, name
 			      store_header()
 			      print("...Static Constructor::"..name)
 			   end,
       CREATE_TABLE = function(TableName)
+	assert(TableName, "CREATE_TABLE needs a TableName")
       		        TABLES[TableName] = true
 			last_table = TABLES
 			last_key = TableName
 			print ("...Create Table "..TableName)
 		     end,
       FUNCTION = function(TableName)
+	assert(TableName, "FUNCTION needs a TableName")
 		    last_table = FUNCTIONS
 		    last_className = TableName
 		    last_key = TableName
@@ -173,6 +176,7 @@ function load_data(filename)
 		    print ("...Function "..TableName)
 		 end,
       METHOD = function(ClassName, Method)
+	assert(ClassName and Method, "METHOD needs a ClassName and Method")
 		  check_class(ClassName)
 		  last_className = ClassName
 		  last_table, last_key = CLASSES[ClassName].methods, Method
@@ -180,6 +184,7 @@ function load_data(filename)
 		  print("..."..ClassName.."::"..Method)
 	       end,
       CLASS_METHOD = function(ClassName, Method) 
+	assert(ClassName and Method, "CLASS_METHOD needs a ClassName and Method")
 			check_class(ClassName)
 			last_className = ClassName
 			last_table, last_key = CLASSES[ClassName].class_methods, Method
@@ -187,6 +192,7 @@ function load_data(filename)
 			print("..."..ClassName.."::"..Method.."(class_method)")
 		     end,
       CLASS_OPEN = function(ClassName)
+	assert(ClassName, "CLASS_OPEN needs a ClassName")
 		      check_class(ClassName)
 		      last_className = ClassName
 		      last_table, last_key = CLASSES[ClassName], "class_open"
@@ -194,6 +200,7 @@ function load_data(filename)
 		      print("..."..ClassName.." (open)")
 		   end,
       CONSTRUCTOR = function(ClassName) 
+	assert(ClassName, "CONSTRUCTOR needs a ClassName")
 		       check_class(ClassName)
 		       last_className = ClassName
 		       last_table, last_key = CLASSES[ClassName], "constructor"
@@ -201,6 +208,7 @@ function load_data(filename)
 		       print("..."..ClassName.."::Constructor")
 		    end,
       DESTRUCTOR = function(ClassName) 
+	assert(ClassName, "DESTRUCTOR needs a ClassName")
 		      check_class(ClassName)
 		      last_className = ClassName
 		      last_table, last_key = CLASSES[ClassName], "destructor"
@@ -223,13 +231,16 @@ function load_data(filename)
 		    print("...Header h")
 		 end,
       LUACLASSNAME = function (cName, luaName)
+	assert(cName and luaName, "LUACLASSNAME needs a cName and luaName")
 			LUANAME[cName] = luaName
 		     end,
       CPP_CLASS = function (cName, luaName)
+	assert(cName and luaName, "CPP_CLASS needs a cName and luaName")
       		     CREATE_CLASS[cName] = true
 		  end,
 
       SUBCLASS_OF = function(childclass,parentclass)
+	assert(childclass and parentclass, "SUBCLASS_OF needs a childclass and parentclass")
 		       if PARENT_CLASS[childclass] then
 			  error ("Redefining a SUBCLASS_OF label in "..
 				 "binding trying '".. childclass .."' is child of '"..
@@ -244,6 +255,7 @@ function load_data(filename)
       -- referencia a CONSTANTES NUMERICAS (nunca numeros), y no se
       -- permite que dos o mas compartan el mismo valor.
       ENUM_CONSTANT = function(varName, varValue)
+	assert(varValue and varValue, "ENUM_CONSTANT needs a varName and varValue")
 			local tbl=string.gsub(varName, "^(.*)%.[^%.]*$", "%1")
 			local name=string.gsub(varName, "^.*%.([^%.]*)$", "%1")
 			ENUM_CONSTANT[tbl] = ENUM_CONSTANT[tbl] or {}
@@ -259,6 +271,7 @@ function load_data(filename)
       -- referencia a CONST CHAR *, y no se
       -- permite que dos o mas compartan el mismo valor.
       STRING_CONSTANT = function(varName, varValue)
+	assert(varValue and varValue, "STRING_CONSTANT needs a varName and varValue")
 			local tbl=string.gsub(varName, "^(.*)%.[^%.]*$", "%1")
 			local name=string.gsub(varName, "^.*%.([^%.]*)$", "%1")
 			STRING_CONSTANT[tbl] = STRING_CONSTANT[tbl] or {}
