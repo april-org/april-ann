@@ -150,7 +150,8 @@ rlcompleter._set(
     
     contextual_list(expr, sep, str)
     
-    if #matches == 1 and word == matches[1] then
+    -- FIXME: Is this feature good to be really used?
+    if false and #matches == 1 and word == matches[1] then
       print("\n----------------- DOCUMENTATION ----------------------")
       local m  = matches[1]
       local id = expr or ""
