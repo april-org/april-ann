@@ -261,13 +261,15 @@ function sgd_methods:execute(eval, cnn_table)
     end
     --
     ann_optimizer_apply_momentum(oldw, mt, w)
+    -- the weight decay SUMS the weight value. Other regularization is better to
+    -- be after the back-propagation learning rule
     ann_optimizer_regularizations_weight_decay(oldw, cwd, w)
-    --
-    ann_optimizer_apply_regularizations(self, cname, oldw, w, ann_component)
     -- apply back-propagation learning rule
     local norm_lr_rate = -1.0/math.sqrt( N * bunch_size ) * lr
     oldw:axpy(norm_lr_rate, grad)
-    --
+    -- regularizations
+    ann_optimizer_apply_regularizations(self, cname, oldw, w, ann_component)
+    -- constraints
     ann_optimizer_apply_constraints(self, cname, oldw, w, ann_component)
     --
     -- swap current and old weight matrices
