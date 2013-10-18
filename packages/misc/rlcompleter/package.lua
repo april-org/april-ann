@@ -1,7 +1,7 @@
 package{
   name = "rlcompleter",
   version = "1.0",
-  depends = { },
+  depends = { "util" },
   keywords = { "rlcompleter" },
   description = "manages autocompletion",
   -- targets como en ant

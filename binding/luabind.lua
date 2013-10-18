@@ -234,8 +234,8 @@ function load_data(filename)
 	assert(cName and luaName, "LUACLASSNAME needs a cName and luaName")
 			LUANAME[cName] = luaName
 		     end,
-      CPP_CLASS = function (cName, luaName)
-	assert(cName and luaName, "CPP_CLASS needs a cName and luaName")
+      CPP_CLASS = function (cName)
+	assert(cName, "CPP_CLASS needs a cName")
       		     CREATE_CLASS[cName] = true
 		  end,
 
