@@ -176,7 +176,7 @@ Includes these sources
 - MersenneTwister: http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
 - Median filter from Simon Perreault: http://nomis80.org/ctmf.html
 - RuningStat class for efficient and stable computation of mean and variance: http://www.johndcook.com/standard_deviation.html
-
+- Lua autocompletion rlcompleter release 2, by rthomas: https://github.com/rrthomas/lua-rlcompleter
 
 Wiki documentation
 ------------------

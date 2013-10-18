@@ -1,10 +1,13 @@
 dofile("binding/formiga.lua")
 formiga.build_dir = "build_cuda_and_mkl_debug"
 
+local packages = dofile "package_list.lua"
+table.insert(packages, "rlcompleter") -- AUTOCOMPLETION => needs READLINE
+
 luapkg{
   program_name = "april-ann.debug",
   verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
-  packages = dofile "package_list.lua",
+  packages = packages,
   global_flags = {
     debug="yes",
     use_lstrip = "no",

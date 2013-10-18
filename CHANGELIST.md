@@ -4,6 +4,7 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Added Lua autocompletion when readline is available.
 - Added naive `L1_norm` regularization.
 - Added `dataset.clamp`.
 - Added `matrix.map` and `matrix.contiguous` methods.
