@@ -1,6 +1,6 @@
 -- Lua side of readline completion for REPL
 -- By Patrick Rapin; adapted by Reuben Thomas
--- Adapted to April-ANN by Francisco Zamora-Martinez
+-- Adapted to April-ANN by Francisco Zamora-Martinez, 2013
 
 -- The list of Lua keywords
 local keywords = {
@@ -21,7 +21,7 @@ rlcompleter._set(
         matches[#matches + 1] = value
       end
     end
-
+    
     -- This function does the same job as the default completion of readline,
     -- completing paths and filenames. Rewritten because
     -- rl_basic_word_break_characters is different.
@@ -63,7 +63,7 @@ rlcompleter._set(
         return filename_list(str)
       end
       if expr and expr ~= "" then
-        local v = loadstring("return " .. expr)
+        local v = load("return " .. expr)
         if v then
           v = v()
           local t = luatype(v)
@@ -141,10 +141,38 @@ rlcompleter._set(
       -- This main regular expression looks for table indexes and function calls.
       return curstring, expr:match("([%.%w%[%]_]-)([:%.%[%(])" .. word .. "$")
     end
-
     -- Now call the processing functions and return the list of results.
     local str, expr, sep = simplify_expression(line:sub(1, endpos))
+    
     contextual_list(expr, sep, str)
+    
+    if #matches == 1 and word == matches[1] then
+      print("\n----------------- DOCUMENTATION ----------------------")
+      local m  = matches[1]
+      local id = expr
+      local mt
+      if #expr > 0 then
+	local v = load("return " .. expr)
+	if v then	
+	  v = v()
+	  if v then mt = getmetatable(v) end
+	  if mt and mt.id then id = mt.id:match("^[^%s]+") end
+	end
+      end
+      local prefix = id
+      if #prefix > 0 then prefix = prefix .. "." end
+      april_print_doc(prefix .. m, 2)
+      local v = load("return " .. prefix .. m)
+      if v then
+	v = v()
+	if v then mt = getmetatable(v) end
+	if mt and mt.__call then
+	  april_print_doc(prefix .. m .. ".__call", 2)
+	end
+      end
+      print("------------------------------------------------------")
+    end
+    
     return matches
   end
 )
