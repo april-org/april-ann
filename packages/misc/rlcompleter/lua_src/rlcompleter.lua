@@ -61,19 +61,27 @@ rlcompleter._set(
         local v = loadstring("return " .. expr)
         if v then
           v = v()
-          local t = type(v)
+          local t = luatype(v)
           if sep == '.' or sep == ':' then
             if t == 'table' then
               for k, v in pairs(v) do
-                if type(k) == 'string' and (sep ~= ':' or type(v) == "function") then
+                if luatype(k) == 'string' and (sep ~= ':' or luatype(v) == "function") then
                   add(k)
                 end
               end
             end
+	    if getmetatable(v) then
+	      local mt = getmetatable(v)
+	      if mt.__index and luatype(mt.__index) == 'table' then
+		for k,v in pairs(mt.__index) do
+		  add(k)
+		end
+	      end
+	    end
           elseif sep == '[' then
             if t == 'table' then
               for k in pairs(v) do
-                if type(k) == 'number' then
+                if luatype(k) == 'number' then
                   add(k .. "]")
                 end
               end
