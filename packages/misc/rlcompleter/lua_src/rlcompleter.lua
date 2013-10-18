@@ -30,12 +30,17 @@ rlcompleter._set(
       local path, name = str:match("(.*)[\\/]+(.*)")
       path = (path or ".") .. "/"
       name = name or str
-      for f in lfs.dir(path) do
-        if (lfs.attributes(path .. f) or {}).mode == 'directory' then
-          add(f .. "/")
-        else
-          add(f)
-        end
+      local d = rlcompleter.dir(path)
+      if d then
+	for f in d:iterate() do
+	  if rlcompleter.dir.isdir(path .. f) then
+	    add(f .. "/")
+	  else
+	    add(f)
+	  end
+	end
+      else
+	add("")
       end
     end
 
