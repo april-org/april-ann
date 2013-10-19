@@ -66,7 +66,11 @@ extern "C" {
 
 char breaks[] = " \t\n\"\\'><=;:+-*/%^~#{}()[].,";
 extern int   rl_completion_suppress_append;
+#ifdef __APPLE__
 extern char *rl_basic_word_break_characters;
+#else
+extern const char *rl_basic_word_break_characters;
+#endif
 /* Static copy of Lua state, as readline has no per-use state */
 static lua_State *storedL;
 
