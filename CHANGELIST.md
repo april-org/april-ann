@@ -4,6 +4,9 @@ ChangeList
 Master branch unstable release
 ------------------------------
 
+- Solved bug at `luabind_template.cc`, which introduced spurious segmentation
+  faults due to Lua execution of garbage collection in the middle of a
+  `lua_pushClassName`.
 - Added Lua autocompletion when readline is available.
 - Added naive `L1_norm` regularization.
 - Added `dataset.clamp`.
