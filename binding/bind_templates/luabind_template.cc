@@ -134,6 +134,10 @@ int lua_is$$ClassName$$(lua_State *L, int index){
 }
 
 void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
+        // We do IncRef as soon as possible avoiding GARBAGE COLLECTOR to removes
+        // our instance
+        IncRef(obj);
+	//
 	$$ClassName$$ **ptr;
 	
 	DEBUG("lua_push$$ClassName$$ (begin)");
@@ -160,9 +164,6 @@ void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
 	lua_pop(L,2);
 	// pila = ptr
 	
-	//Hacemos un IncRef ya que estamos haciendo una nueva copia
-	//del objeto
-	IncRef(obj);
 	DEBUG("lua_push$$ClassName$$ (end)");
 }
 
