@@ -88,6 +88,9 @@ v0.3.0-beta relase
 
 ### Bugs removed
 
+- Solved bug at `luabind_template.cc`, which introduced spurious segmentation
+  faults due to Lua execution of garbage collection in the middle of a
+  `lua_pushClassName`.
 - Solved bug at glob function.
 - Solved bug at matrix iterators operator=.
 - Solved bug at method `matrix::best_span_iterator::setAtWindow`. Becaose of It
