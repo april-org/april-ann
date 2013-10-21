@@ -802,4 +802,31 @@ Matrix<float> *Matrix<float>::inv() {
   return ret;
 }
 
+// FIXME: using WRAPPER for generalized CULA, LAPACK, float and complex numbers
+// WARNING: the V matrix is returned transposed
+template <>
+void Matrix<float>::svd(Matrix<float> **U, Matrix<float> **S, Matrix<float> **VT) {
+  if (numDim != 2)
+    ERROR_EXIT(128, "Only bi-dimensional matrices are allowed\n");
+  Matrix<float> *A = this;
+  if (this->major_order != CblasColMajor || !this->getIsContiguous())
+    A = this->clone(CblasColMajor);
+  IncRef(A);
+  int INFO;
+  const int m = A->matrixSize[0]; // cols
+  const int n = A->matrixSize[1]; // rows
+  const int lda = A->stride[1];
+  const int numSV = m<n ? m : n;
+  const int dimsU[2]  = {m, m};
+  const int dimsS[1]  = {numSV};
+  const int dimsVT[2] = {n, n};
+  *U  = new Matrix<float>(2, dimsU,  CblasColMajor);
+  *S  = new Matrix<float>(1, dimsS,  CblasColMajor);
+  *VT = new Matrix<float>(2, dimsVT, CblasColMajor);
+  INFO = clapack_sgesdd(CblasColMajor, m, n, lda, A->getData(),
+			(*U)->getData(), (*S)->getData(), (*VT)->getData());
+  checkLapackInfo(INFO);
+  DecRef(A);
+}
+
 template class Matrix<float>;

@@ -616,8 +616,12 @@ public:
 		       IntGPUMirroredMemoryBlock *raw_positions=0,
 		       int shift = 0) const;
   
+  // Expands current matrix to a diagonal matrix
+  Matrix<T> *diagonalize() const;
+  
   /**** LAPACK OPERATIONS ****/
   Matrix<T> *inv();
+  void svd(Matrix<T> **U, Matrix<T> **S, Matrix<T> **V);
 
 private:
   void allocate_memory(int size);

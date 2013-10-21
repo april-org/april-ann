@@ -44,11 +44,15 @@ int clapack_sgetrf(const int Order, const int M, const int N,
                    float *A, const int lda, int *ipiv);
 int clapack_sgetri(const int Order, const int N,
                    float *A, const int lda, int *ipiv);
+int clapack_sgesdd(const int Order, const int M, const int N, const int LDA,
+		   float *A, float *U, float *S, float *VT);
 #elif defined(USE_XCODE)
 int clapack_sgetrf(int Order, int M, int N,
                    float *A, int lda, int *ipiv);
 int clapack_sgetri(int Order, int N,
                    float *A, int lda, int *ipiv);
+int clapack_sgesdd(int Order, int M, int N, int LDA,
+		   float *A, float *U, float *S, float *VT);
 #endif
 
 void checkLapackInfo(int info);
