@@ -174,6 +174,9 @@ void Matrix<float>::adjustRange(float rmin, float rmax);
 template<>
 Matrix<float> *Matrix<float>::inv();
 
+template <>
+void Matrix<float>::svd(Matrix<float> **U, Matrix<float> **S, Matrix<float> **V);
+
 ////////////////////////////////////////////////////////////////////////////
 
 typedef Matrix<float> MatrixFloat;

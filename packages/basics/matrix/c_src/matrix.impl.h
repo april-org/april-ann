@@ -802,3 +802,22 @@ bool Matrix<T>::getIsContiguous() const {
   is_contiguous = CONTIGUOUS;
   return true;
 }
+
+// expands current matrix to a diagonal matrix
+template <typename T>
+Matrix<T> *Matrix<T>::diagonalize() const {
+  if (numDim != 1)
+    ERROR_EXIT(128, "Only one-dimensional matrix is allowed\n");
+  const int dims[2] = { matrixSize[0], matrixSize[0] };
+  Matrix<T> *resul  = new Matrix<T>(2, dims, major_order);
+  // resul_diag is a submatrix of resul, build to do a diagonal traverse
+  const int stride  = matrixSize[0] + 1;
+  Matrix<T> *resul_diag = new Matrix<T>(1, &stride, 0, dims, dims[0],
+					resul->last_raw_pos, resul->data,
+					resul->major_order,
+					resul->use_cuda);
+  resul->zeros();
+  resul_diag->copy(this);
+  delete resul_diag;
+  return resul;
+}

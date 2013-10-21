@@ -4,6 +4,9 @@ ChangeList
 Master branch release
 ---------------------
 
+- Added `matrix.svd` and `matrix.diagonalize`.
+- Added `stats.pca`, `stats.mean_centered`, `stats.pca_whitening`.
+
 v0.3.0-beta relase
 ------------------
 
