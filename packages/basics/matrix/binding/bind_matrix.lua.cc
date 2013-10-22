@@ -1481,7 +1481,11 @@ typedef MatrixFloat::sliding_window SlidingWindow;
     // CALL
     lua_call(L, N+1, 1);
     // pop the result, a number
-    *it = lua_tofloat(L, -1);
+    if (!lua_isnil(L, -1)) {
+      if (!lua_isfloat(L, -1))
+	LUABIND_ERROR("Incorrect returned value type, expected NIL or FLOAT\n");
+      *it = lua_tofloat(L, -1);
+    }
     lua_pop(L, 1);
   }
   delete[] v;
