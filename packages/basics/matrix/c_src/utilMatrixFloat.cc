@@ -302,7 +302,7 @@ MatrixFloat *readMatrixFloatFromTabFile(const char *filename,
     do {
       BufferedGZFile  f(filename, "r");
       FloatAsciiExtractor extractor;
-      constString     line;
+      constString     line("");
       while (f.good()) {
 	line = f.extract_u_line();
 	++nrows;
@@ -320,7 +320,7 @@ MatrixFloat *readMatrixFloatFromTabFile(const char *filename,
     do {
       BufferedFile    f(filename, "r");
       FloatAsciiExtractor extractor;
-      constString     line;
+      constString     line("");
       while (f.good()) {
 	line = f.extract_u_line();
 	++nrows;

@@ -12,10 +12,12 @@ end
 
 -------------------------------------------------------------------------------
 
-function stats.mean_centered(X,major_order)
-  local M,N = table.unpack(X:dim())
+function stats.mean_centered_by_pattern(X,major_order)
+  local dim = X:dim()
+  assert(#dim == 2, "Expected a bi-dimensional matrix")
+  local M,N = table.unpack(dim)
   local R = X:clone(major_order)
-  -- U is the sum over all columns
+  -- U is the mean over all rows
   local U,auxR = R:sum(2):rewrap(M):scal(1/N)
   -- R is centered subtracting by -U
   for i=1,R:dim(2) do auxR=R:select(2,i,auxR):axpy(-1, U) end
@@ -27,8 +29,9 @@ end
 function stats.pca_whitening(X,S,U,epsilon)
   local epsilon = epsilon or 0.0
   local XW      = X:clone():gemm{ A=X, B=U, trans_B=true, beta=0, alpha=1 }
+  local aux
   for i=1,S:dim(1) do
-    XW:select(2,i):scal( 1/math.sqrt(S:get(i) + epsilon) )
+    aux = XW:select(2,i,aux):scal( 1/math.sqrt(S:get(i) + epsilon) )
   end
 end
 
@@ -36,8 +39,10 @@ end
 
 -- PCA algorithm based on covariance matrix and SVD decomposition
 function stats.pca(X)
-  local M,N    = table.unpack(X:dim())
-  local Xc,avg = stats.mean_centered(X, "col_major")
+  local dim    = X:dim()
+  assert(#dim == 2, "Expected a bi-dimensional matrix")
+  local M,N    = table.unpack(dim)
+  local Xc,avg = stats.mean_centered_by_pattern(X, "col_major")
   local sigma  = matrix.col_major(N,N):gemm{ A=Xc, B=Xc,
 					     trans_A=true,
 					     trans_B=false,
@@ -82,6 +87,8 @@ april_set_doc("stats.iterative_pca",
 -- output: T is a MxK scores matrix
 -- output: P is a NxK loads matrix
 -- output: R is a MxN residuals matrix
+--
+-- PCA model: X = TLP’ + R
 function stats.iterative_pca(params)
   local params = get_table_fields(
     {
@@ -102,7 +109,7 @@ function stats.iterative_pca(params)
   local T = matrix[major_order](M,K):zeros() -- left eigenvectors
   local P = matrix[major_order](N,K):zeros() -- right eigenvectors
   local L = matrix[major_order](K):zeros()   -- eigenvalues
-  local R,U = stats.mean_centered(X, major_order) -- residual and means
+  local R,U = stats.mean_centered_by_pattern(X, major_order) -- residual and means
   -- GS-PCA
   local Tcol, Rcol, Pcol, Uslice, Pslice, Tslice, Lk
   for k=1,K do
