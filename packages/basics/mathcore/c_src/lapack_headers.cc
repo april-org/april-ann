@@ -87,6 +87,29 @@ int clapack_sgetri(int Order, int N,
   delete[] WORK;
   return INFO;
 }
+int clapack_sgesdd(int Order, int M, int N, int LDA,
+                   float *A, float *U, float *S, float *VT) {
+  if (Order != CblasColMajor)
+    ERROR_EXIT(256, "Only col_major order is allowed\n");
+  const int numSV = (M<N) ? M : N;
+  // workspace
+  float workSize;
+  float *work = &workSize;
+  int lwork = -1;
+  int *iwork = new int[2*numSV];
+  int info = 0;
+  // call sgesdd_ for workspace size computation
+  sgesdd_("A", &M, &N, A, &LDA, S, U, &M, VT, &N, work, &lwork, iwork, &info);
+  // optimal workspace size is in work[0]
+  lwork = workSize;
+  work = new float[lwork];
+  // computation
+  sgesdd_("A", &M, &N, A, &LDA, S, U, &M, VT, &N, work, &lwork, iwork, &info);
+  // free auxiliary data
+  delete[] work;
+  delete[] iwork;
+  return info;
+}
 #else
 int clapack_sgesdd(const int Order, const int M, const int N, const int LDA,
 		   float *A, float *U, float *S, float *VT) {
