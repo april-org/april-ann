@@ -121,7 +121,7 @@ int clapack_sgesdd(const int Order, const int M, const int N, const int LDA,
   UNUSED_VARIABLE(U);
   UNUSED_VARIABLE(S);
   UNUSED_VARIABLE(VT);
-  ERROR_EXIT("SGESDD FUNCTION NOT IMPLEMENTED IN ATLAS CLAPACK\n");
+  ERROR_EXIT(128,"SGESDD FUNCTION NOT IMPLEMENTED IN ATLAS CLAPACK\n");
   return 0;
 }
 #endif
