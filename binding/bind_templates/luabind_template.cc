@@ -175,6 +175,8 @@ void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
 #include "luabindmacros.h"
 
 int lua_new_$$ClassName$$_$$FILENAME2$$(lua_State *L) {
+        // stops garbage collector to avoid problems with reference counting
+        lua_gc(L, LUA_GCSTOP, 0);
 	lua_remove(L,1);  // primer parametro es la metatabla __call(table,...)
 	$$ClassName$$ UNUSED *obj = 0;
 	DEBUG("lua_new_$$ClassName$$ (begin)");
@@ -184,10 +186,14 @@ int lua_new_$$ClassName$$_$$FILENAME2$$(lua_State *L) {
         if (luabind_num_returned_values != 1) {
           LUABIND_ERROR("constructors must return 1 (and only 1) value");
         }
+	// restart the garbage collector
+        lua_gc(L, LUA_GCRESTART, 0);
 	return luabind_num_returned_values;
 }
 
 int lua_delete_$$ClassName$$_$$FILENAME2$$(lua_State *L){
+  // stops garbage collector to avoid problems with reference counting
+  lua_gc(L, LUA_GCSTOP, 0);
   $$ClassName$$ *obj = lua_rawget$$ClassName$$_$$FILENAME2$$(L,1);
   if (obj != 0) {
     DEBUG_OBJ("lua_delete_$$ClassName$$ (begin)",obj);
@@ -202,6 +208,8 @@ int lua_delete_$$ClassName$$_$$FILENAME2$$(lua_State *L){
   else {
     DEBUG_OBJ("lua_delete_$$ClassName$$ WARNING!! NULL pointer", obj);
   }
+  // restart the garbage collector
+  lua_gc(L, LUA_GCRESTART, 0);
   return 0;
 }
 
@@ -374,6 +382,8 @@ void bindluaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L){
 #include "luabindmacros.h"
 
 int lua_call_$$ClassName$$_$$MethodName$$(lua_State *L){
+  // stops garbage collector to avoid problems with reference counting
+  lua_gc(L, LUA_GCSTOP, 0);
   //Comprobamos que el primer elemento sea el userdata que esperamos
   if (!lua_is$$ClassName$$(L,1)) {
       lua_pushstring(L, "First argument of $$MethodName$$ must be of type "
@@ -389,6 +399,8 @@ int lua_call_$$ClassName$$_$$MethodName$$(lua_State *L){
     $$code$$
       }
   DEBUG_OBJ("lua_call_$$ClassName$$_$$MethodName$$ (end)", obj);
+  // restart the garbage collector
+  lua_gc(L, LUA_GCRESTART, 0);
   return luabind_num_returned_values;
 }
 //LUA end
@@ -401,11 +413,15 @@ int lua_call_$$ClassName$$_$$MethodName$$(lua_State *L){
 int lua_call_class_$$ClassName$$_$$ClassMethodName$$(lua_State *L){
 	
 	DEBUG("lua_call_class_$$ClassName$$_$$ClassMethodName$$");
+        // stops garbage collector to avoid problems with reference counting
+        lua_gc(L, LUA_GCSTOP, 0);
         int luabind_num_returned_values = 0;
 	// CODE:
 	{
 	  $$code$$
 	}
+	// restart the garbage collector
+        lua_gc(L, LUA_GCRESTART, 0);
 	return luabind_num_returned_values;
 }
 //LUA end
@@ -419,10 +435,14 @@ int lua_call_class_$$ClassName$$_$$ClassMethodName$$(lua_State *L){
 #include "luabindmacros.h"
 
 static int lua_call_$$string.gsub(func_name,"%p","_")$$(lua_State *L){
+  // stops garbage collector to avoid problems with reference counting
+  lua_gc(L, LUA_GCSTOP, 0);
   lua_remove(L,1);  // primer parametro es la metatabla __call(table,...)
   DEBUG("lua_call_$$string.gsub(func_name,"%p","_")$$ (begin)");
   int luabind_num_returned_values = 0;
   $$code$$
+  // restart the garbage collector
+  lua_gc(L, LUA_GCRESTART, 0);
   DEBUG("lua_call_$$string.gsub(func_name,"%p","_")$$ (end)");
   return luabind_num_returned_values;
 }
