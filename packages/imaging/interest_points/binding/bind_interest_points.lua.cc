@@ -6,6 +6,7 @@
 #include "pair.h"
 #include <cmath>
 #include <cctype>
+using april_utils::Point2D;
 using namespace InterestPoints;
 //BIND_END
 
@@ -14,7 +15,6 @@ using namespace InterestPoints;
 //BIND_FUNCTION interest_points.extract_points_from_image_old
 {
   using april_utils::vector;
-  using InterestPoints::Point2D;
 
   LUABIND_CHECK_ARGN(==,1);
   ImageFloat *img;
@@ -41,7 +41,6 @@ using namespace InterestPoints;
 //BIND_FUNCTION interest_points.extract_points_from_image
 {
   using april_utils::vector;
-  using InterestPoints::Point2D;
 
   LUABIND_CHECK_ARGN(==,1);
   ImageFloat *img;
@@ -185,7 +184,7 @@ using namespace InterestPoints;
     
     // Outer list
     lua_createtable (L, v->size(), 0);
-    fprintf(stderr, "GetComponent Size %d (%d) Points: %d\n", v->size(), obj->getSize(), obj->getNumPoints()); 
+    //fprintf(stderr, "GetComponent Size %d (%d) Points: %d\n", v->size(), obj->getSize(), obj->getNumPoints()); 
     for(int i=0; i < (int)v->size(); ++i) 
     {   
         int component_size = (*v)[i].size();

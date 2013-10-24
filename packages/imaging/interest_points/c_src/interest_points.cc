@@ -37,7 +37,7 @@ using april_utils::max;
 using april_utils::max_finder;
 using april_utils::min_finder;
 using april_utils::swap;
-using InterestPoints::Point2D;
+using april_utils::Point2D;
 
 
 namespace InterestPoints {
@@ -182,9 +182,7 @@ namespace InterestPoints {
   // Returns true if white, false if not
   // It is assumed that white is 1 and 0
   // otherwise use flag reverse
-  inline
-    bool
-  is_black (float value, float threshold, bool reverse = false) {
+  inline bool is_black (float value, float threshold, bool reverse = false) {
 
     if (value < threshold)
       return true xor reverse;
@@ -470,8 +468,8 @@ namespace InterestPoints {
   }
    
   void SetPoints::addComponent() {
-    if (size != ccPoints->size())
-        fprintf(stderr, "Size sincronization error %d %d\n", size, ccPoints->size());
+    if ((size_t) size != ccPoints->size())
+        fprintf(stderr, "Size sincronization error %d %lu\n", size, ccPoints->size());
     april_assert("Size sincronization error" && size == ccPoints->size());
     
     (*ccPoints).push_back(vector<interest_point>());

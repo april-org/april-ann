@@ -29,11 +29,11 @@
 #include "utilImageFloat.h"
 #include "pair.h"
 #include "vector.h"
+#include "geometry.h"
 using april_utils::vector;
-
+using april_utils::Point2D;
 namespace InterestPoints
 {
-  typedef april_utils::pair<float, float> Point2D;
 
   /**
    * @brief Given an Image returns a vector with the local maxima and local minima of the given image.
