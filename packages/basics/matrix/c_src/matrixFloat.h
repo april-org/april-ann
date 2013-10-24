@@ -73,13 +73,40 @@ template<>
 void Matrix<float>::pow(float value);
 
 template<>
+void Matrix<float>::tan();
+
+template<>
 void Matrix<float>::tanh();
+
+template<>
+void Matrix<float>::atan();
+
+template<>
+void Matrix<float>::atanh();
 
 template <>
 void Matrix<float>::cos();
 
 template <>
+void Matrix<float>::cosh();
+
+template <>
+void Matrix<float>::acos();
+
+template <>
+void Matrix<float>::acosh();
+
+template <>
 void Matrix<float>::sin();
+
+template <>
+void Matrix<float>::sinh();
+
+template <>
+void Matrix<float>::asin();
+
+template <>
+void Matrix<float>::asinh();
 
 template <>
 void Matrix<float>::abs();

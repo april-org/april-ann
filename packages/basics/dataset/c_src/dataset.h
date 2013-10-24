@@ -640,6 +640,21 @@ class SubAndDivNormalizationDataSet : public DataSet<T> {
   int putPattern(int index, const T *pat);
 };
 
+/// A specialization of DataSet which performs a clamp
+template <typename T>
+class ClampDataSet : public DataSet<T> {
+  /// The underlying DataSet.
+  DataSet<T> *ds;
+  float lower, upper;
+ public:
+  ClampDataSet(DataSet<T> *ds, float lower, float upper);
+  virtual ~ClampDataSet();
+  int numPatterns() { return ds->numPatterns(); }
+  int patternSize() { return ds->patternSize(); }
+  int getPattern(int index, T *pat);
+  int putPattern(int index, const T *pat);
+};
+
 /*** Implementacion ***/
 #include "dataset.cc"
 

@@ -2,32 +2,32 @@ return {
   -- BASIC PACAKGES
   --  "plotter",
   "util",
-  "statistics",
+  "stats",
   "dataset",
   "matrix",
   "random",
   "cmdOpt",
   "profiler",
-  "math",
+  "mathcore",
   "gzio",
   "matlab",
-  "mutual_information",
+  "stats.MI",
   
   -- MACHINE LEARNING
   "trainable",
   -- "function_interface",
   -- NEURAL NETWORKS
-  "ann_base",
-  "loss_functions",
+  "ann",
+  "ann.loss",
   "trainable",
-  "sdae",
+  "ann.autoencoders",
 
   -- LANGUAGE MODELS
   --  "fnnlm",
   
   -- IMAGE HANDLERS
-  "image",
-  "image_io",
+  "Image",
+  "ImageIO",
   "libpng",
   "median_filter",
   "image_metrics",

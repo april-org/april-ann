@@ -26,20 +26,6 @@
 #define LUA_COPYRIGHT	LUA_RELEASE "  Copyright (C) 1994-2013 Lua.org, PUC-Rio"
 #define LUA_AUTHORS	"R. Ierusalimschy, L. H. de Figueiredo, W. Celes"
 
-#ifndef APRILANN_COMMIT
-#define APRILANN_COMMIT UNKNOWN
-#endif
-#define STRINGFY(X) #X
-#define TOSTRING(X) STRINGFY(X)
-#define APRILANN_VERSION_MAJOR "0"
-#define APRILANN_VERSION_MINOR "2"
-#define APRILANN_VERSION_RELEASE "1"
-#define APRILANN_RELEASE   "April-ANN v" APRILANN_VERSION_MAJOR "." APRILANN_VERSION_MINOR "." APRILANN_VERSION_RELEASE "-beta COMMIT " TOSTRING(APRILANN_COMMIT)
-#define APRILANN_COPYRIGHT "Copyright (C) 2012-2013 DSIC-UPV, CEU-UCH"
-#define APRILANN_AUTHORS   "F. Zamora-Martinez, S. España-Boquera, J. Gorbe-Moya, J. Pastor & A. Palacios"
-
-#define APRILANN_DISCLAIMER "This program comes with ABSOLUTELY NO WARRANTY; for details see `LICENSE.txt'.\nThis is free software, and you are welcome to redistribute it\nunder certain conditions; see 'LICENSE.txt' for details."
-
 /* mark for precompiled code ('<esc>Lua') */
 #define LUA_SIGNATURE	"\033Lua"
 

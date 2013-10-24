@@ -42,7 +42,7 @@ $$HEADER_C$$
    function lua_setdottedname(dottedname)
       local cpp_str = {
                          "\nbool exists = false;\n",
-                         "lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);\n"
+			 "lua_pushglobaltable(L);\n"
 	              }
       for subName in string.gmatch(dottedname, "([%w_]+)[%.]*") do
 	 table.insert(cpp_str, string.format([[
@@ -134,6 +134,10 @@ int lua_is$$ClassName$$(lua_State *L, int index){
 }
 
 void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
+        // We do IncRef as soon as possible avoiding GARBAGE COLLECTOR to removes
+        // our instance
+        IncRef(obj);
+	//
 	$$ClassName$$ **ptr;
 	
 	DEBUG("lua_push$$ClassName$$ (begin)");
@@ -160,9 +164,6 @@ void lua_push$$ClassName$$(lua_State *L, $$ClassName$$ *obj){
 	lua_pop(L,2);
 	// pila = ptr
 	
-	//Hacemos un IncRef ya que estamos haciendo una nueva copia
-	//del objeto
-	IncRef(obj);
 	DEBUG("lua_push$$ClassName$$ (end)");
 }
 
@@ -205,19 +206,19 @@ int lua_delete_$$ClassName$$_$$FILENAME2$$(lua_State *L){
 }
 
 
-void luaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L){
+void bindluaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L){
 	int meta_instance;   // instance's metatable
 	int meta_class;      // class's metatable
 	int class_table;	 // tabla de la clase
 	int instance_methods;// metodos
 
-	DEBUG("luaopen_$$ClassName$$_$$FILENAME2$$ (begin)");
+	DEBUG("bindluaopen_$$ClassName$$_$$FILENAME2$$ (begin)");
 
 	// Creamos la tabla para la clase
 	$$lua_setdottedname(LUANAME[ClassName])$$
 	// stack: last_table
 	if (exists) {
-	  DEBUG("luaopen_$$ClassName$$_$$FILENAME2$$ (exists table)");
+	  DEBUG("bindluaopen_$$ClassName$$_$$FILENAME2$$ (exists table)");
 	  lua_pushstring(L,"luabind_classes");
 	  lua_rawget(L,LUA_REGISTRYINDEX);
 	  exists = false;
@@ -242,7 +243,7 @@ void luaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L){
 	class_table = lua_gettop(L);
 	
 	if (not exists) {
-	  DEBUG("luaopen_$$ClassName$$_$$FILENAME2$$ (creating class)"); 
+	  DEBUG("bindluaopen_$$ClassName$$_$$FILENAME2$$ (creating class)"); 
 	  // creamos las tablas y guardamos los indices
 	  lua_newtable(L);
 	  meta_instance = lua_gettop(L);
@@ -320,7 +321,7 @@ void luaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L){
 	  
 	  lua_pop(L,1);  // luabind_classes
 	} else {
-	  DEBUG("luaopen_$$ClassName$$_$$FILENAME2$$ (acess created class)"); 
+	  DEBUG("bindluaopen_$$ClassName$$_$$FILENAME2$$ (acess created class)"); 
 	  // Ya existe la clase, buscamos las tablas
 	  // stack: class_table
 	  lua_pushstring(L,"meta_instance");
@@ -333,7 +334,7 @@ void luaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L){
 	  instance_methods = lua_gettop(L);
 	}
 	
-	DEBUG("luaopen_$$ClassName$$_$$FILENAME2$$ (methods)"); 
+	DEBUG("bindluaopen_$$ClassName$$_$$FILENAME2$$ (methods)"); 
 	// Instance_methods
 	//LUA for MethodName in pairs(class.methods) do
 	lua_pushstring(L,"$$MethodName$$");
@@ -358,13 +359,13 @@ void luaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L){
 
 	//LUA if class.class_open ~= ""  then 
 	// Codigo a ejecutar cuando se hace open de la clase
-	DEBUG("luaopen_$$ClassName$$_$$FILENAME2$$ (open)");
+	DEBUG("bindluaopen_$$ClassName$$_$$FILENAME2$$ (open)");
 	{
 		$$class.class_open$$
 	} 
 
 	//LUA end
-	DEBUG("luaopen_$$ClassName$$_$$FILENAME2$$ (end)");
+	DEBUG("bindluaopen_$$ClassName$$_$$FILENAME2$$ (end)");
 }
 
 //LUA for MethodName,code in pairs(class.methods) do

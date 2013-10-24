@@ -302,7 +302,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   LUABIND_GET_OPTIONAL_PARAMETER(2, string, order, 0);
   MatrixFloat *obj;
   if ((obj = readMatrixFloatFromFile(filename, order)) == 0)
-    LUABIND_ERROR("bad format");
+    LUABIND_FERROR1("Error happens reading from %s", filename);
   else LUABIND_RETURN(MatrixFloat,obj);
 }
 //BIND_END
@@ -318,7 +318,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   LUABIND_GET_OPTIONAL_PARAMETER(2, string, order, "row_major");
   MatrixFloat *obj;
   if ((obj = readMatrixFloatFromTabFile(filename, order)) == 0)
-    LUABIND_ERROR("bad format");
+    LUABIND_FERROR1("Error happens reading from %s", filename);
   else LUABIND_RETURN(MatrixFloat,obj);
 }
 //BIND_END
@@ -1083,9 +1083,30 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat tan
+{
+  obj->tan();
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat tanh
 {
   obj->tanh();
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat atan
+{
+  obj->atan();
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat atanh
+{
+  obj->atanh();
   LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END
@@ -1097,9 +1118,51 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat sinh
+{
+  obj->sinh();
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat asin
+{
+  obj->asin();
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat asinh
+{
+  obj->asinh();
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat cos
 {
   obj->cos();
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat cosh
+{
+  obj->cosh();
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat acos
+{
+  obj->acos();
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat acosh
+{
+  obj->acosh();
   LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END
@@ -1359,9 +1422,61 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
+
 //BIND_METHOD MatrixFloat inv
 {
   LUABIND_RETURN(MatrixFloat, obj->inv());
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat contiguous
+{
+  if (obj->getIsContiguous())
+    LUABIND_RETURN(MatrixFloat, obj);
+  else
+    LUABIND_RETURN(MatrixFloat, obj->clone());
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat map
+{
+  int argn;
+  int N;
+  argn = lua_gettop(L); // number of arguments
+  N = argn-1;
+  MatrixFloat **v = 0;
+  MatrixFloat::const_iterator *list_it = 0;
+  if (N > 0) {
+    v = new MatrixFloat*[N];
+    list_it = new MatrixFloat::const_iterator[N];
+  }
+  for (int i=0; i<N; ++i) {
+    LUABIND_CHECK_PARAMETER(i+1, MatrixFloat);
+    LUABIND_GET_PARAMETER(i+1, MatrixFloat, v[i]);
+    if (!v[i]->sameDim(obj))
+      LUABIND_ERROR("The given matrices must have the same dimension sizes\n");
+    list_it[i] = v[i]->begin();
+  }
+  LUABIND_CHECK_PARAMETER(argn, function);
+  for (MatrixFloat::iterator it(obj->begin()); it!=obj->end(); ++it) {
+    // copy the Lua function, lua_call will pop this copy
+    lua_pushvalue(L, argn);
+    // push the self matrix value
+    lua_pushfloat(L, *it);
+    // push the value of the rest of given matrices
+    for (int j=0; j<N; ++j) {
+      lua_pushfloat(L, *list_it[j]);
+      ++list_it[j];
+    }
+    // CALL
+    lua_call(L, N+1, 1);
+    // pop the result, a number
+    *it = lua_tofloat(L, -1);
+    lua_pop(L, 1);
+  }
+  delete[] v;
+  delete[] list_it;
+  LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END
 

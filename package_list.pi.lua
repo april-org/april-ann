@@ -13,7 +13,7 @@ return {
   "loss_functions",
   "trainable",
   "sdae",
-  "image",
-  "image_io",
+  "Image",
+  "ImageIO",
   "libpng",
  }
