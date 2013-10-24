@@ -827,9 +827,36 @@ april_set_doc("matrix.exp", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
+april_set_doc("matrix.tan", {
+		class = "method",
+		summary = "Component wise tanh operation IN-PLACE: Y = tan(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
 april_set_doc("matrix.tanh", {
 		class = "method",
 		summary = "Component wise tanh operation IN-PLACE: Y = tanh(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.atan", {
+		class = "method",
+		summary = "Component wise atanh operation IN-PLACE: Y = atan(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.atanh", {
+		class = "method",
+		summary = "Component wise atanh operation IN-PLACE: Y = atanh(Y)",
 		params = {
 		},
 		outputs = {
@@ -845,9 +872,63 @@ april_set_doc("matrix.sin", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
+april_set_doc("matrix.sinh", {
+		class = "method",
+		summary = "Component wise sinh operation IN-PLACE: Y = sinh(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.asin", {
+		class = "method",
+		summary = "Component wise asin operation IN-PLACE: Y = asin(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.asinh", {
+		class = "method",
+		summary = "Component wise asinh operation IN-PLACE: Y = asinh(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
 april_set_doc("matrix.cos", {
 		class = "method",
 		summary = "Component wise cos operation IN-PLACE: Y = cos(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.cosh", {
+		class = "method",
+		summary = "Component wise cosh operation IN-PLACE: Y = cosh(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.acos", {
+		class = "method",
+		summary = "Component wise acos operation IN-PLACE: Y = acos(Y)",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
+april_set_doc("matrix.acosh", {
+		class = "method",
+		summary = "Component wise acosh operation IN-PLACE: Y = acosh(Y)",
 		params = {
 		},
 		outputs = {
@@ -1046,6 +1127,44 @@ april_set_doc("matrix.inv",
 		  "col_major matrices.",
 		},
 		outputs = { "The matrix inverse" },
+	      })
+
+april_set_doc("matrix.contiguous",
+	      {
+		class = "method",
+		summary = "Returns a contiguous version of the caller matrix",
+		description = {
+		  "Returns a contiguous version of the caller matrix.",
+		  "If the matrix is contiguous, returns itself.",
+		  "Otherwise, returns a copy of the caller.",
+		},
+		outputs = { "A matrix instance" },
+	      })
+
+april_set_doc("matrix.map",
+	      {
+		class = "method",
+		summary = "Maps the matrix values by a given list of matrices and a Lua map function",
+		description = {
+		  "Maps the matrix values by a given list of matrices",
+		  "and a Lua map function.",
+		  "The Lua function will be called for every possible",
+		  "matrix position. The Lua function receives the caller matrix",
+		  "value at the given position, the value of the second matrix,",
+		  "the value of the third matrix, and so on.",
+		  "The Lua function returns ONLY one value, which will be",
+		  "assigned to the caller matrix IN-PLACE.",
+		  "All the matrices must have the same dimension sizes.",
+		  "The number of given matrices could be >= 0",
+		},
+		params = {
+		  "A second matrix",
+		  "A third matrix",
+		  "...",
+		  "A Nth matrix",
+		  "A Lua function which applies the map computation.",
+		},
+		outputs = { "The caller matrix" },
 	      })
 
 april_set_doc("matrix.sliding_window",

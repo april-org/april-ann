@@ -53,10 +53,13 @@ trainer:randomize_weights{
   inf         = -1,
   sup         =  1,
 }
+trainer:set_option("learning_rate", 0.01)
+trainer:set_option("momentum",      0.01)
+trainer:set_option("weight_decay",  1e-05)
+-- bias has weight_decay of ZERO
+trainer:set_layerwise_option("b.", "weight_decay", 0)
+
 trainer:save("jarl.net", "binary")
-thenet:set_option("learning_rate", 0.01)
-thenet:set_option("momentum",      0.01)
-thenet:set_option("weight_decay",  1e-05)
 
 training_data = {
   input_dataset  = train_input,

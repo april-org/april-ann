@@ -1,3 +1,6 @@
+2013/10/13: COPYRIGHT, AUTHORS, and VERSION stuff is out of Lua source tree, it
+is managed by formiga.
+
 2013/09/17: Modified lua.h to incorporate the commit number
 
 diff --git a/lua/lua-5.2.2/src/lua.h b/lua/lua-5.2.2/src/lua.h

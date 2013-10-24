@@ -1,14 +1,19 @@
 dofile("binding/formiga.lua")
 formiga.build_dir = "build_release_macosx"
 
+local packages = dofile "package_list.lua"
+table.insert(packages, "rlcompleter") -- AUTOCOMPLETION => needs READLINE
+
 luapkg{
   program_name = "april-ann",
   verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
-  packages = dofile "package_list.lua",
+  packages = packages,
+  version_flags = dofile "VERSION.lua",
+  disclaimer_strings = dofile "DISCLAIMER.lua",
   global_flags = {
     debug="no",
     use_lstrip = "yes",
-    use_readline="no",
+    use_readline="yes",
     optimization = "yes",
     platform = "unix",
     extra_flags={
@@ -18,6 +23,7 @@ luapkg{
       "-DUSE_XCODE",
       "-F/System/Library/Frameworks/Accelerate.framework",
       "-DNO_OMP",
+      "-fPIC",
     },
     extra_libs={
       "-lpthread",
@@ -26,6 +32,10 @@ luapkg{
       "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib",
       "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libLAPACK.dylib",
       "-rdynamic",
+      "-fPIC",
+    },
+    shared_extra_libs={
+      assert(io.popen("pkg-config --libs 'lua >= 5.2'"):read("*l"))
     },
   },
   
@@ -103,13 +113,15 @@ if arg[2] == nil then
   arg[2] = "."
 end
 
-formiga.os.execute("mkdir -p "..formiga.os.compose_dir(arg[2], "bin"))
-formiga.os.execute("mkdir -p "..formiga.os.compose_dir(arg[2], "lib"))
-formiga.os.execute("mkdir -p "..formiga.os.compose_dir(arg[2], "include"))
-formiga.os.execute("cp -f "..formiga.os.compose_dir(formiga.build_dir,"bin",formiga.program_name)
-                   .." "..formiga.os.compose_dir(arg[2], "bin", formiga.program_name))
-formiga.os.execute("cp -R "..formiga.os.compose_dir(formiga.build_dir,"lib")
-                   .." "..arg[2])
-formiga.os.execute("cp -R "..formiga.os.compose_dir(formiga.build_dir,"include","april")
-                   .." "..formiga.os.compose_dir(arg[2], "include"))
+if arg[1] ~= "document" and arg[1] ~= "test" then
+  formiga.os.execute("mkdir -p "..formiga.os.compose_dir(arg[2], "bin"))
+  formiga.os.execute("mkdir -p "..formiga.os.compose_dir(arg[2], "lib"))
+  formiga.os.execute("mkdir -p "..formiga.os.compose_dir(arg[2], "include"))
+  formiga.os.execute("cp -f "..formiga.os.compose_dir(formiga.build_dir,"bin",formiga.program_name)
+		       .." "..formiga.os.compose_dir(arg[2], "bin", formiga.program_name))
+  formiga.os.execute("cp -R "..formiga.os.compose_dir(formiga.build_dir,"lib")
+		       .." "..arg[2])
+  formiga.os.execute("cp -R "..formiga.os.compose_dir(formiga.build_dir,"include","april-ann")
+		       .." "..formiga.os.compose_dir(arg[2], "include"))
 
+end

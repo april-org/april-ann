@@ -37,5 +37,6 @@ typedef StepDataSet<float> StepDataSetFloat;
 typedef DerivDataSet<float> DerivDataSetFloat;
 typedef CacheDataSet<float> CacheDataSetFloat;
 typedef SubAndDivNormalizationDataSet<float> SubAndDivNormalizationDataSetFloat;
+typedef ClampDataSet<float> ClampDataSetFloat;
 
 #endif // UTILDATASETFLOAT_H

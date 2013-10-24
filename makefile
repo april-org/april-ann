@@ -1,3 +1,8 @@
+LINUX_LUALIB = /usr/lib/lua/5.2
+DARWIN_LUALIB = /opt/local/lib/lua/5.2
+BIN = /usr/bin
+UNAME = `uname`
+
 ALL: release-mkl
 
 document:
@@ -6,10 +11,13 @@ document:
 test-macosx: debug-macosx
 	lua build_debug_macosx.lua test
 
-test: test-mkl
+test: test-debug
 
 test-mkl: debug-mkl
 	lua build_mkl_debug.lua test
+
+test-debug: debug
+	lua build_debug.lua test
 
 #test:
 #	lua build_debug.lua test
@@ -29,6 +37,9 @@ release:
 release-cuda-mkl:
 	lua build_cuda_and_mkl_release.lua
 
+release-pi:
+	lua build_release_pi.lua
+
 debug-macosx:
 	lua build_debug_macosx.lua
 
@@ -43,3 +54,27 @@ debug-cuda-mkl:
 
 clean:
 	./clean.sh
+
+install:
+	make install-$(UNAME)
+
+uninstall:
+	make uninstall-$(UNAME)
+
+install-Darwin:
+	mkdir -p $(DARWIN_LUALIB)
+	install lib/aprilann.so $(DARWIN_LUALIB)
+	install bin/april-ann $(BIN)
+
+install-Linux:
+	mkdir -p $(LINUX_LUALIB)
+	install lib/aprilann.so $(LINUX_LUALIB)
+	install bin/april-ann $(BIN)
+
+uninstall-Darwin:
+	rm -f $(DARWIN_LUALIB)/aprilann.so
+	rm -f $(BIN)/april-ann
+
+uninstall-Linux:
+	rm -f $(LINUX_LUALIB)/aprilann.so
+	rm -f $(BIN)/april-ann

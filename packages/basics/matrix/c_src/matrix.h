@@ -548,9 +548,18 @@ public:
   void exp();
   void sqrt();
   void pow(T value);
+  void tan();
   void tanh();
+  void atan();
+  void atanh();
   void sin();
+  void sinh();
+  void asin();
+  void asinh();
   void cos();
+  void cosh();
+  void acos();
+  void acosh();
   void abs();
   Matrix<T> *cmul(const Matrix<T> *other);
   void adjustRange(T rmin, T rmax);

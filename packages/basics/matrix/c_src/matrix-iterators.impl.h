@@ -377,6 +377,7 @@ typename Matrix<T>::const_iterator &Matrix<T>::const_iterator::operator=(const t
   m = other.m;
   idx = other.idx;
   raw_pos = other.raw_pos;
+  data = m->getData();
   if (other.coords != 0) {
     if (coords==0 || m->numDim != other.m->numDim) {
       delete[] coords;
@@ -396,6 +397,7 @@ typename Matrix<T>::const_iterator &Matrix<T>::const_iterator::operator=(const t
   m = other.m;
   idx = other.idx;
   raw_pos = other.raw_pos;
+  data = m->getData();
   if (other.coords != 0) {
     if (coords==0 || m->numDim != other.m->numDim) {
       delete[] coords;
@@ -554,6 +556,7 @@ operator=(const typename Matrix<T>::const_col_major_iterator &other) {
   m = other.m;
   idx = other.idx;
   raw_pos = other.raw_pos;
+  data = m->getData();
   if (other.coords != 0) {
     if (coords==0 || m->numDim != other.m->numDim) {
       delete[] coords;
@@ -574,6 +577,7 @@ const_col_major_iterator::operator=(const typename Matrix<T>::iterator &other) {
   m = other.m;
   idx = other.idx;
   raw_pos = other.raw_pos;
+  data = m->getData();
   if (!m->getIsContiguous() || m->getMajorOrder()==CblasRowMajor) {
     coords = new int[other.m->getNumDim()];
     if (other.coords != 0)
@@ -590,6 +594,7 @@ operator=(const typename Matrix<T>::const_iterator &other) {
   m = other.m;
   idx = other.idx;
   raw_pos = other.raw_pos;
+  data = m->getData();
   if (!m->getIsContiguous() || m->getMajorOrder()==CblasRowMajor) {
     coords = new int[other.m->getNumDim()];
     if (other.coords != 0)

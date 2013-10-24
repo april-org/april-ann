@@ -167,7 +167,22 @@ void Matrix<T>::pow(T value) {
 }
 
 template <typename T>
+void Matrix<T>::tan() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
 void Matrix<T>::tanh() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
+void Matrix<T>::atan() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
+void Matrix<T>::atanh() {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
@@ -177,7 +192,37 @@ void Matrix<T>::cos() {
 }
 
 template <typename T>
+void Matrix<T>::cosh() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
+void Matrix<T>::acos() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
+void Matrix<T>::acosh() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
 void Matrix<T>::sin() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
+void Matrix<T>::sinh() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
+void Matrix<T>::asin() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
+void Matrix<T>::asinh() {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
