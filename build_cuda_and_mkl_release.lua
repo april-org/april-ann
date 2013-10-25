@@ -8,6 +8,8 @@ luapkg{
   program_name = "april-ann",
   verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
   packages = packages,
+  version_flags = dofile "VERSION.lua",
+  disclaimer_strings = dofile "DISCLAIMER.lua",
   global_flags = {
     debug="no",
     use_lstrip = "yes",
@@ -24,11 +26,14 @@ luapkg{
       "-msse",
       "-DNDEBUG",
       "-DNO_POOL",
+      "-DNO_OMP",
+      "-fPIC",
       -- For CUDA
       "-I/usr/local/cuda/include",
       "-L/usr/local/cuda/lib",
     },
     extra_libs={
+      "-fPIC",
       "-lpthread",
       "-rdynamic",
       -- For Intel MKL :)
@@ -41,6 +46,10 @@ luapkg{
       "-liomp5",
       -- For CUBLAS
       "-lcublas",
+    },
+    shared_extra_libs={
+      "-shared",
+      "-llua5.2",
     },
   },
   
