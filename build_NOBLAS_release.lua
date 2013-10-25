@@ -30,6 +30,7 @@ luapkg{
       "-Wl,-E -ldl"
     },
     shared_extra_libs={
+      "-shared",
       "-llua5.2",
     },
   },

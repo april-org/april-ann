@@ -37,6 +37,8 @@ luapkg{
       "-fPIC",
     },
     shared_extra_libs={
+     "-flat_namespace",
+     "-bundle",
       assert(io.popen("pkg-config --libs 'lua >= 5.2'"):read("*l"))
     },
   },

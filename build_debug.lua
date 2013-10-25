@@ -34,6 +34,7 @@ luapkg{
       "-llapack_atlas",
     },
     shared_extra_libs={
+      "-shared",
       "-llua5.2",
     },
   },
