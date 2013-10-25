@@ -211,18 +211,21 @@ function initialize_neural_network()
   end
   -- generamos la red
   if initial_mlp then
+    print("# LOADING ANN FROM PREVIOUS HMMANN")
     mlp_str = initial_mlp
     ann_table.trainer = trainable.supervised_trainer.load(initial_mlp,
 							  ann.loss[error_function](ann_table.num_outputs),
 							  bunch_size)
     ann_table.thenet  = ann_table.trainer:get_component()
   elseif pretrained_mlp then
+    print("# LOADING PRETRAINED ANN")
     mlp_str = pretrained_mlp
     ann_table.trainer = trainable.supervised_trainer.load(pretrained_mlp,
 							  ann.loss[error_function](ann_table.num_outputs),
 							  bunch_size)
     ann_table.thenet  = ann_table.trainer:get_component()
   else
+    print("# CREATING ANN FROM SCRATCH")
     ann_table.thenet = ann.components.stack()
     mlp_str = string.format("%d inputs",ann_table.num_entradas)
     --
