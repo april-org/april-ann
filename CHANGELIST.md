@@ -4,6 +4,8 @@ ChangeList
 Master branch release
 ---------------------
 
+- Solved problem with `rlcompleter`, which didn't work properly when loaded as a
+  Lua module.
 - Modified `configure.sh` to inform about any error during Lua building.
 - Loadable modules are working on MacOs X.
 - Added `matrix.svd` and `matrix.diagonalize`.
