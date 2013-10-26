@@ -7,6 +7,7 @@ Requirements
 Requires the following libraries. Versions are only orientative, it could work with older and newer versions.
 
 - GNU C++ compiler (g++): v 4.7.2
+- Lua 5.2 headers: in order to tell April-ANN the default system path for Lua modules (`luaconf.h` header).
 - BLAS implementation: ATLAS (v. 3), Intel MKL (v. 10.3.6), MacOS Accelerate Framework
 - Threads posix (pthread)
 - Readline (libreadline)
