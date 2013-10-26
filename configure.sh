@@ -5,9 +5,10 @@ if [ -z $APRILANN_CONFIGURED ]; then
 #export LUA_PATH="`pwd`""/binding/?.lua;?"
 fi
 export LUA_DIR="`pwd`"/lua/lua-5.2.2
-make -C $LUA_DIR
-make -C $LUA_DIR install
-make -C "`pwd`"/lua/lstrip
+(make -C $LUA_DIR            &&
+ make -C $LUA_DIR install    &&
+ make -C "`pwd`"/lua/lstrip) ||
+(echo "Error building Lua!!!" && exit -1)
 if [ -z $APRIL_EXEC ]; then
     export APRIL_EXEC=`pwd`/bin/april-ann
 fi

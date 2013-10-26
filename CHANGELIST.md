@@ -4,6 +4,7 @@ ChangeList
 Master branch release
 ---------------------
 
+- Modified `configure.sh` to inform about any error during Lua building.
 - Loadable modules are working on MacOs X.
 - Added `matrix.svd` and `matrix.diagonalize`.
 - Added `stats.pca`, `stats.mean_centered`, `stats.pca_whitening`.
