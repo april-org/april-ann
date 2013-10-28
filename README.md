@@ -4,7 +4,8 @@ April-ANN
 Requirements
 ------------
 
-Requires the following libraries. Versions are only orientative, it could work with older and newer versions.
+Requires the following libraries. Versions are only orientative, it could work
+with older and newer versions whenver the API was compatible.
 
 - GNU C++ compiler (g++): v 4.7.2
 - Only in Linux systems: Lua 5.2 headers to tell April-ANN the default system path for Lua modules (`lua5.2-deb-multiarch.h` header).
@@ -21,6 +22,11 @@ The following libreries are recommended, but optional:
 
 For perform computation on GPU, this optional library:
 - [OPTIONAL] CUDA and CUBLAS: release 4.2.6
+
+It is possible to install dependencies in Linux (via apt-get) and in MacOS X
+(via MacPorts) running:
+
+- `$ sudo ./DEPENDENCIES-INSTALLER.sh`
 
 Compilation
 -----------
@@ -194,10 +200,18 @@ Doxygen documentation
 LINUX installation
 ------------------
 
-Install g++, libatlas-dev, libreadline-dev, libpng-dev, libtiff-dev, libz-dev, libopenmp-dev.
+Install g++, libatlas-dev, libreadline-dev, libpng-dev, libtiff-dev, libz-dev,
+libopenmp-dev or execute: `$ ./DEPENDENCIES-INSTALLER.sh`
 
 MAC OS X installation
 ---------------------
+
+Via MacPorts:
+
+- Install [MacPorts](http://www.macports.org/)
+- Execute `$ ./DEPENDENCIES-INSTALLER.sh`
+
+Or manually:
 
 - Install libpng, from (sourceforge)[http://sourceforge.net/projects/libpng/files/]. Follow INSTALL information.
 - Install findutils, from (GNU)[http://ftp.gnu.org/pub/gnu/findutils/]. Follow INSTALL instructions. Execute `./configure --prefix=/usr` in order to substitute BSD find of your MacOS.
