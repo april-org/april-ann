@@ -9,6 +9,9 @@ local keywords = {
   'return', 'then', 'true', 'until', 'while'
 }
 
+-- in case you want to use this software without April-ANN
+local luatype = luatype or type
+
 -- This function is called back by C function do_completion, itself called
 -- back by readline library, in order to complete the current input line.
 rlcompleter._set(
@@ -25,7 +28,7 @@ rlcompleter._set(
     -- This function does the same job as the default completion of readline,
     -- completing paths and filenames. Rewritten because
     -- rl_basic_word_break_characters is different.
-    -- Uses LuaFileSystem (lfs) module for this task.
+    -- Uses binding functions for directory traversal (based on LuaFileSystem)
     local function filename_list(str)
       local path, name = str:match("(.*)[\\/]+(.*)")
       path = (path or ".") .. "/"
@@ -147,9 +150,9 @@ rlcompleter._set(
     end
     -- Now call the processing functions and return the list of results.
     local str, expr, sep = simplify_expression(line:sub(1, endpos))
-    
+
     contextual_list(expr, sep, str)
-    
+
     -- FIXME: Is this feature good to be really used?
     if false and #matches == 1 and word == matches[1] then
       print("\n----------------- DOCUMENTATION ----------------------")
