@@ -148,12 +148,33 @@ you can use this bibitem:
 
 ```bibtex
 @misc{aprilann,
-        Author = {Francisco Zamora-Mart\'inez and Salvador Espa\~na-Boquera and Jorge Gorbe-Moya and Joan Pastor-Pellicer and Adrian Palacios},
-        Note = {{https://github.com/pakozm/april-ann}},
-        Title = {{April-ANN toolkit, A Pattern Recognizer In Lua with Artificial Neural Networks}},
-        Year = {2013}}
+  Author = {Francisco Zamora-Mart\'inez and Salvador Espa\~na-Boquera and
+	        Jorge Gorbe-Moya and Joan Pastor-Pellicer and Adrian Palacios},
+  Note = {{https://github.com/pakozm/april-ann}},
+  Title = {{April-ANN toolkit, A Pattern Recognizer In Lua with Artificial Neural Networks}},
+  Year = {2013}}
 ```
 
+Publications
+------------
+
+List of research papers which uses this tool:
+
+- Francisco Zamora-Martínez, Pablo Romeu, Paloma Botella-Rocamora, and Juan
+  Pardo. [Towards Energy Efficiency: Forecasting Indoor Temperature via Multivariate Analysis](http://www.mdpi.com/1996-1073/6/9/4639).
+  *Energies*, 6(9):4639-4659, 2013.
+
+- Pablo Romeu, Francisco Zamora-Martinez, Paloma Botella, and Juan Pardo.
+  [Time-Series Forecasting of Indoor Temperature Using Pre-trained Deep Neural Networks](http://dx.doi.org/10.1007/978-3-642-40728-4_57).
+  In *ICANN*, pages 451-458. 2013.
+
+- Joan Pastor-Pellicer, Francisco Zamora-Martinez, Salvador España-Boquera, and M.J. Castro-Bleda.
+  [F-Measure as the error function to train Neural Networks](http://dx.doi.org/10.1007/978-3-642-38679-4).
+  In *Advances in Computational Intelligence, IWANN, part I*, LNCS, pages 376-384. Springer, 2013.
+
+- F. Zamora-Martínez, Pablo Romeu, Juan Pardo, and Daniel Tormo.
+  Some empirical evaluations of a temperature forecasting module based on Artificial Neural Networks for a domotic home environment.
+  In *IC3K - KDIR*, pages 206-211, 2012.
 
 Packages
 --------
