@@ -201,7 +201,7 @@ LINUX installation
 ------------------
 
 Install g++, libatlas-dev, libreadline-dev, libpng-dev, libtiff-dev, libz-dev,
-libopenmp-dev or execute: `$ ./DEPENDENCIES-INSTALLER.sh`
+libopenmp-dev or execute: `$ sudo ./DEPENDENCIES-INSTALLER.sh`
 
 MAC OS X installation
 ---------------------
@@ -209,7 +209,7 @@ MAC OS X installation
 Via MacPorts:
 
 - Install [MacPorts](http://www.macports.org/)
-- Execute `$ ./DEPENDENCIES-INSTALLER.sh`
+- Execute `$ sudo ./DEPENDENCIES-INSTALLER.sh`
 
 Or manually:
 
