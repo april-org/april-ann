@@ -10,6 +10,34 @@ matrix.row_major = function(...)
   return matrix(...)
 end
 
+matrix.meta_instance.__call = function(self,...)
+  local arg      = table.pack(...)
+  local dims     = self:dim()
+  local pos,size = {},{}
+  for i=1,#arg do
+    local t = arg[i]
+    local tt = luatype(t)
+    local a,b
+    if tt == "table" then
+      a,b = table.unpack(t)
+      assert(tonumber(a) and tonumber(b),
+	     "The table " .. i .. " must contain two numbers")
+    elseif tt == "string" then
+      a = t:match("^(%d+)%:.*$") or 1
+      b = t:match("^.*%:(%d+)$") or dims[i]
+    else
+      error("The argument " .. i .. " is not a table neither a string")
+    end
+    table.insert(pos,  a)
+    table.insert(size, b - a + 1)
+  end
+  for i=#arg+1,#dims do
+    table.insert(pos, 1)
+    table.insert(size, dims[i])
+  end
+  return self:slice(pos,size)
+end
+
 matrix.meta_instance.__tostring = function(self)
   local dims   = self:dim()
   local major  = self:get_major_order()
