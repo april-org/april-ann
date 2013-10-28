@@ -213,5 +213,5 @@ Via MacPorts:
 
 Or manually:
 
-- Install libpng, from (sourceforge)[http://sourceforge.net/projects/libpng/files/]. Follow INSTALL information.
-- Install findutils, from (GNU)[http://ftp.gnu.org/pub/gnu/findutils/]. Follow INSTALL instructions. Execute `./configure --prefix=/usr` in order to substitute BSD find of your MacOS.
+- Install libpng, from [sourceforge](http://sourceforge.net/projects/libpng/files/). Follow INSTALL information.
+- Install findutils, from [GNU](http://ftp.gnu.org/pub/gnu/findutils/). Follow INSTALL instructions. Execute `./configure --prefix=/usr` in order to substitute BSD find of your MacOS.
