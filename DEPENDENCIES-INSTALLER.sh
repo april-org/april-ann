@@ -3,7 +3,7 @@ UNAME=`uname`
 echo "System: $UNAME"
 if [ $UNAME = "Linux" ]; then
     if [ `which apt-get` ]; then
-	apt-get install libz-dev libreadline-dev libblas-dev libatlas-dev libpng12-dev libtiff-dev ||
+	apt-get install libz-dev libreadline-dev libblas-dev libatlas-dev libpng12-dev libtiff-dev liblua5.2-dev ||
 	(echo "ERROR INSTALLING DEPENDENCIES" && exit 10)
     else
 	echo "Error, impossible to install dependencies, this script only works with apt-get"
