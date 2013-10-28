@@ -4,8 +4,14 @@ ChangeList
 Master branch release
 ---------------------
 
+<<<<<<< HEAD
 - Added syntactic sugar for `matrix:slice(...)` method: `m("1:2","3:4")` or
   `m({1,2},{3,4})`, like in Matlab or Octave.
+=======
+- Solved problem with `rlcompleter`, which didn't work properly when loaded as a
+  Lua module.
+- Modified `configure.sh` to inform about any error during Lua building.
+>>>>>>> 925b1391ceec82ff65083fcceabe69027132cb2c
 - Loadable modules are working on MacOs X.
 - Added `matrix.svd` and `matrix.diagonalize`.
 - Added `stats.pca`, `stats.mean_centered`, `stats.pca_whitening`.
