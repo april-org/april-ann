@@ -4,6 +4,8 @@ ChangeList
 Master branch release
 ---------------------
 
+- Solved bug at `buffered_memory.h`. Such bug introduces an early stop when
+  reading matrices, ignoring the last lines of files.
 - Added `DEPENDENCIES-INSTALLER.sh`.
 - Added syntactic sugar for `matrix:slice(...)` method: `m("1:2","3:4")` or
   `m({1,2},{3,4})`, like in Matlab or Octave.
