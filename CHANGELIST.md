@@ -4,6 +4,8 @@ ChangeList
 Master branch release
 ---------------------
 
+- Solved bug at `Matrix<T>::select(...)` C++ method. The matrix offset wasn't be
+  added to the resulting matrix offset.
 - Solved bug at `SlidingWindow::setAtWindow(...)` C++ method. The matrix offset
   wasn't be added to the computed window position.
 - Solved bug at `buffered_memory.h`. Such bug introduces an early stop when
