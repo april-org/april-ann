@@ -545,7 +545,7 @@ Matrix<T> *Matrix<T>::select(int dim, int index, Matrix<T> *dest) {
     result->matrixSize   = new int[d];
     result->stride       = new int[d];
     result->major_order  = major_order;
-    result->offset       = index*stride[dim]; // the select implies an offset
+    result->offset       = offset + index*stride[dim]; // the select implies an offset
     result->last_raw_pos = result->offset;
     result->data         = data;
     result->mmapped_data = 0;
@@ -567,7 +567,7 @@ Matrix<T> *Matrix<T>::select(int dim, int index, Matrix<T> *dest) {
     april_assert(dest->total_size == total_size/matrixSize[dim]);
     april_assert(dest->numDim == numDim-1);
     //
-    int dest_offset = index*stride[dim];
+    int dest_offset = offset + index*stride[dim];
     int dest_last_raw_pos = dest_offset;
     for(int i=0; i<dim; ++i)
       dest_last_raw_pos += (matrixSize[i]-1)*stride[i];
