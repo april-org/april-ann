@@ -4,6 +4,8 @@ ChangeList
 Master branch release
 ---------------------
 
+- Solved bug at `SlidingWindow::setAtWindow(...)` C++ method. The matrix offset
+  wasn't be added to the computed window position.
 - Solved bug at `buffered_memory.h`. Such bug introduces an early stop when
   reading matrices, ignoring the last lines of files.
 - Added `DEPENDENCIES-INSTALLER.sh`.
