@@ -83,7 +83,8 @@ public:
   ~BufferedMemory();
   
   /// Returns if the file was opened correctly, and not is EOF
-  bool good() const { return is_opened && !memory.eofS(); }
+  bool good() const { return is_opened && (buffer_len>buffer_pos ||
+					   !memory.eofS()); }
   /// Closes the memory
   void close();
   /// Forces to write pending data
