@@ -58,10 +58,13 @@ local function mmap(key,value)
   local data,first,last = load(value)()
   local f = io.open(data)
   for i=1,first-1 do f:read("*l") end
-  local out = iterator(range(first,last)):
-  map(function(i) return f:read("*l") or "" end):
+  local out = iterator(io.lines(data)):
+  enumerate():
+  filter(function(idx, line) return idx >= first and idx <= last end):
+  select(2):
   map(string.tokenize):
-  iterate(ipairs):select(2):
+  iterate(ipairs):
+  select(2):
   reduce(function(acc,w)
 	   acc[w] = (acc[w] or 0) + 1
 	   return acc
@@ -73,7 +76,7 @@ end
 -- receive a key and an array of values, and produces a pair of strings
 -- key,value (or able to be string-converted by Lua) pairs
 local function mreduce(key,values)
-  local sum = 0 for i=1,#values do sum=sum+values[i] end
+  local sum = iterator(ipairs(values)):select(2):reduce(math.add,0)
   return key,sum
 end
 
@@ -81,7 +84,7 @@ end
 -- between all workers, and shows the result on user screen
 local function sequential(list)
   iterator(pairs(list)):apply(function(k,v)print(v,k)end)
-  return {1,2,3,4}
+  return {}
 end
 
 -- this function receives the shared value returned by sequential function

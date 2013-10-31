@@ -1429,6 +1429,16 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat svd
+{
+  MatrixFloat *U,*S,*V;
+  obj->svd(&U, &S, &V);
+  LUABIND_RETURN(MatrixFloat, U);
+  LUABIND_RETURN(MatrixFloat, S);
+  LUABIND_RETURN(MatrixFloat, V);
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat contiguous
 {
   if (obj->getIsContiguous())
@@ -1471,7 +1481,11 @@ typedef MatrixFloat::sliding_window SlidingWindow;
     // CALL
     lua_call(L, N+1, 1);
     // pop the result, a number
-    *it = lua_tofloat(L, -1);
+    if (!lua_isnil(L, -1)) {
+      if (!lua_isfloat(L, -1))
+	LUABIND_ERROR("Incorrect returned value type, expected NIL or FLOAT\n");
+      *it = lua_tofloat(L, -1);
+    }
     lua_pop(L, 1);
   }
   delete[] v;
@@ -1480,5 +1494,11 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
-//////////////////////////////////////////////////////////////////////
+//BIND_METHOD MatrixFloat diagonalize
+{
+  MatrixFloat *resul = obj->diagonalize();
+  LUABIND_RETURN(MatrixFloat, resul);
+}
+//BIND_END
 
+//////////////////////////////////////////////////////////////////////

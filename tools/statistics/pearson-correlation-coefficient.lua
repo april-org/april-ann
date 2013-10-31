@@ -12,8 +12,9 @@ col1     = tonumber(arg[2])
 col2     = tonumber(arg[3])
 seed     = tonumber(arg[4])
 conf     = tonumber(arg[5])
-reps     = 1000
+reps     = 100
 
+if conf > 0.5  then reps = 1000 end
 if conf > 0.95 then reps = 10000  end
 if conf > 0.99 then reps = 100000 end
 

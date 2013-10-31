@@ -4,6 +4,22 @@ ChangeList
 Master branch release
 ---------------------
 
+- Solved bug at `Matrix<T>::select(...)` C++ method. The matrix offset wasn't be
+  added to the resulting matrix offset.
+- Solved bug at `SlidingWindow::setAtWindow(...)` C++ method. The matrix offset
+  wasn't be added to the computed window position.
+- Solved bug at `buffered_memory.h`. Such bug introduces an early stop when
+  reading matrices, ignoring the last lines of files.
+- Added `DEPENDENCIES-INSTALLER.sh`.
+- Added syntactic sugar for `matrix:slice(...)` method: `m("1:2","3:4")` or
+  `m({1,2},{3,4})`, like in Matlab or Octave.
+- Solved problem with `rlcompleter`, which didn't work properly when loaded as a
+  Lua module.
+- Modified `configure.sh` to inform about any error during Lua building.
+- Loadable modules are working on MacOs X.
+- Added `matrix.svd` and `matrix.diagonalize`.
+- Added `stats.pca`, `stats.mean_centered`, `stats.pca_whitening`.
+
 v0.3.0-beta relase
 ------------------
 

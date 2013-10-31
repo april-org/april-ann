@@ -60,7 +60,7 @@ int main(int argc, char** argv)
   htime = ((double)clock()-start)/CLOCKS_PER_SEC;
   printf("\n\nTime for GS-PCA host computation: %f\n", htime);
   // the results are in T, P, R
-  print_results(M, N, K, X, T, P, R);
+  // print_results(M, N, K, X, T, P, R);
   // memory clean up and shutdown
   gsl_matrix_free(R);
   gsl_matrix_free(P);
@@ -153,6 +153,9 @@ int gs_pca_gsl(int M, int N, int K,
       gsl_blas_dscal (gsl_vector_get(L, k),
 		      &gsl_matrix_column(T, k).vector);
     }
+  for(k=0; k<K; k++) {
+    printf("%f\n",gsl_vector_get(L, k));
+  }
   // memory clean up
   gsl_vector_free(L);
   gsl_vector_free(U);
