@@ -10,6 +10,34 @@ matrix.row_major = function(...)
   return matrix(...)
 end
 
+matrix.meta_instance.__call = function(self,...)
+  local arg      = table.pack(...)
+  local dims     = self:dim()
+  local pos,size = {},{}
+  for i=1,#arg do
+    local t = arg[i]
+    local tt = luatype(t)
+    local a,b
+    if tt == "table" then
+      a,b = table.unpack(t)
+      assert(tonumber(a) and tonumber(b),
+	     "The table " .. i .. " must contain two numbers")
+    elseif tt == "string" then
+      a = t:match("^(%d+)%:.*$") or 1
+      b = t:match("^.*%:(%d+)$") or dims[i]
+    else
+      error("The argument " .. i .. " is not a table neither a string")
+    end
+    table.insert(pos,  a)
+    table.insert(size, b - a + 1)
+  end
+  for i=#arg+1,#dims do
+    table.insert(pos, 1)
+    table.insert(size, dims[i])
+  end
+  return self:slice(pos,size)
+end
+
 matrix.meta_instance.__tostring = function(self)
   local dims   = self:dim()
   local major  = self:get_major_order()
@@ -112,7 +140,12 @@ function matrix.join(dim, ...)
     end
   end
   -- JOIN
-  local outm  = matrix(table.unpack(size))
+  local outm
+  if arg[1]:get_major_order() == "col_major" then
+    outm = matrix.col_major(table.unpack(size))
+  else
+    outm = matrix(table.unpack(size))
+  end
   local first = matrix(#size):ones():toTable()
   for i=1,#arg do
     local m = arg[i]
@@ -1127,6 +1160,34 @@ april_set_doc("matrix.inv",
 		  "col_major matrices.",
 		},
 		outputs = { "The matrix inverse" },
+	      })
+
+april_set_doc("matrix.svd",
+	      {
+		class = "method",
+		summary = "Computes the SVD of a matrix",
+		description = {
+		  "This method computes the SVD of matrix.",
+		  "It is adapted to work with row_major matrices, but",
+		  "internally they are transformed to col_major, so",
+		  "it is more efficient to compute the SVD over",
+		  "col_major matrices. The computation returns three matrices",
+		  "in col_major, so A=U * S * V'.",
+		},
+		outputs = {
+		  "The matrix U",
+		  "The vector S with the eigenvalues",
+		  "The matrix V', the transposed of V",
+		},
+	      })
+
+april_set_doc("matrix.diagonalize",
+	      {
+		class = "method",
+		summary = "Converts the given uni-dimensional matrix in a bi-dimensional diagonal matrix",
+		outputs = {
+		  "A matrix which is the diagonalized version of the caller matrix",
+		},
 	      })
 
 april_set_doc("matrix.contiguous",

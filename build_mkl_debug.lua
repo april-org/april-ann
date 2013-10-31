@@ -43,6 +43,7 @@ luapkg{
       "-liomp5"
     },
     shared_extra_libs={
+      "-shared",
       "-llua5.2",
     },
   },

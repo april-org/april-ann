@@ -4,9 +4,11 @@ April-ANN
 Requirements
 ------------
 
-Requires the following libraries. Versions are only orientative, it could work with older and newer versions.
+Requires the following libraries. Versions are only orientative, it could work
+with older and newer versions whenver the API was compatible.
 
 - GNU C++ compiler (g++): v 4.7.2
+- Only in Linux systems: Lua 5.2 headers to tell April-ANN the default system path for Lua modules (`lua5.2-deb-multiarch.h` header).
 - BLAS implementation: ATLAS (v. 3), Intel MKL (v. 10.3.6), MacOS Accelerate Framework
 - Threads posix (pthread)
 - Readline (libreadline)
@@ -20,6 +22,11 @@ The following libreries are recommended, but optional:
 
 For perform computation on GPU, this optional library:
 - [OPTIONAL] CUDA and CUBLAS: release 4.2.6
+
+It is possible to install dependencies in Linux (via apt-get) and in MacOS X
+(via MacPorts) running:
+
+- `$ sudo ./DEPENDENCIES-INSTALLER.sh`
 
 Compilation
 -----------
@@ -141,12 +148,33 @@ you can use this bibitem:
 
 ```bibtex
 @misc{aprilann,
-        Author = {Francisco Zamora-Mart\'inez and Salvador Espa\~na-Boquera and Jorge Gorbe-Moya and Joan Pastor-Pellicer and Adrian Palacios},
-        Note = {{https://github.com/pakozm/april-ann}},
-        Title = {{April-ANN toolkit, A Pattern Recognizer In Lua with Artificial Neural Networks}},
-        Year = {2013}}
+  Author = {Francisco Zamora-Mart\'inez and Salvador Espa\~na-Boquera and
+	        Jorge Gorbe-Moya and Joan Pastor-Pellicer and Adrian Palacios},
+  Note = {{https://github.com/pakozm/april-ann}},
+  Title = {{April-ANN toolkit, A Pattern Recognizer In Lua with Artificial Neural Networks}},
+  Year = {2013}}
 ```
 
+Publications
+------------
+
+List of research papers which uses this tool:
+
+- Francisco Zamora-Martínez, Pablo Romeu, Paloma Botella-Rocamora, and Juan
+  Pardo. [Towards Energy Efficiency: Forecasting Indoor Temperature via Multivariate Analysis](http://www.mdpi.com/1996-1073/6/9/4639).
+  *Energies*, 6(9):4639-4659, 2013.
+
+- Pablo Romeu, Francisco Zamora-Martinez, Paloma Botella, and Juan Pardo.
+  [Time-Series Forecasting of Indoor Temperature Using Pre-trained Deep Neural Networks](http://dx.doi.org/10.1007/978-3-642-40728-4_57).
+  In *ICANN*, pages 451-458. 2013.
+
+- Joan Pastor-Pellicer, Francisco Zamora-Martinez, Salvador España-Boquera, and M.J. Castro-Bleda.
+  [F-Measure as the error function to train Neural Networks](http://dx.doi.org/10.1007/978-3-642-38679-4).
+  In *Advances in Computational Intelligence, IWANN, part I*, LNCS, pages 376-384. Springer, 2013.
+
+- F. Zamora-Martínez, Pablo Romeu, Juan Pardo, and Daniel Tormo.
+  Some empirical evaluations of a temperature forecasting module based on Artificial Neural Networks for a domotic home environment.
+  In *IC3K - KDIR*, pages 206-211, 2012.
 
 Packages
 --------
@@ -193,10 +221,18 @@ Doxygen documentation
 LINUX installation
 ------------------
 
-Install g++, libatlas-dev, libreadline-dev, libpng-dev, libtiff-dev, libz-dev, libopenmp-dev.
+Install g++, libatlas-dev, libreadline-dev, libpng-dev, libtiff-dev, libz-dev,
+libopenmp-dev or execute: `$ sudo ./DEPENDENCIES-INSTALLER.sh`
 
 MAC OS X installation
 ---------------------
 
-- Install libpng, from (sourceforge)[http://sourceforge.net/projects/libpng/files/]. Follow INSTALL information.
-- Install findutils, from (GNU)[http://ftp.gnu.org/pub/gnu/findutils/]. Follow INSTALL instructions. Execute `./configure --prefix=/usr` in order to substitute BSD find of your MacOS.
+Via MacPorts:
+
+- Install [MacPorts](http://www.macports.org/)
+- Execute `$ sudo ./DEPENDENCIES-INSTALLER.sh`
+
+Or manually:
+
+- Install libpng, from [sourceforge](http://sourceforge.net/projects/libpng/files/). Follow INSTALL information.
+- Install findutils, from [GNU](http://ftp.gnu.org/pub/gnu/findutils/). Follow INSTALL instructions. Execute `./configure --prefix=/usr` in order to substitute BSD find of your MacOS.

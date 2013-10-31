@@ -49,7 +49,7 @@ ALL_A= $(LUA_A)
 
 # Targets start here.
 DetectOS:
-	-@make $(UNAME)
+	@make $(UNAME)
 
 Linux: linux
 

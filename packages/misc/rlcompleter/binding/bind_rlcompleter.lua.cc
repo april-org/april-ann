@@ -227,6 +227,7 @@ public:
 {
   storedL = L;
   rl_basic_word_break_characters = breaks;
+  rl_completer_word_break_characters = breaks;
   rl_attempted_completion_function = do_completion;
 }
 //BIND_END

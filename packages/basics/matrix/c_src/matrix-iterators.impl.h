@@ -1086,7 +1086,7 @@ int Matrix<T>::sliding_window::numWindows() const {
 template <typename T>
 void Matrix<T>::sliding_window::setAtWindow(int windex) {
   if (windex < num_windows) {
-    raw_pos = 0;
+    raw_pos = m->offset;
     for (int i=0; i < m->getNumDim();i++) {
       int j = order_step[i];
       coords[j]  = offset[j] + (windex % num_steps[j])*step[j];

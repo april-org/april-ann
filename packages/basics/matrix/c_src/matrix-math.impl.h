@@ -375,3 +375,11 @@ template <typename T>
 Matrix<T> *Matrix<T>::inv() {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
+
+template <typename T>
+void Matrix<T>::svd(Matrix<T> **U, Matrix<T> **S, Matrix<T> **V) {
+  UNUSED_VARIABLE(U);
+  UNUSED_VARIABLE(S);
+  UNUSED_VARIABLE(V);
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
