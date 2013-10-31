@@ -233,3 +233,25 @@ april_set_doc("ann.loss.local_fmeasure.__call",
 		outputs={ "An instance of ann.loss.local_fmeasure" },
 	      })
 
+-------------------------------------------------------------------
+
+april_set_doc("ann.loss.zero_one",
+	      {
+		class="class",
+		summary="The 0-1 loss function",
+	      })
+
+april_set_doc("ann.loss.zero_one.__call",
+	      {
+		class="method",
+		summary="Constructor",
+		params={
+		  "The expected pattern size",
+		  {
+		    "Threshold to consider activated the output neuron",
+		    "when size=1 [optional]. By default is 0.5.",
+		  },
+		},
+		outputs={ "An instance of ann.loss.zero_one" },
+	      })
+

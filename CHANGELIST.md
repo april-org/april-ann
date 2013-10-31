@@ -4,6 +4,7 @@ ChangeList
 Master branch release
 ---------------------
 
+- Added `ann.loss.zero_one` loss function.
 - Solved bug at `Matrix<T>::select(...)` C++ method. The matrix offset wasn't be
   added to the resulting matrix offset.
 - Solved bug at `SlidingWindow::setAtWindow(...)` C++ method. The matrix offset

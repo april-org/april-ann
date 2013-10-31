@@ -31,6 +31,7 @@
 #include "cross_entropy_loss_function.h"
 #include "multiclass_cross_entropy_loss_function.h"
 #include "local_fmeasure_loss_function.h"
+#include "zero_one_loss_function.h"
 
 using namespace ANN;
 
@@ -239,3 +240,32 @@ using namespace ANN;
 		 dynamic_cast<LocalFMeasureLossFunction*>(obj->clone()));
 }
 //BIND_END
+
+/////////////////////////////////////////////////////
+//                ZERO-ONE LOSS                    //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME ZeroOneLossFunction ann.loss.zero_one
+//BIND_CPP_CLASS    ZeroOneLossFunction
+//BIND_SUBCLASS_OF  ZeroOneLossFunction LossFunction
+
+//BIND_CONSTRUCTOR ZeroOneLossFunction
+{
+  LUABIND_CHECK_ARGN(>=,1);
+  LUABIND_CHECK_ARGN(<=,2);
+  unsigned int size;
+  float TH;
+  LUABIND_GET_PARAMETER(1, uint, size);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, float, TH, 0.5f);
+  obj=new ZeroOneLossFunction(size, TH);
+  LUABIND_RETURN(ZeroOneLossFunction, obj);
+}
+//BIND_END
+
+//BIND_METHOD ZeroOneLossFunction clone
+{
+  LUABIND_RETURN(ZeroOneLossFunction,
+		 dynamic_cast<ZeroOneLossFunction*>(obj->clone()));
+}
+//BIND_END
+
