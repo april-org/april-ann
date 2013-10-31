@@ -4,6 +4,8 @@ ChangeList
 Master branch release
 ---------------------
 
+- Solved bug when reading using `matrix.fromTabFilename`. The loader failed
+  when the file had empty lines.
 - Added `ann.loss.zero_one` loss function.
 - Solved bug at `Matrix<T>::select(...)` C++ method. The matrix offset wasn't be
   added to the resulting matrix offset.
