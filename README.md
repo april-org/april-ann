@@ -8,7 +8,8 @@ Requires the following libraries. Versions are only orientative, it could work
 with older and newer versions whenver the API was compatible.
 
 - GNU C++ compiler (g++): v 4.7.2
-- Only in Linux systems: Lua 5.2 headers to tell April-ANN the default system path for Lua modules (`lua5.2-deb-multiarch.h` header).
+- Only in Linux systems: Lua 5.2 headers to tell April-ANN the default system
+  path for Lua modules (`lua5.2-deb-multiarch.h` header).
 - BLAS implementation: ATLAS (v. 3), Intel MKL (v. 10.3.6), MacOS Accelerate Framework
 - Threads posix (pthread)
 - Readline (libreadline)
@@ -23,10 +24,13 @@ The following libreries are recommended, but optional:
 For perform computation on GPU, this optional library:
 - [OPTIONAL] CUDA and CUBLAS: release 4.2.6
 
-It is possible to install dependencies in Linux (via apt-get) and in MacOS X
-(via MacPorts) running:
+Dependencies setup
+------------------
 
-- `$ sudo ./DEPENDENCIES-INSTALLER.sh`
+The first time, you need to install dependencies in Linux (via apt-get) and in
+MacOS X (via MacPorts) running:
+
+```$ sudo ./DEPENDENCIES-INSTALLER.sh```
 
 Compilation
 -----------
@@ -42,10 +46,10 @@ different libraries. It is simple, you do
 
 where TARGET is one of the following, depending on which version you want:
 
-- ATLAS: make release (use build_release.lua), make debug (build_debug.lua)
-- Intel MKL: make or make release-mkl (build_mkl_release.lua), make debug-mkl (build_mkl_debug.lua)
-- Intel MKL + CUDA: make release-cuda-mkl (build_cuda_and_mkl_release.lua), make debug-cuda-mkl (build_cuda_and_mkl_debug.lua)
-- Mac OS X Accelerate Framework: make release-macosx (build_release_macosx.lua), make debug-macosx (build_debug_macosx.lua)
+- ATLAS: `make release` (use build_release.lua), `make debug` (build_debug.lua)
+- Intel MKL: `make` or `make release-mkl` (build_mkl_release.lua), `make debug-mkl` (build_mkl_debug.lua)
+- Intel MKL + CUDA: `make release-cuda-mkl` (build_cuda_and_mkl_release.lua), `make debug-cuda-mkl` (build_cuda_and_mkl_debug.lua)
+- Mac OS X Accelerate Framework: `make release-macosx` (build_release_macosx.lua), `make debug-macosx` (build_debug_macosx.lua)
 
 Each of this targets will need a little configuration depending on your library
 installation. For example, in order to compile with MKL, the file build_mkl_release.lua contains
@@ -90,6 +94,10 @@ interpreter and works without any dependency in Lua.  Besides, a shared library
 will be generated at `lib/aprilann.so`, so it is possible to use `require` from
 Lua to load April-ANN in a standard Lua 5.2 interpreter.
 
+**NOTE** that loading `april-ann` as a Lua 5.2 module, you need to have the
+`.so` library in the `package.cpath` or LUA_CPATH. It is possible to install it
+in your system defaults following next section.
+
 ENJOY!
 
 Installation
@@ -104,6 +112,8 @@ $ sudo make install
 This procedure copies the binary to system location in `/usr` (or in
 `/opt/local` for Mac OS X via MacPorts). The shared library is copied
 to Lua default directory, in order to load it by using `require` function.
+*If you are using a non default installation (a custom one), please
+copy the `.so` files manually to your `package.cpath` or LUA_CPATH*.
 
 Use
 ---
