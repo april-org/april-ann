@@ -93,6 +93,8 @@ namespace ANN {
       G2 += b;
       H  += a*beta2 + b;
     }
+    delete input_sw;
+    delete target_sw;
     if (H > 0.0f || H < 0.0f)
       (*loss_output)(0) = -(1.0f+beta2)*G1*G2 / (dim * H);
     else (*loss_output)(0) = 0.0f;
