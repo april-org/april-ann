@@ -203,19 +203,18 @@ april_set_doc("ann.loss.multi_class_cross_entropy.__call",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.local_fmeasure",
+april_set_doc("ann.loss.batch_fmeasure",
 	      {
 		class="class",
 		summary="The FMeasure computed to a bunch of patterns",
 		description={
 		  "This loss function computes",
-		  "FMeasure for a given bunch of patterns.",
-		  "Currently it is only implemented to work with one output",
-		  "unit models.",
+		  "FMeasure for a given bunch of patterns, and for",
+		  "multi-class models.",
 		}
 	      })
 
-april_set_doc("ann.loss.local_fmeasure.__call",
+april_set_doc("ann.loss.batch_fmeasure.__call",
 	      {
 		class="method",
 		summary="Constructor",
@@ -230,7 +229,7 @@ april_set_doc("ann.loss.local_fmeasure.__call",
 		    "[optional], by default is false",
 		  },
 		},
-		outputs={ "An instance of ann.loss.local_fmeasure" },
+		outputs={ "An instance of ann.loss.batch_fmeasure" },
 	      })
 
 -------------------------------------------------------------------

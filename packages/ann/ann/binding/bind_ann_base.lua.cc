@@ -788,6 +788,7 @@ using namespace ANN;
 //BIND_METHOD StackANNComponent pop
 {
   obj->popComponent();
+  LUABIND_RETURN(StackANNComponent, obj);
 }
 //BIND_END
 

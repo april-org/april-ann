@@ -235,7 +235,7 @@ DEF_CWISE_FUNCTOR_0(doTan,float);
 template<>
 void Matrix<float>::tan() {
   applyFunctionWithSpanIterator<float>(this,
-				       MAKE_CWISE_FUNCTOR_0(doTan,float));;
+				       MAKE_CWISE_FUNCTOR_0(doTan,float));
 }
 
 /************* TANH FUNCTION **************/
@@ -243,7 +243,7 @@ DEF_CWISE_FUNCTOR_0(doTanh,float);
 template<>
 void Matrix<float>::tanh() {
   applyFunctionWithSpanIterator<float>(this,
-				       MAKE_CWISE_FUNCTOR_0(doTanh,float));;
+				       MAKE_CWISE_FUNCTOR_0(doTanh,float));
 }
 
 /************* ATAN FUNCTION **************/
@@ -251,7 +251,7 @@ DEF_CWISE_FUNCTOR_0(doAtan,float);
 template<>
 void Matrix<float>::atan() {
   applyFunctionWithSpanIterator<float>(this,
-				       MAKE_CWISE_FUNCTOR_0(doAtan,float));;
+				       MAKE_CWISE_FUNCTOR_0(doAtan,float));
 }
 
 /************* ATANH FUNCTION **************/
@@ -259,7 +259,7 @@ DEF_CWISE_FUNCTOR_0(doAtanh,float);
 template<>
 void Matrix<float>::atanh() {
   applyFunctionWithSpanIterator<float>(this,
-				       MAKE_CWISE_FUNCTOR_0(doAtanh,float));;
+				       MAKE_CWISE_FUNCTOR_0(doAtanh,float));
 }
 
 /************* SIN FUNCTION **************/
@@ -267,7 +267,7 @@ DEF_CWISE_FUNCTOR_0(doSin,float);
 template<>
 void Matrix<float>::sin() {
   applyFunctionWithSpanIterator<float>(this,
-				       MAKE_CWISE_FUNCTOR_0(doSin,float));;
+				       MAKE_CWISE_FUNCTOR_0(doSin,float));
 }
 
 /************* SINH FUNCTION **************/
@@ -275,7 +275,7 @@ DEF_CWISE_FUNCTOR_0(doSinh,float);
 template<>
 void Matrix<float>::sinh() {
   applyFunctionWithSpanIterator<float>(this,
-				       MAKE_CWISE_FUNCTOR_0(doSinh,float));;
+				       MAKE_CWISE_FUNCTOR_0(doSinh,float));
 }
 
 /************* ASIN FUNCTION **************/
@@ -283,7 +283,7 @@ DEF_CWISE_FUNCTOR_0(doAsin,float);
 template<>
 void Matrix<float>::asin() {
   applyFunctionWithSpanIterator<float>(this,
-				       MAKE_CWISE_FUNCTOR_0(doAsin,float));;
+				       MAKE_CWISE_FUNCTOR_0(doAsin,float));
 }
 
 /************* ASINH FUNCTION **************/
@@ -291,7 +291,7 @@ DEF_CWISE_FUNCTOR_0(doAsinh,float);
 template<>
 void Matrix<float>::asinh() {
   applyFunctionWithSpanIterator<float>(this,
-				       MAKE_CWISE_FUNCTOR_0(doAsinh,float));;
+				       MAKE_CWISE_FUNCTOR_0(doAsinh,float));
 }
 
 /************* COS FUNCTION **************/
@@ -299,7 +299,7 @@ DEF_CWISE_FUNCTOR_0(doCos,float);
 template<>
 void Matrix<float>::cos() {
   applyFunctionWithSpanIterator<float>(this,
-				       MAKE_CWISE_FUNCTOR_0(doCos,float));;
+				       MAKE_CWISE_FUNCTOR_0(doCos,float));
 }
 
 /************* COSH FUNCTION **************/
@@ -307,7 +307,7 @@ DEF_CWISE_FUNCTOR_0(doCosh,float);
 template<>
 void Matrix<float>::cosh() {
   applyFunctionWithSpanIterator<float>(this,
-				       MAKE_CWISE_FUNCTOR_0(doCosh,float));;
+				       MAKE_CWISE_FUNCTOR_0(doCosh,float));
 }
 
 /************* ACOS FUNCTION **************/
@@ -315,7 +315,7 @@ DEF_CWISE_FUNCTOR_0(doAcos,float);
 template<>
 void Matrix<float>::acos() {
   applyFunctionWithSpanIterator<float>(this,
-				       MAKE_CWISE_FUNCTOR_0(doAcos,float));;
+				       MAKE_CWISE_FUNCTOR_0(doAcos,float));
 }
 
 /************* ACOSH FUNCTION **************/
@@ -323,7 +323,7 @@ DEF_CWISE_FUNCTOR_0(doAcosh,float);
 template<>
 void Matrix<float>::acosh() {
   applyFunctionWithSpanIterator<float>(this,
-				       MAKE_CWISE_FUNCTOR_0(doAcosh,float));;
+				       MAKE_CWISE_FUNCTOR_0(doAcosh,float));
 }
 
 /************* ABS FUNCTION **************/
@@ -331,7 +331,16 @@ DEF_CWISE_FUNCTOR_0(doAbs,float);
 template<>
 void Matrix<float>::abs() {
   applyFunctionWithSpanIterator<float>(this,
-				       MAKE_CWISE_FUNCTOR_0(doAbs,float));;
+				       MAKE_CWISE_FUNCTOR_0(doAbs,float));
+}
+
+/************* ABS FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doComplement,float);
+template<>
+void Matrix<float>::complement() {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doComplement,
+							    float));
 }
 
 template<>
@@ -650,7 +659,7 @@ Matrix<float> *Matrix<float>::maxSelDim(const int dim,
 					int shift) const {
   if (dim < 0 || dim > numDim)
     ERROR_EXIT2(128, "Incorrect dimension %d, numDim=%d\n", dim, numDim);
-  MatrixFloat *result = new MatrixFloat(1, &matrixSize[dim], major_order);;
+  MatrixFloat *result = new MatrixFloat(1, &matrixSize[dim], major_order);
 #ifdef USE_CUDA
   result->setUseCuda(use_cuda);
 #endif
