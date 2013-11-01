@@ -4,6 +4,8 @@ ChangeList
 Master branch release
 ---------------------
 
+- Solved problems with CUDA compilation, but it stills not working because
+  an error during cuMemAlloc.
 - Solved bug when reading using `matrix.fromTabFilename`. The loader failed
   when the file had empty lines.
 - Added `ann.loss.zero_one` loss function.
