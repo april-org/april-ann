@@ -7,7 +7,7 @@ if [ $UNAME = "Linux" ]; then
 	(echo "ERROR INSTALLING DEPENDENCIES" && exit 10)
 	dest=$(tempfile)
 	echo -e '#include "lua5.2-deb-multiarch.h"\nint main() { return 0; }\n' > $dest.c
-	multiarch=lua/lua-5.2.2/src/lua5.2-deb-multiarch.h
+	multiarch=lua/include/lua5.2-deb-multiarch.h
 	if ! gcc -c $dest.c 2> /dev/null; then
 	    echo "Not found lua5.2-deb-multiarch.h, generating a default one in $multiarch, please, check the content"
 	    echo -e "#ifndef _LUA_DEB_MULTIARCH_\n#define _LUA_DEB_MULTIARCH_\n#define DEB_HOST_MULTIARCH \""$(arch)"-linux-gnu\"\n#endif" > $multiarch
