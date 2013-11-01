@@ -111,6 +111,9 @@ void Matrix<float>::asinh();
 template <>
 void Matrix<float>::abs();
 
+template <>
+void Matrix<float>::complement();
+
 template<>
 Matrix<float> *Matrix<float>::cmul(const Matrix<float> *other);
 

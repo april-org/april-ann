@@ -4,6 +4,8 @@ ChangeList
 Master branch release
 ---------------------
 
+- Renamed loss function `local_fmeasure` as `batch_fmeasure`, and improved to
+  work with multi-class models.
 - Solved problems with CUDA compilation, but it stills not working because
   an error during cuMemAlloc.
 - Solved bug when reading using `matrix.fromTabFilename`. The loader failed

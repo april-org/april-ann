@@ -30,7 +30,7 @@
 #include "mae_loss_function.h"
 #include "cross_entropy_loss_function.h"
 #include "multiclass_cross_entropy_loss_function.h"
-#include "local_fmeasure_loss_function.h"
+#include "batch_fmeasure_loss_function.h"
 #include "zero_one_loss_function.h"
 
 using namespace ANN;
@@ -118,10 +118,8 @@ using namespace ANN;
 
 //BIND_CONSTRUCTOR MSELossFunction
 {
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_CHECK_PARAMETER(1, number);
   unsigned int size;
-  LUABIND_GET_PARAMETER(1, uint, size);
+  LUABIND_GET_OPTIONAL_PARAMETER(1, uint, size, 0);
   obj=new MSELossFunction(size);
   LUABIND_RETURN(MSELossFunction, obj);
 }
@@ -143,10 +141,8 @@ using namespace ANN;
 
 //BIND_CONSTRUCTOR MAELossFunction
 {
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_CHECK_PARAMETER(1, number);
   unsigned int size;
-  LUABIND_GET_PARAMETER(1, uint, size);
+  LUABIND_GET_OPTIONAL_PARAMETER(1, uint, size, 0);
   obj=new MAELossFunction(size);
   LUABIND_RETURN(MAELossFunction, obj);
 }
@@ -168,10 +164,8 @@ using namespace ANN;
 
 //BIND_CONSTRUCTOR CrossEntropyLossFunction
 {
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_CHECK_PARAMETER(1, number);
   unsigned int size;
-  LUABIND_GET_PARAMETER(1, uint, size);
+  LUABIND_GET_OPTIONAL_PARAMETER(1, uint, size, 0);
   obj=new CrossEntropyLossFunction(size);
   LUABIND_RETURN(CrossEntropyLossFunction, obj);
 }
@@ -194,10 +188,8 @@ using namespace ANN;
 
 //BIND_CONSTRUCTOR MultiClassCrossEntropyLossFunction
 {
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_CHECK_PARAMETER(1, number);
   unsigned int size;
-  LUABIND_GET_PARAMETER(1, uint, size);
+  LUABIND_GET_OPTIONAL_PARAMETER(1, uint, size, 0);
   obj=new MultiClassCrossEntropyLossFunction(size);
   LUABIND_RETURN(MultiClassCrossEntropyLossFunction, obj);
 }
@@ -211,33 +203,36 @@ using namespace ANN;
 //BIND_END
 
 /////////////////////////////////////////////////////
-//                LOCAL FMEASURE                   //
+//                BATCH FMEASURE                   //
 /////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME LocalFMeasureLossFunction ann.loss.local_fmeasure
-//BIND_CPP_CLASS    LocalFMeasureLossFunction
-//BIND_SUBCLASS_OF  LocalFMeasureLossFunction LossFunction
+//BIND_LUACLASSNAME BatchFMeasureLossFunction ann.loss.batch_fmeasure
+//BIND_CPP_CLASS    BatchFMeasureLossFunction
+//BIND_SUBCLASS_OF  BatchFMeasureLossFunction LossFunction
 
-//BIND_CONSTRUCTOR LocalFMeasureLossFunction
+//BIND_CONSTRUCTOR BatchFMeasureLossFunction
 {
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_CHECK_PARAMETER(1, table);
-  check_table_fields(L, 1, "size", "beta", "complement", (const char *)0);
-  unsigned int size;
-  float beta;
-  bool complement;
-  LUABIND_GET_TABLE_PARAMETER(1, size, uint, size);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, complement, bool, complement, false);
-  obj=new LocalFMeasureLossFunction(size, beta, complement);
-  LUABIND_RETURN(LocalFMeasureLossFunction, obj);
+  int argn;
+  argn = lua_gettop(L); // number of arguments
+  unsigned int size=0;
+  float beta=1.0f;
+  bool complement=false;
+  if (argn > 0) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "size", "beta", "complement", (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, complement, bool, complement, false);
+  }
+  obj=new BatchFMeasureLossFunction(size, beta, complement);
+  LUABIND_RETURN(BatchFMeasureLossFunction, obj);
 }
 //BIND_END
 
-//BIND_METHOD LocalFMeasureLossFunction clone
+//BIND_METHOD BatchFMeasureLossFunction clone
 {
-  LUABIND_RETURN(LocalFMeasureLossFunction,
-		 dynamic_cast<LocalFMeasureLossFunction*>(obj->clone()));
+  LUABIND_RETURN(BatchFMeasureLossFunction,
+		 dynamic_cast<BatchFMeasureLossFunction*>(obj->clone()));
 }
 //BIND_END
 
@@ -251,11 +246,9 @@ using namespace ANN;
 
 //BIND_CONSTRUCTOR ZeroOneLossFunction
 {
-  LUABIND_CHECK_ARGN(>=,1);
-  LUABIND_CHECK_ARGN(<=,2);
   unsigned int size;
   float TH;
-  LUABIND_GET_PARAMETER(1, uint, size);
+  LUABIND_GET_OPTIONAL_PARAMETER(1, uint, size, 0);
   LUABIND_GET_OPTIONAL_PARAMETER(2, float, TH, 0.5f);
   obj=new ZeroOneLossFunction(size, TH);
   LUABIND_RETURN(ZeroOneLossFunction, obj);
