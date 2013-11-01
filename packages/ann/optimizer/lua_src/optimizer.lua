@@ -4,30 +4,31 @@ local MAX_UPDATES_WITHOUT_PRUNE=100
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 
-local function ann_optimizer_regularizations_weight_decay(oldw, cwd, w)
+local function ann_optimizer_regularizations_weight_decay(destw, cwd, w)
   -- sum current weights by applying the complementary of weight decay term. We
-  -- derive w, and left the result on oldw
-  oldw:axpy(cwd, w)  
+  -- derive w, and left the result on destw
+  destw:axpy(cwd, w)  
 end
 
 ------------------------------------------------------------------------------
 
 get_table_from_dotted_string("ann.optimizer.regularizations", true)
 
-function ann.optimizer.regularizations.L1_norm(oldw, value, w)
+function ann.optimizer.regularizations.L1_norm(destw, value, w)
   if value > 0.0 then
-    -- sum current weights by applying the complementary of weight decay term
-    oldw:map(w,
-	     function(x, y)
-	       -- We derive over y, and left the result on x. So, if y=0.0 we
-	       -- return the weight (which only has the momentum applied to it
-	       -- because if y=0.0, then the gradient is zero and the weight
-	       -- decay is also zero)
-	       if     y > 0 then return math.max(0.0, x-value)
-	       elseif y < 0 then return math.min(0.0, x+value)
-	       else return x
-	       end
-	     end)
+    destw:map(w,
+	      function(x, y)
+		-- We derive over y, and left the result on x. So, if y=0.0 we
+		-- test if |x|>value, returning the weight (which only has the
+		-- momentum applied to it because if y=0.0, then the gradient is
+		-- zero and the weight decay is also zero), if |x|<value, we
+		-- force the weight to be 0.0.
+		if     y > 0 then return math.max(0.0, x-value)
+		elseif y < 0 then return math.min(0.0, x+value)
+		elseif math.abs(x) > value then return x
+		else return 0.0
+		end
+	      end)
   end
 end
 
@@ -35,18 +36,19 @@ end
 
 get_table_from_dotted_string("ann.optimizer.constraints", true)
 
-function ann.optimizer.constraints.max_norm_penalty(oldw, mp, w)
+-- The penalty is computed on w, but applied to oldw and w
+function ann.optimizer.constraints.max_norm_penalty(w, oldw, mp)
   if mp > 0.0 then
-    local old_sw     = oldw:sliding_window()
-    local old_window = nil
     local sw         = w:sliding_window()
     local window     = nil
+    local old_sw     = oldw:sliding_window()
+    local old_window = nil
     while not sw:is_end() do
-      old_window  = old_sw:get_matrix(old_window)
-      local norm2 = old_window:norm2()
+      window  = sw:get_matrix(window)
+      local norm2 = window:norm2()
       if norm2 > mp then
 	local scal_factor = mp / norm2
-	window = sw:get_matrix(window)
+	old_window = old_sw:get_matrix(old_window)
 	old_window:scal(scal_factor)
 	window:scal(scal_factor)
       end
@@ -140,7 +142,7 @@ local function ann_optimizer_apply_constraints(opt,
 		"# WARNING!!! Possible " .. hypname .. " > 0 in bias connection: %s\n",
 		wname)
       end
-      func(oldw, v, w, ann_component)
+      func(w, oldw, v, ann_component)
     end
   end
 end
