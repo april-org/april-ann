@@ -1,2 +1,2 @@
 #!/bin/bash
-git checkout master -- doxygen_doc
+git checkout document -- doxygen_doc
