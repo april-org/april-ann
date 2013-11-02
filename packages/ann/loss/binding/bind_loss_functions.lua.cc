@@ -30,7 +30,7 @@
 #include "mae_loss_function.h"
 #include "cross_entropy_loss_function.h"
 #include "multiclass_cross_entropy_loss_function.h"
-#include "batch_fmeasure_loss_function.h"
+#include "batch_fmeasure_micro_avg_loss_function.h"
 #include "zero_one_loss_function.h"
 
 using namespace ANN;
@@ -206,11 +206,11 @@ using namespace ANN;
 //                BATCH FMEASURE                   //
 /////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME BatchFMeasureLossFunction ann.loss.batch_fmeasure
-//BIND_CPP_CLASS    BatchFMeasureLossFunction
-//BIND_SUBCLASS_OF  BatchFMeasureLossFunction LossFunction
+//BIND_LUACLASSNAME BatchFMeasureMicroAvgLossFunction ann.loss.batch_fmeasure.micro_avg
+//BIND_CPP_CLASS    BatchFMeasureMicroAvgLossFunction
+//BIND_SUBCLASS_OF  BatchFMeasureMicroAvgLossFunction LossFunction
 
-//BIND_CONSTRUCTOR BatchFMeasureLossFunction
+//BIND_CONSTRUCTOR BatchFMeasureMicroAvgLossFunction
 {
   int argn;
   argn = lua_gettop(L); // number of arguments
@@ -224,15 +224,15 @@ using namespace ANN;
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, complement, bool, complement, false);
   }
-  obj=new BatchFMeasureLossFunction(size, beta, complement);
-  LUABIND_RETURN(BatchFMeasureLossFunction, obj);
+  obj=new BatchFMeasureMicroAvgLossFunction(size, beta, complement);
+  LUABIND_RETURN(BatchFMeasureMicroAvgLossFunction, obj);
 }
 //BIND_END
 
-//BIND_METHOD BatchFMeasureLossFunction clone
+//BIND_METHOD BatchFMeasureMicroAvgLossFunction clone
 {
-  LUABIND_RETURN(BatchFMeasureLossFunction,
-		 dynamic_cast<BatchFMeasureLossFunction*>(obj->clone()));
+  LUABIND_RETURN(BatchFMeasureMicroAvgLossFunction,
+		 dynamic_cast<BatchFMeasureMicroAvgLossFunction*>(obj->clone()));
 }
 //BIND_END
 
