@@ -31,24 +31,20 @@ namespace ANN {
   /// M.J. Castro-Bleda.  F-Measure as the error function to train Neural
   /// Networks.  In Advances in Computational Intelligence, IWANN, part I, LNCS,
   /// pages 376-384. Springer, 2013.
+  ///
+  /// FMeasure micro averaging computes TP, FP, FN over the classes and
+  /// patterns, and computes the standard FMeasure equation
   class BatchFMeasureMicroAvgLossFunction : public LossFunction {
     float beta, beta2;
     // auxiliary data for gradient computation speed-up
-    float G1, G2, H;
-    /// The dot product for each class => input(:,j) * target(:,j)
-    MatrixFloat *dot_products;
-    /// The sums per each class => input(:,j)->sum()
-    MatrixFloat *input_sums, *target_sums;
+    float G, H, dot, input_sum, target_sum;
     bool complement_output;
     
     BatchFMeasureMicroAvgLossFunction(BatchFMeasureMicroAvgLossFunction *other) :
     LossFunction(other), beta(other->beta), beta2(other->beta2),
-    G1(other->G1), G2(other->G2), H(other->H),
-    dot_products(0), input_sums(0), target_sums(0),
+    G(other->G), H(other->H), dot(other->dot),
+    input_sum(other->input_sum), target_sum(other->target_sum),
     complement_output(other->complement_output) {
-      if (other->dot_products) dot_products = other->dot_products->clone();
-      if (other->input_sums)   input_sums   = other->input_sums->clone();
-      if (other->target_sums)  target_sums  = other->target_sums->clone();
     }
     
   protected:

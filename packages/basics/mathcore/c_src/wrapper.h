@@ -250,25 +250,6 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
   bool use_gpu);
 */
 
-void doLocalFMeasureLossFunction(FloatGPUMirroredMemoryBlock *input,
-				 FloatGPUMirroredMemoryBlock *target,
-				 FloatGPUMirroredMemoryBlock *loss_output,
-				 unsigned int size,
-				 unsigned int bunch_size,
-				 float beta,
-				 float &Gab, float &Hab,
-				 bool complement_output,
-				 bool use_gpu);
-
-void doComputeLocalFMeasureGradient(FloatGPUMirroredMemoryBlock *target,
-				    FloatGPUMirroredMemoryBlock *output_error,
-				    unsigned int size,
-				    unsigned int bunch_size,
-				    float beta,
-				    float Gab, float Hab,
-				    bool complement_output,
-				    bool use_gpu);
-
 // BLAS FUNCTIONS
 template<typename T>
 void doGemv(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
