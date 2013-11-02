@@ -1056,7 +1056,12 @@ function formiga.__luacode__ (t)
       f_lua = io.open(lua_file_path)
     end
     table.insert(lua_data, f_lua:read("*a"))
-    f_lua:close()
+    local ok,msg= f_lua:close()
+    if formiga.compiler.global_flags.use_lstrip == "yes" and not ok then
+      print("Error in command: " .. command)
+      os.execute("rm -Rf " .. build_dir)
+      os.exit(1)
+    end
     printverbose(2," [luac  ] "..lua_file)
     io.stdout:flush()
   end
@@ -1095,7 +1100,7 @@ function formiga.__luacode__ (t)
 			 }, " ")
   local ok,what,error_resul = os.execute(command)
   if not ok then
-    print("Error en el comando: " .. command)
+    print("Error in command: " .. command)
     os.exit(1)
   end
   os.execute("rm "..thefile..".c")
@@ -2128,7 +2133,7 @@ function generate_package_register_file(package,package_register_functions)
 			       " ")
   local ok,what,resul = os.execute(command)
   if not ok then
-    print("Error en el comando: " .. command)
+    print("Error in command: " .. command)
     os.exit(1)
   end
 end

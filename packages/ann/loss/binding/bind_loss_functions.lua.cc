@@ -59,7 +59,10 @@ using namespace ANN;
   LUABIND_GET_PARAMETER(1, Token, input);
   LUABIND_GET_PARAMETER(2, Token, target);
   MatrixFloat *loss = obj->computeLoss(input, target);
-  LUABIND_RETURN(MatrixFloat, loss);
+  if (loss)
+    LUABIND_RETURN(MatrixFloat, loss);
+  else
+    LUABIND_RETURN_NIL();
 }
 //BIND_END
 
@@ -206,7 +209,7 @@ using namespace ANN;
 //                BATCH FMEASURE                   //
 /////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME BatchFMeasureMicroAvgLossFunction ann.loss.batch_fmeasure.micro_avg
+//BIND_LUACLASSNAME BatchFMeasureMicroAvgLossFunction ann.loss.batch_fmeasure_micro_avg
 //BIND_CPP_CLASS    BatchFMeasureMicroAvgLossFunction
 //BIND_SUBCLASS_OF  BatchFMeasureMicroAvgLossFunction LossFunction
 

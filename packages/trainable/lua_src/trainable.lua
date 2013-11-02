@@ -814,8 +814,9 @@ function trainable_supervised_trainer_methods:compute_gradients_step(input,
   local tr_loss,gradient
   self.ann_component:reset()
   local output = self.ann_component:forward(input, true)
-  tr_loss_matrix = loss:accum_loss( loss:compute_loss(output, target) )
+  tr_loss_matrix = loss:compute_loss(output, target)
   if tr_loss_matrix then
+    loss:accum_loss(tr_loss_matrix)
     gradient = loss:gradient(output, target)
     gradient = self.ann_component:backprop(gradient)
     --
@@ -856,10 +857,10 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
   local gradient = loss:gradient(output, target)
   gradient=self.ann_component:backprop(gradient)
   self.weight_grads = self.ann_component:compute_gradients(self.weight_grads)
-  local epsilond = 0.2
+  local epsilond = 0.3
   local epsilon  = 1e-03
   local ret      = true
-  local bunch_size = input:get_matrix():dim(1)
+  local bunch_size = tr_loss_matrix:dim(1)
   for wname,cnn in self:iterate_weights() do
     local w = cnn:matrix()
     -- The shared parameter has no effect in gradients check, only bunch_size
@@ -888,7 +889,7 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
       if ann_g ~= 0 or g ~= 0 then
 	local abs_err = math.abs(ann_g - g)
 	local err = abs_err/math.abs(ann_g+g)
-	if err > epsilond and abs_err > 1e-03 then
+	if err > epsilond and abs_err > 1e-02 then
 	  fprintf(io.stderr,
 		  "INCORRECT GRADIENT FOR %s[%d], found %g, expected %g "..
 		    "(error %g, abs error %g)\n",
