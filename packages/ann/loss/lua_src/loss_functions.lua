@@ -203,14 +203,14 @@ april_set_doc("ann.loss.multi_class_cross_entropy.__call",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.batch_fmeasure",
+april_set_doc("ann.loss.batch_fmeasure_micro_avg",
 	      {
 		class="class",
-		summary="The FMeasure computed to a bunch of patterns",
+		summary="The FMeasure computed from a bunch of patterns",
 		description={
 		  "This loss function computes",
 		  "FMeasure for a given bunch of patterns, and for",
-		  "multi-class models.",
+		  "multi-class models, using micro-averaging strategy.",
 		}
 	      })
 
@@ -238,6 +238,10 @@ april_set_doc("ann.loss.zero_one",
 	      {
 		class="class",
 		summary="The 0-1 loss function",
+		description={
+		  "The 0-1 loss function. This loss function is",
+		  "derivable and therefore the gradient couldn't be computed.",
+		},
 	      })
 
 april_set_doc("ann.loss.zero_one.__call",
