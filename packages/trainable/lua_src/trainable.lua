@@ -732,6 +732,7 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
 		      local output = self.ann_component:forward(input, true)
 		      local output_mat = output:get_matrix()
 		      tr_loss_matrix = loss:compute_loss(output, target)
+		      if not tr_loss_matrix then return nil end
 		      gradient = loss:gradient(output, target)
 		      gradient = self.ann_component:backprop(gradient)
 		      --
@@ -750,7 +751,7 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
 		      self.ann_component
 		    end,
 		    self.weights_table)
-  loss:accum_loss(tr_loss_matrix)
+  if tr_loss_matrix then loss:accum_loss(tr_loss_matrix) end
   return tr_loss_matrix,gradient
 end
 
@@ -779,8 +780,11 @@ function trainable_supervised_trainer_methods:validate_step(input, target, loss)
   local loss = loss or self.loss_function
   self.ann_component:reset()
   local output   = self.ann_component:forward(input)
-  local tr_loss  = loss:accum_loss( loss:compute_loss(output, target) )
-  return tr_loss
+  local tr_loss_matrix = loss:compute_loss(output, target)
+  if tr_loss_matrix then
+    local tr_loss = loss:accum_loss(tr_loss_matrix)
+    return tr_loss
+  end
 end
 
 ------------------------------------------------------------------------
@@ -811,14 +815,16 @@ function trainable_supervised_trainer_methods:compute_gradients_step(input,
   self.ann_component:reset()
   local output = self.ann_component:forward(input, true)
   tr_loss_matrix = loss:accum_loss( loss:compute_loss(output, target) )
-  gradient = loss:gradient(output, target)
-  gradient = self.ann_component:backprop(gradient)
-  --
-  iterator(pairs(weight_grads)):
-  apply(function(name,mat)mat:zeros()end)
-  --
-  weight_grads = self.ann_component:compute_gradients(weight_grads)
-  return weight_grads,tr_loss_matrix
+  if tr_loss_matrix then
+    gradient = loss:gradient(output, target)
+    gradient = self.ann_component:backprop(gradient)
+    --
+    iterator(pairs(weight_grads)):
+    apply(function(name,mat)mat:zeros()end)
+    --
+    weight_grads = self.ann_component:compute_gradients(weight_grads)
+    return weight_grads,tr_loss_matrix
+  end
 end
 
 ------------------------------------------------------------------------
@@ -843,7 +849,9 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
   self.ann_component:reset()
   loss:reset()
   local output   = self.ann_component:forward(input, true)
-  loss:accum_loss( loss:compute_loss(output, target) )
+  local tr_loss_matrix = loss:compute_loss(output, target)
+  if not tr_loss_matrix then return true end
+  loss:accum_loss(tr_loss_matrix)
   local tr_loss  = loss:get_accum_loss()
   local gradient = loss:gradient(output, target)
   gradient=self.ann_component:backprop(gradient)
@@ -893,7 +901,7 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
   return ret
 end
 
-------------------------------------------------------------------------
+  ------------------------------------------------------------------------
 
 april_set_doc("trainable.supervised_trainer.calculate", {
 		class = "method",

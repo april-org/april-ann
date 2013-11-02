@@ -18,8 +18,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef BATCHFMEASURELOSSFUNCTION_H
-#define BATCHFMEASURELOSSFUNCTION_H
+#ifndef BATCHFMEASUREMICROAVGLOSSFUNCTION_H
+#define BATCHFMEASUREMICROAVGLOSSFUNCTION_H
 
 #include "referenced.h"
 #include "token_base.h"
@@ -31,7 +31,7 @@ namespace ANN {
   /// M.J. Castro-Bleda.  F-Measure as the error function to train Neural
   /// Networks.  In Advances in Computational Intelligence, IWANN, part I, LNCS,
   /// pages 376-384. Springer, 2013.
-  class BatchFMeasureLossFunction : public LossFunction {
+  class BatchFMeasureMicroAvgLossFunction : public LossFunction {
     float beta, beta2;
     // auxiliary data for gradient computation speed-up
     float G1, G2, H;
@@ -41,7 +41,7 @@ namespace ANN {
     MatrixFloat *input_sums, *target_sums;
     bool complement_output;
     
-    BatchFMeasureLossFunction(BatchFMeasureLossFunction *other) :
+    BatchFMeasureMicroAvgLossFunction(BatchFMeasureMicroAvgLossFunction *other) :
     LossFunction(other), beta(other->beta), beta2(other->beta2),
     G1(other->G1), G2(other->G2), H(other->H),
     dot_products(0), input_sums(0), target_sums(0),
@@ -54,14 +54,14 @@ namespace ANN {
   protected:
     virtual MatrixFloat *computeLossBunch(Token *input, Token *target);
   public:
-    BatchFMeasureLossFunction(unsigned int size, float beta=1.0f,
-			      bool complement_output=false);
-    virtual ~BatchFMeasureLossFunction();
+    BatchFMeasureMicroAvgLossFunction(unsigned int size, float beta=1.0f,
+				      bool complement_output=false);
+    virtual ~BatchFMeasureMicroAvgLossFunction();
     virtual Token *computeGradient(Token *input, Token *target);
     virtual LossFunction *clone() {
-      return new BatchFMeasureLossFunction(this);
+      return new BatchFMeasureMicroAvgLossFunction(this);
     }
   };
 }
 
-#endif // BATCHFMEASURELOSSFUNCTION_H
+#endif // BATCHFMEASUREMICROAVGLOSSFUNCTION_H

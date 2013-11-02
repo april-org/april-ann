@@ -246,6 +246,9 @@ end
 function sgd_methods:execute(eval, cnn_table)
   local arg = table.pack( eval() )
   local gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+  -- the gradient computation could fail returning nil, it is important to take
+  -- this into account
+  if not gradients then return nil end
   for cname,cnn in pairs(cnn_table) do
     local w,oldw     = cnn:matrix()
     local grad       = gradients[cname]

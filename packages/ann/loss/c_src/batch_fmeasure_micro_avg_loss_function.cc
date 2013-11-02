@@ -24,23 +24,25 @@
 
 namespace ANN {
 
-  BatchFMeasureLossFunction::BatchFMeasureLossFunction(unsigned int size,
-						       float beta,
-						       bool complement_output) :
+  BatchFMeasureMicroAvgLossFunction::
+  BatchFMeasureMicroAvgLossFunction(unsigned int size,
+				    float beta,
+				    bool complement_output) :
     LossFunction(size), beta(beta), beta2(beta*beta), dot_products(0),
     input_sums(0), target_sums(0),
     complement_output(complement_output) {
   }
   
-  BatchFMeasureLossFunction::~BatchFMeasureLossFunction() {
+  BatchFMeasureMicroAvgLossFunction::~BatchFMeasureMicroAvgLossFunction() {
     delete dot_products;
     delete input_sums;
     delete target_sums;
   }
 
   // TODO: implement it with CUDA
-  MatrixFloat *BatchFMeasureLossFunction::computeLossBunch(Token *input,
-							   Token *target) {
+  MatrixFloat *BatchFMeasureMicroAvgLossFunction::
+  computeLossBunch(Token *input,
+		   Token *target) {
     IncRef(input);
     IncRef(target);
     MatrixFloat *input_mat, *target_mat;
@@ -55,6 +57,17 @@ namespace ANN {
     IncRef(target_mat);
     int dim = 1;
     MatrixFloat *loss_output = new MatrixFloat(1, &dim, CblasColMajor);
+    
+    MatrixFloat *cmul = input_mat->cmul(target_mat);
+    input_sum  = input_mat->sum();
+    target_sum = target_mat->sum();
+    dot        = cmul->sum();
+    prec       = dot / input_sum;
+    recall     = dot / target_sum;
+    H = beta2*prec + recall;
+    delete cmul;
+    (*loss_output)(0) = (1+beta)*(prec*recall) / H;
+
     delete dot_products;
     delete input_sums;
     delete target_sums;
@@ -97,7 +110,10 @@ namespace ANN {
     delete target_sw;
     if (H > 0.0f || H < 0.0f)
       (*loss_output)(0) = -(1.0f+beta2)*G1*G2 / (dim * H);
-    else (*loss_output)(0) = 0.0f;
+    else {
+      delete loss_output;
+      loss_output = 0;
+    }
     DecRef(input);
     DecRef(target);
     DecRef(input_mat);
@@ -105,7 +121,7 @@ namespace ANN {
     return loss_output;
   }
   
-  Token *BatchFMeasureLossFunction::computeGradient(Token *input, Token *target) {
+  Token *BatchFMeasureMicroAvgLossFunction::computeGradient(Token *input, Token *target) {
     IncRef(input);
     IncRef(target);
     MatrixFloat *input_mat, *target_mat;
