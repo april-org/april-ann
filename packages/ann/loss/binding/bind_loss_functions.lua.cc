@@ -31,6 +31,7 @@
 #include "cross_entropy_loss_function.h"
 #include "multiclass_cross_entropy_loss_function.h"
 #include "batch_fmeasure_micro_avg_loss_function.h"
+#include "batch_fmeasure_macro_avg_loss_function.h"
 #include "zero_one_loss_function.h"
 
 using namespace ANN;
@@ -236,6 +237,38 @@ using namespace ANN;
 {
   LUABIND_RETURN(BatchFMeasureMicroAvgLossFunction,
 		 dynamic_cast<BatchFMeasureMicroAvgLossFunction*>(obj->clone()));
+}
+//BIND_END
+
+///////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME BatchFMeasureMacroAvgLossFunction ann.loss.batch_fmeasure_macro_avg
+//BIND_CPP_CLASS    BatchFMeasureMacroAvgLossFunction
+//BIND_SUBCLASS_OF  BatchFMeasureMacroAvgLossFunction LossFunction
+
+//BIND_CONSTRUCTOR BatchFMeasureMacroAvgLossFunction
+{
+  int argn;
+  argn = lua_gettop(L); // number of arguments
+  unsigned int size=0;
+  float beta=1.0f;
+  bool complement=false;
+  if (argn > 0) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "size", "beta", "complement", (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, complement, bool, complement, false);
+  }
+  obj=new BatchFMeasureMacroAvgLossFunction(size, beta, complement);
+  LUABIND_RETURN(BatchFMeasureMacroAvgLossFunction, obj);
+}
+//BIND_END
+
+//BIND_METHOD BatchFMeasureMacroAvgLossFunction clone
+{
+  LUABIND_RETURN(BatchFMeasureMacroAvgLossFunction,
+		 dynamic_cast<BatchFMeasureMacroAvgLossFunction*>(obj->clone()));
 }
 //BIND_END
 

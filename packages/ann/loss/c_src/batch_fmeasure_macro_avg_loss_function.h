@@ -18,8 +18,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef BATCHFMEASUREMICROAVGLOSSFUNCTION_H
-#define BATCHFMEASUREMICROAVGLOSSFUNCTION_H
+#ifndef BATCHFMEASUREMACROAVGLOSSFUNCTION_H
+#define BATCHFMEASUREMACROAVGLOSSFUNCTION_H
 
 #include "referenced.h"
 #include "token_base.h"
@@ -32,34 +32,32 @@ namespace ANN {
   /// Networks.  In Advances in Computational Intelligence, IWANN, part I, LNCS,
   /// pages 376-384. Springer, 2013.
   ///
-  /// FMeasure micro averaging computes TP, FP, FN over the classes and
-  /// patterns, and computes the standard FMeasure equation from this counts.
-  /// Note that micro averaging leads to accuracy if the problem is 1-of-N
-  /// (softmax output), so, it is better suitted with problems where each pattern
-  /// could have more than one label.
-  class BatchFMeasureMicroAvgLossFunction : public LossFunction {
+  /// FMeasure macro averaging computes an average of independent FM per class.
+  class BatchFMeasureMacroAvgLossFunction : public LossFunction {
     float beta, beta2;
     // auxiliary data for gradient computation speed-up
-    float G, H;
+    MatrixFloat *Gs, *Hs;
     bool complement_output;
     
-    BatchFMeasureMicroAvgLossFunction(BatchFMeasureMicroAvgLossFunction *other) :
+    BatchFMeasureMacroAvgLossFunction(BatchFMeasureMacroAvgLossFunction *other) :
     LossFunction(other), beta(other->beta), beta2(other->beta2),
-    G(other->G), H(other->H),
+    Gs(0), Hs(0),
     complement_output(other->complement_output) {
+      if (other->Gs) Gs = other->Gs->clone();
+      if (other->Hs) Hs = other->Hs->clone();
     }
     
   protected:
     virtual MatrixFloat *computeLossBunch(Token *input, Token *target);
   public:
-    BatchFMeasureMicroAvgLossFunction(unsigned int size, float beta=1.0f,
+    BatchFMeasureMacroAvgLossFunction(unsigned int size, float beta=1.0f,
 				      bool complement_output=false);
-    virtual ~BatchFMeasureMicroAvgLossFunction();
+    virtual ~BatchFMeasureMacroAvgLossFunction();
     virtual Token *computeGradient(Token *input, Token *target);
     virtual LossFunction *clone() {
-      return new BatchFMeasureMicroAvgLossFunction(this);
+      return new BatchFMeasureMacroAvgLossFunction(this);
     }
   };
 }
 
-#endif // BATCHFMEASUREMICROAVGLOSSFUNCTION_H
+#endif // BATCHFMEASUREMACROAVGLOSSFUNCTION_H
