@@ -19,24 +19,26 @@
  *
  */
 #include "token_matrix.h"
-#include "batch_fmeasure_micro_avg_loss_function.h"
+#include "batch_fmeasure_macro_avg_loss_function.h"
 #include "wrapper.h"
 
 namespace ANN {
 
-  BatchFMeasureMicroAvgLossFunction::
-  BatchFMeasureMicroAvgLossFunction(unsigned int size,
+  BatchFMeasureMacroAvgLossFunction::
+  BatchFMeasureMacroAvgLossFunction(unsigned int size,
 				    float beta,
 				    bool complement_output) :
     LossFunction(size), beta(beta), beta2(beta*beta),
-    G(0.0f), H(0.0f),
+    Gs(0), Hs(0),
     complement_output(complement_output) {
   }
   
-  BatchFMeasureMicroAvgLossFunction::~BatchFMeasureMicroAvgLossFunction() {
+  BatchFMeasureMacroAvgLossFunction::~BatchFMeasureMacroAvgLossFunction() {
+    delete Gs;
+    delete Hs;
   }
 
-  MatrixFloat *BatchFMeasureMicroAvgLossFunction::
+  MatrixFloat *BatchFMeasureMacroAvgLossFunction::
   computeLossBunch(Token *input, Token *target) {
     IncRef(input);
     IncRef(target);
@@ -53,34 +55,46 @@ namespace ANN {
     //         (1+b^2) dot(o,t)
     // FMb = ---------------------
     //        sum(o) + b^2 sum(t)
-    float dot;
-    if (!input_mat-> getDimSize(0) == 1 || input_mat->getDimSize(1) == 1)
-      // is a vector
-      dot = input_mat->dot(target_mat);
-    else {
-      // is a matrix
-      int dim = (input_mat->getDimSize(0) > input_mat->getDimSize(1)) ? 0 : 1;
-      dot = 0.0f;
-      MatrixFloat *aux1=0, *aux2=0;
-      for (int i=0; i<input_mat->getDimSize(dim); ++i) {
-	aux1 = input_mat->select(dim,i,aux1);
-	aux2 = target_mat->select(dim,i,aux2);
-	dot += aux1->dot(aux2);
+    int num_classes = input_mat->getDimSize(1);
+    delete Gs;
+    delete Hs;
+    Gs = new MatrixFloat(1,&num_classes,CblasColMajor);
+    Hs = Gs->clone();
+    MatrixFloat *class_input_mat=0, *class_target_mat=0;
+    MatrixFloat::iterator Gs_it(Gs->begin());
+    MatrixFloat::iterator Hs_it(Hs->begin());
+    float FMsum = 0.0f;
+    for (int i=0; i<num_classes; ++i, ++Gs_it, ++Hs_it) {
+      april_assert(Gs_it != Gs->end());
+      april_assert(Hs_it != Hs->end());
+      class_input_mat  = input_mat->select(1,i,class_input_mat);
+      class_target_mat = target_mat->select(1,i,class_target_mat);
+      //
+      float dot        = class_input_mat->dot(class_target_mat);
+      float input_sum  = class_input_mat->sum();
+      float target_sum = class_target_mat->sum();
+      *Gs_it = (1+beta2) * dot;
+      *Hs_it = input_sum + beta2 * target_sum;
+      if (*Hs_it > 0.0f || *Hs_it < 0.0f) {
+	float FM  = -(*Gs_it)/(*Hs_it);
+	FMsum    += FM;
       }
-      delete aux1;
-      delete aux2;
+      else {
+	// force Hs to be a null pointer, condition used in computeGradient to
+	// avoid gradient computation
+	delete Hs;
+	Hs = 0;
+	delete class_input_mat;
+	delete class_target_mat;
+	return 0;
+      }
     }
-    float input_sum  = input_mat->sum();
-    float target_sum = target_mat->sum();
-    G = (1+beta2) * dot;
-    H = input_sum + beta2 * target_sum;
+    delete class_input_mat;
+    delete class_target_mat;
     MatrixFloat *loss_output;
-    if ( H>0.0f || H<0.0f ) {
-      int dim = 1;
-      loss_output = new MatrixFloat(1, &dim, CblasColMajor);
-      (*loss_output)(0) = -G/H;
-    }
-    else loss_output = 0;
+    int aux = 1;
+    loss_output = new MatrixFloat(1, &aux, CblasColMajor);
+    (*loss_output)(0) = FMsum/num_classes;
     //
     DecRef(input);
     DecRef(target);
@@ -89,7 +103,7 @@ namespace ANN {
     return loss_output;
   }
   
-  Token *BatchFMeasureMicroAvgLossFunction::
+  Token *BatchFMeasureMacroAvgLossFunction::
   computeGradient(Token *input,Token *target) {
     IncRef(target);
     MatrixFloat *input_mat, *target_mat;
@@ -105,15 +119,28 @@ namespace ANN {
 #ifdef USE_CUDA
     error_mat->setUseCuda(input_mat->getCudaFlag());
 #endif
-    if (H > 0.0f || H < 0.0f) {
+    if (Hs != 0) {
       //   grad FMb                 1 + beta^2            (1+b^2) dot(o,t) 
       // ----------- = t_ij * --------------------- - -------------------------
       //  grad o_ij            sum(o) + b^2 sum(t)     [sum(o) + b^2 sum(t)]^2
-      float H2    = H*H;
-      float scal  = -(1+beta2)/H;
-      float add   = G/H2;
-      error_mat->scal(scal);
-      error_mat->scalarAdd(add);
+      int num_classes = input_mat->getDimSize(1);
+      MatrixFloat::const_iterator Gs_it(Gs->begin());
+      MatrixFloat::const_iterator Hs_it(Hs->begin());
+      MatrixFloat *class_error_mat = 0;
+      float rel = 1.0f/num_classes;
+      for (int i=0; i<num_classes; ++i, ++Gs_it, ++Hs_it) {
+	april_assert(Gs_it != Gs->end());
+	april_assert(Hs_it != Hs->end());
+	class_error_mat = error_mat->select(1,i,class_error_mat);
+	float G=*Gs_it, H=*Hs_it;
+	float H2    = H*H;
+	float scal  = -(1+beta2)/H;
+	float add   = G/H2;
+	class_error_mat->scal(scal);
+	class_error_mat->scalarAdd(add);
+      }
+      delete class_error_mat;
+      error_mat->scal(rel);
     }
     else error_mat->zeros();
     DecRef(target);
