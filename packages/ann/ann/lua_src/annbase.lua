@@ -1202,7 +1202,7 @@ april_set_doc("ann.components.actf",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.__base__", {
+april_set_doc("ann.components.actf", {
 		class="class",
 		summary="Abstract class child of ann.components.base",
 		description={

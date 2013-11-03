@@ -162,7 +162,7 @@ int token_sparse_iterator_function(lua_State *L) {
 
 ////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME TokenVectorGeneric tokens.vector.__base__
+//BIND_LUACLASSNAME TokenVectorGeneric tokens.vector
 //BIND_CPP_CLASS    TokenVectorGeneric
 //BIND_SUBCLASS_OF  TokenVectorGeneric Token
 
