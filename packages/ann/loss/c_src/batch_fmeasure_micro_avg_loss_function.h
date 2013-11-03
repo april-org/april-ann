@@ -33,7 +33,10 @@ namespace ANN {
   /// pages 376-384. Springer, 2013.
   ///
   /// FMeasure micro averaging computes TP, FP, FN over the classes and
-  /// patterns, and computes the standard FMeasure equation
+  /// patterns, and computes the standard FMeasure equation from this counts.
+  /// Note that micro averaging leads to accuracy if the problem is 1-of-N
+  /// (softmax output), so, it is better suitted with problems where each pattern
+  /// could have more than one label.
   class BatchFMeasureMicroAvgLossFunction : public LossFunction {
     float beta, beta2;
     // auxiliary data for gradient computation speed-up
