@@ -1,4 +1,4 @@
----------------------------
+ ---------------------------
 -- BINDING DOCUMENTATION --
 ---------------------------
 
@@ -10,7 +10,7 @@ april_set_doc("ann.loss",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.__base__",
+april_set_doc("ann.loss",
 	      {
 		class="class",
 		summary="Abstract loss function class, implements methods",
@@ -28,7 +28,7 @@ april_set_doc("ann.loss.__base__",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.__base__.accum_loss",
+april_set_doc("ann.loss.accum_loss",
 	      {
 		class="method",
 		summary="Receives a loss matrix and accumulates it",
@@ -42,7 +42,7 @@ april_set_doc("ann.loss.__base__.accum_loss",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.__base__.compute_loss",
+april_set_doc("ann.loss.compute_loss",
 	      {
 		class="method",
 		summary="Computes the loss between two tokens (input and target), but doesn't accumulate it",
@@ -62,7 +62,7 @@ april_set_doc("ann.loss.__base__.compute_loss",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.__base__.gradient",
+april_set_doc("ann.loss.gradient",
 	      {
 		class="method",
 		summary="Computes the gradient of the loss between two tokens",
@@ -84,7 +84,7 @@ april_set_doc("ann.loss.__base__.gradient",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.__base__.get_accum_loss",
+april_set_doc("ann.loss.get_accum_loss",
 	      {
 		class="method",
 		summary="Returns the mean loss from the last reset call",
@@ -97,7 +97,7 @@ april_set_doc("ann.loss.__base__.get_accum_loss",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.__base__.reset",
+april_set_doc("ann.loss.reset",
 	      {
 		class="method",
 		summary="Sets to zero the accumulated loss",
@@ -105,7 +105,7 @@ april_set_doc("ann.loss.__base__.reset",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.__base__.clone",
+april_set_doc("ann.loss.clone",
 	      {
 		class="method",
 		summary="Deep copy of the object",

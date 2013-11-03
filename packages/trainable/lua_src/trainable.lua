@@ -57,7 +57,7 @@ function trainable_supervised_trainer_class_metatable:__call(ann_component,
 							     bunch_size,
 							     optimizer)
   local optimizer = optimizer or ann.optimizer.sgd()
-  if loss_function and not isa(loss_function, ann.loss.__base__) then
+  if loss_function and not isa(loss_function, ann.loss) then
     error("The second parameter must be an instance of ann.loss")
   end
   if optimizer and not isa(optimizer, ann.optimizer) then
@@ -102,7 +102,7 @@ april_set_doc("trainable.supervised_trainer.set_loss_function", {
 		params = { "Loss function" }, })
 
 function trainable_supervised_trainer_methods:set_loss_function(loss_function)
-  assert(isa(loss_function, ann.loss.__base__, "Needs an instance of ann.loss"))
+  assert(isa(loss_function, ann.loss, "Needs an instance of ann.loss"))
   self.loss_function = loss_function
 end
 
@@ -1056,7 +1056,7 @@ function trainable_supervised_trainer_methods:train_dataset(t)
       bunch_size     = { type_match = "number",
 			 mandatory = (self.bunch_size == false),
 			 default=self.bunch_size },
-      loss           = { isa_match  = ann.loss.__base__,
+      loss           = { isa_match  = ann.loss,
                          mandatory  = (self.loss_function==false),
 			 default=self.loss_function },
       optimizer      = { isa_match  = ann.optimizer,
@@ -1178,7 +1178,7 @@ function trainable_supervised_trainer_methods:grad_check_dataset(t)
       bunch_size     = { type_match = "number",
 			 mandatory = (self.bunch_size == false),
 			 default=self.bunch_size },
-      loss           = { isa_match  = ann.loss.__base__,
+      loss           = { isa_match  = ann.loss,
                          mandatory = (self.loss_function==false),
 			 default=self.loss_function },
       max_iterations = { type_match = "number",
@@ -1321,7 +1321,7 @@ function trainable_supervised_trainer_methods:validate_dataset(t)
       bunch_size     = { type_match = "number",
 			 mandatory = (self.bunch_size == false),
 			 default=self.bunch_size },
-      loss           = { isa_match  = ann.loss.__base__,
+      loss           = { isa_match  = ann.loss,
                          mandatory = (self.loss_funcion==false),
 			 default=self.loss_function },
       shuffle        = { isa_match  = random, mandatory = false, default=nil },

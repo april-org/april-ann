@@ -42,7 +42,7 @@ using namespace ANN;
 //                   LossFunction                  //
 /////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME LossFunction ann.loss.__base__
+//BIND_LUACLASSNAME LossFunction ann.loss
 //BIND_CPP_CLASS    LossFunction
 
 //BIND_CONSTRUCTOR LossFunction
