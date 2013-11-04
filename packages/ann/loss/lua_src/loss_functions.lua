@@ -234,6 +234,37 @@ april_set_doc("ann.loss.batch_fmeasure.__call",
 
 -------------------------------------------------------------------
 
+april_set_doc("ann.loss.batch_fmeasure_macro_avg",
+	      {
+		class="class",
+		summary="The FMeasure computed from a bunch of patterns",
+		description={
+		  "This loss function computes",
+		  "FMeasure for a given bunch of patterns, and for",
+		  "multi-class models, using macro-averaging strategy.",
+		}
+	      })
+
+april_set_doc("ann.loss.batch_fmeasure.__call",
+	      {
+		class="method",
+		summary="Constructor",
+		params={
+		  ["size"]="The expected pattern size",
+		  ["beta"]={
+		    "The beta parameter of FMeasure",
+		    "[optional], by default is 1.0",
+		  },
+		  ["complement"]={
+		    "Boolean value, if true computes 1-output",
+		    "[optional], by default is false",
+		  },
+		},
+		outputs={ "An instance of ann.loss.batch_fmeasure" },
+	      })
+
+-------------------------------------------------------------------
+
 april_set_doc("ann.loss.zero_one",
 	      {
 		class="class",
