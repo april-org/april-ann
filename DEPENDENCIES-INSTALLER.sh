@@ -12,7 +12,7 @@ if [ $UNAME = "Linux" ]; then
 	if ! gcc -c $dest.c 2> /dev/null; then
 	    echo "Not found lua5.2-deb-multiarch.h, generating a default one in $multiarch, please, check the content"
 	    echo -e "#ifndef _LUA_DEB_MULTIARCH_\n#define _LUA_DEB_MULTIARCH_\n#define DEB_HOST_MULTIARCH \""$(arch)"-linux-gnu\"\n#endif" > $multiarch
-    	    echo -e "#ifndef _LUA_DEB_MULTIARCH_\n#define _LUA_DEB_MULTIARCH_\n#define DEB_HOST_MULTIARCH \""$(arch)"-linux-gnu\"\n#endif" > $multiarch2
+            echo -e "#ifndef _LUA_DEB_MULTIARCH_\n#define _LUA_DEB_MULTIARCH_\n#define DEB_HOST_MULTIARCH \""$(arch)"-linux-gnu\"\n#endif" > $multiarch2
 	fi
 	rm -f $dest*
 	rm -f $(basename $dest).o
