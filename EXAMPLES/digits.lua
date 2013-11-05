@@ -45,7 +45,7 @@ if util.is_cuda_available() then thenet:set_use_cuda(true) end
 trainer = trainable.supervised_trainer(thenet,
 				       ann.loss.multi_class_cross_entropy(10),
 				       bunch_size,
-				       ann.optimizer.rprop())
+				       ann.optimizer.sgd():set_option("learning_rate",0.1))
 trainer:build()
 trainer:randomize_weights{
   random      = random(52324),
@@ -54,7 +54,6 @@ trainer:randomize_weights{
   inf         = -1,
   sup         =  1,
 }
-trainer:set_option("learning_rate", 0.1)
 
 trainer:save("jarl.net", "binary")
 
@@ -75,7 +74,7 @@ print("# Epoch Training  Validation")
 stopping_criterion = trainable.stopping_criteria.make_max_epochs_wo_imp_relative(2)
 result = trainer:train_holdout_validation{ training_table     = training_data,
 					   validation_table   = validation_data,
-					   min_epochs         = 20,
+					   min_epochs         = 100,
 					   max_epochs         = 1000,
 					   stopping_criterion = stopping_criterion,
 					   update_function    =

@@ -156,6 +156,7 @@ end
 function optimizer_methods:set_option(name,value)
   assert(self.valid_options[name], "Not recognized option " .. name)
   self.global_options[name] = value
+  return self
 end
 
 function optimizer_methods:get_option(name,value)
@@ -167,6 +168,7 @@ function optimizer_methods:set_layerwise_option(layer_name,name,value)
   assert(self.valid_options[name], "Not recognized option " .. name)
   self.layerwise_options[layer_name] = self.layerwise_options[layer_name] or {}
   self.layerwise_options[layer_name][name] = value
+  return self
 end
 
 function optimizer_methods:get_layerwise_option(layer_name,name)
@@ -320,13 +322,11 @@ function rprop_class_metatable:__call(g_options, l_options, count,
 				      steps, old_sign)
   -- the base optimizer, with the supported learning parameters
   local obj = ann.optimizer({
-			      "learning_rate",
+			      "initial_step",
 			      "eta_plus",
 			      "eta_minus",
 			      "max_step",
 			      "min_step",
-			      "momentum",
-			      "weight_decay",
 			      "niter",
 			    },
 			    g_options,
@@ -335,10 +335,7 @@ function rprop_class_metatable:__call(g_options, l_options, count,
   obj.steps    = steps or {}
   obj.old_sign = old_sign or {}
   obj = class_instance(obj, self)
-  -- standard regularization and constraints
-  obj:add_regularization("L1_norm")
-  obj:add_constraint("max_norm_penalty")
-  obj:set_option("learning_rate", 0.1)
+  obj:set_option("initial_step",  0.1)
   obj:set_option("eta_plus",      1.2)
   obj:set_option("eta_minus",     0.5)
   obj:set_option("max_step",      50)
@@ -348,7 +345,7 @@ function rprop_class_metatable:__call(g_options, l_options, count,
 end
 
 function rprop_methods:execute(eval, cnn_table)
-  local learning_rate = self:get_option("learning_rate")
+  local initial_step  = self:get_option("initial_step")
   local eta_plus      = self:get_option("eta_plus")
   local eta_minus     = self:get_option("eta_minus")
   local max_step      = self:get_option("max_step")
@@ -361,22 +358,10 @@ function rprop_methods:execute(eval, cnn_table)
     local gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
     for cname,cnn in pairs(cnn_table) do
       local w,oldw     = cnn:matrix()
-      steps[cname]     = steps[cname] or matrix.col_major(table.unpack(w:dim())):fill(learning_rate)
+      steps[cname]     = steps[cname] or matrix.col_major(table.unpack(w:dim())):fill(initial_step)
       local sign       = gradients[cname]:clone():sign()
-      local mt         = self:get_option_of(cname, "momentum")     or 0.0
-      local wd         = self:get_option_of(cname, "weight_decay") or 0.0
-      local cwd        = 1.0 - wd
-      --
-      if wd > 0.0 and w:dim(2) == 1 then
-	fprintf(io.stderr,
-		"# WARNING!!! Possible weight_decay > 0 in bias connection: %s\n",
-		cname)
-      end
-      --
-      ann_optimizer_apply_momentum(oldw, mt, w)
-      -- the weight decay SUMS the weight value. Other regularization is better to
-      -- be after the back-propagation learning rule
-      ann_optimizer_regularizations_weight_decay(oldw, cwd, w)
+      -- copy the weight
+      oldw:copy(w)
       -- apply reprop learning rule
       if old_sign[cname] then
 	-- FIXME: the map function is not CUDA friendly
@@ -392,10 +377,6 @@ function rprop_methods:execute(eval, cnn_table)
       oldw:axpy(-1.0, sign:cmul(steps[cname]))
       -- keep the sign for the next iteration
       old_sign[cname] = sign
-      -- regularizations
-      ann_optimizer_apply_regularizations(self, cname, oldw, w, ann_component)
-      -- constraints
-      ann_optimizer_apply_constraints(self, cname, oldw, w, ann_component)
       --
       -- swap current and old weight matrices
       cnn:swap()
@@ -442,11 +423,13 @@ function rprop_methods:to_lua_string(format)
 		  concat("=",","),
 		  "}",
 		  ",",
+		  "{",
 		  iterator(pairs(self.old_sign)):
 		  map(function(name,m)
 			return string.format("[%q]",name),m:to_lua_string(format)
 		      end):
 		  concat("=",","),
+		  "}",
 		  ")" }
   return table.concat(str_t, "")
 end
