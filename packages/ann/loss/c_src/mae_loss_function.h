@@ -37,6 +37,7 @@ namespace ANN {
     virtual LossFunction *clone() {
       return new MAELossFunction(this);
     }
+    virtual char *toLuaString();
   };
 }
 

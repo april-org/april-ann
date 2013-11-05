@@ -112,6 +112,12 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD LossFunction to_lua_string
+{
+  LUABIND_RETURN(LossFunction, obj->toLuaString());
+}
+//BIND_END
+
 /////////////////////////////////////////////////////
 //                       MSE                       //
 /////////////////////////////////////////////////////

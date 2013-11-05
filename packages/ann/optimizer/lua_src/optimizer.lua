@@ -4,10 +4,10 @@ local MAX_UPDATES_WITHOUT_PRUNE=100
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 
-local function ann_optimizer_regularizations_weight_decay(oldw, cwd, w)
+local function ann_optimizer_regularizations_weight_decay(destw, cwd, w)
   -- sum current weights by applying the complementary of weight decay term. We
-  -- derive w, and left the result on oldw
-  oldw:axpy(cwd, w)  
+  -- derive w, and left the result on destw
+  destw:axpy(cwd, w)  
 end
 
 ------------------------------------------------------------------------------
@@ -16,7 +16,6 @@ get_table_from_dotted_string("ann.optimizer.regularizations", true)
 
 function ann.optimizer.regularizations.L1_norm(destw, value, w)
   if value > 0.0 then
-    -- sum current weights by applying the complementary of weight decay term
     destw:map(w,
 	      function(x, y)
 		-- We derive over y, and left the result on x. So, if y=0.0 we
@@ -283,7 +282,6 @@ function sgd_methods:execute(eval, cnn_table)
     --
     if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
       cnn:prune_subnormal_and_check_normal()
-      collectgarbage("collect")
     end
   end
   -- count one more update iteration
@@ -318,7 +316,8 @@ end
 local rprop_methods, rprop_class_metatable = class("ann.optimizer.rprop",
 						   ann.optimizer)
 
-function rprop_class_metatable:__call(g_options, l_options, count)
+function rprop_class_metatable:__call(g_options, l_options, count,
+				      steps, old_sign)
   -- the base optimizer, with the supported learning parameters
   local obj = ann.optimizer({
 			      "learning_rate",
@@ -333,6 +332,8 @@ function rprop_class_metatable:__call(g_options, l_options, count)
 			    g_options,
 			    l_options,
 			    count)
+  obj.steps    = steps or {}
+  obj.old_sign = old_sign or {}
   obj = class_instance(obj, self)
   -- standard regularization and constraints
   obj:add_regularization("L1_norm")
@@ -353,8 +354,6 @@ function rprop_methods:execute(eval, cnn_table)
   local max_step      = self:get_option("max_step")
   local min_step      = self:get_option("min_step")
   local niter         = self:get_option("niter")
-  self.steps          = self.steps or {}
-  self.old_sign       = self.old_sign or {}
   local steps         = self.steps
   local old_sign      = self.old_sign
   for i=1,niter do
@@ -380,7 +379,6 @@ function rprop_methods:execute(eval, cnn_table)
       ann_optimizer_regularizations_weight_decay(oldw, cwd, w)
       -- apply reprop learning rule
       if old_sign[cname] then
-	
 	-- FIXME: the map function is not CUDA friendly
 	steps[cname]:map(old_sign[cname], sign,
 			 function(x,y,z)
@@ -389,7 +387,7 @@ function rprop_methods:execute(eval, cnn_table)
 			   else
 			     return x * eta_plus
 			   end
-			 end)
+			 end):clamp(min_step, max_step)
       end
       oldw:axpy(-1.0, sign:cmul(steps[cname]))
       -- keep the sign for the next iteration
@@ -428,13 +426,27 @@ function rprop_methods:clone()
   return obj
 end
 
-function rprop_methods:to_lua_string()
+function rprop_methods:to_lua_string(format)
   local str_t = { "ann.optimizer.rprop(",
 		  table.tostring(self.global_options),
 		  ",",
 		  table.tostring(self.layerwise_options),
 		  ",",
 		  tostring(self.count),
+		  ",",
+		  "{",
+		  iterator(pairs(self.steps)):
+		  map(function(name,m)
+			return string.format("[%q]",name),m:to_lua_string(format)
+		      end):
+		  concat("=",","),
+		  "}",
+		  ",",
+		  iterator(pairs(self.old_sign)):
+		  map(function(name,m)
+			return string.format("[%q]",name),m:to_lua_string(format)
+		      end):
+		  concat("=",","),
 		  ")" }
   return table.concat(str_t, "")
 end
