@@ -45,7 +45,7 @@ if util.is_cuda_available() then thenet:set_use_cuda(true) end
 trainer = trainable.supervised_trainer(thenet,
 				       ann.loss.multi_class_cross_entropy(10),
 				       bunch_size,
-				       ann.optimizer.rpop())
+				       ann.optimizer.rprop())
 trainer:build()
 trainer:randomize_weights{
   random      = random(52324),
@@ -79,7 +79,7 @@ print("# Epoch Training  Validation")
 stopping_criterion = trainable.stopping_criteria.make_max_epochs_wo_imp_relative(2)
 result = trainer:train_holdout_validation{ training_table     = training_data,
 					   validation_table   = validation_data,
-					   min_epochs         = 4,
+					   min_epochs         = 20,
 					   max_epochs         = 1000,
 					   stopping_criterion = stopping_criterion,
 					   update_function    =

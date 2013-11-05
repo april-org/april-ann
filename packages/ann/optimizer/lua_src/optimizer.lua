@@ -14,7 +14,7 @@ end
 
 get_table_from_dotted_string("ann.optimizer.regularizations", true)
 
-function ann.optimizer.regularizations.L1_norm(oldw, value, w)
+function ann.optimizer.regularizations.L1_norm(destw, value, w)
   if value > 0.0 then
     -- sum current weights by applying the complementary of weight decay term
     destw:map(w,
@@ -382,7 +382,7 @@ function rprop_methods:execute(eval, cnn_table)
       if old_sign[cname] then
 	
 	-- FIXME: the map function is not CUDA friendly
-	steps[cname]:map(old_sign, sign,
+	steps[cname]:map(old_sign[cname], sign,
 			 function(x,y,z)
 			   if y < z or y > z then
 			     return x * eta_minus
@@ -435,12 +435,6 @@ function rprop_methods:to_lua_string()
 		  table.tostring(self.layerwise_options),
 		  ",",
 		  tostring(self.count),
-		  ","
-		  table.tostring(table.map(self.steps or {},
-					   function(m) return m:clone() end))
-		  ","
-		  table.tostring(table.map(self.old_sign or {},
-					   function(m) return m:clone() end))
 		  ")" }
   return table.concat(str_t, "")
 end
