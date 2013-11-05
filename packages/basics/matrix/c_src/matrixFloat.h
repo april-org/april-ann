@@ -114,6 +114,9 @@ void Matrix<float>::abs();
 template <>
 void Matrix<float>::complement();
 
+template <>
+void Matrix<float>::sign();
+
 template<>
 Matrix<float> *Matrix<float>::cmul(const Matrix<float> *other);
 

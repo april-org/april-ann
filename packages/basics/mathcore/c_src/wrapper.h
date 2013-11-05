@@ -470,6 +470,12 @@ void doComplement(unsigned int N,
 		  unsigned int shift,
 		  bool use_gpu);
 
+void doSign(unsigned int N,
+	    FloatGPUMirroredMemoryBlock *v,
+	    unsigned int stride,
+	    unsigned int shift,
+	    bool use_gpu);
+
 void doSin(unsigned int N,
 	   FloatGPUMirroredMemoryBlock *v,
 	   unsigned int stride,

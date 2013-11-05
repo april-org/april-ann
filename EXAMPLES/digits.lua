@@ -39,13 +39,22 @@ val_output   = dataset.matrix(m2,
 				circular    = {true}
 			      })
 
-bunch_size = 64
+bunch_size = 256
 thenet = ann.mlp.all_all.generate("256 inputs 128 tanh 10 log_softmax")
 if util.is_cuda_available() then thenet:set_use_cuda(true) end
 trainer = trainable.supervised_trainer(thenet,
-				       ann.loss.multi_class_cross_entropy(10),
+				       ann.loss.multi_class_cross_entropy(),
 				       bunch_size)
 trainer:build()
+--
+trainer:set_option("learning_rate", 0.01)
+trainer:set_option("momentum", 0.01)
+trainer:set_option("weight_decay", 1e-04)
+trainer:set_option("L1_norm", 1e-05)
+-- we avoid weight_decay in bias
+trainer:set_layerwise_option("b.", "weight_decay", 0)
+trainer:set_layerwise_option("b.", "L1_norm", 0)
+
 trainer:randomize_weights{
   random      = random(52324),
   use_fanin   = true,
@@ -53,11 +62,6 @@ trainer:randomize_weights{
   inf         = -1,
   sup         =  1,
 }
-trainer:set_option("learning_rate", 0.01)
-trainer:set_option("momentum",      0.01)
-trainer:set_option("weight_decay",  1e-05)
--- bias has weight_decay of ZERO
-trainer:set_layerwise_option("b.", "weight_decay", 0)
 
 trainer:save("jarl.net", "binary")
 
@@ -78,7 +82,7 @@ print("# Epoch Training  Validation")
 stopping_criterion = trainable.stopping_criteria.make_max_epochs_wo_imp_relative(2)
 result = trainer:train_holdout_validation{ training_table     = training_data,
 					   validation_table   = validation_data,
-					   min_epochs         = 4,
+					   min_epochs         = 100,
 					   max_epochs         = 1000,
 					   stopping_criterion = stopping_criterion,
 					   update_function    =
@@ -88,6 +92,7 @@ result = trainer:train_holdout_validation{ training_table     = training_data,
 								t.validation_error,
 								t.best_epoch,
 								t.best_val_error) end }
+result.best:save("best.net", "ascii")
 clock:stop()
 cpu,wall   = clock:read()
 num_epochs = result.last_epoch

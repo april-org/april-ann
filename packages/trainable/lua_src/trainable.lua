@@ -313,11 +313,11 @@ april_set_doc("trainable.supervised_trainer.save", {
 		    "[optional]. By default is binary." },
 		}, })
 
-function trainable_supervised_trainer_methods:save(filename, binary)
+function trainable_supervised_trainer_methods:save(filename, format)
   assert(#self.components_order > 0, "The component is not built")
-  local binary = binary or "binary"
+  local format = format or "binary"
   local f = io.open(filename,"w") or error("Unable to open " .. filename)
-  f:write("return { model=".. self.ann_component:to_lua_string() .. ",\n")
+  f:write("return { model=".. self.ann_component:to_lua_string(format) .. ",\n")
   f:write("connections={")
   for _,wname in ipairs(self.weights_order) do
     local cobj = self.weights_table[wname]
@@ -325,18 +325,16 @@ function trainable_supervised_trainer_methods:save(filename, binary)
     f:write("\n[\"".. wname .. "\"] = {")
     f:write("\ninput = " .. cobj:get_input_size() .. ",")
     f:write("\noutput = " .. cobj:get_output_size() .. ",")
-    f:write("\nw = " .. w:to_lua_string(binary) .. ",")
-    f:write("\noldw = " .. oldw:to_lua_string(binary) .. ",")
+    f:write("\nw = " .. w:to_lua_string(format) .. ",")
+    f:write("\noldw = " .. oldw:to_lua_string(format) .. ",")
     f:write("\n},")
   end
   f:write("\n},\n")
   if self.loss_function then
-    local id = get_object_id(self.loss_function)
-    local sz = self.ann_component:get_output_size()
-    if id and sz then f:write("loss=" .. id .. "(".. sz .. "),\n") end
+    f:write("loss=" .. self.loss_function:to_lua_string(format) .. ",\n")
   end
   if self.optimizer then
-    f:write("optimizer=" .. self.optimizer:to_lua_string() .. ",\n")
+    f:write("optimizer=" .. self.optimizer:to_lua_string(format) .. ",\n")
   end
   if self.bunch_size then f:write("bunch_size="..self.bunch_size..",\n") end
   f:write("}\n")
