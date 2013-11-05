@@ -17,6 +17,8 @@ get_table_from_dotted_string("ann.optimizer.regularizations", true)
 function ann.optimizer.regularizations.L1_norm(oldw, value, w)
   if value > 0.0 then
     -- sum current weights by applying the complementary of weight decay term
+    
+    -- FIXME: the map function is not CUDA friendly
     oldw:map(w,
 	     function(x, y)
 	       -- We derive over y, and left the result on x. So, if y=0.0 we
@@ -277,6 +279,7 @@ function sgd_methods:execute(eval, cnn_table)
     --
     if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
       cnn:prune_subnormal_and_check_normal()
+      collectgarbage("collect")
     end
   end
   -- count one more update iteration
@@ -300,6 +303,140 @@ function sgd_methods:to_lua_string()
 		  table.tostring(self.layerwise_options),
 		  ",",
 		  tostring(self.count),
+		  ")" }
+  return table.concat(str_t, "")
+end
+
+-----------------------------------
+--------- RESILIENT PROP ----------
+-----------------------------------
+
+local rprop_methods, rprop_class_metatable = class("ann.optimizer.rprop",
+						   ann.optimizer)
+
+function rprop_class_metatable:__call(g_options, l_options, count)
+  -- the base optimizer, with the supported learning parameters
+  local obj = ann.optimizer({
+			      "learning_rate",
+			      "eta_plus",
+			      "eta_minus",
+			      "max_step",
+			      "min_step",
+			      "momentum",
+			      "weight_decay",
+			      "niter",
+			    },
+			    g_options,
+			    l_options,
+			    count)
+  obj = class_instance(obj, self)
+  -- standard regularization and constraints
+  obj:add_regularization("L1_norm")
+  obj:add_constraint("max_norm_penalty")
+  obj:set_option("learning_rate", 0.1)
+  obj:set_option("eta_plus",      1.2)
+  obj:set_option("eta_minus",     0.5)
+  obj:set_option("max_step",      50)
+  obj:set_option("min_step",      1e-05)
+  obj:set_option("niter",         1)
+  return obj
+end
+
+function rprop_methods:execute(eval, cnn_table)
+  local learning_rate = self:get_option("learning_rate")
+  local eta_plus      = self:get_option("eta_plus")
+  local eta_minus     = self:get_option("eta_minus")
+  local max_step      = self:get_option("max_step")
+  local min_step      = self:get_option("min_step")
+  local niter         = self:get_option("niter")
+  self.steps          = self.steps or {}
+  self.old_sign       = self.old_sign or {}
+  local steps         = self.steps
+  local old_sign      = self.old_sign
+  for i=1,niter do
+    local arg = table.pack( eval() )
+    local gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+    for cname,cnn in pairs(cnn_table) do
+      local w,oldw     = cnn:matrix()
+      steps[cname]     = steps[cname] or matrix.col_major(table.unpack(w:dim())):fill(learning_rate)
+      local sign       = gradients[cname]:clone():sign()
+      local mt         = self:get_option_of(cname, "momentum")     or 0.0
+      local wd         = self:get_option_of(cname, "weight_decay") or 0.0
+      local cwd        = 1.0 - wd
+      --
+      if wd > 0.0 and w:dim(2) == 1 then
+	fprintf(io.stderr,
+		"# WARNING!!! Possible weight_decay > 0 in bias connection: %s\n",
+		cname)
+      end
+      --
+      ann_optimizer_apply_momentum(oldw, mt, w)
+      -- the weight decay SUMS the weight value. Other regularization is better to
+      -- be after the back-propagation learning rule
+      ann_optimizer_regularizations_weight_decay(oldw, cwd, w)
+      -- apply reprop learning rule
+      if old_sign[cname] then
+	
+	-- FIXME: the map function is not CUDA friendly
+	steps[cname]:map(old_sign, sign,
+			 function(x,y,z)
+			   if y < z or y > z then
+			     return x * eta_minus
+			   else
+			     return x * eta_plus
+			   end
+			 end)
+      end
+      oldw:axpy(-1.0, sign:cmul(steps[cname]))
+      -- keep the sign for the next iteration
+      old_sign[cname] = sign
+      -- regularizations
+      ann_optimizer_apply_regularizations(self, cname, oldw, w, ann_component)
+      -- constraints
+      ann_optimizer_apply_constraints(self, cname, oldw, w, ann_component)
+      --
+      -- swap current and old weight matrices
+      cnn:swap()
+      --
+      if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
+	cnn:prune_subnormal_and_check_normal()
+	collectgarbage("collect")
+      end
+    end
+  end
+  -- count one more update iteration
+  self:count_one()
+  -- returns the same as returned by eval()
+  return table.unpack(arg)
+end
+
+function rprop_methods:clone()
+  local obj = ann.optimizer.rprop()
+  obj.count             = self.count
+  obj.layerwise_options = table.deep_copy(self.layerwise_options)
+  obj.global_options    = table.deep_copy(self.global_options)
+  if self.steps then
+    obj.steps = table.map(self.steps, function(m) return m:clone() end)
+  end
+  if self.old_sign then
+    obj.old_sign = table.map(self.old_sign, function(m) return m:clone() end)
+  end
+  return obj
+end
+
+function rprop_methods:to_lua_string()
+  local str_t = { "ann.optimizer.rprop(",
+		  table.tostring(self.global_options),
+		  ",",
+		  table.tostring(self.layerwise_options),
+		  ",",
+		  tostring(self.count),
+		  ","
+		  table.tostring(table.map(self.steps or {},
+					   function(m) return m:clone() end))
+		  ","
+		  table.tostring(table.map(self.old_sign or {},
+					   function(m) return m:clone() end))
 		  ")" }
   return table.concat(str_t, "")
 end
@@ -367,29 +504,29 @@ end
 --   local ratio = self:get_option("ratio") or 100
 --   local verbose = self:get_option("verbose")
 --   local red = 1
-  
+
 --   local i = 0
 --   local ls_failed = false
 --   local fx = {}
-  
+
 --   -- three points for the interpolation/extrapolation
 --   local z1,z2,z3=0,0,0
 --   local d1,d2,d3=0,0,0
 --   local f1,f2,f3=0,0,0
-  
+
 --   local df1 = self.df1 or clone_matrix(cnn_table)
 --   local df2 = self.df2 or clone_matrix(cnn_table)
 --   local df3 = self.df3 or clone_matrix(cnn_table)
 --   local tdf
-  
+
 --   -- search direction
 --   local s = clone_matrix(cnn_table)
-  
+
 --   -- temporal storage for the connections
 --   local x0 = clone(cnn_table)
 --   local f0 = 0
 --   local df0 = self.df0 or clone_matrix(cnn_table)
-  
+
 --   -- evaluate at initial point
 --   local arg = table.pack( eval() )
 --   local gradients,bunch_size,tr_loss_matrix = table.unpack(arg)
@@ -397,13 +534,13 @@ end
 --   table.insert(fx, tr_loss_matrix:sum()/bunch_size)
 --   copy(df1, gradients)
 --   i=i+1
-  
+
 --   -- initial search direction
 --   copy(df1, s)
 --   table_apply(s, function(name,m) m:scal(-1) end)
-  
+
 --   d1 = -s:dot
-  
+
 
 --   for cname,cnn in pairs(cnn_table) do
 --     local w,oldw     = cnn:matrix()
@@ -430,6 +567,7 @@ end
 --     --
 --     if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
 --       cnn:prune_subnormal_and_check_normal()
+--       collectgarbage("collect")
 --     end
 --   end
 --   -- count one more update iteration

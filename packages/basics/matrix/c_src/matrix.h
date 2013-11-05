@@ -561,6 +561,7 @@ public:
   void acos();
   void acosh();
   void abs();
+  void sign();
   Matrix<T> *cmul(const Matrix<T> *other);
   void adjustRange(T rmin, T rmax);
   
