@@ -112,6 +112,9 @@ template <>
 void Matrix<float>::abs();
 
 template <>
+void Matrix<float>::complement();
+
+template <>
 void Matrix<float>::sign();
 
 template<>

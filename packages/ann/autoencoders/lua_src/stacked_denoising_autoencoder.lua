@@ -914,7 +914,7 @@ function ann.autoencoders.iterative_sampling(t)
       verbose    = { mandatory = false, type_match = "boolean", default=false },
       log        = { mandatory = false, type_match = "boolean", default=false },
       input      = { mandatory = true,  isa_match  = matrix  },
-      loss       = { mandatory = true,  isa_match  = ann.loss.__base__ },
+      loss       = { mandatory = true,  isa_match  = ann.loss },
     }, t)
   assert(params.model:get_input_size() == params.model:get_output_size(),
 	 "Input and output sizes must be equal!!! (it is an auto-encoder)")
@@ -1004,7 +1004,7 @@ function ann.autoencoders.sgd_sampling(t)
       clamp      = { mandatory = false, type_match = "function",
 		     default = function(v) return v end, },
       log        = { mandatory = false, type_match = "boolean", default=false },
-      loss       = { mandatory = true,  isa_match  = ann.loss.__base__ },
+      loss       = { mandatory = true,  isa_match  = ann.loss },
     }, t)
   assert(params.model:get_input_size() == params.model:get_output_size(),
 	 "Input and output sizes must be equal!!! (it is an auto-encoder)")

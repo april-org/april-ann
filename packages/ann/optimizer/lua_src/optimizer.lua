@@ -17,19 +17,19 @@ get_table_from_dotted_string("ann.optimizer.regularizations", true)
 function ann.optimizer.regularizations.L1_norm(oldw, value, w)
   if value > 0.0 then
     -- sum current weights by applying the complementary of weight decay term
-    
-    -- FIXME: the map function is not CUDA friendly
-    oldw:map(w,
-	     function(x, y)
-	       -- We derive over y, and left the result on x. So, if y=0.0 we
-	       -- return the weight (which only has the momentum applied to it
-	       -- because if y=0.0, then the gradient is zero and the weight
-	       -- decay is also zero)
-	       if     y > 0 then return math.max(0.0, x-value)
-	       elseif y < 0 then return math.min(0.0, x+value)
-	       else return x
-	       end
-	     end)
+    destw:map(w,
+	      function(x, y)
+		-- We derive over y, and left the result on x. So, if y=0.0 we
+		-- test if |x|>value, returning the weight (which only has the
+		-- momentum applied to it because if y=0.0, then the gradient is
+		-- zero and the weight decay is also zero), if |x|<value, we
+		-- force the weight to be 0.0.
+		if     y > 0 then return math.max(0.0, x-value)
+		elseif y < 0 then return math.min(0.0, x+value)
+		elseif math.abs(x) > value then return x
+		else return 0.0
+		end
+	      end)
   end
 end
 
@@ -37,18 +37,19 @@ end
 
 get_table_from_dotted_string("ann.optimizer.constraints", true)
 
-function ann.optimizer.constraints.max_norm_penalty(oldw, mp, w)
+-- The penalty is computed on w, but applied to oldw and w
+function ann.optimizer.constraints.max_norm_penalty(w, oldw, mp)
   if mp > 0.0 then
-    local old_sw     = oldw:sliding_window()
-    local old_window = nil
     local sw         = w:sliding_window()
     local window     = nil
+    local old_sw     = oldw:sliding_window()
+    local old_window = nil
     while not sw:is_end() do
-      old_window  = old_sw:get_matrix(old_window)
-      local norm2 = old_window:norm2()
+      window  = sw:get_matrix(window)
+      local norm2 = window:norm2()
       if norm2 > mp then
 	local scal_factor = mp / norm2
-	window = sw:get_matrix(window)
+	old_window = old_sw:get_matrix(old_window)
 	old_window:scal(scal_factor)
 	window:scal(scal_factor)
       end
@@ -142,7 +143,7 @@ local function ann_optimizer_apply_constraints(opt,
 		"# WARNING!!! Possible " .. hypname .. " > 0 in bias connection: %s\n",
 		wname)
       end
-      func(oldw, v, w, ann_component)
+      func(w, oldw, v, ann_component)
     end
   end
 end
@@ -246,6 +247,9 @@ end
 function sgd_methods:execute(eval, cnn_table)
   local arg = table.pack( eval() )
   local gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+  -- the gradient computation could fail returning nil, it is important to take
+  -- this into account
+  if not gradients then return nil end
   for cname,cnn in pairs(cnn_table) do
     local w,oldw     = cnn:matrix()
     local grad       = gradients[cname]
@@ -504,29 +508,29 @@ end
 --   local ratio = self:get_option("ratio") or 100
 --   local verbose = self:get_option("verbose")
 --   local red = 1
-
+  
 --   local i = 0
 --   local ls_failed = false
 --   local fx = {}
-
+  
 --   -- three points for the interpolation/extrapolation
 --   local z1,z2,z3=0,0,0
 --   local d1,d2,d3=0,0,0
 --   local f1,f2,f3=0,0,0
-
+  
 --   local df1 = self.df1 or clone_matrix(cnn_table)
 --   local df2 = self.df2 or clone_matrix(cnn_table)
 --   local df3 = self.df3 or clone_matrix(cnn_table)
 --   local tdf
-
+  
 --   -- search direction
 --   local s = clone_matrix(cnn_table)
-
+  
 --   -- temporal storage for the connections
 --   local x0 = clone(cnn_table)
 --   local f0 = 0
 --   local df0 = self.df0 or clone_matrix(cnn_table)
-
+  
 --   -- evaluate at initial point
 --   local arg = table.pack( eval() )
 --   local gradients,bunch_size,tr_loss_matrix = table.unpack(arg)
@@ -534,13 +538,13 @@ end
 --   table.insert(fx, tr_loss_matrix:sum()/bunch_size)
 --   copy(df1, gradients)
 --   i=i+1
-
+  
 --   -- initial search direction
 --   copy(df1, s)
 --   table_apply(s, function(name,m) m:scal(-1) end)
-
+  
 --   d1 = -s:dot
-
+  
 
 --   for cname,cnn in pairs(cnn_table) do
 --     local w,oldw     = cnn:matrix()

@@ -92,6 +92,11 @@ result = trainer:train_holdout_validation{ training_table     = training_data,
 clock:stop()
 cpu,wall   = clock:read()
 num_epochs = result.last_epoch
+local val_error,val_variance=result.best:validate_dataset{
+  input_dataset  = val_input,
+  output_dataset = val_output,
+  loss           = ann.loss.zero_one(10)
+}
 printf("# Wall total time: %.3f    per epoch: %.3f\n", wall, wall/num_epochs)
 printf("# CPU  total time: %.3f    per epoch: %.3f\n", cpu, cpu/num_epochs)
-printf("# Validation error: %f\n", result.best_val_error)
+printf("# Validation error: %f  +-  %f\n", val_error, val_variance)

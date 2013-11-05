@@ -1056,7 +1056,12 @@ function formiga.__luacode__ (t)
       f_lua = io.open(lua_file_path)
     end
     table.insert(lua_data, f_lua:read("*a"))
-    f_lua:close()
+    local ok,msg= f_lua:close()
+    if formiga.compiler.global_flags.use_lstrip == "yes" and not ok then
+      print("Error in command: " .. command)
+      os.execute("rm -Rf " .. build_dir)
+      os.exit(1)
+    end
     printverbose(2," [luac  ] "..lua_file)
     io.stdout:flush()
   end
@@ -1095,7 +1100,7 @@ function formiga.__luacode__ (t)
 			 }, " ")
   local ok,what,error_resul = os.execute(command)
   if not ok then
-    print("Error en el comando: " .. command)
+    print("Error in command: " .. command)
     os.exit(1)
   end
   os.execute("rm "..thefile..".c")
@@ -1477,42 +1482,44 @@ function formiga.__link_main_program__ (t)
   io.stderr:flush() -- para que las cosas salgan en un orden apropiado
   formiga.os.execute(command)
 
-  -- We generate a shared library which could be loaded in any Lua interperter
-  local shared_lib_dest_dir = formiga.os.compose_dir(formiga.global_properties.build_dir,
-						     "lib")
-  os.execute("mkdir -p " .. shared_lib_dest_dir)
-  local command = table.concat({ formiga.compiler.CPPcompiler,
-				 formiga.compiler.wall,
-				 formiga.compiler.destination,
-				 string.format("%s/%s.so",
-					       shared_lib_dest_dir,
-					       module_name,
-					       ".so"),
-				 formiga.os.compose_dir(formiga.global_properties.build_dir,
-							"luapkgMain.cc"),
-				 --formiga.compiler.include_dir,
-				 formiga.get_all_objects(),
-				 formiga.os.compose_dir(formiga.global_properties.build_dir,"binding","c_src","*.o"),
-                                 package_library_paths_str,
-                                 package_link_libraries_str,
-				 table.concat(formiga.compiler.extra_libs,
-					      " "),
-				 table.concat(formiga.compiler.shared_extra_libs,
-					      " "),
-				 table.concat(formiga.compiler.extra_flags,
-					      " "),
-				 table.concat(formiga.version_flags,
-					      " "),
-				 pkgconfig_libs_list,
-				 ' -lm '.. formiga.compiler.include_dir ..formiga.os.compose_dir(formiga.os.cwd,"lua","include")..' '.. formiga.compiler.include_dir ..
-				   formiga.lua_dot_c_path},
-			       " ")
-  --
-  printverbose(2,'['..command..']')
-  io.stdout:flush() -- para que las cosas salgan en un orden apropiado
-  io.stderr:flush() -- para que las cosas salgan en un orden apropiado
-  formiga.os.execute(command)
-
+  if not formiga.compiler.global_flags.no_shared then
+     -- We generate a shared library which could be loaded in any Lua interperter
+     local shared_lib_dest_dir = formiga.os.compose_dir(formiga.global_properties.build_dir,
+							"lib")
+     os.execute("mkdir -p " .. shared_lib_dest_dir)
+     local command = table.concat({ formiga.compiler.CPPcompiler,
+				    formiga.compiler.wall,
+				    formiga.compiler.destination,
+				    string.format("%s/%s.so",
+						  shared_lib_dest_dir,
+						  module_name,
+						  ".so"),
+				    formiga.os.compose_dir(formiga.global_properties.build_dir,
+							   "luapkgMain.cc"),
+				    --formiga.compiler.include_dir,
+				    formiga.get_all_objects(),
+				    formiga.os.compose_dir(formiga.global_properties.build_dir,"binding","c_src","*.o"),
+				    package_library_paths_str,
+				    package_link_libraries_str,
+				    table.concat(formiga.compiler.extra_libs,
+						 " "),
+				    table.concat(formiga.compiler.shared_extra_libs,
+						 " "),
+				    table.concat(formiga.compiler.extra_flags,
+						 " "),
+				    table.concat(formiga.version_flags,
+						 " "),
+				    pkgconfig_libs_list,
+				    ' -lm '.. formiga.compiler.include_dir ..formiga.os.compose_dir(formiga.os.cwd,"lua","include")..' '.. formiga.compiler.include_dir ..
+				    formiga.lua_dot_c_path},
+				  " ")
+     --
+     printverbose(2,'['..command..']')
+     io.stdout:flush() -- para que las cosas salgan en un orden apropiado
+     io.stderr:flush() -- para que las cosas salgan en un orden apropiado
+     formiga.os.execute(command)
+     
+  end
 end
 
 function link_main_program (t)
@@ -2126,7 +2133,7 @@ function generate_package_register_file(package,package_register_functions)
 			       " ")
   local ok,what,resul = os.execute(command)
   if not ok then
-    print("Error en el comando: " .. command)
+    print("Error in command: " .. command)
     os.exit(1)
   end
 end

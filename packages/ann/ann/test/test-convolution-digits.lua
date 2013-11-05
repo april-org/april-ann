@@ -97,7 +97,7 @@ push( ann.components.hyperplane{ input=sz1_4*sz2_4*nconv2, output=hidden,
 				 dot_product_name="w3",
 				 bias_weights="b3",
                                  dot_product_weights="w3" } ):
-push( ann.components.actf.tanh{ name="actf-3" } ):
+push( ann.components.actf.relu{ name="actf-3" } ):
 push( ann.components.hyperplane{ input=hidden, output= 10,
 				 name="hyp-2",
 				 bias_name="b4",

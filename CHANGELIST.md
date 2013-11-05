@@ -4,6 +4,22 @@ ChangeList
 Master branch release
 ---------------------
 
+### Unstable changes
+
+- Solved problems with CUDA compilation, but it stills not working because
+  an error during cuMemAlloc.
+  
+### Stable changes
+
+- Moved `ann.loss.__base__` to `ann.loss`.
+- Moved `ann.components.actf.__base__` to `ann.components.actf`.
+- Added `batch_fmeasure_micro_avg` and `batch_fmeasure_macro_avg` for
+  multi-class FMeasure computation.
+- Renamed loss function `local_fmeasure` as `batch_fmeasure`, and improved to
+  work with multi-class models.
+- Solved bug when reading using `matrix.fromTabFilename`. The loader failed
+  when the file had empty lines.
+- Added `ann.loss.zero_one` loss function.
 - Solved bug at `Matrix<T>::select(...)` C++ method. The matrix offset wasn't be
   added to the resulting matrix offset.
 - Solved bug at `SlidingWindow::setAtWindow(...)` C++ method. The matrix offset

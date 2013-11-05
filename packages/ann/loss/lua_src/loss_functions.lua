@@ -1,4 +1,4 @@
----------------------------
+ ---------------------------
 -- BINDING DOCUMENTATION --
 ---------------------------
 
@@ -10,7 +10,7 @@ april_set_doc("ann.loss",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.__base__",
+april_set_doc("ann.loss",
 	      {
 		class="class",
 		summary="Abstract loss function class, implements methods",
@@ -28,7 +28,7 @@ april_set_doc("ann.loss.__base__",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.__base__.accum_loss",
+april_set_doc("ann.loss.accum_loss",
 	      {
 		class="method",
 		summary="Receives a loss matrix and accumulates it",
@@ -42,7 +42,7 @@ april_set_doc("ann.loss.__base__.accum_loss",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.__base__.compute_loss",
+april_set_doc("ann.loss.compute_loss",
 	      {
 		class="method",
 		summary="Computes the loss between two tokens (input and target), but doesn't accumulate it",
@@ -62,7 +62,7 @@ april_set_doc("ann.loss.__base__.compute_loss",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.__base__.gradient",
+april_set_doc("ann.loss.gradient",
 	      {
 		class="method",
 		summary="Computes the gradient of the loss between two tokens",
@@ -84,7 +84,7 @@ april_set_doc("ann.loss.__base__.gradient",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.__base__.get_accum_loss",
+april_set_doc("ann.loss.get_accum_loss",
 	      {
 		class="method",
 		summary="Returns the mean loss from the last reset call",
@@ -97,7 +97,7 @@ april_set_doc("ann.loss.__base__.get_accum_loss",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.__base__.reset",
+april_set_doc("ann.loss.reset",
 	      {
 		class="method",
 		summary="Sets to zero the accumulated loss",
@@ -105,7 +105,7 @@ april_set_doc("ann.loss.__base__.reset",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.__base__.clone",
+april_set_doc("ann.loss.clone",
 	      {
 		class="method",
 		summary="Deep copy of the object",
@@ -203,19 +203,18 @@ april_set_doc("ann.loss.multi_class_cross_entropy.__call",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.local_fmeasure",
+april_set_doc("ann.loss.batch_fmeasure_micro_avg",
 	      {
 		class="class",
-		summary="The FMeasure computed to a bunch of patterns",
+		summary="The FMeasure computed from a bunch of patterns",
 		description={
 		  "This loss function computes",
-		  "FMeasure for a given bunch of patterns.",
-		  "Currently it is only implemented to work with one output",
-		  "unit models.",
+		  "FMeasure for a given bunch of patterns, and for",
+		  "multi-class models, using micro-averaging strategy.",
 		}
 	      })
 
-april_set_doc("ann.loss.local_fmeasure.__call",
+april_set_doc("ann.loss.batch_fmeasure.__call",
 	      {
 		class="method",
 		summary="Constructor",
@@ -230,6 +229,32 @@ april_set_doc("ann.loss.local_fmeasure.__call",
 		    "[optional], by default is false",
 		  },
 		},
-		outputs={ "An instance of ann.loss.local_fmeasure" },
+		outputs={ "An instance of ann.loss.batch_fmeasure" },
+	      })
+
+-------------------------------------------------------------------
+
+april_set_doc("ann.loss.zero_one",
+	      {
+		class="class",
+		summary="The 0-1 loss function",
+		description={
+		  "The 0-1 loss function. This loss function is",
+		  "derivable and therefore the gradient couldn't be computed.",
+		},
+	      })
+
+april_set_doc("ann.loss.zero_one.__call",
+	      {
+		class="method",
+		summary="Constructor",
+		params={
+		  "The expected pattern size",
+		  {
+		    "Threshold to consider activated the output neuron",
+		    "when size=1 [optional]. By default is 0.5.",
+		  },
+		},
+		outputs={ "An instance of ann.loss.zero_one" },
 	      })
 

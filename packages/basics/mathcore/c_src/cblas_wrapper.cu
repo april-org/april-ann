@@ -63,6 +63,15 @@ CWISE_FUNC_KERNEL(fsignf);
 
 #undef CWISE_FUNC_KERNEL
 
+template<typename T>
+__global__ void complementFuncKernel(T *v, unsigned int N, unsigned int stride) {
+  unsigned int x_idx = blockIdx.x * blockDim.x + threadIdx.x;
+  if (x_idx < N) {
+    T *aux = v + x_idx*stride;
+    *aux = (1.0f - *aux);
+  }
+}
+
 #define CWISE_FUNC_KERNEL(func) template<typename T>		\
   __global__ void						\
   func##FuncKernel(T *v, unsigned int N, unsigned int stride,	\
@@ -531,6 +540,31 @@ void doAbs(unsigned int N,
 #endif
 }
 
+void doComplement(unsigned int N,
+		  FloatGPUMirroredMemoryBlock *v,
+		  unsigned int stride,
+		  unsigned int shift,
+		  bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
+#ifdef USE_CUDA
+  if (use_gpu) {
+    float *v_ptr = v->getGPUForReadAndWrite() + shift;
+    dim3 block, grid;
+    computeBlockAndGridSizesForAnArray(N, block, grid);
+    complementFuncKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (v_ptr, N, stride);
+  }
+  else {
+#endif
+    float *v_mem = v->getPPALForReadAndWrite() + shift;
+    for (unsigned int i=0; i<N; ++i, v_mem += stride) *v_mem = (1.0f - *v_mem);
+#ifdef USE_CUDA
+  }
+#endif
+}
+
 void doSign(unsigned int N,
 	    FloatGPUMirroredMemoryBlock *v,
 	    unsigned int stride,
@@ -555,6 +589,7 @@ void doSign(unsigned int N,
   }
 #endif
 }
+
 
 void doPow(unsigned int N,
 	   FloatGPUMirroredMemoryBlock *v,

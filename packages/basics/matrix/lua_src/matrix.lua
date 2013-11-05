@@ -977,6 +977,15 @@ april_set_doc("matrix.abs", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
+april_set_doc("matrix.complement", {
+		class = "method",
+		summary = "Component wise complement operation IN-PLACE: Y = 1 - Y",
+		params = {
+		},
+		outputs = {
+		  "The caller matrix, Y (itself)",
+		}, })
+
 april_set_doc("matrix.sqrt", {
 		class = "method",
 		summary = "Component wise sqrt operation IN-PLACE: Y = sqrt(Y)",

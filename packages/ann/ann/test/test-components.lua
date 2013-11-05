@@ -9,7 +9,7 @@ function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
   ann.components.reset_id_counters()
   local c = component_builder_func()
   if util.is_cuda_available() then c:set_use_cuda(true) end
-  trainer = trainable.supervised_trainer(c, ann.loss[loss_name](o), b)
+  trainer = trainable.supervised_trainer(c, ann.loss[loss_name](), b)
   trainer:build()
   trainer:randomize_weights{ inf = -1, sup = 1, random = rnd }
   input  = matrix.col_major(b, i):uniformf(-1,1,rnd)
@@ -55,6 +55,23 @@ for i=2,4 do
 			push( ann.components.bias{ size=o } )
 		      end,
 		      "mse", i, o, b, "DOTPRODUCT + BIAS")
+    end
+  end
+end
+
+-----------------------------------
+-- DOT PRODUCT + BIAS + FMEASURE --
+-----------------------------------
+
+for i=2,4 do
+  for o=1,4 do
+    for b=1,4 do
+      check_component(function()
+			return ann.components.stack():
+			push( ann.components.dot_product{ input=i, output=o } ):
+			push( ann.components.bias{ size=o } )
+		      end,
+		      "batch_fmeasure_micro_avg", i, o, b, "DOTPRODUCT + BIAS")
     end
   end
 end

@@ -57,7 +57,7 @@ function trainable_supervised_trainer_class_metatable:__call(ann_component,
 							     bunch_size,
 							     optimizer)
   local optimizer = optimizer or ann.optimizer.sgd()
-  if loss_function and not isa(loss_function, ann.loss.__base__) then
+  if loss_function and not isa(loss_function, ann.loss) then
     error("The second parameter must be an instance of ann.loss")
   end
   if optimizer and not isa(optimizer, ann.optimizer) then
@@ -102,7 +102,7 @@ april_set_doc("trainable.supervised_trainer.set_loss_function", {
 		params = { "Loss function" }, })
 
 function trainable_supervised_trainer_methods:set_loss_function(loss_function)
-  assert(isa(loss_function, ann.loss.__base__, "Needs an instance of ann.loss"))
+  assert(isa(loss_function, ann.loss, "Needs an instance of ann.loss"))
   self.loss_function = loss_function
 end
 
@@ -732,6 +732,7 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
 		      local output = self.ann_component:forward(input, true)
 		      local output_mat = output:get_matrix()
 		      tr_loss_matrix = loss:compute_loss(output, target)
+		      if not tr_loss_matrix then return nil end
 		      gradient = loss:gradient(output, target)
 		      gradient = self.ann_component:backprop(gradient)
 		      --
@@ -750,7 +751,7 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
 		      self.ann_component
 		    end,
 		    self.weights_table)
-  loss:accum_loss(tr_loss_matrix)
+  if tr_loss_matrix then loss:accum_loss(tr_loss_matrix) end
   return tr_loss_matrix,gradient
 end
 
@@ -779,8 +780,11 @@ function trainable_supervised_trainer_methods:validate_step(input, target, loss)
   local loss = loss or self.loss_function
   self.ann_component:reset()
   local output   = self.ann_component:forward(input)
-  local tr_loss  = loss:accum_loss( loss:compute_loss(output, target) )
-  return tr_loss
+  local tr_loss_matrix = loss:compute_loss(output, target)
+  if tr_loss_matrix then
+    local tr_loss = loss:accum_loss(tr_loss_matrix)
+    return tr_loss
+  end
 end
 
 ------------------------------------------------------------------------
@@ -810,15 +814,18 @@ function trainable_supervised_trainer_methods:compute_gradients_step(input,
   local tr_loss,gradient
   self.ann_component:reset()
   local output = self.ann_component:forward(input, true)
-  tr_loss_matrix = loss:accum_loss( loss:compute_loss(output, target) )
-  gradient = loss:gradient(output, target)
-  gradient = self.ann_component:backprop(gradient)
-  --
-  iterator(pairs(weight_grads)):
-  apply(function(name,mat)mat:zeros()end)
-  --
-  weight_grads = self.ann_component:compute_gradients(weight_grads)
-  return weight_grads,tr_loss_matrix
+  tr_loss_matrix = loss:compute_loss(output, target)
+  if tr_loss_matrix then
+    loss:accum_loss(tr_loss_matrix)
+    gradient = loss:gradient(output, target)
+    gradient = self.ann_component:backprop(gradient)
+    --
+    iterator(pairs(weight_grads)):
+    apply(function(name,mat)mat:zeros()end)
+    --
+    weight_grads = self.ann_component:compute_gradients(weight_grads)
+    return weight_grads,tr_loss_matrix
+  end
 end
 
 ------------------------------------------------------------------------
@@ -843,15 +850,17 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
   self.ann_component:reset()
   loss:reset()
   local output   = self.ann_component:forward(input, true)
-  loss:accum_loss( loss:compute_loss(output, target) )
+  local tr_loss_matrix = loss:compute_loss(output, target)
+  if not tr_loss_matrix then return true end
+  loss:accum_loss(tr_loss_matrix)
   local tr_loss  = loss:get_accum_loss()
   local gradient = loss:gradient(output, target)
   gradient=self.ann_component:backprop(gradient)
   self.weight_grads = self.ann_component:compute_gradients(self.weight_grads)
-  local epsilond = 0.2
+  local epsilond = 0.3
   local epsilon  = 1e-03
   local ret      = true
-  local bunch_size = input:get_matrix():dim(1)
+  local bunch_size = tr_loss_matrix:dim(1)
   for wname,cnn in self:iterate_weights() do
     local w = cnn:matrix()
     -- The shared parameter has no effect in gradients check, only bunch_size
@@ -880,7 +889,7 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
       if ann_g ~= 0 or g ~= 0 then
 	local abs_err = math.abs(ann_g - g)
 	local err = abs_err/math.abs(ann_g+g)
-	if err > epsilond and abs_err > 1e-03 then
+	if err > epsilond and abs_err > 1e-02 then
 	  fprintf(io.stderr,
 		  "INCORRECT GRADIENT FOR %s[%d], found %g, expected %g "..
 		    "(error %g, abs error %g)\n",
@@ -893,7 +902,7 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
   return ret
 end
 
-------------------------------------------------------------------------
+  ------------------------------------------------------------------------
 
 april_set_doc("trainable.supervised_trainer.calculate", {
 		class = "method",
@@ -1047,7 +1056,7 @@ function trainable_supervised_trainer_methods:train_dataset(t)
       bunch_size     = { type_match = "number",
 			 mandatory = (self.bunch_size == false),
 			 default=self.bunch_size },
-      loss           = { isa_match  = ann.loss.__base__,
+      loss           = { isa_match  = ann.loss,
                          mandatory  = (self.loss_function==false),
 			 default=self.loss_function },
       optimizer      = { isa_match  = ann.optimizer,
@@ -1169,7 +1178,7 @@ function trainable_supervised_trainer_methods:grad_check_dataset(t)
       bunch_size     = { type_match = "number",
 			 mandatory = (self.bunch_size == false),
 			 default=self.bunch_size },
-      loss           = { isa_match  = ann.loss.__base__,
+      loss           = { isa_match  = ann.loss,
                          mandatory = (self.loss_function==false),
 			 default=self.loss_function },
       max_iterations = { type_match = "number",
@@ -1312,7 +1321,7 @@ function trainable_supervised_trainer_methods:validate_dataset(t)
       bunch_size     = { type_match = "number",
 			 mandatory = (self.bunch_size == false),
 			 default=self.bunch_size },
-      loss           = { isa_match  = ann.loss.__base__,
+      loss           = { isa_match  = ann.loss,
                          mandatory = (self.loss_funcion==false),
 			 default=self.loss_function },
       shuffle        = { isa_match  = random, mandatory = false, default=nil },
