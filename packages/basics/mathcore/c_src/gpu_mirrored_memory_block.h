@@ -132,16 +132,16 @@ class GPUMirroredMemoryBlock : public GPUMirroredMemoryBlockBase {
   bool getUpdatedGPU() const {
     return status & GPU_MASK;
   }
-  void unsetUpdatedPPAL() const {
-    status = status & (!PPAL_MASK);
+  void unsetUpdatedPPAL() {
+    status = status & (~PPAL_MASK);
   }
-  void unsetUpdatedGPU() const {
-    status = status & (!GPU_MASK);
+  void unsetUpdatedGPU() {
+    status = status & (~GPU_MASK);
   }
-  void setUpdatedPPAL() const {
+  void setUpdatedPPAL() {
     status = status | PPAL_MASK;
   }
-  void setUpdatedGPU() const {
+  void setUpdatedGPU() {
     status = status | GPU_MASK;
   }
   
@@ -409,7 +409,7 @@ public:
     ERROR_EXIT(128, "Execute it from a non const pointer\n");
   }
 
-  void pinnedMemoryPageLock() const {
+  void pinnedMemoryPageLock() {
     if (isConst() || isMMapped()) {
       ERROR_EXIT(128, "Impossible to set as pinned a const or mmapped memory block\n");
     }

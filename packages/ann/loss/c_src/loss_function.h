@@ -105,7 +105,7 @@ namespace ANN {
     }
     virtual MatrixFloat *computeLoss(Token *input, Token *target) {
       MatrixFloat *loss_data = computeLossBunch(input, target);
-      april_assert(loss_data->getNumDim() == 1);
+      april_assert(loss_data==0 || loss_data->getNumDim() == 1);
       return loss_data;
     }
     // To be implemented by derived classes

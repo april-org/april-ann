@@ -1,5 +1,9 @@
 gmon.out
 
+# Auxiliary include file #
+##########################
+lua5.2-deb-multiarch.h
+
 # Building dirs #
 #################
 build_*

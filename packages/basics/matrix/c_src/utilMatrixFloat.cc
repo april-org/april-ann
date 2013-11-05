@@ -303,12 +303,15 @@ MatrixFloat *readMatrixFloatFromTabFile(const char *filename,
       BufferedGZFile  f(filename, "r");
       FloatAsciiExtractor extractor;
       constString     line("");
+      float           value;
       while (f.good()) {
 	line = f.extract_u_line();
-	++nrows;
+	if (line.len() > 0) {
+	  if (ncols == 0)
+	    while(extractor(line,value)) ++ncols;
+	  ++nrows;
+	}
       }
-      float value;
-      while(extractor(line,value)) ++ncols;
     } while(false);
     BufferedGZFile f(filename, "r");
     return readMatrixFromTabStream<BufferedGZFile, float>(nrows, ncols, f,
@@ -321,12 +324,15 @@ MatrixFloat *readMatrixFloatFromTabFile(const char *filename,
       BufferedFile    f(filename, "r");
       FloatAsciiExtractor extractor;
       constString     line("");
+      float           value;
       while (f.good()) {
 	line = f.extract_u_line();
-	++nrows;
+	if (line.len() > 0) {
+	  if (ncols == 0)
+	    while(extractor(line,value)) ++ncols;
+	  ++nrows;
+	}
       }
-      float value;
-      while(extractor(line,value)) ++ncols;
     } while(false);
     BufferedFile f(filename, "r");
     return readMatrixFromTabStream<BufferedFile, float>(nrows, ncols, f,

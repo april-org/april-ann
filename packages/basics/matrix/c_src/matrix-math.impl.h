@@ -232,6 +232,11 @@ void Matrix<T>::abs() {
 }
 
 template <typename T>
+void Matrix<T>::complement() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
 void Matrix<T>::sign() {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }

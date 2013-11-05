@@ -788,6 +788,7 @@ using namespace ANN;
 //BIND_METHOD StackANNComponent pop
 {
   obj->popComponent();
+  LUABIND_RETURN(StackANNComponent, obj);
 }
 //BIND_END
 
@@ -1259,7 +1260,7 @@ using namespace ANN;
 //         ActivationFunctionANNComponent          //
 /////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME ActivationFunctionANNComponent ann.components.actf.__base__
+//BIND_LUACLASSNAME ActivationFunctionANNComponent ann.components.actf
 //BIND_CPP_CLASS    ActivationFunctionANNComponent
 //BIND_SUBCLASS_OF  ActivationFunctionANNComponent ANNComponent
 
