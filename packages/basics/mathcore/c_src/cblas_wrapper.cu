@@ -24,6 +24,8 @@
 #include "wrapper.h"
 #include "cuda_utils.h"
 
+#define fsignf(x) ((x)<0.0f) ? (-1.0f) : ( ((x)>0.0f) ? (1.0f) : (0.0f) )
+
 ///////////////////////////////////////////////////////////
 /////////////////// Kernels ///////////////////////////////
 ///////////////////////////////////////////////////////////
@@ -57,6 +59,7 @@ CWISE_FUNC_KERNEL(coshf);
 CWISE_FUNC_KERNEL(acosf);
 CWISE_FUNC_KERNEL(acoshf);
 CWISE_FUNC_KERNEL(fabsf);
+CWISE_FUNC_KERNEL(fsignf);
 
 #undef CWISE_FUNC_KERNEL
 
@@ -561,6 +564,32 @@ void doComplement(unsigned int N,
   }
 #endif
 }
+
+void doSign(unsigned int N,
+	    FloatGPUMirroredMemoryBlock *v,
+	    unsigned int stride,
+	    unsigned int shift,
+	    bool use_gpu) {
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
+#ifdef USE_CUDA
+  if (use_gpu) {
+    float *v_ptr = v->getGPUForReadAndWrite() + shift;
+    dim3 block, grid;
+    computeBlockAndGridSizesForAnArray(N, block, grid);
+    fsignfFuncKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+      (v_ptr, N, stride);
+  }
+  else {
+#endif
+    float *v_mem = v->getPPALForReadAndWrite() + shift;
+    for (unsigned int i=0; i<N; ++i, v_mem += stride) *v_mem = fsignf(*v_mem);
+#ifdef USE_CUDA
+  }
+#endif
+}
+
 
 void doPow(unsigned int N,
 	   FloatGPUMirroredMemoryBlock *v,

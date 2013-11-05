@@ -237,6 +237,11 @@ void Matrix<T>::complement() {
 }
 
 template <typename T>
+void Matrix<T>::sign() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
 Matrix<T> *Matrix<T>::cmul(const Matrix<T> *other) {
   UNUSED_VARIABLE(other);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");

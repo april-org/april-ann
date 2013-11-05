@@ -6,6 +6,7 @@ Master branch release
 
 ### Unstable changes
 
+- Added `ann.optimizer.rprop`, Resilient Prop algorithm.
 - Solved problems with CUDA compilation, but it stills not working because
   an error during cuMemAlloc.
   

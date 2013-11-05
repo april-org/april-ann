@@ -57,6 +57,7 @@ namespace ANN {
     virtual LossFunction *clone() {
       return new BatchFMeasureMacroAvgLossFunction(this);
     }
+    virtual char *toLuaString();
   };
 }
 

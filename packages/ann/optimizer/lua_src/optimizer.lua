@@ -16,19 +16,7 @@ get_table_from_dotted_string("ann.optimizer.regularizations", true)
 
 function ann.optimizer.regularizations.L1_norm(destw, value, w)
   if value > 0.0 then
-    destw:map(w,
-	      function(x, y)
-		-- We derive over y, and left the result on x. So, if y=0.0 we
-		-- test if |x|>value, returning the weight (which only has the
-		-- momentum applied to it because if y=0.0, then the gradient is
-		-- zero and the weight decay is also zero), if |x|<value, we
-		-- force the weight to be 0.0.
-		if     y > 0 then return math.max(0.0, x-value)
-		elseif y < 0 then return math.min(0.0, x+value)
-		elseif math.abs(x) > value then return x
-		else return 0.0
-		end
-	      end)
+    ann.optimizer.utils.regularization.L1_norm_map(destw, value, w)
   end
 end
 
@@ -156,6 +144,7 @@ end
 function optimizer_methods:set_option(name,value)
   assert(self.valid_options[name], "Not recognized option " .. name)
   self.global_options[name] = value
+  return self
 end
 
 function optimizer_methods:get_option(name,value)
@@ -167,6 +156,7 @@ function optimizer_methods:set_layerwise_option(layer_name,name,value)
   assert(self.valid_options[name], "Not recognized option " .. name)
   self.layerwise_options[layer_name] = self.layerwise_options[layer_name] or {}
   self.layerwise_options[layer_name][name] = value
+  return self
 end
 
 function optimizer_methods:get_layerwise_option(layer_name,name)
@@ -309,6 +299,129 @@ function sgd_methods:to_lua_string()
   return table.concat(str_t, "")
 end
 
+-----------------------------------
+--------- RESILIENT PROP ----------
+-----------------------------------
+
+local rprop_methods, rprop_class_metatable = class("ann.optimizer.rprop",
+						   ann.optimizer)
+
+function rprop_class_metatable:__call(g_options, l_options, count,
+				      steps, old_sign)
+  -- the base optimizer, with the supported learning parameters
+  local obj = ann.optimizer({
+			      "initial_step",
+			      "eta_plus",
+			      "eta_minus",
+			      "max_step",
+			      "min_step",
+			      "niter",
+			    },
+			    g_options,
+			    l_options,
+			    count)
+  obj.steps    = steps or {}
+  obj.old_sign = old_sign or {}
+  obj = class_instance(obj, self)
+  obj:set_option("initial_step",  0.1)
+  obj:set_option("eta_plus",      1.2)
+  obj:set_option("eta_minus",     0.5)
+  obj:set_option("max_step",      50)
+  obj:set_option("min_step",      1e-05)
+  obj:set_option("niter",         1)
+  return obj
+end
+
+function rprop_methods:execute(eval, cnn_table)
+  local initial_step  = self:get_option("initial_step")
+  local eta_plus      = self:get_option("eta_plus")
+  local eta_minus     = self:get_option("eta_minus")
+  local max_step      = self:get_option("max_step")
+  local min_step      = self:get_option("min_step")
+  local niter         = self:get_option("niter")
+  local steps         = self.steps
+  local old_sign      = self.old_sign
+  for i=1,niter do
+    local arg = table.pack( eval() )
+    local gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+    -- the gradient computation could fail returning nil, it is important to
+    -- take this into account
+    if not gradients then return nil end
+    --
+    for cname,cnn in pairs(cnn_table) do
+      local w,oldw     = cnn:matrix()
+      steps[cname]     = steps[cname] or w:clone():fill(initial_step)
+      local sign       = gradients[cname]:clone():sign()
+      -- copy the weight
+      oldw:copy(w)
+      -- apply reprop learning rule
+      if old_sign[cname] then
+	ann.optimizer.utils.rprop.step(steps[cname],
+				       old_sign[cname],
+				       sign,
+				       eta_minus,
+				       eta_plus)
+      end
+      oldw:axpy(-1.0, sign:cmul(steps[cname]))
+      -- keep the sign for the next iteration
+      old_sign[cname] = sign
+      --
+      -- swap current and old weight matrices
+      cnn:swap()
+      --
+      if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
+	cnn:prune_subnormal_and_check_normal()
+	collectgarbage("collect")
+      end
+    end
+  end
+  -- count one more update iteration
+  self:count_one()
+  -- returns the same as returned by eval()
+  return table.unpack(arg)
+end
+
+function rprop_methods:clone()
+  local obj = ann.optimizer.rprop()
+  obj.count             = self.count
+  obj.layerwise_options = table.deep_copy(self.layerwise_options)
+  obj.global_options    = table.deep_copy(self.global_options)
+  if self.steps then
+    obj.steps = table.map(self.steps, function(m) return m:clone() end)
+  end
+  if self.old_sign then
+    obj.old_sign = table.map(self.old_sign, function(m) return m:clone() end)
+  end
+  return obj
+end
+
+function rprop_methods:to_lua_string(format)
+  local str_t = { "ann.optimizer.rprop(",
+		  table.tostring(self.global_options),
+		  ",",
+		  table.tostring(self.layerwise_options),
+		  ",",
+		  tostring(self.count),
+		  ",",
+		  "{",
+		  iterator(pairs(self.steps)):
+		  map(function(name,m)
+			return string.format("[%q]",name),m:to_lua_string(format)
+		      end):
+		  concat("=",","),
+		  "}",
+		  ",",
+		  "{",
+		  iterator(pairs(self.old_sign)):
+		  map(function(name,m)
+			return string.format("[%q]",name),m:to_lua_string(format)
+		      end):
+		  concat("=",","),
+		  "}",
+		  ")" }
+  return table.concat(str_t, "")
+end
+
 -- ---------------------------------------
 -- --------- CONJUGATE GRADIENT ----------
 -- ---------------------------------------
@@ -435,6 +548,7 @@ end
 --     --
 --     if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
 --       cnn:prune_subnormal_and_check_normal()
+--       collectgarbage("collect")
 --     end
 --   end
 --   -- count one more update iteration
