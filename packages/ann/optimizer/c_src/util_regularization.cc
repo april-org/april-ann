@@ -28,9 +28,9 @@ namespace ANN {
     void UtilRegularization::L1NormMap(MatrixFloat *destw,
 				       float value,
 				       MatrixFloat *w) {
-      april_assert(steps->sameDim(destw) && steps->sameDim(w));
-      april_assert(steps->getNumDim() == 2);
-      april_assert(steps->getMajorOrder() == CblasColMajor);
+      april_assert(destw->sameDim(destw));
+      april_assert(destw->getNumDim() == 2);
+      april_assert(destw->getMajorOrder() == CblasColMajor);
       //
       MatrixFloat::col_major_iterator destw_it(destw->begin());
       MatrixFloat::const_col_major_iterator w_it(w->begin());
