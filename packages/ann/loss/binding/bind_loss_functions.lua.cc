@@ -114,7 +114,7 @@ using namespace ANN;
 
 //BIND_METHOD LossFunction to_lua_string
 {
-  LUABIND_RETURN(LossFunction, obj->toLuaString());
+  LUABIND_RETURN(string, obj->toLuaString());
 }
 //BIND_END
 
