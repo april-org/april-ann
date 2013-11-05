@@ -16,19 +16,7 @@ get_table_from_dotted_string("ann.optimizer.regularizations", true)
 
 function ann.optimizer.regularizations.L1_norm(destw, value, w)
   if value > 0.0 then
-    destw:map(w,
-	      function(x, y)
-		-- We derive over y, and left the result on x. So, if y=0.0 we
-		-- test if |x|>value, returning the weight (which only has the
-		-- momentum applied to it because if y=0.0, then the gradient is
-		-- zero and the weight decay is also zero), if |x|<value, we
-		-- force the weight to be 0.0.
-		if     y > 0 then return math.max(0.0, x-value)
-		elseif y < 0 then return math.min(0.0, x+value)
-		elseif math.abs(x) > value then return x
-		else return 0.0
-		end
-	      end)
+    ann.optimizer.utils.regularization.L1_norm_map(destw, value, w)
   end
 end
 
@@ -356,23 +344,23 @@ function rprop_methods:execute(eval, cnn_table)
   for i=1,niter do
     local arg = table.pack( eval() )
     local gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+    -- the gradient computation could fail returning nil, it is important to
+    -- take this into account
+    if not gradients then return nil end
+    --
     for cname,cnn in pairs(cnn_table) do
       local w,oldw     = cnn:matrix()
-      steps[cname]     = steps[cname] or matrix.col_major(table.unpack(w:dim())):fill(initial_step)
+      steps[cname]     = steps[cname] or w:clone():fill(initial_step)
       local sign       = gradients[cname]:clone():sign()
       -- copy the weight
       oldw:copy(w)
       -- apply reprop learning rule
       if old_sign[cname] then
-	-- FIXME: the map function is not CUDA friendly
-	steps[cname]:map(old_sign[cname], sign,
-			 function(x,y,z)
-			   if y < z or y > z then
-			     return x * eta_minus
-			   else
-			     return x * eta_plus
-			   end
-			 end):clamp(min_step, max_step)
+	ann.optimizer.utils.rprop.step(steps[cname],
+				       old_sign[cname],
+				       sign,
+				       eta_minus,
+				       eta_plus)
       end
       oldw:axpy(-1.0, sign:cmul(steps[cname]))
       -- keep the sign for the next iteration

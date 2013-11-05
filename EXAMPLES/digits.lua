@@ -39,14 +39,22 @@ val_output   = dataset.matrix(m2,
 				circular    = {true}
 			      })
 
-bunch_size = 128
+bunch_size = 256
 thenet = ann.mlp.all_all.generate("256 inputs 128 tanh 10 log_softmax")
 if util.is_cuda_available() then thenet:set_use_cuda(true) end
 trainer = trainable.supervised_trainer(thenet,
-				       ann.loss.multi_class_cross_entropy(10),
-				       bunch_size,
-				       ann.optimizer.sgd():set_option("learning_rate",0.1))
+				       ann.loss.multi_class_cross_entropy(),
+				       bunch_size)
 trainer:build()
+--
+trainer:set_option("learning_rate", 0.01)
+trainer:set_option("momentum", 0.01)
+trainer:set_option("weight_decay", 1e-04)
+trainer:set_option("L1_norm", 1e-05)
+-- we avoid weight_decay in bias
+trainer:set_layerwise_option("b.", "weight_decay", 0)
+trainer:set_layerwise_option("b.", "L1_norm", 0)
+
 trainer:randomize_weights{
   random      = random(52324),
   use_fanin   = true,
