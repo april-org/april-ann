@@ -39,7 +39,7 @@ val_output   = dataset.matrix(m2,
 				circular    = {true}
 			      })
 
-bunch_size = 64
+bunch_size = 128
 thenet = ann.mlp.all_all.generate("256 inputs 128 tanh 10 log_softmax")
 if util.is_cuda_available() then thenet:set_use_cuda(true) end
 trainer = trainable.supervised_trainer(thenet,
@@ -55,10 +55,6 @@ trainer:randomize_weights{
   sup         =  1,
 }
 trainer:set_option("learning_rate", 0.1)
-trainer:set_option("momentum",      0.01)
-trainer:set_option("weight_decay",  1e-05)
--- bias has weight_decay of ZERO
-trainer:set_layerwise_option("b.", "weight_decay", 0)
 
 trainer:save("jarl.net", "binary")
 
@@ -89,6 +85,7 @@ result = trainer:train_holdout_validation{ training_table     = training_data,
 								t.validation_error,
 								t.best_epoch,
 								t.best_val_error) end }
+result.best:save("best.net", "ascii")
 clock:stop()
 cpu,wall   = clock:read()
 num_epochs = result.last_epoch
