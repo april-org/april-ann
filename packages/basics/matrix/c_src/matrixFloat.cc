@@ -334,6 +334,17 @@ void Matrix<float>::abs() {
 				       MAKE_CWISE_FUNCTOR_0(doAbs,float));;
 }
 
+
+/************* SIGN FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doSign,float);
+template<>
+void Matrix<float>::sign() {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doSign,float));;
+}
+
+/****************************************************************************/
+
 template<>
 Matrix<float> *Matrix<float>::cmul(const Matrix<float> *other) {
   if (size() != other->size())

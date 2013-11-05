@@ -44,7 +44,8 @@ thenet = ann.mlp.all_all.generate("256 inputs 128 tanh 10 log_softmax")
 if util.is_cuda_available() then thenet:set_use_cuda(true) end
 trainer = trainable.supervised_trainer(thenet,
 				       ann.loss.multi_class_cross_entropy(10),
-				       bunch_size)
+				       bunch_size,
+				       ann.optimizer.rpop())
 trainer:build()
 trainer:randomize_weights{
   random      = random(52324),
@@ -53,7 +54,7 @@ trainer:randomize_weights{
   inf         = -1,
   sup         =  1,
 }
-trainer:set_option("learning_rate", 0.01)
+trainer:set_option("learning_rate", 0.1)
 trainer:set_option("momentum",      0.01)
 trainer:set_option("weight_decay",  1e-05)
 -- bias has weight_decay of ZERO
