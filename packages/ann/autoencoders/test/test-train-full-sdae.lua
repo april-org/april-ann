@@ -1,6 +1,6 @@
-m1 = ImageIO.read("test/digits.png"):to_grayscale():invert_colors():matrix()
+m1 = ImageIO.read(string.get_path(arg[0]).."digits.png"):to_grayscale():invert_colors():matrix()
 
-bunch_size = 8
+bunch_size = 32
 
 train_input = dataset.matrix(m1,
 			     {
@@ -38,12 +38,12 @@ params_pretrain = {
   
   bunch_size            = bunch_size,
   
+  optimizer             = function() return ann.optimizer.cg() end,
+  
   -- training parameters
   training_options      = {
     global = {
-      ann_options = { learning_rate = 0.1,
-		      momentum      = 0.02,
-		      weight_decay  = 1e-05 },
+
       noise_pipeline = { function(ds) return dataset.perturbation{
 			     dataset  = ds, -- WARNING: the function argument
 			     mean     = 0,
@@ -55,8 +55,8 @@ params_pretrain = {
 			     zero     = 0.0,
 			     one      = 1.0,
 			     random   = perturbation_prob } end },
-      min_epochs            = 10,
-      max_epochs            = 200,
+      min_epochs            = 4,
+      max_epochs            = 10,
       pretraining_percentage_stopping_criterion = 0.01,
     },
   }
@@ -73,9 +73,9 @@ train_input_wo_noise = train_input
 train_input = params_pretrain.training_options.global.noise_pipeline[1](train_input)
 train_input = params_pretrain.training_options.global.noise_pipeline[2](train_input)
 
-full_sdae:set_option("learning_rate", 0.00001)
-full_sdae:set_option("momentum", 0.00002)
-full_sdae:set_option("weight_decay", 0.0)
+trainer:set_option("learning_rate", 0.00001)
+trainer:set_option("momentum", 0.00002)
+trainer:set_option("weight_decay", 0.0)
 
 result = trainer:train_holdout_validation{
   epochs_wo_validation = 2,

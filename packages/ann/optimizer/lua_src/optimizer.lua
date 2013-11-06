@@ -138,7 +138,11 @@ end
 function optimizer_methods:show_options()
   local t = iterator(pairs(self.valid_options)):select(1):enumerate():table()
   table.sort(t)
-  iterator(ipairs(t)):apply(print)
+  print(iterator(ipairs(t)):select(2):concat("\n"))
+end
+
+function optimizer_methods:has_option(name)
+  return self.valid_options[name]
 end
 
 function optimizer_methods:set_option(name,value)
@@ -422,156 +426,360 @@ function rprop_methods:to_lua_string(format)
   return table.concat(str_t, "")
 end
 
--- ---------------------------------------
--- --------- CONJUGATE GRADIENT ----------
--- ---------------------------------------
+---------------------------------------
+--------- CONJUGATE GRADIENT ----------
+---------------------------------------
 
--- -- This implementation is based in the code of optim package of Torch 7:
--- -- http://github.com/torch/optim/blob/master/cg.lua
+-- Conjugate Gradient implementation, copied/modified from optim package of
+-- Torch 7, which is a rewrite of minimize.m written by Carl E. Rasmussen.
+local cg_methods, cg_class_metatable = class("ann.optimizer.cg", ann.optimizer)
 
--- local cg_methods, cg_class_metatable = class("ann.optimizer.cg",
--- 					     ann.optimizer)
+function cg_class_metatable:__call(g_options, l_options, count,
+				   df0, df1, df2, df3, x0, s)
+  -- the base optimizer, with the supported learning parameters
+  local obj = ann.optimizer({
+			      "rho",
+			      "sig",
+			      "int",
+			      "ext",
+			      "max_iter",
+			      "ratio",
+			      "max_eval",
+			    },
+			    g_options,
+			    l_options,
+			    count)
+  obj.state    = {
+    df0 = df0,
+    df1 = df1,
+    df2 = df2, 
+    df3 = df3,
+    x0  = x0,
+    s   = s,
+  }
+  obj = class_instance(obj, self)
+  obj:set_option("rho",           0.01)
+  obj:set_option("sig",           0.5)
+  obj:set_option("int",           0.1)
+  obj:set_option("ext",           3.0)
+  obj:set_option("max_iter",      20)
+  obj:set_option("ratio",         100)
+  -- standard regularization and constraints
+  obj:add_regularization("L1_norm")
+  obj:add_constraint("max_norm_penalty")
+  return obj
+end
 
--- function cg_class_metatable:__call(g_options, l_options, count)
---   -- the base optimizer, with the supported learning parameters
---   local obj = ann.optimizer({
--- 			      "max_eval",
--- 			      "max_iter",
--- 			      "rho",
--- 			      "sig",
--- 			      "int",
--- 			      "ext",
--- 			      "ratio",
--- 			      "learning_rate",
--- 			      "momentum",
--- 			      "weight_decay",
--- 			      "max_norm_penalty"
--- 			    },
--- 			    g_options,
--- 			    l_options,
--- 			    count)
---   obj = class_instance(obj, self)
---   return obj
--- end
-
--- local function clone_matrix(t)
---   return iterator(pairs(t)):map(function(name,c)return name,(c:matrix()):clone()end):table()
--- end
-
--- local function clone(t)
---   return iterator(pairs(t)):map(function(name,c)return name,c:clone()end):table()
--- end
-
--- local function copy(orig,dest)
---   apply(function(name,origc,destc)
--- 	  local orig_w,orig_oldw = origc:matrix()
--- 	  local dest_w,dest_oldw = destc:matrix()
--- 	  dest_w:copy(orig_w)
--- 	  dest_oldw:copy(orig_oldw)
--- 	end)
--- end
-
--- local function table_apply(t, func)
---   iterator(pairs(t)):select(2):apply(func)
--- end
-
--- function cg_methods:execute(eval, cnn_table)
---   local rho = self:get_option("rho") or 0.01
---   local sig = self:get_option("sig") or 0.5
---   local int = self:get_option("int") or 0.1
---   local ext = self:get_option("ext") or 3.0
---   local max_iter = self:get_option("max_iter") or 20
---   local max_eval = self:get_option("max_eval") or max_iter*1.25
---   local ratio = self:get_option("ratio") or 100
---   local verbose = self:get_option("verbose")
---   local red = 1
+function cg_methods:execute(eval, cnn_table)
+  -- COPY function
+  local copy = function(dest,source)
+    iterator(pairs(dest)):apply(function(k,v) v:copy(source[k]) end)
+    return dest
+  end
+  -- DOT_REDUCE function
+  local dot_reduce = function(t1,t2)
+    local t2 = t2 or t1
+    if t1 ~= t2 then
+      return iterator(pairs(t1)):
+      map(function(k,v) return v:contiguous(),t2[k]:contiguous() end):
+      map(function(v1,v2) return v1:rewrap(v1:size()),v2:rewrap(v2:size()) end):
+      map(function(v1,v2) return v1:dot(v2) end):
+      reduce(math.add(), 0)
+    else
+      return iterator(pairs(t1)):
+      map(function(k,v) return v:contiguous():rewrap(v:size()) end):
+      map(function(v) return v:dot(v) end):
+      reduce(math.add(), 0)
+    end
+  end
+  -- ADD function
+  local add = function(x, z, s)
+    iterator(pairs(x)):apply(function(k,v) v:axpy(z, s[k]) end)
+    return x
+  end
+  -- SCAL function
+  local scal = function(t, ss)
+    iterator(pairs(t)):apply(function(k,v) v:scal(ss) end)
+    return t
+  end
+  -- CLONE function
+  local clone = function(t)
+    return iterator(pairs(t)):map(function(k,v)
+				    return k,v:clone()
+				  end):table()
+  end
+  -- CLONE_ONLY_DIMS function
+  local clone_only_dims = function(t)
+    return iterator(pairs(t)):
+    map(function(k,v) return k,matrix.col_major(table.unpack(v:dim())) end):
+    table()
+  end
+  -- UPDATE_WEIGHTS function
+  local update_weights = function(cnn_table, s, dir)
+    for cname,cnn in pairs(cnn_table) do
+      local w,oldw        = cnn:matrix()
+      local grad          = s[cname]
+      local mt  = self:get_option_of(cname, "momentum")     or 0.0
+      local wd  = self:get_option_of(cname, "weight_decay") or 0.0
+      local cwd = 1.0 - wd
+      --
+      if wd > 0.0 and w:dim(2) == 1 then
+	fprintf(io.stderr,
+		"# WARNING!!! Possible weight_decay > 0 in bias connection: %s\n",
+		cname)
+      end
+      --
+      ann_optimizer_apply_momentum(oldw, mt, w)
+      -- the weight decay SUMS the weight value. Other regularization is better to
+      -- be after the back-propagation learning rule
+      ann_optimizer_regularizations_weight_decay(oldw, cwd, w)
+      -- apply back-propagation learning rule
+      oldw:axpy(dir, grad)
+      -- regularizations
+      ann_optimizer_apply_regularizations(self, cname, oldw, w, ann_component)
+      -- constraints
+      ann_optimizer_apply_constraints(self, cname, oldw, w, ann_component)
+      --
+      -- swap current and old weight matrices
+      cnn:swap()
+      --
+    end
+  end
+  -- COPY_WEIGHTS function
+  local copy_weights = function(t)
+    iterator(pairs(cnn_table)):map(function(k,v)
+				     local w,oldw=v:matrix()
+				     t[k]:copy(w)
+				     return k,w
+				   end):table()
+  end
+  ----------------------------------------------------------------------------
   
---   local i = 0
---   local ls_failed = false
---   local fx = {}
+  local x             = 
+  local rho           = self:get_option("rho")
+  local sig           = self:get_option("sig")
+  local int           = self:get_option("int")
+  local ext           = self:get_option("ext")
+  local max_iter      = self:get_option("max_iter")
+  local ratio         = self:get_option("ratio")
+  local max_eval      = self:get_option("max_eval") or max_iter*1.25
+  local red           = 1
   
---   -- three points for the interpolation/extrapolation
---   local z1,z2,z3=0,0,0
---   local d1,d2,d3=0,0,0
---   local f1,f2,f3=0,0,0
-  
---   local df1 = self.df1 or clone_matrix(cnn_table)
---   local df2 = self.df2 or clone_matrix(cnn_table)
---   local df3 = self.df3 or clone_matrix(cnn_table)
---   local tdf
-  
---   -- search direction
---   local s = clone_matrix(cnn_table)
-  
---   -- temporal storage for the connections
---   local x0 = clone(cnn_table)
---   local f0 = 0
---   local df0 = self.df0 or clone_matrix(cnn_table)
-  
---   -- evaluate at initial point
---   local arg = table.pack( eval() )
---   local gradients,bunch_size,tr_loss_matrix = table.unpack(arg)
+  local i             = 0
+  local ls_failed     = 0
+  local fx            = {}
 
---   table.insert(fx, tr_loss_matrix:sum()/bunch_size)
---   copy(df1, gradients)
---   i=i+1
-  
---   -- initial search direction
---   copy(df1, s)
---   table_apply(s, function(name,m) m:scal(-1) end)
-  
---   d1 = -s:dot
-  
+  -- we need three points for the interpolation/extrapolation stuff
+  local z1,z2,z3 = 0,0,0
+  local d1,d2,d3 = 0,0,0
+  local f1,f2,f3 = 0,0,0
 
---   for cname,cnn in pairs(cnn_table) do
---     local w,oldw     = cnn:matrix()
---     local grad       = gradients[cname]
---     local N          = cnn:get_shared_count()
---     local lr         = assert(self:get_option_of(cname, "learning_rate"),
--- 			      "The learning_rate parameter needs to be set")
---     local mt         = self:get_option_of(cname, "momentum")     or 0.0
---     local wd         = self:get_option_of(cname, "weight_decay") or 0.0
---     local cwd        = 1.0 - wd
---     local mp         = self:get_option_of(cname, "max_norm_penalty") or -1.0
---     --
---     ann.optimizer.apply_momentum(oldw, mt, w)
---     ann.optimizer.apply_weight_decay(oldw, cwd, w)
---     --
---     -- apply back-propagation learning rule
---     local norm_lr_rate = -1.0/math.sqrt( N * bunch_size ) * lr
---     oldw:axpy(norm_lr_rate, grad)
---     --
---     ann.optimizer.apply_max_norm_penalty(oldw, w, mp)
---     --
---     -- swap current and old weight matrices
---     cnn:swap()
---     --
---     if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
---       cnn:prune_subnormal_and_check_normal()
---       collectgarbage("collect")
---     end
---   end
---   -- count one more update iteration
---   self:count_one()
---   -- returns the same as returned by eval()
---   return table.unpack(arg)
--- end
+  local df1 = self.state.df1 or clone_only_dims(x)
+  local df2 = self.state.df2 or clone_only_dims(x)
+  local df3 = self.state.df3 or clone_only_dims(x)
+  
+  -- search direction
+  local s = self.state.s or clone_only_dims(x)
+  
+  -- we need a temp storage for X
+  local x0 = self.state.x0 or clone_only_dims(x)
+  local f0  = 0
+  local df0 = self.state.df0 or clone_only_dims(x)
+  
+  -- evaluate at initial point
+  local arg = table.pack( eval() )
+  local gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+  f1 = tr_loss_matrix:sum()/tr_loss_matrix:size()
+  table.insert(fx, f1)
+  copy(df1,gradients)
+  i=i+1
+  
+  -- initial search direction
+  copy(s,df1)
+  scal(s,-1)
+  
+  -- slope
+  d1 = -dot_reduce(s)
+  -- initial step
+  z1 = red/(1-d1)
+  
+  while i < math.abs(max_eval) do
+    
+    copy(x0,x)
+    f0 = f1
+    copy(df0,df1)
+    
+    update_weights(cnn_table, s, z1)
 
--- function cg_methods:clone()
---   local obj = ann.optimizer.cg()
---   obj.count             = self.count
---   obj.layerwise_options = table.deep_copy(self.layerwise_options)
---   obj.global_options    = table.deep_copy(self.global_options)
---   return obj
--- end
+    arg = table.pack( eval() )
+    gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+    f2 = tr_loss_matrix:sum()/tr_loss_matrix:size()
+    
+    copy(df2,gradients)
+    i=i+1
+    d2 = dot_reduce(df2,s)
+    -- init point 3 equal to point 1
+    f3,d3,z3 = f1,d1,-z1
+    local m       = math.min(max_iter,max_eval-i)
+    local success = false
+    local limit   = -1
+    
+    while true do
+      while (f2 > f1+z1*rho*d1 or d2 > -sig*d1) and m > 0 do
+	limit = z1
+	if f2 > f1 then
+	  z2 = z3 - (0.5*d3*z3*z3)/(d3*z3+f2-f3)
+	else
+	  local A = 6*(f2-f3)/z3+3*(d2+d3)
+	  local B = 3*(f3-f2)-z3*(d3+2*d2)
+	  z2 = (math.sqrt(B*B-A*d2*z3*z3)-B)/A
+	end
+	if z2 ~= z2 or z2 == math.huge or z2 == -math.huge then
+	  z2 = z3/2
+	end
+	z2 = math.max(math.min(z2, int*z3),(1-int)*z3)
+	z1 = z1 + z2
+	
+	add(x,z2,s)
+	arg = table.pack( eval() )
+	gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+	f2 = tr_loss_matrix:sum()/tr_loss_matrix:size()
+	copy(df2,gradients)
+	i=i+1
+	m = m - 1
+	d2 = dot_reduce(df2,s)
+	z3 = z3-z2
+      end
+      if f2 > f1+z1*rho*d1 or d2 > -sig*d1 then
+	break
+      elseif d2 > sig*d1 then
+	success = true
+	break
+      elseif m == 0 then
+	break
+      end
+      local A = 6*(f2-f3)/z3+3*(d2+d3);
+      local B = 3*(f3-f2)-z3*(d3+2*d2);
+      z2 = -d2*z3*z3/(B+math.sqrt(B*B-A*d2*z3*z3))
+      
+      if z2 ~= z2 or z2 == math.huge or z2 == -math.huge or z2 < 0 then
+	if limit < -0.5 then
+	  z2 = z1 * (ext -1)
+	else
+	  z2 = (limit-z1)/2
+	end
+      elseif (limit > -0.5) and (z2+z1) > limit then
+	z2 = (limit-z1)/2
+      elseif limit < -0.5 and (z2+z1) > z1*ext then
+	z2 = z1*(ext-1)
+      elseif z2 < -z3*int then
+	z2 = -z3*int
+      elseif limit > -0.5 and z2 < (limit-z1)*(1-int) then
+	z2 = (limit-z1)*(1-int)
+      end
+      f3=f2
+      d3=d2
+      z3=-z2
+      z1=z1+z2;
+      add(x,z2,s)
+      
+      arg = table.pack( eval() )
+      gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+      f2 = tr_loss_matrix:sum()/tr_loss_matrix:size()
+      copy(df2, gradients)
+      i=i+1
+      m = m - 1
+      d2 = dot_reduce(df2,s)
+    end
+    if success then
+      f1 = f2
+      table.insert(fx, f1)
+      local ss = (dot_reduce(df2,df2) - dot_reduce(df2,df1))/dot_reduce(df1,df1)
+      scal(s,ss)
+      add(s,-1,df2)
+      local tmp = clone(df1)
+      copy(df1,df2)
+      copy(df2,tmp)
+      d2 = dot_reduce(df1,s)
+      if d2> 0 then
+	copy(s,df1)
+	scal(s,-1)
+	d2 = -dot_reduce(s,s)
+      end
+      z1 = z1 * math.min(ratio, d1/(d2-1e-320))
+      d1 = d2
+      ls_failed = 0
+    else
+      copy(x,x0)
+      f1 = f0
+      copy(df1,df0)
+      if ls_failed or i>max_eval then
+	break
+      end
+      local tmp = clone(df1)
+      copy(df1,df2)
+      copy(df2,tmp)
+      copy(s,df1)
+      scal(s,-1)
+      d1 = -dot_reduce(s,s)
+      z1 = 1/(1-d1)
+      ls_failed = 1
+    end
+  end
+  self.state.df0 = df0
+  self.state.df1 = df1
+  self.state.df2 = df2
+  self.state.df3 = df3
+  self.state.x0 = x0
+  self.state.s = s
+  
+  -- count one more update iteration
+  self:count_one()
+  --
+  if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
+    iterator(pairs(cnn_table)):apply(function(cname,cnn)
+				       cnn:prune_subnormal_and_check_normal()
+				     end)
+  end
+  --
+  -- returns the same as returned by eval(), plus the sequence of iteration
+  -- losses, plus the number of iterations
+  return table.unpack(arg),fx,i
+end
 
--- function cg_methods:to_lua_string()
---   local str_t = { "ann.optimizer.cg(",
--- 		  table.tostring(self.global_options),
--- 		  ",",
--- 		  table.tostring(self.layerwise_options),
--- 		  ",",
--- 		  tostring(self.count),
--- 		  ")" }
---   return table.concat(str_t, "")
--- end
+function cg_methods:clone()
+  local obj = ann.optimizer.cg()
+  obj.count             = self.count
+  obj.layerwise_options = table.deep_copy(self.layerwise_options)
+  obj.global_options    = table.deep_copy(self.global_options)
+  if self.state.df0 then
+    obj.state.df0 = table.map(self.state.df0, function(m) return m:clone() end)
+  end
+  if self.state.df1 then
+    obj.state.df1 = table.map(self.state.df1, function(m) return m:clone() end)
+  end
+  if self.state.df2 then
+    obj.state.df2 = table.map(self.state.df2, function(m) return m:clone() end)
+  end
+  if self.state.df3 then
+    obj.state.df3 = table.map(self.state.df3, function(m) return m:clone() end)
+  end
+  if self.state.x0 then
+    obj.state.x0 = table.map(self.state.x0, function(m) return m:clone() end)
+  end
+  if self.state.s then
+    obj.state.s = table.map(self.state.s, function(m) return m:clone() end)
+  end
+  return obj
+end
+
+function cg_methods:to_lua_string(format)
+  local str_t = { "ann.optimizer.cg(",
+		  table.tostring(self.global_options),
+		  ",",
+		  table.tostring(self.layerwise_options),
+		  ",",
+		  tostring(self.count),
+		  ")" }
+  return table.concat(str_t, "")
+end
