@@ -375,6 +375,8 @@ april_set_doc("ann.autoencoders.greedy_layerwise_pretraining",
 		    "for training description."
 		  },
 		params= {
+		  ["optimizer"]   = {"A function which returns an optimizer",
+					"[optional]",},
 		  ["names_prefix"]   = {"A prefix added to all component names",
 					"[optional]",},
 		  ["shuffle_random"] = "A random object instance for shuffle",
@@ -434,6 +436,8 @@ april_set_doc("ann.autoencoders.greedy_layerwise_pretraining",
 		    "for training description."
 		  },
 		params= {
+		  ["optimizer"]   = {"A function which returns an optimizer",
+				     "[optional]",},
 		  ["names_prefix"]   = {"A prefix added to all component names",
 					"[optional]",},
 		  ["shuffle_random"] = "A random object instance for shuffle",
@@ -483,6 +487,7 @@ april_set_doc("ann.autoencoders.greedy_layerwise_pretraining",
 function ann.autoencoders.greedy_layerwise_pretraining(t)
   local params = get_table_fields(
     {
+      optimizer        = { mandatory=false, type_match="function" },
       names_prefix     = { mandatory=false, default="", type_match="string" },
       shuffle_random   = { mandatory=true,  isa_match=random },
       weights_random   = { mandatory=true,  isa_match=random },
@@ -530,6 +535,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
   end
   params.training_options.global    = params.training_options.global    or { ann_options = {} }
   params.training_options.layerwise = params.training_options.layerwise or {}
+  params.training_options.global.ann_options = params.training_options.global.ann_options or {}
   --------------------------------------
   -- on the fly. Do not generate all the dataset for each layer
   local on_the_fly = params.on_the_fly
@@ -578,7 +584,8 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
     else
       local mlp_final_trainer = trainable.supervised_trainer(mlp_final:clone(),
 							     nil,
-							     params.bunch_size)
+							     params.bunch_size,
+							     params.optimizer())
       local aux_weights = {}
       for i,v in pairs(mlp_final_weights) do aux_weights[i] = v:clone() end
       mlp_final_trainer:build{ weights=aux_weights }
@@ -596,14 +603,6 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 							    cod_size,
 							    cod_actf,
 							    params.weights_random)
-    for key,value in pairs(global_options.ann_options) do
-      if layerwise_options.ann_options[key] == nil then
-	dae:set_option(key, value)
-      end
-    end
-    for key,value in pairs(layerwise_options.ann_options) do
-      dae:set_option(key, value)
-    end
     collectgarbage("collect")
     local loss_function
     if input_actf == "log_logistic" then
@@ -613,16 +612,30 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
     else
       loss_function = ann.loss.mse(input_size)
     end
+    ---------- TRAIN THE AUTOENCODER WO VALIDATION ----------
+    local trainer = trainable.supervised_trainer(dae, loss_function,
+						 params.bunch_size,
+						 params.optimizer())
+    trainer:build()
+    for key,value in pairs(global_options.ann_options) do
+      if layerwise_options.ann_options[key] == nil then
+	trainer:set_option(key, value)
+      end
+    end
+    for key,value in pairs(layerwise_options.ann_options) do
+      trainer:set_option(key, value)
+    end
+    for _,reg in ipairs({ "weight_decay", "L1_norm", "max_norm_penalty" }) do
+      if trainer:has_option(reg) then
+	trainer:set_layerwise_option(params.names_prefix.."b.*", reg, 0.0)
+      end
+    end
     if input_actf=="linear" or cod_actf=="linear" then
       -- if activation is linear, the derivative slope is so high, so we use
       -- learning_rate to reduce its impact
       local ratio = 1/math.sqrt(cod_size+input_size)
-      dae:set_option("learning_rate", dae:get_option("learning_rate")*ratio)
+      trainer:set_option("learning_rate", trainer:get_option("learning_rate")*ratio)
     end
-    ---------- TRAIN THE AUTOENCODER WO VALIDATION ----------
-    local trainer = trainable.supervised_trainer(dae, loss_function,
-						 params.bunch_size)
-    trainer:build()
     -- printf("BEFORE TRAIN %d\n", i)
     local best_net = trainer:train_wo_validation{
       min_epochs     = lookup("min_epochs"),
@@ -672,7 +685,8 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 					      cod_actf)
 	local cod_trainer = trainable.supervised_trainer(codifier,
 							 nil,
-							 params.bunch_size)
+							 params.bunch_size,
+							 params.optimizer())
 	cod_trainer:build()
 	-- print("Load bias ", params.names_prefix .. "b")
 	cod_trainer:weights(params.names_prefix.."b"):load{ w = b1mat }
@@ -725,7 +739,8 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
     else
       local mlp_final_trainer = trainable.supervised_trainer(mlp_final:clone(),
 							     nil,
-							     params.bunch_size)
+							     params.bunch_size,
+							     params.optimizer())
       local aux_weights = {}
       for i,v in pairs(mlp_final_weights) do aux_weights[i] = v:clone() end
       mlp_final_trainer:build{ weights = aux_weights }
@@ -743,14 +758,6 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 		    output_size,
 		    output_actf),
       nil, params.names_prefix)
-    for key,value in pairs(global_options.ann_options) do
-      if layerwise_options.ann_options[key] == nil then
-	thenet:set_option(key, value)
-      end
-    end
-    for key,value in pairs(layerwise_options.ann_options) do
-      thenet:set_option(key, value)
-    end
     local loss_function
     if output_actf == "log_logistic" then
       loss_function = ann.loss.cross_entropy(output_size)
@@ -761,8 +768,22 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
     end
     local thenet_trainer = trainable.supervised_trainer(thenet,
 							loss_function,
-							params.bunch_size)
+							params.bunch_size,
+							params.optimizer())
     thenet_trainer:build()
+    for key,value in pairs(global_options.ann_options) do
+      if layerwise_options.ann_options[key] == nil then
+	thenet_trainer:set_option(key, value)
+      end
+    end
+    for key,value in pairs(layerwise_options.ann_options) do
+      thenet_trainer:set_option(key, value)
+    end
+    for _,reg in ipairs({ "weight_decay", "L1_norm", "max_norm_penalty" }) do
+      if thenet_trainer:has_option(reg) then
+	thenet_trainer:set_layerwise_option(params.names_prefix.."b.*", reg, 0.0)
+      end
+    end
     thenet_trainer:randomize_weights{
       random     = params.weights_random,
       inf=-math.sqrt(6 / (input_size + output_size)),
