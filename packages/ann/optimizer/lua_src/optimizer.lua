@@ -438,6 +438,8 @@ function cg_class_metatable:__call(g_options, l_options, count,
 				   df0, df1, df2, df3, x0, s)
   -- the base optimizer, with the supported learning parameters
   local obj = ann.optimizer({
+			      "momentum",
+			      "weight_decay",
 			      "rho",
 			      "sig",
 			      "int",
@@ -458,12 +460,12 @@ function cg_class_metatable:__call(g_options, l_options, count,
     s   = s,
   }
   obj = class_instance(obj, self)
-  obj:set_option("rho",           0.01)
-  obj:set_option("sig",           0.5)
-  obj:set_option("int",           0.1)
-  obj:set_option("ext",           3.0)
+  obj:set_option("rho",           0.01) -- rho is a constant in Wolfe-Powell conditions
+  obj:set_option("sig",           0.5)  -- sig is another constant of Wolf-Powell
+  obj:set_option("int",           0.1)  -- reevaluation limit
+  obj:set_option("ext",           3.0)  -- maximum number of extrapolations
   obj:set_option("max_iter",      20)
-  obj:set_option("ratio",         100)
+  obj:set_option("ratio",         100)  -- maximum slope ratio
   -- standard regularization and constraints
   obj:add_regularization("L1_norm")
   obj:add_constraint("max_norm_penalty")
@@ -515,7 +517,7 @@ function cg_methods:execute(eval, cnn_table)
     table()
   end
   -- UPDATE_WEIGHTS function
-  local update_weights = function(cnn_table, s, dir)
+  local update_weights = function(x, dir, s)
     for cname,cnn in pairs(cnn_table) do
       local w,oldw        = cnn:matrix()
       local grad          = s[cname]
@@ -544,6 +546,8 @@ function cg_methods:execute(eval, cnn_table)
       cnn:swap()
       --
     end
+    -- swap in x
+    x.w,x.oldw = x.oldw,x.w
   end
   -- COPY_WEIGHTS function
   local copy_weights = function(t)
@@ -555,7 +559,17 @@ function cg_methods:execute(eval, cnn_table)
   end
   ----------------------------------------------------------------------------
   
-  local x             = 
+  local x = {
+    
+    w = iterator(pairs(cnn_table)):
+    map(function(k,v) return k,v:matrix() end):
+    select(1,2):table(),
+    
+    oldw = iterator(pairs(cnn_table)):
+    map(function(k,v) return k,v:matrix() end):
+    select(1,3):table()
+    
+  }
   local rho           = self:get_option("rho")
   local sig           = self:get_option("sig")
   local int           = self:get_option("int")
@@ -574,17 +588,17 @@ function cg_methods:execute(eval, cnn_table)
   local d1,d2,d3 = 0,0,0
   local f1,f2,f3 = 0,0,0
 
-  local df1 = self.state.df1 or clone_only_dims(x)
-  local df2 = self.state.df2 or clone_only_dims(x)
-  local df3 = self.state.df3 or clone_only_dims(x)
+  local df1 = self.state.df1 or clone_only_dims(x.w)
+  local df2 = self.state.df2 or clone_only_dims(x.w)
+  local df3 = self.state.df3 or clone_only_dims(x.w)
   
   -- search direction
-  local s = self.state.s or clone_only_dims(x)
+  local s = self.state.s or clone_only_dims(x.w)
   
   -- we need a temp storage for X
-  local x0 = self.state.x0 or clone_only_dims(x)
+  local x0  = self.state.x0 or { w=clone(x.w), oldw=clone(x.oldw) }
   local f0  = 0
-  local df0 = self.state.df0 or clone_only_dims(x)
+  local df0 = self.state.df0 or clone_only_dims(x.w)
   
   -- evaluate at initial point
   local arg = table.pack( eval() )
@@ -605,11 +619,13 @@ function cg_methods:execute(eval, cnn_table)
   
   while i < math.abs(max_eval) do
     
-    copy(x0,x)
+    copy(x0.w,    x.w)
+    copy(x0.oldw, x.oldw)
+    
     f0 = f1
     copy(df0,df1)
     
-    update_weights(cnn_table, s, z1)
+    update_weights(x, z1, s)
 
     arg = table.pack( eval() )
     gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
@@ -640,7 +656,7 @@ function cg_methods:execute(eval, cnn_table)
 	z2 = math.max(math.min(z2, int*z3),(1-int)*z3)
 	z1 = z1 + z2
 	
-	add(x,z2,s)
+	update_weights(x, z2, s)
 	arg = table.pack( eval() )
 	gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
 	f2 = tr_loss_matrix:sum()/tr_loss_matrix:size()
@@ -681,7 +697,7 @@ function cg_methods:execute(eval, cnn_table)
       d3=d2
       z3=-z2
       z1=z1+z2;
-      add(x,z2,s)
+      update_weights(x, z2, s)
       
       arg = table.pack( eval() )
       gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
@@ -697,9 +713,10 @@ function cg_methods:execute(eval, cnn_table)
       local ss = (dot_reduce(df2,df2) - dot_reduce(df2,df1))/dot_reduce(df1,df1)
       scal(s,ss)
       add(s,-1,df2)
-      local tmp = clone(df1)
-      copy(df1,df2)
-      copy(df2,tmp)
+      df1,df2 = df2,df1
+      -- local tmp = clone(df1)
+      -- copy(df1,df2)
+      -- copy(df2,tmp)
       d2 = dot_reduce(df1,s)
       if d2> 0 then
 	copy(s,df1)
@@ -710,15 +727,17 @@ function cg_methods:execute(eval, cnn_table)
       d1 = d2
       ls_failed = 0
     else
-      copy(x,x0)
+      copy(x.w,    x0.w)
+      copy(x.oldw, x0.oldw)
       f1 = f0
       copy(df1,df0)
       if ls_failed or i>max_eval then
 	break
       end
-      local tmp = clone(df1)
-      copy(df1,df2)
-      copy(df2,tmp)
+      df1,df2 = df2,df1
+      -- local tmp = clone(df1)
+      -- copy(df1,df2)
+      -- copy(df2,tmp)
       copy(s,df1)
       scal(s,-1)
       d1 = -dot_reduce(s,s)
@@ -765,7 +784,10 @@ function cg_methods:clone()
     obj.state.df3 = table.map(self.state.df3, function(m) return m:clone() end)
   end
   if self.state.x0 then
-    obj.state.x0 = table.map(self.state.x0, function(m) return m:clone() end)
+    obj.state.x0 = {
+      w = table.map(self.state.x0.w, function(m) return m:clone() end),
+      oldw = table.map(self.state.x0.oldw, function(m) return m:clone() end),
+    }
   end
   if self.state.s then
     obj.state.s = table.map(self.state.s, function(m) return m:clone() end)
