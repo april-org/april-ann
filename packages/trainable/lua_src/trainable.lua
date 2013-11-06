@@ -171,7 +171,7 @@ april_set_doc("trainable.supervised_trainer.has_option", {
 
 function trainable_supervised_trainer_methods:has_option(name)
   local opt = assert(self.optimizer, "The optimizer has not been defined")
-  opt:het_option(name,value)
+  return opt:has_option(name)
 end
 
 ------------------------------------------------------------------------

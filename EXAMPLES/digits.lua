@@ -39,7 +39,7 @@ val_output   = dataset.matrix(m2,
 				circular    = {true}
 			      })
 
-bunch_size = 256
+bunch_size = 32
 thenet = ann.mlp.all_all.generate("256 inputs 128 tanh 10 log_softmax")
 if util.is_cuda_available() then thenet:set_use_cuda(true) end
 trainer = trainable.supervised_trainer(thenet,

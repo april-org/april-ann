@@ -520,7 +520,7 @@ void doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
 		 // numerical approximation problems, and to ensure correct working of
 		 // inv_t > EPSILON comparison
 		 float  inv_t     = clamp(1.0f - target_ptr[b], EPSILON, 1.0f - EPSILON);
-		 // printf("%g * %g :: %g * %g :: %g\n", t, log_o, inv_t, log_inv_o, o);
+		 //printf("%g * %g + %g * %g :: %g\n", t, log_o, inv_t, log_inv_o, o);
 		 float sum;
 		 if (t > EPSILON) sum = -t * log_o;
 		 else sum = 0.0f;
@@ -619,7 +619,8 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
     float *error_output_ptr = error_output->getPPALForWrite();
     for (unsigned int i = 0; i < size; i++) {
       for (unsigned int b=0; b<bunch_size; ++b)
-	error_output_ptr[b] = expf(input_ptr[b]) - target_ptr[b];
+	error_output_ptr[b] =
+	  clamp(expf(input_ptr[b]), EPSILON, 1.0f - EPSILON) - target_ptr[b];
       input_ptr  += bunch_size;
       target_ptr += bunch_size;
       error_output_ptr += bunch_size;
