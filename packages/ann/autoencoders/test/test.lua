@@ -64,7 +64,7 @@ params_pretrain = {
   -- training parameters
   training_options      = {
     global = {
-      ann_options = { weight_decay  = 1e-05, momentum=0.0, rho=0.0001 },
+      ann_options = { weight_decay  = 1e-05, rho=0.0001 },
       noise_pipeline = { function(ds) return dataset.perturbation{
 			     dataset  = ds, -- WARNING: the function argument
 			     mean     = 0,
@@ -173,14 +173,14 @@ if dropout_factor > 0.0 then
 end
 
 --trainer_deep_classifier:set_option("learning_rate", 0.4)
-trainer_deep_classifier:set_option("momentum", 0.0)
+--trainer_deep_classifier:set_option("momentum", 0.0)
 trainer_deep_classifier:set_option("weight_decay", 0.0)
 trainer_deep_classifier:set_option("max_norm_penalty", 4.0)
 -- set_dropout(trainer_deep_classifier)
 
 trainer_shallow_classifier:set_option("learning_rate", 0.4)
 trainer_shallow_classifier:set_option("momentum",
-				      trainer_deep_classifier:get_option("momentum"))
+				      0.1)
 trainer_shallow_classifier:set_option("weight_decay",
 				      trainer_deep_classifier:get_option("weight_decay"))
 trainer_shallow_classifier:set_option("max_norm_penalty",
@@ -190,7 +190,7 @@ set_dropout(trainer_shallow_classifier)
 trainer_deep_wo_pretraining:set_option("learning_rate",
 				       trainer_shallow_classifier:get_option("learning_rate"))
 trainer_deep_wo_pretraining:set_option("momentum",
-				       trainer_deep_classifier:get_option("momentum"))
+				       trainer_shallow_classifier:get_option("momentum"))
 trainer_deep_wo_pretraining:set_option("weight_decay",
 				       trainer_deep_classifier:get_option("weight_decay"))
 trainer_deep_wo_pretraining:set_option("max_norm_penalty",
