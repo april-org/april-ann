@@ -3,6 +3,13 @@ local MAX_UPDATES_WITHOUT_PRUNE=100
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
+-- REMOVE UTILS FROM GLOBALS TABLE
+local ann_optimizer_utils = ann.optimizer.utils
+ann.optimizer.utils = nil
+
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
 local function ann_optimizer_regularizations_weight_decay(destw, cwd, w)
   -- sum current weights by applying the complementary of weight decay term. We
@@ -16,7 +23,7 @@ get_table_from_dotted_string("ann.optimizer.regularizations", true)
 
 function ann.optimizer.regularizations.L1_norm(destw, value, w)
   if value > 0.0 then
-    ann.optimizer.utils.regularization.L1_norm_map(destw, value, w)
+    ann_optimizer_utils.regularization.L1_norm_map(destw, value, w)
   end
 end
 
@@ -59,7 +66,7 @@ function optimizer_class_metatable:__call(valid_options,
 					  count)
   local g_options, l_options = g_options or {}, l_options or {}
   local obj = class_instance({
-			       valid_options     = iterator(ipairs(valid_options or {})):map(function(i,name)return name,true end):table(),
+			       valid_options     = iterator(ipairs(valid_options or {})):map(function(i,t)return t[1],t[2] end):table(),
 			       global_options    = {},
 			       layerwise_options = {},
 			       count             = count or 0,
@@ -80,24 +87,24 @@ end
 -- regularization functions has the API:
 -- func(oldw, value, w, ann_component)
 -- where oldw is the destination weights matrix, and w the current weights matrix
-function optimizer_methods:add_regularization(hyperparameter_name, func)
+function optimizer_methods:add_regularization(hyperparameter_name, func, desc)
   local func = assert(func or ann.optimizer.regularizations[hyperparameter_name],
 		      "Problem with hyperparemter function of " .. hyperparameter_name)
   assert(not self.valid_options[hyperparameter_name],
 	 "Redefinition of hyperparameter " .. hyperparameter_name)
-  self.valid_options[hyperparameter_name] = true
+  self.valid_options[hyperparameter_name] = desc
   self.regularizations[hyperparameter_name] = func
 end
 
 -- constraint functions has the API:
 -- func(oldw, value, w, ann_component) => remember to apply the same constraint to oldw and w
 -- where oldw is the next weights matrix, and w the current weights matrix
-function optimizer_methods:add_constraint(hyperparameter_name, func)
+function optimizer_methods:add_constraint(hyperparameter_name, func, desc)
   local func = assert(func or ann.optimizer.constraints[hyperparameter_name],
 		      "Problem with hyperparemter function of " .. hyperparameter_name)
   assert(not self.valid_options[hyperparameter_name],
 	 "Redefinition of hyperparameter " .. hyperparameter_name)
-  self.valid_options[hyperparameter_name] = true
+  self.valid_options[hyperparameter_name] = desc
   self.constraints[hyperparameter_name] = func
 end
 
@@ -136,9 +143,9 @@ local function ann_optimizer_apply_constraints(opt,
 end
 
 function optimizer_methods:show_options()
-  local t = iterator(pairs(self.valid_options)):select(1):enumerate():table()
-  table.sort(t)
-  print(iterator(ipairs(t)):select(2):concat("\n"))
+  local t = iterator(pairs(self.valid_options)):enumerate():table()
+  table.sort(t, function(a,b) return a[1]<b[1] end)
+  print(iterator(ipairs(t)):select(2):map(table.unpack):concat("\t","\n"))
 end
 
 function optimizer_methods:has_option(name)
@@ -175,7 +182,8 @@ function optimizer_methods:get_option_of(layer_name,name)
 end
 
 -- eval is a function which returns the data needed by the optimizer (at least,
--- the gradients, the bunch size, the loss matrix, and the ANN component)
+-- the loss, the loss matrix for each pattern in the batch, the gradients, the
+-- bunch size, and the ANN component)
 --
 -- cnn_table is a dictionary of connections objects, indexed by its names.
 function optimizer_methods:execute(eval, cnn_table)
@@ -223,23 +231,23 @@ local sgd_methods, sgd_class_metatable = class("ann.optimizer.sgd",
 function sgd_class_metatable:__call(g_options, l_options, count)
   -- the base optimizer, with the supported learning parameters
   local obj = ann.optimizer({
-			      "learning_rate",
-			      "momentum",
-			      "weight_decay",
+			      {"learning_rate", "Learning speed factor (0.1)"},
+			      {"momentum", "Learning inertia factor (0.1)"},
+			      {"weight_decay", "Weight L2 regularization (1e-04)"},
 			    },
 			    g_options,
 			    l_options,
 			    count)
   obj = class_instance(obj, self)
   -- standard regularization and constraints
-  obj:add_regularization("L1_norm")
-  obj:add_constraint("max_norm_penalty")
+  obj:add_regularization("L1_norm", nil, "Weight L1 regularization (1e-05)")
+  obj:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
   return obj
 end
 
 function sgd_methods:execute(eval, cnn_table)
   local arg = table.pack( eval() )
-  local gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+  local tr_loss,tr_loss_matrix,gradients,bunch_size,ann_component = table.unpack(arg)
   -- the gradient computation could fail returning nil, it is important to take
   -- this into account
   if not gradients then return nil end
@@ -314,12 +322,12 @@ function rprop_class_metatable:__call(g_options, l_options, count,
 				      steps, old_sign)
   -- the base optimizer, with the supported learning parameters
   local obj = ann.optimizer({
-			      "initial_step",
-			      "eta_plus",
-			      "eta_minus",
-			      "max_step",
-			      "min_step",
-			      "niter",
+			      {"initial_step", "Initial weight update value (0.1)"},
+			      {"eta_plus", "Update value up by this factor (1.2)"},
+			      {"eta_minus", "Update value down by this factor (0.5)"},
+			      {"max_step", "Maximum value of update step (50)"},
+			      {"min_step", "Minimum value of update step (1e-05)"},
+			      {"niter", "Number of iterations (1)"},
 			    },
 			    g_options,
 			    l_options,
@@ -345,9 +353,10 @@ function rprop_methods:execute(eval, cnn_table)
   local niter         = self:get_option("niter")
   local steps         = self.steps
   local old_sign      = self.old_sign
+  local arg
   for i=1,niter do
-    local arg = table.pack( eval() )
-    local gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+    arg = table.pack( eval() )
+    local tr_loss,tr_loss_matrix,gradients,bunch_size,ann_component = table.unpack(arg)
     -- the gradient computation could fail returning nil, it is important to
     -- take this into account
     if not gradients then return nil end
@@ -360,7 +369,7 @@ function rprop_methods:execute(eval, cnn_table)
       oldw:copy(w)
       -- apply reprop learning rule
       if old_sign[cname] then
-	ann.optimizer.utils.rprop.step(steps[cname],
+	ann_optimizer_utils.rprop.step(steps[cname],
 				       old_sign[cname],
 				       sign,
 				       eta_minus,
@@ -438,15 +447,15 @@ function cg_class_metatable:__call(g_options, l_options, count,
 				   df0, df1, df2, df3, x0, s)
   -- the base optimizer, with the supported learning parameters
   local obj = ann.optimizer({
-			      "momentum",
-			      "weight_decay",
-			      "rho",
-			      "sig",
-			      "int",
-			      "ext",
-			      "max_iter",
-			      "ratio",
-			      "max_eval",
+			      {"momentum", "Learning inertia factor (0.1)"},
+			      {"weight_decay", "Weights L2 regularization (1e-04)"},
+			      {"rho", "Constant for Wolf-Powell conditions (0.01)"},
+			      {"sig", "Constant for Wolf-Powell conditions (0.5)"},
+			      {"int", "Reevaluation limit (0.1)"},
+			      {"ext", "Maximum number of extrapolations (3)"},
+			      {"max_iter", "Maximum number of iterations (20)"},
+			      {"ratio", "Maximum slope ratio (100)"},
+			      {"max_eval", "Maximum number of evaluations (max_iter*1.25)"},
 			    },
 			    g_options,
 			    l_options,
@@ -467,8 +476,8 @@ function cg_class_metatable:__call(g_options, l_options, count,
   obj:set_option("max_iter",      20)
   obj:set_option("ratio",         100)  -- maximum slope ratio
   -- standard regularization and constraints
-  obj:add_regularization("L1_norm")
-  obj:add_constraint("max_norm_penalty")
+  obj:add_regularization("L1_norm", nil, "Weight L1 regularization (1e-05)")
+  obj:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
   return obj
 end
 
@@ -516,12 +525,33 @@ function cg_methods:execute(eval, cnn_table)
     map(function(k,v) return k,matrix.col_major(table.unpack(v:dim())) end):
     table()
   end
+  -- UPDATE_GRADIENTS function
+  local update_gradients = function(gradients)
+    for cname,cnn in pairs(cnn_table) do
+      local w,oldw        = cnn:matrix()
+      local grad          = gradients[cname]
+      local mt  = self:get_option_of(cname, "momentum") or 0.0
+      --
+      if mt > 0.0 then
+	local aux = w:clone():axpy(-1.0, oldw)
+	grad:axpy(mt, aux)
+      end
+      --
+    end
+  end
+  -- COPY_WEIGHTS function
+  local copy_weights = function(t)
+    iterator(pairs(cnn_table)):map(function(k,v)
+				     local w,oldw=v:matrix()
+				     t[k]:copy(w)
+				     return k,w
+				   end):table()
+  end
   -- UPDATE_WEIGHTS function
   local update_weights = function(x, dir, s)
     for cname,cnn in pairs(cnn_table) do
       local w,oldw        = cnn:matrix()
       local grad          = s[cname]
-      local mt  = self:get_option_of(cname, "momentum")     or 0.0
       local wd  = self:get_option_of(cname, "weight_decay") or 0.0
       local cwd = 1.0 - wd
       --
@@ -531,7 +561,7 @@ function cg_methods:execute(eval, cnn_table)
 		cname)
       end
       --
-      ann_optimizer_apply_momentum(oldw, mt, w)
+      oldw:zeros()
       -- the weight decay SUMS the weight value. Other regularization is better to
       -- be after the back-propagation learning rule
       ann_optimizer_regularizations_weight_decay(oldw, cwd, w)
@@ -602,7 +632,8 @@ function cg_methods:execute(eval, cnn_table)
   
   -- evaluate at initial point
   local arg = table.pack( eval() )
-  local gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+  local tr_loss,tr_loss_matrix,gradients,bunch_size,ann_component = table.unpack(arg)
+  update_gradients(gradients)
   f1 = tr_loss_matrix:sum()/tr_loss_matrix:size()
   table.insert(fx, f1)
   copy(df1,gradients)
@@ -628,7 +659,8 @@ function cg_methods:execute(eval, cnn_table)
     update_weights(x, z1, s)
 
     arg = table.pack( eval() )
-    gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+    tr_loss,tr_loss_matrix,gradients,bunch_size,ann_component = table.unpack(arg)
+    update_gradients(gradients)
     f2 = tr_loss_matrix:sum()/tr_loss_matrix:size()
     
     copy(df2,gradients)
@@ -658,7 +690,8 @@ function cg_methods:execute(eval, cnn_table)
 	
 	update_weights(x, z2, s)
 	arg = table.pack( eval() )
-	gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+	tr_loss,tr_loss_matrix,gradients,bunch_size,ann_component = table.unpack(arg)
+	update_gradients(gradients)
 	f2 = tr_loss_matrix:sum()/tr_loss_matrix:size()
 	copy(df2,gradients)
 	i=i+1
@@ -700,7 +733,8 @@ function cg_methods:execute(eval, cnn_table)
       update_weights(x, z2, s)
       
       arg = table.pack( eval() )
-      gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+      tr_loss,tr_loss_matrix,gradients,bunch_size,ann_component = table.unpack(arg)
+      update_gradients(gradients)
       f2 = tr_loss_matrix:sum()/tr_loss_matrix:size()
       copy(df2, gradients)
       i=i+1
@@ -760,10 +794,13 @@ function cg_methods:execute(eval, cnn_table)
 				       cnn:prune_subnormal_and_check_normal()
 				     end)
   end
-  --
+  -- evaluate the function at the end
+  local arg = table.pack( eval() )
   -- returns the same as returned by eval(), plus the sequence of iteration
-  -- losses, plus the number of iterations
-  return table.unpack(arg),fx,i
+  -- losses and the number of iterations
+  table.insert(arg, fx)
+  table.insert(arg, i)
+  return table.unpack(arg)
 end
 
 function cg_methods:clone()

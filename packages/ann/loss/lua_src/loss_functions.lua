@@ -40,6 +40,20 @@ april_set_doc("ann.loss.accum_loss",
 		}
 	      })
 
+april_set_doc("ann.loss.accum_loss",
+	      {
+		class="method",
+		summary="Receives a loss matrix and accumulates it",
+		params={
+		  "The loss function mean at the given batch.",
+		  "The loss matrix computed by compute_loss method.",
+		},
+		outputs = {
+		  "The given loss function mean at the given batch.",
+		  "The given loss matrix",
+		}
+	      })
+
 -------------------------------------------------------------------
 
 april_set_doc("ann.loss.compute_loss",
@@ -56,6 +70,7 @@ april_set_doc("ann.loss.compute_loss",
 		  "Target token",
 		},
 		outputs = {
+		  "The loss function mean at the given batch.",
 		  "A matrix with the loss computed for every pair of patterns (tokens)",
 		},
 	      })

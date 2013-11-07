@@ -58,13 +58,13 @@ params_pretrain = {
   supervised_layer      = { size = 10, actf = "log_softmax" },
   output_datasets       = { train_output },
   
-  bunch_size            = bunch_size,
+  bunch_size            = 512,
   optimizer             = function() return ann.optimizer.cg() end,
   
   -- training parameters
   training_options      = {
     global = {
-      ann_options = { weight_decay  = 1e-05 },
+      ann_options = { weight_decay  = 1e-05, momentum=0.1, rho=0.00001 },
       noise_pipeline = { function(ds) return dataset.perturbation{
 			     dataset  = ds, -- WARNING: the function argument
 			     mean     = 0,
@@ -75,7 +75,7 @@ params_pretrain = {
 			     vd       = 0.10,
 			     zero     = 0.0,
 			     random   = perturbation_prob } end },
-      min_epochs            =  2,
+      min_epochs            = 4,
       max_epochs            = 10,
       pretraining_percentage_stopping_criterion = 0.1,
     },
@@ -91,12 +91,12 @@ trainer_deep_classifier = trainable.supervised_trainer(deep_classifier,
 						       bunch_size,
 						       ann.optimizer.cg())
 trainer_deep_classifier:build()
+trainer_deep_classifier:set_option("rho", 0.0001)
 --
 shallow_classifier = ann.mlp.all_all.generate("256 inputs 256 tanh 128 tanh 10 log_softmax")
 trainer_shallow_classifier = trainable.supervised_trainer(shallow_classifier,
 							  ann.loss[loss_name](10),
-							  bunch_size,
-							  ann.optimizer.cg())
+							  bunch_size)
 trainer_shallow_classifier:build()
 trainer_shallow_classifier:randomize_weights {
   random   = random(1234),
@@ -106,8 +106,7 @@ trainer_shallow_classifier:randomize_weights {
 deep_classifier_wo_pretraining = ann.mlp.all_all.generate("256 inputs 1024 logistic 1024 logistic 32 logistic 10 log_softmax")
 trainer_deep_wo_pretraining = trainable.supervised_trainer(deep_classifier_wo_pretraining,
 							   ann.loss[loss_name](10),
-							   bunch_size,
-							   ann.optimizer.cg())
+							   bunch_size)
 trainer_deep_wo_pretraining:build()
 trainer_deep_wo_pretraining:randomize_weights{
   random   = random(1234),
@@ -123,7 +122,8 @@ train_input = dataset.salt_noise{
 datosentrenar_deep = {
   input_dataset = train_input,
   output_dataset = train_output,
-  shuffle = random(8569)
+  shuffle = random(8569),
+  bunch_size = 512,
 }
 datosentrenar_shallow = {
   input_dataset = train_input,
@@ -174,10 +174,10 @@ end
 --trainer_deep_classifier:set_option("learning_rate", 0.4)
 trainer_deep_classifier:set_option("momentum", 0.0)
 trainer_deep_classifier:set_option("weight_decay", 0.0)
-trainer_deep_classifier:set_option("max_norm_penalty", 15.0)
-set_dropout(trainer_deep_classifier)
+trainer_deep_classifier:set_option("max_norm_penalty", 4.0)
+-- set_dropout(trainer_deep_classifier)
 
---trainer_shallow_classifier:set_option("learning_rate", 0.4)
+trainer_shallow_classifier:set_option("learning_rate", 0.4)
 trainer_shallow_classifier:set_option("momentum",
 				      trainer_deep_classifier:get_option("momentum"))
 trainer_shallow_classifier:set_option("weight_decay",
@@ -186,8 +186,8 @@ trainer_shallow_classifier:set_option("max_norm_penalty",
 				      trainer_deep_classifier:get_option("max_norm_penalty"))
 set_dropout(trainer_shallow_classifier)
 
---trainer_deep_wo_pretraining:set_option("learning_rate",
---				       trainer_shallow_classifier:get_option("learning_rate"))
+trainer_deep_wo_pretraining:set_option("learning_rate",
+				       trainer_shallow_classifier:get_option("learning_rate"))
 trainer_deep_wo_pretraining:set_option("momentum",
 				       trainer_deep_classifier:get_option("momentum"))
 trainer_deep_wo_pretraining:set_option("weight_decay",
@@ -215,8 +215,10 @@ for i=1,10 do
 	 mse_tr_deep, mse_val_deep,
 	 mse_tr_deep_wo, mse_val_deep_wo,
 	 mse_tr_shallow, mse_val_shallow)
-  --trainer_deep_classifier:set_option("learning_rate",
-  --trainer_deep_classifier:get_option("learning_rate")*0.99)
+  if trainer_deep_classifier:has_option("learning_rate") then
+    trainer_deep_classifier:set_option("learning_rate",
+				       trainer_deep_classifier:get_option("learning_rate")*0.99)
+  end
 end
 
 -- classification

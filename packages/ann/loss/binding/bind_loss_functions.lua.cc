@@ -60,8 +60,10 @@ using namespace ANN;
   LUABIND_GET_PARAMETER(1, Token, input);
   LUABIND_GET_PARAMETER(2, Token, target);
   MatrixFloat *loss = obj->computeLoss(input, target);
-  if (loss)
+  if (loss) {
+    LUABIND_RETURN(float, loss->sum()/loss->getDimSize(0));
     LUABIND_RETURN(MatrixFloat, loss);
+  }
   else
     LUABIND_RETURN_NIL();
 }
@@ -69,12 +71,29 @@ using namespace ANN;
 
 //BIND_METHOD LossFunction accum_loss
 {
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_CHECK_PARAMETER(1, MatrixFloat);
+  int argn;
+  argn = lua_gettop(L); // number of arguments
+  LUABIND_CHECK_ARGN(>=,1);
+  LUABIND_CHECK_ARGN(<=,2);
+  float tr_loss;
   MatrixFloat *loss;
-  LUABIND_GET_PARAMETER(1, MatrixFloat, loss);
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, MatrixFloat);
+    LUABIND_GET_PARAMETER(1, MatrixFloat, loss);
+  }
+  else {
+    LUABIND_CHECK_PARAMETER(1, float);
+    LUABIND_CHECK_PARAMETER(2, MatrixFloat);
+    LUABIND_GET_PARAMETER(1, float, tr_loss);
+    LUABIND_GET_PARAMETER(2, MatrixFloat, loss);
+  }
   obj->accumLoss(loss);
-  LUABIND_RETURN(MatrixFloat, loss);
+  if (argn == 1)
+    LUABIND_RETURN(MatrixFloat, loss);
+  else {
+    LUABIND_RETURN(float, tr_loss);
+    LUABIND_RETURN(MatrixFloat, loss);
+  }
 }
 //BIND_END
 
