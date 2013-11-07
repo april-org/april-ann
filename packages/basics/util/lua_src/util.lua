@@ -1,6 +1,6 @@
 local COLWIDTH=70
 
-function class_get_value_of_key(class_table, key)
+function class_get(class_table, key)
   if class_table.meta_instance and
   luatype(class_table.meta_instance.__index) == "table" then
     return class_table.meta_instance.__index[key]
@@ -8,6 +8,8 @@ function class_get_value_of_key(class_table, key)
     error("The table is not a class")
   end
 end
+
+class_get_value_of_key = class_get
 
 function class_extension(class_table, key, value)
   if class_table.meta_instance and
