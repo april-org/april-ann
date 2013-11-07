@@ -1,6 +1,6 @@
 m1 = ImageIO.read(string.get_path(arg[0]).."digits.png"):to_grayscale():invert_colors():matrix()
 
-bunch_size = 32
+bunch_size = 256
 
 train_input = dataset.matrix(m1,
 			     {
@@ -38,12 +38,12 @@ params_pretrain = {
   
   bunch_size            = bunch_size,
   
-  optimizer             = function() return ann.optimizer.cg() end,
+
   
   -- training parameters
   training_options      = {
     global = {
-
+      ann_options = { learning_rate=0.1 },
       noise_pipeline = { function(ds) return dataset.perturbation{
 			     dataset  = ds, -- WARNING: the function argument
 			     mean     = 0,
@@ -66,16 +66,18 @@ layers_table[1].actf = "log_logistic"
 full_sdae = ann.autoencoders.build_full_autoencoder(layers_table, sdae_table)
 trainer = trainable.supervised_trainer(full_sdae,
 				       ann.loss.multi_class_cross_entropy(layers_table[1].size),
-				       bunch_size)
+				       bunch_size,
+				       ann.optimizer.cg())
 trainer:build()
+trainer:set_option("rho",0.001)
 
 train_input_wo_noise = train_input
 train_input = params_pretrain.training_options.global.noise_pipeline[1](train_input)
 train_input = params_pretrain.training_options.global.noise_pipeline[2](train_input)
 
-trainer:set_option("learning_rate", 0.00001)
-trainer:set_option("momentum", 0.00002)
-trainer:set_option("weight_decay", 0.0)
+--trainer:set_option("learning_rate", 0.00001)
+--trainer:set_option("momentum", 0.00002)
+--trainer:set_option("weight_decay", 0.0)
 
 result = trainer:train_holdout_validation{
   epochs_wo_validation = 2,

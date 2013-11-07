@@ -165,7 +165,7 @@ __global__ void computeCrossEntropyLossFunctionKernel(const float *output,
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
     // compute derivative
     float  log_o     = clip(output[index], logf(epsilon), logf(1.0 - epsilon));
-    double o         = exp(output[index]);
+    double o         = exp(log_o);
     float  log_inv_o = log(1.0 - o);
     float  t         = clip(target_output[index], epsilon, 1.0f - epsilon);
     float  inv_t     = clip(1.0f - target_output[index], epsilon, 1.0f - epsilon);
@@ -191,7 +191,8 @@ __global__ void computeCrossEntropyGradientKernel(const float *output,
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
     // compute derivative
-    error_output[index] = expf(output[index]) - target_output[index];
+    float v = clip(output[index], logf(epsilon), logf(1.0 - epsilon));
+    error_output[index] = expf(v) - target_output[index];
   }
 }
 
@@ -512,7 +513,7 @@ void doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
 			      "Only [0,1] target patterns are allowed");
 		 // compute derivative
 		 float  log_o     = clamp(input_ptr[b], log_epsilon, log_1_epsilon);
-		 double o         = exp(input_ptr[b]);
+		 double o         = exp(log_o);
 		 float  log_inv_o = log(1.0 - o);
 		 // CLAMP of reference (target)
 		 float  t         = clamp(target_ptr[b], EPSILON, 1.0f - EPSILON);
@@ -520,7 +521,7 @@ void doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
 		 // numerical approximation problems, and to ensure correct working of
 		 // inv_t > EPSILON comparison
 		 float  inv_t     = clamp(1.0f - target_ptr[b], EPSILON, 1.0f - EPSILON);
-		 //printf("%g * %g + %g * %g :: %g\n", t, log_o, inv_t, log_inv_o, o);
+		 // printf("%g * %g + %g * %g :: %g\n", t, log_o, inv_t, log_inv_o, o);
 		 float sum;
 		 if (t > EPSILON) sum = -t * log_o;
 		 else sum = 0.0f;
@@ -613,14 +614,16 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
   }
   else {
 #endif
-    UNUSED_VARIABLE(EPSILON);
+    float log_epsilon   = logf(EPSILON);
+    float log_1_epsilon = logf(1.0f - EPSILON);
+
     const float *input_ptr  = input->getPPALForRead();
     const float *target_ptr = target->getPPALForRead();
     float *error_output_ptr = error_output->getPPALForWrite();
     for (unsigned int i = 0; i < size; i++) {
       for (unsigned int b=0; b<bunch_size; ++b)
 	error_output_ptr[b] =
-	  clamp(expf(input_ptr[b]), EPSILON, 1.0f - EPSILON) - target_ptr[b];
+	  expf(clamp(input_ptr[b], log_epsilon, log_1_epsilon)) - target_ptr[b];
       input_ptr  += bunch_size;
       target_ptr += bunch_size;
       error_output_ptr += bunch_size;
