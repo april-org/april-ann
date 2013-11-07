@@ -64,7 +64,7 @@ params_pretrain = {
   -- training parameters
   training_options      = {
     global = {
-      ann_options = { weight_decay  = 1e-05, momentum=0.1, rho=0.00001 },
+      ann_options = { weight_decay  = 1e-05, momentum=0.0, rho=0.0001 },
       noise_pipeline = { function(ds) return dataset.perturbation{
 			     dataset  = ds, -- WARNING: the function argument
 			     mean     = 0,
@@ -91,7 +91,7 @@ trainer_deep_classifier = trainable.supervised_trainer(deep_classifier,
 						       bunch_size,
 						       ann.optimizer.cg())
 trainer_deep_classifier:build()
-trainer_deep_classifier:set_option("rho", 0.0001)
+trainer_deep_classifier:set_option("rho", 0.001)
 --
 shallow_classifier = ann.mlp.all_all.generate("256 inputs 256 tanh 128 tanh 10 log_softmax")
 trainer_shallow_classifier = trainable.supervised_trainer(shallow_classifier,
@@ -204,7 +204,7 @@ trainer_deep_classifier:set_layerwise_option("b.*", "weight_decay",0.0)
 trainer_deep_wo_pretraining:set_layerwise_option("b.*", "weight_decay",0.0)
 trainer_shallow_classifier:set_layerwise_option("b.*", "weight_decay",0.0)
 
-for i=1,10 do
+for i=1,40 do
   local mse_tr_deep = trainer_deep_classifier:train_dataset(datosentrenar_deep)
   local mse_tr_deep_wo = trainer_deep_wo_pretraining:train_dataset(datosentrenar_deep_wo)
   local mse_tr_shallow = trainer_shallow_classifier:train_dataset(datosentrenar_shallow)
