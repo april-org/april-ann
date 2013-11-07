@@ -447,7 +447,7 @@ function cg_class_metatable:__call(g_options, l_options, count,
 				   df0, df1, df2, df3, x0, s)
   -- the base optimizer, with the supported learning parameters
   local obj = ann.optimizer({
-			      {"momentum", "Learning inertia factor (0.1)"},
+			      --			      {"momentum", "Learning inertia factor (0.1)"},
 			      {"weight_decay", "Weights L2 regularization (1e-04)"},
 			      {"rho", "Constant for Wolf-Powell conditions (0.01)"},
 			      {"sig", "Constant for Wolf-Powell conditions (0.5)"},
@@ -527,17 +527,18 @@ function cg_methods:execute(eval, cnn_table)
   end
   -- UPDATE_GRADIENTS function
   local update_gradients = function(gradients)
-    for cname,cnn in pairs(cnn_table) do
-      local w,oldw        = cnn:matrix()
-      local grad          = gradients[cname]
-      local mt  = self:get_option_of(cname, "momentum") or 0.0
-      --
-      if mt > 0.0 then
-	local aux = w:clone():axpy(-1.0, oldw)
-	grad:axpy(mt, aux)
-      end
-      --
-    end
+    return gradients
+    -- for cname,cnn in pairs(cnn_table) do
+    --   local w,oldw        = cnn:matrix()
+    --   local grad          = gradients[cname]
+    --   local mt  = self:get_option_of(cname, "momentum") or 0.0
+    --   --
+    --   if mt > 0.0 then
+    -- 	local aux = w:clone():axpy(-1.0, oldw)
+    -- 	grad:axpy(mt, aux)
+    --   end
+    --   --
+    -- end
   end
   -- COPY_WEIGHTS function
   local copy_weights = function(t)
