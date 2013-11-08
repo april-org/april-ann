@@ -247,7 +247,8 @@ end
 
 function sgd_methods:execute(eval, cnn_table)
   local arg = table.pack( eval() )
-  local tr_loss,tr_loss_matrix,gradients,bunch_size,ann_component = table.unpack(arg)
+  local tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+  local bunch_size = bunch_size or 1
   -- the gradient computation could fail returning nil, it is important to take
   -- this into account
   if not gradients then return nil end
@@ -356,7 +357,7 @@ function rprop_methods:execute(eval, cnn_table)
   local arg
   for i=1,niter do
     arg = table.pack( eval() )
-    local tr_loss,tr_loss_matrix,gradients,bunch_size,ann_component = table.unpack(arg)
+    local tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
     -- the gradient computation could fail returning nil, it is important to
     -- take this into account
     if not gradients then return nil end
@@ -633,9 +634,9 @@ function cg_methods:execute(eval, cnn_table)
   
   -- evaluate at initial point
   local arg = table.pack( eval() )
-  local tr_loss,tr_loss_matrix,gradients,bunch_size,ann_component = table.unpack(arg)
+  local tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
   update_gradients(gradients)
-  f1 = tr_loss_matrix:sum()/tr_loss_matrix:size()
+  f1 = tr_loss
   table.insert(fx, f1)
   copy(df1,gradients)
   i=i+1
@@ -660,9 +661,9 @@ function cg_methods:execute(eval, cnn_table)
     update_weights(x, z1, s)
 
     arg = table.pack( eval() )
-    tr_loss,tr_loss_matrix,gradients,bunch_size,ann_component = table.unpack(arg)
+    tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
     update_gradients(gradients)
-    f2 = tr_loss_matrix:sum()/tr_loss_matrix:size()
+    f2 = tr_loss
     
     copy(df2,gradients)
     i=i+1
@@ -691,9 +692,9 @@ function cg_methods:execute(eval, cnn_table)
 	
 	update_weights(x, z2, s)
 	arg = table.pack( eval() )
-	tr_loss,tr_loss_matrix,gradients,bunch_size,ann_component = table.unpack(arg)
+	tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
 	update_gradients(gradients)
-	f2 = tr_loss_matrix:sum()/tr_loss_matrix:size()
+	f2 = tr_loss
 	copy(df2,gradients)
 	i=i+1
 	m = m - 1
@@ -734,9 +735,9 @@ function cg_methods:execute(eval, cnn_table)
       update_weights(x, z2, s)
       
       arg = table.pack( eval() )
-      tr_loss,tr_loss_matrix,gradients,bunch_size,ann_component = table.unpack(arg)
+      tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
       update_gradients(gradients)
-      f2 = tr_loss_matrix:sum()/tr_loss_matrix:size()
+      f2 = tr_loss
       copy(df2, gradients)
       i=i+1
       m = m - 1
