@@ -1299,6 +1299,19 @@ function iterator_methods:enumerate()
 		  end)
 end
 
+function iterator_methods:call(funcname, ...)
+  local func_args = table.pack(...)
+  return self:map(function(...)
+		    local arg    = table.pack(...)
+		    local result = {}
+		    for i=1,#arg do
+		      local t = table.pack(arg[i][funcname](arg[i],table.unpack(func_args)))
+		      for j=1,#t do table.insert(result, t[j]) end
+		    end
+		    return table.unpack(result)
+		  end)
+end
+
 function iterator_methods:iterate(iterator_func)
   return self:map(function(...)
 		    local f,s,v = iterator_func(...)
