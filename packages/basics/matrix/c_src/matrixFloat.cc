@@ -343,6 +343,17 @@ void Matrix<float>::complement() {
 							    float));
 }
 
+
+/************* SIGN FUNCTION **************/
+DEF_CWISE_FUNCTOR_0(doSign,float);
+template<>
+void Matrix<float>::sign() {
+  applyFunctionWithSpanIterator<float>(this,
+				       MAKE_CWISE_FUNCTOR_0(doSign,float));;
+}
+
+/****************************************************************************/
+
 template<>
 Matrix<float> *Matrix<float>::cmul(const Matrix<float> *other) {
   if (size() != other->size())
@@ -354,7 +365,7 @@ Matrix<float> *Matrix<float>::cmul(const Matrix<float> *other) {
     ERROR_EXIT(128, "Matrices with different dimension sizes\n");
   if (!getIsContiguous() || !other->getIsContiguous())
     ERROR_EXIT(128, "Only allowed for contiguous matrices\n");
-  Matrix<float> *new_mat = new Matrix(1, &total_size, major_order);
+  Matrix<float> *new_mat = new Matrix(numDim, matrixSize, major_order);
 #ifdef USE_CUDA
   new_mat->setUseCuda(use_cuda);
 #endif

@@ -70,4 +70,10 @@ namespace ANN {
     return ret;
   }
 
+  char *CrossEntropyLossFunction::toLuaString() {
+    buffer_list buffer;
+    buffer.printf("ann.loss.cross_entropy(%d)", size);
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  }
+
 }

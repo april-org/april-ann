@@ -39,6 +39,7 @@ namespace ANN {
     virtual LossFunction *clone() {
       return new CrossEntropyLossFunction(this);
     }
+    virtual char *toLuaString();
   };
 }
 

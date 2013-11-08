@@ -62,5 +62,11 @@ namespace ANN {
 			 input_mat->getCudaFlag());
     return error_output;
   }
+
+  char *MAELossFunction::toLuaString() {
+    buffer_list buffer;
+    buffer.printf("ann.loss.mae(%d)", size);
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  }
   
 }

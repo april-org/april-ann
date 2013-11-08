@@ -40,6 +40,20 @@ april_set_doc("ann.loss.accum_loss",
 		}
 	      })
 
+april_set_doc("ann.loss.accum_loss",
+	      {
+		class="method",
+		summary="Receives a loss matrix and accumulates it",
+		params={
+		  "The loss function mean at the given batch.",
+		  "The loss matrix computed by compute_loss method.",
+		},
+		outputs = {
+		  "The given loss function mean at the given batch.",
+		  "The given loss matrix",
+		}
+	      })
+
 -------------------------------------------------------------------
 
 april_set_doc("ann.loss.compute_loss",
@@ -56,6 +70,7 @@ april_set_doc("ann.loss.compute_loss",
 		  "Target token",
 		},
 		outputs = {
+		  "The loss function mean at the given batch.",
 		  "A matrix with the loss computed for every pair of patterns (tokens)",
 		},
 	      })
@@ -211,6 +226,37 @@ april_set_doc("ann.loss.batch_fmeasure_micro_avg",
 		  "This loss function computes",
 		  "FMeasure for a given bunch of patterns, and for",
 		  "multi-class models, using micro-averaging strategy.",
+		}
+	      })
+
+april_set_doc("ann.loss.batch_fmeasure.__call",
+	      {
+		class="method",
+		summary="Constructor",
+		params={
+		  ["size"]="The expected pattern size",
+		  ["beta"]={
+		    "The beta parameter of FMeasure",
+		    "[optional], by default is 1.0",
+		  },
+		  ["complement"]={
+		    "Boolean value, if true computes 1-output",
+		    "[optional], by default is false",
+		  },
+		},
+		outputs={ "An instance of ann.loss.batch_fmeasure" },
+	      })
+
+-------------------------------------------------------------------
+
+april_set_doc("ann.loss.batch_fmeasure_macro_avg",
+	      {
+		class="class",
+		summary="The FMeasure computed from a bunch of patterns",
+		description={
+		  "This loss function computes",
+		  "FMeasure for a given bunch of patterns, and for",
+		  "multi-class models, using macro-averaging strategy.",
 		}
 	      })
 

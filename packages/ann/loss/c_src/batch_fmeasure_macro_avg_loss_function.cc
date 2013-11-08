@@ -147,4 +147,13 @@ namespace ANN {
     DecRef(target_mat);
     return error_output;
   }
+
+  char *BatchFMeasureMacroAvgLossFunction::toLuaString() {
+    buffer_list buffer;
+    buffer.printf("ann.loss.batch_fmeasure_macro_avg{ size=%d, beta=%f, "
+		  "complement=%s }",
+		  size, beta, (complement_output)?"true":"false");
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  }
+
 }

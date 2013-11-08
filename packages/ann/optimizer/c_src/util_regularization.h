@@ -2,7 +2,7 @@
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
- * Copyright 2012, Salvador España-Boquera, Adrian Palacios, Francisco Zamora-Martinez
+ * Copyright 2013, Francisco Zamora-Martinez
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
@@ -18,27 +18,19 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef MSELOSSFUNCTION_H
-#define MSELOSSFUNCTION_H
+#ifndef UTIL_REGULARIZATION_H
+#define UTIL_REGULARIZATION_H
 
-#include "referenced.h"
-#include "token_base.h"
-#include "loss_function.h"
-
+#include "matrixFloat.h"
 namespace ANN {
-  class MSELossFunction : public LossFunction {
-    MSELossFunction(MSELossFunction *other) : LossFunction(other) { }
-  protected:
-    virtual MatrixFloat *computeLossBunch(Token *input, Token *target);
-  public:
-    MSELossFunction(unsigned int size);
-    virtual ~MSELossFunction();
-    virtual Token *computeGradient(Token *input, Token *target);
-    virtual LossFunction *clone() {
-      return new MSELossFunction(this);
-    }
-    virtual char *toLuaString();
-  };
+  namespace optimizer {
+    class UtilRegularization : public Referenced {
+    public:
+      static void L1NormMap(MatrixFloat *destw,
+			    float value,
+			    MatrixFloat *w);
+    };
+  }
 }
 
-#endif // MSELOSSFUNCTION_H
+#endif // UTIL_REGULARIZATION_H

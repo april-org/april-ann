@@ -1,6 +1,6 @@
 m1 = ImageIO.read(string.get_path(arg[0]) ..  "digits.png"):to_grayscale():invert_colors():matrix()
 
-bunch_size = 8
+bunch_size = 32
 
 train_input = dataset.matrix(m1,
 			     {
@@ -58,14 +58,13 @@ params_pretrain = {
   supervised_layer      = { size = 10, actf = "log_softmax" },
   output_datasets       = { train_output },
   
-  bunch_size            = bunch_size,
+  bunch_size            = 512,
+  optimizer             = function() return ann.optimizer.cg() end,
   
   -- training parameters
   training_options      = {
     global = {
-      ann_options = { learning_rate = 0.1,
-		      momentum      = 0.02,
-		      weight_decay  = 1e-05 },
+      ann_options = { weight_decay  = 1e-05, rho=0.0001 },
       noise_pipeline = { function(ds) return dataset.perturbation{
 			     dataset  = ds, -- WARNING: the function argument
 			     mean     = 0,
@@ -76,7 +75,7 @@ params_pretrain = {
 			     vd       = 0.10,
 			     zero     = 0.0,
 			     random   = perturbation_prob } end },
-      min_epochs            =  2,
+      min_epochs            = 4,
       max_epochs            = 10,
       pretraining_percentage_stopping_criterion = 0.1,
     },
@@ -89,8 +88,10 @@ codifier_net = ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
 							       layers_table)
 trainer_deep_classifier = trainable.supervised_trainer(deep_classifier,
 						       ann.loss[loss_name](10),
-						       bunch_size)
+						       bunch_size,
+						       ann.optimizer.cg())
 trainer_deep_classifier:build()
+trainer_deep_classifier:set_option("rho", 0.001)
 --
 shallow_classifier = ann.mlp.all_all.generate("256 inputs 256 tanh 128 tanh 10 log_softmax")
 trainer_shallow_classifier = trainable.supervised_trainer(shallow_classifier,
@@ -121,7 +122,8 @@ train_input = dataset.salt_noise{
 datosentrenar_deep = {
   input_dataset = train_input,
   output_dataset = train_output,
-  shuffle = random(8569)
+  shuffle = random(8569),
+  bunch_size = 512,
 }
 datosentrenar_shallow = {
   input_dataset = train_input,
@@ -169,32 +171,40 @@ if dropout_factor > 0.0 then
   end
 end
 
-deep_classifier:set_option("learning_rate", 0.4)
-deep_classifier:set_option("momentum", 0.2)
-deep_classifier:set_option("weight_decay", 0.0)
-deep_classifier:set_option("max_norm_penalty", 15.0)
-set_dropout(trainer_deep_classifier)
+--trainer_deep_classifier:set_option("learning_rate", 0.4)
+--trainer_deep_classifier:set_option("momentum", 0.0)
+trainer_deep_classifier:set_option("weight_decay", 0.0)
+trainer_deep_classifier:set_option("max_norm_penalty", 4.0)
+-- set_dropout(trainer_deep_classifier)
 
-shallow_classifier:set_option("learning_rate", 0.4)
-shallow_classifier:set_option("momentum",
-			      deep_classifier:get_option("momentum"))
-shallow_classifier:set_option("weight_decay",
-			      deep_classifier:get_option("weight_decay"))
-shallow_classifier:set_option("max_norm_penalty",
-			      deep_classifier:get_option("max_norm_penalty"))
+trainer_shallow_classifier:set_option("learning_rate", 0.4)
+trainer_shallow_classifier:set_option("momentum",
+				      0.1)
+trainer_shallow_classifier:set_option("weight_decay",
+				      trainer_deep_classifier:get_option("weight_decay"))
+trainer_shallow_classifier:set_option("max_norm_penalty",
+				      trainer_deep_classifier:get_option("max_norm_penalty"))
 set_dropout(trainer_shallow_classifier)
 
-deep_classifier_wo_pretraining:set_option("learning_rate",
-					  shallow_classifier:get_option("learning_rate"))
-deep_classifier_wo_pretraining:set_option("momentum",
-					  deep_classifier:get_option("momentum"))
-deep_classifier_wo_pretraining:set_option("weight_decay",
-					  deep_classifier:get_option("weight_decay"))
-deep_classifier:set_option("max_norm_penalty",
-			   deep_classifier:get_option("max_norm_penalty"))
+trainer_deep_wo_pretraining:set_option("learning_rate",
+				       trainer_shallow_classifier:get_option("learning_rate"))
+trainer_deep_wo_pretraining:set_option("momentum",
+				       trainer_shallow_classifier:get_option("momentum"))
+trainer_deep_wo_pretraining:set_option("weight_decay",
+				       trainer_deep_classifier:get_option("weight_decay"))
+trainer_deep_wo_pretraining:set_option("max_norm_penalty",
+				       trainer_deep_classifier:get_option("max_norm_penalty"))
 set_dropout(trainer_deep_wo_pretraining)
 
-for i=1,10 do
+trainer_deep_classifier:set_layerwise_option("b.*", "max_norm_penalty",0.0)
+trainer_deep_wo_pretraining:set_layerwise_option("b.*", "max_norm_penalty",0.0)
+trainer_shallow_classifier:set_layerwise_option("b.*", "max_norm_penalty",0.0)
+
+trainer_deep_classifier:set_layerwise_option("b.*", "weight_decay",0.0)
+trainer_deep_wo_pretraining:set_layerwise_option("b.*", "weight_decay",0.0)
+trainer_shallow_classifier:set_layerwise_option("b.*", "weight_decay",0.0)
+
+for i=1,40 do
   local mse_tr_deep = trainer_deep_classifier:train_dataset(datosentrenar_deep)
   local mse_tr_deep_wo = trainer_deep_wo_pretraining:train_dataset(datosentrenar_deep_wo)
   local mse_tr_shallow = trainer_shallow_classifier:train_dataset(datosentrenar_shallow)
@@ -205,27 +215,22 @@ for i=1,10 do
 	 mse_tr_deep, mse_val_deep,
 	 mse_tr_deep_wo, mse_val_deep_wo,
 	 mse_tr_shallow, mse_val_shallow)
-  deep_classifier:set_option("learning_rate",
-			     deep_classifier:get_option("learning_rate")*0.99)
+  if trainer_deep_classifier:has_option("learning_rate") then
+    trainer_deep_classifier:set_option("learning_rate",
+				       trainer_deep_classifier:get_option("learning_rate")*0.99)
+  end
 end
 
 -- classification
-deep_out_ds    = trainer_deep_classifier:use_dataset{ input_dataset = val_input }
-deep_wo_out_ds = trainer_deep_wo_pretraining:use_dataset{ input_dataset = val_input }
-shallow_out_ds = trainer_shallow_classifier:use_dataset{ input_dataset  = val_input }
-
-local errors = {0,0,0}
-
-for ipat,pat in val_input:patterns() do
-  local _,class         = table.max(val_output:getPattern(ipat))
-  local _,deep_class    = table.max(deep_out_ds:getPattern(ipat))
-  local _,deep_wo_class = table.max(deep_wo_out_ds:getPattern(ipat))
-  local _,shallow_class = table.max(shallow_out_ds:getPattern(ipat))
-  if class ~= deep_class then errors[1] = errors[1] + 1 end
-  if class ~= deep_wo_class then errors[2] = errors[2] + 1 end
-  if class ~= shallow_class then errors[3] = errors[3] + 1 end
-end
-
-print(errors[1]/val_input:numPatterns(),
-      errors[2]/val_input:numPatterns(),
-      errors[3]/val_input:numPatterns())
+print(trainer_deep_classifier:validate_dataset{
+	input_dataset  = val_input,
+	output_dataset = val_output,
+	loss = ann.loss.zero_one() })
+print(trainer_deep_wo_pretraining:validate_dataset{
+	input_dataset  = val_input,
+	output_dataset = val_output,
+	loss = ann.loss.zero_one() })
+print(trainer_shallow_classifier:validate_dataset{
+	input_dataset  = val_input,
+	output_dataset = val_output,
+	loss = ann.loss.zero_one() })
