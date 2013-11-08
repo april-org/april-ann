@@ -171,7 +171,7 @@ april_set_doc("trainable.supervised_trainer.has_option", {
 
 function trainable_supervised_trainer_methods:has_option(name)
   local opt = assert(self.optimizer, "The optimizer has not been defined")
-  opt:het_option(name,value)
+  return opt:has_option(name)
 end
 
 ------------------------------------------------------------------------
@@ -313,11 +313,11 @@ april_set_doc("trainable.supervised_trainer.save", {
 		    "[optional]. By default is binary." },
 		}, })
 
-function trainable_supervised_trainer_methods:save(filename, binary)
+function trainable_supervised_trainer_methods:save(filename, format)
   assert(#self.components_order > 0, "The component is not built")
-  local binary = binary or "binary"
+  local format = format or "binary"
   local f = io.open(filename,"w") or error("Unable to open " .. filename)
-  f:write("return { model=".. self.ann_component:to_lua_string() .. ",\n")
+  f:write("return { model=".. self.ann_component:to_lua_string(format) .. ",\n")
   f:write("connections={")
   for _,wname in ipairs(self.weights_order) do
     local cobj = self.weights_table[wname]
@@ -325,18 +325,16 @@ function trainable_supervised_trainer_methods:save(filename, binary)
     f:write("\n[\"".. wname .. "\"] = {")
     f:write("\ninput = " .. cobj:get_input_size() .. ",")
     f:write("\noutput = " .. cobj:get_output_size() .. ",")
-    f:write("\nw = " .. w:to_lua_string(binary) .. ",")
-    f:write("\noldw = " .. oldw:to_lua_string(binary) .. ",")
+    f:write("\nw = " .. w:to_lua_string(format) .. ",")
+    f:write("\noldw = " .. oldw:to_lua_string(format) .. ",")
     f:write("\n},")
   end
   f:write("\n},\n")
   if self.loss_function then
-    local id = get_object_id(self.loss_function)
-    local sz = self.ann_component:get_output_size()
-    if id and sz then f:write("loss=" .. id .. "(".. sz .. "),\n") end
+    f:write("loss=" .. self.loss_function:to_lua_string(format) .. ",\n")
   end
   if self.optimizer then
-    f:write("optimizer=" .. self.optimizer:to_lua_string() .. ",\n")
+    f:write("optimizer=" .. self.optimizer:to_lua_string(format) .. ",\n")
   end
   if self.bunch_size then f:write("bunch_size="..self.bunch_size..",\n") end
   f:write("}\n")
@@ -716,8 +714,8 @@ april_set_doc("trainable.supervised_trainer.train_step", {
 		  "An optimizer [optional]",
 		},
 		outputs = {
+		  "The mean of loss function at current batch",
 		  "A matrix with the loss of every given pattern",
-		  "A token with the gradient of loss function at component inputs",
 		} })
 
 function trainable_supervised_trainer_methods:train_step(input, target, loss,
@@ -726,33 +724,36 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
   if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
   local loss      = loss or self.loss_function
   local optimizer = optimizer or self.optimizer
-  local tr_loss_matrix,gradient
-  optimizer:execute(function()
-		      self.ann_component:reset()
-		      local output = self.ann_component:forward(input, true)
-		      local output_mat = output:get_matrix()
-		      tr_loss_matrix = loss:compute_loss(output, target)
-		      if not tr_loss_matrix then return nil end
-		      gradient = loss:gradient(output, target)
-		      gradient = self.ann_component:backprop(gradient)
-		      --
-		      for name,mat in pairs(self.weight_grads) do mat:zeros() end
-		      --
-		      self.weight_grads =
-			self.ann_component:compute_gradients(self.weight_grads)
-		      return
+  local tr_loss, tr_loss_matrix =
+    optimizer:execute(function()
+			self.ann_component:reset()
+			local output = self.ann_component:forward(input, true)
+			local output_mat = output:get_matrix()
+			local tr_loss,tr_loss_matrix
+			tr_loss,tr_loss_matrix = loss:compute_loss(output, target)
+			if not tr_loss_matrix then return nil end
+			gradient = loss:gradient(output, target)
+			gradient = self.ann_component:backprop(gradient)
+			--
+			for name,mat in pairs(self.weight_grads) do mat:zeros() end
+			--
+			self.weight_grads =
+			  self.ann_component:compute_gradients(self.weight_grads)
+			return 
+			  -- the loss
+			  tr_loss,
+			-- the loss matrix
+			tr_loss_matrix,
 			-- the gradients
 			self.weight_grads,
-		      -- the bunch_size
-		      tr_loss_matrix:dim(1),
-		      -- the loss matrix
-		      tr_loss_matrix,
-		      -- the ANN component
-		      self.ann_component
-		    end,
-		    self.weights_table)
+			-- the bunch_size
+			tr_loss_matrix:dim(1),
+			-- the ANN component
+			self.ann_component
+		      end,
+		      self.weights_table)
   if tr_loss_matrix then loss:accum_loss(tr_loss_matrix) end
-  return tr_loss_matrix,gradient
+  return tr_loss,tr_loss_matrix
 end
 
 ------------------------------------------------------------------------
@@ -771,6 +772,7 @@ april_set_doc("trainable.supervised_trainer.validate_step", {
 		  "The loss function [optional]",
 		},
 		outputs = {
+		  "The mean of loss function at given batch",
 		  "A matrix with the loss of every pattern",
 		} })
 
@@ -780,10 +782,10 @@ function trainable_supervised_trainer_methods:validate_step(input, target, loss)
   local loss = loss or self.loss_function
   self.ann_component:reset()
   local output   = self.ann_component:forward(input)
-  local tr_loss_matrix = loss:compute_loss(output, target)
+  local tr_loss,tr_loss_matrix = loss:compute_loss(output, target)
   if tr_loss_matrix then
-    local tr_loss = loss:accum_loss(tr_loss_matrix)
-    return tr_loss
+    loss:accum_loss(tr_loss_matrix)
+    return tr_loss,tr_loss_matrix
   end
 end
 
@@ -800,6 +802,7 @@ april_set_doc("trainable.supervised_trainer.compute_gradients_step", {
 		},
 		outputs = {
 		  "A table with the gradient matrices.",
+		  "The mean of loss function at given batch",
 		  "A matrix with the loss of each pattern.",
 		} })
 
@@ -811,10 +814,10 @@ function trainable_supervised_trainer_methods:compute_gradients_step(input,
   if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
   local loss         = loss or self.loss_function
   local weight_grads = weight_grads or {}
-  local tr_loss,gradient
+  local tr_loss,tr_loss_matrix,gradient
   self.ann_component:reset()
   local output = self.ann_component:forward(input, true)
-  tr_loss_matrix = loss:compute_loss(output, target)
+  tr_loss,tr_loss_matrix = loss:compute_loss(output, target)
   if tr_loss_matrix then
     loss:accum_loss(tr_loss_matrix)
     gradient = loss:gradient(output, target)
@@ -824,7 +827,7 @@ function trainable_supervised_trainer_methods:compute_gradients_step(input,
     apply(function(name,mat)mat:zeros()end)
     --
     weight_grads = self.ann_component:compute_gradients(weight_grads)
-    return weight_grads,tr_loss_matrix
+    return weight_grads,tr_loss,tr_loss_matrix
   end
 end
 
@@ -850,10 +853,8 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
   self.ann_component:reset()
   loss:reset()
   local output   = self.ann_component:forward(input, true)
-  local tr_loss_matrix = loss:compute_loss(output, target)
+  local tr_loss,tr_loss_matrix = loss:compute_loss(output, target)
   if not tr_loss_matrix then return true end
-  loss:accum_loss(tr_loss_matrix)
-  local tr_loss  = loss:get_accum_loss()
   local gradient = loss:gradient(output, target)
   gradient=self.ann_component:backprop(gradient)
   self.weight_grads = self.ann_component:compute_gradients(self.weight_grads)
@@ -869,15 +870,11 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
     for i=1,w:size() do
       local orig_w = w:raw_get(i-1)
       w:raw_set(i-1, orig_w - epsilon)
-      loss:reset()
-      loss:accum_loss( loss:compute_loss(self.ann_component:forward(input, true),
-					 target) )
-      local loss_a = loss:get_accum_loss()
+      local loss_a = loss:compute_loss(self.ann_component:forward(input,true),
+				       target)
       w:raw_set(i-1, orig_w + epsilon)
-      loss:reset()
-      loss:accum_loss( loss:compute_loss(self.ann_component:forward(input, true),
-					 target) )
-      local loss_b = loss:get_accum_loss()
+      local loss_b = loss:compute_loss(self.ann_component:forward(input,true),
+				       target)
       w:raw_set(i-1, orig_w)
       local g = (loss_b - loss_a) / (2*epsilon)
       local ann_g = ann_grads:raw_get(i-1)*ratio

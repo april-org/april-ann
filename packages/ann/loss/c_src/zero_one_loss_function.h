@@ -41,6 +41,7 @@ namespace ANN {
     virtual LossFunction *clone() {
       return new ZeroOneLossFunction(this);
     }
+    virtual char *toLuaString();
   };
 }
 

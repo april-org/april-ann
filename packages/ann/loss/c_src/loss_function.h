@@ -111,6 +111,7 @@ namespace ANN {
     // To be implemented by derived classes
     virtual Token *computeGradient(Token *input, Token *target) = 0;
     virtual LossFunction *clone() = 0;
+    virtual char *toLuaString() = 0;
     /////////////////////////////////////////////////////////////////
   };
 }

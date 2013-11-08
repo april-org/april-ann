@@ -487,7 +487,8 @@ april_set_doc("ann.autoencoders.greedy_layerwise_pretraining",
 function ann.autoencoders.greedy_layerwise_pretraining(t)
   local params = get_table_fields(
     {
-      optimizer        = { mandatory=false, type_match="function" },
+      optimizer        = { mandatory=false, type_match="function",
+			   default = function() return nil end},
       names_prefix     = { mandatory=false, default="", type_match="string" },
       shuffle_random   = { mandatory=true,  isa_match=random },
       weights_random   = { mandatory=true,  isa_match=random },

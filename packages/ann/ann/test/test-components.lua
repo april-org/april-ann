@@ -13,11 +13,12 @@ function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
   trainer:build()
   trainer:randomize_weights{ inf = -1, sup = 1, random = rnd }
   input  = matrix.col_major(b, i):uniformf(-1,1,rnd)
-  if (loss_name == "cross_entropy" or
-      loss_name == "multi_class_cross_entropy") then
-    target = matrix.col_major(b, o):uniformf(0,1,rnd)
-  else
+  if loss_name == "mse" then
     target = matrix.col_major(b, o):uniformf(-1,1,rnd)
+  elseif not norm and (loss_name == "batch_fmeasure_micro_avg" or loss_name == "batch_fmeasure_macro_avg") then
+    target = matrix.col_major(b, o):uniform(0,1,rnd)
+  else
+    target = matrix.col_major(b, o):uniformf(0,1,rnd)
   end
   if norm then
     apply(function(m) m:scal(1/m:sum()) end,
@@ -65,14 +66,41 @@ end
 
 for i=2,4 do
   for o=1,4 do
-    for b=1,4 do
-      check_component(function()
-			return ann.components.stack():
-			push( ann.components.dot_product{ input=i, output=o } ):
-			push( ann.components.bias{ size=o } )
-		      end,
-		      "batch_fmeasure_micro_avg", i, o, b, "DOTPRODUCT + BIAS")
-    end
+    b=32
+    check_component(function()
+		      return ann.components.stack():
+		      push( ann.components.dot_product{ input=i, output=o } ):
+		      push( ann.components.bias{ size=o } ):
+		      push( ann.components.actf.logistic() )
+		    end,
+		    "batch_fmeasure_micro_avg", i, o, b, "DOTPRODUCT + BIAS + LOGISTIC")
+  end
+end
+
+for i=2,4 do
+  for o=1,4 do
+    b=32
+    check_component(function()
+		      return ann.components.stack():
+		      push( ann.components.dot_product{ input=i, output=o } ):
+		      push( ann.components.bias{ size=o } ):
+		      push( ann.components.actf.logistic() )
+		    end,
+		    "batch_fmeasure_macro_avg", i, o, b, "DOTPRODUCT + BIAS + LOGISTIC")
+  end
+end
+
+for i=2,4 do
+  for o=2,4 do
+    b=32
+    check_component(function()
+		      return ann.components.stack():
+		      push( ann.components.dot_product{ input=i, output=o } ):
+		      push( ann.components.bias{ size=o } ):
+		      push( ann.components.actf.softmax() )
+		    end,
+		    "batch_fmeasure_macro_avg", i, o, b, "DOTPRODUCT + BIAS + SOFTMAX",
+		    true)
   end
 end
 

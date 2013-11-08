@@ -42,7 +42,8 @@
 
 // ATTENTION: In 64-bit machines is better to use exp than expf
 #define sigmoid(numerator,value) (numerator) / (expf(-(value))+1.0f)
-#define logsigmoid(value) -log1pf(expf(-(value)))
+// The value of -log1p(exp(x)) when X is negative and large, is approximately X
+#define logsigmoid(value) ( (value)<-10.0f) ? (value) : (-log1pf(expf(-(value))))
 
 #define getMatrixFlatIndex(x,lda,y) ((x)+(y)*(lda))
 #define getMatrixIndex(x,lda,y) ((x)*(lda)+(y))
@@ -469,6 +470,12 @@ void doComplement(unsigned int N,
 		  unsigned int stride,
 		  unsigned int shift,
 		  bool use_gpu);
+
+void doSign(unsigned int N,
+	    FloatGPUMirroredMemoryBlock *v,
+	    unsigned int stride,
+	    unsigned int shift,
+	    bool use_gpu);
 
 void doSin(unsigned int N,
 	   FloatGPUMirroredMemoryBlock *v,

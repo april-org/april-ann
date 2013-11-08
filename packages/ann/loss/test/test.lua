@@ -13,8 +13,8 @@ class_extension(matrix,
 
 function check_loss(i,t,l,f,g)
   if f then
-    local e = l:compute_loss(tokens.matrix(i),tokens.matrix(t))
-    assert(math.abs(e:sum() - f(i,t)) < EPSILON)
+    local e,m = l:compute_loss(tokens.matrix(i),tokens.matrix(t))
+    assert(math.abs(e - f(i,t)/m:size()) < EPSILON)
   end
   if g then
     local ep = l:gradient(tokens.matrix(i),tokens.matrix(t))
