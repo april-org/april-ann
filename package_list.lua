@@ -41,4 +41,7 @@ return {
   -- HMMs
   "hmm_trainer",
   "rates",
+  
+  -- MISC
+  "monad",
 }

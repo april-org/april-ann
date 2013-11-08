@@ -788,12 +788,86 @@ end
 ---------------------------------------------------------------
 
 -- auxiliary function for fast development of reductions
+function math.lnot(a)
+  if a then return not a
+  else return function(a) return not a end
+  end
+end
+-- auxiliary function for fast development of reductions
+function math.lor(a,b)
+  if a and b then return a or b end
+  if not a and not b then return function(a,b) return a or b end end
+  if b == nil then
+    return function(b) return a or b end
+  end
+  error("Incorrect arguments")
+end
+-- auxiliary function for fast development of reductions
+function math.land(a,b)
+  if a and b then return a and b end
+  if not a and not b then return function(a,b) return a and b end end
+  if b == nil then
+    return function(b) return a and b end
+  end
+  error("Incorrect arguments")
+end
+-- auxiliary function for fast development of reductions
+function math.ge(a,b)
+  if a and b then return a>=b end
+  if not a and not b then return function(a,b) return a>=b end end
+  if b == nil then
+    return function(b) return a>=b end
+  elseif a == nil then
+    return function(a) return a>=b end
+  end
+end
+-- auxiliary function for fast development of reductions
+function math.gt(a,b)
+  if a and b then return a>b end
+  if not a and not b then return function(a,b) return a>b end end
+  if b == nil then
+    return function(b) return a>b end
+  elseif a == nil then
+    return function(a) return a>b end
+  end
+end
+-- auxiliary function for fast development of reductions
+function math.le(a,b)
+  if a and b then return a<=b end
+  if not a and not b then return function(a,b) return a<=b end end
+  if b == nil then
+    return function(b) return a<=b end
+  elseif a == nil then
+    return function(a) return a<=b end
+  end
+end
+-- auxiliary function for fast development of reductions
+function math.lt(a,b)
+  if a and b then return a<b end
+  if not a and not b then return function(a,b) return a<b end end
+  if b == nil then
+    return function(b) return a<b end
+  elseif a == nil then
+    return function(a) return a<b end
+  end
+end
+-- auxiliary function for fast development of reductions
+function math.eq(a,b)
+  if a and b then return a==b end
+  if not a and not b then return function(a,b) return a==b end end
+  if b == nil then
+    return function(b) return a==b end
+  end
+  error("Incorrect arguments")
+end
+-- auxiliary function for fast development of reductions
 function math.add(a,b)
   if a and b then return a+b end
   if not a and not b then return function(a,b) return a+b end end
   if b == nil then
     return function(b) return a+b end
   end
+  error("Incorrect arguments")
 end
 -- auxiliary function for fast development of reductions
 function math.sub(a,b)
@@ -812,6 +886,7 @@ function math.mul(a,b)
   if b == nil then
     return function(b) return a*b end
   end
+  error("Incorrect arguments")
 end
 -- auxiliary function for fast development of reductions
 function math.div(a,b)
