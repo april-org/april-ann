@@ -16,8 +16,11 @@ function monad_lazy_methods:pass(f)
     return function(...)
       local arg = table.pack(...)
       local aux = arg[1]:pass(f)
-      for i=2,#arg do
-	aux = aux(arg[i])
+      if luatype(aux) == "function" then
+	for i=2,#arg do
+	  if luatype(aux) ~= "function" then break end
+	  aux = aux(arg[i])
+	end
       end
       return aux
     end
