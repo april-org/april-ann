@@ -82,8 +82,13 @@ matrix.meta_instance.__add = function(op1, op2)
 end
 
 matrix.meta_instance.__sub = function(op1, op2)
-  if not isa(op1,matrix) then op1,op2=op2,op1 end
-  return op1:sub(op2)
+  if isa(op1,matrix) and isa(op2,matrix) then
+    return op1:sub(op2)
+  elseif isa(op1,matrix) then
+    return op1:clone():scalar_add(-op2)
+  elseif isa(op2,matrix) then
+    return op2:clone():scal(-1):scalar_add(op1)
+  end
 end
 
 matrix.meta_instance.__mul = function(op1, op2)
