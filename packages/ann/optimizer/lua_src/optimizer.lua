@@ -388,9 +388,9 @@ function rprop_methods:execute(eval, cnn_table)
 	collectgarbage("collect")
       end
     end
+    -- count one more update iteration
+    self:count_one()
   end
-  -- count one more update iteration
-  self:count_one()
   -- returns the same as returned by eval()
   return table.unpack(arg)
 end
@@ -551,6 +551,8 @@ function cg_methods:execute(eval, cnn_table)
   end
   -- UPDATE_WEIGHTS function
   local update_weights = function(x, dir, s)
+    -- count one more update iteration
+    self:count_one()
     for cname,cnn in pairs(cnn_table) do
       local w,oldw        = cnn:matrix()
       local grad          = s[cname]
@@ -577,6 +579,9 @@ function cg_methods:execute(eval, cnn_table)
       -- swap current and old weight matrices
       cnn:swap()
       --
+      if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
+	iterator(pairs(cnn_table)):select(2):call(prune_subnormal_and_check_normal)
+      end
     end
     -- swap in x
     x.w,x.oldw = x.oldw,x.w
@@ -788,14 +793,6 @@ function cg_methods:execute(eval, cnn_table)
   self.state.x0 = x0
   self.state.s = s
   
-  -- count one more update iteration
-  self:count_one()
-  --
-  if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
-    iterator(pairs(cnn_table)):apply(function(cname,cnn)
-				       cnn:prune_subnormal_and_check_normal()
-				     end)
-  end
   -- evaluate the function at the end
   local arg = table.pack( eval() )
   -- returns the same as returned by eval(), plus the sequence of iteration
