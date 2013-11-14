@@ -52,35 +52,59 @@ april_set_doc("trainable.supervised_trainer.__call", {
 			   "An optimizer [option], by default is ann.optimizer.sgd"},
 		outputs = { "Instantiated object" }, })
 
-function trainable_supervised_trainer_class_metatable:__call(ann_component,
-							     loss_function,
-							     bunch_size,
-							     optimizer)
-  local optimizer = optimizer or ann.optimizer.sgd()
-  if loss_function and not isa(loss_function, ann.loss) then
-    error("The second parameter must be an instance of ann.loss")
+function trainable_supervised_trainer_class_metatable:__call(...)
+  local arg = table.pack(...)
+  if #arg == 1 and type(arg[1]) == "table" then
+    -- Loading from a previously saved object, the first argument is a table
+    local t = arg[1]
+    local model = t.model
+    local connections = t.connections
+    local loss        = t.loss
+    local bunch_size  = t.bunch_size
+    local optimizer   = t.optimizer
+    local obj = trainable.supervised_trainer(model, loss, bunch_size, optimizer)
+    obj:build()
+    for wname,cobj in obj:iterate_weights() do
+      local w,oldw = connections[wname].w,connections[wname].oldw
+      assert(w ~= nil, "Component " .. wname .. " not found at file")
+      assert(connections[wname].input == cobj:get_input_size(),
+	     string.format("Incorrect input size, expected %d, found %d\n",
+			   cobj:get_input_size(), connections[wname].input))
+      assert(connections[wname].output == cobj:get_output_size(),
+	     string.format("Incorrect output size, expected %d, found %d\n",
+			   cobj:get_output_size(), connections[wname].output))
+      cobj:load{ w=w, oldw=oldw or w }
+    end
+    return obj
+  else
+    -- Constructor of a new object
+    local ann_component,loss_function,bunch_size,optimizer = table.unpack(arg)
+    local optimizer = optimizer or ann.optimizer.sgd()
+    if loss_function and not isa(loss_function, ann.loss) then
+      error("The second parameter must be an instance of ann.loss")
+    end
+    if optimizer and not isa(optimizer, ann.optimizer) then
+      error("The fourth parameter must be an instance of ann.optimizer")
+    end
+    if bunch_size and not tonumber(bunch_size) then
+      error("The third parameter must be a number")
+    end
+    local obj = {
+      ann_component    = assert(ann_component,"Needs an ANN component object"),
+      loss_function    = loss_function or false,
+      optimizer        = optimizer,
+      weights_table    = {},
+      components_table = {},
+      component2weights_dict = {},
+      weights2component_dict = {},
+      weights_order    = {},
+      components_order = {},
+      bunch_size       = bunch_size or false,
+      weight_grads     = {},
+    }
+    obj = class_instance(obj, self, true)
+    return obj
   end
-  if optimizer and not isa(optimizer, ann.optimizer) then
-    error("The fourth parameter must be an instance of ann.optimizer")
-  end
-  if bunch_size and not tonumber(bunch_size) then
-    error("The third parameter must be a number")
-  end
-  local obj = {
-    ann_component    = assert(ann_component,"Needs an ANN component object"),
-    loss_function    = loss_function or false,
-    optimizer        = optimizer,
-    weights_table    = {},
-    components_table = {},
-    component2weights_dict = {},
-    weights2component_dict = {},
-    weights_order    = {},
-    components_order = {},
-    bunch_size       = bunch_size or false,
-    weight_grads     = {},
-  }
-  obj = class_instance(obj, self, true)
-  return obj
 end
 
 ------------------------------------------------------------------------
@@ -299,6 +323,51 @@ end
 
 ------------------------------------------------------------------------
 
+function trainable_supervised_trainer_methods:to_lua_string(format)
+  assert(#self.components_order > 0, "The component is not built")
+  local format = format or "binary"
+  local t = { }
+  table.insert(t, "trainable.supervised_trainer{ ")
+  table.insert(t, "model=")
+  table.insert(t, self.ann_component:to_lua_string(format))
+  table.insert(t, ",\n")
+  table.insert(t, "connections={")
+  for _,wname in ipairs(self.weights_order) do
+    local cobj = self.weights_table[wname]
+    local w,oldw = cobj:copy_to()
+    table.insert(t, string.format("\n[%q] = {", wname))
+    table.insert(t, "\ninput = ")
+    table.insert(t, cobj:get_input_size())
+    table.insert(t, ",\noutput = ")
+    table.insert(t, cobj:get_output_size())
+    table.insert(t, ",\nw = ")
+    table.insert(t, w:to_lua_string(format))
+    table.insert(t, ",\noldw = ")
+    table.insert(t, oldw:to_lua_string(format))
+    table.insert(t, ",\n},")
+  end
+  table.insert(t, "\n},\n")
+  if self.loss_function then
+    table.insert(t, "loss=")
+    table.insert(t, self.loss_function:to_lua_string(format))
+    table.insert(t, ",\n")
+  end
+  if self.optimizer then
+    table.insert(t, "optimizer=")
+    table.insert(t, self.optimizer:to_lua_string(format))
+    table.insert(t, ",\n")
+  end
+  if self.bunch_size then
+    table.insert(t, "bunch_size=")
+    table.insert(t, self.bunch_size)
+    table.insert(t, ",\n")
+  end
+  table.insert(t, "}")
+  return table.concat(t, "")
+end
+
+------------------------------------------------------------------------
+
 april_set_doc("trainable.supervised_trainer.save", {
 		class = "method",
 		summary = "Save the model at a disk file",
@@ -315,29 +384,10 @@ april_set_doc("trainable.supervised_trainer.save", {
 
 function trainable_supervised_trainer_methods:save(filename, format)
   assert(#self.components_order > 0, "The component is not built")
-  local format = format or "binary"
   local f = io.open(filename,"w") or error("Unable to open " .. filename)
-  f:write("return { model=".. self.ann_component:to_lua_string(format) .. ",\n")
-  f:write("connections={")
-  for _,wname in ipairs(self.weights_order) do
-    local cobj = self.weights_table[wname]
-    local w,oldw = cobj:copy_to()
-    f:write("\n[\"".. wname .. "\"] = {")
-    f:write("\ninput = " .. cobj:get_input_size() .. ",")
-    f:write("\noutput = " .. cobj:get_output_size() .. ",")
-    f:write("\nw = " .. w:to_lua_string(format) .. ",")
-    f:write("\noldw = " .. oldw:to_lua_string(format) .. ",")
-    f:write("\n},")
-  end
-  f:write("\n},\n")
-  if self.loss_function then
-    f:write("loss=" .. self.loss_function:to_lua_string(format) .. ",\n")
-  end
-  if self.optimizer then
-    f:write("optimizer=" .. self.optimizer:to_lua_string(format) .. ",\n")
-  end
-  if self.bunch_size then f:write("bunch_size="..self.bunch_size..",\n") end
-  f:write("}\n")
+  f:write("return ")
+  f:write(self:to_lua_string(format))
+  f:write("\n")
   f:close()
 end
 
@@ -358,26 +408,15 @@ april_set_doc("trainable.supervised_trainer.load", {
 		}, })
 
 function trainable.supervised_trainer.load(filename, loss, bunch_size, optimizer)
-  local f = loadfile(filename) or error("Unable to open " .. filename)
-  local t = f() or error("Impossible to load chunk from file " .. filename)
-  local model = t.model
-  local connections = t.connections
-  local bunch_size = bunch_size or t.bunch_size
-  local loss = loss or t.loss
-  local optimizer = optimizer or t.optimizer
-  local obj = trainable.supervised_trainer(model, loss, bunch_size, optimizer)
-  obj:build()
-  for wname,cobj in obj:iterate_weights() do
-    local w,oldw = connections[wname].w,connections[wname].oldw
-    assert(w ~= nil, "Component " .. wname .. " not found at file")
-    assert(connections[wname].input == cobj:get_input_size(),
-	   string.format("Incorrect input size, expected %d, found %d\n",
-			 cobj:get_input_size(), connections[wname].input))
-    assert(connections[wname].output == cobj:get_output_size(),
-	   string.format("Incorrect output size, expected %d, found %d\n",
-			 cobj:get_output_size(), connections[wname].output))
-    cobj:load{ w=w, oldw=oldw or w }
+  local f   = loadfile(filename) or error("Unable to open " .. filename)
+  local obj = f() or error("Impossible to load chunk from file " .. filename)
+  if type(obj) == "table" then
+    -- OLD FORMAT LOADER
+    obj = trainable.supervised_trainer(obj, loss, bunch_size, optimizer)
   end
+  obj.bunch_size    = bunch_size or obj.bunch_size
+  obj.loss_function = loss       or obj.loss_function
+  obj.optimizer     = optimizer  or obj.optimizer
   return obj
 end
 
@@ -1704,6 +1743,115 @@ function trainable_supervised_trainer_methods:train_holdout_validation(t)
 	   last_train_error = last_train_error,
 	   last_val_error   = last_val_error }
 end
+
+
+------------------------------------------------------------------------------
+
+local train_holdout_methods, train_holdout_class_metatable =
+  class("trainable.train_holdout_validation")
+
+function train_holdout_class_metatable:__call(t,saved_state)
+  local params = get_table_fields(
+    {
+      epochs_wo_validation = { mandatory=false, type_match="number", default=0 },
+      min_epochs = { mandatory=true, type_match="number" },
+      max_epochs = { mandatory=true, type_match="number" },
+      stopping_criterion = { mandatory=true, type_match="function" },
+      first_epoch        = { mandatory=false, type_match="number", default=1 },
+    }, t)
+  local saved_state = saved_state or {}
+  local obj = {
+    params = params,
+    state  = {
+      current_epoch    = saved_state.current_epoch    or 0,
+      train_error      = saved_state.train_error      or math.huge,
+      validation_error = saved_state.validation_error or math.huge,
+      best_epoch       = saved_state.best_epoch       or 0,
+      best_val_error   = saved_state.best_val_error   or 0,
+      best             = saved_state.best             or nil,
+    },
+  }
+  return class_instance(obj, self)
+end
+
+function train_holdout_methods:execute(epoch_function)
+  local params = self.params
+  local state  = self.state
+  state.current_epoch = state.current_epoch + 1
+  collectgarbage("collect")
+  local model
+  model, state.train_error, state.validation_error = epoch_function()
+  if ( state.validation_error < state.best_val_error or
+       state.current_epoch <= params.epochs_wo_validation ) then
+    state.best_epoch     = state.current_epoch
+    state.best_val_error = state.validation_error
+    state.best           = model:clone()
+  end
+  if ( state.current_epoch > params.min_epochs and
+       params.stopping_criterion(state) ) then
+    return false
+  else
+    return true
+  end
+end
+
+function train_holdout_methods:set_param(name,value)
+  assert(self.params[name], "Param  " .. name .. " not found")
+  self.params[name] = value
+end
+
+function train_holdout_methods:get_param(name)
+  return self.params[name]
+end
+
+function train_holdout_methods:get_state()
+  local state = self.state
+  return state.current_epoch, state.train_error, state.validation_error,
+  state.best_epoch, state.best_val_error, state.best
+end
+
+function train_holdout_methods:get_state_table()
+  return self.state
+end
+
+function train_holdout_methods:get_state_string()
+  local state = self.state
+  return string.format("%5d %.6f %.6f    %5d %.6f",
+		       state.current_epoch,
+		       state.train_error,
+		       state.validation_error,
+		       state.best_epoch,
+		       state.best_val_error)
+end
+
+function train_holdout_methods:to_lua_string(format)
+  local t = { }
+  table.insert(t, "trainable.train_holdout_validation{")
+  --
+  table.insert(t, "\n")
+  table.insert(t, table.tostring(self.params))
+  table.insert(t, ",")
+  table.insert(t, "\n")
+  table.insert(t, table.tostring(self.state))
+  table.insert(t, ",")
+  table.insert(t, "\n}")
+  return table.concat(t, "")
+end
+
+function train_holdout_methods:save(filename,format)
+  local f = io.open(filename, "w") or error("Unable to open " .. filename)
+  f:write("return ")
+  f:write(self:to_lua_string())
+  f:write("\n")
+  f:close()
+end
+
+function train_holdout_methods:load(filename)
+  local f   = loadfile(filename) or error("Unable to open " .. filename)
+  local obj = f() or error("Impossible to load chunk from file " .. filename)
+  return obj
+end
+
 
 ---------------------------------------------------------------------------
 -- This function trains without validation, it is trained until a maximum of
