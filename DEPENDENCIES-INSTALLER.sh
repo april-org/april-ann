@@ -23,7 +23,7 @@ if [ $UNAME = "Linux" ]; then
     fi
 elif [ $UNAME = "Darwin" ]; then
     if [ `which port` ]; then
-	port install zlib readline libpng tiff findutils ||
+	port install zlib readline libpng tiff findutils pkgconfig ||
 	(echo "ERROR INSTALLING DEPENDENCIES" && exit 10)
 	echo "This script will change the default system BSD find by GNU find"
 	echo "BSD find will be renamed as bfind"
