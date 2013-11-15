@@ -1769,6 +1769,7 @@ function train_holdout_class_metatable:__call(t,saved_state)
       best_epoch       = saved_state.best_epoch       or 0,
       best_val_error   = saved_state.best_val_error   or 0,
       best             = saved_state.best             or nil,
+      last             = saved_state.last             or nil,
     },
   }
   return class_instance(obj, self)
@@ -1779,13 +1780,15 @@ function train_holdout_methods:execute(epoch_function)
   local state  = self.state
   state.current_epoch = state.current_epoch + 1
   collectgarbage("collect")
-  local model
-  model, state.train_error, state.validation_error = epoch_function()
+  state.last, state.train_error, state.validation_error = epoch_function()
+  assert(state.last and state.train_error and state.validation_error,
+	 "Needs a function which returns three values: "..
+	   "a model, training error and validation error")
   if ( state.validation_error < state.best_val_error or
        state.current_epoch <= params.epochs_wo_validation ) then
     state.best_epoch     = state.current_epoch
     state.best_val_error = state.validation_error
-    state.best           = model:clone()
+    state.best           = state.last:clone()
   end
   if ( state.current_epoch > params.min_epochs and
        params.stopping_criterion(state) ) then
@@ -1807,7 +1810,7 @@ end
 function train_holdout_methods:get_state()
   local state = self.state
   return state.current_epoch, state.train_error, state.validation_error,
-  state.best_epoch, state.best_val_error, state.best
+  state.best_epoch, state.best_val_error, state.best, state.last
 end
 
 function train_holdout_methods:get_state_table()
@@ -1826,15 +1829,14 @@ end
 
 function train_holdout_methods:to_lua_string(format)
   local t = { }
-  table.insert(t, "trainable.train_holdout_validation{")
+  table.insert(t, "trainable.train_holdout_validation(")
   --
-  table.insert(t, "\n")
+  table.insert(t, "\n\t")
   table.insert(t, table.tostring(self.params))
   table.insert(t, ",")
-  table.insert(t, "\n")
+  table.insert(t, "\n\t")
   table.insert(t, table.tostring(self.state))
-  table.insert(t, ",")
-  table.insert(t, "\n}")
+  table.insert(t, "\n)")
   return table.concat(t, "")
 end
 
