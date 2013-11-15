@@ -28,7 +28,7 @@ elif [ $UNAME = "Darwin" ]; then
 	echo "This script will change the default system BSD find by GNU find"
 	echo "BSD find will be renamed as bfind"
 	if [ ! -e /usr/find/bfind ]; then
-	    mv /usr/bin/find /usr/find/bfind
+	    mv /usr/bin/find /usr/bin/bfind
 	else
 	    rm -f /usr/bin/find
 	fi
