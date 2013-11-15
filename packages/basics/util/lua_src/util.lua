@@ -1,6 +1,6 @@
 local COLWIDTH=70
 
-function class_get_value_of_key(class_table, key)
+function class_get(class_table, key)
   if class_table.meta_instance and
   luatype(class_table.meta_instance.__index) == "table" then
     return class_table.meta_instance.__index[key]
@@ -8,6 +8,8 @@ function class_get_value_of_key(class_table, key)
     error("The table is not a class")
   end
 end
+
+class_get_value_of_key = class_get
 
 function class_extension(class_table, key, value)
   if class_table.meta_instance and
@@ -105,6 +107,10 @@ function class(classname, parentclass)
   local class_metatable = {
     __tostring = function() return "class ".. classname .. " class" end,
     id         = classname .. " class",
+    --    __index    = function(t,k)
+    --      local aux = rawget(t,k)
+    --      if aux then return aux else return t.meta_instance.__index[k] end
+    --    end,
   }
   if parentclass then
     setmetatable(meta_instance.__index, parentclass.meta_instance)
@@ -782,12 +788,86 @@ end
 ---------------------------------------------------------------
 
 -- auxiliary function for fast development of reductions
+function math.lnot(a)
+  if a then return not a
+  else return function(a) return not a end
+  end
+end
+-- auxiliary function for fast development of reductions
+function math.lor(a,b)
+  if a and b then return a or b end
+  if not a and not b then return function(a,b) return a or b end end
+  if b == nil then
+    return function(b) return a or b end
+  end
+  error("Incorrect arguments")
+end
+-- auxiliary function for fast development of reductions
+function math.land(a,b)
+  if a and b then return a and b end
+  if not a and not b then return function(a,b) return a and b end end
+  if b == nil then
+    return function(b) return a and b end
+  end
+  error("Incorrect arguments")
+end
+-- auxiliary function for fast development of reductions
+function math.ge(a,b)
+  if a and b then return a>=b end
+  if not a and not b then return function(a,b) return a>=b end end
+  if b == nil then
+    return function(b) return a>=b end
+  elseif a == nil then
+    return function(a) return a>=b end
+  end
+end
+-- auxiliary function for fast development of reductions
+function math.gt(a,b)
+  if a and b then return a>b end
+  if not a and not b then return function(a,b) return a>b end end
+  if b == nil then
+    return function(b) return a>b end
+  elseif a == nil then
+    return function(a) return a>b end
+  end
+end
+-- auxiliary function for fast development of reductions
+function math.le(a,b)
+  if a and b then return a<=b end
+  if not a and not b then return function(a,b) return a<=b end end
+  if b == nil then
+    return function(b) return a<=b end
+  elseif a == nil then
+    return function(a) return a<=b end
+  end
+end
+-- auxiliary function for fast development of reductions
+function math.lt(a,b)
+  if a and b then return a<b end
+  if not a and not b then return function(a,b) return a<b end end
+  if b == nil then
+    return function(b) return a<b end
+  elseif a == nil then
+    return function(a) return a<b end
+  end
+end
+-- auxiliary function for fast development of reductions
+function math.eq(a,b)
+  if a and b then return a==b end
+  if not a and not b then return function(a,b) return a==b end end
+  if b == nil then
+    return function(b) return a==b end
+  end
+  error("Incorrect arguments")
+end
+-- auxiliary function for fast development of reductions
 function math.add(a,b)
   if a and b then return a+b end
   if not a and not b then return function(a,b) return a+b end end
   if b == nil then
     return function(b) return a+b end
   end
+  error("Incorrect arguments")
 end
 -- auxiliary function for fast development of reductions
 function math.sub(a,b)
@@ -806,6 +886,7 @@ function math.mul(a,b)
   if b == nil then
     return function(b) return a*b end
   end
+  error("Incorrect arguments")
 end
 -- auxiliary function for fast development of reductions
 function math.div(a,b)
@@ -1215,6 +1296,19 @@ function iterator_methods:enumerate()
   return self:map(function(...)
 		    id = id + 1
 		    return id, ...
+		  end)
+end
+
+function iterator_methods:call(funcname, ...)
+  local func_args = table.pack(...)
+  return self:map(function(...)
+		    local arg    = table.pack(...)
+		    local result = {}
+		    for i=1,#arg do
+		      local t = table.pack(arg[i][funcname](arg[i],table.unpack(func_args)))
+		      for j=1,#t do table.insert(result, t[j]) end
+		    end
+		    return table.unpack(result)
 		  end)
 end
 

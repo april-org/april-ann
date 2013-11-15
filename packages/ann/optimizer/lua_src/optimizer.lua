@@ -247,7 +247,8 @@ end
 
 function sgd_methods:execute(eval, cnn_table)
   local arg = table.pack( eval() )
-  local tr_loss,tr_loss_matrix,gradients,bunch_size,ann_component = table.unpack(arg)
+  local tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+  local bunch_size = bunch_size or 1
   -- the gradient computation could fail returning nil, it is important to take
   -- this into account
   if not gradients then return nil end
@@ -356,7 +357,7 @@ function rprop_methods:execute(eval, cnn_table)
   local arg
   for i=1,niter do
     arg = table.pack( eval() )
-    local tr_loss,tr_loss_matrix,gradients,bunch_size,ann_component = table.unpack(arg)
+    local tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
     -- the gradient computation could fail returning nil, it is important to
     -- take this into account
     if not gradients then return nil end
@@ -387,9 +388,9 @@ function rprop_methods:execute(eval, cnn_table)
 	collectgarbage("collect")
       end
     end
+    -- count one more update iteration
+    self:count_one()
   end
-  -- count one more update iteration
-  self:count_one()
   -- returns the same as returned by eval()
   return table.unpack(arg)
 end
@@ -550,6 +551,8 @@ function cg_methods:execute(eval, cnn_table)
   end
   -- UPDATE_WEIGHTS function
   local update_weights = function(x, dir, s)
+    -- count one more update iteration
+    self:count_one()
     for cname,cnn in pairs(cnn_table) do
       local w,oldw        = cnn:matrix()
       local grad          = s[cname]
@@ -576,6 +579,9 @@ function cg_methods:execute(eval, cnn_table)
       -- swap current and old weight matrices
       cnn:swap()
       --
+      if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
+	iterator(pairs(cnn_table)):select(2):call(prune_subnormal_and_check_normal)
+      end
     end
     -- swap in x
     x.w,x.oldw = x.oldw,x.w
@@ -633,9 +639,9 @@ function cg_methods:execute(eval, cnn_table)
   
   -- evaluate at initial point
   local arg = table.pack( eval() )
-  local tr_loss,tr_loss_matrix,gradients,bunch_size,ann_component = table.unpack(arg)
+  local tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
   update_gradients(gradients)
-  f1 = tr_loss_matrix:sum()/tr_loss_matrix:size()
+  f1 = tr_loss
   table.insert(fx, f1)
   copy(df1,gradients)
   i=i+1
@@ -660,9 +666,9 @@ function cg_methods:execute(eval, cnn_table)
     update_weights(x, z1, s)
 
     arg = table.pack( eval() )
-    tr_loss,tr_loss_matrix,gradients,bunch_size,ann_component = table.unpack(arg)
+    tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
     update_gradients(gradients)
-    f2 = tr_loss_matrix:sum()/tr_loss_matrix:size()
+    f2 = tr_loss
     
     copy(df2,gradients)
     i=i+1
@@ -691,9 +697,9 @@ function cg_methods:execute(eval, cnn_table)
 	
 	update_weights(x, z2, s)
 	arg = table.pack( eval() )
-	tr_loss,tr_loss_matrix,gradients,bunch_size,ann_component = table.unpack(arg)
+	tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
 	update_gradients(gradients)
-	f2 = tr_loss_matrix:sum()/tr_loss_matrix:size()
+	f2 = tr_loss
 	copy(df2,gradients)
 	i=i+1
 	m = m - 1
@@ -734,9 +740,9 @@ function cg_methods:execute(eval, cnn_table)
       update_weights(x, z2, s)
       
       arg = table.pack( eval() )
-      tr_loss,tr_loss_matrix,gradients,bunch_size,ann_component = table.unpack(arg)
+      tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
       update_gradients(gradients)
-      f2 = tr_loss_matrix:sum()/tr_loss_matrix:size()
+      f2 = tr_loss
       copy(df2, gradients)
       i=i+1
       m = m - 1
@@ -787,14 +793,6 @@ function cg_methods:execute(eval, cnn_table)
   self.state.x0 = x0
   self.state.s = s
   
-  -- count one more update iteration
-  self:count_one()
-  --
-  if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
-    iterator(pairs(cnn_table)):apply(function(cname,cnn)
-				       cnn:prune_subnormal_and_check_normal()
-				     end)
-  end
   -- evaluate the function at the end
   local arg = table.pack( eval() )
   -- returns the same as returned by eval(), plus the sequence of iteration

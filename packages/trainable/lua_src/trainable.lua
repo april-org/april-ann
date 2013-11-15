@@ -724,7 +724,7 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
   if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
   local loss      = loss or self.loss_function
   local optimizer = optimizer or self.optimizer
-  local tr_loss, tr_loss_matrix =
+  local tr_loss, _, _, tr_loss_matrix =
     optimizer:execute(function()
 			self.ann_component:reset()
 			local output = self.ann_component:forward(input, true)
@@ -742,12 +742,12 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
 			return 
 			  -- the loss
 			  tr_loss,
-			-- the loss matrix
-			tr_loss_matrix,
 			-- the gradients
 			self.weight_grads,
 			-- the bunch_size
 			tr_loss_matrix:dim(1),
+			-- the loss matrix
+			tr_loss_matrix,
 			-- the ANN component
 			self.ann_component
 		      end,

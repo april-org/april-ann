@@ -91,7 +91,8 @@ trainer_deep_classifier = trainable.supervised_trainer(deep_classifier,
 						       bunch_size,
 						       ann.optimizer.cg())
 trainer_deep_classifier:build()
-trainer_deep_classifier:set_option("rho", 0.001)
+trainer_deep_classifier:set_option("rho", 0.0001)
+trainer_deep_classifier:set_option("sig", 0.05)
 --
 shallow_classifier = ann.mlp.all_all.generate("256 inputs 256 tanh 128 tanh 10 log_softmax")
 trainer_shallow_classifier = trainable.supervised_trainer(shallow_classifier,
