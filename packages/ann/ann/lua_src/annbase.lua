@@ -1399,4 +1399,6 @@ april_set_doc("ann.components.actf.hardtanh.__call", {
 		summary="Constructor of the component",
 		params={
 		  ["name"] = "The name of the component [optional].",
+		  ["inf"] = "The name of the component [optional], by default is -1.0.",
+		  ["sup"] = "The name of the component [optional], by default is 1.0.",
 		}, })

@@ -10,7 +10,7 @@ function ann_autoencoders_dae_class_metatable:__call(t)
   local params = get_table_fields(
     {
       name   = { mandatory=false, type_match="string" },
-      index  = { mandatory=true, type_match="number", default=1 },
+      index  = { mandatory=true,  type_match="number", default=1 },
       hidden = { mandatory=true,  type_match="table",
 		 getter=get_table_fields_recursive{
 		   actf = { mandatory=true, type_match="string" },
@@ -23,6 +23,7 @@ function ann_autoencoders_dae_class_metatable:__call(t)
 		  }, },
       encoder = { mandatory=false, isa_match=ann.components.base },
       decoder = { mandatory=false, isa_match=ann.components.base },
+      noise   = { mandatory=true,  isa_match=ann.components.base },
     }, t)
   
   assert( ( params.encoder and params.decoder) or
@@ -35,6 +36,18 @@ function ann_autoencoders_dae_class_metatable:__call(t)
 				-- this methods must be defined here because
 				-- they overwrite methods of
 				-- ann.components.stack
+				
+				-- the forward method applies noise during
+				-- training
+				forward = function(self,input,during_training)
+				  if during_training then
+				    input = self.noise:forward(input,
+							       during_training)
+				  end
+				  return self.dae:forward(input,during_training)
+				end,
+				
+				-- the clone function produces a new dae object
 				clone = function(self)
 				  local params = self.params
 				  local obj = ann.autoencoders.dae{
@@ -44,11 +57,17 @@ function ann_autoencoders_dae_class_metatable:__call(t)
 				    visible = table.deep_copy(params.visible),
 				    encoder = (params.encoder and params.encoder:clone()) or nil,
 				    decoder = (params.decoder and params.decoder:clone()) or nil,
+				    noise   = self.noise:clone(),
 				  }
 				end,
+
+				-- the to_lua_string method
 				to_lua_string = function(self,format)
-				  return string.format("ann.autoencoders.dae(%s)", table.tostring(self.params))
+				  return string.format("ann.autoencoders.dae(%s)",
+						       table.tostring(self.params))
 				end,
+				
+				-- the build method 
 				build = function(self,...)
 				  local dae     = self.dae
 				  local result  = table.pack(dae:build(...))
@@ -58,6 +77,7 @@ function ann_autoencoders_dae_class_metatable:__call(t)
 					   encoder:get_output_size() == 0 or
 					   decoder:get_input_size() == 0,
 					 "Output size of encoder must be equals to input size of decoder")
+				  self.noise:build(...)
 				  return table.unpack(result)
 				end,
 				  })
@@ -88,7 +108,7 @@ function ann_autoencoders_dae_class_metatable:__call(t)
 				     bias_weights="b-dec" .. params.index,
 				     transpose=true
 				   } ):
-    push( ann.components.actf[params.hidden.actf]() )
+    push( ann.components.actf[params.visible.actf]() )
   end
   
   dae:push(encoder)
@@ -97,8 +117,9 @@ function ann_autoencoders_dae_class_metatable:__call(t)
   obj.encoder = encoder
   obj.decoder = decoder
   obj.dae     = dae
+  obj.noise   = params.noise
   obj.params  = params
-
+  
   obj = class_instance(obj, self)
   
   return obj
@@ -116,12 +137,16 @@ function ann_autoencoders_dae_methods:get_C_decoder_component()
   return self.decoder
 end 
 
-function ann_autoencoders_dae_methods:encode(input)
-  return self.encoder:forward(input)
+function ann_autoencoders_dae_methods:corrupt(...)
+  return self.noise:forward(...)
 end
 
-function ann_autoencoders_dae_methods:decode(hidden)
-  return self.decoder:forward(hidden)
+function ann_autoencoders_dae_methods:encode(...)
+  return self.encoder:forward(...)
+end
+
+function ann_autoencoders_dae_methods:decode(...)
+  return self.decoder:forward(...)
 end
 
 function ann_autoencoders_dae_methods:get_visible_param()

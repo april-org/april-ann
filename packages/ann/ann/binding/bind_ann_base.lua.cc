@@ -1474,13 +1474,16 @@ using namespace ANN;
   LUABIND_CHECK_ARGN(<=, 1);
   int argn = lua_gettop(L);
   const char *name=0;
+  float inf=-1.0f, sup=1.0f;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", (const char *)0);
+    check_table_fields(L, 1, "name", "inf", "sup", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, inf, float, inf, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, sup, float, sup, 0);
   }
-  obj = new HardtanhActfANNComponent(name);
-  LUABIND_RETURN(HardtanhActfANNComponent, obj);  
+  obj = new HardtanhActfANNComponent(name, inf, sup);
+  LUABIND_RETURN(HardtanhActfANNComponent, obj);
 }
 //BIND_END
 
