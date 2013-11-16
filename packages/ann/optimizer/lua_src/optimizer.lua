@@ -74,10 +74,13 @@ function optimizer_class_metatable:__call(valid_options,
 			       constraints       = {},
 			     },
 			     self)
-  for name,value in pairs(g_options) do obj:set_option(name,value) end
-  for wname,options in pairs(l_options) do
+  for name,value in pairs(g_options) do
+    obj.global_options[name] = value
+  end
+  for layer_name,options in pairs(l_options) do
     for name,value in pairs(options) do
-      obj:set_layerwise_option(wname,name,value)
+      obj.layerwise_options[layer_name] = obj.layerwise_options[layer_name] or {}
+      obj.layerwise_options[layer_name][name] = value
     end
   end
   return obj
