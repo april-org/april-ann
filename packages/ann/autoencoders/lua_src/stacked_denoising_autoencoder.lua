@@ -2,6 +2,138 @@ get_table_from_dotted_string("ann.autoencoders", true)
 
 ----------------------------------------------------------------------
 
+local ann_autoencoders_dae_methods,
+ann_autoencoders_dae_class_metatable = class("ann.autoencoders.dae",
+					     ann.components.base)
+
+function ann_autoencoders_dae_class_metatable:__call(t)
+  local params = get_table_fields(
+    {
+      name   = { mandatory=false, type_match="string" },
+      index  = { mandatory=true, type_match="number", default=1 },
+      hidden = { mandatory=true,  type_match="table",
+		 getter=get_table_fields_recursive{
+		   actf = { mandatory=true, type_match="string" },
+		   size = { mandatory=true, type_match="number" },
+		 }, },
+      visible = { mandatory=true,  type_match="table",
+		  getter=get_table_fields_recursive{
+		    actf = { mandatory=true, type_match="string" },
+		    size = { mandatory=true, type_match="number" },
+		  }, },
+      encoder = { mandatory=false, isa_match=ann.components.base },
+      decoder = { mandatory=false, isa_match=ann.components.base },
+    }, t)
+  
+  assert( ( params.encoder and params.decoder) or
+	    ( (not params.encoder) and (not params.decoder) ),
+	  "Encoder and decoder must be given together, or not given both")
+  
+  local name  = params.name or "DAE-" .. params.index
+  local dae   = ann.components.stack{ name=name }
+  local obj   = class_wrapper(dae,{
+				-- this methods must be defined here because
+				-- they overwrite methods of
+				-- ann.components.stack
+				clone = function(self)
+				  local params = self.params
+				  local obj = ann.autoencoders.dae{
+				    name    = params.name,
+				    index   = params.index,
+				    hidden  = table.deep_copy(params.hidden),
+				    visible = table.deep_copy(params.visible),
+				    encoder = (params.encoder and params.encoder:clone()) or nil,
+				    decoder = (params.decoder and params.decoder:clone()) or nil,
+				  }
+				end,
+				to_lua_string = function(self,format)
+				  return string.format("ann.autoencoders.dae(%s)", table.tostring(self.params))
+				end,
+				build = function(self,...)
+				  local dae     = self.dae
+				  local result  = table.pack(dae:build(...))
+				  local encoder = self.encoder
+				  local decoder = self.decoder
+				  assert(encoder:get_output_size() == decoder:get_input_size() or
+					   encoder:get_output_size() == 0 or
+					   decoder:get_input_size() == 0,
+					 "Output size of encoder must be equals to input size of decoder")
+				  return table.unpack(result)
+				end,
+				  })
+  
+  local encoder = params.encoder
+  if not encoder then
+    encoder = ann.components.stack{ name="enc-" .. params.index }:
+    push( ann.components.hyperplane{ name="enc-plane-" .. params.index,
+				     input=params.visible.size,
+				     output=params.hidden.size,
+				     dot_product_name="w-enc" .. params.index,
+				     bias_name="b-enc" .. params.index,
+				     dot_product_weights="w" .. params.index,
+				     bias_weights="b-enc" .. params.index,
+				   } ):
+    push( ann.components.actf[params.hidden.actf]() )
+  end
+  
+  local decoder = params.decoder
+  if not decoder then
+    decoder = ann.components.stack{ name="dec-" .. params.index }:
+    push( ann.components.hyperplane{ name="dec-plane-" .. params.index,
+				     input=params.hidden.size,
+				     output=params.visible.size,
+				     dot_product_name="w-dec" .. params.index,
+				     bias_name="b-dec" .. params.index,
+				     dot_product_weights="w" .. params.index,
+				     bias_weights="b-dec" .. params.index,
+				     transpose=true
+				   } ):
+    push( ann.components.actf[params.hidden.actf]() )
+  end
+  
+  dae:push(encoder)
+  dae:push(decoder)
+
+  obj.encoder = encoder
+  obj.decoder = decoder
+  obj.dae     = dae
+  obj.params  = params
+
+  obj = class_instance(obj, self)
+  
+  return obj
+end
+
+function ann_autoencoders_dae_methods:get_C_dae_component()
+  return self.dae
+end
+
+function ann_autoencoders_dae_methods:get_C_encoder_component()
+  return self.encoder
+end 
+
+function ann_autoencoders_dae_methods:get_C_decoder_component()
+  return self.decoder
+end 
+
+function ann_autoencoders_dae_methods:encode(input)
+  return self.encoder:forward(input)
+end
+
+function ann_autoencoders_dae_methods:decode(hidden)
+  return self.decoder:forward(hidden)
+end
+
+function ann_autoencoders_dae_methods:get_visible_param()
+  return self.params.visible
+end
+
+function ann_autoencoders_dae_methods:get_hidden_param()
+  return self.params.hidden
+end
+
+----------------------------------------------------------------------
+
 april_set_doc("ann.autoencoders",
 	      {
 		class="namespace",
