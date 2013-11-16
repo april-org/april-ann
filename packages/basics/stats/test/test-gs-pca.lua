@@ -11,7 +11,12 @@ end
 
 --------------------------------------------------------------------------
 
-m = matrix.fromTabFilename(base_dir.."data/sample.txt.gz"):transpose()
+os.execute("curl -0 http://cafre.dsic.upv.es:8080/~pako/STUFF/sample.txt.gz > /tmp/sample.txt.gz")
+if not io.open("/tmp/sample.txt.gz") then
+  print("Ignoring test, impossible to connect with cafre.dsic.upv.es")
+  os.exit(0)
+end
+m = matrix.fromTabFilename("/tmp/sample.txt.gz"):transpose()
 
 --------------------------------------------------------------------------
 
