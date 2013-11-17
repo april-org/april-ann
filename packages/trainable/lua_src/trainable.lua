@@ -1860,7 +1860,7 @@ function train_holdout_methods:save(filename,format)
   f:close()
 end
 
-function train_holdout_methods:load(filename)
+function trainable.train_holdout_validation.load(filename)
   local f   = loadfile(filename) or error("Unable to open " .. filename)
   local obj = f() or error("Impossible to load chunk from file " .. filename)
   return obj
