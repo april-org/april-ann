@@ -1754,9 +1754,10 @@ function train_holdout_class_metatable:__call(t,saved_state)
   local params = get_table_fields(
     {
       epochs_wo_validation = { mandatory=false, type_match="number", default=0 },
-      min_epochs = { mandatory=true, type_match="number" },
+      min_epochs = { mandatory=true, type_match="number", default=0 },
       max_epochs = { mandatory=true, type_match="number" },
-      stopping_criterion = { mandatory=true, type_match="function" },
+      stopping_criterion = { mandatory=true, type_match="function",
+			     default = function() return false end },
       first_epoch        = { mandatory=false, type_match="number", default=1 },
     }, t)
   local saved_state = saved_state or {}
@@ -1767,7 +1768,7 @@ function train_holdout_class_metatable:__call(t,saved_state)
       train_error      = saved_state.train_error      or math.huge,
       validation_error = saved_state.validation_error or math.huge,
       best_epoch       = saved_state.best_epoch       or 0,
-      best_val_error   = saved_state.best_val_error   or 0,
+      best_val_error   = saved_state.best_val_error   or math.huge,
       best             = saved_state.best             or nil,
       last             = saved_state.last             or nil,
     },
@@ -1778,24 +1779,30 @@ end
 function train_holdout_methods:execute(epoch_function)
   local params = self.params
   local state  = self.state
+  -- check max epochs
+  if state.current_epoch >= params.max_epochs then
+    return false
+  end
+  -- check stopping criterion
+  if ( state.current_epoch > params.min_epochs and
+       params.stopping_criterion(state) ) then
+    return false
+  end
+  -- compute one training step by using epoch_function
   state.current_epoch = state.current_epoch + 1
   collectgarbage("collect")
   state.last, state.train_error, state.validation_error = epoch_function()
   assert(state.last and state.train_error and state.validation_error,
 	 "Needs a function which returns three values: "..
 	   "a model, training error and validation error")
+  -- update with the best model
   if ( state.validation_error < state.best_val_error or
        state.current_epoch <= params.epochs_wo_validation ) then
     state.best_epoch     = state.current_epoch
     state.best_val_error = state.validation_error
     state.best           = state.last:clone()
   end
-  if ( state.current_epoch > params.min_epochs and
-       params.stopping_criterion(state) ) then
-    return false
-  else
-    return true
-  end
+  return true
 end
 
 function train_holdout_methods:set_param(name,value)

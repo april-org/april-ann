@@ -113,14 +113,16 @@ clock = util.stopwatch()
 clock:go()
 
 -- print("Epoch Training  Validation")
-for epoch = 1,max_epochs do
-  collectgarbage("collect")
-  totalepocas = totalepocas+1
-  errortrain,vartrain  = trainer:train_dataset(datosentrenar)
-  errorval,varval      = trainer:validate_dataset(datosvalidar)
-  printf("%4d  %.7f %.7f :: %.7f %.7f\n",
-  	 totalepocas,errortrain,errorval,vartrain,varval)
-  if math.abs(errortrain - errors[epoch][1]) > epsilon then
+train_func = trainable.train_holdout_validation{ max_epochs = max_epochs }
+-- training loop
+while train_func:execute(function()
+			   local tr = trainer:train_dataset(datosentrenar)
+			   local va = trainer:validate_dataset(datosvalidar)
+			   return trainer,tr,va
+			 end) do
+  print(train_func:get_state_string())
+  local epoch,errortrain,errorval = train_func:get_state()
+    if math.abs(errortrain - errors[epoch][1]) > epsilon then
     error(string.format("Training error %g is not equal enough to "..
 			  "reference error %g",
 			errortrain, errors[epoch][1]))
