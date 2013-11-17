@@ -15,6 +15,11 @@ Master branch release
   
 ### Stable changes
 
+- Added `FunctionInterface` class, in Lua as `functions` class, superclass of
+  ANN components.
+- Added automatic conversion between DataSetFloat and DataSetToken in
+  `dataset.token.filter` and `dataset.token.union`.
+- Added `dataset.token.filter`, which allows ANN components as filters.
 - Added `inf` and `sup` limits to Hard-Tanh activation function.
 - Added `random:to_lua_string()` method.
 - Added `ann.optimizer.cg`, Conjugate Gradient algorithm.

@@ -20,6 +20,7 @@
  *
  */
 //BIND_HEADER_C
+#include "bind_function_interface.h"
 #include "bind_matrix.h"
 #include "bind_mtrand.h"
 #include "bind_tokens.h"
@@ -93,7 +94,9 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "hardtanh_actf_component.h"
 #include "sin_actf_component.h"
 #include "linear_actf_component.h"
+#include "bind_function_interface.h"
 
+using namespace Functions;
 using namespace ANN;
 
 //BIND_END
@@ -281,8 +284,11 @@ using namespace ANN;
 //                  ANNComponent                   //
 /////////////////////////////////////////////////////
 
+//BIND_LUACLASSNAME FunctionInterface functions
+
 //BIND_LUACLASSNAME ANNComponent ann.components.base
 //BIND_CPP_CLASS    ANNComponent
+//BIND_SUBCLASS_OF  ANNComponent FunctionInterface
 
 //BIND_CONSTRUCTOR ANNComponent
 //DOC_BEGIN

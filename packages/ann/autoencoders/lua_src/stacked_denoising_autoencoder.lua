@@ -2,11 +2,14 @@ get_table_from_dotted_string("ann.autoencoders", true)
 
 ----------------------------------------------------------------------
 
-local ann_autoencoders_dae_methods,
-ann_autoencoders_dae_class_metatable = class("ann.autoencoders.dae",
-					     ann.components.base)
+-- The auto-encoder class (AE) will be a denoising auto-encoder (DAE) when
+-- trained with corrupted input, and clean output
 
-function ann_autoencoders_dae_class_metatable:__call(t)
+local ann_autoencoders_ae_methods,
+ann_autoencoders_ae_class_metatable = class("ann.autoencoders.ae",
+					    ann.components.base)
+
+function ann_autoencoders_ae_class_metatable:__call(t)
   local params = get_table_fields(
     {
       name   = { mandatory=false, type_match="string" },
@@ -23,65 +26,52 @@ function ann_autoencoders_dae_class_metatable:__call(t)
 		  }, },
       encoder = { mandatory=false, isa_match=ann.components.base },
       decoder = { mandatory=false, isa_match=ann.components.base },
-      noise   = { mandatory=true,  isa_match=ann.components.base },
     }, t)
   
   assert( ( params.encoder and params.decoder) or
 	    ( (not params.encoder) and (not params.decoder) ),
 	  "Encoder and decoder must be given together, or not given both")
   
-  local name  = params.name or "DAE-" .. params.index
-  local dae   = ann.components.stack{ name=name }
-  local obj   = class_wrapper(dae,{
+  local name  = params.name or "AE-" .. params.index
+  local ae    = ann.components.stack{ name=name }
+  local obj   = class_wrapper(ae,{
 				-- this methods must be defined here because
 				-- they overwrite methods of
 				-- ann.components.stack
 				
-				-- the forward method applies noise during
-				-- training
-				forward = function(self,input,during_training)
-				  if during_training then
-				    input = self.noise:forward(input,
-							       during_training)
-				  end
-				  return self.dae:forward(input,during_training)
-				end,
-				
-				-- the clone function produces a new dae object
+				-- the clone function produces a new ae object
 				clone = function(self)
 				  local params = self.params
-				  local obj = ann.autoencoders.dae{
+				  local obj = ann.autoencoders.ae{
 				    name    = params.name,
 				    index   = params.index,
 				    hidden  = table.deep_copy(params.hidden),
 				    visible = table.deep_copy(params.visible),
 				    encoder = (params.encoder and params.encoder:clone()) or nil,
 				    decoder = (params.decoder and params.decoder:clone()) or nil,
-				    noise   = self.noise:clone(),
 				  }
 				  return obj
 				end,
 
 				-- the to_lua_string method
 				to_lua_string = function(self,format)
-				  return string.format("ann.autoencoders.dae(%s)",
+				  return string.format("ann.autoencoders.ae(%s)",
 						       table.tostring(self.params))
 				end,
 				
 				-- the build method 
 				build = function(self,...)
-				  local dae     = self.dae
-				  local result  = table.pack(dae:build(...))
+				  local ae      = self.ae
+				  local result  = table.pack(ae:build(...))
 				  local encoder = self.encoder
 				  local decoder = self.decoder
 				  assert(encoder:get_output_size() == decoder:get_input_size() or
 					   encoder:get_output_size() == 0 or
 					   decoder:get_input_size() == 0,
 					 "Output size of encoder must be equals to input size of decoder")
-				  self.noise:build(...)
 				  return table.unpack(result)
 				end,
-				  })
+				 })
   
   local encoder = params.encoder
   if not encoder then
@@ -112,13 +102,12 @@ function ann_autoencoders_dae_class_metatable:__call(t)
     push( ann.components.actf[params.visible.actf]() )
   end
   
-  dae:push(encoder)
-  dae:push(decoder)
+  ae:push(encoder)
+  ae:push(decoder)
 
   obj.encoder = encoder
   obj.decoder = decoder
-  obj.dae     = dae
-  obj.noise   = params.noise
+  obj.ae      = ae
   obj.params  = params
   
   obj = class_instance(obj, self)
@@ -126,35 +115,31 @@ function ann_autoencoders_dae_class_metatable:__call(t)
   return obj
 end
 
-function ann_autoencoders_dae_methods:get_C_dae_component()
-  return self.dae
+function ann_autoencoders_ae_methods:get_C_AE_component()
+  return self.ae
 end
 
-function ann_autoencoders_dae_methods:get_C_encoder_component()
+function ann_autoencoders_ae_methods:get_C_encoder_component()
   return self.encoder
 end 
 
-function ann_autoencoders_dae_methods:get_C_decoder_component()
+function ann_autoencoders_ae_methods:get_C_decoder_component()
   return self.decoder
 end 
 
-function ann_autoencoders_dae_methods:corrupt(...)
-  return self.noise:forward(...)
-end
-
-function ann_autoencoders_dae_methods:encode(...)
+function ann_autoencoders_ae_methods:encode(...)
   return self.encoder:forward(...)
 end
 
-function ann_autoencoders_dae_methods:decode(...)
+function ann_autoencoders_ae_methods:decode(...)
   return self.decoder:forward(...)
 end
 
-function ann_autoencoders_dae_methods:get_visible_param()
+function ann_autoencoders_ae_methods:get_visible_param()
   return self.params.visible
 end
 
-function ann_autoencoders_dae_methods:get_hidden_param()
+function ann_autoencoders_ae_methods:get_hidden_param()
   return self.params.hidden
 end
 
@@ -534,7 +519,7 @@ april_set_doc("ann.autoencoders.greedy_layerwise_pretraining",
 		  },
 		params= {
 		  ["optimizer"]   = {"A function which returns an optimizer",
-					"[optional]",},
+				     "[optional]",},
 		  ["names_prefix"]   = {"A prefix added to all component names",
 					"[optional]",},
 		  ["shuffle_random"] = "A random object instance for shuffle",

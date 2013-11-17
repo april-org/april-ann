@@ -71,7 +71,6 @@ val_output   = dataset.matrix(m2,
 				circular    = {true}
 			      })
 
-
 thenet = ann.mlp.all_all.generate(description)
 if util.is_cuda_available() then thenet:set_use_cuda(true) end
 trainer = trainable.supervised_trainer(thenet,
