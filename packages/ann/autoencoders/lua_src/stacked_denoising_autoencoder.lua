@@ -59,6 +59,7 @@ function ann_autoencoders_dae_class_metatable:__call(t)
 				    decoder = (params.decoder and params.decoder:clone()) or nil,
 				    noise   = self.noise:clone(),
 				  }
+				  return obj
 				end,
 
 				-- the to_lua_string method
