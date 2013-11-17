@@ -1479,8 +1479,8 @@ using namespace ANN;
     LUABIND_CHECK_PARAMETER(1, table);
     check_table_fields(L, 1, "name", "inf", "sup", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, inf, float, inf, 0);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, sup, float, sup, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, inf, float, inf, -1.0f);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, sup, float, sup,  1.0f);
   }
   obj = new HardtanhActfANNComponent(name, inf, sup);
   LUABIND_RETURN(HardtanhActfANNComponent, obj);
