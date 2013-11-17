@@ -6,7 +6,7 @@ Master branch release
 
 ### Unstable changes
 
-- Added `ann.autoencoders.dae` class, in order to factorize the SDAE code.
+- Added `ann.autoencoders.ae` class, in order to factorize the SDAE code.
 - Added `trainable.train_holdout_validation` class, which in the future will
   replace current `trainable.supervised_trainer:train_holdout_validation`
   method.
