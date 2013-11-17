@@ -1848,6 +1848,11 @@ function train_holdout_methods:to_lua_string(format)
 end
 
 function train_holdout_methods:save(filename,format)
+  local f = io.open(filename, "r")
+  if f then
+    f:close()
+    os.execute(string.format("mv -f %s %s.bak", filename, filename))
+  end
   local f = io.open(filename, "w") or error("Unable to open " .. filename)
   f:write("return ")
   f:write(self:to_lua_string())

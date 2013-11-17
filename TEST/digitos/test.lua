@@ -121,7 +121,7 @@ while train_func:execute(function()
 			   return trainer,tr,va
 			 end) do
   print(train_func:get_state_string())
-  local epoch,errortrain,errorval = train_func:get_state()
+  local epoch,errortrain,errorval,best_epoch = train_func:get_state()
     if math.abs(errortrain - errors[epoch][1]) > epsilon then
     error(string.format("Training error %g is not equal enough to "..
 			  "reference error %g",
@@ -132,6 +132,7 @@ while train_func:execute(function()
 			  "reference error %g",
 			errorval, errors[epoch][2]))
   end
+  -- if best_epoch == epoch then train_func:save("wop.lua") end
 end
 
 clock:stop()
