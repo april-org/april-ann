@@ -11,6 +11,7 @@ bin
 dep_graph.dot
 include
 lib
+doxygen_doc
 
 # Emacs backups #
 #################
