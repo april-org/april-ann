@@ -1,2 +1,2 @@
 #!/bin/bash
-git checkout document -- doxygen_doc
+rsync -vrhz --rsh="ssh -l pako" doxygen_doc cafre.dsic.upv.es:~/public_html/STUFF

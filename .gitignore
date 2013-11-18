@@ -1,3 +1,4 @@
+doxygen_doc
 bin
 build_*
 dep_graph.dot
