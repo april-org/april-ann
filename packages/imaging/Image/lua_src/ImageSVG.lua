@@ -43,7 +43,6 @@ end
 -- Recieves a table with points x,y
 function imageSVG_methods:addPathFromTable(path, params)
     --params treatment
-
     local id = params.id or ""
     local stroke = params.stroke or "black"
     local stroke_width = params.stroke_width or "2"
@@ -51,7 +50,6 @@ function imageSVG_methods:addPathFromTable(path, params)
     local buffer = {}
 
     table.insert(buffer, string.format("<path id = \"%s\" d = \"", id))
-
     for i, v in ipairs(path) do
         if (i == 1) then
             table.insert(buffer, string.format("M %d %d ", v[1], v[2]))
@@ -88,15 +86,38 @@ end
 function imageSVG_methods:addPaths(paths)
     for i, path in ipairs(paths) do
         local color = "black"
-        if (i <= #colors) then
-            color = colors[i]
-        end
+            color = colors[i%#colors+1]
         --        print(i, color, #path)
         self:addPathFromTable(path,{stroke = color, id = tostring(i)})
     end
 end
 
 
+-- Each element of the table is a path
+function imageSVG_methods:addInterestPointPaths(paths, ...)
+    
+    params = arg[1] or {}
+    local num_classes = params.num_class or 5
+    for i, path in ipairs(paths) do
+        -- Process the component
+        --
+        local color = "black"
+        color = colors[i%#colors+1]
+
+        -- Separate by classes
+        local t = {}
+        for i = 1,num_classes do
+          table.insert(t, {})
+        end
+        for i, v in ipairs(paths[i]) do
+            table.insert(t[v[3]], v)
+        end
+        -- Draw a path for each class
+        for i = 1, num_classes do
+          self:addPathFromTable(t[i],{stroke = color, id = tostring(i)})
+        end
+    end
+end
 
 -- Given a table with table of points, draw
 function imageSVG_methods:addPointsFromTables(tables, size)
@@ -141,6 +162,21 @@ function imageSVG_methods:addSquare(point, params)
     local y = point[2]
 
     table.insert(self.body,string.format("<rect x=\"%d\" y=\"%d\" width=\"%f\" height=\"%f\" fill=\"%s\"/>", x, y, side,side, color))
+end
+
+function imageSVG_methods:addRect(rect, params)
+
+    local color = params.color or "black"
+    
+    if params.cls then
+      color = colors[params.cls]
+    end
+
+    local x = rect[1]
+    local y = rect[2]
+    local w = rect[3] - rect[1]
+    local h = rect[4] - rect[2]
+    table.insert(self.body,string.format("<rect x=\"%d\" y=\"%d\" width=\"%f\" height=\"%f\" stroke=\"%s\" fill-opacity=\"0\"/> ", x, y, w, h, color))
 end
 
 function imageSVG_methods:addPoint(point, params)

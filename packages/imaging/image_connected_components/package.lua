@@ -1,8 +1,8 @@
- package{ name = "interest_points",
+package{ name = "image_connected_components",
    version = "1.0",
-   depends = { "dataset", "image", "image_connected_components" },
-   keywords = { "image", "interest_points", "line", "ocr" },
-   description = "Utils for detect and classify interest points in an images",
+   depends = {"util", "matrix", "dataset", "image" },
+   keywords = { },
+   description = "A new awesome april package!",
    -- targets como en ant
    target{
      name = "init",
@@ -17,7 +17,7 @@
      name = "provide",
      depends = "init",
      copy{ file= "c_src/*.h", dest_dir = "include" },
-     provide_bind{ file = "binding/bind_interest_points.lua.cc", dest_dir = "include" },
+     provide_bind{ file = "binding/bind_image_connected_components.lua.cc", dest_dir = "include" },
    },
    target{
      name = "build",
@@ -32,7 +32,7 @@
        orig_dir = "lua_src",
        dest_dir = "build",
      },
-     build_bind{ file = "binding/bind_interest_points.lua.cc", dest_dir = "build" },
+     build_bind{ file = "binding/bind_image_connected_components.lua.cc", dest_dir = "build" },
    },
    target{
      name = "document",
@@ -40,5 +40,3 @@
      document_bind{},
    },
  }
- 
- 

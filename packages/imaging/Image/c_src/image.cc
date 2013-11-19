@@ -179,6 +179,19 @@ Image<T>* Image<T>::clone() const {
 }
 
 template <typename T>
+int Image<T>::count_black_pixels(T threshold) const{
+  int count = 0;
+  for (int y = 0; y < this->height; ++y) {
+    for (int x = 0; x < this->width; x++) {
+        if((*this)(x,y) < threshold) {
+          ++count;
+        }
+    }
+  }
+  return count;
+}
+
+template <typename T>
 void Image<T>::projection_v(T *v) const {
   // v has size width
   for (int x=0;x<width;x++)
