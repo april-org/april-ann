@@ -2171,7 +2171,8 @@ april_set_doc("trainable.train_holdout_validation.load", {
 
 function trainable.train_holdout_validation.load(filename)
   local f = loadfile(filename) or error("Unable to open " .. filename)
-  local obj,extra = f() or error("Impossible to load chunk from file " .. filename)
+  local obj,extra = f()
+  assert(obj, "Impossible to load chunk from file " .. filename)
   return obj,extra
 end
 
@@ -2404,7 +2405,7 @@ april_set_doc("trainable.train_wo_validation.load", {
 		  "A train_wo_validation_methods instance",
 		  "A table with extra saved data or nil if not given when saving",
 		}, })
-train_wo_validation_methods.load = train_holdout_methods.load
+trainable.train_wo_validation.load = trainable.train_holdout_validation.load
 
 -------------------------------------------------------------------------------
 
