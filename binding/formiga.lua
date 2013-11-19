@@ -107,7 +107,7 @@ formiga = {
     Ccompiler = os.getenv("CC") or "gcc",
     extra_libs = {"-ldl"},
     shared_extra_libs = { },
-    extra_flags = { string.format("-DGIT_COMMIT=%d", commit_count), },
+    extra_flags = { string.format("-DGIT_COMMIT=%s", commit_count), },
     language_by_extension = {
       c = "c", cc = "c++", cxx = "c++", CC = "c++", cpp = "c++",
       cu = "nvcc",

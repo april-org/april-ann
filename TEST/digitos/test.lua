@@ -131,7 +131,7 @@ while train_func:execute(function()
 			  "reference error %g",
 			errorval, errors[epoch][2]))
   end
-  -- if best_epoch == epoch then train_func:save("wop.lua") end
+  -- if best_epoch == epoch then train_func:save("wop.lua", "binary", {shuffle=datosentrenar.shuffle}) end
 end
 
 clock:stop()
