@@ -1,6 +1,6 @@
 package{ name = "image_connected_components",
    version = "1.0",
-   depends = {"util", "matrix", "dataset", "image" },
+   depends = {"util", "matrix", "dataset", "Image" },
    keywords = { },
    description = "A new awesome april package!",
    -- targets como en ant
