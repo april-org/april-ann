@@ -1589,7 +1589,7 @@ function trainable_supervised_trainer_methods:clone()
   return obj
 end
 
-april_set_doc("trainable.train_holdout_validation.norm2", {
+april_set_doc("trainable.supervised_trainer.norm2", {
 		class = "method",
 		summary = "Returns the maximum norm2 of the weights which name matches",
 		params={
@@ -1934,8 +1934,10 @@ april_set_doc("trainable.train_holdout_validation.__call", {
 		  "Constructor of the train_holdout_validation class.",
 		},
 		params = {
-		  epochs_wo_validation =
-		    "Number of epochs from start where the validation is ignored",
+		  epochs_wo_validation = {
+		    "Number of epochs from start where the validation is",
+		    "ignored [optional], by default it is 0",
+		  },
 		  min_epochs = "Minimum number of epochs for training [optional]. By default it is 0",
 		  max_epochs = "Maximum number of epochs for training",
 		  stopping_criterion = {
@@ -1948,6 +1950,11 @@ april_set_doc("trainable.train_holdout_validation.__call", {
 		    "best_val_error=..., train_error=...,",
 		    "validation_error=... }). [optional] By default it is max_epochs criterion.",
 		  },
+		  tolerance = {
+		    "The tolerance>=0 is the minimum relative difference to",
+		    "take the current validation loss as the best [optional],",
+		    "by default it is 0.",
+		  },
 		  first_epoch = "The first epoch number [optional]. By default it is 0.",
 		},
 		outputs = { "Instantiated object" }, })
@@ -1958,10 +1965,12 @@ function train_holdout_class_metatable:__call(t,saved_state)
       epochs_wo_validation = { mandatory=false, type_match="number", default=0 },
       min_epochs = { mandatory=true, type_match="number", default=0 },
       max_epochs = { mandatory=true, type_match="number" },
+      tolerance  = { mandatory=true, type_match="number", default=0 },
       stopping_criterion = { mandatory=true, type_match="function",
 			     default = function() return false end },
       first_epoch        = { mandatory=false, type_match="number", default=1 },
     }, t)
+  assert(params.tolerance >= 0, "tolerance < 0 is forbidden")
   local saved_state = saved_state or {}
   local obj = {
     params = params,
@@ -2017,9 +2026,13 @@ function train_holdout_methods:execute(epoch_function)
   -- update with the best model
   if ( state.validation_error < state.best_val_error or
        state.current_epoch <= params.epochs_wo_validation ) then
-    state.best_epoch     = state.current_epoch
-    state.best_val_error = state.validation_error
-    state.best           = state.last:clone()
+    local abs_error = state.best_val_error - state.validation_error
+    local rel_error = abs_error / state.best_val_error
+    if state.best_val_error == math.huge or rel_error > params.tolerance then
+      state.best_epoch     = state.current_epoch
+      state.best_val_error = state.validation_error
+      state.best           = state.last:clone()
+    end
   end
   return true
 end
@@ -2094,8 +2107,8 @@ april_set_doc("trainable.train_holdout_validation.get_state_string", {
 		summary =
 		"Returns the state of the training in string format, for printing",
 		outputs = {
-		  "A string with the format ('%5d %.6f %.6f    %5d %.6f',",
-		  "current_epoch,train_error,validation_error,best_epoch,best_val_error)"
+		  { "A string with the format ('%5d %.6f %.6f    %5d %.6f',",
+		    "current_epoch,train_error,validation_error,best_epoch,best_val_error)" }
 		}, })
 
 function train_holdout_methods:get_state_string()
@@ -2349,8 +2362,8 @@ april_set_doc("trainable.train_wo_validation.get_state_string", {
 		summary =
 		"Returns the state of the training in string format, for printing",
 		outputs = {
-		  "A string with the format ('%5d %.6f    %.6f',",
-		  "current_epoch,train_error,train_improvement)"
+		  { "A string with the format ('%5d %.6f    %.6f',",
+		    "current_epoch,train_error,train_improvement)" }
 		}, })
 
 function train_wo_validation_methods:get_state_string()
