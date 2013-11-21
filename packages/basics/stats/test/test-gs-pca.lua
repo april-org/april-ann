@@ -26,7 +26,7 @@ m = matrix.fromTabFilename("/tmp/sample.txt.gz"):transpose()
 
 -- aU,aS,aVT = stats.pca(m)
 
--- aR = stats.mean_centered_by_pattern(m, "col_major")
+aR = stats.mean_centered_by_pattern(m, "col_major")
 
 -- -- check regeneration of original covariance matrix
 -- cov = compute_cov(aR, 2)
@@ -79,3 +79,5 @@ for sw in cov:sliding_window():iterate() do sw:adjust_range(0,1) end
 -- U matrix orthogonality check
 bPmul = bP:clone():gemm{ A=bP, B=bP, trans_B=true, alpha=1.0, beta=0.0, }
 assert(bPmul:equals( bPmul:clone():zeros():diag(1), 1e-03 ))
+
+os.execute("rm -f /tmp/sample.txt.gz")
