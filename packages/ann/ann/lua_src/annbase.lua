@@ -1002,9 +1002,47 @@ april_set_doc("ann.components.stack.__call",
 april_set_doc("ann.components.stack.push",
 	      {
 		class="method",
-		summary="Pushes a component to the stack",
+		summary="Pushes a list of components to the stack",
 		params={
 		  "An instance of ann.components.base (or any child class)",
+		  "An instance of ann.components.base (or any child class)",
+		  "...",
+		  "An instance of ann.components.base (or any child class)",
+		},
+		outputs = { "The caller object" },
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.stack.unroll",
+	      {
+		class="method",
+		summary="Returns the list of components of the stack",
+		outputs = {
+		  "An instance of ann.components.base",
+		  "An instance of ann.components.base",
+		  "...",
+		  "An instance of ann.components.base",
+		},
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.stack.get",
+	      {
+		class="method",
+		summary="Returns the components of the stack at the given indexes",
+		params = {
+		  "Index of component",
+		  "Index of component",
+		  "...",
+		  "Index of component",
+		},
+		outputs = {
+		  "An instance of ann.components.base",
+		  "An instance of ann.components.base",
+		  "...",
+		  "An instance of ann.components.base",
 		},
 	      })
 

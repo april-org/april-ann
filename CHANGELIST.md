@@ -18,6 +18,7 @@ Master branch release
   
 ### Stable changes
 
+- Added methods `unroll` and `get` to `ann.components.stack` class.
 - Solved bug at `stats.correlation.pearson`.
 - Added `FunctionInterface` class, in Lua as `functions` class, superclass of
   ANN components.
