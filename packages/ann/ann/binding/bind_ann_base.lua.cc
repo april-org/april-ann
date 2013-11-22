@@ -94,6 +94,7 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "hardtanh_actf_component.h"
 #include "sin_actf_component.h"
 #include "linear_actf_component.h"
+#include "dropout_component.h"
 #include "bind_function_interface.h"
 
 using namespace Functions;
@@ -1259,6 +1260,38 @@ using namespace ANN;
 {
   LUABIND_RETURN(MaxPoolingANNComponent,
 		 dynamic_cast<MaxPoolingANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+////////////////////////////////////////////////////
+//              DropoutANNComponent               //
+////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME DropoutANNComponent ann.components.dropout
+//BIND_CPP_CLASS    DropoutANNComponent
+//BIND_SUBCLASS_OF  DropoutANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR DropoutANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  float prob=0.5f, value=0.0f;
+  unsigned int size=0;
+  MTRand *random=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", "size", "prob", "value", "random",
+		       (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, prob, float, prob, 0.5f);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, value, float, value, 0.0f);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, random, MTRand, random, 0);
+  }
+  if (!random) random = new MTRand();
+  obj = new DropoutANNComponent(random, value, prob, name, size);
+  LUABIND_RETURN(DropoutANNComponent, obj);  
 }
 //BIND_END
 
