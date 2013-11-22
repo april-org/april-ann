@@ -43,7 +43,7 @@ layers_table = {
   { size=  256, actf="logistic"}, -- INPUT LAYER
   { size= 1024, actf="logistic"}, -- FIRST HIDDEN LAYER
   { size= 1024, actf="logistic"}, -- SECOND HIDDEN LAYER
-  { size=   32, actf="logistic"}, -- THIRD HIDDEN LAYER
+  { size= 1024, actf="logistic"}, -- THIRD HIDDEN LAYER
 }
 
 perturbation_prob = random(9283424)
@@ -64,7 +64,7 @@ params_pretrain = {
   -- training parameters
   training_options      = {
     global = {
-      ann_options = { weight_decay  = 1e-05, rho=0.0001 },
+      ann_options = { weight_decay  = 1e-05, rho=0.0001, sig=0.8 },
       noise_pipeline = { function(ds) return dataset.perturbation{
 			     dataset  = ds, -- WARNING: the function argument
 			     mean     = 0,
@@ -72,11 +72,11 @@ params_pretrain = {
 			     random   = perturbation_prob } end,
 			 function(ds) return dataset.salt_noise{
 			     dataset  = ds, -- WARNING: the function argument
-			     vd       = 0.10,
+			     vd       = 0.20,
 			     zero     = 0.0,
 			     random   = perturbation_prob } end },
-      min_epochs            = 4,
-      max_epochs            = 10,
+      min_epochs            = 10,
+      max_epochs            = 20,
       pretraining_percentage_stopping_criterion = 0.1,
     },
   }
@@ -92,7 +92,7 @@ trainer_deep_classifier = trainable.supervised_trainer(deep_classifier,
 						       ann.optimizer.cg())
 trainer_deep_classifier:build()
 trainer_deep_classifier:set_option("rho", 0.0001)
-trainer_deep_classifier:set_option("sig", 0.05)
+trainer_deep_classifier:set_option("sig", 0.8)
 --
 shallow_classifier = ann.mlp.all_all.generate("256 inputs 256 tanh 128 tanh 10 log_softmax")
 trainer_shallow_classifier = trainable.supervised_trainer(shallow_classifier,
@@ -104,7 +104,7 @@ trainer_shallow_classifier:randomize_weights {
   inf      = -0.1,
   sup      =  0.1 }
 --
-deep_classifier_wo_pretraining = ann.mlp.all_all.generate("256 inputs 1024 logistic 1024 logistic 32 logistic 10 log_softmax")
+deep_classifier_wo_pretraining = ann.mlp.all_all.generate("256 inputs 1024 logistic 1024 logistic 1024 logistic 10 log_softmax")
 trainer_deep_wo_pretraining = trainable.supervised_trainer(deep_classifier_wo_pretraining,
 							   ann.loss[loss_name](10),
 							   bunch_size)
@@ -176,7 +176,7 @@ end
 --trainer_deep_classifier:set_option("momentum", 0.0)
 trainer_deep_classifier:set_option("weight_decay", 0.0)
 trainer_deep_classifier:set_option("max_norm_penalty", 4.0)
--- set_dropout(trainer_deep_classifier)
+--set_dropout(trainer_deep_classifier)
 
 trainer_shallow_classifier:set_option("learning_rate", 0.4)
 trainer_shallow_classifier:set_option("momentum",

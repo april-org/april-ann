@@ -1169,7 +1169,8 @@ end
 -- to string
 -----
 
-function table.tostring(t)
+function table.tostring(t,format)
+  if t.to_lua_string then return t:to_lua_string(format) end
   local out = {}
   for i,v in pairs(t) do
     local key
@@ -1179,8 +1180,14 @@ function table.tostring(t)
     elseif tonumber(i) then key = "["..i.."]".."="
     else key = string.format("[%q]=",tostring(i))
     end
-    if luatype(v) == "table" then value = table.tostring(v)
-    elseif luatype(v) == "string" then value = string.format("%q",v)
+    local tt = luatype(v)
+    if tt == "table" then value = table.tostring(v,format)
+    elseif tt == "string" then value = string.format("%q",v)
+    elseif tt == "userdata" then
+      assert(v.to_lua_string, "Needs to_lua_string method")
+      value = v:to_lua_string(format)
+    elseif tt == "function" then
+      value = util.function_to_lua_string(v,format)
     else value = tostring(v)
     end
     table.insert(out, key .. value)
@@ -1381,6 +1388,54 @@ function iterator_methods:table()
   return t
 end
 
+----------------------------------------------------------------------------
+
+function util.function_setupvalues(func, upvalues)
+  for i,value in ipairs(upvalues) do
+    debug.setupvalue(func, i, value)
+  end
+  return func
+end
+
+local function char(c) return ("\\%03d"):format(c:byte()) end
+local function szstr(s) return ('"%s"'):format(s:gsub("[^ !#-~]", char)) end
+
+function util.function_to_lua_string(func,format)
+  --
+  local func_dump = string.format("load(%s)", szstr(string.dump(func)))
+  local upvalues = {}
+  local i = 1
+  while true do
+    local name,value = debug.getupvalue(func,i)
+    if not name then break end
+    upvalues[i] = value
+    i = i + 1
+  end
+  --
+  local t = {
+    "util.function_setupvalues(",
+    func_dump,
+    ",",
+    table.tostring(upvalues,format),
+    ")"
+  }
+  return table.concat(t, "")
+end
+
+function util.to_lua_string(data,format)
+  local tt = luatype(data)
+  if tt == "table" then
+    return table.tostring(tt,format)
+  elseif tt == "function" then
+    return util.function_to_lua_string(data,format)
+  elseif tt == "userdata" then
+    assert(getmetatable(tt) and getmetatable(tt).__index and tt.to_lua_string,
+	   "Needs a to_lua_string(format) method")
+    return tt:to_lua_string(format)
+  else
+    return tostring(data)
+  end
+end
 
 -------------------
 -- DOCUMENTATION --

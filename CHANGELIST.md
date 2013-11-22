@@ -6,13 +6,16 @@ Master branch release
 
 ### Unstable changes
 
-- Added `ann.optimizer.cg`, Conjugate Gradient algorithm.
-- Added `ann.optimizer.rprop`, Resilient Prop algorithm.
+- Added `trainable.train_holdout_validation` class, which in the future will
+  replace current `trainable.supervised_trainer:train_holdout_validation`
+  method.
 - Solved problems with CUDA compilation, but it stills not working because
   an error during cuMemAlloc.
   
 ### Stable changes
 
+- Added `ann.optimizer.cg`, Conjugate Gradient algorithm.
+- Added `ann.optimizer.rprop`, Resilient Prop algorithm.
 - Stabilization of log-logistic activation function.
 - Stabilization of training with cross-entropy and multi-class-entropy.
 - Moved `ann.loss.__base__` to `ann.loss`.

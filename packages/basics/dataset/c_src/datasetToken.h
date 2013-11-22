@@ -51,23 +51,33 @@ public:
       int dims[2]   = { static_cast<int>(bunch_size),
 			patternSize() };
       MatrixFloat *output_mat = new MatrixFloat(2, dims, CblasColMajor);
+      IncRef(output_mat);
       TokenMatrixFloat *output_mat_token  = new TokenMatrixFloat(output_mat);
       output           = output_mat_token;
-      unsigned int i   = 0;
-      MatrixFloat::sliding_window window(output_mat, 0, 0, 0, 0, 0);
-      while(!window.isEnd()) {
+      // the dims vector will be used to rewrap the matrices to has the same
+      // structure
+      dims[0] = patternSize();
+      MatrixFloat *submat = 0;
+      for (int i=0; i<static_cast<int>(bunch_size); ++i) {
+	if (i>0) aux_token = getPattern(indexes[i]);
 	IncRef(aux_token);
+	
 	TokenMatrixFloat *aux_mat_token;
 	aux_mat_token = aux_token->convertTo<TokenMatrixFloat*>();
+	MatrixFloat *aux_mat = aux_mat_token->getMatrix();
+	MatrixFloat *aux_mat_rewrapped = aux_mat->rewrap(dims, 1);
+	IncRef(aux_mat);
+	IncRef(aux_mat_rewrapped);
 	
-	MatrixFloat *submat = window.getMatrix();
-	submat->copy(aux_mat_token->getMatrix());
-	delete submat;
+	submat = output_mat->select(0, i, submat);
+	submat->copy(aux_mat_rewrapped);
 	
+	DecRef(aux_mat_rewrapped);
+	DecRef(aux_mat);
 	DecRef(aux_token);
-	if ( (++i) < bunch_size) aux_token = getPattern(indexes[i]);
-	window.next();
       }
+      delete submat;
+      DecRef(output_mat);
       break;
     }
     default: {

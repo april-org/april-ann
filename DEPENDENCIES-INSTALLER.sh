@@ -3,7 +3,7 @@ UNAME=`uname`
 echo "System: $UNAME"
 if [ $UNAME = "Linux" ]; then
     if [ `which apt-get` ]; then
-	apt-get install libz-dev libreadline-dev libblas-dev libatlas-dev libpng12-dev libtiff-dev liblua5.2-dev ||
+	apt-get install pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libpng12-dev libtiff-dev liblua5.2-dev ||
 	(echo "ERROR INSTALLING DEPENDENCIES" && exit 10)
 	dest=$(tempfile)
 	echo -e '#include "lua5.2-deb-multiarch.h"\nint main() { return 0; }\n' > $dest.c
@@ -23,12 +23,12 @@ if [ $UNAME = "Linux" ]; then
     fi
 elif [ $UNAME = "Darwin" ]; then
     if [ `which port` ]; then
-	port install zlib readline libpng tiff findutils ||
+	port install zlib readline libpng tiff findutils pkgconfig lua ||
 	(echo "ERROR INSTALLING DEPENDENCIES" && exit 10)
 	echo "This script will change the default system BSD find by GNU find"
 	echo "BSD find will be renamed as bfind"
 	if [ ! -e /usr/find/bfind ]; then
-	    mv /usr/bin/find /usr/find/bfind
+	    mv /usr/bin/find /usr/bin/bfind
 	else
 	    rm -f /usr/bin/find
 	fi
