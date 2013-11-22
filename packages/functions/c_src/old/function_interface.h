@@ -91,7 +91,7 @@ namespace Functions {
     /// It returns the output (or range) size of the function.
     virtual unsigned int getOutputSize() const = 0;
     /// A new abstract method that computes output vector given input vector.
-    virtual Token *calculate(const Token *input_vector) = 0;
+    virtual Token *calculate(const Token *input) = 0;
     
 
     /// Method for flow computation of outputs in a pipeline system.

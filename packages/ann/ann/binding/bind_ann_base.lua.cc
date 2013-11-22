@@ -20,6 +20,7 @@
  *
  */
 //BIND_HEADER_C
+#include "bind_function_interface.h"
 #include "bind_matrix.h"
 #include "bind_mtrand.h"
 #include "bind_tokens.h"
@@ -93,7 +94,9 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "hardtanh_actf_component.h"
 #include "sin_actf_component.h"
 #include "linear_actf_component.h"
+#include "bind_function_interface.h"
 
+using namespace Functions;
 using namespace ANN;
 
 //BIND_END
@@ -281,8 +284,11 @@ using namespace ANN;
 //                  ANNComponent                   //
 /////////////////////////////////////////////////////
 
+//BIND_LUACLASSNAME FunctionInterface functions
+
 //BIND_LUACLASSNAME ANNComponent ann.components.base
 //BIND_CPP_CLASS    ANNComponent
+//BIND_SUBCLASS_OF  ANNComponent FunctionInterface
 
 //BIND_CONSTRUCTOR ANNComponent
 //DOC_BEGIN
@@ -1474,13 +1480,16 @@ using namespace ANN;
   LUABIND_CHECK_ARGN(<=, 1);
   int argn = lua_gettop(L);
   const char *name=0;
+  float inf=-1.0f, sup=1.0f;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L, 1, "name", (const char *)0);
+    check_table_fields(L, 1, "name", "inf", "sup", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, inf, float, inf, -1.0f);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, sup, float, sup,  1.0f);
   }
-  obj = new HardtanhActfANNComponent(name);
-  LUABIND_RETURN(HardtanhActfANNComponent, obj);  
+  obj = new HardtanhActfANNComponent(name, inf, sup);
+  LUABIND_RETURN(HardtanhActfANNComponent, obj);
 }
 //BIND_END
 

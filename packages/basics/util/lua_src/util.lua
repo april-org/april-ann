@@ -55,14 +55,14 @@ function class_wrapper(obj,wrapper)
   local wrapper = wrapper or {}
   local current = obj
   while (getmetatable(current) and getmetatable(current).__index and
-	 getmetatable(current).__index ~= current) do
+	 not rawequal(getmetatable(current).__index,current)) do
     current = getmetatable(current).__index
     for i,v in pairs(current) do
       if wrapper[i] == nil then
 	if type(v) == "function" then
 	  wrapper[i] =
 	    function(first, ...)
-	      if first == wrapper then
+	      if rawequal(first,wrapper) then
 		return obj[i](obj, ...)
 	      else
 		return obj[i](...)
@@ -148,7 +148,7 @@ function isa( object_instance, base_class_table )
   while (not _isa and object_table and getmetatable(object_table) and
 	 getmetatable(object_table).__index) do
     local t = getmetatable(object_table).__index
-    _isa = (t == base_class_meta)
+    _isa = rawequal(t,base_class_meta)
     object_table = t
   end
   return _isa

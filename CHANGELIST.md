@@ -6,6 +6,10 @@ Master branch release
 
 ### Unstable changes
 
+- Added `ann.autoencoders.ae` class, in order to factorize the SDAE code.
+- Added `trainable.train_wo_validation` class, which in the future will
+  replace current `trainable.supervised_trainer:train_wo_validation`
+  method.
 - Added `trainable.train_holdout_validation` class, which in the future will
   replace current `trainable.supervised_trainer:train_holdout_validation`
   method.
@@ -14,6 +18,13 @@ Master branch release
   
 ### Stable changes
 
+- Added `FunctionInterface` class, in Lua as `functions` class, superclass of
+  ANN components.
+- Added automatic conversion between DataSetFloat and DataSetToken in
+  `dataset.token.filter` and `dataset.token.union`.
+- Added `dataset.token.filter`, which allows ANN components as filters.
+- Added `inf` and `sup` limits to Hard-Tanh activation function.
+- Added `random:to_lua_string()` method.
 - Solved bug at `trainable` when using `use_dataset`, `train_dataset`,
   `validate_dataset`, `grad_check_dataset` methods without a `bunch_size`
   parameter, and with a trainer which has not a `bunch_size` defined at

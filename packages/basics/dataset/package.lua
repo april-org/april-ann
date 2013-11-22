@@ -1,6 +1,6 @@
  package{ name = "dataset",
    version = "1.0",
-   depends = { "util", "matrix", "random", "tokens" },
+   depends = { "util", "matrix", "random", "tokens", "functions" },
    keywords = { "dataset" },
    description = "no description available",
    -- targets como en ant
