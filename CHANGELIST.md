@@ -14,6 +14,10 @@ Master branch release
   
 ### Stable changes
 
+- Solved bug at `trainable` when using `use_dataset`, `train_dataset`,
+  `validate_dataset`, `grad_check_dataset` methods without a `bunch_size`
+  parameter, and with a trainer which has not a `bunch_size` defined at
+  construction.
 - Added `ann.optimizer.cg`, Conjugate Gradient algorithm.
 - Added `ann.optimizer.rprop`, Resilient Prop algorithm.
 - Stabilization of log-logistic activation function.

@@ -53,10 +53,9 @@ april_set_doc("trainable.supervised_trainer.__call", {
 		outputs = { "Instantiated object" }, })
 
 function trainable_supervised_trainer_class_metatable:__call(...)
-  local arg = table.pack(...)
-  if #arg == 1 and type(arg[1]) == "table" then
+  if select('#',...) == 1 and type(select(1,...)) == "table" then
     -- Loading from a previously saved object, the first argument is a table
-    local t = arg[1]
+    local t = select(1,...)
     local model = t.model
     local connections = t.connections
     local loss        = t.loss
@@ -78,7 +77,7 @@ function trainable_supervised_trainer_class_metatable:__call(...)
     return obj
   else
     -- Constructor of a new object
-    local ann_component,loss_function,bunch_size,optimizer = table.unpack(arg)
+    local ann_component,loss_function,bunch_size,optimizer = ...
     local optimizer = optimizer or ann.optimizer.sgd()
     if loss_function and not isa(loss_function, ann.loss) then
       error("The second parameter must be an instance of ann.loss")
@@ -1090,8 +1089,7 @@ function trainable_supervised_trainer_methods:train_dataset(t)
 			 },
       },
       bunch_size     = { type_match = "number",
-			 mandatory = (self.bunch_size == false),
-			 default=self.bunch_size },
+			 mandatory = (self.bunch_size == false) },
       loss           = { isa_match  = ann.loss,
                          mandatory  = (self.loss_function==false),
 			 default=self.loss_function },
@@ -1107,7 +1105,7 @@ function trainable_supervised_trainer_methods:train_dataset(t)
   assert(not params.input_dataset or not params.distribution,
 	 "input_dataset/output_dataset fields are forbidden with distribution")
   --
-  
+  local bunch_size = params.bunch_size or self.bunch_size
   -- TRAINING TABLES
   
   -- for each pattern, index in dataset
@@ -1167,12 +1165,19 @@ function trainable_supervised_trainer_methods:train_dataset(t)
       for i=1,num_patterns do table.insert(ds_idx_table, i) end
     end
   end
+  -- SANITY CHECK
+  assert(self:get_input_size() == 0 or
+	   self:get_input_size() == params.input_dataset:patternSize(),
+	 "Incorrect patternSize at input_dataset")
+  assert(self:get_output_size() == 0 or
+	   self:get_output_size() == params.output_dataset:patternSize(),
+	 "Incorrect patternSize at output_dataset")
   -- TRAIN USING ds_idx_table
   local k=0
   local bunch_indexes = {}
-  for i=1,#ds_idx_table,params.bunch_size do
+  for i=1,#ds_idx_table,bunch_size do
     table.clear(bunch_indexes)
-    local last = math.min(i+params.bunch_size-1, #ds_idx_table)
+    local last = math.min(i+bunch_size-1, #ds_idx_table)
     for j=i,last do table.insert(bunch_indexes, ds_idx_table[j]) end
     local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
     local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
@@ -1212,8 +1217,7 @@ function trainable_supervised_trainer_methods:grad_check_dataset(t)
       input_dataset  = { mandatory = false, default=nil },
       output_dataset = { mandatory = false, default=nil },
       bunch_size     = { type_match = "number",
-			 mandatory = (self.bunch_size == false),
-			 default=self.bunch_size },
+			 mandatory = (self.bunch_size == false) },
       loss           = { isa_match  = ann.loss,
                          mandatory = (self.loss_function==false),
 			 default=self.loss_function },
@@ -1227,7 +1231,7 @@ function trainable_supervised_trainer_methods:grad_check_dataset(t)
   assert(params.input_dataset ~= not params.output_dataset,
 	 "input_dataset and output_dataset fields are mandatory together")
   --
-  
+  local bunch_size = params.bunch_size or self.bunch_size
   -- TRAINING TABLES
   
   -- for each pattern, index in dataset
@@ -1243,12 +1247,19 @@ function trainable_supervised_trainer_methods:grad_check_dataset(t)
   check_dataset_sizes(params.input_dataset, params.output_dataset)
   local num_patterns = params.input_dataset:numPatterns()
   for i=1,num_patterns do table.insert(ds_idx_table, i) end
+  -- SANITY CHECK
+  assert(self:get_input_size() == 0 or
+	   self:get_input_size() == params.input_dataset:patternSize(),
+	 "Incorrect patternSize at input_dataset")
+  assert(self:get_output_size() == 0 or
+	   self:get_output_size() == params.output_dataset:patternSize(),
+	 "Incorrect patternSize at output_dataset")
   local k=0
   local bunch_indexes = {}
-  for i=1,#ds_idx_table,params.bunch_size do
-    if i/params.bunch_size > params.max_iterations then break end
+  for i=1,#ds_idx_table,bunch_size do
+    if i/bunch_size > params.max_iterations then break end
     table.clear(bunch_indexes)
-    local last = math.min(i+params.bunch_size-1, #ds_idx_table)
+    local last = math.min(i+bunch_size-1, #ds_idx_table)
     for j=i,last do table.insert(bunch_indexes, ds_idx_table[j]) end
     local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
     local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
@@ -1355,8 +1366,7 @@ function trainable_supervised_trainer_methods:validate_dataset(t)
       input_dataset  = { mandatory = true },
       output_dataset = { mandatory = true },
       bunch_size     = { type_match = "number",
-			 mandatory = (self.bunch_size == false),
-			 default=self.bunch_size },
+			 mandatory = (self.bunch_size == false) },
       loss           = { isa_match  = ann.loss,
                          mandatory = (self.loss_funcion==false),
 			 default=self.loss_function },
@@ -1368,6 +1378,7 @@ function trainable_supervised_trainer_methods:validate_dataset(t)
 	 "input_dataset and output_dataset fields are mandatory together")
   assert(not params.input_dataset or not params.distribution,
 	 "input_dataset/output_dataset fields are forbidden with distribution")
+  local bunch_size = params.bunch_size or self.bunch_size
   -- TRAINING TABLES
   
   -- for each pattern, index in corresponding datasets
@@ -1393,12 +1404,19 @@ function trainable_supervised_trainer_methods:validate_dataset(t)
   else
     for i=1,num_patterns do table.insert(ds_idx_table, i) end
   end
+  -- SANITY CHECK
+  assert(self:get_input_size() == 0 or
+	   self:get_input_size() == params.input_dataset:patternSize(),
+	 "Incorrect patternSize at input_dataset")
+  assert(self:get_output_size() == 0 or
+	   self:get_output_size() == params.output_dataset:patternSize(),
+	 "Incorrect patternSize at output_dataset")
   -- TRAIN USING ds_idx_table
   local k=0
   local bunch_indexes = {}
-  for i=1,#ds_idx_table,params.bunch_size do
+  for i=1,#ds_idx_table,bunch_size do
     table.clear(bunch_indexes)
-    local last = math.min(i+params.bunch_size-1, #ds_idx_table)
+    local last = math.min(i+bunch_size-1, #ds_idx_table)
     for j=i,last do table.insert(bunch_indexes, ds_idx_table[j]) end
     local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
     local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
@@ -1442,18 +1460,22 @@ function trainable_supervised_trainer_methods:for_each_pattern(t)
       input_dataset  = { mandatory = true },
       func           = { mandatory = true, type_match="function" },
       bunch_size     = { type_match = "number",
-			 mandatory = (self.bunch_size == false),
-			 default=self.bunch_size },
+			 mandatory = (self.bunch_size == false) },
     }, t)
   if isa(params.input_dataset, dataset) then
     params.input_dataset = dataset.token.wrapper(params.input_dataset)
   end
+  local bunch_size = params.bunch_size or self.bunch_size
   local nump = params.input_dataset:numPatterns()
+  -- SANITY CHECK
+  assert(self:get_input_size() == 0 or
+	   self:get_input_size() == params.input_dataset:patternSize(),
+	 "Incorrect patternSize at input_dataset")
   local k=0
   local bunch_indexes = {}
-  for i=1,nump,params.bunch_size do
+  for i=1,nump,bunch_size do
     table.clear(bunch_indexes)
-    local last = math.min(i+params.bunch_size-1, nump)
+    local last = math.min(i+bunch_size-1, nump)
     for j=i,last do table.insert(bunch_indexes, j) end
     local input  = params.input_dataset:getPatternBunch(bunch_indexes)
     local output = self.ann_component:forward(input)
@@ -1500,9 +1522,9 @@ function trainable_supervised_trainer_methods:use_dataset(t)
       input_dataset  = { mandatory = true },
       output_dataset = { mandatory = false, default=nil },
       bunch_size     = { type_match = "number",
-			 mandatory = (self.bunch_size == false),
-			 default=self.bunch_size },
+			 mandatory = (self.bunch_size == false)  },
     }, t)
+  local bunch_size = params.bunch_size or self.bunch_size
   local nump    = params.input_dataset:numPatterns()
   local outsize = self.ann_component:get_output_size()
   if params.output_dataset then
@@ -1520,11 +1542,18 @@ function trainable_supervised_trainer_methods:use_dataset(t)
   if isa(params.input_dataset, dataset) then
     params.input_dataset = dataset.token.wrapper(params.input_dataset)
   end
+  -- SANITY CHECK
+  assert(self:get_input_size() == 0 or
+	   self:get_input_size() == params.input_dataset:patternSize(),
+	 "Incorrect patternSize at input_dataset")
+  assert(self:get_output_size() == 0 or
+	   self:get_output_size() == params.output_dataset:patternSize(),
+	 "Incorrect patternSize at output_dataset")
   local k=0
   local bunch_indexes = {}
-  for i=1,nump,params.bunch_size do
+  for i=1,nump,bunch_size do
     table.clear(bunch_indexes)
-    local last = math.min(i+params.bunch_size-1, nump)
+    local last = math.min(i+bunch_size-1, nump)
     for j=i,last do table.insert(bunch_indexes, j) end
     local input  = params.input_dataset:getPatternBunch(bunch_indexes)
     local output = self.ann_component:forward(input)
