@@ -18,6 +18,7 @@ Master branch release
   
 ### Stable changes
 
+- Solved bug at `stats.correlation.pearson`.
 - Added `FunctionInterface` class, in Lua as `functions` class, superclass of
   ANN components.
 - Added automatic conversion between DataSetFloat and DataSetToken in
