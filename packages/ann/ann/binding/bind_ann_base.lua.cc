@@ -75,8 +75,6 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "rewrap_component.h"
 #include "slice_component.h"
 #include "flatten_component.h"
-#include "gaussian_noise_component.h"
-#include "salt_and_pepper_component.h"
 #include "convolution_component.h"
 #include "convolution_bias_component.h"
 #include "maxpooling_component.h"
@@ -94,6 +92,8 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "hardtanh_actf_component.h"
 #include "sin_actf_component.h"
 #include "linear_actf_component.h"
+#include "gaussian_noise_component.h"
+#include "salt_and_pepper_component.h"
 #include "dropout_component.h"
 #include "bind_function_interface.h"
 
@@ -1043,77 +1043,6 @@ using namespace ANN;
 //BIND_END
 
 /////////////////////////////////////////////////////
-//               GaussianNoiseANNComponent         //
-/////////////////////////////////////////////////////
-
-//BIND_LUACLASSNAME GaussianNoiseANNComponent ann.components.gaussian_noise
-//BIND_CPP_CLASS    GaussianNoiseANNComponent
-//BIND_SUBCLASS_OF  GaussianNoiseANNComponent ANNComponent
-
-//BIND_CONSTRUCTOR GaussianNoiseANNComponent
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, table);
-  const char *name=0;
-  float mean, var;
-  unsigned int size=0;
-  MTRand *random;
-  check_table_fields(L, 1, "size", "random", "mean", "var", "name",
-		     (const char *)0);
-  LUABIND_GET_TABLE_PARAMETER(1, random, MTRand, random);
-  LUABIND_GET_TABLE_PARAMETER(1, mean, float, mean);
-  LUABIND_GET_TABLE_PARAMETER(1, var, float, var);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, 0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
-  obj = new GaussianNoiseANNComponent(random, mean, var, name, size);
-  LUABIND_RETURN(GaussianNoiseANNComponent, obj);
-}
-//BIND_END
-
-//BIND_METHOD GaussianNoiseANNComponent clone
-{
-  LUABIND_RETURN(GaussianNoiseANNComponent,
-		 dynamic_cast<GaussianNoiseANNComponent*>(obj->clone()));
-}
-//BIND_END
-
-/////////////////////////////////////////////////////
-//               SaltAndPepperANNComponent         //
-/////////////////////////////////////////////////////
-
-//BIND_LUACLASSNAME SaltAndPepperANNComponent ann.components.salt_and_pepper
-//BIND_CPP_CLASS    SaltAndPepperANNComponent
-//BIND_SUBCLASS_OF  SaltAndPepperANNComponent ANNComponent
-
-//BIND_CONSTRUCTOR SaltAndPepperANNComponent
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, table);
-  const char *name=0;
-  float zero, one, prob;
-  unsigned int size=0;
-  MTRand *random;
-  check_table_fields(L, 1, "size", "random", "one", "zero", "prob", "name",
-		     (const char *)0);
-  LUABIND_GET_TABLE_PARAMETER(1, random, MTRand, random);
-  LUABIND_GET_TABLE_PARAMETER(1, prob, float, prob);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, zero, float,  zero, 0.0f);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, one,  float,  one,  1.0f);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint,   size, 0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
-  obj = new SaltAndPepperANNComponent(random, zero, one, prob, name, size);
-  LUABIND_RETURN(SaltAndPepperANNComponent, obj);
-}
-//BIND_END
-
-//BIND_METHOD SaltAndPepperANNComponent clone
-{
-  LUABIND_RETURN(SaltAndPepperANNComponent,
-		 dynamic_cast<SaltAndPepperANNComponent*>(obj->clone()));
-}
-//BIND_END
-
-/////////////////////////////////////////////////////
 //               ConvolutionANNComponent           //
 /////////////////////////////////////////////////////
 
@@ -1263,6 +1192,114 @@ using namespace ANN;
 }
 //BIND_END
 
+/////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME StochasticANNComponent ann.components.stochastic
+//BIND_CPP_CLASS    StochasticANNComponent
+//BIND_SUBCLASS_OF  StochasticANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR StochasticANNComponent
+{
+  LUABIND_ERROR("Abstract class!!!");
+}
+//BIND_END
+
+//BIND_METHOD StochasticANNComponent set_random
+{
+  MTRand *random;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, MTRand);
+  LUABIND_GET_PARAMETER(1, MTRand, random);
+  obj->setRandom(random);
+  LUABIND_RETURN(StochasticANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD StochasticANNComponent get_random
+{
+  LUABIND_RETURN(MTRand, obj->getRandom());
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//               GaussianNoiseANNComponent         //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME GaussianNoiseANNComponent ann.components.gaussian_noise
+//BIND_CPP_CLASS    GaussianNoiseANNComponent
+//BIND_SUBCLASS_OF  GaussianNoiseANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR GaussianNoiseANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  float mean=0.0f, var=0.1f;
+  unsigned int size=0;
+  MTRand *random=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "size", "random", "mean", "var", "name",
+		       (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, random, MTRand, random, random);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, mean, float, mean, mean);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, var, float, var, var);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, size);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, name);
+  }
+  if (!random) random = new MTRand();
+  obj = new GaussianNoiseANNComponent(random, mean, var, name, size);
+  LUABIND_RETURN(GaussianNoiseANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD GaussianNoiseANNComponent clone
+{
+  LUABIND_RETURN(GaussianNoiseANNComponent,
+		 dynamic_cast<GaussianNoiseANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//               SaltAndPepperANNComponent         //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME SaltAndPepperANNComponent ann.components.salt_and_pepper
+//BIND_CPP_CLASS    SaltAndPepperANNComponent
+//BIND_SUBCLASS_OF  SaltAndPepperANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR SaltAndPepperANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  float zero=0.0f, one=1.0f, prob=0.2f;
+  unsigned int size=0;
+  MTRand *random=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "size", "random", "one", "zero", "prob", "name",
+		       (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, random, MTRand, random, random);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, prob, float, prob, prob);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, zero, float,  zero, zero);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, one,  float,  one,  one);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint,   size, size);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, name);
+  }
+  if (!random) random = new MTRand();  
+  obj = new SaltAndPepperANNComponent(random, zero, one, prob, name, size);
+  LUABIND_RETURN(SaltAndPepperANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD SaltAndPepperANNComponent clone
+{
+  LUABIND_RETURN(SaltAndPepperANNComponent,
+		 dynamic_cast<SaltAndPepperANNComponent*>(obj->clone()));
+}
+//BIND_END
+
 ////////////////////////////////////////////////////
 //              DropoutANNComponent               //
 ////////////////////////////////////////////////////
@@ -1283,17 +1320,26 @@ using namespace ANN;
     LUABIND_CHECK_PARAMETER(1, table);
     check_table_fields(L, 1, "name", "size", "prob", "value", "random",
 		       (const char *)0);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, 0);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, prob, float, prob, 0.5f);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, value, float, value, 0.0f);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, random, MTRand, random, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, name);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, size);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, prob, float, prob, prob);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, value, float, value, value);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, random, MTRand, random, random);
   }
   if (!random) random = new MTRand();
   obj = new DropoutANNComponent(random, value, prob, name, size);
   LUABIND_RETURN(DropoutANNComponent, obj);  
 }
 //BIND_END
+
+//BIND_METHOD SaltAndPepperANNComponent clone
+{
+  LUABIND_RETURN(DropoutANNComponent,
+		 dynamic_cast<DropoutANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////
 //         ActivationFunctionANNComponent          //

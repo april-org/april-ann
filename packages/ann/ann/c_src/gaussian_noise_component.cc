@@ -31,15 +31,13 @@ namespace ANN {
 						       float variance,
 						       const char *name,
 						       unsigned int size) :
-    ANNComponent(name, 0, size, size),
-    random(random),
+    StochasticANNComponent(random, name, 0, size, size),
     input(0),
     output(0),
     error_input(0),
     error_output(0),
     mean(mean),
     variance(variance) {
-    IncRef(random);
   }
   
   GaussianNoiseANNComponent::~GaussianNoiseANNComponent() {
@@ -47,7 +45,6 @@ namespace ANN {
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);
     if (error_output) DecRef(error_output);
-    DecRef(random);
   }
   
   Token *GaussianNoiseANNComponent::doForward(Token* _input, bool during_training) {

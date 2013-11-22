@@ -31,8 +31,7 @@ namespace ANN {
 					   float prob,
 					   const char *name,
 					   unsigned int size) :
-    ANNComponent(name, 0, size, size),
-    random(random),
+    StochasticANNComponent(random, name, 0, size, size),
     input(0),
     output(0),
     error_input(0),
@@ -41,7 +40,6 @@ namespace ANN {
     value(value),
     prob(prob),
     size(size) {
-    IncRef(random);
   }
   
   DropoutANNComponent::~DropoutANNComponent() {
@@ -50,7 +48,6 @@ namespace ANN {
     if (output) DecRef(output);
     if (error_output) DecRef(error_output);
     if (dropout_mask) DecRef(dropout_mask);
-    DecRef(random);
   }
   
   Token *DropoutANNComponent::doForward(Token* _input, bool during_training) {
@@ -73,7 +70,7 @@ namespace ANN {
       // apply dropout
       if (during_training) {
 	if (dropout_mask == 0 || dropout_mask->size() != input_mat->size()) {
-	  DecRef(dropout_mask);
+	  if (dropout_mask) DecRef(dropout_mask);
 	  int dims = { input_mat->size() };
 	  dropout_mask = new MatrixFloat(1, dims, CblasColMajor);
 	  IncRef(dropout_mask);

@@ -21,21 +21,16 @@
 #ifndef DROPOUTCOMPONENT_H
 #define DROPOUTCOMPONENT_H
 
-#include "vector.h"
 #include "ann_component.h"
 #include "token_matrix.h"
-#include "MersenneTwister.h"
-
-using april_utils::vector;
+#include "stochastic_component.h"
 
 namespace ANN {
   
-  /// This component adds to the input matrix Salt and Pepper noise, using a
-  /// given random object, the noise probability (50% is this is for zero, and
-  /// 50% for one), and the float values of zero and one. The matrix size and
-  /// dimensions are not restricted.
-  class DropoutANNComponent : public ANNComponent {
-    MTRand           *random;
+  /// This component adds to the input matrix mask noise, using a given random
+  /// object, the noise probability, and the float value for masked units. The
+  /// matrix size and dimensions are not restricted.
+  class DropoutANNComponent : public StochasticANNComponent {
     TokenMatrixFloat *input, *output;
     Token            *error_input, *error_output;
     MatrixFloat      *dropout_mask;

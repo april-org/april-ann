@@ -21,20 +21,16 @@
 #ifndef GAUSSIANNOISECOMPONENT_H
 #define GAUSSIANNOISECOMPONENT_H
 
-#include "vector.h"
 #include "ann_component.h"
 #include "token_matrix.h"
-#include "MersenneTwister.h"
-
-using april_utils::vector;
+#include "stochastic_component.h"
 
 namespace ANN {
 
   /// A component which adds gaussian noise, with the given mean and variance,
   /// to the input matrix. The size and dimensions of input matrix are not
   /// restricted.
-  class GaussianNoiseANNComponent : public ANNComponent {
-    MTRand           *random;
+  class GaussianNoiseANNComponent : public StochasticANNComponent {
     TokenMatrixFloat *input, *output;
     Token            *error_input, *error_output;
     float            mean, variance;
