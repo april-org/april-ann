@@ -55,7 +55,6 @@ namespace ANN {
 
   ANNComponent *LinearActfANNComponent::clone() {
     LinearActfANNComponent *obj = new LinearActfANNComponent(name.c_str());
-    obj->setOption(DROPOUT_FACTOR_STRING, getOption(DROPOUT_FACTOR_STRING));
     return obj;
   }
 

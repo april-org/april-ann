@@ -105,26 +105,6 @@ namespace ANN {
       components[c]->setUseCuda(v);
   }
   
-  void StackANNComponent::setOption(const char *name, double value) {
-    for (unsigned int c=0; c<components.size(); ++c)
-      components[c]->setOption(name, value);
-  }
-
-  bool StackANNComponent::hasOption(const char *name) {
-    bool ret = false;
-    for (unsigned int c=0; c<components.size() && !ret; ++c)
-      ret = components[c]->hasOption(name);
-    return ret;
-  }
-    
-  double StackANNComponent::getOption(const char *name) {
-    for (unsigned int c=0; c<components.size(); ++c) {
-      if (components[c]->hasOption(name))
-	return components[c]->getOption(name);
-    }
-    return ANNComponent::getOption(name);
-  }
-    
   void StackANNComponent::build(unsigned int _input_size,
 				unsigned int _output_size,
 				hash<string,Connections*> &weights_dict,

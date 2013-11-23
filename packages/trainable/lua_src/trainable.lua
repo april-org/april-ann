@@ -249,46 +249,6 @@ end
 
 ------------------------------------------------------------------------
 
-april_set_doc("trainable.supervised_trainer.set_component_option", {
-		class = "method",
-		summary = "Sets an specific component option",
-		description = {
-		  "Sets the value of a component option specifying the",
-		  "component name by a Lua regular expression, so the option is set",
-		  "for all components which match the given name",
-		},
-		params  = {
-		  "An string with the Lua regular expression",
-		  "An string with the option name",
-		  "A number with the value",
-		}, })
-
-
-function trainable_supervised_trainer_methods:set_component_option(cname_match,
-								   name,
-								   value)
-  for cname,c in self:iterate_components(cname_match) do
-    c:set_option(name,value)
-  end
-end
-
-april_set_doc("trainable.supervised_trainer.get_component_option", {
-		class = "method",
-		summary = "Returns the option value of a given component name",
-		params  = {
-		  "An string with the component name",
-		  "An string with the option name",
-		},
-		outputs = { "A number with the value", }, })
-
-function trainable_supervised_trainer_methods:get_component_option(cname,
-								   oname)
-  local c = self.components_table[cname]
-  return c and c:get_option(oname)
-end
-
-------------------------------------------------------------------------
-
 april_set_doc("trainable.supervised_trainer.get_input_size", {
 		class = "method",
 		summary = "Gets the input size of its component",

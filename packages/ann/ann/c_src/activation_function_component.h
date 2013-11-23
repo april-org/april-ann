@@ -33,12 +33,6 @@ namespace ANN {
   /// the anncomponents must fulfill.
   class ActivationFunctionANNComponent : public ANNComponent {
     TokenMatrixFloat *input, *output, *error_input, *error_output;
-    // for dropout
-    float                        dropout_factor;
-    FloatGPUMirroredMemoryBlock *dropout_mask;
-    int                         *units_order_permutation;
-    static MTRand                dropout_random;
-    static int                   dropout_seed;
   protected:
     virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,
 				 FloatGPUMirroredMemoryBlock *output_units,
@@ -64,12 +58,6 @@ namespace ANN {
     virtual Token *doBackprop(Token *input_error);
 
     virtual void reset(unsigned int it=0);
-    
-    virtual void setOption(const char *name, double value);
-
-    virtual bool hasOption(const char *name);
-    
-    virtual double getOption(const char *name);
     
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,

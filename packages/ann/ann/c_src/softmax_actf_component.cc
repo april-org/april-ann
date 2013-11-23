@@ -78,7 +78,6 @@ namespace ANN {
 
   ANNComponent *SoftmaxActfANNComponent::clone() {
     SoftmaxActfANNComponent *obj = new SoftmaxActfANNComponent(name.c_str());
-    obj->setOption(DROPOUT_FACTOR_STRING, getOption(DROPOUT_FACTOR_STRING));
     return obj;
   }
 

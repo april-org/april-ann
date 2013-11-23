@@ -1,6 +1,8 @@
 m1 = ImageIO.read(string.get_path(arg[0]) ..  "digits.png"):to_grayscale():invert_colors():matrix()
 
-bunch_size = 32
+bunch_size     = 32
+dropout_factor = 0.5
+dropout_random = random(123242)
 
 train_input = dataset.matrix(m1,
 			     {
@@ -86,6 +88,16 @@ loss_name = "multi_class_cross_entropy"
 sdae_table,deep_classifier = ann.autoencoders.greedy_layerwise_pretraining(params_pretrain)
 codifier_net = ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
 							       layers_table)
+list = table.pack(deep_classifier:unroll())
+new_list = {}
+for i=1,#list,2 do
+  table.insert(new_list, list[i])
+  table.insert(new_list, list[i+1])
+  table.insert(new_list, ann.components.dropout{ prob=dropout_factor,
+						 random=dropout_random })
+end
+deep_classifier = ann.components.stack(table.unpack(new_list))
+
 trainer_deep_classifier = trainable.supervised_trainer(deep_classifier,
 						       ann.loss[loss_name](10),
 						       bunch_size,
@@ -93,6 +105,8 @@ trainer_deep_classifier = trainable.supervised_trainer(deep_classifier,
 trainer_deep_classifier:build()
 trainer_deep_classifier:set_option("rho", 0.0001)
 trainer_deep_classifier:set_option("sig", 0.8)
+
+trainer_deep_classifier:save("jarl.net")
 --
 shallow_classifier = ann.mlp.all_all.generate("256 inputs 256 tanh 128 tanh 10 log_softmax")
 trainer_shallow_classifier = trainable.supervised_trainer(shallow_classifier,
@@ -144,19 +158,6 @@ datosvalidar = {
 
 print(trainer_deep_classifier:validate_dataset(datosvalidar))
 
-dropout_factor = 0.5
-function set_dropout(trainer)
-  if dropout_factor > 0.0 then
-    local max=trainer:count_components("^actf.*$")
-    for name,component in trainer.iterate_components(trainer, "^actf.*$") do
-      if name ~= "actf"..max then
-	component:set_option("dropout_factor",dropout_factor)
-	component:set_option("dropout_seed", 5425)
-      end
-    end
-  end
-end
-
 -- we scale the weights before dropout
 if dropout_factor > 0.0 then
   for name,cnn in trainer_deep_classifier:iterate_weights("^w.*$") do
@@ -176,7 +177,7 @@ end
 --trainer_deep_classifier:set_option("momentum", 0.0)
 trainer_deep_classifier:set_option("weight_decay", 0.0)
 trainer_deep_classifier:set_option("max_norm_penalty", 4.0)
---set_dropout(trainer_deep_classifier)
+set_dropout(trainer_deep_classifier)
 
 trainer_shallow_classifier:set_option("learning_rate", 0.4)
 trainer_shallow_classifier:set_option("momentum",

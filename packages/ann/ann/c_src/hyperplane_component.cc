@@ -107,21 +107,6 @@ namespace ANN {
     bias->setUseCuda(v);
   }
   
-  void HyperplaneANNComponent::setOption(const char *name, double value) {
-    dot_product->setOption(name, value);
-    bias->setOption(name, value);
-  }
-
-  bool HyperplaneANNComponent::hasOption(const char *name) {
-    return dot_product->hasOption(name) || bias->hasOption(name);
-  }
-    
-  double HyperplaneANNComponent::getOption(const char *name) {
-    if (dot_product->hasOption(name)) return dot_product->getOption(name);
-    if (bias->hasOption(name)) return bias->getOption(name);
-    return ANNComponent::getOption(name);
-  }
-    
   void HyperplaneANNComponent::build(unsigned int _input_size,
 				     unsigned int _output_size,
 				     hash<string,Connections*> &weights_dict,

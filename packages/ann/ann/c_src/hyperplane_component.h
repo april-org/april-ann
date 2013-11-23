@@ -62,12 +62,6 @@ namespace ANN {
     
     virtual void setUseCuda(bool v);
     
-    virtual void setOption(const char *name, double value);
-
-    virtual bool hasOption(const char *name);
-    
-    virtual double getOption(const char *name);
-    
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
 		       hash<string,Connections*> &weights_dict,

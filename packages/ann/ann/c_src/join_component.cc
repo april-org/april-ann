@@ -318,26 +318,6 @@ namespace ANN {
       components[c]->setUseCuda(v);
   }
   
-  void JoinANNComponent::setOption(const char *name, double value) {
-    for (unsigned int c=0; c<components.size(); ++c)
-      components[c]->setOption(name, value);
-  }
-  
-  bool JoinANNComponent::hasOption(const char *name) {
-    bool ret = false;
-    for (unsigned int c=0; c<components.size() && !ret; ++c)
-      ret = components[c]->hasOption(name);
-    return ret;
-  }
-  
-  double JoinANNComponent::getOption(const char *name) {
-    for (unsigned int c=0; c<components.size(); ++c) {
-      if (components[c]->hasOption(name))
-	return components[c]->getOption(name);
-    }
-    return ANNComponent::getOption(name);
-  }
-
   void JoinANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
     for (unsigned int i=0; i<components.size(); ++i)
       components[i]->copyWeights(weights_dict);
