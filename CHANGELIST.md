@@ -6,6 +6,8 @@ Master branch release
 
 ### Unstable changes
 
+- Added `ann.components.dropout` class.
+- Added `StochasticANNComponent` which is base class for stochastic components.
 - Added `ann.autoencoders.ae` class, in order to factorize the SDAE code.
 - Added `trainable.train_wo_validation` class, which in the future will
   replace current `trainable.supervised_trainer:train_wo_validation`
@@ -18,6 +20,8 @@ Master branch release
   
 ### Stable changes
 
+- Removed dropout code from activation functions.
+- Deleted options from ANN components.
 - Added methods `unroll` and `get` to `ann.components.stack` class.
 - Solved bug at `stats.correlation.pearson`.
 - Added `FunctionInterface` class, in Lua as `functions` class, superclass of
