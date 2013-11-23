@@ -868,6 +868,7 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
   local epsilon  = 1e-03
   local ret      = true
   local bunch_size = tr_loss_matrix:dim(1)
+  local it = 1
   for wname,cnn in self:iterate_weights() do
     local w = cnn:matrix()
     -- The shared parameter has no effect in gradients check, only bunch_size
@@ -876,9 +877,13 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
     for i=1,w:size() do
       local orig_w = w:raw_get(i-1)
       w:raw_set(i-1, orig_w - epsilon)
+      self.ann_component:reset(it)
+      it=it+1
       local loss_a = loss:compute_loss(self.ann_component:forward(input,true),
 				       target)
       w:raw_set(i-1, orig_w + epsilon)
+      self.ann_component:reset(it)
+      it=it+1
       local loss_b = loss:compute_loss(self.ann_component:forward(input,true),
 				       target)
       w:raw_set(i-1, orig_w)
@@ -926,6 +931,7 @@ function trainable_supervised_trainer_methods:calculate(input)
   if type(input) == "table" then input = tokens.matrix(matrix.col_major(input))
   elseif isa(input, matrix) then input = tokens.matrix(input)
   end
+  self.ann_component:reset()
   return self.ann_component:forward(input):get_matrix()
 end
 
@@ -1446,6 +1452,7 @@ function trainable_supervised_trainer_methods:for_each_pattern(t)
     local last = math.min(i+bunch_size-1, nump)
     for j=i,last do table.insert(bunch_indexes, j) end
     local input  = params.input_dataset:getPatternBunch(bunch_indexes)
+    self.ann_component:reset()
     local output = self.ann_component:forward(input)
     params.func(bunch_indexes, self)
     k=k+1
@@ -1524,6 +1531,7 @@ function trainable_supervised_trainer_methods:use_dataset(t)
     local last = math.min(i+bunch_size-1, nump)
     for j=i,last do table.insert(bunch_indexes, j) end
     local input  = params.input_dataset:getPatternBunch(bunch_indexes)
+    self.ann_component:reset()
     local output = self.ann_component:forward(input)
     params.output_dataset:putPatternBunch(bunch_indexes,output)
     k=k+1

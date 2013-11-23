@@ -60,6 +60,22 @@ for i=2,4 do
   end
 end
 
+-- DROPOUT
+
+for i=2,4 do
+  for o=2,4 do
+    for b=1,4 do
+      check_component(function()
+			return ann.components.stack():
+			push( ann.components.dot_product{ input=i, output=o } ):
+			push( ann.components.bias{ size=o } ):
+			push( ann.components.dropout() )
+		      end,
+		      "mse", i, o, b, "DOTPRODUCT + BIAS + DROPOUT")
+    end
+  end
+end
+
 -----------------------------------
 -- DOT PRODUCT + BIAS + FMEASURE --
 -----------------------------------
