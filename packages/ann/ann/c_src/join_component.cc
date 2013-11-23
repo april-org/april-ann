@@ -248,7 +248,7 @@ namespace ANN {
     return error_output;
   }
 
-  void JoinANNComponent::reset() {
+  void JoinANNComponent::reset(unsigned int it) {
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);
@@ -258,7 +258,7 @@ namespace ANN {
     output	 = 0;
     error_output = 0;
     for (unsigned int i=0; i<components.size(); ++i)
-      components[i]->reset();
+      components[i]->reset(it);
   }
   
   void JoinANNComponent::computeAllGradients(hash<string,MatrixFloat*>

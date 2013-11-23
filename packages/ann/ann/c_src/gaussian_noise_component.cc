@@ -67,7 +67,7 @@ namespace ANN {
     april_assert(output_mat->getMajorOrder() == CblasColMajor);
     for (MatrixFloat::col_major_iterator it=noise_mat->begin();
 	 it!=noise_mat->end(); ++it)
-      *it = random->randNorm(mean, variance);
+      *it = randNorm(mean, variance);
     output_mat->axpy(1.0f, noise_mat);
     delete noise_mat;
     return output;
@@ -79,7 +79,8 @@ namespace ANN {
     return error_output;
   }
   
-  void GaussianNoiseANNComponent::reset() {
+  void GaussianNoiseANNComponent::reset(unsigned int it) {
+    StochasticANNComponent::reset(it);
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);
@@ -92,7 +93,7 @@ namespace ANN {
 
   ANNComponent *GaussianNoiseANNComponent::clone() {
     GaussianNoiseANNComponent *copy_component = new
-      GaussianNoiseANNComponent(new MTRand(*random),
+      GaussianNoiseANNComponent(new MTRand(*getRandom()),
 				mean, variance,
 				name.c_str(),
 				input_size);

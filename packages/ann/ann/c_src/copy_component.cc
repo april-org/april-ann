@@ -145,7 +145,8 @@ namespace ANN {
     return error_output;
   }
   
-  void CopyANNComponent::reset() {
+  void CopyANNComponent::reset(unsigned int it) {
+    UNUSED_VARIABLE(it);
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);

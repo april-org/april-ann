@@ -77,7 +77,7 @@ namespace ANN {
 	}
 	for (MatrixFloat::col_major_iterator it(dropout_mask->begin());
 	     it != dropout_mask->end(); ++it) {
-	  if (random->rand() < prob) *it = 0.0f;
+	  if (rand() < prob) *it = 0.0f;
 	  else *it = 1.0f;
 	}
 	// apply mask
@@ -128,7 +128,8 @@ namespace ANN {
     return error_output;
   }
   
-  void DropoutANNComponent::reset() {
+  void DropoutANNComponent::reset(unsigned int it) {
+    StochasticANNComponent::reset(it);
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);
@@ -141,7 +142,7 @@ namespace ANN {
 
   ANNComponent *DropoutANNComponent::clone() {
     DropoutANNComponent *copy_component = new
-      DropoutANNComponent(new MTRand(*random),
+      DropoutANNComponent(new MTRand(*getRandom()),
 			  value, prob,
 			  name.c_str(),
 			  size);

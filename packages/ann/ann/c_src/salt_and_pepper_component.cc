@@ -68,7 +68,7 @@ namespace ANN {
     for (MatrixFloat::col_major_iterator it(output_mat->begin());
 	 it != output_mat->end();
 	 ++it) {
-      float p = random->rand();
+      float p = rand();
       if (p < prob) {
 	if (p < prob * 0.5f) *it = zero;
 	else *it = one;
@@ -86,7 +86,8 @@ namespace ANN {
     return error_output;
   }
   
-  void SaltAndPepperANNComponent::reset() {
+  void SaltAndPepperANNComponent::reset(unsigned int it) {
+    StochasticANNComponent::reset(it);
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);
@@ -99,7 +100,7 @@ namespace ANN {
 
   ANNComponent *SaltAndPepperANNComponent::clone() {
     SaltAndPepperANNComponent *copy_component = new
-      SaltAndPepperANNComponent(new MTRand(*random),
+      SaltAndPepperANNComponent(new MTRand(*getRandom()),
 				zero, one, prob,
 				name.c_str(),
 				input_size);

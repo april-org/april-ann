@@ -18,6 +18,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "unused_variable.h"
 #include "swap.h"
 #include "maxpooling_component.h"
 #include "token_matrix.h"
@@ -269,7 +270,8 @@ namespace ANN {
     return error_output;
   }
   
-  void MaxPoolingANNComponent::reset() {
+  void MaxPoolingANNComponent::reset(unsigned int it) {
+    UNUSED_VARIABLE(it);
     if (input)          DecRef(input);
     if (error_input)    DecRef(error_input);
     if (output)         DecRef(output);

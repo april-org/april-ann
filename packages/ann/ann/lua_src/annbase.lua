@@ -696,6 +696,12 @@ april_set_doc("ann.components.base.reset",
 		  "component. Input, output, error input and error output",
 		  "tokens are set to nil",
 		},
+		params = {
+		  { "An optional number with the current iteration. It is",
+		    "used by iterative algorithms as Conjugate Gradient",
+		    "to indicate components current iteration number.",
+		  }
+		}
 	      })
 
 ----------------------------------------------------------------------
@@ -1167,11 +1173,30 @@ april_set_doc("ann.components.slice.__call",
 
 ----------------------------------------------------------------------
 
+april_set_doc("ann.components.stochastic", {
+		class="class",
+		summary="An abstract component which implements basic interface of stochastic components",})
+
+april_set_doc("ann.components.stochastic.get_random",
+	      {
+		class="method",
+		summary="Returns the underlying random object",
+		outputs={ "A random object" },
+	      })
+
+april_set_doc("ann.components.stochastic.set_random",
+	      {
+		class="method",
+		summary="Sets the underlying random object",
+		params={ "A random object" },
+		outputs={ "The caller object" },
+	      })
+
+----------------------------------------------------------------------
+
 april_set_doc("ann.components.gaussian_noise", {
 		class="class",
 		summary="A component which adds Gaussian noise to data",})
-
-----------------------------------------------------------------------
 
 april_set_doc("ann.components.gaussian_noise.__call",
 	      {
@@ -1185,11 +1210,62 @@ april_set_doc("ann.components.gaussian_noise.__call",
 		params={
 		  ["name"]   = "A string with the given name [optional]",
 		  ["size"]   = "A number with the size [optional]",
-		  ["mean"]   = "Mean of the gaussian noise",
-		  ["var"]    = "Variance of the gaussian noise",
-		  ["random"] = "Random object instance",
+		  ["mean"]   = "Mean of the gaussian noise [optional], by default it is 0",
+		  ["var"]    = "Variance of the gaussian noise [optional], by default it is 0.1",
+		  ["random"] = "Random object instance [optional]",
 		},
 		outputs= { "An instance of ann.components.gaussian_noise" }
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.salt_and_pepper", {
+		class="class",
+		summary="A component which adds salt and pepper noise to data",})
+
+april_set_doc("ann.components.salt_and_pepper.__call",
+	      {
+		class="method",
+		summary="Constructor of the component",
+		description = {
+		  "The Name is generated automatically if non given.",
+		  "Size is set to zero by default, so it is mandatory to give",
+		  "it at build method if not given at the constructor."
+		},
+		params={
+		  ["name"]   = "A string with the given name [optional]",
+		  ["size"]   = "A number with the size [optional]",
+		  ["prob"]   = "Probability of noise [optional], by default it is 0.2",
+		  ["zero"]   = "Value of ZERO [optional], by default it is 0",
+		  ["one"]    = "Value of ONE [optional], by default it is 1",
+		  ["random"] = "Random object instance [optional]",
+		},
+		outputs= { "An instance of ann.components.salt_and_pepper" }
+	      })
+
+----------------------------------------------------------------------
+
+april_set_doc("ann.components.dropout", {
+		class="class",
+		summary="A component which adds salt and pepper noise to data",})
+
+april_set_doc("ann.components.dropout.__call",
+	      {
+		class="method",
+		summary="Constructor of the component",
+		description = {
+		  "The Name is generated automatically if non given.",
+		  "Size is set to zero by default, so it is mandatory to give",
+		  "it at build method if not given at the constructor."
+		},
+		params={
+		  ["name"]   = "A string with the given name [optional]",
+		  ["size"]   = "A number with the size [optional]",
+		  ["prob"]   = "Probability of noise [optional], by default it is 0.5",
+		  ["value"]  = "Mask value [optional], by default it is 0",
+		  ["random"] = "Random object instance [optional]",
+		},
+		outputs= { "An instance of ann.components.dropout" }
 	      })
 
 ----------------------------------------------------------------------

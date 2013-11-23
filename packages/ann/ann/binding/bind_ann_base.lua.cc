@@ -484,7 +484,9 @@ using namespace ANN;
 
 //BIND_METHOD ANNComponent reset
 {
-  obj->reset();
+  unsigned int it;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, int, it, 0);
+  obj->reset(it);
 }
 //BIND_END
 

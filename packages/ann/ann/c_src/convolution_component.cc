@@ -379,7 +379,8 @@ namespace ANN {
     DecRef(error_input_w);
   }
 
-  void ConvolutionANNComponent::reset() {
+  void ConvolutionANNComponent::reset(unsigned int it) {
+    UNUSED_VARIABLE(it);
     if (input)        DecRef(input);
     if (error_input)  DecRef(error_input);
     if (output)       DecRef(output);

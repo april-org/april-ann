@@ -22,6 +22,7 @@
 #define ANNCOMPONENT_H
 
 #include <cstring>
+#include "unused_variable.h"
 #include "function_interface.h"
 #include "unused_variable.h"
 #include "mystring.h"
@@ -152,8 +153,11 @@ namespace ANN {
     }
     
     /// Virtual method to reset to zero gradients and outputs (inputs are not
-    /// reseted)
-    virtual void reset() { }
+    /// reseted). It receives a counter of the number of times it is called by
+    /// iterative optimizers (as conjugate gradient).
+    virtual void reset(unsigned int it=0) {
+      UNUSED_VARIABLE(it);
+    }
 
     /// Method which receives a hash table with matrices where compute the
     /// gradients.

@@ -19,6 +19,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "unused_variable.h"
 #include "activation_function_component.h"
 #include "wrapper.h"
 
@@ -162,7 +163,8 @@ namespace ANN {
     return error_output;
   }
 
-  void ActivationFunctionANNComponent::reset() {
+  void ActivationFunctionANNComponent::reset(unsigned int it) {
+    UNUSED_VARIABLE(it);
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);

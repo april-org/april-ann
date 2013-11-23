@@ -237,7 +237,8 @@ namespace ANN {
     DecRef(error_w);
   }
 
-  void ConvolutionBiasANNComponent::reset() {
+  void ConvolutionBiasANNComponent::reset(unsigned int it) {
+    UNUSED_VARIABLE(it);
     if (input)        DecRef(input);
     if (error)        DecRef(error);
     if (output)       DecRef(output);

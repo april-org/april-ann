@@ -769,9 +769,11 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
   if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
   local loss      = loss or self.loss_function
   local optimizer = optimizer or self.optimizer
+  local it        = 0
   local tr_loss, _, _, tr_loss_matrix =
     optimizer:execute(function()
-			self.ann_component:reset()
+			self.ann_component:reset(it)
+			it = it+1
 			local output = self.ann_component:forward(input, true)
 			local output_mat = output:get_matrix()
 			local tr_loss,tr_loss_matrix

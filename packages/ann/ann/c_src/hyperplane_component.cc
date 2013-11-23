@@ -18,6 +18,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "unused_variable.h"
 #include "hyperplane_component.h"
 
 namespace ANN {
@@ -77,9 +78,9 @@ namespace ANN {
     return output;
   }
     
-  void HyperplaneANNComponent::reset() {
-    dot_product->reset();
-    bias->reset();
+  void HyperplaneANNComponent::reset(unsigned int it) {
+    dot_product->reset(it);
+    bias->reset(it);
   }
 
   void HyperplaneANNComponent::computeAllGradients(hash<string,MatrixFloat*>

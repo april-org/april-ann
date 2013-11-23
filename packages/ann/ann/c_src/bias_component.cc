@@ -19,6 +19,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "unused_variable.h"
 #include "bias_component.h"  
 #include "wrapper.h"
 #include "unused_variable.h"
@@ -93,7 +94,8 @@ namespace ANN {
     return error;
   }
 
-  void BiasANNComponent::reset() {
+  void BiasANNComponent::reset(unsigned int it) {
+    UNUSED_VARIABLE(it);
     if (input)  DecRef(input);
     if (error)  DecRef(error);
     if (output) DecRef(output);

@@ -278,7 +278,8 @@ namespace ANN {
     } // if sparse_input ... else
   }
 
-  void DotProductANNComponent::reset() {
+  void DotProductANNComponent::reset(unsigned int it) {
+    UNUSED_VARIABLE(it);
     if (input)        DecRef(input);
     if (error_input)  DecRef(error_input);
     if (output)       DecRef(output);

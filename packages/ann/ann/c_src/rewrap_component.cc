@@ -100,7 +100,8 @@ namespace ANN {
     return error_output;
   }
   
-  void RewrapANNComponent::reset() {
+  void RewrapANNComponent::reset(unsigned int it) {
+    UNUSED_VARIABLE(it);
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);

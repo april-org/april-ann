@@ -19,6 +19,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "unused_variable.h"
 #include "stack_component.h"
 
 namespace ANN {
@@ -78,9 +79,9 @@ namespace ANN {
     return aux_token;
   }
     
-  void StackANNComponent::reset() {
+  void StackANNComponent::reset(unsigned int it) {
     for (unsigned int c=0; c<components.size(); ++c)
-      components[c]->reset();
+      components[c]->reset(it);
   }
   
   void StackANNComponent::computeAllGradients(hash<string,MatrixFloat*>

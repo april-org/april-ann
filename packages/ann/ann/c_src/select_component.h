@@ -51,7 +51,7 @@ namespace ANN {
     
     virtual Token *doBackprop(Token *input_error);
     
-    virtual void reset();
+    virtual void reset(unsigned int it=0);
     
     virtual ANNComponent *clone();
 
