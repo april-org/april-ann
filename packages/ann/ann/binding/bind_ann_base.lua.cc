@@ -359,51 +359,6 @@ using namespace ANN;
 }
 //BIND_END
 
-//BIND_METHOD ANNComponent set_option
-//DOC_BEGIN
-// set_option(name, value)
-/// Method to modify the value of a given option name.
-/// @param name A lua string with the name of the option.
-/// @param value A lua number with the desired value.
-//DOC_END
-{
-  const char *name;
-  double value;
-  LUABIND_CHECK_ARGN(==,2);
-  LUABIND_GET_PARAMETER(1, string, name);
-  LUABIND_GET_PARAMETER(2, double, value);
-  obj->setOption(name, value);
-}
-//BIND_END
-
-//BIND_METHOD ANNComponent get_option
-//DOC_BEGIN
-// get_option(name)
-/// Method to retrieve the value of a given option name.
-/// @param name A lua string with the name of the option.
-//DOC_END
-{
-  const char *name;
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_GET_PARAMETER(1, string, name);
-  LUABIND_RETURN(double, obj->getOption(name));
-}
-//BIND_END
-
-//BIND_METHOD ANNComponent has_option
-//DOC_BEGIN
-// has_option(name)
-/// Method to ask for the existence of a given option name.
-/// @param name A lua string with the name of the option.
-//DOC_END
-{
-  const char *name;
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_GET_PARAMETER(1, string, name);
-  LUABIND_RETURN(bool, obj->hasOption(name));
-}
-//BIND_END
-
 //BIND_METHOD ANNComponent get_input_size
 {
   LUABIND_RETURN(uint, obj->getInputSize());
@@ -809,7 +764,7 @@ using namespace ANN;
     if (idx >= obj->size())
       LUABIND_FERROR2("Incorrect index, expected <= %d, found %d\n",
 		      obj->size(), idx+1);
-    LUABIND_RETURN(ANNComponent, obj->getComponentAt(i));
+    LUABIND_RETURN(ANNComponent, obj->getComponentAt(idx));
   }
 }
 //BIND_END

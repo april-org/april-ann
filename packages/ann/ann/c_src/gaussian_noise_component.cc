@@ -48,7 +48,7 @@ namespace ANN {
   }
   
   Token *GaussianNoiseANNComponent::doForward(Token* _input, bool during_training) {
-    UNUSED_VARIABLE(during_training);
+    _input = StochasticANNComponent::doForward(_input, during_training);
     // error checking
     if ( (_input == 0) ||
 	 (_input->getTokenCode() != table_of_token_codes::token_matrix))

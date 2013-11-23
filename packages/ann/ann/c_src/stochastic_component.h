@@ -62,6 +62,11 @@ namespace ANN {
     virtual ~StochasticANNComponent() {
       DecRef(random);
     }
+
+    virtual Token *doForward(Token* input, bool during_training) {
+      if (!during_training) stochastic_state = NORMAL;
+      return input;
+    }
     
     virtual void reset(unsigned int it=0) {
       if (it == 0) {

@@ -88,16 +88,20 @@ loss_name = "multi_class_cross_entropy"
 sdae_table,deep_classifier = ann.autoencoders.greedy_layerwise_pretraining(params_pretrain)
 codifier_net = ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
 							       layers_table)
-list = table.pack(deep_classifier:unroll())
-new_list = {}
-for i=1,#list,2 do
-  table.insert(new_list, list[i])
-  table.insert(new_list, list[i+1])
-  table.insert(new_list, ann.components.dropout{ prob=dropout_factor,
-						 random=dropout_random })
+function set_dropout(component)
+  local new_stack = ann.components.stack()
+  for i=1,component:size(),2 do
+    new_stack:push( component:get(i),
+		    component:get(i+1) )
+    if i < component:size()-2 then
+      new_stack:push( ann.components.dropout{ name="dropout-".. (i+1)/2,
+					      prob=dropout_factor,
+					      random=dropout_random } )
+    end
+  end
+  return new_stack
 end
-deep_classifier = ann.components.stack(table.unpack(new_list))
-
+deep_classifier = set_dropout(deep_classifier)
 trainer_deep_classifier = trainable.supervised_trainer(deep_classifier,
 						       ann.loss[loss_name](10),
 						       bunch_size,
@@ -105,10 +109,9 @@ trainer_deep_classifier = trainable.supervised_trainer(deep_classifier,
 trainer_deep_classifier:build()
 trainer_deep_classifier:set_option("rho", 0.0001)
 trainer_deep_classifier:set_option("sig", 0.8)
-
-trainer_deep_classifier:save("jarl.net")
 --
 shallow_classifier = ann.mlp.all_all.generate("256 inputs 256 tanh 128 tanh 10 log_softmax")
+shallow_classifier = set_dropout(shallow_classifier)
 trainer_shallow_classifier = trainable.supervised_trainer(shallow_classifier,
 							  ann.loss[loss_name](10),
 							  bunch_size)
@@ -119,6 +122,7 @@ trainer_shallow_classifier:randomize_weights {
   sup      =  0.1 }
 --
 deep_classifier_wo_pretraining = ann.mlp.all_all.generate("256 inputs 1024 logistic 1024 logistic 1024 logistic 10 log_softmax")
+deep_classifier_wo_pretraining = set_dropout(deep_classifier_wo_pretraining)
 trainer_deep_wo_pretraining = trainable.supervised_trainer(deep_classifier_wo_pretraining,
 							   ann.loss[loss_name](10),
 							   bunch_size)
@@ -177,7 +181,6 @@ end
 --trainer_deep_classifier:set_option("momentum", 0.0)
 trainer_deep_classifier:set_option("weight_decay", 0.0)
 trainer_deep_classifier:set_option("max_norm_penalty", 4.0)
-set_dropout(trainer_deep_classifier)
 
 trainer_shallow_classifier:set_option("learning_rate", 0.4)
 trainer_shallow_classifier:set_option("momentum",
@@ -186,7 +189,6 @@ trainer_shallow_classifier:set_option("weight_decay",
 				      trainer_deep_classifier:get_option("weight_decay"))
 trainer_shallow_classifier:set_option("max_norm_penalty",
 				      trainer_deep_classifier:get_option("max_norm_penalty"))
-set_dropout(trainer_shallow_classifier)
 
 trainer_deep_wo_pretraining:set_option("learning_rate",
 				       trainer_shallow_classifier:get_option("learning_rate"))
@@ -196,7 +198,6 @@ trainer_deep_wo_pretraining:set_option("weight_decay",
 				       trainer_deep_classifier:get_option("weight_decay"))
 trainer_deep_wo_pretraining:set_option("max_norm_penalty",
 				       trainer_deep_classifier:get_option("max_norm_penalty"))
-set_dropout(trainer_deep_wo_pretraining)
 
 trainer_deep_classifier:set_layerwise_option("b.*", "max_norm_penalty",0.0)
 trainer_deep_wo_pretraining:set_layerwise_option("b.*", "max_norm_penalty",0.0)

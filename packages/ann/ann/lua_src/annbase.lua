@@ -119,81 +119,14 @@ function ann.mlp.all_all.generate(topology, first_count, names_prefix)
     count = count + 1
     prev_size = size
   end
-  local obj = {
-    description = topology,
-    first_count = first_count,
-    prefix      = names_prefix,
-    names_order = names_order,
-    thenet      = thenet,
-    clone = function(o)
-      local nn=ann.mlp.all_all.generate(o.description,o.first_count,o.prefix)
-      nn:build{ weights = table.map(o:copy_weights(),
-				    function(cnn)return cnn:clone()end) }
-      return nn
-    end }
-  -- we make obj a wrapper of thenet, so we keep useful information as a lua
-  -- table but it is like the original object from the outside
-  return class_wrapper(thenet, obj)
+  return thenet
 end
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.mlp.all_all.save",
-	      {
-		class="function",
-		summary="Saves an all-all stacked ANN model",
-		description={
-		  "This function saves an all-all ANN model. It only works",
-		  "with models generated via ann.mlp.all_all.generate",
-		  "function.",
-		},
-		params= {
-		  { "The model object (not the trainer)" },
-		  { "A filename string" },
-		  { "Matrix save mode [optional], by default 'binary'" },
-		},
-	      })
-
 function ann.mlp.all_all.save(model, filename, mode, old)
-  if type(model) ~= "table" or not model.description then
-    error ("Incorrect ANN mode!!!")
-  end
-  local mode = mode or "binary"
-  local old  = old or "old"
-  local weights_table = model:copy_weights()
-  local total_size = 0
-  for _,cnn in pairs(weights_table) do total_size = total_size + cnn:size() end
-  local wmatrix    = matrix(total_size)
-  local oldwmatrix = matrix(total_size)
-  local pos        = 0
-  for i=1,#model.names_order,2 do
-    local bname   = model.names_order[i]
-    local wname   = model.names_order[i+1]
-    local bias    = weights_table[bname]
-    local weights = weights_table[wname]
-    local colsize = weights:get_input_size() + 1
-    bias:weights{
-      w           = wmatrix,
-      oldw        = oldwmatrix,
-      first_pos   = pos,
-      column_size = colsize }
-    _,_,pos = weights:weights{
-      w           = wmatrix,
-      oldw        = oldwmatrix,
-      first_pos   = pos + 1,
-      column_size = colsize }
-    pos = pos - 1
-  end
-  local f = io.open(filename,"w")
-  f:write("return {\n\""..model.description.."\",\n"..
-	    wmatrix:to_lua_string(mode)..",")
-  if old == "old" then 
-    f:write("\n".. oldwmatrix:to_lua_string(mode)..",\n")
-  end
-  f:write("first_count=" .. model.first_count .. ",\n")
-  f:write("prefix='" .. model.prefix .. "',\n")
-  f:write("}\n")
-  f:close()
+  error("DEPRECATED: this method is deprecated, please use standard ANN "..
+	  "components and trainable.supervised_trainer objects")
 end
 
 -------------------------------------------------------------------
@@ -215,7 +148,10 @@ april_set_doc("ann.mlp.all_all.load",
 		}
 	      })
 
+-- this function is for retro-compatibility
 function ann.mlp.all_all.load(filename)
+  print("DEPRECATED: this method is deprecated, please use standard ANN "..
+	  "components and trainable.supervised_trainer objects")
   local c     = loadfile(filename)
   local data  = c()
   local model = ann.mlp.all_all.generate(data[1], data.first_count, data.prefix)
@@ -510,53 +446,6 @@ april_set_doc("ann.components.base.get_is_built",
 		summary="Returns the build state of the object",
 		outputs = {
 		  "A boolean with the build state"
-		}
-	      })
-
-----------------------------------------------------------------------
-
-april_set_doc("ann.components.base.set_option",
-	      {
-		class="method",
-		summary="Changes an option of the component",
-		description=
-		  {
-		    "This method changes the value of an option.",
-		    "Not all components implement the same options.",
-		    "Implemented options are: dropout_factor, and",
-		    "dropout_seed.",
-		  },
-		params = {
-		  "A string with the name of the option",
-		  "A number with its value"
-		},
-	      })
-
-----------------------------------------------------------------------
-
-april_set_doc("ann.components.base.get_option",
-	      {
-		class="method",
-		summary="Returns the value of a given option name",
-		params = {
-		  "A string with the name of the option",
-		},
-		outputs = {
-		  "A number with its value"
-		}
-	      })
-
-----------------------------------------------------------------------
-
-april_set_doc("ann.components.base.has_option",
-	      {
-		class="method",
-		summary="Returns true/false if the option is valid",
-		params = {
-		  "A string with the name of the option",
-		},
-		outputs = {
-		  "A boolean"
 		}
 	      })
 
