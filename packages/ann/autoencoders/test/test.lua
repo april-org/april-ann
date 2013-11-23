@@ -160,8 +160,6 @@ datosvalidar = {
   output_dataset = val_output
 }
 
-print(trainer_deep_classifier:validate_dataset(datosvalidar))
-
 -- we scale the weights before dropout
 if dropout_factor > 0.0 then
   for name,cnn in trainer_deep_classifier:iterate_weights("^w.*$") do
@@ -176,6 +174,7 @@ if dropout_factor > 0.0 then
     end
   end
 end
+print(trainer_deep_classifier:validate_dataset(datosvalidar))
 
 --trainer_deep_classifier:set_option("learning_rate", 0.4)
 --trainer_deep_classifier:set_option("momentum", 0.0)
