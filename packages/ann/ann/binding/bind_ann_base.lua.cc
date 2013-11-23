@@ -779,12 +779,38 @@ using namespace ANN;
 
 //BIND_METHOD StackANNComponent push
 {
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, ANNComponent);
-  ANNComponent *component;
-  LUABIND_GET_PARAMETER(1, ANNComponent, component);
-  obj->pushComponent(component);
+  LUABIND_CHECK_ARGN(>=, 1);
+  int argn = lua_gettop(L);
+  for (int i=1; i<=argn; ++i) {
+    LUABIND_CHECK_PARAMETER(i, ANNComponent);
+    ANNComponent *component;
+    LUABIND_GET_PARAMETER(i, ANNComponent, component);
+    obj->pushComponent(component);
+  }
   LUABIND_RETURN(StackANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD StackANNComponent unroll
+{
+  for (unsigned int i=0; i<obj->size(); ++i)
+    LUABIND_RETURN(ANNComponent, obj->getComponentAt(i));
+}
+//BIND_END
+
+//BIND_METHOD StackANNComponent get
+{
+  LUABIND_CHECK_ARGN(>=,1);
+  int argn = lua_gettop(L);
+  for (int i=1; i<=argn; ++i) {
+    unsigned int idx;
+    LUABIND_GET_PARAMETER(i, uint, idx);
+    --idx;
+    if (idx >= obj->size())
+      LUABIND_FERROR2("Incorrect index, expected <= %d, found %d\n",
+		      obj->size(), idx+1);
+    LUABIND_RETURN(ANNComponent, obj->getComponentAt(i));
+  }
 }
 //BIND_END
 

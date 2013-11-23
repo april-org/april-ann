@@ -45,6 +45,10 @@ namespace ANN {
     ANNComponent *topComponent();
     /// Removes the component at the top of the stack
     void popComponent();
+    /// Returns the component at the given index
+    ANNComponent *getComponentAt(unsigned int i) { return components[i]; }
+    /// Returns the component at the given index
+    const ANNComponent *getComponentAt(unsigned int i) const { return components[i]; }
 
     virtual Token *getInput();
     virtual Token *getOutput();

@@ -101,10 +101,17 @@ function ann_autoencoders_ae_class_metatable:__call(t)
 				   } ):
     push( ann.components.actf[params.visible.actf]() )
   end
+  if isa(encoder, ann.components.stack) then
+    ae:push(encoder:unroll())
+  else
+    ae:push(encoder)
+  end
+  if isa(decoder, ann.components.stack) then
+    ae:push(decoder:unroll())
+  else
+    ae:push(decoder)
+  end
   
-  ae:push(encoder)
-  ae:push(decoder)
-
   obj.encoder = encoder
   obj.decoder = decoder
   obj.ae      = ae
