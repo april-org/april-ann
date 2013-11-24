@@ -544,23 +544,21 @@ function cg_methods:execute(eval, cnn_table)
     --   --
     -- end
   end
-  -- COPY_WEIGHTS function
-  local copy_weights = function(t)
-    iterator(pairs(cnn_table)):map(function(k,v)
-				     local w,oldw=v:matrix()
-				     t[k]:copy(w)
-				     return k,w
-				   end):table()
-  end
   -- UPDATE_WEIGHTS function
   local update_weights = function(x, dir, s)
-    -- count one more update iteration
-    self:count_one()
     for cname,cnn in pairs(cnn_table) do
       local w,oldw        = cnn:matrix()
       local grad          = s[cname]
-      local wd  = self:get_option_of(cname, "weight_decay") or 0.0
-      local cwd = 1.0 - wd
+      -- apply back-propagation learning rule
+      w:axpy(dir, grad)
+    end
+  end
+  -- APPLY REGULARIZATION AND PENALTIES
+  local apply_regularization_and_penalties = function()
+    for cname,cnn in pairs(cnn_table) do
+      local w,oldw = cnn:matrix()
+      local wd     = self:get_option_of(cname, "weight_decay") or 0.0
+      local cwd    = 1.0 - wd
       --
       if wd > 0.0 and w:dim(2) == 1 then
 	fprintf(io.stderr,
@@ -569,11 +567,10 @@ function cg_methods:execute(eval, cnn_table)
       end
       --
       oldw:zeros()
+      
       -- the weight decay SUMS the weight value. Other regularization is better to
       -- be after the back-propagation learning rule
       ann_optimizer_regularizations_weight_decay(oldw, cwd, w)
-      -- apply back-propagation learning rule
-      oldw:axpy(dir, grad)
       -- regularizations
       ann_optimizer_apply_regularizations(self, cname, oldw, w, ann_component)
       -- constraints
@@ -586,8 +583,6 @@ function cg_methods:execute(eval, cnn_table)
 	iterator(pairs(cnn_table)):select(2):call(prune_subnormal_and_check_normal)
       end
     end
-    -- swap in x
-    x.w,x.oldw = x.oldw,x.w
   end
   -- COPY_WEIGHTS function
   local copy_weights = function(t)
@@ -598,6 +593,9 @@ function cg_methods:execute(eval, cnn_table)
 				   end):table()
   end
   ----------------------------------------------------------------------------
+  
+  -- count one more update iteration
+  self:count_one()
   
   local x = {
     
@@ -795,6 +793,8 @@ function cg_methods:execute(eval, cnn_table)
   self.state.df3 = df3
   self.state.x0 = x0
   self.state.s = s
+  
+  apply_regularization_and_penalties()
   
   -- evaluate the function at the end
   local arg = table.pack( eval() )
