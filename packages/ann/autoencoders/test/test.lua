@@ -88,18 +88,22 @@ loss_name = "multi_class_cross_entropy"
 sdae_table,deep_classifier = ann.autoencoders.greedy_layerwise_pretraining(params_pretrain)
 codifier_net = ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
 							       layers_table)
-function set_dropout(component)
-  local new_stack = ann.components.stack()
-  for i=1,component:size(),2 do
-    new_stack:push( component:get(i),
-		    component:get(i+1) )
-    if i < component:size()-2 then
-      new_stack:push( ann.components.dropout{ name="dropout-".. (i+1)/2,
-					      prob=dropout_factor,
-					      random=dropout_random } )
+function set_dropout(stack)
+  if dropout_factor > 0.0 then
+    local new_stack = ann.components.stack()
+    for i=1,stack:size(),2 do
+      new_stack:push( stack:get(i),
+		      stack:get(i+1) )
+      if i < stack:size()-2 then
+	new_stack:push( ann.components.dropout{ name="dropout-".. (i+1)/2,
+						prob=dropout_factor,
+						random=dropout_random } )
+      end
     end
+    return new_stack
+  else
+    return stack
   end
-  return new_stack
 end
 deep_classifier = set_dropout(deep_classifier)
 trainer_deep_classifier = trainable.supervised_trainer(deep_classifier,
