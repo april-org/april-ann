@@ -16,6 +16,12 @@ end
 -----------------------
 -- TRAINABLE CLASSES --
 -----------------------
+
+-------------------------------------------------------------------------------
+
+------------------------------
+-- SUPERVISED_TRAINER CLASS --
+------------------------------
 april_set_doc("trainable.supervised_trainer", {
 		class       = "class",
 		summary     = "Supervised machine learning trainer",
@@ -53,10 +59,9 @@ april_set_doc("trainable.supervised_trainer.__call", {
 		outputs = { "Instantiated object" }, })
 
 function trainable_supervised_trainer_class_metatable:__call(...)
-  local arg = table.pack(...)
-  if #arg == 1 and type(arg[1]) == "table" then
+  if select('#',...) == 1 and type(select(1,...)) == "table" then
     -- Loading from a previously saved object, the first argument is a table
-    local t = arg[1]
+    local t = select(1,...)
     local model = t.model
     local connections = t.connections
     local loss        = t.loss
@@ -78,7 +83,7 @@ function trainable_supervised_trainer_class_metatable:__call(...)
     return obj
   else
     -- Constructor of a new object
-    local ann_component,loss_function,bunch_size,optimizer = table.unpack(arg)
+    local ann_component,loss_function,bunch_size,optimizer = ...
     local optimizer = optimizer or ann.optimizer.sgd()
     if loss_function and not isa(loss_function, ann.loss) then
       error("The second parameter must be an instance of ann.loss")
@@ -1090,8 +1095,7 @@ function trainable_supervised_trainer_methods:train_dataset(t)
 			 },
       },
       bunch_size     = { type_match = "number",
-			 mandatory = (self.bunch_size == false),
-			 default=self.bunch_size },
+			 mandatory = (self.bunch_size == false) },
       loss           = { isa_match  = ann.loss,
                          mandatory  = (self.loss_function==false),
 			 default=self.loss_function },
@@ -1107,7 +1111,7 @@ function trainable_supervised_trainer_methods:train_dataset(t)
   assert(not params.input_dataset or not params.distribution,
 	 "input_dataset/output_dataset fields are forbidden with distribution")
   --
-  
+  local bunch_size = params.bunch_size or self.bunch_size
   -- TRAINING TABLES
   
   -- for each pattern, index in dataset
@@ -1167,12 +1171,19 @@ function trainable_supervised_trainer_methods:train_dataset(t)
       for i=1,num_patterns do table.insert(ds_idx_table, i) end
     end
   end
+  -- SANITY CHECK
+  assert(self:get_input_size() == 0 or
+	   self:get_input_size() == params.input_dataset:patternSize(),
+	 "Incorrect patternSize at input_dataset")
+  assert(self:get_output_size() == 0 or
+	   self:get_output_size() == params.output_dataset:patternSize(),
+	 "Incorrect patternSize at output_dataset")
   -- TRAIN USING ds_idx_table
   local k=0
   local bunch_indexes = {}
-  for i=1,#ds_idx_table,params.bunch_size do
+  for i=1,#ds_idx_table,bunch_size do
     table.clear(bunch_indexes)
-    local last = math.min(i+params.bunch_size-1, #ds_idx_table)
+    local last = math.min(i+bunch_size-1, #ds_idx_table)
     for j=i,last do table.insert(bunch_indexes, ds_idx_table[j]) end
     local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
     local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
@@ -1212,8 +1223,7 @@ function trainable_supervised_trainer_methods:grad_check_dataset(t)
       input_dataset  = { mandatory = false, default=nil },
       output_dataset = { mandatory = false, default=nil },
       bunch_size     = { type_match = "number",
-			 mandatory = (self.bunch_size == false),
-			 default=self.bunch_size },
+			 mandatory = (self.bunch_size == false) },
       loss           = { isa_match  = ann.loss,
                          mandatory = (self.loss_function==false),
 			 default=self.loss_function },
@@ -1227,7 +1237,7 @@ function trainable_supervised_trainer_methods:grad_check_dataset(t)
   assert(params.input_dataset ~= not params.output_dataset,
 	 "input_dataset and output_dataset fields are mandatory together")
   --
-  
+  local bunch_size = params.bunch_size or self.bunch_size
   -- TRAINING TABLES
   
   -- for each pattern, index in dataset
@@ -1243,12 +1253,19 @@ function trainable_supervised_trainer_methods:grad_check_dataset(t)
   check_dataset_sizes(params.input_dataset, params.output_dataset)
   local num_patterns = params.input_dataset:numPatterns()
   for i=1,num_patterns do table.insert(ds_idx_table, i) end
+  -- SANITY CHECK
+  assert(self:get_input_size() == 0 or
+	   self:get_input_size() == params.input_dataset:patternSize(),
+	 "Incorrect patternSize at input_dataset")
+  assert(self:get_output_size() == 0 or
+	   self:get_output_size() == params.output_dataset:patternSize(),
+	 "Incorrect patternSize at output_dataset")
   local k=0
   local bunch_indexes = {}
-  for i=1,#ds_idx_table,params.bunch_size do
-    if i/params.bunch_size > params.max_iterations then break end
+  for i=1,#ds_idx_table,bunch_size do
+    if i/bunch_size > params.max_iterations then break end
     table.clear(bunch_indexes)
-    local last = math.min(i+params.bunch_size-1, #ds_idx_table)
+    local last = math.min(i+bunch_size-1, #ds_idx_table)
     for j=i,last do table.insert(bunch_indexes, ds_idx_table[j]) end
     local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
     local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
@@ -1355,8 +1372,7 @@ function trainable_supervised_trainer_methods:validate_dataset(t)
       input_dataset  = { mandatory = true },
       output_dataset = { mandatory = true },
       bunch_size     = { type_match = "number",
-			 mandatory = (self.bunch_size == false),
-			 default=self.bunch_size },
+			 mandatory = (self.bunch_size == false) },
       loss           = { isa_match  = ann.loss,
                          mandatory = (self.loss_funcion==false),
 			 default=self.loss_function },
@@ -1368,6 +1384,7 @@ function trainable_supervised_trainer_methods:validate_dataset(t)
 	 "input_dataset and output_dataset fields are mandatory together")
   assert(not params.input_dataset or not params.distribution,
 	 "input_dataset/output_dataset fields are forbidden with distribution")
+  local bunch_size = params.bunch_size or self.bunch_size
   -- TRAINING TABLES
   
   -- for each pattern, index in corresponding datasets
@@ -1393,12 +1410,19 @@ function trainable_supervised_trainer_methods:validate_dataset(t)
   else
     for i=1,num_patterns do table.insert(ds_idx_table, i) end
   end
+  -- SANITY CHECK
+  assert(self:get_input_size() == 0 or
+	   self:get_input_size() == params.input_dataset:patternSize(),
+	 "Incorrect patternSize at input_dataset")
+  assert(self:get_output_size() == 0 or
+	   self:get_output_size() == params.output_dataset:patternSize(),
+	 "Incorrect patternSize at output_dataset")
   -- TRAIN USING ds_idx_table
   local k=0
   local bunch_indexes = {}
-  for i=1,#ds_idx_table,params.bunch_size do
+  for i=1,#ds_idx_table,bunch_size do
     table.clear(bunch_indexes)
-    local last = math.min(i+params.bunch_size-1, #ds_idx_table)
+    local last = math.min(i+bunch_size-1, #ds_idx_table)
     for j=i,last do table.insert(bunch_indexes, ds_idx_table[j]) end
     local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
     local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
@@ -1442,18 +1466,22 @@ function trainable_supervised_trainer_methods:for_each_pattern(t)
       input_dataset  = { mandatory = true },
       func           = { mandatory = true, type_match="function" },
       bunch_size     = { type_match = "number",
-			 mandatory = (self.bunch_size == false),
-			 default=self.bunch_size },
+			 mandatory = (self.bunch_size == false) },
     }, t)
   if isa(params.input_dataset, dataset) then
     params.input_dataset = dataset.token.wrapper(params.input_dataset)
   end
+  local bunch_size = params.bunch_size or self.bunch_size
   local nump = params.input_dataset:numPatterns()
+  -- SANITY CHECK
+  assert(self:get_input_size() == 0 or
+	   self:get_input_size() == params.input_dataset:patternSize(),
+	 "Incorrect patternSize at input_dataset")
   local k=0
   local bunch_indexes = {}
-  for i=1,nump,params.bunch_size do
+  for i=1,nump,bunch_size do
     table.clear(bunch_indexes)
-    local last = math.min(i+params.bunch_size-1, nump)
+    local last = math.min(i+bunch_size-1, nump)
     for j=i,last do table.insert(bunch_indexes, j) end
     local input  = params.input_dataset:getPatternBunch(bunch_indexes)
     local output = self.ann_component:forward(input)
@@ -1500,9 +1528,9 @@ function trainable_supervised_trainer_methods:use_dataset(t)
       input_dataset  = { mandatory = true },
       output_dataset = { mandatory = false, default=nil },
       bunch_size     = { type_match = "number",
-			 mandatory = (self.bunch_size == false),
-			 default=self.bunch_size },
+			 mandatory = (self.bunch_size == false)  },
     }, t)
+  local bunch_size = params.bunch_size or self.bunch_size
   local nump    = params.input_dataset:numPatterns()
   local outsize = self.ann_component:get_output_size()
   if params.output_dataset then
@@ -1520,11 +1548,18 @@ function trainable_supervised_trainer_methods:use_dataset(t)
   if isa(params.input_dataset, dataset) then
     params.input_dataset = dataset.token.wrapper(params.input_dataset)
   end
+  -- SANITY CHECK
+  assert(self:get_input_size() == 0 or
+	   self:get_input_size() == params.input_dataset:patternSize(),
+	 "Incorrect patternSize at input_dataset")
+  assert(self:get_output_size() == 0 or
+	   self:get_output_size() == params.output_dataset:patternSize(),
+	 "Incorrect patternSize at output_dataset")
   local k=0
   local bunch_indexes = {}
-  for i=1,nump,params.bunch_size do
+  for i=1,nump,bunch_size do
     table.clear(bunch_indexes)
-    local last = math.min(i+params.bunch_size-1, nump)
+    local last = math.min(i+bunch_size-1, nump)
     for j=i,last do table.insert(bunch_indexes, j) end
     local input  = params.input_dataset:getPatternBunch(bunch_indexes)
     local output = self.ann_component:forward(input)
@@ -1581,6 +1616,27 @@ function trainable_supervised_trainer_methods:clone()
     if type(v) == "function" then obj[i] = v end
   end
   return obj
+end
+
+april_set_doc("trainable.supervised_trainer.norm2", {
+		class = "method",
+		summary = "Returns the maximum norm2 of the weights which name matches",
+		params={
+		  "A connection weights name Lua pattern string [optional], by default it is .*",
+		},
+		outputs = {
+		  "A number with the maximum norm2",
+		}, })
+
+function trainable_supervised_trainer_methods:norm2(match_string)
+  local norm2 = 0
+  for _,cnn in self:iterate_weights(match_string) do
+    norm2 = math.max(norm2,
+		     reduce(function(a,b)
+			      return math.max(a,b:norm2())
+			    end, 0, cnn:matrix():sliding_window():iterate()))
+  end
+  return norm2
 end
 
 ------------------------------------------------------------------------
@@ -1673,6 +1729,7 @@ april_set_doc("trainable.supervised_trainer.train_holdout_validation", {
 		}, })
 
 function trainable_supervised_trainer_methods:train_holdout_validation(t)
+  print("DEPRECATED: use the class trainable.train_holdout_validation")
   local params = get_table_fields(
     {
       training_table   = { mandatory=true, type_match="table" },
@@ -1743,117 +1800,6 @@ function trainable_supervised_trainer_methods:train_holdout_validation(t)
 	   last_train_error = last_train_error,
 	   last_val_error   = last_val_error }
 end
-
-
-------------------------------------------------------------------------------
-
-local train_holdout_methods, train_holdout_class_metatable =
-  class("trainable.train_holdout_validation")
-
-function train_holdout_class_metatable:__call(t,saved_state)
-  local params = get_table_fields(
-    {
-      epochs_wo_validation = { mandatory=false, type_match="number", default=0 },
-      min_epochs = { mandatory=true, type_match="number" },
-      max_epochs = { mandatory=true, type_match="number" },
-      stopping_criterion = { mandatory=true, type_match="function" },
-      first_epoch        = { mandatory=false, type_match="number", default=1 },
-    }, t)
-  local saved_state = saved_state or {}
-  local obj = {
-    params = params,
-    state  = {
-      current_epoch    = saved_state.current_epoch    or 0,
-      train_error      = saved_state.train_error      or math.huge,
-      validation_error = saved_state.validation_error or math.huge,
-      best_epoch       = saved_state.best_epoch       or 0,
-      best_val_error   = saved_state.best_val_error   or 0,
-      best             = saved_state.best             or nil,
-      last             = saved_state.last             or nil,
-    },
-  }
-  return class_instance(obj, self)
-end
-
-function train_holdout_methods:execute(epoch_function)
-  local params = self.params
-  local state  = self.state
-  state.current_epoch = state.current_epoch + 1
-  collectgarbage("collect")
-  state.last, state.train_error, state.validation_error = epoch_function()
-  assert(state.last and state.train_error and state.validation_error,
-	 "Needs a function which returns three values: "..
-	   "a model, training error and validation error")
-  if ( state.validation_error < state.best_val_error or
-       state.current_epoch <= params.epochs_wo_validation ) then
-    state.best_epoch     = state.current_epoch
-    state.best_val_error = state.validation_error
-    state.best           = state.last:clone()
-  end
-  if ( state.current_epoch > params.min_epochs and
-       params.stopping_criterion(state) ) then
-    return false
-  else
-    return true
-  end
-end
-
-function train_holdout_methods:set_param(name,value)
-  assert(self.params[name], "Param  " .. name .. " not found")
-  self.params[name] = value
-end
-
-function train_holdout_methods:get_param(name)
-  return self.params[name]
-end
-
-function train_holdout_methods:get_state()
-  local state = self.state
-  return state.current_epoch, state.train_error, state.validation_error,
-  state.best_epoch, state.best_val_error, state.best, state.last
-end
-
-function train_holdout_methods:get_state_table()
-  return self.state
-end
-
-function train_holdout_methods:get_state_string()
-  local state = self.state
-  return string.format("%5d %.6f %.6f    %5d %.6f",
-		       state.current_epoch,
-		       state.train_error,
-		       state.validation_error,
-		       state.best_epoch,
-		       state.best_val_error)
-end
-
-function train_holdout_methods:to_lua_string(format)
-  local t = { }
-  table.insert(t, "trainable.train_holdout_validation(")
-  --
-  table.insert(t, "\n\t")
-  table.insert(t, table.tostring(self.params))
-  table.insert(t, ",")
-  table.insert(t, "\n\t")
-  table.insert(t, table.tostring(self.state))
-  table.insert(t, "\n)")
-  return table.concat(t, "")
-end
-
-function train_holdout_methods:save(filename,format)
-  local f = io.open(filename, "w") or error("Unable to open " .. filename)
-  f:write("return ")
-  f:write(self:to_lua_string())
-  f:write("\n")
-  f:close()
-end
-
-function train_holdout_methods:load(filename)
-  local f   = loadfile(filename) or error("Unable to open " .. filename)
-  local obj = f() or error("Impossible to load chunk from file " .. filename)
-  return obj
-end
-
 
 ---------------------------------------------------------------------------
 -- This function trains without validation, it is trained until a maximum of
@@ -1952,6 +1898,7 @@ april_set_doc("trainable.supervised_trainer.train_wo_validation", {
 		}, })
 
 function trainable_supervised_trainer_methods:train_wo_validation(t)
+  print("DEPRECATED: use the class trainable.train_wo_validation")
   local params = get_table_fields(
     {
       training_table = { mandatory=true },
@@ -1988,16 +1935,521 @@ function trainable_supervised_trainer_methods:train_wo_validation(t)
   return best
 end
 
-function trainable_supervised_trainer_methods:norm2(match_string)
-  local norm2 = 0
-  for _,cnn in self:iterate_weights(match_string) do
-    norm2 = math.max(norm2,
-		     reduce(function(a,b)
-			      return math.max(a,b:norm2())
-			    end, 0, cnn:matrix():sliding_window():iterate()))
-  end
-  return norm2
+-------------------------------------------------------------------------------
+
+------------------------------------
+-- TRAIN_HOLDOUT_VALIDATION CLASS --
+------------------------------------
+
+april_set_doc("trainable.train_holdout_validation", {
+		class       = "class",
+		summary     = "Training class using holdout validation",
+		description ={
+		  "This training class defines a train_func which",
+		  "follows a training schedule based on validation error or",
+		  "in number of epochs. Method execute receives a function",
+		  "which trains one epoch and returns the trainer object,",
+		  "the training loss and the validation loss. This method",
+		  "returns true in case the training continues, or false if",
+		  "the stop criterion is true.",
+		}, })
+
+local train_holdout_methods, train_holdout_class_metatable =
+  class("trainable.train_holdout_validation")
+
+april_set_doc("trainable.train_holdout_validation.__call", {
+		class = "method", summary = "Constructor",
+		description ={
+		  "Constructor of the train_holdout_validation class.",
+		},
+		params = {
+		  epochs_wo_validation = {
+		    "Number of epochs from start where the validation is",
+		    "ignored [optional], by default it is 0",
+		  },
+		  min_epochs = "Minimum number of epochs for training [optional]. By default it is 0",
+		  max_epochs = "Maximum number of epochs for training",
+		  stopping_criterion = {
+		    "A predicate function which",
+		    "returns true if stopping criterion, false otherwise.",
+		    "Some basic criteria are implemented at",
+		    "trainable.stopping_criteria table.",
+		    "The criterion function is called as",
+		    "stopping_criterion({ current_epoch=..., best_epoch=...,",
+		    "best_val_error=..., train_error=...,",
+		    "validation_error=... }). [optional] By default it is max_epochs criterion.",
+		  },
+		  tolerance = {
+		    "The tolerance>=0 is the minimum relative difference to",
+		    "take the current validation loss as the best [optional],",
+		    "by default it is 0.",
+		  },
+		  first_epoch = "The first epoch number [optional]. By default it is 0.",
+		},
+		outputs = { "Instantiated object" }, })
+
+function train_holdout_class_metatable:__call(t,saved_state)
+  local params = get_table_fields(
+    {
+      epochs_wo_validation = { mandatory=false, type_match="number", default=0 },
+      min_epochs = { mandatory=true, type_match="number", default=0 },
+      max_epochs = { mandatory=true, type_match="number" },
+      tolerance  = { mandatory=true, type_match="number", default=0 },
+      stopping_criterion = { mandatory=true, type_match="function",
+			     default = function() return false end },
+      first_epoch        = { mandatory=false, type_match="number", default=1 },
+    }, t)
+  assert(params.tolerance >= 0, "tolerance < 0 is forbidden")
+  local saved_state = saved_state or {}
+  local obj = {
+    params = params,
+    state  = {
+      current_epoch    = saved_state.current_epoch    or 0,
+      train_error      = saved_state.train_error      or math.huge,
+      validation_error = saved_state.validation_error or math.huge,
+      best_epoch       = saved_state.best_epoch       or 0,
+      best_val_error   = saved_state.best_val_error   or math.huge,
+      best             = saved_state.best             or nil,
+      last             = saved_state.last             or nil,
+    },
+  }
+  return class_instance(obj, self)
 end
+
+april_set_doc("trainable.train_holdout_validation.execute", {
+		class = "method", summary = "Runs one training epoch",
+		description ={
+		  "This method executes one training epoch. It receives an",
+		  "epoch function which where the user trains the model,",
+		  "and which returns the trained model, the train loss, and the",
+		  "validation loss.",
+		},
+		params = {
+		  {
+		    "A function which trains a model and returns the trained model,",
+		    "the training loss and the validation loss",
+		  },
+		  first_epoch = "The first epoch number",
+		},
+		outputs = { "True or false, indicating if the training continues or not" }, })
+
+function train_holdout_methods:execute(epoch_function)
+  local params = self.params
+  local state  = self.state
+  -- check max epochs
+  if state.current_epoch >= params.max_epochs then
+    return false
+  end
+  -- check stopping criterion
+  if ( state.current_epoch > params.min_epochs and
+       params.stopping_criterion(state) ) then
+    return false
+  end
+  -- compute one training step by using epoch_function
+  state.current_epoch = state.current_epoch + 1
+  collectgarbage("collect")
+  state.last, state.train_error, state.validation_error = epoch_function()
+  assert(state.last and state.train_error and state.validation_error,
+	 "Needs a function which returns three values: "..
+	   "a model, training error and validation error")
+  -- update with the best model
+  if ( state.validation_error < state.best_val_error or
+       state.current_epoch <= params.epochs_wo_validation ) then
+    local abs_error = state.best_val_error - state.validation_error
+    local rel_error = abs_error / state.best_val_error
+    if state.best_val_error == math.huge or rel_error > params.tolerance then
+      state.best_epoch     = state.current_epoch
+      state.best_val_error = state.validation_error
+      state.best           = state.last:clone()
+    end
+  end
+  return true
+end
+
+april_set_doc("trainable.train_holdout_validation.set_param", {
+		class = "method",
+		summary =
+		  "Modifies one parameter of which was given at construction",
+		params = {
+		  "The parameter name",
+		  "The parameter value",
+		}, })
+
+function train_holdout_methods:set_param(name,value)
+  assert(self.params[name], "Param  " .. name .. " not found")
+  self.params[name] = value
+end
+
+april_set_doc("trainable.train_holdout_validation.get_param", {
+		class = "method",
+		summary =
+		  "Returns the value of a param",
+		params = {
+		  "The parameter name",
+		},
+		outputs = { "The paremter value" }, })
+
+function train_holdout_methods:get_param(name)
+  return self.params[name]
+end
+
+april_set_doc("trainable.train_holdout_validation.get_state", {
+		class = "method",
+		summary =
+		  "Returns the state of the training",
+		outputs = {
+		  "Current epoch",
+		  "Train loss",
+		  "Validation loss",
+		  "Best epoch",
+		  "Best epoch validation loss",
+		  "Best trained model",
+		  "Last trained model",
+		}, })
+
+function train_holdout_methods:get_state()
+  local state = self.state
+  return state.current_epoch, state.train_error, state.validation_error,
+  state.best_epoch, state.best_val_error, state.best, state.last
+end
+
+april_set_doc("trainable.train_holdout_validation.get_state_table", {
+		class = "method",
+		summary =
+		  "Returns the state table of the training",
+		outputs = {
+		  current_epoch = "Current epoch",
+		  train_error = "Train loss",
+		  validation_error = "Validation loss",
+		  best_epoch = "Best epoch",
+		  best_val_error = "Best epoch validation loss",
+		  best = "Best trained model",
+		  last = "Last trained model",
+		}, })
+
+function train_holdout_methods:get_state_table()
+  return self.state
+end
+
+april_set_doc("trainable.train_holdout_validation.get_state_string", {
+		class = "method",
+		summary =
+		"Returns the state of the training in string format, for printing",
+		outputs = {
+		  { "A string with the format ('%5d %.6f %.6f    %5d %.6f',",
+		    "current_epoch,train_error,validation_error,best_epoch,best_val_error)" }
+		}, })
+
+function train_holdout_methods:get_state_string()
+  local state = self.state
+  return string.format("%5d %.6f %.6f    %5d %.6f",
+		       state.current_epoch,
+		       state.train_error,
+		       state.validation_error,
+		       state.best_epoch,
+		       state.best_val_error)
+end
+
+function train_holdout_methods:to_lua_string(format)
+  local t = { }
+  table.insert(t, "trainable.train_holdout_validation(")
+  --
+  table.insert(t, "\n\t")
+  table.insert(t, table.tostring(self.params))
+  table.insert(t, ",")
+  table.insert(t, "\n\t")
+  table.insert(t, table.tostring(self.state))
+  table.insert(t, "\n)")
+  return table.concat(t, "")
+end
+
+april_set_doc("trainable.train_holdout_validation.save", {
+		class = "method",
+		summary = "Saves the training in a filename",
+		description = {
+		  "Saves the training in a filename.",
+		  "If the filename exists, it is renamed as filename.bak",
+		},
+		params={
+		  "The filename",
+		  { "The format for matrix data ('ascii' or 'binary'),",
+		    "[optional] by default 'binary'", },
+		  {
+		    "Extra data dictionary (a table) [optional].",
+		    "It is useful to store random objects.",
+		    "The serialization of this objects is automatic",
+		    "if they has a 'to_lua_string(format)' method, or",
+		    "if they are Lua standard types (number, string, table).",
+		  },
+		}, })
+
+function train_holdout_methods:save(filename,format,extra)
+  local f = io.open(filename, "r")
+  if f then
+    f:close()
+    os.execute(string.format("mv -f %s %s.bak", filename, filename))
+  end
+  local f = io.open(filename, "w") or error("Unable to open " .. filename)
+  f:write("return ")
+  f:write(self:to_lua_string())
+  if extra then
+    f:write(",\n")
+    f:write(table.tostring(extra))
+  end
+  f:write("\n")
+  f:close()
+end
+
+april_set_doc("trainable.train_holdout_validation.load", {
+		class = "method",
+		summary = "Loads the training from a filename",
+		params={
+		  "The filename",
+		},
+		outputs = {
+		  "A train_holdout_methods instance",
+		  "A table with extra saved data or nil if not given when saving",
+		}, })
+
+function trainable.train_holdout_validation.load(filename)
+  local f = loadfile(filename) or error("Unable to open " .. filename)
+  local obj,extra = f()
+  assert(obj, "Impossible to load chunk from file " .. filename)
+  return obj,extra
+end
+
+-------------------------------------------------------------------------------
+
+------------------------------------
+-- TRAIN_HOLDOUT_VALIDATION CLASS --
+------------------------------------
+
+april_set_doc("trainable.train_wo_validation", {
+		class       = "class",
+		summary     = "Training class without validation",
+		description ={
+		  "This training class defines a train_func which",
+		  "follows a training schedule based on training error or",
+		  "in number of epochs. Method execute receives a function",
+		  "which trains one epoch and returns the trainer object and",
+		  "the training loss. This method",
+		  "returns true in case the training continues, or false if",
+		  "the stop criterion is true.",
+		}, })
+
+local train_wo_validation_methods, train_wo_validation_class_metatable =
+  class("trainable.train_wo_validation")
+
+april_set_doc("trainable.train_wo_validation.__call", {
+		class = "method", summary = "Constructor",
+		description ={
+		  "Constructor of the train_wo_validation class.",
+		},
+		params = {
+		  min_epochs = "Minimum number of epochs for training [optional]. By default it is 0,",
+		  max_epochs = "Maximum number of epochs for training",
+		  percentage_stopping_criterion = "A number [optional]. By default it is 0.01",
+		  first_epoch = "The first epoch number [optional]. By default it is 1",
+		},
+		outputs = { "Instantiated object" }, })
+
+function train_wo_validation_class_metatable:__call(t,saved_state)
+  local params = get_table_fields(
+    {
+      min_epochs = { mandatory=true, type_match="number", default=0 },
+      max_epochs = { mandatory=true, type_match="number" },
+      percentage_stopping_criterion = { mandatory=true, type_match="number",
+					default = 0.01 },
+      first_epoch        = { mandatory=false, type_match="number", default=1 },
+    }, t)
+  local saved_state = saved_state or {}
+  local obj = {
+    params = params,
+    state  = {
+      current_epoch     = saved_state.current_epoch     or 0,
+      train_error       = saved_state.train_error       or math.huge,
+      train_improvement = saved_state.train_improvement or math.huge,
+      last              = saved_state.last              or nil,
+    },
+  }
+  return class_instance(obj, self)
+end
+
+april_set_doc("trainable.train_wo_validation.execute", {
+		class = "method", summary = "Runs one training epoch",
+		description ={
+		  "This method executes one training epoch. It receives an",
+		  "epoch function which where the user trains the model,",
+		  "and which returns the trained model and the train loss.",
+		},
+		params = {
+		  {
+		    "A function which trains a model and returns the trained model",
+		    "and the training loss",
+		  },
+		  first_epoch = "The first epoch number",
+		},
+		outputs = { "True or false, indicating if the training continues or not" }, })
+
+function train_wo_validation_methods:execute(epoch_function)
+  local params = self.params
+  local state  = self.state
+  -- stopping criterion
+  if (state.current_epoch > params.min_epochs and
+      state.train_improvement < params.percentage_stopping_criterion) then
+    return false
+  end
+  -- check max epochs
+  if state.current_epoch >= params.max_epochs then
+    return false
+  end
+  -- compute one training step by using epoch_function
+  state.current_epoch = state.current_epoch + 1
+  collectgarbage("collect")
+  local model,tr_err
+  model, tr_err = epoch_function()
+  assert(model and tr_err,
+	 "Needs a function which returns two values: "..
+	   "a model and training error")
+  --
+  local prev_tr_err    = state.train_error
+  local tr_improvement
+  if state.current_epoch > 1 then
+    tr_improvement = (prev_tr_err - tr_err)/prev_tr_err
+  else
+    tr_improvement = math.huge
+  end
+  
+  state.train_error       = tr_err
+  state.train_improvement = tr_improvement
+  state.last              = model
+  
+  return true
+end
+
+april_set_doc("trainable.train_wo_validation.set_param", {
+		class = "method",
+		summary =
+		  "Modifies one parameter of which was given at construction",
+		params = {
+		  "The parameter name",
+		  "The parameter value",
+		}, })
+
+function train_wo_validation_methods:set_param(name,value)
+  assert(self.params[name], "Param  " .. name .. " not found")
+  self.params[name] = value
+end
+
+april_set_doc("trainable.train_wo_validation.get_param", {
+		class = "method",
+		summary =
+		  "Returns the value of a param",
+		params = {
+		  "The parameter name",
+		},
+		outputs = { "The paremter value" }, })
+
+function train_wo_validation_methods:get_param(name)
+  return self.params[name]
+end
+
+april_set_doc("trainable.train_wo_validation.get_state", {
+		class = "method",
+		summary =
+		  "Returns the state of the training",
+		outputs = {
+		  "Current epoch",
+		  "Train loss",
+		  "Train relative improvement",
+		  "Last trained model",
+		}, })
+
+function train_wo_validation_methods:get_state()
+  local state = self.state
+  return state.current_epoch, state.train_error,
+  state.train_improvement,state.last
+end
+
+april_set_doc("trainable.train_wo_validation.get_state_table", {
+		class = "method",
+		summary =
+		  "Returns the state table of the training",
+		outputs = {
+		  current_epoch = "Current epoch",
+		  train_error = "Train loss",
+		  train_improvement = "Train relative improvement",
+		  last = "Last trained model",
+		}, })
+
+function train_wo_validation_methods:get_state_table()
+  return self.state
+end
+
+april_set_doc("trainable.train_wo_validation.get_state_string", {
+		class = "method",
+		summary =
+		"Returns the state of the training in string format, for printing",
+		outputs = {
+		  { "A string with the format ('%5d %.6f    %.6f',",
+		    "current_epoch,train_error,train_improvement)" }
+		}, })
+
+function train_wo_validation_methods:get_state_string()
+  local state = self.state
+  return string.format("%5d %.6f    %.6f",
+		       state.current_epoch,
+		       state.train_error,
+		       state.train_improvement)
+end
+
+function train_wo_validation_methods:to_lua_string(format)
+  local t = { }
+  table.insert(t, "trainable.train_wo_validation(")
+  --
+  table.insert(t, "\n\t")
+  table.insert(t, table.tostring(self.params))
+  table.insert(t, ",")
+  table.insert(t, "\n\t")
+  table.insert(t, table.tostring(self.state))
+  table.insert(t, "\n)")
+  return table.concat(t, "")
+end
+
+april_set_doc("trainable.train_wo_validation.save", {
+		class = "method",
+		summary = "Saves the training in a filename",
+		description = {
+		  "Saves the training in a filename.",
+		  "If the filename exists, it is renamed as filename.bak",
+		},
+		params={
+		  "The filename",
+		  { "The format for matrix data ('ascii' or 'binary'),",
+		    "[optional] by default 'binary'", },
+		  {
+		    "Extra data dictionary (a table) [optional].",
+		    "It is useful to store random objects.",
+		    "The serialization of this objects is automatic",
+		    "if they has a 'to_lua_string(format)' method, or",
+		    "if they are Lua standard types (number, string, table).",
+		  },
+		}, })
+train_wo_validation_methods.save = train_holdout_methods.save
+
+april_set_doc("trainable.train_wo_validation.load", {
+		class = "method",
+		summary = "Loads the training from a filename",
+		params={
+		  "The filename",
+		},
+		outputs = {
+		  "A train_wo_validation_methods instance",
+		  "A table with extra saved data or nil if not given when saving",
+		}, })
+trainable.train_wo_validation.load = trainable.train_holdout_validation.load
+
+-------------------------------------------------------------------------------
 
 -------------------------
 -- STOPPING CRITERIA --

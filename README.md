@@ -225,8 +225,8 @@ Wiki documentation
 
 Doxygen documentation
 ---------------------
-- [Developer manual](http://pakozm.github.com/april-ann/doxygen_doc/developer/html/index.html)
-- [Reference manual](http://pakozm.github.com/april-ann/doxygen_doc/user_refman/html/index.html)
+- [Developer manual](http://cafre.dsic.upv.es:8080/~pako/STUFF/doxygen_doc/developer/html/index.html)
+- [Reference manual](http://cafre.dsic.upv.es:8080/~pako/STUFF/doxygen_doc/user_refman/html/index.html)
 
 LINUX installation
 ------------------

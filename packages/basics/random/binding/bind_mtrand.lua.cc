@@ -312,7 +312,14 @@
     randState[i-1] = (uint32_t)luaL_checknumber(L, -1);
     lua_remove(L,-1);
   }
-  obj->load( randState );	
+  obj->load( randState );
+  LUABIND_RETURN(MTRand,obj);
+}
+//BIND_END
+
+//BIND_METHOD MTRand to_lua_string
+{
+  LUABIND_RETURN(string, obj->toLuaString());
 }
 //BIND_END
 

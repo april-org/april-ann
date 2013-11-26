@@ -118,8 +118,9 @@ namespace ANN {
   
   char *GaussianNoiseANNComponent::toLuaString() {
     buffer_list buffer;
-    buffer.printf("ann.components.gaussian_noise{ name='%s',size=%d }",
-		  name.c_str(), input_size);
+    buffer.printf("ann.components.gaussian_noise{ name='%s',size=%d,random=random(),mean=%g,var=%g }",
+		  name.c_str(), input_size, // random->toLuaString(),
+		  mean, variance);
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
 }

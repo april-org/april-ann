@@ -137,6 +137,7 @@ void doApplyHardtanhActivation(FloatGPUMirroredMemoryBlock *input_units,
 			       FloatGPUMirroredMemoryBlock *output_units,
 			       unsigned int size,
 			       unsigned int bunch_size,
+			       float inf, float sup,
 			       bool use_gpu);
 
 void doMultiplyHardtanhDerivatives(FloatGPUMirroredMemoryBlock *input_units,
@@ -144,6 +145,7 @@ void doMultiplyHardtanhDerivatives(FloatGPUMirroredMemoryBlock *input_units,
 				   FloatGPUMirroredMemoryBlock *output_errors,
 				   unsigned int size,
 				   unsigned int bunch_size,
+				   float inf, float sup,
 				   bool use_gpu);
 
 void doApplySinActivation(FloatGPUMirroredMemoryBlock *input_units,

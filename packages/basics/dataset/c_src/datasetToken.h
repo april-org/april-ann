@@ -22,6 +22,7 @@
 #ifndef UTILDATASETTOKEN_H
 #define UTILDATASETTOKEN_H
 
+#include "function_interface.h"
 #include "unused_variable.h"
 #include "token_base.h"
 #include "token_matrix.h"
@@ -274,6 +275,53 @@ public:
       delete submat;
       ds->putPattern(indexes[i], aux_mem);
     }
+  }
+};
+
+class DataSetTokenFilter : public DataSetToken {
+  // the underlying dataset
+  DataSetToken *ds;
+  Functions::FunctionInterface *filter;
+public:
+  DataSetTokenFilter(DataSetToken *ds,
+		     Functions::FunctionInterface *filter) :
+    ds(ds), filter(filter) {
+    IncRef(ds);
+    IncRef(filter);
+  }
+  virtual ~DataSetTokenFilter() {
+    DecRef(ds);
+    DecRef(filter);
+  }
+  /// Number of patterns in the set
+  virtual int numPatterns() { return ds->numPatterns(); }
+  /// Size of each pattern.
+  virtual int patternSize() {
+    return ( (filter->getOutputSize() > 0) ?
+	     filter->getOutputSize() :
+	     ds->patternSize() );
+  }
+  /// Get the pattern index to the vector pat
+  virtual Token *getPattern(int index) {
+    return filter->calculate(ds->getPattern(index));
+  }
+  /// Get the pattern index to the vector pat
+  virtual Token *getPatternBunch(const int *indexes,unsigned int bunch_size) {
+    return filter->calculate(ds->getPatternBunch(indexes,bunch_size));
+  }
+  /// Put the given vector pat at pattern index
+  virtual void putPattern(int index, Token *pat) {
+    UNUSED_VARIABLE(index);
+    UNUSED_VARIABLE(pat);
+    ERROR_EXIT(128, "Not implemented\n");
+  }
+  /// Put the pattern bunch
+  virtual void putPatternBunch(const int *indexes,unsigned int bunch_size,
+			       Token *pat) {
+    UNUSED_VARIABLE(indexes);
+    UNUSED_VARIABLE(bunch_size);
+    UNUSED_VARIABLE(pat);
+    ERROR_EXIT(128, "Not implemented\n");
   }
 };
 

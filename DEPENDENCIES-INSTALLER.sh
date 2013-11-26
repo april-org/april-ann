@@ -15,16 +15,20 @@ if [ $UNAME = "Linux" ]; then
 	    echo -e "#ifndef _LUA_DEB_MULTIARCH_\n#define _LUA_DEB_MULTIARCH_\n#define DEB_HOST_MULTIARCH \""$(arch)"-linux-gnu\"\n#endif" > $multiarch
             echo -e "#ifndef _LUA_DEB_MULTIARCH_\n#define _LUA_DEB_MULTIARCH_\n#define DEB_HOST_MULTIARCH \""$(arch)"-linux-gnu\"\n#endif" > $multiarch2
 	fi
-	rm -f $dest*
-	rm -f $(basename $dest).o
+	if [ ! -z $dest ]; then
+	    rm -f $dest*
+	    rm -f $(basename $dest).o
+	fi
     else
 	echo "Error, impossible to install dependencies, this script only works with apt-get"
 	exit 10
     fi
 elif [ $UNAME = "Darwin" ]; then
     if [ `which port` ]; then
-	port install zlib readline libpng tiff findutils pkgconfig lua ||
-	(echo "ERROR INSTALLING DEPENDENCIES" && exit 10)
+	if ! port install zlib readline libpng tiff findutils pkgconfig lua; then
+	    echo "ERROR INSTALLING DEPENDENCIES"
+	    exit 10
+	fi
 	echo "This script will change the default system BSD find by GNU find"
 	echo "BSD find will be renamed as bfind"
 	if [ ! -e /usr/find/bfind ]; then

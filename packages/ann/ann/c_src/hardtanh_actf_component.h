@@ -30,6 +30,7 @@ namespace ANN {
   /// Component which computes the HardTanh activation function. It is useful
   /// for deep ANNs and CNNs.
   class HardtanhActfANNComponent : public ActivationFunctionANNComponent {
+    float inf, sup;
   protected:
     virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,
 				 FloatGPUMirroredMemoryBlock *output_units,
@@ -42,7 +43,7 @@ namespace ANN {
 				     unsigned int size,
 				     unsigned int bunch_size);
   public:
-    HardtanhActfANNComponent(const char *name);
+    HardtanhActfANNComponent(const char *name, float inf=-1.0f, float sup=1.0f);
     virtual ~HardtanhActfANNComponent();
     virtual ANNComponent *clone();
 

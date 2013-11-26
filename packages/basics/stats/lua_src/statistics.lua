@@ -625,7 +625,11 @@ april_set_doc("stats.bootstrap_resampling",
 		  sampling_func = {"A function which every time is called",
 				   "returns a random element of the",
 				   "population"},
-		  
+		  reducer = {
+		    "A table or an object which has methods 'add', 'compute',",
+		    "and 'clear'",
+		  },
+		  verbose = "True or false",
 		},
 		outputs = {
 		  "A table with the reducer output for every repetition."
@@ -639,6 +643,7 @@ function stats.bootstrap_resampling(params)
       repetitions     = { type_match = "number",   mandatory = true },
       sampling_func   = { type_match = "function", mandatory = true },
       reducer         = { mandatory = true },
+      verbose         = { mandatory = false },
     },
     params)
   assert(params.reducer.clear and params.reducer.add and params.reducer.compute,
@@ -653,10 +658,17 @@ function stats.bootstrap_resampling(params)
     for p=1,population_size do
       reducer:add(sampling_func())
     end
+    if params.verbose and i % 20 == 0 then
+      fprintf(io.stderr, "\r%3.0f%%", i/repetitions*100)
+      io.stderr:flush()
+    end
     local r = table.pack(reducer:compute())
     if #r == 1 then r = table.unpack(r) end
     table.insert(result, r)
     reducer:clear()
+  end
+  if params.verbose then
+    fprintf(io.stderr, " done\n")
   end
   return result
 end
@@ -696,6 +708,6 @@ function pearson_methods:compute()
   local N          = self.mean_var_x:size()
   local mu_x,s_x   = self.mean_var_x:compute()
   local mu_y,s_y   = self.mean_var_y:compute()
-  local rxy = N*(self.xy_sum - mu_x*mu_y) / (s_x * s_y)
+  local rxy = ( self.xy_sum - N*mu_x*mu_y ) / ( (N-1)*math.sqrt(s_x*s_y) )
   return rxy
 end
