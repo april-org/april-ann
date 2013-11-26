@@ -39,7 +39,7 @@ namespace april_utils {
             float getSlope() { return m; };
             float getYintercept() { return b; };
 
-            void getPolars(float &phi, float &r);
+            //void getPolars(float &phi, float &r);
 
             Point2D intersection(const line &, bool &intersect);
             Point2D closestPoint(const Point2D &, float &);

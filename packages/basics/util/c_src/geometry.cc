@@ -23,12 +23,12 @@ namespace april_utils {
       
     }
     // static line fromPolar(float phi, float r);
-    void line::getPolars(float &phi, float &r) {
+/*    void line::getPolars(float &phi, float &r) {
         //TODO
         return;
 
     };
-
+*/
     Point2D line::intersection(const line &out, bool &intersect) {
         // Parallel form
         if (m == out.m){
