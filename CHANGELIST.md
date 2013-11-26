@@ -11,7 +11,9 @@ Master branch release
   method.
 - Solved problems with CUDA compilation, but it stills not working because
   an error during cuMemAlloc.
-  
+- Class interest_points and layout algorithms (still in development).
+- Added the geometry c++ class for working in to lines and point geometry.
+
 ### Stable changes
 
 - Added `ann.optimizer.cg`, Conjugate Gradient algorithm.
@@ -42,6 +44,7 @@ Master branch release
 - Loadable modules are working on MacOs X.
 - Added `matrix.svd` and `matrix.diagonalize`.
 - Added `stats.pca`, `stats.mean_centered`, `stats.pca_whitening`.
+
 
 v0.3.0-beta relase
 ------------------
