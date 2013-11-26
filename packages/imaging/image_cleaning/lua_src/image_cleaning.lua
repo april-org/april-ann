@@ -140,6 +140,7 @@ april_set_doc("image.image_cleaning.getCleanParameters",
         "- vertical = ... if defined generates features of the vertical column of each pixel.",
         "- horizontal = ... if defined generates features of the vertical column of each pixel.",
         "- random_perturbation = ... adds a gaussian perturbation of mean 0.5",
+        "- old = ... uses default 8 values for vertical and horizontal histogram",
 		  },
 		},
 		outputs= {
@@ -183,9 +184,9 @@ function image.image_cleaning.getCleanParameters(img, params)
   local function getVerticalHistogram(img, levels, radius)
       local mVert = img:get_vertical_histogram(levels, radius)
       local params_vert_hist = {
-          patternSize = {1, 8},
+          patternSize = {1, levels},
           stepSize = {0, 1, 0},
-          numSteps = { img:matrix():dim()[1], img:matrix():dim()[2], 8},
+          numSteps = { img:matrix():dim()[1], img:matrix():dim()[2], levels},
           defaultValue = 0,
           circular = {false, false},
       }
@@ -196,9 +197,9 @@ function image.image_cleaning.getCleanParameters(img, params)
   local function getHorizontalHistogram(img, levels, radius)
       local mHor = img:get_horizontal_histogram(levels, radius)
       local params_hor_hist = {
-          patternSize = {1, 8},
+          patternSize = {1, levels},
           stepSize = {1,0,0},
-          numSteps = { img:matrix():dim()[1],img:matrix():dim()[2], 8},
+          numSteps = { img:matrix():dim()[1],img:matrix():dim()[2], levels},
           defaultValue = 0,
           circular = {false, false},
       }
@@ -236,12 +237,21 @@ function image.image_cleaning.getCleanParameters(img, params)
       local ds_median = getMedian(img, params.median, 0)
       table.insert(table_datasets, ds_median)
   end
+
+  local levels_hist = levels
+
+  if params.old then
+      levels_hist = 8
+  end
+  
   if params.horizontal then
-      local ds_hor = getHorizontalHistogram(img, params.histogram_levels, params.horizontal)
+      --local ds_hor = getHorizontalHistogram(img, params.histogram_levels, params.horizontal)
+      local ds_hor = getHorizontalHistogram(img, levels_hist, params.horizontal)
       table.insert(table_datasets, ds_hor)
   end
   if params.vertical then
-      local ds_ver = getVerticalHistogram(img, params.histogram_levels, params.vertical)
+      --local ds_ver = getVerticalHistogram(img, params.histogram_levels, params.vertical)
+      local ds_ver = getVerticalHistogram(img, levels_hist, params.vertical)
       table.insert(table_datasets, ds_ver)
   end
 
@@ -260,7 +270,7 @@ function image.image_cleaning.getCleanParameters(img, params)
 
 end
 
-function image.image_cleaning.getParametersFromString(param_str)
+function image.image_cleaning.getParametersFromString(param_str, old)
   
     params = {}
     
@@ -294,6 +304,8 @@ function image.image_cleaning.getParametersFromString(param_str)
     if horizontal then
         params.horizontal = tonumber(horizontal)
     end
+
+    params.old = old
     --[[for i, v in pairs(params) do
         
         print(i,v)
@@ -320,7 +332,7 @@ function image.image_cleaning.clean_image(img, net, params)
 
     local dsClean = dataset.matrix(mClean, paramsClean)
 
-
+    print(dsInput:patternSize(), net:get_input_size())
     -- Use the dataset
     net:use_dataset {
         input_dataset = dsInput,

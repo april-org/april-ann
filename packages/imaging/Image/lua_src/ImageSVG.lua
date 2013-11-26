@@ -24,15 +24,13 @@ end
 function imageSVG_methods:setHeader()
 
     self.header = {}
-    table.insert(self.header, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
-    table.insert(self.header, "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 20001102//EN\" \"http://www.w3.org/TR/2000/CR-SVG-20001102/DTD/svg-20001102.dtd\">")
 
     --  local swidth  = tostring(self.width) or "100%"
     --  local sheight = tostring(self.height) or "100%"
 
     local swidth  = (self.width ~= -1 and tostring(self.width)) or "100%"
     local sheight = (self.height ~= -1 and tostring(self.height)) or "100%"
-    table.insert(self.header,string.format("<svg width=\"%s\" height=\"%s\"\nxmlns:xlink=\"http://www.w3.org/1999/xlink\" >\n", swidth, sheight))
+    table.insert(self.header,string.format("<svg width=\"%s\" height=\"%s\"\n xmlns=\"http://www.w3.org/2000/svg\"  xmlns:xlink=\"http://www.w3.org/1999/xlink\" >\n", swidth, sheight))
 end
 
 function imageSVG_methods:setFooter()
