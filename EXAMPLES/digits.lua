@@ -80,23 +80,24 @@ clock = util.stopwatch()
 clock:go()
 print("# Epoch Training  Validation")
 stopping_criterion = trainable.stopping_criteria.make_max_epochs_wo_imp_relative(2)
-result = trainer:train_holdout_validation{ training_table     = training_data,
-					   validation_table   = validation_data,
-					   min_epochs         = 100,
-					   max_epochs         = 1000,
-					   stopping_criterion = stopping_criterion,
-					   update_function    =
-					     function(t) printf("%4d %.6f %.6f (%4d %.6f)\n",
-								t.current_epoch,
-								t.train_error,
-								t.validation_error,
-								t.best_epoch,
-								t.best_val_error) end }
-result.best:save("best.net", "ascii")
+train_func = trainable.train_holdout_validation{
+  min_epochs = 100,
+  max_epochs = 1000,
+  stopping_criterion = stopping_criterion
+}
+while train_func:execute(function()
+			   local tr = trainer:train_dataset(training_data)
+			   local va = trainer:validate_dataset(validation_data)
+			   return trainer,tr,va
+			 end) do
+  print(train_func:get_state_string())
+end
+best = train_func:get_state_table().best
+best:save("best.net", "ascii")
 clock:stop()
 cpu,wall   = clock:read()
-num_epochs = result.last_epoch
-local val_error,val_variance=result.best:validate_dataset{
+num_epochs = train_func:get_state_table().current_epoch
+local val_error,val_variance=best:validate_dataset{
   input_dataset  = val_input,
   output_dataset = val_output,
   loss           = ann.loss.zero_one(10)
