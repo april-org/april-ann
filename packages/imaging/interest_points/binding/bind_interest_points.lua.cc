@@ -105,11 +105,12 @@ using namespace InterestPoints;
 //BIND_END
 
 //BIND_METHOD SetPoints getNumPoints
+{
   LUABIND_RETURN(int, obj->getNumPoints());
-
+}
 //BIND_END
-
 //BIND_METHOD SetPoints addPoint
+{
  LUABIND_CHECK_ARGN(==, 2);
  LUABIND_CHECK_PARAMETER(1, int);
  LUABIND_CHECK_PARAMETER(2, table);
@@ -117,8 +118,8 @@ using namespace InterestPoints;
  // Recieves a table of 3-elements {x, y, c, type}
  // Sometimes can include a 5th element with the log-probability
  int elems;
- int component = 0;
- LUABIND_GET_PARAMETER(1, int, component);
+ int comp = 1;
+ LUABIND_GET_PARAMETER(1, int, comp);
  LUABIND_TABLE_GETN(1, elems);
 
  int x, y, c;
@@ -147,8 +148,8 @@ using namespace InterestPoints;
    lua_rawgeti(L, -1, 4+c);
    log_prob = lua_tonumber(L,-1);
  }
- obj->addPoint(component, x, y, c, class_type, log_prob);
-
+ obj->addPoint(comp, x, y, c, class_type, log_prob);
+}
 //BIND_END
 
 
@@ -221,7 +222,7 @@ using namespace InterestPoints;
 //DOC_BEGIN
 //DOC_END
 {
- using InterestPoints::ConnectedPoints;
+  using InterestPoints::ConnectedPoints;
   LUABIND_CHECK_ARGN(==,1);
   ImageFloat *img;
   LUABIND_GET_PARAMETER(1, ImageFloat, img);
@@ -232,6 +233,7 @@ using namespace InterestPoints;
 //BIND_END
 
 //BIND_METHOD ConnectedPoints addPoint
+{
  LUABIND_CHECK_ARGN(==, 1);
  LUABIND_CHECK_PARAMETER(1, table);
 
@@ -268,15 +270,15 @@ using namespace InterestPoints;
    log_prob = lua_tonumber(L,-1);
  }
  obj->addPoint(x, y, c, class_type, log_prob);
-
+}
 //BIND_END
 
 //BIND_METHOD ConnectedPoints computeComponents
-
+{
  LUABIND_CHECK_ARGN(==,0);
 
  SetPoints *sp = obj->computePoints();
 
  LUABIND_RETURN(SetPoints, sp);
-
+}
 //BIND_END

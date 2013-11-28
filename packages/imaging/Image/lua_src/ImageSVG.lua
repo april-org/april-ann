@@ -94,7 +94,7 @@ end
 -- Each element of the table is a path
 function imageSVG_methods:addInterestPointPaths(paths, ...)
     
-    params = arg[1] or {}
+    params = table.pack(...)
     local num_classes = params.num_class or 5
     for i, path in ipairs(paths) do
         -- Process the component
