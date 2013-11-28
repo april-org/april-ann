@@ -26,4 +26,3 @@
 //
 // a = sum(yi)/n - b*(sum(xi)/n)
 void least_squares(double x[], double y[], int numPoints, double &a, double &b);
-

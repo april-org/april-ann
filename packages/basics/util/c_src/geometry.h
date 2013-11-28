@@ -34,6 +34,7 @@ namespace april_utils {
 
         public:
             line(float m, float b): m(m),b(b){};
+
             line(const Point2D &, const Point2D &);
             // static line fromPolar(float phi, float r);
             float getSlope() { return m; };

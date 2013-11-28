@@ -29,7 +29,7 @@
 #include "qsort.h"
 #include <cmath>
 #include <cstdio>
-
+#include "linear_least_squares.h"
 using april_utils::vector;
 using april_utils::pair;
 using april_utils::min;
@@ -618,7 +618,7 @@ namespace InterestPoints {
 
   }
 
-  SetPoints * ConnectedPoints::computePoints() {
+/*  SetPoints * ConnectedPoints::computePoints() {
 
       SetPoints * mySet = new SetPoints(img);
       int cini = -1;
@@ -659,7 +659,61 @@ namespace InterestPoints {
           }//Point
           } 
           return mySet;
+      }*/
+
+  SetPoints * ConnectedPoints::computePoints() {
+      SetPoints * mySet = new SetPoints(img);
+      //Process each component
+      for (int cc = 0; cc < size; ++cc) {
+       vector<interest_point> &component = (*ccPoints)[cc];
+       
+       vector<interest_point> *top_line = this->get_points_by_type(cc, TOPLINE);
+
+       //Compute the regression over the points of the line
+
       }
+
+       return mySet;
   }
-  // namespace InterestPoints
+
+  vector<interest_point> *SetPoints::get_points_by_type(const int cc, const int point_class, const float min_prob) {
+     // TODO: Check if cc is on the range
+     vector<interest_point> component = (*ccPoints)[cc];
+     vector<interest_point> *line = new vector<interest_point>();
+     
+     for(size_t i = 0; i < component.size(); ++i) {
+         interest_point v = component[i];
+         if (v.point_class == point_class and v.log_prob > min_prob) {
+             line->push_back(v);
+
+         }
+
+
+     }
+
+     return line; 
+  }
+
+  double line_least_squares(vector<interest_point> &v) {
+   
+     //TODO: Move to geometry
+     double *x = new double[v.size()];
+     double *y = new double[v.size()];
+     for (size_t i = 0; i < v.size(); ++i) {
+          x[i] = v[i].x;
+          y[i] = v[i].x;
+     }
+     
+     double a, b;
+     least_squares(x,y,v.size(), a, b);
+
+     line myLine = line(a,b);
+
+     delete []x;
+     delete []y;
+     return 0.0;
+  }
+}
+
+// namespace InterestPoints
 

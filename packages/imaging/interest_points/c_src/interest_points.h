@@ -34,7 +34,8 @@ using april_utils::vector;
 using april_utils::Point2D;
 namespace InterestPoints
 {
-
+  
+  enum {ASCENDER, TOPLINE, CENTRAL, BASELINE, DESCENDER, OTHER};
   /**
    * @brief Given an Image returns a vector with the local maxima and local minima of the given image.
    *
@@ -112,6 +113,8 @@ namespace InterestPoints
          };
          float component_affinity(int component, interest_point &ip);
          float similarity(interest_point &ip1, interest_point &ip2);
+         vector<interest_point> *get_points_by_type(const int cc, const int point_class, \
+                 const float min_prob = -999999.00);
  };
 
  class ConnectedPoints: public SetPoints {
