@@ -1,6 +1,6 @@
  package{ name = "ann",
    version = "1.0",
-   depends = { "util", "tokens", "random", "matrix" },
+   depends = { "util", "tokens", "random", "matrix", "functions" },
    keywords = { "ANN interfaces" },
    description = "Define ANNs classes and interfaces",
    -- targets como en ant

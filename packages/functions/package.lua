@@ -1,6 +1,6 @@
- package{ name = "function_interface",
+ package{ name = "functions",
    version = "1.0",
-   depends = { "util", "dataset", "tokens" },
+   depends = { "util", "tokens" },
    keywords = { "Functions" },
    description = "Define interfaces and methods for work with functions",
    -- targets como en ant

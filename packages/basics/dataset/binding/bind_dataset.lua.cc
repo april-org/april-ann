@@ -26,6 +26,7 @@
 #include "MersenneTwister.h"
 #include "bind_referenced_vector.h"
 #include "bind_tokens.h"
+#include "bind_function_interface.h"
 
 int dataset_iterator_function(lua_State *L) {
   // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es
@@ -63,6 +64,18 @@ int datasetToken_iterator_function(lua_State *L) {
   Token *tk = obj->getPattern(index-1); // ojito que le RESTAMOS uno
   lua_pushToken(L,tk);
   return 2;
+}
+
+bool lua_isAuxDataSetToken(lua_State *L, int n) {
+  return lua_isDataSetFloat(L,n) || lua_isDataSetToken(L,n);
+}
+
+DataSetToken *lua_toAuxDataSetToken(lua_State *L, int n) {
+  if (lua_isDataSetFloat(L, n)) {
+    DataSetFloat *ds = lua_toDataSetFloat(L,n);
+    return new DataSetFloat2TokenWrapper(ds);
+  }
+  return lua_toDataSetToken(L,n);
 }
 
 //BIND_END
@@ -1262,7 +1275,7 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
       LUABIND_ERROR("UnionDataSetToken needs a Lua table with two or "
 		    "more DataSetToken\n");
     DataSetToken **ds_array = new DataSetToken*[size];
-    LUABIND_TABLE_TO_VECTOR(1, DataSetToken, ds_array, size);
+    LUABIND_TABLE_TO_VECTOR(1, AuxDataSetToken, ds_array, size);
     obj = new UnionDataSetToken(ds_array, size);
     delete[] ds_array;
   }
@@ -1274,9 +1287,9 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 //BIND_METHOD UnionDataSetToken push_back
 {
   LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, DataSetToken);
+  LUABIND_CHECK_PARAMETER(1, AuxDataSetToken);
   DataSetToken *ds;
-  LUABIND_GET_PARAMETER(1, DataSetToken, ds);
+  LUABIND_GET_PARAMETER(1, AuxDataSetToken, ds);
   obj->push_back(ds);
 }
 //BIND_END
@@ -1322,6 +1335,26 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
   LUABIND_GET_PARAMETER(1, DataSetFloat, ds);
   obj = new DataSetFloat2TokenWrapper(ds);
   LUABIND_RETURN(DataSetFloat2TokenWrapper, obj);
+}
+//BIND_END
+
+//////////////////////////////////////////
+
+//BIND_LUACLASSNAME DataSetTokenFilter dataset.token.filter
+//BIND_CPP_CLASS    DataSetTokenFilter
+//BIND_SUBCLASS_OF  DataSetTokenFilter DataSetToken
+
+//BIND_CONSTRUCTOR DataSetTokenFilter
+{
+  LUABIND_CHECK_ARGN(==,2);
+  LUABIND_CHECK_PARAMETER(1, AuxDataSetToken);
+  LUABIND_CHECK_PARAMETER(2, FunctionInterface);
+  DataSetToken *ds;
+  FunctionInterface *filter;
+  LUABIND_GET_PARAMETER(1, AuxDataSetToken, ds);
+  LUABIND_GET_PARAMETER(2, FunctionInterface, filter);
+  obj = new DataSetTokenFilter(ds,filter);
+  LUABIND_RETURN(DataSetTokenFilter, obj);
 }
 //BIND_END
 

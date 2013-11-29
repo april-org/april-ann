@@ -25,8 +25,9 @@
 
 namespace ANN {
 
-  HardtanhActfANNComponent::HardtanhActfANNComponent(const char *name) :
-    ActivationFunctionANNComponent(name) { }
+  HardtanhActfANNComponent::HardtanhActfANNComponent(const char *name,
+						     float inf, float sup) :
+    ActivationFunctionANNComponent(name), inf(inf), sup(sup) { }
   HardtanhActfANNComponent::~HardtanhActfANNComponent() { }
 
   void HardtanhActfANNComponent::applyActivation(FloatGPUMirroredMemoryBlock *input_units,
@@ -37,6 +38,7 @@ namespace ANN {
 			      output_units,
 			      size,
 			      bunch_size,
+			      inf, sup,
 			      use_cuda);
   }
 
@@ -52,6 +54,7 @@ namespace ANN {
 				  output_errors,
 				  size,
 				  bunch_size,
+				  inf, sup,
 				  use_cuda);
   }
 
@@ -63,7 +66,8 @@ namespace ANN {
   
   char *HardtanhActfANNComponent::toLuaString() {
     buffer_list buffer;
-    buffer.printf("ann.components.actf.hardtanh{ name='%s' }", name.c_str());
+    buffer.printf("ann.components.actf.hardtanh{ name='%s', inf=%g, sup=%g }",
+		  name.c_str(), inf, sup);
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
 

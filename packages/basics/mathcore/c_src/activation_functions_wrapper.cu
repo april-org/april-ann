@@ -258,7 +258,8 @@ __global__ void hardtanhActKernel(const float *input_units,
 				  float *output_units,
 				  unsigned int max_x,
 				  unsigned int lda_x,
-				  unsigned int max_y) {
+				  unsigned int max_y,
+				  float inf, float sup) {
   unsigned int matrix_x_pos, matrix_y_pos;
   getColumnMajorBunchMatrixPositions(blockIdx,
 				     blockDim,
@@ -267,7 +268,7 @@ __global__ void hardtanhActKernel(const float *input_units,
 				     matrix_y_pos);
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index  = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
-    output_units[index] = clip(input_units[index], -1.0f, +1.0f);
+    output_units[index] = clip(input_units[index], inf, sup);
   }
 }
 
@@ -276,7 +277,8 @@ __global__ void hardtanhDerKernel(const float *input_units,
 				  float *output_errors,
 				  unsigned int max_x,
 				  unsigned int lda_x,
-				  unsigned int max_y) {
+				  unsigned int max_y,
+				  float inf, float sup) {
   unsigned int matrix_x_pos, matrix_y_pos;
   getColumnMajorBunchMatrixPositions(blockIdx,
 				     blockDim,
@@ -286,7 +288,7 @@ __global__ void hardtanhDerKernel(const float *input_units,
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
     float value = 0.0f;
-    if (-1.0f < input_units[index] && input_units[index] < 1.0f)
+    if (inf < input_units[index] && input_units[index] < sup)
       value = input_units[index];
     output_errors[index] = input_errors[index] * value;
   }
@@ -1026,6 +1028,7 @@ void doApplyHardtanhActivation(FloatGPUMirroredMemoryBlock *input_units,
 			       FloatGPUMirroredMemoryBlock *output_units,
 			       unsigned int size,
 			       unsigned int bunch_size,
+			       float inf, float sup,
 			       bool use_gpu) {
 #ifndef USE_CUDA
   UNUSED_VARIABLE(use_gpu);
@@ -1043,7 +1046,8 @@ void doApplyHardtanhActivation(FloatGPUMirroredMemoryBlock *input_units,
        output_units_ptr,
        bunch_size,
        bunch_size,
-       size);
+       size,
+       inf, sup);
   }
   else {
 #endif
@@ -1056,7 +1060,7 @@ void doApplyHardtanhActivation(FloatGPUMirroredMemoryBlock *input_units,
 #endif
 #endif
     for (unsigned int i=0; i<sz; ++i)
-      output_units_ptr[i] = clamp(input_units_ptr[i], -1.0f, 1.0f);
+      output_units_ptr[i] = clamp(input_units_ptr[i], inf, sup);
 #ifdef USE_CUDA
   }
 #endif
@@ -1067,6 +1071,7 @@ void doMultiplyHardtanhDerivatives(FloatGPUMirroredMemoryBlock *input_units,
 				   FloatGPUMirroredMemoryBlock *output_errors,
 				   unsigned int size,
 				   unsigned int bunch_size,
+				   float inf, float sup,
 				   bool use_gpu) {
 #ifndef USE_CUDA
   UNUSED_VARIABLE(use_gpu);
@@ -1085,7 +1090,8 @@ void doMultiplyHardtanhDerivatives(FloatGPUMirroredMemoryBlock *input_units,
        output_errors_ptr,
        bunch_size,
        bunch_size,
-       size);
+       size,
+       inf, sup);
   }
   else {
 #endif
@@ -1099,7 +1105,7 @@ void doMultiplyHardtanhDerivatives(FloatGPUMirroredMemoryBlock *input_units,
 #endif
 #endif
     for (unsigned int i=0; i<sz; ++i) {
-      if (input_units_ptr[i] < -1.0f || input_units_ptr[i] > 1.0f)
+      if (input_units_ptr[i] < inf || input_units_ptr[i] > sup)
 	output_errors_ptr[i] = 0.0f;
       else
 	output_errors_ptr[i] = input_errors_ptr[i];

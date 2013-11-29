@@ -22,10 +22,10 @@
 #define ANNCOMPONENT_H
 
 #include <cstring>
+#include "function_interface.h"
 #include "unused_variable.h"
 #include "mystring.h"
 #include "connection.h"
-#include "referenced.h"
 #include "error_print.h"
 #include "token_base.h"
 #include "aux_hash_table.h" // required for build
@@ -61,7 +61,7 @@ namespace ANN {
   
   /// An abstract class that defines the basic interface that
   /// the anncomponents must fulfill.
-  class ANNComponent : public Referenced {
+  class ANNComponent : public Functions::FunctionInterface {
   private:
     bool is_built;
     void generateDefaultName(const char *prefix=0) {
@@ -92,7 +92,7 @@ namespace ANN {
   public:
     ANNComponent(const char *name = 0, const char *weights_name = 0,
 		 unsigned int input_size = 0, unsigned int output_size = 0) :
-      Referenced(),
+      Functions::FunctionInterface(),
       is_built(false),
       input_size(input_size), output_size(output_size),
       use_cuda(false) {
@@ -119,19 +119,23 @@ namespace ANN {
       dest = string(str_id);
       ++next_weights_id;
     }
-
-    unsigned int getInputSize() const {
+    
+    // FunctionInterface methods
+    virtual unsigned int getInputSize() const {
       return input_size;
     }
-    unsigned int getOutputSize() const {
+    virtual unsigned int getOutputSize() const {
       return output_size;
+    }
+    virtual Token *calculate(Token *input) {
+      return this->doForward(input, false);
     }
     
     virtual Token *getInput() { return 0; }
     virtual Token *getOutput() { return 0; }
     virtual Token *getErrorInput() { return 0; }
     virtual Token *getErrorOutput() { return 0; }
-    
+
     /// Virtual method that executes the set of operations required for each
     /// block of connections when performing the forward step of the
     /// Backpropagation algorithm, and returns its output Token

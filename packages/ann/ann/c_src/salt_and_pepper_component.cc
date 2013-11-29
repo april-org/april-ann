@@ -124,8 +124,9 @@ namespace ANN {
   
   char *SaltAndPepperANNComponent::toLuaString() {
     buffer_list buffer;
-    buffer.printf("ann.components.salt_and_pepper{ name='%s',size=%d }",
-		  name.c_str(), input_size);
+    buffer.printf("ann.components.salt_and_pepper{ name='%s',size=%d,random=random(),zero=%g,one=%g,prob=%g}",
+		  name.c_str(), input_size, // random->toLuaString(),
+		  zero, one, prob);
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
 }

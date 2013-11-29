@@ -1,3 +1,4 @@
+#include "buffer_list.h"
 #include "MersenneTwister.h"
 
 const unsigned int MTRand::N;
@@ -253,5 +254,17 @@ void MTRand::load( uint32_t *const loadArray ) {
   for( ; i--; *s++ = *la++ ) {}
   left = *la;
   pNext = &state[N-left];
+}
+
+char *MTRand::toLuaString() const {
+  uint32_t randState[ SAVE ];
+  save( randState );
+  //
+  buffer_list buffer;
+  buffer.printf("random():fromTable{");
+  for (unsigned int i=0; i<SAVE; ++i)
+    buffer.printf(" %u,", randState[i]);
+  buffer.printf(" }");
+  return buffer.to_string(buffer_list::NULL_TERMINATED);
 }
 

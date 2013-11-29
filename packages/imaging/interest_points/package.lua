@@ -1,6 +1,6 @@
  package{ name = "interest_points",
    version = "1.0",
-   depends = { "dataset", "Image" },
+   depends = { "dataset", "Image", "image_connected_components" },
    keywords = { "image", "interest_points", "line", "ocr" },
    description = "Utils for detect and classify interest points in an images",
    -- targets como en ant
