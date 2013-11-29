@@ -71,6 +71,8 @@ class Image : public Referenced {
   int matrix_height() const { return matrix->getDimSize(0); }
   int offset_width()  const { return offset % matrix_width(); }
   int offset_height() const { return offset / matrix_width(); }
+  int count_black_pixels(T threshold) const;
+
   Image<T> *clone() const;
   Image<T> *crop(int width, int height,
 	      int offset_w, int offset_h) const;  
@@ -104,6 +106,7 @@ class Image : public Referenced {
 
   Matrix<T> *comb_lineal_forward(int x, int y, int ancho, int alto, int miniancho, int minialto, LinearCombConf<T> *cl);
   void threshold_image(T low, T high, T value_low, T value_high);
+
  private:
   void invert_affine_matrix(float c[6], float dest[6]) const;
 };

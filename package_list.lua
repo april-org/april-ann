@@ -36,6 +36,7 @@ return {
   "binarization_filter",
   "image_cleaning",
   "interest_points",
+  "image_connected_components",
   --   --"libtiff",
   
   -- HMMs
