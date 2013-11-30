@@ -23,14 +23,17 @@
 #ifndef INTEREST_POINTS_H
 #define INTEREST_POINTS_H
 
+#include <cmath>
 #include "image.h"
+#include "image_connected_components.h"
 #include "utilImageFloat.h"
 #include "pair.h"
 #include "vector.h"
-
+#include "geometry.h"
+using april_utils::vector;
+using april_utils::Point2D;
 namespace InterestPoints
 {
-  typedef april_utils::pair<float, float> Point2D;
 
   /**
    * @brief Given an Image returns a vector with the local maxima and local minima of the given image.
@@ -55,5 +58,79 @@ namespace InterestPoints
    * @param[in] duplicate_interval The minimum distance of locals within the same stroke
    */
   void extract_points_from_image(ImageFloat *pimg, april_utils::vector<Point2D> *local_minima, april_utils::vector<Point2D> *local_maxima, float threshold_white= 0.4, float threshold_black = 0.6, int local_context = 6, int duplicate_interval = 3);
+
+  
+ struct interest_point {
+   int x;
+   int y;
+   bool natural_type;
+   int point_class;
+   float log_prob;
+   
+   interest_point() {}
+   interest_point(int x, int y, int point_class, bool type, float log_prob):
+       x(x), y(y), natural_type(type), point_class(point_class), log_prob(log_prob) {}
+   bool operator< (interest_point &ip)
+   {
+       return this->log_prob > ip.log_prob;
+   }
+
+   float angle(interest_point &ip) {
+      float deltaY = ip.y - this->y;
+      float deltaX = ip.x - this->x;
+      
+      return atan2(deltaY, deltaX);
+   } 
+
+ };
+
+ class SetPoints: public Referenced {
+     protected:
+         vector< vector<interest_point> > *ccPoints;
+         int size;
+         int num_points;
+         ImageFloat *img;
+
+     public:
+         SetPoints(ImageFloat *img);
+         void addPoint(int component, interest_point ip);
+         void addPoint(int component, int x, int y, int c, bool natural_type, float log_prob = 0.0) {
+             addPoint(component, interest_point(x,y,c,natural_type,log_prob));
+         };
+         void addComponent();
+         int getNumPoints() { return num_points;};
+         int getSize() { return size;}
+
+         void print_components();
+         void sort_by_confidence();
+         void sort_by_x();
+         const vector <vector <interest_point> > *getComponents() {
+           return ccPoints;
+         }
+         ~SetPoints(){
+             delete ccPoints;
+         };
+         float component_affinity(int component, interest_point &ip);
+         float similarity(interest_point &ip1, interest_point &ip2);
+ };
+
+ class ConnectedPoints: public SetPoints {
+
+     private:
+         ImageConnectedComponents *imgCCs;
+     public:
+         ConnectedPoints(ImageFloat *img);
+         void addPoint(interest_point ip);
+         void addPoint(int x, int y, int c, bool natural_type, float log_prob = 0.0) {
+             addPoint(interest_point(x,y,c,natural_type,log_prob));
+         };
+         
+
+         SetPoints *computePoints();
+          ~ConnectedPoints() {
+             delete imgCCs;
+          };
+ };
+
 }
 #endif

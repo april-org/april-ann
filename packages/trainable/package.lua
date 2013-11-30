@@ -14,6 +14,14 @@
      delete{ dir = "include" },
    },
    target{
+     name = "test",
+     execute_script{
+       file={
+	 "test/test.lua",
+       },
+     },
+   },
+   target{
      name = "provide",
      depends = "init",
      -- copy{ file= "c_src/*.h", dest_dir = "include" },

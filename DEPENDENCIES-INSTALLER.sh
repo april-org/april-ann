@@ -3,10 +3,8 @@ UNAME=`uname`
 echo "System: $UNAME"
 if [ $UNAME = "Linux" ]; then
     if [ `which apt-get` ]; then
-	if ! apt-get install pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libpng12-dev libtiff-dev liblua5.2-dev; then
-	    echo "ERROR INSTALLING DEPENDENCIES"
-	    exit 10
-	fi
+	apt-get install pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev ||
+	(echo "ERROR INSTALLING DEPENDENCIES" && exit 10)
 	dest=$(tempfile)
 	echo -e '#include "lua5.2-deb-multiarch.h"\nint main() { return 0; }\n' > $dest.c
 	multiarch=lua/include/lua5.2-deb-multiarch.h
