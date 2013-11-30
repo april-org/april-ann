@@ -105,6 +105,15 @@ local val_error,val_variance=best:validate_dataset{
   output_dataset = val_output,
   loss           = ann.loss.zero_one(10)
 }
+local out_ds = best:use_dataset{ input_dataset = val_input }
+best:use_dataset{ input_dataset = val_input, output_dataset = out_ds }
+for input,bunch_indexes in trainable.dataset_multiple_iterator{
+  datasets = { val_input }, bunch_size = 1 } do
+  local out = best:calculate(input)
+  local target = matrix(out:dim(1),out:dim(2),
+			out_ds:getPattern(bunch_indexes[1]))
+  assert(out:equals(target))
+end
 --printf("# Wall total time: %.3f    per epoch: %.3f\n", wall, wall/num_epochs)
 --printf("# CPU  total time: %.3f    per epoch: %.3f\n", cpu, cpu/num_epochs)
 --printf("# Validation error: %f  +-  %f\n", val_error, val_variance)
