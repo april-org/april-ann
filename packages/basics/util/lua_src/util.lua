@@ -730,36 +730,44 @@ local valid_get_table_fields_params_attributes = { type_match = true,
 						   mandatory  = true,
 						   getter     = true,
 						   default    = true }
-function get_table_fields(params, t)
+function get_table_fields(params, t, ignore_other_fields)
   local params = params or {}
   local t      = t or {}
   local ret    = {}
   for key,value in pairs(t) do
-    if not params[key] then error("Unknown field: " .. key) end
+    if not params[key] then
+      if ignore_other_fields then
+	ret[key] = value
+      else
+	error("Unknown field: " .. key)
+      end
+    end
   end
   for key,data in pairs(params) do
-    local data = data or {}
-    for k,_ in pairs(data) do
-      if not valid_get_table_fields_params_attributes[k] then
-	error("Incorrect parameter to function get_table_fields: " .. k)
+    if params[key] then
+      local data = data or {}
+      for k,_ in pairs(data) do
+	if not valid_get_table_fields_params_attributes[k] then
+	  error("Incorrect parameter to function get_table_fields: " .. k)
+	end
       end
-    end
-    -- each param has type_match, mandatory, default, and getter
-    local v = t[key] or data.default
-    if v == nil and data.mandatory then
-      error("Mandatory field not found: " .. key)
-    end
-    if v ~= nil and data.type_match and (luatype(v) ~= data.type_match or type(v) ~= data.type_match) then
-      if data.type_match ~= "function" or (luatype(v) == "table" and not v.__call) then
-	error("Incorrect type '" .. type(v) .. "' for field '" .. key .. "'")
+      -- each param has type_match, mandatory, default, and getter
+      local v = t[key] or data.default
+      if v == nil and data.mandatory then
+	error("Mandatory field not found: " .. key)
       end
-    end
-    if v ~= nil and data.isa_match and not isa(v, data.isa_match) then
-      error("Incorrect field isa_match predicate: " .. key)
-    end
-    if data.getter then v=(t[key]~=nil and data.getter(t[key])) or nil end
-    ret[key] = v
-  end
+      if v ~= nil and data.type_match and (luatype(v) ~= data.type_match or type(v) ~= data.type_match) then
+	if data.type_match ~= "function" or (luatype(v) == "table" and not v.__call) then
+	  error("Incorrect type '" .. type(v) .. "' for field '" .. key .. "'")
+	end
+      end
+      if v ~= nil and data.isa_match and not isa(v, data.isa_match) then
+	error("Incorrect field isa_match predicate: " .. key)
+      end
+      if data.getter then v=(t[key]~=nil and data.getter(t[key])) or nil end
+      ret[key] = v
+    end  -- if params[key] then ...
+  end -- for key,data in pairs(params) ...
   return ret
 end
 

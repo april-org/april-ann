@@ -728,11 +728,9 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
   if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
   local loss      = loss or self.loss_function
   local optimizer = optimizer or self.optimizer
-  local it        = 0
   local tr_loss, _, _, tr_loss_matrix =
-    optimizer:execute(function()
+    optimizer:execute(function(it)
 			self.ann_component:reset(it)
-			it = it+1
 			local output = self.ann_component:forward(input, true)
 			local output_mat = output:get_matrix()
 			local tr_loss,tr_loss_matrix
@@ -1052,16 +1050,21 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 function trainable_supervised_trainer_methods:train_dataset(t)
   local params = get_table_fields(
     {
-      input_dataset  = { mandatory = false, default=nil },
-      output_dataset = { mandatory = false, default=nil },
-      distribution   = { type_match="table", mandatory = false, default=nil,
-			 getter = get_table_fields_ipairs{
-			   input_dataset  = { mandatory=true },
-			   output_dataset = { mandatory=true },
-			   probability    = { type_match="number",
-					      mandatory=true },
-			 },
-      },
+      -- This following commented parameters will be checked by
+      -- trainable.dataset_pair_iterator:
+      --
+      -- shuffle        = { isa_match  = random,   mandatory = false, default=nil },
+      -- replacement    = { type_match = "number", mandatory = false, default=nil },
+      -- input_dataset  = { mandatory = false, default=nil },
+      -- output_dataset = { mandatory = false, default=nil },
+      -- distribution   = { type_match="table", mandatory = false, default=nil,
+      -- 			 getter = get_table_fields_ipairs{
+      -- 			   input_dataset  = { mandatory=true },
+      -- 			   output_dataset = { mandatory=true },
+      -- 			   probability    = { type_match="number",
+      -- 					      mandatory=true },
+      -- 			 },
+      -- },
       bunch_size     = { type_match = "number",
 			 mandatory = (self.bunch_size == false) },
       loss           = { isa_match  = ann.loss,
@@ -1070,98 +1073,21 @@ function trainable_supervised_trainer_methods:train_dataset(t)
       optimizer      = { isa_match  = ann.optimizer,
 			 mandatory  = (not self.optimizer),
 			 default=self.optimizer },
-      shuffle        = { isa_match  = random,   mandatory = false, default=nil },
-      replacement    = { type_match = "number", mandatory = false, default=nil },
-    }, t)
-  -- ERROR CHECKING
-  assert(params.input_dataset ~= not params.output_dataset,
-	 "input_dataset and output_dataset fields are mandatory together")
-  assert(not params.input_dataset or not params.distribution,
-	 "input_dataset/output_dataset fields are forbidden with distribution")
-  --
-  local bunch_size = params.bunch_size or self.bunch_size
-  -- TRAINING TABLES
-  
-  -- for each pattern, index in dataset
-  local ds_idx_table = {}
+    }, t, true)
+  local loss       = params.loss
+  local optimizer  = params.optimizer
+  params.loss      = nil
+  params.optimizer = nil
+  params.bunch_size         = params.bunch_size or self.bunch_size
+  params.assert_input_size  = self:get_input_size()
+  params.assert_output_size = self:get_output_size()
   -- set to ZERO the accumulated of loss
-  params.loss:reset()
-  if params.distribution then
-    -- Training with distribution: given a table of datasets the patterns are
-    -- sampled following the given apriory probability
-    assert(params.shuffle,"shuffle is mandatory with distribution")
-    assert(params.replacement,"replacement is mandatory with distribution")
-    params.input_dataset  = dataset.token.union()
-    params.output_dataset = dataset.token.union()
-    local aprioris = {}
-    local sizes    = {}
-    local sums     = { 0 }
-    for i,v in ipairs(params.distribution) do
-      if isa(v.input_dataset, dataset) then
-	v.input_dataset  = dataset.token.wrapper(v.input_dataset)
-      end
-      if isa(v.output_dataset, dataset) then
-	v.output_dataset = dataset.token.wrapper(v.output_dataset)
-      end
-      check_dataset_sizes(v.input_dataset, v.output_dataset)
-      table.insert(aprioris, v.probability)
-      table.insert(sizes, v.input_dataset:numPatterns())
-      table.insert(sums, sums[#sums] + sizes[#sizes])
-      params.input_dataset:push_back(v.input_dataset)
-      params.output_dataset:push_back(v.output_dataset)
-    end
-    -- generate training tables
-    local dice = random.dice(aprioris)
-    for i=1,params.replacement do
-      local whichclass=dice:thrown(params.shuffle)
-      local idx=params.shuffle:randInt(1,sizes[whichclass])
-      table.insert(ds_idx_table, idx + sums[whichclass])
-    end
-  else
-    if isa(params.input_dataset, dataset) then
-      params.input_dataset  = dataset.token.wrapper(params.input_dataset)
-    end
-    if isa(params.output_dataset, dataset) then
-      params.output_dataset = dataset.token.wrapper(params.output_dataset)
-    end
-    check_dataset_sizes(params.input_dataset, params.output_dataset)
-    local num_patterns = params.input_dataset:numPatterns()
-    -- generate training tables depending on training mode (replacement,
-    -- shuffled, or sequential)
-    if params.replacement then
-      assert(params.shuffle,"shuffle is mandatory with replacement")
-      for i=1,params.replacement do
-	table.insert(ds_idx_table, params.shuffle:randInt(1,num_patterns))
-      end
-    elseif params.shuffle then
-      ds_idx_table = params.shuffle:shuffle(num_patterns)
-    else
-      for i=1,num_patterns do table.insert(ds_idx_table, i) end
-    end
+  loss:reset()
+  for input_bunch,output_bunch in trainable.dataset_pair_iterator(params) do
+    self:train_step(input_bunch, output_bunch, loss, optimizer)
   end
-  -- SANITY CHECK
-  assert(self:get_input_size() == 0 or
-	   self:get_input_size() == params.input_dataset:patternSize(),
-	 "Incorrect patternSize at input_dataset")
-  assert(self:get_output_size() == 0 or
-	   self:get_output_size() == params.output_dataset:patternSize(),
-	 "Incorrect patternSize at output_dataset")
-  -- TRAIN USING ds_idx_table
-  local k=0
-  local bunch_indexes = {}
-  for i=1,#ds_idx_table,bunch_size do
-    table.clear(bunch_indexes)
-    local last = math.min(i+bunch_size-1, #ds_idx_table)
-    for j=i,last do table.insert(bunch_indexes, ds_idx_table[j]) end
-    local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
-    local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
-    self:train_step(input_bunch, output_bunch, params.loss, params.optimizer)
-    k=k+1
-    if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
-  end
-  ds_idx_table = nil
   collectgarbage("collect")
-  return params.loss:get_accum_loss()
+  return loss:get_accum_loss()
 end
 
 ------------------------------------------------------------------------
@@ -1188,69 +1114,39 @@ april_set_doc("trainable.supervised_trainer.grad_check_dataset", {
 function trainable_supervised_trainer_methods:grad_check_dataset(t)
   local params = get_table_fields(
     {
-      input_dataset  = { mandatory = false, default=nil },
-      output_dataset = { mandatory = false, default=nil },
+      -- This following commented parameters will be checked by
+      -- trainable.dataset_pair_iterator:
+      --
+      -- input_dataset  = { mandatory = false, default=nil },
+      -- output_dataset = { mandatory = false, default=nil },
       bunch_size     = { type_match = "number",
 			 mandatory = (self.bunch_size == false) },
       loss           = { isa_match  = ann.loss,
                          mandatory = (self.loss_function==false),
 			 default=self.loss_function },
-      max_iterations = { type_match = "number",
-			 mandatory = false,
-			 default = t.input_dataset:numPatterns() },
       verbose        = { type_match = "boolean",
 			 mandatory = false, default=false },
-    }, t)
-  -- ERROR CHECKING
-  assert(params.input_dataset ~= not params.output_dataset,
-	 "input_dataset and output_dataset fields are mandatory together")
-  --
-  local bunch_size = params.bunch_size or self.bunch_size
-  -- TRAINING TABLES
-  
-  -- for each pattern, index in dataset
-  local ds_idx_table = {}
+    }, t, true)
+  local loss                = params.loss
+  local verbose             = params.verbose
+  params.loss               = nil
+  params.verbose            = nil
+  params.bunch_size         = params.bunch_size or self.bunch_size
+  params.assert_input_size  = self:get_input_size()
+  params.assert_output_size = self:get_output_size()
   -- set to ZERO the accumulated of loss
-  params.loss:reset()
-  if isa(params.input_dataset, dataset) then
-    params.input_dataset  = dataset.token.wrapper(params.input_dataset)
-  end
-  if isa(params.output_dataset, dataset) then
-    params.output_dataset = dataset.token.wrapper(params.output_dataset)
-  end
-  check_dataset_sizes(params.input_dataset, params.output_dataset)
-  local num_patterns = params.input_dataset:numPatterns()
-  for i=1,num_patterns do table.insert(ds_idx_table, i) end
-  -- SANITY CHECK
-  assert(self:get_input_size() == 0 or
-	   self:get_input_size() == params.input_dataset:patternSize(),
-	 "Incorrect patternSize at input_dataset")
-  assert(self:get_output_size() == 0 or
-	   self:get_output_size() == params.output_dataset:patternSize(),
-	 "Incorrect patternSize at output_dataset")
-  local k=0
-  local bunch_indexes = {}
-  for i=1,#ds_idx_table,bunch_size do
-    if i/bunch_size > params.max_iterations then break end
-    table.clear(bunch_indexes)
-    local last = math.min(i+bunch_size-1, #ds_idx_table)
-    for j=i,last do table.insert(bunch_indexes, ds_idx_table[j]) end
-    local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
-    local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
-    if not self:grad_check_step(input_bunch, output_bunch, params.verbose,
-				params.loss) then
+  loss:reset()
+  local ret = true
+  for input,output,bunch_indexes in trainable.dataset_pair_iterator(params) do
+    if not self:grad_check_step(input, output, verbose, loss) then
       printf("Error processing pattern bunch: %s\n",
 	     table.concat(bunch_indexes, " "))
-      ds_idx_table = nil
-      collectgarbage("collect")
-      return false
+      ret = false
+      break
     end
-    k=k+1
-    if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
   end
-  ds_idx_table = nil
   collectgarbage("collect")
-  return true
+  return ret
 end
 
 ------------------------------------------------------------------------
@@ -1337,6 +1233,8 @@ april_set_doc("trainable.supervised_trainer.validate_dataset", {
 function trainable_supervised_trainer_methods:validate_dataset(t)
   local params = get_table_fields(
     {
+      -- In this case, we check all the given parameters, because all the
+      -- dataset iteration schemes are not available for validate_dataset
       input_dataset  = { mandatory = true },
       output_dataset = { mandatory = true },
       bunch_size     = { type_match = "number",
@@ -1352,112 +1250,19 @@ function trainable_supervised_trainer_methods:validate_dataset(t)
 	 "input_dataset and output_dataset fields are mandatory together")
   assert(not params.input_dataset or not params.distribution,
 	 "input_dataset/output_dataset fields are forbidden with distribution")
-  local bunch_size = params.bunch_size or self.bunch_size
-  -- TRAINING TABLES
-  
-  -- for each pattern, index in corresponding datasets
-  local ds_idx_table = {}
-  params.loss:reset()
-  if isa(params.input_dataset, dataset) then
-    params.input_dataset  = dataset.token.wrapper(params.input_dataset)
+  local loss                = params.loss
+  params.loss               = nil
+  params.bunch_size         = params.bunch_size or self.bunch_size
+  params.assert_input_size  = self:get_input_size()
+  params.assert_output_size = self:get_output_size()
+  -- set to ZERO the accumulated of loss
+  loss:reset()
+  for input_bunch,output_bunch in trainable.dataset_pair_iterator(params) do
+    self:validate_step(input_bunch, output_bunch, loss)
   end
-  if isa(params.output_dataset, dataset) then
-    params.output_dataset = dataset.token.wrapper(params.output_dataset)
-  end
-  check_dataset_sizes(params.input_dataset, params.output_dataset)
-  local num_patterns = params.input_dataset:numPatterns()
-  -- generate training tables depending on training mode (replacement,
-  -- shuffled, or sequential)
-  if params.replacement then
-    assert(params.shuffle,"shuffle is mandatory with replacement")
-    for i=1,params.replacement do
-      table.insert(ds_idx_table, params.shuffle:randInt(1,num_patterns))
-    end
-  elseif params.shuffle then
-    ds_idx_table = params.shuffle:shuffle(num_patterns)
-  else
-    for i=1,num_patterns do table.insert(ds_idx_table, i) end
-  end
-  -- SANITY CHECK
-  assert(self:get_input_size() == 0 or
-	   self:get_input_size() == params.input_dataset:patternSize(),
-	 "Incorrect patternSize at input_dataset")
-  assert(self:get_output_size() == 0 or
-	   self:get_output_size() == params.output_dataset:patternSize(),
-	 "Incorrect patternSize at output_dataset")
-  -- TRAIN USING ds_idx_table
-  local k=0
-  local bunch_indexes = {}
-  for i=1,#ds_idx_table,bunch_size do
-    table.clear(bunch_indexes)
-    local last = math.min(i+bunch_size-1, #ds_idx_table)
-    for j=i,last do table.insert(bunch_indexes, ds_idx_table[j]) end
-    local input_bunch  = params.input_dataset:getPatternBunch(bunch_indexes)
-    local output_bunch = params.output_dataset:getPatternBunch(bunch_indexes)
-    self:validate_step(input_bunch, output_bunch, params.loss)
-    k=k+1
-    if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
-  end
-  ds_idx_table = nil
   collectgarbage("collect")
-  return params.loss:get_accum_loss()
-end
-
-------------------------------------------------------------------------
-
-april_set_doc("trainable.supervised_trainer.for_each_pattern", {
-		class = "method",
-		summary = "Iterates over a dataset calling a given function",
-		description = 
-		  {
-		    "This method performs forward with all patterns of the",
-		    "given input_dataset. Each forward is done for bunch_size",
-		    "patterns at the same time, and after each forward the",
-		    "given function is called.",
-		  }, 
-		params = {
-		  ["input_dataset"]  = "A dataset float or dataset token",
-		  ["func"] = {"A function with this header: ",
-			      "func(INDEXES,TRAINER). INDEXES is a table",
-			      "with pattern indexes of the bunch, and",
-			      "TRAINER is the instance of the trainer object.",},
-		  ["bunch_size"]     = 
-		    {
-		      "Bunch size (mini-batch). It is [optional] if bunch_size",
-		      "was set at constructor, otherwise it is mandatory.",
-		    }, 
-		}, })
-
-function trainable_supervised_trainer_methods:for_each_pattern(t)
-  local params = get_table_fields(
-    {
-      input_dataset  = { mandatory = true },
-      func           = { mandatory = true, type_match="function" },
-      bunch_size     = { type_match = "number",
-			 mandatory = (self.bunch_size == false) },
-    }, t)
-  if isa(params.input_dataset, dataset) then
-    params.input_dataset = dataset.token.wrapper(params.input_dataset)
-  end
-  local bunch_size = params.bunch_size or self.bunch_size
-  local nump = params.input_dataset:numPatterns()
-  -- SANITY CHECK
-  assert(self:get_input_size() == 0 or
-	   self:get_input_size() == params.input_dataset:patternSize(),
-	 "Incorrect patternSize at input_dataset")
-  local k=0
-  local bunch_indexes = {}
-  for i=1,nump,bunch_size do
-    table.clear(bunch_indexes)
-    local last = math.min(i+bunch_size-1, nump)
-    for j=i,last do table.insert(bunch_indexes, j) end
-    local input  = params.input_dataset:getPatternBunch(bunch_indexes)
-    self.ann_component:reset()
-    local output = self.ann_component:forward(input)
-    params.func(bunch_indexes, self)
-    k=k+1
-    if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
-  end
+  collectgarbage("collect")
+  return loss:get_accum_loss()
 end
 
 ------------------------------------------------------------------------
@@ -1494,14 +1299,15 @@ april_set_doc("trainable.supervised_trainer.use_dataset", {
 function trainable_supervised_trainer_methods:use_dataset(t)
   local params = get_table_fields(
     {
+      -- In this case, we check all the given parameters, because all the
+      -- dataset iteration schemes are not available for use_dataset
       input_dataset  = { mandatory = true },
       output_dataset = { mandatory = false, default=nil },
       bunch_size     = { type_match = "number",
 			 mandatory = (self.bunch_size == false)  },
     }, t)
-  local bunch_size = params.bunch_size or self.bunch_size
-  local nump    = params.input_dataset:numPatterns()
-  local outsize = self.ann_component:get_output_size()
+  local nump        = params.input_dataset:numPatterns()
+  local outsize     = self.ann_component:get_output_size()
   if params.output_dataset then
     if isa(params.output_dataset, dataset) then
       params.output_dataset = dataset.token.wrapper(params.output_dataset)
@@ -1517,26 +1323,17 @@ function trainable_supervised_trainer_methods:use_dataset(t)
   if isa(params.input_dataset, dataset) then
     params.input_dataset = dataset.token.wrapper(params.input_dataset)
   end
-  -- SANITY CHECK
-  assert(self:get_input_size() == 0 or
-	   self:get_input_size() == params.input_dataset:patternSize(),
-	 "Incorrect patternSize at input_dataset")
-  assert(self:get_output_size() == 0 or
-	   self:get_output_size() == params.output_dataset:patternSize(),
-	 "Incorrect patternSize at output_dataset")
-  local k=0
-  local bunch_indexes = {}
-  for i=1,nump,bunch_size do
-    table.clear(bunch_indexes)
-    local last = math.min(i+bunch_size-1, nump)
-    for j=i,last do table.insert(bunch_indexes, j) end
-    local input  = params.input_dataset:getPatternBunch(bunch_indexes)
-    self.ann_component:reset()
-    local output = self.ann_component:forward(input)
-    params.output_dataset:putPatternBunch(bunch_indexes,output)
-    k=k+1
-    if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
-  end
+  local output_dataset        = params.output_dataset
+  params.bunch_size           = params.bunch_size or self.bunch_size 
+  params.datasets             = { params.input_dataset }
+  params.assert_pattern_sizes = { self:get_input_size() }
+  params.input_dataset, params.output_dataset = nil, nil
+  local ann_component = self.ann_component
+  for input_bunch,bunch_indexes in trainable.dataset_multiple_iterator(params) do
+    ann_component:reset()
+    local output = ann_component:forward(input_bunch)
+    output_dataset:putPatternBunch(bunch_indexes,output)
+  end  
   return t.output_dataset
 end
 
@@ -1903,6 +1700,224 @@ function trainable_supervised_trainer_methods:train_wo_validation(t)
     prev_tr_err = tr_err
   end
   return best
+end
+
+-------------------------------------------------------------------------------
+
+--------------------------------
+-- DATASET_ITERATOR FUNCTIONS --
+--------------------------------
+
+april_set_doc("trainable.dataset_pair_iterator", {
+		class       = "function",
+		summary     = {
+		  "A function which returns an iterator which",
+		  "does a dataset pair loop (input_dataset and output_dataset)"
+		},
+		description ={
+		  "This class is useful to implement a loop over a dataset.",
+		  "It implements different loop schemes, in all the cases",
+		  "returning a bunch_size patterns.",
+		  "It admits the following traversals: sequential, shuffled,",
+		  "shuffled with replacement, shuffled with distribution.",
+		}, })
+
+local TOO_LARGE_NUMPATTERNS = 4000000
+function trainable.dataset_pair_iterator(t)
+  local params = get_table_fields(
+    {
+      input_dataset  = { mandatory = false, default=nil },
+      output_dataset = { mandatory = false, default=nil },
+      distribution   = { type_match="table", mandatory = false, default=nil,
+			 getter = get_table_fields_ipairs{
+			   input_dataset  = { mandatory=true },
+			   output_dataset = { mandatory=true },
+			   probability    = { type_match="number",
+					      mandatory=true },
+			 },
+      },
+      bunch_size     = { type_match = "number", mandatory = true },
+      shuffle        = { isa_match  = random,   mandatory = false, default=nil },
+      replacement    = { type_match = "number", mandatory = false, default=nil },
+      assert_input_size = { type_match = "number", mandatory = false, default=0 },
+      assert_output_size = { type_match = "number", mandatory = false, default=0 },
+    }, t)
+  -- ERROR CHECKING
+  assert(params.input_dataset ~= not params.output_dataset,
+	 "input_dataset and output_dataset fields are mandatory together")
+  assert(not params.input_dataset or not params.distribution,
+	 "input_dataset/output_dataset fields are forbidden with distribution")
+  assert(params.assert_input_size ~= not params.assert_output_size,
+	 "assert_input_size and assert_output_size are mandatory together")
+  if params.input_dataset then
+    params.datasets = { params.input_dataset, params.output_dataset }
+    params.input_dataset, params.output_dataset = nil
+  end
+  if params.distribution then
+    iterator(ipairs(params.distribution)):
+    apply(function(_,data)
+	    data.datasets = { data.input_dataset, data.output_dataset }
+	    data.input_dataset, data.output_dataset = nil, nil
+	  end)
+  end
+  if params.assert_input_size then
+    params.assert_pattern_sizes = { params.assert_input_size,
+				    params.assert_output_size }
+    params.assert_input_size, params.assert_output_size = nil, nil
+  end
+  return trainable.dataset_multiple_iterator(params)
+end
+
+----------------------------
+
+april_set_doc("trainable.dataset_multiple_iterator", {
+		class       = "function",
+		summary     = {
+		  "A function which returns an iterator which",
+		  "does a dataset pair loop (input_dataset and output_dataset)"
+		},
+		description ={
+		  "This class is useful to implement a loop over a dataset.",
+		  "It implements different loop schemes, in all the cases",
+		  "returning a bunch_size patterns.",
+		  "It admits the following traversals: sequential, shuffled,",
+		  "shuffled with replacement, shuffled with distribution.",
+		}, })
+
+local TOO_LARGE_NUMPATTERNS = 4000000
+function trainable.dataset_multiple_iterator(t)
+  local params = get_table_fields(
+    {
+      datasets       = { mandatory = false, default=nil },
+      distribution   = { type_match="table", mandatory = false, default=nil,
+			 getter = get_table_fields_ipairs{
+			   datasets    = { mandatory=true },
+			   probability = { type_match="number",
+					   mandatory=true },
+			 },
+      },
+      bunch_size     = { type_match = "number", mandatory = true },
+      shuffle        = { isa_match  = random,   mandatory = false, default=nil },
+      replacement    = { type_match = "number", mandatory = false, default=nil },
+      assert_pattern_sizes = { type_match = "table", mandatory = false,
+			       default={ } },
+    }, t)
+  -- ERROR CHECKING
+  assert(not params.datasets or not params.distribution,
+	 "datasets field is forbidden with distribution")
+  assert(params.datasets or params.distribution,
+	 "datasets or distribution are needed")
+  --
+  local bunch_size = params.bunch_size
+  --
+  local to_dataset_token = function(ds_table)
+    local nump
+    return iterator(ipairs(ds_table)):
+    map(function(_,ds)
+	  if nump then
+	    assert(nump == ds:numPatterns(),
+		   string.format("Incorrect number of patterns, expected "..
+				   "%d, found %d", nump, ds:numPatterns()))
+	  else nump = ds:numPatterns()
+	  end
+	  return isa(ds,dataset) and dataset.token.wrapper(ds) or ds
+	end):
+    table(), nump
+  end
+  -- TRAINING TABLES
+  
+  -- for each pattern, index in dataset
+  local ds_idx_table = {}
+  if params.distribution then
+    -- Training with distribution: given a table of datasets the patterns are
+    -- sampled following the given apriory probability
+    assert(params.shuffle,"shuffle is mandatory with distribution")
+    assert(params.replacement,"replacement is mandatory with distribution")
+    params.datasets = { }
+    local aprioris = {}
+    local sizes    = {}
+    local sums     = { 0 }
+    local num_ds
+    --
+    params.datasets = iterator(ipairs(params.distribution.datasets)):
+    map(function() return dataset.token.union() end):
+    table()
+    --
+    for i,v in ipairs(params.distribution) do
+      local nump
+      if num_ds then
+	assert(num_ds == #v.datasets,
+	       string.format("Incorrect number of datasets, expected %d, found %d",
+			     num_ds, #v.datasets))
+      else num_ds = #v.datasets
+      end
+      v.datasets = to_dataset_token(v.datasets)
+      table.insert(aprioris, v.probability)
+      table.insert(sizes, nump)
+      table.insert(sums, sums[#sums] + nump)
+      --
+      iterator(ipairs(params.datasets)):
+      apply(function(k,union_ds) union_ds:push_back(v.datasets[k]) end)
+    end -- for i,v in ipairs(params.distribution)
+    -- generate training tables
+    local dice = random.dice(aprioris)
+    for i=1,params.replacement do
+      local whichclass=dice:thrown(params.shuffle)
+      local idx=params.shuffle:randInt(1,sizes[whichclass])
+      table.insert(ds_idx_table, idx + sums[whichclass])
+    end
+  else -- if params.distribution then ... else
+    --
+    local num_patterns
+    params.datasets,num_patterns = to_dataset_token(params.datasets)
+    assert(num_patterns < TOO_LARGE_NUMPATTERNS or params.replacement,
+	   "The number of patterns is too large, use replacement instead")
+    -- generate training tables depending on training mode (replacement,
+    -- shuffled, or sequential)
+    if params.replacement then
+      assert(params.shuffle,"shuffle is mandatory with replacement")
+      assert(params.replacement < TOO_LARGE_NUMPATTERNS, 
+	     "The number of patterns is too large, use a shorter replacement")
+      for i=1,params.replacement do
+	table.insert(ds_idx_table, params.shuffle:randInt(1,num_patterns))
+      end
+    elseif params.shuffle then
+      ds_idx_table = params.shuffle:shuffle(num_patterns)
+    else
+      for i=1,num_patterns do table.insert(ds_idx_table, i) end
+    end
+  end
+  -- SANITY CHECK
+  iterator(ipairs(params.assert_pattern_sizes)):
+  apply(function(k,psize)
+	  local ds_psize = params.datasets[k]:patternSize()
+	  assert(psize == 0 or psize == ds_psize,
+		 string.format("Incorrect patternSize at dataset %d, found %d"..
+				 ", expected %d", k, ds_psize, psize))
+	end)
+  --
+  -- ITERATOR USING ds_idx_table
+  local k=0
+  local bunch_indexes = {}
+  local i=1 -- pattern index
+  return function()
+    if i > #ds_idx_table then
+      ds_idx_table=nil
+      collectgarbage("collect")
+      return nil
+    end
+    table.clear(bunch_indexes)
+    local last = math.min(i+bunch_size-1, #ds_idx_table)
+    for j=i,last do table.insert(bunch_indexes, ds_idx_table[j]) end
+    local data = iterator(ipairs(params.datasets)):select(2):
+    call('getPatternBunch', bunch_indexes):
+    table()
+    table.insert(data, bunch_indexes)
+    k=k+1
+    i=i+#bunch_indexes
+    if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
+    return table.unpack(data)
+  end
 end
 
 -------------------------------------------------------------------------------

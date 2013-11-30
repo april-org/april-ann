@@ -588,7 +588,8 @@ april_set_doc("ann.components.base.reset",
 		params = {
 		  { "An optional number with the current iteration. It is",
 		    "used by iterative algorithms as Conjugate Gradient",
-		    "to indicate components current iteration number.",
+		    "to indicate components current iteration number",
+		    "[optional]. By default it is 0",
 		  }
 		}
 	      })

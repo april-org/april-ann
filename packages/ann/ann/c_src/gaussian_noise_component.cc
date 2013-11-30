@@ -67,7 +67,7 @@ namespace ANN {
     april_assert(output_mat->getMajorOrder() == CblasColMajor);
     for (MatrixFloat::col_major_iterator it=noise_mat->begin();
 	 it!=noise_mat->end(); ++it)
-      *it = randNorm(mean, variance);
+      *it = random->randNorm(mean, variance);
     output_mat->axpy(1.0f, noise_mat);
     delete noise_mat;
     return output;

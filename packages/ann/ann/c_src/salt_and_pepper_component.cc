@@ -68,7 +68,7 @@ namespace ANN {
     for (MatrixFloat::col_major_iterator it(output_mat->begin());
 	 it != output_mat->end();
 	 ++it) {
-      float p = rand();
+      float p = random->rand();
       if (p < prob) {
 	if (p < prob * 0.5f) *it = zero;
 	else *it = one;

@@ -359,7 +359,7 @@ function rprop_methods:execute(eval, cnn_table)
   local old_sign      = self.old_sign
   local arg
   for i=1,niter do
-    arg = table.pack( eval() )
+    arg = table.pack( eval(i-1) )
     local tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
     -- the gradient computation could fail returning nil, it is important to
     -- take this into account
@@ -554,7 +554,7 @@ function cg_methods:execute(eval, cnn_table)
     end
   end
   -- APPLY REGULARIZATION AND PENALTIES
-  local apply_regularization_and_penalties = function()
+  local apply_regularization_and_penalties = function(ann_component)
     for cname,cnn in pairs(cnn_table) do
       local w,oldw = cnn:matrix()
       local wd     = self:get_option_of(cname, "weight_decay") or 0.0
@@ -617,7 +617,7 @@ function cg_methods:execute(eval, cnn_table)
   local max_eval      = self:get_option("max_eval") or max_iter*1.25
   local red           = 1
   
-  local i             = 0
+  local i             = 0 -- counts the number of evaluations
   local ls_failed     = 0
   local fx            = {}
 
@@ -639,7 +639,7 @@ function cg_methods:execute(eval, cnn_table)
   local df0 = self.state.df0 or clone_only_dims(x.w)
   
   -- evaluate at initial point
-  local arg = table.pack( eval() )
+  local arg = table.pack( eval(i) )
   local tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
   update_gradients(gradients)
   f1 = tr_loss
@@ -666,7 +666,7 @@ function cg_methods:execute(eval, cnn_table)
     
     update_weights(x, z1, s)
 
-    arg = table.pack( eval() )
+    arg = table.pack( eval(i) )
     tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
     update_gradients(gradients)
     f2 = tr_loss
@@ -697,7 +697,7 @@ function cg_methods:execute(eval, cnn_table)
 	z1 = z1 + z2
 	
 	update_weights(x, z2, s)
-	arg = table.pack( eval() )
+	arg = table.pack( eval(i) )
 	tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
 	update_gradients(gradients)
 	f2 = tr_loss
@@ -740,7 +740,7 @@ function cg_methods:execute(eval, cnn_table)
       z1=z1+z2;
       update_weights(x, z2, s)
       
-      arg = table.pack( eval() )
+      arg = table.pack( eval(i) )
       tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
       update_gradients(gradients)
       f2 = tr_loss
@@ -794,10 +794,10 @@ function cg_methods:execute(eval, cnn_table)
   self.state.x0 = x0
   self.state.s = s
   
-  apply_regularization_and_penalties()
+  apply_regularization_and_penalties(ann_component)
   
   -- evaluate the function at the end
-  local arg = table.pack( eval() )
+  local arg = table.pack( eval(i) )
   -- returns the same as returned by eval(), plus the sequence of iteration
   -- losses and the number of iterations
   table.insert(arg, fx)

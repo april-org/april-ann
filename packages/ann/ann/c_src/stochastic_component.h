@@ -42,9 +42,9 @@ namespace ANN {
     };
     StochasticState stochastic_state;
     unsigned int last_reset_it;
-    MTRand *random;
-    april_utils::vector<double> stored_sequence;
-    unsigned int stored_pos;
+    uint32_t *random_frozen_state;
+  protected:
+    MTRand   *random;
   public:
     StochasticANNComponent(MTRand *random,
 			   const char *name=0,
@@ -54,13 +54,14 @@ namespace ANN {
       ANNComponent(name, weights, input_size, output_size),
       stochastic_state(NORMAL),
       last_reset_it(0),
-      random(random),
-      stored_pos(0) {
+      random(random) {
       april_assert(random != 0 && "Needs a random object\n");
       IncRef(random);
+      random_frozen_state = new uint32_t[MTRand::SAVE];
     }
     virtual ~StochasticANNComponent() {
       DecRef(random);
+      delete[] random_frozen_state;
     }
 
     virtual Token *doForward(Token* input, bool during_training) {
@@ -70,14 +71,12 @@ namespace ANN {
     
     virtual void reset(unsigned int it=0) {
       if (it == 0) {
-	// first iteration, goes to KEEP state, where the sequence of numbers is
-	// stored
+	// first iteration, goes to KEEP state
 	switch(stochastic_state) {
 	case FROZEN:
 	case NORMAL:
 	  stochastic_state = KEEP;
-	  stored_pos       = 0;
-	  stored_sequence.clear();
+	  random->save(random_frozen_state);
 	  break;
 	default:
 	  ;
@@ -87,7 +86,7 @@ namespace ANN {
 	// iteration change, reinitialize the store sequence position pointer
 	// and goes to FROZEN state
 	stochastic_state = FROZEN;
-	stored_pos       = 0;
+	random->load(random_frozen_state);
       }
       last_reset_it = it;
     }
@@ -97,6 +96,7 @@ namespace ANN {
       DecRef(this->random);
       this->random = random;
       IncRef(this->random);
+      last_reset_it = 0;
     }
     
     /// Method to serialize the underlying random object
@@ -104,48 +104,6 @@ namespace ANN {
     
     /// Method to serialize the underlying random object
     virtual const MTRand *getRandom() const { return random; }
-    
-#define SAMPLE(value,FUNC) do {						\
-      if (stored_sequence.size() > 10000000)				\
-	ERROR_PRINT("WARNING!!! stochastec state sequence too large, "	\
-		    "please, check that you are passing iteration "	\
-		    "number at reset(...) method\n");			\
-      switch(stochastic_state) {					\
-      case NORMAL:							\
-	(value) = (FUNC);						\
-	break;								\
-      case KEEP:							\
-	(value) = (FUNC);						\
-	stored_sequence.push_back( (value) );				\
-	break;								\
-      case FROZEN:							\
-	if (stored_pos < stored_sequence.size())			\
-	  (value) = stored_sequence[stored_pos];			\
-	else {								\
-	  (value) = (FUNC);						\
-	  stored_sequence.push_back( (value) );				\
-	}								\
-	++stored_pos;							\
-	break;								\
-      default:								\
-	;								\
-      }									\
-    } while(0)
-    
-    /// Uniform distribution random sampling function
-    double rand() {
-       double value=0.0f;
-       SAMPLE(value, random->rand());
-       return value;
-    }
-    
-    /// Normal distribution random sampling function
-    double randNorm( const double& mean=0.0, const double &variance = 0.0 ) {
-      double value=0.0f;
-      SAMPLE(value, random->randNorm(mean, variance));
-      return value;
-    }
-#undef SAMPLE
   };
 }
 
