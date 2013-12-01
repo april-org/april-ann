@@ -1,6 +1,6 @@
 digits_image = ImageIO.read(string.get_path(arg[0]).."digits.png")
 m1           = digits_image:to_grayscale():invert_colors():matrix()
-
+--
 -- TRAINING --
 -- a simple matrix for the desired output
 train_input  = dataset.matrix(m1,
@@ -38,59 +38,51 @@ val_output   = dataset.matrix(m2,
 				stepSize    = {-1},
 				circular    = {true}
 			      })
-
+--
 bunch_size = 32
 thenet = ann.mlp.all_all.generate("256 inputs 128 tanh 10 log_softmax")
-if util.is_cuda_available() then thenet:set_use_cuda(true) end
-trainer = trainable.supervised_trainer(thenet,
-				       ann.loss.multi_class_cross_entropy(),
-				       bunch_size)
-trainer:build()
+connections = thenet:build()
+weights_random = random(52324)
+connections = iterator(pairs(connections)):enumerate():table()
+table.sort(connections, function(a,b) return a[1]<b[1] end)
+iterator(ipairs(connections)):select(2):field(2):
+apply(function(cnn)
+	local fan = cnn:get_input_size() + cnn:get_output_size()
+	cnn:randomize_weights{
+	  random = weights_random,
+	  inf = -1/fan,
+	  sup =  1/fan,
+	}
+      end)
 --
-trainer:set_option("learning_rate", 0.001)
-trainer:set_option("momentum", 0.01)
-trainer:set_option("weight_decay", 1e-04)
-trainer:set_option("L1_norm", 1e-05)
--- we avoid weight_decay in bias
-trainer:set_layerwise_option("b.", "weight_decay", 0)
-trainer:set_layerwise_option("b.", "L1_norm", 0)
-
-trainer:randomize_weights{
-  random      = random(52324),
-  use_fanin   = true,
-  use_fanout  = true,
-  inf         = -1,
-  sup         =  1,
-}
-
-trainer:save("jarl.net", "binary")
-
 training_data = {
   input_dataset  = train_input,
   output_dataset = train_output,
   shuffle        = random(25234),
   bunch_size     = bunch_size,
 }
-
+--
 validation_data = {
   input_dataset  = val_input,
   output_dataset = val_output,
   bunch_size     = bunch_size,
 }
-
-
-local weight_grads = {}
+--
 loss = ann.loss.multi_class_cross_entropy()
 opt  = ann.optimizer.sgd()
 opt:set_option("learning_rate", 0.001)
-opt:set_option("momentum", 0.01)
-opt:set_option("weight_decay", 1e-04)
-opt:set_option("L1_norm", 1e-05)
+opt:set_option("momentum",      0.01)
+opt:set_option("weight_decay",  1e-04)
+opt:set_option("L1_norm",       1e-05)
+--
 opt:set_layerwise_option("b1", "weight_decay", 0)
 opt:set_layerwise_option("b2", "weight_decay", 0)
-opt:set_layerwise_option("b1", "L1_norm", 0)
-opt:set_layerwise_option("b2", "L1_norm", 0)
-local train = function(data)
+opt:set_layerwise_option("b1", "L1_norm",      0)
+opt:set_layerwise_option("b2", "L1_norm",      0)
+--
+local weight_grads -- upvalue of train
+local train = function(thenet,data,loss,opt)
+  weight_grads = weight_grads or { } -- upvalue
   loss:reset()
   for input,target in trainable.dataset_pair_iterator(data) do
     local tr_loss,_,_,tr_matrix =
@@ -102,19 +94,25 @@ local train = function(data)
 		    iterator(pairs(weight_grads)):select(2):call('zeros')
 		    weight_grads = thenet:compute_gradients(weight_grads)
 		    return tr_loss,weight_grads,tr_matrix:dim(1),tr_matrix
-		  end, thenet:copy_weights())
+		  end,
+		  thenet:copy_weights())
     loss:accum_loss(tr_loss,tr_matrix)
   end
-  return loss:get_accum_loss()
+  local tr,_=loss:get_accum_loss()
+  return tr
 end
-local validate = function(data)
+--
+local validate = function(thenet,data,loss)
   loss:reset()
   for input,target in trainable.dataset_pair_iterator(data) do
+    thenet:reset()
     local out = thenet:forward(input)
     loss:accum_loss(loss:compute_loss(out,target))
   end
-  return loss:get_accum_loss()  
+  local va,_=loss:get_accum_loss()
+  return va
 end
+--
 clock = util.stopwatch()
 clock:go()
 print("# Epoch Training  Validation")
@@ -125,8 +123,8 @@ train_func = trainable.train_holdout_validation{
   stopping_criterion = stopping_criterion
 }
 while train_func:execute(function()
-			   local tr_loss,_ = train(training_data)
-			   local va_loss,_ = validate(validation_data)
+			   local tr_loss = train(thenet,training_data,loss,opt)
+			   local va_loss = validate(thenet,validation_data,loss)
 			   return thenet,tr_loss,va_loss
 			 end) do
   print(train_func:get_state_string())
