@@ -2169,6 +2169,8 @@ april_set_doc("trainable.train_holdout_validation.save", {
 		}, })
 
 function train_holdout_methods:save(filename,format,extra)
+  assert(format==nil or luatype(format)=="string",
+	 "Second argument is a string with the format: 'binary' or 'ascii'")
   local f = io.open(filename, "r")
   if f then
     f:close()
@@ -2176,10 +2178,10 @@ function train_holdout_methods:save(filename,format,extra)
   end
   local f = io.open(filename, "w") or error("Unable to open " .. filename)
   f:write("return ")
-  f:write(self:to_lua_string())
+  f:write(self:to_lua_string(format))
   if extra then
     f:write(",\n")
-    f:write(table.tostring(extra))
+    f:write(table.tostring(extra, format))
   end
   f:write("\n")
   f:close()

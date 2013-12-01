@@ -40,12 +40,12 @@ val_output   = dataset.matrix(m2,
 			      })
 --
 bunch_size = 32
-thenet = ann.mlp.all_all.generate("256 inputs 128 tanh 10 log_softmax")
-connections = thenet:build()
+thenet         = ann.mlp.all_all.generate("256 inputs 128 tanh 10 log_softmax")
+connections    = thenet:build()
 weights_random = random(52324)
-connections = iterator(pairs(connections)):enumerate():table()
-table.sort(connections, function(a,b) return a[1]<b[1] end)
-iterator(ipairs(connections)):select(2):field(2):
+cnn_array      = iterator(pairs(connections)):enumerate():table()
+table.sort(cnn_array, function(a,b) return a[1]<b[1] end) -- sort by name
+iterator(ipairs(cnn_array)):select(2):field(2):
 apply(function(cnn)
 	local fan = cnn:get_input_size() + cnn:get_output_size()
 	cnn:randomize_weights{
@@ -55,10 +55,11 @@ apply(function(cnn)
 	}
       end)
 --
+shuffle = random(25234)
 training_data = {
   input_dataset  = train_input,
   output_dataset = train_output,
-  shuffle        = random(25234),
+  shuffle        = shuffle,
   bunch_size     = bunch_size,
 }
 --
@@ -90,12 +91,13 @@ local train = function(thenet,data,loss,opt)
 		    thenet:reset(it)
 		    local out = thenet:forward(input)
 		    local tr_loss,tr_matrix = loss:compute_loss(out,target)
+		    if not tr_loss then return nil end
 		    thenet:backprop(loss:gradient(out,target))
 		    iterator(pairs(weight_grads)):select(2):call('zeros')
 		    weight_grads = thenet:compute_gradients(weight_grads)
 		    return tr_loss,weight_grads,tr_matrix:dim(1),tr_matrix
 		  end,
-		  thenet:copy_weights())
+		  connections)
     loss:accum_loss(tr_loss,tr_matrix)
   end
   local tr,_=loss:get_accum_loss()
@@ -128,6 +130,12 @@ while train_func:execute(function()
 			   return thenet,tr_loss,va_loss
 			 end) do
   print(train_func:get_state_string())
+  local state = train_func:get_state_table()
+  if state.current_epoch == state.best_epoch then
+    train_func:save("jjj.lua", "binary",
+		    { optimizer = opt, loss = loss,
+		      weights = connections, shuffle = shuffle })
+  end
 end
 clock:stop()
 cpu,wall   = clock:read()
