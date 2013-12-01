@@ -71,7 +71,7 @@ validation_data = {
 --
 loss = ann.loss.multi_class_cross_entropy()
 opt  = ann.optimizer.sgd()
-opt:set_option("learning_rate", 0.001)
+opt:set_option("learning_rate", 0.01)
 opt:set_option("momentum",      0.01)
 opt:set_option("weight_decay",  1e-04)
 opt:set_option("L1_norm",       1e-05)
@@ -93,7 +93,7 @@ local train = function(thenet,data,loss,opt)
 		    local tr_loss,tr_matrix = loss:compute_loss(out,target)
 		    if not tr_loss then return nil end
 		    thenet:backprop(loss:gradient(out,target))
-		    iterator(pairs(weight_grads)):select(2):call('zeros')
+		    for _,w in pairs(weight_grads) do w:zeros() end
 		    weight_grads = thenet:compute_gradients(weight_grads)
 		    return tr_loss,weight_grads,tr_matrix:dim(1),tr_matrix
 		  end,
