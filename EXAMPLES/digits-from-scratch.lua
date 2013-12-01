@@ -47,11 +47,11 @@ cnn_array      = iterator(pairs(connections)):enumerate():table()
 table.sort(cnn_array, function(a,b) return a[1]<b[1] end) -- sort by name
 iterator(ipairs(cnn_array)):select(2):field(2):
 apply(function(cnn)
-	local fan = cnn:get_input_size() + cnn:get_output_size()
+	local sqrt_fan = math.sqrt(cnn:get_input_size() + cnn:get_output_size())
 	cnn:randomize_weights{
 	  random = weights_random,
-	  inf = -1/fan,
-	  sup =  1/fan,
+	  inf = -1/sqrt_fan,
+	  sup =  1/sqrt_fan,
 	}
       end)
 --
