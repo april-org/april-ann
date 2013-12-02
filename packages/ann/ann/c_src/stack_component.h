@@ -50,6 +50,19 @@ namespace ANN {
     /// Returns the component at the given index
     const ANNComponent *getComponentAt(unsigned int i) const { return components[i]; }
 
+    virtual void precomputeOutputSize(const vector<unsigned int> &input_size,
+				      vector<unsigned int> &output_size) {
+      vector<unsigned int> aux(input_size);
+      if (getOutputSize()>0) output_size.push_back(getOutputSize());
+      else {
+	for (unsigned int i=0; i<components.size(); ++i) {
+	  components[i]->precomputeOutputSize(aux, output_size);
+	  aux.swap(output_size);
+	}
+	aux.swap(output_size);
+      }
+    }
+
     virtual Token *getInput();
     virtual Token *getOutput();
     virtual Token *getErrorInput();

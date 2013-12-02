@@ -21,6 +21,7 @@
 #ifndef REWRAPCOMPONENT_H
 #define REWRAPCOMPONENT_H
 
+#include "unused_variable.h"
 #include "vector.h"
 #include "ann_component.h"
 #include "token_vector.h"
@@ -46,6 +47,14 @@ namespace ANN {
     virtual Token *getOutput() { return output; }
     virtual Token *getErrorInput() { return error_input; }
     virtual Token *getErrorOutput() { return error_output; }
+    
+    virtual void precomputeOutputSize(const vector<unsigned int> &input_size,
+				      vector<unsigned int> &output_size) {
+      UNUSED_VARIABLE(input_size);
+      output_size.clear();
+      for (int i=0; i<n-1; ++i)
+	output_size.push_back(rewrap_dims[i+1]);
+    }
     
     virtual Token *doForward(Token* input, bool during_training);
     

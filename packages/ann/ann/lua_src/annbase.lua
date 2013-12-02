@@ -406,6 +406,20 @@ april_set_doc("ann.connections.size",
 
 -------------------------------------------------------------------
 
+april_set_doc("ann.connections.precompute_output_size",
+	      {
+		class="method",
+		summary="Precomputes the shape of the output (a table)",
+		params = {
+		  "A table with the input's shape (a table) [optional]",
+		},
+		outputs = {
+		  "A table with the output's shape",
+		}
+	      })
+
+-------------------------------------------------------------------
+
 april_set_doc("ann.connections.get_input_size",
 	      {
 		class="method",
