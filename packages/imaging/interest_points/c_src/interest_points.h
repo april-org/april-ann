@@ -61,16 +61,14 @@ namespace InterestPoints
   void extract_points_from_image(ImageFloat *pimg, april_utils::vector<Point2D> *local_minima, april_utils::vector<Point2D> *local_maxima, float threshold_white= 0.4, float threshold_black = 0.6, int local_context = 6, int duplicate_interval = 3);
 
   
- struct interest_point {
-   int x;
-   int y;
+ struct interest_point:Point<int> {
    bool natural_type;
    int point_class;
    float log_prob;
    
    interest_point() {}
    interest_point(int x, int y, int point_class, bool type, float log_prob):
-       x(x), y(y), natural_type(type), point_class(point_class), log_prob(log_prob) {}
+       Point(x,y), natural_type(type), point_class(point_class), log_prob(log_prob) {}
    bool operator< (interest_point &ip)
    {
        return this->log_prob > ip.log_prob;
@@ -85,35 +83,45 @@ namespace InterestPoints
 
  };
 
+ class PointComponent:public vector<interest_point> {
+     public:
+       PointComponent(int size):vector<interest_point>(size){};
+       PointComponent():vector<interest_point>(){};
+
+       double line_least_squares();
+
+       void sort_by_confidence();
+       void sort_by_x();
+ };
  class SetPoints: public Referenced {
      protected:
-         vector< vector<interest_point> > *ccPoints;
+         vector< PointComponent > *ccPoints;
          int size;
          int num_points;
          ImageFloat *img;
 
      public:
          SetPoints(ImageFloat *img);
-         void addPoint(int component, interest_point ip);
-         void addPoint(int component, int x, int y, int c, bool natural_type, float log_prob = 0.0) {
-             addPoint(component, interest_point(x,y,c,natural_type,log_prob));
-         };
          void addComponent();
          int getNumPoints() { return num_points;};
          int getSize() { return size;}
-
+         
+         void addPoint(int component, interest_point ip);
+         void addPoint(int component, int x, int y, int c, bool natural_type, float log_prob = 0.0) {
+             addPoint(component, interest_point(x,y,c,natural_type,log_prob));
+         }
          void print_components();
          void sort_by_confidence();
          void sort_by_x();
-         const vector <vector <interest_point> > *getComponents() {
-           return ccPoints;
+         const vector <PointComponent > *getComponents() {
+             return ccPoints;
          }
          ~SetPoints(){
              delete ccPoints;
          };
          float component_affinity(int component, interest_point &ip);
          float similarity(interest_point &ip1, interest_point &ip2);
-         vector<interest_point> *get_points_by_type(const int cc, const int point_class, \
+         PointComponent *get_points_by_type(const int cc, const int point_class, \
                  const float min_prob = -999999.00);
  };
 
@@ -127,12 +135,12 @@ namespace InterestPoints
          void addPoint(int x, int y, int c, bool natural_type, float log_prob = 0.0) {
              addPoint(interest_point(x,y,c,natural_type,log_prob));
          };
-         
+
 
          SetPoints *computePoints();
-          ~ConnectedPoints() {
+         ~ConnectedPoints() {
              delete imgCCs;
-          };
+         };
  };
 
 }

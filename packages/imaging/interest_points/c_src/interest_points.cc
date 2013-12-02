@@ -30,7 +30,9 @@
 #include <cmath>
 #include <cstdio>
 #include "linear_least_squares.h"
-using april_utils::vector;
+
+using namespace april_utils;
+/*::vector;
 using april_utils::pair;
 using april_utils::min;
 using april_utils::max;
@@ -38,7 +40,7 @@ using april_utils::max_finder;
 using april_utils::min_finder;
 using april_utils::swap;
 using april_utils::Point2D;
-
+*/
 
 namespace InterestPoints {
 
@@ -124,9 +126,9 @@ namespace InterestPoints {
       sz = v.size ();
     for (int p = 0; p < sz; ++p) {
       int
-        x = v[p].first;
+        x = v[p].x;
       int
-        y = v[p].second;
+        y = v[p].y;
       //                printf("Point %d %d (%d/%d)\n", x, y, x_act, nV.size());
 
       if (x != x_act)
@@ -301,8 +303,8 @@ namespace InterestPoints {
     vector < Point2D > *result_Point2D = new vector < Point2D > (sz);
     vector < Point2D > &vec = *result_Point2D;
     for (int i = 0; i < sz; ++i) {
-        vec[i].first = result_xy[i].x;
-        vec[i].second = result_xy[i].y;
+        vec[i].x = result_xy[i].x;
+        vec[i].y = result_xy[i].y;
     }
 
     //Delete duplicates
@@ -452,7 +454,7 @@ namespace InterestPoints {
   SetPoints::SetPoints(ImageFloat *img) {
       // Compute connected components of the image
       this->img = img;
-      ccPoints = new vector< vector<interest_point> >();
+      ccPoints = new vector< PointComponent >();
       size = 0;
       num_points = 0;
   }
@@ -472,7 +474,7 @@ namespace InterestPoints {
         fprintf(stderr, "Size sincronization error %d %lu\n", size, ccPoints->size());
     april_assert("Size sincronization error" && size == ccPoints->size());
     
-    (*ccPoints).push_back(vector<interest_point>());
+    (*ccPoints).push_back(PointComponent());
     ++size;
   } 
   // Class Interest Points
@@ -486,6 +488,7 @@ namespace InterestPoints {
       num_points = 0;
   }
 
+  
   void ConnectedPoints::addPoint(interest_point ip) {
 
       int x, y;
@@ -508,8 +511,13 @@ namespace InterestPoints {
           fprintf(stderr,"Warning the point of interest (%d,%d,%d, %d) is not in any component (%d, %d)\n", ip.x, ip.y, ip.point_class, ip.natural_type, x, y);
       } 
   }
- 
-  bool componentComparator(vector<interest_point> &v1, vector<interest_point> &v2) {
+
+  /**
+   *
+   * Points comparatarors
+   *
+   **/ 
+  bool componentComparator(PointComponent &v1, PointComponent &v2) {
 
     if (v1.size() == 0) {
         return false;
@@ -527,18 +535,22 @@ namespace InterestPoints {
     return v1.x < v2.x;
   }
 
+  void PointComponent::sort_by_confidence() {
+      if (size() > 0)
+          april_utils::Sort(&(*this)[0], (int)size());
+
+  }
+
+  void PointComponent::sort_by_x() {
+
+      april_utils::Sort(&(*this)[0], size(), interestPointXComparator);
+  }
   void SetPoints::sort_by_confidence() {
 
-     if (!size) return;
-     for (int i = 0; i < size; ++i) {
-
-         if ((*ccPoints)[i].size() > 0)
-           april_utils::Sort(&((*ccPoints)[i])[0], (int)(*ccPoints)[i].size());
-
-     }
-
-     april_utils::Sort(&((*ccPoints)[0]), (int)ccPoints->size(), componentComparator);
-    
+      if (!size) return;
+      for (int i = 0; i < size; ++i) {
+          (*ccPoints)[i].sort_by_confidence();
+      }
   }
 
   void SetPoints::sort_by_x() {
@@ -546,10 +558,7 @@ namespace InterestPoints {
       sort_by_confidence();
 
       for (int i = 0; i < size; ++i) {
-        
-          if ((*ccPoints)[i].size()) {
-            april_utils::Sort(&((*ccPoints)[i])[0], (int)(*ccPoints)[i].size(), interestPointXComparator);
-          }
+          (*ccPoints)[i].sort_by_x();
       }
   }
   void SetPoints::print_components() {
@@ -557,7 +566,7 @@ namespace InterestPoints {
       for(int i = 0; i < size; ++i) {
           printf("Component %d\n", i);
           printf("\t size %ld\n", (*ccPoints)[i].size());
-          for (vector<interest_point>::iterator it = (*ccPoints)[i].begin(); it != (*ccPoints)[i].end(); ++it) {
+          for (PointComponent::iterator it = (*ccPoints)[i].begin(); it != (*ccPoints)[i].end(); ++it) {
               printf("\t%d %d %d (%f)\n", it->x, it->y, it->point_class, it->log_prob);
           }
       }
@@ -566,20 +575,20 @@ namespace InterestPoints {
   // Takes
   float SetPoints::component_affinity(int component, interest_point &ip) {
       if (component < 0 || component >= size){
-        fprintf(stderr, "Warning (similarity)! The component %d does not exist!! (Total components %d\n", component, size);    
-        return 0.0;
+          fprintf(stderr, "Warning (similarity)! The component %d does not exist!! (Total components %d\n", component, size);    
+          return 0.0;
       }
       // If the component is empty the affinity is the probability of the point (logscale)
 
-      vector<interest_point> &cc = (*ccPoints)[component];
+      PointComponent &cc = (*ccPoints)[component];
       float score_max = 0.0;
       if (cc.size() == 0)
           return ip.log_prob;
 
 
       for (size_t p = 0; p < cc.size(); ++p){
-         
-         score_max = max(score_max, similarity(cc[p], ip));
+
+          score_max = max(score_max, similarity(cc[p], ip));
       }
 
       return score_max;
@@ -587,8 +596,8 @@ namespace InterestPoints {
 
   float angle_diff(interest_point &a, interest_point &b) {
 
-       float alpha = a.angle(b);
-       return min(fabs(alpha), fabs(2*M_PI-alpha));
+      float alpha = a.angle(b);
+      return min(fabs(alpha), fabs(2*M_PI-alpha));
   }
 
   float SetPoints::similarity(interest_point &ip1, interest_point &ip2) {
@@ -610,109 +619,113 @@ namespace InterestPoints {
               return 1.0;
       }
       else {
-        // They're are different classes
-        return 1.0;
+          // They're are different classes
+          return 1.0;
 
       }
       return 0.0;
 
   }
 
-/*  SetPoints * ConnectedPoints::computePoints() {
+  /*  SetPoints * ConnectedPoints::computePoints() {
 
       SetPoints * mySet = new SetPoints(img);
       int cini = -1;
       int cfin = 0;
       int threshold = 1.0;
-      // Process each connected component
-      for (int cc = 0; cc < size; ++cc) {
-          printf("Computing connected component %d/%d\n", cc, size);
+  // Process each connected component
+  for (int cc = 0; cc < size; ++cc) {
+  printf("Computing connected component %d/%d\n", cc, size);
 
-          if (!(*ccPoints)[cc].size())
-              continue;
-          //Add an empty set
-          cini = cfin;
-          cfin++;
-          mySet->addComponent();
-          for (size_t p = 0; p < (*ccPoints)[cc].size(); ++p) {
-              bool added = false;
-              // for (interest_point ip : (*ccPoints)[cc]) {
-              for (int current_set = cini; current_set < cfin; ++current_set) {
-                  float affinity = mySet->component_affinity(current_set, (*ccPoints)[cc][p]);
-                  if (affinity >= threshold){
-                      //Add the point
-                      mySet->addPoint(current_set, (*ccPoints)[cc][p]);
-                      added = true;
-                      break;
-                  } //added                
-              } //components
+  if (!(*ccPoints)[cc].size())
+  continue;
+  //Add an empty set
+  cini = cfin;
+  cfin++;
+  mySet->addComponent();
+  for (size_t p = 0; p < (*ccPoints)[cc].size(); ++p) {
+  bool added = false;
+  // for (interest_point ip : (*ccPoints)[cc]) {
+  for (int current_set = cini; current_set < cfin; ++current_set) {
+  float affinity = mySet->component_affinity(current_set, (*ccPoints)[cc][p]);
+  if (affinity >= threshold){
+  //Add the point
+  mySet->addPoint(current_set, (*ccPoints)[cc][p]);
+  added = true;
+  break;
+  } //added                
+  } //components
 
-              if (!added) {
-                  // Check if it is the first point
-                  if (p) {
-                      ++cfin;
-                      mySet->addComponent();
-                  }
-                  mySet->addPoint(cfin-1, (*ccPoints)[cc][p]);
-              }
+  if (!added) {
+  // Check if it is the first point
+  if (p) {
+  ++cfin;
+  mySet->addComponent();
+  }
+  mySet->addPoint(cfin-1, (*ccPoints)[cc][p]);
+  }
 
-          }//Point
-          } 
-          return mySet;
-      }*/
+  }//Point
+  } 
+  return mySet;
+  }*/
 
   SetPoints * ConnectedPoints::computePoints() {
       SetPoints * mySet = new SetPoints(img);
       //Process each component
       for (int cc = 0; cc < size; ++cc) {
-       vector<interest_point> &component = (*ccPoints)[cc];
-       
-       vector<interest_point> *top_line = this->get_points_by_type(cc, TOPLINE);
+          PointComponent &component = (*ccPoints)[cc];
 
-       //Compute the regression over the points of the line
+          PointComponent *top_line = this->get_points_by_type(cc, TOPLINE);
+
+          //Compute the regression over the points of the line
 
       }
 
-       return mySet;
+      return mySet;
   }
 
-  vector<interest_point> *SetPoints::get_points_by_type(const int cc, const int point_class, const float min_prob) {
-     // TODO: Check if cc is on the range
-     vector<interest_point> component = (*ccPoints)[cc];
-     vector<interest_point> *line = new vector<interest_point>();
-     
-     for(size_t i = 0; i < component.size(); ++i) {
-         interest_point v = component[i];
-         if (v.point_class == point_class and v.log_prob > min_prob) {
-             line->push_back(v);
+  PointComponent *SetPoints::get_points_by_type(const int cc, const int point_class, const float min_prob) {
+      // TODO: Check if cc is on the range
+      PointComponent component = (*ccPoints)[cc];
+      PointComponent *l = new PointComponent();
 
-         }
+      for(size_t i = 0; i < component.size(); ++i) {
+          interest_point v = component[i];
+          if (v.point_class == point_class and v.log_prob > min_prob) {
+              l->push_back(v);
 
+          }
+      }
 
-     }
+      return l; 
+  }
+  double PointComponent::line_least_squares() {
 
-     return line; 
+      //TODO: Move to geometry
+      size_t n = this->size();
+      double *vx = new double[n];
+      double *vy = new double[n];
+      for (size_t i = 0; i < n; ++i) {
+          vx[i] = (*this)[i].x;
+          vy[i] = (*this)[i].y;
+      }
+
+      double a, b;
+      least_squares(vx,vy, n, a, b);
+
+      line myLine = line(a,b);
+
+      double sse = 0.0;
+
+      for (size_t i = 0; i < n; ++i) {
+          sse += myLine.distance((*this)[i]); 
+      }
+      delete []vx;
+      delete []vy;
+      return 0.0;
   }
 
-  double line_least_squares(vector<interest_point> &v) {
-   
-     //TODO: Move to geometry
-     double *x = new double[v.size()];
-     double *y = new double[v.size()];
-     for (size_t i = 0; i < v.size(); ++i) {
-          x[i] = v[i].x;
-          y[i] = v[i].x;
-     }
-     
-     double a, b;
-     least_squares(x,y,v.size(), a, b);
-
-     line myLine = line(a,b);
-
-     delete []x;
-     delete []y;
-     return 0.0;
-  }
 }
 
 // namespace InterestPoints
