@@ -344,3 +344,61 @@ function interest_points.get_interest_points(img, mlpUppers, mlpLowers)
 
     return upper_table, lower_table
 end
+
+----------------------------------------------------
+-- Util functions
+-- Recieve a table with the tag classes
+-- Returns a Sparse (softmax) vector of the tags
+-- ------------------------------------------------
+function interest_points.loadTagDataset(points, numClasses)
+
+    local numClasses = numClasses or 5
+    local mOut = matrix(#points, points)
+    local dsIndex = dataset.identity(numClasses)
+    local dsOutIndex = dataset.matrix(mOut)
+    local dsOut = dataset.indexed(dsOutIndex, {dsIndex})
+
+    return dsOut
+end
+------------------------
+--
+-- Recieves an image and a interest point table, x_window and y_window parameters,
+-- and return a returns a dataset of size num_points*((xwindow+1+xwindow*)*(y_window+1+ỳ_window))
+--
+--
+---------------------------
+function dataset.interest_point(img, table_points, x_window, y_window)
+
+    img_matrix = img:matrix()
+
+    -- Create the dataset over the image
+    local params_img = {
+      patternSize  = {x_window*2+1, y_window*2+1},
+      offset       = {-x_window, -y_window},
+      stepSize     = {1,1},
+      numSteps     = img_matrix:dim(),
+      defaultValue = 1,
+      circular     = {false, false}
+    }
+
+    dsImg = dataset.matrix(img_matrix, params_img)
+
+   print(dsImg:patternSize())
+
+   -- Create the indexed point
+   -- the table is composed by elems (x, y, c)
+   tIndexes = table.imap(table_points, function (elem) return elem[1]*img_matrix:dim()[1]+elem[2] end)
+
+   dsIndexes = dataset.matrix(matrix(tIndexes))
+
+   dsPoints = dataset.indexed(dsIndexes, {dsImg})
+    
+   local dsOut = nil
+
+   if #table_points[1] >= 3 then
+      points = table.imap(table_points, function (elem) return elem[3] end)
+   end
+   
+
+   return dsPoints, interest_points.loadTagDataset(points)
+end
