@@ -221,7 +221,7 @@ function methods:getPointClass(img, x, y, mlp)
 end
 
 --Gets a dataset and returns a table with the indexes of the major class
-local function getIndexSoftmax(dsOut)
+function interest_points.getIndexSoftmax(dsOut)
     local tResult = {}
 
     for i, v in dsOut:patterns() do
@@ -269,7 +269,7 @@ end
 function methods:classify_points(img, points, mlp)
    
     local dsOut = self:compute_points(img, points, mlp)
-    local classes = getIndexSoftmax(dsOut)
+    local classes = self.getIndexSoftmax(dsOut)
 
     local res = {}
     for i, c in ipairs(classes) do
@@ -382,8 +382,6 @@ function dataset.interest_point(img, table_points, x_window, y_window)
     }
 
     dsImg = dataset.matrix(img_matrix, params_img)
-
-   print(dsImg:patternSize())
 
    -- Create the indexed point
    -- the table is composed by elems (x, y, c)
