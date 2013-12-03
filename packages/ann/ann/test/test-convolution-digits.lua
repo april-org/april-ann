@@ -19,15 +19,6 @@ conv2 = {nconv1, 2, 2,} nconv2=20
 maxp2 = {1, 2, 2}
 hidden = 100
 
-sz1_1 = 16 - conv1[2] + 1
-sz2_1 = 16 - conv1[3] + 1
-sz1_2 = math.floor(sz1_1/maxp1[2])
-sz2_2 = math.floor(sz2_1/maxp1[3])
-sz1_3 = sz1_2 - conv2[2] + 1
-sz2_3 = sz2_2 - conv2[3] + 1
-sz1_4 = math.floor(sz1_3/maxp2[2])
-sz2_4 = math.floor(sz2_3/maxp2[3])
-
 --------------------------------------------------------------
 
 m1 = ImageIO.read(string.get_path(arg[0]) .. "digits.png"):to_grayscale():invert_colors():matrix()
@@ -90,8 +81,13 @@ push( ann.components.convolution_bias{ n=nconv2, ndims=#conv2,
 push( ann.components.actf.relu{ name="actf-2" } ):
 push( ann.components.max_pooling{ kernel=maxp2,
 				  name="pool-2" } ):
-push( ann.components.flatten{ name="flatten" } ):
-push( ann.components.hyperplane{ input=sz1_4*sz2_4*nconv2, output=hidden,
+push( ann.components.flatten{ name="flatten" } )
+
+convolution_output_size = thenet:precompute_output_size()[1]
+
+thenet:
+push( ann.components.hyperplane{ input=convolution_output_size,
+				 output=hidden,
 				 name="hyp-1",
 				 bias_name="b3",
 				 dot_product_name="w3",
@@ -269,9 +265,6 @@ for waux in w:sliding_window():iterate() do
 		   "KK-"..k..".pnm")
   k=k+1
 end
-
-
-
 
 clock:stop()
 cpu,wall = clock:read()

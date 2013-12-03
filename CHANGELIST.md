@@ -6,6 +6,7 @@ Master branch release
 
 ### Unstable changes
 
+- Added method `precompute_output_size` in ANN components.
 - Added `trainable.dataset_pair_iterator` and
   `trainable.dataset_multiple_iterator`, useful to iterate over datasets
   following different traversal schemes: sequential, shuffled, shuffled with

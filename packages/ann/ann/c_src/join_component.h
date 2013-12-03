@@ -21,6 +21,7 @@
 #ifndef JOINCOMPONENT_H
 #define JOINCOMPONENT_H
 
+#include "unused_variable.h"
 #include "vector.h"
 #include "ann_component.h"
 #include "token_vector.h"
@@ -69,6 +70,14 @@ namespace ANN {
     virtual Token *getOutput() { return output; }
     virtual Token *getErrorInput() { return error_input; }
     virtual Token *getErrorOutput() { return error_output; }
+
+    virtual void precomputeOutputSize(const vector<unsigned int> &input_size,
+				      vector<unsigned int> &output_size) {
+      UNUSED_VARIABLE(input_size);
+      UNUSED_VARIABLE(output_size);
+      ERROR_EXIT(128,
+		 "Impossible to precomputeOutputSize in JoinANNComponent\n");
+    }
     
     virtual Token *doForward(Token* input, bool during_training);
 

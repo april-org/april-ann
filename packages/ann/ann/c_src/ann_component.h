@@ -22,6 +22,7 @@
 #define ANNCOMPONENT_H
 
 #include <cstring>
+#include "vector.h"
 #include "unused_variable.h"
 #include "function_interface.h"
 #include "unused_variable.h"
@@ -35,6 +36,7 @@
 
 using april_utils::hash;    // required for build
 using april_utils::string;
+using april_utils::vector;
 
 #ifndef NDEBUG
 #define ASSERT_MATRIX(m) do {						\
@@ -120,7 +122,16 @@ namespace ANN {
     virtual Token *calculate(Token *input) {
       return this->doForward(input, false);
     }
+    /////////////////////////////////////////////
     
+    virtual void precomputeOutputSize(const vector<unsigned int> &input_size,
+				      vector<unsigned int> &output_size) {
+      output_size.clear();
+      if (getOutputSize()>0) output_size.push_back(getOutputSize());
+      else if (getInputSize() > 0) output_size.push_back(getInputSize());
+      else output_size = input_size;
+    }
+
     virtual Token *getInput() { return 0; }
     virtual Token *getOutput() { return 0; }
     virtual Token *getErrorInput() { return 0; }

@@ -914,8 +914,7 @@ Matrix<T>::sliding_window::sliding_window(Matrix<T> *m,
   //
   if (num_steps == 0) {
     for (int i=0; i<m->numDim; ++i)
-      this->num_steps[i] = 1;
-    this->num_steps[0] = (m->matrixSize[0]-this->sub_matrix_size[0])/this->step[0] + 1;
+      this->num_steps[i] = (m->matrixSize[i] - this->sub_matrix_size[i])/this->step[i] + 1;
   }
   else
     for (int i=0; i<m->numDim; ++i)
@@ -927,7 +926,9 @@ Matrix<T>::sliding_window::sliding_window(Matrix<T> *m,
   else
     for (int i=0; i<m->numDim; ++i)
       this->order_step[i] = order_step[i];
-  //
+  // last_raw_pos is 0 instead of m->offset because at getMatrix method the
+  // resulting matrix last_raw_pos is the addition between current window
+  // raw_pos (with m->offset) plus the following last_raw_pos computation
   last_raw_pos = 0;
   total_size   = 1;
   for (int i=0; i<m->numDim; ++i) {
