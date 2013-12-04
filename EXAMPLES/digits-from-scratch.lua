@@ -40,19 +40,19 @@ val_output   = dataset.matrix(m2,
 			      })
 --
 bunch_size = 32
-thenet         = ann.mlp.all_all.generate("256 inputs 128 tanh 10 log_softmax")
-connections    = thenet:build()
+thenet,cnns = ann.mlp.all_all.generate("256 inputs 128 tanh 10 log_softmax"):build()
 weights_random = random(52324)
-cnn_array      = iterator(pairs(connections)):enumerate():table()
+cnn_array      = iterator(pairs(cnns)):enumerate():table()
 table.sort(cnn_array, function(a,b) return a[1]<b[1] end) -- sort by name
 iterator(ipairs(cnn_array)):select(2):field(2):
 apply(function(cnn)
-	local sqrt_fan = math.sqrt(cnn:get_input_size() + cnn:get_output_size())
-	cnn:randomize_weights{
-	  random = weights_random,
-	  inf = -1/sqrt_fan,
-	  sup =  1/sqrt_fan,
-	}
+	local sqrt_fan = math.sqrt(cnn:dim(1) + cnn:dim(2))
+	ann.connections.randomize_weights(cnn,
+					  {
+					    random = weights_random,
+					    inf = -1/sqrt_fan,
+					    sup =  1/sqrt_fan,
+					  })
       end)
 --
 shuffle = random(25234)
@@ -97,7 +97,7 @@ local train = function(thenet,data,loss,opt)
 		    weight_grads = thenet:compute_gradients(weight_grads)
 		    return tr_loss,weight_grads,tr_matrix:dim(1),tr_matrix
 		  end,
-		  connections)
+		  cnns)
     loss:accum_loss(tr_loss,tr_matrix)
   end
   local tr,_=loss:get_accum_loss()
@@ -134,7 +134,7 @@ while train_func:execute(function()
   if state.current_epoch == state.best_epoch then
     train_func:save("jjj.lua", "binary",
 		    { optimizer = opt, loss = loss,
-		      weights = connections, shuffle = shuffle })
+		      weights = cnns, shuffle = shuffle })
   end
 end
 clock:stop()
