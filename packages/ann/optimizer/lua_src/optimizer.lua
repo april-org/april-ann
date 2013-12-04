@@ -109,7 +109,7 @@ local function ann_optimizer_apply_regularizations(opt, wname, dest, w)
     local v = opt:get_option_of(wname, hypname)
     if v then
       -- sanity check
-      if v > 0.0 and w:dim(2) == 1 then
+      if v > 0.0 and #w:dim() == 2 and w:dim(2) == 1 then
 	fprintf(io.stderr,
 		"# WARNING!!! Possible " .. hypname .. " > 0 in bias connection: %s\n",
 		wname)
@@ -125,7 +125,7 @@ local function ann_optimizer_apply_constraints(opt, wname, w)
     local v = opt:get_option_of(wname, hypname)
     if v then
       -- sanity check
-      if v > 0.0 and w:dim(2) == 1 then
+      if v > 0.0 and #w:dim() == 2 and w:dim(2) == 1 then
 	fprintf(io.stderr,
 		"# WARNING!!! Possible " .. hypname .. " > 0 in bias connection: %s\n",
 		wname)
@@ -237,6 +237,8 @@ function sgd_class_metatable:__call(g_options, l_options, count, update)
 end
 
 function sgd_methods:execute(eval, cnn_table)
+  assert(type(cnn_table) == "table",
+	 "The second argument is a table with matrices")
   local arg = table.pack( eval() )
   local tr_loss,gradients,bunch_size,tr_loss_matrix = table.unpack(arg)
   local bunch_size = bunch_size or 1
@@ -247,6 +249,7 @@ function sgd_methods:execute(eval, cnn_table)
     local w,update    = cnn,self.update[cname] or matrix.col_major(table.unpack(cnn:dim())):zeros()
     local grad        = gradients[cname]
     local N           = cnn:get_shared_count()
+    N                 = ( N>0 and N) or 1
     local lr          = assert(self:get_option_of(cname, "learning_rate"),
 		 	      "The learning_rate parameter needs to be set")
     local mt          = self:get_option_of(cname, "momentum")     or 0.0
@@ -331,6 +334,8 @@ function rprop_class_metatable:__call(g_options, l_options, count,
 end
 
 function rprop_methods:execute(eval, cnn_table)
+  assert(type(cnn_table) == "table",
+	 "The second argument is a table with matrices")
   local initial_step  = self:get_option("initial_step")
   local eta_plus      = self:get_option("eta_plus")
   local eta_minus     = self:get_option("eta_minus")
@@ -463,6 +468,8 @@ function cg_class_metatable:__call(g_options, l_options, count,
 end
 
 function cg_methods:execute(eval, cnn_table)
+  assert(type(cnn_table) == "table",
+	 "The second argument is a table with matrices")
   -- COPY function
   local copy = function(dest,source)
     iterator(pairs(dest)):apply(function(k,v) v:copy(source[k]) end)
