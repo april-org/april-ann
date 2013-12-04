@@ -73,6 +73,7 @@ Matrix<T>::Matrix(int numDim, const int *stride, const int offset,
 		  GPUMirroredMemoryBlock<T> *data,
 		  const CBLAS_ORDER major_order,
 		  const bool use_cuda) :
+  Referenced(), shared_count(0),
   numDim(numDim), stride(new int[numDim]), offset(offset),
   matrixSize(new int[numDim]), total_size(total_size),
   last_raw_pos(last_raw_pos), data(data), mmapped_data(0),
@@ -92,12 +93,14 @@ Matrix<T>::Matrix(int numDim,
 		  const int* dim,
 		  CBLAS_ORDER major_order,
 		  GPUMirroredMemoryBlock<T> *data,
-		  int offset) : numDim(numDim),
-				offset(offset),
-				mmapped_data(0),
-				major_order(major_order),
-				use_cuda(false),
-				is_contiguous(CONTIGUOUS) {
+		  int offset) :
+  Referenced(), shared_count(0),
+  numDim(numDim),
+  offset(offset),
+  mmapped_data(0),
+  major_order(major_order),
+  use_cuda(false),
+  is_contiguous(CONTIGUOUS) {
   /*
     if (major_order == CblasColMajor && numDim > 2)
     ERROR_EXIT(128, "ColMajor order is only allowed when numDim<=2\n");
@@ -120,12 +123,15 @@ Matrix<T>::Matrix(int numDim,
 template <typename T>
 Matrix<T>::Matrix(Matrix<T> *other,
 		  const int* coords, const int *sizes,
-		  bool clone) : numDim(other->numDim),
-				offset(0),
-				mmapped_data(0),
-				major_order(other->major_order),
-				use_cuda(other->use_cuda),
-				is_contiguous(NONE) {
+		  bool clone) :
+  Referenced(),
+  shared_count(0),
+  numDim(other->numDim),
+  offset(0),
+  mmapped_data(0),
+  major_order(other->major_order),
+  use_cuda(other->use_cuda),
+  is_contiguous(NONE) {
   for (int i=0; i<numDim; i++) {
     if (sizes[i] + coords[i] > other->matrixSize[i])
       ERROR_EXIT3(128, "Size+coordinates are out of dimension size: %d+%d>%d\n",
@@ -179,11 +185,13 @@ Matrix<T>::Matrix(Matrix<T> *other,
 
 /// Constructor with variable arguments
 template <typename T>
-Matrix<T>::Matrix(int numDim, int d1, ...) : numDim(numDim),
-					     offset(0),
-					     mmapped_data(0),
-					     major_order(CblasRowMajor),
-					     is_contiguous(CONTIGUOUS) {
+Matrix<T>::Matrix(int numDim, int d1, ...) :
+  Referenced(), shared_count(0),
+  numDim(numDim),
+  offset(0),
+  mmapped_data(0),
+  major_order(CblasRowMajor),
+  is_contiguous(CONTIGUOUS) {
   int *dim   = new int[numDim];
   stride     = new int[numDim];
   matrixSize = new int[numDim];
@@ -203,12 +211,15 @@ Matrix<T>::Matrix(int numDim, int d1, ...) : numDim(numDim),
 
 /// Constructor for copy or clone other given matrix
 template <typename T>
-Matrix<T>::Matrix(Matrix<T> *other, bool clone) : numDim(other->numDim),
-						  offset(0),
-						  mmapped_data(0),
-						  major_order(other->major_order),
-						  use_cuda(other->use_cuda),
-						  is_contiguous(other->is_contiguous){
+Matrix<T>::Matrix(Matrix<T> *other, bool clone) :
+  Referenced(),
+  shared_count(0),
+  numDim(other->numDim),
+  offset(0),
+  mmapped_data(0),
+  major_order(other->major_order),
+  use_cuda(other->use_cuda),
+  is_contiguous(other->is_contiguous){
   stride       = new int[numDim];
   matrixSize   = new int[numDim];
   total_size   = other->total_size;
@@ -820,4 +831,9 @@ Matrix<T> *Matrix<T>::diagonalize() const {
   resul_diag->copy(this);
   delete resul_diag;
   return resul;
+}
+
+template <typename T>
+void Matrix<T>::pruneSubnormalAndCheckNormal() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }

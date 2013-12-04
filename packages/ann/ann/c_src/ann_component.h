@@ -191,7 +191,7 @@ namespace ANN {
     /// parent method before do anything.
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       hash<string,Connections*> &weights_dict,
+		       hash<string,MatrixFloat*> &weights_dict,
 		       hash<string,ANNComponent*> &components_dict) {
       UNUSED_VARIABLE(weights_dict);
       // if (is_built) ERROR_EXIT(128, "Rebuild is forbidden!!!!\n");
@@ -216,8 +216,8 @@ namespace ANN {
 		    output_size, _output_size);
     }
     
-    /// Abstract method to retrieve Connections objects from ANNComponents
-    virtual void copyWeights(hash<string,Connections*> &weights_dict) {
+    /// Abstract method to retrieve matrix weights from ANNComponents
+    virtual void copyWeights(hash<string,MatrixFloat*> &weights_dict) {
       UNUSED_VARIABLE(weights_dict);
     }
 

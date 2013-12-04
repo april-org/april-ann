@@ -61,7 +61,7 @@ namespace ANN {
     
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       hash<string,Connections*> &weights_dict,
+		       hash<string,MatrixFloat*> &weights_dict,
 		       hash<string,ANNComponent*> &components_dict);
 
   };

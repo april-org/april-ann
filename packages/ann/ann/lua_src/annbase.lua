@@ -15,14 +15,9 @@ april_set_doc("ann.save",
 function ann.save(c, filename, format)
   local format = format or "binary"
   local f =  io.open(filename, "w")
-  f:write(string.format("return %s:build{ weights={\n %s\n}\n}\n",
+  f:write(string.format("return %s:build{ weights=%s }\n",
 			c:to_lua_string(),
-			table.concat(table.linearize(table.map2(c:copy_weights(),
-								function(k,v)
-								  return string.format("[%q] = %s",
-										       k,
-										       v:to_lua_string())
-								end)), ",\n")))
+			table.tostring(c:copy_weights())))
   f:close()
 end
 
@@ -36,7 +31,7 @@ april_set_doc("ann.load",
 	      })
 
 function ann.load(filename)
-  local _,_,c = dofile(filename)
+  local c,_,_ = dofile(filename)
   return c
 end
 ----------------------------------------------------------------------
@@ -157,7 +152,7 @@ function ann.mlp.all_all.load(filename)
   local model = ann.mlp.all_all.generate(data[1], data.first_count, data.prefix)
   local w     = data[2]
   local oldw  = data[3] or w
-  local weights_table = model:build()
+  local _,weights_table,_ = model:build()
   local pos = 0
   for i=1,#model.names_order,2 do
     local bname   = model.names_order[i]
@@ -674,11 +669,11 @@ april_set_doc("ann.components.base.build",
 		  
 		},
 		outputs= {
+		  { "The caller ANN component."},
 		  { "A table with all the weights_name=>ann.connections found",
 		    "at the components hierarchy."},
 		  { "A table with all the name=>ann.components found",
 		    "at the hierarchy."},
-		  { "The caller ANN component."},
 		}
 	      })
 

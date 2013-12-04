@@ -32,7 +32,7 @@ namespace ANN {
   /// and step, and the given number of output planes.
   class ConvolutionANNComponent : public ANNComponent {
     TokenMatrixFloat *input, *error_input, *output, *error_output;
-    Connections *weights_matrix;
+    MatrixFloat *weights_matrix;
     unsigned int num_updates_from_last_prune;
     
     // parameters of the convolution
@@ -125,9 +125,9 @@ namespace ANN {
     virtual ANNComponent *clone();
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
-		       hash<string,Connections*> &weights_dict,
+		       hash<string,MatrixFloat*> &weights_dict,
 		       hash<string,ANNComponent*> &components_dict);
-    virtual void copyWeights(hash<string,Connections*> &weights_dict);
+    virtual void copyWeights(hash<string,MatrixFloat*> &weights_dict);
 
     virtual char *toLuaString();
 

@@ -63,7 +63,7 @@ namespace ANN {
     UNUSED_VARIABLE(during_training);
     if (weights_matrix == 0) ERROR_EXIT1(129, "Not built component %s\n",
 					 name.c_str());
-    MatrixFloat *weights_mat = weights_matrix->getPtr();
+    MatrixFloat *weights_mat = weights_matrix;
     // error checking
     if (_input == 0) ERROR_EXIT1(129,"Null Token received! [%s]\n",
 				 name.c_str());
@@ -209,7 +209,7 @@ namespace ANN {
     error_output_mat->setUseCuda(use_cuda);
 #endif      
     //
-    MatrixFloat *weights_mat = weights_matrix->getPtr();
+    MatrixFloat *weights_mat = weights_matrix;
     if (bunch_size > 1) {
       // C = alpha * A * B + beta * C
       error_output_mat->gemm(CblasNoTrans, transpose_weights,
@@ -229,10 +229,10 @@ namespace ANN {
   void DotProductANNComponent::computeGradients(MatrixFloat*& grads_mat) {
     weights_matrix->addToSharedCount();
     if (grads_mat == 0) {
-      grads_mat = weights_matrix->getPtr()->cloneOnlyDims();
+      grads_mat = weights_matrix->cloneOnlyDims();
       grads_mat->zeros();
     }
-    else if (!grads_mat->sameDim(weights_matrix->getPtr()))
+    else if (!grads_mat->sameDim(weights_matrix))
       ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
     MatrixFloat *error_input_mat = error_input->getMatrix();
     unsigned int bunch_size = error_input_mat->getDimSize(0);
@@ -303,7 +303,7 @@ namespace ANN {
   
   void DotProductANNComponent::build(unsigned int _input_size,
 				     unsigned int _output_size,
-				     hash<string,Connections*> &weights_dict,
+				     hash<string,MatrixFloat*> &weights_dict,
 				     hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
@@ -317,13 +317,14 @@ namespace ANN {
     ////////////////////////////////////////////////////////////////////
     if (transpose_weights == CblasTrans)
       swap(weights_input_size, weights_output_size);
-    Connections *&w = weights_dict[weights_name];
+    MatrixFloat *&w = weights_dict[weights_name];
     // printf("%s :: %p %p\n", weights_name.c_str(), w, weights_matrix);
     if (w != 0) {
       // printf("COPY OF WEIGHTS FROM HASH %s\n", weights_name.c_str());
       AssignRef(weights_matrix, w);
-      if (!weights_matrix->checkInputOutputSizes(weights_input_size,
-						 weights_output_size))
+      if (!Connections::checkInputOutputSizes(weights_matrix,
+					      weights_input_size,
+					      weights_output_size))
 	ERROR_EXIT3(256,"The weights matrix input/output sizes are not correct, "
 		    "expected %dx%d [%s]\n",
 		    weights_input_size, weights_output_size,
@@ -332,8 +333,8 @@ namespace ANN {
     else {
       if (weights_matrix == 0) {
 	// printf("NEW OF WEIGHTS %s\n", weights_name.c_str());
-	weights_matrix = new Connections(weights_input_size,
-					 weights_output_size);
+	weights_matrix = Connections::build(weights_input_size,
+					    weights_output_size);
 	IncRef(weights_matrix);
       }
       // else printf("USING PREVIOUS WEIGHTS %s\n", weights_name.c_str());
@@ -341,11 +342,11 @@ namespace ANN {
     }
   }
 
-  void DotProductANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
+  void DotProductANNComponent::copyWeights(hash<string,MatrixFloat*> &weights_dict) {
     if (weights_matrix == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
-    Connections *&w = weights_dict[weights_name];
+    MatrixFloat *&w = weights_dict[weights_name];
     if (w != 0 && w != weights_matrix)
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with weights_matrix attribute [%s]\n",

@@ -70,15 +70,28 @@ function trainable_supervised_trainer_class_metatable:__call(...)
     local obj = trainable.supervised_trainer(model, loss, bunch_size, optimizer)
     obj:build()
     for wname,cobj in obj:iterate_weights() do
-      local w,oldw = connections[wname].w,connections[wname].oldw
-      assert(w ~= nil, "Component " .. wname .. " not found at file")
-      assert(connections[wname].input == cobj:get_input_size(),
-	     string.format("Incorrect input size, expected %d, found %d\n",
-			   cobj:get_input_size(), connections[wname].input))
-      assert(connections[wname].output == cobj:get_output_size(),
-	     string.format("Incorrect output size, expected %d, found %d\n",
-			   cobj:get_output_size(), connections[wname].output))
-      cobj:load{ w=w, oldw=oldw or w }
+      local w = connections[wname]
+      if type(w) == "table" then
+	w = w.w
+	local oldw = w.oldw
+	assert(w ~= nil, "Component " .. wname .. " not found at file")
+	assert(connections[wname].input == ann.connections.get_input_size(cobj),
+	       string.format("Incorrect input size, expected %d, found %d\n",
+			     ann.connections.get_input_size(cobj),
+			     connections[wname].input))
+	assert(connections[wname].output == ann.connections.get_output_size(cobj),
+	       string.format("Incorrect output size, expected %d, found %d\n",
+			     ann.connections.get_output_size(cobj),
+			     connections[wname].output))
+	if obj.optimizer.update then
+	  obj.optimizer.update[wname] = obj.optimizer.update[wname] or oldw
+	end
+      end
+      if w:get_major_order() == cobj:get_major_order() then
+	cobj:copy(w)
+      else
+	ann.connections.load(cobj, { w=w })
+      end
     end
     return obj
   else
@@ -290,7 +303,6 @@ end
 
 function trainable_supervised_trainer_methods:to_lua_string(format)
   assert(#self.components_order > 0, "The component is not built")
-  local format = format or "binary"
   local t = { }
   table.insert(t, "trainable.supervised_trainer{ ")
   table.insert(t, "model=")
@@ -299,17 +311,10 @@ function trainable_supervised_trainer_methods:to_lua_string(format)
   table.insert(t, "connections={")
   for _,wname in ipairs(self.weights_order) do
     local cobj = self.weights_table[wname]
-    local w,oldw = cobj:copy_to()
-    table.insert(t, string.format("\n[%q] = {", wname))
-    table.insert(t, "\ninput = ")
-    table.insert(t, cobj:get_input_size())
-    table.insert(t, ",\noutput = ")
-    table.insert(t, cobj:get_output_size())
-    table.insert(t, ",\nw = ")
+    local w = cobj
+    table.insert(t, string.format("\n[%q] = ", wname))
     table.insert(t, w:to_lua_string(format))
-    table.insert(t, ",\noldw = ")
-    table.insert(t, oldw:to_lua_string(format))
-    table.insert(t, ",\n},")
+    table.insert(t, ",")
   end
   table.insert(t, "\n},\n")
   if self.loss_function then
@@ -601,18 +606,19 @@ function trainable_supervised_trainer_methods:randomize_weights(t)
       local constant    = 0
       local connection  = self.weights_table[wname]
       if params.use_fanin then
-	constant = constant + connection:get_input_size()
+	constant = constant + ann.connections.get_input_size(connection)
       end
       if params.use_fanout then
-	constant = constant + connection:get_output_size()
+	constant = constant + ann.connections.get_output_size(connection)
       end
       if constant > 0 then
 	current_inf = current_inf / math.sqrt(constant)
 	current_sup = current_sup / math.sqrt(constant)
       end
-      connection:randomize_weights{ random = params.random,
-				    inf    = current_inf,
-				    sup    = current_sup }
+      ann.connections.randomize_weights(connection,
+					{ random = params.random,
+					  inf    = current_inf,
+					  sup    = current_sup })
     end
   end
 end
@@ -650,6 +656,7 @@ function trainable_supervised_trainer_methods:build(t)
     }, t or {})
   self.weight_grads  = {}
   self.weights_table = params.weights or {}
+  _,
   self.weights_table,
   self.components_table = self.ann_component:build{
     input   = params.input,
@@ -665,7 +672,7 @@ function trainable_supervised_trainer_methods:build(t)
   self.weights2component_dict = {}
   for name,c in pairs(self.components_table) do
     table.insert(self.components_order, name)
-    if c:has_weigths_name() then
+    if c:has_weights_name() then
       local wname = c:get_weights_name()
       self.component2weights_dict[name]  = c:get_weights_name()
       self.weights2component_dict[wname] = self.weights2component_dict[wname] or {}
@@ -751,9 +758,7 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
 			-- the bunch_size
 			tr_loss_matrix:dim(1),
 			-- the loss matrix
-			tr_loss_matrix,
-			-- the ANN component
-			self.ann_component
+			tr_loss_matrix
 		      end,
 		      self.weights_table)
   if tr_loss_matrix then loss:accum_loss(tr_loss_matrix) end
@@ -868,7 +873,7 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
   local bunch_size = tr_loss_matrix:dim(1)
   local it = 1
   for wname,cnn in self:iterate_weights() do
-    local w = cnn:matrix()
+    local w = cnn
     -- The shared parameter has no effect in gradients check, only bunch_size
     local ratio = 1/bunch_size
     local ann_grads = self.weight_grads[wname]
@@ -1345,7 +1350,7 @@ april_set_doc("trainable.supervised_trainer.show_weights", {
 
 function trainable_supervised_trainer_methods:show_weights()
   for _,wname in pairs(self.weights_order) do
-    local w = self.weights_table[wname]:copy_to():toTable()
+    local w = self.weights_table[wname]:toTable()
     print(wname, table.concat(w, " "))
   end
 end
@@ -1401,7 +1406,7 @@ function trainable_supervised_trainer_methods:norm2(match_string)
     norm2 = math.max(norm2,
 		     reduce(function(a,b)
 			      return math.max(a,b:norm2())
-			    end, 0, cnn:matrix():sliding_window():iterate()))
+			    end, 0, cnn:sliding_window():iterate()))
   end
   return norm2
 end
@@ -2140,10 +2145,10 @@ function train_holdout_methods:to_lua_string(format)
   table.insert(t, "trainable.train_holdout_validation(")
   --
   table.insert(t, "\n\t")
-  table.insert(t, table.tostring(self.params))
+  table.insert(t, table.tostring(self.params, format))
   table.insert(t, ",")
   table.insert(t, "\n\t")
-  table.insert(t, table.tostring(self.state))
+  table.insert(t, table.tostring(self.state, format))
   table.insert(t, "\n)")
   return table.concat(t, "")
 end
@@ -2395,10 +2400,10 @@ function train_wo_validation_methods:to_lua_string(format)
   table.insert(t, "trainable.train_wo_validation(")
   --
   table.insert(t, "\n\t")
-  table.insert(t, table.tostring(self.params))
+  table.insert(t, table.tostring(self.params, format))
   table.insert(t, ",")
   table.insert(t, "\n\t")
-  table.insert(t, table.tostring(self.state))
+  table.insert(t, table.tostring(self.state, format))
   table.insert(t, "\n)")
   return table.concat(t, "")
 end

@@ -41,6 +41,10 @@
 template <typename T>
 class Matrix : public Referenced {
   enum matrix_contiguous_enum_t { NONE=0, CONTIGUOUS=1, NONCONTIGUOUS=2 };
+  // Auxiliary count variable where the user could store the number of times
+  // this object is shared in a computation (like in ANN components sharing
+  // weight matrices)
+  unsigned int shared_count;
 protected:
   /// Number of dimensions
   int numDim;
@@ -483,6 +487,23 @@ public:
   Matrix<T> *clone(CBLAS_ORDER major_order);
   /// Shallow copy
   Matrix<T>* shallow_copy();
+  
+  /// Number values check
+  void pruneSubnormalAndCheckNormal();
+  
+  /// This method sets to zero the shared counter
+  void resetSharedCount() { shared_count = 0; }
+  /// This method adds counts to the shared counter
+  void addToSharedCount(unsigned int count=1) { shared_count += count; }
+  /// Getter of the shared count value
+  unsigned int getSharedCount() const {
+    if (shared_count == 0)
+      ERROR_EXIT(128, "Found ZERO in shared_count of connections, check that "
+		 "all the elements are using properly resetSharedCount() "
+		 "and addToSharedCount(...) methods\n");
+    return shared_count;
+  }
+  
   /// Raw access operator []
   T& operator[] (int i);
   const T& operator[] (int i) const;

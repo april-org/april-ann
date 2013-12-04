@@ -6,6 +6,14 @@ Master branch release
 
 ### Unstable changes
 
+- `update` property is added to `ann.optimizers.sgd` object in order to compute
+  the momentum.
+- Optimizers `execute` method receives a functions which computes the loss, the
+  gradient (mandatory). The bunch and the loss matrix are **optional**.
+- `ANN::Connections` is a static class with helper functions, and it is binded
+  as `ann.connections`.
+- ANN Components has a pointer to a `MatrixFloat` instead of `ANN::Connections`.
+- Old-weights property is removed from ANN connections.
 - Added method `precompute_output_size` in ANN components.
 - Added `trainable.dataset_pair_iterator` and
   `trainable.dataset_multiple_iterator`, useful to iterate over datasets

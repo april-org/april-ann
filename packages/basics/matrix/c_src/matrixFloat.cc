@@ -19,6 +19,7 @@
  *
  */
 
+#include "check_floats.h"
 #include "swap.h"
 #include "matrix.h"
 #include "matrixFloat.h"
@@ -848,5 +849,14 @@ void Matrix<float>::svd(Matrix<float> **U, Matrix<float> **S, Matrix<float> **VT
   checkLapackInfo(INFO);
   DecRef(A);
 }
+
+template <>
+void Matrix<float>::pruneSubnormalAndCheckNormal() {
+  float *data = getRawDataAccess()->getPPALForReadAndWrite();
+  if (!april_utils::check_floats(data, size()))
+    ERROR_EXIT(128, "No finite numbers at weights matrix!!!\n");
+}
+
+///////////////////////////////////////////////////////////////////////////////
 
 template class Matrix<float>;

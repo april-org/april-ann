@@ -18,7 +18,9 @@
      execute_script{
        file={
 	 "test/test-components.lua",
-	 "test/test-digits.lua"
+	 "test/test-digits-sgd.lua",
+	 "test/test-digits-rprop.lua",
+	 "test/test-digits-cg.lua",
        },
      },
    },

@@ -64,7 +64,7 @@ namespace ANN {
     MatrixFloat *output_mat = input_mat->clone();
     AssignRef(output,new TokenMatrixFloat(output_mat));
     // bias
-    MatrixFloat *bias_ptr = bias_vector->getPtr();
+    MatrixFloat *bias_ptr = bias_vector;
     if (bunch_size == 1) output_mat->axpy(1.0f, bias_ptr);
     else {
       // addition of bias vector at output
@@ -110,10 +110,10 @@ namespace ANN {
     // count one use of the vector
     bias_vector->addToSharedCount();
     if (grads_mat == 0) {
-      grads_mat = bias_vector->getPtr()->cloneOnlyDims();
+      grads_mat = bias_vector->cloneOnlyDims();
       grads_mat->zeros();
     }
-    else if (!grads_mat->sameDim(bias_vector->getPtr()))
+    else if (!grads_mat->sameDim(bias_vector))
       ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
     MatrixFloat *input_error_mat = error->getMatrix();
     unsigned int bunch_size = input_error_mat->getDimSize(0);
@@ -141,7 +141,7 @@ namespace ANN {
 
   void BiasANNComponent::build(unsigned int _input_size,
 			       unsigned int _output_size,
-			       hash<string,Connections*> &weights_dict,
+			       hash<string,MatrixFloat*> &weights_dict,
 			       hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
@@ -156,12 +156,13 @@ namespace ANN {
     unsigned int weights_input_size  = 1;
     unsigned int weights_output_size = output_size;
     ////////////////////////////////////////////////////////////////////
-    Connections *&w = weights_dict[weights_name];
+    MatrixFloat *&w = weights_dict[weights_name];
     // printf("%s :: %p %p\n", weights_name.c_str(), w, bias_vector);
     if (w != 0) {
       AssignRef(bias_vector, w);
       // printf("COPY OF BIAS FROM HASH %s\n", weights_name.c_str());
-      if (!bias_vector->checkInputOutputSizes(weights_input_size,
+      if (!Connections::checkInputOutputSizes(bias_vector,
+					      weights_input_size,
 					      weights_output_size))
 	ERROR_EXIT3(256,"The weights matrix input/output sizes are not correct, "
 		    "expected %d inputs and %d outputs. [%s]\n",
@@ -171,8 +172,8 @@ namespace ANN {
     else {
       if (bias_vector == 0) {
 	// printf("NEW OF BIAS %s\n", weights_name.c_str());
-	bias_vector = new Connections(weights_input_size,
-				      weights_output_size);
+	bias_vector = Connections::build(weights_input_size,
+					 weights_output_size);
 	IncRef(bias_vector);
       }
       // else printf("USING PREVIOUS BIAS %s\n", weights_name.c_str());
@@ -180,11 +181,11 @@ namespace ANN {
     }
   }
 
-  void BiasANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
+  void BiasANNComponent::copyWeights(hash<string,MatrixFloat*> &weights_dict) {
     if (bias_vector == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
-    Connections *&w = weights_dict[weights_name];
+    MatrixFloat *&w = weights_dict[weights_name];
     if (w != 0 && w != bias_vector)
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with bias_vector attribute [%s]\n",

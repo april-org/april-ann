@@ -278,7 +278,7 @@ namespace ANN {
 
   void JoinANNComponent::build(unsigned int _input_size,
 			       unsigned int _output_size,
-			       hash<string,Connections*> &weights_dict,
+			       hash<string,MatrixFloat*> &weights_dict,
 			       hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
@@ -318,7 +318,7 @@ namespace ANN {
       components[c]->setUseCuda(v);
   }
   
-  void JoinANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
+  void JoinANNComponent::copyWeights(hash<string,MatrixFloat*> &weights_dict) {
     for (unsigned int i=0; i<components.size(); ++i)
       components[i]->copyWeights(weights_dict);
   }

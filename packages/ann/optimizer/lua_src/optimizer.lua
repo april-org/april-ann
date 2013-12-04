@@ -11,19 +11,15 @@ ann.optimizer.utils = nil
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 
-local function ann_optimizer_regularizations_weight_decay(destw, cwd, w)
-  -- sum current weights by applying the complementary of weight decay term. We
-  -- derive w, and left the result on destw
-  destw:axpy(cwd, w)  
-end
-
-------------------------------------------------------------------------------
-
 get_table_from_dotted_string("ann.optimizer.regularizations", true)
 
-function ann.optimizer.regularizations.L1_norm(destw, value, w)
+function ann.optimizer.regularizations.weight_decay(dest, wd, w)
+  dest:axpy(-wd, w)
+end
+
+function ann.optimizer.regularizations.L1_norm(dest, value, w)
   if value > 0.0 then
-    ann_optimizer_utils.regularization.L1_norm_map(destw, value, w)
+    ann_optimizer_utils.regularization.L1_norm_map(dest, value, w)
   end
 end
 
@@ -31,23 +27,18 @@ end
 
 get_table_from_dotted_string("ann.optimizer.constraints", true)
 
--- The penalty is computed on w, but applied to oldw and w
-function ann.optimizer.constraints.max_norm_penalty(w, oldw, mp)
+-- The penalty is computed and applied on w
+function ann.optimizer.constraints.max_norm_penalty(mp, w)
   if mp > 0.0 then
     local sw         = w:sliding_window()
     local window     = nil
-    local old_sw     = oldw:sliding_window()
-    local old_window = nil
     while not sw:is_end() do
       window  = sw:get_matrix(window)
       local norm2 = window:norm2()
       if norm2 > mp then
 	local scal_factor = mp / norm2
-	old_window = old_sw:get_matrix(old_window)
-	old_window:scal(scal_factor)
 	window:scal(scal_factor)
       end
-      old_sw:next()
       sw:next()
     end
   end
@@ -72,6 +63,8 @@ function optimizer_class_metatable:__call(valid_options,
 			       count             = count or 0,
 			       regularizations   = {},
 			       constraints       = {},
+			       regularizations_order = {},
+			       constraints_order     = {},
 			     },
 			     self)
   for name,value in pairs(g_options) do
@@ -87,9 +80,8 @@ function optimizer_class_metatable:__call(valid_options,
 end
 
 
--- regularization functions has the API:
--- func(oldw, value, w, ann_component)
--- where oldw is the destination weights matrix, and w the current weights matrix
+-- regularization functions has the API: func(dest, value, w) where dest is the
+-- destination matrix, and w the current weights matrix
 function optimizer_methods:add_regularization(hyperparameter_name, func, desc)
   local func = assert(func or ann.optimizer.regularizations[hyperparameter_name],
 		      "Problem with hyperparemter function of " .. hyperparameter_name)
@@ -97,11 +89,10 @@ function optimizer_methods:add_regularization(hyperparameter_name, func, desc)
 	 "Redefinition of hyperparameter " .. hyperparameter_name)
   self.valid_options[hyperparameter_name] = desc
   self.regularizations[hyperparameter_name] = func
+  table.insert(self.regularizations_order, hyperparameter_name)
 end
 
--- constraint functions has the API:
--- func(oldw, value, w, ann_component) => remember to apply the same constraint to oldw and w
--- where oldw is the next weights matrix, and w the current weights matrix
+-- constraint functions has the API: func(value, w)
 function optimizer_methods:add_constraint(hyperparameter_name, func, desc)
   local func = assert(func or ann.optimizer.constraints[hyperparameter_name],
 		      "Problem with hyperparemter function of " .. hyperparameter_name)
@@ -109,12 +100,12 @@ function optimizer_methods:add_constraint(hyperparameter_name, func, desc)
 	 "Redefinition of hyperparameter " .. hyperparameter_name)
   self.valid_options[hyperparameter_name] = desc
   self.constraints[hyperparameter_name] = func
+  table.insert(self.constraints_order, hyperparameter_name)
 end
 
-local function ann_optimizer_apply_regularizations(opt,
-						   wname, oldw, w,
-						   ann_component)
-  for hypname,func in pairs(opt.regularizations) do
+local function ann_optimizer_apply_regularizations(opt, wname, dest, w)
+  for _,hypname in ipairs(opt.regularizations_order) do
+    local func = opt.regularizations[hypname]
     local v = opt:get_option_of(wname, hypname)
     if v then
       -- sanity check
@@ -123,15 +114,14 @@ local function ann_optimizer_apply_regularizations(opt,
 		"# WARNING!!! Possible " .. hypname .. " > 0 in bias connection: %s\n",
 		wname)
       end
-      func(oldw, v, w, ann_component)
+      func(dest, v, w)
     end
   end
 end
 
-local function ann_optimizer_apply_constraints(opt,
-					       wname, oldw, w,
-					       ann_component)
-  for hypname,func in pairs(opt.constraints) do
+local function ann_optimizer_apply_constraints(opt, wname, w)
+  for _,hypname in pairs(opt.constraints_order) do
+    local func = opt.constraints[hypname]
     local v = opt:get_option_of(wname, hypname)
     if v then
       -- sanity check
@@ -140,7 +130,7 @@ local function ann_optimizer_apply_constraints(opt,
 		"# WARNING!!! Possible " .. hypname .. " > 0 in bias connection: %s\n",
 		wname)
       end
-      func(w, oldw, v, ann_component)
+      func(v, w)
     end
   end
 end
@@ -188,7 +178,7 @@ end
 -- the loss, the loss matrix for each pattern in the batch, the gradients, the
 -- bunch size, and the ANN component)
 --
--- cnn_table is a dictionary of connections objects, indexed by its names.
+-- cnn_table is a dictionary of weight matrix objects, indexed by its names.
 function optimizer_methods:execute(eval, cnn_table)
   error("NOT IMPLEMENTED METHOD!, use a derived class instance")
 end
@@ -211,16 +201,13 @@ end
 ------------------------------------------------
 ------------------------------------------------
 
-local function ann_optimizer_apply_momentum(oldw, mt, w)
+local function ann_optimizer_apply_momentum(mt, update)
   if mt > 0.0 then
-    -- intertia is computed between current and old weight matrices, but with
-    -- inverted sign
-    oldw:axpy(-1.0, w)
-    -- apply momentum term to inertia computation, with inverted sign
-    oldw:scal(-mt)
+    -- intertia is computed as a portion of previous update
+    update:scal(mt)
   else
-    -- sets to ZERO the old matrix
-    oldw:zeros()
+    -- sets to ZERO
+    update:zeros()
   end
 end
 
@@ -231,18 +218,19 @@ end
 local sgd_methods, sgd_class_metatable = class("ann.optimizer.sgd",
 					       ann.optimizer)
 
-function sgd_class_metatable:__call(g_options, l_options, count)
+function sgd_class_metatable:__call(g_options, l_options, count, update)
   -- the base optimizer, with the supported learning parameters
   local obj = ann.optimizer({
 			      {"learning_rate", "Learning speed factor (0.1)"},
 			      {"momentum", "Learning inertia factor (0.1)"},
-			      {"weight_decay", "Weight L2 regularization (1e-04)"},
 			    },
 			    g_options,
 			    l_options,
 			    count)
+  obj.update = update or { }
   obj = class_instance(obj, self)
   -- standard regularization and constraints
+  obj:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
   obj:add_regularization("L1_norm", nil, "Weight L1 regularization (1e-05)")
   obj:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
   return obj
@@ -250,45 +238,35 @@ end
 
 function sgd_methods:execute(eval, cnn_table)
   local arg = table.pack( eval() )
-  local tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+  local tr_loss,gradients,bunch_size,tr_loss_matrix = table.unpack(arg)
   local bunch_size = bunch_size or 1
   -- the gradient computation could fail returning nil, it is important to take
   -- this into account
   if not gradients then return nil end
   for cname,cnn in pairs(cnn_table) do
-    local w,oldw     = cnn:matrix()
-    local grad       = gradients[cname]
-    local N          = cnn:get_shared_count()
-    local lr         = assert(self:get_option_of(cname, "learning_rate"),
-			      "The learning_rate parameter needs to be set")
-    local mt         = self:get_option_of(cname, "momentum")     or 0.0
-    local wd         = self:get_option_of(cname, "weight_decay") or 0.0
-    local cwd        = 1.0 - wd
+    local w,update    = cnn,self.update[cname] or matrix.col_major(table.unpack(cnn:dim())):zeros()
+    local grad        = gradients[cname]
+    local N           = cnn:get_shared_count()
+    local lr          = assert(self:get_option_of(cname, "learning_rate"),
+		 	      "The learning_rate parameter needs to be set")
+    local mt          = self:get_option_of(cname, "momentum")     or 0.0
     --
-    if wd > 0.0 and w:dim(2) == 1 then
-      fprintf(io.stderr,
-	      "# WARNING!!! Possible weight_decay > 0 in bias connection: %s\n",
-	      cname)
-    end
-    --
-    ann_optimizer_apply_momentum(oldw, mt, w)
-    -- the weight decay SUMS the weight value. Other regularization is better to
-    -- be after the back-propagation learning rule
-    ann_optimizer_regularizations_weight_decay(oldw, cwd, w)
+    ann_optimizer_apply_momentum(mt, update)
     -- apply back-propagation learning rule
     local norm_lr_rate = -1.0/math.sqrt( N * bunch_size ) * lr
-    oldw:axpy(norm_lr_rate, grad)
+    update:axpy(norm_lr_rate, grad)
     -- regularizations
-    ann_optimizer_apply_regularizations(self, cname, oldw, w, ann_component)
+    ann_optimizer_apply_regularizations(self, cname, update, w)
+    -- apply update matrix to the weights
+    w:axpy(1.0, update)
     -- constraints
-    ann_optimizer_apply_constraints(self, cname, oldw, w, ann_component)
-    --
-    -- swap current and old weight matrices
-    cnn:swap()
+    ann_optimizer_apply_constraints(self, cname, w)
     --
     if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
       cnn:prune_subnormal_and_check_normal()
     end
+    --
+    self.update[cname] = update
   end
   -- count one more update iteration
   self:count_one()
@@ -301,16 +279,20 @@ function sgd_methods:clone()
   obj.count             = self.count
   obj.layerwise_options = table.deep_copy(self.layerwise_options)
   obj.global_options    = table.deep_copy(self.global_options)
+  obj.update            = table.map(self.update,function(m)return m:clone()end)
   return obj
 end
 
-function sgd_methods:to_lua_string()
+function sgd_methods:to_lua_string(format)
+  local format = format or "binary"
   local str_t = { "ann.optimizer.sgd(",
 		  table.tostring(self.global_options),
 		  ",",
 		  table.tostring(self.layerwise_options),
 		  ",",
 		  tostring(self.count),
+		  ",",
+		  table.tostring(self.update, format),
 		  ")" }
   return table.concat(str_t, "")
 end
@@ -360,17 +342,15 @@ function rprop_methods:execute(eval, cnn_table)
   local arg
   for i=1,niter do
     arg = table.pack( eval(i-1) )
-    local tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+    local tr_loss,gradients,bunch_size,tr_loss_matrix = table.unpack(arg)
     -- the gradient computation could fail returning nil, it is important to
     -- take this into account
     if not gradients then return nil end
     --
     for cname,cnn in pairs(cnn_table) do
-      local w,oldw     = cnn:matrix()
+      local w          = cnn
       steps[cname]     = steps[cname] or w:clone():fill(initial_step)
       local sign       = gradients[cname]:clone():sign()
-      -- copy the weight
-      oldw:copy(w)
       -- apply reprop learning rule
       if old_sign[cname] then
 	ann_optimizer_utils.rprop.step(steps[cname],
@@ -379,12 +359,9 @@ function rprop_methods:execute(eval, cnn_table)
 				       eta_minus,
 				       eta_plus)
       end
-      oldw:axpy(-1.0, sign:cmul(steps[cname]))
+      w:axpy(-1.0, sign:cmul(steps[cname]))
       -- keep the sign for the next iteration
       old_sign[cname] = sign
-      --
-      -- swap current and old weight matrices
-      cnn:swap()
       --
       if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
 	cnn:prune_subnormal_and_check_normal()
@@ -452,7 +429,6 @@ function cg_class_metatable:__call(g_options, l_options, count,
   -- the base optimizer, with the supported learning parameters
   local obj = ann.optimizer({
 			      --			      {"momentum", "Learning inertia factor (0.1)"},
-			      {"weight_decay", "Weights L2 regularization (1e-04)"},
 			      {"rho", "Constant for Wolf-Powell conditions (0.01)"},
 			      {"sig", "Constant for Wolf-Powell conditions (0.5)"},
 			      {"int", "Reevaluation limit (0.1)"},
@@ -480,6 +456,7 @@ function cg_class_metatable:__call(g_options, l_options, count,
   obj:set_option("max_iter",      20)
   obj:set_option("ratio",         100)  -- maximum slope ratio
   -- standard regularization and constraints
+  obj:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
   obj:add_regularization("L1_norm", nil, "Weight L1 regularization (1e-05)")
   obj:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
   return obj
@@ -546,68 +523,32 @@ function cg_methods:execute(eval, cnn_table)
   end
   -- UPDATE_WEIGHTS function
   local update_weights = function(x, dir, s)
-    for cname,cnn in pairs(cnn_table) do
-      local w,oldw        = cnn:matrix()
-      local grad          = s[cname]
+    for cname,cnn in pairs(x) do
+      local w    = cnn
+      local grad = s[cname]
       -- apply back-propagation learning rule
       w:axpy(dir, grad)
     end
   end
   -- APPLY REGULARIZATION AND PENALTIES
-  local apply_regularization_and_penalties = function(ann_component)
-    for cname,cnn in pairs(cnn_table) do
-      local w,oldw = cnn:matrix()
-      local wd     = self:get_option_of(cname, "weight_decay") or 0.0
-      local cwd    = 1.0 - wd
-      --
-      if wd > 0.0 and w:dim(2) == 1 then
-	fprintf(io.stderr,
-		"# WARNING!!! Possible weight_decay > 0 in bias connection: %s\n",
-		cname)
-      end
-      --
-      oldw:zeros()
-      
-      -- the weight decay SUMS the weight value. Other regularization is better to
-      -- be after the back-propagation learning rule
-      ann_optimizer_regularizations_weight_decay(oldw, cwd, w)
+  local apply_regularization_and_penalties = function(x)
+    for cname,cnn in pairs(x) do
+      local w = cnn
       -- regularizations
-      ann_optimizer_apply_regularizations(self, cname, oldw, w, ann_component)
+      ann_optimizer_apply_regularizations(self, cname, w, w)
       -- constraints
-      ann_optimizer_apply_constraints(self, cname, oldw, w, ann_component)
-      --
-      -- swap current and old weight matrices
-      cnn:swap()
-      --
-      if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
-	iterator(pairs(cnn_table)):select(2):call(prune_subnormal_and_check_normal)
-      end
+      ann_optimizer_apply_constraints(self, cname, w)
     end
-  end
-  -- COPY_WEIGHTS function
-  local copy_weights = function(t)
-    iterator(pairs(cnn_table)):map(function(k,v)
-				     local w,oldw=v:matrix()
-				     t[k]:copy(w)
-				     return k,w
-				   end):table()
+    if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
+      for _,cnn in pairs(x)do cnn:prune_subnormal_and_check_normal()end
+    end
   end
   ----------------------------------------------------------------------------
   
   -- count one more update iteration
   self:count_one()
   
-  local x = {
-    
-    w = iterator(pairs(cnn_table)):
-    map(function(k,v) return k,v:matrix() end):
-    select(1,2):table(),
-    
-    oldw = iterator(pairs(cnn_table)):
-    map(function(k,v) return k,v:matrix() end):
-    select(1,3):table()
-    
-  }
+  local x             = cnn_table
   local rho           = self:get_option("rho")
   local sig           = self:get_option("sig")
   local int           = self:get_option("int")
@@ -626,21 +567,21 @@ function cg_methods:execute(eval, cnn_table)
   local d1,d2,d3 = 0,0,0
   local f1,f2,f3 = 0,0,0
 
-  local df1 = self.state.df1 or clone_only_dims(x.w)
-  local df2 = self.state.df2 or clone_only_dims(x.w)
-  local df3 = self.state.df3 or clone_only_dims(x.w)
+  local df1 = self.state.df1 or clone_only_dims(x)
+  local df2 = self.state.df2 or clone_only_dims(x)
+  local df3 = self.state.df3 or clone_only_dims(x)
   
   -- search direction
-  local s = self.state.s or clone_only_dims(x.w)
+  local s = self.state.s or clone_only_dims(x)
   
   -- we need a temp storage for X
-  local x0  = self.state.x0 or { w=clone(x.w), oldw=clone(x.oldw) }
+  local x0  = self.state.x0 or clone(x)
   local f0  = 0
-  local df0 = self.state.df0 or clone_only_dims(x.w)
+  local df0 = self.state.df0 or clone_only_dims(x)
   
   -- evaluate at initial point
   local arg = table.pack( eval(i) )
-  local tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+  local tr_loss,gradients,bunch_size,tr_loss_matrix = table.unpack(arg)
   update_gradients(gradients)
   f1 = tr_loss
   table.insert(fx, f1)
@@ -658,8 +599,7 @@ function cg_methods:execute(eval, cnn_table)
   
   while i < math.abs(max_eval) do
     
-    copy(x0.w,    x.w)
-    copy(x0.oldw, x.oldw)
+    copy(x0, x)
     
     f0 = f1
     copy(df0,df1)
@@ -667,7 +607,7 @@ function cg_methods:execute(eval, cnn_table)
     update_weights(x, z1, s)
 
     arg = table.pack( eval(i) )
-    tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+    tr_loss,gradients,bunch_size,tr_loss_matrix = table.unpack(arg)
     update_gradients(gradients)
     f2 = tr_loss
     
@@ -698,7 +638,7 @@ function cg_methods:execute(eval, cnn_table)
 	
 	update_weights(x, z2, s)
 	arg = table.pack( eval(i) )
-	tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+	tr_loss,gradients,bunch_size,tr_loss_matrix = table.unpack(arg)
 	update_gradients(gradients)
 	f2 = tr_loss
 	copy(df2,gradients)
@@ -741,7 +681,7 @@ function cg_methods:execute(eval, cnn_table)
       update_weights(x, z2, s)
       
       arg = table.pack( eval(i) )
-      tr_loss,gradients,bunch_size,tr_loss_matrix,ann_component = table.unpack(arg)
+      tr_loss,gradients,bunch_size,tr_loss_matrix = table.unpack(arg)
       update_gradients(gradients)
       f2 = tr_loss
       copy(df2, gradients)
@@ -769,8 +709,7 @@ function cg_methods:execute(eval, cnn_table)
       d1 = d2
       ls_failed = 0
     else
-      copy(x.w,    x0.w)
-      copy(x.oldw, x0.oldw)
+      copy(x, x0)
       f1 = f0
       copy(df1,df0)
       if ls_failed or i>max_eval then
@@ -794,7 +733,7 @@ function cg_methods:execute(eval, cnn_table)
   self.state.x0 = x0
   self.state.s = s
   
-  apply_regularization_and_penalties(ann_component)
+  apply_regularization_and_penalties(x)
   
   -- evaluate the function at the end
   local arg = table.pack( eval(i) )
@@ -823,10 +762,7 @@ function cg_methods:clone()
     obj.state.df3 = table.map(self.state.df3, function(m) return m:clone() end)
   end
   if self.state.x0 then
-    obj.state.x0 = {
-      w = table.map(self.state.x0.w, function(m) return m:clone() end),
-      oldw = table.map(self.state.x0.oldw, function(m) return m:clone() end),
-    }
+    obj.state.x0 = table.map(self.state.x0, function(m) return m:clone() end)
   end
   if self.state.s then
     obj.state.s = table.map(self.state.s, function(m) return m:clone() end)

@@ -109,7 +109,7 @@ namespace ANN {
   
   void HyperplaneANNComponent::build(unsigned int _input_size,
 				     unsigned int _output_size,
-				     hash<string,Connections*> &weights_dict,
+				     hash<string,MatrixFloat*> &weights_dict,
 				     hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
     //////////////////////////////////////////////////////////////
@@ -122,7 +122,7 @@ namespace ANN {
     bias->build(output_size, output_size, weights_dict, components_dict);
   }
   
-  void HyperplaneANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
+  void HyperplaneANNComponent::copyWeights(hash<string,MatrixFloat*> &weights_dict) {
     dot_product->copyWeights(weights_dict);
     bias->copyWeights(weights_dict);
   }

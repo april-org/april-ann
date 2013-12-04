@@ -121,7 +121,7 @@ namespace ANN {
   
   void RewrapANNComponent::build(unsigned int _input_size,
 				 unsigned int _output_size,
-				 hash<string,Connections*> &weights_dict,
+				 hash<string,MatrixFloat*> &weights_dict,
 				 hash<string,ANNComponent*> &components_dict) {
     unsigned int sz = 1;
     for (int i=1; i<this->n; ++i) sz *= rewrap_dims[i];

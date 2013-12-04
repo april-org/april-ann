@@ -153,7 +153,7 @@ namespace ANN {
     UNUSED_VARIABLE(during_training);
     if (weights_matrix == 0) ERROR_EXIT1(129, "Not built component %s\n",
 					 name.c_str());
-    MatrixFloat *weights_mat = weights_matrix->getPtr();
+    MatrixFloat *weights_mat = weights_matrix;
     // error checking
     if (_input == 0) ERROR_EXIT1(129,"Null Token received! [%s]\n",
 				 name.c_str());
@@ -241,7 +241,7 @@ namespace ANN {
   }
   
   Token *ConvolutionANNComponent::doBackprop(Token *_error_input) {
-    MatrixFloat *weights_mat = weights_matrix->getPtr();
+    MatrixFloat *weights_mat = weights_matrix;
     // error checking
     if ( (_error_input == 0) ||
 	 (_error_input->getTokenCode() != table_of_token_codes::token_matrix))
@@ -327,7 +327,7 @@ namespace ANN {
   void ConvolutionANNComponent::computeGradients(MatrixFloat *&grads_mat) {
     weights_matrix->addToSharedCount(number_input_windows);
     if (grads_mat == 0) {
-      grads_mat = weights_matrix->getPtr()->cloneOnlyDims();
+      grads_mat = weights_matrix->cloneOnlyDims();
       grads_mat->zeros();
     }
     MatrixFloat *input_mat       = input->getMatrix();
@@ -404,7 +404,7 @@ namespace ANN {
 
   void ConvolutionANNComponent::build(unsigned int _input_size,
 				     unsigned int _output_size,
-				     hash<string,Connections*> &weights_dict,
+				     hash<string,MatrixFloat*> &weights_dict,
 				     hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
@@ -412,13 +412,14 @@ namespace ANN {
     unsigned int weights_input_size  = kernel_size;
     unsigned int weights_output_size = hidden_size;
     ////////////////////////////////////////////////////////////////////
-    Connections *&w = weights_dict[weights_name];
+    MatrixFloat *&w = weights_dict[weights_name];
     // printf("%s :: %p %p\n", weights_name.c_str(), w, weights_matrix);
     if (w != 0) {
       // printf("COPY OF WEIGHTS FROM HASH %s\n", weights_name.c_str());
       AssignRef(weights_matrix, w);
-      if (!weights_matrix->checkInputOutputSizes(weights_input_size,
-						 weights_output_size))
+      if (!Connections::checkInputOutputSizes(weights_matrix,
+					      weights_input_size,
+					      weights_output_size))
 	ERROR_EXIT3(256,"The weights matrix input/output sizes are not correct, "
 		    "expected %dx%d [%s]\n",
 		    weights_input_size, weights_output_size,
@@ -427,8 +428,8 @@ namespace ANN {
     else {
       if (weights_matrix == 0) {
 	// printf("NEW OF WEIGHTS %s\n", weights_name.c_str());
-	weights_matrix = new Connections(weights_input_size,
-					 weights_output_size);
+	weights_matrix = Connections::build(weights_input_size,
+					    weights_output_size);
 	IncRef(weights_matrix);
       }
       // else printf("USING PREVIOUS WEIGHTS %s\n", weights_name.c_str());
@@ -436,11 +437,11 @@ namespace ANN {
     }
   }
 
-  void ConvolutionANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
+  void ConvolutionANNComponent::copyWeights(hash<string,MatrixFloat*> &weights_dict) {
     if (weights_matrix == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
-    Connections *&w = weights_dict[weights_name];
+    MatrixFloat *&w = weights_dict[weights_name];
     if (w != 0 && w != weights_matrix)
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with weights_matrix attribute [%s]\n",

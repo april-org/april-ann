@@ -32,7 +32,7 @@ namespace ANN {
   /// A component which adds a bias to the given bi-dimensional input matrix.
   class BiasANNComponent : public ANNComponent {
     TokenMatrixFloat *input, *output, *error;
-    Connections *bias_vector;
+    MatrixFloat *bias_vector;
     
   protected:
     
@@ -52,9 +52,9 @@ namespace ANN {
     virtual ANNComponent *clone();
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
-		       hash<string,Connections*> &weights_dict,
+		       hash<string,MatrixFloat*> &weights_dict,
 		       hash<string,ANNComponent*> &components_dict);
-    virtual void copyWeights(hash<string,Connections*> &weights_dict);
+    virtual void copyWeights(hash<string,MatrixFloat*> &weights_dict);
     
     virtual char *toLuaString();
   };

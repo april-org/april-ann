@@ -183,6 +183,9 @@ Matrix<float> *Matrix<float>::inv();
 template <>
 void Matrix<float>::svd(Matrix<float> **U, Matrix<float> **S, Matrix<float> **V);
 
+template <>
+void Matrix<float>::pruneSubnormalAndCheckNormal();
+
 ////////////////////////////////////////////////////////////////////////////
 
 typedef Matrix<float> MatrixFloat;

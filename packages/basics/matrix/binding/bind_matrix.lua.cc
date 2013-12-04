@@ -370,12 +370,12 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 
 //BIND_METHOD MatrixFloat toFilename
 //DOC_BEGIN
-// void toFilename(string filename, string type='ascii')
+// void toFilename(string filename, string type='binary')
 /// Permite salvar una matriz con un formato tal y como se carga con el
 /// metodo fromString. El unico argumento opcional indica el tipo 'ascii'
 /// o 'binary'.
 ///@param filename Indica el nombre del fichero.
-///@param type Parametro opcional. Puede ser 'ascii' o 'binary', y por defecto es 'ascii'.
+///@param type Parametro opcional. Puede ser 'ascii' o 'binary', y por defecto es 'binary'.
 //DOC_END
 {
   LUABIND_CHECK_ARGN(>=, 1);
@@ -383,7 +383,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   const char *filename;
   constString cs;
   LUABIND_GET_PARAMETER(1, string, filename);
-  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("ascii"));
+  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("binary"));
   bool is_ascii = (cs == "ascii");
   writeMatrixFloatToFile(obj, filename, is_ascii);
 }
@@ -400,16 +400,16 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 
 //BIND_METHOD MatrixFloat toString
 //DOC_BEGIN
-// string toString(string type='ascii')
+// string toString(string type='binary')
 /// Permite salvar una matriz con un formato tal y como se carga con el
 /// metodo fromString. El unico argumento opcional indica el tipo 'ascii'
 /// o 'binary'.
-///@param type Parámetro opcional. Puede ser 'ascii' o 'binary', y por defecto es 'ascii'.
+///@param type Parámetro opcional. Puede ser 'ascii' o 'binary', y por defecto es 'binary'.
 //DOC_END
 {
   LUABIND_CHECK_ARGN(<=, 1);
   constString cs;
-  LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("ascii"));
+  LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("binary"));
   bool is_ascii = (cs == "ascii");
   writeMatrixFloatToLuaString(obj, L, is_ascii);
   LUABIND_INCREASE_NUM_RETURNS(1);
@@ -1512,6 +1512,32 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 {
   MatrixFloat *resul = obj->diagonalize();
   LUABIND_RETURN(MatrixFloat, resul);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat get_shared_count
+{
+  LUABIND_RETURN(uint, obj->getSharedCount());
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat reset_shared_count
+{
+  obj->resetSharedCount();
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat add_to_shared_count
+{
+  unsigned int count;
+  LUABIND_GET_PARAMETER(1,uint,count);
+  obj->addToSharedCount(count);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat prune_subnormal_and_check_normal
+{
+  obj->pruneSubnormalAndCheckNormal();
 }
 //BIND_END
 

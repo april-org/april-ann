@@ -107,7 +107,7 @@ namespace ANN {
   
   void StackANNComponent::build(unsigned int _input_size,
 				unsigned int _output_size,
-				hash<string,Connections*> &weights_dict,
+				hash<string,MatrixFloat*> &weights_dict,
 				hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
     //////////////////////////////////////////////////////////////
@@ -139,7 +139,7 @@ namespace ANN {
     */
   }
   
-  void StackANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
+  void StackANNComponent::copyWeights(hash<string,MatrixFloat*> &weights_dict) {
     for (unsigned int c=0; c<components.size(); ++c)
       components[c]->copyWeights(weights_dict);
   }

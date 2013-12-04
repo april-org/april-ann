@@ -239,7 +239,7 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
   const char *filename;
   constString cs;
   LUABIND_GET_PARAMETER(1, string, filename);
-  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("ascii"));
+  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("binary"));
   bool is_ascii = (cs == "ascii");
   writeMatrixInt32ToFile(obj, filename, is_ascii);
 }
@@ -249,7 +249,7 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 {
   LUABIND_CHECK_ARGN(<=, 1);
   constString cs;
-  LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("ascii"));
+  LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("binary"));
   bool is_ascii = (cs == "ascii");
   writeMatrixInt32ToLuaString(obj, L, is_ascii);
   LUABIND_INCREASE_NUM_RETURNS(1);
