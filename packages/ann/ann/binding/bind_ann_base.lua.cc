@@ -126,7 +126,7 @@ using namespace ANN;
 				       input_size);
   //
   MatrixFloat *obj;
-  if (w && w->getMajorOrder() == CblasColMajor) obj = w;
+  if (w && w->getMajorOrder() == CblasColMajor) obj = w->clone();
   else {
     obj = Connections::build(input_size, output_size);
     if (w) Connections::loadWeights(obj, w, first_pos, column_size);

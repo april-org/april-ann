@@ -12,18 +12,19 @@ weight_decay   = 1e-05
 max_epochs     = 10
 
 -- training and validation
-errors = {
-  {2.7256057, 18.6052704},
-  {14.7692690, 5.8276091},
-  {5.7847500, 4.2319937},
-  {3.9067090, 3.0507331},
-  {2.7962668, 1.0699219},
-  {1.0011752, 0.8399307},
-  {0.6373432, 0.5589627},
-  {0.3391171, 0.3530262},
-  {0.2058428, 0.2627542},
-  {0.1379610, 0.2229893},
-}
+errors = matrix.fromString[[10 2
+ascii
+2.7256057 18.605270
+14.769267 5.830131
+5.7847500 4.2319937
+3.9067090 3.0507331
+2.7962668 1.0699219
+1.0011752 0.8399307
+0.6373432 0.5586927
+0.3391171 0.3530262
+0.2058428 0.2627542
+0.1379610 0.2229893
+]]
 epsilon = 1e-02
 
 --------------------------------------------------------------
@@ -115,15 +116,15 @@ for epoch = 1,max_epochs do
   errorval,varval      = trainer:validate_dataset(datosvalidar)
   printf("%4d  %.7f %.7f :: %.7f %.7f\n",
   	 totalepocas,errortrain,errorval,vartrain,varval)
-  if math.abs(errortrain - errors[epoch][1]) > epsilon then
+  if math.abs(errortrain - errors:get(epoch,1)) > epsilon then
     error(string.format("Training error %g is not equal enough to "..
-			  "reference error %g",
-			errortrain, errors[epoch][1]))
+  			  "reference error %g",
+  			errortrain, errors:get(epoch,1)))
   end
-  if math.abs(errorval - errors[epoch][2]) > epsilon then
+  if math.abs(errorval - errors:get(epoch,2)) > epsilon then
     error(string.format("Validation error %g is not equal enough to "..
-			  "reference error %g",
-			errorval, errors[epoch][2]))
+  			  "reference error %g",
+  			errorval, errors:get(epoch,2)))
   end
 end
 

@@ -52,10 +52,18 @@ april_set_doc("trainable.supervised_trainer.__call", {
 			      "If the component is in build state, the",
 			      "constructed trainer is in build state also.",
 		},
-		params = { "ANN component or similar supervised learning model",
-			   "Loss function [optional]",
-			   "Bunch size (mini batch) [optional]",
-			   "An optimizer [option], by default is ann.optimizer.sgd"},
+		params = {
+		  "ANN component or similar supervised learning model",
+		  "Loss function [optional]",
+		  "Bunch size (mini batch) [optional]",
+		  "An optimizer [option], by default is ann.optimizer.sgd",
+		  {
+		    "A gradient smoothing boolean flag [optional], by default",
+		    "it is true.",
+		    "This parameter scales the gradients depending in the",
+		    "bunch_size and in the number of times the weight was used",
+		  },
+		},
 		outputs = { "Instantiated object" }, })
 
 function trainable_supervised_trainer_class_metatable:__call(...)
@@ -67,7 +75,9 @@ function trainable_supervised_trainer_class_metatable:__call(...)
     local loss        = t.loss
     local bunch_size  = t.bunch_size
     local optimizer   = t.optimizer
-    local obj = trainable.supervised_trainer(model, loss, bunch_size, optimizer)
+    local smooth_gradients = t.smooth_gradients or true
+    local obj = trainable.supervised_trainer(model, loss, bunch_size, optimizer,
+					     smooth_gradients)
     obj:build()
     for wname,cobj in obj:iterate_weights() do
       local w = connections[wname]
@@ -96,8 +106,9 @@ function trainable_supervised_trainer_class_metatable:__call(...)
     return obj
   else
     -- Constructor of a new object
-    local ann_component,loss_function,bunch_size,optimizer = ...
+    local ann_component,loss_function,bunch_size,optimizer,smooth_gradients = ...
     local optimizer = optimizer or ann.optimizer.sgd()
+    local smooth_gradients = smooth_gradients or true
     if loss_function and not isa(loss_function, ann.loss) then
       error("The second parameter must be an instance of ann.loss")
     end
@@ -111,6 +122,7 @@ function trainable_supervised_trainer_class_metatable:__call(...)
       ann_component    = assert(ann_component,"Needs an ANN component object"),
       loss_function    = loss_function or false,
       optimizer        = optimizer,
+      smooth_gradients = smooth_gradients,
       weights_table    = {},
       components_table = {},
       component2weights_dict = {},
@@ -330,6 +342,11 @@ function trainable_supervised_trainer_methods:to_lua_string(format)
   if self.bunch_size then
     table.insert(t, "bunch_size=")
     table.insert(t, self.bunch_size)
+    table.insert(t, ",\n")
+  end
+  if self.smooth_gradients ~= nil then
+    table.insert(t, "smooth_gradients=")
+    table.insert(t, tostring(self.smooth_gradients))
     table.insert(t, ",\n")
   end
   table.insert(t, "}")
@@ -723,6 +740,7 @@ april_set_doc("trainable.supervised_trainer.train_step", {
 		  "The corresponding target output pattern (table or token)",
 		  "The loss function [optional]",
 		  "An optimizer [optional]",
+		  "A smooth gradients boolean [optional]",
 		},
 		outputs = {
 		  "The mean of loss function at current batch",
@@ -730,12 +748,14 @@ april_set_doc("trainable.supervised_trainer.train_step", {
 		} })
 
 function trainable_supervised_trainer_methods:train_step(input, target, loss,
-							 optimizer)
+							 optimizer,
+							 smooth_gradients)
   if type(input)  == "table" then input  = tokens.matrix(matrix.col_major(input))  end
   if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
   local loss      = loss or self.loss_function
   local optimizer = optimizer or self.optimizer
-  local tr_loss, _, _, tr_loss_matrix =
+  local smooth_gradients = smooth_gradients or self.smooth_gradients
+  local tr_loss, _, tr_loss_matrix =
     optimizer:execute(function(it)
 			self.ann_component:reset(it)
 			local output = self.ann_component:forward(input, true)
@@ -750,13 +770,20 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
 			--
 			self.weight_grads =
 			  self.ann_component:compute_gradients(self.weight_grads)
+			local bunch_size = tr_loss_matrix:dim(1)
+			-- gradient smoothing
+			if smooth_gradients then
+			  for name,mat in pairs(self.weight_grads) do
+			    local N = self.weight_grads[name]:get_shared_count()
+			    N       = ( N>0 and N) or 1
+			    mat:scal( 1.0/math.sqrt(N * bunch_size) )
+			  end
+			end
 			return 
 			  -- the loss
 			  tr_loss,
 			-- the gradients
 			self.weight_grads,
-			-- the bunch_size
-			tr_loss_matrix:dim(1),
 			-- the loss matrix
 			tr_loss_matrix
 		      end,
@@ -1046,6 +1073,7 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 		      "Bunch size (mini-batch). It is [optional] if bunch_size",
 		      "was set at constructor, otherwise it is mandatory.",
 		    }, 
+		  ["smooth_gradients"] = "A smooth gradients boolean [optional]",
 		},
 		outputs = {
 		  "A number with the mean loss of each training step",
@@ -1078,18 +1106,23 @@ function trainable_supervised_trainer_methods:train_dataset(t)
       optimizer      = { isa_match  = ann.optimizer,
 			 mandatory  = (not self.optimizer),
 			 default=self.optimizer },
+      smooth_gradients = { type_match = "boolean",
+			   mandatory  = false,
+			   default=self.smooth_gradients },
     }, t, true)
   local loss       = params.loss
   local optimizer  = params.optimizer
+  local smooth_gradients = params.smooth_gradients
   params.loss      = nil
   params.optimizer = nil
+  params.smooth_gradients   = nil
   params.bunch_size         = params.bunch_size or self.bunch_size
   params.assert_input_size  = self:get_input_size()
   params.assert_output_size = self:get_output_size()
   -- set to ZERO the accumulated of loss
   loss:reset()
   for input_bunch,output_bunch in trainable.dataset_pair_iterator(params) do
-    self:train_step(input_bunch, output_bunch, loss, optimizer)
+    self:train_step(input_bunch, output_bunch, loss, optimizer, smooth_gradients)
   end
   collectgarbage("collect")
   return loss:get_accum_loss()

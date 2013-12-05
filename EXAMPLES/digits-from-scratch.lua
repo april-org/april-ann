@@ -86,7 +86,7 @@ local train = function(thenet,data,loss,opt)
   weight_grads = weight_grads or { } -- upvalue
   loss:reset()
   for input,target in trainable.dataset_pair_iterator(data) do
-    local tr_loss,_,_,tr_matrix =
+    local tr_loss,_,tr_matrix =
       opt:execute(function(it)
 		    thenet:reset(it)
 		    local out = thenet:forward(input)
@@ -95,7 +95,13 @@ local train = function(thenet,data,loss,opt)
 		    thenet:backprop(loss:gradient(out,target))
 		    for _,w in pairs(weight_grads) do w:zeros() end
 		    weight_grads = thenet:compute_gradients(weight_grads)
-		    return tr_loss,weight_grads,tr_matrix:dim(1),tr_matrix
+		    -- gradients smoothing
+		    for name,w in pairs(weight_grads) do
+		      local count = cnns[name]:get_shared_count()
+		      count = ( count>0 and count) or 1
+		      w:scal( 1.0/math.sqrt(count*bunch_size) )
+		    end
+		    return tr_loss,weight_grads,tr_matrix
 		  end,
 		  cnns)
     loss:accum_loss(tr_loss,tr_matrix)

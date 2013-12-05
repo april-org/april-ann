@@ -6,24 +6,25 @@ description    = "256 inputs 256 tanh 128 tanh 10 log_softmax"
 inf            = -1
 sup            =  1
 shuffle_random = random(5678)
-rho            = 0.001
+rho            = 0.01
 sig            = 0.8
 weight_decay   = 1e-05
 max_epochs     = 10
 
 -- training and validation
-errors = {
-  {0.1754176, 0.2544766},
-  {0.0198613, 0.1189429},
-  {0.0038684, 0.0996554},
-  {0.0014355, 0.0770654},
-  {0.0004041, 0.0775090},
-  {0.0002285, 0.0777847},
-  {0.0000280, 0.0713880},
-  {0.0000100, 0.0884530},
-  {0.0000044, 0.0916537},
-  {0.0000033, 0.0902332},
-}
+errors = matrix.fromString[[10 2
+ascii
+0.1364878 0.2552190
+0.0078906 0.0778204
+0.0018425 0.0892997
+0.0000942 0.0647947
+0.0000181 0.1008427
+0.0000051 0.0784141
+0.0000020 0.0974825
+0.0000020 0.1003913
+0.0000014 0.0980982
+0.0000015 0.0992237
+]]
 epsilon = 1e-03
 
 --------------------------------------------------------------
@@ -121,15 +122,15 @@ for epoch = 1,max_epochs do
   errorval,varval      = trainer:validate_dataset(datosvalidar)
   printf("%4d  %.7f %.7f :: %.7f %.7f\n",
   	 totalepocas,errortrain,errorval,vartrain,varval)
-  if math.abs(errortrain - errors[epoch][1]) > epsilon then
+  if math.abs(errortrain - errors:get(epoch,1)) > epsilon then
     error(string.format("Training error %g is not equal enough to "..
-			  "reference error %g",
-			errortrain, errors[epoch][1]))
+  			  "reference error %g",
+  			errortrain, errors:get(epoch,1)))
   end
-  if math.abs(errorval - errors[epoch][2]) > epsilon then
+  if math.abs(errorval - errors:get(epoch,2)) > epsilon then
     error(string.format("Validation error %g is not equal enough to "..
-			  "reference error %g",
-			errorval, errors[epoch][2]))
+  			  "reference error %g",
+  			errorval, errors:get(epoch,2)))
   end
 end
 

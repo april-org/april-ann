@@ -175,8 +175,7 @@ function optimizer_methods:get_option_of(layer_name,name)
 end
 
 -- eval is a function which returns the data needed by the optimizer (at least,
--- the loss, the loss matrix for each pattern in the batch, the gradients, the
--- bunch size, and the ANN component)
+-- the loss, and the gradients. The rest of values will be ignored)
 --
 -- cnn_table is a dictionary of weight matrix objects, indexed by its names.
 function optimizer_methods:execute(eval, cnn_table)
@@ -240,24 +239,20 @@ function sgd_methods:execute(eval, cnn_table)
   assert(type(cnn_table) == "table",
 	 "The second argument is a table with matrices")
   local arg = table.pack( eval() )
-  local tr_loss,gradients,bunch_size,tr_loss_matrix = table.unpack(arg)
-  local bunch_size = bunch_size or 1
+  local tr_loss,gradients = table.unpack(arg)
   -- the gradient computation could fail returning nil, it is important to take
   -- this into account
   if not gradients then return nil end
   for cname,cnn in pairs(cnn_table) do
     local w,update    = cnn,self.update[cname] or matrix.col_major(table.unpack(cnn:dim())):zeros()
     local grad        = gradients[cname]
-    local N           = cnn:get_shared_count()
-    N                 = ( N>0 and N) or 1
     local lr          = assert(self:get_option_of(cname, "learning_rate"),
 		 	      "The learning_rate parameter needs to be set")
     local mt          = self:get_option_of(cname, "momentum")     or 0.0
     --
     ann_optimizer_apply_momentum(mt, update)
     -- apply back-propagation learning rule
-    local norm_lr_rate = -1.0/math.sqrt( N * bunch_size ) * lr
-    update:axpy(norm_lr_rate, grad)
+    update:axpy(-lr, grad)
     -- regularizations
     ann_optimizer_apply_regularizations(self, cname, update, w)
     -- apply update matrix to the weights
@@ -347,7 +342,7 @@ function rprop_methods:execute(eval, cnn_table)
   local arg
   for i=1,niter do
     arg = table.pack( eval(i-1) )
-    local tr_loss,gradients,bunch_size,tr_loss_matrix = table.unpack(arg)
+    local tr_loss,gradients = table.unpack(arg)
     -- the gradient computation could fail returning nil, it is important to
     -- take this into account
     if not gradients then return nil end
@@ -588,7 +583,7 @@ function cg_methods:execute(eval, cnn_table)
   
   -- evaluate at initial point
   local arg = table.pack( eval(i) )
-  local tr_loss,gradients,bunch_size,tr_loss_matrix = table.unpack(arg)
+  local tr_loss,gradients = table.unpack(arg)
   update_gradients(gradients)
   f1 = tr_loss
   table.insert(fx, f1)
@@ -614,7 +609,7 @@ function cg_methods:execute(eval, cnn_table)
     update_weights(x, z1, s)
 
     arg = table.pack( eval(i) )
-    tr_loss,gradients,bunch_size,tr_loss_matrix = table.unpack(arg)
+    tr_loss,gradients = table.unpack(arg)
     update_gradients(gradients)
     f2 = tr_loss
     
@@ -645,7 +640,7 @@ function cg_methods:execute(eval, cnn_table)
 	
 	update_weights(x, z2, s)
 	arg = table.pack( eval(i) )
-	tr_loss,gradients,bunch_size,tr_loss_matrix = table.unpack(arg)
+	tr_loss,gradients = table.unpack(arg)
 	update_gradients(gradients)
 	f2 = tr_loss
 	copy(df2,gradients)
@@ -688,7 +683,7 @@ function cg_methods:execute(eval, cnn_table)
       update_weights(x, z2, s)
       
       arg = table.pack( eval(i) )
-      tr_loss,gradients,bunch_size,tr_loss_matrix = table.unpack(arg)
+      tr_loss,gradients = table.unpack(arg)
       update_gradients(gradients)
       f2 = tr_loss
       copy(df2, gradients)

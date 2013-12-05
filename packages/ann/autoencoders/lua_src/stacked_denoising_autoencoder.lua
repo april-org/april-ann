@@ -215,14 +215,17 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(names_prefix,
 				output = input_size,
 				transpose = true} )
   autoencoder_component:push(ann.components.actf[input_actf]{ name=names_prefix.."actf2" })
-  local weights_table = autoencoder_component:build()
+  local _,weights_table = autoencoder_component:build()
   for _,wname in ipairs({ names_prefix.."w",
 			  names_prefix.."b1",
 			  names_prefix.."b2" }) do
-    weights_table[wname]:randomize_weights{
-      random = weights_random,
-      inf    = -math.sqrt(6 / (input_size + cod_size)),
-      sup    =  math.sqrt(6 / (input_size + cod_size)) }
+    ann.connections.
+    randomize_weights(weights_table[wname],
+		      {
+			random = weights_random,
+			inf    = -math.sqrt(6 / (input_size + cod_size)),
+			sup    =  math.sqrt(6 / (input_size + cod_size))
+		      })
   end
   return autoencoder_component
 end
@@ -803,9 +806,9 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
     local b1obj = best_net:weights(params.names_prefix.."b1"):clone()
     local b2obj = best_net:weights(params.names_prefix.."b2"):clone()
     local wobj  = best_net:weights(params.names_prefix.."w"):clone()
-    local b1mat = b1obj:copy_to()
-    local b2mat = b2obj:copy_to()
-    local wmat  = wobj:copy_to()
+    local b1mat = ann.connections.copy_to(b1obj)
+    local b2mat = ann.connections.copy_to(b2obj)
+    local wmat  = ann.connections.copy_to(wobj)
     table.insert(weights, wmat)
     table.insert(bias, { b1mat, b2mat })
     --
@@ -840,8 +843,10 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 							 params.optimizer())
 	cod_trainer:build()
 	-- print("Load bias ", params.names_prefix .. "b")
-	cod_trainer:weights(params.names_prefix.."b"):load{ w = b1mat }
-	cod_trainer:weights(params.names_prefix.."w"):load{ w = wmat }
+	ann.connections.load(cod_trainer:weights(params.names_prefix.."b"),
+			     { w = b1mat })
+	ann.connections.load(cod_trainer:weights(params.names_prefix.."w"),
+			     { w = wmat })
 	if current_dataset_params.distribution then
 	  -- compute code for each distribution dataset
 	  for _,v in ipairs(current_dataset_params.distribution) do

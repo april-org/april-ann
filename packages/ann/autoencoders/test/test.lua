@@ -173,7 +173,7 @@ if dropout_factor > 0.0 then
 	w:scal(1.0/(1.0-dropout_factor))
 	ow:scal(1.0/(1.0-dropout_factor))
       else
-	cnn:scale(1.0/(1.0-dropout_factor))
+	cnn:scal(1.0/(1.0-dropout_factor))
       end
     end
   end
