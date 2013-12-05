@@ -472,7 +472,7 @@ namespace InterestPoints {
   void SetPoints::addComponent() {
     if ((size_t) size != ccPoints->size())
         fprintf(stderr, "Size sincronization error %d %lu\n", size, ccPoints->size());
-    april_assert("Size sincronization error" && size == ccPoints->size());
+    april_assert("Size sincronization error" && (size_t)size == ccPoints->size());
     
     (*ccPoints).push_back(PointComponent());
     ++size;
