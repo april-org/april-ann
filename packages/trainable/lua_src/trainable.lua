@@ -770,7 +770,7 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
 			--
 			self.weight_grads =
 			  self.ann_component:compute_gradients(self.weight_grads)
-			local bunch_size = tr_loss_matrix:dim(1)
+			local bunch_size = output_mat:dim(1)
 			-- gradient smoothing
 			if smooth_gradients then
 			  for name,mat in pairs(self.weight_grads) do
