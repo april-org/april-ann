@@ -6,6 +6,8 @@ Master branch release
 
 ### Unstable changes
 
+_ Gradients smoothing, based on weights sharing and `bunch_size`, is applied by
+  `trainable.supervised_trainer` objects, not by the `optimizer`.
 - `update` property is added to `ann.optimizers.sgd` object in order to compute
   the momentum.
 - Optimizers `execute` method receives a functions which computes the loss, the
