@@ -14,9 +14,12 @@ ann.optimizer.utils = nil
 get_table_from_dotted_string("ann.optimizer.regularizations", true)
 
 function ann.optimizer.regularizations.weight_decay(dest, wd, w)
-  dest:axpy(-wd, w)
+  if wd > 0.0 then
+    dest:axpy(-wd, w)
+  end
 end
 
+-- This regularization term must be applied the last
 function ann.optimizer.regularizations.L1_norm(dest, value, w)
   if value > 0.0 then
     ann_optimizer_utils.regularization.L1_norm_map(dest, value, w)
@@ -177,8 +180,9 @@ end
 -- eval is a function which returns the data needed by the optimizer (at least,
 -- the loss, and the gradients. The rest of values will be ignored)
 --
--- cnn_table is a dictionary of weight matrix objects, indexed by its names.
-function optimizer_methods:execute(eval, cnn_table)
+-- weights is a dictionary of weight matrix objects, indexed by its names, or a
+-- matrix
+function optimizer_methods:execute(eval, weights)
   error("NOT IMPLEMENTED METHOD!, use a derived class instance")
 end
 
@@ -235,36 +239,35 @@ function sgd_class_metatable:__call(g_options, l_options, count, update)
   return obj
 end
 
-function sgd_methods:execute(eval, cnn_table)
-  assert(type(cnn_table) == "table",
-	 "The second argument is a table with matrices")
+function sgd_methods:execute(eval, weights)
+  if type(weights) ~= "table" then weights = { weights } end
   local arg = table.pack( eval() )
   local tr_loss,gradients = table.unpack(arg)
   -- the gradient computation could fail returning nil, it is important to take
   -- this into account
   if not gradients then return nil end
-  for cname,cnn in pairs(cnn_table) do
-    local w,update    = cnn,self.update[cname] or matrix.col_major(table.unpack(cnn:dim())):zeros()
-    local grad        = gradients[cname]
-    local lr          = assert(self:get_option_of(cname, "learning_rate"),
+  for name,w in pairs(weights) do
+    local update      = self.update[name] or w:clone():zeros()
+    local grad        = gradients[name]
+    local lr          = assert(self:get_option_of(name, "learning_rate"),
 		 	      "The learning_rate parameter needs to be set")
-    local mt          = self:get_option_of(cname, "momentum")     or 0.0
+    local mt          = self:get_option_of(name, "momentum")     or 0.0
     --
     ann_optimizer_apply_momentum(mt, update)
     -- apply back-propagation learning rule
     update:axpy(-lr, grad)
     -- regularizations
-    ann_optimizer_apply_regularizations(self, cname, update, w)
+    ann_optimizer_apply_regularizations(self, name, update, w)
     -- apply update matrix to the weights
     w:axpy(1.0, update)
     -- constraints
-    ann_optimizer_apply_constraints(self, cname, w)
+    ann_optimizer_apply_constraints(self, name, w)
     --
     if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
-      cnn:prune_subnormal_and_check_normal()
+      w:prune_subnormal_and_check_normal()
     end
     --
-    self.update[cname] = update
+    self.update[name] = update
   end
   -- count one more update iteration
   self:count_one()
@@ -328,9 +331,8 @@ function rprop_class_metatable:__call(g_options, l_options, count,
   return obj
 end
 
-function rprop_methods:execute(eval, cnn_table)
-  assert(type(cnn_table) == "table",
-	 "The second argument is a table with matrices")
+function rprop_methods:execute(eval, weights)
+  if type(weights) ~= "table" then weights = { weights } end
   local initial_step  = self:get_option("initial_step")
   local eta_plus      = self:get_option("eta_plus")
   local eta_minus     = self:get_option("eta_minus")
@@ -347,24 +349,23 @@ function rprop_methods:execute(eval, cnn_table)
     -- take this into account
     if not gradients then return nil end
     --
-    for cname,cnn in pairs(cnn_table) do
-      local w          = cnn
-      steps[cname]     = steps[cname] or w:clone():fill(initial_step)
-      local sign       = gradients[cname]:clone():sign()
+    for name,w in pairs(weights) do
+      steps[name] = steps[name] or w:clone():fill(initial_step)
+      local sign  = gradients[name]:clone():sign()
       -- apply reprop learning rule
-      if old_sign[cname] then
-	ann_optimizer_utils.rprop.step(steps[cname],
-				       old_sign[cname],
+      if old_sign[name] then
+	ann_optimizer_utils.rprop.step(steps[name],
+				       old_sign[name],
 				       sign,
 				       eta_minus,
 				       eta_plus)
       end
-      w:axpy(-1.0, sign:cmul(steps[cname]))
+      w:axpy(-1.0, sign:cmul(steps[name]))
       -- keep the sign for the next iteration
-      old_sign[cname] = sign
+      old_sign[name] = sign
       --
       if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
-	cnn:prune_subnormal_and_check_normal()
+	w:prune_subnormal_and_check_normal()
 	collectgarbage("collect")
       end
     end
@@ -462,9 +463,8 @@ function cg_class_metatable:__call(g_options, l_options, count,
   return obj
 end
 
-function cg_methods:execute(eval, cnn_table)
-  assert(type(cnn_table) == "table",
-	 "The second argument is a table with matrices")
+function cg_methods:execute(eval, weights)
+  if type(weights) ~= "table" then weights = { weights } end
   -- COPY function
   local copy = function(dest,source)
     iterator(pairs(dest)):apply(function(k,v) v:copy(source[k]) end)
@@ -508,41 +508,23 @@ function cg_methods:execute(eval, cnn_table)
     map(function(k,v) return k,matrix.col_major(table.unpack(v:dim())) end):
     table()
   end
-  -- UPDATE_GRADIENTS function
-  local update_gradients = function(gradients)
-    return gradients
-    -- for cname,cnn in pairs(cnn_table) do
-    --   local w,oldw        = cnn:matrix()
-    --   local grad          = gradients[cname]
-    --   local mt  = self:get_option_of(cname, "momentum") or 0.0
-    --   --
-    --   if mt > 0.0 then
-    -- 	local aux = w:clone():axpy(-1.0, oldw)
-    -- 	grad:axpy(mt, aux)
-    --   end
-    --   --
-    -- end
-  end
   -- UPDATE_WEIGHTS function
   local update_weights = function(x, dir, s)
-    for cname,cnn in pairs(x) do
-      local w    = cnn
-      local grad = s[cname]
+    for name,w in pairs(x) do
       -- apply back-propagation learning rule
-      w:axpy(dir, grad)
+      w:axpy(dir, s[name])
     end
   end
   -- APPLY REGULARIZATION AND PENALTIES
   local apply_regularization_and_penalties = function(x)
-    for cname,cnn in pairs(x) do
-      local w = cnn
+    for name,w in pairs(x) do
       -- regularizations
-      ann_optimizer_apply_regularizations(self, cname, w, w)
+      ann_optimizer_apply_regularizations(self, name, w, w)
       -- constraints
-      ann_optimizer_apply_constraints(self, cname, w)
+      ann_optimizer_apply_constraints(self, name, w)
     end
     if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
-      for _,cnn in pairs(x)do cnn:prune_subnormal_and_check_normal()end
+      for _,w in pairs(x) do w:prune_subnormal_and_check_normal() end
     end
   end
   ----------------------------------------------------------------------------
@@ -550,7 +532,7 @@ function cg_methods:execute(eval, cnn_table)
   -- count one more update iteration
   self:count_one()
   
-  local x             = cnn_table
+  local x             = weights
   local rho           = self:get_option("rho")
   local sig           = self:get_option("sig")
   local int           = self:get_option("int")
@@ -584,7 +566,6 @@ function cg_methods:execute(eval, cnn_table)
   -- evaluate at initial point
   local arg = table.pack( eval(i) )
   local tr_loss,gradients = table.unpack(arg)
-  update_gradients(gradients)
   f1 = tr_loss
   table.insert(fx, f1)
   copy(df1,gradients)
@@ -610,7 +591,6 @@ function cg_methods:execute(eval, cnn_table)
 
     arg = table.pack( eval(i) )
     tr_loss,gradients = table.unpack(arg)
-    update_gradients(gradients)
     f2 = tr_loss
     
     copy(df2,gradients)
@@ -641,7 +621,6 @@ function cg_methods:execute(eval, cnn_table)
 	update_weights(x, z2, s)
 	arg = table.pack( eval(i) )
 	tr_loss,gradients = table.unpack(arg)
-	update_gradients(gradients)
 	f2 = tr_loss
 	copy(df2,gradients)
 	i=i+1
@@ -684,7 +663,6 @@ function cg_methods:execute(eval, cnn_table)
       
       arg = table.pack( eval(i) )
       tr_loss,gradients = table.unpack(arg)
-      update_gradients(gradients)
       f2 = tr_loss
       copy(df2, gradients)
       i=i+1
