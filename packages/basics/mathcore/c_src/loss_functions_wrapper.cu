@@ -95,7 +95,7 @@ __global__ void computeMAELossFunctionKernel(const float *output,
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
     float absd = fabsf(output[index] - target_output[index]);
     if (absd < zero_epsilon_distance) absd = 0.0f;
-    pattern_errors[index] = absd / max_y;
+    pattern_errors[index] = absd;
   }
 }
 
