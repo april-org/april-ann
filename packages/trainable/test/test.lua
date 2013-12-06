@@ -1,4 +1,4 @@
-digits_image = ImageIO.read(string.get_path(arg[0]).."digits.png")
+digits_image = ImageIO.read(string.get_path(arg[0]).."../../../EXAMPLES/digits.png")
 m1           = digits_image:to_grayscale():invert_colors():matrix()
 
 -- TRAINING --
@@ -78,30 +78,33 @@ validation_data = {
 
 clock = util.stopwatch()
 clock:go()
-print("# Epoch Training  Validation")
-stopping_criterion = trainable.stopping_criteria.make_max_epochs_wo_imp_relative(2)
+--print("# Epoch Training  Validation")
+-- print("Epoch Training  Validation")
 train_func = trainable.train_holdout_validation{
-  min_epochs = 100,
-  max_epochs = 1000,
-  stopping_criterion = stopping_criterion
+  min_epochs=10,
+  max_epochs = 20,
+  stopping_criterion = trainable.stopping_criteria.make_max_epochs_wo_imp_relative(1.1),
+  tolerance = 0.1,
 }
+-- training loop
 while train_func:execute(function()
 			   local tr = trainer:train_dataset(training_data)
 			   local va = trainer:validate_dataset(validation_data)
 			   return trainer,tr,va
 			 end) do
-  print(train_func:get_state_string())
+  train_func:save("last.net", "ascii")
 end
-best = train_func:get_state_table().best
-best:save("best.net", "ascii")
+clock:stop()
+cpu,wall = clock:read()
+num_epochs = train_func:get_state_table().current_epoch
 clock:stop()
 cpu,wall   = clock:read()
-num_epochs = train_func:get_state_table().current_epoch
+best       = train_func:get_state_table().best
 local val_error,val_variance=best:validate_dataset{
   input_dataset  = val_input,
   output_dataset = val_output,
   loss           = ann.loss.zero_one(10)
 }
-printf("# Wall total time: %.3f    per epoch: %.3f\n", wall, wall/num_epochs)
-printf("# CPU  total time: %.3f    per epoch: %.3f\n", cpu, cpu/num_epochs)
-printf("# Validation error: %f  +-  %f\n", val_error, val_variance)
+--printf("# Wall total time: %.3f    per epoch: %.3f\n", wall, wall/num_epochs)
+--printf("# CPU  total time: %.3f    per epoch: %.3f\n", cpu, cpu/num_epochs)
+--printf("# Validation error: %f  +-  %f\n", val_error, val_variance)

@@ -43,7 +43,7 @@ namespace ANN {
 		      input_mat->getDimSize(1),
 		      input_mat->getDimSize(0),
 		      input_mat->getCudaFlag());
-    loss_output->scal(1.0f/dim);
+    loss_output->scal(1.0f/input_mat->getDimSize(1));
     return loss_output;
   }
 

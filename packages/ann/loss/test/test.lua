@@ -14,7 +14,7 @@ class_extension(matrix,
 function check_loss(i,t,l,f,g)
   if f then
     local e,m = l:compute_loss(tokens.matrix(i),tokens.matrix(t))
-    assert(math.abs(e - f(i,t)/m:size()) < EPSILON)
+    assert(math.abs(e - f(i,t)) < EPSILON)
   end
   if g then
     local ep = l:gradient(tokens.matrix(i),tokens.matrix(t))
@@ -35,7 +35,7 @@ check_loss(matrix.col_major(20,1):uniformf(0,1,random(1234)):log(),
 					   function(x,y)
 					     return (1-y)*(math.log(1-x))
 					   end):sum()
-	     return -a-b
+	     return (-a-b)/20
 	   end,
 	   function(i,t)
 	     return i:clone():exp():axpy(-1, t)
@@ -47,7 +47,7 @@ check_loss(matrix.col_major(20,4):uniformf(0,1,random(1234)):normalize():log(),
 			   { dataset.identity(4) }):toMatrix():clone("col_major"),
 	   ann.loss.multi_class_cross_entropy(4),
 	   function(i,t)
-	     return -i:clone():cmul(t):sum()
+	     return -i:clone():cmul(t):sum()/20
 	   end,
 	   function(i,t)
 	     return i:clone():exp():axpy(-1, t)
@@ -58,7 +58,7 @@ check_loss(matrix.col_major(20,4):uniformf(0,1,random(1234)),
 	   matrix.col_major(20,4):uniform(0,1,random(525)),
 	   ann.loss.mse(4),
 	   function(i,t)
-	     return i:clone():axpy(-1,t):pow(2):sum()*0.5
+	     return i:clone():axpy(-1,t):pow(2):sum()*0.5/20
 	   end,
 	   function(i,t)
 	     return i:clone():axpy(-1, t)
@@ -69,7 +69,7 @@ check_loss(matrix.col_major(20,4):uniformf(0,1,random(1234)),
 	   matrix.col_major(20,4):uniform(0,1,random(525)),
 	   ann.loss.mae(4),
 	   function(i,t)
-	     return i:clone():axpy(-1,t):abs():sum()/20
+	     return i:clone():axpy(-1,t):abs():sum()/20/4
 	   end)
 
 -- ZERO-ONE
@@ -84,5 +84,5 @@ check_loss(matrix.col_major(20,4):uniformf(0,1,random(1234)),
 	       if j ~= t:get(idx,1) then errors = errors + 1 end
 	       idx = idx + 1
 	     end
-	     return errors
+	     return errors/20
 	   end)
