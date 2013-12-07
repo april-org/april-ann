@@ -451,6 +451,25 @@ using namespace ANN;
 }
 //BIND_END
 
+//BIND_METHOD ANNComponent precompute_output_size
+{
+  vector<unsigned int> input_size, output_size;
+  LUABIND_CHECK_ARGN(<=,1);
+  int argn = lua_gettop(L);
+  if (argn == 0) input_size.push_back(0);
+  else {  
+    int n;
+    LUABIND_TABLE_GETN(1, n);
+    input_size.resize(n);
+    LUABIND_TABLE_TO_VECTOR(1, uint, input_size, n);
+  }
+  obj->precomputeOutputSize(input_size, output_size);
+  LUABIND_FORWARD_CONTAINER_TO_NEW_TABLE(vector<unsigned int>,
+					 uint, output_size);
+  LUABIND_RETURN_FROM_STACK(-1);
+}
+//BIND_END
+
 //BIND_METHOD ANNComponent forward
 {
   Token *input;
