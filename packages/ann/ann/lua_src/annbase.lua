@@ -155,9 +155,7 @@ april_set_doc("ann.mlp.all_all.save",
 	      })
 
 function ann.mlp.all_all.save(model, filename, mode, old)
-  if type(model) ~= "table" or not model.description then
-    error ("Incorrect ANN mode!!!")
-  end
+  if not model.description then error ("Incorrect ANN mode!!!") end
   local mode = mode or "binary"
   local old  = old or "old"
   local weights_table = model:copy_weights()
@@ -172,12 +170,12 @@ function ann.mlp.all_all.save(model, filename, mode, old)
     local bias    = weights_table[bname]
     local weights = weights_table[wname]
     local colsize = weights:get_input_size() + 1
-    bias:weights{
+    bias:load{
       w           = wmatrix,
       oldw        = oldwmatrix,
       first_pos   = pos,
       column_size = colsize }
-    _,_,pos = weights:weights{
+    pos = weights:load{
       w           = wmatrix,
       oldw        = oldwmatrix,
       first_pos   = pos + 1,
