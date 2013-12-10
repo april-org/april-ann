@@ -114,6 +114,10 @@ function ann.mlp.all_all.generate(topology, first_count, names_prefix)
     count = count + 1
     prev_size = size
   end
+  local aux = get_lua_properties_table(thenet)
+  aux.description  = topology
+  aux.first_count  = first_count
+  aux.names_prefix = names_prefix
   return thenet
 end
 
