@@ -1,13 +1,28 @@
 local COLWIDTH=70
 
+------------------------------------------------------------------------------
+
 local LUA_BIND_CPP_PROPERTIES = {}
 setmetatable(LUA_BIND_CPP_PROPERTIES, { mode='k' }) -- table with weak keys
+
+function has_lua_properties_table(obj)
+  assert(luatype(obj)=="userdata", "This functions only works with userdata")
+  return LUA_BIND_CPP_PROPERTIES[obj]
+end
 
 function get_lua_properties_table(obj)
   assert(luatype(obj)=="userdata", "This functions only works with userdata")
   LUA_BIND_CPP_PROPERTIES[obj] = LUA_BIND_CPP_PROPERTIES[obj] or {}
   return LUA_BIND_CPP_PROPERTIES[obj]
 end
+
+function set_lua_properties_table(obj, t)
+  assert(luatype(obj)=="userdata", "This functions only works with userdata")
+  LUA_BIND_CPP_PROPERTIES[obj] = t
+  return obj
+end
+
+------------------------------------------------------------------------------
 
 function class_get(class_table, key)
   if class_table.meta_instance and
