@@ -110,6 +110,15 @@ namespace ANN {
     virtual Token *getOutput() { return output; }
     virtual Token *getErrorInput() { return error_input; }
     virtual Token *getErrorOutput() { return error_output; }
+    virtual void precomputeOutputSize(const vector<unsigned int> &input_size,
+				      vector<unsigned int> &output_size) {
+      output_size.clear();
+      output_size.push_back(hidden_size);
+      for (int i=1; i<input_planes_dim; ++i)
+	output_size.push_back((input_size[i-1]-kernel_dims[i])/kernel_step[i]+1);
+      for (int i=input_planes_dim+1; i<=input_num_dims; ++i)
+	output_size.push_back((input_size[i-1]-kernel_dims[i])/kernel_step[i]+1);
+    }
     virtual Token *doForward(Token* input, bool during_training);
     virtual Token *doBackprop(Token *input_error);
     virtual void   reset();

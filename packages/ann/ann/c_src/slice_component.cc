@@ -27,12 +27,18 @@
 #include "wrapper.h"
 
 namespace ANN {
+
+  unsigned int mult(const int *v, int n) {
+    int m = 1;
+    for (int i=0; i<n; ++i) m *= v[i];
+    return m;
+  }
   
   SliceANNComponent::SliceANNComponent(const int *slice_offset,
 				       const int *slice_size,
 				       int n,
 				       const char *name) :
-    ANNComponent(name, 0, 0, 0),
+    ANNComponent(name, 0, 0, mult(slice_size, n)),
     slice_offset(new int[n+1]),
     slice_size(new int[n+1]),
     n(n+1),
