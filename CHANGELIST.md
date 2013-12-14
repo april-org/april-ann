@@ -6,6 +6,7 @@ Master branch release
 
 ### Unstable changes
 
+- Added method `precompute_output_size` in ANN components.
 - Added `ann.autoencoders.ae` class, in order to factorize the SDAE code.
 - Added `trainable.train_wo_validation` class, which in the future will
   replace current `trainable.supervised_trainer:train_wo_validation`

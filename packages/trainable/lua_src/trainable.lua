@@ -417,7 +417,7 @@ function trainable.supervised_trainer.load(filename, loss, bunch_size, optimizer
   local obj = f() or error("Impossible to load chunk from file " .. filename)
   if type(obj) == "table" then
     -- OLD FORMAT LOADER
-    obj = trainable.supervised_trainer(obj, loss, bunch_size, optimizer)
+    obj = trainable.supervised_trainer(obj)
   end
   obj.bunch_size    = bunch_size or obj.bunch_size
   obj.loss_function = loss       or obj.loss_function
