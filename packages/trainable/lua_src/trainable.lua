@@ -750,8 +750,8 @@ april_set_doc("trainable.supervised_trainer.train_step", {
 function trainable_supervised_trainer_methods:train_step(input, target, loss,
 							 optimizer,
 							 smooth_gradients)
-  if type(input)  == "table" then input  = tokens.matrix(matrix.col_major(input))  end
-  if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
+  if type(input)  == "table" then input  = matrix.col_major(input)  end
+  if type(target) == "table" then target = matrix.col_major(target) end
   local loss      = loss or self.loss_function
   local optimizer = optimizer or self.optimizer
   local smooth_gradients = smooth_gradients or self.smooth_gradients
@@ -813,8 +813,8 @@ april_set_doc("trainable.supervised_trainer.validate_step", {
 		} })
 
 function trainable_supervised_trainer_methods:validate_step(input, target, loss)
-  if type(input)  == "table" then input  = tokens.matrix(matrix.col_major(input))  end
-  if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
+  if type(input)  == "table" then input  = matrix.col_major(input)  end
+  if type(target) == "table" then target = matrix.col_major(target) end
   local loss = loss or self.loss_function
   self.ann_component:reset()
   local output   = self.ann_component:forward(input)
@@ -846,8 +846,8 @@ function trainable_supervised_trainer_methods:compute_gradients_step(input,
 								     target,
 								     loss,
 								     weight_grads)
-  if type(input)  == "table" then input  = tokens.matrix(matrix.col_major(input))  end
-  if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
+  if type(input)  == "table" then input  = matrix.col_major(input)  end
+  if type(target) == "table" then target = matrix.col_major(target) end
   local loss         = loss or self.loss_function
   local weight_grads = weight_grads or {}
   local tr_loss,tr_loss_matrix,gradient
@@ -883,8 +883,8 @@ april_set_doc("trainable.supervised_trainer.grad_check_step", {
 		} })
 
 function trainable_supervised_trainer_methods:grad_check_step(input, target, verbose, loss)
-  if type(input)  == "table" then input  = tokens.matrix(matrix.col_major(input))  end
-  if type(target) == "table" then target = tokens.matrix(matrix.col_major(target)) end
+  if type(input)  == "table" then input  = matrix.col_major(input)  end
+  if type(target) == "table" then target = matrix.col_major(target) end
   local loss = loss or self.loss_function
   self.ann_component:reset()
   loss:reset()
@@ -958,9 +958,7 @@ april_set_doc("trainable.supervised_trainer.calculate", {
 		} })
 
 function trainable_supervised_trainer_methods:calculate(input)
-  if type(input) == "table" then input = tokens.matrix(matrix.col_major(input))
-  elseif isa(input, matrix) then input = tokens.matrix(input)
-  end
+  if type(input) == "table" then input = matrix.col_major(input) end
   self.ann_component:reset()
   return self.ann_component:forward(input):get_matrix()
 end

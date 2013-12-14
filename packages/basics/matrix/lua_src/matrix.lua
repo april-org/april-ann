@@ -25,6 +25,9 @@ matrix.meta_instance.__call = function(self,...)
     elseif tt == "string" then
       a = t:match("^(%d+)%:.*$") or 1
       b = t:match("^.*%:(%d+)$") or dims[i]
+    elseif tt == "number" then
+      a = tonumber(t)
+      b = a
     else
       error("The argument " .. i .. " is not a table neither a string")
     end

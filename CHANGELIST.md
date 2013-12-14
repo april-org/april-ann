@@ -6,6 +6,8 @@ Master branch release
 
 ### Unstable changes
 
+- Simplified coupling between ANN components, ANN loss functions, introducing
+  automatic binding between MatrixFloat and TokenMatrixFloat.
 _ Gradients smoothing, based on weights sharing and `bunch_size`, is applied by
   `trainable.supervised_trainer` objects, not by the `optimizer`.
 - `update` property is added to `ann.optimizers.sgd` object in order to compute

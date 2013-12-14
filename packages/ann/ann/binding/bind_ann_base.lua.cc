@@ -398,12 +398,14 @@ using namespace ANN;
   bool during_training;
   LUABIND_CHECK_ARGN(>=, 1);
   LUABIND_CHECK_ARGN(<=, 2);
-  LUABIND_GET_PARAMETER(1, Token, input);
+  LUABIND_GET_PARAMETER(1, AuxToken, input);
   LUABIND_GET_OPTIONAL_PARAMETER(2, bool, during_training, false);
+  IncRef(input);
   bool rewrapped = rewrapToAtLeastDim2(input);
   Token *output = obj->doForward(input, during_training);
   if (rewrapped) unwrapToDim1(output);
   LUABIND_RETURN(Token, output);
+  DecRef(input);
 }
 //BIND_END
 
@@ -411,7 +413,8 @@ using namespace ANN;
 {
   Token *input;
   LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_GET_PARAMETER(1, Token, input);
+  LUABIND_GET_PARAMETER(1, AuxToken, input);
+  IncRef(input);
   bool rewrapped = rewrapToAtLeastDim2(input);
   Token *gradient = obj->doBackprop(input);
   if (gradient != 0) {
@@ -419,6 +422,7 @@ using namespace ANN;
     LUABIND_RETURN(Token, gradient);
   }
   else LUABIND_RETURN_NIL();
+  DecRef(input);
 }
 //BIND_END
 

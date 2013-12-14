@@ -55,6 +55,24 @@ int token_sparse_iterator_function(lua_State *L) {
   return 2;
 }
 
+#include "matrixFloat.h"
+#include "bind_matrix.h"
+
+bool lua_isAuxToken(lua_State *L, int n) {
+  return lua_isMatrixFloat(L,n) || lua_isToken(L,n);
+}
+
+// Be careful, this function returns an object which needs to call IncRef and
+// DecRef ALWAYS, even if the receives is not getting the property. Otherwise, a
+// memory leak will exists.
+Token *lua_toAuxToken(lua_State *L, int n) {
+  if (lua_isMatrixFloat(L, n)) {
+    MatrixFloat *mat = lua_toMatrixFloat(L,n);
+    return new TokenMatrixFloat(mat);
+  }
+  return lua_toToken(L,n);
+}
+
 //BIND_END
 
 //BIND_HEADER_H
@@ -62,6 +80,9 @@ int token_sparse_iterator_function(lua_State *L) {
 #include "token_memory_block.h"
 #include "token_matrix.h"
 #include "token_vector.h"
+
+bool lua_isAuxToken(lua_State *L, int n);
+Token *lua_toAuxToken(lua_State *L, int n);
 //BIND_END
 
 //BIND_LUACLASSNAME Token tokens.base

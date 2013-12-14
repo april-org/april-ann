@@ -24,8 +24,8 @@ function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
     apply(function(m) m:scal(1/m:sum()) end,
 	  target:sliding_window():iterate())
   end
-  result = trainer:grad_check_step(tokens.matrix(input),
-				   tokens.matrix(target),
+  result = trainer:grad_check_step(input,
+				   target,
 				   verbose)
   if not result then
     print("---- INPUT ----")
