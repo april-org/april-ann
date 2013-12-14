@@ -471,11 +471,15 @@ void Matrix<float>::gemm(CBLAS_TRANSPOSE trans_A,
     lda = otherA->stride[0];
     ldb = otherB->stride[0];
     ldc = stride[0];
+    if (otherA->stride[1] != 1 || otherB->stride[1] != 1 || stride[1] != 1)
+      ERROR_EXIT(128, "Contiguous matrices are needed\n");
   }
   else {
     lda = otherA->stride[1];
     ldb = otherB->stride[1];
     ldc = stride[1];
+    if (otherA->stride[0] != 1 || otherB->stride[0] != 1 || stride[0] != 1)
+      ERROR_EXIT(128, "Contiguous matrices are needed\n");
   }
   doGemm(major_order, trans_A, trans_B,
 	 M, N, K,
