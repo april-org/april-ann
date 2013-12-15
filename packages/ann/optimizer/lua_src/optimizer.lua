@@ -360,6 +360,7 @@ function rprop_methods:execute(eval, weights)
 				       eta_minus,
 				       eta_plus)
       end
+      steps[name]:clamp(min_step, max_step)
       w:axpy(-1.0, sign:cmul(steps[name]))
       -- keep the sign for the next iteration
       old_sign[name] = sign
@@ -757,6 +758,131 @@ function cg_methods:to_lua_string(format)
 		  table.tostring(self.layerwise_options),
 		  ",",
 		  tostring(self.count),
+		  ")" }
+  return table.concat(str_t, "")
+end
+
+------------------------------
+--------- QUICKPROP ----------
+------------------------------
+
+local quickprop_methods, quickprop_class_metatable = class("ann.optimizer.quickprop",
+					       ann.optimizer)
+
+function quickprop_class_metatable:__call(g_options, l_options, count,
+					  update, lastg)
+  -- the base optimizer, with the supported learning parameters
+  local obj = ann.optimizer({
+			      {"learning_rate", "Learning speed factor (0.1)"},
+			      {"mu", "Maximum growth factor (1.75)"},
+			      {"epsilon", "Bootstrap factor (1e-04)"},
+			      {"max_step", "Maximum step value (1000)"},
+			    },
+			    g_options,
+			    l_options,
+			    count)
+  obj:set_option("mu", 1.75)
+  obj:set_option("epsilon", 1e-04)
+  obj:set_option("max_step", 1000)
+  obj.update = update or { }
+  obj.lastg  = lastg  or { }
+  obj = class_instance(obj, self)
+  -- standard regularization and constraints
+  obj:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
+  obj:add_regularization("L1_norm", nil, "Weight L1 regularization (1e-05)")
+  obj:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
+  return obj
+end
+
+function quickprop_methods:execute(eval, weights)
+  if type(weights) ~= "table" then weights = { weights } end
+  local arg = table.pack( eval() )
+  local tr_loss,gradients = table.unpack(arg)
+  -- the gradient computation could fail returning nil, it is important to take
+  -- this into account
+  if not gradients then return nil end
+  for name,w in pairs(weights) do
+    local update      = self.update[name]
+    local lastg       = self.lastg[name]
+    local grad        = gradients[name]
+    local lr          = assert(self:get_option_of(name, "learning_rate"),
+		 	      "The learning_rate parameter needs to be set")
+    local mu          = self:get_option_of(name, "mu")
+    local epsilon     = self:get_option_of(name, "epsilon")
+    local max_step    = self:get_option_of(name, "max_step")
+    if not update then
+      -- compute standard back-propagation learning rule
+      update = w:clone()
+      lastg  = grad:clone()
+      update:copy(grad):scal(-1.0)
+    else
+      local shrink = mu / (1.0 + mu)
+      -- compute quickprop update
+      update:map(lastg, grad,
+		 function(prev_step, prev_slope, slope)
+		   local step = 0
+		   if math.abs(prev_step) > 1e-03 then
+		     if math.sign(slope) == math.sign(prev_step) then
+		       step = step + epsilon * slope
+		     end
+		     if ( (prev_step  > 0 and slope > shrink*prev_slope) or
+			  (prev_slope < 0 and slope < shrink*prev_slope) ) then
+		       step = step + mu * prev_step
+		     else
+		       step = step + -(prev_step*slope) / (prev_slope - slope)
+		     end
+		   else
+		     step = step + epsilon * slope
+		   end
+		   if step > max_step or step < -max_step then
+		     step = math.sign(step) * max_step
+		   end
+		   return step
+		 end)
+      lastg:copy(grad)
+    end
+    --
+    self.update[name] = update
+    self.lastg[name]  = lastg
+    -- regularizations
+    ann_optimizer_apply_regularizations(self, name, update, w)
+    -- apply update matrix to the weights
+    w:axpy(lr, update)
+    -- constraints
+    ann_optimizer_apply_constraints(self, name, w)
+    --
+    if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
+      w:prune_subnormal_and_check_normal()
+    end
+  end
+  -- count one more update iteration
+  self:count_one()
+  -- returns the same as returned by eval()
+  return table.unpack(arg)
+end
+
+function quickprop_methods:clone()
+  local obj = ann.optimizer.quickprop()
+  obj.count             = self.count
+  obj.layerwise_options = table.deep_copy(self.layerwise_options)
+  obj.global_options    = table.deep_copy(self.global_options)
+  obj.update            = table.map(self.update,function(m)return m:clone()end)
+  obj.lastg             = table.map(self.lastg,function(m)return m:clone()end)
+  return obj
+end
+
+function quickprop_methods:to_lua_string(format)
+  local format = format or "binary"
+  local str_t = { "ann.optimizer.quickprop(",
+		  table.tostring(self.global_options),
+		  ",",
+		  table.tostring(self.layerwise_options),
+		  ",",
+		  tostring(self.count),
+		  ",",
+		  table.tostring(self.update, format),
+		  ",",
+		  table.tostring(self.lastg, format),
 		  ")" }
   return table.concat(str_t, "")
 end

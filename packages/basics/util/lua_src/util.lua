@@ -979,6 +979,12 @@ function math.std(t, ini, fin)
   return math.sqrt(suma_sqr/(total-1)),total
 end
 
+-- computes the sign of a number
+function math.sign(v)
+  return (v>0 and 1) or (v<0 and -1) or 0
+end
+
+
 ---------------------------------------------------------------
 ------------------------ STRING UTILS -------------------------
 ---------------------------------------------------------------
