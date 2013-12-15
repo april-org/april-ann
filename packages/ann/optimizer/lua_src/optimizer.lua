@@ -250,7 +250,7 @@ function sgd_methods:execute(eval, weights)
     local update      = self.update[name] or w:clone():zeros()
     local grad        = gradients[name]
     local lr          = assert(self:get_option_of(name, "learning_rate"),
-		 	      "The learning_rate parameter needs to be set")
+			       "The learning_rate parameter needs to be set")
     local mt          = self:get_option_of(name, "momentum")     or 0.0
     --
     ann_optimizer_apply_momentum(mt, update)
@@ -767,7 +767,7 @@ end
 ------------------------------
 
 local quickprop_methods, quickprop_class_metatable = class("ann.optimizer.quickprop",
-					       ann.optimizer)
+							   ann.optimizer)
 
 function quickprop_class_metatable:__call(g_options, l_options, count,
 					  update, lastg)
@@ -806,7 +806,7 @@ function quickprop_methods:execute(eval, weights)
     local lastg       = self.lastg[name]
     local grad        = gradients[name]
     local lr          = assert(self:get_option_of(name, "learning_rate"),
-		 	      "The learning_rate parameter needs to be set")
+			       "The learning_rate parameter needs to be set")
     local mu          = self:get_option_of(name, "mu")
     local epsilon     = self:get_option_of(name, "epsilon")
     local max_step    = self:get_option_of(name, "max_step")
@@ -814,28 +814,29 @@ function quickprop_methods:execute(eval, weights)
       -- compute standard back-propagation learning rule
       update = w:clone()
       lastg  = grad:clone()
-      update:copy(grad):scal(-1.0)
+      update:copy(grad)
     else
       local shrink = mu / (1.0 + mu)
       -- compute quickprop update
       update:map(lastg, grad,
 		 function(prev_step, prev_slope, slope)
-		   local step = 0
+		   local step=0
 		   if math.abs(prev_step) > 1e-03 then
 		     if math.sign(slope) == math.sign(prev_step) then
 		       step = step + epsilon * slope
 		     end
-		     if ( (prev_step  > 0 and slope > shrink*prev_slope) or
-			  (prev_slope < 0 and slope < shrink*prev_slope) ) then
+		     if ( (prev_step > 0 and slope > shrink*prev_slope) or
+		     	  (prev_step < 0 and slope < shrink*prev_slope) ) then
 		       step = step + mu * prev_step
 		     else
-		       step = step + -(prev_step*slope) / (prev_slope - slope)
+		       step = step + (prev_step*slope) / (prev_slope - slope)
 		     end
 		   else
 		     step = step + epsilon * slope
 		   end
-		   if step > max_step or step < -max_step then
-		     step = math.sign(step) * max_step
+		   if step > max_step then step = max_step
+		   elseif step < -max_step then
+		     step = -max_step
 		   end
 		   return step
 		 end)
@@ -847,7 +848,7 @@ function quickprop_methods:execute(eval, weights)
     -- regularizations
     ann_optimizer_apply_regularizations(self, name, update, w)
     -- apply update matrix to the weights
-    w:axpy(lr, update)
+    w:axpy(-lr, update)
     -- constraints
     ann_optimizer_apply_constraints(self, name, w)
     --

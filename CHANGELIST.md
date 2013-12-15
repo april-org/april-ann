@@ -6,6 +6,7 @@ Master branch release
 
 ### Unstable changes
 
+- Added `ann.optimizer.quickprop` algorithm, but stills untested.
 - Simplified coupling between ANN components, ANN loss functions, introducing
   automatic binding between MatrixFloat and TokenMatrixFloat.
 - Gradients smoothing, based on weights sharing and `bunch_size`, is applied by
