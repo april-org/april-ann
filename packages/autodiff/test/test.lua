@@ -1,17 +1,20 @@
 local AD   = autodiff
 local op   = AD.op
 local func = AD.func
-local a,b  = AD.scalar('a b')
+local a,b  = AD.matrix('a b')
 
-c = a * b
+weights = {
+  b = matrix.col_major(3,4):linear()
+}
 
-cf = func(c, {a}, {b=2})
-print( cf(3) )
+c = a * op.transpose(b)
 
-dc_db = c:diff(a)
+---------------------------------------------------
 
-print(dc_db)
+f = func(c, {a}, weights)
+print( f(matrix.col_major(2,4):linear(4)) )
 
-f = func(dc_db, {a,b})
+---------------------------------------------------
 
-print(f(4,5))
+df_db = func( c:diff(b), {a}, weights )
+print( df_db(matrix.col_major(2,4):linear(4)) )

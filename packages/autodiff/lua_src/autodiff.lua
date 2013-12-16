@@ -1,10 +1,21 @@
 autodiff    = autodiff or {}
 autodiff.op = autodiff.op or {}
 
+------------------------------------------------------------------------------
+
 local CONSTANT = 'constant'
 local SCALAR   = 'scalar'
+local MATRIX   = 'matrix'
+
+------------------------------------------------------------------------------
 
 local SYMBOLS = {}
+
+local infer_table = {
+  [CONSTANT] = { [CONSTANT]=CONSTANT, [SCALAR]=SCALAR, [MATRIX]=MATRIX },
+  [SCALAR]   = { [CONSTANT]=SCALAR,   [SCALAR]=SCALAR, [MATRIX]=MATRIX },
+  [MATRIX]   = { [CONSTANT]=MATRIX,   [SCALAR]=MATRIX, [MATRIX]=MATRIX },
+}
 
 local function infer(...)
   local arg = table.pack(...)
@@ -15,9 +26,11 @@ local function infer(...)
     dtype = arg[1].dtype
   end
   for i=2,#arg do
-    local argi_dtype = SCALAR
-    if type(arg[i]) == "number" then arg[i] = CONSTANT end
-    if argi_dtype == SCALAR then dtype = SCALAR end
+    local argi_dtype
+    if type(arg[i]) == "number" then argi_dtype = CONSTANT
+    else argi_dtype = arg[i].dtype
+    end
+    dtype = infer_table[dtype][argi_dtype]
   end
   return dtype
 end
@@ -70,6 +83,8 @@ local function op(name, dtype, args, eval, diff)
   return s
 end
 
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
 function autodiff.clear()
@@ -317,3 +332,185 @@ autodiff.op[SCALAR] = {
   end,
 
 }
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+-- MATRIXS
+
+autodiff[MATRIX] = function(names)
+  local t = table.pack(autodiff.symbol(names, MATRIX))
+  for i=1,#t do
+    t[i].diff = function(self, target)
+      local tname = (type(target)=="string" and target) or target.name
+      if tname == self.name then
+	return autodiff.constant(1)
+      else 
+	return autodiff.constant(0)
+      end
+    end
+  end
+  return table.unpack(t)
+end
+
+-- CONSTANT OPERATIONS
+
+autodiff.op[MATRIX] = {
+  
+  add = function(a,b)
+    local a,b = coercion(a),coercion(b)
+    local s = op('add', MATRIX, {a,b},
+		 function(self, ...)
+		   local a = self.args[1]:eval(...)
+		   local b = self.args[2]:eval(...)
+		   return a + b
+		 end,
+		 function(self, target)
+		   if self.name == target then return autodiff.constant(1) end
+		   local da = self.args[1]:diff(target)
+		   local db = self.args[2]:diff(target)
+		   return da + db
+		 end)
+    return s
+  end,
+  
+  sub = function(a,b)
+    local a,b = coercion(a),coercion(b)
+    return a + (-1 * b)
+  end,
+
+  mul = function(a,b)
+    local a,b = coercion(a),coercion(b)
+    local s = op('mul', MATRIX, {a,b},
+		 function(self, ...)
+		   local a = self.args[1]:eval(...)
+		   local b = self.args[2]:eval(...)
+		   if a == 0 or b == 0 then return 0 end
+		   return a * b
+		 end,
+		 function(self, target)
+		   if self.name == target then return autodiff.constant(1) end
+		   local a,b = self.args[1],self.args[2]
+		   local da,db = a:diff(target),b:diff(target)
+		   return a*db + da*b
+		 end)
+    return s
+  end,
+  
+  div = function(a,b)
+    local a,b = coercion(a),coercion(b)
+    return a * (b^(-1))
+  end,
+
+  pow = function(a,b)
+    local a,b = coercion(a),coercion(b)
+    local s = op('pow', MATRIX, {a,b},
+		 function(self, ...)
+		   local a = self.args[1]:eval(...)
+		   local b = self.args[2]:eval(...)
+		   return a^b
+		 end,
+		 function(self, target)
+		   if self.name == target then return autodiff.constant(1) end
+		   local a,b = self.args[1],self.args[2]
+		   local da  = a:diff(target)
+		   return b * (a^(b-1)) * da
+		 end)
+    return s
+  end,
+  
+  unm = function(a)
+    local a = coercion(a)
+    return (-1) * a
+  end,
+
+  log = function(a)
+    local a = coercion(a)
+    local s = op('log', MATRIX, {a},
+		 function(self, ...)
+		   local a = self.args[1]:eval(...)
+		   return math.log(a)
+		 end,
+		 function(self, target)
+		   if self.name == target then return autodiff.constant(1) end
+		   local a  = self.args[1]
+		   local da = a:diff(target)
+		   return 1/a * da
+		 end)
+    return s
+  end,
+
+  exp = function(a)
+    local a = coercion(a)
+    local s = op('exp', MATRIX, {a},
+		 function(self, ...)
+		   local a = self.args[1]:eval(...)
+		   return math.exp(a)
+		 end,
+		 function(self, target)
+		   if self.name == target then return autodiff.constant(1) end
+		   local a  = self.args[1]
+		   local da = a:diff(target)
+		   return autodiff.op.exp(a) * da
+		 end)
+    return s
+  end,
+
+  cos = function(a)
+    local a = coercion(a)
+    local s = op('cos', MATRIX, {a},
+		 function(self, ...)
+		   local a = self.args[1]:eval(...)
+		   return math.cos(a)
+		 end,
+		 function(self, target)
+		   if self.name == target then return autodiff.constant(1) end
+		   local a  = self.args[1]
+		   local da = a:diff(target)
+		   return autodiff.op.sin(a) * da
+		 end)
+    return s
+  end,
+
+  sin = function(a)
+    local a = coercion(a)
+    local s = op('sin', MATRIX, {a},
+		 function(self, ...)
+		   local a = self.args[1]:eval(...)
+		   return math.sin(a)
+		 end,
+		 function(self, target)
+		   if self.name == target then return autodiff.constant(1) end
+		   local a  = self.args[1]
+		   local da = a:diff(target)
+		   return autodiff.op.cos(a) * da
+		 end)
+    return s
+  end,
+
+  transpose = function(a)
+    local a = coercion(a)
+    local s = op('T', MATRIX, {a},
+		 function(self, ...)
+		   local a = self.args[1]:eval(...)
+		   return a:transpose()
+		 end,
+		 function(self, target)
+		   if self.name == target then return autodiff.constant(1) end
+		   local a  = self.args[1]
+		   local da = a:diff(target)
+		   if da.dtype == MATRIX then
+		     return autodiff.op.transpose(da)
+		   else
+		     return da
+		   end
+		 end)
+    return s
+  end
+
+}
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
