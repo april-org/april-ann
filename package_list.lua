@@ -12,6 +12,7 @@ return {
   "gzio",
   "matlab",
   "stats.MI",
+  "autodiff",
   
   -- MACHINE LEARNING
   "trainable",

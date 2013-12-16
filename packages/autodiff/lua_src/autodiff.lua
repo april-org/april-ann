@@ -1,5 +1,5 @@
-AD    = AD or {}
-AD.op = AD.op or {}
+autodiff    = autodiff or {}
+autodiff.op = autodiff.op or {}
 
 local CONSTANT = 'constant'
 local SCALAR   = 'scalar'
@@ -24,12 +24,12 @@ end
 
 local symbol_mt = {
   __call = function(s,...) return s:eval(...) end,
-  __add  = function(a,b) return AD.op[ infer(a,b) ].add(a,b) end,
-  __sub  = function(a,b) return AD.op[ infer(a,b) ].sub(a,b) end,
-  __mul  = function(a,b) return AD.op[ infer(a,b) ].mul(a,b) end,
-  __div  = function(a,b) return AD.op[ infer(a,b) ].div(a,b) end,
-  __unm  = function(a)   return AD.op[ infer(a) ].unm(a)     end,
-  __pow  = function(a,b) return AD.op[ infer(a,b) ].pow(a,b) end,
+  __add  = function(a,b) return autodiff.op[ infer(a,b) ].add(a,b) end,
+  __sub  = function(a,b) return autodiff.op[ infer(a,b) ].sub(a,b) end,
+  __mul  = function(a,b) return autodiff.op[ infer(a,b) ].mul(a,b) end,
+  __div  = function(a,b) return autodiff.op[ infer(a,b) ].div(a,b) end,
+  __unm  = function(a)   return autodiff.op[ infer(a) ].unm(a)     end,
+  __pow  = function(a,b) return autodiff.op[ infer(a,b) ].pow(a,b) end,
   __tostring = function(s) return s.name end,
 }
 
@@ -40,6 +40,10 @@ local function symbol(name,dtype)
     t = {
       name  = name,
       dtype = dtype,
+      issymbol = true,
+      eval = function(self,values)
+	return assert(values[self.name], "Undefined value " .. self.name)
+      end
     }
     SYMBOLS[name] = t
     setmetatable(t, symbol_mt)
@@ -60,43 +64,54 @@ local function op(name, dtype, args, eval, diff)
     cache[self.name] = v
     return v
   end
+  s.diff = function(self, target)
+    return diff(self, (type(target)=="string" and target) or target.name)
+  end
   return s
 end
 
 -----------------------------------------------------------------------------
 
-function AD.clear()
-  SYMBOLS = { }
+function autodiff.clear()
+  SYMBOLS = {}
 end
 
-function AD.symbol(names,dtype)
+function autodiff.symbol(names,dtype)
   local result = iterator(names:gmatch("[^%s]+")):
   map(function(name) return symbol(name,dtype) end):table()
   return table.unpack(result)
 end
 
-function AD.func(s,...)
-  local arg = table.pack(...)
+function autodiff.func(s,args,shared_values)
+  local args,shared_values = args or {},shared_values or {}
+  for i,s in ipairs(args) do
+    assert(type(s)=="table" and s.issymbol,
+	   "Argument " .. i .. " is not a symbol")
+  end
+  for name,_ in pairs(shared_values) do
+    assert(SYMBOLS[name], "Undefined symbol " .. name)
+  end
   return function(...)
-    local arg2 = table.pack(...)
-    assert(#arg == #arg2,
+    local args2 = table.pack(...)
+    assert(#args == #args2,
 	   string.format("Incorrect number of arguments, expected %d, found %d\n",
-			 #arg, #arg2))
-    return s:eval( iterator(ipairs(arg)):
-		   map(function(k,v) return v.name,arg2[k] end):
-		   table() )
+			 #args, #args2))
+    local values = iterator(ipairs(args)):
+    map(function(k,v) return v.name,args2[k] end):table()
+    for k,v in pairs(shared_values) do values[k] = v end
+    return s:eval(values)
   end
 end
 
-setmetatable(AD.op,
+setmetatable(autodiff.op,
 	     {
 	       __index = function(s,key)
 		 return rawget(s,key) or
 		   function(...)
 		     local dtype = infer(...)
-		     local t = assert(AD.op[dtype],
+		     local t = assert(autodiff.op[dtype],
 				      "Incorrect type " .. dtype)
-		     local t = assert(AD.op[dtype][key],
+		     local t = assert(autodiff.op[dtype][key],
 				      "Operation: " .. key .. " not implemented for type: " .. dtype)
 		     return t(...)
 		   end
@@ -109,14 +124,14 @@ setmetatable(AD.op,
 
 -- CONSTANTS
 
-AD.constant = function(...)
+autodiff.constant = function(...)
   local arg = table.pack(...)
   local result = {}
   for _,value in ipairs(arg) do
-    local s = AD.symbol(tostring(value), CONSTANT)
+    local s = autodiff.symbol(tostring(value), CONSTANT)
     s.value = value
     s.eval  = function(self) return self.value end
-    s.diff  = function(self) return AD.constant( 0 ) end
+    s.diff  = function(self) return autodiff.constant( 0 ) end
     table.insert(result, s)
   end
   return table.unpack(result)
@@ -125,24 +140,24 @@ end
 -- CONSTANT OPERATIONS
 
 local function coercion(a)
-  if type(a) == "number" then return AD.constant(a)
+  if type(a) == "number" then return autodiff.constant(a)
   else return a
   end
 end
 
-AD.op[CONSTANT] = {
+autodiff.op[CONSTANT] = {
   
-  add = function(a,b) local a,b=coercion(a),coercion(b) return AD.constant( a() + b() ) end,
-  sub = function(a,b) local a,b=coercion(a),coercion(b) return AD.constant( a() - b() ) end,
-  pow = function(a,b) local a,b=coercion(a),coercion(b) return AD.constant( a() ^ b() ) end,
-  unm = function(a)   local a=coercion(a) return AD.constant( - a() )     end,
-  mul = function(a,b) local a,b=coercion(a),coercion(b) return AD.constant( a() * b() ) end,
-  div = function(a,b) local a,b=coercion(a),coercion(b) return AD.constant( a() / b() ) end,
+  add = function(a,b) local a,b=coercion(a),coercion(b) return autodiff.constant( a() + b() ) end,
+  sub = function(a,b) local a,b=coercion(a),coercion(b) return autodiff.constant( a() - b() ) end,
+  pow = function(a,b) local a,b=coercion(a),coercion(b) return autodiff.constant( a() ^ b() ) end,
+  unm = function(a)   local a=coercion(a) return autodiff.constant( - a() )     end,
+  mul = function(a,b) local a,b=coercion(a),coercion(b) return autodiff.constant( a() * b() ) end,
+  div = function(a,b) local a,b=coercion(a),coercion(b) return autodiff.constant( a() / b() ) end,
 
-  log = function(a) local a=coercion(a) return AD.constant( math.log( a() ) ) end,
-  exp = function(a) local a=coercion(a) return AD.constant( math.exp( a() ) ) end,
-  sin = function(a) local a=coercion(a) return AD.constant( math.sin( a() ) ) end,
-  cos = function(a) local a=coercion(a) return AD.constant( math.cos( a() ) ) end,
+  log = function(a) local a=coercion(a) return autodiff.constant( math.log( a() ) ) end,
+  exp = function(a) local a=coercion(a) return autodiff.constant( math.exp( a() ) ) end,
+  sin = function(a) local a=coercion(a) return autodiff.constant( math.sin( a() ) ) end,
+  cos = function(a) local a=coercion(a) return autodiff.constant( math.cos( a() ) ) end,
 
 }
 
@@ -152,19 +167,24 @@ AD.op[CONSTANT] = {
 
 -- SCALARS
 
-AD[SCALAR] = function(names)
-  local result = table.pack( AD.symbol(names, SCALAR) )
-  for i=1,#result do
-    result[i].eval = function(self,values)
-      return assert(values[self.name], "Undefined value " .. self.name)
+autodiff[SCALAR] = function(names)
+  local t = table.pack(autodiff.symbol(names, SCALAR))
+  for i=1,#t do
+    t[i].diff = function(self, target)
+      local tname = (type(target)=="string" and target) or target.name
+      if tname == self.name then
+	return autodiff.constant(1)
+      else 
+	return autodiff.constant(0)
+      end
     end
   end
-  return table.unpack(result)
+  return table.unpack(t)
 end
 
 -- CONSTANT OPERATIONS
 
-AD.op[SCALAR] = {
+autodiff.op[SCALAR] = {
   
   add = function(a,b)
     local a,b = coercion(a),coercion(b)
@@ -173,6 +193,12 @@ AD.op[SCALAR] = {
 		   local a = self.args[1]:eval(...)
 		   local b = self.args[2]:eval(...)
 		   return a + b
+		 end,
+		 function(self, target)
+		   if self.name == target then return autodiff.constant(1) end
+		   local da = self.args[1]:diff(target)
+		   local db = self.args[2]:diff(target)
+		   return da + db
 		 end)
     return s
   end,
@@ -189,6 +215,12 @@ AD.op[SCALAR] = {
 		   local a = self.args[1]:eval(...)
 		   local b = self.args[2]:eval(...)
 		   return a * b
+		 end,
+		 function(self, target)
+		   if self.name == target then return autodiff.constant(1) end
+		   local a,b = self.args[1],self.args[2]
+		   local da,db = a:diff(target),b:diff(target)
+		   return da*b + a*db
 		 end)
     return s
   end,
@@ -205,6 +237,12 @@ AD.op[SCALAR] = {
 		   local a = self.args[1]:eval(...)
 		   local b = self.args[2]:eval(...)
 		   return a^b
+		 end,
+		 function(self, target)
+		   if self.name == target then return autodiff.constant(1) end
+		   local a,b = self.args[1],self.args[2]
+		   local da  = a:diff(target)
+		   return b * (a^(b-1)) * da
 		 end)
     return s
   end,
@@ -220,6 +258,12 @@ AD.op[SCALAR] = {
 		 function(self, ...)
 		   local a = self.args[1]:eval(...)
 		   return math.log(a)
+		 end,
+		 function(self, target)
+		   if self.name == target then return autodiff.constant(1) end
+		   local a  = self.args[1]
+		   local da = a:diff(target)
+		   return 1/a * da
 		 end)
     return s
   end,
@@ -230,6 +274,12 @@ AD.op[SCALAR] = {
 		 function(self, ...)
 		   local a = self.args[1]:eval(...)
 		   return math.exp(a)
+		 end,
+		 function(self, target)
+		   if self.name == target then return autodiff.constant(1) end
+		   local a  = self.args[1]
+		   local da = a:diff(target)
+		   return autodiff.op.exp(a) * da
 		 end)
     return s
   end,
@@ -240,6 +290,12 @@ AD.op[SCALAR] = {
 		 function(self, ...)
 		   local a = self.args[1]:eval(...)
 		   return math.cos(a)
+		 end,
+		 function(self, target)
+		   if self.name == target then return autodiff.constant(1) end
+		   local a  = self.args[1]
+		   local da = a:diff(target)
+		   return autodiff.op.sin(a) * da
 		 end)
     return s
   end,
@@ -250,6 +306,12 @@ AD.op[SCALAR] = {
 		 function(self, ...)
 		   local a = self.args[1]:eval(...)
 		   return math.sin(a)
+		 end,
+		 function(self, target)
+		   if self.name == target then return autodiff.constant(1) end
+		   local a  = self.args[1]
+		   local da = a:diff(target)
+		   return autodiff.op.cos(a) * da
 		 end)
     return s
   end,
