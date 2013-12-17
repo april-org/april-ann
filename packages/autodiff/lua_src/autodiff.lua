@@ -622,7 +622,24 @@ autodiff.op[MATRIX] = {
 		 end)
     return s
   end,
-
+  
+  sum = function(a,b)
+    local a,b = coercion(a),b and coercion(b)
+    local s = op('sum', MATRIX, {a,b},
+		 function(self, ...)
+		   local a = self.args[1]:eval(...)
+		   local b = self.args[2] and self.args[2]:eval(...)
+		   assert(type(a) == "matrix")
+		   assert(not b or type(b)=="number")
+		   return a:sum(b)
+		 end,
+		 function(self, target)
+		   local a,b = self.args[1],self.args[2]
+		   local da  = a:diff(target)
+		   return autodiff.op.sum(da, b)
+		 end)
+    return s
+  end,
 }
 
 -----------------------------------------------------------------------------
