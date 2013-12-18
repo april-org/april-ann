@@ -840,6 +840,16 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
+// returns a matrix with size as the given matrix, but without data copy
+//BIND_CLASS_METHOD MatrixFloat as
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  MatrixFloat *m;
+  LUABIND_GET_PARAMETER(1, MatrixFloat, m);
+  LUABIND_RETURN(MatrixFloat,m->cloneOnlyDims());
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat transpose
 {
   LUABIND_RETURN(MatrixFloat, obj->transpose());

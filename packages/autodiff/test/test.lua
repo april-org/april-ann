@@ -1,39 +1,39 @@
 local AD   = autodiff
 local op   = AD.op
 local func = AD.func
-local a,w,b  = AD.matrix('a w b')
+local a,w,b,seed  = AD.matrix('a w b seed')
 
 local rnd = random(1234)
 local M   = matrix.col_major
 
 weights = {
-  w = M(3,4):uniformf(0,1,rnd),
-  b = M(1,3):uniformf(0,1,rnd),
+  w = M(4,3):uniformf(0,1,rnd),
+  b = M(3,1):uniformf(0,1,rnd),
 }
 
 function sigmoid(s)
   return 1/(1 + op.exp(-s))
 end
 
-d = a * op.transpose(w) + b
-c = a * op.transpose(w) -- sigmoid( d )
+d = op.transpose(w) * a + b
+c = op.transpose(w) * a -- sigmoid( d )
 
 ---------------------------------------------------
 
-local input = M(1,4):uniformf(0,1,rnd)
+local input = M(4,1):uniformf(0,1,rnd)
 local cache = {}
 f = func(c, {a}, weights, cache)
 print( f(input) )
 
 ---------------------------------------------------
 
-aux = c:diff(w)
+aux = c:diff(w, seed)
 print(aux)
 
 autodiff.dot_graph(aux, "wop.dot")
 
-df_dw = func(aux, {a}, weights, cache)
-print( df_dw(input) )
+df_dw = func(aux, {a,seed}, weights, cache)
+print( df_dw( input, M(3,1):uniformf(0,1,rnd) ) )
 
 ---------------------------------------------------
 
