@@ -1278,8 +1278,8 @@ function table.linearize(t)
 end
 
 table.luainsert = table.insert
-function table.insert(t,v)
-  table.luainsert(t,v)
+function table.insert(t,...)
+  table.luainsert(t,...)
   return t
 end
 
