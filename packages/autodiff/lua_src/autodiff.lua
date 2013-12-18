@@ -246,6 +246,7 @@ autodiff.op[CONSTANT] = {
   sin = function(a) local a=coercion(a) return autodiff.constant( math.sin( a() ) ) end,
   cos = function(a) local a=coercion(a) return autodiff.constant( math.cos( a() ) ) end,
 
+  transpose = function(a) local a=coercion(a) return autodiff.constant( a() ) end,
 }
 
 -----------------------------------------------------------------------------
@@ -480,8 +481,8 @@ autodiff.op[MATRIX] = {
 		 function(self, target, seed)
 		   local a,b = self.args[1],self.args[2]
 		   local da  = a:diff(target, seed)
-		   local db  = b:diff(target, autodiff.op.transpose(seed))
-		   return a*db + da*b
+		   local db  = b:diff(target, seed)
+		   return autodiff.op.transpose(a)*db + b*da
 		 end)
     return s
   end,

@@ -15,8 +15,7 @@ function sigmoid(s)
   return 1/(1 + op.exp(-s))
 end
 
-d = op.transpose(w) * a + b
-c = op.transpose(w) * a -- sigmoid( d )
+c = sigmoid( op.transpose(w) * a + b )
 
 ---------------------------------------------------
 
@@ -37,7 +36,7 @@ print( df_dw( input, M(3,1):uniformf(0,1,rnd) ) )
 
 ---------------------------------------------------
 
-aux = c:diff(a)
+aux = c:diff(b)
 print(aux)
 
 df_db = func(aux, {a}, weights, cache)
