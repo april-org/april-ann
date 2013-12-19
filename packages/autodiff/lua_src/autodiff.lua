@@ -476,16 +476,16 @@ autodiff.op[MATRIX] = {
 		   elseif b == 1 then return a
 		   end
 		   --
-		   -- print("----------------------------------------------")
-		   -- print("a",self.args[1])
-		   -- print(a)
-		   -- print("b",self.args[2])
-		   -- print(b)
+		   print("----------------------------------------------")
+		   print("a",self.args[1])
+		   print(a)
+		   print("b",self.args[2])
+		   print(b)
 		   return a * b
 		 end,
 		 function(self, target, seed)
 		   local a,b = self.args[1],self.args[2]
-		   local da  = a:diff(target, seed*b)
+		   local da  = a:diff(target, b*seed)
 		   local db  = b:diff(target, autodiff.op.transpose(a)*seed)
 		   return da + db --autodiff.op.transpose(a)*db + b*da
 		 end)
@@ -597,7 +597,7 @@ autodiff.op[MATRIX] = {
 		 function(self, target, seed)
 		   local a  = self.args[1]
 		   local da = a:diff(target, autodiff.op.transpose(seed))
-		   return da
+		   return autodiff.op.transpose(da)
 		 end)
     return s
   end,
@@ -609,6 +609,11 @@ autodiff.op[MATRIX] = {
 		   local a = self.args[1]:eval(...)
 		   local b = self.args[2]:eval(...)
 		   if a == 0 or b == 0 then return 0 end
+		   print("--------------------------------")
+		   print(self.args[1])
+		   print(a)
+		   print(self.args[2])
+		   print(b)
 		   if type(a) == "number" or type(b) == "number" then
 		     return a*b
 		   end

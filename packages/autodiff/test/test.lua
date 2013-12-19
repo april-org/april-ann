@@ -17,7 +17,7 @@ function sigmoid(s)
 end
 
 -- c = sigmoid( op.transpose(w) * a + b )
-c = op.transpose(w2) * ( op.transpose(w) * a + b )
+c = op.transpose(w2) * sigmoid( op.transpose(w) * a + b )
 -- c = op.transpose(w) * a + b
 
 ---------------------------------------------------
