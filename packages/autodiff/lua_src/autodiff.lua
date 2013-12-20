@@ -149,15 +149,17 @@ function autodiff.symbol(names,dtype)
 end
 
 function autodiff.func(s,args,shared_values,cache)
+  if type(s) ~= "table" then s = { s } end
   local args,shared_values = args or {},shared_values or {}
-  for i,s in ipairs(args) do
-    assert(type(s)=="table" and s.issymbol,
+  for i,t in ipairs(args) do
+    assert(type(t)=="table" and t.issymbol,
 	   "Argument " .. i .. " is not a symbol")
   end
   for name,_ in pairs(shared_values) do
     assert(SYMBOLS[name], "Undefined symbol " .. name)
   end
   return function(...)
+    local cache = cache or {}
     local args2 = table.pack(...)
     assert(#args == #args2,
 	   string.format("Incorrect number of arguments, expected %d, found %d\n",
@@ -165,8 +167,18 @@ function autodiff.func(s,args,shared_values,cache)
     local values = iterator(ipairs(args)):
     map(function(k,v) return v.name,args2[k] end):table()
     for k,v in pairs(shared_values) do values[k] = v end
-    return s:eval(values,cache)
+    local ret = iterator(ipairs(s)):
+    map(function(_,current) return current:eval(values,cache) end):table()
+    return table.unpack(ret)
   end
+end
+
+function autodiff.diff(f, symbols, seed)
+  if type(symbols) ~= "table" then symbols = { symbols } end
+  local all_diff = f:diff(seed)
+  return table.unpack(iterator(ipairs(symbols)):
+		      map(function(_,s) return all_diff[s.name] end):
+		      table())
 end
 
 setmetatable(autodiff.op,
@@ -483,11 +495,6 @@ autodiff.op[MATRIX] = {
 		   elseif b == 1 then return a
 		   end
 		   --
-		   -- print("----------------------------")
-		   -- print(self.args[1])
-		   -- print(a)
-		   -- print(self.args[2])
-		   -- print(b)
 		   return a * b
 		 end,
 		 function(self, seed, result)
@@ -525,11 +532,8 @@ autodiff.op[MATRIX] = {
 		 end,
 		 function(self, seed, result)
 		   local a,b = self.args[1],self.args[2]
-		   print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-		   print(a)
-		   print(b)
-		   print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-		   local da  = a:diff(seed * b * (a^(b-1)), result)
+		   local seed = autodiff.op.cmul(seed, b*a^(b-1))
+		   a:diff(seed, result)
 		   return result
 		 end)
     return s
@@ -539,7 +543,7 @@ autodiff.op[MATRIX] = {
     local a = coercion(a)
     return (-1) * a
   end,
-
+  
   log = function(a)
     local a = coercion(a)
     local s = op('log', MATRIX, {a},
@@ -609,9 +613,6 @@ autodiff.op[MATRIX] = {
 		 end,
 		 function(self, seed, result)
 		   local a  = self.args[1]
-		   -- print("++++++++++++++++++++++++++++++++++++")
-		   -- print(seed)
-		   -- print("++++++++++++++++++++++++++++++++++++")
 		   a:diff(autodiff.op.transpose(seed), result)
 		   return result
 		 end)
@@ -628,12 +629,6 @@ autodiff.op[MATRIX] = {
 		   if type(a) == "number" or type(b) == "number" then
 		     return a*b
 		   end
-		   print("========================================")
-		   print(self.args[1])
-		   print(a)
-		   print(self.args[2])
-		   print(b)
-		   print("========================================")
 		   return a:cmul(b)
 		 end,
 		 function(self, seed, result)
