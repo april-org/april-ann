@@ -29,8 +29,6 @@ df_dw_result = table.pack( df_dw(input) )
 for i,v in ipairs(df_dw_result) do print(v) end
 
 ---------------------------------------------------
----------------------------------------------------
----------------------------------------------------
 
 net = ann.mlp.all_all.generate("4 inputs 3 logistic 2 logistic")
 net:build{
