@@ -9,6 +9,16 @@ local MATRIX   = 'matrix'
 
 ------------------------------------------------------------------------------
 
+local function insert(t, key, value)
+  local t = t or {}
+  if not t[key] then
+    t[key] = value
+  else
+    t[key] = t[key] + value
+  end
+  return t
+end
+
 local SYMBOLS = {}
 
 local infer_table = {
@@ -90,9 +100,9 @@ local function op(name, dtype, args, eval, diff)
     self.last = v
     return v
   end
-  s.diff = function(self, target, seed)
+  s.diff = function(self, seed, result)
     local seed = seed or autodiff.op.fill(self,1)
-    return diff(self, (type(target)=="string" and target) or target.name, seed)
+    return diff(self, seed, insert(result, self.name, seed))
   end
   s.to_dot_string = function(self,id,parent,names,edges)
     local edges = edges or {}
@@ -197,7 +207,11 @@ autodiff.constant = function(...)
     local s = autodiff.symbol(tostring(value), CONSTANT)
     s.value = value
     s.eval  = function(self) return self.value end
-    s.diff  = function(self) return autodiff.constant( 0 ) end
+    s.diff  = function(self, seed, result)
+      local result = result or {}
+      result[self.name] = autodiff.constant( 0 )
+      return result
+    end
     s.to_dot_string = function(self,id,parent,names,edges)
       local id  = id or { 0 }
       local aux = {}
@@ -258,13 +272,8 @@ autodiff.op[CONSTANT] = {
 autodiff[SCALAR] = function(names)
   local t = table.pack(autodiff.symbol(names, SCALAR))
   for i=1,#t do
-    t[i].diff = function(self, target, seed)
-      local tname = (type(target)=="string" and target) or target.name
-      if tname == self.name then
-	return seed
-      else 
-	return autodiff.constant(0)
-      end
+    t[i].diff = function(self, seed, result)
+      return insert(result, self.name, seed)
     end
   end
   return table.unpack(t)
@@ -282,10 +291,11 @@ autodiff.op[SCALAR] = {
 		   local b = self.args[2]:eval(...)
 		   return a + b
 		 end,
-		 function(self, target)
-		   local da = self.args[1]:diff(target)
-		   local db = self.args[2]:diff(target)
-		   return da + db
+		 function(self, seed, result)
+		   local a,b = self.args[1],self.args[2]
+		   a:diff(seed, result)
+		   b:diff(seed, result)
+		   return result
 		 end)
     return s
   end,
@@ -303,10 +313,11 @@ autodiff.op[SCALAR] = {
 		   local b = self.args[2]:eval(...)
 		   return a * b
 		 end,
-		 function(self, target)
+		 function(self, seed, result)
 		   local a,b = self.args[1],self.args[2]
-		   local da,db = a:diff(target),b:diff(target)
-		   return da*b + a*db
+		   a:diff(seed*b, result)
+		   b:diff(seed*a, result)
+		   return result
 		 end)
     return s
   end,
@@ -324,10 +335,10 @@ autodiff.op[SCALAR] = {
 		   local b = self.args[2]:eval(...)
 		   return a^b
 		 end,
-		 function(self, target)
+		 function(self, seed, result)
 		   local a,b = self.args[1],self.args[2]
-		   local da  = a:diff(target)
-		   return b * (a^(b-1)) * da
+		   a:diff(b * (a^(b-1)) * seed, result)
+		   return result
 		 end)
     return s
   end,
@@ -344,10 +355,10 @@ autodiff.op[SCALAR] = {
 		   local a = self.args[1]:eval(...)
 		   return math.log(a)
 		 end,
-		 function(self, target)
+		 function(self, seed, result)
 		   local a  = self.args[1]
-		   local da = a:diff(target)
-		   return 1/a * da
+		   a:diff(1/a * seed, result)
+		   return result
 		 end)
     return s
   end,
@@ -359,10 +370,10 @@ autodiff.op[SCALAR] = {
 		   local a = self.args[1]:eval(...)
 		   return math.exp(a)
 		 end,
-		 function(self, target)
+		 function(self, seed, result)
 		   local a  = self.args[1]
-		   local da = a:diff(target)
-		   return autodiff.op.exp(a) * da
+		   a:diff(self * seed, result)
+		   return result
 		 end)
     return s
   end,
@@ -374,10 +385,10 @@ autodiff.op[SCALAR] = {
 		   local a = self.args[1]:eval(...)
 		   return math.cos(a)
 		 end,
-		 function(self, target)
+		 function(self, seed, result)
 		   local a  = self.args[1]
-		   local da = a:diff(target)
-		   return autodiff.op.sin(a) * da
+		   a:diff(-autodiff.op.sin(a) * seed, result)
+		   return result
 		 end)
     return s
   end,
@@ -389,10 +400,10 @@ autodiff.op[SCALAR] = {
 		   local a = self.args[1]:eval(...)
 		   return math.sin(a)
 		 end,
-		 function(self, target)
+		 function(self, seed, result)
 		   local a  = self.args[1]
-		   local da = a:diff(target)
-		   return autodiff.op.cos(a) * da
+		   a:diff(autodiff.op.cos(a) * seed, result)
+		   return result
 		 end)
     return s
   end,
@@ -405,8 +416,8 @@ autodiff.op[SCALAR] = {
 		   local b = self.args[2]:eval(...)
 		   return b
 		 end,
-		 function(self, target)
-		   return autodiff.scalar(0)
+		 function(self, seed, result)
+		   return result
 		 end)
     return s
   end,
@@ -422,13 +433,8 @@ autodiff.op[SCALAR] = {
 autodiff[MATRIX] = function(names)
   local t = table.pack(autodiff.symbol(names, MATRIX))
   for i=1,#t do
-    t[i].diff = function(self, target, seed)
-      local tname = (type(target)=="string" and target) or target.name
-      if tname == self.name then
-	return seed
-      else 
-	return autodiff.constant(0)
-      end
+    t[i].diff = function(self, seed, result)
+      return insert(result, self.name, seed)
     end
   end
   return table.unpack(t)
@@ -451,10 +457,11 @@ autodiff.op[MATRIX] = {
 		   --
 		   return a + b
 		 end,
-		 function(self, target, seed)
-		   local da = self.args[1]:diff(target, seed)
-		   local db = self.args[2]:diff(target, seed)
-		   return da + db
+		 function(self, seed, result)
+		   local a,b = self.args[1],self.args[2]
+		   a:diff(seed, result)
+		   b:diff(seed, result)
+		   return result
 		 end)
     return s
   end,
@@ -476,24 +483,26 @@ autodiff.op[MATRIX] = {
 		   elseif b == 1 then return a
 		   end
 		   --
-		   print("----------------------------------------------")
-		   print("a",self.args[1])
-		   print(a)
-		   print("b",self.args[2])
-		   print(b)
+		   -- print("----------------------------")
+		   -- print(self.args[1])
+		   -- print(a)
+		   -- print(self.args[2])
+		   -- print(b)
 		   return a * b
 		 end,
-		 function(self, target, seed)
+		 function(self, seed, result)
 		   local a,b = self.args[1],self.args[2]
-		   local da  = a:diff(target, b*seed)
-		   local db  = b:diff(target, autodiff.op.transpose(a)*seed)
-		   return da + db --autodiff.op.transpose(a)*db + b*da
+		   a:diff(seed*b, result)
+		   b:diff(autodiff.op.transpose(a)*seed, result)
+		   return result
 		 end)
     return s
   end,
   
   div = function(a,b)
     local a,b = coercion(a),coercion(b)
+    assert(a.dtype ~= MATRIX or b.dtype ~= MATRIX,
+	   "Incorrect types, div between MATRIX and MATRIX is not implemented")
     return a * (b^(-1))
   end,
 
@@ -514,10 +523,14 @@ autodiff.op[MATRIX] = {
 		   --
 		   return a:clone():pow(b)
 		 end,
-		 function(self, target, seed)
+		 function(self, seed, result)
 		   local a,b = self.args[1],self.args[2]
-		   local da  = a:diff(target, seed)
-		   return b * (a^(b-1)) * da
+		   print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+		   print(a)
+		   print(b)
+		   print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+		   local da  = a:diff(seed * b * (a^(b-1)), result)
+		   return result
 		 end)
     return s
   end,
@@ -534,9 +547,9 @@ autodiff.op[MATRIX] = {
 		   local a = self.args[1]:eval(...)
 		   return a:clone():log()
 		 end,
-		 function(self, target, seed)
+		 function(self, seed, result)
 		   local a  = self.args[1]
-		   local da = a:diff(target, seed)
+		   local da = a:diff(seed, result)
 		   return autodiff.op.cmul(autodiff.op.pow(a, -1), da)
 		 end)
     return s
@@ -549,10 +562,10 @@ autodiff.op[MATRIX] = {
 		   local a = self.args[1]:eval(...)
 		   return a:clone():exp()
 		 end,
-		 function(self, target, seed)
-		   local a  = self.args[1]
-		   local da = a:diff(target, seed)
-		   return autodiff.op.cmul(autodiff.op.exp(a), da)
+		 function(self, seed, result)
+		   local a = self.args[1]
+		   a:diff(autodiff.op.cmul(self, seed), result)
+		   return result
 		 end)
     return s
   end,
@@ -564,10 +577,10 @@ autodiff.op[MATRIX] = {
 		   local a = self.args[1]:eval(...)
 		   return a:clone():cos()
 		 end,
-		 function(self, target, seed)
+		 function(self, seed, result)
 		   local a  = self.args[1]
-		   local da = a:diff(target, seed)
-		   return autodiff.op.sin(a) * da
+		   a:diff(autodiff.op.cmul(-autodiff.op.sin(a), seed), result)
+		   return result
 		 end)
     return s
   end,
@@ -579,10 +592,10 @@ autodiff.op[MATRIX] = {
 		   local a = self.args[1]:eval(...)
 		   return a:clone():sin()
 		 end,
-		 function(self, target, seed)
+		 function(self, seed, result)
 		   local a  = self.args[1]
-		   local da = a:diff(target, seed)
-		   return autodiff.op.cos(a) * da
+		   a:diff(autodiff.op.cmul(autodiff.op.cos(a), seed), result)
+		   return result
 		 end)
     return s
   end,
@@ -594,10 +607,13 @@ autodiff.op[MATRIX] = {
 		   local a = self.args[1]:eval(...)
 		   return a:transpose()
 		 end,
-		 function(self, target, seed)
+		 function(self, seed, result)
 		   local a  = self.args[1]
-		   local da = a:diff(target, autodiff.op.transpose(seed))
-		   return autodiff.op.transpose(da)
+		   -- print("++++++++++++++++++++++++++++++++++++")
+		   -- print(seed)
+		   -- print("++++++++++++++++++++++++++++++++++++")
+		   a:diff(autodiff.op.transpose(seed), result)
+		   return result
 		 end)
     return s
   end,
@@ -609,18 +625,22 @@ autodiff.op[MATRIX] = {
 		   local a = self.args[1]:eval(...)
 		   local b = self.args[2]:eval(...)
 		   if a == 0 or b == 0 then return 0 end
-		   print("--------------------------------")
+		   if type(a) == "number" or type(b) == "number" then
+		     return a*b
+		   end
+		   print("========================================")
 		   print(self.args[1])
 		   print(a)
 		   print(self.args[2])
 		   print(b)
-		   if type(a) == "number" or type(b) == "number" then
-		     return a*b
-		   end
+		   print("========================================")
 		   return a:cmul(b)
 		 end,
-		 function(self, target, seed)
-		   error("NOT IMPLEMENTED")
+		 function(self, seed, result)
+		   local a,b = self.args[1],self.args[2]
+		   a:diff(autodiff.op.cmul(a,seed), result)
+		   b:diff(autodiff.op.cmul(b,seed), result)
+		   return result
 		 end)
     return s
   end,
@@ -635,12 +655,8 @@ autodiff.op[MATRIX] = {
 		   assert(type(b) == "number")
 		   return matrix.as(a):fill(b)
 		 end,
-		 function(self, target, seed)
-		   if self.name == target then
-		     return autodiff.op.fill(self.args[1],1) * self.args[2]
-		   else
-		     return autodiff.constant(0)
-		   end
+		 function(self, seed, result)
+		   return result
 		 end)
     return s
   end,
@@ -655,10 +671,8 @@ autodiff.op[MATRIX] = {
 		   assert(not b or type(b)=="number")
 		   return a:sum(b)
 		 end,
-		 function(self, target)
-		   local a,b = self.args[1],self.args[2]
-		   local da  = a:diff(target)
-		   return autodiff.op.sum(da, b)
+		 function(self, seed, result)
+		   error("NOT IMPLEMENTED")
 		 end)
     return s
   end,

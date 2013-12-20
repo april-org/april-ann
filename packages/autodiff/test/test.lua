@@ -16,8 +16,8 @@ function sigmoid(s)
   return 1/(1 + op.exp(-s))
 end
 
--- c = sigmoid( op.transpose(w) * a + b )
-c = op.transpose(w2) * sigmoid( op.transpose(w) * a + b )
+c = sigmoid( op.transpose(w) * a + b )
+-- c = op.transpose(w2) * op.cos( op.transpose(w) * a + b )
 -- c = op.transpose(w) * a + b
 
 ---------------------------------------------------
@@ -29,28 +29,38 @@ print( f(input) )
 
 ---------------------------------------------------
 
-aux = c:diff(w2)
-print(aux)
-
-autodiff.dot_graph(aux, "wop2.dot")
-
-df_dw2 = func(aux, {a}, weights, cache)
-print( df_dw2( input ) )
+all_diffs = c:diff()
 
 ---------------------------------------------------
 
-aux = c:diff(w)
-print(aux)
-
-autodiff.dot_graph(aux, "wop.dot")
-
-df_dw = func(aux, {a}, weights, cache)
-print( df_dw( input ) )
+aux = all_diffs.w2
+if aux then
+  print(aux)
+  
+  autodiff.dot_graph(aux, "wop2.dot")
+  
+  df_dw2 = func(aux, {a}, weights, cache)
+  print( df_dw2( input ) )
+end
 
 ---------------------------------------------------
 
-aux = c:diff(b)
-print(aux)
+aux = all_diffs.w
+if aux then
+  print(aux)
+  
+  autodiff.dot_graph(aux, "wop.dot")
+  
+  df_dw = func(aux, {a}, weights, cache)
+  print( df_dw( input ) )
+end
 
-df_db = func(aux, {a}, weights, cache)
-print( df_db(input) )
+---------------------------------------------------
+
+aux = all_diffs.b
+if aux then
+  print(aux)
+  
+  df_db = func(aux, {a}, weights, cache)
+  print( df_db(input) )
+end
