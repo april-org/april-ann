@@ -18,7 +18,13 @@ function logistic(s)
 end
 
 f         = logistic(op.transpose(w2) * logistic( op.transpose(w) * a + b ) + c)
+
+AD.dot_graph(f, "wop.dot")
+
 df_dw_tbl = table.pack( f, AD.diff(f, {w, b, w2, c}) )
+
+AD.dot_graph(df_dw_tbl[2], "wop2.dot")
+
 df_dw     = AD.func(df_dw_tbl, {a}, weights )
 
 ---------------------------------------------------
@@ -40,7 +46,7 @@ net:build{
   }
 }
 
-print( net:forward(input:transpose()):get_matrix() )
+print( net:forward(input:transpose()):get_matrix():transpose() )
 
 net:backprop( M(1,2):ones() )
 grads = net:compute_gradients()
