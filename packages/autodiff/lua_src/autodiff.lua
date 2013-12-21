@@ -139,7 +139,7 @@ function autodiff.remove(...)
 end
 
 -- this functions adds a new operation with the given data
-function autodiff.add_op(name, dtype, args, eval_func, diff_func)
+function autodiff.gen_op(name, dtype, args, eval_func, diff_func)
   local s = symbol(string.format("(%s %s)", name,
 				 iterator(ipairs(args)):select(2):
 				 map(tostring):concat(" ")),
@@ -194,7 +194,7 @@ function autodiff.add_op(name, dtype, args, eval_func, diff_func)
 end
 
 -- helper name
-local add_op = autodiff.add_op
+local gen_op = autodiff.gen_op
 --
 
 -- Function for declaration of symbols from the exterior of autodiff program. It
@@ -382,7 +382,7 @@ autodiff.op[SCALAR] = {
     elseif b == autodiff.constant(0) then return a
     end
     --
-    local s = add_op('+', SCALAR, {a,b},
+    local s = gen_op('+', SCALAR, {a,b},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       local b = self.args[2]:eval(...)
@@ -412,7 +412,7 @@ autodiff.op[SCALAR] = {
     elseif b == autodiff.constant(1) then return a
     end
     --
-    local s = add_op('*', SCALAR, {a,b},
+    local s = gen_op('*', SCALAR, {a,b},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       local b = self.args[2]:eval(...)
@@ -441,7 +441,7 @@ autodiff.op[SCALAR] = {
     elseif b == autodiff.constant(1) then return a
     end
     --
-    local s = add_op('^', SCALAR, {a,b},
+    local s = gen_op('^', SCALAR, {a,b},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       local b = self.args[2]:eval(...)
@@ -461,7 +461,7 @@ autodiff.op[SCALAR] = {
   
   log = function(a)
     local a = coercion(a)
-    local s = add_op('log', SCALAR, {a},
+    local s = gen_op('log', SCALAR, {a},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       return math.log(a)
@@ -476,7 +476,7 @@ autodiff.op[SCALAR] = {
 
   exp = function(a)
     local a = coercion(a)
-    local s = add_op('exp', SCALAR, {a},
+    local s = gen_op('exp', SCALAR, {a},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       return math.exp(a)
@@ -491,7 +491,7 @@ autodiff.op[SCALAR] = {
 
   sin = function(a)
     local a = coercion(a)
-    local s = add_op('sin', SCALAR, {a},
+    local s = gen_op('sin', SCALAR, {a},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       return math.sin(a)
@@ -506,7 +506,7 @@ autodiff.op[SCALAR] = {
 
   cos = function(a)
     local a = coercion(a)
-    local s = add_op('cos', SCALAR, {a},
+    local s = gen_op('cos', SCALAR, {a},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       return math.cos(a)
@@ -521,7 +521,7 @@ autodiff.op[SCALAR] = {
 
   sinh = function(a)
     local a = coercion(a)
-    local s = add_op('sinh', SCALAR, {a},
+    local s = gen_op('sinh', SCALAR, {a},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       return math.sinh(a)
@@ -536,7 +536,7 @@ autodiff.op[SCALAR] = {
 
   cosh = function(a)
     local a = coercion(a)
-    local s = add_op('cosh', SCALAR, {a},
+    local s = gen_op('cosh', SCALAR, {a},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       return math.cosh(a)
@@ -551,7 +551,7 @@ autodiff.op[SCALAR] = {
 
   tanh = function(a)
     local a = coercion(a)
-    local s = add_op('tanh', SCALAR, {a},
+    local s = gen_op('tanh', SCALAR, {a},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       return math.tanh(a)
@@ -566,7 +566,7 @@ autodiff.op[SCALAR] = {
 
   abs = function(a)
     local a = coercion(a)
-    local s = add_op('abs', SCALAR, {a},
+    local s = gen_op('abs', SCALAR, {a},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       return math.abs(a)
@@ -591,12 +591,23 @@ autodiff.op[SCALAR] = {
 
 -- MATRIXS
 
+local shape_mt = {
+  __call = function(t,...)
+    local arg = table.pack(...)
+    for i,v in ipairs(arg) do table.insert(t, v) end
+  end
+}
+
 autodiff[MATRIX] = function(names)
   local t = table.pack(autodiff.symbol(names, MATRIX))
   for i=1,#t do
     t[i].diff = function(self, seed, result)
       return insert_grad(result, self.name, seed)
     end
+    -- the shape table is callable (like a function) and defines the shape of
+    -- the underlying matrix
+    t[i].shape = { }
+    setmetatable(t[i].shape, shape_mt)
     local mt = getmetatable(t[i])
     mt.__call = function(t, ...) return op.slice(t, ...) end
   end
@@ -605,8 +616,39 @@ end
 
 -- MATRIX OPERATIONS
 
+local function broadcast(a,b)
+  if type(a) ~= "matrix" or type(b) ~= "matrix" then return a,b end
+  local dims_a,dims_b = a:dim(),b:dim()
+  assert(#dims_a == #dims_b, "Incorrect dimension sizes")
+  local i=1 while i<=#dims_a and dims_a[i] == dims_b[i] do i=i+1 end
+  if i<=#dims_a then
+    local source
+    local dest
+    local tgt
+    if dims_a[i] == 1 then
+      tgt,source,dest = dims_a,a,matrix.as(b):zeros()
+      a = dest
+    elseif dims_b[i] == 1 then
+      tgt,source,dest = dims_b,b,matrix.as(a):zeros()
+      b = dest
+    else
+      error("Not aligned dimensions")
+    end
+    while i<=#dims_a do
+      assert(dims_a[i] == dims_b[i] or tgt[i] == 1,
+	     "Trailing dimensions do not match")
+      i=i+1
+    end
+    for sw in dest:sliding_window{size=tgt, step=tgt}:iterate() do
+      sw:copy(source)
+    end
+  end
+  return a,b
+end
+
 autodiff.op[MATRIX] = {
   
+  -- this operation applies broadcast if needed
   add = function(a,b)
     local a,b = coercion(a),coercion(b)
     -- simplifcations
@@ -614,8 +656,9 @@ autodiff.op[MATRIX] = {
     if a == autodiff.constant(0) then return b
     elseif b == autodiff.constant(0) then return a
     end
+    
     --
-    local s = add_op('+', MATRIX, {a,b},
+    local s = gen_op('+', MATRIX, {a,b},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       local b = self.args[2]:eval(...)
@@ -623,11 +666,13 @@ autodiff.op[MATRIX] = {
 		       if a == 0 then return b
 		       elseif b == 0 then return a
 		       end
-		       --
+		       -- FIXME: do broadcasting at composition time
+		       local a,b = broadcast(a,b)
 		       return a + b
 		     end,
 		     function(self, seed, result)
 		       local a,b = self.args[1],self.args[2]
+		       
 		       a:diff(seed, result)
 		       b:diff(seed, result)
 		       return result
@@ -649,7 +694,7 @@ autodiff.op[MATRIX] = {
     elseif b == autodiff.constant(1) then return a
     end
     --
-    local s = add_op('*', MATRIX, {a,b},
+    local s = gen_op('*', MATRIX, {a,b},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       local b = self.args[2]:eval(...)
@@ -685,7 +730,7 @@ autodiff.op[MATRIX] = {
       return autodiff.constant(1)
     end
     --
-    local s = add_op('^', MATRIX, {a,b},
+    local s = gen_op('^', MATRIX, {a,b},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       local b = self.args[2]:eval(...)
@@ -716,7 +761,7 @@ autodiff.op[MATRIX] = {
   
   log = function(a)
     local a = coercion(a)
-    local s = add_op('log', MATRIX, {a},
+    local s = gen_op('log', MATRIX, {a},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       return a:clone():log()
@@ -731,7 +776,7 @@ autodiff.op[MATRIX] = {
 
   exp = function(a)
     local a = coercion(a)
-    local s = add_op('exp', MATRIX, {a},
+    local s = gen_op('exp', MATRIX, {a},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       return a:clone():exp()
@@ -746,7 +791,7 @@ autodiff.op[MATRIX] = {
 
   cos = function(a)
     local a = coercion(a)
-    local s = add_op('cos', MATRIX, {a},
+    local s = gen_op('cos', MATRIX, {a},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       return a:clone():cos()
@@ -761,7 +806,7 @@ autodiff.op[MATRIX] = {
 
   sin = function(a)
     local a = coercion(a)
-    local s = add_op('sin', MATRIX, {a},
+    local s = gen_op('sin', MATRIX, {a},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       return a:clone():sin()
@@ -776,7 +821,7 @@ autodiff.op[MATRIX] = {
 
   tanh = function(a)
     local a = coercion(a)
-    local s = add_op('tanh', MATRIX, {a},
+    local s = gen_op('tanh', MATRIX, {a},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       return a:clone():tanh()
@@ -791,7 +836,7 @@ autodiff.op[MATRIX] = {
 
   transpose = function(a)
     local a = coercion(a)
-    local s = add_op('T', MATRIX, {a},
+    local s = gen_op('T', MATRIX, {a},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       return a:transpose()
@@ -806,7 +851,7 @@ autodiff.op[MATRIX] = {
 
   cmul = function(a,b)
     local a,b = coercion(a),coercion(b)
-    local s = add_op('.*', MATRIX, {a,b},
+    local s = gen_op('.*', MATRIX, {a,b},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       local b = self.args[2]:eval(...)
@@ -827,7 +872,7 @@ autodiff.op[MATRIX] = {
   
   fill = function(a,b)
     local a,b = coercion(a),coercion(b)
-    local s = add_op('fill', MATRIX, {a,b},
+    local s = gen_op('fill', MATRIX, {a,b},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       local b = self.args[2]:eval(...)
@@ -843,7 +888,7 @@ autodiff.op[MATRIX] = {
   
   sum = function(a)
     local a = coercion(a)
-    local s = add_op('sum', SCALAR, {a},
+    local s = gen_op('sum', SCALAR, {a},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       assert(type(a) == "matrix")
@@ -859,7 +904,7 @@ autodiff.op[MATRIX] = {
 
   select = function(a,dim,value)
     local a,dim,value = coercion(a),coercion(dim),coercion(value)
-    local s = add_op('select', MATRIX, {a,dim,value},
+    local s = gen_op('select', MATRIX, {a,dim,value},
 		     function(self, ...)
 		       local a     = self.args[1]:eval(...)
 		       local dim   = self.args[2]:eval(...)
@@ -875,7 +920,7 @@ autodiff.op[MATRIX] = {
 
   slice = function(...)
     local arg = iterator(ipairs(table.pack(...))):select(2):map(coercion):table()
-    local s = add_op('slice', MATRIX, arg,
+    local s = gen_op('slice', MATRIX, arg,
 		     function(self, ...)
 		       local arg = iterator(ipairs(self.args)):
 		       select(2):call('eval',...):table()
@@ -898,7 +943,7 @@ autodiff.op[MATRIX] = {
 
   copy = function(...)
     local arg = iterator(ipairs(table.pack(...))):select(2):map(coercion):table()
-    local s = add_op('copy', MATRIX, arg,
+    local s = gen_op('copy', MATRIX, arg,
 		     function(self, ...)
 		       local arg = iterator(ipairs(self.args)):
 		       select(2):call('eval',...):table()
@@ -919,7 +964,7 @@ autodiff.op[MATRIX] = {
 
   get = function(...)
     local arg = iterator(ipairs(table.pack(...))):select(2):map(coercion):table()
-    local s = add_op('get', SCALAR, arg,
+    local s = gen_op('get', SCALAR, arg,
 		     function(self, ...)
 		       local arg = iterator(ipairs(self.args)):
 		       select(2):call('eval', ...):table()
@@ -941,7 +986,7 @@ autodiff.op[MATRIX] = {
 
   abs = function(...)
     local arg = iterator(ipairs(table.pack(...))):select(2):map(coercion):table()
-    local s = add_op('abs', MATRIX, arg,
+    local s = gen_op('abs', MATRIX, arg,
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       assert(type(a) == "matrix")
