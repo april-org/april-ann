@@ -1209,8 +1209,11 @@ end
 
 function table.tostring(t,format)
   if t.to_lua_string then return t:to_lua_string(format) end
-  local out = {}
-  for i,v in pairs(t) do
+  local out  = {}
+  local keys = iterator(pairs(t)):select(1):table()
+  table.sort(keys, function(a,b) return tostring(a) < tostring(b) end)
+  for _,i in ipairs(keys) do
+    local v = t[i]
     local key
     local value
     if luatype(i) == "string" then

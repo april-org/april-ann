@@ -752,8 +752,8 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
 							 smooth_gradients)
   if type(input)  == "table" then input  = matrix.col_major(input)  end
   if type(target) == "table" then target = matrix.col_major(target) end
-  local loss      = loss or self.loss_function
-  local optimizer = optimizer or self.optimizer
+  local loss      = loss or self.loss_function or error("Needs a loss object")
+  local optimizer = optimizer or self.optimizer or error("Needs an optimizer object")
   local smooth_gradients = smooth_gradients or self.smooth_gradients
   local tr_loss, _, tr_loss_matrix =
     optimizer:execute(function(it)

@@ -7,6 +7,8 @@ autodiff.op = autodiff.op or {}
 local CONSTANT = 'constant'
 local SCALAR   = 'scalar'
 local MATRIX   = 'matrix'
+local TABLE    = 'table'
+local STRING   = 'string'
 
 ------------------------------------------------------------------------------
 
@@ -23,9 +25,11 @@ local SYMBOLS = {}
 
 -- table for inference computation given a pair of symbol dtypes
 local infer_table = {
-  [CONSTANT] = { [CONSTANT]=CONSTANT, [SCALAR]=SCALAR, [MATRIX]=MATRIX },
-  [SCALAR]   = { [CONSTANT]=SCALAR,   [SCALAR]=SCALAR, [MATRIX]=MATRIX },
-  [MATRIX]   = { [CONSTANT]=MATRIX,   [SCALAR]=MATRIX, [MATRIX]=MATRIX },
+  [CONSTANT] = { [CONSTANT]=CONSTANT, [SCALAR]=SCALAR, [MATRIX]=MATRIX, [TABLE]=CONSTANT, [STRING]=CONSTANT },
+  [SCALAR]   = { [CONSTANT]=SCALAR,   [SCALAR]=SCALAR, [MATRIX]=MATRIX, [TABLE]=SCALAR,   [STRING]=SCALAR   },
+  [MATRIX]   = { [CONSTANT]=MATRIX,   [SCALAR]=MATRIX, [MATRIX]=MATRIX, [TABLE]=MATRIX,   [STRING]=MATRIX   },
+  [TABLE]    = { [CONSTANT]=CONSTANT, [SCALAR]=SCALAR, [MATRIX]=MATRIX, [TABLE]=TABLE,    [STRING]=TABLE    },
+  [STRING]   = { [CONSTANT]=CONSTANT, [SCALAR]=SCALAR, [MATRIX]=MATRIX, [TABLE]=TABLE,    [STRING]=STRING   },
 }
 
 -- function which inferes the dtype given a list of symbols
@@ -70,6 +74,8 @@ local function symbol(name,dtype)
       __pow  = function(a,b) return autodiff.op[ infer(a,b) ].pow(a,b) end,
       __tostring = function(s) return s.name end,
       __eq = function(a,b) return a.name == b.name end,
+      __lt = function(a,b) return a.name <  b.name end,
+      __le = function(a,b) return a.name <= b.name end,
     }
     -- the symbol table
     t = {
@@ -78,7 +84,7 @@ local function symbol(name,dtype)
       issymbol = true,
       -- basic eval function, returns the value stored at values table
       eval     = function(self,values)
-	return assert(values[self.name], "Undefined value " .. self.name)
+	return values[self.name] or error("Undefined value " .. self.name)
       end,
       -- default diff table, introduces the given seed at the result table
       diff     = function(self, seed, result)
@@ -110,6 +116,8 @@ end
 -- auxiliary coercion function, converts Lua types in symbolic types
 local function coercion(a)
   if type(a) == "number" then return autodiff.constant(a)
+  elseif type(a) == "table" and not a.issymbol then return autodiff.table(a)
+  elseif type(a) == "string" then return autodiff.string(a)
   else return a
   end
 end
@@ -207,11 +215,11 @@ function autodiff.func(s,args,shared_values,cache)
   if s.issymbol then s = { s } end
   local args,shared_values = args or {},shared_values or {}
   for i,t in ipairs(args) do
-    assert(type(t)=="table" and t.issymbol,
-	   "Argument " .. i .. " is not a symbol")
+    assert(type(t)=="table" and t.issymbol and SYMBOLS[t.name],
+	   "Argument " .. i .. " is not a symbol or it was cleared")
   end
   for name,_ in pairs(shared_values) do
-    assert(SYMBOLS[name], "Undefined symbol " .. name)
+    assert(SYMBOLS[name], "Undefined or cleared symbol " .. name)
   end
   -- the returned function is a closure
   return function(...)
@@ -223,8 +231,7 @@ function autodiff.func(s,args,shared_values,cache)
     local values = iterator(ipairs(args)):
     map(function(k,v) return v.name,args2[k] end):table()
     for k,v in pairs(shared_values) do values[k] = v end
-    local ret = iterator(ipairs(s)):
-    map(function(_,current) return current:eval(values,cache) end):table()
+    local ret = iterator(ipairs(s)):select(2):call('eval',values,cache):table()
     return table.unpack(ret)
   end
 end
@@ -264,7 +271,7 @@ setmetatable(autodiff.op,
 -- auxiliary function for debugging purposes
 function autodiff.dot_graph(s, filename)
   local f = io.open(filename, "w")
-  f:write("digraph g {\n rankdir=BT;\n")
+  f:write("digraph g {\nrankdir=BT;\n")
   f:write( s:to_dot_string() )
   f:write("}\n")
   f:close()
@@ -326,19 +333,24 @@ autodiff.op[CONSTANT] = {
   unm = function(a)   local a=coercion(a) return autodiff.constant( - a:eval() )     end,
   mul = function(a,b) local a,b=coercion(a),coercion(b) return autodiff.constant( a:eval() * b:eval() ) end,
   div = function(a,b) local a,b=coercion(a),coercion(b) return autodiff.constant( a:eval() / b:eval() ) end,
-  
+
   -- extended math expressions
+  abs = function(a) local a=coercion(a) return autodiff.constant( math.abs(a:eval() )) end,
   log = function(a) local a=coercion(a) return autodiff.constant( math.log( a:eval() ) ) end,
   exp = function(a) local a=coercion(a) return autodiff.constant( math.exp( a:eval() ) ) end,
+  --
   sin = function(a) local a=coercion(a) return autodiff.constant( math.sin( a:eval() ) ) end,
   cos = function(a) local a=coercion(a) return autodiff.constant( math.cos( a:eval() ) ) end,
   tan = function(a) local a=coercion(a) return autodiff.constant( math.tan( a:eval() ) ) end,
+  --
   sinh = function(a) local a=coercion(a) return autodiff.constant( math.sinh( a:eval() ) ) end,
   cosh = function(a) local a=coercion(a) return autodiff.constant( math.cosh( a:eval() ) ) end,
   tanh = function(a) local a=coercion(a) return autodiff.constant( math.tanh( a:eval() ) ) end,
+  --
   asin = function(a) local a=coercion(a) return autodiff.constant( math.asin( a:eval() ) ) end,
   acos = function(a) local a=coercion(a) return autodiff.constant( math.acos( a:eval() ) ) end,
   atan = function(a) local a=coercion(a) return autodiff.constant( math.atan( a:eval() ) ) end,
+  --
   asinh = function(a) local a=coercion(a) return autodiff.constant( math.asinh( a:eval() ) ) end,
   acosh = function(a) local a=coercion(a) return autodiff.constant( math.acosh( a:eval() ) ) end,
   atanh = function(a) local a=coercion(a) return autodiff.constant( math.atanh( a:eval() ) ) end,
@@ -364,7 +376,8 @@ autodiff.op[SCALAR] = {
   
   add = function(a,b)
     local a,b = coercion(a),coercion(b)
-    -- simplifactions
+    -- simplifications
+    if b<a then a,b=b,a end
     if a == autodiff.constant(0) then return b
     elseif b == autodiff.constant(0) then return a
     end
@@ -392,6 +405,7 @@ autodiff.op[SCALAR] = {
   mul = function(a,b)
     local a,b = coercion(a),coercion(b)
     -- simplifactions
+    if b<a then a,b=b,a end
     if a == autodiff.constant(0) or b == autodiff.constant(0) then
       return autodiff.constant(0)
     elseif a == autodiff.constant(1) then return b
@@ -550,10 +564,25 @@ autodiff.op[SCALAR] = {
     return s
   end,
 
+  abs = function(a)
+    local a = coercion(a)
+    local s = add_op('abs', SCALAR, {a},
+		     function(self, ...)
+		       local a = self.args[1]:eval(...)
+		       return math.abs(a)
+		     end,
+		     function(self, seed, result)
+		       local a = self.args[1]
+		       a:diff(seed/self, result)
+		       return result
+		     end)
+    return s
+  end,
+
   -- matrix operations
   fill = function(a,b) return b end,
   transpose = function(a) return a end,
-
+  
 }
 
 -----------------------------------------------------------------------------
@@ -568,16 +597,24 @@ autodiff[MATRIX] = function(names)
     t[i].diff = function(self, seed, result)
       return insert_grad(result, self.name, seed)
     end
+    local mt = getmetatable(t[i])
+    mt.__call = function(t, ...) return op.slice(t, ...) end
   end
   return table.unpack(t)
 end
 
--- CONSTANT OPERATIONS
+-- MATRIX OPERATIONS
 
 autodiff.op[MATRIX] = {
   
   add = function(a,b)
     local a,b = coercion(a),coercion(b)
+    -- simplifcations
+    if b<a then a,b=b,a end
+    if a == autodiff.constant(0) then return b
+    elseif b == autodiff.constant(0) then return a
+    end
+    --
     local s = add_op('+', MATRIX, {a,b},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
@@ -605,6 +642,13 @@ autodiff.op[MATRIX] = {
 
   mul = function(a,b)
     local a,b = coercion(a),coercion(b)
+    -- simplifcations
+    if a == autodiff.constant(0) or b == autodiff.constant(0) then
+      return autodiff.constant(0)
+    elseif a == autodiff.constant(1) then return b
+    elseif b == autodiff.constant(1) then return a
+    end
+    --
     local s = add_op('*', MATRIX, {a,b},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
@@ -635,6 +679,12 @@ autodiff.op[MATRIX] = {
 
   pow = function(a,b)
     local a,b = coercion(a),coercion(b)
+    -- simplifcations
+    if a == autodiff.constant(0) then return autodiff.constant(0)
+    elseif a == autodiff.constant(1) or b == autodiff.constant(0) then
+      return autodiff.constant(1)
+    end
+    --
     local s = add_op('^', MATRIX, {a,b},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
@@ -724,6 +774,21 @@ autodiff.op[MATRIX] = {
     return s
   end,
 
+  tanh = function(a)
+    local a = coercion(a)
+    local s = add_op('tanh', MATRIX, {a},
+		     function(self, ...)
+		       local a = self.args[1]:eval(...)
+		       return a:clone():tanh()
+		     end,
+		     function(self, seed, result)
+		       local a  = self.args[1]
+		       a:diff(autodiff.op.cmul(1 - self^2, seed), result)
+		       return result
+		     end)
+    return s
+  end,
+
   transpose = function(a)
     local a = coercion(a)
     local s = add_op('T', MATRIX, {a},
@@ -776,18 +841,116 @@ autodiff.op[MATRIX] = {
     return s
   end,
   
-  sum = function(a,b)
-    local a,b = coercion(a),b and coercion(b)
-    local s = add_op('sum', MATRIX, {a,b},
+  sum = function(a)
+    local a = coercion(a)
+    local s = add_op('sum', SCALAR, {a},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
-		       local b = self.args[2] and self.args[2]:eval(...)
 		       assert(type(a) == "matrix")
-		       assert(not b or type(b)=="number")
-		       return a:sum(b)
+		       return a:sum()
+		     end,
+		     function(self, seed, result)
+		       local a = self.args[1]
+		       a:diff(autodiff.op.fill(a, seed), result)
+		       return result
+		     end)
+    return s
+  end,
+
+  select = function(a,dim,value)
+    local a,dim,value = coercion(a),coercion(dim),coercion(value)
+    local s = add_op('select', MATRIX, {a,dim,value},
+		     function(self, ...)
+		       local a     = self.args[1]:eval(...)
+		       local dim   = self.args[2]:eval(...)
+		       local value = self.args[3]:eval(...)
+		       assert(type(a) == "matrix")
+		       return a:select(dim,value)
 		     end,
 		     function(self, seed, result)
 		       error("NOT IMPLEMENTED")
+		     end)
+    return s
+  end,
+
+  slice = function(...)
+    local arg = iterator(ipairs(table.pack(...))):select(2):map(coercion):table()
+    local s = add_op('slice', MATRIX, arg,
+		     function(self, ...)
+		       local arg = iterator(ipairs(self.args)):
+		       select(2):call('eval',...):table()
+		       local a = table.remove(arg,1)
+		       assert(type(a) == "matrix")
+		       return a(table.unpack(arg))
+		     end,
+		     function(self, seed, result)
+		       local a   = self.args[1]
+		       local arg = iterator(range(2,#self.args)):
+		       map(function(i) return self.args[i] end):table()
+		       --
+		       local dest = autodiff.op.fill(self,0)
+		       dest = autodiff.op.copy(dest, a, table.unpack(arg))
+		       a:diff(dest, result)
+		       return result
+		     end)
+    return s
+  end,
+
+  copy = function(...)
+    local arg = iterator(ipairs(table.pack(...))):select(2):map(coercion):table()
+    local s = add_op('copy', MATRIX, arg,
+		     function(self, ...)
+		       local arg = iterator(ipairs(self.args)):
+		       select(2):call('eval',...):table()
+		       local a = table.remove(arg,1)
+		       local b = table.remove(arg,2)
+		       assert(type(a) == "matrix")
+		       assert(type(b) == "matrix")
+		       a = a:clone()
+		       if #arg > 0 then
+			 a(table.unpack(arg)):copy(b)
+		       else a:copy(b)
+		       end
+		       return a
+		     end,
+		     function(self, seed, result) return result end)
+    return s
+  end,
+
+  get = function(...)
+    local arg = iterator(ipairs(table.pack(...))):select(2):map(coercion):table()
+    local s = add_op('get', SCALAR, arg,
+		     function(self, ...)
+		       local arg = iterator(ipairs(self.args)):
+		       select(2):call('eval', ...):table()
+		       local a = table.remove(arg,1)
+		       assert(type(a) == "matrix")
+		       return a:get(table.unpack(arg))
+		     end,
+		     function(self, seed, result)
+		       local a = self.args[1]
+		       local arg = iterator(range(2,#self.args)):
+		       map(function(i) return self.args[i] end):table()
+		       local result = autodiff.op.fill(a, 0)
+		       result = autodiff.op.copy(result,seed,table.unpack(arg))
+		       a:diff(seed, result)
+		       return result
+		     end)
+    return s
+  end,
+
+  abs = function(...)
+    local arg = iterator(ipairs(table.pack(...))):select(2):map(coercion):table()
+    local s = add_op('abs', MATRIX, arg,
+		     function(self, ...)
+		       local a = self.args[1]:eval(...)
+		       assert(type(a) == "matrix")
+		       return a:clone():abs()
+		     end,
+		     function(self, seed, result)
+		       local a = self.args[1]
+		       a:diff(autodiff.op.cmul(seed,1/self), result)
+		       return result
 		     end)
     return s
   end,
@@ -796,3 +959,41 @@ autodiff.op[MATRIX] = {
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
+
+-- TABLE
+
+-- the table data type exists to allow passing Lua tables to the operators
+
+autodiff[TABLE] = function(tbl)
+  assert(type(tbl) == "table")
+  local t = autodiff.symbol(table.tostring(tbl), TABLE)
+  t.value = tbl
+  t.eval  = function(self) return self.value end
+  t.diff  = function(self, seed, result) return result end
+  return t
+end
+
+-- TABLE OPERATIONS
+
+autodiff.op[TABLE] = { }
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+-- STRING
+
+-- the string data type exists to allow passing Lua strings to the operators
+
+autodiff[STRING] = function(strl)
+  assert(type(str) == "string")
+  local t = autodiff.symbol(str, STRING)
+  t.value = str
+  t.eval  = function(self) return self.value end
+  t.diff  = function(self, seed, result) return result end
+  return t
+end
+
+-- TABLE OPERATIONS
+
+autodiff.op[STRING] = { }

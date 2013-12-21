@@ -110,12 +110,12 @@ Matrix<float>* Matrix<float>::multiply(const Matrix<float> *other) const {
     }
     else {
       // DOT product
-      int dim[1] = {1};
-      resul = new Matrix<float>(1, dim, major_order);
+      int dim[2] = {1,1};
+      resul = new Matrix<float>(numDim, dim, major_order);
 #ifdef USE_CUDA
       resul->setUseCuda(use_cuda);
 #endif
-      (*resul)(0) = this->dot(other);
+      (*resul)[0] = this->dot(other);
     }
   }
   else if (numDim == 2 && other->numDim == 2 &&

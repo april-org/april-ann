@@ -7,9 +7,9 @@ local rnd = random(1234)
 local M   = matrix.col_major
 
 weights = {
-  w  = M(4,3):uniformf(0,1,rnd),
+  w  = M(3,4):uniformf(0,1,rnd),
   b  = M(3,1):uniformf(0,1,rnd),
-  w2 = M(3,2):uniformf(0,1,rnd),
+  w2 = M(2,3):uniformf(0,1,rnd),
   c  = M(2,1):uniformf(0,1,rnd),
 }
 
@@ -17,7 +17,7 @@ function logistic(s)
   return 1/(1 + op.exp(-s))
 end
 
-f         = logistic(op.transpose(w2) * logistic( op.transpose(w) * a + b ) + c)
+f = logistic(w2 * logistic( w * a + b ) + c)
 
 AD.dot_graph(f, "wop.dot")
 
@@ -25,34 +25,52 @@ df_dw_tbl = table.pack( f, AD.diff(f, {w, b, w2, c}) )
 
 AD.dot_graph(df_dw_tbl[2], "wop2.dot")
 
-df_dw     = AD.func(df_dw_tbl, {a}, weights )
+df_dw = AD.func(df_dw_tbl, {a}, weights )
 
----------------------------------------------------
+result = table.pack(  df_dw( M(4,1):uniformf(0,1,rnd) ) )
+iterator(ipairs(result)):select(2):apply(print)
 
-local input = M(4,1):uniformf(0,1,rnd)
-df_dw_result = table.pack( df_dw(input) )
+---------------------------------------------------------------------
 
-for i,v in ipairs(df_dw_result) do print(v) end
+-- SYMBOLIC DECLARATION
+AD.clear()
+-- inputs
+local x,s,h = AD.matrix('x s h')
+-- target
+local target = AD.matrix('target')
+-- weights
+local wx,ws1,wh1,ws2,wh2,b = AD.matrix('wx ws1 wh1 ws2 wh2 b')
+-- gradient seed
+local seed = AD.matrix('seed')
+-- equation
+f = wx*x + ws1*s + wh1*h + (ws2*s + wh2*h) * op.get(x,1,1) + b
 
----------------------------------------------------
+-- loss
+L = autodiff.op.sum( (f - target)^2 )
 
-net = ann.mlp.all_all.generate("4 inputs 3 logistic 2 logistic")
-net:build{
-  weights = {
-    w1 = weights.w:transpose(),
-    w2 = weights.w2:transpose(),
-    b1 = weights.b(),
-    b2 = weights.c(),
-  }
+-- INSTANTIATION
+local rnd = random(1234)
+local M   = matrix.col_major
+
+weights = {
+  wx  = M(12,3):uniformf(-0.1, 0.1, rnd),
+  ws1 = M(12,4):uniformf(-0.1, 0.1, rnd),
+  wh1 = M(12,24):uniformf(-0.1, 0.1, rnd),
+  ws2 = M(12,4):uniformf(-0.1, 0.1, rnd),
+  wh2 = M(12,24):uniformf(-0.1, 0.1, rnd),
+  b   = M(12,1):uniformf(-0.1, 0.1, rnd)
 }
 
-print( net:forward(input:transpose()):get_matrix():transpose() )
+AD.dot_graph(f, "wop.dot")
 
-net:backprop( M(1,2):ones() )
-grads = net:compute_gradients()
-for i,v in pairs(grads) do
-  print(i)
-  if i:match("w.") then v=v:transpose() end
-  print(v)
-end
+df_dw_tbl = table.pack( f, AD.diff(f, {wx, ws1, wh1, ws2, wh2, b}, seed) )
 
+AD.dot_graph(df_dw_tbl[5], "wop2.dot")
+
+df_dw     = AD.func(df_dw_tbl, {x,s,h,seed}, weights )
+
+result = table.pack(  df_dw( M(3,1):uniformf(0,1,rnd),
+			     M(4,1):uniformf(0,1,rnd),
+			     M(24,1):zeros():set(10,1,1),
+			     M(12,1):uniformf(0,1,rnd) ) )
+iterator(ipairs(result)):select(2):apply(print)
