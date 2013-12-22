@@ -61,7 +61,7 @@ local function symbol(name,dtype)
   local t
   if SYMBOLS[name] then
     t = SYMBOLS[name]
-    assert(t.dtype == dtype, "Symbol redifinition is not allowed")
+    assert(t.dtype == dtype, "Symbol redifinition is not allowed: " .. name)
   else
     -- a new metatable for each symbol, allows to redefine the operations for
     -- specific symbol types
@@ -82,9 +82,19 @@ local function symbol(name,dtype)
       name     = name,
       dtype    = dtype,
       issymbol = true,
+      dims     = nil,
+      set_dims = function(self,...)
+	self.dims = table.pack(...)
+	if type(self.dims[1]) == "table" then
+	  assert(#self.dims == 1,
+		 "set_dims accepts ONE table or a MULTIPLE numbers list")
+	  self.dims = self.dims[1]
+	end
+      end,
       -- basic eval function, returns the value stored at values table
       eval     = function(self,values)
-	return values[self.name] or error("Undefined value " .. self.name)
+	local m = values[self.name] or error("Undefined value " .. self.name)
+	return m
       end,
       -- default diff table, introduces the given seed at the result table
       diff     = function(self, seed, result)
@@ -591,12 +601,15 @@ autodiff.op[SCALAR] = {
 
 -- MATRIXS
 
-local shape_mt = {
-  __call = function(t,...)
-    local arg = table.pack(...)
-    for i,v in ipairs(arg) do table.insert(t, v) end
+function check_dims(a,b)
+  if a and b then
+    if #a ~= #b then return false end
+    for i=1,#a do
+      if a[i] ~= b[i] then return false end
+    end
   end
-}
+  return true
+end
 
 autodiff[MATRIX] = function(names)
   local t = table.pack(autodiff.symbol(names, MATRIX))
@@ -604,10 +617,15 @@ autodiff[MATRIX] = function(names)
     t[i].diff = function(self, seed, result)
       return insert_grad(result, self.name, seed)
     end
-    -- the shape table is callable (like a function) and defines the shape of
-    -- the underlying matrix
-    t[i].shape = { }
-    setmetatable(t[i].shape, shape_mt)
+    local old_eval = t[i].eval
+    t[i].eval = function(self,values)
+      local m = old_eval(self,values)
+      assert( check_dims(t[i].dims, m:dim()),
+	      "Incorrect dimensions, expected %s, found %s",
+	      table.concat(t[i].dims or {}, "x"),
+	      table.concat(m:dim(), "x") )
+      return m
+    end
     local mt = getmetatable(t[i])
     mt.__call = function(t, ...) return op.slice(t, ...) end
   end
@@ -616,39 +634,37 @@ end
 
 -- MATRIX OPERATIONS
 
-local function broadcast(a,b)
-  if type(a) ~= "matrix" or type(b) ~= "matrix" then return a,b end
-  local dims_a,dims_b = a:dim(),b:dim()
-  assert(#dims_a == #dims_b, "Incorrect dimension sizes")
-  local i=1 while i<=#dims_a and dims_a[i] == dims_b[i] do i=i+1 end
-  if i<=#dims_a then
-    local source
-    local dest
-    local tgt
-    if dims_a[i] == 1 then
-      tgt,source,dest = dims_a,a,matrix.as(b):zeros()
-      a = dest
-    elseif dims_b[i] == 1 then
-      tgt,source,dest = dims_b,b,matrix.as(a):zeros()
-      b = dest
-    else
-      error("Not aligned dimensions")
-    end
-    while i<=#dims_a do
-      assert(dims_a[i] == dims_b[i] or tgt[i] == 1,
-	     "Trailing dimensions do not match")
-      i=i+1
-    end
-    for sw in dest:sliding_window{size=tgt, step=tgt}:iterate() do
-      sw:copy(source)
-    end
-  end
-  return a,b
-end
+-- local function broadcast(a,b)
+--   local dims_a,dims_b = a.dims,b.dims
+--   assert(#dims_a == #dims_b, "Incorrect dimension sizes")
+--   local i=1 while i<=#dims_a and dims_a[i] == dims_b[i] do i=i+1 end
+--   if i<=#dims_a then
+--     local source
+--     local dest
+--     local tgt
+--     if dims_a[i] == 1 then
+--       tgt,source,dest = dims_a,a,autodiff.op.fill(b,0)
+--       a = dest
+--     elseif dims_b[i] == 1 then
+--       tgt,source,dest = dims_b,b,autodiff.op.fill(a,0)
+--       b = dest
+--     else
+--       error("Not aligned dimensions")
+--     end
+--     while i<=#dims_a do
+--       assert(dims_a[i] == dims_b[i] or tgt[i] == 1,
+-- 	     "Trailing dimensions do not match")
+--       i=i+1
+--     end
+--     autodiff.op.slide(dest, {size=tgt, step=tgt},
+-- 		      function(sw) return autodiff.op.copy(sw,source) end)
+
+--   end
+--   return a,b
+-- end
 
 autodiff.op[MATRIX] = {
   
-  -- this operation applies broadcast if needed
   add = function(a,b)
     local a,b = coercion(a),coercion(b)
     -- simplifcations
@@ -656,7 +672,6 @@ autodiff.op[MATRIX] = {
     if a == autodiff.constant(0) then return b
     elseif b == autodiff.constant(0) then return a
     end
-    
     --
     local s = gen_op('+', MATRIX, {a,b},
 		     function(self, ...)
@@ -666,17 +681,19 @@ autodiff.op[MATRIX] = {
 		       if a == 0 then return b
 		       elseif b == 0 then return a
 		       end
-		       -- FIXME: do broadcasting at composition time
-		       local a,b = broadcast(a,b)
 		       return a + b
 		     end,
 		     function(self, seed, result)
 		       local a,b = self.args[1],self.args[2]
-		       
 		       a:diff(seed, result)
 		       b:diff(seed, result)
 		       return result
 		     end)
+    if a.dims or b.dims then
+      assert( check_dims(a.dims, b.dims),
+	      "Incorrect dimensions")
+      s:set_dims(a.dims or b.dims)
+    end
     return s
   end,
   
@@ -708,10 +725,22 @@ autodiff.op[MATRIX] = {
 		     end,
 		     function(self, seed, result)
 		       local a,b = self.args[1],self.args[2]
-		       a:diff(seed*b, result)
+		       a:diff(seed*autodiff.op.transpose(b), result)
 		       b:diff(autodiff.op.transpose(a)*seed, result)
 		       return result
 		     end)
+    if a.dims and b.dims then
+      assert(#a.dims == 2 and #a.dims == #b.dims, "Incorrect dimensions")
+      assert(a.dims[2] == b.dims[1],
+	     string.format("Incorrect matrix dims for multiplication: %s * %s",
+			   table.concat(a.dims, "x"),
+			   table.concat(b.dims, "x")))
+      s:set_dims(a.dims[1], b.dims[2])
+    elseif a.dtype == CONSTANT or a.dtype == SCALAR then
+      if b.dims then s:set_dims(b.dims) end
+    elseif b.dtype == CONSTANT or b.dtype == SCALAR then
+      if a.dims then s:set_dims(a.dims) end
+    end
     return s
   end,
   
@@ -751,6 +780,7 @@ autodiff.op[MATRIX] = {
 		       a:diff(seed, result)
 		       return result
 		     end)
+    if a.dims then s:set_dims(a.dims) end
     return s
   end,
   
@@ -771,6 +801,7 @@ autodiff.op[MATRIX] = {
 		       local da = a:diff(seed, result)
 		       return autodiff.op.cmul(autodiff.op.pow(a, -1), da)
 		     end)
+    if a.dims then s:set_dims(a.dims) end
     return s
   end,
 
@@ -786,6 +817,7 @@ autodiff.op[MATRIX] = {
 		       a:diff(autodiff.op.cmul(self, seed), result)
 		       return result
 		     end)
+    if a.dims then s:set_dims(a.dims) end
     return s
   end,
 
@@ -801,6 +833,7 @@ autodiff.op[MATRIX] = {
 		       a:diff(autodiff.op.cmul(-autodiff.op.sin(a), seed), result)
 		       return result
 		     end)
+    if a.dims then s:set_dims(a.dims) end
     return s
   end,
 
@@ -816,6 +849,7 @@ autodiff.op[MATRIX] = {
 		       a:diff(autodiff.op.cmul(autodiff.op.cos(a), seed), result)
 		       return result
 		     end)
+    if a.dims then s:set_dims(a.dims) end
     return s
   end,
 
@@ -831,6 +865,7 @@ autodiff.op[MATRIX] = {
 		       a:diff(autodiff.op.cmul(1 - self^2, seed), result)
 		       return result
 		     end)
+    if a.dims then s:set_dims(a.dims) end
     return s
   end,
 
@@ -846,6 +881,10 @@ autodiff.op[MATRIX] = {
 		       a:diff(autodiff.op.transpose(seed), result)
 		       return result
 		     end)
+    if a.dims then
+      s:set_dims(iterator(ipairs(a.dims)):select(2):
+		 reduce(function(acc,v) return table.insert(acc,1,v) end, {}))
+    end
     return s
   end,
 
@@ -867,6 +906,11 @@ autodiff.op[MATRIX] = {
 		       b:diff(autodiff.op.cmul(b,seed), result)
 		       return result
 		     end)
+    if a.dims or b.dims then
+      assert( check_dims(a.dims, b.dims),
+	      "Incorrect dimensions" )
+      s:set_dims(a.dims or b.dims)
+    end
     return s
   end,
   
@@ -883,6 +927,7 @@ autodiff.op[MATRIX] = {
 		     function(self, seed, result)
 		       return result
 		     end)
+    if a.dims then s:set_dims(a.dims) end
     return s
   end,
   
@@ -915,6 +960,7 @@ autodiff.op[MATRIX] = {
 		     function(self, seed, result)
 		       error("NOT IMPLEMENTED")
 		     end)
+    -- TODO: modify dims
     return s
   end,
 
@@ -938,6 +984,7 @@ autodiff.op[MATRIX] = {
 		       a:diff(dest, result)
 		       return result
 		     end)
+    -- TODO: modify dims
     return s
   end,
 
@@ -959,6 +1006,7 @@ autodiff.op[MATRIX] = {
 		       return a
 		     end,
 		     function(self, seed, result) return result end)
+    -- TODO: modify dims
     return s
   end,
 
@@ -984,9 +1032,9 @@ autodiff.op[MATRIX] = {
     return s
   end,
 
-  abs = function(...)
-    local arg = iterator(ipairs(table.pack(...))):select(2):map(coercion):table()
-    local s = gen_op('abs', MATRIX, arg,
+  abs = function(a)
+    local a = coercion(a)
+    local s = gen_op('abs', MATRIX, {a},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       assert(type(a) == "matrix")
@@ -997,8 +1045,10 @@ autodiff.op[MATRIX] = {
 		       a:diff(autodiff.op.cmul(seed,1/self), result)
 		       return result
 		     end)
+    if a.dims then s:set_dims(a.dims) end
     return s
   end,
+
 }
 
 -----------------------------------------------------------------------------

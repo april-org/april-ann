@@ -1,7 +1,7 @@
 local AD   = autodiff
 local op   = AD.op
 local func = AD.func
-local a,w,w2,seed  = AD.matrix('a w w2 seed')
+local a,w,w2 = AD.matrix('a w w2')
 local b,c = AD.matrix('b c')
 
 local rnd = random(1234)
@@ -14,10 +14,11 @@ weights = {
   c  = M(2,1):uniformf(0,1,rnd),
 }
 
-w:shape(table.unpack(weights.w:dim()))
-b:shape(table.unpack(weights.b:dim()))
-w2:shape(table.unpack(weights.w2:dim()))
-c:shape(table.unpack(weights.c:dim()))
+w:set_dims(weights.w:dim())
+b:set_dims(weights.b:dim())
+w2:set_dims(weights.w2:dim())
+c:set_dims(weights.c:dim())
+a:set_dims(4,1)
 
 function logistic(s)
   return 1/(1 + op.exp(-s))
