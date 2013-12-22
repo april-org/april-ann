@@ -3,6 +3,74 @@ autodiff.op = autodiff.op or {}
 
 ------------------------------------------------------------------------------
 
+-- COMPILER
+
+local compiler = {}
+
+local compiler_mt = {
+  __index = {
+    write_indent = function(self)
+      local tbl = { }
+      for i=1,self.indent do table.insert(tbl, "  ") end
+      self.f:write(table.concat(tbl, ""))
+    end,
+    write_initial_var = function(self,var_name,name)
+      self:write_indent()
+      self.f:write(string.format("local %s = arg[%q]\n", var_name, name))
+    end,
+    write_initial_constant = function(self,var_name,value)
+      self:write_indent()
+      self.f:write(string.format("local %s = %s\n",
+				 var_name, tostring(value)))
+    end,
+    write_expression = function(self, var_name, expression)
+      self:write_indent()
+      self.f:write(string.format("local %s = (%s)\n",
+				 var_name, expression))
+    end,
+    write_return = function(self, var_name)
+      self:write_indent()
+      self.f:write(string.format("return %s\n", var_name))
+    end,
+    begin_expression = function(self, var_name)
+      self:write_indent()
+      self.f:write(string.format("if not cache[%q] then\n", var_name))
+      self.indent = self.indent + 1
+    end,
+    end_expression = function(self, var_name)
+      self:write_indent()
+      self.f:write(string.format("cache[%q] = %s\n", var_name, var_name))
+      self.indent = self.indent - 1
+      self:write_indent()
+      self.f:write(string.format("end\n"))
+      self:write_indent()
+      self.f:write(string.format("local %s = cache[%q]\n",
+				 var_name, var_name))
+    end,
+    close = function(self)
+      self.f:write("end\n")
+      self.f:close()
+    end,
+    new_function = function(self)
+      self.f:write("end,")
+      self.f:write("function(arg,cache)\n")
+    end,
+  }
+}
+
+setmetatable(compiler,
+	     {
+	       __call = function(self,filename)
+		 local f = io.open(filename, "w") or error("Impossible to open: ".. filename)
+		 local obj = { f=f, indent=1 }
+		 setmetatable(obj,compiler_mt)
+		 obj.f:write("return function(arg,cache)\n")
+		 return obj
+	       end,
+	     })
+
+------------------------------------------------------------------------------
+
 -- dtype constants
 local CONSTANT = 'constant'
 local SCALAR   = 'scalar'
@@ -41,6 +109,17 @@ local function infer(...)
     dtype = infer_table[dtype][argi_dtype]
   end
   return dtype
+end
+
+local gen_arg_name
+local reset_var_id
+do
+  local var_name_id=0
+  reset_var_id = function() var_name_id = 0 end
+  gen_var_name = function()
+    var_name_id=var_name_id+1
+    return string.format("__var%d__", var_name_id)
+  end
 end
 
 -- a function which declares symbols given its name and its dtype. A symbol
@@ -83,6 +162,7 @@ local function symbol(name,dtype)
       dtype    = dtype,
       issymbol = true,
       dims     = nil,
+      clear_var_name = function(self) self.var_name = nil end,
       set_dims = function(self,...)
 	self.dims = table.pack(...)
 	if type(self.dims[1]) == "table" then
@@ -99,6 +179,13 @@ local function symbol(name,dtype)
       -- default diff table, introduces the given seed at the result table
       diff     = function(self, seed, result)
 	return insert_grad(result, self.name, seed)
+      end,
+      --
+      compile = function(self,dest)
+	if not self.var_name then
+	  self.var_name = gen_var_name()
+	end
+	dest:write_initial_var(self.var_name,self.name)
       end,
       --
       last = nil,
@@ -149,7 +236,8 @@ function autodiff.remove(...)
 end
 
 -- this functions adds a new operation with the given data
-function autodiff.gen_op(name, dtype, args, eval_func, diff_func)
+function autodiff.gen_op(name, dtype, args, eval_func, diff_func, compile)
+  local compile = compile or function() error("COMPILATION NOT IMPLEMENTED") end
   local s = symbol(string.format("(%s %s)", name,
 				 iterator(ipairs(args)):select(2):
 				 map(tostring):concat(" ")),
@@ -171,6 +259,20 @@ function autodiff.gen_op(name, dtype, args, eval_func, diff_func)
     -- by default the seed is a symbol as the symbol output filled with 1s
     local seed = seed or autodiff.op.fill(self,1)
     return diff_func(self, seed, insert_grad(result, self.name, seed))
+  end
+  -- compilation function
+  s.compile = function(self,dest)
+    if not self.var_name then
+      self.var_name = gen_var_name()
+    end
+    dest:begin_expression(self.var_name)
+    iterator(ipairs(self.args)):select(2):call('compile',dest):apply()
+    dest:write_expression(self.var_name, compile(self))
+    dest:end_expression(self.var_name)
+  end
+  s.clear_var_name = function(self)
+    self.var_name = nil
+    iterator(ipairs(self.args)):select(2):call('clear_var_name'):apply()
   end
   -- auxiliary function for debugging purposes
   s.to_dot_string = function(self,id,parent,names,edges)
@@ -223,6 +325,7 @@ end
 function autodiff.func(s,args,shared_values,cache)
   assert(type(s) == "table")
   if s.issymbol then s = { s } end
+  iterator(ipairs(s)):select(2):call('clear_var_name'):apply()
   local args,shared_values = args or {},shared_values or {}
   for i,t in ipairs(args) do
     assert(type(t)=="table" and t.issymbol and SYMBOLS[t.name],
@@ -231,9 +334,25 @@ function autodiff.func(s,args,shared_values,cache)
   for name,_ in pairs(shared_values) do
     assert(SYMBOLS[name], "Undefined or cleared symbol " .. name)
   end
+  -- compilation procedure
+  reset_var_id() -- resets the variable id counter
+  local filename = os.tmpname()
+  local dest = compiler(filename)
+  -- compiles all the received symbolic graphs
+  for i,current_s in ipairs(s) do
+    if i>1 then dest:new_function() end
+    current_s:compile(dest)
+    dest:write_return(current_s.var_name)
+  end
+  dest:close()
+  -- loading of the compiled program
+  local funcs = table.pack(dofile(filename))
+  local f = io.open(filename, "r")
+  local program = f:read("*a")
+  f:close()
+  os.remove(filename)
   -- the returned function is a closure
   return function(...)
-    local cache = cache or {}
     local args2 = table.pack(...)
     assert(#args == #args2,
 	   string.format("Incorrect number of arguments, expected %d, found %d\n",
@@ -241,9 +360,11 @@ function autodiff.func(s,args,shared_values,cache)
     local values = iterator(ipairs(args)):
     map(function(k,v) return v.name,args2[k] end):table()
     for k,v in pairs(shared_values) do values[k] = v end
-    local ret = iterator(ipairs(s)):select(2):call('eval',values,cache):table()
+    local cache = {}
+    local ret = iterator(ipairs(funcs)):select(2):
+    map(function(f) return f(values,cache) end):table()
     return table.unpack(ret)
-  end
+  end,program
 end
 
 -- Function for differentiation. It receives a symbol function f, a table with
@@ -305,6 +426,12 @@ autodiff.constant = function(...)
       local result = result or {}
       result[self.name] = autodiff.constant( 0 )
       return result
+    end
+    s.compile = function(self,dest)
+      if not self.var_name then
+	self.var_name = gen_var_name()
+      end
+      dest:write_initial_constant(self.var_name,self:eval())
     end
     s.to_dot_string = function(self,id,parent,names,edges)
       local id  = id or { 0 }
@@ -403,6 +530,11 @@ autodiff.op[SCALAR] = {
 		       a:diff(seed, result)
 		       b:diff(seed, result)
 		       return result
+		     end,
+		     function(self)
+		       local a,b = self.args[1],self.args[2]
+		       local str_tbl = { a.var_name, "+", b.var_name }
+		       return table.concat(str_tbl, " ")
 		     end)
     return s
   end,
@@ -433,6 +565,11 @@ autodiff.op[SCALAR] = {
 		       a:diff(seed*b, result)
 		       b:diff(seed*a, result)
 		       return result
+		     end,
+		     function(self)
+		       local a,b = self.args[1],self.args[2]
+		       local str_tbl = { a.var_name, "*", b.var_name }
+		       return table.concat(str_tbl, " ")
 		     end)
     return s
   end,
@@ -461,6 +598,11 @@ autodiff.op[SCALAR] = {
 		       local a,b = self.args[1],self.args[2]
 		       a:diff(b * (a^(b-1)) * seed, result)
 		       return result
+		     end,
+		     function(self)
+		       local a,b = self.args[1],self.args[2]
+		       local str_tbl = { a.var_name, "^", b.var_name }
+		       return table.concat(str_tbl, " ")
 		     end)
     return s
   end,
@@ -480,6 +622,11 @@ autodiff.op[SCALAR] = {
 		       local a  = self.args[1]
 		       a:diff(1/a * seed, result)
 		       return result
+		     end,
+		     function(self)
+		       local a = self.args[1]
+		       local str_tbl = { "math.log(", a.var_name, ")" }
+		       return table.concat(str_tbl, " ")
 		     end)
     return s
   end,
@@ -495,6 +642,11 @@ autodiff.op[SCALAR] = {
 		       local a  = self.args[1]
 		       a:diff(self * seed, result)
 		       return result
+		     end,
+		     function(self)
+		       local a = self.args[1]
+		       local str_tbl = { "math.exp(", a.var_name, ")" }
+		       return table.concat(str_tbl, " ")
 		     end)
     return s
   end,
@@ -510,6 +662,11 @@ autodiff.op[SCALAR] = {
 		       local a  = self.args[1]
 		       a:diff(autodiff.op.cos(a) * seed, result)
 		       return result
+		     end,
+		     function(self)
+		       local a = self.args[1]
+		       local str_tbl = { "math.sin(", a.var_name, ")" }
+		       return table.concat(str_tbl, " ")
 		     end)
     return s
   end,
@@ -525,6 +682,11 @@ autodiff.op[SCALAR] = {
 		       local a  = self.args[1]
 		       a:diff(-autodiff.op.sin(a) * seed, result)
 		       return result
+		     end,
+		     function(self)
+		       local a = self.args[1]
+		       local str_tbl = { "math.cos(", a.var_name, ")" }
+		       return table.concat(str_tbl, " ")
 		     end)
     return s
   end,
@@ -540,6 +702,11 @@ autodiff.op[SCALAR] = {
 		       local a  = self.args[1]
 		       a:diff(autodiff.op.cosh(a) * seed, result)
 		       return result
+		     end,
+		     function(self)
+		       local a = self.args[1]
+		       local str_tbl = { "math.sinh(", a.var_name, ")" }
+		       return table.concat(str_tbl, " ")
 		     end)
     return s
   end,
@@ -555,6 +722,11 @@ autodiff.op[SCALAR] = {
 		       local a = self.args[1]
 		       a:diff(autodiff.op.sinh(a) * seed, result)
 		       return result
+		     end,
+		     function(self)
+		       local a = self.args[1]
+		       local str_tbl = { "math.cosh(", a.var_name, ")" }
+		       return table.concat(str_tbl, " ")
 		     end)
     return s
   end,
@@ -570,6 +742,11 @@ autodiff.op[SCALAR] = {
 		       local a  = self.args[1]
 		       a:diff((1 - self^2) * seed, result)
 		       return result
+		     end,
+		     function(self)
+		       local a = self.args[1]
+		       local str_tbl = { "math.tanh(", a.var_name, ")" }
+		       return table.concat(str_tbl, " ")
 		     end)
     return s
   end,
@@ -585,6 +762,11 @@ autodiff.op[SCALAR] = {
 		       local a = self.args[1]
 		       a:diff(seed/self, result)
 		       return result
+		     end,
+		     function(self)
+		       local a = self.args[1]
+		       local str_tbl = { "math.abs(", a.var_name, ")" }
+		       return table.concat(str_tbl, " ")
 		     end)
     return s
   end,
@@ -688,6 +870,11 @@ autodiff.op[MATRIX] = {
 		       a:diff(seed, result)
 		       b:diff(seed, result)
 		       return result
+		     end,
+		     function(self)
+		       local a,b = self.args[1],self.args[2]
+		       local str_tbl = { a.var_name, '+', b.var_name }
+		       return table.concat(str_tbl, " ")
 		     end)
     if a.dims or b.dims then
       assert( check_dims(a.dims, b.dims),
@@ -728,6 +915,11 @@ autodiff.op[MATRIX] = {
 		       a:diff(seed*autodiff.op.transpose(b), result)
 		       b:diff(autodiff.op.transpose(a)*seed, result)
 		       return result
+		     end,
+		     function(self)
+		       local a,b = self.args[1],self.args[2]
+		       local str_tbl = { a.var_name, '*', b.var_name }
+		       return table.concat(str_tbl, " ")
 		     end)
     if a.dims and b.dims then
       assert(#a.dims == 2 and #a.dims == #b.dims, "Incorrect dimensions")
@@ -779,6 +971,11 @@ autodiff.op[MATRIX] = {
 		       local seed = autodiff.op.cmul(seed, b*a^(b-1))
 		       a:diff(seed, result)
 		       return result
+		     end,
+		     function(self)
+		       local a,b = self.args[1],self.args[2]
+		       local str_tbl = { a.var_name, '^', b.var_name }
+		       return table.concat(str_tbl, " ")
 		     end)
     if a.dims then s:set_dims(a.dims) end
     return s
@@ -800,6 +997,11 @@ autodiff.op[MATRIX] = {
 		       local a  = self.args[1]
 		       local da = a:diff(seed, result)
 		       return autodiff.op.cmul(autodiff.op.pow(a, -1), da)
+		     end,
+		     function(self)
+		       local a = self.args[1]
+		       local str_tbl = { a.var_name, ':clone():log()' }
+		       return table.concat(str_tbl, "")
 		     end)
     if a.dims then s:set_dims(a.dims) end
     return s
@@ -816,6 +1018,11 @@ autodiff.op[MATRIX] = {
 		       local a = self.args[1]
 		       a:diff(autodiff.op.cmul(self, seed), result)
 		       return result
+		     end,
+		     function(self)
+		       local a = self.args[1]
+		       local str_tbl = { a.var_name, ':clone():exp()' }
+		       return table.concat(str_tbl, "")
 		     end)
     if a.dims then s:set_dims(a.dims) end
     return s
@@ -832,6 +1039,11 @@ autodiff.op[MATRIX] = {
 		       local a  = self.args[1]
 		       a:diff(autodiff.op.cmul(-autodiff.op.sin(a), seed), result)
 		       return result
+		     end,
+		     function(self)
+		       local a = self.args[1]
+		       local str_tbl = { a.var_name, ':clone():cos()' }
+		       return table.concat(str_tbl, "")
 		     end)
     if a.dims then s:set_dims(a.dims) end
     return s
@@ -848,6 +1060,11 @@ autodiff.op[MATRIX] = {
 		       local a  = self.args[1]
 		       a:diff(autodiff.op.cmul(autodiff.op.cos(a), seed), result)
 		       return result
+		     end,
+		     function(self)
+		       local a = self.args[1]
+		       local str_tbl = { a.var_name, ':clone():sin()' }
+		       return table.concat(str_tbl, "")
 		     end)
     if a.dims then s:set_dims(a.dims) end
     return s
@@ -864,6 +1081,11 @@ autodiff.op[MATRIX] = {
 		       local a  = self.args[1]
 		       a:diff(autodiff.op.cmul(1 - self^2, seed), result)
 		       return result
+		     end,
+		     function(self)
+		       local a = self.args[1]
+		       local str_tbl = { a.var_name, ':clone():tanh()' }
+		       return table.concat(str_tbl, "")
 		     end)
     if a.dims then s:set_dims(a.dims) end
     return s
@@ -880,6 +1102,11 @@ autodiff.op[MATRIX] = {
 		       local a  = self.args[1]
 		       a:diff(autodiff.op.transpose(seed), result)
 		       return result
+		     end,
+		     function(self)
+		       local a = self.args[1]
+		       local str_tbl = { a.var_name, ':transpose()' }
+		       return table.concat(str_tbl, "")
 		     end)
     if a.dims then
       s:set_dims(iterator(ipairs(a.dims)):select(2):
@@ -905,6 +1132,11 @@ autodiff.op[MATRIX] = {
 		       a:diff(autodiff.op.cmul(a,seed), result)
 		       b:diff(autodiff.op.cmul(b,seed), result)
 		       return result
+		     end,
+		     function(self)
+		       local a,b = self.args[1],self.args[2]
+		       local str_tbl = { a.var_name, ':cmul(', b.var_name, ')' }
+		       return table.concat(str_tbl, "")
 		     end)
     if a.dims or b.dims then
       assert( check_dims(a.dims, b.dims),
@@ -926,6 +1158,11 @@ autodiff.op[MATRIX] = {
 		     end,
 		     function(self, seed, result)
 		       return result
+		     end,
+		     function(self)
+		       local a,b = self.args[1],self.args[2]
+		       local str_tbl = { 'matrix.as(', a.var_name, '):fill(', b.var_name, ')' }
+		       return table.concat(str_tbl, "")
 		     end)
     if a.dims then s:set_dims(a.dims) end
     return s
@@ -943,6 +1180,11 @@ autodiff.op[MATRIX] = {
 		       local a = self.args[1]
 		       a:diff(autodiff.op.fill(a, seed), result)
 		       return result
+		     end,
+		     function(self)
+		       local a = self.args[1]
+		       local str_tbl = { a.var_name, ':sum()' }
+		       return table.concat(str_tbl, "")
 		     end)
     return s
   end,
@@ -959,6 +1201,13 @@ autodiff.op[MATRIX] = {
 		     end,
 		     function(self, seed, result)
 		       error("NOT IMPLEMENTED")
+		     end,
+		     function(self)
+		       local a     = self.args[1]
+		       local dim   = self.args[2]
+		       local value = self.args[3]
+		       local str_tbl = { a.var_name, ':select(', dim.var_name, ',', value.var_name, ')' }
+		       return table.concat(str_tbl, "")
 		     end)
     -- TODO: modify dims
     return s
@@ -983,6 +1232,17 @@ autodiff.op[MATRIX] = {
 		       dest = autodiff.op.copy(dest, a, table.unpack(arg))
 		       a:diff(dest, result)
 		       return result
+		     end,
+		     function(self)
+		       local a       = self.args[1]
+		       local str_tbl = { a.var_name, '(' }
+		       table.insert(str_tbl, self.args[2].var_name)
+		       for i=3,#self.args do
+			 table.insert(str_tbl, ',')
+			 table.insert(str_tbl, self.args[i].var_name)
+		       end
+		       table.insert(str_tbl, ')')
+		       return table.concat(str_tbl, "")
 		     end)
     -- TODO: modify dims
     return s
@@ -1005,7 +1265,25 @@ autodiff.op[MATRIX] = {
 		       end
 		       return a
 		     end,
-		     function(self, seed, result) return result end)
+		     function(self, seed, result) return result end,
+		     function(self)
+		       local a = self.args[1]
+		       local b = self.args[2]
+		       local str_tbl = { a.var_name, ':clone()' }
+		       if #self.args > 2 then
+			 table.insert(str_tbl, '(')
+			 table.insert(str_tbl, self.args[3].var_name)
+			 for i=4,#self.args do
+			   table.insert(str_tbl, ',')
+			   table.insert(str_tbl, self.args[i].var_name)
+			 end
+			 table.insert(str_tbl, ')')
+		       end
+		       table.insert(str_tbl, ':copy(')
+		       table.insert(str_tbl, b.var_name)
+		       table.insert(str_tbl, ')')
+		       return table.concat(str_tbl, "")
+		     end)
     -- TODO: modify dims
     return s
   end,
@@ -1028,6 +1306,17 @@ autodiff.op[MATRIX] = {
 		       result = autodiff.op.copy(result,seed,table.unpack(arg))
 		       a:diff(seed, result)
 		       return result
+		     end,
+		     function(self)
+		       local a = self.args[1]
+		       local str_tbl = { a.var_name, ':get(' }
+		       table.insert(str_tbl, self.args[2].var_name)
+		       for i=3,#self.args do
+			 table.insert(str_tbl, ',')
+			 table.insert(str_tbl, self.args[i].var_name)
+		       end
+		       table.insert(str_tbl, ')')
+		       return table.concat(str_tbl, "")
 		     end)
     return s
   end,
@@ -1044,6 +1333,11 @@ autodiff.op[MATRIX] = {
 		       local a = self.args[1]
 		       a:diff(autodiff.op.cmul(seed,1/self), result)
 		       return result
+		     end,
+		     function(self)
+		       local a = self.args[1]
+		       local str_tbl = { a.var_name, ':clone():abs()' }
+		       return table.concat(str_tbl, "")
 		     end)
     if a.dims then s:set_dims(a.dims) end
     return s

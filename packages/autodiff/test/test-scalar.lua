@@ -3,7 +3,7 @@ local op   = AD.op
 local func = AD.func
 local a,b,c  = AD.scalar('a b c')
 
-f = op.cos(a*b + c)
+f = op.cos(a*b + c) + a*b
 print(f)
 fx = func(f, {a,b,c})
 print(fx(3,4,5))
