@@ -379,7 +379,9 @@ function autodiff.func(s,args,shared_values,cache)
   local program = f:read("*a")
   f:close()
   os.remove(filename)
-  -- the returned function is a closure
+  -- the returned function is a closure which inserts the input arguments and
+  -- shared_values in a dictionary; this dictionary is passed to each of the
+  -- previously compiled functions
   return function(...)
     local args2 = table.pack(...)
     assert(#args == #args2,
