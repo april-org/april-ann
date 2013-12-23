@@ -32,7 +32,8 @@ setmetatable(compiler_out,
 	     {
 	       __call = function(self,filename)
 		 local f = io.open(filename, "w") or error("Impossible to open: ".. filename)
-		 local obj = { f=f, indent=1, active_vars={}, cache_counts={} }
+		 local obj = { f=f, indent=1, active_vars={}, cache_counts={},
+			       declared_expressions = {} }
 		 setmetatable(obj,compiler_out_mt)
 		 obj.f:write("return function(arg,cache)\n")
 		 return obj
@@ -42,6 +43,9 @@ setmetatable(compiler_out,
 -- methods
 compiler_out_mt.__index = {
   -- basic methods
+  declared_expression = function(self,var_name)
+    return self.declared_expressions[var_name]
+  end,
   write_indent = function(self)
     local tbl = {}
     for i=1,self.indent do table.insert(tbl, "  ") end
@@ -59,6 +63,7 @@ compiler_out_mt.__index = {
     self.f:write("end,\n")
     self.f:write("function(arg,cache)\n")
     self.active_vars = {}
+    self.declared_expressions = {}
   end,
   count_cache = function(self,var_name)
     self.cache_counts[var_name] = (self.cache_counts[var_name] or 0) + 1
@@ -97,7 +102,7 @@ compiler_out_mt.__index = {
     -- current parent. In the first case, it is not necessary to introduce a new
     -- block, because children and parent always come together. In the second
     -- case, a block with a cache check is needed.
-    if self.cache_counts[var_name] > (parent_count or 0) then
+    if self.cache_counts[var_name] > (parent_count or 1) then
       self:write_indent()
       self.f:write(string.format("if not cache[%q] then\n", var_name))
       self.indent = self.indent + 1
@@ -115,22 +120,34 @@ compiler_out_mt.__index = {
     self.f:write(string.format("%s = (%s)\n", var_name, expression))
     self.active_vars[var_name] = true
   end,
-  end_expression = function(self, var_name, parent_count)
+  end_expression = function(self, var_name, parent_count, childs)
     assert(self.active_vars[var_name],
-	   "Declare expresion vars before writing them")
+	   "Declare expression vars before writing them")
     -- The same parent and children cache count means that they are dependent,
     -- so the children always come with the same parent. If the counts are
     -- different, then the children has a dependence in paths different than the
     -- current parent. In the first case, it is not necessary to introduce a new
     -- block, because children and parent always come together. In the second
     -- case, a block with a cache check is needed.
-    if self.cache_counts[var_name] > (parent_count or 0) then
+    if self.cache_counts[var_name] > (parent_count or 1) then
       self:write_indent()
       self.f:write(string.format("cache[%q] = %s\n", var_name, var_name))
       self.indent = self.indent - 1
       self:write_indent()
       self.f:write(string.format("else -- if not cache[%q]\n", var_name))
       self.indent = self.indent + 1
+      if childs then
+	local function get_child_from_cache(v)
+	  if v.isop then
+	    self:write_indent()
+	    self.f:write(string.format("%s = cache[%q]\n",
+				       v.var_name, v.var_name))
+	    self.declared_expressions[v.var_name] = true
+	    for i=1,#v.args do get_child_from_cache(v.args[i]) end
+	  end
+	end
+	for i=1,#childs do get_child_from_cache(childs[i]) end
+      end
       self:write_indent()
       self.f:write(string.format("%s = cache[%q]\n", var_name, var_name))
       self.indent = self.indent - 1
@@ -138,6 +155,7 @@ compiler_out_mt.__index = {
       self.f:write(string.format("end -- if not cache[%q] else ... end\n",
 	  var_name))
     end
+    self.declared_expressions[var_name] = true
   end,
 }
 ------------------------------------------------------------------------------
@@ -188,7 +206,7 @@ end
 -- a function which declares symbols given its name and its dtype. A symbol
 -- has two basic methods:
 --
--- e:eval(values,cache) => evaluates the expresion using the given variable
+-- e:eval(values,cache) => evaluates the expression using the given variable
 --                         values table and the given cache table. The cache
 --                         table is useful to store partial computations,
 --                         improving the efficiency of the computation.
@@ -341,13 +359,15 @@ function autodiff.gen_op(name, dtype, args, eval_func, diff_func, compile)
     if not self.var_name then
       self.var_name = gen_var_name()
     end
-    dest:begin_expression(self.var_name, parent_count)
-    -- compiles the arguments list
-    iterator(ipairs(self.args)):select(2):
-    call('compile',dest,dest:get_cache_count(self.var_name)):apply()
-    -- compiles the operation expression itself
-    compile(self, dest)
-    dest:end_expression(self.var_name, parent_count)
+    if not dest:declared_expression(self.var_name) then
+      dest:begin_expression(self.var_name, parent_count)
+      -- compiles the arguments list
+      iterator(ipairs(self.args)):select(2):
+      call('compile',dest,dest:get_cache_count(self.var_name)):apply()
+      -- compiles the operation expression itself
+      compile(self, dest)
+      dest:end_expression(self.var_name, parent_count, self.args)
+    end
   end
   -- removes the associated var_name, and calls the clear_var_name of its
   -- arguments
@@ -434,7 +454,7 @@ function autodiff.func(s, args, shared_values)
   -- FIRST, traverse the symbols to acquire cache counts, which will be used to
   -- optimize the produced code, and checks if all the not op symbol variables
   -- are given as argument or as shared_value (symbols_dict)
-  function count_cache(v,dest)
+  local function count_cache(v,dest)
     if not v.var_name then v.var_name = gen_var_name() end
     dest:count_cache(v.var_name)
     if v.isop then
@@ -450,7 +470,7 @@ function autodiff.func(s, args, shared_values)
     if i>1 then dest:new_function() end
     if current_s.isop then
       -- declare local vars at the beginning of the function
-      function get_vars(v,dest)
+      local function get_vars(v,dest)
 	if not v.isop then v:compile(dest)
 	else
 	  if not v.var_name then v.var_name = gen_var_name() end
@@ -594,7 +614,7 @@ autodiff.op[CONSTANT] = {
   div = function(a,b) local a,b=coercion(a),coercion(b) return autodiff.constant( a:eval() / b:eval() ) end,
 
   -- extended math expressions
-  abs = function(a) local a=coercion(a) return autodiff.constant( math.abs(a:eval() )) end,
+  abs = function(a) local a=coercion(a) return autodiff.constant( math.abs( a:eval() )) end,
   log = function(a) local a=coercion(a) return autodiff.constant( math.log( a:eval() ) ) end,
   exp = function(a) local a=coercion(a) return autodiff.constant( math.exp( a:eval() ) ) end,
   --
@@ -609,11 +629,6 @@ autodiff.op[CONSTANT] = {
   asin = function(a) local a=coercion(a) return autodiff.constant( math.asin( a:eval() ) ) end,
   acos = function(a) local a=coercion(a) return autodiff.constant( math.acos( a:eval() ) ) end,
   atan = function(a) local a=coercion(a) return autodiff.constant( math.atan( a:eval() ) ) end,
-  --
-  asinh = function(a) local a=coercion(a) return autodiff.constant( math.asinh( a:eval() ) ) end,
-  acosh = function(a) local a=coercion(a) return autodiff.constant( math.acosh( a:eval() ) ) end,
-  atanh = function(a) local a=coercion(a) return autodiff.constant( math.atanh( a:eval() ) ) end,
-
   -- matrix expressions
   transpose = function(a) local a=coercion(a) return autodiff.constant( a:eval() ) end,
   fill = function(a,b) local a,b=coercion(a),coercion(b) return autodiff.constant(b) end,
@@ -1084,6 +1099,7 @@ autodiff.op[MATRIX] = {
     if a == autodiff.constant(0) then return autodiff.constant(0)
     elseif a == autodiff.constant(1) or b == autodiff.constant(0) then
       return autodiff.constant(1)
+    elseif b == autodiff.constant(1) then return a
     end
     --
     local s = gen_op('^', MATRIX, {a,b},
@@ -1259,6 +1275,14 @@ autodiff.op[MATRIX] = {
 
   cmul = function(a,b)
     local a,b = coercion(a),coercion(b)
+    -- simplification
+    if a.isop and a.isop=='fill' then
+      if     a.args[2] == autodiff.constant( 1) then return  b
+      elseif a.args[2] == autodiff.constant(-1) then return -b
+      elseif a.args[2] == autodiff.constant( 0) then return  a
+      end
+    end
+    --
     local s = gen_op('.*', MATRIX, {a,b},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
