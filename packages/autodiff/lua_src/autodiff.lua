@@ -1429,7 +1429,35 @@ autodiff.op[MATRIX] = {
     if a.dims then s:set_dims(a.dims) end
     return s
   end,
-
+  
+  logistic = function(a)
+    local a = coercion(a)
+    local s = gen_op('logistic', MATRIX, {a},
+		     function(self, ...)
+		       local a = self.args[1]:eval(...)
+		       assert(type(a) == "matrix")
+		       return a:clone():scal(-1):exp():scalar_add(1):div(1)
+		     end,
+		     function(self, seed, result)
+		       local a  = self.args[1]
+		       local da = autodiff.op.cmul(a, 1-a)
+		       a:diff(autodiff.op.cmul(da,seed), result)
+		       return result
+		     end,
+		     function(self, dest)
+		       local a = self.args[1]
+		       local str_tbl = { a.var_name,
+					 ':clone()',
+					 ':scal(-1)',
+					 ':exp()',
+					 ':scalar_add(1)',
+					 ':div(1)' }
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
+		     end)
+    if a.dims then s:set_dims(a.dims) end
+    return s
+  end,
 }
 
 -----------------------------------------------------------------------------

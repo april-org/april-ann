@@ -679,14 +679,24 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 
 //BIND_METHOD MatrixFloat fill
 //DOC_BEGIN
-// void fill(float value)
+// void fill(value)
 /// Permite poner todos los valores de la matriz a un mismo valor.
 //DOC_END
 {
   LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, float);
   float value;
-  LUABIND_GET_PARAMETER(1,float,value);
+  if (lua_isMatrixFloat(L, 1)) {
+    MatrixFloat *aux;
+    LUABIND_GET_PARAMETER(1,MatrixFloat,aux);
+    for (int i=0; i<aux->getNumDim(); ++i)
+      if (aux->getDimSize(i) != 1)
+	LUABIND_ERROR("Needs a float or a matrix with only one element\n");
+    value = *(aux->begin());
+  }
+  else {
+    LUABIND_CHECK_PARAMETER(1, float);
+    LUABIND_GET_PARAMETER(1,float,value);
+  }
   obj->fill(value);
   LUABIND_RETURN(MatrixFloat, obj);
 }
