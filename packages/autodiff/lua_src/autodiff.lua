@@ -2,7 +2,10 @@ autodiff    = autodiff or {}
 autodiff.op = autodiff.op or {}
 
 ------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
+-- auxiliary functions for variable name generation
 local gen_arg_name
 local reset_var_id
 do
@@ -14,109 +17,129 @@ do
   end
 end
 
--- COMPILER
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
-local compiler = {}
+-- COMPILER OUT: Lua CLASS, developed from scratch, not using April-ANN
+-- class. Allows to write the compilation output to a file
 
-local compiler_mt = {
-  __index = {
-    -- basic methods
-    write_indent = function(self)
-      local tbl = {}
-      for i=1,self.indent do table.insert(tbl, "  ") end
-      self.f:write(table.concat(tbl, ""))
-    end,
-    write_return = function(self, var_name)
-      self:write_indent()
-      self.f:write(string.format("return %s\n", var_name))
-    end,
-    close = function(self)
-      self.f:write("end\n")
-      self.f:close()
-    end,
-    new_function = function(self)
-      self.f:write("end,\n")
-      self.f:write("function(arg,cache)\n")
-      self.active_vars = {}
-    end,
-    count_cache = function(self,var_name)
-      self.cache_counts[var_name] = (self.cache_counts[var_name] or 0) + 1
-    end,
-    -- variable declaration methods
-    write_var = function(self,var_name)
-      if not self.active_vars[var_name] then
-	self:write_indent()
-	self.f:write(string.format("local %s\n", var_name))
-      end
-      self.active_vars[var_name] = true
-    end,
-    write_initial_var = function(self,var_name,name)
-      if not self.active_vars[var_name] then
-	self:write_indent()
-	self.f:write(string.format("local %s = arg[%q]\n", var_name, name))
-      end
-      self.active_vars[var_name] = true
-    end,
-    write_initial_constant = function(self,var_name,value)
-      if not self.active_vars[var_name] then
-	self:write_indent()
-	self.f:write(string.format("local %s = %s\n",
-				   var_name, tostring(value)))
-      end
-      self.active_vars[var_name] = true
-    end,
-    -- expression methods
-    begin_expression = function(self, var_name)
-      if self.cache_counts[var_name] > 1 then
-	self:write_indent()
-	self.f:write(string.format("if not cache[%q] then\n", var_name))
-	self.indent = self.indent + 1
-      end
-    end,
-    write_expr_line = function(self, expression)
-      self:write_indent()
-      self.f:write(string.format("%s\n", expression))
-    end,
-    write_expr_assign = function(self, var_name, expression)
-      self:write_indent()
-      if not self.active_vars[var_name] then
-	self.f:write("local ")
-      end
-      self.f:write(string.format("%s = (%s)\n", var_name, expression))
-      self.active_vars[var_name] = true
-    end,
-    end_expression = function(self, var_name)
-      assert(self.active_vars[var_name],
-	     "Declare expresion vars before writing them")
-      if self.cache_counts[var_name] > 1 then
-	self:write_indent()
-	self.f:write(string.format("cache[%q] = %s\n", var_name, var_name))
-	self.indent = self.indent - 1
-	self:write_indent()
-	self.f:write(string.format("else -- if not cache[%q]\n", var_name))
-	self.indent = self.indent + 1
-	self:write_indent()
-	self.f:write(string.format("%s = cache[%q]\n", var_name, var_name))
-	self.indent = self.indent - 1
-	self:write_indent()
-	self.f:write(string.format("end -- if not cache[%q] else ... end\n",
-	                           var_name))
-      end
-    end,
-  }
-}
+local compiler_out = {}
+local compiler_out_mt = {}
 
-setmetatable(compiler,
+-- constructor
+setmetatable(compiler_out,
 	     {
 	       __call = function(self,filename)
 		 local f = io.open(filename, "w") or error("Impossible to open: ".. filename)
 		 local obj = { f=f, indent=1, active_vars={}, cache_counts={} }
-		 setmetatable(obj,compiler_mt)
+		 setmetatable(obj,compiler_out_mt)
 		 obj.f:write("return function(arg,cache)\n")
 		 return obj
 	       end,
 	     })
 
+-- methods
+compiler_out_mt.__index = {
+  -- basic methods
+  write_indent = function(self)
+    local tbl = {}
+    for i=1,self.indent do table.insert(tbl, "  ") end
+    self.f:write(table.concat(tbl, ""))
+  end,
+  write_return = function(self, var_name)
+    self:write_indent()
+    self.f:write(string.format("return %s\n", var_name))
+  end,
+  close = function(self)
+    self.f:write("end\n")
+    self.f:close()
+  end,
+  new_function = function(self)
+    self.f:write("end,\n")
+    self.f:write("function(arg,cache)\n")
+    self.active_vars = {}
+  end,
+  count_cache = function(self,var_name)
+    self.cache_counts[var_name] = (self.cache_counts[var_name] or 0) + 1
+  end,
+  get_cache_count = function(self, var_name)
+    return self.cache_counts[var_name] or 0
+  end,
+  -- variable declaration methods
+  write_var = function(self,var_name)
+    if not self.active_vars[var_name] then
+      self:write_indent()
+      self.f:write(string.format("local %s\n", var_name))
+    end
+    self.active_vars[var_name] = true
+  end,
+  write_initial_var = function(self,var_name,name)
+    if not self.active_vars[var_name] then
+      self:write_indent()
+      self.f:write(string.format("local %s = arg[%q]\n", var_name, name))
+    end
+    self.active_vars[var_name] = true
+  end,
+  write_initial_constant = function(self,var_name,value)
+    if not self.active_vars[var_name] then
+      self:write_indent()
+      self.f:write(string.format("local %s = %s\n",
+				 var_name, tostring(value)))
+    end
+    self.active_vars[var_name] = true
+  end,
+  -- expression methods
+  begin_expression = function(self, var_name, parent_count)
+    -- The same parent and children cache count means that they are dependent,
+    -- so the children always come with the same parent. If the counts are
+    -- different, then the children has a dependence in paths different than the
+    -- current parent. In the first case, it is not necessary to introduce a new
+    -- block, because children and parent always come together. In the second
+    -- case, a block with a cache check is needed.
+    if self.cache_counts[var_name] > (parent_count or 0) then
+      self:write_indent()
+      self.f:write(string.format("if not cache[%q] then\n", var_name))
+      self.indent = self.indent + 1
+    end
+  end,
+  write_expr_line = function(self, expression)
+    self:write_indent()
+    self.f:write(string.format("%s\n", expression))
+  end,
+  write_expr_assign = function(self, var_name, expression)
+    self:write_indent()
+    if not self.active_vars[var_name] then
+      self.f:write("local ")
+    end
+    self.f:write(string.format("%s = (%s)\n", var_name, expression))
+    self.active_vars[var_name] = true
+  end,
+  end_expression = function(self, var_name, parent_count)
+    assert(self.active_vars[var_name],
+	   "Declare expresion vars before writing them")
+    -- The same parent and children cache count means that they are dependent,
+    -- so the children always come with the same parent. If the counts are
+    -- different, then the children has a dependence in paths different than the
+    -- current parent. In the first case, it is not necessary to introduce a new
+    -- block, because children and parent always come together. In the second
+    -- case, a block with a cache check is needed.
+    if self.cache_counts[var_name] > (parent_count or 0) then
+      self:write_indent()
+      self.f:write(string.format("cache[%q] = %s\n", var_name, var_name))
+      self.indent = self.indent - 1
+      self:write_indent()
+      self.f:write(string.format("else -- if not cache[%q]\n", var_name))
+      self.indent = self.indent + 1
+      self:write_indent()
+      self.f:write(string.format("%s = cache[%q]\n", var_name, var_name))
+      self.indent = self.indent - 1
+      self:write_indent()
+      self.f:write(string.format("end -- if not cache[%q] else ... end\n",
+	  var_name))
+    end
+  end,
+}
 ------------------------------------------------------------------------------
 
 -- dtype constants
@@ -127,8 +150,11 @@ local TABLE    = 'table'
 local STRING   = 'string'
 
 ------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 
--- auxiliar function which inserts gradient of a given symbol name
+-- auxiliar function which inserts gradient of a given symbol name, accumulating
+-- gradients which come from different graph paths
 local function insert_grad(t, key, value)
   local t = t or {}
   t[key] = (not t[key] and value) or (t[key] + value)
@@ -173,6 +199,9 @@ end
 --                        size of the output produced by the given symbolic
 --                        function. The result table stores all the computed
 --                        gradients, and is equivalent to the returned table.
+--
+-- e:compile(compiler_out) => produces code for the evaluation of the object
+--                            and writes it to the given compiler_out instance.
 local function symbol(name,dtype)
   local t
   if SYMBOLS[name] then
@@ -195,11 +224,14 @@ local function symbol(name,dtype)
     }
     -- the symbol table
     t = {
-      name     = name,
-      dtype    = dtype,
-      issymbol = true,
-      dims     = nil,
+      name     = name,   -- the name identifies the symbol
+      dtype    = dtype,  -- indicates the expected type of the symbol
+      issymbol = true,   -- indicates that this table is a symbol
+      dims     = nil,    -- it is possible to write the dimensions if needed the
+      -- following method removes the var_name associated with the compilation
+      -- of the symbol
       clear_var_name = function(self) self.var_name = nil end,
+      -- modifies the dimensions of the symbol shape
       set_dims = function(self,...)
 	self.dims = table.pack(...)
 	if type(self.dims[1]) == "table" then
@@ -208,23 +240,24 @@ local function symbol(name,dtype)
 	  self.dims = self.dims[1]
 	end
       end,
-      -- basic eval function, returns the value stored at values table
-      eval     = function(self,values)
+      -- default eval function, returns the value stored at values table
+      eval = function(self,values)
 	local m = values[self.name] or error("Undefined value " .. self.name)
 	return m
       end,
-      -- default diff table, introduces the given seed at the result table
-      diff     = function(self, seed, result)
+      -- default diff function, introduces the given seed at the result table
+      diff = function(self, seed, result)
 	return insert_grad(result, self.name, seed)
       end,
-      --
+      -- default compile function, reserves a var_name if needed, and writes the
+      -- initialization of the variable
       compile = function(self,dest)
 	if not self.var_name then
 	  self.var_name = gen_var_name()
 	end
 	dest:write_initial_var(self.var_name,self.name)
       end,
-      --
+      -- the last value of eval function is stored here
       last = nil,
       -- method for debug purposes
       to_dot_string = function(self,id,parent,edges)
@@ -239,7 +272,7 @@ local function symbol(name,dtype)
 	return table.concat(aux, "\n")
       end,
     }
-    -- stores the symbol at the SYMBOLS table
+    -- the symbol is stored at the SYMBOLS table
     SYMBOLS[name] = t
     --
     setmetatable(t, symbol_mt)
@@ -260,7 +293,8 @@ end
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
--- function for symbol names clear
+-- function for symbol names clear, it is useful when you want to compile
+-- totally different functions, which don't share symbols
 function autodiff.clear()
   SYMBOLS = {}
 end
@@ -272,14 +306,18 @@ function autodiff.remove(...)
   end
 end
 
--- this functions adds a new operation with the given data
+-- this functions returns a new operation with the given data
 function autodiff.gen_op(name, dtype, args, eval_func, diff_func, compile)
   local compile = compile or function() error("COMPILATION NOT IMPLEMENTED") end
+  -- an operation is a symbol with the given type, and with a name which is a
+  -- concatenation of its arguments
   local s = symbol(string.format("(%s %s)", name,
 				 iterator(ipairs(args)):select(2):
 				 map(tostring):concat(" ")),
 		   dtype)
+  -- this flag allows to distinguish between operations and standard symbols
   s.isop = name
+  -- the arguments of the operation
   s.args = args
   -- eval function for operations
   s.eval = function(self, values, prev_cache)
@@ -293,20 +331,26 @@ function autodiff.gen_op(name, dtype, args, eval_func, diff_func, compile)
   end
   -- diff function for operations
   s.diff = function(self, seed, result)
-    -- by default the seed is a symbol as the symbol output filled with 1s
+    -- by default the seed is a symbol which has the type and shape of the
+    -- operation output, but filled with 1s
     local seed = seed or autodiff.op.fill(self,1)
     return diff_func(self, seed, insert_grad(result, self.name, seed))
   end
-  -- compilation function
-  s.compile = function(self,dest)
+  -- compilation function, compiles the operation
+  s.compile = function(self,dest,parent_count)
     if not self.var_name then
       self.var_name = gen_var_name()
     end
-    dest:begin_expression(self.var_name)
-    iterator(ipairs(self.args)):select(2):call('compile',dest):apply()
+    dest:begin_expression(self.var_name, parent_count)
+    -- compiles the arguments list
+    iterator(ipairs(self.args)):select(2):
+    call('compile',dest,dest:get_cache_count(self.var_name)):apply()
+    -- compiles the operation expression itself
     compile(self, dest)
-    dest:end_expression(self.var_name)
+    dest:end_expression(self.var_name, parent_count)
   end
+  -- removes the associated var_name, and calls the clear_var_name of its
+  -- arguments
   s.clear_var_name = function(self)
     self.var_name = nil
     iterator(ipairs(self.args)):select(2):call('clear_var_name'):apply()
@@ -354,35 +398,54 @@ function autodiff.symbol(names,dtype)
   return table.unpack(result)
 end
 
--- Function which converts a given table with symbols in a multi-evaluated
--- function. It receives an args table where the function arguments are stored
--- in order. The shared_values table stores pairs name,value which are shared
--- between symbolic expressions and your Lua program. The resulting function
--- will return many values as the number of symbols are given in s table.
-function autodiff.func(s,args,shared_values,cache)
+-- Function which compiles any number of symbols (in a table) into a
+-- multi-evaluated function. It receives an args table where the function
+-- arguments are stored in the expected order. The shared_values table stores
+-- pairs name,value which are shared between symbolic expressions and your Lua
+-- program. The resulting function will return as many values as the number of
+-- symbols are given in s table.
+function autodiff.func(s, args, shared_values)
   assert(type(s) == "table")
   if s.issymbol then s = { s } end
+  -- removes the stored var_names
   iterator(ipairs(s)):select(2):call('clear_var_name'):apply()
+  -- checks the args table, and builds a dictionary for check that all the
+  -- necessary symbols has an argument or a shared_value
+  local symbols_dict = {}
   local args,shared_values = args or {},shared_values or {}
   for i,t in ipairs(args) do
     assert(type(t)=="table" and t.issymbol and SYMBOLS[t.name],
 	   "Argument " .. i .. " is not a symbol or it was cleared")
+    assert(not symbols_dict[t.name],
+	   "An argument was given two times: " .. t.name)
+    symbols_dict[t.name] = true
   end
+  -- checks the shared_values table
   for name,_ in pairs(shared_values) do
     assert(SYMBOLS[name], "Undefined or cleared symbol " .. name)
+    assert(not symbols_dict[name],
+	   "An argument or shared_value was given two times: " .. name)
+    symbols_dict[name] = true
   end
-  -- compilation procedure
+  -- COMPILATION PROCEDURE
   reset_var_id() -- resets the variable id counter
   local filename = os.tmpname()
-  local dest = compiler(filename)
-  -- first, traverse the symbols to acquire cache counts
+  local dest = compiler_out(filename)
+  -- FIRST, traverse the symbols to acquire cache counts, which will be used to
+  -- optimize the produced code, and checks if all the not op symbol variables
+  -- are given as argument or as shared_value (symbols_dict)
   function count_cache(v,dest)
     if not v.var_name then v.var_name = gen_var_name() end
     dest:count_cache(v.var_name)
-    if v.isop then for _,v2 in ipairs(v.args) do count_cache(v2,dest) end end
+    if v.isop then
+      for _,v2 in ipairs(v.args) do count_cache(v2,dest) end
+    else assert(v.dtype==CONSTANT or symbols_dict[v.name],
+		"Symbol not found as argument or shared_variable: ".. v.name)
+    end
   end
+  -- count over all the given symbols
   for i,current_s in ipairs(s) do count_cache(current_s,dest) end
-  -- second, traverse the symbols producing the source code
+  -- SECOND, traverse the symbols producing the source code
   for i,current_s in ipairs(s) do
     if i>1 then dest:new_function() end
     if current_s.isop then
@@ -471,7 +534,7 @@ end
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
--- CONSTANTS
+-- CONSTANT
 
 -- declaration of a constant symbol
 autodiff.constant = function(...)
@@ -560,7 +623,7 @@ autodiff.op[CONSTANT] = {
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
--- SCALARS
+-- SCALAR
 
 autodiff[SCALAR] = function(names) return autodiff.symbol(names, SCALAR) end
 
@@ -851,7 +914,7 @@ autodiff.op[SCALAR] = {
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
--- MATRIXS
+-- MATRIX
 
 function check_dims(a,b)
   if a and b then

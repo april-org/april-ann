@@ -52,9 +52,9 @@ x:set_dims(2,1)
 y:set_dims(1,1)
 
 -- XOR ANN
-local xor = op.logistic(b2 + w2 * op.logistic(b1 + w1 * x))
+local xor = b2 + w2 * (b1 + w1 * x)
 -- Loss function
-local L   = op.sum((xor - y)^2)
+local L = op.sum((xor - y)^2)
 -- Regularization
 -- L = L + 0.5*weight_decay/learning_rate * (op.sum(w1^2) + op.sum(w2^2))
 
