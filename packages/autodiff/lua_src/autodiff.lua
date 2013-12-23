@@ -20,13 +20,35 @@ local compiler = {}
 
 local compiler_mt = {
   __index = {
-    deactivate_var = function(self, var_name)
-      self.active_vars[var_name] = false
-    end,
+    -- basic methods
     write_indent = function(self)
-      local tbl = { }
+      local tbl = {}
       for i=1,self.indent do table.insert(tbl, "  ") end
       self.f:write(table.concat(tbl, ""))
+    end,
+    write_return = function(self, var_name)
+      self:write_indent()
+      self.f:write(string.format("return %s\n", var_name))
+    end,
+    close = function(self)
+      self.f:write("end\n")
+      self.f:close()
+    end,
+    new_function = function(self)
+      self.f:write("end,\n")
+      self.f:write("function(arg,cache)\n")
+      self.active_vars = {}
+    end,
+    count_cache = function(self,var_name)
+      self.cache_counts[var_name] = (self.cache_counts[var_name] or 0) + 1
+    end,
+    -- variable declaration methods
+    write_var = function(self,var_name)
+      if not self.active_vars[var_name] then
+	self:write_indent()
+	self.f:write(string.format("local %s\n", var_name))
+      end
+      self.active_vars[var_name] = true
     end,
     write_initial_var = function(self,var_name,name)
       if not self.active_vars[var_name] then
@@ -43,11 +65,19 @@ local compiler_mt = {
       end
       self.active_vars[var_name] = true
     end,
-    write_line = function(self, expression)
+    -- expression methods
+    begin_expression = function(self, var_name)
+      if self.cache_counts[var_name] > 1 then
+	self:write_indent()
+	self.f:write(string.format("if not cache[%q] then\n", var_name))
+	self.indent = self.indent + 1
+      end
+    end,
+    write_expr_line = function(self, expression)
       self:write_indent()
       self.f:write(string.format("%s\n", expression))
     end,
-    write_assign = function(self, var_name, expression)
+    write_expr_assign = function(self, var_name, expression)
       self:write_indent()
       if not self.active_vars[var_name] then
 	self.f:write("local ")
@@ -55,34 +85,23 @@ local compiler_mt = {
       self.f:write(string.format("%s = (%s)\n", var_name, expression))
       self.active_vars[var_name] = true
     end,
-    write_return = function(self, var_name)
-      self:write_indent()
-      self.f:write(string.format("return %s\n", var_name))
-    end,
-    begin_expression = function(self, var_name)
-      self:write_indent()
-      self.f:write(string.format("if not cache[%q] then\n", var_name))
-      self.indent = self.indent + 1
-    end,
     end_expression = function(self, var_name)
-      self:write_indent()
-      self.f:write(string.format("cache[%q] = %s\n", var_name, var_name))
-      self.indent = self.indent - 1
-      self:write_indent()
-      self.f:write(string.format("end\n"))
-      self:write_indent()
-      self.f:write(string.format("local %s = cache[%q]\n",
-				 var_name, var_name))
-      self.active_vars[var_name] = true
-    end,
-    close = function(self)
-      self.f:write("end\n")
-      self.f:close()
-    end,
-    new_function = function(self)
-      self.f:write("end,\n")
-      self.f:write("function(arg,cache)\n")
-      self.active_vars = { }
+      assert(self.active_vars[var_name],
+	     "Declare expresion vars before writing them")
+      if self.cache_counts[var_name] > 1 then
+	self:write_indent()
+	self.f:write(string.format("cache[%q] = %s\n", var_name, var_name))
+	self.indent = self.indent - 1
+	self:write_indent()
+	self.f:write(string.format("else -- if not cache[%q]\n", var_name))
+	self.indent = self.indent + 1
+	self:write_indent()
+	self.f:write(string.format("%s = cache[%q]\n", var_name, var_name))
+	self.indent = self.indent - 1
+	self:write_indent()
+	self.f:write(string.format("end -- if not cache[%q] else ... end\n",
+	                           var_name))
+      end
     end,
   }
 }
@@ -91,7 +110,7 @@ setmetatable(compiler,
 	     {
 	       __call = function(self,filename)
 		 local f = io.open(filename, "w") or error("Impossible to open: ".. filename)
-		 local obj = { f=f, indent=1, active_vars = {} }
+		 local obj = { f=f, indent=1, active_vars={}, cache_counts={} }
 		 setmetatable(obj,compiler_mt)
 		 obj.f:write("return function(arg,cache)\n")
 		 return obj
@@ -287,8 +306,6 @@ function autodiff.gen_op(name, dtype, args, eval_func, diff_func, compile)
     iterator(ipairs(self.args)):select(2):call('compile',dest):apply()
     compile(self, dest)
     dest:end_expression(self.var_name)
-    iterator(ipairs(self.args)):select(2):
-    apply(function(v) dest:deactivate_var(v.var_name) end)
   end
   s.clear_var_name = function(self)
     self.var_name = nil
@@ -358,17 +375,29 @@ function autodiff.func(s,args,shared_values,cache)
   reset_var_id() -- resets the variable id counter
   local filename = os.tmpname()
   local dest = compiler(filename)
-  -- compiles all the received symbolic graphs
+  -- first, traverse the symbols to acquire cache counts
+  function count_cache(v,dest)
+    if not v.var_name then v.var_name = gen_var_name() end
+    dest:count_cache(v.var_name)
+    if v.isop then for _,v2 in ipairs(v.args) do count_cache(v2,dest) end end
+  end
+  for i,current_s in ipairs(s) do count_cache(current_s,dest) end
+  -- second, traverse the symbols producing the source code
   for i,current_s in ipairs(s) do
     if i>1 then dest:new_function() end
     if current_s.isop then
+      -- declare local vars at the beginning of the function
       function get_vars(v,dest)
 	if not v.isop then v:compile(dest)
-	else for _,v2 in ipairs(v.args) do get_vars(v2,dest) end
+	else
+	  if not v.var_name then v.var_name = gen_var_name() end
+	  dest:write_var(v.var_name)
+	  for _,v2 in ipairs(v.args) do get_vars(v2,dest) end
 	end
       end
       get_vars(current_s,dest)
     end
+    -- compile the symbol
     current_s:compile(dest)
     dest:write_return(current_s.var_name)
   end
@@ -564,8 +593,8 @@ autodiff.op[SCALAR] = {
 		     function(self, dest)
 		       local a,b = self.args[1],self.args[2]
 		       local str_tbl = { a.var_name, "+", b.var_name }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, " "))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, " "))
 		     end)
     return s
   end,
@@ -600,8 +629,8 @@ autodiff.op[SCALAR] = {
 		     function(self, dest)
 		       local a,b = self.args[1],self.args[2]
 		       local str_tbl = { a.var_name, "*", b.var_name }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, " "))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, " "))
 		     end)
     return s
   end,
@@ -634,8 +663,8 @@ autodiff.op[SCALAR] = {
 		     function(self, dest)
 		       local a,b = self.args[1],self.args[2]
 		       local str_tbl = { a.var_name, "^", b.var_name }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, " "))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, " "))
 		     end)
     return s
   end,
@@ -659,8 +688,8 @@ autodiff.op[SCALAR] = {
 		     function(self, dest)
 		       local a = self.args[1]
 		       local str_tbl = { "math.log(", a.var_name, ")" }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, " "))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, " "))
 		     end)
     return s
   end,
@@ -680,8 +709,8 @@ autodiff.op[SCALAR] = {
 		     function(self, dest)
 		       local a = self.args[1]
 		       local str_tbl = { "math.exp(", a.var_name, ")" }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, " "))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, " "))
 		     end)
     return s
   end,
@@ -701,8 +730,8 @@ autodiff.op[SCALAR] = {
 		     function(self, dest)
 		       local a = self.args[1]
 		       local str_tbl = { "math.sin(", a.var_name, ")" }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, " "))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, " "))
 		     end)
     return s
   end,
@@ -722,8 +751,8 @@ autodiff.op[SCALAR] = {
 		     function(self, dest)
 		       local a = self.args[1]
 		       local str_tbl = { "math.cos(", a.var_name, ")" }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, " "))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, " "))
 		     end)
     return s
   end,
@@ -743,8 +772,8 @@ autodiff.op[SCALAR] = {
 		     function(self, dest)
 		       local a = self.args[1]
 		       local str_tbl = { "math.sinh(", a.var_name, ")" }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, " "))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, " "))
 		     end)
     return s
   end,
@@ -764,8 +793,8 @@ autodiff.op[SCALAR] = {
 		     function(self, dest)
 		       local a = self.args[1]
 		       local str_tbl = { "math.cosh(", a.var_name, ")" }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, " "))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, " "))
 		     end)
     return s
   end,
@@ -785,8 +814,8 @@ autodiff.op[SCALAR] = {
 		     function(self, dest)
 		       local a = self.args[1]
 		       local str_tbl = { "math.tanh(", a.var_name, ")" }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, " "))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, " "))
 		     end)
     return s
   end,
@@ -806,8 +835,8 @@ autodiff.op[SCALAR] = {
 		     function(self, dest)
 		       local a = self.args[1]
 		       local str_tbl = { "math.abs(", a.var_name, ")" }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, " "))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, " "))
 		     end)
     return s
   end,
@@ -915,8 +944,8 @@ autodiff.op[MATRIX] = {
 		     function(self, dest)
 		       local a,b = self.args[1],self.args[2]
 		       local str_tbl = { a.var_name, '+', b.var_name }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, " "))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, " "))
 		     end)
     if a.dims or b.dims then
       assert( check_dims(a.dims, b.dims),
@@ -961,8 +990,8 @@ autodiff.op[MATRIX] = {
 		     function(self, dest)
 		       local a,b = self.args[1],self.args[2]
 		       local str_tbl = { a.var_name, '*', b.var_name }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, " "))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, " "))
 		     end)
     if a.dims and b.dims then
       assert(#a.dims == 2 and #a.dims == #b.dims, "Incorrect dimensions")
@@ -1018,8 +1047,8 @@ autodiff.op[MATRIX] = {
 		     function(self, dest)
 		       local a,b = self.args[1],self.args[2]
 		       local str_tbl = { a.var_name, '^', b.var_name }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, " "))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, " "))
 		     end)
     if a.dims then s:set_dims(a.dims) end
     return s
@@ -1045,8 +1074,8 @@ autodiff.op[MATRIX] = {
 		     function(self, dest)
 		       local a = self.args[1]
 		       local str_tbl = { a.var_name, ':clone():log()' }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, ""))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
 		     end)
     if a.dims then s:set_dims(a.dims) end
     return s
@@ -1067,8 +1096,8 @@ autodiff.op[MATRIX] = {
 		     function(self, dest)
 		       local a = self.args[1]
 		       local str_tbl = { a.var_name, ':clone():exp()' }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, ""))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
 		     end)
     if a.dims then s:set_dims(a.dims) end
     return s
@@ -1089,8 +1118,8 @@ autodiff.op[MATRIX] = {
 		     function(self, dest)
 		       local a = self.args[1]
 		       local str_tbl = { a.var_name, ':clone():cos()' }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, ""))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
 		     end)
     if a.dims then s:set_dims(a.dims) end
     return s
@@ -1111,8 +1140,8 @@ autodiff.op[MATRIX] = {
 		     function(self, dest)
 		       local a = self.args[1]
 		       local str_tbl = { a.var_name, ':clone():sin()' }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, ""))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
 		     end)
     if a.dims then s:set_dims(a.dims) end
     return s
@@ -1133,8 +1162,8 @@ autodiff.op[MATRIX] = {
 		     function(self, dest)
 		       local a = self.args[1]
 		       local str_tbl = { a.var_name, ':clone():tanh()' }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, ""))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
 		     end)
     if a.dims then s:set_dims(a.dims) end
     return s
@@ -1155,8 +1184,8 @@ autodiff.op[MATRIX] = {
 		     function(self, dest)
 		       local a = self.args[1]
 		       local str_tbl = { a.var_name, ':transpose()' }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, ""))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
 		     end)
     if a.dims then
       s:set_dims(iterator(ipairs(a.dims)):select(2):
@@ -1186,8 +1215,8 @@ autodiff.op[MATRIX] = {
 		     function(self, dest)
 		       local a,b = self.args[1],self.args[2]
 		       local str_tbl = { a.var_name, ':cmul(', b.var_name, ')' }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, ""))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
 		     end)
     if a.dims or b.dims then
       assert( check_dims(a.dims, b.dims),
@@ -1213,8 +1242,8 @@ autodiff.op[MATRIX] = {
 		     function(self, dest)
 		       local a,b = self.args[1],self.args[2]
 		       local str_tbl = { 'matrix.as(', a.var_name, '):fill(', b.var_name, ')' }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, ""))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
 		     end)
     if a.dims then s:set_dims(a.dims) end
     return s
@@ -1236,8 +1265,8 @@ autodiff.op[MATRIX] = {
 		     function(self, dest)
 		       local a = self.args[1]
 		       local str_tbl = { a.var_name, ':sum()' }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, ""))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
 		     end)
     return s
   end,
@@ -1260,8 +1289,8 @@ autodiff.op[MATRIX] = {
 		       local dim   = self.args[2]
 		       local value = self.args[3]
 		       local str_tbl = { a.var_name, ':select(', dim.var_name, ',', value.var_name, ')' }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, ""))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
 		     end)
     -- TODO: modify dims
     return s
@@ -1296,8 +1325,8 @@ autodiff.op[MATRIX] = {
 			 table.insert(str_tbl, self.args[i].var_name)
 		       end
 		       table.insert(str_tbl, ')')
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, ""))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
 		     end)
     -- TODO: modify dims
     return s
@@ -1337,8 +1366,8 @@ autodiff.op[MATRIX] = {
 		       table.insert(str_tbl, ':copy(')
 		       table.insert(str_tbl, b.var_name)
 		       table.insert(str_tbl, ')')
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, ""))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
 		     end)
     -- TODO: modify dims
     return s
@@ -1372,8 +1401,8 @@ autodiff.op[MATRIX] = {
 			 table.insert(str_tbl, self.args[i].var_name)
 		       end
 		       table.insert(str_tbl, ')')
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, ""))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
 		     end)
     return s
   end,
@@ -1394,8 +1423,8 @@ autodiff.op[MATRIX] = {
 		     function(self, dest)
 		       local a = self.args[1]
 		       local str_tbl = { a.var_name, ':clone():abs()' }
-		       dest:write_assign(self.var_name,
-					 table.concat(str_tbl, ""))
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
 		     end)
     if a.dims then s:set_dims(a.dims) end
     return s
@@ -1422,7 +1451,7 @@ end
 
 -- TABLE OPERATIONS
 
-autodiff.op[TABLE] = { }
+autodiff.op[TABLE] = {}
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
@@ -1443,4 +1472,4 @@ end
 
 -- TABLE OPERATIONS
 
-autodiff.op[STRING] = { }
+autodiff.op[STRING] = {}

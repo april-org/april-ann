@@ -85,7 +85,8 @@ df_dw_tbl = table.pack( f, AD.diff(f, {wx, ws1, wh1, ws2, wh2, b}, seed) )
 
 AD.dot_graph(df_dw_tbl[5], "wop2.dot")
 
-df_dw     = AD.func(df_dw_tbl, {x,s,h,seed}, weights )
+df_dw,program = AD.func(df_dw_tbl, {x,s,h,seed}, weights )
+io.open("program2.lua", "w"):write(program .. "\n")
 
 result = table.pack(  df_dw( M(3,1):uniformf(0,1,rnd),
 			     M(4,1):uniformf(0,1,rnd),
