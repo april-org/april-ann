@@ -12,7 +12,7 @@ m_xor = matrix.fromString[[
     0 0 0
     0 1 1
     1 0 1
-    1 1 1
+    1 1 0
 ]]
 
 ds_input  = dataset.matrix(m_xor,{patternSize={1,2}})
@@ -33,16 +33,14 @@ local weights = {
   w2 = M(1,2):copy(m(3,"2:3")),
 }
 
---
-net = ann.mlp.all_all.generate("2 inputs 2 logistic 1 logistic")
-net:build{ weights=weights }
---
-
-
 local AD = autodiff
 local op = AD.op
 local func = AD.func
 local b1,w1,b2,w2,x,y = AD.matrix('b1 w1 b2 w2 x y')
+-- it is possible to use AD.scalar('wd') if you want to change weight decay
+-- during learning
+local wd = weight_decay
+local lr = learning_rate
 
 b1:set_dims(2,1)
 w1:set_dims(2,2)
@@ -51,17 +49,22 @@ w2:set_dims(1,2)
 x:set_dims(2,1)
 y:set_dims(1,1)
 
+b1:set_broadcast(false, true)
+b2:set_broadcast(false, true)
+
 -- XOR ANN
-local xor = op.logistic(b2 + w2 * op.logistic(b1 + w1 * x))
--- Loss function
-local L = op.sum((xor - y)^2)
+function logistic(s) return 1/(1 + op.exp(-s)) end
+local xor = logistic(b2 + w2 * logistic(b1 + w1 * x))
+-- Loss function: negative cross-entropy
+local L = -op.sum(y*op.log(xor) + (1-y)*op.log(1-xor))
 -- Regularization
--- L = L + 0.5*weight_decay/learning_rate * (op.sum(w1^2) + op.sum(w2^2))
+L = L + 0.5 * wd * (op.sum(w1^2) + op.sum(w2^2))
 
 -- Compilation
-local f   = func(xor, {x}, weights)
+local shared_vars = weights
+local f   = func(xor, {x}, shared_vars)
 local tbl = table.pack( L, AD.diff(L, {b1, w1, b2, w2}) )
-local dL_dw,program = func(tbl, {x,y}, weights)
+local dL_dw,program = func(tbl, {x,y}, shared_vars)
 
 AD.dot_graph(tbl[4], "wop.dot")
 
@@ -73,9 +76,7 @@ opt:set_option("momentum", momentum)
 
 for j=1,4 do
   local input = M(2,1, ds_input:getPattern(j))
-  print(table.concat(input:toTable(), " "),
-	f(input):get(1,1),
-	net:forward(input:transpose()):get_matrix():get(1,1))
+  print(table.concat(input:toTable(), " "), f(input):get(1,1))
 end
 print()
 
@@ -99,3 +100,9 @@ print(weights.b1)
 print(weights.w1)
 print(weights.b2)
 print(weights.w2)
+
+for j=1,4 do
+  local input = M(2,1, ds_input:getPattern(j))
+  print(table.concat(input:toTable(), " "), f(input):get(1,1))
+end
+print()

@@ -196,8 +196,11 @@ local infer_table = {
 local function infer(...)
   local arg   = table.pack(...)
   local dtype = (type(arg[1]) == "number" and CONSTANT) or arg[1].dtype
+  assert(dtype, string.format("Found nil dtype at argument: %s\n", arg[1]))
   for i=2,#arg do
     local argi_dtype = (type(arg[i]) == "number" and CONSTANT) or arg[i].dtype
+    assert(argi_dtype,
+	   string.format("Found nil dtype at argument: %s\n", arg[i]))
     dtype = infer_table[dtype][argi_dtype]
   end
   return dtype
@@ -242,10 +245,11 @@ local function symbol(name,dtype)
     }
     -- the symbol table
     t = {
-      name     = name,   -- the name identifies the symbol
-      dtype    = dtype,  -- indicates the expected type of the symbol
-      issymbol = true,   -- indicates that this table is a symbol
-      dims     = nil,    -- it is possible to write the dimensions if needed the
+      name      = name,   -- the name identifies the symbol
+      dtype     = dtype,  -- indicates the expected type of the symbol
+      issymbol  = true,   -- indicates that this table is a symbol
+      dims      = nil,    -- it is possible to write the dimensions if needed the
+      broadcast = nil,    -- explicit indicate of broadcasting
       -- following method removes the var_name associated with the compilation
       -- of the symbol
       clear_var_name = function(self) self.var_name = nil end,
@@ -256,6 +260,15 @@ local function symbol(name,dtype)
 	  assert(#self.dims == 1,
 		 "set_dims accepts ONE table or a MULTIPLE numbers list")
 	  self.dims = self.dims[1]
+	end
+      end,
+      -- indicates if it is possible to broadcast the result over each dimension
+      set_broadcast = function(self,...)
+	self.broadcast = table.pack(...)
+	if type(self.broadcast[1]) == "table" then
+	  assert(#self.broadcast == 1,
+		 "set_broadcast accepts ONE table or a MULTIPLE numbers list")
+	  self.broadcast = self.broadcast[1]
 	end
       end,
       -- default eval function, returns the value stored at values table
@@ -532,8 +545,9 @@ setmetatable(autodiff.op,
 		     assert(select('#',...) > 0,
 			    "Incorrect number of arguments")
 		     local dtype = infer(...)
+		     assert(dtype, "Found nil dtype")
 		     local t = assert(autodiff.op[dtype],
-				      "Incorrect type " .. dtype)
+				      "Incorrect type " .. (dtype or "nil"))
 		     local t = assert(t[key],
 				      "Operation: " .. key .. " not implemented for type: " .. dtype)
 		     return t(...)
@@ -1146,9 +1160,10 @@ autodiff.op[MATRIX] = {
 		       return a:clone():log()
 		     end,
 		     function(self, seed, result)
-		       local a  = self.args[1]
-		       local da = a:diff(seed, result)
-		       return autodiff.op.cmul(autodiff.op.pow(a, -1), da)
+		       local a    = self.args[1]
+		       local seed = autodiff.op.cmul(autodiff.op.pow(a, -1), seed)
+		       a:diff(seed, result)
+		       return result
 		     end,
 		     function(self, dest)
 		       local a = self.args[1]
@@ -1474,9 +1489,9 @@ autodiff.op[MATRIX] = {
 		       local a = self.args[1]
 		       local arg = iterator(range(2,#self.args)):
 		       map(function(i) return self.args[i] end):table()
-		       local result = autodiff.op.fill(a, 0)
-		       result = autodiff.op.copy(result,seed,table.unpack(arg))
-		       a:diff(seed, result)
+		       local aux = autodiff.op.fill(a, 0)
+		       aux = autodiff.op.copy(aux,seed,table.unpack(arg))
+		       a:diff(aux, result)
 		       return result
 		     end,
 		     function(self, dest)
@@ -1517,34 +1532,6 @@ autodiff.op[MATRIX] = {
     return s
   end,
   
-  logistic = function(a)
-    local a = coercion(a)
-    local s = gen_op('logistic', MATRIX, {a},
-		     function(self, ...)
-		       local a = self.args[1]:eval(...)
-		       assert(type(a) == "matrix")
-		       return a:clone():scal(-1):exp():scalar_add(1):div(1)
-		     end,
-		     function(self, seed, result)
-		       local a    = self.args[1]
-		       local grad = autodiff.op.cmul(self, 1-self)
-		       a:diff(autodiff.op.cmul(grad,seed), result)
-		       return result
-		     end,
-		     function(self, dest)
-		       local a = self.args[1]
-		       local str_tbl = { a.var_name,
-					 ':clone()',
-					 ':scal(-1)',
-					 ':exp()',
-					 ':scalar_add(1)',
-					 ':div(1)' }
-		       dest:write_expr_assign(self.var_name,
-					      table.concat(str_tbl, ""))
-		     end)
-    if a.dims then s:set_dims(a.dims) end
-    return s
-  end,
 }
 
 -----------------------------------------------------------------------------
