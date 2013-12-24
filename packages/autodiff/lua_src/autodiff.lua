@@ -291,10 +291,12 @@ local function symbol(name,dtype)
       -- the last value of eval function is stored here
       last = nil,
       -- method for debug purposes
-      to_dot_string = function(self,id,parent,edges)
+      to_dot_string = function(self,id,parent,names,edges,idx)
+	local idx = idx or 0
 	local aux = { string.format("%s [shape=box];", name) }
 	if parent then
-	  local edge_str = string.format("%s -> %s;", name, parent)
+	  local edge_str = string.format('%s -> %s [headlabel="%d",labeldistance=3];',
+					 name, parent, idx)
 	  if not edges[edge_str] then
 	    table.insert(aux, edge_str)
 	    edges[edge_str] = true
@@ -389,7 +391,8 @@ function autodiff.gen_op(name, dtype, args, eval_func, diff_func, compile)
     iterator(ipairs(self.args)):select(2):call('clear_var_name'):apply()
   end
   -- auxiliary function for debugging purposes
-  s.to_dot_string = function(self,id,parent,names,edges)
+  s.to_dot_string = function(self,id,parent,names,edges,idx)
+    local idx   = idx   or 0
     local edges = edges or {}
     local names = names or {}
     local id  = id or { 0 }
@@ -404,14 +407,15 @@ function autodiff.gen_op(name, dtype, args, eval_func, diff_func, compile)
       table.insert(aux, string.format('%s [label="%s"];', name_str, self.isop))
     end
     if parent then
-      local edge_str = string.format("%s -> %s;", name_str, parent)
+      local edge_str = string.format('%s -> %s [headlabel="%d",labeldistance=3];',
+				     name_str, parent, idx)
       if not edges[edge_str] then
 	table.insert(aux, edge_str)
 	edges[edge_str] = true
       end
     end
-    for _,v in ipairs(self.args) do
-      local str = v:to_dot_string(id,name_str,names,edges)
+    for i,v in ipairs(self.args) do
+      local str = v:to_dot_string(id,name_str,names,edges,i)
       table.insert(aux, str)
     end
     return table.concat(aux, "\n")
@@ -589,7 +593,8 @@ autodiff.constant = function(...)
       end
       dest:write_initial_constant(self.var_name,self:eval())
     end
-    s.to_dot_string = function(self,id,parent,names,edges)
+    s.to_dot_string = function(self,id,parent,names,edges,idx)
+      local idx = idx or 0
       local id  = id or { 0 }
       local aux = {}
       local name_str
@@ -602,7 +607,8 @@ autodiff.constant = function(...)
 					name_str, self.name))
       end
       if parent then
-	local edge_str = string.format("%s -> %s;", name_str, parent)
+	local edge_str = string.format('%s -> %s [headlabel="%d",labeldistance=3];',
+				       name_str, parent, idx)
 	if not edges[edge_str] then
 	  table.insert(aux, edge_str)
 	  edges[edge_str] = true
