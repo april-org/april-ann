@@ -52,7 +52,7 @@ x:set_dims(2,1)
 y:set_dims(1,1)
 
 -- XOR ANN
-local xor = b2 + w2 * (b1 + w1 * x)
+local xor = op.logistic(b2 + w2 * op.logistic(b1 + w1 * x))
 -- Loss function
 local L = op.sum((xor - y)^2)
 -- Regularization
@@ -62,6 +62,8 @@ local L = op.sum((xor - y)^2)
 local f   = func(xor, {x}, weights)
 local tbl = table.pack( L, AD.diff(L, {b1, w1, b2, w2}) )
 local dL_dw,program = func(tbl, {x,y}, weights)
+
+AD.dot_graph(tbl[4], "wop.dot")
 
 io.open("program.lua","w"):write(program.."\n")
 
@@ -84,12 +86,8 @@ for i=1,30000 do
     local input  = M(2,1, ds_input:getPattern(idx[j]))
     local output = M(1,1, ds_output:getPattern(idx[j]))
     local loss = opt:execute(function()
-			       local loss,b1,w1,b2,w2 = dL_dw(input,output)
-			       print(b1)
-			       print(w1)
-			       print(b2)
-			       print(w2)
-			       return loss, { b1=b1, w1=w1, b2=b2, w2=w2 }
+			       local loss,db1,dw1,db2,dw2 = dL_dw(input,output)
+			       return loss, { b1=db1, w1=dw1, b2=db2, w2=dw2 }
 			     end,
 			     weights)
     m:add(loss)

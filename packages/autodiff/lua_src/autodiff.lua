@@ -1526,9 +1526,9 @@ autodiff.op[MATRIX] = {
 		       return a:clone():scal(-1):exp():scalar_add(1):div(1)
 		     end,
 		     function(self, seed, result)
-		       local a  = self.args[1]
-		       local da = autodiff.op.cmul(a, 1-a)
-		       a:diff(autodiff.op.cmul(da,seed), result)
+		       local a    = self.args[1]
+		       local grad = autodiff.op.cmul(self, 1-self)
+		       a:diff(autodiff.op.cmul(grad,seed), result)
 		       return result
 		     end,
 		     function(self, dest)
