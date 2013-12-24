@@ -37,6 +37,7 @@ class Referenced {
   virtual ~Referenced();
   virtual void incRef();
   virtual bool decRef();
+  virtual int  getRef() const { return refs; }
 };
 
 #endif // REFERENCED_H

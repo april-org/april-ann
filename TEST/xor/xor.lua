@@ -24,16 +24,20 @@ function show_weights(trainer, filter)
   end
   print()
   for _,wname in ipairs({ "b1", "w1", "b2", "w2" }) do
-    local w = trainer.weights_table[wname]:copy_to():toTable()
+    local w = trainer.weights_table[wname]:toTable()
     print(wname, table.concat(w, " "))
   end
 end
 
 function load_initial_weights(weights_table)
-  weights_table["b1"]:load{ w=m, first_pos=0, column_size=3 }
-  weights_table["w1"]:load{ w=m, first_pos=1, column_size=3 }
-  weights_table["b2"]:load{ w=m, first_pos=6, column_size=3 }
-  weights_table["w2"]:load{ w=m, first_pos=7, column_size=3 }
+  ann.connections.load(weights_table["b1"],
+		       { w=m, first_pos=0, column_size=3 })
+  ann.connections.load(weights_table["w1"],
+		       { w=m, first_pos=1, column_size=3 })
+  ann.connections.load(weights_table["b2"],
+		       { w=m, first_pos=6, column_size=3 })
+  ann.connections.load(weights_table["w2"],
+		       { w=m, first_pos=7, column_size=3 })
 end
 
 -----------------------------------------------------------

@@ -32,7 +32,10 @@ static bool rewrapToAtLeastDim2(Token *&tk) {
     MatrixFloat *m = tk_mat->getMatrix();
     if (m->getNumDim() == 1) {
       int dims[2] = { 1, m->getDimSize(0) };
-      tk = new TokenMatrixFloat(m->rewrap(dims, 2));
+      Token *new_tk = new TokenMatrixFloat(m->rewrap(dims, 2));
+      IncRef(new_tk);
+      DecRef(tk);
+      tk = new_tk;
       return true;
     }
   }
@@ -45,7 +48,7 @@ static void unwrapToDim1(Token *&tk) {
     MatrixFloat *m = tk_mat->getMatrix();
     int dim = m->getDimSize(1);
     MatrixFloat *new_m = m->rewrap(&dim, 1);
-    tk = new TokenMatrixFloat(new_m);
+    Token *tk = new TokenMatrixFloat(new_m);
   }
 }
 
