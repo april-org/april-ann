@@ -1,6 +1,6 @@
 package{ name = "autodiff.ann",
    version = "1.0",
-   depends = { "util", "matrix", "autodiff" },
+   depends = { "util", "matrix", "autodiff", "ann", "ann.loss" },
    keywords = { },
    description = "",
    -- targets como en ant

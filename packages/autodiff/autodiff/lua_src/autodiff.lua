@@ -355,6 +355,11 @@ function autodiff.remove(...)
   end
 end
 
+-- returns a symbol given its name
+function autodiff.get(name)
+  return SYMBOLS[name]
+end
+
 autodiff.coercion = coercion
 
 -- this functions returns a new operation with the given data
@@ -531,12 +536,13 @@ function autodiff.func(s, args, shared_values)
   -- previously compiled functions
   return function(...)
     local args2 = table.pack(...)
+    local cache = {}
+    if not args2[#args2].issymbol then cache = table.remove(args2, #args2) end
     assert(#args == #args2,
 	   string.format("Incorrect number of arguments, expected %d, found %d\n",
 			 #args, #args2))
     local values = {} for k,v in ipairs(args) do values[v.name] = args2[k] end
     for k,v in pairs(shared_values) do values[k] = v end
-    local cache = {}
     local ret = {} for i,f in ipairs(funcs) do ret[i]=f(values,cache) end
     return table.unpack(ret)
   end,program

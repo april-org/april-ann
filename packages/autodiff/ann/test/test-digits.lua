@@ -1,5 +1,5 @@
 local learning_rate  = 0.1
-local momentum       = 0.0 --0.1
+local momentum       = 0.1
 local weight_decay   = 1e-04
 local semilla        = 1234
 local rnd            = random(semilla)
@@ -56,28 +56,22 @@ local INPUT  = train_input:patternSize()
 local OUTPUT = train_output:patternSize()
 
 local weights = {
-  b1 = M(H1,1):uniformf(-0.1,0.1,rnd),
-  w1 = M(H1,INPUT):uniformf(-0.1,0.1,rnd),
-  b2 = M(H2,1):uniformf(-0.1,0.1,rnd),
-  w2 = M(H2,H1):uniformf(-0.1,0.1,rnd),
-  b3 = M(OUTPUT,1):uniformf(-0.1,0.1,rnd),
-  w3 = M(OUTPUT,H2):uniformf(-0.1,0.1,rnd),
+  b1 = M(H1,1),
+  w1 = M(H1,INPUT),
+  b2 = M(H2,1),
+  w2 = M(H2,H1),
+  b3 = M(OUTPUT,1),
+  w3 = M(OUTPUT,H2),
 }
 
 local AD = autodiff
 local op = AD.op
 local func = AD.func
-local b1,w1,b2,w2,b3,w3,x,y,seed = AD.matrix('b1 w1 b2 w2 b3 w3 x y seed')
+local b1,w1,b2,w2,b3,w3,x,y,loss_input = AD.matrix('b1 w1 b2 w2 b3 w3 x y loss_input')
 -- it is possible to use AD.scalar('wd') if you want to change weight decay
 -- during learning
 local wd = weight_decay
 
-b1:set_dims(weights.b1:dim())
-w1:set_dims(weights.w1:dim())
-b2:set_dims(weights.b2:dim())
-w2:set_dims(weights.w2:dim())
-b3:set_dims(weights.b3:dim())
-w3:set_dims(weights.w3:dim())
 x:set_dims(INPUT,1)
 y:set_dims(OUTPUT,1)
 
@@ -90,50 +84,42 @@ function logistic(s) return 1/(1 + op.exp(-s)) end
 local net_h1  = logistic(b1 + w1 * x)       -- first layer
 local net_h2  = logistic(b2 + w2 * net_h1)  -- second layer
 local net_out = b3 + w3 * net_h2            -- output layer
-local net     = op.exp(AD.ann.log_softmax(net_out)) -- softmax layer (only for validation, not training)
+
 -- Loss function: negative cross-entropy with the log-softmax (for training)
-local L = AD.ann.cross_entropy_log_softmax(y, net_out)
+local L = AD.ann.cross_entropy_log_softmax(y, loss_input)
 -- Regularization
-L = L + 0.5 * wd * (op.sum(w1^2) + op.sum(w2^2) + op.sum(w2^2))
+L = L + 0.5 * wd * (op.sum(w1^2) + op.sum(w2^2) + op.sum(w3^2))
 
--- Compilation
-local shared_vars = table.deep_copy(weights)
-shared_vars.seed  = 1
-local f   = func(net, {x}, shared_vars)
-local tbl = table.pack( L, AD.diff(L, {b1, w1, b2, w2, b3, w3}) )
-local dL_dw,program = func(tbl, {x,y}, shared_vars)
-local Lxy = func(L, {x,y}, shared_vars)
+-- Compilation using AD.ann helpers
+local thenet = AD.ann.component("mynet", net_out, x) -- without softmax layer
+local loss   = AD.ann.loss(L, loss_input, y)
 
-AD.dot_graph(tbl[6], "wop.dot")
+-- TRAINER
+trainer = trainable.supervised_trainer(thenet, loss, 1)
+trainer:build{ weights=weights }
+trainer:randomize_weights{ inf=-0.1, sup=0.1, random=rnd }
+trainer:set_option("learning_rate", learning_rate)
+trainer:set_option("momentum", momentum)
+--
 
-io.open("program.lua","w"):write(program.."\n")
+-- it is important to give thenet to the loss function, in order to reuse
+-- memorized (cached) computations
+loss:compile(weights, thenet)
+--
 
-local opt = ann.optimizer.sgd()
-opt:set_option("learning_rate", learning_rate)
-opt:set_option("momentum", momentum)
-
-for i=1,100 do
-  local idx = rnd:shuffle(train_input:numPatterns())
-  local tr_loss = stats.mean_var()
-  for j=1,train_input:numPatterns() do
-    local input  = M(INPUT,1, train_input:getPattern(idx[j]))
-    local output = M(OUTPUT,1, train_output:getPattern(idx[j]))
-    local loss = opt:execute(function()
-			       local loss,db1,dw1,db2,dw2,db3,dw3 = dL_dw(input,output)
-			       return loss, { b1=db1, w1=dw1,
-					      b2=db2, w2=dw2,
-					      b3=db3, w3=dw3 }
-			     end,
-			     weights)
-    L:eval{ x=input, y=output, b1=weights.b1, w1=weights.w1, b2=weights.b2, w2=weights.w2, b3=weights.b3, w3=weights.w3, seed=seed }
-    tr_loss:add(loss)
-  end
-  local va_loss = stats.mean_var()
-  for j=1,val_input:numPatterns() do
-    local input  = M(INPUT,1, val_input:getPattern(j))
-    local output = M(OUTPUT,1, val_output:getPattern(j))
-    local loss   = Lxy(input,output)
-    va_loss:add(loss)
-  end
-  print(i, tr_loss:compute(), va_loss:compute())
+local train_func = trainable.train_holdout_validation{ min_epochs=100,
+						       max_epochs=100 }
+while train_func:execute(function()
+			   local tr_loss = trainer:train_dataset{
+			     input_dataset  = train_input,
+			     output_dataset = train_output,
+			     shuffle        = rnd
+			   }
+			   local va_loss = trainer:validate_dataset{
+			     input_dataset  = val_input,
+			     output_dataset = val_output,
+			   }
+			   return trainer,tr_loss,va_loss
+			 end) do
+  print(train_func:get_state_string())
 end
