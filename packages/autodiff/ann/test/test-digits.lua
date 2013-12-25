@@ -80,13 +80,13 @@ b2:set_broadcast(false, true)
 b3:set_broadcast(false, true)
 
 -- ANN
-function logistic(s) return 1/(1 + op.exp(-s)) end
-local net_h1  = logistic(b1 + w1 * x)       -- first layer
-local net_h2  = logistic(b2 + w2 * net_h1)  -- second layer
-local net_out = b3 + w3 * net_h2            -- output layer
+local net_h1  = AD.ann.logistic(b1 + w1 * x)       -- first layer
+local net_h2  = AD.ann.logistic(b2 + w2 * net_h1)  -- second layer
+local net_out = b3 + w3 * net_h2            -- output layer (linear, the softmax
+					    -- is added to the loss function)
 
 -- Loss function: negative cross-entropy with the log-softmax (for training)
-local L = AD.ann.cross_entropy_log_softmax(y, loss_input)
+local L = AD.ann.cross_entropy_log_softmax(loss_input, y)
 -- Regularization
 L = L + 0.5 * wd * (op.sum(w1^2) + op.sum(w2^2) + op.sum(w3^2))
 
