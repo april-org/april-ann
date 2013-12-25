@@ -6,7 +6,7 @@ autodiff.op = autodiff.op or {}
 ------------------------------------------------------------------------------
 
 -- auxiliary functions for variable name generation
-local gen_arg_name
+local gen_var_name
 local reset_var_id
 do
   local var_name_id=0
@@ -16,6 +16,8 @@ do
     return string.format("__var%d__", var_name_id)
   end
 end
+
+autodiff.gen_var_name = gen_var_name
 
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
@@ -112,6 +114,12 @@ compiler_out_mt.__index = {
     self:write_indent()
     self.f:write(string.format("%s\n", expression))
   end,
+  write_expr_block = function(self, block)
+    for line in block:lines_of() do
+      self:write_indent()
+      self.f:write(string.format("%s\n", line))
+    end
+  end,
   write_expr_assign = function(self, var_name, expression)
     self:write_indent()
     if not self.active_vars[var_name] then
@@ -166,6 +174,14 @@ local SCALAR   = 'scalar'
 local MATRIX   = 'matrix'
 local TABLE    = 'table'
 local STRING   = 'string'
+
+autodiff.dtypes = {
+  CONSTANT = CONSTANT,
+  SCALAR   = SCALAR,
+  MATRIX   = MATRIX,
+  TABLE    = TABLE,
+  STRING   = STRING,
+}
 
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
@@ -338,6 +354,8 @@ function autodiff.remove(...)
     SYMBOLS[name] = nil
   end
 end
+
+autodiff.coercion = coercion
 
 -- this functions returns a new operation with the given data
 function autodiff.gen_op(name, dtype, args, eval_func, diff_func, compile)
@@ -516,12 +534,10 @@ function autodiff.func(s, args, shared_values)
     assert(#args == #args2,
 	   string.format("Incorrect number of arguments, expected %d, found %d\n",
 			 #args, #args2))
-    local values = iterator(ipairs(args)):
-    map(function(k,v) return v.name,args2[k] end):table()
+    local values = {} for k,v in ipairs(args) do values[v.name] = args2[k] end
     for k,v in pairs(shared_values) do values[k] = v end
     local cache = {}
-    local ret = iterator(ipairs(funcs)):select(2):
-    map(function(f) return f(values,cache) end):table()
+    local ret = {} for i,f in ipairs(funcs) do ret[i]=f(values,cache) end
     return table.unpack(ret)
   end,program
 end
@@ -1277,7 +1293,7 @@ autodiff.op[MATRIX] = {
 		       return a:transpose()
 		     end,
 		     function(self, seed, result)
-		       local a  = self.args[1]
+		       local a = self.args[1]
 		       a:diff(autodiff.op.transpose(seed), result)
 		       return result
 		     end,
@@ -1316,13 +1332,22 @@ autodiff.op[MATRIX] = {
 		     end,
 		     function(self, seed, result)
 		       local a,b = self.args[1],self.args[2]
-		       a:diff(autodiff.op.cmul(a,seed), result)
-		       b:diff(autodiff.op.cmul(b,seed), result)
+		       a:diff(autodiff.op.cmul(b,seed), result)
+		       b:diff(autodiff.op.cmul(a,seed), result)
 		       return result
 		     end,
 		     function(self, dest)
 		       local a,b = self.args[1],self.args[2]
-		       local str_tbl = { a.var_name, ':cmul(', b.var_name, ')' }
+		       local str_tbl
+		       if a.dtype == MATRIX and b.dtype == MATRIX then
+			 str_tbl = { a.var_name, ':cmul(', b.var_name, ')' }
+		       elseif (a.dtype == SCALAR or b.dtype == SCALAR) or
+		       (a.dtype == CONSTANT or b.dtype == CONSTANT) then
+			 str_tbl = { a.var_name, ' * ', b.var_name }
+		       else
+			 error(string.format("Incorrect arguments dtype: %s %s",
+					     a.dtype, b.dtype))
+		       end
 		       dest:write_expr_assign(self.var_name,
 					      table.concat(str_tbl, ""))
 		     end)
@@ -1514,7 +1539,28 @@ autodiff.op[MATRIX] = {
 		     end)
     return s
   end,
-
+  
+  sign = function(a)
+    local a = coercion(a)
+    local s = gen_op('sign', MATRIX, {a},
+		     function(self, ...)
+		       local a = self.args[1]:eval(...)
+		       assert(type(a) == "matrix")
+		       return a:clone():sign()
+		     end,
+		     function(self, seed, result)
+		       return result
+		     end,
+		     function(self, dest)
+		       local a = self.args[1]
+		       local str_tbl = { a.var_name, ':clone():sign()' }
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
+		     end)
+    if a.dims then s:set_dims(a.dims) end
+    return s
+  end,
+  
   abs = function(a)
     local a = coercion(a)
     local s = gen_op('abs', MATRIX, {a},
@@ -1525,12 +1571,60 @@ autodiff.op[MATRIX] = {
 		     end,
 		     function(self, seed, result)
 		       local a = self.args[1]
-		       a:diff(autodiff.op.cmul(seed,1/self), result)
+		       local sign = autodiff.op.sign(self)
+		       a:diff(autodiff.op.cmul(sign,seed), result)
 		       return result
 		     end,
 		     function(self, dest)
 		       local a = self.args[1]
 		       local str_tbl = { a.var_name, ':clone():abs()' }
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
+		     end)
+    if a.dims then s:set_dims(a.dims) end
+    return s
+  end,
+
+  max = function(a)
+    local a = coercion(a)
+    local s = gen_op('max', SCALAR, {a},
+		     function(self, ...)
+		       local a = self.args[1]:eval(...)
+		       assert(type(a) == "matrix")
+		       return a:clone():max()
+		     end,
+		     function(self, seed, result)
+		       local a = self.args[1]
+		       local argmax = autodiff.op.argmax(a)
+		       local out = autodiff.op.fill(a,0)
+		       local out = autodiff.op.copy(out, seed, argmax)
+		       a:diff(out, result)
+		       return result
+		     end,
+		     function(self, dest)
+		       local a = self.args[1]
+		       local str_tbl = { a.var_name, ':clone():max()' }
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
+		     end)
+    if a.dims then s:set_dims(a.dims) end
+    return s
+  end,
+
+  argmax = function(a)
+    local a = coercion(a)
+    local s = gen_op('argmax', SCALAR, {a},
+		     function(self, ...)
+		       local a = self.args[1]:eval(...)
+		       assert(type(a) == "matrix")
+		       return select(2,a:clone():max())
+		     end,
+		     function(self, seed, result)
+		       return result
+		     end,
+		     function(self, dest)
+		       local a = self.args[1]
+		       local str_tbl = { 'select(2,', a.var_name, ':clone():max())' }
 		       dest:write_expr_assign(self.var_name,
 					      table.concat(str_tbl, ""))
 		     end)

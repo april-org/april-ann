@@ -13,6 +13,7 @@ return {
   "matlab",
   "stats.MI",
   "autodiff",
+  "autodiff.ann",
   
   -- MACHINE LEARNING
   "trainable",

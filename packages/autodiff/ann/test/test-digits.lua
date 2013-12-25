@@ -1,6 +1,6 @@
 local learning_rate  = 0.1
 local momentum       = 0.0 --0.1
-local weight_decay   = 1e-02
+local weight_decay   = 1e-04
 local semilla        = 1234
 local rnd            = random(semilla)
 local H1             = 256
@@ -9,7 +9,7 @@ local M              = matrix.col_major
 --
 --------------------------------------------------------------
 
-m1 = ImageIO.read(string.get_path(arg[0]) .. "../../../TEST/digitos/digits.png"):to_grayscale():invert_colors():matrix()
+m1 = ImageIO.read(string.get_path(arg[0]) .. "../../../../TEST/digitos/digits.png"):to_grayscale():invert_colors():matrix()
 train_input = dataset.matrix(m1,
 			     {
 			       patternSize = {16,16},
@@ -56,12 +56,12 @@ local INPUT  = train_input:patternSize()
 local OUTPUT = train_output:patternSize()
 
 local weights = {
-  b1 = M(H1,1):uniformf(-0.01,0.01,rnd),
-  w1 = M(H1,INPUT):uniformf(-0.01,0.01,rnd),
-  b2 = M(H2,1):uniformf(-0.01,0.01,rnd),
-  w2 = M(H2,H1):uniformf(-0.01,0.01,rnd),
-  b3 = M(OUTPUT,1):uniformf(-0.01,0.01,rnd),
-  w3 = M(OUTPUT,H2):uniformf(-0.01,0.01,rnd),
+  b1 = M(H1,1):uniformf(-0.1,0.1,rnd),
+  w1 = M(H1,INPUT):uniformf(-0.1,0.1,rnd),
+  b2 = M(H2,1):uniformf(-0.1,0.1,rnd),
+  w2 = M(H2,H1):uniformf(-0.1,0.1,rnd),
+  b3 = M(OUTPUT,1):uniformf(-0.1,0.1,rnd),
+  w3 = M(OUTPUT,H2):uniformf(-0.1,0.1,rnd),
 }
 
 local AD = autodiff
@@ -90,9 +90,9 @@ function logistic(s) return 1/(1 + op.exp(-s)) end
 local net_h1  = logistic(b1 + w1 * x)       -- first layer
 local net_h2  = logistic(b2 + w2 * net_h1)  -- second layer
 local net_out = b3 + w3 * net_h2            -- output layer
-local net     = op.exp(net_out) / op.sum(op.exp(net_out)) -- softmax
--- Loss function: negative cross-entropy
-local L = -op.sum( op.cmul(y, op.log(net)) )
+local net     = op.exp(AD.ann.log_softmax(net_out)) -- softmax layer (only for validation, not training)
+-- Loss function: negative cross-entropy with the log-softmax (for training)
+local L = AD.ann.cross_entropy_log_softmax(y, net_out)
 -- Regularization
 L = L + 0.5 * wd * (op.sum(w1^2) + op.sum(w2^2) + op.sum(w2^2))
 
@@ -126,10 +126,6 @@ for i=1,100 do
 			     end,
 			     weights)
     L:eval{ x=input, y=output, b1=weights.b1, w1=weights.w1, b2=weights.b2, w2=weights.w2, b3=weights.b3, w3=weights.w3, seed=seed }
-    print(L.last)
-    print( (op.cmul(y, op.log(net))).last )
-    print( (op.cmul((1-y), op.log(1-net))).last )
-    print(net_out.last)
     tr_loss:add(loss)
   end
   local va_loss = stats.mean_var()
