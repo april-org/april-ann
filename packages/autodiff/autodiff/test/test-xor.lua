@@ -46,8 +46,8 @@ b1:set_dims(2,1)
 w1:set_dims(2,2)
 b2:set_dims(1,1)
 w2:set_dims(1,2)
-x:set_dims(2,1)
-y:set_dims(1,1)
+x:set_dims(2,0)
+y:set_dims(1,0)
 
 b1:set_broadcast(false, true)
 b2:set_broadcast(false, true)
@@ -56,7 +56,7 @@ b2:set_broadcast(false, true)
 function logistic(s) return 1/(1 + op.exp(-s)) end
 local xor = logistic(b2 + w2 * logistic(b1 + w1 * x))
 -- Loss function: negative cross-entropy
-local L = -op.sum(y*op.log(xor) + (1-y)*op.log(1-xor))
+local L = -op.sum(op.cmul(y,op.log(xor)) + op.cmul((1-y),op.log(1-xor)))
 -- Regularization
 L = L + 0.5 * wd * (op.sum(w1^2) + op.sum(w2^2))
 
@@ -81,19 +81,18 @@ end
 print()
 
 for i=1,30000 do
-  local idx = rnd:shuffle(4)
-  local m = stats.mean_var()
+  local input  = M(2,4)
+  local output = M(1,4)
   for j=1,4 do
-    local input  = M(2,1, ds_input:getPattern(idx[j]))
-    local output = M(1,1, ds_output:getPattern(idx[j]))
-    local loss = opt:execute(function()
-			       local loss,db1,dw1,db2,dw2 = dL_dw(input,output)
-			       return loss, { b1=db1, w1=dw1, b2=db2, w2=dw2 }
-			     end,
-			     weights)
-    m:add(loss)
+    input(":",j):copy_from_table(ds_input:getPattern(j))
+    output(":",j):copy_from_table(ds_output:getPattern(j))
   end
-  print(i, m:compute())
+  local loss = opt:execute(function()
+			     local loss,db1,dw1,db2,dw2 = dL_dw(input,output)
+			     return loss, { b1=db1, w1=dw1, b2=db2, w2=dw2 }
+			   end,
+			   weights)
+  print(i, loss)
 end
 
 print(weights.b1)

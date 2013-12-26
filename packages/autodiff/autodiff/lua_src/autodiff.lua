@@ -190,6 +190,7 @@ autodiff.dtypes = {
 -- auxiliar function which inserts gradient of a given symbol name, accumulating
 -- gradients which come from different graph paths
 local function insert_grad(t, key, value)
+  assert(value, "Find nil value while processing gradient of " .. tostring(key))
   local t = t or {}
   t[key] = (not t[key] and value) or (t[key] + value)
   return t
@@ -287,13 +288,24 @@ local function symbol(name,dtype)
 	  self.broadcast = self.broadcast[1]
 	end
       end,
+      -- ignore the gradient computation, take the seed as gradient
+      ignore_gradient = function(self)
+	self.diff = function(self,seed,result)
+	  local seed = seed or autodiff.op.fill(self,1)
+	  insert_grad(result, self.name, seed)
+	  for _,v in ipairs(self.args or {}) do v:diff(seed,result) end
+	  return result
+	end
+      end,
       -- default eval function, returns the value stored at values table
       eval = function(self,values)
 	local m = values[self.name] or error("Undefined value " .. self.name)
+	self.last = m
 	return m
       end,
       -- default diff function, introduces the given seed at the result table
       diff = function(self, seed, result)
+	local seed = seed or autodiff.op.fill(self,1)
 	return insert_grad(result, self.name, seed)
       end,
       -- default compile function, reserves a var_name if needed, and writes the
@@ -467,8 +479,6 @@ end
 function autodiff.func(s, args, shared_values)
   assert(type(s) == "table")
   if s.issymbol then s = { s } end
-  -- removes the stored var_names
-  iterator(ipairs(s)):select(2):call('clear_var_name'):apply()
   -- checks the args table, and builds a dictionary for check that all the
   -- necessary symbols has an argument or a shared_value
   local symbols_dict = {}
@@ -488,7 +498,6 @@ function autodiff.func(s, args, shared_values)
     symbols_dict[name] = true
   end
   -- COMPILATION PROCEDURE
-  reset_var_id() -- resets the variable id counter
   local filename = os.tmpname()
   local dest = compiler_out(filename)
   -- FIRST, traverse the symbols to acquire cache counts, which will be used to
@@ -498,7 +507,7 @@ function autodiff.func(s, args, shared_values)
     if not v.var_name then v.var_name = gen_var_name() end
     dest:count_cache(v.var_name)
     if v.isop then
-      for _,v2 in ipairs(v.args) do count_cache(v2,dest) end
+      for j,v2 in ipairs(v.args) do count_cache(v2,dest) end
     else assert(v.dtype==CONSTANT or symbols_dict[v.name],
 		"Symbol not found as argument or shared_variable: ".. v.name)
     end
@@ -537,7 +546,10 @@ function autodiff.func(s, args, shared_values)
   return function(...)
     local args2 = table.pack(...)
     local cache = {}
-    if not args2[#args2].issymbol then cache = table.remove(args2, #args2) end
+    if #args2 == #args+1 then
+      cache = table.remove(args2, #args2)
+      assert(type(cache) == "table", "Expected a cache table as last argument")
+    end
     assert(#args == #args2,
 	   string.format("Incorrect number of arguments, expected %d, found %d\n",
 			 #args, #args2))
@@ -558,7 +570,10 @@ function autodiff.diff(f, symbols, seed)
   if symbols.issymbol then symbols = { symbols } end
   local all_diff = f:diff(seed)
   return table.unpack(iterator(ipairs(symbols)):
-		      map(function(_,s) return all_diff[s.name] end):
+		      map(function(_,s)
+			    return all_diff[s.name] or
+			      error("Gradient of " .. s.name .. " not implemented")
+			  end):
 		      table())
 end
 
@@ -973,11 +988,25 @@ autodiff.op[SCALAR] = {
 
 -- MATRIX
 
+function check_broadcast(a,b)
+  local a_broadcast,b_broadcast = a.broadcast or {},b.broadcast or {}
+  local ret = a
+  for i=1,math.max(#a_broadcast,#b_broadcast) do
+    if b_broadcast[i] then ret = b end
+    if a_broadcast[i] and b_broadcast[i] then
+      return false,"Only one variable could be broadcasted"
+    end
+  end
+  return ret
+end
+
 function check_dims(a,b)
   if a and b then
     if #a ~= #b then return false end
     for i=1,#a do
-      if a[i] ~= b[i] then return false end
+      if a[i] ~= 0 and b[i] ~= 0 then
+	if a[i] ~= b[i] then return false end
+      end
     end
   end
   return true
@@ -993,9 +1022,9 @@ autodiff[MATRIX] = function(names)
     t[i].eval = function(self,values)
       local m = old_eval(self,values)
       assert( check_dims(t[i].dims, m:dim()),
-	      "Incorrect dimensions, expected %s, found %s",
-	      table.concat(t[i].dims or {}, "x"),
-	      table.concat(m:dim(), "x") )
+	      string.format("Incorrect dimensions, expected %s, found %s",
+			    table.concat(t[i].dims or {}, "x"),
+			    table.concat(m:dim(), "x")) )
       return m
     end
     local mt = getmetatable(t[i])
@@ -1005,6 +1034,129 @@ autodiff[MATRIX] = function(names)
 end
 
 -- MATRIX OPERATIONS
+
+function gen_broadcasted_symbol(name,dtype,args,
+				eval_func,compile_func)
+  assert(#args==2, "Only two arguments are possible in broadcasted operations")
+  local aux = assert(check_broadcast(args[1],args[2]))
+  s = gen_op(name, dtype, args,
+	     function(self, ...)
+	       local who = aux
+	       local a = self.args[1]:eval(...)
+	       local b = self.args[2]:eval(...)
+	       -- simplifications
+	       if a == 0 then return b
+	       elseif b == 0 then return a
+	       end
+	       --
+	       local other,who_broadcast
+	       if who == self.args[1] then
+		 who           = a
+		 other         = b
+		 who_broadcast = self.args[1].broadcast or {}
+	       else
+		 who           = b
+		 other         = a
+		 who_broadcast = self.args[2].broadcast or {}
+	       end
+	       local who_dims      = who:dim()
+	       local other_dims    = other:dim()
+	       for i=1,#who_dims do
+		 assert(not who_broadcast[i] or who_dims[i]==1,
+			string.format("Broadcasted dimensions must be of size=1, found dims[%d]=%d",
+				      i, who_dims[i]))
+		 assert(who_broadcast[i] or who_dims[i]==other_dims[i],
+			string.format("Not broadcasted dimensions must be equal, found broadcasted_dims[%d]=%d and dims[%d]=%d",
+				      i, who_dims[i], i, other_dims[i]))
+	       end
+	       local result = matrix.as(other)
+	       local r_sw   = result:sliding_window{ size=who_dims,
+						     step=who_dims }
+	       local sw     = other:sliding_window{ size=who_dims,
+						    step=who_dims }
+	       local r_slice,slice
+	       while not r_sw:is_end() do
+		 r_slice = r_sw:get_matrix(r_slice)
+		 slice = sw:get_matrix(slice)
+		 r_slice:copy( eval_func(slice,who) )
+		 r_sw:next()
+		 sw:next()
+	       end
+	       return result
+	     end,
+	     function(self, seed, result)
+	       local who = aux
+	       local a,b = self.args[1],self.args[2]
+	       local which = 0
+	       for i=1,#who.broadcast do
+		 if who.broadcast[i] then
+		   assert(which==0, "Only one dimension could be broadcasted")
+		   which = i
+		 end
+	       end
+	       if who == a then
+		 a:diff(autodiff.op.sum(seed, which), result)
+		 b:diff(seed, result)
+	       else
+		 a:diff(seed, result)
+		 b:diff(autodiff.op.sum(seed, which), result)
+	       end
+	       return result
+	     end,
+	     function(self, dest)
+	       local who = aux
+	       local a,b = self.args[1],self.args[2]
+	       local other,who_broadcast
+	       if who == self.args[1] then
+		 who           = a
+		 other         = b
+		 who_broadcast = self.args[1].broadcast or {}
+	       else
+		 who           = b
+		 other         = a
+		 who_broadcast = self.args[2].broadcast or {}
+	       end
+	       local who_dims   = gen_var_name()
+	       local other_dims = gen_var_name()
+	       dest:write_expr_assign(who_dims,
+				      string.format("%s:dim()", who.var_name))
+	       dest:write_expr_assign(other_dims,
+				      string.format("%s:dim()", other.var_name))
+	       dest:write_expr_assign(self.var_name,
+				      string.format("matrix.as(%s)",
+						    other.var_name))
+	       local r_sw = gen_var_name()
+	       local sw   = gen_var_name()
+	       dest:write_expr_assign(r_sw,
+				      string.format("%s:sliding_window{ size=%s, step=%s}",
+						    self.var_name,
+						    who_dims, who_dims))
+	       dest:write_expr_assign(sw,
+				      string.format("%s:sliding_window{ size=%s, step=%s}",
+						    other.var_name,
+						    who_dims, who_dims))
+	       local r_slice = gen_var_name()
+	       local slice   = gen_var_name()
+	       dest:write_var(r_slice)
+	       dest:write_var(slice)
+	       dest:write_expr_block(string.format([[
+while not %s:is_end() do
+  %s = %s:get_matrix(%s)
+  %s = %s:get_matrix(%s)
+  %s:copy( %s )
+  %s:next()
+  %s:next()
+end]],
+						   r_sw,
+						   r_slice, r_sw, r_slice,
+						   slice, sw, slice,
+						   r_slice,
+						   compile_func(slice, who.var_name),
+						   r_sw,
+						   sw))
+	     end)
+  return s
+end
 
 -- local function broadcast(a,b)
 --   local dims_a,dims_b = a.dims,b.dims
@@ -1045,33 +1197,48 @@ autodiff.op[MATRIX] = {
     elseif b == autodiff.constant(0) then return a
     end
     --
-    local s = gen_op('+', MATRIX, {a,b},
-		     function(self, ...)
-		       local a = self.args[1]:eval(...)
-		       local b = self.args[2]:eval(...)
-		       -- simplifications
-		       if a == 0 then return b
-		       elseif b == 0 then return a
-		       end
-		       return a + b
-		     end,
-		     function(self, seed, result)
-		       local a,b = self.args[1],self.args[2]
-		       a:diff(seed, result)
-		       b:diff(seed, result)
-		       return result
-		     end,
-		     function(self, dest)
-		       local a,b = self.args[1],self.args[2]
-		       local str_tbl = { a.var_name, '+', b.var_name }
-		       dest:write_expr_assign(self.var_name,
-					      table.concat(str_tbl, " "))
-		     end)
-    if a.dims or b.dims then
-      assert( check_dims(a.dims, b.dims),
-	      "Incorrect dimensions")
-      s:set_dims(a.dims or b.dims)
+    local s
+    if a.broadcast or b.broadcast then
+      -- broadcasted version
+      s = gen_broadcasted_symbol('+', MATRIX, {a,b},
+				 function(a,b) return a+b end,
+				 function(a_var_name,b_var_name)
+				   return string.format("%s + %s",
+							a_var_name,
+							b_var_name)
+				 end)
+    else
+      -- not broadcasted version
+      s = gen_op('+', MATRIX, {a,b},
+		 function(self, ...)
+		   local a = self.args[1]:eval(...)
+		   local b = self.args[2]:eval(...)
+		   -- simplifications
+		   if a == 0 then return b
+		   elseif b == 0 then return a
+		   end
+		   return a + b
+		 end,
+		 function(self, seed, result)
+		   local a,b = self.args[1],self.args[2]
+		   a:diff(seed, result)
+		   b:diff(seed, result)
+		   return result
+		 end,
+		 function(self, dest)
+		   local a,b = self.args[1],self.args[2]
+		   local str_tbl = { a.var_name, '+', b.var_name }
+		   dest:write_expr_assign(self.var_name,
+					  table.concat(str_tbl, " "))
+		 end)
     end
+    -- TODO: implement correctly taking into account broadcast property
+    --
+    -- if a.dims or b.dims then
+    --   assert( check_dims(a.dims, b.dims, a.broadcast, b.broadcast),
+    -- 	      "Incorrect dimensions")
+    --   s:set_dims(a.dims or b.dims)
+    -- end
     return s
   end,
   
@@ -1367,46 +1534,117 @@ autodiff.op[MATRIX] = {
   
   fill = function(a,b)
     local a,b = coercion(a),coercion(b)
-    local s = gen_op('fill', MATRIX, {a,b},
-		     function(self, ...)
-		       local a = self.args[1]:eval(...)
-		       local b = self.args[2]:eval(...)
-		       assert(type(a) == "matrix")
-		       assert(type(b) == "number")
-		       return matrix.as(a):fill(b)
-		     end,
-		     function(self, seed, result)
-		       return result
-		     end,
-		     function(self, dest)
-		       local a,b = self.args[1],self.args[2]
-		       local str_tbl = { 'matrix.as(', a.var_name, '):fill(', b.var_name, ')' }
-		       dest:write_expr_assign(self.var_name,
-					      table.concat(str_tbl, ""))
-		     end)
+    local s
+    if b.dtype == SCALAR or b.dtype == CONSTANT then
+      s = gen_op('fill', MATRIX, {a,b},
+		 function(self, ...)
+		   local a = self.args[1]:eval(...)
+		   local b = self.args[2]:eval(...)
+		   assert(type(a) == "matrix")
+		   assert(type(b) == "number")
+		   return matrix.as(a):fill(b)
+		 end,
+		 function(self, seed, result)
+		   return result
+		 end,
+		 function(self, dest)
+		   local a,b = self.args[1],self.args[2]
+		   local str_tbl = { 'matrix.as(', a.var_name, '):fill(', b.var_name, ')' }
+		   dest:write_expr_assign(self.var_name,
+					  table.concat(str_tbl, ""))
+		 end)
+    elseif b.dtype == MATRIX then
+      s = gen_op('fill', MATRIX, {a,b},
+		 function(self, ...)
+		   local a   = self.args[1]:eval(...)
+		   local b   = self.args[2]:eval(...)
+		   assert(type(a) == "matrix")
+		   assert(type(b) == "matrix")
+		   local result = matrix.as(a)
+		   local sw = result:sliding_window{ size=b:dim(), step=b:dim() }
+		   local slice
+		   while not sw:is_end() do
+		     slice = sw:get_matrix(slice)
+		     slice:copy(b)
+		     sw:next()
+		   end
+		   return result
+		 end,
+		 function(self, seed, result)
+		   return result
+		 end,
+		 function(self, dest)
+		   local a,b = self.args[1],self.args[2]
+		   dest:write_expr_assign(self.var_name,
+					  string.format("matrix.as( %s )",
+							a.var_name))
+		   local sw = gen_var_name()
+		   dest:write_expr_assign(sw,
+					  string.format("%s:sliding_window{ size=%s:dim(), step=%s:dim() }",
+							self.var_name,
+							b.var_name, b.var_name))
+		   local slice = gen_var_name()
+		   dest:write_expr_block(string.format([[
+while not %s:is_end() do
+  %s = %s:get_matrix( %s )
+  %s:copy( %s )
+  %s:next()
+end
+]],
+						       sw,
+						       slice, sw, slice,
+						       slice, b.var_name,
+						       sw))
+		 end)
+    else
+      error("Not recognized dtype: " .. tostring(b.dtype))
+    end
     if a.dims then s:set_dims(a.dims) end
     return s
   end,
   
-  sum = function(a)
-    local a = coercion(a)
-    local s = gen_op('sum', SCALAR, {a},
-		     function(self, ...)
-		       local a = self.args[1]:eval(...)
-		       assert(type(a) == "matrix")
-		       return a:sum()
-		     end,
-		     function(self, seed, result)
-		       local a = self.args[1]
-		       a:diff(autodiff.op.fill(a, seed), result)
-		       return result
-		     end,
-		     function(self, dest)
-		       local a = self.args[1]
-		       local str_tbl = { a.var_name, ':sum()' }
-		       dest:write_expr_assign(self.var_name,
-					      table.concat(str_tbl, ""))
-		     end)
+  sum = function(a,dim)
+    local a,dim = coercion(a),dim and coercion(dim)
+    local s
+    if not dim then
+      s = gen_op('sum', SCALAR, {a},
+		 function(self, ...)
+		   local a = self.args[1]:eval(...)
+		   assert(type(a) == "matrix")
+		   return a:sum()
+		 end,
+		 function(self, seed, result)
+		   local a = self.args[1]
+		   a:diff(autodiff.op.fill(a, seed), result)
+		   return result
+		 end,
+		 function(self, dest)
+		   local a = self.args[1]
+		   local str_tbl = { a.var_name, ':sum()' }
+		   dest:write_expr_assign(self.var_name,
+					  table.concat(str_tbl, ""))
+		 end)
+    else
+      s = gen_op('sum', MATRIX, {a,dim},
+		 function(self, ...)
+		   local a   = self.args[1]:eval(...)
+		   local dim = self.args[2]:eval(...)
+		   assert(type(a)   == "matrix")
+		   assert(type(dim) == "number")
+		   return a:sum(dim)
+		 end,
+		 function(self, seed, result)
+		   local a,dim = self.args[1],self.args[2]
+		   a:diff(autodiff.op.fill(a, seed), result)
+		   return result
+		 end,
+		 function(self, dest)
+		   local a,dim = self.args[1],self.args[2]
+		   local str_tbl = { a.var_name, ':sum(', dim.var_name, ')' }
+		   dest:write_expr_assign(self.var_name,
+					  table.concat(str_tbl, ""))
+		 end)
+    end
     return s
   end,
 
@@ -1589,6 +1827,31 @@ autodiff.op[MATRIX] = {
 		     end)
     if a.dims then s:set_dims(a.dims) end
     return s
+  end,
+
+  size = function(a)
+    local a = coercion(a)
+    local s = gen_op('size', SCALAR, {a},
+		     function(self, ...)
+		       local a = self.args[1]:eval(...)
+		       assert(type(a) == "matrix")
+		       return a:size()
+		     end,
+		     function(self, seed, result)
+		       return result
+		     end,
+		     function(self, dest)
+		       local a = self.args[1]
+		       local str_tbl = { a.var_name, ':size()' }
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
+		     end)
+    if a.dims then s:set_dims(a.dims) end
+    return s
+  end,
+
+  mean = function(a)
+    return autodiff.op.sum(a) / autodiff.op.size(a)
   end,
 
   max = function(a)

@@ -740,6 +740,7 @@ april_set_doc("trainable.supervised_trainer.train_step", {
 		  "The corresponding target output pattern (table or token)",
 		  "The loss function [optional]",
 		  "An optimizer [optional]",
+		  "The bunch size [optional]",
 		  "A smooth gradients boolean [optional]",
 		},
 		outputs = {
@@ -749,17 +750,18 @@ april_set_doc("trainable.supervised_trainer.train_step", {
 
 function trainable_supervised_trainer_methods:train_step(input, target, loss,
 							 optimizer,
+							 bunch_size,
 							 smooth_gradients)
   if type(input)  == "table" then input  = matrix.col_major(input)  end
   if type(target) == "table" then target = matrix.col_major(target) end
-  local loss      = loss or self.loss_function or error("Needs a loss object")
-  local optimizer = optimizer or self.optimizer or error("Needs an optimizer object")
+  local loss       = loss or self.loss_function or error("Needs a loss object")
+  local optimizer  = optimizer or self.optimizer or error("Needs an optimizer object")
+  local bunch_size = bunch_size or self.bunch_size or 1
   local smooth_gradients = smooth_gradients or self.smooth_gradients
   local tr_loss, _, tr_loss_matrix =
     optimizer:execute(function(it)
 			self.ann_component:reset(it)
 			local output = self.ann_component:forward(input, true)
-			local output_mat = output:get_matrix()
 			local tr_loss,tr_loss_matrix
 			tr_loss,tr_loss_matrix = loss:compute_loss(output, target)
 			if not tr_loss_matrix then return nil end
@@ -770,7 +772,6 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
 			--
 			self.weight_grads =
 			  self.ann_component:compute_gradients(self.weight_grads)
-			local bunch_size = output_mat:dim(1)
 			-- gradient smoothing
 			if smooth_gradients then
 			  for name,mat in pairs(self.weight_grads) do
@@ -1119,8 +1120,9 @@ function trainable_supervised_trainer_methods:train_dataset(t)
   params.assert_output_size = self:get_output_size()
   -- set to ZERO the accumulated of loss
   loss:reset()
-  for input_bunch,output_bunch in trainable.dataset_pair_iterator(params) do
-    self:train_step(input_bunch, output_bunch, loss, optimizer, smooth_gradients)
+  for input_bunch,output_bunch,bunch_indexes in trainable.dataset_pair_iterator(params) do
+    self:train_step(input_bunch, output_bunch, loss, optimizer, #bunch_indexes,
+		    smooth_gradients)
   end
   collectgarbage("collect")
   return loss:get_accum_loss()

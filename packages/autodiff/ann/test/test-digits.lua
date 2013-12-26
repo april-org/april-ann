@@ -6,6 +6,7 @@ local rnd            = random(semilla)
 local H1             = 256
 local H2             = 128
 local M              = matrix.col_major
+local bunch_size     = 512
 --
 --------------------------------------------------------------
 
@@ -72,8 +73,8 @@ local b1,w1,b2,w2,b3,w3,x,y,loss_input = AD.matrix('b1 w1 b2 w2 b3 w3 x y loss_i
 -- during learning
 local wd = weight_decay
 
-x:set_dims(INPUT,1)
-y:set_dims(OUTPUT,1)
+x:set_dims(INPUT,0)
+y:set_dims(OUTPUT,0)
 
 b1:set_broadcast(false, true)
 b2:set_broadcast(false, true)
@@ -85,41 +86,93 @@ local net_h2  = AD.ann.logistic(b2 + w2 * net_h1)  -- second layer
 local net_out = b3 + w3 * net_h2            -- output layer (linear, the softmax
 					    -- is added to the loss function)
 
+local net = AD.op.exp( AD.ann.log_softmax(net_out) ) -- softmax (for testing)
 -- Loss function: negative cross-entropy with the log-softmax (for training)
-local L = AD.ann.cross_entropy_log_softmax(loss_input, y)
--- Regularization
-L = L + 0.5 * wd * (op.sum(w1^2) + op.sum(w2^2) + op.sum(w3^2))
+local L = AD.op.sum( AD.ann.cross_entropy_log_softmax(net_out, y, 2) )
+-- Regularization component
+local Lreg = L + 0.5 * wd * (op.sum(w1^2) + op.sum(w2^2) + op.sum(w3^2))
+-- Differentiation, plus loss computation
+local dw_tbl = table.pack( Lreg, AD.diff(Lreg, {b1, w1, b2, w2, b3, w3}) )
+-- Compilation
+local L_func = AD.func(L, {x,y}, weights)
+local dw_func,dw_program = AD.func(dw_tbl, {x,y}, weights)
 
--- Compilation using AD.ann helpers
-local thenet = AD.ann.component("mynet", net_out, x) -- without softmax layer
-local loss   = AD.ann.loss(L, loss_input, y)
-
--- TRAINER
-trainer = trainable.supervised_trainer(thenet, loss, 1)
-trainer:build{ weights=weights }
-trainer:randomize_weights{ inf=-0.1, sup=0.1, random=rnd }
-trainer:set_option("learning_rate", learning_rate)
-trainer:set_option("momentum", momentum)
+--
+g = io.open("program.lua","w")
+g:write(dw_program)
+g:close()
 --
 
--- it is important to give thenet to the loss function, in order to reuse
--- memorized (cached) computations
-loss:compile(weights, thenet)
+-- Randomization
+for _,w in pairs(weights) do
+  ann.connections.randomize_weights(w, { inf=-0.1, sup=0.1, random=rnd })
+end
+
+-- OPTIMIZER
+local opt = ann.optimizer.cg()
+--opt:set_option("learning_rate", learning_rate)
+--opt:set_option("momentum", momentum)
+--
+
+local ds_pair_it = trainable.dataset_pair_iterator
+-- traindataset
+local function train_dataset(in_ds,out_ds)
+  local mv = stats.mean_var()
+  for input_bunch,output_bunch in ds_pair_it{ input_dataset=in_ds,
+					      output_dataset=out_ds,
+					      bunch_size=bunch_size } do
+    local loss
+    loss = opt:execute(function()
+			 local loss,
+			 b1,w1,
+			 b2,w2,
+			 b3,w3 = dw_func(input_bunch:get_matrix():transpose(),
+					 output_bunch:get_matrix():transpose())
+			 return loss, { b1=b1, w1=w1, b2=b2, w2=w2, b3=b3, w3=w3 }
+		       end,
+		       weights)
+    mv:add(loss/bunch_size)
+  end
+  return mv:compute()
+end
+
+-- validatedataset
+local function validate_dataset(in_ds,out_ds)
+  local mv = stats.mean_var()
+  for input_bunch,output_bunch in ds_pair_it{ input_dataset=in_ds,
+					      output_dataset=out_ds,
+					      bunch_size=bunch_size } do
+    local loss = L_func(input_bunch:get_matrix():transpose(),
+			output_bunch:get_matrix():transpose())
+    mv:add(loss/bunch_size)
+  end
+  return mv:compute()
+end
+
+-- auxiliar function which builds a wrapper over the weigths
+local function wrapper(w)
+  return {
+    w=w,
+    clone=function(self)
+      return wrapper(iterator(pairs(w)):
+		     map(function(name,m)
+			   return name,m:clone()
+			 end):
+		     table())
+    end
+  }
+end
+weights_wrapper = wrapper(weights)
 --
 
 local train_func = trainable.train_holdout_validation{ min_epochs=100,
 						       max_epochs=100 }
 while train_func:execute(function()
-			   local tr_loss = trainer:train_dataset{
-			     input_dataset  = train_input,
-			     output_dataset = train_output,
-			     shuffle        = rnd
-			   }
-			   local va_loss = trainer:validate_dataset{
-			     input_dataset  = val_input,
-			     output_dataset = val_output,
-			   }
-			   return trainer,tr_loss,va_loss
+			   local tr_loss = train_dataset(train_input,
+							 train_output)
+			   local va_loss = validate_dataset(val_input,
+							    val_output)
+			   return weights_wrapper,tr_loss,va_loss
 			 end) do
   print(train_func:get_state_string())
 end
