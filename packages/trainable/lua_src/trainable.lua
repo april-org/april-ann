@@ -1812,12 +1812,12 @@ april_set_doc("trainable.dataset_multiple_iterator", {
 		class       = "function",
 		summary     = {
 		  "A function which returns an iterator which",
-		  "does a dataset pair loop (input_dataset and output_dataset)"
+		  "does a dataset loop through multiple datasets"
 		},
 		description ={
-		  "This class is useful to implement a loop over a dataset.",
+		  "This function is useful to implement a loop over a dataset.",
 		  "It implements different loop schemes, in all the cases",
-		  "returning a bunch_size patterns.",
+		  "returning a token with bunch_size patterns.",
 		  "It admits the following traversals: sequential, shuffled,",
 		  "shuffled with replacement, shuffled with distribution.",
 		}, })
@@ -1837,6 +1837,7 @@ function trainable.dataset_multiple_iterator(t)
       bunch_size     = { type_match = "number", mandatory = true },
       shuffle        = { isa_match  = random,   mandatory = false, default=nil },
       replacement    = { type_match = "number", mandatory = false, default=nil },
+      bunch_major    = { type_match = "string", mandatory = false, default="row_major" },
       assert_pattern_sizes = { type_match = "table", mandatory = false,
 			       default={ } },
     }, t)
@@ -1858,7 +1859,8 @@ function trainable.dataset_multiple_iterator(t)
 				   "%d, found %d", nump, ds:numPatterns()))
 	  else nump = ds:numPatterns()
 	  end
-	  return isa(ds,dataset) and dataset.token.wrapper(ds) or ds
+	  return isa(ds,dataset) and dataset.token.wrapper(ds,
+							   params.bunch_major) or ds
 	end):
     table(), nump
   end

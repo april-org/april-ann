@@ -205,8 +205,11 @@ public:
 class DataSetFloat2TokenWrapper : public DataSetToken {
   MatrixFloat  *aux_mat;
   DataSetFloat *ds;
+  CBLAS_ORDER   bunch_major;
 public:
-  DataSetFloat2TokenWrapper(DataSetFloat *ds) : ds(ds) {
+  DataSetFloat2TokenWrapper(DataSetFloat *ds,
+			    CBLAS_ORDER bunch_major=CblasRowMajor) :
+    ds(ds), bunch_major(bunch_major) {
     IncRef(ds);
     int dims[2] = { 1, ds->patternSize() };
     aux_mat = new MatrixFloat(2, dims, CblasColMajor);
@@ -218,7 +221,13 @@ public:
   int numPatterns() { return ds->numPatterns(); }
   int patternSize() { return ds->patternSize(); }
   Token *getPattern(int index) {
-    int dims[2] = { 1, patternSize() };
+    int dims[2];
+    if (bunch_major == CblasRowMajor) {
+      dims[0] = 1; dims[1] = patternSize();
+    }
+    else {
+      dims[0] = patternSize(); dims[1] = 1;
+    }
     MatrixFloat *mat = new MatrixFloat(2, dims, CblasColMajor);
     TokenMatrixFloat *token = new TokenMatrixFloat(mat);
     FloatGPUMirroredMemoryBlock *mem_block = mat->getRawDataAccess();
@@ -227,14 +236,22 @@ public:
     return token;
   }
   Token *getPatternBunch(const int *indexes, unsigned int bunch_size) {
-    int dims[2] = { static_cast<int>(bunch_size), patternSize() };
+    int dims[2], major_dim=0;
+    if (bunch_major == CblasRowMajor) {
+      dims[0] = static_cast<int>(bunch_size); dims[1] = patternSize();
+    }
+    else {
+      dims[0] = patternSize(); dims[1] = static_cast<int>(bunch_size);
+      major_dim = 1;
+    }
     MatrixFloat *mat = new MatrixFloat(2, dims, CblasColMajor);
     TokenMatrixFloat *token = new TokenMatrixFloat(mat);
     FloatGPUMirroredMemoryBlock *aux_mem_block = aux_mat->getRawDataAccess();
     float *aux_mem = aux_mem_block->getPPALForWrite();
     int pattern_size = patternSize();
     int num_patterns = numPatterns();
-    MatrixFloat::sliding_window window(mat, 0, 0, 0, 0, 0);
+    dims[major_dim] = 1;
+    MatrixFloat::sliding_window window(mat, dims, 0, dims, 0, 0);
     for (unsigned int i=0; i<bunch_size; ++i) {
       april_assert(!window.isEnd());
       april_assert(0 <= indexes[i] && indexes[i] < num_patterns);
@@ -267,9 +284,22 @@ public:
     FloatGPUMirroredMemoryBlock *aux_mem_block = aux_mat->getRawDataAccess();
     float *aux_mem = aux_mem_block->getPPALForWrite();
     int pattern_size = patternSize();
+    int coords[2], major_dim;
+    int sizes[2];
+    if (bunch_major == CblasRowMajor) {
+      major_dim = 0;
+      coords[1] = 0;
+      sizes[0]  = 1;
+      sizes[1]  = pattern_size;
+    }
+    else if (bunch_major == CblasColMajor) {
+      major_dim = 1;
+      coords[0] = 0;
+      sizes[0]  = pattern_size;
+      sizes[1]  = 1;
+    }
     for (unsigned int i=0; i<bunch_size; ++i) {
-      int coords[2] = { static_cast<int>(i), 0 };
-      int sizes[2]  = { 1, pattern_size };
+      coords[major_dim] = static_cast<int>(i);
       MatrixFloat *submat = new MatrixFloat(mat, coords, sizes, false);
       aux_mat->copy(submat);
       delete submat;
