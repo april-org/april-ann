@@ -1584,6 +1584,7 @@ autodiff.op[MATRIX] = {
 							self.var_name,
 							b.var_name, b.var_name))
 		   local slice = gen_var_name()
+		   dest:write_var(slice)
 		   dest:write_expr_block(string.format([[
 while not %s:is_end() do
   %s = %s:get_matrix( %s )

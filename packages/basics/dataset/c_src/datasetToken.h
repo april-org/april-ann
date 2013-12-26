@@ -292,7 +292,7 @@ public:
       sizes[0]  = 1;
       sizes[1]  = pattern_size;
     }
-    else if (bunch_major == CblasColMajor) {
+    else {
       major_dim = 1;
       coords[0] = 0;
       sizes[0]  = pattern_size;

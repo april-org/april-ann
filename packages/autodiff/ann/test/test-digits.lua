@@ -6,7 +6,7 @@ local rnd            = random(semilla)
 local H1             = 256
 local H2             = 128
 local M              = matrix.col_major
-local bunch_size     = 512
+local bunch_size     = 32
 --
 --------------------------------------------------------------
 
@@ -88,7 +88,7 @@ local net_out = b3 + w3 * net_h2            -- output layer (linear, the softmax
 
 local net = AD.op.exp( AD.ann.log_softmax(net_out) ) -- softmax (for testing)
 -- Loss function: negative cross-entropy with the log-softmax (for training)
-local L = AD.op.sum( AD.ann.cross_entropy_log_softmax(net_out, y, 2) )
+local L = AD.op.mean( AD.ann.cross_entropy_log_softmax(net_out, y, 2) )
 -- Regularization component
 local Lreg = L + 0.5 * wd * (op.sum(w1^2) + op.sum(w2^2) + op.sum(w3^2))
 -- Differentiation, plus loss computation
@@ -109,9 +109,9 @@ for _,w in pairs(weights) do
 end
 
 -- OPTIMIZER
-local opt = ann.optimizer.cg()
---opt:set_option("learning_rate", learning_rate)
---opt:set_option("momentum", momentum)
+local opt = ann.optimizer.sgd()
+opt:set_option("learning_rate", learning_rate)
+opt:set_option("momentum", momentum)
 --
 
 local ds_pair_it = trainable.dataset_pair_iterator
@@ -131,7 +131,7 @@ local function train_dataset(in_ds,out_ds)
 			 return loss, { b1=b1, w1=w1, b2=b2, w2=w2, b3=b3, w3=w3 }
 		       end,
 		       weights)
-    mv:add(loss/bunch_size)
+    mv:add(loss)
   end
   return mv:compute()
 end
@@ -144,7 +144,7 @@ local function validate_dataset(in_ds,out_ds)
 					      bunch_size=bunch_size } do
     local loss = L_func(input_bunch:get_matrix():transpose(),
 			output_bunch:get_matrix():transpose())
-    mv:add(loss/bunch_size)
+    mv:add(loss)
   end
   return mv:compute()
 end
