@@ -31,51 +31,50 @@ end
 
 -- LOG SOFTMAX ACTIVATION FUNCTION WITH CROSS-ENTROPY LOSS
 function AD.ann.cross_entropy_log_softmax(input, target, dim)
+  assert(type(dim)=="number", "The 3rd argument (dim) must be a number")
+  local other_dim = 3 - dim
   local i   = AD.coercion(input)
   local t   = AD.coercion(target)
-  local dim = AD.coercion(dim)
   local output = AD.ann.log_softmax(i,dim)
   -- ignore the gradient of softmax, it is computed at the loss function
   output:ignore_gradient()
   -- cross_entropy
-  s = AD.gen_op('CE', AD.dtypes.MATRIX, {output,t,dim},
+  s = AD.gen_op('CE', AD.dtypes.MATRIX, {output,t},
 		function(self, ...)
 		  local i   = self.args[1]:eval(...)
 		  local t   = self.args[2]:eval(...)
-		  local dim = self.args[3]:eval(...)
-		  return -i:cmul(t):sum(3-dim)
+		  return -i:cmul(t):sum(other_dim)
 		end,
 		function(self, seed, result)
 		  local i = self.args[1]
 		  local t = self.args[2]
 		  local dself = AD.op.exp(i) - t
-		  seed:set_broadcast( (dim==1) and true or false,
-				      (dim==2) and true or false )
+		  if dim == 1 then seed:set_broadcast(true, false)
+		  else             seed:set_broadcast(false, true) end
 		  local seed  = AD.op.fill(i, seed)
 		  i:diff(AD.op.cmul(seed, dself), result)
 		  return result
 		end,
 		function(self, dest)
-			local i   = self.args[1]
-			local t   = self.args[2]
-			local dim = self.args[3]
-			dest:write_expr_assign(self.var_name,
-					       string.format("-%s:cmul(%s):sum(3 - %s)",
-							     i.var_name,
-							     t.var_name,
-							     dim.var_name))
-		      end)
+		  local i   = self.args[1]
+		  local t   = self.args[2]
+		  dest:write_expr_assign(self.var_name,
+					 string.format("-%s:cmul(%s):sum(%d)",
+						       i.var_name,
+						       t.var_name,
+						       other_dim))
+		end)
   return s
 end
 
 -- LOG-SOFTMAX
 function AD.ann.log_softmax(a,dim)
-  local a,dim = AD.coercion(a),AD.coercion(dim)
-  local s = AD.gen_op('log_softmax', AD.dtypes.MATRIX, {a,dim},
+  assert(type(dim)=="number", "The 2nd argument (dim) must be a number")
+  local other_dim = 3 - dim
+  local a = AD.coercion(a)
+  local s = AD.gen_op('log_softmax', AD.dtypes.MATRIX, {a},
 		      function(self, ...)
 			local i   = self.args[1]:eval(...)
-			local dim = self.args[2]:eval(...)
-			local other_dim = 3 - dim
 			local max = i:max(other_dim)
 			local out = i:clone()
 			local slice
@@ -101,71 +100,70 @@ function AD.ann.log_softmax(a,dim)
 		      end,
 		      function(self, dest)
 			local i   = self.args[1]
-			local dim = self.args[2]
 			local max = AD.gen_var_name()
 			local sum = AD.gen_var_name()
-			local other_dim = AD.gen_var_name()
-			dest:write_expr_assign(other_dim,
-					       string.format("3 - %s",
-							     dim.var_name))
 			dest:write_expr_assign(self.var_name,
 					       string.format("%s:clone()",
 							     i.var_name))
 			local max = AD.gen_var_name()
 			dest:write_expr_assign(max,
-					       string.format("%s:max(%s)",
+					       string.format("%s:max(%d)",
 							     self.var_name,
 							     other_dim))
 			local slice = AD.gen_var_name()
 			dest:write_var(slice)
-			dest:write_expr_block(string.format([[
-if %s == 1 then
-  for k=1,%s:dim(%s) do
-    %s = %s:select(%s,k,%s)
-    %s:scalar_add(-%s:get(k,1))
-  end
-else
-  for k=1,%s:dim(%s) do
-    %s = %s:select(%s,k,%s)
-    %s:scalar_add(-%s:get(1,k))
-  end
+			if dim == 1 then
+			  dest:write_expr_block(string.format([[
+for k=1,%s:dim(%d) do
+  %s = %s:select(%d,k,%s)
+  %s:scalar_add(-%s:get(k,1))
 end
 ]],
-							    dim.var_name,
-							    self.var_name, dim.var_name,
-							    slice, self.var_name, dim.var_name, slice,
-							    slice, max,
-							    self.var_name, dim.var_name,
-							    slice, self.var_name, dim.var_name, slice,
-							    slice, max))
+							      self.var_name, dim,
+							      slice, self.var_name, dim, slice,
+							      slice, max))
+			else -- if dim == 1 ... else
+			  dest:write_expr_block(string.format([[
+for k=1,%s:dim(%d) do
+  %s = %s:select(%d,k,%s)
+  %s:scalar_add(-%s:get(1,k))
+end
+]],
+							      
+							      self.var_name, dim,
+							      slice, self.var_name, dim, slice,
+							      slice, max))
+			end
 			local sum_exp = AD.gen_var_name()
 			dest:write_expr_assign(sum_exp,
 					       string.format("%s:clone():exp()",
 							     self.var_name))
 			dest:write_expr_assign(sum_exp,
-					       string.format("%s:sum(%s)",
+					       string.format("%s:sum(%d)",
 							     sum_exp,
 							     other_dim))
-			dest:write_expr_block(string.format([[
-if %s == 1 then
-  for k=1,%s:dim(%s) do
-    %s = %s:select(%s,k,%s)
-    %s:scalar_add( -math.log(%s:get(k,1)) )
-  end
-else
-  for k=1,%s:dim(%s) do
-    %s = %s:select(%s,k,%s)
-    %s:scalar_add( -math.log(%s:get(1,k)) )
-  end
+			if dim == 1 then
+			  dest:write_expr_block(string.format([[
+for k=1,%s:dim(%d) do
+  %s = %s:select(%d,k,%s)
+  %s:scalar_add( -math.log(%s:get(k,1)) )
 end
 ]],
-							    dim.var_name,
-							    self.var_name, dim.var_name,
-							    slice, self.var_name, dim.var_name, slice,
-							    slice, sum_exp,
-							    self.var_name, dim.var_name,
-							    slice, self.var_name, dim.var_name, slice,
-							    slice, sum_exp))
+							      self.var_name, dim,
+							      slice, self.var_name, dim, slice,
+							      slice, sum_exp))
+			else -- if dim == 1 then ... else
+			  dest:write_expr_block(string.format([[
+for k=1,%s:dim(%d) do
+  %s = %s:select(%d,k,%s)
+  %s:scalar_add( -math.log(%s:get(1,k)) )
+end
+]],
+							      
+							      self.var_name, dim,
+							      slice, self.var_name, dim, slice,
+							      slice, sum_exp))
+			end
 		      end)
   return s
 end

@@ -86,7 +86,7 @@ local net_h2  = AD.ann.logistic(b2 + w2 * net_h1)  -- second layer
 local net_out = b3 + w3 * net_h2            -- output layer (linear, the softmax
 					    -- is added to the loss function)
 
-local net = AD.op.exp( AD.ann.log_softmax(net_out) ) -- softmax (for testing)
+local net = AD.op.exp( AD.ann.log_softmax(net_out, 2) ) -- softmax (for testing)
 -- Loss function: negative cross-entropy with the log-softmax (for training)
 local L = AD.op.mean( AD.ann.cross_entropy_log_softmax(net_out, y, 2) )
 -- Regularization component
