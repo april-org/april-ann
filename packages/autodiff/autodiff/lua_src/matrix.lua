@@ -227,13 +227,13 @@ autodiff.op[MATRIX] = {
 					  table.concat(str_tbl, " "))
 		 end)
     end
-    -- TODO: implement correctly taking into account broadcast property
-    --
-    -- if a.dims or b.dims then
-    --   assert( check_dims(a.dims, b.dims, a.broadcast, b.broadcast),
-    -- 	      "Incorrect dimensions")
-    --   s:set_dims(a.dims or b.dims)
-    -- end
+    if a.dims or b.dims then
+      local a_dims,b_dims,dims = a.dims or {}, b.dims or {}, {}
+      for i=1,math.max(#a_dims,#b_dims) do
+	dims[i] = math.max(a_dims[i] or 0, b_dims[i] or 0)
+      end
+      s:set_dims(dims)
+    end
     return s
   end,
   
