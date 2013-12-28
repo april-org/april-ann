@@ -64,7 +64,8 @@ L = L + 0.5 * wd * (op.sum(w1^2) + op.sum(w2^2))
 local shared_vars = weights
 local f   = func(xor, {x}, shared_vars)
 local tbl = table.pack( L, AD.diff(L, {b1, w1, b2, w2}) )
-local dL_dw,program = func(tbl, {x,y}, shared_vars)
+local dL_dw = func(tbl, {x,y}, shared_vars)
+local program = dL_dw.program
 
 AD.dot_graph(tbl[4], "wop.dot")
 

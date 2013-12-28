@@ -1,5 +1,10 @@
-autodiff    = autodiff or {}
-autodiff.op = autodiff.op or {}
+autodiff                 = autodiff or {}
+autodiff.op              = autodiff.op or {}
+autodiff.graph_iterators = autodiff.graph_iterators or {}
+autodiff.optdb           = autodiff.optdb or {}
+
+local global_optimizations_db = {}
+local local_optimizations_db  = {}
 
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
@@ -268,6 +273,11 @@ local function symbol(name,dtype)
       dims      = nil,    -- it is possible to write the dimensions if needed the
       broadcast = nil,    -- explicit indicate of broadcasting
       --
+      arg_ipairs = function() return ipairs{} end,
+      --
+      replace = function() return end,
+      --
+      unmark = function(self) self.visited = nil end,
       generate_name = function() end,
       -- following method removes the var_name associated with the compilation
       -- of the symbol
@@ -391,10 +401,29 @@ function autodiff.gen_op(name, dtype, args,
   -- the arguments of the operation
   s.args = args
   --
+  s.unmark = function(self)
+    if self.visited then
+      self.visited = nil
+      iterator(ipairs(self.args)):select(2):call('unmark'):apply()
+    end
+  end
+  --
   s.generate_name = function(self)
-    self.name = string.format("(%s %s)", self.isop,
-			      iterator(ipairs(args)):select(2):
-			      map(tostring):concat(" "))
+    if not self.visited then
+      self.visited = true
+      iterator(ipairs(self.args)):select(2):call('generate_name'):apply()
+      self.name = string.format("(%s %s)", self.isop,
+				iterator(ipairs(self.args)):select(2):
+				map(tostring):concat(" "))
+    end
+  end
+  --
+  s.arg_ipairs = function(self) return ipairs(self.args) end
+  --
+  s.replace = function(self, idx, node)
+    self.args[idx]=node
+    self:unmark()
+    self:generate_name()
   end
   -- eval function for operations
   s.eval = function(self, values, prev_cache)
@@ -485,9 +514,14 @@ end
 -- pairs name,value which are shared between symbolic expressions and your Lua
 -- program. The resulting function will return as many values as the number of
 -- symbols are given in s table.
-function autodiff.func(s, args, shared_values)
+function autodiff.func(s, args, shared_values, optimize)
+  local optimize = (optimize==nil and true) or optimize
   assert(type(s) == "table")
   if s.issymbol then s = { s } end
+  -- optimize all the given symbols
+  if optimize then
+    -- for i=1,#s do s[i] = autodiff.optimize(s[i]) end
+  end
   -- checks the args table, and builds a dictionary for check that all the
   -- necessary symbols has an argument or a shared_value
   local symbols_dict = {}
@@ -549,26 +583,37 @@ function autodiff.func(s, args, shared_values)
   local program = f:read("*a")
   f:close()
   os.remove(filename)
-  -- the returned function is a closure which inserts the input arguments and
-  -- shared_values in a dictionary; this dictionary is passed to each of the
-  -- previously compiled functions
-  return function(...)
-    local args2 = table.pack(...)
-    local cache = {}
-    if #args2 == #args+1 then
-      cache = table.remove(args2, #args2)
-      assert(type(cache) == "table", "Expected a cache table as last argument")
-    end
-    assert(#args == #args2,
-	   string.format("Incorrect number of arguments, expected %d, found %d\n",
-			 #args, #args2))
-    local values = {} for k,v in ipairs(args) do values[v.name] = args2[k] end
-    for k,v in pairs(shared_values) do values[k] = v end
-    local ret = {} for i,f in ipairs(funcs) do ret[i]=f(values,cache) end
-    return table.unpack(ret)
-  end,
-  -- the Lua string with the program is also returned, for debugging purposes
-  program
+  -- the returned a callable table, with a closure, which inserts the input
+  -- arguments and shared_values in a dictionary; this dictionary is passed to
+  -- each of the previously compiled functions
+  local ret = {
+    program       = program,
+    inputs        = args,
+    outputs       = s,
+    shared_values = shared_values,
+    funcs         = funcs,
+  }
+  setmetatable(ret,{
+		 __call = function(self, ...)
+		   local shared_values = self.shared_values
+		   local args  = self.inputs
+		   local funcs = self.funcs
+		   local args2 = table.pack(...)
+		   local cache = {}
+		   if #args2 == #args+1 then
+		     cache = table.remove(args2, #args2)
+		     assert(type(cache) == "table", "Expected a cache table as last argument")
+		   end
+		   assert(#args == #args2,
+			  string.format("Incorrect number of arguments, expected %d, found %d\n",
+					#args, #args2))
+		   local values = {} for k,v in ipairs(args) do values[v.name] = args2[k] end
+		   for k,v in pairs(shared_values) do values[k] = v end
+		   local ret = {} for i,f in ipairs(funcs) do ret[i]=f(values,cache) end
+		   return table.unpack(ret)
+		 end,
+		   })
+  return ret
 end
 
 -- Function for differentiation. It receives a symbol function f, a table with
@@ -586,6 +631,34 @@ function autodiff.diff(f, symbols, seed)
 			      error("Gradient of " .. s.name .. " not implemented")
 			  end):
 		      table())
+end
+
+-- dummy operation, adds a sentinel operation useful to perform optimizations
+local function dummy(s)
+  return gen_op('sentinel', s.dtype, {s})
+end
+
+-- applies optimizations
+function autodiff.optimize(s)
+  local graph_it = autodiff.graph_iterators.post_order_traversal
+  repeat
+    local current_name = s.name
+    -- sentinel dummy operation
+    local dummy_s = dummy(s)
+    for which,opt_func in ipairs(local_optimizations_db) do
+      -- apply optimization over the sentinel argument
+      for node,parent,child_idx in graph_it(dummy_s.args[1], dummy_s, 1) do
+	opt_func(parent, node, child_idx)
+      end
+    end
+    for which,opt_func in ipairs(global_optimizations_db) do
+      -- apply optimization over the sentinel argument
+      opt_func(dummy_s.args[1], dummy_s, 1)
+    end
+    -- retrieve the sentinel argument and substitutes the original operation
+    s = dummy_s.args[1]
+  until s.name == current_name
+  return s
 end
 
 -- auxiliary function for debugging purposes
@@ -619,3 +692,88 @@ setmetatable(autodiff.op,
 		   end
 	       end,
 	     })
+
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+
+function autodiff.graph_iterators.pre_order_traversal(s,parent,k)
+  local visited = {}
+  local function yield_iterator(s,parent,i,depth)
+    if not visited[s] then
+      visited[s] = true
+      coroutine.yield(s,parent,i,depth)
+      for j,child in s:arg_ipairs() do yield_iterator(child,s,j,depth+1) end
+    end
+  end
+  return coroutine.wrap(function() yield_iterator(s,parent,k,1) end)
+end
+
+function autodiff.graph_iterators.post_order_traversal(s,parent,k)
+  local visited = {}
+  local function yield_iterator(s,parent,i,depth)
+    if not visited[s] then
+      visited[s] = true
+      for j,child in s:arg_ipairs() do yield_iterator(child,s,j,depth+1) end
+      coroutine.yield(s,parent,i,depth)
+    end
+  end
+  return coroutine.wrap(function() yield_iterator(s,parent,k,1) end)
+end
+
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+
+function autodiff.optdb.register_global(opt_func)
+  table.insert(global_optimizations_db, opt_func)
+end
+
+function autodiff.optdb.register_local(opt_func)
+  table.insert(local_optimizations_db, opt_func)
+end
+
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+
+local function add_general_optimization(...)
+  local flat_add = {}
+  local parent_depth
+  for node,parent,child_index,depth in autodiff.graph_iterators.post_order_traversal(...) do
+    if node.isop == '+' then
+      parent_depth = ( parent_depth and math.min(parent_depth, depth) ) or depth
+      for i,v in node:arg_ipairs() do
+	if v.isop ~= '+' then table.insert(flat_add, v) end
+      end
+    end
+    if #flat_add > 0 and parent.isop ~= '+' and depth <= parent_depth then
+      -- modify the current symbol with all the stored additions at flat_add
+      local constant  = autodiff[CONSTANT](0)
+      -- add reduction
+      local vars_dict = iterator(ipairs(flat_add)):select(2):
+      reduce(function(acc,v)
+	       if v.dtype == CONSTANT then constant = constant + v
+	       else acc[v] = (acc[v] or autodiff[CONSTANT](0)) + 1 end
+	       return acc
+	     end, {})
+      -- canonical form (sorted)
+      table.sort(flat_add)
+      -- new symbol
+      local new_node = constant
+      for i,v in ipairs(flat_add) do
+	if vars_dict[v] then
+	  new_node,vars_dict[v] = new_node + (vars_dict[v]*v),nil
+	end
+      end
+      -- child substitution
+      parent:replace(child_index, new_node)
+      --
+      flat_add = {}
+      parent_depth = nil
+    end
+  end
+end
+
+-- optimization registration
+autodiff.optdb.register_global(add_general_optimization)

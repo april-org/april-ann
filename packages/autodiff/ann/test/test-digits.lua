@@ -93,15 +93,21 @@ local L = AD.op.mean( AD.ann.cross_entropy_log_softmax(net_out, y, 2) )
 local Lreg = L + 0.5 * wd * (op.sum(w1^2) + op.sum(w2^2) + op.sum(w3^2))
 -- Differentiation, plus loss computation
 local dw_tbl = table.pack( Lreg, AD.diff(Lreg, {b1, w1, b2, w2, b3, w3}) )
+for i=1,#dw_tbl do
+  AD.dot_graph(dw_tbl[i], "graph-"..i..".dot")
+end
 -- Compilation
 local L_func = AD.func(L, {x,y}, weights)
-local dw_func,dw_program = AD.func(dw_tbl, {x,y}, weights)
-
+local dw_func = AD.func(dw_tbl, {x,y}, weights)
+local dw_program = dw_func.program
 --
 g = io.open("program.lua","w")
 g:write(dw_program)
 g:close()
 --
+for i=1,#dw_tbl do
+  AD.dot_graph(dw_func.outputs[i], "graph2-"..i..".dot")
+end
 
 -- Randomization
 for _,w in pairs(weights) do

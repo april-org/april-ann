@@ -40,7 +40,8 @@ AD.dot_graph(df_dw_tbl[2], "wop2.dot")
 -- compilation of a Lua function which receives an input (a) and has a shared
 -- table with the values of the weights; the function returns multiple values,
 -- one for the forward, and one for each gradient computation
-df_dw,program = AD.func(df_dw_tbl, {a}, weights )
+df_dw = AD.func(df_dw_tbl, {a}, weights )
+program = df_dw.program
 
 -- write the compiled program to a diskfile
 io.open("program.lua","w"):write(program.."\n")
@@ -85,7 +86,8 @@ df_dw_tbl = table.pack( f, AD.diff(f, {wx, ws1, wh1, ws2, wh2, b}, seed) )
 
 AD.dot_graph(df_dw_tbl[5], "wop2.dot")
 
-df_dw,program = AD.func(df_dw_tbl, {x,s,h,seed}, weights )
+df_dw = AD.func(df_dw_tbl, {x,s,h,seed}, weights )
+program = df_dw.program
 io.open("program2.lua", "w"):write(program .. "\n")
 
 result = table.pack(  df_dw( M(3,1):uniformf(0,1,rnd),

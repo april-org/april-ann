@@ -296,3 +296,47 @@ autodiff.op[SCALAR] = {
   
 }
 
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+
+local function mul_scalar_optimization(...)
+  local flat_mul = {}
+  local parent_depth
+  for node,parent,child_index,depth in autodiff.graph_iterators.post_order_traversal(...) do
+    if node.isop == '*' and node.dtype == SCALAR then
+      parent_depth = ( parent_depth and math.min(parent_depth, depth) ) or depth
+      for i,v in node:arg_ipairs() do
+	if v.isop ~= '*' then table.insert(flat_mul, v) end
+      end
+    end
+    if #flat_mul > 0 and parent.isop ~= '*' and depth <= parent_depth then
+      -- modify the current symbol with all the stored additions at flat_mul
+      local constant  = autodiff[CONSTANT](1)
+      -- add reduction
+      local vars_dict = iterator(ipairs(flat_mul)):select(2):
+      reduce(function(acc,v)
+	       if v.dtype == CONSTANT then constant = constant * v
+	       else acc[v] = (acc[v] or autodiff[CONSTANT](0)) + 1 end
+	       return acc
+	     end, {})
+      -- canonical form (sorted)
+      table.sort(flat_mul)
+      -- new symbol
+      local new_node = constant
+      for i,v in ipairs(flat_mul) do
+	if vars_dict[v] then
+	  new_node,vars_dict[v] = new_node * (v^vars_dict[v]),nil
+	end
+      end
+      -- child substitution
+      parent:replace(child_index, new_node)
+      --
+      flat_mul = {}
+      parent_depth = nil
+    end
+  end
+end
+
+-- register optimizations
+autodiff.optdb.register_global(mul_scalar_optimization)
