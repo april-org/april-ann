@@ -50,7 +50,7 @@ autodiff[MATRIX] = function(names)
       return m
     end
     local mt = getmetatable(t[i])
-    mt.__call = function(t, ...) return op.slice(t, ...) end
+    mt.__call = function(t, ...) return autodiff.op.matrix.slice(t, ...) end
   end
   return table.unpack(t)
 end

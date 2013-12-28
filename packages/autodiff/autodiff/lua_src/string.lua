@@ -14,7 +14,7 @@ local gen_op       = autodiff.gen_op
 
 autodiff[STRING] = function(str)
   assert(type(str) == "string")
-  local t = autodiff.symbol(str, STRING)
+  local t = autodiff.symbol(string.format("%q",str), STRING)
   t.value = str
   t.eval  = function(self) return self.value end
   t.diff  = function(self, seed, result) return result end
@@ -22,7 +22,8 @@ autodiff[STRING] = function(str)
     if not self.var_name then
       self.var_name = gen_var_name()
     end
-    dest:write_initial_constant(self.var_name,self:eval())
+    dest:write_initial_constant(self.var_name,
+				string.format("%q",self:eval()))
   end
   return t
 end

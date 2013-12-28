@@ -22,7 +22,9 @@ autodiff[TABLE] = function(tbl)
     if not self.var_name then
       self.var_name = gen_var_name()
     end
-    dest:write_initial_constant(self.var_name,self:eval())
+    dest:write_initial_constant(self.var_name,
+				string.format("%s",
+					      table.tostring(self:eval())))
   end
   return t
 end

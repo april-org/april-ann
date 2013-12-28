@@ -375,6 +375,8 @@ end
 -- removes a given list of names from the symbols table
 function autodiff.remove(...)
   for i,name in ipairs(table.pack(...)) do
+    if type(name) == "table" then name = name.name end
+    assert(type(name)=="string", "Needs a symbol table or symbol name string")
     SYMBOLS[name] = nil
   end
 end
@@ -551,7 +553,7 @@ function autodiff.func(s, args, shared_values, optimize)
     dest:count_cache(v.var_name)
     if v.isop then
       for j,v2 in ipairs(v.args) do count_cache(v2,dest) end
-    else assert(v.dtype==CONSTANT or symbols_dict[v.name],
+    else assert(v.dtype==CONSTANT or v.dtype==STRING or v.dtype==TABLE or symbols_dict[v.name],
 		"Symbol not found as argument or shared_variable: ".. v.name)
     end
   end
