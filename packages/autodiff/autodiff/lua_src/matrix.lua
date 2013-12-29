@@ -302,6 +302,7 @@ autodiff.op[MATRIX] = {
     return a * (b^(-1))
   end,
 
+  -- pow by an scalar
   pow = function(a,b)
     local a,b = coercion(a),coercion(b)
     -- simplifcations
@@ -311,7 +312,10 @@ autodiff.op[MATRIX] = {
     elseif b == autodiff[CONSTANT](1) then return a
     end
     --
-    local s = gen_op('^', MATRIX, {a,b},
+    assert(a.dtype == MATRIX and (b.dtype == SCALAR or b.dtype == CONSTANT),
+	   "Incorrect types in matrix pow, only valid with scalar or constants")
+    --
+    local s = gen_op('.^', MATRIX, {a,b},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
 		       local b = self.args[2]:eval(...)
@@ -334,9 +338,10 @@ autodiff.op[MATRIX] = {
 		     end,
 		     function(self, dest)
 		       local a,b = self.args[1],self.args[2]
-		       local str_tbl = { a.var_name, '^', b.var_name }
+		       local str_tbl = { a.var_name,
+					 ':clone():pow(', b.var_name, ')' }
 		       dest:write_expr_assign(self.var_name,
-					      table.concat(str_tbl, " "))
+					      table.concat(str_tbl, ""))
 		     end)
     if a.dims then s:set_dims(a.dims) end
     return s
@@ -372,6 +377,7 @@ autodiff.op[MATRIX] = {
 
   exp = function(a)
     local a = coercion(a)
+    if a == autodiff[CONSTANT](0) then return autodiff[CONSTANT](1) end
     local s = gen_op('exp', MATRIX, {a},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
@@ -695,7 +701,7 @@ end
 		       map(function(i) return self.args[i] end):table()
 		       --
 		       local dest = autodiff.op.fill(self,0)
-		       dest = autodiff.op.copy(dest, a, table.unpack(arg))
+		       dest = autodiff.op.copy(dest, seed, table.unpack(arg))
 		       a:diff(dest, result)
 		       return result
 		     end,
@@ -914,44 +920,75 @@ end
 ------------------------------------------------------------------------------
 
 local function cmul_general_optimization(...)
-  local flat_mul = {}
-  local parent_depth
-  for node,parent,child_index,depth in autodiff.graph_iterators.post_order_traversal(...) do
+  for node in autodiff.graph_iterators.post_order_traversal(...) do
     if node.isop == '.*' then
-      parent_depth = ( parent_depth and math.min(parent_depth, depth) ) or depth
-      for i,v in node:arg_ipairs() do
-	if v.isop ~= '.*' then table.insert(flat_mul, v) end
-      end
-    end
-    if #flat_mul > 0 and parent.isop ~= '.*' and depth <= parent_depth then
       -- modify the current symbol with all the stored additions at flat_mul
       local constant = autodiff[CONSTANT](1)
       local scalar   = autodiff[CONSTANT](1)
-      -- add reduction
-      local vars_dict = iterator(ipairs(flat_mul)):select(2):
-      reduce(function(acc,v)
-	       if v.dtype == CONSTANT then constant = constant * v
-	       elseif v.dtype == SCALAR then scalar = scalar * v
-	       else acc[v] = (acc[v] or autodiff[CONSTANT](0)) + 1 end
-	       return acc
-	     end, {})
-      -- canonical form (sorted)
-      table.sort(flat_mul)
-      -- new symbol
-      local new_node = constant * scalar
-      for i,v in ipairs(flat_mul) do
-	if vars_dict[v] then
-	  new_node,vars_dict[v] = autodiff.op.cmul(new_node, (v^vars_dict[v])),nil
+      local exp      = autodiff[CONSTANT](0)
+      local vd       = {}
+      local function count(a,b)
+	local b = b or autodiff[CONSTANT](1)
+	if a.dtype == CONSTANT then constant = constant * a^b
+	elseif a.dtype == SCALAR then scalar = scalar * v^b
+	else vd[a] = (vd[a] or autodiff[CONSTANT](0)) + b end
+      end
+      local function child_traverse(child)
+	if child.isop == '.*' then
+	  for i,v in child:arg_ipairs() do child_traverse(v) end
+	elseif child.isop == '.^' then
+	  count(child.args[1], child.args[2])
+	elseif child.isop == 'exp' then
+	  exp = exp + child.args[1]
+	else count(child)
 	end
       end
-      -- child substitution
-      parent:replace(child_index, new_node)
-      --
-      flat_mul = {}
-      parent_depth = nil
-    end
-  end
+      child_traverse(node)
+      -- modify the current symbol with all the stored multiplications
+      local vars = iterator(pairs(vd)):select(1):table()
+      -- canonical form (sorted)
+      table.sort(vars)
+      -- new symbol
+      local new_node = constant * scalar
+      if exp ~= autodiff[CONSTANT](0) then
+	new_node = autodiff.op.cmul(new_node, autodiff.op.exp(exp))
+      end
+      for i,v in ipairs(vars) do
+	new_node = autodiff.op.cmul(new_node, (v^vd[v]))
+      end
+      -- substitution
+      if new_node ~= node then node:replace(new_node) end
+    end -- if node.isop == '.*'
+  end -- if node in post_order_traversal
+end
+
+local function pow_matrix_optimization(...)
+  for node in autodiff.graph_iterators.post_order_traversal(...) do
+    if node.isop == '.^' and node.dtype == MATRIX then
+      local a,b = node.args[1],node.args[2]
+      if a.isop == '.^' and a.dtype == MATRIX then
+	local new_node = a.args[1]^(b*a.args[2])
+	-- substitution
+	if new_node ~= node then node:replace(new_node) end
+      end
+    end -- if node.isop == '^'
+  end -- for node in post_order_traversal
+end
+
+local function exp_matrix_optimization(...)
+  for node in autodiff.graph_iterators.post_order_traversal(...) do
+    if node.isop == '.^'  and node.dtype == MATRIX then
+      local a,b = node.args[1],node.args[2]
+      if a.isop == 'exp' and a.dtype == MATRIX then
+	local new_node = autodiff.op.exp(a.args[1]*b)
+	-- substitution
+	if new_node ~= node then node:replace(new_node) end
+      end
+    end -- if node.isop == '^'
+  end -- for node in post_order_traversal
 end
 
 -- register optimizations
 autodiff.optdb.register_global(cmul_general_optimization)
+autodiff.optdb.register_global(pow_matrix_optimization)
+autodiff.optdb.register_global(exp_matrix_optimization)

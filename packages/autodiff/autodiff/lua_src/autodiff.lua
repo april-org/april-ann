@@ -204,6 +204,7 @@ end
 -- all the symbols declared in a program will be stored here, so, symbol names
 -- couldn't be reused
 local SYMBOLS = {}
+setmetatable(SYMBOLS, { __mode="v" })
 
 -- table for inference computation given a pair of symbol dtypes
 local infer_table = {
@@ -247,7 +248,7 @@ end
 --                            and writes it to the given compiler_out instance.
 local function symbol(name,dtype)
   local t
-  if SYMBOLS[name] then
+  if SYMBOLS[name] and SYMBOLS[name].name == name then
     t = SYMBOLS[name]
     assert(t.dtype == dtype, "Symbol redifinition is not allowed: " .. name)
   else
@@ -275,7 +276,23 @@ local function symbol(name,dtype)
       --
       arg_ipairs = function() return ipairs{} end,
       --
-      replace = function() return end,
+      replace = function(self,new_self)
+	collectgarbage("collect")
+	local new_self = autodiff.coercion(new_self)
+	if self ~= new_self then
+	  for name,v in pairs(SYMBOLS) do
+	    for i,child in ipairs(v.args or {}) do
+	      if child == self then v.args[i] = new_self end
+	    end
+	    v:unmark()
+	  end
+	  for name,v in pairs(SYMBOLS) do
+	    v:generate_name()
+	    SYMBOLS[v.name] = v
+	  end
+	end
+	collectgarbage("collect")
+      end,
       --
       unmark = function(self) self.visited = nil end,
       generate_name = function() end,
@@ -355,9 +372,9 @@ end
 
 -- auxiliary coercion function, converts Lua types in symbolic types
 local function coercion(a)
-  if type(a) == "number" then return autodiff.constant(a)
-  elseif type(a) == "table" and not a.issymbol then return autodiff.table(a)
-  elseif type(a) == "string" then return autodiff.string(a)
+  if type(a) == "number" then return autodiff[CONSTANT](a)
+  elseif type(a) == "table" and not a.issymbol then return autodiff[TABLE](a)
+  elseif type(a) == "string" then return autodiff[STRING](a)
   else return a
   end
 end
@@ -421,12 +438,6 @@ function autodiff.gen_op(name, dtype, args,
   end
   --
   s.arg_ipairs = function(self) return ipairs(self.args) end
-  --
-  s.replace = function(self, idx, node)
-    self.args[idx]=node
-    self:unmark()
-    self:generate_name()
-  end
   -- eval function for operations
   s.eval = function(self, values, prev_cache)
     -- create the cache if not given
@@ -630,7 +641,7 @@ function autodiff.diff(f, symbols, seed)
   return table.unpack(iterator(ipairs(symbols)):
 		      map(function(_,s)
 			    return all_diff[s.name] or
-			      error("Gradient of " .. s.name .. " not implemented")
+			      error("Gradient of " .. s.name .. " not implemented, or symbol not found")
 			  end):
 		      table())
 end
@@ -642,9 +653,11 @@ end
 
 -- applies optimizations
 function autodiff.optimize(s)
+  local memory   = {} -- used to avoid possible oscillations
   local graph_it = autodiff.graph_iterators.post_order_traversal
   repeat
     local current_name = s.name
+    memory[current_name] = true
     -- sentinel dummy operation
     local dummy_s = dummy(s)
     for which,opt_func in ipairs(local_optimizations_db) do
@@ -659,7 +672,7 @@ function autodiff.optimize(s)
     end
     -- retrieve the sentinel argument and substitutes the original operation
     s = dummy_s.args[1]
-  until s.name == current_name
+  until s.name == current_name or memory[s.name]
   return s
 end
 
@@ -740,41 +753,40 @@ end
 ------------------------------------------------------------------------------
 
 local function add_general_optimization(...)
-  local flat_add = {}
-  local parent_depth
-  for node,parent,child_index,depth in autodiff.graph_iterators.post_order_traversal(...) do
+  for node in autodiff.graph_iterators.post_order_traversal(...) do
     if node.isop == '+' then
-      parent_depth = ( parent_depth and math.min(parent_depth, depth) ) or depth
-      for i,v in node:arg_ipairs() do
-	if v.isop ~= '+' then table.insert(flat_add, v) end
+      local constant = autodiff[CONSTANT](0)
+      local vd = {}
+      local function count(a,b)
+	local b = b or autodiff[CONSTANT](1)
+	assert(b.dtype == CONSTANT) -- sanity check
+	if a.dtype == CONSTANT then constant = constant + a*b
+	else vd[a] = (vd[a] or autodiff[CONSTANT](0)) + b end
       end
-    end
-    if #flat_add > 0 and parent.isop ~= '+' and depth <= parent_depth then
-      -- modify the current symbol with all the stored additions at flat_add
-      local constant  = autodiff[CONSTANT](0)
-      -- add reduction
-      local vars_dict = iterator(ipairs(flat_add)):select(2):
-      reduce(function(acc,v)
-	       if v.dtype == CONSTANT then constant = constant + v
-	       else acc[v] = (acc[v] or autodiff[CONSTANT](0)) + 1 end
-	       return acc
-	     end, {})
-      -- canonical form (sorted)
-      table.sort(flat_add)
-      -- new symbol
-      local new_node = constant
-      for i,v in ipairs(flat_add) do
-	if vars_dict[v] then
-	  new_node,vars_dict[v] = new_node + (vars_dict[v]*v),nil
+      local function child_traverse(child)
+	if child.isop == '+' then
+	  for i,v in child:arg_ipairs() do child_traverse(v) end
+	elseif child.isop == '*' then
+	  local a,b = child.args[1],child.args[2]
+	  if b.dtype == CONSTANT then count(a,b)
+	  elseif a.dtype == CONSTANT then count(b,a)
+	  else count(child)
+	  end
+	else count(child)
 	end
       end
-      -- child substitution
-      parent:replace(child_index, new_node)
-      --
-      flat_add = {}
-      parent_depth = nil
-    end
-  end
+      child_traverse(node)
+      -- modify the current symbol with all the stored additions
+      local vars = iterator(pairs(vd)):select(1):table()
+      -- canonical form (sorted)
+      table.sort(vars)
+      -- new symbol
+      local new_node = constant
+      for i,v in ipairs(vars) do new_node = new_node + (vd[v]*v) end
+      -- substitution
+      if new_node ~= node then node:replace(new_node) end
+    end -- if node.isop == '+'
+  end -- for node in post_order_traversal
 end
 
 -- optimization registration

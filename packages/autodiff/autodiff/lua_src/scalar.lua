@@ -94,6 +94,7 @@ autodiff.op[SCALAR] = {
     -- simplifactions
     if a == autodiff[CONSTANT](0) then
       return autodiff[CONSTANT](0)
+    elseif a == autodiff[CONSTANT](1) then return autodiff[CONSTANT](1)
     elseif b == autodiff[CONSTANT](0) then return autodiff[CONSTANT](1)
     elseif b == autodiff[CONSTANT](1) then return a
     end
@@ -145,6 +146,7 @@ autodiff.op[SCALAR] = {
 
   exp = function(a)
     local a = coercion(a)
+    if a == autodiff[CONSTANT](0) then return autodiff[CONSTANT](1) end
     local s = gen_op('exp', SCALAR, {a},
 		     function(self, ...)
 		       local a = self.args[1]:eval(...)
@@ -301,42 +303,67 @@ autodiff.op[SCALAR] = {
 ------------------------------------------------------------------------------
 
 local function mul_scalar_optimization(...)
-  local flat_mul = {}
-  local parent_depth
-  for node,parent,child_index,depth in autodiff.graph_iterators.post_order_traversal(...) do
+  for node in autodiff.graph_iterators.post_order_traversal(...) do
     if node.isop == '*' and node.dtype == SCALAR then
-      parent_depth = ( parent_depth and math.min(parent_depth, depth) ) or depth
-      for i,v in node:arg_ipairs() do
-	if v.isop ~= '*' then table.insert(flat_mul, v) end
+      local constant = autodiff[CONSTANT](1)
+      local exp = autodiff[CONSTANT](0)
+      local vd = {}
+      local function count(a,b)
+	local b = b or autodiff[CONSTANT](1)
+	if a.dtype == CONSTANT then constant = constant * a^b
+	else vd[a] = (vd[a] or autodiff[CONSTANT](0)) + b end
       end
-    end
-    if #flat_mul > 0 and parent.isop ~= '*' and depth <= parent_depth then
-      -- modify the current symbol with all the stored additions at flat_mul
-      local constant  = autodiff[CONSTANT](1)
-      -- add reduction
-      local vars_dict = iterator(ipairs(flat_mul)):select(2):
-      reduce(function(acc,v)
-	       if v.dtype == CONSTANT then constant = constant * v
-	       else acc[v] = (acc[v] or autodiff[CONSTANT](0)) + 1 end
-	       return acc
-	     end, {})
-      -- canonical form (sorted)
-      table.sort(flat_mul)
-      -- new symbol
-      local new_node = constant
-      for i,v in ipairs(flat_mul) do
-	if vars_dict[v] then
-	  new_node,vars_dict[v] = new_node * (v^vars_dict[v]),nil
+      local function child_traverse(child)
+	if child.isop == '*' then
+	  for i,v in child:arg_ipairs() do child_traverse(v) end
+	elseif child.isop == '^' then
+	  count(child.args[1], child.args[2])
+	elseif child.isop == 'exp' then
+	  exp = exp + child.args[1]
+	else count(child)
 	end
       end
-      -- child substitution
-      parent:replace(child_index, new_node)
-      --
-      flat_mul = {}
-      parent_depth = nil
-    end
-  end
+      child_traverse(node)
+      -- modify the current symbol with all the stored multiplications
+      local vars = iterator(pairs(vd)):select(1):table()
+      -- canonical form (sorted)
+      table.sort(vars)
+      -- new symbol
+      local new_node = constant * autodiff.op.exp(exp)
+      for i,v in ipairs(vars) do new_node = new_node * (v^vd[v]) end
+      -- substitution
+      if new_node ~= node then node:replace(new_node) end
+    end -- if node.isop == '*'
+  end -- for node in post_order_traversal
+end
+
+local function pow_scalar_optimization(...)
+  for node in autodiff.graph_iterators.post_order_traversal(...) do
+    if node.isop == '^' and node.dtype == SCALAR then
+      local a,b = node.args[1],node.args[2]
+      if a.isop == '^' then
+	local new_node = a.args[1]^(b*a.args[2])
+	-- substitution
+	if new_node ~= node then node:replace(new_node) end
+      end
+    end -- if node.isop == '^'
+  end -- for node in post_order_traversal
+end
+
+local function exp_scalar_optimization(...)
+  for node in autodiff.graph_iterators.post_order_traversal(...) do
+    if node.isop == '^'  and node.dtype == SCALAR then
+      local a,b = node.args[1],node.args[2]
+      if a.isop == 'exp' then
+	local new_node = autodiff.op.exp(a.args[1]*b)
+	-- substitution
+	if new_node ~= node then node:replace(new_node) end
+      end
+    end -- if node.isop == '^'
+  end -- for node in post_order_traversal
 end
 
 -- register optimizations
 autodiff.optdb.register_global(mul_scalar_optimization)
+autodiff.optdb.register_global(pow_scalar_optimization)
+autodiff.optdb.register_global(exp_scalar_optimization)
