@@ -23,8 +23,21 @@
 
 #include "pair.h"
 namespace april_utils {
-    typedef pair<float, float> Point2D;
 
+    template <typename T>
+    struct Point {
+      T x;
+      T y;
+      Point(T x, T y):x(x),y(y){};
+      Point(){};
+      Point<T>(const Point<int> &p){
+       x = static_cast<T>(p.x);
+       y = static_cast<T>(p.y);   
+      };
+    };
+    typedef Point<float> Point2D;
+
+    
     // TODO: Define Point2D
     class line {
 
@@ -34,7 +47,9 @@ namespace april_utils {
 
         public:
             line(float m, float b): m(m),b(b){};
-            line(const Point2D &, const Point2D &);
+            
+            template <typename T>
+            line(const Point<T> &, const Point<T> &);
             // static line fromPolar(float phi, float r);
             float getSlope() { return m; };
             float getYintercept() { return b; };
@@ -42,8 +57,12 @@ namespace april_utils {
             //void getPolars(float &phi, float &r);
 
             Point2D intersection(const line &, bool &intersect);
-            Point2D closestPoint(const Point2D &, float &);
-            float distance(const Point2D &);
+
+            template <typename T>
+            Point2D closestPoint(const Point<T> &, float &);
+
+            template <typename T>
+            float distance(const Point<T> &);
             //static void polarToRect(float , float , float &, float &);
             //static void rectToPolar(float,  float , float &, float &);
     };

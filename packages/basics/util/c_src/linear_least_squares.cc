@@ -27,7 +27,6 @@
 // a = sum(yi)/n - b*(sum(xi)/n)
 
 #include "linear_least_squares.h"
-
 void least_squares(double x[], double y[], int numPoints, double &a, double &b) {
   double sum_xi=0, sum_yi=0, sum_xi_2=0, sum_xi_yi=0;
   for (int i=0; i<numPoints; ++i) {
