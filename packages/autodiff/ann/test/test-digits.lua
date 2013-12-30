@@ -100,7 +100,7 @@ for i=1,#dw_tbl do
 end
 -- Compilation
 local L_func = AD.func(L, {x,y}, weights)
-local dw_func = AD.func(dw_tbl, {x,y}, weights, false)
+local dw_func = AD.func(dw_tbl, {x,y}, weights)
 local dw_program = dw_func.program
 --
 g = io.open("program.lua","w")
@@ -108,7 +108,7 @@ g:write(dw_program)
 g:close()
 --
 for i=1,#dw_tbl do
-  AD.dot_graph(dw_func.outputs[i], "graph1-"..i..".dot")
+  AD.dot_graph(dw_func.outputs[i], "graph2-"..i..".dot")
 end
 
 -- Randomization

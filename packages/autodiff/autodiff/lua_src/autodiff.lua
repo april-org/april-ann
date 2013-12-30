@@ -528,7 +528,7 @@ end
 -- program. The resulting function will return as many values as the number of
 -- symbols are given in s table.
 function autodiff.func(s, args, shared_values, optimize)
-  -- local optimize = (optimize==nil and true) or optimize
+  local optimize = (optimize==nil and true) or optimize
   assert(type(s) == "table")
   if s.issymbol then s = { s } end
   -- optimize all the given symbols
