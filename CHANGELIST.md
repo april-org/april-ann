@@ -6,6 +6,8 @@ Master branch release
 
 ### Unstable changes
 
+- Added packages `autodiff` and `autodiff.ann`, with automatic differentiation
+  algorithms.
 - Added `ann.optimizer.quickprop` algorithm, but stills untested.
 - Gradients smoothing, based on weights sharing and `bunch_size`, is applied by
   `trainable.supervised_trainer` objects, not by the `optimizer`.
@@ -21,6 +23,11 @@ v0.3.1-beta relase
 
 ### API Changes
 
+- `matrix:transpose()` returns a matrix which references the original. Any
+  modification to the tranposed matrix, will be reflected at the original.
+- `matrix:cmul` method is now **in-place**, so, if you don't want to modify the
+  original matrix, you need to do `m:clone():cmul(...)` instead of
+  `m:cmul(...)`.
 - `update` property is added to `ann.optimizers.sgd` object in order to compute
   the momentum.
 - Optimizers `execute` method receives a functions which computes the loss, the
