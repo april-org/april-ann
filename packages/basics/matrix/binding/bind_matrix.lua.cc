@@ -560,7 +560,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
     int v1;
     LUABIND_GET_PARAMETER(1,int,v1);
     if (v1<1 || v1 > obj->getDimSize(0)) {
-      LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
+      LUABIND_FERROR2("wrong index parameter 1, %d is not <= %d",
 		      v1, obj->getDimSize(0));
     }
     ret = (*obj)(v1-1);
@@ -570,11 +570,11 @@ typedef MatrixFloat::sliding_window SlidingWindow;
     LUABIND_GET_PARAMETER(1,int,v1);
     LUABIND_GET_PARAMETER(2,int,v2);
     if (v1<1 || v1 > obj->getDimSize(0)) {
-      LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
+      LUABIND_FERROR2("wrong index parameter 1, %d is not <= %d or is not >= 1",
 		      v1, obj->getDimSize(0));
     }
     if (v2<1 || v2 > obj->getDimSize(1)) {
-      LUABIND_FERROR2("wrong index parameter: 2 <= %d <= %d is incorrect",
+      LUABIND_FERROR2("wrong index parameter 2, %d is not <= %d or is not >= 1",
 		      v2, obj->getDimSize(1));
     }
     ret = (*obj)(v1-1, v2-1);
@@ -584,7 +584,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
     for (int i=0; i<obj->getNumDim(); ++i) {
       LUABIND_GET_PARAMETER(i+1,int,coords[i]);
       if (coords[i]<1 || coords[i] > obj->getDimSize(i)) {
-	LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
+	LUABIND_FERROR2("wrong index parameter %d, %d is not <= %d or is not >= 1",
 			coords[i], obj->getDimSize(i));
       }
       coords[i]--;
@@ -1049,12 +1049,10 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 //BIND_METHOD MatrixFloat cmul
   {
     LUABIND_CHECK_ARGN(==, 1);
-    MatrixFloat *mat,*resul;
+    MatrixFloat *mat;
     LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
-    resul = obj->cmul(mat);
-    if (resul == 0)
-      LUABIND_ERROR("matrix cmul wrong dimensions");
-    LUABIND_RETURN(MatrixFloat, resul);
+    obj->cmul(mat);
+    LUABIND_RETURN(MatrixFloat, obj);
   }
 //BIND_END
 

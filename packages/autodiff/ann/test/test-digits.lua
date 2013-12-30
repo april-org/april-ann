@@ -64,6 +64,8 @@ local weights = {
   b3 = M(OUTPUT,1),
   w3 = M(OUTPUT,H2),
 }
+local weights_list = iterator(pairs(weights)):select(1):table()
+table.sort(weights_list)
 
 local AD = autodiff
 local op = AD.op
@@ -98,7 +100,7 @@ for i=1,#dw_tbl do
 end
 -- Compilation
 local L_func = AD.func(L, {x,y}, weights)
-local dw_func = AD.func(dw_tbl, {x,y}, weights)
+local dw_func = AD.func(dw_tbl, {x,y}, weights, false)
 local dw_program = dw_func.program
 --
 g = io.open("program.lua","w")
@@ -106,11 +108,12 @@ g:write(dw_program)
 g:close()
 --
 for i=1,#dw_tbl do
-  AD.dot_graph(dw_func.outputs[i], "graph2-"..i..".dot")
+  AD.dot_graph(dw_func.outputs[i], "graph1-"..i..".dot")
 end
 
 -- Randomization
-for _,w in pairs(weights) do
+for _,wname in ipairs(weights_list) do
+  local w = weights[wname]
   ann.connections.randomize_weights(w, { inf=-0.1, sup=0.1, random=rnd })
 end
 
@@ -126,7 +129,8 @@ local function train_dataset(in_ds,out_ds)
   local mv = stats.mean_var()
   for input_bunch,output_bunch in ds_pair_it{ input_dataset=in_ds,
 					      output_dataset=out_ds,
-					      bunch_size=bunch_size } do
+					      bunch_size=bunch_size,
+					      shuffle = rnd, } do
     local loss
     loss = opt:execute(function()
 			 local loss,

@@ -13,7 +13,6 @@ ascii col_major
 ]]
 
 c = a*b
-
 assert(c:get(1,1) == 1*1+2*4+3*7)
 
 assert((b*a):equals(matrix.col_major(3,3,{

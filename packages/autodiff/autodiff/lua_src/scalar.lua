@@ -341,7 +341,7 @@ local function pow_scalar_optimization(...)
   for node in autodiff.graph_iterators.post_order_traversal(...) do
     if node.isop == '^' and node.dtype == SCALAR then
       local a,b = node.args[1],node.args[2]
-      if a.isop == '^' then
+      if a.isop == '^' and a.dtype == SCALAR then
 	local new_node = a.args[1]^(b*a.args[2])
 	-- substitution
 	if new_node ~= node then node:replace(new_node) end
@@ -352,9 +352,9 @@ end
 
 local function exp_scalar_optimization(...)
   for node in autodiff.graph_iterators.post_order_traversal(...) do
-    if node.isop == '^'  and node.dtype == SCALAR then
+    if node.isop == '^' and node.dtype == SCALAR then
       local a,b = node.args[1],node.args[2]
-      if a.isop == 'exp' then
+      if a.isop == 'exp' and a.dtype == SCALAR then
 	local new_node = autodiff.op.exp(a.args[1]*b)
 	-- substitution
 	if new_node ~= node then node:replace(new_node) end

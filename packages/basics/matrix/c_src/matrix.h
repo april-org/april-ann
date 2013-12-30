@@ -40,12 +40,15 @@
 
 template <typename T>
 class Matrix : public Referenced {
+  const static unsigned int MATRIX_BINARY_VERSION;
   enum matrix_contiguous_enum_t { NONE=0, CONTIGUOUS=1, NONCONTIGUOUS=2 };
   // Auxiliary count variable where the user could store the number of times
   // this object is shared in a computation (like in ANN components sharing
   // weight matrices)
   unsigned int shared_count;
 protected:
+  /// Indicator of transposition
+  bool transposed;
   /// Number of dimensions
   int numDim;
   /// Size of each dimension
@@ -84,16 +87,13 @@ protected:
 				   ( (matrixSize[0]==1) ||
 				     (matrixSize[1]==1) ))); }
   bool isColVector() const { return (numDim==2 && matrixSize[1]==1); }
-  /// Returns the size of the vector, the coordinate which is different of 1. It
-  /// only works if the matrix is a vector (precondition).
-  int getVectorSize() const {
-    return ( (numDim==1) ? matrixSize[0] :
-	     april_utils::max(matrixSize[0], matrixSize[1]) ); }
+  /// Returns the stride of the vector, the stride whom coordinate is different
+  /// of 1. It only works if the matrix is a vector (precondition).
   int getVectorStride() const {
     return (numDim == 1) ? stride[0] :
-      (major_order==CblasRowMajor) ? stride[1] : stride[0];
+      ( (matrixSize[0]!=1) ? (stride[0]) : (stride[1]) );
   }
-
+  
 public:
   class sliding_window;
   friend class sliding_window;
@@ -325,7 +325,8 @@ public:
 	  else
 	    return a < b;
 	}
-	// FIXME: Would be better to use a trade-off between size and stride?
+	// Don't use a trade-off between size and stride, it will be unsafe with
+	// transposed matrices
 	else
 	  return a_sz > b_sz;
       }
@@ -361,7 +362,7 @@ private:
   Matrix(int numDim, const int *stride, const int offset,
 	 const int *matrixSize, const int total_size, const int last_raw_pos,
 	 GPUMirroredMemoryBlock<T> *data, const CBLAS_ORDER major_order,
-	 const bool use_cuda);
+	 const bool use_cuda, const bool transposed);
 
   /// Modifies the offset of the matrix. WARNING, this method doesn't check the
   /// new data position, so be sure that it fits in the data pointer size
@@ -412,6 +413,11 @@ public:
   int getStrideSize(int i) const { return stride[i]; }
   int size() const { return total_size; }
   CBLAS_ORDER getMajorOrder() const { return major_order; }
+  bool getTransposedFlag() const { return transposed; }
+  bool getIsDataRowOrdered() const {
+    return ( (getMajorOrder()==CblasRowMajor && !getTransposedFlag()) ||
+	     (getMajorOrder()==CblasColMajor &&  getTransposedFlag()) );
+  }
   void setUseCuda(bool v) {
     use_cuda = v;
 #ifdef USE_CUDA
@@ -420,7 +426,7 @@ public:
   }
   bool getCudaFlag() const { return use_cuda; }
   bool isSimple() const {
-    return (getIsContiguous())&&(major_order==CblasRowMajor);
+    return (getIsContiguous())&&(getIsDataRowOrdered());
   }
   /// Indicates if it is a contiguous matrix
   bool getIsContiguous() const;
@@ -477,8 +483,8 @@ public:
     return end_const_iterator;
   }
 
-  /// Transposition
-  Matrix<T>* transpose() const;
+  /// Symbolic transposition, changes the flag
+  Matrix<T>* transpose();
   /// Copy only sizes, but not data
   Matrix<T>* cloneOnlyDims() const;
   /// Deep copy
@@ -580,7 +586,7 @@ public:
   void abs();
   void complement();
   void sign();
-  Matrix<T> *cmul(const Matrix<T> *other);
+  void cmul(const Matrix<T> *other);
   void adjustRange(T rmin, T rmax);
   
   /**** BLAS OPERATIONS ****/

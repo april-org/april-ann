@@ -24,7 +24,7 @@
 
 template <typename T>
 void Matrix<T>::fill(T value) {
-  if (major_order == CblasRowMajor)
+  if (getIsDataRowOrdered())
     for (iterator it(begin()); it!=end(); ++it) {
       *it = value;
     }
@@ -242,10 +242,9 @@ void Matrix<T>::sign() {
 }
 
 template <typename T>
-Matrix<T> *Matrix<T>::cmul(const Matrix<T> *other) {
+void Matrix<T>::cmul(const Matrix<T> *other) {
   UNUSED_VARIABLE(other);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-  return 0;
 }
 
 template <typename T>

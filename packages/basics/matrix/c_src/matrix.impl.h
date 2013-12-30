@@ -27,6 +27,9 @@
 #include "error_print.h"
 #include "ignore_result.h"
 
+template<typename T>
+const unsigned int Matrix<T>::MATRIX_BINARY_VERSION = 0x00000001;
+
 template <typename T>
 void Matrix<T>::initialize(const int *dim) {
   total_size=1;
@@ -72,8 +75,9 @@ Matrix<T>::Matrix(int numDim, const int *stride, const int offset,
 		  const int last_raw_pos,
 		  GPUMirroredMemoryBlock<T> *data,
 		  const CBLAS_ORDER major_order,
-		  const bool use_cuda) :
-  Referenced(), shared_count(0),
+		  const bool use_cuda,
+		  const bool transposed) :
+  Referenced(), shared_count(0), transposed(transposed),
   numDim(numDim), stride(new int[numDim]), offset(offset),
   matrixSize(new int[numDim]), total_size(total_size),
   last_raw_pos(last_raw_pos), data(data), mmapped_data(0),
@@ -94,7 +98,7 @@ Matrix<T>::Matrix(int numDim,
 		  CBLAS_ORDER major_order,
 		  GPUMirroredMemoryBlock<T> *data,
 		  int offset) :
-  Referenced(), shared_count(0),
+  Referenced(), shared_count(0), transposed(false),
   numDim(numDim),
   offset(offset),
   mmapped_data(0),
@@ -125,7 +129,7 @@ Matrix<T>::Matrix(Matrix<T> *other,
 		  const int* coords, const int *sizes,
 		  bool clone) :
   Referenced(),
-  shared_count(0),
+  shared_count(0), transposed(other->transposed),
   numDim(other->numDim),
   offset(0),
   mmapped_data(0),
@@ -186,7 +190,7 @@ Matrix<T>::Matrix(Matrix<T> *other,
 /// Constructor with variable arguments
 template <typename T>
 Matrix<T>::Matrix(int numDim, int d1, ...) :
-  Referenced(), shared_count(0),
+  Referenced(), shared_count(0), transposed(false),
   numDim(numDim),
   offset(0),
   mmapped_data(0),
@@ -213,7 +217,7 @@ Matrix<T>::Matrix(int numDim, int d1, ...) :
 template <typename T>
 Matrix<T>::Matrix(Matrix<T> *other, bool clone) :
   Referenced(),
-  shared_count(0),
+  shared_count(0), transposed(other->transposed),
   numDim(other->numDim),
   offset(0),
   mmapped_data(0),
@@ -225,6 +229,7 @@ Matrix<T>::Matrix(Matrix<T> *other, bool clone) :
   total_size   = other->total_size;
   last_raw_pos = other->last_raw_pos;
   if (clone) {
+    transposed = false;
     initialize(other->matrixSize);
     allocate_memory(total_size);
     copy(other);
@@ -249,6 +254,11 @@ Matrix<T> *Matrix<T>::fromMMappedDataReader(april_utils::MMappedDataReader
   obj->data = GPUMirroredMemoryBlock<T>::fromMMappedDataReader(mmapped_data);
   IncRef(obj->data);
   //
+  int binary_version = *(mmapped_data->get<int>());
+  if (binary_version != MATRIX_BINARY_VERSION)
+    ERROR_EXIT1(128,
+		"Incorrect binary matrix version from commit number %d\n",
+		mmapped_data->getCommitNumber());
   int N = *(mmapped_data->get<int>());
   obj->numDim        = N;
   obj->stride        = mmapped_data->get<int>(N);
@@ -257,6 +267,7 @@ Matrix<T> *Matrix<T>::fromMMappedDataReader(april_utils::MMappedDataReader
   obj->total_size    = *(mmapped_data->get<int>());
   obj->last_raw_pos  = *(mmapped_data->get<int>());
   obj->major_order   = *(mmapped_data->get<CBLAS_ORDER>());
+  obj->transposed    = *(mmapped_data->get<bool>());
   // NON MAPPED DATA
   obj->use_cuda      = false;
   obj->is_contiguous = NONE;
@@ -271,6 +282,7 @@ template <typename T>
 void Matrix<T>::toMMappedDataWriter(april_utils::MMappedDataWriter
 				    *mmapped_data) const {
   data->toMMappedDataWriter(mmapped_data);
+  mmapped_data->put(&MATRIX_BINARY_VERSION);
   mmapped_data->put(&numDim);
   mmapped_data->put(stride, numDim);
   mmapped_data->put(&offset);
@@ -278,6 +290,7 @@ void Matrix<T>::toMMappedDataWriter(april_utils::MMappedDataWriter
   mmapped_data->put(&total_size);
   mmapped_data->put(&last_raw_pos);
   mmapped_data->put(&major_order);
+  mmapped_data->put(&transposed);
 }
 
 template <typename T>
@@ -313,24 +326,18 @@ Matrix<T> *Matrix<T>::rewrap(const int *new_dims, int len) {
 }
 
 template<typename T>
-Matrix<T> *Matrix<T>::transpose() const {
-  int *aux_matrix_size = new int[numDim];
-  for (int i=0; i<numDim; ++i) aux_matrix_size[i] = matrixSize[numDim-i-1];
-  Matrix<T> *resul = new Matrix<T>(numDim, aux_matrix_size, major_order);
-#ifdef USE_CUDA
-  resul->setUseCuda(use_cuda);
-#endif
-  const T *d = data->getPPALForRead();
-  int *aux_coords = new int[numDim];
-  for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
-  int raw_pos = offset;
-  for (iterator resul_it(resul->begin()); resul_it!=resul->end(); ++resul_it) {
-    *resul_it = d[raw_pos];
-    nextCoordVectorColOrder(aux_coords, raw_pos);
+Matrix<T> *Matrix<T>::transpose() {
+  Matrix<T> *result;
+  if (this->numDim > 1) {
+    result = this->shallow_copy();
+    result->transposed = !result->transposed;
+    for (int i=0,j=numDim-1; i<numDim; ++i,--j) {
+      result->stride[j]     = this->stride[i];
+      result->matrixSize[j] = this->matrixSize[i];
+    }
   }
-  delete[] aux_coords;
-  delete[] aux_matrix_size;
-  return resul;
+  else result = this;
+  return result;
 }
 
 template <typename T>
@@ -551,6 +558,7 @@ Matrix<T> *Matrix<T>::select(int dim, int index, Matrix<T> *dest) {
     result = new Matrix();
     int d = numDim - 1;
     // Data initialization
+    result->transposed   = this->transposed;
     result->use_cuda     = use_cuda;
     result->numDim       = d;
     result->matrixSize   = new int[d];
@@ -826,7 +834,8 @@ Matrix<T> *Matrix<T>::diagonalize() const {
   Matrix<T> *resul_diag = new Matrix<T>(1, &stride, 0, dims, dims[0],
 					resul->last_raw_pos, resul->data,
 					resul->major_order,
-					resul->use_cuda);
+					resul->use_cuda,
+					resul->transposed);
   resul->zeros();
   resul_diag->copy(this);
   delete resul_diag;

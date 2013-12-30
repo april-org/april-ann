@@ -680,8 +680,7 @@ april_set_doc("matrix.transpose", {
 		summary = "Returns transposition of the caller matrix.",
 		description = {
 		  "Returns transposition of the caller matrix.",
-		  "The returned matrix is totally new.",
-		  "This method is only allowed for 2D matrices",
+		  "The returned matrix is a reference to the original.",
 		},
 		outputs = {
 		  "A matrix object (transposed)",
@@ -817,20 +816,12 @@ april_set_doc("matrix.mul", {
 
 april_set_doc("matrix.cmul", {
 		class = "method",
-		summary = "Returns the component-wise multiplication of caller and other matrix.",
-		description = {
-		  "Returns the component-wise multiplication of caller and other matrix.",
-		  "This method only works with contiguous matrices, which",
-		  "are reinterpreted as a vector.",
-		  "The returned matrix has only one dimension, however you",
-		  "can rewrap it to a different dimension sizes.",
-		  "It uses BLAS operations (sbmv).",
-		},
+		summary = "Computes IN-PLACE the component-wise multiplication of caller and other matrix.",
 		params = {
 		  "Another matrix",
 		},
 		outputs = {
-		  "A new matrix result of component-wise multiplication",
+		  "The caller matrix",
 		}, })
 
 april_set_doc("matrix.plogp", {

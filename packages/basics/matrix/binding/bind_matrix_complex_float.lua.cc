@@ -790,12 +790,10 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 //BIND_METHOD MatrixComplexF cmul
   {
     LUABIND_CHECK_ARGN(==, 1);
-    MatrixComplexF *mat,*resul;
+    MatrixComplexF *mat;
     LUABIND_GET_PARAMETER(1, MatrixComplexF, mat);
-    resul = obj->cmul(mat);
-    if (resul == 0)
-      LUABIND_ERROR("matrix cmul wrong dimensions");
-    LUABIND_RETURN(MatrixComplexF, resul);
+    obj->cmul(mat);
+    LUABIND_RETURN(MatrixComplexF, obj);
   }
 //BIND_END
 

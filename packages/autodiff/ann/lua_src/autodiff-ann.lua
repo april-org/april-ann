@@ -43,7 +43,7 @@ function AD.ann.cross_entropy_log_softmax(input, target, dim)
 		function(self, ...)
 		  local i   = self.args[1]:eval(...)
 		  local t   = self.args[2]:eval(...)
-		  return -i:cmul(t):sum(other_dim)
+		  return -i:clone():cmul(t):sum(other_dim)
 		end,
 		function(self, seed, result)
 		  local i = self.args[1]
@@ -59,7 +59,7 @@ function AD.ann.cross_entropy_log_softmax(input, target, dim)
 		  local i   = self.args[1]
 		  local t   = self.args[2]
 		  dest:write_expr_assign(self.var_name,
-					 string.format("-%s:cmul(%s):sum(%d)",
+					 string.format("-%s:clone():cmul(%s):sum(%d)",
 						       i.var_name,
 						       t.var_name,
 						       other_dim))

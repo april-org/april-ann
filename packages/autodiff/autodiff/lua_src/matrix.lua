@@ -512,7 +512,7 @@ autodiff.op[MATRIX] = {
 		       if type(a) == "number" or type(b) == "number" then
 			 return a*b
 		       end
-		       return a:cmul(b)
+		       return a:clone():cmul(b)
 		     end,
 		     function(self, seed, result)
 		       local a,b = self.args[1],self.args[2]
@@ -524,7 +524,7 @@ autodiff.op[MATRIX] = {
 		       local a,b = self.args[1],self.args[2]
 		       local str_tbl
 		       if a.dtype == MATRIX and b.dtype == MATRIX then
-			 str_tbl = { a.var_name, ':cmul(', b.var_name, ')' }
+			 str_tbl = { a.var_name, ':clone():cmul(', b.var_name, ')' }
 		       elseif (a.dtype == SCALAR or b.dtype == SCALAR) or
 		       (a.dtype == CONSTANT or b.dtype == CONSTANT) then
 			 str_tbl = { a.var_name, ' * ', b.var_name }

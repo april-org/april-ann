@@ -430,9 +430,9 @@ function autodiff.gen_op(name, dtype, args,
   s.generate_name = function(self)
     if not self.visited then
       self.visited = true
-      iterator(ipairs(self.args)):select(2):call('generate_name'):apply()
+      iterator(self:arg_ipairs()):select(2):call('generate_name'):apply()
       self.name = string.format("(%s %s)", self.isop,
-				iterator(ipairs(self.args)):select(2):
+				iterator(self:arg_ipairs()):select(2):
 				map(tostring):concat(" "))
     end
   end
@@ -463,7 +463,7 @@ function autodiff.gen_op(name, dtype, args,
     if not dest:declared_expression(self.var_name) then
       dest:begin_expression(self.var_name, parent_count)
       -- compiles the arguments list
-      iterator(ipairs(self.args)):select(2):
+      iterator(self:arg_ipairs()):select(2):
       call('compile',dest,dest:get_cache_count(self.var_name)):apply()
       -- compiles the operation expression itself
       compile(self, dest)
@@ -474,7 +474,7 @@ function autodiff.gen_op(name, dtype, args,
   -- arguments
   s.clear_var_name = function(self)
     self.var_name = nil
-    iterator(ipairs(self.args)):select(2):call('clear_var_name'):apply()
+    iterator(self:arg_ipairs()):select(2):call('clear_var_name'):apply()
   end
   -- auxiliary function for debugging purposes
   s.to_dot_string = function(self,id,parent,names,edges,idx)
@@ -500,7 +500,7 @@ function autodiff.gen_op(name, dtype, args,
 	edges[edge_str] = true
       end
     end
-    for i,v in ipairs(self.args) do
+    for i,v in self:arg_ipairs() do
       local str = v:to_dot_string(id,name_str,names,edges,i)
       table.insert(aux, str)
     end
@@ -528,12 +528,12 @@ end
 -- program. The resulting function will return as many values as the number of
 -- symbols are given in s table.
 function autodiff.func(s, args, shared_values, optimize)
-  local optimize = (optimize==nil and true) or optimize
+  -- local optimize = (optimize==nil and true) or optimize
   assert(type(s) == "table")
   if s.issymbol then s = { s } end
   -- optimize all the given symbols
   if optimize then
-    -- for i=1,#s do s[i] = autodiff.optimize(s[i]) end
+    for i=1,#s do s[i] = autodiff.optimize(s[i]) end
   end
   -- checks the args table, and builds a dictionary for check that all the
   -- necessary symbols has an argument or a shared_value

@@ -149,6 +149,7 @@ void applyBinaryFunctionWithSpanIterator(Matrix<T> *m1,
   UNUSED_VARIABLE(SIZE_th);
 #endif
   if (m1->getIsContiguous() && m2->getIsContiguous() &&
+      m1->getIsDataRowOrdered() == m2->getIsDataRowOrdered() &&
       static_cast<unsigned int>(m1->size()) < CONTIGUOUS_th)
     functor(m1, m2,
 	    static_cast<unsigned int>(m1->size()), 1, 1,
@@ -221,6 +222,7 @@ void applyBinaryFunctionWithSpanIterator(Matrix<T> *m1,
   UNUSED_VARIABLE(SIZE_th);
 #endif
   if (m1->getIsContiguous() && m2->getIsContiguous() &&
+      m1->getIsDataRowOrdered() == m2->getIsDataRowOrdered() &&
       static_cast<unsigned int>(m1->size()) < CONTIGUOUS_th)
     functor(m1, m2,
 	    static_cast<unsigned int>(m1->size()), 1, 1,
@@ -387,8 +389,9 @@ bool applyBinaryAndReductionWithSpanIterator(const Matrix<T> *m1,
   UNUSED_VARIABLE(N_th);
   UNUSED_VARIABLE(SIZE_th);
 #endif
- if (m1->getIsContiguous() && m2->getIsContiguous()
-     && static_cast<unsigned int>(m1->size()) < CONTIGUOUS_th)
+ if (m1->getIsContiguous() && m2->getIsContiguous() &&
+     m1->getIsDataRowOrdered() == m2->getIsDataRowOrdered() &&
+     static_cast<unsigned int>(m1->size()) < CONTIGUOUS_th)
     return functor(m1, m2,
 		   static_cast<unsigned int>(m1->size()), 1, 1,
 		   static_cast<unsigned int>(m1->getOffset()),
@@ -516,7 +519,8 @@ template<typename T, typename FUNC>
 void applyBinaryFunctionWithSpanIteratorNOPARALLEL(Matrix<T> *m1,
 						   Matrix<T> *m2,
 						   const FUNC &functor) {
-  if (m1->getIsContiguous() && m2->getIsContiguous())
+  if (m1->getIsContiguous() && m2->getIsContiguous() &&
+      m1->getIsDataRowOrdered() == m2->getIsDataRowOrdered())
     functor(m1, m2,
 	    static_cast<unsigned int>(m1->size()), 1, 1,
 	    static_cast<unsigned int>(m1->getOffset()),
@@ -552,7 +556,8 @@ template<typename T, typename FUNC>
 void applyBinaryFunctionWithSpanIteratorNOPARALLEL(Matrix<T> *m1,
 						   const Matrix<T> *m2,
 						   const FUNC &functor) {
-  if (m1->getIsContiguous() && m2->getIsContiguous())
+  if (m1->getIsContiguous() && m2->getIsContiguous() &&
+      m1->getIsDataRowOrdered() == m2->getIsDataRowOrdered())
     functor(m1, m2,
 	    static_cast<unsigned int>(m1->size()), 1, 1,
 	    static_cast<unsigned int>(m1->getOffset()),

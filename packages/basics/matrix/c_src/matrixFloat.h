@@ -118,7 +118,7 @@ template <>
 void Matrix<float>::sign();
 
 template<>
-Matrix<float> *Matrix<float>::cmul(const Matrix<float> *other);
+void Matrix<float>::cmul(const Matrix<float> *other);
 
 /**** BLAS OPERATIONS ****/
 

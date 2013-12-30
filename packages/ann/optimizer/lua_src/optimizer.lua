@@ -361,7 +361,7 @@ function rprop_methods:execute(eval, weights)
 				       eta_plus)
       end
       steps[name]:clamp(min_step, max_step)
-      w:axpy(-1.0, sign:cmul(steps[name]))
+      w:axpy(-1.0, sign:clone():cmul(steps[name]))
       -- keep the sign for the next iteration
       old_sign[name] = sign
       --
