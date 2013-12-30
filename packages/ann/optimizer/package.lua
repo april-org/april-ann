@@ -14,6 +14,16 @@
      delete{ dir = "include" },
    },
    target{
+     name = "test",
+     execute_script{
+       file={
+	 "test/test-digits-sgd.lua",
+	 "test/test-digits-rprop.lua",
+	 "test/test-digits-cg.lua",
+       },
+     },
+   },
+   target{
      name = "provide",
      depends = "init",
      copy{ file= "c_src/*.h", dest_dir = "include" },

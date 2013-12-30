@@ -6,7 +6,7 @@ description    = "256 inputs 256 tanh 128 tanh 10 log_softmax"
 inf            = -1
 sup            =  1
 shuffle_random = random(5678)
-rho            = 0.001
+rho            = 0.01
 sig            = 0.8
 weight_decay   = 1e-05
 max_epochs     = 10
@@ -14,22 +14,22 @@ max_epochs     = 10
 -- training and validation
 errors = matrix.fromString[[10 2
 ascii
-2.7256057 18.605270
-14.769267 5.830131
-5.7847500 4.2319937
-3.9067090 3.0507331
-2.7962668 1.0699219
-1.0011752 0.8399307
-0.6373432 0.5586927
-0.3391171 0.3530262
-0.2058428 0.2627542
-0.1379610 0.2229893
+0.1364878 0.2552190
+0.0078906 0.0778204
+0.0018425 0.0892997
+0.0000942 0.0647947
+0.0000181 0.1008427
+0.0000051 0.0784141
+0.0000020 0.0974825
+0.0000020 0.1003913
+0.0000014 0.0980982
+0.0000015 0.0992237
 ]]
-epsilon = 1e-02
+epsilon = 1e-03
 
 --------------------------------------------------------------
 
-m1 = ImageIO.read(string.get_path(arg[0]) .. "digits.png"):to_grayscale():invert_colors():matrix()
+m1 = ImageIO.read(string.get_path(arg[0]) .. "../../ann/test/digits.png"):to_grayscale():invert_colors():matrix()
 train_input = dataset.matrix(m1,
 			     {
 			       patternSize = {16,16},
@@ -78,8 +78,14 @@ if util.is_cuda_available() then thenet:set_use_cuda(true) end
 trainer = trainable.supervised_trainer(thenet,
 				       ann.loss.multi_class_cross_entropy(10),
 				       bunch_size,
-				       ann.optimizer.rprop())
+				       ann.optimizer.cg())
 trainer:build()
+
+trainer:set_option("rho", rho)
+trainer:set_option("sig", sig)
+trainer:set_option("weight_decay",  weight_decay)
+-- bias has weight_decay of ZERO
+trainer:set_layerwise_option("b.", "weight_decay", 0)
 
 trainer:randomize_weights{
   random      = weights_random,
