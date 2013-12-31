@@ -1355,19 +1355,18 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   LUABIND_GET_PARAMETER(1, int, lower);
   LUABIND_GET_PARAMETER(2, int, upper);
   LUABIND_GET_OPTIONAL_PARAMETER(3, MTRand, random, 0);
-  if (lower < 0)
-    LUABIND_ERROR("Allowed only for positive integers");
+
   if (lower > upper)
     LUABIND_ERROR("First argument must be <= second argument");
   if (random == 0) random = new MTRand();
   IncRef(random);
-  if (obj->getMajorOrder() == CblasRowMajor)
+  if (obj->getIsDataRowOrdered())
     for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it) {
-      *it = static_cast<float>(random->randInt(upper - lower) + lower);
+      *it = static_cast<float>(random->randInt(upper - lower)) + lower;
     }
   else
     for (MatrixFloat::col_major_iterator it(obj->begin());it!=obj->end();++it) {
-      *it = static_cast<float>(random->randInt(upper - lower) + lower);
+      *it = static_cast<float>(random->randInt(upper - lower)) + lower;
     }
   DecRef(random);
   LUABIND_RETURN(MatrixFloat, obj);

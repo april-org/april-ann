@@ -31,6 +31,8 @@ matrix.meta_instance.__call = function(self,...)
     else
       error("The argument " .. i .. " is not a table neither a string")
     end
+    assert(1 <= a and a <= dims[i], "Range out of bounds")
+    assert(1 <= b and b <= dims[i], "Range out of bounds")
     table.insert(pos,  a)
     table.insert(size, b - a + 1)
   end
