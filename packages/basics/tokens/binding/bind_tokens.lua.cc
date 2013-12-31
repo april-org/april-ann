@@ -193,7 +193,7 @@ Token *lua_toAuxToken(lua_State *L, int n);
 }
 //BIND_END
 
-//BIND_METHOD TokenVectorGeneric get_size
+//BIND_METHOD TokenVectorGeneric size
 {
   LUABIND_RETURN(uint, obj->size());
 }
@@ -238,12 +238,6 @@ Token *lua_toAuxToken(lua_State *L, int n);
   }
   else obj = new TokenBunchVector();
   LUABIND_RETURN(TokenBunchVector, obj);
-}
-//BIND_END
-
-//BIND_METHOD TokenBunchVector size
-{
-  LUABIND_RETURN(uint, obj->size());
 }
 //BIND_END
 
