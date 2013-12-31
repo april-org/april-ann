@@ -251,7 +251,7 @@ function sgd_methods:execute(eval, weights)
     local grad        = gradients[name]
     local lr          = assert(self:get_option_of(name, "learning_rate"),
 			       "The learning_rate parameter needs to be set")
-    local mt          = self:get_option_of(name, "momentum")     or 0.0
+    local mt          = self:get_option_of(name, "momentum") or 0.0
     --
     ann_optimizer_apply_momentum(mt, update)
     -- apply back-propagation learning rule
@@ -567,6 +567,7 @@ function cg_methods:execute(eval, weights)
   -- evaluate at initial point
   local arg = table.pack( eval(i) )
   local tr_loss,gradients = table.unpack(arg)
+  if not gradients then return nil end
   f1 = tr_loss
   table.insert(fx, f1)
   copy(df1,gradients)

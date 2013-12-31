@@ -120,16 +120,18 @@ while train_func:execute(function()
 			   return trainer,tr,va
 			 end) do
   print(train_func:get_state_string())
-  local epoch,errortrain,errorval,best_epoch = train_func:get_state()
+  if bunch_size == 64 then
+    local epoch,errortrain,errorval,best_epoch = train_func:get_state()
     if math.abs(errortrain - errors[epoch][1]) > epsilon then
-    error(string.format("Training error %g is not equal enough to "..
-			  "reference error %g",
-			errortrain, errors[epoch][1]))
-  end
-  if math.abs(errorval - errors[epoch][2]) > epsilon then
-    error(string.format("Validation error %g is not equal enough to "..
-			  "reference error %g",
-			errorval, errors[epoch][2]))
+      error(string.format("Training error %g is not equal enough to "..
+			    "reference error %g",
+			  errortrain, errors[epoch][1]))
+    end
+    if math.abs(errorval - errors[epoch][2]) > epsilon then
+      error(string.format("Validation error %g is not equal enough to "..
+			    "reference error %g",
+			  errorval, errors[epoch][2]))
+    end
   end
   -- if best_epoch == epoch then train_func:save("wop.lua", "binary", {shuffle=datosentrenar.shuffle}) end
 end

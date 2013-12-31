@@ -760,22 +760,25 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
   local smooth_gradients = smooth_gradients or self.smooth_gradients
   local tr_loss, _, tr_loss_matrix =
     optimizer:execute(function(it)
-			self.ann_component:reset(it)
-			local output = self.ann_component:forward(input, true)
+			local loss  = loss
+			local model = self.ann_component
+			local grads = self.weight_grads
+			model:reset(it)
+			local output = model:forward(input, true)
 			local tr_loss,tr_loss_matrix
 			tr_loss,tr_loss_matrix = loss:compute_loss(output, target)
 			if not tr_loss_matrix then return nil end
 			gradient = loss:gradient(output, target)
-			gradient = self.ann_component:backprop(gradient)
+			gradient = model:backprop(gradient)
 			--
-			for name,mat in pairs(self.weight_grads) do mat:zeros() end
+			for name,mat in pairs(grads) do mat:zeros() end
 			--
-			self.weight_grads =
-			  self.ann_component:compute_gradients(self.weight_grads)
+			grads = model:compute_gradients(grads)
+			self.weight_grads = grads
 			-- gradient smoothing
 			if smooth_gradients then
-			  for name,mat in pairs(self.weight_grads) do
-			    local N = self.weight_grads[name]:get_shared_count()
+			  for name,mat in pairs(grads) do
+			    local N = grads[name]:get_shared_count()
 			    N       = ( N>0 and N) or 1
 			    mat:scal( 1.0/math.sqrt(N * bunch_size) )
 			  end
@@ -816,9 +819,10 @@ april_set_doc("trainable.supervised_trainer.validate_step", {
 function trainable_supervised_trainer_methods:validate_step(input, target, loss)
   if type(input)  == "table" then input  = matrix.col_major(input)  end
   if type(target) == "table" then target = matrix.col_major(target) end
-  local loss = loss or self.loss_function
-  self.ann_component:reset()
-  local output   = self.ann_component:forward(input)
+  local model = self.ann_component
+  local loss  = loss or self.loss_function
+  model:reset()
+  local output   = model:forward(input)
   local tr_loss,tr_loss_matrix = loss:compute_loss(output, target)
   if tr_loss_matrix then
     loss:accum_loss(tr_loss_matrix)
@@ -2333,8 +2337,7 @@ function train_wo_validation_methods:execute(epoch_function)
   -- compute one training step by using epoch_function
   state.current_epoch = state.current_epoch + 1
   collectgarbage("collect")
-  local model,tr_err
-  model, tr_err = epoch_function()
+  local model,tr_err = epoch_function()
   assert(model and tr_err,
 	 "Needs a function which returns two values: "..
 	   "a model and training error")
