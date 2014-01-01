@@ -89,6 +89,8 @@ v0.3.1-beta relase
 
 ### C/C++ code changes
 
+- Added `MatrixSet` class template, which stores a dictionary of STRING->MATRIX,
+  useful for ANNs and gradient descent purposes.
 - Added `StochasticANNComponent` which is base class for stochastic components.
 - Simplified coupling between ANN components, ANN loss functions, introducing
   automatic binding between MatrixFloat and TokenMatrixFloat.
