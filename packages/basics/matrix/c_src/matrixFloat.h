@@ -186,6 +186,20 @@ void Matrix<float>::svd(Matrix<float> **U, Matrix<float> **S, Matrix<float> **V)
 template <>
 void Matrix<float>::pruneSubnormalAndCheckNormal();
 
+/* BOOLEAN CONDITIONS: this methods transforms the given matrix in a ZERO/ONE
+   matrix, depending in the truth of the given condition */
+// less than
+template <>
+void Matrix<float>::LTCondition(float value);
+template <>
+void Matrix<float>::LTCondition(Matrix<float> *value);
+// greater than
+template <>
+void Matrix<float>::GTCondition(float value);
+template <>
+void Matrix<float>::GTCondition(Matrix<float> *value);
+//
+
 ////////////////////////////////////////////////////////////////////////////
 
 typedef Matrix<float> MatrixFloat;

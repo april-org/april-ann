@@ -1277,6 +1277,28 @@ april_set_doc("matrix.map",
 		outputs = { "The caller matrix" },
 	      })
 
+april_set_doc("matrix.lt",
+	      {
+		class = "method",
+		summary = "Returns a 0/1 matrix where values are less than given param. IN-PLACE operation",
+		params = {
+		  "A matrix or a number",
+		},
+		outputs = { "The caller matrix" },
+	      })
+
+april_set_doc("matrix.gt",
+	      {
+		class = "method",
+		summary = "Returns a 0/1 matrix where values are greater than given param. IN-PLACE operation",
+		params = {
+		  "A matrix or a number",
+		},
+		outputs = { "The caller matrix" },
+	      })
+
+-------------------------------------------------------------------------
+
 april_set_doc("matrix.sliding_window",
 	      {
 		class = "method",

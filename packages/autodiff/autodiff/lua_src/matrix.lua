@@ -542,6 +542,60 @@ autodiff.op[MATRIX] = {
     end
     return s
   end,
+
+  lt = function(a,b)
+    local a,b = coercion(a),coercion(b)
+    --
+    local s = gen_op('<', MATRIX, {a,b},
+		     function(self, ...)
+		       local a = self.args[1]:eval(...)
+		       local b = self.args[2]:eval(...)
+		       return a:clone():lt(b)
+		     end,
+		     function(self, seed, result)
+		       return result
+		     end,
+		     function(self, dest)
+		       local a,b = self.args[1],self.args[2]
+		       local str_tbl = { a.var_name,
+					 ':clone():lt(', b.var_name, ')' }
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
+		     end)
+    if a.dims or b.dims then
+      assert( check_dims(a.dims, b.dims),
+	      "Incorrect dimensions" )
+      s:set_dims(a.dims or b.dims)
+    end
+    return s
+  end,
+
+  gt = function(a,b)
+    local a,b = coercion(a),coercion(b)
+    --
+    local s = gen_op('>', MATRIX, {a,b},
+		     function(self, ...)
+		       local a = self.args[1]:eval(...)
+		       local b = self.args[2]:eval(...)
+		       return a:clone():gt(b)
+		     end,
+		     function(self, seed, result)
+		       return result
+		     end,
+		     function(self, dest)
+		       local a,b = self.args[1],self.args[2]
+		       local str_tbl = { a.var_name,
+					 ':clone():gt(', b.var_name, ')' }
+		       dest:write_expr_assign(self.var_name,
+					      table.concat(str_tbl, ""))
+		     end)
+    if a.dims or b.dims then
+      assert( check_dims(a.dims, b.dims),
+	      "Incorrect dimensions" )
+      s:set_dims(a.dims or b.dims)
+    end
+    return s
+  end,
   
   fill = function(a,b)
     local a,b = coercion(a),coercion(b)

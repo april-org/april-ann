@@ -1590,6 +1590,38 @@ public:
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat lt
+{
+  if (lua_isMatrixFloat(L, 1)) {
+    MatrixFloat *value;
+    LUABIND_GET_PARAMETER(1, MatrixFloat, value);
+    obj->LTCondition(value);
+  }
+  else {
+    float value;
+    LUABIND_GET_PARAMETER(1, float, value);
+    obj->LTCondition(value);
+  }
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat gt
+{
+  if (lua_isMatrixFloat(L, 1)) {
+    MatrixFloat *value;
+    LUABIND_GET_PARAMETER(1, MatrixFloat, value);
+    obj->GTCondition(value);
+  }
+  else {
+    float value;
+    LUABIND_GET_PARAMETER(1, float, value);
+    obj->GTCondition(value);
+  }
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
 //////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME MatrixFloatSet matrix.dict

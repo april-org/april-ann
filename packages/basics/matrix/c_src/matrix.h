@@ -592,12 +592,19 @@ public:
   void cmul(const Matrix<T> *other);
   void adjustRange(T rmin, T rmax);
   
+  /* BOOLEAN CONDITIONS: this methods transforms the given matrix in a ZERO/ONE
+     matrix, depending in the truth of the given condition */
+  // less than
+  void LTCondition(T value);
+  void LTCondition(Matrix<T> *value);
+  // greater than
+  void GTCondition(T value);
+  void GTCondition(Matrix<T> *value);
+  //
+  
   /**** BLAS OPERATIONS ****/
   void scalarAdd(T s);
   
-  // FIXME: This operations could be improved if we take into account when the
-  // matrix data is contiguous in memory (even when it is a sub-matrix)
-
   // SCOPY BLAS operation this = other
   void copy(const Matrix<T> *other);
   

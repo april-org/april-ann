@@ -83,8 +83,8 @@ b2:set_broadcast(false, true)
 b3:set_broadcast(false, true)
 
 -- ANN
-local net_h1  = AD.ann.logistic(b1 + w1 * x)       -- first layer
-local net_h2  = AD.ann.logistic(b2 + w2 * net_h1)  -- second layer
+local net_h1  = AD.ann.relu(b1 + w1 * x)       -- first layer
+local net_h2  = AD.ann.relu(b2 + w2 * net_h1)  -- second layer
 local net_out = b3 + w3 * net_h2            -- output layer (linear, the softmax
 					    -- is added to the loss function)
 
@@ -95,9 +95,7 @@ local L = AD.op.mean( AD.ann.cross_entropy_log_softmax(net_out, y, 2) )
 local Lreg = L + 0.5 * wd * (op.sum(w1^2) + op.sum(w2^2) + op.sum(w3^2))
 -- Differentiation, plus loss computation
 local dw_tbl = table.pack( Lreg, AD.diff(Lreg, {b1, w1, b2, w2, b3, w3}) )
-for i=1,#dw_tbl do
-  AD.dot_graph(dw_tbl[i], "graph-"..i..".dot")
-end
+
 -- Compilation
 local L_func = AD.func(L, {x,y}, weights)
 local dw_func = AD.func(dw_tbl, {x,y}, weights)
@@ -107,14 +105,15 @@ g = io.open("program.lua","w")
 g:write(dw_program)
 g:close()
 --
-for i=1,#dw_tbl do
-  AD.dot_graph(dw_func.outputs[i], "graph2-"..i..".dot")
-end
 
--- Randomization
+-- RANDOMIZATION
 for _,wname in ipairs(weights_list) do
   local w = weights[wname]
-  ann.connections.randomize_weights(w, { inf=-0.1, sup=0.1, random=rnd })
+  if wname:match("b.") then
+    ann.connections.randomize_weights(w, { inf=0, sup=1, random=rnd })
+  else
+    ann.connections.randomize_weights(w, { inf=-0.1, sup=0.1, random=rnd })
+  end
 end
 
 -- OPTIMIZER
@@ -122,6 +121,9 @@ local opt = ann.optimizer.sgd()
 opt:set_option("learning_rate", learning_rate)
 opt:set_option("momentum", momentum)
 --
+
+-- WEIGHTS DICTIONARY
+local weights_dict = matrix.dict(weights)
 
 local ds_pair_it = trainable.dataset_pair_iterator
 -- traindataset
@@ -138,7 +140,7 @@ local function train_dataset(in_ds,out_ds)
 					 output_bunch:get_matrix():transpose())
 			 return loss, { b1=b1, w1=w1, b2=b2, w2=w2, b3=b3, w3=w3 }
 		       end,
-		       weights)
+		       weights_dict)
     mv:add(loss)
   end
   return mv:compute()
@@ -158,7 +160,6 @@ local function validate_dataset(in_ds,out_ds)
 end
 
 -- TRAINING
-local weights_dict = matrix.dict(weights)
 local train_func = trainable.train_holdout_validation{ min_epochs=100,
 						       max_epochs=100 }
 while train_func:execute(function()

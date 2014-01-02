@@ -4,6 +4,11 @@
 local AD = autodiff
 AD.ann   = AD.ann or {}
 
+-- RECTIFIED LINER
+function AD.ann.relu(a)
+  return AD.op.cmul(a, AD.op.gt(a,0))
+end
+
 -- LOGISTIC ACTIVATION FUNCTION
 function AD.ann.logistic(a)
   local a = AD.coercion(a)

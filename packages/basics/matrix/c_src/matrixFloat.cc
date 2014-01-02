@@ -879,6 +879,63 @@ void Matrix<float>::pruneSubnormalAndCheckNormal() {
     ERROR_EXIT(128, "No finite numbers at weights matrix!!!\n");
 }
 
+
+// FIXME: IMPLEMENT THE BOOLEAN CONDITIONS USING CUDA WRAPPERS
+
+/* BOOLEAN CONDITIONS: this methods transforms the given matrix in a ZERO/ONE
+   matrix, depending in the truth of the given condition */
+// less than
+template <>
+void Matrix<float>::LTCondition(float value) {
+  iterator it(begin());
+  while(it != end()) {
+    if ( (*it) < value ) *it = 1.0f;
+    else *it = 0.0f;
+    ++it;
+  }
+}
+
+template <>
+void Matrix<float>::LTCondition(Matrix<float> *value) {
+  if (!sameDim(value))
+    ERROR_EXIT(128, "Incompatible matrix sizes\n");
+  const_iterator it_value(value->begin());
+  iterator it(begin());
+  while(it != end()) {
+    if ( (*it) < (*it_value) ) *it = 1.0f;
+    else *it = 0.0f;
+    ++it;
+    ++it_value;
+  }
+}
+
+// greater than
+template <>
+void Matrix<float>::GTCondition(float value) {
+  iterator it(begin());
+  while(it != end()) {
+    if ( (*it) > value ) *it = 1.0f;
+    else *it = 0.0f;
+    ++it;
+  }
+}
+
+template <>
+void Matrix<float>::GTCondition(Matrix<float> *value) {
+  if (!sameDim(value))
+    ERROR_EXIT(128, "Incompatible matrix sizes\n");
+  const_iterator it_value(value->begin());
+  iterator it(begin());
+  while(it != end()) {
+    if ( (*it) > (*it_value) ) *it = 1.0f;
+    else *it = 0.0f;
+    ++it;
+    ++it_value;
+  }
+}
+//
+
+
 ///////////////////////////////////////////////////////////////////////////////
 
 template class Matrix<float>;

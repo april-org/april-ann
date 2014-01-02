@@ -392,3 +392,34 @@ void Matrix<T>::svd(Matrix<T> **U, Matrix<T> **S, Matrix<T> **V) {
   UNUSED_VARIABLE(V);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
+
+
+// FIXME: IMPLEMENT THE BOOLEAN CONDITIONS USING CUDA WRAPPERS
+
+/* BOOLEAN CONDITIONS: this methods transforms the given matrix in a ZERO/ONE
+   matrix, depending in the truth of the given condition */
+// less than
+template <typename T>
+void Matrix<T>::LTCondition(T value) {
+  UNUSED_VARIABLE(value);
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
+void Matrix<T>::LTCondition(Matrix<T> *value) {
+  UNUSED_VARIABLE(value);
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+// greater than
+template <typename T>
+void Matrix<T>::GTCondition(T value) {
+  UNUSED_VARIABLE(value);
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+template <typename T>
+void Matrix<T>::GTCondition(Matrix<T> *value) {
+  UNUSED_VARIABLE(value);
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+//
