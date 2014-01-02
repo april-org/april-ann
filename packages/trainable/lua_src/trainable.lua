@@ -140,6 +140,17 @@ end
 
 ------------------------------------------------------------------------
 
+april_set_doc("trainable.supervised_trainer.get_loss_function", {
+		class = "method",
+		summary = "Modifies the loss function property",
+		params = { "Loss function" }, })
+
+function trainable_supervised_trainer_methods:get_loss_function()
+  return self.loss_function
+end
+
+------------------------------------------------------------------------
+
 april_set_doc("trainable.supervised_trainer.set_optimizer", {
 		class = "method",
 		summary = "Modifies the optimizer property",
