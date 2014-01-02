@@ -441,35 +441,14 @@ using namespace ANN;
 {
   LUABIND_CHECK_ARGN(<=, 1);
   int argn = lua_gettop(L);
-  hash<string,MatrixFloat*> weight_grads_dict;
-  if (argn == 1) {
-    if (lua_istable(L, 1)) {
-      lua_pushvalue(L, 1);
-      // stack now contains: -1 => table
-      lua_pushnil(L);
-      // stack now contains: -1 => nil; -2 => table
-      while (lua_next(L, -2)) {
-	// copy the key so that lua_tostring does not modify the original
-	lua_pushvalue(L, -2);
-	// stack now contains: -1 => value; -2 => key; -3 => table
-	string key(lua_tostring(L, -1));
-	// stack now contains: -1 => key; -2 => value; -3 => key; -4 => table
-	MatrixFloat *value     = lua_toMatrixFloat(L, -2);
-	weight_grads_dict[key] = value;
-	// pop value + copy of key, leaving original key
-	lua_pop(L, 2);
-	// stack now contains: -1 => key; -2 => table
-      }
-      // stack now contains: -1 => table (when lua_next returns 0 it pops the key
-      // but does not push anything.)
-    }
-    else if (!lua_isnil(L, 1))
-      LUABIND_ERROR("Expected a table with a dictionary of weights matrices");
-  }
+  MatrixFloatSet *weight_grads_dict;
+  if (argn == 1)
+    LUABIND_GET_PARAMETER(1, MatrixFloatSet, weight_grads_dict);
+  else
+    weight_grads_dict = new MatrixFloatSet();
   //
   obj->computeAllGradients(weight_grads_dict);
-  pushHashTableInLuaStack(L, weight_grads_dict, lua_pushMatrixFloat);
-  LUABIND_RETURN_FROM_STACK(-1);
+  LUABIND_RETURN(MatrixFloatSet, weight_grads_dict);
 }
 //BIND_END
 
@@ -500,55 +479,32 @@ using namespace ANN;
   LUABIND_CHECK_ARGN(<=, 1);
   int argn = lua_gettop(L);
   unsigned int input_size=0, output_size=0;
-  hash<string,MatrixFloat*> weights_dict;
+  MatrixFloatSet *weights_dict = 0;
   hash<string,ANNComponent*> components_dict;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
     check_table_fields(L, 1, "input", "output", "weights", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input, uint, input_size, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, output, uint, output_size, 0);
-    lua_getfield(L, 1, "weights");
-    if (lua_istable(L, -1)) {
-      lua_pushvalue(L, -1);
-      // stack now contains: -1 => table
-      lua_pushnil(L);
-      // stack now contains: -1 => nil; -2 => table
-      while (lua_next(L, -2)) {
-	// copy the key so that lua_tostring does not modify the original
-	lua_pushvalue(L, -2);
-	// stack now contains: -1 => value; -2 => key; -3 => table
-	string key(lua_tostring(L, -1));
-	// stack now contains: -1 => key; -2 => value; -3 => key; -4 => table
-	MatrixFloat *value = lua_toMatrixFloat(L, -2);
-	weights_dict[key]  = value;
-	// pop value + copy of key, leaving original key
-	lua_pop(L, 2);
-	// stack now contains: -1 => key; -2 => table
-      }
-      // stack now contains: -1 => table (when lua_next returns 0 it pops the key
-      // but does not push anything.)
-    }
-    else if (!lua_isnil(L, -1))
-      LUABIND_ERROR("Expected a table at field weights");
-    // Pop table or nil value
-    lua_pop(L, 1);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights,
+					 MatrixFloatSet, weights_dict, 0);
   }
+  if (weights_dict == 0) weights_dict = new MatrixFloatSet();
   //
   obj->build(input_size, output_size, weights_dict, components_dict);
   //
   LUABIND_RETURN(ANNComponent, obj);
-  pushHashTableInLuaStack(L, weights_dict, lua_pushMatrixFloat);
+  LUABIND_RETURN(MatrixFloatSet, weights_dict);
   pushHashTableInLuaStack(L, components_dict, lua_pushANNComponent);
-  LUABIND_INCREASE_NUM_RETURNS(2);
+  LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent copy_weights
 {
-  hash<string,MatrixFloat*> weights_dict;
+  MatrixFloatSet *weights_dict = new MatrixFloatSet();
   obj->copyWeights(weights_dict);
-  pushHashTableInLuaStack(L, weights_dict, lua_pushMatrixFloat);
-  LUABIND_RETURN_FROM_STACK(-1);
+  LUABIND_RETURN(MatrixFloatSet, weights_dict);
 }
 //BIND_END
 

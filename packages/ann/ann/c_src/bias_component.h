@@ -52,9 +52,9 @@ namespace ANN {
     virtual ANNComponent *clone();
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
-		       hash<string,MatrixFloat*> &weights_dict,
+		       MatrixFloatSet *weights_dict,
 		       hash<string,ANNComponent*> &components_dict);
-    virtual void copyWeights(hash<string,MatrixFloat*> &weights_dict);
+    virtual void copyWeights(MatrixFloatSet *weights_dict);
     
     virtual char *toLuaString();
   };

@@ -42,6 +42,10 @@ v0.3.1-beta relase
 
 ### New features
 
+- Added `matrix.dict`, a hash set dictionary in C++ binded to Lua, which allows
+  to execute basic math operations and reductions over the whole set of
+  contained matrices. It major purpose is to represent a set of connection
+  weights or gradients in ANNs.
 - Added `dataset.token.filter`, which allows ANN components as filters.
 - Added `trainable.train_holdout_validation` class, which replace
   `trainable.supervised_trainer:train_holdout_validation` method.

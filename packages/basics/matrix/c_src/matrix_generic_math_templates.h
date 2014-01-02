@@ -389,9 +389,9 @@ bool applyBinaryAndReductionWithSpanIterator(const Matrix<T> *m1,
   UNUSED_VARIABLE(N_th);
   UNUSED_VARIABLE(SIZE_th);
 #endif
- if (m1->getIsContiguous() && m2->getIsContiguous() &&
-     m1->getIsDataRowOrdered() == m2->getIsDataRowOrdered() &&
-     static_cast<unsigned int>(m1->size()) < CONTIGUOUS_th)
+  if (m1->getIsContiguous() && m2->getIsContiguous() &&
+      m1->getIsDataRowOrdered() == m2->getIsDataRowOrdered() &&
+      static_cast<unsigned int>(m1->size()) < CONTIGUOUS_th)
     return functor(m1, m2,
 		   static_cast<unsigned int>(m1->size()), 1, 1,
 		   static_cast<unsigned int>(m1->getOffset()),

@@ -113,7 +113,7 @@ namespace ANN {
   
   void SelectANNComponent::build(unsigned int _input_size,
 				 unsigned int _output_size,
-				 hash<string,MatrixFloat*> &weights_dict,
+				 MatrixFloatSet *weights_dict,
 				 hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);

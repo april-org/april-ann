@@ -26,11 +26,12 @@ matrix.meta_instance.__call = function(self,...)
       a = t:match("^(%d+)%:.*$") or 1
       b = t:match("^.*%:(%d+)$") or dims[i]
     elseif tt == "number" then
-      a = tonumber(t)
+      a = t
       b = a
     else
       error("The argument " .. i .. " is not a table neither a string")
     end
+    a,b = tonumber(a),tonumber(b)
     assert(1 <= a and a <= dims[i], "Range out of bounds")
     assert(1 <= b and b <= dims[i], "Range out of bounds")
     table.insert(pos,  a)
@@ -216,6 +217,33 @@ function matrix.saveRAW(matrix,filename)
   f:close()
 end
 
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+function matrix.dict.wrap_matrices(m)
+  local tt = type(m)
+  if tt == "table" then
+    m = matrix.dict(m)
+  elseif tt == "matrix" then
+    m = matrix.dict():insert("1",m)
+  end
+  assert(isa(m, matrix.dict), "Needs a matrix.dict, a matrix, or a table")
+  return m
+end
+
+function matrix.dict.meta_instance:__call(key)
+  return self:find(key)
+end
+function matrix.dict.meta_instance:__newindex(key,value)
+  return self:insert(key, value)
+end
+function matrix.dict.meta_instance:__pairs()
+  return self:iterate()
+end
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
 util.vector_uint.meta_instance.__tostring = function(self)

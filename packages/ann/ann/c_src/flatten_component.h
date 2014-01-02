@@ -65,7 +65,7 @@ namespace ANN {
 
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       hash<string,MatrixFloat*> &weights_dict,
+		       MatrixFloatSet *weights_dict,
 		       hash<string,ANNComponent*> &components_dict);
 
     virtual char *toLuaString();

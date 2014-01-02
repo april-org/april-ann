@@ -13,6 +13,8 @@ local function check_dataset_sizes(ds1, ds2)
 		       ds2:numPatterns()))
 end
 
+local wrap_matrices = matrix.dict.wrap_matrices
+
 -----------------------
 -- TRAINABLE CLASSES --
 -----------------------
@@ -78,31 +80,7 @@ function trainable_supervised_trainer_class_metatable:__call(...)
     local smooth_gradients = t.smooth_gradients or true
     local obj = trainable.supervised_trainer(model, loss, bunch_size, optimizer,
 					     smooth_gradients)
-    obj:build()
-    for wname,cobj in obj:iterate_weights() do
-      local w = connections[wname]
-      if type(w) == "table" then
-	w = w.w
-	local oldw = w.oldw
-	assert(w ~= nil, "Component " .. wname .. " not found at file")
-	assert(connections[wname].input == ann.connections.get_input_size(cobj),
-	       string.format("Incorrect input size, expected %d, found %d\n",
-			     ann.connections.get_input_size(cobj),
-			     connections[wname].input))
-	assert(connections[wname].output == ann.connections.get_output_size(cobj),
-	       string.format("Incorrect output size, expected %d, found %d\n",
-			     ann.connections.get_output_size(cobj),
-			     connections[wname].output))
-	if obj.optimizer.update then
-	  obj.optimizer.update[wname] = obj.optimizer.update[wname] or oldw
-	end
-      end
-      if w:get_major_order() == cobj:get_major_order() then
-	cobj:copy(w)
-      else
-	ann.connections.load(cobj, { w=w })
-      end
-    end
+    obj:build{ weights = connections }
     return obj
   else
     -- Constructor of a new object
@@ -123,14 +101,14 @@ function trainable_supervised_trainer_class_metatable:__call(...)
       loss_function    = loss_function or false,
       optimizer        = optimizer,
       smooth_gradients = smooth_gradients,
-      weights_table    = {},
+      weights_table    = matrix.dict(),
       components_table = {},
       component2weights_dict = {},
       weights2component_dict = {},
       weights_order    = {},
       components_order = {},
       bunch_size       = bunch_size or false,
-      weight_grads     = {},
+      weight_grads     = matrix.dict(),
     }
     obj = class_instance(obj, self, true)
     return obj
@@ -304,11 +282,7 @@ function trainable_supervised_trainer_methods:size()
   if #self.components_order == 0 then
     error("It is not build")
   end
-  local sz = 0
-  for wname,cnn in pairs(self.weights_table) do
-    sz = sz + cnn:size()
-  end
-  return sz
+  return self.weights_table:size()
 end
 
 ------------------------------------------------------------------------
@@ -322,7 +296,7 @@ function trainable_supervised_trainer_methods:to_lua_string(format)
   table.insert(t, ",\n")
   table.insert(t, "connections={")
   for _,wname in ipairs(self.weights_order) do
-    local cobj = self.weights_table[wname]
+    local cobj = self.weights_table(wname)
     local w = cobj
     table.insert(t, string.format("\n[%q] = ", wname))
     table.insert(t, w:to_lua_string(format))
@@ -515,7 +489,7 @@ function trainable_supervised_trainer_methods:iterate_weights(match_string)
       end
     until self.weights_order[pos]:match(match_string)
     local name = self.weights_order[pos]
-    return name,self.weights_table[name]
+    return name,self.weights_table(name)
   end
 end
 
@@ -560,7 +534,7 @@ function trainable_supervised_trainer_methods:weights(str)
   if #self.components_order == 0 then
     error("Needs execution of build method")
   end
-  return self.weights_table[str]
+  return self.weights_table(str)
 end
 
 ------------------------------------------------------------------------
@@ -621,7 +595,7 @@ function trainable_supervised_trainer_methods:randomize_weights(t)
       local current_inf = params.inf
       local current_sup = params.sup
       local constant    = 0
-      local connection  = self.weights_table[wname]
+      local connection  = self.weights_table(wname)
       if params.use_fanin then
 	constant = constant + ann.connections.get_input_size(connection)
       end
@@ -667,22 +641,19 @@ april_set_doc("trainable.supervised_trainer.build", {
 function trainable_supervised_trainer_methods:build(t)
   local params = get_table_fields(
     {
-      weights = { type_match="table",  mandatory = false, default=nil },
+      weights = { mandatory = false, default=nil },
       input   = { type_match="number", mandatory = false, default=nil },
       output  = { type_match="number", mandatory = false, default=nil },
     }, t or {})
-  self.weight_grads  = {}
-  self.weights_table = params.weights or {}
+  self.weight_grads  = matrix.dict()
+  self.weights_table = wrap_matrices(params.weights or matrix.dict())
   _,
   self.weights_table,
   self.components_table = self.ann_component:build{
     input   = params.input,
     output  = params.output,
     weights = self.weights_table, }
-  self.weights_order = {}
-  for name,_ in pairs(self.weights_table) do
-    table.insert(self.weights_order, name)
-  end
+  self.weights_order = self.weights_table:keys()
   table.sort(self.weights_order)
   self.components_order = {}
   self.component2weights_dict = {}
@@ -709,7 +680,7 @@ april_set_doc("trainable.supervised_trainer.get_weights_of", {
 		outputs = { "An instance of ann.connections" }, })
 
 function trainable_supervised_trainer_methods:get_weights_of(name)
-  return self.weights_table[self.component2weights_dict[name]]
+  return self.weights_table(self.component2weights_dict[name])
 end
 
 april_set_doc("trainable.supervised_trainer.get_components_of", {
@@ -771,14 +742,15 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
 			gradient = loss:gradient(output, target)
 			gradient = model:backprop(gradient)
 			--
-			for name,mat in pairs(grads) do mat:zeros() end
+			grads:zeros()
 			--
 			grads = model:compute_gradients(grads)
 			self.weight_grads = grads
 			-- gradient smoothing
 			if smooth_gradients then
-			  for name,mat in pairs(grads) do
-			    local N = grads[name]:get_shared_count()
+			  for _,name in ipairs(self.weights_order) do
+			    local mat = grads(name)
+			    local N = mat:get_shared_count()
 			    N       = ( N>0 and N) or 1
 			    mat:scal( 1.0/math.sqrt(N * bunch_size) )
 			  end
@@ -908,7 +880,7 @@ function trainable_supervised_trainer_methods:grad_check_step(input, target, ver
     local w = cnn
     -- The shared parameter has no effect in gradients check, only bunch_size
     local ratio = 1/bunch_size
-    local ann_grads = self.weight_grads[wname]
+    local ann_grads = self.weight_grads(wname)
     for i=1,w:size() do
       local orig_w = w:raw_get(i-1)
       w:raw_set(i-1, orig_w - epsilon)
@@ -1387,7 +1359,7 @@ april_set_doc("trainable.supervised_trainer.show_weights", {
 
 function trainable_supervised_trainer_methods:show_weights()
   for _,wname in pairs(self.weights_order) do
-    local w = self.weights_table[wname]:toTable()
+    local w = self.weights_table(wname):toTable()
     print(wname, table.concat(w, " "))
   end
 end
@@ -1417,8 +1389,7 @@ function trainable_supervised_trainer_methods:clone()
     obj:set_optimizer(self.optimizer:clone())
   end
   if #self.weights_order > 0 then
-    obj:build{ weights = table.map(self.weights_table,
-				   function(cnn) return cnn:clone() end) }
+    obj:build{ weights = self.weights_table:clone() }
   end
   -- add possible user functions
   for i,v in pairs(self) do

@@ -329,6 +329,7 @@ namespace ANN {
     if (grads_mat == 0) {
       grads_mat = weights_matrix->cloneOnlyDims();
       grads_mat->zeros();
+      IncRef(grads_mat);
     }
     MatrixFloat *input_mat       = input->getMatrix();
     MatrixFloat *error_input_mat = error_input->getMatrix();
@@ -404,7 +405,7 @@ namespace ANN {
 
   void ConvolutionANNComponent::build(unsigned int _input_size,
 				     unsigned int _output_size,
-				     hash<string,MatrixFloat*> &weights_dict,
+				     MatrixFloatSet *weights_dict,
 				     hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
@@ -412,7 +413,7 @@ namespace ANN {
     unsigned int weights_input_size  = kernel_size;
     unsigned int weights_output_size = hidden_size;
     ////////////////////////////////////////////////////////////////////
-    MatrixFloat *&w = weights_dict[weights_name];
+    MatrixFloat *&w = (*weights_dict)[weights_name];
     // printf("%s :: %p %p\n", weights_name.c_str(), w, weights_matrix);
     if (w != 0) {
       // printf("COPY OF WEIGHTS FROM HASH %s\n", weights_name.c_str());
@@ -434,20 +435,24 @@ namespace ANN {
       }
       // else printf("USING PREVIOUS WEIGHTS %s\n", weights_name.c_str());
       w = weights_matrix;
+      IncRef(w);
     }
   }
 
-  void ConvolutionANNComponent::copyWeights(hash<string,MatrixFloat*> &weights_dict) {
+  void ConvolutionANNComponent::copyWeights(MatrixFloatSet *weights_dict) {
     if (weights_matrix == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
-    MatrixFloat *&w = weights_dict[weights_name];
+    MatrixFloat *&w = (*weights_dict)[weights_name];
     if (w != 0 && w != weights_matrix)
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with weights_matrix attribute [%s]\n",
 		  weights_name.c_str(),
 		  name.c_str());
-    else if (w == 0) w = weights_matrix;
+    else if (w == 0) {
+      w = weights_matrix;
+      IncRef(w);
+    }
   }  
 
   char *ConvolutionANNComponent::toLuaString() {

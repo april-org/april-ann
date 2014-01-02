@@ -91,15 +91,15 @@ namespace ANN {
     
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
-		       hash<string,MatrixFloat*> &weights_dict,
+		       MatrixFloatSet *weights_dict,
 		       hash<string,ANNComponent*> &components_dict);
     
-    virtual void copyWeights(hash<string,MatrixFloat*> &weights_dict);
+    virtual void copyWeights(MatrixFloatSet *weights_dict);
 
     virtual void copyComponents(hash<string,ANNComponent*> &components_dict);
     
     virtual ANNComponent *getComponent(string &name);
-    virtual void computeAllGradients(hash<string,MatrixFloat*> &weight_grads_dict);
+    virtual void computeAllGradients(MatrixFloatSet *weight_grads_dict);
     virtual void debugInfo() {
       ANNComponent::debugInfo();
       for (unsigned int i=0; i<components.size(); ++i)

@@ -112,6 +112,7 @@ namespace ANN {
     if (grads_mat == 0) {
       grads_mat = bias_vector->cloneOnlyDims();
       grads_mat->zeros();
+      IncRef(grads_mat);
     }
     else if (!grads_mat->sameDim(bias_vector))
       ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
@@ -141,7 +142,7 @@ namespace ANN {
 
   void BiasANNComponent::build(unsigned int _input_size,
 			       unsigned int _output_size,
-			       hash<string,MatrixFloat*> &weights_dict,
+			       MatrixFloatSet *weights_dict,
 			       hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
@@ -156,7 +157,7 @@ namespace ANN {
     unsigned int weights_input_size  = 1;
     unsigned int weights_output_size = output_size;
     ////////////////////////////////////////////////////////////////////
-    MatrixFloat *&w = weights_dict[weights_name];
+    MatrixFloat *&w = (*weights_dict)[weights_name];
     // printf("%s :: %p %p\n", weights_name.c_str(), w, bias_vector);
     if (w != 0) {
       AssignRef(bias_vector, w);
@@ -178,20 +179,24 @@ namespace ANN {
       }
       // else printf("USING PREVIOUS BIAS %s\n", weights_name.c_str());
       w = bias_vector;
+      IncRef(w);
     }
   }
 
-  void BiasANNComponent::copyWeights(hash<string,MatrixFloat*> &weights_dict) {
+  void BiasANNComponent::copyWeights(MatrixFloatSet *weights_dict) {
     if (bias_vector == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
-    MatrixFloat *&w = weights_dict[weights_name];
+    MatrixFloat *&w = (*weights_dict)[weights_name];
     if (w != 0 && w != bias_vector)
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with bias_vector attribute [%s]\n",
 		  weights_name.c_str(),
 		  name.c_str());
-    else if (w == 0) w = bias_vector;
+    else if (w == 0) {
+      w = bias_vector;
+      IncRef(w);
+    }
   }
 
   char *BiasANNComponent::toLuaString() {

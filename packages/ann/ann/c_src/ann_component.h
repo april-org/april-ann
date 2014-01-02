@@ -33,6 +33,7 @@
 #include "aux_hash_table.h" // required for build
 #include "hash_table.h"     // required for build
 #include "matrixFloat.h"
+#include "matrixFloatSet.h"
 
 using april_utils::hash;    // required for build
 using april_utils::string;
@@ -161,9 +162,9 @@ namespace ANN {
 
     /// Method which receives a hash table with matrices where compute the
     /// gradients.
-    virtual void computeAllGradients(hash<string,MatrixFloat*> &weight_grads_dict){
+    virtual void computeAllGradients(MatrixFloatSet *weight_grads_dict){
       if (!weights_name.empty())
-	computeGradients(weight_grads_dict[weights_name]);
+	computeGradients( (*weight_grads_dict)[weights_name] );
     }
     
     virtual ANNComponent *clone() {
@@ -191,7 +192,7 @@ namespace ANN {
     /// parent method before do anything.
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       hash<string,MatrixFloat*> &weights_dict,
+		       MatrixFloatSet *weights_dict,
 		       hash<string,ANNComponent*> &components_dict) {
       UNUSED_VARIABLE(weights_dict);
       // if (is_built) ERROR_EXIT(128, "Rebuild is forbidden!!!!\n");
@@ -217,7 +218,7 @@ namespace ANN {
     }
     
     /// Abstract method to retrieve matrix weights from ANNComponents
-    virtual void copyWeights(hash<string,MatrixFloat*> &weights_dict) {
+    virtual void copyWeights(MatrixFloatSet *weights_dict) {
       UNUSED_VARIABLE(weights_dict);
     }
 

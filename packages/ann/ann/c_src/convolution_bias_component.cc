@@ -205,6 +205,7 @@ namespace ANN {
     if (grads_mat == 0) {
       grads_mat = bias_vector->cloneOnlyDims();
       grads_mat->zeros();
+      IncRef(grads_mat);
     }
     MatrixFloat *input_error_mat = error->getMatrix();
     // Prepare sliding windows to compute the convolution
@@ -260,12 +261,12 @@ namespace ANN {
 
   void ConvolutionBiasANNComponent::build(unsigned int _input_size,
 					  unsigned int _output_size,
-					  hash<string,MatrixFloat*> &weights_dict,
+					  MatrixFloatSet *weights_dict,
 					  hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
     ////////////////////////////////////////////////////////////////////
-    MatrixFloat *&b = weights_dict[weights_name];
+    MatrixFloat *&b = (*weights_dict)[weights_name];
     if (b != 0) {
       AssignRef(bias_vector, b);
       if (!Connections::checkInputOutputSizes(bias_vector,1,hidden_size))
@@ -278,20 +279,24 @@ namespace ANN {
 	IncRef(bias_vector);
       }
       b = bias_vector;
+      IncRef(b);
     }
   }
 
-  void ConvolutionBiasANNComponent::copyWeights(hash<string,MatrixFloat*> &weights_dict) {
+  void ConvolutionBiasANNComponent::copyWeights(MatrixFloatSet *weights_dict) {
     if (bias_vector == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
-    MatrixFloat *&b = weights_dict[weights_name];
+    MatrixFloat *&b = (*weights_dict)[weights_name];
     if (b != 0 && b != bias_vector)
       ERROR_EXIT2(101, "Weights dictionary contains %s bias name which is "
 		  "not shared with bias_vector attribute [%s]\n",
 		  weights_name.c_str(),
 		  name.c_str());
-    else if (b == 0) b = bias_vector;
+    else if (b == 0) {
+      b = bias_vector;
+      IncRef(b);
+    }
   }  
 
   char *ConvolutionBiasANNComponent::toLuaString() {
