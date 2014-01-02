@@ -133,9 +133,7 @@ local function train_dataset(in_ds,out_ds)
 					      shuffle = rnd, } do
     local loss
     loss = opt:execute(function()
-			 local loss,
-			 b1,w1,
-			 b2,w2,
+			 local loss,b1,w1,b2,w2,
 			 b3,w3 = dw_func(input_bunch:get_matrix():transpose(),
 					 output_bunch:get_matrix():transpose())
 			 return loss, { b1=b1, w1=w1, b2=b2, w2=w2, b3=b3, w3=w3 }
@@ -159,22 +157,8 @@ local function validate_dataset(in_ds,out_ds)
   return mv:compute()
 end
 
--- auxiliar function which builds a wrapper over the weigths
-local function wrapper(w)
-  return {
-    w=w,
-    clone=function(self)
-      return wrapper(iterator(pairs(w)):
-		     map(function(name,m)
-			   return name,m:clone()
-			 end):
-		     table())
-    end
-  }
-end
-weights_wrapper = wrapper(weights)
---
-
+-- TRAINING
+local weights_dict = matrix.dict(weights)
 local train_func = trainable.train_holdout_validation{ min_epochs=100,
 						       max_epochs=100 }
 while train_func:execute(function()
@@ -182,7 +166,7 @@ while train_func:execute(function()
 							 train_output)
 			   local va_loss = validate_dataset(val_input,
 							    val_output)
-			   return weights_wrapper,tr_loss,va_loss
+			   return weights_dict,tr_loss,va_loss
 			 end) do
   print(train_func:get_state_string())
 end
