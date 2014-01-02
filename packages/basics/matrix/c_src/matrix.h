@@ -331,6 +331,9 @@ public:
 	  return a_sz > b_sz;
       }
     };
+    //
+    void initialize(const Matrix<T> *m, int raw_pos);
+    //
     best_span_iterator(const Matrix<T> *m, int raw_pos);
   public:
     best_span_iterator(const Matrix<T> *m);

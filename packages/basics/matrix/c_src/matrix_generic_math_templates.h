@@ -27,7 +27,6 @@
 
 #define DEFAULT_N_TH 100
 #define DEFAULT_SIZE_TH 100
-#define DEFAULT_CONTIGUOUS_TH 200
 
 // Auxiliary function template which applies a FUNCTOR REDUCTION over a given
 // matrix, so the functor is called as FUNC(a matrix), and returns a type O,
@@ -84,15 +83,13 @@ template<typename T, typename FUNC>
 void applyFunctionWithSpanIterator(Matrix<T> *m,
 				   const FUNC &functor,
 				   const int N_th = DEFAULT_N_TH,
-				   const unsigned int SIZE_th = DEFAULT_SIZE_TH,
-				   const unsigned int CONTIGUOUS_th = DEFAULT_CONTIGUOUS_TH) {
+				   const unsigned int SIZE_th = DEFAULT_SIZE_TH) {
 #ifdef NO_OMP
   UNUSED_VARIABLE(N_th);
   UNUSED_VARIABLE(SIZE_th);
 #endif
   // Contiguous memory block
-  if (m->getIsContiguous() &&
-      static_cast<unsigned int>(m->size()) < CONTIGUOUS_th)
+  if (m->getIsContiguous())
     functor(m, static_cast<unsigned int>(m->size()), 1,
 	    static_cast<unsigned int>(m->getOffset()));
   // One dimension
@@ -142,15 +139,13 @@ void applyBinaryFunctionWithSpanIterator(Matrix<T> *m1,
 					 Matrix<T> *m2,
 					 const FUNC &functor,
 					 const int N_th = DEFAULT_N_TH,
-					 const unsigned int SIZE_th = DEFAULT_SIZE_TH,
-					 const unsigned int CONTIGUOUS_th = DEFAULT_CONTIGUOUS_TH) {
+					 const unsigned int SIZE_th = DEFAULT_SIZE_TH) {
 #ifdef NO_OMP
   UNUSED_VARIABLE(N_th);
   UNUSED_VARIABLE(SIZE_th);
 #endif
   if (m1->getIsContiguous() && m2->getIsContiguous() &&
-      m1->getIsDataRowOrdered() == m2->getIsDataRowOrdered() &&
-      static_cast<unsigned int>(m1->size()) < CONTIGUOUS_th)
+      m1->getIsDataRowOrdered() == m2->getIsDataRowOrdered())
     functor(m1, m2,
 	    static_cast<unsigned int>(m1->size()), 1, 1,
 	    static_cast<unsigned int>(m1->getOffset()),
@@ -215,15 +210,13 @@ void applyBinaryFunctionWithSpanIterator(Matrix<T> *m1,
 					 const Matrix<T> *m2,
 					 const FUNC &functor,
 					 const int N_th = DEFAULT_N_TH,
-					 const unsigned int SIZE_th = DEFAULT_SIZE_TH,
-					 const unsigned int CONTIGUOUS_th = DEFAULT_CONTIGUOUS_TH) {
+					 const unsigned int SIZE_th = DEFAULT_SIZE_TH) {
 #ifdef NO_OMP
   UNUSED_VARIABLE(N_th);
   UNUSED_VARIABLE(SIZE_th);
 #endif
   if (m1->getIsContiguous() && m2->getIsContiguous() &&
-      m1->getIsDataRowOrdered() == m2->getIsDataRowOrdered() &&
-      static_cast<unsigned int>(m1->size()) < CONTIGUOUS_th)
+      m1->getIsDataRowOrdered() == m2->getIsDataRowOrdered())
     functor(m1, m2,
 	    static_cast<unsigned int>(m1->size()), 1, 1,
 	    static_cast<unsigned int>(m1->getOffset()),
@@ -286,15 +279,13 @@ template<typename T, typename FUNC>
 T applySumReductionWithSpanIterator(const Matrix<T> *m,
 				    const FUNC &functor,
 				    const int N_th = DEFAULT_N_TH,
-				    const unsigned int SIZE_th = DEFAULT_SIZE_TH,
-				    const unsigned int CONTIGUOUS_th = DEFAULT_CONTIGUOUS_TH) {
+				    const unsigned int SIZE_th = DEFAULT_SIZE_TH) {
 #ifdef NO_OMP
   UNUSED_VARIABLE(N_th);
   UNUSED_VARIABLE(SIZE_th);
 #endif
   // Contiguous memory block
-  if (m->getIsContiguous() &&
-      static_cast<unsigned int>(m->size()) < CONTIGUOUS_th)
+  if (m->getIsContiguous())
     return functor(m, static_cast<unsigned int>(m->size()), 1,
 		   static_cast<unsigned int>(m->getOffset()));
   // One dimension
@@ -344,11 +335,9 @@ T applySumReductionWithSpanIterator(const Matrix<T> *m,
 // Similar to previous functions, but for sum-reduction operations
 template<typename T, typename FUNC>
 T applySumReductionWithSpanIteratorNOPARALLEL(const Matrix<T> *m,
-					      const FUNC &functor,
-					      const unsigned int CONTIGUOUS_th = DEFAULT_CONTIGUOUS_TH) {
+					      const FUNC &functor) {
   // Contiguous memory block
-  if (m->getIsContiguous() &&
-      static_cast<unsigned int>(m->size()) < CONTIGUOUS_th)
+  if (m->getIsContiguous())
     return functor(m, static_cast<unsigned int>(m->size()), 1,
 		   static_cast<unsigned int>(m->getOffset()));
   // One dimension
@@ -383,15 +372,13 @@ bool applyBinaryAndReductionWithSpanIterator(const Matrix<T> *m1,
 					     const Matrix<T> *m2,
 					     const FUNC &functor,
 					     const int N_th = DEFAULT_N_TH,
-					     const unsigned int SIZE_th = DEFAULT_SIZE_TH,
-					     const unsigned int CONTIGUOUS_th = DEFAULT_CONTIGUOUS_TH) {
+					     const unsigned int SIZE_th = DEFAULT_SIZE_TH) {
 #ifdef NO_OMP
   UNUSED_VARIABLE(N_th);
   UNUSED_VARIABLE(SIZE_th);
 #endif
   if (m1->getIsContiguous() && m2->getIsContiguous() &&
-      m1->getIsDataRowOrdered() == m2->getIsDataRowOrdered() &&
-      static_cast<unsigned int>(m1->size()) < CONTIGUOUS_th)
+      m1->getIsDataRowOrdered() == m2->getIsDataRowOrdered())
     return functor(m1, m2,
 		   static_cast<unsigned int>(m1->size()), 1, 1,
 		   static_cast<unsigned int>(m1->getOffset()),

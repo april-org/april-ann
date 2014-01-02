@@ -232,6 +232,16 @@ function matrix.dict.wrap_matrices(m)
   return m
 end
 
+function matrix.dict.meta_instance.__index:to_lua_string(format)
+  local str_tbl = { "matrix.dict{\n" }
+  for name,w in pairs(self) do
+    table.insert(str_tbl,
+		 string.format("[%q] = %s,\n", name, w:to_lua_string(format)))
+  end
+  table.insert(str_tbl, "}")
+  return table.concat(str_tbl, " ")
+end
+
 function matrix.dict.meta_instance:__call(key)
   return self:find(key)
 end
