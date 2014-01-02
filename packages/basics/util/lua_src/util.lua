@@ -2,6 +2,32 @@ local COLWIDTH=70
 
 ------------------------------------------------------------------------------
 
+local setmetatable = setmetatable
+local getmetatable = getmetatable
+local string = string
+local table = table
+local math = math
+local pairs = pairs
+local ipairs = ipairs
+local assert = assert
+
+------------------------------------------------------------------------------
+
+function april_assert(condition, ...)
+   if not condition then
+     if next({...}) then
+       local s,r = pcall(function (...) return(string.format(...)) end, ...)
+         if s then
+	   error("assertion failed!: " .. r, 2)
+         end
+      end
+     error("assertion failed!", 2)
+   end
+   return condition
+end
+
+------------------------------------------------------------------------------
+
 local LUA_BIND_CPP_PROPERTIES = {}
 setmetatable(LUA_BIND_CPP_PROPERTIES, { mode='k' }) -- table with weak keys
 
@@ -755,6 +781,12 @@ local valid_get_table_fields_params_attributes = { type_match = true,
 						   getter     = true,
 						   default    = true }
 function get_table_fields(params, t, ignore_other_fields)
+  local isa = isa
+  local type = type
+  local pairs = pairs
+  local ipairs = ipairs
+  local luatype = luatype
+  --
   local params = params or {}
   local t      = t or {}
   local ret    = {}
@@ -798,6 +830,7 @@ end
 function get_table_fields_ipairs(...)
   local arg = table.pack(...)
   return function(t)
+    local table = table
     local t   = t or {}
     local ret = {}
     for i,v in ipairs(t) do

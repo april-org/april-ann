@@ -2,15 +2,29 @@
 -- LOCAL AUXILIARY FUNCTIONS --
 -------------------------------
 
+local math = math
+local table = table
+local string = string
+--
+local ipairs = ipairs
+local pairs = pairs
+local assert = assert
+--
+local type = type
+local isa = isa
+local iterator = iterator
+local get_table_fields = get_table_fields
+local april_assert = april_assert
+
+-----------------------------------------
+
 local MAX_ITERS_WO_COLLECT_GARBAGE=10000
 
 local function check_dataset_sizes(ds1, ds2)
-  assert(ds1:numPatterns() == ds2:numPatterns(),
-	 string.format("Different input/output datasets "..
-			 "numPatterns found: "..
-			 "%d != %d",
-		       ds1:numPatterns(),
-		       ds2:numPatterns()))
+  april_assert(ds1:numPatterns() == ds2:numPatterns(),
+	       "Different input/output datasets numPatterns found: %d != %d",
+	       ds1:numPatterns(),
+	       ds2:numPatterns())
 end
 
 local wrap_matrices = matrix.dict.wrap_matrices
@@ -134,7 +148,7 @@ april_set_doc("trainable.supervised_trainer.set_loss_function", {
 		params = { "Loss function" }, })
 
 function trainable_supervised_trainer_methods:set_loss_function(loss_function)
-  assert(isa(loss_function, ann.loss, "Needs an instance of ann.loss"))
+  assert(isa(loss_function, ann.loss), "Needs an instance of ann.loss")
   self.loss_function = loss_function
 end
 
@@ -146,7 +160,7 @@ april_set_doc("trainable.supervised_trainer.set_optimizer", {
 		params = { "An instance of ann.optimizer" }, })
 
 function trainable_supervised_trainer_methods:set_optimizer(optimizer)
-  assert(isa(optimizer, ann.optimizer, "Needs an instance of ann.optimizer"))
+  assert(isa(optimizer, ann.optimizer), "Needs an instance of ann.optimizer")
   self.optimizer = optimizer
 end
 
@@ -731,37 +745,32 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
   local smooth_gradients = smooth_gradients or self.smooth_gradients
   local tr_loss, _, tr_loss_matrix =
     optimizer:execute(function(it)
-			local loss  = loss
-			local model = self.ann_component
-			local grads = self.weight_grads
+			local self   = self
+			local loss   = loss
+			local model  = self.ann_component
+			local grads  = self.weight_grads
+			local target = target
 			model:reset(it)
 			local output = model:forward(input, true)
 			local tr_loss,tr_loss_matrix
 			tr_loss,tr_loss_matrix = loss:compute_loss(output, target)
 			if not tr_loss_matrix then return nil end
-			gradient = loss:gradient(output, target)
-			gradient = model:backprop(gradient)
+			local gradient=model:backprop(loss:gradient(output,target))
 			--
 			grads:zeros()
 			--
-			grads = model:compute_gradients(grads)
+			local grads = model:compute_gradients(grads)
 			self.weight_grads = grads
 			-- gradient smoothing
 			if smooth_gradients then
-			  for _,name in ipairs(self.weights_order) do
-			    local mat = grads(name)
+			  for name,mat in pairs(grads) do
 			    local N = mat:get_shared_count()
 			    N       = ( N>0 and N) or 1
 			    mat:scal( 1.0/math.sqrt(N * bunch_size) )
 			  end
 			end
-			return 
-			  -- the loss
-			  tr_loss,
-			-- the gradients
-			self.weight_grads,
-			-- the loss matrix
-			tr_loss_matrix
+			-- the loss, the gradients, and the loss matrix
+			return tr_loss, grads, tr_loss_matrix
 		      end,
 		      self.weights_table)
   if tr_loss_matrix then loss:accum_loss(tr_loss_matrix) end
@@ -794,7 +803,7 @@ function trainable_supervised_trainer_methods:validate_step(input, target, loss)
   local model = self.ann_component
   local loss  = loss or self.loss_function
   model:reset()
-  local output   = model:forward(input)
+  local output = model:forward(input)
   local tr_loss,tr_loss_matrix = loss:compute_loss(output, target)
   if tr_loss_matrix then
     loss:accum_loss(tr_loss_matrix)
@@ -1100,7 +1109,6 @@ function trainable_supervised_trainer_methods:train_dataset(t)
     self:train_step(input_bunch, output_bunch, loss, optimizer, #bunch_indexes,
 		    smooth_gradients)
   end
-  collectgarbage("collect")
   return loss:get_accum_loss()
 end
 
@@ -1159,7 +1167,6 @@ function trainable_supervised_trainer_methods:grad_check_dataset(t)
       break
     end
   end
-  collectgarbage("collect")
   return ret
 end
 
@@ -1274,8 +1281,6 @@ function trainable_supervised_trainer_methods:validate_dataset(t)
   for input_bunch,output_bunch in trainable.dataset_pair_iterator(params) do
     self:validate_step(input_bunch, output_bunch, loss)
   end
-  collectgarbage("collect")
-  collectgarbage("collect")
   return loss:get_accum_loss()
 end
 
@@ -1797,8 +1802,13 @@ april_set_doc("trainable.dataset_multiple_iterator", {
 		  "shuffled with replacement, shuffled with distribution.",
 		}, })
 
-local TOO_LARGE_NUMPATTERNS = 4000000
 function trainable.dataset_multiple_iterator(t)
+  local assert = assert
+  local table = table
+  local iterator = iterator
+  local april_assert = april_assert
+  --
+  local TOO_LARGE_NUMPATTERNS = 4000000
   local params = get_table_fields(
     {
       datasets       = { mandatory = false, default=nil },
@@ -1829,9 +1839,9 @@ function trainable.dataset_multiple_iterator(t)
     return iterator(ipairs(ds_table)):
     map(function(_,ds)
 	  if nump then
-	    assert(nump == ds:numPatterns(),
-		   string.format("Incorrect number of patterns, expected "..
-				   "%d, found %d", nump, ds:numPatterns()))
+	    april_assert(nump == ds:numPatterns(),
+			 "Incorrect number of patterns, expected %d, found %d",
+			 nump, ds:numPatterns())
 	  else nump = ds:numPatterns()
 	  end
 	  return isa(ds,dataset) and dataset.token.wrapper(ds,
@@ -1861,9 +1871,9 @@ function trainable.dataset_multiple_iterator(t)
     for i,v in ipairs(params.distribution) do
       local nump
       if num_ds then
-	assert(num_ds == #v.datasets,
-	       string.format("Incorrect number of datasets, expected %d, found %d",
-			     num_ds, #v.datasets))
+	april_assert(num_ds == #v.datasets,
+		     "Incorrect number of datasets, expected %d, found %d",
+		     num_ds, #v.datasets)
       else num_ds = #v.datasets
       end
       v.datasets = to_dataset_token(v.datasets)
@@ -1906,32 +1916,74 @@ function trainable.dataset_multiple_iterator(t)
   iterator(ipairs(params.assert_pattern_sizes)):
   apply(function(k,psize)
 	  local ds_psize = params.datasets[k]:patternSize()
-	  assert(psize == 0 or psize == ds_psize,
-		 string.format("Incorrect patternSize at dataset %d, found %d"..
-				 ", expected %d", k, ds_psize, psize))
+	  april_assert(psize == 0 or psize == ds_psize,
+		       "Incorrect patternSize at dataset %d, found %d, expected %d",
+		       k, ds_psize, psize)
 	end)
   --
   -- ITERATOR USING ds_idx_table
   local k=0
   local bunch_indexes = {}
   local i=1 -- pattern index
-  return function()
-    if i > #ds_idx_table then
-      ds_idx_table=nil
-      collectgarbage("collect")
-      return nil
+  if #params.datasets > 2 then
+    return function()
+      local ds_idx_table  = ds_idx_table
+      local bunch_indexes = bunch_indexes
+      local table = table
+      local insert = table.insert
+      -- end condition, return nil
+      if i > #ds_idx_table then return nil end
+      -- general case
+      table.clear(bunch_indexes)
+      local last = math.min(i+bunch_size-1, #ds_idx_table)
+      for j=i,last do insert(bunch_indexes, ds_idx_table[j]) end
+      local data = {}
+      for i,v in ipairs(params.datasets) do data[i] = v:getPatternBunch(bunch_indexes) end
+      insert(data, bunch_indexes)
+      k=k+1
+      i=i+#bunch_indexes
+      if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
+      return table.unpack(data)
     end
-    table.clear(bunch_indexes)
-    local last = math.min(i+bunch_size-1, #ds_idx_table)
-    for j=i,last do table.insert(bunch_indexes, ds_idx_table[j]) end
-    local data = iterator(ipairs(params.datasets)):select(2):
-    call('getPatternBunch', bunch_indexes):
-    table()
-    table.insert(data, bunch_indexes)
-    k=k+1
-    i=i+#bunch_indexes
-    if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
-    return table.unpack(data)
+  elseif #params.datasets == 2 then
+    local ds1,ds2 = params.datasets[1],params.datasets[2]
+    return function()
+      local ds_idx_table  = ds_idx_table
+      local bunch_indexes = bunch_indexes
+      local table = table
+      local insert = table.insert
+      -- end condition, return nil
+      if i > #ds_idx_table then return nil end
+      -- general case
+      table.clear(bunch_indexes)
+      local last = math.min(i+bunch_size-1, #ds_idx_table)
+      for j=i,last do insert(bunch_indexes, ds_idx_table[j]) end
+      local bunch1 = ds1:getPatternBunch(bunch_indexes)
+      local bunch2 = ds2:getPatternBunch(bunch_indexes)
+      k=k+1
+      i=i+#bunch_indexes
+      if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
+      return bunch1,bunch2,bunch_indexes
+    end
+  else -- ( #params.datasets == 1 )
+    local ds1 = params.datasets[1]
+    return function()
+      local ds_idx_table  = ds_idx_table
+      local bunch_indexes = bunch_indexes
+      local table = table
+      local insert = table.insert
+      -- end condition, return nil
+      if i > #ds_idx_table then return nil end
+      -- general case
+      table.clear(bunch_indexes)
+      local last = math.min(i+bunch_size-1, #ds_idx_table)
+      for j=i,last do insert(bunch_indexes, ds_idx_table[j]) end
+      local bunch1 = ds1:getPatternBunch(bunch_indexes)
+      k=k+1
+      i=i+#bunch_indexes
+      if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
+      return bunch1,bunch_indexes
+    end
   end
 end
 
@@ -2047,11 +2099,9 @@ function train_holdout_methods:execute(epoch_function)
   end
   -- compute one training step by using epoch_function
   state.current_epoch = state.current_epoch + 1
-  collectgarbage("collect")
   state.last, state.train_error, state.validation_error = epoch_function()
   assert(state.last and state.train_error and state.validation_error,
-	 "Needs a function which returns three values: "..
-	   "a model, training error and validation error")
+	 "Needs a function which returns three values: a model, training error and validation error")
   -- update with the best model
   if ( state.validation_error < state.best_val_error or
        state.current_epoch <= params.epochs_wo_validation ) then
@@ -2076,7 +2126,7 @@ april_set_doc("trainable.train_holdout_validation.set_param", {
 		}, })
 
 function train_holdout_methods:set_param(name,value)
-  assert(self.params[name], "Param  " .. name .. " not found")
+  april_assert(self.params[name], "Param %s not found", name)
   self.params[name] = value
 end
 
@@ -2151,15 +2201,16 @@ function train_holdout_methods:get_state_string()
 end
 
 function train_holdout_methods:to_lua_string(format)
+  local insert = table.insert
   local t = { }
-  table.insert(t, "trainable.train_holdout_validation(")
+  insert(t, "trainable.train_holdout_validation(")
   --
-  table.insert(t, "\n\t")
-  table.insert(t, table.tostring(self.params, format))
-  table.insert(t, ",")
-  table.insert(t, "\n\t")
-  table.insert(t, table.tostring(self.state, format))
-  table.insert(t, "\n)")
+  insert(t, "\n\t")
+  insert(t, table.tostring(self.params, format))
+  insert(t, ",")
+  insert(t, "\n\t")
+  insert(t, table.tostring(self.state, format))
+  insert(t, "\n)")
   return table.concat(t, "")
 end
 
@@ -2216,7 +2267,7 @@ april_set_doc("trainable.train_holdout_validation.load", {
 function trainable.train_holdout_validation.load(filename)
   local f = loadfile(filename) or error("Unable to open " .. filename)
   local obj,extra = f()
-  assert(obj, "Impossible to load chunk from file " .. filename)
+  april_assert(obj, "Impossible to load chunk from file %s", filename)
   return obj,extra
 end
 
@@ -2307,11 +2358,9 @@ function train_wo_validation_methods:execute(epoch_function)
   end
   -- compute one training step by using epoch_function
   state.current_epoch = state.current_epoch + 1
-  collectgarbage("collect")
   local model,tr_err = epoch_function()
   assert(model and tr_err,
-	 "Needs a function which returns two values: "..
-	   "a model and training error")
+	 "Needs a function which returns two values: a model and training error")
   --
   local prev_tr_err    = state.train_error
   local tr_improvement
@@ -2338,7 +2387,7 @@ april_set_doc("trainable.train_wo_validation.set_param", {
 		}, })
 
 function train_wo_validation_methods:set_param(name,value)
-  assert(self.params[name], "Param  " .. name .. " not found")
+  april_assert(self.params[name], "Param %s not found", name)
   self.params[name] = value
 end
 
@@ -2405,15 +2454,16 @@ function train_wo_validation_methods:get_state_string()
 end
 
 function train_wo_validation_methods:to_lua_string(format)
+  local insert = table.insert
   local t = { }
-  table.insert(t, "trainable.train_wo_validation(")
+  insert(t, "trainable.train_wo_validation(")
   --
-  table.insert(t, "\n\t")
-  table.insert(t, table.tostring(self.params, format))
-  table.insert(t, ",")
-  table.insert(t, "\n\t")
-  table.insert(t, table.tostring(self.state, format))
-  table.insert(t, "\n)")
+  insert(t, "\n\t")
+  insert(t, table.tostring(self.params, format))
+  insert(t, ",")
+  insert(t, "\n\t")
+  insert(t, table.tostring(self.state, format))
+  insert(t, "\n)")
   return table.concat(t, "")
 end
 

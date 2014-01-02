@@ -1,3 +1,19 @@
+local math = math
+local table = table
+local string = string
+--
+local ipairs = ipairs
+local pairs = pairs
+local assert = assert
+--
+local type = type
+local isa = isa
+local iterator = iterator
+local get_table_fields = get_table_fields
+local april_assert = april_assert
+
+------------------------------------------------------------------------------
+
 local MAX_UPDATES_WITHOUT_PRUNE=100
 
 ------------------------------------------------------------------------------
@@ -86,10 +102,12 @@ end
 -- regularization functions has the API: func(dest, value, w) where dest is the
 -- destination matrix, and w the current weights matrix
 function optimizer_methods:add_regularization(hyperparameter_name, func, desc)
-  local func = assert(func or ann.optimizer.regularizations[hyperparameter_name],
-		      "Problem with hyperparemter function of " .. hyperparameter_name)
-  assert(not self.valid_options[hyperparameter_name],
-	 "Redefinition of hyperparameter " .. hyperparameter_name)
+  local func = april_assert(func or ann.optimizer.regularizations[hyperparameter_name],
+			    "Problem with hyperparemter function of %s",
+			    hyperparameter_name)
+  april_assert(not self.valid_options[hyperparameter_name],
+	       "Redefinition of hyperparameter %s",
+	       hyperparameter_name)
   self.valid_options[hyperparameter_name] = desc
   self.regularizations[hyperparameter_name] = func
   table.insert(self.regularizations_order, hyperparameter_name)
@@ -97,10 +115,12 @@ end
 
 -- constraint functions has the API: func(value, w)
 function optimizer_methods:add_constraint(hyperparameter_name, func, desc)
-  local func = assert(func or ann.optimizer.constraints[hyperparameter_name],
-		      "Problem with hyperparemter function of " .. hyperparameter_name)
-  assert(not self.valid_options[hyperparameter_name],
-	 "Redefinition of hyperparameter " .. hyperparameter_name)
+  local func = april_assert(func or ann.optimizer.constraints[hyperparameter_name],
+			    "Problem with hyperparemter function of %s",
+			    hyperparameter_name)
+  april_assert(not self.valid_options[hyperparameter_name],
+	       "Redefinition of hyperparameter %s",
+	       hyperparameter_name)
   self.valid_options[hyperparameter_name] = desc
   self.constraints[hyperparameter_name] = func
   table.insert(self.constraints_order, hyperparameter_name)
@@ -114,8 +134,8 @@ local function ann_optimizer_apply_regularizations(opt, wname, dest, w)
       -- sanity check
       if v > 0.0 and #w:dim() == 2 and w:dim(2) == 1 then
 	fprintf(io.stderr,
-		"# WARNING!!! Possible " .. hypname .. " > 0 in bias connection: %s\n",
-		wname)
+		"# WARNING!!! Possible %s > 0 in bias connection: %s\n",
+		hypname, wname)
       end
       func(dest, v, w)
     end
@@ -130,8 +150,8 @@ local function ann_optimizer_apply_constraints(opt, wname, w)
       -- sanity check
       if v > 0.0 and #w:dim() == 2 and w:dim(2) == 1 then
 	fprintf(io.stderr,
-		"# WARNING!!! Possible " .. hypname .. " > 0 in bias connection: %s\n",
-		wname)
+		"# WARNING!!! Possible %s > 0 in bias connection: %s\n",
+		hypname, wname)
       end
       func(v, w)
     end
@@ -149,30 +169,30 @@ function optimizer_methods:has_option(name)
 end
 
 function optimizer_methods:set_option(name,value)
-  assert(self.valid_options[name], "Not recognized option " .. name)
+  april_assert(self.valid_options[name], "Not recognized option %s", name)
   self.global_options[name] = value
   return self
 end
 
 function optimizer_methods:get_option(name,value)
-  assert(self.valid_options[name], "Not recognized option " .. name)
+  april_assert(self.valid_options[name], "Not recognized option %s", name)
   return self.global_options[name]
 end
 
 function optimizer_methods:set_layerwise_option(layer_name,name,value)
-  assert(self.valid_options[name], "Not recognized option " .. name)
+  april_assert(self.valid_options[name], "Not recognized option %s", name)
   self.layerwise_options[layer_name] = self.layerwise_options[layer_name] or {}
   self.layerwise_options[layer_name][name] = value
   return self
 end
 
 function optimizer_methods:get_layerwise_option(layer_name,name)
-  assert(self.valid_options[name], "Not recognized option " .. name)
+  april_assert(self.valid_options[name], "Not recognized option %s", name)
   return (self.layerwise_options[layer_name] or {})[name]
 end
 
 function optimizer_methods:get_option_of(layer_name,name)
-  assert(self.valid_options[name], "Not recognized option " .. name)
+  april_assert(self.valid_options[name], "Not recognized option %s", name)
   return ( (self.layerwise_options[layer_name] or {})[name] or
 	     self.global_options[name] )
 end
@@ -246,6 +266,10 @@ function sgd_class_metatable:__call(g_options, l_options, count, update)
 end
 
 function sgd_methods:execute(eval, weights)
+  local wrap_matrices = wrap_matrices
+  local table = table
+  local assert = assert
+  --
   local weights = wrap_matrices(weights)
   local arg = table.pack( eval() )
   local tr_loss,gradients = table.unpack(arg)
@@ -339,6 +363,10 @@ function rprop_class_metatable:__call(g_options, l_options, count,
 end
 
 function rprop_methods:execute(eval, weights)
+  local wrap_matrices = wrap_matrices
+  local table = table
+  local assert = assert
+  --
   local weights = wrap_matrices(weights)
   local initial_step  = self:get_option("initial_step")
   local eta_plus      = self:get_option("eta_plus")
@@ -375,7 +403,6 @@ function rprop_methods:execute(eval, weights)
       --
       if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
 	w:prune_subnormal_and_check_normal()
-	collectgarbage("collect")
       end
     end
     -- count one more update iteration
@@ -461,6 +488,11 @@ function cg_class_metatable:__call(g_options, l_options, count,
 end
 
 function cg_methods:execute(eval, weights)
+  local wrap_matrices = wrap_matrices
+  local table = table
+  local assert = assert
+  local math = math
+  --
   local weights = wrap_matrices(weights)
   -- UPDATE_WEIGHTS function
   local update_weights = function(x, dir, s)
@@ -750,6 +782,11 @@ function quickprop_class_metatable:__call(g_options, l_options, count,
 end
 
 function quickprop_methods:execute(eval, weights)
+  local wrap_matrices = wrap_matrices
+  local table = table
+  local assert = assert
+  local math = math
+  --
   local weights = wrap_matrices(weights)
   local arg = table.pack( eval() )
   local tr_loss,gradients = table.unpack(arg)
