@@ -292,13 +292,14 @@ local function symbol(name,dtype)
 	  end
 	end
 	collectgarbage("collect")
+	return self
       end,
       --
       unmark = function(self) self.visited = nil end,
       generate_name = function() end,
       -- following method removes the var_name associated with the compilation
       -- of the symbol
-      clear_var_name = function(self) self.var_name = nil end,
+      clear_var_name = function(self) self.var_name = nil return self end,
       -- modifies the dimensions of the symbol shape
       set_dims = function(self,...)
 	self.dims = table.pack(...)
@@ -307,6 +308,7 @@ local function symbol(name,dtype)
 		 "set_dims accepts ONE table or a MULTIPLE numbers list")
 	  self.dims = self.dims[1]
 	end
+	return self
       end,
       -- indicates if it is possible to broadcast the result over each dimension
       set_broadcast = function(self,...)
@@ -316,6 +318,7 @@ local function symbol(name,dtype)
 		 "set_broadcast accepts ONE table or a MULTIPLE numbers list")
 	  self.broadcast = self.broadcast[1]
 	end
+	return self
       end,
       -- ignore the gradient computation, take the seed as gradient
       ignore_gradient = function(self)
@@ -639,7 +642,10 @@ function autodiff.diff(f, symbols, seed)
   if symbols.issymbol then symbols = { symbols } end
   local all_diff = f:diff(seed)
   return table.unpack(iterator(ipairs(symbols)):
-		      map(function(_,s)
+		      map(function(i,s)
+			    april_assert(type(s)=="table" and s.issymbol,
+					 "Found a not symbol variable at position %d",
+					 i)
 			    return all_diff[s.name] or
 			      error("Gradient of " .. s.name .. " not implemented, or symbol not found")
 			  end):

@@ -984,7 +984,7 @@ local function cmul_general_optimization(...)
       local function count(a,b)
 	local b = b or autodiff[CONSTANT](1)
 	if a.dtype == CONSTANT then constant = constant * a^b
-	elseif a.dtype == SCALAR then scalar = scalar * v^b
+	elseif a.dtype == SCALAR then scalar = scalar * a^b
 	else vd[a] = (vd[a] or autodiff[CONSTANT](0)) + b end
       end
       local function child_traverse(child)
