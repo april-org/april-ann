@@ -14,16 +14,16 @@ max_epochs     = 10
 -- training and validation
 errors = matrix.fromString[[10 2
 ascii
-2.7256057 18.605270
-14.769267 5.830131
-5.7847500 4.2319937
-3.9067090 3.0507331
-2.7962668 1.0699219
-1.0011752 0.8399307
-0.6373432 0.5586927
-0.3391171 0.3530262
-0.2058428 0.2627542
-0.1379610 0.2229893
+2.4257019 2.2666397
+2.2404771 2.0808170
+2.0071127 1.5948118
+1.4796402 1.0622932
+0.9099334 0.6604984
+0.5221485 0.4503360
+0.3342607 0.3491776
+0.2382729 0.2637241
+0.1805640 0.2074246
+0.1439983 0.1729773
 ]]
 epsilon = 0.1
 
@@ -78,8 +78,9 @@ if util.is_cuda_available() then thenet:set_use_cuda(true) end
 trainer = trainable.supervised_trainer(thenet,
 				       ann.loss.multi_class_cross_entropy(10),
 				       bunch_size,
-				       ann.optimizer.rprop())
+				       ann.optimizer.quickprop())
 trainer:build()
+trainer:set_option("learning_rate", 0.1)
 
 trainer:randomize_weights{
   random      = weights_random,
