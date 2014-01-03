@@ -220,7 +220,7 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(names_prefix,
 			  names_prefix.."b1",
 			  names_prefix.."b2" }) do
     ann.connections.
-    randomize_weights(weights_table[wname],
+    randomize_weights(weights_table(wname),
 		      {
 			random = weights_random,
 			inf    = -math.sqrt(6 / (input_size + cod_size)),
@@ -424,7 +424,7 @@ function ann.autoencoders.build_full_autoencoder(layers,
   local bias_mat      = sdae_table.bias
   local sdae          = ann.components.stack{ name=names_prefix.."stack" }
   local prev_size     = layers[1].size
-  local weights_table = {}
+  local weights_table = matrix.dict()
   local k = 1
   for i=2,#layers do
     local size , actf   = layers[i].size,layers[i].actf
@@ -710,7 +710,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
   local weights = {}
   local bias    = {}
   -- incremental mlp
-  local mlp_final_weights = {}
+  local mlp_final_weights = matrix.dict()
   local mlp_final = ann.components.stack{ name=params.names_prefix.."stack" }
   -- loop for each pair of layers
   for i=2,#params.layers do
@@ -740,8 +740,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 							     nil,
 							     params.bunch_size,
 							     params.optimizer())
-      local aux_weights = {}
-      for i,v in pairs(mlp_final_weights) do aux_weights[i] = v:clone() end
+      local aux_weights = mlp_final_weights:clone()
       mlp_final_trainer:build{ weights=aux_weights }
       data = generate_training_table_configuration_on_the_fly(current_dataset_params,
 							      params.replacement,
@@ -803,12 +802,9 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
       end }
     -- printf("AFTER TRAIN %d\n", i)
     ---------------------------------------------------------
-    local b1obj = best_net:weights(params.names_prefix.."b1"):clone()
-    local b2obj = best_net:weights(params.names_prefix.."b2"):clone()
-    local wobj  = best_net:weights(params.names_prefix.."w"):clone()
-    local b1mat = ann.connections.copy_to(b1obj)
-    local b2mat = ann.connections.copy_to(b2obj)
-    local wmat  = ann.connections.copy_to(wobj)
+    local b1mat = best_net:weights(params.names_prefix.."b1"):clone()
+    local b2mat = best_net:weights(params.names_prefix.."b2"):clone()
+    local wmat  = best_net:weights(params.names_prefix.."w"):clone()
     table.insert(weights, wmat)
     table.insert(bias, { b1mat, b2mat })
     --
@@ -821,8 +817,8 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 		      dot_product_weights = params.names_prefix.."w" .. (i-1),
 		      bias_weights        = params.names_prefix.."b" .. (i-1), })
     mlp_final:push( ann.components.actf[cod_actf]{ name=params.names_prefix.."actf" .. (i-1) } )
-    mlp_final_weights[params.names_prefix.."w" .. (i-1)] = wobj
-    mlp_final_weights[params.names_prefix.."b"    .. (i-1)] = b1obj
+    mlp_final_weights[params.names_prefix.."w" .. (i-1)] = wmat
+    mlp_final_weights[params.names_prefix.."b"    .. (i-1)] = b1mat
     --
     --insert the information
     if not on_the_fly then
@@ -843,10 +839,8 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 							 params.optimizer())
 	cod_trainer:build()
 	-- print("Load bias ", params.names_prefix .. "b")
-	ann.connections.load(cod_trainer:weights(params.names_prefix.."b"),
-			     { w = b1mat })
-	ann.connections.load(cod_trainer:weights(params.names_prefix.."w"),
-			     { w = wmat })
+	cod_trainer:weights(params.names_prefix.."b"):copy(b1mat)
+	cod_trainer:weights(params.names_prefix.."w"):copy(wmat)
 	if current_dataset_params.distribution then
 	  -- compute code for each distribution dataset
 	  for _,v in ipairs(current_dataset_params.distribution) do
@@ -897,8 +891,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 							     nil,
 							     params.bunch_size,
 							     params.optimizer())
-      local aux_weights = {}
-      for i,v in pairs(mlp_final_weights) do aux_weights[i] = v:clone() end
+      local aux_weights = mlp_final_weights:clone()
       mlp_final_trainer:build{ weights = aux_weights }
       data = generate_training_table_configuration_on_the_fly(current_dataset_params,
 							      params.replacement,
@@ -985,7 +978,7 @@ function ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
   local weights_mat   = sdae_table.weights
   local bias_mat      = sdae_table.bias
   local codifier_net  = ann.components.stack{ name="stack" }
-  local weights_table = {}
+  local weights_table = matrix.dict()
   for i=2,#layers do
     local bname = "b"..(i-1)
     local wname = "w"..(i-1)
