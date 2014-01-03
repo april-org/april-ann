@@ -63,8 +63,6 @@ trainer:randomize_weights{
   sup         =  1,
 }
 
-trainer:save("jarl.net", "binary")
-
 training_data = {
   input_dataset  = train_input,
   output_dataset = train_output,
@@ -87,13 +85,20 @@ train_func = trainable.train_holdout_validation{
   tolerance = 0.1,
 }
 -- training loop
+tmpname = os.tmpname()
 while train_func:execute(function()
 			   local tr = trainer:train_dataset(training_data)
 			   local va = trainer:validate_dataset(validation_data)
 			   return trainer,tr,va
 			 end) do
-  train_func:save("last.net", "ascii")
+  train_func:save(tmpname, "binary", { shuffle = training_data.shuffle })
+  train_func,extra = trainable.train_holdout_validation.load(tmpname)
+  training_data.shuffle = extra.shuffle
 end
+train_func:save(tmpname, "ascii")
+train_func = trainable.train_holdout_validation.load(tmpname)
+os.remove(tmpname)
+os.remove(tmpname..".bak")
 clock:stop()
 cpu,wall = clock:read()
 num_epochs = train_func:get_state_table().current_epoch
