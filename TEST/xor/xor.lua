@@ -145,7 +145,6 @@ trainer:set_option("momentum",      momentum)
 trainer:set_option("weight_decay",  weight_decay)
 trainer:set_layerwise_option("b.*", "weight_decay", 0.0)
 trainer:set_loss_function(ann.loss.cross_entropy(net_component:get_output_size()))
-trainer:save("ll.net", "ascii")
 load_initial_weights(trainer.weights_table)
 
 print ("\nAfter 30000 epochs")

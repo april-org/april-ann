@@ -63,8 +63,6 @@ trainer:randomize_weights{
   sup         =  1,
 }
 
-trainer:save("jarl.net", "binary")
-
 training_data = {
   input_dataset  = train_input,
   output_dataset = train_output,
@@ -93,7 +91,6 @@ while train_func:execute(function()
   print(train_func:get_state_string())
 end
 best = train_func:get_state_table().best
-best:save("best.net", "ascii")
 clock:stop()
 cpu,wall   = clock:read()
 num_epochs = train_func:get_state_table().current_epoch
