@@ -23,11 +23,6 @@
 
 #define IncRef(x) (x)->incRef()
 #define DecRef(x) if ((x)->decRef()) delete (x)
-#define AssignRef(dest,ref) do {					\
-    if ((dest)!=0) DecRef((dest));					\
-    (dest) = (ref);							\
-    IncRef((dest));							\
-  } while(0)
 
 class Referenced {
  protected:
@@ -37,6 +32,14 @@ class Referenced {
   virtual ~Referenced();
   virtual void incRef();
   virtual bool decRef();
+  virtual int  getRef() const { return refs; }
 };
+
+template<typename T>
+void AssignRef(T &dest, T ref) {
+  if (dest != 0) DecRef(dest);
+  dest = ref;
+  IncRef(dest);
+}
 
 #endif // REFERENCED_H

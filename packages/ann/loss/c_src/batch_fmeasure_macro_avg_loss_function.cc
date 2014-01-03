@@ -115,7 +115,7 @@ namespace ANN {
     IncRef(target_mat);
     MatrixFloat *error_mat = target_mat->clone();
     TokenMatrixFloat *error_mat_token = new TokenMatrixFloat(error_mat);
-    AssignRef(error_output, error_mat_token);
+    AssignRef<Token*>(error_output, error_mat_token);
 #ifdef USE_CUDA
     error_mat->setUseCuda(input_mat->getCudaFlag());
 #endif

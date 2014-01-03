@@ -6,11 +6,13 @@
 namespace april_utils {
 
     const float infinity = std::numeric_limits<float>::infinity();
-    line::line(const Point2D &x, const Point2D &y) {
-      float x1 = x.first;
-      float y1 = x.second;
-      float x2 = y.first;
-      float y2 = y.second;
+
+    template <typename T>
+    line::line(const Point<T> &x, const Point<T> &y) {
+      float x1 = (float) x.x;
+      float y1 = (float) x.y;
+      float x2 = (float) y.x;
+      float y2 = (float) y.y;
       
       if (x2 == x1) {
         fprintf(stderr, "Warning the slope is infinite");
@@ -47,12 +49,25 @@ namespace april_utils {
         return Point2D(x,y);
     }
 
-    float line::distance(const Point2D &p) {
-      return abs(p.second-m*p.first-b)/sqrt(m*m+1);;
+    template <> 
+        float line::distance(const Point<float> &p) {
+        float x = p.x;
+        float y = p.y;
+        return abs(y-m*x-b)/sqrt(m*m+1);;
+
     }
-    Point2D line::closestPoint(const Point2D &p, float &dist) {
-      int x1 = p.first;
-      int y1 = p.second;
+    template <>
+    float line::distance(const Point<int> &p) {
+        Point<float> pf = Point<float>(p); 
+        return this->distance(pf);
+    }
+
+
+
+    template <typename T>
+    Point2D line::closestPoint(const Point<T> &p, float &dist) {
+      int x1 = p.x;
+      int y1 = p.y;
       // Extracted from: http://math.ucsd.edu/~wgarner/math4c/derivations/distance/distptline.htm
       float x = (m*y1+x1-m*b)/(m*m+1);
       float y = (m*m*y1+m*x1+b)/(m*m+1);

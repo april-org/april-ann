@@ -32,8 +32,7 @@ namespace ANN {
 						       float prob,
 						       const char *name,
 						       unsigned int size) :
-    ANNComponent(name, 0, size, size),
-    random(random),
+    StochasticANNComponent(random, name, 0, size, size),
     input(0),
     output(0),
     error_input(0),
@@ -41,7 +40,6 @@ namespace ANN {
     zero(zero),
     one(one),
     prob(prob) {
-    IncRef(random);
   }
   
   SaltAndPepperANNComponent::~SaltAndPepperANNComponent() {
@@ -49,11 +47,10 @@ namespace ANN {
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);
     if (error_output) DecRef(error_output);
-    DecRef(random);
   }
   
   Token *SaltAndPepperANNComponent::doForward(Token* _input, bool during_training) {
-    UNUSED_VARIABLE(during_training);
+    _input = StochasticANNComponent::doForward(_input, during_training);
     // error checking
     if ( (_input == 0) ||
 	 (_input->getTokenCode() != table_of_token_codes::token_matrix))
@@ -89,7 +86,8 @@ namespace ANN {
     return error_output;
   }
   
-  void SaltAndPepperANNComponent::reset() {
+  void SaltAndPepperANNComponent::reset(unsigned int it) {
+    StochasticANNComponent::reset(it);
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);
@@ -102,7 +100,7 @@ namespace ANN {
 
   ANNComponent *SaltAndPepperANNComponent::clone() {
     SaltAndPepperANNComponent *copy_component = new
-      SaltAndPepperANNComponent(new MTRand(*random),
+      SaltAndPepperANNComponent(new MTRand(*getRandom()),
 				zero, one, prob,
 				name.c_str(),
 				input_size);
@@ -111,7 +109,7 @@ namespace ANN {
 
   void SaltAndPepperANNComponent::build(unsigned int _input_size,
 					unsigned int _output_size,
-					hash<string,Connections*> &weights_dict,
+					MatrixFloatSet *weights_dict,
 					hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);

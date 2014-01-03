@@ -6,63 +6,106 @@ Master branch release
 
 ### Unstable changes
 
-- Added method `precompute_output_size` in ANN components.
+- Added packages `autodiff` and `autodiff.ann`, with automatic differentiation
+  algorithms.
+- Added `ann.optimizer.quickprop` algorithm, but stills untested.
+- Gradients smoothing, based on weights sharing and `bunch_size`, is applied by
+  `trainable.supervised_trainer` objects, not by the `optimizer`.
+- Added `ann.components.dropout` class.
 - Added `ann.autoencoders.ae` class, in order to factorize the SDAE code.
-- Added `trainable.train_wo_validation` class, which in the future will
-  replace current `trainable.supervised_trainer:train_wo_validation`
-  method.
-- Added `trainable.train_holdout_validation` class, which in the future will
-  replace current `trainable.supervised_trainer:train_holdout_validation`
-  method.
 - Solved problems with CUDA compilation, but it stills not working because
   an error during cuMemAlloc.
 - Class interest_points and layout algorithms (still in development).
 - Added the geometry c++ class for working in to lines and point geometry.
 
-### Stable changes
+v0.3.1-beta relase
+------------------
 
+### API Changes
+
+- `matrix:transpose()` returns a matrix which references the original. Any
+  modification to the tranposed matrix, will be reflected at the original.
+- `matrix:cmul` method is now **in-place**, so, if you don't want to modify the
+  original matrix, you need to do `m:clone():cmul(...)` instead of
+  `m:cmul(...)`.
+- `update` property is added to `ann.optimizers.sgd` object in order to compute
+  the momentum.
+- Optimizers `execute` method receives a functions which computes the loss, the
+  gradient (mandatory). Any other data is **optional**.
+- Removed dropout code from activation functions.
+- Deleted options from ANN components.
 - Added methods `unroll` and `get` to `ann.components.stack` class.
-- Solved bug at `stats.correlation.pearson`.
-- Added `FunctionInterface` class, in Lua as `functions` class, superclass of
-  ANN components.
-- Added automatic conversion between DataSetFloat and DataSetToken in
-  `dataset.token.filter` and `dataset.token.union`.
-- Added `dataset.token.filter`, which allows ANN components as filters.
 - Added `inf` and `sup` limits to Hard-Tanh activation function.
 - Added `random:to_lua_string()` method.
-- Solved bug at `trainable` when using `use_dataset`, `train_dataset`,
-  `validate_dataset`, `grad_check_dataset` methods without a `bunch_size`
-  parameter, and with a trainer which has not a `bunch_size` defined at
-  construction.
-- Added `ann.optimizer.cg`, Conjugate Gradient algorithm.
-- Added `ann.optimizer.rprop`, Resilient Prop algorithm.
-- Stabilization of log-logistic activation function.
-- Stabilization of training with cross-entropy and multi-class-entropy.
 - Moved `ann.loss.__base__` to `ann.loss`.
 - Moved `ann.components.actf.__base__` to `ann.components.actf`.
+
+### New features
+
+- Added `matrix.dict`, a hash set dictionary in C++ binded to Lua, which allows
+  to execute basic math operations and reductions over the whole set of
+  contained matrices. It major purpose is to represent a set of connection
+  weights or gradients in ANNs.
+- Added `dataset.token.filter`, which allows ANN components as filters.
+- Added `trainable.train_holdout_validation` class, which replace
+  `trainable.supervised_trainer:train_holdout_validation` method.
+- Added `trainable.train_wo_validation` class, which replace
+  `trainable.supervised_trainer:train_wo_validation` method.
+- Added `trainable.dataset_pair_iterator` and
+  `trainable.dataset_multiple_iterator`, useful to iterate over datasets
+  following different traversal schemes: sequential, shuffled, shuffled with
+  replacement, shuffled with distribution.
+- Added method `precompute_output_size` in ANN components.
+- Added `ann.optimizer.cg`, Conjugate Gradient algorithm.
+- Added `ann.optimizer.rprop`, Resilient Prop algorithm.
 - Added `batch_fmeasure_micro_avg` and `batch_fmeasure_macro_avg` for
   multi-class FMeasure computation.
 - Renamed loss function `local_fmeasure` as `batch_fmeasure`, and improved to
   work with multi-class models.
+- Added `ann.loss.zero_one` loss function.
+- Added `DEPENDENCIES-INSTALLER.sh`.
+- Added syntactic sugar for `matrix:slice(...)` method: `m("1:2","3:4")` or
+  `m({1,2},{3,4})`, like in Matlab or Octave.
+- Added `matrix.svd` and `matrix.diagonalize`.
+- Added `stats.pca`, `stats.mean_centered`, `stats.pca_whitening`.
+
+### Bugs removed
+
+- Solved bug at `stats.correlation.pearson`.
+- Solved bug at `trainable` when using `use_dataset`, `train_dataset`,
+  `validate_dataset`, `grad_check_dataset` methods without a `bunch_size`
+  parameter, and with a trainer which has not a `bunch_size` defined at
+  construction.
+- Stabilization of log-logistic activation function.
+- Stabilization of training with cross-entropy and multi-class-entropy.
 - Solved bug when reading using `matrix.fromTabFilename`. The loader failed
   when the file had empty lines.
-- Added `ann.loss.zero_one` loss function.
 - Solved bug at `Matrix<T>::select(...)` C++ method. The matrix offset wasn't be
   added to the resulting matrix offset.
 - Solved bug at `SlidingWindow::setAtWindow(...)` C++ method. The matrix offset
   wasn't be added to the computed window position.
 - Solved bug at `buffered_memory.h`. Such bug introduces an early stop when
   reading matrices, ignoring the last lines of files.
-- Added `DEPENDENCIES-INSTALLER.sh`.
-- Added syntactic sugar for `matrix:slice(...)` method: `m("1:2","3:4")` or
-  `m({1,2},{3,4})`, like in Matlab or Octave.
 - Solved problem with `rlcompleter`, which didn't work properly when loaded as a
   Lua module.
 - Modified `configure.sh` to inform about any error during Lua building.
 - Loadable modules are working on MacOs X.
-- Added `matrix.svd` and `matrix.diagonalize`.
-- Added `stats.pca`, `stats.mean_centered`, `stats.pca_whitening`.
 
+### C/C++ code changes
+
+- Added `MatrixSet` class template, which stores a dictionary of STRING->MATRIX,
+  useful for ANNs and gradient descent purposes.
+- Added `StochasticANNComponent` which is base class for stochastic components.
+- Simplified coupling between ANN components, ANN loss functions, introducing
+  automatic binding between MatrixFloat and TokenMatrixFloat.
+- ANN Components has a pointer to a `MatrixFloat` instead of `ANN::Connections`.
+- `ANN::Connections` is a static class with helper functions, and it is binded
+  as `ann.connections`.
+- Old-weights property is removed from ANN connections.
+- Added automatic conversion between DataSetFloat and DataSetToken in
+  `dataset.token.filter` and `dataset.token.union`.
+- Added `FunctionInterface` class, in Lua as `functions` class, superclass of
+  ANN components.
 
 v0.3.0-beta relase
 ------------------

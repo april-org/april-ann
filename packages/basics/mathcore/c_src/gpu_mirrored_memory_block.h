@@ -70,7 +70,8 @@ public:
 template<typename T>
 class GPUMirroredMemoryBlock : public GPUMirroredMemoryBlockBase {
 #ifndef NO_POOL
-  const static size_t MAX_POOL_LIST_SIZE = 100*1024*1024; // 100 Megabytes
+  const static size_t MAX_POOL_LIST_SIZE    = 200*1024*1024; // 200 Megabytes
+  const static size_t MIN_MEMORY_TH_IN_POOL = 20; // 20 bytes
   static size_t pool_size;
   static april_utils::hash<unsigned int,april_utils::list<T*> > pool_lists;
   // FIXME: This static class is not working... therefore the memory allocated
@@ -316,6 +317,7 @@ public:
     pinned   = false;
 #endif
 #ifndef NO_POOL
+    bool alloc_block = false;
     april_utils::list<T*> &l = pool_lists[size];
     if (l.empty()) {
       if (!use_mmap_allocation) {
@@ -364,7 +366,7 @@ public:
 	if (!isMMapped()) {
 #ifndef NO_POOL
 	  april_utils::list<T*> &l = pool_lists[size];
-	  if (pool_size < MAX_POOL_LIST_SIZE) {
+	  if (pool_size < MAX_POOL_LIST_SIZE && size >= MIN_MEMORY_TH_IN_POOL) {
 	    pool_size += size*sizeof(T);
 	    l.push_front(mem_ppal);
 	  }

@@ -62,13 +62,39 @@ int sliding_window_iterator_function(lua_State *L) {
   return 1;
 }
 
+int matrixfloatset_iterator_function(lua_State *L) {
+  MatrixFloatSetIteratorWrapper *obj = lua_toMatrixFloatSetIteratorWrapper(L,1);
+  if (obj->it == obj->m->end()) {
+    lua_pushnil(L);
+    return 1;
+  }
+  lua_pushstring(L, obj->it->first.c_str());
+  lua_pushMatrixFloat(L, obj->it->second);
+  ++obj->it;
+  return 2;
+}
+
 //BIND_END
 
 //BIND_HEADER_H
 #include "matrixFloat.h"
+#include "matrixFloatSet.h"
 #include "utilLua.h"
 #include <cmath> // para isfinite
 typedef MatrixFloat::sliding_window SlidingWindow;
+
+class MatrixFloatSetIteratorWrapper : public Referenced {
+public:
+  MatrixFloatSet *m;
+  MatrixFloatSet::iterator it;
+  MatrixFloatSetIteratorWrapper(MatrixFloatSet *m) :
+  Referenced(), m(m), it(m->begin()) {
+    IncRef(m);
+  }
+  virtual ~MatrixFloatSetIteratorWrapper() {
+    DecRef(m);
+  }
+};
 //BIND_END
 
 //BIND_LUACLASSNAME MatrixFloat matrix
@@ -370,12 +396,12 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 
 //BIND_METHOD MatrixFloat toFilename
 //DOC_BEGIN
-// void toFilename(string filename, string type='ascii')
+// void toFilename(string filename, string type='binary')
 /// Permite salvar una matriz con un formato tal y como se carga con el
 /// metodo fromString. El unico argumento opcional indica el tipo 'ascii'
 /// o 'binary'.
 ///@param filename Indica el nombre del fichero.
-///@param type Parametro opcional. Puede ser 'ascii' o 'binary', y por defecto es 'ascii'.
+///@param type Parametro opcional. Puede ser 'ascii' o 'binary', y por defecto es 'binary'.
 //DOC_END
 {
   LUABIND_CHECK_ARGN(>=, 1);
@@ -383,7 +409,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   const char *filename;
   constString cs;
   LUABIND_GET_PARAMETER(1, string, filename);
-  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("ascii"));
+  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("binary"));
   bool is_ascii = (cs == "ascii");
   writeMatrixFloatToFile(obj, filename, is_ascii);
 }
@@ -400,16 +426,16 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 
 //BIND_METHOD MatrixFloat toString
 //DOC_BEGIN
-// string toString(string type='ascii')
+// string toString(string type='binary')
 /// Permite salvar una matriz con un formato tal y como se carga con el
 /// metodo fromString. El unico argumento opcional indica el tipo 'ascii'
 /// o 'binary'.
-///@param type Parámetro opcional. Puede ser 'ascii' o 'binary', y por defecto es 'ascii'.
+///@param type Parámetro opcional. Puede ser 'ascii' o 'binary', y por defecto es 'binary'.
 //DOC_END
 {
   LUABIND_CHECK_ARGN(<=, 1);
   constString cs;
-  LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("ascii"));
+  LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("binary"));
   bool is_ascii = (cs == "ascii");
   writeMatrixFloatToLuaString(obj, L, is_ascii);
   LUABIND_INCREASE_NUM_RETURNS(1);
@@ -560,7 +586,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
     int v1;
     LUABIND_GET_PARAMETER(1,int,v1);
     if (v1<1 || v1 > obj->getDimSize(0)) {
-      LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
+      LUABIND_FERROR2("wrong index parameter 1, %d is not <= %d",
 		      v1, obj->getDimSize(0));
     }
     ret = (*obj)(v1-1);
@@ -570,11 +596,11 @@ typedef MatrixFloat::sliding_window SlidingWindow;
     LUABIND_GET_PARAMETER(1,int,v1);
     LUABIND_GET_PARAMETER(2,int,v2);
     if (v1<1 || v1 > obj->getDimSize(0)) {
-      LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
+      LUABIND_FERROR2("wrong index parameter 1, %d is not <= %d or is not >= 1",
 		      v1, obj->getDimSize(0));
     }
     if (v2<1 || v2 > obj->getDimSize(1)) {
-      LUABIND_FERROR2("wrong index parameter: 2 <= %d <= %d is incorrect",
+      LUABIND_FERROR2("wrong index parameter 2, %d is not <= %d or is not >= 1",
 		      v2, obj->getDimSize(1));
     }
     ret = (*obj)(v1-1, v2-1);
@@ -584,7 +610,7 @@ typedef MatrixFloat::sliding_window SlidingWindow;
     for (int i=0; i<obj->getNumDim(); ++i) {
       LUABIND_GET_PARAMETER(i+1,int,coords[i]);
       if (coords[i]<1 || coords[i] > obj->getDimSize(i)) {
-	LUABIND_FERROR2("wrong index parameter: 1 <= %d <= %d is incorrect",
+	LUABIND_FERROR2("wrong index parameter %d, %d is not <= %d or is not >= 1",
 			coords[i], obj->getDimSize(i));
       }
       coords[i]--;
@@ -679,14 +705,24 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 
 //BIND_METHOD MatrixFloat fill
 //DOC_BEGIN
-// void fill(float value)
+// void fill(value)
 /// Permite poner todos los valores de la matriz a un mismo valor.
 //DOC_END
 {
   LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, float);
   float value;
-  LUABIND_GET_PARAMETER(1,float,value);
+  if (lua_isMatrixFloat(L, 1)) {
+    MatrixFloat *aux;
+    LUABIND_GET_PARAMETER(1,MatrixFloat,aux);
+    for (int i=0; i<aux->getNumDim(); ++i)
+      if (aux->getDimSize(i) != 1)
+	LUABIND_ERROR("Needs a float or a matrix with only one element\n");
+    value = *(aux->begin());
+  }
+  else {
+    LUABIND_CHECK_PARAMETER(1, float);
+    LUABIND_GET_PARAMETER(1,float,value);
+  }
   obj->fill(value);
   LUABIND_RETURN(MatrixFloat, obj);
 }
@@ -837,6 +873,16 @@ typedef MatrixFloat::sliding_window SlidingWindow;
     obj2 = obj->clone(order);
   }
   LUABIND_RETURN(MatrixFloat,obj2);
+}
+//BIND_END
+
+// returns a matrix with size as the given matrix, but without data copy
+//BIND_CLASS_METHOD MatrixFloat as
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  MatrixFloat *m;
+  LUABIND_GET_PARAMETER(1, MatrixFloat, m);
+  LUABIND_RETURN(MatrixFloat,m->cloneOnlyDims());
 }
 //BIND_END
 
@@ -1029,12 +1075,10 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 //BIND_METHOD MatrixFloat cmul
   {
     LUABIND_CHECK_ARGN(==, 1);
-    MatrixFloat *mat,*resul;
+    MatrixFloat *mat;
     LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
-    resul = obj->cmul(mat);
-    if (resul == 0)
-      LUABIND_ERROR("matrix cmul wrong dimensions");
-    LUABIND_RETURN(MatrixFloat, resul);
+    obj->cmul(mat);
+    LUABIND_RETURN(MatrixFloat, obj);
   }
 //BIND_END
 
@@ -1337,19 +1381,18 @@ typedef MatrixFloat::sliding_window SlidingWindow;
   LUABIND_GET_PARAMETER(1, int, lower);
   LUABIND_GET_PARAMETER(2, int, upper);
   LUABIND_GET_OPTIONAL_PARAMETER(3, MTRand, random, 0);
-  if (lower < 0)
-    LUABIND_ERROR("Allowed only for positive integers");
+
   if (lower > upper)
     LUABIND_ERROR("First argument must be <= second argument");
   if (random == 0) random = new MTRand();
   IncRef(random);
-  if (obj->getMajorOrder() == CblasRowMajor)
+  if (obj->getIsDataRowOrdered())
     for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it) {
-      *it = static_cast<float>(random->randInt(upper - lower) + lower);
+      *it = static_cast<float>(random->randInt(upper - lower)) + lower;
     }
   else
     for (MatrixFloat::col_major_iterator it(obj->begin());it!=obj->end();++it) {
-      *it = static_cast<float>(random->randInt(upper - lower) + lower);
+      *it = static_cast<float>(random->randInt(upper - lower)) + lower;
     }
   DecRef(random);
   LUABIND_RETURN(MatrixFloat, obj);
@@ -1436,6 +1479,12 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat is_transposed
+{
+  LUABIND_RETURN(bool, obj->getTransposedFlag());
+}
+//BIND_END
+
 
 //BIND_METHOD MatrixFloat inv
 {
@@ -1515,4 +1564,411 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat get_shared_count
+{
+  LUABIND_RETURN(uint, obj->getSharedCount());
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat reset_shared_count
+{
+  obj->resetSharedCount();
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat add_to_shared_count
+{
+  unsigned int count;
+  LUABIND_GET_PARAMETER(1,uint,count);
+  obj->addToSharedCount(count);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat prune_subnormal_and_check_normal
+{
+  obj->pruneSubnormalAndCheckNormal();
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat lt
+{
+  if (lua_isMatrixFloat(L, 1)) {
+    MatrixFloat *value;
+    LUABIND_GET_PARAMETER(1, MatrixFloat, value);
+    obj->LTCondition(value);
+  }
+  else {
+    float value;
+    LUABIND_GET_PARAMETER(1, float, value);
+    obj->LTCondition(value);
+  }
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat gt
+{
+  if (lua_isMatrixFloat(L, 1)) {
+    MatrixFloat *value;
+    LUABIND_GET_PARAMETER(1, MatrixFloat, value);
+    obj->GTCondition(value);
+  }
+  else {
+    float value;
+    LUABIND_GET_PARAMETER(1, float, value);
+    obj->GTCondition(value);
+  }
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
 //////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME MatrixFloatSet matrix.dict
+//BIND_CPP_CLASS MatrixFloatSet
+
+//BIND_CONSTRUCTOR MatrixFloatSet
+{
+  int argn = lua_gettop(L); // number of arguments
+  obj = new MatrixFloatSet();
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    lua_pushvalue(L, 1);
+    // stack now contains: -1 => table
+    lua_pushnil(L);
+    // stack now contains: -1 => nil; -2 => table
+    while (lua_next(L, -2)) {
+      // copy the key so that lua_tostring does not modify the original
+      lua_pushvalue(L, -2);
+      // stack now contains: -1 => value; -2 => key; -3 => table
+      const char *key = lua_tostring(L, -1);
+      // stack now contains: -1 => key; -2 => value; -3 => key; -4 => table
+      MatrixFloat *value = lua_toMatrixFloat(L, -2);
+      obj->insert(key, value);
+      // pop value + copy of key, leaving original key
+      lua_pop(L, 2);
+      // stack now contains: -1 => key; -2 => table
+    }
+    // stack now contains: -1 => table (when lua_next returns 0 it pops the key
+    // but does not push anything.)
+  }
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet size
+{
+  LUABIND_RETURN(int, obj->size());
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet insert
+{
+  const char *key;
+  MatrixFloat *m;
+  LUABIND_CHECK_ARGN(==, 2);
+  LUABIND_GET_PARAMETER(1, string, key);
+  LUABIND_GET_PARAMETER(2, MatrixFloat, m);
+  obj->insert(key, m);
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet find
+{
+  const char *key;
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_GET_PARAMETER(1, string, key);
+  MatrixFloat *m = obj->find(key);
+  if (m != 0) LUABIND_RETURN(MatrixFloat, m);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet fill
+{
+  float value;
+  LUABIND_GET_PARAMETER(1, float, value);
+  obj->fill(value);
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet scalar_add
+{
+  float value;
+  LUABIND_GET_PARAMETER(1, float, value);
+  obj->scalarAdd(value);
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet pow
+{
+  float value;
+  LUABIND_GET_PARAMETER(1, float, value);
+  obj->pow(value);
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet scal
+{
+  float value;
+  LUABIND_GET_PARAMETER(1, float, value);
+  obj->scal(value);
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet clamp
+{
+  float v1,v2;
+  LUABIND_GET_PARAMETER(1, float, v1);
+  LUABIND_GET_PARAMETER(2, float, v2);
+  obj->clamp(v1,v2);
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet zeros
+{
+  obj->zeros();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet ones
+{
+  obj->ones();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet plogp
+{
+  obj->plogp();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet log
+{
+  obj->log();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet log1p
+{
+  obj->log1p();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet exp
+{
+  obj->exp();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet sqrt
+{
+  obj->sqrt();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet tan
+{
+  obj->tan();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet tanh
+{
+  obj->tanh();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet atan
+{
+  obj->atan();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet atanh
+{
+  obj->atanh();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet cos
+{
+  obj->cos();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet cosh
+{
+  obj->cosh();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet acos
+{
+  obj->acos();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet acosh
+{
+  obj->acosh();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet sin
+{
+  obj->sin();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet sinh
+{
+  obj->sinh();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet asin
+{
+  obj->asin();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet asinh
+{
+  obj->asinh();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet abs
+{
+  obj->abs();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet complement
+{
+  obj->complement();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet sign
+{
+  obj->sign();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet inv
+{
+  obj->inv();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet prune_subnormal_and_check_normal
+{
+  obj->pruneSubnormalAndCheckNormal();
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet keys
+{
+  lua_createtable(L, 0, 0);
+  int i=1;
+  for (MatrixFloatSet::const_iterator it=obj->begin();
+       it != obj->end(); ++it, ++i) {
+    lua_pushnumber(L, i);
+    lua_pushstring(L, it->first.c_str());
+    lua_settable(L, -3);
+  }
+  LUABIND_INCREASE_NUM_RETURNS(1);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet axpy
+{
+  float alpha;
+  MatrixFloatSet *other;
+  LUABIND_GET_PARAMETER(1, float, alpha);
+  LUABIND_GET_PARAMETER(2, MatrixFloatSet, other);
+  obj->axpy(alpha, other);
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet copy
+{
+  MatrixFloatSet *other;
+  LUABIND_GET_PARAMETER(1, MatrixFloatSet, other);
+  obj->copy(other);
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet dot
+{
+  MatrixFloatSet *other;
+  LUABIND_GET_PARAMETER(1, MatrixFloatSet, other);
+  float dot_result = obj->dot(other);
+  LUABIND_RETURN(float, dot_result);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet clone
+{
+  MatrixFloatSet *cloned = obj->clone();
+  LUABIND_RETURN(MatrixFloatSet, cloned);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet clone_only_dims
+{
+  MatrixFloatSet *cloned = obj->cloneOnlyDims();
+  LUABIND_RETURN(MatrixFloatSet, cloned);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloatSet iterate
+{
+  LUABIND_CHECK_ARGN(==, 0);
+  LUABIND_RETURN(cfunction,matrixfloatset_iterator_function);
+  LUABIND_RETURN(MatrixFloatSetIteratorWrapper,
+		 new MatrixFloatSetIteratorWrapper(obj));
+}
+//BIND_END
+
+//BIND_LUACLASSNAME MatrixFloatSetIteratorWrapper matrix.dict.__iterator__
+//BIND_CPP_CLASS    MatrixFloatSetIteratorWrapper
+
+//BIND_CONSTRUCTOR MatrixFloatSetIteratorWrapper
+{
+  LUABIND_ERROR("Use matrix.dict.iterate method");
+}
+//BIND_END

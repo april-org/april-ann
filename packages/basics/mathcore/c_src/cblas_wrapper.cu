@@ -133,8 +133,13 @@ void doLog(unsigned int N,
   }
   else {
 #endif
+    float log_NZ = logf(NEAR_ZERO);
     float *v_mem = v->getPPALForReadAndWrite() + shift;
-    for (unsigned int i=0; i<N; ++i, v_mem += stride) *v_mem = logf(*v_mem);
+    for (unsigned int i=0; i<N; ++i, v_mem += stride) {
+      // TODO: implement this sanity check at CUBLAS
+      if (*v_mem > NEAR_ZERO || *v_mem < -NEAR_ZERO) *v_mem = logf(*v_mem);
+      else *v_mem = log_NZ;
+    }
 #ifdef USE_CUDA
   }
 #endif  

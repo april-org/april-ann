@@ -215,14 +215,17 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(names_prefix,
 				output = input_size,
 				transpose = true} )
   autoencoder_component:push(ann.components.actf[input_actf]{ name=names_prefix.."actf2" })
-  local weights_table = autoencoder_component:build()
+  local _,weights_table = autoencoder_component:build()
   for _,wname in ipairs({ names_prefix.."w",
 			  names_prefix.."b1",
 			  names_prefix.."b2" }) do
-    weights_table[wname]:randomize_weights{
-      random = weights_random,
-      inf    = -math.sqrt(6 / (input_size + cod_size)),
-      sup    =  math.sqrt(6 / (input_size + cod_size)) }
+    ann.connections.
+    randomize_weights(weights_table[wname],
+		      {
+			random = weights_random,
+			inf    = -math.sqrt(6 / (input_size + cod_size)),
+			sup    =  math.sqrt(6 / (input_size + cod_size))
+		      })
   end
   return autoencoder_component
 end
@@ -803,9 +806,9 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
     local b1obj = best_net:weights(params.names_prefix.."b1"):clone()
     local b2obj = best_net:weights(params.names_prefix.."b2"):clone()
     local wobj  = best_net:weights(params.names_prefix.."w"):clone()
-    local b1mat = b1obj:copy_to()
-    local b2mat = b2obj:copy_to()
-    local wmat  = wobj:copy_to()
+    local b1mat = ann.connections.copy_to(b1obj)
+    local b2mat = ann.connections.copy_to(b2obj)
+    local wmat  = ann.connections.copy_to(wobj)
     table.insert(weights, wmat)
     table.insert(bias, { b1mat, b2mat })
     --
@@ -840,8 +843,10 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 							 params.optimizer())
 	cod_trainer:build()
 	-- print("Load bias ", params.names_prefix .. "b")
-	cod_trainer:weights(params.names_prefix.."b"):load{ w = b1mat }
-	cod_trainer:weights(params.names_prefix.."w"):load{ w = wmat }
+	ann.connections.load(cod_trainer:weights(params.names_prefix.."b"),
+			     { w = b1mat })
+	ann.connections.load(cod_trainer:weights(params.names_prefix.."w"),
+			     { w = wmat })
 	if current_dataset_params.distribution then
 	  -- compute code for each distribution dataset
 	  for _,v in ipairs(current_dataset_params.distribution) do
@@ -1098,7 +1103,7 @@ function ann.autoencoders.iterative_sampling(t)
   local chain   = {}
   for i=1,params.max do
     params.model:reset()
-    output = params.model:forward(tokens.matrix(input))
+    output = params.model:forward(input)
     -- restore masked positions
     -- for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
     -- compute the loss of current iteration
@@ -1190,7 +1195,7 @@ function ann.autoencoders.sgd_sampling(t)
   local chain    = {}
   for i=1,params.max do
     params.model:reset()
-    output = params.model:forward(tokens.matrix(input)):clone()
+    output = params.model:forward(input):clone()
     -- restore masked positions
     -- for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
     -- compute the loss of current iteration
@@ -1211,14 +1216,14 @@ function ann.autoencoders.sgd_sampling(t)
     if params.verbose then printf("\n") end
     if last_L == 0 or imp < params.stop then break end
     -- GRADIENT DESCENT UPDATE OF INPUT VECTOR
-    --aux = params.noise:forward(tokens.matrix(input)):get_matrix()
+    --aux = params.noise:forward(input):get_matrix()
     ---- restore masked positions
     --for _,pos in ipairs(params.mask) do
     --aux:set(1,pos,input_rewrapped:get(1,pos))
     --end
     
     local gradient = params.model:backprop(params.loss:gradient(params.model:get_output(),
-								params.model:get_input())) -- tokens.matrix(aux)))
+								params.model:get_input()))
     -- local g = gradient:get_matrix():clone("row_major"):rewrap(16,16):pow(2):sqrt():clamp(0,1)
     -- matrix.saveImage(g, string.format("gradient-%04d.pnm", i))
     gradient = gradient:get_matrix()
@@ -1233,7 +1238,7 @@ function ann.autoencoders.sgd_sampling(t)
     last_L = L
     -- sample from noise distribution
     params.noise:reset()
-    input = params.noise:forward(tokens.matrix(input)):get_matrix()
+    input = params.noise:forward(input):get_matrix()
     -- restore masked positions
     for _,pos in ipairs(params.mask) do
       input:set(1,pos,input_rewrapped:get(1,pos))

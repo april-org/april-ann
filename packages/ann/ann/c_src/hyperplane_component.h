@@ -56,29 +56,23 @@ namespace ANN {
 
     virtual Token *doBackprop(Token *input_error);
     
-    virtual void reset();
+    virtual void reset(unsigned int it=0);
     
     virtual ANNComponent *clone();
     
     virtual void setUseCuda(bool v);
     
-    virtual void setOption(const char *name, double value);
-
-    virtual bool hasOption(const char *name);
-    
-    virtual double getOption(const char *name);
-    
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
-		       hash<string,Connections*> &weights_dict,
+		       MatrixFloatSet *weights_dict,
 		       hash<string,ANNComponent*> &components_dict);
     
-    virtual void copyWeights(hash<string,Connections*> &weights_dict);
+    virtual void copyWeights(MatrixFloatSet *weights_dict);
 
     virtual void copyComponents(hash<string,ANNComponent*> &components_dict);
     
     virtual ANNComponent *getComponent(string &name);
-    virtual void computeAllGradients(hash<string,MatrixFloat*> &weight_grads_dict);
+    virtual void computeAllGradients(MatrixFloatSet *weight_grads_dict);
     virtual void debugInfo() {
       ANNComponent::debugInfo();
       dot_product->debugInfo();

@@ -1,34 +1,35 @@
 -- un generador de valores aleatorios... y otros parametros
-bunch_size     = tonumber(arg[1]) or 64
+bunch_size     = tonumber(arg[1]) or 512
 semilla        = 1234
 weights_random = random(semilla)
 description    = "256 inputs 256 tanh 128 tanh 10 log_softmax"
 inf            = -1
 sup            =  1
 shuffle_random = random(5678)
-learning_rate  = 0.08
-momentum       = 0.01
+rho            = 0.001
+sig            = 0.8
 weight_decay   = 1e-05
 max_epochs     = 10
 
 -- training and validation
-errors = {
-  {2.2762842, 2.0276833},
-  {1.6794761, 1.2444804},
-  {0.9245928, 0.6157830},
-  {0.5167769, 0.3807266},
-  {0.3109381, 0.3248250},
-  {0.2184281, 0.2167415},
-  {0.1626369, 0.1783843},
-  {0.1271410, 0.1495624},
-  {0.1077118, 0.1718368},
-  {0.0960633, 0.1591717},
-}
-epsilon = 1e-04
+errors = matrix.fromString[[10 2
+ascii
+2.4257019 2.2666397
+2.2404771 2.0808170
+2.0071127 1.5948118
+1.4796402 1.0622932
+0.9099334 0.6604984
+0.5221485 0.4503360
+0.3342607 0.3491776
+0.2382729 0.2637241
+0.1805640 0.2074246
+0.1439983 0.1729773
+]]
+epsilon = 0.1
 
 --------------------------------------------------------------
 
-m1 = ImageIO.read(string.get_path(arg[0]) .. "digits.png"):to_grayscale():invert_colors():matrix()
+m1 = ImageIO.read(string.get_path(arg[0]) .. "../../ann/test/digits.png"):to_grayscale():invert_colors():matrix()
 train_input = dataset.matrix(m1,
 			     {
 			       patternSize = {16,16},
@@ -76,14 +77,10 @@ thenet = ann.mlp.all_all.generate(description)
 if util.is_cuda_available() then thenet:set_use_cuda(true) end
 trainer = trainable.supervised_trainer(thenet,
 				       ann.loss.multi_class_cross_entropy(10),
-				       bunch_size)
+				       bunch_size,
+				       ann.optimizer.quickprop())
 trainer:build()
-
-trainer:set_option("learning_rate", learning_rate)
-trainer:set_option("momentum",      momentum)
-trainer:set_option("weight_decay",  weight_decay)
--- bias has weight_decay of ZERO
-trainer:set_layerwise_option("b.", "weight_decay", 0)
+trainer:set_option("learning_rate", 0.1)
 
 trainer:randomize_weights{
   random      = weights_random,
@@ -120,16 +117,16 @@ for epoch = 1,max_epochs do
   errorval,varval      = trainer:validate_dataset(datosvalidar)
   printf("%4d  %.7f %.7f :: %.7f %.7f\n",
   	 totalepocas,errortrain,errorval,vartrain,varval)
- if math.abs(errortrain - errors[epoch][1]) > epsilon then
-   error(string.format("Training error %g is not equal enough to "..
-			  "reference error %g",
-			errortrain, errors[epoch][1]))
- end
- if math.abs(errorval - errors[epoch][2]) > epsilon then
-   error(string.format("Validation error %g is not equal enough to "..
-			  "reference error %g",
-			errorval, errors[epoch][2]))
- end
+  if math.abs(errortrain - errors:get(epoch,1)) > epsilon then
+    error(string.format("Training error %g is not equal enough to "..
+  			  "reference error %g",
+  			errortrain, errors:get(epoch,1)))
+  end
+  if math.abs(errorval - errors:get(epoch,2)) > epsilon then
+    error(string.format("Validation error %g is not equal enough to "..
+  			  "reference error %g",
+  			errorval, errors:get(epoch,2)))
+  end
 end
 
 clock:stop()

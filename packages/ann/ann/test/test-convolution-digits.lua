@@ -156,22 +156,21 @@ if check_grandients then
 			     })
 end
 
-trainer:for_each_pattern{
-  input_dataset = datosvalidar.input_dataset,
-  bunch_size    = 1,
-  func = function(idxs, trainer)
-    local c = trainer:component("pool-1")
-    local o = c:get_output():get_matrix()
-    local d = o:dim()
-    local k = 0
-    for w in o:sliding_window{ size={1,1,d[3],d[4]}, step={1,1,1,1},
-			       numSteps={d[1], d[2], 1, 1} }:iterate() do
-      local img = w:clone():rewrap(d[3]*d[4]):clone("row_major"):rewrap(d[3],d[4])
-      matrix.saveImage(img:adjust_range(0,1), "/tmp/WW-".. idxs[1] .. "-"..k..".pnm")
-      k=k+1
-    end
+for input in trainable.dataset_multiple_iterator{
+  datasets   = { datosvalidar.input_dataset },
+  bunch_size = 1, } do
+  trainer:calculate(input)
+  local c = trainer:component("pool-1")
+  local o = c:get_output():get_matrix()
+  local d = o:dim()
+  local k = 0
+  for w in o:sliding_window{ size={1,1,d[3],d[4]}, step={1,1,1,1},
+			     numSteps={d[1], d[2], 1, 1} }:iterate() do
+    local img = w:clone():rewrap(d[3]*d[4]):clone("row_major"):rewrap(d[3],d[4])
+    matrix.saveImage(img:adjust_range(0,1), "/tmp/WW-".. idxs[1] .. "-"..k..".pnm")
+    k=k+1
   end
-}
+end
 
 totalepocas = 0
 

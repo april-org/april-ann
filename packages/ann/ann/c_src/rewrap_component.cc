@@ -100,7 +100,8 @@ namespace ANN {
     return error_output;
   }
   
-  void RewrapANNComponent::reset() {
+  void RewrapANNComponent::reset(unsigned int it) {
+    UNUSED_VARIABLE(it);
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);
@@ -120,7 +121,7 @@ namespace ANN {
   
   void RewrapANNComponent::build(unsigned int _input_size,
 				 unsigned int _output_size,
-				 hash<string,Connections*> &weights_dict,
+				 MatrixFloatSet *weights_dict,
 				 hash<string,ANNComponent*> &components_dict) {
     unsigned int sz = 1;
     for (int i=1; i<this->n; ++i) sz *= rewrap_dims[i];

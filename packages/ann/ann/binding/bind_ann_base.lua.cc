@@ -32,7 +32,10 @@ static bool rewrapToAtLeastDim2(Token *&tk) {
     MatrixFloat *m = tk_mat->getMatrix();
     if (m->getNumDim() == 1) {
       int dims[2] = { 1, m->getDimSize(0) };
-      tk = new TokenMatrixFloat(m->rewrap(dims, 2));
+      Token *new_tk = new TokenMatrixFloat(m->rewrap(dims, 2));
+      IncRef(new_tk);
+      DecRef(tk);
+      tk = new_tk;
       return true;
     }
   }
@@ -45,7 +48,7 @@ static void unwrapToDim1(Token *&tk) {
     MatrixFloat *m = tk_mat->getMatrix();
     int dim = m->getDimSize(1);
     MatrixFloat *new_m = m->rewrap(&dim, 1);
-    tk = new TokenMatrixFloat(new_m);
+    Token *tk = new TokenMatrixFloat(new_m);
   }
 }
 
@@ -75,8 +78,6 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "rewrap_component.h"
 #include "slice_component.h"
 #include "flatten_component.h"
-#include "gaussian_noise_component.h"
-#include "salt_and_pepper_component.h"
 #include "convolution_component.h"
 #include "convolution_bias_component.h"
 #include "maxpooling_component.h"
@@ -94,7 +95,11 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "hardtanh_actf_component.h"
 #include "sin_actf_component.h"
 #include "linear_actf_component.h"
+#include "gaussian_noise_component.h"
+#include "salt_and_pepper_component.h"
+#include "dropout_component.h"
 #include "bind_function_interface.h"
+#include "error_print.h"
 
 using namespace Functions;
 using namespace ANN;
@@ -105,10 +110,7 @@ using namespace ANN;
 //                  Connections                    //
 /////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME Connections ann.connections
-//BIND_CPP_CLASS    Connections
-
-//BIND_CONSTRUCTOR Connections
+//BIND_FUNCTION ann.connections
 {
   LUABIND_CHECK_ARGN(==,1);
   LUABIND_CHECK_PARAMETER(1, table);
@@ -120,97 +122,76 @@ using namespace ANN;
   LUABIND_GET_TABLE_PARAMETER(1, input, uint, input_size);
   LUABIND_GET_TABLE_PARAMETER(1, output, uint, output_size);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, w, MatrixFloat, w, 0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, w);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, 0);
+  if (oldw != 0) ERROR_PRINT("oldw field is deprecated\n");
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, first_pos, uint, first_pos, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, column_size, uint, column_size,
 				       input_size);
-  if (oldw && !w) LUABIND_ERROR("Parameter w is mandatory with oldw!!!\n");
-  if (w && w->getMajorOrder() == CblasColMajor)
-    obj=new Connections(input_size, output_size, w, oldw);
+  //
+  MatrixFloat *obj;
+  if (w && w->getMajorOrder() == CblasColMajor) obj = w->clone();
   else {
-    obj=new Connections(input_size, output_size);
-    if (w) obj->loadWeights(w, oldw, first_pos, column_size);
+    obj = Connections::build(input_size, output_size);
+    if (w) Connections::loadWeights(obj, w, first_pos, column_size);
   }
-  LUABIND_RETURN(Connections, obj);
+  LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END
 
-//BIND_METHOD Connections clone
+//BIND_FUNCTION ann.connections.to_lua_string
 {
-  Connections *cnn = obj->clone();
-  LUABIND_RETURN(Connections, cnn);
-}
-//BIND_END
-
-//BIND_METHOD Connections swap
-{
-  obj->swap();
-}
-//BIND_END
-
-//BIND_METHOD Connections get_shared_count
-{
-  LUABIND_RETURN(uint, obj->getSharedCount());
-}
-//BIND_END
-
-//BIND_METHOD Connections set_shared_count
-{
-  unsigned int count;
-  LUABIND_GET_PARAMETER(1,uint,count);
-  obj->resetSharedCount();
-  obj->addToSharedCount(count);
-}
-//BIND_END
-
-//BIND_METHOD Connections to_lua_string
-{
-  char *str = obj->toLuaString();
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1,MatrixFloat);
+  MatrixFloat *obj;
+  LUABIND_GET_PARAMETER(1, MatrixFloat, obj);
+  char *str = Connections::toLuaString(obj);
   LUABIND_RETURN(string, str);
   delete[] str;
 }
 //BIND_END
 
-//BIND_METHOD Connections load
+//BIND_FUNCTION ann.connections.load
 {
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_CHECK_PARAMETER(1,table);
-  check_table_fields(L, 1, "w", "oldw", "first_pos", "column_size",
+  LUABIND_CHECK_ARGN(==,2);
+  LUABIND_CHECK_PARAMETER(1,MatrixFloat);
+  LUABIND_CHECK_PARAMETER(2,table);
+  check_table_fields(L, 2, "w", "oldw", "first_pos", "column_size",
 		     (const char *)0);
-
+  
   unsigned int	 first_pos, column_size;
-  MatrixFloat	*w, *oldw;
+  MatrixFloat	*w, *oldw, *obj;
   
-  LUABIND_GET_TABLE_PARAMETER(1, w, MatrixFloat, w);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, w);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, first_pos, uint, first_pos, 0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, column_size, uint, column_size,
-				       obj->getNumInputs());
-
-  LUABIND_RETURN(uint, obj->loadWeights(w, oldw, first_pos, column_size));
+  LUABIND_GET_PARAMETER(1, MatrixFloat, obj);
+  
+  LUABIND_GET_TABLE_PARAMETER(2, w, MatrixFloat, w);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(2, oldw, MatrixFloat, oldw, 0);
+  if (oldw != 0) ERROR_PRINT("oldw field is deprecated\n");
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(2, first_pos, uint, first_pos, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(2, column_size, uint, column_size,
+				       Connections::getNumInputs(obj));
+  LUABIND_RETURN(uint, Connections::loadWeights(obj, w, first_pos, column_size));
 }
 //BIND_END
 
-//BIND_METHOD Connections prune_subnormal_and_check_normal
+//BIND_FUNCTION ann.connections.copy_to
 {
-  obj->pruneSubnormalAndCheckNormal();
-}
-//BIND_END
-
-//BIND_METHOD Connections copy_to
-{
-  LUABIND_CHECK_ARGN(<=,1);
+  LUABIND_CHECK_ARGN(>=,1);
+  LUABIND_CHECK_ARGN(<=,2);
+  LUABIND_CHECK_PARAMETER(1, MatrixFloat);
+  
   int argn = lua_gettop(L);
-  unsigned int  first_pos=0, column_size=obj->getNumInputs();
-  MatrixFloat  *w=0, *oldw=0;
+  MatrixFloat *w=0, *oldw=0, *obj;
+  LUABIND_GET_PARAMETER(1, MatrixFloat, obj);
+  unsigned int first_pos=0, column_size=Connections::getNumInputs(obj);
   
-  if (argn == 1) {
-    LUABIND_CHECK_PARAMETER(1,table);
-    check_table_fields(L, 1, "w", "oldw", "first_pos", "column_size",
+  if (argn == 2) {
+    LUABIND_CHECK_PARAMETER(2,table);
+    check_table_fields(L, 2, "w", "oldw", "first_pos", "column_size",
 		       (const char *)0);
 
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, w, MatrixFloat, w, w);
-    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, w);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, oldw, MatrixFloat, oldw, 0);
+    if (oldw != 0) ERROR_PRINT("oldw field is deprecated\n");
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, first_pos, uint, first_pos,
 					 first_pos);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, column_size, uint, column_size,
@@ -219,64 +200,53 @@ using namespace ANN;
 
   int size = static_cast<int>(obj->size());
   if (!w)    w    = new MatrixFloat(1, first_pos + size);
-  if (!oldw) oldw = new MatrixFloat(1, w->size());
   
-  if (first_pos + obj->size() > static_cast<unsigned int>(w->size()) ||
-      first_pos + obj->size() > static_cast<unsigned int>(oldw->size()) )
+  if (first_pos + obj->size() > static_cast<unsigned int>(w->size()))
     LUABIND_ERROR("Incorrect matrix size!!\n");
 
-  unsigned int lastpos = obj->copyWeightsTo(w, oldw, first_pos, column_size);
+  unsigned int lastpos;
+  lastpos = Connections::copyWeightsTo(obj, w, first_pos, column_size);
   LUABIND_RETURN(MatrixFloat, w);
-  LUABIND_RETURN(MatrixFloat, oldw);
   LUABIND_RETURN(uint, lastpos);
 }
 //BIND_END
 
-//BIND_METHOD Connections matrix
+//BIND_FUNCTION ann.connections.get_input_size
 {
-  LUABIND_RETURN(MatrixFloat, obj->getPtr());
-  LUABIND_RETURN(MatrixFloat, obj->getPrevPtr());
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, MatrixFloat);
+  MatrixFloat *obj;
+  LUABIND_GET_PARAMETER(1, MatrixFloat, obj);
+  LUABIND_RETURN(uint, Connections::getInputSize(obj));
 }
 //BIND_END
 
-//BIND_METHOD Connections size
+//BIND_FUNCTION ann.connections.get_output_size
 {
-  LUABIND_RETURN(uint, obj->size());
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, MatrixFloat);
+  MatrixFloat *obj;
+  LUABIND_GET_PARAMETER(1, MatrixFloat, obj);
+  LUABIND_RETURN(uint, Connections::getOutputSize(obj));
 }
 //BIND_END
 
-//BIND_METHOD Connections get_input_size
+//BIND_FUNCTION ann.connections.randomize_weights
 {
-  LUABIND_RETURN(uint, obj->getInputSize());
-}
-//BIND_END
-
-//BIND_METHOD Connections get_output_size
-{
-  LUABIND_RETURN(uint, obj->getOutputSize());
-}
-//BIND_END
-
-//BIND_METHOD Connections randomize_weights
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, table);
-  check_table_fields(L, 1, "random", "inf", "sup", (const char *)0);
+  LUABIND_CHECK_ARGN(==, 2);
+  LUABIND_CHECK_PARAMETER(1, MatrixFloat);
+  LUABIND_CHECK_PARAMETER(2, table);
+  check_table_fields(L, 2, "random", "inf", "sup", (const char *)0);
   MTRand *rnd;
   float inf, sup;
   bool use_fanin;
-  LUABIND_GET_TABLE_PARAMETER(1, random, MTRand, rnd);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, inf, float, inf, -1.0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, sup, float,  sup, 1.0);
-  obj->randomizeWeights(rnd, inf, sup);
-  LUABIND_RETURN(Connections, obj);
-}
-//BIND_END
-
-//BIND_METHOD Connections print_debug
-{
-  obj->printDebug();
-  LUABIND_RETURN(Connections, obj);
+  MatrixFloat *obj;
+  LUABIND_GET_PARAMETER(1, MatrixFloat, obj);
+  LUABIND_GET_TABLE_PARAMETER(2, random, MTRand, rnd);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(2, inf, float, inf, -1.0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(2, sup, float,  sup, 1.0);
+  Connections::randomizeWeights(obj, rnd, inf, sup);
+  LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END
 
@@ -340,7 +310,7 @@ using namespace ANN;
 }
 //BIND_END
 
-//BIND_METHOD ANNComponent has_weigths_name
+//BIND_METHOD ANNComponent has_weights_name
 {
   LUABIND_RETURN(bool, obj->hasWeightsName());
 }
@@ -355,51 +325,6 @@ using namespace ANN;
 //BIND_METHOD ANNComponent debug_info
 {
   obj->debugInfo();
-}
-//BIND_END
-
-//BIND_METHOD ANNComponent set_option
-//DOC_BEGIN
-// set_option(name, value)
-/// Method to modify the value of a given option name.
-/// @param name A lua string with the name of the option.
-/// @param value A lua number with the desired value.
-//DOC_END
-{
-  const char *name;
-  double value;
-  LUABIND_CHECK_ARGN(==,2);
-  LUABIND_GET_PARAMETER(1, string, name);
-  LUABIND_GET_PARAMETER(2, double, value);
-  obj->setOption(name, value);
-}
-//BIND_END
-
-//BIND_METHOD ANNComponent get_option
-//DOC_BEGIN
-// get_option(name)
-/// Method to retrieve the value of a given option name.
-/// @param name A lua string with the name of the option.
-//DOC_END
-{
-  const char *name;
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_GET_PARAMETER(1, string, name);
-  LUABIND_RETURN(double, obj->getOption(name));
-}
-//BIND_END
-
-//BIND_METHOD ANNComponent has_option
-//DOC_BEGIN
-// has_option(name)
-/// Method to ask for the existence of a given option name.
-/// @param name A lua string with the name of the option.
-//DOC_END
-{
-  const char *name;
-  LUABIND_CHECK_ARGN(==,1);
-  LUABIND_GET_PARAMETER(1, string, name);
-  LUABIND_RETURN(bool, obj->hasOption(name));
 }
 //BIND_END
 
@@ -476,12 +401,14 @@ using namespace ANN;
   bool during_training;
   LUABIND_CHECK_ARGN(>=, 1);
   LUABIND_CHECK_ARGN(<=, 2);
-  LUABIND_GET_PARAMETER(1, Token, input);
+  LUABIND_GET_PARAMETER(1, AuxToken, input);
   LUABIND_GET_OPTIONAL_PARAMETER(2, bool, during_training, false);
+  IncRef(input);
   bool rewrapped = rewrapToAtLeastDim2(input);
   Token *output = obj->doForward(input, during_training);
   if (rewrapped) unwrapToDim1(output);
   LUABIND_RETURN(Token, output);
+  DecRef(input);
 }
 //BIND_END
 
@@ -489,7 +416,8 @@ using namespace ANN;
 {
   Token *input;
   LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_GET_PARAMETER(1, Token, input);
+  LUABIND_GET_PARAMETER(1, AuxToken, input);
+  IncRef(input);
   bool rewrapped = rewrapToAtLeastDim2(input);
   Token *gradient = obj->doBackprop(input);
   if (gradient != 0) {
@@ -497,12 +425,15 @@ using namespace ANN;
     LUABIND_RETURN(Token, gradient);
   }
   else LUABIND_RETURN_NIL();
+  DecRef(input);
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent reset
 {
-  obj->reset();
+  unsigned int it;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, int, it, 0);
+  obj->reset(it);
 }
 //BIND_END
 
@@ -510,35 +441,14 @@ using namespace ANN;
 {
   LUABIND_CHECK_ARGN(<=, 1);
   int argn = lua_gettop(L);
-  hash<string,MatrixFloat*> weight_grads_dict;
-  if (argn == 1) {
-    if (lua_istable(L, 1)) {
-      lua_pushvalue(L, 1);
-      // stack now contains: -1 => table
-      lua_pushnil(L);
-      // stack now contains: -1 => nil; -2 => table
-      while (lua_next(L, -2)) {
-	// copy the key so that lua_tostring does not modify the original
-	lua_pushvalue(L, -2);
-	// stack now contains: -1 => value; -2 => key; -3 => table
-	string key(lua_tostring(L, -1));
-	// stack now contains: -1 => key; -2 => value; -3 => key; -4 => table
-	MatrixFloat *value     = lua_toMatrixFloat(L, -2);
-	weight_grads_dict[key] = value;
-	// pop value + copy of key, leaving original key
-	lua_pop(L, 2);
-	// stack now contains: -1 => key; -2 => table
-      }
-      // stack now contains: -1 => table (when lua_next returns 0 it pops the key
-      // but does not push anything.)
-    }
-    else if (!lua_isnil(L, 1))
-      LUABIND_ERROR("Expected a table with a dictionary of weights matrices");
-  }
+  MatrixFloatSet *weight_grads_dict;
+  if (argn == 1)
+    LUABIND_GET_PARAMETER(1, MatrixFloatSet, weight_grads_dict);
+  else
+    weight_grads_dict = new MatrixFloatSet();
   //
   obj->computeAllGradients(weight_grads_dict);
-  pushHashTableInLuaStack(L, weight_grads_dict, lua_pushMatrixFloat);
-  LUABIND_RETURN_FROM_STACK(-1);
+  LUABIND_RETURN(MatrixFloatSet, weight_grads_dict);
 }
 //BIND_END
 
@@ -569,56 +479,32 @@ using namespace ANN;
   LUABIND_CHECK_ARGN(<=, 1);
   int argn = lua_gettop(L);
   unsigned int input_size=0, output_size=0;
-  hash<string,Connections*> weights_dict;
+  MatrixFloatSet *weights_dict = 0;
   hash<string,ANNComponent*> components_dict;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
     check_table_fields(L, 1, "input", "output", "weights", (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, input, uint, input_size, 0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, output, uint, output_size, 0);
-    lua_getfield(L, 1, "weights");
-    if (lua_istable(L, -1)) {
-      lua_pushvalue(L, -1);
-      // stack now contains: -1 => table
-      lua_pushnil(L);
-      // stack now contains: -1 => nil; -2 => table
-      while (lua_next(L, -2)) {
-	// copy the key so that lua_tostring does not modify the original
-	lua_pushvalue(L, -2);
-	// stack now contains: -1 => value; -2 => key; -3 => table
-	string key(lua_tostring(L, -1));
-	// stack now contains: -1 => key; -2 => value; -3 => key; -4 => table
-	Connections *value = lua_toConnections(L, -2);
-	weights_dict[key]  = value;
-	// pop value + copy of key, leaving original key
-	lua_pop(L, 2);
-	// stack now contains: -1 => key; -2 => table
-      }
-      // stack now contains: -1 => table (when lua_next returns 0 it pops the key
-      // but does not push anything.)
-    }
-    else if (!lua_isnil(L, -1))
-      LUABIND_ERROR("Expected a table at field weights");
-    // Pop table or nil value
-    lua_pop(L, 1);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights,
+					 MatrixFloatSet, weights_dict, 0);
   }
+  if (weights_dict == 0) weights_dict = new MatrixFloatSet();
   //
   obj->build(input_size, output_size, weights_dict, components_dict);
   //
-  pushHashTableInLuaStack(L, components_dict, lua_pushANNComponent);
-  LUABIND_RETURN_FROM_STACK(-1);
-  pushHashTableInLuaStack(L, weights_dict, lua_pushConnections);
-  LUABIND_RETURN_FROM_STACK(-2);
   LUABIND_RETURN(ANNComponent, obj);
+  LUABIND_RETURN(MatrixFloatSet, weights_dict);
+  pushHashTableInLuaStack(L, components_dict, lua_pushANNComponent);
+  LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent copy_weights
 {
-  hash<string,Connections*> weights_dict;
+  MatrixFloatSet *weights_dict = new MatrixFloatSet();
   obj->copyWeights(weights_dict);
-  pushHashTableInLuaStack(L, weights_dict, lua_pushConnections);
-  LUABIND_RETURN_FROM_STACK(-1);
+  LUABIND_RETURN(MatrixFloatSet, weights_dict);
 }
 //BIND_END
 
@@ -825,7 +711,7 @@ using namespace ANN;
     if (idx >= obj->size())
       LUABIND_FERROR2("Incorrect index, expected <= %d, found %d\n",
 		      obj->size(), idx+1);
-    LUABIND_RETURN(ANNComponent, obj->getComponentAt(i));
+    LUABIND_RETURN(ANNComponent, obj->getComponentAt(idx));
   }
 }
 //BIND_END
@@ -1087,77 +973,6 @@ using namespace ANN;
 //BIND_END
 
 /////////////////////////////////////////////////////
-//               GaussianNoiseANNComponent         //
-/////////////////////////////////////////////////////
-
-//BIND_LUACLASSNAME GaussianNoiseANNComponent ann.components.gaussian_noise
-//BIND_CPP_CLASS    GaussianNoiseANNComponent
-//BIND_SUBCLASS_OF  GaussianNoiseANNComponent ANNComponent
-
-//BIND_CONSTRUCTOR GaussianNoiseANNComponent
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, table);
-  const char *name=0;
-  float mean, var;
-  unsigned int size=0;
-  MTRand *random;
-  check_table_fields(L, 1, "size", "random", "mean", "var", "name",
-		     (const char *)0);
-  LUABIND_GET_TABLE_PARAMETER(1, random, MTRand, random);
-  LUABIND_GET_TABLE_PARAMETER(1, mean, float, mean);
-  LUABIND_GET_TABLE_PARAMETER(1, var, float, var);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, 0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
-  obj = new GaussianNoiseANNComponent(random, mean, var, name, size);
-  LUABIND_RETURN(GaussianNoiseANNComponent, obj);
-}
-//BIND_END
-
-//BIND_METHOD GaussianNoiseANNComponent clone
-{
-  LUABIND_RETURN(GaussianNoiseANNComponent,
-		 dynamic_cast<GaussianNoiseANNComponent*>(obj->clone()));
-}
-//BIND_END
-
-/////////////////////////////////////////////////////
-//               SaltAndPepperANNComponent         //
-/////////////////////////////////////////////////////
-
-//BIND_LUACLASSNAME SaltAndPepperANNComponent ann.components.salt_and_pepper
-//BIND_CPP_CLASS    SaltAndPepperANNComponent
-//BIND_SUBCLASS_OF  SaltAndPepperANNComponent ANNComponent
-
-//BIND_CONSTRUCTOR SaltAndPepperANNComponent
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, table);
-  const char *name=0;
-  float zero, one, prob;
-  unsigned int size=0;
-  MTRand *random;
-  check_table_fields(L, 1, "size", "random", "one", "zero", "prob", "name",
-		     (const char *)0);
-  LUABIND_GET_TABLE_PARAMETER(1, random, MTRand, random);
-  LUABIND_GET_TABLE_PARAMETER(1, prob, float, prob);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, zero, float,  zero, 0.0f);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, one,  float,  one,  1.0f);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint,   size, 0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
-  obj = new SaltAndPepperANNComponent(random, zero, one, prob, name, size);
-  LUABIND_RETURN(SaltAndPepperANNComponent, obj);
-}
-//BIND_END
-
-//BIND_METHOD SaltAndPepperANNComponent clone
-{
-  LUABIND_RETURN(SaltAndPepperANNComponent,
-		 dynamic_cast<SaltAndPepperANNComponent*>(obj->clone()));
-}
-//BIND_END
-
-/////////////////////////////////////////////////////
 //               ConvolutionANNComponent           //
 /////////////////////////////////////////////////////
 
@@ -1306,6 +1121,155 @@ using namespace ANN;
 		 dynamic_cast<MaxPoolingANNComponent*>(obj->clone()));
 }
 //BIND_END
+
+/////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME StochasticANNComponent ann.components.stochastic
+//BIND_CPP_CLASS    StochasticANNComponent
+//BIND_SUBCLASS_OF  StochasticANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR StochasticANNComponent
+{
+  LUABIND_ERROR("Abstract class!!!");
+}
+//BIND_END
+
+//BIND_METHOD StochasticANNComponent set_random
+{
+  MTRand *random;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, MTRand);
+  LUABIND_GET_PARAMETER(1, MTRand, random);
+  obj->setRandom(random);
+  LUABIND_RETURN(StochasticANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD StochasticANNComponent get_random
+{
+  LUABIND_RETURN(MTRand, obj->getRandom());
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//               GaussianNoiseANNComponent         //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME GaussianNoiseANNComponent ann.components.gaussian_noise
+//BIND_CPP_CLASS    GaussianNoiseANNComponent
+//BIND_SUBCLASS_OF  GaussianNoiseANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR GaussianNoiseANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  float mean=0.0f, var=0.1f;
+  unsigned int size=0;
+  MTRand *random=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "size", "random", "mean", "var", "name",
+		       (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, random, MTRand, random, random);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, mean, float, mean, mean);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, var, float, var, var);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, size);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, name);
+  }
+  if (!random) random = new MTRand();
+  obj = new GaussianNoiseANNComponent(random, mean, var, name, size);
+  LUABIND_RETURN(GaussianNoiseANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD GaussianNoiseANNComponent clone
+{
+  LUABIND_RETURN(GaussianNoiseANNComponent,
+		 dynamic_cast<GaussianNoiseANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//               SaltAndPepperANNComponent         //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME SaltAndPepperANNComponent ann.components.salt_and_pepper
+//BIND_CPP_CLASS    SaltAndPepperANNComponent
+//BIND_SUBCLASS_OF  SaltAndPepperANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR SaltAndPepperANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  float zero=0.0f, one=1.0f, prob=0.2f;
+  unsigned int size=0;
+  MTRand *random=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "size", "random", "one", "zero", "prob", "name",
+		       (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, random, MTRand, random, random);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, prob, float, prob, prob);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, zero, float,  zero, zero);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, one,  float,  one,  one);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint,   size, size);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, name);
+  }
+  if (!random) random = new MTRand();  
+  obj = new SaltAndPepperANNComponent(random, zero, one, prob, name, size);
+  LUABIND_RETURN(SaltAndPepperANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD SaltAndPepperANNComponent clone
+{
+  LUABIND_RETURN(SaltAndPepperANNComponent,
+		 dynamic_cast<SaltAndPepperANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+////////////////////////////////////////////////////
+//              DropoutANNComponent               //
+////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME DropoutANNComponent ann.components.dropout
+//BIND_CPP_CLASS    DropoutANNComponent
+//BIND_SUBCLASS_OF  DropoutANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR DropoutANNComponent
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  int argn = lua_gettop(L);
+  const char *name=0;
+  float prob=0.5f, value=0.0f;
+  unsigned int size=0;
+  MTRand *random=0;
+  if (argn == 1) {
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L, 1, "name", "size", "prob", "value", "random",
+		       (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, name);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, size);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, prob, float, prob, prob);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, value, float, value, value);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, random, MTRand, random, random);
+  }
+  if (!random) random = new MTRand();
+  obj = new DropoutANNComponent(random, value, prob, name, size);
+  LUABIND_RETURN(DropoutANNComponent, obj);  
+}
+//BIND_END
+
+//BIND_METHOD SaltAndPepperANNComponent clone
+{
+  LUABIND_RETURN(DropoutANNComponent,
+		 dynamic_cast<DropoutANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////
 //         ActivationFunctionANNComponent          //

@@ -30,6 +30,7 @@ namespace april_utils {
     string &operator=(const string &other);
     string &operator+=(const string &other);
     void append(const string &other);
+    operator const char *() const { return c_str(); }
     bool operator==(const string &other) const;
     bool operator<(const string &other)  const;
     bool operator<=(const string &other) const;

@@ -1,5 +1,55 @@
 local COLWIDTH=70
 
+------------------------------------------------------------------------------
+
+local setmetatable = setmetatable
+local getmetatable = getmetatable
+local string = string
+local table = table
+local math = math
+local pairs = pairs
+local ipairs = ipairs
+local assert = assert
+
+------------------------------------------------------------------------------
+
+function april_assert(condition, ...)
+   if not condition then
+     if next({...}) then
+       local s,r = pcall(function (...) return(string.format(...)) end, ...)
+         if s then
+	   error("assertion failed!: " .. r, 2)
+         end
+      end
+     error("assertion failed!", 2)
+   end
+   return condition
+end
+
+------------------------------------------------------------------------------
+
+local LUA_BIND_CPP_PROPERTIES = {}
+setmetatable(LUA_BIND_CPP_PROPERTIES, { mode='k' }) -- table with weak keys
+
+function has_lua_properties_table(obj)
+  assert(luatype(obj)=="userdata", "This functions only works with userdata")
+  return LUA_BIND_CPP_PROPERTIES[obj]
+end
+
+function get_lua_properties_table(obj)
+  assert(luatype(obj)=="userdata", "This functions only works with userdata")
+  LUA_BIND_CPP_PROPERTIES[obj] = LUA_BIND_CPP_PROPERTIES[obj] or {}
+  return LUA_BIND_CPP_PROPERTIES[obj]
+end
+
+function set_lua_properties_table(obj, t)
+  assert(luatype(obj)=="userdata", "This functions only works with userdata")
+  LUA_BIND_CPP_PROPERTIES[obj] = t
+  return obj
+end
+
+------------------------------------------------------------------------------
+
 function class_get(class_table, key)
   if class_table.meta_instance and
   luatype(class_table.meta_instance.__index) == "table" then
@@ -730,42 +780,57 @@ local valid_get_table_fields_params_attributes = { type_match = true,
 						   mandatory  = true,
 						   getter     = true,
 						   default    = true }
-function get_table_fields(params, t)
+function get_table_fields(params, t, ignore_other_fields)
+  local isa = isa
+  local type = type
+  local pairs = pairs
+  local ipairs = ipairs
+  local luatype = luatype
+  --
   local params = params or {}
   local t      = t or {}
   local ret    = {}
   for key,value in pairs(t) do
-    if not params[key] then error("Unknown field: " .. key) end
+    if not params[key] then
+      if ignore_other_fields then
+	ret[key] = value
+      else
+	error("Unknown field: " .. key)
+      end
+    end
   end
   for key,data in pairs(params) do
-    local data = data or {}
-    for k,_ in pairs(data) do
-      if not valid_get_table_fields_params_attributes[k] then
-	error("Incorrect parameter to function get_table_fields: " .. k)
+    if params[key] then
+      local data = data or {}
+      for k,_ in pairs(data) do
+	if not valid_get_table_fields_params_attributes[k] then
+	  error("Incorrect parameter to function get_table_fields: " .. k)
+	end
       end
-    end
-    -- each param has type_match, mandatory, default, and getter
-    local v = t[key] or data.default
-    if v == nil and data.mandatory then
-      error("Mandatory field not found: " .. key)
-    end
-    if v ~= nil and data.type_match and (luatype(v) ~= data.type_match or type(v) ~= data.type_match) then
-      if data.type_match ~= "function" or (luatype(v) == "table" and not v.__call) then
-	error("Incorrect type '" .. type(v) .. "' for field '" .. key .. "'")
+      -- each param has type_match, mandatory, default, and getter
+      local v = t[key] or data.default
+      if v == nil and data.mandatory then
+	error("Mandatory field not found: " .. key)
       end
-    end
-    if v ~= nil and data.isa_match and not isa(v, data.isa_match) then
-      error("Incorrect field isa_match predicate: " .. key)
-    end
-    if data.getter then v=(t[key]~=nil and data.getter(t[key])) or nil end
-    ret[key] = v
-  end
+      if v ~= nil and data.type_match and (luatype(v) ~= data.type_match or type(v) ~= data.type_match) then
+	if data.type_match ~= "function" or (luatype(v) == "table" and not v.__call) then
+	  error("Incorrect type '" .. type(v) .. "' for field '" .. key .. "'")
+	end
+      end
+      if v ~= nil and data.isa_match and not isa(v, data.isa_match) then
+	error("Incorrect field isa_match predicate: " .. key)
+      end
+      if data.getter then v=(t[key]~=nil and data.getter(t[key])) or nil end
+      ret[key] = v
+    end  -- if params[key] then ...
+  end -- for key,data in pairs(params) ...
   return ret
 end
 
 function get_table_fields_ipairs(...)
   local arg = table.pack(...)
   return function(t)
+    local table = table
     local t   = t or {}
     local ret = {}
     for i,v in ipairs(t) do
@@ -946,6 +1011,12 @@ function math.std(t, ini, fin)
   end
   return math.sqrt(suma_sqr/(total-1)),total
 end
+
+-- computes the sign of a number
+function math.sign(v)
+  return (v>0 and 1) or (v<0 and -1) or 0
+end
+
 
 ---------------------------------------------------------------
 ------------------------ STRING UTILS -------------------------
@@ -1171,8 +1242,11 @@ end
 
 function table.tostring(t,format)
   if t.to_lua_string then return t:to_lua_string(format) end
-  local out = {}
-  for i,v in pairs(t) do
+  local out  = {}
+  local keys = iterator(pairs(t)):select(1):table()
+  table.sort(keys, function(a,b) return tostring(a) < tostring(b) end)
+  for _,i in ipairs(keys) do
+    local v = t[i]
     local key
     local value
     if luatype(i) == "string" then
