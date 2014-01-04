@@ -21,13 +21,13 @@
 #ifndef AFFINE_TRANSFORM_H
 #define AFFINE_TRANSFORM_H
 
-#include "matrix.h"
+#include "matrixFloat.h"
 
-class AffineTransform2D: public Matrix<float>
+class AffineTransform2D: public MatrixFloat
 {
   public:
   AffineTransform2D();
-  AffineTransform2D(Matrix<float> *mat);
+  AffineTransform2D(MatrixFloat *mat);
   ~AffineTransform2D() {}
   
   AffineTransform2D *accumulate(AffineTransform2D *other);

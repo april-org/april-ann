@@ -25,7 +25,7 @@ const int AffineTransform2D::dimensions[2] = {3,3};
 
 /// Identity transform
 AffineTransform2D::AffineTransform2D():
-  Matrix<float>(2, dimensions)
+  MatrixFloat(2, dimensions)
 {
   zeros();
   (*data)[0] = 1.0f;
@@ -33,7 +33,7 @@ AffineTransform2D::AffineTransform2D():
   (*data)[8] = 1.0f;
 }
 
-AffineTransform2D::AffineTransform2D(Matrix<float> *mat): Matrix<float>(mat)
+AffineTransform2D::AffineTransform2D(MatrixFloat *mat): MatrixFloat(mat)
 {
   april_assert("AffineTransform2D: Matrix must be 3x3" && 
          numDim == 2 && 
@@ -47,14 +47,12 @@ AffineTransform2D::AffineTransform2D(Matrix<float> *mat): Matrix<float>(mat)
 
 AffineTransform2D *AffineTransform2D::accumulate(AffineTransform2D *other)
 {
-  Matrix<float> *temp = other->multiply(this);
-  Matrix<float>::iterator this_it(begin());
-  Matrix<float>::const_iterator temp_it(temp->begin());
-  for (int i=0; i<6; i++) {
-    *this_it = *temp_it;
-    ++this_it;
-    ++temp_it;
-  }
+  MatrixFloat *this_clone = this->clone();
+  IncRef(this_clone);
+  this->gemm(CblasNoTrans, CblasNoTrans,
+	     1.0f, other, this_clone,
+	     0.0f);
+  DecRef(this_clone);
   return this;
 }
 
@@ -65,7 +63,7 @@ AffineTransform2D *AffineTransform2D::rotate(float angle)
   (*trans.data)[1] = -sinf(angle);
   (*trans.data)[3] = sinf(angle);
   (*trans.data)[4] = cosf(angle);
-
+  
   accumulate(&trans);
   return this;
 }
