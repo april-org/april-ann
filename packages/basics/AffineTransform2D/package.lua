@@ -1,7 +1,7 @@
- package{ name = "affine_transform",
+ package{ name = "AffineTransform2D",
    version = "1.0",
    depends = { "util", "matrix" },
-   keywords = { "affine_transform" },
+   keywords = { "AffineTransform2D" },
    description = "An affine transform class",
    -- targets como en ant
    target{
