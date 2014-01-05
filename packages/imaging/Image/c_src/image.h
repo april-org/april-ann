@@ -106,9 +106,6 @@ class Image : public Referenced {
 
   Matrix<T> *comb_lineal_forward(int x, int y, int ancho, int alto, int miniancho, int minialto, LinearCombConf<T> *cl);
   void threshold_image(T low, T high, T value_low, T value_high);
-
- private:
-  void invert_affine_matrix(float c[6], float dest[6]) const;
 };
 
 /*** Implementacion ***/
