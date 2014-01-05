@@ -254,7 +254,7 @@ Matrix<T> *Matrix<T>::fromMMappedDataReader(april_utils::MMappedDataReader
   obj->data = GPUMirroredMemoryBlock<T>::fromMMappedDataReader(mmapped_data);
   IncRef(obj->data);
   //
-  int binary_version = *(mmapped_data->get<int>());
+  unsigned int binary_version = *(mmapped_data->get<unsigned int>());
   if (binary_version != MATRIX_BINARY_VERSION)
     ERROR_EXIT1(128,
 		"Incorrect binary matrix version from commit number %d\n",

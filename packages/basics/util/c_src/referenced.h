@@ -37,7 +37,7 @@ class Referenced {
 
 template<typename T>
 void AssignRef(T &dest, T ref) {
-  T &aux = dest;
+  T  aux = dest;
   dest   = ref;
   IncRef(dest);
   if (aux != 0) DecRef(aux);
