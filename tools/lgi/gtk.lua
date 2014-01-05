@@ -4,46 +4,52 @@ local gtk = {}
 local lgi = require "lgi"
 local Gtk = lgi.Gtk
 
-function gtk.show(param)
-  local gtk_image = nil
-  local tmp_file  = nil
-  if type(param) ~= "string" then
-    local img = nil
-    if type(param) == "Image" or type(param) == "ImageRGB" then
-      img = param
-    elseif type(param) == "matrix" then
-      img = Image(param)
-    else
-      error("Not supported data type: " .. type(param))
+function gtk.show(...)
+  local windows = {}
+  for i=1,select('#',...) do
+    local param = select(i,...)
+    local gtk_image = nil
+    local tmp_file  = nil
+    if type(param) ~= "string" then
+      local img = nil
+      if type(param) == "Image" or type(param) == "ImageRGB" then
+	img = param
+      elseif type(param) == "matrix" then
+	img = Image(param)
+      else
+	error("Not supported data type: " .. type(param))
+      end
+      tmp_file = os.tmpname()
+      ImageIO.write(img, tmp_file, 'png')
+      param = tmp_file
     end
-    tmp_file = os.tmpname()
-    ImageIO.write(img, tmp_file, 'png')
-    param = tmp_file
-  end
-  local window = Gtk.Window {
-    title = 'Prueba',
-    Gtk.Box {
-      id = 'vbox',
-      orientation = 'VERTICAL',
-      spacing = 8,
-      border_width = 8,
-      Gtk.Frame {
-	shadow_type = 'IN',
-	halign = 'CENTER',
-	valign = 'CENTER',
-	Gtk.Image { file = param, },
+    local window = Gtk.Window {
+      title = 'Prueba',
+      Gtk.Box {
+	id = 'vbox',
+	orientation = 'VERTICAL',
+	spacing = 8,
+	border_width = 8,
+	Gtk.Frame {
+	  shadow_type = 'IN',
+	  halign = 'CENTER',
+	  valign = 'CENTER',
+	  Gtk.Image { file = param, },
+	},
+	Gtk.ToggleButton {
+	  id = 'exit',
+	  label = 'exit',
+	},
       },
-      Gtk.ToggleButton {
-	id = 'exit',
-	label = 'exit',
-      },
-    },
-  }
-  function window.child.exit:on_toggled()
-    Gtk.main_quit()
+    }
+    function window.child.exit:on_toggled()
+      for i=1,#windows do windows[i]:hide() end
+      Gtk.main_quit()
+    end
+    window:show_all()
+    table.insert(windows, window)
+    if tmp_file then os.remove(tmp_file) end
   end
-  window:show_all()
-  if tmp_file then os.remove(tmp_file) end
   Gtk.main()
 end
 
