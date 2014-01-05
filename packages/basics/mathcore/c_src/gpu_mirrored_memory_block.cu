@@ -21,7 +21,13 @@
  */
 #include "gpu_mirrored_memory_block.h"
 
-bool GPUMirroredMemoryBlockBase::use_mmap_allocation = false;
+bool   GPUMirroredMemoryBlockBase::use_mmap_allocation = false;
+
+#ifndef NO_POOL
+size_t GPUMirroredMemoryBlockBase::pool_size = 0;
+april_utils::hash<unsigned int,april_utils::list<void*> >
+GPUMirroredMemoryBlockBase::pool_lists(1024);
+#endif
 
 template class GPUMirroredMemoryBlock<float>;
 template class GPUMirroredMemoryBlock<double>;
