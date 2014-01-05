@@ -43,20 +43,14 @@
     LUABIND_ERROR("Needs a matrix with 3 dimensions");
   if (img->getDimSize(2) != 3)
     LUABIND_ERROR("Needs a matrix with 3 components (R,G,B) at the 3rd dimension");
+  if (!img->isSimple())
+    LUABIND_ERROR("ImageRGB needs a simple matrix: row_major and contiguous\n");
+  GPUMirroredMemoryBlock<FloatRGB> *float_rgb_mem;
+  float_rgb_mem = img->getRawDataAccess()->reinterpretAs<FloatRGB>();
   int dims[2] = { img->getDimSize(0), img->getDimSize(1) };
-  Matrix<FloatRGB> *img_rgb = new Matrix<FloatRGB>(2, dims);
+  Matrix<FloatRGB> *img_rgb = new Matrix<FloatRGB>(2, dims, CblasRowMajor,
+						   float_rgb_mem);
   //
-  MatrixFloat::iterator img_it(img->begin());
-  Matrix<FloatRGB>::iterator img_rgb_it(img_rgb->begin());
-  for (int i=0; i<dims[0]; ++i) {
-    for (int j=0; j<dims[1]; ++j) {
-      FloatRGB &rgb = *img_rgb_it;
-      rgb.r = *img_it; ++img_it;
-      rgb.g = *img_it; ++img_it;
-      rgb.b = *img_it; ++img_it;
-      ++img_rgb_it;
-    }
-  }
   obj = new ImageFloatRGB(img_rgb);
   LUABIND_RETURN(ImageFloatRGB, obj);
 }
@@ -133,19 +127,11 @@
 {
   LUABIND_CHECK_ARGN(==,0);
   Matrix<FloatRGB> *img_rgb = obj->matrix;
+  GPUMirroredMemoryBlock<float> *mat_mem;
+  mat_mem = img_rgb->getRawDataAccess()->reinterpretAs<float>();
   int dims[3] = { img_rgb->getDimSize(0), img_rgb->getDimSize(1), 3 };
-  MatrixFloat *output = new MatrixFloat(3, dims, img_rgb->getMajorOrder());
-  Matrix<FloatRGB>::iterator img_it(img_rgb->begin());
-  MatrixFloat::iterator output_it(output->begin());
-  for (int i=0; i<dims[0]; ++i) {
-    for (int j=0; j<dims[1]; ++j) {
-      FloatRGB rgb = *img_it;
-      *output_it = rgb.r; ++output_it;
-      *output_it = rgb.g; ++output_it;
-      *output_it = rgb.b; ++output_it;
-      ++img_it;
-    }
-  }
+  MatrixFloat *output = new MatrixFloat(3, dims, img_rgb->getMajorOrder(),
+					mat_mem);
   LUABIND_RETURN(MatrixFloat, output);
 }
 //BIND_END
