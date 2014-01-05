@@ -191,7 +191,7 @@ __global__ void computeCrossEntropyGradientKernel(const float *output,
   if (matrix_x_pos < max_x && matrix_y_pos < max_y) {
     unsigned int index = getMatrixFlatIndex(matrix_x_pos, lda_x, matrix_y_pos);
     // compute derivative
-    float v = clip(output[index], logf(epsilon), logf(1.0 - epsilon));
+    float v = clip(output[index], logf(zero), logf(1.0 - zero));
     error_output[index] = expf(v) - target_output[index];
   }
 }
