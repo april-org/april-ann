@@ -112,7 +112,7 @@ MatrixFloat *convertFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
     dims[0] = 2;
     for (int i=0; i<N; ++i) dims[i+1] = mat->getDimPtr()[i];
   }
-  GPUMirroredMemoryBlock *new_mat_memory;
+  FloatGPUMirroredMemoryBlock *new_mat_memory;
   new_mat_memory = mat->getRawDataAccess()->reinterpretAs<float>();
   new_mat=new MatrixFloat(N+1, dims, mat->getMajorOrder(), new_mat_memory);
 #ifdef USE_CUDA
