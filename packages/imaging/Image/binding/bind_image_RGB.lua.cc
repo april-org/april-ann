@@ -36,7 +36,29 @@
 //BIND_CONSTRUCTOR ImageFloatRGB
 // este constructor recibe una matrix
 {
-  LUABIND_ERROR("ERROR: Constructing a ImageRGB from a matrix is not allowed. Use ImageRGB.empty or ImageRGB.read() instead");
+  LUABIND_CHECK_ARGN(==,1);
+  MatrixFloat      *img;
+  LUABIND_GET_PARAMETER(1, MatrixFloat, img);
+  if (img->getNumDim() != 3)
+    LUABIND_ERROR("Needs a matrix with 3 dimensions");
+  if (img->getDimSize(2) != 3)
+    LUABIND_ERROR("Needs a matrix with 3 components (R,G,B) at the 3rd dimension");
+  int dims[2] = { img->getDimSize(0), img->getDimSize(1) };
+  Matrix<FloatRGB> *img_rgb = new Matrix<FloatRGB>(2, dims);
+  //
+  MatrixFloat::iterator img_it(img->begin());
+  Matrix<FloatRGB>::iterator img_rgb_it(img_rgb->begin());
+  for (int i=0; i<dims[0]; ++i) {
+    for (int j=0; j<dims[1]; ++j) {
+      FloatRGB &rgb = *img_rgb_it;
+      rgb.r = *img_it; ++img_it;
+      rgb.g = *img_it; ++img_it;
+      rgb.b = *img_it; ++img_it;
+      ++img_rgb_it;
+    }
+  }
+  obj = new ImageFloatRGB(img_rgb);
+  LUABIND_RETURN(ImageFloatRGB, obj);
 }
 //BIND_END
 
@@ -49,7 +71,7 @@
 
     Matrix<FloatRGB> *m = new Matrix<FloatRGB>(2, w, h);
     ImageFloatRGB *result = new ImageFloatRGB(m);
-
+    
     LUABIND_RETURN(ImageFloatRGB, result);
 }
 //BIND_END
