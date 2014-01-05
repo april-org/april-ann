@@ -23,6 +23,7 @@ v0.3.1-beta relase
 
 ### API Changes
 
+- Added `matrix:linspace(a,b)` and `matrix:linspace(a,b,base)`.
 - `matrix:transpose()` returns a matrix which references the original. Any
   modification to the tranposed matrix, will be reflected at the original.
 - `matrix:cmul` method is now **in-place**, so, if you don't want to modify the

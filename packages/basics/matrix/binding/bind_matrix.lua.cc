@@ -1421,6 +1421,37 @@ public:
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat linspace
+{
+  int size = obj->size()-1;
+  float inf,sup;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, float, inf, 1.0f);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, float, sup, static_cast<float>(size+1));
+  int i = 0;
+  float diff = sup-inf;
+  for (MatrixFloat::iterator it(obj->begin()); it!=obj->end(); ++it, ++i)
+    *it = (diff*i)/size + inf;
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat logspace
+{
+  int size = obj->size()-1;
+  float inf,sup,base;
+  LUABIND_GET_OPTIONAL_PARAMETER(3, float, base, 10.0f);
+  LUABIND_GET_OPTIONAL_PARAMETER(1, float, inf, 1.0f);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, float, sup, size+1);
+  int i=0;
+  inf = logf(inf)/logf(base);
+  sup = logf(sup)/logf(base);
+  float diff = sup-inf;
+  for (MatrixFloat::iterator it(obj->begin()); it!=obj->end(); ++it, ++i)
+    *it = powf(base, (diff*i)/size + inf);
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat linear
 {
   int lower, step;
