@@ -75,9 +75,9 @@ protected:
   public:
     PoolFreeBeforeExit() { }
     ~PoolFreeBeforeExit() {
-      for (typename april_utils::hash<unsigned int,april_utils::list<void*> >::iterator it = pool_lists.begin();
+      for (april_utils::hash<unsigned int,april_utils::list<void*> >::iterator it = pool_lists.begin();
 	   it != pool_lists.end(); ++it) {
-	for (typename april_utils::list<void*>::iterator lit = it->second.begin();
+	for (april_utils::list<void*>::iterator lit = it->second.begin();
 	     lit != it->second.end(); ++lit)
 	  delete *lit;
       }

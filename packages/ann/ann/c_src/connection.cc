@@ -74,8 +74,8 @@ namespace ANN {
     double dsup = high;
     
     // assert to avoid nearzero weights
-    april_assert(fabs(dinf) > weightnearzero);
-    april_assert(fabs(dsup) > weightnearzero);
+    if (fabs(dinf) < weightnearzero) dinf =  weightnearzero;
+    if (fabs(dsup) < weightnearzero) dsup = -weightnearzero;
     double range  = dsup - dinf;
     MatrixFloat::iterator w_it(weights->begin());
     while(w_it != weights->end()) {
