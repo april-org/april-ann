@@ -50,10 +50,11 @@ class Referenced {
  */
 template<typename T>
 void AssignRef(T &dest, T ref) {
-  T  aux = dest;
-  dest   = ref;
-  IncRef(dest);
-  if (aux != 0) DecRef(aux);
+  if (dest != ref) {
+    if (dest != 0) DecRef(dest);
+    dest = ref;
+    IncRef(dest);
+  }
 }
 
 #endif // REFERENCED_H

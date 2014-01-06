@@ -84,11 +84,7 @@ public:
   }
   void insert(const april_utils::string &k, Matrix<T> *v) {
     Matrix<T> *&old = matrix_dict[k];
-    if (old != v) {
-      if (old != 0) DecRef(old);
-      old = v;
-      IncRef(v);
-    }
+    AssignRef(old, v);
   }
   // find operation
   Matrix<T> *find(const char *k) const {
