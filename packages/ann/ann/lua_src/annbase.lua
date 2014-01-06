@@ -16,8 +16,8 @@ function ann.save(c, filename, format)
   local format = format or "binary"
   local f =  io.open(filename, "w")
   f:write(string.format("return %s:build{ weights=%s }\n",
-			c:to_lua_string(),
-			table.tostring(c:copy_weights())))
+			c:to_lua_string(format),
+			c:copy_weights():to_lua_string(format)))
   f:close()
 end
 
@@ -28,6 +28,7 @@ april_set_doc("ann.load",
 		params={
 		  "A filename string",
 		},
+		outputs = { "An ANN component in built-state" },
 	      })
 
 function ann.load(filename)
@@ -185,23 +186,16 @@ april_set_doc("ann",
 
 april_set_doc("ann.connections",
 	      {
-		class="class",
-		summary="Connections class, stores weights and useful methods",
-		description={
-		    "The ann.connections class is used at ann.components ",
-		    "objects to store weights when needed. This objects have",
-		    "an ROWSxCOLS matrix of float parameters, being ROWS",
-		    "the input size of a given component, and COLS the output",
-		    "size.",
-		  },
+		class="namespace",
+		summary="Connections namespace, stores helper functions",
 	      })
 
 -------------------------------------------------------------------
 
 april_set_doc("ann.connections.__call",
 	      {
-		class="method",
-		summary="Constructor",
+		class="function",
+		summary="Builds a matrix for connections",
 		description=
 		  {
 		    "The constructor reserves memory for the given input and",
@@ -217,8 +211,8 @@ april_set_doc("ann.connections.__call",
 
 april_set_doc("ann.connections.__call",
 	      {
-		class="method",
-		summary="Constructor",
+		class="function",
+		summary="Builds a matrix for connections",
 		description=
 		  {
 		    "The constructor reserves memory for the given input and",
@@ -242,149 +236,13 @@ april_set_doc("ann.connections.__call",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.connections.clone",
-	      {
-		class="method",
-		summary="Makes a deep copy of the object",
-		outputs = { "An instance of ann.connections" }
-	      })
-
--------------------------------------------------------------------
-
-april_set_doc("ann.connections.scale",
-	      {
-		class="method",
-		summary="Scale the weights by a given factor",
-		params = { "A number with the scale factor" }
-	      })
-
--------------------------------------------------------------------
-
-april_set_doc("ann.connections.load",
-	      {
-		class="method",
-		summary="Load weights from a matrix",
-		description=
-		  {
-		    "The method load connection weights from a matrix.",
-		    "The weights are in row-major from the outside,",
-		    "but internally they are stored in col-major order.",
-		  },
-		params={
-		  ["w"] = "A matrix with enough number of data values.",
-		  ["oldw"] = "A matrix used to compute momentum (same size of w) [optional]",
-		  ["first_pos"] = "Position of the first weight on the given "..
-		    "matrix w [optional]. By default is 0",
-		  ["column_size"] = "Leading size of the weights [optional]. "..
-		    "By default is input"
-		},
-		outputs = { "A number: first_pos + column_size*OUTPUT" }
-	      })
-
--------------------------------------------------------------------
-
-april_set_doc("ann.connections.copy_to",
-	      {
-		class="method",
-		summary="Returns the weights as a CLONED matrix",
-		description=
-		  {
-		    "The method copies the weights to the given matrixes or",
-		    "create new ones to store the data.",
-		    "Note that matrixes are a copy, so any modification won't",
-		    "affect to connections object.",
-		  },
-		params={
-		  ["w"] = "A matrix with enough number of data values.",
-		  ["oldw"] = "A matrix used to compute momentum (same size of w) [optional]",
-		  ["first_pos"] = "Position of the first weight on the given "..
-		    "matrix w [optional]. By default is 0",
-		  ["column_size"] = "Leading size of the weights [optional]. "..
-		    "By default is input"
-		},
-		outputs = {
-		  "A matrix with the weights",
-		  "A matrix with the weights of previous iteration (for momentum)",
-		  "A number: first_pos + column_size*OUTPUT",
-		}
-	      })
-
--------------------------------------------------------------------
-
-april_set_doc("ann.connections.matrix",
-	      {
-		class="method",
-		summary="Returns the weight matrices pointers",
-		description=
-		  {
-		    "The method returns the weight matrices pointers,",
-		    "so any change will affect the component.",
-		    "BE CAREFUL, if you modify the weights matrix,",
-		    "made sure that the previous weights matrix is coherent.",
-		  },
-		outputs = {
-		  "A matrix with the weights",
-		  "A matrix with the weights of previous iteration (for momentum)",
-		}
-	      })
-
--------------------------------------------------------------------
-
-april_set_doc("ann.connections.size",
-	      {
-		class="method",
-		summary="Returns the size INPUTxOUTPUT",
-		outputs = {
-		  "A number with the size",
-		}
-	      })
-
--------------------------------------------------------------------
-
-april_set_doc("ann.connections.precompute_output_size",
-	      {
-		class="method",
-		summary="Precomputes the shape of the output (a table)",
-		params = {
-		  "A table with the input's shape (a table) [optional]",
-		},
-		outputs = {
-		  "A table with the output's shape",
-		}
-	      })
-
--------------------------------------------------------------------
-
-april_set_doc("ann.connections.get_input_size",
-	      {
-		class="method",
-		summary="Returns the size INPUT",
-		outputs = {
-		  "A number with the size",
-		}
-	      })
-
--------------------------------------------------------------------
-
-april_set_doc("ann.connections.get_output_size",
-	      {
-		class="method",
-		summary="Returns the size OUTPUT",
-		outputs = {
-		  "A number with the size",
-		}
-	      })
-
--------------------------------------------------------------------
-
 april_set_doc("ann.connections.randomize_weights",
 	      {
-		class="method",
+		class="function",
 		summary="Initializes following uniform random distribution: [inf,sup]",
 		params={
-		  ["random"] = "A random object",
-		  ["inf"] = "Inferior limit [optional]. By default is -1.0",
-		  ["sup"] = "Superior limit [optional]. By default is  1.0",
+		  "A weights matrix",
+		  "A table with fields: random, inf and sup",
 		},
 	      })
 
@@ -452,6 +310,20 @@ april_set_doc("ann.components.base.__call",
 	      })
 
 ----------------------------------------------------------------------
+
+april_set_doc("ann.components.base.precompute_output_size",
+	      {
+		class="method",
+		summary="Precomputes the shape of the output (a table)",
+		params = {
+		  "A table with the input's shape (a table) [optional]",
+		},
+		outputs = {
+		  "A table with the output's shape",
+		}
+	      })
+
+-------------------------------------------------------------------
 
 april_set_doc("ann.components.base.get_is_built",
 	      {
@@ -577,18 +449,6 @@ april_set_doc("ann.components.base.backprop",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.base.update",
-	      {
-		class="method",
-		summary="Updates connection weights of the component",
-		description={
-		  "Updates connection weights of the component.",
-		  "This method is only valid after forward and backprop calls."
-		},
-	      })
-
-----------------------------------------------------------------------
-
 april_set_doc("ann.components.base.reset",
 	      {
 		class="method",
@@ -632,14 +492,6 @@ april_set_doc("ann.components.base.set_use_cuda",
 		  "Sets the use_cuda flag. If use_cuda=true then all the",
 		  "computation will be done at GPU.",
 		}
-	      })
-
-----------------------------------------------------------------------
-
-april_set_doc("ann.components.base.reset_connections",
-	      {
-		class="method",
-		summary="Set to zero the count reference of shared connections",
 	      })
 
 ----------------------------------------------------------------------
@@ -696,7 +548,7 @@ april_set_doc("ann.components.base.copy_weights",
 		class="method",
 		summary="Returns the dictionary weights_name=>ann.connections",
 		outputs= {
-		  { "A table with all the weights_name=>ann.connections found",
+		  { "A matrix.dict objecti all the weights_name=>matrix found",
 		    "at the components hierarchy."},
 		}
 	      })
