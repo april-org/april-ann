@@ -61,10 +61,12 @@ extern "C" {
 /// Class base for memory blocks mirrored between host (mem ppal) and device
 /// (GPU)
 class GPUMirroredMemoryBlockBase : public Referenced {
+#ifndef NO_POOL
 public:
   typedef april_utils::list<char*>                  ListType;
   typedef april_utils::hash<unsigned int, ListType> PoolType;
-  
+#endif
+
 private:
   static bool use_mmap_allocation;
 

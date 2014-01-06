@@ -22,7 +22,6 @@ luapkg{
       "-DUSE_XCODE",
       "-F/System/Library/Frameworks/Accelerate.framework",
       "-pg",
-      "-DNO_POOL",
       "-DNO_OMP",
       "-fPIC",
     },

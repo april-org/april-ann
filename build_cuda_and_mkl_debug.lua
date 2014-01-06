@@ -26,7 +26,6 @@ luapkg{
       "-march=native",
       "-msse",
       "-pg",
-      "-DNO_POOL",
       "-DNO_OMP",
        --"-fPIC",
       -- For CUDA
