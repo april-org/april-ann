@@ -30,6 +30,10 @@
 #include "mystring.h"
 #include "maxmin.h"
 
+/**
+ * The class MatrixSet is a hash map of string=>Matrix<T>, allowing to compute
+ * math operations to all the underlying matrices, or between two MatrixSet.
+ */
 template<typename T>
 class MatrixSet : public Referenced {
   typedef april_utils::hash<april_utils::string, Matrix<T> *> DictType;
