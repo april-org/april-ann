@@ -406,7 +406,8 @@ T& Matrix<T>::operator() (int row, int col) {
 
 template <typename T>
 T& Matrix<T>::operator() (int coord0, int coord1, int coord2, ...) {
-  int aux_coords[3];
+  april_assert(numDim >= 3);
+  int *aux_coords = new int[numDim];
   aux_coords[0] = coord0;
   aux_coords[1] = coord1;
   aux_coords[2] = coord2;
@@ -418,6 +419,7 @@ T& Matrix<T>::operator() (int coord0, int coord1, int coord2, ...) {
   }
   va_end(ap);
   int raw_pos = computeRawPos(aux_coords);
+  delete[] aux_coords;
   return data->get(raw_pos);
 }
 
@@ -446,7 +448,8 @@ const T& Matrix<T>::operator() (int row, int col) const {
 
 template <typename T>
 const T& Matrix<T>::operator() (int coord0, int coord1, int coord2, ...) const {
-  int aux_coords[3];
+  april_assert(numDim >= 3);
+  int *aux_coords = new int[numDim];
   aux_coords[0] = coord0;
   aux_coords[1] = coord1;
   aux_coords[2] = coord2;
@@ -458,6 +461,7 @@ const T& Matrix<T>::operator() (int coord0, int coord1, int coord2, ...) const {
   }
   va_end(ap);
   int raw_pos = computeRawPos(aux_coords);
+  delete[] aux_coords;
   return data->get(raw_pos);
 }
 

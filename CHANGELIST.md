@@ -94,6 +94,11 @@ v0.3.1-beta relase
 
 ### C/C++ code changes
 
+- Added `Matrix<T>::random_acces_iterator`, which reduces the access overhead
+  for random access of a `Matrix` object. It retains the memory pointer forcing
+  an update between host and device (GPU) memory.
+- Generalized `GPUMirroredBlockBase` to allow the reinterpretation of the
+  underlying memory pointer using different types (reinterpret_cast).
 - Added `MatrixSet` class template, which stores a dictionary of STRING->MATRIX,
   useful for ANNs and gradient descent purposes.
 - Added `StochasticANNComponent` which is base class for stochastic components.

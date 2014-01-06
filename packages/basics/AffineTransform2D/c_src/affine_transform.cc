@@ -28,9 +28,10 @@ AffineTransform2D::AffineTransform2D():
   MatrixFloat(2, dimensions)
 {
   zeros();
-  (*this)(0,0) = 1.0f;
-  (*this)(1,1) = 1.0f;
-  (*this)(2,2) = 1.0f;
+  MatrixFloat::random_access_iterator data(this);
+  data(0,0) = 1.0f;
+  data(1,1) = 1.0f;
+  data(2,2) = 1.0f;
 }
 
 AffineTransform2D::AffineTransform2D(MatrixFloat *mat): MatrixFloat(mat)
@@ -105,8 +106,9 @@ AffineTransform2D *AffineTransform2D::shear(float x, float y)
 
 void AffineTransform2D::transform(float x, float y, float *dst_x, float *dst_y) const
 {
-  float res_x = (*this)(0,0)*x+(*this)(0,1)*y+(*this)(0,2);
-  float res_y = (*this)(1,0)*x+(*this)(1,1)*y+(*this)(1,2);
+  MatrixFloat::const_random_access_iterator data(this);
+  float res_x = data(0,0)*x+data(0,1)*y+data(0,2);
+  float res_y = data(1,0)*x+data(1,1)*y+data(1,2);
   
   *dst_x=res_x;
   *dst_y=res_y;

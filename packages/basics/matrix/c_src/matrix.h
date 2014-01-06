@@ -253,9 +253,11 @@ public:
   };
 
   /********************************************************/
-  // The sliding is a kind of iterator which traverses the matrix producing
-  // sub-matrices following a sliding window similar to dataset.matrix. This
-  // iterator couldn't account for CIRCULAR and OUTSIDE values.
+  /**
+   * The sliding is a kind of iterator which traverses the matrix producing
+   * sub-matrices following a sliding window similar to dataset.matrix. This
+   * iterator couldn't account for CIRCULAR and OUTSIDE values.
+   */
   class sliding_window : public Referenced {
     /// A reference to the matrix
     Matrix<T> *m;
@@ -305,8 +307,10 @@ public:
   };
   
   /********************************************************/
-  // The span iterator traverses the matrix allowing to do a linear
-  // traversal of the largest dimension.
+  /**
+   * The span iterator traverses the matrix allowing to do a linear
+   * traversal of the largest dimension.
+   */
   class best_span_iterator {
     friend class Matrix;
     const Matrix<T> *m;
@@ -349,6 +353,105 @@ public:
     best_span_iterator &operator++();
     int numberOfIterations() const;
     void setAtIteration(int idx);
+  };
+
+  /********************************************************/
+  /**
+   * The random access iterator allows to retain the memory pointer, forcing an
+   * update between host and device (GPU) memory, and allows to access any
+   * position of the matrix given its coordinates.
+   */
+  class random_access_iterator {
+    Matrix<T> *m;
+    T *memory;
+    int *coords;
+  public:
+    random_access_iterator(Matrix<T> *m) :
+      m(m),
+      memory(m->getRawDataAccess()->getPPALForReadAndWrite()),
+      coords(new int[m->numDim]) { }
+    ~random_access_iterator() { delete[] coords; }
+    T& operator() (int i) {
+      april_assert(m->numDim == 1);
+      int raw_pos = m->computeRawPos(&i);
+      return memory[raw_pos];
+    }
+    T& operator() (int row, int col) {
+      april_assert(m->numDim == 2);
+      coords[0] = row; coords[1] = col;
+      int raw_pos = m->computeRawPos(coords);
+      return memory[raw_pos];
+    }
+    T& operator() (int coord0, int coord1, int coord2, ...) {
+      april_assert(m->numDim >= 3);
+      coords[0] = coord0;
+      coords[1] = coord1;
+      coords[2] = coord2;
+      va_list ap;
+      va_start(ap, coord2);
+      for(int i=3; i<m->numDim; i++) {
+	int coordn = va_arg(ap, int);
+	coords[i] = coordn;
+      }
+      va_end(ap);
+      int raw_pos = m->computeRawPos(coords);
+      return memory[raw_pos];
+    }
+    T& operator() (int *coords, int sz) {
+      UNUSED_VARIABLE(sz);
+      april_assert(m->numDim == sz);
+      int raw_pos = m->computeRawPos(coords);
+      return memory[raw_pos];
+    }
+  };
+  /**
+   * The const random access iterator allows to retain the memory pointer,
+   * forcing an update between host and device (GPU) memory, and allows to
+   * access any position of the matrix given its coordinates. It is a read-only
+   * iterator.
+   */
+  class const_random_access_iterator {
+    const Matrix<T> *m;
+    const T *memory;
+    int *coords;
+  public:
+    const_random_access_iterator(const Matrix<T> *m) :
+      m(m),
+      memory(m->getRawDataAccess()->getPPALForRead()),
+      coords(new int[m->numDim]) { }
+    ~const_random_access_iterator() { delete[] coords; }
+    const T& operator() (int i) const {
+      april_assert(m->numDim == 1);
+      int raw_pos = m->computeRawPos(&i);
+      return memory[raw_pos];
+    }
+    const T& operator() (int row, int col) const {
+      april_assert(m->numDim == 2);
+      coords[0] = row; coords[1] = col;
+      int raw_pos = m->computeRawPos(coords);
+      return memory[raw_pos];
+    }
+    const T& operator() (int coord0, int coord1, int coord2, ...) const {
+      april_assert(m->numDim >= 3);
+      coords[0] = coord0;
+      coords[1] = coord1;
+      coords[2] = coord2;
+      va_list ap;
+      va_start(ap, coord2);
+      for(int i=3; i<m->numDim; i++) {
+	int coordn = va_arg(ap, int);
+	coords[i] = coordn;
+      }
+      va_end(ap);
+      int raw_pos = m->computeRawPos(coords);
+      return memory[raw_pos];
+    }
+    const T& operator() (int *coords, int sz) const {
+      UNUSED_VARIABLE(sz);
+      april_assert(m->numDim == sz);
+      int raw_pos = m->computeRawPos(coords);
+      return memory[raw_pos];
+    }
   };
   
 private:

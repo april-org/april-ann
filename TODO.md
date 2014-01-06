@@ -1,2 +1,3 @@
-- Update `Image` package to use `matrix` methods, instead of direct access to
-  data. Therefore, image crop will be a matrix slice operation.
+- Update `Image` package to use `Matrix<T>::random_access_iterator`, instead of
+  direct access to data. Therefore, image would work with any underlying
+  `matrix`, even not simple ones.
