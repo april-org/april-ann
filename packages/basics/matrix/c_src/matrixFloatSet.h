@@ -22,6 +22,7 @@
 #ifndef MATRIXFLOATSET_H
 #define MATRIXFLOATSET_H
 
+#include "matrixFloat.h"
 #include "matrixSet.h"
 
 typedef MatrixSet<float> MatrixFloatSet;

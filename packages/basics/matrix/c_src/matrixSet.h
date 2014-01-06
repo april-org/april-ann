@@ -45,7 +45,7 @@ public:
   //
 
   MatrixSet() : matrix_dict(32, 2.0f) { }
-  ~MatrixSet() {
+  virtual ~MatrixSet() {
     for (iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
       DecRef(it->second);
     }
@@ -228,6 +228,7 @@ public:
       int b_size = b->size();
       AssignRef(a, a->rewrap(&a_size, 1));
       AssignRef(b, b->rewrap(&a_size, 1));
+      printf("%p %p :: %d %d\n", a,b,a->getRef(), b->getRef());
       result = result + a->dot(b);
       DecRef(a);
       DecRef(b);

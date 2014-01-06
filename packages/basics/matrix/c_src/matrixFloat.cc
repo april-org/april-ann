@@ -569,6 +569,7 @@ void Matrix<float>::ger(float alpha,
 
 template<>
 float Matrix<float>::dot(const Matrix<float> *other) const {
+  printf("%p %p\n", this,other);
   if (!this->isVector() || !other->isVector())
     ERROR_EXIT(128,"Incorrect number of dimensions");
   if (this->size() != other->size())

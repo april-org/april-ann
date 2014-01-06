@@ -486,7 +486,8 @@ public:
   Matrix(int numDim, const int* dim,
 	 CBLAS_ORDER major_order = CblasRowMajor,
 	 GPUMirroredMemoryBlock<T> *data = 0,
-	 int offset = 0);
+	 int offset = 0,
+	 bool transposed = false);
   
   /// Constructor with T() values and CblasRowMajor order
   Matrix(int numDim, int d1, ...);

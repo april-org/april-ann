@@ -57,7 +57,7 @@ void Matrix<T>::initialize(const int *dim) {
 /// Allocation of memory for data pointer. It is Referenced for sharing.
 template <typename T>
 void Matrix<T>::allocate_memory(int size) {
-  data = new GPUMirroredMemoryBlock<T>(size);
+  data = new GPUMirroredMemoryBlock<T>(static_cast<unsigned int>(size));
   IncRef(data);
 }
 
@@ -97,8 +97,9 @@ Matrix<T>::Matrix(int numDim,
 		  const int* dim,
 		  CBLAS_ORDER major_order,
 		  GPUMirroredMemoryBlock<T> *data,
-		  int offset) :
-  Referenced(), shared_count(0), transposed(false),
+		  int offset,
+		  bool transposed) :
+  Referenced(), shared_count(0), transposed(transposed),
   numDim(numDim),
   offset(offset),
   mmapped_data(0),
@@ -144,6 +145,7 @@ Matrix<T>::Matrix(Matrix<T> *other,
   stride     = new int[numDim];
   matrixSize = new int[numDim];
   if (clone) {
+    transposed    = false;
     is_contiguous = CONTIGUOUS;
     initialize(sizes);
     allocate_memory(total_size);
@@ -318,7 +320,8 @@ Matrix<T> *Matrix<T>::rewrap(const int *new_dims, int len) {
   if (new_size != size())
     ERROR_EXIT2(128, "Incorrect size, expected %d, and found %d\n",
 		size(), new_size);
-  Matrix<T> *obj = new Matrix<T>(len, new_dims, major_order, data, offset);
+  Matrix<T> *obj = new Matrix<T>(len, new_dims, major_order, data, offset,
+				 transposed);
 #ifdef USE_CUDA
   obj->setUseCuda(use_cuda);
 #endif
@@ -381,19 +384,19 @@ Matrix<T>* Matrix<T>::shallow_copy() {
 
 template <typename T>
 T& Matrix<T>::operator[] (int i) {
-  return data->get(i);
+  return data->get(static_cast<unsigned int>(i));
 }
 
 template <typename T>
 const T& Matrix<T>::operator[] (int i) const {
-  return data->get(i);
+  return data->get(static_cast<unsigned int>(i));
 }
 
 template <typename T>
 T& Matrix<T>::operator() (int i) {
   april_assert(numDim == 1);
   int raw_pos = computeRawPos(&i);
-  return data->get(raw_pos);
+  return data->get(static_cast<unsigned int>(raw_pos));
 }
 
 template <typename T>
@@ -401,7 +404,7 @@ T& Matrix<T>::operator() (int row, int col) {
   april_assert(numDim == 2);
   int pos[2]={row,col};
   int raw_pos = computeRawPos(pos);
-  return data->get(raw_pos);
+  return data->get(static_cast<unsigned int>(raw_pos));
 }
 
 template <typename T>
@@ -420,7 +423,7 @@ T& Matrix<T>::operator() (int coord0, int coord1, int coord2, ...) {
   va_end(ap);
   int raw_pos = computeRawPos(aux_coords);
   delete[] aux_coords;
-  return data->get(raw_pos);
+  return data->get(static_cast<unsigned int>(raw_pos));
 }
 
 template <typename T>
@@ -428,14 +431,14 @@ T& Matrix<T>::operator() (int *coords, int sz) {
   UNUSED_VARIABLE(sz);
   april_assert(numDim == sz);
   int raw_pos = computeRawPos(coords);
-  return data->get(raw_pos);
+  return data->get(static_cast<unsigned int>(raw_pos));
 }
 
 template <typename T>
 const T& Matrix<T>::operator() (int i) const {
   april_assert(numDim == 1);
   int raw_pos = computeRawPos(&i);
-  return data->get(raw_pos);
+  return data->get(static_cast<unsigned int>(raw_pos));
 }
 
 template <typename T>
@@ -443,7 +446,7 @@ const T& Matrix<T>::operator() (int row, int col) const {
   april_assert(numDim == 2);
   int pos[2]={row,col};
   int raw_pos = computeRawPos(pos);
-  return data->get(raw_pos);
+  return data->get(static_cast<unsigned int>(raw_pos));
 }
 
 template <typename T>
@@ -462,7 +465,7 @@ const T& Matrix<T>::operator() (int coord0, int coord1, int coord2, ...) const {
   va_end(ap);
   int raw_pos = computeRawPos(aux_coords);
   delete[] aux_coords;
-  return data->get(raw_pos);
+  return data->get(static_cast<unsigned int>(raw_pos));
 }
 
 template <typename T>
@@ -470,7 +473,7 @@ const T& Matrix<T>::operator() (int *coords, int sz) const {
   UNUSED_VARIABLE(sz);
   april_assert(numDim == sz);
   int raw_pos = computeRawPos(coords);
-  return data->get(raw_pos);
+  return data->get(static_cast<unsigned int>(raw_pos));
 }
 
 template <typename T>

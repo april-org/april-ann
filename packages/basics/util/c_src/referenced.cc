@@ -18,8 +18,6 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef _REFERENCEDCC_
-#define _REFERENCEDCC_
 
 // #define __DEBUG__
 
@@ -67,4 +65,6 @@ bool Referenced::decRef() {
   return (refs <= 0); 
 }
 
-#endif // _REFERENCEDCC_
+int Referenced::getRef() const {
+  return refs;
+}
