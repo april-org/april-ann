@@ -79,7 +79,7 @@ protected:
 	   it != pool_lists.end(); ++it) {
 	for (april_utils::list<void*>::iterator lit = it->second.begin();
 	     lit != it->second.end(); ++lit)
-	  delete *lit;
+	  aligned_free(*lit);
       }
     }
   };
