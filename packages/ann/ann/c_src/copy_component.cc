@@ -125,7 +125,7 @@ namespace ANN {
     error_output_mat->setUseCuda(use_cuda);
 #endif
     TokenMatrixFloat *error_output_token = new TokenMatrixFloat(error_output_mat);
-    AssignRef<Token*>(error_output, error_output_token);
+    AssignRef<Token>(error_output, error_output_token);
     error_output_mat->copy(current_mat);
     
     // The rest of tokens

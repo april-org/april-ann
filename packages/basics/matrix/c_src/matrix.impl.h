@@ -106,10 +106,6 @@ Matrix<T>::Matrix(int numDim,
   major_order(major_order),
   use_cuda(false),
   is_contiguous(CONTIGUOUS) {
-  /*
-    if (major_order == CblasColMajor && numDim > 2)
-    ERROR_EXIT(128, "ColMajor order is only allowed when numDim<=2\n");
-  */
   stride     = new int[numDim];
   matrixSize = new int[numDim];
   initialize(dim);
@@ -320,8 +316,7 @@ Matrix<T> *Matrix<T>::rewrap(const int *new_dims, int len) {
   if (new_size != size())
     ERROR_EXIT2(128, "Incorrect size, expected %d, and found %d\n",
 		size(), new_size);
-  Matrix<T> *obj = new Matrix<T>(len, new_dims, major_order, data, offset,
-				 transposed);
+  Matrix<T> *obj = new Matrix<T>(len, new_dims, major_order, data, offset);
 #ifdef USE_CUDA
   obj->setUseCuda(use_cuda);
 #endif

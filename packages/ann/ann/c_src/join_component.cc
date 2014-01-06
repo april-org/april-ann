@@ -84,7 +84,7 @@ namespace ANN {
 #endif
 	  coords[1] += sz;
 	  TokenMatrixFloat *component_mat_token = new TokenMatrixFloat(output_mat);
-	  AssignRef<Token*>((*result_vector_token)[i], component_mat_token);
+	  AssignRef<Token>((*result_vector_token)[i], component_mat_token);
 	}
 	break;
       }
@@ -108,7 +108,7 @@ namespace ANN {
 	case table_of_token_codes::vector_Tokens:
 	  // for each component we reserve a vector for bunch_size patterns
 	  for (unsigned int i=0; i<result_vector_token->size(); ++i)
-	    AssignRef<Token*>((*result_vector_token)[i],
+	    AssignRef<Token>((*result_vector_token)[i],
 			      new TokenBunchVector(input_vector_token->size()));
 	  // for each pattern
 	  for (unsigned int b=0; b<input_vector_token->size(); ++b) {
@@ -159,7 +159,7 @@ namespace ANN {
       MatrixFloat *component_mat = new MatrixFloat(mat, coords, sizes, true);
       coords[1] += sz;
       TokenMatrixFloat *component_mat_token = new TokenMatrixFloat(component_mat);
-      AssignRef<Token*>((*vector_token)[i], component_mat_token);
+      AssignRef<Token>((*vector_token)[i], component_mat_token);
     }
   }
   
@@ -212,7 +212,7 @@ namespace ANN {
     // more simpler a decoupled code
     buildInputBunchVector(input_vector, _input);
     for (unsigned int i=0; i<components.size(); ++i)
-      AssignRef<Token*>((*output_vector)[i],
+      AssignRef<Token>((*output_vector)[i],
 			components[i]->doForward((*input_vector)[i],
 						 during_training));
     // INFO: will be possible to put this method inside previous loop, but seems
@@ -241,10 +241,10 @@ namespace ANN {
     // array. Depending on the received input, this vector would be returned as
     // it is, or gradients will be stored as a TokenMatrixFloat joining all
     // array positions.
-    if (segmented_input) AssignRef<Token*>(error_output, error_output_vector);
+    if (segmented_input) AssignRef<Token>(error_output, error_output_vector);
     // INFO: will be possible to put this method inside previous loop, but
     // seems more simpler a decoupled code
-    else AssignRef<Token*>(error_output,
+    else AssignRef<Token>(error_output,
 			   buildMatrixFloatToken(error_output_vector, false));
     return error_output;
   }

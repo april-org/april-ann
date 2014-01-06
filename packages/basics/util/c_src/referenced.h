@@ -49,7 +49,7 @@ class Referenced {
  * @param ref It is the variable with the value which you want to assign.
  */
 template<typename T>
-void AssignRef(T &dest, T ref) {
+void AssignRef(T *&dest, T *ref) {
   if (dest != ref) {
     if (dest != 0) DecRef(dest);
     dest = ref;

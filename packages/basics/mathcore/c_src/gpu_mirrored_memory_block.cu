@@ -24,9 +24,10 @@
 bool   GPUMirroredMemoryBlockBase::use_mmap_allocation = false;
 
 #ifndef NO_POOL
+GPUMirroredMemoryBlockBase::PoolFreeBeforeExit GPUMirroredMemoryBlockBase::pool_free_before_exit;
 size_t GPUMirroredMemoryBlockBase::pool_size = 0;
-april_utils::hash<unsigned int,april_utils::list<void*> >
-GPUMirroredMemoryBlockBase::pool_lists(1024);
+GPUMirroredMemoryBlockBase::PoolType *GPUMirroredMemoryBlockBase::pool_lists =
+  new GPUMirroredMemoryBlockBase::PoolType(1024);
 #endif
 
 template class GPUMirroredMemoryBlock<float>;

@@ -25,6 +25,7 @@
 #include <cmath>
 #include "referenced.h"
 #include "matrix.h"
+#include "matrixFloat.h"
 #include "aux_hash_table.h"
 #include "hash_table.h"
 #include "mystring.h"
@@ -153,7 +154,7 @@ public:
   // two matrix basic math operator macros
 #define MAKE_OPERATOR(NAME)					\
   void NAME(const MatrixSet<T> *other) {			\
-    for (const_iterator it = matrix_dict.begin();		\
+    for (iterator it = matrix_dict.begin();			\
 	 it!=matrix_dict.end(); ++it) {				\
       Matrix<T> *a = it->second;				\
       const Matrix<T> *b = other->find(it->first);		\
@@ -170,7 +171,7 @@ public:
 
   // AXPY
   void axpy(T alpha, const MatrixSet<T> *other) {
-    for (const_iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
+    for (iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
       Matrix<T> *a = it->second;
       const Matrix<T> *b = other->find(it->first);
       if (b == 0)
@@ -182,8 +183,8 @@ public:
 
   // EQUALS
   void equals(const MatrixSet<T> *other, T epsilon) {
-    for (const_iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
-      Matrix<T> *a = it->second;
+    for (iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
+      const Matrix<T> *a = it->second;
       const Matrix<T> *b = other->find(it->first);
       if (b == 0)
         ERROR_EXIT1(128, "Matrix with name %s not found\n",
@@ -194,7 +195,7 @@ public:
 
   // matrix math reductions
   T norm2() {
-    T result_norm2 = 0.0f;
+    T result_norm2 = T();
     for (iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
       T current_norm2 = it->second->norm2();
       result_norm2 = result_norm2 + current_norm2*current_norm2;
@@ -214,12 +215,12 @@ public:
   // dot reduction
   T dot(MatrixSet<T> *other) {
     T result = T();
-    for (const_iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
+    for (iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
       Matrix<T> *a = it->second;
       Matrix<T> *b = other->find(it->first);
       if (b == 0)
         ERROR_EXIT1(128, "Matrix with name %s not found\n",
-                    it->first.c_str());
+		    it->first.c_str());
       IncRef(a);
       IncRef(b);
       if (!a->getIsContiguous()) AssignRef(a, a->clone());
@@ -227,8 +228,7 @@ public:
       int a_size = a->size();
       int b_size = b->size();
       AssignRef(a, a->rewrap(&a_size, 1));
-      AssignRef(b, b->rewrap(&a_size, 1));
-      printf("%p %p :: %d %d\n", a,b,a->getRef(), b->getRef());
+      AssignRef(b, b->rewrap(&b_size, 1));
       result = result + a->dot(b);
       DecRef(a);
       DecRef(b);

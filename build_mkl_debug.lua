@@ -24,7 +24,6 @@ luapkg{
       "-march=native",
       "-msse",
       "-pg",
-      "-DNO_POOL",
       "-fopenmp",
       "-fPIC",
     },

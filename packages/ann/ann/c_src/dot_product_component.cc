@@ -79,7 +79,7 @@ namespace ANN {
       april_assert(input_mat->getDimSize(1) == static_cast<int>(input_size));
       if (input_mat->getStrideSize(0) > 1) {
 	input_mat = input_mat->clone();
-	AssignRef<Token*>(input,new TokenMatrixFloat(input_mat));
+	AssignRef<Token>(input,new TokenMatrixFloat(input_mat));
       }
 #ifdef USE_CUDA
       input_mat->setUseCuda(use_cuda);

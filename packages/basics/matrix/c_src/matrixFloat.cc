@@ -547,7 +547,7 @@ void Matrix<float>::ger(float alpha,
 			const Matrix<float> *otherX,
 			const Matrix<float> *otherY) {
   if (!otherX->isVector() || !otherY->isVector() || numDim!=2)
-    ERROR_EXIT(128,"Incorrect number of dimensions");
+    ERROR_EXIT(128,"Incorrect number of dimensions\n");
   int M=otherX->size(), N=otherY->size();
   if (matrixSize[0] != M ||
       matrixSize[1] != N)
@@ -569,14 +569,13 @@ void Matrix<float>::ger(float alpha,
 
 template<>
 float Matrix<float>::dot(const Matrix<float> *other) const {
-  printf("%p %p\n", this,other);
   if (!this->isVector() || !other->isVector())
-    ERROR_EXIT(128,"Incorrect number of dimensions");
+    ERROR_EXIT(128,"Incorrect number of dimensions\n");
   if (this->size() != other->size())
     ERROR_EXIT2(128, "Incorrect dimensions: %d dot %d\n",
 		this->size(), other->size());
   if (major_order != other->major_order)
-    ERROR_EXIT(128, "Matrices with different major orders");
+    ERROR_EXIT(128, "Matrices with different major orders\n");
   float ret = doDot(size(),
 		    data, offset, getVectorStride(),
 		    other->data, other->offset, other->getVectorStride(),

@@ -72,6 +72,7 @@ v0.3.1-beta relase
 
 ### Bugs removed
 
+- Memory leak due to the GPUMirroredMemoryBlock pool was solved.
 - Solved bug at `stats.correlation.pearson`.
 - Solved bug at `trainable` when using `use_dataset`, `train_dataset`,
   `validate_dataset`, `grad_check_dataset` methods without a `bunch_size`

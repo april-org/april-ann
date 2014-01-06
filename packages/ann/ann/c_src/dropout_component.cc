@@ -107,13 +107,13 @@ namespace ANN {
       april_assert(error_input_mat->getNumDim() >= 2);
       if (!error_input_mat->getIsContiguous()) {
 	error_input_mat = error_input_mat->clone();
-	AssignRef<Token*>(error_input,new TokenMatrixFloat(error_input_mat));
+	AssignRef<Token>(error_input,new TokenMatrixFloat(error_input_mat));
       }
 #ifdef USE_CUDA
       error_input_mat->setUseCuda(use_cuda);
 #endif
       MatrixFloat *error_output_mat = error_input_mat->clone();
-      AssignRef<Token*>(error_output,new TokenMatrixFloat(error_output_mat));
+      AssignRef<Token>(error_output,new TokenMatrixFloat(error_output_mat));
       if (!error_output_mat->sameDim(input->getMatrix()))
 	ERROR_EXIT1(129, "Different bunches found at doForward and doBackprop [%s]\n",
 		    name.c_str());

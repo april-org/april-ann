@@ -1922,6 +1922,12 @@ public:
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloatSet norm2
+{
+  LUABIND_RETURN(float, obj->norm2());
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloatSet prune_subnormal_and_check_normal
 {
   obj->pruneSubnormalAndCheckNormal();
@@ -1947,6 +1953,9 @@ public:
 {
   float alpha;
   MatrixFloatSet *other;
+  LUABIND_CHECK_ARGN(==,2);
+  LUABIND_CHECK_PARAMETER(1,float);
+  LUABIND_CHECK_PARAMETER(2,MatrixFloatSet);
   LUABIND_GET_PARAMETER(1, float, alpha);
   LUABIND_GET_PARAMETER(2, MatrixFloatSet, other);
   obj->axpy(alpha, other);
@@ -1963,9 +1972,22 @@ public:
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloatSet cmul
+{
+  MatrixFloatSet *other;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1,MatrixFloatSet);
+  LUABIND_GET_PARAMETER(1, MatrixFloatSet, other);
+  obj->cmul(other);
+  LUABIND_RETURN(MatrixFloatSet, obj);
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloatSet dot
 {
   MatrixFloatSet *other;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1,MatrixFloatSet);
   LUABIND_GET_PARAMETER(1, MatrixFloatSet, other);
   float dot_result = obj->dot(other);
   LUABIND_RETURN(float, dot_result);

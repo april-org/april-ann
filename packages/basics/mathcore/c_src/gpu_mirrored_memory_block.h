@@ -61,6 +61,11 @@ extern "C" {
 /// Class base for memory blocks mirrored between host (mem ppal) and device
 /// (GPU)
 class GPUMirroredMemoryBlockBase : public Referenced {
+public:
+  typedef april_utils::list<char*>                  ListType;
+  typedef april_utils::hash<unsigned int, ListType> PoolType;
+  
+private:
   static bool use_mmap_allocation;
 
 protected:
@@ -68,25 +73,27 @@ protected:
   const static size_t MAX_POOL_LIST_SIZE    = 200*1024*1024; // 200 Megabytes
   const static size_t MIN_MEMORY_TH_IN_POOL = 20; // 20 bytes
   static size_t pool_size;
-  static april_utils::hash<unsigned int,april_utils::list<void*> > pool_lists;
-  // FIXME: This static class is not working... therefore the memory allocated
-  // by pool pointers is never freed. 
+  static PoolType *pool_lists;
+  /// Auxiliary class for free of memory pool
   class PoolFreeBeforeExit {
   public:
     PoolFreeBeforeExit() { }
     ~PoolFreeBeforeExit() {
-      for (april_utils::hash<unsigned int,april_utils::list<void*> >::iterator it = pool_lists.begin();
-	   it != pool_lists.end(); ++it) {
-	for (april_utils::list<void*>::iterator lit = it->second.begin();
-	     lit != it->second.end(); ++lit)
+      for (PoolType::iterator it = pool_lists->begin();
+	   it != pool_lists->end(); ++it) {
+	for (ListType::iterator lit = it->second.begin();
+	     lit != it->second.end(); ++lit) {
 	  aligned_free(*lit);
+	}
       }
+      delete pool_lists;
     }
   };
-  const static PoolFreeBeforeExit pool_free_before_exit();
+  static PoolFreeBeforeExit pool_free_before_exit;
 #endif
   size_t size;
   union {
+    char *char_mem;
     void *mem_ppal;
     const void *const_mem_ppal;
   };
@@ -160,7 +167,7 @@ protected:
 		      cudaGetErrorString(cudaGetLastError()));
       }
       else {
-	if (cudaMemcpyAsync(reinterpret_cast<void*>(mem_ppal),
+	if (cudaMemcpyAsync(mem_ppal,
 			    reinterpret_cast<void*>(mem_gpu),
 			    size,
 			    cudaMemcpyDeviceToHost, 0) != cudaSuccess)
@@ -188,7 +195,7 @@ protected:
     else {
       cudaThreadSynchronize();
       if (cudaMemcpyAsync(reinterpret_cast<void*>(mem_gpu),
-			  reinterpret_cast<void*>(mem_ppal),
+			  mem_ppal,
 			  size,
 			  cudaMemcpyHostToDevice, 0) != cudaSuccess)
 	ERROR_EXIT1(162, "Could not copy memory from host to device: %s\n",
@@ -213,8 +220,6 @@ protected:
   }
 #endif
 
-  GPUMirroredMemoryBlockBase() : Referenced() { }
-  
 public:
 
 #ifdef USE_CUDA  
@@ -240,7 +245,7 @@ public:
       ERROR_EXIT(128, "Impossible to update memory from a const pointer\n");
 #endif
     mmapped_data->put(&size);
-    mmapped_data->put(reinterpret_cast<const char*>(mem_ppal), size);
+    mmapped_data->put(char_mem, size);
   }
   
   void toMMappedDataWriter(april_utils::MMappedDataWriter *mmapped_data) {
@@ -248,12 +253,13 @@ public:
     updateMemPPAL();
 #endif
     mmapped_data->put(&size);
-    mmapped_data->put(reinterpret_cast<char *>(mem_ppal), size);
+    mmapped_data->put(char_mem, size);
   }
   
-  GPUMirroredMemoryBlockBase(april_utils::MMappedDataReader *mmapped_data) {
+  GPUMirroredMemoryBlockBase(april_utils::MMappedDataReader *mmapped_data) :
+    Referenced() {
     this->size     = *(mmapped_data->get<size_t>());
-    this->mem_ppal = reinterpret_cast<void*>(mmapped_data->get<char>(this->size));
+    this->char_mem = mmapped_data->get<char>(this->size);
     this->mmapped_data = mmapped_data;
     IncRef(mmapped_data);
     this->status = 0;
@@ -307,10 +313,10 @@ public:
 #endif
 #ifndef NO_POOL
     bool alloc_block = false;
-    april_utils::list<void*> &l = pool_lists[size];
+    april_utils::list<char*> &l = (*pool_lists)[size];
     if (l.empty()) {
       if (!use_mmap_allocation) {
-	mem_ppal = reinterpret_cast<void*>(aligned_malloc<char*>(size));
+	char_mem = aligned_malloc<char>(size);
       }
       else {
 	setMMapped();
@@ -329,7 +335,7 @@ public:
     }
 #else
     if (!use_mmap_allocation) {
-      mem_ppal = reinterpret_cast<void*>(aligned_malloc<char*>(size));
+      char_mem = aligned_malloc<char>(size);
     }
     else {
       setMMapped();
@@ -355,14 +361,14 @@ public:
       if (isAllocated()) {
 	if (!isMMapped()) {
 #ifndef NO_POOL
-	  april_utils::list<void*> &l = pool_lists[size];
+	  april_utils::list<void*> &l = (*pool_lists)[size];
 	  if (pool_size < MAX_POOL_LIST_SIZE && size >= MIN_MEMORY_TH_IN_POOL) {
 	    pool_size += size;
-	    l.push_front(mem_ppal);
+	    l.push_front(char_mem);
 	  }
-	  else aligned_free(mem_ppal);
+	  else aligned_free(char_mem);
 #else
-	  aligned_free(mem_ppal);
+	  aligned_free(char_mem);
 #endif
 	}
 	else munmap(mem_ppal, size);
@@ -378,14 +384,14 @@ public:
     if (isAllocated()) {
       if (!isMMapped()) {
 #ifndef NO_POOL
-	april_utils::list<void*> &l = pool_lists[size];
+	april_utils::list<char*> &l = (*pool_lists)[size];
 	if (pool_size < MAX_POOL_LIST_SIZE) {
 	  pool_size += size;
-	  l.push_front(mem_ppal);
+	  l.push_front(char_mem);
 	}
-	else aligned_free(mem_ppal);
+	else aligned_free(char_mem);
 #else
-	aligned_free(mem_ppal);
+	aligned_free(char_mem);
 #endif
       }
       else munmap(mem_ppal, size);
@@ -403,7 +409,7 @@ public:
     if (isConst() || isMMapped()) {
       ERROR_EXIT(128, "Impossible to set as pinned a const or mmapped memory block\n");
     }
-    if (mem_ppal) aligned_free(mem_ppal);
+    if (mem_ppal) aligned_free(char_mem);
     void *ptr;
     if (cudaHostAlloc(&ptr, size, 0) != cudaSuccess)
       ERROR_EXIT1(162, "Could not copy memory from host to device: %s\n",
@@ -433,10 +439,26 @@ class GPUMirroredMemoryBlock : public GPUMirroredMemoryBlockBase {
   
 protected:
   
-  GPUMirroredMemoryBlock() : GPUMirroredMemoryBlockBase() { }
-  
   GPUMirroredMemoryBlock(april_utils::MMappedDataReader *mmapped_data) :
     GPUMirroredMemoryBlockBase(mmapped_data) { }
+  
+  T *getPointer() {
+    union {
+      void *void_ptr;
+      T    *T_ptr;
+    };
+    void_ptr = mem_ppal;
+    return T_ptr;
+  }
+
+  const T *getPointer() const {
+    union {
+      const void *void_ptr;
+      const T    *T_ptr;
+    };
+    void_ptr = const_mem_ppal;
+    return T_ptr;
+  }
   
 public:
   
@@ -446,12 +468,11 @@ public:
   }
   
   GPUMirroredMemoryBlock(unsigned int sz, T *mem) :
-    GPUMirroredMemoryBlockBase(sz*sizeof(T), reinterpret_cast<void*>(mem)) { }
-
+    GPUMirroredMemoryBlockBase(sz*sizeof(T), mem) { }
+  
   GPUMirroredMemoryBlock(unsigned int sz, const T *mem) :
-    GPUMirroredMemoryBlockBase(sz*sizeof(T),
-			       reinterpret_cast<const void*>(mem)) { }
-
+    GPUMirroredMemoryBlockBase(sz*sizeof(T), mem) { }
+  
   GPUMirroredMemoryBlock(unsigned int sz) :
   GPUMirroredMemoryBlockBase(sz*sizeof(T)) { }
   
@@ -466,14 +487,14 @@ public:
     if (!getUpdatedPPAL())
       ERROR_EXIT(128, "Update the memory from a non const pointer\n");
 #endif
-    return reinterpret_cast<const T*>(const_mem_ppal);
+    return getPointer();
   }
 
   const T *getPPALForRead() {
 #ifdef USE_CUDA
     updateMemPPAL();
 #endif
-    return reinterpret_cast<T*>(mem_ppal);
+    return getPointer();
   }
 
 #ifdef USE_CUDA
@@ -496,7 +517,7 @@ public:
     setUpdatedPPAL();
     unsetUpdatedGPU();
 #endif
-    return reinterpret_cast<T*>(mem_ppal);
+    return getPointer();
   }
   
 #ifdef USE_CUDA
@@ -517,7 +538,7 @@ public:
     updateMemPPAL();
     unsetUpdatedGPU();
 #endif
-    return reinterpret_cast<T*>(mem_ppal);
+    return getPointer();
   }
 
 #ifdef USE_CUDA
@@ -535,7 +556,7 @@ public:
     updateMemPPAL();
     unsetUpdatedGPU();
 #endif
-    return (reinterpret_cast<T*>(mem_ppal))[pos];
+    return getPointer()[pos];
   }
 
   T &operator[](unsigned int pos) {
@@ -546,7 +567,7 @@ public:
 #ifdef USE_CUDA
     updateMemPPAL();
 #endif
-    return (reinterpret_cast<const T*>(mem_ppal))[pos];
+    return getPointer()[pos];
   }
 
   const T &operator[](unsigned int pos) const {
@@ -555,7 +576,12 @@ public:
   
   template<typename O>
   GPUMirroredMemoryBlock<O> *reinterpretAs() {
-    return reinterpret_cast<GPUMirroredMemoryBlock<O>*>(this);
+    union {
+      GPUMirroredMemoryBlock<O> *other;
+      GPUMirroredMemoryBlock<T> *ptr;
+    };
+    ptr = this;
+    return other;
   }
 };
 
