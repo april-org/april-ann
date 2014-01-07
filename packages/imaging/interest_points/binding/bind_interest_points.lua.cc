@@ -282,3 +282,54 @@ using namespace InterestPoints;
  LUABIND_RETURN(SetPoints, sp);
 }
 //BIND_END
+
+//BIND_METHOD SetPoints getLinearRegression
+{
+//Used for drawing the line regression
+
+   lua_createtable(L, obj->getSize(), 0);
+   int comp = 1;
+
+   for (int i = 0; i < obj->getSize(); ++i) {
+     PointComponent component = obj->getComponent(i);
+     line *myLine = component.get_regression_line();
+     if (!myLine){
+        
+         continue;
+     }
+     // Compute most left and most right points
+     component.sort_by_x();
+     interest_point p1 = component[0];
+     interest_point p2 = component[component.size()-1];
+     float dist = 0.0;
+     Point2D cp1 = myLine->closestPoint(p1,dist);
+     Point2D cp2 = myLine->closestPoint(p2,dist);
+     //ini point and end point
+     lua_createtable(L,2,0);
+
+     lua_createtable(L,2,0);
+     lua_pushint(L, (int)cp1.x);
+     lua_rawseti(L, -2, 1);
+     lua_pushint(L, (int)cp1.y);
+     lua_rawseti(L, -2, 2);
+
+     lua_rawseti(L,-2, 1);
+     lua_createtable(L, 2,0);
+     lua_pushint(L, (int)cp2.x);
+     lua_rawseti(L, -2, 1);
+     lua_pushint(L, (int)cp2.y);
+     lua_rawseti(L, -2, 2);
+
+     lua_rawseti(L, -2, 2);
+
+     lua_rawseti(L, -2, comp);
+     printf("Componente: %d, Punto A: (%d %d) (%f %f), Punto B: (%d, %d) (%f, %f)\n", i, p1.x, p1.y,cp1.x,cp1.y,  p2.x, p2.y, cp2.x, cp2.y);
+     printf("Slope: %f, intercept %f\n", myLine->getSlope(), myLine->getYintercept());
+     comp++;
+   } 
+   
+   //Returns a table of 2 points
+   LUABIND_RETURN_FROM_STACK(-1);
+
+}
+//BIND_END

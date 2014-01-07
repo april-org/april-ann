@@ -35,7 +35,7 @@ using april_utils::Point2D;
 namespace InterestPoints
 {
   
-  enum {ASCENDER, TOPLINE, CENTRAL, BASELINE, DESCENDER, OTHER};
+  enum {ASCENDER=1, TOPLINE, CENTRAL, BASELINE, DESCENDER, OTHER};
   /**
    * @brief Given an Image returns a vector with the local maxima and local minima of the given image.
    *
@@ -90,8 +90,11 @@ namespace InterestPoints
 
        double line_least_squares();
 
+       PointComponent *get_points_by_type(const int point_class, \
+               const float min_prob = -999999.00);
        void sort_by_confidence();
        void sort_by_x();
+       line *get_regression_line();
  };
  class SetPoints: public Referenced {
      protected:
@@ -103,9 +106,12 @@ namespace InterestPoints
      public:
          SetPoints(ImageFloat *img);
          void addComponent();
+         void addComponent(PointComponent &);
          int getNumPoints() { return num_points;};
          int getSize() { return size;}
-         
+         PointComponent &getComponent(int cc) {
+           return (*ccPoints)[cc];
+         }
          void addPoint(int component, interest_point ip);
          void addPoint(int component, int x, int y, int c, bool natural_type, float log_prob = 0.0) {
              addPoint(component, interest_point(x,y,c,natural_type,log_prob));
@@ -121,8 +127,7 @@ namespace InterestPoints
          };
          float component_affinity(int component, interest_point &ip);
          float similarity(interest_point &ip1, interest_point &ip2);
-         PointComponent *get_points_by_type(const int cc, const int point_class, \
-                 const float min_prob = -999999.00);
+         
  };
 
  class ConnectedPoints: public SetPoints {

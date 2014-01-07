@@ -488,7 +488,15 @@ namespace InterestPoints {
       num_points = 0;
   }
 
-  
+  void SetPoints::addComponent(PointComponent &component) {
+    if ((size_t) size != ccPoints->size())
+        fprintf(stderr, "Size sincronization error %d %lu\n", size, ccPoints->size());
+    april_assert("Size sincronization error" && (size_t)size == ccPoints->size());
+    
+    (*ccPoints).push_back(component);
+    ++size;
+  }
+
   void ConnectedPoints::addPoint(interest_point ip) {
 
       int x, y;
@@ -672,26 +680,35 @@ namespace InterestPoints {
 
   SetPoints * ConnectedPoints::computePoints() {
       SetPoints * mySet = new SetPoints(img);
+      float threshold = 100.0;
       //Process each component
       for (int cc = 0; cc < size; ++cc) {
+
           PointComponent &component = (*ccPoints)[cc];
+          int n_points = component.size();
+          if (n_points == 0)
+              continue;
 
-          PointComponent *top_line = this->get_points_by_type(cc, TOPLINE);
-
+          PointComponent *base_line = component.get_points_by_type(BASELINE);
+          double sse = base_line->line_least_squares();
+           
           //Compute the regression over the points of the line
+          printf("%d %d %f %f\n", cc, (int)base_line->size(),sse, sse/n_points);
 
+          if (sse/n_points < threshold) {
+             mySet->addComponent(*base_line);
+          }
       }
 
       return mySet;
   }
 
-  PointComponent *SetPoints::get_points_by_type(const int cc, const int point_class, const float min_prob) {
+  PointComponent *PointComponent::get_points_by_type(const int point_class, const float min_prob) {
       // TODO: Check if cc is on the range
-      PointComponent component = (*ccPoints)[cc];
       PointComponent *l = new PointComponent();
 
-      for(size_t i = 0; i < component.size(); ++i) {
-          interest_point v = component[i];
+      for(size_t i = 0; i < size(); ++i) {
+          interest_point v = (*this)[i];
           if (v.point_class == point_class and v.log_prob > min_prob) {
               l->push_back(v);
 
@@ -700,12 +717,16 @@ namespace InterestPoints {
 
       return l; 
   }
-  double PointComponent::line_least_squares() {
-
+  line * PointComponent::get_regression_line() {
       //TODO: Move to geometry
       size_t n = this->size();
+      if (n <= 1)
+          return NULL;
+
       double *vx = new double[n];
       double *vy = new double[n];
+
+
       for (size_t i = 0; i < n; ++i) {
           vx[i] = (*this)[i].x;
           vy[i] = (*this)[i].y;
@@ -714,16 +735,28 @@ namespace InterestPoints {
       double a, b;
       least_squares(vx,vy, n, a, b);
 
-      line myLine = line(a,b);
+      delete []vx;
+      delete []vy;
+
+      return new line(b,a);
+  }
+
+  double PointComponent::line_least_squares() {
+
+      size_t n = size();
+      if (n <= 1)
+          return 0.0;
+
+      line *myLine = this->get_regression_line();
 
       double sse = 0.0;
 
-      for (size_t i = 0; i < n; ++i) {
-          sse += myLine.distance((*this)[i]); 
+      for (size_t i = 0; i < size(); ++i) {
+          double dist =  myLine->distance((*this)[i]); 
+          sse += dist*dist; 
       }
-      delete []vx;
-      delete []vy;
-      return 0.0;
+      delete myLine;
+      return sse;
   }
 
 }

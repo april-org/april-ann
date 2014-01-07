@@ -53,7 +53,7 @@ namespace april_utils {
         float line::distance(const Point<float> &p) {
         float x = p.x;
         float y = p.y;
-        return abs(y-m*x-b)/sqrt(m*m+1);;
+        return fabs(m*x+b-y)/sqrt(m*m+1);;
 
     }
     template <>
@@ -74,6 +74,11 @@ namespace april_utils {
       dist = distance(p);
       return Point2D(x, y);
     }
-
+    
+    template <>
+    Point2D line::closestPoint(const Point<int> &p, float &dist) {
+      Point<float> pf = Point<float>(p); 
+      return this->closestPoint(pf,dist);
+    }
 
 }
