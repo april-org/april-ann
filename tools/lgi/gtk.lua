@@ -24,6 +24,7 @@ function gtk.show(...)
       ImageIO.write(img, tmp_file, 'png')
       param = tmp_file
     end
+    local sx,sy  = 1,1
     local pixbuf = GdkPixbuf.Pixbuf.new_from_file(param)
     local window = Gtk.Window {
       title = 'Prueba',
@@ -65,6 +66,14 @@ function gtk.show(...)
 	},
       },
     }
+    local function scale()
+      local scaled_pixbuf = pixbuf:scale_simple(pixbuf.width  * sx,
+						pixbuf.height * sy,
+						'BILINEAR')
+      window.child.image.pixbuf = scaled_pixbuf
+      window.child.image:queue_draw()
+      collectgarbage("collect")
+    end
     function window.child.exit:on_toggled()
       for i=1,#windows do windows[i]:hide() end
       Gtk.main_quit()
@@ -72,24 +81,22 @@ function gtk.show(...)
     function window.child.fit:on_toggled()
       local w,h = window.width-40,window.height - window.child.top.height - 50
       local ratio = pixbuf.height/pixbuf.width
-      if h/ratio < w then w = h/ratio else h = ratio*w end
-      pixbuf = pixbuf:scale_simple(w, h, 'NEAREST')
-      window.child.image.pixbuf = pixbuf
-      window.child.image:queue_draw()
+      if w*ratio > h then
+	sy=h/pixbuf.height
+	sx=sy
+      else
+	sx=w/pixbuf.width
+	sx=sy
+      end
+      scale()
     end
     function window.child.zoomIN:on_toggled()
-      pixbuf = pixbuf:scale_simple(pixbuf.width  * 1.1,
-				   pixbuf.height * 1.1,
-				   'NEAREST')
-      window.child.image.pixbuf = pixbuf
-      window.child.image:queue_draw()
+      sx,sy = sx*1.1,sy*1.1
+      scale()
     end
     function window.child.zoomOUT:on_toggled()
-      pixbuf = pixbuf:scale_simple(pixbuf.width  * 0.9,
-				   pixbuf.height * 0.9,
-				   'NEAREST')
-      window.child.image.pixbuf = pixbuf
-      window.child.image:queue_draw()
+      sx,sy = sx*0.9,sy*0.9
+      scale()
     end
     window:show_all()
     table.insert(windows, window)
