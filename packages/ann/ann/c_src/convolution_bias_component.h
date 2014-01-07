@@ -32,7 +32,7 @@ namespace ANN {
   /// planes. Exists one bias per each output plane.
   class ConvolutionBiasANNComponent : public ANNComponent {
     TokenMatrixFloat *input, *error, *output;
-    Connections *bias_vector;
+    MatrixFloat *bias_vector;
     MatrixFloat *bias_matrix; // rewrapping of bias_vector matrix to fits at
 			      // input window sizes
 
@@ -69,13 +69,13 @@ namespace ANN {
     }
     virtual Token *doForward(Token* input, bool during_training);
     virtual Token *doBackprop(Token *input_error);
-    virtual void   reset();
+    virtual void   reset(unsigned int it=0);
     virtual ANNComponent *clone();
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
-		       hash<string,Connections*> &weights_dict,
+		       MatrixFloatSet *weights_dict,
 		       hash<string,ANNComponent*> &components_dict);
-    virtual void copyWeights(hash<string,Connections*> &weights_dict);
+    virtual void copyWeights(MatrixFloatSet *weights_dict);
     virtual char *toLuaString();
 
   };

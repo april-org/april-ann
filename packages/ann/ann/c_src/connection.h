@@ -33,102 +33,54 @@
 
 using april_utils::max;
 
-#define MAX_ITERATIONS_RANDOMIZE_LOOP 1000
-
-// generates a random weight, checking number of iterations and weightnearzero
-#define rnd_weight(rnd, value, dinf, range, weightnearzero) do {	\
-    unsigned int it = 0;						\
-    do {								\
-      (value) = (rnd)->rand((range))+(dinf);				\
-      it++;								\
-    } while (it < MAX_ITERATIONS_RANDOMIZE_LOOP &&			\
-	     fabs((value)) < (weightnearzero));				\
-    if (fabs((value)) < (weightnearzero))				\
-      ERROR_PRINT("# WARNING!!! Detected weightnearzero\n");		\
-  } while(false);
-
 namespace ANN {
-  
+
+  /// The class Connections is an static class. It is a helper to build,
+  /// initialize, and query matrix instances interpreted as connection weights.
   class Connections : public Referenced {
-  protected:
-    MatrixFloat *weights;
-    MatrixFloat *prev_weights;
-    // Counts the number of ANN components which shares this weight matrices
-    unsigned int shared_count;
-    
   public:
     static const double weightnearzero;
-    
-    Connections(unsigned int num_inputs, unsigned int num_outputs,
-		const MatrixFloat *w=0, const MatrixFloat *oldw=0);
-    ~Connections();
-    
-    // This method must be executed during the forward step
-    void resetSharedCount() {
-      shared_count = 0;
+    static MatrixFloat *build(unsigned int num_inputs,
+			      unsigned int num_outputs);
+    //
+    static unsigned int getInputSize(const MatrixFloat *weights) {
+      return static_cast<unsigned int>(weights->getDimSize(1));
+    }
+    static unsigned int getNumInputs(const MatrixFloat *weights) {
+      return static_cast<unsigned int>(weights->getDimSize(1));
+    }
+    static unsigned int getOutputSize(const MatrixFloat *weights) {
+      return static_cast<unsigned int>(weights->getDimSize(0));
+    }
+    static unsigned int getNumOutputs(const MatrixFloat *weights) {
+      return static_cast<unsigned int>(weights->getDimSize(0));
     }
     
-    // This method must be executed during the backprop step
-    void addToSharedCount(unsigned int count=1) {
-      shared_count += count;
-    }
+    static bool checkInputOutputSizes(const MatrixFloat *weights,
+				      unsigned int input_size,
+				      unsigned int output_size);
 
-    //
-    unsigned int getSharedCount() const {
-      if (shared_count == 0)
-	ERROR_EXIT(128, "Found ZERO in shared_count of connections, check that "
-		   "all ANN components are using properly resetSharedCount() "
-		   "and addToSharedCount(...) methods\n");
-      return shared_count;
-    }
-    
-    //
-    unsigned int getInputSize()  const {
-      return static_cast<unsigned int>(weights->getDimSize(1));
-    }
-    unsigned int getNumInputs()  const {
-      return static_cast<unsigned int>(weights->getDimSize(1));
-    }
-    unsigned int getOutputSize() const {
-      return static_cast<unsigned int>(weights->getDimSize(0));
-    }
-    unsigned int getNumOutputs() const {
-      return static_cast<unsigned int>(weights->getDimSize(0));
-    }
-    
-    unsigned int size() const;
-    void         pruneSubnormalAndCheckNormal();
-    MatrixFloat *getPtr();
-    MatrixFloat *getPrevPtr();
-    
-    // INTERFAZ A IMPLEMENTAR
-    bool checkInputOutputSizes(unsigned int input_size,
-			       unsigned int output_size) const;
-    void randomizeWeights(MTRand *rnd, float low, float high);
-    void randomizeWeightsAtColumn(unsigned int col,
-				  MTRand *rnd,
-				  float low, float high);
+    static void randomizeWeights(MatrixFloat *weights,
+				 MTRand *rnd, float low, float high);
+    static void randomizeWeightsAtColumn(MatrixFloat *weights,
+					 unsigned int col,
+					 MTRand *rnd,
+					 float low, float high);
     // Carga/guarda los pesos de la matriz data comenzando por la
     // posicion first_weight_pos. Devuelve la suma del numero de pesos
     // cargados/salvados y first_weight_pos. En caso de error,
     // abortara el programa con un ERROR_EXIT
-    unsigned int loadWeights(MatrixFloat *data,
-			     MatrixFloat *old_data,
-			     unsigned int first_weight_pos,
-			     unsigned int column_size);
+    static unsigned int loadWeights(MatrixFloat *weights,
+				    MatrixFloat *data,
+				    unsigned int first_weight_pos,
+				    unsigned int column_size);
     
-    unsigned int copyWeightsTo(MatrixFloat *data,
-			       MatrixFloat *old_data,
-			       unsigned int first_weight_pos,
-			       unsigned int column_size);
-    // para hacer copias
-    Connections *clone();
-
-    void printDebug();
-
-    char *toLuaString();
+    static unsigned int copyWeightsTo(MatrixFloat *weights,
+				      MatrixFloat *data,
+				      unsigned int first_weight_pos,
+				      unsigned int column_size);
     
-    void swap();
+    static char *toLuaString(MatrixFloat *weights);
   };
 }
 #endif

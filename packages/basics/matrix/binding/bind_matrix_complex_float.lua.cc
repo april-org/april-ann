@@ -325,12 +325,12 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 
 //BIND_METHOD MatrixComplexF toFilename
 //DOC_BEGIN
-// void toFilename(string filename, string type='ascii')
+// void toFilename(string filename, string type='binary')
 /// Permite salvar una matriz con un formato tal y como se carga con el
 /// metodo fromString. El unico argumento opcional indica el tipo 'ascii'
 /// o 'binary'.
 ///@param filename Indica el nombre del fichero.
-///@param type Parametro opcional. Puede ser 'ascii' o 'binary', y por defecto es 'ascii'.
+///@param type Parametro opcional. Puede ser 'ascii' o 'binary', y por defecto es 'binary'.
 //DOC_END
 {
   LUABIND_CHECK_ARGN(>=, 1);
@@ -338,7 +338,7 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
   const char *filename;
   constString cs;
   LUABIND_GET_PARAMETER(1, string, filename);
-  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("ascii"));
+  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("binary"));
   bool is_ascii = (cs == "ascii");
   writeMatrixComplexFToFile(obj, filename, is_ascii);
 }
@@ -346,16 +346,16 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 
 //BIND_METHOD MatrixComplexF toString
 //DOC_BEGIN
-// string toString(string type='ascii')
+// string toString(string type='binary')
 /// Permite salvar una matriz con un formato tal y como se carga con el
 /// metodo fromString. El unico argumento opcional indica el tipo 'ascii'
 /// o 'binary'.
-///@param type ParÃ¡metro opcional. Puede ser 'ascii' o 'binary', y por defecto es 'ascii'.
+///@param type ParÃ¡metro opcional. Puede ser 'ascii' o 'binary', y por defecto es 'binary'.
 //DOC_END
 {
   LUABIND_CHECK_ARGN(<=, 1);
   constString cs;
-  LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("ascii"));
+  LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("binary"));
   bool is_ascii = (cs == "ascii");
   writeMatrixComplexFToLuaString(obj, L, is_ascii);
   LUABIND_INCREASE_NUM_RETURNS(1);
@@ -790,12 +790,10 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 //BIND_METHOD MatrixComplexF cmul
   {
     LUABIND_CHECK_ARGN(==, 1);
-    MatrixComplexF *mat,*resul;
+    MatrixComplexF *mat;
     LUABIND_GET_PARAMETER(1, MatrixComplexF, mat);
-    resul = obj->cmul(mat);
-    if (resul == 0)
-      LUABIND_ERROR("matrix cmul wrong dimensions");
-    LUABIND_RETURN(MatrixComplexF, resul);
+    obj->cmul(mat);
+    LUABIND_RETURN(MatrixComplexF, obj);
   }
 //BIND_END
 

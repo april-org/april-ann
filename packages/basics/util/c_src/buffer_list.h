@@ -29,7 +29,7 @@ struct buffer_list_node {
   char *buffer;
   int size;
   buffer_list_node *next;
-  buffer_list_node() : buffer(0), size(0), next(0) {};
+  buffer_list_node() : buffer(0), size(0), next(0) {}
   buffer_list_node(int sz, buffer_list_node *nxt=0);
   ~buffer_list_node();
 };

@@ -23,7 +23,7 @@ function image.image_metrics.printMetrics(metrics, range, params)
     printf("\n")
 end
 
-function processImages(self, clean_img, gt_img)
+local function processImages(self, clean_img, gt_img)
   -- Load a dataset over the image and call process_dataset
     
     local dim_clean = clean_img:matrix():dim()  

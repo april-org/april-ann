@@ -2,7 +2,7 @@
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
- * Copyright 2012, Salvador España-Boquera, Jorge Gorbe Moya, Francisco Zamora-Martinez
+ * Copyright 2012, Jorge Gorbe Moya, Salvador España-Boquera
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
@@ -18,5 +18,29 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef AFFINE_TRANSFORM_H
+#define AFFINE_TRANSFORM_H
 
-bool use_mmap_memory_allocation=false;
+#include "matrixFloat.h"
+
+class AffineTransform2D: public MatrixFloat
+{
+  public:
+  AffineTransform2D();
+  AffineTransform2D(MatrixFloat *mat);
+  ~AffineTransform2D() {}
+  
+  AffineTransform2D *accumulate(AffineTransform2D *other);
+  AffineTransform2D *rotate(float angle);
+  AffineTransform2D *rotate(float angle, float center_x, float center_y);
+  AffineTransform2D *translate(float x, float y);
+  AffineTransform2D *scale(float x, float y);
+  AffineTransform2D *shear(float angle_x, float angle_y);
+
+  void transform(float x, float y, float *dstx, float *dsty) const;
+  private:
+  static const int dimensions[2];
+};
+
+#endif
+

@@ -1,6 +1,8 @@
 m1 = ImageIO.read(string.get_path(arg[0]) ..  "digits.png"):to_grayscale():invert_colors():matrix()
 
-bunch_size = 32
+bunch_size     = 32
+dropout_factor = 0.5
+dropout_random = random(123242)
 
 train_input = dataset.matrix(m1,
 			     {
@@ -86,6 +88,24 @@ loss_name = "multi_class_cross_entropy"
 sdae_table,deep_classifier = ann.autoencoders.greedy_layerwise_pretraining(params_pretrain)
 codifier_net = ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
 							       layers_table)
+function set_dropout(stack)
+  if dropout_factor > 0.0 then
+    local new_stack = ann.components.stack()
+    for i=1,stack:size(),2 do
+      new_stack:push( stack:get(i),
+		      stack:get(i+1) )
+      if i < stack:size()-2 then
+	new_stack:push( ann.components.dropout{ name="dropout-".. (i+1)/2,
+						prob=dropout_factor,
+						random=dropout_random } )
+      end
+    end
+    return new_stack
+  else
+    return stack
+  end
+end
+deep_classifier = set_dropout(deep_classifier)
 trainer_deep_classifier = trainable.supervised_trainer(deep_classifier,
 						       ann.loss[loss_name](10),
 						       bunch_size,
@@ -95,6 +115,7 @@ trainer_deep_classifier:set_option("rho", 0.0001)
 trainer_deep_classifier:set_option("sig", 0.8)
 --
 shallow_classifier = ann.mlp.all_all.generate("256 inputs 256 tanh 128 tanh 10 log_softmax")
+shallow_classifier = set_dropout(shallow_classifier)
 trainer_shallow_classifier = trainable.supervised_trainer(shallow_classifier,
 							  ann.loss[loss_name](10),
 							  bunch_size)
@@ -105,6 +126,7 @@ trainer_shallow_classifier:randomize_weights {
   sup      =  0.1 }
 --
 deep_classifier_wo_pretraining = ann.mlp.all_all.generate("256 inputs 1024 logistic 1024 logistic 1024 logistic 10 log_softmax")
+deep_classifier_wo_pretraining = set_dropout(deep_classifier_wo_pretraining)
 trainer_deep_wo_pretraining = trainable.supervised_trainer(deep_classifier_wo_pretraining,
 							   ann.loss[loss_name](10),
 							   bunch_size)
@@ -142,21 +164,6 @@ datosvalidar = {
   output_dataset = val_output
 }
 
-print(trainer_deep_classifier:validate_dataset(datosvalidar))
-
-dropout_factor = 0.5
-function set_dropout(trainer)
-  if dropout_factor > 0.0 then
-    local max=trainer:count_components("^actf.*$")
-    for name,component in trainer.iterate_components(trainer, "^actf.*$") do
-      if name ~= "actf"..max then
-	component:set_option("dropout_factor",dropout_factor)
-	component:set_option("dropout_seed", 5425)
-      end
-    end
-  end
-end
-
 -- we scale the weights before dropout
 if dropout_factor > 0.0 then
   for name,cnn in trainer_deep_classifier:iterate_weights("^w.*$") do
@@ -166,17 +173,17 @@ if dropout_factor > 0.0 then
 	w:scal(1.0/(1.0-dropout_factor))
 	ow:scal(1.0/(1.0-dropout_factor))
       else
-	cnn:scale(1.0/(1.0-dropout_factor))
+	cnn:scal(1.0/(1.0-dropout_factor))
       end
     end
   end
 end
+print(trainer_deep_classifier:validate_dataset(datosvalidar))
 
 --trainer_deep_classifier:set_option("learning_rate", 0.4)
 --trainer_deep_classifier:set_option("momentum", 0.0)
 trainer_deep_classifier:set_option("weight_decay", 0.0)
 trainer_deep_classifier:set_option("max_norm_penalty", 4.0)
---set_dropout(trainer_deep_classifier)
 
 trainer_shallow_classifier:set_option("learning_rate", 0.4)
 trainer_shallow_classifier:set_option("momentum",
@@ -185,7 +192,6 @@ trainer_shallow_classifier:set_option("weight_decay",
 				      trainer_deep_classifier:get_option("weight_decay"))
 trainer_shallow_classifier:set_option("max_norm_penalty",
 				      trainer_deep_classifier:get_option("max_norm_penalty"))
-set_dropout(trainer_shallow_classifier)
 
 trainer_deep_wo_pretraining:set_option("learning_rate",
 				       trainer_shallow_classifier:get_option("learning_rate"))
@@ -195,7 +201,6 @@ trainer_deep_wo_pretraining:set_option("weight_decay",
 				       trainer_deep_classifier:get_option("weight_decay"))
 trainer_deep_wo_pretraining:set_option("max_norm_penalty",
 				       trainer_deep_classifier:get_option("max_norm_penalty"))
-set_dropout(trainer_deep_wo_pretraining)
 
 trainer_deep_classifier:set_layerwise_option("b.*", "max_norm_penalty",0.0)
 trainer_deep_wo_pretraining:set_layerwise_option("b.*", "max_norm_penalty",0.0)

@@ -19,6 +19,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "unused_variable.h"
 #include "stack_component.h"
 
 namespace ANN {
@@ -78,13 +79,13 @@ namespace ANN {
     return aux_token;
   }
     
-  void StackANNComponent::reset() {
+  void StackANNComponent::reset(unsigned int it) {
     for (unsigned int c=0; c<components.size(); ++c)
-      components[c]->reset();
+      components[c]->reset(it);
   }
   
-  void StackANNComponent::computeAllGradients(hash<string,MatrixFloat*>
-					      &weight_grads_dict) {
+  void StackANNComponent::computeAllGradients(MatrixFloatSet
+					      *weight_grads_dict) {
     for (unsigned int c=0; c<components.size(); ++c)
       components[c]->computeAllGradients(weight_grads_dict);
   }
@@ -104,29 +105,9 @@ namespace ANN {
       components[c]->setUseCuda(v);
   }
   
-  void StackANNComponent::setOption(const char *name, double value) {
-    for (unsigned int c=0; c<components.size(); ++c)
-      components[c]->setOption(name, value);
-  }
-
-  bool StackANNComponent::hasOption(const char *name) {
-    bool ret = false;
-    for (unsigned int c=0; c<components.size() && !ret; ++c)
-      ret = components[c]->hasOption(name);
-    return ret;
-  }
-    
-  double StackANNComponent::getOption(const char *name) {
-    for (unsigned int c=0; c<components.size(); ++c) {
-      if (components[c]->hasOption(name))
-	return components[c]->getOption(name);
-    }
-    return ANNComponent::getOption(name);
-  }
-    
   void StackANNComponent::build(unsigned int _input_size,
 				unsigned int _output_size,
-				hash<string,Connections*> &weights_dict,
+				MatrixFloatSet *weights_dict,
 				hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
     //////////////////////////////////////////////////////////////
@@ -158,7 +139,7 @@ namespace ANN {
     */
   }
   
-  void StackANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
+  void StackANNComponent::copyWeights(MatrixFloatSet *weights_dict) {
     for (unsigned int c=0; c<components.size(); ++c)
       components[c]->copyWeights(weights_dict);
   }

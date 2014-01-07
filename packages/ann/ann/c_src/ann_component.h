@@ -23,6 +23,7 @@
 
 #include <cstring>
 #include "vector.h"
+#include "unused_variable.h"
 #include "function_interface.h"
 #include "unused_variable.h"
 #include "mystring.h"
@@ -32,6 +33,7 @@
 #include "aux_hash_table.h" // required for build
 #include "hash_table.h"     // required for build
 #include "matrixFloat.h"
+#include "matrixFloatSet.h"
 
 using april_utils::hash;    // required for build
 using april_utils::string;
@@ -47,17 +49,6 @@ using april_utils::vector;
 #endif
 
 #define MAX_NAME_STR 256
-
-#define LEARNING_RATE_STRING    "learning_rate"
-#define MOMENTUM_STRING         "momentum"
-#define WEIGHT_DECAY_STRING     "weight_decay"
-#define DROPOUT_FACTOR_STRING   "dropout_factor"
-#define DROPOUT_SEED_STRING     "dropout_seed"
-#define MAX_NORM_PENALTY_STRING "max_norm_penalty"
-
-#define mSetOption(var_name,var) if(!strcmp(name,(var_name))){(var)=value;return;}
-#define mHasOption(var_name) if(!strcmp(name,(var_name))) return true;
-#define mGetOption(var_name, var) if(!strcmp(name,(var_name)))return (var);
 
 namespace ANN {
   
@@ -163,14 +154,17 @@ namespace ANN {
     }
     
     /// Virtual method to reset to zero gradients and outputs (inputs are not
-    /// reseted)
-    virtual void reset() { }
+    /// reseted). It receives a counter of the number of times it is called by
+    /// iterative optimizers (as conjugate gradient).
+    virtual void reset(unsigned int it=0) {
+      UNUSED_VARIABLE(it);
+    }
 
     /// Method which receives a hash table with matrices where compute the
     /// gradients.
-    virtual void computeAllGradients(hash<string,MatrixFloat*> &weight_grads_dict){
+    virtual void computeAllGradients(MatrixFloatSet *weight_grads_dict){
       if (!weights_name.empty())
-	computeGradients(weight_grads_dict[weights_name]);
+	computeGradients( (*weight_grads_dict)[weights_name] );
     }
     
     virtual ANNComponent *clone() {
@@ -193,39 +187,12 @@ namespace ANN {
     
     bool getUseCuda() const { return use_cuda; }
     
-    /// Virtual method for setting the value of a training parameter.
-    virtual void setOption(const char *name, double value) {
-      UNUSED_VARIABLE(value);
-      if (strcmp(name,LEARNING_RATE_STRING)==0 ||
-	  strcmp(name,MOMENTUM_STRING)==0      ||
-	  strcmp(name,WEIGHT_DECAY_STRING)==0  ||
-	  strcmp(name,MAX_NORM_PENALTY_STRING)==0) {
-	ERROR_EXIT(128, "DEPRECATED: learning_rate, momentum, weight_decay and "
-		   "max_norm_penalty learning parameters are available "
-		   "through ann.optimizer:set_option(...) objects, or via "
-		   "trainable.supervised_trainer:set_option(...) method\n");
-      }
-      ERROR_EXIT1(140, "The option to be set does not exist: %s.\n", name);
-    }
-
-    /// Virtual method for determining if a training parameter
-    /// is being used or can be used within the network.
-    virtual bool hasOption(const char *name) { UNUSED_VARIABLE(name); return false; }
-    
-    /// Virtual method for getting the value of a training parameter. All childs
-    /// which rewrite this method must call parent method after their process,
-    /// if the looked option is not found to show the error message.
-    virtual double getOption(const char *name) {
-      ERROR_EXIT1(140, "The option %s does not exist.\n", name);
-      return 0.0f;
-    }
-    
     /// Abstract method to finish building of component hierarchy and set
     /// weights objects pointers. All childs which rewrite this method must call
     /// parent method before do anything.
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       hash<string,Connections*> &weights_dict,
+		       MatrixFloatSet *weights_dict,
 		       hash<string,ANNComponent*> &components_dict) {
       UNUSED_VARIABLE(weights_dict);
       // if (is_built) ERROR_EXIT(128, "Rebuild is forbidden!!!!\n");
@@ -250,8 +217,8 @@ namespace ANN {
 		    output_size, _output_size);
     }
     
-    /// Abstract method to retrieve Connections objects from ANNComponents
-    virtual void copyWeights(hash<string,Connections*> &weights_dict) {
+    /// Abstract method to retrieve matrix weights from ANNComponents
+    virtual void copyWeights(MatrixFloatSet *weights_dict) {
       UNUSED_VARIABLE(weights_dict);
     }
 

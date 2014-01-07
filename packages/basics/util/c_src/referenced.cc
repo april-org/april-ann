@@ -18,10 +18,10 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef _REFERENCEDCC_
-#define _REFERENCEDCC_
 
+// #define __PRINT_STACK__
 // #define __DEBUG__
+// #define _debugrefsno0_
 
 #include "referenced.h"
 #ifdef __DEBUG__
@@ -35,14 +35,18 @@
 Referenced::Referenced() {
 #ifdef __DEBUG__
   fprintf(stderr," DEBUG Creating %p\n",this);
+#ifdef __PRINT_STACK__
   print_CPP_stacktrace();
+#endif
 #endif
   refs = 0;
 }
 Referenced::~Referenced() {
 #ifdef __DEBUG__
   fprintf(stderr," DEBUG Destroying %p with reference %d\n",this,refs);
+#ifdef __PRINT_STACK__
   print_CPP_stacktrace();
+#endif
 #endif
 #ifdef _debugrefsno0_
   if (refs != 0)
@@ -53,18 +57,22 @@ void Referenced::incRef() {
   refs++; 
 #ifdef __DEBUG__
   fprintf(stderr," DEBUG IncRef %p to reference %d\n",this,refs);
-  if (refs > 1000)
-    print_CPP_LUA_stacktrace_and_exit();
-  else print_CPP_stacktrace();
+#ifdef __PRINT_STACK__
+  print_CPP_stacktrace();
+#endif
 #endif
 }
 bool Referenced::decRef() { 
   refs--;
 #ifdef __DEBUG__
   fprintf(stderr," DEBUG DecRef %p to reference %d\n",this,refs);
+#ifdef __PRINT_STACK__
   print_CPP_stacktrace();
+#endif
 #endif
   return (refs <= 0); 
 }
 
-#endif // _REFERENCEDCC_
+int Referenced::getRef() const {
+  return refs;
+}

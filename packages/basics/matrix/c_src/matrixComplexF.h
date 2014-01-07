@@ -54,7 +54,7 @@ bool Matrix<ComplexF>::equals(const Matrix<ComplexF> *other,
 			      float epsilon) const;
 
 template<>
-Matrix<ComplexF> *Matrix<ComplexF>::cmul(const Matrix<ComplexF> *other);
+void Matrix<ComplexF>::cmul(const Matrix<ComplexF> *other);
 
 /**** BLAS OPERATIONS ****/
 

@@ -55,13 +55,13 @@ namespace ANN {
     
     virtual Token *doBackprop(Token *input_error);
     
-    virtual void reset();
+    virtual void reset(unsigned int it=0);
     
     virtual ANNComponent *clone();
 
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       hash<string,Connections*> &weights_dict,
+		       MatrixFloatSet *weights_dict,
 		       hash<string,ANNComponent*> &components_dict);
 
     virtual char *toLuaString();

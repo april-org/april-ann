@@ -1510,12 +1510,12 @@ void doApplyLogSoftmaxActivation(FloatGPUMirroredMemoryBlock *input_units,
       double addition = 0.0f;
       cur_pos = 0;
       for (unsigned int i = 0; i < size; i++) {
-	output_units_ptr[cur_pos] = input_units_ptr[cur_pos];
-	double exp_output = exp(output_units_ptr[cur_pos] - maximum);
+	output_units_ptr[cur_pos] = input_units_ptr[cur_pos] - maximum;
+	double exp_output = exp(static_cast<double>(output_units_ptr[cur_pos]));
 	addition += exp_output;
 	cur_pos  += bunch_size;
       }
-      float ratio = maximum + log(addition);
+      float ratio = static_cast<float>(log(addition));
       cur_pos = 0;
       for (unsigned int i = 0; i < size; i++) {
 	output_units_ptr[cur_pos] -= ratio;

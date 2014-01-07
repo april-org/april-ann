@@ -108,7 +108,7 @@ namespace ANN {
     }
     virtual Token *doForward(Token* input, bool during_training);
     virtual Token *doBackprop(Token *input_error);
-    virtual void   reset();
+    virtual void   reset(unsigned int it=0);
     virtual ANNComponent *clone();
     
     virtual char *toLuaString();

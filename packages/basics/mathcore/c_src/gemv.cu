@@ -140,10 +140,10 @@ void doGemv(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
     x_mem = x->getPPALForRead() + x_shift;
     y_mem = y->getPPALForReadAndWrite() + y_shift;
     wrapperCblasGemv(major_type, a_transpose,
-                m, n,
-                alpha, a_mem, a_inc,
-                x_mem, x_inc,
-                beta, y_mem, y_inc);
+		     m, n,
+		     alpha, a_mem, a_inc,
+		     x_mem, x_inc,
+		     beta, y_mem, y_inc);
 #ifdef USE_CUDA
   }
 #endif

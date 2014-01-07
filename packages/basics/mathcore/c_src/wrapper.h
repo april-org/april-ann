@@ -407,6 +407,16 @@ bool doEquals(unsigned int N,
 	      float epsilon,
 	      bool use_gpu);
 
+template <typename T>
+void doCmul(int N,
+	    const GPUMirroredMemoryBlock<T>* x,
+	    unsigned int x_shift,
+	    unsigned int x_inc,
+	    GPUMirroredMemoryBlock<T>* y,
+	    unsigned int y_shift,
+	    unsigned int y_inc,
+	    bool use_gpu);
+
 void doPLogP(unsigned int N,
 	     FloatGPUMirroredMemoryBlock *v,
 	     unsigned int stride,
@@ -533,4 +543,5 @@ void doPow(unsigned int N,
 	   unsigned int shift,
 	   float value,
 	   bool use_gpu);
+
 #endif // WRAPPER_H

@@ -26,7 +26,7 @@ rnd=random(1234)
 for name,cnn in pairs(w) do cnn:randomize_weights{inf=-0.1,sup=0.1,random=rnd} end
 clock = util.stopwatch()
 clock:go()
-output = thenet:forward(tokens.matrix(input)):get_matrix()
+output = thenet:forward(input):get_matrix()
 
 clock:stop()
 print(m:size(), clock:read())

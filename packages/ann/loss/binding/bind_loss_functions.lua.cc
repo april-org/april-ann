@@ -22,6 +22,7 @@
 //BIND_HEADER_C
 #include "bind_tokens.h"
 #include "bind_matrix.h"
+#include "token_matrix.h"
 //BIND_END
 
 //BIND_HEADER_H
@@ -35,7 +36,6 @@
 #include "zero_one_loss_function.h"
 
 using namespace ANN;
-
 //BIND_END
 
 /////////////////////////////////////////////////////
@@ -54,11 +54,13 @@ using namespace ANN;
 //BIND_METHOD LossFunction compute_loss
 {
   LUABIND_CHECK_ARGN(==,2);
-  LUABIND_CHECK_PARAMETER(1, Token);
-  LUABIND_CHECK_PARAMETER(2, Token);
+  LUABIND_CHECK_PARAMETER(1, AuxToken);
+  LUABIND_CHECK_PARAMETER(2, AuxToken);
   Token *input, *target;
-  LUABIND_GET_PARAMETER(1, Token, input);
-  LUABIND_GET_PARAMETER(2, Token, target);
+  LUABIND_GET_PARAMETER(1, AuxToken, input);
+  LUABIND_GET_PARAMETER(2, AuxToken, target);
+  IncRef(input);
+  IncRef(target);
   MatrixFloat *loss = obj->computeLoss(input, target);
   if (loss) {
     LUABIND_RETURN(float, loss->sum()/loss->getDimSize(0));
@@ -66,6 +68,8 @@ using namespace ANN;
   }
   else
     LUABIND_RETURN_NIL();
+  DecRef(input);
+  DecRef(target);
 }
 //BIND_END
 
@@ -100,13 +104,17 @@ using namespace ANN;
 //BIND_METHOD LossFunction gradient
 {
   LUABIND_CHECK_ARGN(==,2);
-  LUABIND_CHECK_PARAMETER(1, Token);
-  LUABIND_CHECK_PARAMETER(2, Token);
+  LUABIND_CHECK_PARAMETER(1, AuxToken);
+  LUABIND_CHECK_PARAMETER(2, AuxToken);
   Token *input, *target;
-  LUABIND_GET_PARAMETER(1, Token, input);
-  LUABIND_GET_PARAMETER(2, Token, target);
+  LUABIND_GET_PARAMETER(1, AuxToken, input);
+  LUABIND_GET_PARAMETER(2, AuxToken, target);
+  IncRef(input);
+  IncRef(target);
   Token *error = obj->computeGradient(input, target);
   LUABIND_RETURN(Token, error);
+  DecRef(input);
+  DecRef(target);
 }
 //BIND_END
 

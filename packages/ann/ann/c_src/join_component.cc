@@ -84,7 +84,7 @@ namespace ANN {
 #endif
 	  coords[1] += sz;
 	  TokenMatrixFloat *component_mat_token = new TokenMatrixFloat(output_mat);
-	  AssignRef((*result_vector_token)[i], component_mat_token);
+	  AssignRef<Token>((*result_vector_token)[i], component_mat_token);
 	}
 	break;
       }
@@ -108,8 +108,8 @@ namespace ANN {
 	case table_of_token_codes::vector_Tokens:
 	  // for each component we reserve a vector for bunch_size patterns
 	  for (unsigned int i=0; i<result_vector_token->size(); ++i)
-	    AssignRef((*result_vector_token)[i],
-		      new TokenBunchVector(input_vector_token->size()));
+	    AssignRef<Token>((*result_vector_token)[i],
+			      new TokenBunchVector(input_vector_token->size()));
 	  // for each pattern
 	  for (unsigned int b=0; b<input_vector_token->size(); ++b) {
 	    TokenBunchVector *pattern_token;
@@ -159,7 +159,7 @@ namespace ANN {
       MatrixFloat *component_mat = new MatrixFloat(mat, coords, sizes, true);
       coords[1] += sz;
       TokenMatrixFloat *component_mat_token = new TokenMatrixFloat(component_mat);
-      AssignRef((*vector_token)[i], component_mat_token);
+      AssignRef<Token>((*vector_token)[i], component_mat_token);
     }
   }
   
@@ -212,8 +212,9 @@ namespace ANN {
     // more simpler a decoupled code
     buildInputBunchVector(input_vector, _input);
     for (unsigned int i=0; i<components.size(); ++i)
-      AssignRef((*output_vector)[i],
-		components[i]->doForward((*input_vector)[i], during_training));
+      AssignRef<Token>((*output_vector)[i],
+			components[i]->doForward((*input_vector)[i],
+						 during_training));
     // INFO: will be possible to put this method inside previous loop, but seems
     // more simpler a decoupled code
     AssignRef(output, buildMatrixFloatToken(output_vector, true));
@@ -240,15 +241,15 @@ namespace ANN {
     // array. Depending on the received input, this vector would be returned as
     // it is, or gradients will be stored as a TokenMatrixFloat joining all
     // array positions.
-    if (segmented_input) AssignRef(error_output, error_output_vector);
+    if (segmented_input) AssignRef<Token>(error_output, error_output_vector);
     // INFO: will be possible to put this method inside previous loop, but
     // seems more simpler a decoupled code
-    else AssignRef(error_output, buildMatrixFloatToken(error_output_vector,
-						       false));
+    else AssignRef<Token>(error_output,
+			   buildMatrixFloatToken(error_output_vector, false));
     return error_output;
   }
 
-  void JoinANNComponent::reset() {
+  void JoinANNComponent::reset(unsigned int it) {
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);
@@ -258,11 +259,11 @@ namespace ANN {
     output	 = 0;
     error_output = 0;
     for (unsigned int i=0; i<components.size(); ++i)
-      components[i]->reset();
+      components[i]->reset(it);
   }
   
-  void JoinANNComponent::computeAllGradients(hash<string,MatrixFloat*>
-					  &weight_grads_dict) {
+  void JoinANNComponent::computeAllGradients(MatrixFloatSet
+					     *weight_grads_dict) {
     for (unsigned int c=0; c<components.size(); ++c)
       components[c]->computeAllGradients(weight_grads_dict);
   }
@@ -278,7 +279,7 @@ namespace ANN {
 
   void JoinANNComponent::build(unsigned int _input_size,
 			       unsigned int _output_size,
-			       hash<string,Connections*> &weights_dict,
+			       MatrixFloatSet *weights_dict,
 			       hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
@@ -318,27 +319,7 @@ namespace ANN {
       components[c]->setUseCuda(v);
   }
   
-  void JoinANNComponent::setOption(const char *name, double value) {
-    for (unsigned int c=0; c<components.size(); ++c)
-      components[c]->setOption(name, value);
-  }
-  
-  bool JoinANNComponent::hasOption(const char *name) {
-    bool ret = false;
-    for (unsigned int c=0; c<components.size() && !ret; ++c)
-      ret = components[c]->hasOption(name);
-    return ret;
-  }
-  
-  double JoinANNComponent::getOption(const char *name) {
-    for (unsigned int c=0; c<components.size(); ++c) {
-      if (components[c]->hasOption(name))
-	return components[c]->getOption(name);
-    }
-    return ANNComponent::getOption(name);
-  }
-
-  void JoinANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
+  void JoinANNComponent::copyWeights(MatrixFloatSet *weights_dict) {
     for (unsigned int i=0; i<components.size(); ++i)
       components[i]->copyWeights(weights_dict);
   }

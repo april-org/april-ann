@@ -112,19 +112,12 @@ MatrixFloat *convertFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
     dims[0] = 2;
     for (int i=0; i<N; ++i) dims[i+1] = mat->getDimPtr()[i];
   }
-  new_mat=new MatrixFloat(N+1, dims, mat->getMajorOrder());
+  FloatGPUMirroredMemoryBlock *new_mat_memory;
+  new_mat_memory = mat->getRawDataAccess()->reinterpretAs<float>();
+  new_mat=new MatrixFloat(N+1, dims, mat->getMajorOrder(), new_mat_memory);
 #ifdef USE_CUDA
   new_mat->setUseCuda(mat->getCudaFlag());
 #endif
-  MatrixComplexF::const_iterator orig_it(mat->begin());
-  MatrixFloat::iterator dest_it(new_mat->begin());
-  while(orig_it != mat->end()) {
-    *dest_it = orig_it->real();
-    ++dest_it;
-    *dest_it = orig_it->img();
-    ++dest_it;
-    ++orig_it;
-  }
   delete[] dims;
   return new_mat;
 }

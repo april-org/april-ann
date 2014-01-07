@@ -215,14 +215,17 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(names_prefix,
 				output = input_size,
 				transpose = true} )
   autoencoder_component:push(ann.components.actf[input_actf]{ name=names_prefix.."actf2" })
-  local weights_table = autoencoder_component:build()
+  local _,weights_table = autoencoder_component:build()
   for _,wname in ipairs({ names_prefix.."w",
 			  names_prefix.."b1",
 			  names_prefix.."b2" }) do
-    weights_table[wname]:randomize_weights{
-      random = weights_random,
-      inf    = -math.sqrt(6 / (input_size + cod_size)),
-      sup    =  math.sqrt(6 / (input_size + cod_size)) }
+    ann.connections.
+    randomize_weights(weights_table(wname),
+		      {
+			random = weights_random,
+			inf    = -math.sqrt(6 / (input_size + cod_size)),
+			sup    =  math.sqrt(6 / (input_size + cod_size))
+		      })
   end
   return autoencoder_component
 end
@@ -421,7 +424,7 @@ function ann.autoencoders.build_full_autoencoder(layers,
   local bias_mat      = sdae_table.bias
   local sdae          = ann.components.stack{ name=names_prefix.."stack" }
   local prev_size     = layers[1].size
-  local weights_table = {}
+  local weights_table = matrix.dict()
   local k = 1
   for i=2,#layers do
     local size , actf   = layers[i].size,layers[i].actf
@@ -707,7 +710,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
   local weights = {}
   local bias    = {}
   -- incremental mlp
-  local mlp_final_weights = {}
+  local mlp_final_weights = matrix.dict()
   local mlp_final = ann.components.stack{ name=params.names_prefix.."stack" }
   -- loop for each pair of layers
   for i=2,#params.layers do
@@ -737,8 +740,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 							     nil,
 							     params.bunch_size,
 							     params.optimizer())
-      local aux_weights = {}
-      for i,v in pairs(mlp_final_weights) do aux_weights[i] = v:clone() end
+      local aux_weights = mlp_final_weights:clone()
       mlp_final_trainer:build{ weights=aux_weights }
       data = generate_training_table_configuration_on_the_fly(current_dataset_params,
 							      params.replacement,
@@ -800,12 +802,9 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
       end }
     -- printf("AFTER TRAIN %d\n", i)
     ---------------------------------------------------------
-    local b1obj = best_net:weights(params.names_prefix.."b1"):clone()
-    local b2obj = best_net:weights(params.names_prefix.."b2"):clone()
-    local wobj  = best_net:weights(params.names_prefix.."w"):clone()
-    local b1mat = b1obj:copy_to()
-    local b2mat = b2obj:copy_to()
-    local wmat  = wobj:copy_to()
+    local b1mat = best_net:weights(params.names_prefix.."b1"):clone()
+    local b2mat = best_net:weights(params.names_prefix.."b2"):clone()
+    local wmat  = best_net:weights(params.names_prefix.."w"):clone()
     table.insert(weights, wmat)
     table.insert(bias, { b1mat, b2mat })
     --
@@ -818,8 +817,8 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 		      dot_product_weights = params.names_prefix.."w" .. (i-1),
 		      bias_weights        = params.names_prefix.."b" .. (i-1), })
     mlp_final:push( ann.components.actf[cod_actf]{ name=params.names_prefix.."actf" .. (i-1) } )
-    mlp_final_weights[params.names_prefix.."w" .. (i-1)] = wobj
-    mlp_final_weights[params.names_prefix.."b"    .. (i-1)] = b1obj
+    mlp_final_weights[params.names_prefix.."w" .. (i-1)] = wmat
+    mlp_final_weights[params.names_prefix.."b"    .. (i-1)] = b1mat
     --
     --insert the information
     if not on_the_fly then
@@ -840,8 +839,8 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 							 params.optimizer())
 	cod_trainer:build()
 	-- print("Load bias ", params.names_prefix .. "b")
-	cod_trainer:weights(params.names_prefix.."b"):load{ w = b1mat }
-	cod_trainer:weights(params.names_prefix.."w"):load{ w = wmat }
+	cod_trainer:weights(params.names_prefix.."b"):copy(b1mat)
+	cod_trainer:weights(params.names_prefix.."w"):copy(wmat)
 	if current_dataset_params.distribution then
 	  -- compute code for each distribution dataset
 	  for _,v in ipairs(current_dataset_params.distribution) do
@@ -892,8 +891,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 							     nil,
 							     params.bunch_size,
 							     params.optimizer())
-      local aux_weights = {}
-      for i,v in pairs(mlp_final_weights) do aux_weights[i] = v:clone() end
+      local aux_weights = mlp_final_weights:clone()
       mlp_final_trainer:build{ weights = aux_weights }
       data = generate_training_table_configuration_on_the_fly(current_dataset_params,
 							      params.replacement,
@@ -980,7 +978,7 @@ function ann.autoencoders.build_codifier_from_sdae_table(sdae_table,
   local weights_mat   = sdae_table.weights
   local bias_mat      = sdae_table.bias
   local codifier_net  = ann.components.stack{ name="stack" }
-  local weights_table = {}
+  local weights_table = matrix.dict()
   for i=2,#layers do
     local bname = "b"..(i-1)
     local wname = "w"..(i-1)
@@ -1098,7 +1096,7 @@ function ann.autoencoders.iterative_sampling(t)
   local chain   = {}
   for i=1,params.max do
     params.model:reset()
-    output = params.model:forward(tokens.matrix(input))
+    output = params.model:forward(input)
     -- restore masked positions
     -- for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
     -- compute the loss of current iteration
@@ -1190,7 +1188,7 @@ function ann.autoencoders.sgd_sampling(t)
   local chain    = {}
   for i=1,params.max do
     params.model:reset()
-    output = params.model:forward(tokens.matrix(input)):clone()
+    output = params.model:forward(input):clone()
     -- restore masked positions
     -- for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
     -- compute the loss of current iteration
@@ -1211,14 +1209,14 @@ function ann.autoencoders.sgd_sampling(t)
     if params.verbose then printf("\n") end
     if last_L == 0 or imp < params.stop then break end
     -- GRADIENT DESCENT UPDATE OF INPUT VECTOR
-    --aux = params.noise:forward(tokens.matrix(input)):get_matrix()
+    --aux = params.noise:forward(input):get_matrix()
     ---- restore masked positions
     --for _,pos in ipairs(params.mask) do
     --aux:set(1,pos,input_rewrapped:get(1,pos))
     --end
     
     local gradient = params.model:backprop(params.loss:gradient(params.model:get_output(),
-								params.model:get_input())) -- tokens.matrix(aux)))
+								params.model:get_input()))
     -- local g = gradient:get_matrix():clone("row_major"):rewrap(16,16):pow(2):sqrt():clamp(0,1)
     -- matrix.saveImage(g, string.format("gradient-%04d.pnm", i))
     gradient = gradient:get_matrix()
@@ -1233,7 +1231,7 @@ function ann.autoencoders.sgd_sampling(t)
     last_L = L
     -- sample from noise distribution
     params.noise:reset()
-    input = params.noise:forward(tokens.matrix(input)):get_matrix()
+    input = params.noise:forward(input):get_matrix()
     -- restore masked positions
     for _,pos in ipairs(params.mask) do
       input:set(1,pos,input_rewrapped:get(1,pos))

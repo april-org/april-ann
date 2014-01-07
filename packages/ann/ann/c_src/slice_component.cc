@@ -115,7 +115,8 @@ namespace ANN {
     return error_output;
   }
   
-  void SliceANNComponent::reset() {
+  void SliceANNComponent::reset(unsigned int it) {
+    UNUSED_VARIABLE(it);
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);
@@ -136,7 +137,7 @@ namespace ANN {
   
   void SliceANNComponent::build(unsigned int _input_size,
 				unsigned int _output_size,
-				hash<string,Connections*> &weights_dict,
+				MatrixFloatSet *weights_dict,
 				hash<string,ANNComponent*> &components_dict) {
     unsigned int sz = 1;
     for (int i=1; i<this->n; ++i) sz *= slice_size[i];

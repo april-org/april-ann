@@ -36,7 +36,23 @@
 //BIND_CONSTRUCTOR ImageFloatRGB
 // este constructor recibe una matrix
 {
-  LUABIND_ERROR("ERROR: Constructing a ImageRGB from a matrix is not allowed. Use ImageRGB.empty or ImageRGB.read() instead");
+  LUABIND_CHECK_ARGN(==,1);
+  MatrixFloat      *img;
+  LUABIND_GET_PARAMETER(1, MatrixFloat, img);
+  if (img->getNumDim() != 3)
+    LUABIND_ERROR("Needs a matrix with 3 dimensions");
+  if (img->getDimSize(2) != 3)
+    LUABIND_ERROR("Needs a matrix with 3 components (R,G,B) at the 3rd dimension");
+  if (!img->isSimple())
+    LUABIND_ERROR("ImageRGB needs a simple matrix: row_major and contiguous\n");
+  GPUMirroredMemoryBlock<FloatRGB> *float_rgb_mem;
+  float_rgb_mem = img->getRawDataAccess()->reinterpretAs<FloatRGB>();
+  int dims[2] = { img->getDimSize(0), img->getDimSize(1) };
+  Matrix<FloatRGB> *img_rgb = new Matrix<FloatRGB>(2, dims, CblasRowMajor,
+						   float_rgb_mem);
+  //
+  obj = new ImageFloatRGB(img_rgb);
+  LUABIND_RETURN(ImageFloatRGB, obj);
 }
 //BIND_END
 
@@ -49,7 +65,7 @@
 
     Matrix<FloatRGB> *m = new Matrix<FloatRGB>(2, w, h);
     ImageFloatRGB *result = new ImageFloatRGB(m);
-
+    
     LUABIND_RETURN(ImageFloatRGB, result);
 }
 //BIND_END
@@ -111,19 +127,11 @@
 {
   LUABIND_CHECK_ARGN(==,0);
   Matrix<FloatRGB> *img_rgb = obj->matrix;
+  GPUMirroredMemoryBlock<float> *mat_mem;
+  mat_mem = img_rgb->getRawDataAccess()->reinterpretAs<float>();
   int dims[3] = { img_rgb->getDimSize(0), img_rgb->getDimSize(1), 3 };
-  MatrixFloat *output = new MatrixFloat(3, dims, img_rgb->getMajorOrder());
-  Matrix<FloatRGB>::iterator img_it(img_rgb->begin());
-  MatrixFloat::iterator output_it(output->begin());
-  for (int i=0; i<dims[0]; ++i) {
-    for (int j=0; j<dims[1]; ++j) {
-      FloatRGB rgb = *img_it;
-      *output_it = rgb.r; ++output_it;
-      *output_it = rgb.g; ++output_it;
-      *output_it = rgb.b; ++output_it;
-      ++img_it;
-    }
-  }
+  MatrixFloat *output = new MatrixFloat(3, dims, img_rgb->getMajorOrder(),
+					mat_mem);
   LUABIND_RETURN(MatrixFloat, output);
 }
 //BIND_END
