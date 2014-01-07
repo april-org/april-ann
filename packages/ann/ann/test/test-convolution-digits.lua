@@ -113,6 +113,7 @@ trainer:set_option("momentum",          momentum)
 trainer:set_option("weight_decay",      weight_decay)
 trainer:set_option("L1_norm",           L1_norm)
 trainer:set_option("max_norm_penalty",  max_norm_penalty)
+--
 trainer:set_layerwise_option("b.", "weight_decay", 0.0)
 trainer:set_layerwise_option("b.", "max_norm_penalty", 0.0)
 trainer:set_layerwise_option("b.", "L1_norm", 0.0)
@@ -124,13 +125,18 @@ trainer:randomize_weights{
   use_fanin   = true,
   use_fanout  = true,
 }
---for _,c in trainer:iterate_components("conv-b*") do
---  c:set_option("learning_rate", 0.0001)
---end
-iterator(trainer:iterate_weights("b.")):
-map(function(name,cnn)return{cnn:matrix()}end):
-iterate(ipairs):
-apply(function(i,w)w:zeros()end)
+trainer:randomize_weights{
+  name_match  = "b.",
+  random      = weights_random,
+  inf         = 0,
+  sup         = 0.2,
+  use_fanin   = true,
+  use_fanout  = true,
+}
+
+-- for _,c in trainer:iterate_components("conv-b*") do
+--   c:set_option("learning_rate", 0.0001)
+-- end
 -- trainer:set_component_option("actf2", "dropout_factor", 0.5)
 
 -- datos para entrenar
@@ -148,15 +154,14 @@ datosvalidar = {
 
 if check_grandients then
   trainer:grad_check_dataset({
-			       input_dataset  = val_input,
-			       output_dataset = val_output,
-			       max_iterations = 10,
+			       input_dataset  = dataset.slice(val_input, 1, 10),
+			       output_dataset = dataset.slice(val_output, 1, 10),
 			       bunch_size = 1,
 			       verbose = false,
 			     })
 end
 
-for input in trainable.dataset_multiple_iterator{
+for input,idxs in trainable.dataset_multiple_iterator{
   datasets   = { datosvalidar.input_dataset },
   bunch_size = 1, } do
   trainer:calculate(input)
@@ -241,24 +246,24 @@ for epoch = 1,max_epochs do
 		     trainer:get_option("learning_rate")*0.95)
 end
 
-trainer:for_each_pattern{
-  input_dataset = datosvalidar.input_dataset,
-  bunch_size    = 1,
-  func = function(idxs, trainer)
-    local c = trainer:component("pool-1")
-    local o = c:get_output():get_matrix()
-    local d = o:dim()
-    local k = 0
-    for w in o:sliding_window{ size={1,1,d[3],d[4]}, step={1,1,1,1},
-			       numSteps={d[1], d[2], 1, 1} }:iterate() do
-      local img = w:clone():rewrap(d[3]*d[4]):clone("row_major"):rewrap(d[3],d[4])
-      matrix.saveImage(img:adjust_range(0,1), "/tmp/jajaja-".. idxs[1] .. "-"..k..".pnm")
-      k=k+1
-    end
-  end
-}
+-- trainer:for_each_pattern{
+--   input_dataset = datosvalidar.input_dataset,
+--   bunch_size    = 1,
+--   func = function(idxs, trainer)
+--     local c = trainer:component("pool-1")
+--     local o = c:get_output():get_matrix()
+--     local d = o:dim()
+--     local k = 0
+--     for w in o:sliding_window{ size={1,1,d[3],d[4]}, step={1,1,1,1},
+-- 			       numSteps={d[1], d[2], 1, 1} }:iterate() do
+--       local img = w:clone():rewrap(d[3]*d[4]):clone("row_major"):rewrap(d[3],d[4])
+--       matrix.saveImage(img:adjust_range(0,1), "/tmp/jajaja-".. idxs[1] .. "-"..k..".pnm")
+--       k=k+1
+--     end
+--   end
+-- }
 
-w = trainer:weights("w1"):matrix()
+w = trainer:weights("w1")
 local k=0
 for waux in w:sliding_window():iterate() do
   matrix.saveImage(waux:scal(1/waux:norm2()):clone("row_major"):rewrap(3,3):adjust_range(0,1),
