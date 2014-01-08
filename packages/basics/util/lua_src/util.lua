@@ -980,9 +980,9 @@ end
 function math.median(t, ini, fin)
   local ini,fin = ini or 1, fin or #t
   local len     = fin-ini+1
-  local mpos    = math.floor((ini+fin-1)/2)
+  local mpos    = math.floor((ini+fin)/2)
   local median  = t[mpos]
-  if len % 2 ~= 0 then
+  if len % 2 == 0 then
     median = (median + t[mpos+1])/2
   end
   return median
@@ -1355,6 +1355,10 @@ end
 function iterator.meta_instance:__call() return table.unpack(self.data) end
 
 function iterator_methods:get() return table.unpack(self.data) end
+
+function iterator_methods:step()
+  return self.data[1](table.unpack(table.slice(self.data,2,#self.data)))
+end
 
 function iterator_methods:map(func)
   return iterator(iterable_map(func, self:get()))
