@@ -40,8 +40,15 @@
 
 template <typename T>
 class Matrix : public Referenced {
+  const static unsigned int MATRIX_BINARY_VERSION;
   enum matrix_contiguous_enum_t { NONE=0, CONTIGUOUS=1, NONCONTIGUOUS=2 };
+  // Auxiliary count variable where the user could store the number of times
+  // this object is shared in a computation (like in ANN components sharing
+  // weight matrices)
+  unsigned int shared_count;
 protected:
+  /// Indicator of transposition
+  bool transposed;
   /// Number of dimensions
   int numDim;
   /// Size of each dimension
@@ -80,16 +87,13 @@ protected:
 				   ( (matrixSize[0]==1) ||
 				     (matrixSize[1]==1) ))); }
   bool isColVector() const { return (numDim==2 && matrixSize[1]==1); }
-  /// Returns the size of the vector, the coordinate which is different of 1. It
-  /// only works if the matrix is a vector (precondition).
-  int getVectorSize() const {
-    return ( (numDim==1) ? matrixSize[0] :
-	     april_utils::max(matrixSize[0], matrixSize[1]) ); }
+  /// Returns the stride of the vector, the stride whom coordinate is different
+  /// of 1. It only works if the matrix is a vector (precondition).
   int getVectorStride() const {
     return (numDim == 1) ? stride[0] :
-      (major_order==CblasRowMajor) ? stride[1] : stride[0];
+      ( (matrixSize[0]!=1) ? (stride[0]) : (stride[1]) );
   }
-
+  
 public:
   class sliding_window;
   friend class sliding_window;
@@ -249,9 +253,11 @@ public:
   };
 
   /********************************************************/
-  // The sliding is a kind of iterator which traverses the matrix producing
-  // sub-matrices following a sliding window similar to dataset.matrix. This
-  // iterator couldn't account for CIRCULAR and OUTSIDE values.
+  /**
+   * The sliding is a kind of iterator which traverses the matrix producing
+   * sub-matrices following a sliding window similar to dataset.matrix. This
+   * iterator couldn't account for CIRCULAR and OUTSIDE values.
+   */
   class sliding_window : public Referenced {
     /// A reference to the matrix
     Matrix<T> *m;
@@ -301,8 +307,10 @@ public:
   };
   
   /********************************************************/
-  // The span iterator traverses the matrix allowing to do a linear
-  // traversal of the largest dimension.
+  /**
+   * The span iterator traverses the matrix allowing to do a linear
+   * traversal of the largest dimension.
+   */
   class best_span_iterator {
     friend class Matrix;
     const Matrix<T> *m;
@@ -321,11 +329,15 @@ public:
 	  else
 	    return a < b;
 	}
-	// FIXME: Would be better to use a trade-off between size and stride?
+	// Don't use a trade-off between size and stride, it will be unsafe with
+	// transposed matrices
 	else
 	  return a_sz > b_sz;
       }
     };
+    //
+    void initialize(const Matrix<T> *m, int raw_pos);
+    //
     best_span_iterator(const Matrix<T> *m, int raw_pos);
   public:
     best_span_iterator(const Matrix<T> *m);
@@ -342,6 +354,105 @@ public:
     int numberOfIterations() const;
     void setAtIteration(int idx);
   };
+
+  /********************************************************/
+  /**
+   * The random access iterator allows to retain the memory pointer, forcing an
+   * update between host and device (GPU) memory, and allows to access any
+   * position of the matrix given its coordinates.
+   */
+  class random_access_iterator {
+    Matrix<T> *m;
+    T *memory;
+    int *coords;
+  public:
+    random_access_iterator(Matrix<T> *m) :
+      m(m),
+      memory(m->getRawDataAccess()->getPPALForReadAndWrite()),
+      coords(new int[m->numDim]) { }
+    ~random_access_iterator() { delete[] coords; }
+    T& operator() (int i) {
+      april_assert(m->numDim == 1);
+      int raw_pos = m->computeRawPos(&i);
+      return memory[raw_pos];
+    }
+    T& operator() (int row, int col) {
+      april_assert(m->numDim == 2);
+      coords[0] = row; coords[1] = col;
+      int raw_pos = m->computeRawPos(coords);
+      return memory[raw_pos];
+    }
+    T& operator() (int coord0, int coord1, int coord2, ...) {
+      april_assert(m->numDim >= 3);
+      coords[0] = coord0;
+      coords[1] = coord1;
+      coords[2] = coord2;
+      va_list ap;
+      va_start(ap, coord2);
+      for(int i=3; i<m->numDim; i++) {
+	int coordn = va_arg(ap, int);
+	coords[i] = coordn;
+      }
+      va_end(ap);
+      int raw_pos = m->computeRawPos(coords);
+      return memory[raw_pos];
+    }
+    T& operator() (int *coords, int sz) {
+      UNUSED_VARIABLE(sz);
+      april_assert(m->numDim == sz);
+      int raw_pos = m->computeRawPos(coords);
+      return memory[raw_pos];
+    }
+  };
+  /**
+   * The const random access iterator allows to retain the memory pointer,
+   * forcing an update between host and device (GPU) memory, and allows to
+   * access any position of the matrix given its coordinates. It is a read-only
+   * iterator.
+   */
+  class const_random_access_iterator {
+    const Matrix<T> *m;
+    const T *memory;
+    int *coords;
+  public:
+    const_random_access_iterator(const Matrix<T> *m) :
+      m(m),
+      memory(m->getRawDataAccess()->getPPALForRead()),
+      coords(new int[m->numDim]) { }
+    ~const_random_access_iterator() { delete[] coords; }
+    const T& operator() (int i) const {
+      april_assert(m->numDim == 1);
+      int raw_pos = m->computeRawPos(&i);
+      return memory[raw_pos];
+    }
+    const T& operator() (int row, int col) const {
+      april_assert(m->numDim == 2);
+      coords[0] = row; coords[1] = col;
+      int raw_pos = m->computeRawPos(coords);
+      return memory[raw_pos];
+    }
+    const T& operator() (int coord0, int coord1, int coord2, ...) const {
+      april_assert(m->numDim >= 3);
+      coords[0] = coord0;
+      coords[1] = coord1;
+      coords[2] = coord2;
+      va_list ap;
+      va_start(ap, coord2);
+      for(int i=3; i<m->numDim; i++) {
+	int coordn = va_arg(ap, int);
+	coords[i] = coordn;
+      }
+      va_end(ap);
+      int raw_pos = m->computeRawPos(coords);
+      return memory[raw_pos];
+    }
+    const T& operator() (int *coords, int sz) const {
+      UNUSED_VARIABLE(sz);
+      april_assert(m->numDim == sz);
+      int raw_pos = m->computeRawPos(coords);
+      return memory[raw_pos];
+    }
+  };
   
 private:
   // const version of iterators, for fast end() iterator calls. They are
@@ -357,7 +468,7 @@ private:
   Matrix(int numDim, const int *stride, const int offset,
 	 const int *matrixSize, const int total_size, const int last_raw_pos,
 	 GPUMirroredMemoryBlock<T> *data, const CBLAS_ORDER major_order,
-	 const bool use_cuda);
+	 const bool use_cuda, const bool transposed);
 
   /// Modifies the offset of the matrix. WARNING, this method doesn't check the
   /// new data position, so be sure that it fits in the data pointer size
@@ -375,7 +486,8 @@ public:
   Matrix(int numDim, const int* dim,
 	 CBLAS_ORDER major_order = CblasRowMajor,
 	 GPUMirroredMemoryBlock<T> *data = 0,
-	 int offset = 0);
+	 int offset = 0,
+	 bool transposed = false);
   
   /// Constructor with T() values and CblasRowMajor order
   Matrix(int numDim, int d1, ...);
@@ -408,6 +520,11 @@ public:
   int getStrideSize(int i) const { return stride[i]; }
   int size() const { return total_size; }
   CBLAS_ORDER getMajorOrder() const { return major_order; }
+  bool getTransposedFlag() const { return transposed; }
+  bool getIsDataRowOrdered() const {
+    return ( (getMajorOrder()==CblasRowMajor && !getTransposedFlag()) ||
+	     (getMajorOrder()==CblasColMajor &&  getTransposedFlag()) );
+  }
   void setUseCuda(bool v) {
     use_cuda = v;
 #ifdef USE_CUDA
@@ -416,7 +533,7 @@ public:
   }
   bool getCudaFlag() const { return use_cuda; }
   bool isSimple() const {
-    return (getIsContiguous())&&(major_order==CblasRowMajor);
+    return (getIsContiguous())&&(getIsDataRowOrdered());
   }
   /// Indicates if it is a contiguous matrix
   bool getIsContiguous() const;
@@ -473,8 +590,8 @@ public:
     return end_const_iterator;
   }
 
-  /// Transposition
-  Matrix<T>* transpose() const;
+  /// Symbolic transposition, changes the flag
+  Matrix<T>* transpose();
   /// Copy only sizes, but not data
   Matrix<T>* cloneOnlyDims() const;
   /// Deep copy
@@ -483,6 +600,19 @@ public:
   Matrix<T> *clone(CBLAS_ORDER major_order);
   /// Shallow copy
   Matrix<T>* shallow_copy();
+  
+  /// Number values check
+  void pruneSubnormalAndCheckNormal();
+  
+  /// This method sets to zero the shared counter
+  void resetSharedCount() { shared_count = 0; }
+  /// This method adds counts to the shared counter
+  void addToSharedCount(unsigned int count=1) { shared_count += count; }
+  /// Getter of the shared count value
+  unsigned int getSharedCount() const {
+    return shared_count;
+  }
+  
   /// Raw access operator []
   T& operator[] (int i);
   const T& operator[] (int i) const;
@@ -563,15 +693,22 @@ public:
   void abs();
   void complement();
   void sign();
-  Matrix<T> *cmul(const Matrix<T> *other);
+  void cmul(const Matrix<T> *other);
   void adjustRange(T rmin, T rmax);
+  
+  /* BOOLEAN CONDITIONS: this methods transforms the given matrix in a ZERO/ONE
+     matrix, depending in the truth of the given condition */
+  // less than
+  void LTCondition(T value);
+  void LTCondition(Matrix<T> *value);
+  // greater than
+  void GTCondition(T value);
+  void GTCondition(Matrix<T> *value);
+  //
   
   /**** BLAS OPERATIONS ****/
   void scalarAdd(T s);
   
-  // FIXME: This operations could be improved if we take into account when the
-  // matrix data is contiguous in memory (even when it is a sub-matrix)
-
   // SCOPY BLAS operation this = other
   void copy(const Matrix<T> *other);
   

@@ -63,8 +63,6 @@ trainer:randomize_weights{
   sup         =  1,
 }
 
-trainer:save("jarl.net", "binary")
-
 training_data = {
   input_dataset  = train_input,
   output_dataset = train_output,
@@ -87,13 +85,20 @@ train_func = trainable.train_holdout_validation{
   tolerance = 0.1,
 }
 -- training loop
+tmpname = os.tmpname()
 while train_func:execute(function()
 			   local tr = trainer:train_dataset(training_data)
 			   local va = trainer:validate_dataset(validation_data)
 			   return trainer,tr,va
 			 end) do
-  train_func:save("last.net", "ascii")
+  train_func:save(tmpname, "binary", { shuffle = training_data.shuffle })
+  train_func,extra = trainable.train_holdout_validation.load(tmpname)
+  training_data.shuffle = extra.shuffle
 end
+train_func:save(tmpname, "ascii")
+train_func = trainable.train_holdout_validation.load(tmpname)
+os.remove(tmpname)
+os.remove(tmpname..".bak")
 clock:stop()
 cpu,wall = clock:read()
 num_epochs = train_func:get_state_table().current_epoch
@@ -105,6 +110,15 @@ local val_error,val_variance=best:validate_dataset{
   output_dataset = val_output,
   loss           = ann.loss.zero_one(10)
 }
+local out_ds = best:use_dataset{ input_dataset = val_input }
+best:use_dataset{ input_dataset = val_input, output_dataset = out_ds }
+for input,bunch_indexes in trainable.dataset_multiple_iterator{
+  datasets = { val_input }, bunch_size = 1 } do
+  local out = best:calculate(input)
+  local target = matrix(out:dim(1),out:dim(2),
+			out_ds:getPattern(bunch_indexes[1]))
+  assert(out:equals(target))
+end
 --printf("# Wall total time: %.3f    per epoch: %.3f\n", wall, wall/num_epochs)
 --printf("# CPU  total time: %.3f    per epoch: %.3f\n", cpu, cpu/num_epochs)
 --printf("# Validation error: %f  +-  %f\n", val_error, val_variance)

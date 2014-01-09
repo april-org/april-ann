@@ -18,6 +18,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "unused_variable.h"
 #include "hyperplane_component.h"
 
 namespace ANN {
@@ -77,13 +78,13 @@ namespace ANN {
     return output;
   }
     
-  void HyperplaneANNComponent::reset() {
-    dot_product->reset();
-    bias->reset();
+  void HyperplaneANNComponent::reset(unsigned int it) {
+    dot_product->reset(it);
+    bias->reset(it);
   }
 
-  void HyperplaneANNComponent::computeAllGradients(hash<string,MatrixFloat*>
-						   &weight_grads_dict) {
+  void HyperplaneANNComponent::computeAllGradients(MatrixFloatSet
+						   *weight_grads_dict) {
     dot_product->computeAllGradients(weight_grads_dict);
     bias->computeAllGradients(weight_grads_dict);
   }
@@ -106,24 +107,9 @@ namespace ANN {
     bias->setUseCuda(v);
   }
   
-  void HyperplaneANNComponent::setOption(const char *name, double value) {
-    dot_product->setOption(name, value);
-    bias->setOption(name, value);
-  }
-
-  bool HyperplaneANNComponent::hasOption(const char *name) {
-    return dot_product->hasOption(name) || bias->hasOption(name);
-  }
-    
-  double HyperplaneANNComponent::getOption(const char *name) {
-    if (dot_product->hasOption(name)) return dot_product->getOption(name);
-    if (bias->hasOption(name)) return bias->getOption(name);
-    return ANNComponent::getOption(name);
-  }
-    
   void HyperplaneANNComponent::build(unsigned int _input_size,
 				     unsigned int _output_size,
-				     hash<string,Connections*> &weights_dict,
+				     MatrixFloatSet *weights_dict,
 				     hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
     //////////////////////////////////////////////////////////////
@@ -136,7 +122,7 @@ namespace ANN {
     bias->build(output_size, output_size, weights_dict, components_dict);
   }
   
-  void HyperplaneANNComponent::copyWeights(hash<string,Connections*> &weights_dict) {
+  void HyperplaneANNComponent::copyWeights(MatrixFloatSet *weights_dict) {
     dot_product->copyWeights(weights_dict);
     bias->copyWeights(weights_dict);
   }

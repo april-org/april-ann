@@ -31,15 +31,13 @@ namespace ANN {
 						       float variance,
 						       const char *name,
 						       unsigned int size) :
-    ANNComponent(name, 0, size, size),
-    random(random),
+    StochasticANNComponent(random, name, 0, size, size),
     input(0),
     output(0),
     error_input(0),
     error_output(0),
     mean(mean),
     variance(variance) {
-    IncRef(random);
   }
   
   GaussianNoiseANNComponent::~GaussianNoiseANNComponent() {
@@ -47,11 +45,10 @@ namespace ANN {
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);
     if (error_output) DecRef(error_output);
-    DecRef(random);
   }
   
   Token *GaussianNoiseANNComponent::doForward(Token* _input, bool during_training) {
-    UNUSED_VARIABLE(during_training);
+    _input = StochasticANNComponent::doForward(_input, during_training);
     // error checking
     if ( (_input == 0) ||
 	 (_input->getTokenCode() != table_of_token_codes::token_matrix))
@@ -82,7 +79,8 @@ namespace ANN {
     return error_output;
   }
   
-  void GaussianNoiseANNComponent::reset() {
+  void GaussianNoiseANNComponent::reset(unsigned int it) {
+    StochasticANNComponent::reset(it);
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);
@@ -95,7 +93,7 @@ namespace ANN {
 
   ANNComponent *GaussianNoiseANNComponent::clone() {
     GaussianNoiseANNComponent *copy_component = new
-      GaussianNoiseANNComponent(new MTRand(*random),
+      GaussianNoiseANNComponent(new MTRand(*getRandom()),
 				mean, variance,
 				name.c_str(),
 				input_size);
@@ -104,7 +102,7 @@ namespace ANN {
 
   void GaussianNoiseANNComponent::build(unsigned int _input_size,
 					unsigned int _output_size,
-					hash<string,Connections*> &weights_dict,
+					MatrixFloatSet *weights_dict,
 					hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);

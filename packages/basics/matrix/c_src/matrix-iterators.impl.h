@@ -26,7 +26,7 @@
 
 template <typename T>
 Matrix<T>::iterator::iterator(Matrix<T> *m) : m(m), idx(0), raw_pos(0) {
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasColMajor) {
+  if (!m->getIsContiguous() || !m->getIsDataRowOrdered()) {
     coords = new int[m->getNumDim()];
     for (int i=0; i<m->getNumDim(); ++i) coords[i] = 0;
   }
@@ -39,7 +39,7 @@ Matrix<T>::iterator::iterator(Matrix<T> *m) : m(m), idx(0), raw_pos(0) {
 template <typename T>
 Matrix<T>::iterator::iterator(Matrix<T> *m, int raw_pos) :
   m(m), idx(0), raw_pos(raw_pos) {
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasColMajor) {
+  if (!m->getIsContiguous() || !m->getIsDataRowOrdered()) {
     coords = new int[m->getNumDim()];
     m->computeCoords(raw_pos, coords);
   }
@@ -51,7 +51,7 @@ Matrix<T>::iterator::iterator(Matrix<T> *m, int raw_pos) :
 template <typename T>
 Matrix<T>::iterator::iterator(Matrix<T> *m, int raw_pos, int *coords) :
   m(m), idx(0), raw_pos(raw_pos) {
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasColMajor) {
+  if (!m->getIsContiguous() || !m->getIsDataRowOrdered()) {
     this->coords = new int[m->getNumDim()];
     for (int i=0; i<m->getNumDim(); ++i) this->coords[i] = coords[i];
   }
@@ -144,7 +144,7 @@ int Matrix<T>::iterator::getRawPos() const {
 template <typename T>
 Matrix<T>::col_major_iterator::col_major_iterator(Matrix<T> *m) :
   m(m), idx(0), raw_pos(0) {
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasRowMajor) {
+  if (!m->getIsContiguous() || m->getIsDataRowOrdered()) {
     coords = new int[m->getNumDim()];
     for (int i=0; i<m->getNumDim(); ++i) coords[i] = 0;
   }
@@ -157,7 +157,7 @@ Matrix<T>::col_major_iterator::col_major_iterator(Matrix<T> *m) :
 template <typename T>
 Matrix<T>::col_major_iterator::col_major_iterator(Matrix<T> *m, int raw_pos) :
   m(m), idx(0), raw_pos(raw_pos) {
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasRowMajor) {
+  if (!m->getIsContiguous() || m->getIsDataRowOrdered()) {
     coords = new int[m->getNumDim()];
     m->computeCoords(raw_pos, coords);
   }
@@ -169,7 +169,7 @@ Matrix<T>::col_major_iterator::col_major_iterator(Matrix<T> *m, int raw_pos) :
 template <typename T>
 Matrix<T>::col_major_iterator::col_major_iterator(Matrix<T> *m, int raw_pos, int *coords) :
   m(m), idx(0), raw_pos(raw_pos) {
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasRowMajor) {
+  if (!m->getIsContiguous() || m->getIsDataRowOrdered()) {
     coords = new int[m->getNumDim()];
     for (int i=0; i<m->getNumDim(); ++i) this->coords[i] = coords[i];
   }
@@ -201,7 +201,7 @@ Matrix<T>::col_major_iterator::col_major_iterator(const iterator &other) :
   m(other.m),
   idx(other.idx),
   raw_pos(other.raw_pos) {
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasRowMajor) {
+  if (!m->getIsContiguous() || m->getIsDataRowOrdered()) {
     coords = new int[m->getNumDim()];
     if (other.coords != 0)
       for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
@@ -249,7 +249,7 @@ typename Matrix<T>::col_major_iterator &Matrix<T>::col_major_iterator::operator=
   idx = other.idx;
   raw_pos = other.raw_pos;
   data = m->getData();
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasRowMajor) {
+  if (!m->getIsContiguous() || m->getIsDataRowOrdered()) {
     coords = new int[other.m->getNumDim()];
     if (other.coords != 0)
       for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
@@ -306,7 +306,7 @@ int Matrix<T>::col_major_iterator::getRawPos() const {
 template <typename T>
 Matrix<T>::const_iterator::const_iterator(const Matrix<T> *m) :
   m(m), idx(0), raw_pos(0) {
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasColMajor) {
+  if (!m->getIsContiguous() || !m->getIsDataRowOrdered()) {
     coords = new int[m->getNumDim()];
     for (int i=0; i<m->getNumDim(); ++i) coords[i] = 0;
   }
@@ -318,7 +318,7 @@ Matrix<T>::const_iterator::const_iterator(const Matrix<T> *m) :
 template <typename T>
 Matrix<T>::const_iterator::const_iterator(const Matrix<T> *m, int raw_pos) :
   m(m), idx(0), raw_pos(raw_pos) {
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasColMajor) {
+  if (!m->getIsContiguous() || !m->getIsDataRowOrdered()) {
     coords = new int[m->getNumDim()];
     m->computeCoords(raw_pos, coords);
   }
@@ -329,7 +329,7 @@ Matrix<T>::const_iterator::const_iterator(const Matrix<T> *m, int raw_pos) :
 template <typename T>
 Matrix<T>::const_iterator::const_iterator(const Matrix<T> *m, int raw_pos, int *coords) :
   m(m), idx(0), raw_pos(raw_pos) {
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasColMajor) {
+  if (!m->getIsContiguous() || !m->getIsDataRowOrdered()) {
     coords = new int[m->getNumDim()];
     for (int i=0; i<m->getNumDim(); ++i) this->coords[i] = coords[i];
   }
@@ -460,7 +460,7 @@ int Matrix<T>::const_iterator::getRawPos() const {
 template <typename T>
 Matrix<T>::const_col_major_iterator::const_col_major_iterator(const Matrix<T> *m) :
   m(m), idx(0), raw_pos(0) {
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasRowMajor) {
+  if (!m->getIsContiguous() || m->getIsDataRowOrdered()) {
     coords = new int[m->getNumDim()];
     for (int i=0; i<m->getNumDim(); ++i) coords[i] = 0;
   }
@@ -473,7 +473,7 @@ template <typename T>
 Matrix<T>::const_col_major_iterator::const_col_major_iterator(const Matrix<T> *m,
 							      int raw_pos) :
   m(m), idx(0), raw_pos(raw_pos) {
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasRowMajor) {
+  if (!m->getIsContiguous() || m->getIsDataRowOrdered()) {
     coords = new int[m->getNumDim()];
     m->computeCoords(raw_pos, coords);
   }
@@ -486,7 +486,7 @@ Matrix<T>::const_col_major_iterator::const_col_major_iterator(const Matrix<T> *m
 							      int raw_pos,
 							      int *coords) :
   m(m), idx(0), raw_pos(raw_pos) {
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasRowMajor) {
+  if (!m->getIsContiguous() || m->getIsDataRowOrdered()) {
     coords = new int[m->getNumDim()];
     for (int i=0; i<m->getNumDim(); ++i) this->coords[i] = coords[i];
   }
@@ -518,7 +518,7 @@ const_col_major_iterator(const Matrix<T>::iterator &other) :
   m(other.m),
   idx(other.idx), 
   raw_pos(other.raw_pos) {
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasRowMajor) {
+  if (!m->getIsContiguous() || m->getIsDataRowOrdered()) {
     coords = new int[m->getNumDim()];
     if (other.coords != 0)
       for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
@@ -534,7 +534,7 @@ const_col_major_iterator(const Matrix<T>::const_iterator &other) :
   m(other.m),
   idx(other.idx), 
   raw_pos(other.raw_pos) {
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasRowMajor) {
+  if (!m->getIsContiguous() || m->getIsDataRowOrdered()) {
     coords = new int[m->getNumDim()];
     if (other.coords != 0)
       for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
@@ -578,7 +578,7 @@ const_col_major_iterator::operator=(const typename Matrix<T>::iterator &other) {
   idx = other.idx;
   raw_pos = other.raw_pos;
   data = m->getData();
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasRowMajor) {
+  if (!m->getIsContiguous() || m->getIsDataRowOrdered()) {
     coords = new int[other.m->getNumDim()];
     if (other.coords != 0)
       for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
@@ -595,7 +595,7 @@ operator=(const typename Matrix<T>::const_iterator &other) {
   idx = other.idx;
   raw_pos = other.raw_pos;
   data = m->getData();
-  if (!m->getIsContiguous() || m->getMajorOrder()==CblasRowMajor) {
+  if (!m->getIsContiguous() || m->getIsDataRowOrdered()) {
     coords = new int[other.m->getNumDim()];
     if (other.coords != 0)
       for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
@@ -667,46 +667,9 @@ int Matrix<T>::const_col_major_iterator::getRawPos() const {
 /*******************************************************************/
 
 template <typename T>
-Matrix<T>::best_span_iterator::
-best_span_iterator(const Matrix<T> *m,int raw_pos) : m(m), raw_pos(raw_pos) {
-  coords = new int[m->numDim];
-  order  = new int[m->numDim];
-  m->computeCoords(raw_pos, coords);
-  switch(m->numDim) {
-  case 1: order[0] = 0; num_iterations = 1; break;
-  case 2:
-    if (m->matrixSize[0] > m->matrixSize[1]) {
-      order[0] = 0;
-      order[1] = 1;
-    }
-    else if (m->matrixSize[1] > m->matrixSize[0]) {
-      order[0] = 1;
-      order[1] = 0;
-    }
-    else {
-      if (m->major_order == CblasRowMajor) {
-	order[0] = 1;
-	order[1] = 0;
-      }
-      else {
-	order[0] = 0;
-	order[1] = 1;
-      }
-    }
-    num_iterations = m->matrixSize[order[1]];
-    break;
-  default:
-    for (int i=0; i<m->numDim; ++i) order[i] = i;
-    april_utils::Sort(order, 0, m->numDim-1, inverse_sort_compare(m));
-    num_iterations = 1;
-    for (int i=1; i<m->numDim; ++i)
-      num_iterations *= m->matrixSize[order[i]];
-  }
-}
-
-template <typename T>
-Matrix<T>::best_span_iterator::best_span_iterator(const Matrix<T> *m) :
-  m(m), raw_pos(m->offset) {
+void Matrix<T>::best_span_iterator::initialize(const Matrix<T> *m, int raw_pos) {
+  this->m       = m;
+  this->raw_pos = raw_pos;
   coords = new int[m->numDim];
   order  = new int[m->numDim];
   switch(m->numDim) {
@@ -722,7 +685,10 @@ Matrix<T>::best_span_iterator::best_span_iterator(const Matrix<T> *m) :
       order[1] = 0;
     }
     else {
-      if (m->major_order == CblasRowMajor) {
+      // CUATION: this conditions is critical to work with transposed matrices,
+      // in order to ensure the iterator to traverse equally two matrices with
+      // different transposition.
+      if (m->getMajorOrder() == CblasRowMajor) {
 	order[0] = 1;
 	order[1] = 0;
       }
@@ -743,6 +709,18 @@ Matrix<T>::best_span_iterator::best_span_iterator(const Matrix<T> *m) :
     for (int i=1; i<m->numDim; ++i)
       num_iterations *= m->matrixSize[order[i]];
   }
+}
+
+template <typename T>
+Matrix<T>::best_span_iterator::
+best_span_iterator(const Matrix<T> *m,int raw_pos) {
+  initialize(m, raw_pos);
+  m->computeCoords(raw_pos, coords);
+}
+
+template <typename T>
+Matrix<T>::best_span_iterator::best_span_iterator(const Matrix<T> *m) {
+  initialize(m, m->offset);
 }
 
 template <typename T>
@@ -1070,7 +1048,8 @@ Matrix<T> *Matrix<T>::sliding_window::getMatrix(Matrix<T> *dest) {
     return new Matrix<T>(m->numDim, m->stride,
 			 raw_pos, sub_matrix_size,
 			 total_size, last_raw_pos + raw_pos,
-			 m->data, m->major_order, m->use_cuda);
+			 m->data, m->major_order, m->use_cuda,
+			 m->transposed);
   else {
     april_assert(dest->getRawDataAccess() == m->getRawDataAccess());
     dest->changeSubMatrixData(raw_pos, last_raw_pos + raw_pos);

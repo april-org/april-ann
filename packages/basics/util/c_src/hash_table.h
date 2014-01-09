@@ -95,7 +95,7 @@ namespace april_utils {
     hash& operator=(const hash&);  // assignment operator
       
     void clear(); // Erases all of the elements.
-    data_type* find(const key_type& k);
+    data_type* find(const key_type& k) const;
     value_type* find_pair(const key_type& k) const;
     bool search(const key_type& k) const {
       return find_pair(k) != 0;
@@ -451,7 +451,7 @@ namespace april_utils {
   
   template <typename ky, typename dt, 
 	    typename hfcn, typename eqky>
-  dt* hash<ky,dt,hfcn,eqky>::find(const ky& k) {
+  dt* hash<ky,dt,hfcn,eqky>::find(const ky& k) const {
     value_type* p = find_pair(k);
     return p ? &(p->second) : 0;
   }

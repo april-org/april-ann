@@ -25,9 +25,9 @@ using namespace InterestPoints;
   lua_createtable(L, result->size(), 0);
   for (unsigned int i=1; i <= result->size(); i++) {
     lua_createtable(L, 2, 0);
-    lua_pushnumber(L, (*result)[i-1].first);
+    lua_pushnumber(L, (*result)[i-1].x);
     lua_rawseti(L, -2, 1);
-    lua_pushnumber(L, (*result)[i-1].second);
+    lua_pushnumber(L, (*result)[i-1].y);
     lua_rawseti(L, -2, 2);
     lua_rawseti(L, -2, i);
   }
@@ -54,9 +54,9 @@ using namespace InterestPoints;
   lua_createtable(L, local_minima->size(), 0);
   for (unsigned int i=1; i <= local_minima->size(); i++) {
     lua_createtable(L, 2, 0);
-    lua_pushnumber(L, (*local_minima)[i-1].first);
+    lua_pushnumber(L, (*local_minima)[i-1].x);
     lua_rawseti(L, -2, 1);
-    lua_pushnumber(L, (*local_minima)[i-1].second);
+    lua_pushnumber(L, (*local_minima)[i-1].y);
     lua_rawseti(L, -2, 2);
     lua_rawseti(L, -2, i);
   }
@@ -66,9 +66,9 @@ using namespace InterestPoints;
   lua_createtable(L, local_maxima->size(), 0);
   for (unsigned int i=1; i <= local_maxima->size(); i++) {
     lua_createtable(L, 2, 0);
-    lua_pushnumber(L, (*local_maxima)[i-1].first);
+    lua_pushnumber(L, (*local_maxima)[i-1].x);
     lua_rawseti(L, -2, 1);
-    lua_pushnumber(L, (*local_maxima)[i-1].second);
+    lua_pushnumber(L, (*local_maxima)[i-1].y);
     lua_rawseti(L, -2, 2);
     lua_rawseti(L, -2, i);
   }
@@ -180,7 +180,7 @@ using namespace InterestPoints;
 //BIND_METHOD SetPoints getComponentPoints
 {
     // Devuelve una lista de listas de tuplas ;)
-    const vector <vector <interest_point> > *v = obj->getComponents();
+    const vector <PointComponent> *v = obj->getComponents();
     int tupla_len = 3;         
     
     // Outer list

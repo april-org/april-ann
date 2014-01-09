@@ -21,7 +21,14 @@
  */
 #include "gpu_mirrored_memory_block.h"
 
-bool GPUMirroredMemoryBlockBase::use_mmap_allocation = false;
+bool   GPUMirroredMemoryBlockBase::use_mmap_allocation = false;
+
+#ifndef NO_POOL
+GPUMirroredMemoryBlockBase::PoolFreeBeforeExit GPUMirroredMemoryBlockBase::pool_free_before_exit;
+size_t GPUMirroredMemoryBlockBase::pool_size = 0;
+GPUMirroredMemoryBlockBase::PoolType *GPUMirroredMemoryBlockBase::pool_lists =
+  new GPUMirroredMemoryBlockBase::PoolType(1024);
+#endif
 
 template class GPUMirroredMemoryBlock<float>;
 template class GPUMirroredMemoryBlock<double>;

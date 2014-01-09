@@ -21,57 +21,31 @@
 #ifndef MMAPPED_DATA_H
 #define MMAPPED_DATA_H
 
-#include "referenced.h"
-#include "april_assert.h"
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/mman.h>           // mmap() is defined in this header
+#include "referenced.h"
+#include "april_assert.h"
 #include "error_print.h"
 #include "ignore_result.h"
 
 namespace april_utils {
 
   const int MAGIC_NUMBER = 0x3333;
-
+  
   class MMappedDataReader : public Referenced {
+    int commit_number;
     char   *mmapped_data;
     size_t  mmapped_data_size;
     size_t  pos;
     int     fd;
   public:
-    MMappedDataReader(const char *path, bool write=true, bool shared=true) {
-      if ((fd = open(path, O_RDWR)) < 0)
-	ERROR_EXIT1(128,"Unable to open file %s\n", path);
-      // find size of input file
-      struct stat statbuf;
-      if (fstat(fd, &statbuf) < 0) {
-	ERROR_EXIT(128, "Error guessing filesize\n");
-      }
-      // mmap the input file
-      mmapped_data_size = statbuf.st_size;
-      int prot = PROT_READ;
-      if (write) prot = prot | PROT_WRITE;
-      int flags;
-      if (shared) flags = MAP_SHARED;
-      else flags = MAP_PRIVATE;
-      if ((mmapped_data = static_cast<char*>(mmap(0, mmapped_data_size,
-						  prot, flags,
-						  fd, 0)))  == (caddr_t)-1)
-	ERROR_EXIT(128, "mmap error\n");
-      int magic = *(reinterpret_cast<int*>(mmapped_data));
-      if (magic != MAGIC_NUMBER) ERROR_EXIT(128, "Incorrect endianism\n");
-      pos = sizeof(int);
-    }
-  
-    ~MMappedDataReader() {
-      if (fd != -1) close(fd);
-      munmap(mmapped_data, mmapped_data_size);
-    }
-  
-    size_t size() const { return mmapped_data_size - pos; }
-  
+    MMappedDataReader(const char *path, bool write=true, bool shared=true);
+    ~MMappedDataReader();
+    size_t size() const;
+    
     template<typename T> T *get(size_t n=1) {
       size_t sz = sizeof(T)*n;
       if (sz + pos > mmapped_data_size)
@@ -81,23 +55,16 @@ namespace april_utils {
       if (pos == mmapped_data_size) { close(fd); fd=-1; }
       return ptr;
     }
+    int getCommitNumber() const { return commit_number; }
   };
 
   class MMappedDataWriter : public Referenced {
     int fd;
   public:
-    MMappedDataWriter(const char *path) {
-      if ((fd = open(path, O_CREAT | O_WRONLY | O_TRUNC,
-		     S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH)) < 0)
-	ERROR_EXIT1(128,"Unable to open file %s\n", path);
-      int magic = MAGIC_NUMBER;
-      IGNORE_RESULT(write(fd, &magic,        sizeof(int)));
-    }
-    ~MMappedDataWriter() {
-      close(fd);
-    }
+    MMappedDataWriter(const char *path);
+    ~MMappedDataWriter();
     template<typename T>
-    void put(T *data, size_t n=1) {
+    void put(const T *data, size_t n=1) {
       IGNORE_RESULT(write(fd, data, sizeof(T)*n));
     }
   };

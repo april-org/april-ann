@@ -52,7 +52,7 @@ namespace ANN {
     throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
     MatrixFloat *error_mat = input_mat->cloneOnlyDims();
     TokenMatrixFloat *error_mat_token = new TokenMatrixFloat(error_mat);
-    AssignRef(error_output, error_mat_token);
+    AssignRef<Token>(error_output, error_mat_token);
     doComputeMSEGradient(input_mat->getRawDataAccess(),
 			 target_mat->getRawDataAccess(),
 			 error_mat->getRawDataAccess(),

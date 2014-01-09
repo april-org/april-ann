@@ -60,7 +60,6 @@ namespace ANN {
 
   ANNComponent *LogLogisticActfANNComponent::clone() {
     LogLogisticActfANNComponent *obj = new LogLogisticActfANNComponent(name.c_str());
-    obj->setOption(DROPOUT_FACTOR_STRING, getOption(DROPOUT_FACTOR_STRING));
     return obj;
   }
 

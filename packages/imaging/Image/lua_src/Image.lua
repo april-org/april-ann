@@ -1,5 +1,23 @@
+function Image.meta_instance:__tostring()
+  local w,h,x,y = self:geometry()
+  local mat  = self:matrix()
+  local str = string.format("# Image %dx%d%+d%+d [%s]",
+			    w,h,x,y,
+			    mat:get_reference_string())
+  return str
+end
+
+function ImageRGB.meta_instance:__tostring()
+  local w,h,x,y = self:geometry()
+  local mat  = self:matrix()
+  local str = string.format("# ImageRGB %dx%d%+d%+d [%s]",
+			    w,h,x,y,
+			    mat:get_reference_string())
+  return str
+end
+
 function Image.empty(xsize, ysize)
-	local m=matrix(ysize, xsize) -- OJO: ysize == numfilas, etc
+        local m=matrix(ysize, xsize) -- OJO: ysize == numfilas, etc
 	return Image(m)
 end
 

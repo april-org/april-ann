@@ -61,8 +61,10 @@ namespace ANN {
 	april_assert(target_mat->getNumDim() == 2);
 	april_assert(input_mat->sameDim(target_mat));
       }
-      april_assert(input_mat->getIsContiguous());
-      april_assert(target_mat->getIsContiguous());
+      if (!input_mat->getIsContiguous())
+	ERROR_EXIT(128, "Needs a contiguous input matrix\n");
+      if (!target_mat->getIsContiguous())
+	ERROR_EXIT(128, "Needs a contiguous target matrix\n");
       april_assert(input_mat->getMajorOrder() == CblasColMajor);
       april_assert(target_mat->getMajorOrder() == CblasColMajor);
       april_assert(size==0 || input_mat->getDimSize(1)==static_cast<int>(size));

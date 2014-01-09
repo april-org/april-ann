@@ -851,21 +851,6 @@ Image<T> *Image<T>::resize(int dst_width, int dst_height) const
   return result;
 }
 
-// c and dest must have 6 elements
-template <typename T>
-void Image<T>::invert_affine_matrix(float *c, float *dest) const
-{
-  float det = c[0]*c[4] - c[1]*c[3];
-  assert("Affine matrix has no inverse" && det!=0);
-  dest[0] =  c[4]/det;
-  dest[1] = -c[1]/det;
-  dest[3] = -c[3]/det;
-  dest[4] =  c[0]/det;
-  dest[2] = -dest[0]*c[2] - dest[1]*c[5];
-  dest[5] = -dest[3]*c[2] - dest[4]*c[5];
-}
-
-
 /** 
  *  Applies an affine transform given by the matrix
  *
@@ -883,11 +868,12 @@ Image<T> *Image<T>::affine_transform(AffineTransform2D *trans, T default_value,
   using april_utils::max;
   using april_utils::min;
 
-  float *inverse = trans->getRawDataAccess()->getPPALForReadAndWrite();
-  
   float c[6];
-  invert_affine_matrix(inverse, c);
-
+  MatrixFloat *inverse_mat = trans->inv();
+  IncRef(inverse_mat);
+  if (!inverse_mat->isSimple())
+    AssignRef(inverse_mat, inverse_mat->clone(CblasRowMajor));
+  const float *inverse = inverse_mat->getRawDataAccess()->getPPALForRead();
   /*
     printf("--transform-------\n");
     printf("%1.3f %1.3f %1.3f\n", c[0], c[1], c[2]);
@@ -914,6 +900,9 @@ Image<T> *Image<T>::affine_transform(AffineTransform2D *trans, T default_value,
   int x3 = int(roundf((width-1) *inverse[0] + (height-1)*inverse[1] + inverse[2]));
   int y3 = int(roundf((width-1) *inverse[3] + (height-1)*inverse[4] + inverse[5]));
 
+  DecRef(inverse_mat);
+  inverse = 0;
+  
   int xmax = int(roundf(max(x0, max(x1, max(x2, x3)))));
   int xmin = int(roundf(min(x0, min(x1, min(x2, x3)))));
   int ymax = int(roundf(max(y0, max(y1, max(y2, y3)))));

@@ -253,27 +253,38 @@ void sumBunchPatternErrors(float *loss_output_ptr,
 /// @param[in]  bunch_size  The number of patterns.
 /// @param[in]  CODE  The code which will be executed.
 /// @param[in]  var  The variable where the CODE stores the loss.
-#define COMPUTE_LOSS(input,target,loss_output,size,bunch_size,CODE,var)	\
-  do {									\
-    const float *input_ptr  = (input)->getPPALForRead();		\
-    const float *target_ptr = (target)->getPPALForRead();		\
-    float *loss_output_ptr  = (loss_output)->getPPALForWrite();		\
-    for (unsigned int b=0; b<(bunch_size); ++b) {			\
-      CODE;								\
-      loss_output_ptr[b] = (var);					\
-    }									\
-    input_ptr  += bunch_size;						\
-    target_ptr += bunch_size;						\
-    for (unsigned int i = 1; i < (size); i++) {				\
-      for (unsigned int b=0; b<(bunch_size); ++b) {			\
-	CODE;								\
-	loss_output_ptr[b] += (var);					\
-      }									\
-      input_ptr  += bunch_size;						\
-      target_ptr += bunch_size;						\
-    }									\
-  } while(0)
+template<typename F, typename T>
+void COMPUTE_LOSS(FloatGPUMirroredMemoryBlock *input,
+		  FloatGPUMirroredMemoryBlock *target,
+		  FloatGPUMirroredMemoryBlock *loss_output,
+		  unsigned int size,
+		  unsigned int bunch_size,
+		  F func, T zero) {
+  const float *input_ptr  = (input)->getPPALForRead();
+  const float *target_ptr = (target)->getPPALForRead();
+  float *loss_output_ptr  = (loss_output)->getPPALForWrite();
+  for (unsigned int b=0; b<(bunch_size); ++b) {
+    float var = func(input_ptr[b], target_ptr[b], zero);
+    loss_output_ptr[b] = var;
+  }
+  input_ptr  += bunch_size;
+  target_ptr += bunch_size;
+  for (unsigned int i = 1; i < (size); i++) {
+    for (unsigned int b=0; b<(bunch_size); ++b) {
+      float var = func(input_ptr[b], target_ptr[b], zero);
+      loss_output_ptr[b] += var;
+    }
+    input_ptr  += bunch_size;
+    target_ptr += bunch_size;
+  }
+}
 
+float MSE(float input, float target, float zero) {
+  float d = input - target;
+  if (fabs(d) < zero) d = 0.0f;
+  else d = d*d;
+  return d;
+}
 void doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
 		       FloatGPUMirroredMemoryBlock *target,
 		       FloatGPUMirroredMemoryBlock *loss_output,
@@ -285,10 +296,10 @@ void doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
   UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
-  if (use_gpu) {    
+  if (use_gpu) {
     const float *input_ptr  = input->getGPUForRead();
     const float *target_ptr = target->getGPUForRead();
-    FloatGPUMirroredMemoryBlock *pattern_errors = 
+    FloatGPUMirroredMemoryBlock *pattern_errors =
       new FloatGPUMirroredMemoryBlock(target->getSize());
     float *pattern_errors_ptr = pattern_errors->getGPUForWrite();
     dim3 block, grid;
@@ -309,11 +320,8 @@ void doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
   }
   else {
 #endif
-    COMPUTE_LOSS(input,target,loss_output,size,bunch_size,
-		 float d = input_ptr[b] - target_ptr[b];
-		 if (fabs(d) < zero_epsilon_distance) d = 0.0f;
-		 else d = d*d,
-		 d);
+    COMPUTE_LOSS(input,target,loss_output,size,bunch_size,MSE,
+		 zero_epsilon_distance);
 #ifdef USE_CUDA
   }
 #endif
@@ -331,7 +339,7 @@ void doComputeMSEGradient(FloatGPUMirroredMemoryBlock *input,
   UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
-  if (use_gpu) {    
+  if (use_gpu) {
     const float *input_ptr  = input->getGPUForRead();
     const float *target_ptr = target->getGPUForRead();
     float *error_output_ptr = error_output->getGPUForWrite();
@@ -368,6 +376,11 @@ void doComputeMSEGradient(FloatGPUMirroredMemoryBlock *input,
 #endif
 }
 
+float MAE(float input, float target, float zero) {
+  float absd = fabsf(input - target);
+  if (absd < zero) absd = 0.0f;
+  return absd;
+}
 void doMAELossFunction(FloatGPUMirroredMemoryBlock *input,
 		       FloatGPUMirroredMemoryBlock *target,
 		       FloatGPUMirroredMemoryBlock *loss_output,
@@ -379,10 +392,10 @@ void doMAELossFunction(FloatGPUMirroredMemoryBlock *input,
   UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
-  if (use_gpu) {    
+  if (use_gpu) {
     const float *input_ptr  = input->getGPUForRead();
     const float *target_ptr = target->getGPUForRead();
-    FloatGPUMirroredMemoryBlock *pattern_errors = 
+    FloatGPUMirroredMemoryBlock *pattern_errors =
       new FloatGPUMirroredMemoryBlock(target->getSize());
     float *pattern_errors_ptr = pattern_errors->getGPUForWrite();
     dim3 block, grid;
@@ -405,10 +418,8 @@ void doMAELossFunction(FloatGPUMirroredMemoryBlock *input,
 #endif
 
     COMPUTE_LOSS(input,target,loss_output,size,bunch_size,
-		 float absd = fabsf(input_ptr[b] - target_ptr[b]);
-		 if (absd < zero_epsilon_distance) absd = 0.0f,
-		 absd);
-    
+		 MAE, zero_epsilon_distance);
+
 #ifdef USE_CUDA
   }
 #endif
@@ -426,7 +437,7 @@ void doComputeMAEGradient(FloatGPUMirroredMemoryBlock *input,
   UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
-  if (use_gpu) {    
+  if (use_gpu) {
     const float *input_ptr  = input->getGPUForRead();
     const float *target_ptr = target->getGPUForRead();
     float *error_output_ptr = error_output->getGPUForWrite();
@@ -468,6 +479,34 @@ void doComputeMAEGradient(FloatGPUMirroredMemoryBlock *input,
 #endif
 }
 
+struct CEData {
+  float log_epsilon, log_1_epsilon, EPSILON;
+};
+float CE(float input, float target, CEData data) {
+  float log_epsilon   = data.log_epsilon;
+  float log_1_epsilon = data.log_1_epsilon;
+  float EPSILON       = data.EPSILON;
+  april_assert(!(input > 0.0f) &&
+	       "Only log-based activation functions are allowed");
+  april_assert(!(target < 0.0f) && !(target > 1.0f) &&
+	       "Only [0,1] target patterns are allowed");
+  // compute derivative
+  float  log_o     = clamp(input, log_epsilon, log_1_epsilon);
+  double o         = exp(log_o);
+  float  log_inv_o = log(1.0 - o);
+  // CLAMP of reference (target)
+  float  t         = clamp(target, EPSILON, 1.0f - EPSILON);
+  // CLAMP of 1.0 - reference (target). We do clamp again to avoid
+  // numerical approximation problems, and to ensure correct working of
+  // inv_t > EPSILON comparison
+  float  inv_t     = clamp(1.0f - target, EPSILON, 1.0f - EPSILON);
+  // printf("%g * %g + %g * %g :: %g\n", t, log_o, inv_t, log_inv_o, o);
+  float sum;
+  if (t > EPSILON) sum = -t * log_o;
+  else sum = 0.0f;
+  if (inv_t > EPSILON) sum -= inv_t * log_inv_o;
+  return sum;
+}
 void doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
 				FloatGPUMirroredMemoryBlock *target,
 				FloatGPUMirroredMemoryBlock *loss_output,
@@ -479,10 +518,10 @@ void doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
   UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
-  if (use_gpu) {    
+  if (use_gpu) {
     const float *input_ptr  = input->getGPUForRead();
     const float *target_ptr = target->getGPUForRead();
-    FloatGPUMirroredMemoryBlock *pattern_errors = 
+    FloatGPUMirroredMemoryBlock *pattern_errors =
       new FloatGPUMirroredMemoryBlock(target->getSize());
     float *pattern_errors_ptr = pattern_errors->getGPUForWrite();
     dim3 block, grid;
@@ -503,35 +542,27 @@ void doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
   }
   else {
 #endif
-    float log_epsilon   = logf(EPSILON);
-    float log_1_epsilon = logf(1.0f - EPSILON);
-
+    CEData ce_data = { logf(EPSILON), logf(1.0f - EPSILON), EPSILON };
     COMPUTE_LOSS(input,target,loss_output,size,bunch_size,
-		 april_assert(!(input_ptr[b] > 0.0f) &&
-			      "Only log-based activation functions are allowed");
-		 april_assert(!(target_ptr[b] < 0.0f) && !(target_ptr[b] > 1.0f) &&
-			      "Only [0,1] target patterns are allowed");
-		 // compute derivative
-		 float  log_o     = clamp(input_ptr[b], log_epsilon, log_1_epsilon);
-		 double o         = exp(log_o);
-		 float  log_inv_o = log(1.0 - o);
-		 // CLAMP of reference (target)
-		 float  t         = clamp(target_ptr[b], EPSILON, 1.0f - EPSILON);
-		 // CLAMP of 1.0 - reference (target). We do clamp again to avoid
-		 // numerical approximation problems, and to ensure correct working of
-		 // inv_t > EPSILON comparison
-		 float  inv_t     = clamp(1.0f - target_ptr[b], EPSILON, 1.0f - EPSILON);
-		 // printf("%g * %g + %g * %g :: %g\n", t, log_o, inv_t, log_inv_o, o);
-		 float sum;
-		 if (t > EPSILON) sum = -t * log_o;
-		 else sum = 0.0f;
-		 if (inv_t > EPSILON) sum -= inv_t * log_inv_o,
-		 sum);
+		 CE, ce_data);
 #ifdef USE_CUDA
   }
 #endif
 }
 
+float MultiClassCE(float input, float target, float EPSILON) {
+  april_assert(!(input > 0.0f) &&
+	       "Only log-based activation functions are allowed");
+  april_assert(!(target < 0.0f) && !(target > 1.0f) &&
+	       "Only [0,1] target patterns are allowed");
+  // compute derivative
+  float log_o = input;
+  float t = clamp(target, EPSILON, 1.0f - EPSILON);
+  float sum;
+  if (t > EPSILON) sum = -t * log_o;
+  else sum = 0.0f;
+  return sum;
+}
 void doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
 					  FloatGPUMirroredMemoryBlock *target,
 					  FloatGPUMirroredMemoryBlock *loss_output,
@@ -546,7 +577,7 @@ void doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
   if (use_gpu) {
     const float *input_ptr  = input->getGPUForRead();
     const float *target_ptr = target->getGPUForRead();
-    FloatGPUMirroredMemoryBlock *pattern_errors = 
+    FloatGPUMirroredMemoryBlock *pattern_errors =
       new FloatGPUMirroredMemoryBlock(target->getSize());
     float *pattern_errors_ptr = pattern_errors->getGPUForWrite();
     dim3 block, grid;
@@ -569,17 +600,7 @@ void doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
   else {
 #endif
     COMPUTE_LOSS(input,target,loss_output,size,bunch_size,
-		 april_assert(!(input_ptr[b] > 0.0f) &&
-			      "Only log-based activation functions are allowed");
-		 april_assert(!(target_ptr[b] < 0.0f) && !(target_ptr[b] > 1.0f) &&
-			      "Only [0,1] target patterns are allowed");
-		 // compute derivative
-		 float log_o = input_ptr[b];
-		 float t = clamp(target_ptr[b], EPSILON, 1.0f - EPSILON);
-		 float sum;
-		 if (t > EPSILON) sum = -t * log_o;
-		 else sum = 0.0f,
-		 sum);
+		 MultiClassCE, EPSILON);
 #ifdef USE_CUDA
   }
 #endif
@@ -596,7 +617,7 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
   UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
-  if (use_gpu) {    
+  if (use_gpu) {
     const float *input_ptr  = input->getGPUForRead();
     const float *target_ptr = target->getGPUForRead();
     float *error_output_ptr = error_output->getGPUForWrite();
@@ -650,7 +671,7 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
   dim3 block, grid;
   computeBlockAndGridSizesForAColumnMajorBunch(conf, output_size,
   block, grid);
-  
+
   applyTanhErrorFunctionKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
   (output_ptr,
   target_output_ptr,
@@ -667,7 +688,7 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
   const float *target_output_ptr = target_output->getPPALForRead();
   float *output_error_ptr        = output_error->getPPALForWrite();
   float *pattern_errors_ptr      = pattern_errors->getPPALForWrite();
-    
+
   for (unsigned int i = 0; i < output_size; i++) {
   for (unsigned int b=0; b<conf.cur_bunch_size; ++b) {
   d = output_error_ptr[b] = output_ptr[b] - target_output_ptr[b];

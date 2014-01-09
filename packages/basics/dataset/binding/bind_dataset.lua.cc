@@ -1329,11 +1329,19 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 
 //BIND_CONSTRUCTOR DataSetFloat2TokenWrapper
 {
-  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_ARGN(>=,1);
+  LUABIND_CHECK_ARGN(<=,2);
+  int argn = lua_gettop(L); // number of arguments
   LUABIND_CHECK_PARAMETER(1, DataSetFloat);
   DataSetFloat *ds;
+  CBLAS_ORDER bunch_major = CblasRowMajor;
+  const char *major_str;
   LUABIND_GET_PARAMETER(1, DataSetFloat, ds);
-  obj = new DataSetFloat2TokenWrapper(ds);
+  if (argn == 2) {
+    LUABIND_GET_PARAMETER(2, string, major_str);
+    if (strcmp(major_str, "col_major")==0) bunch_major=CblasColMajor;
+  }
+  obj = new DataSetFloat2TokenWrapper(ds, bunch_major);
   LUABIND_RETURN(DataSetFloat2TokenWrapper, obj);
 }
 //BIND_END

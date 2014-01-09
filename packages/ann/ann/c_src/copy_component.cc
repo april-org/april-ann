@@ -125,7 +125,7 @@ namespace ANN {
     error_output_mat->setUseCuda(use_cuda);
 #endif
     TokenMatrixFloat *error_output_token = new TokenMatrixFloat(error_output_mat);
-    AssignRef(error_output, error_output_token);
+    AssignRef<Token>(error_output, error_output_token);
     error_output_mat->copy(current_mat);
     
     // The rest of tokens
@@ -145,7 +145,8 @@ namespace ANN {
     return error_output;
   }
   
-  void CopyANNComponent::reset() {
+  void CopyANNComponent::reset(unsigned int it) {
+    UNUSED_VARIABLE(it);
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);
@@ -166,7 +167,7 @@ namespace ANN {
 
   void CopyANNComponent::build(unsigned int _input_size,
 			       unsigned int _output_size,
-			       hash<string,Connections*> &weights_dict,
+			       MatrixFloatSet *weights_dict,
 			       hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);

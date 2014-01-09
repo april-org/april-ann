@@ -409,8 +409,7 @@ april_set_doc("matrixComplex.transpose", {
 		summary = "Returns transposition of the caller matrixComplex.",
 		description = {
 		  "Returns transposition of the caller matrixComplex.",
-		  "The returned matrixComplex is totally new.",
-		  "This method is only allowed for 2D matrices",
+		  "The returned matrixComplex references the original.",
 		},
 		outputs = {
 		  "A matrixComplex object (transposed)",
@@ -488,18 +487,12 @@ april_set_doc("matrixComplex.mul", {
 
 april_set_doc("matrixComplex.cmul", {
 		class = "method",
-		summary = "Returns the component-wise multiplication of caller and other matrix.",
-		description = {
-		  "Returns the component-wise multiplication of caller and other matrix.",
-		  "The matrices must have the same size, but they are reinterpreted",
-		  " as a vector.",
-		  "The returned matrix has the same size as given matrices",
-		},
+		summary = "Computes IN-PLACE the component-wise multiplication of caller and other matrix.",
 		params = {
 		  "Another matrix",
 		},
 		outputs = {
-		  "A new matrix result of component-wise multiplication",
+		  "The caller matrix",
 		}, })
 
 april_set_doc("matrixComplex.axpy", {
