@@ -18,8 +18,8 @@ Master branch release
 - Class interest_points and layout algorithms (still in development).
 - Added the geometry c++ class for working in to lines and point geometry.
 
-v0.3.1-beta relase
-------------------
+v0.3.1-alpha (pre-relase of v0.3.1-beta)
+----------------------------------------
 
 ### API Changes
 
