@@ -16,7 +16,11 @@ function gtk.show(...)
       if type(param) == "Image" or type(param) == "ImageRGB" then
 	img = param
       elseif type(param) == "matrix" then
-	img = Image(param)
+	if #param:dim() == 2 then
+	  img = Image(param)
+	else
+	  img = ImageRGB(param)
+	end
       else
 	error("Not supported data type: " .. type(param))
       end

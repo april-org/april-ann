@@ -26,13 +26,15 @@ end
 
 -------------------------------------------------------------------------------
 
+-- WARNING IN PLACE OPERATION
 function stats.pca_whitening(X,S,U,epsilon)
   local epsilon = epsilon or 0.0
-  local XW      = X:clone():gemm{ A=X, B=U, trans_B=true, beta=0, alpha=1 }
+  local XW      = X:gemm{ A=X, B=U, trans_B=true, beta=0, alpha=1 }
   local aux
   for i=1,S:dim(1) do
     aux = XW:select(2,i,aux):scal( 1/math.sqrt(S:get(i) + epsilon) )
   end
+  return XW
 end
 
 -------------------------------------------------------------------------------
