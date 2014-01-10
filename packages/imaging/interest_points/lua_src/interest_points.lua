@@ -369,34 +369,38 @@ end
 ---------------------------
 function dataset.interest_point(img, table_points, x_window, y_window)
 
-    img_matrix = img:matrix()
+    local img_matrix = img:matrix()
 
     -- Create the dataset over the image
     local params_img = {
-      patternSize  = {x_window*2+1, y_window*2+1},
-      offset       = {-x_window, -y_window},
+      patternSize  = {y_window*2+1, x_window*2+1},
+      offset       = {-y_window, -x_window},
       stepSize     = {1,1},
       numSteps     = img_matrix:dim(),
       defaultValue = 1,
       circular     = {false, false}
     }
 
-    dsImg = dataset.matrix(img_matrix, params_img)
+    local dsImg = dataset.matrix(img_matrix, params_img)
 
    -- Create the indexed point
    -- the table is composed by elems (x, y, c)
-   tIndexes = table.imap(table_points, function (elem) return elem[1]*img_matrix:dim()[1]+elem[2] end)
+   -- En la imagen es x, y i en la matriz y x
+   local tIndexes = table.imap(table_points, function (elem)
+       local index = elem[2]*img_matrix:dim(2)+elem[1] 
+       assert(index <= img_matrix:size())
+       return index
+   end)
+   local dsIndexes = dataset.matrix(matrix(tIndexes))
 
-   dsIndexes = dataset.matrix(matrix(tIndexes))
-
-   dsPoints = dataset.indexed(dsIndexes, {dsImg})
+   local dsPoints = dataset.indexed(dsIndexes, {dsImg})
     
    local dsOut = nil
-
+   local points
    if #table_points[1] >= 3 then
       points = table.imap(table_points, function (elem) return elem[3] end)
    end
    
 
-   return dsPoints, interest_points.loadTagDataset(points)
+   return dsPoints, points and interest_points.loadTagDataset(points)
 end
