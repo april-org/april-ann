@@ -64,6 +64,7 @@ aR = stats.mean_centered_by_pattern(m, "col_major")
 --------------------------------------------------------------------------
 --------------------------------------------------------------------------
 
+m = stats.mean_centered_by_pattern(m)
 bT,bP,bR,bV,bS = stats.iterative_pca{ X = m, K = 144, }
 
 -- check regeneration of original matrix

@@ -51,6 +51,7 @@ end
 function stats.pca(Xc)
   local dim    = Xc:dim()
   assert(#dim == 2, "Expected a bi-dimensional matrix")
+  local aux = R:sum(2):scal(1/R:dim(2)):rewrap(R:dim(1))
   local M,N    = table.unpack(dim)
   local sigma  = matrix.col_major(N,N):gemm{ A=Xc, B=Xc,
 					     trans_A=true,
@@ -118,7 +119,10 @@ function stats.iterative_pca(params)
   local T = matrix[major_order](M,K):zeros() -- left eigenvectors
   local P = matrix[major_order](N,K):zeros() -- right eigenvectors
   local L = matrix[major_order](K):zeros()   -- eigenvalues
-  local R,U = stats.mean_centered_by_pattern(X, major_order) -- residual and means
+  local R = X:clone()
+  local U = R:sum(2):scal(1/R:dim(2)):rewrap(R:dim(1))
+  assert( math.abs(U:sum() / U:size()) < 1e-03,
+	  "A zero mean (at each pattern) data matrix is needed")
   -- GS-PCA
   local Tcol, Rcol, Pcol, Uslice, Pslice, Tslice, Lk
   for k=1,K do
