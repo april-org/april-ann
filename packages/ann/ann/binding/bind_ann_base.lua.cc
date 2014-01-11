@@ -695,6 +695,7 @@ using namespace ANN;
 
 //BIND_METHOD StackANNComponent unroll
 {
+  lua_checkstack(L, obj->size());
   for (unsigned int i=0; i<obj->size(); ++i)
     LUABIND_RETURN(ANNComponent, obj->getComponentAt(i));
 }
@@ -704,6 +705,7 @@ using namespace ANN;
 {
   LUABIND_CHECK_ARGN(>=,1);
   int argn = lua_gettop(L);
+  lua_checkstack(L, argn);
   for (int i=1; i<=argn; ++i) {
     unsigned int idx;
     LUABIND_GET_PARAMETER(i, uint, idx);
