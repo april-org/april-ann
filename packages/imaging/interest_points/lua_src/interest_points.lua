@@ -367,17 +367,22 @@ end
 --
 --
 ---------------------------
-function dataset.interest_point(img, table_points, x_window, y_window)
+function dataset.interest_point(img, table_points, x_window, y_window, reverse)
 
     local img_matrix = img:matrix()
 
+    local white  = 1
+
+    if reverse then
+        white = 0
+    end
     -- Create the dataset over the image
     local params_img = {
       patternSize  = {y_window*2+1, x_window*2+1},
       offset       = {-y_window, -x_window},
       stepSize     = {1,1},
       numSteps     = img_matrix:dim(),
-      defaultValue = 1,
+      defaultValue = white,
       circular     = {false, false}
     }
 
