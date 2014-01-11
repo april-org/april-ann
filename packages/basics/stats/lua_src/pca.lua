@@ -12,39 +12,46 @@ end
 
 -------------------------------------------------------------------------------
 
-function stats.mean_centered_by_pattern(X,major_order)
+-- WARNING IN PLACE OPERATION
+function stats.mean_centered_by_pattern(X)
   local dim = X:dim()
   assert(#dim == 2, "Expected a bi-dimensional matrix")
   local M,N = table.unpack(dim)
-  local R = X:clone(major_order)
   -- U is the mean over all rows
-  local U,auxR = R:sum(2):rewrap(M):scal(1/N)
-  -- R is centered subtracting by -U
-  for i=1,R:dim(2) do auxR=R:select(2,i,auxR):axpy(-1, U) end
-  return R,U
+  local U,auxX = X:sum(2):rewrap(M):scal(1/N)
+  -- X is centered subtracting by -U
+  for i=1,X:dim(2) do auxX=X:select(2,i,auxX):axpy(-1, U) end
+  return X,U
 end
 
 -------------------------------------------------------------------------------
+
+-- NOT IN-PLACE
+function stats.pca_whitening(X,U,S,epsilon)
+  local epsilon = epsilon or 0.0
+  local result = matrix.as(X)
+  result:gemm{ A=X, B=U, trans_B=false, beta=0, alpha=1}
+  for i=1,S:dim(1) do
+    result:select(2,i):scal( 1/math.sqrt(S:get(i) + epsilon) )
+  end
+  return result
+end
 
 -- WARNING IN PLACE OPERATION
-function stats.pca_whitening(X,S,U,epsilon)
-  local epsilon = epsilon or 0.0
-  local XW      = X:gemm{ A=X, B=U, trans_B=true, beta=0, alpha=1 }
-  local aux
-  for i=1,S:dim(1) do
-    aux = XW:select(2,i,aux):scal( 1/math.sqrt(S:get(i) + epsilon) )
-  end
-  return XW
+function stats.zca_whitening(X,U,S,epsilon)
+  local aux = stats.pca_whitening(X,U,S,epsilon)
+  X:gemm{ A=aux, B=U, trans_B=true, beta=0, alpha=1 }
+  return X
 end
 
 -------------------------------------------------------------------------------
 
--- PCA algorithm based on covariance matrix and SVD decomposition
-function stats.pca(X)
-  local dim    = X:dim()
+-- PCA algorithm based on covariance matrix and SVD decomposition the matrix Xc
+-- must be zero mean centerd for each pattern. Patterns are ordered by rows.
+function stats.pca(Xc)
+  local dim    = Xc:dim()
   assert(#dim == 2, "Expected a bi-dimensional matrix")
   local M,N    = table.unpack(dim)
-  local Xc,avg = stats.mean_centered_by_pattern(X, "col_major")
   local sigma  = matrix.col_major(N,N):gemm{ A=Xc, B=Xc,
 					     trans_A=true,
 					     trans_B=false,
