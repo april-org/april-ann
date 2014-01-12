@@ -27,6 +27,8 @@
 #include "wrapper.h"
 #include "utilMatrixFloat.h"
 
+#define WEIGHTS_NAME "U_S_epsilon"
+
 namespace ANN {
   
   PCAWhiteningANNComponent::PCAWhiteningANNComponent(MatrixFloat *U,
@@ -38,8 +40,9 @@ namespace ANN {
 		 static_cast<unsigned int>(S->size()),
 		 (takeN==0)?(static_cast<unsigned int>(S->size())):(takeN)),
     U(U), S(S), epsilon(epsilon),
-    input(0),
-    output(0) {
+    dot_product_encoder(0, WEIGHTS_NAME,
+			getInputSize(), getOutputSize(),
+			true) {
     if (U->getMajorOrder() != CblasColMajor)
       ERROR_EXIT(128, "Incorrect U matrix major order, needed col_major\n");
     if (S->getMajorOrder() != CblasColMajor)
@@ -58,55 +61,38 @@ namespace ANN {
     }
     IncRef(this->U);
     IncRef(this->S);
+    //
+    U_S_epsilon = this->U->clone();
+    // regularization
+    MatrixFloat *aux_mat = 0;
+    MatrixFloat::const_iterator Sit(this->S->begin());
+    for (int i=0; i<this->S->size(); ++i, ++Sit) {
+      aux_mat = U_S_epsilon->select(1, i, aux_mat);
+      aux_mat->scal( 1/sqrtf( (*Sit) + epsilon ) );
+    }
+    IncRef(U_S_epsilon);
+    //
+    matrix_set.insert(WEIGHTS_NAME, U_S_epsilon);
+    hash<string,ANNComponent*> components_dict;
+    dot_product_encoder.build(0, 0, &matrix_set, components_dict);
   }
   
   PCAWhiteningANNComponent::~PCAWhiteningANNComponent() {
-    if (input) DecRef(input);
-    if (output) DecRef(output);
     DecRef(U);
     DecRef(S);
+    DecRef(U_S_epsilon);
   }
   
   Token *PCAWhiteningANNComponent::doForward(Token* _input, bool during_training) {
-    UNUSED_VARIABLE(during_training);
-    if (_input->getTokenCode() != table_of_token_codes::token_matrix)
-      ERROR_EXIT1(128, "Incorrect token found, only TokenMatrixFloat is "
-		  "allowed [%s]\n", name.c_str());
-    AssignRef(input, _input->convertTo<TokenMatrixFloat*>());    
-    MatrixFloat *input_mat = input->getMatrix();
-#ifdef USE_CUDA
-    input_mat->setUseCuda(use_cuda);
-#endif
-    if (input_mat->getNumDim() != 2)
-      ERROR_EXIT2(128, "A 2-dimensional matrix is expected, found %d. "
-		  "[%s]", input_mat->getNumDim(), name.c_str());
-    int dims[2] = { input_mat->getDimSize(0), S->size() };
-    MatrixFloat *output_mat = new MatrixFloat(2, dims, CblasColMajor);
-    output_mat->gemm(CblasNoTrans, CblasNoTrans, 1.0f, input_mat, U, 0.0f);
-    // regularization
-    if (epsilon > 0.0f) {
-      MatrixFloat *aux_mat = 0;
-      MatrixFloat::const_iterator Sit(S->begin());
-      for (int i=0; i<S->size(); ++i, ++Sit) {
-	aux_mat = output_mat->select(1, i, aux_mat);
-	aux_mat->scal( 1/sqrtf( (*Sit) + epsilon ) );
-      }
-    }
-    AssignRef(output, new TokenMatrixFloat(output_mat));
-    return output;
+    return dot_product_encoder.doForward(_input, during_training);
   }
 
   Token *PCAWhiteningANNComponent::doBackprop(Token *_error_input) {
-    UNUSED_VARIABLE(_error_input);
-    return 0;
+    return dot_product_encoder.doBackprop(_error_input);
   }
   
   void PCAWhiteningANNComponent::reset(unsigned int it) {
-    UNUSED_VARIABLE(it);
-    if (input) DecRef(input);
-    if (output) DecRef(output);
-    input	 = 0;
-    output	 = 0;
+    dot_product_encoder.reset(it);
   }
   
   ANNComponent *PCAWhiteningANNComponent::clone() {
@@ -121,8 +107,11 @@ namespace ANN {
 				       unsigned int _output_size,
 				       MatrixFloatSet *weights_dict,
 				       hash<string,ANNComponent*> &components_dict) {
-    ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
-    // TODO: Check that output_size == S->size()
+    // TODO: CHECK INPUT OUTPUT SIZES
+    UNUSED_VARIABLE(_input_size);
+    UNUSED_VARIABLE(_output_size);
+    UNUSED_VARIABLE(weights_dict);
+    UNUSED_VARIABLE(components_dict);
   }
   
   char *PCAWhiteningANNComponent::toLuaString() {

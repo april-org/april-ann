@@ -25,6 +25,8 @@
 #include "ann_component.h"
 #include "token_vector.h"
 #include "token_matrix.h"
+#include "dot_product_component.h"
+#include "matrixFloatSet.h"
 
 using april_utils::vector;
 
@@ -34,8 +36,10 @@ namespace ANN {
   protected:
     MatrixFloat *U; //< bi-dimensional
     MatrixFloat *S; //< one-dimensional
+    MatrixFloat *U_S_epsilon; //< matrix for dot_product_component
     float epsilon;  //< regularization
-    TokenMatrixFloat *input, *output;
+    DotProductANNComponent dot_product_encoder; //< Applies the transformation
+    MatrixFloatSet matrix_set; //< Auxiliary for dot_product_encoder build
     
   public:
     PCAWhiteningANNComponent(MatrixFloat *U,
@@ -45,10 +49,10 @@ namespace ANN {
 			     const char *name=0);
     virtual ~PCAWhiteningANNComponent();
     
-    virtual Token *getInput() { return input; }
-    virtual Token *getOutput() { return output; }
-    virtual Token *getErrorInput() { return 0; }
-    virtual Token *getErrorOutput() { return 0; }
+    virtual Token *getInput() { return dot_product_encoder.getInput(); }
+    virtual Token *getOutput() { return dot_product_encoder.getOutput(); }
+    virtual Token *getErrorInput() { return dot_product_encoder.getErrorInput(); }
+    virtual Token *getErrorOutput() { return dot_product_encoder.getErrorOutput(); }
     
     virtual Token *doForward(Token* input, bool during_training);
     

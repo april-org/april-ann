@@ -26,12 +26,14 @@
 #include "token_vector.h"
 #include "token_matrix.h"
 #include "pca_whitening_component.h"
+#include "dot_product_component.h"
 
 using april_utils::vector;
 
 namespace ANN {
 
   class ZCAWhiteningANNComponent : public PCAWhiteningANNComponent {
+    DotProductANNComponent dot_product_decoder; //< Applies the reconstruction from PCA rotated data
   public:
     ZCAWhiteningANNComponent(MatrixFloat *U,
 			     MatrixFloat *S,
@@ -42,6 +44,14 @@ namespace ANN {
     
     virtual Token *doForward(Token* input, bool during_training);
     
+    virtual Token *doBackprop(Token *input_error);
+    
+    virtual Token *getInput() { return PCAWhiteningANNComponent::getInput(); }
+    virtual Token *getOutput() { return dot_product_decoder.getOutput(); }
+    virtual Token *getErrorInput() { return dot_product_decoder.getErrorInput(); }
+    virtual Token *getErrorOutput() { return PCAWhiteningANNComponent::getErrorOutput(); }
+
+
     virtual ANNComponent *clone();
     
     virtual char *toLuaString();

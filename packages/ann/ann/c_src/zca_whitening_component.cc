@@ -27,6 +27,8 @@
 #include "wrapper.h"
 #include "utilMatrixFloat.h"
 
+#define WEIGHTS_NAME "U"
+
 namespace ANN {
   
   ZCAWhiteningANNComponent::ZCAWhiteningANNComponent(MatrixFloat *U,
@@ -34,7 +36,15 @@ namespace ANN {
 						     float epsilon,
 						     unsigned int takeN,
 						     const char *name) :
-    PCAWhiteningANNComponent(U,S,epsilon,takeN,name) {
+    PCAWhiteningANNComponent(U,S,epsilon,takeN,name),
+    dot_product_decoder(0, WEIGHTS_NAME,
+			getOutputSize(), getInputSize(),
+			false)
+  {
+    output_size = input_size;
+    matrix_set.insert(WEIGHTS_NAME, this->U);
+    hash<string,ANNComponent*> components_dict;
+    dot_product_decoder.build(0, 0, &matrix_set, components_dict);
   }
   
   ZCAWhiteningANNComponent::~ZCAWhiteningANNComponent() {
@@ -42,16 +52,13 @@ namespace ANN {
   
   Token *ZCAWhiteningANNComponent::doForward(Token* _input,
 					     bool during_training) {
-    PCAWhiteningANNComponent::doForward(_input, during_training);
-    MatrixFloat *input_mat  = input->getMatrix();
-    MatrixFloat *output_mat = output->getMatrix();
-    MatrixFloat *zca_mat    = input_mat->cloneOnlyDims();
-#ifdef USE_CUDA
-    zca_mat->setUseCuda(use_cuda);
-#endif
-    zca_mat->gemm(CblasNoTrans, CblasTrans, 1.0f, output_mat, U, 0.0f); 
-    AssignRef(output, new TokenMatrixFloat(zca_mat));
-    return output;
+    Token *rotated = PCAWhiteningANNComponent::doForward(_input, during_training);
+    return dot_product_decoder.doForward(rotated, during_training);
+  }
+  
+  Token *ZCAWhiteningANNComponent::doBackprop(Token *_error_input) {
+    Token *rotated_error = PCAWhiteningANNComponent::doBackprop(_error_input);
+    return dot_product_decoder.doBackprop(rotated_error);
   }
   
   ANNComponent *ZCAWhiteningANNComponent::clone() {
