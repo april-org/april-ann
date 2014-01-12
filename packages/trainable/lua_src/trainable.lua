@@ -2211,6 +2211,18 @@ function train_holdout_methods:get_state_string()
 		       state.best_val_error)
 end
 
+april_set_doc("trainable.train_holdout_validation.is_best", {
+		class = "method",
+		summary = "Returns if current epoch is the best epoch",
+		outputs = {
+		  "A boolean"
+		}, })
+
+function train_holdout_methods:is_best()
+  local state = self.state
+  return state.current_epoch == state.best_epoch
+end
+
 function train_holdout_methods:to_lua_string(format)
   local insert = table.insert
   local t = { }
