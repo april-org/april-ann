@@ -206,7 +206,7 @@ function confus_matrix_methods:clone()
     
     local obj = table.deep_copy(self)
 
-    return class_instance(obj, self, true)
+    return class_instance(obj, stats.confusion_matrix, true)
 end
 april_set_doc("stats.confusion_matrix.reset", {
 		class = "method", summary = "Reset to 0 all the counters",
