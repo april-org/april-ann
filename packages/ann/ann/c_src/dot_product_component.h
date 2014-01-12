@@ -34,7 +34,7 @@ namespace ANN {
   class DotProductANNComponent : public ANNComponent {
     Token            *input;
     TokenMatrixFloat *error_input, *output, *error_output;
-    Connections *weights_matrix;
+    MatrixFloat *weights_matrix;
     bool sparse_input;
     
     /// learning parameters
@@ -56,13 +56,13 @@ namespace ANN {
     virtual Token *getErrorOutput() { return error_output; }
     virtual Token *doForward(Token* input, bool during_training);
     virtual Token *doBackprop(Token *input_error);
-    virtual void   reset();
+    virtual void   reset(unsigned int it=0);
     virtual ANNComponent *clone();
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
-		       hash<string,Connections*> &weights_dict,
+		       MatrixFloatSet *weights_dict,
 		       hash<string,ANNComponent*> &components_dict);
-    virtual void copyWeights(hash<string,Connections*> &weights_dict);
+    virtual void copyWeights(MatrixFloatSet *weights_dict);
     
     virtual char *toLuaString();
     

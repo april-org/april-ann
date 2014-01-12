@@ -24,8 +24,8 @@ function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
     apply(function(m) m:scal(1/m:sum()) end,
 	  target:sliding_window():iterate())
   end
-  result = trainer:grad_check_step(tokens.matrix(input),
-				   tokens.matrix(target),
+  result = trainer:grad_check_step(input,
+				   target,
 				   verbose)
   if not result then
     print("---- INPUT ----")
@@ -56,6 +56,22 @@ for i=2,4 do
 			push( ann.components.bias{ size=o } )
 		      end,
 		      "mse", i, o, b, "DOTPRODUCT + BIAS")
+    end
+  end
+end
+
+-- DROPOUT
+
+for i=2,4 do
+  for o=2,4 do
+    for b=1,4 do
+      check_component(function()
+			return ann.components.stack():
+			push( ann.components.dot_product{ input=i, output=o } ):
+			push( ann.components.bias{ size=o } ):
+			push( ann.components.dropout() )
+		      end,
+		      "mse", i, o, b, "DOTPRODUCT + BIAS + DROPOUT")
     end
   end
 end

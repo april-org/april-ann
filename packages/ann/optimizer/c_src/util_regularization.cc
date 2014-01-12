@@ -25,24 +25,24 @@
 namespace ANN {
   namespace optimizer {
     // FIXME: MAKE A CUDA IMPLEMENTATION
-    void UtilRegularization::L1NormMap(MatrixFloat *destw,
+    void UtilRegularization::L1NormMap(MatrixFloat *dest,
 				       float value,
 				       MatrixFloat *w) {
-      april_assert(destw->sameDim(destw));
-      april_assert(destw->getNumDim() == 2);
-      april_assert(destw->getMajorOrder() == CblasColMajor);
+      april_assert(dest->sameDim(w));
+      april_assert(dest->getNumDim() == 2);
+      april_assert(dest->getMajorOrder() == CblasColMajor);
       //
-      MatrixFloat::col_major_iterator destw_it(destw->begin());
+      MatrixFloat::col_major_iterator dest_it(dest->begin());
       MatrixFloat::const_col_major_iterator w_it(w->begin());
       //
-      while(destw_it != destw->end()) {
-	float x = *destw_it;
+      while(dest_it != dest->end()) {
+	float x = *dest_it;
 	float y = *w_it;
-	if (y > 0.0f)      *destw_it = april_utils::max(0.0f, x-value);
-	else if (y < 0.0f) *destw_it = april_utils::min(0.0f, x+value);
-	else if (fabsf(x) < value) *destw_it = 0.0f;
+	if (y > 0.0f)      *dest_it = april_utils::max(-y, x-value);
+	else if (y < 0.0f) *dest_it = april_utils::min(-y, x+value);
+	else if (fabsf(x) < value) *dest_it = 0.0f;
 	//
-	++destw_it;
+	++dest_it;
 	++w_it;
       }
     }

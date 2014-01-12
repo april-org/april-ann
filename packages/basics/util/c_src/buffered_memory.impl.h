@@ -287,6 +287,6 @@ void BufferedMemory<MEMORY_TYPE>::printf(const char *format, ...) {
 }
 
 template<typename MEMORY_TYPE>
-void BufferedMemory<MEMORY_TYPE>::write(const void *buffer, size_t len) {
-  total_bytes += memory.writeS(buffer, sizeof(char), len);
+void BufferedMemory<MEMORY_TYPE>::write(const void *buffer_, size_t len) {
+  total_bytes += memory.writeS(buffer_, sizeof(char), len);
 }

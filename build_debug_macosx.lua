@@ -22,11 +22,11 @@ luapkg{
       "-DUSE_XCODE",
       "-F/System/Library/Frameworks/Accelerate.framework",
       "-pg",
-      "-DNO_POOL",
       "-DNO_OMP",
       "-fPIC",
     },
     extra_libs={
+      "-L/opt/local/lib", -- macports, change if necessary
       "-lpthread",
       "-lpng",
       "/System/Library/Frameworks/Accelerate.framework/Versions/A/Accelerate",

@@ -18,7 +18,6 @@ luapkg{
     platform = "unix",
     extra_flags={
       "-pg",
-      "-DNO_POOL",
       "-DNO_OMP",
       "-fPIC",
     },

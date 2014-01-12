@@ -19,22 +19,18 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include "unused_variable.h"
 #include "activation_function_component.h"
 #include "wrapper.h"
 
 namespace ANN {
-
-  MTRand ActivationFunctionANNComponent::dropout_random = MTRand();
-  int    ActivationFunctionANNComponent::dropout_seed   = -1;
-
+  
   ActivationFunctionANNComponent::ActivationFunctionANNComponent(const char *name) :
     ANNComponent(name, 0, 0, 0),
     input(0),
     output(0),
     error_input(0),
-    error_output(0),
-    dropout_factor(0.0f),
-    dropout_mask(0) {
+    error_output(0) {
   }
 
   ActivationFunctionANNComponent::~ActivationFunctionANNComponent() {
@@ -42,11 +38,11 @@ namespace ANN {
     if (error_input)  DecRef(error_input);
     if (output)       DecRef(output);
     if (error_output) DecRef(error_output);
-    delete dropout_mask;
   }
 
   Token *ActivationFunctionANNComponent::doForward(Token* _input,
 						   bool during_training) {
+    UNUSED_VARIABLE(during_training);
     // error checking
     if ( (_input == 0) ||
 	 (_input->getTokenCode() != table_of_token_codes::token_matrix))
@@ -83,22 +79,6 @@ namespace ANN {
     FloatGPUMirroredMemoryBlock *output_ptr = output_mat->getRawDataAccess();
     // execute apply activations abstract method
     applyActivation(input_ptr, output_ptr, current_input_size, bunch_size);
-    // apply dropout
-    if (dropout_factor > 0.0f) {
-      if (during_training) {
-	delete dropout_mask;
-	dropout_mask    = new FloatGPUMirroredMemoryBlock(input_mat->size());
-	float *mask_ptr = dropout_mask->getPPALForWrite();
-	for (unsigned int i=0; i<dropout_mask->getSize(); ++i) {
-	  if (dropout_random.rand() < dropout_factor) mask_ptr[i] = 0.0f;
-	  else mask_ptr[i] = 1.0f;
-	}
-	// apply mask
-	applyMask(output_ptr, dropout_mask, 0.0f, current_input_size,
-		  bunch_size, use_cuda);
-      }
-      else output_mat->scal(1.0f - dropout_factor);
-    }
     if (flattened) {
       delete input_mat;
       delete output_mat;
@@ -151,10 +131,6 @@ namespace ANN {
     multiplyDerivatives(input_ptr, output_ptr,
 			error_input_ptr, error_output_ptr,
 			current_input_size, bunch_size);
-    if (dropout_factor > 0.0f && dropout_mask != 0)
-      // apply mask
-      applyMask(error_output_ptr, dropout_mask, 0.0f, current_input_size,
-		bunch_size, use_cuda);
     if (flattened) {
       delete error_input_mat;
       delete error_output_mat;
@@ -162,44 +138,21 @@ namespace ANN {
     return error_output;
   }
 
-  void ActivationFunctionANNComponent::reset() {
+  void ActivationFunctionANNComponent::reset(unsigned int it) {
+    UNUSED_VARIABLE(it);
     if (input) DecRef(input);
     if (error_input) DecRef(error_input);
     if (output) DecRef(output);
     if (error_output) DecRef(error_output);
-    delete dropout_mask;
     input	 = 0;
     error_input	 = 0;
     output	 = 0;
     error_output = 0;
-    dropout_mask = 0;
   }
-
-  void ActivationFunctionANNComponent::setOption(const char *name, double value) {
-    mSetOption(DROPOUT_FACTOR_STRING, dropout_factor);
-    if (strcmp(name, DROPOUT_SEED_STRING) == 0) {
-      dropout_seed = static_cast<int>(value);
-      dropout_random = MTRand(dropout_seed);
-      return;
-    }
-    ANNComponent::setOption(name, value);
-  }
-
-  bool ActivationFunctionANNComponent::hasOption(const char *name) {
-    mHasOption(DROPOUT_FACTOR_STRING);
-    mHasOption(DROPOUT_SEED_STRING);
-    return false;
-  }
-    
-  double ActivationFunctionANNComponent::getOption(const char *name) {
-    mGetOption(DROPOUT_FACTOR_STRING, dropout_factor);
-    mGetOption(DROPOUT_SEED_STRING,   dropout_seed);
-    return ANNComponent::getOption(name);
-  }
-    
+  
   void ActivationFunctionANNComponent::build(unsigned int _input_size,
 					     unsigned int _output_size,
-					     hash<string,Connections*> &weights_dict,
+					     MatrixFloatSet *weights_dict,
 					     hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size, weights_dict, components_dict);
     if (input_size == 0) input_size = output_size;

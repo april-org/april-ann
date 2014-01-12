@@ -21,12 +21,9 @@
 #ifndef SALTANDPEPPERCOMPONENT_H
 #define SALTANDPEPPERCOMPONENT_H
 
-#include "vector.h"
 #include "ann_component.h"
 #include "token_matrix.h"
-#include "MersenneTwister.h"
-
-using april_utils::vector;
+#include "stochastic_component.h"
 
 namespace ANN {
   
@@ -34,8 +31,7 @@ namespace ANN {
   /// given random object, the noise probability (50% is this is for zero, and
   /// 50% for one), and the float values of zero and one. The matrix size and
   /// dimensions are not restricted.
-  class SaltAndPepperANNComponent : public ANNComponent {
-    MTRand           *random;
+  class SaltAndPepperANNComponent : public StochasticANNComponent {
     TokenMatrixFloat *input, *output;
     Token            *error_input, *error_output;
     float            zero, one;
@@ -56,13 +52,13 @@ namespace ANN {
     
     virtual Token *doBackprop(Token *input_error);
     
-    virtual void reset();
+    virtual void reset(unsigned int it=0);
     
     virtual ANNComponent *clone();
 
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       hash<string,Connections*> &weights_dict,
+		       MatrixFloatSet *weights_dict,
 		       hash<string,ANNComponent*> &components_dict);
 
     virtual char *toLuaString();

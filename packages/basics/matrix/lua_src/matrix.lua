@@ -25,9 +25,15 @@ matrix.meta_instance.__call = function(self,...)
     elseif tt == "string" then
       a = t:match("^(%d+)%:.*$") or 1
       b = t:match("^.*%:(%d+)$") or dims[i]
+    elseif tt == "number" then
+      a = t
+      b = a
     else
       error("The argument " .. i .. " is not a table neither a string")
     end
+    a,b = tonumber(a),tonumber(b)
+    assert(1 <= a and a <= dims[i], "Range out of bounds")
+    assert(1 <= b and b <= dims[i], "Range out of bounds")
     table.insert(pos,  a)
     table.insert(size, b - a + 1)
   end
@@ -44,23 +50,31 @@ matrix.meta_instance.__tostring = function(self)
   local coords = {}
   local out    = {}
   local row    = {}
-  for i=1,#dims do coords[i]=1 end
-  for i=1,self:size() do
-    if #dims > 2 and coords[#dims] == 1 and coords[#dims-1] == 1 then
-      table.insert(out,
-		   string.format("\n# pos [%s]",
-				 table.concat(coords, ",")))
+  local so_large = false
+  for i=1,#dims do 
+    coords[i]=1
+    if dims[i] > 20 then so_large = true end
+  end
+  if not so_large then
+    for i=1,self:size() do
+      if #dims > 2 and coords[#dims] == 1 and coords[#dims-1] == 1 then
+	table.insert(out,
+		     string.format("\n# pos [%s]",
+				   table.concat(coords, ",")))
+      end
+      table.insert(row, string.format("% -11.6g", self:get(table.unpack(coords))))
+      local j=#dims+1
+      repeat
+	j=j-1
+	coords[j] = coords[j] + 1
+	if coords[j] > dims[j] then coords[j] = 1 end
+      until j==1 or coords[j] ~= 1
+      if coords[#coords] == 1 then
+	table.insert(out, table.concat(row, " ")) row={}
+      end
     end
-    table.insert(row, string.format("% -11.6g", self:get(table.unpack(coords))))
-    local j=#dims+1
-    repeat
-      j=j-1
-      coords[j] = coords[j] + 1
-      if coords[j] > dims[j] then coords[j] = 1 end
-    until j==1 or coords[j] ~= 1
-    if coords[#coords] == 1 then
-      table.insert(out, table.concat(row, " ")) row={}
-    end
+  else
+    table.insert(out, "Large matrix, not printed to display")
   end
   table.insert(out, string.format("# Matrix of size [%s] in %s [%s]",
 				  table.concat(dims, ","), major,
@@ -69,6 +83,7 @@ matrix.meta_instance.__tostring = function(self)
 end
 
 matrix.meta_instance.__eq = function(op1, op2)
+  if type(op1) == "number" or type(op2) == "number" then return false end
   return op1:equals(op2)
 end
 
@@ -210,6 +225,43 @@ function matrix.saveRAW(matrix,filename)
   f:close()
 end
 
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+function matrix.dict.wrap_matrices(m)
+  local tt = type(m)
+  if tt == "table" then
+    m = matrix.dict(m)
+  elseif tt == "matrix" then
+    m = matrix.dict():insert("1",m)
+  end
+  assert(isa(m, matrix.dict), "Needs a matrix.dict, a matrix, or a table")
+  return m
+end
+
+function matrix.dict.meta_instance.__index:to_lua_string(format)
+  local str_tbl = { "matrix.dict{\n" }
+  for name,w in pairs(self) do
+    table.insert(str_tbl,
+		 string.format("[%q] = %s,\n", name, w:to_lua_string(format)))
+  end
+  table.insert(str_tbl, "}")
+  return table.concat(str_tbl, " ")
+end
+
+function matrix.dict.meta_instance:__call(key)
+  return self:find(key)
+end
+function matrix.dict.meta_instance:__newindex(key,value)
+  return self:insert(key, value)
+end
+function matrix.dict.meta_instance:__pairs()
+  return self:iterate()
+end
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
 util.vector_uint.meta_instance.__tostring = function(self)
@@ -676,8 +728,7 @@ april_set_doc("matrix.transpose", {
 		summary = "Returns transposition of the caller matrix.",
 		description = {
 		  "Returns transposition of the caller matrix.",
-		  "The returned matrix is totally new.",
-		  "This method is only allowed for 2D matrices",
+		  "The returned matrix is a reference to the original.",
 		},
 		outputs = {
 		  "A matrix object (transposed)",
@@ -813,20 +864,12 @@ april_set_doc("matrix.mul", {
 
 april_set_doc("matrix.cmul", {
 		class = "method",
-		summary = "Returns the component-wise multiplication of caller and other matrix.",
-		description = {
-		  "Returns the component-wise multiplication of caller and other matrix.",
-		  "This method only works with contiguous matrices, which",
-		  "are reinterpreted as a vector.",
-		  "The returned matrix has only one dimension, however you",
-		  "can rewrap it to a different dimension sizes.",
-		  "It uses BLAS operations (sbmv).",
-		},
+		summary = "Computes IN-PLACE the component-wise multiplication of caller and other matrix.",
 		params = {
 		  "Another matrix",
 		},
 		outputs = {
-		  "A new matrix result of component-wise multiplication",
+		  "The caller matrix",
 		}, })
 
 april_set_doc("matrix.plogp", {
@@ -1227,7 +1270,7 @@ april_set_doc("matrix.map",
 		  "matrix position. The Lua function receives the caller matrix",
 		  "value at the given position, the value of the second matrix,",
 		  "the value of the third matrix, and so on.",
-		  "The Lua function returns ONLY one value, which will be",
+		  "The Lua function returns NIL or ONLY one value, which will be",
 		  "assigned to the caller matrix IN-PLACE.",
 		  "All the matrices must have the same dimension sizes.",
 		  "The number of given matrices could be >= 0",
@@ -1241,6 +1284,28 @@ april_set_doc("matrix.map",
 		},
 		outputs = { "The caller matrix" },
 	      })
+
+april_set_doc("matrix.lt",
+	      {
+		class = "method",
+		summary = "Returns a 0/1 matrix where values are less than given param. IN-PLACE operation",
+		params = {
+		  "A matrix or a number",
+		},
+		outputs = { "The caller matrix" },
+	      })
+
+april_set_doc("matrix.gt",
+	      {
+		class = "method",
+		summary = "Returns a 0/1 matrix where values are greater than given param. IN-PLACE operation",
+		params = {
+		  "A matrix or a number",
+		},
+		outputs = { "The caller matrix" },
+	      })
+
+-------------------------------------------------------------------------
 
 april_set_doc("matrix.sliding_window",
 	      {

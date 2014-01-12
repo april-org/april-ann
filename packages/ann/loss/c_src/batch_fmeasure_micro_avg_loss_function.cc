@@ -54,7 +54,7 @@ namespace ANN {
     // FMb = ---------------------
     //        sum(o) + b^2 sum(t)
     float dot;
-    if (!input_mat-> getDimSize(0) == 1 || input_mat->getDimSize(1) == 1)
+    if (input_mat->getDimSize(0) == 1 || input_mat->getDimSize(1) == 1)
       // is a vector
       dot = input_mat->dot(target_mat);
     else {
@@ -101,7 +101,7 @@ namespace ANN {
     IncRef(target_mat);
     MatrixFloat *error_mat = target_mat->clone();
     TokenMatrixFloat *error_mat_token = new TokenMatrixFloat(error_mat);
-    AssignRef(error_output, error_mat_token);
+    AssignRef<Token>(error_output, error_mat_token);
 #ifdef USE_CUDA
     error_mat->setUseCuda(input_mat->getCudaFlag());
 #endif
