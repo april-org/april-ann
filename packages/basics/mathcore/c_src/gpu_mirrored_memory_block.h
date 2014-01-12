@@ -212,10 +212,11 @@ protected:
 
   bool allocMemGPU() {
     if (mem_gpu == 0) {
+      GPUHelper::initHelper();
       CUresult result;
       result = cuMemAlloc(&mem_gpu, size);
       if (result != CUDA_SUCCESS)
-	ERROR_EXIT(161, "Could not allocate memory in device.\n");
+	ERROR_EXIT1(161, "Could not allocate memory in device, error %d\n", result);
       return true;
     }
     return false;
