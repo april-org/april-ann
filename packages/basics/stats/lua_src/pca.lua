@@ -49,12 +49,13 @@ function stats.pca_threshold(S,mass)
   local mass = mass or 0.99
   local acc = 0
   local sum = S:sum()
-  local acc_th,th = 0,0
+  local acc_th,th = 0,1
   for i=1,S:size() do
     acc=acc+S:get(i)
     if acc/sum < mass then acc_th,th=acc,i end
   end
-  return th,acc_th,acc_th/sum
+  assert(acc_th > 0, "The probability mass needs to be larger")
+  return th,S:get(th),acc_th/sum
 end
 
 -------------------------------------------------------------------------------
