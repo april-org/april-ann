@@ -26,6 +26,7 @@
        file={
 	 "test/test_bootstrap.lua",
 	 "test/test-gs-pca.lua",
+	 "test/test-zca-whitening.lua",
        },
      },
    },
