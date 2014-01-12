@@ -112,18 +112,13 @@ int clapack_sgesdd(int Order, int M, int N, int LDA,
   return info;
 }
 #else
+#include "lapacke.h"
 int clapack_sgesdd(const int Order, const int M, const int N, const int LDA,
 		   float *A, float *U, float *S, float *VT) {
-  UNUSED_VARIABLE(Order);
-  UNUSED_VARIABLE(M);
-  UNUSED_VARIABLE(N);
-  UNUSED_VARIABLE(LDA);
-  UNUSED_VARIABLE(A);
-  UNUSED_VARIABLE(U);
-  UNUSED_VARIABLE(S);
-  UNUSED_VARIABLE(VT);
-  ERROR_EXIT(128,"SGESDD FUNCTION NOT IMPLEMENTED IN ATLAS CLAPACK\n");
-  return 0;
+  if (Order != CblasColMajor)
+    ERROR_EXIT(256, "Only col_major order is allowed\n");
+  int info = LAPACKE_sgesdd(LAPACK_COL_MAJOR, 'A', M, N, A, LDA, S, U, M, VT, N);
+  return info;
 }
 #endif
 

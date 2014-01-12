@@ -1503,16 +1503,35 @@ end
 function util.to_lua_string(data,format)
   local tt = luatype(data)
   if tt == "table" then
-    return table.tostring(tt,format)
+    if data.to_lua_string then
+      return data:to_lua_string(format)
+    else
+      return table.tostring(data,format)
+    end
   elseif tt == "function" then
     return util.function_to_lua_string(data,format)
   elseif tt == "userdata" then
-    assert(getmetatable(tt) and getmetatable(tt).__index and tt.to_lua_string,
-	   "Needs a to_lua_string(format) method")
-    return tt:to_lua_string(format)
+    assert(getmetatable(data) and
+	     getmetatable(data).__index and
+	     getmetatable(data).__index.to_lua_string,
+	   "Userdata needs a to_lua_string(format) method")
+    return data:to_lua_string(format)
   else
     return tostring(data)
   end
+end
+
+------------------------------------------------------------------------------
+
+function serialize(data, filename, format)
+  local f = io.open(filename, "w")
+  f:write("return ")
+  f:write(util.to_lua_string(data, format))
+  f:close()
+end
+
+function deserialize(filename)
+  return dofile(filename)
 end
 
 -------------------
