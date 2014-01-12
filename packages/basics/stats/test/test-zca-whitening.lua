@@ -1,4 +1,4 @@
-local path = string.get_path(arg[0]).."/../../../../TEST"
+local path = string.get_path(arg[0]).."../../../../TEST"
 local m = ImageIO.read(path.."/digitos/digits.png"):invert_colors():to_grayscale():matrix()
 local ds = dataset.matrix(m,
 			  {
