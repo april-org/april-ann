@@ -44,6 +44,19 @@ function stats.zca_whitening(X,U,S,epsilon)
   return X
 end
 
+-- show PCA threshold
+function stats.pca_threshold(S,mass)
+  local mass = mass or 0.99
+  local acc = 0
+  local sum = S:sum()
+  local acc_th,th = 0,0
+  for i=1,S:size() do
+    acc=acc+S:get(i)
+    if acc/sum < mass then acc_th,th=acc,i end
+  end
+  return th,acc_th,acc_th/sum
+end
+
 -------------------------------------------------------------------------------
 
 -- PCA algorithm based on covariance matrix and SVD decomposition the matrix Xc
@@ -51,7 +64,7 @@ end
 function stats.pca(Xc)
   local dim    = Xc:dim()
   assert(#dim == 2, "Expected a bi-dimensional matrix")
-  local aux = R:sum(2):scal(1/R:dim(2)):rewrap(R:dim(1))
+  local aux = Xc:sum(2):scal(1/Xc:dim(2)):rewrap(Xc:dim(1))
   local M,N    = table.unpack(dim)
   local sigma  = matrix.col_major(N,N):gemm{ A=Xc, B=Xc,
 					     trans_A=true,

@@ -53,11 +53,11 @@ namespace ANN {
     if (takeN != 0) {
       int coords[2] = { 0,0 };
       int sizes[2] = { U->getDimSize(0), static_cast<int>(takeN) };
-      U = new MatrixFloat(U, coords, sizes, true);
-      S = new MatrixFloat(S, coords+1, sizes+1, true);
+      this->U = new MatrixFloat(this->U, coords, sizes, true);
+      this->S = new MatrixFloat(this->S, coords+1, sizes+1, true);
     }
-    IncRef(U);
-    IncRef(S);
+    IncRef(this->U);
+    IncRef(this->S);
   }
   
   PCAWhiteningANNComponent::~PCAWhiteningANNComponent() {
