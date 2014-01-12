@@ -29,7 +29,7 @@ end
 -- NOT IN-PLACE
 function stats.pca_whitening(X,U,S,epsilon)
   local epsilon = epsilon or 0.0
-  local result = matrix.as(X)
+  local result = matrix[X:get_major_order()](X:dim(1), S:size())
   result:gemm{ A=X, B=U, trans_B=false, beta=0, alpha=1}
   for i=1,S:dim(1) do
     result:select(2,i):scal( 1/math.sqrt(S:get(i) + epsilon) )
