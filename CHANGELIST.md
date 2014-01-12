@@ -6,6 +6,9 @@ Master branch release
 
 ### Unstable changes
 
+- Added `ann.components.zca_whitening` and `ann.components.pca_whitening`
+  classes.
+- Added `stats.zca_whitening` and `stats.pca_whitening` functions.
 - Added packages `autodiff` and `autodiff.ann`, with automatic differentiation
   algorithms.
 - Added `ann.optimizer.quickprop` algorithm, but stills untested.
