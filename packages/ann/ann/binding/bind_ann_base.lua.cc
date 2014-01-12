@@ -98,6 +98,8 @@ void pushHashTableInLuaStack(lua_State *L,
 #include "gaussian_noise_component.h"
 #include "salt_and_pepper_component.h"
 #include "dropout_component.h"
+#include "pca_whitening_component.h"
+#include "zca_whitening_component.h"
 #include "bind_function_interface.h"
 #include "error_print.h"
 
@@ -1547,5 +1549,75 @@ using namespace ANN;
   }
   obj = new LinearActfANNComponent(name);
   LUABIND_RETURN(LinearActfANNComponent, obj);  
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//           PCAWhiteningANNComponent              //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME PCAWhiteningANNComponent ann.components.pca_whitening
+//BIND_CPP_CLASS    PCAWhiteningANNComponent
+//BIND_SUBCLASS_OF  PCAWhiteningANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR PCAWhiteningANNComponent
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  const char *name=0;
+  float epsilon;
+  int takeN;
+  MatrixFloat *U, *S;
+  check_table_fields(L, 1, "U", "S", "takeN", "epsilon", (const char *)0);
+  LUABIND_GET_TABLE_PARAMETER(1, U, MatrixFloat, U);
+  LUABIND_GET_TABLE_PARAMETER(1, S, MatrixFloat, S);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, takeN, int, takeN, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, epsilon, float, epsilon, 0);
+  //
+  obj = new PCAWhiteningANNComponent(U, S, epsilon, takeN, name);
+  LUABIND_RETURN(PCAWhiteningANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD PCAWhiteningANNComponent clone
+{
+  LUABIND_RETURN(PCAWhiteningANNComponent,
+		 dynamic_cast<PCAWhiteningANNComponent*>(obj->clone()));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////
+//           ZCAWhiteningANNComponent              //
+/////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME ZCAWhiteningANNComponent ann.components.zca_whitening
+//BIND_CPP_CLASS    ZCAWhiteningANNComponent
+//BIND_SUBCLASS_OF  ZCAWhiteningANNComponent ANNComponent
+
+//BIND_CONSTRUCTOR ZCAWhiteningANNComponent
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  const char *name=0;
+  float epsilon;
+  int takeN;
+  MatrixFloat *U, *S;
+  check_table_fields(L, 1, "U", "S", "takeN", "epsilon", (const char *)0);
+  LUABIND_GET_TABLE_PARAMETER(1, U, MatrixFloat, U);
+  LUABIND_GET_TABLE_PARAMETER(1, S, MatrixFloat, S);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, takeN, int, takeN, 0);
+  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, epsilon, float, epsilon, 0);
+  //
+  obj = new ZCAWhiteningANNComponent(U, S, epsilon, takeN, name);
+  LUABIND_RETURN(ZCAWhiteningANNComponent, obj);
+}
+//BIND_END
+
+//BIND_METHOD ZCAWhiteningANNComponent clone
+{
+  LUABIND_RETURN(ZCAWhiteningANNComponent,
+		 dynamic_cast<ZCAWhiteningANNComponent*>(obj->clone()));
 }
 //BIND_END
