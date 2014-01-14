@@ -34,6 +34,7 @@ extern "C" {
 #include "april_assert.h"
 #include "referenced.h"
 #include "complex_number.h"
+#include "unused_variable.h"
 #include <new>
 
 #ifdef USE_CUDA
@@ -431,6 +432,19 @@ public:
   }
   
   static void setUseMMapAllocation(bool v) { use_mmap_allocation = v; }
+  
+  void forceUpdate(bool use_cuda) {
+#ifdef USE_CUDA
+    if (isConst())
+      ERROR_EXIT(128, "Impossible to write in a const memory block\n");
+    if (use_cuda)
+      updateMemGPU();
+    else
+      updateMemPPAL();
+#else
+    UNUSED_VARIABLE(use_cuda);
+#endif
+  }
 };
 
 ////////////////////////////////////////////////////////////////////////////

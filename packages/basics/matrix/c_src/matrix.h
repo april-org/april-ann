@@ -762,6 +762,13 @@ public:
   Matrix<T> *inv();
   void svd(Matrix<T> **U, Matrix<T> **S, Matrix<T> **V);
 
+  // UPDATE GPU OR PPAL IF NEEDED
+  void update() {
+    #ifdef USE_CUDA
+    data->forceUpdate(use_cuda);
+    #endif
+  }
+
 private:
   void allocate_memory(int size);
   void release_memory();

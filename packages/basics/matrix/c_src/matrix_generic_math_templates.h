@@ -285,9 +285,11 @@ T applySumReductionWithSpanIterator(const Matrix<T> *m,
   UNUSED_VARIABLE(SIZE_th);
 #endif
   // Contiguous memory block
-  if (m->getIsContiguous())
-    return functor(m, static_cast<unsigned int>(m->size()), 1,
-		   static_cast<unsigned int>(m->getOffset()));
+  if (m->getIsContiguous()) {
+    T aux = functor(m, static_cast<unsigned int>(m->size()), 1,
+		    static_cast<unsigned int>(m->getOffset()));
+    return aux;
+  }
   // One dimension
   else if (m->getNumDim() == 1)
     return functor(m, static_cast<unsigned int>(m->size()),
