@@ -1,33 +1,36 @@
 local gnuplot = {} -- module gnuplot
 
---
+--------------- GNUPLOT OBJECT METHODS ---------------------
 local gnuplot_methods = {}
 
---
+-- Writes using format and a list of arguments
 function gnuplot_methods:writef(format, ...)
   self.in_pipe:write(string.format(format,...))
   return self
 end
 
---
+-- Writes the given strings (separated by blanks)
 function gnuplot_methods:write(...)
-  self.in_pipe:write(...)
-  return self
-end
-
---
-function gnuplot_methods:set(...)
   self.in_pipe:write(table.concat(table.pack(...), " "))
-  self.in_pipe:write("\n")
   return self
 end
 
---
+-- Sets a parameter
+function gnuplot_methods:set(...)
+  self:write("set ")
+  self:write(table.concat(table.pack(...), " "))
+  self:write("\n")
+  self:flush()
+  return self
+end
+
+-- Forces to write in the pipe
 function gnuplot_methods:flush()
   self.in_pipe:flush()
+  return self
 end
 
---
+-- Plots (or multiplots) a given table with gnuplot parameters
 function gnuplot_methods:plot(params)
   local plot_str_tbl = { "plot" }
   local tmpnames = self.tmpnames
@@ -63,26 +66,29 @@ function gnuplot_methods:plot(params)
   table.insert(plot_str_tbl, "\n")
   self:write(table.concat(plot_str_tbl, " "))
   self:flush()
+  return self
 end
 
---
+-- Closes the gnuplot pipe (interface)
 function gnuplot_methods:close()
   self.in_pipe:close()
   for _,tmpname in ipairs(self.tmpnames) do
-    os.remove(tmpnames[i])
+    os.remove(tmpname)
   end
+  self.in_pipe  = nil
+  self.tmpnames = {}
 end
 
---
+------ METATABLE OF THE OBJECTS --------
 local object_metatable = {}
-
 object_metatable.__index = gnuplot_methods
-
 function object_metatable:__gc()
   self:close()
 end
 
---
+------------- CONSTRUCTOR --------------------
+
+-- builds an instance for interfacing with gnuplot
 function gnuplot.new()
   local f = io.popen("which gnuplot")
   local command = f:read("*l")
@@ -94,5 +100,8 @@ function gnuplot.new()
   setmetatable(obj, object_metatable)
   return obj
 end
+
+-- gnuplot() is equivalent to gnuplot.new()
+setmetatable(gnuplot, { __call = gnuplot.new })
 
 return gnuplot
