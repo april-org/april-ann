@@ -1,35 +1,43 @@
 local gnuplot = {} -- module gnuplot
 
---
+--------------- GNUPLOT OBJECT METHODS ---------------------
 local gnuplot_methods = {}
 
---
+-- Writes using format and a list of arguments
 function gnuplot_methods:writef(format, ...)
   self.in_pipe:write(string.format(format,...))
   return self
 end
 
---
+-- Writes the given strings (separated by blanks)
 function gnuplot_methods:write(...)
-  self.in_pipe:write(...)
-  return self
-end
-
---
-function gnuplot_methods:set(...)
   self.in_pipe:write(table.concat(table.pack(...), " "))
-  self.in_pipe:write("\n")
   return self
 end
 
---
+-- Sets a parameter
+function gnuplot_methods:set(...)
+  self:write("set ")
+  self:write(table.concat(table.pack(...), " "))
+  self:write("\n")
+  self:flush()
+  return self
+end
+
+-- Forces to write in the pipe
 function gnuplot_methods:flush()
   self.in_pipe:flush()
+  return self
 end
 
---
-function gnuplot_methods:plot(params)
-  local plot_str_tbl = { "plot" }
+-- Plots (or multiplots) a given table with gnuplot parameters
+function gnuplot_methods:plot(params, offset)
+  local plot_str_tbl = { }
+  if offset then
+    table.insert(plot_str_tbl, string.format("plot%s", offset))
+  else
+    table.insert(plot_str_tbl, "plot")
+  end
   local tmpnames = self.tmpnames
   if not params[1] then params = { params } end
   for i,current in ipairs(params) do
@@ -53,7 +61,7 @@ function gnuplot_methods:plot(params)
     if title then title_str = string.format("title '%s'", title) end
     if notitle then title_str = "notitle" end
     local with_str = ""
-    if with then with_str = string.format("w '%s'", with) end
+    if with then with_str = string.format("w %s", with) end
     table.insert(plot_str_tbl,
 		 string.format("'%s' u %s %s %s %s",
 			       data, table.concat(using,":"),
@@ -63,26 +71,29 @@ function gnuplot_methods:plot(params)
   table.insert(plot_str_tbl, "\n")
   self:write(table.concat(plot_str_tbl, " "))
   self:flush()
+  return self
 end
 
---
+-- Closes the gnuplot pipe (interface)
 function gnuplot_methods:close()
   self.in_pipe:close()
   for _,tmpname in ipairs(self.tmpnames) do
-    os.remove(tmpnames[i])
+    os.remove(tmpname)
   end
+  self.in_pipe  = nil
+  self.tmpnames = {}
 end
 
---
+------ METATABLE OF THE OBJECTS --------
 local object_metatable = {}
-
 object_metatable.__index = gnuplot_methods
-
 function object_metatable:__gc()
   self:close()
 end
 
---
+------------- CONSTRUCTOR --------------------
+
+-- builds an instance for interfacing with gnuplot
 function gnuplot.new()
   local f = io.popen("which gnuplot")
   local command = f:read("*l")
@@ -94,5 +105,8 @@ function gnuplot.new()
   setmetatable(obj, object_metatable)
   return obj
 end
+
+-- gnuplot() is equivalent to gnuplot.new()
+setmetatable(gnuplot, { __call = gnuplot.new })
 
 return gnuplot
