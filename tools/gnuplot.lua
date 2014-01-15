@@ -10,6 +10,12 @@ function gnuplot_methods:writef(format, ...)
 end
 
 --
+function gnuplot_methods:write(...)
+  self.in_pipe:write(...)
+  return self
+end
+
+--
 function gnuplot_methods:set(...)
   self.in_pipe:write(table.concat(table.pack(...), " "))
   self.in_pipe:write("\n")
@@ -23,36 +29,39 @@ end
 
 --
 function gnuplot_methods:plot(params)
+  local plot_str_tbl = { "plot" }
   local tmpnames = self.tmpnames
   if not params[1] then params = { params } end
-  self:writef("plot ")
   for i,current in ipairs(params) do
-    local data    = current.data
+    local data    = assert(current.data, "Data field is mandatory")
     local using   = current.using or current.u or { 1 }
     local title   = current.title or current.t
     local notitle = current.notitle
-    local with    = current.with or current.w or "points"
+    local with    = current.with or current.w
     local other   = current.other or ""
     assert(type(other) == "string")
     if type(using) ~= "table" then using = { using } end
-    if type(data) == "matrix" then
+    if type(data) == "matrix" or type(data) == "matrixDouble" then
+      assert(data.toTabFilename,
+	     "The matrix object needs the method toTabFilename")
       local aux_tmpname = os.tmpname()
       data:toTabFilename(aux_tmpname)
       data = aux_tmpname
       table.insert(tmpnames, aux_tmpname)
     end
-    local title_str
-    if title then
-      title_str = string.format("title '%s'", title)
-    else
-      title_str = ""
-    end
+    local title_str = ""
+    if title then title_str = string.format("title '%s'", title) end
     if notitle then title_str = "notitle" end
-    self:writef("'%s' u %s w %s %s %s",
-		data, table.concat(using,":"), with, title_str, other)
-    if i ~= #params then self:writef(",") end
+    local with_str = ""
+    if with then with_str = string.format("w '%s'", with) end
+    table.insert(plot_str_tbl,
+		 string.format("'%s' u %s %s %s %s",
+			       data, table.concat(using,":"),
+			       with_str, title_str, other))
+    if i ~= #params then table.insert(plot_str_tbl, ",") end
   end
-  self:writef("\n")
+  table.insert(plot_str_tbl, "\n")
+  self:write(table.concat(plot_str_tbl, " "))
   self:flush()
 end
 
