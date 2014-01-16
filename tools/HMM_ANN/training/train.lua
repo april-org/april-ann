@@ -11,7 +11,7 @@
 april_print_script_header(arg)
 
 dofile(string.get_path(arg[0]) .. "../utils.lua")
-optargs,dropout_table = dofile(string.get_path(arg[0]) .. "/cmdopt.lua")
+optargs = dofile(string.get_path(arg[0]) .. "/cmdopt.lua")
 
 table.unpack_on(optargs, _G)
 trainfile_mfc    = optargs.train_m
@@ -596,50 +596,45 @@ while em_iteration <= em.em_max_iterations do
   ann_table.trainer:set_layerwise_option("b.*", "max_norm_penalty", 0.0)
   ann_table.trainer:set_layerwise_option("b.*", "L1_norm", 0.0)
   --
-  iterator(ipairs(dropout_table)):
-  apply(function(i,data)
-	  iterator(ann_table.trainer:iterate_components(data.name)):
-	  apply(function(cname,c)
-		  printf("# DROPOUT OF COMPONENT %s = %f\n", cname, data.value)
-		  c:set_option("dropout_factor", data.value)
-		  c:set_option("dropout_seed",   dropout_seed)
-		end)
-	end)
   --------------------------------------
   -- ANN TRAINING (MAXIMIZATION STEP) --
   --------------------------------------
-  local result = ann_table.trainer:train_holdout_validation{
-    training_table = ann_table.trainingdata,
-    validation_table = ann_table.validationdata,
+  local train_function = trainable.train_holdout_validation{
     epochs_wo_validation = em.num_epochs_without_validation,
     min_epochs = em.num_epochs_without_validation,
     max_epochs = max,
     stopping_criterion = trainable.stopping_criteria.make_max_epochs_wo_imp_absolute(em.max_epochs_without_improvement),
-    update_function = function(t)
-      printf("em %4d epoch %4d totalepoch %4d ce_train %.7f ce_val "..
-	       "%.7f %10d %.7f  %.7f :: %.7f  %.7f\n",
-	     em_iteration, t.current_epoch, totaltrain,
-	     t.train_error, t.validation_error, bestepoch,
-	     t.best_val_error, ann_table.trainer:get_option("learning_rate"),
-	     ann_table.trainer:norm2("w.*"), ann_table.trainer:norm2("b.*"))
-      totaltrain = totaltrain + 1
-      if (totaltrain > ann_table.num_epochs_first_lr and
-	    em_iteration == 1 and
-	    totaltrain % 10 == 1 and
-	  ann_table.trainer:get_option("learning_rate") > ann_table.learning_rate ) then
-	ann_table.trainer:set_option("learning_rate",
-				     ann_table.trainer:get_option("learning_rate") - 0.001)
-      end
-      if t.current_epoch == em.num_epochs_without_validation then
-	firstbestce = t.validation_error
-	printf ("# FIRST BEST CE FOR EM: %.7f\n", firstbestce)
-      end
-      io.stdout:flush()
-    end,
-    best_function = function(best_trainer)
-      bestepoch = totaltrain
-    end,
   }
+  while train_function:execute(function()
+				 local tr_loss = ann_table.trainer:train_dataset(ann_table.trainingdata)
+				 local va_loss = ann_table.trainer:validate_dataset(ann_table.validationdata)
+				 return ann_table.trainer,tr_loss,va_loss
+			       end) do
+    local state = train_function:get_state_table()
+    if train_function:is_best() then
+      bestepoch = state.current_epoch
+    end
+    printf("em %4d epoch %4d totalepoch %4d ce_train %.7f ce_val "..
+	     "%.7f %10d %.7f  %.7f :: %.7f  %.7f\n",
+	   em_iteration, state.current_epoch, totaltrain,
+	   state.train_error, state.validation_error, bestepoch,
+	   state.best_val_error, ann_table.trainer:get_option("learning_rate"),
+	   ann_table.trainer:norm2("w.*"), ann_table.trainer:norm2("b.*"))
+    totaltrain = totaltrain + 1
+    if (totaltrain > ann_table.num_epochs_first_lr and
+	  em_iteration == 1 and
+	  totaltrain % 10 == 1 and
+	ann_table.trainer:get_option("learning_rate") > ann_table.learning_rate ) then
+      ann_table.trainer:set_option("learning_rate",
+				   ann_table.trainer:get_option("learning_rate") - 0.001)
+    end
+    if state.current_epoch == em.num_epochs_without_validation then
+      firstbestce = state.validation_error
+      printf ("# FIRST BEST CE FOR EM: %.7f\n", firstbestce)
+    end
+    io.stdout:flush()
+  end
+  local result = train_function:get_state_table()
   -- nos quedamos con la mejor red ;)
   totaltrain = bestepoch
   ann_table.trainer = result.best

@@ -1,7 +1,3 @@
-dropout_table = {
-  layers = { }
-}
-
 cmdOptTest = cmdOpt{
   program_name = string.basename(arg[0]),
   argument_description = "",
@@ -287,27 +283,6 @@ cmdOptTest = cmdOpt{
     filter=tonumber,
   },
   {
-    index_name = "dropout",
-    description = "Dropout: layer_name|||value",
-    long ="dropout",
-    argument="yes",
-    mode="always",
-    default_value="",
-    action=function(name_and_value)
-      local name,value = name_and_value:match("^(.*)|||(.*)$")
-      table.insert(dropout_table, { name=name, value=value })
-    end,
-  },
-  {
-    index_name = "dropout_seed",
-    description = "Dropout seed",
-    long ="dropout-seed",
-    argument="yes",
-    mode="always",
-    default_value=82975,
-    filter=tonumber,
-  },
-  {
     index_name="rndw",
     description="Size of the random inf/sup for MLP",
     long="rndw",
@@ -483,4 +458,4 @@ if optargs.defopt then
 end
 optargs = cmdOptTest:check_args(optargs, initial_values)
 
-return optargs,dropout_table
+return optargs
