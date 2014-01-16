@@ -54,7 +54,12 @@ end
 
 -- Plots (or multiplots) a given table with gnuplot parameters
 function gnuplot_methods:plot(params, range)
-  local plot_str_tbl = { }
+  -- remove previous temporal files
+  for _,tmpname in pairs(self.tmpnames) do
+    self:writeln(string.format("!rm -f %s", tmpname))
+  end
+  self.tmpnames = {}
+  local plot_str_tbl = {}
   if range then
     table.insert(plot_str_tbl, string.format("plot%s", range))
   else
@@ -73,16 +78,21 @@ function gnuplot_methods:plot(params, range)
     local other   = current.other or ""
     assert(type(other) == "string")
     if type(data) == "matrix" or type(data) == "matrixDouble" then
-      assert(data.toTabFilename,
-	     "The matrix object needs the method toTabFilename")
-      local aux_tmpname = tmpnames[data] or os.tmpname()
-      tmpnames[data] = aux_tmpname
-      data:toTabFilename(aux_tmpname)
+      local aux_tmpname = tmpnames[data]
+      if not aux_tmpname then
+	assert(data.toTabFilename,
+	       "The matrix object needs the method toTabFilename")
+	aux_tmpname = os.tmpname()
+	tmpnames[data] = aux_tmpname
+	data:toTabFilename(aux_tmpname)
+      end
       data = aux_tmpname
     end
     if data then
-      local f = april_assert(io.open(data), "Unable to open filename %s", data)
-      f:close()
+      if #data > 0 then
+	local f = assert(io.open(data), "Unable to open filename " .. data)
+	f:close()
+      end
       data = string.format("%q", data)
     end
     table.insert(plot_str_tbl,
@@ -100,9 +110,7 @@ end
 -- Closes the gnuplot pipe (interface)
 function gnuplot_methods:close()
   self.in_pipe:close()
-  for _,tmpname in pairs(self.tmpnames) do os.remove(tmpname) end
   self.in_pipe  = nil
-  self.tmpnames = {}
 end
 
 ---------------
@@ -112,6 +120,7 @@ end
 ------ METATABLE OF THE OBJECTS --------
 local object_metatable = {}
 object_metatable.__index = gnuplot_methods
+object_metatable.__call  = gnuplot_methods.writeln
 function object_metatable:__gc()
   self:close()
 end
@@ -126,8 +135,7 @@ function gnuplot.new()
   local command = f:read("*l")
   f:close()
   assert(command, "Impossible to find gnuplot binary executable")
-  local in_pipe,out_pipe = io.popen2(command)
-  out_pipe:close()
+  local in_pipe= io.popen(command, "w")
   local obj = { in_pipe = in_pipe, tmpnames = {} }
   setmetatable(obj, object_metatable)
   return obj
@@ -163,11 +171,13 @@ HELP: shows this help message
 > gnuplot.help()
 
 
+METHOD __call:
 METHOD WRITE LINE: writes a sentence line to gnuplot
   arguments:
     format: is a string with a printf format string
     ... : is a variable argument list
 
+> gp(format, ...)
 > gp:writeln(format, ...)
 
 
