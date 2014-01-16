@@ -3,23 +3,45 @@ local gnuplot = {} -- module gnuplot
 --------------- GNUPLOT OBJECT METHODS ---------------------
 local gnuplot_methods = {}
 
+-----------------------
+-- PRIVATE FUNCTIONS --
+-----------------------
+
 -- Writes using format and a list of arguments
-function gnuplot_methods:writef(format, ...)
+local function writef(self,format, ...)
   self.in_pipe:write(string.format(format,...))
   return self
 end
 
 -- Writes the given strings (separated by blanks)
-function gnuplot_methods:write(...)
+local function write(self,...)
   self.in_pipe:write(table.concat(table.pack(...), " "))
+  return self
+end
+
+local function read(output,value,format)
+  local format = format or "%s"
+  if not value then return "" end
+  return string.format("%s "..format, output, tostring(value))
+end
+
+--------------------
+-- PUBLIC METHODS --
+--------------------
+
+-- Writes a line using format and a list of arguments
+function gnuplot_methods:writeln(format, ...)
+  writef(self,format,...)
+  write(self,"\n")
+  self:flush()
   return self
 end
 
 -- Sets a parameter
 function gnuplot_methods:set(...)
-  self:write("set ")
-  self:write(table.concat(table.pack(...), " "))
-  self:write("\n")
+  write(self,"set ")
+  write(self,table.concat(table.pack(...), " "))
+  write(self,"\n")
   self:flush()
   return self
 end
@@ -28,12 +50,6 @@ end
 function gnuplot_methods:flush()
   self.in_pipe:flush()
   return self
-end
-
-local function read(output,value,format)
-  local format = format or "%s"
-  if not value then return "" end
-  return string.format("%s "..format, output, tostring(value))
 end
 
 -- Plots (or multiplots) a given table with gnuplot parameters
@@ -47,7 +63,9 @@ function gnuplot_methods:plot(params, offset)
   local tmpnames = self.tmpnames
   if not params[1] then params = { params } end
   for i,current in ipairs(params) do
-    local data    = assert(current.data, "Data field is mandatory")
+    local data    = current.data
+    local func    = current.func
+    assert(data or func, "Field data or func is mandatory")
     local using   = read("u", current.using or current.u)
     local title   = read("title",current.title or current.t,"%q")
     local notitle = read("notitle",current.notitle,"")
@@ -62,14 +80,19 @@ function gnuplot_methods:plot(params, offset)
       data = aux_tmpname
       table.insert(tmpnames, aux_tmpname)
     end
+    if data then
+      local f = april_assert(io.open(data), "Unable to open filename %s", data)
+      f:close()
+      data = string.format("%q", data)
+    end
     table.insert(plot_str_tbl,
-		 string.format("'%s' %s %s %s %s",
-			       data, using, with, title, other))
+		 string.format("%s %s %s %s %s",
+			       data or func, using, with, title, other))
     if i ~= #params then table.insert(plot_str_tbl, ",") end
   end
   table.insert(plot_str_tbl, "\n")
   print(table.concat(plot_str_tbl, " "))
-  self:write(table.concat(plot_str_tbl, " "))
+  write(self,table.concat(plot_str_tbl, " "))
   self:flush()
   return self
 end
@@ -84,6 +107,10 @@ function gnuplot_methods:close()
   self.tmpnames = {}
 end
 
+---------------
+-- METATABLE --
+---------------
+
 ------ METATABLE OF THE OBJECTS --------
 local object_metatable = {}
 object_metatable.__index = gnuplot_methods
@@ -91,7 +118,9 @@ function object_metatable:__gc()
   self:close()
 end
 
-------------- CONSTRUCTOR --------------------
+-----------------
+-- CONSTRUCTOR --
+-----------------
 
 -- builds an instance for interfacing with gnuplot
 function gnuplot.new()
