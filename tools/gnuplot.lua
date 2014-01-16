@@ -53,10 +53,10 @@ function gnuplot_methods:flush()
 end
 
 -- Plots (or multiplots) a given table with gnuplot parameters
-function gnuplot_methods:plot(params, offset)
+function gnuplot_methods:plot(params, range)
   local plot_str_tbl = { }
-  if offset then
-    table.insert(plot_str_tbl, string.format("plot%s", offset))
+  if range then
+    table.insert(plot_str_tbl, string.format("plot%s", range))
   else
     table.insert(plot_str_tbl, "plot")
   end
@@ -75,10 +75,10 @@ function gnuplot_methods:plot(params, offset)
     if type(data) == "matrix" or type(data) == "matrixDouble" then
       assert(data.toTabFilename,
 	     "The matrix object needs the method toTabFilename")
-      local aux_tmpname = os.tmpname()
+      local aux_tmpname = tmpnames[data] or os.tmpname()
+      tmpnames[data] = aux_tmpname
       data:toTabFilename(aux_tmpname)
       data = aux_tmpname
-      table.insert(tmpnames, aux_tmpname)
     end
     if data then
       local f = april_assert(io.open(data), "Unable to open filename %s", data)
@@ -100,9 +100,7 @@ end
 -- Closes the gnuplot pipe (interface)
 function gnuplot_methods:close()
   self.in_pipe:close()
-  for _,tmpname in ipairs(self.tmpnames) do
-    os.remove(tmpname)
-  end
+  for _,tmpname in pairs(self.tmpnames) do os.remove(tmpname) end
   self.in_pipe  = nil
   self.tmpnames = {}
 end
@@ -137,5 +135,82 @@ end
 
 -- gnuplot() is equivalent to gnuplot.new()
 setmetatable(gnuplot, { __call = gnuplot.new })
+
+-------------------
+-- HELP FUNCTION --
+-------------------
+
+function gnuplot.help()
+  print[[
+Help of module 'gnuplot'.
+
+This module is a wrap around gnuplot command, allowing
+to make drawings of matrix objects (not lua tables),
+filenames or gnuplot functions (expressions). The module
+allow to declare as many gnuplot objects as you need,
+none of them will share anything, so every object has
+its own gnuplot window.
+
+
+CONSTRUCTOR: builds a gnuplot object instance
+
+> gp = gnuplot()     -- the __call metamethod is defined
+> gp = gnuplot.new() -- both are equivalent
+
+
+HELP: shows this help message
+
+> gnuplot.help()
+
+
+METHOD WRITE LINE: writes a sentence line to gnuplot
+  arguments:
+    format: is a string with a printf format string
+    ... : is a variable argument list
+
+> gp:writeln(format, ...)
+
+
+METHOD SET: executes the set command of gnuplot
+  arguments:
+    ... : a variable argument list, all of them strings
+
+> gp:set("format x '%20f'")
+> gp:set("xrange [-10,10]")
+
+
+METHOD PLOT: plots multiple data
+  arguments:
+    params: a table with as many tables as data you want to plot together.
+            Each table contains the following fields:
+               - data: mandatory if not given func field. It is a string with
+                       a filename path, or a matrix with data.
+               - func: mandatory if not given data field. It is a string with
+                       a gnuplot expression.
+               - using or u: a string with the using property of plot [optional]
+               - with or w: a string with the with property of plot [optional]
+               - title or t: a string with the title property of plot [optional]
+               - notitle: any value different than false and nil [optional]
+               - other: a string with any list of plot properties [optional]
+    range: an optional string with the range property of gnuplot
+
+> gp:writeln('f(x) = 4*x')
+> gp:plot({  { data='filename1', u='1:2', w='l', t='A' },
+             { data='', u='4:5', w='p', t='P' },
+             { func='f(x)' }, }, "[-10:10][20:40]")
+
+
+METHOD FLUSH: flushes all the pending data (normally it
+              is not necessary)
+
+> gp:flush()
+
+
+METHOD CLOSE: closes the connection with gnuplot
+
+> gp:close()
+
+]]
+end
 
 return gnuplot
