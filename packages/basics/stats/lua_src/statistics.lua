@@ -45,6 +45,7 @@ function mean_var_methods:clear()
   self.new_m = 0
   self.new_s = 0
   self.N     = 0
+  return self
 end
 
 -----------------------------------------------------------------------------
@@ -205,7 +206,7 @@ function confus_matrix_methods:clone()
     
     local obj = table.deep_copy(self)
 
-    return class_instance(obj, self, true)
+    return class_instance(obj, stats.confusion_matrix, true)
 end
 april_set_doc("stats.confusion_matrix.reset", {
 		class = "method", summary = "Reset to 0 all the counters",
@@ -605,6 +606,43 @@ end
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
+april_set_doc("stats.confidence_interval",
+	      {
+		class = "function",
+		summary = "Returns the extremes of a confidence interval",
+		description= {
+		  "This function returns the extremes of a confidence interval",
+		  "given a table of sorted values and the confidence value.",
+		  "It could compute the interval over a slice of the table.",
+		},
+		params = {
+		  "The sorted table with the data.",
+		  "The confidence [optional], by default it is 0.95.",
+		  "The first position of the table [optional], by default it is 1",
+		  "The last position of the table [optional], by default it is #data",
+		},
+		outputs = {
+		  "The left limit of the interval",
+		  "The right limit of the interval",
+		},
+	      })
+
+-- returns the extremes of the interval, the table data must be sorted
+function stats.confidence_interval(data, confidence, ini, fin)
+  local confidence, ini, fin = confidence or 0.95, ini or 1, fin or #data
+  assert(confidence > 0 and confidence < 1,
+	 "Incorrect confidence value, it must be in range (0,1)")
+  local N = fin - ini + 1
+  local med_conf_size = N*(1.0 - confidence)*0.5
+  local a_pos = math.max(ini, math.round(med_conf_size))
+  local b_pos = math.min(fin, math.round(N - med_conf_size))
+  return data[a_pos],data[b_pos]
+end
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
 april_set_doc("stats.bootstrap_resampling",
 	      {
 		class = "function",
@@ -614,58 +652,63 @@ april_set_doc("stats.bootstrap_resampling",
 		  "by using bootstrapping technique. The function receives",
 		  "a population size, a sampling function which returns an",
 		  "individual sample from the source population every time",
-		  "it is called, a reducer object or table with methods add,",
-		  "compute, and clear. The function applies the reducer to",
-		  "every sample and returns in a table the computation of",
-		  "the reducer value for every possible population.",
+		  "it is called, a reducer function, and an initial value.",
+		  "The function applies the reducer to",
+		  "every aggregated value and sample value.",
+		  "The aggregated value is then post-processed by the a function.",
+		  "A table with the computation of the post-process function",
+		  "for every repetition will be returned.",
 		},
 		params = {
 		  population_size = "Size of the population",
 		  repetitions = "Number of repetitions, recommended minimum of 1000",
-		  sampling_func = {"A function which every time is called",
-				   "returns a random element of the",
-				   "population"},
+		  sampling = {"A function which every time is called",
+			      "returns a random element of the",
+			      "population"},
 		  reducer = {
-		    "A table or an object which has methods 'add', 'compute',",
-		    "and 'clear'",
+		    "A function witch receives two values and returns one",
 		  },
+		  initial = "A function which returns the initial value of the reduction",
+		  postprocess = "A function which transforms the aggregated value [optional], by default the identity",
 		  verbose = "True or false",
 		},
 		outputs = {
 		  "A table with the reducer output for every repetition."
 		},
 	      })
--- Receives a class or a table with methods: clear(), add(), compute()
 function stats.bootstrap_resampling(params)
   local params = get_table_fields(
     {
       population_size = { mandatory = true },
       repetitions     = { type_match = "number",   mandatory = true },
-      sampling_func   = { type_match = "function", mandatory = true },
-      reducer         = { mandatory = true },
+      sampling        = { type_match = "function", mandatory = true },
+      reducer         = { type_match = "function", mandatory = true },
+      postprocess     = { type_match = "function", mandatory = false,
+			  default=function(...) return ... end },
+      initial         = { type_match = "function", mandatory = true },
       verbose         = { mandatory = false },
     },
     params)
-  assert(params.reducer.clear and params.reducer.add and params.reducer.compute,
-	 "Needs a class or table in 'reducer' field with methods: clear, add, compute")
   local population_size  = params.population_size
   local repetitions      = params.repetitions
-  local sampling_func    = params.sampling_func
+  local sampling_func    = params.sampling
   local reducer          = params.reducer
+  local initial          = params.initial
+  local postprocess      = params.postprocess
   local result           = {}
   for i=1,repetitions do
     collectgarbage("collect")
+    local acc = initial()
     for p=1,population_size do
-      reducer:add(sampling_func())
+      acc = reducer(acc, sampling_func())
     end
     if params.verbose and i % 20 == 0 then
       fprintf(io.stderr, "\r%3.0f%%", i/repetitions*100)
       io.stderr:flush()
     end
-    local r = table.pack(reducer:compute())
+    local r = table.pack(postprocess(acc))
     if #r == 1 then r = table.unpack(r) end
     table.insert(result, r)
-    reducer:clear()
   end
   if params.verbose then
     fprintf(io.stderr, " done\n")
@@ -691,6 +734,7 @@ function pearson_methods:clear()
   self.mean_var_x:clear()
   self.mean_var_y:clear()
   self.xy_sum = 0
+  return self
 end
 
 function pearson_methods:add(x,y)
@@ -702,6 +746,7 @@ function pearson_methods:add(x,y)
   self.mean_var_x:add(x)
   self.mean_var_y:add(y)
   self.xy_sum = self.xy_sum + x*y
+  return self
 end
 
 function pearson_methods:compute()

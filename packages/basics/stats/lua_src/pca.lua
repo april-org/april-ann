@@ -12,37 +12,61 @@ end
 
 -------------------------------------------------------------------------------
 
-function stats.mean_centered_by_pattern(X,major_order)
+-- WARNING IN PLACE OPERATION
+function stats.mean_centered_by_pattern(X)
   local dim = X:dim()
   assert(#dim == 2, "Expected a bi-dimensional matrix")
   local M,N = table.unpack(dim)
-  local R = X:clone(major_order)
   -- U is the mean over all rows
-  local U,auxR = R:sum(2):rewrap(M):scal(1/N)
-  -- R is centered subtracting by -U
-  for i=1,R:dim(2) do auxR=R:select(2,i,auxR):axpy(-1, U) end
-  return R,U
+  local U,auxX = X:sum(2):rewrap(M):scal(1/N)
+  -- X is centered subtracting by -U
+  for i=1,X:dim(2) do auxX=X:select(2,i,auxX):axpy(-1, U) end
+  return X,U
 end
 
 -------------------------------------------------------------------------------
 
-function stats.pca_whitening(X,S,U,epsilon)
+-- NOT IN-PLACE
+function stats.pca_whitening(X,U,S,epsilon)
   local epsilon = epsilon or 0.0
-  local XW      = X:clone():gemm{ A=X, B=U, trans_B=true, beta=0, alpha=1 }
-  local aux
+  local result = matrix[X:get_major_order()](X:dim(1), S:size())
+  result:gemm{ A=X, B=U, trans_B=false, beta=0, alpha=1}
   for i=1,S:dim(1) do
-    aux = XW:select(2,i,aux):scal( 1/math.sqrt(S:get(i) + epsilon) )
+    result:select(2,i):scal( 1/math.sqrt(S:get(i) + epsilon) )
   end
+  return result
+end
+
+-- WARNING IN PLACE OPERATION
+function stats.zca_whitening(X,U,S,epsilon)
+  local aux = stats.pca_whitening(X,U,S,epsilon)
+  X:gemm{ A=aux, B=U, trans_B=true, beta=0, alpha=1 }
+  return X
+end
+
+-- show PCA threshold
+function stats.pca_threshold(S,mass)
+  local mass = mass or 0.99
+  local acc = 0
+  local sum = S:sum()
+  local acc_th,th = 0,1
+  for i=1,S:size() do
+    acc=acc+S:get(i)
+    if acc/sum < mass then acc_th,th=acc,i end
+  end
+  assert(acc_th > 0, "The probability mass needs to be larger")
+  return th,S:get(th),acc_th/sum
 end
 
 -------------------------------------------------------------------------------
 
--- PCA algorithm based on covariance matrix and SVD decomposition
-function stats.pca(X)
-  local dim    = X:dim()
+-- PCA algorithm based on covariance matrix and SVD decomposition the matrix Xc
+-- must be zero mean centerd for each pattern. Patterns are ordered by rows.
+function stats.pca(Xc)
+  local dim    = Xc:dim()
   assert(#dim == 2, "Expected a bi-dimensional matrix")
+  local aux = Xc:sum(2):scal(1/Xc:dim(2)):rewrap(Xc:dim(1))
   local M,N    = table.unpack(dim)
-  local Xc,avg = stats.mean_centered_by_pattern(X, "col_major")
   local sigma  = matrix.col_major(N,N):gemm{ A=Xc, B=Xc,
 					     trans_A=true,
 					     trans_B=false,
@@ -109,7 +133,10 @@ function stats.iterative_pca(params)
   local T = matrix[major_order](M,K):zeros() -- left eigenvectors
   local P = matrix[major_order](N,K):zeros() -- right eigenvectors
   local L = matrix[major_order](K):zeros()   -- eigenvalues
-  local R,U = stats.mean_centered_by_pattern(X, major_order) -- residual and means
+  local R = X:clone()
+  local U = R:sum(2):scal(1/R:dim(2)):rewrap(R:dim(1))
+  assert( math.abs(U:sum() / U:size()) < 1e-03,
+	  "A zero mean (at each pattern) data matrix is needed")
   -- GS-PCA
   local Tcol, Rcol, Pcol, Uslice, Pslice, Tslice, Lk
   for k=1,K do

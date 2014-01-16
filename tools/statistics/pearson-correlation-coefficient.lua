@@ -50,21 +50,19 @@ local N   = #points
 local rnd = random(seed)
 
 fprintf(io.stderr, "%d repetitions, %d points\n", reps, N)
+
 local data = stats.bootstrap_resampling{
   verbose         = true,
   population_size = N,
   repetitions     = reps,
-  reducer         = stats.correlation.pearson(),
-  sampling_func   = function() return table.unpack(points[rnd:randInt(1,N)]) end,
+  sampling        = function() return table.unpack(points[rnd:randInt(1,N)]) end,
+  initial         = function() return stats.correlation.pearson() end,
+  reducer         = function(acc,x,y) return acc:add(x,y) end,
+  postprocess     = function(acc) return acc:compute() end,
 }
 
 table.sort(data, function(a,b) return a < b end)
-local med_conf_size = reps*(1.0 - conf)*0.5
-local a = math.max(1,    math.round(med_conf_size))
-local b = math.min(reps, math.round(reps - med_conf_size))
-
-local rxy1 = data[a]
-local rxy2 = data[b]
+local rxy1,rxy2 = stats.confidence_interval(data, conf)
 
 local alpha,beta = util.linear_least_squares(points)
 

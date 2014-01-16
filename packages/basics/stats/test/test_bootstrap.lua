@@ -5,8 +5,10 @@ local errors = iterator(range(1,1000)):map(function()return rnd:randNorm(0.0,1.0
 local populations = stats.bootstrap_resampling{
   population_size = #errors,
   repetitions     = 1000,
-  sampling_func   = function() return rnd:choose(errors) end,
-  reducer         = stats.mean_var(),
+  sampling        = function() return rnd:choose(errors) end,
+  initial         = function() return stats.mean_var() end,
+  reducer         = function(acc,v) return acc:add(v) end,
+  postprocess     = function(acc) return acc:compute() end,
 }
 
 table.sort(populations, function(a,b) return a[1] < b[1] end)

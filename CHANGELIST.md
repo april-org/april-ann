@@ -6,6 +6,9 @@ Master branch release
 
 ### Unstable changes
 
+- Added `ann.components.zca_whitening` and `ann.components.pca_whitening`
+  classes.
+- Added `stats.zca_whitening` and `stats.pca_whitening` functions.
 - Added packages `autodiff` and `autodiff.ann`, with automatic differentiation
   algorithms.
 - Added `ann.optimizer.quickprop` algorithm, but stills untested.
@@ -17,6 +20,10 @@ Master branch release
   an error during cuMemAlloc.
 - Class interest_points and layout algorithms (still in development).
 - Added the geometry c++ class for working in to lines and point geometry.
+
+### C/C++
+
+- Added dependency with `liblapacke` for PCA when not available MKL or MacOS X.
 
 v0.3.1-alpha (pre-relase of v0.3.1-beta)
 ----------------------------------------

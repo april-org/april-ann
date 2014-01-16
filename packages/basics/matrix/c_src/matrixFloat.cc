@@ -453,6 +453,9 @@ void Matrix<float>::gemm(CBLAS_TRANSPOSE trans_A,
 			 const Matrix<float> *otherA,
 			 const Matrix<float> *otherB,
 			 float beta) {
+  if (this == otherA || this == otherB)
+    ERROR_EXIT(128, "GEMM method couldn't receive as A or B argument "
+	       "the caller object\n");
   if (numDim != 2 || otherA->numDim != 2 || otherB->numDim != 2)
     ERROR_EXIT(128,"Incorrect number of dimensions, only allowed for numDim=2\n");
   int row_idx_A = 0, col_idx_A = 1, row_idx_B = 0, col_idx_B = 1;
