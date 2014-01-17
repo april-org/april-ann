@@ -53,10 +53,15 @@ function gnuplot_methods:flush()
 end
 
 -- Plots (or multiplots) a given table with gnuplot parameters
-function gnuplot_methods:plot(params, offset)
-  local plot_str_tbl = { }
-  if offset then
-    table.insert(plot_str_tbl, string.format("plot%s", offset))
+function gnuplot_methods:plot(params, range)
+  -- remove previous temporal files
+  for _,tmpname in pairs(self.tmpnames) do
+    self:writeln(string.format("!rm -f %s", tmpname))
+  end
+  self.tmpnames = {}
+  local plot_str_tbl = {}
+  if range then
+    table.insert(plot_str_tbl, string.format("plot%s", range))
   else
     table.insert(plot_str_tbl, "plot")
   end
@@ -73,16 +78,21 @@ function gnuplot_methods:plot(params, offset)
     local other   = current.other or ""
     assert(type(other) == "string")
     if type(data) == "matrix" or type(data) == "matrixDouble" then
-      assert(data.toTabFilename,
-	     "The matrix object needs the method toTabFilename")
-      local aux_tmpname = os.tmpname()
-      data:toTabFilename(aux_tmpname)
+      local aux_tmpname = tmpnames[data]
+      if not aux_tmpname then
+	assert(data.toTabFilename,
+	       "The matrix object needs the method toTabFilename")
+	aux_tmpname = os.tmpname()
+	tmpnames[data] = aux_tmpname
+	data:toTabFilename(aux_tmpname)
+      end
       data = aux_tmpname
-      table.insert(tmpnames, aux_tmpname)
     end
     if data then
-      local f = april_assert(io.open(data), "Unable to open filename %s", data)
-      f:close()
+      if #data > 0 then
+	local f = assert(io.open(data), "Unable to open filename " .. data)
+	f:close()
+      end
       data = string.format("%q", data)
     end
     table.insert(plot_str_tbl,
@@ -100,11 +110,7 @@ end
 -- Closes the gnuplot pipe (interface)
 function gnuplot_methods:close()
   self.in_pipe:close()
-  for _,tmpname in ipairs(self.tmpnames) do
-    os.remove(tmpname)
-  end
   self.in_pipe  = nil
-  self.tmpnames = {}
 end
 
 ---------------
@@ -114,6 +120,7 @@ end
 ------ METATABLE OF THE OBJECTS --------
 local object_metatable = {}
 object_metatable.__index = gnuplot_methods
+object_metatable.__call  = gnuplot_methods.writeln
 function object_metatable:__gc()
   self:close()
 end
@@ -128,8 +135,7 @@ function gnuplot.new()
   local command = f:read("*l")
   f:close()
   assert(command, "Impossible to find gnuplot binary executable")
-  local in_pipe,out_pipe = io.popen2(command)
-  out_pipe:close()
+  local in_pipe= io.popen(command, "w")
   local obj = { in_pipe = in_pipe, tmpnames = {} }
   setmetatable(obj, object_metatable)
   return obj
@@ -137,5 +143,84 @@ end
 
 -- gnuplot() is equivalent to gnuplot.new()
 setmetatable(gnuplot, { __call = gnuplot.new })
+
+-------------------
+-- HELP FUNCTION --
+-------------------
+
+function gnuplot.help()
+  print[[
+Help of module 'gnuplot'.
+
+This module is a wrap around gnuplot command, allowing
+to make drawings of matrix objects (not lua tables),
+filenames or gnuplot functions (expressions). The module
+allow to declare as many gnuplot objects as you need,
+none of them will share anything, so every object has
+its own gnuplot window.
+
+
+CONSTRUCTOR: builds a gnuplot object instance
+
+> gp = gnuplot()     -- the __call metamethod is defined
+> gp = gnuplot.new() -- both are equivalent
+
+
+HELP: shows this help message
+
+> gnuplot.help()
+
+
+METHOD __call:
+METHOD WRITE LINE: writes a sentence line to gnuplot
+  arguments:
+    format: is a string with a printf format string
+    ... : is a variable argument list
+
+> gp(format, ...)
+> gp:writeln(format, ...)
+
+
+METHOD SET: executes the set command of gnuplot
+  arguments:
+    ... : a variable argument list, all of them strings
+
+> gp:set("format x '%20f'")
+> gp:set("xrange [-10,10]")
+
+
+METHOD PLOT: plots multiple data
+  arguments:
+    params: a table with as many tables as data you want to plot together.
+            Each table contains the following fields:
+               - data: mandatory if not given func field. It is a string with
+                       a filename path, or a matrix with data.
+               - func: mandatory if not given data field. It is a string with
+                       a gnuplot expression.
+               - using or u: a string with the using property of plot [optional]
+               - with or w: a string with the with property of plot [optional]
+               - title or t: a string with the title property of plot [optional]
+               - notitle: any value different than false and nil [optional]
+               - other: a string with any list of plot properties [optional]
+    range: an optional string with the range property of gnuplot
+
+> gp:writeln('f(x) = 4*x')
+> gp:plot({  { data='filename1', u='1:2', w='l', t='A' },
+             { data='', u='4:5', w='p', t='P' },
+             { func='f(x)' }, }, "[-10:10][20:40]")
+
+
+METHOD FLUSH: flushes all the pending data (normally it
+              is not necessary)
+
+> gp:flush()
+
+
+METHOD CLOSE: closes the connection with gnuplot
+
+> gp:close()
+
+]]
+end
 
 return gnuplot
