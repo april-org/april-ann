@@ -26,6 +26,11 @@ Master branch release
 - Added index matrix for min/max operations in `matrix` objects.
 - Added `serialize` and `deserialize` Lua functions, in `util` package.
 
+### Bugs removed
+
+- Solved bug at `Matrix<T>::sliding_window` which makes an early end of the
+  iterator when window has an `offset` different of 0.
+
 ### C/C++
 
 - Added dependency with `liblapacke` for PCA when not available MKL or MacOS X.

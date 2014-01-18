@@ -861,7 +861,7 @@ Matrix<T>::sliding_window::sliding_window(Matrix<T> *m,
   coords(new int[m->numDim]),
   raw_pos(m->offset),
   finished(false),
-  num_step_by_step(new int[m->numDim]),
+  offset_plus_num_step_by_step(new int[m->numDim]),
   num_windows(1)
 {
   IncRef(m);
@@ -932,9 +932,9 @@ Matrix<T>::sliding_window::sliding_window(Matrix<T> *m,
 		 this->sub_matrix_size[i]);
     if (last > m->matrixSize[i])
       ERROR_EXIT1(128, "Overflow at sliding window dimension %d!!!\n", i);
-    num_step_by_step[i] = this->num_steps[i] * this->step[i];
+    offset_plus_num_step_by_step[i] = offset[i] + this->num_steps[i] * this->step[i];
     num_windows *= this->num_steps[i];
-  }  
+  }
 }
 
 template <typename T>
@@ -951,7 +951,7 @@ Matrix<T>::sliding_window::sliding_window(const sliding_window &other) :
   total_size(other.total_size),
   last_raw_pos(other.last_raw_pos),
   finished(other.finished),
-  num_step_by_step(new int[m->numDim]),
+  offset_plus_num_step_by_step(new int[m->numDim]),
   num_windows(other.num_windows)
 {
   IncRef(m);
@@ -962,7 +962,7 @@ Matrix<T>::sliding_window::sliding_window(const sliding_window &other) :
     order_step[i]	= other.order_step[i];
     coords[i]		= other.coords[i];
     offset[i]		= other.offset[i];
-    num_step_by_step[i] = other.num_step_by_step[i];
+    offset_plus_num_step_by_step[i] = other.offset_plus_num_step_by_step[i];
   }
 }
 
@@ -975,7 +975,7 @@ Matrix<T>::sliding_window::~sliding_window() {
   delete[] order_step;
   delete[] coords;
   delete[] offset;
-  delete[] num_step_by_step;
+  delete[] offset_plus_num_step_by_step;
 }
  
 template <typename T>
@@ -988,14 +988,14 @@ operator=(const sliding_window &other) {
     delete[] order_step;
     delete[] coords;
     delete[] offset;
-    delete[] num_step_by_step;
+    delete[] offset_plus_num_step_by_step;
     sub_matrix_size  = new int[other.m->numDim];
     step	     = new int[other.m->numDim];
     num_steps	     = new int[other.m->numDim];
     order_step	     = new int[other.m->numDim];
     coords	     = new int[other.m->numDim];
     offset	     = new int[other.m->numDim];
-    num_step_by_step = new int[other.m->numDim];
+    offset_plus_num_step_by_step = new int[other.m->numDim];
   }
   if (m) DecRef(m);
   m		       = other.m;
@@ -1013,7 +1013,7 @@ operator=(const sliding_window &other) {
     order_step[i]	= other.order_step[i];
     coords[i]		= other.coords[i];
     offset[i]		= other.offset[i];
-    num_step_by_step[i]	= other.num_step_by_step[i];
+    offset_plus_num_step_by_step[i] = other.offset_plus_num_step_by_step[i];
   }	
   return *this;
 }
@@ -1027,7 +1027,7 @@ next() {
     int pos  = order_step[j];
     int prev = coords[pos];
     coords[pos] += step[pos];
-    if (coords[pos] >= num_step_by_step[pos]) {
+    if (coords[pos] >= offset_plus_num_step_by_step[pos]) {
       coords[pos] = offset[pos];
       raw_pos -= m->stride[pos]*(prev + offset[pos]);
       overflow = true;
