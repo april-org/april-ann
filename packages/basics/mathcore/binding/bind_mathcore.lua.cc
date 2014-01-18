@@ -33,3 +33,15 @@
   GPUMirroredMemoryBlockBase::setUseMMapAllocation(v);
 }
 //BIND_END
+
+//BIND_FUNCTION mathcore.set_max_pool_size
+{
+  int max_pool_size;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_GET_PARAMETER(1, int, max_pool_size);
+#ifndef NO_POOL
+  GPUMirroredMemoryBlockBase::
+    changeMaxPoolSize(static_cast<size_t>(max_pool_size));
+#endif
+}
+//BIND_END

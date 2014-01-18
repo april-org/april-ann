@@ -522,8 +522,9 @@ bool Matrix<T>::putSubCol(int col, int first_row, T* vec, int vecsize) {
 }
 
 template <typename T>
-bool Matrix<T>::sameDim(const Matrix<T> *other) const {
-  return sameDim(other->matrixSize, other->numDim);
+template <typename O>
+bool Matrix<T>::sameDim(const Matrix<O> *other) const {
+  return sameDim(other->getDimPtr(), other->getNumDim());
 }
 
 template <typename T>

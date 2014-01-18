@@ -23,6 +23,7 @@ Master branch release
 
 ### API Changes
 
+- Added index matrix for min/max operations in `matrix` objects.
 - Added `serialize` and `deserialize` Lua functions, in `util` package.
 
 ### C/C++

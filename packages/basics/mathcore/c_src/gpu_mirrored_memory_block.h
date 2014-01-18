@@ -72,8 +72,8 @@ private:
 
 protected:
 #ifndef NO_POOL
-  const static size_t MAX_POOL_LIST_SIZE    = 200*1024*1024; // 200 Megabytes
-  const static size_t MIN_MEMORY_TH_IN_POOL = 20; // 20 bytes
+  static size_t MAX_POOL_LIST_SIZE;
+  static size_t MIN_MEMORY_TH_IN_POOL;
   static size_t pool_size;
   static PoolType *pool_lists;
   /// Auxiliary class for free of memory pool
@@ -365,7 +365,7 @@ public:
 	if (!isMMapped()) {
 #ifndef NO_POOL
 	  april_utils::list<void*> &l = (*pool_lists)[size];
-	  if (pool_size < MAX_POOL_LIST_SIZE && size >= MIN_MEMORY_TH_IN_POOL) {
+	  if (pool_size + size <= MAX_POOL_LIST_SIZE && size >= MIN_MEMORY_TH_IN_POOL) {
 	    pool_size += size;
 	    l.push_front(char_mem);
 	  }
@@ -388,7 +388,7 @@ public:
       if (!isMMapped()) {
 #ifndef NO_POOL
 	april_utils::list<char*> &l = (*pool_lists)[size];
-	if (pool_size < MAX_POOL_LIST_SIZE) {
+	if (pool_size+size <= MAX_POOL_LIST_SIZE && size >= MIN_MEMORY_TH_IN_POOL) {
 	  pool_size += size;
 	  l.push_front(char_mem);
 	}
@@ -431,6 +431,13 @@ public:
   }
   
   static void setUseMMapAllocation(bool v) { use_mmap_allocation = v; }
+
+#ifndef NO_POOL
+  static void changeMaxPoolSize(size_t max_pool_size) {
+    MAX_POOL_LIST_SIZE = max_pool_size;
+    // TODO: free pool memory if necessary
+  }
+#endif
 };
 
 ////////////////////////////////////////////////////////////////////////////

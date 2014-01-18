@@ -25,6 +25,7 @@
 #include <cmath> // para isfinite
 #include "luabindutil.h"
 #include "luabindmacros.h"
+#include "bind_matrix_int32.h"
 
 #define FUNCTION_NAME "read_vector"
 static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
@@ -953,12 +954,25 @@ public:
     if (argn > 0) {
       int dim;
       MatrixFloat *dest;
+      MatrixInt32 *argmin;
       LUABIND_GET_PARAMETER(1, int, dim);
       LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
+      LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixInt32, argmin, 0);
+      int *aux = 0;
+      if (argmin == 0) {
+	aux = new int[obj->getNumDim()];
+	for (int i=0; i<obj->getNumDim(); ++i) aux[i] = obj->getDimSize(i);
+	aux[dim-1] = 1;
+	argmin = new MatrixInt32(obj->getNumDim(), aux);
+      }
+      IncRef(argmin);
       if (dim < 1 || dim > obj->getNumDim())
 	LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
 			dim, obj->getNumDim());
-      LUABIND_RETURN(MatrixFloat, obj->min(dim-1, dest));
+      LUABIND_RETURN(MatrixFloat, obj->min(dim-1, dest, argmin));
+      LUABIND_RETURN(MatrixInt32, argmin);
+      DecRef(argmin);
+      delete[] aux;
     }
     else {
       int arg_min, raw_pos;
@@ -976,28 +990,31 @@ public:
     if (argn > 0) {
       int dim;
       MatrixFloat *dest;
+      MatrixInt32 *argmax;
       LUABIND_GET_PARAMETER(1, int, dim);
       LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
+      LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixInt32, argmax, 0);
+      int *aux = 0;
+      if (argmax == 0) {
+	aux = new int[obj->getNumDim()];
+	for (int i=0; i<obj->getNumDim(); ++i) aux[i] = obj->getDimSize(i);
+	aux[dim-1] = 1;
+	argmax = new MatrixInt32(obj->getNumDim(), aux);
+      }
+      IncRef(argmax);
       if (dim < 1 || dim > obj->getNumDim())
 	LUABIND_FERROR2("Incorrect dimension, found %d, expect in [1,%d]",
 			dim, obj->getNumDim());
-      LUABIND_RETURN(MatrixFloat, obj->max(dim-1, dest));
+      LUABIND_RETURN(MatrixFloat, obj->max(dim-1, dest, argmax));
+      LUABIND_RETURN(MatrixInt32, argmax);
+      DecRef(argmax);
+      delete[] aux;
     }
     else {
       int arg_max, raw_pos;
       LUABIND_RETURN(float, obj->max(arg_max, raw_pos));
       LUABIND_RETURN(int, arg_max+1);
     }
-  }
-//BIND_END
-
-//BIND_METHOD MatrixFloat max_sel_dim
-  {
-    LUABIND_CHECK_ARGN(==, 1);
-    int dim;
-    LUABIND_GET_PARAMETER(1, int, dim);
-    MatrixFloat *resul = obj->maxSelDim(dim-1);
-    LUABIND_RETURN(MatrixFloat, resul);
   }
 //BIND_END
 

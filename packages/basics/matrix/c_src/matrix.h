@@ -371,17 +371,24 @@ public:
       memory(m->getRawDataAccess()->getPPALForReadAndWrite()),
       coords(new int[m->numDim]) { }
     ~random_access_iterator() { delete[] coords; }
+    /// Raw access operation, CAUTION it is dangerous
+    T& operator[] (int raw_pos) {
+      return memory[raw_pos];
+    }
+    /// Acces for uni-dimensional matrices
     T& operator() (int i) {
       april_assert(m->numDim == 1);
       int raw_pos = m->computeRawPos(&i);
       return memory[raw_pos];
     }
+    /// Acces for bi-dimensional matrices
     T& operator() (int row, int col) {
       april_assert(m->numDim == 2);
       coords[0] = row; coords[1] = col;
       int raw_pos = m->computeRawPos(coords);
       return memory[raw_pos];
     }
+    /// Acces for N-dimensional matrices
     T& operator() (int coord0, int coord1, int coord2, ...) {
       april_assert(m->numDim >= 3);
       coords[0] = coord0;
@@ -397,6 +404,7 @@ public:
       int raw_pos = m->computeRawPos(coords);
       return memory[raw_pos];
     }
+    /// Acces for N-dimensional by using a vector of coordinates
     T& operator() (int *coords, int sz) {
       UNUSED_VARIABLE(sz);
       april_assert(m->numDim == sz);
@@ -420,6 +428,10 @@ public:
       memory(m->getRawDataAccess()->getPPALForRead()),
       coords(new int[m->numDim]) { }
     ~const_random_access_iterator() { delete[] coords; }
+    /// Raw access operation, CAUTION it is dangerous
+    const T& operator[] (int raw_pos) const {
+      return memory[raw_pos];
+    }
     const T& operator() (int i) const {
       april_assert(m->numDim == 1);
       int raw_pos = m->computeRawPos(&i);
@@ -636,7 +648,8 @@ public:
   bool putSubCol(int col, int first_row, T *vec, int vecsize);
 
   /// Returns true if they have the same dimension
-  bool sameDim(const Matrix<T> *other) const;
+  template<typename O>
+  bool sameDim(const Matrix<O> *other) const;
   bool sameDim(const int *dims, const int len) const;
 
   /// Returns a matrix of one less dimension, with the elements selected for the
@@ -747,9 +760,11 @@ public:
   T max(int &arg_max, int &arg_max_raw_pos) const;
   void minAndMax(T &min, T &max) const;
   
-  // Min and max over given dimension
-  Matrix<T> *min(int dim, Matrix<T> *dest=0);
-  Matrix<T> *max(int dim, Matrix<T> *dest=0);
+  // Min and max over given dimension, be careful, argmin and argmax matrices
+  // contains the min/max index at the given dimension, but starting in 1 (not
+  // in 0)
+  Matrix<T> *min(int dim, Matrix<T> *dest=0, Matrix<int32_t> *argmin=0);
+  Matrix<T> *max(int dim, Matrix<T> *dest=0, Matrix<int32_t> *argmax=0);
 
   Matrix<T> *maxSelDim(const int dim,
 		       IntGPUMirroredMemoryBlock *raw_positions=0,
