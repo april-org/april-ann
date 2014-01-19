@@ -838,14 +838,8 @@ Matrix<float> *Matrix<float>::inv() {
   INFO = clapack_sgetri(CblasColMajor,
 			A->numDim,A->getData(),A->stride[1],IPIV);
   checkLapackInfo(INFO);
-  delete IPIV;
-  MatrixFloat *ret;
-  if (major_order != CblasColMajor) {
-    ret = A->clone(CblasRowMajor);
-    delete A;
-  }
-  else ret = A;
-  return ret;
+  delete[] IPIV;
+  return A;
 }
 
 // FIXME: using WRAPPER for generalized CULA, LAPACK, float and complex numbers
@@ -854,9 +848,7 @@ template <>
 void Matrix<float>::svd(Matrix<float> **U, Matrix<float> **S, Matrix<float> **VT) {
   if (numDim != 2)
     ERROR_EXIT(128, "Only bi-dimensional matrices are allowed\n");
-  Matrix<float> *A = this;
-  if (this->major_order != CblasColMajor || !this->getIsContiguous())
-    A = this->clone(CblasColMajor);
+  Matrix<float> *A = this->clone(CblasColMajor);
   IncRef(A);
   int INFO;
   const int m = A->matrixSize[0]; // cols

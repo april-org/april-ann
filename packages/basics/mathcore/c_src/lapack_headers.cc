@@ -117,7 +117,8 @@ int clapack_sgesdd(const int Order, const int M, const int N, const int LDA,
 		   float *A, float *U, float *S, float *VT) {
   if (Order != CblasColMajor)
     ERROR_EXIT(256, "Only col_major order is allowed\n");
-  int info = LAPACKE_sgesdd(LAPACK_COL_MAJOR, 'A', M, N, A, LDA, S, U, M, VT, N);
+  int info = LAPACKE_sgesdd(LAPACK_COL_MAJOR, 'S',
+			    M, N, A, LDA, S, U, M, VT, N);
   return info;
 }
 #endif
