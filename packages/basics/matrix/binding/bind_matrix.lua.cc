@@ -949,7 +949,7 @@ public:
 //BIND_METHOD MatrixFloat min
   {
     LUABIND_CHECK_ARGN(>=,0);
-    LUABIND_CHECK_ARGN(<=,2);
+    LUABIND_CHECK_ARGN(<=,3);
     int argn = lua_gettop(L);
     if (argn > 0) {
       int dim;
@@ -985,7 +985,7 @@ public:
 //BIND_METHOD MatrixFloat max
   {
     LUABIND_CHECK_ARGN(>=,0);
-    LUABIND_CHECK_ARGN(<=,2);
+    LUABIND_CHECK_ARGN(<=,3);
     int argn = lua_gettop(L);
     if (argn > 0) {
       int dim;

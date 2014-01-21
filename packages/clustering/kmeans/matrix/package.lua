@@ -1,6 +1,6 @@
  package{ name = "clustering.kmeans.matrix",
    version = "1.0",
-   depends = { "util", "dataset", "matrix", "random", "math" },
+   depends = { "util", "dataset", "matrix", "random", "mathcore" },
    keywords = { "clustering", "K-means" },
    description = "K-means clustering algorithm",
    -- targets como en ant

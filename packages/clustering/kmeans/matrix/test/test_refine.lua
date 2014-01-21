@@ -1,6 +1,3 @@
-require "kmeans_matrix"
-
-
 filename = arg[1] or 'data.txt'
 data = matrix.fromFilename(filename)
 

@@ -27,7 +27,12 @@ function funcs.find_clusters(X,C,T,verbose)
   april_assert(Cdim[2] == D,
 	       "Different columns found between data and centroids: %d ~= %d\n",
 	       D, Cdim[2])
+  local T = T or matrixInt32(N,1)
+  april_assert(#T:dim() == 2 and T:dim(1) == N and T:dim(2) == 1 and isa(T,matrixInt32),
+	       "The tags matrix must be bi-dimensional matrixInt32 and with size %dx1\n",
+	       N)
   --
+  local auxXblock,mins
   local Mnew       = matrix[X:get_major_order()]
   local M2Y        = Mnew(BSIZE,K)
   local CScores    = Mnew(K):zeros()
@@ -39,6 +44,7 @@ function funcs.find_clusters(X,C,T,verbose)
   -- traverse in BSIZE blocks
   for b=1,N,BSIZE do
     local block_size = math.min(BSIZE,N-b+1)
+    if block_size ~= BSIZE then mins,auxXblock = nil,nil end
     local Xblock = X:slice({b,1},{block_size,D})
     local M2Yblock = M2Y:slice({1,1},{block_size,K})
     -- STEP 1: multiply Xblock by C to compute clusters distances
@@ -51,9 +57,10 @@ function funcs.find_clusters(X,C,T,verbose)
       M2Yrow:axpy(1.0,Ysq)
     end -- for i=1,block_size do
     -- STEP 3: compute closest centroid
-    local mins,argmins = M2Yblock:min(2) -- vectors of size block_size
+    mins,argmins = M2Yblock:min(2,mins,T:slice({b,1},{block_size,1}))
     -- STEP 4: accumulate score
-    local scores = Xblock:clone():pow(2):sum(2):axpy(1.0,mins)
+    auxXblock = auxXblock or Xblock:clone()
+    local scores = auxXblock:copy(Xblock):pow(2):sum(2):axpy(1.0,mins)
     for i=1,K do
       local v   = scores:get(i,1)
       local pos = argmins:get(i,1)
@@ -65,12 +72,6 @@ function funcs.find_clusters(X,C,T,verbose)
     end -- for i=1,K do
     -- sum all scores
     score = score + mins:sum()
-    if T then
-      -- tags
-      for i=1,block_size do
-	T:set(b+i-1,argmins:get(i,1))
-      end
-    end -- if T then
   end -- for b=1,N,BSIZE
   for k=1,K do
     local sc,c = CScores:get(k),Ccont:get(k)
@@ -82,7 +83,7 @@ function funcs.find_clusters(X,C,T,verbose)
     end
   end
   score = score/N
-  return score
+  return score,T
 end
 
 ----------------------------
@@ -120,7 +121,7 @@ function funcs.basic(X,C,params)
   local iter        = 0
   local score
   local discrepancy
-  local Csum_row,Csq_row,X_row
+  local Csum_row,Csq_row,X_row,mins,argmins,auxXblock
   repeat
     -- compute Ysquare
     local Ysq = C:clone():pow(2):sum(2) -- vector of size K
@@ -133,6 +134,7 @@ function funcs.basic(X,C,params)
     -- traverse in blocks of BSIZE
     for b=1,N,BSIZE do
       local block_size = math.min(BSIZE,N-b+1)
+      if block_size ~= BSIZE then mins,argmins,auxXblock = nil,nil,nil end
       local Xblock = X:slice({b,1},{block_size,D})
       local M2Yblock = M2Y:slice({1,1},{block_size,K})
       -- STEP 1: multiply Xblock by C to compute clusters distances
@@ -145,18 +147,21 @@ function funcs.basic(X,C,params)
 	M2Yrow:axpy(1.0,Ysq)
       end -- for i=1,block_size do
       -- STEP 3: compute closest centroid
-      local mins,argmins = M2Yblock:min(2) -- vectors of size block_size,1
+      mins,argmins = M2Yblock:min(2,mins,argmins)
       -- STEP 4: accumulate score
-      local scores = Xblock:clone():pow(2):sum(2):axpy(1.0,mins)
+      auxXblock = auxXblock or matrix.as(Xblock)
+      auxXblock = auxXblock:copy(Xblock):pow(2)
+      local scores = auxXblock:pow(2):sum(2):axpy(1.0,mins)
       score = score + mins:sum()
-
+      
       for i=1,block_size do
 	local cpos = argmins:get(i,1)
 	Csum_row   = Csum:select(1,cpos,Csum_row)
 	Csq_row    = Csq:select(1,cpos,Csq_row)
 	X_row      = Xblock:select(1,i)
+	X_row2     = auxXblock:select(1,i)
 	Csum_row:axpy(1.0, X_row)
-	Csq_row:axpy(1.0, X_row:clone():pow(2))
+	Csq_row:axpy(1.0, X_row2)
 	Ccont:set(cpos, Ccont:get(cpos) + 1)
       end
     end
@@ -165,11 +170,9 @@ function funcs.basic(X,C,params)
       local count = Ccont:get(i)
       if count > 0 then
 	local rcount = 1/count
-	for j=1,D do
-	  Csum(i,j):scal(rcount)
-	  Csq(i,j):scal(rcount)
-	end
 	local csum_i,c_i = Csum(i,':'),C(i,':')
+	csum_i:scal(rcount)
+	Csq(i,':'):scal(rcount)
 	local diff = (csum_i - c_i):abs():sum()
 	discrepancy = discrepancy + diff
 	c_i:copy(csum_i)
