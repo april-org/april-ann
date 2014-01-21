@@ -121,8 +121,8 @@ function funcs.basic(X,C,params)
   local iter        = 0
   local score
   local discrepancy
-  local Csum_row,Csq_row,X_row,mins,argmins,auxXblock
   repeat
+    local Csum_row,Csq_row,X_row,mins,argmins,auxXblock
     -- compute Ysquare
     local Ysq = C:clone():pow(2):sum(2) -- vector of size K
     -- counters set to zero
