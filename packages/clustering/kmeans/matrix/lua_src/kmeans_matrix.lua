@@ -195,7 +195,7 @@ function funcs.basic(X,C,params)
   end
   local norm2 = X:norm2()
   score = (score + norm2*norm2) / N
-  return score
+  return score,C
 end
 
 -----------------------------
@@ -293,7 +293,7 @@ function funcs.refine(X,C,params)
   end
   -- copy the best centroids to C
   C:copy(FM:select(1,best_J,FMiter))
-  return best_score
+  return best_score,C
 end
 
 -----------------------

@@ -5,10 +5,11 @@ data = matrix.fromFilename(filename)
 K = 2
 
 
-res = clustering.kmeans.matrix({ 
+res,C = clustering.kmeans.matrix({ 
     data = data,
     K = K,
     random = random(1234)
 })
 
+print(C)
 print(res)
