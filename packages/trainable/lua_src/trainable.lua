@@ -1751,7 +1751,7 @@ april_set_doc("trainable.dataset_pair_iterator", {
 		  "shuffled with replacement, shuffled with distribution.",
 		}, })
 
-local TOO_LARGE_NUMPATTERNS = 4000000
+local TOO_LARGE_NUMPATTERNS = 20000000
 function trainable.dataset_pair_iterator(t)
   local params = get_table_fields(
     {
@@ -1819,7 +1819,7 @@ function trainable.dataset_multiple_iterator(t)
   local iterator = iterator
   local april_assert = april_assert
   --
-  local TOO_LARGE_NUMPATTERNS = 4000000
+  local TOO_LARGE_NUMPATTERNS = 20000000
   local params = get_table_fields(
     {
       datasets       = { mandatory = false, default=nil },
@@ -1992,7 +1992,7 @@ function trainable.dataset_multiple_iterator(t)
       local bunch1 = ds1:getPatternBunch(bunch_indexes)
       k=k+1
       i=i+#bunch_indexes
-      if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
+      if k == MtAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
       return bunch1,bunch_indexes
     end
   end
