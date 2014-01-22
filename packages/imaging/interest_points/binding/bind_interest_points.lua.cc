@@ -81,6 +81,62 @@ using namespace InterestPoints;
 }
 //BIND_END
 
+//BIND_FUNCTION interest_points.classify_pixel
+{
+  // Recibe una imagen y la lista de puntos de interés
+  LUABIND_CHECK_ARGN(==,5);
+  ImageFloat *img;
+  int points;
+    
+  LUABIND_GET_PARAMETER(1, ImageFloat, img);
+  LUABIND_CHECK_PARAMETER(2, table);
+  LUABIND_CHECK_PARAMETER(3, table);
+  LUABIND_CHECK_PARAMETER(4, table);
+  LUABIND_CHECK_PARAMETER(5, table);
+
+  int point_vector_length[4];
+  vector<Point2D> point_vector[4];
+  
+  for (int vec=0; vec<4; vec++) {
+    LUABIND_TABLE_GETN(vec+2, point_vector_length[vec]);
+    point_vector[vec].resize(point_vector_length[vec]);
+    for (int i=1; i <= point_vector_length[vec]; ++i) {
+      lua_rawgeti(L,vec+2,i); // punto i-esimo, es una tabla, los vectores estan en pila[4-7]
+      lua_rawgeti(L,-1,1); // x
+      LUABIND_GET_PARAMETER(-1, float, point_vector[vec][i-1].x);
+      lua_pop(L,1); // la quitamos de la pila
+      lua_rawgeti(L,-1,2); // y
+      LUABIND_GET_PARAMETER(-1, float, point_vector[vec][i-1].y);
+      lua_pop(L,2); // la quitamos de la pila, tb la tabla
+    }
+  }
+
+  ImageFloat *result = InterestPoints::get_pixel_area(img, point_vector[0], point_vector[1], point_vector[2], point_vector[3]);
+
+  
+  LUABIND_RETURN(ImageFloat, result);
+}
+//BIND_END
+
+//BIND_FUNCTION interest_points.get_indexes_from_colored
+{
+  // Recibe una imagen y la lista de puntos de interés
+  LUABIND_CHECK_ARGN(==,1);
+  ImageFloat *img;
+  int points;
+    
+  LUABIND_GET_PARAMETER(1, ImageFloat, img);
+  
+  MatrixFloat *m_pixels;
+
+  MatrixFloat *result = InterestPoints::get_indexes_from_colored(img);
+
+  
+  LUABIND_RETURN(MatrixFloat, result);
+}
+
+//BIND_END
+
 //-----------------------------------------
 //
 // CLASS INTEREST POINTS

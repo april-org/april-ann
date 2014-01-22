@@ -195,121 +195,117 @@ namespace InterestPoints {
     return false xor reverse;
   }
   april_utils::vector < Point2D >
-    *extract_points_from_image_old (ImageFloat * pimg, float threshold_white,
-                                    float threshold_black, int local_context,
-                                    int duplicate_interval) {
+    *extract_points_from_image_old (
+            ImageFloat * pimg, float threshold_white,
+            float threshold_black, int local_context,
+            int duplicate_interval) {
 
-    /*        const int          contexto = 6;
-       const float threshold_white = 0.6; // <= es blanco
-       const float threshold_black = 0.4; // >= es negro
-       const float duplicate_interval = 2;
-     */
-    ImageFloat & img = *pimg;   // mas comodo
-    int
-      x,
-      y,
-      h = img.height, w = img.width;
+        ImageFloat & img = *pimg;   // mas comodo
+        int
+            x,
+            y,
+            h = img.height, w = img.width;
 
-    int *
-      stamp_max = new int[h];
-    int *
-      stamp_min = new int[h];
-    vector < xy > **stroke_vec_max = new vector < xy > *[h];  // resultado
-    vector < xy > **stroke_vec_min = new vector < xy > *[h];  // resultado
-    for (y = 0; y < h; ++y) {
-      stroke_vec_max[y] = new vector < xy >;
-      stroke_vec_min[y] = new vector < xy >;
-      stamp_max[y] = -1;
-      stamp_min[y] = -1;
-    }
-    vector < xy > result_xy;
-    max_finder < xy > maxf (local_context, local_context, &result_xy);
-    min_finder < xy > minf (local_context, local_context, &result_xy);
+        int *
+            stamp_max = new int[h];
+        int *
+            stamp_min = new int[h];
+        vector < xy > **stroke_vec_max = new vector < xy > *[h];  // resultado
+        vector < xy > **stroke_vec_min = new vector < xy > *[h];  // resultado
+        for (y = 0; y < h; ++y) {
+            stroke_vec_max[y] = new vector < xy >;
+            stroke_vec_min[y] = new vector < xy >;
+            stamp_max[y] = -1;
+            stamp_min[y] = -1;
+        }
+        vector < xy > result_xy;
+        max_finder < xy > maxf (local_context, local_context, &result_xy);
+        min_finder < xy > minf (local_context, local_context, &result_xy);
 
-    // avanzamos columna a columna por toda la imagen
-    for (x = 0; x < w; ++x) {
-        // el borde inferior de los trazos, subiendo en la columna
-        for (y = h - 1; y > 0; --y) {
-            if ((y == h - 1 || is_white (img (x, y + 1), threshold_white)) && (is_black (img (x, y - 1), threshold_black))) { 
-                int
-                    index = -1;
-                if (stamp_max[y] == x)
-                    index = y;
-                else if (y - 1 >= 0 && stamp_max[y - 1] == x)
-                    index = y - 1;
-                else if (y + 1 < h && stamp_max[y + 1] == x)
-                    index = y + 1;
-                else if (y - 2 >= 0 && stamp_max[y - 2] == x)
-                    index = y - 2;
-                else if (y + 2 < h && stamp_max[y + 2] == x)
-                    index = y + 2;
-                else {
-                    process_stroke_max (maxf, stroke_vec_max[y]);
-                    index = y;
+        // avanzamos columna a columna por toda la imagen
+        for (x = 0; x < w; ++x) {
+            // el borde inferior de los trazos, subiendo en la columna
+            for (y = h - 1; y > 0; --y) {
+                if ((y == h - 1 || is_white (img (x, y + 1), threshold_white)) && (is_black (img (x, y - 1), threshold_black))) { 
+                    int
+                        index = -1;
+                    if (stamp_max[y] == x)
+                        index = y;
+                    else if (y - 1 >= 0 && stamp_max[y - 1] == x)
+                        index = y - 1;
+                    else if (y + 1 < h && stamp_max[y + 1] == x)
+                        index = y + 1;
+                    else if (y - 2 >= 0 && stamp_max[y - 2] == x)
+                        index = y - 2;
+                    else if (y + 2 < h && stamp_max[y + 2] == x)
+                        index = y + 2;
+                    else {
+                        process_stroke_max (maxf, stroke_vec_max[y]);
+                        index = y;
+                    }
+                    stroke_vec_max[index]->push_back (xy (x, y));
+                    if (index != y) {
+                        swap (stroke_vec_max[y], stroke_vec_max[index]);
+                    }
+                    stamp_max[y] = x + 1;
+                    //
+                    --y;
                 }
-                stroke_vec_max[index]->push_back (xy (x, y));
-                if (index != y) {
-                    swap (stroke_vec_max[y], stroke_vec_max[index]);
+            }
+
+            // el borde superior de los trazos, bajando en la columna
+            for (y = 0; y < h - 1; ++y) {
+                if (is_black (img (x, y + 1), threshold_black) &&
+                        (y == 0 || is_white (img (x, y - 1), threshold_white))) {
+
+                    int
+                        index = -1;
+                    if (stamp_min[y] == x)
+                        index = y;
+                    else if (y - 1 >= 0 && stamp_min[y - 1] == x)
+                        index = y - 1;
+                    else if (y + 1 < h && stamp_min[y + 1] == x)
+                        index = y + 1;
+                    else if (y - 2 >= 0 && stamp_min[y - 2] == x)
+                        index = y - 2;
+                    else if (y + 2 < h && stamp_min[y + 2] == x)
+                        index = y + 2;
+                    else {
+                        process_stroke_min (minf, stroke_vec_min[y]);
+                        index = y;
+                    }
+                    stroke_vec_min[index]->push_back (xy (x, y));
+                    if (index != y) {
+                        swap (stroke_vec_min[y], stroke_vec_min[index]);
+                    }
+                    stamp_min[y] = x + 1;
+                    ++y;
                 }
-                stamp_max[y] = x + 1;
-                //
-                --y;
             }
         }
-
-        // el borde superior de los trazos, bajando en la columna
-        for (y = 0; y < h - 1; ++y) {
-            if (is_black (img (x, y + 1), threshold_black) &&
-                    (y == 0 || is_white (img (x, y - 1), threshold_white))) {
-
-                int
-                    index = -1;
-                if (stamp_min[y] == x)
-                    index = y;
-                else if (y - 1 >= 0 && stamp_min[y - 1] == x)
-                    index = y - 1;
-                else if (y + 1 < h && stamp_min[y + 1] == x)
-                    index = y + 1;
-                else if (y - 2 >= 0 && stamp_min[y - 2] == x)
-                    index = y - 2;
-                else if (y + 2 < h && stamp_min[y + 2] == x)
-                    index = y + 2;
-                else {
-                    process_stroke_min (minf, stroke_vec_min[y]);
-                    index = y;
-                }
-                stroke_vec_min[index]->push_back (xy (x, y));
-                if (index != y) {
-                    swap (stroke_vec_min[y], stroke_vec_min[index]);
-                }
-                stamp_min[y] = x + 1;
-                ++y;
-            }
+        for (y = 0; y < h; ++y) {
+            process_stroke_max (maxf, stroke_vec_max[y]);
+            process_stroke_min (minf, stroke_vec_min[y]);
+            delete stroke_vec_max[y];
+            delete stroke_vec_min[y];
         }
-    }
-    for (y = 0; y < h; ++y) {
-        process_stroke_max (maxf, stroke_vec_max[y]);
-        process_stroke_min (minf, stroke_vec_min[y]);
-        delete stroke_vec_max[y];
-        delete stroke_vec_min[y];
-    }
-    delete[]stroke_vec_max;
-    delete[]stroke_vec_min;
-    delete[]stamp_max;
-    delete[]stamp_min;
-    // convertir stroke_set a Point2D
-    int
-        sz = result_xy.size ();
-    vector < Point2D > *result_Point2D = new vector < Point2D > (sz);
-    vector < Point2D > &vec = *result_Point2D;
-    for (int i = 0; i < sz; ++i) {
-        vec[i].x = result_xy[i].x;
-        vec[i].y = result_xy[i].y;
-    }
+        delete[]stroke_vec_max;
+        delete[]stroke_vec_min;
+        delete[]stamp_max;
+        delete[]stamp_min;
+        // convertir stroke_set a Point2D
+        int
+            sz = result_xy.size ();
+        vector < Point2D > *result_Point2D = new vector < Point2D > (sz);
+        vector < Point2D > &vec = *result_Point2D;
+        for (int i = 0; i < sz; ++i) {
+            vec[i].x = result_xy[i].x;
+            vec[i].y = result_xy[i].y;
+        }
 
-    //Delete duplicates
-    remove_neighborns (vec, duplicate_interval, h);
-    return result_Point2D;
+        //Delete duplicates
+        remove_neighborns (vec, duplicate_interval, h);
+        return result_Point2D;
 
     }
 
@@ -320,11 +316,6 @@ namespace InterestPoints {
           int local_context, int duplicate_interval)
   {
 
-      /*        const int          contexto = 6;
-                const float threshold_white = 0.6; // <= es blanco
-                const float threshold_black = 0.4; // >= es negro
-                const float duplicate_interval = 2;
-                */
       ImageFloat & img = *pimg;   // mas comodo
       int
           x,
@@ -440,14 +431,235 @@ namespace InterestPoints {
       vector < Point2D > &vec_min = *local_minima;
       for (int i = 0; i < sz; ++i) {
           local_minima->push_back (Point2D (result_max[i].x, result_max[i].y));
-          //                            vec_max[i].first  = result_max[i].x;
-          //                            vec_max[i].second = result_max[i].y;
+          //                            vec_max[i].x  = result_max[i].x;
+          //                            vec_max[i].y = result_max[i].y;
       }
 
       //Delete duplicates
       remove_neighborns (vec_min, duplicate_interval, h);
       ///                        return result_Point2D;
 
+  }
+
+  static Point2D get_next_point(vector<Point2D> v, int index, int width, float default_y)
+  {
+      assert(index+1 >= 0 && "Invalid index");
+
+      if (v.size() > 0) {
+          if (index < int(v.size())-1) {
+              return v[index+1];
+          }
+          else {
+              return Point2D(width-1.0f, v.back().y);
+          }
+      } else {
+          return Point2D(width-1.0f, default_y);
+      }
+  }
+
+  static Point2D get_first_point(vector<Point2D> v, float default_y, int *index)
+  {
+      Point2D result;
+      if (!v.empty()) {
+          result.x  = 0;
+          result.y = v[0].y;
+          if (v[0].x == 0) {
+              *index = 0; // index is the last index we have used in v
+          } 
+          else {
+              *index = -1;
+          }
+      } 
+      else {
+          result.x = 0.0f;
+          result.y = default_y;
+          *index = -1;
+      }
+
+      return result;
+  }
+
+  static void classify_pixel(ImageFloat *img, ImageFloat *result, int col, int ini_row, int end_row, float value) {
+
+      for(int row = ini_row; row < end_row; ++row) {
+          if (is_black((*img)(col,row), 0.5)) {
+              (*result)(col,row) = value;
+          }
+
+      } 
+
+
+  }
+  const float ASC  = 0.2;
+  const float BODY = 0.4;
+  const float DESC = 0.6;
+
+  ImageFloat *get_pixel_area(ImageFloat *source,
+          vector<Point2D> ascenders,
+          vector<Point2D> upper_baseline, 
+          vector<Point2D> lower_baseline,
+          vector<Point2D> descenders
+          ){ 
+
+      assert(!upper_baseline.empty() && "Upper baseline must not be empty");
+      assert(!lower_baseline.empty() && "Lower baseline must not be empty");
+
+      int width = source->width;
+      int height = source->height;
+
+      /* Definimos 4 alturas relevantes en las imagenes
+       *  
+       *   IMAGEN DESTINO              IMAGEN ORIGEN
+       *
+       *   - 0 --------------------------- cur_asc -
+       *   |               ascenders               |
+       *   - dst_upper ----------------- cur_upper -
+       *   |                  body                 |
+       *   - dst_lower ----------------- cur_lower -
+       *   |               descenders              |
+       *   - dst_height-1 --------------- cur_desc -
+       */
+
+
+
+      int dims[2] = {height, width};
+      MatrixFloat *result_mat = new MatrixFloat(2, dims);
+      result_mat->fill(1.0);
+      ImageFloat  *result = new ImageFloat(result_mat);
+
+
+
+      int asc_idx = 0;
+      int upper_idx = 0;
+      int lower_idx = 0;
+      int desc_idx = 0;
+
+      Point2D next_asc, next_upper, next_lower, next_desc;
+      Point2D prev_asc, prev_upper, prev_lower, prev_desc;
+
+      prev_asc = get_first_point(ascenders, 0.0f, &asc_idx);
+      next_asc = get_next_point(ascenders, asc_idx, width, 0.0f);
+      asc_idx++;
+
+      prev_desc = get_first_point(descenders, height-1.0f, &desc_idx);
+      next_desc = get_next_point(descenders, desc_idx, width, height-1.0f);
+      desc_idx++;
+
+      // Default value won't be used due to precondition
+      prev_upper = get_first_point(upper_baseline, -9999.9f, &upper_idx);
+      next_upper = get_next_point(upper_baseline, upper_idx, width, -9999.9f);
+      upper_idx++;
+
+      // Default value won't be used due to precondition
+      prev_lower = get_first_point(lower_baseline, -9999.9f, &lower_idx);
+      next_lower = get_next_point(lower_baseline, lower_idx, width, -9999.9f);
+      lower_idx++;
+
+      int body_columns=0;
+      float body_size_sum=0.0f;
+
+      int BASELINE_SLACK=int(0.02f*height);
+
+      for (int column = 0; column < width; column++) {
+          if (column > next_asc.x) {
+              prev_asc = next_asc;
+              next_asc = get_next_point(ascenders, asc_idx, width, 0.0f);
+              asc_idx++;
+          }
+          if (column > next_desc.x) {
+              prev_desc = next_desc;
+              next_desc = get_next_point(descenders, desc_idx, width, height-1.0f);
+              desc_idx++;
+          }
+          if (column > next_upper.x) {
+              prev_upper = next_upper;
+              next_upper = get_next_point(upper_baseline, upper_idx, width, 9999.9f);
+              upper_idx++;
+          }
+          if (column > next_lower.x) {
+              prev_lower = next_lower;
+              next_lower = get_next_point(lower_baseline, lower_idx, width, 9999.9f);
+              lower_idx++;
+          }
+
+          float cur_upper = max(0.0f, prev_upper.y + 
+                  ((column - prev_upper.x) / (next_upper.x-prev_upper.x)) * 
+                  (next_upper.y - prev_upper.y) - BASELINE_SLACK);
+          float cur_lower = min(height - 1.0f, prev_lower.y + 
+                  ((column - prev_lower.x) / (next_lower.x - prev_lower.x)) *
+                  (next_lower.y - prev_lower.y) + BASELINE_SLACK);
+
+          if (cur_upper > cur_lower) {
+              swap(cur_upper, cur_lower);
+          }
+
+
+          float cur_asc   = min(cur_upper, prev_asc.y + 
+                  ((column - prev_asc.x) / (next_asc.x - prev_asc.x) ) *
+                  (next_asc.y   - prev_asc.y));
+          float cur_desc  = max(cur_lower, prev_desc.y +
+                  ((column - prev_desc.x) / (next_desc.x - prev_desc.x)) *
+                  (next_desc.y  - prev_desc.y));
+
+          // Classify the pixels
+
+          int asc = round(cur_asc);
+          int upper = round(cur_upper);
+          int lower = round(cur_lower);
+          int desc = round(cur_desc);
+          //          printf("%d %d %d %d %d\n", column, asc, upper, lower, desc); 
+          classify_pixel(source, result, column, asc, upper, ASC);
+          classify_pixel(source, result, column, upper, lower, BODY);
+          classify_pixel(source, result, column, lower, desc, DESC);
+
+      }
+      return result;
+  }
+
+  MatrixFloat * get_indexes_from_colored(ImageFloat *img) {
+
+      // Compute the number of pixels
+      int total = 0;
+
+      int width  = img->width;
+      int height = img->height;
+                  float eps = 0.05;
+      for (int col = 0; col < width; ++col)
+          {
+              for(int row = 0; row < height; ++row) {
+                  if (is_black((*img)(col,row),DESC+eps)) total++;
+              }
+          }
+
+          int dims[2] = {total,2};
+          MatrixFloat * m_pixels = new MatrixFloat(2, dims);
+
+          int current = 0;
+          for (int col= 0; col < width; ++col){
+
+              for(int row = 0; row < height; ++row) {
+                  float value = (*img)(col,row);
+                  float tag = 0;
+                  float index = (row)*width+col+1;
+
+                  if (is_black(value,DESC+eps)) {
+                      // Get the label
+                      if (value <= ASC+eps) {
+                          tag = 1;  
+                      }
+                      else if(value <= BODY+eps) {
+                          tag = 2;
+                      }
+                      else if(value <= DESC+eps) {
+                          tag = 3;
+                      }
+                      (*m_pixels)(current,0) = index;
+                      (*m_pixels)(current,1) = tag;
+                      current++;
+                  }
+              }
+          }
+          return m_pixels;
   }
 
   // Class Set Points
@@ -458,24 +670,24 @@ namespace InterestPoints {
       size = 0;
       num_points = 0;
   }
-  
+
   void SetPoints::addPoint(int component, interest_point ip){
-    if (component < 0 || component >= size){
-        fprintf(stderr, "Warning the component %d does not exist!! (Total components %d)\n", component, size);    
-        return;
-    }
-    (*ccPoints)[component].push_back(ip);
-    ++num_points;
+      if (component < 0 || component >= size){
+          fprintf(stderr, "Warning the component %d does not exist!! (Total components %d)\n", component, size);    
+          return;
+      }
+      (*ccPoints)[component].push_back(ip);
+      ++num_points;
 
   }
-   
+
   void SetPoints::addComponent() {
-    if ((size_t) size != ccPoints->size())
-        fprintf(stderr, "Size sincronization error %d %lu\n", size, ccPoints->size());
-    april_assert("Size sincronization error" && (size_t)size == ccPoints->size());
-    
-    (*ccPoints).push_back(PointComponent());
-    ++size;
+      if ((size_t) size != ccPoints->size())
+          fprintf(stderr, "Size sincronization error %d %lu\n", size, ccPoints->size());
+      april_assert("Size sincronization error" && (size_t)size == ccPoints->size());
+
+      (*ccPoints).push_back(PointComponent());
+      ++size;
   } 
   // Class Interest Points
   ConnectedPoints::ConnectedPoints(ImageFloat *img):  SetPoints::SetPoints(img){
@@ -489,12 +701,12 @@ namespace InterestPoints {
   }
 
   void SetPoints::addComponent(PointComponent &component) {
-    if ((size_t) size != ccPoints->size())
-        fprintf(stderr, "Size sincronization error %d %lu\n", size, ccPoints->size());
-    april_assert("Size sincronization error" && (size_t)size == ccPoints->size());
-    
-    (*ccPoints).push_back(component);
-    ++size;
+      if ((size_t) size != ccPoints->size())
+          fprintf(stderr, "Size sincronization error %d %lu\n", size, ccPoints->size());
+      april_assert("Size sincronization error" && (size_t)size == ccPoints->size());
+
+      (*ccPoints).push_back(component);
+      ++size;
   }
 
   void ConnectedPoints::addPoint(interest_point ip) {
@@ -502,14 +714,14 @@ namespace InterestPoints {
       int x, y;
       x = ip.x;
 
-          // It is local maxima, add 1 to the y for take the component
-          if( ip.natural_type) {
-              y = ip.y + 1;
-          } 
-          else {
-              y = ip.y - 1;
+      // It is local maxima, add 1 to the y for take the component
+      if( ip.natural_type) {
+          y = ip.y + 1;
+      } 
+      else {
+          y = ip.y - 1;
 
-          }
+      }
       int component = this->imgCCs->getComponent(x,y);
       if (component >= 0) {
           SetPoints::addPoint(component,ip);
@@ -527,20 +739,20 @@ namespace InterestPoints {
    **/ 
   bool componentComparator(PointComponent &v1, PointComponent &v2) {
 
-    if (v1.size() == 0) {
-        return false;
-    }
-    
-    if (v2.size() == 0) {
-      return true;
-    }
+      if (v1.size() == 0) {
+          return false;
+      }
 
-    return v1[0] < v2[0];
+      if (v2.size() == 0) {
+          return true;
+      }
+
+      return v1[0] < v2[0];
 
   }
 
   bool interestPointXComparator(interest_point &v1, interest_point &v2) {
-    return v1.x < v2.x;
+      return v1.x < v2.x;
   }
 
   void PointComponent::sort_by_confidence() {
@@ -691,12 +903,12 @@ namespace InterestPoints {
 
           PointComponent *base_line = component.get_points_by_type(BASELINE);
           double sse = base_line->line_least_squares();
-           
+
           //Compute the regression over the points of the line
           printf("%d %d %f %f\n", cc, (int)base_line->size(),sse, sse/n_points);
 
           if (sse/n_points < threshold) {
-             mySet->addComponent(*base_line);
+              mySet->addComponent(*base_line);
           }
       }
 
