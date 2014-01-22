@@ -72,7 +72,13 @@ using namespace KNN;
 }
 //BIND_END
 
-//BIND_METHOD KDTreeFloat search
+//BIND_METHOD KDTreeFloat searchNN
 {
+  MatrixFloat *point;
+  double distance;
+  LUABIND_GET_PARAMETER(1,MatrixFloat,point);
+  int idx = obj->searchNN(point,distance,0);
+  LUABIND_RETURN(int, idx+1);
+  LUABIND_RETURN(double, distance);
 }
 //BIND_END

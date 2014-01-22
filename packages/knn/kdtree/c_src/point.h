@@ -106,6 +106,16 @@ namespace KNN {
     const_iterator begin() const { return const_iterator(base, stride); }
     const_iterator end(const int D) const { return const_iterator(base+D*stride, stride); } 
     int getId() const { return id; }
+    double dist(const Point &other, const int D) const {
+      const T *this_ptr  = base;
+      const T *other_ptr = other.base;
+      double d = 0.0;
+      for (int i=0; i<D; ++i, this_ptr+=stride, other_ptr+=other.stride) {
+	double diff = (*this_ptr) - (*other_ptr);
+	d += diff * diff;
+      }
+      return d;
+    }
   };
 }
 #endif // KNN_POINT_H

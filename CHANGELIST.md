@@ -6,6 +6,7 @@ Master branch release
 
 ### Unstable changes
 
+- Added `clustering` and `knn` algorithms.
 - Added `ann.components.zca_whitening` and `ann.components.pca_whitening`
   classes.
 - Added `stats.zca_whitening` and `stats.pca_whitening` functions.

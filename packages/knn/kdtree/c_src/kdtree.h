@@ -21,6 +21,7 @@
 #ifndef KDTREE_H
 #define KDTREE_H
 
+#include <cfloat>
 #include "MersenneTwister.h"
 #include "referenced.h"
 #include "point.h"
@@ -30,12 +31,14 @@
 
 namespace KNN {
 
-  /// KDTree class, for fast KNN
+  /// KDTree class for KNN search. It is not a complete KDTree, it isn't allow
+  /// to insert or remove points. All data is pushed as bi-dimensional matrices,
+  /// and after that the KDTree is build.
   template<typename T>
   class KDTree : public Referenced {
     typedef april_utils::vector< Point<T> > PointsList;
     static const size_t MEDIAN_APPROX_SIZE=20;
-
+    
     // For median computation
     struct MedianCompare {
       const int axis;
@@ -47,7 +50,6 @@ namespace KNN {
     
     // Node of the KDTree
     class KDNode {
-      friend class KDTree;
       Point<T>    point;
       KDNode     *left;
       KDNode     *right;
@@ -62,9 +64,59 @@ namespace KNN {
 	delete left;
 	delete right;
       }
-      
+      const Point<T> &getPoint() const { return point; }
+      const KDNode *getLeft() const { return left; }
+      const KDNode *getRight() const { return right; }
+      T getSplitValue() const { return split_value; }
     };
-
+    
+    /// Class base for KNN search. It implements the interface for searching
+    /// decisions, stores the k-best (or 1-best), and indicates when to stop.
+    class Searcher {
+    public:
+      virtual ~Searcher() { }
+      virtual void process(const Point<T> &node_point) = 0;
+      virtual int side(const T split_value, const int axis) const = 0;
+      virtual bool leftIntersection(const T split_value, const int axis) const = 0;
+      virtual bool rightIntersection(const T split_value, const int axis) const = 0;
+    };
+    
+    /// Specialization of Searcher for the NN search
+    class OneBestSearcher : public Searcher {
+      Point<T> &X;
+      int best_id;
+      double best_distance;
+      const int D;
+    public:
+      OneBestSearcher(Point<T> &X, const int D) :
+	X(X), best_id(-1), best_distance(DBL_MAX), D(D) {
+      }
+      virtual ~OneBestSearcher() { }
+      virtual void process(const Point<T> &node_point) {
+	const double current_distance = X.dist(node_point, D);
+	if (current_distance < best_distance) {
+	  best_distance = current_distance;
+	  best_id       = node_point.getId();
+	}
+      }
+      virtual int side(const T split_value, const int axis) const {
+	if (X[axis] < split_value) return 0;
+	else return 1;
+      }
+      virtual bool leftIntersection(const T split_value, const int axis) const {
+	const double diff = X[axis] - split_value;
+	const double intersection_distance = diff*diff;
+	return intersection_distance < best_distance || X[axis] < split_value;
+      }
+      virtual bool rightIntersection(const T split_value, const int axis) const {
+	const double diff = X[axis] - split_value;
+	const double intersection_distance = diff*diff;
+	return intersection_distance < best_distance || X[axis] > split_value;
+      }
+      int getOneBestIndex() const { return best_id; }
+      double getOneBestDistance() const { return best_distance; }
+    };
+    
     // properties
     
     const int D; ///< The number of dimensions
@@ -132,14 +184,43 @@ namespace KNN {
       return node;
     }
 
+    /// Generic search method, uses an instance of Searcher to compute
+    /// intersections with hyperplane and the search hypersphere.
+    void searchKNN(Searcher &searcher,
+		   const KDNode *node,
+		   const int depth) {
+      if (node == 0) return;
+      const Point<T> &node_point = node->getPoint();
+      const T split_value = node->getSplitValue();
+      const KDNode *left  = node->getLeft();
+      const KDNode *right = node->getRight();
+      const int axis      = depth%D;
+      //
+      searcher.process(node_point);
+      switch(searcher.side(split_value,axis)) {
+      case 0:
+	searchKNN(searcher, left, depth+1);
+	if (searcher.rightIntersection(split_value,axis))
+	  searchKNN(searcher, right, depth+1);
+	break;
+      case 1:
+	searchKNN(searcher, right, depth+1);
+	if (searcher.leftIntersection(split_value,axis))
+	  searchKNN(searcher, left, depth+1);
+	break;
+      default:
+	;
+      }
+    }
+
     /// For debugging purposes
-    void print(KDNode *node, int depth) {
+    void print(const KDNode *node, int depth) {
       if (node == 0) return;
       for (int i=0; i<depth; ++i)
 	printf("  ");
-      printf("%d %f\n", node->point.getId(), node->split_value);
-      print(node->left,  depth+1);
-      print(node->right, depth+1);
+      printf("%d %f\n", node->getPoint().getId(), node->getSplitValue());
+      print(node->getLeft(),  depth+1);
+      print(node->getRight(), depth+1);
     }
     
   public:
@@ -158,12 +239,13 @@ namespace KNN {
     
     /// Returns a matrix and a row from an index point
     Matrix<T> *getMatrixAndRow(int index, int &row) {
+      april_assert(index >= 0 && index < N);
       int izq,der,m;
-      izq = 0; der = N;
+      izq = 0; der = static_cast<int>(first_index.size());
       do {
 	m = (izq+der)/2;
 	if (first_index[m] <= index) 
-	  izq = m; 
+	  izq = m;
 	else 
 	  der = m;
       } while (izq < der-1);
@@ -204,8 +286,31 @@ namespace KNN {
       delete points_list;
     }
     
-    void searchNN(Matrix<T> *point) {
-      
+    /// Method for 1-NN search, it receives a matrix with one point, and returns
+    /// the best point index (in the order of they were pushed), the distance to
+    /// the best, and a matrix with the best point (if needed, that is, result
+    /// pointer != 0).
+    int searchNN(Matrix<T> *point_matrix,
+		 double &distance,
+		 Matrix<T> **result) {
+      if (point_matrix->getNumDim() != 2 || point_matrix->getDimSize(0) != 1)
+	ERROR_EXIT(256, "A bi-dimensional matrix with one row is needed\n");
+      if (point_matrix->getDimSize(1) != D)
+	ERROR_EXIT2(256, "Incorrect number of columns, expected %d, found %d\n",
+		    D, point_matrix->getDimSize(1));
+      Point<T> point(point_matrix, 0, -1);
+      OneBestSearcher one_best(point,D);
+      searchKNN(one_best, root, 0);
+      int best_id = one_best.getOneBestIndex();
+      distance = one_best.getOneBestDistance();
+      if (result != 0) {
+	int best_row;
+	Matrix<T> *best_matrix = getMatrixAndRow(best_id, best_row);
+	int coords[2] = { best_row, 0 };
+	int sizes[2]  = { 1, D };
+	*result = new Matrix<T>(best_matrix, coords, sizes);
+      }
+      return best_id;
     }
     
     /// For debugging purposes

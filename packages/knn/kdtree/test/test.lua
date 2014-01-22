@@ -8,5 +8,17 @@ kdt:push(m1)
 kdt:push(m2)
 kdt:build()
 kdt:print()
-best = kdt:searchNN(matrix(4,1):uniformf(0,1,rnd))
-print(best)
+p = matrix(1,4):uniformf(0,1,rnd)
+bestid,bestdist,best = kdt:searchNN(p)
+print(p)
+print(bestid)
+print(bestdist)
+
+for i=1,m1:dim(1) do
+  local aux = m1(i,':')
+  print(i, (aux-p):pow(2):sum())
+end
+for i=1,m2:dim(1) do
+  local aux = m2(i,':')
+  print(m1:dim(1)+i-1, (aux-p):pow(2):sum())
+end
