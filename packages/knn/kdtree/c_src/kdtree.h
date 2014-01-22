@@ -39,7 +39,7 @@ namespace KNN {
   template<typename T>
   class KDTree : public Referenced {
     typedef april_utils::vector< Point<T> > PointsList;
-    static const size_t MEDIAN_APPROX_SIZE=20;
+    static const size_t MEDIAN_APPROX_SIZE=40;
     
     // For median computation
     struct MedianCompare {
@@ -108,12 +108,12 @@ namespace KNN {
       virtual bool leftIntersection(const T split_value, const int axis) const {
 	const double diff = X[axis] - split_value;
 	const double intersection_distance = diff*diff;
-	return intersection_distance <= best_distance || X[axis]<split_value;
+	return !(intersection_distance > best_distance) || X[axis]<split_value;
       }
       virtual bool rightIntersection(const T split_value, const int axis) const {
 	const double diff = X[axis] - split_value;
 	const double intersection_distance = diff*diff;
-	return intersection_distance <= best_distance || X[axis]>=split_value;
+	return !(intersection_distance > best_distance) || !(X[axis]<split_value);
       }
       int getOneBestIndex() const { return best_id; }
       double getOneBestDistance() const { return best_distance; }
@@ -160,12 +160,12 @@ namespace KNN {
       virtual bool leftIntersection(const T split_value, const int axis) const {
 	const double diff = X[axis] - split_value;
 	const double intersection_distance = diff*diff;
-	return intersection_distance <= kbest_distance || X[axis]<split_value;
+	return !(intersection_distance > kbest_distance) || X[axis]<split_value;
       }
       virtual bool rightIntersection(const T split_value, const int axis) const {
 	const double diff = X[axis] - split_value;
 	const double intersection_distance = diff*diff;
-	return intersection_distance <= kbest_distance || X[axis]>=split_value;
+	return !(intersection_distance > kbest_distance) || !(X[axis]<split_value);
       }
       void getBestData(april_utils::vector<int> &indices,
 		       april_utils::vector<double> &distances) {

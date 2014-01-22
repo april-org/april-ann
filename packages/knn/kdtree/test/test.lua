@@ -4,7 +4,7 @@ local rnd = random(1234)
 local m1  = matrix(N,D):uniformf(-1,1,rnd)
 local m2  = matrix(N,D):uniformf(-1,1,rnd)
 --
-local kdt = knn.kdtree(m1:dim(2),rnd)
+local kdt = knn.kdtree(m1:dim(2),random(8424))
 kdt:push(m1)
 kdt:push(m2)
 kdt:build()
