@@ -20,5 +20,5 @@ for i=1,m1:dim(1) do
 end
 for i=1,m2:dim(1) do
   local aux = m2(i,':')
-  print(m1:dim(1)+i-1, (aux-p):pow(2):sum())
+  print(m1:dim(1)+i, (aux-p):pow(2):sum())
 end
