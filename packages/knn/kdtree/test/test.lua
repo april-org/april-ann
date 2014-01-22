@@ -1,19 +1,26 @@
 local N   = 1000000
-local D   = 100
+local D   = 10
 local rnd = random(1234)
-local m1  = matrix(N,D):uniformf(0,1,rnd)
-local m2  = matrix(N,D):uniformf(0,1,rnd)
+local m1  = matrix(N,D):uniformf(-1,1,rnd)
+local m2  = matrix(N,D):uniformf(-1,1,rnd)
 --
 local kdt = knn.kdtree(m1:dim(2),rnd)
 kdt:push(m1)
 kdt:push(m2)
 kdt:build()
 -- KDTREE SEARCH
-local p = matrix(1,D):uniformf(0,1,rnd)
+local p = matrix(1,D):uniformf(-1,1,rnd)
 local bestid,bestdist,best = kdt:searchNN(p)
 print(p)
 print(bestid)
 print(bestdist)
+print("stats:",kdt:stats())
+-- KNN SEARCH
+local result = kdt:searchKNN(4,p)
+for i=1,#result do
+  print(i, result[i][1], result[i][2])
+end
+print("stats:",kdt:stats())
 -- NAIVE LINEAR SEARCH
 local besti
 local bestd = math.huge

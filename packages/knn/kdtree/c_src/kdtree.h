@@ -28,6 +28,8 @@
 #include "qsort.h"
 #include "matrix.h"
 #include "maxmin.h"
+#include "min_heap.h"
+#include "pair.h"
 
 namespace KNN {
 
@@ -106,15 +108,77 @@ namespace KNN {
       virtual bool leftIntersection(const T split_value, const int axis) const {
 	const double diff = X[axis] - split_value;
 	const double intersection_distance = diff*diff;
-	return intersection_distance < best_distance || X[axis] < split_value;
+	return intersection_distance <= best_distance || X[axis]<split_value;
       }
       virtual bool rightIntersection(const T split_value, const int axis) const {
 	const double diff = X[axis] - split_value;
 	const double intersection_distance = diff*diff;
-	return intersection_distance < best_distance || X[axis] > split_value;
+	return intersection_distance <= best_distance || X[axis]>=split_value;
       }
       int getOneBestIndex() const { return best_id; }
       double getOneBestDistance() const { return best_distance; }
+    };
+    
+    /// Less functor for min_heap for KBestSearcher
+    struct KbestPairLess {
+      bool operator()(const april_utils::pair<int,double> &a,
+		      const april_utils::pair<int,double> &b) {
+	// we use > instead of < to convert the min_heap into a max_heap
+	return a.second > b.second;
+      }
+    };
+    
+    /// Specialization of Searcher for the K-NN search. It uses a max_heap where
+    /// the points are ordered by distance (desceding order), allowing to use
+    /// the furthest point to define the hypersphere.
+    class KBestSearcher : public Searcher {
+      typedef april_utils::pair<int,double> HeapNode;
+      typedef april_utils::min_heap<HeapNode,KbestPairLess> MaxHeapType;
+      Point<T> &X;
+      double kbest_distance;
+      const int D, K;
+      MaxHeapType max_heap;
+    public:
+      KBestSearcher(const int K, Point<T> &X, const int D) :
+	X(X), kbest_distance(DBL_MAX), D(D), K(K), max_heap(K,KbestPairLess()) {
+      }
+      virtual ~KBestSearcher() { }
+      virtual void process(const Point<T> &node_point) {
+	const double current_distance = X.dist(node_point, D);
+	if (current_distance < kbest_distance || max_heap.size() < K) {
+	  HeapNode e(node_point.getId(), current_distance);
+	  if (max_heap.size() == K) max_heap.pop();
+	  max_heap.push(e);
+	  const HeapNode &top = max_heap.top();
+	  kbest_distance = top.second;
+	}
+      }
+      virtual int side(const T split_value, const int axis) const {
+	if (X[axis] < split_value) return 0;
+	else return 1;
+      }
+      virtual bool leftIntersection(const T split_value, const int axis) const {
+	const double diff = X[axis] - split_value;
+	const double intersection_distance = diff*diff;
+	return intersection_distance <= kbest_distance || X[axis]<split_value;
+      }
+      virtual bool rightIntersection(const T split_value, const int axis) const {
+	const double diff = X[axis] - split_value;
+	const double intersection_distance = diff*diff;
+	return intersection_distance <= kbest_distance || X[axis]>=split_value;
+      }
+      void getBestData(april_utils::vector<int> &indices,
+		       april_utils::vector<double> &distances) {
+	indices.resize(max_heap.size());
+	distances.resize(max_heap.size());
+	for (int i=max_heap.size()-1; i>=0; --i) {
+	  april_assert(!max_heap.empty());
+	  const HeapNode &top = max_heap.top();
+	  indices[i]   = top.first;
+	  distances[i] = top.second;
+	  max_heap.pop();
+	}
+      }
     };
     
     // properties
@@ -128,6 +192,9 @@ namespace KNN {
     /// The root node of the KDTree
     KDNode *root;
     MTRand *random; ///< A random number generator
+    
+    // for stats
+    int number_of_processed_points;
     
     // private methods
     
@@ -196,6 +263,7 @@ namespace KNN {
       const KDNode *right = node->getRight();
       const int axis      = depth%D;
       //
+      ++number_of_processed_points;
       searcher.process(node_point);
       switch(searcher.side(split_value,axis)) {
       case 0:
@@ -300,6 +368,7 @@ namespace KNN {
 		    D, point_matrix->getDimSize(1));
       Point<T> point(point_matrix, 0, -1);
       OneBestSearcher one_best(point,D);
+      number_of_processed_points = 0;
       searchKNN(one_best, root, 0);
       int best_id = one_best.getOneBestIndex();
       distance = one_best.getOneBestDistance();
@@ -312,12 +381,60 @@ namespace KNN {
       }
       return best_id;
     }
+
+    /// Method for K-NN search (with K>1). Tt receives a matrix with one point
+    /// and the K value, and returns a vector of indices, a vector of distances,
+    /// and a vector of matrices (if needed, that is, result pointer != 0).
+    void searchKNN(int K,
+		   Matrix<T> *point_matrix,
+		   april_utils::vector<int> &indices,
+		   april_utils::vector<double> &distances,
+		   april_utils::vector< Matrix<T> *> *result=0) {
+      if (K == 1) {
+	double distance;
+	Matrix<T> *resultM;
+	int best_id = searchNN(point_matrix,distance,(result!=0)?(&resultM):0);
+	indices.push_back(best_id);
+	indices.push_back(distance);
+	if (result) result->push_back(resultM);
+      }
+      else {
+	if (point_matrix->getNumDim() != 2 || point_matrix->getDimSize(0) != 1)
+	  ERROR_EXIT(256, "A bi-dimensional matrix with one row is needed\n");
+	if (point_matrix->getDimSize(1) != D)
+	  ERROR_EXIT2(256, "Incorrect number of columns, expected %d, found %d\n",
+		      D, point_matrix->getDimSize(1));
+	Point<T> point(point_matrix, 0, -1);
+	KBestSearcher k_best(K,point,D);
+	number_of_processed_points = 0;
+	searchKNN(k_best, root, 0);
+	k_best.getBestData(indices,distances);
+	if (result != 0) {
+	  result->reserve(static_cast<size_t>(indices.size()));
+	  for (size_t i=0; i<indices.size(); ++i) {
+	    int best_id = indices[i];
+	    int best_row;
+	    Matrix<T> *best_matrix = getMatrixAndRow(best_id, best_row);
+	    int coords[2] = { best_row, 0 };
+	    int sizes[2]  = { 1, D };
+	    result->push_back(new Matrix<T>(best_matrix, coords, sizes));
+	  }
+	}
+      }
+    }
+  
+    int getDimSize() const { return D; }
+    
+    int size() const { return N; }
     
     /// For debugging purposes
     void print() {
       print(root, 0);
     }
     
+    int getNumProcessedPoints() const {
+      return number_of_processed_points;
+    }
   };
   typedef KDTree<float> KDTreeFloat;
 }
