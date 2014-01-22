@@ -361,6 +361,8 @@ namespace KNN {
     int searchNN(Matrix<T> *point_matrix,
 		 double &distance,
 		 Matrix<T> **result) {
+      if (root == 0)
+	ERROR_EXIT(256, "Build method needs to be called before searching\n");
       if (point_matrix->getNumDim() != 2 || point_matrix->getDimSize(0) != 1)
 	ERROR_EXIT(256, "A bi-dimensional matrix with one row is needed\n");
       if (point_matrix->getDimSize(1) != D)
@@ -390,12 +392,14 @@ namespace KNN {
 		   april_utils::vector<int> &indices,
 		   april_utils::vector<double> &distances,
 		   april_utils::vector< Matrix<T> *> *result=0) {
+      if (root == 0)
+	ERROR_EXIT(256, "Build method needs to be called before searching\n");
       if (K == 1) {
 	double distance;
 	Matrix<T> *resultM;
 	int best_id = searchNN(point_matrix,distance,(result!=0)?(&resultM):0);
 	indices.push_back(best_id);
-	indices.push_back(distance);
+	distances.push_back(distance);
 	if (result) result->push_back(resultM);
       }
       else {
@@ -429,6 +433,8 @@ namespace KNN {
     
     /// For debugging purposes
     void print() {
+      if (root == 0)
+	ERROR_EXIT(256, "Build method needs to be called before print\n");
       print(root, 0);
     }
     
