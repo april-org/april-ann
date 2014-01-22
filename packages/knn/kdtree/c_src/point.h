@@ -106,6 +106,8 @@ namespace KNN {
     const_iterator begin() const { return const_iterator(base, stride); }
     const_iterator end(const int D) const { return const_iterator(base+D*stride, stride); } 
     int getId() const { return id; }
+    // WARNING: this function must to be redefined if the type T is not a plain
+    // type (like a Complex number).
     double dist(const Point &other, const int D) const {
       const T *this_ptr  = base;
       const T *other_ptr = other.base;
