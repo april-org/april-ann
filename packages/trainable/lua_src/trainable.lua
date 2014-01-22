@@ -1907,7 +1907,7 @@ function trainable.dataset_multiple_iterator(t)
     local num_patterns
     params.datasets,num_patterns = to_dataset_token(params.datasets)
     assert(num_patterns < TOO_LARGE_NUMPATTERNS or params.replacement,
-	   "The number of patterns is too large, use replacement instead")
+	   "The number of patterns is too large, use replacement instead"..num_patterns.."/"..TOO_LARGE_NUMPATTERNS)
     -- generate training tables depending on training mode (replacement,
     -- shuffled, or sequential)
     if params.replacement then
