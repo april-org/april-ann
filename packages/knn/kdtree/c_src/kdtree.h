@@ -303,6 +303,7 @@ namespace KNN {
       for (typename april_utils::vector< Matrix<T>* >::iterator it=matrix_vector.begin();
 	   it != matrix_vector.end(); ++it)
 	DecRef(*it);
+      delete root;
     }
     
     /// Returns a matrix and a row from an index point
