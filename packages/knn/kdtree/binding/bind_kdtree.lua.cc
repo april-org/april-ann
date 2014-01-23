@@ -122,7 +122,7 @@ using namespace KNN;
   MatrixFloat *m = obj->getMatrixAndRow(index-1,row);
   int coords[2] = { row, 0 };
   int sizes[2]  = { 1, obj->getDimSize() };
-  LUABIND_RETURN(MatrixFloat, new MatrixFloat(m, coords, sizes));
+  LUABIND_RETURN(MatrixFloat, new MatrixFloat(m, coords, sizes, false));
   LUABIND_RETURN(MatrixFloat, m);
 }
 //BIND_END

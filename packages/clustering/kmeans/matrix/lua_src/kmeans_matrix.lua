@@ -329,7 +329,7 @@ local function metatable_call(self,params)
   local distortion
   if not centroids then
     assert(random, "Field random is mandatory when not given centroids")
-    centroids = matrix[data:get_major_order()](K,data:dim(2))
+    centroids = matrix[data:get_major_order()](params.K,data:dim(2))
     distortion = funcs.refine(data, centroids, {
 				max_iter   = params.max_iter,
 				random     = params.random,

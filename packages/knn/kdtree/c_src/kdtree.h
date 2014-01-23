@@ -380,7 +380,7 @@ namespace KNN {
 	Matrix<T> *best_matrix = getMatrixAndRow(best_id, best_row);
 	int coords[2] = { best_row, 0 };
 	int sizes[2]  = { 1, D };
-	*result = new Matrix<T>(best_matrix, coords, sizes);
+	*result = new Matrix<T>(best_matrix, coords, sizes, false);
       }
       return best_id;
     }
@@ -422,7 +422,7 @@ namespace KNN {
 	    Matrix<T> *best_matrix = getMatrixAndRow(best_id, best_row);
 	    int coords[2] = { best_row, 0 };
 	    int sizes[2]  = { 1, D };
-	    result->push_back(new Matrix<T>(best_matrix, coords, sizes));
+	    result->push_back(new Matrix<T>(best_matrix, coords, sizes, false));
 	  }
 	}
       }
