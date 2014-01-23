@@ -26,10 +26,12 @@
 #include <cmath>
 #include "image.h"
 #include "image_connected_components.h"
+#include "datasetFloat.h"
 #include "utilImageFloat.h"
 #include "pair.h"
 #include "vector.h"
 #include "geometry.h"
+
 using april_utils::vector;
 using april_utils::Point2D;
 namespace InterestPoints
@@ -61,6 +63,7 @@ namespace InterestPoints
   void extract_points_from_image(ImageFloat *pimg, april_utils::vector<Point2D> *local_minima, april_utils::vector<Point2D> *local_maxima, float threshold_white= 0.4, float threshold_black = 0.6, int local_context = 6, int duplicate_interval = 3);
 
 
+ ImageFloatRGB * area_to_rgb(ImageFloat *img);
  /*
   *
   *
@@ -73,6 +76,7 @@ namespace InterestPoints
             vector<Point2D> descenders
             );
 
+ ImageFloat *get_image_area_from_dataset(DataSetFloat *ds_out, DataSetFloat *indexed, int width, int height, int num_classes); 
  MatrixFloat * get_indexes_from_colored(ImageFloat *img);
 
  struct interest_point:Point<int> {

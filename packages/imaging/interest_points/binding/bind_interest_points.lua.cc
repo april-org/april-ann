@@ -2,6 +2,7 @@
 #include "interest_points.h"
 #include "utilImageFloat.h"
 #include "bind_image.h"
+#include "bind_image_RGB.h"
 #include "vector.h"
 #include "pair.h"
 #include <cmath>
@@ -115,6 +116,22 @@ using namespace InterestPoints;
 
   
   LUABIND_RETURN(ImageFloat, result);
+}
+//BIND_END
+
+//BIND_FUNCTION interest_points.get_image_area_from_dataset
+{
+ LUABIND_CHECK_ARGN(==,4);
+ DataSetFloat *dsOut, *indexed;
+ int height, width; 
+ LUABIND_GET_PARAMETER(1, DataSetFloat, dsOut);
+ LUABIND_GET_PARAMETER(2, DataSetFloat, indexed);
+ LUABIND_GET_PARAMETER(3, int, width);
+ LUABIND_GET_PARAMETER(4, int, height);
+ ImageFloat *img = InterestPoints::get_image_area_from_dataset(dsOut, indexed, width, height, 3);
+
+ ImageFloatRGB *rgb = InterestPoints::area_to_rgb(img);
+ LUABIND_RETURN(ImageFloatRGB, rgb);
 }
 //BIND_END
 

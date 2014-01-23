@@ -490,9 +490,90 @@ namespace InterestPoints {
 
 
   }
+
+  
+
   const float ASC  = 0.2;
   const float BODY = 0.4;
   const float DESC = 0.6;
+
+  ImageFloatRGB * area_to_rgb(ImageFloat *img) {
+
+      int width = img->width;
+      int height = img->height;
+      float eps = 0.05;
+      ImageFloatRGB *rgb = new ImageFloatRGB(width, height, FloatRGB(1.0,1.0,1.0));
+
+      for (int y = 0; y < height; ++y)
+          for(int x = 0; x < width; ++x) {
+              float value = (*img)(x,y);
+              if (is_black(value,DESC+eps)) {
+                  // Get the label
+                  if (value <= ASC+eps) {
+                      (*rgb)(x,y) = FloatRGB(1.0,0.0,0.0); 
+                  }
+                  else if(value <= BODY+eps) {
+
+                      (*rgb)(x,y) = FloatRGB(0.0,1.0,0.0); 
+                  }
+                  else if(value <= DESC+eps) {
+
+                      (*rgb)(x,y) = FloatRGB(0.0,0.0,1.0); 
+                  }
+              }
+          }
+
+      return rgb;
+
+  }
+
+  ImageFloat *get_image_area_from_dataset(DataSetFloat *ds_out,
+          DataSetFloat *indexed,
+          int width,
+          int height,
+          int num_classes = 3) 
+  {
+      assert(ds_out->numPatterns() == indexed->numPatterns() && "The number of patterns does not fit");
+
+      int numPats = ds_out->numPatterns();
+
+      int dims[2] = {height, width};
+      MatrixFloat *result_mat = new MatrixFloat(2, dims);
+      result_mat->fill(1.0);
+      ImageFloat  *result = new ImageFloat(result_mat);
+      float ipat;
+      float *ftag = new float[num_classes];
+
+      // Get the softmax index
+      for (int i = 0; i < numPats; ++i) {
+          indexed->getPattern(i,&ipat);
+          int index = (int) ipat;
+          ds_out->getPattern(i, ftag);
+          int row = index/width;
+          int column = index%width; 
+          int tag = april_utils::argmax(ftag, num_classes)+1;
+          float value = 1;
+
+          switch(tag) {
+              case 1:
+                  value = ASC;
+                  break;
+              case 2:
+                  value = BODY;
+                  break;
+              case 3:
+                  value = DESC;
+                  break;
+              default:
+                  break;
+          }
+
+          (*result)(column, row) = value;
+      }
+
+      return result;
+  }
+
 
   ImageFloat *get_pixel_area(ImageFloat *source,
           vector<Point2D> ascenders,
@@ -519,15 +600,10 @@ namespace InterestPoints {
        *   |               descenders              |
        *   - dst_height-1 --------------- cur_desc -
        */
-
-
-
       int dims[2] = {height, width};
       MatrixFloat *result_mat = new MatrixFloat(2, dims);
       result_mat->fill(1.0);
       ImageFloat  *result = new ImageFloat(result_mat);
-
-
 
       int asc_idx = 0;
       int upper_idx = 0;
@@ -623,43 +699,43 @@ namespace InterestPoints {
 
       int width  = img->width;
       int height = img->height;
-                  float eps = 0.05;
+      float eps = 0.05;
       for (int col = 0; col < width; ++col)
-          {
-              for(int row = 0; row < height; ++row) {
-                  if (is_black((*img)(col,row),DESC+eps)) total++;
-              }
+      {
+          for(int row = 0; row < height; ++row) {
+              if (is_black((*img)(col,row),DESC+eps)) total++;
           }
+      }
 
-          int dims[2] = {total,2};
-          MatrixFloat * m_pixels = new MatrixFloat(2, dims);
+      int dims[2] = {total,2};
+      MatrixFloat * m_pixels = new MatrixFloat(2, dims);
 
-          int current = 0;
-          for (int col= 0; col < width; ++col){
+      int current = 0;
+      for (int col= 0; col < width; ++col){
 
-              for(int row = 0; row < height; ++row) {
-                  float value = (*img)(col,row);
-                  float tag = 0;
-                  float index = (row)*width+col+1;
+          for(int row = 0; row < height; ++row) {
+              float value = (*img)(col,row);
+              float tag = 0;
+              float index = (row)*width+col+1;
 
-                  if (is_black(value,DESC+eps)) {
-                      // Get the label
-                      if (value <= ASC+eps) {
-                          tag = 1;  
-                      }
-                      else if(value <= BODY+eps) {
-                          tag = 2;
-                      }
-                      else if(value <= DESC+eps) {
-                          tag = 3;
-                      }
-                      (*m_pixels)(current,0) = index;
-                      (*m_pixels)(current,1) = tag;
-                      current++;
+              if (is_black(value,DESC+eps)) {
+                  // Get the label
+                  if (value <= ASC+eps) {
+                      tag = 1;  
                   }
+                  else if(value <= BODY+eps) {
+                      tag = 2;
+                  }
+                  else if(value <= DESC+eps) {
+                      tag = 3;
+                  }
+                  (*m_pixels)(current,0) = index;
+                  (*m_pixels)(current,1) = tag;
+                  current++;
               }
           }
-          return m_pixels;
+      }
+      return m_pixels;
   }
 
   // Class Set Points
