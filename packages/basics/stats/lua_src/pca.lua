@@ -67,11 +67,12 @@ function stats.pca(Xc)
   assert(#dim == 2, "Expected a bi-dimensional matrix")
   local aux = Xc:sum(2):scal(1/Xc:dim(2)):rewrap(Xc:dim(1))
   local M,N    = table.unpack(dim)
-  local sigma  = matrix.col_major(N,N):gemm{ A=Xc, B=Xc,
-					     trans_A=true,
-					     trans_B=false,
-					     alpha=1/M,
-					     beta=0, }
+  local sigma  = matrix.col_major(N,N)
+  sigma:gemm{ A=Xc, B=Xc,
+	      trans_A=true,
+	      trans_B=false,
+	      alpha=1/M,
+	      beta=0, }
   local U,S,VT = sigma:svd()
   return U,S,VT
 end
