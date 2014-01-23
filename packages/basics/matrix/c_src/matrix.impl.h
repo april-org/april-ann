@@ -39,6 +39,7 @@ void Matrix<T>::initialize(const int *dim) {
       stride[i] = total_size;
       total_size *= dim[i];
       matrixSize[i] = dim[i];
+      april_assert(matrixSize[i] > 0);
     }
     break;
   case CblasColMajor:
@@ -46,6 +47,7 @@ void Matrix<T>::initialize(const int *dim) {
       stride[i] = total_size;
       total_size *= dim[i];
       matrixSize[i] = dim[i];
+      april_assert(matrixSize[i] > 0);
     }
     break;
   default:
@@ -83,7 +85,8 @@ Matrix<T>::Matrix(int numDim, const int *stride, const int offset,
   last_raw_pos(last_raw_pos), data(data), mmapped_data(0),
   major_order(major_order),
   use_cuda(use_cuda),
-  is_contiguous(NONE) {
+  is_contiguous(NONE),
+  end_iterator(), end_const_iterator(), end_best_span_iterator() {
   IncRef(data);
   for (int i=0; i<numDim; ++i) {
     this->stride[i] = stride[i];
@@ -105,7 +108,8 @@ Matrix<T>::Matrix(int numDim,
   mmapped_data(0),
   major_order(major_order),
   use_cuda(false),
-  is_contiguous(CONTIGUOUS) {
+  is_contiguous(CONTIGUOUS),
+  end_iterator(), end_const_iterator(), end_best_span_iterator() {
   stride     = new int[numDim];
   matrixSize = new int[numDim];
   initialize(dim);
@@ -132,7 +136,8 @@ Matrix<T>::Matrix(Matrix<T> *other,
   mmapped_data(0),
   major_order(other->major_order),
   use_cuda(other->use_cuda),
-  is_contiguous(NONE) {
+  is_contiguous(NONE),
+  end_iterator(), end_const_iterator(), end_best_span_iterator() {
   for (int i=0; i<numDim; i++) {
     if (sizes[i] + coords[i] > other->matrixSize[i])
       ERROR_EXIT3(128, "Size+coordinates are out of dimension size: %d+%d>%d\n",
@@ -193,7 +198,8 @@ Matrix<T>::Matrix(int numDim, int d1, ...) :
   offset(0),
   mmapped_data(0),
   major_order(CblasRowMajor),
-  is_contiguous(CONTIGUOUS) {
+  is_contiguous(CONTIGUOUS),
+  end_iterator(), end_const_iterator(), end_best_span_iterator() {
   int *dim   = new int[numDim];
   stride     = new int[numDim];
   matrixSize = new int[numDim];
@@ -221,7 +227,8 @@ Matrix<T>::Matrix(Matrix<T> *other, bool clone) :
   mmapped_data(0),
   major_order(other->major_order),
   use_cuda(other->use_cuda),
-  is_contiguous(other->is_contiguous){
+  is_contiguous(other->is_contiguous),
+  end_iterator(), end_const_iterator(), end_best_span_iterator() {
   stride       = new int[numDim];
   matrixSize   = new int[numDim];
   total_size   = other->total_size;

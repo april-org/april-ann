@@ -313,6 +313,7 @@ MatrixFloat *readMatrixFloatFromTabFile(const char *filename,
 	}
       }
     } while(false);
+    if (nrows <= 0 || ncols <= 0) ERROR_EXIT(256, "Found 0 rows or 0 cols\n");
     BufferedGZFile f(filename, "r");
     return readMatrixFromTabStream<BufferedGZFile, float>(nrows, ncols, f,
 							  FloatAsciiExtractor(),
@@ -334,6 +335,7 @@ MatrixFloat *readMatrixFloatFromTabFile(const char *filename,
 	}
       }
     } while(false);
+    if (nrows <= 0 || ncols <= 0) ERROR_EXIT(256, "Found 0 rows or 0 cols\n");
     BufferedFile f(filename, "r");
     return readMatrixFromTabStream<BufferedFile, float>(nrows, ncols, f,
 							FloatAsciiExtractor(),

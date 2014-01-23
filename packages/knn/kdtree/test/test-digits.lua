@@ -25,17 +25,13 @@ end
 
 if DO_PCA then
   local U,S = stats.pca(train_data:clone("col_major"))
-  train_data = stats.pca_whitening(train_data,
-				   U:clone("row_major"),
-				   S:clone("row_major"),
-				   EPSILON)
+  U=U:clone("row_major")
+  S=S:clone("row_major")
+  train_data = stats.pca_whitening(train_data,U,S,EPSILON)
   -- print(stats.pca_threshold(S,0.99))
   train_data = train_data(':',{1,TOP_PCA})
   
-  val_data = stats.pca_whitening(val_data,
-				 U:clone("row_major"),
-				 S:clone("row_major"),
-				 EPSILON)
+  val_data = stats.pca_whitening(val_data,U,S,EPSILON)
   val_data = val_data(':',{1,TOP_PCA})
 end
 
@@ -50,14 +46,8 @@ local errors2=0
 for i=1,val_data:dim(1) do
   local pat = val_data(i,':')
   local result = kdt:searchKNN(KNN,pat)
-  local counts = {}
-  local max = 0
-  local best_class = 0
-  for i=1,#result do
-    local c = (result[i][1]-1) % 10
-    counts[c] = (counts[c] or 0) + 1
-    if counts[c] > max then best_class,max = c,counts[c] end
-  end
+  local best_class = knn.kdtree.classifyKNN(result,
+					    function(id) return (id-1)%10 end)
   local dist=result[1][2]
   -- print(i,best_class,counts[best_class])
   local target_class = (i-1) % 10

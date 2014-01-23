@@ -470,12 +470,14 @@ private:
   // const version of iterators, for fast end() iterator calls. They are
   // allocated on-demand, so if end() methods are never executed, they
   // don't waste memory space
-  const iterator end_iterator;
-  const const_iterator end_const_iterator;
-  const best_span_iterator end_best_span_iterator;
+  mutable iterator end_iterator;
+  mutable const_iterator end_const_iterator;
+  mutable best_span_iterator end_best_span_iterator;
   
   // NULL constructor
-  Matrix() : is_contiguous(NONE) { }
+  Matrix() : is_contiguous(NONE),
+	     end_iterator(), end_const_iterator(),
+	     end_best_span_iterator() { }
   //
   Matrix(int numDim, const int *stride, const int offset,
 	 const int *matrixSize, const int total_size, const int last_raw_pos,
@@ -487,9 +489,9 @@ private:
   void changeSubMatrixData(const int new_offset, const int new_last_raw_pos) {
     offset	 = new_offset;
     last_raw_pos = new_last_raw_pos;
-    const_cast<iterator*>(&end_iterator)->m			= 0;
-    const_cast<const_iterator*>(&end_const_iterator)->m		= 0;
-    const_cast<best_span_iterator*>(&end_best_span_iterator)->m = 0;
+    end_iterator.m	     = 0;
+    end_const_iterator.m     = 0;
+    end_best_span_iterator.m = 0;
   }
 
 public:
@@ -569,13 +571,12 @@ public:
   }
   const iterator &end() {
     if (end_iterator.m == 0)
-      *(const_cast<iterator*>(&end_iterator)) = iterator(this, last_raw_pos+1);
+      end_iterator = iterator(this, last_raw_pos+1);
     return end_iterator;
   }
   const best_span_iterator &end_span_iterator() const {
     if (end_best_span_iterator.m == 0)
-      *(const_cast<best_span_iterator*>(&end_best_span_iterator)) =
-	best_span_iterator(this, last_raw_pos+1);
+      end_best_span_iterator = best_span_iterator(this, last_raw_pos+1);
     return end_best_span_iterator;
   }
   /************************/
@@ -596,9 +597,8 @@ public:
   }
   const const_iterator &end() const {
     if (end_const_iterator.m == 0)
-      *(const_cast<const_iterator*>(&end_const_iterator)) =
-	const_iterator(this,
-		       last_raw_pos+1); 
+      end_const_iterator = const_iterator(this,
+					  last_raw_pos+1); 
     return end_const_iterator;
   }
 
