@@ -48,7 +48,7 @@ elif [ $UNAME = "Darwin" ]; then
   sudo ln -s `which gfind` /usr/bin/find
 
 else
-  echo "Error, impossible to install dependencies, not recognized system: $UNAME"
-  exit 10
+    echo "Error, impossible to install dependencies, not recognized system: $UNAME"
+    exit 10
 fi
 exit 0

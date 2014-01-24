@@ -21,6 +21,10 @@ Master branch release
 - Class interest_points and layout algorithms (still in development).
 - Added the geometry c++ class for working in to lines and point geometry.
 
+### API Changes
+
+- Added `serialize` and `deserialize` Lua functions, in `util` package.
+
 ### C/C++
 
 - Added dependency with `liblapacke` for PCA when not available MKL or MacOS X.
