@@ -6,6 +6,7 @@ Master branch release
 
 ### Unstable changes
 
+- Added `clustering` and `knn` algorithms.
 - Added `ann.components.zca_whitening` and `ann.components.pca_whitening`
   classes.
 - Added `stats.zca_whitening` and `stats.pca_whitening` functions.
@@ -23,7 +24,13 @@ Master branch release
 
 ### API Changes
 
+- Added index matrix for min/max operations in `matrix` objects.
 - Added `serialize` and `deserialize` Lua functions, in `util` package.
+
+### Bugs removed
+
+- Solved bug at `Matrix<T>::sliding_window` which makes an early end of the
+  iterator when window has an `offset` different of 0.
 
 ### C/C++
 
