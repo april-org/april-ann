@@ -496,6 +496,7 @@ namespace InterestPoints {
   const float ASC  = 0.2;
   const float BODY = 0.4;
   const float DESC = 0.6;
+  const float UNK  = 0.8;
 
   ImageFloatRGB * area_to_rgb(ImageFloat *img) {
 
@@ -552,8 +553,10 @@ namespace InterestPoints {
           int row = index/width;
           int column = index%width; 
           int tag = april_utils::argmax(ftag, num_classes)+1;
-          float value = 1;
-
+          
+//float prob = exp(april_utils.max(ftag, num_classes));
+          float value = 1.0;
+          
           switch(tag) {
               case 1:
                   value = ASC;
@@ -565,9 +568,10 @@ namespace InterestPoints {
                   value = DESC;
                   break;
               default:
+
                   break;
           }
-
+        
           (*result)(column, row) = value;
       }
 

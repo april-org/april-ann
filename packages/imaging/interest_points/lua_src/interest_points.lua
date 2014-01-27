@@ -252,14 +252,13 @@ function methods:compute_points(img, points, mlp)
     for i, point in ipairs(points) do
         x,y = unpack(point)
         local dsFish = self:getFishDs(img, x, y)
-
         table.insert(fishEyes, dsFish)
     end
 
     local dsFishes = dataset.union(fishEyes)
     -- Classify the datasets
+    
     local dsOut = mlp:use_dataset({input_dataset=dsFishes})
-
     return dsOut
 end
 
@@ -269,10 +268,11 @@ end
 function methods:classify_points(img, points, mlp)
    
     local dsOut = self:compute_points(img, points, mlp)
-    local classes = self.getIndexSoftmax(dsOut)
-
+    local classes = interest_points.getIndexSoftmax(dsOut)
+    
     local res = {}
     for i, c in ipairs(classes) do
+        
         x, y = unpack(points[i])
         table.insert(res,  {x,y,c, dsOut:getPattern(i)})
     end
@@ -299,7 +299,7 @@ function methods:extract_points(img, mlpUppers, mlpLowers)
     -- Compute uppers
     local uppers_classified = self:classify_points(img, uppers, mlpUppers)
     -- Compute uppers
-    local lowers_classified = pc:classify_points(img, lowers, mlpLowers)
+    local lowers_classified = self:classify_points(img, lowers, mlpLowers)
 
     return uppers_classified, lowers_classified
 
