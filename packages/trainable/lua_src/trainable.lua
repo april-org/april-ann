@@ -94,7 +94,14 @@ function trainable_supervised_trainer_class_metatable:__call(...)
     local smooth_gradients = t.smooth_gradients or true
     local obj = trainable.supervised_trainer(model, loss, bunch_size, optimizer,
 					     smooth_gradients)
-    obj:build{ weights = connections }
+    local weight = connections
+    if not isa(connections, matrix.dict) then
+      weights = matrix.dict()
+      for name,wdata in pairs(connections) do
+	weights:insert(name,wdata.w:clone("col_major"):rewrap(wdata.output, wdata.input))
+      end
+    end
+    obj:build{ weights = weights }
     return obj
   else
     -- Constructor of a new object

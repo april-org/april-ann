@@ -29,6 +29,9 @@ Master branch release
 
 ### Bugs removed
 
+- Solved bug which makes to load unitialized weight matrices when loading old
+  trainable.supervised_trainer (without `matrix.dict` object).
+
 - Solved bug at `Matrix<T>::sliding_window` which makes an early end of the
   iterator when window has an `offset` different of 0.
 
