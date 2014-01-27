@@ -98,7 +98,15 @@ function trainable_supervised_trainer_class_metatable:__call(...)
     if not isa(connections, matrix.dict) then
       weights = matrix.dict()
       for name,wdata in pairs(connections) do
-	weights:insert(name,wdata.w:clone("col_major"):rewrap(wdata.output, wdata.input))
+	local m = wdata
+	if not isa(m, matrix) then
+	  m = wdata.w:rewrap(wdata.output,wdata.input)
+	end
+	if m:get_major_order() == "col_major" then
+	  weights:insert(name,m)
+	else
+	  weights:insert(name,m:clone("col_major"))
+	end
       end
     end
     obj:build{ weights = weights }
