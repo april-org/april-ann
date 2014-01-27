@@ -6,6 +6,10 @@ Master branch release
 
 ### Unstable changes
 
+- Added `clustering` and `knn` algorithms.
+- Added `ann.components.zca_whitening` and `ann.components.pca_whitening`
+  classes.
+- Added `stats.zca_whitening` and `stats.pca_whitening` functions.
 - Added packages `autodiff` and `autodiff.ann`, with automatic differentiation
   algorithms.
 - Added `ann.optimizer.quickprop` algorithm, but stills untested.
@@ -18,8 +22,25 @@ Master branch release
 - Class interest_points and layout algorithms (still in development).
 - Added the geometry c++ class for working in to lines and point geometry.
 
-v0.3.1-beta relase
-------------------
+### API Changes
+
+- Added index matrix for min/max operations in `matrix` objects.
+- Added `serialize` and `deserialize` Lua functions, in `util` package.
+
+### Bugs removed
+
+- Solved bug which makes to load unitialized weight matrices when loading old
+  trainable.supervised_trainer (without `matrix.dict` object).
+
+- Solved bug at `Matrix<T>::sliding_window` which makes an early end of the
+  iterator when window has an `offset` different of 0.
+
+### C/C++
+
+- Added dependency with `liblapacke` for PCA when not available MKL or MacOS X.
+
+v0.3.1-alpha (pre-relase of v0.3.1-beta)
+----------------------------------------
 
 ### API Changes
 

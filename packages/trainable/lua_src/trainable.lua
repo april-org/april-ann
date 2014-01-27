@@ -94,7 +94,14 @@ function trainable_supervised_trainer_class_metatable:__call(...)
     local smooth_gradients = t.smooth_gradients or true
     local obj = trainable.supervised_trainer(model, loss, bunch_size, optimizer,
 					     smooth_gradients)
-    obj:build{ weights = connections }
+    local weight = connections
+    if not isa(connections, matrix.dict) then
+      weights = matrix.dict()
+      for name,wdata in pairs(connections) do
+	weights:insert(name,wdata.w:clone("col_major"):rewrap(wdata.output, wdata.input))
+      end
+    end
+    obj:build{ weights = weights }
     return obj
   else
     -- Constructor of a new object
@@ -2209,6 +2216,18 @@ function train_holdout_methods:get_state_string()
 		       state.validation_error,
 		       state.best_epoch,
 		       state.best_val_error)
+end
+
+april_set_doc("trainable.train_holdout_validation.is_best", {
+		class = "method",
+		summary = "Returns if current epoch is the best epoch",
+		outputs = {
+		  "A boolean"
+		}, })
+
+function train_holdout_methods:is_best()
+  local state = self.state
+  return state.current_epoch == state.best_epoch
 end
 
 function train_holdout_methods:to_lua_string(format)

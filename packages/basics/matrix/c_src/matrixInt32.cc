@@ -22,3 +22,15 @@
 #include "matrixInt32.h"
 
 template class Matrix<int32_t>;
+
+/************* ZEROS FUNCTION **************/
+template<>
+void Matrix<int32_t>::zeros() {
+  fill(0);
+}
+
+/************* ONES FUNCTION **************/
+template<>
+void Matrix<int32_t>::ones() {
+  fill(1);
+}

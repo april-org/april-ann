@@ -24,4 +24,10 @@
 
 typedef Matrix<double> MatrixDouble;
 
+template<>
+void Matrix<double>::zeros();
+
+template<>
+void Matrix<double>::ones();
+
 #endif // MATRIX_DOUBLE_H

@@ -16,7 +16,11 @@ function gtk.show(...)
       if type(param) == "Image" or type(param) == "ImageRGB" then
 	img = param
       elseif type(param) == "matrix" then
-	img = Image(param)
+	if #param:dim() == 2 then
+	  img = Image(param)
+	else
+	  img = ImageRGB(param)
+	end
       else
 	error("Not supported data type: " .. type(param))
       end
@@ -38,22 +42,22 @@ function gtk.show(...)
 	  orientation = 'HORIZONTAL',
 	  spacing = 8,
 	  border_width = 8,
-	  Gtk.ToggleButton {
+	  Gtk.Button {
 	    id = 'fit',
 	    label = 'fit',
 	  },
 	  Gtk.Box {
 	    orientation = 'VERTICAL',
-	    Gtk.ToggleButton {
+	    Gtk.Button {
 	      id = 'zoomIN',
 	      label = '+',
 	    },
-	    Gtk.ToggleButton {
+	    Gtk.Button {
 	      id = 'zoomOUT',
 	      label = '-',
 	    },
 	  },
-	  Gtk.ToggleButton {
+	  Gtk.Button {
 	    id = 'exit',
 	    label = 'exit',
 	  },
@@ -74,11 +78,11 @@ function gtk.show(...)
       window.child.image:queue_draw()
       collectgarbage("collect")
     end
-    function window.child.exit:on_toggled()
+    function window.child.exit:on_pressed()
       for i=1,#windows do windows[i]:hide() end
       Gtk.main_quit()
     end
-    function window.child.fit:on_toggled()
+    function window.child.fit:on_pressed()
       local w,h = window.width-40,window.height - window.child.top.height - 50
       local ratio = pixbuf.height/pixbuf.width
       if w*ratio > h then
@@ -90,11 +94,11 @@ function gtk.show(...)
       end
       scale()
     end
-    function window.child.zoomIN:on_toggled()
+    function window.child.zoomIN:on_pressed()
       sx,sy = sx*1.1,sy*1.1
       scale()
     end
-    function window.child.zoomOUT:on_toggled()
+    function window.child.zoomOUT:on_pressed()
       sx,sy = sx*0.9,sy*0.9
       scale()
     end

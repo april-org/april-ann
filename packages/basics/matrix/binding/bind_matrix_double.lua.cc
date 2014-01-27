@@ -428,6 +428,20 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 }
 //BIND_END
 
+//BIND_METHOD MatrixDouble zeros
+{
+  obj->zeros();
+  LUABIND_RETURN(MatrixDouble, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixDouble ones
+{
+  obj->ones();
+  LUABIND_RETURN(MatrixDouble, obj);
+}
+//BIND_END
+
 //BIND_METHOD MatrixDouble dim
 {
   LUABIND_CHECK_ARGN(>=, 0);

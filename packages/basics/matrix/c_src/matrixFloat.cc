@@ -453,6 +453,9 @@ void Matrix<float>::gemm(CBLAS_TRANSPOSE trans_A,
 			 const Matrix<float> *otherA,
 			 const Matrix<float> *otherB,
 			 float beta) {
+  if (this == otherA || this == otherB)
+    ERROR_EXIT(128, "GEMM method couldn't receive as A or B argument "
+	       "the caller object\n");
   if (numDim != 2 || otherA->numDim != 2 || otherB->numDim != 2)
     ERROR_EXIT(128,"Incorrect number of dimensions, only allowed for numDim=2\n");
   int row_idx_A = 0, col_idx_A = 1, row_idx_B = 0, col_idx_B = 1;
@@ -835,14 +838,8 @@ Matrix<float> *Matrix<float>::inv() {
   INFO = clapack_sgetri(CblasColMajor,
 			A->numDim,A->getData(),A->stride[1],IPIV);
   checkLapackInfo(INFO);
-  delete IPIV;
-  MatrixFloat *ret;
-  if (major_order != CblasColMajor) {
-    ret = A->clone(CblasRowMajor);
-    delete A;
-  }
-  else ret = A;
-  return ret;
+  delete[] IPIV;
+  return A;
 }
 
 // FIXME: using WRAPPER for generalized CULA, LAPACK, float and complex numbers
@@ -851,9 +848,7 @@ template <>
 void Matrix<float>::svd(Matrix<float> **U, Matrix<float> **S, Matrix<float> **VT) {
   if (numDim != 2)
     ERROR_EXIT(128, "Only bi-dimensional matrices are allowed\n");
-  Matrix<float> *A = this;
-  if (this->major_order != CblasColMajor || !this->getIsContiguous())
-    A = this->clone(CblasColMajor);
+  Matrix<float> *A = this->clone(CblasColMajor);
   IncRef(A);
   int INFO;
   const int m = A->matrixSize[0]; // cols

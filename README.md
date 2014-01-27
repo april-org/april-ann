@@ -15,6 +15,7 @@ with older and newer versions whenver the API was compatible.
 - Readline (libreadline)
 - OpenMP
 - LAPACK library, offered by liblapack_atlas, mkl_lapack, or MacOS Accelerate Framework
+- LAPACKE library when compiling with ATLAS
 - libz: support for open of GZIPPED files
 
 The following libreries are recommended, but optional:
@@ -185,6 +186,12 @@ List of research papers which uses this tool:
 - F. Zamora-Martínez, Pablo Romeu, Juan Pardo, and Daniel Tormo.
   Some empirical evaluations of a temperature forecasting module based on Artificial Neural Networks for a domotic home environment.
   In *IC3K - KDIR*, pages 206-211, 2012.
+
+Our ancient ANN implementation in the former April tookit was published here:
+
+- S. España-Boquera, F. Zamora-Martinez, M.J. Castro-Bleda, J. Gorbe-Moya.
+  Efficient BP algorithms for general feedforward neural networks.
+  In *IWINAC*, pages 327-336, 2007.
 
 Packages
 --------

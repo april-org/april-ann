@@ -980,9 +980,9 @@ end
 function math.median(t, ini, fin)
   local ini,fin = ini or 1, fin or #t
   local len     = fin-ini+1
-  local mpos    = math.floor((ini+fin-1)/2)
+  local mpos    = math.floor((ini+fin)/2)
   local median  = t[mpos]
-  if len % 2 ~= 0 then
+  if len % 2 == 0 then
     median = (median + t[mpos+1])/2
   end
   return median
@@ -1356,6 +1356,10 @@ function iterator.meta_instance:__call() return table.unpack(self.data) end
 
 function iterator_methods:get() return table.unpack(self.data) end
 
+function iterator_methods:step()
+  return self.data[1](table.unpack(table.slice(self.data,2,#self.data)))
+end
+
 function iterator_methods:map(func)
   return iterator(iterable_map(func, self:get()))
 end
@@ -1499,16 +1503,35 @@ end
 function util.to_lua_string(data,format)
   local tt = luatype(data)
   if tt == "table" then
-    return table.tostring(tt,format)
+    if data.to_lua_string then
+      return data:to_lua_string(format)
+    else
+      return table.tostring(data,format)
+    end
   elseif tt == "function" then
     return util.function_to_lua_string(data,format)
   elseif tt == "userdata" then
-    assert(getmetatable(tt) and getmetatable(tt).__index and tt.to_lua_string,
-	   "Needs a to_lua_string(format) method")
-    return tt:to_lua_string(format)
+    assert(getmetatable(data) and
+	     getmetatable(data).__index and
+	     getmetatable(data).__index.to_lua_string,
+	   "Userdata needs a to_lua_string(format) method")
+    return data:to_lua_string(format)
   else
     return tostring(data)
   end
+end
+
+------------------------------------------------------------------------------
+
+function serialize(data, filename, format)
+  local f = io.open(filename, "w")
+  f:write("return ")
+  f:write(util.to_lua_string(data, format))
+  f:close()
+end
+
+function deserialize(filename)
+  return dofile(filename)
 end
 
 -------------------

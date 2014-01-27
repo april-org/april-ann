@@ -428,6 +428,20 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 }
 //BIND_END
 
+//BIND_METHOD MatrixInt32 zeros
+{
+  obj->zeros();
+  LUABIND_RETURN(MatrixInt32, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixInt32 ones
+{
+  obj->ones();
+  LUABIND_RETURN(MatrixInt32, obj);
+}
+//BIND_END
+
 //BIND_METHOD MatrixInt32 dim
 {
   LUABIND_CHECK_ARGN(>=, 0);

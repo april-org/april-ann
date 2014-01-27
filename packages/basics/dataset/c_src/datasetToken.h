@@ -205,11 +205,9 @@ public:
 class DataSetFloat2TokenWrapper : public DataSetToken {
   MatrixFloat  *aux_mat;
   DataSetFloat *ds;
-  CBLAS_ORDER   bunch_major;
 public:
-  DataSetFloat2TokenWrapper(DataSetFloat *ds,
-			    CBLAS_ORDER bunch_major=CblasRowMajor) :
-    ds(ds), bunch_major(bunch_major) {
+  DataSetFloat2TokenWrapper(DataSetFloat *ds) :
+    ds(ds) {
     IncRef(ds);
     int dims[2] = { 1, ds->patternSize() };
     aux_mat = new MatrixFloat(2, dims, CblasColMajor);
@@ -221,13 +219,7 @@ public:
   int numPatterns() { return ds->numPatterns(); }
   int patternSize() { return ds->patternSize(); }
   Token *getPattern(int index) {
-    int dims[2];
-    if (bunch_major == CblasRowMajor) {
-      dims[0] = 1; dims[1] = patternSize();
-    }
-    else {
-      dims[0] = patternSize(); dims[1] = 1;
-    }
+    int dims[2] = { 1, patternSize() };
     MatrixFloat *mat = new MatrixFloat(2, dims, CblasColMajor);
     TokenMatrixFloat *token = new TokenMatrixFloat(mat);
     FloatGPUMirroredMemoryBlock *mem_block = mat->getRawDataAccess();
@@ -237,13 +229,7 @@ public:
   }
   Token *getPatternBunch(const int *indexes, unsigned int bunch_size) {
     int dims[2], major_dim=0;
-    if (bunch_major == CblasRowMajor) {
-      dims[0] = static_cast<int>(bunch_size); dims[1] = patternSize();
-    }
-    else {
-      dims[0] = patternSize(); dims[1] = static_cast<int>(bunch_size);
-      major_dim = 1;
-    }
+    dims[0] = static_cast<int>(bunch_size); dims[1] = patternSize();
     MatrixFloat *mat = new MatrixFloat(2, dims, CblasColMajor);
     TokenMatrixFloat *token = new TokenMatrixFloat(mat);
     FloatGPUMirroredMemoryBlock *aux_mem_block = aux_mat->getRawDataAccess();
@@ -286,18 +272,10 @@ public:
     int pattern_size = patternSize();
     int coords[2], major_dim;
     int sizes[2];
-    if (bunch_major == CblasRowMajor) {
-      major_dim = 0;
-      coords[1] = 0;
-      sizes[0]  = 1;
-      sizes[1]  = pattern_size;
-    }
-    else {
-      major_dim = 1;
-      coords[0] = 0;
-      sizes[0]  = pattern_size;
-      sizes[1]  = 1;
-    }
+    major_dim = 0;
+    coords[1] = 0;
+    sizes[0]  = 1;
+    sizes[1]  = pattern_size;
     for (unsigned int i=0; i<bunch_size; ++i) {
       coords[major_dim] = static_cast<int>(i);
       MatrixFloat *submat = new MatrixFloat(mat, coords, sizes, false);

@@ -348,8 +348,21 @@ struct max_dim_functor {
   T operator()(const Matrix<T> *slice) { int a,b; return slice->max(a,b); }
 };
 template <typename T>
-Matrix<T>* Matrix<T>::max(int dim, Matrix<T> *dest) {
-  return applyFunctorOverDimension<T, T>(max_dim_functor<T>(), this, dim, dest);
+struct max_and_argmax_dim_functor {
+  T operator()(const Matrix<T> *slice, int32_t &argmax_pos) {
+    int a,b;
+    T max = slice->max(a,b);
+    argmax_pos = a+1;
+    return max;
+  }
+};
+template <typename T>
+Matrix<T>* Matrix<T>::max(int dim, Matrix<T> *dest, Matrix<int32_t> *argmax) {
+  if (argmax == 0)
+    return applyFunctorOverDimension<T,T>(max_dim_functor<T>(), this, dim, dest);
+  else
+    return applyFunctorOverDimension2<T,T,int32_t>(max_and_argmax_dim_functor<T>(),
+						   this, dim, dest, argmax);
 }
 
 // the argument indicates over which dimension the sum must be performed
@@ -358,8 +371,21 @@ struct min_dim_functor {
   T operator()(const Matrix<T> *slice) { int a,b; return slice->min(a,b); }
 };
 template <typename T>
-Matrix<T>* Matrix<T>::min(int dim, Matrix<T> *dest) {
-  return applyFunctorOverDimension<T,T>(min_dim_functor<T>(), this, dim, dest);
+struct min_and_argmin_dim_functor {
+  T operator()(const Matrix<T> *slice, int32_t &argmin_pos) {
+    int a,b;
+    T min = slice->min(a,b);
+    argmin_pos = a+1;
+    return min;
+  }
+};
+template <typename T>
+Matrix<T>* Matrix<T>::min(int dim, Matrix<T> *dest, Matrix<int32_t> *argmin) {
+  if (argmin == 0)
+    return applyFunctorOverDimension<T,T>(min_dim_functor<T>(), this, dim, dest);
+  else
+    return applyFunctorOverDimension2<T,T,int32_t>(min_and_argmin_dim_functor<T>(),
+						   this, dim, dest, argmin);
 }
 
 template <typename T>

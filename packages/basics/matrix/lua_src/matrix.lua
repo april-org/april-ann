@@ -5,6 +5,25 @@ class_extension(matrix, "to_lua_string",
                                        self:toString(format or "binary"))
                 end)
 
+-- ADDING PSEUDO-INVERSE METHOD
+class_extension(matrix, "pinv",
+		function(self)
+		  local u,s,vt = self:svd()
+		  for i=1,s:size() do
+		    local aux = s:get(i)
+		    u:select(2,i):scal(((math.abs(aux)>1e-07) and 1/aux) or 0.0)
+		  end
+		  return matrix.as(self):
+		  gemm{
+		    A       = vt,
+		    B       = u,
+		    trans_A = true,
+		    trans_B = true,
+		    alpha   = 1.0,
+		    beta    = 0.0,
+		  }
+		end)
+
 -- the constructor
 matrix.row_major = function(...)
   return matrix(...)
@@ -44,43 +63,11 @@ matrix.meta_instance.__call = function(self,...)
   return self:slice(pos,size)
 end
 
-matrix.meta_instance.__tostring = function(self)
-  local dims   = self:dim()
-  local major  = self:get_major_order()
-  local coords = {}
-  local out    = {}
-  local row    = {}
-  local so_large = false
-  for i=1,#dims do 
-    coords[i]=1
-    if dims[i] > 20 then so_large = true end
-  end
-  if not so_large then
-    for i=1,self:size() do
-      if #dims > 2 and coords[#dims] == 1 and coords[#dims-1] == 1 then
-	table.insert(out,
-		     string.format("\n# pos [%s]",
-				   table.concat(coords, ",")))
-      end
-      table.insert(row, string.format("% -11.6g", self:get(table.unpack(coords))))
-      local j=#dims+1
-      repeat
-	j=j-1
-	coords[j] = coords[j] + 1
-	if coords[j] > dims[j] then coords[j] = 1 end
-      until j==1 or coords[j] ~= 1
-      if coords[#coords] == 1 then
-	table.insert(out, table.concat(row, " ")) row={}
-      end
-    end
-  else
-    table.insert(out, "Large matrix, not printed to display")
-  end
-  table.insert(out, string.format("# Matrix of size [%s] in %s [%s]",
-				  table.concat(dims, ","), major,
-				  self:get_reference_string()))
-  return table.concat(out, "\n")
-end
+matrix.meta_instance.__tostring =
+  matrix.__make_generic_print__("Matrix",
+				function(value)
+				  return string.format("% -11.6g", value)
+				end)
 
 matrix.meta_instance.__eq = function(op1, op2)
   if type(op1) == "number" or type(op2) == "number" then return false end
