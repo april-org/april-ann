@@ -482,7 +482,7 @@ namespace InterestPoints {
   static void classify_pixel(ImageFloat *img, ImageFloat *result, int col, int ini_row, int end_row, float value) {
 
       for(int row = ini_row; row < end_row; ++row) {
-          if (is_black((*img)(col,row), 0.5)) {
+          if (is_black((*img)(col,row), 0.8)) {
               (*result)(col,row) = value;
           }
 
@@ -643,28 +643,38 @@ namespace InterestPoints {
       for (int column = 0; column < width; column++) {
           if (column > next_asc.x) {
               prev_asc = next_asc;
-              next_asc = get_next_point(ascenders, asc_idx, width, 0.0f);
-              asc_idx++;
+              while (next_asc.x == prev_asc.x) {
+                next_asc = get_next_point(ascenders, asc_idx, width, 0.0f);
+                asc_idx++;
+              }
           }
           if (column > next_desc.x) {
-              prev_desc = next_desc;
-              next_desc = get_next_point(descenders, desc_idx, width, height-1.0f);
-              desc_idx++;
+              while (next_desc.x == prev_desc.x) {
+                  prev_desc = next_desc;
+
+                  next_desc = get_next_point(descenders, desc_idx, width, height-1.0f);
+                  desc_idx++;
+              }
           }
           if (column > next_upper.x) {
-              prev_upper = next_upper;
-              next_upper = get_next_point(upper_baseline, upper_idx, width, 9999.9f);
-              upper_idx++;
+              while (next_upper.x == prev_upper.x) {
+                  prev_upper = next_upper;
+                  next_upper = get_next_point(upper_baseline, upper_idx, width, 9999.9f);
+                  upper_idx++;
+              }
           }
           if (column > next_lower.x) {
-              prev_lower = next_lower;
-              next_lower = get_next_point(lower_baseline, lower_idx, width, 9999.9f);
-              lower_idx++;
+              while (next_lower.x == prev_lower.x) {
+                  prev_lower = next_lower;
+                  next_lower = get_next_point(lower_baseline, lower_idx, width, 9999.9f);
+                  lower_idx++;
+              }
           }
 
           float cur_upper = max(0.0f, prev_upper.y + 
                   ((column - prev_upper.x) / (next_upper.x-prev_upper.x)) * 
                   (next_upper.y - prev_upper.y) - BASELINE_SLACK);
+
           float cur_lower = min(height - 1.0f, prev_lower.y + 
                   ((column - prev_lower.x) / (next_lower.x - prev_lower.x)) *
                   (next_lower.y - prev_lower.y) + BASELINE_SLACK);
@@ -683,10 +693,15 @@ namespace InterestPoints {
 
           // Classify the pixels
 
-          int asc = round(cur_asc);
-          int upper = round(cur_upper);
-          int lower = round(cur_lower);
-          int desc = round(cur_desc);
+
+          int asc = 0; //max(0, (int)round(cur_asc));
+          int upper = max(asc, (int)round(cur_upper));
+          int desc = height; //min(height,(int)round(cur_desc));
+          int lower = min(desc,(int)round(cur_lower));
+          assert(asc >= 0.0 && asc < height);
+          assert(upper >= 0.0 && upper < height);
+          assert(lower >= 0.0 && lower < height);
+          assert(desc >= 0.0 && desc < height);
           //          printf("%d %d %d %d %d\n", column, asc, upper, lower, desc); 
           classify_pixel(source, result, column, asc, upper, ASC);
           classify_pixel(source, result, column, upper, lower, BODY);
@@ -707,7 +722,7 @@ namespace InterestPoints {
       for (int col = 0; col < width; ++col)
       {
           for(int row = 0; row < height; ++row) {
-              if (is_black((*img)(col,row),DESC+eps)) total++;
+              if (is_black((*img)(col,row),0.8)) total++;
           }
       }
 

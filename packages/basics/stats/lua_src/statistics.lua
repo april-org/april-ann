@@ -237,7 +237,9 @@ function confus_matrix_methods:addSample(pred, gt)
         gt   = map_dict[gt]
     end
     if not self:checkType(pred) or not self:checkType(gt) then
-        error("The class is not correct")
+        printf("Error %f %f, %d\n", pred, gt, self.samples)
+        return
+        --error("The class is not correct")
     end
 
     if gt == pred then
@@ -371,8 +373,8 @@ function stats.confusion_matrix.twoDatasetsIterator(predDs, gtDs)
 
     return function()
         i = i+1
-
         if i <= n then return predDs:getPattern(i)[1], gtDs:getPattern(i)[1] end
+        
     end
 end
 
@@ -397,6 +399,8 @@ function confus_matrix_methods:addData(param1, param2)
     if( type(param1) == 'function') then
         iterator = param1
         assert(param2 == nil)
+    elseif (type(param1) == 'dataset') then
+        iterator = stats.confusion_matrix.twoDatasetsIterator(param1, param2)
     else
         iterator = stats.confusion_matrix.twoTablesIterator(param1, param2)
         assert(type(param1) == "table" and type(param2) == "table", "The type of the params is not correct")
