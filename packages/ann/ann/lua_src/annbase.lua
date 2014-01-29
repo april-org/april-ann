@@ -2,6 +2,31 @@ get_table_from_dotted_string("ann.mlp.all_all", true)
 
 ----------------------------------------------------------------------
 
+function ann.connections.input_filters_image(w, nrows, ncols, margin)
+  local margin = margin or 1
+  local R = math.floor(math.sqrt(w:dim(1)))
+  local C = math.ceil(math.sqrt(w:dim(1)))
+  local result = matrix(R*(nrows+1)-1, C*(ncols+1)-1):zeros()
+  local neuron_weights
+  local result_sw = result:sliding_window{ size={nrows,ncols},
+                                           step={nrows+margin,ncols+margin}, }
+  local result_m
+  for i=1,w:dim(1) do
+    result_m = result_sw:get_matrix(result_m)
+    neuron_weights = w:select(1,i,neuron_weights)
+    local normalized = neuron_weights:clone():rewrap(nrows,ncols):
+    clone("row_major"):
+    scal(1/neuron_weights:norm2()):
+    adjust_range(0,1)
+    result_m:copy(normalized)
+    --
+    result_sw:next()    
+  end
+  return Image(result)
+end
+
+----------------------------------------------------------------------
+
 april_set_doc("ann.save",
 	      {
 		class="function",
@@ -188,6 +213,22 @@ april_set_doc("ann.connections",
 	      {
 		class="namespace",
 		summary="Connections namespace, stores helper functions",
+	      })
+
+-------------------------------------------------------------------
+
+april_set_doc("ann.connections.input_filters_image",
+	      {
+		class="function",
+		summary="Builds an image with the filters in the given weights matrix",
+		params={
+		  { "The weights matrix" },
+		  { "The number of rows at each filter" },
+		  { "The number of columns at each filter" },
+		},
+		outputs={
+		  "A squared image (instance of Image) containing all the filters",
+		}
 	      })
 
 -------------------------------------------------------------------

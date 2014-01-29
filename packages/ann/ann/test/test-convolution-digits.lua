@@ -263,13 +263,9 @@ end
 --   end
 -- }
 
-w = trainer:weights("w1")
-local k=0
-for waux in w:sliding_window():iterate() do
-  matrix.saveImage(waux:scal(1/waux:norm2()):clone("row_major"):rewrap(3,3):adjust_range(0,1),
-		   "KK-"..k..".pnm")
-  k=k+1
-end
+
+local img = ann.connections.input_filters_image(trainer:weights("w1"), 3, 3)
+ImageIO.write(img,"/tmp/filters.png")
 
 clock:stop()
 cpu,wall = clock:read()
