@@ -491,13 +491,29 @@ namespace InterestPoints {
 
   }
 
-  
+  enum AREAS { UNK, ASC, BODY, DESC };
 
-  const float ASC  = 0.2;
-  const float BODY = 0.4;
-  const float DESC = 0.6;
-  const float UNK  = 0.8;
+  const float ASC_CODE  = 0.2;
+  const float BODY_CODE = 0.4;
+  const float DESC_CODE = 0.6;
+  const float UNK_CODE  = 0.8;
 
+  static int get_tag(float value) {
+      float eps = 0.05;
+      int tag = 0;
+      // Get the label
+      if (value <= ASC_CODE+eps) {
+          tag = 1;  
+      }
+      else if(value <= BODY_CODE+eps) {
+          tag = 2;
+      }
+      else if(value <= DESC_CODE+eps) {
+          tag = 3;
+      }
+      return tag;
+
+  }
   ImageFloatRGB * area_to_rgb(ImageFloat *img) {
 
       int width = img->width;
@@ -508,18 +524,21 @@ namespace InterestPoints {
       for (int y = 0; y < height; ++y)
           for(int x = 0; x < width; ++x) {
               float value = (*img)(x,y);
-              if (is_black(value,DESC+eps)) {
+              if (is_black(value, UNK_CODE+eps)) {
                   // Get the label
-                  if (value <= ASC+eps) {
+                  if (value <= ASC_CODE+eps) {
                       (*rgb)(x,y) = FloatRGB(1.0,0.0,0.0); 
                   }
-                  else if(value <= BODY+eps) {
+                  else if(value <= BODY_CODE+eps) {
 
                       (*rgb)(x,y) = FloatRGB(0.0,1.0,0.0); 
                   }
-                  else if(value <= DESC+eps) {
+                  else if(value <= DESC_CODE+eps) {
 
                       (*rgb)(x,y) = FloatRGB(0.0,0.0,1.0); 
+                  }
+                  else {
+                      (*rgb)(x,y) = FloatRGB(0.5,0.5,0.5); 
                   }
               }
           }
@@ -528,11 +547,82 @@ namespace InterestPoints {
 
   }
 
+
+  ImageFloat *refine_colored(ImageFloat *img, MatrixFloat *mat, int num_classes)
+  {
+      int height = img->height;
+      int width  = img->width;
+      int dims[2] = {height, width};
+
+      MatrixFloat::random_access_iterator mat_it(mat);
+
+      MatrixFloat *result_mat = new MatrixFloat(2, dims);
+      result_mat->fill(1.0);
+
+      ImageFloat  *result = new ImageFloat(result_mat);
+
+      //FIX_ME
+      // Use Integral Image (image_histograms package)
+      int dim_scores[2] = {height+1, num_classes};
+      MatrixFloat *scores = new MatrixFloat(2, dim_scores);
+      // Accesor
+      MatrixFloat::random_access_iterator scores_it(scores);
+      // Columns
+      for (int x = 0; x < width; ++x) {
+
+          //Baseline
+          //FROM DOWN TO UP
+          for (int c = 0; c < num_classes; ++c) {
+              scores_it(height,c) = 0;
+          }
+
+          for (int y = height-1; y >= 0; --y) {
+              for (int c = 0; c <= num_classes; ++c) {
+                  scores_it(y,c) = scores_it(y+1, c) + mat_it(y,x,c);
+              }
+          }
+
+          // Find baseline transition
+          int max_value = -999999;
+          int argmax_value = 0;
+          for (int y = height-1; y >= 0; --y) {
+              float base_score = scores_it(y,2) - 2*scores_it(y, 0) - 2*scores_it(y, 1);
+              //printf("%d %d %f\n", x, y, base_score);
+              if (base_score > max_value) {
+                  argmax_value = y;
+                  max_value = base_score;
+              }
+          }
+          int y_base = argmax_value;
+
+          // Find topline transition
+          max_value = -99999;
+          for (int y = y_base; y >= 0; --y) {
+              float base_score = scores_it(y, 1) - 2*scores_it(y, 0) - 2*scores_it(y, 2);
+              if (base_score > max_value) {
+                  argmax_value = y;
+                  max_value = base_score;
+              }
+          }
+          //Topline
+          int y_top = argmax_value;
+          
+          classify_pixel(img, result, x, 0, y_top, ASC_CODE);
+          classify_pixel(img, result, x, y_top, y_base, BODY_CODE);
+          classify_pixel(img, result, x, y_base, height, DESC_CODE);
+
+      }
+
+
+      return result;
+
+  }
+
   ImageFloat *get_image_area_from_dataset(DataSetFloat *ds_out,
           DataSetFloat *indexed,
           int width,
           int height,
-          int num_classes = 3) 
+          int num_classes = 3, float threshold) 
   {
       assert(ds_out->numPatterns() == indexed->numPatterns() && "The number of patterns does not fit");
 
@@ -553,29 +643,67 @@ namespace InterestPoints {
           int row = index/width;
           int column = index%width; 
           int tag = april_utils::argmax(ftag, num_classes)+1;
-          
-//float prob = exp(april_utils.max(ftag, num_classes));
+          float prob = exp(april_utils::max(ftag, num_classes));
+
           float value = 1.0;
-          
+
           switch(tag) {
               case 1:
-                  value = ASC;
+                  value = ASC_CODE;
                   break;
               case 2:
-                  value = BODY;
+                  value = BODY_CODE;
                   break;
               case 3:
-                  value = DESC;
+                  value = DESC_CODE;
                   break;
               default:
 
                   break;
           }
-        
+
+          if (prob < threshold)
+              value = UNK_CODE;
+
           (*result)(column, row) = value;
       }
 
       return result;
+  }
+
+  // Returns a 3D matrix. 2 first dimensions are the dimensions of the imgage.
+  // The third dimension are the values of the softmax computed for the image
+  MatrixFloat *get_image_matrix_from_index(DataSetFloat *ds_out,
+          DataSetFloat *indexed,
+          int width,
+          int height,
+          int num_classes) 
+  {
+      assert(ds_out->numPatterns() == indexed->numPatterns() && "The number of patterns does not fit");
+
+      int numPats = ds_out->numPatterns();
+
+      int dims[3] = {height, width, num_classes};
+      MatrixFloat *result_mat = new MatrixFloat(3, dims);
+      MatrixFloat::random_access_iterator it(result_mat);
+      result_mat->fill(0.0);
+      float ipat; 
+      float *ftag = new float[num_classes];
+      // Get the softmax index
+      for (int i = 0; i < numPats; ++i) {
+          indexed->getPattern(i,&ipat);
+          int index = (int) ipat;
+          //Result mat is a matrix in row major (y, x)
+          int row = (index/width);
+          int column = (index%width); 
+          ds_out->getPattern(i, ftag);;
+          for (int c = 0; c < num_classes; ++c) {
+              it(row, column,c) = exp(ftag[c]);
+          }
+          int tag = april_utils::argmax(ftag, num_classes)+1;
+      }
+      delete []ftag;
+      return result_mat;
   }
 
 
@@ -644,8 +772,8 @@ namespace InterestPoints {
           if (column > next_asc.x) {
               prev_asc = next_asc;
               while (next_asc.x == prev_asc.x) {
-                next_asc = get_next_point(ascenders, asc_idx, width, 0.0f);
-                asc_idx++;
+                  next_asc = get_next_point(ascenders, asc_idx, width, 0.0f);
+                  asc_idx++;
               }
           }
           if (column > next_desc.x) {
@@ -703,19 +831,22 @@ namespace InterestPoints {
           assert(lower >= 0.0 && lower < height);
           assert(desc >= 0.0 && desc < height);
           //          printf("%d %d %d %d %d\n", column, asc, upper, lower, desc); 
-          classify_pixel(source, result, column, asc, upper, ASC);
-          classify_pixel(source, result, column, upper, lower, BODY);
-          classify_pixel(source, result, column, lower, desc, DESC);
+          classify_pixel(source, result, column, asc, upper, ASC_CODE);
+          classify_pixel(source, result, column, upper, lower, BODY_CODE);
+          classify_pixel(source, result, column, lower, desc, DESC_CODE);
 
       }
       return result;
   }
 
-  MatrixFloat * get_indexes_from_colored(ImageFloat *img) {
+  /* 
+   * Img2 is used to compute a indexed softmax value using the indexes from the first image
+   * in this case the matrix will have 3 columns: index class_img class_img2
+   * useful to compute the error of an image */
+  MatrixFloat * get_indexes_from_colored(ImageFloat *img, ImageFloat *img2) {
 
       // Compute the number of pixels
       int total = 0;
-
       int width  = img->width;
       int height = img->height;
       float eps = 0.05;
@@ -725,8 +856,12 @@ namespace InterestPoints {
               if (is_black((*img)(col,row),0.8)) total++;
           }
       }
+      int n_imgs = 1;
+      if (img2) {
+          n_imgs = 2;
+      }
 
-      int dims[2] = {total,2};
+      int dims[2] = {total,n_imgs + 1};
       MatrixFloat * m_pixels = new MatrixFloat(2, dims);
 
       int current = 0;
@@ -737,19 +872,18 @@ namespace InterestPoints {
               float tag = 0;
               float index = (row)*width+col+1;
 
-              if (is_black(value,DESC+eps)) {
-                  // Get the label
-                  if (value <= ASC+eps) {
-                      tag = 1;  
-                  }
-                  else if(value <= BODY+eps) {
-                      tag = 2;
-                  }
-                  else if(value <= DESC+eps) {
-                      tag = 3;
-                  }
+
+              if (is_black(value,0.8)) {
+
+                  tag = get_tag(value);
                   (*m_pixels)(current,0) = index;
                   (*m_pixels)(current,1) = tag;
+                  if (img2) {
+                      float value2 = (*img2)(col,row);
+                      int tag2 = get_tag(value2);
+                      (*m_pixels)(current,2) = tag2;
+                  }
+
                   current++;
               }
           }

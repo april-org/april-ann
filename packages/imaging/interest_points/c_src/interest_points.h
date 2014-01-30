@@ -76,9 +76,16 @@ namespace InterestPoints
             vector<Point2D> descenders
             );
 
- ImageFloat *get_image_area_from_dataset(DataSetFloat *ds_out, DataSetFloat *indexed, int width, int height, int num_classes); 
- MatrixFloat * get_indexes_from_colored(ImageFloat *img);
+MatrixFloat *get_image_matrix_from_index(DataSetFloat *ds_out,
+        DataSetFloat *indexed,
+        int width,
+        int height,
+        int num_classes = 3);
 
+ ImageFloat *get_image_area_from_dataset(DataSetFloat *ds_out, DataSetFloat *indexed, int width, int height, int num_classes, float threshold = 0.8); 
+ MatrixFloat * get_indexes_from_colored(ImageFloat *img, ImageFloat *img2=NULL);
+
+ ImageFloat *refine_colored(ImageFloat *img, MatrixFloat *mat, int num_classes = 3);
  struct interest_point:Point<int> {
      bool natural_type;
      int point_class;
@@ -86,7 +93,7 @@ namespace InterestPoints
 
      interest_point() {}
      interest_point(int x, int y, int point_class, bool type, float log_prob):
-         Point(x,y), natural_type(type), point_class(point_class), log_prob(log_prob) {}
+         Point<int>(x,y), natural_type(type), point_class(point_class), log_prob(log_prob) {}
      bool operator< (interest_point &ip)
      {
          return this->log_prob > ip.log_prob;

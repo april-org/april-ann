@@ -119,7 +119,7 @@ using namespace InterestPoints;
 }
 //BIND_END
 
-//BIND_FUNCTION interest_points.get_image_area_from_dataset
+//BIND_FUNCTION interest_points.get_image_matrix_from_index
 {
  LUABIND_CHECK_ARGN(==,4);
  DataSetFloat *dsOut, *indexed;
@@ -128,25 +128,67 @@ using namespace InterestPoints;
  LUABIND_GET_PARAMETER(2, DataSetFloat, indexed);
  LUABIND_GET_PARAMETER(3, int, width);
  LUABIND_GET_PARAMETER(4, int, height);
- ImageFloat *img = InterestPoints::get_image_area_from_dataset(dsOut, indexed, width, height, 3);
+ MatrixFloat *mat = InterestPoints::get_image_matrix_from_index(dsOut, indexed, width, height, 3);
+ LUABIND_RETURN(MatrixFloat, mat);
+}
+//BIND_END
+//BIND_FUNCTION interest_points.get_image_area_from_dataset
+{
+ LUABIND_CHECK_ARGN(>=,4);
+ DataSetFloat *dsOut, *indexed;
+ float threshold;
+ int height, width; 
+ LUABIND_GET_PARAMETER(1, DataSetFloat, dsOut);
+ LUABIND_GET_PARAMETER(2, DataSetFloat, indexed);
+ LUABIND_GET_PARAMETER(3, int, width);
+ LUABIND_GET_PARAMETER(4, int, height);
+ LUABIND_GET_OPTIONAL_PARAMETER(5, float, threshold, 0.7);
+ ImageFloat *img = InterestPoints::get_image_area_from_dataset(dsOut, indexed, width, height, 3, threshold);
 
  ImageFloatRGB *rgb = InterestPoints::area_to_rgb(img);
  LUABIND_RETURN(ImageFloatRGB, rgb);
+ LUABIND_RETURN(ImageFloat, img);
 }
 //BIND_END
 
-//BIND_FUNCTION interest_points.get_indexes_from_colored
+//BIND_FUNCTION interest_points.area_to_rgb
 {
-  // Recibe una imagen y la lista de puntos de interés
   LUABIND_CHECK_ARGN(==,1);
   ImageFloat *img;
+  LUABIND_GET_PARAMETER(1, ImageFloat, img);
+
+  ImageFloatRGB *result = InterestPoints::area_to_rgb(img);
+  LUABIND_RETURN(ImageFloatRGB, result);
+}
+//BIND_END
+//BIND_FUNCTION interest_points.refine_colored
+{
+  LUABIND_CHECK_ARGN(==,2);
+  MatrixFloat *mat;
+  ImageFloat *img;
+  LUABIND_GET_PARAMETER(1, ImageFloat, img);
+  LUABIND_GET_PARAMETER(2, MatrixFloat, mat);
+  ImageFloat *result = InterestPoints::refine_colored(img, mat);
+  LUABIND_RETURN(ImageFloat, result);
+
+}
+//BIND_END
+
+////BIND_FUNCTION interest_points.get_indexes_from_colored
+{
+  // Recibe una imagen y la lista de puntos de interés
+  LUABIND_CHECK_ARGN(>=,1);
+  LUABIND_CHECK_ARGN(<=,2);
+  ImageFloat *img;
+  ImageFloat *img2;
   int points;
     
   LUABIND_GET_PARAMETER(1, ImageFloat, img);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, ImageFloat, img2, NULL);
   
   MatrixFloat *m_pixels;
 
-  MatrixFloat *result = InterestPoints::get_indexes_from_colored(img);
+  MatrixFloat *result = InterestPoints::get_indexes_from_colored(img, img2);
 
   
   LUABIND_RETURN(MatrixFloat, result);
