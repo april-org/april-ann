@@ -326,86 +326,229 @@ function interest_points.sort_by_class(table_points, classes)
 
 end
 
--- Returns two tables wiht the lower and bound points classified
-function interest_points.get_interest_points(img, mlpUppers, mlpLowers) 
 
-    local uppers, lowers = interest_points.extract_points_from_image(img)
-    pc = interest_points.pointClassifier(500, 250, 50, 30, false)
+function interest_points.filter_points(tables)
 
-    -- Compute uppers
-    local uppers_classified = pc:classify_points(img, uppers, mlpUppers)
-    local classes = mlpUppers:get_output_size()
-    local upper_table = interest_points.sort_by_class(uppers_classified, classes)
-
-    -- Compute uppers
-    local lowers_classified = pc:classify_points(img, lowers, mlpLowers)
-    classes = mlpLowers:get_output_size()
-    local lower_table = interest_points.sort_by_class(lowers_classified, classes)
-
-    return upper_table, lower_table
-end
-
-----------------------------------------------------
--- Util functions
--- Recieve a table with the tag classes
--- Returns a Sparse (softmax) vector of the tags
--- ------------------------------------------------
-function interest_points.loadTagDataset(points, numClasses)
-
-    local numClasses = numClasses or 5
-    local mOut = matrix(#points, points)
-    local dsIndex = dataset.identity(numClasses)
-    local dsOutIndex = dataset.matrix(mOut)
-    local dsOut = dataset.indexed(dsOutIndex, {dsIndex})
-
-    return dsOut
-end
-------------------------
---
--- Recieves an image and a interest point table, x_window and y_window parameters,
--- and return a returns a dataset of size num_points*((xwindow+1+xwindow*)*(y_window+1+ỳ_window))
---
---
----------------------------
-function dataset.interest_point(img, table_points, x_window, y_window, reverse)
-
-    local img_matrix = img:matrix()
-
-    local white  = 1
-
-    if reverse then
-        white = 0
+  -------------------------------------------------------------
+  -- get_first_point(tbl, width, default_y) -> point, index
+  -------------------------------------------------------------
+  local function get_first_point(tbl, width, default_y)
+    if #tbl == 0 then
+      return {0, default_y}, 0
+    else
+      local result = {0, tbl[1][2]}
+      if tbl[1][1] == 0 then
+        return result, 1
+      else
+        return result, 0
+      end
     end
-    -- Create the dataset over the image
-    local params_img = {
-      patternSize  = {y_window*2+1, x_window*2+1},
-      offset       = {-y_window, -x_window},
-      stepSize     = {1,1},
-      numSteps     = img_matrix:dim(),
-      defaultValue = white,
-      circular     = {false, false}
-    }
+  end
 
-    local dsImg = dataset.matrix(img_matrix, params_img)
+  ---------------------------------------------------------------
+  -- get_next_point(tbl, index, width, default_y) -> point
+  ---------------------------------------------------------------
+  local function get_next_point(tbl, index, width, default_y)
+      if index+1 < 1 then error("invalid index") end
 
-   -- Create the indexed point
-   -- the table is composed by elems (x, y, c)
-   -- En la imagen es x, y i en la matriz y x
-   local tIndexes = table.imap(table_points, function (elem)
-       local index = elem[2]*img_matrix:dim(2)+elem[1] 
-       assert(index <= img_matrix:size())
-       return index
-   end)
-   local dsIndexes = dataset.matrix(matrix(tIndexes))
+      if #tbl > 0 then
+          if index < #tbl then
+              return tbl[index+1]
+          else
+              return {width-1, tbl[#tbl][2]}
+          end
+      else
+          return {width-1, default_y}
+      end
+  end
 
-   local dsPoints = dataset.indexed(dsIndexes, {dsImg})
-    
-   local dsOut = nil
-   local points
-   if #table_points[1] >= 3 then
-      points = table.imap(table_points, function (elem) return elem[3] end)
-   end
-   
+  local function filter_repeated(tip, func) 
+      local result = {}
+      local y
+      for i=1,#tbl do
+          if y == nil then
+              y = tbl[i][2]
+          end
+          if tbl[i+1]~= nil and tbl[i+1][1] == tbl[i][1] then
+              y = func(y, tbl[i+1][2])
+          else
+              table.insert(result,{tbl[i][1], y})
+              y=nil
+          end
+      end
+      return result
+  end
+  local ASCENDER=1
+  local UPPER_BASELINE=2
+  local BODY=3
+  local LOWER_BASELINE=4
+  local DESCENDER=5
 
-   return dsPoints, points and interest_points.loadTagDataset(points)
-end
+
+  -- START
+
+  -- FIlter repeated
+  filter_repeated(tables[ASCENDER], math.min)
+  filter_repeated(tables[UPPER_BASELINE], math.min)
+  filter_repeated(tables[LOWER_BASELINE], math.max)
+  filter_repeated(tables[DESCENDER], math.max)
+  local asc_idx, desc_idx, upper_idx
+  local prev_asc, next_asc
+  local prev_desc, next_desc
+
+  prev_asc, asc_idx = get_first_point(tables[ASCENDER], w, 0)
+  next_asc = get_next_point(tables[ASCENDER], asc_idx, w, 0)
+  asc_idx = asc_idx+1
+
+  local highest = {-1, math.huge}
+  local new_ascenders = {}
+  for i, p in ipairs(tables[BODY]) do
+      --[[
+      printf ("prev_asc = (%d, %d), p = (%d, %d), next_asc = (%d, %d)\n",
+      prev_asc[1], prev_asc[2], p[1], p[2], next_asc[1], next_asc[2])
+      --]]
+      if p[1] > next_asc[1] or i == #tables[BODY] then
+          local x,y = unpack(highest)
+          local asc_y = prev_asc[2] + ((x-prev_asc[1])/(next_asc[1]-prev_asc[1]))*(next_asc[2]-prev_asc[2])
+          --printf("---> highest=(%d,%d), asc_y=%d\n", x,y, asc_y)
+          if y < asc_y then
+              table.insert(new_ascenders, highest)
+              --printf("inserted ascender: (%d, %d)\n", x, y)
+          end
+          while p[1] > next_asc[1] do
+              prev_asc = next_asc
+              next_asc = get_next_point(tables[ASCENDER], asc_idx, w, 0)
+              asc_idx = asc_idx+1
+          end
+          highest = p 
+      end
+      if p[2] < highest[2] then
+          highest=p
+      end
+  end
+
+  tables[ASCENDER] = table.join(tables[ASCENDER], new_ascenders)
+  table.sort(tables[ASCENDER], function(a,b) return a[1]<b[1] end)
+  tables[ASCENDER] = filtrar_repetidos_array(tables[ASCENDER], math.min)
+
+  prev_desc, desc_idx = get_first_point(tables[DESCENDER], w, h-1)
+  next_desc = get_next_point(tables[DESCENDER], desc_idx, w, h-1)
+  desc_idx = desc_idx+1
+
+  local lowest = {-1, 0}
+  local new_descenders = {}
+  for i, p in ipairs(tables[BODY]) do
+      --[[
+      printf ("prev_desc = (%d, %d), p = (%d, %d), next_desc = (%d, %d)\n",
+      prev_desc[1], prev_desc[2], p[1], p[2], next_desc[1], next_desc[2])
+      --]]
+      if p[1] > next_desc[1] or i == #tables[BODY] then
+          local x,y = unpack(lowest)
+          local desc_y = prev_desc[2] + ((x-prev_desc[1])/(next_desc[1]-prev_desc[1]))*(next_desc[2]-prev_desc[2])
+          --printf("---> lowest=(%d,%d), desc_y=%d\n", x,y, desc_y)
+          if y > desc_y then
+              table.insert(new_descenders, lowest)
+              --printf("inserted descender: (%d, %d)\n", x, y)
+          end
+          while p[1] > next_desc[1] do
+              prev_desc = next_desc
+              next_desc = get_next_point(tables[DESCENDER], desc_idx, w, h-1)
+              desc_idx = desc_idx + 1
+          end
+          lowest = p
+      end
+      if p[2] > lowest[2] then
+          lowest=p
+      end
+  end
+
+  filter_repeated(tables[ASCENDER], math.min)
+  filter_repeated(tables[DESCENDER], math.max)
+
+  return tables
+
+  end
+
+  -- Returns two tables wiht the lower and bound points classified
+  function interest_points.get_interest_points(img, mlpUppers, mlpLowers) 
+
+      local uppers, lowers = interest_points.extract_points_from_image(img)
+      pc = interest_points.pointClassifier(500, 250, 50, 30, false)
+
+      -- Compute uppers
+      local uppers_classified = pc:classify_points(img, uppers, mlpUppers)
+      local classes = mlpUppers:get_output_size()
+      local upper_table = interest_points.sort_by_class(uppers_classified, classes)
+
+      -- Compute uppers
+      local lowers_classified = pc:classify_points(img, lowers, mlpLowers)
+      classes = mlpLowers:get_output_size()
+      local lower_table = interest_points.sort_by_class(lowers_classified, classes)
+
+      return upper_table, lower_table
+  end
+
+  ----------------------------------------------------
+  -- Util functions
+  -- Recieve a table with the tag classes
+  -- Returns a Sparse (softmax) vector of the tags
+  -- ------------------------------------------------
+  function interest_points.loadTagDataset(points, numClasses)
+
+      local numClasses = numClasses or 5
+      local mOut = matrix(#points, points)
+      local dsIndex = dataset.identity(numClasses)
+      local dsOutIndex = dataset.matrix(mOut)
+      local dsOut = dataset.indexed(dsOutIndex, {dsIndex})
+
+      return dsOut
+  end
+  ------------------------
+  --
+  -- Recieves an image and a interest point table, x_window and y_window parameters,
+  -- and return a returns a dataset of size num_points*((xwindow+1+xwindow*)*(y_window+1+ỳ_window))
+  --
+  --
+  ---------------------------
+  function dataset.interest_point(img, table_points, x_window, y_window, reverse)
+
+      local img_matrix = img:matrix()
+
+      local white  = 1
+
+      if reverse then
+          white = 0
+      end
+      -- Create the dataset over the image
+      local params_img = {
+          patternSize  = {y_window*2+1, x_window*2+1},
+          offset       = {-y_window, -x_window},
+          stepSize     = {1,1},
+          numSteps     = img_matrix:dim(),
+          defaultValue = white,
+          circular     = {false, false}
+      }
+
+      local dsImg = dataset.matrix(img_matrix, params_img)
+
+      -- Create the indexed point
+      -- the table is composed by elems (x, y, c)
+      -- En la imagen es x, y i en la matriz y x
+      local tIndexes = table.imap(table_points, function (elem)
+          local index = elem[2]*img_matrix:dim(2)+elem[1] 
+          assert(index <= img_matrix:size())
+          return index
+      end)
+      local dsIndexes = dataset.matrix(matrix(tIndexes))
+
+      local dsPoints = dataset.indexed(dsIndexes, {dsImg})
+
+      local dsOut = nil
+      local points
+      if #table_points[1] >= 3 then
+          points = table.imap(table_points, function (elem) return elem[3] end)
+      end
+
+
+      return dsPoints, points and interest_points.loadTagDataset(points)
+  end
