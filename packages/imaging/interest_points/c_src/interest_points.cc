@@ -706,8 +706,7 @@ namespace InterestPoints {
       return result_mat;
   }
 
-
-  ImageFloat *get_pixel_area(ImageFloat *source,
+ImageFloat *get_pixel_area(ImageFloat *source,
           vector<Point2D> ascenders,
           vector<Point2D> upper_baseline, 
           vector<Point2D> lower_baseline,
@@ -732,10 +731,15 @@ namespace InterestPoints {
        *   |               descenders              |
        *   - dst_height-1 --------------- cur_desc -
        */
+
+
+
       int dims[2] = {height, width};
       MatrixFloat *result_mat = new MatrixFloat(2, dims);
       result_mat->fill(1.0);
       ImageFloat  *result = new ImageFloat(result_mat);
+
+
 
       int asc_idx = 0;
       int upper_idx = 0;
@@ -771,38 +775,28 @@ namespace InterestPoints {
       for (int column = 0; column < width; column++) {
           if (column > next_asc.x) {
               prev_asc = next_asc;
-              while (next_asc.x == prev_asc.x) {
-                  next_asc = get_next_point(ascenders, asc_idx, width, 0.0f);
-                  asc_idx++;
-              }
+              next_asc = get_next_point(ascenders, asc_idx, width, 0.0f);
+              asc_idx++;
           }
           if (column > next_desc.x) {
-              while (next_desc.x == prev_desc.x) {
-                  prev_desc = next_desc;
-
-                  next_desc = get_next_point(descenders, desc_idx, width, height-1.0f);
-                  desc_idx++;
-              }
+              prev_desc = next_desc;
+              next_desc = get_next_point(descenders, desc_idx, width, height-1.0f);
+              desc_idx++;
           }
           if (column > next_upper.x) {
-              while (next_upper.x == prev_upper.x) {
-                  prev_upper = next_upper;
-                  next_upper = get_next_point(upper_baseline, upper_idx, width, 9999.9f);
-                  upper_idx++;
-              }
+              prev_upper = next_upper;
+              next_upper = get_next_point(upper_baseline, upper_idx, width, 9999.9f);
+              upper_idx++;
           }
           if (column > next_lower.x) {
-              while (next_lower.x == prev_lower.x) {
-                  prev_lower = next_lower;
-                  next_lower = get_next_point(lower_baseline, lower_idx, width, 9999.9f);
-                  lower_idx++;
-              }
+              prev_lower = next_lower;
+              next_lower = get_next_point(lower_baseline, lower_idx, width, 9999.9f);
+              lower_idx++;
           }
 
           float cur_upper = max(0.0f, prev_upper.y + 
                   ((column - prev_upper.x) / (next_upper.x-prev_upper.x)) * 
                   (next_upper.y - prev_upper.y) - BASELINE_SLACK);
-
           float cur_lower = min(height - 1.0f, prev_lower.y + 
                   ((column - prev_lower.x) / (next_lower.x - prev_lower.x)) *
                   (next_lower.y - prev_lower.y) + BASELINE_SLACK);
@@ -821,15 +815,10 @@ namespace InterestPoints {
 
           // Classify the pixels
 
-
-          int asc = 0; //max(0, (int)round(cur_asc));
-          int upper = max(asc, (int)round(cur_upper));
-          int desc = height; //min(height,(int)round(cur_desc));
-          int lower = min(desc,(int)round(cur_lower));
-          assert(asc >= 0.0 && asc < height);
-          assert(upper >= 0.0 && upper < height);
-          assert(lower >= 0.0 && lower < height);
-          assert(desc >= 0.0 && desc < height);
+          int asc = round(cur_asc);
+          int upper = round(cur_upper);
+          int lower = round(cur_lower);
+          int desc = round(cur_desc);
           //          printf("%d %d %d %d %d\n", column, asc, upper, lower, desc); 
           classify_pixel(source, result, column, asc, upper, ASC_CODE);
           classify_pixel(source, result, column, upper, lower, BODY_CODE);
@@ -838,7 +827,6 @@ namespace InterestPoints {
       }
       return result;
   }
-
   /* 
    * Img2 is used to compute a indexed softmax value using the indexes from the first image
    * in this case the matrix will have 3 columns: index class_img class_img2
