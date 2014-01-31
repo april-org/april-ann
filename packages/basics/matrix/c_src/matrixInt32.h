@@ -24,4 +24,10 @@
 
 typedef Matrix<int32_t> MatrixInt32;
 
+template<>
+void Matrix<int32_t>::zeros();
+
+template<>
+void Matrix<int32_t>::ones();
+
 #endif // MATRIX_INT_H

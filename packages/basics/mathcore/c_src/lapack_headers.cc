@@ -52,12 +52,12 @@ int clapack_sgesdd(const int Order, const int M, const int N, const int LDA,
   float workSize;
   float *work = &workSize;
   int lwork = -1;
-  int *iwork = new int[2*numSV];
+  int *iwork = new int[8*numSV];
   int info = 0;
   // call sgesdd_ for workspace size computation
   sgesdd_("A", &M, &N, A, &LDA, S, U, &M, VT, &N, work, &lwork, iwork, &info);
   // optimal workspace size is in work[0]
-  lwork = workSize;
+  lwork = (int)workSize;
   work = new float[lwork];
   // computation
   sgesdd_("A", &M, &N, A, &LDA, S, U, &M, VT, &N, work, &lwork, iwork, &info);
@@ -96,13 +96,13 @@ int clapack_sgesdd(int Order, int M, int N, int LDA,
   float workSize;
   float *work = &workSize;
   int lwork = -1;
-  int *iwork = new int[2*numSV];
+  int *iwork = new int[8*numSV];
   int info = 0;
   char Astr[2]="A";
   // call sgesdd_ for workspace size computation
   sgesdd_(Astr, &M, &N, A, &LDA, S, U, &M, VT, &N, work, &lwork, iwork, &info);
   // optimal workspace size is in work[0]
-  lwork = workSize;
+  lwork = (int)workSize;
   work = new float[lwork];
   // computation
   sgesdd_(Astr, &M, &N, A, &LDA, S, U, &M, VT, &N, work, &lwork, iwork, &info);
@@ -117,7 +117,8 @@ int clapack_sgesdd(const int Order, const int M, const int N, const int LDA,
 		   float *A, float *U, float *S, float *VT) {
   if (Order != CblasColMajor)
     ERROR_EXIT(256, "Only col_major order is allowed\n");
-  int info = LAPACKE_sgesdd(LAPACK_COL_MAJOR, 'A', M, N, A, LDA, S, U, M, VT, N);
+  int info = LAPACKE_sgesdd(LAPACK_COL_MAJOR, 'A',
+			    M, N, A, LDA, S, U, M, VT, N);
   return info;
 }
 #endif

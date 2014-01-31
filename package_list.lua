@@ -16,6 +16,8 @@ return {
   "autodiff.ann",
   
   -- MACHINE LEARNING
+  "clustering.kmeans.matrix",
+  "knn.kdtree",
   "trainable",
   -- "function_interface",
   -- NEURAL NETWORKS

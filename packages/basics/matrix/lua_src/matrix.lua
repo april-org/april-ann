@@ -5,6 +5,25 @@ class_extension(matrix, "to_lua_string",
                                        self:toString(format or "binary"))
                 end)
 
+-- ADDING PSEUDO-INVERSE METHOD
+class_extension(matrix, "pinv",
+		function(self)
+		  local u,s,vt = self:svd()
+		  for i=1,s:size() do
+		    local aux = s:get(i)
+		    u:select(2,i):scal(((math.abs(aux)>1e-07) and 1/aux) or 0.0)
+		  end
+		  return matrix.as(self):
+		  gemm{
+		    A       = vt,
+		    B       = u,
+		    trans_A = true,
+		    trans_B = true,
+		    alpha   = 1.0,
+		    beta    = 0.0,
+		  }
+		end)
+
 -- the constructor
 matrix.row_major = function(...)
   return matrix(...)
