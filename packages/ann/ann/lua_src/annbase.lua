@@ -2,7 +2,7 @@ get_table_from_dotted_string("ann.mlp.all_all", true)
 
 ----------------------------------------------------------------------
 
-function ann.connections.input_filters_image(w, shape, margin)
+function ann.connections.input_filters_image(w, shape, margin, notranspose)
   assert(#shape == 2 or #shape == 3,
 	 "Expected shape with 2 or 3 dimensions")
   assert(#shape == 2 or shape[3] == 3,
@@ -19,15 +19,15 @@ function ann.connections.input_filters_image(w, shape, margin)
   for i=1,w:dim(1) do
     result_m = result_sw:get_matrix(result_m)
     neuron_weights = w:select(1,i,neuron_weights)
-    local normalized = neuron_weights:clone():
-    rewrap(table.unpack(shape)):clone("row_major"):
+    local normalized = neuron_weights:clone(notranspose and "row_major"):
+    rewrap(table.unpack(shape)):clone(notranspose or "row_major"):
     scal(1/neuron_weights:norm2()):
     adjust_range(0,1)
     result_m:copy(normalized)
     --
     result_sw:next()    
   end
-  if #shape == 3 then
+  if #shape == 2 then
     return Image(result)
   else
     return ImageRGB(result)
@@ -234,6 +234,7 @@ april_set_doc("ann.connections.input_filters_image",
 		  { "The weights matrix" },
 		  { "The shape of the inputs, a table with 2 or 3 components" },
 		  { "The margin between each filter [optional], by default it is 1" },
+		  { "No transpose [optional], by default it is nil" },
 		},
 		outputs={
 		  "A squared image (instance of Image) containing all the filters",
