@@ -24,6 +24,8 @@ Master branch release
 
 ### API Changes
 
+- Added operator `%` to Lua `string` metatable, allowing to do Python-like
+  string formatting, and map-like substitutions.
 - Added index matrix for min/max operations in `matrix` objects.
 - Added `serialize` and `deserialize` Lua functions, in `util` package.
 
