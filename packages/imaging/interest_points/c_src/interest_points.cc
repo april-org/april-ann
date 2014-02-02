@@ -714,8 +714,11 @@ ImageFloat *get_pixel_area(ImageFloat *source,
           MatrixFloat *transitions
           ){ 
 
-      assert(!upper_baseline.empty() && "Upper baseline must not be empty");
-      assert(!lower_baseline.empty() && "Lower baseline must not be empty");
+   
+      if (upper_baseline.empty() || lower_baseline.empty())
+          ERROR_EXIT(128, "Upper/Lower baseline munst not be empty");
+      april_assert(!upper_baseline.empty() && "Upper baseline must not be empty");
+      april_assert(!lower_baseline.empty() && "Lower baseline must not be empty");
 
       //FILE *ft son las transiciones
       int width = source->width;
