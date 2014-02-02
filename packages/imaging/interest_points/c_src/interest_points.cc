@@ -710,12 +710,14 @@ ImageFloat *get_pixel_area(ImageFloat *source,
           vector<Point2D> ascenders,
           vector<Point2D> upper_baseline, 
           vector<Point2D> lower_baseline,
-          vector<Point2D> descenders
+          vector<Point2D> descenders,
+          MatrixFloat *transitions
           ){ 
 
       assert(!upper_baseline.empty() && "Upper baseline must not be empty");
       assert(!lower_baseline.empty() && "Lower baseline must not be empty");
 
+      //FILE *ft son las transiciones
       int width = source->width;
       int height = source->height;
 
@@ -732,14 +734,14 @@ ImageFloat *get_pixel_area(ImageFloat *source,
        *   - dst_height-1 --------------- cur_desc -
        */
 
-
+      int tdims[2] = {width,4};
+      transitions = new MatrixFloat(2, tdims);
+      MatrixFloat::random_access_iterator trans(transitions);
 
       int dims[2] = {height, width};
       MatrixFloat *result_mat = new MatrixFloat(2, dims);
       result_mat->fill(1.0);
       ImageFloat  *result = new ImageFloat(result_mat);
-
-
 
       int asc_idx = 0;
       int upper_idx = 0;
@@ -814,11 +816,16 @@ ImageFloat *get_pixel_area(ImageFloat *source,
                   (next_desc.y  - prev_desc.y));
 
           // Classify the pixels
-
+          
           int asc = round(cur_asc);
           int upper = round(cur_upper);
           int lower = round(cur_lower);
           int desc = round(cur_desc);
+          trans(column, 0) = asc;
+          trans(column, 1) = upper;
+          trans(column, 2) = lower;
+          trans(column, 3) = desc;
+
           //          printf("%d %d %d %d %d\n", column, asc, upper, lower, desc); 
           classify_pixel(source, result, column, asc, upper, ASC_CODE);
           classify_pixel(source, result, column, upper, lower, BODY_CODE);

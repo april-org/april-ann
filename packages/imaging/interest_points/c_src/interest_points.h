@@ -73,7 +73,8 @@ namespace InterestPoints
             vector<Point2D> ascenders,
             vector<Point2D> upper_baseline, 
             vector<Point2D> lower_baseline,
-            vector<Point2D> descenders
+            vector<Point2D> descenders,
+            MatrixFloat *transitions
             );
 
 MatrixFloat *get_image_matrix_from_index(DataSetFloat *ds_out,
