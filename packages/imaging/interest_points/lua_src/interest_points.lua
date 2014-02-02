@@ -327,7 +327,7 @@ function interest_points.sort_by_class(table_points, classes)
 end
 
 
-function interest_points.filter_points(tables)
+function interest_points.filter_points(tables, height, width)
 
   -------------------------------------------------------------
   -- get_first_point(tbl, width, default_y) -> point, index
@@ -362,14 +362,14 @@ function interest_points.filter_points(tables)
       end
   end
 
-  local function filter_repeated(tip, func) 
+  local function filter_repeated(tbl, func) 
       local result = {}
       local y
       for i=1,#tbl do
           if y == nil then
               y = tbl[i][2]
           end
-          if tbl[i+1]~= nil and tbl[i+1][1] == tbl[i][1] then
+          if i+1 <= #tbl and tbl[i+1][1] == tbl[i][1] then
               y = func(y, tbl[i+1][2])
           else
               table.insert(result,{tbl[i][1], y})
@@ -388,16 +388,16 @@ function interest_points.filter_points(tables)
   -- START
 
   -- FIlter repeated
-  filter_repeated(tables[ASCENDER], math.min)
-  filter_repeated(tables[UPPER_BASELINE], math.min)
-  filter_repeated(tables[LOWER_BASELINE], math.max)
-  filter_repeated(tables[DESCENDER], math.max)
+  tables[ASCENDER] = filter_repeated(tables[ASCENDER], math.min)
+  tables[UPPER_BASELINE] = filter_repeated(tables[UPPER_BASELINE], math.min)
+  tables[LOWER_BASELINE] = filter_repeated(tables[LOWER_BASELINE], math.max)
+  tables[DESCENDER] =  filter_repeated(tables[DESCENDER], math.max)
   local asc_idx, desc_idx, upper_idx
   local prev_asc, next_asc
   local prev_desc, next_desc
 
-  prev_asc, asc_idx = get_first_point(tables[ASCENDER], w, 0)
-  next_asc = get_next_point(tables[ASCENDER], asc_idx, w, 0)
+  prev_asc, asc_idx = get_first_point(tables[ASCENDER], width, 0)
+  next_asc = get_next_point(tables[ASCENDER], asc_idx, width, 0)
   asc_idx = asc_idx+1
 
   local highest = {-1, math.huge}
@@ -417,7 +417,7 @@ function interest_points.filter_points(tables)
           end
           while p[1] > next_asc[1] do
               prev_asc = next_asc
-              next_asc = get_next_point(tables[ASCENDER], asc_idx, w, 0)
+              next_asc = get_next_point(tables[ASCENDER], asc_idx, width, 0)
               asc_idx = asc_idx+1
           end
           highest = p 
@@ -429,10 +429,9 @@ function interest_points.filter_points(tables)
 
   tables[ASCENDER] = table.join(tables[ASCENDER], new_ascenders)
   table.sort(tables[ASCENDER], function(a,b) return a[1]<b[1] end)
-  tables[ASCENDER] = filtrar_repetidos_array(tables[ASCENDER], math.min)
 
-  prev_desc, desc_idx = get_first_point(tables[DESCENDER], w, h-1)
-  next_desc = get_next_point(tables[DESCENDER], desc_idx, w, h-1)
+  prev_desc, desc_idx = get_first_point(tables[DESCENDER], width, height-1)
+  next_desc = get_next_point(tables[DESCENDER], desc_idx, width, height-1)
   desc_idx = desc_idx+1
 
   local lowest = {-1, 0}
@@ -452,7 +451,7 @@ function interest_points.filter_points(tables)
           end
           while p[1] > next_desc[1] do
               prev_desc = next_desc
-              next_desc = get_next_point(tables[DESCENDER], desc_idx, w, h-1)
+              next_desc = get_next_point(tables[DESCENDER], desc_idx, width, height-1)
               desc_idx = desc_idx + 1
           end
           lowest = p
@@ -462,8 +461,8 @@ function interest_points.filter_points(tables)
       end
   end
 
-  filter_repeated(tables[ASCENDER], math.min)
-  filter_repeated(tables[DESCENDER], math.max)
+  tables[ASCENDER] =  filter_repeated(tables[ASCENDER], math.min)
+  tables[DESCENDER] =filter_repeated(tables[DESCENDER], math.max)
 
   return tables
 
