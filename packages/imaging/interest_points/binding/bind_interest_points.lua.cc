@@ -113,7 +113,7 @@ using namespace InterestPoints;
   }
 
   MatrixFloat *transitions = NULL;
-  ImageFloat *result = InterestPoints::get_pixel_area(img, point_vector[0], point_vector[1], point_vector[2], point_vector[3], transitions);
+  ImageFloat *result = InterestPoints::get_pixel_area(img, point_vector[0], point_vector[1], point_vector[2], point_vector[3], &transitions);
 
   
   LUABIND_RETURN(ImageFloat, result);

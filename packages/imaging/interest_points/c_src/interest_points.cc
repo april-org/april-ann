@@ -711,7 +711,7 @@ ImageFloat *get_pixel_area(ImageFloat *source,
           vector<Point2D> upper_baseline, 
           vector<Point2D> lower_baseline,
           vector<Point2D> descenders,
-          MatrixFloat *transitions
+          MatrixFloat **transitions
           ){ 
 
    
@@ -737,9 +737,10 @@ ImageFloat *get_pixel_area(ImageFloat *source,
        *   - dst_height-1 --------------- cur_desc -
        */
 
-      int tdims[2] = {width,4};
-      transitions = new MatrixFloat(2, tdims);
-      MatrixFloat::random_access_iterator trans(transitions);
+      int tdims[2] = {width, 4};
+      (*transitions) = new MatrixFloat(2, tdims);
+
+      MatrixFloat::random_access_iterator trans(*transitions);
 
       int dims[2] = {height, width};
       MatrixFloat *result_mat = new MatrixFloat(2, dims);
