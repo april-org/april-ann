@@ -58,7 +58,7 @@ function image.image_cleaning.apply_filter_histogram(img, neighbors, levels, rad
      offset       = { -neighbors, -neighbors },
      stepSize     = { 1,1 },
      numSteps     = tDim,
-     defaultValue = 1,
+     defaultValue = 0,
      circular     = { false, false }
   }
 
