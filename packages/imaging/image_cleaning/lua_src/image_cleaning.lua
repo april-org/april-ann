@@ -161,7 +161,7 @@ function image.image_cleaning.getCleanParameters(img, params)
           offset       = {-y_window,-x_window},
           stepSize     = {1,1},
           numSteps     = img_matrix:dim(),
-          defaultValue = 1, -- 1 es blanco
+          defaultValue = 0, -- 1 es blanco
           circular     = {false,false}
       }
 
