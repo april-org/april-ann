@@ -25,6 +25,9 @@
 // Define NO_POOL to avoid the use of a pool of pointers
 // #define NO_POOL
 
+// Define POOL_DEBUG for verbose debug printf's
+// #define POOL_DEBUG
+
 #include <cstring>
 #include <cstdio>
 extern "C" {
@@ -63,8 +66,8 @@ extern "C" {
 class GPUMirroredMemoryBlockBase : public Referenced {
 #ifndef NO_POOL
 public:
-  typedef april_utils::list<char*>                  ListType;
-  typedef april_utils::hash<unsigned int, ListType> PoolType;
+  typedef april_utils::list<char*>                PoolListType;
+  typedef april_utils::hash<size_t, PoolListType> PoolType;
 #endif
 
 private:
@@ -83,7 +86,7 @@ protected:
     ~PoolFreeBeforeExit() {
       for (PoolType::iterator it = pool_lists->begin();
 	   it != pool_lists->end(); ++it) {
-	for (ListType::iterator lit = it->second.begin();
+	for (PoolListType::iterator lit = it->second.begin();
 	     lit != it->second.end(); ++lit) {
 	  aligned_free(*lit);
 	}
@@ -316,10 +319,13 @@ public:
 #endif
 #ifndef NO_POOL
     bool alloc_block = false;
-    april_utils::list<char*> &l = (*pool_lists)[size];
+    PoolListType &l = (*pool_lists)[size];
     if (l.empty()) {
       if (!use_mmap_allocation) {
 	char_mem = aligned_malloc<char>(size);
+#ifdef POOL_DEBUG
+	printf("ALLOC %lu :: %p\n", size, char_mem);
+#endif
       }
       else {
 	setMMapped();
@@ -335,6 +341,9 @@ public:
       mem_ppal = *(l.begin());
       l.pop_front();
       pool_size -= size;
+#ifdef POOL_DEBUG
+      printf("POP %lu :: %p\n", size, mem_ppal);
+#endif
     }
 #else
     if (!use_mmap_allocation) {
@@ -364,12 +373,20 @@ public:
       if (isAllocated()) {
 	if (!isMMapped()) {
 #ifndef NO_POOL
-	  april_utils::list<void*> &l = (*pool_lists)[size];
+	  PoolListType &l = (*pool_lists)[size];
 	  if (pool_size + size <= MAX_POOL_LIST_SIZE && size >= MIN_MEMORY_TH_IN_POOL) {
 	    pool_size += size;
 	    l.push_front(char_mem);
+#ifdef POOL_DEBUG
+	    printf("PUSH %lu :: %p\n", size, char_mem);
+#endif
 	  }
-	  else aligned_free(char_mem);
+	  else {
+#ifdef POOL_DEBUG
+	    printf("FREE %lu :: %p\n", size, char_mem);
+#endif
+	    aligned_free(char_mem);
+	  }
 #else
 	  aligned_free(char_mem);
 #endif
@@ -387,12 +404,20 @@ public:
     if (isAllocated()) {
       if (!isMMapped()) {
 #ifndef NO_POOL
-	april_utils::list<char*> &l = (*pool_lists)[size];
+	PoolListType &l = (*pool_lists)[size];
 	if (pool_size+size <= MAX_POOL_LIST_SIZE && size >= MIN_MEMORY_TH_IN_POOL) {
 	  pool_size += size;
 	  l.push_front(char_mem);
+#ifdef POOL_DEBUG
+	  printf("PUSH %lu :: %p\n", size, char_mem);
+#endif
 	}
-	else aligned_free(char_mem);
+	else {
+#ifdef POOL_DEBUG
+	  printf("FREE %lu :: %p\n", size, char_mem);
+#endif
+	  aligned_free(char_mem);
+	}
 #else
 	aligned_free(char_mem);
 #endif
