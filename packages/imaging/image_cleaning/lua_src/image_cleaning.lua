@@ -58,7 +58,7 @@ function image.image_cleaning.apply_filter_histogram(img, neighbors, levels, rad
      offset       = { -neighbors, -neighbors },
      stepSize     = { 1,1 },
      numSteps     = tDim,
-     defaultValue = 1,
+     defaultValue = 0,
      circular     = { false, false }
   }
 
@@ -150,13 +150,15 @@ april_set_doc("image.image_cleaning.getCleanParameters",
 })
 function image.image_cleaning.getCleanParameters(img, params)
 
-  local function getWindowDataset(img, vecinos)
+
+  local function getWindowDataset(img, x_window, y_window)
       local img_matrix = img:matrix()
-      local lado = vecinos*2+1
+      local ladox = x_window*2+1
+      local ladoy = y_window*2+1
 
       local params_sucia = {
-          patternSize  = {lado,lado},
-          offset       = {-vecinos,-vecinos},
+          patternSize  = {ladoy,ladox},
+          offset       = {-y_window,-x_window},
           stepSize     = {1,1},
           numSteps     = img_matrix:dim(),
           defaultValue = 1, -- 1 es blanco
@@ -225,10 +227,14 @@ function image.image_cleaning.getCleanParameters(img, params)
   local table_datasets = {}
 
   if params.window then
-      local ds_window  = getWindowDataset(img, params.window)
+      local ds_window  = getWindowDataset(img, params.window, params.window)
       table.insert(table_datasets, ds_window)
   end
 
+  if params.x_window and params.y_window then
+     local ds_window  = getWindowDataset(img, params.x_window, params.y_window)
+      table.insert(table_datasets, ds_window)
+  end
   if params.histogram_radio then
       local ds_hist    = getHistogramDataset(img, params.histogram_levels, params.histogram_radio)
       table.insert(table_datasets, ds_hist)
