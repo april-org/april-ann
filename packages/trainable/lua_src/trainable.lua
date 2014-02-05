@@ -1967,11 +1967,12 @@ function trainable.dataset_multiple_iterator(t)
 	end)
   --
   -- ITERATOR USING ds_idx_func
-  local pattern_size = params.datasets[1]:patternSize()
   local k=0
   local bunch_indexes = {}
   local bunch_mb_size = bunch_size * pattern_size * 4
   if #params.datasets > 2 then
+    local pattern_size = iterator(ipairs(params.datasets)):select(2):
+    call('patternSize'):reduce(math.add(), 0)
     return function()
       local ds_idx_func = ds_idx_func
       local bunch_indexes = bunch_indexes
@@ -1993,6 +1994,7 @@ function trainable.dataset_multiple_iterator(t)
     end
   elseif #params.datasets == 2 then
     local ds1,ds2 = params.datasets[1],params.datasets[2]
+    local pattern_size = ds1:patternSize() + ds2:patternSize()
     return function()
       local ds_idx_func  = ds_idx_func
       local bunch_indexes = bunch_indexes
@@ -2014,6 +2016,7 @@ function trainable.dataset_multiple_iterator(t)
     end
   else -- ( #params.datasets == 1 )
     local ds1 = params.datasets[1]
+    local pattern_size = ds1:patternSize()
     return function()
       local ds_idx_func  = ds_idx_func
       local bunch_indexes = bunch_indexes
