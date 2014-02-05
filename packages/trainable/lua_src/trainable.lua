@@ -18,7 +18,7 @@ local april_assert = april_assert
 
 -----------------------------------------
 
-local MAX_ITERS_WO_COLLECT_GARBAGE=10000
+local MAX_SIZE_WO_COLLECT_GARBAGE=50*1024*1024 -- 50 MB
 
 local function check_dataset_sizes(ds1, ds2)
   april_assert(ds1:numPatterns() == ds2:numPatterns(),
@@ -1828,6 +1828,8 @@ april_set_doc("trainable.dataset_multiple_iterator", {
 		}, })
 
 function trainable.dataset_multiple_iterator(t)
+  local cgarbage = collectgarbage
+  cgarbage("collect")
   local assert = assert
   local table = table
   local iterator = iterator
@@ -1968,6 +1970,9 @@ function trainable.dataset_multiple_iterator(t)
   local k=0
   local bunch_indexes = {}
   if #params.datasets > 2 then
+    local pattern_size = iterator(ipairs(params.datasets)):select(2):
+    call('patternSize'):reduce(math.add(), 0)
+    local bunch_mb_size = bunch_size * pattern_size * 4
     return function()
       local ds_idx_func = ds_idx_func
       local bunch_indexes = bunch_indexes
@@ -1979,17 +1984,19 @@ function trainable.dataset_multiple_iterator(t)
 	table.insert(bunch_indexes, idx)
       until not idx or #bunch_indexes==bunch_size
       -- end condition, return nil
-      if #bunch_indexes == 0 then collectgarbage("collect") return end
+      if #bunch_indexes == 0 then cgarbage("collect") return end
       local data = {}
       for i,v in ipairs(params.datasets) do data[i] = v:getPatternBunch(bunch_indexes) end
       insert(data, bunch_indexes)
-      k=k+1
-      if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
+      k=k+bunch_mb_size
+      if k >= MAX_SIZE_WO_COLLECT_GARBAGE then cgarbage("collect") k=0 end
       return table.unpack(data)
     end
   elseif #params.datasets == 2 then
     local ds1,ds2 = params.datasets[1],params.datasets[2]
-    return function()
+    local pattern_size = ds1:patternSize() + ds2:patternSize()
+    local bunch_mb_size = bunch_size * pattern_size * 4
+  return function()
       local ds_idx_func  = ds_idx_func
       local bunch_indexes = bunch_indexes
       local table = table
@@ -1998,18 +2005,20 @@ function trainable.dataset_multiple_iterator(t)
       table.clear(bunch_indexes)
       repeat
 	local idx = ds_idx_func()
-	table.insert(bunch_indexes, idx)
+	insert(bunch_indexes, idx)
       until not idx or #bunch_indexes==bunch_size
       -- end condition, return nil
-      if #bunch_indexes == 0 then collectgarbage("collect") return end
+      if #bunch_indexes == 0 then cgarbage("collect") return end
       local bunch1 = ds1:getPatternBunch(bunch_indexes)
       local bunch2 = ds2:getPatternBunch(bunch_indexes)
-      k=k+1
-      if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
+      k=k+bunch_mb_size
+      if k >= MAX_SIZE_WO_COLLECT_GARBAGE then cgarbage("collect") k=0 end
       return bunch1,bunch2,bunch_indexes
     end
   else -- ( #params.datasets == 1 )
     local ds1 = params.datasets[1]
+    local pattern_size = ds1:patternSize()
+    local bunch_mb_size = bunch_size * pattern_size * 4
     return function()
       local ds_idx_func  = ds_idx_func
       local bunch_indexes = bunch_indexes
@@ -2019,13 +2028,13 @@ function trainable.dataset_multiple_iterator(t)
       table.clear(bunch_indexes)
       repeat
 	local idx = ds_idx_func()
-	table.insert(bunch_indexes, idx)
+	insert(bunch_indexes, idx)
       until not idx or #bunch_indexes==bunch_size
       -- end condition, return nil
-      if #bunch_indexes == 0 then collectgarbage("collect") return end
+      if #bunch_indexes == 0 then cgarbage("collect") return end
       local bunch1 = ds1:getPatternBunch(bunch_indexes)
-      k=k+1
-      if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
+      k=k+bunch_mb_size
+      if k >= MAX_SIZE_WO_COLLECT_GARBAGE then cgarbage("collect") k=0 end
       return bunch1,bunch_indexes
     end
   end
