@@ -43,6 +43,7 @@ class Image : public Referenced {
   //Destructor...
   virtual ~Image();
   //Methods
+  Matrix<T> *getMatrix() { return matrix; }
   T& operator () (int x, int y) { 
     return matrix->getRawDataAccess()->getPPALForReadAndWrite()[offset+x+y*matrix_width()];
   }

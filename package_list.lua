@@ -42,6 +42,7 @@ return {
   "interest_points",
   "image_connected_components",
   --   --"libtiff",
+  "ocr.off_line.param",
   
   -- HMMs
   "hmm_trainer",

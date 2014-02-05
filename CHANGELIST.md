@@ -39,6 +39,7 @@ Master branch release
 
 ### C/C++
 
+- Added geometric parametrizer for off-line text preprocessing.
 - Added dependency with `liblapacke` for PCA when not available MKL or MacOS X.
 
 v0.3.1-alpha (pre-relase of v0.3.1-beta)
