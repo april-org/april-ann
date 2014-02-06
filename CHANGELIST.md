@@ -24,6 +24,7 @@ Master branch release
 
 ### API Changes
 
+- Added operations `math.log1p` and `math.logadd`.
 - Added operator `%` to Lua `string` metatable, allowing to do Python-like
   string formatting, and map-like substitutions.
 - Added index matrix for min/max operations in `matrix` objects.
@@ -33,7 +34,6 @@ Master branch release
 
 - Solved bug which makes to load unitialized weight matrices when loading old
   trainable.supervised_trainer (without `matrix.dict` object).
-
 - Solved bug at `Matrix<T>::sliding_window` which makes an early end of the
   iterator when window has an `offset` different of 0.
 

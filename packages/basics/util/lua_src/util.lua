@@ -852,6 +852,15 @@ end
 ------------------------ MATH UTILS ---------------------------
 ---------------------------------------------------------------
 
+-- log addition
+function math.logadd(a,b)
+  if a > b then
+    return a + math.log1p(math.exp(b-a))
+  else
+    return b + math.log1p(math.exp(a-b))
+  end
+end
+
 -- auxiliary function for fast development of reductions
 function math.lnot(a)
   if a then return not a
