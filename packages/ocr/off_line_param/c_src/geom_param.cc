@@ -292,6 +292,8 @@ namespace OCR {
 	  copyNormVector(v_inf_derivative, result, i, 0, inv_text_height);
 	  break;
 	case 'T':
+	  result->putCol(i, v_orig_nstrokes, img->width);
+	  break;
 	case 't': //TODO: Normalizar?
 	  copyNormVector(v_nstrokes, result, i, 0, 0.3);
 	  break;
