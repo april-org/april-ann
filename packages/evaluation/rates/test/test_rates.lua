@@ -15,13 +15,13 @@ for _,line in ipairs(lineas) do
   print("->"..line)
 end
 
-resul = tasas{
+resul = rates{
   datatype = "lines", -- no hace falta, es valor por defecto
   line_sep = "%*",    -- no hace falta, es valor por defecto
   words_width = 1,
   --  words_sep = " ",    -- no hace falta, por defecto es ' \t'
   data = lineas, -- los datos
-  tasa = "pra", -- campo obligatorio, no hay valor por defecto
+  rate = "pra", -- campo obligatorio, no hay valor por defecto
   confusion_matrix=true, -- por defecto es false
 }
 
@@ -39,8 +39,8 @@ print"----------------------------------\n"
 
 print"SIN MATRIZ DE CONFUSION"
 
-resul = tasas{
-  tasa = "pra",
+resul = rates{
+  rate = "pra",
   data = lineas,
 }
 
@@ -56,8 +56,8 @@ enteros = {
   {{1,1,2,3},{1,3,2,2,4}},
   {{1,1,2,3},{1,1,2,3,4}}
 }
-resul = tasas{
-  tasa = "pra",
+resul = rates{
+  rate = "pra",
   data = enteros,
   datatype = "pairs_int",
   confusion_matrix=true,
@@ -83,8 +83,8 @@ enteros = {
   {{1,1,2,3},{1,3,2,2,4}},
   {{1,1,2,3},{1,1,2,3,4}}
 }
-resul = tasas{
-  tasa = "raw",
+resul = rates{
+  rate = "raw",
   data = enteros,
   datatype = "pairs_int",
 }
