@@ -52,6 +52,15 @@ for i=1,val_data:dim(1) do
   -- print(i,best_class,counts[best_class])
   local target_class = (i-1) % 10
   if best_class ~= target_class then errors=errors+1 end
+  -- POSTERIORS
+  local result = kdt:searchKNN(100,pat)
+  local posteriors = knn.kdtree.posteriorKNN(result,
+					     function(id) return (id-1)%10 end)
+  print("# POSTERIORS", best_class, target_class)
+  local posteriors = iterator(pairs(posteriors)):map(table.pack):table()
+  table.sort(posteriors,function(a,b) return a[1]<b[1] end)
+  iterator(ipairs(posteriors)):select(2):map(table.unpack):apply(print)
+  print("# #")
   -- NAIVE CLASSIFIER
   local best_class,min=nil,math.huge
   for j=1,train_data:dim(1) do
