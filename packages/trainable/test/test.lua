@@ -123,5 +123,5 @@ end
 --printf("# CPU  total time: %.3f    per epoch: %.3f\n", cpu, cpu/num_epochs)
 --printf("# Validation error: %f  +-  %f\n", val_error, val_variance)
 
-local img = ann.connections.input_filters_image(best:weights("w1"), 16, 16)
+local img = ann.connections.input_filters_image(best:weights("w1"), {16,16})
 ImageIO.write(img, "/tmp/filters.png")

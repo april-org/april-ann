@@ -264,7 +264,7 @@ end
 -- }
 
 
-local img = ann.connections.input_filters_image(trainer:weights("w1"), 3, 3)
+local img = ann.connections.input_filters_image(trainer:weights("w1"), {3,3})
 ImageIO.write(img,"/tmp/filters.png")
 
 clock:stop()

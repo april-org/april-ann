@@ -808,7 +808,7 @@ function get_table_fields(params, t, ignore_other_fields)
 	end
       end
       -- each param has type_match, mandatory, default, and getter
-      local v = t[key] or data.default
+      local v = (t[key]==nil and data.default) or t[key]
       if v == nil and data.mandatory then
 	error("Mandatory field not found: " .. key)
       end
@@ -851,6 +851,15 @@ end
 ---------------------------------------------------------------
 ------------------------ MATH UTILS ---------------------------
 ---------------------------------------------------------------
+
+-- log addition
+function math.logadd(a,b)
+  if a > b then
+    return a + math.log1p(math.exp(b-a))
+  else
+    return b + math.log1p(math.exp(a-b))
+  end
+end
 
 -- auxiliary function for fast development of reductions
 function math.lnot(a)

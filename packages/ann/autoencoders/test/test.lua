@@ -242,5 +242,5 @@ print(trainer_shallow_classifier:validate_dataset{
 	loss = ann.loss.zero_one() })
 
 local img = ann.connections.input_filters_image(trainer_deep_classifier:weights("w1"),
-						16, 16)
+						{16,16})
 ImageIO.write(img, "/tmp/filters.png")

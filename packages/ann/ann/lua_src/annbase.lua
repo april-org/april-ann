@@ -3,6 +3,7 @@ get_table_from_dotted_string("ann.mlp.all_all", true)
 ----------------------------------------------------------------------
 
 function ann.connections.input_filters_image(w, shape, margin, notranspose)
+  assert(type(shape) == "table", "Needs a shape table as 2nd argument")
   assert(#shape == 2 or #shape == 3,
 	 "Expected shape with 2 or 3 dimensions")
   assert(#shape == 2 or shape[3] == 3,
