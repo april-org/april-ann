@@ -1528,16 +1528,21 @@ end
 
 ------------------------------------------------------------------------------
 
-function serialize(data, filename, format)
+function util.serialize(data, filename, format)
+  assert(filename, "A filename is needed as 2nd argument")
   local f = io.open(filename, "w")
   f:write("return ")
   f:write(util.to_lua_string(data, format))
   f:close()
 end
 
-function deserialize(filename)
+------------------------------------------------------------------------------
+
+function util.deserialize(filename)
   return dofile(filename)
 end
+
+------------------------------------------------------------------------------
 
 -------------------
 -- DOCUMENTATION --

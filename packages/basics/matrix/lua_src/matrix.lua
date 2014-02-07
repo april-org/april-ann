@@ -29,45 +29,17 @@ matrix.row_major = function(...)
   return matrix(...)
 end
 
-matrix.meta_instance.__call = function(self,...)
-  local arg      = table.pack(...)
-  local dims     = self:dim()
-  local pos,size = {},{}
-  for i=1,#arg do
-    local t = arg[i]
-    local tt = luatype(t)
-    local a,b
-    if tt == "table" then
-      a,b = table.unpack(t)
-      assert(tonumber(a) and tonumber(b),
-	     "The table " .. i .. " must contain two numbers")
-    elseif tt == "string" then
-      a = t:match("^(%d+)%:.*$") or 1
-      b = t:match("^.*%:(%d+)$") or dims[i]
-    elseif tt == "number" then
-      a = t
-      b = a
-    else
-      error("The argument " .. i .. " is not a table neither a string")
-    end
-    a,b = tonumber(a),tonumber(b)
-    assert(1 <= a and a <= dims[i], "Range out of bounds")
-    assert(1 <= b and b <= dims[i], "Range out of bounds")
-    table.insert(pos,  a)
-    table.insert(size, b - a + 1)
-  end
-  for i=#arg+1,#dims do
-    table.insert(pos, 1)
-    table.insert(size, dims[i])
-  end
-  return self:slice(pos,size)
-end
+matrix.meta_instance.__call =
+  matrix.__make_generic_call__()
 
 matrix.meta_instance.__tostring =
   matrix.__make_generic_print__("Matrix",
 				function(value)
 				  return string.format("% -11.6g", value)
 				end)
+
+matrix.join =
+  matrix.__make_generic_join__(matrix)
 
 matrix.meta_instance.__eq = function(op1, op2)
   if type(op1) == "number" or type(op2) == "number" then return false end
@@ -124,45 +96,6 @@ end
 matrix.meta_instance.__unm = function(op)
   local new_mat = op:clone()
   return new_mat:scal(-1)
-end
-
-function matrix.join(dim, ...)
-  local arg  = table.pack(...)
-  local size = arg[1]:dim()
-  -- ERROR CHECK
-  assert(dim >= 1 and dim <= #size,
-	 "Incorrect given dimension number, or incorrect first matrix size")
-  size[dim]  = 0
-  for i=1,#arg do
-    local m = arg[i]
-    local d = m:dim()
-    assert(#d == #size,
-	   "All the matrices must have the same number of dimensions")
-    size[dim] = size[dim] + d[dim]
-    for j=1,dim-1 do
-      assert(size[j] == d[j], "Incorrect dimension size")
-    end
-    for j=dim+1,#size do
-      assert(size[j] == d[j], "Incorrect dimension size")
-    end
-  end
-  -- JOIN
-  local outm
-  if arg[1]:get_major_order() == "col_major" then
-    outm = matrix.col_major(table.unpack(size))
-  else
-    outm = matrix(table.unpack(size))
-  end
-  local first = matrix(#size):ones():toTable()
-  for i=1,#arg do
-    local m = arg[i]
-    local d = m:dim()
-    size[dim] = d[dim]
-    local outm_slice = outm:slice(first, size)
-    outm_slice:copy(m)
-    first[dim] = first[dim] + size[dim]
-  end
-  return outm
 end
 
 -- IMAGE
