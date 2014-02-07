@@ -1022,6 +1022,11 @@ end
 ------------------------ STRING UTILS -------------------------
 ---------------------------------------------------------------
 
+getmetatable("").__mod = function(self,t)
+  assert(type(t) == "table", "Needs a table as parameter")
+  return self:gsub("$(%a[%a%d]*)",t):format(table.unpack(t))
+end
+
 function string.truncate(str, columns, prefix)
   local columns = columns - #prefix - 1
   local lines   = string.tokenize(str, "\n")

@@ -24,6 +24,8 @@ Master branch release
 
 ### API Changes
 
+- Added operator `%` to Lua `string` metatable, allowing to do Python-like
+  string formatting, and map-like substitutions.
 - Added index matrix for min/max operations in `matrix` objects.
 - Added `serialize` and `deserialize` Lua functions, in `util` package.
 
@@ -37,6 +39,7 @@ Master branch release
 
 ### C/C++
 
+- Added geometric parametrizer for off-line text preprocessing.
 - Added dependency with `liblapacke` for PCA when not available MKL or MacOS X.
 
 v0.3.1-alpha (pre-relase of v0.3.1-beta)

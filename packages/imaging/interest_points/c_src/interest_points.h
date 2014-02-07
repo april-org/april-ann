@@ -26,16 +26,18 @@
 #include <cmath>
 #include "image.h"
 #include "image_connected_components.h"
+#include "datasetFloat.h"
 #include "utilImageFloat.h"
 #include "pair.h"
 #include "vector.h"
 #include "geometry.h"
+
 using april_utils::vector;
 using april_utils::Point2D;
 namespace InterestPoints
 {
   
-  enum {ASCENDER, TOPLINE, CENTRAL, BASELINE, DESCENDER, OTHER};
+  enum {ASCENDER=1, TOPLINE, CENTRAL, BASELINE, DESCENDER, OTHER};
   /**
    * @brief Given an Image returns a vector with the local maxima and local minima of the given image.
    *
@@ -52,7 +54,7 @@ namespace InterestPoints
    *
    * @param[in] pimg Pointer to the image
    * @param[out] local_minima Return the points of the local minima contour
-   * @param[out] local_maxima Return the points of the local maxima contour
+   * @param[out] local_maxima Return the points of the local a contour
    * @param[in] threshold_white More than this value is considered black
    * @param[in] threshold_black Less than this value is set to white
    * @param[in] local_context The number of pixels in stroke that is used to compute the local maxima/minima
@@ -60,38 +62,65 @@ namespace InterestPoints
    */
   void extract_points_from_image(ImageFloat *pimg, april_utils::vector<Point2D> *local_minima, april_utils::vector<Point2D> *local_maxima, float threshold_white= 0.4, float threshold_black = 0.6, int local_context = 6, int duplicate_interval = 3);
 
-  
- struct interest_point:Point<int> {
-   bool natural_type;
-   int point_class;
-   float log_prob;
-   
-   interest_point() {}
-   interest_point(int x, int y, int point_class, bool type, float log_prob):
-       Point(x,y), natural_type(type), point_class(point_class), log_prob(log_prob) {}
-   bool operator< (interest_point &ip)
-   {
-       return this->log_prob > ip.log_prob;
-   }
 
-   float angle(interest_point &ip) {
-      float deltaY = ip.y - this->y;
-      float deltaX = ip.x - this->x;
-      
-      return atan2(deltaY, deltaX);
-   } 
+ ImageFloatRGB * area_to_rgb(ImageFloat *img);
+ /*
+  *
+  *
+  *
+  */
+ ImageFloat *get_pixel_area(ImageFloat *source,
+            vector<Point2D> ascenders,
+            vector<Point2D> upper_baseline, 
+            vector<Point2D> lower_baseline,
+            vector<Point2D> descenders,
+            MatrixFloat **transitions
+            );
+
+MatrixFloat *get_image_matrix_from_index(DataSetFloat *ds_out,
+        DataSetFloat *indexed,
+        int width,
+        int height,
+        int num_classes = 3);
+
+ ImageFloat *get_image_area_from_dataset(DataSetFloat *ds_out, DataSetFloat *indexed, int width, int height, int num_classes, float threshold = 0.8); 
+ MatrixFloat * get_indexes_from_colored(ImageFloat *img, ImageFloat *img2=NULL);
+
+ ImageFloat *refine_colored(ImageFloat *img, MatrixFloat *mat, int num_classes = 3);
+ struct interest_point:Point<int> {
+     bool natural_type;
+     int point_class;
+     float log_prob;
+
+     interest_point() {}
+     interest_point(int x, int y, int point_class, bool type, float log_prob):
+         Point<int>(x,y), natural_type(type), point_class(point_class), log_prob(log_prob) {}
+     bool operator< (interest_point &ip)
+     {
+         return this->log_prob > ip.log_prob;
+     }
+
+     float angle(interest_point &ip) {
+         float deltaY = ip.y - this->y;
+         float deltaX = ip.x - this->x;
+
+         return atan2(deltaY, deltaX);
+     } 
 
  };
 
  class PointComponent:public vector<interest_point> {
      public:
-       PointComponent(int size):vector<interest_point>(size){};
-       PointComponent():vector<interest_point>(){};
+         PointComponent(int size):vector<interest_point>(size){};
+         PointComponent():vector<interest_point>(){};
 
-       double line_least_squares();
+         double line_least_squares();
 
-       void sort_by_confidence();
-       void sort_by_x();
+         PointComponent *get_points_by_type(const int point_class, \
+                 const float min_prob = -999999.00);
+         void sort_by_confidence();
+         void sort_by_x();
+         line *get_regression_line();
  };
  class SetPoints: public Referenced {
      protected:
@@ -103,9 +132,12 @@ namespace InterestPoints
      public:
          SetPoints(ImageFloat *img);
          void addComponent();
+         void addComponent(PointComponent &);
          int getNumPoints() { return num_points;};
          int getSize() { return size;}
-         
+         PointComponent &getComponent(int cc) {
+             return (*ccPoints)[cc];
+         }
          void addPoint(int component, interest_point ip);
          void addPoint(int component, int x, int y, int c, bool natural_type, float log_prob = 0.0) {
              addPoint(component, interest_point(x,y,c,natural_type,log_prob));
@@ -121,8 +153,7 @@ namespace InterestPoints
          };
          float component_affinity(int component, interest_point &ip);
          float similarity(interest_point &ip1, interest_point &ip2);
-         PointComponent *get_points_by_type(const int cc, const int point_class, \
-                 const float min_prob = -999999.00);
+
  };
 
  class ConnectedPoints: public SetPoints {
