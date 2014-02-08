@@ -21,3 +21,33 @@ function dataset.create_fann_file(filename, input_dataset, output_dataset)
   fich:close()
 end
 
+-----------------------------------------------------------------------------
+
+class("dataset.token.lua_filter")
+
+function dataset.token.lua_filter:__call(t)
+  local params = get_table_fields({
+				    dataset = { mandatory=true },
+				    filter  = { mandatory=true,
+						type_match="function" },
+				  }, t)
+  local obj = { ds=params.dataset, filter=params.filter }
+  if isa(ds,dataset) then obj.ds = dataset.token_wrapper(obj.ds) end
+  return class_instance(obj, self)
+end
+
+function dataset.token.lua_filter:numPatterns() return self.ds:numPatterns() end
+
+function dataset.token.lua_filter:patternSize() return self.ds:patternSize() end
+
+function dataset.token.lua_filter:getPattern(idx)
+  local output = self.filter( self.ds:getPattern(idx) )
+  assert( isa(output,token.base), "The output of the filter must be a token")
+  return output
+end
+
+function dataset.token.lua_filter:getPatternBunch(idxs)
+  local output = self.filter( self.ds:getPatternBunch(idx) )
+  assert( isa(output,token.base), "The output of the filter must be a token")
+  return output
+end
