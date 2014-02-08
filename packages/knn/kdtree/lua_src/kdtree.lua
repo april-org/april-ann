@@ -22,3 +22,34 @@ function knn.kdtree.posteriorKNN(result, get_class_function)
   for i,v in pairs(posteriors) do posteriors[i] = v - cte end
   return posteriors
 end
+
+function knn.kdtree.regressionKNN(result, get_target_function)
+  local posteriors = {}
+  local cte
+  for i=1,#result do
+    local logp = -result[i][2]
+    posteriors[i] = logp
+    cte = (cte and math.logadd(cte,logp)) or logp
+  end
+  local wrap_table = {
+    matrix = function(a) return a end,
+    matrixComplex = function(a) return a end,
+    table = function(a) return matrix(#a, a) end,
+    number = function(a) return matrix(1,{a}) end,
+  }
+  local wrap_func = function(a)
+    return assert(wrap_table[type(a)](a),
+		  "Incorrect type returned by get_target_function, expected a matrix, a table or a number")
+  end
+  local logp = posteriors[1] - cte
+  posteriors[1] = logp
+  local result = wrap_func(get_target_function(result[1][1])):clone():
+  scal(math.exp(logp))
+  for i=2,#posteriors do
+    local logp = posteriors[i] - cte
+    posteriors[i] = logp
+    local target = wrap_func(get_target_function(result[i][1]))
+    result:axpy(math.exp(logp), target)
+  end
+  return result,posteriors
+end
