@@ -13,14 +13,19 @@ end
 function knn.kdtree.posteriorKNN(result, get_class_function)
   local posteriors = {}
   local cte
+  local best,argbest=-math.huge,-1
   for i=1,#result do
     local c = get_class_function(result[i][1])
     local logp = -result[i][2]
     posteriors[c] = (posteriors[c] and math.logadd(posteriors[c],logp)) or logp
     cte = (cte and math.logadd(cte,logp)) or logp
   end
-  for i,v in pairs(posteriors) do posteriors[i] = v - cte end
-  return posteriors
+  for i,v in pairs(posteriors) do
+    local logp = v - cte
+    posteriors[i] = logp
+    if logp > best then best,argbest=logp,i end
+  end
+  return posteriors,argbest,best
 end
 
 function knn.kdtree.regressionKNN(result, get_target_function)
