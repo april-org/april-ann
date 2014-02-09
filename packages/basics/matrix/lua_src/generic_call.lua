@@ -22,8 +22,10 @@ matrix.__make_generic_call__ = function()
 	error("The argument %d is not a table neither a string" % {i})
       end
       a,b = tonumber(a),tonumber(b)
-      assert(1 <= a and a <= dims[i], "Range out of bounds")
-      assert(1 <= b and b <= dims[i], "Range out of bounds")
+      april_assert(1 <= a and a <= dims[i],
+		   "Range %d out of bounds for dim %d", a, i)
+      april_assert(1 <= b and b <= dims[i],
+		   "Range %d out of bounds for dim %d", b, i)
       table.insert(pos,  a)
       table.insert(size, b - a + 1)
     end
