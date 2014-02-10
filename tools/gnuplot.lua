@@ -89,7 +89,7 @@ function gnuplot_methods:plot(params, range)
       data = aux_tmpname
     end
     if data then
-      if #data > 0 then
+      if #data > 0 and string.sub(data,1,1) ~= "<" then
 	local f = assert(io.open(data), "Unable to open filename " .. data)
 	f:close()
       end

@@ -5,11 +5,18 @@ class_extension(matrixComplex, "to_lua_string",
                                        self:toString(format or "binary"))
                 end)
 
+matrixComplex.meta_instance.__call =
+  matrix.__make_generic_call__()
+
 matrixComplex.meta_instance.__tostring =
   matrix.__make_generic_print__("MatrixComplex",
 				function(value)
 				  return string.format("%12s",tostring(value))
 				end)
+
+matrixComplex.join =
+  matrix.__make_generic_join__(matrixComplex)
+
 
 matrixComplex.meta_instance.__eq = function(op1, op2)
   return op1:equals(op2)
@@ -50,14 +57,6 @@ end
 matrixComplex.meta_instance.__unm = function(op)
   local new_mat = op:clone()
   return new_mat:scal(-1)
-end
-
-function matrixComplex.loadfile()
-  error("Deprecated, use fromFilename method")
-end
-
-function matrixComplex.savefile()
-  error("Deprecated, use toFilename method")
 end
 
 -----------------------------------------------------------------------------
