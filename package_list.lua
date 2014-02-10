@@ -43,7 +43,7 @@ return {
   "image_connected_components",
   --   --"libtiff",
   "ocr.off_line.param",
-  
+  "ocr.off_line_text_preprocessing",
   -- HMMs
   "hmm_trainer",
   "rates",
