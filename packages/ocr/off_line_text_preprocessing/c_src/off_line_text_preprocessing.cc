@@ -95,7 +95,7 @@ static float column_reduce(ImageFloat *src, int col,
 bool xComparator(Point2D &v1, Point2D &v2) {
       return v1.x < v2.x;
   }
-static void filter_asc_desc(vector<Point2D> *points, MatrixFloat::random_access_iterator &line_it,int width, bool ascender = true,float threshold = 1.0f) {
+static void filter_asc_desc(vector<Point2D> *points, MatrixFloat::random_access_iterator &line_it,int width, bool ascender = true,float threshold = 10.0f) {
 
     
     april_utils::Sort(&(*points)[0],points->size(),xComparator); 
@@ -127,7 +127,7 @@ static void filter_asc_desc(vector<Point2D> *points, MatrixFloat::random_access_
         }
         else {
             // Descenders
-            if (line_it(p.x,0) < p.y-threshold) {
+            if (line_it(p.x,1) < p.y-threshold) {
                 if (lastx != x) {
                     new_points->push_back(p);
                     lastx = x;
