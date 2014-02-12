@@ -70,6 +70,20 @@
 }
 //BIND_END
 
+//BIND_FUNCTION ocr.off_line_text_preprocessing.add_asc_desc
+{
+
+    LUABIND_CHECK_ARGN(==,2);
+    ImageFloat *img;
+    MatrixFloat *mat;
+
+    LUABIND_GET_PARAMETER(1, ImageFloat, img); 
+    LUABIND_GET_PARAMETER(2, MatrixFloat, mat); 
+    MatrixFloat *result = OCR::OffLineTextPreprocessing::add_asc_desc(img,mat);
+    LUABIND_RETURN(MatrixFloat, result);
+}
+//BIND_END
+
 //BIND_FUNCTION ocr.off_line_text_preprocessing.normalize_from_matrix
 {
   using april_utils::vector;
@@ -91,7 +105,7 @@
 
   LUABIND_GET_OPTIONAL_PARAMETER(6, bool, keep_aspect, false);
 
-  ImageFloat *result = OCR::OffLineTextPreprocessing::normalize_size(img,mat, ascender_ratio, descender_ratio,
+  ImageFloat *result = OCR::OffLineTextPreprocessing::normalize_size(img, mat, ascender_ratio, descender_ratio,
       dst_height, keep_aspect);
 
   LUABIND_RETURN(ImageFloat, result);
