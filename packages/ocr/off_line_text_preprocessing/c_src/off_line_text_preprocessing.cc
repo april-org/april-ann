@@ -5,6 +5,7 @@
 #include "pair.h"
 #include "swap.h"
 #include "max_min_finder.h" // para buscar_extremos_trazo
+#include "unused_variable.h"
 #include <cmath>
 #include <cstdio>
 
@@ -35,6 +36,7 @@ static Point2D get_next_point(vector<Point2D> v, int index, int width, float def
 
 static Point2D get_first_point(vector<Point2D> v, int width, float default_y, int *index)
 {
+    UNUSED_VARIABLE(width);
     Point2D result;
     if (!v.empty()) {
         result.x  = 0;
