@@ -7,7 +7,6 @@
 #include "bind_image.h"
 //BIND_END
 
-
 //BIND_FUNCTION ocr.off_line.param.geom
 {
     LUABIND_CHECK_ARGN(>=, 1);
@@ -21,5 +20,16 @@
     MatrixFloat *result = OCR::OffLineTextPreprocessing::
       GeomParam::extract(img, param_list);
     LUABIND_RETURN(MatrixFloat, result);
+}
+//BIND_END
+
+//BIND_FUNCTION ocr.off_line.RLSA
+{
+  ImageFloat *img;
+  int threshold;
+  LUABIND_GET_PARAMETER(1, ImageFloat, img);
+  LUABIND_GET_PARAMETER(2, int, threshold);
+  OCR::OffLineTextPreprocessing::RLSA(img,threshold);
+  // LUABIND_RETURN(ImageFloat,img);
 }
 //BIND_END

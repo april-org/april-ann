@@ -24,6 +24,7 @@ Master branch release
 
 ### API Changes
 
+- Added operations `math.log1p` and `math.logadd`.
 - Added operator `%` to Lua `string` metatable, allowing to do Python-like
   string formatting, and map-like substitutions.
 - Added index matrix for min/max operations in `matrix` objects.
@@ -33,7 +34,6 @@ Master branch release
 
 - Solved bug which makes to load unitialized weight matrices when loading old
   trainable.supervised_trainer (without `matrix.dict` object).
-
 - Solved bug at `Matrix<T>::sliding_window` which makes an early end of the
   iterator when window has an `offset` different of 0.
 
@@ -67,6 +67,7 @@ v0.3.1-alpha (pre-relase of v0.3.1-beta)
 
 ### New features
 
+- Added a normalize handwritting text utilities based on the main areas of the text.
 - Added `matrix.dict`, a hash set dictionary in C++ binded to Lua, which allows
   to execute basic math operations and reductions over the whole set of
   contained matrices. It major purpose is to represent a set of connection
