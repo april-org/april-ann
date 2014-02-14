@@ -109,6 +109,10 @@ end
 
 -- Closes the gnuplot pipe (interface)
 function gnuplot_methods:close()
+  -- remove previous temporal files
+  for _,tmpname in pairs(self.tmpnames) do
+    self:writeln(string.format("!rm -f %s", tmpname))
+  end
   self.in_pipe:close()
   self.in_pipe  = nil
 end
