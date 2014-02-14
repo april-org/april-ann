@@ -1,6 +1,6 @@
  package{ name = "ocr.off_line_text_preprocessing",
    version = "1.0",
-   depends = { "util", "Image", "matrix" },
+   depends = { "util", "Image", "matrix", "interest_points" },
    keywords = { "off_line_text_preprocessing" },
    description = "Handwritten text preprocessing utilities",
    -- targets como en ant
