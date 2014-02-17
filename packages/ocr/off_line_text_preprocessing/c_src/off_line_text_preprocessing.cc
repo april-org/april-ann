@@ -97,7 +97,6 @@ bool xComparator(Point2D &v1, Point2D &v2) {
   }
 static void filter_asc_desc(vector<Point2D> *points, MatrixFloat::random_access_iterator &line_it,int width, bool ascender = true,float threshold = 10.0f) {
 
-    
     april_utils::Sort(&(*points)[0],points->size(),xComparator); 
 
     vector<Point2D> *new_points = new vector<Point2D>();
@@ -509,7 +508,7 @@ namespace OCR {
             // Compute local maxima and local minima
             vector<Point2D> *ascenders = new vector<Point2D>();
             vector<Point2D> *descenders = new vector<Point2D>();
-            InterestPoints::extract_points_from_image(img, ascenders, descenders);
+            InterestPoints::extract_points_from_image(img, ascenders, descenders, 0.6, 0.4, 6, 15 );
 
 
             // Filter the points that are over the size
@@ -521,7 +520,7 @@ namespace OCR {
             int asc_idx = 0;
             int desc_idx = 0;
 
-
+            
             prev_asc = get_first_point(*ascenders, width, 0.0f, &asc_idx);
             next_asc = get_next_point(*ascenders, asc_idx, width, 0.0f);
             asc_idx++;
@@ -547,12 +546,14 @@ namespace OCR {
                     desc_idx++;
                 }
 
-                float cur_asc   = min(cur_upper, prev_asc.y + 
+                float cur_asc   = min(cur_upper-1.0f, prev_asc.y + 
                         ((column - prev_asc.x) / (next_asc.x - prev_asc.x) ) *
                         (next_asc.y   - prev_asc.y));
-                float cur_desc  = max(cur_lower, prev_desc.y +
+                cur_asc = max(0.0f,cur_asc);
+                float cur_desc  = max(cur_lower+1.0f, prev_desc.y +
                         ((column - prev_desc.x) / (next_desc.x - prev_desc.x)) *
                         (next_desc.y  - prev_desc.y));
+                cur_desc = max(height-1.0f, cur_desc);
                 // Add the new lines and copy the old ones
 
                 //printf("Liada %d %f %f,(%f,%f) (%f,%f)\n", column, cur_asc, cur_upper, prev_asc.x, prev_asc.y, next_asc.x, next_asc.y);
