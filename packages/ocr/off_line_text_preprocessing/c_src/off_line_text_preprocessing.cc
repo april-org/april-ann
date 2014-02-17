@@ -163,10 +163,13 @@ static void resize_index(ImageFloat *src, ImageFloat *dst,
             "Bottom source must be <= src_height");
     assert(dst_bottom <= dst->height && 
             "Bottom dest must be <= dest_height");
-    assert(src_top < src_bottom &&
+    assert(src_top <= src_bottom &&
             "Top src pixel has to be lower than bottom");
     assert(dst_top < dst_bottom &&
             "Top target pixel has to be lower than bottom");
+
+    //if (src_top >= src_bottom) 
+    //    src_bottom = src_top+1;
 
     int epsilon      = 1e-7;
     float ratio = (src_bottom - src_top)/(dst_bottom - dst_top);
@@ -531,6 +534,8 @@ namespace OCR {
 
                 float cur_upper = line_it(column,0);
                 float cur_lower = line_it(column,1);
+                if (cur_upper > cur_lower) 
+                    cur_upper = cur_lower; 
                 if (column > next_asc.x) {
                     prev_asc = next_asc;
                     next_asc = get_next_point(*ascenders, asc_idx, width, 0.0f);
