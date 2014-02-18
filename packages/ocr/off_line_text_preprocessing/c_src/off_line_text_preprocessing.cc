@@ -553,7 +553,7 @@ namespace OCR {
                 float cur_desc  = max(cur_lower+1.0f, prev_desc.y +
                         ((column - prev_desc.x) / (next_desc.x - prev_desc.x)) *
                         (next_desc.y  - prev_desc.y));
-                cur_desc = max(height-1.0f, cur_desc);
+                cur_desc = min(height-1.0f, cur_desc);
                 // Add the new lines and copy the old ones
 
                 //printf("Liada %d %f %f,(%f,%f) (%f,%f)\n", column, cur_asc, cur_upper, prev_asc.x, prev_asc.y, next_asc.x, next_asc.y);
