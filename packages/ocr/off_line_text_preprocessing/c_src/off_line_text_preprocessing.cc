@@ -93,58 +93,79 @@ static float column_reduce(ImageFloat *src, int col,
 // Given a contour matrix (baseline, topline) and a line points
 //
 bool xComparator(Point2D &v1, Point2D &v2) {
-      return v1.x < v2.x;
-  }
-static void filter_asc_desc(vector<Point2D> *points, MatrixFloat::random_access_iterator &line_it,int width, bool ascender = true,float threshold = 10.0f) {
-
-    april_utils::Sort(&(*points)[0],points->size(),xComparator); 
-
-    vector<Point2D> *new_points = new vector<Point2D>();
-    int lastx = -1;
-    int lasty  = -1;
-
-    for(int i = 0; i < (int)points->size();++i) {
-        Point2D &p = (*points)[i];
-        int x = int(p.x);
-
-        if (ascender) {
-            if (line_it(p.x,0) > p.y+threshold) {
-
-                if (lastx != x) {
-                    new_points->push_back(p);
-                    lastx = x;
-                    lasty = p.y;
-                }
-                else if (lasty > p.y) {
-                    new_points->pop_back();
-                    new_points->push_back(p);
-                    lasty = p.y;
-                }
-
-            }
-
-        }
-        else {
-            // Descenders
-            if (line_it(p.x,1) < p.y-threshold) {
-                if (lastx != x) {
-                    new_points->push_back(p);
-                    lastx = x;
-                    lasty = p.y;
-                }
-                else if (lasty < p.y) {
-                    new_points->pop_back();
-                    new_points->push_back(p);
-                    lasty = p.y;
-                }
-            }
-        }
-    }
-    // Delte points and change to new_points
-    vector<Point2D> *aux = points;
-    points->swap(*new_points);
-    delete new_points;
+  return v1.x < v2.x;
 }
+
+bool yComparator(Point2D &v1, Point2D &v2) {
+  return v1.y < v2.y;
+}
+bool yComparatorReversed(Point2D &v1, Point2D &v2) {
+  return v1.y > v2.y;
+}
+
+static void filter_asc(vector<Point2D> *points,
+		       MatrixFloat::random_access_iterator &line_it,
+		       int width, 
+		       float vThreshold = 10.0f,
+		       int hThreshold = 20) {
+  bool *valid = new bool[width];
+  for (int i=0; i<width; ++i) valid[i] = true;
+  vector<Point2D> *new_points = new vector<Point2D>();
+  
+  april_utils::Sort(&(*points)[0],points->size(),yComparator);
+  for(int i = 0; i < (int)points->size();++i) {
+    Point2D &p = (*points)[i];
+    int x = int(p.x);
+    if (line_it(x,0) > p.y+vThreshold && valid[x]) {
+      new_points->push_back(p);
+      int first = max(x-hThreshold,0);
+      int last  = min(x+hThreshold,width-1);
+      for (int i=first; i<=last; ++i)
+	valid[i]=false;
+    }
+  }
+  // sort new_points by x
+  april_utils::Sort(&(*new_points)[0],new_points->size(),xComparator); 
+  
+  // delete points and change to new_points
+  vector<Point2D> *aux = points;
+  points->swap(*new_points);
+  delete new_points;
+  delete[] valid;
+}
+
+static void filter_desc(vector<Point2D> *points,
+			MatrixFloat::random_access_iterator &line_it,
+			int width, 
+			float vThreshold = 10.0f,
+			int hThreshold = 20) {
+  bool *valid = new bool[width];
+  for (int i=0; i<width; ++i) valid[i] = true;
+  vector<Point2D> *new_points = new vector<Point2D>();
+  
+  april_utils::Sort(&(*points)[0],points->size(),yComparatorReversed);
+  for(int i = 0; i < (int)points->size();++i) {
+    Point2D &p = (*points)[i];
+    int x = int(p.x);
+    if (line_it(x,1) < p.y-vThreshold && valid[x]) {
+      new_points->push_back(p);
+      int first = max(x-hThreshold,0);
+      int last  = min(x+hThreshold,width-1);
+      for (int i=first; i<=last; ++i)
+	valid[i]=false;
+    }
+  }
+  // sort new_points by x
+  april_utils::Sort(&(*new_points)[0],new_points->size(),xComparator); 
+  
+  // delete points and change to new_points
+  vector<Point2D> *aux = points;
+  points->swap(*new_points);
+  delete new_points;
+  delete[] valid;
+}
+
+
 // Scales the source column to the target column
 // Recieve:
 // Two Images (Source and target)
@@ -512,8 +533,8 @@ namespace OCR {
 
 
             // Filter the points that are over the size
-            filter_asc_desc(ascenders, line_it, width);
-            filter_asc_desc(descenders, line_it, width, false);
+            filter_asc(ascenders, line_it, width);
+            filter_desc(descenders, line_it, width);
             // Compute the interpolated lines
             Point2D next_asc, next_desc;
             Point2D prev_asc, prev_desc;
