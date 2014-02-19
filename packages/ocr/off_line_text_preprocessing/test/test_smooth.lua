@@ -16,7 +16,7 @@ for i=1,smoothed:dim(1) do
 end 
 
 local finalMat = ocr.off_line_text_preprocessing.add_asc_desc(img:to_grayscale():invert_colors(), bodyMat)
-
+local img2 = img:clone()
 
 
 for i = 1, finalMat:dim(1) do
@@ -30,6 +30,10 @@ for i = 1, finalMat:dim(1) do
   img:putpixel(i,upper,1,0,1);
   img:putpixel(i,lower, 0,0,1);
 end
+
+imgNorm = ocr.off_line_text_preprocessing.normalize_from_matrix(img2:to_grayscale():invert_colors(), 0.1,0.2,finalMat,40)
+
 finalMat:toTabFilename("prueba.mat")
 ImageIO.write(img, "prueba.png")
+ImageIO.write(imgNorm:invert_colors(), "prueba-norm.png")
 print (bodyMat)
