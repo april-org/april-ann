@@ -1043,13 +1043,25 @@ function formiga.__luacode__ (t)
     table.append(files_list,
 		 formiga.os.glob(formiga.os.compose_dir(orig_dir,luafil)))
   end
+  local ok,f_lua
   lua_data = {}
+  local function has_lstrip()
+    local f = io.popen("which lstrip")
+    local l = f:read("*l")
+    f:close()
+    if not l or #l == 0 then
+      printverbosecolor(0,"red","black",
+			"WARNING!!! Impossible to run lstrip command, skipping lstrip")
+      return false
+    end
+    return true
+  end
   for _,lua_file in ipairs(files_list) do
     command = "luac -o /dev/null "..lua_file
     formiga.os.execute(command)
     lua_file_path = formiga.os.compose_dir(formiga.os.basedir,
 					   lua_file)
-    if formiga.compiler.global_flags.use_lstrip == "yes" then
+    if formiga.compiler.global_flags.use_lstrip == "yes" and has_lstrip() then
       command = "lstrip "..lua_file_path
       f_lua = io.popen(command)
     else
