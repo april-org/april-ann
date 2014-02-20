@@ -543,7 +543,7 @@ namespace OCR {
             int asc_idx = 0;
             int desc_idx = 0;
 
-            
+
             prev_asc = get_first_point(*ascenders, width, 0.0f, &asc_idx);
             next_asc = get_next_point(*ascenders, asc_idx, width, 0.0f);
             asc_idx++;
@@ -578,7 +578,10 @@ namespace OCR {
                         (next_desc.y  - prev_desc.y));
                 cur_desc = min(height-1.0f, cur_desc);
                 // Add the new lines and copy the old ones
-
+                
+                if (cur_upper >= cur_lower) {
+                    cur_upper = max(cur_lower-1.f, 0.0f);
+                }
                 //printf("Liada %d %f %f,(%f,%f) (%f,%f)\n", column, cur_asc, cur_upper, prev_asc.x, prev_asc.y, next_asc.x, next_asc.y);
                 //printf("Liada2 %d %f %f,(%f,%f) (%f,%f)\n", column, cur_desc, cur_lower, prev_desc.x, prev_desc.y, next_desc.x, next_desc.y);
                 result_it(column, 0) = cur_asc;
