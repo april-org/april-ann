@@ -410,7 +410,7 @@ namespace OCR {
                 }
                 //printf("dst_dsc :%d, dst_height: %d, bottom_cut:%d, height: %d, ratio: %f\n", dst_desc, dst_height, bottom_cut, height, body_ratio); 
                 assert(dst_desc <= dst_height && "Something went wrong");
-                if( bottom_cut - cur_lower 1.0f)
+                if( bottom_cut - cur_lower >= 1.0f)
                   resize_index(source, result, column, cur_lower, bottom_cut, dst_lower, dst_desc);
             }
 
