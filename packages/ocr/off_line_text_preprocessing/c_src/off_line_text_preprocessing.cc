@@ -581,6 +581,10 @@ namespace OCR {
                 cur_desc = min(height-1.0f, cur_desc);
                 // Add the new lines and copy the old ones
 
+                if (descenders->size() == 0)
+                    cur_desc = height;
+                if (ascenders->size() == 0)
+                    cur_asc = 0;
                 if (cur_upper >= cur_lower) {
                     cur_upper = max(cur_lower-1.f, 0.0f);
                 }

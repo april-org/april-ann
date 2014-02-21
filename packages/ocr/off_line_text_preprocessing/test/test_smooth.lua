@@ -40,11 +40,12 @@ local img2 = img:clone()
 
 for i = 1, finalMat:dim(1) do
   local asc = math.max(0,math.round(finalMat:get(i,1)))
-  local desc = math.min(h-1,math.round(finalMat:get(i,4)))
-  local upper = finalMat:get(i,2)
-  local lower = finalMat:get(i,3)
+  local desc = math.min(h-2,math.round(finalMat:get(i,4)))
+  local upper = math.max(0,finalMat:get(i,2))
+  local lower = math.min(h-2,finalMat:get(i,3))
 
 
+  
   print(i,asc, desc, w, h)
   img:putpixel(i,asc,1,0,0);
   img:putpixel(i,desc, 0,1,0);
