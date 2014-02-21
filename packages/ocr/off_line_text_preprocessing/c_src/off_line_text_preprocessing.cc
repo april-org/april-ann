@@ -192,7 +192,7 @@ static void resize_index(ImageFloat *src, ImageFloat *dst,
 
     //if (src_top >= src_bottom) 
     //    src_bottom = src_top+1;
-
+    
     int epsilon      = 1e-7;
     float ratio = (src_bottom - src_top)/(dst_bottom - dst_top);
     float cur_top = src_top;
@@ -393,8 +393,8 @@ namespace OCR {
                     dst_asc = -top_cut/body_ratio;
                     top_cut = 0;
                 }
-
-                resize_index(source, result, column, top_cut, cur_upper, dst_asc, dst_upper);
+                if(cur_upper - top_cut >= 1.0f)
+                  resize_index(source, result, column, top_cut, cur_upper, dst_asc, dst_upper);
                 //printf("x=%d, 1=%f, 2=%f, 4=%f, 5=%f\n", column, cur_asc, cur_upper, cur_lower, cur_desc);
                 // Descenders
                 float expected_bottom =  (dst_height - dst_lower)*body_ratio;
@@ -410,7 +410,8 @@ namespace OCR {
                 }
                 //printf("dst_dsc :%d, dst_height: %d, bottom_cut:%d, height: %d, ratio: %f\n", dst_desc, dst_height, bottom_cut, height, body_ratio); 
                 assert(dst_desc <= dst_height && "Something went wrong");
-                resize_index(source, result, column, cur_lower, bottom_cut, dst_lower, dst_desc);
+                if( bottom_cut - cur_lower 1.0f)
+                  resize_index(source, result, column, cur_lower, bottom_cut, dst_lower, dst_desc);
             }
 
             return result;
