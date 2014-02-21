@@ -489,8 +489,8 @@ namespace OCR {
                     dst_asc = -top_cut/body_ratio;
                     top_cut = 0;
                 }
-
-                resize_index(source, result, column, top_cut, cur_upper, dst_asc, dst_upper);
+                if (cur_upper - top_cut >= 1)
+                    resize_index(source, result, column, top_cut, cur_upper, dst_asc, dst_upper);
                 //printf("x=%d, 1=%f, 2=%f, 4=%f, 5=%f\n", column, cur_asc, cur_upper, cur_lower, cur_desc);
                 // Descenders
                 float expected_bottom =  (dst_height - dst_lower)*body_ratio;
@@ -505,7 +505,8 @@ namespace OCR {
                     bottom_cut = height;
                 }
                 assert(dst_desc <= dst_height && "Something went wrong");
-                resize_index(source, result, column, cur_lower, bottom_cut, dst_lower, dst_desc);
+                if(bottom_cut - cur_lower >= 1.0f)
+                 resize_index(source, result, column, cur_lower, bottom_cut, dst_lower, dst_desc);
 
             }
 
@@ -579,7 +580,7 @@ namespace OCR {
                         (next_desc.y  - prev_desc.y));
                 cur_desc = min(height-1.0f, cur_desc);
                 // Add the new lines and copy the old ones
-                
+
                 if (cur_upper >= cur_lower) {
                     cur_upper = max(cur_lower-1.f, 0.0f);
                 }
