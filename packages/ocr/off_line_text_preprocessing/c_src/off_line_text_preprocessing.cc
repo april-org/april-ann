@@ -139,7 +139,7 @@ static void filter_asc(vector<Point2D> *points,
 static void filter_desc(vector<Point2D> *points,
 			MatrixFloat::random_access_iterator &line_it,
 			int width, 
-			float vThreshold = 10.0f,
+			float vThreshold = 5.0f,
 			int hThreshold = 20) {
   bool *valid = new bool[width];
   for (int i=0; i<width; ++i) valid[i] = true;
@@ -516,7 +516,9 @@ namespace OCR {
 
         // From the points of the topline and baseline, adds the ascenderes and descenders
         MatrixFloat *add_asc_desc (ImageFloat     *img,
-                MatrixFloat *line_mat
+                MatrixFloat *line_mat,
+                int v_threshold,
+                float h_threshold
                 )
         {
             // Precondition mat size must be columns
@@ -537,8 +539,8 @@ namespace OCR {
 
 
             // Filter the points that are over the size
-            filter_asc(ascenders, line_it, width);
-            filter_desc(descenders, line_it, width);
+            filter_asc(ascenders, line_it, width, v_threshold, h_threshold);
+            filter_desc(descenders, line_it, width,v_threshold, h_threshold);
             // Compute the interpolated lines
             Point2D next_asc, next_desc;
             Point2D prev_asc, prev_desc;
