@@ -5,6 +5,7 @@
 #include "pair.h"
 #include "swap.h"
 #include "max_min_finder.h" // para buscar_extremos_trazo
+#include "unused_variable.h"
 #include <cmath>
 #include <cstdio>
 #include "interest_points.h"
@@ -35,6 +36,7 @@ static Point2D get_next_point(vector<Point2D> v, int index, int width, float def
 
 static Point2D get_first_point(vector<Point2D> v, int width, float default_y, int *index)
 {
+    UNUSED_VARIABLE(width);
     Point2D result;
     if (!v.empty()) {
         result.x  = 0;
@@ -93,59 +95,79 @@ static float column_reduce(ImageFloat *src, int col,
 // Given a contour matrix (baseline, topline) and a line points
 //
 bool xComparator(Point2D &v1, Point2D &v2) {
-      return v1.x < v2.x;
-  }
-static void filter_asc_desc(vector<Point2D> *points, MatrixFloat::random_access_iterator &line_it,int width, bool ascender = true,float threshold = 10.0f) {
-
-    
-    april_utils::Sort(&(*points)[0],points->size(),xComparator); 
-
-    vector<Point2D> *new_points = new vector<Point2D>();
-    int lastx = -1;
-    int lasty  = -1;
-
-    for(int i = 0; i < (int)points->size();++i) {
-        Point2D &p = (*points)[i];
-        int x = int(p.x);
-
-        if (ascender) {
-            if (line_it(p.x,0) > p.y+threshold) {
-
-                if (lastx != x) {
-                    new_points->push_back(p);
-                    lastx = x;
-                    lasty = p.y;
-                }
-                else if (lasty > p.y) {
-                    new_points->pop_back();
-                    new_points->push_back(p);
-                    lasty = p.y;
-                }
-
-            }
-
-        }
-        else {
-            // Descenders
-            if (line_it(p.x,1) < p.y-threshold) {
-                if (lastx != x) {
-                    new_points->push_back(p);
-                    lastx = x;
-                    lasty = p.y;
-                }
-                else if (lasty < p.y) {
-                    new_points->pop_back();
-                    new_points->push_back(p);
-                    lasty = p.y;
-                }
-            }
-        }
-    }
-    // Delte points and change to new_points
-    vector<Point2D> *aux = points;
-    points->swap(*new_points);
-    delete new_points;
+  return v1.x < v2.x;
 }
+
+bool yComparator(Point2D &v1, Point2D &v2) {
+  return v1.y < v2.y;
+}
+bool yComparatorReversed(Point2D &v1, Point2D &v2) {
+  return v1.y > v2.y;
+}
+
+static void filter_asc(vector<Point2D> *points,
+		       MatrixFloat::random_access_iterator &line_it,
+		       int width, 
+		       float vThreshold = 10.0f,
+		       int hThreshold = 20) {
+  bool *valid = new bool[width];
+  for (int i=0; i<width; ++i) valid[i] = true;
+  vector<Point2D> *new_points = new vector<Point2D>();
+  
+  april_utils::Sort(&(*points)[0],points->size(),yComparator);
+  for(int i = 0; i < (int)points->size();++i) {
+    Point2D &p = (*points)[i];
+    int x = int(p.x);
+    if (line_it(x,0) > p.y+vThreshold && valid[x]) {
+      new_points->push_back(p);
+      int first = max(x-hThreshold,0);
+      int last  = min(x+hThreshold,width-1);
+      for (int i=first; i<=last; ++i)
+	valid[i]=false;
+    }
+  }
+  // sort new_points by x
+  april_utils::Sort(&(*new_points)[0],new_points->size(),xComparator); 
+  
+  // delete points and change to new_points
+  vector<Point2D> *aux = points;
+  points->swap(*new_points);
+  delete new_points;
+  delete[] valid;
+}
+
+static void filter_desc(vector<Point2D> *points,
+			MatrixFloat::random_access_iterator &line_it,
+			int width, 
+			float vThreshold = 5.0f,
+			int hThreshold = 20) {
+  bool *valid = new bool[width];
+  for (int i=0; i<width; ++i) valid[i] = true;
+  vector<Point2D> *new_points = new vector<Point2D>();
+  
+  april_utils::Sort(&(*points)[0],points->size(),yComparatorReversed);
+  for(int i = 0; i < (int)points->size();++i) {
+    Point2D &p = (*points)[i];
+    int x = int(p.x);
+    if (line_it(x,1) < p.y-vThreshold && valid[x]) {
+      new_points->push_back(p);
+      int first = max(x-hThreshold,0);
+      int last  = min(x+hThreshold,width-1);
+      for (int i=first; i<=last; ++i)
+	valid[i]=false;
+    }
+  }
+  // sort new_points by x
+  april_utils::Sort(&(*new_points)[0],new_points->size(),xComparator); 
+  
+  // delete points and change to new_points
+  vector<Point2D> *aux = points;
+  points->swap(*new_points);
+  delete new_points;
+  delete[] valid;
+}
+
+
 // Scales the source column to the target column
 // Recieve:
 // Two Images (Source and target)
@@ -163,11 +185,14 @@ static void resize_index(ImageFloat *src, ImageFloat *dst,
             "Bottom source must be <= src_height");
     assert(dst_bottom <= dst->height && 
             "Bottom dest must be <= dest_height");
-    assert(src_top < src_bottom &&
+    assert(src_top <= src_bottom &&
             "Top src pixel has to be lower than bottom");
     assert(dst_top < dst_bottom &&
             "Top target pixel has to be lower than bottom");
 
+    //if (src_top >= src_bottom) 
+    //    src_bottom = src_top+1;
+    
     int epsilon      = 1e-7;
     float ratio = (src_bottom - src_top)/(dst_bottom - dst_top);
     float cur_top = src_top;
@@ -368,8 +393,8 @@ namespace OCR {
                     dst_asc = -top_cut/body_ratio;
                     top_cut = 0;
                 }
-
-                resize_index(source, result, column, top_cut, cur_upper, dst_asc, dst_upper);
+                if(cur_upper - top_cut >= 1.0f)
+                  resize_index(source, result, column, top_cut, cur_upper, dst_asc, dst_upper);
                 //printf("x=%d, 1=%f, 2=%f, 4=%f, 5=%f\n", column, cur_asc, cur_upper, cur_lower, cur_desc);
                 // Descenders
                 float expected_bottom =  (dst_height - dst_lower)*body_ratio;
@@ -385,7 +410,8 @@ namespace OCR {
                 }
                 //printf("dst_dsc :%d, dst_height: %d, bottom_cut:%d, height: %d, ratio: %f\n", dst_desc, dst_height, bottom_cut, height, body_ratio); 
                 assert(dst_desc <= dst_height && "Something went wrong");
-                resize_index(source, result, column, cur_lower, bottom_cut, dst_lower, dst_desc);
+                if( bottom_cut - cur_lower >= 1.0f)
+                  resize_index(source, result, column, cur_lower, bottom_cut, dst_lower, dst_desc);
             }
 
             return result;
@@ -463,8 +489,8 @@ namespace OCR {
                     dst_asc = -top_cut/body_ratio;
                     top_cut = 0;
                 }
-
-                resize_index(source, result, column, top_cut, cur_upper, dst_asc, dst_upper);
+                if (cur_upper - top_cut >= 1)
+                    resize_index(source, result, column, top_cut, cur_upper, dst_asc, dst_upper);
                 //printf("x=%d, 1=%f, 2=%f, 4=%f, 5=%f\n", column, cur_asc, cur_upper, cur_lower, cur_desc);
                 // Descenders
                 float expected_bottom =  (dst_height - dst_lower)*body_ratio;
@@ -479,7 +505,8 @@ namespace OCR {
                     bottom_cut = height;
                 }
                 assert(dst_desc <= dst_height && "Something went wrong");
-                resize_index(source, result, column, cur_lower, bottom_cut, dst_lower, dst_desc);
+                if(bottom_cut - cur_lower >= 1.0f)
+                 resize_index(source, result, column, cur_lower, bottom_cut, dst_lower, dst_desc);
 
             }
 
@@ -489,7 +516,9 @@ namespace OCR {
 
         // From the points of the topline and baseline, adds the ascenderes and descenders
         MatrixFloat *add_asc_desc (ImageFloat     *img,
-                MatrixFloat *line_mat
+                MatrixFloat *line_mat,
+                int v_threshold,
+                float h_threshold
                 )
         {
             // Precondition mat size must be columns
@@ -506,12 +535,12 @@ namespace OCR {
             // Compute local maxima and local minima
             vector<Point2D> *ascenders = new vector<Point2D>();
             vector<Point2D> *descenders = new vector<Point2D>();
-            InterestPoints::extract_points_from_image(img, ascenders, descenders);
+            InterestPoints::extract_points_from_image(img, ascenders, descenders, 0.6, 0.4, 6, 15 );
 
 
             // Filter the points that are over the size
-            filter_asc_desc(ascenders, line_it, width);
-            filter_asc_desc(descenders, line_it, width, false);
+            filter_asc(ascenders, line_it, width, v_threshold, h_threshold);
+            filter_desc(descenders, line_it, width,v_threshold, h_threshold);
             // Compute the interpolated lines
             Point2D next_asc, next_desc;
             Point2D prev_asc, prev_desc;
@@ -531,6 +560,8 @@ namespace OCR {
 
                 float cur_upper = line_it(column,0);
                 float cur_lower = line_it(column,1);
+                if (cur_upper > cur_lower) 
+                    cur_upper = cur_lower; 
                 if (column > next_asc.x) {
                     prev_asc = next_asc;
                     next_asc = get_next_point(*ascenders, asc_idx, width, 0.0f);
@@ -542,14 +573,23 @@ namespace OCR {
                     desc_idx++;
                 }
 
-                float cur_asc   = min(cur_upper, prev_asc.y + 
+                float cur_asc   = min(cur_upper-1.0f, prev_asc.y + 
                         ((column - prev_asc.x) / (next_asc.x - prev_asc.x) ) *
                         (next_asc.y   - prev_asc.y));
-                float cur_desc  = max(cur_lower, prev_desc.y +
+                cur_asc = max(0.0f,cur_asc);
+                float cur_desc  = max(cur_lower+1.0f, prev_desc.y +
                         ((column - prev_desc.x) / (next_desc.x - prev_desc.x)) *
                         (next_desc.y  - prev_desc.y));
+                cur_desc = min(height-1.0f, cur_desc);
                 // Add the new lines and copy the old ones
 
+                if (descenders->size() == 0)
+                    cur_desc = height;
+                if (ascenders->size() == 0)
+                    cur_asc = 0;
+                if (cur_upper >= cur_lower) {
+                    cur_upper = max(cur_lower-1.f, 0.0f);
+                }
                 //printf("Liada %d %f %f,(%f,%f) (%f,%f)\n", column, cur_asc, cur_upper, prev_asc.x, prev_asc.y, next_asc.x, next_asc.y);
                 //printf("Liada2 %d %f %f,(%f,%f) (%f,%f)\n", column, cur_desc, cur_lower, prev_desc.x, prev_desc.y, next_desc.x, next_desc.y);
                 result_it(column, 0) = cur_asc;
