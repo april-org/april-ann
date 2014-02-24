@@ -517,8 +517,8 @@ namespace OCR {
         // From the points of the topline and baseline, adds the ascenderes and descenders
         MatrixFloat *add_asc_desc (ImageFloat     *img,
                 MatrixFloat *line_mat,
-                int v_threshold,
-                float h_threshold
+                float v_threshold,
+                int h_threshold
                 )
         {
             // Precondition mat size must be columns
