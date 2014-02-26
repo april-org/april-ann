@@ -62,8 +62,6 @@ using namespace InterestPoints;
     lua_rawseti(L, -2, i);
   }
 
-//  LUABIND_RETURN_FROM_STACK(-1);
-  
   lua_createtable(L, local_maxima->size(), 0);
   for (unsigned int i=1; i <= local_maxima->size(); i++) {
     lua_createtable(L, 2, 0);
@@ -74,11 +72,9 @@ using namespace InterestPoints;
     lua_rawseti(L, -2, i);
   }
 
-//  LUABIND_RETURN_FROM_STACK(-2); 
-//  LUABIND_RETURN_FROM_STACK(-2);
-  return 2; 
   delete local_minima;
   delete local_maxima;
+  return 2; 
 }
 //BIND_END
 

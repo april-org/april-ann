@@ -73,7 +73,8 @@
 //BIND_FUNCTION ocr.off_line_text_preprocessing.add_asc_desc
 {
 
-    LUABIND_CHECK_ARGN(<=,2);
+    LUABIND_CHECK_ARGN(>=,2);
+    LUABIND_CHECK_ARGN(<=,4);
     ImageFloat *img;
     MatrixFloat *mat;
     int v_threshold;
@@ -81,7 +82,7 @@
     LUABIND_GET_PARAMETER(1, ImageFloat, img); 
     LUABIND_GET_PARAMETER(2, MatrixFloat, mat);
     LUABIND_GET_OPTIONAL_PARAMETER(3,float,v_threshold, 5.0f);
-    LUABIND_GET_OPTIONAL_PARAMETER(3,int,h_threshold, 20.0f);
+    LUABIND_GET_OPTIONAL_PARAMETER(4,int,h_threshold, 20);
      
     MatrixFloat *result = OCR::OffLineTextPreprocessing::add_asc_desc(img,mat, v_threshold, h_threshold);
     LUABIND_RETURN(MatrixFloat, result);
