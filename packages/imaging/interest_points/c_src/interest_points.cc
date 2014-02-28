@@ -184,7 +184,7 @@ namespace InterestPoints {
   // Returns true if white, false if not
   // It is assumed that white is 1 and 0
   // otherwise use flag reverse
-  inline bool is_black (float value, float threshold, bool reverse = false) {
+  inline bool is_black (float value, float threshold, bool reverse=false) {
 
     if (value < threshold)
       return true xor reverse;
@@ -313,7 +313,7 @@ namespace InterestPoints {
           vector < Point2D > *local_minima,
           vector < Point2D > *local_maxima,
           float threshold_white, float threshold_black,
-          int local_context, int duplicate_interval)
+          int local_context, int duplicate_interval, bool reverse)
   {
 
       ImageFloat & img = *pimg;   // mas comodo
@@ -343,7 +343,7 @@ namespace InterestPoints {
       for (x = 0; x < w; ++x) {
           // el borde inferior de los trazos, subiendo en la columna
           for (y = h - 1; y > 0; --y) {
-              if ((y == h - 1 || is_white (img (x, y + 1), threshold_white)) && (is_black (img (x, y - 1), threshold_black))) { // procesar el pixel
+              if ((y == h - 1 || is_white (img (x, y + 1), threshold_white, reverse)) && (is_black (img (x, y - 1), threshold_black, reverse))) { // procesar el pixel
 
                   int
                       index = -1;
@@ -372,8 +372,8 @@ namespace InterestPoints {
           }
           // el borde superior de los trazos, bajando en la columna
           for (y = 0; y < h - 1; ++y) {
-              if (is_black (img (x, y + 1), threshold_black) &&
-                      (y == 0 || is_white (img (x, y - 1), threshold_white))) {
+              if (is_black (img (x, y + 1), threshold_black,reverse) &&
+                      (y == 0 || is_white (img (x, y - 1), threshold_white, reverse))) {
 
                   int
                       index = -1;

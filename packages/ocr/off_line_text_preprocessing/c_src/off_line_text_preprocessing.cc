@@ -517,8 +517,8 @@ namespace OCR {
         // From the points of the topline and baseline, adds the ascenderes and descenders
         MatrixFloat *add_asc_desc (ImageFloat     *img,
                 MatrixFloat *line_mat,
-                int v_threshold,
-                float h_threshold
+                float v_threshold,
+                int h_threshold
                 )
         {
             // Precondition mat size must be columns
@@ -535,7 +535,9 @@ namespace OCR {
             // Compute local maxima and local minima
             vector<Point2D> *ascenders = new vector<Point2D>();
             vector<Point2D> *descenders = new vector<Point2D>();
-            InterestPoints::extract_points_from_image(img, ascenders, descenders, 0.6, 0.4, 6, 15 );
+
+            // The true is because the image is inverted
+            InterestPoints::extract_points_from_image(img, descenders, ascenders, 0.6, 0.4, 6, 15, true );
 
 
             // Filter the points that are over the size

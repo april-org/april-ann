@@ -1120,6 +1120,8 @@ function trainable_supervised_trainer_methods:train_dataset(t)
 			   mandatory  = false,
 			   default=self.smooth_gradients },
     }, t, true)
+  assert(#self.components_order > 0,
+	 "Execute build method before call this method")
   local loss       = params.loss
   local optimizer  = params.optimizer
   local smooth_gradients = params.smooth_gradients
@@ -1175,6 +1177,8 @@ function trainable_supervised_trainer_methods:grad_check_dataset(t)
       verbose        = { type_match = "boolean",
 			 mandatory = false, default=false },
     }, t, true)
+  assert(#self.components_order > 0,
+	 "Execute build method before call this method")
   local loss                = params.loss
   local verbose             = params.verbose
   params.loss               = nil
@@ -1292,6 +1296,8 @@ function trainable_supervised_trainer_methods:validate_dataset(t)
       shuffle        = { isa_match  = random, mandatory = false, default=nil },
       replacement    = { type_match = "number", mandatory = false, default=nil },
     }, t)
+  assert(#self.components_order > 0,
+	 "Execute build method before call this method")
   -- ERROR CHECKING
   assert(params.input_dataset ~= not params.output_dataset,
 	 "input_dataset and output_dataset fields are mandatory together")
@@ -1351,6 +1357,8 @@ function trainable_supervised_trainer_methods:use_dataset(t)
       bunch_size     = { type_match = "number",
 			 mandatory = (self.bunch_size == false)  },
     }, t)
+  assert(#self.components_order > 0,
+	 "Execute build method before call this method")
   local nump        = params.input_dataset:numPatterns()
   local outsize     = self.ann_component:get_output_size()
   if params.output_dataset then
