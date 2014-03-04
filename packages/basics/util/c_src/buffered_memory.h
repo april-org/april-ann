@@ -78,6 +78,9 @@ class BufferedMemory : public Referenced {
 
 public:
   
+  /// Constructor with a opned reference
+  BufferedMemory(MEMORY_TYPE &other);
+  
   /// Constructor for memory read/write, it receives the string path and the mode
   BufferedMemory(const char *path, const char *mode);
   ~BufferedMemory();

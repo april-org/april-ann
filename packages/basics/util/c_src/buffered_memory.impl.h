@@ -71,6 +71,16 @@ bool BufferedMemory<MEMORY_TYPE>::trim(const char *delim) {
 }
 
 template<typename MEMORY_TYPE>
+BufferedMemory<MEMORY_TYPE>::BufferedMemory(MEMORY_TYPE &other) :
+  Referenced(), memory(other) {
+  total_bytes    = 0;
+  buffer         = new char[DEFAULT_BUFFER_LEN];
+  max_buffer_len = DEFAULT_BUFFER_LEN;
+  setBufferAsFull();
+  is_opened = memory.isOpened();
+}
+
+template<typename MEMORY_TYPE>
 BufferedMemory<MEMORY_TYPE>::BufferedMemory(const char *path, const char *mode) :
   Referenced(), memory() {
   total_bytes    = 0;
