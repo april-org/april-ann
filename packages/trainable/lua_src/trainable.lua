@@ -265,10 +265,13 @@ april_set_doc("trainable.supervised_trainer.set_layerwise_option", {
 function trainable_supervised_trainer_methods:set_layerwise_option(layer_match,
 								   name,
 								   value)
+  local N=0
   local opt = assert(self.optimizer, "The optimizer has not been defined")
   for cnn_name,cnn in self:iterate_weights(layer_match) do
     opt:set_layerwise_option(cnn_name,name,value)
+    N=N+1
   end
+  april_assert(N>0, "0 layers match the given layer_match= %s", layer_match)
 end
 
 april_set_doc("trainable.supervised_trainer.get_option_of", {
