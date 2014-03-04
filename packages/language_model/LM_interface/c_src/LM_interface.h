@@ -1,7 +1,7 @@
 #ifndef LANGUAGE_MODEL_INTERFACE
 #define LANGUAGE_MODEL_INTERFACE
 
-#include "symbol_scores.h"
+#include <stdint.h>
 #include "logbase.h"
 #include "referenced.h"
 #include "vector.h"
@@ -9,100 +9,130 @@
 namespace language_models {
   
   using april_utils::vector;
+  typedef int32_t Word;
 
-  // forma lazy de devolver un Key, en el caso de modelos
-  // conexionistas no tiene sentido generar un key (es caro) que luego
-  // no se va a utilizar si se aplica la poda, en el caso de modelos
-  // estadisticos encapsula el estado devuelto.
-  // Debe tener el metodo: Key get();
-  template <typename Key>
-  class FutureKey {};
-
-  // para modelos estadisticos
-  template <>
-  class FutureKey<unsigned int> {
-    unsigned int key;
-  public:
-    void set(unsigned int  k) { key = k; }
-    void get(unsigned int &k) { k   = key; }
-  };
-
-  /**
-     prepare => en el estadistico no hace nada, y en el conexionista
-     hace un forward de la red neuronal (SOLO HASTA LA PENULTIMA CAPA).
-     
-     get => recibe una clave y una palabra. Devuelve un Score y un
-     FutureKey, siendo este ultimo un objeto que de forma lazy se
-     convierte en un Key (en el estadistico son basicamente iguales).
-     
-     getBestProb => la mejor probabilidad que daria un get
-     
-     getIntialKey => recibe el indice del context cue inicial, y
-     devuelve un Key que representa al estado inicial. En el
-     estadistico es el estado inicial del automata, en el conexionista
-     son $n-1$ context cues.
-     
-     getFinalKey => recibe el indice del context cue final, y devuelve
-     un Key que en el caso estadistico es el estado final del automata
-     (SOLO DEBE HABER UN UNICO ESTADO FINAL), y en el conexionista un
-     Key con una unica palabra (el context cue final).
-   */
-
-  typedef unsigned int Word;
-  
+  // Score is usually log_float
+  // Key is usually uint32_t
   template <typename Key, typename Score>
+  class LMModel; // forward declaration
+  
+  // Score is usually log_float
+  // Key is usually uint32_t
+  template <typename Key, typename Score>
+  // LMInterface is the non-thread-safe wrapper around a LMModel.  The
+  // LMModel contains the 'static' (and usually thread-safe) data
+  // (e.g. the actual automata, the MLPs of a NNLM, etc.) whereas the
+  // LMInterface usually contains other data structures to perform the
+  // actual computation of LM queries. It also contains the
+  // LMHistoryManager
   class LMInterface : public Referenced {
+    
   public:
-
+    
+    vector<KeyScoreIdTuple> result;
+    
     struct KeyScoreTuple {
-      Key   key;
+      Key key;
       Score score;
     };
-    struct FKeyScoreTuple {
-      FutureKey<Key> fKey;
-      Score score;
-    };
-    struct WordScore {
-      Word word;
-      Score score;
-    }
-    struct KeyScoreBackpointerTuple {
-      Key   key;
-      Score score;
-      Backpointer backpointer;
+    
+    struct KeyScoreIdTuple {
+      Key     key;
+      Score   score;
+      int32_t idKey;
+      int32_t idWord;
     };
 
-
+    struct WordIdScoreTuple {
+      Word    word
+      int32_t idWord;
+      Score   score;
+    };
+    
     virtual ~LMInterface() { }
+
+    // retrieves the LMModel where this LMInterface was obtained
+    virtual LMModel* getLMModel() = 0;
+    
+    // -------------- individual LM queries -------------
 
     // get is the most basic LM query method, receives the Key and the Word,
     // returns 0,1 or several results by overwritting the vector result
     // which is cleared in the method (not need to be cleared before)
-    virtual void get(const Key &key, Word word, vector<FKeyScoreTuple> result) = 0;
-
-    // TODO: add pruning techniques
-    virtual void get(const Key &key, Word word, vector<FKeyScoreTuple> result, Score pruning_threshold) = 0;
-
-
-    // get in buch mode
-    // this method has a default implementation based on the previous get method
-    virtual void get(vector<KeyScoreBackpointerTuple> input1,
-		     vector<int> sgmInput1,
-		     vector<WordScore> input2,
-		     vector<int> sgmInput2,
-		     vector<KeyScoreBackpointerTuple> output);
-    // TODO: add pruning techniques
     
-		     
+    // TODO: threshold should have a default value
+    virtual void get(const Key &key, Word word, vector<KeyScoreTuple> &result, Score threshold) = 0;
 
-    virtual Score getBestProb()				             = 0;
-    virtual Score getBestProb(Key &k)				     = 0;
-    virtual void  getInitialKey(Word initial_word, Key &k)   = 0;
+    // this method is the same get with an interface more similar to
+    // the bunch (multiple queries) mode
+    virtual void get(const Key &key, int32_t idKey, Word word, int32_t idWord,
+		     vector<KeyScoreIdTuple> &result, Score threshold) = 0;
+
+
+    // -------------- BUNCH MODE -------------
+    // Note: we can freely mix insertQuery and insertQueries, but
+    // individual queries (gets) and bunch mode queries should not be
+    // mixed.
+
+    // the bunch mode operates in a state fashion, the first operation
+    // is clearQueries to reset the internal structures and the result
+    // vector
+    void clearQueries() {
+      result.clear();
+    }
+
+    // call this method for each individual query
+    virtual void insertQuery(const Key &key, int32_t idKey,
+			     Word word, int32_t idWord,
+			     Score threshold);
+    
+    // this method can be naively converted into a series of
+    // insertQuery calls, but it can be optimized for some 
+    virtual void insertQueries(const Key &key, int32_t idKey,
+			       vector<WordIdScoreTuple> words);
+
+    // this method may perform the 'actual' computation of LM queries
+    // in some implementations which can benefit of bunch mode (for
+    // instance, NNLMs may profit this feature for grouping all
+    // queries associated to the same Key, and can perform serveral
+    // forward steps in bunch mode). Other LMs such as those based on
+    // automata (e.g. ngram_lira) may perform the LM queries in the
+    // insert method so that here they only have to return the result
+    // vector.
+    virtual void getQueries(vector<KeyScoreIdentifiersTuple> &result);
+
+
+    // an upper bound on the best transition probability, usually
+    // pre-computed in the model
+    virtual Score getBestProb() = 0;
+
+    // an upper bound on the best transition probability departing
+    // from key, usually pre-computed in the model
+    virtual Score getBestProb(Key &k) = 0;
+
+    // initial word is the initial context cue
+    virtual void  getInitialKey(Word initial_word, Key &k) = 0;
 
     // I don't like this method, it seems to assume that there is only one final state
-    virtual void  getFinalKey(Word final_word, Key &k)       = 0;
+    virtual void  getFinalKey(Word final_word, Key &k) = 0;
+    // replace by this method?
+    virtual Score getFinalScore(Word final_word, Key &k) = 0;
   };
-  
-};
+
+  template <typename Key, typename Score>
+  class LMModel : public Referenced {
+  public:
+    // return -1 when it is not an ngram
+    int ngramOrder();
+
+    bool requireHistoryManager();
+
+    // TODO: LMHistoryManager does not yet exist, it is essentially a
+    // (wrapper to a) TrieVector
+    LMInterface<Key,Score>* getInterface(LMHistoryManager *hmanager=0);
+
+  }:
+
+}; // closes namespace
 
 #endif // LANGUAGE_MODEL_INTERFACE
