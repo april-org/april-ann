@@ -67,6 +67,7 @@ v0.3.1-alpha (pre-relase of v0.3.1-beta)
 
 ### New features
 
+- Added Sauvola's binarization method.
 - Added a normalize handwritting text utilities based on the main areas of the text.
 - Added `matrix.dict`, a hash set dictionary in C++ binded to Lua, which allows
   to execute basic math operations and reductions over the whole set of

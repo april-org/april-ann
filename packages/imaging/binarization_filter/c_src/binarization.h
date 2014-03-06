@@ -30,7 +30,9 @@ ImageFloat *binarize_niblack(const ImageFloat *src, int windowRadius, float k,
 //// Another Niblack implementation
 ImageFloat *binarize_niblack_simple(const ImageFloat *src,
                                    int windowRadius, float k);
-
+// Sauvolas modification
+ImageFloat *binarize_sauvola(const ImageFloat *src, int windowRadius, float k, float r)
+;
 //// Otsu's Binarization
 ImageFloat *binarize_otsus(const ImageFloat *src);
 
