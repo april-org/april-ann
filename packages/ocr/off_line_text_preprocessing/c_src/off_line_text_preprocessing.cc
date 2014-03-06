@@ -193,7 +193,7 @@ static void resize_index(ImageFloat *src, ImageFloat *dst,
     //if (src_top >= src_bottom) 
     //    src_bottom = src_top+1;
     
-    int epsilon      = 1e-7;
+    double epsilon = 1e-7;
     float ratio = (src_bottom - src_top)/(dst_bottom - dst_top);
     float cur_top = src_top;
     float cur_bottom;
