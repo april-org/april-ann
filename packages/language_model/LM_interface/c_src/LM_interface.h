@@ -11,6 +11,8 @@ namespace language_models {
   using april_utils::vector;
   typedef int32_t WordType;
 
+  class LMHistoryManager;
+
   // Score is usually log_float
   // Key is usually uint32_t
   template <typename Key, typename Score>
@@ -61,7 +63,7 @@ namespace language_models {
     virtual ~LMInterface() { }
 
     // retrieves the LMModel where this LMInterface was obtained
-    virtual LMModel* getLMModel() = 0;
+    virtual LMModel<Key, Score>* getLMModel() = 0;
     
     // -------------- individual LM queries -------------
 
@@ -82,13 +84,13 @@ namespace language_models {
     virtual int get(const Key &key, WordType word,
 		     vector<KeyScoreTuple> &result, Score threshold) {
       // default behavior 
-      resul.clear();
+      result.clear();
       vector<KeyScoreIdTuple> aux;
       get(key,0,aux,threshold);
-      for (vector<KeyScoreIdTuple>::iterator it = aux.begin();
+      for (typename vector<KeyScoreIdTuple>::iterator it = aux.begin();
 	   it != aux.end(); ++it)
-	resul.push_back(KeyScoreTuple(it->key,it->score));
-      return resul.size();
+	result.push_back(KeyScoreTuple(it->key,it->score));
+      return result.size();
     }
 
     // -------------- BUNCH MODE -------------
@@ -105,14 +107,14 @@ namespace language_models {
 
     // call this method for each individual query
     virtual void insertQuery(const Key &key, int32_t idKey,
-			     Word word, int32_t idWord,
+			     WordType word, int32_t idWord,
 			     Score threshold) {
       // default implementation use the method get
       vector<KeyScoreIdTuple> aux;
       get(key,idKey,word,idWord,aux,threshold);
-      for (vector<KeyScoreIdTuple>::iterator it = aux.begin();
+      for (typename vector<KeyScoreIdTuple>::iterator it = aux.begin();
 	   it != aux.end(); ++it)
-	resul.push_back(*it);
+	result.push_back(*it);
     }
     
     // this method can be naively converted into a series of
@@ -120,7 +122,7 @@ namespace language_models {
     virtual void insertQueries(const Key &key, int32_t idKey,
 			       vector<WordIdScoreTuple> words) {
       // default behavior
-      for (vector<WordIdScoreTuple>::iterator it = words.begin();
+      for (typename vector<WordIdScoreTuple>::iterator it = words.begin();
 	   it != words.end(); ++it)
 	insertQuery(key, idKey, it->word, it->idWord, it->score);
     }
@@ -134,7 +136,7 @@ namespace language_models {
     // insert method so that here they only have to return the result
     // vector.
     // returns result size
-    virtual int getQueries(vector<KeyScoreIdentifiersTuple> &result) {
+    virtual int getQueries(vector<KeyScoreIdTuple> &result) {
       // default behavior
       result = this->result;
       return result.size();
@@ -149,7 +151,7 @@ namespace language_models {
     virtual Score getBestProb(Key &k) = 0;
 
     // initial word is the initial context cue
-    virtual void getInitialKey(Word initial_word, Key &k) = 0;
+    virtual void getInitialKey(WordType initial_word, Key &k) = 0;
 
     // this method returns false and does nothing on non-ngram LMs
     virtual bool getZerogramKey(Key &k) {
@@ -158,9 +160,9 @@ namespace language_models {
     }
 
     // I don't like this method, it seems to assume that there is only one final state
-    virtual void  getFinalKey(Word final_word, Key &k) = 0;
+    virtual void  getFinalKey(WordType final_word, Key &k) = 0;
     // replace by this method?
-    virtual Score getFinalScore(Word final_word, Key &k) = 0;
+    virtual Score getFinalScore(WordType final_word, Key &k) = 0;
   };
 
   template <typename Key, typename Score>
@@ -186,7 +188,9 @@ namespace language_models {
     // TODO: LMHistoryManager does not yet exist, it is essentially a
     // (wrapper to a) TrieVector
     virtual LMInterface<Key,Score>* getInterface(LMHistoryManager *hmanager=0) = 0;
+  };
 
+  class LMHistoryManager : public Referenced {
   };
 
 }; // closes namespace
