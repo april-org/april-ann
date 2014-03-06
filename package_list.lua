@@ -27,7 +27,8 @@ return {
   "ann.autoencoders",
 
   -- LANGUAGE MODELS
-  --  "fnnlm",
+  "LM_interface",
+  "ngram_lira",
   
   -- IMAGE HANDLERS
   "Image",

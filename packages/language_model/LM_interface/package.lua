@@ -1,6 +1,6 @@
  package{ name = "LM_interface",
 	  version = "1.0",
-	  depends = { "util", "dataset", "symbol_scores" },
+	  depends = { "util", "dataset" }, --, "symbol_scores" },
 	  keywords = { },
 	  description = "Interface for generic language models",
 	  target{
