@@ -24,6 +24,7 @@ Master branch release
 
 ### API Changes
 
+- Added method `m:toTabStream(file or gzfile)` to `matrix`.
 - Added operations `math.log1p` and `math.logadd`.
 - Added operator `%` to Lua `string` metatable, allowing to do Python-like
   string formatting, and map-like substitutions.
