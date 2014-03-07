@@ -57,7 +57,7 @@ namespace LanguageModels {
   struct NgramLiraBinaryHeader {
     unsigned int magic;
     unsigned int ngram_value;
-    unsigned int vocabularySize;
+    unsigned int vocabulary_size;
     unsigned int initial_state;
     unsigned int final_state;
     unsigned int lowest_state;
@@ -95,7 +95,7 @@ namespace LanguageModels {
     // the actual list of words in the model
     bool ignore_extra_words_in_dictionary;
 
-    unsigned int vocabularySize;
+    unsigned int vocabulary_size;
     unsigned int initial_state;
     unsigned int final_state;
     unsigned int lowest_state;
@@ -139,6 +139,8 @@ namespace LanguageModels {
     size_t filesize;
     char  *filemapped;
     //----------------------------------------------------------------------
+
+    static const unsigned int maxN = 20;
     
     ~NgramLiraModel();
 
@@ -182,22 +184,23 @@ namespace LanguageModels {
   
   class NgramLiraInterface : public LMInterface<NgramLiraModel::Key,
 						NgramLiraModel::Score> {
+  public:
+    typedef NgramLiraModel::Key Key;
+    typedef NgramLiraModel::Score Score;
+
+  private:
     NgramLiraModel *lira_model;
 
     // used to prepare, this class is not thread safe :'(
-    static const unsigned int maxN = 20;
     int prepared_level;
 
     // values contained in linear_index_vector are useful until prepared_level
-    int linear_index_vector[maxN];
+    int linear_index_vector[NgramLiraModel::maxN];
 
     virtual void privateGet(const Key &key, WordType word, Burden burden,
 			    vector<KeyScoreBurdenTuple> &result, Score threshold);
 
   public:
-
-    typedef NgramLiraModel::Key Key;
-    typedef NgramLiraModel::Score Score;
 
     NgramLiraInterface(NgramLiraModel *lira_model) :
       lira_model(lira_model) {
@@ -208,7 +211,7 @@ namespace LanguageModels {
       DecRef(lira_model);
     }
     
-    virtual LMModel* getLMModel() {
+    virtual LMModelUInt32LogFloat* getLMModel() {
       // it is the responsibility of the receiver to IncRef the model
       return lira_model;
     }
@@ -226,20 +229,21 @@ namespace LanguageModels {
       vector<WordIdScoreTuple> words, bool is_sorted=false);
     */
     
-    virtual Score getBestProb() const { return best_prob; }
-    virtual Score getBestProb(const Key &k) const { return max_out_prob[k]; }
-    virtual void getZeroGramKey(const Key &k) const {
-      k = lowest_state;
+    virtual Score getBestProb() const { return lira_model->best_prob; }
+    virtual Score getBestProb(const Key &k) const { return lira_model->max_out_prob[k]; }
+    virtual bool getZeroGramKey(Key &k) const {
+      k = lira_model->lowest_state;
+      return true;
     }
     virtual void getInitialKey(Key &k) const {
-      k = initial_state;
+      k = lira_model->initial_state;
     }
     virtual void getFinalKey(Key &k) const {
-      k = final_state;
+      k = lira_model->final_state;
     }
 
     // useful methods to look for an state:
-    Key getDestState(const Key &st, const WordType word);
+    Key getDestState(Key st, const WordType word);
     Key findKeyFromNgram(const WordType *word_sequence, int len);
     
   };

@@ -21,20 +21,27 @@
  */
 
 //BIND_HEADER_C
+#include "bind_LM_interface.h"
 //BIND_END
 
 //BIND_HEADER_H
+#include "bind_LM_interface.h"
 #include "ngram_lira.h"
 using namespace LanguageModels;
 //BIND_END
 
+//BIND_LUACLASSNAME LMModelUInt32LogFloat language_models.model
+//BIND_LUACLASSNAME LMInterfaceUInt32LogFloat language_models.interface
+
+///////////////////////////////////////////////////////////////////////////
+
 //BIND_LUACLASSNAME NgramLiraModel ngram.lira.model
 //BIND_CPP_CLASS    NgramLiraModel
-//BIND_SUBCLASS_OF  NgramLiraModel LMModel
+//BIND_SUBCLASS_OF  NgramLiraModel LMModelUInt32LogFloat
 
 //BIND_LUACLASSNAME NgramLiraInterface ngram.lira.interface
 //BIND_CPP_CLASS    NgramLiraInterface
-//BIND_SUBCLASS_OF  NgramLiraModel LMInterfaceUInt32LogFloat
+//BIND_SUBCLASS_OF  NgramLiraInterface LMInterfaceUInt32LogFloat
 
 //BIND_CONSTRUCTOR NgramLiraModel
 {
@@ -135,9 +142,9 @@ using namespace LanguageModels;
   const char **vocabulary_vector = new const char *[vocabulary_size];
   LUABIND_TABLE_TO_VECTOR(-1, string, vocabulary_vector, vocabulary_size);
   
-  obj->save_binary(filename,
-		   (unsigned int)vocabulary_size,
-		   vocabulary_vector);
+  obj->saveBinary(filename,
+		  (unsigned int)vocabulary_size,
+		  vocabulary_vector);
   delete[] vocabulary_vector;
 }
 //BIND_END
@@ -170,6 +177,6 @@ using namespace LanguageModels;
 
 //BIND_CONSTRUCTOR NgramLiraInterface
 {
-  LAUBIND_ERROR("Use the model method get_interface");
+  LUABIND_ERROR("Use the model method get_interface");
 }
 //BIND_END

@@ -1,5 +1,4 @@
-ngram      = ngram or {}
-ngram.stat = ngram.stat or {}
+get_table_from_dotted_string("ngram.lira.arpa2lira", true)
 
 -- Recibe una tabla con estos argumentos:
 --  input_file      fichero de entrada
@@ -11,8 +10,7 @@ ngram.stat = ngram.stat or {}
 --  output_file     fichero de salida
 --  output_filename nombre fichero de salida
 -- escribe en el fichero con formato .lira
-function ngram.stat.arpa2lira(tbl)
-
+local function arpa2lira(tbl)
   local theTrie = util.trie()
   local log10   = math.log(10)
   local logZero = -1e12 -- representación de log(-infinito)
@@ -29,7 +27,7 @@ function ngram.stat.arpa2lira(tbl)
 
   -- estas tablas contienen el automata
   --local state2transitions={} -- estado -> [ destino,palabra,prob ] * num_trans
-  local state2transitions=arpa2lira.State2Transitions()
+  local state2transitions=ngram.lira.arpa2lira.State2Transitions()
   -- la lista de transiciones es vector de {destino,palabra,prob}
   local backoffs={} -- estado -> {estado,prob bajada}
 
@@ -472,8 +470,4 @@ function ngram.stat.arpa2lira(tbl)
 
 end
 
--- descomentar para testear:
--- ngram.stat.arpa2lira{
---   input_filename  = "dihana3gram.arpa",
---   output_filename = "dihana3gram.lira",
--- }
+setmetatable(ngram.lira.arpa2lira, { __call=arpa2lira })

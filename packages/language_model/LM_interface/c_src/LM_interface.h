@@ -2,6 +2,7 @@
 #define LANGUAGE_MODEL_INTERFACE
 
 #include <stdint.h>
+#include "unused_variable.h"
 #include "logbase.h"
 #include "referenced.h"
 #include "vector.h"
@@ -9,7 +10,7 @@
 namespace LanguageModels {
   
   using april_utils::vector;
-  typedef int32_t WordType;
+  typedef uint32_t WordType;
 
   class LMHistoryManager;
 
@@ -46,8 +47,10 @@ namespace LanguageModels {
       int32_t id_key;
       int32_t id_word;
       Burden() {}
+      Burden(int32_t id_key, int32_t id_word) :
+	id_key(id_key), id_word(id_word) {}
       Burden(const Burden &other) :
-	idKey(other.id_key), idWord(other.id_word) { }
+	id_key(other.id_key), id_word(other.id_word) { }
     };
     
     /// This struct is the result produced by the LM query, a pair of
@@ -69,7 +72,7 @@ namespace LanguageModels {
       Score    score;
       WordIdScoreTuple() {}
       WordIdScoreTuple(WordType w, int32_t idw, Score s) :
-	word(w), idWord(idw), score(s) {}
+	word(w), id_word(idw), score(s) {}
     };
     
   private:
@@ -95,19 +98,9 @@ namespace LanguageModels {
     /// the bunch (multiple queries) mode
     /// TODO: threshold should have a default value
     virtual void get(const Key &key, WordType word, Burden burden,
-		     vector<KeyScoreBurdenTuple> &result, Score threshold) = 0;
+		     vector<KeyScoreBurdenTuple> &result,
+		     Score threshold) = 0;
     
-    // returns the size of result
-    virtual void get(const Key &key, WordType word,
-		     vector<KeyScoreTuple> &result, Score threshold) {
-      // default behavior 
-      vector<KeyScoreBurdenTuple> aux;
-      get(key,0,aux,threshold);
-      for (typename vector<KeyScoreBurdenTuple>::iterator it = aux.begin();
-	   it != aux.end(); ++it)
-	result.push_back(KeyScoreTuple(it->key,it->score));
-    }
-
     // -------------- BUNCH MODE -------------
     // Note: we can freely mix insertQuery and insertQueries, but
     // individual queries (gets) and bunch mode queries should not be
@@ -132,6 +125,7 @@ namespace LanguageModels {
     virtual void insertQueries(const Key &key, int32_t id_key,
 			       vector<WordIdScoreTuple> words,
 			       bool is_sorted=false) {
+      UNUSED_VARIABLE(is_sorted);
       // default behavior
       for (typename vector<WordIdScoreTuple>::iterator it = words.begin();
 	   it != words.end(); ++it)
@@ -163,14 +157,15 @@ namespace LanguageModels {
 
     /// this method returns false and does nothing on non-ngram LMs
     virtual bool getZeroGramKey(Key &k) const {
+      UNUSED_VARIABLE(k);
       // default behavior
       return false;
     }
 
     // I don't like this method, it seems to assume that there is only one final state
-    virtual void  getFinalKey(Key &k) const = 0;
+    virtual void getFinalKey(Key &k) const = 0;
     // replace by this method?
-    virtual Score getFinalScore(const Key &k) const = 0;
+    // virtual Score getFinalScore(const Key &k) const = 0;
   };
   
   /// The LMModel is the thread-safe part of the LM, where the model data is
@@ -205,8 +200,8 @@ namespace LanguageModels {
   class LMHistoryManager : public Referenced {
   };
 
-  typedef LMInterface<uint32_t,log_float> LMInterfaceUInt32LogFloat
-  typedef LMModel<uint32_t,log_float> LMModelUInt32LogFloat
+  typedef LMInterface<uint32_t,log_float> LMInterfaceUInt32LogFloat;
+  typedef LMModel<uint32_t,log_float> LMModelUInt32LogFloat;
 
 }; // closes namespace
 

@@ -27,8 +27,8 @@ return {
   "ann.autoencoders",
 
   -- LANGUAGE MODELS
-  "LM_interface",
-  "ngram_lira",
+  "language_models",
+  "ngram.lira",
   
   -- IMAGE HANDLERS
   "Image",

@@ -1,4 +1,4 @@
- package{ name = "LM_interface",
+ package{ name = "language_models",
 	  version = "1.0",
 	  depends = { "util", "dataset" }, --, "symbol_scores" },
 	  keywords = { },

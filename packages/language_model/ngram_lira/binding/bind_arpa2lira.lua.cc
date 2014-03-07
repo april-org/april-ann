@@ -13,7 +13,7 @@ using april_utils::vector;
 
 ////////////////////////////////////
 
-//BIND_LUACLASSNAME VectorReferenced arpa2lira.VectorReferenced
+//BIND_LUACLASSNAME VectorReferenced ngram.lira.arpa2lira.VectorReferenced
 //BIND_CPP_CLASS    VectorReferenced
 
 //BIND_CONSTRUCTOR VectorReferenced
@@ -62,7 +62,7 @@ using april_utils::vector;
 
 ////////////////////////////////////
 
-//BIND_LUACLASSNAME TransitionsIterator arpa2lira.TransitionsIterator
+//BIND_LUACLASSNAME TransitionsIterator ngram.lira.arpa2lira.TransitionsIterator
 //BIND_CPP_CLASS    TransitionsIterator
 
 //BIND_CONSTRUCTOR TransitionsIterator
@@ -101,7 +101,7 @@ using april_utils::vector;
 
 ////////////////////////////////////
 
-//BIND_LUACLASSNAME State2Transitions arpa2lira.State2Transitions
+//BIND_LUACLASSNAME State2Transitions ngram.lira.arpa2lira.State2Transitions
 //BIND_CPP_CLASS    State2Transitions
 
 //BIND_CONSTRUCTOR State2Transitions

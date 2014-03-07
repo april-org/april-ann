@@ -296,9 +296,9 @@ namespace LanguageModels {
     }
   }
 
-  void NgramLiraModel::save_binary(const char *filename,
-				   unsigned int expected_vocabulary_size,
-				   const char *expected_vocabulary[]) {
+  void NgramLiraModel::saveBinary(const char *filename,
+				  unsigned int expected_vocabulary_size,
+				  const char *expected_vocabulary[]) {
     
     if (expected_vocabulary_size != vocabulary_size) {
       ERROR_PRINT2("Error expected vocabulary is %d instead of %d\n",
@@ -510,7 +510,7 @@ namespace LanguageModels {
     // at this point, all seems to be ok :)
   }
 
-  LMInterface<Key,Score>* NgramLiraModel::getInterface() {
+  LMInterfaceUInt32LogFloat* NgramLiraModel::getInterface() {
     return new NgramLiraInterface(this);
   }
   
@@ -520,6 +520,7 @@ namespace LanguageModels {
 				      WordType word, Burden burden,
 				      vector<KeyScoreBurdenTuple> &result,
 				      Score threshold) {
+    UNUSED_VARIABLE(threshold);
     Score accum_backoff     = Score::one();
     unsigned int st         = state;
     int       depth         = 0; // number of times we have performed backoff
@@ -527,31 +528,32 @@ namespace LanguageModels {
     
     for (;;) {
       if (depth > prepared_level) {
-	if (st >= first_state_binary_search) {
+	if (st >= lira_model->first_state_binary_search) {
 	  linear_index = -1; // indicates dichotomic search
 	} else { // let's look the LinearSearchInfo of this state
 	  linear_index = 0;
-	  while(linear_search_table[linear_index].first_state <= st)
+	  while(lira_model->linear_search_table[linear_index].first_state <= st)
 	    linear_index++;
 	  linear_index--; // nos habiamos pasado ;)
 	}
 	linear_index_vector[depth] = linear_index;
-	prepared_level             = depth;
+	prepared_level = depth;
       } else {
 	linear_index = linear_index_vector[depth];
       }
       
       if (linear_index >= 0) {
-	LinearSearchInfo *info = &linear_search_table[linear_index];
+	LinearSearchInfo *info = &(lira_model->linear_search_table[linear_index]);
 	// range of transitions during the search:
 	unsigned int first_tr_index = (st - info->first_state)*info->fan_out + info->first_index;
 	unsigned int last_tr_index  = first_tr_index + info->fan_out;
 	// lineal search:
 	for (unsigned int tr_index = first_tr_index; tr_index < last_tr_index; tr_index++)
-	  if (transition_words_table[tr_index] == word) {
+	  if (lira_model->transition_words_table[tr_index] == word) {
 	    result.clear();
-	    result.push_back(KeyScoreBurdenTuple(transition_table[tr_index].state,
-						 accum_backoff * transition_table[tr_index].prob,
+	    result.push_back(KeyScoreBurdenTuple(lira_model->transition_table[tr_index].state,
+						 accum_backoff *
+						 lira_model->transition_table[tr_index].prob,
 						 burden));
 	    return;
 	  }
@@ -559,14 +561,15 @@ namespace LanguageModels {
 	// the dichotomic search of the transition index is not based
 	// on the binary_search template in order to be able to return
 	// as soon as the word is found
-	unsigned int left  = first_transition[st];
-	unsigned int right = first_transition[st+1] - 1;
+	unsigned int left  = lira_model->first_transition[st];
+	unsigned int right = lira_model->first_transition[st+1] - 1;
 	while (left <= right) {
 	  unsigned int tr_index     = (left+right)/2;
-	  unsigned int current_word = transition_words_table[tr_index];
+	  unsigned int current_word = lira_model->transition_words_table[tr_index];
 	  if (current_word == word) {
-	    result.push_back(KeyScoreBurdenTuple(transition_table[tr_index].state,
-						 accum_backoff * transition_table[tr_index].prob,
+	    result.push_back(KeyScoreBurdenTuple(lira_model->transition_table[tr_index].state,
+						 accum_backoff *
+						 lira_model->transition_table[tr_index].prob,
 						 burden));
 	    return;
 	  } else if (current_word < word) {
@@ -577,8 +580,8 @@ namespace LanguageModels {
 	}
       }
       // apply backoff when the transition is not found:
-      accum_backoff *= backoff_table[st].bo_prob;
-      st             = backoff_table[st].bo_dest_state;      
+      accum_backoff *= lira_model->backoff_table[st].bo_prob;
+      st             = lira_model->backoff_table[st].bo_dest_state;      
       depth++;
     }
     ERROR_EXIT(256, "This should never happen\n");
@@ -604,37 +607,38 @@ namespace LanguageModels {
   // }
 
   // internal method used by findKeyFromNgram
-  Key NgramLiraInterface::getDestState(const Key &st,
-				       const WordType word) {
+  NgramLiraInterface::Key
+  NgramLiraInterface::getDestState(NgramLiraInterface::Key st,
+				   const WordType word) {
     do {
-      if (st < first_state_binary_search) {
+      if (st < lira_model->first_state_binary_search) {
 	// linear search, we look for the LinearSearchInfo of st
 	int linear_index = 0;
-	while(linear_search_table[linear_index].first_state <= st)
+	while(lira_model->linear_search_table[linear_index].first_state <= st)
 	  linear_index++;
 	// -1 because the search stopped too late ;)
-	LinearSearchInfo *info = &linear_search_table[linear_index-1];
+	LinearSearchInfo *info = &(lira_model->linear_search_table[linear_index-1]);
 	// range of transitions during the search:
 	unsigned int first_tr_index = ((st - info->first_state)*info->fan_out +
 				       info->first_index);
 	unsigned int last_tr_index  = first_tr_index + info->fan_out;
 	// lineal search:
 	for (unsigned int tr_index = first_tr_index; tr_index < last_tr_index; tr_index++) {
-	  if (transition_words_table[tr_index] == word) {
-	    return transition_table[tr_index].state;
+	  if (lira_model->transition_words_table[tr_index] == word) {
+	    return lira_model->transition_table[tr_index].state;
 	  }
 	}
       } else {
 	// the dichotomic search of the transition index is not based
 	// on the binary_search template in order to be able to return
 	// as soon as the word is found
-	unsigned int left  = first_transition[st];
-	unsigned int right = first_transition[st+1] - 1;
+	unsigned int left  = lira_model->first_transition[st];
+	unsigned int right = lira_model->first_transition[st+1] - 1;
 	while (left <= right) {
 	  unsigned int tr_index     = (left+right)/2;
-	  unsigned int current_word = transition_words_table[tr_index];
+	  unsigned int current_word = lira_model->transition_words_table[tr_index];
 	  if (current_word == word) {
-	    return transition_table[tr_index].state;
+	    return lira_model->transition_table[tr_index].state;
 	  } else if (current_word < word) {
 	    left  = tr_index+1;
 	  } else {
@@ -643,14 +647,15 @@ namespace LanguageModels {
 	}
       }
       // apply backoff when the transition is not found:
-      st = backoff_table[st].bo_dest_state;      
+      st = lira_model->backoff_table[st].bo_dest_state;      
     } while (1);
     return st;
   }
 
-  Key NgramLiraInterface::findKeyFromNgram(const WordType *wordSequence,
-					   int len) {
-    Key st = lowest_state;
+  NgramLiraInterface::Key
+  NgramLiraInterface::findKeyFromNgram(const WordType *wordSequence,
+				       int len) {
+    Key st = lira_model->lowest_state;
     for (int i=0; i<len; ++i)
       if (wordSequence[i] > 0)
 	st = getDestState(st,wordSequence[i]);
