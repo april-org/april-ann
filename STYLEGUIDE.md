@@ -9,6 +9,7 @@ for every new and fresh code, this guide will be followed.
 
 - Indentation: Two spaces indentation. For deep indentations, 7 spaces could be
   substitued by one tab.
+- Namespaces: Namespaces are in UpperCamelCase.
 - Classes: Class names (and structs) are in UpperCamelCase.
 - Methods: Method names in lowerCamelCase.
 - Properties: In lower case with underscore sepparating words.
