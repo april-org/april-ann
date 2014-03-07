@@ -343,3 +343,15 @@ MatrixFloat *readMatrixFloatFromTabFile(const char *filename,
   }
   return 0;
 }
+
+void writeMatrixFloatToTabGZStream(MatrixFloat *mat, BufferedGZFile *stream) {
+  writeMatrixToTabStream(mat, *stream, FloatAsciiSizer(),
+			 FloatAsciiCoder<BufferedGZFile>());
+}
+
+void writeMatrixFloatToTabStream(MatrixFloat *mat, FILE *f) {
+  FileWrapper file_wrapper(f);
+  BufferedFile stream(file_wrapper);
+  writeMatrixToTabStream(mat, stream, FloatAsciiSizer(),
+			 FloatAsciiCoder<BufferedFile>());
+}

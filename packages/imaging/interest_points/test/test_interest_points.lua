@@ -25,8 +25,6 @@ for _, p in ipairs(uppers) do
 end
 for _, p in ipairs(lowers) do
     mySVG:addSquare(p, {color = "red"})
-
-
 end
 mySVG:write(outFile)
 print(#uppers)

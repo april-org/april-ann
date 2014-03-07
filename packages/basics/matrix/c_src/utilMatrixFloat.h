@@ -21,6 +21,7 @@
 #ifndef UTILMATRIXFLOAT_H
 #define UTILMATRIXFLOAT_H
 
+#include "buffered_gzfile.h"
 #include "constString.h"
 #include "matrixFloat.h"
 #include "utilMatrixIO.h"
@@ -96,4 +97,6 @@ void writeMatrixFloatToTabFile(MatrixFloat *mat, const char *filename);
 MatrixFloat *readMatrixFloatFromTabFile(const char *filename,
 					const char *order = "row_major");
 
+void writeMatrixFloatToTabGZStream(MatrixFloat *mat, BufferedGZFile *stream);
+void writeMatrixFloatToTabStream(MatrixFloat *mat, FILE *f);
 #endif // UTILMATRIXFLOAT_H
