@@ -25,7 +25,7 @@
 
 //BIND_HEADER_H
 #include "ngram_lira.h"
-using language_models::NgramLira;
+using namespace LanguageModels;
 //BIND_END
 
 //BIND_LUACLASSNAME NgramLiraModel ngram.lira.model
@@ -34,7 +34,7 @@ using language_models::NgramLira;
 
 //BIND_LUACLASSNAME NgramLiraInterface ngram.lira.interface
 //BIND_CPP_CLASS    NgramLiraInterface
-//BIND_SUBCLASS_OF  NgramLiraModel LMInterface
+//BIND_SUBCLASS_OF  NgramLiraModel LMInterfaceUInt32LogFloat
 
 //BIND_CONSTRUCTOR NgramLiraModel
 {
@@ -166,60 +166,10 @@ using language_models::NgramLira;
 }
 //BIND_END
 
-//BIND_DESTRUCTOR NgramLiraInterface
+//////////////////////////////////////////////////////////////////////////
+
+//BIND_CONSTRUCTOR NgramLiraInterface
 {
+  LAUBIND_ERROR("Use the model method get_interface");
 }
 //BIND_END
-
-//BIND_METHOD NgramLira getInitialKey
-{
-  unsigned int initial_word, key;
-  LUABIND_GET_PARAMETER(1, uint, initial_word);
-  obj->getInitialKey(initial_word, key);
-  LUABIND_RETURN(uint, key);
-}
-//BIND_END
-
-//BIND_METHOD NgramLira getZeroGramKey
-{
-  unsigned int initial_word, key;
-  LUABIND_GET_PARAMETER(1, uint, initial_word);
-  obj->getZeroGramKey(initial_word, key);
-  LUABIND_RETURN(uint, key);
-}
-//BIND_END
-
-//BIND_METHOD NgramLira getFinalKey
-{
-  unsigned int final_word, key;
-  LUABIND_GET_PARAMETER(1, uint, final_word);
-  obj->getFinalKey(final_word, key);
-  LUABIND_RETURN(uint, key);
-}
-//BIND_END
-
-//BIND_METHOD NgramLira getLMOrder
-{
-  LUABIND_RETURN(uint, obj->getLMOrder());
-}
-//BIND_END
-
-//BIND_METHOD NgramLira findKeyFromNgram
-{
-  unsigned int *words;
-  int len;
-  LUABIND_TABLE_GETN(1, len);
-  words = new unsigned int[len];
-  LUABIND_TABLE_TO_VECTOR(1, uint, words, len);
-  unsigned int key = obj->findKeyFromNgram(words, len);
-  delete[] words;
-  LUABIND_RETURN(uint, key);
-}
-//BIND_END
-
-//BIND_METHOD NgramLira restart
-{
-  obj->restart();
-}
-//BIND_END
-

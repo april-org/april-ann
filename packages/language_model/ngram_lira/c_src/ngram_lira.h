@@ -33,7 +33,7 @@
 using namespace april_utils;
 using april_utils::binary_search;
 
-namespace language_models {
+namespace LanguageModels {
 
   struct NgramLiraTransition {
     unsigned int state;
@@ -85,9 +85,12 @@ namespace language_models {
     size_t       size_max_out_prob;
   };
 
-  class NgramLiraModel : public LMModel<uint32_t,log_float> {
+  class NgramLiraModel : public LMModelUInt32LogFloat {
   public:
-
+    
+    typedef uint32_t Key;
+    typedef log_float Score;
+    
     // allows the dictionary used to check the model to be larger than
     // the actual list of words in the model
     bool ignore_extra_words_in_dictionary;
@@ -139,15 +142,15 @@ namespace language_models {
     
     ~NgramLiraModel();
 
-    // generates the binary data useful for mmaped version
-    void save_binary(const char *filename,
-		     unsigned int expectedVocabularySize,
-		     const char *expectedVocabulary[]);
+    /// generates the binary data useful for mmaped version
+    void saveBinary(const char *filename,
+		    unsigned int expected_vocabulary_size,
+		    const char *expected_vocabulary[]);
     
-    // constructor for binary mmaped data
+    /// constructor for binary mmaped data
     NgramLiraModel(const char *filename,
-		   unsigned int expectedVocabularySize,
-		   const char *expectedVocabulary[],
+		   unsigned int expected_vocabulary_size,
+		   const char *expected_vocabulary[],
 		   bool ignore_extra_words_in_dictionary);
 
     /// fan_out_threshold is used to distinguish automata states when
@@ -155,85 +158,89 @@ namespace language_models {
     /// expectedVocabularySize is an array of char* strings, the
     /// vocabulary is not checked when this argument is NULL
     NgramLiraModel(FILE *fd,
-		   unsigned int expectedVocabularySize,
-		   const char *expectedVocabulary[],
+		   unsigned int expected_vocabulary_size,
+		   const char *expected_vocabulary[],
 		   int fan_out_threshold,
 		   bool ignore_extra_words_in_dictionary);
 
-    // creates a simple model with two states: one which is a loop and
-    // a final state
-    NgramLiraModel(int vocabularySize, WordType final_word);
-
-
-    bool isDeterministic() {
+    /// creates a simple model with two states: one which is a loop and
+    /// a final state
+    NgramLiraModel(int vocabulary_size, WordType final_word);
+    
+    virtual bool isDeterministic() const {
       return true;
     }
 
-    int ngramOrder() { return ngram_value; }
+    virtual int ngramOrder() const { return ngram_value; }
     
-    bool requireHistoryManager() { return false; }
+    virtual bool requireHistoryManager() const { return false; }
 
-    LMInterface<Key,Score>* getInterface(LMHistoryManager *hmanager=0) {
-      return new NgramLiraInterface(this);
-    }
+    virtual LMInterface<Key,Score>* getInterface();
 
     
   }; // closes class NgramLiraModel
-
-  class NgramLiraInterface : public LMInterface<uint32_t,log_float> {
-    NgramLiraModel *liraModel;
+  
+  class NgramLiraInterface : public LMInterface<NgramLiraModel::Key,
+						NgramLiraModel::Score> {
+    NgramLiraModel *lira_model;
 
     // used to prepare, this class is not thread safe :'(
     static const unsigned int maxN = 20;
-    int preparedLevel;
+    int prepared_level;
 
-    // values contained in linear_index_vector are useful until prepareLevel
+    // values contained in linear_index_vector are useful until prepared_level
     int linear_index_vector[maxN];
+
+    virtual void privateGet(const Key &key, WordType word, Burden burden,
+			    vector<KeyScoreBurdenTuple> &result, Score threshold);
 
   public:
 
-    NgramLiraInterface(NgramLiraModel *liraModel) :
-      liraModel(liraModel) {
-      IncRef(liraModel);
+    typedef NgramLiraModel::Key Key;
+    typedef NgramLiraModel::Score Score;
+
+    NgramLiraInterface(NgramLiraModel *lira_model) :
+      lira_model(lira_model) {
+      IncRef(lira_model);
     }
     
     ~NgramLiraInterface() {
-      DecRef(liraModel);
+      DecRef(lira_model);
     }
     
-    LMModel* getLMModel() {
+    virtual LMModel* getLMModel() {
       // it is the responsibility of the receiver to IncRef the model
-      return liraModel;
+      return lira_model;
     }
     
-    int get(const Key &key, int32_t idKey,
-	    WordType word, int32_t idWord,
-	    vector<KeyScoreIdTuple> &result, Score threshold);
+    virtual void get(const Key &key, WordType word, Burden burden,
+		     vector<KeyScoreBurdenTuple> &result, Score threshold);
     
-    void clearQueries();
+    virtual void clearQueries();
     
-    void insertQuery(const Key &key, int32_t idKey,
-		     Word word, int32_t idWord,
-		     Score threshold);
+    /*
+      virtual void insertQuery(const Key &key, Word word, Burden burden,
+      Score threshold);
+      
+      virtual void insertQueries(const Key &key, int32_t id_key,
+      vector<WordIdScoreTuple> words, bool is_sorted=false);
+    */
     
-    void insertQueries(const Key &key, int32_t idKey,
-		       vector<WordIdScoreTuple> words);
-    
-    log_float    getBestProb()                   { return best_prob; }
-    log_float    getBestProb(unsigned int &k)    { return max_out_prob[k]; }
-    void getZeroGramKey(unsigned int initial_word, unsigned int &k) {
+    virtual Score getBestProb() const { return best_prob; }
+    virtual Score getBestProb(const Key &k) const { return max_out_prob[k]; }
+    virtual void getZeroGramKey(const Key &k) const {
       k = lowest_state;
     }
-    void getInitialKey(unsigned int initial_word, unsigned int &k) {
+    virtual void getInitialKey(Key &k) const {
       k = initial_state;
     }
-    void getFinalKey(unsigned int final_word, unsigned int &k) {
+    virtual void getFinalKey(Key &k) const {
       k = final_state;
     }
 
     // useful methods to look for an state:
-    unsigned int getDestState(unsigned int st, unsigned int word);
-    unsigned int findKeyFromNgram(const unsigned int *wordSequence, int len);
+    Key getDestState(const Key &st, const WordType word);
+    Key findKeyFromNgram(const WordType *word_sequence, int len);
     
   };
 
