@@ -60,7 +60,7 @@ namespace InterestPoints
    * @param[in] local_context The number of pixels in stroke that is used to compute the local maxima/minima
    * @param[in] duplicate_interval The minimum distance of locals within the same stroke
    */
-  void extract_points_from_image(ImageFloat *pimg, april_utils::vector<Point2D> *local_minima, april_utils::vector<Point2D> *local_maxima, float threshold_white= 0.4, float threshold_black = 0.6, int local_context = 6, int duplicate_interval = 3);
+  void extract_points_from_image(ImageFloat *pimg, april_utils::vector<Point2D> *local_minima, april_utils::vector<Point2D> *local_maxima, float threshold_white= 0.4, float threshold_black = 0.6, int local_context = 6, int duplicate_interval = 3, bool reverse = false);
 
 
  ImageFloatRGB * area_to_rgb(ImageFloat *img);

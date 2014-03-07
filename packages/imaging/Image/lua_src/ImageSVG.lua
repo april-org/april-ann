@@ -1,7 +1,7 @@
 local imageSVG_methods,
 imageSVG_class_metatable = class("imageSVG")
 
-local colors = { "red", "blue", "green", "orange", "purple"}
+local colors = { "red", "blue", "green", "orange", "purple","yellow"}
 
 function imageSVG_class_metatable:__call(params)
 

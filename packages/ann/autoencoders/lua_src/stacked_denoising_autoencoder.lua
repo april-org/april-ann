@@ -84,7 +84,7 @@ function ann_autoencoders_ae_class_metatable:__call(t)
 				     dot_product_weights="w" .. params.index,
 				     bias_weights="b-enc" .. params.index,
 				   } ):
-    push( ann.components.actf[params.hidden.actf]() )
+    push( ann.components.actf[params.hidden.actf]{ name="h-enc-" .. params.index} )
   end
   
   local decoder = params.decoder
@@ -99,7 +99,7 @@ function ann_autoencoders_ae_class_metatable:__call(t)
 				     bias_weights="b-dec" .. params.index,
 				     transpose=true
 				   } ):
-    push( ann.components.actf[params.visible.actf]() )
+    push( ann.components.actf[params.visible.actf]{ name="v-enc-" .. params.index} )
   end
   if isa(encoder, ann.components.stack) then
     ae:push(encoder:unroll())

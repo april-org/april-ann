@@ -156,13 +156,14 @@ namespace ANN {
 				  hash<string,ANNComponent*> &components_dict) {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
-    if (size == 0) size = _input_size;
-    if (size == 0) size = _output_size;
-    if (_input_size  == 0) _input_size  = size;
-    if (_output_size == 0) _output_size = size;
-    if (_input_size != _output_size)
+    if (input_size == 0) input_size = output_size;
+    if (output_size == 0) output_size = input_size;
+    if (size != 0 && size != input_size)
+      ERROR_EXIT(128, "Size given different from size at input/output\n");
+    size = input_size;
+    if (input_size != output_size)
       ERROR_EXIT3(128, "Incorrect input/output sizes: input=%d output=%d [%s]\n",
-		  _input_size, _output_size, name.c_str());
+		  input_size, output_size, name.c_str());
   }
   
   char *DropoutANNComponent::toLuaString() {

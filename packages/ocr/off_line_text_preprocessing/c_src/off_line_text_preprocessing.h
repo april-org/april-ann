@@ -34,8 +34,10 @@ namespace OCR {
     {
 
         MatrixFloat *add_asc_desc (ImageFloat     *img,
-                MatrixFloat *line_mat
-                );
+                MatrixFloat *line_mat,
+                    float v_treshold = 5,
+                    int h_threshold = 22.0f
+                    );
         ImageFloat *normalize_size(ImageFloat *source, float ascender_ratio, float descender_ratio,
                 april_utils::vector<Point2D> ascenders, april_utils::vector<Point2D> upper_baseline, 
                 april_utils::vector<Point2D> lower_baseline, april_utils::vector<Point2D> descenders,
