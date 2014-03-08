@@ -204,7 +204,7 @@ public:
   int burden_id_key=-1, burden_id_word=-1;
   float log_threshold;
   log_float threshold = log_float::zero();
-  GetResultUInt32LogFloat *result;
+  GetResultUInt32LogFloat *result = 0;
   LUABIND_GET_PARAMETER(1, uint, key);
   LUABIND_GET_PARAMETER(2, uint, word);
   if (lua_istable(L,3)) {
