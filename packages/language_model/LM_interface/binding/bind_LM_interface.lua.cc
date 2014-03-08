@@ -49,7 +49,7 @@ public:
 {
   unsigned int i;
   LUABIND_GET_PARAMETER(1, uint, i);
-  LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple tuple = obj->get(i);
+  LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple tuple = obj->get(i-1);
   LUABIND_RETURN(uint, tuple.key_score.key);
   LUABIND_RETURN(float, tuple.key_score.score.log());
   LUABIND_RETURN(int, tuple.burden.id_key);
@@ -87,6 +87,12 @@ public:
 }
 //BIND_END
 
+//BIND_METHOD QueryResultUInt32LogFloat size
+{
+  LUABIND_RETURN(uint, obj->size());
+}
+//BIND_END
+
 /////////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME GetResultUInt32LogFloat language_models.get_result
@@ -102,11 +108,17 @@ public:
 {
   unsigned int i;
   LUABIND_GET_PARAMETER(1, uint, i);
-  LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple tuple = obj->get(i);
+  LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple tuple = obj->get(i-1);
   LUABIND_RETURN(uint, tuple.key_score.key);
   LUABIND_RETURN(float, tuple.key_score.score.log());
   LUABIND_RETURN(int, tuple.burden.id_key);
   LUABIND_RETURN(int, tuple.burden.id_word);
+}
+//BIND_END
+
+//BIND_METHOD GetResultUInt32LogFloat size
+{
+  LUABIND_RETURN(uint, obj->size());
 }
 //BIND_END
 
