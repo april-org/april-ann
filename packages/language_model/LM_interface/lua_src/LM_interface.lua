@@ -32,7 +32,7 @@ end
 query_metatable.__ipairs = function(self)
   local i=0
   return function()
-    if i <= self:size() then
+    if i < self:size() then
       i=i+1
       return i,self:get(i)
     end

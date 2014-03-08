@@ -201,13 +201,22 @@ public:
 //BIND_METHOD LMInterfaceUInt32LogFloat get
 {
   uint32_t key, word;
+  int burden_id_key=-1, burden_id_word=-1;
   float log_threshold;
+  log_float threshold = log_float::zero();
   LUABIND_GET_PARAMETER(1, uint, key);
   LUABIND_GET_PARAMETER(2, uint, word);
-  LUABIND_GET_OPTIONAL_PARAMETER(3, float, log_threshold, log_float::zero());
-  log_float threshold(log_threshold);
+  if (lua_istable(L,3)) {
+    check_table_fields(L, 3, "threshold", "id_key", "id_word", (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, threshold, float, log_threshold,
+					 log_float::zero());
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, id_key, int, burden_id_key, -1);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, id_word, int, burden_id_word, -1);
+    threshold = log_float(log_threshold);
+  }
   GetResultUInt32LogFloat *result = new GetResultUInt32LogFloat;
-  obj->get(key, word, LMInterfaceUInt32LogFloat::Burden(-1,-1),
+  obj->get(key, word, LMInterfaceUInt32LogFloat::Burden(burden_id_key,
+							burden_id_word),
 	   result->getVector(), threshold);
   LUABIND_RETURN(GetResultUInt32LogFloat, result);
 }
@@ -224,14 +233,18 @@ public:
 {
   uint32_t key, word;
   float log_threshold;
-  int burden_id_key, burden_id_word;
+  log_float threshold = log_float::zero();
+  int burden_id_key=-1, burden_id_word=-1;
   LUABIND_GET_PARAMETER(1, uint, key);
   LUABIND_GET_PARAMETER(2, uint, word);
-  LUABIND_GET_OPTIONAL_PARAMETER(3, float, log_threshold, log_float::zero());
-  log_float threshold(log_threshold);
-  check_table_fields(L, 4, "id_key", "id_word", (const char *)0);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(4, id_key, int, burden_id_key, -1);
-  LUABIND_GET_TABLE_OPTIONAL_PARAMETER(4, id_word, int, burden_id_word, -1);
+  if (lua_istable(L,3)) {
+    check_table_fields(L, 3, "threshold", "id_key", "id_word", (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, threshold, float, log_threshold,
+					 log_float::zero());
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, id_key, int, burden_id_key, -1);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, id_word, int, burden_id_word, -1);
+    threshold = log_float(log_threshold);
+  }
   obj->insertQuery(key, word,
 		   LMInterfaceUInt32LogFloat::Burden(burden_id_key,
 						     burden_id_word),
