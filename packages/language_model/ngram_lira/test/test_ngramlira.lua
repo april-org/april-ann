@@ -1,17 +1,17 @@
 vocab = lexClass.load(io.open("vocab"))
-model = ngram.lira{
+model = ngram.lira.model{
   command="zcat dihana3gram.lira.gz",
   vocabulary=vocab:getWordVocabulary(),
   fan_out_threshold=10
 }
 
-sum,numwords,numunks =
-  ngram.get_sentence_prob(model, vocab,
-			  string.tokenize("quer'ia un tren con "..
-					  "destino a barcelona"),
-			  io.stdout, 2,
-			    -1, vocab:getWordId("<s>"),
-			  vocab:getWordId("</s>"))
+-- sum,numwords,numunks =
+--   ngram.get_sentence_prob(model, vocab,
+-- 			  string.tokenize("quer'ia un tren con "..
+-- 					  "destino a barcelona"),
+-- 			  io.stdout, 2,
+-- 			    -1, vocab:getWordId("<s>"),
+-- 			  vocab:getWordId("</s>"))
 
 print("TEST 2")
 

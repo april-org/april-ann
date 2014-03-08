@@ -155,8 +155,8 @@ namespace LanguageModels {
     /// initial key is the initial context cue
     virtual void getInitialKey(Key &k) const = 0;
 
-    /// this method returns false and does nothing on non-ngram LMs
-    virtual bool getZeroGramKey(Key &k) const {
+    /// this method returns false and does nothing on LMs without zero key
+    virtual bool getZeroKey(Key &k) const {
       UNUSED_VARIABLE(k);
       // default behavior
       return false;

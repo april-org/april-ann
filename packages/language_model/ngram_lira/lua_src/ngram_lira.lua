@@ -4,7 +4,7 @@ local function lira_gz_load_function(filename,
 				     final_ngram_word,
 				     extra)
   -- estadistico
-  lm_model = ngram.lira{
+  lm_model = ngram.lira.model{
     command="zcat ".. filename,
     vocabulary=dictionary:getWordVocabulary(),
     fan_out_threshold=10,
@@ -19,7 +19,7 @@ local function lira_load_function(filename,
 				  final_ngram_word,
 				  extra)
   -- estadistico
-  lm_model = ngram.lira{
+  lm_model = ngram.lira.model{
     filename=filename,
     vocabulary=dictionary:getWordVocabulary(),
     fan_out_threshold=10,
@@ -34,7 +34,7 @@ local function blira_load_function(filename,
 				   final_ngram_word,
 				   extra)
   -- estadistico binario
-  lm_model = ngram.lira.load_binary{
+  lm_model = ngram.lira.model.load_binary{
     filename=filename,
     vocabulary=dictionary:getWordVocabulary(),
     ignore_extra_words_in_dictionary = extra.ignore_extra_words_in_dictionary or false

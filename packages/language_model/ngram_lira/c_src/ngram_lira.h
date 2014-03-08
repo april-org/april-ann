@@ -231,7 +231,7 @@ namespace LanguageModels {
     
     virtual Score getBestProb() const { return lira_model->best_prob; }
     virtual Score getBestProb(const Key &k) const { return lira_model->max_out_prob[k]; }
-    virtual bool getZeroGramKey(Key &k) const {
+    virtual bool getZeroKey(Key &k) const {
       k = lira_model->lowest_state;
       return true;
     }

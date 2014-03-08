@@ -235,3 +235,43 @@ public:
   LUABIND_RETURN(QueryResultUInt32LogFloat, result);
 }
 //BIND_END
+
+//BIND_METHOD LMInterfaceUInt32LogFloat get_initial_key
+{
+  uint32_t key;
+  obj->getInitialKey(key);
+  LUABIND_RETURN(uint, key);
+}
+//BIND_END
+
+//BIND_METHOD LMInterfaceUInt32LogFloat get_final_key
+{
+  uint32_t key;
+  obj->getFinalKey(key);
+  LUABIND_RETURN(uint, key);
+}
+//BIND_END
+
+//BIND_METHOD LMInterfaceUInt32LogFloat get_zero_key
+{
+  uint32_t key;
+  if (!obj->getZeroKey(key))
+    LUABIND_ERROR("Impossible to get zero key");
+  LUABIND_RETURN(uint, key);
+}
+//BIND_END
+
+//BIND_METHOD LMInterfaceUInt32LogFloat get_best_prob
+{
+  uint32_t key;
+  log_float score;
+  if (lua_isnil(L,1)) {
+    score = obj->getBestProb();
+  }
+  else {
+    LUABIND_GET_PARAMETER(1, uint, key);
+    score = obj->getBestProb(key);
+  }
+  LUABIND_RETURN(float, score.log());
+}
+//BIND_END
