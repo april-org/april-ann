@@ -26,3 +26,8 @@ for every new and fresh code, this guide will be followed.
 ## Lua style guide
 
 Prefered always in lower case with underscore sepparating words.
+
+## LuaPkg packages
+
+Package names are prefered to be equal to the global Lua table where C/C++
+classes and functions are binded, and where Lua code is written.
