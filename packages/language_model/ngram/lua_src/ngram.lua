@@ -29,9 +29,8 @@ function ngram.get_sentence_prob(lm, vocab, words, flog, debug_flag,
   local debug_flag = debug_flag or 0
   local word_ids
   word_ids = vocab:searchWordIdSequence(words, unk_id)
-  local key
-  if use_bcc then key = lmi:get_initial_key(init_id)
-  else key = lmi:get_zero_key(init_id) end
+  if use_bcc then lmi:get_initial_key(key)
+  else lmi:get_zero_key(key) end
   local sum      = 0
   local p
   local numwords    = #word_ids
@@ -47,7 +46,7 @@ function ngram.get_sentence_prob(lm, vocab, words, flog, debug_flag,
     if word_ids[i] == -1 then
       numunks = numunks + 1
       lastunk = i
-      key = lmi:get_zero_key(init_id)
+      lmi:get_zero_key(key)
     elseif i - lastunk >= ngram_value then
       if num_classes then
 	local pos = multi_class_table_inv[word_ids[i]]
@@ -134,8 +133,9 @@ end
 function ngram.get_prob_from_id_tbl(lm, word_ids, init_id, final_id,
 				    use_bcc, use_ecc)
   local lmi = lm:get_interface()
-  local key = lmi:get_initial_key(init_id)
-  if not use_bcc then key = lmi:get_zero_key(init_id) end
+  local key
+  lmi:get_initial_key(key)
+  if not use_bcc then lmi:get_zero_key(key) end
   local sum      = 0
   local p
   local numwords    = #word_ids
