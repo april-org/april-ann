@@ -29,8 +29,10 @@ function ngram.get_sentence_prob(lm, vocab, words, flog, debug_flag,
   local debug_flag = debug_flag or 0
   local word_ids
   word_ids = vocab:searchWordIdSequence(words, unk_id)
-  if use_bcc then lmi:get_initial_key(key)
-  else lmi:get_zero_key(key) end
+  local key
+  if use_bcc then key = lmi:get_initial_key()
+  else key = lmi:get_zero_key() end
+  local result
   local sum      = 0
   local p
   local numwords    = #word_ids
@@ -46,7 +48,7 @@ function ngram.get_sentence_prob(lm, vocab, words, flog, debug_flag,
     if word_ids[i] == -1 then
       numunks = numunks + 1
       lastunk = i
-      lmi:get_zero_key(key)
+      key = lmi:get_zero_key()
     elseif i - lastunk >= ngram_value then
       if num_classes then
 	local pos = multi_class_table_inv[word_ids[i]]
@@ -60,20 +62,32 @@ function ngram.get_sentence_prob(lm, vocab, words, flog, debug_flag,
 	  local current_col_w = multi_class_table[(kk-1)*num_classes + col + 1]
 	  local prob
 	  if current_row_w then
-	    prob,_ = lmi:get(key, current_row_w)
+	    result = lmi:get(key, current_row_w)
+      assert(result:size() == 1,
+             "Error: Expected a deterministic LM")
+      _,prob = result:get(1)
 	    row_prob = row_prob + math.exp(prob)
 	  end
 	  if current_col_w then
-	    prob,_ = lmi:get(key, current_col_w)
+	    result = lmi:get(key, current_col_w)
+      assert(result:size() == 1,
+             "Error: Expected a deterministic LM")
+      _,prob = result:get(1)
 	    col_prob = col_prob + math.exp(prob)
 	  end
 	end
 	local aux
 	p = math.log(col_prob) + math.log(row_prob)
-	aux,key = lmi:get(key, word_ids[i])
+	result = lmi:get(key, word_ids[i])
+  assert(result:size() == 1,
+         "Error: Expected a deterministic LM")
+  key,aux = result:get(1)
 	-- print(aux, p, math.log(col_prob), math.log(row_prob))
       else
-	p,key = lmi:get(key, word_ids[i])
+	result = lmi:get(key, word_ids[i])
+  assert(result:size() == 1,
+         "Error: Expected a deterministic LM")
+  key,p = result:get(1)
       end
       if word_ids[i] == unk_id then
 	numunks = numunks + 1
@@ -91,7 +105,10 @@ function ngram.get_sentence_prob(lm, vocab, words, flog, debug_flag,
 	end
       end
     else
-      p,key = lmi:get(key, word_ids[i])
+      result = lmi:get(key, word_ids[i])
+      assert(result:size() == 1,
+             "Error: Expected a deterministic LM")
+      key,p = result:get(1)
       not_used_words = not_used_words + 1
     end
   end
@@ -100,8 +117,10 @@ function ngram.get_sentence_prob(lm, vocab, words, flog, debug_flag,
   end
   if not is_stream then
     if use_ecc then
-      
-      p   = lmi:get(key, final_id)
+      result = lmi:get(key, final_id)
+      assert(result:size() == 1,
+             "Error: Expected a deterministic LM")
+      _,p = result:get(1)
       p   = p / math.log(10)
       sum = sum + p
       
@@ -133,21 +152,27 @@ end
 function ngram.get_prob_from_id_tbl(lm, word_ids, init_id, final_id,
 				    use_bcc, use_ecc)
   local lmi = lm:get_interface()
-  local key
-  lmi:get_initial_key(key)
-  if not use_bcc then lmi:get_zero_key(key) end
+  local key = lmi:get_initial_key()
+  if not use_bcc then key = lmi:get_zero_key() end
   local sum      = 0
+  local result
   local p
   local numwords    = #word_ids
   local ngram_value = lm:ngram_order()
   for i=1,numwords do
     if word_ids[i] ~= 0 then
-      p,key = lmi:get(key, word_ids[i])
+      result = lmi:get(key, word_ids[i])
+      assert(result:size() == 1,
+             "Error: Expected a deterministic LM")
+      key,p = result:get(1)
       sum = sum + p
     end
   end
   if use_ecc then
-    p   = lmi:get(key, final_id)
+    result = lmi:get(key, final_id)
+    assert(result:size() == 1,
+           "Error: Expected a deterministic LM")
+    _,p = result:get(1)
     sum = sum + p
   end
   return sum
