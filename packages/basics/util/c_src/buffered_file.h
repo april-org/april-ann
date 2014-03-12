@@ -32,7 +32,7 @@ class FileWrapper {
 public:
   FileWrapper(FileWrapper &other) : f(other.f), need_close(false) { }
   FileWrapper(FILE *f) : f(f), need_close(false) { }
-  FileWrapper() : f(0) { }
+  FileWrapper() : f(0), need_close(true) { }
   ~FileWrapper() {
     closeS();
   }
