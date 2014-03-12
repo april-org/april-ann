@@ -63,31 +63,31 @@ function ngram.get_sentence_prob(lm, vocab, words, flog, debug_flag,
 	  local prob
 	  if current_row_w then
 	    result = lmi:get(key, current_row_w)
-      assert(result:size() == 1,
-             "Error: Expected a deterministic LM")
-      _,prob = result:get(1)
+	    assert(result:size() == 1,
+		   "Error: Expected a deterministic LM")
+	    _,prob = result:get(1)
 	    row_prob = row_prob + math.exp(prob)
 	  end
 	  if current_col_w then
 	    result = lmi:get(key, current_col_w)
-      assert(result:size() == 1,
-             "Error: Expected a deterministic LM")
-      _,prob = result:get(1)
+	    assert(result:size() == 1,
+		   "Error: Expected a deterministic LM")
+	    _,prob = result:get(1)
 	    col_prob = col_prob + math.exp(prob)
 	  end
 	end
 	local aux
 	p = math.log(col_prob) + math.log(row_prob)
 	result = lmi:get(key, word_ids[i])
-  assert(result:size() == 1,
-         "Error: Expected a deterministic LM")
-  key,aux = result:get(1)
+	assert(result:size() == 1,
+	       "Error: Expected a deterministic LM")
+	key,aux = result:get(1)
 	-- print(aux, p, math.log(col_prob), math.log(row_prob))
       else
 	result = lmi:get(key, word_ids[i])
-  assert(result:size() == 1,
-         "Error: Expected a deterministic LM")
-  key,p = result:get(1)
+	assert(result:size() == 1,
+	       "Error: Expected a deterministic LM")
+	key,p = result:get(1)
       end
       if word_ids[i] == unk_id then
 	numunks = numunks + 1
