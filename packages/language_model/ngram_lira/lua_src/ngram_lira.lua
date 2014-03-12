@@ -7,7 +7,7 @@ local function lira_gz_load_function(filename,
   lm_model = ngram.lira.model{
     command="zcat ".. filename,
     vocabulary=dictionary:getWordVocabulary(),
-    fan_out_threshold=10,
+    fan_out_threshold=extra.fant_out_threshold or 10,
     ignore_extra_words_in_dictionary = extra.ignore_extra_words_in_dictionary or false
   }
   return lm_model
@@ -22,7 +22,7 @@ local function lira_load_function(filename,
   lm_model = ngram.lira.model{
     filename=filename,
     vocabulary=dictionary:getWordVocabulary(),
-    fan_out_threshold=10,
+    fan_out_threshold=extra.fant_out_threshold or 10,
     ignore_extra_words_in_dictionary = extra.ignore_extra_words_in_dictionary or false
   }
   return lm_model
