@@ -38,13 +38,14 @@ public:
   
   GZFileWrapper(GZFileWrapper &other) : f(other.f), need_close(false) { }
   GZFileWrapper(gzFile f) : f(f), need_close(false) { }
-  GZFileWrapper() : f(0) { }
+  GZFileWrapper() : f(0), need_close(true) { }
   ~GZFileWrapper() {
     closeS();
   }
   bool isOpened() const { return f != 0; }
   bool openS(const char *path, const char *mode) {
     f = gzopen(path, mode);
+    need_close = true;
     return f != 0;
   }
   void closeS() {
