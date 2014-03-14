@@ -191,6 +191,26 @@ function ngram.test_set_ppl(lm, vocab, testset, flog, debug_flag,
 			    use_ecc,
 			    multi_class_table,
 			    num_classes)
+
+  local unk_id = -1
+  if vocab:getWordId(unk_word) then unk_id = vocab:getWordId(unk_word) end
+  
+  local lines_it = iterator(io.lines("frase")):
+  map( function(line) return iterator(line:gmatch("[^%s]+")) end )
+  
+  for words_it in lines_it() do
+    words_it:map( function(w) return vocab:getWordId(w) or unk_id end )
+    ngram.get_sentence_prob( words_it, ... )
+    -- dins del ngram:
+    --   for word in words_it() do ... end
+  end
+  
+  
+  
+  
+  
+  
+
   local multi_class_table_inv
   if multi_class_table then
     multi_class_table_inv = table.invert(multi_class_table)

@@ -90,8 +90,9 @@ namespace LanguageModels {
     // -------------- individual LM queries -------------
 
     // get is the most basic LM query method, receives the Key and the Word,
-    // returns 0,1 or several results by overwritting the vector result
-    // which is cleared in the method (not need to be cleared before)
+    // returns 0,1 or several results by pushing back to the vector result (the
+    // vector is not cleared, and it is not needed to be cleared as
+    // pre-condition)
     
     
     /// this method is the same get with an interface more similar to
@@ -100,6 +101,18 @@ namespace LanguageModels {
     virtual void get(const Key &key, WordType word, Burden burden,
 		     vector<KeyScoreBurdenTuple> &result,
 		     Score threshold) = 0;
+    
+    /// this method computes the next keys given a pir (key,word). It could be a
+    /// non-deterministic LM. By default, it uses the standard get() method and
+    /// discards the Burden and Score.
+    virtual void getNextKeys(const Key &key, WordType word,
+			     vector<Key> &result) {
+      vector<KeyScoreBurdenTuple> aux_result;
+      get(key, word, Burden(-1,-1), aux_result, Score::zero());
+      for (vector<KeyScoreBurdenTuple>::iterator it = aux_result.begin();
+	   it != aux_result.end(); ++it)
+	result.push_back(it->key_score.key);
+    }
     
     // -------------- BUNCH MODE -------------
     // Note: we can freely mix insertQuery and insertQueries, but
