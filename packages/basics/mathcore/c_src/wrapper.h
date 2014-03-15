@@ -544,4 +544,16 @@ void doPow(unsigned int N,
 	   float value,
 	   bool use_gpu);
 
+//////////////////////////////////////////////////////////////////////
+
+int doSearchCSCSparseIndexOf(const IntGPUMirroredMemoryBlock *indices,
+			     const IntGPUMirroredMemoryBlock *first_index,
+			     const int c1, const int c2,
+			     const int N, bool use_gpu);
+
+int doSearchCSRSparseIndexOf(const IntGPUMirroredMemoryBlock *indices,
+			     const IntGPUMirroredMemoryBlock *first_index,
+			     const int c1, const int c2,
+			     const int N, bool use_gpu);
+
 #endif // WRAPPER_H
