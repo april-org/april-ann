@@ -41,7 +41,7 @@
 // http://software.intel.com/sites/products/documentation/hpc/mkl/mklman/GUID-9FCEB1C4-670D-4738-81D2-F378013412B0.htm
 
 /// The SparseMatrix class represents bi-dimensional sparse matrices, stored as
-/// CSC or CSR format, using one-based indexing (as in Lua). The structure of
+/// CSC or CSR format, using zero-based indexing (as in Lua). The structure of
 /// the matrices is resized dynamically. It is not possible to share internal
 /// memory pointers between different matrices, unless transposition operator
 /// which shared the data pointers.
@@ -88,7 +88,8 @@ protected:
   bool isVector() const { return ( (matrixSize[0]==1) ||
 				   (matrixSize[1]==1) ); }
   bool isColVector() const { return matrixSize[1]==1; }
-  int searchIndexOf(const int c1, const int c2);
+  int searchIndexOf(const int c0, const int c1) const;
+  int searchIndexOfFirst(const int c0, const int c1) const;
   
 public:
   
@@ -112,7 +113,7 @@ public:
     T &operator*();
     T *operator->();
     int getIdx() const { return idx; }
-    void getCoords(int &x, int &y);
+    void getCoords(int &x0, int &x1);
   };
   /*******************************************************/
   class const_iterator {
@@ -136,7 +137,7 @@ public:
     const T &operator*() const;
     const T *operator->() const;
     int getIdx() const { return idx; }
-    void getCoords(int &x, int &y);
+    void getCoords(int &x0, int &x1);
   };
   /*******************************************************/
   
@@ -146,20 +147,22 @@ private:
   // don't waste memory space
   mutable iterator end_iterator;
   mutable const_iterator end_const_iterator;
-
+  
+  SparseMatrix() : end_iterator(), end_const_iterator() { }
+  
 public:
   /********** Constructors ***********/
   
   /// Constructor
-  SparseMatrix(const int d1, const int d2,
+  SparseMatrix(const int d0, const int d1,
 	       const SPARSE_FORMAT sparse_format = CSC_FORMAT);
   
   /// Constructor given other matrix, it does a deep copy (clone).
   SparseMatrix(const SparseMatrix<T> *other);
   /// Sub-matrix constructor, makes a deep copy of the given matrix slice
   SparseMatrix(const SparseMatrix<T> *other,
-	       const int coord1, const int coord2,
-	       const int size1, const int size2);
+	       const int coord0, const int coord1,
+	       const int size0, const int size1);
   /// Destructor
   virtual ~SparseMatrix();
   
@@ -170,7 +173,7 @@ public:
   void toMMappedDataWriter(april_utils::MMappedDataWriter *mmapped_data) const;
 
   /// Modify sizes of matrix, and returns a cloned sparse matrix
-  SparseMatrix<T> *rewrap(const int new_d1, const int new_d2);
+  SparseMatrix<T> *rewrap(const int new_d0, const int new_d1);
   
   /* Getters and setters */
   int getNumDim() const { return 2; }
@@ -195,8 +198,12 @@ public:
   bool getCudaFlag() const { return use_cuda; }
   /**********************/
   iterator begin() { return iterator(this); }
-  iterator iteratorAt(int c1, int c2) {
-    int idx = searchIndexOf(c1, c2);
+  iterator iteratorAt(int c0, int c1) {
+    int idx = searchIndexOf(c0, c1);
+    return iterator(this, idx);
+  }
+  iterator iteratorAtFirst(int c0, int c1) {
+    int idx = searchIndexOfFirst(c0, c1);
     return iterator(this, idx);
   }
   const iterator &end() {
@@ -206,9 +213,13 @@ public:
   }
   /************************/
   const_iterator begin() const { return const_iterator(this); }
-  const_iterator iteratorAt(int c1, int c2) const {
-    int idx = searchIndexOf(c1, c2);
-    return iterator(this, idx);
+  const_iterator iteratorAt(int c0, int c1) const {
+    int idx = searchIndexOf(c0, c1);
+    return const_iterator(this, idx);
+  }
+  const_iterator iteratorAtFirst(int c0, int c1) const {
+    int idx = searchIndexOfFirst(c0, c1);
+    return const_iterator(this, idx);
   }
   const const_iterator &end() const {
     if (end_const_iterator.m == 0)
@@ -240,7 +251,9 @@ public:
   
   /// Adds a new element, with the pre-condition of being added in order. If the
   /// order is not mantained, an error will be thrown
-  void pushBack(int c1, int c2, T value);
+  void pushBack(int c0, int c1, T value);
+  void pushBack(const_iterator &b, const_iterator &e,
+		int offset0=0, int offset1=0);
   
   /// Raw access operator [], access by index position
   T& operator[] (int i);
@@ -264,7 +277,7 @@ public:
   /// Returns true if they have the same dimension
   template<typename O>
   bool sameDim(const Matrix<O> *other) const;
-  bool sameDim(const int d1, const int d2) const;
+  bool sameDim(const int d0, const int d1) const;
   
   ////////////////////////////////////////////////////////////////////////////
   
@@ -343,7 +356,7 @@ public:
 private:
   void allocate_memory(int size);
   void release_memory();
-  void initialize(int d1, int d2);
+  void initialize(int d0, int d1);
 };
 
 #include "sparse_matrix.impl.h"

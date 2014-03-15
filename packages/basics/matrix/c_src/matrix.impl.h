@@ -275,6 +275,7 @@ Matrix<T> *Matrix<T>::fromMMappedDataReader(april_utils::MMappedDataReader
   obj->transposed    = *(mmapped_data->get<bool>());
   // NON MAPPED DATA
   obj->use_cuda      = false;
+  obj->shared_count  = 0;
   obj->is_contiguous = NONE;
   // THE MMAP POINTER
   obj->mmapped_data  = mmapped_data;
