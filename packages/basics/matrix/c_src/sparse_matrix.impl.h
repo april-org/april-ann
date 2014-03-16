@@ -76,24 +76,40 @@ void SparseMatrix<T>::initialize(int d0, int d1) {
   matrixSize[0] = d0;
   matrixSize[1] = d1;
   non_zero_size = 0;
+  first_index = 0;
+  ptrB = 0;
+  ptrE = 0;
 }
 
 /// Allocation of memory for data pointer. It is Referenced for sharing.
 template <typename T>
 void SparseMatrix<T>::allocate_memory(int size) {
   unsigned int sz = static_cast<unsigned int>(size);
+  GPUMirroredMemoryBlock<T> *old_values      = values;
+  IntGPUMirroredMemoryBlock *old_indices     = indices;
+  int coord_sz = matrixSize[1];
+  if (sparse_format == CSR_FORMAT) coord_sz = matrixSize[0];
   values  = new GPUMirroredMemoryBlock<T>(sz);
-  indices = new IntGPUMirroredMemoryBlock(INITIAL_NON_ZERO_SIZE);
-  first_index = new IntGPUMirroredMemoryBlock(INITIAL_NON_ZERO_SIZE+1);
-  ptrB = new IntGPUMirroredMemoryBlock(first_index->getPPALForRead(),
-				       INITIAL_NON_ZERO_SIZE);
-  ptrE = new IntGPUMirroredMemoryBlock(first_index->getPPALForRead()+1,
-				       INITIAL_NON_ZERO_SIZE);
+  indices = new IntGPUMirroredMemoryBlock(sz);
+  if (first_index == 0) {
+    first_index = new IntGPUMirroredMemoryBlock(coord_sz);
+    ptrB = new IntGPUMirroredMemoryBlock(first_index->getPPALForRead(),sz);
+    ptrE = new IntGPUMirroredMemoryBlock(first_index->getPPALForRead()+1,sz);
+    IncRef(first_index);
+    IncRef(ptrB);
+    IncRef(ptrE);
+    // initialize all the first index to zero
+    int *first_index_ptr = first_index->getPPALForWrite();
+    for (int i=0; i<coord_sz; ++i) first_index_ptr[i] = 0;
+  }
+  if (old_values) {
+    values->copyFromBlock(old_values, 0, 0, old_values->getSize());
+    indices->copyFromBlock(old_indices, 0, 0, old_indices->getSize());
+    DecRef(old_values);
+    DecRef(old_indices);
+  }
   IncRef(values);
   IncRef(indices);
-  IncRef(first_index);
-  IncRef(ptrB);
-  IncRef(ptrE);
 }
 
 /// Release of the memory allocated for data pointer.
@@ -114,7 +130,67 @@ SparseMatrix<T>::SparseMatrix(const int d0, const int d1,
   sparse_format(sparse_format), use_cuda(false),
   end_iterator(), end_const_iterator() {
   initialize(d0, d1);
-  allocate_memory(total_size);
+  allocate_memory(INITIAL_NON_ZERO_SIZE);
+}
+
+template <typename T>
+SparseMatrix<T>::SparseMatrix(const Matrix<T> *other,
+			      const SPARSE_FORMAT sparse_format) :
+  Referenced(), shared_count(0), mmapped_data(0),
+  sparse_format(sparse_format), use_cuda(false),
+  end_iterator(), end_const_iterator() {
+  if (other->getNumDim() != 2)
+    ERROR_EXIT(128, "Only allowed for bi-dimensional matrices\n");
+  initialize(other->getDimSize(0), other->getDimSize(1));
+  //
+  non_zero_size = 0;
+  Matrix<T>::const_iterator it(other->begin());
+  for (int c1=0; c1<other->getDimSize(1); ++c1)
+    for (int c0=0; c0<other->getDimSize(0); ++c0, ++it) {
+      if (it == other->end())
+	ERROR_EXIT(128, "Unexpected matrix iterator end\n");
+      if (*it > 0.0f || *it < 0.0f) non_zero_size++;
+    }
+  allocate_memory(non_zero_size);
+  int current = 0;
+  float *values_ptr = values->getPPALForWrite();
+  float *indices_ptr = indices->getPPALForWrite();
+  float *first_index_ptr = first_index_ptr->getPPALForWrite();
+  first_index_ptr[0] = 0;
+  switch(sparse_format) {
+  case CSC_FORMAT:
+    {
+      Matrix<T>::const_col_major_iterator it(other->begin());
+      for (int c1=0; c1<other->getDimSize(1); ++c1) {
+	for (int c0=0; c0<other->getDimSize(0); ++c0, ++it, ++current) {
+	  if (*it > 0.0f || *it < 0.0f) {
+	    values_ptr[current] = *it;
+	    indices_ptr[current] = c0;
+	  }
+	}
+	first_index_ptr[c1+1] = current;
+      }
+    }
+    break; // case CSC_FORMAT
+  case CSR_FORMAT:
+    {
+      Matrix<T>::const_iterator it(other->begin());
+      for (int c0=0; c0<other->getDimSize(0); ++c0) {
+	for (int c1=0; c1<other->getDimSize(1); ++c1, ++it, ++current) {
+	  if (*it > 0.0f || *it < 0.0f) {
+	    values_ptr[current] = *it;
+	    indices_ptr[current] = c1;
+	  }
+	}
+	first_index_ptr[c0+1] = current;
+      }
+    }
+    break; // case CSR_FORMAT
+  default:
+    ERROR_EXIT1(128, "Unrecognized format %d\n", sparse_format);
+  }
+  ptrB->getPPALForWrite();
+  ptrE->getPPALForWrite();
 }
 
 /// Constructor for sub-matrix building
@@ -134,7 +210,7 @@ SparseMatrix<T>::SparseMatrix(const SparseMatrix<T> *other,
     ERROR_EXIT3(128, "Size+coordinates are out of dimension size: %d+%d>%d\n",
 		size1, coord1, other->matrixSize[1]);
   initialize(size0, size1);
-  allocate_memory(total_size);
+  allocate_memory(other->non_zero_size);
   switch(sparse_format) {
   case CSC_FORMAT:
     for (int c1=0; c1<size1; ++c1) {
@@ -763,14 +839,40 @@ void SparseMatrix<T>::pruneSubnormalAndCheckNormal() {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
- template <typename T>
- void SparseMatrix<T>::pushBack(const_iterator &b, const_iterator &e,
-				int offset0, int offset1) {
-   const_iterator it(b);
-   while(it != e) {
-     int x0,x1;
-     it->getCoords(x0, x1);
-     pushBack(x0-offset0, x1-offset1, *it);
-     ++it;
-   }
- }
+template <typename T>
+void SparseMatrix<T>::pushBack(int c0, int c1, T value) {
+  if (c0 < 0 || c0 >= matrixSize[0] || c1 < 0 || c1 >= matrixSize[1])
+    ERROR_EXIT4(128, "Coordinates out of bounds: (%d,%d) out of %dx%d\n",
+		c0, c1, matrixSize[0], matrixSize[1]);
+  float *values_ptr = values->getPPALForReadAndWrite();
+  float *indices_ptr = indices->getPPALForReadAndWrite();
+  float *first_index_ptr = first_index->getPPALForReadAndWrite();
+  if (non_zero_size > 0) {
+    // check if the pushBack is sorted
+    switch(sparse_format) {
+    case CSC_FORMAT:
+      if (first_index_ptr[c1] != 0 && first_index_ptr[c1+1] != non_zero_size)
+	ERROR_EXIT(128, "pushBack out of order\n");
+      break;
+    case CSR_FORMAT:
+      if (first_index_ptr[c0] != 0 && first_index_ptr[c0+1] != non_zero_size)
+	ERROR_EXIT(128, "pushBack out of order\n");
+      break;
+    default:
+      ERROR_EXIT1(128, "Unrecognized format %d\n", sparse_format);
+    }
+    }
+    
+}
+
+template <typename T>
+void SparseMatrix<T>::pushBack(const_iterator &b, const_iterator &e,
+			       int offset0, int offset1) {
+  const_iterator it(b);
+  while(it != e) {
+    int x0,x1;
+    it->getCoords(x0, x1);
+    pushBack(x0-offset0, x1-offset1, *it);
+    ++it;
+  }
+}

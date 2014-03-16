@@ -156,7 +156,11 @@ public:
   /// Constructor
   SparseMatrix(const int d0, const int d1,
 	       const SPARSE_FORMAT sparse_format = CSC_FORMAT);
-  
+
+  /// Constructor given a dense matrix, it does constructs a sparse matrix
+  /// (cloned).
+  SparseMatrix(const Matrix<T> *other,
+	       const SPARSE_FORMAT sparse_format = CSC_FORMAT);
   /// Constructor given other matrix, it does a deep copy (clone).
   SparseMatrix(const SparseMatrix<T> *other);
   /// Sub-matrix constructor, makes a deep copy of the given matrix slice
