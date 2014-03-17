@@ -28,255 +28,242 @@
 #include "ignore_result.h"
 
 template<typename T>
-const unsigned int Matrix<T>::MATRIX_BINARY_VERSION = 0x00000001;
+const unsigned int SparseMatrix<T>::MATRIX_BINARY_VERSION = 0x00000001;
 
-template <typename T>
-void Matrix<T>::initialize(const int *dim) {
-  total_size=1;
-  switch(major_order) {
-  case CblasRowMajor:
-    for(int i=numDim-1; i>=0; --i) {
-      stride[i] = total_size;
-      total_size *= dim[i];
-      matrixSize[i] = dim[i];
-      april_assert(matrixSize[i] > 0);
-    }
+template<typename T>
+int SparseMatrix<T>::searchIndexOf(const int c0, const int c1) const {
+  int idx;
+  switch(sparse_format) {
+  case CSC_FORMAT:
+    if (c1 >= matrixSize[1]) idx = non_zero_size+1;
+    else idx = doSearchCSCSparseIndexOf(indices, first_index, c0, c1, use_cuda);
     break;
-  case CblasColMajor:
-    for(int i=0; i<numDim; ++i) {
-      stride[i] = total_size;
-      total_size *= dim[i];
-      matrixSize[i] = dim[i];
-      april_assert(matrixSize[i] > 0);
-    }
+  case CSR_FORMAT:
+    if (c0 >= matrixSize[0]) idx = non_zero_size+1;
+    else idx = doSearchCSRSparseIndexOf(indices, first_index, c0, c1, use_cuda);
     break;
   default:
-    ERROR_EXIT(128, "Incorrect major order!!!\n");
+    ERROR_EXIT1(128, "Unrecognized format %d\n", sparse_format);
   }
-  last_raw_pos = total_size-1;
+  if (idx == -1)
+    ERROR_EXIT2(128, "Impossible to found index of (%d,%d)\n", c0, c1);
+  return idx;
+}
+
+template<typename T>
+int SparseMatrix<T>::searchIndexOfFirst(const int c0, const int c1) const {
+  int idx;
+  switch(sparse_format) {
+  case CSC_FORMAT:
+    if (c1 >= matrixSize[1]) idx = non_zero_size+1;
+    else idx = doSearchCSCSparseIndexOfFirst(indices, first_index, c0, c1,
+					     use_cuda);
+    break;
+  case CSR_FORMAT:
+    if (c0 >= matrixSize[0]) idx = non_zero_size+1;
+    else idx = doSearchCSRSparseIndexOfFirst(indices, first_index, c0, c1,
+					     use_cuda);
+    break;
+  default:
+    ERROR_EXIT1(128, "Unrecognized format %d\n", sparse_format);
+  }
+  return idx;
+}
+
+template <typename T>
+void SparseMatrix<T>::initialize(int d0, int d1) {
+  total_size    = d0*d1;
+  matrixSize[0] = d0;
+  matrixSize[1] = d1;
+  non_zero_size = 0;
+  first_index = 0;
+  ptrB = 0;
+  ptrE = 0;
 }
 
 /// Allocation of memory for data pointer. It is Referenced for sharing.
 template <typename T>
-void Matrix<T>::allocate_memory(int size) {
-  data = new GPUMirroredMemoryBlock<T>(static_cast<unsigned int>(size));
-  IncRef(data);
+void SparseMatrix<T>::allocate_memory(int size) {
+  unsigned int sz = static_cast<unsigned int>(size);
+  GPUMirroredMemoryBlock<T> *old_values      = values;
+  IntGPUMirroredMemoryBlock *old_indices     = indices;
+  int coord_sz = matrixSize[1];
+  if (sparse_format == CSR_FORMAT) coord_sz = matrixSize[0];
+  values  = new GPUMirroredMemoryBlock<T>(sz);
+  indices = new IntGPUMirroredMemoryBlock(sz);
+  if (first_index == 0) {
+    first_index = new IntGPUMirroredMemoryBlock(coord_sz);
+    ptrB = new IntGPUMirroredMemoryBlock(first_index->getPPALForRead(),sz);
+    ptrE = new IntGPUMirroredMemoryBlock(first_index->getPPALForRead()+1,sz);
+    IncRef(first_index);
+    IncRef(ptrB);
+    IncRef(ptrE);
+    // initialize all the first index to zero
+    int *first_index_ptr = first_index->getPPALForWrite();
+    for (int i=0; i<coord_sz; ++i) first_index_ptr[i] = 0;
+  }
+  if (old_values) {
+    values->copyFromBlock(old_values, 0, 0, old_values->getSize());
+    indices->copyFromBlock(old_indices, 0, 0, old_indices->getSize());
+    DecRef(old_values);
+    DecRef(old_indices);
+  }
+  IncRef(values);
+  IncRef(indices);
 }
 
 /// Release of the memory allocated for data pointer.
 template <typename T>
-void Matrix<T>::release_memory() {
-  DecRef(data);
-}
-
-/// Null constructor
-template <typename T>
-Matrix<T>::Matrix(int numDim, const int *stride, const int offset,
-		  const int *matrixSize,
-		  const int total_size,
-		  const int last_raw_pos,
-		  GPUMirroredMemoryBlock<T> *data,
-		  const CBLAS_ORDER major_order,
-		  const bool use_cuda,
-		  const bool transposed) :
-  Referenced(), shared_count(0), transposed(transposed),
-  numDim(numDim), stride(new int[numDim]), offset(offset),
-  matrixSize(new int[numDim]), total_size(total_size),
-  last_raw_pos(last_raw_pos), data(data), mmapped_data(0),
-  major_order(major_order),
-  use_cuda(use_cuda),
-  is_contiguous(NONE),
-  end_iterator(), end_const_iterator(), end_best_span_iterator() {
-  IncRef(data);
-  for (int i=0; i<numDim; ++i) {
-    this->stride[i] = stride[i];
-    this->matrixSize[i] = matrixSize[i];
-  }
+void SparseMatrix<T>::release_memory() {
+  DecRef(values);
+  DecRef(indices);
+  DecRef(first_index);
+  DecRef(ptrB);
+  DecRef(ptrE);
 }
 
 /// Default constructor
 template <typename T>
-Matrix<T>::Matrix(int numDim,
-		  const int* dim,
-		  CBLAS_ORDER major_order,
-		  GPUMirroredMemoryBlock<T> *data,
-		  int offset,
-		  bool transposed) :
-  Referenced(), shared_count(0), transposed(transposed),
-  numDim(numDim),
-  offset(offset),
-  mmapped_data(0),
-  major_order(major_order),
-  use_cuda(false),
-  is_contiguous(CONTIGUOUS),
-  end_iterator(), end_const_iterator(), end_best_span_iterator() {
-  stride     = new int[numDim];
-  matrixSize = new int[numDim];
-  initialize(dim);
-  last_raw_pos += offset;
-  if (data == 0) allocate_memory(total_size);
-  else {
-    if (static_cast<int>(data->getSize()) < offset + size())
-      ERROR_EXIT2(128, "Data pointer size doesn't fit, expected %d, found %d\n",
-		  size(), data->getSize());
-    this->data = data;
-    IncRef(data);
+SparseMatrix<T>::SparseMatrix(const int d0, const int d1,
+			      const SPARSE_FORMAT sparse_format) :
+  Referenced(), shared_count(0), mmapped_data(0),
+  sparse_format(sparse_format), use_cuda(false),
+  end_iterator(), end_const_iterator() {
+  initialize(d0, d1);
+  allocate_memory(INITIAL_NON_ZERO_SIZE);
+}
+
+template <typename T>
+SparseMatrix<T>::SparseMatrix(const Matrix<T> *other,
+			      const SPARSE_FORMAT sparse_format) :
+  Referenced(), shared_count(0), mmapped_data(0),
+  sparse_format(sparse_format), use_cuda(false),
+  end_iterator(), end_const_iterator() {
+  if (other->getNumDim() != 2)
+    ERROR_EXIT(128, "Only allowed for bi-dimensional matrices\n");
+  initialize(other->getDimSize(0), other->getDimSize(1));
+  //
+  non_zero_size = 0;
+  Matrix<T>::const_iterator it(other->begin());
+  for (int c1=0; c1<other->getDimSize(1); ++c1)
+    for (int c0=0; c0<other->getDimSize(0); ++c0, ++it) {
+      if (it == other->end())
+	ERROR_EXIT(128, "Unexpected matrix iterator end\n");
+      if (*it > 0.0f || *it < 0.0f) non_zero_size++;
+    }
+  allocate_memory(non_zero_size);
+  int current = 0;
+  float *values_ptr = values->getPPALForWrite();
+  float *indices_ptr = indices->getPPALForWrite();
+  float *first_index_ptr = first_index_ptr->getPPALForWrite();
+  first_index_ptr[0] = 0;
+  switch(sparse_format) {
+  case CSC_FORMAT:
+    {
+      Matrix<T>::const_col_major_iterator it(other->begin());
+      for (int c1=0; c1<other->getDimSize(1); ++c1) {
+	for (int c0=0; c0<other->getDimSize(0); ++c0, ++it, ++current) {
+	  if (*it > 0.0f || *it < 0.0f) {
+	    values_ptr[current] = *it;
+	    indices_ptr[current] = c0;
+	  }
+	}
+	first_index_ptr[c1+1] = current;
+      }
+    }
+    break; // case CSC_FORMAT
+  case CSR_FORMAT:
+    {
+      Matrix<T>::const_iterator it(other->begin());
+      for (int c0=0; c0<other->getDimSize(0); ++c0) {
+	for (int c1=0; c1<other->getDimSize(1); ++c1, ++it, ++current) {
+	  if (*it > 0.0f || *it < 0.0f) {
+	    values_ptr[current] = *it;
+	    indices_ptr[current] = c1;
+	  }
+	}
+	first_index_ptr[c0+1] = current;
+      }
+    }
+    break; // case CSR_FORMAT
+  default:
+    ERROR_EXIT1(128, "Unrecognized format %d\n", sparse_format);
   }
+  ptrB->getPPALForWrite();
+  ptrE->getPPALForWrite();
 }
 
 /// Constructor for sub-matrix building
 template <typename T>
-Matrix<T>::Matrix(Matrix<T> *other,
-		  const int* coords, const int *sizes,
-		  bool clone) :
+SparseMatrix<T>::SparseMatrix(const SparseMatrix<T> *other,
+			      const int coord0, const int coord1,
+			      const int size0, const int size1) :
   Referenced(),
-  shared_count(0), transposed(other->transposed),
-  numDim(other->numDim),
-  offset(0),
-  mmapped_data(0),
-  major_order(other->major_order),
+  shared_count(0), mmapped_data(0),
+  sparse_format(other->sparse_format),
   use_cuda(other->use_cuda),
-  is_contiguous(NONE),
   end_iterator(), end_const_iterator(), end_best_span_iterator() {
-  for (int i=0; i<numDim; i++) {
-    if (sizes[i] + coords[i] > other->matrixSize[i])
-      ERROR_EXIT3(128, "Size+coordinates are out of dimension size: %d+%d>%d\n",
-		  sizes[i], coords[i], other->matrixSize[i]);
-  }
-  stride     = new int[numDim];
-  matrixSize = new int[numDim];
-  if (clone) {
-    transposed    = false;
-    is_contiguous = CONTIGUOUS;
-    initialize(sizes);
-    allocate_memory(total_size);
-    int other_raw_pos = other->computeRawPos(coords);
-    const T *other_data = other->data->getPPALForRead();
-    int *aux_coords = new int[numDim];
-    for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
-    if (major_order == CblasRowMajor) {
-      for (iterator it(begin()); it!=end(); ++it) {
-	*it = other_data[other_raw_pos];
-	nextCoordVectorRowOrder(aux_coords, other_raw_pos,
-				sizes, other->stride, numDim,
-				other->last_raw_pos);
-      }
+  if (size0 + coord0 > other->matrixSize[0])
+    ERROR_EXIT3(128, "Size+coordinates are out of dimension size: %d+%d>%d\n",
+		size0, coord0, other->matrixSize[0]);
+  if (size1 + coord1 > other->matrixSize[1])
+    ERROR_EXIT3(128, "Size+coordinates are out of dimension size: %d+%d>%d\n",
+		size1, coord1, other->matrixSize[1]);
+  initialize(size0, size1);
+  allocate_memory(other->non_zero_size);
+  switch(sparse_format) {
+  case CSC_FORMAT:
+    for (int c1=0; c1<size1; ++c1) {
+      const_iterator it(other->iteratorAtFirst(coord0, c1));
+      const_iterator end_it(other->iteratorAtFirst(coord0 + size0, c1));
+      pushBack(it,end_it,coord0,coord1);
     }
-    else {
-      for (col_major_iterator it(begin()); it!=end(); ++it) {
-	*it = other_data[other_raw_pos];
-	nextCoordVectorColOrder(aux_coords, other_raw_pos,
-				sizes, other->stride, numDim,
-				other->last_raw_pos);
-      }
+    break;
+  case CSR_FORMAT:
+    for (int c0=0; c0<size0; ++c0) {
+      const_iterator it(other->iteratorAtFirst(c0, coord1));
+      const_iterator end_it(other->iteratorAtFirst(c0, coord1 + size1));
+      pushBack(it,end_it,coord0,coord1);
     }
-    delete[] aux_coords;
-  }
-  else {
-    int *aux_coords = new int[numDim];
-    total_size = 1;
-    for (int i=0; i<numDim; i++) {
-      stride[i]     = other->stride[i];
-      matrixSize[i] = sizes[i];
-      total_size    = total_size * sizes[i];
-      aux_coords[i] = sizes[i]-1;
-    }
-    offset = other->computeRawPos(coords);
-    data   = other->data;
-    IncRef(data);
-    last_raw_pos = computeRawPos(aux_coords);
-    delete[] aux_coords;
-  }
-}
-
-
-/// Constructor with variable arguments
-template <typename T>
-Matrix<T>::Matrix(int numDim, int d1, ...) :
-  Referenced(), shared_count(0), transposed(false),
-  numDim(numDim),
-  offset(0),
-  mmapped_data(0),
-  major_order(CblasRowMajor),
-  is_contiguous(CONTIGUOUS),
-  end_iterator(), end_const_iterator(), end_best_span_iterator() {
-  int *dim   = new int[numDim];
-  stride     = new int[numDim];
-  matrixSize = new int[numDim];
-  va_list ap;
-  va_start(ap, d1);
-  dim[0]=d1;
-  for (int i=1; i<numDim; i++) {
-    int di = va_arg(ap, int);
-    dim[i] = di;
-  }
-  va_end(ap);
-  initialize(dim);
-  allocate_memory(total_size);
-  delete[] dim;
-}
-
-
-/// Constructor for copy or clone other given matrix
-template <typename T>
-Matrix<T>::Matrix(Matrix<T> *other, bool clone) :
-  Referenced(),
-  shared_count(0), transposed(other->transposed),
-  numDim(other->numDim),
-  offset(0),
-  mmapped_data(0),
-  major_order(other->major_order),
-  use_cuda(other->use_cuda),
-  is_contiguous(other->is_contiguous),
-  end_iterator(), end_const_iterator(), end_best_span_iterator() {
-  stride       = new int[numDim];
-  matrixSize   = new int[numDim];
-  total_size   = other->total_size;
-  last_raw_pos = other->last_raw_pos;
-  if (clone) {
-    transposed = false;
-    initialize(other->matrixSize);
-    allocate_memory(total_size);
-    copy(other);
-    is_contiguous = CONTIGUOUS;
-  }
-  else {
-    offset       = other->offset;
-    data         = other->data;
-    IncRef(data);
-    for (int i=0; i<numDim; ++i) {
-      stride[i]     = other->stride[i];
-      matrixSize[i] = other->matrixSize[i];
-    }
+    break;
+  default:
+    ERROR_EXIT1(128, "Unrecognized format %d\n", sparse_format);
   }
 }
 
 template <typename T>
-Matrix<T> *Matrix<T>::fromMMappedDataReader(april_utils::MMappedDataReader
-					    *mmapped_data) {
-  Matrix<T> *obj = new Matrix();
+SparseMatrix<T> *SparseMatrix<T>::fromMMappedDataReader(april_utils::MMappedDataReader
+							*mmapped_data) {
+  SparseMatrix<T> *obj = new SparseMatrix();
   //
-  obj->data = GPUMirroredMemoryBlock<T>::fromMMappedDataReader(mmapped_data);
-  IncRef(obj->data);
+  obj->values  = GPUMirroredMemoryBlock<T>::fromMMappedDataReader(mmapped_data);
+  obj->indices = IntGPUMirroredMemoryBlock::fromMMappedDataReader(mmapped_data);
+  obj->first_index = IntGPUMirroredMemoryBlock::fromMMappedDataReader(mmapped_data);
+  IncRef(values);
+  IncRef(indices);
+  IncRef(first_index);
+  //
+  ptrB = new IntGPUMirroredMemoryBlock(first_index->getPPALForRead(),
+				       INITIAL_NON_ZERO_SIZE);
+  ptrE = new IntGPUMirroredMemoryBlock(first_index->getPPALForRead()+1,
+				       INITIAL_NON_ZERO_SIZE);
+  IncRef(ptrB);
+  IncRef(ptrE);
   //
   unsigned int binary_version = *(mmapped_data->get<unsigned int>());
   if (binary_version != MATRIX_BINARY_VERSION)
     ERROR_EXIT1(128,
 		"Incorrect binary matrix version from commit number %d\n",
 		mmapped_data->getCommitNumber());
-  int N = *(mmapped_data->get<int>());
-  obj->numDim        = N;
-  obj->stride        = mmapped_data->get<int>(N);
-  obj->offset        = *(mmapped_data->get<int>());
-  obj->matrixSize    = mmapped_data->get<int>(N);
+  int *aux_size = mmapped_data->get<int>(2);
+  obj->matrixSize[0] = aux_size[0];
+  obj->matrixSize[1] = aux_size[1];
   obj->total_size    = *(mmapped_data->get<int>());
-  obj->last_raw_pos  = *(mmapped_data->get<int>());
-  obj->major_order   = *(mmapped_data->get<CBLAS_ORDER>());
-  obj->transposed    = *(mmapped_data->get<bool>());
+  obj->non_zero_size = *(mmapped_data->get<int>());
+  obj->sparse_format = *(mmapped_data->get<SPARSE_FORMAT>());
   // NON MAPPED DATA
   obj->use_cuda      = false;
   obj->shared_count  = 0;
-  obj->is_contiguous = NONE;
   // THE MMAP POINTER
   obj->mmapped_data  = mmapped_data;
   IncRef(obj->mmapped_data);
@@ -285,32 +272,26 @@ Matrix<T> *Matrix<T>::fromMMappedDataReader(april_utils::MMappedDataReader
 }
 
 template <typename T>
-void Matrix<T>::toMMappedDataWriter(april_utils::MMappedDataWriter
-				    *mmapped_data) const {
-  data->toMMappedDataWriter(mmapped_data);
+void SparseMatrix<T>::toMMappedDataWriter(april_utils::MMappedDataWriter
+					  *mmapped_data) const {
+  values->toMMappedDataWriter(mmapped_data);
+  indices->toMMappedDataWriter(mmapped_data);
+  first_index->toMMappedDataWriter(mmapped_data);
   mmapped_data->put(&MATRIX_BINARY_VERSION);
-  mmapped_data->put(&numDim);
-  mmapped_data->put(stride, numDim);
-  mmapped_data->put(&offset);
-  mmapped_data->put(matrixSize, numDim);
+  mmapped_data->put(matrixSize, 2);
   mmapped_data->put(&total_size);
-  mmapped_data->put(&last_raw_pos);
-  mmapped_data->put(&major_order);
-  mmapped_data->put(&transposed);
+  mmapped_data->put(&non_zero_size);
+  mmapped_data->put(&sparse_format);
 }
 
 template <typename T>
-Matrix<T>::~Matrix() {
+SparseMatrix<T>::~SparseMatrix() {
   release_memory();
-  if (mmapped_data == 0) {
-    delete[] stride;
-    delete[] matrixSize;
-  }
-  else DecRef(mmapped_data);
+  if (mmapped_data != 0) DecRef(mmapped_data);
 }
 
 template <typename T>
-Matrix<T> *Matrix<T>::rewrap(const int *new_dims, int len) {
+SparseMatrix<T> *SparseMatrix<T>::rewrap(const int *new_dims, int len) {
   if (!getIsContiguous())
     ERROR_EXIT(128, "Impossible to re-wrap non contiguous matrix, "
 	       "clone it first\n");
@@ -324,7 +305,7 @@ Matrix<T> *Matrix<T>::rewrap(const int *new_dims, int len) {
   if (new_size != size())
     ERROR_EXIT2(128, "Incorrect size, expected %d, and found %d\n",
 		size(), new_size);
-  Matrix<T> *obj = new Matrix<T>(len, new_dims, major_order, data, offset);
+  SparseMatrix<T> *obj = new SparseMatrix<T>(len, new_dims, major_order, data, offset);
 #ifdef USE_CUDA
   obj->setUseCuda(use_cuda);
 #endif
@@ -332,8 +313,8 @@ Matrix<T> *Matrix<T>::rewrap(const int *new_dims, int len) {
 }
 
 template<typename T>
-Matrix<T> *Matrix<T>::transpose() {
-  Matrix<T> *result;
+SparseMatrix<T> *SparseMatrix<T>::transpose() {
+  SparseMatrix<T> *result;
   if (this->numDim > 1) {
     result = this->shallow_copy();
     result->transposed = !result->transposed;
@@ -347,8 +328,8 @@ Matrix<T> *Matrix<T>::transpose() {
 }
 
 template <typename T>
-Matrix<T>* Matrix<T>::cloneOnlyDims() const {
-  Matrix<T> *obj = new Matrix<T>(numDim, matrixSize, major_order);
+SparseMatrix<T>* SparseMatrix<T>::cloneOnlyDims() const {
+  SparseMatrix<T> *obj = new SparseMatrix<T>(numDim, matrixSize, major_order);
 #ifdef USE_CUDA
   obj->setUseCuda(use_cuda);
 #endif
@@ -356,10 +337,10 @@ Matrix<T>* Matrix<T>::cloneOnlyDims() const {
 }
 
 template<typename T>
-Matrix<T> *Matrix<T>::clone(CBLAS_ORDER major_order) {
-  Matrix<T> *resul;
+SparseMatrix<T> *SparseMatrix<T>::clone(CBLAS_ORDER major_order) {
+  SparseMatrix<T> *resul;
   if (this->major_order != major_order) {
-    resul = new Matrix<T>(numDim, matrixSize, major_order);
+    resul = new SparseMatrix<T>(numDim, matrixSize, major_order);
 #ifdef USE_CUDA
     resul->setUseCuda(use_cuda);
 #endif
@@ -376,34 +357,34 @@ Matrix<T> *Matrix<T>::clone(CBLAS_ORDER major_order) {
 }
 
 template <typename T>
-Matrix<T>* Matrix<T>::clone() {
-  return new Matrix<T>(this,true);
+SparseMatrix<T>* SparseMatrix<T>::clone() {
+  return new SparseMatrix<T>(this,true);
 }
 
 template <typename T>
-Matrix<T>* Matrix<T>::shallow_copy() {
-  return new Matrix<T>(this,false);
+SparseMatrix<T>* SparseMatrix<T>::shallow_copy() {
+  return new SparseMatrix<T>(this,false);
 }
 
 template <typename T>
-T& Matrix<T>::operator[] (int i) {
+T& SparseMatrix<T>::operator[] (int i) {
   return data->get(static_cast<unsigned int>(i));
 }
 
 template <typename T>
-const T& Matrix<T>::operator[] (int i) const {
+const T& SparseMatrix<T>::operator[] (int i) const {
   return data->get(static_cast<unsigned int>(i));
 }
 
 template <typename T>
-T& Matrix<T>::operator() (int i) {
+T& SparseMatrix<T>::operator() (int i) {
   april_assert(numDim == 1);
   int raw_pos = computeRawPos(&i);
   return data->get(static_cast<unsigned int>(raw_pos));
 }
 
 template <typename T>
-T& Matrix<T>::operator() (int row, int col) {
+T& SparseMatrix<T>::operator() (int row, int col) {
   april_assert(numDim == 2);
   int pos[2]={row,col};
   int raw_pos = computeRawPos(pos);
@@ -411,14 +392,14 @@ T& Matrix<T>::operator() (int row, int col) {
 }
 
 template <typename T>
-T& Matrix<T>::operator() (int coord0, int coord1, int coord2, ...) {
+T& SparseMatrix<T>::operator() (int coord0, int coord0, int coord1, ...) {
   april_assert(numDim >= 3);
   int *aux_coords = new int[numDim];
   aux_coords[0] = coord0;
-  aux_coords[1] = coord1;
-  aux_coords[2] = coord2;
+  aux_coords[1] = coord0;
+  aux_coords[2] = coord1;
   va_list ap;
-  va_start(ap, coord2);
+  va_start(ap, coord1);
   for(int i=3; i<numDim; i++) {
     int coordn = va_arg(ap, int);
     aux_coords[i] = coordn;
@@ -430,7 +411,7 @@ T& Matrix<T>::operator() (int coord0, int coord1, int coord2, ...) {
 }
 
 template <typename T>
-T& Matrix<T>::operator() (int *coords, int sz) {
+T& SparseMatrix<T>::operator() (int *coords, int sz) {
   UNUSED_VARIABLE(sz);
   april_assert(numDim == sz);
   int raw_pos = computeRawPos(coords);
@@ -438,14 +419,14 @@ T& Matrix<T>::operator() (int *coords, int sz) {
 }
 
 template <typename T>
-const T& Matrix<T>::operator() (int i) const {
+const T& SparseMatrix<T>::operator() (int i) const {
   april_assert(numDim == 1);
   int raw_pos = computeRawPos(&i);
   return data->get(static_cast<unsigned int>(raw_pos));
 }
 
 template <typename T>
-const T& Matrix<T>::operator() (int row, int col) const {
+const T& SparseMatrix<T>::operator() (int row, int col) const {
   april_assert(numDim == 2);
   int pos[2]={row,col};
   int raw_pos = computeRawPos(pos);
@@ -453,14 +434,14 @@ const T& Matrix<T>::operator() (int row, int col) const {
 }
 
 template <typename T>
-const T& Matrix<T>::operator() (int coord0, int coord1, int coord2, ...) const {
+const T& SparseMatrix<T>::operator() (int coord0, int coord0, int coord1, ...) const {
   april_assert(numDim >= 3);
   int *aux_coords = new int[numDim];
   aux_coords[0] = coord0;
-  aux_coords[1] = coord1;
-  aux_coords[2] = coord2;
+  aux_coords[1] = coord0;
+  aux_coords[2] = coord1;
   va_list ap;
-  va_start(ap, coord2);
+  va_start(ap, coord1);
   for(int i=3; i<numDim; i++) {
     int coordn = va_arg(ap, int);
     aux_coords[i] = coordn;
@@ -472,7 +453,7 @@ const T& Matrix<T>::operator() (int coord0, int coord1, int coord2, ...) const {
 }
 
 template <typename T>
-const T& Matrix<T>::operator() (int *coords, int sz) const {
+const T& SparseMatrix<T>::operator() (int *coords, int sz) const {
   UNUSED_VARIABLE(sz);
   april_assert(numDim == sz);
   int raw_pos = computeRawPos(coords);
@@ -480,7 +461,7 @@ const T& Matrix<T>::operator() (int *coords, int sz) const {
 }
 
 template <typename T>
-bool Matrix<T>::getCol(int col, T* vec, int vecsize) {
+bool SparseMatrix<T>::getCol(int col, T* vec, int vecsize) {
   // If it is not a 2D matrix, error
   if (numDim != 2) return false;
   // If the column is out of range, error
@@ -496,7 +477,7 @@ bool Matrix<T>::getCol(int col, T* vec, int vecsize) {
 }
 
 template <typename T>
-bool Matrix<T>::putCol(int col, T* vec, int vecsize) {
+bool SparseMatrix<T>::putCol(int col, T* vec, int vecsize) {
   // If it is not a 2D matrix, error
   if (numDim != 2) return false;
   // If the column is out of range, error
@@ -512,7 +493,7 @@ bool Matrix<T>::putCol(int col, T* vec, int vecsize) {
 }
 
 template <typename T>
-bool Matrix<T>::putSubCol(int col, int first_row, T* vec, int vecsize) {
+bool SparseMatrix<T>::putSubCol(int col, int first_row, T* vec, int vecsize) {
   // If it is not a 2D matrix, error
   if (numDim != 2) return false;
   // If the column is out of range, error
@@ -531,12 +512,12 @@ bool Matrix<T>::putSubCol(int col, int first_row, T* vec, int vecsize) {
 
 template <typename T>
 template <typename O>
-bool Matrix<T>::sameDim(const Matrix<O> *other) const {
+bool SparseMatrix<T>::sameDim(const SparseMatrix<O> *other) const {
   return sameDim(other->getDimPtr(), other->getNumDim());
 }
 
 template <typename T>
-bool Matrix<T>::sameDim(const int *dims, const int len) const {
+bool SparseMatrix<T>::sameDim(const int *dims, const int len) const {
   if (numDim != len) return false;
   switch(numDim) {
   default:
@@ -557,16 +538,16 @@ bool Matrix<T>::sameDim(const int *dims, const int len) const {
 }
 
 template<typename T>
-Matrix<T> *Matrix<T>::select(int dim, int index, Matrix<T> *dest) {
+SparseMatrix<T> *SparseMatrix<T>::select(int dim, int index, SparseMatrix<T> *dest) {
   if (numDim == 1)
     ERROR_EXIT(128, "Not possible to execute select for numDim=1\n");
   if (dim >= numDim)
     ERROR_EXIT(128, "Select for a dimension which doesn't exists\n");
   if (index >= matrixSize[dim])
     ERROR_EXIT(128, "Select for an index out of the matrix\n");
-  Matrix<T> *result;
+  SparseMatrix<T> *result;
   if (dest == 0) {
-    result = new Matrix();
+    result = new SparseMatrix();
     int d = numDim - 1;
     // Data initialization
     result->transposed   = this->transposed;
@@ -603,7 +584,7 @@ Matrix<T> *Matrix<T>::select(int dim, int index, Matrix<T> *dest) {
       dest_last_raw_pos += (matrixSize[i]-1)*stride[i];
     for(int i=dim+1; i<numDim; ++i)
       dest_last_raw_pos += (matrixSize[i]-1)*stride[i];
-    dest->changeSubMatrixData(dest_offset, dest_last_raw_pos);
+    dest->changeSubSparseMatrixData(dest_offset, dest_last_raw_pos);
     //
     result = dest;
   }
@@ -613,23 +594,23 @@ Matrix<T> *Matrix<T>::select(int dim, int index, Matrix<T> *dest) {
 /***** COORDINATES METHODS *****/
 
 template <typename T>
-bool Matrix<T>::nextCoordVectorRowOrder(int *coords, int &raw_pos) const {
+bool SparseMatrix<T>::nextCoordVectorRowOrder(int *coords, int &raw_pos) const {
   return nextCoordVectorRowOrder(coords, raw_pos, matrixSize, stride, numDim,
 				 last_raw_pos);
 }
 
 template <typename T>
-bool Matrix<T>::nextCoordVectorColOrder(int *coords, int &raw_pos) const {
+bool SparseMatrix<T>::nextCoordVectorColOrder(int *coords, int &raw_pos) const {
   return nextCoordVectorColOrder(coords, raw_pos, matrixSize, stride, numDim,
 				 last_raw_pos);
 }
 
 template <typename T>
-bool Matrix<T>::nextCoordVectorRowOrder(int *coords, int &raw_pos,
-					const int *sizes,
-					const int *strides,
-					const int numDim,
-					const int last_raw_pos) {
+bool SparseMatrix<T>::nextCoordVectorRowOrder(int *coords, int &raw_pos,
+					      const int *sizes,
+					      const int *strides,
+					      const int numDim,
+					      const int last_raw_pos) {
   bool ret = true;
   switch(numDim) {
   case 1:
@@ -669,11 +650,11 @@ bool Matrix<T>::nextCoordVectorRowOrder(int *coords, int &raw_pos,
 }
 
 template <typename T>
-bool Matrix<T>::nextCoordVectorColOrder(int *coords, int &raw_pos,
-					const int *sizes,
-					const int *strides,
-					const int numDim,
-					const int last_raw_pos) {
+bool SparseMatrix<T>::nextCoordVectorColOrder(int *coords, int &raw_pos,
+					      const int *sizes,
+					      const int *strides,
+					      const int numDim,
+					      const int last_raw_pos) {
   bool ret = true;
   switch(numDim) {
   case 1:
@@ -714,19 +695,19 @@ bool Matrix<T>::nextCoordVectorColOrder(int *coords, int &raw_pos,
 }
 
 template <typename T>
-bool Matrix<T>::nextCoordVectorRowOrder(int *coords) const {
+bool SparseMatrix<T>::nextCoordVectorRowOrder(int *coords) const {
   return nextCoordVectorRowOrder(coords, matrixSize, numDim);
 }
 
 template <typename T>
-bool Matrix<T>::nextCoordVectorColOrder(int *coords) const {
+bool SparseMatrix<T>::nextCoordVectorColOrder(int *coords) const {
   return nextCoordVectorColOrder(coords, matrixSize, numDim);
 }
 
 template <typename T>
-bool Matrix<T>::nextCoordVectorRowOrder(int *coords,
-					const int *sizes,
-					int numDim) {
+bool SparseMatrix<T>::nextCoordVectorRowOrder(int *coords,
+					      const int *sizes,
+					      int numDim) {
   int j = numDim;
   do {
     --j;
@@ -737,9 +718,9 @@ bool Matrix<T>::nextCoordVectorRowOrder(int *coords,
 }
 
 template <typename T>
-bool Matrix<T>::nextCoordVectorColOrder(int *coords,
-					const int *sizes,
-					int numDim) {
+bool SparseMatrix<T>::nextCoordVectorColOrder(int *coords,
+					      const int *sizes,
+					      int numDim) {
   int j = 0;
   do {
     coords[j] = (coords[j]+1) % sizes[j];
@@ -749,7 +730,7 @@ bool Matrix<T>::nextCoordVectorColOrder(int *coords,
 }
 
 template <typename T>
-int Matrix<T>::computeRawPos(const int *coords) const {
+int SparseMatrix<T>::computeRawPos(const int *coords) const {
   int raw_pos;
   switch(numDim) {
   case 1:
@@ -772,7 +753,7 @@ int Matrix<T>::computeRawPos(const int *coords) const {
 }
 
 template <typename T>
-void Matrix<T>::computeCoords(const int raw_pos, int *coords) const {
+void SparseMatrix<T>::computeCoords(const int raw_pos, int *coords) const {
   int R = raw_pos - offset;
   switch(numDim) {
   case 1: coords[0] = R / stride[0]; break;
@@ -807,7 +788,7 @@ void Matrix<T>::computeCoords(const int raw_pos, int *coords) const {
 }
 
 template <typename T>
-bool Matrix<T>::getIsContiguous() const {
+bool SparseMatrix<T>::getIsContiguous() const {
   if (is_contiguous != NONE) return (is_contiguous==CONTIGUOUS);
   if (major_order == CblasRowMajor) {
     int aux = 1;
@@ -835,18 +816,18 @@ bool Matrix<T>::getIsContiguous() const {
 
 // expands current matrix to a diagonal matrix
 template <typename T>
-Matrix<T> *Matrix<T>::diagonalize() const {
+SparseMatrix<T> *SparseMatrix<T>::diagonalize() const {
   if (numDim != 1)
     ERROR_EXIT(128, "Only one-dimensional matrix is allowed\n");
   const int dims[2] = { matrixSize[0], matrixSize[0] };
-  Matrix<T> *resul  = new Matrix<T>(2, dims, major_order);
+  SparseMatrix<T> *resul  = new SparseMatrix<T>(2, dims, major_order);
   // resul_diag is a submatrix of resul, build to do a diagonal traverse
   const int stride  = matrixSize[0] + 1;
-  Matrix<T> *resul_diag = new Matrix<T>(1, &stride, 0, dims, dims[0],
-					resul->last_raw_pos, resul->data,
-					resul->major_order,
-					resul->use_cuda,
-					resul->transposed);
+  SparseMatrix<T> *resul_diag = new SparseMatrix<T>(1, &stride, 0, dims, dims[0],
+						    resul->last_raw_pos, resul->data,
+						    resul->major_order,
+						    resul->use_cuda,
+						    resul->transposed);
   resul->zeros();
   resul_diag->copy(this);
   delete resul_diag;
@@ -854,6 +835,44 @@ Matrix<T> *Matrix<T>::diagonalize() const {
 }
 
 template <typename T>
-void Matrix<T>::pruneSubnormalAndCheckNormal() {
+void SparseMatrix<T>::pruneSubnormalAndCheckNormal() {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+}
+
+template <typename T>
+void SparseMatrix<T>::pushBack(int c0, int c1, T value) {
+  if (c0 < 0 || c0 >= matrixSize[0] || c1 < 0 || c1 >= matrixSize[1])
+    ERROR_EXIT4(128, "Coordinates out of bounds: (%d,%d) out of %dx%d\n",
+		c0, c1, matrixSize[0], matrixSize[1]);
+  float *values_ptr = values->getPPALForReadAndWrite();
+  float *indices_ptr = indices->getPPALForReadAndWrite();
+  float *first_index_ptr = first_index->getPPALForReadAndWrite();
+  if (non_zero_size > 0) {
+    // check if the pushBack is sorted
+    switch(sparse_format) {
+    case CSC_FORMAT:
+      if (first_index_ptr[c1] != 0 && first_index_ptr[c1+1] != non_zero_size)
+	ERROR_EXIT(128, "pushBack out of order\n");
+      break;
+    case CSR_FORMAT:
+      if (first_index_ptr[c0] != 0 && first_index_ptr[c0+1] != non_zero_size)
+	ERROR_EXIT(128, "pushBack out of order\n");
+      break;
+    default:
+      ERROR_EXIT1(128, "Unrecognized format %d\n", sparse_format);
+    }
+    }
+    
+}
+
+template <typename T>
+void SparseMatrix<T>::pushBack(const_iterator &b, const_iterator &e,
+			       int offset0, int offset1) {
+  const_iterator it(b);
+  while(it != e) {
+    int x0,x1;
+    it->getCoords(x0, x1);
+    pushBack(x0-offset0, x1-offset1, *it);
+    ++it;
+  }
 }

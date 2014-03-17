@@ -244,7 +244,7 @@ public:
     }
   }
 #endif
-  
+
   void toMMappedDataWriter(april_utils::MMappedDataWriter *mmapped_data) const {
 #ifdef USE_CUDA
     if (!getUpdatedPPAL())
@@ -513,6 +513,14 @@ public:
   
   virtual ~GPUMirroredMemoryBlock() { }
   
+  void copyFromBlock(const GPUMirroredMemoryBlock<T> *other,
+		     size_t from, size_t where, size_t sz) {
+    const T *other_ptr = other->getPPALForRead() + from;
+    T *this_ptr        = this->getPPALForWrite() + where;
+    memcpy(this_ptr, other_ptr, sz * sizeof(T));
+  }
+
+
   unsigned int getSize() const {
     return size/sizeof(T);
   }
