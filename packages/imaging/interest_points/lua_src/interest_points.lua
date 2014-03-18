@@ -509,7 +509,7 @@ function interest_points.filter_points(tables, height, width)
   --
   --
   ---------------------------
-  function dataset.interest_point(img, table_points, x_window, y_window, reverse)
+  function dataset.interest_point(img, table_points, x_window, y_window, num_classes, reverse)
 
       local img_matrix = img:matrix()
 
@@ -549,5 +549,5 @@ function interest_points.filter_points(tables, height, width)
       end
 
 
-      return dsPoints, points and interest_points.loadTagDataset(points)
+      return dsPoints, points and interest_points.loadTagDataset(points, num_classes)
   end

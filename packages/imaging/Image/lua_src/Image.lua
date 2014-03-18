@@ -47,3 +47,4 @@ function Image.save(img, filename)
 	local m=i:info()
 	matrix.saveImage(m, filename)
 end
+
