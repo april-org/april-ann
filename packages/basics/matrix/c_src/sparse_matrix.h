@@ -183,8 +183,7 @@ public:
 	       SPARSE_FORMAT sparse_format = NONE_FORMAT);
   /// Sub-matrix constructor, makes a deep copy of the given matrix slice
   SparseMatrix(const SparseMatrix<T> *other,
-	       const int coord0, const int coord1,
-	       const int size0, const int size1);
+	       const int *coords, const int *sizes, bool clone=true);
   /// Destructor
   virtual ~SparseMatrix();
   

@@ -328,7 +328,7 @@ public:
   LUABIND_CHECK_ARGN(<=,3);
   LUABIND_CHECK_PARAMETER(1, table);
   LUABIND_CHECK_PARAMETER(2, table);
-  int coords_len, sizes_len;
+  int *coords, *sizes, coords_len, sizes_len;
   bool clone;
   LUABIND_TABLE_GETN(1, coords_len);
   LUABIND_TABLE_GETN(2, sizes_len);
@@ -336,17 +336,19 @@ public:
     LUABIND_FERROR3("Incorrect number of dimensions, expected %d, "
 		    "found %d and %d\n",
 		    obj->getNumDim(), coords_len, sizes_len);
-  april_assert(obj->getNumDim() == 2);
-  int coords[2], sizes[2];
+  coords = new int[coords_len];
+  sizes  = new int[sizes_len];
   LUABIND_TABLE_TO_VECTOR_SUB1(1, int, coords, coords_len);
   LUABIND_TABLE_TO_VECTOR(2, int, sizes,  sizes_len);
+  LUABIND_GET_OPTIONAL_PARAMETER(3, bool, clone, false);
   for (int i=0; i<sizes_len; ++i)
     if (coords[i] < 0 || sizes[i] < 1 ||
 	sizes[i]+coords[i] > obj->getDimSize(i))
       LUABIND_FERROR1("Incorrect size or coord at position %d\n", i+1);
-  SparseMatrixFloat *obj2 = new SparseMatrixFloat(obj, coords[0], coords[1],
-						  sizes[0], sizes[1]);
+  SparseMatrixFloat *obj2 = new SparseMatrixFloat(obj, coords, sizes, clone);
   LUABIND_RETURN(SparseMatrixFloat, obj2);
+  delete[] coords;
+  delete[] sizes;
 }
 //BIND_END
 

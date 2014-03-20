@@ -231,25 +231,26 @@ SparseMatrix<T>::SparseMatrix(const SparseMatrix<T> *other,
 /// Constructor for sub-matrix building
 template <typename T>
 SparseMatrix<T>::SparseMatrix(const SparseMatrix<T> *other,
-			      const int coord0, const int coord1,
-			      const int size0, const int size1) :
+			      const int *coords, const int *sizes,
+			      bool clone) :
   Referenced(),
   shared_count(0), mmapped_data(0),
   sparse_format(other->sparse_format),
   use_cuda(other->use_cuda),
   end_iterator(), end_const_iterator() {
-  if (size0 + coord0 > other->matrixSize[0])
+  UNUSED_VARIABLE(clone);
+  if (sizes[0] + coords[0] > other->matrixSize[0])
     ERROR_EXIT3(128, "Size+coordinates are out of dimension size: %d+%d>%d\n",
-		size0, coord0, other->matrixSize[0]);
-  if (size1 + coord1 > other->matrixSize[1])
+		sizes[0], coords[0], other->matrixSize[0]);
+  if (sizes[1] + coords[1] > other->matrixSize[1])
     ERROR_EXIT3(128, "Size+coordinates are out of dimension size: %d+%d>%d\n",
-		size1, coord1, other->matrixSize[1]);
-  initialize(size0, size1);
+		sizes[1], coords[1], other->matrixSize[1]);
+  initialize(sizes[0], sizes[1]);
   int non_zero_size = 0;
   int x0=0, x1=0;
   for (const_iterator it(other->begin()); it != other->end(); ++it) {
     it.getCoords(x0,x1);
-    if (x0 >= coord0 && x0 < coord0+size0 && x1 >= coord1 && x1 < coord1+size1)
+    if (x0 >= coords[0] && x0 < coords[0]+sizes[0] && x1 >= coords[1] && x1 < coords[1]+sizes[1])
       ++non_zero_size;
   }
   allocate_memory(non_zero_size);
@@ -264,7 +265,7 @@ SparseMatrix<T>::SparseMatrix(const SparseMatrix<T> *other,
       int x0=0, x1=0;
       for (const_iterator it(other->begin()); it != other->end(); ++it) {
 	it.getCoords(x0,x1);
-	if (x0 >= coord0 && x0 < coord0+size0 && x1 >= coord1 && x1 < coord1+size1) {
+	if (x0 >= coords[0] && x0 < coords[0]+sizes[0] && x1 >= coords[1] && x1 < coords[1]+sizes[1]) {
 	  values_ptr[current]  = *it;
 	  indices_ptr[current] = x0;
 	  ++current;
@@ -278,7 +279,7 @@ SparseMatrix<T>::SparseMatrix(const SparseMatrix<T> *other,
       int x0=0, x1=0;
       for (const_iterator it(other->begin()); it != other->end(); ++it) {
 	it.getCoords(x0,x1);
-	if (x0 >= coord0 && x0 < coord0+size0 && x1 >= coord1 && x1 < coord1+size1) {
+	if (x0 >= coords[0] && x0 < coords[0]+sizes[0] && x1 >= coords[1] && x1 < coords[1]+sizes[1]) {
 	  values_ptr[current]  = *it;
 	  indices_ptr[current] = x1;
 	  ++current;
