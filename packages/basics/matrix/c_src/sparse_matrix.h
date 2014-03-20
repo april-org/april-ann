@@ -326,6 +326,53 @@ public:
 				 sparse_format);
     return result;
   }
+  
+  static SparseMatrix<T> *diag(Matrix<T> *m,
+			       SPARSE_FORMAT sparse_format = CSR_FORMAT) {
+    if (m->getNumDim() != 1)
+      ERROR_EXIT(128, "Expected uni-dimensional matrix\n");
+    int N = m->getDimSize(0);
+    unsigned int uN = static_cast<unsigned int>(N);
+    SparseMatrix<T> *result;
+    GPUMirroredMemoryBlock<T> *values = new GPUMirroredMemoryBlock<T>(uN);
+    IntGPUMirroredMemoryBlock *indices = new IntGPUMirroredMemoryBlock(uN);
+    IntGPUMirroredMemoryBlock *first_index = new IntGPUMirroredMemoryBlock(uN+1);
+    T *values_ptr = values->getPPALForWrite();
+    int *indices_ptr = indices->getPPALForWrite();
+    int *first_index_ptr = first_index->getPPALForWrite();
+    first_index_ptr[0] = 0;
+    typename Matrix<T>::const_iterator it(m->begin());
+    for (unsigned int i=0; i<uN; ++i, ++it) {
+      april_assert(it != m->end());
+      values_ptr[i] = *it;
+      indices_ptr[i] = i;
+      first_index_ptr[i+1] = i+1;
+    }
+    result = new SparseMatrix<T>(N, N,
+				 values, indices, first_index,
+				 sparse_format);
+    return result;
+  }
+
+  static SparseMatrix<T> *diag(GPUMirroredMemoryBlock<T> *values,
+			       SPARSE_FORMAT sparse_format = CSR_FORMAT) {
+    unsigned int uN = values->getSize();
+    int N = static_cast<int>(uN);
+    SparseMatrix<T> *result;
+    IntGPUMirroredMemoryBlock *indices = new IntGPUMirroredMemoryBlock(uN);
+    IntGPUMirroredMemoryBlock *first_index = new IntGPUMirroredMemoryBlock(uN+1);
+    int *indices_ptr = indices->getPPALForWrite();
+    int *first_index_ptr = first_index->getPPALForWrite();
+    first_index_ptr[0] = 0;
+    for (unsigned int i=0; i<uN; ++i) {
+      indices_ptr[i] = i;
+      first_index_ptr[i+1] = i+1;
+    }
+    result = new SparseMatrix<T>(N, N,
+				 values, indices, first_index,
+				 sparse_format);
+    return result;
+  }
 
 
   // Returns a new matrix with the sum, assuming they have the same dimension
