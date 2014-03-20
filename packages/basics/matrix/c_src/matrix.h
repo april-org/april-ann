@@ -783,6 +783,8 @@ private:
   void initialize(const int *dim);
 };
 
+#include "sparse_matrix.h"
+
 #include "matrix.impl.h"
 #include "matrix-iterators.impl.h"
 #include "matrix-math.impl.h"

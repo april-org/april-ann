@@ -24,12 +24,13 @@
 #include "binary_search.h"
 #include "cuda_utils.h"
 
+using namespace april_utils;
+
 /// searchs the index where the given coordinate (c1,c2) will is stored, or -1
 /// in case it isn't there
 int doSearchCSCSparseIndexOf(const IntGPUMirroredMemoryBlock *indices,
 			     const IntGPUMirroredMemoryBlock *first_index,
-			     const int c1, const int c2,
-			     const int N, bool use_gpu) {
+			     const int c1, const int c2, bool use_gpu) {
 #ifndef USE_CUDA
   UNUSED_VARIABLE(use_gpu);
 #endif
@@ -40,10 +41,10 @@ int doSearchCSCSparseIndexOf(const IntGPUMirroredMemoryBlock *indices,
   // else {
 #endif
   const int *indices_ptr = indices->getPPALForRead();
-  const int *first_index_ptr = first_index_ptr->getPPALForRead();
+  const int *first_index_ptr = first_index->getPPALForRead();
   if (c1 == 0) return first_index_ptr[c2];
   else {
-    return binary_search(indices_ptr[ first_index_ptr[c2] ],
+    return binary_search(indices_ptr + first_index_ptr[c2],
 			 first_index_ptr[c2+1] - first_index_ptr[c2],
 			 c1);
   }
@@ -56,8 +57,7 @@ int doSearchCSCSparseIndexOf(const IntGPUMirroredMemoryBlock *indices,
 /// in case it isn't there
 int doSearchCSRSparseIndexOf(const IntGPUMirroredMemoryBlock *indices,
 			     const IntGPUMirroredMemoryBlock *first_index,
-			     const int c1, const int c2,
-			     const int N, bool use_gpu) {
+			     const int c1, const int c2, bool use_gpu) {
 #ifndef USE_CUDA
   UNUSED_VARIABLE(use_gpu);
 #endif
@@ -68,10 +68,10 @@ int doSearchCSRSparseIndexOf(const IntGPUMirroredMemoryBlock *indices,
   // else {
 #endif
   const int *indices_ptr = indices->getPPALForRead();
-  const int *first_index_ptr = first_index_ptr->getPPALForRead();
+  const int *first_index_ptr = first_index->getPPALForRead();
   if (c2 == 0) return first_index_ptr[c1];
   else {
-    return binary_search(indices_ptr[ first_index_ptr[c1] ],
+    return binary_search(indices_ptr + first_index_ptr[c1],
 			 first_index_ptr[c1+1] - first_index_ptr[c1],
 			 c2);
   }
@@ -86,8 +86,7 @@ int doSearchCSRSparseIndexOf(const IntGPUMirroredMemoryBlock *indices,
 /// in case it isn't there
 int doSearchCSCSparseIndexOfFirst(const IntGPUMirroredMemoryBlock *indices,
 				  const IntGPUMirroredMemoryBlock *first_index,
-				  const int c1, const int c2,
-				  const int N, bool use_gpu) {
+				  const int c1, const int c2, bool use_gpu) {
 #ifndef USE_CUDA
   UNUSED_VARIABLE(use_gpu);
 #endif
@@ -98,12 +97,14 @@ int doSearchCSCSparseIndexOfFirst(const IntGPUMirroredMemoryBlock *indices,
   // else {
 #endif
   const int *indices_ptr = indices->getPPALForRead();
-  const int *first_index_ptr = first_index_ptr->getPPALForRead();
+  const int *first_index_ptr = first_index->getPPALForRead();
   if (c1 == 0) return first_index_ptr[c2];
   else {
-    return binary_search_first(indices_ptr[ first_index_ptr[c2] ],
-			       first_index_ptr[c2+1] - first_index_ptr[c2],
-			       c1);
+    const int *aux = binary_search_first(indices_ptr + first_index_ptr[c2],
+					 first_index_ptr[c2+1] - first_index_ptr[c2],
+					 c1);
+    if (aux == 0) ERROR_EXIT(128, "Incorrect given coordinates\n");
+    return *aux;
   }
 #ifdef USE_CUDA
   // }
@@ -114,8 +115,7 @@ int doSearchCSCSparseIndexOfFirst(const IntGPUMirroredMemoryBlock *indices,
 /// in case it isn't there
 int doSearchCSRSparseIndexOfFirst(const IntGPUMirroredMemoryBlock *indices,
 				  const IntGPUMirroredMemoryBlock *first_index,
-				  const int c1, const int c2,
-				  const int N, bool use_gpu) {
+				  const int c1, const int c2, bool use_gpu) {
 #ifndef USE_CUDA
   UNUSED_VARIABLE(use_gpu);
 #endif
@@ -126,12 +126,14 @@ int doSearchCSRSparseIndexOfFirst(const IntGPUMirroredMemoryBlock *indices,
   // else {
 #endif
   const int *indices_ptr = indices->getPPALForRead();
-  const int *first_index_ptr = first_index_ptr->getPPALForRead();
+  const int *first_index_ptr = first_index->getPPALForRead();
   if (c2 == 0) return first_index_ptr[c1];
   else {
-    return binary_search_first(indices_ptr[ first_index_ptr[c1] ],
-			       first_index_ptr[c1+1] - first_index_ptr[c1],
-			       c2);
+    const int *aux = binary_search_first(indices_ptr + first_index_ptr[c1],
+					 first_index_ptr[c1+1] - first_index_ptr[c1],
+					 c2);
+    if (aux == 0) ERROR_EXIT(128, "Incorrect given coordinates\n");
+    return *aux;
   }
 #ifdef USE_CUDA
   // }

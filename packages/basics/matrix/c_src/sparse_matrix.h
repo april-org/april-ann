@@ -48,10 +48,10 @@
 template <typename T>
 class SparseMatrix : public Referenced {
 public:
-  enum SPARSE_FORMAT { CSC_FORMAT=0, CSR_FORMAT };
+  enum SPARSE_FORMAT { CSR_FORMAT=0, CSC_FORMAT=1,
+		       NONE_FORMAT=255 };
 private:
   const static unsigned int MATRIX_BINARY_VERSION;
-  const static unsigned int INITIAL_NON_ZERO_SIZE = 8;
   // Auxiliary count variable where the user could store the number of times
   // this object is shared in a computation (like in ANN components sharing
   // weight matrices)
@@ -63,14 +63,10 @@ protected:
   int matrixSize[2];
   /// Total size of the matrix (number of elements)
   int total_size;
-  /// Number of elements different of zero
-  int non_zero_size;
-  // Pointers to data: values,indices,ptrB,ptrE
+  // Pointers to data: values,indices,first_index
   GPUMirroredMemoryBlock<T> *values;      ///< non-zero values
   IntGPUMirroredMemoryBlock *indices;     ///< indices for rows (CSC) or columns (CSR)
   IntGPUMirroredMemoryBlock *first_index; ///< size(values) + 1
-  IntGPUMirroredMemoryBlock *ptrB; ///< first indices (points to first_index)
-  IntGPUMirroredMemoryBlock *ptrE; ///< last indices (points to first_index+1)
   /// For mmapped matrices
   april_utils::MMappedDataReader *mmapped_data;
   /// Format type (CSC or CSR)
@@ -101,6 +97,10 @@ public:
     friend class SparseMatrix;
     SparseMatrix<T> *m;
     int idx;
+    //
+    T   *values;
+    int *indices;
+    int *first_index;
     iterator(SparseMatrix<T> *m, int idx=0);
   public:
     iterator();
@@ -113,13 +113,17 @@ public:
     T &operator*();
     T *operator->();
     int getIdx() const { return idx; }
-    void getCoords(int &x0, int &x1);
+    void getCoords(int &x0, int &x1) const;
   };
   /*******************************************************/
   class const_iterator {
     friend class SparseMatrix;
     const SparseMatrix<T> *m;
     int idx;
+    //
+    const T   *values;
+    const int *indices;
+    const int *first_index;
     const_iterator(const SparseMatrix<T> *m, int idx=0);
   public:
     const_iterator();
@@ -137,32 +141,46 @@ public:
     const T &operator*() const;
     const T *operator->() const;
     int getIdx() const { return idx; }
-    void getCoords(int &x0, int &x1);
+    void getCoords(int &x0, int &x1) const;
   };
   /*******************************************************/
   
 private:
   // const version of iterators, for fast end() iterator calls. They are
   // allocated on-demand, so if end() methods are never executed, they
-  // don't waste memory space
+  // nerver will be initialized.
   mutable iterator end_iterator;
   mutable const_iterator end_const_iterator;
   
   SparseMatrix() : end_iterator(), end_const_iterator() { }
+  int getSparseCoordinateSize() const {
+    if (sparse_format == CSR_FORMAT) return matrixSize[1];
+    else return matrixSize[0];
+  }
+  int getCompressedCoordinateSize() const {
+    if (sparse_format == CSR_FORMAT) return matrixSize[0];
+    else return matrixSize[1];
+  }
+  void checkSortedIndices(bool sort=false);
   
 public:
   /********** Constructors ***********/
   
   /// Constructor
   SparseMatrix(const int d0, const int d1,
-	       const SPARSE_FORMAT sparse_format = CSC_FORMAT);
+	       GPUMirroredMemoryBlock<T> *values,
+	       IntGPUMirroredMemoryBlock *indices,
+	       IntGPUMirroredMemoryBlock *first_index,
+	       const SPARSE_FORMAT sparse_format = CSR_FORMAT,
+	       bool sort=false);
 
   /// Constructor given a dense matrix, it does constructs a sparse matrix
   /// (cloned).
   SparseMatrix(const Matrix<T> *other,
-	       const SPARSE_FORMAT sparse_format = CSC_FORMAT);
+	       const SPARSE_FORMAT sparse_format = CSR_FORMAT);
   /// Constructor given other matrix, it does a deep copy (clone).
-  SparseMatrix(const SparseMatrix<T> *other);
+  SparseMatrix(const SparseMatrix<T> *other,
+	       SPARSE_FORMAT sparse_format = NONE_FORMAT);
   /// Sub-matrix constructor, makes a deep copy of the given matrix slice
   SparseMatrix(const SparseMatrix<T> *other,
 	       const int coord0, const int coord1,
@@ -176,15 +194,12 @@ public:
   /// Writes to a file
   void toMMappedDataWriter(april_utils::MMappedDataWriter *mmapped_data) const;
 
-  /// Modify sizes of matrix, and returns a cloned sparse matrix
-  SparseMatrix<T> *rewrap(const int new_d0, const int new_d1);
-  
   /* Getters and setters */
-  int getNumDim() const { return 2; }
+  int getNumDim() const { return numDim; }
   const int *getDimPtr() const { return matrixSize; }
   int getDimSize(int i) const { return matrixSize[i]; }
   int size() const { return total_size; }
-  int nonZeroSize() const { return non_zero_size; }
+  int nonZeroSize() const { return static_cast<int>(values->getSize()); }
   SPARSE_FORMAT getSparseFormat() const { return sparse_format; }
   bool getIsDataRowOrdered() const {
     return sparse_format == CSR_FORMAT;
@@ -204,42 +219,49 @@ public:
   iterator begin() { return iterator(this); }
   iterator iteratorAt(int c0, int c1) {
     int idx = searchIndexOf(c0, c1);
+    if (idx == -1) ERROR_EXIT2(128,"Incorrect given position (%d,%d)\n",c0,c1);
     return iterator(this, idx);
   }
   iterator iteratorAtFirst(int c0, int c1) {
     int idx = searchIndexOfFirst(c0, c1);
     return iterator(this, idx);
   }
+  iterator iteratorAtRawIndex(int i) {
+    return iterator(this,i);
+  }
   const iterator &end() {
     if (end_iterator.m == 0)
-      end_iterator = iterator(this, non_zero_size+1);
+      end_iterator = iterator(this, nonZeroSize());
     return end_iterator;
   }
   /************************/
   const_iterator begin() const { return const_iterator(this); }
   const_iterator iteratorAt(int c0, int c1) const {
     int idx = searchIndexOf(c0, c1);
+    if (idx == -1) ERROR_EXIT2(128,"Incorrect given position (%d,%d)\n",c0,c1);
     return const_iterator(this, idx);
   }
   const_iterator iteratorAtFirst(int c0, int c1) const {
     int idx = searchIndexOfFirst(c0, c1);
     return const_iterator(this, idx);
   }
+  const_iterator iteratorAtRawIndex(int i) const {
+    return const_iterator(this,i);
+  }
   const const_iterator &end() const {
     if (end_const_iterator.m == 0)
       end_const_iterator = const_iterator(this,
-					  non_zero_size+1); 
+					  nonZeroSize()); 
     return end_const_iterator;
   }
 
-  /// Symbolic transposition, changes the flag and the sparse format
+  /// Symbolic transposition, changes the sparse format
   SparseMatrix<T>* transpose();
-  /// Copy only sizes, but not data
-  SparseMatrix<T>* cloneOnlyDims() const;
-  /// Deep copy
-  Matrix<T>* clone();
   /// Deep copy with different sparse format
-  Matrix<T> *clone(SPARSE_FORMAT sparse_format);
+  SparseMatrix<T> *clone(SPARSE_FORMAT sparse_format = NONE_FORMAT) const;
+  
+  /// Returns an equivalent dense matrix
+  Matrix<T> *toDense(CBLAS_ORDER order=CblasRowMajor) const;
   
   /// Number values check
   void pruneSubnormalAndCheckNormal();
@@ -253,32 +275,26 @@ public:
     return shared_count;
   }
   
-  /// Adds a new element, with the pre-condition of being added in order. If the
-  /// order is not mantained, an error will be thrown
-  void pushBack(int c0, int c1, T value);
-  void pushBack(const_iterator &b, const_iterator &e,
-		int offset0=0, int offset1=0);
-  
   /// Raw access operator [], access by index position
   T& operator[] (int i);
   const T& operator[] (int i) const;
   /// Access to independent elements
   // T& operator() (int row, int col);
-  // const T& operator() (int row, int col) const;
+  const T operator() (int row, int col) const;
   
   /// Function to obtain RAW access to data pointer. Be careful with it, because
   /// you are losing sub-matrix abstraction, and the major order.
-  GPUMirroredMemoryBlock<T> *getRawValuesAccess() { return data; }
+  GPUMirroredMemoryBlock<T> *getRawValuesAccess() { return values; }
   IntGPUMirroredMemoryBlock *getRawIndicesAccess() { return indices; }
-  IntGPUMirroredMemoryBlock *getRawPtrBAccess() { return ptrB; }
-  IntGPUMirroredMemoryBlock *getRawPtrEAccess() { return ptrE; }
+  IntGPUMirroredMemoryBlock *getRawFirstIndexAccess() { return first_index; }
 
-  const GPUMirroredMemoryBlock<T> *getRawValuesAccess() const { return data; }
+  const GPUMirroredMemoryBlock<T> *getRawValuesAccess() const { return values; }
   const IntGPUMirroredMemoryBlock *getRawIndicesAccess() const { return indices; }
-  const IntGPUMirroredMemoryBlock *getRawPtrBAccess() const { return ptrB; }
-  const IntGPUMirroredMemoryBlock *getRawPtrEAccess() const { return ptrE; }
+  const IntGPUMirroredMemoryBlock *getRawFirstIndexAccess() const { return first_index; }
   
   /// Returns true if they have the same dimension
+  template<typename O>
+  bool sameDim(const SparseMatrix<O> *other) const;
   template<typename O>
   bool sameDim(const Matrix<O> *other) const;
   bool sameDim(const int d0, const int d1) const;
@@ -286,8 +302,31 @@ public:
   ////////////////////////////////////////////////////////////////////////////
   
   void clamp(T lower, T upper);
-  // Set a diagonal matrix (only works with a new fresh matrix)
-  void diag(T value);
+  void fill(T value);
+  void zeros();
+  void ones();
+  static SparseMatrix<T> *diag(int N, T value=T(),
+			       SPARSE_FORMAT sparse_format = CSR_FORMAT) {
+    unsigned int uN = static_cast<unsigned int>(N);
+    SparseMatrix<T> *result;
+    GPUMirroredMemoryBlock<T> *values = new GPUMirroredMemoryBlock<T>(uN);
+    IntGPUMirroredMemoryBlock *indices = new IntGPUMirroredMemoryBlock(uN);
+    IntGPUMirroredMemoryBlock *first_index = new IntGPUMirroredMemoryBlock(uN+1);
+    T *values_ptr = values->getPPALForWrite();
+    int *indices_ptr = indices->getPPALForWrite();
+    int *first_index_ptr = first_index->getPPALForWrite();
+    first_index_ptr[0] = 0;
+    for (unsigned int i=0; i<uN; ++i) {
+      values_ptr[i] = value;
+      indices_ptr[i] = i;
+      first_index_ptr[i+1] = i+1;
+    }
+    result = new SparseMatrix<T>(N, N,
+				 values, indices, first_index,
+				 sparse_format);
+    return result;
+  }
+
 
   // Returns a new matrix with the sum, assuming they have the same dimension
   // Crashes otherwise
@@ -327,7 +366,7 @@ public:
   void abs();
   void complement();
   void sign();
-  SparseMatrix<T> *cmul(const SparseMatrix<T> *other);
+  SparseMatrix<T> *cmul(const SparseMatrix<T> *other) const;
   void adjustRange(T rmin, T rmax);
   
   /**** BLAS OPERATIONS ****/
@@ -353,9 +392,6 @@ public:
   // in 0)
   Matrix<T> *min(int dim, Matrix<T> *dest=0, Matrix<int32_t> *argmin=0);
   Matrix<T> *max(int dim, Matrix<T> *dest=0, Matrix<int32_t> *argmax=0);
-  
-  // Expands current matrix to a diagonal matrix
-  static SparseMatrix<T> *diagonalize(Matrix<T> *diag);
   
 private:
   void allocate_memory(int size);
