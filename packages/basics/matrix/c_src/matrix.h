@@ -38,6 +38,10 @@
 #include "mmapped_data.h"
 #include "unused_variable.h"
 
+// forward declaration
+template <typename T>
+class SparseMatrix;
+
 template <typename T>
 class Matrix : public Referenced {
   const static unsigned int MATRIX_BINARY_VERSION;
@@ -727,12 +731,23 @@ public:
   
   // AXPY BLAS operation this = this + alpha * other
   void axpy(T alpha, const Matrix<T> *other);
+
+  // AXPY Sparse BLAS operation this = this + alpha * other
+  void axpy(T alpha, const SparseMatrix<T> *other);
   
   // GEMM BLAS operation this = alpha * op(A)*op(B) + beta*this
   void gemm(CBLAS_TRANSPOSE trans_A,
 	    CBLAS_TRANSPOSE trans_B,
 	    T alpha,
 	    const Matrix<T> *otherA,
+	    const Matrix<T> *otherB,
+	    T beta);
+
+  // GEMM Sparse BLAS operation this = alpha * op(A)*op(B) + beta*this
+  void gemm(CBLAS_TRANSPOSE trans_A,
+	    CBLAS_TRANSPOSE trans_B,
+	    T alpha,
+	    const SparseMatrix<T> *otherA,
 	    const Matrix<T> *otherB,
 	    T beta);
 
@@ -743,6 +758,13 @@ public:
 	    const Matrix<T> *otherX,
 	    T beta);
 
+  // GEMV Sparse BLAS operation this = alpha * op(A)*X + beta*this
+  void gemv(CBLAS_TRANSPOSE trans_A,
+	    T alpha,
+	    const SparseMatrix<T> *otherA,
+	    const Matrix<T> *otherX,
+	    T beta);
+
   // GER BLAS operation this = alpha * X*Y' + this
   void ger(T alpha,
 	   const Matrix<T> *otherX,
@@ -750,6 +772,9 @@ public:
 
   // DOT BLAS operation value = dot(this, other)
   T dot(const Matrix<T> *other) const;
+
+  // DOT Sparse BLAS operation value = dot(this, other)
+  T dot(const SparseMatrix<T> *other) const;
   
   void scal(T value);
 

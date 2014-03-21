@@ -21,7 +21,6 @@
  */
 
 #include "maxmin.h"
-#include "clamp.h"
 #include "matrix_generic_math_templates.h"
 
 template <typename T>
@@ -31,41 +30,13 @@ void SparseMatrix<T>::fill(T value) {
 }
 
 template <typename T>
-void SparseMatrix<T>::clamp(T lower, T upper) {
-  for (iterator it(begin()); it!=end(); ++it)
-    *it = april_utils::clamp(*it, lower, upper);
-}
-
-
-template <typename T>
 void SparseMatrix<T>::zeros() {
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  fill(T());
 }
 
 template <typename T>
 void SparseMatrix<T>::ones() {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-}
-
-template <typename T>
-SparseMatrix<T>* SparseMatrix<T>::addition(const SparseMatrix<T> *other) {
-  UNUSED_VARIABLE(other);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-  return 0;
-}
-
-template <typename T>
-SparseMatrix<T>* SparseMatrix<T>::substraction(const SparseMatrix<T> *other) {
-  UNUSED_VARIABLE(other);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-  return 0;
-}
-
-template <typename T>
-SparseMatrix<T>* SparseMatrix<T>::multiply(const SparseMatrix<T> *other) const {
-  UNUSED_VARIABLE(other);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-  return 0;
 }
 
 template <typename T>
@@ -106,14 +77,7 @@ Matrix<T>* SparseMatrix<T>::sum(int dim, Matrix<T> *dest) {
 /**** COMPONENT WISE OPERATIONS ****/
 
 template <typename T>
-void SparseMatrix<T>::scalarAdd(T s) {
-  for (iterator it(begin()); it!=end(); ++it)
-    (*it) += s;
-}
-
-template <typename T>
 void SparseMatrix<T>::copy(const SparseMatrix<T> *other) {
-  UNUSED_VARIABLE(other);
   if (!sameDim(other))
     ERROR_EXIT(128, "Not equal matrix dimensions or format\n");
   const_iterator it_orig(other->begin());
@@ -131,26 +95,6 @@ bool SparseMatrix<T>::equals(const SparseMatrix<T> *other, float epsilon) const 
   UNUSED_VARIABLE(epsilon);
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   return false;
-}
-
-template <typename T>
-void SparseMatrix<T>::plogp() {
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-}
-
-template <typename T>
-void SparseMatrix<T>::log() {
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-}
-
-template <typename T>
-void SparseMatrix<T>::log1p() {
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-}
-
-template <typename T>
-void SparseMatrix<T>::exp() {
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
 template <typename T>
@@ -185,26 +129,6 @@ void SparseMatrix<T>::atanh() {
 }
 
 template <typename T>
-void SparseMatrix<T>::cos() {
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-}
-
-template <typename T>
-void SparseMatrix<T>::cosh() {
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-}
-
-template <typename T>
-void SparseMatrix<T>::acos() {
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-}
-
-template <typename T>
-void SparseMatrix<T>::acosh() {
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-}
-
-template <typename T>
 void SparseMatrix<T>::sin() {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
@@ -230,38 +154,20 @@ void SparseMatrix<T>::abs() {
 }
 
 template <typename T>
-void SparseMatrix<T>::complement() {
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-}
-
-template <typename T>
 void SparseMatrix<T>::sign() {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
 template <typename T>
-SparseMatrix<T> *SparseMatrix<T>::cmul(const SparseMatrix<T> *other) const {
-  UNUSED_VARIABLE(other);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-}
-
-template <typename T>
-T SparseMatrix<T>::dot(const SparseMatrix<T> *other) const {
-  UNUSED_VARIABLE(other);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-  return 0.0f;
-}
-
-template <typename T>
 void SparseMatrix<T>::scal(T value) {
-  UNUSED_VARIABLE(value);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  for (iterator it(begin()); it != end(); ++it)
+    *it *= value;
 }
 
 template <typename T>
 void SparseMatrix<T>::div(T value) {
-  UNUSED_VARIABLE(value);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  for (iterator it(begin()); it != end(); ++it)
+    *it /= value;
 }
 
 template <typename T>
@@ -271,26 +177,28 @@ float SparseMatrix<T>::norm2() const {
 }
  
 template <typename T>
-T SparseMatrix<T>::min(int &arg_min, int &arg_min_raw_pos) const {
-  UNUSED_VARIABLE(arg_min);
-  UNUSED_VARIABLE(arg_min_raw_pos);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-  return T();
+T SparseMatrix<T>::min(int &c0, int &c1) const {
+  const_iterator it = april_utils::argmin(begin(),end());
+  it.getCoords(c0,c1);
+  return *it;
 }
  
 template <typename T>
-T SparseMatrix<T>::max(int &arg_max, int &arg_max_raw_pos) const {
-  UNUSED_VARIABLE(arg_max);
-  UNUSED_VARIABLE(arg_max_raw_pos);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-  return T();
+T SparseMatrix<T>::max(int &c0, int &c1) const {
+  const_iterator it = april_utils::argmax(begin(),end());
+  it.getCoords(c0,c1);
+  return *it;
 }
  
 template <typename T>
 void SparseMatrix<T>::minAndMax(T &min, T &max) const {
-  UNUSED_VARIABLE(min);
-  UNUSED_VARIABLE(max);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  const_iterator it(begin());
+  min = max = *it;
+  ++it;
+  for (; it != end(); ++it) {
+    if ( max < (*it) ) max = *it;
+    else if ( (*it) < min ) min = *it;
+  }
 }
 
 // the argument indicates over which dimension the max must be performed
@@ -389,11 +297,4 @@ Matrix<T>* SparseMatrix<T>::min(int dim, Matrix<T> *dest,
     }
   }
   return dest;
-}
-
-template <typename T>
-void SparseMatrix<T>::adjustRange(T rmin, T rmax) {
-  UNUSED_VARIABLE(rmin);
-  UNUSED_VARIABLE(rmax);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }

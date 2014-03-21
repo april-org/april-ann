@@ -129,10 +129,21 @@ template<>
 void Matrix<float>::axpy(float alpha, const Matrix<float> *other);
 
 template<>
+void Matrix<float>::axpy(float alpha, const SparseMatrix<float> *other);
+
+template<>
 void Matrix<float>::gemm(CBLAS_TRANSPOSE trans_A,
 			 CBLAS_TRANSPOSE trans_B,
 			 float alpha,
 			 const Matrix<float> *otherA,
+			 const Matrix<float> *otherB,
+			 float beta);
+
+template<>
+void Matrix<float>::gemm(CBLAS_TRANSPOSE trans_A,
+			 CBLAS_TRANSPOSE trans_B,
+			 float alpha,
+			 const SparseMatrix<float> *otherA,
 			 const Matrix<float> *otherB,
 			 float beta);
 
@@ -144,12 +155,22 @@ void Matrix<float>::gemv(CBLAS_TRANSPOSE trans_A,
 			 float beta);
 
 template<>
+void Matrix<float>::gemv(CBLAS_TRANSPOSE trans_A,
+			 float alpha,
+			 const SparseMatrix<float> *otherA,
+			 const Matrix<float> *otherX,
+			 float beta);
+
+template<>
 void Matrix<float>::ger(float alpha,
 			const Matrix<float> *otherX,
 			const Matrix<float> *otherY);
 
 template<>
 float Matrix<float>::dot(const Matrix<float> *other) const;
+
+template<>
+float Matrix<float>::dot(const SparseMatrix<float> *other) const;
 
 template<>
 void Matrix<float>::scal(float value);

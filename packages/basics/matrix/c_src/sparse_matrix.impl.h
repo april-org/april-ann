@@ -150,7 +150,7 @@ template <typename T>
 SparseMatrix<T>::SparseMatrix(const Matrix<T> *other,
 			      const SPARSE_FORMAT sparse_format) :
   Referenced(), shared_count(0), mmapped_data(0),
-  sparse_format(sparse_format), use_cuda(false),
+  sparse_format(sparse_format), use_cuda(other->getCudaFlag()),
   end_iterator(), end_const_iterator() {
   if (other->getNumDim() != 2)
     ERROR_EXIT(128, "Only allowed for bi-dimensional matrices\n");
@@ -211,7 +211,11 @@ SparseMatrix<T>::SparseMatrix(const Matrix<T> *other,
 template <typename T>
 SparseMatrix<T>::SparseMatrix(const SparseMatrix<T> *other,
 			      SPARSE_FORMAT sparse_format) :
-  shared_count(shared_count) {
+  Referenced(),
+  shared_count(shared_count),
+  mmapped_data(0),
+  use_cuda(other->use_cuda),
+  end_iterator(), end_const_iterator() {
   if (sparse_format == NONE_FORMAT) this->sparse_format = other->sparse_format;
   else this->sparse_format = sparse_format;
   initialize(other->matrixSize[0], other->matrixSize[1]);
@@ -265,11 +269,11 @@ SparseMatrix<T>::SparseMatrix(const SparseMatrix<T> *other,
       int x0=0, x1=0;
       for (const_iterator it(other->begin()); it != other->end(); ++it) {
 	it.getCoords(x0,x1);
-	if (x0 >= coords[0] && x0 < coords[0]+sizes[0] && x1 >= coords[1] && x1 < coords[1]+sizes[1]) {
+	if (coords[0] <= x0 && x0 < coords[0]+sizes[0] && coords[1] <= x1 && x1 < coords[1]+sizes[1]) {
 	  values_ptr[current]  = *it;
-	  indices_ptr[current] = x0;
+	  indices_ptr[current] = x0-coords[0];
 	  ++current;
-	  first_index_ptr[x0+1] = x1;
+	  first_index_ptr[x1-coords[1]+1] = current;
 	}
       }
     }
@@ -279,11 +283,11 @@ SparseMatrix<T>::SparseMatrix(const SparseMatrix<T> *other,
       int x0=0, x1=0;
       for (const_iterator it(other->begin()); it != other->end(); ++it) {
 	it.getCoords(x0,x1);
-	if (x0 >= coords[0] && x0 < coords[0]+sizes[0] && x1 >= coords[1] && x1 < coords[1]+sizes[1]) {
+	if (coords[0] <= x0 && x0 < coords[0]+sizes[0] && coords[1] <= x1 && x1 < coords[1]+sizes[1]) {
 	  values_ptr[current]  = *it;
-	  indices_ptr[current] = x1;
+	  indices_ptr[current] = x1-coords[1];
 	  ++current;
-	  first_index_ptr[x1+1] = x0;
+	  first_index_ptr[x0-coords[0]+1] = current;
 	}
       }
     }

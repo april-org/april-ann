@@ -56,7 +56,7 @@ struct Complex {
   __host__ __device__ static Complex<T> zero_zero() { return Complex(0.0, 0.0); }
   __host__ __device__ static Complex<T> one_zero() { return Complex(1.0, 0.0); }
   __host__ __device__ static Complex<T> zero_one() { return Complex(0.0, 1.0); }
-  __host__ __device__ Complex() { }
+  __host__ __device__ Complex() { data[REAL_IDX] = T(); data[IMG_IDX] = T(); }
   __host__ __device__ Complex(T r, T i) { data[REAL_IDX] = r; data[IMG_IDX] = i; }
   __host__ __device__ ~Complex() { }
   __host__ __device__ Complex(const Complex<T> &other) { *this = other; }
@@ -95,6 +95,14 @@ struct Complex {
     this->data[IMG_IDX]  += other.data[IMG_IDX];
     return *this;
   }
+  __host__ __device__ Complex<T> &operator*=(const Complex<T> &other) {
+    *this = (*this) * other;
+    return *this;
+  }
+  __host__ __device__ Complex<T> &operator/=(const Complex<T> &other) {
+    *this = (*this) / other;
+    return *this;
+  }
   __host__ __device__ Complex<T> operator+(const Complex<T> &other) const {
     Complex<T> result;
     result.data[REAL_IDX] = this->data[REAL_IDX]+other.data[REAL_IDX];
@@ -112,6 +120,14 @@ struct Complex {
     result.data[REAL_IDX] = -this->data[REAL_IDX];
     result.data[IMG_IDX]  = -this->data[IMG_IDX];
     return result;
+  }
+  __host__ __device__ bool operator<(const Complex<T> &other) const {
+    // FIXME: are you sure?
+    return abs() < other.abs();
+  }
+  __host__ __device__ bool operator>(const Complex<T> &other) const {
+    // FIXME: are you sure?
+    return abs() > other.abs();
   }
   __host__ __device__ Complex<T> expc() const {
     T expa = exp(data[REAL_IDX]);

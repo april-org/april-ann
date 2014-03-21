@@ -29,7 +29,6 @@
 #include "wrapper.h"
 #include "gpu_mirrored_memory_block.h"
 #include "referenced.h"
-#include "clamp.h"
 #include "aligned_memory.h"
 #include "swap.h"
 #include "maxmin.h"
@@ -300,7 +299,6 @@ public:
   
   ////////////////////////////////////////////////////////////////////////////
   
-  void clamp(T lower, T upper);
   void fill(T value);
   void zeros();
   void ones();
@@ -373,17 +371,6 @@ public:
     return result;
   }
 
-
-  // Returns a new matrix with the sum, assuming they have the same dimension
-  // Crashes otherwise
-  SparseMatrix<T>* addition(const SparseMatrix<T> *other);
-
-  // The same as addition but substracting
-  SparseMatrix<T>* substraction(const SparseMatrix<T> *other);
-  
-  // Matrices must be NxK and KxM, the result is NxM
-  SparseMatrix<T>* multiply(const SparseMatrix<T> *other) const;
-
   T sum() const;
 
   // the argument indicates over which dimension the sum must be performed
@@ -391,10 +378,6 @@ public:
 
   /**** COMPONENT WISE OPERATIONS ****/
   bool equals(const SparseMatrix<T> *other, float epsilon) const;
-  void plogp();
-  void log();
-  void log1p();
-  void exp();
   void sqrt();
   void pow(T value);
   void tan();
@@ -405,32 +388,21 @@ public:
   void sinh();
   void asin();
   void asinh();
-  void cos();
-  void cosh();
-  void acos();
-  void acosh();
   void abs();
-  void complement();
   void sign();
-  SparseMatrix<T> *cmul(const SparseMatrix<T> *other) const;
-  void adjustRange(T rmin, T rmax);
   
   /**** BLAS OPERATIONS ****/
-  void scalarAdd(T s);
   
   // SCOPY BLAS operation this = other
   void copy(const SparseMatrix<T> *other);
-  
-  // DOT BLAS operation value = dot(this, other)
-  T dot(const SparseMatrix<T> *other) const;
   
   void scal(T value);
 
   void div(T value);
   
   float norm2() const;
-  T min(int &arg_min, int &arg_min_raw_pos) const;
-  T max(int &arg_max, int &arg_max_raw_pos) const;
+  T min(int &c0, int &c1) const;
+  T max(int &c0, int &c1) const;
   void minAndMax(T &min, T &max) const;
   
   // Min and max over given dimension, be careful, argmin and argmax matrices

@@ -53,29 +53,11 @@ matrix.sparse.meta_instance.__eq = function(op1, op2)
   return op1:equals(op2)
 end
 
-matrix.sparse.meta_instance.__add = function(op1, op2)
-  if not isa(op1,matrix.sparse) then op1,op2=op2,op1 end
-  if type(op2) == "number" then
-    return op1:clone():scalar_add(op2)
-  else
-    return op1:add(op2)
-  end
-end
-
-matrix.sparse.meta_instance.__sub = function(op1, op2)
-  if isa(op1,matrix.sparse) and isa(op2,matrix.sparse) then
-    return op1:sub(op2)
-  elseif isa(op1,matrix.sparse) then
-    return op1:clone():scalar_add(-op2)
-  elseif isa(op2,matrix.sparse) then
-    return op2:clone():scal(-1):scalar_add(op1)
-  end
-end
-
 matrix.sparse.meta_instance.__mul = function(op1, op2)
-  if not isa(op1,matrix.sparse) then op1,op2=op2,op1 end
   if type(op2) == "number" then return op1:clone():scal(op2)
-  else return op1:mul(op2)
+  elseif type(op1) == "number" then return op2:clone():scal(op1)
+  else
+    error("matrix.sparse only could be multiplied by scalars")
   end
 end
 
@@ -92,11 +74,7 @@ matrix.sparse.meta_instance.__div = function(op1, op2)
     local new_mat = op2:clone()
     return new_mat:div(op1)
   else
-    assert(isa(op1,matrix.sparse) and isa(op2,matrix.sparse),
-	   "Expected a matrix and a number or two matrices")
-    local new_mat1 = op1:clone()
-    local new_mat2 = op2:clone():div(1)
-    return new_mat1:axpy(1.0, new_mat2)
+    error("matrix.sparse only could be divided by scalars")
   end
 end
 

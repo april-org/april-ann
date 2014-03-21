@@ -390,19 +390,6 @@ public:
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat adjust_range
-{
-  float rmin,rmax;
-  LUABIND_CHECK_ARGN(==, 2);
-  LUABIND_CHECK_PARAMETER(1, float);
-  LUABIND_CHECK_PARAMETER(2, float);
-  LUABIND_GET_PARAMETER(1,float,rmin);
-  LUABIND_GET_PARAMETER(2,float,rmax);
-  obj->adjustRange(rmin, rmax);
-  LUABIND_RETURN(SparseMatrixFloat, obj);
-}
-//BIND_END
-
 //BIND_CLASS_METHOD SparseMatrixFloat diag
 {
   SparseMatrixFloat *obj;
@@ -475,9 +462,10 @@ public:
       delete[] aux;
     }
     else {
-      int arg_min, raw_pos;
-      LUABIND_RETURN(float, obj->min(arg_min, raw_pos));
-      LUABIND_RETURN(int, arg_min+1);
+      int c0, c1;
+      LUABIND_RETURN(float, obj->min(c0, c1));
+      LUABIND_RETURN(int, c0+1);
+      LUABIND_RETURN(int, c1+1);
     }
   }
 //BIND_END
@@ -511,9 +499,10 @@ public:
       delete[] aux;
     }
     else {
-      int arg_max, raw_pos;
-      LUABIND_RETURN(float, obj->max(arg_max, raw_pos));
-      LUABIND_RETURN(int, arg_max+1);
+      int c0, c1;
+      LUABIND_RETURN(float, obj->max(c0, c1));
+      LUABIND_RETURN(int, c0+1);
+      LUABIND_RETURN(int, c1+1);
     }
   }
 //BIND_END
@@ -525,105 +514,6 @@ public:
   LUABIND_GET_PARAMETER(1, SparseMatrixFloat, other);
   LUABIND_GET_OPTIONAL_PARAMETER(2, float, epsilon, 1e-04f);
   LUABIND_RETURN(boolean, obj->equals(other, epsilon));
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixFloat clamp
-  {
-    LUABIND_CHECK_ARGN(==, 2);
-    float lower,upper;
-    LUABIND_GET_PARAMETER(1, float, lower);
-    LUABIND_GET_PARAMETER(2, float, upper);
-    obj->clamp(lower,upper);
-    LUABIND_RETURN(SparseMatrixFloat, obj);
-  }
-//BIND_END
-
-//BIND_METHOD SparseMatrixFloat add
-  {
-    int argn;
-    argn = lua_gettop(L); // number of arguments
-    LUABIND_CHECK_ARGN(==, 1);
-    SparseMatrixFloat *mat,*resul;
-    LUABIND_GET_PARAMETER(1, SparseMatrixFloat, mat);
-    if (!obj->sameDim(mat))
-      LUABIND_ERROR("matrix add wrong dimensions");
-    resul = obj->addition(mat);
-    LUABIND_RETURN(SparseMatrixFloat, resul);
-  }
-//BIND_END
-
-//BIND_METHOD SparseMatrixFloat scalar_add
-{
-  int argn;
-  argn = lua_gettop(L); // number of arguments
-  LUABIND_CHECK_ARGN(==, 1);
-  float scalar;
-  LUABIND_GET_PARAMETER(1, float, scalar);
-  obj->scalarAdd(scalar);
-  LUABIND_RETURN(SparseMatrixFloat, obj);
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixFloat sub
-  {
-    LUABIND_CHECK_ARGN(==, 1);
-    SparseMatrixFloat *mat,*resul;
-    LUABIND_GET_PARAMETER(1, SparseMatrixFloat, mat);
-    if (!obj->sameDim(mat))
-      LUABIND_ERROR("matrix sub wrong dimensions");
-    resul = obj->substraction(mat);
-    LUABIND_RETURN(SparseMatrixFloat, resul);
-  }
-//BIND_END
-
-//BIND_METHOD SparseMatrixFloat mul
-  {
-    LUABIND_CHECK_ARGN(==, 1);
-    SparseMatrixFloat *mat,*resul;
-    LUABIND_GET_PARAMETER(1, SparseMatrixFloat, mat);
-    resul = obj->multiply(mat);
-    if (resul == 0)
-      LUABIND_ERROR("matrix mul wrong dimensions");
-    LUABIND_RETURN(SparseMatrixFloat, resul);
-  }
-//BIND_END
-
-//BIND_METHOD SparseMatrixFloat cmul
-  {
-    LUABIND_CHECK_ARGN(==, 1);
-    SparseMatrixFloat *mat;
-    LUABIND_GET_PARAMETER(1, SparseMatrixFloat, mat);
-    SparseMatrixFloat *result = obj->cmul(mat);
-    LUABIND_RETURN(SparseMatrixFloat, result);
-  }
-//BIND_END
-
-//BIND_METHOD SparseMatrixFloat plogp
-{
-  obj->plogp();
-  LUABIND_RETURN(SparseMatrixFloat, obj);
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixFloat log
-{
-  obj->log();
-  LUABIND_RETURN(SparseMatrixFloat, obj);
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixFloat log1p
-{
-  obj->log1p();
-  LUABIND_RETURN(SparseMatrixFloat, obj);
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixFloat exp
-{
-  obj->exp();
-  LUABIND_RETURN(SparseMatrixFloat, obj);
 }
 //BIND_END
 
@@ -700,44 +590,9 @@ public:
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat cos
-{
-  obj->cos();
-  LUABIND_RETURN(SparseMatrixFloat, obj);
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixFloat cosh
-{
-  obj->cosh();
-  LUABIND_RETURN(SparseMatrixFloat, obj);
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixFloat acos
-{
-  obj->acos();
-  LUABIND_RETURN(SparseMatrixFloat, obj);
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixFloat acosh
-{
-  obj->acosh();
-  LUABIND_RETURN(SparseMatrixFloat, obj);
-}
-//BIND_END
-
 //BIND_METHOD SparseMatrixFloat abs
 {
   obj->abs();
-  LUABIND_RETURN(SparseMatrixFloat, obj);
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixFloat complement
-{
-  obj->complement();
   LUABIND_RETURN(SparseMatrixFloat, obj);
 }
 //BIND_END
@@ -780,16 +635,6 @@ public:
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat dot
-  {
-    LUABIND_CHECK_ARGN(==, 1);
-    LUABIND_CHECK_PARAMETER(1, SparseMatrixFloat);
-    SparseMatrixFloat *matX;
-    LUABIND_GET_PARAMETER(1, SparseMatrixFloat, matX);
-    LUABIND_RETURN(float, obj->dot(matX));
-  }
-//BIND_END
-
 //BIND_METHOD SparseMatrixFloat scal
   {
     LUABIND_CHECK_ARGN(==, 1);
@@ -825,6 +670,7 @@ public:
 //BIND_METHOD SparseMatrixFloat reset_shared_count
 {
   obj->resetSharedCount();
+  LUABIND_RETURN(SparseMatrixFloat, obj);
 }
 //BIND_END
 
