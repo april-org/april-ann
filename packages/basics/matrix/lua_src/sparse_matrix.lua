@@ -13,6 +13,8 @@ matrix.sparse.meta_instance.__call =
   matrix.__make_generic_call__()
 
 matrix.sparse.meta_instance.__tostring = function(self)
+  local out      = {}
+  local sparse   = (self.get_sparse_format and self:get_sparse_format()) or "csr"
   local dims     = self:dim()
   local so_large = false
   local getter   = function(value) return string.format("% -11.6g", value) end
@@ -22,9 +24,7 @@ matrix.sparse.meta_instance.__tostring = function(self)
   end
   if not so_large then  
     local aux    = self:to_dense()
-    local sparse = (self.get_sparse_format and self:get_sparse_format()) or "csr"
     local coords = {1,1}
-    local out    = {}
     local row    = {}
     for i=1,aux:size() do
       table.insert(row, getter(aux:get(table.unpack(coords))))
@@ -38,14 +38,14 @@ matrix.sparse.meta_instance.__tostring = function(self)
 	table.insert(out, table.concat(row, " ")) row={}
       end
     end
-    table.insert(out, string.format("# SparseMatrix of size [%s] in %s [%s], %d non-zeros",
-				    table.concat(dims, ","), sparse,
-				    self:get_reference_string(),
-				    self:non_zero_size()))
-    return table.concat(out, "\n")
   else
-    return "Large matrix, not printed to display"
+    table.insert(out, "Large matrix, not printed to display")
   end
+  table.insert(out, string.format("# SparseMatrix of size [%s] in %s [%s], %d non-zeros",
+				  table.concat(dims, ","), sparse,
+				  self:get_reference_string(),
+				  self:non_zero_size()))
+  return table.concat(out, "\n")
 end
 
 matrix.sparse.meta_instance.__eq = function(op1, op2)
