@@ -109,7 +109,7 @@ namespace LanguageModels {
 			     vector<Key> &result) {
       vector<KeyScoreBurdenTuple> aux_result;
       get(key, word, Burden(-1,-1), aux_result, Score::zero());
-      for (vector<KeyScoreBurdenTuple>::iterator it = aux_result.begin();
+      for (typename vector<KeyScoreBurdenTuple>::iterator it = aux_result.begin();
 	   it != aux_result.end(); ++it)
 	result.push_back(it->key_score.key);
     }

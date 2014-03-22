@@ -1,6 +1,6 @@
 get_table_from_dotted_string("ngram", true)
 
--- funciones auxliares
+-- Auxiliar functions
 local function exp10(value)
   return math.pow(10, value)
 end
@@ -16,7 +16,7 @@ local function print_pw(flog, lastword, previousword, ngram_value, p)
 	   ngram_value, exp10(p), p)
 end
 
-function ngram.get_sentence_prob(lm, vocab, words, flog, debug_flag,
+function language_models.get_sentence_prob(lm, vocab, words, flog, debug_flag,
 				 unk_id, init_id, final_id,
 				 is_stream, use_unk, order,
 				 use_bcc, use_ecc,
@@ -149,7 +149,7 @@ function ngram.get_sentence_prob(lm, vocab, words, flog, debug_flag,
   return sum,numwords,numunks
 end
 
-function ngram.get_prob_from_id_tbl(lm, word_ids, init_id, final_id,
+function language_models.get_prob_from_id_tbl(lm, word_ids, init_id, final_id,
 				    use_bcc, use_ecc)
   local lmi = lm:get_interface()
   local key = lmi:get_initial_key()
@@ -178,7 +178,7 @@ function ngram.get_prob_from_id_tbl(lm, word_ids, init_id, final_id,
   return sum
 end
 
-function ngram.test_set_ppl(lm, vocab, testset, flog, debug_flag,
+function language_models.test_set_ppl(lm, vocab, testset, flog, debug_flag,
 			    unk_word, init_word, final_word,
 			    is_stream,
 			    use_unk,
@@ -197,14 +197,14 @@ function ngram.test_set_ppl(lm, vocab, testset, flog, debug_flag,
   
   local lines_it = iterator(io.lines("frase")):
   map( function(line) return iterator(line:gmatch("[^%s]+")) end )
-  
+  --[[
   for words_it in lines_it() do
     words_it:map( function(w) return vocab:getWordId(w) or unk_id end )
     ngram.get_sentence_prob( words_it, ... )
     -- dins del ngram:
     --   for word in words_it() do ... end
   end
-  
+  --]]
   
   
   

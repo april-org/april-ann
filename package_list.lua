@@ -28,7 +28,6 @@ return {
 
   -- LANGUAGE MODELS
   "language_models",
-  "ngram",
   "ngram.lira",
   
   -- IMAGE HANDLERS

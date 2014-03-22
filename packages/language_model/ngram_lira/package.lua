@@ -1,6 +1,6 @@
 package{ name = "ngram.lira",
    version = "1.0",
-   depends = { "util", "language_models", "ngram" },
+   depends = { "util", "language_models" },
    keywords = { },
    description = "no description available",
    target{
