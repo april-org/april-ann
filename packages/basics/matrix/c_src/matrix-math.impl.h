@@ -321,9 +321,13 @@ void Matrix<T>::axpy(T alpha, const SparseMatrix<T> *other) {
   if (size() != other->size())
     ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d\n",
 		size(), other->size());
-  if (!isVector() ||
-      (other->getDimSize(0)!=1 && other->getDimSize(1)!=1))
+  if (!isVector())
     ERROR_EXIT(128, "sparse AXPY only works with vectors\n");
+  if ( (other->getSparseFormat() == SparseMatrix<T>::CSR_FORMAT &&
+	other->getDimSize(0) != 1) ||
+       (other->getSparseFormat() == SparseMatrix<T>::CSC_FORMAT &&
+	other->getDimSize(1) != 1) )
+    ERROR_EXIT(128, "sparse AXPY needs a CSR row-vector or a CSC col-vector\n");
   doSparseAxpy(other->nonZeroSize(), alpha,
 	       other->getRawValuesAccess(),
 	       other->getRawIndicesAccess(),
