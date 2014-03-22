@@ -33,6 +33,5 @@ local m2 = matrix.sparse.csr(3,3,
 local aux = m2:as_vector()
 print(m:clone():axpy(1.0,aux))
 
-local b = matrix.sparse.csr(1,3,blockf{3},blocki{0})
+local b = matrix.sparse.csr(3,blockf{3},blocki{2})
 print(b)
-
