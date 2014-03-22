@@ -71,30 +71,59 @@ int SparseMatrix<T>::searchIndexOfFirst(const int c0, const int c1) const {
 }
 
 template <typename T>
+struct SparseMatrixIndicesCmp {
+  bool operator()(const april_utils::pair<int,T> &a,
+		  const april_utils::pair<int,T> &b) {
+    return a.first < b.first;
+  }
+};
+template <typename T>
 void SparseMatrix<T>::checkSortedIndices(bool sort) {
+  const int dense_size = getDenseCoordinateSize();
+  const int compressed_size = getCompressedCoordinateSize();
+  // for index sort algorithm
   if (indices->getSize() != values->getSize())
-    ERROR_EXIT(256, "Different size blocks found in indices and values\n");
-  if (first_index->getSize() != getCompressedCoordinateSize()+1)
-    ERROR_EXIT1(256, "First index block size must be %d\n",
-		getCompressedCoordinateSize()+1);
+    ERROR_EXIT(256, "Different block sizes found in indices and values\n");
+  if (first_index->getSize() != dense_size+1)
+    ERROR_EXIT1(256, "First index block size must be %d\n", dense_size+1);
   const int *indices_ptr = indices->getPPALForRead();
   const int *first_index_ptr = first_index->getPPALForRead();
-  const int sparse_size = getSparseCoordinateSize();
-  for (int i=0; i<getCompressedCoordinateSize(); ++i) {
+  if (first_index_ptr[dense_size] != static_cast<int>(values->getSize()))
+    ERROR_EXIT2(256, "Incorrect last value of first_index block, "
+		"found %d, expected %u\n", first_index_ptr[dense_size],
+		values->getSize());
+  april_utils::vector< april_utils::pair<int,T> > aux_index_sorted;
+  for (int i=0; i<dense_size; ++i) {
     bool need_sort = false;
     if (first_index_ptr[i] < first_index_ptr[i+1] &&
 	(indices_ptr[first_index_ptr[i]] < 0 ||
-	 indices_ptr[first_index_ptr[i]] >= sparse_size))
-      ERROR_EXIT(256, "Index out-of-bounds\n");
+	 indices_ptr[first_index_ptr[i]] >= compressed_size))
+      ERROR_EXIT2(256, "Index out-of-bounds [%d] = %d\n",
+		  first_index_ptr[i],
+		  indices_ptr[first_index_ptr[i]]);
     for (unsigned int j=first_index_ptr[i]+1; j<first_index_ptr[i+1]; ++j) {
       if (indices_ptr[j-1] >= indices_ptr[j]) need_sort = true;
-      if (indices_ptr[j] < 0 || indices_ptr[j] >= sparse_size)
-	ERROR_EXIT(256, "Index out-of-bounds\n");
+      if (indices_ptr[j] < 0 || indices_ptr[j] >= compressed_size)
+	ERROR_EXIT2(256, "Index out-of-bounds [%d] = %d\n",
+		    j, indices_ptr[j]);
     }
     if (need_sort) {
       if (!sort) ERROR_EXIT(256, "Found incorrect index order\n");
+      aux_index_sorted.clear();
+      T *values_ptr = values->getPPALForReadAndWrite();
       int *indices_ptr = indices->getPPALForReadAndWrite();
-      april_utils::Sort(indices_ptr, first_index_ptr[i], first_index_ptr[i+1]-1);
+      for (int j=first_index_ptr[i]; j<first_index_ptr[i+1]; ++j)
+	aux_index_sorted.push_back(april_utils::make_pair(indices_ptr[j],
+							  values_ptr[j]));
+      april_assert(aux_index_sorted.size() > 0);
+      april_utils::Sort(aux_index_sorted.begin(),
+			0, static_cast<int>(aux_index_sorted.size())-1,
+			SparseMatrixIndicesCmp<T>());
+      int k=0;
+      for (int j=first_index_ptr[i]; j<first_index_ptr[i+1]; ++j, ++k) {
+	indices_ptr[j] = aux_index_sorted[k].first;
+	values_ptr[j] = aux_index_sorted[k].second;
+      }
     }
   }
 }
@@ -111,8 +140,8 @@ template <typename T>
 void SparseMatrix<T>::allocate_memory(int size) {
   unsigned int sz = static_cast<unsigned int>(size);
   values  = new GPUMirroredMemoryBlock<T>(sz);
-  indices = new IntGPUMirroredMemoryBlock(sz);
-  first_index = new IntGPUMirroredMemoryBlock(static_cast<unsigned int>(getCompressedCoordinateSize())+1);
+  indices = new Int32GPUMirroredMemoryBlock(sz);
+  first_index = new Int32GPUMirroredMemoryBlock(static_cast<unsigned int>(getDenseCoordinateSize())+1);
   IncRef(values);
   IncRef(indices);
   IncRef(first_index);
@@ -130,8 +159,8 @@ void SparseMatrix<T>::release_memory() {
 template <typename T>
 SparseMatrix<T>::SparseMatrix(const int d0, const int d1,
 			      GPUMirroredMemoryBlock<T> *values,
-			      IntGPUMirroredMemoryBlock *indices,
-			      IntGPUMirroredMemoryBlock *first_index,
+			      Int32GPUMirroredMemoryBlock *indices,
+			      Int32GPUMirroredMemoryBlock *first_index,
 			      const SPARSE_FORMAT sparse_format,
 			      bool sort) :
   Referenced(), shared_count(0), 
@@ -303,8 +332,8 @@ SparseMatrix<T> *SparseMatrix<T>::fromMMappedDataReader(april_utils::MMappedData
   SparseMatrix<T> *obj = new SparseMatrix();
   //
   obj->values  = GPUMirroredMemoryBlock<T>::fromMMappedDataReader(mmapped_data);
-  obj->indices = IntGPUMirroredMemoryBlock::fromMMappedDataReader(mmapped_data);
-  obj->first_index = IntGPUMirroredMemoryBlock::fromMMappedDataReader(mmapped_data);
+  obj->indices = Int32GPUMirroredMemoryBlock::fromMMappedDataReader(mmapped_data);
+  obj->first_index = Int32GPUMirroredMemoryBlock::fromMMappedDataReader(mmapped_data);
   IncRef(obj->values);
   IncRef(obj->indices);
   IncRef(obj->first_index);
@@ -412,5 +441,50 @@ Matrix<T> *SparseMatrix<T>::toDense(CBLAS_ORDER order) const {
     it.getCoords(x0,x1);
     result_it(x0,x1) = *it;
   }
+  return result;
+}
+
+template <typename T>
+SparseMatrix<T> *SparseMatrix<T>::asVector() const {
+  int sz = matrixSize[0]*matrixSize[1];
+  const int *this_indices_ptr     = indices->getPPALForRead();
+  const int *this_first_index_ptr = first_index->getPPALForRead();
+  //
+  bool sort=false;
+  GPUMirroredMemoryBlock<T> *result_values  = values->clone();
+  Int32GPUMirroredMemoryBlock *result_indices =
+    new Int32GPUMirroredMemoryBlock(nonZeroSize());
+  Int32GPUMirroredMemoryBlock *result_first_index =
+    new Int32GPUMirroredMemoryBlock(2);
+  //
+  int *result_indices_ptr = result_indices->getPPALForWrite();
+  int *result_first_index_ptr = result_first_index->getPPALForWrite();
+  result_first_index_ptr[0] = 0;
+  result_first_index_ptr[1] = nonZeroSize();
+  //
+  int d0,d1;
+  switch(sparse_format) {
+  case CSR_FORMAT:
+    d0=1; d1=sz;
+    for (int row=0; row<matrixSize[0]; ++row)
+      for (int i=this_first_index_ptr[row]; i<this_first_index_ptr[row+1]; ++i)
+	result_indices_ptr[i] = this_indices_ptr[i] + row*matrixSize[1];
+    break;
+  case CSC_FORMAT:
+    d0=sz; d1=1;
+    sort=true;
+    for (int col=0; col<matrixSize[1]; ++col)
+      for (int i=this_first_index_ptr[col]; i<this_first_index_ptr[col+1]; ++i)
+	result_indices_ptr[i] = this_indices_ptr[i] + col*matrixSize[0];
+    break;
+  default:
+    ;
+  }
+  SparseMatrix<T> *result = new SparseMatrix(d0, d1,
+					     result_values,
+					     result_indices,
+					     result_first_index,
+					     sparse_format,
+					     sort);
   return result;
 }

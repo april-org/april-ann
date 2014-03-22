@@ -52,7 +52,6 @@ extern "C" {
 #define VECTOR_DSET(n, value, vec, step) for(unsigned int _i_=0,_j_=0;_j_<(n);++_j_,_i_+=(step))(vec)[_i_]=(value)
 /*****************************************************************************/
 #else
-
 #ifndef NO_BLAS
 ////////////////////////////////// ATLAS //////////////////////////////////////
 extern "C" {
@@ -110,5 +109,22 @@ void cblas_ssbmv(CBLAS_ORDER order,
 #endif
 
 #define NEGATE_CBLAS_TRANSPOSE(trans) ((trans) == CblasNoTrans)?CblasTrans:CblasNoTrans
+
+#ifndef USE_MKL
+#include "complex_number.h"
+// sparse BLAS is only available with CUDA or MKL
+void cblas_saxpyi(int NNZ, float alpha,
+		  const float *x_values_mem,
+		  const int *x_indices_mem,
+		  float *y_mem);
+void cblas_daxpyi(int NNZ, double alpha,
+		  const double *x_values_mem,
+		  const int *x_indices_mem,
+		  double *y_mem);
+void cblas_caxpyi(int NNZ, const ComplexF *alpha,
+		  const ComplexF *x_values_mem,
+		  const int *x_indices_mem,
+		  ComplexF *y_mem);
+#endif
 
 #endif // CBLAS_HEADERS_H

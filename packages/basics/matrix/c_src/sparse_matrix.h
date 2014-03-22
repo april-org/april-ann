@@ -64,8 +64,8 @@ protected:
   int total_size;
   // Pointers to data: values,indices,first_index
   GPUMirroredMemoryBlock<T> *values;      ///< non-zero values
-  IntGPUMirroredMemoryBlock *indices;     ///< indices for rows (CSC) or columns (CSR)
-  IntGPUMirroredMemoryBlock *first_index; ///< size(values) + 1
+  Int32GPUMirroredMemoryBlock *indices;     ///< indices for rows (CSC) or columns (CSR)
+  Int32GPUMirroredMemoryBlock *first_index; ///< size(values) + 1
   /// For mmapped matrices
   april_utils::MMappedDataReader *mmapped_data;
   /// Format type (CSC or CSR)
@@ -152,13 +152,13 @@ private:
   mutable const_iterator end_const_iterator;
   
   SparseMatrix() : end_iterator(), end_const_iterator() { }
-  int getSparseCoordinateSize() const {
-    if (sparse_format == CSR_FORMAT) return matrixSize[1];
-    else return matrixSize[0];
-  }
-  int getCompressedCoordinateSize() const {
+  int getDenseCoordinateSize() const {
     if (sparse_format == CSR_FORMAT) return matrixSize[0];
     else return matrixSize[1];
+  }
+  int getCompressedCoordinateSize() const {
+    if (sparse_format == CSR_FORMAT) return matrixSize[1];
+    else return matrixSize[0];
   }
   void checkSortedIndices(bool sort=false);
   
@@ -168,8 +168,8 @@ public:
   /// Constructor
   SparseMatrix(const int d0, const int d1,
 	       GPUMirroredMemoryBlock<T> *values,
-	       IntGPUMirroredMemoryBlock *indices,
-	       IntGPUMirroredMemoryBlock *first_index,
+	       Int32GPUMirroredMemoryBlock *indices,
+	       Int32GPUMirroredMemoryBlock *first_index,
 	       const SPARSE_FORMAT sparse_format = CSR_FORMAT,
 	       bool sort=false);
 
@@ -283,12 +283,12 @@ public:
   /// Function to obtain RAW access to data pointer. Be careful with it, because
   /// you are losing sub-matrix abstraction, and the major order.
   GPUMirroredMemoryBlock<T> *getRawValuesAccess() { return values; }
-  IntGPUMirroredMemoryBlock *getRawIndicesAccess() { return indices; }
-  IntGPUMirroredMemoryBlock *getRawFirstIndexAccess() { return first_index; }
+  Int32GPUMirroredMemoryBlock *getRawIndicesAccess() { return indices; }
+  Int32GPUMirroredMemoryBlock *getRawFirstIndexAccess() { return first_index; }
 
   const GPUMirroredMemoryBlock<T> *getRawValuesAccess() const { return values; }
-  const IntGPUMirroredMemoryBlock *getRawIndicesAccess() const { return indices; }
-  const IntGPUMirroredMemoryBlock *getRawFirstIndexAccess() const { return first_index; }
+  const Int32GPUMirroredMemoryBlock *getRawIndicesAccess() const { return indices; }
+  const Int32GPUMirroredMemoryBlock *getRawFirstIndexAccess() const { return first_index; }
   
   /// Returns true if they have the same dimension
   template<typename O>
@@ -307,8 +307,8 @@ public:
     unsigned int uN = static_cast<unsigned int>(N);
     SparseMatrix<T> *result;
     GPUMirroredMemoryBlock<T> *values = new GPUMirroredMemoryBlock<T>(uN);
-    IntGPUMirroredMemoryBlock *indices = new IntGPUMirroredMemoryBlock(uN);
-    IntGPUMirroredMemoryBlock *first_index = new IntGPUMirroredMemoryBlock(uN+1);
+    Int32GPUMirroredMemoryBlock *indices = new Int32GPUMirroredMemoryBlock(uN);
+    Int32GPUMirroredMemoryBlock *first_index = new Int32GPUMirroredMemoryBlock(uN+1);
     T *values_ptr = values->getPPALForWrite();
     int *indices_ptr = indices->getPPALForWrite();
     int *first_index_ptr = first_index->getPPALForWrite();
@@ -332,8 +332,8 @@ public:
     unsigned int uN = static_cast<unsigned int>(N);
     SparseMatrix<T> *result;
     GPUMirroredMemoryBlock<T> *values = new GPUMirroredMemoryBlock<T>(uN);
-    IntGPUMirroredMemoryBlock *indices = new IntGPUMirroredMemoryBlock(uN);
-    IntGPUMirroredMemoryBlock *first_index = new IntGPUMirroredMemoryBlock(uN+1);
+    Int32GPUMirroredMemoryBlock *indices = new Int32GPUMirroredMemoryBlock(uN);
+    Int32GPUMirroredMemoryBlock *first_index = new Int32GPUMirroredMemoryBlock(uN+1);
     T *values_ptr = values->getPPALForWrite();
     int *indices_ptr = indices->getPPALForWrite();
     int *first_index_ptr = first_index->getPPALForWrite();
@@ -356,8 +356,8 @@ public:
     unsigned int uN = values->getSize();
     int N = static_cast<int>(uN);
     SparseMatrix<T> *result;
-    IntGPUMirroredMemoryBlock *indices = new IntGPUMirroredMemoryBlock(uN);
-    IntGPUMirroredMemoryBlock *first_index = new IntGPUMirroredMemoryBlock(uN+1);
+    Int32GPUMirroredMemoryBlock *indices = new Int32GPUMirroredMemoryBlock(uN);
+    Int32GPUMirroredMemoryBlock *first_index = new Int32GPUMirroredMemoryBlock(uN+1);
     int *indices_ptr = indices->getPPALForWrite();
     int *first_index_ptr = first_index->getPPALForWrite();
     first_index_ptr[0] = 0;
@@ -410,6 +410,11 @@ public:
   // in 0)
   Matrix<T> *min(int dim, Matrix<T> *dest=0, Matrix<int32_t> *argmin=0);
   Matrix<T> *max(int dim, Matrix<T> *dest=0, Matrix<int32_t> *argmax=0);
+  
+  /// This method converts the caller SparseMatrix in a vector, unrolling the
+  /// dimensions in row-major order. If the SparseMatrix is in CSR format, the
+  /// resulting vector is a row vector, otherwise, it is a column vector.
+  SparseMatrix<T> *asVector() const;  
   
 private:
   void allocate_memory(int size);

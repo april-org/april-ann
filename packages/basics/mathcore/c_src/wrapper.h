@@ -30,7 +30,9 @@
 #ifdef USE_CUDA
 #include <cuda.h>
 #include <cublas_v2.h>
+#include <cusparse_v2.h>
 #include "cublas_error.h"
+#include "cusparse_error.h"
 #endif
 
 #include "gpu_mirrored_memory_block.h"
@@ -296,6 +298,16 @@ void doAxpyLoop(int N, T alpha,
 		bool use_gpu);
 
 template<typename T>
+void doSparseAxpy(int NNZ,
+		  T alpha,
+		  const GPUMirroredMemoryBlock<T> *x_values,
+		  const Int32GPUMirroredMemoryBlock *x_indices,
+		  GPUMirroredMemoryBlock<T>* y,
+		  unsigned int y_shift,
+		  unsigned int y_inc,
+		  bool use_gpu);
+  
+template<typename T>
 void doGemm(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
 	    CBLAS_TRANSPOSE b_transpose, int m, int n, int k, T alpha,
 	    GPUMirroredMemoryBlock<T>* a, unsigned int a_inc,
@@ -546,20 +558,20 @@ void doPow(unsigned int N,
 
 //////////////////////////////////////////////////////////////////////
 
-int doSearchCSCSparseIndexOf(const IntGPUMirroredMemoryBlock *indices,
-			     const IntGPUMirroredMemoryBlock *first_index,
+int doSearchCSCSparseIndexOf(const Int32GPUMirroredMemoryBlock *indices,
+			     const Int32GPUMirroredMemoryBlock *first_index,
 			     const int c1, const int c2, bool use_gpu);
 
-int doSearchCSRSparseIndexOf(const IntGPUMirroredMemoryBlock *indices,
-			     const IntGPUMirroredMemoryBlock *first_index,
+int doSearchCSRSparseIndexOf(const Int32GPUMirroredMemoryBlock *indices,
+			     const Int32GPUMirroredMemoryBlock *first_index,
 			     const int c1, const int c2, bool use_gpu);
 
-int doSearchCSCSparseIndexOfFirst(const IntGPUMirroredMemoryBlock *indices,
-				  const IntGPUMirroredMemoryBlock *first_index,
+int doSearchCSCSparseIndexOfFirst(const Int32GPUMirroredMemoryBlock *indices,
+				  const Int32GPUMirroredMemoryBlock *first_index,
 				  const int c1, const int c2, bool use_gpu);
 
-int doSearchCSRSparseIndexOfFirst(const IntGPUMirroredMemoryBlock *indices,
-				  const IntGPUMirroredMemoryBlock *first_index,
+int doSearchCSRSparseIndexOfFirst(const Int32GPUMirroredMemoryBlock *indices,
+				  const Int32GPUMirroredMemoryBlock *first_index,
 				  const int c1, const int c2, bool use_gpu);
 
 #endif // WRAPPER_H

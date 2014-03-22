@@ -89,14 +89,14 @@ public:
   else {
     int rows,cols;
     FloatGPUMirroredMemoryBlock *values;
-    IntGPUMirroredMemoryBlock *indices;
-    IntGPUMirroredMemoryBlock *first_index;
+    Int32GPUMirroredMemoryBlock *indices;
+    Int32GPUMirroredMemoryBlock *first_index;
     bool sort;
     LUABIND_GET_PARAMETER(1, int, rows);
     LUABIND_GET_PARAMETER(2, int, cols);
     LUABIND_GET_PARAMETER(3, FloatGPUMirroredMemoryBlock, values);
-    LUABIND_GET_PARAMETER(4, IntGPUMirroredMemoryBlock, indices);
-    LUABIND_GET_PARAMETER(5, IntGPUMirroredMemoryBlock, first_index);
+    LUABIND_GET_PARAMETER(4, Int32GPUMirroredMemoryBlock, indices);
+    LUABIND_GET_PARAMETER(5, Int32GPUMirroredMemoryBlock, first_index);
     LUABIND_GET_OPTIONAL_PARAMETER(6, boolean, sort, false);
     obj = new SparseMatrixFloat(rows, cols,
 				values, indices, first_index,
@@ -119,14 +119,14 @@ public:
   else {
     int rows,cols;
     FloatGPUMirroredMemoryBlock *values;
-    IntGPUMirroredMemoryBlock *indices;
-    IntGPUMirroredMemoryBlock *first_index;
+    Int32GPUMirroredMemoryBlock *indices;
+    Int32GPUMirroredMemoryBlock *first_index;
     bool sort;
     LUABIND_GET_PARAMETER(1, int, rows);
     LUABIND_GET_PARAMETER(2, int, cols);
     LUABIND_GET_PARAMETER(3, FloatGPUMirroredMemoryBlock, values);
-    LUABIND_GET_PARAMETER(4, IntGPUMirroredMemoryBlock, indices);
-    LUABIND_GET_PARAMETER(5, IntGPUMirroredMemoryBlock, first_index);
+    LUABIND_GET_PARAMETER(4, Int32GPUMirroredMemoryBlock, indices);
+    LUABIND_GET_PARAMETER(5, Int32GPUMirroredMemoryBlock, first_index);
     LUABIND_GET_OPTIONAL_PARAMETER(6, boolean, sort, false);
     obj = new SparseMatrixFloat(rows, cols,
 				values, indices, first_index,
@@ -685,5 +685,11 @@ public:
 //BIND_METHOD SparseMatrixFloat prune_subnormal_and_check_normal
 {
   obj->pruneSubnormalAndCheckNormal();
+}
+//BIND_END
+
+//BIND_METHOD SparseMatrixFloat as_vector
+{
+  LUABIND_RETURN(SparseMatrixFloat, obj->asVector());
 }
 //BIND_END

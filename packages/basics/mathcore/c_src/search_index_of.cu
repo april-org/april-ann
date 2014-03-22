@@ -28,8 +28,8 @@ using namespace april_utils;
 
 /// searchs the index where the given coordinate (c1,c2) will is stored, or -1
 /// in case it isn't there
-int doSearchCSCSparseIndexOf(const IntGPUMirroredMemoryBlock *indices,
-			     const IntGPUMirroredMemoryBlock *first_index,
+int doSearchCSCSparseIndexOf(const Int32GPUMirroredMemoryBlock *indices,
+			     const Int32GPUMirroredMemoryBlock *first_index,
 			     const int c1, const int c2, bool use_gpu) {
 #ifndef USE_CUDA
   UNUSED_VARIABLE(use_gpu);
@@ -55,8 +55,8 @@ int doSearchCSCSparseIndexOf(const IntGPUMirroredMemoryBlock *indices,
 
 /// searchs the index where the given coordinate (c1,c2) will is stored, or -1
 /// in case it isn't there
-int doSearchCSRSparseIndexOf(const IntGPUMirroredMemoryBlock *indices,
-			     const IntGPUMirroredMemoryBlock *first_index,
+int doSearchCSRSparseIndexOf(const Int32GPUMirroredMemoryBlock *indices,
+			     const Int32GPUMirroredMemoryBlock *first_index,
 			     const int c1, const int c2, bool use_gpu) {
 #ifndef USE_CUDA
   UNUSED_VARIABLE(use_gpu);
@@ -84,8 +84,8 @@ int doSearchCSRSparseIndexOf(const IntGPUMirroredMemoryBlock *indices,
 
 /// searchs the index where the given coordinate (c1,c2) will is stored, or -1
 /// in case it isn't there
-int doSearchCSCSparseIndexOfFirst(const IntGPUMirroredMemoryBlock *indices,
-				  const IntGPUMirroredMemoryBlock *first_index,
+int doSearchCSCSparseIndexOfFirst(const Int32GPUMirroredMemoryBlock *indices,
+				  const Int32GPUMirroredMemoryBlock *first_index,
 				  const int c1, const int c2, bool use_gpu) {
 #ifndef USE_CUDA
   UNUSED_VARIABLE(use_gpu);
@@ -113,8 +113,8 @@ int doSearchCSCSparseIndexOfFirst(const IntGPUMirroredMemoryBlock *indices,
 
 /// searchs the index where the given coordinate (c1,c2) will is stored, or -1
 /// in case it isn't there
-int doSearchCSRSparseIndexOfFirst(const IntGPUMirroredMemoryBlock *indices,
-				  const IntGPUMirroredMemoryBlock *first_index,
+int doSearchCSRSparseIndexOfFirst(const Int32GPUMirroredMemoryBlock *indices,
+				  const Int32GPUMirroredMemoryBlock *first_index,
 				  const int c1, const int c2, bool use_gpu) {
 #ifndef USE_CUDA
   UNUSED_VARIABLE(use_gpu);

@@ -26,6 +26,7 @@
 #include "luabindutil.h"
 #include "luabindmacros.h"
 #include "bind_matrix_int32.h"
+#include "bind_sparse_matrix.h"
 #include "bind_gzio.h"
 
 #define FUNCTION_NAME "read_vector"
@@ -1304,10 +1305,20 @@ public:
   int argn;
   LUABIND_CHECK_ARGN(==, 2);
   float alpha;
-  MatrixFloat *mat;
   LUABIND_GET_PARAMETER(1, float, alpha);
-  LUABIND_GET_PARAMETER(2, MatrixFloat, mat);
-  obj->axpy(alpha, mat);
+  if (lua_isMatrixFloat(L,2)) {
+    MatrixFloat *mat;
+    LUABIND_GET_PARAMETER(2, MatrixFloat, mat);
+    obj->axpy(alpha, mat);
+  }
+  else if (lua_isSparseMatrixFloat(L,2)) {
+    SparseMatrixFloat *mat;
+    LUABIND_GET_PARAMETER(2, SparseMatrixFloat, mat);
+    obj->axpy(alpha, mat);
+  }
+  else {
+    LUABIND_ERROR("Expected matrix or matrix.sparse as 2nd argument");
+  }
   LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END

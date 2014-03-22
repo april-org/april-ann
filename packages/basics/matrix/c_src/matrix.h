@@ -792,7 +792,7 @@ public:
   Matrix<T> *max(int dim, Matrix<T> *dest=0, Matrix<int32_t> *argmax=0);
 
   Matrix<T> *maxSelDim(const int dim,
-		       IntGPUMirroredMemoryBlock *raw_positions=0,
+		       Int32GPUMirroredMemoryBlock *raw_positions=0,
 		       int shift = 0) const;
   
   // Expands current matrix to a diagonal matrix

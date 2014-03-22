@@ -126,28 +126,6 @@ template<>
 void Matrix<float>::copy(const Matrix<float> *other);
 
 template<>
-void Matrix<float>::axpy(float alpha, const Matrix<float> *other);
-
-template<>
-void Matrix<float>::axpy(float alpha, const SparseMatrix<float> *other);
-
-template<>
-void Matrix<float>::gemm(CBLAS_TRANSPOSE trans_A,
-			 CBLAS_TRANSPOSE trans_B,
-			 float alpha,
-			 const Matrix<float> *otherA,
-			 const Matrix<float> *otherB,
-			 float beta);
-
-template<>
-void Matrix<float>::gemm(CBLAS_TRANSPOSE trans_A,
-			 CBLAS_TRANSPOSE trans_B,
-			 float alpha,
-			 const SparseMatrix<float> *otherA,
-			 const Matrix<float> *otherB,
-			 float beta);
-
-template<>
 void Matrix<float>::gemv(CBLAS_TRANSPOSE trans_A,
 			 float alpha,
 			 const Matrix<float> *otherA,
@@ -192,7 +170,7 @@ void Matrix<float>::minAndMax(float &min, float &max) const;
 
 template <>
 Matrix<float> *Matrix<float>::maxSelDim(const int dim,
-					IntGPUMirroredMemoryBlock *raw_positions,
+					Int32GPUMirroredMemoryBlock *raw_positions,
 					int shift) const;
 
 template<>

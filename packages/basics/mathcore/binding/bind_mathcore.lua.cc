@@ -159,30 +159,30 @@ T GPUMirroredMemoryBlockGet(lua_State *L,
 
 ////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME IntGPUMirroredMemoryBlock mathcore.block.int
-//BIND_CPP_CLASS IntGPUMirroredMemoryBlock
+//BIND_LUACLASSNAME Int32GPUMirroredMemoryBlock mathcore.block.int32
+//BIND_CPP_CLASS Int32GPUMirroredMemoryBlock
 
-//BIND_CONSTRUCTOR IntGPUMirroredMemoryBlock
+//BIND_CONSTRUCTOR Int32GPUMirroredMemoryBlock
 {
   GPUMirroredMemoryBlockConstructor(L,obj);
-  LUABIND_RETURN(IntGPUMirroredMemoryBlock,obj);
+  LUABIND_RETURN(Int32GPUMirroredMemoryBlock,obj);
 }
 //BIND_END
 
-//BIND_METHOD IntGPUMirroredMemoryBlock size
+//BIND_METHOD Int32GPUMirroredMemoryBlock size
 {
   LUABIND_RETURN(uint,obj->getSize());
 }
 //BIND_END
 
-//BIND_METHOD IntGPUMirroredMemoryBlock set
+//BIND_METHOD Int32GPUMirroredMemoryBlock set
 {
   GPUMirroredMemoryBlockSet(L,obj);
-  LUABIND_RETURN(IntGPUMirroredMemoryBlock,obj);
+  LUABIND_RETURN(Int32GPUMirroredMemoryBlock,obj);
 }
 //BIND_END
 
-//BIND_METHOD IntGPUMirroredMemoryBlock get
+//BIND_METHOD Int32GPUMirroredMemoryBlock get
 {
   LUABIND_RETURN(int,GPUMirroredMemoryBlockGet(L,obj));
 }

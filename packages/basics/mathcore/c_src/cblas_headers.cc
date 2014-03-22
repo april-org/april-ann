@@ -136,3 +136,40 @@ void cblas_ssbmv(CBLAS_ORDER order,
 }
 
 #endif // ADHOC_BLAS
+
+
+#ifndef USE_MKL
+// sparse BLAS is only available with CUDA or MKL
+
+// generic templates
+template<typename T>
+void generic_cblas_axpyi(int NNZ, T alpha,
+			 const T *x_values_mem,
+			 const int *x_indices_mem,
+			 T *y_mem) {
+  for (int i=0; i<NNZ; ++i) {
+    int idx = x_indices_mem[i];
+    y_mem[idx] += alpha * x_values_mem[i];
+  }
+}
+
+// cblas function implementations
+void cblas_saxpyi(int NNZ, float alpha,
+		  const float *x_values_mem,
+		  const int *x_indices_mem,
+		  float *y_mem) {
+  generic_cblas_axpyi(NNZ, alpha, x_values_mem, x_indices_mem, y_mem);
+}
+void cblas_daxpyi(int NNZ, double alpha,
+		  const double *x_values_mem,
+		  const int *x_indices_mem,
+		  double *y_mem) {
+  generic_cblas_axpyi(NNZ, alpha, x_values_mem, x_indices_mem, y_mem);
+}
+void cblas_caxpyi(int NNZ, const ComplexF *alpha,
+		  const ComplexF *x_values_mem,
+		  const int *x_indices_mem,
+		  ComplexF *y_mem) {
+  generic_cblas_axpyi(NNZ, *alpha, x_values_mem, x_indices_mem, y_mem);
+}
+#endif
