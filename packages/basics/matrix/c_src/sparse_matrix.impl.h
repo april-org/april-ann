@@ -84,7 +84,7 @@ void SparseMatrix<T>::checkSortedIndices(bool sort) {
   // for index sort algorithm
   if (indices->getSize() != values->getSize())
     ERROR_EXIT(256, "Different block sizes found in indices and values\n");
-  if (first_index->getSize() != dense_size+1)
+  if (static_cast<int>(first_index->getSize()) != dense_size+1)
     ERROR_EXIT1(256, "First index block size must be %d\n", dense_size+1);
   const int *indices_ptr = indices->getPPALForRead();
   const int *first_index_ptr = first_index->getPPALForRead();
@@ -101,7 +101,7 @@ void SparseMatrix<T>::checkSortedIndices(bool sort) {
       ERROR_EXIT2(256, "Index out-of-bounds [%d] = %d\n",
 		  first_index_ptr[i],
 		  indices_ptr[first_index_ptr[i]]);
-    for (unsigned int j=first_index_ptr[i]+1; j<first_index_ptr[i+1]; ++j) {
+    for (int j=first_index_ptr[i]+1; j<first_index_ptr[i+1]; ++j) {
       if (indices_ptr[j-1] >= indices_ptr[j]) need_sort = true;
       if (indices_ptr[j] < 0 || indices_ptr[j] >= compressed_size)
 	ERROR_EXIT2(256, "Index out-of-bounds [%d] = %d\n",
@@ -241,7 +241,7 @@ template <typename T>
 SparseMatrix<T>::SparseMatrix(const SparseMatrix<T> *other,
 			      SPARSE_FORMAT sparse_format) :
   Referenced(),
-  shared_count(shared_count),
+  shared_count(other->shared_count),
   mmapped_data(0),
   use_cuda(other->use_cuda),
   end_iterator(), end_const_iterator() {
