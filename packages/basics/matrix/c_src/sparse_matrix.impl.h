@@ -478,7 +478,9 @@ SparseMatrix<T> *SparseMatrix<T>::asVector() const {
 	result_indices_ptr[i] = this_indices_ptr[i] + col*matrixSize[0];
     break;
   default:
-    ;
+    // never gonna happen
+    d0=-1; d1=-1; // this avoids compiler warning
+    ERROR_EXIT(128, "Incorrect sparse format\n");
   }
   SparseMatrix<T> *result = new SparseMatrix(d0, d1,
 					     result_values,
