@@ -37,7 +37,7 @@ aU,aS,aVT = stats.pca(aR)
 
 -- check regeneration of original covariance matrix
 cov = compute_cov(aR, 2)
-assert(cov:equals( aU * aS:diagonalize() * aVT, 1e-04 ))
+assert(cov:equals( aU * aS:to_dense("col_major") * aVT, 1e-04 ))
 
 -- ROTATION
 amRot = aR * aU
@@ -65,7 +65,7 @@ assert(refV:equals(aVT:clone():abs(), 0.001))
 
 -- check S matrix with octave computation
 refS = matrix.fromFilename(base_dir.."data/S.gz", "col_major")
-assert(refS:equals(aS, 0.001))
+assert(refS:diagonalize():equals(aS:to_dense("col_major"), 0.001))
 
 --------------------------------------------------------------------------
 --------------------------------------------------------------------------

@@ -152,14 +152,6 @@ private:
   mutable const_iterator end_const_iterator;
   
   SparseMatrix() : end_iterator(), end_const_iterator() { }
-  int getDenseCoordinateSize() const {
-    if (sparse_format == CSR_FORMAT) return matrixSize[0];
-    else return matrixSize[1];
-  }
-  int getCompressedCoordinateSize() const {
-    if (sparse_format == CSR_FORMAT) return matrixSize[1];
-    else return matrixSize[0];
-  }
   void checkSortedIndices(bool sort=false);
   
 public:
@@ -198,6 +190,14 @@ public:
   int getDimSize(int i) const { return matrixSize[i]; }
   int size() const { return total_size; }
   int nonZeroSize() const { return static_cast<int>(values->getSize()); }
+  int getDenseCoordinateSize() const {
+    if (sparse_format == CSR_FORMAT) return matrixSize[0];
+    else return matrixSize[1];
+  }
+  int getCompressedCoordinateSize() const {
+    if (sparse_format == CSR_FORMAT) return matrixSize[1];
+    else return matrixSize[0];
+  }
   SPARSE_FORMAT getSparseFormat() const { return sparse_format; }
   bool getIsDataRowOrdered() const {
     return sparse_format == CSR_FORMAT;
@@ -298,6 +298,17 @@ public:
   bool sameDim(const int d0, const int d1) const;
   
   ////////////////////////////////////////////////////////////////////////////
+
+  bool isDiagonal() const {
+    if (matrixSize[0] != matrixSize[1] || matrixSize[0] != nonZeroSize())
+      return false;
+    for(const_iterator it(begin()); it!=end(); ++it) {
+      int c0,c1;
+      it.getCoords(c0,c1);
+      if (c0 != c1) return false;
+    }
+    return true;
+  }
   
   void fill(T value);
   void zeros();

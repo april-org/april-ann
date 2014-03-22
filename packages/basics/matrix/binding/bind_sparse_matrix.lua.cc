@@ -20,6 +20,7 @@
  */
 //BIND_HEADER_C
 #include <cmath> // para isfinite
+#include "utilMatrixFloat.h"
 #include "luabindutil.h"
 #include "luabindmacros.h"
 #include "bind_matrix.h"
@@ -714,5 +715,35 @@ public:
 //BIND_METHOD SparseMatrixFloat as_vector
 {
   LUABIND_RETURN(SparseMatrixFloat, obj->asVector());
+}
+//BIND_END
+
+//BIND_METHOD SparseMatrixFloat is_diagonal
+{
+  LUABIND_RETURN(bool, obj->isDiagonal());
+}
+//BIND_END
+
+//BIND_METHOD SparseMatrixFloat toString
+{
+  LUABIND_CHECK_ARGN(<=, 1);
+  constString cs;
+  LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("binary"));
+  bool is_ascii = (cs == "ascii");
+  writeSparseMatrixFloatToLuaString(obj, L, is_ascii);
+  LUABIND_INCREASE_NUM_RETURNS(1);
+}
+//BIND_END
+
+//BIND_CLASS_METHOD SparseMatrixFloat fromString
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, string);
+  constString cs;
+  LUABIND_GET_PARAMETER(1,constString,cs);
+  SparseMatrixFloat *obj;
+  if ((obj = readSparseMatrixFloatFromString(cs)) == 0)
+    LUABIND_ERROR("bad format");
+  else LUABIND_RETURN(SparseMatrixFloat,obj);
 }
 //BIND_END

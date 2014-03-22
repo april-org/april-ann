@@ -130,7 +130,7 @@ assert(U:equals(matrix.col_major(4,4,
 				   0,0,0,-1,
 				   1,0,0, 0,
 				 })))
-assert(S:equals(matrix.col_major(4,{4,3,2.23607,0})))
+assert(S:to_dense():equals(matrix.col_major(4,{4,3,2.23607,0}):diagonalize()))
 assert(V:equals(matrix.col_major(5,5,
 				 {
 				   0,1,0,0,0,

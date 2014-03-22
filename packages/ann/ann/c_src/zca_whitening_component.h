@@ -21,6 +21,8 @@
 #ifndef ZCAWHITENINGCOMPONENT_H
 #define ZCAWHITENINGCOMPONENT_H
 
+#include "sparse_matrixFloat.h"
+#include "matrixFloat.h"
 #include "vector.h"
 #include "ann_component.h"
 #include "token_vector.h"
@@ -36,7 +38,7 @@ namespace ANN {
     DotProductANNComponent dot_product_decoder; //< Applies the reconstruction from PCA rotated data
   public:
     ZCAWhiteningANNComponent(MatrixFloat *U,
-			     MatrixFloat *S,
+			     SparseMatrixFloat *S,
 			     float epsilon=0.0f,
 			     unsigned int takeN=0,
 			     const char *name=0);

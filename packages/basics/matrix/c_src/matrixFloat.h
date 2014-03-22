@@ -180,7 +180,8 @@ template<>
 Matrix<float> *Matrix<float>::inv();
 
 template <>
-void Matrix<float>::svd(Matrix<float> **U, Matrix<float> **S, Matrix<float> **V);
+void Matrix<float>::svd(Matrix<float> **U, SparseMatrix<float> **S,
+			Matrix<float> **V);
 
 template <>
 void Matrix<float>::pruneSubnormalAndCheckNormal();

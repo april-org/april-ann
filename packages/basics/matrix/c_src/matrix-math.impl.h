@@ -573,7 +573,7 @@ Matrix<T> *Matrix<T>::inv() {
 }
 
 template <typename T>
-void Matrix<T>::svd(Matrix<T> **U, Matrix<T> **S, Matrix<T> **V) {
+void Matrix<T>::svd(Matrix<T> **U, SparseMatrix<T> **S, Matrix<T> **V) {
   UNUSED_VARIABLE(U);
   UNUSED_VARIABLE(S);
   UNUSED_VARIABLE(V);

@@ -35,3 +35,5 @@ print(m:clone():axpy(1.0,aux))
 
 local b = matrix.sparse.csr(3,blockf{3},blocki{2})
 print(b)
+
+print(aux3:toString("ascii"))

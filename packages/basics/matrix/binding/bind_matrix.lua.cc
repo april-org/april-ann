@@ -1572,10 +1572,11 @@ public:
 
 //BIND_METHOD MatrixFloat svd
 {
-  MatrixFloat *U,*S,*V;
+  MatrixFloat *U,*V;
+  SparseMatrixFloat *S;
   obj->svd(&U, &S, &V);
   LUABIND_RETURN(MatrixFloat, U);
-  LUABIND_RETURN(MatrixFloat, S);
+  LUABIND_RETURN(SparseMatrixFloat, S);
   LUABIND_RETURN(MatrixFloat, V);
 }
 //BIND_END

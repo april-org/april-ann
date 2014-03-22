@@ -27,10 +27,11 @@ if ann.components.zca_whitening then
     epsilon=0.017,
     takeN=192,
   }
-  new  = zca_whitening:forward(aux):get_matrix()
+  new = zca_whitening:forward(aux):get_matrix()
 end
 
-local new2 = stats.zca_whitening(aux:clone(), aU(':','1:192'), aS('1:192'), 0.017)
+local new2 = stats.zca_whitening(aux:clone(), aU(':','1:192'),
+				 aS('1:192','1:192'), 0.017)
 
 if new then
   for i=1,new:dim(1) do

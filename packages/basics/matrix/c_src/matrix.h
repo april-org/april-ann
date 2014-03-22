@@ -800,7 +800,7 @@ public:
   
   /**** LAPACK OPERATIONS ****/
   Matrix<T> *inv();
-  void svd(Matrix<T> **U, Matrix<T> **S, Matrix<T> **V);
+  void svd(Matrix<T> **U, SparseMatrix<T> **S, Matrix<T> **V);
 
 private:
   void allocate_memory(int size);

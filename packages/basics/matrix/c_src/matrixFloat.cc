@@ -24,6 +24,7 @@
 #include "swap.h"
 #include "matrix.h"
 #include "matrixFloat.h"
+#include "sparse_matrixFloat.h"
 #include "matrix_generic_math_templates.h" // functions which apply functors
 #include "matrix_generic_math_functors.h"  // standard functors
 #include "wrapper.h" // wrappers of mathematical function (for CPU/GPU)
@@ -760,7 +761,7 @@ Matrix<float> *Matrix<float>::inv() {
 // FIXME: using WRAPPER for generalized CULA, LAPACK, float and complex numbers
 // WARNING: the V matrix is returned transposed
 template <>
-void Matrix<float>::svd(Matrix<float> **U, Matrix<float> **S, Matrix<float> **VT) {
+void Matrix<float>::svd(Matrix<float> **U, SparseMatrix<float> **S, Matrix<float> **VT) {
   if (numDim != 2)
     ERROR_EXIT(128, "Only bi-dimensional matrices are allowed\n");
   Matrix<float> *A = this->clone(CblasColMajor);
@@ -774,10 +775,13 @@ void Matrix<float>::svd(Matrix<float> **U, Matrix<float> **S, Matrix<float> **VT
   const int dimsS[1]  = {numSV};
   const int dimsVT[2] = {n, n};
   *U  = new Matrix<float>(2, dimsU,  CblasColMajor);
-  *S  = new Matrix<float>(1, dimsS,  CblasColMajor);
+  *S  = SparseMatrix<float>::diag(numSV, 0.0f,
+				  SparseMatrix<float>::CSR_FORMAT);
   *VT = new Matrix<float>(2, dimsVT, CblasColMajor);
   INFO = clapack_sgesdd(CblasColMajor, m, n, lda, A->getData(),
-			(*U)->getData(), (*S)->getData(), (*VT)->getData());
+			(*U)->getData(),
+			(*S)->getRawValuesAccess()->getPPALForWrite(),
+			(*VT)->getData());
   checkLapackInfo(INFO);
   DecRef(A);
 }

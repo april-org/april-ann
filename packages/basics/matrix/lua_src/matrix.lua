@@ -9,8 +9,7 @@ class_extension(matrix, "to_lua_string",
 class_extension(matrix, "pinv",
 		function(self)
 		  local u,s,vt = self:svd()
-		  for i=1,s:size() do
-		    local aux = s:get(i)
+		  for aux,i in s:iterate() do
 		    u:select(2,i):scal(((math.abs(aux)>1e-07) and 1/aux) or 0.0)
 		  end
 		  return matrix.as(self):
@@ -1153,7 +1152,7 @@ april_set_doc("matrix.svd",
 		},
 		outputs = {
 		  "The matrix U",
-		  "The vector S with the eigenvalues",
+		  "The sparse row vector S with the eigenvalues",
 		  "The matrix V', the transposed of V",
 		},
 	      })
@@ -1161,7 +1160,7 @@ april_set_doc("matrix.svd",
 april_set_doc("matrix.diagonalize",
 	      {
 		class = "method",
-		summary = "Converts the given uni-dimensional matrix in a bi-dimensional diagonal matrix",
+		summary = "Converts the given uni-dimensional matrix in a bi-dimensional diagonal dense matrix",
 		outputs = {
 		  "A matrix which is the diagonalized version of the caller matrix",
 		},
