@@ -377,7 +377,7 @@ SparseMatrix<T>::~SparseMatrix() {
 }
 
 template<typename T>
-SparseMatrix<T> *SparseMatrix<T>::transpose() {
+SparseMatrix<T> *SparseMatrix<T>::transpose() const {
   SparseMatrix<T> *result = new SparseMatrix<T>(this);
   april_utils::swap(result->matrixSize[0], result->matrixSize[1]);
   if (sparse_format == CSR_FORMAT) result->sparse_format = CSC_FORMAT;

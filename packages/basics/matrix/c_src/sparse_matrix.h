@@ -254,7 +254,7 @@ public:
   }
 
   /// Symbolic transposition, changes the sparse format
-  SparseMatrix<T>* transpose();
+  SparseMatrix<T>* transpose() const;
   /// Deep copy with different sparse format
   SparseMatrix<T> *clone(SPARSE_FORMAT sparse_format = NONE_FORMAT) const;
   
