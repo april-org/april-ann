@@ -130,6 +130,10 @@ void SparseMatrix<T>::checkSortedIndices(bool sort) {
 
 template <typename T>
 void SparseMatrix<T>::initialize(int d0, int d1) {
+  if (d1 == 1 && sparse_format == CSR_FORMAT)
+    ERROR_EXIT(128, "Column vector unable with CSR format\n");
+  else if (d0 == 1 && sparse_format == CSC_FORMAT)
+    ERROR_EXIT(128, "Row vector unable with CSC format\n");
   total_size    = d0*d1;
   matrixSize[0] = d0;
   matrixSize[1] = d1;
@@ -169,9 +173,20 @@ SparseMatrix<T>::SparseMatrix(const int d0, const int d1,
   sparse_format(sparse_format), use_cuda(false),
   end_iterator(), end_const_iterator() {
   initialize(d0, d1);
+  if (this->first_index == 0) {
+    if ( (d1 == 1 && sparse_format == CSC_FORMAT) ||
+	 (d0 == 1 && sparse_format == CSR_FORMAT) ) {
+      this->first_index = new Int32GPUMirroredMemoryBlock(2);
+      int *first_index_ptr = this->first_index->getPPALForWrite();
+      first_index_ptr[0] = 0;
+      first_index_ptr[1] = static_cast<int>(values->getSize());
+    }
+    else ERROR_EXIT(128, "NULL first_index block only allowed for "
+		    "column or row vectors, not matrices\n");
+  }
   IncRef(values);
   IncRef(indices);
-  IncRef(first_index);
+  IncRef(this->first_index);
   checkSortedIndices(sort);
 }
 
@@ -185,13 +200,14 @@ SparseMatrix<T>::SparseMatrix(const Matrix<T> *other,
     ERROR_EXIT(128, "Only allowed for bi-dimensional matrices\n");
   initialize(other->getDimSize(0), other->getDimSize(1));
   //
+  const T zero = T();
   int non_zero_size = 0;
   typename Matrix<T>::const_iterator it(other->begin());
   for (int c1=0; c1<other->getDimSize(1); ++c1) {
     for (int c0=0; c0<other->getDimSize(0); ++c0, ++it) {
       if (it == other->end())
 	ERROR_EXIT(128, "Unexpected matrix iterator end\n");
-      if (*it > 0.0f || *it < 0.0f) non_zero_size++;
+      if (zero < *it || *it < zero) non_zero_size++;
     }
   }
   allocate_memory(non_zero_size);
@@ -206,7 +222,7 @@ SparseMatrix<T>::SparseMatrix(const Matrix<T> *other,
       typename Matrix<T>::const_col_major_iterator it(other->begin());
       for (int c1=0; c1<other->getDimSize(1); ++c1) {
 	for (int c0=0; c0<other->getDimSize(0); ++c0, ++it) {
-	  if (*it > 0.0f || *it < 0.0f) {
+	  if (zero < *it || *it < zero) {
 	    values_ptr[current]  = *it;
 	    indices_ptr[current] = c0;
 	    ++current;
@@ -220,8 +236,8 @@ SparseMatrix<T>::SparseMatrix(const Matrix<T> *other,
     {
       typename Matrix<T>::const_iterator it(other->begin());
       for (int c0=0; c0<other->getDimSize(0); ++c0) {
-	for (int c1=0; c1<other->getDimSize(1); ++c1, ++it, ++current) {
-	  if (*it > 0.0f || *it < 0.0f) {
+	for (int c1=0; c1<other->getDimSize(1); ++c1, ++it) {
+	  if (zero < *it || *it < zero) {
 	    values_ptr[current]  = *it;
 	    indices_ptr[current] = c1;
 	    ++current;
@@ -283,7 +299,8 @@ SparseMatrix<T>::SparseMatrix(const SparseMatrix<T> *other,
   int x0=0, x1=0;
   for (const_iterator it(other->begin()); it != other->end(); ++it) {
     it.getCoords(x0,x1);
-    if (x0 >= coords[0] && x0 < coords[0]+sizes[0] && x1 >= coords[1] && x1 < coords[1]+sizes[1])
+    if (x0 >= coords[0] && x0 < coords[0]+sizes[0] &&
+	x1 >= coords[1] && x1 < coords[1]+sizes[1])
       ++non_zero_size;
   }
   allocate_memory(non_zero_size);
@@ -298,7 +315,8 @@ SparseMatrix<T>::SparseMatrix(const SparseMatrix<T> *other,
       int x0=0, x1=0;
       for (const_iterator it(other->begin()); it != other->end(); ++it) {
 	it.getCoords(x0,x1);
-	if (coords[0] <= x0 && x0 < coords[0]+sizes[0] && coords[1] <= x1 && x1 < coords[1]+sizes[1]) {
+	if (coords[0] <= x0 && x0 < coords[0]+sizes[0] &&
+	    coords[1] <= x1 && x1 < coords[1]+sizes[1]) {
 	  values_ptr[current]  = *it;
 	  indices_ptr[current] = x0-coords[0];
 	  ++current;
@@ -312,7 +330,8 @@ SparseMatrix<T>::SparseMatrix(const SparseMatrix<T> *other,
       int x0=0, x1=0;
       for (const_iterator it(other->begin()); it != other->end(); ++it) {
 	it.getCoords(x0,x1);
-	if (coords[0] <= x0 && x0 < coords[0]+sizes[0] && coords[1] <= x1 && x1 < coords[1]+sizes[1]) {
+	if (coords[0] <= x0 && x0 < coords[0]+sizes[0] &&
+	    coords[1] <= x1 && x1 < coords[1]+sizes[1]) {
 	  values_ptr[current]  = *it;
 	  indices_ptr[current] = x1-coords[1];
 	  ++current;
@@ -327,8 +346,8 @@ SparseMatrix<T>::SparseMatrix(const SparseMatrix<T> *other,
 }
 
 template <typename T>
-SparseMatrix<T> *SparseMatrix<T>::fromMMappedDataReader(april_utils::MMappedDataReader
-							*mmapped_data) {
+SparseMatrix<T> *SparseMatrix<T>::
+fromMMappedDataReader(april_utils::MMappedDataReader *mmapped_data) {
   SparseMatrix<T> *obj = new SparseMatrix();
   //
   obj->values  = GPUMirroredMemoryBlock<T>::fromMMappedDataReader(mmapped_data);
@@ -386,7 +405,8 @@ SparseMatrix<T> *SparseMatrix<T>::transpose() const {
 }
 
 template<typename T>
-SparseMatrix<T> *SparseMatrix<T>::clone(SparseMatrix<T>::SPARSE_FORMAT sparse_format) const {
+SparseMatrix<T> *SparseMatrix<T>::clone(SparseMatrix<T>::SPARSE_FORMAT
+					sparse_format) const {
   return new SparseMatrix<T>(this, sparse_format);
 }
 

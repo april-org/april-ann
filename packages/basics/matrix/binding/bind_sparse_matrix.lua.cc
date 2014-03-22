@@ -96,7 +96,8 @@ public:
     LUABIND_GET_PARAMETER(2, int, cols);
     LUABIND_GET_PARAMETER(3, FloatGPUMirroredMemoryBlock, values);
     LUABIND_GET_PARAMETER(4, Int32GPUMirroredMemoryBlock, indices);
-    LUABIND_GET_PARAMETER(5, Int32GPUMirroredMemoryBlock, first_index);
+    LUABIND_GET_OPTIONAL_PARAMETER(5, Int32GPUMirroredMemoryBlock,
+				   first_index, 0);
     LUABIND_GET_OPTIONAL_PARAMETER(6, boolean, sort, false);
     obj = new SparseMatrixFloat(rows, cols,
 				values, indices, first_index,
@@ -126,7 +127,8 @@ public:
     LUABIND_GET_PARAMETER(2, int, cols);
     LUABIND_GET_PARAMETER(3, FloatGPUMirroredMemoryBlock, values);
     LUABIND_GET_PARAMETER(4, Int32GPUMirroredMemoryBlock, indices);
-    LUABIND_GET_PARAMETER(5, Int32GPUMirroredMemoryBlock, first_index);
+    LUABIND_GET_OPTIONAL_PARAMETER(5, Int32GPUMirroredMemoryBlock,
+				   first_index, 0);
     LUABIND_GET_OPTIONAL_PARAMETER(6, boolean, sort, false);
     obj = new SparseMatrixFloat(rows, cols,
 				values, indices, first_index,

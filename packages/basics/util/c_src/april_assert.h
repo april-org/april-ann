@@ -23,10 +23,10 @@
 #ifdef NDEBUG
 #define april_assert(cond)
 #else
-#define april_assert(cond) do {			\
-    if (!(cond)) {				\
-      print_CPP_stacktrace();			\
-      assert(cond);				\
-    }						\
+#define april_assert(cond) do {				\
+    if (!(cond)) {					\
+      print_CPP_stacktrace();				\
+      assert(cond);					\
+    }							\
   } while(0)
 #endif
