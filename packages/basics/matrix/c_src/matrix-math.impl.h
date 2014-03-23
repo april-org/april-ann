@@ -413,7 +413,7 @@ void Matrix<T>::sparseMM(CBLAS_TRANSPOSE trans_A,
   if (major_order != otherB->major_order)
     ERROR_EXIT(128, "Matrices with different major orders\n");
   
-  int M=matrixSize[0], N=matrixSize[1], K=otherA->getDimSize(col_idx_A);
+  int M=matrixSize[0], N=matrixSize[1], K=otherB->getDimSize(0);
   int ldb, ldc;
   if (major_order == CblasRowMajor) {
     ldb = (!otherB->getTransposedFlag())?(otherB->stride[0]):(otherB->stride[1]);

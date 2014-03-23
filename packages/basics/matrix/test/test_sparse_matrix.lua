@@ -50,13 +50,13 @@ local b = matrix(4,2,{
                    1, 2,
                      })
 
-local c = matrix(3,2):sparse_mm({
-                                  trans_A=true,
-                                  alpha=1.0,
-                                  A=a,
-                                  B=b:transpose(),
-                                  beta=0.0,
-                                })
+local c = matrix(3,2):zeros():sparse_mm({
+                                          trans_A=true,
+                                          alpha=1.0,
+                                          A=a,
+                                          B=b,
+                                          beta=0.0,
+                                        })
 
 print(c)
 
