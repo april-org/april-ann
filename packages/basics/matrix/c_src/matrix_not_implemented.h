@@ -63,14 +63,12 @@
     ERROR_EXIT(128, "NOT IMPLEMENTED\n");			\
   }								\
   template <>							\
-  void Matrix<TYPE>::gemm(CBLAS_TRANSPOSE trans_A,		\
-			  CBLAS_TRANSPOSE trans_B,		\
-			  TYPE alpha,				\
-			  const SparseMatrix<TYPE> *otherA,	\
-			  const Matrix<TYPE> *otherB,		\
-			  TYPE beta) {				\
+  void Matrix<TYPE>::sparseMM(CBLAS_TRANSPOSE trans_A,		\
+                              TYPE alpha,                       \
+                              const SparseMatrix<TYPE> *otherA,	\
+                              const Matrix<TYPE> *otherB,       \
+                              TYPE beta) {                      \
     UNUSED_VARIABLE(trans_A);					\
-    UNUSED_VARIABLE(trans_B);					\
     UNUSED_VARIABLE(alpha);					\
     UNUSED_VARIABLE(otherA);					\
     UNUSED_VARIABLE(otherB);					\
@@ -87,12 +85,11 @@
 			  const Matrix<TYPE> *otherB,		\
 			  TYPE beta);				\
   template <>							\
-  void Matrix<TYPE>::gemm(CBLAS_TRANSPOSE trans_A,		\
-			  CBLAS_TRANSPOSE trans_B,		\
-			  TYPE alpha,				\
-			  const SparseMatrix<TYPE> *otherA,	\
-			  const Matrix<TYPE> *otherB,		\
-			  TYPE beta);
+  void Matrix<TYPE>::sparseMM(CBLAS_TRANSPOSE trans_A,		\
+                              TYPE alpha,                       \
+                              const SparseMatrix<TYPE> *otherA,	\
+                              const Matrix<TYPE> *otherB,       \
+                              TYPE beta);
 
 /////////////////////////////////////////////////////////////////////////////
 

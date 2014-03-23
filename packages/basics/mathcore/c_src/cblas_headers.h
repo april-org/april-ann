@@ -22,7 +22,10 @@
 #ifndef CBLAS_HEADERS_H
 #define CBLAS_HEADERS_H
 
+#include "complex_number.h"
 #include "aligned_memory.h"
+
+enum SPARSE_FORMAT { CSR_FORMAT=0, CSC_FORMAT=1, NONE_FORMAT=255 };
 
 #ifdef USE_MKL
 #ifdef USE_XCODE
@@ -111,7 +114,6 @@ void cblas_ssbmv(CBLAS_ORDER order,
 #define NEGATE_CBLAS_TRANSPOSE(trans) ((trans) == CblasNoTrans)?CblasTrans:CblasNoTrans
 
 #ifndef USE_MKL
-#include "complex_number.h"
 // sparse BLAS is only available with CUDA or MKL
 void cblas_saxpyi(int NNZ, float alpha,
 		  const float *x_values_mem,
@@ -126,5 +128,35 @@ void cblas_caxpyi(int NNZ, const ComplexF *alpha,
 		  const int *x_indices_mem,
 		  ComplexF *y_mem);
 #endif
+
+void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
+		     CBLAS_TRANSPOSE a_transpose,
+		     int m, int n, int k,
+		     float alpha,
+		     const float *a_values_mem,
+		     const int *a_indices_mem,
+		     const int *a_first_index_mem,
+		     const float *b_mem, int b_inc,
+		     float beta, float *c_mem, int c_inc);
+
+void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
+		     CBLAS_TRANSPOSE a_transpose,
+		     int m, int n, int k,
+		     double alpha,
+		     const double *a_values_mem,
+		     const int *a_indices_mem,
+		     const int *a_first_index_mem,
+		     const double *b_mem, int b_inc,
+		     double beta, double *c_mem, int c_inc);
+
+void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
+		     CBLAS_TRANSPOSE a_transpose,
+		     int m, int n, int k,
+		     ComplexF alpha,
+		     const ComplexF *a_values_mem,
+		     const int *a_indices_mem,
+		     const int *a_first_index_mem,
+		     const ComplexF *b_mem, int b_inc,
+		     ComplexF beta, ComplexF *c_mem, int c_inc);
 
 #endif // CBLAS_HEADERS_H

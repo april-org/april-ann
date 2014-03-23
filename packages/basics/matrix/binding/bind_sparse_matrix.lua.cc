@@ -85,7 +85,7 @@ public:
   if (argn == 1) {
     MatrixFloat *m;
     LUABIND_GET_PARAMETER(1, MatrixFloat, m);
-    obj = new SparseMatrixFloat(m, SparseMatrixFloat::CSR_FORMAT);
+    obj = new SparseMatrixFloat(m, CSR_FORMAT);
   }
   else {
     int rows,cols;
@@ -113,7 +113,7 @@ public:
     }
     obj = new SparseMatrixFloat(rows, cols,
 				values, indices, first_index,
-				SparseMatrixFloat::CSR_FORMAT,
+				CSR_FORMAT,
 				sort);
   }
   LUABIND_RETURN(SparseMatrixFloat,obj);
@@ -127,7 +127,7 @@ public:
   if (argn == 1) {
     MatrixFloat *m;
     LUABIND_GET_PARAMETER(1, MatrixFloat, m);
-    obj = new SparseMatrixFloat(m, SparseMatrixFloat::CSC_FORMAT);
+    obj = new SparseMatrixFloat(m, CSC_FORMAT);
   }
   else {
     int rows,cols;
@@ -154,7 +154,7 @@ public:
     }
     obj = new SparseMatrixFloat(rows, cols,
 				values, indices, first_index,
-				SparseMatrixFloat::CSC_FORMAT,
+				CSC_FORMAT,
 				sort);
   }
   LUABIND_RETURN(SparseMatrixFloat,obj);
@@ -325,7 +325,7 @@ public:
 
 //BIND_METHOD SparseMatrixFloat get_sparse_format
 {
-  if (obj->getSparseFormat() == SparseMatrixFloat::CSR_FORMAT)
+  if (obj->getSparseFormat() == CSR_FORMAT)
     LUABIND_RETURN(string, "csr");
   else LUABIND_RETURN(string, "csc");
 }
@@ -387,8 +387,8 @@ public:
   else {
     const char *sparse;
     LUABIND_GET_PARAMETER(1, string, sparse);
-    SparseMatrixFloat::SPARSE_FORMAT format = SparseMatrixFloat::CSC_FORMAT;
-    if (strcmp(sparse, "csr") == 0) format = SparseMatrixFloat::CSR_FORMAT;
+    SPARSE_FORMAT format = CSC_FORMAT;
+    if (strcmp(sparse, "csr") == 0) format = CSR_FORMAT;
     else if (strcmp(sparse, "csc") != 0)
       LUABIND_FERROR1("Incorrect sparse format string %s", sparse);
     obj2 = obj->clone(format);
@@ -423,8 +423,8 @@ public:
     LUABIND_GET_PARAMETER(1, MatrixFloat, m);
     const char *sparse;
     LUABIND_GET_OPTIONAL_PARAMETER(2, string, sparse, "csr");
-    SparseMatrixFloat::SPARSE_FORMAT format = SparseMatrixFloat::CSR_FORMAT;
-    if (strcmp(sparse, "csc") == 0) format = SparseMatrixFloat::CSC_FORMAT;
+    SPARSE_FORMAT format = CSR_FORMAT;
+    if (strcmp(sparse, "csc") == 0) format = CSC_FORMAT;
     else if (strcmp(sparse, "csr") != 0)
       LUABIND_FERROR1("Incorrect sparse format string %s", sparse);    
     obj = SparseMatrixFloat::diag(m,format);
@@ -434,8 +434,8 @@ public:
     LUABIND_GET_PARAMETER(1, FloatGPUMirroredMemoryBlock, block);
     const char *sparse;
     LUABIND_GET_OPTIONAL_PARAMETER(2, string, sparse, "csr");
-    SparseMatrixFloat::SPARSE_FORMAT format = SparseMatrixFloat::CSR_FORMAT;
-    if (strcmp(sparse, "csc") == 0) format = SparseMatrixFloat::CSC_FORMAT;
+    SPARSE_FORMAT format = CSR_FORMAT;
+    if (strcmp(sparse, "csc") == 0) format = CSC_FORMAT;
     else if (strcmp(sparse, "csr") != 0)
       LUABIND_FERROR1("Incorrect sparse format string %s", sparse);    
     obj = SparseMatrixFloat::diag(block,format);
@@ -447,8 +447,8 @@ public:
     LUABIND_GET_PARAMETER(2, float, v);
     const char *sparse;
     LUABIND_GET_OPTIONAL_PARAMETER(3, string, sparse, "csr");
-    SparseMatrixFloat::SPARSE_FORMAT format = SparseMatrixFloat::CSR_FORMAT;
-    if (strcmp(sparse, "csc") == 0) format = SparseMatrixFloat::CSC_FORMAT;
+    SPARSE_FORMAT format = CSR_FORMAT;
+    if (strcmp(sparse, "csc") == 0) format = CSC_FORMAT;
     else if (strcmp(sparse, "csr") != 0)
       LUABIND_FERROR1("Incorrect sparse format string %s", sparse);  
     obj = SparseMatrixFloat::diag(N,v,format);

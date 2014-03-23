@@ -323,9 +323,9 @@ void Matrix<T>::axpy(T alpha, const SparseMatrix<T> *other) {
 		size(), other->size());
   if (!isVector())
     ERROR_EXIT(128, "sparse AXPY only works with vectors\n");
-  if ( (other->getSparseFormat() == SparseMatrix<T>::CSR_FORMAT &&
+  if ( (other->getSparseFormat() == CSR_FORMAT &&
 	other->getDimSize(0) != 1) ||
-       (other->getSparseFormat() == SparseMatrix<T>::CSC_FORMAT &&
+       (other->getSparseFormat() == CSC_FORMAT &&
 	other->getDimSize(1) != 1) )
     ERROR_EXIT(128, "sparse AXPY needs a CSR row-vector or a CSC col-vector\n");
   doSparseAxpy(other->nonZeroSize(), alpha,
@@ -391,19 +391,54 @@ void Matrix<T>::gemm(CBLAS_TRANSPOSE trans_A,
 }
 
 template <typename T>
-void Matrix<T>::gemm(CBLAS_TRANSPOSE trans_A,
-		     CBLAS_TRANSPOSE trans_B,
-		     T alpha,
-		     const SparseMatrix<T> *otherA,
-		     const Matrix<T> *otherB,
-		     T beta) {
-  UNUSED_VARIABLE(trans_A);
-  UNUSED_VARIABLE(trans_B);
-  UNUSED_VARIABLE(alpha);
-  UNUSED_VARIABLE(otherA);
-  UNUSED_VARIABLE(otherB);
-  UNUSED_VARIABLE(beta);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+void Matrix<T>::sparseMM(CBLAS_TRANSPOSE trans_A,
+                         T alpha,
+                         const SparseMatrix<T> *otherA,
+                         const Matrix<T> *otherB,
+                         T beta) {
+  if (this == otherB)
+    ERROR_EXIT(128, "Sparse GEMM method couldn't receive as A or B argument "
+	       "the caller object\n");
+  if (numDim != 2 || otherA->getNumDim() != 2 || otherB->numDim != 2)
+    ERROR_EXIT(128,"Incorrect number of dimensions, only allowed for numDim=2\n");
+  int row_idx_A = 0, col_idx_A = 1, row_idx_B = 0, col_idx_B = 1;
+  if (trans_A == CblasTrans) april_utils::swap(row_idx_A, col_idx_A);
+  if (matrixSize[0] != otherA->getDimSize(row_idx_A) ||
+      matrixSize[1] != otherB->matrixSize[col_idx_B] ||
+      otherA->getDimSize(col_idx_A) != otherB->matrixSize[row_idx_B])
+    ERROR_EXIT6(128, "Incorrect matrixes dimensions: %dx%d + %dx%d * %dx%d\n",
+		matrixSize[0], matrixSize[1],
+		otherA->getDimSize(row_idx_A), otherA->getDimSize(col_idx_A),
+		otherB->matrixSize[row_idx_B], otherB->matrixSize[col_idx_B]);
+  if (major_order != otherB->major_order)
+    ERROR_EXIT(128, "Matrices with different major orders\n");
+  
+  int M=matrixSize[0], N=matrixSize[1], K=otherA->getDimSize(col_idx_A);
+  int ldb, ldc;
+  if (major_order == CblasRowMajor) {
+    ldb = (!otherB->getTransposedFlag())?(otherB->stride[0]):(otherB->stride[1]);
+    ldc = (!this->getTransposedFlag()  )?(this->stride[0]  ):(this->stride[1]);
+  }
+  else {
+    ldb = (!otherB->getTransposedFlag())?(otherB->stride[1]):(otherB->stride[0]);
+    ldc = (!this->getTransposedFlag()  )?(this->stride[1]  ):(this->stride[0]);
+  }
+  if (otherB->stride[0]+otherB->stride[1] != ldb+1 ||
+      this->stride[0]  +this->stride[1]   != ldc+1)
+    ERROR_EXIT(128, "Contiguous matrices are needed\n");
+  // if (otherB->getTransposedFlag()) trans_B=NEGATE_CBLAS_TRANSPOSE(trans_B);
+  doSparseMM<T>(major_order,
+                otherA->getSparseFormat(),
+                trans_A,
+                M, N, K,
+                alpha,
+                otherA->getRawValuesAccess(),
+                otherA->getRawIndicesAccess(),
+                otherA->getRawFirstIndexAccess(),
+                otherB->data, ldb,
+                beta, data, ldc,
+                otherB->offset, offset,
+                use_cuda);
 }
 
 template <typename T>

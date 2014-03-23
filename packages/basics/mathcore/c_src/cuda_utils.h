@@ -89,4 +89,13 @@ static cublasOperation_t getCublasOperation(CBLAS_TRANSPOSE operation) {
   else // operation == CblasConjTrans
     return CUBLAS_OP_C;
 }
+
+static cusparseOperation_t getCusparseOperation(CBLAS_TRANSPOSE operation) {
+  if (operation == CblasNoTrans)
+    return CUSPARSE_OPERATION_NON_TRANSPOSE;
+  else if (operation == CblasTrans)
+    return CUSPARSE_OPERATION_TRANSPOSE;
+  else // operation == CblasConjTrans
+    return CUSPARSE_OPERATION_CONJUGATE_TRANSPOSE;
+}
 #endif

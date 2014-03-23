@@ -164,6 +164,7 @@ struct Complex {
 };
 
 typedef Complex<float> ComplexF;
+typedef Complex<double> ComplexD;
 
 #ifdef UNDEF_HOST
 #undef __host__

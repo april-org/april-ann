@@ -42,6 +42,8 @@
 template <typename T>
 class SparseMatrix;
 
+/// Multidimensional matrix class. It implements basic linear algebra routines
+/// and other math operations. By default, the zero value must be T()
 template <typename T>
 class Matrix : public Referenced {
   const static unsigned int MATRIX_BINARY_VERSION;
@@ -486,7 +488,8 @@ private:
   Matrix(int numDim, const int *stride, const int offset,
 	 const int *matrixSize, const int total_size, const int last_raw_pos,
 	 GPUMirroredMemoryBlock<T> *data, const CBLAS_ORDER major_order,
-	 const bool use_cuda, const bool transposed);
+	 const bool use_cuda, const bool transposed,
+	 april_utils::MMappedDataReader *mmapped_data = 0);
 
   /// Modifies the offset of the matrix. WARNING, this method doesn't check the
   /// new data position, so be sure that it fits in the data pointer size
@@ -608,6 +611,8 @@ public:
 
   /// Symbolic transposition, changes the flag
   Matrix<T>* transpose();
+  /// Changing major order is a different way to perform a transposition
+  Matrix<T>* changeOrder(CBLAS_ORDER new_major_order);
   /// Copy only sizes, but not data
   Matrix<T>* cloneOnlyDims() const;
   /// Deep copy
@@ -743,13 +748,12 @@ public:
 	    const Matrix<T> *otherB,
 	    T beta);
 
-  // GEMM Sparse BLAS operation this = alpha * op(A)*op(B) + beta*this
-  void gemm(CBLAS_TRANSPOSE trans_A,
-	    CBLAS_TRANSPOSE trans_B,
-	    T alpha,
-	    const SparseMatrix<T> *otherA,
-	    const Matrix<T> *otherB,
-	    T beta);
+  // MM Sparse BLAS operation this = alpha * op(A)*B + beta*this
+  void sparseMM(CBLAS_TRANSPOSE trans_A,
+                T alpha,
+                const SparseMatrix<T> *otherA,
+                const Matrix<T> *otherB,
+                T beta);
 
   // GEMV BLAS operation this = alpha * op(A)*X + beta*this
   void gemv(CBLAS_TRANSPOSE trans_A,

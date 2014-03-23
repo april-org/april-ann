@@ -913,6 +913,27 @@ public:
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat change_order
+{
+  const char *major;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, string, major, 0);
+  CBLAS_ORDER order;
+  if (major != 0) {
+    if (strcmp(major, "col_major") == 0) order = CblasColMajor;
+    else if (strcmp(major, "row_major") == 0) order = CblasRowMajor;
+    else {
+      order = CblasRowMajor; // avoids compiler warning
+      LUABIND_FERROR1("Incorrect major order string %s", major);
+    }
+  }
+  else {
+    if (obj->getMajorOrder() == CblasRowMajor) order = CblasColMajor;
+    else order = CblasRowMajor;
+  }
+  LUABIND_RETURN(MatrixFloat, obj->changeOrder(order));
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat isfinite
 //DOC_BEGIN
 // bool isfinite
@@ -1343,6 +1364,29 @@ public:
 	      trans_B ? CblasTrans : CblasNoTrans,
 	      alpha, matA, matB,
 	      beta);
+    LUABIND_RETURN(MatrixFloat, obj);
+  }
+//BIND_END
+
+//BIND_METHOD MatrixFloat sparse_mm
+  {
+    LUABIND_CHECK_ARGN(==, 1);
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L,1, "trans_A", "alpha", "A", "B", "beta",
+		       (const char *)0);
+    bool trans_A;
+    float alpha;
+    float beta;
+    SparseMatrixFloat *matA;
+    MatrixFloat *matB;
+    LUABIND_GET_TABLE_PARAMETER(1, A, SparseMatrixFloat, matA);
+    LUABIND_GET_TABLE_PARAMETER(1, B, MatrixFloat, matB);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_A, bool, trans_A, false);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, float, alpha, 1.0f);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f);
+    obj->sparseMM(trans_A ? CblasTrans : CblasNoTrans,
+                  alpha, matA, matB,
+                  beta);
     LUABIND_RETURN(MatrixFloat, obj);
   }
 //BIND_END

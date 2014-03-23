@@ -310,11 +310,31 @@ void doSparseAxpy(int NNZ,
 template<typename T>
 void doGemm(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
 	    CBLAS_TRANSPOSE b_transpose, int m, int n, int k, T alpha,
-	    GPUMirroredMemoryBlock<T>* a, unsigned int a_inc,
-	    GPUMirroredMemoryBlock<T>* b, unsigned int b_inc, T beta,
+	    const GPUMirroredMemoryBlock<T>* a, unsigned int a_inc,
+	    const GPUMirroredMemoryBlock<T>* b, unsigned int b_inc, T beta,
 	    GPUMirroredMemoryBlock<T>* c, unsigned int c_inc,
 	    unsigned int a_shift, unsigned int b_shift, unsigned int c_shift,
 	    bool use_gpu);
+
+template <typename T>
+void doSparseMM(CBLAS_ORDER major_order,
+		SPARSE_FORMAT sparse_format,
+		CBLAS_TRANSPOSE a_transpose,
+		int m,
+		int n,
+		int k,
+		T alpha,
+		const GPUMirroredMemoryBlock<T>* a_values,
+		const Int32GPUMirroredMemoryBlock* a_indices,
+		const Int32GPUMirroredMemoryBlock* a_first_index,
+		const GPUMirroredMemoryBlock<T>* b,
+		int b_inc,
+		T beta,
+		GPUMirroredMemoryBlock<T>* c,
+		int c_inc,
+		int b_shift,
+		int c_shift,
+		bool use_gpu);
 
 template<typename T>
 void doScal(unsigned int size,

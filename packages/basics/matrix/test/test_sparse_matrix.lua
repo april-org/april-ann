@@ -37,3 +37,31 @@ local b = matrix.sparse.csr(3,blockf{3},blocki{2})
 print(b)
 
 print(aux3:toString("ascii"))
+
+local a = matrix.sparse.csc(matrix(4,3,{
+                                     1,  2,  3, 0,
+                                     0,  0,  2, 0,
+                                     0, -1,  0, 1,
+                                       }))
+local b = matrix(4,2,{
+                   2, 1,
+                   1, 0,
+                     -1, -2,
+                   1, 2,
+                     })
+
+local c = matrix(3,2):sparse_mm({
+                                  trans_A=true,
+                                  alpha=1.0,
+                                  A=a,
+                                  B=b:transpose(),
+                                  beta=0.0,
+                                })
+
+print(c)
+
+print(matrix(3,4,{
+               1,  2,  3, 0,
+               0,  0,  2, 0,
+               0, -1,  0, 1,
+                 }) * b)

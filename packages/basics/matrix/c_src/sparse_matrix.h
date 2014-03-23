@@ -46,10 +46,6 @@
 /// which shared the data pointers.
 template <typename T>
 class SparseMatrix : public Referenced {
-public:
-  enum SPARSE_FORMAT { CSR_FORMAT=0, CSC_FORMAT=1,
-		       NONE_FORMAT=255 };
-private:
   const static unsigned int MATRIX_BINARY_VERSION;
   // Auxiliary count variable where the user could store the number of times
   // this object is shared in a computation (like in ANN components sharing
@@ -254,7 +250,7 @@ public:
   }
 
   /// Symbolic transposition, changes the sparse format
-  SparseMatrix<T>* transpose() const;
+  SparseMatrix<T>* transpose();
   /// Deep copy with different sparse format
   SparseMatrix<T> *clone(SPARSE_FORMAT sparse_format = NONE_FORMAT) const;
   

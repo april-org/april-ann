@@ -396,17 +396,20 @@ SparseMatrix<T>::~SparseMatrix() {
 }
 
 template<typename T>
-SparseMatrix<T> *SparseMatrix<T>::transpose() const {
-  SparseMatrix<T> *result = new SparseMatrix<T>(this);
-  april_utils::swap(result->matrixSize[0], result->matrixSize[1]);
-  if (sparse_format == CSR_FORMAT) result->sparse_format = CSC_FORMAT;
-  else result->sparse_format = CSR_FORMAT;
+SparseMatrix<T> *SparseMatrix<T>::transpose() {
+  SparseMatrix<T> *result =
+    new SparseMatrix<T>(matrixSize[1],
+                        matrixSize[0],
+                        values,
+                        indices,
+                        first_index,
+                        (sparse_format == CSR_FORMAT) ? CSC_FORMAT : CSR_FORMAT,
+                        false);
   return result;
 }
 
 template<typename T>
-SparseMatrix<T> *SparseMatrix<T>::clone(SparseMatrix<T>::SPARSE_FORMAT
-					sparse_format) const {
+SparseMatrix<T> *SparseMatrix<T>::clone(SPARSE_FORMAT sparse_format) const {
   return new SparseMatrix<T>(this, sparse_format);
 }
 

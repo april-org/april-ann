@@ -457,13 +457,13 @@ readSparseMatrixFromStream(StreamType &stream,
   }
   int dims[2], n=0, NZ;
   for (int i=0; i<2; ++i, ++n) {
-    if (!token.extract_int(&dims[i])) {
+    if (!line.extract_int(&dims[i])) {
       ERROR_PRINT1("incorrect dimension %d type, expected a integer\n", n);
       return 0;
     }
     n++;
   }
-  if (!token.extract_int(&NZ)) {
+  if (!line.extract_int(&NZ)) {
     ERROR_PRINT("impossible to read the number of non-zero elements\n");
     return 0;
   }
@@ -481,15 +481,9 @@ readSparseMatrixFromStream(StreamType &stream,
   Int32GPUMirroredMemoryBlock *first_index = 0;
   if (!sparse || sparse=="csr") {
     first_index = new Int32GPUMirroredMemoryBlock(dims[0]+1);
-    mat = new SparseMatrix<MatrixType>(dims[0],dims[1],
-				       values,indices,first_index,
-				       SparseMatrix<MatrixType>::CSR_FORMAT);
   }
   else if (sparse=="csc") {
     first_index = new Int32GPUMirroredMemoryBlock(dims[1]+1);
-    mat = new SparseMatrix<MatrixType>(dims[0],dims[1],
-				       values,indices,first_index,
-				       SparseMatrix<MatrixType>::CSC_FORMAT);
   }
   else {
     ERROR_PRINT("Impossible to determine the sparse format\n");
@@ -501,47 +495,70 @@ readSparseMatrixFromStream(StreamType &stream,
   if (format == "ascii") {
     int i=0;
     while(i<NZ) {
-      line=stream.extract_u_line();
-      while(i<NZ)
-	if (!ascii_extractor(line, values_ptr[i++]))
-	  ERROR_EXIT(128, "Incorrect sparse matrix format\n");
+      if (! (line=stream.extract_u_line()) )
+        ERROR_EXIT(128, "Incorrect sparse matrix format\n");
+      while(i<NZ &&
+            ascii_extractor(line, values_ptr[i])) {
+        ++i;
+      }
     }
     i=0;
     while(i<NZ) {
-      line=stream.extract_u_line();
-      while(i<NZ)
-	if (!line.extract_int(&indices_ptr[i++]))
-	  ERROR_EXIT(128, "Incorrect sparse matrix format\n");
+      if (! (line=stream.extract_u_line()) )
+        ERROR_EXIT(128, "Incorrect sparse matrix format\n");
+      while(i<NZ &&
+            line.extract_int(&indices_ptr[i])) {
+        ++i;
+      }
     }
     i=0;
     while(i<static_cast<int>(first_index->getSize())) {
-      line=stream.extract_u_line();
-      while(i<NZ)
-	if (!line.extract_int(&first_index_ptr[i++]))
-	  ERROR_EXIT(128, "Incorrect sparse matrix format\n");
+      if (! (line=stream.extract_u_line()) )
+        ERROR_EXIT(128, "Incorrect sparse matrix format\n");
+      while(i<static_cast<int>(first_index->getSize()) &&
+            line.extract_int(&first_index_ptr[i])) {
+        ++i;
+      }
     }
   } else { // binary
     int i=0;
     while(i<NZ) {
-      line=stream.extract_u_line();
-      while(i<NZ)
-	if (!bin_extractor(line, values_ptr[i++]))
-	  ERROR_EXIT(128, "Incorrect sparse matrix format\n");
+      if (! (line=stream.extract_u_line()) )
+        ERROR_EXIT(128, "Incorrect sparse matrix format\n");
+      while(i<NZ &&
+            bin_extractor(line, values_ptr[i])) {
+        ++i;
+      }
     }
     i=0;
     while(i<NZ) {
-      line=stream.extract_u_line();
-      while(i<NZ)
-	if (!line.extract_int32_binary(&indices_ptr[i++]))
-	  ERROR_EXIT(128, "Incorrect sparse matrix format\n");
+      if (! (line=stream.extract_u_line()) )
+        ERROR_EXIT(128, "Incorrect sparse matrix format\n");
+      while(i<NZ &&
+            line.extract_int32_binary(&indices_ptr[i])) {
+        ++i;
+      }
     }
     i=0;
     while(i<static_cast<int>(first_index->getSize())) {
-      line=stream.extract_u_line();
-      while(i<NZ)
-	if (!line.extract_int32_binary(&first_index_ptr[i++]))
-	  ERROR_EXIT(128, "Incorrect sparse matrix format\n");
+      if (! (line=stream.extract_u_line()) )
+        ERROR_EXIT(128, "Incorrect sparse matrix format\n");
+      while(i<static_cast<int>(first_index->getSize()) &&
+            line.extract_int32_binary(&first_index_ptr[i])) {
+        ++i;
+      }
     }
+  }
+  if (sparse=="csr") {
+    mat = new SparseMatrix<MatrixType>(dims[0],dims[1],
+				       values,indices,first_index,
+				       CSR_FORMAT);
+  }
+  else {
+    // This was checked before: else if (sparse=="csc") {
+    mat = new SparseMatrix<MatrixType>(dims[0],dims[1],
+				       values,indices,first_index,
+				       CSC_FORMAT);
   }
   return mat;
 }
@@ -608,7 +625,7 @@ int writeSparseMatrixToStream(SparseMatrix<MatrixType> *mat,
   if (is_ascii) {
     const int columns = 9;
     stream.printf("ascii");
-    if (mat->getSparseFormat() == SparseMatrix<MatrixType>::CSR_FORMAT)
+    if (mat->getSparseFormat() == CSR_FORMAT)
       stream.printf(" csr");
     else
       stream.printf(" csc");
@@ -638,7 +655,7 @@ int writeSparseMatrixToStream(SparseMatrix<MatrixType> *mat,
   } else { // binary
     const int columns = 16;
     stream.printf("binary");
-    if (mat->getSparseFormat() == SparseMatrix<MatrixType>::CSR_FORMAT)
+    if (mat->getSparseFormat() == CSR_FORMAT)
       stream.printf(" csr");
     else
       stream.printf(" csc");

@@ -775,8 +775,7 @@ void Matrix<float>::svd(Matrix<float> **U, SparseMatrix<float> **S, Matrix<float
   const int dimsS[1]  = {numSV};
   const int dimsVT[2] = {n, n};
   *U  = new Matrix<float>(2, dimsU,  CblasColMajor);
-  *S  = SparseMatrix<float>::diag(numSV, 0.0f,
-				  SparseMatrix<float>::CSR_FORMAT);
+  *S  = SparseMatrix<float>::diag(numSV, 0.0f, CSR_FORMAT);
   *VT = new Matrix<float>(2, dimsVT, CblasColMajor);
   INFO = clapack_sgesdd(CblasColMajor, m, n, lda, A->getData(),
 			(*U)->getData(),
