@@ -27,6 +27,7 @@
 
 class GZFileWrapper {
   gzFile f;
+  bool need_close;
 public:
   static bool isGZ(const char *filename) {
     int len = strlen(filename);
@@ -34,17 +35,21 @@ public:
 	    filename[len-2] == 'g' &&
 	    filename[len-1] == 'z');
   }
-
-  GZFileWrapper() : f(0) { }
+  
+  GZFileWrapper(GZFileWrapper &other) : f(other.f), need_close(false) { }
+  GZFileWrapper(gzFile f) : f(f), need_close(false) { }
+  GZFileWrapper() : f(0), need_close(true) { }
   ~GZFileWrapper() {
-    if (f != 0) closeS();
+    closeS();
   }
+  bool isOpened() const { return f != 0; }
   bool openS(const char *path, const char *mode) {
     f = gzopen(path, mode);
+    need_close = true;
     return f != 0;
   }
   void closeS() {
-    gzclose(f);
+    if (need_close && f != 0) gzclose(f);
     f = 0;
   }
   size_t readS(void *ptr, size_t size, size_t nmemb) {

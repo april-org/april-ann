@@ -26,6 +26,7 @@
 #include "luabindutil.h"
 #include "luabindmacros.h"
 #include "bind_matrix_int32.h"
+#include "bind_gzio.h"
 
 #define FUNCTION_NAME "read_vector"
 static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
@@ -422,6 +423,24 @@ public:
   const char *filename;
   LUABIND_GET_PARAMETER(1, string, filename);
   writeMatrixFloatToTabFile(obj, filename);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat toTabStream
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  if (lua_isBufferedGZFile(L,1)) {
+    BufferedGZFile *stream;
+    LUABIND_GET_PARAMETER(1, BufferedGZFile, stream);
+    writeMatrixFloatToTabGZStream(obj, stream);
+  }
+  else {
+    luaL_Stream *p = ((luaL_Stream *)luaL_checkudata(L, 1, LUA_FILEHANDLE));
+    if (p == 0)
+      LUABIND_ERROR("First argument must be a file");
+    FILE *stream = p->f;
+    writeMatrixFloatToTabStream(obj, stream);
+  }
 }
 //BIND_END
 
