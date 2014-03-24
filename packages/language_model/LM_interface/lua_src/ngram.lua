@@ -17,12 +17,8 @@ local function print_pw(flog, lastword, previousword, ngram_value, p)
 end
 
 function language_models.get_sentence_prob(lm, vocab, words, flog, debug_flag,
-				 unk_id, init_id, final_id,
-				 is_stream, use_unk, order,
-				 use_bcc, use_ecc,
-				 multi_class_table,
-				 multi_class_table_inv,
-				 num_classes)
+				 unk_id, init_id,
+				 use_unk, use_bcc, use_ecc)
   local lmi = lm:get_interface()
   if use_unk == "none" then unk_id = -1 end
   local flog       = flog       or io.stdout
@@ -44,56 +40,23 @@ function language_models.get_sentence_prob(lm, vocab, words, flog, debug_flag,
   local ini = 1
   local lastunk = -ngram_value
   local not_used_words = 0
+
+  assert(lm:is_deterministic(),
+         "Error: Expected a deterministic LM")
+
   for i=1,numwords do
     if word_ids[i] == -1 then
       numunks = numunks + 1
       lastunk = i
       key = lmi:get_zero_key()
     elseif i - lastunk >= ngram_value then
-      if num_classes then
-	local pos = multi_class_table_inv[word_ids[i]]
-	local row = math.floor((pos-1)/num_classes)
-	local col = math.fmod(pos-1, num_classes)
-	local row_offset = row*num_classes
-	local col_prob = 0
-	local row_prob = 0
-	for kk=1,num_classes do
-	  local current_row_w = multi_class_table[row_offset + kk]
-	  local current_col_w = multi_class_table[(kk-1)*num_classes + col + 1]
-	  local prob
-	  if current_row_w then
-	    result = lmi:get(key, current_row_w)
-	    assert(result:size() == 1,
-		   "Error: Expected a deterministic LM")
-	    _,prob = result:get(1)
-	    row_prob = row_prob + math.exp(prob)
-	  end
-	  if current_col_w then
-	    result = lmi:get(key, current_col_w)
-	    assert(result:size() == 1,
-		   "Error: Expected a deterministic LM")
-	    _,prob = result:get(1)
-	    col_prob = col_prob + math.exp(prob)
-	  end
-	end
-	local aux
-	p = math.log(col_prob) + math.log(row_prob)
 	result = lmi:get(key, word_ids[i])
-	assert(result:size() == 1,
-	       "Error: Expected a deterministic LM")
-	key,aux = result:get(1)
-	-- print(aux, p, math.log(col_prob), math.log(row_prob))
-      else
-	result = lmi:get(key, word_ids[i])
-	assert(result:size() == 1,
-	       "Error: Expected a deterministic LM")
 	key,p = result:get(1)
-      end
       if word_ids[i] == unk_id then
 	numunks = numunks + 1
       end
       if not is_stream or i >= ngram_value then
-	if use_unk == "all" then
+	--if use_unk == "all" then
 	  p   = p / math.log(10)
 	  sum = sum + p
 	  if debug_flag >= 2 then
@@ -102,12 +65,10 @@ function language_models.get_sentence_prob(lm, vocab, words, flog, debug_flag,
 		     ((word_ids[i-1] ~= unk_id and words[i-1]) or words[i-1]) or "<s>",
 		     ngram_value, p)
 	  end
-	end
+	--end
       end
     else
       result = lmi:get(key, word_ids[i])
-      assert(result:size() == 1,
-             "Error: Expected a deterministic LM")
       key,p = result:get(1)
       not_used_words = not_used_words + 1
     end
@@ -118,8 +79,6 @@ function language_models.get_sentence_prob(lm, vocab, words, flog, debug_flag,
   if not is_stream then
     if use_ecc then
       result = lmi:get(key, final_id)
-      assert(result:size() == 1,
-             "Error: Expected a deterministic LM")
       _,p = result:get(1)
       p   = p / math.log(10)
       sum = sum + p
@@ -205,11 +164,6 @@ function language_models.test_set_ppl(lm, vocab, testset, flog, debug_flag,
     --   for word in words_it() do ... end
   end
   --]]
-  
-  
-  
-  
-  
 
   local multi_class_table_inv
   if multi_class_table then
