@@ -156,9 +156,12 @@ april_set_doc("interest_points.pointClassifier.getFishDs", {
 })
 function methods:getFishDs(img, x, y)
 
-    local mFish = img:comb_lineal_forward(x,y, self.ancho, self.alto, self.miniancho, self.minialto, self.inv_tlc)
-    local dsFish = dataset.matrix(mFish, {patternSize={self.miniancho*self.minialto},stepSize={self.miniancho*self.minialto}, numSteps={1} })
+    local mFish = img:comb_lineal_forward(x,y, self.ancho, self.alto, self.miniancho, self.minialto, self.inv_tlc):complement()
 
+
+    local dsFish = dataset.matrix(mFish, {patternSize={self.miniancho*self.minialto},stepSize={self.miniancho*self.minialto}, numSteps={1} })
+    
+    
     return dsFish
 end
 
