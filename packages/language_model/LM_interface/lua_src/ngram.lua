@@ -16,22 +16,22 @@ local function print_pw(flog, lastword, previousword, ngram_value, p)
 	   ngram_value, exp10(p), p)
 end
 
-function language_models.get_sentence_prob(lm, vocab, words, flog, debug_flag,
+function language_models.get_sentence_prob(lm, words_it, flog, debug_flag,
 				 unk_id, init_id,
 				 use_unk, use_bcc, use_ecc)
   local lmi = lm:get_interface()
   if use_unk == "none" then unk_id = -1 end
   local flog       = flog       or io.stdout
   local debug_flag = debug_flag or 0
-  local word_ids
-  word_ids = vocab:searchWordIdSequence(words, unk_id)
+  --local word_ids
+  --word_ids = vocab:searchWordIdSequence(words, unk_id)
   local key
   if use_bcc then key = lmi:get_initial_key()
   else key = lmi:get_zero_key() end
   local result
   local sum      = 0
   local p
-  local numwords    = #word_ids
+  local numwords    = 0
   local ngram_value = order or lm:ngram_order()
   local numunks     = 0
   --if not unk_smooth then unk_smooth = 0 else
@@ -40,56 +40,47 @@ function language_models.get_sentence_prob(lm, vocab, words, flog, debug_flag,
   local ini = 1
   local lastunk = -ngram_value
   local not_used_words = 0
+  local i = 1
 
   assert(lm:is_deterministic(),
          "Error: Expected a deterministic LM")
 
-  for i=1,numwords do
-    if word_ids[i] == -1 then
+  for word in words_it() do
+    if word == -1 then
       numunks = numunks + 1
       lastunk = i
       key = lmi:get_zero_key()
     elseif i - lastunk >= ngram_value then
-	result = lmi:get(key, word_ids[i])
+	result = lmi:get(key, word)
 	key,p = result:get(1)
-      if word_ids[i] == unk_id then
+      if word == unk_id then
 	numunks = numunks + 1
       end
       if not is_stream or i >= ngram_value then
 	--if use_unk == "all" then
 	  p   = p / math.log(10)
 	  sum = sum + p
-	  if debug_flag >= 2 then
-	    print_pw(flog,
-		     (word_ids[i] ~= unk_id and words[i]) or "<unk>",
-		     ((word_ids[i-1] ~= unk_id and words[i-1]) or words[i-1]) or "<s>",
-		     ngram_value, p)
-	  end
 	--end
       end
     else
-      result = lmi:get(key, word_ids[i])
+      result = lmi:get(key, word)
       key,p = result:get(1)
       not_used_words = not_used_words + 1
     end
+    i = i + 1
   end
+
+  numwords = i - 1
   if use_unk ~= "all" then
     numwords = numwords - numunks - not_used_words
   end
+
   if not is_stream then
     if use_ecc then
       result = lmi:get(key, final_id)
       _,p = result:get(1)
       p   = p / math.log(10)
       sum = sum + p
-      
-      local last = #word_ids
-      if debug_flag >= 2 then
-	print_pw(flog,
-		 "</s>",  
-		 ((word_ids[last] ~= unk_id and words[last]) or words[last]) or "<s>",
-		 ngram_value, p)
-      end
     end
   else
     numwords = numwords - ngram_value + 1
@@ -119,8 +110,8 @@ function language_models.get_prob_from_id_tbl(lm, word_ids, init_id, final_id,
   local numwords    = #word_ids
   local ngram_value = lm:ngram_order()
   for i=1,numwords do
-    if word_ids[i] ~= 0 then
-      result = lmi:get(key, word_ids[i])
+    if word ~= 0 then
+      result = lmi:get(key, word)
       assert(result:size() == 1,
              "Error: Expected a deterministic LM")
       key,p = result:get(1)

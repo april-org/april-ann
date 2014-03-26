@@ -2,13 +2,18 @@ local path = arg[0]:get_path()
 local vocab = lexClass.load(io.open(path .. "vocab"))
 local model = language_models.load(path .. "dihana3gram.lira.gz",
 				  vocab, "<s>", "</s>")
-local sum,numwords,numunks =
-  language_models.get_sentence_prob(model, vocab,
- 			               string.tokenize("quer'ia un tren con "..
-			                    	    "destino a barcelona"),
- 			               io.stdout, 2,
- 			                 -1, vocab:getWordId("<s>"),
- 			               vocab:getWordId("</s>"))
+local phrase = "quer'ia un tren con destino a barcelona"
+local lines_it = iterator(io.lines("frase")):
+map( function(line) return iterator(line:gmatch("[^%s]+")) end )
+for words_it in lines_it() do
+  words_it = words_it:map( function(w) return vocab:getWordId(w) or unk_id end )
+  local sum,numwords,numunks =
+    language_models.get_sentence_prob(model,
+					   words_it,
+					   io.stdout, 2,
+					   -1, vocab:getWordId("<s>"),
+					   vocab:getWordId("</s>"))
+end
 
 --print("TEST 2")
 --
