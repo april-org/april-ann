@@ -142,20 +142,6 @@ function language_models.test_set_ppl(lm, vocab, testset, flog, debug_flag,
 			    multi_class_table,
 			    num_classes)
 
-  local unk_id = -1
-  if vocab:getWordId(unk_word) then unk_id = vocab:getWordId(unk_word) end
-  
-  local lines_it = iterator(io.lines("frase")):
-  map( function(line) return iterator(line:gmatch("[^%s]+")) end )
-  --[[
-  for words_it in lines_it() do
-    words_it:map( function(w) return vocab:getWordId(w) or unk_id end )
-    ngram.get_sentence_prob( words_it, ... )
-    -- dins del ngram:
-    --   for word in words_it() do ... end
-  end
-  --]]
-
   local multi_class_table_inv
   if multi_class_table then
     multi_class_table_inv = table.invert(multi_class_table)
@@ -173,8 +159,11 @@ function language_models.test_set_ppl(lm, vocab, testset, flog, debug_flag,
   local final_id = vocab:getWordId(final_word)
   -- lm:restart()
   local count = 0
-  for sentence in io.lines(testset) do
-    local words = string.tokenize(sentence)
+  local lines_it = iterator(io.lines(testset)):
+  map( function(line) return iterator(line:gmatch("[^%s]+")) end )
+
+  for words_it in lines_it() do
+    words_it = words_it:map( function(w) return vocab:getWordId(w) or unk_id end )
     local use_sentence = true
     if train_restriction then
       if words[1] ~= "<train>" then use_sentence = false end
@@ -182,24 +171,21 @@ function language_models.test_set_ppl(lm, vocab, testset, flog, debug_flag,
     end
     if use_sentence then
       count = count + 1
-      if #sentence > 0 and #words > 0 then
-	if debug_flag >= 1 then fprintf(flog, "%s\n", sentence) end
+      --if #sentence > 0 and #words > 0 then
+	--if debug_flag >= 1 then fprintf(flog, "%s\n", sentence) end
 	local sum,numwords,numunks =
-	  ngram.get_sentence_prob(lm, vocab, words, flog, debug_flag,
-				  unk_id, init_id, final_id,
-				  is_stream, use_unk, order,
-				  use_bcc, use_ecc,
-				  multi_class_table,
-				  multi_class_table_inv,
-				  num_classes)
+	  ngram.get_sentence_prob(lm, words_it, flog, debug_flag,
+				  unk_id, init_id,
+				  use_unk, use_bcc, use_ecc)
 	totalsum       = totalsum + sum
 	totalwords     = totalwords + numwords
 	totalunks      = totalunks + numunks
 	totalsentences = totalsentences + 1
-      end
+      --end
       -- if use_cache or math.mod(count, 1000) == 0 then lm:restart() end
       -- if use_cache then lm:restart() end
     end
+    --[[
     if use_cache then
       local word_ids
       word_ids = vocab:searchWordIdSequence(words, unk_id)
@@ -212,6 +198,7 @@ function language_models.test_set_ppl(lm, vocab, testset, flog, debug_flag,
       end
       --lm:showCache()
     end
+    ]]--
   end
   -- lm:restart()
   local entropy  = -totalsum/(totalwords + ((use_ecc and totalsentences) or 0))
