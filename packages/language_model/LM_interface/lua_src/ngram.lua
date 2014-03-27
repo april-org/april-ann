@@ -16,31 +16,47 @@ local function print_pw(flog, lastword, previousword, ngram_value, p)
 	   ngram_value, exp10(p), p)
 end
 
-function language_models.get_sentence_prob(lm, words_it, flog, debug_flag,
-				 unk_id, init_id,
-				 use_unk, use_bcc, use_ecc)
-  local lmi = lm:get_interface()
-  if use_unk == "none" then unk_id = -1 end
-  local flog       = flog       or io.stdout
-  local debug_flag = debug_flag or 0
-  --local word_ids
-  --word_ids = vocab:searchWordIdSequence(words, unk_id)
-  local key
-  if use_bcc then key = lmi:get_initial_key()
-  else key = lmi:get_zero_key() end
-  local result
+function language_models.get_sentence_prob(params)
+  local params = get_table_fields(
+    {
+      lm         = { mandatory = true },
+      words_it   = { mandatory = true },
+      flog       = { mandatory = false, default = io.stdout },
+      debug_flag = { mandatory = false, type_match = "number", default = 0 },
+      unk_id     = { mandatory = false, type_match = "string" },
+      final_id   = { mandatory = false, type_match = "string", default = "</s>" },
+      use_unk    = { mandatory = false, type_match = "string" },
+      use_bcc    = { mandatory = false },
+      use_ecc    = { mandatory = false }
+    }, params)
+
+  local lm = params.lm
+  local words_it = params.words_it
+  local flog = params.flog
+  local debug_flag = params.debug_flag
+  local unk_id = params.debug_flag
+  local final_id = params.final_id
+  local use_unk = params.use_unk
+  local use_bcc = params.use_bcc
+  local use_ecc = params.use_ecc
   local sum      = 0
-  local p
   local numwords    = 0
-  local ngram_value = order or lm:ngram_order()
   local numunks     = 0
-  --if not unk_smooth then unk_smooth = 0 else
-  --  unk_smooth        = log10(unk_smooth)
-  --end
-  local ini = 1
+  local lmi = lm:get_interface()
+  local ngram_value = lm:ngram_order()
   local lastunk = -ngram_value
   local not_used_words = 0
   local i = 1
+  local key
+  local p
+  local result
+
+  if use_bcc then 
+    key = lmi:get_initial_key()
+  else 
+    key = lmi:get_zero_key() end
+
+  if use_unk == "none" then unk_id = -1 end
 
   assert(lm:is_deterministic(),
          "Error: Expected a deterministic LM")
@@ -175,7 +191,7 @@ function language_models.test_set_ppl(lm, vocab, testset, flog, debug_flag,
 	--if debug_flag >= 1 then fprintf(flog, "%s\n", sentence) end
 	local sum,numwords,numunks =
 	  ngram.get_sentence_prob(lm, words_it, flog, debug_flag,
-				  unk_id, init_id,
+				  unk_id, final_id,
 				  use_unk, use_bcc, use_ecc)
 	totalsum       = totalsum + sum
 	totalwords     = totalwords + numwords

@@ -8,11 +8,11 @@ map( function(line) return iterator(line:gmatch("[^%s]+")) end )
 for words_it in lines_it() do
   words_it = words_it:map( function(w) return vocab:getWordId(w) or unk_id end )
   local sum,numwords,numunks =
-    language_models.get_sentence_prob(model,
-					   words_it,
-					   io.stdout, 2,
-					   -1, vocab:getWordId("<s>"),
-					   vocab:getWordId("</s>"))
+    language_models.get_sentence_prob{ 
+    					    lm = model,
+					    words_it = words_it,
+					    debug_flag = 2
+					  }
 end
 
 --print("TEST 2")
