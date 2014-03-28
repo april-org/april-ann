@@ -19,6 +19,7 @@
  *
  */
 
+#include "april_assert.h"
 #include "unused_variable.h"
 #include "cblas_headers.h"
 #include "error_print.h"
@@ -153,6 +154,78 @@ void generic_cblas_axpyi(int NNZ, T alpha,
   }
 }
 
+template<typename T>
+void generic_cblas_sparse_mm(SPARSE_FORMAT sparse_format,
+                             CBLAS_TRANSPOSE a_transpose,
+                             int m, int n, int k,
+                             T alpha,
+                             const T *a_values_mem,
+                             const int *a_indices_mem,
+                             const int *a_first_index_mem,
+                             const T *b_mem, int b_inc,
+                             T beta, T *c_mem, int c_inc) {
+  UNUSED_VARIABLE(k);
+  if (a_transpose == CblasTrans) {
+    if (sparse_format == CSR_FORMAT) sparse_format = CSC_FORMAT;
+    else sparse_format = CSR_FORMAT;
+  }
+  if (sparse_format == CSR_FORMAT) {
+    // for each destination row
+    for (int i=0; i<m; ++i) {
+      int first  = a_first_index_mem[i];
+      int lastp1 = a_first_index_mem[i+1]; // last plus 1
+      int c_pos  = i*c_inc;
+      printf("%d\n", c_pos);
+      // for each destination col
+      for (int j=0; j<n; ++j, ++c_pos) {
+        T aux = T();
+        for (int x=first; x<lastp1; ++x) {
+          int c1    = a_indices_mem[x];
+          int b_pos = c1*b_inc + j;
+          april_assert(0 <= c1 && c1 < k);
+          aux = aux + a_values_mem[x] * b_mem[b_pos];
+        }
+        if (beta == T()) c_mem[c_pos] = alpha * aux;
+        else c_mem[c_pos] = beta*c_mem[c_pos] + alpha*aux;
+      }
+    }
+  }
+  else if (sparse_format == CSC_FORMAT) {
+    // first C matrix needs to be initialized
+    if (beta == T()) {
+      for (int i=0; i<m; ++i) {
+        int c_pos  = i*c_inc;
+        for (int j=0; j<n; ++j, ++c_pos) {
+          c_mem[c_pos] = T();
+        }
+      }
+    }
+    else {
+      for (int i=0; i<m; ++i) {
+        int c_pos  = i*c_inc;
+        for (int j=0; j<n; ++j, ++c_pos) {
+          c_mem[c_pos] = c_mem[c_pos] * beta;
+        }
+      }
+    }
+    // for each destination col
+    for (int j=0; j<n; ++j) {
+      // for each A col
+      for (int i=0; i<k; ++i) {
+        int first  = a_first_index_mem[i];
+        int lastp1 = a_first_index_mem[i+1]; // last plus 1
+        // for each sparse destination row
+        for (int x=first; x<lastp1; ++x) {
+          int c0    = a_indices_mem[x];
+          int b_pos = c0*b_inc + j;
+          int c_pos = x*c_inc  + j;
+          c_mem[c_pos] = c_mem[c_pos] + alpha * a_values_mem[x] * b_mem[b_pos];
+        }
+      }
+    }
+  }
+}
+
 // cblas function implementations
 void cblas_saxpyi(int NNZ, float alpha,
 		  const float *x_values_mem,
@@ -181,21 +254,14 @@ void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
 		     const int *a_first_index_mem,
 		     const float *b_mem, int b_inc,
 		     float beta, float *c_mem, int c_inc) {
-  UNUSED_VARIABLE(sparse_format);
-  UNUSED_VARIABLE(a_transpose);
-  UNUSED_VARIABLE(m);
-  UNUSED_VARIABLE(n);
-  UNUSED_VARIABLE(k);
-  UNUSED_VARIABLE(alpha);
-  UNUSED_VARIABLE(a_values_mem);
-  UNUSED_VARIABLE(a_indices_mem);
-  UNUSED_VARIABLE(a_first_index_mem);
-  UNUSED_VARIABLE(b_mem);
-  UNUSED_VARIABLE(b_inc);
-  UNUSED_VARIABLE(beta);
-  UNUSED_VARIABLE(c_mem);
-  UNUSED_VARIABLE(c_inc);
-  ERROR_EXIT(128, "NOT IMPLEMENTED\n");
+  generic_cblas_sparse_mm(sparse_format,
+                          a_transpose,
+                          m,n,k,
+                          alpha,
+                          a_values_mem, a_indices_mem, a_first_index_mem,
+                          b_mem, b_inc,
+                          beta,
+                          c_mem, c_inc);
 }
 void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
 		     CBLAS_TRANSPOSE a_transpose,
@@ -206,21 +272,14 @@ void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
 		     const int *a_first_index_mem,
 		     const double *b_mem, int b_inc,
 		     double beta, double *c_mem, int c_inc) {
-  UNUSED_VARIABLE(sparse_format);
-  UNUSED_VARIABLE(a_transpose);
-  UNUSED_VARIABLE(m);
-  UNUSED_VARIABLE(n);
-  UNUSED_VARIABLE(k);
-  UNUSED_VARIABLE(alpha);
-  UNUSED_VARIABLE(a_values_mem);
-  UNUSED_VARIABLE(a_indices_mem);
-  UNUSED_VARIABLE(a_first_index_mem);
-  UNUSED_VARIABLE(b_mem);
-  UNUSED_VARIABLE(b_inc);
-  UNUSED_VARIABLE(beta);
-  UNUSED_VARIABLE(c_mem);
-  UNUSED_VARIABLE(c_inc);
-  ERROR_EXIT(128, "NOT IMPLEMENTED\n");
+  generic_cblas_sparse_mm(sparse_format,
+                          a_transpose,
+                          m,n,k,
+                          alpha,
+                          a_values_mem, a_indices_mem, a_first_index_mem,
+                          b_mem, b_inc,
+                          beta,
+                          c_mem, c_inc);
 }
 void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
 		     CBLAS_TRANSPOSE a_transpose,
@@ -231,21 +290,14 @@ void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
 		     const int *a_first_index_mem,
 		     const ComplexF *b_mem, int b_inc,
 		     ComplexF beta, ComplexF *c_mem, int c_inc) {
-  UNUSED_VARIABLE(sparse_format);
-  UNUSED_VARIABLE(a_transpose);
-  UNUSED_VARIABLE(m);
-  UNUSED_VARIABLE(n);
-  UNUSED_VARIABLE(k);
-  UNUSED_VARIABLE(alpha);
-  UNUSED_VARIABLE(a_values_mem);
-  UNUSED_VARIABLE(a_indices_mem);
-  UNUSED_VARIABLE(a_first_index_mem);
-  UNUSED_VARIABLE(b_mem);
-  UNUSED_VARIABLE(b_inc);
-  UNUSED_VARIABLE(beta);
-  UNUSED_VARIABLE(c_mem);
-  UNUSED_VARIABLE(c_inc);
-  ERROR_EXIT(128, "NOT IMPLEMENTED\n");
+  generic_cblas_sparse_mm(sparse_format,
+                          a_transpose,
+                          m,n,k,
+                          alpha,
+                          a_values_mem, a_indices_mem, a_first_index_mem,
+                          b_mem, b_inc,
+                          beta,
+                          c_mem, c_inc);
 }
 #else
 #include <mkl_spblas.h>
