@@ -20,19 +20,18 @@ function language_models.get_sentence_prob(params)
   local params = get_table_fields(
     {
       lm         = { mandatory = true },
-      words_it   = { mandatory = true },
-      flog       = { mandatory = false, default = io.stdout },
+      words_it   = { mandatory = true, isa_match = iterator },
+      log_file   = { mandatory = false, default = io.stdout },
       debug_flag = { mandatory = false, type_match = "number", default = 0 },
-      unk_id     = { mandatory = false, type_match = "string" },
-      final_id   = { mandatory = false, type_match = "string", default = "</s>" },
-      use_unk    = { mandatory = false, type_match = "string" },
+      unk_id     = { mandatory = false, type_match = "number", default = -1 },
+      use_unk    = { mandatory = false, type_match = "string", default = "all" },
       use_bcc    = { mandatory = false },
       use_ecc    = { mandatory = false }
     }, params)
 
   local lm = params.lm
   local words_it = params.words_it
-  local flog = params.flog
+  local log_file = params.log_file
   local debug_flag = params.debug_flag
   local unk_id = params.debug_flag
   local final_id = params.final_id
@@ -55,8 +54,6 @@ function language_models.get_sentence_prob(params)
     key = lmi:get_initial_key()
   else 
     key = lmi:get_zero_key() end
-
-  if use_unk == "none" then unk_id = -1 end
 
   assert(lm:is_deterministic(),
          "Error: Expected a deterministic LM")
@@ -103,15 +100,15 @@ function language_models.get_sentence_prob(params)
   end
   
   if debug_flag >= 1 then
-    fprintf (flog, "%d sentences, %d words, %d OOVs\n",
+    fprintf (log_file, "%d sentences, %d words, %d OOVs\n",
 	     1, numwords, numunks)
-    fprintf (flog, "0 zeroprobs, logprob= %.4f ppl= %.3f ppl1= %.3f\n",
+    fprintf (log_file, "0 zeroprobs, logprob= %.4f ppl= %.3f ppl1= %.3f\n",
 	     sum,
 	     exp10(-sum/(numwords+ ((use_ecc and 1) or 0) )),
 	     exp10(-sum/numwords))
-    fprintf (flog, "\n")
+    fprintf (log_file, "\n")
   end
-  flog:flush()
+  log_file:flush()
   return sum,numwords,numunks
 end
 
