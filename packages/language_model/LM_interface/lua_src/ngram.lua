@@ -9,11 +9,8 @@ local function log10(value)
   return math.log(value) / math.log(10)
 end
 
-local function print_pw(flog, lastword, previousword, ngram_value, p)
-  fprintf (flog, "\tp( %s | %s %s", lastword, previousword,
-	   (ngram_value > 2 and "...") or "")
-  fprintf (flog, ")\t= [%dgram] %g [ %f ]\n",
-	   ngram_value, exp10(p), p)
+local function print_pw(log_file, word_id, p)
+  fprintf (log_file, "\tp( %d | ... ) = %f\n", word_id, p)
 end
 
 function language_models.get_sentence_prob(params)
@@ -38,9 +35,9 @@ function language_models.get_sentence_prob(params)
   local use_unk = params.use_unk
   local use_bcc = params.use_bcc
   local use_ecc = params.use_ecc
-  local sum      = 0
-  local numwords    = 0
-  local numunks     = 0
+  local sum = 0
+  local numwords = 0
+  local numunks = 0
   local lmi = lm:get_interface()
   local ngram_value = lm:ngram_order()
   local lastunk = -ngram_value
@@ -50,37 +47,32 @@ function language_models.get_sentence_prob(params)
   local p
   local result
 
-  if use_bcc then 
-    key = lmi:get_initial_key()
-  else 
-    key = lmi:get_zero_key() end
-
   assert(lm:is_deterministic(),
          "Error: Expected a deterministic LM")
 
+  if use_bcc then 
+    key = lmi:get_initial_key()
+  else 
+    key = lmi:get_zero_key()
+  end
+
   for word in words_it() do
-    if word == -1 then
+    if word == unk_id then
       numunks = numunks + 1
       lastunk = i
       key = lmi:get_zero_key()
     elseif i - lastunk >= ngram_value then
 	result = lmi:get(key, word)
 	key,p = result:get(1)
-      if word == unk_id then
-	numunks = numunks + 1
-      end
-      if not is_stream or i >= ngram_value then
-	--if use_unk == "all" then
+	if use_unk ~= "none" then
 	  p   = p / math.log(10)
 	  sum = sum + p
-	--end
-      end
-    else
-      result = lmi:get(key, word)
-      key,p = result:get(1)
-      not_used_words = not_used_words + 1
+    	else
+	  not_used_words = not_used_words + 1
+	end
     end
     i = i + 1
+    print_pw(log_file, word, 0)
   end
 
   numwords = i - 1
