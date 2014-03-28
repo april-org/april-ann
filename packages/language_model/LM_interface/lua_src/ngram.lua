@@ -57,22 +57,48 @@ function language_models.get_sentence_prob(params)
   end
 
   for word in words_it() do
-    if word == unk_id then
+    -- If word id is -1, unknown words aren't
+    -- considered by the model. We must skip
+    -- the addition, store the unknown word
+    -- index and set key to zero key
+    if word == -1 then
       numunks = numunks + 1
       lastunk = i
       key = lmi:get_zero_key()
+    -- If unknown words don't appear on context
     elseif i - lastunk >= ngram_value then
 	result = lmi:get(key, word)
 	key,p = result:get(1)
-	if use_unk ~= "none" then
+	-- If current word is unknown, we store
+	-- the index and sum its probability if
+	-- we consider all unknown words
+	if word == unk_id then
+	  numunks = numunks + 1
+	  lastunk = i
+	  if use_unk == "all" then
+	    p   = p / math.log(10)
+	    sum = sum + p
+	  end
+	-- If it's known, we sum its probability
+	else
 	  p   = p / math.log(10)
 	  sum = sum + p
-    	else
+	end
+     -- If last unknown word is on context, then
+     -- we add its probability if we consider all
+     -- or only context unknown words
+     else
+	result = lmi:get(key, word)
+	key,p = result:get(1)
+	if use_unk == "none" then
 	  not_used_words = not_used_words + 1
+	else
+	  p   = p / math.log(10)
+	  sum = sum + p
 	end
     end
     i = i + 1
-    print_pw(log_file, word, 0)
+    print_pw(log_file, word, p)
   end
 
   numwords = i - 1
@@ -80,15 +106,11 @@ function language_models.get_sentence_prob(params)
     numwords = numwords - numunks - not_used_words
   end
 
-  if not is_stream then
-    if use_ecc then
-      result = lmi:get(key, final_id)
-      _,p = result:get(1)
-      p   = p / math.log(10)
-      sum = sum + p
-    end
-  else
-    numwords = numwords - ngram_value + 1
+  if use_ecc then
+    result = lmi:get(key, final_id)
+    _,p = result:get(1)
+    p   = p / math.log(10)
+    sum = sum + p
   end
   
   if debug_flag >= 1 then
@@ -101,6 +123,7 @@ function language_models.get_sentence_prob(params)
     fprintf (log_file, "\n")
   end
   log_file:flush()
+
   return sum,numwords,numunks
 end
 
