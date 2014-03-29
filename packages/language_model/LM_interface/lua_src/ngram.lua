@@ -9,8 +9,11 @@ local function log10(value)
   return math.log(value) / math.log(10)
 end
 
-local function print_pw(log_file, word_id, p)
-  fprintf (log_file, "\tp( %d | ... ) = %f\n", word_id, p)
+local function print_pw(log_file, lastword, previousword, ngram_value, p)
+  fprintf (log_file, "\tp( %s | %s %s", lastword, previousword,
+	 (ngram_value > 2 and "...") or "")
+  fprintf (log_file, ")\t= [%dgram] %g [ %f ]\n",
+	 ngram_value, exp10(p), p)
 end
 
 function language_models.get_sentence_prob(params)
@@ -46,6 +49,7 @@ function language_models.get_sentence_prob(params)
   local key
   local p
   local result
+  local prev_word
 
   assert(lm:is_deterministic(),
          "Error: Expected a deterministic LM")
@@ -56,23 +60,23 @@ function language_models.get_sentence_prob(params)
     key = lmi:get_zero_key()
   end
 
-  for word in words_it() do
+  for word_id,word in words_it() do
     -- If word id is -1, unknown words aren't
     -- considered by the model. We must skip
     -- the addition, store the unknown word
     -- index and set key to zero key
-    if word == -1 then
+    if word_id == -1 then
       numunks = numunks + 1
       lastunk = i
       key = lmi:get_zero_key()
     -- If unknown words don't appear on context
     elseif i - lastunk >= ngram_value then
-	result = lmi:get(key, word)
+	result = lmi:get(key, word_id)
 	key,p = result:get(1)
 	-- If current word is unknown, we store
 	-- the index and sum its probability if
 	-- we consider all unknown words
-	if word == unk_id then
+	if word_id == unk_id then
 	  numunks = numunks + 1
 	  lastunk = i
 	  if use_unk == "all" then
@@ -88,7 +92,7 @@ function language_models.get_sentence_prob(params)
      -- we add its probability if we consider all
      -- or only context unknown words
      else
-	result = lmi:get(key, word)
+	result = lmi:get(key, word_id)
 	key,p = result:get(1)
 	if use_unk == "none" then
 	  not_used_words = not_used_words + 1
@@ -97,8 +101,15 @@ function language_models.get_sentence_prob(params)
 	  sum = sum + p
 	end
     end
+
+    if debug_flag >= 2 then
+      print_pw(log_file,
+		 (word_id ~= unk_id and word) or "<unk>",
+		 ((prev_word_id ~= unk_id and prev_word) or prev_word) or "<s>",
+		 ngram_value, p)
+    end
+    prev_word = word      
     i = i + 1
-    print_pw(log_file, word, p)
   end
 
   numwords = i - 1
