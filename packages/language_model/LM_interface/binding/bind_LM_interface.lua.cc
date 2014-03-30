@@ -273,11 +273,16 @@ public:
 }
 //BIND_END
 
-//BIND_METHOD LMInterfaceUInt32LogFloat get_final_key
+//BIND_METHOD LMInterfaceUInt32LogFloat get_final_score
 {
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_CHECK_ARGN(<=, 2);
   uint32_t key;
-  obj->getFinalKey(key);
-  LUABIND_RETURN(uint, key);
+  LUABIND_GET_PARAMETER(1, uint, key);
+  float log_threshold;
+  LUABIND_GET_OPTIONAL_PARAMETER(2, float, log_threshold, log_float::zero());
+  log_float threshold = log_float(log_threshold);
+  LUABIND_RETURN(float, obj->getFinalScore(key, threshold).log());
 }
 //BIND_END
 

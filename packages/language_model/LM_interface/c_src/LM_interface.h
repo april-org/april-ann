@@ -176,9 +176,14 @@ namespace LanguageModels {
     }
 
     // I don't like this method, it seems to assume that there is only one final state
-    virtual void getFinalKey(Key &k) const = 0;
-    // replace by this method?
-    // virtual Score getFinalScore(const Key &k) const = 0;
+    //virtual void getFinalKey(Key &k) const = 0;
+    // replaced by getFinalScore method
+
+    // returns the score associated to the probability of being a
+    // final state. This method is not const since it may depend on
+    // get which is not const either. An score is provided as pruning
+    // technique (in the same way as with get method):
+    virtual Score getFinalScore(const Key &k, Score threshold) = 0;
   };
   
   /// The LMModel is the thread-safe part of the LM, where the model data is
