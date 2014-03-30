@@ -238,10 +238,17 @@ namespace LanguageModels {
     virtual void getInitialKey(Key &k) const {
       k = lira_model->initial_state;
     }
-    virtual void getFinalKey(Key &k) const {
-      k = lira_model->final_state;
+    // replaced by getFinalScore:
+    // virtual void getFinalKey(Key &k) const {
+    //   k = lira_model->final_state;
+    // }
+    virtual Score getFinalScore(const Key &k, Score threshold) {
+      vector<KeyScoreBurdenTuple> aux;
+      Burden dummyBurden;
+      get(k, lira_model->final_state, dummyBurden, aux, threshold);
+      // do we need the following assert? the model is deterministic
+      return (aux.size() == 1) ? aux[0].key_score.score : threshold;
     }
-
     // useful methods to look for an state:
     Key getDestState(Key st, const WordType word);
     Key findKeyFromNgram(const WordType *word_sequence, int len);
