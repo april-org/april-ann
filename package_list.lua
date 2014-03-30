@@ -2,6 +2,7 @@ return {
   -- BASIC PACAKGES
   --  "plotter",
   "util",
+  "utest",
   "stats",
   "dataset",
   "matrix",
