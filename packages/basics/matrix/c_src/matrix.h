@@ -609,10 +609,12 @@ public:
     return end_const_iterator;
   }
 
-  /// Symbolic transposition, changes the flag
+  /// Symbolic transposition, changes the flag and preserves the major order
+  /// flag
   Matrix<T>* transpose();
-  /// Changing major order is a different way to perform a transposition
-  Matrix<T>* changeOrder(CBLAS_ORDER new_major_order);
+  /// Changing major order is a different way to perform a transposition, but
+  /// taking into account a change in the major_order flag
+  Matrix<T>* inMajorOrder(CBLAS_ORDER new_major_order);
   /// Copy only sizes, but not data
   Matrix<T>* cloneOnlyDims() const;
   /// Deep copy
@@ -764,11 +766,11 @@ public:
 
   // GEMV Sparse BLAS operation this = alpha * op(A)*X + beta*this
   void gemv(CBLAS_TRANSPOSE trans_A,
-	    T alpha,
-	    const SparseMatrix<T> *otherA,
-	    const Matrix<T> *otherX,
-	    T beta);
-
+            T alpha,
+            const SparseMatrix<T> *otherA,
+            const Matrix<T> *otherX,
+            T beta);
+  
   // GER BLAS operation this = alpha * X*Y' + this
   void ger(T alpha,
 	   const Matrix<T> *otherX,

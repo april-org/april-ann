@@ -489,10 +489,10 @@ void Matrix<T>::gemv(CBLAS_TRANSPOSE trans_A,
 
 template <typename T>
 void Matrix<T>::gemv(CBLAS_TRANSPOSE trans_A,
-		     T alpha,
-		     const SparseMatrix<T> *otherA,
-		     const Matrix<T> *otherX,
-		     T beta) {
+                     T alpha,
+                     const SparseMatrix<T> *otherA,
+                     const Matrix<T> *otherX,
+                     T beta) {
   if (!isVector() || !otherX->isVector())
     ERROR_EXIT(128,"Incorrect number of dimensions\n");
   int M,N;
@@ -509,8 +509,7 @@ void Matrix<T>::gemv(CBLAS_TRANSPOSE trans_A,
       ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx1 + %dx%d * %dx1\n",
 		  size(), N, M, otherX->size());
   }
-  if (major_order != otherA->major_order ||
-      otherA->major_order != otherX->major_order)
+  if (major_order != otherX->major_order)
     ERROR_EXIT(128, "Matrices with different major orders\n");
   //
   int ldx=otherX->getVectorStride();

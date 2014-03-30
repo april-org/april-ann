@@ -913,24 +913,18 @@ public:
 }
 //BIND_END
 
-//BIND_METHOD MatrixFloat change_order
+//BIND_METHOD MatrixFloat in_major_order
 {
   const char *major;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, string, major, 0);
+  LUABIND_GET_PARAMETER(1, string, major);
   CBLAS_ORDER order;
-  if (major != 0) {
-    if (strcmp(major, "col_major") == 0) order = CblasColMajor;
-    else if (strcmp(major, "row_major") == 0) order = CblasRowMajor;
-    else {
-      order = CblasRowMajor; // avoids compiler warning
-      LUABIND_FERROR1("Incorrect major order string %s", major);
-    }
-  }
+  if (strcmp(major, "col_major") == 0) order = CblasColMajor;
+  else if (strcmp(major, "row_major") == 0) order = CblasRowMajor;
   else {
-    if (obj->getMajorOrder() == CblasRowMajor) order = CblasColMajor;
-    else order = CblasRowMajor;
+    order = CblasRowMajor; // avoids compiler warning
+    LUABIND_FERROR1("Incorrect major order string %s", major);
   }
-  LUABIND_RETURN(MatrixFloat, obj->changeOrder(order));
+  LUABIND_RETURN(MatrixFloat, obj->inMajorOrder(order));
 }
 //BIND_END
 
@@ -1400,15 +1394,29 @@ public:
     bool trans_A;
     float alpha;
     float beta;
-    MatrixFloat *matA,*matX;
-    LUABIND_GET_TABLE_PARAMETER(1, A, MatrixFloat, matA);
+    MatrixFloat *matX;
     LUABIND_GET_TABLE_PARAMETER(1, X, MatrixFloat, matX);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_A, bool, trans_A, false);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, float, alpha, 1.0f);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f);
-    obj->gemv(trans_A ? CblasTrans : CblasNoTrans,
-	      alpha, matA, matX,
-	      beta);
+    
+    lua_getfield(L, 1, "A");
+    if (lua_isMatrixFloat(L,-1)) {
+      lua_pop(L,1);
+      MatrixFloat *matA;
+      LUABIND_GET_TABLE_PARAMETER(1, A, MatrixFloat, matA);
+      obj->gemv(trans_A ? CblasTrans : CblasNoTrans,
+                alpha, matA, matX,
+                beta);
+    }
+    else {
+      lua_pop(L,1);
+      SparseMatrixFloat *matA;
+      LUABIND_GET_TABLE_PARAMETER(1, A, SparseMatrixFloat, matA);
+      obj->gemv(trans_A ? CblasTrans : CblasNoTrans,
+                alpha, matA, matX,
+                beta);
+    }
     LUABIND_RETURN(MatrixFloat, obj);
   }
 //BIND_END

@@ -349,12 +349,14 @@ Matrix<T> *Matrix<T>::transpose() {
 }
 
 template<typename T>
-Matrix<T> *Matrix<T>::changeOrder(CBLAS_ORDER new_major_order) {
+Matrix<T> *Matrix<T>::inMajorOrder(CBLAS_ORDER new_major_order) {
   Matrix<T> *result;
   if (new_major_order == major_order) result = this;
-  else result = new Matrix<T>(numDim, stride, offset, matrixSize, total_size,
-			      last_raw_pos, data, new_major_order, use_cuda,
-			      transposed, mmapped_data);
+  else {
+    result = this->transpose();
+    result->transposed  = !result->transposed;
+    result->major_order = new_major_order;
+  }
   return result;
 }
 

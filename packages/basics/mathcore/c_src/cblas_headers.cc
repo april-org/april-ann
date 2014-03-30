@@ -154,6 +154,7 @@ void generic_cblas_axpyi(int NNZ, T alpha,
   }
 }
 
+// only works with row-major dense matrices
 template<typename T>
 void generic_cblas_sparse_mm(SPARSE_FORMAT sparse_format,
                              CBLAS_TRANSPOSE a_transpose,
@@ -170,18 +171,20 @@ void generic_cblas_sparse_mm(SPARSE_FORMAT sparse_format,
     else sparse_format = CSR_FORMAT;
   }
   if (sparse_format == CSR_FORMAT) {
-    // for each destination row
-    for (int i=0; i<m; ++i) {
-      int first  = a_first_index_mem[i];
-      int lastp1 = a_first_index_mem[i+1]; // last plus 1
-      int c_pos  = i*c_inc;
-      // for each destination col
-      for (int j=0; j<n; ++j, ++c_pos) {
+    // C = beta C + alpha A*B
+    for (int dest_row=0; dest_row<m; ++dest_row) {
+      // dest_row are also A rows
+      int first  = a_first_index_mem[dest_row];
+      int lastp1 = a_first_index_mem[dest_row+1]; // last plus 1
+      // position of the first column at dest_row
+      int c_pos  = dest_row*c_inc;
+      for (int dest_col=0; dest_col<n; ++dest_col, ++c_pos) {
         T aux = T();
+        // traverse one A row and one B column
         for (int x=first; x<lastp1; ++x) {
-          int c1    = a_indices_mem[x];
-          int b_pos = c1*b_inc + j;
-          april_assert(0 <= c1 && c1 < k);
+          int A_col = a_indices_mem[x];
+          int b_pos = A_col*b_inc + dest_col;
+          april_assert(0 <= A_col && A_col < k);
           aux = aux + a_values_mem[x] * b_mem[b_pos];
         }
         if (beta == T()) c_mem[c_pos] = alpha * aux;
@@ -207,17 +210,16 @@ void generic_cblas_sparse_mm(SPARSE_FORMAT sparse_format,
         }
       }
     }
-    // for each destination col
-    for (int j=0; j<n; ++j) {
-      // for each A col
-      for (int i=0; i<k; ++i) {
-        int first  = a_first_index_mem[i];
-        int lastp1 = a_first_index_mem[i+1]; // last plus 1
-        // for each sparse destination row
+    // C = beta C + alpha A*B
+    for (int dest_col=0; dest_col<n; ++dest_col) {
+      for (int A_col=0; A_col<k; ++A_col) {
+        int first  = a_first_index_mem[A_col];
+        int lastp1 = a_first_index_mem[A_col+1]; // last plus 1
+        // for each destination row (sparse)
         for (int x=first; x<lastp1; ++x) {
-          int c0    = a_indices_mem[x];
-          int b_pos = c0*b_inc + j;
-          int c_pos = c0*c_inc + j;
+          int dest_row = a_indices_mem[x];
+          int b_pos = A_col*b_inc    + dest_col;
+          int c_pos = dest_row*c_inc + dest_col;
           c_mem[c_pos] = c_mem[c_pos] + alpha * a_values_mem[x] * b_mem[b_pos];
         }
       }
@@ -240,18 +242,17 @@ void generic_cblas_sparse_mv(SPARSE_FORMAT sparse_format,
     else sparse_format = CSR_FORMAT;
   }
   if (sparse_format == CSR_FORMAT) {
-    // for each destination position
-    for (int i=0; i<m; ++i) {
-      int first  = a_first_index_mem[i];
-      int lastp1 = a_first_index_mem[i+1]; // last plus 1
+    for (int dest=0; dest<m; ++dest) {
+      int first  = a_first_index_mem[dest];
+      int lastp1 = a_first_index_mem[dest+1]; // last plus 1
       T aux = T();
       // for each col at the sparse matrix
       for (int x=first; x<lastp1; ++x) {
-        int c1    = a_indices_mem[x];
-        april_assert(0 <= c1 && c1 < n);
-        aux = aux + a_values_mem[x] * x_mem[c1*x_inc];
+        int A_col = a_indices_mem[x];
+        april_assert(0 <= A_col && A_col < n);
+        aux = aux + a_values_mem[x] * x_mem[A_col*x_inc];
       }
-      int y_pos  = i*y_inc;
+      int y_pos  = dest*y_inc;
       if (beta == T()) y_mem[y_pos] = alpha * aux;
       else y_mem[y_pos] = beta*y_mem[y_pos] + alpha*aux;
     }
@@ -270,16 +271,15 @@ void generic_cblas_sparse_mv(SPARSE_FORMAT sparse_format,
         y_mem[y_pos] = y_mem[y_pos] * beta;
       }
     }
-    // for each A col
-    for (int j=0; j<n; ++j) {
-      int first  = a_first_index_mem[j];
-      int lastp1 = a_first_index_mem[j+1]; // last plus 1
+    for (int A_col=0; A_col<n; ++A_col) {
+      int first  = a_first_index_mem[A_col];
+      int lastp1 = a_first_index_mem[A_col+1]; // last plus 1
       // for each sparse destination position
       for (int x=first; x<lastp1; ++x) {
-        int c0    = a_indices_mem[x];
-        int x_pos = c0*x_inc;
-        int y_pos = c0*y_inc;
-        y_mem[y_pos] = y_mem[y_pos] + alpha * a_values_mem[x] * y_mem[y_pos];
+        int dest  = a_indices_mem[x];
+        int x_pos = A_col*x_inc;
+        int y_pos = dest*y_inc;
+        y_mem[y_pos] = y_mem[y_pos] + alpha * a_values_mem[x] * x_mem[x_pos];
       }
     }
   }

@@ -109,10 +109,10 @@
   }								\
   template <>							\
   void Matrix<TYPE>::gemv(CBLAS_TRANSPOSE trans_A,		\
-			  TYPE alpha,				\
-			  const SparseMatrix<TYPE> *otherA,	\
-			  const Matrix<TYPE> *otherX,		\
-			  TYPE beta) {				\
+                          TYPE alpha,                           \
+                          const SparseMatrix<TYPE> *otherA,	\
+                          const Matrix<TYPE> *otherX,           \
+                          TYPE beta) {                          \
     UNUSED_VARIABLE(trans_A);					\
     UNUSED_VARIABLE(alpha);					\
     UNUSED_VARIABLE(otherA);					\
@@ -130,10 +130,10 @@
 			  TYPE beta);				\
   template <>							\
   void Matrix<TYPE>::gemv(CBLAS_TRANSPOSE trans_A,		\
-			  TYPE alpha,				\
-			  const SparseMatrix<TYPE> *otherA,	\
-			  const Matrix<TYPE> *otherX,		\
-			  TYPE beta);
+                          TYPE alpha,                           \
+                          const SparseMatrix<TYPE> *otherA,	\
+                          const Matrix<TYPE> *otherX,           \
+                          TYPE beta);
 
 /////////////////////////////////////////////////////////////////////////////
 

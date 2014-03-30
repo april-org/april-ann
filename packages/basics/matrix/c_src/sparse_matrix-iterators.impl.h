@@ -25,7 +25,7 @@
 
 template <typename T>
 SparseMatrix<T>::iterator::iterator(SparseMatrix<T> *m, int idx) :
-  m(m), idx(idx) {
+  m(m), idx(idx), first_index_pos(0) {
   // IncRef(m);
   values      = m->values->getPPALForReadAndWrite();
   indices     = m->indices->getPPALForReadAndWrite();
@@ -35,12 +35,14 @@ SparseMatrix<T>::iterator::iterator(SparseMatrix<T> *m, int idx) :
 template <typename T>
 SparseMatrix<T>::iterator::iterator() : m(0), idx(0),
 					values(0), indices(0),
-					first_index(0) { }
+					first_index(0),
+                                        first_index_pos(0) { }
 
 template <typename T>
 SparseMatrix<T>::iterator::iterator(const iterator &other) :
   m(other.m),
-  idx(other.idx) {
+  idx(other.idx),
+  first_index_pos(other.first_index_pos) {
   // IncRef(m);
   values      = m->values->getPPALForReadAndWrite();
   indices     = m->indices->getPPALForReadAndWrite();
@@ -62,6 +64,7 @@ operator=(const SparseMatrix<T>::iterator &other) {
   values      = m->values->getPPALForReadAndWrite();
   indices     = m->indices->getPPALForReadAndWrite();
   first_index = other.first_index;
+  first_index_pos = other.first_index_pos;
   return *this;
 }
 
@@ -79,7 +82,7 @@ template <typename T>
 typename SparseMatrix<T>::iterator &SparseMatrix<T>::iterator::operator++() {
   ++idx;
   if (idx < m->nonZeroSize())
-    while(*(first_index+1) <= idx) ++first_index;
+    while(first_index[first_index_pos+1] <= idx) ++first_index_pos;
   return *this;
 }
 
@@ -98,10 +101,10 @@ void SparseMatrix<T>::iterator::getCoords(int &x0, int &x1) const {
   switch(m->sparse_format) {
   case CSC_FORMAT:
     x0 = indices[idx];
-    x1 = *first_index;
+    x1 = first_index_pos;
     break;
   case CSR_FORMAT:
-    x0 = *first_index;
+    x0 = first_index_pos;
     x1 = indices[idx];
     break;
   default:
@@ -115,7 +118,7 @@ void SparseMatrix<T>::iterator::getCoords(int &x0, int &x1) const {
 template <typename T>
 SparseMatrix<T>::const_iterator::const_iterator(const SparseMatrix<T> *m,
 						int idx) :
-  m(m), idx(idx) {
+  m(m), idx(idx), first_index_pos(0) {
   // IncRef(m);
   values      = m->values->getPPALForRead();
   indices     = m->indices->getPPALForRead();
@@ -125,12 +128,14 @@ SparseMatrix<T>::const_iterator::const_iterator(const SparseMatrix<T> *m,
 template <typename T>
 SparseMatrix<T>::const_iterator::const_iterator() : m(0), idx(0),
 						    values(0), indices(0),
-						    first_index(0) { }
+						    first_index(0),
+                                                    first_index_pos(0) { }
 
 template <typename T>
 SparseMatrix<T>::const_iterator::const_iterator(const const_iterator &other) :
   m(other.m),
-  idx(other.idx) {
+  idx(other.idx),
+  first_index_pos(other.first_index_pos) {
   // IncRef(m);
   values      = m->values->getPPALForReadAndWrite();
   indices     = m->indices->getPPALForReadAndWrite();
@@ -140,7 +145,8 @@ SparseMatrix<T>::const_iterator::const_iterator(const const_iterator &other) :
 template <typename T>
 SparseMatrix<T>::const_iterator::const_iterator(const iterator &other) :
   m(other.m),
-  idx(other.idx) {
+  idx(other.idx),
+  first_index_pos(other.first_index_pos) {
   // IncRef(m);
   values      = m->values->getPPALForRead();
   indices     = m->indices->getPPALForRead();
@@ -162,6 +168,7 @@ operator=(const SparseMatrix<T>::const_iterator &other) {
   values      = m->values->getPPALForRead();
   indices     = m->indices->getPPALForRead();
   first_index = other.first_index;
+  first_index_pos = other.first_index_pos;
   return *this;
 }
 
@@ -175,6 +182,7 @@ operator=(const SparseMatrix<T>::iterator &other) {
   values      = m->values->getPPALForRead();
   indices     = m->indices->getPPALForRead();
   first_index = other.first_index;
+  first_index_pos = other.first_index_pos;
   return *this;
 }
 
@@ -202,7 +210,7 @@ template <typename T>
 typename SparseMatrix<T>::const_iterator &SparseMatrix<T>::const_iterator::operator++() {
   ++idx;
   if (idx < m->nonZeroSize())
-    while(*(first_index+1) <= idx) ++first_index;
+    while(first_index[first_index_pos+1] <= idx) ++first_index_pos;
   return *this;
 }
 
@@ -221,10 +229,10 @@ void SparseMatrix<T>::const_iterator::getCoords(int &x0, int &x1) const {
   switch(m->sparse_format) {
   case CSC_FORMAT:
     x0 = indices[idx];
-    x1 = *first_index;
+    x1 = first_index_pos;
     break;
   case CSR_FORMAT:
-    x0 = *first_index;
+    x0 = first_index_pos;
     x1 = indices[idx];
     break;
   default:

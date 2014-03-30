@@ -96,6 +96,7 @@ public:
     T   *values;
     int *indices;
     int *first_index;
+    int  first_index_pos;
     iterator(SparseMatrix<T> *m, int idx=0);
   public:
     iterator();
@@ -119,6 +120,7 @@ public:
     const T   *values;
     const int *indices;
     const int *first_index;
+    int  first_index_pos;
     const_iterator(const SparseMatrix<T> *m, int idx=0);
   public:
     const_iterator();
@@ -185,6 +187,7 @@ public:
   const int *getDimPtr() const { return matrixSize; }
   int getDimSize(int i) const { return matrixSize[i]; }
   int size() const { return total_size; }
+  // FIXME: use an attribute to improve the efficiency of this call
   int nonZeroSize() const { return static_cast<int>(values->getSize()); }
   int getDenseCoordinateSize() const {
     if (sparse_format == CSR_FORMAT) return matrixSize[0];
