@@ -175,7 +175,6 @@ void generic_cblas_sparse_mm(SPARSE_FORMAT sparse_format,
       int first  = a_first_index_mem[i];
       int lastp1 = a_first_index_mem[i+1]; // last plus 1
       int c_pos  = i*c_inc;
-      printf("%d\n", c_pos);
       // for each destination col
       for (int j=0; j<n; ++j, ++c_pos) {
         T aux = T();
@@ -218,9 +217,69 @@ void generic_cblas_sparse_mm(SPARSE_FORMAT sparse_format,
         for (int x=first; x<lastp1; ++x) {
           int c0    = a_indices_mem[x];
           int b_pos = c0*b_inc + j;
-          int c_pos = x*c_inc  + j;
+          int c_pos = c0*c_inc + j;
           c_mem[c_pos] = c_mem[c_pos] + alpha * a_values_mem[x] * b_mem[b_pos];
         }
+      }
+    }
+  }
+}
+
+template<typename T>
+void generic_cblas_sparse_mv(SPARSE_FORMAT sparse_format,
+                             CBLAS_TRANSPOSE a_transpose,
+                             int m, int n,
+                             T alpha,
+                             const T *a_values_mem,
+                             const int *a_indices_mem,
+                             const int *a_first_index_mem,
+                             const T *x_mem, int x_inc,
+                             T beta, T *y_mem, int y_inc) {
+  if (a_transpose == CblasTrans) {
+    if (sparse_format == CSR_FORMAT) sparse_format = CSC_FORMAT;
+    else sparse_format = CSR_FORMAT;
+  }
+  if (sparse_format == CSR_FORMAT) {
+    // for each destination position
+    for (int i=0; i<m; ++i) {
+      int first  = a_first_index_mem[i];
+      int lastp1 = a_first_index_mem[i+1]; // last plus 1
+      T aux = T();
+      // for each col at the sparse matrix
+      for (int x=first; x<lastp1; ++x) {
+        int c1    = a_indices_mem[x];
+        april_assert(0 <= c1 && c1 < n);
+        aux = aux + a_values_mem[x] * x_mem[c1*x_inc];
+      }
+      int y_pos  = i*y_inc;
+      if (beta == T()) y_mem[y_pos] = alpha * aux;
+      else y_mem[y_pos] = beta*y_mem[y_pos] + alpha*aux;
+    }
+  }
+  else if (sparse_format == CSC_FORMAT) {
+    // first Y vector needs to be initialized
+    if (beta == T()) {
+      int y_pos=0;
+      for (int i=0; i<m; ++i, y_pos+=y_inc) {
+        y_mem[y_pos] = T();
+      }
+    }
+    else {
+      int y_pos=0;
+      for (int i=0; i<m; ++i, y_pos+=y_inc) {
+        y_mem[y_pos] = y_mem[y_pos] * beta;
+      }
+    }
+    // for each A col
+    for (int j=0; j<n; ++j) {
+      int first  = a_first_index_mem[j];
+      int lastp1 = a_first_index_mem[j+1]; // last plus 1
+      // for each sparse destination position
+      for (int x=first; x<lastp1; ++x) {
+        int c0    = a_indices_mem[x];
+        int x_pos = c0*x_inc;
+        int y_pos = c0*y_inc;
+        y_mem[y_pos] = y_mem[y_pos] + alpha * a_values_mem[x] * y_mem[y_pos];
       }
     }
   }
@@ -298,6 +357,60 @@ void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
                           b_mem, b_inc,
                           beta,
                           c_mem, c_inc);
+}
+void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
+		     CBLAS_TRANSPOSE a_transpose,
+		     int m, int n,
+		     float alpha,
+		     const float *a_values_mem,
+		     const int *a_indices_mem,
+		     const int *a_first_index_mem,
+		     const float *x_mem, int x_inc,
+		     float beta, float *y_mem, int y_inc) {
+  generic_cblas_sparse_mv(sparse_format,
+                          a_transpose,
+                          m,n,
+                          alpha,
+                          a_values_mem, a_indices_mem, a_first_index_mem,
+                          x_mem, x_inc,
+                          beta,
+                          y_mem, y_inc);
+}
+void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
+		     CBLAS_TRANSPOSE a_transpose,
+		     int m, int n,
+		     double alpha,
+		     const double *a_values_mem,
+		     const int *a_indices_mem,
+		     const int *a_first_index_mem,
+		     const double *x_mem, int x_inc,
+		     double beta, double *y_mem, int y_inc) {
+  generic_cblas_sparse_mv(sparse_format,
+                          a_transpose,
+                          m,n,
+                          alpha,
+                          a_values_mem, a_indices_mem, a_first_index_mem,
+                          x_mem, x_inc,
+                          beta,
+                          y_mem, y_inc);
+}
+void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
+		     CBLAS_TRANSPOSE a_transpose,
+		     int m, int n,
+		     ComplexF alpha,
+		     const ComplexF *a_values_mem,
+		     const int *a_indices_mem,
+		     const int *a_first_index_mem,
+		     const ComplexF *x_mem, int x_inc,
+		     ComplexF beta, ComplexF *y_mem, int y_inc) {
+  generic_cblas_sparse_mv(sparse_format,
+                          a_transpose,
+                          m,n,
+                          alpha,
+                          a_values_mem, a_indices_mem, a_first_index_mem,
+                          x_mem, x_inc,
+                          beta,
+                          y_mem, y_inc);
 }
 #else
 #include <mkl_spblas.h>
@@ -427,4 +540,126 @@ void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
     ERROR_EXIT(128, "Incorrect sparse format\n");
   }
 }
+void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
+		     CBLAS_TRANSPOSE a_transpose,
+		     int m, int n,
+		     float alpha,
+		     const float *a_values_mem,
+		     const int *a_indices_mem,
+		     const int *a_first_index_mem,
+		     const float *x_mem, int x_inc,
+		     float beta, float *y_mem, int y_inc) {
+  char descrA[6]; descrA[0] = 'g'; descrA[3]='c';
+  char trans = (a_transpose == CblasTrans) ? 't' : 'n';
+  switch(sparse_format) {
+  case CSR_FORMAT:
+    mkl_scsrmv(&trans,
+	       &m, &n,
+	       &alpha,
+	       descrA,
+	       const_cast<float*>(a_values_mem),
+               const_cast<int*>(a_indices_mem),
+	       const_cast<int*>(a_first_index_mem),
+               const_cast<int*>(a_first_index_mem+1),
+	       const_cast<float*>(x_mem), &x_inc,
+	       &beta, const_cast<float*>(y_mem), &y_inc);
+    break;
+  case CSC_FORMAT:
+    mkl_scscmv(&trans,
+	       &m, &n,
+	       &alpha,
+	       descrA,
+	       const_cast<float*>(a_values_mem),
+               const_cast<int*>(a_indices_mem),
+	       const_cast<int*>(a_first_index_mem),
+               const_cast<int*>(a_first_index_mem+1),
+	       const_cast<float*>(x_mem), &x_inc,
+	       &beta, const_cast<float*>(y_mem), &y_inc);
+    break;
+  default:
+    ERROR_EXIT(128, "Incorrect sparse format\n");
+  }
+}
+void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
+		     CBLAS_TRANSPOSE a_transpose,
+		     int m, int n,
+		     double alpha,
+		     const double *a_values_mem,
+		     const int *a_indices_mem,
+		     const int *a_first_index_mem,
+		     const double *x_mem, int x_inc,
+		     double beta, double *y_mem, int y_inc) {
+  char descrA[6]; descrA[0] = 'g'; descrA[3]='c';
+  char trans = (a_transpose == CblasTrans) ? 't' : 'n';
+  switch(sparse_format) {
+  case CSR_FORMAT:
+    mkl_dcsrmv(&trans,
+	       &m, &n,
+	       &alpha,
+	       descrA,
+	       const_cast<double*>(a_values_mem),
+               const_cast<int*>(a_indices_mem),
+	       const_cast<int*>(a_first_index_mem),
+               const_cast<int*>(a_first_index_mem+1),
+	       const_cast<double*>(x_mem), &x_inc,
+	       &beta, const_cast<double*>(y_mem), &y_inc);
+    break;
+  case CSC_FORMAT:
+    mkl_dcscmv(&trans,
+	       &m, &n,
+	       &alpha,
+	       descrA,
+	       const_cast<double*>(a_values_mem),
+               const_cast<int*>(a_indices_mem),
+	       const_cast<int*>(a_first_index_mem),
+               const_cast<int*>(a_first_index_mem+1),
+	       const_cast<double*>(x_mem), &x_inc,
+	       &beta, const_cast<double*>(y_mem), &y_inc);
+    break;
+  default:
+    ERROR_EXIT(128, "Incorrect sparse format\n");
+  }
+}
+
+void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
+		     CBLAS_TRANSPOSE a_transpose,
+		     int m, int n,
+		     ComplexF alpha,
+		     const ComplexF *a_values_mem,
+		     const int *a_indices_mem,
+		     const int *a_first_index_mem,
+		     const ComplexF *x_mem, int x_inc,
+		     ComplexF beta, ComplexF *y_mem, int y_inc) {
+  char descrA[6]; descrA[0] = 'g'; descrA[3]='c';
+  char trans = (a_transpose == CblasTrans) ? 't' : 'n';
+  switch(sparse_format) {
+  case CSR_FORMAT:
+    mkl_ccsrmv(&trans,
+	       &m, &n,
+	       &alpha,
+	       descrA,
+	       const_cast<ComplexF*>(a_values_mem),
+               const_cast<int*>(a_indices_mem),
+	       const_cast<int*>(a_first_index_mem),
+               const_cast<int*>(a_first_index_mem+1),
+	       const_cast<ComplexF*>(x_mem), &x_inc,
+	       &beta, const_cast<ComplexF*>(y_mem), &y_inc);
+    break;
+  case CSC_FORMAT:
+    mkl_ccscmv(&trans,
+	       &m, &n,
+	       &alpha,
+	       descrA,
+	       const_cast<ComplexF*>(a_values_mem),
+               const_cast<int*>(a_indices_mem),
+	       const_cast<int*>(a_first_index_mem),
+               const_cast<int*>(a_first_index_mem+1),
+	       const_cast<ComplexF*>(x_mem), &x_inc,
+	       &beta, const_cast<ComplexF*>(y_mem), &y_inc);
+    break;
+  default:
+    ERROR_EXIT(128, "Incorrect sparse format\n");
+  }
+}
+
 #endif

@@ -62,13 +62,6 @@ template<>
 void Matrix<ComplexF>::copy(const Matrix<ComplexF> *other);
 
 template<>
-void Matrix<ComplexF>::gemv(CBLAS_TRANSPOSE trans_A,
-			 ComplexF alpha,
-			 const Matrix<ComplexF> *otherA,
-			 const Matrix<ComplexF> *otherX,
-			 ComplexF beta);
-
-template<>
 void Matrix<ComplexF>::ger(ComplexF alpha,
 			   const Matrix<ComplexF> *otherX,
 			   const Matrix<ComplexF> *otherY);

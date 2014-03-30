@@ -126,20 +126,6 @@ template<>
 void Matrix<float>::copy(const Matrix<float> *other);
 
 template<>
-void Matrix<float>::gemv(CBLAS_TRANSPOSE trans_A,
-			 float alpha,
-			 const Matrix<float> *otherA,
-			 const Matrix<float> *otherX,
-			 float beta);
-
-template<>
-void Matrix<float>::gemv(CBLAS_TRANSPOSE trans_A,
-			 float alpha,
-			 const SparseMatrix<float> *otherA,
-			 const Matrix<float> *otherX,
-			 float beta);
-
-template<>
 void Matrix<float>::ger(float alpha,
 			const Matrix<float> *otherX,
 			const Matrix<float> *otherY);

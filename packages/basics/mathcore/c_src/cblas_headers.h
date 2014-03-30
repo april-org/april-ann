@@ -159,4 +159,34 @@ void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
 		     const ComplexF *b_mem, int b_inc,
 		     ComplexF beta, ComplexF *c_mem, int c_inc);
 
+void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
+		     CBLAS_TRANSPOSE a_transpose,
+		     int m, int n,
+		     float alpha,
+		     const float *a_values_mem,
+		     const int *a_indices_mem,
+		     const int *a_first_index_mem,
+		     const float *x_mem, int x_inc,
+		     float beta, float *y_mem, int y_inc);
+
+void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
+		     CBLAS_TRANSPOSE a_transpose,
+		     int m, int n,
+		     double alpha,
+		     const double *a_values_mem,
+		     const int *a_indices_mem,
+		     const int *a_first_index_mem,
+		     const double *x_mem, int x_inc,
+		     double beta, double *y_mem, int y_inc);
+
+void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
+		     CBLAS_TRANSPOSE a_transpose,
+		     int m, int n,
+		     ComplexF alpha,
+		     const ComplexF *a_values_mem,
+		     const int *a_indices_mem,
+		     const int *a_first_index_mem,
+		     const ComplexF *x_mem, int x_inc,
+		     ComplexF beta, ComplexF *y_mem, int y_inc);
+
 #endif // CBLAS_HEADERS_H

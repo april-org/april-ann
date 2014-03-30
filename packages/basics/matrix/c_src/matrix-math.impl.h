@@ -447,12 +447,44 @@ void Matrix<T>::gemv(CBLAS_TRANSPOSE trans_A,
 		     const Matrix<T> *otherA,
 		     const Matrix<T> *otherX,
 		     T beta) {
-  UNUSED_VARIABLE(trans_A);
-  UNUSED_VARIABLE(alpha);
-  UNUSED_VARIABLE(otherA);
-  UNUSED_VARIABLE(otherX);
-  UNUSED_VARIABLE(beta);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  if (!isVector() || !otherX->isVector() || otherA->numDim != 2)
+    ERROR_EXIT(128,"Incorrect number of dimensions\n");
+  int M,N;
+  if (otherA->getTransposedFlag()) {
+    trans_A=NEGATE_CBLAS_TRANSPOSE(trans_A);
+    M=otherA->matrixSize[1];
+    N=otherA->matrixSize[0];
+  }else {
+    M=otherA->matrixSize[0];
+    N=otherA->matrixSize[1];
+  }
+  // SANITY CHECK
+  if (trans_A == CblasNoTrans) {
+    if (M != size() || N != otherX->size())
+      ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx1 + %dx%d * %dx1\n",
+		  size(), M, N, otherX->size());
+  }
+  else {
+    if (N != size() || M != otherX->size())
+      ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx1 + %dx%d * %dx1\n",
+		  size(), N, M, otherX->size());
+  }
+  if (major_order != otherA->major_order ||
+      otherA->major_order != otherX->major_order)
+    ERROR_EXIT(128, "Matrices with different major orders\n");
+  //
+  int lda=(otherA->getIsDataRowOrdered())?otherA->stride[0]:otherA->stride[1];
+  int ldx=otherX->getVectorStride();
+  int ldy=getVectorStride();
+  if (otherA->stride[0] + otherA->stride[1] != lda+1)
+    ERROR_EXIT(128, "Only allowed with contiguous matrices\n");
+  doGemv(major_order, trans_A,
+	 M, N,
+	 alpha, otherA->data, lda,
+	 otherX->data, ldx,
+	 beta, data, ldy,
+	 otherA->offset, otherX->offset, offset,
+	 use_cuda);
 }
 
 template <typename T>
@@ -461,12 +493,40 @@ void Matrix<T>::gemv(CBLAS_TRANSPOSE trans_A,
 		     const SparseMatrix<T> *otherA,
 		     const Matrix<T> *otherX,
 		     T beta) {
-  UNUSED_VARIABLE(trans_A);
-  UNUSED_VARIABLE(alpha);
-  UNUSED_VARIABLE(otherA);
-  UNUSED_VARIABLE(otherX);
-  UNUSED_VARIABLE(beta);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  if (!isVector() || !otherX->isVector())
+    ERROR_EXIT(128,"Incorrect number of dimensions\n");
+  int M,N;
+  M=otherA->getDimSize(0);
+  N=otherA->getDimSize(1);
+  // SANITY CHECK
+  if (trans_A == CblasNoTrans) {
+    if (M != size() || N != otherX->size())
+      ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx1 + %dx%d * %dx1\n",
+		  size(), M, N, otherX->size());
+  }
+  else {
+    if (N != size() || M != otherX->size())
+      ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx1 + %dx%d * %dx1\n",
+		  size(), N, M, otherX->size());
+  }
+  if (major_order != otherA->major_order ||
+      otherA->major_order != otherX->major_order)
+    ERROR_EXIT(128, "Matrices with different major orders\n");
+  //
+  int ldx=otherX->getVectorStride();
+  int ldy=getVectorStride();
+  doSparseGemv(major_order,
+               otherA->getSparseFormat(),
+               trans_A,
+               M, N,
+               alpha,
+               otherA->getRawValuesAccess(),
+               otherA->getRawIndicesAccess(),
+               otherA->getRawFirstIndexAccess(),
+               otherX->data, ldx,
+               beta, data, ldy,
+               otherX->offset, offset,
+               use_cuda);
 }
 
 template <typename T>

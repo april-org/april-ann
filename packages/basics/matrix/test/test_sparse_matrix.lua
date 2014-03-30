@@ -38,7 +38,7 @@ print(b)
 
 print(aux3:toString("ascii"))
 
-local a = matrix.sparse.csc(matrix(4,3,{
+local a = matrix.sparse.csr(matrix(4,3,{
                                      1,  2,  3, 0,
                                      0,  0,  2, 0,
                                      0, -1,  0, 1,
@@ -60,8 +60,8 @@ local c = matrix(3,2):zeros():sparse_mm({
 
 print(c)
 
-print(matrix(3,4,{
+print(matrix(4,3,{
                1,  2,  3, 0,
                0,  0,  2, 0,
                0, -1,  0, 1,
-                 }) * b)
+                 }):transpose() * b)
