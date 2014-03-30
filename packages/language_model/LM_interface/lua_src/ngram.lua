@@ -25,8 +25,8 @@ function language_models.get_sentence_prob(params)
       debug_flag = { mandatory = false, type_match = "number", default = 0 },
       unk_id     = { mandatory = false, type_match = "number", default = -1 },
       use_unk    = { mandatory = false, type_match = "string", default = "all" },
-      use_bcc    = { mandatory = false },
-      use_ecc    = { mandatory = false }
+      use_bcc    = { mandatory = false, type_match = "boolean" },
+      use_ecc    = { mandatory = false, type_match = "boolean" }
     }, params)
 
   local lm = params.lm
@@ -167,42 +167,56 @@ function language_models.get_prob_from_id_tbl(lm, word_ids, init_id, final_id,
   return sum
 end
 
-function language_models.test_set_ppl(lm, vocab, testset, flog, debug_flag,
-			    unk_word, init_word, final_word,
-			    is_stream,
-			    use_unk,
-			    use_cache,
-			    train_restriction,
-			    cache_stop_token,
-			    null_token,
-			    order,
-			    use_bcc,
-			    use_ecc,
-			    multi_class_table,
-			    num_classes)
+function language_models.test_set_ppl(params)
+  local params = get_table_fields (
+    {
+      lm                = { mandatory = true }, 
+      vocab             = { mandatory = true },
+      testset           = { mandatory = true },
+      log_file          = { mandatory = false, default = io.stdout },
+      debug_flag        = { mandatory = false, type_match = "number", default = 0 },
+      unk_word          = { mandatory = false, type_match = "string", default = "<unk>" },
+      init_word         = { mandatory = false, type_match = "string", default = "<s>" },
+      final_word        = { mandatory = false, type_match = "string", default = "</s>" },
+      use_unk           = { mandatory = false, type_match = "string", default = "all" },
+      use_cache         = { mandatory = false, type_match = "boolean" },
+      train_restriction = { mandatory = false, type_match = "boolean" },
+      cache_stop_token  = { mandatory = false, type_match = "string" },
+      null_token        = { mandatory = false, type_match = "string" },
+      use_bcc           = { mandatory = false, type_match = "boolean" },
+      use_ecc           = { mandatory = false, type_match = "boolean" }
+    }, params)
 
-  local multi_class_table_inv
-  if multi_class_table then
-    multi_class_table_inv = table.invert(multi_class_table)
-  end
-  local totalwords     = 0
-  local totalsentences = 0
-  local totalunks      = 0
-  local totalsum       = 0
-  local unk_word       = unk_word or "<unk>"
-  local init_word      = init_word or "<s>"
-  local final_word     = final_word or "</s>"
+  local lm             = params.lm
+  local vocab          = params.vocab
+  local testset        = params.testset
+  local log_file       = params.log_file
+  local debug_flag     = params.debug_flag
+  local unk_word       = params.unk_word
+  local init_word      = params.init_word
+  local final_word     = params.final_word
   local unk_id         = -1
   if vocab:getWordId(unk_word) then unk_id = vocab:getWordId(unk_word) end
   local init_id  = vocab:getWordId(init_word)
   local final_id = vocab:getWordId(final_word)
   -- lm:restart()
+  local use_unk = params.use_unk
+  local use_cache = params.use_cache
+  local train_restriction = params.train_restriction
+  local cache_stop_token = params.cache_stop_token
+  local null_token = params.null_token
+  local use_bcc = params.use_bcc
+  local use_ecc = params.use_ecc
   local count = 0
+  local totalwords     = 0
+  local totalsentences = 0
+  local totalunks      = 0
+  local totalsum       = 0
   local lines_it = iterator(io.lines(testset)):
   map( function(line) return iterator(line:gmatch("[^%s]+")) end )
 
   for words_it in lines_it() do
-    words_it = words_it:map( function(w) return vocab:getWordId(w) or unk_id end )
+    words_it = words_it:map( function(w) return (vocab:getWordId(w) or unk_id),w end )
     local use_sentence = true
     if train_restriction then
       if words[1] ~= "<train>" then use_sentence = false end
@@ -213,9 +227,14 @@ function language_models.test_set_ppl(lm, vocab, testset, flog, debug_flag,
       --if #sentence > 0 and #words > 0 then
 	--if debug_flag >= 1 then fprintf(flog, "%s\n", sentence) end
 	local sum,numwords,numunks =
-	  ngram.get_sentence_prob(lm, words_it, flog, debug_flag,
-				  unk_id, final_id,
-				  use_unk, use_bcc, use_ecc)
+	  language_models.get_sentence_prob{ lm         = lm, 
+	  					  words_it   = words_it,
+						  log_file   = log_file,
+						  debug_flag = debug_flag,
+						  unk_id     = unk_id,
+						  use_unk    = use_unk,
+						  use_bcc    = use_bcc,
+						  use_ecc    = use_ecc }
 	totalsum       = totalsum + sum
 	totalwords     = totalwords + numwords
 	totalunks      = totalunks + numunks
@@ -248,17 +267,17 @@ function language_models.test_set_ppl(lm, vocab, testset, flog, debug_flag,
   if is_stream then ppl = ppl1 entropy = entropy1 end
   
   if debug_flag >= 0 then
-    fprintf (flog, "file %s: %d sentences, %d words, %d OOVs\n",
+    fprintf (log_file, "file %s: %d sentences, %d words, %d OOVs\n",
 	     testset,
 	     totalsentences,
 	     totalwords,
 	     totalunks)
-    flog:flush()
-    fprintf (flog,
+    log_file:flush()
+    fprintf (log_file,
 	     "0 zeroprobs, logprob= %f ppl= %f ppl1= %f\n",
 	     totalsum,
 	     ppl, ppl1)
-    flog:close()
+    log_file:close()
   end
   
   return {
