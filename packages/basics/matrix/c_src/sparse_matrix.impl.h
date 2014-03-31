@@ -194,7 +194,8 @@ SparseMatrix<T>::SparseMatrix(const int d0, const int d1,
 
 template <typename T>
 SparseMatrix<T>::SparseMatrix(const Matrix<T> *other,
-			      const SPARSE_FORMAT sparse_format) :
+			      const SPARSE_FORMAT sparse_format,
+                              const T zero) :
   Referenced(), shared_count(0), mmapped_data(0),
   sparse_format(sparse_format), use_cuda(other->getCudaFlag()),
   end_iterator(), end_const_iterator() {
@@ -202,14 +203,13 @@ SparseMatrix<T>::SparseMatrix(const Matrix<T> *other,
     ERROR_EXIT(128, "Only allowed for bi-dimensional matrices\n");
   initialize(other->getDimSize(0), other->getDimSize(1));
   //
-  const T zero = T();
   int non_zero_size = 0;
   typename Matrix<T>::const_iterator it(other->begin());
   for (int c1=0; c1<other->getDimSize(1); ++c1) {
     for (int c0=0; c0<other->getDimSize(0); ++c0, ++it) {
       if (it == other->end())
 	ERROR_EXIT(128, "Unexpected matrix iterator end\n");
-      if (zero < *it || *it < zero) non_zero_size++;
+      if (zero < *it || *it < -zero) non_zero_size++;
     }
   }
   allocate_memory(non_zero_size);
@@ -224,7 +224,7 @@ SparseMatrix<T>::SparseMatrix(const Matrix<T> *other,
       typename Matrix<T>::const_col_major_iterator it(other->begin());
       for (int c1=0; c1<other->getDimSize(1); ++c1) {
 	for (int c0=0; c0<other->getDimSize(0); ++c0, ++it) {
-	  if (zero < *it || *it < zero) {
+	  if (zero < *it || *it < -zero) {
 	    values_ptr[current]  = *it;
 	    indices_ptr[current] = c0;
 	    ++current;
@@ -239,7 +239,7 @@ SparseMatrix<T>::SparseMatrix(const Matrix<T> *other,
       typename Matrix<T>::const_iterator it(other->begin());
       for (int c0=0; c0<other->getDimSize(0); ++c0) {
 	for (int c1=0; c1<other->getDimSize(1); ++c1, ++it) {
-	  if (zero < *it || *it < zero) {
+	  if (zero < *it || *it < -zero) {
 	    values_ptr[current]  = *it;
 	    indices_ptr[current] = c1;
 	    ++current;

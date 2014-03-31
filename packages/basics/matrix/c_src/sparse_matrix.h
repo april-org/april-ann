@@ -166,7 +166,8 @@ public:
   /// Constructor given a dense matrix, it does constructs a sparse matrix
   /// (cloned).
   SparseMatrix(const Matrix<T> *other,
-	       const SPARSE_FORMAT sparse_format = CSR_FORMAT);
+	       const SPARSE_FORMAT sparse_format = CSR_FORMAT,
+               const T zero = T());
   /// Constructor given other matrix, it does a deep copy (clone).
   SparseMatrix(const SparseMatrix<T> *other,
 	       SPARSE_FORMAT sparse_format = NONE_FORMAT);
