@@ -24,6 +24,9 @@ Master branch release
 
 ### API Changes
 
+- Added `utest` package, for unit testing.
+- Added methods to `matrix` which work with sparse matrices.
+- Added class `matrix.sparse`.
 - Added method `m:toTabStream(file or gzfile)` to `matrix`.
 - Added operations `math.log1p` and `math.logadd`.
 - Added operator `%` to Lua `string` metatable, allowing to do Python-like
@@ -40,6 +43,8 @@ Master branch release
 
 ### C/C++
 
+- Added sparse CBLAS wrappers, for CUDA (not tested) and standard release.
+- Added CBLAS wrappers for float, double, and ComplexF types.
 - Added geometric parametrizer for off-line text preprocessing.
 - Added dependency with `liblapacke` for PCA when not available MKL or MacOS X.
 

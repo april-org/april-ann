@@ -32,7 +32,7 @@
 namespace ANN {
   
   ZCAWhiteningANNComponent::ZCAWhiteningANNComponent(MatrixFloat *U,
-						     MatrixFloat *S,
+						     SparseMatrixFloat *S,
 						     float epsilon,
 						     unsigned int takeN,
 						     const char *name) :
@@ -42,7 +42,13 @@ namespace ANN {
 			false)
   {
     output_size = input_size;
-    matrix_set.insert(WEIGHTS_NAME, this->U);
+    MatrixFloat *aux_U = U;
+    if (takeN != 0) {
+      int coords[2] = { 0,0 };
+      int sizes[2] = { U->getDimSize(0), static_cast<int>(takeN) };
+      aux_U = new MatrixFloat(this->U, coords, sizes, true);
+    }
+    matrix_set.insert(WEIGHTS_NAME, aux_U);
     hash<string,ANNComponent*> components_dict;
     dot_product_decoder.build(0, 0, &matrix_set, components_dict);
   }
@@ -74,9 +80,9 @@ namespace ANN {
     char *U_str, *S_str;
     int len;
     U_str = writeMatrixFloatToString(U, false, len);
-    S_str = writeMatrixFloatToString(S, false, len);
-    buffer.printf("ann.components.zca_whitening{ name='%s', U=%s, S=%s, epsilon=%g, takeN=0, }",
-		  name.c_str(), U_str, S_str, epsilon);
+    S_str = writeSparseMatrixFloatToString(S, false, len);
+    buffer.printf("ann.components.zca_whitening{ name='%s', U=matrix.fromString[[%s]], S=matrix.sparse.fromString[[%s]], epsilon=%g, takeN=%u, }",
+		  name.c_str(), U_str, S_str, epsilon, getTakeN());
     delete[] U_str;
     delete[] S_str;
     return buffer.to_string(buffer_list::NULL_TERMINATED);

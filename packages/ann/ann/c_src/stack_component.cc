@@ -35,6 +35,7 @@ namespace ANN {
   void StackANNComponent::pushComponent(ANNComponent *component) {
     IncRef(component);
     components.push_back(component);
+    output_size = 0;
   }
 
   ANNComponent *StackANNComponent::topComponent() {

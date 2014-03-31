@@ -21,6 +21,8 @@
 #ifndef PCAWHITENINGCOMPONENT_H
 #define PCAWHITENINGCOMPONENT_H
 
+#include "sparse_matrixFloat.h"
+#include "matrixFloat.h"
 #include "vector.h"
 #include "ann_component.h"
 #include "token_vector.h"
@@ -35,15 +37,16 @@ namespace ANN {
   class PCAWhiteningANNComponent : public ANNComponent {
   protected:
     MatrixFloat *U; //< bi-dimensional
-    MatrixFloat *S; //< one-dimensional
+    SparseMatrixFloat *S; //< sparse diagonal matrix in CSR
     MatrixFloat *U_S_epsilon; //< matrix for dot_product_component
     float epsilon;  //< regularization
     DotProductANNComponent dot_product_encoder; //< Applies the transformation
     MatrixFloatSet matrix_set; //< Auxiliary for dot_product_encoder build
+    unsigned int takeN;
     
   public:
     PCAWhiteningANNComponent(MatrixFloat *U,
-			     MatrixFloat *S,
+			     SparseMatrixFloat *S,
 			     float epsilon=0.0f,
 			     unsigned int takeN=0,
 			     const char *name=0);
@@ -68,6 +71,7 @@ namespace ANN {
 		       hash<string,ANNComponent*> &components_dict);
 
     virtual char *toLuaString();
+    unsigned int getTakeN() const { return takeN; }
   };
 }
 

@@ -34,5 +34,5 @@ GPUMirroredMemoryBlockBase::PoolType *GPUMirroredMemoryBlockBase::pool_lists =
 
 template class GPUMirroredMemoryBlock<float>;
 template class GPUMirroredMemoryBlock<double>;
-template class GPUMirroredMemoryBlock<int>;
+template class GPUMirroredMemoryBlock<int32_t>;
 template class GPUMirroredMemoryBlock<ComplexF>;

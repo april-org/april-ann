@@ -26,6 +26,7 @@
 #include "luabindutil.h"
 #include "luabindmacros.h"
 #include "bind_matrix_int32.h"
+#include "bind_sparse_matrix.h"
 #include "bind_gzio.h"
 
 #define FUNCTION_NAME "read_vector"
@@ -912,6 +913,21 @@ public:
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat in_major_order
+{
+  const char *major;
+  LUABIND_GET_PARAMETER(1, string, major);
+  CBLAS_ORDER order;
+  if (strcmp(major, "col_major") == 0) order = CblasColMajor;
+  else if (strcmp(major, "row_major") == 0) order = CblasRowMajor;
+  else {
+    order = CblasRowMajor; // avoids compiler warning
+    LUABIND_FERROR1("Incorrect major order string %s", major);
+  }
+  LUABIND_RETURN(MatrixFloat, obj->inMajorOrder(order));
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat isfinite
 //DOC_BEGIN
 // bool isfinite
@@ -1304,10 +1320,20 @@ public:
   int argn;
   LUABIND_CHECK_ARGN(==, 2);
   float alpha;
-  MatrixFloat *mat;
   LUABIND_GET_PARAMETER(1, float, alpha);
-  LUABIND_GET_PARAMETER(2, MatrixFloat, mat);
-  obj->axpy(alpha, mat);
+  if (lua_isMatrixFloat(L,2)) {
+    MatrixFloat *mat;
+    LUABIND_GET_PARAMETER(2, MatrixFloat, mat);
+    obj->axpy(alpha, mat);
+  }
+  else if (lua_isSparseMatrixFloat(L,2)) {
+    SparseMatrixFloat *mat;
+    LUABIND_GET_PARAMETER(2, SparseMatrixFloat, mat);
+    obj->axpy(alpha, mat);
+  }
+  else {
+    LUABIND_ERROR("Expected matrix or matrix.sparse as 2nd argument");
+  }
   LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END
@@ -1336,6 +1362,29 @@ public:
   }
 //BIND_END
 
+//BIND_METHOD MatrixFloat sparse_mm
+  {
+    LUABIND_CHECK_ARGN(==, 1);
+    LUABIND_CHECK_PARAMETER(1, table);
+    check_table_fields(L,1, "trans_A", "alpha", "A", "B", "beta",
+		       (const char *)0);
+    bool trans_A;
+    float alpha;
+    float beta;
+    SparseMatrixFloat *matA;
+    MatrixFloat *matB;
+    LUABIND_GET_TABLE_PARAMETER(1, A, SparseMatrixFloat, matA);
+    LUABIND_GET_TABLE_PARAMETER(1, B, MatrixFloat, matB);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_A, bool, trans_A, false);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, float, alpha, 1.0f);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f);
+    obj->sparseMM(trans_A ? CblasTrans : CblasNoTrans,
+                  alpha, matA, matB,
+                  beta);
+    LUABIND_RETURN(MatrixFloat, obj);
+  }
+//BIND_END
+
 //BIND_METHOD MatrixFloat gemv
   {
     LUABIND_CHECK_ARGN(==, 1);
@@ -1345,15 +1394,29 @@ public:
     bool trans_A;
     float alpha;
     float beta;
-    MatrixFloat *matA,*matX;
-    LUABIND_GET_TABLE_PARAMETER(1, A, MatrixFloat, matA);
+    MatrixFloat *matX;
     LUABIND_GET_TABLE_PARAMETER(1, X, MatrixFloat, matX);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_A, bool, trans_A, false);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, float, alpha, 1.0f);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f);
-    obj->gemv(trans_A ? CblasTrans : CblasNoTrans,
-	      alpha, matA, matX,
-	      beta);
+    
+    lua_getfield(L, 1, "A");
+    if (lua_isMatrixFloat(L,-1)) {
+      lua_pop(L,1);
+      MatrixFloat *matA;
+      LUABIND_GET_TABLE_PARAMETER(1, A, MatrixFloat, matA);
+      obj->gemv(trans_A ? CblasTrans : CblasNoTrans,
+                alpha, matA, matX,
+                beta);
+    }
+    else {
+      lua_pop(L,1);
+      SparseMatrixFloat *matA;
+      LUABIND_GET_TABLE_PARAMETER(1, A, SparseMatrixFloat, matA);
+      obj->gemv(trans_A ? CblasTrans : CblasNoTrans,
+                alpha, matA, matX,
+                beta);
+    }
     LUABIND_RETURN(MatrixFloat, obj);
   }
 //BIND_END
@@ -1561,10 +1624,11 @@ public:
 
 //BIND_METHOD MatrixFloat svd
 {
-  MatrixFloat *U,*S,*V;
+  MatrixFloat *U,*V;
+  SparseMatrixFloat *S;
   obj->svd(&U, &S, &V);
   LUABIND_RETURN(MatrixFloat, U);
-  LUABIND_RETURN(MatrixFloat, S);
+  LUABIND_RETURN(SparseMatrixFloat, S);
   LUABIND_RETURN(MatrixFloat, V);
 }
 //BIND_END

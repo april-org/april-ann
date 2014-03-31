@@ -355,3 +355,37 @@ void writeMatrixFloatToTabStream(MatrixFloat *mat, FILE *f) {
   writeMatrixToTabStream(mat, stream, FloatAsciiSizer(),
 			 FloatAsciiCoder<BufferedFile>());
 }
+
+////////////////////////////////////////////////////////////////////////////
+
+char *writeSparseMatrixFloatToString(SparseMatrixFloat *mat,
+				     bool is_ascii,
+				     int &len) {
+  WriteBufferWrapper wrapper;
+  len = writeSparseMatrixToStream(mat, wrapper,
+				  SparseFloatAsciiSizer(),
+				  SparseFloatBinarySizer(),
+				  FloatAsciiCoder<WriteBufferWrapper>(),
+				  FloatBinaryCoder<WriteBufferWrapper>(),
+				  is_ascii);
+  return wrapper.getBufferProperty();
+}
+
+void writeSparseMatrixFloatToLuaString(SparseMatrixFloat *mat,
+				       lua_State *L,
+				       bool is_ascii) {
+  WriteLuaBufferWrapper wrapper(L);
+  IGNORE_RESULT(writeSparseMatrixToStream(mat, wrapper,
+					  SparseFloatAsciiSizer(),
+					  SparseFloatBinarySizer(),
+					  FloatAsciiCoder<WriteLuaBufferWrapper>(),
+					  FloatBinaryCoder<WriteLuaBufferWrapper>(),
+					  is_ascii));
+  wrapper.finish();
+}
+
+SparseMatrixFloat *readSparseMatrixFloatFromString(constString &cs) {
+  return readSparseMatrixFromStream<constString, float>(cs,
+							FloatAsciiExtractor(),
+							FloatBinaryExtractor());
+}

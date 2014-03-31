@@ -2,7 +2,7 @@
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
- * Copyright 2013, Francisco Zamora-Martinez
+ * Copyright 2014, Francisco Zamora-Martinez
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
@@ -18,17 +18,14 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef MATRIX_CHAR_H
-#define MATRIX_CHAR_H
-#include "matrix.h"
-#include "matrix_not_implemented.h"
 
-NOT_IMPLEMENT_AXPY_HEADER(char)
-NOT_IMPLEMENT_GEMM_HEADER(char)
-NOT_IMPLEMENT_GEMV_HEEADER(char)
-NOT_IMPLEMENT_GER_HEADER(char)
+#ifndef SPARSEMATRIXFLOAT_H
+#define SPARSEMATRIXFLOAT_H
+
+#include "matrixFloat.h"
 
 ///////////////////////////////////////////////////////////////////////////////
-typedef Matrix<char> MatrixChar;
 
-#endif // MATRIX_CHAR_H
+typedef SparseMatrix<float> SparseMatrixFloat;
+
+#endif // SPARSEMATRIXFLOAT_H

@@ -38,6 +38,12 @@
 #include "mmapped_data.h"
 #include "unused_variable.h"
 
+// forward declaration
+template <typename T>
+class SparseMatrix;
+
+/// Multidimensional matrix class. It implements basic linear algebra routines
+/// and other math operations. By default, the zero value must be T()
 template <typename T>
 class Matrix : public Referenced {
   const static unsigned int MATRIX_BINARY_VERSION;
@@ -482,7 +488,8 @@ private:
   Matrix(int numDim, const int *stride, const int offset,
 	 const int *matrixSize, const int total_size, const int last_raw_pos,
 	 GPUMirroredMemoryBlock<T> *data, const CBLAS_ORDER major_order,
-	 const bool use_cuda, const bool transposed);
+	 const bool use_cuda, const bool transposed,
+	 april_utils::MMappedDataReader *mmapped_data = 0);
 
   /// Modifies the offset of the matrix. WARNING, this method doesn't check the
   /// new data position, so be sure that it fits in the data pointer size
@@ -602,8 +609,12 @@ public:
     return end_const_iterator;
   }
 
-  /// Symbolic transposition, changes the flag
+  /// Symbolic transposition, changes the flag and preserves the major order
+  /// flag
   Matrix<T>* transpose();
+  /// Changing major order is a different way to perform a transposition, but
+  /// taking into account a change in the major_order flag
+  Matrix<T>* inMajorOrder(CBLAS_ORDER new_major_order);
   /// Copy only sizes, but not data
   Matrix<T>* cloneOnlyDims() const;
   /// Deep copy
@@ -727,6 +738,9 @@ public:
   
   // AXPY BLAS operation this = this + alpha * other
   void axpy(T alpha, const Matrix<T> *other);
+
+  // AXPY Sparse BLAS operation this = this + alpha * other
+  void axpy(T alpha, const SparseMatrix<T> *other);
   
   // GEMM BLAS operation this = alpha * op(A)*op(B) + beta*this
   void gemm(CBLAS_TRANSPOSE trans_A,
@@ -736,6 +750,13 @@ public:
 	    const Matrix<T> *otherB,
 	    T beta);
 
+  // MM Sparse BLAS operation this = alpha * op(A)*B + beta*this
+  void sparseMM(CBLAS_TRANSPOSE trans_A,
+                T alpha,
+                const SparseMatrix<T> *otherA,
+                const Matrix<T> *otherB,
+                T beta);
+
   // GEMV BLAS operation this = alpha * op(A)*X + beta*this
   void gemv(CBLAS_TRANSPOSE trans_A,
 	    T alpha,
@@ -743,6 +764,13 @@ public:
 	    const Matrix<T> *otherX,
 	    T beta);
 
+  // GEMV Sparse BLAS operation this = alpha * op(A)*X + beta*this
+  void gemv(CBLAS_TRANSPOSE trans_A,
+            T alpha,
+            const SparseMatrix<T> *otherA,
+            const Matrix<T> *otherX,
+            T beta);
+  
   // GER BLAS operation this = alpha * X*Y' + this
   void ger(T alpha,
 	   const Matrix<T> *otherX,
@@ -750,6 +778,9 @@ public:
 
   // DOT BLAS operation value = dot(this, other)
   T dot(const Matrix<T> *other) const;
+
+  // DOT Sparse BLAS operation value = dot(this, other)
+  T dot(const SparseMatrix<T> *other) const;
   
   void scal(T value);
 
@@ -767,7 +798,7 @@ public:
   Matrix<T> *max(int dim, Matrix<T> *dest=0, Matrix<int32_t> *argmax=0);
 
   Matrix<T> *maxSelDim(const int dim,
-		       IntGPUMirroredMemoryBlock *raw_positions=0,
+		       Int32GPUMirroredMemoryBlock *raw_positions=0,
 		       int shift = 0) const;
   
   // Expands current matrix to a diagonal matrix
@@ -775,13 +806,15 @@ public:
   
   /**** LAPACK OPERATIONS ****/
   Matrix<T> *inv();
-  void svd(Matrix<T> **U, Matrix<T> **S, Matrix<T> **V);
+  void svd(Matrix<T> **U, SparseMatrix<T> **S, Matrix<T> **V);
 
 private:
   void allocate_memory(int size);
   void release_memory();
   void initialize(const int *dim);
 };
+
+#include "sparse_matrix.h"
 
 #include "matrix.impl.h"
 #include "matrix-iterators.impl.h"
