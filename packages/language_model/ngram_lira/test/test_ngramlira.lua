@@ -20,6 +20,7 @@ for words_it in lines_it() do
     					    lm = model,
 					    words_it = words_it,
 					    debug_flag = 2,
+					    --unk_id = unk_id,
 					    use_unk = "all"
 					  }
 end
@@ -39,6 +40,7 @@ for words_it in lines_it() do
     					    lm = model,
 					    words_it = words_it,
 					    debug_flag = 2,
+					    --unk_id = unk_id,
 					    use_unk = "context"
 					  }
 end
@@ -58,6 +60,7 @@ for words_it in lines_it() do
     					    lm = model,
 					    words_it = words_it,
 					    debug_flag = 2,
+					    --unk_id = unk_id,
 					    use_unk = "none"
 					  }
 end

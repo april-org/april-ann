@@ -33,8 +33,7 @@ function language_models.get_sentence_prob(params)
   local words_it = params.words_it
   local log_file = params.log_file
   local debug_flag = params.debug_flag
-  local unk_id = params.debug_flag
-  local final_id = params.final_id
+  local unk_id = params.unk_id
   local use_unk = params.use_unk
   local use_bcc = params.use_bcc
   local use_ecc = params.use_ecc
