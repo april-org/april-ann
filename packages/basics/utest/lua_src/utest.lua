@@ -76,5 +76,9 @@ end
 utest.check.ge = function(a, b, ...)
   return check(function() return a > b end, ...)
 end
+utest.check.success = check
+utest.check.fail = function(f, ...)
+  return check(function() return not f() end, ...)
+end
 --
 setmetatable(utest.check,{ __call = function(self,...) return check(...) end })
