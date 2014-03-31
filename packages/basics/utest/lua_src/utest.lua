@@ -2,7 +2,7 @@ get_table_from_dotted_string("utest",true)
 --
 local function write(level,format,...)
   if level>0 or util.stdout_is_a_terminal() then
-    printf(format,...)
+    fprintf(io.stderr, format,...)
   end
 end
 --
@@ -10,7 +10,7 @@ local testn  = 0
 local passed = 0
 local failed = 0
 utest.finish = function()
-  write((failed == 0 and 0) or 1, "%d total tests: %s%d passed%s, %s%d failed%s\n",
+  write((failed > 0 and 1) or 0, "%d total tests: %s%d passed%s, %s%d failed%s\n",
         testn,
         ansi.fg.bright_green, passed, ansi.fg.default,
         ansi.fg.bright_red, failed, ansi.fg.default)
