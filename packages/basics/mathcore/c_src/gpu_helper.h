@@ -48,9 +48,9 @@ class GPUHelper {
       state = cublasCreate(&handler);
       if (state != CUBLAS_STATUS_SUCCESS)
 	ERROR_EXIT(150, "Cublas couldn't be initialized\n");
-      state = cusparseCreate(&sparse_handler);
-      if (state != CUSPARSE_STATUS_SUCCESS)
-	ERROR_EXIT(150, "Cublas couldn't be initialized\n");
+      cusparseStatus_t sparse_state = cusparseCreate(&sparse_handler);
+      if (sparse_state != CUSPARSE_STATUS_SUCCESS)
+	ERROR_EXIT(150, "Cusparse couldn't be initialized\n");
       //
       initialized = true;
       if (cuDeviceGet (&device, 0) != CUDA_SUCCESS)
@@ -61,8 +61,8 @@ class GPUHelper {
       streams.push_back(0);
       current_stream = 0;
       fprintf(stderr,
-	      "# Initialized CUDA and CUBLAS for GPU capabilitites of version %d.%d\n",
-	      properties.major, properties.minor);
+	      "# Initialized CUDA, CUBLAS and CUSPARSE for GPU capabilitites "
+              "of version %d.%d\n", properties.major, properties.minor);
     }
   }
 

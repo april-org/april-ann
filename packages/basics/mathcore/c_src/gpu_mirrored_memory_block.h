@@ -211,6 +211,7 @@ protected:
   bool allocMemGPU() const {
     ERROR_EXIT(128, "You need first to update the "
 	       "memory in a non const pointer\n");
+    return false;
   }
 
   bool allocMemGPU() {

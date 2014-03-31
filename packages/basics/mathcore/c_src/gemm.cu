@@ -87,20 +87,20 @@ cublasStatus_t wrapperCublasGemm(cublasHandle_t &handle,
                      reinterpret_cast<cuComplex*>(c_mem), c_inc);
 }
 
-cublasStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
-				    cusparseOperation_t &cusparse_a_transpose,
-				    int m, int n, int k,
-				    int NNZ,
-				    float *alpha,
-				    const cusparseMatDescr_t descrA,
-				    const float *a_values_mem,
-				    const int *a_first_index_mem,
-				    const int *a_indices_mem,
-				    const float *b_mem,
-				    unsigned int b_inc,
-				    float *beta,
-				    float *c_mem,
-				    unsigned int c_inc) {
+cusparseStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
+                                      cusparseOperation_t &cusparse_a_transpose,
+                                      int m, int n, int k,
+                                      int NNZ,
+                                      float *alpha,
+                                      const cusparseMatDescr_t descrA,
+                                      const float *a_values_mem,
+                                      const int *a_first_index_mem,
+                                      const int *a_indices_mem,
+                                      const float *b_mem,
+                                      unsigned int b_inc,
+                                      float *beta,
+                                      float *c_mem,
+                                      unsigned int c_inc) {
   return cusparseScsrmm(handle, cusparse_a_transpose,
 			m, n, k,
 			NNZ,
@@ -111,20 +111,20 @@ cublasStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
 			beta, c_mem, c_inc);
 }
 
-cublasStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
-				    cusparseOperation_t &cusparse_a_transpose,
-				    int m, int n, int k,
-				    int NNZ,
-				    double *alpha,
-				    const cusparseMatDescr_t descrA,
-				    const double *a_values_mem,
-				    const int *a_first_index_mem,
-				    const int *a_indices_mem,
-				    const double *b_mem,
-				    unsigned int b_inc,
-				    double *beta,
-				    double *c_mem,
-				    unsigned int c_inc) {
+cusparseStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
+                                      cusparseOperation_t &cusparse_a_transpose,
+                                      int m, int n, int k,
+                                      int NNZ,
+                                      double *alpha,
+                                      const cusparseMatDescr_t descrA,
+                                      const double *a_values_mem,
+                                      const int *a_first_index_mem,
+                                      const int *a_indices_mem,
+                                      const double *b_mem,
+                                      unsigned int b_inc,
+                                      double *beta,
+                                      double *c_mem,
+                                      unsigned int c_inc) {
   return cusparseDcsrmm(handle, cusparse_a_transpose,
 			m, n, k,
 			NNZ,
@@ -135,20 +135,20 @@ cublasStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
 			beta, c_mem, c_inc);
 }
 
-cublasStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
-				    cusparseOperation_t &cusparse_a_transpose,
-				    int m, int n, int k,
-				    int NNZ,
-				    ComplexF *alpha,
-				    const cusparseMatDescr_t descrA,
-				    const ComplexF *a_values_mem,
-				    const int *a_first_index_mem,
-				    const int *a_indices_mem,
-				    const ComplexF *b_mem,
-				    unsigned int b_inc,
-				    ComplexF *beta,
-				    ComplexF *c_mem,
-				    unsigned int c_inc) {
+cusparseStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
+                                      cusparseOperation_t &cusparse_a_transpose,
+                                      int m, int n, int k,
+                                      int NNZ,
+                                      ComplexF *alpha,
+                                      const cusparseMatDescr_t descrA,
+                                      const ComplexF *a_values_mem,
+                                      const int *a_first_index_mem,
+                                      const int *a_indices_mem,
+                                      const ComplexF *b_mem,
+                                      unsigned int b_inc,
+                                      ComplexF *beta,
+                                      ComplexF *c_mem,
+                                      unsigned int c_inc) {
   return cusparseCcsrmm(handle, cusparse_a_transpose,
 			m, n, k,
 			NNZ,
@@ -158,7 +158,7 @@ cublasStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
 			a_first_index_mem, a_indices_mem,
 			reinterpret_cast<const cuComplex*>(b_mem), b_inc,
 			reinterpret_cast<const cuComplex*>(beta),
-			reinterpret_cast<const cuComplex*>(c_mem), c_inc);
+			reinterpret_cast<cuComplex*>(c_mem), c_inc);
 }
 
 #endif
@@ -342,7 +342,7 @@ void doSparseMM(CBLAS_ORDER major_order,
     cusparseHandle_t handle = GPUHelper::getSparseHandler();
     if (major_order != CblasColMajor)
       ERROR_EXIT(128, "Column major matrices are expected\n");
-    if (sparse_format != SparseMatrix<T>::CSR_FORMAT)
+    if (sparse_format != CSR_FORMAT)
       a_transpose = NEGATE_CBLAS_TRANSPOSE(a_transpose);
     //printf("Doing a sgemm with comp=1 & cuda=1\n");
     a_values_mem = a_values->getGPUForRead();
@@ -354,12 +354,16 @@ void doSparseMM(CBLAS_ORDER major_order,
     
     status = cusparseSetStream(handle, GPUHelper::getCurrentStream());
     checkCusparseError(status);
-    cusparseMatDescr_t descrA = {
-      CUSPARSE_MATRIX_TYPE_GENERAL,
-      0, // fill mode
-      0, // diag type
-      CUSPARSE_INDEX_BASE_ZERO
-    };
+    cusparseMatDescr_t descrA;
+    status = cusparseCreateMatDescr(&descrA);
+    checkCusparseError(status);
+    /* by default, it is initialized like this:
+       descrA->MatrixType = CUSPARSE_MATRIX_TYPE_GENERAL;
+       descrA->FillMode   = 0;
+       descrA->DiagType   = 0;
+       descrA->IndexBase  = CUSPARSE_INDEX_BASE_ZERO;
+    */
+    //
     status = wrapperCusparseCSRMM(handle,
 				  cusparse_a_transpose,
 				  m, n, k,
@@ -371,6 +375,8 @@ void doSparseMM(CBLAS_ORDER major_order,
 				  a_indices_mem,
 				  b_mem, b_inc,
 				  &beta, c_mem, c_inc);
+    checkCusparseError(status);
+    status = cusparseDestroyMatDescr(descrA);
     checkCusparseError(status);
   }
   else {

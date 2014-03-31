@@ -66,10 +66,10 @@ cublasStatus_t wrapperCublasAxpy(cublasHandle_t &handle,
 cusparseStatus_t wrapperCusparseAxpy(cusparseHandle_t &handle,
 				     int NNZ,
 				     float *alpha,
-				     float *x_values_mem,
-				     int *x_indices_mem,
+				     const float *x_values_mem,
+				     const int *x_indices_mem,
 				     float *y_mem) {
-  return cusparseSaxpyi(handle, NNZ, &alpha,
+  return cusparseSaxpyi(handle, NNZ, alpha,
 			x_values_mem, x_indices_mem,
 			y_mem,
 			CUSPARSE_INDEX_BASE_ZERO);
@@ -78,22 +78,21 @@ cusparseStatus_t wrapperCusparseAxpy(cusparseHandle_t &handle,
 cusparseStatus_t wrapperCusparseAxpy(cusparseHandle_t &handle,
 				     int NNZ,
 				     double *alpha,
-				     double *x_values_mem,
-				     int *x_indices_mem,
+				     const double *x_values_mem,
+				     const int *x_indices_mem,
 				     double *y_mem) {
-  return cusparseDaxpyi(handle, NNZ, &alpha,
+  return cusparseDaxpyi(handle, NNZ, alpha,
 			x_values_mem, x_indices_mem,
 			y_mem,
 			CUSPARSE_INDEX_BASE_ZERO);
 }
 
-cublasStatus_t wrapperCusparseAxpy(cublasHandle_t &handle,
-				   int N,
-				   ComplexF *alpha,
-				   const ComplexF *x_mem,
-				   unsigned int x_inc,
-				   ComplexF *y_mem,
-				   unsigned int y_inc) {
+cusparseStatus_t wrapperCusparseAxpy(cusparseHandle_t &handle,
+                                     int NNZ,
+                                     ComplexF *alpha,
+                                     const ComplexF *x_values_mem,
+                                     const int *x_indices_mem,
+                                     ComplexF *y_mem) {
   return cusparseCaxpyi(handle, NNZ,
 			reinterpret_cast<const cuComplex*>(alpha),
 			reinterpret_cast<const cuComplex*>(x_values_mem),
@@ -302,6 +301,8 @@ void doSparseAxpy(int NNZ,
 #endif
 #ifdef USE_CUDA
   if (use_gpu) {
+    if (y_inc != 1)
+      ERROR_EXIT(128, "Error, executing sparse AXPY in CUDA with inc != 1\n");
     cusparseStatus_t status;
     cusparseHandle_t handle = GPUHelper::getSparseHandler();
     //printf("Doing a saxpy with comp=1 & cuda=1\n");

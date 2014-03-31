@@ -22,7 +22,7 @@
 
 #ifdef USE_CUDA
 
-void checkCusparseError(cublasStatus_t status) {
+void checkCusparseError(cusparseStatus_t status) {
   if (status == CUSPARSE_STATUS_SUCCESS)
     return;
   else if (status == CUSPARSE_STATUS_NOT_INITIALIZED)
