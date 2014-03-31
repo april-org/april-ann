@@ -19,10 +19,59 @@
  *
  */
 //BIND_HEADER_C
-#include "gpu_mirrored_memory_block.h"
+#include "luabindutil.h"
+#include "luabindmacros.h"
+#include "error_print.h"
+
+#define FUNCTION_NAME "Constructor"
+template<typename T>
+void GPUMirroredMemoryBlockConstructor(lua_State *L,
+				       GPUMirroredMemoryBlock<T> *&obj) {
+  unsigned int N;
+  if (lua_istable(L,1)) N = lua_rawlen(L,1);
+  else LUABIND_GET_PARAMETER(1,uint,N);
+  obj = new GPUMirroredMemoryBlock<T>(N);
+  if (lua_istable(L,1)) {
+    T *ptr = obj->getPPALForWrite();
+    for (unsigned int i=0; i<N; ++i) {
+      lua_pushinteger(L, i+1);
+      lua_gettable(L, -2);
+      LUABIND_GET_PARAMETER(-1,number,ptr[i]);
+      lua_pop(L,1);
+    }
+  }
+}
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "set"
+template<typename T>
+void GPUMirroredMemoryBlockSet(lua_State *L,
+			       GPUMirroredMemoryBlock<T> *obj) {
+  T value;
+  unsigned int i;
+  LUABIND_GET_PARAMETER(1,uint,i);
+  LUABIND_GET_PARAMETER(2,number,value);
+  if (i<=0 || i> obj->getSize()) ERROR_EXIT(128, "Index out of bounds\n");
+  T *ptr = obj->getPPALForWrite();
+  ptr[i-1] = value;
+}
+#undef FUNCTION_NAME
+
+#define FUNCTION_NAME "get"
+template<typename T>
+T GPUMirroredMemoryBlockGet(lua_State *L,
+			    GPUMirroredMemoryBlock<T> *obj) {
+  unsigned int i;
+  LUABIND_GET_PARAMETER(1,uint,i);
+  if (i<=0 || i> obj->getSize()) ERROR_EXIT(128, "Index out of bounds\n");
+  const T *ptr = obj->getPPALForRead();
+  return ptr[i-1];
+}
+#undef FUNCTION_NAME
 //BIND_END
 
 //BIND_HEADER_H
+#include "gpu_mirrored_memory_block.h"
 //BIND_END
 
 //BIND_FUNCTION mathcore.set_mmap_allocation
@@ -31,5 +80,110 @@
   LUABIND_CHECK_ARGN(==,1);
   LUABIND_GET_PARAMETER(1, bool, v);
   GPUMirroredMemoryBlockBase::setUseMMapAllocation(v);
+}
+//BIND_END
+
+//BIND_FUNCTION mathcore.set_max_pool_size
+{
+  int max_pool_size;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_GET_PARAMETER(1, int, max_pool_size);
+#ifndef NO_POOL
+  GPUMirroredMemoryBlockBase::
+    changeMaxPoolSize(static_cast<size_t>(max_pool_size));
+#endif
+}
+//BIND_END
+
+////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME FloatGPUMirroredMemoryBlock mathcore.block.float
+//BIND_CPP_CLASS FloatGPUMirroredMemoryBlock
+
+//BIND_CONSTRUCTOR FloatGPUMirroredMemoryBlock
+{
+  GPUMirroredMemoryBlockConstructor(L,obj);
+  LUABIND_RETURN(FloatGPUMirroredMemoryBlock,obj);
+}
+//BIND_END
+
+//BIND_METHOD FloatGPUMirroredMemoryBlock size
+{
+  LUABIND_RETURN(uint,obj->getSize());
+}
+//BIND_END
+
+//BIND_METHOD FloatGPUMirroredMemoryBlock set
+{
+  GPUMirroredMemoryBlockSet(L,obj);
+  LUABIND_RETURN(FloatGPUMirroredMemoryBlock,obj);
+}
+//BIND_END
+
+//BIND_METHOD FloatGPUMirroredMemoryBlock get
+{
+  LUABIND_RETURN(float,GPUMirroredMemoryBlockGet(L,obj));
+}
+//BIND_END
+
+////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME DoubleGPUMirroredMemoryBlock mathcore.block.double
+//BIND_CPP_CLASS DoubleGPUMirroredMemoryBlock
+
+//BIND_CONSTRUCTOR DoubleGPUMirroredMemoryBlock
+{
+  GPUMirroredMemoryBlockConstructor(L,obj);
+  LUABIND_RETURN(DoubleGPUMirroredMemoryBlock,obj);
+}
+//BIND_END
+
+//BIND_METHOD DoubleGPUMirroredMemoryBlock size
+{
+  LUABIND_RETURN(uint,obj->getSize());
+}
+//BIND_END
+
+//BIND_METHOD DoubleGPUMirroredMemoryBlock set
+{
+  GPUMirroredMemoryBlockSet(L,obj);
+  LUABIND_RETURN(DoubleGPUMirroredMemoryBlock,obj);
+}
+//BIND_END
+
+//BIND_METHOD DoubleGPUMirroredMemoryBlock get
+{
+  LUABIND_RETURN(double,GPUMirroredMemoryBlockGet(L,obj));
+}
+//BIND_END
+
+////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME Int32GPUMirroredMemoryBlock mathcore.block.int32
+//BIND_CPP_CLASS Int32GPUMirroredMemoryBlock
+
+//BIND_CONSTRUCTOR Int32GPUMirroredMemoryBlock
+{
+  GPUMirroredMemoryBlockConstructor(L,obj);
+  LUABIND_RETURN(Int32GPUMirroredMemoryBlock,obj);
+}
+//BIND_END
+
+//BIND_METHOD Int32GPUMirroredMemoryBlock size
+{
+  LUABIND_RETURN(uint,obj->getSize());
+}
+//BIND_END
+
+//BIND_METHOD Int32GPUMirroredMemoryBlock set
+{
+  GPUMirroredMemoryBlockSet(L,obj);
+  LUABIND_RETURN(Int32GPUMirroredMemoryBlock,obj);
+}
+//BIND_END
+
+//BIND_METHOD Int32GPUMirroredMemoryBlock get
+{
+  LUABIND_RETURN(int,GPUMirroredMemoryBlockGet(L,obj));
 }
 //BIND_END

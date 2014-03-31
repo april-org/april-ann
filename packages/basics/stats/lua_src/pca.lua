@@ -29,10 +29,10 @@ end
 -- NOT IN-PLACE
 function stats.pca_whitening(X,U,S,epsilon)
   local epsilon = epsilon or 0.0
-  local result = matrix[X:get_major_order()](X:dim(1), S:size())
+  local result = matrix[X:get_major_order()](X:dim(1), S:dim(1))
   result:gemm{ A=X, B=U, trans_B=false, beta=0, alpha=1}
-  for i=1,S:dim(1) do
-    result:select(2,i):scal( 1/math.sqrt(S:get(i) + epsilon) )
+  for v,i in S:iterate() do
+    result:select(2,i):scal( 1/math.sqrt(v + epsilon) )
   end
   return result
 end
@@ -49,13 +49,13 @@ function stats.pca_threshold(S,mass)
   local mass = mass or 0.99
   local acc = 0
   local sum = S:sum()
-  local acc_th,th = 0,1
-  for i=1,S:size() do
-    acc=acc+S:get(i)
-    if acc/sum < mass then acc_th,th=acc,i end
+  local acc_th,th,vth = 0,1
+  for v,i in S:iterate() do
+    acc=acc + v
+    if acc/sum < mass then vth,acc_th,th=v,acc,i end
   end
   assert(acc_th > 0, "The probability mass needs to be larger")
-  return th,S:get(th),acc_th/sum
+  return th,vth,acc_th/sum
 end
 
 -------------------------------------------------------------------------------
@@ -67,11 +67,12 @@ function stats.pca(Xc)
   assert(#dim == 2, "Expected a bi-dimensional matrix")
   local aux = Xc:sum(2):scal(1/Xc:dim(2)):rewrap(Xc:dim(1))
   local M,N    = table.unpack(dim)
-  local sigma  = matrix.col_major(N,N):gemm{ A=Xc, B=Xc,
-					     trans_A=true,
-					     trans_B=false,
-					     alpha=1/M,
-					     beta=0, }
+  local sigma  = matrix.col_major(N,N)
+  sigma:gemm{ A=Xc, B=Xc,
+	      trans_A=true,
+	      trans_B=false,
+	      alpha=1/M,
+	      beta=0, }
   local U,S,VT = sigma:svd()
   return U,S,VT
 end

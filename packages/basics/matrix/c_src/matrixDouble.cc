@@ -21,3 +21,15 @@
 #include "matrixDouble.h"
 
 template class Matrix<double>;
+
+/************* ZEROS FUNCTION **************/
+template<>
+void Matrix<double>::zeros() {
+  fill(0.0);
+}
+
+/************* ONES FUNCTION **************/
+template<>
+void Matrix<double>::ones() {
+  fill(1.0);
+}

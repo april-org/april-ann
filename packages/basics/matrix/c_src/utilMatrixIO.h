@@ -24,6 +24,7 @@
 #include "constString.h"
 #include "binarizer.h"
 #include "error_print.h"
+#include "matrix.h"
 extern "C" {
 #include "lauxlib.h"
 #include "lualib.h"
@@ -432,5 +433,255 @@ int writeMatrixToTabStream(Matrix<MatrixType> *mat,
   }
   return stream.getTotalBytes();
 }
+
+/////////////////////////////////////////////////////////////////////////////
+
+// SPARSE
+
+template <typename StreamType, typename MatrixType,
+	  typename AsciiExtractFunctor,  typename BinaryExtractorFunctor>
+SparseMatrix<MatrixType>*
+readSparseMatrixFromStream(StreamType &stream,
+			   AsciiExtractFunctor ascii_extractor,
+			   BinaryExtractorFunctor bin_extractor) {
+  if (!stream.good()) {
+    ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
+    return 0;
+  }
+  constString line,format,sparse,token;
+  // First we read the matrix dimensions
+  line = stream.extract_u_line();
+  if (!line) {
+    ERROR_PRINT("empty file!!!\n");
+    return 0;
+  }
+  int dims[2], n=0, NZ;
+  for (int i=0; i<2; ++i, ++n) {
+    if (!line.extract_int(&dims[i])) {
+      ERROR_PRINT1("incorrect dimension %d type, expected a integer\n", n);
+      return 0;
+    }
+    n++;
+  }
+  if (!line.extract_int(&NZ)) {
+    ERROR_PRINT("impossible to read the number of non-zero elements\n");
+    return 0;
+  }
+  SparseMatrix<MatrixType> *mat = 0;
+  // Now we read the type of the format
+  line = stream.extract_u_line();
+  format = line.extract_token();
+  if (!format) {
+    ERROR_PRINT("impossible to read format token\n");
+    return 0;
+  }
+  sparse = line.extract_token();
+  GPUMirroredMemoryBlock<MatrixType> *values = new GPUMirroredMemoryBlock<MatrixType>(NZ);
+  Int32GPUMirroredMemoryBlock *indices = new Int32GPUMirroredMemoryBlock(NZ);
+  Int32GPUMirroredMemoryBlock *first_index = 0;
+  if (!sparse || sparse=="csr") {
+    first_index = new Int32GPUMirroredMemoryBlock(dims[0]+1);
+  }
+  else if (sparse=="csc") {
+    first_index = new Int32GPUMirroredMemoryBlock(dims[1]+1);
+  }
+  else {
+    ERROR_PRINT("Impossible to determine the sparse format\n");
+    return 0;
+  }
+  float *values_ptr = values->getPPALForWrite();
+  int32_t *indices_ptr = indices->getPPALForWrite();
+  int32_t *first_index_ptr = first_index->getPPALForWrite();
+  if (format == "ascii") {
+    int i=0;
+    while(i<NZ) {
+      if (! (line=stream.extract_u_line()) )
+        ERROR_EXIT(128, "Incorrect sparse matrix format\n");
+      while(i<NZ &&
+            ascii_extractor(line, values_ptr[i])) {
+        ++i;
+      }
+    }
+    i=0;
+    while(i<NZ) {
+      if (! (line=stream.extract_u_line()) )
+        ERROR_EXIT(128, "Incorrect sparse matrix format\n");
+      while(i<NZ &&
+            line.extract_int(&indices_ptr[i])) {
+        ++i;
+      }
+    }
+    i=0;
+    while(i<static_cast<int>(first_index->getSize())) {
+      if (! (line=stream.extract_u_line()) )
+        ERROR_EXIT(128, "Incorrect sparse matrix format\n");
+      while(i<static_cast<int>(first_index->getSize()) &&
+            line.extract_int(&first_index_ptr[i])) {
+        ++i;
+      }
+    }
+  } else { // binary
+    int i=0;
+    while(i<NZ) {
+      if (! (line=stream.extract_u_line()) )
+        ERROR_EXIT(128, "Incorrect sparse matrix format\n");
+      while(i<NZ &&
+            bin_extractor(line, values_ptr[i])) {
+        ++i;
+      }
+    }
+    i=0;
+    while(i<NZ) {
+      if (! (line=stream.extract_u_line()) )
+        ERROR_EXIT(128, "Incorrect sparse matrix format\n");
+      while(i<NZ &&
+            line.extract_int32_binary(&indices_ptr[i])) {
+        ++i;
+      }
+    }
+    i=0;
+    while(i<static_cast<int>(first_index->getSize())) {
+      if (! (line=stream.extract_u_line()) )
+        ERROR_EXIT(128, "Incorrect sparse matrix format\n");
+      while(i<static_cast<int>(first_index->getSize()) &&
+            line.extract_int32_binary(&first_index_ptr[i])) {
+        ++i;
+      }
+    }
+  }
+  if (sparse=="csr") {
+    mat = new SparseMatrix<MatrixType>(dims[0],dims[1],
+				       values,indices,first_index,
+				       CSR_FORMAT);
+  }
+  else {
+    // This was checked before: else if (sparse=="csc") {
+    mat = new SparseMatrix<MatrixType>(dims[0],dims[1],
+				       values,indices,first_index,
+				       CSC_FORMAT);
+  }
+  return mat;
+}
+
+/*** Functor examples
+
+struct DummyAsciiSizer {
+  // returns the number of bytes needed for all matrix data (plus spaces)
+  int operator()(const Matrix<MatrixType> *mat) {
+    RETURN 12 * mat->size();
+  }
+};
+struct DummyBinarySizer {
+  // returns the number of bytes needed for all matrix data (plus spaces)
+  int operator()(const Matrix<MatrixType> *mat) {
+    RETURN binarizer::buffer_size_32(mat->size());
+  }
+};
+template<typename StreamType>
+struct DummyAsciiCoder {
+  // puts to the stream the given value
+  void operator()(const MatrixType &value, StreamType &stream) {
+    stream.printf("%.5g", value);
+  }
+};
+template<typename StreamType>
+struct DummyBinaryCoder {
+  // puts to the stream the given value
+  void operator()(const MatrixType &value, StreamType &stream) {
+    char b[5];
+    binarizer::code_BLAH(value, b);
+    stream.printf("%s", b);
+  }
+};
+****************************************************************/
+
+// Returns the number of chars written (there is a '\0' that is not counted)
+template <typename StreamType, typename MatrixType,
+	  typename AsciiSizeFunctor,  typename BinarySizeFunctor,
+	  typename AsciiCodeFunctor,  typename BinaryCodeFunctor>
+int writeSparseMatrixToStream(SparseMatrix<MatrixType> *mat,
+			      StreamType &stream,
+			      AsciiSizeFunctor ascii_sizer,
+			      BinarySizeFunctor bin_sizer,
+			      AsciiCodeFunctor ascii_coder,
+			      BinaryCodeFunctor bin_coder,
+			      bool is_ascii) {
+  int sizedata,sizeheader;
+  sizeheader = (mat->getNumDim()+1)*10+10+10; // FIXME: To put adequate values
+  // sizedata contains the memory used by MatrixType in ascii including spaces,
+  // new lines, etc...
+  if (is_ascii) sizedata = ascii_sizer(mat) + mat->nonZeroSize()*12 + mat->getDenseCoordinateSize()*12 + 3;
+  else sizedata = bin_sizer(mat) + binarizer::buffer_size_32(mat->nonZeroSize()) + binarizer::buffer_size_32(mat->getDenseCoordinateSize()) + 3;
+  stream.setExpectedSize(sizedata+sizeheader+1);
+  if (!stream.good()) {
+    ERROR_EXIT(256, "The stream is not prepared, it is empty, or EOF\n");
+  }
+  stream.printf("%d ",mat->getDimSize(0));
+  stream.printf("%d ",mat->getDimSize(1));
+  stream.printf("%d\n",mat->nonZeroSize());
+  const float *values_ptr = mat->getRawValuesAccess()->getPPALForRead();
+  const int32_t *indices_ptr = mat->getRawIndicesAccess()->getPPALForRead();
+  const int32_t *first_index_ptr = mat->getRawFirstIndexAccess()->getPPALForRead();
+  if (is_ascii) {
+    const int columns = 9;
+    stream.printf("ascii");
+    if (mat->getSparseFormat() == CSR_FORMAT)
+      stream.printf(" csr");
+    else
+      stream.printf(" csc");
+    stream.printf("\n");
+    int i;
+    for (i=0; i<mat->nonZeroSize(); ++i) {
+      ascii_coder(values_ptr[i], stream);
+      stream.printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
+    }
+    if ((i % columns) != 0) {
+      stream.printf("\n"); 
+    }
+    for (i=0; i<mat->nonZeroSize(); ++i) {
+      stream.printf("%d", indices_ptr[i]);
+      stream.printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
+    }
+    if ((i % columns) != 0) {
+      stream.printf("\n"); 
+    }
+    for (i=0; i<=mat->getDenseCoordinateSize(); ++i) {
+      stream.printf("%d", first_index_ptr[i]);
+      stream.printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
+    }
+    if ((i % columns) != 0) {
+      stream.printf("\n"); 
+    }
+  } else { // binary
+    const int columns = 16;
+    stream.printf("binary");
+    if (mat->getSparseFormat() == CSR_FORMAT)
+      stream.printf(" csr");
+    else
+      stream.printf(" csc");
+    stream.printf("\n");
+    int i=0;
+    char b[5];
+    for (i=0; i<mat->nonZeroSize(); ++i) {
+      bin_coder(values_ptr[i], stream);
+      if ((i+1) % columns == 0) stream.printf("\n");
+    }
+    if ((i % columns) != 0) stream.printf("\n"); 
+    for (i=0; i<mat->nonZeroSize(); ++i) {
+      binarizer::code_int32(indices_ptr[i], b);
+      stream.printf("%c%c%c%c%c", b[0],b[1],b[2],b[3],b[4]);
+      if ((i+1) % columns == 0) stream.printf("\n");
+    }
+    if ((i % columns) != 0) stream.printf("\n"); 
+    for (i=0; i<=mat->getDenseCoordinateSize(); ++i) {
+      binarizer::code_int32(first_index_ptr[i], b);
+      stream.printf("%c%c%c%c%c", b[0],b[1],b[2],b[3],b[4]);
+      if ((i+1) % columns == 0) stream.printf("\n");
+    }
+    if ((i % columns) != 0) stream.printf("\n"); 
+  }
+  return stream.getTotalBytes();
+}
+
 
 #endif // UTILMATRIXIO_H

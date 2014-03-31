@@ -50,6 +50,7 @@ cublasStatus_t wrapperCublasDot(cublasHandle_t &handle,
 				unsigned int y_inc,
 				ComplexF *ret) {
   ERROR_EXIT(256, "Dot product for complex numbers not implemented with CUDA\n");
+  return CUBLAS_STATUS_INTERNAL_ERROR;
 }
 
 #endif

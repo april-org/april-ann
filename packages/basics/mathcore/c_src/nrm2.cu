@@ -47,6 +47,7 @@ cublasStatus_t wrapperCublasNrm2(cublasHandle_t &handle,
   UNUSED_VARIABLE(x_inc);
   UNUSED_VARIABLE(result);
   ERROR_EXIT(256, "Nrm2 for complex numbers not implemented in CUDA\n");
+  return CUBLAS_STATUS_INTERNAL_ERROR;
 }
 
 #endif

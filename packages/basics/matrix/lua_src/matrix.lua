@@ -5,82 +5,40 @@ class_extension(matrix, "to_lua_string",
                                        self:toString(format or "binary"))
                 end)
 
+-- ADDING PSEUDO-INVERSE METHOD
+class_extension(matrix, "pinv",
+		function(self)
+		  local u,s,vt = self:svd()
+		  for aux,i in s:iterate() do
+		    u:select(2,i):scal(((math.abs(aux)>1e-07) and 1/aux) or 0.0)
+		  end
+		  return matrix.as(self):
+		  gemm{
+		    A       = vt,
+		    B       = u,
+		    trans_A = true,
+		    trans_B = true,
+		    alpha   = 1.0,
+		    beta    = 0.0,
+		  }
+		end)
+
 -- the constructor
 matrix.row_major = function(...)
   return matrix(...)
 end
 
-matrix.meta_instance.__call = function(self,...)
-  local arg      = table.pack(...)
-  local dims     = self:dim()
-  local pos,size = {},{}
-  for i=1,#arg do
-    local t = arg[i]
-    local tt = luatype(t)
-    local a,b
-    if tt == "table" then
-      a,b = table.unpack(t)
-      assert(tonumber(a) and tonumber(b),
-	     "The table " .. i .. " must contain two numbers")
-    elseif tt == "string" then
-      a = t:match("^(%d+)%:.*$") or 1
-      b = t:match("^.*%:(%d+)$") or dims[i]
-    elseif tt == "number" then
-      a = t
-      b = a
-    else
-      error("The argument " .. i .. " is not a table neither a string")
-    end
-    a,b = tonumber(a),tonumber(b)
-    assert(1 <= a and a <= dims[i], "Range out of bounds")
-    assert(1 <= b and b <= dims[i], "Range out of bounds")
-    table.insert(pos,  a)
-    table.insert(size, b - a + 1)
-  end
-  for i=#arg+1,#dims do
-    table.insert(pos, 1)
-    table.insert(size, dims[i])
-  end
-  return self:slice(pos,size)
-end
+matrix.meta_instance.__call =
+  matrix.__make_generic_call__()
 
-matrix.meta_instance.__tostring = function(self)
-  local dims   = self:dim()
-  local major  = self:get_major_order()
-  local coords = {}
-  local out    = {}
-  local row    = {}
-  local so_large = false
-  for i=1,#dims do 
-    coords[i]=1
-    if dims[i] > 20 then so_large = true end
-  end
-  if not so_large then
-    for i=1,self:size() do
-      if #dims > 2 and coords[#dims] == 1 and coords[#dims-1] == 1 then
-	table.insert(out,
-		     string.format("\n# pos [%s]",
-				   table.concat(coords, ",")))
-      end
-      table.insert(row, string.format("% -11.6g", self:get(table.unpack(coords))))
-      local j=#dims+1
-      repeat
-	j=j-1
-	coords[j] = coords[j] + 1
-	if coords[j] > dims[j] then coords[j] = 1 end
-      until j==1 or coords[j] ~= 1
-      if coords[#coords] == 1 then
-	table.insert(out, table.concat(row, " ")) row={}
-      end
-    end
-  else
-    table.insert(out, "Large matrix, not printed to display")
-  end
-  table.insert(out, string.format("# Matrix of size [%s] in %s [%s]",
-				  table.concat(dims, ","), major,
-				  self:get_reference_string()))
-  return table.concat(out, "\n")
-end
+matrix.meta_instance.__tostring =
+  matrix.__make_generic_print__("Matrix",
+				function(value)
+				  return string.format("% -11.6g", value)
+				end)
+
+matrix.join =
+  matrix.__make_generic_join__(matrix)
 
 matrix.meta_instance.__eq = function(op1, op2)
   if type(op1) == "number" or type(op2) == "number" then return false end
@@ -107,9 +65,19 @@ matrix.meta_instance.__sub = function(op1, op2)
 end
 
 matrix.meta_instance.__mul = function(op1, op2)
-  if not isa(op1,matrix) then op1,op2=op2,op1 end
-  if type(op2) == "number" then return op1:clone():scal(op2)
-  else return op1:mul(op2)
+  if isa(op1,matrix.sparse) or isa(op2,matrix.sparse) then
+    if isa(op2,matrix.sparse) then
+      local op1,op2 = op2:transpose(),op1:transpose()
+      local res = matrix[op2:get_major_order()](op1:dim(1),op2:dim(2))
+      res:sparse_mm{ alpha=1.0, beta=0.0, A=op1, B=op2 }
+      return res:transpose()
+    else
+    end
+  else
+    if not isa(op1,matrix) then op1,op2=op2,op1 end
+    if type(op2) == "number" then return op1:clone():scal(op2)
+    else return op1:mul(op2)
+    end
   end
 end
 
@@ -137,45 +105,6 @@ end
 matrix.meta_instance.__unm = function(op)
   local new_mat = op:clone()
   return new_mat:scal(-1)
-end
-
-function matrix.join(dim, ...)
-  local arg  = table.pack(...)
-  local size = arg[1]:dim()
-  -- ERROR CHECK
-  assert(dim >= 1 and dim <= #size,
-	 "Incorrect given dimension number, or incorrect first matrix size")
-  size[dim]  = 0
-  for i=1,#arg do
-    local m = arg[i]
-    local d = m:dim()
-    assert(#d == #size,
-	   "All the matrices must have the same number of dimensions")
-    size[dim] = size[dim] + d[dim]
-    for j=1,dim-1 do
-      assert(size[j] == d[j], "Incorrect dimension size")
-    end
-    for j=dim+1,#size do
-      assert(size[j] == d[j], "Incorrect dimension size")
-    end
-  end
-  -- JOIN
-  local outm
-  if arg[1]:get_major_order() == "col_major" then
-    outm = matrix.col_major(table.unpack(size))
-  else
-    outm = matrix(table.unpack(size))
-  end
-  local first = matrix(#size):ones():toTable()
-  for i=1,#arg do
-    local m = arg[i]
-    local d = m:dim()
-    size[dim] = d[dim]
-    local outm_slice = outm:slice(first, size)
-    outm_slice:copy(m)
-    first[dim] = first[dim] + size[dim]
-  end
-  return outm
 end
 
 -- IMAGE
@@ -1233,7 +1162,7 @@ april_set_doc("matrix.svd",
 		},
 		outputs = {
 		  "The matrix U",
-		  "The vector S with the eigenvalues",
+		  "The sparse row vector S with the eigenvalues",
 		  "The matrix V', the transposed of V",
 		},
 	      })
@@ -1241,7 +1170,7 @@ april_set_doc("matrix.svd",
 april_set_doc("matrix.diagonalize",
 	      {
 		class = "method",
-		summary = "Converts the given uni-dimensional matrix in a bi-dimensional diagonal matrix",
+		summary = "Converts the given uni-dimensional matrix in a bi-dimensional diagonal dense matrix",
 		outputs = {
 		  "A matrix which is the diagonalized version of the caller matrix",
 		},

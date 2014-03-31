@@ -30,9 +30,11 @@
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <cublas_v2.h>
+#include <cusparse_v2.h>
 
 class GPUHelper {
   static cublasHandle_t handler;
+  static cusparseHandle_t sparse_handler;
   static bool initialized;
   static cudaDeviceProp properties;
   static CUdevice  device;
@@ -46,9 +48,11 @@ class GPUHelper {
       state = cublasCreate(&handler);
       if (state != CUBLAS_STATUS_SUCCESS)
 	ERROR_EXIT(150, "Cublas couldn't be initialized\n");
-      else
-	initialized = true;
-      
+      cusparseStatus_t sparse_state = cusparseCreate(&sparse_handler);
+      if (sparse_state != CUSPARSE_STATUS_SUCCESS)
+	ERROR_EXIT(150, "Cusparse couldn't be initialized\n");
+      //
+      initialized = true;
       if (cuDeviceGet (&device, 0) != CUDA_SUCCESS)
 	ERROR_EXIT(152, "Failed to get device\n");
       if (cudaGetDeviceProperties(&properties, 0) != cudaSuccess)
@@ -57,8 +61,8 @@ class GPUHelper {
       streams.push_back(0);
       current_stream = 0;
       fprintf(stderr,
-	      "# Initialized CUDA and CUBLAS for GPU capabilitites of version %d.%d\n",
-	      properties.major, properties.minor);
+	      "# Initialized CUDA, CUBLAS and CUSPARSE for GPU capabilitites "
+              "of version %d.%d\n", properties.major, properties.minor);
     }
   }
 
@@ -68,12 +72,18 @@ class GPUHelper {
       ERROR_EXIT(151, "Destroying CUBLAS handler, that it's not initialized\n");
     // Need to free all the allocated memory in GPU
     cublasDestroy(handler);
+    cusparseDestroy(sparse_handler);
     initialized = false;
   } 
 
   static cublasHandle_t &getHandler() {
     initHelper();
     return handler;
+  }
+
+  static cusparseHandle_t &getSparseHandler() {
+    initHelper();
+    return sparse_handler;
   }
   
   static CUdevice &getCUdevice() {

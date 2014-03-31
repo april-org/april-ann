@@ -326,9 +326,11 @@ namespace ANN {
       if (!Connections::checkInputOutputSizes(weights_matrix,
 					      weights_input_size,
 					      weights_output_size))
-	ERROR_EXIT3(256,"The weights matrix input/output sizes are not correct, "
-		    "expected %dx%d [%s]\n",
+	ERROR_EXIT5(256,"The weights matrix input/output sizes are not correct, "
+		    "expected %d and %d, found %d and %d [%s]\n",
 		    weights_input_size, weights_output_size,
+		    Connections::getInputSize(weights_matrix),
+		    Connections::getOutputSize(weights_matrix),
 		    name.c_str());
     }
     else {

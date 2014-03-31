@@ -42,9 +42,11 @@ Matrix<O> *applyFunctorOverDimension(FUNC func,
   /**** ORIG sliding window ****/
   int *orig_w_size      = new int[numDim];
   int *orig_w_num_steps = new int[numDim];
+  int result_size=1;
   for (int i=0; i<dim; ++i) {
     orig_w_size[i] = 1;
     result_dims[i] = orig_w_num_steps[i] = matrixSize[i];
+    result_size *= result_dims[i];
   }
   result_dims[dim] = 1;
   orig_w_size[dim] = matrixSize[dim];
@@ -60,13 +62,73 @@ Matrix<O> *applyFunctorOverDimension(FUNC func,
   Matrix<O> *result = dest;
   if (result == 0) result = new Matrix<O>(numDim, result_dims,
 					  orig->getMajorOrder());
-  else if (!result->sameDim(result_dims, numDim))
-    ERROR_EXIT(256, "Incorrect size at the given dest matrtix\n");
+  else if (result->size() != result_size)
+    // else if (!result->sameDim(result_dims, numDim))
+    ERROR_EXIT2(256, "Incorrect size at the given dest matrtix, "
+		"expected %d, found %d\n", result_size, result->size());
   // traverse in row major order
   for (typename Matrix<O>::iterator it(result->begin());
        it!=result->end(); ++it) {
     orig_w.getMatrix(slice);
     *it = func(slice);
+    orig_w.next();
+  }
+  DecRef(slice);
+  delete[] orig_w_size;
+  delete[] orig_w_num_steps;
+  delete[] result_dims;
+  return result;
+}
+
+// Auxiliary function template which applies a FUNCTOR REDUCTION over a given
+// matrix, so the functor is called as FUNC(a matrix, a matrix component), and
+// returns a type O, the type of the destination matrix
+template<typename T, typename O, typename C, typename FUNC>
+Matrix<O> *applyFunctorOverDimension2(FUNC func,
+				      Matrix<T> *orig,
+				      int dim,
+				      Matrix<O> *dest,
+				      Matrix<C> *other) {
+  if (other == 0)
+    ERROR_EXIT(256, "Other dest matrix not given, use a different template\n");
+  const int numDim      = orig->getNumDim();
+  const int *matrixSize = orig->getDimPtr();
+  int *result_dims      = new int[numDim];
+  /**** ORIG sliding window ****/
+  int *orig_w_size      = new int[numDim];
+  int *orig_w_num_steps = new int[numDim];
+  int result_size=1;
+  for (int i=0; i<dim; ++i) {
+    orig_w_size[i] = 1;
+    result_dims[i] = orig_w_num_steps[i] = matrixSize[i];
+    result_size *= result_dims[i];
+  }
+  result_dims[dim] = 1;
+  orig_w_size[dim] = matrixSize[dim];
+  orig_w_num_steps[dim] = 1;
+  for (int i=dim+1; i<numDim; ++i) {
+    orig_w_size[i] = 1;
+    result_dims[i] = orig_w_num_steps[i] = matrixSize[i];
+  }
+  typename Matrix<T>::sliding_window orig_w(orig,orig_w_size,0,0,orig_w_num_steps,0);
+  Matrix<T> *slice = orig_w.getMatrix();
+  IncRef(slice);
+  /******************************/
+  Matrix<O> *result = dest;
+  if (result == 0) result = new Matrix<O>(numDim, result_dims,
+					  orig->getMajorOrder());
+  else if (result->size() != result_size)
+    // else if (!result->sameDim(result_dims, numDim))
+    ERROR_EXIT2(256, "Incorrect size at the given dest matrtix, "
+		"expected %d, found %d\n", result_size, result->size());
+  if (result->size() != other->size())
+    ERROR_EXIT(256, "Incorrect size at the given other dest matrtix\n");
+  // traverse in row major order
+  typename Matrix<C>::iterator other_it(other->begin());
+  for (typename Matrix<O>::iterator it(result->begin());
+       it!=result->end(); ++it, ++other_it) {
+    orig_w.getMatrix(slice);
+    *it = func(slice, *other_it);
     orig_w.next();
   }
   DecRef(slice);

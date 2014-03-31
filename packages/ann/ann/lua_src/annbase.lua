@@ -2,6 +2,41 @@ get_table_from_dotted_string("ann.mlp.all_all", true)
 
 ----------------------------------------------------------------------
 
+function ann.connections.input_filters_image(w, shape, margin, notranspose)
+  assert(type(shape) == "table", "Needs a shape table as 2nd argument")
+  assert(#shape == 2 or #shape == 3,
+	 "Expected shape with 2 or 3 dimensions")
+  assert(#shape == 2 or shape[3] == 3,
+	 "Expected 3 components at the 3rd dimension (color RGB)")
+  local margin = margin or 1
+  local R = math.floor(math.sqrt(w:dim(1)))
+  local C = math.ceil(math.sqrt(w:dim(1)))
+  local result = matrix(R*(shape[1]+1)-1,C*(shape[2]+1)-1,shape[3]):zeros()
+  local neuron_weights
+  local step = { shape[1]+margin, shape[2]+margin }
+  if #shape == 3 then step[3] = 1 end
+  local result_sw = result:sliding_window{ size=shape, step=step }
+  local result_m
+  for i=1,w:dim(1) do
+    result_m = result_sw:get_matrix(result_m)
+    neuron_weights = w:select(1,i,neuron_weights)
+    local normalized = neuron_weights:clone(notranspose and "row_major"):
+    rewrap(table.unpack(shape)):clone(notranspose or "row_major"):
+    scal(1/neuron_weights:norm2()):
+    adjust_range(0,1)
+    result_m:copy(normalized)
+    --
+    result_sw:next()    
+  end
+  if #shape == 2 then
+    return Image(result)
+  else
+    return ImageRGB(result)
+  end
+end
+
+----------------------------------------------------------------------
+
 april_set_doc("ann.save",
 	      {
 		class="function",
@@ -188,6 +223,23 @@ april_set_doc("ann.connections",
 	      {
 		class="namespace",
 		summary="Connections namespace, stores helper functions",
+	      })
+
+-------------------------------------------------------------------
+
+april_set_doc("ann.connections.input_filters_image",
+	      {
+		class="function",
+		summary="Builds an image with the filters in the given weights matrix",
+		params={
+		  { "The weights matrix" },
+		  { "The shape of the inputs, a table with 2 or 3 components" },
+		  { "The margin between each filter [optional], by default it is 1" },
+		  { "No transpose [optional], by default it is nil" },
+		},
+		outputs={
+		  "A squared image (instance of Image) containing all the filters",
+		}
 	      })
 
 -------------------------------------------------------------------

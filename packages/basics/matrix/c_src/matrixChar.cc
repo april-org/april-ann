@@ -19,5 +19,12 @@
  *
  */
 #include "matrixChar.h"
+#include "matrix_not_implemented.h"
 
+NOT_IMPLEMENT_AXPY(char)
+NOT_IMPLEMENT_GEMM(char)
+NOT_IMPLEMENT_GEMV(char)
+NOT_IMPLEMENT_GER(char)
+
+///////////////////////////////////////////////////////////////////////////////
 template class Matrix<char>;

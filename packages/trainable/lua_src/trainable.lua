@@ -18,7 +18,7 @@ local april_assert = april_assert
 
 -----------------------------------------
 
-local MAX_ITERS_WO_COLLECT_GARBAGE=10000
+local MAX_SIZE_WO_COLLECT_GARBAGE=50*1024*1024 -- 50 MB
 
 local function check_dataset_sizes(ds1, ds2)
   april_assert(ds1:numPatterns() == ds2:numPatterns(),
@@ -94,7 +94,22 @@ function trainable_supervised_trainer_class_metatable:__call(...)
     local smooth_gradients = t.smooth_gradients or true
     local obj = trainable.supervised_trainer(model, loss, bunch_size, optimizer,
 					     smooth_gradients)
-    obj:build{ weights = connections }
+    local weight = connections
+    if not isa(connections, matrix.dict) then
+      weights = matrix.dict()
+      for name,wdata in pairs(connections) do
+	local m = wdata
+	if not isa(m, matrix) then
+	  m = wdata.w:rewrap(wdata.output,wdata.input)
+	end
+	if m:get_major_order() == "col_major" then
+	  weights:insert(name,m)
+	else
+	  weights:insert(name,m:clone("col_major"))
+	end
+      end
+    end
+    obj:build{ weights = weights }
     return obj
   else
     -- Constructor of a new object
@@ -250,10 +265,13 @@ april_set_doc("trainable.supervised_trainer.set_layerwise_option", {
 function trainable_supervised_trainer_methods:set_layerwise_option(layer_match,
 								   name,
 								   value)
+  local N=0
   local opt = assert(self.optimizer, "The optimizer has not been defined")
   for cnn_name,cnn in self:iterate_weights(layer_match) do
     opt:set_layerwise_option(cnn_name,name,value)
+    N=N+1
   end
+  april_assert(N>0, "0 layers match the given layer_match= %s", layer_match)
 end
 
 april_set_doc("trainable.supervised_trainer.get_option_of", {
@@ -1105,6 +1123,8 @@ function trainable_supervised_trainer_methods:train_dataset(t)
 			   mandatory  = false,
 			   default=self.smooth_gradients },
     }, t, true)
+  assert(#self.components_order > 0,
+	 "Execute build method before call this method")
   local loss       = params.loss
   local optimizer  = params.optimizer
   local smooth_gradients = params.smooth_gradients
@@ -1160,6 +1180,8 @@ function trainable_supervised_trainer_methods:grad_check_dataset(t)
       verbose        = { type_match = "boolean",
 			 mandatory = false, default=false },
     }, t, true)
+  assert(#self.components_order > 0,
+	 "Execute build method before call this method")
   local loss                = params.loss
   local verbose             = params.verbose
   params.loss               = nil
@@ -1277,6 +1299,8 @@ function trainable_supervised_trainer_methods:validate_dataset(t)
       shuffle        = { isa_match  = random, mandatory = false, default=nil },
       replacement    = { type_match = "number", mandatory = false, default=nil },
     }, t)
+  assert(#self.components_order > 0,
+	 "Execute build method before call this method")
   -- ERROR CHECKING
   assert(params.input_dataset ~= not params.output_dataset,
 	 "input_dataset and output_dataset fields are mandatory together")
@@ -1336,6 +1360,8 @@ function trainable_supervised_trainer_methods:use_dataset(t)
       bunch_size     = { type_match = "number",
 			 mandatory = (self.bunch_size == false)  },
     }, t)
+  assert(#self.components_order > 0,
+	 "Execute build method before call this method")
   local nump        = params.input_dataset:numPatterns()
   local outsize     = self.ann_component:get_output_size()
   if params.output_dataset then
@@ -1751,7 +1777,6 @@ april_set_doc("trainable.dataset_pair_iterator", {
 		  "shuffled with replacement, shuffled with distribution.",
 		}, })
 
-local TOO_LARGE_NUMPATTERNS = 4000000
 function trainable.dataset_pair_iterator(t)
   local params = get_table_fields(
     {
@@ -1814,12 +1839,14 @@ april_set_doc("trainable.dataset_multiple_iterator", {
 		}, })
 
 function trainable.dataset_multiple_iterator(t)
+  local cgarbage = collectgarbage
+  cgarbage("collect")
   local assert = assert
   local table = table
   local iterator = iterator
   local april_assert = april_assert
   --
-  local TOO_LARGE_NUMPATTERNS = 4000000
+  local TOO_LARGE_NUMPATTERNS = 1000000
   local params = get_table_fields(
     {
       datasets       = { mandatory = false, default=nil },
@@ -1863,7 +1890,7 @@ function trainable.dataset_multiple_iterator(t)
   -- TRAINING TABLES
   
   -- for each pattern, index in dataset
-  local ds_idx_table = {}
+  local ds_idx_func
   if params.distribution then
     -- Training with distribution: given a table of datasets the patterns are
     -- sampled following the given apriory probability
@@ -1897,30 +1924,48 @@ function trainable.dataset_multiple_iterator(t)
     end -- for i,v in ipairs(params.distribution)
     -- generate training tables
     local dice = random.dice(aprioris)
-    for i=1,params.replacement do
-      local whichclass=dice:thrown(params.shuffle)
-      local idx=params.shuffle:randInt(1,sizes[whichclass])
-      table.insert(ds_idx_table, idx + sums[whichclass])
+    local i = 1
+    ds_idx_func = function()
+      if i <= params.replacement then
+	i=i+1
+	local whichclass=dice:thrown(params.shuffle)
+	local idx=params.shuffle:randInt(1,sizes[whichclass])
+	return idx+sums[whichclass]
+      end
     end
   else -- if params.distribution then ... else
     --
     local num_patterns
     params.datasets,num_patterns = to_dataset_token(params.datasets)
-    assert(num_patterns < TOO_LARGE_NUMPATTERNS or params.replacement,
-	   "The number of patterns is too large, use replacement instead")
     -- generate training tables depending on training mode (replacement,
     -- shuffled, or sequential)
     if params.replacement then
       assert(params.shuffle,"shuffle is mandatory with replacement")
-      assert(params.replacement < TOO_LARGE_NUMPATTERNS, 
-	     "The number of patterns is too large, use a shorter replacement")
-      for i=1,params.replacement do
-	table.insert(ds_idx_table, params.shuffle:randInt(1,num_patterns))
+      local i=1
+      ds_idx_func = function()
+	if i <= params.replacement then
+	  i=i+1
+	  return params.shuffle:randInt(1,num_patterns)
+	end
       end
     elseif params.shuffle then
-      ds_idx_table = params.shuffle:shuffle(num_patterns)
+      assert(num_patterns < TOO_LARGE_NUMPATTERNS, 
+	     "The number of patterns is too large, use a shorter replacement, or non-shuffled training")
+      local ds_idx_table = params.shuffle:shuffle(num_patterns)
+      local i=0
+      ds_idx_func = function()
+	i=i+1
+	if i<= #ds_idx_table then
+	  return ds_idx_table[i]
+	else ds_idx_table = {}
+	end
+      end
     else
-      for i=1,num_patterns do table.insert(ds_idx_table, i) end
+      local i=0
+      ds_idx_func = function()
+	i=i+1
+	if i<= num_patterns then return i end
+      end
     end
   end
   -- SANITY CHECK
@@ -1932,67 +1977,75 @@ function trainable.dataset_multiple_iterator(t)
 		       k, ds_psize, psize)
 	end)
   --
-  -- ITERATOR USING ds_idx_table
+  -- ITERATOR USING ds_idx_func
   local k=0
   local bunch_indexes = {}
-  local i=1 -- pattern index
   if #params.datasets > 2 then
+    local pattern_size = iterator(ipairs(params.datasets)):select(2):
+    call('patternSize'):reduce(math.add(), 0)
+    local bunch_mb_size = bunch_size * pattern_size * 4
     return function()
-      local ds_idx_table  = ds_idx_table
+      local ds_idx_func = ds_idx_func
       local bunch_indexes = bunch_indexes
       local table = table
       local insert = table.insert
-      -- end condition, return nil
-      if i > #ds_idx_table then return nil end
-      -- general case
       table.clear(bunch_indexes)
-      local last = math.min(i+bunch_size-1, #ds_idx_table)
-      for j=i,last do insert(bunch_indexes, ds_idx_table[j]) end
+      repeat
+	local idx = ds_idx_func()
+	table.insert(bunch_indexes, idx)
+      until not idx or #bunch_indexes==bunch_size
+      -- end condition, return nil
+      if #bunch_indexes == 0 then cgarbage("collect") return end
       local data = {}
       for i,v in ipairs(params.datasets) do data[i] = v:getPatternBunch(bunch_indexes) end
       insert(data, bunch_indexes)
-      k=k+1
-      i=i+#bunch_indexes
-      if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
+      k=k+bunch_mb_size
+      if k >= MAX_SIZE_WO_COLLECT_GARBAGE then cgarbage("collect") k=0 end
       return table.unpack(data)
     end
   elseif #params.datasets == 2 then
     local ds1,ds2 = params.datasets[1],params.datasets[2]
-    return function()
-      local ds_idx_table  = ds_idx_table
+    local pattern_size = ds1:patternSize() + ds2:patternSize()
+    local bunch_mb_size = bunch_size * pattern_size * 4
+  return function()
+      local ds_idx_func  = ds_idx_func
       local bunch_indexes = bunch_indexes
       local table = table
       local insert = table.insert
-      -- end condition, return nil
-      if i > #ds_idx_table then return nil end
       -- general case
       table.clear(bunch_indexes)
-      local last = math.min(i+bunch_size-1, #ds_idx_table)
-      for j=i,last do insert(bunch_indexes, ds_idx_table[j]) end
+      repeat
+	local idx = ds_idx_func()
+	insert(bunch_indexes, idx)
+      until not idx or #bunch_indexes==bunch_size
+      -- end condition, return nil
+      if #bunch_indexes == 0 then cgarbage("collect") return end
       local bunch1 = ds1:getPatternBunch(bunch_indexes)
       local bunch2 = ds2:getPatternBunch(bunch_indexes)
-      k=k+1
-      i=i+#bunch_indexes
-      if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
+      k=k+bunch_mb_size
+      if k >= MAX_SIZE_WO_COLLECT_GARBAGE then cgarbage("collect") k=0 end
       return bunch1,bunch2,bunch_indexes
     end
   else -- ( #params.datasets == 1 )
     local ds1 = params.datasets[1]
+    local pattern_size = ds1:patternSize()
+    local bunch_mb_size = bunch_size * pattern_size * 4
     return function()
-      local ds_idx_table  = ds_idx_table
+      local ds_idx_func  = ds_idx_func
       local bunch_indexes = bunch_indexes
       local table = table
       local insert = table.insert
-      -- end condition, return nil
-      if i > #ds_idx_table then return nil end
       -- general case
       table.clear(bunch_indexes)
-      local last = math.min(i+bunch_size-1, #ds_idx_table)
-      for j=i,last do insert(bunch_indexes, ds_idx_table[j]) end
+      repeat
+	local idx = ds_idx_func()
+	insert(bunch_indexes, idx)
+      until not idx or #bunch_indexes==bunch_size
+      -- end condition, return nil
+      if #bunch_indexes == 0 then cgarbage("collect") return end
       local bunch1 = ds1:getPatternBunch(bunch_indexes)
-      k=k+1
-      i=i+#bunch_indexes
-      if k == MAX_ITERS_WO_COLLECT_GARBAGE then collectgarbage("collect") k=0 end
+      k=k+bunch_mb_size
+      if k >= MAX_SIZE_WO_COLLECT_GARBAGE then cgarbage("collect") k=0 end
       return bunch1,bunch_indexes
     end
   end

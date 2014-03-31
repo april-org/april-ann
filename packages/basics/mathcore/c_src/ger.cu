@@ -52,6 +52,7 @@ cublasStatus_t wrapperCublasGer(cublasHandle_t &handle,
 				ComplexF *a_mem,
 				unsigned int a_inc) {
   ERROR_EXIT(256, "Ger operation not implemented in CUDA\n");
+  return CUBLAS_STATUS_INTERNAL_ERROR;
 }
 #endif
 

@@ -20,6 +20,7 @@
  */
 //BIND_HEADER_C
 
+#include <cmath>
 #include <cstring>
 #include <csignal>
 #include <errno.h>
@@ -805,5 +806,15 @@ extern const char *__COMMIT_NUMBER__;
   LUABIND_GET_PARAMETER(1, string, path);
   obj = new MMappedDataWriter(path);
   LUABIND_RETURN(MMappedDataWriter, obj);
+}
+//BIND_END
+
+/////////////////////////////////////////////////////////////////////////////
+
+//BIND_FUNCTION math.log1p
+{
+  double a;
+  LUABIND_GET_PARAMETER(1,double,a);
+  LUABIND_RETURN(double,log1p(a));
 }
 //BIND_END

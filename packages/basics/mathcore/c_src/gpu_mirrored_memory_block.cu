@@ -24,6 +24,8 @@
 bool   GPUMirroredMemoryBlockBase::use_mmap_allocation = false;
 
 #ifndef NO_POOL
+size_t GPUMirroredMemoryBlockBase::MAX_POOL_LIST_SIZE = 200*1024*1024; // 200 Megabytes
+size_t GPUMirroredMemoryBlockBase::MIN_MEMORY_TH_IN_POOL = 20; // 20 bytes
 GPUMirroredMemoryBlockBase::PoolFreeBeforeExit GPUMirroredMemoryBlockBase::pool_free_before_exit;
 size_t GPUMirroredMemoryBlockBase::pool_size = 0;
 GPUMirroredMemoryBlockBase::PoolType *GPUMirroredMemoryBlockBase::pool_lists =
@@ -32,5 +34,5 @@ GPUMirroredMemoryBlockBase::PoolType *GPUMirroredMemoryBlockBase::pool_lists =
 
 template class GPUMirroredMemoryBlock<float>;
 template class GPUMirroredMemoryBlock<double>;
-template class GPUMirroredMemoryBlock<int>;
+template class GPUMirroredMemoryBlock<int32_t>;
 template class GPUMirroredMemoryBlock<ComplexF>;

@@ -22,21 +22,28 @@
 #define BUFFERED_FILE_H
 
 #include <cstdlib>
+#include "error_print.h"
 #include "buffered_memory.h"
+#include "referenced.h"
 
 class FileWrapper {
   FILE *f;
+  bool need_close;
 public:
-  FileWrapper() : f(0) { }
+  FileWrapper(FileWrapper &other) : f(other.f), need_close(false) { }
+  FileWrapper(FILE *f) : f(f), need_close(false) { }
+  FileWrapper() : f(0), need_close(true) { }
   ~FileWrapper() {
-    if (f != 0) closeS();
+    closeS();
   }
+  bool isOpened() const { return f != 0; }
   bool openS(const char *path, const char *mode) {
     f = fopen(path, mode);
+    need_close = true;
     return f != 0;
   }
   void closeS() {
-    fclose(f);
+    if (need_close && f != 0) fclose(f);
     f = 0;
   }
   size_t readS(void *ptr, size_t size, size_t nmemb) {

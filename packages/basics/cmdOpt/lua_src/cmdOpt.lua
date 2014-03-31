@@ -334,6 +334,7 @@ function cmdopt_methods:parse_without_check(arguments)
     if opt.index_name then result[opt.index_name] = value end
     if type(opt.action) == "function" then opt.action(value) end
   end
+  if type(result) == "string" then error(result) end
   return result
 end
 
@@ -360,12 +361,18 @@ function cmdopt_methods:check_args(optargs,initial_values)
       end
     end
   end
+  if type(optargs) == "string" then error(optargs) end
   return optargs
 end
 
-function cmdopt_methods:parse_args(arguments)
+function cmdopt_methods:parse_args(arguments,defopt)
+  local defopt_func = defopt_func or function(v) return v end
   local result = self:parse_without_check(arguments)
-  if type(result) == "string" then error(result) end
-  self:check_args(result)
+  local initial_values
+  if defopt and result[defopt] then
+    initial_values = result[defopt]
+    result[defopt] = nil
+  end
+  self:check_args(result, initial_values)
   return result
 end

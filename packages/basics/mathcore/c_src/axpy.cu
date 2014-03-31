@@ -40,6 +40,16 @@ cublasStatus_t wrapperCublasAxpy(cublasHandle_t &handle,
 
 cublasStatus_t wrapperCublasAxpy(cublasHandle_t &handle,
 				 int N,
+				 double *alpha,
+				 const double *x_mem,
+				 unsigned int x_inc,
+				 double *y_mem,
+				 unsigned int y_inc) {
+  return cublasDaxpy(handle, N, alpha, x_mem, x_inc, y_mem, y_inc);
+}
+
+cublasStatus_t wrapperCublasAxpy(cublasHandle_t &handle,
+				 int N,
 				 ComplexF *alpha,
 				 const ComplexF *x_mem,
 				 unsigned int x_inc,
@@ -50,6 +60,48 @@ cublasStatus_t wrapperCublasAxpy(cublasHandle_t &handle,
                      reinterpret_cast<const cuComplex*>(x_mem), x_inc,
                      reinterpret_cast<cuComplex*>(y_mem), y_inc);
 }
+
+// Cusparse wrappers
+
+cusparseStatus_t wrapperCusparseAxpy(cusparseHandle_t &handle,
+				     int NNZ,
+				     float *alpha,
+				     const float *x_values_mem,
+				     const int *x_indices_mem,
+				     float *y_mem) {
+  return cusparseSaxpyi(handle, NNZ, alpha,
+			x_values_mem, x_indices_mem,
+			y_mem,
+			CUSPARSE_INDEX_BASE_ZERO);
+}
+
+cusparseStatus_t wrapperCusparseAxpy(cusparseHandle_t &handle,
+				     int NNZ,
+				     double *alpha,
+				     const double *x_values_mem,
+				     const int *x_indices_mem,
+				     double *y_mem) {
+  return cusparseDaxpyi(handle, NNZ, alpha,
+			x_values_mem, x_indices_mem,
+			y_mem,
+			CUSPARSE_INDEX_BASE_ZERO);
+}
+
+cusparseStatus_t wrapperCusparseAxpy(cusparseHandle_t &handle,
+                                     int NNZ,
+                                     ComplexF *alpha,
+                                     const ComplexF *x_values_mem,
+                                     const int *x_indices_mem,
+                                     ComplexF *y_mem) {
+  return cusparseCaxpyi(handle, NNZ,
+			reinterpret_cast<const cuComplex*>(alpha),
+			reinterpret_cast<const cuComplex*>(x_values_mem),
+			x_indices_mem,
+			reinterpret_cast<cuComplex*>(y_mem),
+			CUSPARSE_INDEX_BASE_ZERO);
+}
+
+////////////////////////////////////////////////////////////////////////////
 
 template<typename T>
 __global__ void axpyLoopKernel(unsigned int N,
@@ -91,10 +143,36 @@ void wrapperCblasAxpy(int N, float alpha,
   cblas_saxpy(N, alpha, x_mem, x_inc, y_mem, y_inc);
 }
 
+void wrapperCblasAxpy(int N, double alpha,
+		      const double *x_mem, unsigned int x_inc,
+		      double *y_mem, unsigned int y_inc) {
+  cblas_daxpy(N, alpha, x_mem, x_inc, y_mem, y_inc);
+}
+
 void wrapperCblasAxpy(int N, ComplexF alpha,
 		      const ComplexF *x_mem, unsigned int x_inc,
 		      ComplexF *y_mem, unsigned int y_inc) {
   cblas_caxpy(N, &alpha, x_mem, x_inc, y_mem, y_inc);
+}
+
+// sparse CBLAS wrappers
+
+void wrapperCblasAxpyi(int NNZ, float alpha,
+		       const float *x_mem, const int *x_ind,
+		       float *y_mem) {
+  cblas_saxpyi(NNZ, alpha, x_mem, x_ind, y_mem);
+}
+
+void wrapperCblasAxpyi(int NNZ, double alpha,
+		       const double *x_mem, const int *x_ind,
+		       double *y_mem) {
+  cblas_daxpyi(NNZ, alpha, x_mem, x_ind, y_mem);
+}
+
+void wrapperCblasAxpyi(int NNZ, ComplexF alpha,
+		       const ComplexF *x_mem, const int *x_ind,
+		       ComplexF *y_mem) {
+  cblas_caxpyi(NNZ, &alpha, x_mem, x_ind, y_mem);
 }
 
 /***************************************
@@ -203,15 +281,74 @@ void doAxpyLoop(int N,
 #endif
 }
 
+template <typename T>
+void doSparseAxpy(int NNZ,
+		  T alpha,
+		  const GPUMirroredMemoryBlock<T> *x_values,
+		  const Int32GPUMirroredMemoryBlock *x_indices,
+		  GPUMirroredMemoryBlock<T>* y,
+		  unsigned int y_shift,
+		  unsigned int y_inc,
+		  bool use_gpu)
+{
+  if (y_inc != 1)
+    ERROR_EXIT(128, "sparse AXPY not implemented for stride != 1\n");
+  const T *x_values_mem;
+  const int *x_indices_mem;
+  T *y_mem;
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
+#ifdef USE_CUDA
+  if (use_gpu) {
+    if (y_inc != 1)
+      ERROR_EXIT(128, "Error, executing sparse AXPY in CUDA with inc != 1\n");
+    cusparseStatus_t status;
+    cusparseHandle_t handle = GPUHelper::getSparseHandler();
+    //printf("Doing a saxpy with comp=1 & cuda=1\n");
+    x_values_mem  = x_values->getGPUForRead();
+    x_indices_mem = x_indices->getGPUForRead();
+    y_mem = y->getGPUForReadAndWrite() + y_shift;
+    
+    status = cusparseSetStream(handle, GPUHelper::getCurrentStream());
+    checkCusparseError(status);
+
+    status = wrapperCusparseAxpy(handle, NNZ, &alpha,
+				 x_values_mem, x_indices_mem,
+				 y_mem);
+    
+    checkCusparseError(status);
+  }
+  else {
+#endif
+    x_values_mem  = x_values->getPPALForRead();
+    x_indices_mem = x_indices->getPPALForRead();
+    y_mem = y->getPPALForReadAndWrite() + y_shift;
+    wrapperCblasAxpyi(NNZ, alpha, x_values_mem, x_indices_mem, y_mem);
+#ifdef USE_CUDA
+  }
+#endif
+}
+    
 template void doAxpy<float>(int N,
 			    float alpha,
-                    	    const GPUMirroredMemoryBlock<float>* x,
+			    const GPUMirroredMemoryBlock<float>* x,
 			    unsigned int x_shift,
 			    unsigned int x_inc,
 			    GPUMirroredMemoryBlock<float>* y,
 			    unsigned int y_shift,
 			    unsigned int y_inc,
 			    bool use_gpu);
+
+template void doAxpy<double>(int N,
+			     double alpha,
+			     const GPUMirroredMemoryBlock<double>* x,
+			     unsigned int x_shift,
+			     unsigned int x_inc,
+			     GPUMirroredMemoryBlock<double>* y,
+			     unsigned int y_shift,
+			     unsigned int y_inc,
+			     bool use_gpu);
 
 template void doAxpy<ComplexF>(int N,
 			       ComplexF alpha,
@@ -222,6 +359,33 @@ template void doAxpy<ComplexF>(int N,
 			       unsigned int y_shift,
 			       unsigned int y_inc,
 			       bool use_gpu);
+
+template void doSparseAxpy<float>(int NNZ,
+				  float alpha,
+				  const GPUMirroredMemoryBlock<float> *x_values,
+				  const Int32GPUMirroredMemoryBlock *x_indices,
+				  GPUMirroredMemoryBlock<float>* y,
+				  unsigned int y_shift,
+				  unsigned int y_inc,
+				  bool use_gpu);
+
+template void doSparseAxpy<double>(int NNZ,
+				   double alpha,
+				   const GPUMirroredMemoryBlock<double> *x_values,
+				   const Int32GPUMirroredMemoryBlock *x_indices,
+				   GPUMirroredMemoryBlock<double>* y,
+				   unsigned int y_shift,
+				   unsigned int y_inc,
+				   bool use_gpu);
+
+template void doSparseAxpy<ComplexF>(int NNZ,
+				     ComplexF alpha,
+				     const GPUMirroredMemoryBlock<ComplexF> *x_values,
+				     const Int32GPUMirroredMemoryBlock *x_indices,
+				     GPUMirroredMemoryBlock<ComplexF>* y,
+				     unsigned int y_shift,
+				     unsigned int y_inc,
+				     bool use_gpu);
 
 template void doAxpyLoop<float>(int N,
 				float alpha,
@@ -235,6 +399,19 @@ template void doAxpyLoop<float>(int N,
 				const unsigned int x_stride,
 				const unsigned int y_stride,
 				bool use_gpu);
+
+template void doAxpyLoop<double>(int N,
+				 double alpha,
+				 GPUMirroredMemoryBlock<double>* x,
+				 unsigned int x_inc,
+				 unsigned int x_shift,
+				 GPUMirroredMemoryBlock<double>* y,
+				 unsigned int y_inc,
+				 unsigned int y_shift,
+				 unsigned int times,
+				 const unsigned int x_stride,
+				 const unsigned int y_stride,
+				 bool use_gpu);
 
 template void doAxpyLoop<ComplexF>(int N,
 				   ComplexF alpha,

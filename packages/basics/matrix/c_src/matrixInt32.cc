@@ -20,5 +20,25 @@
  */
 #include <stdint.h>
 #include "matrixInt32.h"
+#include "matrix_not_implemented.h"
+
+NOT_IMPLEMENT_AXPY(int32_t)
+NOT_IMPLEMENT_GEMM(int32_t)
+NOT_IMPLEMENT_GEMV(int32_t)
+NOT_IMPLEMENT_GER(int32_t)
+
+/************* ZEROS FUNCTION **************/
+template<>
+void Matrix<int32_t>::zeros() {
+  fill(0);
+}
+
+/************* ONES FUNCTION **************/
+template<>
+void Matrix<int32_t>::ones() {
+  fill(1);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 
 template class Matrix<int32_t>;

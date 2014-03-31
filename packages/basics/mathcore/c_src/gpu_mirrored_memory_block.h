@@ -25,6 +25,9 @@
 // Define NO_POOL to avoid the use of a pool of pointers
 // #define NO_POOL
 
+// Define POOL_DEBUG for verbose debug printf's
+// #define POOL_DEBUG
+
 #include <cstring>
 #include <cstdio>
 extern "C" {
@@ -64,8 +67,8 @@ extern "C" {
 class GPUMirroredMemoryBlockBase : public Referenced {
 #ifndef NO_POOL
 public:
-  typedef april_utils::list<char*>                  ListType;
-  typedef april_utils::hash<unsigned int, ListType> PoolType;
+  typedef april_utils::list<char*>                PoolListType;
+  typedef april_utils::hash<size_t, PoolListType> PoolType;
 #endif
 
 private:
@@ -73,8 +76,8 @@ private:
 
 protected:
 #ifndef NO_POOL
-  const static size_t MAX_POOL_LIST_SIZE    = 200*1024*1024; // 200 Megabytes
-  const static size_t MIN_MEMORY_TH_IN_POOL = 20; // 20 bytes
+  static size_t MAX_POOL_LIST_SIZE;
+  static size_t MIN_MEMORY_TH_IN_POOL;
   static size_t pool_size;
   static PoolType *pool_lists;
   /// Auxiliary class for free of memory pool
@@ -84,7 +87,7 @@ protected:
     ~PoolFreeBeforeExit() {
       for (PoolType::iterator it = pool_lists->begin();
 	   it != pool_lists->end(); ++it) {
-	for (ListType::iterator lit = it->second.begin();
+	for (PoolListType::iterator lit = it->second.begin();
 	     lit != it->second.end(); ++lit) {
 	  aligned_free(*lit);
 	}
@@ -209,6 +212,7 @@ protected:
   bool allocMemGPU() const {
     ERROR_EXIT(128, "You need first to update the "
 	       "memory in a non const pointer\n");
+    return false;
   }
 
   bool allocMemGPU() {
@@ -242,7 +246,7 @@ public:
     }
   }
 #endif
-  
+
   void toMMappedDataWriter(april_utils::MMappedDataWriter *mmapped_data) const {
 #ifdef USE_CUDA
     if (!getUpdatedPPAL())
@@ -317,10 +321,13 @@ public:
 #endif
 #ifndef NO_POOL
     bool alloc_block = false;
-    april_utils::list<char*> &l = (*pool_lists)[size];
+    PoolListType &l = (*pool_lists)[size];
     if (l.empty()) {
       if (!use_mmap_allocation) {
 	char_mem = aligned_malloc<char>(size);
+#ifdef POOL_DEBUG
+	printf("ALLOC %lu :: %p\n", size, char_mem);
+#endif
       }
       else {
 	setMMapped();
@@ -336,6 +343,9 @@ public:
       mem_ppal = *(l.begin());
       l.pop_front();
       pool_size -= size;
+#ifdef POOL_DEBUG
+      printf("POP %lu :: %p\n", size, mem_ppal);
+#endif
     }
 #else
     if (!use_mmap_allocation) {
@@ -365,12 +375,20 @@ public:
       if (isAllocated()) {
 	if (!isMMapped()) {
 #ifndef NO_POOL
-	  april_utils::list<void*> &l = (*pool_lists)[size];
-	  if (pool_size < MAX_POOL_LIST_SIZE && size >= MIN_MEMORY_TH_IN_POOL) {
+	  PoolListType &l = (*pool_lists)[size];
+	  if (pool_size + size <= MAX_POOL_LIST_SIZE && size >= MIN_MEMORY_TH_IN_POOL) {
 	    pool_size += size;
 	    l.push_front(char_mem);
+#ifdef POOL_DEBUG
+	    printf("PUSH %lu :: %p\n", size, char_mem);
+#endif
 	  }
-	  else aligned_free(char_mem);
+	  else {
+#ifdef POOL_DEBUG
+	    printf("FREE %lu :: %p\n", size, char_mem);
+#endif
+	    aligned_free(char_mem);
+	  }
 #else
 	  aligned_free(char_mem);
 #endif
@@ -388,12 +406,20 @@ public:
     if (isAllocated()) {
       if (!isMMapped()) {
 #ifndef NO_POOL
-	april_utils::list<char*> &l = (*pool_lists)[size];
-	if (pool_size < MAX_POOL_LIST_SIZE) {
+	PoolListType &l = (*pool_lists)[size];
+	if (pool_size+size <= MAX_POOL_LIST_SIZE && size >= MIN_MEMORY_TH_IN_POOL) {
 	  pool_size += size;
 	  l.push_front(char_mem);
+#ifdef POOL_DEBUG
+	  printf("PUSH %lu :: %p\n", size, char_mem);
+#endif
 	}
-	else aligned_free(char_mem);
+	else {
+#ifdef POOL_DEBUG
+	  printf("FREE %lu :: %p\n", size, char_mem);
+#endif
+	  aligned_free(char_mem);
+	}
 #else
 	aligned_free(char_mem);
 #endif
@@ -432,7 +458,6 @@ public:
   }
   
   static void setUseMMapAllocation(bool v) { use_mmap_allocation = v; }
-  
   void forceUpdate(bool use_cuda) {
 #ifdef USE_CUDA
     if (isConst())
@@ -445,6 +470,13 @@ public:
     UNUSED_VARIABLE(use_cuda);
 #endif
   }
+
+#ifndef NO_POOL
+  static void changeMaxPoolSize(size_t max_pool_size) {
+    MAX_POOL_LIST_SIZE = max_pool_size;
+    // TODO: free pool memory if necessary
+  }
+#endif
 };
 
 ////////////////////////////////////////////////////////////////////////////
@@ -495,6 +527,20 @@ public:
   
   virtual ~GPUMirroredMemoryBlock() { }
   
+  GPUMirroredMemoryBlock<T> *clone() const {
+    GPUMirroredMemoryBlock<T> *result = new GPUMirroredMemoryBlock(getSize());
+    result->copyFromBlock(this, 0, 0, getSize());
+    return result;
+  }
+  
+  void copyFromBlock(const GPUMirroredMemoryBlock<T> *other,
+		     size_t from, size_t where, size_t sz) {
+    const T *other_ptr = other->getPPALForRead() + from;
+    T *this_ptr        = this->getPPALForWrite() + where;
+    memcpy(this_ptr, other_ptr, sz * sizeof(T));
+  }
+
+
   unsigned int getSize() const {
     return size/sizeof(T);
   }
@@ -605,7 +651,7 @@ public:
 // typedef for referring to float memory blocks
 typedef GPUMirroredMemoryBlock<float>    FloatGPUMirroredMemoryBlock;
 typedef GPUMirroredMemoryBlock<double>   DoubleGPUMirroredMemoryBlock;
-typedef GPUMirroredMemoryBlock<int>      IntGPUMirroredMemoryBlock;
+typedef GPUMirroredMemoryBlock<int32_t>  Int32GPUMirroredMemoryBlock;
 typedef GPUMirroredMemoryBlock<ComplexF> ComplexFGPUMirroredMemoryBlock;
 
 #endif // GPU_MIRRORED_MEMORY_BLOCK_H

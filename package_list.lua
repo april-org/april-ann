@@ -2,6 +2,7 @@ return {
   -- BASIC PACAKGES
   --  "plotter",
   "util",
+  "utest",
   "stats",
   "dataset",
   "matrix",
@@ -16,6 +17,8 @@ return {
   "autodiff.ann",
   
   -- MACHINE LEARNING
+  "clustering.kmeans.matrix",
+  "knn.kdtree",
   "trainable",
   -- "function_interface",
   -- NEURAL NETWORKS
@@ -40,11 +43,10 @@ return {
   "interest_points",
   "image_connected_components",
   --   --"libtiff",
-  
+  "ocr.off_line.param",
+  "ocr.off_line_text_preprocessing",
   -- HMMs
   "hmm_trainer",
   "rates",
   
-  -- MISC
-  "monad",
 }

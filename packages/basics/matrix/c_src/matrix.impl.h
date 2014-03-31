@@ -39,6 +39,7 @@ void Matrix<T>::initialize(const int *dim) {
       stride[i] = total_size;
       total_size *= dim[i];
       matrixSize[i] = dim[i];
+      april_assert(matrixSize[i] > 0);
     }
     break;
   case CblasColMajor:
@@ -46,6 +47,7 @@ void Matrix<T>::initialize(const int *dim) {
       stride[i] = total_size;
       total_size *= dim[i];
       matrixSize[i] = dim[i];
+      april_assert(matrixSize[i] > 0);
     }
     break;
   default:
@@ -76,15 +78,18 @@ Matrix<T>::Matrix(int numDim, const int *stride, const int offset,
 		  GPUMirroredMemoryBlock<T> *data,
 		  const CBLAS_ORDER major_order,
 		  const bool use_cuda,
-		  const bool transposed) :
+		  const bool transposed,
+		  april_utils::MMappedDataReader *mmapped_data) :
   Referenced(), shared_count(0), transposed(transposed),
   numDim(numDim), stride(new int[numDim]), offset(offset),
   matrixSize(new int[numDim]), total_size(total_size),
-  last_raw_pos(last_raw_pos), data(data), mmapped_data(0),
+  last_raw_pos(last_raw_pos), data(data), mmapped_data(mmapped_data),
   major_order(major_order),
   use_cuda(use_cuda),
-  is_contiguous(NONE) {
+  is_contiguous(NONE),
+  end_iterator(), end_const_iterator(), end_best_span_iterator() {
   IncRef(data);
+  if (mmapped_data) IncRef(mmapped_data);
   for (int i=0; i<numDim; ++i) {
     this->stride[i] = stride[i];
     this->matrixSize[i] = matrixSize[i];
@@ -105,7 +110,8 @@ Matrix<T>::Matrix(int numDim,
   mmapped_data(0),
   major_order(major_order),
   use_cuda(false),
-  is_contiguous(CONTIGUOUS) {
+  is_contiguous(CONTIGUOUS),
+  end_iterator(), end_const_iterator(), end_best_span_iterator() {
   stride     = new int[numDim];
   matrixSize = new int[numDim];
   initialize(dim);
@@ -132,7 +138,8 @@ Matrix<T>::Matrix(Matrix<T> *other,
   mmapped_data(0),
   major_order(other->major_order),
   use_cuda(other->use_cuda),
-  is_contiguous(NONE) {
+  is_contiguous(NONE),
+  end_iterator(), end_const_iterator(), end_best_span_iterator() {
   for (int i=0; i<numDim; i++) {
     if (sizes[i] + coords[i] > other->matrixSize[i])
       ERROR_EXIT3(128, "Size+coordinates are out of dimension size: %d+%d>%d\n",
@@ -193,7 +200,8 @@ Matrix<T>::Matrix(int numDim, int d1, ...) :
   offset(0),
   mmapped_data(0),
   major_order(CblasRowMajor),
-  is_contiguous(CONTIGUOUS) {
+  is_contiguous(CONTIGUOUS),
+  end_iterator(), end_const_iterator(), end_best_span_iterator() {
   int *dim   = new int[numDim];
   stride     = new int[numDim];
   matrixSize = new int[numDim];
@@ -221,7 +229,8 @@ Matrix<T>::Matrix(Matrix<T> *other, bool clone) :
   mmapped_data(0),
   major_order(other->major_order),
   use_cuda(other->use_cuda),
-  is_contiguous(other->is_contiguous){
+  is_contiguous(other->is_contiguous),
+  end_iterator(), end_const_iterator(), end_best_span_iterator() {
   stride       = new int[numDim];
   matrixSize   = new int[numDim];
   total_size   = other->total_size;
@@ -268,6 +277,7 @@ Matrix<T> *Matrix<T>::fromMMappedDataReader(april_utils::MMappedDataReader
   obj->transposed    = *(mmapped_data->get<bool>());
   // NON MAPPED DATA
   obj->use_cuda      = false;
+  obj->shared_count  = 0;
   obj->is_contiguous = NONE;
   // THE MMAP POINTER
   obj->mmapped_data  = mmapped_data;
@@ -335,6 +345,18 @@ Matrix<T> *Matrix<T>::transpose() {
     }
   }
   else result = this;
+  return result;
+}
+
+template<typename T>
+Matrix<T> *Matrix<T>::inMajorOrder(CBLAS_ORDER new_major_order) {
+  Matrix<T> *result;
+  if (new_major_order == major_order) result = this;
+  else {
+    result = this->transpose();
+    result->transposed  = !result->transposed;
+    result->major_order = new_major_order;
+  }
   return result;
 }
 
@@ -522,8 +544,9 @@ bool Matrix<T>::putSubCol(int col, int first_row, T* vec, int vecsize) {
 }
 
 template <typename T>
-bool Matrix<T>::sameDim(const Matrix<T> *other) const {
-  return sameDim(other->matrixSize, other->numDim);
+template <typename O>
+bool Matrix<T>::sameDim(const Matrix<O> *other) const {
+  return sameDim(other->getDimPtr(), other->getNumDim());
 }
 
 template <typename T>

@@ -6,6 +6,7 @@ Master branch release
 
 ### Unstable changes
 
+- Added `clustering` and `knn` algorithms.
 - Added `ann.components.zca_whitening` and `ann.components.pca_whitening`
   classes.
 - Added `stats.zca_whitening` and `stats.pca_whitening` functions.
@@ -23,10 +24,28 @@ Master branch release
 
 ### API Changes
 
+- Added `utest` package, for unit testing.
+- Added methods to `matrix` which work with sparse matrices.
+- Added class `matrix.sparse`.
+- Added method `m:toTabStream(file or gzfile)` to `matrix`.
+- Added operations `math.log1p` and `math.logadd`.
+- Added operator `%` to Lua `string` metatable, allowing to do Python-like
+  string formatting, and map-like substitutions.
+- Added index matrix for min/max operations in `matrix` objects.
 - Added `serialize` and `deserialize` Lua functions, in `util` package.
+
+### Bugs removed
+
+- Solved bug which makes to load unitialized weight matrices when loading old
+  trainable.supervised_trainer (without `matrix.dict` object).
+- Solved bug at `Matrix<T>::sliding_window` which makes an early end of the
+  iterator when window has an `offset` different of 0.
 
 ### C/C++
 
+- Added sparse CBLAS wrappers, for CUDA (not tested) and standard release.
+- Added CBLAS wrappers for float, double, and ComplexF types.
+- Added geometric parametrizer for off-line text preprocessing.
 - Added dependency with `liblapacke` for PCA when not available MKL or MacOS X.
 
 v0.3.1-alpha (pre-relase of v0.3.1-beta)
@@ -54,6 +73,7 @@ v0.3.1-alpha (pre-relase of v0.3.1-beta)
 
 ### New features
 
+- Added a normalize handwritting text utilities based on the main areas of the text.
 - Added `matrix.dict`, a hash set dictionary in C++ binded to Lua, which allows
   to execute basic math operations and reductions over the whole set of
   contained matrices. It major purpose is to represent a set of connection

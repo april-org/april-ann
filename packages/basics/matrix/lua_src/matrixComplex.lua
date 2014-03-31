@@ -5,36 +5,18 @@ class_extension(matrixComplex, "to_lua_string",
                                        self:toString(format or "binary"))
                 end)
 
-matrixComplex.meta_instance.__tostring = function(self)
-  local dims   = self:dim()
-  local major  = self:get_major_order()
-  local coords = {}
-  local out    = {}
-  local row    = {}
-  for i=1,#dims do coords[i]=1 end
-  for i=1,self:size() do
-    if #dims > 2 and coords[#dims] == 1 and coords[#dims-1] == 1 then
-      table.insert(out,
-		   string.format("\n# pos [%s]",
-				 table.concat(coords, ",")))
-    end
-    table.insert(row, string.format("%12s",
-				    tostring(self:get(table.unpack(coords)))))
-    local j=#dims+1
-    repeat
-      j=j-1
-      coords[j] = coords[j] + 1
-      if coords[j] > dims[j] then coords[j] = 1 end
-    until j==1 or coords[j] ~= 1
-    if coords[#coords] == 1 then
-      table.insert(out, table.concat(row, " ")) row={}
-    end
-  end
-  table.insert(out, string.format("# MatrixComplex of size [%s] in %s [%s]",
-				  table.concat(dims, ","), major,
-				  self:get_reference_string()))
-  return table.concat(out, "\n")
-end
+matrixComplex.meta_instance.__call =
+  matrix.__make_generic_call__()
+
+matrixComplex.meta_instance.__tostring =
+  matrix.__make_generic_print__("MatrixComplex",
+				function(value)
+				  return string.format("%12s",tostring(value))
+				end)
+
+matrixComplex.join =
+  matrix.__make_generic_join__(matrixComplex)
+
 
 matrixComplex.meta_instance.__eq = function(op1, op2)
   return op1:equals(op2)
@@ -75,14 +57,6 @@ end
 matrixComplex.meta_instance.__unm = function(op)
   local new_mat = op:clone()
   return new_mat:scal(-1)
-end
-
-function matrixComplex.loadfile()
-  error("Deprecated, use fromFilename method")
-end
-
-function matrixComplex.savefile()
-  error("Deprecated, use toFilename method")
 end
 
 -----------------------------------------------------------------------------

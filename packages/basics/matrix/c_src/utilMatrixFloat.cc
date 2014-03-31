@@ -313,6 +313,7 @@ MatrixFloat *readMatrixFloatFromTabFile(const char *filename,
 	}
       }
     } while(false);
+    if (nrows <= 0 || ncols <= 0) ERROR_EXIT(256, "Found 0 rows or 0 cols\n");
     BufferedGZFile f(filename, "r");
     return readMatrixFromTabStream<BufferedGZFile, float>(nrows, ncols, f,
 							  FloatAsciiExtractor(),
@@ -334,10 +335,57 @@ MatrixFloat *readMatrixFloatFromTabFile(const char *filename,
 	}
       }
     } while(false);
+    if (nrows <= 0 || ncols <= 0) ERROR_EXIT(256, "Found 0 rows or 0 cols\n");
     BufferedFile f(filename, "r");
     return readMatrixFromTabStream<BufferedFile, float>(nrows, ncols, f,
 							FloatAsciiExtractor(),
 							order);
   }
   return 0;
+}
+
+void writeMatrixFloatToTabGZStream(MatrixFloat *mat, BufferedGZFile *stream) {
+  writeMatrixToTabStream(mat, *stream, FloatAsciiSizer(),
+			 FloatAsciiCoder<BufferedGZFile>());
+}
+
+void writeMatrixFloatToTabStream(MatrixFloat *mat, FILE *f) {
+  FileWrapper file_wrapper(f);
+  BufferedFile stream(file_wrapper);
+  writeMatrixToTabStream(mat, stream, FloatAsciiSizer(),
+			 FloatAsciiCoder<BufferedFile>());
+}
+
+////////////////////////////////////////////////////////////////////////////
+
+char *writeSparseMatrixFloatToString(SparseMatrixFloat *mat,
+				     bool is_ascii,
+				     int &len) {
+  WriteBufferWrapper wrapper;
+  len = writeSparseMatrixToStream(mat, wrapper,
+				  SparseFloatAsciiSizer(),
+				  SparseFloatBinarySizer(),
+				  FloatAsciiCoder<WriteBufferWrapper>(),
+				  FloatBinaryCoder<WriteBufferWrapper>(),
+				  is_ascii);
+  return wrapper.getBufferProperty();
+}
+
+void writeSparseMatrixFloatToLuaString(SparseMatrixFloat *mat,
+				       lua_State *L,
+				       bool is_ascii) {
+  WriteLuaBufferWrapper wrapper(L);
+  IGNORE_RESULT(writeSparseMatrixToStream(mat, wrapper,
+					  SparseFloatAsciiSizer(),
+					  SparseFloatBinarySizer(),
+					  FloatAsciiCoder<WriteLuaBufferWrapper>(),
+					  FloatBinaryCoder<WriteLuaBufferWrapper>(),
+					  is_ascii));
+  wrapper.finish();
+}
+
+SparseMatrixFloat *readSparseMatrixFloatFromString(constString &cs) {
+  return readSparseMatrixFromStream<constString, float>(cs,
+							FloatAsciiExtractor(),
+							FloatBinaryExtractor());
 }

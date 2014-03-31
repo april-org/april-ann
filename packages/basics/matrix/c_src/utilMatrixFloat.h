@@ -21,8 +21,10 @@
 #ifndef UTILMATRIXFLOAT_H
 #define UTILMATRIXFLOAT_H
 
+#include "buffered_gzfile.h"
 #include "constString.h"
 #include "matrixFloat.h"
+#include "sparse_matrixFloat.h"
 #include "utilMatrixIO.h"
 
 struct FloatAsciiExtractor {
@@ -51,6 +53,18 @@ struct FloatBinarySizer {
   // returns the number of bytes needed for all matrix data (plus spaces)
   int operator()(const Matrix<float> *mat) {
     return binarizer::buffer_size_32(mat->size());
+  }
+};
+struct SparseFloatAsciiSizer {
+  // returns the number of bytes needed for all matrix data (plus spaces)
+  int operator()(const SparseMatrix<float> *mat) {
+    return mat->nonZeroSize()*12;
+  }
+};
+struct SparseFloatBinarySizer {
+  // returns the number of bytes needed for all matrix data (plus spaces)
+  int operator()(const SparseMatrix<float> *mat) {
+    return binarizer::buffer_size_32(mat->nonZeroSize());
   }
 };
 template<typename StreamType>
@@ -96,4 +110,14 @@ void writeMatrixFloatToTabFile(MatrixFloat *mat, const char *filename);
 MatrixFloat *readMatrixFloatFromTabFile(const char *filename,
 					const char *order = "row_major");
 
+void writeMatrixFloatToTabGZStream(MatrixFloat *mat, BufferedGZFile *stream);
+void writeMatrixFloatToTabStream(MatrixFloat *mat, FILE *f);
+
+// SPARSE MATRIX FLOAT
+
+char *writeSparseMatrixFloatToString(SparseMatrixFloat *mat, bool is_ascii,
+				     int &len);
+void writeSparseMatrixFloatToLuaString(SparseMatrixFloat *mat, lua_State *L,
+				       bool is_ascii);
+SparseMatrixFloat *readSparseMatrixFloatFromString(constString &cs);
 #endif // UTILMATRIXFLOAT_H

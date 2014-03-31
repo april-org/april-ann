@@ -24,6 +24,7 @@
 #include "swap.h"
 #include "matrix.h"
 #include "matrixFloat.h"
+#include "sparse_matrixFloat.h"
 #include "matrix_generic_math_templates.h" // functions which apply functors
 #include "matrix_generic_math_functors.h"  // standard functors
 #include "wrapper.h" // wrappers of mathematical function (for CPU/GPU)
@@ -414,137 +415,6 @@ void Matrix<float>::copy(const Matrix<float> *other) {
   applyBinaryFunctionWithSpanIterator<float>(this, other, functor);
 }
 
-struct axpy_functor {
-  float alpha;
-  axpy_functor(float alpha) : alpha(alpha) { }
-  void operator()(MatrixFloat *one, const MatrixFloat *other,
-		  unsigned int size,
-		  unsigned int stride_one,
-		  unsigned int stride_other,
-		  unsigned int offset_one,
-		  unsigned int offset_other) const {
-    doAxpy(size, alpha,
-	   other->getRawDataAccess(),
-	   offset_other, stride_other,
-	   one->getRawDataAccess(),
-	   offset_one, stride_one,
-	   one->getCudaFlag());
-  }
-};
-template<>
-void Matrix<float>::axpy(float alpha, const Matrix<float> *other) {
-  if (size() != other->size())
-    ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d\n",
-		size(), other->size());
-  if (major_order != other->major_order)
-    ERROR_EXIT(128, "Matrices with different major orders\n");
-  axpy_functor functor(alpha);
-#ifdef USE_MKL
-  applyBinaryFunctionWithSpanIteratorNOPARALLEL<float>(this, other, functor);
-#else
-  applyBinaryFunctionWithSpanIterator<float>(this, other, functor);
-#endif
-}
-
-template<>
-void Matrix<float>::gemm(CBLAS_TRANSPOSE trans_A,
-			 CBLAS_TRANSPOSE trans_B,
-			 float alpha,
-			 const Matrix<float> *otherA,
-			 const Matrix<float> *otherB,
-			 float beta) {
-  if (this == otherA || this == otherB)
-    ERROR_EXIT(128, "GEMM method couldn't receive as A or B argument "
-	       "the caller object\n");
-  if (numDim != 2 || otherA->numDim != 2 || otherB->numDim != 2)
-    ERROR_EXIT(128,"Incorrect number of dimensions, only allowed for numDim=2\n");
-  int row_idx_A = 0, col_idx_A = 1, row_idx_B = 0, col_idx_B = 1;
-  if (trans_A == CblasTrans) april_utils::swap(row_idx_A, col_idx_A);
-  if (trans_B == CblasTrans) april_utils::swap(row_idx_B, col_idx_B);
-  if (matrixSize[0] != otherA->matrixSize[row_idx_A] ||
-      matrixSize[1] != otherB->matrixSize[col_idx_B] ||
-      otherA->matrixSize[col_idx_A] != otherB->matrixSize[row_idx_B])
-    ERROR_EXIT6(128, "Incorrect matrixes dimensions: %dx%d + %dx%d * %dx%d\n",
-		matrixSize[0], matrixSize[1],
-		otherA->matrixSize[row_idx_A], otherA->matrixSize[col_idx_A],
-		otherB->matrixSize[row_idx_B], otherB->matrixSize[col_idx_B]);
-  if (major_order != otherA->major_order ||
-      otherA->major_order != otherB->major_order)
-    ERROR_EXIT(128, "Matrices with different major orders\n");
-  
-  int M=matrixSize[0], N=matrixSize[1], K=otherA->matrixSize[col_idx_A];
-  int lda, ldb, ldc;
-  if (major_order == CblasRowMajor) {
-    lda = (!otherA->getTransposedFlag())?(otherA->stride[0]):(otherA->stride[1]);
-    ldb = (!otherB->getTransposedFlag())?(otherB->stride[0]):(otherB->stride[1]);
-    ldc = (!this->getTransposedFlag()  )?(this->stride[0]  ):(this->stride[1]);
-  }
-  else {
-    lda = (!otherA->getTransposedFlag())?(otherA->stride[1]):(otherA->stride[0]);
-    ldb = (!otherB->getTransposedFlag())?(otherB->stride[1]):(otherB->stride[0]);
-    ldc = (!this->getTransposedFlag()  )?(this->stride[1]  ):(this->stride[0]);
-  }
-  if (otherA->stride[0]+otherA->stride[1] != lda+1 ||
-      otherB->stride[0]+otherB->stride[1] != ldb+1 ||
-      this->stride[0]  +this->stride[1]   != ldc+1)
-    ERROR_EXIT(128, "Contiguous matrices are needed\n");
-  if (otherA->getTransposedFlag()) trans_A=NEGATE_CBLAS_TRANSPOSE(trans_A);
-  if (otherB->getTransposedFlag()) trans_B=NEGATE_CBLAS_TRANSPOSE(trans_B);
-  doGemm(major_order, trans_A, trans_B,
-	 M, N, K,
-	 alpha, otherA->data, lda,
-	 otherB->data, ldb,
-	 beta, data, ldc,
-	 otherA->offset, otherB->offset, offset,
-	 use_cuda);
-}
-
-template<>
-void Matrix<float>::gemv(CBLAS_TRANSPOSE trans_A,
-			 float alpha,
-			 const Matrix<float> *otherA,
-			 const Matrix<float> *otherX,
-			 float beta) {
-  if (!isVector() || !otherX->isVector() || otherA->numDim != 2)
-    ERROR_EXIT(128,"Incorrect number of dimensions\n");
-  int M,N;
-  if (otherA->getTransposedFlag()) {
-    trans_A=NEGATE_CBLAS_TRANSPOSE(trans_A);
-    M=otherA->matrixSize[1];
-    N=otherA->matrixSize[0];
-  }else {
-    M=otherA->matrixSize[0];
-    N=otherA->matrixSize[1];
-  }
-  // SANITY CHECK
-  if (trans_A == CblasNoTrans) {
-    if (M != size() || N != otherX->size())
-      ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx1 + %dx%d * %dx1\n",
-		  size(), M, N, otherX->size());
-  }
-  else {
-    if (N != size() || M != otherX->size())
-      ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx1 + %dx%d * %dx1\n",
-		  size(), N, M, otherX->size());
-  }
-  if (major_order != otherA->major_order ||
-      otherA->major_order != otherX->major_order)
-    ERROR_EXIT(128, "Matrices with different major orders\n");
-  //
-  int lda=(otherA->getIsDataRowOrdered())?otherA->stride[0]:otherA->stride[1];
-  int ldx=otherX->getVectorStride();
-  int ldy=getVectorStride();
-  if (otherA->stride[0] + otherA->stride[1] != lda+1)
-    ERROR_EXIT(128, "Only allowed with contiguous matrices\n");
-  doGemv(major_order, trans_A,
-	 M, N,
-	 alpha, otherA->data, lda,
-	 otherX->data, ldx,
-	 beta, data, ldy,
-	 otherA->offset, otherX->offset, offset,
-	 use_cuda);
-}
-
 template<>
 void Matrix<float>::ger(float alpha,
 			const Matrix<float> *otherX,
@@ -692,7 +562,7 @@ void Matrix<float>::minAndMax(float &min, float &max) const {
 
 template <>
 Matrix<float> *Matrix<float>::maxSelDim(const int dim,
-					IntGPUMirroredMemoryBlock *raw_positions,
+					Int32GPUMirroredMemoryBlock *raw_positions,
 					int shift) const {
   if (dim < 0 || dim > numDim)
     ERROR_EXIT2(128, "Incorrect dimension %d, numDim=%d\n", dim, numDim);
@@ -838,25 +708,17 @@ Matrix<float> *Matrix<float>::inv() {
   INFO = clapack_sgetri(CblasColMajor,
 			A->numDim,A->getData(),A->stride[1],IPIV);
   checkLapackInfo(INFO);
-  delete IPIV;
-  MatrixFloat *ret;
-  if (major_order != CblasColMajor) {
-    ret = A->clone(CblasRowMajor);
-    delete A;
-  }
-  else ret = A;
-  return ret;
+  delete[] IPIV;
+  return A;
 }
 
 // FIXME: using WRAPPER for generalized CULA, LAPACK, float and complex numbers
 // WARNING: the V matrix is returned transposed
 template <>
-void Matrix<float>::svd(Matrix<float> **U, Matrix<float> **S, Matrix<float> **VT) {
+void Matrix<float>::svd(Matrix<float> **U, SparseMatrix<float> **S, Matrix<float> **VT) {
   if (numDim != 2)
     ERROR_EXIT(128, "Only bi-dimensional matrices are allowed\n");
-  Matrix<float> *A = this;
-  if (this->major_order != CblasColMajor || !this->getIsContiguous())
-    A = this->clone(CblasColMajor);
+  Matrix<float> *A = this->clone(CblasColMajor);
   IncRef(A);
   int INFO;
   const int m = A->matrixSize[0]; // cols
@@ -867,10 +729,12 @@ void Matrix<float>::svd(Matrix<float> **U, Matrix<float> **S, Matrix<float> **VT
   const int dimsS[1]  = {numSV};
   const int dimsVT[2] = {n, n};
   *U  = new Matrix<float>(2, dimsU,  CblasColMajor);
-  *S  = new Matrix<float>(1, dimsS,  CblasColMajor);
+  *S  = SparseMatrix<float>::diag(numSV, 0.0f, CSR_FORMAT);
   *VT = new Matrix<float>(2, dimsVT, CblasColMajor);
   INFO = clapack_sgesdd(CblasColMajor, m, n, lda, A->getData(),
-			(*U)->getData(), (*S)->getData(), (*VT)->getData());
+			(*U)->getData(),
+			(*S)->getRawValuesAccess()->getPPALForWrite(),
+			(*VT)->getData());
   checkLapackInfo(INFO);
   DecRef(A);
 }
