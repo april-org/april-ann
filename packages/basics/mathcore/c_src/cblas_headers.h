@@ -113,7 +113,11 @@ void cblas_ssbmv(CBLAS_ORDER order,
 
 #define NEGATE_CBLAS_TRANSPOSE(trans) ((trans) == CblasNoTrans)?CblasTrans:CblasNoTrans
 
-#ifndef USE_MKL
+// FIXME: MKL version is not working properly
+//#ifndef USE_MKL
+
+#if 1
+
 // sparse BLAS is only available with CUDA or MKL
 void cblas_saxpyi(int NNZ, float alpha,
 		  const float *x_values_mem,

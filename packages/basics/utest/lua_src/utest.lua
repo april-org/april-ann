@@ -1,3 +1,28 @@
+-- This module allows unit testing in April-ANN. This module uses internal
+-- variables to account for 'passed' and 'failed' tests. At the end of the
+-- program a summary will be printed to stderr. In case of a non-terminal
+-- output, only the 'failed' tests will produce a print out. This module exports
+-- the following functions:
+--
+-- utest.check(function, error_message): executes the given function, in case of
+--                                       fail, it shows the error_message
+--
+-- utest.check.success(function, error_message): an alias of previous one
+--
+-- utest.check.fail(function, error_message): the opposite of previous one
+--
+-- utest.check.eq(a, b, error_message): tests of a == b
+--
+-- utest.check.neq(a, b, error_message): tests of a ~= b
+--
+-- utest.check.lt(a, b, error_message): tests of a < b
+--
+-- utest.check.le(a, b, error_message): tests of a <= b
+--
+-- utest.check.gt(a, b, error_message): tests of a > b
+--
+-- utest.check.ge(a, b, error_message): tests of a >= b
+-------------------------------------------------------------------------------
 get_table_from_dotted_string("utest",true)
 --
 local function write(level,format,...)

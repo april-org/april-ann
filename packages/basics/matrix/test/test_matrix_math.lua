@@ -119,7 +119,6 @@ check(j, matrix.col_major(2,2,{
 ---------------------------------------------------------------
 ---------------------------------------------------------------
 
--- TODO: UNCOMMENT WHEN SVD WAS IMPLEMENTED AT ATLAS
 local m = matrix.col_major(4,5,{1,0,0,0,2,
 				0,0,3,0,0,
 				0,0,0,0,0,
@@ -148,7 +147,7 @@ check(V, matrix.col_major(5,5,
 
 local m = matrix(20,20):uniformf()
 local subm = m:slice({5,4},{6,9})
-subm:equals( m("5:10","4:12") )
-subm:equals( m({5,10},{4,12}) )
+check.eq(subm, m("5:10","4:12"))
+check.eq(subm, m({5,10},{4,12}))
 local subm = m:slice({1,4},{6,m:dim(2)-3})
-subm:equals( m(":6","4:") )
+check.eq(subm, m(":6","4:"))

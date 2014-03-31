@@ -139,7 +139,11 @@ void cblas_ssbmv(CBLAS_ORDER order,
 #endif // ADHOC_BLAS
 
 
-#ifndef USE_MKL
+// FIXME: MKL version is not working properly
+//#ifndef USE_MKL
+
+#if 1
+
 // sparse BLAS is only available with CUDA or MKL
 
 // generic templates
@@ -241,15 +245,17 @@ void generic_cblas_sparse_mv(SPARSE_FORMAT sparse_format,
     if (sparse_format == CSR_FORMAT) sparse_format = CSC_FORMAT;
     else sparse_format = CSR_FORMAT;
   }
+  int y_size = (a_transpose==CblasNoTrans)?(m):(n);
+  int x_size = (a_transpose==CblasNoTrans)?(n):(m);
   if (sparse_format == CSR_FORMAT) {
-    for (int dest=0; dest<m; ++dest) {
+    for (int dest=0; dest<y_size; ++dest) {
       int first  = a_first_index_mem[dest];
       int lastp1 = a_first_index_mem[dest+1]; // last plus 1
       T aux = T();
       // for each col at the sparse matrix
       for (int x=first; x<lastp1; ++x) {
         int A_col = a_indices_mem[x];
-        april_assert(0 <= A_col && A_col < n);
+        april_assert(0 <= A_col && A_col < x_size);
         aux = aux + a_values_mem[x] * x_mem[A_col*x_inc];
       }
       int y_pos  = dest*y_inc;
@@ -261,17 +267,17 @@ void generic_cblas_sparse_mv(SPARSE_FORMAT sparse_format,
     // first Y vector needs to be initialized
     if (beta == T()) {
       int y_pos=0;
-      for (int i=0; i<m; ++i, y_pos+=y_inc) {
+      for (int i=0; i<y_size; ++i, y_pos+=y_inc) {
         y_mem[y_pos] = T();
       }
     }
     else {
       int y_pos=0;
-      for (int i=0; i<m; ++i, y_pos+=y_inc) {
+      for (int i=0; i<y_size; ++i, y_pos+=y_inc) {
         y_mem[y_pos] = y_mem[y_pos] * beta;
       }
     }
-    for (int A_col=0; A_col<n; ++A_col) {
+    for (int A_col=0; A_col<x_size; ++A_col) {
       int first  = a_first_index_mem[A_col];
       int lastp1 = a_first_index_mem[A_col+1]; // last plus 1
       // for each sparse destination position
@@ -279,6 +285,7 @@ void generic_cblas_sparse_mv(SPARSE_FORMAT sparse_format,
         int dest  = a_indices_mem[x];
         int x_pos = A_col*x_inc;
         int y_pos = dest*y_inc;
+        april_assert(0 <= dest && dest < y_size);
         y_mem[y_pos] = y_mem[y_pos] + alpha * a_values_mem[x] * x_mem[x_pos];
       }
     }
@@ -549,6 +556,9 @@ void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
 		     const int *a_first_index_mem,
 		     const float *x_mem, int x_inc,
 		     float beta, float *y_mem, int y_inc) {
+  if ((x_inc!=1) || (y_inc!=1))
+    ERROR_EXIT(128, "Impossible to execute sparse gemv with MKL and "
+               "non-contiguous vectors\n");
   char descrA[6]; descrA[0] = 'g'; descrA[3]='c';
   char trans = (a_transpose == CblasTrans) ? 't' : 'n';
   switch(sparse_format) {
@@ -561,8 +571,8 @@ void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
                const_cast<int*>(a_indices_mem),
 	       const_cast<int*>(a_first_index_mem),
                const_cast<int*>(a_first_index_mem+1),
-	       const_cast<float*>(x_mem), &x_inc,
-	       &beta, const_cast<float*>(y_mem), &y_inc);
+	       const_cast<float*>(x_mem),
+	       &beta, const_cast<float*>(y_mem));
     break;
   case CSC_FORMAT:
     mkl_scscmv(&trans,
@@ -573,8 +583,8 @@ void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
                const_cast<int*>(a_indices_mem),
 	       const_cast<int*>(a_first_index_mem),
                const_cast<int*>(a_first_index_mem+1),
-	       const_cast<float*>(x_mem), &x_inc,
-	       &beta, const_cast<float*>(y_mem), &y_inc);
+	       const_cast<float*>(x_mem),
+	       &beta, const_cast<float*>(y_mem));
     break;
   default:
     ERROR_EXIT(128, "Incorrect sparse format\n");
@@ -589,6 +599,9 @@ void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
 		     const int *a_first_index_mem,
 		     const double *x_mem, int x_inc,
 		     double beta, double *y_mem, int y_inc) {
+  if ((x_inc!=1) || (y_inc!=1))
+    ERROR_EXIT(128, "Impossible to execute sparse gemv with MKL and "
+               "non-contiguous vectors\n");
   char descrA[6]; descrA[0] = 'g'; descrA[3]='c';
   char trans = (a_transpose == CblasTrans) ? 't' : 'n';
   switch(sparse_format) {
@@ -601,8 +614,8 @@ void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
                const_cast<int*>(a_indices_mem),
 	       const_cast<int*>(a_first_index_mem),
                const_cast<int*>(a_first_index_mem+1),
-	       const_cast<double*>(x_mem), &x_inc,
-	       &beta, const_cast<double*>(y_mem), &y_inc);
+	       const_cast<double*>(x_mem),
+	       &beta, const_cast<double*>(y_mem));
     break;
   case CSC_FORMAT:
     mkl_dcscmv(&trans,
@@ -613,8 +626,8 @@ void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
                const_cast<int*>(a_indices_mem),
 	       const_cast<int*>(a_first_index_mem),
                const_cast<int*>(a_first_index_mem+1),
-	       const_cast<double*>(x_mem), &x_inc,
-	       &beta, const_cast<double*>(y_mem), &y_inc);
+	       const_cast<double*>(x_mem),
+	       &beta, const_cast<double*>(y_mem));
     break;
   default:
     ERROR_EXIT(128, "Incorrect sparse format\n");
@@ -630,32 +643,37 @@ void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
 		     const int *a_first_index_mem,
 		     const ComplexF *x_mem, int x_inc,
 		     ComplexF beta, ComplexF *y_mem, int y_inc) {
+  if ((x_inc!=1) || (y_inc!=1))
+    ERROR_EXIT(128, "Impossible to execute sparse gemv with MKL and "
+               "non-contiguous vectors\n");
   char descrA[6]; descrA[0] = 'g'; descrA[3]='c';
   char trans = (a_transpose == CblasTrans) ? 't' : 'n';
   switch(sparse_format) {
   case CSR_FORMAT:
     mkl_ccsrmv(&trans,
 	       &m, &n,
-	       &alpha,
+	       reinterpret_cast<MKL_Complex8*>(&alpha),
 	       descrA,
-	       const_cast<ComplexF*>(a_values_mem),
+	       reinterpret_cast<MKL_Complex8*>(const_cast<ComplexF*>(a_values_mem)),
                const_cast<int*>(a_indices_mem),
 	       const_cast<int*>(a_first_index_mem),
                const_cast<int*>(a_first_index_mem+1),
-	       const_cast<ComplexF*>(x_mem), &x_inc,
-	       &beta, const_cast<ComplexF*>(y_mem), &y_inc);
+	       reinterpret_cast<MKL_Complex8*>(const_cast<ComplexF*>(x_mem)),
+	       reinterpret_cast<MKL_Complex8*>(&beta),
+               reinterpret_cast<MKL_Complex8*>(const_cast<ComplexF*>(y_mem)));
     break;
   case CSC_FORMAT:
     mkl_ccscmv(&trans,
 	       &m, &n,
-	       &alpha,
+	       reinterpret_cast<MKL_Complex8*>(&alpha),
 	       descrA,
-	       const_cast<ComplexF*>(a_values_mem),
+	       reinterpret_cast<MKL_Complex8*>(const_cast<ComplexF*>(a_values_mem)),
                const_cast<int*>(a_indices_mem),
 	       const_cast<int*>(a_first_index_mem),
                const_cast<int*>(a_first_index_mem+1),
-	       const_cast<ComplexF*>(x_mem), &x_inc,
-	       &beta, const_cast<ComplexF*>(y_mem), &y_inc);
+	       reinterpret_cast<MKL_Complex8*>(const_cast<ComplexF*>(x_mem)),
+	       reinterpret_cast<MKL_Complex8*>(&beta),
+               reinterpret_cast<MKL_Complex8*>(const_cast<ComplexF*>(y_mem)));
     break;
   default:
     ERROR_EXIT(128, "Incorrect sparse format\n");
