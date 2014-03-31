@@ -46,6 +46,7 @@ int SparseMatrix<T>::searchIndexOf(const int c0, const int c1) const {
     break;
   default:
     ERROR_EXIT1(128, "Unrecognized format %d\n", sparse_format);
+    idx=-1;
   }
   return idx;
 }
@@ -66,6 +67,7 @@ int SparseMatrix<T>::searchIndexOfFirst(const int c0, const int c1) const {
     break;
   default:
     ERROR_EXIT1(128, "Unrecognized format %d\n", sparse_format);
+    idx=-1;
   }
   return idx;
 }

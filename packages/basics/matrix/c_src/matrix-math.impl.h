@@ -664,6 +664,7 @@ void Matrix<T>::adjustRange(T rmin, T rmax) {
 template <typename T>
 Matrix<T> *Matrix<T>::inv() {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  return 0;
 }
 
 template <typename T>

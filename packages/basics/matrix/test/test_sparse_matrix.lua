@@ -51,21 +51,22 @@ local m2 = matrix.sparse.csc(3,3,
 			     blocki{1,0},
 			     blocki{0,1,2,2})
 local aux = m2:as_vector()
-check(make_eq(m:clone():axpy(1.0,aux:to_dense()),
-              m:clone():axpy(1.0,aux)))
+check(function()
+        return make_eq(m:clone():axpy(1.0,aux:to_dense()),
+                       m:clone():axpy(1.0,aux))
+      end)
 
 local b = matrix.sparse.csr(3,blockf{3},blocki{2})
 local str = aux3:toString("ascii")
-check(function() return str == [[5 5 5
+check.eq(str, [[5 5 5
 ascii csr
 1 2 3 4 5 
 0 1 2 3 4 
 0 1 2 3 4 5 
-]]
-      end)
+]])
 
 local str = aux3:transpose():toString("ascii")
-assert(str == [[5 5 5
+check.eq(str, [[5 5 5
 ascii csc
 1 2 3 4 5 
 0 1 2 3 4 
@@ -88,108 +89,113 @@ local b = matrix(4,2,{
                      -1, -2,
                    1, 2,
                      })
-local c = matrix(3,2):zeros():sparse_mm({
-                                          trans_A=false,
-                                          alpha=1.0,
-                                          A=a_csc,
-                                          B=b,
-                                          beta=0.0,
-                                        })
-check(make_eq(matrix(3,4,{
-                       1,  2,  3, 0,
-                       0,  0,  2, 0,
-                       0, -1,  0, 1,
-                         }) * b,
-              c))
+check(function()
+        local c = matrix(3,2):zeros():sparse_mm({
+                                                  trans_A=false,
+                                                  alpha=1.0,
+                                                  A=a_csc,
+                                                  B=b,
+                                                  beta=0.0,
+                                                })
+        return make_eq(matrix(3,4,{
+                                1,  2,  3, 0,
+                                0,  0,  2, 0,
+                                0, -1,  0, 1,
+                                  }) * b,
+                       c)
+      end)
 
-local c = matrix(3,2):zeros():sparse_mm({
-                                          trans_A=false,
-                                          alpha=1.0,
-                                          A=a_csr,
-                                          B=b,
-                                          beta=0.0,
-                                        })
-check(make_eq(matrix(3,4,{
-                       1,  2,  3, 0,
-                       0,  0,  2, 0,
-                       0, -1,  0, 1,
-                         }) * b,
-              c))
+check(function()
+        local c = matrix(3,2):zeros():sparse_mm({
+                                                  trans_A=false,
+                                                  alpha=1.0,
+                                                  A=a_csr,
+                                                  B=b,
+                                                  beta=0.0,
+                                                })
+        return make_eq(matrix(3,4,{
+                                1,  2,  3, 0,
+                                0,  0,  2, 0,
+                                0, -1,  0, 1,
+                                  }) * b,
+                       c)
+      end)
 
-local c = matrix(3,2):zeros():sparse_mm({
-                                          trans_A=true,
-                                          alpha=1.0,
-                                          A=a_csc:transpose(),
-                                          B=b,
-                                          beta=0.0,
-                                        })
-check(make_eq(matrix(3,4,{
-                       1,  2,  3, 0,
-                       0,  0,  2, 0,
-                       0, -1,  0, 1,
-                         }) * b,
-              c))
+check(function()
+        local c = matrix(3,2):zeros():sparse_mm({
+                                                  trans_A=true,
+                                                  alpha=1.0,
+                                                  A=a_csc:transpose(),
+                                                  B=b,
+                                                  beta=0.0,
+                                                })
+        return make_eq(matrix(3,4,{
+                                1,  2,  3, 0,
+                                0,  0,  2, 0,
+                                0, -1,  0, 1,
+                                  }) * b,
+                       c)
+      end)
 
-local c = matrix(3,2):zeros():sparse_mm({
-                                          trans_A=true,
-                                          alpha=1.0,
-                                          A=a_csr:transpose(),
-                                          B=b,
-                                          beta=0.0,
-                                        })
-check(make_eq(matrix(3,4,{
-                       1,  2,  3, 0,
-                       0,  0,  2, 0,
-                       0, -1,  0, 1,
-                         }) * b,
-              c))
+check(function()
+        local c = matrix(3,2):zeros():sparse_mm({
+                                                  trans_A=true,
+                                                  alpha=1.0,
+                                                  A=a_csr:transpose(),
+                                                  B=b,
+                                                  beta=0.0,
+                                                })
+        return make_eq(matrix(3,4,{
+                                1,  2,  3, 0,
+                                0,  0,  2, 0,
+                                0, -1,  0, 1,
+                                  }) * b,
+                       c)
+      end)
 
 local x = matrix(4):linear()
 local y = matrix(3):zeros()
 
-y:gemv({
-         trans_A=false,
-         alpha=1.0,
-         A=a_csc,
-         X=x,
-         beta=0.0
-       })
+check(function()
+        y:gemv({
+                 trans_A=false,
+                 alpha=1.0,
+                 A=a_csc,
+                 X=x,
+                 beta=0.0
+               })
+        return make_eq(a_csc:to_dense()*x, y)
+      end)
 
-check(make_eq(a_csc:to_dense()*x, y))
+check(function()
+        y:gemv({
+                 trans_A=true,
+                 alpha=1.0,
+                 A=a_csc:transpose(),
+                 X=x,
+                 beta=0.0
+               })
+        return make_eq(a_csc:to_dense()*x, y)
+      end)
 
-y:gemv({
-         trans_A=true,
-         alpha=1.0,
-         A=a_csc:transpose(),
-         X=x,
-         beta=0.0
-       })
+check(function()
+        y:gemv({
+                 trans_A=false,
+                 alpha=1.0,
+                 A=a_csr,
+                 X=x,
+                 beta=0.0
+               })
+        return make_eq(a_csc:to_dense()*x, y)
+      end)
 
-print(a_csr:to_dense()*x)
-print(y)
-
-check(make_eq(a_csc:to_dense()*x, y))
-
-print(a_csc:to_dense()*x)
-print(a_csr)
-print(a_csc)
-
-y:gemv({
-         trans_A=false,
-         alpha=1.0,
-         A=a_csr,
-         X=x,
-         beta=0.0
-       })
-
-check(make_eq(a_csc:to_dense()*x, y))
-
-y:gemv({
-         trans_A=true,
-         alpha=1.0,
-         A=a_csr:transpose(),
-         X=x,
-         beta=0.0
-       })
-
-check(make_eq(a_csc:to_dense()*x, y))
+check(function()
+        y:gemv({
+                 trans_A=true,
+                 alpha=1.0,
+                 A=a_csr:transpose(),
+                 X=x,
+                 beta=0.0
+               })
+        return make_eq(a_csc:to_dense()*x, y)
+      end)
