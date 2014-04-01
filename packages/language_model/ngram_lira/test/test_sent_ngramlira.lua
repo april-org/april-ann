@@ -21,6 +21,7 @@ for words_it in lines_it() do
 					    words_it = words_it,
 					    debug_flag = 2,
 					    --unk_id = unk_id,
+              use_ecc = true,
 					    use_unk = "all"
 					  }
 end

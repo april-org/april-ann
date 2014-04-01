@@ -117,8 +117,7 @@ function language_models.get_sentence_prob(params)
   end
 
   if use_ecc then
-    result = lmi:get(key, final_id)
-    _,p = result:get(1)
+    p = lmi:get_final_score(key);
     p   = p / math.log(10)
     sum = sum + p
   end
