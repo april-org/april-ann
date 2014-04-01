@@ -11,9 +11,9 @@ end
 
 local function print_pw(log_file, lastword, previousword, ngram_value, p)
   fprintf (log_file, "\tp( %s | %s %s", lastword, previousword,
-	 (ngram_value > 2 and "...") or "")
+           (ngram_value > 2 and "...") or "")
   fprintf (log_file, ")\t= [%dgram] %g [ %f ]\n",
-	 ngram_value, exp10(p), p)
+           ngram_value, exp10(p), p)
 end
 
 function language_models.get_sentence_prob(params)
@@ -70,42 +70,42 @@ function language_models.get_sentence_prob(params)
       key = lmi:get_zero_key()
     -- If unknown words don't appear on context
     elseif i - lastunk >= ngram_value then
-	result = lmi:get(key, word_id)
-	key,p = result:get(1)
-	-- If current word is unknown, we store
-	-- the index and sum its probability if
-	-- we consider all unknown words
-	if word_id == unk_id then
-	  numunks = numunks + 1
-	  lastunk = i
-	  if use_unk == "all" then
-	    p   = p / math.log(10)
-	    sum = sum + p
-	  end
-	-- If it's known, we sum its probability
-	else
-	  p   = p / math.log(10)
-	  sum = sum + p
-	end
+      result = lmi:get(key, word_id)
+      key,p = result:get(1)
+      -- If current word is unknown, we store
+      -- the index and sum its probability if
+      -- we consider all unknown words
+      if word_id == unk_id then
+      numunks = numunks + 1
+      lastunk = i
+      if use_unk == "all" then
+      p   = p / math.log(10)
+      sum = sum + p
+      end
+      -- If it's known, we sum its probability
+      else
+      p   = p / math.log(10)
+      sum = sum + p
+      end
      -- If last unknown word is on context, then
      -- we add its probability if we consider all
      -- or only context unknown words
-     else
-	result = lmi:get(key, word_id)
-	key,p = result:get(1)
-	if use_unk == "none" then
-	  not_used_words = not_used_words + 1
-	else
-	  p   = p / math.log(10)
-	  sum = sum + p
-	end
+    else
+      result = lmi:get(key, word_id)
+      key,p = result:get(1)
+      if use_unk == "none" then
+      not_used_words = not_used_words + 1
+      else
+      p   = p / math.log(10)
+      sum = sum + p
+      end
     end
 
     if debug_flag >= 2 then
       print_pw(log_file,
-		 (word_id ~= unk_id and word) or "<unk>",
-		 ((prev_word_id ~= unk_id and prev_word) or prev_word) or "<s>",
-		 ngram_value, p)
+               (word_id ~= unk_id and word) or "<unk>",
+               ((prev_word_id ~= unk_id and prev_word) or prev_word) or "<s>",
+               ngram_value, p)
     end
     prev_word = word      
     i = i + 1
@@ -125,11 +125,11 @@ function language_models.get_sentence_prob(params)
   
   if debug_flag >= 1 then
     fprintf (log_file, "%d sentences, %d words, %d OOVs\n",
-	     1, numwords, numunks)
+             1, numwords, numunks)
     fprintf (log_file, "0 zeroprobs, logprob= %.4f ppl= %.3f ppl1= %.3f\n",
-	     sum,
-	     exp10(-sum/(numwords+ ((use_ecc and 1) or 0) )),
-	     exp10(-sum/numwords))
+             sum,
+             exp10(-sum/(numwords+ ((use_ecc and 1) or 0) )),
+             exp10(-sum/numwords))
     fprintf (log_file, "\n")
   end
   log_file:flush()
@@ -138,7 +138,7 @@ function language_models.get_sentence_prob(params)
 end
 
 function language_models.get_prob_from_id_tbl(lm, word_ids, init_id, final_id,
-				    use_bcc, use_ecc)
+                                              use_bcc, use_ecc)
   local lmi = lm:get_interface()
   local key = lmi:get_initial_key()
   if not use_bcc then key = lmi:get_zero_key() end
@@ -224,20 +224,20 @@ function language_models.test_set_ppl(params)
     if use_sentence then
       count = count + 1
       --if #sentence > 0 and #words > 0 then
-	--if debug_flag >= 1 then fprintf(flog, "%s\n", sentence) end
-	local sum,numwords,numunks =
-	  language_models.get_sentence_prob{ lm         = lm, 
-	  					  words_it   = words_it,
-						  log_file   = log_file,
-						  debug_flag = debug_flag,
-						  unk_id     = unk_id,
-						  use_unk    = use_unk,
-						  use_bcc    = use_bcc,
-						  use_ecc    = use_ecc }
-	totalsum       = totalsum + sum
-	totalwords     = totalwords + numwords
-	totalunks      = totalunks + numunks
-	totalsentences = totalsentences + 1
+      --if debug_flag >= 1 then fprintf(flog, "%s\n", sentence) end
+      local sum,numwords,numunks =
+        language_models.get_sentence_prob{ lm         = lm, 
+                                           words_it   = words_it,
+                                           log_file   = log_file,
+                                           debug_flag = debug_flag,
+                                           unk_id     = unk_id,
+                                           use_unk    = use_unk,
+                                           use_bcc    = use_bcc,
+                                           use_ecc    = use_ecc }
+     totalsum       = totalsum + sum
+     totalwords     = totalwords + numwords
+     totalunks      = totalunks + numunks
+     totalsentences = totalsentences + 1
       --end
       -- if use_cache or math.mod(count, 1000) == 0 then lm:restart() end
       -- if use_cache then lm:restart() end
@@ -247,11 +247,11 @@ function language_models.test_set_ppl(params)
       local word_ids
       word_ids = vocab:searchWordIdSequence(words, unk_id)
       for i=1,#word_ids do
-	if words[i] == cache_stop_token then
-	  lm:clearCache()
-	elseif words[i] ~= null_token then
-	  lm:cacheWord(word_ids[i])
-	end
+        if words[i] == cache_stop_token then
+          lm:clearCache()
+        elseif words[i] ~= null_token then
+          lm:cacheWord(word_ids[i])
+        end
       end
       --lm:showCache()
     end
@@ -267,15 +267,15 @@ function language_models.test_set_ppl(params)
   
   if debug_flag >= 0 then
     fprintf (log_file, "file %s: %d sentences, %d words, %d OOVs\n",
-	     testset,
-	     totalsentences,
-	     totalwords,
-	     totalunks)
+             testset,
+             totalsentences,
+             totalwords,
+             totalunks)
     log_file:flush()
     fprintf (log_file,
-	     "0 zeroprobs, logprob= %f ppl= %f ppl1= %f\n",
-	     totalsum,
-	     ppl, ppl1)
+             "0 zeroprobs, logprob= %f ppl= %f ppl1= %f\n",
+             totalsum,
+             ppl, ppl1)
     log_file:close()
   end
   
