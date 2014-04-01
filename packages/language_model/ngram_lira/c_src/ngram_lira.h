@@ -26,7 +26,6 @@
 #include "LM_interface.h"
 #include "binary_search.h"
 #include <cmath>
-#include <cassert>
 #include <climits> // UINT_MAX
 #include "logbase.h"
 
@@ -140,7 +139,8 @@ namespace LanguageModels {
     char  *filemapped;
     //----------------------------------------------------------------------
 
-    static const unsigned int maxN = 20;
+    // required by getFinalScore method:
+    WordType final_word;
     
     ~NgramLiraModel();
 
@@ -153,6 +153,7 @@ namespace LanguageModels {
     NgramLiraModel(const char *filename,
 		   unsigned int expected_vocabulary_size,
 		   const char *expected_vocabulary[],
+		   WordType final_word,
 		   bool ignore_extra_words_in_dictionary);
 
     /// fan_out_threshold is used to distinguish automata states when
@@ -162,6 +163,7 @@ namespace LanguageModels {
     NgramLiraModel(FILE *fd,
 		   unsigned int expected_vocabulary_size,
 		   const char *expected_vocabulary[],
+		   WordType final_word,
 		   int fan_out_threshold,
 		   bool ignore_extra_words_in_dictionary);
 
@@ -190,15 +192,6 @@ namespace LanguageModels {
 
   private:
     NgramLiraModel *lira_model;
-
-    // used to prepare, this class is not thread safe :'(
-    int prepared_level;
-
-    // values contained in linear_index_vector are useful until prepared_level
-    int linear_index_vector[NgramLiraModel::maxN];
-
-    virtual void privateGet(const Key &key, WordType word, Burden burden,
-			    vector<KeyScoreBurdenTuple> &result, Score threshold);
 
   public:
 
@@ -245,8 +238,7 @@ namespace LanguageModels {
     virtual Score getFinalScore(const Key &k, Score threshold) {
       vector<KeyScoreBurdenTuple> aux;
       Burden dummyBurden;
-      get(k, lira_model->final_state, dummyBurden, aux, threshold);
-      // do we need the following assert? the model is deterministic
+      get(k, lira_model->final_word, dummyBurden, aux, threshold);
       return (aux.size() == 1) ? aux[0].key_score.score : threshold;
     }
     // useful methods to look for an state:

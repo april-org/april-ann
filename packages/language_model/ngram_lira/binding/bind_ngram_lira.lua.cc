@@ -52,6 +52,7 @@ using namespace LanguageModels;
 		     "command", // open file command, i.e. "zcat blah.gz"
 		     "filename",
 		     "vocabulary",
+		     "final_word", 
 		     "fan_out_threshold",
 		     // sirve para permitir que el diccionario que te
 		     // pasan sea mas grande que el que hay en el
@@ -71,12 +72,12 @@ using namespace LanguageModels;
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, ignore_extra_words_in_dictionary,
 				       bool,
 				       ignore_extra_words_in_dictionary, false);
-
   lua_getfield(L,1,"vocabulary");
   if (lua_isnil(L,-1)) {
     LUABIND_ERROR("error ngram.lira.model constructor requires vocabulary table");
   }
-  int vocabulary_size;
+  int vocabulary_size, final_word;
+  LUABIND_GET_TABLE_PARAMETER(1, final_word, int, final_word);
   LUABIND_TABLE_GETN(-1, vocabulary_size);
   const char **vocabulary_vector = new const char *[vocabulary_size];
   LUABIND_TABLE_TO_VECTOR(-1, string, vocabulary_vector, vocabulary_size);
@@ -86,6 +87,7 @@ using namespace LanguageModels;
     obj=new NgramLiraModel(filename,
 			   (unsigned int)vocabulary_size,
 			   vocabulary_vector,
+			   final_word,
 			   ignore_extra_words_in_dictionary);
   } else {
     FILE *fd;
@@ -107,6 +109,7 @@ using namespace LanguageModels;
     obj=new NgramLiraModel(fd,
 			   (unsigned int)vocabulary_size,
 			   vocabulary_vector,
+			   final_word,
 			   fan_out_threshold,
 			   ignore_extra_words_in_dictionary);
     if (command) pclose(fd);

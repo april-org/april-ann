@@ -21,6 +21,7 @@
  */
 
 #include "ngram_lira.h"
+#include "april_assert.h"
 #include <cstdio>		// print_model for testing
 #include "uncommented_line.h"	// read data
 #include "error_print.h"        // print errors
@@ -40,11 +41,13 @@ namespace LanguageModels {
   NgramLiraModel::NgramLiraModel(FILE *fd,
 				 unsigned int expected_vocabulary_size,
 				 const char *expected_vocabulary[],
+				 WordType final_word,
 				 int fan_out_threshold,
 				 bool ignore_extra_words_in_dictionary) :
     ignore_extra_words_in_dictionary(ignore_extra_words_in_dictionary),
     fan_out_threshold(fan_out_threshold),
-    is_mmapped(false) {
+    is_mmapped(false),
+    final_word(final_word) {
   
     // these values will be changed later
     transition_words_table    = 0;
@@ -100,11 +103,6 @@ namespace LanguageModels {
     unsigned int n;
     sscanf(buffer,"%u",&n);  
     ngram_value = n;
-    if (n >= maxN) {
-      fprintf(stderr,"Error %u-grams > %u the max value allowed\n",
-	      n,maxN);
-      exit(-1);
-    }
 
     //----------------------------------------------------------------------
     // # number of states
@@ -215,9 +213,10 @@ namespace LanguageModels {
     first_transition[num_states] = num_transitions;
   }
 
-  NgramLiraModel::NgramLiraModel(int vocabulary_size, WordType final_word) {
-    is_mmapped = false;
-
+  NgramLiraModel::NgramLiraModel(int vocabulary_size, WordType final_word) :
+    is_mmapped(false),
+    final_word(final_word) {
+    
     // creates a model with 2 stes, ordered by their fan_out:
     //
     // - state 0 -> final_state has fan_out 0
@@ -435,8 +434,10 @@ namespace LanguageModels {
   NgramLiraModel::NgramLiraModel(const char *filename,
 				 unsigned int expected_vocabulary_size,
 				 const char *expected_vocabulary[],
+				 WordType final_word,
 				 bool ignore_extra_words_in_dictionary) :
-    ignore_extra_words_in_dictionary(ignore_extra_words_in_dictionary) {
+    ignore_extra_words_in_dictionary(ignore_extra_words_in_dictionary),
+    final_word(final_word) {
     //----------------------------------------------------------------------
     // open file:
     if ((file_descriptor = open(filename, O_RDONLY)) < 0) {
@@ -515,42 +516,30 @@ namespace LanguageModels {
   }
   
   ///////////////////////////////////////////////////////////////////////////
-  
-  void NgramLiraInterface::privateGet(const Key &state,
-				      WordType word, Burden burden,
-				      vector<KeyScoreBurdenTuple> &result,
-				      Score threshold) {
+
+  void NgramLiraInterface::get(const Key &state,
+			       WordType word, Burden burden,
+			       vector<KeyScoreBurdenTuple> &result,
+			       Score threshold) {
+    april_assert(word != 0);
     UNUSED_VARIABLE(threshold);
     Score accum_backoff     = Score::one();
     unsigned int st         = state;
-    int       depth         = 0; // number of times we have performed backoff
-    int       linear_index;
+    result.clear();
     
     for (;;) {
-      if (depth > prepared_level) {
-	if (st >= lira_model->first_state_binary_search) {
-	  linear_index = -1; // indicates dichotomic search
-	} else { // let's look the LinearSearchInfo of this state
-	  linear_index = 0;
-	  while(lira_model->linear_search_table[linear_index].first_state <= st)
-	    linear_index++;
-	  linear_index--; // nos habiamos pasado ;)
-	}
-	linear_index_vector[depth] = linear_index;
-	prepared_level = depth;
-      } else {
-	linear_index = linear_index_vector[depth];
-      }
-      
-      if (linear_index >= 0) {
-	LinearSearchInfo *info = &(lira_model->linear_search_table[linear_index]);
+      if (st < lira_model->first_state_binary_search) {
+	int linear_index = 0;
+	while(lira_model->linear_search_table[linear_index].first_state <= st)
+	  linear_index++;
+	// -1 because the search stopped too late ;)
+	LinearSearchInfo *info = &(lira_model->linear_search_table[linear_index-1]);
 	// range of transitions during the search:
 	unsigned int first_tr_index = (st - info->first_state)*info->fan_out + info->first_index;
 	unsigned int last_tr_index  = first_tr_index + info->fan_out;
 	// lineal search:
 	for (unsigned int tr_index = first_tr_index; tr_index < last_tr_index; tr_index++)
 	  if (lira_model->transition_words_table[tr_index] == word) {
-	    result.clear();
 	    result.push_back(KeyScoreBurdenTuple(lira_model->transition_table[tr_index].state,
 						 accum_backoff *
 						 lira_model->transition_table[tr_index].prob,
@@ -580,27 +569,21 @@ namespace LanguageModels {
 	}
       }
       // apply backoff when the transition is not found:
+      if (st == lira_model->lowest_state) {
+	result.push_back(KeyScoreBurdenTuple(st,log_float::zero(),burden));
+	return;
+      }
       accum_backoff *= lira_model->backoff_table[st].bo_prob;
-      st             = lira_model->backoff_table[st].bo_dest_state;      
-      depth++;
+      st             = lira_model->backoff_table[st].bo_dest_state;
     }
     ERROR_EXIT(256, "This should never happen\n");
   }
   
-  void NgramLiraInterface::get(const Key &state,
-			       WordType word, Burden burden,
-			       vector<KeyScoreBurdenTuple> &result,
-			       Score threshold) {
-    prepared_level = -1;
-    privateGet(state, word, burden, result, threshold);
-  }
-
   void NgramLiraInterface::clearQueries() {
-    prepared_level = -1;
     LMInterface::clearQueries();
   }
-
-  // void NgramLiraInterface::insertQueries(const Key &key, int32_t idKey,
+ 
+ // void NgramLiraInterface::insertQueries(const Key &key, int32_t idKey,
   // 					 vector<WordIdScoreTuple> words) {
   //   // todo: we can take profit of the lira data structure to improve
   //   // the efficiency of this method w.r.t. the naive implementation
