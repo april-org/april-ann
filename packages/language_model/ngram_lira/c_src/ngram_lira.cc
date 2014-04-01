@@ -525,7 +525,6 @@ namespace LanguageModels {
     UNUSED_VARIABLE(threshold);
     Score accum_backoff     = Score::one();
     unsigned int st         = state;
-    result.clear();
     
     for (;;) {
       if (st < lira_model->first_state_binary_search) {

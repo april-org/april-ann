@@ -102,7 +102,7 @@ namespace LanguageModels {
 		     vector<KeyScoreBurdenTuple> &result,
 		     Score threshold) = 0;
     
-    /// this method computes the next keys given a pir (key,word). It could be a
+    /// this method computes the next keys given a pair (key,word). It could be a
     /// non-deterministic LM. By default, it uses the standard get() method and
     /// discards the Burden and Score.
     virtual void getNextKeys(const Key &key, WordType word,

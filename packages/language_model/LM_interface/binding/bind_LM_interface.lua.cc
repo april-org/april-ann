@@ -204,11 +204,12 @@ public:
   int burden_id_key=-1, burden_id_word=-1;
   float log_threshold;
   log_float threshold = log_float::zero();
+  bool clear_result = true;
   GetResultUInt32LogFloat *result = 0;
   LUABIND_GET_PARAMETER(1, uint, key);
   LUABIND_GET_PARAMETER(2, uint, word);
   if (lua_istable(L,3)) {
-    check_table_fields(L, 3, "threshold", "id_key", "id_word", "result",
+    check_table_fields(L, 3, "threshold", "id_key", "id_word", "result", "clear_result",
 		       (const char *)0);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, threshold, float, log_threshold,
 					 log_float::zero());
@@ -216,9 +217,11 @@ public:
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, id_word, int, burden_id_word, -1);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, result, GetResultUInt32LogFloat,
 					 result, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, clear_result, bool, clear_result, true);
     threshold = log_float(log_threshold);
   }
   if (result == 0) result = new GetResultUInt32LogFloat;
+  if (clear_result) result->getVector():clear();
   obj->get(key, word, LMInterfaceUInt32LogFloat::Burden(burden_id_key,
 							burden_id_word),
 	   result->getVector(), threshold);
