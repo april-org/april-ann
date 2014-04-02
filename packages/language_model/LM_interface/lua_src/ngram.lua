@@ -100,13 +100,13 @@ function language_models.get_sentence_prob(params)
         sum = sum + p
       end
     end
-
     if debug_flag >= 2 then
       print_pw(log_file,
                (word_id ~= unk_id and word) or "<unk>",
                ((prev_word_id ~= unk_id and prev_word) or prev_word) or "<s>",
                ngram_value, p)
     end
+    prev_word_id = word_id
     prev_word = word      
     i = i + 1
   end
