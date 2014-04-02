@@ -68,7 +68,7 @@ function language_models.get_sentence_prob(params)
       numunks = numunks + 1
       lastunk = i
       key = lmi:get_zero_key()
-    -- If unknown words don't appear on context
+      -- If unknown words don't appear on context
     elseif i - lastunk >= ngram_value then
       result = lmi:get(key, word_id)
       key,p = result:get(1)
@@ -76,28 +76,28 @@ function language_models.get_sentence_prob(params)
       -- the index and sum its probability if
       -- we consider all unknown words
       if word_id == unk_id then
-      numunks = numunks + 1
-      lastunk = i
-      if use_unk == "all" then
-      p   = p / math.log(10)
-      sum = sum + p
-      end
-      -- If it's known, we sum its probability
+        numunks = numunks + 1
+        lastunk = i
+        if use_unk == "all" then
+          p   = p / math.log(10)
+          sum = sum + p
+        end
+        -- If it's known, we sum its probability
       else
-      p   = p / math.log(10)
-      sum = sum + p
+        p   = p / math.log(10)
+        sum = sum + p
       end
-     -- If last unknown word is on context, then
-     -- we add its probability if we consider all
-     -- or only context unknown words
+      -- If last unknown word is on context, then
+      -- we add its probability if we consider all
+      -- or only context unknown words
     else
       result = lmi:get(key, word_id)
       key,p = result:get(1)
       if use_unk == "none" then
-      not_used_words = not_used_words + 1
+        not_used_words = not_used_words + 1
       else
-      p   = p / math.log(10)
-      sum = sum + p
+        p   = p / math.log(10)
+        sum = sum + p
       end
     end
 
@@ -233,27 +233,27 @@ function language_models.test_set_ppl(params)
                                            use_unk    = use_unk,
                                            use_bcc    = use_bcc,
                                            use_ecc    = use_ecc }
-     totalsum       = totalsum + sum
-     totalwords     = totalwords + numwords
-     totalunks      = totalunks + numunks
-     totalsentences = totalsentences + 1
+      totalsum       = totalsum + sum
+      totalwords     = totalwords + numwords
+      totalunks      = totalunks + numunks
+      totalsentences = totalsentences + 1
       --end
       -- if use_cache or math.mod(count, 1000) == 0 then lm:restart() end
       -- if use_cache then lm:restart() end
     end
     --[[
-    if use_cache then
+      if use_cache then
       local word_ids
       word_ids = vocab:searchWordIdSequence(words, unk_id)
       for i=1,#word_ids do
-        if words[i] == cache_stop_token then
-          lm:clearCache()
-        elseif words[i] ~= null_token then
-          lm:cacheWord(word_ids[i])
-        end
+      if words[i] == cache_stop_token then
+      lm:clearCache()
+      elseif words[i] ~= null_token then
+      lm:cacheWord(word_ids[i])
+      end
       end
       --lm:showCache()
-    end
+      end
     ]]--
   end
   -- lm:restart()

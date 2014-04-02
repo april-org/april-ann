@@ -9,10 +9,17 @@
 using namespace LanguageModels;
 
 class QueryResultUInt32LogFloat : public Referenced {
+  LMInterfaceUInt32LogFloat *model;
   const vector<LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple> &result;
 public:
-  QueryResultUInt32LogFloat(const vector<LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple> &result) :
-    result(result) {}
+  QueryResultUInt32LogFloat(LMInterfaceUInt32LogFloat *model) :
+    model(model),
+    result(model->getQueries()) {
+    IncRef(model);
+  }
+  ~QueryResultUInt32LogFloat() {
+    DecRef(model);
+  }
   size_t size() const { return result.size(); }
   const LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple &get(unsigned int i) const {
     return result[i];
@@ -29,6 +36,9 @@ public:
   size_t size() const { return result.size(); }
   const LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple &get(unsigned int i) const {
     return result[i];
+  }
+  void clear() {
+    result.clear();
   }
 };
 
@@ -113,6 +123,13 @@ public:
   LUABIND_RETURN(float, tuple.key_score.score.log());
   LUABIND_RETURN(int, tuple.burden.id_key);
   LUABIND_RETURN(int, tuple.burden.id_word);
+}
+//BIND_END
+
+//BIND_METHOD GetResultUInt32LogFloat clear
+{
+  obj->clear();
+  LUABIND_RETURN(GetResultUInt32LogFloat, obj);
 }
 //BIND_END
 
@@ -259,8 +276,7 @@ public:
 
 //BIND_METHOD LMInterfaceUInt32LogFloat get_queries
 {
-  const vector<LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple> &vresult = obj->getQueries();
-  QueryResultUInt32LogFloat *result = new QueryResultUInt32LogFloat(vresult);
+  QueryResultUInt32LogFloat *result = new QueryResultUInt32LogFloat(obj);
   LUABIND_RETURN(QueryResultUInt32LogFloat, result);
 }
 //BIND_END

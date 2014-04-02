@@ -8,16 +8,16 @@ end
 
 function language_models.load(filename,
 			      dictionary,
-			      initial_ngram_word,
-			      final_ngram_word,
+			      initial_word,
+			      final_word,
 			      extra)
   if not extra then extra = {} end
   local lm_model
   local extension = string.get_extension(filename)
   return lang_models_func_tbl[extension](filename,
 					 dictionary,
-					 initial_ngram_word,
-					 final_ngram_word,
+					 initial_word,
+					 final_word,
 					 extra)
 end
 
