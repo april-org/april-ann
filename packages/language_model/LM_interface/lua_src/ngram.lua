@@ -68,6 +68,12 @@ function language_models.get_sentence_prob(params)
       numunks = numunks + 1
       lastunk = i
       key = lmi:get_zero_key()
+      if debug_flag >= 2 then
+        print_pw(log_file,
+                 "<unk>",
+                 ((prev_word_id ~= unk_id and prev_word) or prev_word_id == unk_id and "<unk>") or "<s>",
+                 ngram_value, p)
+      end
       -- If unknown words don't appear on context
     elseif i - lastunk >= ngram_value then
       result = lmi:get(key, word_id)
@@ -81,11 +87,23 @@ function language_models.get_sentence_prob(params)
         if use_unk == "all" then
           p   = p / math.log(10)
           sum = sum + p
+          if debug_flag >= 2 then
+            print_pw(log_file,
+                     "<unk>",
+                     ((prev_word_id ~= unk_id and prev_word) or prev_word_id == unk_id and "<unk>") or "<s>",
+                     ngram_value, p)
+          end
         end
         -- If it's known, we sum its probability
       else
         p   = p / math.log(10)
         sum = sum + p
+        if debug_flag >= 2 then
+          print_pw(log_file,
+                   word,
+                   ((prev_word_id ~= unk_id and prev_word) or prev_word_id == unk_id and "<unk>") or "<s>",
+                   ngram_value, p)
+        end
       end
       -- If last unknown word is on context, then
       -- we add its probability if we consider all
@@ -98,13 +116,13 @@ function language_models.get_sentence_prob(params)
       else
         p   = p / math.log(10)
         sum = sum + p
+        if debug_flag >= 2 then
+          print_pw(log_file,
+                   (word_id ~= unk_id and word) or "<unk>",
+                   ((prev_word_id ~= unk_id and prev_word) or prev_word_id == unk_id and "<unk>") or "<s>",
+                   ngram_value, p)
+        end
       end
-    end
-    if debug_flag >= 2 then
-      print_pw(log_file,
-               (word_id ~= unk_id and word) or "<unk>",
-               ((prev_word_id ~= unk_id and prev_word) or prev_word) or "<s>",
-               ngram_value, p)
     end
     prev_word_id = word_id
     prev_word = word      
@@ -116,23 +134,18 @@ function language_models.get_sentence_prob(params)
     numwords = numwords - numunks - not_used_words
   end
 
-  if use_ecc then
+  if use_ecc and (use_unk ~= "none" or i - lastunk >= ngram_value) then
     p = lmi:get_final_score(key);
     p   = p / math.log(10)
     sum = sum + p
+    if debug_flag >= 2 then
+      print_pw(log_file,
+               "</s>",
+               ((prev_word_id ~= unk_id and prev_word) or prev_word_id == unk_id and "<unk>") or "<s>",
+               ngram_value, p)
+    end
   end
   
-  if debug_flag >= 1 then
-    fprintf (log_file, "%d sentences, %d words, %d OOVs\n",
-             1, numwords, numunks)
-    fprintf (log_file, "0 zeroprobs, logprob= %.4f ppl= %.3f ppl1= %.3f\n",
-             sum,
-             exp10(-sum/(numwords+ ((use_ecc and 1) or 0) )),
-             exp10(-sum/numwords))
-    fprintf (log_file, "\n")
-  end
-  log_file:flush()
-
   return sum,numwords,numunks
 end
 
@@ -211,9 +224,9 @@ function language_models.test_set_ppl(params)
   local totalunks      = 0
   local totalsum       = 0
   local lines_it = iterator(io.lines(testset)):
-  map( function(line) return iterator(line:gmatch("[^%s]+")) end )
+  map( function(line) return line,iterator(line:gmatch("[^%s]+")) end )
 
-  for words_it in lines_it() do
+  for sentence,words_it in lines_it() do
     words_it = words_it:map( function(w) return (vocab:getWordId(w) or unk_id),w end )
     local use_sentence = true
     if train_restriction then
@@ -223,7 +236,7 @@ function language_models.test_set_ppl(params)
     if use_sentence then
       count = count + 1
       --if #sentence > 0 and #words > 0 then
-      --if debug_flag >= 1 then fprintf(flog, "%s\n", sentence) end
+      if debug_flag >= 1 then fprintf(log_file, "%s\n", sentence) end
       local sum,numwords,numunks =
         language_models.get_sentence_prob{ lm         = lm, 
                                            words_it   = words_it,
@@ -233,6 +246,17 @@ function language_models.test_set_ppl(params)
                                            use_unk    = use_unk,
                                            use_bcc    = use_bcc,
                                            use_ecc    = use_ecc }
+      if debug_flag >= 1 then
+        fprintf (log_file, "%d sentences, %d words, %d OOVs\n",
+                 1, numwords, numunks)
+        fprintf (log_file, "0 zeroprobs, logprob= %.4f ppl= %.3f ppl1= %.3f\n",
+                 sum,
+                 exp10(-sum/(numwords + ((use_ecc and 1) or 0) )),
+                 exp10(-sum/numwords))
+        fprintf (log_file, "\n")
+      end
+      log_file:flush()
+
       totalsum       = totalsum + sum
       totalwords     = totalwords + numwords
       totalunks      = totalunks + numunks
