@@ -74,7 +74,7 @@ function language_models.get_sentence_prob(params)
                  ((prev_word_id ~= unk_id and prev_word) or prev_word_id == unk_id and "<unk>") or "<s>",
                  ngram_value, p)
       end
-      -- If unknown words don't appear on context
+    -- If unknown words don't appear on context
     elseif i - lastunk >= ngram_value then
       result = lmi:get(key, word_id)
       key,p = result:get(1)
@@ -94,7 +94,7 @@ function language_models.get_sentence_prob(params)
                      ngram_value, p)
           end
         end
-        -- If it's known, we sum its probability
+      -- If it's known, we sum its probability
       else
         p   = p / math.log(10)
         sum = sum + p
@@ -105,9 +105,9 @@ function language_models.get_sentence_prob(params)
                    ngram_value, p)
         end
       end
-      -- If last unknown word is on context, then
-      -- we add its probability if we consider all
-      -- or only context unknown words
+    -- If last unknown word is on context, then
+    -- we add its probability if we consider all
+    -- or only context unknown words
     else
       result = lmi:get(key, word_id)
       key,p = result:get(1)
@@ -149,6 +149,7 @@ function language_models.get_sentence_prob(params)
   return sum,numwords,numunks
 end
 
+--[[
 function language_models.get_prob_from_id_tbl(lm, word_ids, init_id, final_id,
                                               use_bcc, use_ecc)
   local lmi = lm:get_interface()
@@ -177,6 +178,7 @@ function language_models.get_prob_from_id_tbl(lm, word_ids, init_id, final_id,
   end
   return sum
 end
+--]]
 
 function language_models.test_set_ppl(params)
   local params = get_table_fields (
