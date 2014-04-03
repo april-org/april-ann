@@ -132,7 +132,7 @@ function language_models.get_sentence_prob(params)
   end
 
   numwords = i - 1
-  if use_unk ~= "all" then
+  if use_unk ~= "all" or unk_id == -1 then
     numwords = numwords - numunks - not_used_words
   end
 
