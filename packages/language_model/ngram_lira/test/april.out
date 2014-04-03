@@ -1,5 +1,5 @@
 quer'ia un tren con destino a barcelona
-	p( quer'ia | <s> ...)	= [3gram] 0.0556274 [ -1.254712 ]
+	p( quer'ia | <s> )	= [2gram] 0.0556274 [ -1.254712 ]
 	p( un | quer'ia ...)	= [3gram] 0.019859 [ -1.702042 ]
 	p( tren | un ...)	= [3gram] 0.11958 [ -0.922342 ]
 	p( con | tren ...)	= [3gram] 0.000764004 [ -3.116904 ]
@@ -11,7 +11,7 @@ quer'ia un tren con destino a barcelona
 0 zeroprobs, logprob= -9.8197 ppl= 16.884 ppl1= 25.282
 
 quer'ia un tren con destino a londres
-	p( quer'ia | <s> ...)	= [3gram] 0.0556274 [ -1.254712 ]
+	p( quer'ia | <s> )	= [2gram] 0.0556274 [ -1.254712 ]
 	p( un | quer'ia ...)	= [3gram] 0.019859 [ -1.702042 ]
 	p( tren | un ...)	= [3gram] 0.11958 [ -0.922342 ]
 	p( con | tren ...)	= [3gram] 0.000764004 [ -3.116904 ]
@@ -23,7 +23,7 @@ quer'ia un tren con destino a londres
 0 zeroprobs, logprob= -9.0513 ppl= 13.534 ppl1= 19.635
 
 quer'ia un avi'on con destino a barcelona
-	p( quer'ia | <unk> ...)	= [3gram] 0.0556274 [ -1.254712 ]
+	p( quer'ia | <s> )	= [2gram] 0.0556274 [ -1.254712 ]
 	p( un | quer'ia ...)	= [3gram] 0.019859 [ -1.702042 ]
 	p( <unk> | un ...)	= [3gram] 0 [ -inf ]
 	p( con | <unk> ...)	= [3gram] 0.00286187 [ -2.543350 ]

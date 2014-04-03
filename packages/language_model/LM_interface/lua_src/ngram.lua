@@ -48,6 +48,7 @@ function language_models.get_sentence_prob(params)
   local key
   local p
   local result
+  local prev_word_id
   local prev_word
 
   assert(lm:is_deterministic(),
@@ -72,7 +73,7 @@ function language_models.get_sentence_prob(params)
         print_pw(log_file,
                  "<unk>",
                  ((prev_word_id ~= unk_id and prev_word) or prev_word_id == unk_id and "<unk>") or "<s>",
-                 ngram_value, -math.huge)
+                 (not prev_word_id and 2) or ngram_value, -math.huge)
       end
     -- If unknown words don't appear on context
     elseif i - lastunk >= ngram_value then
@@ -91,7 +92,7 @@ function language_models.get_sentence_prob(params)
             print_pw(log_file,
                      "<unk>",
                      ((prev_word_id ~= unk_id and prev_word) or prev_word_id == unk_id and "<unk>") or "<s>",
-                     ngram_value, p)
+                     (not prev_word_id and 2) or ngram_value, p)
           end
         end
       -- If it's known, we sum its probability
@@ -99,10 +100,11 @@ function language_models.get_sentence_prob(params)
         p   = p / math.log(10)
         sum = sum + p
         if debug_flag >= 2 then
+
           print_pw(log_file,
                    word,
                    ((prev_word_id ~= unk_id and prev_word) or prev_word_id == unk_id and "<unk>") or "<s>",
-                   ngram_value, p)
+                   (not prev_word_id and 2) or ngram_value, p)
         end
       end
     -- If last unknown word is on context, then
@@ -120,7 +122,7 @@ function language_models.get_sentence_prob(params)
           print_pw(log_file,
                    (word_id ~= unk_id and word) or "<unk>",
                    ((prev_word_id ~= unk_id and prev_word) or prev_word_id == unk_id and "<unk>") or "<s>",
-                   ngram_value, p)
+                   (not prev_word_id and 2) or ngram_value, p)
         end
       end
     end
@@ -142,7 +144,7 @@ function language_models.get_sentence_prob(params)
       print_pw(log_file,
                "</s>",
                ((prev_word_id ~= unk_id and prev_word) or prev_word_id == unk_id and "<unk>") or "<s>",
-               ngram_value, p)
+               (not prev_word_id and 2) or ngram_value, p)
     end
   end
   
