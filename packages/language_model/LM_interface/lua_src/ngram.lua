@@ -72,7 +72,7 @@ function language_models.get_sentence_prob(params)
         print_pw(log_file,
                  "<unk>",
                  ((prev_word_id ~= unk_id and prev_word) or prev_word_id == unk_id and "<unk>") or "<s>",
-                 ngram_value, p)
+                 ngram_value, -math.huge)
       end
     -- If unknown words don't appear on context
     elseif i - lastunk >= ngram_value then
