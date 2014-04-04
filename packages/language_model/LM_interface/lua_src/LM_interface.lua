@@ -22,14 +22,8 @@ function language_models.load(filename,
 end
 
 ---------------------------------------------------------------------------
-
-local query_metatable = language_models.query_result.meta_instance
-
-query_metatable.__len = function(self)
-  return self:size()
-end
-
-query_metatable.__ipairs = function(self)
+local generic_len    = function(self) return self:size() end
+local generic_ipairs = function(self)
   local i=0
   return function()
     if i < self:size() then
@@ -38,27 +32,14 @@ query_metatable.__ipairs = function(self)
     end
   end
 end
-
-class_extension(language_models.query_result, "iterate",
-		query_metatable.__ipairs)
-
+local function set_iterator_metatable(it_class)
+  local metatable = it_class.meta_instance
+  metatable.__len = generic_len
+  metatable.__ipairs = generic_ipairs
+  class_extension(it_class, "iterate",metatable.__ipairs)
+end
 ---------------------------------------------------------------------------
 
-local get_metatable = language_models.get_result.meta_instance
-
-get_metatable.__len = function(self)
-  return self:size()
-end
-
-get_metatable.__ipairs = function(self)
-  local i=0
-  return function()
-    if i < self:size() then
-      i=i+1
-      return i,self:get(i)
-    end
-  end
-end
-
-class_extension(language_models.get_result, "iterate",
-		get_metatable.__ipairs)
+set_iterator_metatable(language_models.__query_result__)
+set_iterator_metatable(language_models.__get_result__)
+set_iterator_metatable(language_models.__next_keys_result__)

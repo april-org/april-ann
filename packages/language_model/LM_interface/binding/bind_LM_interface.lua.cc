@@ -42,11 +42,27 @@ public:
   }
 };
 
+class NextKeysResultUInt32 : public Referenced {
+  vector<uint32_t> result;
+public:
+  NextKeysResultUInt32() {}
+  vector<uint32_t> &getVector() {
+    return result;
+  }
+  size_t size() const { return result.size(); }
+  const uint32_t &get(unsigned int i) const {
+    return result[i];
+  }
+  void clear() {
+    result.clear();
+  }
+};
+
 //BIND_END
 
 /////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME QueryResultUInt32LogFloat language_models.query_result
+//BIND_LUACLASSNAME QueryResultUInt32LogFloat language_models.__query_result__
 //BIND_CPP_CLASS    QueryResultUInt32LogFloat
 
 //BIND_CONSTRUCTOR QueryResultUInt32LogFloat
@@ -105,8 +121,8 @@ public:
 
 /////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME GetResultUInt32LogFloat language_models.get_result
-//BIND_CPP_CLASS    GetResultUInt32LogFloat language_models.get_result
+//BIND_LUACLASSNAME GetResultUInt32LogFloat language_models.__get_result__
+//BIND_CPP_CLASS    GetResultUInt32LogFloat
 
 //BIND_CONSTRUCTOR GetResultUInt32LogFloat
 {
@@ -163,6 +179,52 @@ public:
     lua_pushint(L, tuple.burden.id_word);
     lua_settable(L, -3);
     //
+    lua_settable(L, -3);
+  }
+  LUABIND_INCREASE_NUM_RETURNS(1);
+}
+//BIND_END
+
+/////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME NextKeysResultUInt32 language_models.__next_keys_result__
+//BIND_CPP_CLASS    NextKeysResultUInt32
+
+//BIND_CONSTRUCTOR NextKeysResultUInt32
+{
+  LUABIND_ERROR("FORBIDDEN!!! call method get of a language model");
+}
+//BIND_END
+
+//BIND_METHOD NextKeysResultUInt32 get
+{
+  unsigned int i;
+  LUABIND_GET_PARAMETER(1, uint, i);
+  uint32_t key = obj->get(i-1);
+  LUABIND_RETURN(uint, key);
+}
+//BIND_END
+
+//BIND_METHOD NextKeysResultUInt32 clear
+{
+  obj->clear();
+  LUABIND_RETURN(NextKeysResultUInt32, obj);
+}
+//BIND_END
+
+//BIND_METHOD NextKeysResultUInt32 size
+{
+  LUABIND_RETURN(uint, obj->size());
+}
+//BIND_END
+
+//BIND_METHOD NextKeysResultUInt32 to_table
+{
+  lua_newtable(L);
+  for (unsigned int i=0; i<obj->size(); ++i) {
+    uint32_t key = obj->get(i);
+    lua_pushnumber(L, i+1);
+    lua_pushuint(L, key);
     lua_settable(L, -3);
   }
   LUABIND_INCREASE_NUM_RETURNS(1);
@@ -240,6 +302,24 @@ public:
 							burden_id_word),
 	   result->getVector(), threshold);
   LUABIND_RETURN(GetResultUInt32LogFloat, result);
+}
+//BIND_END
+
+//BIND_METHOD LMInterfaceUInt32LogFloat next_keys
+{
+  uint32_t key, word;
+  NextKeysResultUInt32 *result = 0;
+  LUABIND_GET_PARAMETER(1, uint, key);
+  LUABIND_GET_PARAMETER(2, uint, word);
+  if (lua_istable(L,3)) {
+    check_table_fields(L, 3, "result",
+		       (const char *)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(3, result, NextKeysResultUInt32,
+					 result, 0);
+  }
+  if (result == 0) result = new NextKeysResultUInt32;
+  obj->getNextKeys(key, word, result->getVector());
+  LUABIND_RETURN(NextKeysResultUInt32, result);
 }
 //BIND_END
 

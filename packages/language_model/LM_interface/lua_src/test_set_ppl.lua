@@ -79,22 +79,34 @@ function language_models.get_sentence_prob(params)
       key,p = lmi:get_zero_key(),-math.huge
       printed_word = "<unk>"
     else -- if word_id == -1 else
-      -- In all the cases the key and probability are computed, but probability
-      -- will be added up only when process_prob() is called
+      -- The result is always computed
       result = lmi:get(key, word_id)
-      -- for history based LMs (as NNLMs), it is possible that after an unknown
-      -- word, the model has a transition but it coulnd't compute probabilities,
+      -- For history based LMs (as NNLMs), it is possible that after an unknown
+      -- word, the model can traverse to next key but it coulnd't compute probabilities,
       -- in this cases, show a warning and ignore the current word
       if #result == 0 then
         -- history based LMs case when no context is available
+        result = lmi:next_keys(key, word_id)
+        assert(#result == 1) -- sanity check
+        key = result:get(1)
         not_used_words = not_used_words + 1
-        p = -math.huge
-        printed_word = word
-        fprintf(io.stderr,
-                "# WARNING! LM can't compute probabilities for current "..
-                  "context, in history-based LMs it is possible to need "..
-                  "to fix use_unk='none'\n")
+        if use_unk ~= "none" then
+          -- replicate the behavior of models without <unk> word in the
+          -- vocabulary
+          p = -math.huge
+          printed_word = word
+          fprintf(io.stderr,
+                  "# WARNING! LM can't compute probabilities for current "..
+                    "context, in history-based LMs it is possible to need "..
+                    "to fix use_unk='none'\n")
+        else
+          -- the same behavior as when use_unk=="none" and #result>0
+          printed_word = nil
+        end
       else -- if #result == 0 else
+        assert(#result == 1) -- sanity check
+        -- In all the cases the key and probability are taken, but
+        -- probability will be added up only when process_prob() is called
         key,p = result:get(1)
         -- If unknown words don't appear on context
         if i - lastunk >= ngram_value then
