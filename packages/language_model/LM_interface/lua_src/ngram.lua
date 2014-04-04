@@ -252,7 +252,7 @@ function language_models.test_set_ppl(params)
                                            use_ecc    = use_ecc }
       if debug_flag >= 1 then
         fprintf (log_file, "%d sentences, %d words, %d OOVs\n",
-                 1, numwords, numunks)
+                 1, numwords+numunks, numunks)
         fprintf (log_file, "0 zeroprobs, logprob= %.4f ppl= %.3f ppl1= %.3f\n",
                  sum,
                  exp10(-sum/(numwords + ((use_ecc and 1) or 0) )),
@@ -296,7 +296,7 @@ function language_models.test_set_ppl(params)
     fprintf (log_file, "file %s: %d sentences, %d words, %d OOVs\n",
              testset,
              totalsentences,
-             totalwords,
+             totalwords + totalunks,
              totalunks)
     log_file:flush()
     fprintf (log_file,
