@@ -1,4 +1,4 @@
-get_table_from_dotted_string("ngram", true)
+language_models = language_models or {}
 
 -- Auxiliar functions
 local function exp10(value)
@@ -41,7 +41,7 @@ function language_models.get_sentence_prob(params)
   local numwords = 0
   local numunks = 0
   local lmi = lm:get_interface()
-  local ngram_value = lm:ngram_order()
+  local ngram_value = lm:ngram_order() or 0 -- 0 for non Ngram LMs 
   local lastunk = -ngram_value
   local not_used_words = 0
   local i = 1
@@ -60,58 +60,74 @@ function language_models.get_sentence_prob(params)
     key = lmi:get_zero_key()
   end
 
+  local function process_prob()
+    p   = p / math.log(10)
+    sum = sum + p
+  end
+
   for word_id,word in words_it() do
     -- the word which will be passed to print_pw function; a showed_word==nil
     -- means to show nothing
-    local showed_word
-    -- If word id is -1, unknown words aren't
-    -- considered by the model. We must skip
-    -- the addition, store the unknown word
-    -- index and set key to zero key
+    local printed_word
+    -- If word id is -1, unknown words aren't considered by the model. We must
+    -- skip the addition, store the unknown word index, set key to zero key, and
+    -- probability to -inf for printing purposes because it is not added up
     if word_id == -1 then
       not_used_words = not_used_words + 1
       numunks = numunks + 1
       lastunk = i
       key,p = lmi:get_zero_key(),-math.huge
-      showed_word = "<unk>"
-    -- If unknown words don't appear on context
-    elseif i - lastunk >= ngram_value then
+      printed_word = "<unk>"
+    else -- if word_id == -1 else
+      -- In all the cases the key and probability are computed, but probability
+      -- will be added up only when process_prob() is called
       result = lmi:get(key, word_id)
-      key,p = result:get(1)
-      -- If current word is unknown, we store
-      -- the index and sum its probability if
-      -- we consider all unknown words
-      if word_id == unk_id then
-        lastunk = i
-        if use_unk == "all" then
-          p   = p / math.log(10)
-          sum = sum + p
-          showed_word = "<unk>"
-        end
-      -- If it's known, we sum its probability
-      else
-        p   = p / math.log(10)
-        sum = sum + p
-        showed_word = word
-      end
-    -- If last unknown word is on context, then
-    -- we add its probability if we consider all
-    -- or only context unknown words
-    else
-      result = lmi:get(key, word_id)
-      key,p = result:get(1)
-      if use_unk == "none" then
+      -- for history based LMs (as NNLMs), it is possible that after an unknown
+      -- word, the model has a transition but it coulnd't compute probabilities,
+      -- in this cases, show a warning and ignore the current word
+      if #result == 0 then
+        -- history based LMs case when no context is available
         not_used_words = not_used_words + 1
-        showed_word = nil
-      else -- use_unk == "context" or use_unk == "all"
-        p   = p / math.log(10)
-        sum = sum + p
-        showed_word = (word_id ~= unk_id and word) or "<unk>"
+        p = -math.huge
+        printed_word = word
+      else -- if #result == 0 else
+        key,p = result:get(1)
+        -- If unknown words don't appear on context
+        if i - lastunk >= ngram_value then
+          -- If current word is unknown, we store
+          -- the index and sum its probability if
+          -- we consider all unknown words
+          if word_id == unk_id then
+            lastunk = i
+            if use_unk == "all" then
+              printed_word = "<unk>"
+              process_prob()
+            else
+              not_used_words = not_used_words + 1
+            end
+          else
+            -- If it's known, the probability must be taken into account, the
+            -- printed_word is the given
+            printed_word = word
+            process_prob()
+          end
+        else
+          -- If last unknown word is on context, then
+          -- we add its probability if we consider all
+          -- or only context unknown words
+          if use_unk == "none" then
+            not_used_words = not_used_words + 1
+            printed_word = nil
+          else -- use_unk == "context" or use_unk == "all"
+            printed_word = (word_id ~= unk_id and word) or "<unk>"
+            process_prob()
+          end
+        end -- if unknown word don't appear on context else end
       end
-    end
-    if debug_flag >= 2 and showed_word then
+    end  -- if word_id == -1 else end
+    if debug_flag >= 2 and printed_word then
       print_pw(log_file,
-               showed_word,
+               printed_word,
                ((prev_word_id ~= unk_id and prev_word) or prev_word_id == unk_id and "<unk>") or "<s>",
                (not prev_word_id and 2) or ngram_value, p)
     end
@@ -126,9 +142,8 @@ function language_models.get_sentence_prob(params)
   end
 
   if use_ecc and (use_unk ~= "none" or i - lastunk >= ngram_value) then
-    p = lmi:get_final_score(key);
-    p   = p / math.log(10)
-    sum = sum + p
+    p = lmi:get_final_score(key)
+    process_prob()
     if debug_flag >= 2 then
       print_pw(log_file,
                "</s>",
