@@ -61,20 +61,19 @@ function language_models.get_sentence_prob(params)
   end
 
   for word_id,word in words_it() do
+    -- the word which will be passed to print_pw function; a showed_word==nil
+    -- means to show nothing
+    local showed_word
     -- If word id is -1, unknown words aren't
     -- considered by the model. We must skip
     -- the addition, store the unknown word
     -- index and set key to zero key
     if word_id == -1 then
+      not_used_words = not_used_words + 1
       numunks = numunks + 1
       lastunk = i
-      key = lmi:get_zero_key()
-      if debug_flag >= 2 then
-        print_pw(log_file,
-                 "<unk>",
-                 ((prev_word_id ~= unk_id and prev_word) or prev_word_id == unk_id and "<unk>") or "<s>",
-                 (not prev_word_id and 2) or ngram_value, -math.huge)
-      end
+      key,p = lmi:get_zero_key(),-math.huge
+      showed_word = "<unk>"
     -- If unknown words don't appear on context
     elseif i - lastunk >= ngram_value then
       result = lmi:get(key, word_id)
@@ -83,29 +82,17 @@ function language_models.get_sentence_prob(params)
       -- the index and sum its probability if
       -- we consider all unknown words
       if word_id == unk_id then
-        numunks = numunks + 1
         lastunk = i
         if use_unk == "all" then
           p   = p / math.log(10)
           sum = sum + p
-          if debug_flag >= 2 then
-            print_pw(log_file,
-                     "<unk>",
-                     ((prev_word_id ~= unk_id and prev_word) or prev_word_id == unk_id and "<unk>") or "<s>",
-                     (not prev_word_id and 2) or ngram_value, p)
-          end
+          showed_word = "<unk>"
         end
       -- If it's known, we sum its probability
       else
         p   = p / math.log(10)
         sum = sum + p
-        if debug_flag >= 2 then
-
-          print_pw(log_file,
-                   word,
-                   ((prev_word_id ~= unk_id and prev_word) or prev_word_id == unk_id and "<unk>") or "<s>",
-                   (not prev_word_id and 2) or ngram_value, p)
-        end
+        showed_word = word
       end
     -- If last unknown word is on context, then
     -- we add its probability if we consider all
@@ -115,16 +102,18 @@ function language_models.get_sentence_prob(params)
       key,p = result:get(1)
       if use_unk == "none" then
         not_used_words = not_used_words + 1
-      else
+        showed_word = nil
+      else -- use_unk == "context" or use_unk == "all"
         p   = p / math.log(10)
         sum = sum + p
-        if debug_flag >= 2 then
-          print_pw(log_file,
-                   (word_id ~= unk_id and word) or "<unk>",
-                   ((prev_word_id ~= unk_id and prev_word) or prev_word_id == unk_id and "<unk>") or "<s>",
-                   (not prev_word_id and 2) or ngram_value, p)
-        end
+        showed_word = (word_id ~= unk_id and word) or "<unk>"
       end
+    end
+    if debug_flag >= 2 and showed_word then
+      print_pw(log_file,
+               showed_word,
+               ((prev_word_id ~= unk_id and prev_word) or prev_word_id == unk_id and "<unk>") or "<s>",
+               (not prev_word_id and 2) or ngram_value, p)
     end
     prev_word_id = word_id
     prev_word = word      
@@ -133,7 +122,7 @@ function language_models.get_sentence_prob(params)
 
   numwords = i - 1
   if use_unk ~= "all" or unk_id == -1 then
-    numwords = numwords - numunks - not_used_words
+    numwords = numwords - not_used_words
   end
 
   if use_ecc and (use_unk ~= "none" or i - lastunk >= ngram_value) then
