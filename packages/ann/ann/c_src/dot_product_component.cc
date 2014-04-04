@@ -112,29 +112,34 @@ namespace ANN {
       } // if bunch_size==1 ... else
       break;
     }
-    case table_of_token_codes::vector_float_sparse: {
-      TokenBunchVector *aux = new TokenBunchVector();
-      aux->push_back(_input);
-      _input = aux; // is not necessary to do incref(aux) or decref(_input)
-      // the incref is done at line 127
-      
-      // continues in the next case
-    }
-    case table_of_token_codes::vector_Tokens: {
+    case table_of_token_codes::sparse_token_matrix: {
       sparse_input = true;
       AssignRef(input, _input);
-      TokenBunchVector *input_vector_token=input->convertTo<TokenBunchVector*>();
-      april_assert(input_vector_token->size() > 0);
+      TokenSparseVectorFloat *input_sparse_token =
+        input->convertTo<TokenSparseMatrixFloat*>();
+      april_assert(input_sparse_token->size() > 0);
+      SparseMatrixFloat *input_mat = input_sparse_token->getMatrix();
+      if (input_mat->getSparseFormat() != CSR_FORMAT) {
+        ERROR_EXIT(128, "Sparse matrix must be in csr format\n");
+      }
+      unsigned int bunch_size = input_mat->getDimSize(0);
       // new output to fit the bunch
       MatrixFloat *output_mat;
-      int dims[2] = {static_cast<int>(input_vector_token->size()),
+      int dims[2] = {bunch_size,
 		     static_cast<int>(output_size)};
       output_mat = new MatrixFloat(2, dims, CblasColMajor);
       AssignRef(output,new TokenMatrixFloat(output_mat));
 #ifdef USE_CUDA
       output_mat->setUseCuda(use_cuda);
-#endif      
-      output_mat->zeros();
+#endif
+      MatrixFloat *aux_weights_mat = weights_mat;
+      if (!transpose_weights) {
+        aux_weights_mat = weights_mat->transpose();
+        output_mat->sparseMM(
+
+
+
+ zeros();
       
       // dimension for select operation
       int w_dim = (transpose_weights == CblasNoTrans) ? 1 : 0;

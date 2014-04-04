@@ -20,6 +20,9 @@
  */
 //BIND_HEADER_C
 #include "bind_matrix.h"
+#include "bind_sparse_matrix.h"
+#include "matrixFloat.h"
+#include "sparse_matrixFloat.h"
 
 int token_bunch_vector_iterator_function(lua_State *L) {
   // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es
@@ -36,30 +39,8 @@ int token_bunch_vector_iterator_function(lua_State *L) {
   return 2;
 }
 
-int token_sparse_iterator_function(lua_State *L) {
-  // se llama con: local var_1, ... , var_n = _f(_s, _var) donde _s es
-  // el estado invariante (en este caso el dataset) y _var es var_1 de
-  // iteracion anterior (en este caso el indice)
-  TokenSparseVectorFloat *obj = lua_toTokenSparseVectorFloat(L, 1);
-  unsigned int index = static_cast<unsigned int>(lua_tonumber(L, 2)) + 1; // le sumamos uno
-  if (index > obj->size()) {
-    lua_pushnil(L); return 1;
-  }
-  lua_pushnumber(L, index);
-  april_utils::pair<unsigned int, float> pair = (*obj)[index-1];
-  lua_newtable(L);
-  lua_pushnumber(L, pair.first);
-  lua_rawseti(L, -2, 1);
-  lua_pushnumber(L, pair.second);
-  lua_rawseti(L, -2, 2);
-  return 2;
-}
-
-#include "matrixFloat.h"
-#include "bind_matrix.h"
-
 bool lua_isAuxToken(lua_State *L, int n) {
-  return lua_isMatrixFloat(L,n) || lua_isToken(L,n);
+  return lua_isSparseMatrixFloat(L,n) || lua_isMatrixFloat(L,n) || lua_isToken(L,n);
 }
 
 // Be careful, this function returns an object which needs to call IncRef and
@@ -69,6 +50,10 @@ Token *lua_toAuxToken(lua_State *L, int n) {
   if (lua_isMatrixFloat(L, n)) {
     MatrixFloat *mat = lua_toMatrixFloat(L,n);
     return new TokenMatrixFloat(mat);
+  }
+  else if (lua_isSparseMatrixFloat(L, n)) {
+    SparseMatrixFloat *mat = lua_toSparseMatrixFloat(L,n);
+    return new TokenSparseMatrixFloat(mat);
   }
   return lua_toToken(L,n);
 }
@@ -102,29 +87,37 @@ Token *lua_toAuxToken(lua_State *L, int n);
 
 //BIND_METHOD Token get_matrix
 {
-  TokenMatrixFloat *token_matrix = obj->convertTo<TokenMatrixFloat*>();
-  LUABIND_RETURN(MatrixFloat, token_matrix->getMatrix());
+  switch(obj->getTokenCode()) {
+  case table_of_token_codes::token_matrix:
+    TokenMatrixFloat *token_matrix = obj->convertTo<TokenMatrixFloat*>();
+    LUABIND_RETURN(MatrixFloat, token_matrix->getMatrix());
+    break;
+  case table_of_token_codes:token_sparse_matrix:
+    TokenSparseMatrixFloat *token_sparse_matrix;
+    token_sparse_matrix = obj->convertTo<TokenSparseMatrixFloat*>();
+    LUABIND_RETURN(SparseMatrixFloat, token_sparse_matrix->getMatrix());
+    break;
+  default:
+    ;
+  }
 }
 //BIND_END
 
 //BIND_METHOD Token convert_to_memblock
 {
-  TokenMemoryBlock *token_memblock = obj->convertTo<TokenMemoryBlock*>();
-  LUABIND_RETURN(TokenMemoryBlock, token_memblock);
+  if (obj->getTokenCode() == table_of_token_codes::token_mem_block) {
+    TokenMemoryBlock *token_memblock = obj->convertTo<TokenMemoryBlock*>();
+    LUABIND_RETURN(TokenMemoryBlock, token_memblock);
+  }
 }
 //BIND_END
 
 //BIND_METHOD Token convert_to_bunch_vector
 {
-  TokenBunchVector *token_bunch_vector = obj->convertTo<TokenBunchVector*>();
-  LUABIND_RETURN(TokenBunchVector, token_bunch_vector);
-}
-//BIND_END
-
-//BIND_METHOD Token convert_to_sparse
-{
-  TokenSparseVectorFloat *token_sparse = obj->convertTo<TokenSparseVectorFloat*>();
-  LUABIND_RETURN(TokenSparseVectorFloat, token_sparse);
+  if (obj->getTokenCode() == table_of_token_codes::vector_Tokens) {
+    TokenBunchVector *token_bunch_vector = obj->convertTo<TokenBunchVector*>();
+    LUABIND_RETURN(TokenBunchVector, token_bunch_vector);
+  }
 }
 //BIND_END
 
@@ -178,6 +171,29 @@ Token *lua_toAuxToken(lua_State *L, int n);
 //BIND_METHOD TokenMatrixFloat get_matrix
 {
   LUABIND_RETURN(MatrixFloat, obj->getMatrix());
+}
+//BIND_END
+
+////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME TokenSparseMatrixFloat tokens.sparse_matrix
+//BIND_CPP_CLASS    TokenSparseMatrixFloat
+//BIND_SUBCLASS_OF  TokenSparseMatrixFloat Token
+
+//BIND_CONSTRUCTOR TokenSparseMatrixFloat
+{
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, SparseMatrixFloat);
+  SparseMatrixFloat *mat;
+  LUABIND_GET_PARAMETER(1, SparseMatrixFloat, mat);
+  obj = new TokenSparseMatrixFloat(mat);
+  LUABIND_RETURN(TokenSparseMatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD TokenSparseMatrixFloat get_matrix
+{
+  LUABIND_RETURN(SparseMatrixFloat, obj->getMatrix());
 }
 //BIND_END
 
@@ -284,85 +300,6 @@ Token *lua_toAuxToken(lua_State *L, int n);
   LUABIND_CHECK_ARGN(==, 0);
   LUABIND_RETURN(cfunction,token_bunch_vector_iterator_function);
   LUABIND_RETURN(TokenBunchVector,obj);
-  LUABIND_RETURN(int,0);
-}
-//BIND_END
-
-////////////////////////////////////////////////////////////////////
-
-//BIND_LUACLASSNAME TokenSparseVectorFloat tokens.vector.sparse
-//BIND_CPP_CLASS    TokenSparseVectorFloat
-//BIND_SUBCLASS_OF  TokenSparseVectorFloat TokenVectorGeneric
-
-//BIND_CONSTRUCTOR TokenSparseVectorFloat
-{
-  LUABIND_CHECK_ARGN(<=, 1);
-  int argn = lua_gettop(L);
-  if (argn == 1) {
-    unsigned int size;
-    LUABIND_CHECK_PARAMETER(1, uint);
-    LUABIND_GET_PARAMETER(1, uint, size);
-    obj = new TokenSparseVectorFloat(size);
-  }
-  else obj = new TokenSparseVectorFloat();
-  LUABIND_RETURN(TokenSparseVectorFloat, obj);
-}
-//BIND_END
-
-//BIND_METHOD TokenSparseVectorFloat at
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  unsigned int pos;
-  LUABIND_CHECK_PARAMETER(1, uint);
-  LUABIND_GET_PARAMETER(1, uint, pos);
-  april_utils::pair<unsigned int, float> pair = (*obj)[pos-1];
-  lua_newtable(L);
-  lua_pushuint(L, pair.first);
-  lua_rawseti(L, -2, 1);
-  lua_pushfloat(L, pair.second);
-  lua_rawseti(L, -2, 2);
-  LUABIND_RETURN_FROM_STACK(-1);
-}
-//BIND_END
-
-//BIND_METHOD TokenSparseVectorFloat set
-{
-  LUABIND_CHECK_ARGN(==, 3);
-  unsigned int pos;
-  unsigned int idx;
-  float value;
-  LUABIND_CHECK_PARAMETER(1, uint);
-  LUABIND_CHECK_PARAMETER(2, uint);
-  LUABIND_CHECK_PARAMETER(3, float);
-  LUABIND_GET_PARAMETER(1, uint, pos);
-  LUABIND_GET_PARAMETER(2, uint, idx);
-  LUABIND_GET_PARAMETER(3, float, value);
-  (*obj)[pos-1] = april_utils::pair<unsigned int, float>(idx, value);
-  LUABIND_RETURN(TokenSparseVectorFloat, obj);
-}
-//BIND_END
-
-//BIND_METHOD TokenSparseVectorFloat push_back
-{
-  LUABIND_CHECK_ARGN(==, 2);
-  unsigned int pos;
-  float value;
-  LUABIND_CHECK_PARAMETER(1, uint);
-  LUABIND_CHECK_PARAMETER(2, float);
-  LUABIND_GET_PARAMETER(1, uint, pos);
-  LUABIND_GET_PARAMETER(2, float, value);
-  april_utils::pair<unsigned int, float> pair(pos, value);
-  obj->push_back(pair);
-  LUABIND_RETURN(TokenSparseVectorFloat, obj);
-}
-//BIND_END
-
-//BIND_METHOD TokenSparseVectorFloat iterate
-// para iterar con un for index,value in obj:iterate() do ... end
-{
-  LUABIND_CHECK_ARGN(==, 0);
-  LUABIND_RETURN(cfunction,token_sparse_iterator_function);
-  LUABIND_RETURN(TokenSparseVectorFloat,obj);
   LUABIND_RETURN(int,0);
 }
 //BIND_END
