@@ -90,6 +90,10 @@ function language_models.get_sentence_prob(params)
         not_used_words = not_used_words + 1
         p = -math.huge
         printed_word = word
+        fprintf(io.stderr,
+                "# WARNING! LM can't compute probabilities for current "..
+                  "context, in history-based LMs it is possible to need "..
+                  "to fix use_unk='none'\n")
       else -- if #result == 0 else
         key,p = result:get(1)
         -- If unknown words don't appear on context
