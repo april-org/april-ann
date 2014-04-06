@@ -11,6 +11,13 @@ get_table_from_dotted_string("ngram.lira.arpa2lira", true)
 --  output_filename nombre fichero de salida
 -- escribe en el fichero con formato .lira
 local function arpa2lira(tbl)
+  local tbl = get_table_fields(
+    {
+      input_filename  = { mandatory = true },
+      output_filename = { mandatory = true },
+      limit_vocab     = { mandatory = false },
+      vocabulary      = { mandatory = false }
+    }, tbl)
   local theTrie = util.trie()
   local log10   = math.log(10)
   local logZero = -1e12 -- representación de log(-infinito)
@@ -80,6 +87,8 @@ local function arpa2lira(tbl)
 		 end
   end
   
+  print(input_filename)
+  print(output_filename)
   local input_file  = tbl.input_file  or io.open(tbl.input_filename, "r")
   local output_file = tbl.output_file or io.open(tbl.output_filename,"w")
   local bccue       = tbl.bccue or '<s>'  -- begin context cue
