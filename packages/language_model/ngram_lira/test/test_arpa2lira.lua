@@ -14,7 +14,7 @@ end
 --dofile("../lua_src/arpa2lira.lua")
 
 -- se limita a generar un fichero .lira
-ngram.stat.arpa2lira{
+ngram.lira.arpa2lira{
   input_filename  = arg[1] or "dihana3gram.arpa",
   output_filename = arg[2] or "dihana3gram.lira",
   vocabulary      = lexClass.load(io.open("vocab"))

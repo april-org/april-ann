@@ -10,14 +10,17 @@ get_table_from_dotted_string("ngram.lira.arpa2lira", true)
 --  output_file     fichero de salida
 --  output_filename nombre fichero de salida
 -- escribe en el fichero con formato .lira
-local function arpa2lira(tbl)
+local function arpa2lira(dummy,tbl)
+  -- first argument dummy receives the table ngram.lira.arpa2lira table
+  -- when this local function is used in the setmetatable at the end
+  -- of this file
   local tbl = get_table_fields(
     {
       input_filename  = { mandatory = true },
       output_filename = { mandatory = true },
       limit_vocab     = { mandatory = false },
       vocabulary      = { mandatory = false }
-    }, tbl)
+    }, tbl, true)
   local theTrie = util.trie()
   local log10   = math.log(10)
   local logZero = -1e12 -- representación de log(-infinito)
@@ -87,8 +90,8 @@ local function arpa2lira(tbl)
 		 end
   end
   
-  print(input_filename)
-  print(output_filename)
+  print("Input filename:",input_filename)
+  print("Output filename:",output_filename)
   local input_file  = tbl.input_file  or io.open(tbl.input_filename, "r")
   local output_file = tbl.output_file or io.open(tbl.output_filename,"w")
   local bccue       = tbl.bccue or '<s>'  -- begin context cue
@@ -236,7 +239,7 @@ local function arpa2lira(tbl)
      end
       line = input_file:read('*l')
       if line then line = string.gsub(line ,"_","\\_") end
-      if math.mod(num_proceseed_lines,10000) == 0 then
+      if math.modf(num_proceseed_lines,10000) == 0 then
 	printf("\r%3.0f%%", num_proceseed_lines/ngram_counts[current_n]*100)
 	io.stdout:flush()
       end
@@ -451,7 +454,7 @@ local function arpa2lira(tbl)
       s = s .. string.format(" %f", upperBoundBestProb[statename])
     end
     fprintf(output_file,"%s\n",s)
-    if math.mod(stcod,100000) == 0 then collectgarbage("collect") end
+    if math.modf(stcod,100000) == 0 then collectgarbage("collect") end
   end
 
   -- las transiciones
@@ -469,7 +472,7 @@ local function arpa2lira(tbl)
       fprintf(output_file,"%d %d %d %g\n",
 	      stcod,state2cod[dest],word,prob)
     end
-    if math.mod(stcod,10000) == 0 then collectgarbage("collect") end
+    if math.modf(stcod,10000) == 0 then collectgarbage("collect") end
   end
   
   -- cerrar el fichero, si toca
