@@ -333,6 +333,8 @@ template <typename T>
 void doSparseMM(CBLAS_ORDER major_order,
 		SPARSE_FORMAT sparse_format,
 		CBLAS_TRANSPOSE a_transpose,
+		CBLAS_TRANSPOSE b_transpose,
+		CBLAS_TRANSPOSE c_transpose,
 		int m,
 		int n,
 		int k,

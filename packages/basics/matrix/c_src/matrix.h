@@ -752,6 +752,8 @@ public:
 
   // MM Sparse BLAS operation this = alpha * op(A)*B + beta*this
   void sparseMM(CBLAS_TRANSPOSE trans_A,
+                CBLAS_TRANSPOSE trans_B,
+                CBLAS_TRANSPOSE trans_C,
                 T alpha,
                 const SparseMatrix<T> *otherA,
                 const Matrix<T> *otherB,

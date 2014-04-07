@@ -23,8 +23,11 @@
 #include "swap.h"
 #include "dot_product_component.h"
 #include "wrapper.h"
+#include "matrixFloat.h"
+#include "sparse_matrixFloat.h"
 #include "token_base.h"
-#include "token_vector.h"
+#include "token_matrix.h"
+#include "token_sparse_matrix.h"
 #include "table_of_token_codes.h"
 
 using april_utils::swap;
@@ -112,10 +115,10 @@ namespace ANN {
       } // if bunch_size==1 ... else
       break;
     }
-    case table_of_token_codes::sparse_token_matrix: {
+    case table_of_token_codes::token_sparse_matrix: {
       sparse_input = true;
       AssignRef(input, _input);
-      TokenSparseVectorFloat *input_sparse_token =
+      TokenSparseMatrixFloat *input_sparse_token =
         input->convertTo<TokenSparseMatrixFloat*>();
       april_assert(input_sparse_token->size() > 0);
       SparseMatrixFloat *input_mat = input_sparse_token->getMatrix();
@@ -132,38 +135,11 @@ namespace ANN {
 #ifdef USE_CUDA
       output_mat->setUseCuda(use_cuda);
 #endif
-      MatrixFloat *aux_weights_mat = weights_mat;
-      if (!transpose_weights) {
-        aux_weights_mat = weights_mat->transpose();
-        output_mat->sparseMM(
-
-
-
- zeros();
-      
-      // dimension for select operation
-      int w_dim = (transpose_weights == CblasNoTrans) ? 1 : 0;
-      for (unsigned int b=0; b<input_vector_token->size(); ++b) {
-	MatrixFloat *output_pat_mat = output_mat->select(0,static_cast<int>(b));
-	Token *current = (*input_vector_token)[b];
-	if (current->getTokenCode()!=table_of_token_codes::vector_float_sparse)
-	  ERROR_EXIT1(128,"Incorrect token type, expected vector_float_sparse [%s]\n",
-		      name.c_str());
-	TokenSparseVectorFloat *sparse_token;
-	sparse_token = current->convertTo<TokenSparseVectorFloat*>();
-	for (unsigned int k=0; k<sparse_token->size(); ++k) {
-	  unsigned int pos     = (*sparse_token)[k].first;
-	  float value          = (*sparse_token)[k].second;
-	  int w_index          = static_cast<int>(pos);
-	  if (pos >= input_size)
-	    ERROR_EXIT1(128, "Overflow at sparse vector input pos [%s]\n",
-			name.c_str());
-	  MatrixFloat *w_column = weights_mat->select(w_dim, w_index);
-	  output_pat_mat->axpy(value, w_column);
-	  delete w_column;
-	}
-	delete output_pat_mat;
-      }
+      output_mat->sparseMM(CblasNoTrans,
+                           NEGATE_CBLAS_TRANSPOSE(transpose_weights),
+                           CblasNoTrans,
+                           1.0f, input_mat, weights_mat,
+                           0.0f);
       break;
     }
     default:
@@ -243,28 +219,25 @@ namespace ANN {
     MatrixFloat *error_input_mat = error_input->getMatrix();
     unsigned int bunch_size = error_input_mat->getDimSize(0);
     if (sparse_input) {
-      TokenBunchVector *input_vector_token;
-      input_vector_token  = input->convertTo<TokenBunchVector*>();
-      int w_dim = (transpose_weights == CblasNoTrans) ? 1 : 0;
-      for (unsigned int b=0; b<bunch_size; ++b) {
-	MatrixFloat *error_input_pat_mat;
-	error_input_pat_mat = error_input_mat->select(0,static_cast<int>(b));
-	Token *current = (*input_vector_token)[b];
-	TokenSparseVectorFloat *sparse_token;
-	sparse_token = current->convertTo<TokenSparseVectorFloat*>();
-	for (unsigned int k=0; k<sparse_token->size(); ++k) {
-	  unsigned int pos     = (*sparse_token)[k].first;
-	  float value          = (*sparse_token)[k].second;
-	  int w_index          = static_cast<int>(pos);
-	  if (pos >= input_size)
-	    ERROR_EXIT1(128, "Overflow at sparse vector input pos [%s]\n",
-			name.c_str());
-	  MatrixFloat *w_column = grads_mat->select(w_dim, w_index);
-	  w_column->axpy(value, error_input_pat_mat);
-	  delete w_column;
-	}
-	delete error_input_pat_mat;
-      }
+      TokenSparseMatrixFloat *input_sparse_token =
+        input->convertTo<TokenSparseMatrixFloat*>();
+      SparseMatrixFloat *input_mat = input_sparse_token->getMatrix();
+      if (transpose_weights == CblasNoTrans)
+        grads_mat->sparseMM(CblasTrans,
+                            CblasNoTrans,
+                            CblasTrans,
+                            1.0f,
+                            input_mat,
+                            error_input_mat,
+                            1.0f);
+      else
+        grads_mat->sparseMM(CblasTrans,
+                            CblasNoTrans,
+                            CblasNoTrans,
+                            1.0f,
+                            input_mat,
+                            error_input_mat,
+                            1.0f);
     } // if sparse_input ... else
     else {
       TokenMatrixFloat *input_mat_token=input->convertTo<TokenMatrixFloat*>();

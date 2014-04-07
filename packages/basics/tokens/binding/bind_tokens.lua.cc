@@ -64,6 +64,7 @@ Token *lua_toAuxToken(lua_State *L, int n) {
 #include "token_base.h"
 #include "token_memory_block.h"
 #include "token_matrix.h"
+#include "token_sparse_matrix.h"
 #include "token_vector.h"
 
 bool lua_isAuxToken(lua_State *L, int n);
@@ -88,15 +89,17 @@ Token *lua_toAuxToken(lua_State *L, int n);
 //BIND_METHOD Token get_matrix
 {
   switch(obj->getTokenCode()) {
-  case table_of_token_codes::token_matrix:
+  case table_of_token_codes::token_matrix: {
     TokenMatrixFloat *token_matrix = obj->convertTo<TokenMatrixFloat*>();
     LUABIND_RETURN(MatrixFloat, token_matrix->getMatrix());
     break;
-  case table_of_token_codes:token_sparse_matrix:
+  }
+  case table_of_token_codes::token_sparse_matrix: {
     TokenSparseMatrixFloat *token_sparse_matrix;
     token_sparse_matrix = obj->convertTo<TokenSparseMatrixFloat*>();
     LUABIND_RETURN(SparseMatrixFloat, token_sparse_matrix->getMatrix());
     break;
+  }
   default:
     ;
   }

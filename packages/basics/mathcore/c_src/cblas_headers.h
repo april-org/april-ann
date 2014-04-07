@@ -133,8 +133,11 @@ void cblas_caxpyi(int NNZ, const ComplexF *alpha,
 		  ComplexF *y_mem);
 #endif
 
-void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
+void cblas_sparse_mm(CBLAS_ORDER major_order,
+                     SPARSE_FORMAT sparse_format,
 		     CBLAS_TRANSPOSE a_transpose,
+		     CBLAS_TRANSPOSE b_transpose,
+		     CBLAS_TRANSPOSE c_transpose,
 		     int m, int n, int k,
 		     float alpha,
 		     const float *a_values_mem,
@@ -143,8 +146,11 @@ void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
 		     const float *b_mem, int b_inc,
 		     float beta, float *c_mem, int c_inc);
 
-void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
+void cblas_sparse_mm(CBLAS_ORDER major_order,
+                     SPARSE_FORMAT sparse_format,
 		     CBLAS_TRANSPOSE a_transpose,
+		     CBLAS_TRANSPOSE b_transpose,
+		     CBLAS_TRANSPOSE c_transpose,
 		     int m, int n, int k,
 		     double alpha,
 		     const double *a_values_mem,
@@ -153,8 +159,11 @@ void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
 		     const double *b_mem, int b_inc,
 		     double beta, double *c_mem, int c_inc);
 
-void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
+void cblas_sparse_mm(CBLAS_ORDER major_order,
+                     SPARSE_FORMAT sparse_format,
 		     CBLAS_TRANSPOSE a_transpose,
+		     CBLAS_TRANSPOSE b_transpose,
+		     CBLAS_TRANSPOSE c_transpose,
 		     int m, int n, int k,
 		     ComplexF alpha,
 		     const ComplexF *a_values_mem,
