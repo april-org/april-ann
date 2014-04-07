@@ -8,8 +8,10 @@ local input = matrix.col_major(5,3,{ 0, 1, 0,
 local sparse_input = matrix.sparse.csr(input)
 local e = matrix.col_major(5,4):uniformf(0,1,random(2384))
 --
-for w,transpose in iterator(ipairs({ {w,false},{w:transpose():clone(),true} })):
-select(2):map(table.unpack):get() do
+for _,aux in ipairs({ {w,false},
+                      {w:transpose():clone(),true}
+                    }) do
+  local w,transpose = table.unpack(aux)
   local c = ann.components.dot_product{
     input = 3,
     output = 4,
