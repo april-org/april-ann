@@ -199,3 +199,14 @@ check(function()
                })
         return make_eq(a_csc:to_dense()*x, y)()
       end)
+
+----------------------------------------------------------------------------
+
+local x = matrix(10,1):uniformf(-10,10,random(1234))
+local y = matrix(1,10,{1,-1,4,0,0,2,0,0,0,-3})
+local z = x:dot(y)
+local y_csr = matrix.sparse.csr(y)
+local y_csc = y:transpose()
+
+check.eq(x:dot(y_csr),z)
+check.eq(x:dot(y_csc),z)

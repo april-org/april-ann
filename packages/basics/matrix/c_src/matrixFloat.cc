@@ -415,47 +415,6 @@ void Matrix<float>::copy(const Matrix<float> *other) {
   applyBinaryFunctionWithSpanIterator<float>(this, other, functor);
 }
 
-template<>
-void Matrix<float>::ger(float alpha,
-			const Matrix<float> *otherX,
-			const Matrix<float> *otherY) {
-  if (!otherX->isVector() || !otherY->isVector() || numDim!=2)
-    ERROR_EXIT(128,"Incorrect number of dimensions\n");
-  int M=otherX->size(), N=otherY->size();
-  if (matrixSize[0] != M ||
-      matrixSize[1] != N)
-    ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx%d + %dx1 * 1x%d\n",
-		matrixSize[0], matrixSize[1], M, N);
-  if (major_order != otherX->major_order ||
-      otherX->major_order != otherY->major_order)
-    ERROR_EXIT(128, "Matrices with different major orders\n");
-  int lda=(getIsDataRowOrdered())?stride[0]:stride[1];
-  int ldx=otherX->getVectorStride();
-  int ldy=otherY->getVectorStride();
-  doGer(major_order,
-	M, N,
-	alpha, otherX->data, otherX->offset, ldx,
-	otherY->data, otherY->offset, ldy,
-	data, offset, lda,
-	use_cuda);
-}
-
-template<>
-float Matrix<float>::dot(const Matrix<float> *other) const {
-  if (!this->isVector() || !other->isVector())
-    ERROR_EXIT(128,"Incorrect number of dimensions\n");
-  if (this->size() != other->size())
-    ERROR_EXIT2(128, "Incorrect dimensions: %d dot %d\n",
-		this->size(), other->size());
-  if (major_order != other->major_order)
-    ERROR_EXIT(128, "Matrices with different major orders\n");
-  float ret = doDot(size(),
-		    data, offset, getVectorStride(),
-		    other->data, other->offset, other->getVectorStride(),
-		    use_cuda);
-  return ret;
-}
-
 /********** SCAL FUNCTION ***************/
 DEF_CWISE_FUNCTOR_1(doScal,float);
 template<>

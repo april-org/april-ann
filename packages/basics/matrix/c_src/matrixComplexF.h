@@ -62,14 +62,6 @@ template<>
 void Matrix<ComplexF>::copy(const Matrix<ComplexF> *other);
 
 template<>
-void Matrix<ComplexF>::ger(ComplexF alpha,
-			   const Matrix<ComplexF> *otherX,
-			   const Matrix<ComplexF> *otherY);
-
-template<>
-ComplexF Matrix<ComplexF>::dot(const Matrix<ComplexF> *other) const;
-
-template<>
 void Matrix<ComplexF>::scal(ComplexF value);
 
 template<>

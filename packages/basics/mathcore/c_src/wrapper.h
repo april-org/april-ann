@@ -394,6 +394,15 @@ T doDot(unsigned int size,
 	bool use_gpu);
 
 template<typename T>
+T doSparseDot(int NNZ,
+              const GPUMirroredMemoryBlock<T> *x_values,
+              const Int32GPUMirroredMemoryBlock *x_indices,
+              const GPUMirroredMemoryBlock<T> *y,
+              int y_shift,
+              int y_inc,
+              bool use_gpu);
+
+template<typename T>
 float doNrm2(unsigned int n,
 	     const GPUMirroredMemoryBlock<T> *x,
 	     unsigned int inc,

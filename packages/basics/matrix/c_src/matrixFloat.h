@@ -126,17 +126,6 @@ template<>
 void Matrix<float>::copy(const Matrix<float> *other);
 
 template<>
-void Matrix<float>::ger(float alpha,
-			const Matrix<float> *otherX,
-			const Matrix<float> *otherY);
-
-template<>
-float Matrix<float>::dot(const Matrix<float> *other) const;
-
-template<>
-float Matrix<float>::dot(const SparseMatrix<float> *other) const;
-
-template<>
 void Matrix<float>::scal(float value);
 
 template<>

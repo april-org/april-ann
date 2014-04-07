@@ -46,6 +46,7 @@ class SparseMatrix;
 /// and other math operations. By default, the zero value must be T()
 template <typename T>
 class Matrix : public Referenced {
+  friend class SparseMatrix<T>;
   const static unsigned int MATRIX_BINARY_VERSION;
   enum matrix_contiguous_enum_t { NONE=0, CONTIGUOUS=1, NONCONTIGUOUS=2 };
   // Auxiliary count variable where the user could store the number of times

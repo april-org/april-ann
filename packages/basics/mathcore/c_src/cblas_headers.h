@@ -202,4 +202,19 @@ void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
 		     const ComplexF *x_mem, int x_inc,
 		     ComplexF beta, ComplexF *y_mem, int y_inc);
 
+template<typename T>
+T cblas_sparse_dot(int NNZ,
+                   const T *x_values_mem,
+                   const int *x_indices_mem,
+                   const T *y_mem,
+                   int y_inc) {
+  T result = T();
+  for (int i=0; i<NNZ; ++i) {
+    int pos = x_indices_mem[i];
+    int y_pos = pos * y_inc;
+    result = result + y_mem[y_pos]*x_values_mem[i];
+  }
+  return result;
+}
+
 #endif // CBLAS_HEADERS_H

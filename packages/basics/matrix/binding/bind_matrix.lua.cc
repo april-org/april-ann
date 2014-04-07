@@ -1488,14 +1488,26 @@ public:
 //BIND_METHOD MatrixFloat dot
   {
     LUABIND_CHECK_ARGN(==, 1);
-    LUABIND_CHECK_PARAMETER(1, MatrixFloat);
-    MatrixFloat *matX;
-    LUABIND_GET_PARAMETER(1, MatrixFloat, matX);
+    if (lua_isMatrixFloat(L,1)) {
+      LUABIND_CHECK_PARAMETER(1, MatrixFloat);
+      MatrixFloat *matX;
+      LUABIND_GET_PARAMETER(1, MatrixFloat, matX);
 #ifdef USE_CUDA
-    obj->update();
-    matX->update();
+      obj->update();
+      matX->update();
 #endif
-    LUABIND_RETURN(float, obj->dot(matX));
+      LUABIND_RETURN(float, obj->dot(matX));
+    }
+    else if (lua_isSparseMatrixFloat(L,1)) {
+      LUABIND_CHECK_PARAMETER(1, SparseMatrixFloat);
+      SparseMatrixFloat *matX;
+      LUABIND_GET_PARAMETER(1, SparseMatrixFloat, matX);
+#ifdef USE_CUDA
+      obj->update();
+      matX->update();
+#endif
+      LUABIND_RETURN(float, obj->dot(matX));
+    }
   }
 //BIND_END
 

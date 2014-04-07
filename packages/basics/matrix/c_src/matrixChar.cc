@@ -25,6 +25,7 @@ NOT_IMPLEMENT_AXPY(char)
 NOT_IMPLEMENT_GEMM(char)
 NOT_IMPLEMENT_GEMV(char)
 NOT_IMPLEMENT_GER(char)
+NOT_IMPLEMENT_DOT(char)
 
 ///////////////////////////////////////////////////////////////////////////////
 template class Matrix<char>;

@@ -151,7 +151,6 @@ void Matrix<T>::scalarAdd(T s) {
 
 template <typename T>
 void Matrix<T>::copy(const Matrix<T> *other) {
-  UNUSED_VARIABLE(other);
   if (!sameDim(other))
     ERROR_EXIT(128, "Not equal matrix dimensions\n");
   const_iterator it_orig(other->begin());
@@ -542,24 +541,62 @@ template <typename T>
 void Matrix<T>::ger(T alpha,
                     const Matrix<T> *otherX,
                     const Matrix<T> *otherY) {
-  UNUSED_VARIABLE(alpha);
-  UNUSED_VARIABLE(otherX);
-  UNUSED_VARIABLE(otherY);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  if (this->getTransposedFlag())
+    ERROR_EXIT(128, "GER method don't work with transposed A matrix (this)\n");
+  if (!otherX->isVector() || !otherY->isVector() || numDim!=2)
+    ERROR_EXIT(128,"Incorrect number of dimensions\n");
+  int M=otherX->size(), N=otherY->size();
+  if (matrixSize[0] != M ||
+      matrixSize[1] != N)
+    ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx%d + %dx1 * 1x%d\n",
+		matrixSize[0], matrixSize[1], M, N);
+  if (major_order != otherX->major_order ||
+      otherX->major_order != otherY->major_order)
+    ERROR_EXIT(128, "Matrices with different major orders\n");
+  int lda=(getIsDataRowOrdered())?stride[0]:stride[1];
+  int ldx=otherX->getVectorStride();
+  int ldy=otherY->getVectorStride();
+  doGer(major_order,
+	M, N,
+	alpha, otherX->data, otherX->offset, ldx,
+	otherY->data, otherY->offset, ldy,
+	data, offset, lda,
+	use_cuda);
 }
 
 template <typename T>
 T Matrix<T>::dot(const Matrix<T> *other) const {
-  UNUSED_VARIABLE(other);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-  return T();
+  if (!this->isVector() || !other->isVector())
+    ERROR_EXIT(128,"Incorrect number of dimensions\n");
+  if (this->size() != other->size())
+    ERROR_EXIT2(128, "Incorrect dimensions: %d dot %d\n",
+		this->size(), other->size());
+  if (major_order != other->major_order)
+    ERROR_EXIT(128, "Matrices with different major orders\n");
+  T ret = doDot(size(),
+                data, offset, getVectorStride(),
+                other->data, other->offset, other->getVectorStride(),
+                use_cuda);
+  return ret;
 }
 
 template <typename T>
 T Matrix<T>::dot(const SparseMatrix<T> *other) const {
-  UNUSED_VARIABLE(other);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-  return T();
+  if (!this->isVector() || !other->isVector())
+    ERROR_EXIT(128,"Incorrect number of dimensions\n");
+  if (this->size() != other->size())
+    ERROR_EXIT2(128, "Incorrect dimensions: %d dot %d\n",
+		this->size(), other->size());
+  if (other->getDenseCoordinateSize() != 1)
+    ERROR_EXIT(128, "DOT operation only allowed with sparse matrices with "
+               "dense coordinate size of 1, please, change the sparse "
+               "format\n");
+  T ret = doSparseDot(other->nonZeroSize(),
+                      other->getRawValuesAccess(),
+                      other->getRawIndicesAccess(),
+                      data, offset, getVectorStride(),
+                      use_cuda);
+  return ret;
 }
 
 template <typename T>

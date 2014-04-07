@@ -715,4 +715,22 @@ void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
   }
 }
 
+template float cblas_sparse_dot<float>(int NNZ,
+                                       const float *x_values_mem,
+                                       const int *x_indices_mem,
+                                       const float *y_mem,
+                                       int y_inc);
+
+template double cblas_sparse_dot<double>(int NNZ,
+                                         const double *x_values_mem,
+                                         const int *x_indices_mem,
+                                         const double *y_mem,
+                                         int y_inc);
+
+template ComplexF cblas_sparse_dot<ComplexF>(int NNZ,
+                                             const ComplexF *x_values_mem,
+                                             const int *x_indices_mem,
+                                             const ComplexF *y_mem,
+                                             int y_inc);
+
 #endif

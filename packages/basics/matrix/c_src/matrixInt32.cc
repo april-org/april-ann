@@ -26,6 +26,7 @@ NOT_IMPLEMENT_AXPY(int32_t)
 NOT_IMPLEMENT_GEMM(int32_t)
 NOT_IMPLEMENT_GEMV(int32_t)
 NOT_IMPLEMENT_GER(int32_t)
+NOT_IMPLEMENT_DOT(int32_t)
 
 /************* ZEROS FUNCTION **************/
 template<>
