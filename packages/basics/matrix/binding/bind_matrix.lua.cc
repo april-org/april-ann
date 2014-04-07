@@ -1401,10 +1401,10 @@ public:
   {
     LUABIND_CHECK_ARGN(==, 1);
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L,1, "trans_A", "trans_B",
+    check_table_fields(L,1, "trans_A", "trans_B", "trans_C",
                        "alpha", "A", "B", "beta",
 		       (const char *)0);
-    bool trans_A, trans_B;
+    bool trans_A, trans_B, trans_C;
     float alpha;
     float beta;
     SparseMatrixFloat *matA;
@@ -1413,11 +1413,12 @@ public:
     LUABIND_GET_TABLE_PARAMETER(1, B, MatrixFloat, matB);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_A, bool, trans_A, false);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_B, bool, trans_B, false);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_C, bool, trans_C, false);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, float, alpha, 1.0f);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f);
     obj->sparseMM(trans_A ? CblasTrans : CblasNoTrans,
                   trans_B ? CblasTrans : CblasNoTrans,
-                  CblasNoTrans,
+                  trans_C ? CblasTrans : CblasNoTrans,
                   alpha, matA, matB,
                   beta);
     LUABIND_RETURN(MatrixFloat, obj);
