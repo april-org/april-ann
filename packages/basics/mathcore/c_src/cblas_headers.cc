@@ -182,9 +182,11 @@ void generic_cblas_sparse_mm(CBLAS_ORDER major_order,
   }
   int b_stride[2] = { b_inc, 1 };
   int c_stride[2] = { c_inc, 1 };
-  if (b_transpose == CblasTrans || major_order == CblasColMajor)
+  if ( (b_transpose == CblasTrans   && major_order == CblasRowMajor) ||
+       (b_transpose == CblasNoTrans && major_order == CblasColMajor) )
     swap(b_stride[0], b_stride[1]);
-  if (c_transpose == CblasTrans || major_order == CblasColMajor)
+  if ( (c_transpose == CblasTrans   && major_order == CblasRowMajor) ||
+       (c_transpose == CblasNoTrans && major_order == CblasColMajor) )
     swap(c_stride[0], c_stride[1]);
   if (sparse_format == CSR_FORMAT) {
     // C = beta C + alpha A*B

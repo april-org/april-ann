@@ -128,7 +128,7 @@ namespace ANN {
       unsigned int bunch_size = input_mat->getDimSize(0);
       // new output to fit the bunch
       MatrixFloat *output_mat;
-      int dims[2] = {bunch_size,
+      int dims[2] = {static_cast<int>(bunch_size),
 		     static_cast<int>(output_size)};
       output_mat = new MatrixFloat(2, dims, CblasColMajor);
       AssignRef(output,new TokenMatrixFloat(output_mat));
