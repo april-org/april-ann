@@ -813,7 +813,8 @@ function get_table_fields(params, t, ignore_other_fields)
 	end
       end
       -- each param has type_match, mandatory, default, and getter
-      local v = (t[key]==nil and data.default) or t[key]
+      local v = t[key]
+      if v == nil then v = data.default end
       if v == nil and data.mandatory then
 	error("Mandatory field not found: " .. key)
       end
