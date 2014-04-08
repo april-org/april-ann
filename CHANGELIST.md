@@ -24,6 +24,9 @@ Master branch release
 
 ### API Changes
 
+- Enhanced `util.serialize` and `util.deserialize` to accept functions as
+  argument, allowing to serialize/deserialize over general streams.
+- Added `iscallable(...)` function.
 - Added `utest` package, for unit testing.
 - Added methods to `matrix` which work with sparse matrices.
 - Added class `matrix.sparse`.

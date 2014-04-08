@@ -13,6 +13,11 @@ local assert = assert
 
 ------------------------------------------------------------------------------
 
+function iscallable(obj)
+  local t = luatype(obj)
+  return t == "function" or (t == "table" and (getmetatable(obj) or {}).__call)
+end
+
 function april_assert(condition, ...)
    if not condition then
      if next({...}) then
@@ -438,7 +443,7 @@ function april_help(table_name, verbosity)
     if is_class(v) then
       local id = get_object_id(v):gsub(" class","")
       table.insert(classes, i)
-    elseif luatype(v) == "function" or (luatype(v) == "table" and v.__call) then
+    elseif iscallable(v) then
       table.insert(funcs, {i, string.format("%8s",luatype(v))})
     elseif luatype(v) == "table" then
       table.insert(names, i)
@@ -813,7 +818,7 @@ function get_table_fields(params, t, ignore_other_fields)
 	error("Mandatory field not found: " .. key)
       end
       if v ~= nil and data.type_match and (luatype(v) ~= data.type_match or type(v) ~= data.type_match) then
-	if data.type_match ~= "function" or (luatype(v) == "table" and not v.__call) then
+	if data.type_match ~= "function" or not iscallable(v) then
 	  error("Incorrect type '" .. type(v) .. "' for field '" .. key .. "'")
 	end
       end
@@ -1537,18 +1542,32 @@ end
 
 ------------------------------------------------------------------------------
 
-function util.serialize(data, filename, format)
-  assert(filename, "A filename is needed as 2nd argument")
-  local f = io.open(filename, "w")
-  f:write("return ")
-  f:write(util.to_lua_string(data, format))
-  f:close()
+function util.serialize(data, where, format)
+  assert(where, "A string or function is needed as 2nd argument")
+  if type(where) == "string" then
+    local f = io.open(where, "w")
+    f:write("return ")
+    f:write(util.to_lua_string(data, format))
+    f:close()
+  elseif iscallable(where) then
+    where(string.format("return %s", util.to_lua_string(data, format)))
+  else
+    error("Needs a string or a function as 2nd argument")
+  end
 end
 
 ------------------------------------------------------------------------------
 
-function util.deserialize(filename)
-  return dofile(filename)
+function util.deserialize(from)
+  assert(from, "A string or function is needed as 1st argument")
+  if type(from) == "string" then
+    dofile(from)
+  elseif iscallable(from) then
+    local f = load(from())
+    return f()
+  else
+    error("Needs a string or a function as 1st argument")
+  end
 end
 
 ------------------------------------------------------------------------------
