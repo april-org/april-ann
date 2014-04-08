@@ -1,25 +1,25 @@
 get_table_from_dotted_string("ngram.lira.arpa2lira", true)
 
 -- Recibe una tabla con estos argumentos:
---  input_file      fichero de entrada
---  input_filename  solo se usa si no hay input_file
+--  input_filename  nombre fichero de entrada
+--  output_filename nombre fichero de salida
 --  limit_vocab     OPCIONAL, se usa para limitar el vocabulario
 --  vocabulary      OPCIONAL, se asume que es un lexClass
 --  bccue           OPCIONAL
 --  eccue           OPCIONAL
---  output_file     fichero de salida
---  output_filename nombre fichero de salida
 -- escribe en el fichero con formato .lira
-local function arpa2lira(dummy,tbl)
-  -- first argument dummy receives the table ngram.lira.arpa2lira table
+local function arpa2lira(self, tbl)
+  -- first argument self receives the table ngram.lira.arpa2lira table
   -- when this local function is used in the setmetatable at the end
   -- of this file
   local tbl = get_table_fields(
     {
-      input_filename  = { mandatory = true },
-      output_filename = { mandatory = true },
+      input_filename  = { mandatory = true, type_match = "string" },
+      output_filename = { mandatory = true, type_match = "string" },
       limit_vocab     = { mandatory = false },
-      vocabulary      = { mandatory = false }
+      vocabulary      = { mandatory = false },
+      bccue           = { mandatory = false, type_match = "string", default = "<s>" },
+      eccue           = { mandatory = false, type_match = "string", default = "</s>" }
     }, tbl, true)
   local theTrie = util.trie()
   local log10   = math.log(10)
@@ -90,12 +90,10 @@ local function arpa2lira(dummy,tbl)
 		 end
   end
   
-  print("Input filename:",input_filename)
-  print("Output filename:",output_filename)
-  local input_file  = tbl.input_file  or io.open(tbl.input_filename, "r")
-  local output_file = tbl.output_file or io.open(tbl.output_filename,"w")
-  local bccue       = tbl.bccue or '<s>'  -- begin context cue
-  local eccue       = tbl.eccue or '</s>' -- end   context cue
+  local input_file  = io.open(tbl.input_filename, "r")
+  local output_file = io.open(tbl.output_filename,"w")
+  local bccue       = tbl.bccue -- begin context cue
+  local eccue       = tbl.eccue -- end   context cue
   -- anyadirlos al diccionario y convertirlos en su id
   if not check_word(bccue) then error("Not found " .. bccue .. " in vocabulary") end
   if not check_word(eccue) then error("Not found " .. eccue .. " in vocabulary") end
@@ -251,10 +249,8 @@ local function arpa2lira(dummy,tbl)
   theTrie = nil
   collectgarbage("collect")
 
-  -- cerrar el fichero .arpa, si toca
-  if tbl.input_file == nil then -- lo hemos abierto nosotros con io.open
-    input_file:close()
-  end
+  -- cerrar el fichero .arpa
+  input_file:close()
 
   -- calcular para cada estado una cota superior de la mejor forma de
   -- salir de el teniendo en cuenta bajadas por backoff, se utiliza en
@@ -475,10 +471,7 @@ local function arpa2lira(dummy,tbl)
     if math.modf(stcod,10000) == 0 then collectgarbage("collect") end
   end
   
-  -- cerrar el fichero, si toca
-  if tbl.output_file == nil then -- lo hemos abierto nosotros con io.open
-    output_file:close()
-  end
+  output_file:close()
 
 end
 
