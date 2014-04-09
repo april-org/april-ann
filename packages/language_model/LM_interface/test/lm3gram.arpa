@@ -1,0 +1,48 @@
+
+\data\
+ngram 1=16
+ngram 2=19
+ngram 3=0
+
+\1-grams:
+-0.8653014	</s>
+-99	<s>	-0.5383909
+-1.342423	Curtain	-0.2808266
+-1.041393	Darkness	-0.4134521
+-1.342423	a	-0.2808266
+-1.342423	behind	-0.2373609
+-1.342423	by	-0.2373609
+-1.342423	curtain	-0.2373609
+-1.041393	descended	-0.4357285
+-1.342423	from	-0.2373609
+-1.041393	had	-0.4357286
+-1.342423	hides	-0.2808266
+-1.342423	like	-0.2808266
+-0.8653014	the	-0.5149098
+-1.342423	unless	-0.2808266
+-1.342423	you	-0.2596373
+
+\2-grams:
+-0.30103	<s> Darkness
+-0.60206	<s> unless
+-0.30103	Curtain by
+-0.4771213	Darkness had
+-0.4771213	Darkness hides
+-0.30103	a Curtain
+-0.30103	behind the
+-0.30103	by the
+-0.30103	curtain </s>
+-0.4771213	descended from
+-0.4771213	descended like
+-0.30103	from the
+-0.1760913	had descended
+-0.30103	hides behind
+-0.30103	like a
+-0.30103	the </s>
+-0.60206	the curtain
+-0.30103	unless you
+-0.30103	you had
+
+\3-grams:
+
+\end\
