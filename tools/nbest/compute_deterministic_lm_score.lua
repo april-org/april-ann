@@ -1,16 +1,16 @@
-if #arg < 3 or #arg > 7 then
-  print("Sintaxis:")
-  printf ("\t%s NBESTFILE NNLM VOCAB [trie_size=24 use_bcc=yes use_ecc=yes cache_extra_set=nil]\n",
+if #arg < 3 or #arg > 6 then
+  print("Syntax:")
+  printf ("\t%s nbestfile lm vocab [use_bcc=yes use_ecc=yes cache_extra_set=nil]\n",
 	  string.basename(arg[0]))
   os.exit(128)
 end
 nbestfile            = arg[1]
 lm_file              = arg[2]
 voc_filename         = arg[3]
-trie_size            = tonumber(arg[4] or 24)
-use_bcc              = ((arg[5] or "yes") == "yes")
-use_ecc              = ((arg[6] or "yes") == "yes")
-cache_extra_set      = arg[7]
+--trie_size            = tonumber(arg[4] or 24)
+use_bcc              = ((arg[4] or "yes") == "yes")
+use_ecc              = ((arg[5] or "yes") == "yes")
+cache_extra_set      = arg[6]
 unk_word             = "<unk>"
 begin_word           = "<s>"
 end_word             = "</s>"
@@ -26,9 +26,7 @@ unk_id    = vocab:getWordId(unk_word)
 
 collectgarbage("collect")
 
--- cargamos el modelo FAST
-lm = ngram.load_language_model(lm_file, vocab, begin_word, end_word,
-			       {trie_size=trie_size})
+lm = language_models.load(lm_file, vocab, begin_word, end_word)
 local lmi = lm:get_interface()
 collectgarbage("collect")
 --use_cache = lm:has_cache()
@@ -41,9 +39,8 @@ local scores = {}
 local ngrams = {}
 local j=1
 local prevn = nil
-lm:restart()
-nbestf = io.open(nbestfile, "r")
-cachef = nil
+--lm:restart()
+--cachef = nil
 --if cache_extra_set then
 --  cachef = io.open(cache_extra_set, "r")
 --end
@@ -51,6 +48,7 @@ cachef = nil
 
 assert(lm:is_deterministic(),
        "Error: Expected a deterministic LM")
+nbestf = io.open(nbestfile, "r")
 
 while true do
   local line = nbestf:read("*l")
@@ -78,14 +76,15 @@ while true do
       for word,_ in pairs(where) do
         lmi:insert_query(key, word)
       end
-      result = get_queries()
+      result = lmi:get_queries()
       local i = 1
-      for word,d in pairs(where)
+      for word,d in pairs(where) do
         _,p = result:get(i)
         for _,id in ipairs(d) do
           scores[id] = scores[id] + p
         end
         sum = sum + #d
+        i = i + 1
       end
       --fprintf(io.stderr, "%d : %d\n", key, sum)
     end
@@ -144,7 +143,7 @@ while true do
     table.insert(ngrams[key][w], #scores)
   end
   j=j+1
-  if math.mod(j, 250) == 0 then collectgarbage("collect") end
+  if math.modf(j, 250) == 0 then collectgarbage("collect") end
 end
 nbestf:close()
 time:stop()
