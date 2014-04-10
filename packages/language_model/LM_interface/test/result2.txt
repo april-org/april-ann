@@ -1,0 +1,1383 @@
+# ARG test = best100.filt
+# ARG langmodel_filename = lm3gram.lira
+# ARG vocabfilename = lm3gram.voc
+# ARG debug = 2
+Darkness had descended like a Curtain by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -2.9365 ppl= 2.120 ppl1= 2.328
+
+Darkness had descended like a Certain by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480128.0585 ppl= inf ppl1= inf
+
+Darkness had descended Like a Curtain by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( <unk> | descended ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( a | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480127.8823 ppl= inf ppl1= inf
+
+Derek unless had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( unless | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( had | unless ...)	= [3gram] 0.0476188 [ -1.322221 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -434294480129.2045 ppl= inf ppl1= inf
+
+Darkness had descended Like a Certain by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( <unk> | descended ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( a | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -868588960253.0043 ppl= inf ppl1= inf
+
+Darkness had descended like a Cecil an by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Derek unless had descended like a Certain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( unless | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( had | unless ...)	= [3gram] 0.0476188 [ -1.322221 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960254.3265 ppl= inf ppl1= inf
+
+Darkness had descended like a Cuban by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480128.0585 ppl= inf ppl1= inf
+
+Darkness had descended like a Curtain by he 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | by ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( </s> | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480127.5814 ppl= inf ppl1= inf
+
+Darkness had descended like a Curtain lay the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | Curtain ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( the | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480127.5814 ppl= inf ppl1= inf
+
+Darkness had descended like a Curtain by The 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | by ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( </s> | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480127.5814 ppl= inf ppl1= inf
+
+Derek was s had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -1302883440376.3445 ppl= inf ppl1= inf
+
+Derek mess had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960251.9630 ppl= inf ppl1= inf
+
+Darkness had descended like a Certain by he 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( <unk> | by ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( </s> | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.7034 ppl= inf ppl1= inf
+
+Darkness had descended like a Curtain way the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | Curtain ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( the | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480127.5814 ppl= inf ppl1= inf
+
+Darkness had descended like a Certain lay the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( the | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -868588960251.6620 ppl= inf ppl1= inf
+
+Darkness had descended like a Certain by The 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( <unk> | by ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( </s> | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.7034 ppl= inf ppl1= inf
+
+Darkness had descended like a Clurman by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480128.0585 ppl= inf ppl1= inf
+
+Derek was s had descended like a Certain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -1737177920501.4666 ppl= inf ppl1= inf
+
+Derek mess had descended like a Certain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -1302883440377.0852 ppl= inf ppl1= inf
+
+Darkness had descended like a Ceuta by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480128.0585 ppl= inf ppl1= inf
+
+Derek Ness had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960251.9630 ppl= inf ppl1= inf
+
+, Darkness had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( Darkness | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -434294480128.0584 ppl= inf ppl1= inf
+
+Darkness had descended like a Cecil arm by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Derek is less had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -1302883440376.3445 ppl= inf ppl1= inf
+
+Derek no less had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -1302883440376.3445 ppl= inf ppl1= inf
+
+Dave lawless had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960251.9630 ppl= inf ppl1= inf
+
+Darkness had descended like a Certain way the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( the | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -868588960251.6620 ppl= inf ppl1= inf
+
+Darkness had descended like a Clerk an by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Darkness had descended like a Curtain by He 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | by ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( </s> | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480127.5814 ppl= inf ppl1= inf
+
+Darkness had descended like a Ceuta us by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Darkness had descended like a Curtain by she 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | by ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( </s> | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480127.5814 ppl= inf ppl1= inf
+
+Dusk was s had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -1302883440376.3445 ppl= inf ppl1= inf
+
+Darkness had descended like a Clerk arm by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Darkness had descended like a Court an by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Derek Ness had descended like a Certain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -1302883440377.0852 ppl= inf ppl1= inf
+
+, Darkness had descended like a Certain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( Darkness | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960253.1803 ppl= inf ppl1= inf
+
+Derek us less had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -1302883440376.3445 ppl= inf ppl1= inf
+
+Dave Lawless had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960251.9630 ppl= inf ppl1= inf
+
+Derek is less had descended like a Certain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -1737177920501.4666 ppl= inf ppl1= inf
+
+Darkness had descended like a Cecil aims by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Darkness had descended like a Cecil arms by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Darkness had descended like a Cecil aim by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Darkness had descended like a Court arm by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Derek no less had descended like a Certain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -1737177920501.4666 ppl= inf ppl1= inf
+
+Darkness had descended like a Curtain boy the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | Curtain ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( the | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480127.5814 ppl= inf ppl1= inf
+
+Dave lawless had descended like a Certain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -1302883440377.0852 ppl= inf ppl1= inf
+
+Darkness had descended like a Certain by He 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( <unk> | by ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( </s> | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.7034 ppl= inf ppl1= inf
+
+Darkness had descended like a Curtain , by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | Curtain ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -434294480128.3595 ppl= inf ppl1= inf
+
+Darkness had descended like a Certain by she 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( <unk> | by ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( </s> | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.7034 ppl= inf ppl1= inf
+
+Dusk was s had descended like a Certain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -1737177920501.4666 ppl= inf ppl1= inf
+
+Darkness had descended like a Curtain way he 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | Curtain ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( </s> | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -868588960251.6620 ppl= inf ppl1= inf
+
+Plazek unless had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( unless | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( had | unless ...)	= [3gram] 0.0476188 [ -1.322221 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -434294480129.2045 ppl= inf ppl1= inf
+
+Darkness had descended like a Curtain May the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | Curtain ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( the | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480127.5814 ppl= inf ppl1= inf
+
+Darkness had descended like a Curtain Lay the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | Curtain ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( the | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480127.5814 ppl= inf ppl1= inf
+
+Darkness had descended like a Certainly the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( the | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 7 words, 0 OOVs
+0 zeroprobs, logprob= -434294480127.2803 ppl= inf ppl1= inf
+
+Derek was 5 had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -1302883440376.3445 ppl= inf ppl1= inf
+
+Darkness had descended like a Cecil arm lay the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( the | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -1302883440376.0435 ppl= inf ppl1= inf
+
+Derek unless had descended Like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( unless | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( had | unless ...)	= [3gram] 0.0476188 [ -1.322221 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( <unk> | descended ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( a | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960254.1504 ppl= inf ppl1= inf
+
+Darkness had descended like a Clint an by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Darkness had descended like a Clerk aims by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Dusky less had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960251.9630 ppl= inf ppl1= inf
+
+Darkness had descended like a Clerk arms by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Darkness had descended like a Curtain lay The 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | Curtain ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( </s> | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -868588960251.6620 ppl= inf ppl1= inf
+
+Darkness had descended like a Clerk aim by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Darkness had descended like a Cherian by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480128.0585 ppl= inf ppl1= inf
+
+Derek us less had descended like a Certain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -1737177920501.4666 ppl= inf ppl1= inf
+
+Dave Lawless had descended like a Certain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -1302883440377.0852 ppl= inf ppl1= inf
+
+Darkness had descended like a Kaukau by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480128.0585 ppl= inf ppl1= inf
+
+Darkness had descended like a Curan by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480128.0585 ppl= inf ppl1= inf
+
+Darkness had descended like an Curtain by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( <unk> | like ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( Curtain | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480128.0584 ppl= inf ppl1= inf
+
+' Darkness had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( Darkness | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -434294480128.0584 ppl= inf ppl1= inf
+
+Darkness had descended like a Cecil am by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Darkness had descended like a Caetani by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480128.0585 ppl= inf ppl1= inf
+
+Darkness had descended like a Curran by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480128.0585 ppl= inf ppl1= inf
+
+Darkness had descended like a Certain boy the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( the | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -868588960251.6620 ppl= inf ppl1= inf
+
+Darkness had descended like a Clint arm by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Dave caress had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960251.9630 ppl= inf ppl1= inf
+
+Darkness had descended like a , Curtain by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( Curtain | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -434294480128.3595 ppl= inf ppl1= inf
+
+Due lawless had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960251.9630 ppl= inf ppl1= inf
+
+Dave kv less had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -1302883440376.3445 ppl= inf ppl1= inf
+
+Darkness had descended like a Curtain buy the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | Curtain ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( the | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480127.5814 ppl= inf ppl1= inf
+
+Darkness had descended like a Court aims by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Darkness had descended like a Court arms by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Darkness , had descended like a Curtain by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( <unk> | Darkness ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -434294480127.8823 ppl= inf ppl1= inf
+
+Darkness had descended like a Clark an by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Darkness had descended like a Court aim by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960252.4401 ppl= inf ppl1= inf
+
+Darkness had descended like a Curtain by She 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | by ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( </s> | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -434294480127.5814 ppl= inf ppl1= inf
+
+D merciless had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960251.9630 ppl= inf ppl1= inf
+
+Dark unless had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( unless | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( had | unless ...)	= [3gram] 0.0476188 [ -1.322221 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -434294480129.2045 ppl= inf ppl1= inf
+
+" Darkness had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( Darkness | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -434294480128.0584 ppl= inf ppl1= inf
+
+Dusk unless had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( unless | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( had | unless ...)	= [3gram] 0.0476188 [ -1.322221 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -434294480129.2045 ppl= inf ppl1= inf
+
+Darkness had descended like a Clerk arm lay the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( the | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -1302883440376.0435 ppl= inf ppl1= inf
+
+Darkness " had descended like a Curtain by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( <unk> | Darkness ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -434294480127.8823 ppl= inf ppl1= inf
+
+Derek we ss had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -1302883440376.3445 ppl= inf ppl1= inf
+
+Darkness had descended Like a Cecil an by the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( <unk> | descended ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( a | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -1302883440377.3860 ppl= inf ppl1= inf
+
+Dave kw less had descended like a Curtain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( had | <unk> ...)	= [3gram] 0.0909087 [ -1.041395 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( Curtain | a ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( by | Curtain ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 10 words, 0 OOVs
+0 zeroprobs, logprob= -1302883440376.3445 ppl= inf ppl1= inf
+
+Darkness had descended like a Certain way he 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( </s> | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -1302883440375.7424 ppl= inf ppl1= inf
+
+Plazek unless had descended like a Certain by the 
+	p( <unk> | <s> )	= [2gram] 0 [ -434294480124.381592 ]
+	p( unless | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( had | unless ...)	= [3gram] 0.0476188 [ -1.322221 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( by | <unk> ...)	= [3gram] 0.0454547 [ -1.342422 ]
+	p( the | by ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 9 words, 0 OOVs
+0 zeroprobs, logprob= -868588960254.3265 ppl= inf ppl1= inf
+
+Darkness had descended like a Certain May the 
+	p( Darkness | <s> )	= [2gram] 0.5 [ -0.301030 ]
+	p( had | Darkness ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( descended | had ...)	= [3gram] 0.666667 [ -0.176091 ]
+	p( like | descended ...)	= [3gram] 0.333334 [ -0.477120 ]
+	p( a | like ...)	= [3gram] 0.5 [ -0.301030 ]
+	p( <unk> | a ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( <unk> | <unk> ...)	= [3gram] 0 [ -434294480124.381592 ]
+	p( the | <unk> ...)	= [3gram] 0.136364 [ -0.865301 ]
+	p( </s> | the ...)	= [3gram] 0.5 [ -0.301030 ]
+1 sentences, 8 words, 0 OOVs
+0 zeroprobs, logprob= -868588960251.6620 ppl= inf ppl1= inf
+
+file best100.filt: 100 sentences, 877 words, 0 OOVs
+0 zeroprobs, logprob= -82950245704117.781250 ppl= inf ppl1= inf
