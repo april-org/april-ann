@@ -70,6 +70,7 @@ while true do
     end
     --]]
     -- compute scores for each collected ngram
+
     for key,where in pairs(ngrams) do
       lmi:clear_queries()
       local sum=0

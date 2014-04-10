@@ -122,9 +122,9 @@ opt = cmdOpt{
     long = "help",
     argument = "no",
     action = function (argument) 
-	       print(opt:generate_help()) 
-	       os.exit(1)
-	     end    
+      print(opt:generate_help()) 
+      os.exit(1)
+    end    
   }
 }
 
@@ -172,15 +172,15 @@ if word2probs then
 end
 
 vocab = lexClass.load(io.open(vocabfilename))
-model = ngram.load_language_model(langmodel_filename,
-				  vocab, "<s>", "</s>",
-				  {
-				    cache_size = 10, -- podria ser 0 ;)
-				    trie_size  = trie_size,
-				    word2probs = word2probs,
-				    cache_data = cache_data,
-				    max_trie_constants = max_softmax_constants
-				  })
+model = language_models.load(langmodel_filename,
+                             vocab, "<s>", "</s>",
+                             {
+                               cache_size = 10, -- podria ser 0 ;)
+                               trie_size  = trie_size,
+                               word2probs = word2probs,
+                               cache_data = cache_data,
+                               max_trie_constants = max_softmax_constants
+                             })
 
 if multi_class then
   local N = #vocab:getWordVocabulary()
@@ -197,23 +197,24 @@ cronometro = util.stopwatch()
 cronometro:reset()
 cronometro:go()
 
-resul = ngram.test_set_ppl(model,vocab,test,io.stdout,debug,
-			   "<unk>","<s>","</s>",is_stream,use_unk,
-			   model:has_cache(),
-			   train_restriction,
-			   cache_stop_token,
-			   null_token,
-			   order,
-			   use_bcc,
-			   use_ecc,
-			   multi_class_table,
-			   num_classes)
+resul = language_models.test_set_ppl{ lm = model,
+                                      vocab = vocab,
+                                      testset = test,
+                                      log_file = io.stdout,
+                                      debug_flag = debug,
+                                      use_unk = use_unk,
+                                      use_cache = false,
+                                      train_restriction = train_restriction,
+                                      cache_stop_token = cache_stop_token,
+                                      null_token = null_token,
+                                      use_bcc = use_bcc,
+                                      use_ecc = use_ecc }
 
 fprintf(io.stderr,
-	"Time: %f\nTime/token: %f\nTime/sentence: %f\n",
-	cronometro:read(),
-	cronometro:read()/(resul.numwords + resul.numsentences),
-	cronometro:read()/resul.numsentences)
+        "Time: %f\nTime/token: %f\nTime/sentence: %f\n",
+        cronometro:read(),
+        cronometro:read()/(resul.numwords + resul.numsentences),
+        cronometro:read()/resul.numsentences)
 
 if print_stats then
   model:printStats()
