@@ -182,6 +182,7 @@ model = language_models.load(langmodel_filename,
                                max_trie_constants = max_softmax_constants
                              })
 
+--[[
 if multi_class then
   local N = #vocab:getWordVocabulary()
   multi_class_table = {}
@@ -192,6 +193,7 @@ if multi_class then
   multi_class_table = r:shuffle(multi_class_table)
   num_classes       = math.ceil(math.sqrt(N))
 end
+]]--
 
 cronometro = util.stopwatch()
 cronometro:reset()

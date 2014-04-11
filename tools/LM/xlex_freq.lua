@@ -56,9 +56,9 @@ opt = cmdOpt{
     long = "help",
     argument = "no",
     action = function (argument) 
-	       print(opt:generate_help()) 
-	       os.exit(1)
-	     end    
+      print(opt:generate_help()) 
+      os.exit(1)
+    end    
   }
 }
 
@@ -93,9 +93,9 @@ if vocfile then
     if line ~= "<s>" and line ~= "</s>" and line ~= "<unk>" and line ~= "<stop>" and line ~= "<NULL>" then
       map[line] = next
       vocab[next] = {
-	w  = line,
-	n  = 0,
-	id = next
+        w  = line,
+        n  = 0,
+        id = next
       }
       next = next + 1
     end
@@ -119,35 +119,35 @@ if text then
       if math.mod(jaja, 100000) == 0 then printf(".") io.stdout:flush() end
       local words = string.tokenize(line)
       for i,w in ipairs(words) do
-	if vocfile then
-	  if map[w] then
-	    vocab[map[w]].n = vocab[map[w]].n + prob
-	    counts = counts + prob
-	  else
-	    count_unks = count_unks + prob
-	  end
-	elseif not vocfile then
-	  if not map[w] then
-	    map[w] = next
-	    next   = next + 1
-	  end
-	  vocab[map[w]] = vocab[map[w]] or {
-	    w  = w,
-	    id = map[w],
-	    n  = 0,
-	  }
-	  vocab[map[w]].n = vocab[map[w]].n+prob
-	  counts = counts + prob
-	end
+        if vocfile then
+          if map[w] then
+            vocab[map[w]].n = vocab[map[w]].n + prob
+            counts = counts + prob
+          else
+            count_unks = count_unks + prob
+          end
+        elseif not vocfile then
+          if not map[w] then
+            map[w] = next
+            next   = next + 1
+          end
+          vocab[map[w]] = vocab[map[w]] or {
+            w  = w,
+            id = map[w],
+            n  = 0,
+          }
+          vocab[map[w]].n = vocab[map[w]].n+prob
+          counts = counts + prob
+        end
       end
     end
     printf("\n")
   end
 
   table.sort(vocab, function(a, b)
-		      if a.n == b.n then return a.id < b.id end
-		      return a.n > b.n
-		    end)
+    if a.n == b.n then return a.id < b.id end
+    return a.n > b.n
+  end)
 
   local f = io.open("voc.ALL", "w")
   f:write("<s>\n</s>\n")
