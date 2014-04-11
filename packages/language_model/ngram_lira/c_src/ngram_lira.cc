@@ -569,7 +569,8 @@ namespace LanguageModels {
       }
       // apply backoff when the transition is not found:
       if (st == lira_model->lowest_state) {
-	result.push_back(KeyScoreBurdenTuple(st,log_float::zero(),burden));
+        // this is impossible, throws an error
+        ERROR_EXIT(128, "Transition not found!!!\n");
 	return;
       }
       accum_backoff *= lira_model->backoff_table[st].bo_prob;
