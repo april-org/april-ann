@@ -1562,7 +1562,7 @@ end
 function util.deserialize(from)
   assert(from, "A string or function is needed as 1st argument")
   if type(from) == "string" then
-    dofile(from)
+    return dofile(from)
   elseif iscallable(from) then
     local f = load(from())
     return f()
