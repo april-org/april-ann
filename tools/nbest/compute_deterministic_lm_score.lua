@@ -35,7 +35,6 @@ collectgarbage("collect")
 time=util.stopwatch()
 time:go()
 local scores = {}
-local ngrams = {}
 local j=1
 local prevn = nil
 --lm:restart()
@@ -75,20 +74,9 @@ while true do
       scores[b]= scores[b] + p
     end
     lmi:clear_queries()
---    for key,where in pairs(ngrams) do
---      local i = 1
---      print(key)
---      for word,d in pairs(where) do
---        _,p = result:get(i)
---        for _,id in ipairs(d) do
---          scores[id] = scores[id] + p
---        end
---        i = i + 1
---      end
---    end
+
     print(table.concat(scores, "\n"))
     scores    = {}
-    ngrams    = {}
     prevn     = n
     --[[
     if use_cache or n and math.mod(n, 100) == 99 then lm:restart() end
@@ -103,10 +91,9 @@ while true do
   if not line then break end
   
   line = string.match(line, "|||(.*)|||.*|||")
-  -- collect all ngrams of this sentence for efficient computation
   local words = string.tokenize(line)
   local wids  = vocab:searchWordIdSequence(words, vocab:getWordId(unk_word))
-  table.insert(scores, 0) --  frase actual
+  table.insert(scores, 0)
   local key
   if use_bcc then
     key = lmi:get_initial_key()
@@ -114,21 +101,14 @@ while true do
     key = lmi:get_zero_key()
   end
   for wpos=1,#wids do
-    ngrams[key] = ngrams[key] or {}
     local w = wids[wpos]
-    ngrams[key][w] = ngrams[key][w] or {}
-    table.insert(ngrams[key][w], #scores)
     lmi:insert_query(key, w, { id_key = #scores})
-    -- get next key
     result = lmi:next_keys(key, w)
     assert(#result == 1)
     key = result:get(1)
   end
   if use_ecc then
-    ngrams[key] = ngrams[key] or {}
     local w = vocab:getWordId(end_word)
-    ngrams[key][w] = ngrams[key][w] or {}
-    table.insert(ngrams[key][w], #scores)
     lmi:insert_query(key, w, { id_key = #scores })
   end
   j=j+1
