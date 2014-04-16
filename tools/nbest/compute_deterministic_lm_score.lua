@@ -25,7 +25,6 @@ unk_id    = vocab:getWordId(unk_word)
 ------------------------------------------------------------------------
 
 collectgarbage("collect")
-
 lm = language_models.load(lm_file, vocab, begin_word, end_word)
 local lmi = lm:get_interface()
 collectgarbage("collect")
@@ -69,26 +68,24 @@ while true do
       end
     end
     --]]
-    -- compute scores for each collected ngram
 
-    for key,where in pairs(ngrams) do
-      lmi:clear_queries()
-      local sum=0
-      for word,_ in pairs(where) do
-        lmi:insert_query(key, word)
-      end
-      result = lmi:get_queries()
-      local i = 1
-      for word,d in pairs(where) do
-        _,p = result:get(i)
-        for _,id in ipairs(d) do
-          scores[id] = scores[id] + p
-        end
-        sum = sum + #d
-        i = i + 1
-      end
-      --fprintf(io.stderr, "%d : %d\n", key, sum)
+    result = lmi:get_queries()
+    for i=1,#result do
+      k,p = result:get(i)
+      scores[b]= scores[b] + p
     end
+    lmi:clear_queries()
+--    for key,where in pairs(ngrams) do
+--      local i = 1
+--      print(key)
+--      for word,d in pairs(where) do
+--        _,p = result:get(i)
+--        for _,id in ipairs(d) do
+--          scores[id] = scores[id] + p
+--        end
+--        i = i + 1
+--      end
+--    end
     print(table.concat(scores, "\n"))
     scores    = {}
     ngrams    = {}
@@ -110,18 +107,10 @@ while true do
   local words = string.tokenize(line)
   local wids  = vocab:searchWordIdSequence(words, vocab:getWordId(unk_word))
   table.insert(scores, 0) --  frase actual
-  -- begin context
-  local context = {}
   local key
   if use_bcc then
-    for i=1,lm:ngram_order()-1 do
-      table.insert(context, vocab:getWordId(begin_word))
-    end
     key = lmi:get_initial_key()
   else
-    for i=1,lm:ngram_order()-1 do
-      table.insert(context, 0)
-    end
     key = lmi:get_zero_key()
   end
   for wpos=1,#wids do
@@ -129,10 +118,8 @@ while true do
     local w = wids[wpos]
     ngrams[key][w] = ngrams[key][w] or {}
     table.insert(ngrams[key][w], #scores)
-    -- move one position the context
-    table.remove(context, 1)
-    table.insert(context, w)
-    -- next key
+    lmi:insert_query(key, w)
+    -- get next key
     result = lmi:next_keys(key, w)
     assert(#result == 1)
     key = result:get(1)
@@ -142,6 +129,7 @@ while true do
     local w = vocab:getWordId(end_word)
     ngrams[key][w] = ngrams[key][w] or {}
     table.insert(ngrams[key][w], #scores)
+    lmi:insert_query(key, w)
   end
   j=j+1
   if math.modf(j, 250) == 0 then collectgarbage("collect") end

@@ -1,48 +1,95 @@
 
 \data\
-ngram 1=16
-ngram 2=19
-ngram 3=0
+ngram 1=26
+ngram 2=37
+ngram 3=19
 
 \1-grams:
--0.8653014	</s>
--99	<s>	-0.5383909
--1.342423	Curtain	-0.2808266
--1.041393	Darkness	-0.4134521
--1.342423	a	-0.2808266
--1.342423	behind	-0.2373609
--1.342423	by	-0.2373609
--1.342423	curtain	-0.2373609
--1.041393	descended	-0.4357285
--1.342423	from	-0.2373609
--1.041393	had	-0.4357286
--1.342423	hides	-0.2808266
--1.342423	like	-0.2808266
--0.8653014	the	-0.5149098
--1.342423	unless	-0.2808266
--1.342423	you	-0.2596373
+-0.9726142	</s>
+-99	<s>	-1.229844
+-2.227885	<unk>
+-2.227887	Cecil	-0.2984526
+-1.449735	Certain	-0.799055
+-2.227887	Clurman	-0.260664
+-2.227887	Cuban	-0.260664
+-1.273644	Curtain	-0.9510902
+-1.081759	Darkness	-1.127182
+-1.625827	Derek	-0.6885672
+-1.926857	Like	-0.4282115
+-1.926857	The	-0.4282115
+-0.9726142	a	-1.229844
+-2.227887	an	-0.260664
+-1.051795	by	-1.15521
+-0.9726142	descended	-1.229844
+-0.9726142	had	-1.229844
+-1.926857	he	-0.4282115
+-1.926857	lay	-0.4395663
+-1.023767	like	-1.181539
+-2.227887	mess	-0.2521202
+-2.227887	s	-0.2521202
+-1.081759	the	-1.127182
+-1.926857	unless	-0.4282115
+-2.227887	was	-0.2984526
+-2.227887	way	-0.263475
 
 \2-grams:
--0.30103	<s> Darkness
--0.60206	<s> unless
--0.30103	Curtain by
--0.4771213	Darkness had
--0.4771213	Darkness hides
--0.30103	a Curtain
--0.30103	behind the
--0.30103	by the
--0.30103	curtain </s>
--0.4771213	descended from
--0.4771213	descended like
--0.30103	from the
--0.1760913	had descended
--0.30103	hides behind
--0.30103	like a
--0.30103	the </s>
--0.60206	the curtain
--0.30103	unless you
--0.30103	you had
+-0.1326256	<s> Darkness	0
+-0.6766936	<s> Derek	-0.07918122
+-0.30103	Cecil an
+-0.146128	Certain by	0.10721
+-0.845098	Certain lay
+-0.30103	Clurman by
+-0.30103	Cuban by
+-0.154902	Curtain by	-0.03891808
+-1	Curtain lay
+-1	Curtain way
+-0.02996322	Darkness had	0.1026623
+-0.69897	Derek mess
+-0.39794	Derek unless	0
+-0.69897	Derek was
+-0.1760913	Like a
+-0.1760913	The </s>
+-1.278754	a Cecil
+-0.5006024	a Certain	-0.2340832
+-1.278754	a Clurman
+-1.278754	a Cuban
+-0.3245111	a Curtain	-0.1303338
+-0.30103	an by
+-0.90309	by The	0
+-0.90309	by he	0
+-0.1627273	by the	0.09691012
+-0.9777236	descended Like	0
+-0.07463362	descended like	0
+-0.0234811	had descended	0
+-0.1760913	he </s>
+-0.1760913	lay the	0.6989701
+-0.02632894	like a	-0.05030513
+-0.30103	mess had
+-0.30103	s had
+-0.02996322	the </s>
+-0.1760913	unless had	0.8016324
+-0.30103	was s
+-0.30103	way the
 
 \3-grams:
+-0.07918125	a Certain by
+-0.1091445	a Curtain by
+-0.02996322	<s> Darkness had
+-0.30103	<s> Derek unless
+-0.1760913	descended Like a
+-0.1760913	by The </s>
+-0.50515	like a Certain
+-0.30103	like a Curtain
+-0.2218488	Certain by the
+-0.146128	Curtain by the
+-0.9777236	had descended Like
+-0.07463362	had descended like
+-0.02996322	Darkness had descended
+-0.1760913	unless had descended
+-0.1760913	by he </s>
+-0.02632894	descended like a
+-0.03778856	by the </s>
+-0.1760913	lay the </s>
+-0.1760913	Derek unless had
 
 \end\
