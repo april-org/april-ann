@@ -71,7 +71,7 @@ while true do
 
     result = lmi:get_queries()
     for i=1,#result do
-      k,p = result:get(i)
+      k,p,b = result:get(i)
       scores[b]= scores[b] + p
     end
     lmi:clear_queries()
@@ -118,7 +118,7 @@ while true do
     local w = wids[wpos]
     ngrams[key][w] = ngrams[key][w] or {}
     table.insert(ngrams[key][w], #scores)
-    lmi:insert_query(key, w)
+    lmi:insert_query(key, w, { id_key = #scores})
     -- get next key
     result = lmi:next_keys(key, w)
     assert(#result == 1)
@@ -129,7 +129,7 @@ while true do
     local w = vocab:getWordId(end_word)
     ngrams[key][w] = ngrams[key][w] or {}
     table.insert(ngrams[key][w], #scores)
-    lmi:insert_query(key, w)
+    lmi:insert_query(key, w, { id_key = #scores })
   end
   j=j+1
   if math.modf(j, 250) == 0 then collectgarbage("collect") end
