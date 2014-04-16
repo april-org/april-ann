@@ -29,6 +29,7 @@
 #include "qsort.h"
 #include "swap.h"
 #include "pair.h"
+#include "vector.h"
 
 template<typename T>
 const unsigned int SparseMatrix<T>::MATRIX_BINARY_VERSION = 0x00000001;
