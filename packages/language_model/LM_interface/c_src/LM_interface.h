@@ -224,9 +224,13 @@ namespace LanguageModels {
   private:
     april_utils::TrieVector *trie_vector;
   public:
-    HistoryBasedLM(april_utils::TrieVector &trie_vector) : 
-      trie_vector(trie_vector) { }
-  
+    HistoryBasedLM(april_utils::TrieVector *trie_vector) : 
+      trie_vector(trie_vector) {
+      IncRef(trie_vector);
+    }
+    ~HistoryBasedLM() {
+      DecRef(trie_vector);
+    }
   };
   
   template <typename Key, typename Score>
