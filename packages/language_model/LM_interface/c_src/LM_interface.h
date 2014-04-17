@@ -6,6 +6,7 @@
 #include "logbase.h"
 #include "referenced.h"
 #include "vector.h"
+#include "trie_vector.h"
 
 namespace LanguageModels {
   
@@ -39,7 +40,7 @@ namespace LanguageModels {
       Score score;
       KeyScoreTuple() {}
       KeyScoreTuple(Key k, Score s) :
-	key(k), score(s) {}
+        key(k), score(s) {}
     };
     
     /// This is the burden ignored by the LM but needed by our decoders
@@ -48,9 +49,9 @@ namespace LanguageModels {
       int32_t id_word;
       Burden() {}
       Burden(int32_t id_key, int32_t id_word) :
-	id_key(id_key), id_word(id_word) {}
+        id_key(id_key), id_word(id_word) {}
       Burden(const Burden &other) :
-	id_key(other.id_key), id_word(other.id_word) { }
+        id_key(other.id_key), id_word(other.id_word) { }
     };
     
     /// This struct is the result produced by the LM query, a pair of
@@ -141,8 +142,8 @@ namespace LanguageModels {
       UNUSED_VARIABLE(is_sorted);
       // default behavior
       for (typename vector<WordIdScoreTuple>::iterator it = words.begin();
-	   it != words.end(); ++it)
-	insertQuery(key, it->word, Burden(id_key, it->id_word), it->score);
+      it != words.end(); ++it)
+        insertQuery(key, it->word, Burden(id_key, it->id_word), it->score);
     }
 
     /// this method may perform the 'actual' computation of LM queries
@@ -216,6 +217,29 @@ namespace LanguageModels {
   };
 
   class LMHistoryManager : public Referenced {
+  };
+
+  template <typename Key, typename Score>
+  class HistoryBasedLM : public LMInterface<Key,Score> {
+  private:
+    april_utils::TrieVector *trie_vector;
+  public:
+    HistoryBasedLM(april_utils::TrieVector &trie_vector) : 
+      trie_vector(trie_vector) { }
+  
+  };
+  
+  template <typename Key, typename Score>
+  class BunchHashedLM : public LMInterface<Key,Score> {
+  private:
+    unsigned int bunch_size;
+  public:
+    BunchHashedLM(unsigned int bunch_size) :
+      bunch_size(bunch_size) { }
+    unsigned int getBunchSize() { return bunch_size; }
+    void setBunchSize(unsigned int bunch_size) {
+      bunch_size = bunch_size;
+    }
   };
 
   typedef LMInterface<uint32_t,log_float> LMInterfaceUInt32LogFloat;
