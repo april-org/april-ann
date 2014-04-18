@@ -1,6 +1,7 @@
 return { 
   -- BASIC PACAKGES
   "util",
+  "utest",
   "stats",
   "dataset",
   "matrix",
