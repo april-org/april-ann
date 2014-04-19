@@ -242,7 +242,7 @@ namespace LanguageModels {
       bunch_size(bunch_size) { }
     unsigned int getBunchSize() { return bunch_size; }
     void setBunchSize(unsigned int bunch_size) {
-      bunch_size = bunch_size;
+      this->bunch_size = bunch_size;
     }
   };
 

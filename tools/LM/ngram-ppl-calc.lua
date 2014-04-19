@@ -5,14 +5,15 @@ opt = cmdOpt{
   argument_description = "",
   main_description = "Ngram PPL computed with April toolkit",
   { index_name="multi_class",
-    description = "Compute a multi class with given number of classes (by default no)",
+    description = "Compute a multi class with given number of classes",
     long    = "multi-class",
-    argument = "yes",
+    argument = "no",
   },
   { index_name="vocabfilename",
     description = "Vocabulary (plain or HTK dictionary)",
     short    = "v",
     argument = "yes",
+    mode = "always",
   },
   {
     index_name="langmodel_filename",
@@ -20,6 +21,7 @@ opt = cmdOpt{
                   ".DIR for NNLMs in a DIR structure)",
     short = "l",
     argument = "yes",
+    mode = "always",
   },
   {
     index_name="nnlm_conf",
@@ -38,83 +40,100 @@ opt = cmdOpt{
     description = "Input text",
     short = "t",
     argument = "yes",
+    mode = "always",
   },
   { index_name="debug",
     description = "Debug level (0, 1, 2)",
     short = "d",
     argument = "yes",
+    mode = "always",
+    default_value = 0,
+    filter = tonumber,
   },
   {
     index_name="stream",
-    description="The input text is a words stream [default=no]",
+    description="The input text is a words stream",
     long="stream",
-    argument="yes",
+    argument = "no",
   },
   {
     index_name  = "trie_size",
-    description = "Size of TrieVector for NNLMs [default=24]",
+    description = "Size of TrieVector for NNLMs",
     long        = "trie-size",
     argument    = "yes",
+    mode = "always",
+    default_value = 24,
+    filter = tonumber,
   },
   {
-    index_name  = "unk",
-    description = "Indicate if use or not unk words in PPL computation (all, context, none) [default=all]",
+    index_name  = "use_unk",
+    description = "Indicate if use or not unk words in PPL computation (all, context, none)",
     long        = "unk",
     argument    = "yes",
+    mode = "always",
+    default_value = "all",
   },
   {
     index_name  = "train_restriction",
-    description = "Indicate the use of <train> for indicate which sentences must be used for compute PPL [default=no]",
+    description = "Indicate the use of <train> for indicate which sentences must be used for compute PPL",
     long        = "train-restriction",
-    argument    = "yes",
+    argument = "no",
   },
   {
     index_name  = "cache_data",
-    description = "File with cache-data (use only with .DIR) [default=nil]",
+    description = "File with cache-data (use only with .DIR)",
     long        = "cache-data",
     argument    = "yes",
   },
   {
     index_name="cache_stop_token",
-    description="Cache stop token (default <stop>)",
+    description="Cache stop token",
     long="cache-stop-token",
     argument="yes",
+    mode = "always",
+    default_value = "<stop>",
   },
   {
     index_name="null_token",
-    description="Null token (default <NULL>)",
+    description="Null token",
     long="null-token",
     argument="yes",
+    mode = "always",
+    default_value = "<NULL>",
   },
   {
     index_name  = "order",
-    description = "Use this Ngram order instead of model's order [default=nil]",
+    description = "Use this Ngram order instead of model's order",
     long        = "order",
     argument    = "yes",
+    filter = tonumber,
   },
   {
-    index_name  = "use_bcc",
-    description = "Use begin context cue [default=yes]",
-    long        = "use-bcc",
-    argument    = "yes",
+    index_name  = "no_sos",
+    description = "Avoid start-of-sentence",
+    long        = "no-sos",
+    argument = "no",
   },
   {
-    index_name  = "use_ecc",
-    description = "Use begin context cue [default=yes]",
-    long        = "use-ecc",
-    argument    = "yes",
+    index_name  = "no_eos",
+    description = "Avoid end-of-sentence",
+    long        = "no-eos",
+    argument = "no",
   },
   {
     index_name = "max_softmax_constants",
-    description = "Max number of softmax constants [default=0]",
+    description = "Max number of softmax constants",
     long="max-softmax-constants",
     argument="yes",
+    mode = "always",
+    default_value = 0,
+    filter = tonumber,
   },
   {
     index_name = "print_stats",
-    description = "Print stats [default='no']",
+    description = "Print stats",
     long="print-stats",
-    argument="yes",
+    argument = "no",
   },
   {
     description = "shows this help message",
@@ -130,57 +149,23 @@ opt = cmdOpt{
 
 ---------------------------------------------------
 
-optargs    = opt:parse_args()
-if type(optargs) == "string" then print(optargs) end
-
-
-nnlm_conf = {}
-if optargs.nnlm_conf then
-  local t = dofile(optargs.nnlm_conf)
-  for name,value in pairs(t) do
-    if not nnlm_conf[name] then
-      nnlm_conf[name] = value
-    end
-  end
-end
-
-multi_class        = ((optargs.multi_class or "no")=="yes")
-vocabfilename      = optargs.vocabfilename or error("Needs a vocabulary")
-langmodel_filename = optargs.langmodel_filename or error("Needs a language model")
-test               = optargs.test or error("Needs an input text file")
-debug              = tonumber(optargs.debug) or 0
-trie_size          = tonumber(optargs.trie_size)
-is_stream          = ((optargs.stream or "no") == "yes")
-use_unk            = (optargs.unk or "all")
-word2probs         = optargs.word2probs
-optargs.cache_data = optargs.cache_data or nnlm_conf.cache_data
-cache_data         = optargs.cache_data
-optargs.null_token = optargs.cache_stop_token or nnlm_conf.cache_stop_token
-cache_stop_token   = optargs.cache_stop_token or "<stop>"
-optargs.null_token = optargs.null_token or nnlm_conf.null_token
-null_token         = optargs.null_token or "<NULL>"
-optargs.train_restriction = optargs.train_restriction or nnlm_conf.train_restriction
-train_restriction  = ((optargs.train_restriction or "no" ) == "yes")
-order              = tonumber(optargs.order)
-use_bcc            = ((optargs.use_bcc or "yes" ) == "yes")
-use_ecc            = ((optargs.use_ecc or "yes" ) == "yes")
-max_softmax_constants = tonumber(optargs.max_softmax_constants or 0) or error ("Needs a number at max_softmax_constants")
-print_stats = ((optargs.print_stats or "no") == "yes")
+local optargs = opt:parse_args(nil,"nnlm_conf",false)
+table.unpack_on(optargs, _G)
 
 if word2probs then
   word2probs = ngram.load_word2prob_smooth_factor(word2probs)
 end
 
-vocab = lexClass.load(io.open(vocabfilename))
-model = language_models.load(langmodel_filename,
-                             vocab, "<s>", "</s>",
-                             {
-                               cache_size = 10, -- podria ser 0 ;)
-                               trie_size  = trie_size,
-                               word2probs = word2probs,
-                               cache_data = cache_data,
-                               max_trie_constants = max_softmax_constants
-                             })
+local vocab = lexClass.load(io.open(vocabfilename))
+local model = language_models.load(langmodel_filename,
+                                   vocab, "<s>", "</s>",
+                                   {
+                                     cache_size = 10, -- podria ser 0 ;)
+                                     trie_size  = trie_size,
+                                     word2probs = word2probs,
+                                     cache_data = cache_data,
+                                     max_trie_constants = max_softmax_constants
+                                   })
 
 --[[
 if multi_class then
@@ -195,22 +180,22 @@ if multi_class then
 end
 ]]--
 
-cronometro = util.stopwatch()
+local cronometro = util.stopwatch()
 cronometro:reset()
 cronometro:go()
 
-resul = language_models.test_set_ppl{ lm = model,
-                                      vocab = vocab,
-                                      testset = test,
-                                      log_file = io.stdout,
-                                      debug_flag = debug,
-                                      use_unk = use_unk,
-                                      use_cache = false,
-                                      train_restriction = train_restriction,
-                                      cache_stop_token = cache_stop_token,
-                                      null_token = null_token,
-                                      use_bcc = use_bcc,
-                                      use_ecc = use_ecc }
+local resul = language_models.test_set_ppl{ lm = model,
+                                            vocab = vocab,
+                                            testset = test,
+                                            log_file = io.stdout,
+                                            debug_flag = debug,
+                                            use_unk = use_unk,
+                                            use_cache = false,
+                                            train_restriction = train_restriction,
+                                            cache_stop_token = cache_stop_token,
+                                            null_token = null_token,
+                                            use_bcc = not no_sos,
+                                            use_ecc = not no_eos, }
 
 fprintf(io.stderr,
         "Time: %f\nTime/token: %f\nTime/sentence: %f\n",
