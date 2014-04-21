@@ -86,7 +86,8 @@ local function trainable_qlearning_trainer_train(self, prev_state, prev_action, 
 end
 
 -- takes the previos action, the current state (ANN input) and the reward,
--- updates the ANN weights and returns the current output Q(state,a)
+-- updates the ANN weights and returns the current output Q(state,a);
+-- this method updates on-line, using eligibility traces
 function trainable_qlearning_trainer_methods:one_step(action, state, reward)
   local Qsp
   if self.prev_state then
@@ -173,6 +174,13 @@ function trainable_qlearning_trainer_methods:to_lua_string(format)
 end
 
 ------------------------------------------------------------------------------
+
+-- the batch object helps to implement NFQ algorithm:
+--
+-- http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.72.1193&rep=rep1&type=pdf
+--
+-- Martin Riedmiller, Neural Fitted Q Iteration - First Experiences
+-- with a Data Eﬃcient Neural Reinforcement Learning Method, ECML 2005
 
 local trainable_batch_builder_methods,
 trainable_batch_builder_class_metatable=class("trainable.qlearning_trainer.batch_builder")
