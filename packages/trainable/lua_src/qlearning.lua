@@ -14,7 +14,7 @@ function trainable_qlearning_trainer_class_metatable:__call(t)
       gradients = { mandatory=false, default=matrix.dict() },
       traces = { mandatory=false, default=matrix.dict() },
       noise = { mandatory=false, default=ann.components.base() },
-      clampQ = { mandatory=false, default=function(v) return v end },
+      clampQ = { mandatory=false },
     }, t)
   local tr = params.sup_trainer
   local thenet  = tr:get_component()
@@ -39,7 +39,7 @@ end
 -- PRIVATE METHOD
 -- updates the weights given the previous state, the action, the current state
 -- and the observed reward
-function trainable_qlearning_trainer_train(self, prev_state, prev_action, state, reward)
+local function trainable_qlearning_trainer_train(self, prev_state, prev_action, state, reward)
   local noise = self.noise
   local weights = self.weights
   local thenet = self.thenet
@@ -112,11 +112,22 @@ function trainable_qlearning_trainer_methods:one_step(action, state, reward)
   return Qsp
 end
 
+-- returns an object where you can add several (state, action, next_state,
+-- reward) batches, and at the end, build a pair of input/output datasets for
+-- supervised training
+function trainable_qlearning_trainer_methods:get_batch_builder()
+  return trainable.qlearning_trainer.batch_builder(self)
+end
+
 -- begins a new sequence of training
 function trainable_qlearning_trainer_methods:reset()
   self.prev_state = nil
   self.traces:zeros()
   self.Qprob = 0
+end
+
+function trainable_qlearning_trainer_methods:calculate(...)
+  return self.tr:calculate(...)
 end
 
 function trainable_qlearning_trainer_methods:randomize_weights(...)
@@ -159,4 +170,112 @@ function trainable_qlearning_trainer_methods:to_lua_string(format)
                                         clampQ = self.clampQ,
                                       },
                                       format))
+end
+
+------------------------------------------------------------------------------
+
+local trainable_batch_builder_methods,
+trainable_batch_builder_class_metatable=class("trainable.qlearning_trainer.batch_builder")
+
+function trainable_batch_builder_class_metatable:__call(qlearner)
+  local obj = { qlearner = qlearner, batch={} }
+  return class_instance(obj,self)
+end
+
+function trainable_batch_builder_methods:add(prev_state, output, action, reward)
+  assert(isa(prev_state, matrix),   "Needs a matrix as 1st argument")
+  assert(isa(prev_state, matrix),   "Needs a matrix as 2nd argument")
+  assert(type(action) == "number",  "Needs a number as 3rd argument")
+  assert(type(reward) == "number",  "Needs a matrix as 4th argument")
+  table.insert(self.batch,
+               {
+                 prev_state:clone("row_major"):rewrap(prev_state:size()),
+                 action,
+                 reward,
+                 output:clone("row_major"):rewrap(output:size()),
+               })
+  if self.state_size then
+    assert(self.state_size == prev_state:size(), "Found different state sizes")
+  end
+  self.state_size = prev_state:size()
+end
+
+function trainable_batch_builder_methods:compute_dataset_pair()
+  assert(self.state_size, "Several number of adds is needed")
+  local discount = self.qlearner.discount
+  local inputs  = matrix(#self.batch, self.state_size)
+  local outputs = matrix(#self.batch, self.qlearner.nactions):zeros()
+  local mask = outputs:clone()
+  local mask_row
+  local Qs
+  local state
+  local acc_reward = 0
+  for i=#self.batch,1,-1 do
+    local prev_state,action,reward,output = table.unpack(self.batch[i])
+    --
+    acc_reward = reward + discount * acc_reward
+    Qs = outputs:select(1,i,Qs):set(action,acc_reward)
+    mask_row = mask:select(1,i,mask_row):set(action,1)
+    --
+    state = inputs:select(1,i):copy(prev_state)
+  end
+  if self.qlearner.clampQ then outputs:map(self.qlearner.clampQ) end
+  return dataset.matrix(inputs),dataset.matrix(outputs),dataset.matrix(mask)
+end
+
+-------------------------------------------------------------------------------
+
+trainable.qlearning_trainer.strategies = {}
+
+trainable.qlearning_trainer.strategies.make_epsilon_greedy = function(actions,
+                                                                      epsilon,
+                                                                      rnd)
+  assert(type(actions) == "table", "Needs an actions table as 1st argument")
+  local epsilon = epsilon or 0.1
+  local rnd = rnd or random()
+  return function(output)
+    local coin = rnd:rand()
+    local max,action = output:max()
+    local min = output:min()
+    local diff = max - min
+    local rel_diff = diff / (max + min)
+    if coin < epsilon or rel_diff < 0.01 then
+      action = rnd:choose(actions)
+    end
+    return action
+  end
+end
+
+trainable.qlearning_trainer.strategies.make_epsilon_decresing = function(actions,
+                                                                         epsilon,
+                                                                         decay,
+                                                                         rnd)
+  assert(type(actions) == "table", "Needs an actions table as 1st argument")
+  local epsilon = epsilon or 0.1
+  local decay = decay or 0.9
+  local rnd = rnd or random()
+  return function(output)
+    local coin = rnd:rand()
+    local max,action = output:max()
+    local min = output:min()
+    local diff = max - min
+    local rel_diff = diff / (max + min)
+    if coin < epsilon or rel_diff < 0.01 then
+      action = rnd:choose(actions)
+    end
+    epsilon = epsilon * decay
+    return action
+  end
+end
+
+trainable.qlearning_trainer.strategies.make_softmax = function(actions,rnd)
+  assert(type(actions) == "table", "Needs an actions table as 1st argument")
+  local rnd = rnd or random()
+  return function(output)
+    assert(math.abs(1-output:sum()) < 1e-03,
+           "Softmax strategy needs normalized outputs")
+    local dice = random.dice(output:toTable())
+    local action = dice:thrown(rnd)
+    return action
+  end
 end

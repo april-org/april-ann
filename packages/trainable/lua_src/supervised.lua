@@ -744,6 +744,7 @@ april_set_doc("trainable.supervised_trainer.train_step", {
 		  "An optimizer [optional]",
 		  "The bunch size [optional]",
 		  "A smooth gradients boolean [optional]",
+		  "A mask [optional]",
 		},
 		outputs = {
 		  "The mean of loss function at current batch",
@@ -753,13 +754,22 @@ april_set_doc("trainable.supervised_trainer.train_step", {
 function trainable_supervised_trainer_methods:train_step(input, target, loss,
 							 optimizer,
 							 bunch_size,
-							 smooth_gradients)
+							 smooth_gradients,
+                                                         mask)
   if type(input)  == "table" then input  = matrix.col_major(input)  end
   if type(target) == "table" then target = matrix.col_major(target) end
+  if type(mask)   == "table" then mask   = matrix.col_major(mask) end
   local loss       = loss or self.loss_function or error("Needs a loss object")
   local optimizer  = optimizer or self.optimizer or error("Needs an optimizer object")
   local bunch_size = bunch_size or self.bunch_size or 1
   local smooth_gradients = smooth_gradients or self.smooth_gradients
+  if mask then
+    if not isa(mask,matrix) then mask = mask:get_matrix() end
+    if not isa(target,matrix) then
+      target = target:get_matrix()
+    end
+    target = target:clone():cmul(mask)
+  end
   local tr_loss, _, tr_loss_matrix =
     optimizer:execute(function(it)
 			local self   = self
@@ -767,8 +777,18 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
 			local model  = self.ann_component
 			local grads  = self.weight_grads
 			local target = target
+                        local mask   = mask
 			model:reset(it)
 			local output = model:forward(input, true)
+                        if mask then
+                          if not isa(output,matrix) then
+                            output = output:get_matrix()
+                          end
+                          if not isa(target,matrix) then
+                            target = target:get_matrix()
+                          end
+                          output = output:clone():cmul(mask)
+                        end
 			local tr_loss,tr_loss_matrix
 			tr_loss,tr_loss_matrix = loss:compute_loss(output, target)
 			if not tr_loss_matrix then return nil end
@@ -814,13 +834,25 @@ april_set_doc("trainable.supervised_trainer.validate_step", {
 		  "A matrix with the loss of every pattern",
 		} })
 
-function trainable_supervised_trainer_methods:validate_step(input, target, loss)
+function trainable_supervised_trainer_methods:validate_step(input, target, loss, mask)
   if type(input)  == "table" then input  = matrix.col_major(input)  end
   if type(target) == "table" then target = matrix.col_major(target) end
+  if type(mask)   == "table" then mask   = matrix.col_major(mask) end
   local model = self.ann_component
   local loss  = loss or self.loss_function
   model:reset()
   local output = model:forward(input)
+  if mask then
+    if not isa(mask,matrix) then mask = mask:get_matrix() end
+    if not isa(output,matrix) then
+      output = output:get_matrix()
+    end
+    if not isa(target,matrix) then
+      target = target:get_matrix()
+    end
+    output = output:clone():cmul(mask)
+    target = target:clone():cmul(mask)
+  end
   local tr_loss,tr_loss_matrix = loss:compute_loss(output, target)
   if tr_loss_matrix then
     loss:accum_loss(tr_loss_matrix)
@@ -981,6 +1013,7 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 		params = {
 		  ["input_dataset"]  = "A dataset float or dataset token",
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
+		  ["mask_dataset"] = "A dataset float or dataset token (mask target output)",
 		  ["loss"]           = "A loss function. It is [optional] if loss given at constructor",
 		  ["optimizer"]      = "An optimizer. It is [optional] if optimizer is given at constructor",
 		  ["bunch_size"]     = 
@@ -1007,6 +1040,7 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 		params = {
 		  ["input_dataset"]  = "A dataset float or dataset token",
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
+		  ["mask_dataset"] = "A dataset float or dataset token (mask target output)",
 		  ["shuffle"]        = "A random object used to shuffle patterns before training",
 		  ["loss"]           = "A loss function. It is [optional] if loss given at constructor",
 		  ["optimizer"]      = "An optimizer. It is [optional] if optimizer is given at constructor",
@@ -1035,6 +1069,7 @@ april_set_doc("trainable.supervised_trainer.train_dataset", {
 		params = {
 		  ["input_dataset"]  = "A dataset float or dataset token",
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
+		  ["mask_dataset"] = "A dataset float or dataset token (mask target output)",
 		  ["shuffle"]        = "A random object used to shuffle patterns before training",
 		  ["replacement"]    = "A number with the size of replacement training",
 		  ["loss"]           = "A loss function. It is [optional] if loss given at constructor",
@@ -1116,17 +1151,34 @@ function trainable_supervised_trainer_methods:train_dataset(t)
   local loss       = params.loss
   local optimizer  = params.optimizer
   local smooth_gradients = params.smooth_gradients
+  local mask_dataset = params.mask_dataset
   params.loss      = nil
   params.optimizer = nil
   params.smooth_gradients   = nil
+  params.mask_dataset       = nil
   params.bunch_size         = params.bunch_size or self.bunch_size
-  params.assert_input_size  = self:get_input_size()
-  params.assert_output_size = self:get_output_size()
   -- set to ZERO the accumulated of loss
   loss:reset()
-  for input_bunch,output_bunch,bunch_indexes in trainable.dataset_pair_iterator(params) do
-    self:train_step(input_bunch, output_bunch, loss, optimizer, #bunch_indexes,
-		    smooth_gradients)
+  if not mask_dataset then
+    params.assert_input_size  = self:get_input_size()
+    params.assert_output_size = self:get_output_size()
+    for input_bunch,output_bunch,bunch_indexes in trainable.dataset_pair_iterator(params) do
+      self:train_step(input_bunch, output_bunch, loss, optimizer, #bunch_indexes,
+                      smooth_gradients)
+    end
+  else
+    params.datasets = { params.input_dataset,
+                        params.output_dataset,
+                        mask_dataset }
+    params.input_dataset  = nil
+    params.output_dataset = nil
+    params.assert_pattern_sizes = { self:get_input_size(),
+                                    self:get_output_size(),
+                                    self:get_output_size() }
+    for input_bunch,output_bunch,mask_bunch,bunch_indexes in trainable.dataset_multiple_iterator(params) do
+      self:train_step(input_bunch, output_bunch, loss, optimizer, #bunch_indexes,
+                      smooth_gradients, mask_bunch)
+    end
   end
   return loss:get_accum_loss()
 end
@@ -1206,6 +1258,7 @@ april_set_doc("trainable.supervised_trainer.validate_dataset", {
 		params = {
 		  ["input_dataset"]  = "A dataset float or dataset token",
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
+		  ["mask_dataset"] = "A dataset float or dataset token (mask target output)",
 		  ["loss"]           = "A loss function. It is [optional] if loss given at constructor",
 		  ["bunch_size"]     = 
 		    {
@@ -1231,6 +1284,7 @@ april_set_doc("trainable.supervised_trainer.validate_dataset", {
 		params = {
 		  ["input_dataset"]  = "A dataset float or dataset token",
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
+		  ["mask_dataset"] = "A dataset float or dataset token (mask target output)",
 		  ["shuffle"]        = "A random object used to shuffle patterns before validate",
 		  ["loss"]           = "A loss function. It is [optional] if loss given at constructor",
 		  ["bunch_size"]     = 
@@ -1258,6 +1312,7 @@ april_set_doc("trainable.supervised_trainer.validate_dataset", {
 		params = {
 		  ["input_dataset"]  = "A dataset float or dataset token",
 		  ["output_dataset"] = "A dataset float or dataset token (target output)",
+		  ["mask_dataset"] = "A dataset float or dataset token (mask target output)",
 		  ["shuffle"]        = "A random object used to shuffle patterns before validate",
 		  ["replacement"]    = "A number with the size of replacement validate",
 		  ["loss"]           = "A loss function. It is [optional] if loss given at constructor",
@@ -1279,6 +1334,7 @@ function trainable_supervised_trainer_methods:validate_dataset(t)
       -- dataset iteration schemes are not available for validate_dataset
       input_dataset  = { mandatory = true },
       output_dataset = { mandatory = true },
+      mask_dataset   = { mandatory = false },
       bunch_size     = { type_match = "number",
 			 mandatory = (self.bunch_size == false) },
       loss           = { isa_match  = ann.loss,
@@ -1295,14 +1351,30 @@ function trainable_supervised_trainer_methods:validate_dataset(t)
   assert(not params.input_dataset or not params.distribution,
 	 "input_dataset/output_dataset fields are forbidden with distribution")
   local loss                = params.loss
+  local mask_dataset        = params.mask_dataset
   params.loss               = nil
+  params.mask_dataset       = nil
   params.bunch_size         = params.bunch_size or self.bunch_size
-  params.assert_input_size  = self:get_input_size()
-  params.assert_output_size = self:get_output_size()
   -- set to ZERO the accumulated of loss
   loss:reset()
-  for input_bunch,output_bunch in trainable.dataset_pair_iterator(params) do
-    self:validate_step(input_bunch, output_bunch, loss)
+  if not mask_dataset then
+    params.assert_input_size  = self:get_input_size()
+    params.assert_output_size = self:get_output_size()
+    for input_bunch,output_bunch in trainable.dataset_pair_iterator(params) do
+      self:validate_step(input_bunch, output_bunch, loss)
+    end
+  else
+    params.datasets = { params.input_dataset,
+                        params.output_dataset,
+                        mask_dataset }
+    params.input_dataset  = nil
+    params.output_dataset = nil
+    params.assert_pattern_sizes = { self:get_input_size(),
+                                    self:get_output_size(),
+                                    self:get_output_size() }
+    for input_bunch,output_bunch in trainable.dataset_multiple_iterator(params) do
+      self:validate_step(input_bunch, output_bunch, loss)
+    end
   end
   return loss:get_accum_loss()
 end
