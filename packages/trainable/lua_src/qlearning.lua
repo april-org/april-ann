@@ -15,6 +15,7 @@ function trainable_qlearning_trainer_class_metatable:__call(t)
       traces = { mandatory=false, default=matrix.dict() },
       noise = { mandatory=false, default=ann.components.base() },
       clampQ = { mandatory=false },
+      nactions = { mandatory=false, type_match="number" },
     }, t)
   local tr = params.sup_trainer
   local thenet  = tr:get_component()
@@ -30,9 +31,10 @@ function trainable_qlearning_trainer_class_metatable:__call(t)
     discount = params.discount,
     lambda = params.lambda,
     noise = params.noise,
-    nactions = thenet:get_output_size(),
+    nactions = params.nactions or thenet:get_output_size(),
     clampQ = params.clampQ,
   }
+  assert(obj.nactions > 0, "nactions must be > 0")
   return class_instance(obj, self)
 end
 
@@ -209,7 +211,8 @@ function trainable_batch_builder_methods:add(prev_state, output, action, reward)
 end
 
 function trainable_batch_builder_methods:compute_dataset_pair()
-  assert(self.state_size, "Several number of adds is needed")
+  assert(self.state_size and self.state_size>0,
+         "Several number of adds is needed")
   local discount = self.qlearner.discount
   local inputs  = matrix(#self.batch, self.state_size)
   local outputs = matrix(#self.batch, self.qlearner.nactions):zeros()
