@@ -250,7 +250,7 @@ trainable.qlearning_trainer.strategies.make_epsilon_greedy = function(actions,
     local max,action = output:max()
     local min = output:min()
     local diff = max - min
-    local rel_diff = diff / (max + min)
+    local rel_diff = diff / max
     if coin < epsilon or rel_diff < 0.01 then
       action = rnd:choose(actions)
     end
