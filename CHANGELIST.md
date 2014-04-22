@@ -24,6 +24,7 @@ Master branch release
 
 ### API Changes
 
+- Added `ann.optimizer.asgd` for Averaged SGD optimization.
 - Added `trainable.qlearning_trainer` for reinforcement learning tasks.
 - Enhanced `util.serialize` and `util.deserialize` to accept functions as
   argument, allowing to serialize/deserialize over general streams.
