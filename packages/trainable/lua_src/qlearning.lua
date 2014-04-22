@@ -246,15 +246,17 @@ trainable.qlearning_trainer.strategies.make_epsilon_greedy = function(actions,
                                                                       epsilon,
                                                                       rnd)
   assert(type(actions) == "table", "Needs an actions table as 1st argument")
+  assert(#actions > 1, "#actions must be > 1")
   local epsilon = epsilon or 0.1
   local rnd = rnd or random()
+  local ambiguous_rel_diff = 0.1
   return function(output)
     local coin = rnd:rand()
     local max,action = output:max()
     local min = output:min()
     local diff = max - min
     local rel_diff = diff / max
-    if coin < epsilon or rel_diff < 0.01 then
+    if coin < epsilon or rel_diff < ambiguous_rel_diff then
       action = rnd:choose(actions)
     end
     return action
