@@ -231,6 +231,10 @@ function trainable_batch_builder_methods:compute_dataset_pair()
   return dataset.matrix(inputs),dataset.matrix(outputs),dataset.matrix(mask)
 end
 
+function trainable_batch_builder_methods:size()
+  return #self.batch
+end
+
 -------------------------------------------------------------------------------
 
 trainable.qlearning_trainer.strategies = {}
