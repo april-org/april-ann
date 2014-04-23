@@ -195,7 +195,7 @@ namespace LanguageModels {
     
   public:
 
-    HistoryBasedLMInterface(LMModel<Key,Score>* model) :
+    HistoryBasedLMInterface(HistoryBasedLM<Key,Score>* model) :
       model(model) {
       IncRef(model);
       context_words = new WordType[model->ngramOrder() - 1];
@@ -203,7 +203,7 @@ namespace LanguageModels {
 
     ~HistoryBasedLMInterface() {
       DecRef(model);
-      delete context_words;
+      delete[] context_words;
     }
 
     virtual LMModel<Key, Score>* getLMModel() {
@@ -249,7 +249,7 @@ namespace LanguageModels {
     
   public:
 
-    BunchHashedLMInterface(LMModel<Key,Score>* model) :
+    BunchHashedLMInterface(BunchHashedLM<Key,Score>* model) :
       model(model) {
       IncRef(model);
     }
@@ -349,10 +349,6 @@ namespace LanguageModels {
     virtual bool requireHistoryManager() const {
       return true;
     }
-
-    virtual LMInterface<Key,Score>* getInterface() {
-      return new HistoryBasedLMInterface<Key,Score>(this);
-    }
     
     WordType getInitWord() {
       return init_word;
@@ -388,9 +384,6 @@ namespace LanguageModels {
       return true;
     }
 
-    virtual LMInterface<Key,Score>* getInterface() {
-      return new BunchHashedLMInterface<Key,Score>(this);
-    }
     unsigned int getBunchSize() { return bunch_size; }
 
     void setBunchSize(unsigned int bunch_size) {
