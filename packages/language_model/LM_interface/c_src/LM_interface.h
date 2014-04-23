@@ -19,6 +19,10 @@ namespace LanguageModels {
   // Key is usually uint32_t
   template <typename Key, typename Score>
   class LMModel; // forward declaration
+  template <typename Key, typename Score>
+  class HistoryBasedLM;
+  template <typename Key, typename Score>
+  class BunchHashedLM;
   
   // Score is usually log_float
   // Key is usually uint32_t
