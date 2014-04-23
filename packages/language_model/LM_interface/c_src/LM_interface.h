@@ -191,16 +191,19 @@ namespace LanguageModels {
   class HistoryBasedLMInterface : public LMInterface <Key,Score> {
   private:
     LMModel<Key,Score>* model;
+    WordType* context_words;
     
   public:
 
     HistoryBasedLMInterface(LMModel<Key,Score>* model) :
       model(model) {
       IncRef(model);
+      context_words = new WordType[model->ngramOrder() - 1];
     }
 
     ~HistoryBasedLMInterface() {
       DecRef(model);
+      delete context_words;
     }
 
     virtual LMModel<Key, Score>* getLMModel() {
@@ -220,11 +223,21 @@ namespace LanguageModels {
     }
 
     virtual bool getZeroKey(Key &k) const {
+      april_utils::TrieVector *trie = model->getTrieVector();
+      k = trie->rootNode();
       return true;
     }
 
     virtual void getInitialKey(Key &k) const {
-      ;
+      april_utils::TrieVector *trie = model->getTrieVector();
+      WordType init_word = model->getInitWord();
+      int context_length = model->ngramOrder() - 1;
+
+      WordType aux = trie->rootNode();
+
+      for (unsigned int i = 0; i < context_length; i++)
+        aux = trie->getChild(aux, init_word);
+      k = aux;
     }
 
   };
@@ -340,6 +353,14 @@ namespace LanguageModels {
     virtual LMInterface<Key,Score>* getInterface() {
       return new HistoryBasedLMInterface<Key,Score>(this);
     }
+    
+    WordType getInitWord() {
+      return init_word;
+    }
+
+    april_utils::TrieVector* getTrieVector() {
+      return trie_vector;
+    }
   };
 
   template <typename Key, typename Score>
@@ -368,8 +389,7 @@ namespace LanguageModels {
     }
 
     virtual LMInterface<Key,Score>* getInterface() {
-      return 0;
-      //return new BunchHashedLMInterface<Key,Score>(this);
+      return new BunchHashedLMInterface<Key,Score>(this);
     }
     unsigned int getBunchSize() { return bunch_size; }
 
