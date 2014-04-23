@@ -202,7 +202,23 @@ namespace LanguageModels {
     ~HistoryBasedLMInterface() {
       DecRef(model);
     }
-    
+
+    virtual LMModel<Key, Score>* getLMModel() {
+      return model;
+    }
+
+    virtual void get(const Key &key, WordType word,
+                     typename LMInterface<Key,Score>::Burden burden,
+                     vector<typename LMInterface<Key,Score>::KeyScoreBurdenTuple> &result,
+                     Score threshold) {
+      ;
+    }
+
+    virtual void getNextKeys(const Key &key, WordType word,
+                             vector<Key> &result) {
+      ;
+    }
+
     virtual bool getZeroKey(Key &k) const {
       return true;
     }
@@ -211,13 +227,50 @@ namespace LanguageModels {
       ;
     }
 
+  };
+  
+  template <typename Key, typename Score>
+  class BunchHashedLMInterface : public LMInterface <Key,Score> {
+  private:
+    LMModel<Key,Score>* model;
+    
+  public:
+
+    BunchHashedLMInterface(LMModel<Key,Score>* model) :
+      model(model) {
+      IncRef(model);
+    }
+
+    ~BunchHashedLMInterface() {
+      DecRef(model);
+    }
+
+    virtual LMModel<Key, Score>* getLMModel() {
+      return model;
+    }
+
     virtual void get(const Key &key, WordType word,
                      typename LMInterface<Key,Score>::Burden burden,
                      vector<typename LMInterface<Key,Score>::KeyScoreBurdenTuple> &result,
                      Score threshold) {
+      ;
     }
+
+    virtual void getNextKeys(const Key &key, WordType word,
+                             vector<Key> &result) {
+      ;
+    }
+
+    virtual bool getZeroKey(Key &k) const {
+      return true;
+    }
+
+    virtual void getInitialKey(Key &k) const {
+      ;
+    }
+
   };
-  
+
   /// The LMModel is the thread-safe part of the LM, where the model data is
   /// stored
   template <typename Key, typename Score>
