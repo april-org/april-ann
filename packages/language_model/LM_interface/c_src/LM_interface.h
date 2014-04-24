@@ -196,7 +196,25 @@ namespace LanguageModels {
   private:
     LMModel<Key,Score>* model;
     WordType* context_words;
-    
+
+    void privateGet(const Key &key, WordType word,
+                    typename LMInterface<Key,Score>::Burden burden,
+                    vector<typename LMInterface<Key,Score>::KeyScoreBurdenTuple> &result) {
+      april_utils::TrieVector *trie = model->getTrieVector();
+      WordType aux = trie->rootNode();
+      WordType next_key;
+      int context_length = model->ngramOrder() - 1;
+      
+      for (int i = 0; i < context_length; i++)
+        aux = trie->getChild(aux, context_words[i]);
+      if (!trie->hasChild(aux, word, next_key))
+        next_key = trie->getChild(aux, word);
+      
+      result.push_back(next_key,
+                       Score::zero(),  // this score must be computed
+                       burden);
+    }
+
   public:
 
     HistoryBasedLMInterface(HistoryBasedLM<Key,Score>* model) :
@@ -218,12 +236,28 @@ namespace LanguageModels {
                      typename LMInterface<Key,Score>::Burden burden,
                      vector<typename LMInterface<Key,Score>::KeyScoreBurdenTuple> &result,
                      Score threshold) {
-      ;
+      april_utils::TrieVector *trie = model->getTrieVector();
+      WordType init_word = model->getInitWord();
+      WordType aux = key;
+      int pos = model->ngramOrder() - 1;
+      
+      while (pos > 0) {
+        context_words[pos - 1] = trie->getWord(aux);
+        aux = trie->getParent(aux);
+        --pos;
+      }
+      privateGet(key, word, burden, result);
     }
 
     virtual void getNextKeys(const Key &key, WordType word,
                              vector<Key> &result) {
-      ;
+      april_utils::TrieVector *trie = model->getTrieVector();
+      WordType aux_key;
+
+      aux_key = trie->getChild(key, word);
+      result.push_back(KeyScoreBurdenTuple(aux_key,
+                                           Score::zero(),
+                                           typename LMInterface<Key,Score>::Burden(-1, -1)));
     }
 
     virtual bool getZeroKey(Key &k) const {
