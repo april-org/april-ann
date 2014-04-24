@@ -9,8 +9,7 @@ class_extension(matrix, "to_lua_string",
 class_extension(matrix, "pinv",
 		function(self)
 		  local u,s,vt = self:svd()
-		  for i=1,s:size() do
-		    local aux = s:get(i)
+		  for aux,i in s:iterate() do
 		    u:select(2,i):scal(((math.abs(aux)>1e-07) and 1/aux) or 0.0)
 		  end
 		  return matrix.as(self):
@@ -66,9 +65,19 @@ matrix.meta_instance.__sub = function(op1, op2)
 end
 
 matrix.meta_instance.__mul = function(op1, op2)
-  if not isa(op1,matrix) then op1,op2=op2,op1 end
-  if type(op2) == "number" then return op1:clone():scal(op2)
-  else return op1:mul(op2)
+  if isa(op1,matrix.sparse) or isa(op2,matrix.sparse) then
+    if isa(op2,matrix.sparse) then
+      local op1,op2 = op2:transpose(),op1:transpose()
+      local res = matrix[op2:get_major_order()](op1:dim(1),op2:dim(2))
+      res:sparse_mm{ alpha=1.0, beta=0.0, A=op1, B=op2 }
+      return res:transpose()
+    else
+    end
+  else
+    if not isa(op1,matrix) then op1,op2=op2,op1 end
+    if type(op2) == "number" then return op1:clone():scal(op2)
+    else return op1:mul(op2)
+    end
   end
 end
 
@@ -1153,7 +1162,7 @@ april_set_doc("matrix.svd",
 		},
 		outputs = {
 		  "The matrix U",
-		  "The vector S with the eigenvalues",
+		  "The sparse row vector S with the eigenvalues",
 		  "The matrix V', the transposed of V",
 		},
 	      })
@@ -1161,7 +1170,7 @@ april_set_doc("matrix.svd",
 april_set_doc("matrix.diagonalize",
 	      {
 		class = "method",
-		summary = "Converts the given uni-dimensional matrix in a bi-dimensional diagonal matrix",
+		summary = "Converts the given uni-dimensional matrix in a bi-dimensional diagonal dense matrix",
 		outputs = {
 		  "A matrix which is the diagonalized version of the caller matrix",
 		},

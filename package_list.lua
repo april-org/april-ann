@@ -2,6 +2,7 @@ return {
   -- BASIC PACAKGES
   --  "plotter",
   "util",
+  "utest",
   "stats",
   "dataset",
   "matrix",
@@ -48,6 +49,4 @@ return {
   "hmm_trainer",
   "rates",
   
-  -- MISC
-  "monad",
 }

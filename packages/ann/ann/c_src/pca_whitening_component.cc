@@ -32,45 +32,44 @@
 namespace ANN {
   
   PCAWhiteningANNComponent::PCAWhiteningANNComponent(MatrixFloat *U,
-						     MatrixFloat *S,
+						     SparseMatrixFloat *S,
 						     float epsilon,
 						     unsigned int takeN,
 						     const char *name) :
     ANNComponent(name, 0,
-		 static_cast<unsigned int>(S->size()),
-		 (takeN==0)?(static_cast<unsigned int>(S->size())):(takeN)),
+		 static_cast<unsigned int>(S->getDimSize(0)),
+		 (takeN==0)?(static_cast<unsigned int>(S->getDimSize(0))):(takeN)),
     U(U), S(S), epsilon(epsilon),
     dot_product_encoder(0, WEIGHTS_NAME,
 			getInputSize(), getOutputSize(),
-			true) {
+			true),
+    takeN(takeN) {
     if (U->getMajorOrder() != CblasColMajor)
       ERROR_EXIT(128, "Incorrect U matrix major order, needed col_major\n");
-    if (S->getMajorOrder() != CblasColMajor)
-      ERROR_EXIT(128, "Incorrect S matrix major order, needed col_major\n");
     if (U->getNumDim() != 2)
       ERROR_EXIT(128, "Needs a bi-dimensional matrix as U argument\n");
-    if (S->getNumDim() != 1)
-      ERROR_EXIT(128, "Needs a one-dimensional matrix as S argument\n");
-    if (static_cast<int>(takeN) > S->size())
+    if ( !S->isDiagonal() )
+      ERROR_EXIT(128, "Needs a sparse diagonal matrix as S argument\n");
+    if (static_cast<int>(takeN) > S->getDimSize(0))
       ERROR_EXIT(128, "Taking more components than size of S matrix\n");
     if (takeN != 0) {
       int coords[2] = { 0,0 };
       int sizes[2] = { U->getDimSize(0), static_cast<int>(takeN) };
-      this->U = new MatrixFloat(this->U, coords, sizes, true);
-      this->S = new MatrixFloat(this->S, coords+1, sizes+1, true);
+      U_S_epsilon = new MatrixFloat(this->U, coords, sizes, true);
     }
+    else U_S_epsilon = this->U->clone();
     IncRef(this->U);
     IncRef(this->S);
-    //
-    U_S_epsilon = this->U->clone();
+    IncRef(U_S_epsilon);
     // regularization
     MatrixFloat *aux_mat = 0;
-    MatrixFloat::const_iterator Sit(this->S->begin());
-    for (int i=0; i<this->S->size(); ++i, ++Sit) {
+    SparseMatrixFloat::const_iterator Sit(this->S->begin());
+    for (int i=0; i<U_S_epsilon->getDimSize(1); ++i, ++Sit) {
+      april_assert(Sit != this->S->end());
       aux_mat = U_S_epsilon->select(1, i, aux_mat);
       aux_mat->scal( 1/sqrtf( (*Sit) + epsilon ) );
     }
-    IncRef(U_S_epsilon);
+    delete aux_mat;
     //
     matrix_set.insert(WEIGHTS_NAME, U_S_epsilon);
     hash<string,ANNComponent*> components_dict;
@@ -119,9 +118,9 @@ namespace ANN {
     char *U_str, *S_str;
     int len;
     U_str = writeMatrixFloatToString(U, false, len);
-    S_str = writeMatrixFloatToString(S, false, len);
-    buffer.printf("ann.components.pca_whitening{ name='%s', U=%s, S=%s, epsilon=%g, takeN=0, }",
-		  name.c_str(), U_str, S_str, epsilon);
+    S_str = writeSparseMatrixFloatToString(S, false, len);
+    buffer.printf("ann.components.pca_whitening{ name='%s', U=matrix.fromString[[%s]], S=matrix.sparse.fromString[[%s]], epsilon=%g, takeN=%u, }",
+		  name.c_str(), U_str, 0, S_str, epsilon, takeN);
     delete[] U_str;
     delete[] S_str;
     return buffer.to_string(buffer_list::NULL_TERMINATED);

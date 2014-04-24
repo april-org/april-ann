@@ -52,6 +52,9 @@ debug:
 debug-cuda-mkl:
 	lua build_cuda_and_mkl_debug.lua
 
+debug-pi:
+	lua build_debug_pi.lua
+
 clean:
 	./clean.sh
 

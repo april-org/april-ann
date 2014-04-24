@@ -880,3 +880,103 @@ function quickprop_methods:to_lua_string(format)
 		  ")" }
   return table.concat(str_t, "")
 end
+
+---------------------------------------------------------
+--------- AVERAGED STOCHASTIC GRADIENT DESCENT ----------
+---------------------------------------------------------
+
+-- extracted from: http://research.microsoft.com/pubs/192769/tricks-2012.pdf
+-- Leon Bottou, Stochastic Gradient Descent Tricks, Microsoft Research, 2012
+
+local asgd_methods, asgd_class_metatable = class("ann.optimizer.asgd",
+                                                 ann.optimizer)
+
+function asgd_class_metatable:__call(g_options, l_options, count, update)
+  -- the base optimizer, with the supported learning parameters
+  local obj = ann.optimizer({
+			      {"learning_rate", "Learning speed factor (0.1)"},
+			      {"lr_decay", "Learning decay factor (0.75)"},
+			      {"t0", "Average starts at bunch t0, good values are data size or data dimension (0)"},
+			    },
+			    g_options,
+			    l_options,
+			    count)
+  obj.update = wrap_matrices(update or matrix.dict())
+  obj = class_instance(obj, self)
+  -- standard regularization and constraints
+  obj:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
+  -- default values
+  obj:set_option("lr_decay", 0.75)
+  obj:set_option("t0", 0)
+  return obj
+end
+
+function asgd_methods:execute(eval, weights)
+  local wrap_matrices = wrap_matrices
+  local table = table
+  local assert = assert
+  --
+  local weights = wrap_matrices(weights)
+  local arg = table.pack( eval() )
+  local tr_loss,gradients = table.unpack(arg)
+  -- the gradient computation could fail returning nil, it is important to take
+  -- this into account
+  if not gradients then return nil end
+  gradients = wrap_matrices(gradients)
+  local t = self:get_count()
+  for name,w in pairs(weights) do
+    local update      = (self.update(name) or w:clone()):zeros()
+    local grad        = gradients(name)
+    local lr          = assert(self:get_option_of(name, "learning_rate"),
+			       "The learning_rate parameter needs to be set")
+    local lr_decay    = self:get_option_of(name, "lr_decay")
+    local t0          = self:get_option_of(name, "t0")
+    -- effective values at time t
+    local lr_t        = lr / ((1.0 + lr * t)^(lr_decay)) -- learning rate factor
+    local mu_t        = 1.0 / math.max(1, t - t0)        -- average factor
+    -- apply back-propagation learning rule
+    update:axpy(-lr, grad)
+    -- regularizations
+    ann_optimizer_apply_regularizations(self, name, update, w)
+    -- compute averaged weights
+    if mu_t > 1 or mu_t < 1 then
+      update:axpy(1.0,w)
+      w:scal(1.0 - mu_t):axpy(mu_t, update)
+    else
+      w:axpy(1.0, update)
+    end
+    --
+    if self:get_count() % MAX_UPDATES_WITHOUT_PRUNE == 0 then
+      w:prune_subnormal_and_check_normal()
+    end
+    --
+    self.update[name] = update
+  end
+  -- count one more update iteration
+  self:count_one()
+  -- returns the same as returned by eval()
+  return table.unpack(arg)
+end
+
+function asgd_methods:clone()
+  local obj = ann.optimizer.asgd()
+  obj.count             = self.count
+  obj.layerwise_options = table.deep_copy(self.layerwise_options)
+  obj.global_options    = table.deep_copy(self.global_options)
+  obj.update            = self.update:clone()
+  return obj
+end
+
+function asgd_methods:to_lua_string(format)
+  local format = format or "binary"
+  local str_t = { "ann.optimizer.asgd(",
+		  table.tostring(self.global_options),
+		  ",",
+		  table.tostring(self.layerwise_options),
+		  ",",
+		  tostring(self.count),
+		  ",",
+		  self.update:to_lua_string(format),
+		  ")" }
+  return table.concat(str_t, "")
+end

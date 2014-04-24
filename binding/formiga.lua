@@ -307,6 +307,7 @@ end
 function formiga.os.get_directory_timestamp(path)
   local f=io.popen("find " .. path .. " -type f -printf '%h/%f %T@\n' 2>/dev/null | " ..
 		     "grep  -v '.*/\\..*' | grep -v 'gmon.out' | " ..
+                     "grep -Ev '[^ ]*/tests?/[^/]+' | " ..
                      "cut -d' ' -f2 | sort -n | tail -n 1")
   local timestamp=tonumber(f:read("*l"))
   f:close()
@@ -912,7 +913,7 @@ function formiga .__object__ (t)
 	else
 	  command[1] = formiga.compiler.CUDAcompiler
 	  if formiga.compiler.global_flags.debug == "yes" then
-	    command[1] = command[1] .. " -g -G3"
+	    command[1] = command[1] .. " -g"
           end
 	  local flags = {}
 	  for _,flag in ipairs(formiga.compiler.extra_flags) do

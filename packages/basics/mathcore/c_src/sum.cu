@@ -101,7 +101,10 @@ T doSum(unsigned int N,
          top_reduction,
 	 N, stride);
     }
-    sum = sums_ptr[0];
+    // TODO: Improve the efficiency of this assignment, now it needs
+    // to copy the whole sums array even when only the first one
+    // component is needed
+    sum = sums.getPPALForRead()[0];
   }
   else {
 #endif

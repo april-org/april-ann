@@ -21,13 +21,24 @@
 #ifndef MATRIX_INT32_H
 #define MATRIX_INT32_H
 #include "matrix.h"
+#include "matrix_not_implemented.h"
 
-typedef Matrix<int32_t> MatrixInt32;
+NOT_IMPLEMENT_AXPY_HEADER(int32_t)
+NOT_IMPLEMENT_GEMM_HEADER(int32_t)
+NOT_IMPLEMENT_GEMV_HEEADER(int32_t)
+NOT_IMPLEMENT_GER_HEADER(int32_t)
+NOT_IMPLEMENT_DOT_HEADER(int32_t)
 
+/************* ZEROS FUNCTION **************/
 template<>
 void Matrix<int32_t>::zeros();
 
+/************* ONES FUNCTION **************/
 template<>
 void Matrix<int32_t>::ones();
+
+///////////////////////////////////////////////////////////////////////////////
+
+typedef Matrix<int32_t> MatrixInt32;
 
 #endif // MATRIX_INT_H

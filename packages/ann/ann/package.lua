@@ -18,6 +18,7 @@
      execute_script{
        file={
 	 "test/test-components.lua",
+	 "test/test-sparse.lua",
        },
      },
    },

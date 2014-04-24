@@ -30,6 +30,7 @@ luapkg{
       "-latlas",
       "-rdynamic",
       "-llapack_atlas",
+      "-llapacke",
     },
     shared_extra_libs={
       "-shared",

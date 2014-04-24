@@ -56,6 +56,7 @@ public:
   static const TokenCode token_uint32        = 0x2003;
   static const TokenCode token_mem_block     = 0x2004;
   static const TokenCode token_matrix        = 0x2005;
+  static const TokenCode token_sparse_matrix = 0x2006;
   
   // vectors:
   static const TokenCode vector_float        = 0x3000;
@@ -67,7 +68,6 @@ public:
   static const TokenCode vector_uint32       = 0x3006;
   static const TokenCode vector_SymbolScores = 0x3007;
   static const TokenCode vector_Tokens       = 0x3008;
-  static const TokenCode vector_float_sparse = 0x3009;
   
   // graph protocol:
   static const TokenCode token_idag          = 0x4000;  

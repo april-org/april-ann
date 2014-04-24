@@ -24,6 +24,7 @@
 #ifdef USE_CUDA
 bool GPUHelper::initialized = false;
 cublasHandle_t GPUHelper::handler;
+cusparseHandle_t GPUHelper::sparse_handler;
 cudaDeviceProp GPUHelper::properties;
 CUdevice GPUHelper::device;
 CUcontext GPUHelper::context;

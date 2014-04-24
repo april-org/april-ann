@@ -22,6 +22,7 @@
 //BIND_HEADER_C
 #include "bind_function_interface.h"
 #include "bind_matrix.h"
+#include "bind_sparse_matrix.h"
 #include "bind_mtrand.h"
 #include "bind_tokens.h"
 #include "table_of_token_codes.h"
@@ -1567,10 +1568,11 @@ using namespace ANN;
   const char *name=0;
   float epsilon;
   int takeN;
-  MatrixFloat *U, *S;
+  MatrixFloat *U;
+  SparseMatrixFloat *S;
   check_table_fields(L, 1, "U", "S", "takeN", "epsilon", (const char *)0);
   LUABIND_GET_TABLE_PARAMETER(1, U, MatrixFloat, U);
-  LUABIND_GET_TABLE_PARAMETER(1, S, MatrixFloat, S);
+  LUABIND_GET_TABLE_PARAMETER(1, S, SparseMatrixFloat, S);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, takeN, int, takeN, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, epsilon, float, epsilon, 0);
@@ -1602,10 +1604,11 @@ using namespace ANN;
   const char *name=0;
   float epsilon;
   int takeN;
-  MatrixFloat *U, *S;
+  MatrixFloat *U;
+  SparseMatrixFloat *S;
   check_table_fields(L, 1, "U", "S", "takeN", "epsilon", (const char *)0);
   LUABIND_GET_TABLE_PARAMETER(1, U, MatrixFloat, U);
-  LUABIND_GET_TABLE_PARAMETER(1, S, MatrixFloat, S);
+  LUABIND_GET_TABLE_PARAMETER(1, S, SparseMatrixFloat, S);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, takeN, int, takeN, 0);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, epsilon, float, epsilon, 0);
