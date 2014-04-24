@@ -22,11 +22,11 @@
 
 #include "ngram_lira.h"
 #include "april_assert.h"
-#include <cstdio>		// print_model for testing
-#include "uncommented_line.h"	// read data
+#include <cstdio> // print_model for testing
+#include "uncommented_line.h" // read data
 #include "error_print.h"        // print errors
-#include <cstdlib>		// exit
-#include <cstring>		// strcmp
+#include <cstdlib> // exit
+#include <cstring> // strcmp
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -39,11 +39,11 @@ namespace LanguageModels {
 
   // format errors are NOT checked!!!
   NgramLiraModel::NgramLiraModel(FILE *fd,
-				 unsigned int expected_vocabulary_size,
-				 const char *expected_vocabulary[],
-				 WordType final_word,
-				 int fan_out_threshold,
-				 bool ignore_extra_words_in_dictionary) :
+                                 unsigned int expected_vocabulary_size,
+                                 const char *expected_vocabulary[],
+                                 WordType final_word,
+                                 int fan_out_threshold,
+                                 bool ignore_extra_words_in_dictionary) :
     ignore_extra_words_in_dictionary(ignore_extra_words_in_dictionary),
     fan_out_threshold(fan_out_threshold),
     is_mmapped(false),
@@ -51,10 +51,10 @@ namespace LanguageModels {
   
     // these values will be changed later
     transition_words_table    = 0;
-    transition_table	      = 0;
-    linear_search_table	      = 0;
-    backoff_table	      = 0;
-    max_out_prob	      = 0;
+    transition_table          = 0;
+    linear_search_table       = 0;
+    backoff_table             = 0;
+    max_out_prob              = 0;
     first_state_binary_search = 0;
 
     const int bufferSize = 2048; // fixme: attention to buffer overflow
@@ -76,11 +76,11 @@ namespace LanguageModels {
 
 
     if (!ignore_extra_words_in_dictionary &&
-	expected_vocabulary &&
-	expected_vocabulary_size != vocabulary_size) {
+        expected_vocabulary &&
+        expected_vocabulary_size != vocabulary_size) {
       ERROR_PRINT2("Expected vocabulary_size %u instead of %u\n",
-		   expected_vocabulary_size,
-		   vocabulary_size);
+                   expected_vocabulary_size,
+                   vocabulary_size);
       exit(1);
     }
     for (unsigned int i=0;i<vocabulary_size;++i) {
@@ -88,12 +88,12 @@ namespace LanguageModels {
       // be part of the lexicon
       get_line(buffer,bufferSize,fd);
       if (expected_vocabulary_size) {
-	buffer[strlen(buffer)-1] = '\0'; // quitamos el \n
-	if (strcmp(buffer,expected_vocabulary[i])!=0) {
-	  ERROR_PRINT3("word %u is '%s' instead of '%s'\n",
-		       i,buffer,expected_vocabulary[i]);
-	  exit(1);
-	}
+        buffer[strlen(buffer)-1] = '\0'; // quitamos el \n
+        if (strcmp(buffer,expected_vocabulary[i])!=0) {
+          ERROR_PRINT3("word %u is '%s' instead of '%s'\n",
+                       i,buffer,expected_vocabulary[i]);
+          exit(1);
+        }
       }
     }
 
@@ -139,12 +139,12 @@ namespace LanguageModels {
       get_uncommented_line(buffer,bufferSize,fd);
       sscanf(buffer,"%u%u",&how_many_states,&state_fan_out);
       if (state_fan_out <= fan_out_threshold) { // anyadimos otra entrada en la tabla
-	linear_search_table[lss].first_state = aux_first_state;
-	linear_search_table[lss].fan_out     = state_fan_out;
-	linear_search_table[lss].first_index = aux_first_trans;
-	aux_first_state += how_many_states;
-	aux_first_trans += state_fan_out*how_many_states;
-	lss++;
+        linear_search_table[lss].first_state = aux_first_state;
+        linear_search_table[lss].fan_out     = state_fan_out;
+        linear_search_table[lss].first_index = aux_first_trans;
+        aux_first_state += how_many_states;
+        aux_first_trans += state_fan_out*how_many_states;
+        lss++;
       }
     }
     linear_search_size        = lss;
@@ -180,14 +180,14 @@ namespace LanguageModels {
       float dbackoff,maxOutProb;
       get_uncommented_line(buffer,bufferSize,fd);
       leidos = sscanf(buffer,"%u%d%f%f",
-		      &orig,&bo_dest,&dbackoff,&maxOutProb);
+                      &orig,&bo_dest,&dbackoff,&maxOutProb);
       log_float backoff;
       if (bo_dest >= 0) {
-	backoff_table[orig].bo_prob       = log_float(dbackoff);
-	backoff_table[orig].bo_dest_state = (unsigned int)bo_dest;
+        backoff_table[orig].bo_prob       = log_float(dbackoff);
+        backoff_table[orig].bo_dest_state = (unsigned int)bo_dest;
       }
       if (leidos == 4) {
-	max_out_prob[orig] = log_float(maxOutProb);
+        max_out_prob[orig] = log_float(maxOutProb);
       }
     }
 
@@ -202,8 +202,8 @@ namespace LanguageModels {
       get_uncommented_line(buffer,bufferSize,fd);
       sscanf(buffer,"%u%u%u%f",&orig,&dest,&word,&prob);
       if ((i==0 || orig > last_state) && // new or state is changed
-	  orig >= first_state_binary_search) {
-	first_transition[orig] = i;
+          orig >= first_state_binary_search) {
+        first_transition[orig] = i;
       }
       transition_words_table[i] = word;
       transition_table[i].state = dest;
@@ -296,13 +296,13 @@ namespace LanguageModels {
   }
 
   void NgramLiraModel::saveBinary(const char *filename,
-				  unsigned int expected_vocabulary_size,
-				  const char *expected_vocabulary[]) {
+                                  unsigned int expected_vocabulary_size,
+                                  const char *expected_vocabulary[]) {
     
     if (expected_vocabulary_size != vocabulary_size) {
       ERROR_PRINT2("Error expected vocabulary is %d instead of %d\n",
-		   vocabulary_size,
-		   expected_vocabulary_size);
+                   vocabulary_size,
+                   expected_vocabulary_size);
       exit(1);
     }
 
@@ -370,7 +370,7 @@ namespace LanguageModels {
     // go to the last byte position
     if (lseek(f_descr,filesize-1, SEEK_SET) == -1) {
       ERROR_PRINT1("lseek error, position %u was tried\n",
-		   (unsigned int)(filesize-1));
+                   (unsigned int)(filesize-1));
       exit(1);
     }
     // write dummy byte at the last location
@@ -380,16 +380,16 @@ namespace LanguageModels {
     }
     // mmap the output file
     if ((filemapped = (char*)mmap(0, filesize,
-				  PROT_READ|PROT_WRITE, MAP_SHARED,
-				  f_descr, 0))  == (caddr_t)-1) {
+                                  PROT_READ|PROT_WRITE, MAP_SHARED,
+                                  f_descr, 0))  == (caddr_t)-1) {
       ERROR_PRINT("mmap error\n");
       exit(1);
     }
 
     // copy different things to disk
     memcpy(filemapped,
-	   &header,
-	   sizeof(NgramLiraBinaryHeader));
+           &header,
+           sizeof(NgramLiraBinaryHeader));
 
     // copy vocabulary
     char *dest_voc = filemapped+header.offset_vocabulary_vector;
@@ -399,28 +399,28 @@ namespace LanguageModels {
     }
 
     memcpy(filemapped + header.offset_transition_words_table,
-	   transition_words_table,
-	   header.size_transition_words_table);
+           transition_words_table,
+           header.size_transition_words_table);
 
     memcpy(filemapped + header.offset_transition_table,
-	   transition_table,
-	   header.size_transition_table);
+           transition_table,
+           header.size_transition_table);
 
     memcpy(filemapped+header.offset_linear_search_table,
-	   linear_search_table,
-	   header.size_linear_search_table);
+           linear_search_table,
+           header.size_linear_search_table);
 
     memcpy(filemapped+header.offset_first_transition,
-	   first_transition + first_state_binary_search,
-	   header.size_first_transition_vector);
+           first_transition + first_state_binary_search,
+           header.size_first_transition_vector);
 
     memcpy(filemapped+header.offset_backoff_table,
-	   backoff_table,
-	   header.size_backoff_table);
+           backoff_table,
+           header.size_backoff_table);
 
     memcpy(filemapped+header.offset_max_out_prob,
-	   max_out_prob,
-	   header.size_max_out_prob);
+           max_out_prob,
+           header.size_max_out_prob);
 
     // work done, free the resources ;)
     if (munmap(filemapped, filesize) == -1) {
@@ -432,10 +432,10 @@ namespace LanguageModels {
 
   // constructor for binary mmaped data
   NgramLiraModel::NgramLiraModel(const char *filename,
-				 unsigned int expected_vocabulary_size,
-				 const char *expected_vocabulary[],
-				 WordType final_word,
-				 bool ignore_extra_words_in_dictionary) :
+                                 unsigned int expected_vocabulary_size,
+                                 const char *expected_vocabulary[],
+                                 WordType final_word,
+                                 bool ignore_extra_words_in_dictionary) :
     ignore_extra_words_in_dictionary(ignore_extra_words_in_dictionary),
     final_word(final_word) {
     //----------------------------------------------------------------------
@@ -453,8 +453,8 @@ namespace LanguageModels {
     // mmap the input file
     filesize = statbuf.st_size;
     if ((filemapped = (char*)mmap(0, filesize,
-				  PROT_READ, MAP_SHARED,
-				  file_descriptor, 0))  ==(caddr_t)-1) {
+                                  PROT_READ, MAP_SHARED,
+                                  file_descriptor, 0))  ==(caddr_t)-1) {
       ERROR_PRINT("Error mmaping\n");
       exit(1);
     }
@@ -482,21 +482,21 @@ namespace LanguageModels {
     // checking vocabulary:
     if (expected_vocabulary) {
       if (!ignore_extra_words_in_dictionary) {
-	if (expected_vocabulary_size != vocabulary_size) {
-	  ERROR_PRINT2("Expected vocabulary_size %u instead of %u\n",
-		       expected_vocabulary_size,
-		       vocabulary_size);
-	  exit(1);
-	}
+        if (expected_vocabulary_size != vocabulary_size) {
+          ERROR_PRINT2("Expected vocabulary_size %u instead of %u\n",
+                       expected_vocabulary_size,
+                       vocabulary_size);
+          exit(1);
+        }
       }
       char *dest_voc = filemapped+header->offset_vocabulary_vector;
       for (unsigned int i=0;i<vocabulary_size;++i) {
-	if (strcmp(dest_voc,expected_vocabulary[i])!=0) {
-	  ERROR_PRINT3("word %u is '%s' instead of '%s'\n",
-		       i,dest_voc,expected_vocabulary[i]);
-	  exit(1);
-	}
-	dest_voc += strlen(expected_vocabulary[i])+1;
+        if (strcmp(dest_voc,expected_vocabulary[i])!=0) {
+          ERROR_PRINT3("word %u is '%s' instead of '%s'\n",
+                       i,dest_voc,expected_vocabulary[i]);
+          exit(1);
+        }
+        dest_voc += strlen(expected_vocabulary[i])+1;
       }
     }
 
@@ -518,9 +518,9 @@ namespace LanguageModels {
   ///////////////////////////////////////////////////////////////////////////
 
   void NgramLiraInterface::get(const Key &state,
-			       WordType word, Burden burden,
-			       vector<KeyScoreBurdenTuple> &result,
-			       Score threshold) {
+                               WordType word, Burden burden,
+                               vector<KeyScoreBurdenTuple> &result,
+                               Score threshold) {
     april_assert(word != 0);
     UNUSED_VARIABLE(threshold);
     Score accum_backoff     = Score::one();
@@ -528,50 +528,50 @@ namespace LanguageModels {
     
     for (;;) {
       if (st < lira_model->first_state_binary_search) {
-	int linear_index = 0;
-	while(lira_model->linear_search_table[linear_index].first_state <= st)
-	  linear_index++;
-	// -1 because the search stopped too late ;)
-	LinearSearchInfo *info = &(lira_model->linear_search_table[linear_index-1]);
-	// range of transitions during the search:
-	unsigned int first_tr_index = (st - info->first_state)*info->fan_out + info->first_index;
-	unsigned int last_tr_index  = first_tr_index + info->fan_out;
-	// lineal search:
-	for (unsigned int tr_index = first_tr_index; tr_index < last_tr_index; tr_index++)
-	  if (lira_model->transition_words_table[tr_index] == word) {
-	    result.push_back(KeyScoreBurdenTuple(lira_model->transition_table[tr_index].state,
-						 accum_backoff *
-						 lira_model->transition_table[tr_index].prob,
-						 burden));
-	    return;
-	  }
+        int linear_index = 0;
+        while(lira_model->linear_search_table[linear_index].first_state <= st)
+          linear_index++;
+        // -1 because the search stopped too late ;)
+        LinearSearchInfo *info = &(lira_model->linear_search_table[linear_index-1]);
+        // range of transitions during the search:
+        unsigned int first_tr_index = (st - info->first_state)*info->fan_out + info->first_index;
+        unsigned int last_tr_index  = first_tr_index + info->fan_out;
+        // lineal search:
+        for (unsigned int tr_index = first_tr_index; tr_index < last_tr_index; tr_index++)
+          if (lira_model->transition_words_table[tr_index] == word) {
+            result.push_back(KeyScoreBurdenTuple(lira_model->transition_table[tr_index].state,
+                             accum_backoff *
+                             lira_model->transition_table[tr_index].prob,
+                             burden));
+            return;
+          }
       } else {
-	// the dichotomic search of the transition index is not based
-	// on the binary_search template in order to be able to return
-	// as soon as the word is found
-	unsigned int left  = lira_model->first_transition[st];
-	unsigned int right = lira_model->first_transition[st+1] - 1;
-	while (left <= right) {
-	  unsigned int tr_index     = (left+right)/2;
-	  unsigned int current_word = lira_model->transition_words_table[tr_index];
-	  if (current_word == word) {
-	    result.push_back(KeyScoreBurdenTuple(lira_model->transition_table[tr_index].state,
-						 accum_backoff *
-						 lira_model->transition_table[tr_index].prob,
-						 burden));
-	    return;
-	  } else if (current_word < word) {
-	    left  = tr_index+1;
-	  } else {
-	    right = tr_index-1;
-	  }
-	}
+        // the dichotomic search of the transition index is not based
+        // on the binary_search template in order to be able to return
+        // as soon as the word is found
+        unsigned int left  = lira_model->first_transition[st];
+        unsigned int right = lira_model->first_transition[st+1] - 1;
+        while (left <= right) {
+          unsigned int tr_index     = (left+right)/2;
+          unsigned int current_word = lira_model->transition_words_table[tr_index];
+          if (current_word == word) {
+            result.push_back(KeyScoreBurdenTuple(lira_model->transition_table[tr_index].state,
+                             accum_backoff *
+                             lira_model->transition_table[tr_index].prob,
+                             burden));
+            return;
+          } else if (current_word < word) {
+            left  = tr_index+1;
+          } else {
+            right = tr_index-1;
+          }
+        }
       }
       // apply backoff when the transition is not found:
       if (st == lira_model->lowest_state) {
         // this is impossible, throws an error
         ERROR_EXIT(128, "Transition not found!!!\n");
-	return;
+        return;
       }
       accum_backoff *= lira_model->backoff_table[st].bo_prob;
       st             = lira_model->backoff_table[st].bo_dest_state;
@@ -584,7 +584,7 @@ namespace LanguageModels {
   }
  
  // void NgramLiraInterface::insertQueries(const Key &key, int32_t idKey,
-  // 					 vector<WordIdScoreTuple> words) {
+  //                                       vector<WordIdScoreTuple> words) {
   //   // todo: we can take profit of the lira data structure to improve
   //   // the efficiency of this method w.r.t. the naive implementation
   // }
@@ -592,42 +592,42 @@ namespace LanguageModels {
   // internal method used by findKeyFromNgram
   NgramLiraInterface::Key
   NgramLiraInterface::getDestState(NgramLiraInterface::Key st,
-				   const WordType word) {
+                                   const WordType word) {
     do {
       if (st < lira_model->first_state_binary_search) {
-	// linear search, we look for the LinearSearchInfo of st
-	int linear_index = 0;
-	while(lira_model->linear_search_table[linear_index].first_state <= st)
-	  linear_index++;
-	// -1 because the search stopped too late ;)
-	LinearSearchInfo *info = &(lira_model->linear_search_table[linear_index-1]);
-	// range of transitions during the search:
-	unsigned int first_tr_index = ((st - info->first_state)*info->fan_out +
-				       info->first_index);
-	unsigned int last_tr_index  = first_tr_index + info->fan_out;
-	// lineal search:
-	for (unsigned int tr_index = first_tr_index; tr_index < last_tr_index; tr_index++) {
-	  if (lira_model->transition_words_table[tr_index] == word) {
-	    return lira_model->transition_table[tr_index].state;
-	  }
-	}
+        // linear search, we look for the LinearSearchInfo of st
+        int linear_index = 0;
+        while(lira_model->linear_search_table[linear_index].first_state <= st)
+          linear_index++;
+        // -1 because the search stopped too late ;)
+        LinearSearchInfo *info = &(lira_model->linear_search_table[linear_index-1]);
+        // range of transitions during the search:
+        unsigned int first_tr_index = ((st - info->first_state)*info->fan_out +
+                                       info->first_index);
+        unsigned int last_tr_index  = first_tr_index + info->fan_out;
+        // lineal search:
+        for (unsigned int tr_index = first_tr_index; tr_index < last_tr_index; tr_index++) {
+          if (lira_model->transition_words_table[tr_index] == word) {
+            return lira_model->transition_table[tr_index].state;
+          }
+        }
       } else {
-	// the dichotomic search of the transition index is not based
-	// on the binary_search template in order to be able to return
-	// as soon as the word is found
-	unsigned int left  = lira_model->first_transition[st];
-	unsigned int right = lira_model->first_transition[st+1] - 1;
-	while (left <= right) {
-	  unsigned int tr_index     = (left+right)/2;
-	  unsigned int current_word = lira_model->transition_words_table[tr_index];
-	  if (current_word == word) {
-	    return lira_model->transition_table[tr_index].state;
-	  } else if (current_word < word) {
-	    left  = tr_index+1;
-	  } else {
-	    right = tr_index-1;
-	  }
-	}
+        // the dichotomic search of the transition index is not based
+        // on the binary_search template in order to be able to return
+        // as soon as the word is found
+        unsigned int left  = lira_model->first_transition[st];
+        unsigned int right = lira_model->first_transition[st+1] - 1;
+        while (left <= right) {
+          unsigned int tr_index     = (left+right)/2;
+          unsigned int current_word = lira_model->transition_words_table[tr_index];
+          if (current_word == word) {
+            return lira_model->transition_table[tr_index].state;
+          } else if (current_word < word) {
+            left  = tr_index+1;
+          } else {
+            right = tr_index-1;
+          }
+        }
       }
       // apply backoff when the transition is not found:
       st = lira_model->backoff_table[st].bo_dest_state;      
@@ -637,11 +637,11 @@ namespace LanguageModels {
 
   NgramLiraInterface::Key
   NgramLiraInterface::findKeyFromNgram(const WordType *wordSequence,
-				       int len) {
+                                       int len) {
     Key st = lira_model->lowest_state;
     for (int i=0; i<len; ++i)
       if (wordSequence[i] > 0)
-	st = getDestState(st,wordSequence[i]);
+        st = getDestState(st,wordSequence[i]);
     return st;
   }
 
