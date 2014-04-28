@@ -230,40 +230,34 @@ namespace LanguageModels {
         aux_key = trie->getParent(aux_key);
       }
 
-      context_words = new WordType[context_size];
-
-      // If context size is maximum, context words
-      // must be collected from current key,
-      // which shifts context to the left
-      if (context_size == (model->ngramOrder() - 1))
-        aux_key = key;
-      else
-        aux_key = trie->getParent(key);
-
-      // Context words are collected
-      for (int pos = context_size - 1; pos >= 0; --pos) {
-        context_words[pos] = trie->getWord(aux_key);
-        aux_key = trie->getParent(aux_key);
-      }
-
-      Score aux_score = privateGet(context_words, word, context_size);
-      
-      // If context size is maximum, destination key
-      // is obtained traversing the trie
+      // If context size is maximum, compute score
+      // and key and return them using the result
+      // vector. Else, do nothing.
       if (context_size == (model->ngramOrder() - 1)) {
+        // Context words must be collected from current
+        // key, which shifts context to the left
+        context_words = new WordType[context_size];
+        aux_key = key;
+
+        // Context words are collected
+        for (int pos = context_size - 1; pos >= 0; --pos) {
+          context_words[pos] = trie->getWord(aux_key);
+          aux_key = trie->getParent(aux_key);
+        }
+
+        Score aux_score = privateGet(context_words, word, context_size);
+        
+        // Destination key is obtained traversing the trie
         aux_key = trie->rootNode();
         for (int i = 0; i < context_size; ++i)
           aux_key = trie->getChild(aux_key, context_words[i]);
         aux_key = trie->getChild(aux_key, word);
-      }
-      // Else destination key can be obtained
-      // directly from current key
-      else
-        aux_key = trie->getChild(key, word);
 
-      result.push_back(KeyScoreBurdenTuple(aux_key,
-                                           aux_score,
-                                           burden));
+        // Append to the result vector
+        result.push_back(KeyScoreBurdenTuple(aux_key,
+                                             aux_score,
+                                             burden));
+      }
     }
 
     virtual void getNextKeys(const Key &key, WordType word,
