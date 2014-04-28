@@ -195,37 +195,20 @@ namespace LanguageModels {
   class HistoryBasedLMInterface : public LMInterface <Key,Score> {
   private:
     LMModel<Key,Score>* model;
-    WordType* context_words;
 
-    void privateGet(const Key &key, WordType word,
-                    typename LMInterface<Key,Score>::Burden burden,
-                    vector<typename LMInterface<Key,Score>::KeyScoreBurdenTuple> &result) {
-      april_utils::TrieVector *trie = model->getTrieVector();
-      WordType aux = trie->rootNode();
-      WordType next_key;
-      int context_length = model->ngramOrder() - 1;
-      
-      for (int i = 0; i < context_length; i++)
-        aux = trie->getChild(aux, context_words[i]);
-      if (!trie->hasChild(aux, word, next_key))
-        next_key = trie->getChild(aux, word);
-      
-      result.push_back(next_key,
-                       Score::zero(),  // this score must be computed
-                       burden);
-    }
+    unsigned int context_size;
+
+    virtual Score privateGet(WordType word) = 0;
 
   public:
 
     HistoryBasedLMInterface(HistoryBasedLM<Key,Score>* model) :
       model(model) {
       IncRef(model);
-      context_words = new WordType[model->ngramOrder() - 1];
     }
 
     ~HistoryBasedLMInterface() {
       DecRef(model);
-      delete[] context_words;
     }
 
     virtual LMModel<Key, Score>* getLMModel() {
@@ -237,16 +220,50 @@ namespace LanguageModels {
                      vector<typename LMInterface<Key,Score>::KeyScoreBurdenTuple> &result,
                      Score threshold) {
       april_utils::TrieVector *trie = model->getTrieVector();
-      WordType init_word = model->getInitWord();
-      WordType aux = key;
-      int pos = model->ngramOrder() - 1;
+      WordType* context_words;
+      unsigned int context_size = 0;
+      WordType aux_key = trie->getParent(key);
       
-      while (pos > 0) {
-        context_words[pos - 1] = trie->getWord(aux);
-        aux = trie->getParent(aux);
-        --pos;
+      // Go backward to get context size
+      while (aux_key != trie->rootNode()) {
+        context_size++;
+        aux_key = trie->getParent(aux_key);
       }
-      privateGet(key, word, burden, result);
+
+      context_words = new WordType[context_size];
+
+      // If context size is maximum, context words
+      // must be collected from current key,
+      // which shifts context to the left
+      if (context_size == (model->ngramOrder() - 1))
+        aux_key = key;
+      else
+        aux_key = trie->getParent(key);
+
+      // Context words are collected
+      for (int pos = context_size - 1; pos >= 0; --pos) {
+        context_words[pos] = trie->getWord(aux_key);
+        aux_key = trie->getParent(aux_key);
+      }
+
+      Score aux_score = privateGet(context_words, word, context_size);
+      
+      // If context size is maximum, destination key
+      // is obtained traversing the trie
+      if (context_size == (model->ngramOrder() - 1)) {
+        aux_key = trie->rootNode();
+        for (int i = 0; i < context_size; ++i)
+          aux_key = trie->getChild(aux_key, context_words[i]);
+        aux_key = trie->getChild(aux_key, word);
+      }
+      // Else destination key can be obtained
+      // directly from current key
+      else
+        aux_key = trie->getChild(key, word);
+
+      result.push_back(KeyScoreBurdenTuple(aux_key,
+                                           aux_score,
+                                           burden));
     }
 
     virtual void getNextKeys(const Key &key, WordType word,
