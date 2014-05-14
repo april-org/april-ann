@@ -444,6 +444,8 @@ namespace LanguageModels {
   typedef LMInterface<uint32_t,log_float> LMInterfaceUInt32LogFloat;
   typedef LMModel<uint32_t,log_float> LMModelUInt32LogFloat;
 
+  typedef HistoryBasedLMInterface<uint32_t, log_float> HistoryBasedLMInterfaceUInt32LogFloat;
+  typedef HistoryBasedLM<uint32_t, log_float> HistoryBasedLMUInt32LogFloat;
 }; // closes namespace
 
 #endif // LANGUAGE_MODEL_INTERFACE

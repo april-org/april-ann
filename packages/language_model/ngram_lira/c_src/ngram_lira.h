@@ -247,6 +247,44 @@ namespace LanguageModels {
     
   };
 
+  class HistoryBasedNgramLiraLM : public HistoryBasedLMUInt32LogFloat {
+  public:
+    typedef uint32_t Key;
+    typedef log_float Score;
+
+  private:
+    NgramLiraModel *lira_model;
+
+  public:
+    HistoryBasedNgramLiraLM(int ngram_order,
+                            WordType init_word,
+                            april_utils::TrieVector *trie_vector,
+                            NgramLiraModel *lira_model) :
+                            HistoryBasedLM(ngram_order, init_word, trie_vector),
+                            lira_model(lira_model) {
+      IncRef(lira_model);
+    }
+
+    ~HistoryBasedNgramLiraLM() {
+      DecRef(lira_model);
+    }
+    
+  };
+
+  class HistoryBasedNgramLiraLMInterface : public HistoryBasedLMInterfaceUInt32LogFloat {
+  public:
+    typedef HistoryBasedNgramLiraLM::Key Key;
+    typedef HistoryBasedNgramLiraLM::Score Score;
+
+  private:
+    Score privateGet(const Key &key,
+                     WordType word,
+                     WordType *context_words,
+                     unsigned int context_size) {
+      return 0;
+    }
+  };
+
 } // closes namespace language_models
 
 #endif // NGRAM_LIRA_H
