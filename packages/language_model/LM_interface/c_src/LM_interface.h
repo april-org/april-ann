@@ -196,9 +196,10 @@ namespace LanguageModels {
   private:
     LMModel<Key,Score>* model;
 
-    unsigned int context_size;
-
-    virtual Score privateGet(WordType word) = 0;
+    virtual Score privateGet(const Key &key,
+                             WordType word,
+                             WordType *context_words,
+                             unsigned int context_size) = 0;
 
   public:
 
@@ -245,7 +246,7 @@ namespace LanguageModels {
           aux_key = trie->getParent(aux_key);
         }
 
-        Score aux_score = privateGet(context_words, word, context_size);
+        Score aux_score = privateGet(key, word, context_words, context_size);
         
         // Destination key is obtained traversing the trie
         aux_key = trie->rootNode();
