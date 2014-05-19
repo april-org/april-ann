@@ -884,7 +884,7 @@ function trainable_supervised_trainer_methods:compute_gradients_step(input,
   if type(input)  == "table" then input  = matrix.col_major(input)  end
   if type(target) == "table" then target = matrix.col_major(target) end
   local loss         = loss or self.loss_function
-  local weight_grads = weight_grads or {}
+  local weight_grads = weight_grads or matrix.dict()
   local tr_loss,tr_loss_matrix,gradient
   self.ann_component:reset()
   local output = self.ann_component:forward(input, true)
