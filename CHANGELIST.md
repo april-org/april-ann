@@ -56,6 +56,8 @@ Master branch release
 
 ### Other
 
+- Travis is monitoring only master and devel branches, for push and
+  pull-requests.
 - Added travis compilation and testing platform for pull-requests.
 
 v0.3.1-alpha (pre-relase of v0.3.1-beta)
