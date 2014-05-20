@@ -40,6 +40,9 @@ release-cuda-mkl:
 release-pi:
 	lua build_release_pi.lua
 
+release-no-omp:
+	lua build_release_no_omp.lua
+
 debug-macosx:
 	lua build_debug_macosx.lua
 

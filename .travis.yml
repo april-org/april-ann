@@ -13,3 +13,4 @@ language: cpp
 script: ./.maketravis.sh
 compiler:
   - gcc
+  - clang

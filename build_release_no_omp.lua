@@ -1,7 +1,7 @@
 dofile("binding/formiga.lua")
-formiga.build_dir = "build_release_pi"
+formiga.build_dir = "build_release_no_omp"
 
-local packages = dofile "package_list.pi.lua"
+local packages = dofile "package_list.lua"
 table.insert(packages, "rlcompleter") -- AUTOCOMPLETION => needs READLINE
 
 luapkg{
@@ -17,10 +17,10 @@ luapkg{
     optimization = "yes",
     platform = "unix",
     extra_flags={
+      "-march=native",
+      "-msse",
       "-DNDEBUG",
-      "-DNO_POOL",
       "-DNO_OMP",
-      "-DNO_MM_MALLOC",
       "-fPIC",
     },
     extra_libs={
@@ -29,6 +29,7 @@ luapkg{
       "-lblas",
       "-lcblas",
       "-latlas",
+      "-fopenmp",
       "-rdynamic",
       "-llapack_atlas",
       "-llapacke",
