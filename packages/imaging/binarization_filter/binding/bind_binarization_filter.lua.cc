@@ -59,6 +59,21 @@
 }
 //BIND_END
 
+//BIND_METHOD ImageFloat binarize_sauvola
+{
+  int radius;
+  int r;
+  float k, minThreshold, maxThreshold;
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_GET_PARAMETER(1, int, radius);
+  LUABIND_GET_OPTIONAL_PARAMETER(2,float, k, 0.5);
+  LUABIND_GET_OPTIONAL_PARAMETER(3,float, r, 128);
+  
+  if (radius < 1)
+    LUABIND_ERROR("median filter, radius must be > 0");
+  LUABIND_RETURN(ImageFloat, binarize_sauvola(obj,radius, k, r));
+}
+//BIND_END
 //BIND_METHOD ImageFloat binarize_otsus
 {
   LUABIND_CHECK_ARGN(==, 0);

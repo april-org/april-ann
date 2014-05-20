@@ -26,6 +26,7 @@ luapkg{
       "-pg",
       "-lpthread",
       "-lblas",
+      "-lcblas",
       "-latlas",
       "-L/opt/lib",
       "-lgfortran",

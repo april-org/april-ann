@@ -1,9 +1,0 @@
-`log_logistic` or `log_softmax` output activation function (its better to use
-`log_softmax`). It is based on Kullback-Leibler divergence.
-
-Any component could be parametrized to use different hyperparameters. However,
-as was stated at the introduction, an ANN component is a composition of several
-components, so the parametrization of a parent component implies the same
-parametrization for the child components. It is possible to parametrize a child
-component without affect the parents. In order to parametrize a component, you
-can use `trainer:component(NAME)` to get the component which you want to modify:

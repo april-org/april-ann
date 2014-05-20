@@ -202,6 +202,91 @@ ImageFloat *binarize_niblack_simple(const ImageFloat *src, int windowRadius, flo
     return result;
 }
 
+ImageFloat *binarize_sauvola(const ImageFloat *src, int windowRadius, float k, float r)
+{
+    april_assert(src->width  > 0 && "Zero-sized image!");
+    april_assert(src->height > 0 && "Zero-sized image!");
+    // Image Integral Matrix
+    ImageFloat *result = new ImageFloat(src->width, src->height);
+    double **M = new double*[src->width];
+    for(int i = 0; i < src->width; ++i)
+        M[i] = new double[src->height];
+    // Square Image Integral
+    double **M2 = new double*[src->width];
+    for(int i = 0; i < src->width; ++i)
+        M2[i] = new double[src->height];
+
+    int env=windowRadius;
+    for(int y = 0; y < src->height; y++)      
+        for (int x = 0; x < src->width; x++){
+            M[x][y]=(*src)(x,y);
+            M2[x][y]=(*src)(x,y)*(*src)(x,y);
+            if(x && y){
+                M[x][y]+=M[x-1][y]+M[x][y-1]-M[x-1][y-1];
+                M2[x][y]+=M2[x-1][y]+M2[x][y-1]-M2[x-1][y-1];
+            }
+            else if(x && !y){
+                M[x][y]+=M[x-1][y];
+                M2[x][y]+=M2[x-1][y];
+            }
+            else if(!x && y){
+                M[x][y]+=M[x][y-1];
+                M2[x][y]+=M2[x][y-1];
+            }
+
+        }
+
+    for(int y = 0; y < src->height; y++){
+        for (int x = 0; x < src->width; x++){
+            int limInf , limSup , limRight,limLeft = 0;
+            int area = 1;
+
+            // We take the limits of the enviroment
+            if(x-env < 0){
+                limLeft = 0;
+            }
+            else limLeft=x-env;
+
+            if(x+env >= src->width){
+                limRight = src->width-1;
+            }
+            else limRight=x+env;
+
+            if(y-env < 0){
+                limSup = 0;
+            }
+            else limSup=y-env;
+
+            if(y+env >= src->height){
+                limInf = src->height-1;
+            }
+            else limInf=y+env;       
+
+            area = (limInf-limSup+1)*(limRight-limLeft+1);
+
+            //Calculate the mean
+            double mean = double(M[limLeft][limSup]+ M[limRight][limInf] - M[limLeft][limInf] -M[limRight][limSup])/area;
+            double mean2 = double(M2[limLeft][limSup]+ M2[limRight][limInf] - M2[limLeft][limInf] -M2[limRight][limSup])/area;
+            //Compute the Standar Deviacion square(Mean^2-mean2)
+            double sd = sqrt(mean2-mean*mean);
+
+            //Apply the Threshold T=mean-0.2sd
+            float T = mean *(1+k*(sd/(r-1)));
+            (*result)(x,y) = (*src)(x,y) < T ? 0 : 1;
+        }
+    }
+
+    for(int i = 0; i < src->width;++i){
+        delete []M[i];
+        delete []M2[i];
+
+    }
+    delete []M;
+    delete []M2;
+
+    return result;
+}
+
 
 ImageFloat *binarize_otsus(const ImageFloat *src)
 {
