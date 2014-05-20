@@ -4,7 +4,7 @@ before_install:
   - sudo ./DEPENDENCIES-INSTALLER.sh
   - wget http://www.netlib.org/lapack/lapack-3.5.0.tgz
   - tar zxvf lapack-3.5.0.tgz
-  - cd lapack-3.5.0 && cmake -DLAPACKE=1 -DCMAKE_INSTALL_PREFIX=/usr . && make && make install
+  - cd lapack-3.5.0 && cmake -DLAPACKE=1 -DCMAKE_INSTALL_PREFIX=/usr . && make && sudo make install
 language: cpp
 script: ./.maketravis.sh
 compiler:
