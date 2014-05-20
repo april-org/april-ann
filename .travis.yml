@@ -1,7 +1,10 @@
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -y cmake pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapack-dev
+  - sudo apt-get install -y gfortran cmake pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapack-dev
   - sudo ./DEPENDENCIES-INSTALLER.sh
+  - wget http://www.netlib.org/lapack/lapack-3.5.0.tgz
+  - tar zxvf lapack-3.5.0.tgz
+  - cd lapack-3.5.0 && cmake -DLAPACKE=1 -DCMAKE_INSTALL_PREFIX=/usr . && make && make install
 language: cpp
 script: ./.maketravis.sh
 compiler:
