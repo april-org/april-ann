@@ -26,16 +26,15 @@ luapkg{
       "-march=native",
       "-msse",
       "-DNDEBUG",
-      "-DNO_POOL",
       "-DNO_OMP",
-       --"-fPIC",
+      "-DNO_POOL",
+      --"-fPIC",
       -- For CUDA
-      "-I/usr/local/cuda/include",
-      "-L/usr/local/cuda/lib",
+       --"-I/usr/local/cuda/include",
+       --"-L/usr/local/cuda/lib",
     },
     extra_libs={
        --"-fPIC",
-      "-lpthread",
       "-rdynamic",
       -- For Intel MKL :)
       "-L/opt/MKL/lib",
@@ -44,9 +43,11 @@ luapkg{
       "-lmkl_intel_thread",
       "-lmkl_core",
       "-Wl,--end-group",
-      "-liomp5",
+      "/opt/MKL/lib/libiomp5.a",
       -- For CUBLAS
       "-lcublas",
+       --
+      "-lpthread",
     },
     shared_extra_libs={
       "-shared",

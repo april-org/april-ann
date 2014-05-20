@@ -172,7 +172,7 @@ namespace ANN {
     april_assert(number_input_windows == output_sw.numWindows());
     if (during_training)
       AssignRef(argmax_raw_pos,
-		new IntGPUMirroredMemoryBlock(input_mat->getDimSize(0)*
+		new Int32GPUMirroredMemoryBlock(input_mat->getDimSize(0)*
 					      output_sw.numWindows()));
     else if (argmax_raw_pos) {
       DecRef(argmax_raw_pos);

@@ -9,7 +9,7 @@ function ann.connections.input_filters_image(w, shape, margin, notranspose)
   assert(#shape == 2 or shape[3] == 3,
 	 "Expected 3 components at the 3rd dimension (color RGB)")
   local margin = margin or 1
-  local R = math.floor(math.sqrt(w:dim(1)))
+  local R = math.ceil(math.sqrt(w:dim(1)))
   local C = math.ceil(math.sqrt(w:dim(1)))
   local result = matrix(R*(shape[1]+1)-1,C*(shape[2]+1)-1,shape[3]):zeros()
   local neuron_weights

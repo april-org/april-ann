@@ -22,7 +22,10 @@
 #ifndef CBLAS_HEADERS_H
 #define CBLAS_HEADERS_H
 
+#include "complex_number.h"
 #include "aligned_memory.h"
+
+enum SPARSE_FORMAT { CSR_FORMAT=0, CSC_FORMAT=1, NONE_FORMAT=255 };
 
 #ifdef USE_MKL
 #ifdef USE_XCODE
@@ -52,7 +55,6 @@ extern "C" {
 #define VECTOR_DSET(n, value, vec, step) for(unsigned int _i_=0,_j_=0;_j_<(n);++_j_,_i_+=(step))(vec)[_i_]=(value)
 /*****************************************************************************/
 #else
-
 #ifndef NO_BLAS
 ////////////////////////////////// ATLAS //////////////////////////////////////
 extern "C" {
@@ -110,5 +112,109 @@ void cblas_ssbmv(CBLAS_ORDER order,
 #endif
 
 #define NEGATE_CBLAS_TRANSPOSE(trans) ((trans) == CblasNoTrans)?CblasTrans:CblasNoTrans
+
+// FIXME: MKL version is not working properly
+//#ifndef USE_MKL
+
+#if 1
+
+// sparse BLAS is only available with CUDA or MKL
+void cblas_saxpyi(int NNZ, float alpha,
+		  const float *x_values_mem,
+		  const int *x_indices_mem,
+		  float *y_mem);
+void cblas_daxpyi(int NNZ, double alpha,
+		  const double *x_values_mem,
+		  const int *x_indices_mem,
+		  double *y_mem);
+void cblas_caxpyi(int NNZ, const ComplexF *alpha,
+		  const ComplexF *x_values_mem,
+		  const int *x_indices_mem,
+		  ComplexF *y_mem);
+#endif
+
+void cblas_sparse_mm(CBLAS_ORDER major_order,
+                     SPARSE_FORMAT sparse_format,
+		     CBLAS_TRANSPOSE a_transpose,
+		     CBLAS_TRANSPOSE b_transpose,
+		     CBLAS_TRANSPOSE c_transpose,
+		     int m, int n, int k,
+		     float alpha,
+		     const float *a_values_mem,
+		     const int *a_indices_mem,
+		     const int *a_first_index_mem,
+		     const float *b_mem, int b_inc,
+		     float beta, float *c_mem, int c_inc);
+
+void cblas_sparse_mm(CBLAS_ORDER major_order,
+                     SPARSE_FORMAT sparse_format,
+		     CBLAS_TRANSPOSE a_transpose,
+		     CBLAS_TRANSPOSE b_transpose,
+		     CBLAS_TRANSPOSE c_transpose,
+		     int m, int n, int k,
+		     double alpha,
+		     const double *a_values_mem,
+		     const int *a_indices_mem,
+		     const int *a_first_index_mem,
+		     const double *b_mem, int b_inc,
+		     double beta, double *c_mem, int c_inc);
+
+void cblas_sparse_mm(CBLAS_ORDER major_order,
+                     SPARSE_FORMAT sparse_format,
+		     CBLAS_TRANSPOSE a_transpose,
+		     CBLAS_TRANSPOSE b_transpose,
+		     CBLAS_TRANSPOSE c_transpose,
+		     int m, int n, int k,
+		     ComplexF alpha,
+		     const ComplexF *a_values_mem,
+		     const int *a_indices_mem,
+		     const int *a_first_index_mem,
+		     const ComplexF *b_mem, int b_inc,
+		     ComplexF beta, ComplexF *c_mem, int c_inc);
+
+void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
+		     CBLAS_TRANSPOSE a_transpose,
+		     int m, int n,
+		     float alpha,
+		     const float *a_values_mem,
+		     const int *a_indices_mem,
+		     const int *a_first_index_mem,
+		     const float *x_mem, int x_inc,
+		     float beta, float *y_mem, int y_inc);
+
+void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
+		     CBLAS_TRANSPOSE a_transpose,
+		     int m, int n,
+		     double alpha,
+		     const double *a_values_mem,
+		     const int *a_indices_mem,
+		     const int *a_first_index_mem,
+		     const double *x_mem, int x_inc,
+		     double beta, double *y_mem, int y_inc);
+
+void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
+		     CBLAS_TRANSPOSE a_transpose,
+		     int m, int n,
+		     ComplexF alpha,
+		     const ComplexF *a_values_mem,
+		     const int *a_indices_mem,
+		     const int *a_first_index_mem,
+		     const ComplexF *x_mem, int x_inc,
+		     ComplexF beta, ComplexF *y_mem, int y_inc);
+
+template<typename T>
+T cblas_sparse_dot(int NNZ,
+                   const T *x_values_mem,
+                   const int *x_indices_mem,
+                   const T *y_mem,
+                   int y_inc) {
+  T result = T();
+  for (int i=0; i<NNZ; ++i) {
+    int pos = x_indices_mem[i];
+    int y_pos = pos * y_inc;
+    result = result + y_mem[y_pos]*x_values_mem[i];
+  }
+  return result;
+}
 
 #endif // CBLAS_HEADERS_H

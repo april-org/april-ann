@@ -1,8 +1,8 @@
-package{ name = "monad",
+package{ name = "utest",
    version = "1.0",
    depends = { "util" },
    keywords = { },
-   description = "",
+   description = "Unit testing",
    -- targets como en ant
    target{
      name = "init",
@@ -19,14 +19,6 @@ package{ name = "monad",
      depends = "init",
      --copy{ file= "c_src/*.h", dest_dir = "include" },
      --provide_bind{ file = "binding/bind_util.lua.cc" , dest_dir = "include" },
-   },
-   target{
-     name = "test",
-     -- execute_script{
-     --   file={
-     -- 	 "test/test-functional-programming.lua",
-     --   },
-     -- },
    },
    target{
      name = "build",
