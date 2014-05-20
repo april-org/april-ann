@@ -48,10 +48,15 @@ Master branch release
 
 ### C/C++
 
+- Added `-lcblas` option to `build_release.lua` and `build_debug.lua`.
 - Added sparse CBLAS wrappers, for CUDA (not tested) and standard release.
 - Added CBLAS wrappers for float, double, and ComplexF types.
 - Added geometric parametrizer for off-line text preprocessing.
 - Added dependency with `liblapacke` for PCA when not available MKL or MacOS X.
+
+### Other
+
+- Added travis compilation and testing platform for pull-requests.
 
 v0.3.1-alpha (pre-relase of v0.3.1-beta)
 ----------------------------------------
