@@ -44,12 +44,27 @@ cublasStatus_t wrapperCublasDot(cublasHandle_t &handle,
 
 cublasStatus_t wrapperCublasDot(cublasHandle_t &handle,
 				unsigned int size,
+				const double *x_mem,
+				unsigned int x_inc,
+				const double *y_mem,
+				unsigned int y_inc,
+				double *ret) {
+  return cublasDdot(handle,
+		    size,
+		    x_mem, x_inc,
+		    y_mem, y_inc,
+		    ret);
+}
+
+cublasStatus_t wrapperCublasDot(cublasHandle_t &handle,
+				unsigned int size,
 				const ComplexF *x_mem,
 				unsigned int x_inc,
 				const ComplexF *y_mem,
 				unsigned int y_inc,
 				ComplexF *ret) {
   ERROR_EXIT(256, "Dot product for complex numbers not implemented with CUDA\n");
+  return CUBLAS_STATUS_INTERNAL_ERROR;
 }
 
 #endif
@@ -62,6 +77,14 @@ float wrapperCblasDot(unsigned int size,
 		      const float *x_mem, unsigned int x_inc,
 		      const float *y_mem, unsigned int y_inc) {
   return cblas_sdot(size,
+		    x_mem, x_inc,
+		    y_mem, y_inc);
+}
+
+double wrapperCblasDot(unsigned int size,
+                       const double *x_mem, unsigned int x_inc,
+                       const double *y_mem, unsigned int y_inc) {
+  return cblas_ddot(size,
 		    x_mem, x_inc,
 		    y_mem, y_inc);
 }
@@ -122,6 +145,36 @@ T doDot(unsigned int size,
   return ret;
 }
 
+template<typename T>
+T doSparseDot(int NNZ,
+              const GPUMirroredMemoryBlock<T> *x_values,
+              const Int32GPUMirroredMemoryBlock *x_indices,
+              const GPUMirroredMemoryBlock<T> *y,
+              int y_shift,
+              int y_inc,
+              bool use_gpu) {
+  const T *x_values_mem;
+  const int *x_indices_mem;
+  const T *y_mem;
+  T ret;
+#ifndef USE_CUDA
+  UNUSED_VARIABLE(use_gpu);
+#endif
+#ifdef USE_CUDA
+  if (use_gpu)
+    ERROR_PRINT("CUDA sparse DOT not implemented\n");
+#endif
+  x_values_mem  = x_values->getPPALForRead();
+  x_indices_mem = x_indices->getPPALForRead();
+  y_mem = y->getPPALForRead() + y_shift;
+  ret = cblas_sparse_dot(NNZ,
+                         x_values_mem,
+                         x_indices_mem,
+                         y_mem,
+                         y_inc);
+  return ret;
+}
+
 template float doDot<float>(unsigned int size,
 			    const GPUMirroredMemoryBlock<float> *x,
 			    unsigned int x_shift,
@@ -131,6 +184,15 @@ template float doDot<float>(unsigned int size,
 			    unsigned int y_inc,
 			    bool use_gpu);
 
+template double doDot<double>(unsigned int size,
+                              const GPUMirroredMemoryBlock<double> *x,
+                              unsigned int x_shift,
+                              unsigned int x_inc,
+                              const GPUMirroredMemoryBlock<double> *y,
+                              unsigned int y_shift,
+                              unsigned int y_inc,
+                              bool use_gpu);
+
 template ComplexF doDot<ComplexF>(unsigned int size,
 				  const GPUMirroredMemoryBlock<ComplexF> *x,
 				  unsigned int x_shift,
@@ -139,3 +201,27 @@ template ComplexF doDot<ComplexF>(unsigned int size,
 				  unsigned int y_shift,
 				  unsigned int y_inc,
 				  bool use_gpu);
+
+template float doSparseDot(int NNZ,
+                           const GPUMirroredMemoryBlock<float> *x_values,
+                           const Int32GPUMirroredMemoryBlock *x_indices,
+                           const GPUMirroredMemoryBlock<float> *y,
+                           int y_shift,
+                           int y_inc,
+                           bool use_gpu);
+
+template double doSparseDot(int NNZ,
+                            const GPUMirroredMemoryBlock<double> *x_values,
+                            const Int32GPUMirroredMemoryBlock *x_indices,
+                            const GPUMirroredMemoryBlock<double> *y,
+                            int y_shift,
+                            int y_inc,
+                            bool use_gpu);
+
+template ComplexF doSparseDot(int NNZ,
+                              const GPUMirroredMemoryBlock<ComplexF> *x_values,
+                              const Int32GPUMirroredMemoryBlock *x_indices,
+                              const GPUMirroredMemoryBlock<ComplexF> *y,
+                              int y_shift,
+                              int y_inc,
+                              bool use_gpu);

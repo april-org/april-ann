@@ -24,6 +24,14 @@ Master branch release
 
 ### API Changes
 
+- Added `ann.optimizer.asgd` for Averaged SGD optimization.
+- Added `trainable.qlearning_trainer` for reinforcement learning tasks.
+- Enhanced `util.serialize` and `util.deserialize` to accept functions as
+  argument, allowing to serialize/deserialize over general streams.
+- Added `iscallable(...)` function.
+- Added `utest` package, for unit testing.
+- Added methods to `matrix` which work with sparse matrices.
+- Added class `matrix.sparse`.
 - Added method `m:toTabStream(file or gzfile)` to `matrix`.
 - Added operations `math.log1p` and `math.logadd`.
 - Added operator `%` to Lua `string` metatable, allowing to do Python-like
@@ -40,8 +48,15 @@ Master branch release
 
 ### C/C++
 
+- Added `-lcblas` option to `build_release.lua` and `build_debug.lua`.
+- Added sparse CBLAS wrappers, for CUDA (not tested) and standard release.
+- Added CBLAS wrappers for float, double, and ComplexF types.
 - Added geometric parametrizer for off-line text preprocessing.
 - Added dependency with `liblapacke` for PCA when not available MKL or MacOS X.
+
+### Other
+
+- Added travis compilation and testing platform for pull-requests.
 
 v0.3.1-alpha (pre-relase of v0.3.1-beta)
 ----------------------------------------

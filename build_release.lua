@@ -27,6 +27,7 @@ luapkg{
       "-fPIC",
       "-lpthread",
       "-lblas",
+      "-lcblas",
       "-latlas",
       "-fopenmp",
       "-rdynamic",

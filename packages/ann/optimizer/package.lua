@@ -18,6 +18,7 @@
      execute_script{
        file={
 	 "test/test-digits-sgd.lua",
+	 "test/test-digits-asgd.lua",
 	 "test/test-digits-rprop.lua",
 	 "test/test-digits-cg.lua",
 	 "test/test-digits-qprop.lua",

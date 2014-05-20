@@ -66,7 +66,6 @@ typedef TokenVector<int32_t>  TokenVectorInt32;
 typedef TokenVector<uint32_t> TokenVectorUint32;
 typedef TokenVector<char>     TokenVectorChar;
 typedef TokenVector<Token*>   TokenBunchVector;
-typedef TokenVector<april_utils::pair<unsigned int, float> > TokenSparseVectorFloat;
 
 /* forward declarations */
 
@@ -173,26 +172,5 @@ TokenCode TokenVector<Token*>::getTokenCode() const;
 
 template <>
 Token *TokenVector<Token*>::fromString(constString &cs);
-
-// ---------------------- sparse vector token ----------------------
-
-// TODO: implement
-template <>
-buffer_list* TokenVector<april_utils::pair<unsigned int, float> >::toString();
-
-template <>
-buffer_list*
-TokenVector<april_utils::pair<unsigned int, float> >::debugString(const char *prefix,
-								  int debugLevel);
-
-template <>
-TokenCode
-TokenVector<april_utils::pair<unsigned int, float> >::getTokenCode() const;
-
-// TODO: implement
-template <>
-Token
-*TokenVector<april_utils::pair<unsigned int, float> >::fromString(constString &cs);
-
 
 #endif // TOKEN_VECTOR_H

@@ -54,6 +54,8 @@ namespace ANN {
   void JoinANNComponent::addComponent(ANNComponent *component) {
     components.push_back(component);
     IncRef(component);
+    input_size  = 0;
+    output_size = 0;
   }
 
   void JoinANNComponent::buildInputBunchVector(TokenBunchVector *&result_vector_token,

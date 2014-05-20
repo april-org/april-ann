@@ -35,7 +35,7 @@ namespace ANN {
   /// input matrix.
   class MaxPoolingANNComponent : public ANNComponent {
     TokenMatrixFloat *input, *error_input, *output, *error_output;
-    IntGPUMirroredMemoryBlock *argmax_raw_pos;
+    Int32GPUMirroredMemoryBlock *argmax_raw_pos;
     
     // parameters of the convolution
     

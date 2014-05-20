@@ -37,6 +37,7 @@ extern "C" {
 #include "april_assert.h"
 #include "referenced.h"
 #include "complex_number.h"
+#include "unused_variable.h"
 #include <new>
 
 #ifdef USE_CUDA
@@ -211,6 +212,7 @@ protected:
   bool allocMemGPU() const {
     ERROR_EXIT(128, "You need first to update the "
 	       "memory in a non const pointer\n");
+    return false;
   }
 
   bool allocMemGPU() {
@@ -244,7 +246,7 @@ public:
     }
   }
 #endif
-  
+
   void toMMappedDataWriter(april_utils::MMappedDataWriter *mmapped_data) const {
 #ifdef USE_CUDA
     if (!getUpdatedPPAL())
@@ -456,6 +458,18 @@ public:
   }
   
   static void setUseMMapAllocation(bool v) { use_mmap_allocation = v; }
+  void forceUpdate(bool use_cuda) {
+#ifdef USE_CUDA
+    if (isConst())
+      ERROR_EXIT(128, "Impossible to write in a const memory block\n");
+    if (use_cuda)
+      updateMemGPU();
+    else
+      updateMemPPAL();
+#else
+    UNUSED_VARIABLE(use_cuda);
+#endif
+  }
 
 #ifndef NO_POOL
   static void changeMaxPoolSize(size_t max_pool_size) {
@@ -513,6 +527,20 @@ public:
   
   virtual ~GPUMirroredMemoryBlock() { }
   
+  GPUMirroredMemoryBlock<T> *clone() const {
+    GPUMirroredMemoryBlock<T> *result = new GPUMirroredMemoryBlock(getSize());
+    result->copyFromBlock(this, 0, 0, getSize());
+    return result;
+  }
+  
+  void copyFromBlock(const GPUMirroredMemoryBlock<T> *other,
+		     size_t from, size_t where, size_t sz) {
+    const T *other_ptr = other->getPPALForRead() + from;
+    T *this_ptr        = this->getPPALForWrite() + where;
+    memcpy(this_ptr, other_ptr, sz * sizeof(T));
+  }
+
+
   unsigned int getSize() const {
     return size/sizeof(T);
   }
@@ -623,7 +651,7 @@ public:
 // typedef for referring to float memory blocks
 typedef GPUMirroredMemoryBlock<float>    FloatGPUMirroredMemoryBlock;
 typedef GPUMirroredMemoryBlock<double>   DoubleGPUMirroredMemoryBlock;
-typedef GPUMirroredMemoryBlock<int>      IntGPUMirroredMemoryBlock;
+typedef GPUMirroredMemoryBlock<int32_t>  Int32GPUMirroredMemoryBlock;
 typedef GPUMirroredMemoryBlock<ComplexF> ComplexFGPUMirroredMemoryBlock;
 
 #endif // GPU_MIRRORED_MEMORY_BLOCK_H
