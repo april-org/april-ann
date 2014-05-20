@@ -146,26 +146,26 @@ namespace LanguageModels {
 
     /// generates the binary data useful for mmaped version
     void saveBinary(const char *filename,
-		    unsigned int expected_vocabulary_size,
-		    const char *expected_vocabulary[]);
+                    unsigned int expected_vocabulary_size,
+                    const char *expected_vocabulary[]);
     
     /// constructor for binary mmaped data
     NgramLiraModel(const char *filename,
-		   unsigned int expected_vocabulary_size,
-		   const char *expected_vocabulary[],
-		   WordType final_word,
-		   bool ignore_extra_words_in_dictionary);
+                   unsigned int expected_vocabulary_size,
+                   const char *expected_vocabulary[],
+                   WordType final_word,
+                   bool ignore_extra_words_in_dictionary);
 
     /// fan_out_threshold is used to distinguish automata states when
     /// looking for their transitions
     /// expectedVocabularySize is an array of char* strings, the
     /// vocabulary is not checked when this argument is NULL
     NgramLiraModel(FILE *fd,
-		   unsigned int expected_vocabulary_size,
-		   const char *expected_vocabulary[],
-		   WordType final_word,
-		   int fan_out_threshold,
-		   bool ignore_extra_words_in_dictionary);
+                   unsigned int expected_vocabulary_size,
+                   const char *expected_vocabulary[],
+                   WordType final_word,
+                   int fan_out_threshold,
+                   bool ignore_extra_words_in_dictionary);
 
     /// creates a simple model with two states: one which is a loop and
     /// a final state
@@ -210,7 +210,7 @@ namespace LanguageModels {
     }
     
     virtual void get(const Key &key, WordType word, Burden burden,
-		     vector<KeyScoreBurdenTuple> &result, Score threshold);
+                     vector<KeyScoreBurdenTuple> &result, Score threshold);
     
     virtual void clearQueries();
     
