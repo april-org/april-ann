@@ -185,7 +185,7 @@ namespace LanguageModels {
   }; // closes class NgramLiraModel
   
   class NgramLiraInterface : public LMInterface<NgramLiraModel::Key,
-						NgramLiraModel::Score> {
+                                                NgramLiraModel::Score> {
   public:
     typedef NgramLiraModel::Key Key;
     typedef NgramLiraModel::Score Score;
@@ -247,10 +247,11 @@ namespace LanguageModels {
     
   };
 
-  class HistoryBasedNgramLiraLM : public HistoryBasedLMUInt32LogFloat {
+  class HistoryBasedNgramLiraLM : public HistoryBasedLM<NgramLiraModel::Key,
+                                                        NgramLiraModel::Score > {
   public:
-    typedef uint32_t Key;
-    typedef log_float Score;
+    typedef NgramLiraModel::Key Key;
+    typedef NgramLiraModel::Score Score;
 
   private:
     NgramLiraModel *lira_model;
@@ -271,10 +272,12 @@ namespace LanguageModels {
     
   };
 
-  class HistoryBasedNgramLiraLMInterface : public HistoryBasedLMInterfaceUInt32LogFloat {
+  class HistoryBasedNgramLiraLMInterface :
+    public HistoryBasedLMInterface< NgramLiraModel::Key,
+                                    NgramLiraModel::Score > {
   public:
-    typedef HistoryBasedNgramLiraLM::Key Key;
-    typedef HistoryBasedNgramLiraLM::Score Score;
+    typedef NgramLiraModel::Key Key;
+    typedef NgramLiraModel::Score Score;
 
   private:
     Score privateGet(const Key &key,
