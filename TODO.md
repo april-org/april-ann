@@ -1,3 +1,5 @@
+- Search for FIXME word
+
 - MKL implementation of sparse operations is not working properly.
 
 - Update `ocr.off_line.param` package to use `Matrix<T>` iterators instead of
