@@ -496,10 +496,15 @@ function interest_points.filter_points(tables, height, width)
 
       local numClasses = numClasses or 5
       local mOut = matrix(#points, points)
-      local dsIndex = dataset.identity(numClasses)
-      local dsOutIndex = dataset.matrix(mOut)
-      local dsOut = dataset.indexed(dsOutIndex, {dsIndex})
 
+      local dsOut
+      if numClasses == 2 then
+        dsOut = dataset.matrix(mOut)
+      else
+        local dsIndex = dataset.identity(numClasses)
+        local dsOutIndex = dataset.matrix(mOut)
+        dsOut = dataset.indexed(dsOutIndex, {dsIndex})
+      end
       return dsOut
   end
   ------------------------
