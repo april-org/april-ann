@@ -7,8 +7,8 @@ for every new and fresh code, this guide will be followed.
 
 ### Coding style
 
-- Indentation: Two spaces indentation. For deep indentations, 7 spaces could be
-  substitued by one tab.
+- Indentation: Two spaces indentation. Tabs are not recommended, please,
+  substitute them by spaces.
 - Namespaces: Namespaces are in UpperCamelCase.
 - Classes: Class names (and structs) are in UpperCamelCase.
 - Methods: Method names in lowerCamelCase.
