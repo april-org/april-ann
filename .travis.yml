@@ -1,6 +1,7 @@
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -y cmake pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapack-dev
+  - sudo ./DEPENDENCIES-INSTALLER.sh
 language: cpp
 script: ./.maketravis.sh
 compiler:
