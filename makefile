@@ -9,7 +9,7 @@ document:
 	lua build_release.lua document
 
 configure:
-	. configure.sh
+	./configure.sh
 
 configured-test: configure test-debug
 
