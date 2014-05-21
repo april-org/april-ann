@@ -10,19 +10,21 @@ if [ $UNAME = "Linux" ]; then
         fi
         if [[ $ubuntu_release == "12.04" ]]; then
             apt-get install -y gfortran cmake pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapack-dev
-            cwd=$(pwd)
-            cd /tmp/ &&
-            wget http://www.netlib.org/lapack/lapack-3.5.0.tgz &&
-            tar zxvf lapack-3.5.0.tgz &&
-            cd lapack-3.5.0 &&
-            cmake -DBUILD_SHARED_LIBS=1 -DLAPACKE=1 -DCMAKE_INSTALL_PREFIX=/usr . &&
-            make &&
-            sudo make install
-            if [[ $? -ne 0 ]]; then
-                echo "Error installing dependencies"
-                exit 10
+            if ! locate liblapacke.so; then
+                cwd=$(pwd)
+                cd /tmp/ &&
+                wget http://www.netlib.org/lapack/lapack-3.5.0.tgz &&
+                tar zxvf lapack-3.5.0.tgz &&
+                cd lapack-3.5.0 &&
+                cmake -DBUILD_SHARED_LIBS=1 -DLAPACKE=1 -DCMAKE_INSTALL_PREFIX=/usr . &&
+                make &&
+                sudo make install
+                if [[ $? -ne 0 ]]; then
+                    echo "Error installing dependencies"
+                    exit 10
+                fi
+                cd $cwd
             fi
-            cd $cwd
         else
             apt-get install -y pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapacke-dev
             if [[ $? -ne 0 ]]; then
