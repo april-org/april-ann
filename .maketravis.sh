@@ -1,9 +1,19 @@
 #!/bin/bash
 . configure.sh
 if [[ $CC == gcc ]]; then
-    make release-atlas && make test && make release-pi
+    echo "**** GCC RELEASE-ATLAS ****"     &&
+    make release-atlas                     &&
+    echo "**** GCC TEST-DEBUG-ATLAS ****"  &&
+    make test-debug-atlas                  &&
+    echo "**** GCC RELEASE-NO-OMP ****"    &&
+    make release-no-omp                    &&
+    echo "**** GCC TEST-DEBUG-NO-OMP ****" &&
+    make test-debug-no-omp
 elif [[ $CC == clang ]]; then
-    make release-no-omp
+    echo "**** CLANG RELEASE-NO-OMP ****"     &&
+    make release-no-omp                       &&
+    echo "**** CLANG TEST-DEBUG-NO-OMP ****"  &&
+    make test-debug-no-omp
 else
     echo "Unknown variable CC=$CC"
     exit -1
