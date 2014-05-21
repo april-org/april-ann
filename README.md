@@ -47,14 +47,22 @@ different libraries. It is simple, you do
 
 where TARGET is one of the following, depending on which version you want:
 
-- ATLAS: `make release` (use build_release.lua), `make debug` (build_debug.lua)
-- Intel MKL: `make` or `make release-mkl` (build_mkl_release.lua), `make debug-mkl` (build_mkl_debug.lua)
-- Intel MKL + CUDA: `make release-cuda-mkl` (build_cuda_and_mkl_release.lua), `make debug-cuda-mkl` (build_cuda_and_mkl_debug.lua)
-- Mac OS X Accelerate Framework: `make release-macosx` (build_release_macosx.lua), `make debug-macosx` (build_debug_macosx.lua)
+- **release-mkl** needs of MKL library installed at `/opt/MKL` as prefix.
+- **release-atlas** needs of OMP and ATLAS library.
+- **release-no-omp** needs ATLAS library.
+- **release-cuda-mkl** needs CUDA and MKL installed at `/opt/MKL` as prefix.
+- **release-macosx** needs Mac OS X Accelerate Framework.
+- **release** it is the default target if nothing indicated when `make`
+  invocation and is equivalent to **release-mkl**.
+
+Besides this targets, it is possible to compile for debug replacing release
+string with **debug** string, and for testing replacing release by
+**test-debug**.
 
 Each of this targets will need a little configuration depending on your library
-installation. For example, in order to compile with MKL, the file build_mkl_release.lua contains
-the following sections (among others):
+installation. For example, in order to compile with MKL, the file
+`profile_build_scripts/build_mkl_release.lua` contains the following sections
+(among others):
 
 ```
   global_flags = {

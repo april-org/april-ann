@@ -1,57 +1,44 @@
 dofile("binding/formiga.lua")
-formiga.build_dir = "build_cuda_and_mkl_release"
+formiga.build_dir = "build_release_macosx"
 
-local packages = dofile "package_list.lua"
+local packages = dofile "profile_build_scripts/package_list.lua"
 table.insert(packages, "rlcompleter") -- AUTOCOMPLETION => needs READLINE
 
 luapkg{
   program_name = "april-ann",
   verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
   packages = packages,
-  version_flags = dofile "VERSION.lua",
-  disclaimer_strings = dofile "DISCLAIMER.lua",
+  version_flags = dofile "profile_build_scripts/VERSION.lua",
+  disclaimer_strings = dofile "profile_build_scripts/DISCLAIMER.lua",
   global_flags = {
     debug="no",
     use_lstrip = "yes",
     use_readline="yes",
     optimization = "yes",
-    platform = "unix64+cuda",
-    ignore_cuda = false,
-    no_shared = true,
+    platform = "unix",
     extra_flags={
-      -- For Intel MKL :)
-      "-DUSE_MKL",
-      "-I/opt/MKL/include",
-      --------------------
-      "-march=native",
+      "-mtune=native",
       "-msse",
       "-DNDEBUG",
+      "-DUSE_XCODE",
+      "-F/System/Library/Frameworks/Accelerate.framework",
       "-DNO_OMP",
-      "-DNO_POOL",
-      --"-fPIC",
-      -- For CUDA
-       --"-I/usr/local/cuda/include",
-       --"-L/usr/local/cuda/lib",
+      "-fPIC",
     },
     extra_libs={
-       --"-fPIC",
-      "-rdynamic",
-      -- For Intel MKL :)
-      "-L/opt/MKL/lib",
-      "-lmkl_intel_lp64",
-      "-Wl,--start-group",
-      "-lmkl_intel_thread",
-      "-lmkl_core",
-      "-Wl,--end-group",
-      "/opt/MKL/lib/libiomp5.a",
-      -- For CUBLAS
-      "-lcublas",
-       --
+      "-L/opt/local/lib", -- macports, change if necessary
       "-lpthread",
+      "-lpng",
+      "/System/Library/Frameworks/Accelerate.framework/Versions/A/Accelerate",
+      "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib",
+      "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libLAPACK.dylib",
+      "-rdynamic",
+      "-fPIC",
     },
     shared_extra_libs={
-      "-shared",
-      "-llua5.2",
+     "-flat_namespace",
+     "-bundle",
+      assert(io.popen("pkg-config --libs 'lua >= 5.2'"):read("*l"))
     },
   },
   

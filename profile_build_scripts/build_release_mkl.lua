@@ -1,15 +1,15 @@
 dofile("binding/formiga.lua")
-formiga.build_dir = "build_release_pi"
+formiga.build_dir = "build_release_mkl"
 
-local packages = dofile "package_list.pi.lua"
+local packages = dofile "profile_build_scripts/package_list.lua"
 table.insert(packages, "rlcompleter") -- AUTOCOMPLETION => needs READLINE
 
 luapkg{
   program_name = "april-ann",
   verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
   packages = packages,
-  version_flags = dofile "VERSION.lua",
-  disclaimer_strings = dofile "DISCLAIMER.lua",
+  version_flags = dofile "profile_build_scripts/VERSION.lua",
+  disclaimer_strings = dofile "profile_build_scripts/DISCLAIMER.lua",
   global_flags = {
     debug="no",
     use_lstrip = "yes",
@@ -17,21 +17,28 @@ luapkg{
     optimization = "yes",
     platform = "unix",
     extra_flags={
+      -- For Intel MKL :)
+      "-DUSE_MKL",
+      "-I/opt/MKL/include",
+      --------------------
+      "-march=native",
+      "-msse",
       "-DNDEBUG",
-      "-DNO_POOL",
-      "-DNO_OMP",
-      "-DNO_MM_MALLOC",
+      "-fopenmp",
       "-fPIC",
     },
     extra_libs={
       "-fPIC",
       "-lpthread",
-      "-lblas",
-      "-lcblas",
-      "-latlas",
       "-rdynamic",
-      "-llapack_atlas",
-      "-llapacke",
+      -- For Intel MKL :)
+      "-L/opt/MKL/lib",
+      "-lmkl_intel_lp64",
+      "-Wl,--start-group",
+      "-lmkl_intel_thread",
+      "-lmkl_core",
+      "-Wl,--end-group",
+      "-liomp5",
     },
     shared_extra_libs={
       "-shared",

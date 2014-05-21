@@ -1,33 +1,54 @@
 dofile("binding/formiga.lua")
-formiga.build_dir = "build_NOBLAS_debug"
+formiga.build_dir = "build_debug_cuda_and_mkl"
 
-local packages = dofile "package_list.lua"
+local packages = dofile "profile_build_scripts/package_list.lua"
 table.insert(packages, "rlcompleter") -- AUTOCOMPLETION => needs READLINE
 
 luapkg{
   program_name = "april-ann.debug",
   verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
   packages = packages,
-  version_flags = dofile "VERSION.lua",
-  disclaimer_strings = dofile "DISCLAIMER.lua",
+  version_flags = dofile "profile_build_scripts/VERSION.lua",
+  disclaimer_strings = dofile "profile_build_scripts/DISCLAIMER.lua",
   global_flags = {
     debug="yes",
     use_lstrip = "no",
     use_readline="yes",
     optimization = "no",
-    platform = "unix",
+    platform = "unix64+cuda",
+    ignore_cuda = false,
+    no_shared = true,
     extra_flags={
+      -- For Intel MKL :)
+      "-DUSE_MKL",
+      "-I/opt/MKL/include",
+      --------------------
+      "-march=native",
+      "-msse",
       "-pg",
+      "-DNO_OMP",
       "-DNO_POOL",
-      "-DNO_BLAS",
-      "-DNOOMP",
-      "-fPIC",
+      --"-fPIC",
+      -- For CUDA
+      "-I/usr/local/cuda/include",
+      "-L/usr/local/cuda/lib",
     },
     extra_libs={
-      "-fPIC",
+       --"-fPIC",
       "-pg",
       "-rdynamic",
-      "-Wl,-E -ldl"
+      -- For Intel MKL :)
+      "-L/opt/MKL/lib",
+      "-lmkl_intel_lp64",
+      "-Wl,--start-group",
+      "-lmkl_intel_thread",
+      "-lmkl_core",
+      "-Wl,--end-group",
+      "/opt/MKL/lib/libiomp5.a",
+      -- For CUBLAS
+      "-lcublas",
+      --
+      "-lpthread",
     },
     shared_extra_libs={
       "-shared",
@@ -113,7 +134,7 @@ if arg[1] ~= "document" and arg[1] ~= "test" then
   formiga.os.execute("mkdir -p "..formiga.os.compose_dir(arg[2], "bin"))
   formiga.os.execute("mkdir -p "..formiga.os.compose_dir(arg[2], "lib"))
   formiga.os.execute("mkdir -p "..formiga.os.compose_dir(arg[2], "include"))
-  formiga.os.execute("cp "..formiga.os.compose_dir(formiga.build_dir,"bin",formiga.program_name)
+  formiga.os.execute("cp -f "..formiga.os.compose_dir(formiga.build_dir,"bin",formiga.program_name)
 		       .." "..formiga.os.compose_dir(arg[2], "bin", formiga.program_name))
   formiga.os.execute("cp -R "..formiga.os.compose_dir(formiga.build_dir,"lib")
 		       .." "..arg[2])
