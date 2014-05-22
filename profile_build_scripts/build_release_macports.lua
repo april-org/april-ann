@@ -1,5 +1,5 @@
 dofile("binding/formiga.lua")
-formiga.build_dir = "build_release_macosx"
+formiga.build_dir = "build_release_macports"
 
 local packages = dofile "profile_build_scripts/package_list.lua"
 table.insert(packages, "rlcompleter") -- AUTOCOMPLETION => needs READLINE

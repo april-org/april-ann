@@ -1,5 +1,5 @@
 dofile("binding/formiga.lua")
-formiga.build_dir = "build_release_macosx"
+formiga.build_dir = "build_release_homebrew"
 
 local packages = dofile "profile_build_scripts/package_list.lua"
 table.insert(packages, "rlcompleter") -- AUTOCOMPLETION => needs READLINE
@@ -24,9 +24,11 @@ luapkg{
       "-F/System/Library/Frameworks/Accelerate.framework",
       "-DNO_OMP",
       "-fPIC",
+      "-I/usr/local/opt/readline/include", -- homebrew, change if necessary
     },
     extra_libs={
-      "-L/usr/local/lib", -- homebrew, change if necessary
+      "-L/usr/local/lib",              -- homebrew, change if necessary
+      "-L/usr/local/opt/readline/lib", -- homebrew, change if necessary
       "-lpthread",
       "-lpng",
       "/System/Library/Frameworks/Accelerate.framework/Versions/A/Accelerate",
