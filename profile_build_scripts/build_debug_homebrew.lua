@@ -13,7 +13,7 @@ luapkg{
   global_flags = {
     debug="yes",
     use_lstrip = "no",
-    use_readline="yes",
+    use_readline="no",
     optimization = "no",
     platform = "unix",
     extra_flags={
