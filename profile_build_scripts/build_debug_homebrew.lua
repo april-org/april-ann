@@ -26,7 +26,7 @@ luapkg{
       "-fPIC",
     },
     extra_libs={
-      "-L/opt/local/lib", -- macports, change if necessary
+      "-L/usr/local/lib", -- homebrew, change if necessary
       "-lpthread",
       "-lpng",
       "/System/Library/Frameworks/Accelerate.framework/Versions/A/Accelerate",
