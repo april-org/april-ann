@@ -17,6 +17,7 @@ luapkg{
     optimization = "yes",
     platform = "unix",
     extra_flags={
+      "-D__HOMEBREW__",
       "-mtune=native",
       "-msse",
       "-DNDEBUG",
