@@ -34,6 +34,7 @@ luapkg{
       "-pg",
       "-rdynamic",
       "-fPIC",
+      "-llua"
     },
     shared_extra_libs={
      "-flat_namespace",
