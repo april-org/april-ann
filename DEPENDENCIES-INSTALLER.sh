@@ -57,10 +57,11 @@ elif [ $UNAME = "Darwin" ]; then
             exit 10
         fi
     elif [ $(which brew) ]; then
-        if ! brew install lzlib readline libpng libtiff findutils pkgconfig lua; then
+        if ! brew install lzlib readline libpng libtiff findutils pkgconfig lua52; then
             echo "ERROR INSTALLING DEPENDENCIES USING HOMEBREW"
             exit 10
         fi
+        brew link lua52
     else
         echo "Error, impossible to install dependencies, this scripts needs MacPorts or Homebrew"
         exit 10
