@@ -3,14 +3,14 @@ UNAME=$(uname)
 echo "System: $UNAME"
 if [ $UNAME = "Linux" ]; then
     if [ $(which apt-get) ]; then
-        apt-get update -qq
+        sudo apt-get update -qq
         ubuntu_release=$(lsb_release -r | cut -f 2)
         if [[ $? -ne 0 ]]; then
             echo "Unable to call lsb_release command. This script only works in Ubuntu"
             exit 10
         fi
         if [[ $ubuntu_release == "12.04" ]]; then
-            apt-get install -y gfortran cmake pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapack-dev
+            sudo apt-get install -y gfortran cmake pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapack-dev
             if ! locate liblapacke.so; then
                 cwd=$(pwd)
                 cd /tmp/ &&
@@ -27,7 +27,7 @@ if [ $UNAME = "Linux" ]; then
                 cd $cwd
             fi
         else
-            apt-get install -y pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapacke-dev
+            sudo apt-get install -y pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapacke-dev
             if [[ $? -ne 0 ]]; then
                 echo "Error installing dependencies, only works with ubuntu >= 12.04"
                 exit 10
@@ -52,7 +52,7 @@ if [ $UNAME = "Linux" ]; then
     fi
 elif [ $UNAME = "Darwin" ]; then
     if [ $(which port) ]; then
-        if ! port install zlib readline libpng tiff findutils pkgconfig lua; then
+        if ! sudo port install zlib readline libpng tiff findutils pkgconfig lua; then
             echo "ERROR INSTALLING DEPENDENCIES USING MACPORTS"
             exit 10
         fi
