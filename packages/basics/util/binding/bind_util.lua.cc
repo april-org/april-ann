@@ -586,8 +586,8 @@ extern const char *__COMMIT_NUMBER__;
   LUABIND_GET_PARAMETER(1, double, sleeptime);
   double seconds = floor(sleeptime);
   struct timespec req;
-  req.tv_sec  = (time_t)seconds;
-  req.tv_nsec = (long)((sleeptime-seconds)*1e6);
+  req.tv_sec  = static_cast<time_t>(seconds);
+  req.tv_nsec = static_cast<long>((sleeptime-seconds)*1.0e6);
   nanosleep(&req, 0);
 }
 //BIND_END
