@@ -71,8 +71,8 @@ elif [ $UNAME = "Darwin" ]; then
         echo "version=5.2
 prefix=$HOMEBREW_PREFIX
 libdir=$HOMEBREW_PREFIX/lib
-includedir=$HOMEBREW_PREFIX/include" > /tmp/lua52.pc
-        sudo pkg-config install /tmp/lua52.pc
+includedir=$HOMEBREW_PREFIX/include" > /tmp/lua.pc
+        sudo pkg-config install /tmp/lua.pc
     else
         echo "Error, impossible to install dependencies, this scripts needs MacPorts or Homebrew"
         exit 10
