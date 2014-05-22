@@ -22,10 +22,10 @@ if [[ $UNAME == "Linux" ]]; then
     fi
 elif [[ $UNAME == "Darwin" ]]; then
     if [[ $CC == clang ]]; then
-        ## echo "**** CLANG RELEASE-MACOSX ****"     &&
+        ## echo "**** CLANG RELEASE-HOMEBREW ****"     &&
         ## make release-macosx                       &&
-        echo "**** CLANG TEST-DEBUG-MACOSX ****"  &&
-        make test-debug-macosx
+        echo "**** CLANG TEST-DEBUG-HOMEBREW ****"  &&
+        make test-debug-homebrew
     else
         echo "Unknown variable CC=$CC"
         exit 10

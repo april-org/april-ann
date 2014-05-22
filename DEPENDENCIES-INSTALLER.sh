@@ -62,17 +62,15 @@ elif [ $UNAME = "Darwin" ]; then
             echo "ERROR INSTALLING DEPENDENCIES USING HOMEBREW"
             exit 10
         fi
+        ###################################################################
+        # THIS UGLY HACK IS BECAUSE LUA52 IS NOT AT DEFAULT HOMEBREW REPO #
         brew tap homebrew/versions
         if ! brew install lua52; then
             echo "ERROR INSTALLING DEPENDENCIES USING HOMEBREW"
             exit 10
         fi
         brew link lua52
-        sudo echo "name=lua
-version=5.2
-prefix=$HOMEBREW_PREFIX
-libdir=$HOMEBREW_PREFIX/lib
-includedir=$HOMEBREW_PREFIX/include" > $HOMEBREW_PREFIX/lib/pkgconfig/lua.pc
+        ###################################################################
     else
         echo "Error, impossible to install dependencies, this scripts needs MacPorts or Homebrew"
         exit 10

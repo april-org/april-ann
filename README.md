@@ -51,7 +51,8 @@ where TARGET is one of the following, depending on which version you want:
 - **release-atlas** needs of OMP and ATLAS library.
 - **release-no-omp** needs ATLAS library.
 - **release-cuda-mkl** needs CUDA and MKL installed at `/opt/MKL` as prefix.
-- **release-macosx** needs Mac OS X Accelerate Framework.
+- **release-macports** needs Mac OS X with MacPorts and Accelerate Framework.
+- **release-homebrew** needs Mac OS X with Homebrew and Accelerate Framework.
 - **release** it is the default target if nothing indicated when `make`
   invocation and is equivalent to **release-mkl**.
 

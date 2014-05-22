@@ -24,9 +24,13 @@ test-debug-atlas: debug
 test-debug-no-omp: debug-no-omp
 	lua profile_build_scripts/build_debug_no_omp.lua test
 
-# TEST for MACOSX
-test-debug-macosx: debug-macosx
-	lua profile_build_scripts/build_debug_macosx.lua test
+# TEST for MACOSX MACPORTS
+test-debug-macports: debug-macports
+	lua profile_build_scripts/build_debug_macports.lua test
+
+# TEST for MACOSX HOMEBREW
+test-debug-homebrew: debug-homebrew
+	lua profile_build_scripts/build_debug_homebrew.lua test
 
 # TEST with OMP and MKL
 test-debug-mkl: debug-mkl
@@ -42,9 +46,13 @@ test-debug-pi: debug-pi
 
 #############################################################################
 
-# RELEASE for MACOSX
-release-macosx:
-	lua profile_build_scripts/build_release_macosx.lua
+# RELEASE for MACOSX MACPORTS
+release-macports:
+	lua profile_build_scripts/build_release_macports.lua
+
+# RELEASE for MACOSX HOMEBREW
+release-homebrew:
+	lua profile_build_scripts/build_release_homebrew.lua
 
 # RELEASE with OMP and MKL
 release-mkl:
@@ -68,9 +76,13 @@ release-no-omp:
 
 #############################################################################
 
-# DEBUG for MACOSX
-debug-macosx:
-	lua profile_build_scripts/build_debug_macosx.lua
+# DEBUG for MACOSX MACPORTS
+debug-macports:
+	lua profile_build_scripts/build_debug_macports.lua
+
+# DEBUG for MACOSX HOMEBREW
+debug-homebrew:
+	lua profile_build_scripts/build_debug_homebrew.lua
 
 # DEBUG with OMP and MKL
 debug-mkl:
