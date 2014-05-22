@@ -57,6 +57,7 @@ elif [ $UNAME = "Darwin" ]; then
             exit 10
         fi
     elif [ $(which brew) ]; then
+        brew update
         if ! brew install lzlib readline libpng libtiff findutils pkgconfig lua52; then
             echo "ERROR INSTALLING DEPENDENCIES USING HOMEBREW"
             exit 10
