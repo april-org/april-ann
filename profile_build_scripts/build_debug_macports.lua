@@ -1,15 +1,15 @@
 dofile("binding/formiga.lua")
-formiga.build_dir = "build_debug_macosx"
+formiga.build_dir = "build_debug_macports"
 
-local packages = dofile "package_list.lua"
+local packages = dofile "profile_build_scripts/package_list.lua"
 table.insert(packages, "rlcompleter") -- AUTOCOMPLETION => needs READLINE
 
 luapkg{
   program_name = "april-ann.debug",
   verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
   packages = packages,
-  version_flags = dofile "VERSION.lua",
-  disclaimer_strings = dofile "DISCLAIMER.lua",
+  version_flags = dofile "profile_build_scripts/VERSION.lua",
+  disclaimer_strings = dofile "profile_build_scripts/DISCLAIMER.lua",
   global_flags = {
     debug="yes",
     use_lstrip = "no",
