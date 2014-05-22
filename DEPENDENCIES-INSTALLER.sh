@@ -68,10 +68,11 @@ elif [ $UNAME = "Darwin" ]; then
             exit 10
         fi
         brew link lua52
-        sudo echo "version=5.2
+        sudo echo "name=lua
+version=5.2
 prefix=$HOMEBREW_PREFIX
 libdir=$HOMEBREW_PREFIX/lib
-includedir=$HOMEBREW_PREFIX/include" > /usr/local/lib/pkgconfig/lua.pc
+includedir=$HOMEBREW_PREFIX/include" > $HOMEBREW_PREFIX/lib/pkgconfig/lua.pc
     else
         echo "Error, impossible to install dependencies, this scripts needs MacPorts or Homebrew"
         exit 10
