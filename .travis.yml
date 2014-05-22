@@ -1,4 +1,8 @@
-env: OMP_NUM_THREADS=4
+env: OMP_NUM_THREADS=1
+matrix:
+  exclude:
+    - os: osx
+      compiler: gcc
 branches:
   only:
     - master
@@ -11,3 +15,6 @@ script: ./.maketravis.sh
 compiler:
   - gcc
   - clang
+os:
+  - linux
+  - osx
