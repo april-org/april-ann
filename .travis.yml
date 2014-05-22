@@ -8,7 +8,6 @@ branches:
     - master
     - devel
 before_install:
-  - sudo apt-get update -qq
   - sudo ./DEPENDENCIES-INSTALLER.sh
 language: cpp
 script: ./.maketravis.sh

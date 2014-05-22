@@ -3,6 +3,7 @@ UNAME=$(uname)
 echo "System: $UNAME"
 if [ $UNAME = "Linux" ]; then
     if [ $(which apt-get) ]; then
+        apt-get update -qq
         ubuntu_release=$(lsb_release -r | cut -f 2)
         if [[ $? -ne 0 ]]; then
             echo "Unable to call lsb_release command. This script only works in Ubuntu"
