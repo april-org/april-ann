@@ -166,13 +166,15 @@ extern const char *__COMMIT_NUMBER__;
 
 //BIND_FUNCTION util.wait
 //DOC_BEGIN
-// wait(...)
-/// espera a que terminen TODOS los hijos del proceso
+// pid,status wait(...)
+/// espera a que terminen UNO de los hijos del proceso
 /// despues usar split_process
 //DOC_END
 {
   int status;
-  wait(&status);
+  pid_t pid = wait(&status);
+  LUABIND_RETURN(int,pid);
+  LUABIND_RETURN(int,status);
 }
 //BIND_END
 

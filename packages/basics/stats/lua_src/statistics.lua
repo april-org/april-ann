@@ -664,11 +664,8 @@ april_set_doc("stats.bootstrap_resampling",
 		  "for every repetition will be returned.",
 		},
 		params = {
-		  population_size = "Size of the population",
+		  population = "A table with the population",
 		  repetitions = "Number of repetitions, recommended minimum of 1000",
-		  sampling = {"A function which every time is called",
-			      "returns a random element of the",
-			      "population"},
 		  reducer = {
 		    "A function witch receives two values and returns one",
 		  },
@@ -684,30 +681,31 @@ april_set_doc("stats.bootstrap_resampling",
 function stats.bootstrap_resampling(params)
   local params = get_table_fields(
     {
-      population_size = { mandatory = true },
+      population      = { mandatory = true, type_match = "table" },
       repetitions     = { type_match = "number",   mandatory = true },
-      sampling        = { type_match = "function", mandatory = true },
       reducer         = { type_match = "function", mandatory = true },
       postprocess     = { type_match = "function", mandatory = false,
 			  default=function(...) return ... end },
       initial         = { type_match = "function", mandatory = true },
       verbose         = { mandatory = false },
       ncores          = { mandatory = false, type_match = "number", default = 1 },
+      seed            = { mandatory = false, type_match = "number", default = os.time() },
     },
     params)
-  local population_size  = params.population_size
+  local population       = params.population
   local repetitions      = params.repetitions
-  local sampling_func    = params.sampling
   local reducer          = params.reducer
   local initial          = params.initial
   local postprocess      = params.postprocess
   local ncores           = params.ncores
+  local seed             = params.seed
   local result = parallel_foreach(ncores, iterator(range(1,repetitions)):table(),
                                   function(i)
+                                    local rnd = random(seed + i - 1)
                                     collectgarbage("collect")
                                     local acc = initial()
-                                    for p=1,population_size do
-                                      acc = reducer(acc, sampling_func())
+                                    for p=1,#population do
+                                      acc = reducer(acc, rnd:choose(population))
                                     end
                                     if ncores == 1 and params.verbose and i % 20 == 0 then
                                       fprintf(io.stderr, "\r%3.0f%%",
@@ -719,7 +717,7 @@ function stats.bootstrap_resampling(params)
                                     return r
                                   end,
                                   util.to_lua_string)
-  if params.verbose then
+  if ncores == 1 and params.verbose then
     fprintf(io.stderr, " done\n")
   end
   return result

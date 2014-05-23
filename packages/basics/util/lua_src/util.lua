@@ -695,8 +695,9 @@ end
 function parallel_foreach(num_processes, list, func, output_serialization_function)
   local outputs
   if output_serialization_function then
-    outputs = map(function(idx) return os.tmpname() end,
-		  range(1,num_processes))
+    outputs = iterator(range(1,num_processes)):
+    map(function(idx) return os.tmpname() end):
+    table()
   end
   local id = util.split_process(num_processes)-1
   if outputs then
@@ -707,22 +708,23 @@ function parallel_foreach(num_processes, list, func, output_serialization_functi
 	local ret = func(value)
 	fprintf(f,"[%d] = %s,\n",index,
 		output_serialization_function(ret) or "nil")
+        f:flush()
       end
     end
     fprintf(f, "}\n")
     f:close()
-    if id ~= 0 then os.exit(0) end
+    -- waits for all childrens
+    if id ~= 0 then util.wait() os.exit(0) end
     util.wait()
     -- maps all the outputs to a table
-    return map(function(v)return v end,
-	       iterable_map(function(index,filename)
-			      local t = dofile(filename)
-			      os.remove(filename)
-			      -- multiple outputs from this filename
-			      apply(coroutine.yield, pairs(t))
-			    end,
-			    -- iterate over each output filename
-			    ipairs(outputs)))
+    return iterator(ipairs(outputs)):
+    map(function(index,filename)
+          local t = util.deserialize(filename)
+          os.remove(filename)
+          -- multiple outputs from this filename
+          for k,v in pairs(t) do coroutine.yield(k,v) end
+        end):
+    table()
   else
     for index, value in ipairs(list) do
       if (index%num_processes) == id then
