@@ -675,6 +675,7 @@ april_set_doc("stats.bootstrap_resampling",
 		  initial = "A function which returns the initial value of the reduction",
 		  postprocess = "A function which transforms the aggregated value [optional], by default the identity",
 		  verbose = "True or false",
+                  ncores = "Number of cores [optional], by default it is 1",
 		},
 		outputs = {
 		  "A table with the reducer output for every repetition."
@@ -691,6 +692,7 @@ function stats.bootstrap_resampling(params)
 			  default=function(...) return ... end },
       initial         = { type_match = "function", mandatory = true },
       verbose         = { mandatory = false },
+      ncores          = { mandatory = false, type_match = "number", default = 1 },
     },
     params)
   local population_size  = params.population_size
@@ -699,21 +701,24 @@ function stats.bootstrap_resampling(params)
   local reducer          = params.reducer
   local initial          = params.initial
   local postprocess      = params.postprocess
-  local result           = {}
-  for i=1,repetitions do
-    collectgarbage("collect")
-    local acc = initial()
-    for p=1,population_size do
-      acc = reducer(acc, sampling_func())
-    end
-    if params.verbose and i % 20 == 0 then
-      fprintf(io.stderr, "\r%3.0f%%", i/repetitions*100)
-      io.stderr:flush()
-    end
-    local r = table.pack(postprocess(acc))
-    if #r == 1 then r = table.unpack(r) end
-    table.insert(result, r)
-  end
+  local ncores           = params.ncores
+  local result = parallel_foreach(ncores, iterator(range(1,repetitions)):table(),
+                                  function(i)
+                                    collectgarbage("collect")
+                                    local acc = initial()
+                                    for p=1,population_size do
+                                      acc = reducer(acc, sampling_func())
+                                    end
+                                    if ncores == 1 and params.verbose and i % 20 == 0 then
+                                      fprintf(io.stderr, "\r%3.0f%%",
+                                              i/repetitions*100)
+                                      io.stderr:flush()
+                                    end
+                                    local r = table.pack(postprocess(acc))
+                                    if #r == 1 then r = table.unpack(r) end
+                                    return r
+                                  end,
+                                  util.to_lua_string)
   if params.verbose then
     fprintf(io.stderr, " done\n")
   end
