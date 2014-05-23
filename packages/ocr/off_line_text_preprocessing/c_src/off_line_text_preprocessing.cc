@@ -295,8 +295,12 @@ namespace OCR {
 
             int dims[2] = {dst_height, width};
             MatrixFloat *result_mat = new MatrixFloat(2, dims);
+            
+            // FIXME: For non inverted matrix
+            result_mat->fill(0.0f);
+            
             ImageFloat  *result = new ImageFloat(result_mat);
-
+            
             int asc_idx = 0;
             int upper_idx = 0;
             int lower_idx = 0;
