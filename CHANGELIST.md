@@ -56,6 +56,7 @@ Master branch release
 
 ### Other
 
+- Added argument check at `mathcore.block.*` constructors.
 - Travis is monitoring only master and devel branches, for push and
   pull-requests.
 - Added travis compilation and testing platform for pull-requests.

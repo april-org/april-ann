@@ -102,6 +102,7 @@ T GPUMirroredMemoryBlockGet(lua_State *L,
 
 //BIND_CONSTRUCTOR FloatGPUMirroredMemoryBlock
 {
+  LUABIND_CHECK_ARGN(==,1);
   GPUMirroredMemoryBlockConstructor(L,obj);
   LUABIND_RETURN(FloatGPUMirroredMemoryBlock,obj);
 }
@@ -115,6 +116,7 @@ T GPUMirroredMemoryBlockGet(lua_State *L,
 
 //BIND_METHOD FloatGPUMirroredMemoryBlock set
 {
+  LUABIND_CHECK_ARGN(==,2);
   GPUMirroredMemoryBlockSet(L,obj);
   LUABIND_RETURN(FloatGPUMirroredMemoryBlock,obj);
 }
@@ -133,6 +135,7 @@ T GPUMirroredMemoryBlockGet(lua_State *L,
 
 //BIND_CONSTRUCTOR DoubleGPUMirroredMemoryBlock
 {
+  LUABIND_CHECK_ARGN(==,1);
   GPUMirroredMemoryBlockConstructor(L,obj);
   LUABIND_RETURN(DoubleGPUMirroredMemoryBlock,obj);
 }
@@ -146,6 +149,7 @@ T GPUMirroredMemoryBlockGet(lua_State *L,
 
 //BIND_METHOD DoubleGPUMirroredMemoryBlock set
 {
+  LUABIND_CHECK_ARGN(==,2);
   GPUMirroredMemoryBlockSet(L,obj);
   LUABIND_RETURN(DoubleGPUMirroredMemoryBlock,obj);
 }
@@ -164,6 +168,7 @@ T GPUMirroredMemoryBlockGet(lua_State *L,
 
 //BIND_CONSTRUCTOR Int32GPUMirroredMemoryBlock
 {
+  LUABIND_CHECK_ARGN(==,1);
   GPUMirroredMemoryBlockConstructor(L,obj);
   LUABIND_RETURN(Int32GPUMirroredMemoryBlock,obj);
 }
@@ -177,6 +182,7 @@ T GPUMirroredMemoryBlockGet(lua_State *L,
 
 //BIND_METHOD Int32GPUMirroredMemoryBlock set
 {
+  LUABIND_CHECK_ARGN(==,2);
   GPUMirroredMemoryBlockSet(L,obj);
   LUABIND_RETURN(Int32GPUMirroredMemoryBlock,obj);
 }
