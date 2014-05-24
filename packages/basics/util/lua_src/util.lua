@@ -692,7 +692,10 @@ function glob(...)
   return r
 end
 
-function parallel_foreach(num_processes, list, func, output_serialization_function)
+function parallel_foreach(num_processes, list_or_number, func,
+                          output_serialization_function)
+  assert(type(list_or_number) == "number" or type(list_or_number) == "table",
+         "Needs a table or a number as 2nd argument")
   local outputs
   if output_serialization_function then
     outputs = iterator(range(1,num_processes)):
@@ -703,12 +706,21 @@ function parallel_foreach(num_processes, list, func, output_serialization_functi
   if outputs then
     local f = io.open(outputs[id+1], "w")
     fprintf(f, "return {\n")
-    for index, value in ipairs(list) do
-      if (index%num_processes) == id then
-	local ret = func(value)
-	fprintf(f,"[%d] = %s,\n",index,
-		output_serialization_function(ret) or "nil")
-        f:flush()
+    if type(list_or_number) == "table" then
+      for index, value in ipairs(list_or_number) do
+        if (index%num_processes) == id then
+          local ret = func(value,id)
+          fprintf(f,"[%d] = %s,\n",index,
+                  output_serialization_function(ret) or "nil")
+        end
+      end
+    else
+      for index in range(1,list_or_number) do
+        if (index%num_processes) == id then
+          local ret = func(index,id)
+          fprintf(f,"[%d] = %s,\n",index,
+                  output_serialization_function(ret) or "nil")
+        end
       end
     end
     fprintf(f, "}\n")
@@ -726,9 +738,17 @@ function parallel_foreach(num_processes, list, func, output_serialization_functi
         end):
     table()
   else
-    for index, value in ipairs(list) do
-      if (index%num_processes) == id then
-	local ret = func(value)
+    if type(list_or_number) == "table" then
+      for index, value in ipairs(list_or_number) do
+        if (index%num_processes) == id then
+          local ret = func(value,id)
+        end
+      end
+    else
+      for index in range(1,list_or_number) do
+        if (index%num_processes) == id then
+          local ret = func(index,id)
+        end
       end
     end
     if id ~= 0 then os.exit(0) end

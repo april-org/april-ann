@@ -51,18 +51,17 @@ local rnd = random(seed)
 
 fprintf(io.stderr, "%d repetitions, %d points\n", reps, N)
 
-local data = stats.bootstrap_resampling{
+local boot_result = stats.boot{
   verbose         = true,
-  population_size = N,
-  repetitions     = reps,
-  sampling        = function() return table.unpack(points[rnd:randInt(1,N)]) end,
-  initial         = function() return stats.correlation.pearson() end,
-  reducer         = function(acc,x,y) return acc:add(x,y) end,
-  postprocess     = function(acc) return acc:compute() end,
+  data            = points,
+  R               = reps,
+  statistic       = function(it)
+    local c = stats.correlation.pearson()
+    for k,v in it do c:add(table.unpack(v)) end
+    return { c:compute() }
+  end,
 }
-
-table.sort(data, function(a,b) return a < b end)
-local rxy1,rxy2 = stats.confidence_interval(data, conf)
+local rxy1,rxy2 = stats.boot.ci(data, conf)
 
 local alpha,beta = util.linear_least_squares(points)
 
