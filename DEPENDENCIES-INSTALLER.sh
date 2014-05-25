@@ -3,7 +3,7 @@ UNAME=$(uname)
 echo "System: $UNAME"
 if [ $UNAME = "Linux" ]; then
     if [ $(which apt-get) ]; then
-        sudo apt-get update -qq
+        sudo apt-get update -y -q
         ubuntu_release=$(lsb_release -r | cut -f 2)
         if [[ $? -ne 0 ]]; then
             echo "Unable to call lsb_release command. This script only works in Ubuntu"
@@ -27,7 +27,7 @@ if [ $UNAME = "Linux" ]; then
                 cd $cwd
             fi
         else
-            sudo apt-get install -y pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapacke-dev
+            sudo apt-get install -y gfortran pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapacke-dev
             if [[ $? -ne 0 ]]; then
                 echo "Error installing dependencies, only works with ubuntu >= 12.04"
                 exit 10
