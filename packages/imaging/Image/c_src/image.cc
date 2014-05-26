@@ -961,7 +961,7 @@ Matrix<T> * Image<T>::comb_lineal_forward(int sx, int sy, int ancho, int alto, i
   int dx = (sx-ancho/2);
   int dy = (sy-alto/2);
 
-  const float th = 1e-5;
+  const float th = 1e-6;
   int *vec_tuplas = conf->numTuplas + (miny-dy)*ancho -dx;
   for (int y = miny; y < maxy; ++y,vec_tuplas+=ancho){
       for (int x = minx; x < maxx; x++){
