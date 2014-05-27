@@ -24,6 +24,8 @@ Master branch release
 
 ### API Changes
 
+- Modified bootstrapping API in order to be similar with R: `stats.boot()` and
+  `stats.boot.ci()`.
 - Added `ann.optimizer.asgd` for Averaged SGD optimization.
 - Added `trainable.qlearning_trainer` for reinforcement learning tasks.
 - Enhanced `util.serialize` and `util.deserialize` to accept functions as
