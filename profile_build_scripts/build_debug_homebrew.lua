@@ -1,15 +1,15 @@
 dofile("binding/formiga.lua")
-formiga.build_dir = "build_NOBLAS_debug"
+formiga.build_dir = "build_debug_homebrew"
 
-local packages = dofile "package_list.lua"
+local packages = dofile "profile_build_scripts/package_list.lua"
 table.insert(packages, "rlcompleter") -- AUTOCOMPLETION => needs READLINE
 
 luapkg{
   program_name = "april-ann.debug",
   verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
   packages = packages,
-  version_flags = dofile "VERSION.lua",
-  disclaimer_strings = dofile "DISCLAIMER.lua",
+  version_flags = dofile "profile_build_scripts/VERSION.lua",
+  disclaimer_strings = dofile "profile_build_scripts/DISCLAIMER.lua",
   global_flags = {
     debug="yes",
     use_lstrip = "no",
@@ -17,21 +17,32 @@ luapkg{
     optimization = "no",
     platform = "unix",
     extra_flags={
+      "-D__HOMEBREW__",
+      "-mtune=native",
+      "-msse",
+      "-DUSE_XCODE",
+      "-F/System/Library/Frameworks/Accelerate.framework",
       "-pg",
-      "-DNO_POOL",
-      "-DNO_BLAS",
-      "-DNOOMP",
+      "-DNO_OMP",
       "-fPIC",
+      "-I/usr/local/opt/readline/include", -- homebrew, change if necessary
     },
     extra_libs={
-      "-fPIC",
+      "-L/usr/local/lib",              -- homebrew, change if necessary
+      "-L/usr/local/opt/readline/lib", -- homebrew, change if necessary
+      "-lpthread",
+      "-lpng",
+      "/System/Library/Frameworks/Accelerate.framework/Versions/A/Accelerate",
+      "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib",
+      "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libLAPACK.dylib",
       "-pg",
       "-rdynamic",
-      "-Wl,-E -ldl"
+      "-fPIC",
+      "-llua"
     },
     shared_extra_libs={
-      "-shared",
-      "-llua5.2",
+     "-flat_namespace",
+     "-bundle",
     },
   },
   
@@ -113,7 +124,7 @@ if arg[1] ~= "document" and arg[1] ~= "test" then
   formiga.os.execute("mkdir -p "..formiga.os.compose_dir(arg[2], "bin"))
   formiga.os.execute("mkdir -p "..formiga.os.compose_dir(arg[2], "lib"))
   formiga.os.execute("mkdir -p "..formiga.os.compose_dir(arg[2], "include"))
-  formiga.os.execute("cp "..formiga.os.compose_dir(formiga.build_dir,"bin",formiga.program_name)
+  formiga.os.execute("cp -f "..formiga.os.compose_dir(formiga.build_dir,"bin",formiga.program_name)
 		       .." "..formiga.os.compose_dir(arg[2], "bin", formiga.program_name))
   formiga.os.execute("cp -R "..formiga.os.compose_dir(formiga.build_dir,"lib")
 		       .." "..arg[2])

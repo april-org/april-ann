@@ -1,38 +1,53 @@
 dofile("binding/formiga.lua")
-formiga.build_dir = "build_release"
+formiga.build_dir = "build_release_cuda_and_mkl"
 
-local packages = dofile "package_list.lua"
+local packages = dofile "profile_build_scripts/package_list.lua"
 table.insert(packages, "rlcompleter") -- AUTOCOMPLETION => needs READLINE
 
 luapkg{
   program_name = "april-ann",
   verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
   packages = packages,
-  version_flags = dofile "VERSION.lua",
-  disclaimer_strings = dofile "DISCLAIMER.lua",
+  version_flags = dofile "profile_build_scripts/VERSION.lua",
+  disclaimer_strings = dofile "profile_build_scripts/DISCLAIMER.lua",
   global_flags = {
     debug="no",
     use_lstrip = "yes",
     use_readline="yes",
     optimization = "yes",
-    platform = "unix",
+    platform = "unix64+cuda",
+    ignore_cuda = false,
+    no_shared = true,
     extra_flags={
+      -- For Intel MKL :)
+      "-DUSE_MKL",
+      "-I/opt/MKL/include",
+      --------------------
       "-march=native",
       "-msse",
       "-DNDEBUG",
-      "-fopenmp",
-      "-fPIC",
+      "-DNO_OMP",
+      "-DNO_POOL",
+      --"-fPIC",
+      -- For CUDA
+       --"-I/usr/local/cuda/include",
+       --"-L/usr/local/cuda/lib",
     },
     extra_libs={
-      "-fPIC",
-      "-lpthread",
-      "-lblas",
-      "-lcblas",
-      "-latlas",
-      "-fopenmp",
+       --"-fPIC",
       "-rdynamic",
-      "-llapack_atlas",
-      "-llapacke",
+      -- For Intel MKL :)
+      "-L/opt/MKL/lib",
+      "-lmkl_intel_lp64",
+      "-Wl,--start-group",
+      "-lmkl_intel_thread",
+      "-lmkl_core",
+      "-Wl,--end-group",
+      "/opt/MKL/lib/libiomp5.a",
+      -- For CUBLAS
+      "-lcublas",
+       --
+      "-lpthread",
     },
     shared_extra_libs={
       "-shared",

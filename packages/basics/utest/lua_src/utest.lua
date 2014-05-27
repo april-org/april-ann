@@ -41,9 +41,9 @@ utest.finish = function()
         ansi.fg.bright_green, passed, ansi.fg.default,
         ansi.fg.bright_red, failed, ansi.fg.default)
   if failed > 0 then
-    print("%sTest failed%s\tList: %s"%{ansi.fg.bright_red,
-                                       ansi.fg.default,
-                                       table.concat(failed_list, ", ")})
+    write(1, "%sTest failed%s\tList: %s\n"%{ansi.fg.bright_red,
+                                            ansi.fg.default,
+                                            table.concat(failed_list, ", ")})
     os.exit(1)
   end
   write(0, "%sOk%s\n", ansi.fg.bright_green, ansi.fg.default)

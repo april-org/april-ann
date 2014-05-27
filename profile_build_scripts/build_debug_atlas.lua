@@ -1,33 +1,38 @@
 dofile("binding/formiga.lua")
-formiga.build_dir = "build_NOBLAS_release"
+formiga.build_dir = "build_debug"
 
-local packages = dofile "package_list.lua"
+local packages = dofile "profile_build_scripts/package_list.lua"
 table.insert(packages, "rlcompleter") -- AUTOCOMPLETION => needs READLINE
 
 luapkg{
-  program_name = "april-ann",
+  program_name = "april-ann.debug",
   verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
   packages = packages,
-  version_flags = dofile "VERSION.lua",
-  disclaimer_strings = dofile "DISCLAIMER.lua",
+  version_flags = dofile "profile_build_scripts/VERSION.lua",
+  disclaimer_strings = dofile "profile_build_scripts/DISCLAIMER.lua",
   global_flags = {
-    debug="no",
-    use_lstrip = "yes",
+    debug="yes",
+    use_lstrip = "no",
     use_readline="yes",
-    optimization = "yes",
+    optimization = "no",
     platform = "unix",
     extra_flags={
-      "-march=native",
-      "-msse",
-      "-DNDEBUG",
-      "-DNO_BLAS",
-      "-DNOOMP",
+      "-pg",
+      "-fopenmp",
       "-fPIC",
     },
     extra_libs={
       "-fPIC",
+      "-pg",
+      "-lpthread",
+      "-lblas",
+      "-lcblas",
+      "-latlas",
+      "-L/opt/lib",
+      "-lgfortran",
       "-rdynamic",
-      "-Wl,-E -ldl"
+      "-llapack_atlas",
+      "-llapacke",
     },
     shared_extra_libs={
       "-shared",
@@ -113,11 +118,10 @@ if arg[1] ~= "document" and arg[1] ~= "test" then
   formiga.os.execute("mkdir -p "..formiga.os.compose_dir(arg[2], "bin"))
   formiga.os.execute("mkdir -p "..formiga.os.compose_dir(arg[2], "lib"))
   formiga.os.execute("mkdir -p "..formiga.os.compose_dir(arg[2], "include"))
-  formiga.os.execute("cp -f "..formiga.os.compose_dir(formiga.build_dir,"bin",formiga.program_name)
+  formiga.os.execute("cp "..formiga.os.compose_dir(formiga.build_dir,"bin",formiga.program_name)
 		       .." "..formiga.os.compose_dir(arg[2], "bin", formiga.program_name))
   formiga.os.execute("cp -R "..formiga.os.compose_dir(formiga.build_dir,"lib")
 		       .." "..arg[2])
-  formiga.os.execute("cp -R "..formiga.os.compose_dir(formiga.build_dir,"include","april-ann")
+  formiga.os.execute("cp -R "..formiga.os.compose_dir(formiga.build_dir,"include","april-ann.debug")
 		       .." "..formiga.os.compose_dir(arg[2], "include"))
-
 end

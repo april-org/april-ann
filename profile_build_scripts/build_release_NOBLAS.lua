@@ -1,15 +1,15 @@
 dofile("binding/formiga.lua")
-formiga.build_dir = "build_release_macosx"
+formiga.build_dir = "build_NOBLAS_release"
 
-local packages = dofile "package_list.lua"
+local packages = dofile "profile_build_scripts/package_list.lua"
 table.insert(packages, "rlcompleter") -- AUTOCOMPLETION => needs READLINE
 
 luapkg{
   program_name = "april-ann",
   verbosity_level = 0,  -- 0 => NONE, 1 => ONLY TARGETS, 2 => ALL
   packages = packages,
-  version_flags = dofile "VERSION.lua",
-  disclaimer_strings = dofile "DISCLAIMER.lua",
+  version_flags = dofile "profile_build_scripts/VERSION.lua",
+  disclaimer_strings = dofile "profile_build_scripts/DISCLAIMER.lua",
   global_flags = {
     debug="no",
     use_lstrip = "yes",
@@ -17,28 +17,21 @@ luapkg{
     optimization = "yes",
     platform = "unix",
     extra_flags={
-      "-mtune=native",
+      "-march=native",
       "-msse",
       "-DNDEBUG",
-      "-DUSE_XCODE",
-      "-F/System/Library/Frameworks/Accelerate.framework",
-      "-DNO_OMP",
+      "-DNO_BLAS",
+      "-DNOOMP",
       "-fPIC",
     },
     extra_libs={
-      "-L/opt/local/lib", -- macports, change if necessary
-      "-lpthread",
-      "-lpng",
-      "/System/Library/Frameworks/Accelerate.framework/Versions/A/Accelerate",
-      "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib",
-      "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libLAPACK.dylib",
-      "-rdynamic",
       "-fPIC",
+      "-rdynamic",
+      "-Wl,-E -ldl"
     },
     shared_extra_libs={
-     "-flat_namespace",
-     "-bundle",
-      assert(io.popen("pkg-config --libs 'lua >= 5.2'"):read("*l"))
+      "-shared",
+      "-llua5.2",
     },
   },
   
