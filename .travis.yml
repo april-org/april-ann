@@ -1,4 +1,4 @@
-env: OMP_NUM_THREADS=1
+env: OMP_NUM_THREADS=2
 matrix:
   exclude:
     - os: osx
