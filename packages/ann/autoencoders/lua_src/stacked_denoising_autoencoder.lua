@@ -796,6 +796,8 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
       percentage_stopping_criterion = lookup("pretraining_percentage_stopping_criterion"),      
     }
     while train_func:execute(function()
+                               local data = data
+                               if type(data) == "function" then data = data() end
                                return trainer,trainer:train_dataset(data)
                              end) do
       local t = train_func:get_state_table()
@@ -948,6 +950,8 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
       percentage_stopping_criterion = lookup("pretraining_percentage_stopping_criterion"),      
     }
     while train_func:execute(function()
+                               local data = data
+                               if type(data) == "function" then data = data() end
                                return thenet_trainer,thenet_trainer:train_dataset(data)
                              end) do
       local t = train_func:get_state_table()
