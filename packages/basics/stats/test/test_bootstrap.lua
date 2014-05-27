@@ -16,6 +16,6 @@ iterator(io.lines(base_dir.."test_bootstrap-output.log")):
 map(string.tokenize):
 enumerate():
 apply(function(i,t)
-        check.eq(tonumber(t[1]),boot_result[i][1])
-        check.eq(tonumber(t[2]),boot_result[i][2])
+        check.lt(math.abs(tonumber(t[1]) - boot_result[i][1]), 1e-03)
+        check.lt(math.abs(tonumber(t[2]) - boot_result[i][2]), 1e-03)
       end)
