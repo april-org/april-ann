@@ -44,8 +44,6 @@ val_output   = dataset.matrix(m2,
 layers_table = {
   { size=  256, actf="logistic"}, -- INPUT LAYER
   { size= 1024, actf="logistic"}, -- FIRST HIDDEN LAYER
-  { size= 1024, actf="logistic"}, -- SECOND HIDDEN LAYER
-  { size= 1024, actf="logistic"}, -- THIRD HIDDEN LAYER
 }
 
 perturbation_prob = random(9283424)
