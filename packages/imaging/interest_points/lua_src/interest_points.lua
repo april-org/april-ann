@@ -156,7 +156,7 @@ april_set_doc("interest_points.pointClassifier.getFishDs", {
 })
 function methods:getFishDs(img, x, y)
 
-    local mFish = img:comb_lineal_forward(x,y, self.ancho, self.alto, self.miniancho, self.minialto, self.inv_tlc)
+    local mFish = img:comb_lineal_forward(x,y, self.ancho, self.alto, self.miniancho, self.minialto, self.inv_tlc):clamp(0,1)
     
     if self.reverse_old then
         mFish:complement()

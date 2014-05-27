@@ -740,6 +740,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 							     nil,
 							     params.bunch_size,
 							     params.optimizer())
+
       local aux_weights = mlp_final_weights:clone()
       mlp_final_trainer:build{ weights=aux_weights }
       data = generate_training_table_configuration_on_the_fly(current_dataset_params,
