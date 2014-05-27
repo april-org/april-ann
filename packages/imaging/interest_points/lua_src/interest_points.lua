@@ -652,30 +652,33 @@ function methods:get_interest_points_line(img, mlpUppers, mlpLowers, threshold)
 
   local w, h = img:geometry()
   -- extract points and classify the points
-  print ("Extracting points")
+   -- print ("Extracting points")
   local uppers_classified, lowers_classified = self:extract_points(img, mlpUppers, mlpLowers)
-  print ("Well we have ", #uppers_classified, #lowers_classified)
-  print (#uppers_classified[1])
+  -- print ("Well we have ", #uppers_classified, #lowers_classified)
+  -- print (#uppers_classified[1])
 
   -- filter by the points by threshold and minima for uppers and maxima for lowers
   uppers_classified =  interest_points.filter_by_class_threshold(uppers_classified, threshold, true)
   lowers_classified = interest_points.filter_by_class_threshold(lowers_classified, threshold, false)
  
-  print ("After the first filter we have ", #uppers_classified, #lowers_classified)
+  -- print ("After the first filter we have ", #uppers_classified, #lowers_classified)
   
   -- Mix the tables
-  print("lets mix all together")
+  -- print("lets mix all together")
   local tables = interest_points.classified_to_tables(5, uppers_classified
   , lowers_classified)
-  for i, t in ipairs(tables) do
+  --[[ for i, t in ipairs(tables) do
       print(i,#t) 
   end
+  --]]
+  --
   -- filter
-  print("jorge is filtering...")
+  --[[ print("jorge is filtering...")
   tables = interest_points.filter_points(tables, height,width)
   for i, t in ipairs(tables) do
       print(i,#t) 
   end
+  --]]
   return tables
 end
 
@@ -690,6 +693,7 @@ function interest_points.filter_by_class_threshold(points, threshold, upper)
     for _, point in ipairs(points) do
 
         local class = point[3]
+        -- print(class, math.exp(point[4]), threshold)
         if math.exp(point[4]) > threshold and
             ((upper and class < 3) or (class >3)) then
             table.insert(result, point)
