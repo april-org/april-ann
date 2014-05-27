@@ -13,10 +13,10 @@
      delete{ dir = "build" },
      delete{ dir = "include" },
    },
-   --   target{
-   --     name = "test",
-   --     execute_script{ file="test/execute-sdae-tests.lua" },
-   --   },
+   target{
+     name = "test",
+     execute_script{ file="test/test.lua" },
+   },
    target{
      name = "provide",
      depends = "init",
