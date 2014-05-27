@@ -16,6 +16,7 @@
    target{
      name = "test",
      execute_script{ file="test/test.lua" },
+     execute_script{ file="test/test_on_the_fly.lua" },
    },
    target{
      name = "provide",
