@@ -950,7 +950,7 @@ Matrix<T> * Image<T>::comb_lineal_forward(int sx, int sy, int ancho, int alto, i
 //  printf("Preparing Combination %d\n", conf->patternsize);
   Matrix<T> *mat = new Matrix<T>(1, output_size);
  
-  mat->fill(1);
+  mat->fill(0.0);
 
   //FIXME: This is not working correctly if ancho y alto are not multiples of 2
   int miny = max(sy-alto/2,0);
@@ -961,17 +961,16 @@ Matrix<T> * Image<T>::comb_lineal_forward(int sx, int sy, int ancho, int alto, i
   int dx = (sx-ancho/2);
   int dy = (sy-alto/2);
 
-  const float th = 1-1e-5 ;
+  const float th = 1e-6;
   int *vec_tuplas = conf->numTuplas + (miny-dy)*ancho -dx;
   for (int y = miny; y < maxy; ++y,vec_tuplas+=ancho){
       for (int x = minx; x < maxx; x++){
           float value = (*this)(x,y);
-          if (value < th) {
-              value = 1.0-value;
+          if (value > th) {
               for (int j = vec_tuplas[x-1];j<vec_tuplas[x];j++) {
                   int dest = conf->indices[j];
                   // FIXME sustituir por mat[dest], ahora no funciona
-                  (*mat)(dest) -= value*conf->pesos[j];
+                  (*mat)(dest) += value*conf->pesos[j];
               }
           }
       } 

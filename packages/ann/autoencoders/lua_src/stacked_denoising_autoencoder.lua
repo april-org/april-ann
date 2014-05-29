@@ -740,6 +740,7 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
 							     nil,
 							     params.bunch_size,
 							     params.optimizer())
+
       local aux_weights = mlp_final_weights:clone()
       mlp_final_trainer:build{ weights=aux_weights }
       data = generate_training_table_configuration_on_the_fly(current_dataset_params,
@@ -790,16 +791,22 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
       trainer:set_option("learning_rate", trainer:get_option("learning_rate")*ratio)
     end
     -- printf("BEFORE TRAIN %d\n", i)
-    local best_net = trainer:train_wo_validation{
+    local train_func = trainable.train_wo_validation{
       min_epochs     = lookup("min_epochs"),
       max_epochs     = lookup("max_epochs"),
-      training_table = data,
-      percentage_stopping_criterion = lookup("pretraining_percentage_stopping_criterion"),
-      update_function = function(t)
-	printf("%4d %10.6f  (improvement %.4f)\n",
-	       t.current_epoch, t.train_error, t.train_improvement)
-	io.stdout:flush()	
-      end }
+      percentage_stopping_criterion = lookup("pretraining_percentage_stopping_criterion"),      
+    }
+    while train_func:execute(function()
+                               local data = data
+                               if type(data) == "function" then data = data() end
+                               return trainer,trainer:train_dataset(data)
+                             end) do
+      local t = train_func:get_state_table()
+      printf("%4d %10.6f  (improvement %.4f)\n",
+             t.current_epoch, t.train_error, t.train_improvement)
+      io.stdout:flush()
+    end
+    local best_net = trainer
     -- printf("AFTER TRAIN %d\n", i)
     ---------------------------------------------------------
     local b1mat = best_net:weights(params.names_prefix.."b1"):clone()
@@ -938,17 +945,22 @@ function ann.autoencoders.greedy_layerwise_pretraining(t)
       inf=-math.sqrt(6 / (input_size + output_size)),
       sup= math.sqrt(6 / (input_size + output_size))
     }
-    local best_net_trainer = thenet_trainer:train_wo_validation{
+    local train_func = trainable.train_wo_validation{
       min_epochs     = lookup("min_epochs"),
       max_epochs     = lookup("max_epochs"),
-      training_table = data,
-      percentage_stopping_criterion = lookup("pretraining_percentage_stopping_criterion"),
-      update_function = function(t)
-	printf("%4d %10.6f  (improvement %.4f)\n",
-	       t.current_epoch, t.train_error, t.train_improvement)
-	io.stdout:flush()	
-      end
+      percentage_stopping_criterion = lookup("pretraining_percentage_stopping_criterion"),      
     }
+    while train_func:execute(function()
+                               local data = data
+                               if type(data) == "function" then data = data() end
+                               return thenet_trainer,thenet_trainer:train_dataset(data)
+                             end) do
+      local t = train_func:get_state_table()
+      printf("%4d %10.6f  (improvement %.4f)\n",
+             t.current_epoch, t.train_error, t.train_improvement)
+      io.stdout:flush()	
+    end
+    local best_net_trainer = thenet_trainer
     local wobj  = best_net_trainer:weights(params.names_prefix.."w1"):clone()
     local bobj  = best_net_trainer:weights(params.names_prefix.."b1"):clone()
     local lastn = #params.layers

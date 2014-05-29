@@ -610,7 +610,98 @@ end
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
-april_set_doc("stats.confidence_interval",
+april_set_doc("stats.boot",
+	      {
+		class = "function",
+		summary = "Produces a bootstrap resampling table",
+		description= {
+		  "This function is useful to compute confidence intervals",
+		  "by using bootstrapping technique. The function receives",
+		  "a data table or matrix, a function which returns statistics",
+                  "of a sample given an iterator.",
+		  "A table with the computation of the post-process function",
+		  "for every repetition will be returned.",
+		},
+		params = {
+		  data = "A table with the data",
+		  R = "Number of repetitions, recommended minimum of 1000",
+		  statistic = {
+		    "A function witch receives an iterator and computes",
+                    "statistics (k>=1 statistics) over all the iterator results.",
+                    "The iterator produces a key which is a row in data",
+                    "and a value which is the corresponding row.",
+		  },
+		  verbose = "True or false",
+                  ncores = "Number of cores [optional], by default it is 1",
+                  seed = "A random seed [optional], by default it is os.time()",
+		},
+		outputs = {
+		  "A table with the k statistics for every repetition."
+		},
+	      })
+stats.boot = {}
+-- self is needed because of __call metamethod, but it will be ignored
+local function boot(self,params)
+  local params = get_table_fields(
+    {
+      data        = { mandatory = true },
+      R           = { type_match = "number",   mandatory = true },
+      statistic   = { type_match = "function", mandatory = true },
+      verbose     = { mandatory = false },
+      ncores      = { mandatory = false, type_match = "number", default = 1 },
+      seed        = { mandatory = false, type_match = "number", default = os.time() },
+    },
+    params)
+  local data        = params.data
+  local repetitions = params.R
+  local statistic   = params.statistic
+  local ncores      = params.ncores
+  local seed        = params.seed
+  local get_row,N
+  -- prepare N and get_row function depending in the type of data parameter
+  if type(data) == "table" then
+    N = #data
+    get_row = function(i) return data[i] end
+  elseif isa(data, "matrix") or isa(data, "matrixInt32") or isa(data, "matrixComplex") then
+    N = data:dim(1)
+    local row
+    get_row = function(i) row=data:select(1,i,row) return row end
+  else
+    errro("Incorrect type, needs a table, a matrix, matrixInt32 or matrixComplex")
+  end
+  -- returns an iterator of random samples using rnd random object
+  local make_iterator = function(rnd)
+    local p=0
+    return function()
+      if p<N then p=p+1 j=rnd:randInt(1,p) return j,get_row(j) end
+    end
+  end
+  -- resample function executed in parallel using parallel_foreach
+  local resample = function(i, id)
+    collectgarbage("collect")
+    local rnd = random(seed + i - 1)
+    local r = statistic(make_iterator(rnd))
+    assert(type(r) == "number" or type(r) == "table",
+           "statistic function must return a number or a table")
+    if id == 0 and params.verbose and i % 20 == 0 then
+      fprintf(io.stderr, "\r%3.0f%%", i/repetitions*100)
+      io.stderr:flush()
+    end
+    if type(r) ~= "table" then r = {r} end
+    return r
+  end
+  local result = parallel_foreach(ncores, repetitions,
+                                  resample, util.to_lua_string)
+  if params.verbose then fprintf(io.stderr, " done\n") end
+  return result
+end
+setmetatable(stats.boot, { __call = boot })
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+april_set_doc("stats.boot.ci",
 	      {
 		class = "function",
 		summary = "Returns the extremes of a confidence interval",
@@ -620,10 +711,9 @@ april_set_doc("stats.confidence_interval",
 		  "It could compute the interval over a slice of the table.",
 		},
 		params = {
-		  "The sorted table with the data.",
+		  "The result of stats.boot function.",
 		  "The confidence [optional], by default it is 0.95.",
-		  "The first position of the table [optional], by default it is 1",
-		  "The last position of the table [optional], by default it is #data",
+                  "The statistic index for which you want compute the CI [optional], by default it is 1",
 		},
 		outputs = {
 		  "The left limit of the interval",
@@ -632,92 +722,18 @@ april_set_doc("stats.confidence_interval",
 	      })
 
 -- returns the extremes of the interval, the table data must be sorted
-function stats.confidence_interval(data, confidence, ini, fin)
-  local confidence, ini, fin = confidence or 0.95, ini or 1, fin or #data
+function stats.boot.ci(data, confidence, index)
+  local confidence,index  = confidence or 0.95, index or 1
   assert(confidence > 0 and confidence < 1,
 	 "Incorrect confidence value, it must be in range (0,1)")
-  local N = fin - ini + 1
+  local N = #data
+  assert(index > 0 and index <= N)
   local med_conf_size = N*(1.0 - confidence)*0.5
-  local a_pos = math.max(ini, math.round(med_conf_size))
-  local b_pos = math.min(fin, math.round(N - med_conf_size))
-  return data[a_pos],data[b_pos]
-end
-
------------------------------------------------------------------------------
------------------------------------------------------------------------------
------------------------------------------------------------------------------
-
-april_set_doc("stats.bootstrap_resampling",
-	      {
-		class = "function",
-		summary = "Produces a bootstrap resampling",
-		description= {
-		  "This function is useful to compute confidence intervals",
-		  "by using bootstrapping technique. The function receives",
-		  "a population size, a sampling function which returns an",
-		  "individual sample from the source population every time",
-		  "it is called, a reducer function, and an initial value.",
-		  "The function applies the reducer to",
-		  "every aggregated value and sample value.",
-		  "The aggregated value is then post-processed by the a function.",
-		  "A table with the computation of the post-process function",
-		  "for every repetition will be returned.",
-		},
-		params = {
-		  population_size = "Size of the population",
-		  repetitions = "Number of repetitions, recommended minimum of 1000",
-		  sampling = {"A function which every time is called",
-			      "returns a random element of the",
-			      "population"},
-		  reducer = {
-		    "A function witch receives two values and returns one",
-		  },
-		  initial = "A function which returns the initial value of the reduction",
-		  postprocess = "A function which transforms the aggregated value [optional], by default the identity",
-		  verbose = "True or false",
-		},
-		outputs = {
-		  "A table with the reducer output for every repetition."
-		},
-	      })
-function stats.bootstrap_resampling(params)
-  local params = get_table_fields(
-    {
-      population_size = { mandatory = true },
-      repetitions     = { type_match = "number",   mandatory = true },
-      sampling        = { type_match = "function", mandatory = true },
-      reducer         = { type_match = "function", mandatory = true },
-      postprocess     = { type_match = "function", mandatory = false,
-			  default=function(...) return ... end },
-      initial         = { type_match = "function", mandatory = true },
-      verbose         = { mandatory = false },
-    },
-    params)
-  local population_size  = params.population_size
-  local repetitions      = params.repetitions
-  local sampling_func    = params.sampling
-  local reducer          = params.reducer
-  local initial          = params.initial
-  local postprocess      = params.postprocess
-  local result           = {}
-  for i=1,repetitions do
-    collectgarbage("collect")
-    local acc = initial()
-    for p=1,population_size do
-      acc = reducer(acc, sampling_func())
-    end
-    if params.verbose and i % 20 == 0 then
-      fprintf(io.stderr, "\r%3.0f%%", i/repetitions*100)
-      io.stderr:flush()
-    end
-    local r = table.pack(postprocess(acc))
-    if #r == 1 then r = table.unpack(r) end
-    table.insert(result, r)
-  end
-  if params.verbose then
-    fprintf(io.stderr, " done\n")
-  end
-  return result
+  local a_pos = math.max(1, math.round(med_conf_size))
+  local b_pos = math.min(N, math.round(N - med_conf_size))
+  local aux = iterator(ipairs(data)):select(2):field(index):table()
+  table.sort(aux)
+  return aux[a_pos],aux[b_pos]
 end
 
 -----------------------------------------------------------------------------
