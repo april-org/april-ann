@@ -168,9 +168,11 @@ typedef Complex<double> ComplexD;
 
 #ifdef UNDEF_HOST
 #undef __host__
+#undef UNDEF_HOST
 #endif
 #ifdef UNDEF_DEVICE
 #undef __device__
+#undef UNDEF_DEVICE
 #endif
 
 #endif // COMPLEX_NUMBER_H

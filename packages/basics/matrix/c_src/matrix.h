@@ -46,6 +46,7 @@ class SparseMatrix;
 /// and other math operations. By default, the zero value must be T()
 template <typename T>
 class Matrix : public Referenced {
+  friend class SparseMatrix<T>;
   const static unsigned int MATRIX_BINARY_VERSION;
   enum matrix_contiguous_enum_t { NONE=0, CONTIGUOUS=1, NONCONTIGUOUS=2 };
   // Auxiliary count variable where the user could store the number of times
@@ -752,6 +753,8 @@ public:
 
   // MM Sparse BLAS operation this = alpha * op(A)*B + beta*this
   void sparseMM(CBLAS_TRANSPOSE trans_A,
+                CBLAS_TRANSPOSE trans_B,
+                CBLAS_TRANSPOSE trans_C,
                 T alpha,
                 const SparseMatrix<T> *otherA,
                 const Matrix<T> *otherB,
@@ -807,6 +810,13 @@ public:
   /**** LAPACK OPERATIONS ****/
   Matrix<T> *inv();
   void svd(Matrix<T> **U, SparseMatrix<T> **S, Matrix<T> **V);
+
+  // UPDATE GPU OR PPAL IF NEEDED
+  void update() {
+    #ifdef USE_CUDA
+    data->forceUpdate(use_cuda);
+    #endif
+  }
 
 private:
   void allocate_memory(int size);

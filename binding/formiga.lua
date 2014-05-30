@@ -913,7 +913,7 @@ function formiga .__object__ (t)
 	else
 	  command[1] = formiga.compiler.CUDAcompiler
 	  if formiga.compiler.global_flags.debug == "yes" then
-	    command[1] = command[1] .. " -g -G3"
+	    command[1] = command[1] .. " -g"
           end
 	  local flags = {}
 	  for _,flag in ipairs(formiga.compiler.extra_flags) do

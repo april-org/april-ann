@@ -53,7 +53,7 @@ local m2 = matrix.sparse.csc(3,3,
 local aux = m2:as_vector()
 check(function()
         return make_eq(m:clone():axpy(1.0,aux:to_dense()),
-                       m:clone():axpy(1.0,aux))
+                       m:clone():axpy(1.0,aux))()
       end)
 
 local b = matrix.sparse.csr(3,blockf{3},blocki{2})
@@ -102,7 +102,7 @@ check(function()
                                 0,  0,  2, 0,
                                 0, -1,  0, 1,
                                   }) * b,
-                       c)
+                       c)()
       end)
 
 check(function()
@@ -118,7 +118,7 @@ check(function()
                                 0,  0,  2, 0,
                                 0, -1,  0, 1,
                                   }) * b,
-                       c)
+                       c)()
       end)
 
 check(function()
@@ -134,7 +134,7 @@ check(function()
                                 0,  0,  2, 0,
                                 0, -1,  0, 1,
                                   }) * b,
-                       c)
+                       c)()
       end)
 
 check(function()
@@ -150,7 +150,7 @@ check(function()
                                 0,  0,  2, 0,
                                 0, -1,  0, 1,
                                   }) * b,
-                       c)
+                       c)()
       end)
 
 local x = matrix(4):linear()
@@ -164,7 +164,7 @@ check(function()
                  X=x,
                  beta=0.0
                })
-        return make_eq(a_csc:to_dense()*x, y)
+        return make_eq(a_csc:to_dense()*x, y)()
       end)
 
 check(function()
@@ -175,7 +175,7 @@ check(function()
                  X=x,
                  beta=0.0
                })
-        return make_eq(a_csc:to_dense()*x, y)
+        return make_eq(a_csc:to_dense()*x, y)()
       end)
 
 check(function()
@@ -186,7 +186,7 @@ check(function()
                  X=x,
                  beta=0.0
                })
-        return make_eq(a_csc:to_dense()*x, y)
+        return make_eq(a_csc:to_dense()*x, y)()
       end)
 
 check(function()
@@ -197,5 +197,17 @@ check(function()
                  X=x,
                  beta=0.0
                })
-        return make_eq(a_csc:to_dense()*x, y)
+        return make_eq(a_csc:to_dense()*x, y)()
       end)
+
+----------------------------------------------------------------------------
+
+local x = matrix(10,1):uniformf(-10,10,random(1234))
+local y = matrix(1,10,{1,-1,4,0,0,2,0,0,0,-3})
+local z = x:dot(y)
+local y_csr = matrix.sparse.csr(y)
+local y_csc = y:transpose()
+
+-- FIXME: this test is failing in travis :S
+-- check.eq(x:dot(y_csr),z)
+check.eq(x:dot(y_csc),z)

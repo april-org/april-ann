@@ -48,7 +48,7 @@ function cmdopt_methods:add_option(option)
   table.insert(self.options,opt) -- insert options in list
   --
   assert(opt.mode=="always" or opt.mode=="usergiven",
-	 "Given incorrect mode '"..opt.mode.."'. Use 'usegiven' or 'always'")
+	 "Given incorrect mode '"..tostring(opt.mode).."'. Use 'usegiven' or 'always'")
   --
   if opt.default_value and not opt.mode=="always" then
     error("default_value only allowed if mode='always', otherwise is forbidden")
@@ -239,7 +239,7 @@ function cmdopt_methods:search_long_option(str)
   return found
 end
 
--- main method, returns a string in case of error (error message)
+-- main method, throws an error in case of fail, or returns
 -- or a table with positinal and rest of arguments
 -- actions are simply executed before return
 function cmdopt_methods:parse_without_check(arguments, verbose)
@@ -268,19 +268,15 @@ function cmdopt_methods:parse_without_check(arguments, verbose)
       else
 	-- search long option (prefix) in table:
 	opt = self:search_long_option(key)
-	if opt == nil then -- error
-	  return "ambiguous or non-existent long option: "..str
-	end
+        assert(opt,"ambiguous or non-existent long option: "..str)
 	if opt.argument == "no" then
-	  if value ~= nil then
-	    return "long option '"..key.."' has no arguments but received argument "..value
-	  else
-	    value = true
-	  end
+          april_assert(value == nil,
+                       "long option '%s' has no arguments but received argument %s",
+                       key,value)
+          value = true
 	end
-	if opt.argument == "yes" and value == nil then
-	  return "long option '"..key.."' has obligatory argument"
-	end
+        assert(opt.argument ~= "yes" or value ~= nil,
+               "long option '"..key.."' has obligatory argument")
 	-- guardamos opt y value para procesar
 	table.insert(opt_list,{opt,value})      
       end
@@ -298,9 +294,7 @@ function cmdopt_methods:parse_without_check(arguments, verbose)
       while j<=strlen and go_on do
 	key = string.sub(str, j, j)
 	opt = self.short_options[key]
-	if opt == nil then -- error
-	  return "short option '"..key.."' not found"
-	end
+        assert(opt, "short option '"..key.."' not found")
 	if opt.argument == 'no' then
 	  -- store opt and value to process later
 	  value = true
@@ -310,9 +304,7 @@ function cmdopt_methods:parse_without_check(arguments, verbose)
 	  value = string.sub( str, j+1 )
 	  if value == "" and opt.argument == 'yes' then
 	    i=i+1
-	    if i>nargs then -- error
-	      return "short option '"..key.."' expects obligatory argument"
-	    end
+            assert(i<=nargs,"short option '"..key.."' expects obligatory argument")
 	    value = arguments[i]
 	  end
 	end
@@ -338,7 +330,6 @@ function cmdopt_methods:parse_without_check(arguments, verbose)
     if opt.index_name then result[opt.index_name] = value end
     if type(opt.action) == "function" then opt.action(value) end
   end
-  if type(result) == "string" then error(result) end
   return result
 end
 
@@ -372,7 +363,6 @@ function cmdopt_methods:check_args(optargs,initial_values,verbose)
       end
     end
   end
-  if type(optargs) == "string" then error(optargs) end
   return optargs
 end
 

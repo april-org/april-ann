@@ -46,6 +46,7 @@
 /// which shared the data pointers.
 template <typename T>
 class SparseMatrix : public Referenced {
+  friend class Matrix<T>;
   const static unsigned int MATRIX_BINARY_VERSION;
   // Auxiliary count variable where the user could store the number of times
   // this object is shared in a computation (like in ANN components sharing
@@ -166,7 +167,8 @@ public:
   /// Constructor given a dense matrix, it does constructs a sparse matrix
   /// (cloned).
   SparseMatrix(const Matrix<T> *other,
-	       const SPARSE_FORMAT sparse_format = CSR_FORMAT);
+	       const SPARSE_FORMAT sparse_format = CSR_FORMAT,
+               const T zero = T());
   /// Constructor given other matrix, it does a deep copy (clone).
   SparseMatrix(const SparseMatrix<T> *other,
 	       SPARSE_FORMAT sparse_format = NONE_FORMAT);
@@ -200,6 +202,14 @@ public:
   SPARSE_FORMAT getSparseFormat() const { return sparse_format; }
   bool getIsDataRowOrdered() const {
     return sparse_format == CSR_FORMAT;
+  }
+  // UPDATE GPU OR PPAL IF NEEDED
+  void update() {
+#ifdef USE_CUDA
+    values->forceUpdate();
+    indices->forceUpdate();
+    first_index->forceUpdate();
+#endif
   }
   void setUseCuda(bool v) {
     use_cuda = v;

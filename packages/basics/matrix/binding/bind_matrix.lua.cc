@@ -983,6 +983,9 @@ public:
 
 //BIND_METHOD MatrixFloat min
   {
+#ifdef USE_CUDA
+    obj->update();
+#endif
     LUABIND_CHECK_ARGN(>=,0);
     LUABIND_CHECK_ARGN(<=,3);
     int argn = lua_gettop(L);
@@ -1019,6 +1022,9 @@ public:
 
 //BIND_METHOD MatrixFloat max
   {
+#ifdef USE_CUDA
+    obj->update();
+#endif
     LUABIND_CHECK_ARGN(>=,0);
     LUABIND_CHECK_ARGN(<=,3);
     int argn = lua_gettop(L);
@@ -1059,6 +1065,10 @@ public:
   float epsilon;
   LUABIND_GET_PARAMETER(1, MatrixFloat, other);
   LUABIND_GET_OPTIONAL_PARAMETER(2, float, epsilon, 1e-04f);
+#ifdef USE_CUDA
+    obj->update();
+    other->update();
+#endif
   LUABIND_RETURN(boolean, obj->equals(other, epsilon));
 }
 //BIND_END
@@ -1083,6 +1093,9 @@ public:
     LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
     if (!obj->sameDim(mat))
       LUABIND_ERROR("matrix add wrong dimensions");
+#ifdef USE_CUDA
+    mat->update();
+#endif
     resul = obj->addition(mat);
     LUABIND_RETURN(MatrixFloat, resul);
   }
@@ -1107,6 +1120,9 @@ public:
     LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
     if (!obj->sameDim(mat))
       LUABIND_ERROR("matrix sub wrong dimensions");
+#ifdef USE_CUDA
+    mat->update();
+#endif
     resul = obj->substraction(mat);
     LUABIND_RETURN(MatrixFloat, resul);
   }
@@ -1117,6 +1133,9 @@ public:
     LUABIND_CHECK_ARGN(==, 1);
     MatrixFloat *mat,*resul;
     LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
+#ifdef USE_CUDA
+    mat->update();
+#endif
     resul = obj->multiply(mat);
     if (resul == 0)
       LUABIND_ERROR("matrix mul wrong dimensions");
@@ -1129,6 +1148,9 @@ public:
     LUABIND_CHECK_ARGN(==, 1);
     MatrixFloat *mat;
     LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
+#ifdef USE_CUDA
+    mat->update();
+#endif
     obj->cmul(mat);
     LUABIND_RETURN(MatrixFloat, obj);
   }
@@ -1286,6 +1308,9 @@ public:
 
 //BIND_METHOD MatrixFloat sum
 {
+#ifdef USE_CUDA
+  obj->update();
+#endif
   LUABIND_CHECK_ARGN(>=, 0);
   LUABIND_CHECK_ARGN(<=, 2);
   int argn = lua_gettop(L); // number of arguments
@@ -1310,6 +1335,9 @@ public:
   LUABIND_CHECK_ARGN(==, 1);
   MatrixFloat *mat;
   LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
+#ifdef USE_CUDA
+  mat->update();
+#endif
   obj->copy(mat);
   LUABIND_RETURN(MatrixFloat, obj);
 }
@@ -1324,6 +1352,9 @@ public:
   if (lua_isMatrixFloat(L,2)) {
     MatrixFloat *mat;
     LUABIND_GET_PARAMETER(2, MatrixFloat, mat);
+#ifdef USE_CUDA
+    mat->update();
+#endif
     obj->axpy(alpha, mat);
   }
   else if (lua_isSparseMatrixFloat(L,2)) {
@@ -1354,6 +1385,10 @@ public:
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_B, bool, trans_B, false);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, float, alpha, 1.0f);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f);
+#ifdef USE_CUDA
+    matA->update();
+    matB->update();
+#endif
     obj->gemm(trans_A ? CblasTrans : CblasNoTrans,
 	      trans_B ? CblasTrans : CblasNoTrans,
 	      alpha, matA, matB,
@@ -1366,9 +1401,10 @@ public:
   {
     LUABIND_CHECK_ARGN(==, 1);
     LUABIND_CHECK_PARAMETER(1, table);
-    check_table_fields(L,1, "trans_A", "alpha", "A", "B", "beta",
+    check_table_fields(L,1, "trans_A", "trans_B", "trans_C",
+                       "alpha", "A", "B", "beta",
 		       (const char *)0);
-    bool trans_A;
+    bool trans_A, trans_B, trans_C;
     float alpha;
     float beta;
     SparseMatrixFloat *matA;
@@ -1376,9 +1412,13 @@ public:
     LUABIND_GET_TABLE_PARAMETER(1, A, SparseMatrixFloat, matA);
     LUABIND_GET_TABLE_PARAMETER(1, B, MatrixFloat, matB);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_A, bool, trans_A, false);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_B, bool, trans_B, false);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, trans_C, bool, trans_C, false);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, float, alpha, 1.0f);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, beta, float, beta, 1.0f);
     obj->sparseMM(trans_A ? CblasTrans : CblasNoTrans,
+                  trans_B ? CblasTrans : CblasNoTrans,
+                  trans_C ? CblasTrans : CblasNoTrans,
                   alpha, matA, matB,
                   beta);
     LUABIND_RETURN(MatrixFloat, obj);
@@ -1405,6 +1445,10 @@ public:
       lua_pop(L,1);
       MatrixFloat *matA;
       LUABIND_GET_TABLE_PARAMETER(1, A, MatrixFloat, matA);
+#ifdef USE_CUDA
+      matA->update();
+      matX->update();
+#endif
       obj->gemv(trans_A ? CblasTrans : CblasNoTrans,
                 alpha, matA, matX,
                 beta);
@@ -1432,6 +1476,10 @@ public:
     LUABIND_GET_TABLE_PARAMETER(1, X, MatrixFloat, matX);
     LUABIND_GET_TABLE_PARAMETER(1, Y, MatrixFloat, matY);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, alpha, float, alpha, 1.0f);
+#ifdef USE_CUDA
+    matX->update();
+    matY->update();
+#endif
     obj->ger(alpha, matX, matY);
     LUABIND_RETURN(MatrixFloat, obj);
   }
@@ -1440,10 +1488,26 @@ public:
 //BIND_METHOD MatrixFloat dot
   {
     LUABIND_CHECK_ARGN(==, 1);
-    LUABIND_CHECK_PARAMETER(1, MatrixFloat);
-    MatrixFloat *matX;
-    LUABIND_GET_PARAMETER(1, MatrixFloat, matX);
-    LUABIND_RETURN(float, obj->dot(matX));
+    if (lua_isMatrixFloat(L,1)) {
+      LUABIND_CHECK_PARAMETER(1, MatrixFloat);
+      MatrixFloat *matX;
+      LUABIND_GET_PARAMETER(1, MatrixFloat, matX);
+#ifdef USE_CUDA
+      obj->update();
+      matX->update();
+#endif
+      LUABIND_RETURN(float, obj->dot(matX));
+    }
+    else if (lua_isSparseMatrixFloat(L,1)) {
+      LUABIND_CHECK_PARAMETER(1, SparseMatrixFloat);
+      SparseMatrixFloat *matX;
+      LUABIND_GET_PARAMETER(1, SparseMatrixFloat, matX);
+#ifdef USE_CUDA
+      obj->update();
+      matX->update();
+#endif
+      LUABIND_RETURN(float, obj->dot(matX));
+    }
   }
 //BIND_END
 
@@ -1469,6 +1533,9 @@ public:
  
 //BIND_METHOD MatrixFloat norm2
   {
+#ifdef USE_CUDA
+    obj->update();
+#endif
     LUABIND_RETURN(float, obj->norm2());
   }
 //BIND_END
@@ -1690,6 +1757,9 @@ public:
 
 //BIND_METHOD MatrixFloat diagonalize
 {
+#ifdef USE_CUDA
+    obj->update();
+#endif
   MatrixFloat *resul = obj->diagonalize();
   LUABIND_RETURN(MatrixFloat, resul);
 }
@@ -1750,6 +1820,12 @@ public:
     obj->GTCondition(value);
   }
   LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat update
+{
+  obj->update();
 }
 //BIND_END
 

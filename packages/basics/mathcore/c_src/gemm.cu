@@ -87,20 +87,20 @@ cublasStatus_t wrapperCublasGemm(cublasHandle_t &handle,
                      reinterpret_cast<cuComplex*>(c_mem), c_inc);
 }
 
-cublasStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
-				    cusparseOperation_t &cusparse_a_transpose,
-				    int m, int n, int k,
-				    int NNZ,
-				    float *alpha,
-				    const cusparseMatDescr_t descrA,
-				    const float *a_values_mem,
-				    const int *a_first_index_mem,
-				    const int *a_indices_mem,
-				    const float *b_mem,
-				    unsigned int b_inc,
-				    float *beta,
-				    float *c_mem,
-				    unsigned int c_inc) {
+cusparseStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
+                                      cusparseOperation_t &cusparse_a_transpose,
+                                      int m, int n, int k,
+                                      int NNZ,
+                                      float *alpha,
+                                      const cusparseMatDescr_t descrA,
+                                      const float *a_values_mem,
+                                      const int *a_first_index_mem,
+                                      const int *a_indices_mem,
+                                      const float *b_mem,
+                                      unsigned int b_inc,
+                                      float *beta,
+                                      float *c_mem,
+                                      unsigned int c_inc) {
   return cusparseScsrmm(handle, cusparse_a_transpose,
 			m, n, k,
 			NNZ,
@@ -111,20 +111,20 @@ cublasStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
 			beta, c_mem, c_inc);
 }
 
-cublasStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
-				    cusparseOperation_t &cusparse_a_transpose,
-				    int m, int n, int k,
-				    int NNZ,
-				    double *alpha,
-				    const cusparseMatDescr_t descrA,
-				    const double *a_values_mem,
-				    const int *a_first_index_mem,
-				    const int *a_indices_mem,
-				    const double *b_mem,
-				    unsigned int b_inc,
-				    double *beta,
-				    double *c_mem,
-				    unsigned int c_inc) {
+cusparseStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
+                                      cusparseOperation_t &cusparse_a_transpose,
+                                      int m, int n, int k,
+                                      int NNZ,
+                                      double *alpha,
+                                      const cusparseMatDescr_t descrA,
+                                      const double *a_values_mem,
+                                      const int *a_first_index_mem,
+                                      const int *a_indices_mem,
+                                      const double *b_mem,
+                                      unsigned int b_inc,
+                                      double *beta,
+                                      double *c_mem,
+                                      unsigned int c_inc) {
   return cusparseDcsrmm(handle, cusparse_a_transpose,
 			m, n, k,
 			NNZ,
@@ -135,20 +135,20 @@ cublasStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
 			beta, c_mem, c_inc);
 }
 
-cublasStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
-				    cusparseOperation_t &cusparse_a_transpose,
-				    int m, int n, int k,
-				    int NNZ,
-				    ComplexF *alpha,
-				    const cusparseMatDescr_t descrA,
-				    const ComplexF *a_values_mem,
-				    const int *a_first_index_mem,
-				    const int *a_indices_mem,
-				    const ComplexF *b_mem,
-				    unsigned int b_inc,
-				    ComplexF *beta,
-				    ComplexF *c_mem,
-				    unsigned int c_inc) {
+cusparseStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
+                                      cusparseOperation_t &cusparse_a_transpose,
+                                      int m, int n, int k,
+                                      int NNZ,
+                                      ComplexF *alpha,
+                                      const cusparseMatDescr_t descrA,
+                                      const ComplexF *a_values_mem,
+                                      const int *a_first_index_mem,
+                                      const int *a_indices_mem,
+                                      const ComplexF *b_mem,
+                                      unsigned int b_inc,
+                                      ComplexF *beta,
+                                      ComplexF *c_mem,
+                                      unsigned int c_inc) {
   return cusparseCcsrmm(handle, cusparse_a_transpose,
 			m, n, k,
 			NNZ,
@@ -158,7 +158,7 @@ cublasStatus_t wrapperCusparseCSRMM(cusparseHandle_t &handle,
 			a_first_index_mem, a_indices_mem,
 			reinterpret_cast<const cuComplex*>(b_mem), b_inc,
 			reinterpret_cast<const cuComplex*>(beta),
-			reinterpret_cast<const cuComplex*>(c_mem), c_inc);
+			reinterpret_cast<cuComplex*>(c_mem), c_inc);
 }
 
 #endif
@@ -213,8 +213,11 @@ void wrapperCblasGemm(CBLAS_ORDER &major_type,
 }
 
 template <typename T>
-void wrapperCblasSparseMM(SPARSE_FORMAT sparse_format,
+void wrapperCblasSparseMM(CBLAS_ORDER major_order,
+                          SPARSE_FORMAT sparse_format,
 			  CBLAS_TRANSPOSE a_transpose,
+			  CBLAS_TRANSPOSE b_transpose,
+			  CBLAS_TRANSPOSE c_transpose,
 			  int m, int n, int k,
 			  T alpha,
 			  const T *a_values_mem,
@@ -222,7 +225,8 @@ void wrapperCblasSparseMM(SPARSE_FORMAT sparse_format,
 			  const int *a_first_index_mem,
 			  const T *b_mem, unsigned int b_inc,
 			  T beta, T *c_mem, unsigned int c_inc) {
-  cblas_sparse_mm(sparse_format, a_transpose,
+  cblas_sparse_mm(major_order, sparse_format,
+                  a_transpose, b_transpose, c_transpose,
                   m, n, k,
                   alpha, a_values_mem, a_indices_mem, a_first_index_mem,
                   b_mem, static_cast<int>(b_inc),
@@ -313,6 +317,8 @@ template <typename T>
 void doSparseMM(CBLAS_ORDER major_order,
 		SPARSE_FORMAT sparse_format,
 		CBLAS_TRANSPOSE a_transpose,
+		CBLAS_TRANSPOSE b_transpose,
+		CBLAS_TRANSPOSE c_transpose,
 		int m,
 		int n,
 		int k,
@@ -342,7 +348,10 @@ void doSparseMM(CBLAS_ORDER major_order,
     cusparseHandle_t handle = GPUHelper::getSparseHandler();
     if (major_order != CblasColMajor)
       ERROR_EXIT(128, "Column major matrices are expected\n");
-    if (sparse_format != SparseMatrix<T>::CSR_FORMAT)
+    if (b_transpose == CblasTrans || c_transpose == CblasTrans)
+      ERROR_EXIT(128, "Impossible to transpose B or C matrices "
+                 "when using CUDA\n");
+    if (sparse_format != CSR_FORMAT)
       a_transpose = NEGATE_CBLAS_TRANSPOSE(a_transpose);
     //printf("Doing a sgemm with comp=1 & cuda=1\n");
     a_values_mem = a_values->getGPUForRead();
@@ -354,12 +363,16 @@ void doSparseMM(CBLAS_ORDER major_order,
     
     status = cusparseSetStream(handle, GPUHelper::getCurrentStream());
     checkCusparseError(status);
-    cusparseMatDescr_t descrA = {
-      CUSPARSE_MATRIX_TYPE_GENERAL,
-      0, // fill mode
-      0, // diag type
-      CUSPARSE_INDEX_BASE_ZERO
-    };
+    cusparseMatDescr_t descrA;
+    status = cusparseCreateMatDescr(&descrA);
+    checkCusparseError(status);
+    /* by default, it is initialized like this:
+       descrA->MatrixType = CUSPARSE_MATRIX_TYPE_GENERAL;
+       descrA->FillMode   = 0;
+       descrA->DiagType   = 0;
+       descrA->IndexBase  = CUSPARSE_INDEX_BASE_ZERO;
+    */
+    //
     status = wrapperCusparseCSRMM(handle,
 				  cusparse_a_transpose,
 				  m, n, k,
@@ -372,12 +385,12 @@ void doSparseMM(CBLAS_ORDER major_order,
 				  b_mem, b_inc,
 				  &beta, c_mem, c_inc);
     checkCusparseError(status);
+    status = cusparseDestroyMatDescr(descrA);
+    checkCusparseError(status);
   }
   else {
     //printf("Doing a sgemm with comp=1 & cuda=0\n");
 #endif
-    if (major_order != CblasRowMajor)
-      ERROR_EXIT(128, "Row major matrices are expected\n");
     //printf("Doing a sgemm with comp=0 & cuda=0\n");
     a_values_mem = a_values->getPPALForRead();
     a_indices_mem = a_indices->getPPALForRead();
@@ -385,8 +398,9 @@ void doSparseMM(CBLAS_ORDER major_order,
     b_mem = b->getPPALForRead() + b_shift;
     c_mem = c->getPPALForReadAndWrite() + c_shift;
     // matrix matrix product: C = \alpha op(A) op(B) + \beta C
-    wrapperCblasSparseMM(sparse_format,
-			 a_transpose,
+    wrapperCblasSparseMM(major_order,
+                         sparse_format,
+			 a_transpose, b_transpose, c_transpose,
 			 m,            // num rows of A (before transpose)
 			 n,            // num rows at B (before transpose)
 			 k,            // Common dimension between A and B
@@ -464,6 +478,8 @@ template void doGemm<ComplexF>(CBLAS_ORDER major_type,
 template void doSparseMM<float>(CBLAS_ORDER major_order,
                                 SPARSE_FORMAT sparse_format,
                                 CBLAS_TRANSPOSE a_transpose,
+                                CBLAS_TRANSPOSE b_transpose,
+                                CBLAS_TRANSPOSE c_transpose,
                                 int m,
                                 int n,
                                 int k,
@@ -483,6 +499,8 @@ template void doSparseMM<float>(CBLAS_ORDER major_order,
 template void doSparseMM<double>(CBLAS_ORDER major_order,
                                  SPARSE_FORMAT sparse_format,
                                  CBLAS_TRANSPOSE a_transpose,
+                                 CBLAS_TRANSPOSE b_transpose,
+                                 CBLAS_TRANSPOSE c_transpose,
                                  int m,
                                  int n,
                                  int k,
@@ -502,6 +520,8 @@ template void doSparseMM<double>(CBLAS_ORDER major_order,
 template void doSparseMM<ComplexF>(CBLAS_ORDER major_order,
                                    SPARSE_FORMAT sparse_format,
                                    CBLAS_TRANSPOSE a_transpose,
+                                   CBLAS_TRANSPOSE b_transpose,
+                                   CBLAS_TRANSPOSE c_transpose,
                                    int m,
                                    int n,
                                    int k,

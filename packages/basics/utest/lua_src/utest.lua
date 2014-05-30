@@ -34,12 +34,18 @@ end
 local testn  = 0
 local passed = 0
 local failed = 0
+local failed_list = {}
 utest.finish = function()
   write((failed > 0 and 1) or 0, "%d total tests: %s%d passed%s, %s%d failed%s\n",
         testn,
         ansi.fg.bright_green, passed, ansi.fg.default,
         ansi.fg.bright_red, failed, ansi.fg.default)
-  assert(failed == 0, "%sTest failed%s"%{ansi.fg.bright_red, ansi.fg.default})
+  if failed > 0 then
+    write(1, "%sTest failed%s\tList: %s\n"%{ansi.fg.bright_red,
+                                            ansi.fg.default,
+                                            table.concat(failed_list, ", ")})
+    os.exit(1)
+  end
   write(0, "%sOk%s\n", ansi.fg.bright_green, ansi.fg.default)
 end
 local function register()
@@ -78,6 +84,7 @@ local check = function (func,error_msg)
       end
     end
     failed = failed + 1
+    table.insert(failed_list, testn)
     return false
   end
 end

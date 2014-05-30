@@ -81,11 +81,12 @@ public:
 
 //BIND_CONSTRUCTOR SparseMatrixFloat
 {
-  int argn = lua_gettop(L); // number of arguments
-  if (argn == 1) {
+  if (lua_isMatrixFloat(L,1)) {
+    float near_zero;
     MatrixFloat *m;
     LUABIND_GET_PARAMETER(1, MatrixFloat, m);
-    obj = new SparseMatrixFloat(m, CSR_FORMAT);
+    LUABIND_GET_OPTIONAL_PARAMETER(2, float, near_zero, NEAR_ZERO);
+    obj = new SparseMatrixFloat(m, CSR_FORMAT, near_zero);
   }
   else {
     int rows,cols;
@@ -123,11 +124,12 @@ public:
 //BIND_CLASS_METHOD SparseMatrixFloat csc
 {
   SparseMatrixFloat *obj;
-  int argn = lua_gettop(L); // number of arguments
-  if (argn == 1) {
+  if (lua_isMatrixFloat(L,1)) {
     MatrixFloat *m;
+    float near_zero;
     LUABIND_GET_PARAMETER(1, MatrixFloat, m);
-    obj = new SparseMatrixFloat(m, CSC_FORMAT);
+    LUABIND_GET_OPTIONAL_PARAMETER(2, float, near_zero, NEAR_ZERO);
+    obj = new SparseMatrixFloat(m, CSC_FORMAT, near_zero);
   }
   else {
     int rows,cols;

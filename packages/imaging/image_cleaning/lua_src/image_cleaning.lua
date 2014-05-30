@@ -244,7 +244,7 @@ function image.image_cleaning.getCleanParameters(img, params)
       table.insert(table_datasets, ds_median)
   end
 
-  local levels_hist = levels
+  local levels_hist = params.histogram_levels
 
   if params.old then
       levels_hist = 8
@@ -281,32 +281,32 @@ function image.image_cleaning.getParametersFromString(param_str, old)
     params = {}
     
     -- window
-    v = string.match(param_str, "_v(%d+)_")
+    v = string.match(param_str, "v_(%d+)")
     if v then
         params.window = tonumber(v)
     end
-    levels = string.match(param_str, "_levels_(%d+)_")
+    levels = string.match(param_str, "levels_(%d+)")
     -- histogram_levels
     if levels then
         params.histogram_levels = tonumber(levels)
     end
     -- histogram_radio
-    histogram = string.match(param_str, "_hist_(%d+)_")
+    histogram = string.match(param_str, "hist_(%d+)")
     if histogram then
         params.histogram_radio = tonumber(histogram)
     end
     -- median
-    median = string.match(param_str, "_median_(%d+)_")
+    median = string.match(param_str, "median_(%d+)")
     if median then
         params.median = tonumber(median)
     end
     -- vertical
-    vertical = string.match(param_str, "_vertical_(%d+)_")
+    vertical = string.match(param_str, "vertical_(%d+)")
     if vertical then
         params.vertical = tonumber(vertical)
     end
     -- horizontal
-    horizontal = string.match(param_str, "_horizontal_(%d+)_")
+    horizontal = string.match(param_str, "horizontal_(%d+)")
     if horizontal then
         params.horizontal = tonumber(horizontal)
     end

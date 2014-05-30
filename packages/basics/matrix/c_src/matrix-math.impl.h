@@ -151,7 +151,6 @@ void Matrix<T>::scalarAdd(T s) {
 
 template <typename T>
 void Matrix<T>::copy(const Matrix<T> *other) {
-  UNUSED_VARIABLE(other);
   if (!sameDim(other))
     ERROR_EXIT(128, "Not equal matrix dimensions\n");
   const_iterator it_orig(other->begin());
@@ -288,24 +287,24 @@ struct axpy_functor {
   T alpha;
   axpy_functor(T alpha) : alpha(alpha) { }
   void operator()(Matrix<T> *one, const Matrix<T> *other,
-		  unsigned int size,
-		  unsigned int stride_one,
-		  unsigned int stride_other,
-		  unsigned int offset_one,
-		  unsigned int offset_other) const {
+                  unsigned int size,
+                  unsigned int stride_one,
+                  unsigned int stride_other,
+                  unsigned int offset_one,
+                  unsigned int offset_other) const {
     doAxpy(size, alpha,
-	   other->getRawDataAccess(),
-	   offset_other, stride_other,
-	   one->getRawDataAccess(),
-	   offset_one, stride_one,
-	   one->getCudaFlag());
+           other->getRawDataAccess(),
+           offset_other, stride_other,
+           one->getRawDataAccess(),
+           offset_one, stride_one,
+           one->getCudaFlag());
   }
 };
 template <typename T>
 void Matrix<T>::axpy(T alpha, const Matrix<T> *other) {
   if (size() != other->size())
     ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d\n",
-		size(), other->size());
+                size(), other->size());
   if (major_order != other->major_order)
     ERROR_EXIT(128, "Matrices with different major orders\n");
   axpy_functor<T> functor(alpha);
@@ -320,33 +319,35 @@ template <typename T>
 void Matrix<T>::axpy(T alpha, const SparseMatrix<T> *other) {
   if (size() != other->size())
     ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d\n",
-		size(), other->size());
+                size(), other->size());
   if (!isVector())
     ERROR_EXIT(128, "sparse AXPY only works with vectors\n");
   if ( (other->getSparseFormat() == CSR_FORMAT &&
-	other->getDimSize(0) != 1) ||
+        other->getDimSize(0) != 1) ||
        (other->getSparseFormat() == CSC_FORMAT &&
-	other->getDimSize(1) != 1) )
+        other->getDimSize(1) != 1) )
     ERROR_EXIT(128, "sparse AXPY needs a CSR row-vector or a CSC col-vector\n");
   doSparseAxpy(other->nonZeroSize(), alpha,
-	       other->getRawValuesAccess(),
-	       other->getRawIndicesAccess(),
-	       getRawDataAccess(),
-	       static_cast<unsigned int>(getOffset()),
-	       static_cast<unsigned int>(getVectorStride()),
-	       getCudaFlag());  
+               other->getRawValuesAccess(),
+               other->getRawIndicesAccess(),
+               getRawDataAccess(),
+               static_cast<unsigned int>(getOffset()),
+               static_cast<unsigned int>(getVectorStride()),
+               getCudaFlag());  
 }
 
 template <typename T>
 void Matrix<T>::gemm(CBLAS_TRANSPOSE trans_A,
-		     CBLAS_TRANSPOSE trans_B,
-		     T alpha,
-		     const Matrix<T> *otherA,
-		     const Matrix<T> *otherB,
-		     T beta) {
+                     CBLAS_TRANSPOSE trans_B,
+                     T alpha,
+                     const Matrix<T> *otherA,
+                     const Matrix<T> *otherB,
+                     T beta) {
+  if (this->getTransposedFlag())
+    ERROR_EXIT(128, "GEMM method don't work with transposed C matrix (this)\n");
   if (this == otherA || this == otherB)
     ERROR_EXIT(128, "GEMM method couldn't receive as A or B argument "
-	       "the caller object\n");
+               "the caller object\n");
   if (numDim != 2 || otherA->numDim != 2 || otherB->numDim != 2)
     ERROR_EXIT(128,"Incorrect number of dimensions, only allowed for numDim=2\n");
   int row_idx_A = 0, col_idx_A = 1, row_idx_B = 0, col_idx_B = 1;
@@ -356,9 +357,9 @@ void Matrix<T>::gemm(CBLAS_TRANSPOSE trans_A,
       matrixSize[1] != otherB->matrixSize[col_idx_B] ||
       otherA->matrixSize[col_idx_A] != otherB->matrixSize[row_idx_B])
     ERROR_EXIT6(128, "Incorrect matrixes dimensions: %dx%d + %dx%d * %dx%d\n",
-		matrixSize[0], matrixSize[1],
-		otherA->matrixSize[row_idx_A], otherA->matrixSize[col_idx_A],
-		otherB->matrixSize[row_idx_B], otherB->matrixSize[col_idx_B]);
+                matrixSize[0], matrixSize[1],
+                otherA->matrixSize[row_idx_A], otherA->matrixSize[col_idx_A],
+                otherB->matrixSize[row_idx_B], otherB->matrixSize[col_idx_B]);
   if (major_order != otherA->major_order ||
       otherA->major_order != otherB->major_order)
     ERROR_EXIT(128, "Matrices with different major orders\n");
@@ -382,38 +383,43 @@ void Matrix<T>::gemm(CBLAS_TRANSPOSE trans_A,
   if (otherA->getTransposedFlag()) trans_A=NEGATE_CBLAS_TRANSPOSE(trans_A);
   if (otherB->getTransposedFlag()) trans_B=NEGATE_CBLAS_TRANSPOSE(trans_B);
   doGemm(major_order, trans_A, trans_B,
-	 M, N, K,
-	 alpha, otherA->data, lda,
-	 otherB->data, ldb,
-	 beta, data, ldc,
-	 otherA->offset, otherB->offset, offset,
-	 use_cuda);
+         M, N, K,
+         alpha, otherA->data, lda,
+         otherB->data, ldb,
+         beta, data, ldc,
+         otherA->offset, otherB->offset, offset,
+         use_cuda);
 }
 
 template <typename T>
 void Matrix<T>::sparseMM(CBLAS_TRANSPOSE trans_A,
+                         CBLAS_TRANSPOSE trans_B,
+                         CBLAS_TRANSPOSE trans_C,
                          T alpha,
                          const SparseMatrix<T> *otherA,
                          const Matrix<T> *otherB,
                          T beta) {
   if (this == otherB)
     ERROR_EXIT(128, "Sparse GEMM method couldn't receive as A or B argument "
-	       "the caller object\n");
+               "the caller object\n");
   if (numDim != 2 || otherA->getNumDim() != 2 || otherB->numDim != 2)
     ERROR_EXIT(128,"Incorrect number of dimensions, only allowed for numDim=2\n");
   int row_idx_A = 0, col_idx_A = 1, row_idx_B = 0, col_idx_B = 1;
+  int row_idx_C = 0, col_idx_C = 1;
   if (trans_A == CblasTrans) april_utils::swap(row_idx_A, col_idx_A);
-  if (matrixSize[0] != otherA->getDimSize(row_idx_A) ||
-      matrixSize[1] != otherB->matrixSize[col_idx_B] ||
+  if (trans_B == CblasTrans) april_utils::swap(row_idx_B, col_idx_B);
+  if (trans_C == CblasTrans) april_utils::swap(row_idx_C, col_idx_C);
+  if (matrixSize[row_idx_C] != otherA->getDimSize(row_idx_A) ||
+      matrixSize[col_idx_C] != otherB->matrixSize[col_idx_B] ||
       otherA->getDimSize(col_idx_A) != otherB->matrixSize[row_idx_B])
     ERROR_EXIT6(128, "Incorrect matrixes dimensions: %dx%d + %dx%d * %dx%d\n",
-		matrixSize[0], matrixSize[1],
-		otherA->getDimSize(row_idx_A), otherA->getDimSize(col_idx_A),
-		otherB->matrixSize[row_idx_B], otherB->matrixSize[col_idx_B]);
+                matrixSize[row_idx_C], matrixSize[col_idx_C],
+                otherA->getDimSize(row_idx_A), otherA->getDimSize(col_idx_A),
+                otherB->matrixSize[row_idx_B], otherB->matrixSize[col_idx_B]);
   if (major_order != otherB->major_order)
     ERROR_EXIT(128, "Matrices with different major orders\n");
   
-  int M=matrixSize[0], N=matrixSize[1], K=otherB->getDimSize(0);
+  int M=matrixSize[row_idx_C], N=matrixSize[col_idx_C], K=otherB->getDimSize(row_idx_B);
   int ldb, ldc;
   if (major_order == CblasRowMajor) {
     ldb = (!otherB->getTransposedFlag())?(otherB->stride[0]):(otherB->stride[1]);
@@ -426,10 +432,13 @@ void Matrix<T>::sparseMM(CBLAS_TRANSPOSE trans_A,
   if (otherB->stride[0]+otherB->stride[1] != ldb+1 ||
       this->stride[0]  +this->stride[1]   != ldc+1)
     ERROR_EXIT(128, "Contiguous matrices are needed\n");
-  // if (otherB->getTransposedFlag()) trans_B=NEGATE_CBLAS_TRANSPOSE(trans_B);
+  if (otherB->getTransposedFlag()) trans_B=NEGATE_CBLAS_TRANSPOSE(trans_B);
+  if (this->getTransposedFlag())   trans_C=NEGATE_CBLAS_TRANSPOSE(trans_C);
   doSparseMM<T>(major_order,
                 otherA->getSparseFormat(),
                 trans_A,
+                trans_B,
+                trans_C,
                 M, N, K,
                 alpha,
                 otherA->getRawValuesAccess(),
@@ -443,10 +452,10 @@ void Matrix<T>::sparseMM(CBLAS_TRANSPOSE trans_A,
 
 template <typename T>
 void Matrix<T>::gemv(CBLAS_TRANSPOSE trans_A,
-		     T alpha,
-		     const Matrix<T> *otherA,
-		     const Matrix<T> *otherX,
-		     T beta) {
+                     T alpha,
+                     const Matrix<T> *otherA,
+                     const Matrix<T> *otherX,
+                     T beta) {
   if (!isVector() || !otherX->isVector() || otherA->numDim != 2)
     ERROR_EXIT(128,"Incorrect number of dimensions\n");
   int M,N;
@@ -462,12 +471,12 @@ void Matrix<T>::gemv(CBLAS_TRANSPOSE trans_A,
   if (trans_A == CblasNoTrans) {
     if (M != size() || N != otherX->size())
       ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx1 + %dx%d * %dx1\n",
-		  size(), M, N, otherX->size());
+                  size(), M, N, otherX->size());
   }
   else {
     if (N != size() || M != otherX->size())
       ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx1 + %dx%d * %dx1\n",
-		  size(), N, M, otherX->size());
+                  size(), N, M, otherX->size());
   }
   if (major_order != otherA->major_order ||
       otherA->major_order != otherX->major_order)
@@ -479,12 +488,12 @@ void Matrix<T>::gemv(CBLAS_TRANSPOSE trans_A,
   if (otherA->stride[0] + otherA->stride[1] != lda+1)
     ERROR_EXIT(128, "Only allowed with contiguous matrices\n");
   doGemv(major_order, trans_A,
-	 M, N,
-	 alpha, otherA->data, lda,
-	 otherX->data, ldx,
-	 beta, data, ldy,
-	 otherA->offset, otherX->offset, offset,
-	 use_cuda);
+         M, N,
+         alpha, otherA->data, lda,
+         otherX->data, ldx,
+         beta, data, ldy,
+         otherA->offset, otherX->offset, offset,
+         use_cuda);
 }
 
 template <typename T>
@@ -502,12 +511,12 @@ void Matrix<T>::gemv(CBLAS_TRANSPOSE trans_A,
   if (trans_A == CblasNoTrans) {
     if (M != size() || N != otherX->size())
       ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx1 + %dx%d * %dx1\n",
-		  size(), M, N, otherX->size());
+                  size(), M, N, otherX->size());
   }
   else {
     if (N != size() || M != otherX->size())
       ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx1 + %dx%d * %dx1\n",
-		  size(), N, M, otherX->size());
+                  size(), N, M, otherX->size());
   }
   if (major_order != otherX->major_order)
     ERROR_EXIT(128, "Matrices with different major orders\n");
@@ -530,26 +539,64 @@ void Matrix<T>::gemv(CBLAS_TRANSPOSE trans_A,
 
 template <typename T>
 void Matrix<T>::ger(T alpha,
-		    const Matrix<T> *otherX,
-		    const Matrix<T> *otherY) {
-  UNUSED_VARIABLE(alpha);
-  UNUSED_VARIABLE(otherX);
-  UNUSED_VARIABLE(otherY);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+                    const Matrix<T> *otherX,
+                    const Matrix<T> *otherY) {
+  if (this->getTransposedFlag())
+    ERROR_EXIT(128, "GER method don't work with transposed A matrix (this)\n");
+  if (!otherX->isVector() || !otherY->isVector() || numDim!=2)
+    ERROR_EXIT(128,"Incorrect number of dimensions\n");
+  int M=otherX->size(), N=otherY->size();
+  if (matrixSize[0] != M ||
+      matrixSize[1] != N)
+    ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx%d + %dx1 * 1x%d\n",
+		matrixSize[0], matrixSize[1], M, N);
+  if (major_order != otherX->major_order ||
+      otherX->major_order != otherY->major_order)
+    ERROR_EXIT(128, "Matrices with different major orders\n");
+  int lda=(getIsDataRowOrdered())?stride[0]:stride[1];
+  int ldx=otherX->getVectorStride();
+  int ldy=otherY->getVectorStride();
+  doGer(major_order,
+	M, N,
+	alpha, otherX->data, otherX->offset, ldx,
+	otherY->data, otherY->offset, ldy,
+	data, offset, lda,
+	use_cuda);
 }
 
 template <typename T>
 T Matrix<T>::dot(const Matrix<T> *other) const {
-  UNUSED_VARIABLE(other);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-  return T();
+  if (!this->isVector() || !other->isVector())
+    ERROR_EXIT(128,"Incorrect number of dimensions\n");
+  if (this->size() != other->size())
+    ERROR_EXIT2(128, "Incorrect dimensions: %d dot %d\n",
+		this->size(), other->size());
+  if (major_order != other->major_order)
+    ERROR_EXIT(128, "Matrices with different major orders\n");
+  T ret = doDot(size(),
+                data, offset, getVectorStride(),
+                other->data, other->offset, other->getVectorStride(),
+                use_cuda);
+  return ret;
 }
 
 template <typename T>
 T Matrix<T>::dot(const SparseMatrix<T> *other) const {
-  UNUSED_VARIABLE(other);
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
-  return T();
+  if (!this->isVector() || !other->isVector())
+    ERROR_EXIT(128,"Incorrect number of dimensions\n");
+  if (this->size() != other->size())
+    ERROR_EXIT2(128, "Incorrect dimensions: %d dot %d\n",
+		this->size(), other->size());
+  if (other->getDenseCoordinateSize() != 1)
+    ERROR_EXIT(128, "DOT operation only allowed with sparse matrices with "
+               "dense coordinate size of 1, please, change the sparse "
+               "format\n");
+  T ret = doSparseDot(other->nonZeroSize(),
+                      other->getRawValuesAccess(),
+                      other->getRawIndicesAccess(),
+                      data, offset, getVectorStride(),
+                      use_cuda);
+  return ret;
 }
 
 template <typename T>
@@ -617,7 +664,7 @@ Matrix<T>* Matrix<T>::max(int dim, Matrix<T> *dest, Matrix<int32_t> *argmax) {
     return applyFunctorOverDimension<T,T>(max_dim_functor<T>(), this, dim, dest);
   else
     return applyFunctorOverDimension2<T,T,int32_t>(max_and_argmax_dim_functor<T>(),
-						   this, dim, dest, argmax);
+                                                   this, dim, dest, argmax);
 }
 
 // the argument indicates over which dimension the sum must be performed
@@ -640,13 +687,13 @@ Matrix<T>* Matrix<T>::min(int dim, Matrix<T> *dest, Matrix<int32_t> *argmin) {
     return applyFunctorOverDimension<T,T>(min_dim_functor<T>(), this, dim, dest);
   else
     return applyFunctorOverDimension2<T,T,int32_t>(min_and_argmin_dim_functor<T>(),
-						   this, dim, dest, argmin);
+                                                   this, dim, dest, argmin);
 }
 
 template <typename T>
 Matrix<T> *Matrix<T>::maxSelDim(const int dim,
-				Int32GPUMirroredMemoryBlock *raw_positions,
-				int shift) const {
+                                Int32GPUMirroredMemoryBlock *raw_positions,
+                                int shift) const {
   UNUSED_VARIABLE(dim);
   UNUSED_VARIABLE(raw_positions);
   UNUSED_VARIABLE(shift);

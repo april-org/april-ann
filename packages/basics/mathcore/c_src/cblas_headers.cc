@@ -19,10 +19,13 @@
  *
  */
 
+#include "swap.h"
 #include "april_assert.h"
 #include "unused_variable.h"
 #include "cblas_headers.h"
 #include "error_print.h"
+
+using april_utils::swap;
 
 #ifdef ADHOC_BLAS
 
@@ -160,8 +163,11 @@ void generic_cblas_axpyi(int NNZ, T alpha,
 
 // only works with row-major dense matrices
 template<typename T>
-void generic_cblas_sparse_mm(SPARSE_FORMAT sparse_format,
+void generic_cblas_sparse_mm(CBLAS_ORDER major_order,
+                             SPARSE_FORMAT sparse_format,
                              CBLAS_TRANSPOSE a_transpose,
+                             CBLAS_TRANSPOSE b_transpose,
+                             CBLAS_TRANSPOSE c_transpose,
                              int m, int n, int k,
                              T alpha,
                              const T *a_values_mem,
@@ -174,6 +180,14 @@ void generic_cblas_sparse_mm(SPARSE_FORMAT sparse_format,
     if (sparse_format == CSR_FORMAT) sparse_format = CSC_FORMAT;
     else sparse_format = CSR_FORMAT;
   }
+  int b_stride[2] = { b_inc, 1 };
+  int c_stride[2] = { c_inc, 1 };
+  if ( (b_transpose == CblasTrans   && major_order == CblasRowMajor) ||
+       (b_transpose == CblasNoTrans && major_order == CblasColMajor) )
+    swap(b_stride[0], b_stride[1]);
+  if ( (c_transpose == CblasTrans   && major_order == CblasRowMajor) ||
+       (c_transpose == CblasNoTrans && major_order == CblasColMajor) )
+    swap(c_stride[0], c_stride[1]);
   if (sparse_format == CSR_FORMAT) {
     // C = beta C + alpha A*B
     for (int dest_row=0; dest_row<m; ++dest_row) {
@@ -181,13 +195,13 @@ void generic_cblas_sparse_mm(SPARSE_FORMAT sparse_format,
       int first  = a_first_index_mem[dest_row];
       int lastp1 = a_first_index_mem[dest_row+1]; // last plus 1
       // position of the first column at dest_row
-      int c_pos  = dest_row*c_inc;
-      for (int dest_col=0; dest_col<n; ++dest_col, ++c_pos) {
+      int c_pos  = dest_row*c_stride[0];
+      for (int dest_col=0; dest_col<n; ++dest_col, c_pos += c_stride[1]) {
         T aux = T();
         // traverse one A row and one B column
         for (int x=first; x<lastp1; ++x) {
           int A_col = a_indices_mem[x];
-          int b_pos = A_col*b_inc + dest_col;
+          int b_pos = A_col*b_stride[0] + dest_col*b_stride[1];
           april_assert(0 <= A_col && A_col < k);
           aux = aux + a_values_mem[x] * b_mem[b_pos];
         }
@@ -200,16 +214,16 @@ void generic_cblas_sparse_mm(SPARSE_FORMAT sparse_format,
     // first C matrix needs to be initialized
     if (beta == T()) {
       for (int i=0; i<m; ++i) {
-        int c_pos  = i*c_inc;
-        for (int j=0; j<n; ++j, ++c_pos) {
+        int c_pos  = i*c_stride[0];
+        for (int j=0; j<n; ++j, c_pos += c_stride[1]) {
           c_mem[c_pos] = T();
         }
       }
     }
     else {
       for (int i=0; i<m; ++i) {
-        int c_pos  = i*c_inc;
-        for (int j=0; j<n; ++j, ++c_pos) {
+        int c_pos  = i*c_stride[0];
+        for (int j=0; j<n; ++j, c_pos += c_stride[1]) {
           c_mem[c_pos] = c_mem[c_pos] * beta;
         }
       }
@@ -222,8 +236,8 @@ void generic_cblas_sparse_mm(SPARSE_FORMAT sparse_format,
         // for each destination row (sparse)
         for (int x=first; x<lastp1; ++x) {
           int dest_row = a_indices_mem[x];
-          int b_pos = A_col*b_inc    + dest_col;
-          int c_pos = dest_row*c_inc + dest_col;
+          int b_pos = A_col*b_stride[0] + dest_col*b_stride[1];
+          int c_pos = dest_row*c_stride[0] + dest_col*c_stride[1];
           c_mem[c_pos] = c_mem[c_pos] + alpha * a_values_mem[x] * b_mem[b_pos];
         }
       }
@@ -311,8 +325,11 @@ void cblas_caxpyi(int NNZ, const ComplexF *alpha,
 		  ComplexF *y_mem) {
   generic_cblas_axpyi(NNZ, *alpha, x_values_mem, x_indices_mem, y_mem);
 }
-void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
+void cblas_sparse_mm(CBLAS_ORDER major_order,
+                     SPARSE_FORMAT sparse_format,
 		     CBLAS_TRANSPOSE a_transpose,
+		     CBLAS_TRANSPOSE b_transpose,
+		     CBLAS_TRANSPOSE c_transpose,
 		     int m, int n, int k,
 		     float alpha,
 		     const float *a_values_mem,
@@ -320,8 +337,11 @@ void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
 		     const int *a_first_index_mem,
 		     const float *b_mem, int b_inc,
 		     float beta, float *c_mem, int c_inc) {
-  generic_cblas_sparse_mm(sparse_format,
+  generic_cblas_sparse_mm(major_order,
+                          sparse_format,
                           a_transpose,
+                          b_transpose,
+                          c_transpose,
                           m,n,k,
                           alpha,
                           a_values_mem, a_indices_mem, a_first_index_mem,
@@ -329,8 +349,11 @@ void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
                           beta,
                           c_mem, c_inc);
 }
-void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
+void cblas_sparse_mm(CBLAS_ORDER major_order,
+                     SPARSE_FORMAT sparse_format,
 		     CBLAS_TRANSPOSE a_transpose,
+		     CBLAS_TRANSPOSE b_transpose,
+		     CBLAS_TRANSPOSE c_transpose,
 		     int m, int n, int k,
 		     double alpha,
 		     const double *a_values_mem,
@@ -338,8 +361,11 @@ void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
 		     const int *a_first_index_mem,
 		     const double *b_mem, int b_inc,
 		     double beta, double *c_mem, int c_inc) {
-  generic_cblas_sparse_mm(sparse_format,
+  generic_cblas_sparse_mm(major_order,
+                          sparse_format,
                           a_transpose,
+                          b_transpose,
+                          c_transpose,
                           m,n,k,
                           alpha,
                           a_values_mem, a_indices_mem, a_first_index_mem,
@@ -347,8 +373,11 @@ void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
                           beta,
                           c_mem, c_inc);
 }
-void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
+void cblas_sparse_mm(CBLAS_ORDER major_order,
+                     SPARSE_FORMAT sparse_format,
 		     CBLAS_TRANSPOSE a_transpose,
+		     CBLAS_TRANSPOSE b_transpose,
+		     CBLAS_TRANSPOSE c_transpose,
 		     int m, int n, int k,
 		     ComplexF alpha,
 		     const ComplexF *a_values_mem,
@@ -356,8 +385,11 @@ void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
 		     const int *a_first_index_mem,
 		     const ComplexF *b_mem, int b_inc,
 		     ComplexF beta, ComplexF *c_mem, int c_inc) {
-  generic_cblas_sparse_mm(sparse_format,
+  generic_cblas_sparse_mm(major_order,
+                          sparse_format,
                           a_transpose,
+                          b_transpose,
+                          c_transpose,
                           m,n,k,
                           alpha,
                           a_values_mem, a_indices_mem, a_first_index_mem,
@@ -421,6 +453,9 @@ void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
 }
 #else
 #include <mkl_spblas.h>
+#error "MKL spblas mm operation is not implemented"
+
+// FIXME: finish it using a more general multiplication function
 void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
 		     CBLAS_TRANSPOSE a_transpose,
 		     int m, int n, int k,
@@ -679,5 +714,23 @@ void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
     ERROR_EXIT(128, "Incorrect sparse format\n");
   }
 }
+
+template float cblas_sparse_dot<float>(int NNZ,
+                                       const float *x_values_mem,
+                                       const int *x_indices_mem,
+                                       const float *y_mem,
+                                       int y_inc);
+
+template double cblas_sparse_dot<double>(int NNZ,
+                                         const double *x_values_mem,
+                                         const int *x_indices_mem,
+                                         const double *y_mem,
+                                         int y_inc);
+
+template ComplexF cblas_sparse_dot<ComplexF>(int NNZ,
+                                             const ComplexF *x_values_mem,
+                                             const int *x_indices_mem,
+                                             const ComplexF *y_mem,
+                                             int y_inc);
 
 #endif

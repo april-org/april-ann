@@ -13,6 +13,11 @@ local assert = assert
 
 ------------------------------------------------------------------------------
 
+function iscallable(obj)
+  local t = luatype(obj)
+  return t == "function" or (t == "table" and (getmetatable(obj) or {}).__call)
+end
+
 function april_assert(condition, ...)
    if not condition then
      if next({...}) then
@@ -438,7 +443,7 @@ function april_help(table_name, verbosity)
     if is_class(v) then
       local id = get_object_id(v):gsub(" class","")
       table.insert(classes, i)
-    elseif luatype(v) == "function" or (luatype(v) == "table" and v.__call) then
+    elseif iscallable(v) then
       table.insert(funcs, {i, string.format("%8s",luatype(v))})
     elseif luatype(v) == "table" then
       table.insert(names, i)
@@ -687,41 +692,63 @@ function glob(...)
   return r
 end
 
-function parallel_foreach(num_processes, list, func, output_serialization_function)
+function parallel_foreach(num_processes, list_or_number, func,
+                          output_serialization_function)
+  assert(type(list_or_number) == "number" or type(list_or_number) == "table",
+         "Needs a table or a number as 2nd argument")
   local outputs
   if output_serialization_function then
-    outputs = map(function(idx) return os.tmpname() end,
-		  range(1,num_processes))
+    outputs = iterator(range(1,num_processes)):
+    map(function(idx) return os.tmpname() end):
+    table()
   end
   local id = util.split_process(num_processes)-1
   if outputs then
     local f = io.open(outputs[id+1], "w")
     fprintf(f, "return {\n")
-    for index, value in ipairs(list) do
-      if (index%num_processes) == id then
-	local ret = func(value)
-	fprintf(f,"[%d] = %s,\n",index,
-		output_serialization_function(ret) or "nil")
+    if type(list_or_number) == "table" then
+      for index, value in ipairs(list_or_number) do
+        if (index%num_processes) == id then
+          local ret = func(value,id)
+          fprintf(f,"[%d] = %s,\n",index,
+                  output_serialization_function(ret) or "nil")
+        end
+      end
+    else
+      for index in range(1,list_or_number) do
+        if (index%num_processes) == id then
+          local ret = func(index,id)
+          fprintf(f,"[%d] = %s,\n",index,
+                  output_serialization_function(ret) or "nil")
+        end
       end
     end
     fprintf(f, "}\n")
     f:close()
-    if id ~= 0 then os.exit(0) end
+    -- waits for all childrens
+    if id ~= 0 then util.wait() os.exit(0) end
     util.wait()
     -- maps all the outputs to a table
-    return map(function(v)return v end,
-	       iterable_map(function(index,filename)
-			      local t = dofile(filename)
-			      os.remove(filename)
-			      -- multiple outputs from this filename
-			      apply(coroutine.yield, pairs(t))
-			    end,
-			    -- iterate over each output filename
-			    ipairs(outputs)))
+    return iterator(ipairs(outputs)):
+    map(function(index,filename)
+          local t = util.deserialize(filename)
+          os.remove(filename)
+          -- multiple outputs from this filename
+          for k,v in pairs(t) do coroutine.yield(k,v) end
+        end):
+    table()
   else
-    for index, value in ipairs(list) do
-      if (index%num_processes) == id then
-	local ret = func(value)
+    if type(list_or_number) == "table" then
+      for index, value in ipairs(list_or_number) do
+        if (index%num_processes) == id then
+          local ret = func(value,id)
+        end
+      end
+    else
+      for index in range(1,list_or_number) do
+        if (index%num_processes) == id then
+          local ret = func(index,id)
+        end
       end
     end
     if id ~= 0 then os.exit(0) end
@@ -808,12 +835,13 @@ function get_table_fields(params, t, ignore_other_fields)
 	end
       end
       -- each param has type_match, mandatory, default, and getter
-      local v = (t[key]==nil and data.default) or t[key]
+      local v = t[key]
+      if v == nil then v = data.default end
       if v == nil and data.mandatory then
 	error("Mandatory field not found: " .. key)
       end
       if v ~= nil and data.type_match and (luatype(v) ~= data.type_match or type(v) ~= data.type_match) then
-	if data.type_match ~= "function" or (luatype(v) == "table" and not v.__call) then
+	if data.type_match ~= "function" or not iscallable(v) then
 	  error("Incorrect type '" .. type(v) .. "' for field '" .. key .. "'")
 	end
       end
@@ -1537,18 +1565,32 @@ end
 
 ------------------------------------------------------------------------------
 
-function util.serialize(data, filename, format)
-  assert(filename, "A filename is needed as 2nd argument")
-  local f = io.open(filename, "w")
-  f:write("return ")
-  f:write(util.to_lua_string(data, format))
-  f:close()
+function util.serialize(data, where, format)
+  assert(where, "A string or function is needed as 2nd argument")
+  if type(where) == "string" then
+    local f = io.open(where, "w")
+    f:write("return ")
+    f:write(util.to_lua_string(data, format))
+    f:close()
+  elseif iscallable(where) then
+    where(string.format("return %s", util.to_lua_string(data, format)))
+  else
+    error("Needs a string or a function as 2nd argument")
+  end
 end
 
 ------------------------------------------------------------------------------
 
-function util.deserialize(filename)
-  return dofile(filename)
+function util.deserialize(from)
+  assert(from, "A string or function is needed as 1st argument")
+  if type(from) == "string" then
+    return dofile(from)
+  elseif iscallable(from) then
+    local f = load(from())
+    return f()
+  else
+    error("Needs a string or a function as 1st argument")
+  end
 end
 
 ------------------------------------------------------------------------------

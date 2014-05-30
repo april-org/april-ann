@@ -44,6 +44,20 @@ cublasStatus_t wrapperCublasGer(cublasHandle_t &handle,
 
 cublasStatus_t wrapperCublasGer(cublasHandle_t &handle,
 				unsigned int m, unsigned int n,
+				double *alpha,
+				const double *x_mem,
+				unsigned int x_inc,
+				const double *y_mem,
+				unsigned int y_inc,
+				double *a_mem,
+				unsigned int a_inc) {
+  return cublasDger(handle, m, n, alpha, x_mem, x_inc,
+		    y_mem, y_inc,
+		    a_mem, a_inc);
+}
+
+cublasStatus_t wrapperCublasGer(cublasHandle_t &handle,
+				unsigned int m, unsigned int n,
 				ComplexF *alpha,
 				const ComplexF *x_mem,
 				unsigned int x_inc,
@@ -52,6 +66,7 @@ cublasStatus_t wrapperCublasGer(cublasHandle_t &handle,
 				ComplexF *a_mem,
 				unsigned int a_inc) {
   ERROR_EXIT(256, "Ger operation not implemented in CUDA\n");
+  return CUBLAS_STATUS_INTERNAL_ERROR;
 }
 #endif
 
@@ -65,6 +80,19 @@ void wrapperCblasGer(CBLAS_ORDER major_type,
 		     const float *y_mem, unsigned int y_inc,
 		     float *a_mem, unsigned int a_inc) {
   cblas_sger(major_type,
+	     m, n,
+	     alpha,
+	     x_mem, x_inc,
+	     y_mem, y_inc,
+	     a_mem, a_inc);
+}
+
+void wrapperCblasGer(CBLAS_ORDER major_type,
+		     int m, int n, double alpha,
+		     const double *x_mem, unsigned int x_inc,
+		     const double *y_mem, unsigned int y_inc,
+		     double *a_mem, unsigned int a_inc) {
+  cblas_dger(major_type,
 	     m, n,
 	     alpha,
 	     x_mem, x_inc,
@@ -162,6 +190,21 @@ template void doGer<float>(CBLAS_ORDER major_type,
 			   unsigned int a_shift,
 			   unsigned int a_inc,
 			   bool use_gpu);
+
+template void doGer<double>(CBLAS_ORDER major_type,
+                            unsigned int m,
+                            unsigned int n,
+                            double alpha,
+                            GPUMirroredMemoryBlock<double> *x,
+                            unsigned int x_shift,
+                            unsigned int x_inc,
+                            GPUMirroredMemoryBlock<double> *y,
+                            unsigned int y_shift,
+                            unsigned int y_inc,
+                            GPUMirroredMemoryBlock<double> *a,
+                            unsigned int a_shift,
+                            unsigned int a_inc,
+                            bool use_gpu);
 
 template void doGer<ComplexF>(CBLAS_ORDER major_type,
 			      unsigned int m,

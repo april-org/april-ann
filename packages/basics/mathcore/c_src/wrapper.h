@@ -333,6 +333,8 @@ template <typename T>
 void doSparseMM(CBLAS_ORDER major_order,
 		SPARSE_FORMAT sparse_format,
 		CBLAS_TRANSPOSE a_transpose,
+		CBLAS_TRANSPOSE b_transpose,
+		CBLAS_TRANSPOSE c_transpose,
 		int m,
 		int n,
 		int k,
@@ -390,6 +392,15 @@ T doDot(unsigned int size,
 	unsigned int y_shift,
 	unsigned int y_inc,
 	bool use_gpu);
+
+template<typename T>
+T doSparseDot(int NNZ,
+              const GPUMirroredMemoryBlock<T> *x_values,
+              const Int32GPUMirroredMemoryBlock *x_indices,
+              const GPUMirroredMemoryBlock<T> *y,
+              int y_shift,
+              int y_inc,
+              bool use_gpu);
 
 template<typename T>
 float doNrm2(unsigned int n,

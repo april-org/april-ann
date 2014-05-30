@@ -67,7 +67,11 @@ extern "C" {
 char breaks[] = " \t\n\"\\'><=;:+-*/%^~#{}()[].,";
 extern int   rl_completion_suppress_append;
 #ifdef __APPLE__
+#ifdef __HOMEBREW__
+extern const char *rl_basic_word_break_characters;
+#else
 extern char *rl_basic_word_break_characters;
+#endif
 #else
 extern const char *rl_basic_word_break_characters;
 #endif

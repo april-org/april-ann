@@ -57,7 +57,7 @@ cublasStatus_t wrapperCublasGemv(cublasHandle_t &handle,
 				 const double *beta,
 				 double *y_mem,
 				 unsigned int y_inc) {
-  return cublasSgemv(handle, cublas_a_transpose,
+  return cublasDgemv(handle, cublas_a_transpose,
 		     m, n,
 		     alpha, a_mem, a_inc,
 		     x_mem, x_inc,
@@ -105,9 +105,9 @@ cusparseStatus_t wrapperCusparseCSRGemv(cusparseHandle_t &handle,
                         descrA,
                         a_values_mem,
                         a_first_index_mem,
-                        a_indices_mem
-                        x_mem, x_inc,
-                        beta, y_mem, y_inc);
+                        a_indices_mem,
+                        x_mem,
+                        beta, y_mem);
 }
 
 cusparseStatus_t wrapperCusparseCSRGemv(cusparseHandle_t &handle,
@@ -125,15 +125,15 @@ cusparseStatus_t wrapperCusparseCSRGemv(cusparseHandle_t &handle,
                                         unsigned int y_inc) {
   if (x_inc != 1 || y_inc != 1)
     ERROR_EXIT(128, "Not implemented for non contiguous vectors\n");
-  return cusparseScsrmv(handle, cusparse_a_transpose,
+  return cusparseDcsrmv(handle, cusparse_a_transpose,
                         m, n, NNZ,
                         alpha,
                         descrA,
                         a_values_mem,
                         a_first_index_mem,
-                        a_indices_mem
-                        x_mem, x_inc,
-                        beta, y_mem, y_inc);
+                        a_indices_mem,
+                        x_mem,
+                        beta, y_mem);
 }
 
 cusparseStatus_t wrapperCusparseCSRGemv(cusparseHandle_t &handle,
@@ -151,15 +151,16 @@ cusparseStatus_t wrapperCusparseCSRGemv(cusparseHandle_t &handle,
                                         unsigned int y_inc) {
   if (x_inc != 1 || y_inc != 1)
     ERROR_EXIT(128, "Not implemented for non contiguous vectors\n");
-  return cusparseScsrmv(handle, cusparse_a_transpose,
+  return cusparseCcsrmv(handle, cusparse_a_transpose,
                         m, n, NNZ,
-                        alpha,
+                        reinterpret_cast<const cuComplex*>(alpha),
                         descrA,
-                        a_values_mem,
+                        reinterpret_cast<const cuComplex*>(a_values_mem),
                         a_first_index_mem,
-                        a_indices_mem
-                        x_mem, x_inc,
-                        beta, y_mem, y_inc);
+                        a_indices_mem,
+                        reinterpret_cast<const cuComplex*>(x_mem),
+                        reinterpret_cast<const cuComplex*>(beta),
+                        reinterpret_cast<cuComplex*>(y_mem));
 }
 #endif
 
@@ -298,7 +299,7 @@ void doSparseGemv(CBLAS_ORDER major_order, SPARSE_FORMAT sparse_format,
     cusparseHandle_t handle = GPUHelper::getSparseHandler();
     if (major_order != CblasColMajor)
       ERROR_EXIT(128, "Column major matrices are expected\n");
-    if (sparse_format != SparseMatrix<T>::CSR_FORMAT)
+    if (sparse_format != CSR_FORMAT)
       a_transpose = NEGATE_CBLAS_TRANSPOSE(a_transpose);
     a_values_mem = a_values->getGPUForRead();
     a_indices_mem = a_indices->getGPUForRead();
@@ -309,13 +310,15 @@ void doSparseGemv(CBLAS_ORDER major_order, SPARSE_FORMAT sparse_format,
     
     status = cusparseSetStream(handle, GPUHelper::getCurrentStream());
     checkCusparseError(status);
-    cusparseMatDescr_t descrA = {
-      CUSPARSE_MATRIX_TYPE_GENERAL,
-      0, // fill mode
-      0, // diag type
-      CUSPARSE_INDEX_BASE_ZERO
-    };
-    
+    cusparseMatDescr_t descrA;
+    status = cusparseCreateMatDescr(&descrA);
+    checkCusparseError(status);
+    /* by default, it is initialized like this:
+       descrA->MatrixType = CUSPARSE_MATRIX_TYPE_GENERAL;
+       descrA->FillMode   = 0;
+       descrA->DiagType   = 0;
+       descrA->IndexBase  = CUSPARSE_INDEX_BASE_ZERO;
+    */
     status = wrapperCusparseCSRGemv(handle,
                                     cusparse_a_transpose,
                                     m, n, NNZ,
@@ -327,7 +330,8 @@ void doSparseGemv(CBLAS_ORDER major_order, SPARSE_FORMAT sparse_format,
                                     x_mem, x_inc,
                                     &beta, y_mem, y_inc);
     checkCusparseError(status);
-
+    status = cusparseDestroyMatDescr(descrA);
+    checkCusparseError(status);
   }
   else {
 #endif

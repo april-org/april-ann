@@ -27,6 +27,7 @@ NOT_IMPLEMENT_AXPY_HEADER(char)
 NOT_IMPLEMENT_GEMM_HEADER(char)
 NOT_IMPLEMENT_GEMV_HEEADER(char)
 NOT_IMPLEMENT_GER_HEADER(char)
+NOT_IMPLEMENT_DOT_HEADER(char)
 
 ///////////////////////////////////////////////////////////////////////////////
 typedef Matrix<char> MatrixChar;

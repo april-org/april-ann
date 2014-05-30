@@ -102,18 +102,7 @@ function imageSVG_methods:addInterestPointPaths(paths, ...)
         local color = "black"
         color = colors[i%#colors+1]
 
-        -- Separate by classes
-        local t = {}
-        for i = 1,num_classes do
-          table.insert(t, {})
-        end
-        for i, v in ipairs(paths[i]) do
-            table.insert(t[v[3]], v)
-        end
-        -- Draw a path for each class
-        for i = 1, num_classes do
-          self:addPathFromTable(t[i],{stroke = color, id = tostring(i)})
-        end
+        self:addPathFromTable(path,{stroke = color, id = tostring(i)})
     end
 end
 

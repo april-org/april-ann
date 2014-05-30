@@ -64,11 +64,15 @@
   }								\
   template <>							\
   void Matrix<TYPE>::sparseMM(CBLAS_TRANSPOSE trans_A,		\
+                              CBLAS_TRANSPOSE trans_B,		\
+                              CBLAS_TRANSPOSE trans_C,		\
                               TYPE alpha,                       \
                               const SparseMatrix<TYPE> *otherA,	\
                               const Matrix<TYPE> *otherB,       \
                               TYPE beta) {                      \
     UNUSED_VARIABLE(trans_A);					\
+    UNUSED_VARIABLE(trans_B);					\
+    UNUSED_VARIABLE(trans_C);					\
     UNUSED_VARIABLE(alpha);					\
     UNUSED_VARIABLE(otherA);					\
     UNUSED_VARIABLE(otherB);					\
@@ -86,6 +90,8 @@
 			  TYPE beta);				\
   template <>							\
   void Matrix<TYPE>::sparseMM(CBLAS_TRANSPOSE trans_A,		\
+                              CBLAS_TRANSPOSE trans_B,		\
+                              CBLAS_TRANSPOSE trans_C,		\
                               TYPE alpha,                       \
                               const SparseMatrix<TYPE> *otherA,	\
                               const Matrix<TYPE> *otherB,       \
@@ -153,6 +159,26 @@
   void Matrix<TYPE>::ger(TYPE alpha,			\
 			 const Matrix<TYPE> *otherX,	\
 			 const Matrix<TYPE> *otherY);
+
+#define NOT_IMPLEMENT_DOT(TYPE)                                         \
+  template <>                                                           \
+  TYPE Matrix<TYPE>::dot(const Matrix<TYPE> *other) const {             \
+    UNUSED_VARIABLE(other);                                             \
+    ERROR_EXIT(128, "NOT IMPLEMENTED\n");                               \
+    return TYPE();                                                      \
+  }                                                                     \
+  template <>                                                           \
+  TYPE Matrix<TYPE>::dot(const SparseMatrix<TYPE> *other) const {       \
+    UNUSED_VARIABLE(other);                                             \
+    ERROR_EXIT(128, "NOT IMPLEMENTED\n");                               \
+    return TYPE();                                                      \
+  }
+
+#define NOT_IMPLEMENT_DOT_HEADER(TYPE)                                  \
+  template <>                                                           \
+  TYPE Matrix<TYPE>::dot(const Matrix<TYPE> *other) const;              \
+  template<>                                                            \
+  TYPE Matrix<TYPE>::dot(const SparseMatrix<TYPE> *other) const;
 
 
 #endif // MATRIX_NOT_IMPLEMENTED_H

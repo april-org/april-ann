@@ -133,8 +133,11 @@ void cblas_caxpyi(int NNZ, const ComplexF *alpha,
 		  ComplexF *y_mem);
 #endif
 
-void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
+void cblas_sparse_mm(CBLAS_ORDER major_order,
+                     SPARSE_FORMAT sparse_format,
 		     CBLAS_TRANSPOSE a_transpose,
+		     CBLAS_TRANSPOSE b_transpose,
+		     CBLAS_TRANSPOSE c_transpose,
 		     int m, int n, int k,
 		     float alpha,
 		     const float *a_values_mem,
@@ -143,8 +146,11 @@ void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
 		     const float *b_mem, int b_inc,
 		     float beta, float *c_mem, int c_inc);
 
-void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
+void cblas_sparse_mm(CBLAS_ORDER major_order,
+                     SPARSE_FORMAT sparse_format,
 		     CBLAS_TRANSPOSE a_transpose,
+		     CBLAS_TRANSPOSE b_transpose,
+		     CBLAS_TRANSPOSE c_transpose,
 		     int m, int n, int k,
 		     double alpha,
 		     const double *a_values_mem,
@@ -153,8 +159,11 @@ void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
 		     const double *b_mem, int b_inc,
 		     double beta, double *c_mem, int c_inc);
 
-void cblas_sparse_mm(SPARSE_FORMAT sparse_format,
+void cblas_sparse_mm(CBLAS_ORDER major_order,
+                     SPARSE_FORMAT sparse_format,
 		     CBLAS_TRANSPOSE a_transpose,
+		     CBLAS_TRANSPOSE b_transpose,
+		     CBLAS_TRANSPOSE c_transpose,
 		     int m, int n, int k,
 		     ComplexF alpha,
 		     const ComplexF *a_values_mem,
@@ -192,5 +201,20 @@ void cblas_sparse_mv(SPARSE_FORMAT sparse_format,
 		     const int *a_first_index_mem,
 		     const ComplexF *x_mem, int x_inc,
 		     ComplexF beta, ComplexF *y_mem, int y_inc);
+
+template<typename T>
+T cblas_sparse_dot(int NNZ,
+                   const T *x_values_mem,
+                   const int *x_indices_mem,
+                   const T *y_mem,
+                   int y_inc) {
+  T result = T();
+  for (int i=0; i<NNZ; ++i) {
+    int pos = x_indices_mem[i];
+    int y_pos = pos * y_inc;
+    result = result + y_mem[y_pos]*x_values_mem[i];
+  }
+  return result;
+}
 
 #endif // CBLAS_HEADERS_H

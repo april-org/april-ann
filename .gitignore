@@ -31,3 +31,14 @@ doxygen_doc
 Icon?
 ehthumbs.db
 Thumbs.db
+
+# Emacs Clang autocompletion #
+##############################
+.clang-completion-error
+
+# Global tags #
+###############
+GPATH
+GRTAGS
+GSYMS
+GTAGS

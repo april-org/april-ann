@@ -6,6 +6,19 @@ Master branch release
 
 ### Unstable changes
 
+### API Changes
+
+### Bugs removed
+
+### C/C++
+
+### Other
+
+v0.3.1
+------
+
+### Unstable changes
+
 - Added `clustering` and `knn` algorithms.
 - Added `ann.components.zca_whitening` and `ann.components.pca_whitening`
   classes.
@@ -24,6 +37,13 @@ Master branch release
 
 ### API Changes
 
+- Modified bootstrapping API in order to be similar with R: `stats.boot()` and
+  `stats.boot.ci()`.
+- Added `ann.optimizer.asgd` for Averaged SGD optimization.
+- Added `trainable.qlearning_trainer` for reinforcement learning tasks.
+- Enhanced `util.serialize` and `util.deserialize` to accept functions as
+  argument, allowing to serialize/deserialize over general streams.
+- Added `iscallable(...)` function.
 - Added `utest` package, for unit testing.
 - Added methods to `matrix` which work with sparse matrices.
 - Added class `matrix.sparse`.
@@ -43,10 +63,18 @@ Master branch release
 
 ### C/C++
 
+- Added `-lcblas` option to `build_release.lua` and `build_debug.lua`.
 - Added sparse CBLAS wrappers, for CUDA (not tested) and standard release.
 - Added CBLAS wrappers for float, double, and ComplexF types.
 - Added geometric parametrizer for off-line text preprocessing.
 - Added dependency with `liblapacke` for PCA when not available MKL or MacOS X.
+
+### Other
+
+- Added argument check at `mathcore.block.*` constructors.
+- Travis is monitoring only master and devel branches, for push and
+  pull-requests.
+- Added travis compilation and testing platform for pull-requests.
 
 v0.3.1-alpha (pre-relase of v0.3.1-beta)
 ----------------------------------------
@@ -73,6 +101,7 @@ v0.3.1-alpha (pre-relase of v0.3.1-beta)
 
 ### New features
 
+- Added Sauvola's binarization method.
 - Added a normalize handwritting text utilities based on the main areas of the text.
 - Added `matrix.dict`, a hash set dictionary in C++ binded to Lua, which allows
   to execute basic math operations and reductions over the whole set of
