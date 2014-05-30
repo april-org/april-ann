@@ -6,6 +6,19 @@ Master branch release
 
 ### Unstable changes
 
+### API Changes
+
+### Bugs removed
+
+### C/C++
+
+### Other
+
+v0.3.1
+------
+
+### Unstable changes
+
 - Added `clustering` and `knn` algorithms.
 - Added `ann.components.zca_whitening` and `ann.components.pca_whitening`
   classes.
