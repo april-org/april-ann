@@ -159,6 +159,12 @@ void Matrix<float>::svd(Matrix<float> **U, SparseMatrix<float> **S,
 			Matrix<float> **V);
 
 template <>
+log_float Matrix<float>::logDeterminant(float &sign);
+
+template <>
+double Matrix<float>::determinant();
+
+template <>
 void Matrix<float>::pruneSubnormalAndCheckNormal();
 
 /* BOOLEAN CONDITIONS: this methods transforms the given matrix in a ZERO/ONE

@@ -21,22 +21,27 @@
 #ifndef STATISTICAL_DISTRIBUTION_H
 #define STATISTICAL_DISTRIBUTION_H
 
+#include "logbase.h"
 #include "matrixFloat.h"
 #include "matrixFloatSet.h"
 #include "MersenneTwister.h"
 #include "referenced.h"
 
 namespace Stats {
-  
+
   class StatisticalDistributionBase : public Referenced {
+  protected:
+    static void checkMatrixSizes(const MatrixFloat *a, const MatrixFloat *b) {
+      if (!a->sameDim(b)) ERROR_EXIT(128, "Expected same matrix sizes\n");
+    }
   public:
     StatisticalDistributionBase() : Referenced() {}
     virtual ~StatisticalDistributionBase() {}
-    virtual MatrixFloat *sample(MTRand *rng, MatrixFloat *result=0) const = 0;
-    virtual MatrixFloat *pdf(const MatrixFloat *x, MatrixFloat *result=0) const = 0;
-    virtual MatrixFloat *cdf(const MatrixFloat *x, MatrixFloat *result=0) const = 0;
+    virtual MatrixFloat *sample(MTRand *rng, MatrixFloat *result=0) = 0;
+    virtual log_float logpdf(const MatrixFloat *x) = 0;
+    virtual log_float logcdf(const MatrixFloat *x) = 0;
     virtual StatisticalDistributionBase *clone() = 0;
-    virtual MatrixFloatSet *getParams() const = 0;
+    virtual MatrixFloatSet *getParams() = 0;
     virtual char *toLuaString(bool is_ascii) const = 0;
   };
   

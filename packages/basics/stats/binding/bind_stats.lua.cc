@@ -26,6 +26,7 @@
 //BIND_HEADER_H
 #include "statistical_distribution.h"
 #include "uniform_distribution.h"
+#include "normal_distribution.h"
 
 using namespace Stats;
 
@@ -50,21 +51,19 @@ using namespace Stats;
 }
 //BIND_END
 
-//BIND_METHOD StatisticalDistributionBase pdf
+//BIND_METHOD StatisticalDistributionBase logpdf
 {
-  MatrixFloat *x, *dest;
+  MatrixFloat *x;
   LUABIND_GET_PARAMETER(1, MatrixFloat, x);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
-  LUABIND_RETURN(MatrixFloat, obj->pdf(x, dest));
+  LUABIND_RETURN(float, obj->logpdf(x).log());
 }
 //BIND_END
 
-//BIND_METHOD StatisticalDistributionBase cdf
+//BIND_METHOD StatisticalDistributionBase logcdf
 {
-  MatrixFloat *x, *dest;
+  MatrixFloat *x;
   LUABIND_GET_PARAMETER(1, MatrixFloat, x);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
-  LUABIND_RETURN(MatrixFloat, obj->cdf(x, dest));
+  LUABIND_RETURN(float, obj->logcdf(x).log());
 }
 //BIND_END
 
@@ -116,5 +115,28 @@ using namespace Stats;
 {
   LUABIND_RETURN(UniformDistribution,
                  static_cast<UniformDistribution*>(obj->clone()));
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME GeneralNormalDistribution stats.dist.normal
+//BIND_CPP_CLASS    GeneralNormalDistribution
+//BIND_SUBCLASS_OF  GeneralNormalDistribution StatisticalDistributionBase
+
+//BIND_CONSTRUCTOR GeneralNormalDistribution
+{
+  MatrixFloat *mean, *cov;
+  LUABIND_GET_PARAMETER(1, MatrixFloat, mean);
+  LUABIND_GET_PARAMETER(2, MatrixFloat, cov);
+  obj = new GeneralNormalDistribution(mean, cov);
+  LUABIND_RETURN(GeneralNormalDistribution, obj);
+}
+//BIND_END
+
+//BIND_METHOD GeneralNormalDistribution clone
+{
+  LUABIND_RETURN(GeneralNormalDistribution,
+                 static_cast<GeneralNormalDistribution*>(obj->clone()));
 }
 //BIND_END

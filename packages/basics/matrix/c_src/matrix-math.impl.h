@@ -722,6 +722,18 @@ void Matrix<T>::svd(Matrix<T> **U, SparseMatrix<T> **S, Matrix<T> **V) {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 
+template <typename T>
+log_float Matrix<T>::logDeterminant(float &sign) {
+  UNUSED_VARIABLE(sign);
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  return log_float::zero();
+}
+
+template <typename T>
+double Matrix<T>::determinant() {
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  return 0.0f;
+}
 
 // FIXME: IMPLEMENT THE BOOLEAN CONDITIONS USING CUDA WRAPPERS
 

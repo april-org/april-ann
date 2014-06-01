@@ -23,20 +23,21 @@
 #define MATRIX_H
 
 #include <cmath>
-#include "april_assert.h"
 #include <cstdarg>
 #include <new> // surprisingly, placement new doesn't work without this
-#include "cblas_headers.h"
-#include "wrapper.h"
-#include "gpu_mirrored_memory_block.h"
-#include "referenced.h"
-#include "clamp.h"
 #include "aligned_memory.h"
-#include "swap.h"
+#include "april_assert.h"
+#include "cblas_headers.h"
+#include "clamp.h"
+#include "gpu_mirrored_memory_block.h"
+#include "logbase.h"
 #include "maxmin.h"
-#include "qsort.h"
 #include "mmapped_data.h"
+#include "qsort.h"
+#include "referenced.h"
 #include "unused_variable.h"
+#include "swap.h"
+#include "wrapper.h"
 
 // forward declaration
 template <typename T>
@@ -810,6 +811,8 @@ public:
   /**** LAPACK OPERATIONS ****/
   Matrix<T> *inv();
   void svd(Matrix<T> **U, SparseMatrix<T> **S, Matrix<T> **V);
+  log_float logDeterminant(float &sign);
+  double determinant();
 
   // UPDATE GPU OR PPAL IF NEEDED
   void update() {

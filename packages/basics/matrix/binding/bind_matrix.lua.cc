@@ -1689,6 +1689,20 @@ public:
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat logdet
+{
+  float sign;
+  LUABIND_RETURN(float, obj->logDeterminant(sign).log());
+  LUABIND_RETURN(float, sign);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat det
+{
+  LUABIND_RETURN(double, obj->determinant());
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat svd
 {
   MatrixFloat *U,*V;

@@ -24,21 +24,13 @@
 
 namespace Stats {
 
-#define CHECK_MATRIX(a,b) do {                          \
-    if ( (b) != 0 ) {                                   \
-      if ( ! (a)->sameDim((b)) ) {                      \
-        ERROR_EXIT(128, "Incorrect matrix sizes\n");    \
-      }                                                 \
-    }                                                   \
-  } while(0)
-
   UniformDistribution::UniformDistribution(MatrixFloat *low,
                                            MatrixFloat *high) :
     StatisticalDistributionBase(),
     low(low), high(high) {
     IncRef(low);
     IncRef(high);
-    CHECK_MATRIX(low, high);
+    checkMatrixSizes(low, high);
     if (low->getNumDim() != 1)
       ERROR_EXIT(128, "Expected one-dimensional low and high matrices\n");
     MatrixFloat::const_iterator low_it(low->begin());
@@ -57,9 +49,9 @@ namespace Stats {
   }
 
   MatrixFloat *UniformDistribution::sample(MTRand *rng,
-                                           MatrixFloat *result) const {
+                                           MatrixFloat *result) {
     if (result == 0) result = low->cloneOnlyDims();
-    else CHECK_MATRIX(low, result);
+    else checkMatrixSizes(low, result);
     MatrixFloat::const_iterator low_it(low->begin()), high_it(high->begin());
     for (MatrixFloat::iterator it(result->begin()); it != result->end();
          ++it, ++low_it, ++high_it) {
@@ -69,39 +61,35 @@ namespace Stats {
     return result;
   }
 
-  MatrixFloat *UniformDistribution::pdf(const MatrixFloat *x,
-                                        MatrixFloat *result) const {
-    if (result == 0) result = low->cloneOnlyDims();
-    else CHECK_MATRIX(low, result);
-    CHECK_MATRIX(low, x);
+  log_float UniformDistribution::logpdf(const MatrixFloat *x) {
+    checkMatrixSizes(low, x);
     MatrixFloat::const_iterator low_it(low->begin()), high_it(high->begin());
-    MatrixFloat::const_iterator x_it(x->begin());
-    for (MatrixFloat::iterator result_it(result->begin());
-         result_it != result->end();
-         ++result_it, ++low_it, ++high_it, ++x_it) {
+    log_float one = log_float::one();
+    log_float result = log_float::one();
+    for (MatrixFloat::const_iterator x_it(x->begin());
+         x_it != x->end() && result > log_float::zero();
+         ++low_it, ++high_it, ++x_it) {
       if (*low_it <= *x_it && *x_it <= *high_it)
-        *result_it = 1.0f / (*high_it - *low_it);
-      else *result_it = 0.0f;
+        result *= one / log_float::from_float(*high_it - *low_it);
+      else result *= log_float::zero();
     }
     return result;
   }
 
-  MatrixFloat *UniformDistribution::cdf(const MatrixFloat *x,
-                                        MatrixFloat *result) const {
-    if (result == 0) result = low->cloneOnlyDims();
-    else CHECK_MATRIX(low, result);
-    CHECK_MATRIX(low, x);
+  log_float UniformDistribution::logcdf(const MatrixFloat *x) {
+    checkMatrixSizes(low, x);
     MatrixFloat::const_iterator low_it(low->begin()), high_it(high->begin());
     MatrixFloat::const_iterator x_it(x->begin());
-    for (MatrixFloat::iterator result_it(result->begin());
-         result_it != result->end();
-         ++result_it, ++low_it, ++high_it, ++x_it) {
+    log_float result = log_float::one();
+    for (MatrixFloat::const_iterator x_it(x->begin());
+         x_it != x->end() && result > log_float::zero();
+         ++low_it, ++high_it, ++x_it) {
       if (*x_it < *low_it)
-        *result_it = 0.0f;
+        result *= log_float::zero();
       else if (*low_it <= *x_it && *x_it < *high_it)
-        *result_it = (*x_it - *low_it) / (*high_it - *low_it);
+        result *= log_float::from_float(*x_it - *low_it) / log_float::from_float(*high_it - *low_it);
       else
-        *result_it = 1.0f;
+        result *= log_float::one();
     }
     return result;
   }
@@ -110,7 +98,7 @@ namespace Stats {
     return new UniformDistribution(low->clone(), high->clone());
   }
 
-  MatrixFloatSet *UniformDistribution::getParams() const {
+  MatrixFloatSet *UniformDistribution::getParams() {
     MatrixFloatSet *dict = new MatrixFloatSet();
     dict->insert("low",  low);
     dict->insert("high", high);

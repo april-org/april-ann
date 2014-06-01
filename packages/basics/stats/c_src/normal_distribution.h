@@ -18,18 +18,21 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef UNIFORM_DISTRIBUTION_H
-#define UNIFORM_DISTRIBUTION_H
+#ifndef NORMAL_DISTRIBUTION_H
+#define NORMAL_DISTRIBUTION_H
 
 #include "statistical_distribution.h"
 
 namespace Stats {
-  
-  class UniformDistribution : public StatisticalDistributionBase {
-    MatrixFloat *low, *high;
+
+  class GeneralNormalDistribution : public StatisticalDistributionBase {
+    MatrixFloat *mean, *cov, *inv_cov, *diff, *mult;
+    log_float cov_det, K;
+    float cov_det_sign;
   public:
-    UniformDistribution(MatrixFloat *low, MatrixFloat *high);
-    virtual ~UniformDistribution();
+    GeneralNormalDistribution(MatrixFloat *mean, MatrixFloat *cov);
+    virtual ~GeneralNormalDistribution();
+    void updateCov();
     virtual MatrixFloat *sample(MTRand *rng, MatrixFloat *result=0);
     virtual log_float logpdf(const MatrixFloat *x);
     virtual log_float logcdf(const MatrixFloat *x);
@@ -37,7 +40,7 @@ namespace Stats {
     virtual MatrixFloatSet *getParams();
     virtual char *toLuaString(bool is_ascii) const;
   };
-  
+
 }
 
-#endif // UNIFORM_DISTRIBUTION_H
+#endif // NORMAL_DISTRIBUTION_H
