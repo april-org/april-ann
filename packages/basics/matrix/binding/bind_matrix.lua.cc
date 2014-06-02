@@ -1929,11 +1929,13 @@ public:
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_GET_PARAMETER(1, string, key);
   MatrixFloatSet::Value *v = obj->find(key);
-  if (v->dense != 0) {
-    if (v->is_sparse)
+  if (v != 0) {
+    if (v->is_sparse) {
       LUABIND_RETURN(SparseMatrixFloat, v->sparse);
-    else
+    }
+    else {
       LUABIND_RETURN(MatrixFloat, v->dense);
+    }
   }
 }
 //BIND_END
