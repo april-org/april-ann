@@ -20,6 +20,7 @@
  */
 //BIND_HEADER_C
 #include "bind_matrix.h"
+#include "bind_sparse_matrix.h"
 #include "bind_mtrand.h"
 //BIND_END
 
@@ -53,17 +54,19 @@ using namespace Stats;
 
 //BIND_METHOD StatisticalDistributionBase logpdf
 {
-  MatrixFloat *x;
+  MatrixFloat *x, *dest;
   LUABIND_GET_PARAMETER(1, MatrixFloat, x);
-  LUABIND_RETURN(float, obj->logpdf(x).log());
+  LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
+  LUABIND_RETURN(MatrixFloat, obj->logpdf(x, dest));
 }
 //BIND_END
 
 //BIND_METHOD StatisticalDistributionBase logcdf
 {
-  MatrixFloat *x;
+  MatrixFloat *x, *dest;
   LUABIND_GET_PARAMETER(1, MatrixFloat, x);
-  LUABIND_RETURN(float, obj->logcdf(x).log());
+  LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
+  LUABIND_RETURN(MatrixFloat, obj->logcdf(x, dest));
 }
 //BIND_END
 
@@ -120,17 +123,42 @@ using namespace Stats;
 
 //////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME GeneralNormalDistribution stats.dist.normal
+//BIND_LUACLASSNAME GeneralNormalDistribution stats.dist.normal.general
 //BIND_CPP_CLASS    GeneralNormalDistribution
 //BIND_SUBCLASS_OF  GeneralNormalDistribution StatisticalDistributionBase
 
+//BIND_LUACLASSNAME DiagonalNormalDistribution stats.dist.normal.diagonal
+//BIND_CPP_CLASS    DiagonalNormalDistribution
+//BIND_SUBCLASS_OF  DiagonalNormalDistribution StatisticalDistributionBase
+
 //BIND_CONSTRUCTOR GeneralNormalDistribution
 {
-  MatrixFloat *mean, *cov;
+  LUABIND_ERROR("Use stats.dist.normal constructor");
+}
+//BIND_END
+
+//BIND_CONSTRUCTOR DiagonalNormalDistribution
+{
+  LUABIND_ERROR("Use stats.dist.normal constructor");
+}
+//BIND_END
+
+//BIND_FUNCTION stats.dist.normal
+{
+  MatrixFloat *mean;
   LUABIND_GET_PARAMETER(1, MatrixFloat, mean);
-  LUABIND_GET_PARAMETER(2, MatrixFloat, cov);
-  obj = new GeneralNormalDistribution(mean, cov);
-  LUABIND_RETURN(GeneralNormalDistribution, obj);
+  if (lua_isMatrixFloat(L,2)) {
+    MatrixFloat *cov;
+    LUABIND_GET_PARAMETER(2, MatrixFloat, cov);
+    GeneralNormalDistribution *obj = new GeneralNormalDistribution(mean, cov);
+    LUABIND_RETURN(GeneralNormalDistribution, obj);
+  }
+  else {
+    SparseMatrixFloat *cov;
+    LUABIND_GET_PARAMETER(2, SparseMatrixFloat, cov);
+    DiagonalNormalDistribution *obj = new DiagonalNormalDistribution(mean, cov);
+    LUABIND_RETURN(DiagonalNormalDistribution, obj);
+  }
 }
 //BIND_END
 
@@ -138,5 +166,12 @@ using namespace Stats;
 {
   LUABIND_RETURN(GeneralNormalDistribution,
                  static_cast<GeneralNormalDistribution*>(obj->clone()));
+}
+//BIND_END
+
+//BIND_METHOD DiagonalNormalDistribution clone
+{
+  LUABIND_RETURN(DiagonalNormalDistribution,
+                 static_cast<DiagonalNormalDistribution*>(obj->clone()));
 }
 //BIND_END

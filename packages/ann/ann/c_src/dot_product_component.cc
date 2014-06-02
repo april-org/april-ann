@@ -296,7 +296,7 @@ namespace ANN {
     ////////////////////////////////////////////////////////////////////
     if (transpose_weights == CblasTrans)
       swap(weights_input_size, weights_output_size);
-    MatrixFloat *&w = (*weights_dict)[weights_name];
+    MatrixFloat *&w = (*weights_dict)[weights_name].getDense();
     // printf("%s :: %p %p\n", weights_name.c_str(), w, weights_matrix);
     if (w != 0) {
       // printf("COPY OF WEIGHTS FROM HASH %s\n", weights_name.c_str());
@@ -328,7 +328,7 @@ namespace ANN {
     if (weights_matrix == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
-    MatrixFloat *&w = (*weights_dict)[weights_name];
+    MatrixFloat *&w = (*weights_dict)[weights_name].getDense();
     if (w != 0 && w != weights_matrix)
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with weights_matrix attribute [%s]\n",

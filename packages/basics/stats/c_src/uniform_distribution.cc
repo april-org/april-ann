@@ -26,72 +26,106 @@ namespace Stats {
 
   UniformDistribution::UniformDistribution(MatrixFloat *low,
                                            MatrixFloat *high) :
-    StatisticalDistributionBase(),
-    low(low), high(high) {
+    StatisticalDistributionBase(low->size()),
+    low(low), high(high), diff(0) {
     IncRef(low);
     IncRef(high);
-    checkMatrixSizes(low, high);
-    if (low->getNumDim() != 1)
-      ERROR_EXIT(128, "Expected one-dimensional low and high matrices\n");
+    if (!low->sameDim(high))
+      ERROR_EXIT(128, "Expected same sizes in low and high matrices\n");
+    if (low->getMajorOrder() != CblasColMajor ||
+        high->getMajorOrder() != CblasColMajor)
+      ERROR_EXIT(128, "Expected col_major matrices\n");
     MatrixFloat::const_iterator low_it(low->begin());
     MatrixFloat::const_iterator high_it(high->begin());
     while(low_it != low->end()) {
-      if (*high_it < *low_it)
-        ERROR_EXIT(128, "High must be always higher than low matrix\n");
+      if ( ! (*low_it < *high_it) )
+        ERROR_EXIT(128, "All low values must be less than high matrix\n");
       ++low_it;
       ++high_it;
     }
+    updateParams();
   }
 
   UniformDistribution::~UniformDistribution() {
     DecRef(low);
     DecRef(high);
+    DecRef(diff);
   }
 
-  MatrixFloat *UniformDistribution::sample(MTRand *rng,
-                                           MatrixFloat *result) {
-    if (result == 0) result = low->cloneOnlyDims();
-    else checkMatrixSizes(low, result);
-    MatrixFloat::const_iterator low_it(low->begin()), high_it(high->begin());
-    for (MatrixFloat::iterator it(result->begin()); it != result->end();
-         ++it, ++low_it, ++high_it) {
-      float s = *high_it - *low_it;
-      *it = rng->rand(s) + *low_it;
+  void UniformDistribution::privateSample(MTRand *rng, MatrixFloat *result) {
+    // traverse in row_major result matrix
+    MatrixFloat::iterator it(result->begin());
+    while(it != result->end()) {
+      // traverse in row_major low and diff matrices
+      MatrixFloat::const_iterator low_it(low->begin()), diff_it(diff->begin());
+      while(low_it != low->end()) {
+        *it = rng->rand(*diff_it) + *low_it;
+        ++it;
+        ++low_it;
+        ++diff_it;
+      }
     }
-    return result;
   }
 
-  log_float UniformDistribution::logpdf(const MatrixFloat *x) {
-    checkMatrixSizes(low, x);
-    MatrixFloat::const_iterator low_it(low->begin()), high_it(high->begin());
-    log_float one = log_float::one();
-    log_float result = log_float::one();
-    for (MatrixFloat::const_iterator x_it(x->begin());
-         x_it != x->end() && result > log_float::zero();
-         ++low_it, ++high_it, ++x_it) {
-      if (*low_it <= *x_it && *x_it <= *high_it)
-        result *= one / log_float::from_float(*high_it - *low_it);
-      else result *= log_float::zero();
-    }
-    return result;
-  }
-
-  log_float UniformDistribution::logcdf(const MatrixFloat *x) {
-    checkMatrixSizes(low, x);
-    MatrixFloat::const_iterator low_it(low->begin()), high_it(high->begin());
+  void UniformDistribution::privateLogpdf(const MatrixFloat *x,
+                                          MatrixFloat *result) {
+    MatrixFloat::iterator result_it(result->begin());
     MatrixFloat::const_iterator x_it(x->begin());
-    log_float result = log_float::one();
-    for (MatrixFloat::const_iterator x_it(x->begin());
-         x_it != x->end() && result > log_float::zero();
-         ++low_it, ++high_it, ++x_it) {
-      if (*x_it < *low_it)
-        result *= log_float::zero();
-      else if (*low_it <= *x_it && *x_it < *high_it)
-        result *= log_float::from_float(*x_it - *low_it) / log_float::from_float(*high_it - *low_it);
-      else
-        result *= log_float::one();
+    while(x_it != x->end()) {
+      log_float one = log_float::one();
+      log_float current_result = log_float::one();
+      MatrixFloat::const_iterator low_it(low->begin()), high_it(high->begin());
+      MatrixFloat::const_iterator diff_it(diff->begin());  
+      while(low_it != low->end() && current_result > log_float::zero()) {
+        if (*low_it <= *x_it && *x_it <= *high_it)
+          current_result *= one / log_float::from_float(*diff_it);
+        else current_result *= log_float::zero();
+        ++low_it;
+        ++high_it;
+        ++x_it;
+        ++diff_it;
+      }
+      while(low_it != low->end()) {
+        ++low_it;
+        ++high_it;
+        ++x_it;
+        ++diff_it;
+      }
+      *result_it = current_result.log();
+      ++result_it;
     }
-    return result;
+  }
+
+  void UniformDistribution::privateLogcdf(const MatrixFloat *x,
+                                          MatrixFloat *result) {
+    MatrixFloat::iterator result_it(result->begin());
+    MatrixFloat::const_iterator x_it(x->begin());
+    while(x_it != x->end()) {
+      log_float one = log_float::one();
+      log_float current_result = log_float::one();
+      MatrixFloat::const_iterator low_it(low->begin()), high_it(high->begin());
+      MatrixFloat::const_iterator diff_it(diff->begin());
+      while(low_it != low->end() && current_result > log_float::zero()) {
+        if (*x_it < *low_it)
+          current_result *= log_float::zero();
+        else if (*low_it <= *x_it && *x_it < *high_it)
+          current_result *= log_float::from_float(*x_it - *low_it) / log_float::from_float(*diff_it);
+        else
+          current_result *= log_float::one();
+        ++low_it;
+        ++high_it;
+        ++x_it;
+        ++diff_it;
+      }
+      while(low_it != low->end()) {
+        ++low_it;
+        ++high_it;
+        ++x_it;
+        ++diff_it;
+      }
+      *result_it = current_result.log();
+      ++result_it;
+    }
   }
 
   StatisticalDistributionBase *UniformDistribution::clone() {
@@ -116,5 +150,10 @@ namespace Stats {
     delete[] low_str;
     delete[] high_str;
     return buffer.to_string(buffer_list::NULL_TERMINATED);
+  }
+  
+  void UniformDistribution::updateParams() {
+    AssignRef(diff, high->clone());
+    diff->axpy(-1.0, low);
   }
 }

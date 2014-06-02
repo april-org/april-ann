@@ -163,8 +163,9 @@ namespace ANN {
     /// Method which receives a hash table with matrices where compute the
     /// gradients.
     virtual void computeAllGradients(MatrixFloatSet *weight_grads_dict){
-      if (!weights_name.empty())
-	computeGradients( (*weight_grads_dict)[weights_name] );
+      if (!weights_name.empty()) {
+        computeGradients( (*weight_grads_dict)[weights_name].getDense() );
+      }
     }
     
     virtual ANNComponent *clone() {

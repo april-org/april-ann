@@ -442,6 +442,25 @@ public:
       LUABIND_FERROR1("Incorrect sparse format string %s", sparse);    
     obj = SparseMatrixFloat::diag(block,format);
   }
+  else if (lua_istable(L,1)) {
+    int N;
+    LUABIND_TABLE_GETN(1, N);
+    FloatGPUMirroredMemoryBlock *block = new FloatGPUMirroredMemoryBlock(N);
+    const char *sparse;
+    LUABIND_GET_OPTIONAL_PARAMETER(2, string, sparse, "csr");
+    SPARSE_FORMAT format = CSR_FORMAT;
+    if (strcmp(sparse, "csc") == 0) format = CSC_FORMAT;
+    else if (strcmp(sparse, "csr") != 0)
+      LUABIND_FERROR1("Incorrect sparse format string %s", sparse);
+    float *mem = block->getPPALForWrite();
+    lua_pushnil(L);
+    int i=0;
+    while(lua_next(L, 1) != 0) {
+      mem[i++] = lua_tofloat(L, -1); 
+      lua_pop(L, 1);
+    }
+    obj = SparseMatrixFloat::diag(block,format);
+  }
   else {
     int N;
     float v;

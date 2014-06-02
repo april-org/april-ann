@@ -21,6 +21,7 @@
 #ifndef STATISTICAL_DISTRIBUTION_H
 #define STATISTICAL_DISTRIBUTION_H
 
+#include "error_print.h"
 #include "logbase.h"
 #include "matrixFloat.h"
 #include "matrixFloatSet.h"
@@ -29,20 +30,90 @@
 
 namespace Stats {
 
+  /// Class StatisticalDistributionBase implements basic interface for
+  /// statistical distributions and defines a private API for new classes
+  /// derivation. All the methods work with col_major matrices (like ANN
+  /// components), and with two-dimensional matrices where first dimension is
+  /// the bunch_size (like ANN components).
   class StatisticalDistributionBase : public Referenced {
+    unsigned int size;
+
   protected:
-    static void checkMatrixSizes(const MatrixFloat *a, const MatrixFloat *b) {
-      if (!a->sameDim(b)) ERROR_EXIT(128, "Expected same matrix sizes\n");
-    }
+    /// Receives a random generator and a MatrixFloat where sampled values will
+    /// be stored. The number of samples values will be equal to
+    /// result->getDimSize(0)
+    virtual void privateSample(MTRand *rng, MatrixFloat *result) = 0;
+    /// Receives a x MatrixFloat with NxM size (N = bunch_size), and a N sized
+    /// result MatrixFloat.
+    virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result) = 0;
+    /// Receives a x MatrixFloat with NxM size (N = bunch_size), and a N sized
+    /// result MatrixFloat.
+    virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result) = 0;
+
   public:
-    StatisticalDistributionBase() : Referenced() {}
+    StatisticalDistributionBase(unsigned int size) : Referenced(), size(size) {}
     virtual ~StatisticalDistributionBase() {}
-    virtual MatrixFloat *sample(MTRand *rng, MatrixFloat *result=0) = 0;
-    virtual log_float logpdf(const MatrixFloat *x) = 0;
-    virtual log_float logcdf(const MatrixFloat *x) = 0;
+    /// Public part of sample method, where arguments will be checked.
+    MatrixFloat *sample(MTRand *rng, MatrixFloat *result=0) {
+      int dims[2] = { 1, static_cast<int>(size) };
+      if (result == 0) {
+        result = new MatrixFloat(2, dims, CblasColMajor);
+      }
+      else if (result->getNumDim() != 2 || result->getDimSize(1) != static_cast<int>(size))
+        ERROR_EXIT1(128, "Incorrect result matrix size, expected "
+                    "bi-dimensional matrix with Nx%u shape\n", size);
+      else if (result->getMajorOrder() != CblasColMajor)
+        ERROR_EXIT(128, "Expected col_major order in result matrix\n");
+      // virtual call
+      privateSample(rng, result);
+      return result;
+    }
+    /// Public part of logpdf method, arguments will be checked here.
+    MatrixFloat *logpdf(const MatrixFloat *x, MatrixFloat *result=0) {
+      if (x->getNumDim() != 2 || x->getDimSize(1) != static_cast<int>(size))
+        ERROR_EXIT1(128, "Incorrect x matrix size, expected bi-dimensional "
+                    "matrix with Nx%u shape\n", size);
+      if (x->getMajorOrder() != CblasColMajor)
+        ERROR_EXIT(128, "Expected col_major in x matrix\n");
+      int dims[1] = { x->getDimSize(0) };
+      if (result == 0) {
+        result = new MatrixFloat(1, dims, CblasColMajor);
+      }
+      else if (result->getNumDim() != 1 || result->getDimSize(0) != dims[0])
+        ERROR_EXIT1(128, "Incorrect result matrix size, expected "
+                    "one-dimensional matrix with %d size\n", dims[0]);
+      else if (result->getMajorOrder() != CblasColMajor)
+        ERROR_EXIT(128, "Expected col_major order in result matrix\n");
+      // virtual call
+      privateLogpdf(x, result);
+      return result;
+    }
+    /// Public part of logcdf method, arguments will be checked here.
+    MatrixFloat *logcdf(const MatrixFloat *x, MatrixFloat *result=0) {
+      if (x->getNumDim() != 2 || x->getDimSize(1) != static_cast<int>(size))
+        ERROR_EXIT1(128, "Incorrect x matrix size, expected bi-dimensional "
+                    "matrix with Nx%u shape\n", size);
+      if (x->getMajorOrder() != CblasColMajor)
+        ERROR_EXIT(128, "Expected col_major in x matrix\n");
+      int dims[1] = { x->getDimSize(0) };
+      if (result == 0) {
+        result = new MatrixFloat(1, dims, CblasColMajor);
+      }
+      else if (result->getNumDim() != 1 || result->getDimSize(0) != dims[0])
+        ERROR_EXIT1(128, "Incorrect result matrix size, expected "
+                    "one-dimensional matrix with %d size\n", dims[0]);
+      else if (result->getMajorOrder() != CblasColMajor)
+        ERROR_EXIT(128, "Expected col_major order in result matrix\n");
+      // virtual call
+      privateLogcdf(x, result);
+      return result;
+    }
+    unsigned int getSize() { return size; }
+    // abstract interface
     virtual StatisticalDistributionBase *clone() = 0;
     virtual MatrixFloatSet *getParams() = 0;
     virtual char *toLuaString(bool is_ascii) const = 0;
+    virtual void updateParams() {}
   };
   
   ////////////////////////////////////////////////////////////////////////////

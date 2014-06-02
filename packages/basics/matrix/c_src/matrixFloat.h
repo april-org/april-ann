@@ -165,6 +165,9 @@ template <>
 double Matrix<float>::determinant();
 
 template <>
+Matrix<float> *Matrix<float>::cholesky(char uplo);
+
+template <>
 void Matrix<float>::pruneSubnormalAndCheckNormal();
 
 /* BOOLEAN CONDITIONS: this methods transforms the given matrix in a ZERO/ONE

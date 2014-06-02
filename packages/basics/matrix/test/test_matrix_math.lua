@@ -167,3 +167,14 @@ local m = matrix(3,3,{ 1, 2, 3,
 local logdet,sign = m:logdet()
 check.lt(math.abs(logdet-math.log(m:det())), 1e-03)
 check.eq(sign,1)
+
+---------------------------------------------------------------
+
+local m = matrix.col_major(3,3,{ 4, 12, -16,
+                                 12, 37, -43,
+                                   -16, -43, 98 })
+local U = m:cholesky('U')
+local L = m:cholesky('L')
+
+check.eq( U:transpose()*U, m)
+check.eq( L*L:transpose(), m)

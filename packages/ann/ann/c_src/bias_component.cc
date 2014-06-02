@@ -157,7 +157,7 @@ namespace ANN {
     unsigned int weights_input_size  = 1;
     unsigned int weights_output_size = output_size;
     ////////////////////////////////////////////////////////////////////
-    MatrixFloat *&w = (*weights_dict)[weights_name];
+    MatrixFloat *&w = (*weights_dict)[weights_name].getDense();
     // printf("%s :: %p %p\n", weights_name.c_str(), w, bias_vector);
     if (w != 0) {
       AssignRef(bias_vector, w);
@@ -187,7 +187,7 @@ namespace ANN {
     if (bias_vector == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
-    MatrixFloat *&w = (*weights_dict)[weights_name];
+    MatrixFloat *&w = (*weights_dict)[weights_name].getDense();
     if (w != 0 && w != bias_vector)
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with bias_vector attribute [%s]\n",

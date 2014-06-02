@@ -519,6 +519,8 @@ public:
   /// default is a deep copy, some code pieces expect this behavior, don't
   /// change it.
   Matrix(Matrix<T> *other, bool clone=true);
+  /// deep copy
+  Matrix(const Matrix<T> *other);
   /// Sub-matrix constructor
   Matrix(Matrix<T> *other,
 	 const int* coords, const int *sizes,
@@ -620,9 +622,9 @@ public:
   /// Copy only sizes, but not data
   Matrix<T>* cloneOnlyDims() const;
   /// Deep copy
-  Matrix<T>* clone();
+  Matrix<T>* clone() const;
   /// Deep copy with different major_order
-  Matrix<T> *clone(CBLAS_ORDER major_order);
+  Matrix<T> *clone(CBLAS_ORDER major_order) const;
   /// Shallow copy
   Matrix<T>* shallow_copy();
   
@@ -813,6 +815,15 @@ public:
   void svd(Matrix<T> **U, SparseMatrix<T> **S, Matrix<T> **V);
   log_float logDeterminant(float &sign);
   double determinant();
+  /**
+   * compute the Cholesky factorization of a real symmetric positive
+   * definite matrix A
+   * The factorization has the form
+   * A = U**T *	U,  if UPLO = 'U', or
+   * A = L  * L**T,  if	UPLO = 'L',
+   * where U is an upper triangular matrix and L is lower triangular.
+   */
+  Matrix<T> *cholesky(char uplo); // 'U' or 'L'
 
   // UPDATE GPU OR PPAL IF NEEDED
   void update() {

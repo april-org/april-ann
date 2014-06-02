@@ -776,6 +776,36 @@ double Matrix<float>::determinant() {
 }
 
 template <>
+Matrix<float> *Matrix<float>::cholesky(char uplo) {
+  if (numDim != 2 || matrixSize[0] != matrixSize[1])
+    ERROR_EXIT(128, "Only squared bi-dimensional matrices are allowed\n");
+  MatrixFloat *A = this->clone(CblasColMajor);
+  int INFO = clapack_spotrf(CblasColMajor,
+                            (uplo == 'U') ? CblasUpper : CblasLower,
+                            A->matrixSize[0], A->getData(), A->stride[1]);
+  checkLapackInfo(INFO);
+  switch(uplo) {
+  case 'U': {
+    MatrixFloat::random_access_iterator it(A);
+    for (int i=0; i<A->matrixSize[0]; ++i)
+      for (int j=0; j<i; ++j)
+        it(i,j) = 0.0f;
+    
+  }
+    break;
+  case 'L':
+  default: {
+    MatrixFloat::random_access_iterator it(A);
+    for (int i=0; i<A->matrixSize[0]; ++i)
+      for (int j=i+1; j<A->matrixSize[0]; ++j)
+        it(i,j) = 0.0f;
+  }
+  }
+  return A;
+}
+
+
+template <>
 void Matrix<float>::pruneSubnormalAndCheckNormal() {
   float *data = getRawDataAccess()->getPPALForReadAndWrite();
   if (!april_utils::check_floats(data, size()))

@@ -735,6 +735,13 @@ double Matrix<T>::determinant() {
   return 0.0f;
 }
 
+template <typename T>
+Matrix<T> *Matrix<T>::cholesky(char uplo) {
+  UNUSED_VARIABLE(uplo);
+  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  return 0;
+}
+
 // FIXME: IMPLEMENT THE BOOLEAN CONDITIONS USING CUDA WRAPPERS
 
 /* BOOLEAN CONDITIONS: this methods transforms the given matrix in a ZERO/ONE

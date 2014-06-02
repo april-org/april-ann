@@ -26,16 +26,20 @@
 namespace Stats {
   
   class UniformDistribution : public StatisticalDistributionBase {
-    MatrixFloat *low, *high;
+    MatrixFloat *low, *high, *diff;
+    
+  protected:
+    virtual void privateSample(MTRand *rng, MatrixFloat *result);
+    virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);
+    virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result);
+
   public:
     UniformDistribution(MatrixFloat *low, MatrixFloat *high);
     virtual ~UniformDistribution();
-    virtual MatrixFloat *sample(MTRand *rng, MatrixFloat *result=0);
-    virtual log_float logpdf(const MatrixFloat *x);
-    virtual log_float logcdf(const MatrixFloat *x);
     virtual StatisticalDistributionBase *clone();
     virtual MatrixFloatSet *getParams();
     virtual char *toLuaString(bool is_ascii) const;
+    virtual void updateParams();
   };
   
 }

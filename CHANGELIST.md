@@ -6,11 +6,20 @@ Master branch release
 
 ### Unstable changes
 
+- Added statistical distributions in `stats.dist`.
+
 ### API Changes
+
+- `matrix.dict` could store sparse and dense float matrices.
+- Added `matrix.cholesky(...)` method.
 
 ### Bugs removed
 
 ### C/C++
+
+- Added statistical distribution classes.
+- Removed C stack trace in ERROR_PRINT and ERROR_EXIT when compiling without
+  debug.
 
 ### Other
 

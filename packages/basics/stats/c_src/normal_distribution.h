@@ -21,24 +21,48 @@
 #ifndef NORMAL_DISTRIBUTION_H
 #define NORMAL_DISTRIBUTION_H
 
+#include "sparse_matrixFloat.h"
 #include "statistical_distribution.h"
 
 namespace Stats {
 
   class GeneralNormalDistribution : public StatisticalDistributionBase {
-    MatrixFloat *mean, *cov, *inv_cov, *diff, *mult;
+    MatrixFloat *mean, *cov, *inv_cov, *L;
     log_float cov_det, K;
     float cov_det_sign;
+
+  protected:
+    virtual void privateSample(MTRand *rng, MatrixFloat *result);
+    virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);
+    virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result);
+    
   public:
     GeneralNormalDistribution(MatrixFloat *mean, MatrixFloat *cov);
     virtual ~GeneralNormalDistribution();
-    void updateCov();
-    virtual MatrixFloat *sample(MTRand *rng, MatrixFloat *result=0);
-    virtual log_float logpdf(const MatrixFloat *x);
-    virtual log_float logcdf(const MatrixFloat *x);
     virtual StatisticalDistributionBase *clone();
     virtual MatrixFloatSet *getParams();
     virtual char *toLuaString(bool is_ascii) const;
+    virtual void updateParams();
+  };
+
+  class DiagonalNormalDistribution : public StatisticalDistributionBase {
+    MatrixFloat *mean;
+    log_float cov_det, K;
+    float cov_det_sign;
+    SparseMatrixFloat *cov, *inv_cov, *L;
+
+  protected:
+    virtual void privateSample(MTRand *rng, MatrixFloat *result);
+    virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);
+    virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result);
+    
+  public:
+    DiagonalNormalDistribution(MatrixFloat *mean, SparseMatrixFloat *cov);
+    virtual ~DiagonalNormalDistribution();
+    virtual StatisticalDistributionBase *clone();
+    virtual MatrixFloatSet *getParams();
+    virtual char *toLuaString(bool is_ascii) const;
+    virtual void updateParams();
   };
 
 }

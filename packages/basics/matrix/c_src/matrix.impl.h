@@ -253,6 +253,29 @@ Matrix<T>::Matrix(Matrix<T> *other, bool clone) :
   }
 }
 
+/// Constructor for clone other given matrix
+template <typename T>
+Matrix<T>::Matrix(const Matrix<T> *other) :
+  Referenced(),
+  shared_count(0), transposed(other->transposed),
+  numDim(other->numDim),
+  offset(0),
+  mmapped_data(0),
+  major_order(other->major_order),
+  use_cuda(other->use_cuda),
+  is_contiguous(other->is_contiguous),
+  end_iterator(), end_const_iterator(), end_best_span_iterator() {
+  stride       = new int[numDim];
+  matrixSize   = new int[numDim];
+  total_size   = other->total_size;
+  last_raw_pos = other->last_raw_pos;
+  transposed = false;
+  initialize(other->matrixSize);
+  allocate_memory(total_size);
+  copy(other);
+  is_contiguous = CONTIGUOUS;
+}
+
 template <typename T>
 Matrix<T> *Matrix<T>::fromMMappedDataReader(april_utils::MMappedDataReader
 					    *mmapped_data) {
@@ -370,7 +393,7 @@ Matrix<T>* Matrix<T>::cloneOnlyDims() const {
 }
 
 template<typename T>
-Matrix<T> *Matrix<T>::clone(CBLAS_ORDER major_order) {
+Matrix<T> *Matrix<T>::clone(CBLAS_ORDER major_order) const {
   Matrix<T> *resul;
   if (this->major_order != major_order) {
     resul = new Matrix<T>(numDim, matrixSize, major_order);
@@ -390,8 +413,8 @@ Matrix<T> *Matrix<T>::clone(CBLAS_ORDER major_order) {
 }
 
 template <typename T>
-Matrix<T>* Matrix<T>::clone() {
-  return new Matrix<T>(this,true);
+Matrix<T>* Matrix<T>::clone() const {
+  return new Matrix<T>(this);
 }
 
 template <typename T>
