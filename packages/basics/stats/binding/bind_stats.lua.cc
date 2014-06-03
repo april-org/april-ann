@@ -131,7 +131,7 @@ using namespace Stats;
   else {
     float lowf, highf;
     LUABIND_GET_PARAMETER(1, float, lowf);
-    LUABIND_GET_PARAMETER(1, float, highf);
+    LUABIND_GET_PARAMETER(2, float, highf);
     int dims[1] = { 1 };
     low  = new MatrixFloat(1, dims, CblasColMajor);
     high = new MatrixFloat(1, dims, CblasColMajor);
