@@ -26,6 +26,7 @@
 
 //BIND_HEADER_H
 #include "beta_distribution.h"
+#include "combinations.h"
 #include "exponential_distribution.h"
 #include "statistical_distribution.h"
 #include "uniform_distribution.h"
@@ -34,6 +35,17 @@
 using namespace Stats;
 
 //BIND_END
+
+//BIND_FUNCTION stats.comb
+{
+  unsigned int n, k;
+  LUABIND_GET_PARAMETER(1, uint, n);
+  LUABIND_GET_PARAMETER(2, uint, k);
+  LUABIND_RETURN(uint, Combinations::get(n, k));
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME StatisticalDistributionBase stats.dist
 //BIND_CPP_CLASS    StatisticalDistributionBase
