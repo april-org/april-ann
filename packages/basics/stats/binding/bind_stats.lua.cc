@@ -25,6 +25,7 @@
 //BIND_END
 
 //BIND_HEADER_H
+#include "beta_distribution.h"
 #include "exponential_distribution.h"
 #include "statistical_distribution.h"
 #include "uniform_distribution.h"
@@ -226,7 +227,6 @@ using namespace Stats;
 }
 //BIND_END
 
-
 //////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME ExponentialDistribution stats.dist.exponential
@@ -255,5 +255,28 @@ using namespace Stats;
 {
   LUABIND_RETURN(ExponentialDistribution,
                  static_cast<ExponentialDistribution*>(obj->clone()));
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME BetaDistribution stats.dist.beta
+//BIND_CPP_CLASS    BetaDistribution
+//BIND_SUBCLASS_OF  BetaDistribution StatisticalDistributionBase
+
+//BIND_CONSTRUCTOR BetaDistribution
+{
+  float alpha, beta;
+  LUABIND_GET_PARAMETER(1, float, alpha);
+  LUABIND_GET_PARAMETER(2, float, beta);
+  obj = new BetaDistribution(alpha, beta);
+  LUABIND_RETURN(BetaDistribution, obj);
+}
+//BIND_END
+
+//BIND_METHOD BetaDistribution clone
+{
+  LUABIND_RETURN(BetaDistribution,
+                 static_cast<BetaDistribution*>(obj->clone()));
 }
 //BIND_END

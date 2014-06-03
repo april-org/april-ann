@@ -18,32 +18,13 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef EXPONENTIAL_DISTRIBUTION_H
-#define EXPONENTIAL_DISTRIBUTION_H
+#ifndef GAMMA_VARIATE_H
+#define GAMMA_VARIATE_H
 
-#include "logbase.h"
-#include "statistical_distribution.h"
+#include "MersenneTwister.h"
 
 namespace Stats {
-
-  class ExponentialDistribution : public StatisticalDistributionBase {
-    MatrixFloat *lambda, *inv_lambda;
-    log_float lambda_prod;
-    
-  protected:
-    virtual void privateSample(MTRand *rng, MatrixFloat *result);
-    virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);
-    virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result);
-    
-  public:
-    ExponentialDistribution(MatrixFloat *lambda);
-    virtual ~ExponentialDistribution();
-    virtual StatisticalDistributionBase *clone();
-    virtual MatrixFloatSet *getParams();
-    virtual char *toLuaString(bool is_ascii) const;
-    virtual void updateParams();
-  };
-  
+  double gammaVariate(MTRand *rng, double a, double b, double c);
 }
 
-#endif // EXPONENTIAL_DISTRIBUTION_H
+#endif // GAMMA_VARIATE_H

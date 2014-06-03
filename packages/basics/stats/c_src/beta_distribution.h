@@ -18,17 +18,17 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef EXPONENTIAL_DISTRIBUTION_H
-#define EXPONENTIAL_DISTRIBUTION_H
+#ifndef BETA_DISTRIBUTION_H
+#define BETA_DISTRIBUTION_H
 
 #include "logbase.h"
 #include "statistical_distribution.h"
 
 namespace Stats {
 
-  class ExponentialDistribution : public StatisticalDistributionBase {
-    MatrixFloat *lambda, *inv_lambda;
-    log_float lambda_prod;
+  class BetaDistribution : public StatisticalDistributionBase {
+    float alpha, beta;
+    log_float Bab;
     
   protected:
     virtual void privateSample(MTRand *rng, MatrixFloat *result);
@@ -36,8 +36,8 @@ namespace Stats {
     virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result);
     
   public:
-    ExponentialDistribution(MatrixFloat *lambda);
-    virtual ~ExponentialDistribution();
+    BetaDistribution(float alpha, float beta);
+    virtual ~BetaDistribution();
     virtual StatisticalDistributionBase *clone();
     virtual MatrixFloatSet *getParams();
     virtual char *toLuaString(bool is_ascii) const;
@@ -46,4 +46,4 @@ namespace Stats {
   
 }
 
-#endif // EXPONENTIAL_DISTRIBUTION_H
+#endif // BETA_DISTRIBUTION_H

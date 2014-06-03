@@ -18,7 +18,6 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#define _USE_MATH_DEFINES
 #include <cmath>
 #include "buffer_list.h"
 #include "error_print.h"
@@ -26,8 +25,6 @@
 #include "utilMatrixFloat.h"
 
 namespace Stats {
-  
-  const float M_2PI = M_PI*2.0f;
   
   ExponentialDistribution::ExponentialDistribution(MatrixFloat *lambda) :
     StatisticalDistributionBase(lambda->size()),
@@ -70,8 +67,8 @@ namespace Stats {
       inv_lambda->div(1.0f);
     }
     for (MatrixFloat::iterator it(result->begin()); it != result->end(); ++it) {
-      float v = static_cast<float>(rng->rand());
-      april_assert(v >= 0.0f && v <= 1.0f);
+      float v = static_cast<float>(rng->randDblExc());
+      april_assert(v > 0.0f && v < 1.0f);
       *it = v;
     }
     result->log();
@@ -97,6 +94,11 @@ namespace Stats {
 
   void ExponentialDistribution::privateLogcdf(const MatrixFloat *x,
                                               MatrixFloat *result) {
+    int a,b;
+    if (x->min(a,b) < 0.0f)
+      ERROR_EXIT(128, "Exponential dist. is not defined for neg. numbers\n");
+    UNUSED_VARIABLE(a);
+    UNUSED_VARIABLE(b);
     int dims[2] = { result->getDimSize(0), 1 };
     // FIXME: needs a contiguous result matrix
     MatrixFloat *rewrapped_result = result->rewrap(dims, 2);
