@@ -11,6 +11,8 @@
 --
 -- utest.check.fail(function, error_message): the opposite of previous one
 --
+-- utest.check.number_eq(a, b, epsilon, error_message): tests of a == b with epsilon tolerance
+--
 -- utest.check.eq(a, b, error_message): tests of a == b
 --
 -- utest.check.neq(a, b, error_message): tests of a ~= b
@@ -90,6 +92,12 @@ local check = function (func,error_msg)
 end
 utest.check = { }
 --
+utest.check.number_eq = function(a, b, epsilon, ...)
+  local epsilon = epsilon or 0.02
+  return check(function()
+                 return math.abs(a-b)/math.abs(a+b) < epsilon
+               end, ...)
+end
 utest.check.eq = function(a, b, ...)
   return check(function() return a == b end, ...)
 end

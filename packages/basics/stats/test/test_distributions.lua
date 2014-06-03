@@ -32,8 +32,8 @@ check(function()
 local mv = stats.mean_var()
 data:map(function(x) mv:add(x) end)
 local mu,sigma = mv:compute()
-check.lt( math.abs(mu + 10), 0.1 )
-check.lt( math.abs(sigma - 2), 0.1 )
+check.number_eq(mu, -10)
+check.number_eq(sigma, 2)
 
 -----------------------------------------------------------------------------
 -- DIAGONAL NORMAL DISTRIBUTION
@@ -50,8 +50,8 @@ check(function()
 local mv = stats.mean_var()
 data:map(function(x) mv:add(x) end)
 local mu,sigma = mv:compute()
-check.lt( math.abs(mu + 10), 0.1 )
-check.lt( math.abs(sigma - 2), 0.1 )
+check.number_eq(mu, -10)
+check.number_eq(sigma, 2)
 local pdf_result = M(2,{-82.5465,-152.797})
 check(function()
         return d:logpdf(M(2,3,{1,-5,3, -10,10,4})):equals(pdf_result,1e-02)
@@ -73,3 +73,60 @@ check(function()
                                                                        }),
                                                  1e-02)
       end)
+
+-----------------------------------------------------------------------------
+-- EXPONENTIAL DISTRIBUTION
+
+local d = stats.dist.exponential(4)
+local samples = M(10,1,{ 0.41319,
+                         0.17446,
+                         0.11866,
+                         0.050273,
+                         0.20654,
+                         0.12271,
+                         0.060404,
+                         0.0649,
+                         0.062123,
+                         0.037511, })
+check.eq( d:sample(random(1234),10), samples )
+local pdf_result = matrix.col_major(10,{ 1.01885,
+                                           -45.38,
+                                           -1.25495,
+                                           -15.5582,
+                                           -11.3048,
+                                           -26.279,
+                                           -1.00439,
+                                           -15.7705,
+                                           -5.93778,
+                                           -63.1531, })
+local x = matrix.col_major(10,1,{ 0.091862,
+                                  11.691586,
+                                  0.660310,
+                                  4.236131,
+                                  3.172766,
+                                  6.916327,
+                                  0.597670,
+                                  4.289197,
+                                  1.831019,
+                                  16.134842, })
+check.eq( d:logpdf(x), pdf_result )
+
+local cdf_result = matrix.col_major(10,{
+                                        -1.17928,
+                                        -4.89368e-21,
+                                        -0.0739403,
+                                        -4.37609e-08,
+                                        -3.07852e-06,
+                                        -9.66294e-13,
+                                        -0.0960346,
+                                        -3.53917e-08,
+                                        -0.000659686,
+                                        -9.35209e-29,
+                                       })
+check.eq( d:logcdf(x), cdf_result )
+
+local x = x:rewrap(1,10)
+local d = stats.dist.exponential(matrix.col_major(10):fill(4))
+
+check.number_eq( d:logpdf(x):get(1), pdf_result:sum() )
+check.number_eq( d:logcdf(x):get(1), cdf_result:sum() )

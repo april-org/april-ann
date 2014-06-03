@@ -24,6 +24,7 @@
 #include "check_floats.h"
 #include "error_print.h"
 #include "normal_distribution.h"
+#include "unused_variable.h"
 #include "utilMatrixFloat.h"
 
 namespace Stats {
@@ -115,6 +116,8 @@ namespace Stats {
 
   void GeneralNormalDistribution::privateLogcdf(const MatrixFloat *x,
                                                 MatrixFloat *result) {
+    UNUSED_VARIABLE(x);
+    UNUSED_VARIABLE(result);
     ERROR_EXIT(128, "Not implemented");
   }
 
@@ -243,6 +246,8 @@ namespace Stats {
 
   void DiagonalNormalDistribution::privateLogcdf(const MatrixFloat *x,
                                                  MatrixFloat *result) {
+    UNUSED_VARIABLE(x);
+    UNUSED_VARIABLE(result);
     ERROR_EXIT(128, "Not implemented");
   }
 

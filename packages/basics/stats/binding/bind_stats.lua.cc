@@ -25,6 +25,7 @@
 //BIND_END
 
 //BIND_HEADER_H
+#include "exponential_distribution.h"
 #include "statistical_distribution.h"
 #include "uniform_distribution.h"
 #include "normal_distribution.h"
@@ -141,8 +142,8 @@ using namespace Stats;
     int dims[1] = { 1 };
     low  = new MatrixFloat(1, dims, CblasColMajor);
     high = new MatrixFloat(1, dims, CblasColMajor);
-    (*low)(0)    = lowf;
-    (*high)(0,0) = highf;
+    (*low)(0)  = lowf;
+    (*high)(0) = highf;
   }
   obj = new UniformDistribution(low, high);
   LUABIND_RETURN(UniformDistribution, obj);
@@ -222,5 +223,37 @@ using namespace Stats;
 {
   LUABIND_RETURN(DiagonalNormalDistribution,
                  static_cast<DiagonalNormalDistribution*>(obj->clone()));
+}
+//BIND_END
+
+
+//////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME ExponentialDistribution stats.dist.exponential
+//BIND_CPP_CLASS    ExponentialDistribution
+//BIND_SUBCLASS_OF  ExponentialDistribution StatisticalDistributionBase
+
+//BIND_CONSTRUCTOR ExponentialDistribution
+{
+  MatrixFloat *lambda;
+  if (lua_isMatrixFloat(L,1)) {
+    LUABIND_GET_PARAMETER(1, MatrixFloat, lambda);
+  }
+  else {
+    float lambdaf;
+    LUABIND_GET_PARAMETER(1, float, lambdaf);
+    int dims[1] = {1};
+    lambda = new MatrixFloat(1, dims, CblasColMajor);
+    lambda->fill(lambdaf);
+  }
+  obj = new ExponentialDistribution(lambda);
+  LUABIND_RETURN(ExponentialDistribution, obj);
+}
+//BIND_END
+
+//BIND_METHOD ExponentialDistribution clone
+{
+  LUABIND_RETURN(ExponentialDistribution,
+                 static_cast<ExponentialDistribution*>(obj->clone()));
 }
 //BIND_END
