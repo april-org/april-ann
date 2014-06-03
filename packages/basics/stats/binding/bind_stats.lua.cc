@@ -47,7 +47,24 @@ using namespace Stats;
   MTRand *rng;
   MatrixFloat *dest;
   LUABIND_GET_PARAMETER(1, MTRand, rng);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
+  int result_pos = 2, N=-1;
+  if (lua_isnumber(L,2)) {
+    LUABIND_GET_PARAMETER(2, int, N);
+    if (N < 1) LUABIND_ERROR("Expected > 0 number as 2nd argument\n");
+    result_pos++;
+  }
+  LUABIND_GET_OPTIONAL_PARAMETER(result_pos, MatrixFloat, dest, 0);
+  if (N > 0) {
+    if (dest == 0) {
+      int dims[2] = { N, static_cast<int>(obj->getSize()) };
+      dest = new MatrixFloat(2, dims, CblasColMajor);
+    }
+    else {
+      if (N != dest->getDimSize(0))
+        LUABIND_FERROR2("Expected a matrix with %d rows, found %d rows\n",
+                        N, dest->getDimSize(0));
+    }
+  }
   LUABIND_RETURN(MatrixFloat, obj->sample(rng, dest));
 }
 //BIND_END
