@@ -27,7 +27,8 @@
 namespace Stats {
 
   class BetaDistribution : public StatisticalDistributionBase {
-    float alpha, beta;
+    MatrixFloat *alpha, *beta;
+    float alphaf, betaf;
     log_float Bab;
     
   protected:
@@ -36,7 +37,7 @@ namespace Stats {
     virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result);
     
   public:
-    BetaDistribution(float alpha, float beta);
+    BetaDistribution(MatrixFloat *alpha, MatrixFloat *beta);
     virtual ~BetaDistribution();
     virtual StatisticalDistributionBase *clone();
     virtual MatrixFloatSet *getParams();

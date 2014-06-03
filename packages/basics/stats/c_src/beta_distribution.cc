@@ -28,9 +28,12 @@
 
 namespace Stats {
   
-  BetaDistribution::BetaDistribution(float alpha, float beta) :
+  BetaDistribution::BetaDistribution(MatrixFloat *alpha, MatrixFloat *beta) :
     StatisticalDistributionBase(1),
     alpha(alpha), beta(beta) {
+    if (alpha->getNumDim() != 1 || beta->getNumDim() != 1 ||
+        alpha->getDimSize(0) != 1 || beta->getDimSize(0) != 1)
+      ERROR_EXIT(128, "Expected alpha,beta one-dimensional matrices with size 1\n");
     updateParams();
   }
 
@@ -38,11 +41,13 @@ namespace Stats {
   }
   
   void BetaDistribution::updateParams() {
-    if (!(alpha > 0.0f) || !(beta > 0.0f))
+    alphaf = (*alpha)(0);
+    betaf  = (*beta)(0);
+    if (!(alphaf > 0.0f) || !(betaf > 0.0f))
       ERROR_EXIT(128, "Beta distribution needs > 0 alpha and beta params\n");
-    log_float gamma_a(lgamma(alpha));
-    log_float gamma_b(lgamma(beta));
-    log_float gamma_ab(lgamma(alpha + beta));
+    log_float gamma_a(lgamma(alphaf));
+    log_float gamma_b(lgamma(betaf));
+    log_float gamma_ab(lgamma(alphaf + betaf));
     Bab = ( gamma_a * gamma_b / gamma_ab );
   }
   
@@ -51,8 +56,8 @@ namespace Stats {
     // generation via gamma variate
     for (MatrixFloat::iterator result_it(result->begin());
          result_it != result->end(); ++result_it) {
-      double y1 = gammaVariate(rng, 0.0f, 1.0f, alpha);
-      double y2 = gammaVariate(rng, 0.0f, 1.0f, beta);
+      double y1 = gammaVariate(rng, 0.0f, 1.0f, alphaf);
+      double y2 = gammaVariate(rng, 0.0f, 1.0f, betaf);
       *result_it = static_cast<float>( y1 / (y1 + y2) );
     }
   }
@@ -66,8 +71,8 @@ namespace Stats {
     MatrixFloat::const_iterator x_it(x->begin());
     MatrixFloat::iterator result_it(result->begin());
     while(x_it != x->end()) {
-      log_float vx  = log_float::from_float(*x_it).raise_to(alpha - 1.0f);
-      log_float v1x = log_float::from_float(1.0f - *x_it).raise_to(beta - 1.0f);
+      log_float vx  = log_float::from_float(*x_it).raise_to(alphaf - 1.0f);
+      log_float v1x = log_float::from_float(1.0f - *x_it).raise_to(betaf - 1.0f);
       log_float r;
       if (vx <= log_float::zero() || v1x <= log_float::zero())
         r = log_float::zero();
@@ -87,19 +92,21 @@ namespace Stats {
   }
 
   StatisticalDistributionBase *BetaDistribution::clone() {
-    return new BetaDistribution(alpha, beta);
+    return new BetaDistribution(alpha->clone(), beta->clone());
   }
   
   MatrixFloatSet *BetaDistribution::getParams() {
-    ERROR_EXIT(256, "NOT IMPLEMENTED\n");
-    return 0;
+    MatrixFloatSet *dict = new MatrixFloatSet();
+    dict->insert("alpha", alpha);
+    dict->insert("beta", beta);
+    return dict;
   }
   
   char *BetaDistribution::toLuaString(bool is_ascii) const {
     UNUSED_VARIABLE(is_ascii);
     buffer_list buffer;
     int len;
-    buffer.printf("stats.dist.beta(%g, %g)", alpha, beta);
+    buffer.printf("stats.dist.beta(%g, %g)", alphaf, betaf);
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
   

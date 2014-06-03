@@ -266,9 +266,21 @@ using namespace Stats;
 
 //BIND_CONSTRUCTOR BetaDistribution
 {
-  float alpha, beta;
-  LUABIND_GET_PARAMETER(1, float, alpha);
-  LUABIND_GET_PARAMETER(2, float, beta);
+  MatrixFloat *alpha, *beta;
+  if (lua_isMatrixFloat(L, 1)) {
+    LUABIND_GET_PARAMETER(1, MatrixFloat, alpha);
+    LUABIND_GET_PARAMETER(2, MatrixFloat, beta);
+  }
+  else {
+    float alphaf, betaf;
+    LUABIND_GET_PARAMETER(1, float, alphaf);
+    LUABIND_GET_PARAMETER(2, float, betaf);
+    int dims[1] = {1};
+    alpha = new MatrixFloat(1, dims, CblasColMajor);
+    (*alpha)(0) = alphaf;
+    beta = new MatrixFloat(1, dims, CblasColMajor);
+    (*beta)(0) = betaf;
+  }
   obj = new BetaDistribution(alpha, beta);
   LUABIND_RETURN(BetaDistribution, obj);
 }
