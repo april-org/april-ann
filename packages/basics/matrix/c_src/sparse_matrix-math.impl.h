@@ -167,7 +167,7 @@ void SparseMatrix<T>::scal(T value) {
 template <typename T>
 void SparseMatrix<T>::div(T value) {
   for (iterator it(begin()); it != end(); ++it)
-    *it /= value;
+    *it = value / *it;
 }
 
 template <typename T>

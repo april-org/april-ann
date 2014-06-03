@@ -15,6 +15,8 @@ Master branch release
 
 ### Bugs removed
 
+- Solved bug at `Matrix<T>::div` and `SparseMatrix<T>::div` methods.
+
 ### C/C++
 
 - Added statistical distribution classes.

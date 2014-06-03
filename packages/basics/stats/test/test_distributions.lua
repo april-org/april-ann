@@ -38,6 +38,7 @@ check.lt( math.abs(sigma - 2), 0.1 )
 -----------------------------------------------------------------------------
 -- DIAGONAL NORMAL DISTRIBUTION
 
+local d2=d
 local N = 1000
 local d = stats.dist.normal( M(3):fill(-10), matrix.sparse.diag{2, 2, 2} )
 
@@ -51,3 +52,8 @@ data:map(function(x) mv:add(x) end)
 local mu,sigma = mv:compute()
 check.lt( math.abs(mu + 10), 0.1 )
 check.lt( math.abs(sigma - 2), 0.1 )
+print( d:logpdf(M(2,3,{1,-5,3, -10,10,4})) )
+local pdf_result = M(2,{-82.5465,-152.797})
+check(function()
+        return d:logpdf(M(2,3,{1,-5,3, -10,10,4})):equals(pdf_result,1e-02)
+      end)

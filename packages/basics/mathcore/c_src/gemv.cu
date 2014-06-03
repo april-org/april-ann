@@ -275,7 +275,7 @@ void doGemv(CBLAS_ORDER major_order, CBLAS_TRANSPOSE a_transpose,
 }
 
 template<typename T>
-void doSparseGemv(CBLAS_ORDER major_order, SPARSE_FORMAT sparse_format,
+void doSparseGemv(SPARSE_FORMAT sparse_format,
                   CBLAS_TRANSPOSE a_transpose,
                   int m, int n,
                   T alpha,
@@ -297,8 +297,6 @@ void doSparseGemv(CBLAS_ORDER major_order, SPARSE_FORMAT sparse_format,
   if (use_gpu) {
     cusparseStatus_t status;
     cusparseHandle_t handle = GPUHelper::getSparseHandler();
-    if (major_order != CblasColMajor)
-      ERROR_EXIT(128, "Column major matrices are expected\n");
     if (sparse_format != CSR_FORMAT)
       a_transpose = NEGATE_CBLAS_TRANSPOSE(a_transpose);
     a_values_mem = a_values->getGPUForRead();
@@ -335,8 +333,6 @@ void doSparseGemv(CBLAS_ORDER major_order, SPARSE_FORMAT sparse_format,
   }
   else {
 #endif
-    if (major_order != CblasRowMajor)
-      ERROR_EXIT(128, "Row major matrices are expected\n");
     a_values_mem = a_values->getPPALForRead();
     a_indices_mem = a_indices->getPPALForRead();
     a_first_index_mem = a_first_index->getPPALForRead();
@@ -380,8 +376,7 @@ template void doGemv<ComplexF>(CBLAS_ORDER major_order, CBLAS_TRANSPOSE a_transp
 			       unsigned int a_shift, unsigned int x_shift, unsigned int y_shift,
 			       bool use_gpu);
 
-template void doSparseGemv<float>(CBLAS_ORDER major_order,
-                                  SPARSE_FORMAT sparse_format,
+template void doSparseGemv<float>(SPARSE_FORMAT sparse_format,
                                   CBLAS_TRANSPOSE a_transpose,
                                   int m, int n,
                                   float alpha,
@@ -393,8 +388,7 @@ template void doSparseGemv<float>(CBLAS_ORDER major_order,
                                   unsigned int x_shift, unsigned int y_shift,
                                   bool use_gpu);
 
-template void doSparseGemv<double>(CBLAS_ORDER major_order,
-                                   SPARSE_FORMAT sparse_format,
+template void doSparseGemv<double>(SPARSE_FORMAT sparse_format,
                                    CBLAS_TRANSPOSE a_transpose,
                                    int m, int n,
                                    double alpha,
@@ -406,8 +400,7 @@ template void doSparseGemv<double>(CBLAS_ORDER major_order,
                                    unsigned int x_shift, unsigned int y_shift,
                                    bool use_gpu);
 
-template void doSparseGemv<ComplexF>(CBLAS_ORDER major_order,
-                                     SPARSE_FORMAT sparse_format,
+template void doSparseGemv<ComplexF>(SPARSE_FORMAT sparse_format,
                                      CBLAS_TRANSPOSE a_transpose,
                                      int m, int n,
                                      ComplexF alpha,

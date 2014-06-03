@@ -60,6 +60,8 @@ namespace Stats {
     AssignRef(inv_cov, cov->inv());
     // TODO: check covariance matrix to be definite positive
     cov_det = cov->logDeterminant(cov_det_sign);
+    if (cov_det.log() < 0.0f)
+      cov_det = cov_det.raise_to(-1.0f);
     log_float KM_2PI = log_float::from_float(M_2PI).
       raise_to(static_cast<float>(mean->getDimSize(0)));
     log_float denom = (KM_2PI * cov_det).raise_to(0.5f);
@@ -181,8 +183,12 @@ namespace Stats {
 	ERROR_EXIT3(256, "No finite number at position %d,%d with value %g\n",
                     x0, x1, *it);
       }
+      if (*it < 0.0f)
+        ERROR_EXIT(256, "Expected a definite positive covariance matrix\n");
       cov_det *= log_float::from_float(*it);
     }
+    if (cov_det.log() < 0.0f)
+      cov_det = cov_det.raise_to(-1.0f);
     log_float KM_2PI = log_float::from_float(M_2PI).
       raise_to(static_cast<float>(mean->getDimSize(0)));
     log_float denom = (KM_2PI * cov_det).raise_to(0.5f);

@@ -266,7 +266,7 @@ void doGemv(CBLAS_ORDER major_type, CBLAS_TRANSPOSE a_transpose,
 	    bool use_gpu);
 
 template<typename T>
-void doSparseGemv(CBLAS_ORDER major_type, SPARSE_FORMAT sparse_format,
+void doSparseGemv(SPARSE_FORMAT sparse_format,
                   CBLAS_TRANSPOSE a_transpose,
                   int m, int n,
                   T alpha,
