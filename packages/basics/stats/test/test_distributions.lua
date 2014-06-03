@@ -56,3 +56,20 @@ local pdf_result = M(2,{-82.5465,-152.797})
 check(function()
         return d:logpdf(M(2,3,{1,-5,3, -10,10,4})):equals(pdf_result,1e-02)
       end)
+
+local d = stats.dist.normal(-30,4)
+check(function()
+        return d:sample(random(4243),10):equals( matrix.col_major(10,1,{
+                                                                      -29.8856,
+                                                                      -28.6116,
+                                                                      -32.333,
+                                                                      -27.8685,
+                                                                      -30.8694,
+                                                                      -31.9292,
+                                                                      -27.3479,
+                                                                      -29.7185,
+                                                                      -29.3391,
+                                                                      -30.6593,
+                                                                       }),
+                                                 1e-02)
+      end)
