@@ -22,7 +22,7 @@
 #define COMBINATIONS_H
 
 #include "error_print.h"
-#include "hash_table.h"
+#include "vector.h"
 
 namespace Stats {
 
@@ -30,13 +30,23 @@ namespace Stats {
     // it is forbidden to instantiate this class, it is a static class
     Combinations() {}
   
-    static april_utils::hash<april_utils::uint_pair,
-                             unsigned int> pascal_triangle;
+    static april_utils::vector<unsigned int> pascal_triangle;
+    
+    static void reserve(unsigned int n) {
+      if (pascal_triangle.size() <= n) {
+        unsigned int oldn = pascal_triangle.size();
+        pascal_triangle.resize( (n+1)<<1 );
+        for (unsigned int i=oldn; i<pascal_triangle.size(); ++i)
+          pascal_triangle[i] = 0;
+      }
+    }
     
     static unsigned int privateGet(unsigned int n, unsigned int k) {
       // frontier problems
       if (n <= 1 || k == 0) return 1;
-      unsigned int &v = pascal_triangle[ april_utils::uint_pair(n,k) ];
+      unsigned int pos = ( ( (n)*(n-1) ) >> 1 ) + (k-1) - 1;
+      reserve(pos);
+      unsigned int &v = pascal_triangle[pos];
       if (v == 0) {
         // general problem
         if (k<n) v = privateGet(n-1, k-1) + privateGet(n-1, k);

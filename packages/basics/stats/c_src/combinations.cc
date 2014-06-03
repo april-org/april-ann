@@ -22,7 +22,6 @@
 
 namespace Stats {
 
-  april_utils::hash<april_utils::uint_pair,
-                    unsigned int> Combinations::pascal_triangle;
+  april_utils::vector<unsigned int> Combinations::pascal_triangle;
 
 }
