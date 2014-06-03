@@ -99,6 +99,12 @@ using namespace Stats;
 }
 //BIND_END
 
+//BIND_METHOD StatisticalDistributionBase update_params
+{
+  obj->updateParams();
+}
+//BIND_END
+
 //BIND_METHOD StatisticalDistributionBase to_lua_string
 {
   const char *format;
