@@ -25,13 +25,14 @@
 #include "statistical_distribution.h"
 
 namespace Stats {
-
+  
+  /// Normal distribution with general covariance matrix
   class GeneralNormalDistribution : public StatisticalDistributionBase {
+  protected:
     MatrixFloat *mean, *cov, *inv_cov, *L;
     log_float cov_det, K;
     float cov_det_sign;
 
-  protected:
     virtual void privateSample(MTRand *rng, MatrixFloat *result);
     virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);
     virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result);
@@ -45,13 +46,14 @@ namespace Stats {
     virtual void updateParams();
   };
 
+  /// Normal distribution with diagonal covariance sparse matrix
   class DiagonalNormalDistribution : public StatisticalDistributionBase {
+  protected:
     MatrixFloat *mean;
     log_float cov_det, K;
     float cov_det_sign;
     SparseMatrixFloat *cov, *inv_cov, *L;
 
-  protected:
     virtual void privateSample(MTRand *rng, MatrixFloat *result);
     virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);
     virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result);
@@ -63,6 +65,42 @@ namespace Stats {
     virtual MatrixFloatSet *getParams();
     virtual char *toLuaString(bool is_ascii) const;
     virtual void updateParams();
+  };
+
+  /// Log-Normal distribution with general covariance matrix
+  class GeneralLogNormalDistribution : public GeneralNormalDistribution {
+    MatrixFloat *location;
+  
+  protected:
+    virtual void privateSample(MTRand *rng, MatrixFloat *result);
+    virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);
+    virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result);
+    
+  public:
+    GeneralLogNormalDistribution(MatrixFloat *mean, MatrixFloat *cov,
+                                 MatrixFloat *location=0);
+    virtual ~GeneralLogNormalDistribution();
+    virtual StatisticalDistributionBase *clone();
+    virtual MatrixFloatSet *getParams();
+    virtual char *toLuaString(bool is_ascii) const;
+  };
+
+  /// Log-LogNormal distribution with diagonal covariance sparse matrix
+  class DiagonalLogNormalDistribution : public DiagonalNormalDistribution {
+    MatrixFloat *location;
+
+  protected:
+    virtual void privateSample(MTRand *rng, MatrixFloat *result);
+    virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);
+    virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result);
+    
+  public:
+    DiagonalLogNormalDistribution(MatrixFloat *mean, SparseMatrixFloat *cov,
+                                  MatrixFloat *location=0);
+    virtual ~DiagonalLogNormalDistribution();
+    virtual StatisticalDistributionBase *clone();
+    virtual MatrixFloatSet *getParams();
+    virtual char *toLuaString(bool is_ascii) const;
   };
 
 }

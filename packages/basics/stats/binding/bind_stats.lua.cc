@@ -266,6 +266,86 @@ using namespace Stats;
 }
 //BIND_END
 
+
+//////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME GeneralLogNormalDistribution stats.dist.lognormal.general
+//BIND_CPP_CLASS    GeneralLogNormalDistribution
+//BIND_SUBCLASS_OF  GeneralLogNormalDistribution StatisticalDistributionBase
+
+//BIND_LUACLASSNAME DiagonalLogNormalDistribution stats.dist.lognormal.diagonal
+//BIND_CPP_CLASS    DiagonalLogNormalDistribution
+//BIND_SUBCLASS_OF  DiagonalLogNormalDistribution StatisticalDistributionBase
+
+//BIND_CONSTRUCTOR GeneralNormalDistribution
+{
+  LUABIND_ERROR("Use stats.dist.lognormal constructor");
+}
+//BIND_END
+
+//BIND_CONSTRUCTOR DiagonalNormalDistribution
+{
+  LUABIND_ERROR("Use stats.dist.lognormal constructor");
+}
+//BIND_END
+
+//BIND_FUNCTION stats.dist.lognormal
+{
+  MatrixFloat *mean, *location;
+  if (lua_isMatrixFloat(L,1)) {
+    LUABIND_GET_PARAMETER(1, MatrixFloat, mean);
+    LUABIND_GET_OPTIONAL_PARAMETER(3, MatrixFloat, location, 0);
+    if (lua_isMatrixFloat(L,2)) {
+      MatrixFloat *cov;
+      LUABIND_GET_PARAMETER(2, MatrixFloat, cov);
+      GeneralLogNormalDistribution *obj = new GeneralLogNormalDistribution(mean, cov,
+                                                                           location);
+      LUABIND_RETURN(GeneralLogNormalDistribution, obj);
+    }
+    else {
+      SparseMatrixFloat *cov;
+      LUABIND_GET_PARAMETER(2, SparseMatrixFloat, cov);
+      DiagonalLogNormalDistribution *obj = new DiagonalLogNormalDistribution(mean, cov,
+                                                                             location);
+      LUABIND_RETURN(DiagonalLogNormalDistribution, obj);
+    }
+  }
+  else {
+    SparseMatrixFloat *cov;
+    float mu, sigma, loc;
+    LUABIND_GET_PARAMETER(1, float, mu);
+    LUABIND_GET_PARAMETER(2, float, sigma);
+    LUABIND_GET_OPTIONAL_PARAMETER(3, float, loc, 0.0f);
+    int dims[1] = { 1 };
+    mean = new MatrixFloat(1, dims, CblasColMajor);
+    (*mean)(0) = mu;
+    cov = SparseMatrixFloat::diag(1, sigma);
+    if (loc != 0.0f) {
+      location = new MatrixFloat(1, dims, CblasColMajor);
+      (*location)(0) = loc;
+    }
+    else location = 0;
+    DiagonalLogNormalDistribution *obj = new DiagonalLogNormalDistribution(mean, cov,
+                                                                           location);
+    LUABIND_RETURN(DiagonalLogNormalDistribution, obj);
+  }
+}
+//BIND_END
+
+//BIND_METHOD GeneralLogNormalDistribution clone
+{
+  LUABIND_RETURN(GeneralLogNormalDistribution,
+                 static_cast<GeneralLogNormalDistribution*>(obj->clone()));
+}
+//BIND_END
+
+//BIND_METHOD DiagonalLogNormalDistribution clone
+{
+  LUABIND_RETURN(DiagonalLogNormalDistribution,
+                 static_cast<DiagonalLogNormalDistribution*>(obj->clone()));
+}
+//BIND_END
+
 //////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME ExponentialDistribution stats.dist.exponential

@@ -61,8 +61,6 @@ namespace Stats {
     AssignRef(inv_cov, cov->inv());
     // TODO: check covariance matrix to be definite positive
     cov_det = cov->logDeterminant(cov_det_sign);
-    if (cov_det.log() < 0.0f)
-      cov_det = cov_det.raise_to(-1.0f);
     log_float KM_2PI = log_float::from_float(M_2PI).
       raise_to(static_cast<float>(mean->getDimSize(0)));
     log_float denom = (KM_2PI * cov_det).raise_to(0.5f);
@@ -128,7 +126,7 @@ namespace Stats {
   MatrixFloatSet *GeneralNormalDistribution::getParams() {
     MatrixFloatSet *dict = new MatrixFloatSet();
     dict->insert("mu", mean);
-    dict->insert("sigma", cov);
+    dict->insert("sigma2", cov);
     return dict;
   }
   
@@ -179,8 +177,8 @@ namespace Stats {
     inv_cov->div(1.0f);
     // inv_cov->pruneSubnormalAndCheckNormal();
     cov_det = log_float::one();
-    for (SparseMatrixFloat::iterator it(inv_cov->begin());
-         it != inv_cov->end(); ++it) {
+    for (SparseMatrixFloat::iterator it(cov->begin());
+         it != cov->end(); ++it) {
       if (!std::isfinite(*it)) {
         int x0,x1;
         it.getCoords(x0,x1);
@@ -191,8 +189,6 @@ namespace Stats {
         ERROR_EXIT(256, "Expected a definite positive covariance matrix\n");
       cov_det *= log_float::from_float(*it);
     }
-    if (cov_det.log() < 0.0f)
-      cov_det = cov_det.raise_to(-1.0f);
     log_float KM_2PI = log_float::from_float(M_2PI).
       raise_to(static_cast<float>(mean->getDimSize(0)));
     log_float denom = (KM_2PI * cov_det).raise_to(0.5f);
@@ -202,7 +198,7 @@ namespace Stats {
   }
   
   void DiagonalNormalDistribution::privateSample(MTRand *rng,
-                                                MatrixFloat *result) {
+                                                 MatrixFloat *result) {
     if (L == 0) {
       L = cov->clone();
       L->sqrt();
@@ -224,7 +220,7 @@ namespace Stats {
   }
   
   void DiagonalNormalDistribution::privateLogpdf(const MatrixFloat *x,
-                                                MatrixFloat *result) {
+                                                 MatrixFloat *result) {
     MatrixFloat *diff = x->clone();
     IncRef(diff);
     int dims[1] = { x->getDimSize(1) };
@@ -259,7 +255,7 @@ namespace Stats {
   MatrixFloatSet *DiagonalNormalDistribution::getParams() {
     MatrixFloatSet *dict = new MatrixFloatSet();
     dict->insert("mu", mean);
-    dict->insert("sigma", cov);
+    dict->insert("sigma2", cov);
     return dict;
   }
   
@@ -275,5 +271,181 @@ namespace Stats {
     delete[] cov_str;
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
+
+  ////////////////////////////////////////////////////////////////////////////  
+
+  GeneralLogNormalDistribution::GeneralLogNormalDistribution(MatrixFloat *mean,
+                                                             MatrixFloat *cov,
+                                                             MatrixFloat *location) :
+    GeneralNormalDistribution(mean,cov),
+    location(location) {
+    if (location == 0) {
+      location = mean->cloneOnlyDims();
+      location->zeros();
+      this->location = location;
+    }
+    IncRef(location);
+    if (!location->sameDim(mean))
+      ERROR_EXIT(256, "Expected location param with same shape as mean param\n");
+    updateParams();
+  }
+
+  GeneralLogNormalDistribution::~GeneralLogNormalDistribution() {
+    DecRef(location);
+  }
   
+  void GeneralLogNormalDistribution::privateSample(MTRand *rng,
+                                                   MatrixFloat *result) {
+    GeneralNormalDistribution::privateSample(rng, result);
+    result->exp();
+    MatrixFloat *result_row = 0;
+    for (int i=0; i<result->getDimSize(0); ++i) {
+      result_row = result->select(0, i, result_row);
+      result_row->axpy(1.0, location);
+    }
+    delete result_row;
+  }
+  
+  void GeneralLogNormalDistribution::privateLogpdf(const MatrixFloat *x,
+                                                   MatrixFloat *result) {
+    MatrixFloat *xlog = x->clone();
+    IncRef(xlog);
+    MatrixFloat *xlog_row = 0;
+    for (int i=0; i<x->getDimSize(0); ++i) {
+      xlog_row = xlog->select(0, i, xlog_row);
+      xlog_row->axpy(-1.0, location);
+    }
+    delete xlog_row;
+    xlog->log();
+    GeneralNormalDistribution::privateLogpdf(xlog, result);
+    MatrixFloat *xlog_sum = xlog->sum(1);
+    IncRef(xlog_sum);
+    result->axpy(-1.0, xlog_sum);
+    DecRef(xlog);
+    DecRef(xlog_sum);
+  }
+
+  void GeneralLogNormalDistribution::privateLogcdf(const MatrixFloat *x,
+                                                   MatrixFloat *result) {
+    UNUSED_VARIABLE(x);
+    UNUSED_VARIABLE(result);
+    ERROR_EXIT(128, "Not implemented");
+  }
+
+  StatisticalDistributionBase *GeneralLogNormalDistribution::clone() {
+    return new GeneralLogNormalDistribution(mean->clone(), cov->clone(),
+                                            location->clone());
+  }
+  
+  MatrixFloatSet *GeneralLogNormalDistribution::getParams() {
+    MatrixFloatSet *dict = new MatrixFloatSet();
+    dict->insert("mu", mean);
+    dict->insert("sigma2", cov);
+    dict->insert("location", location);
+    return dict;
+  }
+  
+  char *GeneralLogNormalDistribution::toLuaString(bool is_ascii) const {
+    buffer_list buffer;
+    char *mean_str, *cov_str, *loc_str;
+    int len;
+    mean_str = writeMatrixFloatToString(mean, is_ascii, len);
+    cov_str = writeMatrixFloatToString(cov, is_ascii, len);
+    loc_str = writeMatrixFloatToString(location, is_ascii, len);
+    buffer.printf("stats.dist.normal(matrix.fromString[[%s]], matrix.fromString[[%s]], matrix.fromString[[%s]])",
+                  mean_str, cov_str, loc_str);
+    delete[] mean_str;
+    delete[] cov_str;
+    delete[] loc_str;
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  }
+
+  ////////////////////////////////////////////////////////////////////////////
+
+  DiagonalLogNormalDistribution::DiagonalLogNormalDistribution(MatrixFloat *mean,
+                                                               SparseMatrixFloat *cov,
+                                                               MatrixFloat *location) :
+    DiagonalNormalDistribution(mean, cov),
+    location(location) {
+    if (location == 0) {
+      location = mean->cloneOnlyDims();
+      location->zeros();
+      this->location = location;
+    }
+    IncRef(location);
+    if (!location->sameDim(mean))
+      ERROR_EXIT(256, "Expected location param with same shape as mean param\n");
+    updateParams();
+  }
+
+  DiagonalLogNormalDistribution::~DiagonalLogNormalDistribution() {
+    DecRef(location);
+  }
+  
+  void DiagonalLogNormalDistribution::privateSample(MTRand *rng,
+                                                    MatrixFloat *result) {
+    DiagonalNormalDistribution::privateSample(rng, result);
+    result->exp();
+    MatrixFloat *result_row = 0;
+    for (int i=0; i<result->getDimSize(0); ++i) {
+      result_row = result->select(0, i, result_row);
+      result_row->axpy(1.0, location);
+    }
+    delete result_row;
+  }
+  
+  void DiagonalLogNormalDistribution::privateLogpdf(const MatrixFloat *x,
+                                                    MatrixFloat *result) {
+    MatrixFloat *xlog = x->clone();
+    IncRef(xlog);
+    MatrixFloat *xlog_row = 0;
+    for (int i=0; i<x->getDimSize(0); ++i) {
+      xlog_row = xlog->select(0, i, xlog_row);
+      xlog_row->axpy(-1.0, location);
+    }
+    delete xlog_row;
+    xlog->log();
+    DiagonalNormalDistribution::privateLogpdf(xlog, result);
+    MatrixFloat *xlog_sum = xlog->sum(1);
+    IncRef(xlog_sum);
+    result->axpy(-1.0, xlog_sum);
+    DecRef(xlog);
+    DecRef(xlog_sum);
+  }
+
+  void DiagonalLogNormalDistribution::privateLogcdf(const MatrixFloat *x,
+                                                    MatrixFloat *result) {
+    UNUSED_VARIABLE(x);
+    UNUSED_VARIABLE(result);
+    ERROR_EXIT(128, "Not implemented");
+  }
+
+  StatisticalDistributionBase *DiagonalLogNormalDistribution::clone() {
+    return new DiagonalLogNormalDistribution(mean->clone(), cov->clone(),
+                                             location->clone());
+  }
+  
+  MatrixFloatSet *DiagonalLogNormalDistribution::getParams() {
+    MatrixFloatSet *dict = new MatrixFloatSet();
+    dict->insert("mu", mean);
+    dict->insert("sigma2", cov);
+    dict->insert("location", location);
+    return dict;
+  }
+  
+  char *DiagonalLogNormalDistribution::toLuaString(bool is_ascii) const {
+    buffer_list buffer;
+    char *mean_str, *cov_str, *loc_str;
+    int len;
+    mean_str = writeMatrixFloatToString(mean, is_ascii, len);
+    cov_str = writeSparseMatrixFloatToString(cov, is_ascii, len);
+    loc_str = writeMatrixFloatToString(location, is_ascii, len);
+    buffer.printf("stats.dist.normal(matrix.fromString[[%s]], matrix.sparse.fromString[[%s]], matrix.fromString[[%s]])",
+                  mean_str, cov_str, loc_str);
+    delete[] mean_str;
+    delete[] cov_str;
+    delete[] loc_str;
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  }
+
 }

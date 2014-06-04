@@ -1,3 +1,4 @@
+io.stderr = io.stdout
 local check = utest.check
 local M = matrix.col_major
 
@@ -23,56 +24,42 @@ local pdf_result = M(2, { 0.0175621, 0.00572678 })
 check.eq( d:logpdf( M(2,3):uniformf(-1,2,random(9427)) ):exp(), pdf_result )
 
 local N = 1000
-local d = stats.dist.normal( M(3):fill(-10),
-                             M(3,3):zeros():diag(2) )
-local data = d:sample( random(4295), M(N,3) )
-check(function()
-        return data:sum(1):scal(1/N):equals( M(1,3):fill(-10), 0.1 )
-      end)
-local mv = stats.mean_var()
-data:map(function(x) mv:add(x) end)
-local mu,sigma = mv:compute()
-check.number_eq(mu, -10)
-check.number_eq(sigma, 2)
+for _,a in ipairs{-4, -0.1, 0.1, 4} do
+  for _,b in ipairs{0.1, 1.0, 4.0} do
+    local d = stats.dist.normal( M(3):fill(a),
+                                 M(3,3):zeros():diag(b) )
+    local data = d:sample( random(4295), M(N,3) )
+    check(function()
+            return data:sum(1):scal(1/N):equals( M(1,3):fill(a), 0.1 )
+          end)
+    local mv = stats.mean_var()
+    data:map(function(x) mv:add(x) end)
+    local mu,sigma = mv:compute()
+    check.number_eq(mu, a, ( math.abs(a) < 1.0 ) and 0.4 or nil)
+    check.number_eq(sigma, b)
+  end
+end
 
 -----------------------------------------------------------------------------
 -- DIAGONAL NORMAL DISTRIBUTION
 
-local d2=d
 local N = 1000
-local d = stats.dist.normal( M(3):fill(-10), matrix.sparse.diag{2, 2, 2} )
-
-check.eq(type(d), "stats.dist.normal.diagonal")
-local data = d:sample( random(4295), M(N,3) )
-check(function()
-        return data:sum(1):scal(1/N):equals( M(1,3):fill(-10), 0.1 )
-      end)
-local mv = stats.mean_var()
-data:map(function(x) mv:add(x) end)
-local mu,sigma = mv:compute()
-check.number_eq(mu, -10)
-check.number_eq(sigma, 2)
-local pdf_result = M(2,{-82.5465,-152.797})
-check(function()
-        return d:logpdf(M(2,3,{1,-5,3, -10,10,4})):equals(pdf_result,1e-02)
-      end)
-
-local d = stats.dist.normal(-30,4)
-check(function()
-        return d:sample(random(4243),10):equals( matrix.col_major(10,1,{
-                                                                      -29.8856,
-                                                                      -28.6116,
-                                                                      -32.333,
-                                                                      -27.8685,
-                                                                      -30.8694,
-                                                                      -31.9292,
-                                                                      -27.3479,
-                                                                      -29.7185,
-                                                                      -29.3391,
-                                                                      -30.6593,
-                                                                       }),
-                                                 1e-02)
-      end)
+for _,a in ipairs{-4, -0.1, 0.1, 4} do
+  for _,b in ipairs{0.1, 1.0, 4.0} do
+    local d = stats.dist.normal( M(3):fill(a), matrix.sparse.diag{b, b, b} )
+    
+    check.eq(type(d), "stats.dist.normal.diagonal")
+    local data = d:sample( random(4295), M(N,3) )
+    check(function()
+            return data:sum(1):scal(1/N):equals( M(1,3):fill(a), 0.1 )
+          end)
+    local mv = stats.mean_var()
+    data:map(function(x) mv:add(x) end)
+    local mu,sigma = mv:compute()
+    check.number_eq(mu, a, ( math.abs(a) < 1.0 ) and 0.4 or nil)
+    check.number_eq(sigma, b)
+  end
+end
 
 -----------------------------------------------------------------------------
 -- EXPONENTIAL DISTRIBUTION
@@ -149,3 +136,43 @@ check.eq( d:logcdf(matrix.col_major(3,1,{4,8,1})), cdf_result )
 -- BERNOULLI DISTRIBUTION
 
 local d = stats.dist.bernoulli(0.5)
+
+-----------------------------------------------------------------------------
+-- LOG-NORMAL DISTRIBUTION
+local N = 1000
+for _,a in ipairs{-4, -0.1, 0.1, 4} do
+  for _,b in ipairs{0.1, 1.0, 4.0} do
+    local d = stats.dist.lognormal( M(3):fill(a),
+                                    M(3,3):zeros():diag(b) )
+    local data = d:sample( random(4295), M(N,3) )
+    check(function()
+            return (data:sum(1):scal(1/N):log() - M(1,3):fill(a + b/2)):abs():sum()/3 < 0.1
+          end)
+    local mv = stats.mean_var()
+    data:map(function(x) mv:add(x) end)
+    local mu,sigma = mv:compute()
+    check.number_eq(math.log(mu), a + b/2, 0.1)
+    -- FIXME: PRECISSION PROBLEMS ?????
+    -- check.number_eq(math.log(sigma), (b - 1 + (2*a + b)))
+  end
+end
+
+-----------------------------------------------------------------------------
+-- DIAGONAL NORMAL DISTRIBUTION
+
+for _,a in ipairs{-4, -0.1, 0.1, 4} do
+  for _,b in ipairs{0.1, 1.0, 4.0} do
+    local d = stats.dist.lognormal( M(3):fill(a), matrix.sparse.diag{b, b, b} )
+    check.eq(type(d), "stats.dist.lognormal.diagonal")
+    local data = d:sample( random(4295), M(N,3) )
+    check(function()
+            return (data:sum(1):scal(1/N):log() - M(1,3):fill(a + b/2)):abs():sum()/3 < 0.1
+          end)
+    local mv = stats.mean_var()
+    data:map(function(x) mv:add(x) end)
+    local mu,sigma = mv:compute()
+    check.number_eq(mu, math.exp(a + b/2), 0.1)
+    -- FIXME: PRECISSION PROBLEMS ?????
+    -- check.number_eq(math.log(sigma), (b - 1 + (2*a + b)), 0.08)
+  end
+end
