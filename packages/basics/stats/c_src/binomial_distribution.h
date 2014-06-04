@@ -28,9 +28,12 @@ namespace Stats {
 
   class BinomialDistribution : public StatisticalDistributionBase {
     MatrixFloat *n, *p;
-    float nf, pf;
-    log_float comb_n_k;
+    int ni;
+    float pf, pfm1;
+    log_float lpf, lpfm1;
     
+    log_float computeDensity(int k);
+
   protected:
     virtual void privateSample(MTRand *rng, MatrixFloat *result);
     virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);

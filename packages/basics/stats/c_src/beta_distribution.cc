@@ -64,22 +64,22 @@ namespace Stats {
   
   void BetaDistribution::privateLogpdf(const MatrixFloat *x,
                                        MatrixFloat *result) {
-    float min,max;
-    x->minAndMax(min,max);
-    if (min < 0.0f || max > 1.0f)
-      ERROR_EXIT(128, "Beta dist. is only defined in range [0,1]\n");
     MatrixFloat::const_iterator x_it(x->begin());
     MatrixFloat::iterator result_it(result->begin());
     while(x_it != x->end()) {
-      log_float vx  = log_float::from_float(*x_it).raise_to(alphaf - 1.0f);
-      log_float v1x = log_float::from_float(1.0f - *x_it).raise_to(betaf - 1.0f);
-      log_float r;
-      if (vx <= log_float::zero() || v1x <= log_float::zero())
-        r = log_float::zero();
-      else
-        r = vx * v1x / Bab;
-      *result_it = r.log();
-        ++x_it;
+      if (*x_it < 0.0f || *x_it > 1.0f)
+        *result_it = log_float::zero().log();
+      else {
+        log_float vx  = log_float::from_float(*x_it).raise_to(alphaf - 1.0f);
+        log_float v1x = log_float::from_float(1.0f - *x_it).raise_to(betaf - 1.0f);
+        log_float r;
+        if (vx <= log_float::zero() || v1x <= log_float::zero())
+          r = log_float::zero();
+        else
+          r = vx * v1x / Bab;
+        *result_it = r.log();
+      }
+      ++x_it;
       ++result_it;
     }
   }

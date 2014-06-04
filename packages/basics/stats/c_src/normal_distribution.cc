@@ -168,6 +168,7 @@ namespace Stats {
     DecRef(mean);
     DecRef(cov);
     DecRef(inv_cov);
+    if (L != 0) DecRef(L);
   }
   
   void DiagonalNormalDistribution::updateParams() {

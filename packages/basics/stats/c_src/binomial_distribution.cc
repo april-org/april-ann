@@ -23,7 +23,7 @@
 #include "buffer_list.h"
 #include "error_print.h"
 #include "binomial_distribution.h"
-#include "gamma_variate.h"
+#include "combinations.h"
 #include "utilMatrixFloat.h"
 
 namespace Stats {
@@ -38,51 +38,99 @@ namespace Stats {
   }
 
   BinomialDistribution::~BinomialDistribution() {
+    DecRef(n);
+    DecRef(p);
   }
   
   void BinomialDistribution::updateParams() {
-    nf = (*n)(0);
-    pf  = (*p)(0);
+    float nf = (*n)(0);
+    pf = (*p)(0);
+    //
     if (!(nf > 0.0f) || !(pf > 0.0f))
       ERROR_EXIT(128, "Binomial distribution needs > 0 n and p params\n");
+    if (!(pf < 1.0f))
+      ERROR_EXIT(128, "Binomial distribution needs < 1 p param\n");
+    if (floorf(nf) != nf)
+      ERROR_EXIT(128, "Binomial distribution needs an integer n param\n");
+    //
+    pfm1 = 1.0f - pf;
+    if (pf == 1.0f) {
+      lpf = log_float::one();
+      lpfm1 = log_float::zero();
+    }
+    else if (pf == 0.0f) {
+      lpf = log_float::zero();
+      lpfm1 = log_float::one();
+    }
+    else {
+      lpf = log_float::from_float(pf);
+      lpfm1 = log_float::from_float(pfm1);
+    }
+    ni = static_cast<int>(nf);
   }
   
   void BinomialDistribution::privateSample(MTRand *rng,
-                                       MatrixFloat *result) {
+                                           MatrixFloat *result) {
     // generation via gamma variate
     for (MatrixFloat::iterator result_it(result->begin());
          result_it != result->end(); ++result_it) {
-      double y1 = gammaVariate(rng, 0.0f, 1.0f, nf);
-      double y2 = gammaVariate(rng, 0.0f, 1.0f, pf);
-      *result_it = static_cast<float>( y1 / (y1 + y2) );
+      // simulate n Bernoulli trials, and sum all values
+      int counts = 0;
+      for (int i=0; i<ni; ++i) {
+        if (rng->rand() < pf) ++counts;
+      }
+      *result_it = static_cast<float>(counts);
     }
   }
   
+  log_float BinomialDistribution::computeDensity(int k) {
+    unsigned int Ci = Combinations::get(ni, k);
+    log_float C = log_float::from_float(static_cast<float>(Ci));
+    return ( C *
+             lpf.raise_to(static_cast<float>(k)) *
+             lpfm1.raise_to(static_cast<float>(ni - k)) );
+  }
+
   void BinomialDistribution::privateLogpdf(const MatrixFloat *x,
-                                       MatrixFloat *result) {
-    float min,max;
-    x->minAndMax(min,max);
-    if (min < 0.0f || max > 1.0f)
-      ERROR_EXIT(128, "Binomial dist. is only defined in range [0,1]\n");
+                                           MatrixFloat *result) {
     MatrixFloat::const_iterator x_it(x->begin());
     MatrixFloat::iterator result_it(result->begin());
     while(x_it != x->end()) {
-      log_float vx  = log_float::from_float(*x_it).raise_to(nf - 1.0f);
-      log_float v1x = log_float::from_float(1.0f - *x_it).raise_to(pf - 1.0f);
-      log_float r;
-      if (vx <= log_float::zero() || v1x <= log_float::zero())
-        r = log_float::zero();
-      *result_it = r.log();
-        ++x_it;
+      if (floorf(*x_it) != *x_it)
+        ERROR_EXIT(128, "All values must be integers\n");
+      if (*x_it < 0.0f || *x_it > static_cast<float>(ni))
+        *result_it = log_float::zero().log();
+      else {
+        unsigned int k  = static_cast<unsigned int>(*x_it);
+        *result_it = computeDensity(k).log();
+      }
+      ++x_it;
       ++result_it;
     }
   }
 
   void BinomialDistribution::privateLogcdf(const MatrixFloat *x,
-                                       MatrixFloat *result) {
-    UNUSED_VARIABLE(x);
-    UNUSED_VARIABLE(result);
-    ERROR_EXIT(128, "NOT IMPLEMENTED\n");
+                                           MatrixFloat *result) {
+    MatrixFloat::const_iterator x_it(x->begin());
+    MatrixFloat::iterator result_it(result->begin());
+    while(x_it != x->end()) {
+      if (floorf(*x_it) != *x_it)
+        ERROR_EXIT(128, "All values must be integers\n");
+      if (*x_it < 0.0f)
+        *result_it = log_float::zero().log();
+      else if (*x_it > static_cast<float>(ni))
+        *result_it = log_float::one().log();
+      else {
+        log_float r = computeDensity(0);
+        int k = static_cast<int>(*x_it);
+        for (int i=1; i<=k; ++i) {
+          r += computeDensity(i);
+        }
+        *result_it = r.log();
+      }
+      ++x_it;
+      ++result_it;
+    }
   }
 
   StatisticalDistributionBase *BinomialDistribution::clone() {
@@ -100,7 +148,7 @@ namespace Stats {
     UNUSED_VARIABLE(is_ascii);
     buffer_list buffer;
     int len;
-    buffer.printf("stats.dist.binomial(%g, %g)", nf, pf);
+    buffer.printf("stats.dist.binomial(%d, %g)", ni, pf);
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
   

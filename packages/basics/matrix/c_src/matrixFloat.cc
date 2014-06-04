@@ -739,6 +739,7 @@ log_float Matrix<float>::logDeterminant(float &sign) {
   if ( (row_changes & 1) == 0 ) sign = 1.0f;
   else sign = -1.0f;
   delete[] IPIV;
+  delete A;
   return det;
 }
 
@@ -772,6 +773,7 @@ double Matrix<float>::determinant() {
   if ( (row_changes & 1) == 0 ) sign = 1.0f;
   else sign = -1.0f;
   delete[] IPIV;
+  delete A;
   return sign*det;
 }
 

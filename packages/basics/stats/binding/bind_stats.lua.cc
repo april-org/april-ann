@@ -26,6 +26,7 @@
 
 //BIND_HEADER_H
 #include "beta_distribution.h"
+#include "binomial_distribution.h"
 #include "combinations.h"
 #include "exponential_distribution.h"
 #include "statistical_distribution.h"
@@ -86,18 +87,44 @@ using namespace Stats;
 //BIND_METHOD StatisticalDistributionBase logpdf
 {
   MatrixFloat *x, *dest;
-  LUABIND_GET_PARAMETER(1, MatrixFloat, x);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
+  if (lua_isMatrixFloat(L,1)) {
+    LUABIND_GET_PARAMETER(1, MatrixFloat, x);
+    LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
+  }
+  else {
+    float xf;
+    LUABIND_CHECK_ARGN(==,1);
+    LUABIND_GET_PARAMETER(1, float, xf);
+    dest = 0;
+    int dims[2] = {1,1};
+    x = new MatrixFloat(2, dims, CblasColMajor);
+    (*x)(0,0) = xf;
+  }
+  IncRef(x);
   LUABIND_RETURN(MatrixFloat, obj->logpdf(x, dest));
+  DecRef(x);
 }
 //BIND_END
 
 //BIND_METHOD StatisticalDistributionBase logcdf
 {
   MatrixFloat *x, *dest;
-  LUABIND_GET_PARAMETER(1, MatrixFloat, x);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
+  if (lua_isMatrixFloat(L,1)) {
+    LUABIND_GET_PARAMETER(1, MatrixFloat, x);
+    LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, dest, 0);
+  }
+  else {
+    float xf;
+    LUABIND_CHECK_ARGN(==,1);
+    LUABIND_GET_PARAMETER(1, float, xf);
+    dest = 0;
+    int dims[2] = {1,1};
+    x = new MatrixFloat(2, dims, CblasColMajor);
+    (*x)(0,0) = xf;
+  }
+  IncRef(x);
   LUABIND_RETURN(MatrixFloat, obj->logcdf(x, dest));
+  DecRef(x);
 }
 //BIND_END
 
@@ -302,5 +329,42 @@ using namespace Stats;
 {
   LUABIND_RETURN(BetaDistribution,
                  static_cast<BetaDistribution*>(obj->clone()));
+}
+//BIND_END
+
+
+//////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME BinomialDistribution stats.dist.binomial
+//BIND_CPP_CLASS    BinomialDistribution
+//BIND_SUBCLASS_OF  BinomialDistribution StatisticalDistributionBase
+
+//BIND_CONSTRUCTOR BinomialDistribution
+{
+  MatrixFloat *n, *p;
+  if (lua_isMatrixFloat(L, 1)) {
+    LUABIND_GET_PARAMETER(1, MatrixFloat, n);
+    LUABIND_GET_PARAMETER(2, MatrixFloat, p);
+  }
+  else {
+    unsigned int ni;
+    float pf;
+    LUABIND_GET_PARAMETER(1, uint, ni);
+    LUABIND_GET_PARAMETER(2, float, pf);
+    int dims[1] = {1};
+    n = new MatrixFloat(1, dims, CblasColMajor);
+    (*n)(0) = static_cast<float>(ni);
+    p = new MatrixFloat(1, dims, CblasColMajor);
+    (*p)(0) = pf;
+  }
+  obj = new BinomialDistribution(n, p);
+  LUABIND_RETURN(BinomialDistribution, obj);
+}
+//BIND_END
+
+//BIND_METHOD BinomialDistribution clone
+{
+  LUABIND_RETURN(BinomialDistribution,
+                 static_cast<BinomialDistribution*>(obj->clone()));
 }
 //BIND_END

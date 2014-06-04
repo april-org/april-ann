@@ -130,3 +130,22 @@ local d = stats.dist.exponential(matrix.col_major(10):fill(4))
 
 check.number_eq( d:logpdf(x):get(1), pdf_result:sum() )
 check.number_eq( d:logcdf(x):get(1), cdf_result:sum() )
+
+-----------------------------------------------------------------------------
+-- BINOMIAL DISTRIBUTION
+
+local d = stats.dist.binomial(10,0.5)
+
+check.eq( d:sample(random(1234),10),
+          matrix.col_major(10,1,{3,6,6,6,5,5,4,5,3,5}) )
+
+local pdf_result = matrix.col_major(3,{-1.58436,-3.12481,-4.62889})
+check.eq( d:logpdf(matrix.col_major(3,1,{4,8,1})), pdf_result )
+
+local cdf_result = matrix.col_major(3,{-0.975635,-0.0108004,-4.53358})
+check.eq( d:logcdf(matrix.col_major(3,1,{4,8,1})), cdf_result )
+
+-----------------------------------------------------------------------------
+-- BERNOULLI DISTRIBUTION
+
+local d = stats.dist.bernoulli(0.5)
