@@ -269,11 +269,6 @@ namespace LanguageModels {
     ~HistoryBasedNgramLiraLM() {
       DecRef(lira_model);
     }
-
-    NgramLiraModel* getLiraModel() {
-      return lira_model;
-    }
-    
   };
 
   class HistoryBasedNgramLiraLMInterface :
@@ -284,73 +279,20 @@ namespace LanguageModels {
     typedef NgramLiraModel::Score Score;
 
   private:
-    KeyScoreTuple* getDestStateAndProb(Key state, WordType word) {
-      Score accum_backoff = Score::one();
-      Key st = state;
-
-      do {
-        if (st < lira_model->first_state_binary_search) {
-          // linear search, we look for the LinearSearchInfo of st
-          int linear_index = 0;
-          while(lira_model->linear_search_table[linear_index].first_state <= st)
-            linear_index++;
-          // -1 because the search stopped too late ;)
-          LinearSearchInfo *info = &(lira_model->linear_search_table[linear_index-1]);
-          // range of transitions during the search:
-          unsigned int first_tr_index = ((st - info->first_state)*info->fan_out +
-                                         info->first_index);
-          unsigned int last_tr_index  = first_tr_index + info->fan_out;
-          // lineal search:
-          for (unsigned int tr_index = first_tr_index; tr_index < last_tr_index; tr_index++) {
-            if (lira_model->transition_words_table[tr_index] == word) {
-              return new KeyScoreTuple(lira_model->transition_table[tr_index].state,
-                                       lira_model->transition_table[tr_index].prob * accum_backoff);
-            }
-          }
-        } else {
-          // the dichotomic search of the transition index is not based
-          // on the binary_search template in order to be able to return
-          // as soon as the word is found
-          unsigned int left  = lira_model->first_transition[st];
-          unsigned int right = lira_model->first_transition[st+1] - 1;
-          while (left <= right) {
-            unsigned int tr_index     = (left+right)/2;
-            unsigned int current_word = lira_model->transition_words_table[tr_index];
-            if (current_word == word) {
-              return new KeyScoreTuple(lira_model->transition_table[tr_index].state,
-                                       lira_model->transition_table[tr_index].prob * accum_backoff);
-            } else if (current_word < word) {
-              left  = tr_index+1;
-            } else {
-              right = tr_index-1;
-            }
-          }
-        }
-        // Apply backoff when the transition is not found:
-        st             = lira_model->backoff_table[st].bo_dest_state;
-        accum_backoff *= lira_model->backoff_table[st].bo_prob;
-      } while (1);
-      return new KeyScoreTuple(st, accum_backoff);
-    }
 
     Score privateGet(const Key &key,
                      WordType word,
                      WordType *context_words,
                      unsigned int context_size) {
       // How to get lira_model from LMModel?
-      NgramLiraModel *lira_model = ;
-      Score score = Score::one();
-      Key st = lira_model->lowest_state;
+      NgramLiraModel *lira_model = getLMModel()->lira_model;
+      NgramLiraInterface *lira_interface = lira_model->getInterface();
+      vector <KeyScoreBurdenTuple> result;
 
-      for (unsigned int i = 0; i < context_size; i++) {
-        KeyScoreTuple *dest_tuple = getDestStateAndProb(st, context_words[i]);
-        st = dest_tuple->key;
-        score *= dest_tuple->score;
-      }
-      KeyScoreTuple *dest_tuple = getDestStateAndProb(st, word);
-      score *= dest_tuple->score;
+      Key st = lira_interface->findKeyFromNgram(context_words, context_size);
+      lira_interface->get(key, word, Burden(-1, -1), result, Score::zero());
 
-      return score;
+      return result[0].key_score.score;
     }
   };
 
