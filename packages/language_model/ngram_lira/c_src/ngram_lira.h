@@ -290,7 +290,7 @@ namespace LanguageModels {
       vector <KeyScoreBurdenTuple> result;
 
       Key st = lira_interface->findKeyFromNgram(context_words, context_size);
-      lira_interface->get(key, word, Burden(-1, -1), result, Score::zero());
+      lira_interface->get(st, word, Burden(-1, -1), result, Score::zero());
 
       return result[0].key_score.score;
     }
