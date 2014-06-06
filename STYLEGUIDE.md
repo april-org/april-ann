@@ -27,6 +27,9 @@ for every new and fresh code, this guide will be followed.
 - Unless inline methods, it is better to separate declaration in .h
   and implementation in .cc or .cu (for C++ or Cuda).
 
+- In derived classes write always **virtual** in rewritten methods
+  and *destructors*.
+
 #### Examples
 
 ```C++
@@ -56,6 +59,64 @@ namespace NameSpaceWhatever {
     T auxiliary = a + b;
     return auxiliary;
   }
+}
+```
+
+Class derivation:
+
+**parent.h**
+```C++
+class Parent {
+public:
+  Parent();
+  virtual ~Parent();
+  virtual void method();
+};
+```
+
+**parent.cc**
+```C++
+#include "parent.h"
+
+Parent::Parent() {
+  ...
+}
+
+Parent::~Parent() {
+  ...
+}
+
+void Parent::method() {
+  // Parent class method implementation
+}
+```
+
+**derived.h**
+```C++
+#include "parent.h"
+
+class Derived : public Parent {
+public:
+  Derived();
+  virtual ~Derived();
+  virtual void method();
+};
+```
+
+**derived.cc**
+```C++
+#include "derived.h"
+
+Derived::Derived() {
+  ...
+}
+
+Derived::~Derived() {
+  ...
+}
+
+void Derived::method() {
+  // Derived class method implementation
 }
 ```
 
