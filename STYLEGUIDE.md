@@ -7,6 +7,8 @@ for every new and fresh code, this guide will be followed.
 
 ### Coding style
 
+#### General rules
+
 - Indentation: Two spaces indentation. Tabs are not recommended, please,
   substitute them by spaces.
 - Namespaces: Namespaces are in UpperCamelCase.
@@ -16,7 +18,19 @@ for every new and fresh code, this guide will be followed.
 - Variables: In lower case with underscore sepparating words.
 - Constants: In upper case with underscore sepparating words.
 
-Example:
+#### Class declaration and implementation
+
+- Separate the code in different files, in order to improve legibility
+  and understanding. If one file requires to implement more than one
+  class, there must be a good reason for it ;)
+
+- Unless inline methods, it is better to separate declaration in .h
+  and implementation in .cc or .cu (for C++ or Cuda).
+
+- In derived classes write always **virtual** in rewritten methods
+  and *destructors*.
+
+#### Examples
 
 ```C++
 // upper case underscored
@@ -45,6 +59,77 @@ namespace NameSpaceWhatever {
     T auxiliary = a + b;
     return auxiliary;
   }
+}
+```
+
+Class derivation:
+
+**parent.h**
+
+```C++
+/*
+ *LICENSE COMMENT
+ */
+#ifndef PARENT_H
+#define PARENT_H
+class Parent {
+public:
+  Parent();
+  virtual ~Parent();
+  virtual void method();
+};
+#endif // PARENT_H
+```
+
+**parent.cc**
+```C++
+#include "parent.h"
+
+Parent::Parent() {
+  ...
+}
+
+Parent::~Parent() {
+  ...
+}
+
+void Parent::method() {
+  // Parent class method implementation
+}
+```
+
+**derived.h**
+```C++
+/*
+ *LICENSE COMMENT
+ */
+#ifndef DERIVED_H
+#define DERIVED_H
+#include "parent.h"
+
+class Derived : public Parent {
+public:
+  Derived();
+  virtual ~Derived();
+  virtual void method();
+};
+#endif // DERIVED_H
+```
+
+**derived.cc**
+```C++
+#include "derived.h"
+
+Derived::Derived() {
+  ...
+}
+
+Derived::~Derived() {
+  ...
+}
+
+void Derived::method() {
+  // Derived class method implementation
 }
 ```
 
