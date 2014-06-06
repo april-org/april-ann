@@ -35,7 +35,7 @@ namespace LanguageModels {
   /// LMHistoryManager
   template <typename Key, typename Score>
   class LMInterface : public Referenced {
-    
+
   public:
     
     /// This is a tuple with a LM key and an associated score
@@ -82,15 +82,25 @@ namespace LanguageModels {
     
   private:
     
+    LMModel<Key,Score>* model;
+    
     /// auxiliary result vector
     vector<KeyScoreBurdenTuple> result;
     
   public:
+
+    LMInterface(LMModel<Key,Score>* model) : model(model) {
+      IncRef(model);
+    }
     
-    virtual ~LMInterface() { }
+    virtual ~LMInterface() { 
+      DecRef(model);
+    }
 
     /// retrieves the LMModel where this LMInterface was obtained
-    virtual LMModel<Key, Score>* getLMModel() = 0;
+    virtual LMModel<Key, Score>* getLMModel() {
+      return model;
+    }
     
     // -------------- individual LM queries -------------
 
@@ -194,33 +204,30 @@ namespace LanguageModels {
   template <typename Key, typename Score>
   class HistoryBasedLMInterface : public LMInterface <Key,Score> {
   private:
-    LMModel<Key,Score>* model;
 
     virtual Score privateGet(const Key &key,
                              WordType word,
                              WordType *context_words,
                              unsigned int context_size) = 0;
 
+    april_utils::TrieVector *trie;
+
   public:
 
     HistoryBasedLMInterface(HistoryBasedLM<Key,Score>* model) :
-      model(model) {
-      IncRef(model);
+      LMInterface<Key,Score>(model) {
+      trie = model->getTrieVector();
+      IncRef(trie);
     }
 
-    ~HistoryBasedLMInterface() {
-      DecRef(model);
-    }
-
-    virtual LMModel<Key, Score>* getLMModel() {
-      return model;
+    virtual ~HistoryBasedLMInterface() {
+      DecRef(trie);
     }
 
     virtual void get(const Key &key, WordType word,
                      typename LMInterface<Key,Score>::Burden burden,
                      vector<typename LMInterface<Key,Score>::KeyScoreBurdenTuple> &result,
                      Score threshold) {
-      april_utils::TrieVector *trie = model->getTrieVector();
       WordType* context_words;
       unsigned int context_size = 0;
       WordType aux_key = trie->getParent(key);
@@ -263,7 +270,6 @@ namespace LanguageModels {
 
     virtual void getNextKeys(const Key &key, WordType word,
                              vector<Key> &result) {
-      april_utils::TrieVector *trie = model->getTrieVector();
       WordType aux_key;
 
       aux_key = trie->getChild(key, word);
@@ -273,13 +279,11 @@ namespace LanguageModels {
     }
 
     virtual bool getZeroKey(Key &k) const {
-      april_utils::TrieVector *trie = model->getTrieVector();
       k = trie->rootNode();
       return true;
     }
 
     virtual void getInitialKey(Key &k) const {
-      april_utils::TrieVector *trie = model->getTrieVector();
       WordType init_word = model->getInitWord();
       int context_length = model->ngramOrder() - 1;
 
@@ -295,21 +299,14 @@ namespace LanguageModels {
   template <typename Key, typename Score>
   class BunchHashedLMInterface : public LMInterface <Key,Score> {
   private:
-    LMModel<Key,Score>* model;
     
   public:
 
     BunchHashedLMInterface(BunchHashedLM<Key,Score>* model) :
-      model(model) {
-      IncRef(model);
+      LMInterface<Key,Score>(model) {
     }
 
     ~BunchHashedLMInterface() {
-      DecRef(model);
-    }
-
-    virtual LMModel<Key, Score>* getLMModel() {
-      return model;
     }
 
     virtual void get(const Key &key, WordType word,
@@ -340,6 +337,8 @@ namespace LanguageModels {
   class LMModel : public Referenced {
   public:
 
+    LMModel() : Referenced() {}
+
     virtual bool isDeterministic() const {
       // default behavior
       return false;
@@ -358,8 +357,6 @@ namespace LanguageModels {
       return true;
     }
 
-    // TODO: LMHistoryManager does not yet exist, it is essentially a
-    // (wrapper to a) TrieVector
     virtual LMInterface<Key,Score>* getInterface() = 0;
   };
 
@@ -378,6 +375,7 @@ namespace LanguageModels {
     HistoryBasedLM(int ngram_order,
                    WordType init_word,
                    april_utils::TrieVector *trie_vector) : 
+      LMModel(),
       ngram_order(ngram_order),             
       init_word(init_word),             
       trie_vector(trie_vector) {
@@ -407,6 +405,10 @@ namespace LanguageModels {
     april_utils::TrieVector* getTrieVector() {
       return trie_vector;
     }
+
+    // this class is also abstract and hence does not implement
+    // getInterface
+    // virtual LMInterface<Key,Score>* getInterface() = 0;
   };
 
   template <typename Key, typename Score>
@@ -419,6 +421,7 @@ namespace LanguageModels {
 
     BunchHashedLM(int ngram_order,
                   unsigned int bunch_size) :
+      LMModel(),
       ngram_order(ngram_order),
       bunch_size(bunch_size) { }
 
@@ -431,7 +434,7 @@ namespace LanguageModels {
     }
 
     virtual bool requireHistoryManager() const {
-      return true;
+      return false;
     }
 
     unsigned int getBunchSize() { return bunch_size; }
