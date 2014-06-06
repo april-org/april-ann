@@ -7,6 +7,8 @@ for every new and fresh code, this guide will be followed.
 
 ### Coding style
 
+#### General rules
+
 - Indentation: Two spaces indentation. Tabs are not recommended, please,
   substitute them by spaces.
 - Namespaces: Namespaces are in UpperCamelCase.
@@ -16,7 +18,16 @@ for every new and fresh code, this guide will be followed.
 - Variables: In lower case with underscore sepparating words.
 - Constants: In upper case with underscore sepparating words.
 
-Example:
+#### Class declaration and implementation
+
+- Separate the code in different files, in order to improve legibility
+  and understanding. If one file requires to implement more than one
+  class, there must be a good reason for it ;)
+
+- Unless inline methods, it is better to separate declaration in .h
+  and implementation in .cc or .cu (for C++ or Cuda).
+
+#### Examples
 
 ```C++
 // upper case underscored
