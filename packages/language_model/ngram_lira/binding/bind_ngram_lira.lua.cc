@@ -27,6 +27,7 @@
 //BIND_HEADER_H
 #include "bind_LM_interface.h"
 #include "ngram_lira.h"
+#include "history_based_ngram_lira.h"
 using namespace LanguageModels;
 //BIND_END
 

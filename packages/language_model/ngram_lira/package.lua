@@ -24,7 +24,7 @@ package{ name = "ngram.lira",
      depends = "provide",
      use_timestamp=true,
      object{ 
-       file = {"c_src/ngram_lira*.cc",},
+       file = {"c_src/*.cc",},
        include_dirs = "${include_dirs}",
        --flags = "-std=c99", not valid for c++!!!
        dest_dir = "build",

@@ -2,11 +2,11 @@
 #define LANGUAGE_MODEL_INTERFACE
 
 #include <stdint.h>
-#include "unused_variable.h"
 #include "logbase.h"
 #include "referenced.h"
-#include "vector.h"
 #include "trie_vector.h"
+#include "unused_variable.h"
+#include "vector.h"
 
 namespace LanguageModels {
   
@@ -35,7 +35,7 @@ namespace LanguageModels {
   /// LMHistoryManager
   template <typename Key, typename Score>
   class LMInterface : public Referenced {
-    friend class LMModel;
+    friend class LMModel<Key,Score>;
     
   public:
     
@@ -56,7 +56,7 @@ namespace LanguageModels {
       Burden(int32_t id_key, int32_t id_word) :
         id_key(id_key), id_word(id_word) {}
       Burden(const Burden &other) :
-        id_key(other.id_key), id_word(other.id_word) { }
+      id_key(other.id_key), id_word(other.id_word) { }
     };
     
     /// This struct is the result produced by the LM query, a pair of
@@ -82,14 +82,12 @@ namespace LanguageModels {
     };
     
   private:
-    
-    LMModel<Key,Score>* model;
-    
     /// auxiliary result vector
     vector<KeyScoreBurdenTuple> result;
 
   protected:
     
+    LMModel<Key,Score>* model;
     LMInterface(LMModel<Key,Score>* model) : model(model) {
       IncRef(model);
     }
@@ -159,7 +157,7 @@ namespace LanguageModels {
       UNUSED_VARIABLE(is_sorted);
       // default behavior
       for (typename vector<WordIdScoreTuple>::iterator it = words.begin();
-      it != words.end(); ++it)
+	   it != words.end(); ++it)
         insertQuery(key, it->word, Burden(id_key, it->id_word), it->score);
     }
 
@@ -206,7 +204,7 @@ namespace LanguageModels {
 
   template <typename Key, typename Score>
   class HistoryBasedLMInterface : public LMInterface <Key,Score> {
-    friend class HistoryBaseLM;
+    friend class HistoryBasedLM<Key,Score>;
   private:
 
     virtual Score privateGet(const Key &key,
@@ -224,6 +222,9 @@ namespace LanguageModels {
       IncRef(trie);
     }
     
+    typedef typename LMInterface<Key,Score>::KeyScoreBurdenTuple KeyScoreBurdenTuple;
+    typedef typename LMInterface<Key,Score>::Burden Burden;
+
   public:
 
     virtual ~HistoryBasedLMInterface() {
@@ -231,9 +232,10 @@ namespace LanguageModels {
     }
 
     virtual void get(const Key &key, WordType word,
-                     typename LMInterface<Key,Score>::Burden burden,
-                     vector<typename LMInterface<Key,Score>::KeyScoreBurdenTuple> &result,
+                     Burden burden,
+                     vector<KeyScoreBurdenTuple> &result,
                      Score threshold) {
+      UNUSED_VARIABLE(threshold);
       WordType* context_words;
       unsigned int context_size = 0;
       WordType aux_key = trie->getParent(key);
@@ -247,7 +249,7 @@ namespace LanguageModels {
       // If context size is maximum, compute score
       // and key and return them using the result
       // vector. Else, do nothing.
-      if (context_size == (model->ngramOrder() - 1)) {
+      if (context_size == (this->model->ngramOrder() - 1)) {
         // Context words must be collected from current
         // key, which shifts context to the left
         context_words = new WordType[context_size];
@@ -279,9 +281,7 @@ namespace LanguageModels {
       WordType aux_key;
 
       aux_key = trie->getChild(key, word);
-      result.push_back(KeyScoreBurdenTuple(aux_key,
-                                           Score::zero(),
-                                           typename LMInterface<Key,Score>::Burden(-1, -1)));
+      result.push_back(aux_key);
     }
 
     virtual bool getZeroKey(Key &k) const {
@@ -290,8 +290,9 @@ namespace LanguageModels {
     }
 
     virtual void getInitialKey(Key &k) const {
-      WordType init_word = model->getInitWord();
-      int context_length = model->ngramOrder() - 1;
+      HistoryBasedLM<Key,Score> *mdl = static_cast<HistoryBasedLM<Key,Score>* >(this->model);
+      WordType init_word = mdl->getInitWord();
+      int context_length = this->model->ngramOrder() - 1;
 
       WordType aux = trie->rootNode();
 
@@ -304,7 +305,7 @@ namespace LanguageModels {
   
   template <typename Key, typename Score>
   class BunchHashedLMInterface : public LMInterface <Key,Score> {
-    friend class BunchHashedLM;
+    friend class BunchHashedLM<Key,Score>;
   private:
 
   protected:
@@ -384,7 +385,7 @@ namespace LanguageModels {
     HistoryBasedLM(int ngram_order,
                    WordType init_word,
                    april_utils::TrieVector *trie_vector) : 
-      LMModel(),
+      LMModel<Key,Score>(),
       ngram_order(ngram_order),             
       init_word(init_word),             
       trie_vector(trie_vector) {
@@ -430,7 +431,7 @@ namespace LanguageModels {
 
     BunchHashedLM(int ngram_order,
                   unsigned int bunch_size) :
-      LMModel(),
+      LMModel<Key,Score>(),
       ngram_order(ngram_order),
       bunch_size(bunch_size) { }
 

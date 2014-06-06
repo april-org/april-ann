@@ -521,6 +521,7 @@ namespace LanguageModels {
                                WordType word, Burden burden,
                                vector<KeyScoreBurdenTuple> &result,
                                Score threshold) {
+    NgramLiraModel *lira_model = static_cast<NgramLiraModel*>(model);
     april_assert(word != 0);
     UNUSED_VARIABLE(threshold);
     Score accum_backoff     = Score::one();
@@ -593,6 +594,7 @@ namespace LanguageModels {
   NgramLiraInterface::Key
   NgramLiraInterface::getDestState(NgramLiraInterface::Key st,
                                    const WordType word) {
+    NgramLiraModel *lira_model = static_cast<NgramLiraModel*>(model);
     do {
       if (st < lira_model->first_state_binary_search) {
         // linear search, we look for the LinearSearchInfo of st
@@ -638,6 +640,7 @@ namespace LanguageModels {
   NgramLiraInterface::Key
   NgramLiraInterface::findKeyFromNgram(const WordType *wordSequence,
                                        int len) {
+    NgramLiraModel *lira_model = static_cast<NgramLiraModel*>(model);
     Key st = lira_model->lowest_state;
     for (int i=0; i<len; ++i)
       if (wordSequence[i] > 0)

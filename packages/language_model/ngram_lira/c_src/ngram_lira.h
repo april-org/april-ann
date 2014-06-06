@@ -187,26 +187,17 @@ namespace LanguageModels {
   class NgramLiraInterface : public LMInterface<NgramLiraModel::Key,
                                                 NgramLiraModel::Score> {
   public:
+    friend class NgramLiraModel;
     typedef NgramLiraModel::Key Key;
     typedef NgramLiraModel::Score Score;
 
-  private:
-    NgramLiraModel *lira_model;
-
-  public:
-
+  protected:
     NgramLiraInterface(NgramLiraModel *lira_model) :
-      lira_model(lira_model) {
-      IncRef(lira_model);
+    LMInterface<Key,Score>(lira_model) {
     }
     
-    ~NgramLiraInterface() {
-      DecRef(lira_model);
-    }
-    
-    virtual LMModelUInt32LogFloat* getLMModel() {
-      // it is the responsibility of the receiver to IncRef the model
-      return lira_model;
+  public:
+    virtual ~NgramLiraInterface() {
     }
     
     virtual void get(const Key &key, WordType word, Burden burden,
@@ -222,78 +213,29 @@ namespace LanguageModels {
       vector<WordIdScoreTuple> words, bool is_sorted=false);
     */
     
-    virtual Score getBestProb() const { return lira_model->best_prob; }
-    virtual Score getBestProb(const Key &k) const { return lira_model->max_out_prob[k]; }
+    virtual Score getBestProb() const { return static_cast<NgramLiraModel*>(model)->best_prob; }
+    virtual Score getBestProb(const Key &k) const { return static_cast<NgramLiraModel*>(model)->max_out_prob[k]; }
     virtual bool getZeroKey(Key &k) const {
-      k = lira_model->lowest_state;
+      k = static_cast<NgramLiraModel*>(model)->lowest_state;
       return true;
     }
     virtual void getInitialKey(Key &k) const {
-      k = lira_model->initial_state;
+      k = static_cast<NgramLiraModel*>(model)->initial_state;
     }
     // replaced by getFinalScore:
     // virtual void getFinalKey(Key &k) const {
-    //   k = lira_model->final_state;
+    //   k = static_cast<NgramLiraModel*>(model)->final_state;
     // }
     virtual Score getFinalScore(const Key &k, Score threshold) {
       vector<KeyScoreBurdenTuple> aux;
       Burden dummyBurden;
-      get(k, lira_model->final_word, dummyBurden, aux, threshold);
+      get(k, static_cast<NgramLiraModel*>(model)->final_word, dummyBurden, aux, threshold);
       return (aux.size() == 1) ? aux[0].key_score.score : threshold;
     }
     // useful methods to look for an state:
     Key getDestState(Key st, const WordType word);
     Key findKeyFromNgram(const WordType *word_sequence, int len);
     
-  };
-
-  class HistoryBasedNgramLiraLM : public HistoryBasedLM<NgramLiraModel::Key,
-                                                        NgramLiraModel::Score > {
-  public:
-    typedef NgramLiraModel::Key Key;
-    typedef NgramLiraModel::Score Score;
-
-  private:
-    NgramLiraModel *lira_model;
-
-  public:
-    HistoryBasedNgramLiraLM(int ngram_order,
-                            WordType init_word,
-                            april_utils::TrieVector *trie_vector,
-                            NgramLiraModel *lira_model) :
-                            HistoryBasedLM(ngram_order, init_word, trie_vector),
-                            lira_model(lira_model) {
-      IncRef(lira_model);
-    }
-
-    ~HistoryBasedNgramLiraLM() {
-      DecRef(lira_model);
-    }
-  };
-
-  class HistoryBasedNgramLiraLMInterface :
-    public HistoryBasedLMInterface< NgramLiraModel::Key,
-                                    NgramLiraModel::Score > {
-  public:
-    typedef NgramLiraModel::Key Key;
-    typedef NgramLiraModel::Score Score;
-
-  private:
-
-    Score privateGet(const Key &key,
-                     WordType word,
-                     WordType *context_words,
-                     unsigned int context_size) {
-      // How to get lira_model from LMModel?
-      NgramLiraModel *lira_model = getLMModel()->lira_model;
-      NgramLiraInterface *lira_interface = lira_model->getInterface();
-      vector <KeyScoreBurdenTuple> result;
-
-      Key st = lira_interface->findKeyFromNgram(context_words, context_size);
-      lira_interface->get(st, word, Burden(-1, -1), result, Score::zero());
-
-      return result[0].key_score.score;
-    }
   };
 
 } // closes namespace language_models
