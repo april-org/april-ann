@@ -35,7 +35,8 @@ namespace LanguageModels {
   /// LMHistoryManager
   template <typename Key, typename Score>
   class LMInterface : public Referenced {
-
+    friend class LMModel;
+    
   public:
     
     /// This is a tuple with a LM key and an associated score
@@ -86,13 +87,15 @@ namespace LanguageModels {
     
     /// auxiliary result vector
     vector<KeyScoreBurdenTuple> result;
-    
-  public:
 
+  protected:
+    
     LMInterface(LMModel<Key,Score>* model) : model(model) {
       IncRef(model);
     }
     
+  public:
+
     virtual ~LMInterface() { 
       DecRef(model);
     }
@@ -203,6 +206,7 @@ namespace LanguageModels {
 
   template <typename Key, typename Score>
   class HistoryBasedLMInterface : public LMInterface <Key,Score> {
+    friend class HistoryBaseLM;
   private:
 
     virtual Score privateGet(const Key &key,
@@ -212,13 +216,15 @@ namespace LanguageModels {
 
     april_utils::TrieVector *trie;
 
-  public:
-
+  protected:
+    
     HistoryBasedLMInterface(HistoryBasedLM<Key,Score>* model) :
       LMInterface<Key,Score>(model) {
       trie = model->getTrieVector();
       IncRef(trie);
     }
+    
+  public:
 
     virtual ~HistoryBasedLMInterface() {
       DecRef(trie);
@@ -298,13 +304,16 @@ namespace LanguageModels {
   
   template <typename Key, typename Score>
   class BunchHashedLMInterface : public LMInterface <Key,Score> {
+    friend class BunchHashedLM;
   private:
-    
-  public:
 
+  protected:
+    
     BunchHashedLMInterface(BunchHashedLM<Key,Score>* model) :
       LMInterface<Key,Score>(model) {
     }
+    
+  public:
 
     ~BunchHashedLMInterface() {
     }
