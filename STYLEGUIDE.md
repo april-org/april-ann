@@ -65,13 +65,20 @@ namespace NameSpaceWhatever {
 Class derivation:
 
 **parent.h**
+
 ```C++
+/*
+ *LICENSE COMMENT
+ */
+#ifndef PARENT_H
+#define PARENT_H
 class Parent {
 public:
   Parent();
   virtual ~Parent();
   virtual void method();
 };
+#endif // PARENT_H
 ```
 
 **parent.cc**
@@ -93,6 +100,11 @@ void Parent::method() {
 
 **derived.h**
 ```C++
+/*
+ *LICENSE COMMENT
+ */
+#ifndef DERIVED_H
+#define DERIVED_H
 #include "parent.h"
 
 class Derived : public Parent {
@@ -101,6 +113,7 @@ public:
   virtual ~Derived();
   virtual void method();
 };
+#endif // DERIVED_H
 ```
 
 **derived.cc**
