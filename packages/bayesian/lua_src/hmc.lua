@@ -103,7 +103,7 @@ local function hmc(self, eval, theta)
   --
   local energy = final_energy
   local ok =  pcall(theta.prune_subnormal_and_check_normal, theta)
-  if not ok then print(ok, "PROBLEM") end
+  -- if not ok then print(ok, "PROBLEM") end
   if not accept or not ok then energy = initial_energy theta:copy(theta0) end
   local accepted = (accept and 1) or 0
   -- accept rate update (exponential mean)
@@ -127,6 +127,7 @@ local function hmc(self, eval, theta)
   --
   state.acceptance_rate = acceptance_rate
   state.accepted = accept
+  state.energy = energy
   state.initial_energy = initial_energy
   state.final_energy = final_energy
   state.initial_kinetic = initial_kinetic
@@ -134,10 +135,6 @@ local function hmc(self, eval, theta)
   state.epsilon = epsilon
   state.rng = rng
   --
-  printf("\t\t\t %5d %12.6f :: %d  %.6f  %6.2f%%  %s\n",
-         self:get_count(), energy, #samples, epsilon,
-         acceptance_rate*100, (accept and "**") or "")
-  
   -- if #samples > samples_max_size then
   --   local next_samples = {}
   --   local permutation = rng:shuffle(#samples)
@@ -184,6 +181,7 @@ function hmc_class_metatable:__call(g_options, l_options, count, state)
       final_kinetic   = 0.0,
       initial_energy  = 0.0,
       initial_kinetic = 0.0,
+      energy = 0.0,
       epsilon = nil,
       samples = {},
       rng = nil,
@@ -229,10 +227,23 @@ function hmc_methods:to_lua_string(format)
   return table.concat(str_t, "")
 end
 
+function hmc_methods:start_burnin()
+  self.state.samples = {}
+end
+
 function hmc_methods:finish_burnin()
   self.state.samples = {}
 end
 
 function hmc_methods:get_samples()
   return self.state.samples
+end
+
+function hmc_methods:get_state_string()
+  return "%5d %12.6f :: %d  %.6f  %6.2f%%  %s"%
+  {
+    self:get_count(), self.state.energy, #self.state.samples,
+    self.state.epsilon,
+    self.state.acceptance_rate*100, (self.state.accept and "**") or ""
+  }
 end
