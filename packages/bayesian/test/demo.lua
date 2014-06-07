@@ -9,7 +9,7 @@ local A = matrix.col_major(2,2,{ 50.251256, -24.874372,
 function plot_samples(samples)
   local data = matrix.col_major(#samples,2)
   for i=1,#samples do
-    data(i,':'):copy(samples[i]("1"))
+    data(i,':'):copy(samples[i]("x"))
   end
   local mu = data:sum(1)/data:dim(1)
   local data_centered = data:clone()
@@ -29,7 +29,7 @@ end
 function correlated_normal()
   local grad = x * A
   local logp = -0.5 * grad:dot(x)
-  return -logp, grad
+  return -logp, { x=grad }
 end
 
 ----------------------------------------------------------------------------
@@ -38,10 +38,10 @@ local hmc = bayesian.optimizer.hmc()
 hmc:set_option("seed", 4676)
 
 hmc:start_burnin()
-for i=1,5000 do hmc:execute(correlated_normal, x) end
+for i=1,5000 do hmc:execute(correlated_normal, {x=x}) end
 hmc:finish_burnin()
 
-for i=1,5000 do hmc:execute(correlated_normal, x) end
+for i=1,5000 do hmc:execute(correlated_normal, {x=x}) end
 print(hmc:get_state_string())
 
 plot_samples(hmc:get_samples())
