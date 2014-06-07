@@ -6,6 +6,8 @@
 
 //BIND_HEADER_H
 #include "LM_interface.h"
+#include "history_based_LM.h"
+#include "bunch_hashed_LM.h"
 using namespace LanguageModels;
 
 class QueryResultUInt32LogFloat : public Referenced {

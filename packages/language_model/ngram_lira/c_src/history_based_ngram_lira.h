@@ -23,6 +23,7 @@
 #ifndef HISTORY_BASED_NGRAM_LIRA_H
 #define HISTORY_BASED_NGRAM_LIRA_H
 
+#include "history_based_LM.h"
 #include "ngram_lira.h"
 
 namespace LanguageModels {
