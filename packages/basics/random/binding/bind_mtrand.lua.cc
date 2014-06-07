@@ -44,7 +44,7 @@
 //DOC_END
 {
   int argn = lua_gettop(L); /* number of arguments */
-  if (argn == 0)
+  if ( argn == 0 || (argn == 1 && lua_isnil(L,1)) )
     obj = new MTRand(); // auto-initialize with /dev/urandom or time()
   // and clock()
   else if (argn == 1)

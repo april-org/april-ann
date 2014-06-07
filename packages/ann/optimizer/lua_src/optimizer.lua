@@ -174,7 +174,7 @@ function optimizer_methods:set_option(name,value)
   return self
 end
 
-function optimizer_methods:get_option(name,value)
+function optimizer_methods:get_option(name)
   april_assert(self.valid_options[name], "Not recognized option %s", name)
   return self.global_options[name]
 end

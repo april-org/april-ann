@@ -26,6 +26,7 @@ return {
   "ann.loss",
   "trainable",
   "ann.autoencoders",
+  "bayesian",
 
   -- LANGUAGE MODELS
   --  "fnnlm",
