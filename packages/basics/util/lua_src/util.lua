@@ -1101,7 +1101,7 @@ end
 
 function string.get_path(path_with_filename, sep)
   local sep=sep or'/'
-  return path_with_filename:match("(.*"..sep..")") or ""
+  return path_with_filename:match("(.*"..sep..")") or "./"
 end
 
 function string.lines_of(t)

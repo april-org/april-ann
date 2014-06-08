@@ -307,7 +307,7 @@ april_set_doc("trainable.supervised_trainer.size", {
 		outputs = { "A number" }, })
 
 function trainable_supervised_trainer_methods:size()
-  if #self.components_order == 0 then
+  if not self.is_built then
     error("It is not build")
   end
   return self.weights_table:size()
@@ -316,7 +316,7 @@ end
 ------------------------------------------------------------------------
 
 function trainable_supervised_trainer_methods:to_lua_string(format)
-  assert(#self.components_order > 0, "The component is not built")
+  assert(self.is_built, "The component is not built")
   local t = { }
   table.insert(t, "trainable.supervised_trainer{ ")
   table.insert(t, "model=")
@@ -372,7 +372,7 @@ april_set_doc("trainable.supervised_trainer.save", {
 		}, })
 
 function trainable_supervised_trainer_methods:save(filename, format)
-  assert(#self.components_order > 0, "The component is not built")
+  assert(self.is_built, "The component is not built")
   local f = io.open(filename,"w") or error("Unable to open " .. filename)
   f:write("return ")
   f:write(self:to_lua_string(format))
@@ -421,7 +421,7 @@ april_set_doc("trainable.supervised_trainer.count_components", {
 
 function trainable_supervised_trainer_methods:count_components(match_string)
   local match_string = match_string or ".*"
-  if #self.components_order == 0 then
+  if not self.is_built then
     error("It is not build")
   end
   local count = 0
@@ -443,7 +443,7 @@ april_set_doc("trainable.supervised_trainer.count_weights", {
 
 function trainable_supervised_trainer_methods:count_weights(match_string)
   local match_string = match_string or ".*"
-  if #self.components_order == 0 then
+  if not self.is_built then
     error("It is not build")
   end
   local count = 0
@@ -471,7 +471,7 @@ april_set_doc("trainable.supervised_trainer.iterate_components", {
 
 function trainable_supervised_trainer_methods:iterate_components(match_string)
   local match_string = match_string or ".*"
-  if #self.components_order == 0 then
+  if not self.is_built then
     error("It is not build")
   end
   local pos = 0
@@ -505,7 +505,7 @@ april_set_doc("trainable.supervised_trainer.iterate_weights", {
 
 function trainable_supervised_trainer_methods:iterate_weights(match_string)
   local match_string = match_string or ".*"
-  if #self.components_order == 0 then
+  if not self.is_built then
     error("It is not build")
   end
   local pos = 0
@@ -537,7 +537,7 @@ april_set_doc("trainable.supervised_trainer.component", {
 		outputs = { "A component object" } })
 
 function trainable_supervised_trainer_methods:component(str)
-  if #self.components_order == 0 then
+  if not self.is_built then
     error("Needs execution of build method")
   end
   return self.components_table[str]
@@ -559,7 +559,7 @@ april_set_doc("trainable.supervised_trainer.weights", {
 		outputs = { "An ann.connections object" } })
 
 function trainable_supervised_trainer_methods:weights(str)
-  if #self.components_order == 0 then
+  if not self.is_built then
     error("Needs execution of build method")
   end
   return self.weights_table(str)
@@ -573,7 +573,7 @@ april_set_doc("trainable.supervised_trainer.get_weights_table", {
 		outputs = { "A table with all the weights, indexed by names" } })
 
 function trainable_supervised_trainer_methods:get_weights_table()
-  if #self.components_order == 0 then
+  if not self.is_built then
     error("Needs execution of build method")
   end
   return self.weights_table
@@ -616,7 +616,7 @@ function trainable_supervised_trainer_methods:randomize_weights(t)
       use_fanin  = { type_match="boolean", mandatory = false, default = false },
       use_fanout = { type_match="boolean", mandatory = false, default = false },
     }, t)
-  assert(#self.components_order > 0,
+  assert(self.is_built,
 	 "Execute build method before randomize_weights")
   for i,wname in ipairs(self.weights_order) do
     if not params.name_match or wname:match(params.name_match) then
@@ -699,6 +699,7 @@ function trainable_supervised_trainer_methods:build(t)
     end
   end
   table.sort(self.components_order)
+  self.is_built = true
   return self,self.weights_table,self.components_table
 end
 
@@ -1146,7 +1147,7 @@ function trainable_supervised_trainer_methods:train_dataset(t)
 			   mandatory  = false,
 			   default=self.smooth_gradients },
     }, t, true)
-  assert(#self.components_order > 0,
+  assert(self.is_built,
 	 "Execute build method before call this method")
   local loss       = params.loss
   local optimizer  = params.optimizer
@@ -1220,7 +1221,7 @@ function trainable_supervised_trainer_methods:grad_check_dataset(t)
       verbose        = { type_match = "boolean",
 			 mandatory = false, default=false },
     }, t, true)
-  assert(#self.components_order > 0,
+  assert(self.is_built,
 	 "Execute build method before call this method")
   local loss                = params.loss
   local verbose             = params.verbose
@@ -1343,7 +1344,7 @@ function trainable_supervised_trainer_methods:validate_dataset(t)
       shuffle        = { isa_match  = random, mandatory = false, default=nil },
       replacement    = { type_match = "number", mandatory = false, default=nil },
     }, t)
-  assert(#self.components_order > 0,
+  assert(self.is_built,
 	 "Execute build method before call this method")
   -- ERROR CHECKING
   assert(params.input_dataset ~= not params.output_dataset,
@@ -1420,7 +1421,7 @@ function trainable_supervised_trainer_methods:use_dataset(t)
       bunch_size     = { type_match = "number",
 			 mandatory = (self.bunch_size == false)  },
     }, t)
-  assert(#self.components_order > 0,
+  assert(self.is_built,
 	 "Execute build method before call this method")
   local nump        = params.input_dataset:numPatterns()
   local outsize     = self.ann_component:get_output_size()

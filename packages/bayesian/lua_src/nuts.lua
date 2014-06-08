@@ -14,13 +14,10 @@ local wrap_matrices = matrix.dict.wrap_matrices
 -- eval is a function a function which returns L(Theta),dL/dTheta. It is
 -- implemented to minimize the negative of the log-likelihood (maximize the
 -- log-likelihood)
-local function hmc(self, eval, theta)
-  local math_log    = math.log
-  local math_clamp  = math.clamp
+local function nuts(self, eval, theta)
   local theta       = wrap_matrices(theta)
   local state       = self.state
   local samples     = state.samples
-  local energies    = state.energies
   local epsilon     = state.epsilon or self:get_option("epsilon")
   local rng         = state.rng or random(self:get_option("seed"))
   local thin        = self:get_option("thin")
@@ -39,16 +36,16 @@ local function hmc(self, eval, theta)
   state.acceptance_rate = state.acceptance_rate or target_acceptance_rate*0.5
   --
   -- kinetic energy associated with given velocity
-  local kinetic_energy = function(vel)
+  kinetic_energy = function(vel)
     return 0.5 * vel:dot(vel)
   end
   --
   -- executes the simulation chain of HMC using leapfrog updates
-  local simulation = function(pos, vel, epsilon, nsteps)
+  simulation = function(pos, vel, epsilon, nsteps)
     --
     -- receives the optimizer table, a matrix dict with positions, other with
     -- velocities, and the epsilon for the step
-    local leapfrog = function(pos, vel, epsilon)
+    leapfrog = function(pos, vel, epsilon)
       -- from pos(t) and vel(t - eps/2), compute vel(t + eps/2)
       local energy,grads = eval()
       grads = wrap_matrices(grads)
@@ -78,9 +75,9 @@ local function hmc(self, eval, theta)
   end
   --
   -- metropolis hastings reject procedure
-  local metropolis_hastings = function(initial_p, final_p)
+  function metropolis_hastings(initial_p, final_p)
     local alpha = initial_p - final_p
-    local accept_threshold = math_log(rng:randDblExc())
+    local accept_threshold = math.log(rng:randDblExc())
     return accept_threshold < alpha
   end
   --
@@ -96,6 +93,12 @@ local function hmc(self, eval, theta)
   local lambda = ((rng:rand() < beta) and -1) or 1
   local p_epsilon = lambda * epsilon * (1.0 + alpha * rng:randNorm(0,1))
   local initial_kinetic = kinetic_energy(vel) * inv_var
+  local initial_energy,grads = eval()
+  grads = wrap_matrices(grads)
+  local initial_joint = scale*initial_energy + initial_kinetic
+  local logu = rnd:rand(0, math.exp(-initial_joint))
+  
+  
   -- simulate the HMC mechanics
   local initial_energy, final_energy = simulation(theta, vel, p_epsilon, nsteps)
   vel:scal(-1.0)
@@ -115,7 +118,6 @@ local function hmc(self, eval, theta)
   self:count_one()
   if self:get_count() % thin == 0 then
     table.insert(samples, theta:clone())
-    table.insert(energies, energy)
   end
   local acceptance_rate = acc_decay * state.acceptance_rate + (1.0 - acc_decay) * accepted
   -- sanity check
@@ -127,7 +129,7 @@ local function hmc(self, eval, theta)
   else
     epsilon = epsilon*epsilon_dec
   end
-  epsilon = math_clamp(epsilon, epsilon_min, epsilon_max)
+  epsilon = math.clamp(epsilon, epsilon_min, epsilon_max)
   --
   state.acceptance_rate = acceptance_rate
   state.accepted = accept
@@ -153,10 +155,10 @@ local function hmc(self, eval, theta)
   return eval()
 end
 
-local hmc_methods, hmc_class_metatable = class("bayesian.optimizer.hmc",
-                                               ann.optimizer)
+local nuts_methods, nuts_class_metatable = class("bayesian.optimizer.nuts",
+                                                 ann.optimizer)
 
-function hmc_class_metatable:__call(g_options, l_options, count, state)
+function nuts_class_metatable:__call(g_options, l_options, count, state)
   -- the base optimizer, with the supported learning parameters
   local obj = ann.optimizer({
                               { "thin", "Take 1-of-thin samples (1)" },
@@ -188,7 +190,6 @@ function hmc_class_metatable:__call(g_options, l_options, count, state)
       energy = 0.0,
       epsilon = nil,
       samples = {},
-      energies = {},
       rng = nil,
     }
   obj = class_instance(obj, self)
@@ -208,21 +209,22 @@ function hmc_class_metatable:__call(g_options, l_options, count, state)
   return obj
 end
 
-hmc_methods.execute = hmc
+nuts_methods.execute = nuts
 
-function hmc_methods:clone()
-  local obj = bayesian.optimizer.hmc()
+function nuts_methods:clone()
+  local obj = bayesian.optimizer.nuts()
   obj.count             = self.count
   obj.layerwise_options = table.deep_copy(self.layerwise_options)
   obj.global_options    = table.deep_copy(self.global_options)
+  obj.state             = {}
   for k,v in pairs(self.state) do obj.state[k] = v end
   for k,v in pairs(self.state.samples) do obj.state.samples[k] = v:clone() end
   return obj
 end
 
-function hmc_methods:to_lua_string(format)
+function nuts_methods:to_lua_string(format)
   local format = format or "binary"
-  local str_t = { "ann.optimizer.hmc(",
+  local str_t = { "ann.optimizer.nuts(",
                   table.tostring(self.global_options),
                   ",",
                   table.tostring(self.layerwise_options),
@@ -234,27 +236,27 @@ function hmc_methods:to_lua_string(format)
   return table.concat(str_t, "")
 end
 
-function hmc_methods:start_burnin()
+function nuts_methods:start_burnin()
   self.state.samples = {}
 end
 
-function hmc_methods:finish_burnin()
+function nuts_methods:finish_burnin()
   self.state.samples = {}
 end
 
-function hmc_methods:get_samples()
+function nuts_methods:get_samples()
   return self.state.samples
 end
 
-function hmc_methods:get_state_string()
-  return "%6d %.10f :: %6d %.10f %6.2f%% %s"%
+function nuts_methods:get_state_string()
+  return "%5d %12.6f :: %d  %.6f  %6.2f%%  %s"%
   {
     self:get_count(), self.state.energy, #self.state.samples,
     self.state.epsilon,
-    self.state.acceptance_rate*100, (self.state.accepted and "**") or ""
+    self.state.acceptance_rate*100, (self.state.accept and "**") or ""
   }
 end
 
-function hmc_methods:get_state_table()
+function nuts_methods:get_state_table()
   return self.state
 end
