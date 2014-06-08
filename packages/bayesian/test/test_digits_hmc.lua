@@ -7,8 +7,8 @@ local sup            =  0.1
 local shuffle_random = random(5678)
 
 local rnd = random(123824)
-local burnin = 2000
-local max_epochs = 1000
+local burnin = 1000
+local max_epochs = 3000
 local nchains = 1
 
 --------------------------------------------------------------
@@ -129,7 +129,7 @@ for j=1,#trainers do
       thenet:build{ weights = weights }
       return thenet:forward(input):get_matrix()
     end,
-    N=100,
+    N=1000,
     shuffle=rnd,
     samples=hmc:get_samples(),
   }
