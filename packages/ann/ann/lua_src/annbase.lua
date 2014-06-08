@@ -20,9 +20,9 @@ function ann_wrapper_class_metatable:__call(t)
   local obj = {
     forward_function = params.forward,
     backprop_function = params.backprop or
-    function() error"Not implemented in wrapper component" end,
+    function() error"Not implemented for THIS wrapper component" end,
     compute_gradients_function = params.compute_gradients or
-    function() error"Not implemented in wrapper component" end,
+    function() error"Not implemented for THIS wrapper component" end,
     reset_function = params.reset or function() end,
     input = params.input,
     output = params.output,
