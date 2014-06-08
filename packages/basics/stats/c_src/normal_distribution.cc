@@ -271,6 +271,57 @@ namespace Stats {
     delete[] cov_str;
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
+  
+  ////////////////////////////////////////////////////////////////////////////
+
+  StandardNormalDistribution::StandardNormalDistribution() :
+    StatisticalDistributionBase(1) {
+    K = log_float::from_float(1.0f/sqrtf(M_2PI));
+  }
+
+  StandardNormalDistribution::~StandardNormalDistribution() {
+  }
+  
+  void StandardNormalDistribution::privateSample(MTRand *rng,
+                                                 MatrixFloat *result) {
+    for (MatrixFloat::iterator result_it = result->begin();
+         result_it != result->end(); ++result_it) {
+      *result_it = static_cast<float>(rng->randNorm(0.0, 1.0));
+    }
+  }
+  
+  void StandardNormalDistribution::privateLogpdf(const MatrixFloat *x,
+                                                MatrixFloat *result) {
+    MatrixFloat *x2 = x->clone();
+    IncRef(x2);
+    x2->pow(2);
+    result->fill(K.log());
+    result->axpy(-0.5,  x2);
+    DecRef(x2);
+  }
+
+  void StandardNormalDistribution::privateLogcdf(const MatrixFloat *x,
+                                                MatrixFloat *result) {
+    UNUSED_VARIABLE(x);
+    UNUSED_VARIABLE(result);
+    ERROR_EXIT(128, "Not implemented");
+  }
+
+  StatisticalDistributionBase *StandardNormalDistribution::clone() {
+    return new StandardNormalDistribution();
+  }
+  
+  MatrixFloatSet *StandardNormalDistribution::getParams() {
+    MatrixFloatSet *dict = new MatrixFloatSet();
+    return dict;
+  }
+  
+  char *StandardNormalDistribution::toLuaString(bool is_ascii) const {
+    UNUSED_VARIABLE(is_ascii);
+    buffer_list buffer;
+    buffer.printf("stats.dist.normal()");
+    return buffer.to_string(buffer_list::NULL_TERMINATED);
+  }
 
   ////////////////////////////////////////////////////////////////////////////  
 

@@ -25,7 +25,7 @@
 #include "statistical_distribution.h"
 
 namespace Stats {
-  
+
   /// Normal distribution with general covariance matrix
   class GeneralNormalDistribution : public StatisticalDistributionBase {
   protected:
@@ -66,6 +66,24 @@ namespace Stats {
     virtual char *toLuaString(bool is_ascii) const;
     virtual void updateParams();
   };
+
+  /// Normal distribution with mean=0 and var=1
+  class StandardNormalDistribution : public StatisticalDistributionBase {
+  protected:
+    log_float K;
+    
+    virtual void privateSample(MTRand *rng, MatrixFloat *result);
+    virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);
+    virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result);
+    
+  public:
+    StandardNormalDistribution();
+    virtual ~StandardNormalDistribution();
+    virtual StatisticalDistributionBase *clone();
+    virtual MatrixFloatSet *getParams();
+    virtual char *toLuaString(bool is_ascii) const;
+  };
+  
 
   /// Log-Normal distribution with general covariance matrix
   class GeneralLogNormalDistribution : public GeneralNormalDistribution {

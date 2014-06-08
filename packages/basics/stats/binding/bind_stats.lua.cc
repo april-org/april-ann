@@ -207,6 +207,11 @@ using namespace Stats;
 //BIND_CPP_CLASS    DiagonalNormalDistribution
 //BIND_SUBCLASS_OF  DiagonalNormalDistribution StatisticalDistributionBase
 
+//BIND_LUACLASSNAME StandardNormalDistribution stats.dist.normal.standard
+//BIND_CPP_CLASS    StandardNormalDistribution
+//BIND_SUBCLASS_OF  StandardNormalDistribution StatisticalDistributionBase
+
+
 //BIND_CONSTRUCTOR GeneralNormalDistribution
 {
   LUABIND_ERROR("Use stats.dist.normal constructor");
@@ -219,35 +224,49 @@ using namespace Stats;
 }
 //BIND_END
 
+//BIND_CONSTRUCTOR StandardNormalDistribution
+{
+  LUABIND_ERROR("Use stats.dist.normal constructor");
+}
+//BIND_END
+
 //BIND_FUNCTION stats.dist.normal
 {
-  MatrixFloat *mean;
-  if (lua_isMatrixFloat(L,1)) {
-    LUABIND_GET_PARAMETER(1, MatrixFloat, mean);
-    if (lua_isMatrixFloat(L,2)) {
-      MatrixFloat *cov;
-      LUABIND_GET_PARAMETER(2, MatrixFloat, cov);
-      GeneralNormalDistribution *obj = new GeneralNormalDistribution(mean, cov);
-      LUABIND_RETURN(GeneralNormalDistribution, obj);
+  int argn;
+  argn = lua_gettop(L); // number of arguments
+  if (argn == 0) {
+    StandardNormalDistribution *obj = new StandardNormalDistribution();
+    LUABIND_RETURN(StandardNormalDistribution, obj);
+  }
+  else {
+    MatrixFloat *mean;
+    if (lua_isMatrixFloat(L,1)) {
+      LUABIND_GET_PARAMETER(1, MatrixFloat, mean);
+      if (lua_isMatrixFloat(L,2)) {
+        MatrixFloat *cov;
+        LUABIND_GET_PARAMETER(2, MatrixFloat, cov);
+        GeneralNormalDistribution *obj = new GeneralNormalDistribution(mean, cov);
+        LUABIND_RETURN(GeneralNormalDistribution, obj);
+      }
+      else {
+        SparseMatrixFloat *cov;
+        LUABIND_GET_PARAMETER(2, SparseMatrixFloat, cov);
+        DiagonalNormalDistribution *obj = new DiagonalNormalDistribution(mean, cov);
+        LUABIND_RETURN(DiagonalNormalDistribution, obj);
+      }
     }
     else {
       SparseMatrixFloat *cov;
-      LUABIND_GET_PARAMETER(2, SparseMatrixFloat, cov);
+      float mu, sigma;
+      LUABIND_GET_PARAMETER(1, float, mu);
+      LUABIND_GET_PARAMETER(2, float, sigma);
+      int dims[1] = { 1 };
+      mean = new MatrixFloat(1, dims, CblasColMajor);
+      (*mean)(0) = mu;
+      cov = SparseMatrixFloat::diag(1, sigma);
       DiagonalNormalDistribution *obj = new DiagonalNormalDistribution(mean, cov);
       LUABIND_RETURN(DiagonalNormalDistribution, obj);
     }
-  }
-  else {
-    SparseMatrixFloat *cov;
-    float mu, sigma;
-    LUABIND_GET_PARAMETER(1, float, mu);
-    LUABIND_GET_PARAMETER(2, float, sigma);
-    int dims[1] = { 1 };
-    mean = new MatrixFloat(1, dims, CblasColMajor);
-    (*mean)(0) = mu;
-    cov = SparseMatrixFloat::diag(1, sigma);
-    DiagonalNormalDistribution *obj = new DiagonalNormalDistribution(mean, cov);
-    LUABIND_RETURN(DiagonalNormalDistribution, obj);
   }
 }
 //BIND_END
@@ -263,6 +282,13 @@ using namespace Stats;
 {
   LUABIND_RETURN(DiagonalNormalDistribution,
                  static_cast<DiagonalNormalDistribution*>(obj->clone()));
+}
+//BIND_END
+
+//BIND_METHOD StandardNormalDistribution clone
+{
+  LUABIND_RETURN(StandardNormalDistribution,
+                 static_cast<StandardNormalDistribution*>(obj->clone()));
 }
 //BIND_END
 

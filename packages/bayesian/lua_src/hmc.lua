@@ -15,6 +15,8 @@ local wrap_matrices = matrix.dict.wrap_matrices
 -- implemented to minimize the negative of the log-likelihood (maximize the
 -- log-likelihood)
 local function hmc(self, eval, theta)
+  local math_log    = math.log
+  local math_clamp  = math.clamp
   local theta       = wrap_matrices(theta)
   local state       = self.state
   local samples     = state.samples
@@ -36,16 +38,16 @@ local function hmc(self, eval, theta)
   state.acceptance_rate = state.acceptance_rate or target_acceptance_rate*0.5
   --
   -- kinetic energy associated with given velocity
-  kinetic_energy = function(vel)
+  local kinetic_energy = function(vel)
     return 0.5 * vel:dot(vel)
   end
   --
   -- executes the simulation chain of HMC using leapfrog updates
-  simulation = function(pos, vel, epsilon, nsteps)
+  local simulation = function(pos, vel, epsilon, nsteps)
     --
     -- receives the optimizer table, a matrix dict with positions, other with
     -- velocities, and the epsilon for the step
-    leapfrog = function(pos, vel, epsilon)
+    local leapfrog = function(pos, vel, epsilon)
       -- from pos(t) and vel(t - eps/2), compute vel(t + eps/2)
       local energy,grads = eval()
       grads = wrap_matrices(grads)
@@ -75,14 +77,14 @@ local function hmc(self, eval, theta)
   end
   --
   -- metropolis hastings reject procedure
-  function metropolis_hastings(initial_p, final_p)
+  local metropolis_hastings = function(initial_p, final_p)
     local alpha = initial_p - final_p
-    local accept_threshold = math.log(rng:randDblExc())
+    local accept_threshold = math_log(rng:randDblExc())
     return accept_threshold < alpha
   end
   --
   -- one HMC sample procedure
-  local norm01 = stats.dist.normal(0,1)
+  local norm01 = stats.dist.normal()
   local theta0 = theta:clone()
   local vel = theta:clone_only_dims()
   -- sample velocity from a standard normal distribution
@@ -123,7 +125,7 @@ local function hmc(self, eval, theta)
   else
     epsilon = epsilon*epsilon_dec
   end
-  epsilon = math.clamp(epsilon, epsilon_min, epsilon_max)
+  epsilon = math_clamp(epsilon, epsilon_min, epsilon_max)
   --
   state.acceptance_rate = acceptance_rate
   state.accepted = accept
@@ -210,6 +212,8 @@ function hmc_methods:clone()
   obj.count             = self.count
   obj.layerwise_options = table.deep_copy(self.layerwise_options)
   obj.global_options    = table.deep_copy(self.global_options)
+  for k,v in pairs(self.state) do obj.state[k] = v end
+  for k,v in pairs(self.state.samples) do obj.state.samples[k] = v:clone() end
   return obj
 end
 
@@ -246,4 +250,8 @@ function hmc_methods:get_state_string()
     self.state.epsilon,
     self.state.acceptance_rate*100, (self.state.accept and "**") or ""
   }
+end
+
+function hmc_methods:get_state_table()
+  return self.state
 end
