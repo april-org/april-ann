@@ -63,7 +63,7 @@ local trainer = trainable.supervised_trainer(thenet,
                                              bayesian.optimizer.hmc())
 trainer:build()
 trainer:set_option("nsteps",      80)
-trainer:set_option("var",         40)
+trainer:set_option("var",         60)
 trainer:set_option("seed",     74967)
 trainer:set_option("epsilon",  0.002)
 
