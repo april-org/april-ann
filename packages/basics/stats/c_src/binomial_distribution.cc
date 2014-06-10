@@ -137,13 +137,6 @@ namespace Stats {
     return new BinomialDistribution(n->clone(), p->clone());
   }
   
-  MatrixFloatSet *BinomialDistribution::getParams() {
-    MatrixFloatSet *dict = new MatrixFloatSet();
-    dict->insert("n", n);
-    dict->insert("p", p);
-    return dict;
-  }
-  
   char *BinomialDistribution::toLuaString(bool is_ascii) const {
     UNUSED_VARIABLE(is_ascii);
     buffer_list buffer;

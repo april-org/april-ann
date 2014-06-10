@@ -15,28 +15,32 @@ local wrap_matrices = matrix.dict.wrap_matrices
 -- implemented to minimize the negative of the log-likelihood (maximize the
 -- log-likelihood)
 local function hmc(self, eval, theta)
+  local state       = self.state
+  --
+  local energies    = state.energies
   local math_log    = math.log
   local math_clamp  = math.clamp
-  local theta       = wrap_matrices(theta)
-  local state       = self.state
+  local priors      = state.priors
   local samples     = state.samples
-  local energies    = state.energies
-  local epsilon     = state.epsilon or self:get_option("epsilon")
-  local rng         = state.rng or random(self:get_option("seed"))
-  local thin        = self:get_option("thin")
+  local theta       = wrap_matrices(theta)
+  --
   local acc_decay   = self:get_option("acc_decay")
   local alpha       = self:get_option("alpha")
   local beta        = self:get_option("beta")
-  local var         = self:get_option("var")
-  local nsteps      = self:get_option("nsteps")
-  local epsilon_inc = self:get_option("epsilon_inc")
+  local epsilon     = state.epsilon or self:get_option("epsilon")
   local epsilon_dec = self:get_option("epsilon_dec")
-  local epsilon_min = self:get_option("epsilon_min")
+  local epsilon_inc = self:get_option("epsilon_inc")
   local epsilon_max = self:get_option("epsilon_max")
+  local epsilon_min = self:get_option("epsilon_min")
+  local nsteps      = self:get_option("nsteps")
+  local rng         = state.rng or random(self:get_option("seed"))
   local scale       = self:get_option("scale")
+  local thin        = self:get_option("thin")
+  local mass         = self:get_option("mass")
   local target_acceptance_rate = self:get_option("target_acceptance_rate")
-  local inv_var     = 1.0/var
-  state.acceptance_rate = state.acceptance_rate or target_acceptance_rate*0.5
+  --
+  local inv_mass     = 1.0/mass
+  state.acceptance_rate = state.acceptance_rate
   --
   -- kinetic energy associated with given velocity
   local kinetic_energy = function(vel)
@@ -50,30 +54,31 @@ local function hmc(self, eval, theta)
     -- velocities, and the epsilon for the step
     local leapfrog = function(pos, vel, epsilon)
       -- from pos(t) and vel(t - eps/2), compute vel(t + eps/2)
-      local energy,grads = eval()
+      local _,grads = eval()
       grads = wrap_matrices(grads)
-      vel:axpy(-epsilon, grads:scal(scale))
+      vel:axpy(-epsilon, grads)
       -- from vel(t + eps/2) compute pos(t + eps)
-      pos:axpy(epsilon*inv_var, vel)
+      pos:axpy(epsilon*inv_mass, vel)
       -- local eval_result,grads = eval()
       -- vel:axpy(-epsilon*0.5, grads)
-      return energy
     end
     --
     -- compute velocity at time: t + eps/2
     local initial_energy,grads = eval()
+    initial_energy = scale*initial_energy + priors:compute_neg_log_prior(pos)
     grads = wrap_matrices(grads)
-    vel:axpy(-0.5*epsilon, grads:scal(scale))
+    vel:axpy(-0.5*epsilon, grads)
     -- compute position at time: t + eps
-    pos:axpy(epsilon*inv_var, vel)
+    pos:axpy(epsilon*inv_mass, vel)
     -- compute from 2 to nsteps leapfrog updates
     for i=2,nsteps do
       leapfrog(pos, vel, epsilon)
     end
     -- compute velocity at time: t + nsteps*eps
     local final_energy,grads = eval()
+    final_energy = scale*final_energy + priors:compute_neg_log_prior(pos)
     grads = wrap_matrices(grads)
-    vel:axpy(-0.5*epsilon, grads:scal(scale))
+    vel:axpy(-0.5*epsilon, grads)
     return initial_energy, final_energy
   end
   --
@@ -83,6 +88,9 @@ local function hmc(self, eval, theta)
     local accept_threshold = math_log(rng:randDblExc())
     return accept_threshold < alpha
   end
+  --
+  -- priors sampling
+  priors:sample(rng, theta)
   --
   -- one HMC sample procedure
   local norm01 = stats.dist.normal()
@@ -95,14 +103,14 @@ local function hmc(self, eval, theta)
   -- epsilon perturbation
   local lambda = ((rng:rand() < beta) and -1) or 1
   local p_epsilon = lambda * epsilon * (1.0 + alpha * rng:randNorm(0,1))
-  local initial_kinetic = kinetic_energy(vel) * inv_var
+  local initial_kinetic = kinetic_energy(vel) * inv_mass
   -- simulate the HMC mechanics
   local initial_energy, final_energy = simulation(theta, vel, p_epsilon, nsteps)
   vel:scal(-1.0)
-  local final_kinetic = kinetic_energy(vel) * inv_var
+  local final_kinetic = kinetic_energy(vel) * inv_mass
   -- rejection based in metropolis hastings
-  local accept = metropolis_hastings(scale*initial_energy + initial_kinetic,
-                                     scale*final_energy + final_kinetic)
+  local accept = metropolis_hastings(initial_energy + initial_kinetic,
+                                     final_energy + final_kinetic)
   --
   local energy = final_energy
   local ok =  pcall(theta.prune_subnormal_and_check_normal, theta)
@@ -117,7 +125,12 @@ local function hmc(self, eval, theta)
     table.insert(samples, theta:clone())
     table.insert(energies, energy)
   end
-  local acceptance_rate = acc_decay * state.acceptance_rate + (1.0 - acc_decay) * accepted
+  local acceptance_rate
+  if state.acceptance_rate then
+    acceptance_rate = acc_decay * state.acceptance_rate + (1.0 - acc_decay) * accepted
+  else
+    acceptance_rate = accepted
+  end
   -- sanity check
   assert(epsilon_inc > 1.0 and epsilon_dec < 1.0 and epsilon_dec > 0.0)
   -- depending in the acceptance_rate, the epsilon is updated to increase mixing
@@ -164,7 +177,7 @@ function hmc_class_metatable:__call(g_options, l_options, count, state)
                               { "target_acceptance_rate", "Desired acceptance rate (0.65)" },
                               { "alpha", "Step length perturbation size (0.1)" },
                               { "beta", "Step length sign change prob (0.5)" },
-                              { "var", "Variance of particles (1)" },
+                              { "mass", "Mass of particles (1)" },
                               { "nsteps", "Number of Leap-Frog steps (20)" },
                               { "epsilon", "Initial epsilon value (0.01)" },
                               { "epsilon_inc", "Epsilon increment (1.02)" },
@@ -187,6 +200,7 @@ function hmc_class_metatable:__call(g_options, l_options, count, state)
       initial_kinetic = 0.0,
       energy = 0.0,
       epsilon = nil,
+      priors = bayesian.priors(),
       samples = {},
       energies = {},
       rng = nil,
@@ -197,7 +211,7 @@ function hmc_class_metatable:__call(g_options, l_options, count, state)
   obj:set_option("target_acceptance_rate", 0.65)
   obj:set_option("alpha", 0.1)
   obj:set_option("beta", 0.5)
-  obj:set_option("var", 1)
+  obj:set_option("mass", 1)
   obj:set_option("nsteps", 20)
   obj:set_option("epsilon", 0.01)
   obj:set_option("epsilon_inc", 1.02)
@@ -235,11 +249,13 @@ function hmc_methods:to_lua_string(format)
 end
 
 function hmc_methods:start_burnin()
-  self.state.samples = {}
+  self.state.samples  = {}
+  self.state.energies = {}
 end
 
 function hmc_methods:finish_burnin()
-  self.state.samples = {}
+  self.state.samples  = {}
+  self.state.energies = {}
 end
 
 function hmc_methods:get_samples()
@@ -257,4 +273,8 @@ end
 
 function hmc_methods:get_state_table()
   return self.state
+end
+
+function hmc_methods:get_priors()
+  return self.state.priors
 end

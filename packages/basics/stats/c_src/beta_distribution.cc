@@ -95,13 +95,6 @@ namespace Stats {
     return new BetaDistribution(alpha->clone(), beta->clone());
   }
   
-  MatrixFloatSet *BetaDistribution::getParams() {
-    MatrixFloatSet *dict = new MatrixFloatSet();
-    dict->insert("alpha", alpha);
-    dict->insert("beta", beta);
-    return dict;
-  }
-  
   char *BetaDistribution::toLuaString(bool is_ascii) const {
     UNUSED_VARIABLE(is_ascii);
     buffer_list buffer;

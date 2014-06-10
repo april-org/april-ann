@@ -30,6 +30,8 @@ namespace Stats {
     MatrixFloat *lambda, *inv_lambda;
     log_float lambda_prod;
     
+    void updateParams();
+
   protected:
     virtual void privateSample(MTRand *rng, MatrixFloat *result);
     virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);
@@ -39,9 +41,7 @@ namespace Stats {
     ExponentialDistribution(MatrixFloat *lambda);
     virtual ~ExponentialDistribution();
     virtual StatisticalDistributionBase *clone();
-    virtual MatrixFloatSet *getParams();
     virtual char *toLuaString(bool is_ascii) const;
-    virtual void updateParams();
   };
   
 }

@@ -132,13 +132,6 @@ namespace Stats {
     return new UniformDistribution(low->clone(), high->clone());
   }
 
-  MatrixFloatSet *UniformDistribution::getParams() {
-    MatrixFloatSet *dict = new MatrixFloatSet();
-    dict->insert("low",  low);
-    dict->insert("high", high);
-    return dict;
-  }
-  
   char *UniformDistribution::toLuaString(bool is_ascii) const {
     buffer_list buffer;
     char *low_str, *high_str;

@@ -134,15 +134,9 @@ using namespace Stats;
 }
 //BIND_END
 
-//BIND_METHOD StatisticalDistributionBase get_params
+//BIND_METHOD StatisticalDistributionBase size
 {
-  LUABIND_RETURN(MatrixFloatSet, obj->getParams());
-}
-//BIND_END
-
-//BIND_METHOD StatisticalDistributionBase update_params
-{
-  obj->updateParams();
+  LUABIND_RETURN(uint, obj->getSize());
 }
 //BIND_END
 

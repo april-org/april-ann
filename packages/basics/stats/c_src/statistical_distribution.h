@@ -111,9 +111,7 @@ namespace Stats {
     unsigned int getSize() { return size; }
     // abstract interface
     virtual StatisticalDistributionBase *clone() = 0;
-    virtual MatrixFloatSet *getParams() = 0;
     virtual char *toLuaString(bool is_ascii) const = 0;
-    virtual void updateParams() {}
   };
   
   ////////////////////////////////////////////////////////////////////////////

@@ -76,44 +76,44 @@ local samples = M(10,1,{ 0.41319,
                          0.062123,
                          0.037511, })
 check.eq( d:sample(random(1234),10), samples )
-local pdf_result = matrix.col_major(10,{ 1.01885,
-                                           -45.38,
-                                           -1.25495,
-                                           -15.5582,
-                                           -11.3048,
-                                           -26.279,
-                                           -1.00439,
-                                           -15.7705,
-                                           -5.93778,
-                                           -63.1531, })
-local x = matrix.col_major(10,1,{ 0.091862,
-                                  11.691586,
-                                  0.660310,
-                                  4.236131,
-                                  3.172766,
-                                  6.916327,
-                                  0.597670,
-                                  4.289197,
-                                  1.831019,
-                                  16.134842, })
+local pdf_result = M(10,{ 1.01885,
+                            -45.38,
+                            -1.25495,
+                            -15.5582,
+                            -11.3048,
+                            -26.279,
+                            -1.00439,
+                            -15.7705,
+                            -5.93778,
+                            -63.1531, })
+local x = M(10,1,{ 0.091862,
+                   11.691586,
+                   0.660310,
+                   4.236131,
+                   3.172766,
+                   6.916327,
+                   0.597670,
+                   4.289197,
+                   1.831019,
+                   16.134842, })
 check.eq( d:logpdf(x), pdf_result )
 
-local cdf_result = matrix.col_major(10,{
-                                        -1.17928,
-                                        -4.89368e-21,
-                                        -0.0739403,
-                                        -4.37609e-08,
-                                        -3.07852e-06,
-                                        -9.66294e-13,
-                                        -0.0960346,
-                                        -3.53917e-08,
-                                        -0.000659686,
-                                        -9.35209e-29,
-                                       })
+local cdf_result = M(10,{
+                         -1.17928,
+                         -4.89368e-21,
+                         -0.0739403,
+                         -4.37609e-08,
+                         -3.07852e-06,
+                         -9.66294e-13,
+                         -0.0960346,
+                         -3.53917e-08,
+                         -0.000659686,
+                         -9.35209e-29,
+                        })
 check.eq( d:logcdf(x), cdf_result )
 
 local x = x:rewrap(1,10)
-local d = stats.dist.exponential(matrix.col_major(10):fill(4))
+local d = stats.dist.exponential(M(10):fill(4))
 
 check.number_eq( d:logpdf(x):get(1), pdf_result:sum() )
 check.number_eq( d:logcdf(x):get(1), cdf_result:sum() )
@@ -124,13 +124,13 @@ check.number_eq( d:logcdf(x):get(1), cdf_result:sum() )
 local d = stats.dist.binomial(10,0.5)
 
 check.eq( d:sample(random(1234),10),
-          matrix.col_major(10,1,{3,6,6,6,5,5,4,5,3,5}) )
+          M(10,1,{3,6,6,6,5,5,4,5,3,5}) )
 
-local pdf_result = matrix.col_major(3,{-1.58436,-3.12481,-4.62889})
-check.eq( d:logpdf(matrix.col_major(3,1,{4,8,1})), pdf_result )
+local pdf_result = M(3,{-1.58436,-3.12481,-4.62889})
+check.eq( d:logpdf(M(3,1,{4,8,1})), pdf_result )
 
-local cdf_result = matrix.col_major(3,{-0.975635,-0.0108004,-4.53358})
-check.eq( d:logcdf(matrix.col_major(3,1,{4,8,1})), cdf_result )
+local cdf_result = M(3,{-0.975635,-0.0108004,-4.53358})
+check.eq( d:logcdf(M(3,1,{4,8,1})), cdf_result )
 
 -----------------------------------------------------------------------------
 -- BERNOULLI DISTRIBUTION

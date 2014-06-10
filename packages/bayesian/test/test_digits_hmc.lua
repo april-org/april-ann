@@ -1,7 +1,7 @@
 -- un generador de valores aleatorios... y otros parametros
-local bunch_size     = 1024
+local bunch_size     = 128
 local weights_random = random(1234)
-local description    = "256 inputs 128 tanh 10 log_softmax"
+local description    = "256 inputs 10 log_softmax"
 local inf            = -0.1
 local sup            =  0.1
 local shuffle_random = random(5678)
@@ -62,10 +62,26 @@ local trainer = trainable.supervised_trainer(thenet,
                                              bunch_size,
                                              bayesian.optimizer.hmc())
 trainer:build()
-trainer:set_option("nsteps",      80)
-trainer:set_option("var",         60)
-trainer:set_option("seed",     74967)
-trainer:set_option("epsilon",  0.002)
+trainer:set_option("target_acceptance_rate", 0.65)
+trainer:set_option("epsilon",       0.002)
+trainer:set_option("epsilon_max",      80)
+trainer:set_option("mass",           2000)
+trainer:set_option("nsteps",            2)
+trainer:set_option("scale",    bunch_size)
+trainer:set_option("seed",          74967)
+--
+
+-------------------------------------------------------
+-- hierarchical model
+local hmc    = trainer:get_optimizer()
+local priors = hmc:get_priors()
+--
+local w_mu   = priors:value("w_mu",  0)
+local w_var  = priors:value("w_var", 1)
+for wname,_ in trainer:iterate_weights() do
+  priors:dist(wname, "normal", w_mu, w_var)
+end
+-------------------------------------------------------
 
 local trainers = {}
 for i=1,nchains do
@@ -124,6 +140,7 @@ end
 for j=1,#trainers do
   local thenet = trainers[j]:get_component()
   local hmc = trainers[j]:get_optimizer()
+  -- Bayesian combination of N sampled weights
   local bayesian_model = bayesian.build_bayes_comb{
     forward = function(weights, input)
       thenet:build{ weights = weights }
@@ -142,6 +159,22 @@ for j=1,#trainers do
                                                   output_dataset=datosentrenar.output_dataset,
                                                 }))
   print("VA", bayesian_trainer:validate_dataset(datosvalidar))
+  -- MAP on validation
+  trainers[j]:set_loss_function(ann.loss.zero_one())
+  local map_weigths = bayesian.get_MAP_weights(function(weights)
+                                                 trainers[j]:build{ weights = weights }
+                                                 return trainers[j]:validate_dataset(datosvalidar)
+                                               end,
+                                               hmc:get_samples(),
+                                               hmc:get_state_table().energies)
+  trainers[j]:build{ weights = map_weights }
+  print("TR", trainers[j]:validate_dataset({
+                                             input_dataset=datosentrenar.input_dataset,
+                                             output_dataset=datosentrenar.output_dataset,
+                                           }))
+  print("VA", trainers[j]:validate_dataset(datosvalidar))
+  local img = ann.connections.input_filters_image(map_weigths("w1"), {16,16})
+  ImageIO.write(img, "/tmp/filters.png")
 end
 
 clock:stop()

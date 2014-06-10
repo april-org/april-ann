@@ -33,6 +33,7 @@ namespace Stats {
     log_float cov_det, K;
     float cov_det_sign;
 
+    void updateParams();
     virtual void privateSample(MTRand *rng, MatrixFloat *result);
     virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);
     virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result);
@@ -41,9 +42,7 @@ namespace Stats {
     GeneralNormalDistribution(MatrixFloat *mean, MatrixFloat *cov);
     virtual ~GeneralNormalDistribution();
     virtual StatisticalDistributionBase *clone();
-    virtual MatrixFloatSet *getParams();
     virtual char *toLuaString(bool is_ascii) const;
-    virtual void updateParams();
   };
 
   /// Normal distribution with diagonal covariance sparse matrix
@@ -54,6 +53,7 @@ namespace Stats {
     float cov_det_sign;
     SparseMatrixFloat *cov, *inv_cov, *L;
 
+    void updateParams();
     virtual void privateSample(MTRand *rng, MatrixFloat *result);
     virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);
     virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result);
@@ -62,9 +62,7 @@ namespace Stats {
     DiagonalNormalDistribution(MatrixFloat *mean, SparseMatrixFloat *cov);
     virtual ~DiagonalNormalDistribution();
     virtual StatisticalDistributionBase *clone();
-    virtual MatrixFloatSet *getParams();
     virtual char *toLuaString(bool is_ascii) const;
-    virtual void updateParams();
   };
 
   /// Normal distribution with mean=0 and var=1
@@ -80,7 +78,6 @@ namespace Stats {
     StandardNormalDistribution();
     virtual ~StandardNormalDistribution();
     virtual StatisticalDistributionBase *clone();
-    virtual MatrixFloatSet *getParams();
     virtual char *toLuaString(bool is_ascii) const;
   };
   
@@ -99,7 +96,6 @@ namespace Stats {
                                  MatrixFloat *location=0);
     virtual ~GeneralLogNormalDistribution();
     virtual StatisticalDistributionBase *clone();
-    virtual MatrixFloatSet *getParams();
     virtual char *toLuaString(bool is_ascii) const;
   };
 
@@ -117,7 +113,6 @@ namespace Stats {
                                   MatrixFloat *location=0);
     virtual ~DiagonalLogNormalDistribution();
     virtual StatisticalDistributionBase *clone();
-    virtual MatrixFloatSet *getParams();
     virtual char *toLuaString(bool is_ascii) const;
   };
 

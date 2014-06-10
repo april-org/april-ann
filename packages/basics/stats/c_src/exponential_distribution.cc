@@ -125,12 +125,6 @@ namespace Stats {
     return new ExponentialDistribution(lambda->clone());
   }
   
-  MatrixFloatSet *ExponentialDistribution::getParams() {
-    MatrixFloatSet *dict = new MatrixFloatSet();
-    dict->insert("lambda", lambda);
-    return dict;
-  }
-  
   char *ExponentialDistribution::toLuaString(bool is_ascii) const {
     buffer_list buffer;
     char *lambda_str;

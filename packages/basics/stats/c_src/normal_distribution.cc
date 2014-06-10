@@ -123,13 +123,6 @@ namespace Stats {
     return new GeneralNormalDistribution(mean->clone(), cov->clone());
   }
   
-  MatrixFloatSet *GeneralNormalDistribution::getParams() {
-    MatrixFloatSet *dict = new MatrixFloatSet();
-    dict->insert("mu", mean);
-    dict->insert("sigma2", cov);
-    return dict;
-  }
-  
   char *GeneralNormalDistribution::toLuaString(bool is_ascii) const {
     buffer_list buffer;
     char *mean_str, *cov_str;
@@ -252,13 +245,6 @@ namespace Stats {
     return new DiagonalNormalDistribution(mean->clone(), cov->clone());
   }
   
-  MatrixFloatSet *DiagonalNormalDistribution::getParams() {
-    MatrixFloatSet *dict = new MatrixFloatSet();
-    dict->insert("mu", mean);
-    dict->insert("sigma2", cov);
-    return dict;
-  }
-  
   char *DiagonalNormalDistribution::toLuaString(bool is_ascii) const {
     buffer_list buffer;
     char *mean_str, *cov_str;
@@ -309,11 +295,6 @@ namespace Stats {
 
   StatisticalDistributionBase *StandardNormalDistribution::clone() {
     return new StandardNormalDistribution();
-  }
-  
-  MatrixFloatSet *StandardNormalDistribution::getParams() {
-    MatrixFloatSet *dict = new MatrixFloatSet();
-    return dict;
   }
   
   char *StandardNormalDistribution::toLuaString(bool is_ascii) const {
@@ -386,14 +367,6 @@ namespace Stats {
   StatisticalDistributionBase *GeneralLogNormalDistribution::clone() {
     return new GeneralLogNormalDistribution(mean->clone(), cov->clone(),
                                             location->clone());
-  }
-  
-  MatrixFloatSet *GeneralLogNormalDistribution::getParams() {
-    MatrixFloatSet *dict = new MatrixFloatSet();
-    dict->insert("mu", mean);
-    dict->insert("sigma2", cov);
-    dict->insert("location", location);
-    return dict;
   }
   
   char *GeneralLogNormalDistribution::toLuaString(bool is_ascii) const {
@@ -474,14 +447,6 @@ namespace Stats {
   StatisticalDistributionBase *DiagonalLogNormalDistribution::clone() {
     return new DiagonalLogNormalDistribution(mean->clone(), cov->clone(),
                                              location->clone());
-  }
-  
-  MatrixFloatSet *DiagonalLogNormalDistribution::getParams() {
-    MatrixFloatSet *dict = new MatrixFloatSet();
-    dict->insert("mu", mean);
-    dict->insert("sigma2", cov);
-    dict->insert("location", location);
-    return dict;
   }
   
   char *DiagonalLogNormalDistribution::toLuaString(bool is_ascii) const {

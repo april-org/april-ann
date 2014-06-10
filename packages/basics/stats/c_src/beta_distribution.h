@@ -30,6 +30,8 @@ namespace Stats {
     MatrixFloat *alpha, *beta;
     float alphaf, betaf;
     log_float Bab;
+
+    void updateParams();
     
   protected:
     virtual void privateSample(MTRand *rng, MatrixFloat *result);
@@ -40,9 +42,7 @@ namespace Stats {
     BetaDistribution(MatrixFloat *alpha, MatrixFloat *beta);
     virtual ~BetaDistribution();
     virtual StatisticalDistributionBase *clone();
-    virtual MatrixFloatSet *getParams();
     virtual char *toLuaString(bool is_ascii) const;
-    virtual void updateParams();
   };
   
 }

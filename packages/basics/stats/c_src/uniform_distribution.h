@@ -28,6 +28,8 @@ namespace Stats {
   class UniformDistribution : public StatisticalDistributionBase {
     MatrixFloat *low, *high, *diff;
     
+    void updateParams();
+
   protected:
     virtual void privateSample(MTRand *rng, MatrixFloat *result);
     virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);
@@ -37,9 +39,7 @@ namespace Stats {
     UniformDistribution(MatrixFloat *low, MatrixFloat *high);
     virtual ~UniformDistribution();
     virtual StatisticalDistributionBase *clone();
-    virtual MatrixFloatSet *getParams();
     virtual char *toLuaString(bool is_ascii) const;
-    virtual void updateParams();
   };
   
 }

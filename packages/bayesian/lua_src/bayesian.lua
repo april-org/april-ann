@@ -3,17 +3,17 @@ get_table_from_dotted_string("bayesian", true)
 local wrap_matrices = matrix.dict.wrap_matrices
 
 -- modifies model weights to be the MAP model for a given eval function
-function bayesian.build_MAP(model, eval, samples)
-  assert(samples and energies, "Needs a table with samples and energies fields")
-  assert(#samples > 0, "Tables are empty")
-  local best,argbest = eval(samples[1]),samples[1]
+function bayesian.get_MAP_weights(eval, samples)
+  assert(samples, "Needs a table with samples as 2nd argument")
+  assert(#samples > 0, "samples table is empty")
+  local best,argbest = table.pack(eval(samples[1])),samples[1]
   for i=2,#samples do
-    if energies[i] < best then
-      best,argbest = eval(samples[1]),samples[i]
+    local current = table.pack(eval(samples[i]))
+    if current[1] < best[1] then
+      best,argbest = current,samples[i]
     end
   end
-  model:build{ weights = best:clone() }
-  return model
+  return argbest,table.unpack(best)
 end
 
 -- returns a model which forwards computation is a combination of N sampled
@@ -56,3 +56,5 @@ function bayesian.build_bayes_comb(t)
     end,
   }
 end
+
+------------------------------------------------------------------------------

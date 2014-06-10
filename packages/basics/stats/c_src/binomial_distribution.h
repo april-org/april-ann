@@ -32,6 +32,7 @@ namespace Stats {
     float pf, pfm1;
     log_float lpf, lpfm1;
     
+    void updateParams();
     log_float computeDensity(int k);
 
   protected:
@@ -43,9 +44,7 @@ namespace Stats {
     BinomialDistribution(MatrixFloat *alpha, MatrixFloat *binomial);
     virtual ~BinomialDistribution();
     virtual StatisticalDistributionBase *clone();
-    virtual MatrixFloatSet *getParams();
     virtual char *toLuaString(bool is_ascii) const;
-    virtual void updateParams();
   };
   
 }
