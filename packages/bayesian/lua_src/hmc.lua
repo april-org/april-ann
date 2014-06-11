@@ -2,6 +2,10 @@ get_table_from_dotted_string("bayesian", true)
 
 local wrap_matrices = matrix.dict.wrap_matrices
 
+-- Hamiltonian Monte-Carlo implementation with a basic on-line adaptation of
+-- epsilon, bounded by [epsilon_min,epsilon_max].
+
+
 -- Radford M. Neal. MCMC using Hamiltonian dynamics. 2010
 -- http://www.cs.toronto.edu/~radford/ham-mcmc.abstract.html
 
@@ -11,9 +15,11 @@ local wrap_matrices = matrix.dict.wrap_matrices
 
 -- http://deeplearning.net/tutorial/hmc.html
 
--- eval is a function a function which returns L(Theta),dL/dTheta. It is
+-- @param eval is a function a function which returns L(Theta),dL/dTheta. It is
 -- implemented to minimize the negative of the log-likelihood (maximize the
--- log-likelihood)
+-- log-likelihood).
+--
+-- @param theta is a matrix, a table of matrices or a matrix.dict instance.
 local function hmc(self, eval, theta)
   local state       = self.state
   --
@@ -26,7 +32,6 @@ local function hmc(self, eval, theta)
   --
   local acc_decay   = self:get_option("acc_decay")
   local alpha       = self:get_option("alpha")
-  local beta        = self:get_option("beta")
   local epsilon     = state.epsilon or self:get_option("epsilon")
   local epsilon_dec = self:get_option("epsilon_dec")
   local epsilon_inc = self:get_option("epsilon_inc")
@@ -36,10 +41,14 @@ local function hmc(self, eval, theta)
   local rng         = state.rng or random(self:get_option("seed"))
   local scale       = self:get_option("scale")
   local thin        = self:get_option("thin")
-  local mass         = self:get_option("mass")
+  local mass        = self:get_option("mass")
+  local persistence  = self:get_option("persistence")
   local target_acceptance_rate = self:get_option("target_acceptance_rate")
   --
+  assert(persistence >= 0.0 and persistence <= 1.0,
+         "Incorrect persistence ratio")
   local inv_mass     = 1.0/mass
+  local spersistence = math.sqrt(1 - persistence*persistence)
   state.acceptance_rate = state.acceptance_rate
   --
   -- kinetic energy associated with given velocity
@@ -94,15 +103,26 @@ local function hmc(self, eval, theta)
   --
   -- one HMC sample procedure
   local norm01 = stats.dist.normal()
-  local theta0 = theta:clone()
-  local vel = theta:clone_only_dims()
+  local theta0 = theta:clone() -- for in case of rejection
+  local vel    = self.state.vel
+  local vel0 -- only if persistent
   -- sample velocity from a standard normal distribution
-  for name,v in pairs(vel) do
-    norm01:sample(rng, v:rewrap(v:size(), 1))
+  if persistence == 0.0 or not vel then
+    vel = vel or theta:clone_only_dims()
+    for name,v in pairs(vel) do
+      norm01:sample(rng, v:rewrap(v:size(), 1))
+    end
+  else
+    vel0 = vel:clone() -- for in case of rejection
+    vel:scal(-persistence)
+    for name,v in pairs(vel) do
+      local aux = matrix.col_major(v:size(),1)
+      norm01:sample(rng, aux)
+      v:rewrap(v:size(),1):axpy(spersistence, aux)
+    end
   end
   -- epsilon perturbation
-  local lambda = ((rng:rand() < beta) and -1) or 1
-  local p_epsilon = lambda * epsilon * (1.0 + alpha * rng:randNorm(0,1))
+  local p_epsilon = epsilon + rng:randNorm(0,alpha*alpha)
   local initial_kinetic = kinetic_energy(vel) * inv_mass
   -- simulate the HMC mechanics
   local initial_energy, final_energy = simulation(theta, vel, p_epsilon, nsteps)
@@ -115,7 +135,11 @@ local function hmc(self, eval, theta)
   local energy = final_energy
   local ok =  pcall(theta.prune_subnormal_and_check_normal, theta)
   -- if not ok then print(ok, "PROBLEM") end
-  if not accept or not ok then energy = initial_energy theta:copy(theta0) end
+  if not accept or not ok then
+    energy = initial_energy
+    theta:copy(theta0)
+    if persistent then vel:copy(vel0) end
+  end
   local accepted = (accept and 1) or 0
   -- accept rate update (exponential mean)
   assert(acc_decay > 0.0 and acc_decay < 1.0)
@@ -151,6 +175,7 @@ local function hmc(self, eval, theta)
   state.final_kinetic = final_kinetic
   state.epsilon = epsilon
   state.rng = rng
+  state.vel = vel
   --
   -- if #samples > samples_max_size then
   --   local next_samples = {}
@@ -175,8 +200,7 @@ function hmc_class_metatable:__call(g_options, l_options, count, state)
                               { "thin", "Take 1-of-thin samples (1)" },
                               { "acc_decay", "Acceptance average mean decay (0.95)" },
                               { "target_acceptance_rate", "Desired acceptance rate (0.65)" },
-                              { "alpha", "Step length perturbation size (0.1)" },
-                              { "beta", "Step length sign change prob (0.5)" },
+                              { "alpha", "Step length perturbation stddev (0.1)" },
                               { "mass", "Mass of particles (1)" },
                               { "nsteps", "Number of Leap-Frog steps (20)" },
                               { "epsilon", "Initial epsilon value (0.01)" },
@@ -184,6 +208,7 @@ function hmc_class_metatable:__call(g_options, l_options, count, state)
                               { "epsilon_dec", "Epsilon decrement (0.98)" },
                               { "epsilon_min", "Epsilon lower bound (1e-04)" },
                               { "epsilon_max", "Epsilon upper bound (1.0)" },
+                              { "persistence", "Momenta persistence, 0 for non-persistent (0)" },
                               { "scale", "Energy function scale (1)" },
                               { "seed", "Seed for random number generator (time)" },
                             },
@@ -210,7 +235,6 @@ function hmc_class_metatable:__call(g_options, l_options, count, state)
   obj:set_option("acc_decay", 0.95)
   obj:set_option("target_acceptance_rate", 0.65)
   obj:set_option("alpha", 0.1)
-  obj:set_option("beta", 0.5)
   obj:set_option("mass", 1)
   obj:set_option("nsteps", 20)
   obj:set_option("epsilon", 0.01)
@@ -218,6 +242,7 @@ function hmc_class_metatable:__call(g_options, l_options, count, state)
   obj:set_option("epsilon_dec", 0.98)
   obj:set_option("epsilon_min", 1e-04)
   obj:set_option("epsilon_max", 1.0)
+  obj:set_option("persistence", 0.0)
   obj:set_option("scale", 1.0)
   return obj
 end
@@ -263,7 +288,7 @@ function hmc_methods:get_samples()
 end
 
 function hmc_methods:get_state_string()
-  return "%6d %.10f :: %6d %.10f %6.2f%% %s"%
+  return "%6d %11g :: %6d %11g %6.2f%% %s"%
   {
     self:get_count(), self.state.energy, #self.state.samples,
     self.state.epsilon,

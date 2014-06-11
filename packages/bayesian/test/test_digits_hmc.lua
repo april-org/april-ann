@@ -7,7 +7,7 @@ local sup            =  0.1
 local shuffle_random = random(5678)
 
 local rnd = random(123824)
-local burnin = 1000
+local burnin = 3000
 local max_epochs = 3000
 local nchains = 1
 
@@ -62,13 +62,16 @@ local trainer = trainable.supervised_trainer(thenet,
                                              bunch_size,
                                              bayesian.optimizer.hmc())
 trainer:build()
-trainer:set_option("target_acceptance_rate", 0.65)
+trainer:set_option("alpha",           0.2)
 trainer:set_option("epsilon",       0.002)
 trainer:set_option("epsilon_max",      80)
+trainer:set_option("epsilon_min",   1e-10)
 trainer:set_option("mass",           2000)
-trainer:set_option("nsteps",            1)
+trainer:set_option("nsteps",            2)
+-- trainer:set_option("persistence",    0.90)
 trainer:set_option("scale",             1)
 trainer:set_option("seed",          74967)
+trainer:set_option("target_acceptance_rate", 0.65)
 --
 
 -------------------------------------------------------
