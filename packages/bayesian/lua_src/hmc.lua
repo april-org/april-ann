@@ -52,9 +52,9 @@ local function hmc(self, eval, theta)
     --
     -- receives the optimizer table, a matrix dict with positions, other with
     -- velocities, and the epsilon for the step
-    local leapfrog = function(pos, vel, epsilon)
+    local leapfrog = function(pos, vel, epsilon, i)
       -- from pos(t) and vel(t - eps/2), compute vel(t + eps/2)
-      local _,grads = eval()
+      local _,grads = eval(i)
       grads = wrap_matrices(grads)
       vel:axpy(-epsilon, grads)
       -- from vel(t + eps/2) compute pos(t + eps)
@@ -64,7 +64,7 @@ local function hmc(self, eval, theta)
     end
     --
     -- compute velocity at time: t + eps/2
-    local initial_energy,grads = eval()
+    local initial_energy,grads = eval(0)
     initial_energy = scale*initial_energy + priors:compute_neg_log_prior(pos)
     grads = wrap_matrices(grads)
     vel:axpy(-0.5*epsilon, grads)
@@ -72,10 +72,10 @@ local function hmc(self, eval, theta)
     pos:axpy(epsilon*inv_mass, vel)
     -- compute from 2 to nsteps leapfrog updates
     for i=2,nsteps do
-      leapfrog(pos, vel, epsilon)
+      leapfrog(pos, vel, epsilon, i-1)
     end
     -- compute velocity at time: t + nsteps*eps
-    local final_energy,grads = eval()
+    local final_energy,grads = eval(nsteps)
     final_energy = scale*final_energy + priors:compute_neg_log_prior(pos)
     grads = wrap_matrices(grads)
     vel:axpy(-0.5*epsilon, grads)

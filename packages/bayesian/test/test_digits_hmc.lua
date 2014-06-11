@@ -66,21 +66,21 @@ trainer:set_option("target_acceptance_rate", 0.65)
 trainer:set_option("epsilon",       0.002)
 trainer:set_option("epsilon_max",      80)
 trainer:set_option("mass",           2000)
-trainer:set_option("nsteps",            2)
-trainer:set_option("scale",    bunch_size)
+trainer:set_option("nsteps",            1)
+trainer:set_option("scale",             1)
 trainer:set_option("seed",          74967)
 --
 
 -------------------------------------------------------
 -- hierarchical model
-local hmc    = trainer:get_optimizer()
-local priors = hmc:get_priors()
---
-local w_mu   = priors:value("w_mu",  0)
-local w_var  = priors:value("w_var", 1)
-for wname,_ in trainer:iterate_weights() do
-  priors:dist(wname, "normal", w_mu, w_var)
-end
+-- local hmc    = trainer:get_optimizer()
+-- local priors = hmc:get_priors()
+-- --
+-- local w_mu   = priors:value("w_mu",  0)
+-- local w_var  = priors:value("w_var", 1)
+-- for wname,_ in trainer:iterate_weights() do
+--   priors:dist(wname, "normal", w_mu, w_var)
+-- end
 -------------------------------------------------------
 
 local trainers = {}
