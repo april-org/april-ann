@@ -881,9 +881,8 @@ end
 		     end,
 		     function(self, seed, result)
 		       local a = self.args[1]
-		       local sign = autodiff.op.sign(self)
-		       a:diff(autodiff.op.cmul(sign,seed), result)
-		       return result
+		       a:diff(autodiff.op.cmul(a,seed) * (1/self), result)
+                       return result
 		     end,
 		     function(self, dest)
 		       local a = self.args[1]
