@@ -26,6 +26,7 @@ local function metropolis(self, eval, theta)
   local epsilon_max = self:get_option("epsilon_max")
   local epsilon_min = self:get_option("epsilon_min")
   local rng         = state.rng or random(self:get_option("seed"))
+  local scale       = self:get_option("scale")
   local thin        = self:get_option("thin")
   local target_acceptance_rate = self:get_option("target_acceptance_rate")
   --
@@ -40,14 +41,14 @@ local function metropolis(self, eval, theta)
   local norm01 = state.norm01 or stats.dist.normal()
   local theta0 = theta:clone() -- for in case of rejection
   local eval0_result = table.pack( eval(0) )
-  local initial_energy = eval0_result[1]
+  local initial_energy = scale*eval0_result[1]
   for name,v in pairs(theta) do
-    local aux = matrix.col_major(v:size(),1)
-    norm01:sample(rng, aux)
-    v:rewrap(v:size(),1):axpy(epsilon, aux)
+    local aux = matrix.as(v)
+    norm01:sample(rng, aux:rewrap(v:size(),1))
+    v:axpy(epsilon, aux)
   end
   local eval1_result = table.pack( eval(1) )
-  local final_energy = eval1_result[1]
+  local final_energy = scale*eval1_result[1]
   -- rejection based in metropolis hastings
   local accept = metropolis_hastings(initial_energy, final_energy)
   --
@@ -119,15 +120,11 @@ function metropolis_class_metatable:__call(g_options, l_options, count, state)
                               { "thin", "Take 1-of-thin samples (1)" },
                               { "acc_decay", "Acceptance average mean decay (0.95)" },
                               { "target_acceptance_rate", "Desired acceptance rate (0.65)" },
-                              { "alpha", "Step length perturbation stddev (0.1)" },
-                              { "mass", "Mass of particles (1)" },
-                              { "nsteps", "Number of Leap-Frog steps (20)" },
                               { "epsilon", "Initial epsilon value (0.01)" },
                               { "epsilon_inc", "Epsilon increment (1.02)" },
                               { "epsilon_dec", "Epsilon decrement (0.98)" },
                               { "epsilon_min", "Epsilon lower bound (1e-04)" },
                               { "epsilon_max", "Epsilon upper bound (1.0)" },
-                              { "persistence", "Momenta persistence, 0 for non-persistent (0)" },
                               { "scale", "Energy function scale (1)" },
                               { "seed", "Seed for random number generator (time)" },
                             },
@@ -152,12 +149,13 @@ function metropolis_class_metatable:__call(g_options, l_options, count, state)
   obj = class_instance(obj, self)
   obj:set_option("thin", 1)
   obj:set_option("acc_decay", 0.95)
-  obj:set_option("target_acceptance_rate", 0.65)
   obj:set_option("epsilon", 0.1)
   obj:set_option("epsilon_inc", 1.02)
   obj:set_option("epsilon_dec", 0.98)
   obj:set_option("epsilon_min", 1e-04)
   obj:set_option("epsilon_max", 1.0)
+  obj:set_option("scale", 1)
+  obj:set_option("target_acceptance_rate", 0.40)
   return obj
 end
 

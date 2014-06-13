@@ -102,7 +102,7 @@ local function hmc(self, eval, theta)
   priors:sample(rng, theta)
   --
   -- one HMC sample procedure
-  local norm01 = stats.dist.normal()
+  local norm01 = state.norm01 or stats.dist.normal()
   local theta0 = theta:clone() -- for in case of rejection
   local vel    = self.state.vel
   local vel0 -- only if persistent
@@ -174,6 +174,7 @@ local function hmc(self, eval, theta)
   state.initial_kinetic = initial_kinetic
   state.final_kinetic = final_kinetic
   state.epsilon = epsilon
+  state.norm01 = norm01
   state.rng = rng
   state.vel = vel
   --
@@ -199,7 +200,6 @@ function hmc_class_metatable:__call(g_options, l_options, count, state)
   local obj = ann.optimizer({
                               { "thin", "Take 1-of-thin samples (1)" },
                               { "acc_decay", "Acceptance average mean decay (0.95)" },
-                              { "target_acceptance_rate", "Desired acceptance rate (0.65)" },
                               { "alpha", "Step length perturbation stddev (0.1)" },
                               { "mass", "Mass of particles (1)" },
                               { "nsteps", "Number of Leap-Frog steps (20)" },
@@ -211,6 +211,7 @@ function hmc_class_metatable:__call(g_options, l_options, count, state)
                               { "persistence", "Momenta persistence, 0 for non-persistent (0)" },
                               { "scale", "Energy function scale (1)" },
                               { "seed", "Seed for random number generator (time)" },
+                              { "target_acceptance_rate", "Desired acceptance rate (0.65)" },
                             },
                             g_options,
                             l_options,
@@ -233,7 +234,6 @@ function hmc_class_metatable:__call(g_options, l_options, count, state)
   obj = class_instance(obj, self)
   obj:set_option("thin", 1)
   obj:set_option("acc_decay", 0.95)
-  obj:set_option("target_acceptance_rate", 0.65)
   obj:set_option("alpha", 0.1)
   obj:set_option("mass", 1)
   obj:set_option("nsteps", 20)
@@ -244,6 +244,7 @@ function hmc_class_metatable:__call(g_options, l_options, count, state)
   obj:set_option("epsilon_max", 1.0)
   obj:set_option("persistence", 0.0)
   obj:set_option("scale", 1.0)
+  obj:set_option("target_acceptance_rate", 0.65)
   return obj
 end
 

@@ -1,5 +1,5 @@
 -- un generador de valores aleatorios... y otros parametros
-local bunch_size     = 128
+local bunch_size     = 1024
 local weights_random = random(1234)
 local description    = "256 inputs 10 log_softmax"
 local inf            = -0.1
@@ -60,17 +60,10 @@ local thenet = ann.mlp.all_all.generate(description)
 local trainer = trainable.supervised_trainer(thenet,
                                              ann.loss.multi_class_cross_entropy(),
                                              bunch_size,
-                                             bayesian.optimizer.hmc())
+                                             bayesian.optimizer.metropolis())
 trainer:build()
-trainer:set_option("alpha",           0.2)
-trainer:set_option("epsilon",       0.002)
-trainer:set_option("epsilon_max",      80)
-trainer:set_option("epsilon_min",   1e-10)
-trainer:set_option("mass",           2000)
-trainer:set_option("nsteps",            2)
--- trainer:set_option("persistence",    0.90)
-trainer:set_option("scale",    bunch_size)
-trainer:set_option("seed",          74967)
+trainer:set_option("scale", bunch_size)
+trainer:set_option("seed",       74967)
 --
 
 -------------------------------------------------------
