@@ -1890,39 +1890,39 @@ function formiga.__main_documentation__ (t)
     if tbl.INPUT == nil then
       tbl.INPUT = doc_dir
     end
-    if tbl.PROJECT_NAME == nil then
-      tbl.PROJECT_NAME = '"'..formiga.program_name..({ " (user reference manual)",
-						       " (developer manual)"})[i]..'"'
-    end
+    -- if tbl.PROJECT_NAME == nil then
+    --   tbl.PROJECT_NAME = '"'..formiga.program_name..({ " (user reference manual)",
+    --     					       " (developer manual)"})[i]..'"'
+    -- end
     if tbl.OUTPUT_DIRECTORY == nil then
       tbl.OUTPUT_DIRECTORY = dest_dir
     end
     if tbl.STRIP_FROM_PATH == nil then
       tbl.STRIP_FROM_PATH = doc_dir
     end
-    if tbl.HTML_HEADER == nil then
-      local header_filename = formiga.os.compose_dir(formiga.os.cwd,
-						     formiga.documentation_build_dir,
-						     doc_dir_name,
-						     "header.html")
-      --formiga.__make_header_doc__(filename,title,dev_title,user_title,is_dev)
-      formiga.__make_header_doc__(header_filename,
-				  formiga.program_name,
-				  formiga.program_name.." (developer manual)",
-				  formiga.program_name.." (user reference manual)",
-				  i==2)
-      tbl.HTML_HEADER = header_filename
-    end
-    if tbl.HTML_FOOTER == nil then
-      local footer_filename = formiga.os.compose_dir(formiga.os.cwd,
-						     formiga.documentation_build_dir,
-						     doc_dir_name,
-						     "footer.html")
-      tbl.HTML_FOOTER = footer_filename
-      local f= io.open(footer_filename,"w")
-      f:write("\n</BODY>\n</HTML>\n")
-      f:close()
-    end
+    -- if tbl.HTML_HEADER == nil then
+    --   local header_filename = formiga.os.compose_dir(formiga.os.cwd,
+    --     					     formiga.documentation_build_dir,
+    --     					     doc_dir_name,
+    --     					     "header.html")
+    --   --formiga.__make_header_doc__(filename,title,dev_title,user_title,is_dev)
+    --   formiga.__make_header_doc__(header_filename,
+    --     			  formiga.program_name,
+    --     			  formiga.program_name.." (developer manual)",
+    --     			  formiga.program_name.." (user reference manual)",
+    --     			  i==2)
+    --   tbl.HTML_HEADER = header_filename
+    -- end
+    -- if tbl.HTML_FOOTER == nil then
+    --   local footer_filename = formiga.os.compose_dir(formiga.os.cwd,
+    --     					     formiga.documentation_build_dir,
+    --     					     doc_dir_name,
+    --     					     "footer.html")
+    --   tbl.HTML_FOOTER = footer_filename
+    --   local f= io.open(footer_filename,"w")
+    --   f:write("\n</BODY>\n</HTML>\n")
+    --   f:close()
+    -- end
     -- copiar el our_doxygen.css
     os.execute(string.format("mkdir -p %s; cp %s %s",
 			     formiga.os.compose_dir(dest_dir,"html"),
