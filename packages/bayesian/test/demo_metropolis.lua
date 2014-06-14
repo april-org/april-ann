@@ -26,10 +26,10 @@ function plot_samples(samples)
   gp:close()
 end
 
-function correlated_normal()
+function correlated_normal(x)
   local grad = x * A
   local logp = -0.5 * grad:dot(x)
-  return -logp, { x=grad }
+  return -logp
 end
 
 ----------------------------------------------------------------------------
@@ -38,10 +38,10 @@ local opt = bayesian.optimizer.metropolis()
 opt:set_option("seed", 4676)
 
 opt:start_burnin()
-for i=1,5000 do opt:execute(correlated_normal, {x=x}) end
+for i=1,5000 do opt:execute(correlated_normal, x) end
 opt:finish_burnin()
 
-for i=1,5000 do opt:execute(correlated_normal, {x=x}) end
+for i=1,5000 do opt:execute(correlated_normal, x) end
 print(opt:get_state_string())
 
 plot_samples(opt:get_samples())

@@ -220,6 +220,10 @@ function optimizer_methods:clone()
   return obj
 end
 
+function optimizer_methods:needs_property(name)
+  return false
+end
+
 ------------------------------------------------
 ------------------------------------------------
 ------------------------------------------------
@@ -270,8 +274,9 @@ function sgd_methods:execute(eval, weights)
   local table = table
   local assert = assert
   --
+  local origw = weights
   local weights = wrap_matrices(weights)
-  local arg = table.pack( eval() )
+  local arg = table.pack( eval(origw) )
   local tr_loss,gradients = table.unpack(arg)
   -- the gradient computation could fail returning nil, it is important to take
   -- this into account
@@ -329,6 +334,13 @@ function sgd_methods:to_lua_string(format)
   return table.concat(str_t, "")
 end
 
+local sgd_properties = {
+  gradient = true
+}
+function sgd_methods:needs_property(name)
+  return sgd_properties[name]
+end
+
 -----------------------------------
 --------- RESILIENT PROP ----------
 -----------------------------------
@@ -367,6 +379,7 @@ function rprop_methods:execute(eval, weights)
   local table = table
   local assert = assert
   --
+  local origw = weights
   local weights = wrap_matrices(weights)
   local initial_step  = self:get_option("initial_step")
   local eta_plus      = self:get_option("eta_plus")
@@ -378,7 +391,7 @@ function rprop_methods:execute(eval, weights)
   local old_sign      = self.old_sign
   local arg
   for i=1,niter do
-    arg = table.pack( eval(i-1) )
+    arg = table.pack( eval(origw, i-1) )
     local tr_loss,gradients = table.unpack(arg)
     -- the gradient computation could fail returning nil, it is important to
     -- take this into account
@@ -441,6 +454,13 @@ function rprop_methods:to_lua_string(format)
   return table.concat(str_t, "")
 end
 
+local rprop_properties = {
+  gradient = true
+}
+function rprop_methods:needs_property(name)
+  return rprop_properties[name]
+end
+
 ---------------------------------------
 --------- CONJUGATE GRADIENT ----------
 ---------------------------------------
@@ -493,6 +513,7 @@ function cg_methods:execute(eval, weights)
   local assert = assert
   local math = math
   --
+  local origw = weights
   local weights = wrap_matrices(weights)
   -- UPDATE_WEIGHTS function
   local update_weights = function(x, dir, s)
@@ -547,7 +568,7 @@ function cg_methods:execute(eval, weights)
   local df0 = self.state.df0 or x:clone_only_dims()
   
   -- evaluate at initial point
-  local arg = table.pack( eval(i) )
+  local arg = table.pack( eval(origw, i) )
   local tr_loss,gradients = table.unpack(arg)
   if not gradients then return nil end
   gradients = wrap_matrices(gradients)
@@ -574,7 +595,7 @@ function cg_methods:execute(eval, weights)
     
     update_weights(x, z1, s)
 
-    arg = table.pack( eval(i) )
+    arg = table.pack( eval(origw, i) )
     tr_loss,gradients = table.unpack(arg)
     gradients = wrap_matrices(gradients)
     f2 = tr_loss
@@ -605,7 +626,7 @@ function cg_methods:execute(eval, weights)
 	z1 = z1 + z2
 	
 	update_weights(x, z2, s)
-	arg = table.pack( eval(i) )
+	arg = table.pack( eval(origw, i) )
 	tr_loss,gradients = table.unpack(arg)
 	gradients = wrap_matrices(gradients)
 	f2 = tr_loss
@@ -648,7 +669,7 @@ function cg_methods:execute(eval, weights)
       z1=z1+z2;
       update_weights(x, z2, s)
       
-      arg = table.pack( eval(i) )
+      arg = table.pack( eval(origw, i) )
       tr_loss,gradients = table.unpack(arg)
       gradients = wrap_matrices(gradients)
       f2 = tr_loss
@@ -704,7 +725,7 @@ function cg_methods:execute(eval, weights)
   apply_regularization_and_penalties(x)
   
   -- evaluate the function at the end
-  local arg = table.pack( eval(i) )
+  local arg = table.pack( eval(origw, i) )
   -- returns the same as returned by eval(), plus the sequence of iteration
   -- losses and the number of iterations
   table.insert(arg, fx)
@@ -749,6 +770,13 @@ function cg_methods:to_lua_string(format)
   return table.concat(str_t, "")
 end
 
+local cg_properties = {
+  gradient = true
+}
+function cg_methods:needs_property(name)
+  return cg_properties[name]
+end
+
 ------------------------------
 --------- QUICKPROP ----------
 ------------------------------
@@ -787,8 +815,9 @@ function quickprop_methods:execute(eval, weights)
   local assert = assert
   local math = math
   --
+  local origw = weights
   local weights = wrap_matrices(weights)
-  local arg = table.pack( eval() )
+  local arg = table.pack( eval(origw) )
   local tr_loss,gradients = table.unpack(arg)
   -- the gradient computation could fail returning nil, it is important to take
   -- this into account
@@ -881,6 +910,14 @@ function quickprop_methods:to_lua_string(format)
   return table.concat(str_t, "")
 end
 
+local quickprop_properties = {
+  gradient = true
+}
+function quickprop_methods:needs_property(name)
+  return quickprop_properties[name]
+end
+
+
 ---------------------------------------------------------
 --------- AVERAGED STOCHASTIC GRADIENT DESCENT ----------
 ---------------------------------------------------------
@@ -916,8 +953,9 @@ function asgd_methods:execute(eval, weights)
   local table = table
   local assert = assert
   --
+  local origw = weights
   local weights = wrap_matrices(weights)
-  local arg = table.pack( eval() )
+  local arg = table.pack( eval(origw) )
   local tr_loss,gradients = table.unpack(arg)
   -- the gradient computation could fail returning nil, it is important to take
   -- this into account
@@ -979,4 +1017,11 @@ function asgd_methods:to_lua_string(format)
 		  self.update:to_lua_string(format),
 		  ")" }
   return table.concat(str_t, "")
+end
+
+local asgd_properties = {
+  gradient = true
+}
+function asgd_methods:needs_property(name)
+  return asgd_properties[name]
 end

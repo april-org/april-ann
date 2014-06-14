@@ -26,7 +26,7 @@ function plot_samples(samples)
   gp:close()
 end
 
-function correlated_normal()
+function correlated_normal(x)
   local grad = x * A
   local logp = -0.5 * grad:dot(x)
   return -logp, { x=grad }
@@ -38,10 +38,10 @@ local hmc = bayesian.optimizer.hmc()
 hmc:set_option("seed", 4676)
 
 hmc:start_burnin()
-for i=1,5000 do hmc:execute(correlated_normal, {x=x}) end
+for i=1,5000 do hmc:execute(correlated_normal, x) end
 hmc:finish_burnin()
 
-for i=1,5000 do hmc:execute(correlated_normal, {x=x}) end
+for i=1,5000 do hmc:execute(correlated_normal, x) end
 print(hmc:get_state_string())
 
 plot_samples(hmc:get_samples())

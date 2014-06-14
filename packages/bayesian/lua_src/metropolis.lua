@@ -17,7 +17,8 @@ local function metropolis(self, eval, theta)
   local math_clamp  = math.clamp
   local priors      = state.priors
   local samples     = state.samples
-  local theta       = wrap_matrices(theta)
+  local origw = theta
+  local theta = wrap_matrices(theta)
   --
   local acc_decay   = self:get_option("acc_decay")
   local epsilon     = state.epsilon or self:get_option("epsilon")
@@ -40,14 +41,14 @@ local function metropolis(self, eval, theta)
   -- one METROPOLIS sample procedure
   local norm01 = state.norm01 or stats.dist.normal()
   local theta0 = theta:clone() -- for in case of rejection
-  local eval0_result = table.pack( eval(0) )
+  local eval0_result = table.pack( eval(origw, 0) )
   local initial_energy = scale*eval0_result[1]
   for name,v in pairs(theta) do
     local aux = matrix.as(v)
     norm01:sample(rng, aux:rewrap(v:size(),1))
     v:axpy(epsilon, aux)
   end
-  local eval1_result = table.pack( eval(1) )
+  local eval1_result = table.pack( eval(origw, 1) )
   local final_energy = scale*eval1_result[1]
   -- rejection based in metropolis hastings
   local accept = metropolis_hastings(initial_energy, final_energy)
@@ -214,4 +215,10 @@ end
 
 function metropolis_methods:get_priors()
   return self.state.priors
+end
+
+local metropolis_properties = {
+}
+function metropolis_methods:needs_property(name)
+  return metropolis_properties[name]
 end

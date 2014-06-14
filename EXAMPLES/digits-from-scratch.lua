@@ -87,7 +87,10 @@ local train = function(thenet,data,loss,opt)
   loss:reset()
   for input,target in trainable.dataset_pair_iterator(data) do
     local tr_loss,_,tr_matrix =
-      opt:execute(function(it)
+      opt:execute(function(weights, it)
+                    if weights ~= cnns then
+                      thenet:build{ weights = weights }
+                    end
 		    thenet:reset(it)
 		    local out = thenet:forward(input)
 		    local tr_loss,tr_matrix = loss:compute_loss(out,target)

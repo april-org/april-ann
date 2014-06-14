@@ -771,16 +771,20 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
     end
     target = target:clone():cmul(mask)
   end
+  local needs_gradient = optimizer:needs_property("gradient")
   local tr_loss, _, tr_loss_matrix =
-    optimizer:execute(function(it)
-			local self   = self
-			local loss   = loss
-			local model  = self.ann_component
-			local grads  = self.weight_grads
-			local target = target
+    optimizer:execute(function(weights, it)
+                        if weights ~= self.weights_table then
+                          self:build{ weights = weights }
+                        end
+                        local self   = self
+                        local loss   = loss
+                        local model  = self.ann_component
+                        local grads  = self.weight_grads
+                        local target = target
                         local mask   = mask
-			model:reset(it)
-			local output = model:forward(input, true)
+                        model:reset(it)
+                        local output = model:forward(input, true)
                         if mask then
                           if not isa(output,matrix) then
                             output = output:get_matrix()
@@ -790,27 +794,31 @@ function trainable_supervised_trainer_methods:train_step(input, target, loss,
                           end
                           output = output:clone():cmul(mask)
                         end
-			local tr_loss,tr_loss_matrix
-			tr_loss,tr_loss_matrix = loss:compute_loss(output, target)
-			if not tr_loss_matrix then return nil end
-			local gradient=model:backprop(loss:gradient(output,target))
-			--
-			grads:zeros()
-			--
-			local grads = model:compute_gradients(grads)
-			self.weight_grads = grads
-			-- gradient smoothing
-			if smooth_gradients then
-			  for name,mat in pairs(grads) do
-			    local N = mat:get_shared_count()
-			    N       = ( N>0 and N) or 1
-			    mat:scal( 1.0/math.sqrt(N * bunch_size) )
-			  end
-			end
-			-- the loss, the gradients, and the loss matrix
-			return tr_loss, grads, tr_loss_matrix
-		      end,
-		      self.weights_table)
+                        local tr_loss,tr_loss_matrix
+                        tr_loss,tr_loss_matrix = loss:compute_loss(output, target)
+                        if not tr_loss_matrix then return nil end
+                        if needs_gradient then
+                          local gradient=model:backprop(loss:gradient(output,target))
+                          --
+                          grads:zeros()
+                          --
+                          local grads = model:compute_gradients(grads)
+                          self.weight_grads = grads
+                          -- gradient smoothing
+                          if smooth_gradients then
+                            for name,mat in pairs(grads) do
+                              local N = mat:get_shared_count()
+                              N       = ( N>0 and N) or 1
+                              mat:scal( 1.0/math.sqrt(N * bunch_size) )
+                            end
+                          end
+                          -- the loss, the gradients, and the loss matrix
+                          return tr_loss, grads, tr_loss_matrix
+                        else
+                          return tr_loss, nil, tr_loss_matrix
+                        end
+                      end,
+                      self.weights_table)
   if tr_loss_matrix then loss:accum_loss(tr_loss_matrix) end
   return tr_loss,tr_loss_matrix
 end

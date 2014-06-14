@@ -160,13 +160,18 @@ end
 
 function matrix.dict.wrap_matrices(m)
   local tt = type(m)
+  local unwrap
   if tt == "table" then
     m = matrix.dict(m)
+    unwrap = function(m) return iterator(pairs(m)):table() end
   elseif tt == "matrix" then
     m = matrix.dict():insert("1",m)
+    unwrap = function(m) return m("1") end
+  else
+    unwrap = function(m) return m end
   end
   assert(isa(m, matrix.dict), "Needs a matrix.dict, a matrix, or a table")
-  return m
+  return m,unwrap
 end
 
 function matrix.dict.meta_instance.__index:to_lua_string(format)

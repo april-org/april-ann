@@ -28,7 +28,8 @@ local function hmc(self, eval, theta)
   local math_clamp  = math.clamp
   local priors      = state.priors
   local samples     = state.samples
-  local theta       = wrap_matrices(theta)
+  local origw = theta
+  local theta = wrap_matrices(theta)
   --
   local acc_decay   = self:get_option("acc_decay")
   local alpha       = self:get_option("alpha")
@@ -63,7 +64,7 @@ local function hmc(self, eval, theta)
     -- velocities, and the epsilon for the step
     local leapfrog = function(pos, vel, epsilon, i)
       -- from pos(t) and vel(t - eps/2), compute vel(t + eps/2)
-      local _,grads = eval(i)
+      local _,grads = eval(origw, i)
       grads = wrap_matrices(grads)
       vel:axpy(-epsilon, grads)
       -- from vel(t + eps/2) compute pos(t + eps)
@@ -73,7 +74,7 @@ local function hmc(self, eval, theta)
     end
     --
     -- compute velocity at time: t + eps/2
-    local initial_energy,grads = eval(0)
+    local initial_energy,grads = eval(origw, 0)
     initial_energy = scale*initial_energy + priors:compute_neg_log_prior(pos)
     grads = wrap_matrices(grads)
     vel:axpy(-0.5*epsilon, grads)
@@ -84,7 +85,7 @@ local function hmc(self, eval, theta)
       leapfrog(pos, vel, epsilon, i-1)
     end
     -- compute velocity at time: t + nsteps*eps
-    local final_energy,grads = eval(nsteps)
+    local final_energy,grads = eval(origw, nsteps)
     final_energy = scale*final_energy + priors:compute_neg_log_prior(pos)
     grads = wrap_matrices(grads)
     vel:axpy(-0.5*epsilon, grads)
@@ -189,7 +190,7 @@ local function hmc(self, eval, theta)
   --   collectgarbage("collect")
   -- end
   -- print("\t\t ACCEPTED:", #samples, accepted, currentN, accepted/currentN)
-  return eval()
+  return eval(origw, nsteps+1)
 end
 
 local hmc_methods, hmc_class_metatable = class("bayesian.optimizer.hmc",
@@ -303,4 +304,11 @@ end
 
 function hmc_methods:get_priors()
   return self.state.priors
+end
+
+local hmc_properties = {
+  gradient = true,
+}
+function hmc_methods:needs_property(name)
+  return hmc_properties[name]
 end

@@ -58,10 +58,14 @@ local function trainable_qlearning_trainer_train(self, prev_state, prev_action, 
   noise:reset(0)
   local state = noise:forward(state, true)
   local error_grad = matrix.col_major(1, nactions):zeros()
+  local needs_gradient = optimizer:needs_property("gradient")
   local loss,Qsp,Qs
   loss,gradients,Qsp,Qs,expected_Qsa =
-    optimizer:execute(function(it)
+    optimizer:execute(function(weights, it)
                         assert(not it or it == 0)
+                        if weights ~= self.weights then
+                          thenet:build{ weights = weights }
+                        end
                         thenet:reset(it)
                         local Qsp = thenet:forward(state):get_matrix()
                         local Qs  = thenet:forward(prev_state,true):get_matrix()
@@ -69,18 +73,22 @@ local function trainable_qlearning_trainer_train(self, prev_state, prev_action, 
                         local delta = reward + discount * Qsp:max() - Qsa
                         local diff = delta
                         local loss = 0.5 * diff * diff
-                        error_grad:set(1, prev_action, -diff)
-                        thenet:backprop(error_grad)
-                        gradients:zeros()
-                        gradients = thenet:compute_gradients(gradients)
-                        if traces:size() == 0 then
-                          for name,g in pairs(gradients) do
-                            traces[name] = matrix.as(g):zeros()
+                        if needs_gradient then
+                          error_grad:set(1, prev_action, -diff)
+                          thenet:backprop(error_grad)
+                          gradients:zeros()
+                          gradients = thenet:compute_gradients(gradients)
+                          if traces:size() == 0 then
+                            for name,g in pairs(gradients) do
+                              traces[name] = matrix.as(g):zeros()
+                            end
                           end
+                          traces:scal(lambda*discount)
+                          traces:axpy(1.0, gradients)
+                          return loss,traces,Qsp,Qs,expected_Qsa
+                        else
+                          return loss,nil,Qsp,Qs,expected_Qsa
                         end
-                        traces:scal(lambda*discount)
-                        traces:axpy(1.0, gradients)
-                        return loss,traces,Qsp,Qs,expected_Qsa
                       end,
                       weights)
   self.gradients = gradients
