@@ -62,14 +62,22 @@ namespace LanguageModels {
 
     ~BunchHashedLMInterface() {
     }
+  protected:
+    typedef open_addr_hash<WordType, vector<KeyScoreMultipleBurdenTuple> > WordResultHash;
+    typedef open_addr_hash<Key, WordResultHash> KeyWordHash;
 
   private:
-    open_addr_hash<Key, open_addr_hash<WordType, KeyScoreMultipleBurdenTuple> > context_key_hash;
+    KeyWordHash context_key_hash;
+
+    vector<KeyScoreTuple> &bunchGet(Key, WordResultHash) {
+      vector<KeyScoreTuple> bunch_result;
+      return bunch_result;
+    }
 
   public:
     virtual void get(const Key &key, WordType word,
-                     typename LMInterface<Key,Score>::Burden burden,
-                     vector<typename LMInterface<Key,Score>::KeyScoreBurdenTuple> &result,
+                     Burden burden,
+                     vector<KeyScoreBurdenTuple> &result,
                      Score threshold) {
       ;
     }
@@ -88,7 +96,7 @@ namespace LanguageModels {
                              Score threshold) {
       // We hash the context key if it's not hashed
       if (not context_key_hash.search(key))
-        context_key_hash[key] = open_addr_hash<WordType, vector<KeyScoreMultipleBurdenTuple> >();
+        context_key_hash[key] = WordResultHash();
 
       // We hash the word if it's not hashed
       if (not context_key_hash[key].search(word))
@@ -99,7 +107,30 @@ namespace LanguageModels {
     }
 
     virtual const vector<KeyScoreBurdenTuple> &getQueries() const {
-      // execute the actual query algorithm
+      // For each context key entry
+      for (typename KeyWordHash::iterator it = context_key_hash.begin();
+        it != context_key_hash.end(); ++it) {
+        vector<KeyScoreTuple> bunch_result;
+        unsigned int cur_result = 0;
+        // We launch a bunchGet
+        Key context_key = (*it)->first;
+        WordResultHash word_hash = (*it)->second;
+
+        bunch_result = bunchGet(context_key, word_hash);
+
+        // Fill result vector with values from bunch_result
+        for (typename WordResultHash::iterator it2 = word_hash.begin();
+          it2 != word_hash.end(); ++it2) {
+          WordType word = (*it)->first;
+          KeyScoreMultipleBurdenTuple result_tuple = (*it2)->second;
+
+          for (unsigned int i = 0; i < result_tuple.burden_vector.size(); ++i)
+            this->result.push_back(KeyScoreBurdenTuple(bunch_result[cur_result].key,
+                                                       bunch_result[cur_result].score,
+                                                       result_tuple.burden_vector[i]));
+          ++cur_result;
+        }
+      }
       return this->result;
     }
 
