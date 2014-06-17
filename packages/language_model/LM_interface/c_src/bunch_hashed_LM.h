@@ -81,7 +81,7 @@ namespace LanguageModels {
 
     virtual const vector<KeyScoreBurdenTuple> &getQueries() const {
       // execute the actual query algorithm
-      return result;
+      return this->result;
     }
 
     virtual bool getZeroKey(Key &k) const {

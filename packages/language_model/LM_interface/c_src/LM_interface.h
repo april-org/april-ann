@@ -97,7 +97,7 @@ namespace LanguageModels {
         word(w), id_word(idw), score(s) {}
     };
     
-  protected:
+    protected:
     /// auxiliary result vector
     vector<KeyScoreBurdenTuple> result;
     
