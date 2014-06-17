@@ -41,22 +41,32 @@ namespace LanguageModels {
   template <typename Key, typename Score>
   class BunchHashedLMInterface : public LMInterface <Key,Score> {
     friend class BunchHashedLM<Key,Score>;
-  private:
-    open_addr_hash<Key, WordType> hash;
   protected:
     
     BunchHashedLMInterface(BunchHashedLM<Key,Score>* model) :
       LMInterface<Key,Score>(model) {
     }
 
+    typedef typename LMInterface<Key,Score>::KeyScoreTuple KeyScoreTuple;
     typedef typename LMInterface<Key,Score>::KeyScoreBurdenTuple KeyScoreBurdenTuple;
     typedef typename LMInterface<Key,Score>::Burden Burden;
 
   public:
+    struct KeyScoreMultipleBurdenTuple {
+      KeyScoreTuple key_score;
+      vector<Burden> burden_vector;
+      KeyScoreMultipleBurdenTuple() {}
+      KeyScoreMultipleBurdenTuple(Key k, Score s, vector<Burden> burden_vector) :
+        key_score(k,s), burden_vector(burden_vector) {}
+    };
 
     ~BunchHashedLMInterface() {
     }
 
+  private:
+    open_addr_hash<Key, open_addr_hash<WordType, KeyScoreMultipleBurdenTuple> > context_key_hash;
+
+  public:
     virtual void get(const Key &key, WordType word,
                      typename LMInterface<Key,Score>::Burden burden,
                      vector<typename LMInterface<Key,Score>::KeyScoreBurdenTuple> &result,
@@ -71,12 +81,21 @@ namespace LanguageModels {
 
     virtual void clearQueries() {
       LMInterface<Key,Score>::clearQueries();
-      // clear of hash tables
+      context_key_hash.clear();
     }
 
     virtual void insertQuery(const Key &key, WordType word, Burden burden,
                              Score threshold) {
-      // add query to hashtable                         
+      // We hash the context key if it's not hashed
+      if (not context_key_hash.search(key))
+        context_key_hash[key] = open_addr_hash<WordType, vector<KeyScoreMultipleBurdenTuple> >();
+
+      // We hash the word if it's not hashed
+      if (not context_key_hash[key].search(word))
+        context_key_hash[key][word] = KeyScoreMultipleBurdenTuple();
+
+      // Add burden to the end of the burden vector
+      context_key_hash[key][word].burden_vector.push_back(burden);
     }
 
     virtual const vector<KeyScoreBurdenTuple> &getQueries() const {
