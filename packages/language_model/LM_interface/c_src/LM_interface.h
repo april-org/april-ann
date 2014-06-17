@@ -97,11 +97,9 @@ namespace LanguageModels {
         word(w), id_word(idw), score(s) {}
     };
     
-  private:
+  protected:
     /// auxiliary result vector
     vector<KeyScoreBurdenTuple> result;
-
-  protected:
     
     LMModel<Key,Score>* model;
     LMInterface(LMModel<Key,Score>* model) : model(model) {
@@ -154,7 +152,7 @@ namespace LanguageModels {
     /// the bunch mode operates in a state fashion, the first operation
     /// is clearQueries to reset the internal structures and the result
     /// vector
-    void clearQueries() {
+    virtual void clearQueries() {
       result.clear();
     }
 
@@ -173,7 +171,7 @@ namespace LanguageModels {
       UNUSED_VARIABLE(is_sorted);
       // default behavior
       for (typename vector<WordIdScoreTuple>::iterator it = words.begin();
-	   it != words.end(); ++it)
+        it != words.end(); ++it)
         insertQuery(key, it->word, Burden(id_key, it->id_word), it->score);
     }
 

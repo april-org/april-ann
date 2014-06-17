@@ -25,12 +25,14 @@
 #include <stdint.h>
 #include "LM_interface.h"
 #include "logbase.h"
+#include "open_addressing_hash.h"
 #include "unused_variable.h"
 #include "vector.h"
 
 namespace LanguageModels {
   
   using april_utils::vector;
+  using april_utils::open_addr_hash;
   
   template <typename Key, typename Score>
   class BunchHashedLM;
@@ -40,13 +42,16 @@ namespace LanguageModels {
   class BunchHashedLMInterface : public LMInterface <Key,Score> {
     friend class BunchHashedLM<Key,Score>;
   private:
-
+    open_addr_hash<Key, WordType> hash;
   protected:
     
     BunchHashedLMInterface(BunchHashedLM<Key,Score>* model) :
       LMInterface<Key,Score>(model) {
     }
-    
+
+    typedef typename LMInterface<Key,Score>::KeyScoreBurdenTuple KeyScoreBurdenTuple;
+    typedef typename LMInterface<Key,Score>::Burden Burden;
+
   public:
 
     ~BunchHashedLMInterface() {
@@ -62,6 +67,21 @@ namespace LanguageModels {
     virtual void getNextKeys(const Key &key, WordType word,
                              vector<Key> &result) {
       ;
+    }
+
+    virtual void clearQueries() {
+      LMInterface<Key,Score>::clearQueries();
+      // clear of hash tables
+    }
+
+    virtual void insertQuery(const Key &key, WordType word, Burden burden,
+                             Score threshold) {
+      // add query to hashtable                         
+    }
+
+    virtual const vector<KeyScoreBurdenTuple> &getQueries() const {
+      // execute the actual query algorithm
+      return result;
     }
 
     virtual bool getZeroKey(Key &k) const {
