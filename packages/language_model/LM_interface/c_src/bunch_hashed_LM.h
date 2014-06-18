@@ -23,16 +23,18 @@
 #define BUNCH_HASHED_LM_H
 
 #include <stdint.h>
+#include "hash_table.h"
 #include "LM_interface.h"
 #include "logbase.h"
-#include "open_addressing_hash.h"
+#include "open_addressing_hash_with_fast_iterator.h"
 #include "unused_variable.h"
 #include "vector.h"
 
 namespace LanguageModels {
   
   using april_utils::vector;
-  using april_utils::open_addr_hash;
+  using april_utils::open_addr_hash_fast_it;
+  using april_utils::hash;
   
   template <typename Key, typename Score>
   class BunchHashedLM;
@@ -56,31 +58,21 @@ namespace LanguageModels {
       KeyScoreTuple key_score;
       vector<Burden> burden_vector;
       KeyScoreMultipleBurdenTuple() {}
-      KeyScoreMultipleBurdenTuple(Key k, Score s, vector<Burden> burden_vector) :
-        key_score(k,s), burden_vector(burden_vector) {}
     };
 
     ~BunchHashedLMInterface() {
     }
   protected:
-    typedef open_addr_hash<WordType, vector<KeyScoreMultipleBurdenTuple> > WordResultHash;
-    typedef open_addr_hash<Key, WordResultHash> KeyWordHash;
+    typedef open_addr_hash_fast_it<WordType, vector<KeyScoreMultipleBurdenTuple> > WordResultHash;
+    typedef hash<Key, WordResultHash> KeyWordHash;
 
   private:
     KeyWordHash context_key_hash;
 
-    vector<KeyScoreTuple> &bunchGet(Key, WordResultHash) {
-      vector<KeyScoreTuple> bunch_result;
-      return bunch_result;
+    void bunchGet(Key &key, WordResultHash &hash) {
     }
 
   public:
-    virtual void get(const Key &key, WordType word,
-                     Burden burden,
-                     vector<KeyScoreBurdenTuple> &result,
-                     Score threshold) {
-      ;
-    }
 
     virtual void getNextKeys(const Key &key, WordType word,
                              vector<Key> &result) {
@@ -94,16 +86,9 @@ namespace LanguageModels {
 
     virtual void insertQuery(const Key &key, WordType word, Burden burden,
                              Score threshold) {
-      // We hash the context key if it's not hashed
-      if (not context_key_hash.search(key))
-        context_key_hash[key] = WordResultHash();
-
-      // We hash the word if it's not hashed
-      if (not context_key_hash[key].search(word))
-        context_key_hash[key][word] = KeyScoreMultipleBurdenTuple();
-
-      // Add burden to the end of the burden vector
-      context_key_hash[key][word].burden_vector.push_back(burden);
+      WordResultHash &ctxt = context_key_hash[key];
+      KeyScoreMultipleBurdenTuple &ctxt_word = ctxt[word];
+      ctxt_word.burden_vector.push_back(burden);
     }
 
     virtual const vector<KeyScoreBurdenTuple> &getQueries() const {
@@ -116,7 +101,7 @@ namespace LanguageModels {
         Key context_key = (*it)->first;
         WordResultHash word_hash = (*it)->second;
 
-        bunch_result = bunchGet(context_key, word_hash);
+        bunchGet(context_key, word_hash);
 
         // Fill result vector with values from bunch_result
         for (typename WordResultHash::iterator it2 = word_hash.begin();
