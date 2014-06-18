@@ -166,13 +166,15 @@ extern const char *__COMMIT_NUMBER__;
 
 //BIND_FUNCTION util.wait
 //DOC_BEGIN
-// wait(...)
-/// espera a que terminen TODOS los hijos del proceso
+// pid,status wait(...)
+/// espera a que terminen UNO de los hijos del proceso
 /// despues usar split_process
 //DOC_END
 {
   int status;
-  wait(&status);
+  pid_t pid = wait(&status);
+  LUABIND_RETURN(int,pid);
+  LUABIND_RETURN(int,status);
 }
 //BIND_END
 
@@ -586,8 +588,8 @@ extern const char *__COMMIT_NUMBER__;
   LUABIND_GET_PARAMETER(1, double, sleeptime);
   double seconds = floor(sleeptime);
   struct timespec req;
-  req.tv_sec  = (time_t)seconds;
-  req.tv_nsec = (long)((sleeptime-seconds)*1e6);
+  req.tv_sec  = static_cast<time_t>(seconds);
+  req.tv_nsec = static_cast<long>((sleeptime-seconds)*1.0e6);
   nanosleep(&req, 0);
 }
 //BIND_END

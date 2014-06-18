@@ -6,6 +6,19 @@ Master branch release
 
 ### Unstable changes
 
+### API Changes
+
+### Bugs removed
+
+### C/C++
+
+### Other
+
+v0.3.1
+------
+
+### Unstable changes
+
 - Added `clustering` and `knn` algorithms.
 - Added `ann.components.zca_whitening` and `ann.components.pca_whitening`
   classes.
@@ -24,6 +37,8 @@ Master branch release
 
 ### API Changes
 
+- Modified bootstrapping API in order to be similar with R: `stats.boot()` and
+  `stats.boot.ci()`.
 - Added `ann.optimizer.asgd` for Averaged SGD optimization.
 - Added `trainable.qlearning_trainer` for reinforcement learning tasks.
 - Enhanced `util.serialize` and `util.deserialize` to accept functions as
