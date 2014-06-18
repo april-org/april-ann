@@ -244,7 +244,7 @@ function image.image_cleaning.getCleanParameters(img, params)
       table.insert(table_datasets, ds_median)
   end
 
-  local levels_hist = params.histogram_levels
+  local levels_hist = params.histogram_levels or 4
 
   if params.old then
       levels_hist = 8
