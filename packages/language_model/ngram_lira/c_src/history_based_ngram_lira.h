@@ -68,8 +68,7 @@ namespace LanguageModels {
     NgramLiraModel *lira_model;
 
   public:
-    HistoryBasedNgramLiraLM(int ngram_order,
-                            WordType init_word,
+    HistoryBasedNgramLiraLM(WordType init_word,
                             april_utils::TrieVector *trie_vector,
                             NgramLiraModel *lira_model);
 
@@ -77,9 +76,6 @@ namespace LanguageModels {
 
     virtual LMInterface<Key,Score>* getInterface();
   };
-
-
-
 
 } // closes namespace language_models
 

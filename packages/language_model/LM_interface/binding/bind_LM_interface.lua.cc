@@ -428,3 +428,27 @@ public:
   LUABIND_RETURN(float, score.log());
 }
 //BIND_END
+
+//////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME HistoryBasedLMUInt32LogFloat language_models.history_based_model
+//BIND_CPP_CLASS HistoryBasedLMUInt32LogFloat
+//BIND_SUBCLASS_OF HistoryBasedLMUInt32LogFloat LMModelUInt32LogFloat
+
+//BIND_CONSTRUCTOR HistoryBasedLMUInt32LogFloat
+{
+  LUABIND_ERROR("Abstract class!!!");
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME HistoryBasedLMInterfaceUInt32LogFloat language_models.history_based_interface
+//BIND_CPP_CLASS HistoryBasedLMInterfaceUInt32LogFloat
+//BIND_SUBCLASS_OF HistoryBasedLMInterfaceUInt32LogFloat LMInterfaceUInt32LogFloat
+
+//BIND_CONSTRUCTOR HistoryBasedLMInterfaceUInt32LogFloat
+{
+  LUABIND_ERROR("Abstract class!!!");
+}
+//BIND_END

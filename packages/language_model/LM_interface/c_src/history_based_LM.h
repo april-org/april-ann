@@ -23,6 +23,7 @@
 #define HISTORY_BASED_LM_H
 
 #include <stdint.h>
+#include "error_print.h"
 #include "LM_interface.h"
 #include "logbase.h"
 #include "trie_vector.h"
@@ -71,36 +72,32 @@ namespace LanguageModels {
                      vector<KeyScoreBurdenTuple> &result,
                      Score threshold) {
       UNUSED_VARIABLE(threshold);
-      WordType* context_words;
-      unsigned int context_size = 0;
-      WordType aux_key = trie->getParent(key);
+      WordType* context_words = new WordType[this->model->ngramOrder() - 1];
+      Key aux_key = key;
       
-      // Go backward to get context size
-      while (aux_key != trie->rootNode()) {
-        context_size++;
+      // Go backward to get context size and context words. Context words must
+      // be collected from current key, which shifts context to the left
+      int pos = this->model->ngramOrder() - 1;
+      while (aux_key != trie->rootNode() && pos > 0) {
+        context_words[pos-1] = trie->getWord(aux_key);
         aux_key = trie->getParent(aux_key);
+        --pos;
       }
-
+      if (aux_key != trie->rootNode())
+        ERROR_EXIT(256, "Overflow filling context words from current key\n");
+      // compute context_size from position in context_words
+      const unsigned int context_size = this->model->ngramOrder() - 1 - pos;
+      
       // If context size is maximum, compute score
       // and key and return them using the result
       // vector. Else, do nothing.
       if (context_size == (this->model->ngramOrder() - 1)) {
-        // Context words must be collected from current
-        // key, which shifts context to the left
-        context_words = new WordType[context_size];
-        aux_key = key;
-
-        // Context words are collected
-        for (int pos = context_size - 1; pos >= 0; --pos) {
-          context_words[pos] = trie->getWord(aux_key);
-          aux_key = trie->getParent(aux_key);
-        }
-
         Score aux_score = privateGet(key, word, context_words, context_size);
         
-        // Destination key is obtained traversing the trie
+        // Destination key is obtained traversing the trie starting from
+        // context_word[1]
         aux_key = trie->rootNode();
-        for (int i = 0; i < context_size; ++i)
+        for (int i = 1; i < context_size; ++i)
           aux_key = trie->getChild(aux_key, context_words[i]);
         aux_key = trie->getChild(aux_key, word);
 
@@ -109,11 +106,12 @@ namespace LanguageModels {
                                              aux_score,
                                              burden));
       }
+      delete[] context_words;
     }
 
     virtual void getNextKeys(const Key &key, WordType word,
                              vector<Key> &result) {
-      WordType aux_key;
+      Key aux_key;
 
       aux_key = trie->getChild(key, word);
       result.push_back(aux_key);
@@ -129,11 +127,10 @@ namespace LanguageModels {
       WordType init_word = mdl->getInitWord();
       int context_length = this->model->ngramOrder() - 1;
 
-      WordType aux = trie->rootNode();
+      k = trie->rootNode();
 
       for (unsigned int i = 0; i < context_length; i++)
-        aux = trie->getChild(aux, init_word);
-      k = aux;
+        k = trie->getChild(k, init_word);
     }
 
   };

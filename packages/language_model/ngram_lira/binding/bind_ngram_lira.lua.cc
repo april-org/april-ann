@@ -22,17 +22,23 @@
 
 //BIND_HEADER_C
 #include "bind_LM_interface.h"
+#include "bind_util.h"
+using namespace april_utils;
 //BIND_END
 
 //BIND_HEADER_H
 #include "bind_LM_interface.h"
-#include "ngram_lira.h"
+#include "history_based_LM.h"
 #include "history_based_ngram_lira.h"
+#include "ngram_lira.h"
 using namespace LanguageModels;
 //BIND_END
 
 //BIND_LUACLASSNAME LMModelUInt32LogFloat language_models.model
 //BIND_LUACLASSNAME LMInterfaceUInt32LogFloat language_models.interface
+
+//BIND_LUACLASSNAME HistoryBasedLMUInt32LogFloat language_models.history_based_model
+//BIND_LUACLASSNAME HistoryBasedLMInterfaceUInt32LogFloat language_models.history_based_interface
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -59,7 +65,7 @@ using namespace LanguageModels;
 		     // pasan sea mas grande que el que hay en el
 		     // modelo lira
 		     "ignore_extra_words_in_dictionary",
-		     0); // 0 para terminar el check_table_fields
+		     (const char *)0); // 0 para terminar el check_table_fields
   //
   bool ignore_extra_words_in_dictionary = false;
   bool binary = false;
@@ -133,7 +139,7 @@ using namespace LanguageModels;
   check_table_fields(L, 1, 
 		     "filename",
 		     "vocabulary",
-		     0); // 0 para terminar el check_table_fields
+		     (const char *)0); // 0 para terminar el check_table_fields
   //
   const char *filename;
   LUABIND_GET_TABLE_PARAMETER(1, filename, string, filename);
@@ -160,7 +166,7 @@ using namespace LanguageModels;
   check_table_fields(L, 1, 
 		     "vocabulary_size",
 		     "final_word", 
-		     0); // 0 para terminar el check_table_fields
+		     (const char *)0); // 0 para terminar el check_table_fields
   //
   int vocabulary_size, final_word;
   LUABIND_GET_TABLE_PARAMETER(1,
@@ -180,6 +186,41 @@ using namespace LanguageModels;
 //////////////////////////////////////////////////////////////////////////
 
 //BIND_CONSTRUCTOR NgramLiraInterface
+{
+  LUABIND_ERROR("Use the model method get_interface");
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME HistoryBasedNgramLiraLM ngram.lira.history_based_model
+//BIND_CPP_CLASS    HistoryBasedNgramLiraLM
+//BIND_SUBCLASS_OF  HistoryBasedNgramLiraLM HistoryBasedLMUInt32LogFloat
+
+//BIND_LUACLASSNAME HistoryBasedNgramLiraLMInterface ngram.lira.history_based_interface
+//BIND_CPP_CLASS    HistoryBasedNgramLiraLMInterface
+//BIND_SUBCLASS_OF  HistoryBasedNgramLiraLMInterface HistoryBasedLMInterfaceUInt32LogFloat
+
+//BIND_CONSTRUCTOR HistoryBasedNgramLiraLM
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  check_table_fields(L, 1, "init_word_id", "trie_vector", "lira_model",
+                     (const char *)0);
+  unsigned int init_word_id;
+  TrieVector *trie_vector;
+  NgramLiraModel *lira_model;
+  LUABIND_GET_TABLE_PARAMETER(1, init_word_id, uint, init_word_id);
+  LUABIND_GET_TABLE_PARAMETER(1, trie_vector, TrieVector, trie_vector);
+  LUABIND_GET_TABLE_PARAMETER(1, lira_model, NgramLiraModel, lira_model);
+  obj = new HistoryBasedNgramLiraLM(init_word_id, trie_vector, lira_model);
+  LUABIND_RETURN(HistoryBasedNgramLiraLM, obj);
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////////////
+
+//BIND_CONSTRUCTOR HistoryBasedNgramLiraLMInterface
 {
   LUABIND_ERROR("Use the model method get_interface");
 }

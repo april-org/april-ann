@@ -64,11 +64,10 @@ namespace LanguageModels {
   }
   
   HistoryBasedNgramLiraLM::
-  HistoryBasedNgramLiraLM(int ngram_order,
-			  WordType init_word,
+  HistoryBasedNgramLiraLM(WordType init_word,
 			  april_utils::TrieVector *trie_vector,
 			  NgramLiraModel *lira_model) :
-    HistoryBasedLM(ngram_order, init_word, trie_vector),
+    HistoryBasedLM(lira_model->ngramOrder(), init_word, trie_vector),
     lira_model(lira_model) {
     IncRef(lira_model);
   }

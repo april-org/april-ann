@@ -213,8 +213,12 @@ namespace LanguageModels {
       vector<WordIdScoreTuple> words, bool is_sorted=false);
     */
     
-    virtual Score getBestProb() const { return static_cast<NgramLiraModel*>(model)->best_prob; }
-    virtual Score getBestProb(const Key &k) const { return static_cast<NgramLiraModel*>(model)->max_out_prob[k]; }
+    virtual Score getBestProb() const {
+      return static_cast<NgramLiraModel*>(model)->best_prob;
+    }
+    virtual Score getBestProb(const Key &k) const {
+      return static_cast<NgramLiraModel*>(model)->max_out_prob[k];
+    }
     virtual bool getZeroKey(Key &k) const {
       k = static_cast<NgramLiraModel*>(model)->lowest_state;
       return true;
@@ -229,7 +233,8 @@ namespace LanguageModels {
     virtual Score getFinalScore(const Key &k, Score threshold) {
       vector<KeyScoreBurdenTuple> aux;
       Burden dummyBurden;
-      get(k, static_cast<NgramLiraModel*>(model)->final_word, dummyBurden, aux, threshold);
+      get(k, static_cast<NgramLiraModel*>(model)->final_word, dummyBurden, aux,
+          threshold);
       return (aux.size() == 1) ? aux[0].key_score.score : threshold;
     }
     // useful methods to look for an state:
