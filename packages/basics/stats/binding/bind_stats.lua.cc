@@ -128,6 +128,28 @@ using namespace Stats;
 }
 //BIND_END
 
+//BIND_METHOD StatisticalDistributionBase logpdf_derivative
+{
+  MatrixFloat *x, *grads;
+  if (lua_isMatrixFloat(L,1)) {
+    LUABIND_GET_PARAMETER(1, MatrixFloat, x);
+    LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, grads, 0);
+  }
+  else {
+    float xf;
+    LUABIND_CHECK_ARGN(==,1);
+    LUABIND_GET_PARAMETER(1, float, xf);
+    grads = 0;
+    int dims[2] = {1,1};
+    x = new MatrixFloat(2, dims, CblasColMajor);
+    (*x)(0,0) = xf;
+  }
+  IncRef(x);
+  LUABIND_RETURN(MatrixFloat, obj->logpdfDerivative(x, grads));
+  DecRef(x);
+}
+//BIND_END
+
 //BIND_METHOD StatisticalDistributionBase clone
 {
   LUABIND_RETURN(StatisticalDistributionBase, obj->clone());

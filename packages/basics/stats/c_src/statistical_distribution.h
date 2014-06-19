@@ -49,7 +49,12 @@ namespace Stats {
     /// Receives a x MatrixFloat with NxM size (N = bunch_size), and a N sized
     /// result MatrixFloat.
     virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result) = 0;
-
+    /// Receives a x MatrixFloat with NxM size (N = bunch_size), and a N sized
+    /// grads MatrixFloat.
+    virtual void privateLogpdfDerivative(const MatrixFloat *x,
+                                         MatrixFloat *result) {
+      ERROR_EXIT(128, "Derivative not implemented\n");
+    }
   public:
     StatisticalDistributionBase(unsigned int size) : Referenced(), size(size) {}
     virtual ~StatisticalDistributionBase() {}
@@ -107,6 +112,26 @@ namespace Stats {
       // virtual call
       privateLogcdf(x, result);
       return result;
+    }
+    /// Public part of logpdfDerivative method, arguments will be checked here.
+    MatrixFloat *logpdfDerivative(const MatrixFloat *x, MatrixFloat *grads=0) {
+      if (x->getNumDim() != 2 || x->getDimSize(1) != static_cast<int>(size))
+        ERROR_EXIT1(128, "Incorrect x matrix size, expected bi-dimensional "
+                    "matrix with Nx%u shape\n", size);
+      if (x->getMajorOrder() != CblasColMajor)
+        ERROR_EXIT(128, "Expected col_major in x matrix\n");
+      int dims[1] = { x->getDimSize(0) };
+      if (grads == 0) {
+        grads = new MatrixFloat(1, dims, CblasColMajor);
+      }
+      else if (grads->getNumDim() != 1 || grads->getDimSize(0) != dims[0])
+        ERROR_EXIT1(128, "Incorrect grads matrix size, expected "
+                    "one-dimensional matrix with %d size\n", dims[0]);
+      else if (grads->getMajorOrder() != CblasColMajor)
+        ERROR_EXIT(128, "Expected col_major order in grads matrix\n");
+      // virtual call
+      privateLogpdfDerivative(x, grads);
+      return grads;
     }
     unsigned int getSize() { return size; }
     // abstract interface
