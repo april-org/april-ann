@@ -66,11 +66,10 @@ namespace LanguageModels {
     typedef open_addr_hash_fast_it<WordType, vector<KeyScoreMultipleBurdenTuple> > WordResultHash;
     typedef hash<Key, WordResultHash> KeyWordHash;
 
+    virtual void computeKeysAndScores(KeyWordHash &ctxt_hash) = 0;
+
   private:
     KeyWordHash context_key_hash;
-
-    void bunchGet(Key &key, WordResultHash &hash) {
-    }
 
   public:
 
@@ -92,28 +91,32 @@ namespace LanguageModels {
     }
 
     virtual const vector<KeyScoreBurdenTuple> &getQueries() const {
+
+      // compute keys and scores for queries in the hash table
+      computeKeysAndScores(context_key_hash);
+
       // For each context key entry
-      for (typename KeyWordHash::iterator it = context_key_hash.begin();
+      for (typename KeyWordHash::const_iterator it = context_key_hash.begin();
         it != context_key_hash.end(); ++it) {
-        vector<KeyScoreTuple> bunch_result;
-        unsigned int cur_result = 0;
-        // We launch a bunchGet
-        Key context_key = (*it)->first;
-        WordResultHash word_hash = (*it)->second;
+        Key context_key = it->first;
+        WordResultHash word_hash = it->second;
 
-        bunchGet(context_key, word_hash);
-
-        // Fill result vector with values from bunch_result
-        for (typename WordResultHash::iterator it2 = word_hash.begin();
+        // For each word entry
+        for (typename WordResultHash::const_iterator it2 = word_hash.begin();
           it2 != word_hash.end(); ++it2) {
-          WordType word = (*it)->first;
-          KeyScoreMultipleBurdenTuple result_tuple = (*it2)->second;
+          WordType word = it2->first;
+          KeyScoreMultipleBurdenTuple result_tuple = it2->second;
 
-          for (unsigned int i = 0; i < result_tuple.burden_vector.size(); ++i)
-            this->result.push_back(KeyScoreBurdenTuple(bunch_result[cur_result].key,
-                                                       bunch_result[cur_result].score,
-                                                       result_tuple.burden_vector[i]));
-          ++cur_result;
+          // For each burden at burden vector
+          for (unsigned int i = 0; i < result_tuple.burden_vector.size(); ++i) {
+            KeyScoreBurdenTuple new_tuple;
+
+            new_tuple.key_score.key   = result_tuple.key_score.key;
+            new_tuple.key_score.score = result_tuple.key_score.score;
+            new_tuple.burden          = result_tuple.burden_vector[i];
+
+            this->result.push_back(new_tuple);
+          }
         }
       }
       return this->result;
