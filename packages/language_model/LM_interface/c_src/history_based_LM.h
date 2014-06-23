@@ -62,6 +62,24 @@ namespace LanguageModels {
                                        WordType *context_words,
                                        unsigned int context_size) = 0;
 
+    unsigned int getContextProperties(const Key &key,
+                                      WordType *context_words) {
+      Key aux_key = key;
+
+      // Go backward to get context size and context words. Context words must
+      // be collected from current key, which shifts context to the left
+      int pos = this->model->ngramOrder() - 1;
+      while (aux_key != trie->rootNode() && pos > 0) {
+        context_words[pos-1] = trie->getWord(aux_key);
+        aux_key = trie->getParent(aux_key);
+        --pos;
+      }
+      if (aux_key != trie->rootNode())
+        ERROR_EXIT(256, "Overflow filling context words from current key\n");
+      // compute context_size from position in context_words
+      return (this->model->ngramOrder() - 1 - pos);                               
+    }
+
     typedef typename LMInterface<Key,Score>::KeyScoreBurdenTuple KeyScoreBurdenTuple;
     typedef typename LMInterface<Key,Score>::Burden Burden;
 
@@ -77,30 +95,16 @@ namespace LanguageModels {
                      Score threshold) {
       UNUSED_VARIABLE(threshold);
       WordType* context_words = new WordType[this->model->ngramOrder() - 1];
-      Key aux_key = key;
-      
-      // Go backward to get context size and context words. Context words must
-      // be collected from current key, which shifts context to the left
-      int pos = this->model->ngramOrder() - 1;
-      while (aux_key != trie->rootNode() && pos > 0) {
-        context_words[pos-1] = trie->getWord(aux_key);
-        aux_key = trie->getParent(aux_key);
-        --pos;
-      }
-      if (aux_key != trie->rootNode())
-        ERROR_EXIT(256, "Overflow filling context words from current key\n");
-      // compute context_size from position in context_words
-      const unsigned int context_size = this->model->ngramOrder() - 1 - pos;
-      
+      const unsigned int context_size = getContextProperties(key,
+                                                             context_words);
       // If context size is maximum, compute score
       // and key and return them using the result
       // vector. Else, do nothing.
       if (context_size == (this->model->ngramOrder() - 1)) {
         Score aux_score = privateGet(key, word, context_words, context_size);
-        
         // Destination key is obtained traversing the trie starting from
         // context_word[1]
-        aux_key = trie->rootNode();
+        Key aux_key = trie->rootNode();
         for (int i = 1; i < context_size; ++i)
           aux_key = trie->getChild(aux_key, context_words[i]);
         aux_key = trie->getChild(aux_key, word);
@@ -115,22 +119,10 @@ namespace LanguageModels {
 
     virtual void getNextKeys(const Key &key, WordType word,
                              vector<Key> &result) {
+      Key aux_key;
       WordType* context_words = new WordType[this->model->ngramOrder() - 1];
-      Key aux_key = key;
-      
-      // Go backward to get context size and context words. Context words must
-      // be collected from current key, which shifts context to the left
-      int pos = this->model->ngramOrder() - 1;
-      while (aux_key != trie->rootNode() && pos > 0) {
-        context_words[pos-1] = trie->getWord(aux_key);
-        aux_key = trie->getParent(aux_key);
-        --pos;
-      }
-      if (aux_key != trie->rootNode())
-        ERROR_EXIT(256, "Overflow filling context words from current key\n");
-      // compute context_size from position in context_words
-      const unsigned int context_size = this->model->ngramOrder() - 1 - pos;
-      
+      const unsigned int context_size = getContextProperties(key,
+                                                             context_words);
       // If context is maximum
       if (context_size == (this->model->ngramOrder() - 1)) {
         // Destination key is obtained traversing the trie starting from
@@ -167,21 +159,8 @@ namespace LanguageModels {
     virtual Score getFinalScore(const Key &k, Score threshold) {
       UNUSED_VARIABLE(threshold);
       WordType* context_words = new WordType[this->model->ngramOrder() - 1];
-      Key aux_key = k;
-      
-      // Go backward to get context size and context words. Context words must
-      // be collected from current key, which shifts context to the left
-      int pos = this->model->ngramOrder() - 1;
-      while (aux_key != trie->rootNode() && pos > 0) {
-        context_words[pos-1] = trie->getWord(aux_key);
-        aux_key = trie->getParent(aux_key);
-        --pos;
-      }
-      if (aux_key != trie->rootNode())
-        ERROR_EXIT(256, "Overflow filling context words from current key\n");
-      // compute context_size from position in context_words
-      const unsigned int context_size = this->model->ngramOrder() - 1 - pos;
-      
+      const unsigned int context_size = getContextProperties(k, context_words);
+
       // If context size is maximum, compute score
       // and key and return them using the result
       // vector. Else, do nothing.
