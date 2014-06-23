@@ -47,11 +47,6 @@ namespace LanguageModels {
   }
   
   Score HistoryBasedNgramLiraLMInterface::
-  getFinalScore(const Key &k, Score threshold) {
-    return lira_interface->getFinalScore(k,threshold);
-  }
-
-  Score HistoryBasedNgramLiraLMInterface::
   privateGet(const Key &key,
 	     WordType word,
 	     WordType *context_words,
@@ -61,6 +56,17 @@ namespace LanguageModels {
     Key st = lira_interface->findKeyFromNgram(context_words, context_size);
     lira_interface->get(st, word, Burden(-1, -1), result, Score::zero());
     return result[0].key_score.score;
+  }
+
+  Score HistoryBasedNgramLiraLMInterface::
+  privateGetFinalScore(const Key &key,
+                       WordType *context_words,
+                       unsigned int context_size) {
+    UNUSED_VARIABLE(key);
+    vector <KeyScoreBurdenTuple> result;
+    Key st = lira_interface->findKeyFromNgram(context_words, context_size);
+    Score score = lira_interface->getFinalScore(st, Score::zero());
+    return score;
   }
   
   HistoryBasedNgramLiraLM::

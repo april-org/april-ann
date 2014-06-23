@@ -40,14 +40,17 @@ namespace LanguageModels {
     Score getBestProb() const;
 
     Score getBestProb(const Key &k) const;
-    
-    Score getFinalScore(const Key &k, Score threshold);
 
   protected:
     friend class HistoryBasedNgramLiraLM;
     HistoryBasedNgramLiraLMInterface(HistoryBasedNgramLiraLM *model,
 				     NgramLiraModel *lira_model);
-    
+
+    Score privateGetFinalScore(const Key &key,
+                               WordType *context_words,
+                               unsigned int context_size);
+
+
   private:
 
     NgramLiraInterface *lira_interface;
