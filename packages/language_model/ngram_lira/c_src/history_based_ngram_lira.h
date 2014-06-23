@@ -37,9 +37,8 @@ namespace LanguageModels {
     typedef NgramLiraModel::Key Key;
     typedef NgramLiraModel::Score Score;
 
-    Score getBestProb() const;
-
-    Score getBestProb(const Key &k) const;
+    Score privateBestProb() const;
+    Score privateBestProb(const Key &k) const;
 
   protected:
     friend class HistoryBasedNgramLiraLM;

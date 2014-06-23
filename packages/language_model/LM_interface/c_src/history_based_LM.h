@@ -42,6 +42,23 @@ namespace LanguageModels {
   class HistoryBasedLMInterface : public LMInterface <Key,Score> {
     friend class HistoryBasedLM<Key,Score>;
   private:
+    unsigned int getContextProperties(const Key &key,
+                                      WordType *context_words) {
+      Key aux_key = key;
+
+      // Go backward to get context size and context words. Context words must
+      // be collected from current key, which shifts context to the left
+      int pos = this->model->ngramOrder() - 1;
+      while (aux_key != trie->rootNode() && pos > 0) {
+        context_words[pos-1] = trie->getWord(aux_key);
+        aux_key = trie->getParent(aux_key);
+        --pos;
+      }
+      if (aux_key != trie->rootNode())
+        ERROR_EXIT(256, "Overflow filling context words from current key\n");
+      // compute context_size from position in context_words
+      return (this->model->ngramOrder() - 1 - pos);                               
+    }
 
     virtual Score privateGet(const Key &key,
                              WordType word,
@@ -62,23 +79,9 @@ namespace LanguageModels {
                                        WordType *context_words,
                                        unsigned int context_size) = 0;
 
-    unsigned int getContextProperties(const Key &key,
-                                      WordType *context_words) {
-      Key aux_key = key;
+    virtual Score privateBestProb() const = 0;
 
-      // Go backward to get context size and context words. Context words must
-      // be collected from current key, which shifts context to the left
-      int pos = this->model->ngramOrder() - 1;
-      while (aux_key != trie->rootNode() && pos > 0) {
-        context_words[pos-1] = trie->getWord(aux_key);
-        aux_key = trie->getParent(aux_key);
-        --pos;
-      }
-      if (aux_key != trie->rootNode())
-        ERROR_EXIT(256, "Overflow filling context words from current key\n");
-      // compute context_size from position in context_words
-      return (this->model->ngramOrder() - 1 - pos);                               
-    }
+    virtual Score privateBestProb(const Key &key) const = 0;
 
     typedef typename LMInterface<Key,Score>::KeyScoreBurdenTuple KeyScoreBurdenTuple;
     typedef typename LMInterface<Key,Score>::Burden Burden;
@@ -170,6 +173,14 @@ namespace LanguageModels {
         delete[] context_words;
         return score;
       } else return Score::zero();
+    }
+
+    Score getBestProb() const {
+      return privateBestProb();
+    }
+
+    Score getBestProb(const Key &k) const {
+      return privateBestProb(k);
     }
   };
   

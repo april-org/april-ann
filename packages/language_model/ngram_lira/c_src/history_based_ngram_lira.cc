@@ -37,12 +37,12 @@ namespace LanguageModels {
   }
   
   Score HistoryBasedNgramLiraLMInterface::
-  getBestProb() const {
+  privateBestProb() const {
     return lira_interface->getBestProb();
   }
 
   Score HistoryBasedNgramLiraLMInterface::
-  getBestProb(const Key &k) const {
+  privateBestProb(const Key &k) const {
     return lira_interface->getBestProb(k);
   }
   
