@@ -128,14 +128,14 @@ namespace LanguageModels {
     /// this method is the same get with an interface more similar to
     /// the bunch (multiple queries) mode
     /// TODO: threshold should have a default value
-    virtual void get(const Key &key, WordType word, Burden burden,
+    virtual void get(Key key, WordType word, Burden burden,
                      vector<KeyScoreBurdenTuple> &result,
                      Score threshold) = 0;
     
     /// this method computes the next keys given a pair (key,word). It could be a
     /// non-deterministic LM. By default, it uses the standard get() method and
     /// discards the Burden and Score.
-    virtual void getNextKeys(const Key &key, WordType word,
+    virtual void getNextKeys(Key key, WordType word,
                              vector<Key> &result) {
       vector<KeyScoreBurdenTuple> aux_result;
       get(key, word, Burden(-1,-1), aux_result, Score::zero());
@@ -158,14 +158,14 @@ namespace LanguageModels {
 
     /// call this method for each individual query.
     /// The default implementation use the get method
-    virtual void insertQuery(const Key &key, WordType word, Burden burden,
+    virtual void insertQuery(Key key, WordType word, Burden burden,
                              Score threshold) {
       get(key,word,burden,result,threshold);
     }
     
     /// this method can be naively converted into a series of
     /// insertQuery calls, but it can be optimized for some 
-    virtual void insertQueries(const Key &key, int32_t id_key,
+    virtual void insertQueries(Key key, int32_t id_key,
                                vector<WordIdScoreTuple> words,
                                bool is_sorted=false) {
       UNUSED_VARIABLE(is_sorted);
@@ -193,10 +193,10 @@ namespace LanguageModels {
 
     /// an upper bound on the best transition probability departing
     /// from key, usually pre-computed in the model
-    virtual Score getBestProb(const Key &k) const = 0;
+    virtual Score getBestProb(Key k) = 0;
 
-    /// initial key is the initial context cue
-    virtual void getInitialKey(Key &k) const = 0;
+    /// initial key is the initial state (initial context cue)
+    virtual Key getInitialKey() = 0;
 
     /// this method returns false and does nothing on LMs without zero key
     virtual bool getZeroKey(Key &k) const {
@@ -205,15 +205,11 @@ namespace LanguageModels {
       return false;
     }
 
-    // I don't like this method, it seems to assume that there is only one final state
-    //virtual void getFinalKey(Key &k) const = 0;
-    // replaced by getFinalScore method
-
     // returns the score associated to the probability of being a
     // final state. This method is not const since it may depend on
     // get which is not const either. An score is provided as pruning
     // technique (in the same way as with get method):
-    virtual Score getFinalScore(const Key &k, Score threshold) = 0;
+    virtual Score getFinalScore(Key k, Score threshold) = 0;
   };
 
   /// The LMModel is the thread-safe part of the LM, where the model data is
@@ -223,6 +219,7 @@ namespace LanguageModels {
   public:
 
     LMModel() : Referenced() {}
+    virtual ~LMModel() {}
 
     virtual bool isDeterministic() const {
       // default behavior

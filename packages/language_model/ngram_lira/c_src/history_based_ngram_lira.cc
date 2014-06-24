@@ -34,40 +34,60 @@ namespace LanguageModels {
     HistoryBasedLMInterface(model) {
     lira_interface = 
       static_cast<NgramLiraInterface*>(lira_model->getInterface());
-  }
-  
-  Score HistoryBasedNgramLiraLMInterface::
-  privateBestProb() const {
-    return lira_interface->getBestProb();
+    IncRef(lira_interface);
   }
 
-  Score HistoryBasedNgramLiraLMInterface::
-  privateBestProb(const Key &k) const {
-    return lira_interface->getBestProb(k);
+  HistoryBasedNgramLiraLMInterface::
+  ~HistoryBasedNgramLiraLMInterface() {
+    DecRef(lira_interface);
+  }
+
+  bool HistoryBasedNgramLiraLMInterface::
+  privateBestProb(Key k,
+                  const WordType *context_words,
+                  unsigned int context_size,
+                  Score &score) {
+    UNUSED_VARIABLE(k);
+    Key lira_k = lira_interface->findKeyFromNgram(context_words, context_size);
+    score = lira_interface->getBestProb(lira_k);
+    return true;
   }
   
-  Score HistoryBasedNgramLiraLMInterface::
-  privateGet(const Key &key,
-	     WordType word,
-	     WordType *context_words,
-	     unsigned int context_size) {
+  bool HistoryBasedNgramLiraLMInterface::
+  privateGetFinalScore(Key key,
+                       const WordType *context_words,
+                       unsigned int context_size,
+                       Score threshold,
+                       Score &score) {
     UNUSED_VARIABLE(key);
+    UNUSED_VARIABLE(threshold);
+    Key lira_k = lira_interface->findKeyFromNgram(context_words, context_size);
+    score = lira_interface->getFinalScore(lira_k, Score::zero());
+    return true;
+  }
+  
+  bool HistoryBasedNgramLiraLMInterface::
+  privateGet(Key key,
+             WordType word,
+             const WordType *context_words,
+             unsigned int context_size,
+             Score threshold,
+             Score &score) {
+    UNUSED_VARIABLE(key);
+    UNUSED_VARIABLE(threshold);
     vector <KeyScoreBurdenTuple> result;
     Key st = lira_interface->findKeyFromNgram(context_words, context_size);
     lira_interface->get(st, word, Burden(-1, -1), result, Score::zero());
-    return result[0].key_score.score;
+    score = result[0].key_score.score;
+    return true;
+  }
+  
+  Score HistoryBasedNgramLiraLMInterface::
+  getBestProb() const {
+    return lira_interface->getBestProb();
   }
 
-  Score HistoryBasedNgramLiraLMInterface::
-  privateGetFinalScore(const Key &key,
-                       WordType *context_words,
-                       unsigned int context_size) {
-    UNUSED_VARIABLE(key);
-    vector <KeyScoreBurdenTuple> result;
-    Key st = lira_interface->findKeyFromNgram(context_words, context_size);
-    Score score = lira_interface->getFinalScore(st, Score::zero());
-    return score;
-  }
+  ////////////////////////////////////////////////////////////////////////////
   
   HistoryBasedNgramLiraLM::
   HistoryBasedNgramLiraLM(WordType init_word,

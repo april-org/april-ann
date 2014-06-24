@@ -34,7 +34,9 @@ local result2 = language_models.test_set_ppl{
   lm = hist_based_lira_model,
   vocab = vocab,
   testset = path .. "frase",
-  debug_flag = 2,
+  debug_flag = -1,
   use_bcc = true,
   use_ecc = true,
 }
+
+for i,v in pairs(result) do check.eq( v, result2[i] ) end

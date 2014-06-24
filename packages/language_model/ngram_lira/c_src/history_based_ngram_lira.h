@@ -36,28 +36,37 @@ namespace LanguageModels {
   public:
     typedef NgramLiraModel::Key Key;
     typedef NgramLiraModel::Score Score;
-
-    Score privateBestProb() const;
-    Score privateBestProb(const Key &k) const;
+    
+    virtual ~HistoryBasedNgramLiraLMInterface();
+    Score getBestProb() const;
 
   protected:
     friend class HistoryBasedNgramLiraLM;
     HistoryBasedNgramLiraLMInterface(HistoryBasedNgramLiraLM *model,
 				     NgramLiraModel *lira_model);
 
-    Score privateGetFinalScore(const Key &key,
-                               WordType *context_words,
-                               unsigned int context_size);
+    virtual bool privateBestProb(Key k,
+                                 const WordType *context_words,
+                                 unsigned int context_size,
+                                 Score &score);
+    
+    virtual bool privateGetFinalScore(Key key,
+                                      const WordType *context_words,
+                                      unsigned int context_size,
+                                      Score threshold,
+                                      Score &score);
 
-
+    virtual bool privateGet(Key key,
+                            WordType word,
+                            const WordType *context_words,
+                            unsigned int context_size,
+                            Score threshold,
+                            Score &score);
+    
   private:
 
     NgramLiraInterface *lira_interface;
-
-    Score privateGet(const Key &key,
-                     WordType word,
-                     WordType *context_words,
-                     unsigned int context_size);
+  
   };
 
   class HistoryBasedNgramLiraLM : public HistoryBasedLM<NgramLiraModel::Key,

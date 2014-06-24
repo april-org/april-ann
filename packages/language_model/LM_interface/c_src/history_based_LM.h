@@ -23,6 +23,7 @@
 #define HISTORY_BASED_LM_H
 
 #include <stdint.h>
+#include "april_assert.h"
 #include "error_print.h"
 #include "LM_interface.h"
 #include "logbase.h"
@@ -31,57 +32,86 @@
 #include "vector.h"
 
 namespace LanguageModels {
-  
+
   using april_utils::vector;
-  
+
   template <typename Key, typename Score>
   class HistoryBasedLM;
-  
+
   /// HistoryBasedLMInterface documentation ...
   template <typename Key, typename Score>
   class HistoryBasedLMInterface : public LMInterface <Key,Score> {
     friend class HistoryBasedLM<Key,Score>;
   private:
-    unsigned int getContextProperties(const Key &key,
-                                      WordType *context_words) {
-      Key aux_key = key;
-
+    unsigned int getContextProperties(Key key,
+                                      WordType *context_words,
+                                      unsigned int &offset) {
       // Go backward to get context size and context words. Context words must
       // be collected from current key, which shifts context to the left
-      int pos = this->model->ngramOrder() - 1;
-      while (aux_key != trie->rootNode() && pos > 0) {
-        context_words[pos-1] = trie->getWord(aux_key);
-        aux_key = trie->getParent(aux_key);
+      unsigned int pos = this->model->ngramOrder() - 1;
+      while (key != trie->rootNode() && pos > 0) {
+        context_words[pos-1] = trie->getWord(key);
+        key = trie->getParent(key);
         --pos;
       }
-      if (aux_key != trie->rootNode())
+      if (key != trie->rootNode())
         ERROR_EXIT(256, "Overflow filling context words from current key\n");
+      // return offset in context_words
+      offset = pos;
       // compute context_size from position in context_words
-      return (this->model->ngramOrder() - 1 - pos);                               
+      return (this->model->ngramOrder() - 1 - pos);
+    }
+    
+    Key getDestinationKey(const WordType *context_words,
+                          const unsigned int offset,
+                          const unsigned int context_size,
+                          const WordType word) {
+      // in case the offset==0 (context_size == order-1), we need to swipe out
+      // one word
+      int begin = (offset == 0) ? 1 : offset, end = offset + context_size;
+      // Destination key is obtained traversing context_words from begin to
+      // end-1
+      Key dest_key = trie->rootNode();
+      for (int i = begin; i < end; ++i)
+        dest_key = trie->getChild(dest_key, context_words[i]);
+      // last transition uses the given word
+      dest_key = trie->getChild(dest_key, word);
+      return dest_key;
     }
 
-    virtual Score privateGet(const Key &key,
-                             WordType word,
-                             WordType *context_words,
-                             unsigned int context_size) = 0;
-
     april_utils::TrieVector *trie;
+    WordType *context_words;
 
   protected:
-    
+
     HistoryBasedLMInterface(HistoryBasedLM<Key,Score>* model) :
       LMInterface<Key,Score>(model) {
       trie = model->getTrieVector();
       IncRef(trie);
+      // we put one more word to allow storing next word at end of this array
+      context_words = new WordType[model->ngramOrder()];
     }
 
-    virtual Score privateGetFinalScore(const Key &key,
-                                       WordType *context_words,
-                                       unsigned int context_size) = 0;
+    /// returns true in case the probability could be computed
+    virtual bool privateGet(Key key,
+                            WordType word,
+                            const WordType *context_words,
+                            unsigned int context_size,
+                            Score threshold,
+                            Score &score) = 0;
 
-    virtual Score privateBestProb() const = 0;
+    /// returns true in case the probability could be computed
+    virtual bool privateGetFinalScore(Key key,
+                                      const WordType *context_words,
+                                      unsigned int context_size,
+                                      Score threshold,
+                                      Score &score) = 0;
 
-    virtual Score privateBestProb(const Key &key) const = 0;
+    /// returns true in case the probability could be computed
+    virtual bool privateBestProb(Key key,
+                                 const WordType *context_words,
+                                 unsigned int context_size,
+                                 Score &score) = 0;
 
     typedef typename LMInterface<Key,Score>::KeyScoreBurdenTuple KeyScoreBurdenTuple;
     typedef typename LMInterface<Key,Score>::Burden Burden;
@@ -90,57 +120,41 @@ namespace LanguageModels {
 
     virtual ~HistoryBasedLMInterface() {
       DecRef(trie);
+      delete[] context_words;
     }
 
-    virtual void get(const Key &key, WordType word,
+    virtual void get(Key key, WordType word,
                      Burden burden,
                      vector<KeyScoreBurdenTuple> &result,
                      Score threshold) {
-      UNUSED_VARIABLE(threshold);
-      WordType* context_words = new WordType[this->model->ngramOrder() - 1];
+      const int order = this->model->ngramOrder();
+      unsigned int offset;
       const unsigned int context_size = getContextProperties(key,
-                                                             context_words);
-      // If context size is maximum, compute score
-      // and key and return them using the result
-      // vector. Else, do nothing.
-      if (context_size == (this->model->ngramOrder() - 1)) {
-        Score aux_score = privateGet(key, word, context_words, context_size);
-        // Destination key is obtained traversing the trie starting from
-        // context_word[1]
-        Key aux_key = trie->rootNode();
-        for (int i = 1; i < context_size; ++i)
-          aux_key = trie->getChild(aux_key, context_words[i]);
-        aux_key = trie->getChild(aux_key, word);
-
+                                                             context_words,
+                                                             offset);
+      // Compute score with the retrieved context. In case of success, return
+      // them using the result vector. Else, do nothing.
+      Score score;
+      if (privateGet(key, word, context_words + offset, context_size,
+                     threshold, score)) {
+        // Destination key is obtained traversing the trie
+        Key dest_key = getDestinationKey(context_words, offset,
+                                         context_size, word);
         // Append to the result vector
-        result.push_back(KeyScoreBurdenTuple(aux_key,
-                                             aux_score,
-                                             burden));
+        result.push_back(KeyScoreBurdenTuple(dest_key, score, burden));
       }
-      delete[] context_words;
     }
 
-    virtual void getNextKeys(const Key &key, WordType word,
+    virtual void getNextKeys(Key key, WordType word,
                              vector<Key> &result) {
-      Key aux_key;
-      WordType* context_words = new WordType[this->model->ngramOrder() - 1];
+      unsigned int offset;
       const unsigned int context_size = getContextProperties(key,
-                                                             context_words);
-      // If context is maximum
-      if (context_size == (this->model->ngramOrder() - 1)) {
-        // Destination key is obtained traversing the trie starting from
-        // context_word[1]
-        aux_key = trie->rootNode();
-        for (int i = 1; i < context_size; ++i)
-          aux_key = trie->getChild(aux_key, context_words[i]);
-        aux_key = trie->getChild(aux_key, word);
-      } else {
-        // Else destination key is obtained from given key and word 
-        aux_key = trie->getChild(key, word);
-      }
+                                                             context_words,
+                                                             offset);
+      Key dest_key = getDestinationKey(context_words, offset,
+                                       context_size, word);
       // Append to the result vector
-      result.push_back(aux_key);
-      delete[] context_words;
+      result.push_back(dest_key);
     }
 
     virtual bool getZeroKey(Key &k) const {
@@ -148,42 +162,45 @@ namespace LanguageModels {
       return true;
     }
 
-    virtual void getInitialKey(Key &k) const {
-      HistoryBasedLM<Key,Score> *mdl = static_cast<HistoryBasedLM<Key,Score>* >(this->model);
+    virtual Key getInitialKey() {
+      HistoryBasedLM<Key,Score> *mdl;
+      mdl = static_cast<HistoryBasedLM<Key,Score>* >(this->model);
       WordType init_word = mdl->getInitWord();
       int context_length = this->model->ngramOrder() - 1;
-
-      k = trie->rootNode();
-
+      Key k = trie->rootNode();
       for (unsigned int i = 0; i < context_length; i++)
         k = trie->getChild(k, init_word);
+      return k;
     }
 
-    virtual Score getFinalScore(const Key &k, Score threshold) {
-      UNUSED_VARIABLE(threshold);
-      WordType* context_words = new WordType[this->model->ngramOrder() - 1];
-      const unsigned int context_size = getContextProperties(k, context_words);
-
-      // If context size is maximum, compute score
-      // and key and return them using the result
-      // vector. Else, do nothing.
-      // TODO: Fix this logic.
-      if (context_size == (this->model->ngramOrder() - 1)) {
-        Score score = privateGetFinalScore(k, context_words, context_size);
-        delete[] context_words;
-        return score;
-      } else return Score::zero();
+    virtual Score getFinalScore(Key k, Score threshold) {
+      unsigned int offset;
+      const unsigned int context_size = getContextProperties(k, context_words,
+                                                             offset);
+      // Compute score with the retrieved context. In case of fail, return
+      // zero probability
+      Score score;
+      if (!privateGetFinalScore(k, context_words+offset, context_size,
+                                threshold, score))
+        score = Score::zero();
+      return score;
     }
 
-    Score getBestProb() const {
-      return privateBestProb();
+    Score getBestProb(Key k) {
+      unsigned int offset;
+      const unsigned int context_size = getContextProperties(k, context_words,
+                                                             offset);
+      // Compute score with the retrieved context. In case of fail, return
+      // zero probability
+      Score score;
+      if (!privateBestProb(k, context_words+offset, context_size, score))
+        score = Score::zero();
+      return score;
     }
 
-    Score getBestProb(const Key &k) const {
-      return privateBestProb(k);
-    }
+    // virtual Score getBestProb() const = 0;
   };
-  
+
   template <typename Key, typename Score>
   class HistoryBasedLM : public LMModel <Key,Score> {
   private:
@@ -195,22 +212,24 @@ namespace LanguageModels {
 
     HistoryBasedLM(int ngram_order,
                    WordType init_word,
-                   april_utils::TrieVector *trie_vector) : 
+                   april_utils::TrieVector *trie_vector) :
       LMModel<Key,Score>(),
-      ngram_order(ngram_order),             
-      init_word(init_word),             
+      ngram_order(ngram_order),
+      init_word(init_word),
       trie_vector(trie_vector) {
       IncRef(trie_vector);
+      if (ngram_order <= 0)
+        ERROR_EXIT(128, "Impossible to build HistoryBasedLM with <= 0 order\n");
     }
 
-    ~HistoryBasedLM() {
+    virtual ~HistoryBasedLM() {
       DecRef(trie_vector);
     }
 
     virtual bool isDeterministic() const {
       return true;
     }
-    
+
     virtual int ngramOrder() const {
       return ngram_order;
     }
@@ -218,7 +237,7 @@ namespace LanguageModels {
     virtual bool requireHistoryManager() const {
       return true;
     }
-    
+
     WordType getInitWord() {
       return init_word;
     }
@@ -231,7 +250,7 @@ namespace LanguageModels {
     // getInterface
     // virtual LMInterface<Key,Score>* getInterface() = 0;
   };
-  
+
   typedef HistoryBasedLMInterface<uint32_t, log_float> HistoryBasedLMInterfaceUInt32LogFloat;
   typedef HistoryBasedLM<uint32_t, log_float> HistoryBasedLMUInt32LogFloat;
 }; // closes namespace

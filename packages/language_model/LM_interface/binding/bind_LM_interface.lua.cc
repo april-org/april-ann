@@ -386,8 +386,7 @@ public:
 
 //BIND_METHOD LMInterfaceUInt32LogFloat get_initial_key
 {
-  uint32_t key;
-  obj->getInitialKey(key);
+  uint32_t key = obj->getInitialKey();
   LUABIND_RETURN(uint, key);
 }
 //BIND_END

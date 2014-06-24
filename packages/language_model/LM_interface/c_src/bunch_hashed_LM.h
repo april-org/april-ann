@@ -60,7 +60,7 @@ namespace LanguageModels {
       KeyScoreMultipleBurdenTuple() {}
     };
 
-    ~BunchHashedLMInterface() {
+    virtual ~BunchHashedLMInterface() {
     }
   protected:
     typedef open_addr_hash_fast_it<WordType, vector<KeyScoreMultipleBurdenTuple> > WordResultHash;
@@ -73,7 +73,7 @@ namespace LanguageModels {
 
   public:
 
-    virtual void getNextKeys(const Key &key, WordType word,
+    virtual void getNextKeys(Key key, WordType word,
                              vector<Key> &result) {
       ;
     }
@@ -83,7 +83,7 @@ namespace LanguageModels {
       context_key_hash.clear();
     }
 
-    virtual void insertQuery(const Key &key, WordType word, Burden burden,
+    virtual void insertQuery(Key key, WordType word, Burden burden,
                              Score threshold) {
       WordResultHash &ctxt = context_key_hash[key];
       KeyScoreMultipleBurdenTuple &ctxt_word = ctxt[word];
@@ -122,38 +122,28 @@ namespace LanguageModels {
       return this->result;
     }
 
-    virtual bool getZeroKey(Key &k) const {
-      return true;
-    }
-
-    virtual void getInitialKey(Key &k) const {
-      ;
-    }
-
+    // virtual bool getZeroKey(Key &k) const
+    // virtual Key getInitialKey() const
+    
   };
   
   template <typename Key, typename Score>
   class BunchHashedLM : public LMModel <Key,Score> {
   private:
-    int ngram_order;
     unsigned int bunch_size;
 
   public:
 
-    BunchHashedLM(int ngram_order,
-                  unsigned int bunch_size) :
+    BunchHashedLM(unsigned int bunch_size) :
       LMModel<Key,Score>(),
-      ngram_order(ngram_order),
       bunch_size(bunch_size) { }
+    
+    virtual ~BunchHashedLM() { }
 
     virtual bool isDeterministic() const {
       return true;
     }
     
-    virtual int ngramOrder() const {
-      return ngram_order;
-    }
-
     virtual bool requireHistoryManager() const {
       return false;
     }

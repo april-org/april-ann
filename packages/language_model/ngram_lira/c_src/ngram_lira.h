@@ -142,7 +142,7 @@ namespace LanguageModels {
     // required by getFinalScore method:
     WordType final_word;
     
-    ~NgramLiraModel();
+    virtual ~NgramLiraModel();
 
     /// generates the binary data useful for mmaped version
     void saveBinary(const char *filename,
@@ -200,37 +200,35 @@ namespace LanguageModels {
     virtual ~NgramLiraInterface() {
     }
     
-    virtual void get(const Key &key, WordType word, Burden burden,
+    virtual void get(Key key, WordType word, Burden burden,
                      vector<KeyScoreBurdenTuple> &result, Score threshold);
     
     virtual void clearQueries();
     
     /*
-      virtual void insertQuery(const Key &key, Word word, Burden burden,
+      Implemented by default in parent class:
+      
+      virtual void insertQuery(Key key, Word word, Burden burden,
       Score threshold);
       
-      virtual void insertQueries(const Key &key, int32_t id_key,
+      virtual void insertQueries(Key key, int32_t id_key,
       vector<WordIdScoreTuple> words, bool is_sorted=false);
     */
     
     virtual Score getBestProb() const {
       return static_cast<NgramLiraModel*>(model)->best_prob;
     }
-    virtual Score getBestProb(const Key &k) const {
+    virtual Score getBestProb(Key k) {
       return static_cast<NgramLiraModel*>(model)->max_out_prob[k];
     }
     virtual bool getZeroKey(Key &k) const {
       k = static_cast<NgramLiraModel*>(model)->lowest_state;
       return true;
     }
-    virtual void getInitialKey(Key &k) const {
-      k = static_cast<NgramLiraModel*>(model)->initial_state;
+    virtual Key getInitialKey() {
+      return static_cast<NgramLiraModel*>(model)->initial_state;
     }
-    // replaced by getFinalScore:
-    // virtual void getFinalKey(Key &k) const {
-    //   k = static_cast<NgramLiraModel*>(model)->final_state;
-    // }
-    virtual Score getFinalScore(const Key &k, Score threshold) {
+    virtual Score getFinalScore(Key k, Score threshold) {
       vector<KeyScoreBurdenTuple> aux;
       Burden dummyBurden;
       get(k, static_cast<NgramLiraModel*>(model)->final_word, dummyBurden, aux,

@@ -517,7 +517,7 @@ namespace LanguageModels {
   
   ///////////////////////////////////////////////////////////////////////////
 
-  void NgramLiraInterface::get(const Key &state,
+  void NgramLiraInterface::get(Key state,
                                WordType word, Burden burden,
                                vector<KeyScoreBurdenTuple> &result,
                                Score threshold) {
