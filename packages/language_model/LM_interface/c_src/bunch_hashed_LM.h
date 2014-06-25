@@ -63,21 +63,17 @@ namespace LanguageModels {
     virtual ~BunchHashedLMInterface() {
     }
   protected:
-    typedef open_addr_hash_fast_it<WordType, vector<KeyScoreMultipleBurdenTuple> > WordResultHash;
-    typedef hash<Key, WordResultHash> KeyWordHash;
+    typedef hash<WordType, vector<KeyScoreMultipleBurdenTuple> > WordResultHash;
+    typedef open_addr_hash_fast_it<Key, WordResultHash> KeyWordHash;
 
-    virtual void computeKeysAndScores(KeyWordHash &ctxt_hash) = 0;
+    virtual void computeKeysAndScores(KeyWordHash &ctxt_hash,
+                                      unsigned int bunch_size) = 0;
 
   private:
     KeyWordHash context_key_hash;
 
   public:
-
-    virtual void getNextKeys(Key key, WordType word,
-                             vector<Key> &result) {
-      ;
-    }
-
+    
     virtual void clearQueries() {
       LMInterface<Key,Score>::clearQueries();
       context_key_hash.clear();
@@ -91,9 +87,11 @@ namespace LanguageModels {
     }
 
     virtual const vector<KeyScoreBurdenTuple> &getQueries() const {
-
+      BunchHashedLM<Key,Score> *mdl;
+      mdl = static_cast<BunchHashedLM<Key,Score>*>(this->model);
+      
       // compute keys and scores for queries in the hash table
-      computeKeysAndScores(context_key_hash);
+      computeKeysAndScores(context_key_hash, mdl->getBunchSize());
 
       // For each context key entry
       for (typename KeyWordHash::const_iterator it = context_key_hash.begin();
@@ -121,9 +119,16 @@ namespace LanguageModels {
       }
       return this->result;
     }
+    
 
-    // virtual bool getZeroKey(Key &k) const
-    // virtual Key getInitialKey() const
+    /*
+      virtual void get(Key key, WordType word, Burden burden,
+                       vector<KeyScoreBurdenTuple> &result,
+                       Score threshold) = 0;
+    */
+    // virtual void getNextKeys(Key key, WordType word, vector<Key> &result) = 0;
+    // virtual bool getZeroKey(Key &k) const;
+    // virtual Key getInitialKey();
     
   };
   
