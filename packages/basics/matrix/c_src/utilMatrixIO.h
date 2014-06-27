@@ -59,12 +59,11 @@ public:
 };
 
 class WriteLuaBufferWrapper {
-  lua_State *L;
   luaL_Buffer lua_buffer;
   char *buffer_ptr;
   int total_bytes;
 public:
-  WriteLuaBufferWrapper(lua_State *L) : L(L), buffer_ptr(0), total_bytes(0) {
+  WriteLuaBufferWrapper(lua_State *L) : buffer_ptr(0), total_bytes(0) {
     luaL_buffinit(L, &lua_buffer);
   }
   ~WriteLuaBufferWrapper() { }

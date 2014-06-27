@@ -58,17 +58,21 @@ elif [ $UNAME = "Darwin" ]; then
         fi
     elif [ $(which brew) ]; then
         brew update
-        if ! brew install lzlib readline libpng libtiff findutils pkgconfig; then
-            echo "ERROR INSTALLING DEPENDENCIES USING HOMEBREW"
-            exit 10
-        fi
+        # If the packages are installed, brew is returning != 0 error code
+        #if ! brew install lzlib readline libpng libtiff findutils pkgconfig; then
+        #    echo "ERROR INSTALLING DEPENDENCIES USING HOMEBREW"
+        #    exit 10
+        #fi
+        brew install lzlib readline libpng libtiff findutils pkgconfig
         ###################################################################
         # THIS UGLY HACK IS BECAUSE LUA52 IS NOT AT DEFAULT HOMEBREW REPO #
         brew tap homebrew/versions
-        if ! brew install lua52; then
-            echo "ERROR INSTALLING DEPENDENCIES USING HOMEBREW"
-            exit 10
-        fi
+        # If the packages are installed, brew is returning != 0 error code
+        #if ! brew install lua52; then
+        #    echo "ERROR INSTALLING DEPENDENCIES USING HOMEBREW"
+        #    exit 10
+        #fi
+        brew install lua52
         brew link lua52
         ###################################################################
     else
