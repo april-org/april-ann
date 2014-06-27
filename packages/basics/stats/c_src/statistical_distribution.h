@@ -53,6 +53,8 @@ namespace Stats {
     /// grads MatrixFloat.
     virtual void privateLogpdfDerivative(const MatrixFloat *x,
                                          MatrixFloat *result) {
+      UNUSED_VARIABLE(x);
+      UNUSED_VARIABLE(result);
       ERROR_EXIT(128, "Derivative not implemented\n");
     }
   public:
