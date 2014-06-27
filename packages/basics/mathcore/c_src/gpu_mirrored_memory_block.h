@@ -320,7 +320,6 @@ public:
     pinned   = false;
 #endif
 #ifndef NO_POOL
-    bool alloc_block = false;
     PoolListType &l = (*pool_lists)[size];
     if (l.empty()) {
       if (!use_mmap_allocation) {
