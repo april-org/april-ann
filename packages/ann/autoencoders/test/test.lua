@@ -43,7 +43,7 @@ val_output   = dataset.matrix(m2,
 
 layers_table = {
   { size=  256, actf="logistic"}, -- INPUT LAYER
-  { size= 1024, actf="logistic"}, -- FIRST HIDDEN LAYER
+  { size=  256, actf="logistic"}, -- FIRST HIDDEN LAYER
 }
 
 perturbation_prob = random(9283424)
@@ -58,7 +58,7 @@ params_pretrain = {
   supervised_layer      = { size = 10, actf = "log_softmax" },
   output_datasets       = { train_output },
   
-  bunch_size            = 512,
+  bunch_size            = 256,
   optimizer             = function() return ann.optimizer.cg() end,
   
   -- training parameters
@@ -123,7 +123,7 @@ trainer_shallow_classifier:randomize_weights {
   inf      = -0.1,
   sup      =  0.1 }
 --
-deep_classifier_wo_pretraining = ann.mlp.all_all.generate("256 inputs 1024 logistic 1024 logistic 1024 logistic 10 log_softmax")
+deep_classifier_wo_pretraining = ann.mlp.all_all.generate("256 inputs 256 logistic 256 logistic 256 logistic 10 log_softmax")
 deep_classifier_wo_pretraining = set_dropout(deep_classifier_wo_pretraining)
 trainer_deep_wo_pretraining = trainable.supervised_trainer(deep_classifier_wo_pretraining,
 							   ann.loss[loss_name](10),
