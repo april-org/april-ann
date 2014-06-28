@@ -1173,8 +1173,9 @@ function table.clear(t)
   for k,v in pairs(t) do t[k] = nil end
 end
 
-function table.unpack_on(t, dest)
+function table.unpack_on(t, dest, overwrite)
   for i,j in pairs(t) do
+    april_assert(overwrite or not dest[i], "Redefinition of key %s", i)
     dest[i] = j
   end
 end
