@@ -8,6 +8,9 @@ Master branch release
 
 ### API Changes
 
+- Added `table.values`, `table.ivalues`, `table.keys` and `table.ikeys`
+  iterators.
+
 ### Bugs removed
 
 ### C/C++

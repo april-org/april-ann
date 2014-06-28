@@ -1361,6 +1361,42 @@ function table.insert(t,...)
   return t
 end
 
+-- values and keys iterators
+function table.values(t)
+  local key,value
+  return function()
+    key,value = next(t,key)
+    return value
+  end
+end
+
+function table.ivalues(t)
+  local key=0
+  return function()
+    key = key+1
+    local v = t[key]
+    -- TODO: check if table has nil gaps
+    return v
+  end
+end
+
+function table.keys(t)
+  local key
+  return function()
+    key = next(t,key)
+    return key
+  end
+end
+
+function table.ikeys(t)
+  local key=0
+  return function()
+    key = key+1
+    -- TODO: check if table has nil gaps
+    if t[key] then return key end
+  end
+end
+
 ---------------------------------------------------------------
 --------------------------- IO UTILS --------------------------
 ---------------------------------------------------------------
