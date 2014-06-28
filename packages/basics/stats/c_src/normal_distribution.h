@@ -37,6 +37,8 @@ namespace Stats {
     virtual void privateSample(MTRand *rng, MatrixFloat *result);
     virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);
     virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result);
+    virtual void privateLogpdfDerivative(const MatrixFloat *x,
+                                         MatrixFloat *result);
     
   public:
     GeneralNormalDistribution(MatrixFloat *mean, MatrixFloat *cov);
@@ -57,6 +59,8 @@ namespace Stats {
     virtual void privateSample(MTRand *rng, MatrixFloat *result);
     virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);
     virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result);
+    virtual void privateLogpdfDerivative(const MatrixFloat *x,
+                                         MatrixFloat *result);
     
   public:
     DiagonalNormalDistribution(MatrixFloat *mean, SparseMatrixFloat *cov);
@@ -73,6 +77,8 @@ namespace Stats {
     virtual void privateSample(MTRand *rng, MatrixFloat *result);
     virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);
     virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result);
+    virtual void privateLogpdfDerivative(const MatrixFloat *x,
+                                         MatrixFloat *result);
     
   public:
     StandardNormalDistribution();
@@ -90,6 +96,8 @@ namespace Stats {
     virtual void privateSample(MTRand *rng, MatrixFloat *result);
     virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);
     virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result);
+    virtual void privateLogpdfDerivative(const MatrixFloat *x,
+                                         MatrixFloat *result);
     
   public:
     GeneralLogNormalDistribution(MatrixFloat *mean, MatrixFloat *cov,
@@ -107,6 +115,8 @@ namespace Stats {
     virtual void privateSample(MTRand *rng, MatrixFloat *result);
     virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);
     virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result);
+    virtual void privateLogpdfDerivative(const MatrixFloat *x,
+                                         MatrixFloat *result);
     
   public:
     DiagonalLogNormalDistribution(MatrixFloat *mean, SparseMatrixFloat *cov,

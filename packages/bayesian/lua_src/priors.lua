@@ -104,7 +104,7 @@ function priors_methods:value(name, value)
   return name
 end
 
-function priors_methods:dist(target, dist, ...)
+function priors_methods:follows(target, dist, ...)
   assert(type(dist) == "string", "Expected a string with the distribution name")
   april_assert(stats.dist[dist], "Unknown distribution %s\n", dist)
   april_assert(not self.tree[target], "Redifition of target '%s' dist", target)
@@ -124,7 +124,7 @@ function priors_methods:sample(rng, weights)
   local outcomes = {}
   local weights  = wrap_matrices(weights or {})
   for _,name in ipairs(self.order) do
-    local v = self.tree[name]
+    local v = assert( self.tree[name] )
     local s = sampling_funcs[v.t](v, outcomes)
     local w = weights(name)
     if not w then
@@ -134,6 +134,22 @@ function priors_methods:sample(rng, weights)
   end
   self.outcomes = outcomes
   return outcomes
+end
+
+function priors_methods:update_gradients_with_priors(weights, grads)
+  local weights  = wrap_matrices(weights or {})
+  local grads  = wrap_matrices(grads or {})
+  for name,w in pairs(weights) do
+    local wgrads = assert( grads(name) )
+    local v = self.tree[name]
+    if v then
+      assert(v.t == "dist", "Expected a distribution")
+      local d = assert(v.obj, "Needs to call sample before")
+      local w = normalize(d, w)
+      local wgrads = normalize(d, wgrads)
+      d:logpdf_derivative(w, wgrads)
+    end
+  end
 end
 
 ------------------------------------------------------------------------------

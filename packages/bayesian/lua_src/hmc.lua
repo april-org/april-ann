@@ -52,6 +52,13 @@ local function hmc(self, eval, theta)
   local spersistence = math.sqrt(1 - persistence*persistence)
   state.acceptance_rate = state.acceptance_rate
   --
+  local eval_with_priors = function(w, ...)
+    local aux = table.pack( eval(w, ...) )
+    local grads = aux[2]
+    priors:update_gradients_with_priors(w, grads)
+    return table.unpack(aux)
+  end
+  --
   -- kinetic energy associated with given velocity
   local kinetic_energy = function(vel)
     return 0.5 * vel:dot(vel)
@@ -64,17 +71,17 @@ local function hmc(self, eval, theta)
     -- velocities, and the epsilon for the step
     local leapfrog = function(pos, vel, epsilon, i)
       -- from pos(t) and vel(t - eps/2), compute vel(t + eps/2)
-      local _,grads = eval(origw, i)
+      local _,grads = eval_with_priors(origw, i)
       grads = wrap_matrices(grads)
       vel:axpy(-epsilon, grads)
       -- from vel(t + eps/2) compute pos(t + eps)
       pos:axpy(epsilon*inv_mass, vel)
-      -- local eval_result,grads = eval()
+      -- local eval_result,grads = eval_with_priors(origw, i)
       -- vel:axpy(-epsilon*0.5, grads)
     end
     --
     -- compute velocity at time: t + eps/2
-    local initial_energy,grads = eval(origw, 0)
+    local initial_energy,grads = eval_with_priors(origw, 0)
     initial_energy = scale*initial_energy + priors:compute_neg_log_prior(pos)
     grads = wrap_matrices(grads)
     vel:axpy(-0.5*epsilon, grads)
@@ -85,7 +92,7 @@ local function hmc(self, eval, theta)
       leapfrog(pos, vel, epsilon, i-1)
     end
     -- compute velocity at time: t + nsteps*eps
-    local final_energy,grads = eval(origw, nsteps)
+    local final_energy,grads = eval_with_priors(origw, nsteps)
     final_energy = scale*final_energy + priors:compute_neg_log_prior(pos)
     grads = wrap_matrices(grads)
     vel:axpy(-0.5*epsilon, grads)
@@ -190,7 +197,7 @@ local function hmc(self, eval, theta)
   --   collectgarbage("collect")
   -- end
   -- print("\t\t ACCEPTED:", #samples, accepted, currentN, accepted/currentN)
-  return eval(origw, nsteps+1)
+  return eval_with_priors(origw, nsteps+1)
 end
 
 local hmc_methods, hmc_class_metatable = class("bayesian.optimizer.hmc",

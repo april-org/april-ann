@@ -102,7 +102,7 @@ namespace Stats {
     MatrixFloat *diff_row = 0;
     for (int i=0; i<x->getDimSize(0); ++i, ++result_it) {
       diff_row = diff->select(0, i, diff_row);
-      diff_row->axpy(-1.0, mean);
+      diff_row->axpy(-1.0f, mean);
       mult->gemv(CblasNoTrans, 1.0f, inv_cov, diff_row, 0.0f);
       *result_it = -0.5 * mult->dot(diff_row);
     }
@@ -117,6 +117,25 @@ namespace Stats {
     UNUSED_VARIABLE(x);
     UNUSED_VARIABLE(result);
     ERROR_EXIT(128, "Not implemented");
+  }
+
+  void GeneralNormalDistribution::privateLogpdfDerivative(const MatrixFloat *x,
+                                                          MatrixFloat *result) {
+    result->copy(x);
+    MatrixFloat *diff = x->clone();
+    IncRef(diff);
+    // over all samples (bunch_size)
+    MatrixFloat *diff_row = 0;
+    MatrixFloat *result_row = 0;
+    for (int i=0; i<x->getDimSize(0); ++i) {
+      diff_row = diff->select(0, i, diff_row);
+      result_row = result->select(0, i, result_row);
+      diff_row->axpy(-1.0, mean);
+      result_row->gemv(CblasNoTrans, 1.0f, inv_cov, diff_row, 1.0f);
+    }
+    delete diff_row;
+    delete result_row;
+    DecRef(diff);
   }
 
   StatisticalDistributionBase *GeneralNormalDistribution::clone() {
@@ -241,6 +260,25 @@ namespace Stats {
     ERROR_EXIT(128, "Not implemented");
   }
 
+  void DiagonalNormalDistribution::privateLogpdfDerivative(const MatrixFloat *x,
+                                                           MatrixFloat *result) {
+    result->copy(x);
+    MatrixFloat *diff = x->clone();
+    IncRef(diff);
+    // over all samples (bunch_size)
+    MatrixFloat *diff_row = 0;
+    MatrixFloat *result_row = 0;
+    for (int i=0; i<x->getDimSize(0); ++i) {
+      diff_row = diff->select(0, i, diff_row);
+      result_row = result->select(0, i, result_row);
+      diff_row->axpy(-1.0, mean);
+      result_row->gemv(CblasNoTrans, 1.0f, inv_cov, diff_row, 1.0f);
+    }
+    delete diff_row;
+    delete result_row;
+    DecRef(diff);
+  }
+
   StatisticalDistributionBase *DiagonalNormalDistribution::clone() {
     return new DiagonalNormalDistribution(mean->clone(), cov->clone());
   }
@@ -291,6 +329,11 @@ namespace Stats {
     UNUSED_VARIABLE(x);
     UNUSED_VARIABLE(result);
     ERROR_EXIT(128, "Not implemented");
+  }
+
+  void StandardNormalDistribution::privateLogpdfDerivative(const MatrixFloat *x,
+                                                           MatrixFloat *result) {
+    result->axpy(1.0, x);
   }
 
   StatisticalDistributionBase *StandardNormalDistribution::clone() {
@@ -345,20 +388,27 @@ namespace Stats {
     MatrixFloat *xlog_row = 0;
     for (int i=0; i<x->getDimSize(0); ++i) {
       xlog_row = xlog->select(0, i, xlog_row);
-      xlog_row->axpy(-1.0, location);
+      xlog_row->axpy(-1.0f, location);
     }
     delete xlog_row;
     xlog->log();
     GeneralNormalDistribution::privateLogpdf(xlog, result);
     MatrixFloat *xlog_sum = xlog->sum(1);
     IncRef(xlog_sum);
-    result->axpy(-1.0, xlog_sum);
+    result->axpy(-1.0f, xlog_sum);
     DecRef(xlog);
     DecRef(xlog_sum);
   }
 
   void GeneralLogNormalDistribution::privateLogcdf(const MatrixFloat *x,
                                                    MatrixFloat *result) {
+    UNUSED_VARIABLE(x);
+    UNUSED_VARIABLE(result);
+    ERROR_EXIT(128, "Not implemented");
+  }
+
+  void GeneralLogNormalDistribution::privateLogpdfDerivative(const MatrixFloat *x,
+                                                             MatrixFloat *result) {
     UNUSED_VARIABLE(x);
     UNUSED_VARIABLE(result);
     ERROR_EXIT(128, "Not implemented");
@@ -425,20 +475,27 @@ namespace Stats {
     MatrixFloat *xlog_row = 0;
     for (int i=0; i<x->getDimSize(0); ++i) {
       xlog_row = xlog->select(0, i, xlog_row);
-      xlog_row->axpy(-1.0, location);
+      xlog_row->axpy(-1.0f, location);
     }
     delete xlog_row;
     xlog->log();
     DiagonalNormalDistribution::privateLogpdf(xlog, result);
     MatrixFloat *xlog_sum = xlog->sum(1);
     IncRef(xlog_sum);
-    result->axpy(-1.0, xlog_sum);
+    result->axpy(-1.0f, xlog_sum);
     DecRef(xlog);
     DecRef(xlog_sum);
   }
 
   void DiagonalLogNormalDistribution::privateLogcdf(const MatrixFloat *x,
                                                     MatrixFloat *result) {
+    UNUSED_VARIABLE(x);
+    UNUSED_VARIABLE(result);
+    ERROR_EXIT(128, "Not implemented");
+  }
+
+  void DiagonalLogNormalDistribution::privateLogpdfDerivative(const MatrixFloat *x,
+                                                              MatrixFloat *result) {
     UNUSED_VARIABLE(x);
     UNUSED_VARIABLE(result);
     ERROR_EXIT(128, "Not implemented");

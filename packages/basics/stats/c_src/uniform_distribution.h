@@ -21,6 +21,7 @@
 #ifndef UNIFORM_DISTRIBUTION_H
 #define UNIFORM_DISTRIBUTION_H
 
+#include "unused_variable.h"
 #include "statistical_distribution.h"
 
 namespace Stats {
@@ -34,6 +35,11 @@ namespace Stats {
     virtual void privateSample(MTRand *rng, MatrixFloat *result);
     virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result);
     virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result);
+    virtual void privateLogpdfDerivative(const MatrixFloat *x,
+                                         MatrixFloat *result) {
+      UNUSED_VARIABLE(x);
+      result->zeros();
+    }
 
   public:
     UniformDistribution(MatrixFloat *low, MatrixFloat *high);

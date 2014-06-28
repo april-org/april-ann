@@ -6,9 +6,9 @@ local wrap_matrices = matrix.dict.wrap_matrices
 function bayesian.get_MAP_weights(eval, samples)
   assert(samples, "Needs a table with samples as 2nd argument")
   assert(#samples > 0, "samples table is empty")
-  local best,argbest = table.pack(eval(samples[1])),samples[1]
+  local best,argbest = table.pack(eval(samples[1], 1)),samples[1]
   for i=2,#samples do
-    local current = table.pack(eval(samples[i]))
+    local current = table.pack(eval(samples[i], i))
     if current[1] < best[1] then
       best,argbest = current,samples[i]
     end
