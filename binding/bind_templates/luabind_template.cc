@@ -295,14 +295,18 @@ void bindluaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L){
 	  lua_pushstring(L,"id");  //table's (class) id...
 	  lua_pushstring(L,"$$(LUANAME[ClassName] or ClassName)$$");
 	  lua_settable(L,meta_instance);
-
+	  lua_pushstring(L,"cls");  //table's (class)
+          lua_pushvalue(L,class_table);
+          lua_settable(L,meta_instance);
+          
+          
 	  // todo: revisar si dejamos esto:
 	  lua_pushstring(L,"id");  //table's (class) id...
 	  lua_pushstring(L,"$$(LUANAME[ClassName] or ClassName)$$ class");
 	  lua_settable(L,meta_class);
-
-
-	  // class metatable
+          
+	  
+          // class metatable
 	  lua_pushvalue(L,meta_class);
 	  lua_setmetatable(L,class_table);
 	  
