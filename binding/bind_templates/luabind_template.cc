@@ -267,6 +267,11 @@ void bindluaopen_$$ClassName$$_$$FILENAME2$$(lua_State *L){
 	  lua_pushstring(L,"__tostring");
 	  lua_pushcfunction(L,lua_print_name_class);
 	  lua_settable(L,meta_class);
+
+	  // __concat
+	  lua_pushstring(L,"__concat");
+	  lua_pushcfunction(L,lua_concat_class_method);
+	  lua_settable(L,meta_class);
 	  
 	  // Class metatable
 	  lua_pushstring(L,"__call");

@@ -161,6 +161,10 @@ function class(classname, parentclass)
   local class_metatable = {
     __tostring = function() return "class ".. classname .. " class" end,
     id         = classname .. " class",
+    __concat   = function(a,b)
+      assert(type(b) == "string", "Needs a string as second argument")
+      return class_get(a,b)
+    end,
     --    __index    = function(t,k)
     --      local aux = rawget(t,k)
     --      if aux then return aux else return t.meta_instance.__index[k] end
@@ -231,9 +235,8 @@ end
 
 function get_object_cls(obj)
   local cls = nil
-  if getmetatable(obj) and getmetatable(obj).meta_instance then
-    cls = getmetatable(obj).meta_instance.cls
-  end
+  local mt = getmetatable(obj)
+  if mt then cls = mt.cls end
   return cls
 end
 

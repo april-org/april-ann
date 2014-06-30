@@ -222,7 +222,7 @@ end
 ---------------------------
 -- BINDING DOCUMENTATION --
 ---------------------------
-april_set_doc("matrix", {
+april_set_doc(matrix, {
 		class       = "class",
 		summary     = "Multidimensional matrix objects",
 		description ={
@@ -234,7 +234,7 @@ april_set_doc("matrix", {
 		  "efficiency."
 		}, })
 
-april_set_doc("matrix.__call", {
+april_set_doc(matrix, {
 		class = "method", summary = "Constructor",
 		description ={
 		  "Constructor of a multidimensional matrix.",
@@ -252,7 +252,7 @@ april_set_doc("matrix.__call", {
 		},
 		outputs = { "A matrix instantiated object" }, })
 
-april_set_doc("matrix.col_major", {
+april_set_doc(matrix.col_major, {
 		class = "function", summary = "constructor",
 		description ={
 		  "Constructor of a multidimensional matrix.",
@@ -272,7 +272,7 @@ april_set_doc("matrix.col_major", {
 		},
 		outputs = { "A matrix instantiated object" }, })
 
-april_set_doc("matrix.fromFilename", {
+april_set_doc(matrix.fromFilename, {
 		class = "function", summary = "constructor",
 		description ={
 		  "Loads a matrix from a filename.",
@@ -287,7 +287,7 @@ april_set_doc("matrix.fromFilename", {
 		},
 		outputs = { "A matrix instantiated object" }, })
 
-april_set_doc("matrix.fromTabFilename", {
+april_set_doc(matrix.fromTabFilename, {
 		class = "function", summary = "constructor",
 		description ={
 		  "Loads a matrix from a filename tabuled by lines and spaces.",
@@ -302,7 +302,7 @@ april_set_doc("matrix.fromTabFilename", {
 		},
 		outputs = { "A matrix instantiated object" }, })
 
-april_set_doc("matrix.fromMMap", {
+april_set_doc(matrix.fromMMap, {
 		class = "function", summary = "constructor",
 		description ={
 		  "Loads a matrix from a mmaped filename.",
@@ -321,7 +321,7 @@ april_set_doc("matrix.fromMMap", {
 		},
 		outputs = { "A matrix instantiated object" }, })
 
-april_set_doc("matrix.toFilename", {
+april_set_doc(matrix.."toFilename", {
 		class = "method",
 		summary = "It allows to store a matrix in a file.",
 		description ={
@@ -334,7 +334,7 @@ april_set_doc("matrix.toFilename", {
 		    "By default is ascii." },
 		}, })
 
-april_set_doc("matrix.toTabFilename", {
+april_set_doc(matrix.."toTabFilename", {
 		class = "method",
 		summary = "It allows to store a matrix in a file tabuled by lines and spaces.",
 		description ={
@@ -345,7 +345,7 @@ april_set_doc("matrix.toTabFilename", {
 		  "A filename path.",
 		}, })
 
-april_set_doc("matrix.toMMap", {
+april_set_doc(matrix.."toMMap", {
 		class = "method",
 		summary = "It allows to store a matrix in a mmapped file.",
 		description ={
@@ -356,7 +356,7 @@ april_set_doc("matrix.toMMap", {
 		  "A filename path.",
 		}, })
 
-april_set_doc("matrix.loadImage", {
+april_set_doc(matrix.loadImage, {
 		class = "function", summary = "constructor",
 		description ={
 		  "Loads a matrix from a image filename.",
@@ -366,7 +366,7 @@ april_set_doc("matrix.loadImage", {
 		},
 		outputs = { "A matrix instantiated object" }, })
 
-april_set_doc("matrix.saveImage", {
+april_set_doc(matrix.saveImage, {
 		class = "function",
 		summary = "It allows to store a matrix in a image file.",
 		description ={
@@ -377,7 +377,7 @@ april_set_doc("matrix.saveImage", {
 		  "A filename path.",
 		}, })
 
-april_set_doc("matrix.fromString", {
+april_set_doc(matrix.fromString, {
 		class = "function", summary = "constructor",
 		description ={
 		  "Loads a matrix from a Lua string.",
@@ -387,7 +387,7 @@ april_set_doc("matrix.fromString", {
 		},
 		outputs = { "A matrix instantiated object" }, })
 
-april_set_doc("matrix.toString", {
+april_set_doc(matrix.."toString", {
 		class = "method",
 		summary = "It returns a Lua string which stores the matrix.",
 		description ={
@@ -396,13 +396,13 @@ april_set_doc("matrix.toString", {
 		},
 		outputs = { "A Lua string" }, })
 
-april_set_doc("matrix.to_lua_string", {
+april_set_doc(matrix.."to_lua_string", {
 		class = "method",
 		summary = "It returns a Lua chunk string which is loadable.",
                 params  = { "The format [optional]. By default is binary." },
 		outputs = { "A Lua string" }, })
 
-april_set_doc("matrix.fromPNM", {
+april_set_doc(matrix.fromPNM, {
 		class = "function", summary = "constructor",
 		description ={
 		  "Loads a matrix from a PNM image stored at a Lua string.",
@@ -412,7 +412,7 @@ april_set_doc("matrix.fromPNM", {
 		},
 		outputs = { "A matrix instantiated object" }, })
 
-april_set_doc("matrix.toPNM", {
+april_set_doc(matrix.."toPNM", {
 		class = "method",
 		summary = "It stores the matrix as a PNM image Lua string.",
 		description ={
@@ -420,14 +420,14 @@ april_set_doc("matrix.toPNM", {
 		},
 		outputs = { "A Lua string" }, })
 
-april_set_doc("matrix.copy_from_table", {
+april_set_doc(matrix.."copy_from_table", {
 		class = "method",
 		summary = "Copies the table values to the matrix.",
 		params = {
 		  "A lua table with data numbers in row_major order",
 		}, })
 
-april_set_doc("matrix.get", {
+april_set_doc(matrix.."get", {
 		class = "method",
 		summary = "Returns the value stored at a given position.",
 		params = {
@@ -442,14 +442,14 @@ april_set_doc("matrix.get", {
 		  "A number",
 		}, })
 
-april_set_doc("matrix.sum",
+april_set_doc(matrix.."sum",
 	      {
 		class="method",
 		summary="Computes the sum of all the elements.",
 		outputs={"A number"},
 	      })
 
-april_set_doc("matrix.sum",
+april_set_doc(matrix.."sum",
 	      {
 		class="method",
 		summary="Computes the sum of all the elements over the given dimension.",
@@ -460,7 +460,7 @@ april_set_doc("matrix.sum",
 		outputs={"A matrix with the result"},
 	      })
 
-april_set_doc("matrix.set", {
+april_set_doc(matrix.."set", {
 		class = "method",
 		summary = "Sets the value of a given position.",
 		params = {
@@ -474,7 +474,7 @@ april_set_doc("matrix.set", {
 		},
 		outputs = { "The caller matrix" }, })
 
-april_set_doc("matrix.raw_get", {
+april_set_doc(matrix.."raw_get", {
 		class = "method",
 		summary = "Returns the value stored at a given RAW position.",
 		params = {
@@ -484,7 +484,7 @@ april_set_doc("matrix.raw_get", {
 		  "A number",
 		}, })
 
-april_set_doc("matrix.raw_set", {
+april_set_doc(matrix.."raw_set", {
 		class = "method",
 		summary = "Sets the value of a given RAW position.",
 		params = {
@@ -492,14 +492,14 @@ april_set_doc("matrix.raw_set", {
 		},
 		outputs = { "The caller matrix" }, })
 
-april_set_doc("matrix.offset", {
+april_set_doc(matrix.."offset", {
 		class = "method",
 		summary = "Returns the RAW offset position of matrix data.",
 		outputs = {
 		  "A number with the RAW offset position",
 		}, })
 
-april_set_doc("matrix.fill", {
+april_set_doc(matrix.."fill", {
 		class = "method",
 		summary = "Sets all values to a given number.",
 		description = {
@@ -513,7 +513,7 @@ april_set_doc("matrix.fill", {
 		  "The caller object (itself)",
 		}, })
 
-april_set_doc("matrix.set_use_cuda", {
+april_set_doc(matrix.."set_use_cuda", {
 		class = "method",
 		summary = "Indicates if use or not CUDA for math operations.",
 		params = {
@@ -523,21 +523,21 @@ april_set_doc("matrix.set_use_cuda", {
 		  "The caller object (itself)",
 		}, })
 
-april_set_doc("matrix.get_major_order", {
+april_set_doc(matrix.."get_major_order", {
 		class = "method",
 		summary = "Returns the major order of internal data.",
 		outputs = {
 		  "A string with the major order",
 		}, })
 
-april_set_doc("matrix.dim", {
+april_set_doc(matrix.."dim", {
 		class = "method",
 		summary = "Returns a table with the size of each dimension.",
 		outputs = {
 		  "A table",
 		}, })
 
-april_set_doc("matrix.dim", {
+april_set_doc(matrix.."dim", {
 		class = "method",
 		summary = "Returns the size of a given dimension number.",
 		params = {
@@ -547,14 +547,14 @@ april_set_doc("matrix.dim", {
 		  "A number",
 		}, })
 
-april_set_doc("matrix.stride", {
+april_set_doc(matrix.."stride", {
 		class = "method",
 		summary = "Returns a table with the stride size of each dimension.",
 		outputs = {
 		  "A table",
 		}, })
 
-april_set_doc("matrix.stride", {
+april_set_doc(matrix.."stride", {
 		class = "method",
 		summary = "Returns the stride size of a given dimension number.",
 		params = {
@@ -564,7 +564,7 @@ april_set_doc("matrix.stride", {
 		  "A number",
 		}, })
 
-april_set_doc("matrix.slice", {
+april_set_doc(matrix.."slice", {
 		class = "method",
 		summary = "Returns a sub-matrix that is a slice of caller matrix.",
 		description = {
@@ -583,7 +583,7 @@ april_set_doc("matrix.slice", {
 		  "A matrix object (sub-matrix)",
 		}, })
 
-april_set_doc("matrix.rewrap", {
+april_set_doc(matrix.."rewrap", {
 		class = "method",
 		summary = "Reinterprets the data as with other dimensions.",
 		description = {
@@ -601,7 +601,7 @@ april_set_doc("matrix.rewrap", {
 		  "A matrix object (referencing the caller matrix)",
 		}, })
 
-april_set_doc("matrix.select", {
+april_set_doc(matrix.."select", {
 		class = "method",
 		summary = "Returns an slice result of select given dimension at given index.",
 		description = {
@@ -617,8 +617,8 @@ april_set_doc("matrix.select", {
 		  "A matrix object (referencing the caller matrix)",
 		}, })
 
-april_set_doc("matrix.join", {
-		class = "method",
+april_set_doc(matrix.join, {
+		class = "function",
 		summary = "Produce a matrix which is the join of a given set of matrices.",
 		description = {
 		  "Joins a given set of matrices, given the dimension where they differ.",
@@ -636,7 +636,7 @@ april_set_doc("matrix.join", {
 		  "A new matrix object",
 		}, })
 
-april_set_doc("matrix.clone", {
+april_set_doc(matrix.."clone", {
 		class = "method",
 		summary = "Returns a deep copy (clone) of the caller matrix.",
 		description = {
@@ -652,7 +652,7 @@ april_set_doc("matrix.clone", {
 		  "A matrix object (cloned)",
 		}, })
 
-april_set_doc("matrix.transpose", {
+april_set_doc(matrix.."transpose", {
 		class = "method",
 		summary = "Returns transposition of the caller matrix.",
 		description = {
@@ -663,7 +663,7 @@ april_set_doc("matrix.transpose", {
 		  "A matrix object (transposed)",
 		}, })
 
-april_set_doc("matrix.adjust_range", {
+april_set_doc(matrix.."adjust_range", {
 		class = "method",
 		summary = "Modifies the matrix values IN-PLACE to be at given range",
 		params = {
@@ -674,7 +674,7 @@ april_set_doc("matrix.adjust_range", {
 		  "The caller matrix object (itself)",
 		}, })
 
-april_set_doc("matrix.diag", {
+april_set_doc(matrix.."diag", {
 		class = "method",
 		summary = "Sets diagonal positions to a given number.",
 		description = {
@@ -688,7 +688,7 @@ april_set_doc("matrix.diag", {
 		  "The caller object (itself)",
 		}, })
 
-april_set_doc("matrix.toTable", {
+april_set_doc(matrix.."toTable", {
 		class = "method",
 		summary = "Returns a Lua table with the data of the matrix.",
 		description = {
@@ -699,14 +699,14 @@ april_set_doc("matrix.toTable", {
 		  "A Lua table",
 		}, })
 
-april_set_doc("matrix.min", {
+april_set_doc(matrix.."min", {
 		class = "method",
 		summary = "Returns the minimum value contained at the matrix.",
 		outputs = {
 		  "A number",
 		}, })
 
-april_set_doc("matrix.min", {
+april_set_doc(matrix.."min", {
 		class = "method",
 		summary = "Returns a matrix with minimum values over given dimension.",
 		params = {
@@ -717,14 +717,14 @@ april_set_doc("matrix.min", {
 		  "A matrix with the result",
 		}, })
 
-april_set_doc("matrix.max", {
+april_set_doc(matrix.."max", {
 		class = "method",
 		summary = "Returns the maximum value contained at the matrix.",
 		outputs = {
 		  "A number",
 		}, })
 
-april_set_doc("matrix.max", {
+april_set_doc(matrix.."max", {
 		class = "method",
 		summary = "Returns a matrix with maximum values over given dimension.",
 		params = {
@@ -735,7 +735,7 @@ april_set_doc("matrix.max", {
 		  "A matrix with the result",
 		}, })
 
-april_set_doc("matrix.clamp", {
+april_set_doc(matrix.."clamp", {
 		class = "method",
 		summary = "Clamp matrix values IN-PLACE to be in the given range.",
 		params = {
@@ -746,7 +746,7 @@ april_set_doc("matrix.clamp", {
 		  "The caller matrix (itself)",
 		}, })
 
-april_set_doc("matrix.add", {
+april_set_doc(matrix.."add", {
 		class = "method",
 		summary = "Returns the addition of caller and other matrix.",
 		description = {
@@ -760,7 +760,7 @@ april_set_doc("matrix.add", {
 		  "A new matrix result of addition",
 		}, })
 
-april_set_doc("matrix.sub", {
+april_set_doc(matrix.."sub", {
 		class = "method",
 		summary = "Returns the subtraction of caller and other matrix.",
 		description = {
@@ -774,7 +774,7 @@ april_set_doc("matrix.sub", {
 		  "A new matrix result of subtraction",
 		}, })
 
-april_set_doc("matrix.mul", {
+april_set_doc(matrix.."mul", {
 		class = "method",
 		summary = "Returns the multiplication of caller and other matrix.",
 		description = {
@@ -791,7 +791,7 @@ april_set_doc("matrix.mul", {
 		  "A new matrix result of multiplication",
 		}, })
 
-april_set_doc("matrix.cmul", {
+april_set_doc(matrix.."cmul", {
 		class = "method",
 		summary = "Computes IN-PLACE the component-wise multiplication of caller and other matrix.",
 		params = {
@@ -801,7 +801,7 @@ april_set_doc("matrix.cmul", {
 		  "The caller matrix",
 		}, })
 
-april_set_doc("matrix.plogp", {
+april_set_doc(matrix.."plogp", {
 		class = "method",
 		summary = "Component wise p*log(p) operation IN-PLACE: Y = Y*log(Y)",
 		params = {
@@ -810,7 +810,7 @@ april_set_doc("matrix.plogp", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.log", {
+april_set_doc(matrix.."log", {
 		class = "method",
 		summary = "Component wise log operation IN-PLACE: Y = log(Y)",
 		params = {
@@ -819,7 +819,7 @@ april_set_doc("matrix.log", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.log1p", {
+april_set_doc(matrix.."log1p", {
 		class = "method",
 		summary = "Component wise log1p operation IN-PLACE: Y = log1p(Y)",
 		params = {
@@ -828,7 +828,7 @@ april_set_doc("matrix.log1p", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.exp", {
+april_set_doc(matrix.."exp", {
 		class = "method",
 		summary = "Component wise exp operation IN-PLACE: Y = exp(Y)",
 		params = {
@@ -837,7 +837,7 @@ april_set_doc("matrix.exp", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.tan", {
+april_set_doc(matrix.."tan", {
 		class = "method",
 		summary = "Component wise tanh operation IN-PLACE: Y = tan(Y)",
 		params = {
@@ -846,7 +846,7 @@ april_set_doc("matrix.tan", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.tanh", {
+april_set_doc(matrix.."tanh", {
 		class = "method",
 		summary = "Component wise tanh operation IN-PLACE: Y = tanh(Y)",
 		params = {
@@ -855,7 +855,7 @@ april_set_doc("matrix.tanh", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.atan", {
+april_set_doc(matrix.."atan", {
 		class = "method",
 		summary = "Component wise atanh operation IN-PLACE: Y = atan(Y)",
 		params = {
@@ -864,7 +864,7 @@ april_set_doc("matrix.atan", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.atanh", {
+april_set_doc(matrix.."atanh", {
 		class = "method",
 		summary = "Component wise atanh operation IN-PLACE: Y = atanh(Y)",
 		params = {
@@ -873,7 +873,7 @@ april_set_doc("matrix.atanh", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.sin", {
+april_set_doc(matrix.."sin", {
 		class = "method",
 		summary = "Component wise sin operation IN-PLACE: Y = sin(Y)",
 		params = {
@@ -882,7 +882,7 @@ april_set_doc("matrix.sin", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.sinh", {
+april_set_doc(matrix.."sinh", {
 		class = "method",
 		summary = "Component wise sinh operation IN-PLACE: Y = sinh(Y)",
 		params = {
@@ -891,7 +891,7 @@ april_set_doc("matrix.sinh", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.asin", {
+april_set_doc(matrix.."asin", {
 		class = "method",
 		summary = "Component wise asin operation IN-PLACE: Y = asin(Y)",
 		params = {
@@ -900,7 +900,7 @@ april_set_doc("matrix.asin", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.asinh", {
+april_set_doc(matrix.."asinh", {
 		class = "method",
 		summary = "Component wise asinh operation IN-PLACE: Y = asinh(Y)",
 		params = {
@@ -909,7 +909,7 @@ april_set_doc("matrix.asinh", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.cos", {
+april_set_doc(matrix.."cos", {
 		class = "method",
 		summary = "Component wise cos operation IN-PLACE: Y = cos(Y)",
 		params = {
@@ -918,7 +918,7 @@ april_set_doc("matrix.cos", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.cosh", {
+april_set_doc(matrix.."cosh", {
 		class = "method",
 		summary = "Component wise cosh operation IN-PLACE: Y = cosh(Y)",
 		params = {
@@ -927,7 +927,7 @@ april_set_doc("matrix.cosh", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.acos", {
+april_set_doc(matrix.."acos", {
 		class = "method",
 		summary = "Component wise acos operation IN-PLACE: Y = acos(Y)",
 		params = {
@@ -936,7 +936,7 @@ april_set_doc("matrix.acos", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.acosh", {
+april_set_doc(matrix.."acosh", {
 		class = "method",
 		summary = "Component wise acosh operation IN-PLACE: Y = acosh(Y)",
 		params = {
@@ -945,7 +945,7 @@ april_set_doc("matrix.acosh", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.abs", {
+april_set_doc(matrix.."abs", {
 		class = "method",
 		summary = "Component wise abs operation IN-PLACE: Y = abs(Y)",
 		params = {
@@ -954,7 +954,7 @@ april_set_doc("matrix.abs", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.complement", {
+april_set_doc(matrix.."complement", {
 		class = "method",
 		summary = "Component wise complement operation IN-PLACE: Y = 1 - Y",
 		params = {
@@ -963,7 +963,7 @@ april_set_doc("matrix.complement", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.sqrt", {
+april_set_doc(matrix.."sqrt", {
 		class = "method",
 		summary = "Component wise sqrt operation IN-PLACE: Y = sqrt(Y)",
 		params = {
@@ -972,7 +972,7 @@ april_set_doc("matrix.sqrt", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.pow", {
+april_set_doc(matrix.."pow", {
 		class = "method",
 		summary = "Component wise pow operation IN-PLACE: Y = pow(Y,x)",
 		params = {
@@ -982,7 +982,7 @@ april_set_doc("matrix.pow", {
 		  "The caller matrix, Y (itself)",
 		}, })
 
-april_set_doc("matrix.axpy", {
+april_set_doc(matrix.."axpy", {
 		class = "method",
 		summary = "BLAS AXPY operation IN-PLACE: Y = Y + alpha * X.",
 		params = {
@@ -993,7 +993,7 @@ april_set_doc("matrix.axpy", {
 		  "The caller matrix (a vector), Y (itself)",
 		}, })
 
-april_set_doc("matrix.gemv", {
+april_set_doc(matrix.."gemv", {
 		class = "method",
 		summary = "BLAS GEMV operation IN-PLACE: Y = beta * Y + alpha * A * X.",
 		params = {
@@ -1010,7 +1010,7 @@ april_set_doc("matrix.gemv", {
 		  "The caller matrix (a vector), Y (itself)",
 		}, })
 
-april_set_doc("matrix.gemm", {
+april_set_doc(matrix.."gemm", {
 		class = "method",
 		summary = "BLAS GEMM operation IN-PLACE: C = beta * C + alpha * A * B.",
 		params = {
@@ -1031,7 +1031,7 @@ april_set_doc("matrix.gemm", {
 		  "The caller matrix, C (itself)",
 		}, })
 
-april_set_doc("matrix.ger", {
+april_set_doc(matrix.."ger", {
 		class = "method",
 		summary = "BLAS GER operation IN-PLACE: Z = Z + alpha * X * Y'.",
 		params = {
@@ -1043,7 +1043,7 @@ april_set_doc("matrix.ger", {
 		  "The caller matrix, Z (itself)",
 		}, })
 
-april_set_doc("matrix.dot", {
+april_set_doc(matrix.."dot", {
 		class = "method",
 		summary = "BLAS DOT operation IN-PLACE: v = X  dot  Y",
 		params = {
@@ -1053,7 +1053,7 @@ april_set_doc("matrix.dot", {
 		  "A number with the dot product",
 		}, })
 
-april_set_doc("matrix.scal", {
+april_set_doc(matrix.."scal", {
 		class = "method",
 		summary = "BLAS SCAL operation IN-PLACE.",
 		params = {
@@ -1063,7 +1063,7 @@ april_set_doc("matrix.scal", {
 		  "The caller matrix (itself)."
 		}, })
 
-april_set_doc("matrix.div", {
+april_set_doc(matrix.."div", {
 		class = "method",
 		summary = "Inverse to scal operation IN-PLACE, produces A = value/A.",
 		params = {
@@ -1073,14 +1073,14 @@ april_set_doc("matrix.div", {
 		  "The caller matrix (itself)."
 		}, })
 
-april_set_doc("matrix.norm2", {
+april_set_doc(matrix.."norm2", {
 		class = "method",
 		summary = "BLAS NRM2 operation.",
 		outputs = {
 		  "A number with the norm-2 of caller matrix."
 		}, })
 
-april_set_doc("matrix.copy",
+april_set_doc(matrix.."copy",
 	      {
 		class = "method",
 		summary = "Copy the values from another matrix using BLAS",
@@ -1088,7 +1088,7 @@ april_set_doc("matrix.copy",
 		outputs = { "The caller matrix instance" },
 	      })
 
-april_set_doc("matrix.linear",
+april_set_doc(matrix.."linear",
 	      {
 		class = "method",
 		summary = "Initializes with linear integers",
@@ -1097,7 +1097,7 @@ april_set_doc("matrix.linear",
 		outputs = { "The caller matrix instance" },
 	      })
 
-april_set_doc("matrix.uniform",
+april_set_doc(matrix.."uniform",
 	      {
 		class = "method",
 		summary = "Initializes with random positive integers from range [a,b]",
@@ -1107,7 +1107,7 @@ april_set_doc("matrix.uniform",
 		outputs = { "The caller matrix instance" },
 	      })
 
-april_set_doc("matrix.uniformf",
+april_set_doc(matrix.."uniformf",
 	      {
 		class = "method",
 		summary = "Initializes with random floats in range [a,b]",
@@ -1117,14 +1117,14 @@ april_set_doc("matrix.uniformf",
 		outputs = { "The caller matrix instance" },
 	      })
 
-april_set_doc("matrix.is_contiguous",
+april_set_doc(matrix.."is_contiguous",
 	      {
 		class = "method",
 		summary = "Returns true if the matrix data is contiguous at memory",
 		outputs = { "A boolean" },
 	      })
 
-april_set_doc("matrix.scalar_add",
+april_set_doc(matrix.."scalar_add",
 	      {
 		class = "method",
 		summary = "Adds a scalar IN-PLACE",
@@ -1132,7 +1132,7 @@ april_set_doc("matrix.scalar_add",
 		outputs = { "The caller matrix instance" },
 	      })
 
-april_set_doc("matrix.inv",
+april_set_doc(matrix.."inv",
 	      {
 		class = "method",
 		summary = "Computes the inverse of a matrix",
@@ -1148,7 +1148,7 @@ april_set_doc("matrix.inv",
 		outputs = { "The matrix inverse" },
 	      })
 
-april_set_doc("matrix.svd",
+april_set_doc(matrix.."svd",
 	      {
 		class = "method",
 		summary = "Computes the SVD of a matrix",
@@ -1167,7 +1167,7 @@ april_set_doc("matrix.svd",
 		},
 	      })
 
-april_set_doc("matrix.diagonalize",
+april_set_doc(matrix.."diagonalize",
 	      {
 		class = "method",
 		summary = "Converts the given uni-dimensional matrix in a bi-dimensional diagonal dense matrix",
@@ -1176,7 +1176,7 @@ april_set_doc("matrix.diagonalize",
 		},
 	      })
 
-april_set_doc("matrix.contiguous",
+april_set_doc(matrix.."contiguous",
 	      {
 		class = "method",
 		summary = "Returns a contiguous version of the caller matrix",
@@ -1188,7 +1188,7 @@ april_set_doc("matrix.contiguous",
 		outputs = { "A matrix instance" },
 	      })
 
-april_set_doc("matrix.map",
+april_set_doc(matrix.."map",
 	      {
 		class = "method",
 		summary = "Maps the matrix values by a given list of matrices and a Lua map function",
@@ -1214,7 +1214,7 @@ april_set_doc("matrix.map",
 		outputs = { "The caller matrix" },
 	      })
 
-april_set_doc("matrix.lt",
+april_set_doc(matrix.."lt",
 	      {
 		class = "method",
 		summary = "Returns a 0/1 matrix where values are less than given param. IN-PLACE operation",
@@ -1224,7 +1224,7 @@ april_set_doc("matrix.lt",
 		outputs = { "The caller matrix" },
 	      })
 
-april_set_doc("matrix.gt",
+april_set_doc(matrix.."gt",
 	      {
 		class = "method",
 		summary = "Returns a 0/1 matrix where values are greater than given param. IN-PLACE operation",
@@ -1236,7 +1236,7 @@ april_set_doc("matrix.gt",
 
 -------------------------------------------------------------------------
 
-april_set_doc("matrix.sliding_window",
+april_set_doc(matrix.."sliding_window",
 	      {
 		class = "method",
 		summary = "Returns a sliding window object",
@@ -1250,13 +1250,13 @@ april_set_doc("matrix.sliding_window",
 		outputs = { "An instance of matrix.__sliding_window__" },
 	      })
 
-april_set_doc("matrix.__sliding_window__",
+april_set_doc(matrix.__sliding_window__,
 	      {
 		class       = "class",
 		summary     = "Sliding window for matrix objects",
 	      })
 
-april_set_doc("matrix.__sliding_window__.get_matrix",
+april_set_doc(matrix.__sliding_window__.."get_matrix",
 	      {
 		class       = "method",
 		summary     = "Returns the matrix generated by the window",
@@ -1265,21 +1265,21 @@ april_set_doc("matrix.__sliding_window__.get_matrix",
 		outputs     = { "A matrix instance" },
 	      })
 
-april_set_doc("matrix.__sliding_window__.next",
+april_set_doc(matrix.__sliding_window__.."next",
 	      {
 		class       = "method",
 		summary     = "Moves the window to the next position",
 		outputs     = { "The caller sliding_window object" },
 	      })
 
-april_set_doc("matrix.__sliding_window__.is_end",
+april_set_doc(matrix.__sliding_window__.."is_end",
 	      {
 		class       = "method",
 		summary     = "Returns true when it finishes",
 		outputs     = { "A boolean" },
 	      })
 
-april_set_doc("matrix.__sliding_window__.iterate",
+april_set_doc(matrix.__sliding_window__.."iterate",
 	      {
 		class       = "method",
 		summary     = "Returns an iterator function: for mat in s:iterate() do ... end",

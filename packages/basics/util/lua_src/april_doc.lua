@@ -1,5 +1,5 @@
 local COLWIDTH=70
-local DOC_TABLE = setmetatable({}, {__mode = "kv" })
+local DOC_TABLE = setmetatable({}, {__mode = "k" })
 
 -- help documentation
 local allowed_classes = {
@@ -10,13 +10,13 @@ local allowed_classes = {
   ["var"]=true
 }
 function april_set_doc(object, docblock)
-  -- assert(type(object) ~= "string", "Unable to add string doc")
   local function concat(aux)
     local taux = luatype(aux)
     if taux == "table" then return table.concat(aux, " ") end
     april_assert(taux == "string", "Expected a string, found %s", taux)
     return aux
   end
+  --
   local docblock = get_table_fields(
     {
       class       = { mandatory=true,  type_match="string", default=nil },
@@ -28,7 +28,17 @@ function april_set_doc(object, docblock)
   assert(allowed_classes[docblock.class], "Incorrect class: " .. docblock.class)
   docblock.summary     = concat(docblock.summary)
   docblock.description = concat(docblock.description)
-  
+  --
+  local tt = type(object)
+  if not object or tt == "string" or tt == "number" or tt == "boolean" then
+    fprintf(io.stderr, "Error in april_set_doc\n class: %s\n summary: %s\n",
+            docblock.class, docblock.summary)
+    assert(tt ~= "string", "Unable to add string doc")
+    assert(tt ~= "boolean", "Unable to add boolean doc")
+    assert(tt ~= "number", "Unable to add number doc")
+    assert(object, "Needs a non-nil value as first argument")
+  end
+  --
   if docblock.params then
     for i,v in pairs(docblock.params) do docblock.params[i] = concat(v) end
   end
@@ -42,24 +52,30 @@ end
 
 function april_print_doc(object, verbosity, prefix)
   assert(object, "Needs any object as first argument")
-  assert(type(verbosity)=="number",  "Needs a number as first argument")
+  assert(type(verbosity)=="number",  "Needs a number as second argument")
   local prefix = prefix or ""
   local current_table = DOC_TABLE[object]
   if not current_table then
+    if #prefix > 0 then print(prefix) end
     if verbosity > 1 then
       print("No documentation found.")
     end
     return
   end
   local function build_short(str, color1)
-    return { prefix,
-             ansi.fg[color1]..str or "",
-             ansi.fg["default"] }
+    if #prefix > 0 then
+      return { prefix,
+               ansi.fg[color1]..str or "",
+               ansi.fg["default"] }
+    else
+      return { ansi.fg[color1]..str or "",
+               ansi.fg["default"] }
+    end
   end
-  local function build_list(out, list)
+  local function build_list(out, list, desc)
     if list then
       table.insert(out,
-                   { "\n"..ansi.fg["cyan"].."parameters:"..ansi.fg["default"] })
+                   { "\n"..ansi.fg["cyan"]..desc..ansi.fg["default"] })
       local names_table = {}
       for name,_ in pairs(list) do table.insert(names_table,name) end
       table.sort(names_table, function(a,b) return tostring(a)<tostring(b) end)
@@ -82,7 +98,7 @@ function april_print_doc(object, verbosity, prefix)
   for idx,current in ipairs(current_table) do
 
     if idx > 1 and verbosity > 1 then
-      print("\t--------------------------------------------------------------\n")
+      print("--------------------------------------------------------------\n")
     end
     --local name = current.name
     local out = {}
@@ -95,7 +111,7 @@ function april_print_doc(object, verbosity, prefix)
         str = string.gsub(str, "%[(.*)%]",
                           "["..ansi.fg["bright_yellow"].."%1"..
                             ansi.fg["default"].."]")
-        table.insert(out, { str })
+        table.insert(out[#out], str)
       end
     end
     if verbosity > 1 then
@@ -109,8 +125,8 @@ function april_print_doc(object, verbosity, prefix)
 		     { "\n"..ansi.fg["cyan"].."description:"..ansi.fg["default"],
 		       str })
       end
-      build_list(out, current.params)
-      build_list(out, current.outputs)
+      build_list(out, current.params, "parameters:")
+      build_list(out, current.outputs, "outputs:")
     end
     for i=1,#out do out[i] = table.concat(out[i], " ") end
     print(table.concat(out, "\n"))
@@ -121,24 +137,32 @@ end
 -- verbosity => 0 only names, 1 only summary, 2 all
 function april_help(object, verbosity)
   local verbosity = verbosity or 2
-  local obj = false
+  local object    = get_object_cls(object) or object
+  if ( luatype(object) == "table" and
+       object.meta_instance and object.meta_instance.id ) then
+    if verbosity > 0 then
+      print(ansi.fg["cyan"].."ID: "..ansi.fg["default"]..object.meta_instance.id)
+    end
+  end
   april_print_doc(object, verbosity)
-  local object = get_object_cls(object) or object
   if luatype(object) == "table" then
+    print("--------------------------------------------------------------\n")
     -- local print_data = function(d) print("\t * " .. d) end
     local classes    = {}
     local funcs      = {}
     local names      = {}
     local vars       = {}
     for i,v in pairs(object) do
-      if is_class(v) then
-        table.insert(classes, {i, get_object_cls(v)})
-      elseif iscallable(v) then
-        table.insert(funcs, {i, string.format("%8s",luatype(v)), v})
-      elseif luatype(v) == "table" then
-        table.insert(names, {i, v})
-      else
-        table.insert(vars, {i, string.format("%8s",luatype(v)), v})
+      if i ~= "meta_instance" then
+        if is_class(v) then
+          table.insert(classes, {i, v})
+        elseif iscallable(v) then
+          table.insert(funcs, {i, string.format("%8s",luatype(v)), v})
+        elseif luatype(v) == "table" then
+          table.insert(names, {i, v})
+        else
+          table.insert(vars, {i, string.format("%8s",luatype(v)), v})
+        end
       end
     end
     if #vars > 0 then
@@ -158,7 +182,7 @@ function april_help(object, verbosity)
       table.sort(names, function(a,b) return tostring(a[1]) < tostring(b[1]) end)
       for i,v in ipairs(names) do
         april_print_doc(v[2], math.min(1, verbosity),
-                        ansi.fg["cyan"].."   *"..ansi.fg["default"].." "..v[1])
+                        ansi.fg["cyan"].."   * "..ansi.fg["default"].." "..v[1])
         -- print_data(v)
       end
       print("")
@@ -169,7 +193,7 @@ function april_help(object, verbosity)
       for i,v in ipairs(classes) do
         april_print_doc(v[2],
                         math.min(1, verbosity),
-                        ansi.fg["cyan"].."   *"..ansi.fg["default"].." "..v[1])
+                        ansi.fg["cyan"].."   * "..ansi.fg["default"].." "..v[1])
         -- print_data(v)
       end
       print("")
@@ -207,7 +231,7 @@ function april_help(object, verbosity)
         if v ~= prev then
           april_print_doc(v[2],
                           math.min(1, verbosity),
-                          ansi.fg["cyan"].."   *"..ansi.fg["default"].." "..v[1])
+                          ansi.fg["cyan"].."   * "..ansi.fg["default"].." "..v[1])
         end
         prev = v
         -- print_data(v)
@@ -231,7 +255,7 @@ function april_help(object, verbosity)
         for i,v in ipairs(aux) do
           april_print_doc(v[2],
                           math.min(1, verbosity),
-                          ansi.fg["cyan"].."   *"..ansi.fg["default"].." "..v[1])
+                          ansi.fg["cyan"].."   * "..ansi.fg["default"].." "..v[1])
           -- print_data(v)
         end
         print("")
@@ -248,10 +272,17 @@ end
 local april_doc_mt = {
   __concat = function(a,b)
     local tt = luatype(b)
-    april_set_doc(b,a[1])
-    return b
+    if tt == "table" and april_doc_mt == getmetatable(b) then
+      table.insert(a,b[1])
+      return a
+    else
+      for _,t in ipairs(a) do
+        april_set_doc(b,t)
+      end
+      return b
+    end
   end,
 }
-function april_doc(...)
-  return setmetatable({...}, april_doc_mt)
+function april_doc(t)
+  return setmetatable({t}, april_doc_mt)
 end

@@ -355,7 +355,7 @@ april_set_doc(ann.components.base,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.base.precompute_output_size,
+april_set_doc(ann.components.base.."precompute_output_size",
 	      {
 		class="method",
 		summary="Precomputes the shape of the output (a table)",
@@ -369,7 +369,7 @@ april_set_doc(ann.components.base.precompute_output_size,
 
 -------------------------------------------------------------------
 
-april_set_doc(ann.components.base.get_is_built,
+april_set_doc(ann.components.base.."get_is_built",
 	      {
 		class="method",
 		summary="Returns the build state of the object",
@@ -380,7 +380,7 @@ april_set_doc(ann.components.base.get_is_built,
 
 ----------------------------------------------------------------------
  
-april_set_doc(ann.components.base.get_input_size,
+april_set_doc(ann.components.base.."get_input_size",
 	      {
 		class="method",
 		summary="Returns the size INPUT",
@@ -391,7 +391,7 @@ april_set_doc(ann.components.base.get_input_size,
 
 -------------------------------------------------------------------
 
-april_set_doc(ann.components.base.get_output_size,
+april_set_doc(ann.components.base.."get_output_size",
 	      {
 		class="method",
 		summary="Returns the size OUTPUT",
@@ -402,7 +402,7 @@ april_set_doc(ann.components.base.get_output_size,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.base.get_input,
+april_set_doc(ann.components.base.."get_input",
 	      {
 		class="method",
 		summary="Returns the token at component input",
@@ -413,7 +413,7 @@ april_set_doc(ann.components.base.get_input,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.base.get_output,
+april_set_doc(ann.components.base.."get_output",
 	      {
 		class="method",
 		summary="Returns the token at component output",
@@ -424,7 +424,7 @@ april_set_doc(ann.components.base.get_output,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.base.get_error_input,
+april_set_doc(ann.components.base.."get_error_input",
 	      {
 		class="method",
 		summary="Returns the token at component error input",
@@ -440,7 +440,7 @@ april_set_doc(ann.components.base.get_error_input,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.base.get_error_output,
+april_set_doc(ann.components.base.."get_error_output",
 	      {
 		class="method",
 		summary="Returns the token at component error output",
@@ -456,7 +456,7 @@ april_set_doc(ann.components.base.get_error_output,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.base.forward,
+april_set_doc(ann.components.base.."forward",
 	      {
 		class="method",
 		summary="Computes forward step with the given token",
@@ -475,7 +475,7 @@ april_set_doc(ann.components.base.forward,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.base.backprop,
+april_set_doc(ann.components.base.."backprop",
 	      {
 		class="method",
 		summary="Computes gradient step (backprop) with the given error input",
@@ -493,7 +493,7 @@ april_set_doc(ann.components.base.backprop,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.base.reset,
+april_set_doc(ann.components.base.."reset",
 	      {
 		class="method",
 		summary="Reset all stored tokens",
@@ -513,7 +513,7 @@ april_set_doc(ann.components.base.reset,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.base.clone,
+april_set_doc(ann.components.base.."clone",
 	      {
 		class="method",
 		summary="Makes a deep-copy of the component, except connections",
@@ -528,7 +528,7 @@ april_set_doc(ann.components.base.clone,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.base.set_use_cuda,
+april_set_doc(ann.components.base.."set_use_cuda",
 	      {
 		class="method",
 		summary="Modifies use_cuda flag",
@@ -540,7 +540,7 @@ april_set_doc(ann.components.base.set_use_cuda,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.base.build,
+april_set_doc(ann.components.base.."build",
 	      {
 		class="method",
 		summary="This method needs to be called after component creation",
@@ -579,7 +579,7 @@ april_set_doc(ann.components.base.build,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.base.debug_info,
+april_set_doc(ann.components.base.."debug_info",
 	      {
 		class="method",
 		summary="Debug info at screen",
@@ -587,7 +587,7 @@ april_set_doc(ann.components.base.debug_info,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.base.copy_weights,
+april_set_doc(ann.components.base.."copy_weights",
 	      {
 		class="method",
 		summary="Returns the dictionary weights_name=>ann.connections",
@@ -599,7 +599,7 @@ april_set_doc(ann.components.base.copy_weights,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.base.copy_components,
+april_set_doc(ann.components.base.."copy_components",
 	      {
 		class="method",
 		summary="Returns the dictionary name=>ann.components",
@@ -611,7 +611,7 @@ april_set_doc(ann.components.base.copy_components,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.base.get_component,
+april_set_doc(ann.components.base.."get_component",
 	      {
 		class="method",
 		summary="Returns the ann.component with the given name property",
@@ -626,7 +626,7 @@ april_set_doc(ann.components.base.get_component,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.base.get_name,
+april_set_doc(ann.components.base.."get_name",
 	      {
 		class="method",
 		summary="Returns the name of this ann.component",
@@ -637,7 +637,7 @@ april_set_doc(ann.components.base.get_name,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.base.get_weights_name,
+april_set_doc(ann.components.base.."get_weights_name",
 	      {
 		class="method",
 		summary="Returns the weigths_name of this ann.component",
@@ -648,7 +648,7 @@ april_set_doc(ann.components.base.get_weights_name,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.base.has_weights_name,
+april_set_doc(ann.components.base.."has_weights_name",
 	      {
 		class="method",
 		summary="Indicates if this component has connection weights object",
@@ -804,7 +804,7 @@ april_set_doc(ann.components.stack,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.stack.push,
+april_set_doc(ann.components.stack.."push",
 	      {
 		class="method",
 		summary="Pushes a list of components to the stack",
@@ -819,7 +819,7 @@ april_set_doc(ann.components.stack.push,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.stack.unroll,
+april_set_doc(ann.components.stack.."unroll",
 	      {
 		class="method",
 		summary="Returns the list of components of the stack",
@@ -833,7 +833,7 @@ april_set_doc(ann.components.stack.unroll,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.stack.get,
+april_set_doc(ann.components.stack.."get",
 	      {
 		class="method",
 		summary="Returns the components of the stack at the given indexes",
@@ -853,7 +853,7 @@ april_set_doc(ann.components.stack.get,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.stack.pop,
+april_set_doc(ann.components.stack.."pop",
 	      {
 		class="method",
 		summary="Pops the top component of the stack",
@@ -861,7 +861,7 @@ april_set_doc(ann.components.stack.pop,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.stack.top,
+april_set_doc(ann.components.stack.."top",
 	      {
 		class="method",
 		summary="Returns the top component of the stack",
@@ -897,7 +897,7 @@ april_set_doc(ann.components.join,
 
 ----------------------------------------------------------------------
 
-april_set_doc(ann.components.join.add,
+april_set_doc(ann.components.join.."add",
 	      {
 		class="method",
 		summary="Adds a component to the join",
@@ -1014,14 +1014,14 @@ april_set_doc(ann.components.stochastic, {
 		class="class",
 		summary="An abstract component which implements basic interface of stochastic components",})
 
-april_set_doc(ann.components.stochastic.get_random,
+april_set_doc(ann.components.stochastic.."get_random",
 	      {
 		class="method",
 		summary="Returns the underlying random object",
 		outputs={ "A random object" },
 	      })
 
-april_set_doc(ann.components.stochastic.set_random,
+april_set_doc(ann.components.stochastic.."set_random",
 	      {
 		class="method",
 		summary="Sets the underlying random object",
