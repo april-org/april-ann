@@ -1,7 +1,7 @@
 local mean_var_methods,
 mean_var_class_metatable = class("stats.mean_var")
 
-april_set_doc("stats.mean_var", {
+april_set_doc(stats.mean_var, {
 		class       = "class",
 		summary     = "Class to compute mean and variance",
 		description ={
@@ -11,7 +11,7 @@ april_set_doc("stats.mean_var", {
 
 -----------------------------------------------------------------------------
 
-april_set_doc("stats.mean_var.__call", {
+april_set_doc(stats.mean_var, {
 		class = "method", summary = "Constructor",
 		description ={
 		  "Constructor of a mean_var object",
@@ -35,101 +35,105 @@ end
 
 -----------------------------------------------------------------------------
 
-april_set_doc("stats.mean_var.clear", {
-		class = "method",
-		summary = "Re-initializes the object" })
-
-function mean_var_methods:clear()
-  self.old_m = 0
-  self.old_s = 0
-  self.new_m = 0
-  self.new_s = 0
-  self.N     = 0
-  return self
-end
-
------------------------------------------------------------------------------
-
-april_set_doc("stats.mean_var.add", {
-		class = "method", summary = "Adds one value",
-		params = {
-		  "A number",
-		},
-		outputs = { "The caller mean_var object (itself)" }, })
-
-april_set_doc("stats.mean_var.add", {
-		class = "method", summary = "Adds a sequence of values",
-		params = {
-		  "A Lua table (as array of numbers)",
-		},
-		outputs = { "The caller mean_var object (itself)" }, })
-
-april_set_doc("stats.mean_var.add", {
-		class = "method",
-		summary = "Adds a sequence of values from an iterator function",
-		params = {
-		  "An iterator function",
-		},
-		outputs = { "The caller mean_var object (itself)" }, })
-
-function mean_var_methods:add(...)
-  local arg = { ... }
-  local v = arg[1]
-  if type(v) == "table" then
-    return self:add(ipairs(v))
-  elseif type(v) == "function" then
-    local f,s,v = table.unpack(arg)
-    local tmp = table.pack(f(s,v))
-    while tmp[1] ~= nil do
-      v = tmp[1]
-      if #tmp > 1 then table.remove(tmp,1) end
-      for _,aux in ipairs(tmp) do self:add(aux) end
-      tmp = table.pack(f(s,v))
-    end
-  elseif type(v) == "number" then
-    self.N = self.N + 1
-    -- see Knuth TAOCP vol 2, 3rd edition, page 232
-    if self.N == 1 then
-      self.old_m,self.new_m = v,v
-      self.old_s = 0.0
-    else
-      local old_diff = (v - self.old_m)
-      self.new_m = self.old_m + old_diff/self.N
-      self.new_s = self.old_s + old_diff*(v - self.new_m)
-      -- setup for next iteration
-      self.old_m = self.new_m
-      self.old_s = self.new_s
-    end
-  else
-    error("Incorrect type="..type(v)..". Expected number, table or function")
+mean_var_methods.clear =
+  april_doc{
+    class = "method",
+    summary = "Re-initializes the object"
+  } ..
+  function(self)
+    self.old_m = 0
+    self.old_s = 0
+    self.new_m = 0
+    self.new_s = 0
+    self.N     = 0
+    return self
   end
-  return self
-end
 
 -----------------------------------------------------------------------------
 
-april_set_doc("stats.mean_var.size", {
-		class = "method",
-		summary = "Return the number of elements added",
-		outputs = { "The number of elements added" }, })
-
-function mean_var_methods:size()
-  return self.N
-end
+mean_var_methods.add =
+  april_doc{
+    class = "method", summary = "Adds one value",
+    params = {
+      "A number",
+    },
+    outputs = { "The caller mean_var object (itself)" },
+  } ..
+  april_doc{
+    class = "method", summary = "Adds a sequence of values",
+    params = {
+      "A Lua table (as array of numbers)",
+    },
+    outputs = { "The caller mean_var object (itself)" },
+  } ..
+  april_doc{
+    class = "method",
+    summary = "Adds a sequence of values from an iterator function",
+    params = {
+      "An iterator function",
+    },
+    outputs = { "The caller mean_var object (itself)" },
+  } ..
+  function (self, ...)
+    local arg = { ... }
+    local v = arg[1]
+    if type(v) == "table" then
+      return self:add(ipairs(v))
+    elseif type(v) == "function" then
+      local f,s,v = table.unpack(arg)
+      local tmp = table.pack(f(s,v))
+      while tmp[1] ~= nil do
+        v = tmp[1]
+        if #tmp > 1 then table.remove(tmp,1) end
+        for _,aux in ipairs(tmp) do self:add(aux) end
+        tmp = table.pack(f(s,v))
+      end
+    elseif type(v) == "number" then
+      self.N = self.N + 1
+      -- see Knuth TAOCP vol 2, 3rd edition, page 232
+      if self.N == 1 then
+        self.old_m,self.new_m = v,v
+        self.old_s = 0.0
+      else
+        local old_diff = (v - self.old_m)
+        self.new_m = self.old_m + old_diff/self.N
+        self.new_s = self.old_s + old_diff*(v - self.new_m)
+        -- setup for next iteration
+        self.old_m = self.new_m
+        self.old_s = self.new_s
+      end
+    else
+      error("Incorrect type="..type(v)..". Expected number, table or function")
+    end
+    return self
+  end
 
 -----------------------------------------------------------------------------
 
-april_set_doc("stats.mean_var.compute", {
-		class = "method",
-		summary = "Computes mean and variance of given values",
-		outputs = {
-		  "A number, the mean of the data",
-		  "A number, the variance of the data",
-		}, })
+mean_var_methods.size =
+  april_doc{
+    class = "method",
+    summary = "Return the number of elements added",
+    outputs = { "The number of elements added" },
+  } ..
+  function(self)
+    return self.N
+  end
 
-function mean_var_methods:compute()
-  return self.new_m,self.new_s/(self.N-1)
-end
+-----------------------------------------------------------------------------
+
+mean_var_methods.compute =
+  april_doc{
+    class = "method",
+    summary = "Computes mean and variance of given values",
+    outputs = {
+      "A number, the mean of the data",
+      "A number, the variance of the data",
+    },
+  } ..
+  function(self)
+    return self.new_m,self.new_s/(self.N-1)
+  end
 
 --------------------
 -- Confusion Matrix
@@ -138,249 +142,251 @@ local confus_matrix_methods,
 confus_matrix_class_metatable = class("stats.confusion_matrix")
 
 
-april_set_doc("stats.confusion_matrix", {
-    class       = "class",
-    summary     = "class for computing confusion matrix and classification metrics",
-    description ={
-        "This class is designed to store a confusion matrix and compute main metrics for classification stats",
-    },
+april_set_doc(stats.confusion_matrix, {
+                class       = "class",
+                summary     = "class for computing confusion matrix and classification metrics",
+                description ={
+                  "This class is designed to store a confusion matrix and compute main metrics for classification stats",
+                },
 })
 
-april_set_doc("stats.confusion_matrix.__call", {
-    class ="method",
-    summary     = "Constructor of confusion matrix.",
-    description ={
-        "This class is designed to store a confusion matrix and compute main metrics for classification stats",
-    },
-    params = {
-        "A number of classes [mandatory].",
-        "A table of size num_classes, with the elements on the set.",
-        outputs = {"A confusion_matrix object"}
+april_set_doc(stats.confusion_matrix, {
+                class ="method",
+                summary     = "Constructor of confusion matrix.",
+                description ={
+                  "This class is designed to store a confusion matrix and compute main metrics for classification stats",
+                },
+                params = {
+                  "A number of classes [mandatory].",
+                  "A table of size num_classes, with the elements on the set.",
+                  outputs = {"A confusion_matrix object"}
 
-    }
+                }
 })
 function confus_matrix_class_metatable:__call(num_classes, class_dict)
 
-    local confusion = {}
-    for i = 1, num_classes do
-        local t = {}
-        for j = 1, num_classes do
-            table.insert(t, 0)
-        end
-        table.insert(confusion, t)
+  local confusion = {}
+  for i = 1, num_classes do
+    local t = {}
+    for j = 1, num_classes do
+      table.insert(t, 0)
     end
+    table.insert(confusion, t)
+  end
 
 
-    if (class_dict) then
-        --assert(#class_dict == num_classes, "The map table doesn't have the exact size")
-        map_dict = class_dict
+  if (class_dict) then
+    --assert(#class_dict == num_classes, "The map table doesn't have the exact size")
+    map_dict = class_dict
 
-        --for i, v in ipairs(map_table) do
-        --  map_dict[v] = i
-        --end
+    --for i, v in ipairs(map_table) do
+    --  map_dict[v] = i
+    --end
 
-    end
+  end
 
-    local obj = {
-        num_classes = num_classes,
-        confusion = confusion,
-        hits = 0,
-        misses = 0,
-        samples = 0,
-        -- FIXME: IS NOT POSSIBLE USE MAP DICT AS NIL
-        map_dict = map_dict or false
-    }
-    return class_instance(obj, self, true)
+  local obj = {
+    num_classes = num_classes,
+    confusion = confusion,
+    hits = 0,
+    misses = 0,
+    samples = 0,
+    -- FIXME: IS NOT POSSIBLE USE MAP DICT AS NIL
+    map_dict = map_dict or false
+  }
+  return class_instance(obj, self, true)
 end
 
-april_set_doc("stats.confusion_matrix.clone", {
+confus_matrix_methods.clone =
+  april_doc{
     class ="method",
     summary     = "Clone onstructor of confusion matrix.",
     description ={
-        "This class is designed to store a confusion matrix and compute main metrics for classification stats",
+      "This class is designed to store a confusion matrix and compute main metrics for classification stats",
     },
     params = {
     }
-})
-function confus_matrix_methods:clone()
+  } ..
+  function(self)
     
     local obj = table.deep_copy(self)
 
     return class_instance(obj, stats.confusion_matrix, true)
-end
-april_set_doc("stats.confusion_matrix.reset", {
-		class = "method", summary = "Reset to 0 all the counters",
-		})
-function confus_matrix_methods:reset()
+  end
 
+confus_matrix_methods.reset =
+  april_doc{
+    class = "method", summary = "Reset to 0 all the counters",
+  } ..
+  function(self)
     for i = 1, self.num_classes do
-        local t = {}
-        for j = 1, self.num_classes do
-            self.confusion[i][j] = 0
-        end
+      local t = {}
+      for j = 1, self.num_classes do
+        self.confusion[i][j] = 0
+      end
     end
     self.hits = 0
     self.misses = 0
     self.samples = 0
-end
+  end
 
 function confus_matrix_methods:checkType(clase)
-    return type(clase) == "number" and clase >= 1 and clase <= self.num_classes or false
+  return type(clase) == "number" and clase >= 1 and clase <= self.num_classes or false
 end
 
 ---------------------------------------------
 function confus_matrix_methods:addSample(pred, gt)
 
-    if self.map_dict then
+  if self.map_dict then
 
-        pred = map_dict[pred]
-        gt   = map_dict[gt]
-    end
-    if not self:checkType(pred) or not self:checkType(gt) then
-        printf("Error %f %f, %d\n", pred, gt, self.samples)
-        return
-        --error("The class is not correct")
-    end
+    pred = map_dict[pred]
+    gt   = map_dict[gt]
+  end
+  if not self:checkType(pred) or not self:checkType(gt) then
+    printf("Error %f %f, %d\n", pred, gt, self.samples)
+    return
+      --error("The class is not correct")
+  end
 
-    if gt == pred then
-        self.hits = self.hits + 1
-    else
-        self.misses = self.misses + 1
-    end
-    self.samples = self.samples + 1
+  if gt == pred then
+    self.hits = self.hits + 1
+  else
+    self.misses = self.misses + 1
+  end
+  self.samples = self.samples + 1
 
-    self.confusion[gt][pred] = self.confusion[gt][pred] + 1
+  self.confusion[gt][pred] = self.confusion[gt][pred] + 1
 end
 
 ------------------------------------------------
 
-
-april_set_doc("stats.confusion_matrix.printConfusionRaw", {
-		class = "method", summary = "Print the counters for each class",
-		})
-function confus_matrix_methods:printConfusionRaw()
-
+confus_matrix_methods.printConfusionRaw =
+  april_doc{
+    class = "method", summary = "Print the counters for each class",
+  } ..
+  function(self)
     for i,v in ipairs(self.confusion) do
-        print(table.concat(v, "\t"))
+      print(table.concat(v, "\t"))
     end
-end
+  end
 
-april_set_doc("stats.confusion_matrix.printConfusion", {
-		class = "method", summary = "Print the counters for each class and PR and RC",
+confus_matrix_methods.printConfusion =
+  april_doc{
+    class = "method", summary = "Print the counters for each class and PR and RC",
     params = { "A num_classes string table [optional] with the tags of each class",}
-		})
-function confus_matrix_methods:printConfusion(tags)
+  } ..
+  function(self, tags)
 
     local total_pred = {}
 
 
     printf("\t|\t Predicted ")
     for i = 1, self.num_classes do
-        printf("\t\t")
+      printf("\t\t")
     end
 
     printf("|\n")
     printf("______\t|")
     for i = 1, self.num_classes do
-        printf("\t___\t")
+      printf("\t___\t")
     end
 
     printf("\t___\t\t|\n")
     for i,v in ipairs(self.confusion) do
 
-        local tag = i
-        if tags then
-            tag = tags[i]
-        end
-        printf("%s\t|\t", tag)
-        
-        local recall, hits, total = self:getRecall(i)
-        printf("%s\t|\t %d/%d %0.4f\t|\n", table.concat(v, "\t|\t"), hits, total, recall)
+      local tag = i
+      if tags then
+        tag = tags[i]
+      end
+      printf("%s\t|\t", tag)
+      
+      local recall, hits, total = self:getRecall(i)
+      printf("%s\t|\t %d/%d %0.4f\t|\n", table.concat(v, "\t|\t"), hits, total, recall)
     end
     printf("______\t|")
     for i = 1, self.num_classes do
-        printf("\t___\t")
+      printf("\t___\t")
     end
 
     printf("\t___\t|\n")
     printf("\t\t|")
     for i = 1, self.num_classes do
-        printf("\t%0.4f\t|", self:getPrecision(i))
+      printf("\t%0.4f\t|", self:getPrecision(i))
     end
 
     local acc, hits, total = self:getAccuracy()
     printf("\t%d/%d %0.4f\t|\n", hits, total, acc)
-end
+  end
 
 function confus_matrix_methods:printInf()
+  
+  printf("Samples %d, hits = %d, misses = %d (%0.4f)\n", self.samples, self.hits, self.misses, self.misses/self.total)
+  for i = 1, self.num_classes do
     
-    printf("Samples %d, hits = %d, misses = %d (%0.4f)\n", self.samples, self.hits, self.misses, self.misses/self.total)
-    for i = 1, self.num_classes do
-        
-        print("Predicted %d", i)
-        local total = 0
-        for j = 1, self.num_classes do
-          total = total + self.confusion[i][j]
-        end
-
-        for j = 1, self.num_classes do
-          printf(" - class %d %d/%d (%0.4f)", j, self.confusion[i][j], total, self.confusion[i][j]/total)
-        end
-        print()
+    print("Predicted %d", i)
+    local total = 0
+    for j = 1, self.num_classes do
+      total = total + self.confusion[i][j]
     end
+
+    for j = 1, self.num_classes do
+      printf(" - class %d %d/%d (%0.4f)", j, self.confusion[i][j], total, self.confusion[i][j]/total)
+    end
+    print()
+  end
 end
 
 --------------------------------------------
 -- Datasets and Tables Iterators
 --------------------------------------------
 function stats.confusion_matrix.twoTablesIterator(table_pred, table_gt)
-    local i = 0
-    local n = #table_pred
-    return function()
-        i = i+1
-        if i <= n then return table_pred[i],table_gt[i] end
-    end
+  local i = 0
+  local n = #table_pred
+  return function()
+    i = i+1
+    if i <= n then return table_pred[i],table_gt[i] end
+  end
 
 end
 ----------------------------------------------------------------
 function stats.confusion_matrix.oneTableIterator(typeTable)
 
-    local i = 0
-    local n = #typeTable
-    return function()
-        i = i+1
-        if i <= n then return typeTable[i][1], typeTable[i][2] end
-    end
+  local i = 0
+  local n = #typeTable
+  return function()
+    i = i+1
+    if i <= n then return typeTable[i][1], typeTable[i][2] end
+  end
 
 end
 --------------------------------------------------------------
 function stats.confusion_matrix.oneDatasetIterator(typeDataset)
-    local i = 0
-    local n = typeDataset:numPatterns()
+  local i = 0
+  local n = typeDataset:numPatterns()
 
-    return function()
-        i = i+1
+  return function()
+    i = i+1
 
-        if i <= n then return typeDataset:getPattern(i)[1], typeDataset:getPattern(i)[2] end
-    end
+    if i <= n then return typeDataset:getPattern(i)[1], typeDataset:getPattern(i)[2] end
+  end
 end
 
 function stats.confusion_matrix.twoDatasetsIterator(predDs, gtDs)
-    local i = 0
-    assert(predDs:numPatterns() == gtDs:numPatterns(), "Datasets doesn't have the same size")
+  local i = 0
+  assert(predDs:numPatterns() == gtDs:numPatterns(), "Datasets doesn't have the same size")
 
-    local n = predDs:numPatterns()
+  local n = predDs:numPatterns()
 
-    return function()
-        i = i+1
-        if i <= n then return predDs:getPattern(i)[1], gtDs:getPattern(i)[1] end
-        
-    end
+  return function()
+    i = i+1
+    if i <= n then return predDs:getPattern(i)[1], gtDs:getPattern(i)[1] end
+    
+  end
 end
 
 ---------------------------------------------------------------------------------------------------------
-april_set_doc("stats.confusion_matrix.addData",
-{
+confus_matrix_methods.addData =
+  april_doc{
     class = "method",
     summary = "Add the info of Predicted and Ground Truth set",
     description = {
@@ -392,225 +398,227 @@ april_set_doc("stats.confusion_matrix.addData",
     params = {
       "This parameter can be a table of the predicted tags or an iterator function",
       "This parameter is used if the first parameter is the Predicted table, otherwise it should be nil"},
-})
-function confus_matrix_methods:addData(param1, param2)
+  } ..
+  function(self, param1, param2)
 
     local iterator
     if( type(param1) == 'function') then
-        iterator = param1
-        assert(param2 == nil)
+      iterator = param1
+      assert(param2 == nil)
     elseif (type(param1) == 'dataset') then
-        iterator = stats.confusion_matrix.twoDatasetsIterator(param1, param2)
+      iterator = stats.confusion_matrix.twoDatasetsIterator(param1, param2)
     else
-        iterator = stats.confusion_matrix.twoTablesIterator(param1, param2)
-        assert(type(param1) == "table" and type(param2) == "table", "The type of the params is not correct")
-        assert(#param1, #param2, "The tables does not have the same dimension")
+      iterator = stats.confusion_matrix.twoTablesIterator(param1, param2)
+      assert(type(param1) == "table" and type(param2) == "table", "The type of the params is not correct")
+      assert(#param1, #param2, "The tables does not have the same dimension")
     end
 
 
     for pred, gt in iterator do
-        self:addSample(pred, gt)
+      self:addSample(pred, gt)
     end
-end
+  end
 
 ---------------------------------------------------------------
-april_set_doc("stats.confusion_matrix.getError",
-{
+confus_matrix_methods.getError =
+  april_doc{
     class = "method", summary = "Return the global classification error (misses/total)",
     outputs = { "The global classification error." }, 
-})
-function confus_matrix_methods:getError()
+  } ..
+  function(self)
     return self.misses/self.samples, self.misses, self.samples
-end
+  end
 
-april_set_doc("stats.confusion_matrix.getWeightedError",
-{
+confus_matrix_methods.getWeightedError =
+  april_doc{
     class = "method", summary = "Return the classification error weighted by given values",
     params = {"A table of size weight"},
     outputs = { "The global classification error." }, 
-})
-function confus_matrix_methods:getWeightedError(weights)
+  } ..
+  function(self, weights)
     
     local totalError = 0.0
     for i,w in ipairs(weights) do
-        totalError = totalError+(1-w*self:getRecall(i))
+      totalError = totalError+(1-w*self:getRecall(i))
     end
 
     return totalError
-end
+  end
 
-april_set_doc("stats.confusion_matrix.getAvgError",
-{
+confus_matrix_methods.getAvgError =
+  april_doc{
     class = "method", summary = "Return the average error.",
     outputs = { "The average classification error." }, 
-})
-function confus_matrix_methods:getAvgError(weights)
-    
+  } ..
+  function(self, weights)
     local totalError = 0.0
     local w = 1.0/self.num_classes
     local i
     for i = 1, self.num_classes do
-        totalError = totalError+(1-self:getRecall(i))
+      totalError = totalError+(1-self:getRecall(i))
     end
 
     return totalError*w
-end
+  end
 
-april_set_doc("stats.confusion_matrix.getAccuracy", {
+confus_matrix_methods.getAccuracy =
+  april_doc{
     class = "method", summary = "Return the accuracy (hits/total)",
     outputs = { "The global accuracy." },
-})
-function confus_matrix_methods:getAccuracy()
+  } ..
+  function(self)
     return self.hits/self.samples, self.hits, self.samples
-end
+  end
 
 --------------------------------------------------------------
 function confus_matrix_methods:getConfusionTables()
-    return self.confusion
+  return self.confusion
 end
 ------------------------------------------------------------
 --
-april_set_doc("stats.confusion_matrix.getPrecision",
-{
+confus_matrix_methods.getPrecision =
+  april_doc{
     class = "method", summary = "Return the accuracy (hits/total)",
     params = {"The index of the class for computing the Precision"},
     outputs = { "The selected class Precision." },
-})
-function confus_matrix_methods:getPrecision(tipo)
+  } ..
+  function(self, tipo)
 
     local tp = 0
     local den = 0
 
     -- Moving by columns
     for i=1, self.num_classes do
-        v = self.confusion[i][tipo]
-        if i == tipo then
-            tp = v
+      v = self.confusion[i][tipo]
+      if i == tipo then
+        tp = v
 
-        end
-        den = den + v
+      end
+      den = den + v
     end     
     if den == 0 then
-        return 0, tp, den
+      return 0, tp, den
     end
     return tp/den, tp, den
-end
+  end
 
-april_set_doc("stats.confusion_matrix.getRecall",
-{
+confus_matrix_methods.getRecall =
+  april_doc{
     class = "method", summary = "Return the accuracy (hits/total)",
     params = {"The index of the class for computing the Recall"},
     outputs = { "The selected class Recall." },
-})
-function confus_matrix_methods:getRecall(tipo)
-
+  } ..
+  function(self, tipo)
+    
     local tp = 0
     local den = 0
 
     -- Moving by columns
     for j=1, self.num_classes do
-        v = self.confusion[tipo][j]
-        if j == tipo then
-            tp = v
+      v = self.confusion[tipo][j]
+      if j == tipo then
+        tp = v
 
-        end
-        den = den + v
+      end
+      den = den + v
     end 
 
     if den == 0 then
-        return 0, tp, den
+      return 0, tp, den
     end
     return tp/den, tp, den
-end
+  end
 
-april_set_doc("stats.confusion_matrix.getFMeasure",
-{
+confus_matrix_methods.getFMeasure =
+  april_doc{
     class = "method", summary = "Return the accuracy (hits/total)",
     params = {"The index of the class for computing the Precision"},
     outputs = { "The selected class Precision." },
-})
-function confus_matrix_methods:getFMeasure(tipo, beta)
+  } ..
+  function(self, tipo, beta)
     local nBeta = beta or 1
     nBeta = nBeta*nBeta
     local PR = self:getRecall(tipo)
     local RC = self:getPrecision(tipo)
 
     return (1+nBeta)*(PR*RC)/(nBeta*PR+RC)
-end
+  end
 
 
 
 -------------------------------------------------------
-april_set_doc("stats.confusion_matrix.clearGTClass",
-{
+confus_matrix_methods.clearGTClass =
+  april_doc{
     class = "method", summary = "Clear the counters of one class",
     description= "This function is useful when you don't want to count determinated class.",
     params = {"The index of the class to be clear"},
-})
-function confus_matrix_methods:clearGTClass(tipo)
+  } ..
+  function(self, tipo)
 
     local n_samples = 0
     local hits = 0
     local misses = 0
     -- Moving by columns
     for i=1, self.num_classes do
-        n_samples = n_samples + self.confusion[tipo][i]
-        if i == tipo then
-            hits = self.confusion[tipo][i]
-        else
-            misses = misses + self.confusion[tipo][i]
-        end
-        self.confusion[tipo][i] = 0
+      n_samples = n_samples + self.confusion[tipo][i]
+      if i == tipo then
+        hits = self.confusion[tipo][i]
+      else
+        misses = misses + self.confusion[tipo][i]
+      end
+      self.confusion[tipo][i] = 0
     end
     
     self.samples = self.samples - n_samples
     self.hits    = self.hits - hits
     self.misses  = self.misses - misses
-end
+  end
 
-april_set_doc("stats.confusion_matrix.clearClass",
-{
+confus_matrix_methods.clearClass =
+  april_doc{
     class = "method", summary = "Clear the counters of one pair classes",
     description= "This function is useful when you don't want to count determinated pair class.",
     params = {"The index of the Ground Truth class.","The index of the predicted class"},
-})
-function confus_matrix_methods:clearClass(gt, pred)
+  } ..
+  function(self, gt, pred)
 
     local samples = self.confusion[gt][pred]
     local n_samples = 0
-        if gt == pred then
-            self.hits = self.hits - samples
-        else
-            self.misses = self.misses - samples
-        end
-        self.confusion[gt][pred] = 0
+    if gt == pred then
+      self.hits = self.hits - samples
+    else
+      self.misses = self.misses - samples
+    end
+    self.confusion[gt][pred] = 0
     
     self.samples = self.samples - samples
-end
-april_set_doc("stats.confusion_matrix.clearPredClass",
-{
+  end
+
+confus_matrix_methods.clearPredClass =
+  april_doc{
     class = "method", summary = "Clear the counters of one class",
     description= "This function is useful when you don't want to count determinated class.",
     params = {"The index of the class to be clear"},
-})
-function confus_matrix_methods:clearPredClass(tipo)
-
+  } ..
+  function(self, tipo)
+    
     local n_samples = 0
     -- Moving by Rows
     for i=1, self.num_classes do
-        n_samples = n_samples + self.confusion[i][tipo]
-        self.confusion[i][tipo] = 0
+      n_samples = n_samples + self.confusion[i][tipo]
+      self.confusion[i][tipo] = 0
     end
     
     self.samples = self.samples - n_samples
-   
-end
+    
+  end
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
-april_set_doc("stats.boot",
+stats.boot = {}
+april_set_doc(stats.boot,
 	      {
 		class = "function",
 		summary = "Produces a bootstrap resampling table",
@@ -638,8 +646,8 @@ april_set_doc("stats.boot",
 		outputs = {
 		  "A table with the k statistics for every repetition."
 		},
-	      })
-stats.boot = {}
+})
+
 -- self is needed because of __call metamethod, but it will be ignored
 local function boot(self,params)
   local params = get_table_fields(
@@ -701,40 +709,39 @@ setmetatable(stats.boot, { __call = boot })
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
-april_set_doc("stats.boot.ci",
-	      {
-		class = "function",
-		summary = "Returns the extremes of a confidence interval",
-		description= {
-		  "This function returns the extremes of a confidence interval",
-		  "given a table of sorted values and the confidence value.",
-		  "It could compute the interval over a slice of the table.",
-		},
-		params = {
-		  "The result of stats.boot function.",
-		  "The confidence [optional], by default it is 0.95.",
-                  "The statistic index for which you want compute the CI [optional], by default it is 1",
-		},
-		outputs = {
-		  "The left limit of the interval",
-		  "The right limit of the interval",
-		},
-	      })
-
--- returns the extremes of the interval, the table data must be sorted
-function stats.boot.ci(data, confidence, index)
-  local confidence,index  = confidence or 0.95, index or 1
-  assert(confidence > 0 and confidence < 1,
-	 "Incorrect confidence value, it must be in range (0,1)")
-  local N = #data
-  assert(index > 0 and index <= N)
-  local med_conf_size = N*(1.0 - confidence)*0.5
-  local a_pos = math.max(1, math.round(med_conf_size))
-  local b_pos = math.min(N, math.round(N - med_conf_size))
-  local aux = iterator(ipairs(data)):select(2):field(index):table()
-  table.sort(aux)
-  return aux[a_pos],aux[b_pos]
-end
+stats.boot.ci =
+  april_doc{
+    class = "function",
+    summary = "Returns the extremes of a confidence interval",
+    description= {
+      "This function returns the extremes of a confidence interval",
+      "given a table of sorted values and the confidence value.",
+      "It could compute the interval over a slice of the table.",
+    },
+    params = {
+      "The result of stats.boot function.",
+      "The confidence [optional], by default it is 0.95.",
+      "The statistic index for which you want compute the CI [optional], by default it is 1",
+    },
+    outputs = {
+      "The left limit of the interval",
+      "The right limit of the interval",
+    },
+  } ..
+  -- returns the extremes of the interval, the table data must be sorted
+  function(data, confidence, index)
+    local confidence,index  = confidence or 0.95, index or 1
+    assert(confidence > 0 and confidence < 1,
+           "Incorrect confidence value, it must be in range (0,1)")
+    local N = #data
+    assert(index > 0 and index <= N)
+    local med_conf_size = N*(1.0 - confidence)*0.5
+    local a_pos = math.max(1, math.round(med_conf_size))
+    local b_pos = math.min(N, math.round(N - med_conf_size))
+    local aux = iterator(ipairs(data)):select(2):field(index):table()
+    table.sort(aux)
+    return aux[a_pos],aux[b_pos]
+  end
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------

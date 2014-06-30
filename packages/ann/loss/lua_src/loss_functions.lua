@@ -2,7 +2,7 @@
 -- BINDING DOCUMENTATION --
 ---------------------------
 
-april_set_doc("ann.loss",
+april_set_doc(ann.loss,
 	      {
 		class="namespace",
 		summary="Namespace which contains all loss functions",
@@ -10,7 +10,7 @@ april_set_doc("ann.loss",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss",
+april_set_doc(ann.loss,
 	      {
 		class="class",
 		summary="Abstract loss function class, implements methods",
@@ -28,7 +28,7 @@ april_set_doc("ann.loss",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.accum_loss",
+april_set_doc(ann.loss.."accum_loss",
 	      {
 		class="method",
 		summary="Receives a loss matrix and accumulates it",
@@ -40,7 +40,7 @@ april_set_doc("ann.loss.accum_loss",
 		}
 	      })
 
-april_set_doc("ann.loss.accum_loss",
+april_set_doc(ann.loss.."accum_loss",
 	      {
 		class="method",
 		summary="Receives a loss matrix and accumulates it",
@@ -56,7 +56,7 @@ april_set_doc("ann.loss.accum_loss",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.compute_loss",
+april_set_doc(ann.loss.."compute_loss",
 	      {
 		class="method",
 		summary="Computes the loss between two tokens (input and target), but doesn't accumulate it",
@@ -77,7 +77,7 @@ april_set_doc("ann.loss.compute_loss",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.gradient",
+april_set_doc(ann.loss.."gradient",
 	      {
 		class="method",
 		summary="Computes the gradient of the loss between two tokens",
@@ -99,7 +99,7 @@ april_set_doc("ann.loss.gradient",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.get_accum_loss",
+april_set_doc(ann.loss.."get_accum_loss",
 	      {
 		class="method",
 		summary="Returns the mean loss from the last reset call",
@@ -112,7 +112,7 @@ april_set_doc("ann.loss.get_accum_loss",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.reset",
+april_set_doc(ann.loss.."reset",
 	      {
 		class="method",
 		summary="Sets to zero the accumulated loss",
@@ -120,7 +120,7 @@ april_set_doc("ann.loss.reset",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.clone",
+april_set_doc(ann.loss.."clone",
 	      {
 		class="method",
 		summary="Deep copy of the object",
@@ -128,7 +128,7 @@ april_set_doc("ann.loss.clone",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.mse",
+april_set_doc(ann.loss.mse,
 	      {
 		class="class",
 		summary="Mean square error loss function",
@@ -137,7 +137,7 @@ april_set_doc("ann.loss.mse",
 		}
 	      })
 
-april_set_doc("ann.loss.mse.__call",
+april_set_doc(ann.loss.mse,
 	      {
 		class="method",
 		summary="Constructor",
@@ -149,7 +149,7 @@ april_set_doc("ann.loss.mse.__call",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.mae",
+april_set_doc(ann.loss.mae,
 	      {
 		class="class",
 		summary="Mean absolute error loss function",
@@ -158,7 +158,7 @@ april_set_doc("ann.loss.mae",
 		}
 	      })
 
-april_set_doc("ann.loss.mae.__call",
+april_set_doc(ann.loss.mae,
 	      {
 		class="method",
 		summary="Constructor",
@@ -170,7 +170,7 @@ april_set_doc("ann.loss.mae.__call",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.cross_entropy",
+april_set_doc(ann.loss.cross_entropy,
 	      {
 		class="class",
 		summary="Cross-entropy loss function (for two-class problems)",
@@ -181,7 +181,7 @@ april_set_doc("ann.loss.cross_entropy",
 		}
 	      })
 
-april_set_doc("ann.loss.cross_entropy.__call",
+april_set_doc(ann.loss.cross_entropy,
 	      {
 		class="method",
 		summary="Constructor",
@@ -193,7 +193,7 @@ april_set_doc("ann.loss.cross_entropy.__call",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.multi_class_cross_entropy",
+april_set_doc(ann.loss.multi_class_cross_entropy,
 	      {
 		class="class",
 		summary="Multi-class cross-entropy loss function",
@@ -206,7 +206,7 @@ april_set_doc("ann.loss.multi_class_cross_entropy",
 		}
 	      })
 
-april_set_doc("ann.loss.multi_class_cross_entropy.__call",
+april_set_doc(ann.loss.multi_class_cross_entropy,
 	      {
 		class="method",
 		summary="Constructor",
@@ -218,7 +218,7 @@ april_set_doc("ann.loss.multi_class_cross_entropy.__call",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.batch_fmeasure_micro_avg",
+april_set_doc(ann.loss.batch_fmeasure_micro_avg,
 	      {
 		class="class",
 		summary="The FMeasure computed from a bunch of patterns",
@@ -229,7 +229,7 @@ april_set_doc("ann.loss.batch_fmeasure_micro_avg",
 		}
 	      })
 
-april_set_doc("ann.loss.batch_fmeasure.__call",
+april_set_doc(ann.loss.batch_fmeasure_micro_avg,
 	      {
 		class="method",
 		summary="Constructor",
@@ -249,7 +249,7 @@ april_set_doc("ann.loss.batch_fmeasure.__call",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.batch_fmeasure_macro_avg",
+april_set_doc(ann.loss.batch_fmeasure_macro_avg,
 	      {
 		class="class",
 		summary="The FMeasure computed from a bunch of patterns",
@@ -260,7 +260,7 @@ april_set_doc("ann.loss.batch_fmeasure_macro_avg",
 		}
 	      })
 
-april_set_doc("ann.loss.batch_fmeasure.__call",
+april_set_doc(ann.loss.batch_fmeasure_macro_avg,
 	      {
 		class="method",
 		summary="Constructor",
@@ -280,7 +280,7 @@ april_set_doc("ann.loss.batch_fmeasure.__call",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.loss.zero_one",
+april_set_doc(ann.loss.zero_one,
 	      {
 		class="class",
 		summary="The 0-1 loss function",
@@ -290,7 +290,7 @@ april_set_doc("ann.loss.zero_one",
 		},
 	      })
 
-april_set_doc("ann.loss.zero_one.__call",
+april_set_doc(ann.loss.zero_one,
 	      {
 		class="method",
 		summary="Constructor",

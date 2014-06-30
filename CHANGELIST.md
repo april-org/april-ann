@@ -10,6 +10,9 @@ Master branch release
 
 ### API Changes
 
+- New `april_doc` and `april_set_doc` API, works with values instead of strings.
+- Added `table.values`, `table.ivalues`, `table.keys` and `table.ikeys`
+  iterators.
 - `matrix.dict` could store sparse and dense float matrices.
 - Added `matrix.cholesky(...)` method.
 

@@ -175,125 +175,119 @@ end
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.save",
-	      {
-		class="function",
-		summary="Saves a component with its weights",
-		params={
-		  "A component instance",
-		  "A filename string",
-		},
-	      })
+ann.save = april_doc{
+  class="function",
+  summary="Saves a component with its weights",
+  params={
+    "A component instance",
+    "A filename string",
+  },
+} ..
+  function(c, filename, format)
+    local format = format or "binary"
+    local f =  io.open(filename, "w")
+    f:write(string.format("return %s:build{ weights=%s }\n",
+                          c:to_lua_string(format),
+                          c:copy_weights():to_lua_string(format)))
+    f:close()
+  end
 
-function ann.save(c, filename, format)
-  local format = format or "binary"
-  local f =  io.open(filename, "w")
-  f:write(string.format("return %s:build{ weights=%s }\n",
-			c:to_lua_string(format),
-			c:copy_weights():to_lua_string(format)))
-  f:close()
-end
-
-april_set_doc("ann.load",
-	      {
-		class="function",
-		summary="Loads a component and its weights, saved with ann.save",
-		params={
-		  "A filename string",
-		},
-		outputs = { "An ANN component in built-state" },
-	      })
-
-function ann.load(filename)
-  local c,_,_ = dofile(filename)
-  return c
-end
+ann.load = april_doc{
+  class="function",
+  summary="Loads a component and its weights, saved with ann.save",
+  params={
+    "A filename string",
+  },
+  outputs = { "An ANN component in built-state" },
+} ..
+  function(filename)
+    local c,_,_ = dofile(filename)
+    return c
+  end
 ----------------------------------------------------------------------
 
-april_set_doc("ann.mlp",
+april_set_doc(ann.mlp,
 	      {
 		class="namespace",
 		summary="Namespace with utilties for easy MLP training", })
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.mlp.all_all",
+april_set_doc(ann.mlp.all_all,
 	      {
 		class="namespace",
 		summary="Namespace with utilities for all-all MLP training", })
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.mlp.all_all.generate",
-	      {
-		class="function",
-		summary="Function to build all-all stacked ANN models",
-		description=
-		  {
-		    "This function composes a component object from the",
-		    "given topology description (stacked all-all).",
-		    "It generates default names for components and connection",
-		    "weights. Each layer has one ann.components.dot_product",
-		    "with name=PREFIX..'w'..NUMBER and",
-		    "weights_name=PREFIX..'w'..NUMBER,",
-		    "one ann.components.bias with name='b'..NUMBER and",
-		    "weights_name=PREFIX..'b'..NUMBER, and an",
-		    "ann.components.actf with",
-		    "name=PREFIX..'actf'..NUMBER.",
-		    "NUMBER is a counter initialized at 1, or with the",
-		    "value of second argument (count) for",
-		    "ann.mlp.all_all(topology, count) if it is given.",
-		    "PREFIX is the third argument of the function, by default",
-		    "is an empty string.",
-		  },
-		params= {
-		  { "Topology description string as ",
-		    "'1024 inputs 128 logistc 10 log_softmax" },
-		  { "First count parameter (count) ",
-		    "[optional]. By default 1." },
-		  { "Prefix for all component and weight names [optional].",
-		    "By default is an empty string." },
-		},
-		outputs= {
-		  {"A component object with the especified ",
-		   "neural network topology" }
-		}
-	      })
-
-function ann.mlp.all_all.generate(topology, first_count, names_prefix)
-  local first_count  = first_count or 1
-  local names_prefix = names_prefix or ""
-  local thenet = ann.components.stack{ name="stack" }
-  local name   = "layer"
-  local count  = first_count
-  local t      = string.tokenize(topology)
-  local prev_size = tonumber(t[1])
-  local names_order = {}
-  for i=3,#t,2 do
-    local size = tonumber(t[i])
-    local actf = t[i+1]
-    thenet:push( ann.components.hyperplane{
-		   input=prev_size, output=size,
-		   bias_weights=names_prefix.."b" .. count,
-		   dot_product_weights=names_prefix.."w" .. count,
-		   name=names_prefix.."layer" .. count,
-		   bias_name=names_prefix.."b" .. count,
-		   dot_product_name=names_prefix.."w" .. count } )
-    table.insert(names_order, names_prefix.."b"..count)
-    table.insert(names_order, names_prefix.."w"..count)
-    if not ann.components.actf[actf] then
-      error("Incorrect activation function: " .. actf)
+ann.mlp.all_all.generate = april_doc {
+  class="function",
+  summary="Function to build all-all stacked ANN models",
+  description=
+    {
+      "This function composes a component object from the",
+      "given topology description (stacked all-all).",
+      "It generates default names for components and connection",
+      "weights. Each layer has one ann.components.dot_product",
+      "with name=PREFIX..'w'..NUMBER and",
+      "weights_name=PREFIX..'w'..NUMBER,",
+      "one ann.components.bias with name='b'..NUMBER and",
+      "weights_name=PREFIX..'b'..NUMBER, and an",
+      "ann.components.actf with",
+      "name=PREFIX..'actf'..NUMBER.",
+      "NUMBER is a counter initialized at 1, or with the",
+      "value of second argument (count) for",
+      "ann.mlp.all_all(topology, count) if it is given.",
+      "PREFIX is the third argument of the function, by default",
+      "is an empty string.",
+    },
+  params= {
+    { "Topology description string as ",
+      "'1024 inputs 128 logistc 10 log_softmax" },
+    { "First count parameter (count) ",
+      "[optional]. By default 1." },
+    { "Prefix for all component and weight names [optional].",
+      "By default is an empty string." },
+  },
+  outputs= {
+    {"A component object with the especified ",
+     "neural network topology" }
+  }
+} ..
+  function(topology, first_count, names_prefix)
+    local first_count  = first_count or 1
+    local names_prefix = names_prefix or ""
+    local thenet = ann.components.stack{ name="stack" }
+    local name   = "layer"
+    local count  = first_count
+    local t      = string.tokenize(topology)
+    local prev_size = tonumber(t[1])
+    local names_order = {}
+    for i=3,#t,2 do
+      local size = tonumber(t[i])
+      local actf = t[i+1]
+      thenet:push( ann.components.hyperplane{
+                     input=prev_size, output=size,
+                     bias_weights=names_prefix.."b" .. count,
+                     dot_product_weights=names_prefix.."w" .. count,
+                     name=names_prefix.."layer" .. count,
+                     bias_name=names_prefix.."b" .. count,
+                     dot_product_name=names_prefix.."w" .. count } )
+      table.insert(names_order, names_prefix.."b"..count)
+      table.insert(names_order, names_prefix.."w"..count)
+      if not ann.components.actf[actf] then
+        error("Incorrect activation function: " .. actf)
+      end
+      thenet:push( ann.components.actf[actf]{ name = names_prefix.."actf" .. count } )
+      count = count + 1
+      prev_size = size
     end
-    thenet:push( ann.components.actf[actf]{ name = names_prefix.."actf" .. count } )
-    count = count + 1
-    prev_size = size
+    local aux = get_lua_properties_table(thenet)
+    aux.description  = topology
+    aux.first_count  = first_count
+    aux.names_prefix = names_prefix
+    return thenet
   end
-  local aux = get_lua_properties_table(thenet)
-  aux.description  = topology
-  aux.first_count  = first_count
-  aux.names_prefix = names_prefix
-  return thenet
-end
 
 -------------------------------------------------------------------
 
@@ -304,52 +298,50 @@ end
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.mlp.all_all.load",
-	      {
-		class="function",
-		summary="Loads an all-all stacked ANN model",
-		description={
-		  "This function loads an all-all ANN model. It only works",
-		  "with models generated via ann.mlp.all_all.generate",
-		  "function.",
-		},
-		params= {
-		  { "A filename string" },
-		},
-		outputs = {
-		  "An all-all ANN model"
-		}
-	      })
-
+ann.mlp.all_all.load = april_doc{
+  class="function",
+  summary="Loads an all-all stacked ANN model",
+  description={
+    "This function loads an all-all ANN model. It only works",
+    "with models generated via ann.mlp.all_all.generate",
+    "function.",
+  },
+  params= {
+    { "A filename string" },
+  },
+  outputs = {
+    "An all-all ANN model"
+  }
+} ..
 -- this function is for retro-compatibility
-function ann.mlp.all_all.load(filename)
-  print("DEPRECATED: this method is deprecated, please use standard ANN "..
-	  "components and trainable.supervised_trainer objects")
-  local c     = loadfile(filename)
-  local data  = c()
-  local model = ann.mlp.all_all.generate(data[1], data.first_count, data.prefix)
-  local w     = data[2]
-  local oldw  = data[3] or w
-  local _,weights_table,_ = model:build()
-  local pos = 0
-  for i=1,#model.names_order,2 do
-    local bname   = model.names_order[i]
-    local wname   = model.names_order[i+1]
-    local bias    = weights_table[bname]
-    local weights = weights_table[wname]
-    local colsize = weights:get_input_size() + 1
-    bias:load{ w=w, oldw=oldw, first_pos=pos, column_size=colsize }
-    pos = weights:load{ w=w, oldw=oldw,
-			first_pos=pos+1, column_size=colsize } - 1
+  function(filename)
+    print("DEPRECATED: this method is deprecated, please use standard ANN "..
+            "components and trainable.supervised_trainer objects")
+    local c     = loadfile(filename)
+    local data  = c()
+    local model = ann.mlp.all_all.generate(data[1], data.first_count, data.prefix)
+    local w     = data[2]
+    local oldw  = data[3] or w
+    local _,weights_table,_ = model:build()
+    local pos = 0
+    for i=1,#model.names_order,2 do
+      local bname   = model.names_order[i]
+      local wname   = model.names_order[i+1]
+      local bias    = weights_table[bname]
+      local weights = weights_table[wname]
+      local colsize = weights:get_input_size() + 1
+      bias:load{ w=w, oldw=oldw, first_pos=pos, column_size=colsize }
+      pos = weights:load{ w=w, oldw=oldw,
+                          first_pos=pos+1, column_size=colsize } - 1
+    end
+    return model
   end
-  return model
-end
 
 ---------------------------
 -- BINDING DOCUMENTATION --
 ---------------------------
 
-april_set_doc("ann",
+april_set_doc(ann,
 	      {
 		class="namespace",
 		summary="Namespace which contains all ANN related classes",
@@ -357,7 +349,7 @@ april_set_doc("ann",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.connections",
+april_set_doc(ann.connections,
 	      {
 		class="namespace",
 		summary="Connections namespace, stores helper functions",
@@ -365,7 +357,7 @@ april_set_doc("ann.connections",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.connections.input_filters_image",
+april_set_doc(ann.connections.input_filters_image,
 	      {
 		class="function",
 		summary="Builds an image with the filters in the given weights matrix",
@@ -382,7 +374,7 @@ april_set_doc("ann.connections.input_filters_image",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.connections.__call",
+april_set_doc(ann.connections,
 	      {
 		class="function",
 		summary="Builds a matrix for connections",
@@ -399,7 +391,7 @@ april_set_doc("ann.connections.__call",
 		outputs = { "An instance of ann.connections" }
 	      })
 
-april_set_doc("ann.connections.__call",
+april_set_doc(ann.connections,
 	      {
 		class="function",
 		summary="Builds a matrix for connections",
@@ -426,7 +418,7 @@ april_set_doc("ann.connections.__call",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.connections.randomize_weights",
+april_set_doc(ann.connections.randomize_weights,
 	      {
 		class="function",
 		summary="Initializes following uniform random distribution: [inf,sup]",
@@ -440,7 +432,7 @@ april_set_doc("ann.connections.randomize_weights",
 -------------------------------------------------------------------
 -------------------------------------------------------------------
 
-april_set_doc("ann.components",
+april_set_doc(ann.components,
 	      {
 		class="namespace",
 		summary="Namespace which all ANN components classes",
@@ -448,7 +440,7 @@ april_set_doc("ann.components",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.components.base",
+april_set_doc(ann.components.base,
 	      {
 		class="class",
 		summary="ANN component parent class",
@@ -475,7 +467,7 @@ april_set_doc("ann.components.base",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.components.base.__call",
+april_set_doc(ann.components.base,
 	      {
 		class="method",
 		summary="Constructor",
@@ -501,7 +493,7 @@ april_set_doc("ann.components.base.__call",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.base.precompute_output_size",
+april_set_doc(ann.components.base.."precompute_output_size",
 	      {
 		class="method",
 		summary="Precomputes the shape of the output (a table)",
@@ -515,7 +507,7 @@ april_set_doc("ann.components.base.precompute_output_size",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.components.base.get_is_built",
+april_set_doc(ann.components.base.."get_is_built",
 	      {
 		class="method",
 		summary="Returns the build state of the object",
@@ -526,7 +518,7 @@ april_set_doc("ann.components.base.get_is_built",
 
 ----------------------------------------------------------------------
  
-april_set_doc("ann.components.base.get_input_size",
+april_set_doc(ann.components.base.."get_input_size",
 	      {
 		class="method",
 		summary="Returns the size INPUT",
@@ -537,7 +529,7 @@ april_set_doc("ann.components.base.get_input_size",
 
 -------------------------------------------------------------------
 
-april_set_doc("ann.components.base.get_output_size",
+april_set_doc(ann.components.base.."get_output_size",
 	      {
 		class="method",
 		summary="Returns the size OUTPUT",
@@ -548,7 +540,7 @@ april_set_doc("ann.components.base.get_output_size",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.base.get_input",
+april_set_doc(ann.components.base.."get_input",
 	      {
 		class="method",
 		summary="Returns the token at component input",
@@ -559,7 +551,7 @@ april_set_doc("ann.components.base.get_input",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.base.get_output",
+april_set_doc(ann.components.base.."get_output",
 	      {
 		class="method",
 		summary="Returns the token at component output",
@@ -570,7 +562,7 @@ april_set_doc("ann.components.base.get_output",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.base.get_error_input",
+april_set_doc(ann.components.base.."get_error_input",
 	      {
 		class="method",
 		summary="Returns the token at component error input",
@@ -586,7 +578,7 @@ april_set_doc("ann.components.base.get_error_input",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.base.get_error_output",
+april_set_doc(ann.components.base.."get_error_output",
 	      {
 		class="method",
 		summary="Returns the token at component error output",
@@ -602,7 +594,7 @@ april_set_doc("ann.components.base.get_error_output",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.base.forward",
+april_set_doc(ann.components.base.."forward",
 	      {
 		class="method",
 		summary="Computes forward step with the given token",
@@ -621,7 +613,7 @@ april_set_doc("ann.components.base.forward",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.base.backprop",
+april_set_doc(ann.components.base.."backprop",
 	      {
 		class="method",
 		summary="Computes gradient step (backprop) with the given error input",
@@ -639,7 +631,7 @@ april_set_doc("ann.components.base.backprop",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.base.reset",
+april_set_doc(ann.components.base.."reset",
 	      {
 		class="method",
 		summary="Reset all stored tokens",
@@ -659,7 +651,7 @@ april_set_doc("ann.components.base.reset",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.base.clone",
+april_set_doc(ann.components.base.."clone",
 	      {
 		class="method",
 		summary="Makes a deep-copy of the component, except connections",
@@ -674,7 +666,7 @@ april_set_doc("ann.components.base.clone",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.base.set_use_cuda",
+april_set_doc(ann.components.base.."set_use_cuda",
 	      {
 		class="method",
 		summary="Modifies use_cuda flag",
@@ -686,7 +678,7 @@ april_set_doc("ann.components.base.set_use_cuda",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.base.build",
+april_set_doc(ann.components.base.."build",
 	      {
 		class="method",
 		summary="This method needs to be called after component creation",
@@ -725,7 +717,7 @@ april_set_doc("ann.components.base.build",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.base.debug_info",
+april_set_doc(ann.components.base.."debug_info",
 	      {
 		class="method",
 		summary="Debug info at screen",
@@ -733,7 +725,7 @@ april_set_doc("ann.components.base.debug_info",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.base.copy_weights",
+april_set_doc(ann.components.base.."copy_weights",
 	      {
 		class="method",
 		summary="Returns the dictionary weights_name=>ann.connections",
@@ -745,7 +737,7 @@ april_set_doc("ann.components.base.copy_weights",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.base.copy_components",
+april_set_doc(ann.components.base.."copy_components",
 	      {
 		class="method",
 		summary="Returns the dictionary name=>ann.components",
@@ -757,7 +749,7 @@ april_set_doc("ann.components.base.copy_components",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.base.get_component",
+april_set_doc(ann.components.base.."get_component",
 	      {
 		class="method",
 		summary="Returns the ann.component with the given name property",
@@ -772,7 +764,7 @@ april_set_doc("ann.components.base.get_component",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.base.get_name",
+april_set_doc(ann.components.base.."get_name",
 	      {
 		class="method",
 		summary="Returns the name of this ann.component",
@@ -783,7 +775,7 @@ april_set_doc("ann.components.base.get_name",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.base.get_weights_name",
+april_set_doc(ann.components.base.."get_weights_name",
 	      {
 		class="method",
 		summary="Returns the weigths_name of this ann.component",
@@ -794,7 +786,7 @@ april_set_doc("ann.components.base.get_weights_name",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.base.has_weights_name",
+april_set_doc(ann.components.base.."has_weights_name",
 	      {
 		class="method",
 		summary="Indicates if this component has connection weights object",
@@ -807,7 +799,7 @@ april_set_doc("ann.components.base.has_weights_name",
 --        COMPONENTS         --
 -------------------------------
 
-april_set_doc("ann.components.dot_product", {
+april_set_doc(ann.components.dot_product, {
 		class="class",
 		summary="A component which implements output = input x weights",
 		description = {
@@ -819,7 +811,7 @@ april_set_doc("ann.components.dot_product", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.dot_product.__call",
+april_set_doc(ann.components.dot_product,
 	      {
 		class="method",
 		summary="Constructor of the component",
@@ -845,7 +837,7 @@ april_set_doc("ann.components.dot_product.__call",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.bias", {
+april_set_doc(ann.components.bias, {
 		class="class",
 		summary="A component which implements output = input + bias",
 		description = {
@@ -857,7 +849,7 @@ april_set_doc("ann.components.bias", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.bias.__call",
+april_set_doc(ann.components.bias,
 	      {
 		class="method",
 		summary="Constructor of the component",
@@ -877,7 +869,7 @@ april_set_doc("ann.components.bias.__call",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.hyperplane", {
+april_set_doc(ann.components.hyperplane, {
 		class="class",
 		summary="A component which implements output=input*weigths + bias",
 		description = {
@@ -889,7 +881,7 @@ april_set_doc("ann.components.hyperplane", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.hyperplane.__call",
+april_set_doc(ann.components.hyperplane,
 	      {
 		class="method",
 		summary="Constructor of the component",
@@ -924,7 +916,7 @@ april_set_doc("ann.components.hyperplane.__call",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.stack", {
+april_set_doc(ann.components.stack, {
 		class="class",
 		summary="A container component for stack multiple components",
 		description = {
@@ -935,7 +927,7 @@ april_set_doc("ann.components.stack", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.stack.__call",
+april_set_doc(ann.components.stack,
 	      {
 		class="method",
 		summary="Constructor of the component",
@@ -950,7 +942,7 @@ april_set_doc("ann.components.stack.__call",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.stack.push",
+april_set_doc(ann.components.stack.."push",
 	      {
 		class="method",
 		summary="Pushes a list of components to the stack",
@@ -965,7 +957,7 @@ april_set_doc("ann.components.stack.push",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.stack.unroll",
+april_set_doc(ann.components.stack.."unroll",
 	      {
 		class="method",
 		summary="Returns the list of components of the stack",
@@ -979,7 +971,7 @@ april_set_doc("ann.components.stack.unroll",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.stack.get",
+april_set_doc(ann.components.stack.."get",
 	      {
 		class="method",
 		summary="Returns the components of the stack at the given indexes",
@@ -999,7 +991,7 @@ april_set_doc("ann.components.stack.get",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.stack.pop",
+april_set_doc(ann.components.stack.."pop",
 	      {
 		class="method",
 		summary="Pops the top component of the stack",
@@ -1007,7 +999,7 @@ april_set_doc("ann.components.stack.pop",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.stack.top",
+april_set_doc(ann.components.stack.."top",
 	      {
 		class="method",
 		summary="Returns the top component of the stack",
@@ -1016,7 +1008,7 @@ april_set_doc("ann.components.stack.top",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.join", {
+april_set_doc(ann.components.join, {
 		class="class",
 		summary="A container component for join multiple components",
 		description = {
@@ -1028,7 +1020,7 @@ april_set_doc("ann.components.join", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.join.__call",
+april_set_doc(ann.components.join,
 	      {
 		class="method",
 		summary="Constructor of the component",
@@ -1043,7 +1035,7 @@ april_set_doc("ann.components.join.__call",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.join.add",
+april_set_doc(ann.components.join.."add",
 	      {
 		class="method",
 		summary="Adds a component to the join",
@@ -1054,13 +1046,13 @@ april_set_doc("ann.components.join.add",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.copy", {
+april_set_doc(ann.components.copy, {
 		class="class",
 		summary="A dummy component for copy multiple times its input",})
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.copy.__call",
+april_set_doc(ann.components.copy,
 	      {
 		class="method",
 		summary="Constructor of the component",
@@ -1082,13 +1074,13 @@ april_set_doc("ann.components.copy.__call",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.select", {
+april_set_doc(ann.components.select, {
 		class="class",
 		summary="A component for select operation (see matrix.select)",})
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.select.__call",
+april_set_doc(ann.components.select,
 	      {
 		class="method",
 		summary="Constructor of the component select (see matrix.select)",
@@ -1105,13 +1097,13 @@ april_set_doc("ann.components.select.__call",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.rewrap", {
+april_set_doc(ann.components.rewrap, {
 		class="class",
 		summary="A component for change the dimension of matrix (see matrix.rewrap)",})
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.rewrap.__call",
+april_set_doc(ann.components.rewrap,
 	      {
 		class="method",
 		summary="Constructor of the component rewrap (see matrix.rewrap)",
@@ -1129,13 +1121,13 @@ april_set_doc("ann.components.rewrap.__call",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.slice", {
+april_set_doc(ann.components.slice, {
 		class="class",
 		summary="A component which takes a slice of a matrix (see matrix.slice)",})
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.slice.__call",
+april_set_doc(ann.components.slice,
 	      {
 		class="method",
 		summary="Constructor of the component slice (see matrix.slice)",
@@ -1156,18 +1148,18 @@ april_set_doc("ann.components.slice.__call",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.stochastic", {
+april_set_doc(ann.components.stochastic, {
 		class="class",
 		summary="An abstract component which implements basic interface of stochastic components",})
 
-april_set_doc("ann.components.stochastic.get_random",
+april_set_doc(ann.components.stochastic.."get_random",
 	      {
 		class="method",
 		summary="Returns the underlying random object",
 		outputs={ "A random object" },
 	      })
 
-april_set_doc("ann.components.stochastic.set_random",
+april_set_doc(ann.components.stochastic.."set_random",
 	      {
 		class="method",
 		summary="Sets the underlying random object",
@@ -1177,11 +1169,11 @@ april_set_doc("ann.components.stochastic.set_random",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.gaussian_noise", {
+april_set_doc(ann.components.gaussian_noise, {
 		class="class",
 		summary="A component which adds Gaussian noise to data",})
 
-april_set_doc("ann.components.gaussian_noise.__call",
+april_set_doc(ann.components.gaussian_noise,
 	      {
 		class="method",
 		summary="Constructor of the component",
@@ -1202,11 +1194,11 @@ april_set_doc("ann.components.gaussian_noise.__call",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.salt_and_pepper", {
+april_set_doc(ann.components.salt_and_pepper, {
 		class="class",
 		summary="A component which adds salt and pepper noise to data",})
 
-april_set_doc("ann.components.salt_and_pepper.__call",
+april_set_doc(ann.components.salt_and_pepper,
 	      {
 		class="method",
 		summary="Constructor of the component",
@@ -1228,11 +1220,11 @@ april_set_doc("ann.components.salt_and_pepper.__call",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.dropout", {
+april_set_doc(ann.components.dropout, {
 		class="class",
 		summary="A component which adds salt and pepper noise to data",})
 
-april_set_doc("ann.components.dropout.__call",
+april_set_doc(ann.components.dropout,
 	      {
 		class="method",
 		summary="Constructor of the component",
@@ -1253,7 +1245,7 @@ april_set_doc("ann.components.dropout.__call",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf",
+april_set_doc(ann.components.actf,
 	      {
 		class="namespace",
 		summary="Namespace which contains all activation functions",
@@ -1261,7 +1253,7 @@ april_set_doc("ann.components.actf",
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf", {
+april_set_doc(ann.components.actf, {
 		class="class",
 		summary="Abstract class child of ann.components.base",
 		description={
@@ -1281,13 +1273,13 @@ april_set_doc("ann.components.actf", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.logistic", {
+april_set_doc(ann.components.actf.logistic, {
 		class="class",
 		summary="Logistic (or sigmoid) activation function", })
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.logistic.__call", {
+april_set_doc(ann.components.actf.logistic, {
 		class="method",
 		summary="Constructor of the component",
 		params={
@@ -1296,13 +1288,13 @@ april_set_doc("ann.components.actf.logistic.__call", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.tanh", {
+april_set_doc(ann.components.actf.tanh, {
 		class="class",
 		summary="Tanh activation function", })
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.tanh.__call", {
+april_set_doc(ann.components.actf.tanh, {
 		class="method",
 		summary="Constructor of the component",
 		params={
@@ -1311,13 +1303,13 @@ april_set_doc("ann.components.actf.tanh.__call", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.softsign", {
+april_set_doc(ann.components.actf.softsign, {
 		class="class",
 		summary="Softsign activation function", })
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.softsign.__call", {
+april_set_doc(ann.components.actf.softsign, {
 		class="method",
 		summary="Constructor of the component",
 		params={
@@ -1327,7 +1319,7 @@ april_set_doc("ann.components.actf.softsign.__call", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.log_logistic", {
+april_set_doc(ann.components.actf.log_logistic, {
 		class="class",
 		summary="Logarithm of logistic activation function",
 		description={
@@ -1337,7 +1329,7 @@ april_set_doc("ann.components.actf.log_logistic", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.log_logistic.__call", {
+april_set_doc(ann.components.actf.log_logistic, {
 		class="method",
 		summary="Constructor of the component",
 		params={
@@ -1346,7 +1338,7 @@ april_set_doc("ann.components.actf.log_logistic.__call", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.softmax", {
+april_set_doc(ann.components.actf.softmax, {
 		class="class",
 		summary="Softmax activation function",
 		description={
@@ -1356,7 +1348,7 @@ april_set_doc("ann.components.actf.softmax", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.softmax.__call", {
+april_set_doc(ann.components.actf.softmax, {
 		class="method",
 		summary="Constructor of the component",
 		params={
@@ -1366,7 +1358,7 @@ april_set_doc("ann.components.actf.softmax.__call", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.log_softmax", {
+april_set_doc(ann.components.actf.log_softmax, {
 		class="class",
 		summary="Logarithm of softmax activation function",
 		description={
@@ -1377,7 +1369,7 @@ april_set_doc("ann.components.actf.log_softmax", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.log_softmax.__call", {
+april_set_doc(ann.components.actf.log_softmax, {
 		class="method",
 		summary="Constructor of the component",
 		params={
@@ -1387,13 +1379,13 @@ april_set_doc("ann.components.actf.log_softmax.__call", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.softplus", {
+april_set_doc(ann.components.actf.softplus, {
 		class="class",
 		summary="Softplus activation function", })
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.softplus.__call", {
+april_set_doc(ann.components.actf.softplus, {
 		class="method",
 		summary="Constructor of the component",
 		params={
@@ -1402,13 +1394,13 @@ april_set_doc("ann.components.actf.softplus.__call", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.relu", {
+april_set_doc(ann.components.actf.relu, {
 		class="class",
 		summary="Rectifier Linear Unit (ReLU) activation function", })
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.relu.__call", {
+april_set_doc(ann.components.actf.relu, {
 		class="method",
 		summary="Constructor of the component",
 		params={
@@ -1417,13 +1409,13 @@ april_set_doc("ann.components.actf.relu.__call", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.sin", {
+april_set_doc(ann.components.actf.sin, {
 		class="class",
 		summary="Sin activation function", })
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.sin.__call", {
+april_set_doc(ann.components.actf.sin, {
 		class="method",
 		summary="Constructor of the component",
 		params={
@@ -1432,13 +1424,13 @@ april_set_doc("ann.components.actf.sin.__call", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.linear", {
+april_set_doc(ann.components.actf.linear, {
 		class="class",
 		summary="Linear activation function", })
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.linear.__call", {
+april_set_doc(ann.components.actf.linear, {
 		class="method",
 		summary="Constructor of the component",
 		params={
@@ -1447,13 +1439,13 @@ april_set_doc("ann.components.actf.linear.__call", {
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.hardtanh", {
+april_set_doc(ann.components.actf.hardtanh, {
 		class="class",
 		summary="Hardtanh activation function", })
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.components.actf.hardtanh.__call", {
+april_set_doc(ann.components.actf.hardtanh, {
 		class="method",
 		summary="Constructor of the component",
 		params={
