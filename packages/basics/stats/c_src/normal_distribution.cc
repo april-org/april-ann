@@ -121,7 +121,6 @@ namespace Stats {
 
   void GeneralNormalDistribution::privateLogpdfDerivative(const MatrixFloat *x,
                                                           MatrixFloat *result) {
-    result->copy(x);
     MatrixFloat *diff = x->clone();
     IncRef(diff);
     // over all samples (bunch_size)
@@ -131,7 +130,7 @@ namespace Stats {
       diff_row = diff->select(0, i, diff_row);
       result_row = result->select(0, i, result_row);
       diff_row->axpy(-1.0, mean);
-      result_row->gemv(CblasNoTrans, 1.0f, inv_cov, diff_row, 1.0f);
+      result_row->gemv(CblasNoTrans, -1.0f, inv_cov, diff_row, 1.0f);
     }
     delete diff_row;
     delete result_row;
@@ -262,7 +261,6 @@ namespace Stats {
 
   void DiagonalNormalDistribution::privateLogpdfDerivative(const MatrixFloat *x,
                                                            MatrixFloat *result) {
-    result->copy(x);
     MatrixFloat *diff = x->clone();
     IncRef(diff);
     // over all samples (bunch_size)
@@ -272,7 +270,7 @@ namespace Stats {
       diff_row = diff->select(0, i, diff_row);
       result_row = result->select(0, i, result_row);
       diff_row->axpy(-1.0, mean);
-      result_row->gemv(CblasNoTrans, 1.0f, inv_cov, diff_row, 1.0f);
+      result_row->gemv(CblasNoTrans, -1.0f, inv_cov, diff_row, 1.0f);
     }
     delete diff_row;
     delete result_row;
@@ -333,7 +331,7 @@ namespace Stats {
 
   void StandardNormalDistribution::privateLogpdfDerivative(const MatrixFloat *x,
                                                            MatrixFloat *result) {
-    result->axpy(1.0, x);
+    result->axpy(-1.0, x);
   }
 
   StatisticalDistributionBase *StandardNormalDistribution::clone() {

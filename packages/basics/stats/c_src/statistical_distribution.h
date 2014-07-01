@@ -186,6 +186,7 @@ namespace Stats {
       const int *dims = x->getDimPtr();
       if (grads == 0) {
         grads = new MatrixFloat(2, dims, CblasColMajor);
+        grads->zeros();
       }
       else if (grads->getNumDim() != 2 || grads->getDimSize(0) != dims[0] ||
                grads->getDimSize(1) != dims[1])

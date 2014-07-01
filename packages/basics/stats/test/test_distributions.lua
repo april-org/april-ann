@@ -1,6 +1,22 @@
 io.stderr = io.stdout
 local check = utest.check
 local M = matrix.col_major
+local EPSILON = 0.001
+
+local function check_grads(d, point)
+  local point = point:clone()
+  for i = 1,point:dim(2) do
+    local v = point:get(1,i)
+    point:set(1, i, v + EPSILON)
+    local logpdf1 = d:logpdf(point):get(1)
+    point:set(1, i, v - EPSILON)
+    local logpdf2 = d:logpdf(point):get(1)
+    point:set(1, i, v)
+    local g = d:logpdf_derivative(point):get(1,i)
+    local g_hat = (logpdf1 - logpdf2) / (2 * EPSILON)
+    check.number_eq(g, g_hat)
+  end
+end
 
 -----------------------------------------------------------------------------
 -- UNIFORM DISTRIBUTION
@@ -37,6 +53,7 @@ for _,a in ipairs{-4, -0.1, 0.1, 4} do
     local mu,sigma = mv:compute()
     check.number_eq(mu, a, ( math.abs(a) < 1.0 ) and 0.4 or nil)
     check.number_eq(sigma, b)
+    for i=1,10 do check_grads(d, data(i,':')) end
   end
 end
 
@@ -58,8 +75,26 @@ for _,a in ipairs{-4, -0.1, 0.1, 4} do
     local mu,sigma = mv:compute()
     check.number_eq(mu, a, ( math.abs(a) < 1.0 ) and 0.4 or nil)
     check.number_eq(sigma, b)
+    for i=1,10 do check_grads(d, data(i,':')) end
   end
 end
+
+-----------------------------------------------------------------------------
+-- STANDARD NORMAL DISTRIBUTION
+
+local N = 1000
+local d = stats.dist.normal()
+check.eq(type(d), "stats.dist.normal.standard")
+local data = d:sample( random(4295), M(N,1) )
+check(function()
+    return math.abs(data:sum()/N) < 0.1
+end)
+local mv = stats.mean_var()
+data:map(function(x) mv:add(x) end)
+local mu,sigma = mv:compute()
+check(function() return math.abs(mu) < 0.04 end)
+check.number_eq(sigma, 1.0, 0.1)
+for i=1,10 do check_grads(d, data(i,':')) end
 
 -----------------------------------------------------------------------------
 -- EXPONENTIAL DISTRIBUTION
