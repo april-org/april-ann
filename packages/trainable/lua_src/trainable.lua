@@ -342,64 +342,65 @@ april_set_doc(trainable.train_holdout_validation, {
 		  "the stop criterion is true.",
 		}, })
 
-april_set_doc(trainable.train_holdout_validation, {
-		class = "method", summary = "Constructor",
-		description ={
-		  "Constructor of the train_holdout_validation class.",
-		},
-		params = {
-		  epochs_wo_validation = {
-		    "Number of epochs from start where the validation is",
-		    "ignored [optional], by default it is 0",
-		  },
-		  min_epochs = "Minimum number of epochs for training [optional]. By default it is 0",
-		  max_epochs = "Maximum number of epochs for training",
-		  stopping_criterion = {
-		    "A predicate function which",
-		    "returns true if stopping criterion, false otherwise.",
-		    "Some basic criteria are implemented at",
-		    "trainable.stopping_criteria table.",
-		    "The criterion function is called as",
-		    "stopping_criterion({ current_epoch=..., best_epoch=...,",
-		    "best_val_error=..., train_error=...,",
-		    "validation_error=... }). [optional] By default it is max_epochs criterion.",
-		  },
-		  tolerance = {
-		    "The tolerance>=0 is the minimum relative difference to",
-		    "take the current validation loss as the best [optional],",
-		    "by default it is 0.",
-		  },
-		  first_epoch = "The first epoch number [optional]. By default it is 0.",
-		},
-		outputs = { "Instantiated object" }, })
-
-function train_holdout_class_metatable:__call(t,saved_state)
-  local params = get_table_fields(
-    {
-      epochs_wo_validation = { mandatory=false, type_match="number", default=0 },
-      min_epochs = { mandatory=true, type_match="number", default=0 },
-      max_epochs = { mandatory=true, type_match="number" },
-      tolerance  = { mandatory=true, type_match="number", default=0 },
-      stopping_criterion = { mandatory=true, type_match="function",
-			     default = function() return false end },
-      first_epoch        = { mandatory=false, type_match="number", default=1 },
-    }, t)
-  assert(params.tolerance >= 0, "tolerance < 0 is forbidden")
-  local saved_state = saved_state or {}
-  local obj = {
-    params = params,
-    state  = {
-      current_epoch    = saved_state.current_epoch    or 0,
-      train_error      = saved_state.train_error      or math.huge,
-      validation_error = saved_state.validation_error or math.huge,
-      best_epoch       = saved_state.best_epoch       or 0,
-      best_val_error   = saved_state.best_val_error   or math.huge,
-      best             = saved_state.best             or nil,
-      last             = saved_state.last             or nil,
+train_holdout_class_metatable.__call =
+  april_doc{
+    class = "method", summary = "Constructor",
+    description ={
+      "Constructor of the train_holdout_validation class.",
     },
-  }
-  return class_instance(obj, self)
-end
+    params = {
+      epochs_wo_validation = {
+        "Number of epochs from start where the validation is",
+        "ignored [optional], by default it is 0",
+      },
+      min_epochs = "Minimum number of epochs for training [optional]. By default it is 0",
+      max_epochs = "Maximum number of epochs for training",
+      stopping_criterion = {
+        "A predicate function which",
+        "returns true if stopping criterion, false otherwise.",
+        "Some basic criteria are implemented at",
+        "trainable.stopping_criteria table.",
+        "The criterion function is called as",
+        "stopping_criterion({ current_epoch=..., best_epoch=...,",
+        "best_val_error=..., train_error=...,",
+        "validation_error=... }). [optional] By default it is max_epochs criterion.",
+      },
+      tolerance = {
+        "The tolerance>=0 is the minimum relative difference to",
+        "take the current validation loss as the best [optional],",
+        "by default it is 0.",
+      },
+      first_epoch = "The first epoch number [optional]. By default it is 0.",
+    },
+    outputs = { "Instantiated object" },
+  } ..
+  function(self,t,saved_state)
+    local params = get_table_fields(
+      {
+        epochs_wo_validation = { mandatory=false, type_match="number", default=0 },
+        min_epochs = { mandatory=true, type_match="number", default=0 },
+        max_epochs = { mandatory=true, type_match="number" },
+        tolerance  = { mandatory=true, type_match="number", default=0 },
+        stopping_criterion = { mandatory=true, type_match="function",
+                               default = function() return false end },
+        first_epoch        = { mandatory=false, type_match="number", default=1 },
+      }, t)
+    assert(params.tolerance >= 0, "tolerance < 0 is forbidden")
+    local saved_state = saved_state or {}
+    local obj = {
+      params = params,
+      state  = {
+        current_epoch    = saved_state.current_epoch    or 0,
+        train_error      = saved_state.train_error      or math.huge,
+        validation_error = saved_state.validation_error or math.huge,
+        best_epoch       = saved_state.best_epoch       or 0,
+        best_val_error   = saved_state.best_val_error   or math.huge,
+        best             = saved_state.best             or nil,
+        last             = saved_state.last             or nil,
+      },
+    }
+    return class_instance(obj, self)
+  end
 
 train_holdout_methods.execute =
   april_doc{
@@ -848,11 +849,13 @@ train_wo_validation_methods.save =
       },
     }
   } ..
-  train_holdout_methods.save
+  function(...)
+    return train_holdout_methods.save(...)
+  end
 
 trainable.train_wo_validation.load = 
   april_doc{
-    class = "method",
+    class = "function",
     summary = "Loads the training from a filename",
     params={
       "The filename",
@@ -862,7 +865,9 @@ trainable.train_wo_validation.load =
       "A table with extra saved data or nil if not given when saving",
     },
   } ..
-  trainable.train_holdout_validation.load
+  function(...)
+    return trainable.train_holdout_validation.load(...)
+  end
 
 -------------------------------------------------------------------------------
 
