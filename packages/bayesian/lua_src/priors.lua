@@ -16,7 +16,7 @@ local make_transform = function(func, arg)
   return { t="transform", func=func, arg=arg }
 end
 
-local normalize = function(d, w)
+local normalize_shape = function(d, w)
   if w then
     if d:size() == 1 and w:dim(2) ~= 1 then
       return w:rewrap(w:size(),1)
@@ -40,7 +40,7 @@ local sampling_funcs = {
     local d = stats.dist[v.dist](table.unpack(arg))
     v.obj = d
     return function(rng, w)
-      local w = normalize(d, w)
+      local w = normalize_shape(d, w)
       return d:sample(rng, w)
     end
   end,
@@ -83,7 +83,7 @@ function priors_methods:compute_neg_log_prior(weights)
     local v = self.tree[name]
     if v and v.obj then
       local d = v.obj
-      local w = normalize(d, w)
+      local w = normalize_shape(d, w)
       local out = d:logpdf(w)
       logprob = logprob + out:sum()
     end
@@ -145,8 +145,8 @@ function priors_methods:update_gradients_with_priors(weights, grads)
     if v then
       assert(v.t == "dist", "Expected a distribution")
       local d = assert(v.obj, "Needs to call sample before")
-      local w = normalize(d, w)
-      local wgrads = normalize(d, wgrads)
+      local w = normalize_shape(d, w)
+      local wgrads = normalize_shape(d, wgrads)
       d:logpdf_derivative(w, wgrads)
     end
   end
