@@ -51,7 +51,7 @@ function april_set_doc(object, docblock)
 end
 
 function april_print_doc(object, verbosity, prefix)
-  assert(object, "Needs any object as first argument")
+  assert(object ~= nil, "Needs any object as first argument")
   assert(type(verbosity)=="number",  "Needs a number as second argument")
   local prefix = prefix or ""
   local current_table = DOC_TABLE[object]
@@ -137,19 +137,22 @@ end
 -- verbosity => 0 only names, 1 only summary, 2 all
 function april_help(object, verbosity)
   local verbosity = verbosity or 2
-  local object    = get_object_cls(object) or object
-  if ( luatype(object) == "table" and
-       object.meta_instance and object.meta_instance.id ) then
-    if verbosity > 0 then
+  if verbosity > 0 then
+    if ( luatype(object) == "table" and
+         object.meta_instance and object.meta_instance.id ) then
       print(ansi.fg["cyan"].."ID: "..ansi.fg["default"]..object.meta_instance.id)
+    elseif get_object_id(object) then
+      print(ansi.fg["cyan"].."ID: "..ansi.fg["default"]..get_object_id(object))
     end
   end
+  local object = object or _G
   ----------------------------------------------------------------------------
   -- AUXILIARY FUNCTIONS
   local function print_result(aux)
+    local prev = { }
     table.sort(aux, function(a,b) return a[1]<b[1] end)
     for i,v in ipairs(aux) do
-      if v ~= prev then
+      if v[1] ~= prev[1] then
         april_print_doc(v[3], math.min(1, verbosity),
                         ansi.fg["cyan"].."   * "..
                           v[2]..ansi.fg["default"].." "..v[1])
@@ -160,7 +163,7 @@ function april_help(object, verbosity)
     print("")
   end
   local dummy_filter_function = function() return true end
-  local function process_pairs(tbls, filter)
+  local function process_pairs(title, tbls, filter)
     local filter = filter or dummy_filter_function
     local aux = {}
     for _,t in ipairs(tbls) do
@@ -169,16 +172,28 @@ function april_help(object, verbosity)
           table.insert(aux, {i,"",v})
         end
       end
-      local prev = nil
+    end
+    if #aux > 0 then
+      print(ansi.fg["cyan"].." -- "..title..ansi.fg["default"])
       print_result(aux)
     end
   end
+  local function print_inheritance(title, object)
+    while ( getmetatable(object) and getmetatable(object).__index and
+            not rawequal(getmetatable(object).__index, object) ) do
+      local mt = getmetatable(object)
+      local superclass_name = (mt.id and mt.id:gsub(" class","")) or "UNKNOWN"
+      object = mt.__index
+      process_pairs(title..superclass_name, { object },
+                    function(k,v) return luatype(v) == "function" end)
+    end
+  end
   ----------------------------------------------------------------------------
-  -- OBJECT CLASS documentation
+  -- documentation
   april_print_doc(object, verbosity)
   local mt = getmetatable(object)
-  -- OBJECT metatable
   if mt then
+    -- metatable
     if mt.__call then
       if DOC_TABLE[mt.__call] then
         print("--------------------------------------------------------------\n")
@@ -186,9 +201,11 @@ function april_help(object, verbosity)
       end
     end
     print("--------------------------------------------------------------\n")
-    print(ansi.fg["cyan"].." -- metatable"..ansi.fg["default"])
-    process_pairs({ mt, mt.__index or {} },
+    process_pairs("metatable", { mt, mt.__index },
                   function(i,v) return luatype(v) == "function" end)
+    if mt.__index then
+      print_inheritance("inherited metatable from ", mt.__index)
+    end
   end
   if luatype(object) == "table" then
     -- OBJECT class content
@@ -204,7 +221,7 @@ function april_help(object, verbosity)
           table.insert(classes, {i, "", v})
         elseif iscallable(v) then
           table.insert(funcs, {i, string.format("%8s",luatype(v)), v})
-        elseif luatype(v) == "table" then
+        elseif luatype(v) == "table" and object.meta_instance then
           table.insert(names, {i, "", v})
         else
           table.insert(vars, {i, string.format("%8s",luatype(v)), v})
@@ -230,22 +247,11 @@ function april_help(object, verbosity)
     end
     -- OBJECT meta_instance
     if object.meta_instance and object.meta_instance.__index then
-      print(ansi.fg["cyan"].." -- methods"..ansi.fg["default"])
-      process_pairs(object.meta_instance.__index,
+      process_pairs("object metatable", { object.meta_instance })
+      process_pairs("object methods", { object.meta_instance.__index },
                     function(i,v) return luatype(v) == "function" end)
-      print(ansi.fg["cyan"].." -- metatable"..ansi.fg["default"])
-      process_pairs(object.meta_instance)
       --
-      object = object.meta_instance.__index
-      while (getmetatable(object) and getmetatable(object).__index and
-             getmetatable(object).__index ~= object) do
-        local superclass_name = getmetatable(object).id:gsub(" class","")
-        object = getmetatable(object).__index
-        print(ansi.fg["cyan"]..
-                " -- inherited methods from " ..
-                superclass_name..ansi.fg["default"])
-        process_pairs(object, function(k,v) return luatype(v) == "function" end)
-      end
+      print_inheritance("inherited methods from ", object.meta_instance.__index)
     end
   end
   print()
