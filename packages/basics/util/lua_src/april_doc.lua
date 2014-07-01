@@ -144,8 +144,54 @@ function april_help(object, verbosity)
       print(ansi.fg["cyan"].."ID: "..ansi.fg["default"]..object.meta_instance.id)
     end
   end
+  ----------------------------------------------------------------------------
+  -- AUXILIARY FUNCTIONS
+  local function print_result(aux)
+    table.sort(aux, function(a,b) return a[1]<b[1] end)
+    for i,v in ipairs(aux) do
+      if v ~= prev then
+        april_print_doc(v[3], math.min(1, verbosity),
+                        ansi.fg["cyan"].."   * "..
+                          v[2]..ansi.fg["default"].." "..v[1])
+      end
+      prev = v
+      -- print_data(v)
+    end
+    print("")
+  end
+  local dummy_filter_function = function() return true end
+  local function process_pairs(tbls, filter)
+    local filter = filter or dummy_filter_function
+    local aux = {}
+    for _,t in ipairs(tbls) do
+      for i,v in pairs(t) do
+        if filter(i,v) then
+          table.insert(aux, {i,"",v})
+        end
+      end
+      local prev = nil
+      print_result(aux)
+    end
+  end
+  ----------------------------------------------------------------------------
+  -- OBJECT CLASS documentation
   april_print_doc(object, verbosity)
+  local mt = getmetatable(object)
+  -- OBJECT metatable
+  if mt then
+    if mt.__call then
+      if DOC_TABLE[mt.__call] then
+        print("--------------------------------------------------------------\n")
+        april_print_doc(mt.__call, verbosity)
+      end
+    end
+    print("--------------------------------------------------------------\n")
+    print(ansi.fg["cyan"].." -- metatable"..ansi.fg["default"])
+    process_pairs({ mt, mt.__index or {} },
+                  function(i,v) return luatype(v) == "function" end)
+  end
   if luatype(object) == "table" then
+    -- OBJECT class content
     print("--------------------------------------------------------------\n")
     -- local print_data = function(d) print("\t * " .. d) end
     local classes    = {}
@@ -155,11 +201,11 @@ function april_help(object, verbosity)
     for i,v in pairs(object) do
       if i ~= "meta_instance" then
         if is_class(v) then
-          table.insert(classes, {i, v})
+          table.insert(classes, {i, "", v})
         elseif iscallable(v) then
           table.insert(funcs, {i, string.format("%8s",luatype(v)), v})
         elseif luatype(v) == "table" then
-          table.insert(names, {i, v})
+          table.insert(names, {i, "", v})
         else
           table.insert(vars, {i, string.format("%8s",luatype(v)), v})
         end
@@ -168,75 +214,28 @@ function april_help(object, verbosity)
     if #vars > 0 then
       print(ansi.fg["cyan"].." -- basic variables (string, number)"..
               ansi.fg["default"])
-      table.sort(vars, function(a,b) return tostring(a[1]) < tostring(b[1]) end)
-      for i,v in ipairs(vars) do
-        april_print_doc(v[3], math.min(1, verbosity),
-                        ansi.fg["cyan"].."   * "..
-                          v[2]..ansi.fg["default"].." "..v[1])
-        -- print_data(v)
-      end
-      print("")
+      print_result(vars)
     end
     if #names > 0 then
       print(ansi.fg["cyan"].." -- names in the namespace"..ansi.fg["default"])
-      table.sort(names, function(a,b) return tostring(a[1]) < tostring(b[1]) end)
-      for i,v in ipairs(names) do
-        april_print_doc(v[2], math.min(1, verbosity),
-                        ansi.fg["cyan"].."   * "..ansi.fg["default"].." "..v[1])
-        -- print_data(v)
-      end
-      print("")
+      print_result(names)
     end
     if #classes > 0 then
       print(ansi.fg["cyan"].." -- classes in the namespace"..ansi.fg["default"])
-      table.sort(classes, function(a,b) return tostring(a[1]) < tostring(b[1]) end)
-      for i,v in ipairs(classes) do
-        april_print_doc(v[2],
-                        math.min(1, verbosity),
-                        ansi.fg["cyan"].."   * "..ansi.fg["default"].." "..v[1])
-        -- print_data(v)
-      end
-      print("")
+      print_result(classes)
     end
     if #funcs > 0 then
       print(ansi.fg["cyan"].." -- static functions or tables"..ansi.fg["default"])
-      table.sort(funcs, function(a,b) return tostring(a[1]) < tostring(b[1]) end)
-      for i,v in ipairs(funcs) do
-        april_print_doc(v[3],
-                        math.min(1, verbosity),
-                        ansi.fg["cyan"].."   * "..
-                          v[2]..ansi.fg["default"].." "..v[1])
-        -- print_data(v)
-      end
-      print("")
+      print_result(funcs)
     end
+    -- OBJECT meta_instance
     if object.meta_instance and object.meta_instance.__index then
       print(ansi.fg["cyan"].." -- methods"..ansi.fg["default"])
-      local aux = {}
-      for i,v in pairs(object.meta_instance.__index) do
-        if luatype(v) == "function" then
-          table.insert(aux, {i,v})
-        end
-      end
-      if getmetatable(object) then
-        for i,v in pairs(getmetatable(object)) do
-          if luatype(v) == "function" then
-            table.insert(aux, {i,v})
-          end
-        end
-      end
-      local prev = nil
-      table.sort(aux, function(a,b) return a[1]<b[1] end)
-      for i,v in ipairs(aux) do
-        if v ~= prev then
-          april_print_doc(v[2],
-                          math.min(1, verbosity),
-                          ansi.fg["cyan"].."   * "..ansi.fg["default"].." "..v[1])
-        end
-        prev = v
-        -- print_data(v)
-      end
-      print("")
+      process_pairs(object.meta_instance.__index,
+                    function(i,v) return luatype(v) == "function" end)
+      print(ansi.fg["cyan"].." -- metatable"..ansi.fg["default"])
+      process_pairs(object.meta_instance)
+      --
       object = object.meta_instance.__index
       while (getmetatable(object) and getmetatable(object).__index and
              getmetatable(object).__index ~= object) do
@@ -245,20 +244,7 @@ function april_help(object, verbosity)
         print(ansi.fg["cyan"]..
                 " -- inherited methods from " ..
                 superclass_name..ansi.fg["default"])
-        local aux = {}
-        for i,v in pairs(object) do
-          if luatype(v) == "function" then
-            table.insert(aux, {i,v})
-          end
-        end
-        table.sort(aux, function(a,b) return a[1]<b[1] end)
-        for i,v in ipairs(aux) do
-          april_print_doc(v[2],
-                          math.min(1, verbosity),
-                          ansi.fg["cyan"].."   * "..ansi.fg["default"].." "..v[1])
-          -- print_data(v)
-        end
-        print("")
+        process_pairs(object, function(k,v) return luatype(v) == "function" end)
       end
     end
   end
