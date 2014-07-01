@@ -5,6 +5,7 @@ local EPSILON = 0.001
 
 local function check_grads(d, point)
   local point = point:clone()
+  local g = d:logpdf_derivative(point)
   for i = 1,point:dim(2) do
     local v = point:get(1,i)
     point:set(1, i, v + EPSILON)
@@ -12,9 +13,8 @@ local function check_grads(d, point)
     point:set(1, i, v - EPSILON)
     local logpdf2 = d:logpdf(point):get(1)
     point:set(1, i, v)
-    local g = d:logpdf_derivative(point):get(1,i)
     local g_hat = (logpdf1 - logpdf2) / (2 * EPSILON)
-    check.number_eq(g, g_hat)
+    check.number_eq(g:get(1,i), g_hat)
   end
 end
 

@@ -1,7 +1,7 @@
 -- un generador de valores aleatorios... y otros parametros
 local bunch_size     = 256
 local weights_random = random(1234)
-local description    = "256 inputs 10 log_softmax"
+local description    = "256 inputs 256 tanh 10 log_softmax"
 local inf            = -0.1
 local sup            =  0.1
 local shuffle_random = random(5678)
@@ -63,7 +63,7 @@ local trainer = trainable.supervised_trainer(thenet,
                                              bayesian.optimizer.hmc())
 trainer:build()
 trainer:set_option("alpha",           0.2)
-trainer:set_option("epsilon",       0.002)
+trainer:set_option("epsilon",           1)
 trainer:set_option("epsilon_max",      80)
 trainer:set_option("epsilon_min",   1e-40)
 trainer:set_option("mass",           1000)
@@ -79,7 +79,7 @@ local hmc    = trainer:get_optimizer()
 local priors = hmc:get_priors()
 -- --
 local w_mu   = priors:value("w_mu",  0)
-local w_var  = priors:value("w_var", 1)
+local w_var  = priors:value("w_var", 2)
 for wname,_ in trainer:iterate_weights() do
   priors:follows(wname, "normal", w_mu, w_var)
 end
