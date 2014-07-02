@@ -749,3 +749,30 @@ public:
   else LUABIND_RETURN(SparseMatrixFloat,obj);
 }
 //BIND_END
+
+//BIND_CLASS_METHOD SparseMatrixFloat fromFilename
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, string);
+  const char *filename;
+  LUABIND_GET_PARAMETER(1,string,filename);
+  SparseMatrixFloat *obj;
+  if ((obj = readSparseMatrixFloatFromFile(filename)) == 0)
+    LUABIND_ERROR("bad format");
+  else LUABIND_RETURN(SparseMatrixFloat,obj);
+}
+//BIND_END
+
+//BIND_METHOD SparseMatrixFloat toFilename
+{
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_CHECK_ARGN(<=, 2);
+  LUABIND_CHECK_PARAMETER(1, string);
+  const char *filename;
+  LUABIND_GET_PARAMETER(1,string,filename);
+  constString cs;
+  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("binary"));
+  bool is_ascii = (cs == "ascii");
+  writeSparseMatrixFloatToFile(obj, filename, is_ascii);
+}
+//BIND_END
