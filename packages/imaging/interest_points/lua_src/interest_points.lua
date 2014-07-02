@@ -2,7 +2,7 @@ interest_points = interest_points or {}
 
 local methods, class_metatable = class("interest_points.pointClassifier")
 
-april_set_doc("interest_points.pointClassifier", {
+april_set_doc(interest_points.pointClassifier, {
 		class       = "class",
 		summary     = "Util for computing EyeFish transformation",
 		description ={
@@ -10,13 +10,13 @@ april_set_doc("interest_points.pointClassifier", {
 		}, })
 
 
-april_set_doc("interest_points.pointClassifier.__Call", {
+april_set_doc(interest_points.pointClassifier, {
 		class       = "method",
 		summary     = "Constructor",
 		description ={
 		  "This class prepare the linear transformation.",
 		},
-    outputs = {"A Point Classifier object"},
+                outputs = {"A Point Classifier object"},
 })
 function class_metatable:__call(ancho, alto, miniancho, minialto, reverse_old)
 
@@ -141,39 +141,40 @@ function methods:crop_image(img, x, y)
 end
 
 
-april_set_doc("interest_points.pointClassifier.getFishDs", {
-		class       = "method",
-		summary     = "Main function for obtaining the FishEye Dataset",
-		description ={
-		  "Recieves an image and a point a generates the corresponding dataset",
-		},
+methods.getFishDs =
+  april_doc{
+    class       = "method",
+    summary     = "Main function for obtaining the FishEye Dataset",
+    description ={
+      "Recieves an image and a point a generates the corresponding dataset",
+    },
     params = {
       "An Image object",
       "X coordinate of the point",
       "Y coordinate of the point"
     },
     outputs = {"A Point Classifier object"},
-})
-function methods:getFishDs(img, x, y)
+  } ..
+  function(self, img, x, y)
 
     local mFish = img:comb_lineal_forward(x,y, self.ancho, self.alto, self.miniancho, self.minialto, self.inv_tlc):clamp(0,1)
     
     if self.reverse_old then
-        mFish:complement()
+      mFish:complement()
     end
     local m = mFish:rewrap(self.minialto,self.miniancho)
-   -- ImageIO.write(Image(m),"kk.png")
-   -- ImageIO.write(img,"kk2.png")
+    -- ImageIO.write(Image(m),"kk.png")
+    -- ImageIO.write(img,"kk2.png")
     local dsFish = dataset.matrix(mFish, 
-    {
-        patternSize={self.miniancho*self.minialto},
-        stepSize={self.miniancho*self.minialto},
-        numSteps={1},
-    
+                                  {
+                                    patternSize={self.miniancho*self.minialto},
+                                    stepSize={self.miniancho*self.minialto},
+                                    numSteps={1},
+                                    
     })
-        
+    
     return dsFish
-end
+  end
 
 function methods:applyLinearComb(img, x, y)
     local mat, _, _, dx, dy = img:matrix(),img:geometry()
@@ -192,46 +193,47 @@ end
 -------------------------------------------------------------------------------
 -- Given a point an mlp, return the output of the net with that point (window)
 -----------------------------------------------------------------------------
-april_set_doc("interest_points.pointClassifier.compute_point", {
-		class       = "method",
-		summary     = "Gets the net output for one point",
-		description ={
+methods.compute_point =
+  april_doc{
+    class       = "method",
+    summary     = "Gets the net output for one point",
+    description ={
       "Given a point and mlp, return the output of the net for that point",
-		},
+    },
     params = {
       "An Image object",
       "X coordinate of the point",
       "Y coordinate of the point"
     },
     outputs = {"Table with the values of the softmax"},
-})
-function methods:compute_point(img, x, y, mlp)
+  } ..
+  function(self, img, x, y, mlp)
 
     local dsPoint = self:getFishDs(img, x, y)
-     
+    
     local dsOut = mlp:use_dataset{
       input_dataset = dsPoint 
     }
     return dsOut:getPattern(1)
-end
+  end
 
-april_set_doc("methods.getPointClass", {
-		class       = "method",
-		summary     = "Gets the corresponding class for the point",
-		description ={
+methods.getPointClass =
+  april_doc{
+    class       = "method",
+    summary     = "Gets the corresponding class for the point",
+    description ={
       "Given a point and mlp, return the max index for that point",
-		},
+    },
     params = {
       "An Image object",
       "X coordinate of the point",
       "Y coordinate of the point"
     },
     outputs = {"Integer of the winning class"},
-})
-function methods:getPointClass(img, x, y, mlp)
+  } ..
+  function(self, img, x, y, mlp)
     return self.compute_point(img, x, y, mlp):max()
-
-end
+  end
 
 --Gets a dataset and returns a table with the indexes of the major class
 function interest_points.getIndexSoftmax(dsOut)
@@ -244,28 +246,30 @@ function interest_points.getIndexSoftmax(dsOut)
     end
     return tResult
 end
-april_set_doc("interest_points.pointClassifier.compute_points", {
-		class       = "method",
-		summary     = "Return a dataset with the output of the net",
-		description ={
+
+methods.compute_points =
+  april_doc{
+    class       = "method",
+    summary     = "Return a dataset with the output of the net",
+    description ={
       "Given a list of points and mlp, return the dataset corresponding to output of the mlp to that set of points",
-		},
+    },
     params = {
       "An Image object",
       "List of points Tuples(x,y)",
       "Trainable Object"
     },
     outputs = {"Dataset of size Num_Classes x Num_Points"},
-})
-function methods:compute_points(img, points, mlp)
+  } ..
+  function(self, img, points, mlp)
 
     --Compute the matrix (Forward)
     local fishEyes = {}
 
     for i, point in ipairs(points) do
-        x,y = unpack(point)
-        local dsFish = self:getFishDs(img, x, y)
-        table.insert(fishEyes, dsFish)
+      x,y = unpack(point)
+      local dsFish = self:getFishDs(img, x, y)
+      table.insert(fishEyes, dsFish)
     end
 
     local dsFishes = dataset.union(fishEyes)
@@ -273,7 +277,7 @@ function methods:compute_points(img, points, mlp)
     
     local dsOut = mlp:use_dataset({input_dataset=dsFishes})
     return dsOut
-end
+  end
 
 ----------------------------------------------------------
 -- Given a image extract all the points and classify them
