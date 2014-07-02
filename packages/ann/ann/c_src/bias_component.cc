@@ -19,7 +19,6 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "unused_variable.h"
 #include "bias_component.h"  
 #include "wrapper.h"
 #include "unused_variable.h"
@@ -29,50 +28,36 @@ namespace ANN {
   BiasANNComponent::BiasANNComponent(unsigned int size,
 				     const char *name,
 				     const char *weights_name) :
-    ANNComponent(name, weights_name, size, size),
-    input(0), output(0), error(0),
+    VirtualMatrixANNComponent(name, weights_name, size, size),
     bias_vector(0) {
-    if (weights_name == 0) generateDefaultWeightsName(this->weights_name, "b");
+    if (weights_name == 0) generateDefaultWeightsName("b");
   }
 
   BiasANNComponent::~BiasANNComponent() {
     if (bias_vector) DecRef(bias_vector);
-    if (input) DecRef(input);
-    if (error) DecRef(error);
-    if (output) DecRef(output);
   }
 
-  Token *BiasANNComponent::doForward(Token* _input, bool during_training) {
+  MatrixFloat *BiasANNComponent::privateDoForward(MatrixFloat* input,
+                                                  bool during_training) {
     UNUSED_VARIABLE(during_training);
+    if (input->getNumDim() < 2)
+      ERROR_EXIT2(128, "At 2-dimensional matrix is expected, found %d. "
+		  "[%s]", input->getNumDim(), name.c_str());
     if (bias_vector == 0) ERROR_EXIT1(129, "Not built component %s\n",
 				      name.c_str());
-    // error checking
-    if ( (_input == 0) ||
-	 (_input->getTokenCode() != table_of_token_codes::token_matrix))
-      ERROR_EXIT1(129,"Incorrect input Token type, expected token_matrix! [%s]\n",
-		  name.c_str());
-    // change current input by new input
-    AssignRef(input,_input->convertTo<TokenMatrixFloat*>());
-    MatrixFloat *input_mat = input->getMatrix();
-#ifdef USE_CUDA
-    input_mat->setUseCuda(use_cuda);
-#endif
-    ASSERT_MATRIX(input_mat);
-    april_assert(input_mat->getDimSize(1) == static_cast<int>(input_size));
-    unsigned int bunch_size = input_mat->getDimSize(0);
+    unsigned int bunch_size = input->getDimSize(0);
     // linear transfer of input to output
-    MatrixFloat *output_mat = input_mat->clone();
-    AssignRef(output,new TokenMatrixFloat(output_mat));
+    MatrixFloat *output = input->clone();
     // bias
     MatrixFloat *bias_ptr = bias_vector;
-    if (bunch_size == 1) output_mat->axpy(1.0f, bias_ptr);
+    if (bunch_size == 1) output->axpy(1.0f, bias_ptr);
     else {
       // addition of bias vector at output
       doAxpyLoop(output_size, 1.0f,
 		 bias_ptr->getRawDataAccess(), bias_ptr->getStrideSize(0), 0,
-		 output_mat->getRawDataAccess(), output_mat->getStrideSize(1), 0,
+		 output->getRawDataAccess(), output->getStrideSize(1), 0,
 		 bunch_size,
-		 0, output_mat->getStrideSize(0),
+		 0, output->getStrideSize(0),
 		 use_cuda);
     }
     //
@@ -80,28 +65,13 @@ namespace ANN {
   }
 
   /// In BiasANNComponent this method is a by-pass
-  Token *BiasANNComponent::doBackprop(Token *_error_input)
+  MatrixFloat *BiasANNComponent::privateDoBackprop(MatrixFloat *error_input)
   {
-    if ( (_error_input == 0) ||
-	 (_error_input->getTokenCode() != table_of_token_codes::token_matrix))
-      ERROR_EXIT1(129,"Incorrect input error Token type, expected token_matrix! [%s]\n",
-		  name.c_str());
-    // change current input by new input
-    AssignRef(error,_error_input->convertTo<TokenMatrixFloat*>());
-#ifdef USE_CUDA
-    error->getMatrix()->setUseCuda(use_cuda);
-#endif
-    return error;
+    return error_input;
   }
 
-  void BiasANNComponent::reset(unsigned int it) {
+  void BiasANNComponent::privateReset(unsigned int it) {
     UNUSED_VARIABLE(it);
-    if (input)  DecRef(input);
-    if (error)  DecRef(error);
-    if (output) DecRef(output);
-    input  = 0;
-    error  = 0;
-    output = 0;
     // reset shared counter
     bias_vector->resetSharedCount();
   }
@@ -116,20 +86,20 @@ namespace ANN {
     }
     else if (!grads_mat->sameDim(bias_vector))
       ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
-    MatrixFloat *input_error_mat = error->getMatrix();
-    unsigned int bunch_size = input_error_mat->getDimSize(0);
+    MatrixFloat *error_input_mat = getErrorInputMatrix();
+    unsigned int bunch_size = error_input_mat->getDimSize(0);
     // bias update: prev_bias[j] = prev_bias[j] + \sum_b norm_learn_rate * ERROR_INPUT[b,j]
-    if (bunch_size == 1) grads_mat->axpy(1.0f, input_error_mat);
+    if (bunch_size == 1) grads_mat->axpy(1.0f, error_input_mat);
     else doAxpyLoop(output_size,
 		    1.0f,
-		    input_error_mat->getRawDataAccess(),
-		    input_error_mat->getStrideSize(1),
+		    error_input_mat->getRawDataAccess(),
+		    error_input_mat->getStrideSize(1),
 		    0,
 		    grads_mat->getRawDataAccess(),
 		    grads_mat->getStrideSize(0),
 		    0,
 		    bunch_size,
-		    input_error_mat->getStrideSize(0), 0,
+		    error_input_mat->getStrideSize(0), 0,
 		    use_cuda);
   }
 

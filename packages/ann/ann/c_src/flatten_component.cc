@@ -29,83 +29,45 @@
 namespace ANN {
   
   FlattenANNComponent::FlattenANNComponent(const char *name) :
-    ANNComponent(name, 0, 0, 0),
-    input(0),
-    output(0),
-    error_input(0),
-    error_output(0) {
+    VirtualMatrixANNComponent(name, 0, 0, 0) {
   }
   
   FlattenANNComponent::~FlattenANNComponent() {
-    if (input) DecRef(input);
-    if (error_input) DecRef(error_input);
-    if (output) DecRef(output);
-    if (error_output) DecRef(error_output);
   }
   
-  Token *FlattenANNComponent::doForward(Token* _input, bool during_training) {
+  MatrixFloat *FlattenANNComponent::
+  privateDoForward(MatrixFloat* input_mat, bool during_training) {
+    IncRef(input_mat);
     UNUSED_VARIABLE(during_training);
-    if (_input->getTokenCode() != table_of_token_codes::token_matrix)
-      ERROR_EXIT1(128, "Incorrect token found, only TokenMatrixFloat is "
-		  "allowed [%s]\n", name.c_str());
-    AssignRef(input, _input->convertTo<TokenMatrixFloat*>());    
-    MatrixFloat *input_mat = input->getMatrix();
-#ifdef USE_CUDA
-    input_mat->setUseCuda(use_cuda);
-#endif
     if (input_mat->getNumDim() < 2)
       ERROR_EXIT2(128, "At 2-dimensional matrix is expected, found %d. "
 		  "[%s]", input_mat->getNumDim(), name.c_str());
     flatten_dims[0] = input_mat->getDimSize(0);
     flatten_dims[1] = input_mat->size() / flatten_dims[0];
     if (!input_mat->getIsContiguous()) {
-      input_mat = input_mat->clone();
-      AssignRef(input,new TokenMatrixFloat(input_mat));
+      AssignRef(input_mat, input_mat->clone());
     }
     MatrixFloat *output_mat = input_mat->rewrap(flatten_dims, 2);
-    AssignRef(output, new TokenMatrixFloat(output_mat));
-    return output;
+    DecRef(input_mat);
+    return output_mat;
   }
 
-  Token *FlattenANNComponent::doBackprop(Token *_error_input) {
-    if (_error_input == 0) {
-      if (error_input)  { DecRef(error_input);  error_input  = 0; }
-      if (error_output) { DecRef(error_output); error_output = 0; }
-      return 0;
-    }
-    if (_error_input->getTokenCode() != table_of_token_codes::token_matrix)
-      ERROR_EXIT1(128, "Incorrect error input token type, "
-		  "expected TokenMatrixFloat [%s]\n", name.c_str());
-    AssignRef(error_input, _error_input->convertTo<TokenMatrixFloat*>());
-    MatrixFloat *error_input_mat = error_input->getMatrix();
-#ifdef USE_CUDA
-    error_input_mat->setUseCuda(use_cuda);
-#endif
+  MatrixFloat *FlattenANNComponent::
+  privateDoBackprop(MatrixFloat *error_input_mat) {
+    IncRef(error_input_mat);
     if (!error_input_mat->getIsContiguous()) {
-      error_input_mat = error_input_mat->clone();
-      AssignRef(error_input,new TokenMatrixFloat(error_input_mat));
+      AssignRef(error_input_mat, error_input_mat->clone());
     }
-    if (!output->getMatrix()->sameDim(error_input_mat))
-      ERROR_EXIT1(128, "Error input token has incorrect dimensions [%s]\n",
-		  name.c_str());
     MatrixFloat *error_output_mat;
-    MatrixFloat *input_mat = input->getMatrix();
+    MatrixFloat *input_mat = getInputMatrix();
     error_output_mat = error_input_mat->rewrap(input_mat->getDimPtr(),
 					       input_mat->getNumDim());
-    AssignRef(error_output, new TokenMatrixFloat(error_output_mat));
-    return error_output;
+    DecRef(error_input_mat);
+    return error_output_mat;
   }
   
-  void FlattenANNComponent::reset(unsigned int it) {
+  void FlattenANNComponent::privateReset(unsigned int it) {
     UNUSED_VARIABLE(it);
-    if (input) DecRef(input);
-    if (error_input) DecRef(error_input);
-    if (output) DecRef(output);
-    if (error_output) DecRef(error_output);
-    input	 = 0;
-    error_input	 = 0;
-    output	 = 0;
-    error_output = 0;
   }
 
   ANNComponent *FlattenANNComponent::clone() {

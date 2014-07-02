@@ -24,39 +24,44 @@
 
 #include "token_matrix.h"
 #include "cblas_headers.h"
-#include "ann_component.h"
+#include "matrix_input_switch_component.h"
 #include "connection.h"
 
 namespace ANN {
   
   /// This components computes, for every I output neuron, the dot product
   /// between input neurons and the weights of the neuron I.
-  class DotProductANNComponent : public ANNComponent {
-    Token            *input;
-    TokenMatrixFloat *error_input, *output, *error_output;
+  class DotProductANNComponent : public MatrixInputSwitchANNComponent {
     MatrixFloat *weights_matrix;
-    bool sparse_input;
     
     /// learning parameters
     CBLAS_TRANSPOSE transpose_weights;
     
   protected:
+    
+    // from MatrixANNComponentHelper
+    virtual MatrixFloat *privateDoDenseForward(MatrixFloat *input,
+                                               bool during_training);
+    virtual MatrixFloat *privateDoDenseBackprop(MatrixFloat *error_input);
+    virtual void privateDenseReset(unsigned int it=0);
+    virtual void privateDenseComputeGradients(MatrixFloat*& grads_mat);
 
-    virtual void computeGradients(MatrixFloat*& grads_mat);
-
+    // from SparseMatrixANNComponentHelper
+    virtual MatrixFloat *privateDoSparseForward(SparseMatrixFloat *input,
+                                                bool during_training);
+    virtual SparseMatrixFloat *privateDoSparseBackprop(MatrixFloat *error_input);
+    virtual void privateSparseReset(unsigned int it=0);
+    virtual void privateSparseComputeGradients(MatrixFloat*& grads_mat);
+    
+    //
+    void initializeComputeGradients(MatrixFloat*& grads_mat);
+        
   public:
     DotProductANNComponent(const char *name=0, const char *weights_name=0,
 			   unsigned int input_size  = 0,
 			   unsigned int output_size = 0,
 			   bool transpose_weights   = false);
     virtual ~DotProductANNComponent();
-    virtual Token *getInput() { return input; }
-    virtual Token *getOutput() { return output; }
-    virtual Token *getErrorInput() { return error_input; }
-    virtual Token *getErrorOutput() { return error_output; }
-    virtual Token *doForward(Token* input, bool during_training);
-    virtual Token *doBackprop(Token *input_error);
-    virtual void   reset(unsigned int it=0);
     virtual ANNComponent *clone();
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,

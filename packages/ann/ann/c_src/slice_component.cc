@@ -27,25 +27,15 @@
 #include "wrapper.h"
 
 namespace ANN {
-
-  unsigned int mult(const int *v, int n) {
-    int m = 1;
-    for (int i=0; i<n; ++i) m *= v[i];
-    return m;
-  }
   
   SliceANNComponent::SliceANNComponent(const int *slice_offset,
 				       const int *slice_size,
 				       int n,
 				       const char *name) :
-    ANNComponent(name, 0, 0, mult(slice_size, n)),
+    VirtualMatrixANNComponent(name, 0, 0, mult(slice_size, n)),
     slice_offset(new int[n+1]),
     slice_size(new int[n+1]),
-    n(n+1),
-    input(0),
-    output(0),
-    error_input(0),
-    error_output(0) {
+    n(n+1) {
     for (int i=1; i<this->n; ++i) {
       this->slice_offset[i] = slice_offset[i-1];
       this->slice_size[i]   = slice_size[i-1];
@@ -53,24 +43,13 @@ namespace ANN {
   }
   
   SliceANNComponent::~SliceANNComponent() {
-    if (input) DecRef(input);
-    if (error_input) DecRef(error_input);
-    if (output) DecRef(output);
-    if (error_output) DecRef(error_output);
     delete[] slice_offset;
     delete[] slice_size;
   }
   
-  Token *SliceANNComponent::doForward(Token* _input, bool during_training) {
+  MatrixFloat *SliceANNComponent::
+  privateDoForward(MatrixFloat* input_mat, bool during_training) {
     UNUSED_VARIABLE(during_training);
-    if (_input->getTokenCode() != table_of_token_codes::token_matrix)
-      ERROR_EXIT1(128, "Incorrect token found, only TokenMatrixFloat is "
-		  "allowed [%s]\n", name.c_str());
-    AssignRef(input, _input->convertTo<TokenMatrixFloat*>());    
-    MatrixFloat *input_mat = input->getMatrix();
-#ifdef USE_CUDA
-    input_mat->setUseCuda(use_cuda);
-#endif
     slice_offset[0] = 0;
     slice_size[0]   = input_mat->getDimSize(0);
     if (input_mat->getNumDim() < 2)
@@ -80,29 +59,13 @@ namespace ANN {
 					      slice_offset,
 					      slice_size,
 					      false);
-    AssignRef(output, new TokenMatrixFloat(output_mat));
-    return output;
+    return output_mat;
   }
 
-  Token *SliceANNComponent::doBackprop(Token *_error_input) {
-    if (_error_input == 0) {
-      if (error_input)  { DecRef(error_input);  error_input  = 0; }
-      if (error_output) { DecRef(error_output); error_output = 0; }
-      return 0;
-    }
-    if (_error_input->getTokenCode() != table_of_token_codes::token_matrix)
-      ERROR_EXIT1(128, "Incorrect error input token type, "
-		  "expected TokenMatrixFloat [%s]\n", name.c_str());
-    AssignRef(error_input, _error_input->convertTo<TokenMatrixFloat*>());
-    MatrixFloat *error_input_mat = error_input->getMatrix();
-#ifdef USE_CUDA
-    error_input_mat->setUseCuda(use_cuda);
-#endif
-    if (!output->getMatrix()->sameDim(error_input_mat))
-      ERROR_EXIT1(128, "Error input token has incorrect dimensions [%s]\n",
-		  name.c_str());
+  MatrixFloat *SliceANNComponent::
+  privateDoBackprop(MatrixFloat *error_input_mat) {
+    MatrixFloat *input_mat = getInputMatrix();
     MatrixFloat *error_output_mat;
-    MatrixFloat *input_mat = input->getMatrix();
     error_output_mat = input_mat->cloneOnlyDims();
     error_output_mat->zeros();
     MatrixFloat *error_output_mat_slice = new MatrixFloat(error_output_mat,
@@ -110,21 +73,12 @@ namespace ANN {
 							  slice_size,
 							  false);
     error_output_mat_slice->copy(error_input_mat);
-    AssignRef(error_output, new TokenMatrixFloat(error_output_mat));
     delete error_output_mat_slice;
-    return error_output;
+    return error_output_mat;
   }
   
-  void SliceANNComponent::reset(unsigned int it) {
+  void SliceANNComponent::privateReset(unsigned int it) {
     UNUSED_VARIABLE(it);
-    if (input) DecRef(input);
-    if (error_input) DecRef(error_input);
-    if (output) DecRef(output);
-    if (error_output) DecRef(error_output);
-    input	 = 0;
-    error_input	 = 0;
-    output	 = 0;
-    error_output = 0;
   }
   
   ANNComponent *SliceANNComponent::clone() {
@@ -139,8 +93,7 @@ namespace ANN {
 				unsigned int _output_size,
 				MatrixFloatSet *weights_dict,
 				hash<string,ANNComponent*> &components_dict) {
-    unsigned int sz = 1;
-    for (int i=1; i<this->n; ++i) sz *= slice_size[i];
+    unsigned int sz = mult(slice_size+1, n-1);
     //
     if (_output_size != 0 && _output_size != sz)
       ERROR_EXIT2(256, "Incorrect output size, expected %d, found %d\n",

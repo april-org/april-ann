@@ -78,11 +78,7 @@ namespace ANN {
 						   int num_output_planes,
 						   const char *name,
 						   const char *weights_name) :
-    ANNComponent(name, weights_name, 0, 0),
-    input(0),
-    error_input(0),
-    output(0),
-    error_output(0),
+    VirtualMatrixANNComponent(name, weights_name, 0, 0),
     weights_matrix(0),
     input_planes_dim(input_planes_dim),
     number_input_windows(0),
@@ -101,7 +97,7 @@ namespace ANN {
     output_window_num_steps(new int[input_num_dims+1]),
     output_window_order_step(new int[input_num_dims+1]),
     output_window_rewrap(new int[2]) {
-    if (weights_name == 0) generateDefaultWeightsName(this->weights_name, "w");
+    if (weights_name == 0) generateDefaultWeightsName("w");
     kernel_dims[0] = static_cast<int>(hidden_size);
     kernel_step[0] = 1;
     input_window_order_step[0] = 0;
@@ -130,10 +126,6 @@ namespace ANN {
   
   ConvolutionANNComponent::~ConvolutionANNComponent() {
     if (weights_matrix) DecRef(weights_matrix);
-    if (input) DecRef(input);
-    if (error_input) DecRef(error_input);
-    if (output) DecRef(output);
-    if (error_output) DecRef(error_output);
     delete[] kernel_dims;
     delete[] kernel_step;
     delete[] output_dims;
@@ -148,32 +140,22 @@ namespace ANN {
     delete[] output_window_rewrap;
   }
   
-  // The ConvolutionANNComponent
-  Token *ConvolutionANNComponent::doForward(Token *_input, bool during_training) {
+  MatrixFloat *ConvolutionANNComponent::
+  privateDoForward(MatrixFloat *input_mat, bool during_training) {
     UNUSED_VARIABLE(during_training);
     if (weights_matrix == 0) ERROR_EXIT1(129, "Not built component %s\n",
 					 name.c_str());
     MatrixFloat *weights_mat = weights_matrix;
     // error checking
-    if (_input == 0) ERROR_EXIT1(129,"Null Token received! [%s]\n",
-				 name.c_str());
-    if (_input->getTokenCode() != table_of_token_codes::token_matrix)
-      ERROR_EXIT1(129, "Incorrect token received, expected token_matrix [%s]\n",
-		  name.c_str());
-    AssignRef(input, _input->convertTo<TokenMatrixFloat*>());
-    MatrixFloat *input_mat=input->getMatrix();
     if (input_mat->getNumDim() != input_num_dims+1)
       ERROR_EXIT3(129, "Incorrect input matrix numDims, "
 		  "expected %d, found %d [%s]\n", input_num_dims+1,
 		  input_mat->getNumDim(), name.c_str());
-#ifdef USE_CUDA
-    input_mat->setUseCuda(use_cuda);
-#endif
     const int *input_dims = input_mat->getDimPtr();
     initializeArrays(input_dims);
     MatrixFloat *output_mat;
     output_mat = new MatrixFloat(input_num_dims+1, output_dims, CblasColMajor);
-    AssignRef(output, new TokenMatrixFloat(output_mat));
+    IncRef(output_mat);
 #ifdef USE_CUDA
     output_mat->setUseCuda(use_cuda);
 #endif
@@ -181,26 +163,28 @@ namespace ANN {
     /////////////////////////////////////////////////////////////////////////
 
     // Prepare sliding windows to compute the convolution
-    MatrixFloat::sliding_window input_sw(input_mat, input_window_size,
-					 0,  // OFFSET
-					 kernel_step,
-					 input_window_num_steps,
-					 input_window_order_step);
-    MatrixFloat::sliding_window output_sw(output_mat, output_window_size,
-					  0,  // OFFSET
-					  output_window_step,
-					  output_window_num_steps,
-					  output_window_order_step);
-    number_input_windows = input_sw.numWindows();
+    MatrixFloat::sliding_window *input_sw =
+      new MatrixFloat::sliding_window(input_mat, input_window_size,
+                                      0,  // OFFSET
+                                      kernel_step,
+                                      input_window_num_steps,
+                                      input_window_order_step);
+    MatrixFloat::sliding_window *output_sw =
+      new MatrixFloat::sliding_window(output_mat, output_window_size,
+                                      0,  // OFFSET
+                                      output_window_step,
+                                      output_window_num_steps,
+                                      output_window_order_step);
+    number_input_windows = input_sw->numWindows();
     // CONVOLUTION OVER number_input_windows
-    MatrixFloat *input_w  = input_sw.getMatrix();
-    MatrixFloat *output_w = output_sw.getMatrix();
+    MatrixFloat *input_w  = input_sw->getMatrix();
+    MatrixFloat *output_w = output_sw->getMatrix();
     IncRef(input_w);
     IncRef(output_w);
-    while(!input_sw.isEnd() && !output_sw.isEnd()) {
+    while(!input_sw->isEnd() && !output_sw->isEnd()) {
       // reusing the same MatrixFloat across all the possible windows
-      input_sw.getMatrix(input_w);
-      output_sw.getMatrix(output_w);
+      input_sw->getMatrix(input_w);
+      output_sw->getMatrix(output_w);
       MatrixFloat *input_flattened  = getRewrappedMatrix(input_w,
 							 input_window_rewrap,
 							 2, true);
@@ -228,8 +212,8 @@ namespace ANN {
       }
       
       // Next iteration
-      input_sw.next();
-      output_sw.next();
+      input_sw->next();
+      output_sw->next();
       
       // Free memory
       DecRef(input_flattened);
@@ -237,52 +221,49 @@ namespace ANN {
     }
     DecRef(input_w);
     DecRef(output_w);
-    return output;
+    delete input_sw;
+    delete output_sw;
+    ReleaseRef(output_mat);
+    return output_mat;
   }
   
-  Token *ConvolutionANNComponent::doBackprop(Token *_error_input) {
+  MatrixFloat *ConvolutionANNComponent::
+  privateDoBackprop(MatrixFloat *error_input_mat) {
     MatrixFloat *weights_mat = weights_matrix;
-    // error checking
-    if ( (_error_input == 0) ||
-	 (_error_input->getTokenCode() != table_of_token_codes::token_matrix))
-      ERROR_EXIT1(129,"Incorrect input error Token type, expected token_matrix! [%s]\n",
-		  name.c_str());
-    // change current input by new input
-    AssignRef(error_input,_error_input->convertTo<TokenMatrixFloat*>());
-    MatrixFloat *error_input_mat=error_input->getMatrix();
-    if (!output->getMatrix()->sameDim(error_input_mat))
+    MatrixFloat *output_mat  = getOutputMatrix();
+    MatrixFloat *input_mat   = getInputMatrix();
+    if (!output_mat->sameDim(error_input_mat))
       ERROR_EXIT1(129, "Incorrect dimensions at error input matrix [%s]\n",
 		  name.c_str());
-#ifdef USE_CUDA
-    error_input_mat->setUseCuda(use_cuda);
-#endif
-    MatrixFloat *error_output_mat = input->getMatrix()->cloneOnlyDims();
-    AssignRef(error_output, new TokenMatrixFloat(error_output_mat));
+    MatrixFloat *error_output_mat = input_mat->cloneOnlyDims();
+    IncRef(error_output_mat);
     // initialization of error_output_mat is needed because of kernel
     // overlapping
     error_output_mat->zeros();
 
     // Prepare sliding windows to compute the convolution gradient
-    MatrixFloat::sliding_window error_output_sw(error_output_mat, input_window_size,
-						0,  // OFFSET
-						kernel_step,
-						input_window_num_steps,
-						input_window_order_step);
-    MatrixFloat::sliding_window error_input_sw(error_input_mat, output_window_size,
-					       0,  // OFFSET
-					       output_window_step,
-					       output_window_num_steps,
-					       output_window_order_step);
-    april_assert(error_input_sw.numWindows() == number_input_windows);
+    MatrixFloat::sliding_window *error_output_sw =
+      new MatrixFloat::sliding_window(error_output_mat, input_window_size,
+                                      0,  // OFFSET
+                                      kernel_step,
+                                      input_window_num_steps,
+                                      input_window_order_step);
+    MatrixFloat::sliding_window *error_input_sw =
+      new MatrixFloat::sliding_window(error_input_mat, output_window_size,
+                                      0,  // OFFSET
+                                      output_window_step,
+                                      output_window_num_steps,
+                                      output_window_order_step);
+    april_assert(error_input_sw->numWindows() == number_input_windows);
     // CONVOLUTION GRADIENT
-    MatrixFloat *error_input_w  = error_input_sw.getMatrix();
-    MatrixFloat *error_output_w = error_output_sw.getMatrix();
+    MatrixFloat *error_input_w  = error_input_sw->getMatrix();
+    MatrixFloat *error_output_w = error_output_sw->getMatrix();
     IncRef(error_input_w);
     IncRef(error_output_w);
-    while(!error_input_sw.isEnd() && !error_output_sw.isEnd()) {
+    while(!error_input_sw->isEnd() && !error_output_sw->isEnd()) {
       // reuse the same MatrixFloat across all possible windows
-      error_input_sw.getMatrix(error_input_w);
-      error_output_sw.getMatrix(error_output_w);
+      error_input_sw->getMatrix(error_input_w);
+      error_output_sw->getMatrix(error_output_w);
       MatrixFloat *error_input_flattened  = getRewrappedMatrix(error_input_w,
 							       output_window_rewrap,
 							       2, true);
@@ -312,8 +293,8 @@ namespace ANN {
       }
       
       // Next iteration
-      error_input_sw.next();
-      error_output_sw.next();
+      error_input_sw->next();
+      error_output_sw->next();
       
       // Free memory
       DecRef(error_input_flattened);
@@ -321,7 +302,10 @@ namespace ANN {
     }
     DecRef(error_input_w);
     DecRef(error_output_w);
-    return error_output;
+    delete error_input_sw;
+    delete error_output_sw;
+    ReleaseRef(error_output_mat);
+    return error_output_mat;
   }
   
   void ConvolutionANNComponent::computeGradients(MatrixFloat *&grads_mat) {
@@ -331,8 +315,8 @@ namespace ANN {
       grads_mat->zeros();
       IncRef(grads_mat);
     }
-    MatrixFloat *input_mat       = input->getMatrix();
-    MatrixFloat *error_input_mat = error_input->getMatrix();
+    MatrixFloat *input_mat       = getInputMatrix();
+    MatrixFloat *error_input_mat = getErrorInputMatrix();
     // Prepare sliding windows to compute the convolution
     MatrixFloat::sliding_window input_sw(input_mat, input_window_size,
 					 0,  // OFFSET
@@ -344,7 +328,6 @@ namespace ANN {
 					       output_window_step,
 					       output_window_num_steps,
 					       output_window_order_step);
-    unsigned int bunch_size = error_input_mat->getDimSize(0);
     MatrixFloat *input_w       = input_sw.getMatrix();
     MatrixFloat *error_input_w = error_input_sw.getMatrix();
     IncRef(input_w);
@@ -380,16 +363,8 @@ namespace ANN {
     DecRef(error_input_w);
   }
 
-  void ConvolutionANNComponent::reset(unsigned int it) {
+  void ConvolutionANNComponent::privateReset(unsigned int it) {
     UNUSED_VARIABLE(it);
-    if (input)        DecRef(input);
-    if (error_input)  DecRef(error_input);
-    if (output)       DecRef(output);
-    if (error_output) DecRef(error_output);
-    input	 = 0;
-    error_input	 = 0;
-    output	 = 0;
-    error_output = 0;
     weights_matrix->resetSharedCount();
   }
   

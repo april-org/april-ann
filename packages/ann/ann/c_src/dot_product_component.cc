@@ -43,149 +43,83 @@ namespace ANN {
 						 unsigned int input_size,
 						 unsigned int output_size,
 						 bool transpose_weights) :
-    ANNComponent(name, weights_name, input_size, output_size),
-    input(0),
-    error_input(0),
-    output(0),
-    error_output(0),
+    MatrixInputSwitchANNComponent(name, weights_name, input_size, output_size),
     weights_matrix(0) {
-    if (weights_name == 0) generateDefaultWeightsName(this->weights_name, "w");
+    if (weights_name == 0) generateDefaultWeightsName("w");
     this->transpose_weights = (transpose_weights) ? CblasTrans : CblasNoTrans;
   }
   
   DotProductANNComponent::~DotProductANNComponent() {
     if (weights_matrix) DecRef(weights_matrix);
-    if (input) DecRef(input);
-    if (error_input) DecRef(error_input);
-    if (output) DecRef(output);
-    if (error_output) DecRef(error_output);
   }
   
-  // The DotProductANNComponent
-  Token *DotProductANNComponent::doForward(Token *_input, bool during_training) {
+  MatrixFloat *DotProductANNComponent::
+  privateDoDenseForward(MatrixFloat *input_mat, bool during_training) {
     UNUSED_VARIABLE(during_training);
+    if (input_mat->getNumDim() < 2)
+      ERROR_EXIT2(128, "At 2-dimensional matrix is expected, found %d. "
+		  "[%s]", input_mat->getNumDim(), name.c_str());
     if (weights_matrix == 0) ERROR_EXIT1(129, "Not built component %s\n",
-					 name.c_str());
+                                         getName().c_str());
     MatrixFloat *weights_mat = weights_matrix;
-    // error checking
-    if (_input == 0) ERROR_EXIT1(129,"Null Token received! [%s]\n",
-				 name.c_str());
-    // Three tokens are allowed: matrix, sparse, vector of sparse
-    switch(_input->getTokenCode()) {
-    case table_of_token_codes::token_matrix: {
-      sparse_input = false;
-      // change current input by new input
-      AssignRef(input,_input);
-      TokenMatrixFloat *input_mat_token=input->convertTo<TokenMatrixFloat*>();
-      MatrixFloat *input_mat=input_mat_token->getMatrix();
-      ASSERT_MATRIX(input_mat);
-      april_assert(input_mat->getDimSize(1) == static_cast<int>(input_size));
-      if (input_mat->getStrideSize(0) > 1) {
-	input_mat = input_mat->clone();
-	AssignRef<Token>(input,new TokenMatrixFloat(input_mat));
-      }
+    unsigned int bunch_size  = input_mat->getDimSize(0);
+    // new output to fit the bunch
+    MatrixFloat *output_mat;
+    int dims[2] = { static_cast<int>(bunch_size),
+                    static_cast<int>(getOutputSize()) };
+    output_mat = new MatrixFloat(2, dims, CblasColMajor);
 #ifdef USE_CUDA
-      input_mat->setUseCuda(use_cuda);
+    output_mat->setUseCuda(use_cuda);
 #endif
-      unsigned int bunch_size = input_mat->getDimSize(0);
-      // new output to fit the bunch
-      MatrixFloat *output_mat;
-      int dims[2] = { static_cast<int>(bunch_size),
-		      static_cast<int>(output_size) };
-      output_mat = new MatrixFloat(2, dims, CblasColMajor);
-      AssignRef(output,new TokenMatrixFloat(output_mat));
-#ifdef USE_CUDA
-      output_mat->setUseCuda(use_cuda);
-#endif
-      if (bunch_size == 1) {
-	// vector x matrix product
-	output_mat->gemv(transpose_weights,
-			 1.0f, weights_mat,
-			 input_mat,
-			 0.0f);
-      } // if bunch_size==1
-      else {
-	// matrix x matrix product
-	// C = \alpha op(A) op(B) + \beta C
-	// input * weights = output
-	output_mat->gemm(CblasNoTrans,
-			 NEGATE_CBLAS_TRANSPOSE(transpose_weights),
-			 1.0f, input_mat, weights_mat,
-			 0.0f);
-      } // if bunch_size==1 ... else
-      break;
-    }
-    case table_of_token_codes::token_sparse_matrix: {
-      sparse_input = true;
-      AssignRef(input, _input);
-      TokenSparseMatrixFloat *input_sparse_token =
-        input->convertTo<TokenSparseMatrixFloat*>();
-      april_assert(input_sparse_token->size() > 0);
-      SparseMatrixFloat *input_mat = input_sparse_token->getMatrix();
-      if (input_mat->getSparseFormat() != CSR_FORMAT) {
-        ERROR_EXIT(128, "Sparse matrix must be in csr format\n");
-      }
-      unsigned int bunch_size = input_mat->getDimSize(0);
-      // new output to fit the bunch
-      MatrixFloat *output_mat;
-      int dims[2] = {static_cast<int>(bunch_size),
-		     static_cast<int>(output_size)};
-      output_mat = new MatrixFloat(2, dims, CblasColMajor);
-      AssignRef(output,new TokenMatrixFloat(output_mat));
-#ifdef USE_CUDA
-      output_mat->setUseCuda(use_cuda);
-#endif
-      output_mat->sparseMM(CblasNoTrans,
-                           NEGATE_CBLAS_TRANSPOSE(transpose_weights),
-                           CblasNoTrans,
-                           1.0f, input_mat, weights_mat,
-                           0.0f);
-      break;
-    }
-    default:
-      ERROR_EXIT2(128, "Incorrect token type: %d [%s]\n", _input->getTokenCode(),
-		  name.c_str());
-    };
-    return output;
+    if (bunch_size == 1) {
+      // vector x matrix product
+      output_mat->gemv(transpose_weights,
+                       1.0f, weights_mat,
+                       input_mat,
+                       0.0f);
+    } // if bunch_size==1
+    else {
+      // matrix x matrix product
+      // C = \alpha op(A) op(B) + \beta C
+      // input * weights = output
+      output_mat->gemm(CblasNoTrans,
+                       NEGATE_CBLAS_TRANSPOSE(transpose_weights),
+                       1.0f, input_mat, weights_mat,
+                       0.0f);
+    } // if bunch_size==1 ... else
+    return output_mat;
   }
   
-  Token *DotProductANNComponent::doBackprop(Token *_error_input) {
-    // error checking
-    if ( (_error_input == 0) ||
-	 (_error_input->getTokenCode() != table_of_token_codes::token_matrix))
-      ERROR_EXIT1(129,"Incorrect input error Token type, expected token_matrix! [%s]\n",
-		  name.c_str());
-    // change current input by new input
-    AssignRef(error_input,_error_input->convertTo<TokenMatrixFloat*>());
-    if (sparse_input) {
-      // If input is sparse, the component needs to be an input of the ANN,
-      // therefore the input is probably SO LARGE, and computing the backprop
-      // will lead in HIGH computational cost ;) Because of this, the components
-      // returns a NULL gradient pointer
-      if (error_output) { DecRef(error_output); error_output = 0; }
-      return 0;
-    }
-    MatrixFloat *error_input_mat = error_input->getMatrix();
-    if (! error_input_mat->sameDim(output->getMatrix()) )
-      ERROR_EXIT1(129, "Different bunches found at doForward and doBackprop [%s]\n",
-		  name.c_str());
-    // new error output to fit the bunch
-    ASSERT_MATRIX(error_input_mat);
-    april_assert(error_input_mat->getDimSize(1) == static_cast<int>(output_size));
-    if (error_input_mat->getStrideSize(0) > 1) {
-      error_input_mat = error_input_mat->clone();
-      AssignRef(error_input,new TokenMatrixFloat(error_input_mat));
-    }
+  MatrixFloat *DotProductANNComponent::
+  privateDoSparseForward(SparseMatrixFloat *input_mat, bool during_training) {
+    UNUSED_VARIABLE(during_training);
+    unsigned int bunch_size = input_mat->getDimSize(0);
+    MatrixFloat *weights_mat = weights_matrix;
+    // new output to fit the bunch
+    MatrixFloat *output_mat;
+    int dims[2] = {static_cast<int>(bunch_size),
+                   static_cast<int>(getOutputSize())};
+    output_mat = new MatrixFloat(2, dims, CblasColMajor);
 #ifdef USE_CUDA
-    error_input_mat->setUseCuda(use_cuda);
+    output_mat->setUseCuda(use_cuda);
 #endif
+    output_mat->sparseMM(CblasNoTrans,
+                         NEGATE_CBLAS_TRANSPOSE(transpose_weights),
+                         CblasNoTrans,
+                         1.0f, input_mat, weights_mat,
+                         0.0f);
+    return output_mat;
+  }
+  
+  MatrixFloat *DotProductANNComponent::
+  privateDoDenseBackprop(MatrixFloat *error_input_mat) {
+    // new error output to fit the bunch
     unsigned int bunch_size = error_input_mat->getDimSize(0);
     // new output to fit the bunch
     MatrixFloat *error_output_mat;
     int dims[2] = { static_cast<int>(bunch_size),
-		    static_cast<int>(input_size) };
+		    static_cast<int>(getInputSize()) };
     error_output_mat = new MatrixFloat(2, dims, CblasColMajor);
-    AssignRef(error_output,new TokenMatrixFloat(error_output_mat));
 #ifdef USE_CUDA
     error_output_mat->setUseCuda(use_cuda);
 #endif      
@@ -204,10 +138,31 @@ namespace ANN {
 			     error_input_mat,
 			     0.0f);
     }
-    return error_output;
+    return error_output_mat;
+  }
+
+  SparseMatrixFloat *DotProductANNComponent::
+  privateDoSparseBackprop(MatrixFloat *error_input_mat) {
+    UNUSED_VARIABLE(error_input_mat);
+    // If input is sparse, the component needs to be an input of the ANN,
+    // therefore the input is probably SO LARGE, and computing the backprop
+    // will lead in HIGH computational cost ;) Because of this, the components
+    // returns a NULL gradient pointer
+    return 0;
   }
   
-  void DotProductANNComponent::computeGradients(MatrixFloat*& grads_mat) {
+  void DotProductANNComponent::privateDenseReset(unsigned int it) {
+    UNUSED_VARIABLE(it);
+    weights_matrix->resetSharedCount();
+  }
+
+  void DotProductANNComponent::privateSparseReset(unsigned int it) {
+    UNUSED_VARIABLE(it);
+    weights_matrix->resetSharedCount();
+  }
+
+  void DotProductANNComponent::
+  initializeComputeGradients(MatrixFloat*& grads_mat) {
     weights_matrix->addToSharedCount();
     if (grads_mat == 0) {
       grads_mat = weights_matrix->cloneOnlyDims();
@@ -216,67 +171,59 @@ namespace ANN {
     }
     else if (!grads_mat->sameDim(weights_matrix))
       ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
-    MatrixFloat *error_input_mat = error_input->getMatrix();
-    unsigned int bunch_size = error_input_mat->getDimSize(0);
-    if (sparse_input) {
-      TokenSparseMatrixFloat *input_sparse_token =
-        input->convertTo<TokenSparseMatrixFloat*>();
-      SparseMatrixFloat *input_mat = input_sparse_token->getMatrix();
-      if (transpose_weights == CblasNoTrans)
-        grads_mat->sparseMM(CblasTrans,
-                            CblasNoTrans,
-                            CblasTrans,
-                            1.0f,
-                            input_mat,
-                            error_input_mat,
-                            1.0f);
-      else
-        grads_mat->sparseMM(CblasTrans,
-                            CblasNoTrans,
-                            CblasNoTrans,
-                            1.0f,
-                            input_mat,
-                            error_input_mat,
-                            1.0f);
-    } // if sparse_input ... else
-    else {
-      TokenMatrixFloat *input_mat_token=input->convertTo<TokenMatrixFloat*>();
-      MatrixFloat *input_mat=input_mat_token->getMatrix();
-      if (bunch_size > 1) {
-	grads_mat->gemm(CblasTrans, CblasNoTrans,
-			1.0f,
-			(transpose_weights == CblasNoTrans)?error_input_mat:input_mat, // A
-			(transpose_weights == CblasNoTrans)?input_mat:error_input_mat, // B
-			1.0f);
-      } // if bunch_size > 1 ... else
-      else {
-	grads_mat->ger(1.0f,
-		       (transpose_weights == CblasNoTrans)?error_input_mat:input_mat,
-		       (transpose_weights == CblasNoTrans)?input_mat:error_input_mat);
-      } // if bunch_size > 1 ... else
-    } // if sparse_input ... else
   }
-
-  void DotProductANNComponent::reset(unsigned int it) {
-    UNUSED_VARIABLE(it);
-    if (input)        DecRef(input);
-    if (error_input)  DecRef(error_input);
-    if (output)       DecRef(output);
-    if (error_output) DecRef(error_output);
-    input	 = 0;
-    error_input	 = 0;
-    output	 = 0;
-    error_output = 0;
-    weights_matrix->resetSharedCount();
+  
+  void DotProductANNComponent::
+  privateDenseComputeGradients(MatrixFloat*& grads_mat) {
+    initializeComputeGradients(grads_mat);
+    MatrixFloat *error_input_mat;
+    error_input_mat = getErrorInputMatrix();
+    unsigned int bunch_size = error_input_mat->getDimSize(0);
+    MatrixFloat *input_mat = getInputMatrix();
+    if (bunch_size > 1) {
+      grads_mat->gemm(CblasTrans, CblasNoTrans,
+                      1.0f,
+                      (transpose_weights == CblasNoTrans)?error_input_mat:input_mat, // A
+                      (transpose_weights == CblasNoTrans)?input_mat:error_input_mat, // B
+                      1.0f);
+    } // if bunch_size > 1 ... else
+    else {
+      grads_mat->ger(1.0f,
+                     (transpose_weights == CblasNoTrans)?error_input_mat:input_mat,
+                     (transpose_weights == CblasNoTrans)?input_mat:error_input_mat);
+    } // if bunch_size > 1 ... else
+  }
+  
+  void DotProductANNComponent::
+  privateSparseComputeGradients(MatrixFloat*& grads_mat) {
+    initializeComputeGradients(grads_mat);
+    MatrixFloat *error_input_mat;
+    error_input_mat = getErrorInputMatrix();
+    SparseMatrixFloat *input_mat;
+    input_mat = getSparseInputMatrix();
+    if (transpose_weights == CblasNoTrans)
+      grads_mat->sparseMM(CblasTrans,
+                          CblasNoTrans,
+                          CblasTrans,
+                          1.0f,
+                          input_mat,
+                          error_input_mat,
+                          1.0f);
+    else
+      grads_mat->sparseMM(CblasTrans,
+                          CblasNoTrans,
+                          CblasNoTrans,
+                          1.0f,
+                          input_mat,
+                          error_input_mat,
+                          1.0f);
   }
   
   ANNComponent *DotProductANNComponent::clone() {
     DotProductANNComponent *component = new
-      DotProductANNComponent(name.c_str(), weights_name.c_str(),
-			     input_size, output_size,
+      DotProductANNComponent(getName().c_str(), getWeightsName().c_str(),
+			     getInputSize(), getOutputSize(),
 			     (transpose_weights == CblasTrans));
-    component->input_size     = input_size;
-    component->output_size    = output_size;
     return component;
   }
   
@@ -284,19 +231,19 @@ namespace ANN {
 				     unsigned int _output_size,
 				     MatrixFloatSet *weights_dict,
 				     hash<string,ANNComponent*> &components_dict) {
-    ANNComponent::build(_input_size, _output_size,
-			weights_dict, components_dict);
+    MatrixInputSwitchANNComponent::build(_input_size, _output_size,
+                                         weights_dict, components_dict);
     //
-    if (input_size == 0 || output_size == 0)
+    if (getInputSize() == 0 || getOutputSize() == 0)
       ERROR_EXIT1(141, "Impossible to compute input/output "
 		  "sizes for this component [%s]\n",
-		  name.c_str());
-    unsigned int weights_input_size  = input_size;;
-    unsigned int weights_output_size = output_size;
+		  getName().c_str());
+    unsigned int weights_input_size  = getInputSize();
+    unsigned int weights_output_size = getOutputSize();
     ////////////////////////////////////////////////////////////////////
     if (transpose_weights == CblasTrans)
       swap(weights_input_size, weights_output_size);
-    MatrixFloat *&w = (*weights_dict)[weights_name];
+    MatrixFloat *&w = (*weights_dict)[getWeightsName()];
     // printf("%s :: %p %p\n", weights_name.c_str(), w, weights_matrix);
     if (w != 0) {
       // printf("COPY OF WEIGHTS FROM HASH %s\n", weights_name.c_str());
@@ -309,7 +256,7 @@ namespace ANN {
 		    weights_input_size, weights_output_size,
 		    Connections::getInputSize(weights_matrix),
 		    Connections::getOutputSize(weights_matrix),
-		    name.c_str());
+                    getName().c_str());
     }
     else {
       if (weights_matrix == 0) {
@@ -327,13 +274,13 @@ namespace ANN {
   void DotProductANNComponent::copyWeights(MatrixFloatSet *weights_dict) {
     if (weights_matrix == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
-		  name.c_str());
-    MatrixFloat *&w = (*weights_dict)[weights_name];
+		  getName().c_str());
+    MatrixFloat *&w = (*weights_dict)[getWeightsName()];
     if (w != 0 && w != weights_matrix)
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with weights_matrix attribute [%s]\n",
-		  weights_name.c_str(),
-		  name.c_str());
+		  getWeightsName().c_str(),
+		  getName().c_str());
     else if (w == 0) {
       w = weights_matrix;
       IncRef(w);
@@ -344,8 +291,8 @@ namespace ANN {
     buffer_list buffer;
     buffer.printf("ann.components.dot_product{ name='%s',weights='%s',"
 		  "input=%d,output=%d,transpose=%s }",
-		  name.c_str(), weights_name.c_str(),
-		  input_size, output_size,
+		  getName().c_str(), getWeightsName().c_str(),
+		  getInputSize(), getOutputSize(),
 		  (transpose_weights==CblasTrans)?"true":"false");
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }
