@@ -23,6 +23,7 @@
 
 #include "cblas_headers.h"
 #include "ann_component.h"
+#include "component_properties.h"
 #include "connection.h"
 #include "matrixFloat.h"
 #include "sparse_matrixFloat.h"
@@ -35,7 +36,8 @@ namespace ANN {
    * An abstract component which defines basic interface for components which
    * expect sparse matrix as input and produce dense matrix as output.
    */
-  class VirtualSparseMatrixANNComponent : public ANNComponent {
+  class VirtualSparseMatrixANNComponent : public ANNComponent,
+                                          public ComponentPropertiesAndAsserts {
     TokenSparseMatrixFloat *input, *error_output;
     TokenMatrixFloat *output, *error_input;
     

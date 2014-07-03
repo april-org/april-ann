@@ -21,8 +21,9 @@
 #ifndef MATRIXANNCOMPONENT_H
 #define MATRIXANNCOMPONENT_H  
 
-#include "cblas_headers.h"
 #include "ann_component.h"
+#include "cblas_headers.h"
+#include "component_properties.h"
 #include "connection.h"
 #include "token_matrix.h"
 
@@ -32,10 +33,12 @@ namespace ANN {
    * An abstract component which defines basic interface for components which
    * expect matrices and produce matrices.
    */
-  class VirtualMatrixANNComponent : public ANNComponent {
+  class VirtualMatrixANNComponent : public ANNComponent,
+                                    public ComponentPropertiesAndAsserts {
     TokenMatrixFloat *input, *output, *error_input, *error_output;
     
   protected:
+    
     // Auxiliary methods
     
     MatrixFloat *getInputMatrix() {

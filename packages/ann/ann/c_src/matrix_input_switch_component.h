@@ -21,11 +21,13 @@
 #ifndef MATRIXINPUTSWITCHANNCOMPONENT_H
 #define MATRIXINPUTSWITCHANNCOMPONENT_H
 
+#include "ann_component.h"
 #include "april_assert.h"
 #include "cblas_headers.h"
-#include "matrix_component.h"
-#include "sparse_matrix_component.h"
+#include "component_properties.h"
+#include "sparse_matrixFloat.h"
 #include "token_matrix.h"
+#include "token_sparse_matrix.h"
 
 namespace ANN {
 
@@ -33,7 +35,8 @@ namespace ANN {
    * An abstract component which defines basic interface for components which
    * receives sparse or dense matrix and produce dense matrix.
    */
-  class MatrixInputSwitchANNComponent : public ANNComponent {
+  class MatrixInputSwitchANNComponent : public ANNComponent,
+                                        public ComponentPropertiesAndAsserts {
     TokenMatrixFloat *input, *output, *error_input, *error_output;
     TokenSparseMatrixFloat *sparse_input, *sparse_error_output;
     bool is_sparse_input;

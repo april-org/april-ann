@@ -30,6 +30,7 @@ namespace ANN {
 				     const char *weights_name) :
     VirtualMatrixANNComponent(name, weights_name, size, size),
     bias_vector(0) {
+    setInputContiguousProperty(true);
     if (weights_name == 0) generateDefaultWeightsName("b");
   }
 

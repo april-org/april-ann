@@ -97,6 +97,7 @@ namespace ANN {
     output_window_num_steps(new int[input_num_dims+1]),
     output_window_order_step(new int[input_num_dims+1]),
     output_window_rewrap(new int[2]) {
+    setInputContiguousProperty(true);
     if (weights_name == 0) generateDefaultWeightsName("w");
     kernel_dims[0] = static_cast<int>(hidden_size);
     kernel_step[0] = 1;

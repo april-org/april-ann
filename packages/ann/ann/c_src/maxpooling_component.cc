@@ -80,6 +80,7 @@ namespace ANN {
     output_window_order_step(new int[input_num_dims+1]),
     output_window_rewrap(new int[2]) {
     //
+    setInputContiguousProperty(true);
     input_window_order_step[0] = 0;
     output_window_size[0] = 0;
     output_window_order_step[0] = 0;

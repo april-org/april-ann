@@ -29,6 +29,7 @@ namespace ANN {
   VirtualMatrixANNComponent(const char *name, const char *weights_name,
                             unsigned int input_size, unsigned int output_size) :
     ANNComponent(name, weights_name, input_size, output_size),
+    ComponentPropertiesAndAsserts(),
     input(0), output(0), error_input(0), error_output(0) {
   }
 
@@ -76,7 +77,7 @@ namespace ANN {
     ASSERT_MATRIX(input_mat);
     april_assert(input_size == 0 ||
                  input_mat->size()/input_mat->getDimSize(0) == static_cast<int>(input_size));
-    if (!input_mat->getIsContiguous()) {
+    if (getInputContiguousProperty() && !input_mat->getIsContiguous()) {
       input_mat = input_mat->clone();
       AssignRef(input,new TokenMatrixFloat(input_mat));
     }
@@ -106,13 +107,13 @@ namespace ANN {
     ASSERT_MATRIX(error_input_mat);
     april_assert(output_size == 0 ||
                  error_input_mat->size()/error_input_mat->getDimSize(0) == static_cast<int>(output_size));
-    if (!error_input_mat->getIsContiguous()) {
+    if (getInputContiguousProperty() && !error_input_mat->getIsContiguous()) {
       error_input_mat = error_input_mat->clone();
       AssignRef(error_input,new TokenMatrixFloat(error_input_mat));
     }
     if (! error_input_mat->sameDim(output->getMatrix()) ) {
-      ERROR_EXIT1(129, "Different bunches found at doForward and doBackprop [%s]\n",
-		  name.c_str());
+      ERROR_EXIT1(129, "Different matrix sizes found at doForward and "
+                  "doBackprop [%s]\n", name.c_str());
     }
     //////////////////////////
     // BACKPROP COMPUTATION //

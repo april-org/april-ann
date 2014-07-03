@@ -30,6 +30,7 @@ namespace ANN {
                                   unsigned int input_size,
                                   unsigned int output_size) :
     ANNComponent(name, weights_name, input_size, output_size),
+    ComponentPropertiesAndAsserts(),
     input(0), error_output(0), output(0), error_input(0) {
   }
 
@@ -88,7 +89,15 @@ namespace ANN {
     error_input_mat->setUseCuda(use_cuda);
 #endif
     ASSERT_MATRIX(error_input_mat);
-    april_assert(output->getMatrix()->getDimSize(1) == error_input_mat->getDimSize(1));
+    april_assert(output_size == 0 ||
+                 error_input_mat->size()/error_input_mat->getDimSize(0) == static_cast<int>(output_size));
+    if (getInputContiguousProperty() && !error_input_mat->getIsContiguous()) {
+      error_input_mat = error_input_mat->clone();
+      AssignRef(error_input,new TokenMatrixFloat(error_input_mat));
+    }
+    if (! error_input_mat->sameDim(output->getMatrix()) )
+      ERROR_EXIT1(129, "Different matrix sizes found at doForward and "
+                  "doBackprop [%s]\n", name.c_str());
     //////////////////////////
     // BACKPROP COMPUTATION //
     SparseMatrixFloat *error_output_mat = privateDoBackprop(error_input_mat);

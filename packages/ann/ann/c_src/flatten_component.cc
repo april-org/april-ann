@@ -30,6 +30,7 @@ namespace ANN {
   
   FlattenANNComponent::FlattenANNComponent(const char *name) :
     VirtualMatrixANNComponent(name, 0, 0, 0) {
+    setInputContiguousProperty(true);
   }
   
   FlattenANNComponent::~FlattenANNComponent() {
@@ -44,9 +45,6 @@ namespace ANN {
 		  "[%s]", input_mat->getNumDim(), name.c_str());
     flatten_dims[0] = input_mat->getDimSize(0);
     flatten_dims[1] = input_mat->size() / flatten_dims[0];
-    if (!input_mat->getIsContiguous()) {
-      AssignRef(input_mat, input_mat->clone());
-    }
     MatrixFloat *output_mat = input_mat->rewrap(flatten_dims, 2);
     DecRef(input_mat);
     return output_mat;
@@ -55,9 +53,6 @@ namespace ANN {
   MatrixFloat *FlattenANNComponent::
   privateDoBackprop(MatrixFloat *error_input_mat) {
     IncRef(error_input_mat);
-    if (!error_input_mat->getIsContiguous()) {
-      AssignRef(error_input_mat, error_input_mat->clone());
-    }
     MatrixFloat *error_output_mat;
     MatrixFloat *input_mat = getInputMatrix();
     error_output_mat = error_input_mat->rewrap(input_mat->getDimPtr(),

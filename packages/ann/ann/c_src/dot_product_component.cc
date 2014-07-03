@@ -45,6 +45,7 @@ namespace ANN {
 						 bool transpose_weights) :
     MatrixInputSwitchANNComponent(name, weights_name, input_size, output_size),
     weights_matrix(0) {
+    setInputContiguousProperty(true);
     if (weights_name == 0) generateDefaultWeightsName("w");
     this->transpose_weights = (transpose_weights) ? CblasTrans : CblasNoTrans;
   }

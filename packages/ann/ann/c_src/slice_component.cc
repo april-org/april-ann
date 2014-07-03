@@ -36,6 +36,7 @@ namespace ANN {
     slice_offset(new int[n+1]),
     slice_size(new int[n+1]),
     n(n+1) {
+    setInputContiguousProperty(false);
     for (int i=1; i<this->n; ++i) {
       this->slice_offset[i] = slice_offset[i-1];
       this->slice_size[i]   = slice_size[i-1];

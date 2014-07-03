@@ -88,6 +88,7 @@ namespace ANN {
     window_size(new int[num_dims+1]),
     window_step(new int[num_dims+1]),
     window_num_steps(new int[num_dims+1]) {
+    setInputContiguousProperty(true);
     if (bias_name == 0) generateDefaultWeightsName("b");
     window_size[1]     = static_cast<int>(hidden_size);
     window_step[0]     = 1;

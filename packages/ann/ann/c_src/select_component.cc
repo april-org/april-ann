@@ -32,6 +32,7 @@ namespace ANN {
 					 const char *name) :
     VirtualMatrixANNComponent(name, 0, 0, 0),
     dimension(dimension), index(index) {
+    setInputContiguousProperty(false);
   }
   
   SelectANNComponent::~SelectANNComponent() {

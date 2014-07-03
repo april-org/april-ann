@@ -33,6 +33,7 @@ namespace ANN {
     VirtualMatrixANNComponent(name, 0,
                               mult(rewrap_dims,n), mult(rewrap_dims,n)),
     rewrap_dims(new int[n+1]), n(n+1) {
+    setInputContiguousProperty(true);
     for (int i=1; i<this->n; ++i)
       this->rewrap_dims[i] = rewrap_dims[i-1];
   }
