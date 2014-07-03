@@ -36,6 +36,13 @@
 #include "mmapped_data.h"
 #include "unused_variable.h"
 
+//////////////////////////////////////////////////
+// Avoids error messages from flycheck in emacs //
+#ifndef MATRIX_H
+#include "matrix.h"
+#endif
+//////////////////////////////////////////////////
+
 // CSC or CSR format explained at MKL "Sparse Matrix Storage Formats":
 // http://software.intel.com/sites/products/documentation/hpc/mkl/mklman/GUID-9FCEB1C4-670D-4738-81D2-F378013412B0.htm
 

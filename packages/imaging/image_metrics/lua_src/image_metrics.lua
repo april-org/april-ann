@@ -23,7 +23,7 @@ function image.image_metrics.printMetrics(metrics, range, params)
     printf("\n")
 end
 
-local function processImages(self, clean_img, gt_img)
+local function processImages(self, clean_img, gt_img, threshold)
   -- Load a dataset over the image and call process_dataset
     
     local dim_clean = clean_img:matrix():dim()  
@@ -53,6 +53,8 @@ local function processImages(self, clean_img, gt_img)
     self:process_dataset(
       { predicted = ds_clean,
         ground_truth = ds_gt,
+        binary = threshold and true or false,
+        threshold = threshold
       }
     )
 end

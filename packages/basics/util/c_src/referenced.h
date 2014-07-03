@@ -23,6 +23,9 @@
 
 #define IncRef(x) (x)->incRef()
 #define DecRef(x) if ((x)->decRef()) delete (x)
+// to avoid deletion of objects before pointer return, releases the references
+// but not deletes the object
+#define ReleaseRef(x) (x)->decRef()
 
 /**
  * The class Referenced is used as base class for binded to Lua classes. It

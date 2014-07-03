@@ -2,7 +2,7 @@ Tools directory
 ===============
 
 This directory contains Lua scripts prepared to run experiments for different
-tasks using April-ANN.
+tasks using APRIL-ANN.
 
 Currently, you can find following directories:
 

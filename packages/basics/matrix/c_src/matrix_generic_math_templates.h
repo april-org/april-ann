@@ -412,7 +412,6 @@ T applySumReductionWithSpanIteratorNOPARALLEL(const Matrix<T> *m,
   // General case
   else {
     typename Matrix<T>::best_span_iterator span_it(m);
-    const int N = span_it.numberOfIterations();
     unsigned int size   = static_cast<unsigned int>(span_it.getSize());
     unsigned int stride = static_cast<unsigned int>(span_it.getStride());
     T sum;
@@ -522,7 +521,6 @@ R applyReductionWithSpanIteratorNOPARALLEL(const Matrix<T> *m,
   // General case
   else {
     typename Matrix<T>::best_span_iterator span_it(m);
-    const int N = span_it.numberOfIterations();
     unsigned int size   = static_cast<unsigned int>(span_it.getSize());
     unsigned int stride = static_cast<unsigned int>(span_it.getStride());
     R red(initial_value);
@@ -622,11 +620,10 @@ void applyBinaryFunctionWithSpanIteratorNOPARALLEL(Matrix<T> *m1,
 	    static_cast<unsigned int>(m2->getOffset()));
   else {
     typename Matrix<T>::best_span_iterator span_it1(m1), span_it2(m2);
-    const int N = span_it1.numberOfIterations();
     unsigned int size    = static_cast<unsigned int>(span_it1.getSize());
     unsigned int stride1 = static_cast<unsigned int>(span_it1.getStride());
     unsigned int stride2 = static_cast<unsigned int>(span_it2.getStride());
-    april_assert(N == span_it2.numberOfIterations());
+    april_assert(span_it1.numberOfIterations() == span_it2.numberOfIterations());
     april_assert(size == static_cast<unsigned int>(span_it2.getSize()));
     while(span_it1 != m1->end_span_iterator()) {
       functor(m1, m2, size, stride1, stride2,

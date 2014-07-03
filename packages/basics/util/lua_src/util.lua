@@ -1,5 +1,3 @@
-local COLWIDTH=70
-
 ------------------------------------------------------------------------------
 
 local setmetatable = setmetatable
@@ -156,12 +154,17 @@ function class(classname, parentclass)
   --
   local meta_instance = {
     id = classname,
+    cls = current,
     __tostring = function(self) return "instance of " .. classname end,
     __index = { }
   }
   local class_metatable = {
     __tostring = function() return "class ".. classname .. " class" end,
     id         = classname .. " class",
+    __concat   = function(a,b)
+      assert(type(b) == "string", "Needs a string as second argument")
+      return class_get(a,b)
+    end,
     --    __index    = function(t,k)
     --      local aux = rawget(t,k)
     --      if aux then return aux else return t.meta_instance.__index[k] end
@@ -218,169 +221,8 @@ function super(self, methodname, ...)
   return super_instance[methodname](...)
 end
 
--- help documentation
-local allowed_classes = { ["class"]=true,
-			  ["namespace"]=true,
-			  ["function"]=true,
-			  ["method"]=true,
-			  ["var"]=true }
-function april_set_doc(table_name, docblock)
-  local docblock = get_table_fields(
-    {
-      class       = { mandatory=true,  type_match="string", default=nil },
-      summary     = { mandatory=true },
-      description = { mandatory=false, default=docblock.summary },
-      params      = { mandatory=false, type_match="table", default=nil },
-      outputs     = { mandatory=false, type_match="table", default=nil },
-    }, docblock)
-  assert(allowed_classes[docblock.class], "Incorrect class: " .. docblock.class)
-  _APRIL_DOC_TABLE_ = _APRIL_DOC_TABLE_ or {}
-  if luatype(docblock.summary) == "table" then
-    docblock.summary = table.concat(docblock.summary, " ")
-  end
-  assert(luatype(docblock.summary) == "string", "Incorrect summary type")
-  if luatype(docblock.description) == "table" then
-    docblock.description = table.concat(docblock.description, " ")
-  end
-  assert(luatype(docblock.description) == "string", "Incorrect description type")
-  if docblock.params then
-    for i,v in pairs(docblock.params) do
-      if luatype(v) == "table" then
-	docblock.params[i] = table.concat(v, " ")
-      end
-    end
-  end
-  if docblock.outputs then
-    for i,v in pairs(docblock.outputs) do
-      if luatype(v) == "table" then
-	docblock.outputs[i] = table.concat(v, " ")
-      end
-    end
-  end
-  local current = get_table_from_dotted_string(table_name, true,
-					       _APRIL_DOC_TABLE_)
-  table.insert(current, docblock)
-end
-
 function april_list(t)
-  if luatype(t) ~= "table" then error("Needs a table") end
   for i,v in pairs(t) do print(i,v) end
-end
-
-function april_print_doc(table_name, verbosity, prefix)
-  assert(type(table_name)=="string", "Needs a string as first argument")
-  assert(type(verbosity)=="number",  "Needs a number as first argument")
-  local prefix = prefix or ""
-  local current_table
-  if #table_name==0 then current_table=_APRIL_DOC_TABLE_
-  else
-    table_name=table_name:gsub(" class","")
-    current_table = get_table_from_dotted_string(table_name, true,
-						 _APRIL_DOC_TABLE_)
-  end
-  if #current_table == 0 then
-    if verbosity > 1 then
-      print("No documentation found. Check that you are asking for a BASE "..
-	      "class method, not a child class inherited method.")
-    end
-    table.insert(current_table, {})
-  end
-  local t = string.tokenize(table_name, ".")
-  if #t == 0 then table.insert(t, "") end
-  for idx,current in ipairs(current_table) do
-    if idx > 1 and verbosity > 1 then
-      print("\t--------------------------------------------------------------\n")
-    end
-    local name = table_name
-    local out = { }
-    if verbosity > 1 then
-      table.insert(out,{prefix,
-			ansi.fg["bright_red"]..
-			  (string.format("%9s",current.class or "")),
-			ansi.fg["green"]..table_name..ansi.fg["default"]})
-    else
-      name = t[#t]
-      table.insert(out,
-		   {prefix,
-		    ansi.fg["bright_red"]..
-		      (string.format("%9s",current.class or "")),
-		    ansi.fg["green"]..t[#t]..ansi.fg["default"]})
-    end
-    if verbosity > 0 then
-      if current.summary then
-	if #name<24 then
-	  table.insert(out[1], ansi.fg["cyan"].."=>"..ansi.fg["default"])
-	  local aux = "          "
-	  local str = string.truncate(current.summary, COLWIDTH,
-				      aux..aux..aux)
-	  str = string.gsub(str, "%[(.*)%]",
-			    "["..ansi.fg["bright_yellow"].."%1"..
-			      ansi.fg["default"].."]")
-	  table.insert(out[1], str)
-	else
-	  local aux = "                              "
-	  local str = string.truncate(current.summary, COLWIDTH, aux)
-	  str = string.gsub(str, "%[(.*)%]",
-			    "["..ansi.fg["bright_yellow"].."%1"..
-			      ansi.fg["default"].."]")
-	  table.insert(out, { aux, str })
-	end
-      end
-    end
-    if verbosity > 1 then
-      if current.description then
-	local str = string.truncate(current.description, COLWIDTH,
-				    "            ")
-	str = string.gsub(str, "%[(.*)%]",
-			  "["..ansi.fg["bright_yellow"].."%1"..
-			    ansi.fg["default"].."]")
-	table.insert(out,
-		     { "\n"..ansi.fg["cyan"].."description:"..ansi.fg["default"],
-		       str })
-      end
-      if current.params then
-	table.insert(out,
-		     { "\n"..ansi.fg["cyan"].."parameters:"..ansi.fg["default"] })
-	local names_table = {}
-	for name,_ in pairs(current.params) do table.insert(names_table,name) end
-	table.sort(names_table, function(a,b) return tostring(a)<tostring(b) end)
-	for k,name in ipairs(names_table) do
-	  local description = current.params[name]
-	  local str = string.truncate(description, COLWIDTH,
-				      "                         ")
-	  str = string.gsub(str, "%[(.*)%]",
-			    "["..ansi.fg["bright_yellow"].."%1"..
-			      ansi.fg["default"].."]")
-	  table.insert(out,
-		       { "\t",
-			 ansi.fg["green"]..string.format("%16s",name)..ansi.fg["default"],
-			 str } )
-	end
-      end
-      if current.outputs then
-	table.insert(out,
-		     { "\n"..ansi.fg["cyan"].."outputs:"..ansi.fg["default"] })
-	local names_table = {}
-	for name,_ in pairs(current.outputs) do table.insert(names_table,name) end
-	table.sort(names_table, function(a,b) return tostring(a)<tostring(b) end)
-	for k,name in ipairs(names_table) do
-	  local description = current.outputs[name]
-	  local str = string.truncate(description, COLWIDTH,
-				      "                         ")
-	  str = string.gsub(str, "%[(.*)%]",
-			    "["..ansi.fg["bright_yellow"].."%1"..
-			      ansi.fg["default"].."]")
-	  table.insert(out,
-		       { "\t",
-			 ansi.fg["green"]..string.format("%16s",name)..ansi.fg["default"],
-			 str } )
-	end
-      end
-    end
-    for i=1,#out do out[i] = table.concat(out[i], " ") end
-    print(table.concat(out, "\n"))
-    if verbosity > 1 then print("") end
-  end
 end
 
 function get_object_id(obj)
@@ -391,167 +233,11 @@ function get_object_id(obj)
   return id
 end
 
--- verbosity => 0 only names, 1 only summary, 2 all
-function april_help(table_name, verbosity)
-  if not table_name then table_name="" end
-  if (luatype(table_name) ~= "string" and
-      get_object_id(table_name)) then
-    table_name = get_object_id(table_name):gsub(" class","")
-  end
-  assert(luatype(table_name) == "string",
-	 "Expected string as first argument")
-  local t
-  if #table_name == 0 then t = _G
-  else
-    t = get_table_from_dotted_string(table_name)
-    if not t then
-      local aux  = string.tokenize(table_name, ".")
-      local last = aux[#aux]
-      t = get_table_from_dotted_string(table.concat(aux, ".", 1, #aux-1))
-      if not t or not getmetatable(t) then
-	error(table_name .. " not found")
-      end
-      local auxt = getmetatable(t)[last]
-      if not auxt then
-	if not t.meta_instance then
-	  error(table_name .. " not found")
-	end
-	t = t.meta_instance.__index[last] or error(table_name .. " not found")
-      else t = auxt
-      end
-    end
-  end
-  local verbosity = verbosity or 2
-  local obj = false
-  if luatype(t) == "function" then
-    april_print_doc(table_name, verbosity)
-    -- printf("No more recursive help for %s\n", table_name)
-    return
-  elseif is_class(t) then
-    local id = get_object_id(t):gsub(" class","")
-    t = get_table_from_dotted_string(id)
-    april_print_doc(id, verbosity)
-  else
-    april_print_doc(table_name, verbosity)
-  end
-  -- local print_data = function(d) print("\t * " .. d) end
-  local classes    = {}
-  local funcs      = {}
-  local names      = {}
-  local vars       = {}
-  for i,v in pairs(t) do
-    if is_class(v) then
-      local id = get_object_id(v):gsub(" class","")
-      table.insert(classes, i)
-    elseif iscallable(v) then
-      table.insert(funcs, {i, string.format("%8s",luatype(v))})
-    elseif luatype(v) == "table" then
-      table.insert(names, i)
-    else
-      table.insert(vars, {i, string.format("%8s",luatype(v))})
-    end
-  end
-  if #vars > 0 then
-    print(ansi.fg["cyan"].." -- basic variables (string, number)"..
-	ansi.fg["default"])
-    table.sort(vars, function(a,b) return tostring(a[1]) < tostring(b[1]) end)
-    for i,v in pairs(vars) do
-      april_print_doc(table_name .. "." .. v[1], math.min(1, verbosity),
-		      ansi.fg["cyan"].."   * "..
-			v[2]..ansi.fg["default"])
-      -- print_data(v)
-    end
-    print("")
-  end
-  if #names > 0 then
-    print(ansi.fg["cyan"].." -- names in the namespace"..ansi.fg["default"])
-    table.sort(names)
-    for i,v in pairs(names) do
-      april_print_doc(table_name .. "." .. v, math.min(1, verbosity),
-		      ansi.fg["cyan"].."   *"..ansi.fg["default"])
-      -- print_data(v)
-    end
-    print("")
-  end
-  if #classes > 0 then
-    print(ansi.fg["cyan"].." -- classes in the namespace"..ansi.fg["default"])
-    table.sort(classes)
-    for i,v in pairs(classes) do
-      april_print_doc(table_name .. "." .. v,
-		      math.min(1, verbosity),
-		      ansi.fg["cyan"].."   *"..ansi.fg["default"])
-      -- print_data(v)
-    end
-    print("")
-  end
-  if #funcs > 0 then
-    print(ansi.fg["cyan"].." -- static functions or tables"..ansi.fg["default"])
-    table.sort(funcs, function(a,b) return a[1] < b[1] end)
-    for i,v in ipairs(funcs) do
-      april_print_doc(table_name .. "." .. v[1],
-		      math.min(1, verbosity),
-		      ansi.fg["cyan"].."   * "..
-			v[2]..ansi.fg["default"])
-      -- print_data(v)
-    end
-    print("")
-  end
-  if t.meta_instance and t.meta_instance.__index then
-    print(ansi.fg["cyan"].." -- methods"..ansi.fg["default"])
-    local aux = {}
-    for i,v in pairs(t.meta_instance.__index) do
-      if luatype(v) == "function" then
-	table.insert(aux, i)
-      end
-    end
-    if getmetatable(t) then
-      for i,v in pairs(getmetatable(t)) do
-	if luatype(v) == "function" then
-	  table.insert(aux, i)
-	end
-      end
-    end
-    local prev = nil
-    table.sort(aux)
-    for i,v in ipairs(aux) do
-      if v ~= prev then
-	april_print_doc(table_name .. "." .. v,
-			math.min(1, verbosity),
-			ansi.fg["cyan"].."   *"..ansi.fg["default"])
-      end
-      prev = v
-      -- print_data(v)
-    end
-    print("")
-    t = t.meta_instance.__index
-    while (getmetatable(t) and getmetatable(t).__index and
-	   getmetatable(t).__index ~= t) do
-      local superclass_name = getmetatable(t).id:gsub(" class","")
-      t = getmetatable(t).__index
-      print(ansi.fg["cyan"]..
-	      " -- inherited methods from " ..
-	      superclass_name..ansi.fg["default"])
-      local aux = {}
-      for i,v in pairs(t) do
-	if luatype(v) == "function" then
-	  table.insert(aux, i)
-	end
-      end
-      table.sort(aux)
-      for i,v in ipairs(aux) do
-	april_print_doc(superclass_name .. "." .. v,
-			math.min(1, verbosity),
-			ansi.fg["cyan"].."   *"..ansi.fg["default"])
-	-- print_data(v)
-      end
-      print("")
-    end
-  end
-  print()
-end
-
-function april_dir(t, verbosity)
-  april_help(t, 0)
+function get_object_cls(obj)
+  local cls = nil
+  local mt = getmetatable(obj)
+  if mt then cls = mt.cls end
+  return cls
 end
 
 function april_print_script_header(arg,file)
@@ -1173,8 +859,9 @@ function table.clear(t)
   for k,v in pairs(t) do t[k] = nil end
 end
 
-function table.unpack_on(t, dest)
+function table.unpack_on(t, dest, overwrite)
   for i,j in pairs(t) do
+    april_assert(overwrite or not dest[i], "Redefinition of key %s", i)
     dest[i] = j
   end
 end
@@ -1355,10 +1042,46 @@ function table.linearize(t)
   return r
 end
 
-table.luainsert = table.insert
+table.luainsert = table.luainsert or table.insert
 function table.insert(t,...)
   table.luainsert(t,...)
   return t
+end
+
+-- values and keys iterators
+function table.values(t)
+  local key,value
+  return function()
+    key,value = next(t,key)
+    return value
+  end
+end
+
+function table.ivalues(t)
+  local key=0
+  return function()
+    key = key+1
+    local v = t[key]
+    -- TODO: check if table has nil gaps
+    return v
+  end
+end
+
+function table.keys(t)
+  local key
+  return function()
+    key = next(t,key)
+    return key
+  end
+end
+
+function table.ikeys(t)
+  local key=0
+  return function()
+    key = key+1
+    -- TODO: check if table has nil gaps
+    if t[key] then return key end
+  end
 end
 
 ---------------------------------------------------------------
@@ -1598,7 +1321,7 @@ end
 -------------------
 -- DOCUMENTATION --
 -------------------
-april_set_doc("class", {
+april_set_doc(class, {
 		class = "function",
 		summary = "This function creates a lua class table",
 		description = {
@@ -1610,7 +1333,7 @@ april_set_doc("class", {
 		  "The parent class table [optional]",
 		}, })
 
-april_set_doc("class_instance", {
+april_set_doc(class_instance, {
 		class = "function",
 		summary = "This function makes a table the instance of a class",
 		description = {
@@ -1628,7 +1351,7 @@ april_set_doc("class_instance", {
 		  "The table instanced as object of the given class",
 		}, })
 
-april_set_doc("isa", {
+april_set_doc(isa, {
 		class = "function",
 		summary = "A predicate to check if a table is instance of a class",
 		params = {
@@ -1639,7 +1362,7 @@ april_set_doc("isa", {
 		  "A boolean",
 		}, })
 
-april_set_doc("april_set_doc", {
+april_set_doc(april_set_doc, {
 		class   = "function",
 		summary = "This function adds documentation to april",
 		description = {
@@ -1671,7 +1394,7 @@ april_set_doc("april_set_doc", {
 				  "which will be contatenated with ' '.", },
 		}, })
 
-april_set_doc("map",
+april_set_doc(map,
 	      {
 		class = "function",
 		summary = "An implementation of python map function",
@@ -1699,7 +1422,7 @@ april_set_doc("map",
 		},
 	      })
 
-april_set_doc("map2",
+april_set_doc(map2,
 	      {
 		class = "function",
 		summary = "An implementation of python map function",
@@ -1727,7 +1450,7 @@ april_set_doc("map2",
 		}
 	      })
 
-april_set_doc("signal.register",
+april_set_doc(signal.register,
 	      {
 		class="function",
 		summary="Registers execution of Lua function with a given signal",
@@ -1743,7 +1466,7 @@ april_set_doc("signal.register",
 		},
 	      })
 
-april_set_doc("signal.release",
+april_set_doc(signal.release,
 	      {
 		class="function",
 		summary="Releases the Lua function associated with the given signal",
@@ -1754,4 +1477,56 @@ april_set_doc("signal.release",
 		params = {
 		  "A signal number, use the helpers signal.SIG_...",
 		},
-	      })
+})
+
+--------------------------------------------
+
+april_set_doc(util.stopwatch,{
+                class = "class",
+                summary = "Stopwatch class for time measurement",
+})
+
+april_set_doc(util.stopwatch,{
+                class = "function",
+                summary = "Constructor of stopwatch",
+})
+
+april_set_doc(class_get(util.stopwatch,"go"),{
+                class = "method",
+                summary = "Starts timer",
+})
+
+april_set_doc(class_get(util.stopwatch,"stop"),{
+                class = "method",
+                summary = "Stops timer",
+})
+
+april_set_doc(class_get(util.stopwatch,"reset"),{
+                class = "method",
+                summary = "Resets timer",
+})
+
+april_set_doc(class_get(util.stopwatch,"read"),{
+                class = "method",
+                summary = "Resets timer",
+                outputs = {
+                  "Elapsed CPU time in sec.",
+                  "Elapsed wall time in sec."
+                },
+})
+
+april_set_doc(class_get(util.stopwatch,"is_on"),{
+                class = "method",
+                summary = "Is on predicate",
+                outputs = {
+                  "A boolean indicating object status",
+                },
+})
+
+april_set_doc(class_get(util.stopwatch,"clone"),{
+                class = "method",
+                summary = "Deep copy",
+                outputs = {
+                  "A deep copy of the caller object",
+                },
+})

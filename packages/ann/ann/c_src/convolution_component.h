@@ -23,17 +23,15 @@
 
 #include "token_matrix.h"
 #include "cblas_headers.h"
-#include "ann_component.h"
+#include "matrix_component.h"
 #include "connection.h"
 
 namespace ANN {
 
   /// A component which computes a convolutional layer using given kernel size
   /// and step, and the given number of output planes.
-  class ConvolutionANNComponent : public ANNComponent {
-    TokenMatrixFloat *input, *error_input, *output, *error_output;
+  class ConvolutionANNComponent : public VirtualMatrixANNComponent {
     MatrixFloat *weights_matrix;
-    unsigned int num_updates_from_last_prune;
     
     // parameters of the convolution
     
@@ -97,6 +95,11 @@ namespace ANN {
 
     virtual void computeGradients(MatrixFloat*& grads_mat);
 
+    virtual MatrixFloat *privateDoForward(MatrixFloat* input,
+                                          bool during_training);
+    virtual MatrixFloat *privateDoBackprop(MatrixFloat *input_error);
+    virtual void privateReset(unsigned int it=0);
+    
   public:
     ConvolutionANNComponent(int input_num_dims,
 			    const int *_kernel_dims,  // input_num_dims
@@ -106,10 +109,6 @@ namespace ANN {
 			    int num_output_planes,      // hidden layer size
 			    const char *name=0, const char *weights_name=0);
     virtual ~ConvolutionANNComponent();
-    virtual Token *getInput() { return input; }
-    virtual Token *getOutput() { return output; }
-    virtual Token *getErrorInput() { return error_input; }
-    virtual Token *getErrorOutput() { return error_output; }
     virtual void precomputeOutputSize(const vector<unsigned int> &input_size,
 				      vector<unsigned int> &output_size) {
       output_size.clear();
@@ -119,9 +118,6 @@ namespace ANN {
       for (int i=input_planes_dim+1; i<=input_num_dims; ++i)
 	output_size.push_back((input_size[i-1]-kernel_dims[i])/kernel_step[i]+1);
     }
-    virtual Token *doForward(Token* input, bool during_training);
-    virtual Token *doBackprop(Token *input_error);
-    virtual void   reset(unsigned int it=0);
     virtual ANNComponent *clone();
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,

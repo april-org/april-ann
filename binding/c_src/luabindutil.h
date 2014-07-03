@@ -54,6 +54,7 @@ void   lua_pushchar(lua_State *L, char value);
 
 int lua_print_name_instance(lua_State *L);
 int lua_print_name_class(lua_State *L);
+int lua_concat_class_method(lua_State *L);
 
 void check_table_fields(lua_State *L, int idx, ...);
 

@@ -28,7 +28,7 @@ autodiff.gen_var_name = gen_var_name
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 
--- COMPILER OUT: Lua CLASS, developed from scratch, not using April-ANN
+-- COMPILER OUT: Lua CLASS, developed from scratch, not using APRIL-ANN
 -- class. Allows to write the compilation output to a file
 
 local compiler_out = {}

@@ -23,15 +23,14 @@
 
 #include "token_matrix.h"
 #include "cblas_headers.h"
-#include "ann_component.h"
+#include "matrix_component.h"
 #include "connection.h"
 
 namespace ANN {
 
   /// A component which adds a convolutional bias given the number of output
   /// planes. Exists one bias per each output plane.
-  class ConvolutionBiasANNComponent : public ANNComponent {
-    TokenMatrixFloat *input, *error, *output;
+  class ConvolutionBiasANNComponent : public VirtualMatrixANNComponent {
     MatrixFloat *bias_vector;
     MatrixFloat *bias_matrix; // rewrapping of bias_vector matrix to fits at
 			      // input window sizes
@@ -52,24 +51,21 @@ namespace ANN {
   protected:
 
     virtual void computeGradients(MatrixFloat*& grads_mat);
-
+    virtual MatrixFloat *privateDoForward(MatrixFloat *input,
+                                          bool during_training);
+    virtual MatrixFloat *privateDoBackprop(MatrixFloat *input_error);
+    virtual void privateReset(unsigned int it=0);
+    
   public:
     ConvolutionBiasANNComponent(int input_num_dims,
 				unsigned int num_output_planes,   // hidden layer size
 				const char *name=0,
 				const char *bias_name=0);
     virtual ~ConvolutionBiasANNComponent();
-    virtual Token *getInput() { return input; }
-    virtual Token *getOutput() { return output; }
-    virtual Token *getErrorInput() { return error; }
-    virtual Token *getErrorOutput() { return error; }
     virtual void precomputeOutputSize(const vector<unsigned int> &input_size,
 				      vector<unsigned int> &output_size) {
       output_size = input_size;
     }
-    virtual Token *doForward(Token* input, bool during_training);
-    virtual Token *doBackprop(Token *input_error);
-    virtual void   reset(unsigned int it=0);
     virtual ANNComponent *clone();
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,

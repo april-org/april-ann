@@ -22,7 +22,7 @@
 #define SELECTCOMPONENT_H
 
 #include "vector.h"
-#include "ann_component.h"
+#include "matrix_component.h"
 #include "token_vector.h"
 #include "token_matrix.h"
 
@@ -34,24 +34,20 @@ namespace ANN {
   /// matrix::select(dimension, index) method to the input matrix. The size and
   /// dimensions of the input matrix are not restricted, only the given
   /// dimension property and index must be valid at the input matrix.
-  class SelectANNComponent : public ANNComponent {
+  class SelectANNComponent : public VirtualMatrixANNComponent {
     int dimension, index;
-    TokenMatrixFloat *input, *output, *error_input, *error_output;
+    
+  protected:
+    virtual MatrixFloat *privateDoForward(MatrixFloat* input,
+                                          bool during_training);
+    
+    virtual MatrixFloat *privateDoBackprop(MatrixFloat *input_error);
+    
+    virtual void privateReset(unsigned int it=0);
     
   public:
     SelectANNComponent(int dimension, int index, const char *name=0);
     virtual ~SelectANNComponent();
-    
-    virtual Token *getInput() { return input; }
-    virtual Token *getOutput() { return output; }
-    virtual Token *getErrorInput() { return error_input; }
-    virtual Token *getErrorOutput() { return error_output; }
-    
-    virtual Token *doForward(Token* input, bool during_training);
-    
-    virtual Token *doBackprop(Token *input_error);
-    
-    virtual void reset(unsigned int it=0);
     
     virtual ANNComponent *clone();
 

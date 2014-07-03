@@ -280,7 +280,7 @@ autodiff.op[SCALAR] = {
 		     end,
 		     function(self, seed, result)
 		       local a = self.args[1]
-		       a:diff(seed/self, result)
+		       a:diff(a*seed/self, result)
 		       return result
 		     end,
 		     function(self, dest)

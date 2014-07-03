@@ -8,6 +8,11 @@ Master branch release
 
 ### API Changes
 
+- New `april_doc` and `april_set_doc` API, works with values instead of strings.
+
+- Added `table.values`, `table.ivalues`, `table.keys` and `table.ikeys`
+  iterators.
+
 ### Bugs removed
 
 ### C/C++
@@ -218,7 +223,7 @@ v0.3.0-beta relase
 
 ### New features
 
-- April-ANN is deployed as a standalone executable and as a shared library for
+- APRIL-ANN is deployed as a standalone executable and as a shared library for
   Lua 5.2.
 - Modified `lua.h` to incorporate the GIT commit number in the disclaimer.
 - Added Lua autocompletion when readline is available.

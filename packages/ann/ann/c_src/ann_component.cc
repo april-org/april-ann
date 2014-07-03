@@ -23,4 +23,10 @@
 namespace ANN {
   unsigned int ANNComponent::next_name_id    = 1;
   unsigned int ANNComponent::next_weights_id = 1;
+
+  unsigned int mult(const int *v, int n) {
+    int m = 1;
+    for (int i=0; i<n; ++i) m *= v[i];
+    return m;
+  }
 }

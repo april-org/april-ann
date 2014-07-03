@@ -118,21 +118,21 @@ function image.image_cleaning.getSingleDataset(img, vecinos_salida)
 end
 
 
-april_set_doc("image.image_cleaning.getCleanParameters",
-	      {
-		class="function",
-		summary="Function to generete a sets of parameters given an image. ",
-		description=
-		  {
-		    "This function takes an image and generates feature for each pixel",
-		    "Some parameters include raw pixels values around the desired pixels",
-		    "other have agreggated values like histogram or median filter.",
+image.image_cleaning.getCleanParameters =
+  april_doc{
+    class="function",
+    summary="Function to generete a sets of parameters given an image. ",
+    description=
+      {
+        "This function takes an image and generates feature for each pixel",
+        "Some parameters include raw pixels values around the desired pixels",
+        "other have agreggated values like histogram or median filter.",
         "The given dataset is optimized in order to do not have copies of duplicated features."
-		  },
-		params= {
-		  { "A image object."},
-		  { "A table with parameters with the features to be extracted.",
-      "All the features are optional and only will be generated the given features in the table",
+      },
+    params= {
+      { "A image object."},
+      { "A table with parameters with the features to be extracted.",
+        "All the features are optional and only will be generated the given features in the table",
         "- window = ... size of the side of a sliding window set to each pixel",
         "- histogram_levels = ... number of the values in the histogram, each the values is  computed in range 1/histogram_levels",
         "- histogram_radio = ... size of the side of a sliding window around the pixel where the histogram will be computed",
@@ -141,140 +141,140 @@ april_set_doc("image.image_cleaning.getCleanParameters",
         "- horizontal = ... if defined generates features of the vertical column of each pixel.",
         "- random_perturbation = ... adds a gaussian perturbation of mean 0.5",
         "- old = ... uses default 8 values for vertical and horizontal histogram",
-		  },
-		},
-		outputs= {
-		  {"It returns a width*height length dataset with the features for each pixel."
-		    },
-		}
-})
-function image.image_cleaning.getCleanParameters(img, params)
+      },
+    },
+    outputs= {
+      {"It returns a width*height length dataset with the features for each pixel."
+      },
+    }
+  } ..
+  function(img, params)
 
 
-  local function getWindowDataset(img, x_window, y_window)
+    local function getWindowDataset(img, x_window, y_window)
       local img_matrix = img:matrix()
       local ladox = x_window*2+1
       local ladoy = y_window*2+1
 
       local params_sucia = {
-          patternSize  = {ladoy,ladox},
-          offset       = {-y_window,-x_window},
-          stepSize     = {1,1},
-          numSteps     = img_matrix:dim(),
-          defaultValue = 0, -- 1 es blanco
-          circular     = {false,false}
+        patternSize  = {ladoy,ladox},
+        offset       = {-y_window,-x_window},
+        stepSize     = {1,1},
+        numSteps     = img_matrix:dim(),
+        defaultValue = 0, -- 1 es blanco
+        circular     = {false,false}
       }
 
       return dataset.matrix(img_matrix, params_sucia)
-  end
+    end
 
-  local function getHistogramDataset(img, levels, radio)
+    local function getHistogramDataset(img, levels, radio)
 
       local mHist  = img:get_window_histogram(levels, radio)
 
       local params_sucia_hist = {
-          patternSize  = {1,1, levels},
-          stepSize     = {1,1, levels},
-          numSteps     = {mHist:dim()[1], mHist:dim()[2], 1},
-          defaultValue = 0,
-          circular     = {false,false, false},
+        patternSize  = {1,1, levels},
+        stepSize     = {1,1, levels},
+        numSteps     = {mHist:dim()[1], mHist:dim()[2], 1},
+        defaultValue = 0,
+        circular     = {false,false, false},
       }
 
       return dataset.matrix(mHist, params_sucia_hist)
-  end
+    end
 
-  local function getVerticalHistogram(img, levels, radius)
+    local function getVerticalHistogram(img, levels, radius)
       local mVert = img:get_vertical_histogram(levels, radius)
       local params_vert_hist = {
-          patternSize = {1, levels},
-          stepSize = {0, 1, 0},
-          numSteps = { img:matrix():dim()[1], img:matrix():dim()[2], levels},
-          defaultValue = 0,
-          circular = {false, false},
+        patternSize = {1, levels},
+        stepSize = {0, 1, 0},
+        numSteps = { img:matrix():dim()[1], img:matrix():dim()[2], levels},
+        defaultValue = 0,
+        circular = {false, false},
       }
 
       return dataset.matrix(mVert, params_vert_hist)
-  end
+    end
 
-  local function getHorizontalHistogram(img, levels, radius)
+    local function getHorizontalHistogram(img, levels, radius)
       local mHor = img:get_horizontal_histogram(levels, radius)
       local params_hor_hist = {
-          patternSize = {1, levels},
-          stepSize = {1,0,0},
-          numSteps = { img:matrix():dim()[1],img:matrix():dim()[2], levels},
-          defaultValue = 0,
-          circular = {false, false},
+        patternSize = {1, levels},
+        stepSize = {1,0,0},
+        numSteps = { img:matrix():dim()[1],img:matrix():dim()[2], levels},
+        defaultValue = 0,
+        circular = {false, false},
       }
 
       return dataset.matrix(mHor, params_hor_hist)
-  end
+    end
 
-  local function getMedian(img, radio_mediana, vecinos)
+    local function getMedian(img, radio_mediana, vecinos)
       local img_median = img:median_filter(radio_mediana)
 
       local lado_mediana = 1 + vecinos*2
       params_median = {
-          patternSize={lado_mediana,lado_mediana},
-          offset={-vecinos,-vecinos},
-          stepSize={1,1},
-          numSteps=img_median:matrix():dim(),
-          defaultValue = 1, -- 1 es blanco
-          circular={false,false}
+        patternSize={lado_mediana,lado_mediana},
+        offset={-vecinos,-vecinos},
+        stepSize={1,1},
+        numSteps=img_median:matrix():dim(),
+        defaultValue = 1, -- 1 es blanco
+        circular={false,false}
       }
 
       return dataset.matrix(img_median:matrix(), params_median)
-  end
-  local table_datasets = {}
+    end
+    local table_datasets = {}
 
-  if params.window then
+    if params.window then
       local ds_window  = getWindowDataset(img, params.window, params.window)
       table.insert(table_datasets, ds_window)
-  end
+    end
 
-  if params.x_window and params.y_window then
-     local ds_window  = getWindowDataset(img, params.x_window, params.y_window)
+    if params.x_window and params.y_window then
+      local ds_window  = getWindowDataset(img, params.x_window, params.y_window)
       table.insert(table_datasets, ds_window)
-  end
-  if params.histogram_radio then
+    end
+    if params.histogram_radio then
       local ds_hist    = getHistogramDataset(img, params.histogram_levels, params.histogram_radio)
       table.insert(table_datasets, ds_hist)
-  end
-  if params.median then
+    end
+    if params.median then
       local ds_median = getMedian(img, params.median, 0)
       table.insert(table_datasets, ds_median)
-  end
+    end
 
-  local levels_hist = params.histogram_levels
+    local levels_hist = params.histogram_levels or 4
 
-  if params.old then
+    if params.old then
       levels_hist = 8
-  end
-  
-  if params.horizontal then
+    end
+    
+    if params.horizontal then
       --local ds_hor = getHorizontalHistogram(img, params.histogram_levels, params.horizontal)
       local ds_hor = getHorizontalHistogram(img, levels_hist, params.horizontal)
       table.insert(table_datasets, ds_hor)
-  end
-  if params.vertical then
+    end
+    if params.vertical then
       --local ds_ver = getVerticalHistogram(img, params.histogram_levels, params.vertical)
       local ds_ver = getVerticalHistogram(img, levels_hist, params.vertical)
       table.insert(table_datasets, ds_ver)
-  end
+    end
 
-  local ds_sucia = dataset.join(table_datasets)
-  -- 5. Añadir perturbación
-  -- anyadimos un ruido gaussiano a la imagen sucia
-  if params.random_perturbation then
+    local ds_sucia = dataset.join(table_datasets)
+    -- 5. Añadir perturbación
+    -- anyadimos un ruido gaussiano a la imagen sucia
+    if params.random_perturbation then
       ds_sucia = dataset.perturbation{
-          dataset   = ds_sucia,
-          random    = params.random_perturbation or 123,
-          mean      = 0,                     -- de la gaussiana
-          variance  = params.variance_perturbation or 0.001, -- de la gaussiana
+        dataset   = ds_sucia,
+        random    = params.random_perturbation or 123,
+        mean      = 0,                     -- de la gaussiana
+        variance  = params.variance_perturbation or 0.001, -- de la gaussiana
       }
-  end
-  return ds_sucia
+    end
+    return ds_sucia
 
-end
+  end
 
 function image.image_cleaning.getParametersFromString(param_str, old)
   
