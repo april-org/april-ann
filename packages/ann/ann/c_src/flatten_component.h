@@ -22,7 +22,7 @@
 #define FLATTENCOMPONENT_H
 
 #include "vector.h"
-#include "ann_component.h"
+#include "matrix_component.h"
 #include "token_vector.h"
 #include "token_matrix.h"
 
@@ -33,19 +33,20 @@ namespace ANN {
   /// This component receives a multidimensional input matrix and reinterprets
   /// its data like to be a bi-dimensional matrix (bunch size X number of
   /// neurons).
-  class FlattenANNComponent : public ANNComponent {
+  class FlattenANNComponent : public VirtualMatrixANNComponent {
     int flatten_dims[2];
-    TokenMatrixFloat *input, *output, *error_input, *error_output;
+
+    virtual MatrixFloat *privateDoForward(MatrixFloat* input,
+                                          bool during_training);
+    
+    virtual MatrixFloat *privateDoBackprop(MatrixFloat *input_error);
+    
+    virtual void privateReset(unsigned int it=0);
     
   public:
     FlattenANNComponent(const char *name=0);
     virtual ~FlattenANNComponent();
     
-    virtual Token *getInput() { return input; }
-    virtual Token *getOutput() { return output; }
-    virtual Token *getErrorInput() { return error_input; }
-    virtual Token *getErrorOutput() { return error_output; }
-
     virtual void precomputeOutputSize(const vector<unsigned int> &input_size,
 				      vector<unsigned int> &output_size) {
       unsigned int sz = 1;
@@ -54,12 +55,6 @@ namespace ANN {
       output_size.clear();
       output_size.push_back(sz);
     }
-    
-    virtual Token *doForward(Token* input, bool during_training);
-    
-    virtual Token *doBackprop(Token *input_error);
-    
-    virtual void reset(unsigned int it=0);
     
     virtual ANNComponent *clone();
 

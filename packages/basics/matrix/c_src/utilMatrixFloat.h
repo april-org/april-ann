@@ -115,9 +115,12 @@ void writeMatrixFloatToTabStream(MatrixFloat *mat, FILE *f);
 
 // SPARSE MATRIX FLOAT
 
+void writeSparseMatrixFloatToFile(SparseMatrixFloat *mat, const char *filename,
+                                  bool is_ascii);
 char *writeSparseMatrixFloatToString(SparseMatrixFloat *mat, bool is_ascii,
 				     int &len);
 void writeSparseMatrixFloatToLuaString(SparseMatrixFloat *mat, lua_State *L,
 				       bool is_ascii);
+SparseMatrixFloat *readSparseMatrixFloatFromFile(const char *filename);
 SparseMatrixFloat *readSparseMatrixFloatFromString(constString &cs);
 #endif // UTILMATRIXFLOAT_H

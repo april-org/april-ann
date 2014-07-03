@@ -8,6 +8,11 @@ Master branch release
 
 ### API Changes
 
+- New `april_doc` and `april_set_doc` API, works with values instead of strings.
+
+- Added `table.values`, `table.ivalues`, `table.keys` and `table.ikeys`
+  iterators.
+
 ### Bugs removed
 
 ### C/C++

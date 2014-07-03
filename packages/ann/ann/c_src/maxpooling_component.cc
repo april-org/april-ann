@@ -62,11 +62,7 @@ namespace ANN {
 						 const int *_kernel_dims,
 						 const int *_kernel_step,
 						 const char *name) :
-    ANNComponent(name, 0, 0, 0),
-    input(0),
-    error_input(0),
-    output(0),
-    error_output(0),
+    VirtualMatrixANNComponent(name, 0, 0, 0),
     argmax_raw_pos(0),
     number_input_windows(0),
     kernel_size(1),
@@ -84,6 +80,7 @@ namespace ANN {
     output_window_order_step(new int[input_num_dims+1]),
     output_window_rewrap(new int[2]) {
     //
+    setInputContiguousProperty(true);
     input_window_order_step[0] = 0;
     output_window_size[0] = 0;
     output_window_order_step[0] = 0;
@@ -106,10 +103,6 @@ namespace ANN {
   }
   
   MaxPoolingANNComponent::~MaxPoolingANNComponent() {
-    if (input) DecRef(input);
-    if (error_input) DecRef(error_input);
-    if (output) DecRef(output);
-    if (error_output) DecRef(error_output);
     if (argmax_raw_pos) DecRef(argmax_raw_pos);
     delete[] kernel_dims;
     delete[] kernel_step;
@@ -125,32 +118,21 @@ namespace ANN {
     delete[] output_window_rewrap;
   }
   
-  // The MaxPoolingANNComponent
-  Token *MaxPoolingANNComponent::doForward(Token *_input, bool during_training) {
-    // error checking
-    if (_input == 0) ERROR_EXIT1(129,"Null Token received! [%s]\n",
-				 name.c_str());
-    if (_input->getTokenCode() != table_of_token_codes::token_matrix)
-      ERROR_EXIT1(129, "Incorrect token received, expected token_matrix [%s]\n",
-		  name.c_str());
-    AssignRef(input, _input->convertTo<TokenMatrixFloat*>());
-    MatrixFloat *input_mat=input->getMatrix();
+  MatrixFloat *MaxPoolingANNComponent::
+  privateDoForward(MatrixFloat *input_mat, bool during_training) {
+    IncRef(input_mat);
     if (input_mat->getNumDim() != input_num_dims+1)
       ERROR_EXIT3(129, "Incorrect input matrix numDims, "
 		  "expected %d, found %d [%s]\n", input_num_dims+1,
 		  input_mat->getNumDim(), name.c_str());
-#ifdef USE_CUDA
-    input_mat->setUseCuda(use_cuda);
-#endif
     if (!input_mat->getIsContiguous()) {
-      input_mat = input_mat->clone();
-      AssignRef(input,new TokenMatrixFloat(input_mat));
+      AssignRef(input_mat, input_mat->clone());
     }
     const int *input_dims = input_mat->getDimPtr();
     initializeArrays(input_dims);
     MatrixFloat *output_mat;
     output_mat = new MatrixFloat(input_num_dims+1, output_dims, CblasColMajor);
-    AssignRef(output, new TokenMatrixFloat(output_mat));
+    IncRef(output_mat);
 #ifdef USE_CUDA
     output_mat->setUseCuda(use_cuda);
 #endif
@@ -158,35 +140,37 @@ namespace ANN {
     /////////////////////////////////////////////////////////////////////////
     
     // Prepare sliding windows to compute the convolution
-    MatrixFloat::sliding_window input_sw(input_mat, input_window_size,
-					 0,  // OFFSET
-					 kernel_step,
-					 input_window_num_steps,
-					 input_window_order_step);
-    MatrixFloat::sliding_window output_sw(output_mat, output_window_size,
-					  0,  // OFFSET
-					  output_window_step,
-					  output_window_num_steps,
-					  output_window_order_step);
-    number_input_windows = input_sw.numWindows();
-    april_assert(number_input_windows == output_sw.numWindows());
+    MatrixFloat::sliding_window *input_sw =
+      new MatrixFloat::sliding_window(input_mat, input_window_size,
+                                      0,  // OFFSET
+                                      kernel_step,
+                                      input_window_num_steps,
+                                      input_window_order_step);
+    MatrixFloat::sliding_window *output_sw =
+      new MatrixFloat::sliding_window(output_mat, output_window_size,
+                                      0,  // OFFSET
+                                      output_window_step,
+                                      output_window_num_steps,
+                                      output_window_order_step);
+    number_input_windows = input_sw->numWindows();
+    april_assert(number_input_windows == output_sw->numWindows());
     if (during_training)
       AssignRef(argmax_raw_pos,
 		new Int32GPUMirroredMemoryBlock(input_mat->getDimSize(0)*
-					      output_sw.numWindows()));
+					      output_sw->numWindows()));
     else if (argmax_raw_pos) {
       DecRef(argmax_raw_pos);
       argmax_raw_pos = 0;
     }
     int k=0;
     // CONVOLUTION OVER number_input_windows
-    MatrixFloat *input_w  = input_sw.getMatrix();
-    MatrixFloat *output_w = output_sw.getMatrix();
+    MatrixFloat *input_w  = input_sw->getMatrix();
+    MatrixFloat *output_w = output_sw->getMatrix();
     IncRef(input_w);
     IncRef(output_w);
-    while(!input_sw.isEnd() && !output_sw.isEnd()) {
-      input_sw.getMatrix(input_w);
-      output_sw.getMatrix(output_w);
+    while(!input_sw->isEnd() && !output_sw->isEnd()) {
+      input_sw->getMatrix(input_w);
+      output_sw->getMatrix(output_w);
       MatrixFloat *max_sel_dim = input_w->maxSelDim(0, argmax_raw_pos, k);
       IncRef(max_sel_dim);
       MatrixFloat *max_sel_dim_rewrapped;
@@ -195,8 +179,8 @@ namespace ANN {
       IncRef(max_sel_dim_rewrapped);
       output_w->copy(max_sel_dim_rewrapped);
       // Next iteration
-      input_sw.next();
-      output_sw.next();
+      input_sw->next();
+      output_sw->next();
       // Free memory
       DecRef(max_sel_dim_rewrapped);
       DecRef(max_sel_dim);
@@ -204,49 +188,43 @@ namespace ANN {
     }
     DecRef(input_w);
     DecRef(output_w);
-    return output;
+    DecRef(input_mat);
+    delete input_sw;
+    delete output_sw;
+    ReleaseRef(output_mat);
+    return output_mat;
   }
   
-  Token *MaxPoolingANNComponent::doBackprop(Token *_error_input) {
-    // error checking
-    if ( (_error_input == 0) ||
-	 (_error_input->getTokenCode() != table_of_token_codes::token_matrix))
-      ERROR_EXIT1(129,"Incorrect input error Token type, expected token_matrix! [%s]\n",
-		  name.c_str());
-    // change current input by new input
-    AssignRef(error_input,_error_input->convertTo<TokenMatrixFloat*>());
-    MatrixFloat *error_input_mat=error_input->getMatrix();
-    if (!output->getMatrix()->sameDim(error_input_mat))
-      ERROR_EXIT1(129, "Incorrect dimensions at error input matrix [%s]\n",
-		  name.c_str());
-#ifdef USE_CUDA
-    error_input_mat->setUseCuda(use_cuda);
-#endif
-    MatrixFloat *error_output_mat = input->getMatrix()->cloneOnlyDims();
-    AssignRef(error_output, new TokenMatrixFloat(error_output_mat));
+  MatrixFloat *MaxPoolingANNComponent::
+  privateDoBackprop(MatrixFloat *error_input_mat) {
+    MatrixFloat *input_mat = getInputMatrix();
+    MatrixFloat *error_output_mat = input_mat->cloneOnlyDims();
+    IncRef(error_output_mat);
     error_output_mat->zeros();
     
     // Prepare sliding windows to compute the convolution gradient
-    MatrixFloat::sliding_window error_output_sw(error_output_mat, input_window_size,
-						0,  // OFFSET
-						kernel_step,
-						input_window_num_steps,
-						input_window_order_step);
-    MatrixFloat::sliding_window error_input_sw(error_input_mat, output_window_size,
-					       0,  // OFFSET
-					       output_window_step,
-					       output_window_num_steps,
-					       output_window_order_step);
+    MatrixFloat::sliding_window *error_output_sw =
+      new MatrixFloat::sliding_window(error_output_mat, input_window_size,
+                                      0,  // OFFSET
+                                      kernel_step,
+                                      input_window_num_steps,
+                                      input_window_order_step);
+    MatrixFloat::sliding_window *error_input_sw =
+      new MatrixFloat::sliding_window(error_input_mat, output_window_size,
+                                      0,  // OFFSET
+                                      output_window_step,
+                                      output_window_num_steps,
+                                      output_window_order_step);
     april_assert(argmax_raw_pos != 0);
     april_assert(static_cast<int>(argmax_raw_pos->getSize()) == error_input_mat->size());
-    april_assert(error_output_sw.numWindows() == error_input_sw.numWindows());
+    april_assert(error_output_sw->numWindows() == error_input_sw->numWindows());
     const int *argmax_ints = argmax_raw_pos->getPPALForRead();
-    float *error_output_ptr = error_output_mat->getRawDataAccess()->getPPALForReadAndWrite();
+    // float *error_output_ptr = error_output_mat->getRawDataAccess()->getPPALForReadAndWrite();
     // CONVOLUTION GRADIENT
-    MatrixFloat *error_input_w = error_input_sw.getMatrix();
+    MatrixFloat *error_input_w = error_input_sw->getMatrix();
     IncRef(error_input_w);
-    while(!error_input_sw.isEnd()) {
-      error_input_sw.getMatrix(error_input_w);
+    while(!error_input_sw->isEnd()) {
+      error_input_sw->getMatrix(error_input_w);
       for (MatrixFloat::const_iterator it(error_input_w->begin());
 	   it!=error_input_w->end(); ++it, ++argmax_ints) {
 	(*error_output_mat)[*argmax_ints] += *it;
@@ -263,24 +241,19 @@ namespace ANN {
 	*/
       }
       // Next iteration
-      error_input_sw.next();
+      error_input_sw->next();
     }
     // Free memory
     DecRef(error_input_w);
-    return error_output;
+    delete error_input_sw;
+    delete error_output_sw;
+    ReleaseRef(error_output_mat);
+    return error_output_mat;
   }
   
-  void MaxPoolingANNComponent::reset(unsigned int it) {
+  void MaxPoolingANNComponent::privateReset(unsigned int it) {
     UNUSED_VARIABLE(it);
-    if (input)          DecRef(input);
-    if (error_input)    DecRef(error_input);
-    if (output)         DecRef(output);
-    if (error_output)   DecRef(error_output);
     if (argmax_raw_pos) DecRef(argmax_raw_pos);
-    input	   = 0;
-    error_input	   = 0;
-    output	   = 0;
-    error_output   = 0;
     argmax_raw_pos = 0;
   }
   
@@ -288,8 +261,8 @@ namespace ANN {
     MaxPoolingANNComponent *component = new
       MaxPoolingANNComponent(input_num_dims, kernel_dims+1, kernel_step+1,
 			     name.c_str());
-    component->input_size     = input_size;
-    component->output_size    = output_size;
+    component->input_size   = input_size;
+    component->output_size  = output_size;
     return component;
   }
   

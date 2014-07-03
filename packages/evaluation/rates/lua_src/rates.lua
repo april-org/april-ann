@@ -1,4 +1,5 @@
-april_set_doc("rates",
+rates = rates or {}
+april_set_doc(rates,
 	      {
 		class="function",
 		summary="Computes error rate measures for HMMs decoding.",

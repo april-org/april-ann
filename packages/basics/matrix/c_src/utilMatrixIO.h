@@ -171,7 +171,6 @@ readMatrixFromStream(StreamType &stream,
       ERROR_PRINT("Impossible to determine the order\n");
       return 0;
     }
-    int i=0;
     typename Matrix<MatrixType>::iterator data_it(mat->begin());
     if (format == "ascii") {
       while (data_it!=mat->end() && (line=stream.extract_u_line()))

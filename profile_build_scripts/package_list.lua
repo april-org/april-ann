@@ -48,5 +48,4 @@ return {
   -- HMMs
   "hmm_trainer",
   "rates",
-  
 }
