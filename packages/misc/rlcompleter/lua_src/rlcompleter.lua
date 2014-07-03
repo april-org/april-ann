@@ -1,6 +1,6 @@
 -- Lua side of readline completion for REPL
 -- By Patrick Rapin; adapted by Reuben Thomas
--- Adapted to April-ANN by Francisco Zamora-Martinez, 2013
+-- Adapted to APRIL-ANN by Francisco Zamora-Martinez, 2013
 
 -- The list of Lua keywords
 local keywords = {
@@ -9,7 +9,7 @@ local keywords = {
   'return', 'then', 'true', 'until', 'while'
 }
 
--- in case you want to use this software without April-ANN
+-- in case you want to use this software without APRIL-ANN
 local luatype = luatype or type
 
 -- This function is called back by C function do_completion, itself called

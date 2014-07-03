@@ -132,7 +132,7 @@ Use
 
 ```
 $ april-ann
-April-ANN v0.2.1-beta COMMIT 920  Copyright (C) 2012-2013 DSIC-UPV, CEU-UCH
+APRIL-ANN v0.2.1-beta COMMIT 920  Copyright (C) 2012-2013 DSIC-UPV, CEU-UCH
 This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE.txt.
 This is free software, and you are welcome to redistribute it
 under certain conditions; see LICENSE.txt for details.
@@ -141,9 +141,9 @@ Lua 5.2.2  Copyright (C) 1994-2013 Lua.org, PUC-Rio
 Hello World!
 ```
 
-- It is possible to use April-ANN as a Lua module, loading only the packages
+- It is possible to use APRIL-ANN as a Lua module, loading only the packages
   which you need (i.e. `require("aprilann.matrix")`), or loading the full
-  library (`require("aprilann")`). **Be careful**, the April-ANN modules doesn't
+  library (`require("aprilann")`). **Be careful**, the APRIL-ANN modules doesn't
   follow Lua guidelines and have lateral effects because of the declaration of
   tables, functions, and other values at the GLOBALs Lua table:
 
@@ -152,7 +152,7 @@ $ lua
 Lua 5.2.2  Copyright (C) 1994-2013 Lua.org, PUC-Rio
 > require "aprilann.matrix"
 > require "aprilann"
-April-ANN v0.2.1-beta COMMIT 920  Copyright (C) 2012-2013 DSIC-UPV, CEU-UCH
+APRIL-ANN v0.2.1-beta COMMIT 920  Copyright (C) 2012-2013 DSIC-UPV, CEU-UCH
 This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE.txt.
 This is free software, and you are welcome to redistribute it
 under certain conditions; see LICENSE.txt for details.

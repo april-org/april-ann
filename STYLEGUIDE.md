@@ -1,4 +1,4 @@
-# April-ANN source code **style guide**
+# APRIL-ANN source code **style guide**
 
 The coding style is not homogeneous becase some code parts are very old. However,
 for every new and fresh code, this guide will be followed.
