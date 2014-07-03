@@ -23,32 +23,28 @@
 #define BIASANNCOMPONENT_H  
 
 #include "cblas_headers.h"
-#include "ann_component.h"
+#include "matrix_component.h"
 #include "connection.h"
 #include "token_matrix.h"
 
 namespace ANN {
 
   /// A component which adds a bias to the given bi-dimensional input matrix.
-  class BiasANNComponent : public ANNComponent {
-    TokenMatrixFloat *input, *output, *error;
+  class BiasANNComponent : public VirtualMatrixANNComponent {
     MatrixFloat *bias_vector;
     
   protected:
     
+    virtual MatrixFloat *privateDoForward(MatrixFloat *input,
+                                          bool during_training);
+    virtual MatrixFloat *privateDoBackprop(MatrixFloat *input_error);
+    virtual void privateReset(unsigned int it=0);
     virtual void computeGradients(MatrixFloat*& grad_mat);
     
   public:
     BiasANNComponent(unsigned int size=0,
 		     const char *name=0, const char *weights_name=0);
     virtual ~BiasANNComponent();
-    virtual Token *getInput() { return input; }
-    virtual Token *getOutput() { return output; }
-    virtual Token *getErrorInput() { return error; }
-    virtual Token *getErrorOutput() { return error; }
-    virtual Token *doForward(Token* input, bool during_training);
-    virtual Token *doBackprop(Token *input_error);
-    virtual void   reset(unsigned int it=0);
     virtual ANNComponent *clone();
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,

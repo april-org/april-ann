@@ -25,7 +25,8 @@
 namespace ANN {
 
   StackANNComponent::StackANNComponent(const char *name) :
-    ANNComponent(name) { }
+    ANNComponent(name, 0, 0, 0) {
+  }
   
   StackANNComponent::~StackANNComponent() {
     for (unsigned int i=0; i<components.size(); ++i)

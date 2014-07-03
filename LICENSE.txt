@@ -1,6 +1,6 @@
-April-ANN, Copyright (c) 2012-2014, ESET, Universidad CEU-Cardenal Herrera, (F. Zamora)
-April-ANN, Copyright (c) 2012-2014, DSIC, Universitat Politècncia de València (S. España, J. Pastor, A. Palacios)
-April, Copyright (c) 2006-2012, DSIC, Universitat Politècnica de València (S. España, J. Gorbe, F. Zamora)
+APRIL-ANN, Copyright (c) 2012-2014, ESET, Universidad CEU-Cardenal Herrera, (F. Zamora)
+APRIL-ANN, Copyright (c) 2012-2014, DSIC, Universitat Politècncia de València (S. España, J. Pastor, A. Palacios)
+APRIL, Copyright (c) 2006-2012, DSIC, Universitat Politècnica de València (S. España, J. Gorbe, F. Zamora)
 
                      GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007

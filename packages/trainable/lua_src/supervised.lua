@@ -991,7 +991,8 @@ trainable_supervised_trainer_methods.grad_check_step =
         if ann_g ~= 0 or g ~= 0 then
           local abs_err = math.abs(ann_g - g)
           local err = abs_err/math.abs(ann_g+g)
-          if err > epsilond and abs_err > 1e-02 then
+          -- if err > epsilond and abs_err > 1e-02 then
+          if abs_err > 2*epsilon then
             fprintf(io.stderr,
                     "INCORRECT GRADIENT FOR %s[%d], found %g, expected %g "..
                       "(error %g, abs error %g)\n",

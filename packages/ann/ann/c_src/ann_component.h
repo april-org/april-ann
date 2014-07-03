@@ -41,9 +41,9 @@ using april_utils::vector;
 
 #ifndef NDEBUG
 #define ASSERT_MATRIX(m) do {						\
-    april_assert( (m)->getNumDim() == 2 );				\
     april_assert( (m)->getMajorOrder() == CblasColMajor );		\
   } while(0)
+// april_assert( (m)->getNumDim() == 2 );
 #else
 #define ASSERT_MATRIX(m)
 #endif
@@ -52,6 +52,8 @@ using april_utils::vector;
 
 namespace ANN {
   
+  unsigned int mult(const int *v, int n);
+
   /// An abstract class that defines the basic interface that
   /// the anncomponents must fulfill.
   class ANNComponent : public Functions::FunctionInterface {
@@ -83,10 +85,8 @@ namespace ANN {
     }
     
   public:
-    ANNComponent(const char *name = 0, const char *weights_name = 0,
-		 unsigned int input_size = 0, unsigned int output_size = 0) :
-      Functions::FunctionInterface(),
-      is_built(false),
+    ANNComponent(const char *name, const char *weights_name=0,
+                 unsigned int input_size=0, unsigned int output_size=0) :
       input_size(input_size), output_size(output_size),
       use_cuda(false) {
       if (name) this->name = string(name);
@@ -103,13 +103,12 @@ namespace ANN {
     
     bool getIsBuilt() const { return is_built; }
     
-    void generateDefaultWeightsName(string &dest,
-				    const char *prefix=0) {
+    void generateDefaultWeightsName(const char *prefix=0) {
       char str_id[MAX_NAME_STR+1];
       char default_prefix[2] = "w";
       if (prefix == 0) prefix = default_prefix;
       snprintf(str_id, MAX_NAME_STR, "%s%u", prefix, next_weights_id);
-      dest = string(str_id);
+      weights_name = string(str_id);
       ++next_weights_id;
     }
     
@@ -200,9 +199,10 @@ namespace ANN {
       is_built = true;
       ////////////////////////////////////////////////////////////////////
       ANNComponent *&component = components_dict[name];
-      if (component != 0) ERROR_EXIT1(102, "Non unique component name found: %s\n",
-				      name.c_str());
-      component = this;
+      if (component != 0 &&
+          component != this) ERROR_EXIT1(102, "Non unique component name found: %s\n",
+                                         name.c_str());
+      else component = this;
       ////////////////////////////////////////////////////////////////////
       if (input_size   == 0)  input_size   = _input_size;
       if (output_size  == 0)  output_size  = _output_size;

@@ -23,7 +23,7 @@
 
 #include "unused_variable.h"
 #include "vector.h"
-#include "ann_component.h"
+#include "matrix_component.h"
 #include "token_vector.h"
 #include "token_matrix.h"
 
@@ -35,18 +35,19 @@ namespace ANN {
   /// dimension sizes array. If the input matrix is not contiguous in memory, it
   /// will be cloned. If it is contiguous, the output of this component is a
   /// reinterpretation of input matrix, but the memory pointer will be shared.
-  class RewrapANNComponent : public ANNComponent {
+  class RewrapANNComponent : public VirtualMatrixANNComponent {
     int *rewrap_dims, n;
-    TokenMatrixFloat *input, *output, *error_input, *error_output;
+    
+    virtual MatrixFloat *privateDoForward(MatrixFloat* input,
+                                          bool during_training);
+    
+    virtual MatrixFloat *privateDoBackprop(MatrixFloat *input_error);
+    
+    virtual void privateReset(unsigned int it=0);
     
   public:
     RewrapANNComponent(const int *rewrap_dims, int n, const char *name=0);
     virtual ~RewrapANNComponent();
-    
-    virtual Token *getInput() { return input; }
-    virtual Token *getOutput() { return output; }
-    virtual Token *getErrorInput() { return error_input; }
-    virtual Token *getErrorOutput() { return error_output; }
     
     virtual void precomputeOutputSize(const vector<unsigned int> &input_size,
 				      vector<unsigned int> &output_size) {
@@ -55,12 +56,6 @@ namespace ANN {
       for (int i=0; i<n-1; ++i)
 	output_size.push_back(rewrap_dims[i+1]);
     }
-    
-    virtual Token *doForward(Token* input, bool during_training);
-    
-    virtual Token *doBackprop(Token *input_error);
-    
-    virtual void reset(unsigned int it=0);
     
     virtual ANNComponent *clone();
 

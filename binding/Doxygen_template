@@ -1,7 +1,7 @@
 #---------------------------------------------------------------------------
 # Project related configuration options
 #---------------------------------------------------------------------------
-PROJECT_NAME           = "April-ANN toolkit"
+PROJECT_NAME           = "APRIL-ANN toolkit"
 PROJECT_NUMBER         = 0.3.1
 OUTPUT_DIRECTORY       = 
 CREATE_SUBDIRS         = NO

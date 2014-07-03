@@ -28,7 +28,7 @@
 /************************************************************************
  * Lua readline completion for the Lua standalone interpreter
  *
- * (c) 2013 Francisco Zamora-Martinez, adapted to April-ANN
+ * (c) 2013 Francisco Zamora-Martinez, adapted to APRIL-ANN
  * (c) 2011 Reuben Thomas <rrt@sc3d.org>
  * (c) 2007 Steve Donovan
  * (c) 2004 Jay Carlson

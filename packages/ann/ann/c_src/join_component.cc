@@ -26,7 +26,7 @@
 namespace ANN {
   
   JoinANNComponent::JoinANNComponent(const char *name) :
-    ANNComponent(name),
+    ANNComponent(name, 0, 0, 0),
     input(0),
     error_output(0),
     output(0),

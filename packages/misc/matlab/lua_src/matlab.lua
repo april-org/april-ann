@@ -1,7 +1,7 @@
 matlab = matlab or {}
 
 -- this table keeps a dictionary of functions which receives an element of a
--- given class and returns an April-ANN Lua object
+-- given class and returns an APRIL-ANN Lua object
 local class_tolua_table = {
   [0] = function(e) return e end,
 }
@@ -12,7 +12,7 @@ local function add_wrapper(class_number, f)
   class_tolua_table[class_number] = f
 end
 
--- this function receives an element and returns its corresponding April-ANN Lua
+-- this function receives an element and returns its corresponding APRIL-ANN Lua
 -- object
 function matlab.tolua(element,col_major)
   if element:get_type() == matlab.types.matrix then

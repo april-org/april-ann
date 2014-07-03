@@ -80,10 +80,7 @@ namespace ANN {
 			      unsigned int num_output_planes,
 			      const char *name,
 			      const char *bias_name) :
-    ANNComponent(name, bias_name, 0, 0),
-    input(0),
-    error(0),
-    output(0),
+    VirtualMatrixANNComponent(name, bias_name, 0, 0),
     bias_vector(0),
     bias_matrix(0),
     hidden_size(num_output_planes),
@@ -91,7 +88,8 @@ namespace ANN {
     window_size(new int[num_dims+1]),
     window_step(new int[num_dims+1]),
     window_num_steps(new int[num_dims+1]) {
-    if (bias_name == 0) generateDefaultWeightsName(this->weights_name, "b");
+    setInputContiguousProperty(true);
+    if (bias_name == 0) generateDefaultWeightsName("b");
     window_size[1]     = static_cast<int>(hidden_size);
     window_step[0]     = 1;
     window_step[1]     = 1;
@@ -105,36 +103,21 @@ namespace ANN {
   
   ConvolutionBiasANNComponent::~ConvolutionBiasANNComponent() {
     if (bias_vector) DecRef(bias_vector);
-    if (input) DecRef(input);
-    if (error) DecRef(error);
-    if (output) DecRef(output);
     delete[] window_size;
     delete[] window_step;
     delete[] window_num_steps;
     if (bias_matrix) DecRef(bias_matrix);
   }
   
-  // The ConvolutionBiasANNComponent
-  Token *ConvolutionBiasANNComponent::doForward(Token *_input,
-						bool during_training) {
+  MatrixFloat *ConvolutionBiasANNComponent::
+  privateDoForward(MatrixFloat *input_mat, bool during_training) {
     UNUSED_VARIABLE(during_training);
     if (bias_vector == 0) ERROR_EXIT1(129, "Not built component %s\n",
 				      name.c_str());
-    // error checking
-    if (_input == 0) ERROR_EXIT1(129,"Null Token received! [%s]\n",
-				 name.c_str());
-    if (_input->getTokenCode() != table_of_token_codes::token_matrix)
-      ERROR_EXIT1(129, "Incorrect token received, expected token_matrix [%s]\n",
-		  name.c_str());
-    AssignRef(input, _input->convertTo<TokenMatrixFloat*>());
-    MatrixFloat *input_mat=input->getMatrix();
     if (input_mat->getNumDim() != num_dims+1)
       ERROR_EXIT3(129, "Incorrect input matrix numDims, "
 		  "expected %d, found %d [%s]\n", num_dims+1,
 		  input_mat->getNumDim(), name.c_str());
-#ifdef USE_CUDA
-    input_mat->setUseCuda(use_cuda);
-#endif
     const int *input_dims = input_mat->getDimPtr();
     if (input_dims[1] != static_cast<int>(hidden_size))
       ERROR_EXIT3(129,"Incorrect input dim[1] size, found %d, expected %d [%s]\n",
@@ -142,61 +125,50 @@ namespace ANN {
     initializeArrays(input_dims);
     MatrixFloat *output_mat;
     output_mat = input_mat->clone();
-    AssignRef(output, new TokenMatrixFloat(output_mat));
-    
+    IncRef(output_mat);
     MatrixFloat *bias_matrix = prepareBiasBunch();
     IncRef(bias_matrix);
     /////////////////////////////////////////////////////////////////////////
 
     // Prepare sliding windows to compute the convolution
-    MatrixFloat::sliding_window input_sw(input_mat, window_size,
-					 0,  // OFFSET
-					 window_step,
-					 window_num_steps);
-    MatrixFloat::sliding_window output_sw(output_mat, window_size,
-					  0,  // OFFSET
-					  window_step,
-					  window_num_steps);
-    number_input_windows = input_sw.numWindows();
+    MatrixFloat::sliding_window *input_sw =
+      new MatrixFloat::sliding_window(input_mat, window_size,
+                                      0,  // OFFSET
+                                      window_step,
+                                      window_num_steps);
+    MatrixFloat::sliding_window *output_sw =
+      new MatrixFloat::sliding_window(output_mat, window_size,
+                                      0,  // OFFSET
+                                      window_step,
+                                      window_num_steps);
+    number_input_windows = input_sw->numWindows();
     // CONVOLUTION OVER number_input_windows
-    MatrixFloat *input_w  = input_sw.getMatrix();
-    MatrixFloat *output_w = output_sw.getMatrix();
+    MatrixFloat *input_w  = input_sw->getMatrix();
+    MatrixFloat *output_w = output_sw->getMatrix();
     IncRef(input_w);
     IncRef(output_w);
-    while(!input_sw.isEnd() && !output_sw.isEnd()) {
-      input_sw.getMatrix(input_w);
-      output_sw.getMatrix(output_w);
+    while(!input_sw->isEnd() && !output_sw->isEnd()) {
+      input_sw->getMatrix(input_w);
+      output_sw->getMatrix(output_w);
       // ADD BIAS
       output_w->axpy(1.0f, bias_matrix);
       // Next iteration
-      input_sw.next();
-      output_sw.next();
+      input_sw->next();
+      output_sw->next();
     }
     // Free memory
     DecRef(input_w);
     DecRef(output_w);
     DecRef(bias_matrix);
-    //
-    return output;
+    delete input_sw;
+    delete output_sw;
+    ReleaseRef(output_mat);
+    return output_mat;
   }
   
-  Token *ConvolutionBiasANNComponent::doBackprop(Token *_error_input) {
-    // error checking
-    if ( (_error_input == 0) ||
-	 (_error_input->getTokenCode() != table_of_token_codes::token_matrix))
-      ERROR_EXIT1(129,"Incorrect input error Token type, expected token_matrix! [%s]\n",
-		  name.c_str());
-    // change current input by new input
-    AssignRef(error,_error_input->convertTo<TokenMatrixFloat*>());
-    MatrixFloat *error_mat=error->getMatrix();
-    if (!output->getMatrix()->sameDim(error_mat))
-      ERROR_EXIT1(129, "Incorrect dimensions at error input matrix [%s]\n",
-		  name.c_str());
-#ifdef USE_CUDA
-    error_mat->setUseCuda(use_cuda);
-#endif
-    //
-    return error;
+  MatrixFloat *ConvolutionBiasANNComponent::
+  privateDoBackprop(MatrixFloat *error_mat) {
+    return error_mat;
   }
      
   void ConvolutionBiasANNComponent::computeGradients(MatrixFloat *&grads_mat) {
@@ -207,7 +179,7 @@ namespace ANN {
       grads_mat->zeros();
       IncRef(grads_mat);
     }
-    MatrixFloat *input_error_mat = error->getMatrix();
+    MatrixFloat *input_error_mat = getErrorInputMatrix();
     // Prepare sliding windows to compute the convolution
     MatrixFloat::sliding_window error_sw(input_error_mat, window_size,
 					 0,  // OFFSET
@@ -238,14 +210,8 @@ namespace ANN {
     DecRef(error_w);
   }
 
-  void ConvolutionBiasANNComponent::reset(unsigned int it) {
+  void ConvolutionBiasANNComponent::privateReset(unsigned int it) {
     UNUSED_VARIABLE(it);
-    if (input)        DecRef(input);
-    if (error)        DecRef(error);
-    if (output)       DecRef(output);
-    input	 = 0;
-    error 	 = 0;
-    output	 = 0;
     // reset shared counter
     bias_vector->resetSharedCount();
   }

@@ -1,4 +1,4 @@
--- This module allows unit testing in April-ANN. This module uses internal
+-- This module allows unit testing in APRIL-ANN. This module uses internal
 -- variables to account for 'passed' and 'failed' tests. At the end of the
 -- program a summary will be printed to stderr. In case of a non-terminal
 -- output, only the 'failed' tests will produce a print out. This module exports
