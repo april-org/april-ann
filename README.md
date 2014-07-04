@@ -1,6 +1,15 @@
 APRIL-ANN
 =========
 
+Contributions
+-------------
+
+Contributions are wellcome. Only pull requests
+to `devel` branch will be accepted, so avoid to
+create pull requests to `master`. A Travis CI
+instance will check that your request passes all
+tests. For unit testing use the package `basics/utest`.
+
 Requirements
 ------------
 
