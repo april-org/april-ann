@@ -591,7 +591,6 @@ end
 
 -- what is executed when a target is executed
 function formiga.__target__ (t)
-
   -- ??????????????
   package_register_functions = {}
 
@@ -875,7 +874,7 @@ end
 ----------------------------------------------------------------------
 -- Compilar librerias
 
-function formiga .__object__ (t)
+function formiga.__object__ (t)
   local prop = t.target.package.properties
   local build_dir = formiga.os.compose_dir(formiga.global_properties.build_dir, formiga.os.basedir)
   
@@ -896,10 +895,6 @@ function formiga .__object__ (t)
       if formiga.compiler.global_flags.optimization == "yes" or
       formiga.expand_properties(t.optimization,prop) == "yes" then
 	table.insert(command,formiga.compiler.optimization)
-      end
-      otherflags = formiga.expand_properties(t.flags,prop) or ""
-      if string.len(otherflags) > 0 then 
-        table.insert(command,otherflags)
       end
       language = formiga.expand_properties(t.language,prop) or 
         formiga.compiler.language_by_extension[extension] or "c"
@@ -931,6 +926,10 @@ function formiga .__object__ (t)
         table.insert(command, formiga.compiler.wall)
         table.append(command, formiga.compiler.extra_flags)
 	table.append(command, formiga.version_flags)
+      end
+      otherflags = formiga.expand_properties(t.flags,prop) or ""
+      if string.len(otherflags) > 0 then 
+        table.insert(command,otherflags)
       end
       table.insert(command,formiga.compiler.compile_object.." "..thefile)
       dest_dir = formiga.os.compose_dir(build_dir, formiga.expand_properties(t.dest_dir,prop) or path)
@@ -1180,13 +1179,13 @@ end
 --                               UNITARY TESTING
 ----------------------------------------------------------------------
 
-function formiga.__execute_script(t)
+function formiga.__lua_unit_test(t)
   local prop = t.target.package.properties
   local program_binary = formiga.os.compose_dir(formiga.global_properties.build_dir,
 						"bin",
 						formiga.program_name)
   if (t.file == nil) then
-    print("[execute_script]  error: file must be specified")
+    print("[lua_unit_test]  error: file must be specified")
     return
   end
   for _,tfile in ipairs(t.file) do
@@ -1195,7 +1194,7 @@ function formiga.__execute_script(t)
       command = { program_binary, thefile, "> /dev/null" }
       -- creamos y ejecutamos el comando
       command = table.concat(command," ")
-      printverbose(2," [execute_script] "..command)
+      printverbose(2," [lua_unit_test] "..command)
       local ok,what,error_resul = formiga.os.execute(command, true)
       if not ok then
 	print("Script execution '".. thefile .. "' failed: " .. t.target.package.name)
@@ -1205,8 +1204,8 @@ function formiga.__execute_script(t)
   end
 end
 
-function execute_script(t)
-  t.__task__ = formiga.__execute_script
+function lua_unit_test(t)
+  t.__task__ = formiga.__lua_unit_test
   if type(t.file) == "string" then
     t.file = { t.file }
   end
@@ -1215,98 +1214,113 @@ end
 
 ------------------------------------------------------------------------------
 
-function formiga.__unit_test__(t)
+function formiga.__c_unit_test__(t)
   local prop = t.target.package.properties
   local build_dir = formiga.os.compose_dir(formiga.global_properties.build_dir, formiga.os.basedir)
   local command
   if (t.file == nil) then
-    print("[unit_test]  error: file must be specified")
+    print("[c_unit_test]  error: file must be specified")
     return
   end
-  assert(type(t.file) == "string", "[unit_test]  error: file must be a string")
-  local thefiles = formiga.os.glob(formiga.expand_properties(t.file,prop))
-  for _,thefile in pairs(thefiles) do
-    command = { formiga.compiler.CPPcompiler,
-		table.concat(formiga.compiler.extra_libs, " "), }
-    local path,file,extension,debug,optimization,otherflags
-    path,file,extension = formiga.os.path_file_extension(thefile)
-    if formiga.compiler.global_flags.debug == "yes" or
-    formiga.expand_properties(t.debug,prop) == "yes" then
-      table.insert(command,formiga.compiler.debug)
-    end
-    if formiga.compiler.global_flags.optimization == "yes" or
-    formiga.expand_properties(t.optimization,prop) == "yes" then
-      table.insert(command,formiga.compiler.optimization)
-    end
-    otherflags = formiga.expand_properties(t.flags,prop) or ""
-    if string.len(otherflags) > 0 then 
-      table.insert(command,otherflags)
-    end
-    local language = formiga.expand_properties(t.language,prop) or 
-      formiga.compiler.language_by_extension[extension] or "c"
-    assert(language == "c" or language == "c++",
-	   "Unit testing only allowed for C/C++ programs")
-    table.insert(command, formiga.compiler.wall)
-    table.append(command, formiga.compiler.extra_flags)
-    table.append(command, formiga.version_flags)
-    table.insert(command,thefile) -- like objects but without "-c "
-    local dest_dir = formiga.os.compose_dir(build_dir, formiga.expand_properties(t.dest_dir,prop) or path)
-    table.insert(command,formiga.compiler.destination.." "
-		   ..dest_dir..formiga.os.SEPDIR..file..".out")
-    -- directory inclusion
-    -- the directory where the file is
-    table.insert(command,formiga.compiler.include_dir..dest_dir)
-    -- the include directory of the package
-    table.insert(command,formiga.compiler.include_dir..formiga.os.compose_dir(build_dir, formiga.expand_properties("include",prop)))
-    table.insert(command,formiga.compiler.include_dir..formiga.global_properties.lua_include_dir) -- the directory where lua headers are
-    local directory
-    if t.include_dirs then
-      for _,directory in pairs(t.include_dirs) do
-        for w in string.gmatch(formiga.expand_properties(directory,prop),"[^"..formiga.os.SEPPATH.."]+") do
-          table.insert(command,formiga.compiler.include_dir..w)
-        end
+  for _,tfile in ipairs(t.file) do
+    local thefiles = formiga.os.glob(formiga.expand_properties(tfile,prop))
+    for _,thefile in pairs(thefiles) do
+      command = { formiga.compiler.CPPcompiler,
+		  table.concat(formiga.compiler.extra_libs, " "), }
+      local path,file,extension,debug,optimization,otherflags
+      path,file,extension = formiga.os.path_file_extension(thefile)
+      if formiga.compiler.global_flags.debug == "yes" or
+      formiga.expand_properties(t.debug,prop) == "yes" then
+	table.insert(command,formiga.compiler.debug)
       end
-    end
-    -- add static library
-    table.insert(command, formiga.os.compose_dir(formiga.os.cwd,
-						 "lib","lib"..formiga.program_name..".a"))
-    -- add lua library
-    table.insert(command, formiga.compiler.include_dir..
-		   formiga.os.compose_dir(formiga.os.cwd,
-					  "lua","include"))
-    table.insert(command, formiga.os.compose_dir(formiga.os.cwd,
-						 "lua","lib","*.a"))
-    -- library inclusion
-    if t.libraries then
-      for _,libr in pairs(t.libraries) do
-        for w in string.gmatch(formiga.expand_properties(directory,prop),"w+") do
-          table.insert(command,formiga.compiler.library_inclusion..w)
-        end
+      if formiga.compiler.global_flags.optimization == "yes" or
+      formiga.expand_properties(t.optimization,prop) == "yes" then
+	table.insert(command,formiga.compiler.optimization)
       end
-    end
-    -- inclusion de objetos
-    local directory
-    if t.object_dirs then
-      for _,directory in pairs(t.object_dirs) do
-        for w in string.gmatch(formiga.expand_properties(directory,prop),"[^"..formiga.os.SEPPATH.."]+") do
-          table.insert(command,formiga.compiler.object_dir..w) 
-        end
+      otherflags = formiga.expand_properties(t.flags,prop) or ""
+      if string.len(otherflags) > 0 then 
+	table.insert(command,otherflags)
       end
-    end
-    command = table.concat(command," ")
-    printverbose(2," [unit_test] "..command)
-    os.execute("mkdir -p ".. dest_dir)
-    
-    local ok = formiga.os.execute(command, true)
-    if not ok then
-      print("Unitary test '".. thefile .. "' failed: " .. t.target.package.name)
-      os.exit(1)
+      local language = formiga.expand_properties(t.language,prop) or 
+	formiga.compiler.language_by_extension[extension] or "c"
+      assert(language == "c" or language == "c++",
+	     "Unit testing only allowed for C/C++ programs")
+      table.insert(command, formiga.compiler.wall)
+      table.append(command, formiga.compiler.extra_flags)
+      table.append(command, formiga.version_flags)
+      table.insert(command,thefile) -- like objects but without "-c "
+      local dest_dir = formiga.os.compose_dir(build_dir, formiga.expand_properties(t.dest_dir,prop) or path)
+      local exec_name = dest_dir..formiga.os.SEPDIR..file..".out"
+      table.insert(command,formiga.compiler.destination.." "..exec_name)
+      -- directory inclusion
+      -- the directory where the file is
+      table.insert(command,formiga.compiler.include_dir..dest_dir)
+      -- Incluimos las dependencias indirectas...
+      local pname,directory
+      for pname,directory in pairs(formiga.package_to_dir) do
+	for w in string.gmatch(formiga.expand_properties(directory,prop),
+			       "[^"..formiga.os.SEPPATH.."]+") do
+	  local basedir = formiga.package_table[pname].basedir
+	  table.insert(command, formiga.compiler.include_dir..
+			 formiga.os.compose_dir(formiga.global_properties.build_dir,
+						basedir,
+						"include"))
+	  table.insert(command, formiga.pkgconfig_flags[pname])
+	end
+      end
+      table.insert(command,formiga.compiler.include_dir..formiga.global_properties.lua_include_dir) -- the directory where lua headers are
+      local directory
+      if t.include_dirs then
+	for _,directory in pairs(t.include_dirs) do
+	  for w in string.gmatch(formiga.expand_properties(directory,prop),"[^"..formiga.os.SEPPATH.."]+") do
+	    table.insert(command,formiga.compiler.include_dir..w)
+	  end
+	end
+      end
+      -- add static library
+      table.insert(command, formiga.os.compose_dir(formiga.os.cwd,
+						   "lib","lib"..formiga.program_name..".a"))
+      -- add lua library
+      table.insert(command, formiga.compiler.include_dir..
+		     formiga.os.compose_dir(formiga.os.cwd,
+					    "lua","include"))
+      table.insert(command, formiga.os.compose_dir(formiga.os.cwd,
+						   "lua","lib","*.a"))
+      -- library inclusion
+      if t.libraries then
+	for _,libr in pairs(t.libraries) do
+	  for w in string.gmatch(formiga.expand_properties(directory,prop),"w+") do
+	    table.insert(command,formiga.compiler.library_inclusion..w)
+	  end
+	end
+      end
+      -- inclusion de objetos
+      local directory
+      if t.object_dirs then
+	for _,directory in pairs(t.object_dirs) do
+	  for w in string.gmatch(formiga.expand_properties(directory,prop),"[^"..formiga.os.SEPPATH.."]+") do
+	    table.insert(command,formiga.compiler.object_dir..w) 
+	  end
+	end
+      end
+      command = table.concat(command," ")
+      printverbose(2," [c_unit_test] "..command)
+      os.execute("mkdir -p ".. dest_dir)
+      formiga.os.execute(command)
+      local ok = formiga.os.execute(exec_name, true)
+      if not ok then
+	print("Unitary test '".. thefile .. "' failed: " .. t.target.package.name)
+	os.exit(1)
+      end
     end
   end
 end
 
-function unit_test(t)
-  t.__task__ = formiga.__unit_test__
+function c_unit_test(t)
+  t.__task__ = formiga.__c_unit_test__
+  if type(t.file) == "string" then
+    t.file = { t.file }
+  end
   if type(t.libraries) == "string" then
     t.libraries = { t.libraries }
   end
