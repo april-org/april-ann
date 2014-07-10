@@ -1,6 +1,6 @@
-package{ name = "utest",
+package{ name = "gtest",
    version = "1.0",
-   depends = { "util" },
+   depends = { },
    keywords = { },
    description = "Unit testing",
    -- targets como en ant
@@ -17,15 +17,21 @@ package{ name = "utest",
    target{
      name = "provide",
      depends = "init",
+     copy{ file= "c_src/*.h", dest_dir = "include" },
    },
    target{
      name = "build",
      depends = "provide",
-     use_timestamp = true,
-     luac{
-       orig_dir = "lua_src",
+     use_timestamp = false,
+     object{ 
+       file = "c_src/*.cc",
        dest_dir = "build",
+       -- flags = "-Wmissing-field-initializers",
      },
+   },
+   target{
+     name = "test",
+     depends = "build",
    },
    target{
      name = "document",

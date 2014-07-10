@@ -1,35 +1,47 @@
-#include "context.h"
 #include <cstdio>
+#include "context.h"
+#include "gtest.h"
 
 using april_utils::context;
 using namespace std;
 
-int main()
-{
+// test suite= ContextTest, test name= All
+TEST(ContextTest, All) {
+  int output[] = { 10, 10, 10, 10, 20, 30, 40, 50, 60, 70, 70, 70, 70 };
+  int output_pos = 0;
   context<int> c(3,3);
- 
   c.insert(10);
   int *p = new int(20);
   c.insert(p);
-  printf("p==%p\n", p);
   c.insert(30);
-  if (!c.ready())
-    printf("Not ready yet ;)\n");
+  EXPECT_FALSE( c.ready() ); // Not ready yet
   c.insert(40);
-  printf("%d %d %d %d %d %d %d\n", c[-3],c[-2], c[-1], c[0], c[1], c[2], c[3]);
-  c.insert(50);
-  printf("%d %d %d %d %d %d %d\n", c[-3],c[-2], c[-1], c[0], c[1], c[2], c[3]);
-  c.insert(60);
-  printf("%d %d %d %d %d %d %d\n", c[-3],c[-2], c[-1], c[0], c[1], c[2], c[3]);
-  c.insert(70);
-  printf("%d %d %d %d %d %d %d\n", c[-3],c[-2], c[-1], c[0], c[1], c[2], c[3]);
-  printf("END INPUT\n");
+  for (int i=-3; i<4; ++i) {
+    EXPECT_EQ( c[i], output[i+3+output_pos] );
+  }
+  c.insert(50); ++output_pos;
+  for (int i=-3; i<4; ++i) {
+    EXPECT_EQ( c[i], output[i+3+output_pos] );
+  }
+  c.insert(60); ++output_pos;
+  for (int i=-3; i<4; ++i) {
+    EXPECT_EQ( c[i], output[i+3+output_pos] );
+  }
+  c.insert(70); ++output_pos;
+  for (int i=-3; i<4; ++i) {
+    EXPECT_EQ( c[i], output[i+3+output_pos] );
+  }
   c.end_input();
   c.shift();
   while (c.ready()) {
-    printf("%d %d %d %d %d %d %d\n", c[-3],c[-2], c[-1], c[0], c[1], c[2], c[3]);
+    ++output_pos;
+    for (int i=-3; i<4; ++i) {
+      EXPECT_EQ( c[i], output[i+3+output_pos] );
+    }
     c.shift();
+    EXPECT_LT(output_pos, 13);
   }
-  
-  return 0;
 }
+
+
+APRILANN_GTEST_MAIN(ContextTests)

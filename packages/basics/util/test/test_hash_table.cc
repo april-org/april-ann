@@ -1,3 +1,4 @@
+#include "gtest.h"
 #include "hash_table.h"
 #include "aux_hash_table.h"
 using namespace april_utils;
@@ -7,16 +8,29 @@ using namespace april_utils;
 using std::cout;
 using std::endl;
 
-typedef hash<const char *,const char*> hash_test;
+#define hola "hola"
+#define hello "hello"
+#define adios "adios"
+#define ciao "ciao!"
+#define bye "bye"
+#define x "x"
+#define y "y"
+#define z "z"
+#define uno "uno"
+#define dos "dos"
+#define tres "tres"
+#define cuatro "cuatro"
+#define cinco "cinco"
+#define U1 "1"
+#define U2 "2"
+#define U3 "3"
+#define U4 "4"
+#define U5 "5"
 
-int print_pair(hash_test::value_type p)
-{
-  cout << p.first << "->" << p.second << endl;
-}
+typedef hash<const char *,const char *> hash_test;
 
-bool predicado(hash_test::value_type p)
-{
-  return (!strcmp(p.second, "adios"));
+void process_pair(hash_test::value_type p) {
+  ASSERT_STRNE( p.second, adios );
 }
 
 struct X
@@ -29,57 +43,71 @@ struct X
   }
 };
 
-int main() {
+bool predicado(hash_test::value_type p)
+{
+  return (!strcmp(p.second, adios));
+}
+
+TEST(HashTable, StringStringHashTable) {
   hash_test a_table;
-
-  cout << "La tabla tiene " << a_table.size() << " entradas" << endl;  
-  a_table["hola"]  = "hello";
-  a_table["adios"] = "bye";
-  a_table.insert("adios","ciao!");
-  a_table["x"] = "adios";
-  a_table["y"] = "adios";
-  a_table["z"] = "adios";
-  cout << "a_table[adios] = " << a_table["adios"] << endl;
-  a_table.erase("adios");
-  cout << "a_table[adios] " 
-       << (a_table.search("adios") ? "esta" : "no es encuentra")
-       << endl;
-  cout << "La tabla tiene " << a_table.size() << " entradas" << endl;
-
-
-  cout << "Insertamos 5 elementos nuevos." << endl;
-  a_table["uno"] = "1";
-  a_table["dos"] = "2";
-  a_table["tres"] = "3";
-  a_table["cuatro"] = "4";
-  a_table["cinco"] = "5";
-  cout << "La tabla tiene " << a_table.size() << " entradas" << endl;  
-
-  cout << "Recorrido con un iterador:" << endl;
+  
+  //
+  EXPECT_EQ( a_table.size(), 0 );
+  a_table[hola]  = hello;
+  a_table[adios] = bye;
+  a_table.insert(adios,ciao);
+  a_table[x] = adios;
+  a_table[y] = adios;
+  a_table[z] = adios;
+  EXPECT_STREQ( a_table[adios], ciao );
+  EXPECT_EQ( a_table.size(), 5 );
+  a_table.erase(adios);
+  EXPECT_FALSE( a_table.search(adios) );
+  EXPECT_EQ( a_table.size(), 4 );
+  //
+  a_table[uno] = U1;
+  a_table[dos] = U2;
+  a_table[tres] = U3;
+  a_table[cuatro] = U4;
+  a_table[cinco] = U5;
+  EXPECT_EQ( a_table.size(), 9 );
+  //
+  unsigned int count = 0;
   for (hash_test::const_iterator i=a_table.begin(); i != a_table.end(); ++i) {
-    cout << (*i).first << "->" << i->second << endl;
+    ++count;
+    EXPECT_STREQ( (*i).first, i->first );
+    EXPECT_STREQ( (*i).second, i->second );
   }
-
-  cout << "Borramos todas las entradas con valor 'adios'" << endl;
+  EXPECT_EQ( count, a_table.size() );
+  
+  // Borramos todas las entradas con valor 'adios'
   a_table.delete_if(predicado);
+  EXPECT_EQ( a_table.size(), 6 );
 
-  cout << "Redimensionamos la tabla" << endl;
+  // Redimensionamos la tabla
   a_table.resize(128);
+  
+  // Y ahora con for_each
+  std::for_each(a_table.begin(), a_table.end(), process_pair);
+}
 
-  cout << "Y ahora con for_each" << endl;
-  std::for_each(a_table.begin(), a_table.end(), print_pair);
 
+TEST(HashTable, HashFcnAndEqualKey) {
   X a,b;
   a.data=3;
   b.data=3;
-
-  cout << "Test con tabla con HashFcn y EqualKey genericas" << endl;
+  
+  // Test con tabla con HashFcn y EqualKey genericas" << endl;
   april_utils::hash<X, int> t;
   t[a] = 4;
   t[b] = 99;
 
-  for (april_utils::hash<X,int>::iterator i=t.begin(); i!=t.end(); i++)
-    cout << i->first.data << "->" << i->second << endl;;
-
-  return 0;
+  for (april_utils::hash<X,int>::iterator i=t.begin(); i!=t.end(); i++) {
+    ASSERT_EQ( i->first.data, 3 );
+    ASSERT_EQ( i->second, 99 );
+  }
+  
+  ASSERT_EQ( t.size(), 1 );
 }
+
+APRILANN_GTEST_MAIN(test_hash_table)

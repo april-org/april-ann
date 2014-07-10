@@ -22,13 +22,14 @@ package{ name = "util",
    },
    target{
      name = "test",
-     execute_script{
+     lua_unit_test{
        file={
 	 "test/test-functional-programming.lua",
        },
      },
-     unit_test{
-       file = "test/test_context.cc",
+     c_unit_test{
+       file = { "test/test_context.cc",
+                "test/test_hash_table.cc" },
      },
    },
    target{
