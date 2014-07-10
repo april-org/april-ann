@@ -30,4 +30,6 @@ int main()
     printf("%d %d %d %d %d %d %d\n", c[-3],c[-2], c[-1], c[0], c[1], c[2], c[3]);
     c.shift();
   }
+  
+  return 0;
 }
