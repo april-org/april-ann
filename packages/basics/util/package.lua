@@ -27,6 +27,9 @@ package{ name = "util",
 	 "test/test-functional-programming.lua",
        },
      },
+     unit_test{
+       file = "test/test_context.cc",
+     },
    },
    target{
      name = "build",
