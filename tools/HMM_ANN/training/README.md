@@ -30,7 +30,7 @@ USAGE:
                   [--silences=VALUE] [(-h|--help)] 
 
 DESCRIPTION:
-	HMM/ANN training with April-ANN toolkit
+	HMM/ANN training with APRIL-ANN toolkit
 
 	-fVALUE	      Load configuration file (a lua tabla) (optional)
 	--train-m=VALUE	      MFCC file for training set

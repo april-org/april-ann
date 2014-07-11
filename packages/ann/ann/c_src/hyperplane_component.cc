@@ -24,7 +24,7 @@
 namespace ANN {
 
   HyperplaneANNComponent::HyperplaneANNComponent(const char *name) :
-    ANNComponent(name), dot_product(), bias() {
+    ANNComponent(name, 0, 0, 0), dot_product(), bias() {
   }
   
   HyperplaneANNComponent::HyperplaneANNComponent(const char *name,
@@ -149,9 +149,10 @@ namespace ANN {
 		  "dot_product_weights='%s', bias_weights='%s',"
 		  "input=%d, output=%d, transpose=%s }",
 		  name.c_str(),
-		  dot_product->getName().c_str(), bias->getName().c_str(),
-		  dot_product->getWeightsName().c_str(),
-		  bias->getWeightsName().c_str(),
+		  static_cast<const ANNComponent*>(dot_product)->getName().c_str(),
+                  static_cast<const ANNComponent*>(bias)->getName().c_str(),
+		  static_cast<const ANNComponent*>(dot_product)->getWeightsName().c_str(),
+                  static_cast<const ANNComponent*>(bias)->getWeightsName().c_str(),
 		  input_size, output_size,
 		  (dot_product->transposed())?"true":"false");
     return buffer.to_string(buffer_list::NULL_TERMINATED);

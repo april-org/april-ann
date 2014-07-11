@@ -1,4 +1,4 @@
--- This module allows unit testing in April-ANN. This module uses internal
+-- This module allows unit testing in APRIL-ANN. This module uses internal
 -- variables to account for 'passed' and 'failed' tests. At the end of the
 -- program a summary will be printed to stderr. In case of a non-terminal
 -- output, only the 'failed' tests will produce a print out. This module exports
@@ -23,7 +23,7 @@
 --
 -- utest.check.ge(a, b, error_message): tests of a >= b
 -------------------------------------------------------------------------------
-get_table_from_dotted_string("utest",true)
+utest = utest or {}
 --
 local function write(level,format,...)
   if level>0 or util.stdout_is_a_terminal() then
@@ -67,12 +67,12 @@ local check = function (func,error_msg)
     return true
   else
     if not ok then
-      debug.traceback()
       -- protected call to write, in case tostring fails with returned values
       pcall(function()
               write(1, "%s\n",
                     iterator(ipairs(ret)):select(2):map(tostring):concat(" "))
             end)
+      write(1, "%s\n", debug.traceback())
     end
     write(1, "Test %d: %sfail%s\n", testn,
           ansi.fg.bright_red, ansi.fg.default)

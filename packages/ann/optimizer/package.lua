@@ -15,7 +15,7 @@
    },
    target{
      name = "test",
-     execute_script{
+     lua_unit_test{
        file={
 	 "test/test-digits-sgd.lua",
 	 "test/test-digits-asgd.lua",

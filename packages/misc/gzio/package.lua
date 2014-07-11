@@ -16,7 +16,7 @@
    },
    target{
      name = "test",
-     execute_script{
+     lua_unit_test{
        file={
 	 "test/test.lua",
 	 "test/test.lua",

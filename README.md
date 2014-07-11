@@ -1,5 +1,14 @@
-April-ANN
+APRIL-ANN
 =========
+
+Contributions
+-------------
+
+Contributions are wellcome. Only pull requests
+to `devel` branch will be accepted, so avoid to
+create pull requests to `master`. A Travis CI
+instance will check that your request passes all
+tests. For unit testing use the package `basics/utest`.
 
 Requirements
 ------------
@@ -8,7 +17,7 @@ Requires the following libraries. Versions are only orientative, it could work
 with older and newer versions whenver the API was compatible.
 
 - GNU C++ compiler (g++): v 4.7.2
-- Only in Linux systems: Lua 5.2 headers to tell April-ANN the default system
+- Only in Linux systems: Lua 5.2 headers to tell APRIL-ANN the default system
   path for Lua modules (`lua5.2-deb-multiarch.h` header).
 - BLAS implementation: ATLAS (v. 3), Intel MKL (v. 10.3.6), MacOS Accelerate Framework
 - Threads posix (pthread)
@@ -40,7 +49,7 @@ First, it is mandatory to configure (only the first time) the repo PATH and othe
 
 ```$ . configure.sh```
 
-Second, you could compile the april version which you need. We have developed compiling files for using
+Second, you could compile the APRIL version which you need. We have developed compiling files for using
 different libraries. It is simple, you do
 
 ```$ make TARGET```
@@ -102,7 +111,7 @@ build_mkl_debug.lua, ... and so on.
 The binary will be generated at `bin/april-ann`, which incorporates the Lua 5.2
 interpreter and works without any dependency in Lua.  Besides, a shared library
 will be generated at `lib/aprilann.so`, so it is possible to use `require` from
-Lua to load April-ANN in a standard Lua 5.2 interpreter.
+Lua to load APRIL-ANN in a standard Lua 5.2 interpreter.
 
 **NOTE** that loading `april-ann` as a Lua 5.2 module, you need to have the
 `.so` library in the `package.cpath` or LUA_CPATH. It is possible to install it
@@ -132,7 +141,7 @@ Use
 
 ```
 $ april-ann
-April-ANN v0.2.1-beta COMMIT 920  Copyright (C) 2012-2013 DSIC-UPV, CEU-UCH
+APRIL-ANN v0.2.1-beta COMMIT 920  Copyright (C) 2012-2013 DSIC-UPV, CEU-UCH
 This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE.txt.
 This is free software, and you are welcome to redistribute it
 under certain conditions; see LICENSE.txt for details.
@@ -141,9 +150,9 @@ Lua 5.2.2  Copyright (C) 1994-2013 Lua.org, PUC-Rio
 Hello World!
 ```
 
-- It is possible to use April-ANN as a Lua module, loading only the packages
+- It is possible to use APRIL-ANN as a Lua module, loading only the packages
   which you need (i.e. `require("aprilann.matrix")`), or loading the full
-  library (`require("aprilann")`). **Be careful**, the April-ANN modules doesn't
+  library (`require("aprilann")`). **Be careful**, the APRIL-ANN modules doesn't
   follow Lua guidelines and have lateral effects because of the declaration of
   tables, functions, and other values at the GLOBALs Lua table:
 
@@ -152,7 +161,7 @@ $ lua
 Lua 5.2.2  Copyright (C) 1994-2013 Lua.org, PUC-Rio
 > require "aprilann.matrix"
 > require "aprilann"
-April-ANN v0.2.1-beta COMMIT 920  Copyright (C) 2012-2013 DSIC-UPV, CEU-UCH
+APRIL-ANN v0.2.1-beta COMMIT 920  Copyright (C) 2012-2013 DSIC-UPV, CEU-UCH
 This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE.txt.
 This is free software, and you are welcome to redistribute it
 under certain conditions; see LICENSE.txt for details.
@@ -171,7 +180,7 @@ you can use this bibitem:
   Author = {Francisco Zamora-Mart\'inez and Salvador Espa\~na-Boquera and
 	        Jorge Gorbe-Moya and Joan Pastor-Pellicer and Adrian Palacios},
   Note = {{https://github.com/pakozm/april-ann}},
-  Title = {{April-ANN toolkit, A Pattern Recognizer In Lua with Artificial Neural Networks}},
+  Title = {{APRIL-ANN toolkit, A Pattern Recognizer In Lua with Artificial Neural Networks}},
   Year = {2013}}
 ```
 
@@ -196,7 +205,7 @@ List of research papers which uses this tool:
   Some empirical evaluations of a temperature forecasting module based on Artificial Neural Networks for a domotic home environment.
   In *IC3K - KDIR*, pages 206-211, 2012.
 
-Our ancient ANN implementation in the former April tookit was published here:
+Our ancient ANN implementation in the former APRIL tookit was published here:
 
 - S. España-Boquera, F. Zamora-Martinez, M.J. Castro-Bleda, J. Gorbe-Moya.
   Efficient BP algorithms for general feedforward neural networks.
@@ -205,7 +214,7 @@ Our ancient ANN implementation in the former April tookit was published here:
 Packages
 --------
 
-April-ANN is compiled following a package system. In the directory packages you could find a
+APRIL-ANN is compiled following a package system. In the directory packages you could find a
 tree of directory entries. Leaves in the tree are directories which contain file "package.lua".
 The "package.lua" defines requirements, dependencies, libraries, and other stuff needed by the
 corresponding package.
@@ -231,6 +240,7 @@ Includes these sources
 - Median filter from Simon Perreault: http://nomis80.org/ctmf.html
 - RuningStat class for efficient and stable computation of mean and variance: http://www.johndcook.com/standard_deviation.html
 - Lua autocompletion rlcompleter release 2, by rthomas: https://github.com/rrthomas/lua-rlcompleter
+- Google C++ Testing Framework: https://code.google.com/p/googletest/
 
 Wiki documentation
 ------------------

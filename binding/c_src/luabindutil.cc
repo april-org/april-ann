@@ -200,6 +200,49 @@ int lua_print_name_class(lua_State *L) {
   return 1;
 }
 
+int lua_concat_class_method(lua_State *L) {
+  int argn = lua_gettop(L); // number of arguments
+  if (argn != 2) {
+    lua_pushstring(L, "Incorrect number of arguments, expected 2");
+    lua_error(L);
+  }
+  if (!lua_isstring(L,2)) {
+    lua_pushstring(L, "Expected a string as second argument");
+    lua_error(L);
+  }
+  if (!lua_istable(L,1)) {
+    lua_pushstring(L, "Expected a class table as first argument");
+    lua_error(L);    
+  }
+  const char *method_name = lua_tostring(L,2);
+  // stack: class_table name
+  lua_pushstring(L,"meta_instance");
+  // stack: class_table name "meta_instance"
+  lua_rawget(L,1);
+  if (lua_isnil(L,-1)) {
+    return 0;
+  }
+  // stack: class_table name meta_instance
+  lua_pushstring(L,"__index");
+  // stack: class_table name meta_instance "__index"
+  lua_rawget(L,-2);
+  // stack: class_table name meta_instance __index
+  if (lua_isnil(L,-1)) {
+    return 0;
+  }
+  // stack: class_table name meta_instance __index
+  lua_pushstring(L,method_name);
+  // stack: class_table name meta_instance __index "name"
+  lua_rawget(L,-2);
+  // stack: class_table name meta_instance __index method
+  if (lua_isnil(L,-1)) {
+    return 0;
+  }
+  else {
+    return 1;
+  }
+}
+
 void check_table_fields(lua_State *L, int idx, ...) {
   lua_pushnil(L);
   while(lua_next(L, idx) != 0) {

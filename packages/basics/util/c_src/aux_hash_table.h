@@ -176,6 +176,25 @@ namespace april_utils {
   };
 
   //----------------------------------------------------------------------
+  // c-style strings (const char *) need also a comparison function
+  //
+  template <> struct default_equality_comparison_function<const char *> {
+    bool operator()(const char* s1, const char* s2) const {
+      return strcmp(s1, s2) == 0;
+    }
+  };
+
+  template <> struct default_hash_function<const char *> {
+    static const unsigned int cte_hash  = 2654435769U; // hash Fibonacci
+    long int operator()(const char* s1) const {
+      unsigned int resul = 1;
+      for (const char *r = s1; *r != '\0'; r++)
+        resul = (resul+(unsigned int)(*r))*cte_hash;
+      return resul;
+    }
+  };
+
+  //----------------------------------------------------------------------
   // template para hash de "cosas" que tengan el metodo size,
   // elementos que son tipos básicos y acceso a ellos via operator[]
   template<typename T>

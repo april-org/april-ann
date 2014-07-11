@@ -23,7 +23,7 @@
 
 #include "token_matrix.h"
 #include "cblas_headers.h"
-#include "ann_component.h"
+#include "matrix_component.h"
 #include "connection.h"
 #include "gpu_mirrored_memory_block.h"
 
@@ -33,8 +33,7 @@ namespace ANN {
   /// neural networks (CNNs). It is configured with a given kernel size and
   /// kernel step, and outputs the maximum value of each possible window at
   /// input matrix.
-  class MaxPoolingANNComponent : public ANNComponent {
-    TokenMatrixFloat *input, *error_input, *output, *error_output;
+  class MaxPoolingANNComponent : public VirtualMatrixANNComponent {
     Int32GPUMirroredMemoryBlock *argmax_raw_pos;
     
     // parameters of the convolution
@@ -87,16 +86,18 @@ namespace ANN {
     }
     
     void initializeArrays(const int *input_dims);
+
+    virtual MatrixFloat *privateDoForward(MatrixFloat* input,
+                                          bool during_training);
+    virtual MatrixFloat *privateDoBackprop(MatrixFloat *input_error);
+    virtual void privateReset(unsigned int it=0);
+
   public:
     MaxPoolingANNComponent(int input_num_dims,
 			   const int *_kernel_dims, // input_num_dims
 			   const int *_kernel_step,
 			   const char *name=0);
     virtual ~MaxPoolingANNComponent();
-    virtual Token *getInput() { return input; }
-    virtual Token *getOutput() { return output; }
-    virtual Token *getErrorInput() { return error_input; }
-    virtual Token *getErrorOutput() { return error_output; }
     virtual void precomputeOutputSize(const vector<unsigned int> &input_size,
 				      vector<unsigned int> &output_size) {
       output_size.clear();
@@ -106,9 +107,6 @@ namespace ANN {
 	  output_size.push_back((input_size[i-1]-kernel_dims[i])/kernel_step[i]+1);
       }
     }
-    virtual Token *doForward(Token* input, bool during_training);
-    virtual Token *doBackprop(Token *input_error);
-    virtual void   reset(unsigned int it=0);
     virtual ANNComponent *clone();
     
     virtual char *toLuaString();

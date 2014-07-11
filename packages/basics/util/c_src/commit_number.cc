@@ -2,8 +2,7 @@
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
- * Copyright 2012, Salvador España-Boquera, Adrian Palacios Corella, Francisco
- * Zamora-Martinez
+ * Copyright 2014, Francisco Zamora-Martinez
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
@@ -19,21 +18,11 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "action.h"
-
-namespace ANN {
-
-  // DotProductAction implementation
-  
-  void CopyAction::doForward(bool during_training)
-  {
-  }
-  
-  void CopyAction::doBackprop()
-  {
-  }
-
-  void CopyAction::doUpdate()
-  {
-  }
-}
+#ifndef GIT_COMMIT
+#define GIT_COMMIT UNKNOWN
+#endif
+#define STRINGFY(X) #X
+#define TOSTRING(X) STRINGFY(X)
+const char *__COMMIT_NUMBER__ = TOSTRING(GIT_COMMIT);
+#undef STRINGFY
+#undef TOSTRING

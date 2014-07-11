@@ -358,6 +358,27 @@ void writeMatrixFloatToTabStream(MatrixFloat *mat, FILE *f) {
 
 ////////////////////////////////////////////////////////////////////////////
 
+void writeSparseMatrixFloatToFile(SparseMatrixFloat *mat,
+                                  const char *filename,
+                                  bool is_ascii) {
+  if (GZFileWrapper::isGZ(filename)) {
+    BufferedGZFile f(filename, "w");
+    writeSparseMatrixToStream(mat, f, SparseFloatAsciiSizer(),
+                              SparseFloatBinarySizer(),
+                              FloatAsciiCoder<BufferedGZFile>(),
+                              FloatBinaryCoder<BufferedGZFile>(),
+                              is_ascii);
+  }
+  else {
+    BufferedFile f(filename, "w");
+    writeSparseMatrixToStream(mat, f, SparseFloatAsciiSizer(),
+                              SparseFloatBinarySizer(),
+                              FloatAsciiCoder<BufferedFile>(),
+                              FloatBinaryCoder<BufferedFile>(),
+                              is_ascii);
+  }
+}
+
 char *writeSparseMatrixFloatToString(SparseMatrixFloat *mat,
 				     bool is_ascii,
 				     int &len) {
@@ -382,6 +403,19 @@ void writeSparseMatrixFloatToLuaString(SparseMatrixFloat *mat,
 					  FloatBinaryCoder<WriteLuaBufferWrapper>(),
 					  is_ascii));
   wrapper.finish();
+}
+
+SparseMatrixFloat *readSparseMatrixFloatFromFile(const char *filename) {
+  if (GZFileWrapper::isGZ(filename)) {
+    BufferedGZFile f(filename, "r");
+    return readSparseMatrixFromStream<BufferedGZFile, float>(f, FloatAsciiExtractor(),
+                                                             FloatBinaryExtractor());
+  }
+  else {
+    BufferedFile f(filename, "r");
+    return readSparseMatrixFromStream<BufferedFile, float>(f, FloatAsciiExtractor(),
+                                                           FloatBinaryExtractor());
+  }
 }
 
 SparseMatrixFloat *readSparseMatrixFloatFromString(constString &cs) {

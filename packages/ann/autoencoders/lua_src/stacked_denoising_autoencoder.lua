@@ -152,7 +152,7 @@ end
 
 ----------------------------------------------------------------------
 
-april_set_doc("ann.autoencoders",
+april_set_doc(ann.autoencoders,
 	      {
 		class="namespace",
 		summary={"Namespace with utilties for easy training",
@@ -392,88 +392,86 @@ end
 
 -- This functions receives layer sizes and sdae_table with weights and bias
 -- arrays. It returns a fully connected stacked denoising autoencoder ANN.
-april_set_doc("ann.autoencoders.build_full_autoencoder",
-	      {
-		class="function",
-		summary="Function to build full SDAE (encoding and decoding) ",
-		description=
-		  {
-		    "This function composes an ANN component",
-		    "from the layers table and the sdae_table",
-		    "build by other functions of this namespace. It builds",
-		    "a full auto-encoder, which means that it has the encoding",
-		    "part and the transposed decoding part of the auto-encoder.",
-		  },
-		params= {
-		  { "A table with layers info, as this example:",
-		    "{ { size=..., actf=... }, { size=..., actf=...}, ... }", },
-		  "An sdae table, returned by other function of this namespace",
-		  { "A string prefix [optional], used as prefix of the",
-		    "component names." },
-		},
-		outputs= {
-		  {"A component object with the especified ",
-		   "neural network topology" },
-		}
-	      })
-function ann.autoencoders.build_full_autoencoder(layers,
-						 sdae_table,
-						 names_prefix)
-  local names_prefix  = names_prefix or ""
-  local weights_mat   = sdae_table.weights
-  local bias_mat      = sdae_table.bias
-  local sdae          = ann.components.stack{ name=names_prefix.."stack" }
-  local prev_size     = layers[1].size
-  local weights_table = matrix.dict()
-  local k = 1
-  for i=2,#layers do
-    local size , actf   = layers[i].size,layers[i].actf
-    local wname , bname = names_prefix.."w" .. (i-1) , names_prefix.."b" .. k
-    local actfname = names_prefix.."actf" .. k
-    sdae:push( ann.components.hyperplane{
-		 name                = names_prefix.."c"..k,
-		 input               = prev_size,
-		 output              = size,
-		 dot_product_name    = wname,
-		 dot_product_weights = wname,
-		 bias_name           = bname,
-		 bias_weights        = bname })
-    sdae:push( ann.components.actf[actf]{ name=actfname })
-    --
-    weights_table[wname] = ann.connections{ input=prev_size,
-					    output=size,
-					    w=weights_mat[i-1] }
-    weights_table[bname] = ann.connections{ input=1,
-					    output=size,
-					    w=bias_mat[i-1][1] }
-    prev_size = size
-    k = k+1
+ann.autoencoders.build_full_autoencoder =
+  april_doc{
+    class="function",
+    summary="Function to build full SDAE (encoding and decoding) ",
+    description=
+      {
+        "This function composes an ANN component",
+        "from the layers table and the sdae_table",
+        "build by other functions of this namespace. It builds",
+        "a full auto-encoder, which means that it has the encoding",
+        "part and the transposed decoding part of the auto-encoder.",
+      },
+    params= {
+      { "A table with layers info, as this example:",
+        "{ { size=..., actf=... }, { size=..., actf=...}, ... }", },
+      "An sdae table, returned by other function of this namespace",
+      { "A string prefix [optional], used as prefix of the",
+        "component names." },
+    },
+    outputs= {
+      {"A component object with the especified ",
+       "neural network topology" },
+    }
+  } ..
+  function(layers, sdae_table, names_prefix)
+    local names_prefix  = names_prefix or ""
+    local weights_mat   = sdae_table.weights
+    local bias_mat      = sdae_table.bias
+    local sdae          = ann.components.stack{ name=names_prefix.."stack" }
+    local prev_size     = layers[1].size
+    local weights_table = matrix.dict()
+    local k = 1
+    for i=2,#layers do
+      local size , actf   = layers[i].size,layers[i].actf
+      local wname , bname = names_prefix.."w" .. (i-1) , names_prefix.."b" .. k
+      local actfname = names_prefix.."actf" .. k
+      sdae:push( ann.components.hyperplane{
+                   name                = names_prefix.."c"..k,
+                   input               = prev_size,
+                   output              = size,
+                   dot_product_name    = wname,
+                   dot_product_weights = wname,
+                   bias_name           = bname,
+                   bias_weights        = bname })
+      sdae:push( ann.components.actf[actf]{ name=actfname })
+      --
+      weights_table[wname] = ann.connections{ input=prev_size,
+                                              output=size,
+                                              w=weights_mat[i-1] }
+      weights_table[bname] = ann.connections{ input=1,
+                                              output=size,
+                                              w=bias_mat[i-1][1] }
+      prev_size = size
+      k = k+1
+    end
+    for i=#layers-1,1,-1 do
+      local size , actf   = layers[i].size,layers[i].actf
+      local wname , bname = names_prefix.."w" .. i , names_prefix.."b" .. k
+      local dname = names_prefix.."w" .. k
+      local actfname = names_prefix.."actf" .. k
+      sdae:push( ann.components.hyperplane{
+                   name                = names_prefix.."c"..k,
+                   input               = prev_size,
+                   output              = size,
+                   transpose           = true,
+                   dot_product_weights = wname,
+                   dot_product_name    = dname,
+                   bias_name           = bname,
+                   bias_weights        = bname })
+      sdae:push( ann.components.actf[actf]{ name=actfname })
+      --
+      weights_table[bname] = ann.connections{ input=1,
+                                              output=size,
+                                              w=bias_mat[i][2] }
+      prev_size = size
+      k = k+1
+    end
+    sdae:build{ weights=weights_table }
+    return sdae
   end
-  for i=#layers-1,1,-1 do
-    local size , actf   = layers[i].size,layers[i].actf
-    local wname , bname = names_prefix.."w" .. i , names_prefix.."b" .. k
-    local dname = names_prefix.."w" .. k
-    local actfname = names_prefix.."actf" .. k
-    sdae:push( ann.components.hyperplane{
-		 name                = names_prefix.."c"..k,
-		 input               = prev_size,
-		 output              = size,
-		 transpose           = true,
-		 dot_product_weights = wname,
-		 dot_product_name    = dname,
-		 bias_name           = bname,
-		 bias_weights        = bname })
-    sdae:push( ann.components.actf[actf]{ name=actfname })
-    --
-    weights_table[bname] = ann.connections{ input=1,
-					    output=size,
-					    w=bias_mat[i][2] }
-    prev_size = size
-    k = k+1
-  end
-  sdae:build{ weights=weights_table }
-  return sdae
-end
 
 -- Params is a table which could contain:
 --   * input_dataset => dataset with input (and output) for AE
@@ -514,474 +512,473 @@ end
 -- bias[4] => 256      bias of layer (4)
 -- weights[1] => 256*128  weights of layer (1)
 -- weights[2] => 128*64   weights of layer (2)
-april_set_doc("ann.autoencoders.greedy_layerwise_pretraining",
-	      {
-		class="function",
-		summary={"MAIN function of this namespace, which implements",
-			 "the SDAE training", },
-		description=
-		  {
-		    "This function builds a SDAE following the greedy",
-		    "layerwise algorithm described at",
-		    "http://deeplearning.net/tutorial/SdA.html",
-		    "The function receives a table with a lot of parameters",
-		    "for training description."
-		  },
-		params= {
-		  ["optimizer"]   = {"A function which returns an optimizer",
-				     "[optional]",},
-		  ["names_prefix"]   = {"A prefix added to all component names",
-					"[optional]",},
-		  ["shuffle_random"] = "A random object instance for shuffle",
-		  ["weights_random"] = {"A random object instance for weights",
-					"initialization"},
-		  ["layers"] =
-		    {"A table describing the layers of the SDAE:",
-		     "{ { size=NUMBER, actf=ACTF_STRING }, ... }.",
-		     "This table has the sizes of INPUT LAYER, FIRST HIDDEN",
-		     "LAYER, SECOND HIDDEN LAYER, ..., LAST HIDDEN LAYER",},
-		  ["bunch_size"] = "A number with the value of the bunch",
-		  ["training_options"] = {
-		    "It is a table with options and hyperparameters related to",
-		    "the training. The table has two main fields, global and",
-		    "layerwise. Layerwise table is an array of options, so",
-		    "any option at global table could be overwritten by",
-		    "layerwise option. Each position of layerwise array is",
-		    "related to each iteration of the greedy algorithm.",
-		    "Please, read the wiki for detailed information.",
-		  },
-		  ["input_dataset"] = {
-		    "It is the dataset with input data",
-		  },
-		  ["output_datasets"] = {
-		    "An array with one dataset, the output data [optional]",
-		  },
-		  ["replacement"] = "Replacement during training [optional]",
-		  ["supervised_layer"] = {
-		    "A table with { size=NUMBER, actf=ACTF_STRING } [optional]",
-		  },
-		  ["on_the_fly"] = {
-		    "A boolean, for large datasets, the greedy algorithm must",
-		    "compute",
-		    "encodings on-the-fly, in order to reduce the memory",
-		    "fingerprint [optional]",
-		  },
-		},
-		outputs= {
-		  {"The sdae_table = { weights = ARRAY OF MATRIXES,",
-		   "bias = ARRAY OF MATRIXES }",},
-		  {"An instance of ann.components.stack() with encoding",
-		   "part of SDAE (or a deep classifier if given",
-		   "output_datsets" },
-		}
-	      })
-april_set_doc("ann.autoencoders.greedy_layerwise_pretraining",
-	      {
-		class="function",
-		summary={"MAIN function of this namespace, which implements",
-			 "the SDAE training", },
-		description=
-		  {
-		    "This function builds a SDAE following the greedy",
-		    "layerwise algorithm described at",
-		    "http://deeplearning.net/tutorial/SdA.html",
-		    "The function receives a table with a lot of parameters",
-		    "for training description."
-		  },
-		params= {
-		  ["optimizer"]   = {"A function which returns an optimizer",
-				     "[optional]",},
-		  ["names_prefix"]   = {"A prefix added to all component names",
-					"[optional]",},
-		  ["shuffle_random"] = "A random object instance for shuffle",
-		  ["weights_random"] = {"A random object instance for weights",
-					"initialization"},
-		  ["layers"] =
-		    {"A table describing the layers of the SDAE:",
-		     "{ { size=NUMBER, actf=ACTF_STRING }, ... }.",
-		     "This table has the sizes of INPUT LAYER, FIRST HIDDEN",
-		     "LAYER, SECOND HIDDEN LAYER, ..., LAST HIDDEN LAYER",},
-		  ["bunch_size"] = "A number with the value of the bunch",
-		  ["training_options"] = {
-		    "It is a table with options and hyperparameters related to",
-		    "the training. The table has two main fields, global and",
-		    "layerwise. Layerwise table is an array of options, so",
-		    "any option at global table could be overwritten by",
-		    "layerwise option. Each position of layerwise array is",
-		    "related to each iteration of the greedy algorithm.",
-		    "Please, read the wiki for detailed information.",
-		  },
-		  ["distribution"] = {
-		    "A distribution table as for",
-		    "trainable.supervised_trainer.train_dataset.",
-		  },
-		  ["output_datasets"] = {
-		    "An array with one dataset, the output data [optional]",
-		  },
-		  ["replacement"] = "Replacement during training [optional]",
-		  ["supervised_layer"] = {
-		    "A table with { size=NUMBER, actf=ACTF_STRING } [optional]",
-		  },
-		  ["on_the_fly"] = {
-		    "A boolean, for large datasets, the greedy algorithm must",
-		    "compute",
-		    "encodings on-the-fly, in order to reduce the memory",
-		    "fingerprint [optional]",
-		  },
-		},
-		outputs= {
-		  {"The sdae_table = { weights = ARRAY OF MATRIXES,",
-		   "bias = ARRAY OF MATRIXES }",},
-		  {"An instance of ann.components.stack() with encoding",
-		   "part of SDAE (or a deep classifier if given",
-		   "output_datsets" },
-		}
-	      })
-function ann.autoencoders.greedy_layerwise_pretraining(t)
-  local params = get_table_fields(
-    {
-      optimizer        = { mandatory=false, type_match="function",
-			   default = function() return nil end},
-      names_prefix     = { mandatory=false, default="", type_match="string" },
-      shuffle_random   = { mandatory=true,  isa_match=random },
-      weights_random   = { mandatory=true,  isa_match=random },
-      layers           = { mandatory=true, type_match="table",
-			   getter=get_table_fields_ipairs{
-			     actf = { mandatory=true, type_match="string" },
-			     size = { mandatory=true, type_match="number" },
-			   }, },
-      bunch_size       = { mandatory=true, type_match="number", },
-      training_options = { mandatory=true },
-
-      --      , type_match="table",
-      --			   getter=get_table_fields_recursive{
-      --			     global = { mandatory=true, type_match="table",
-      --					
-      --			   } },
-      --
-      
-      input_dataset    = { mandatory=false },
-      output_datasets  = { mandatory=false, type_match="table", default=nil },
-      distribution     = { mandatory=false, type_match="table", default=nil,
-			   getter=get_table_fields_ipairs{
-			     input_dataset   = { mandatory=true },
-			     output_datasets = { mandatory=true },
-			     probability     = { mandatory=true },
-			   }, },
-      replacement      = { mandatory=false, type_match="number", default=nil },
-      supervised_layer = { mandatory=false, type_match="table", default=nil,
-			   getter=get_table_fields_recursive{
-			     actf = { mandatory=true, type_match="string" },
-			     size = { mandatory=true, type_match="number" },
-			   }, },
-      on_the_fly        = { mandatory=false, default=false, type_match="boolean" },
-    }, t)
-  -- Error checking in params table --
-  if params.input_dataset and params.distribution then
-    error("The input_dataset and distribution parameters are forbidden together")
-  end
-  if params.distribution and not params.replacement then
-    error("The replacement parameter is mandatary if distribution")
-  end
-  if (params.supervised_layer~=nil) == (not params.output_datasets) then
-    error("Params output_datasets and "..
-	    "supervised_layer must be present together")
-  end
-  params.training_options.global    = params.training_options.global    or { ann_options = {} }
-  params.training_options.layerwise = params.training_options.layerwise or {}
-  params.training_options.global.ann_options = params.training_options.global.ann_options or {}
-  --------------------------------------
-  -- on the fly. Do not generate all the dataset for each layer
-  local on_the_fly = params.on_the_fly
-  if params.replacement and not params.on_the_fly then
-    fprintf(io.stderr,
-	    "WARNING!!!! THE REPLACEMENT PARAMETER IS NOT FORCING "..
-	      "ON_THE_FLY, THEY ARE INDEPENDENT\n")
-  end
-  if on_the_fly and params.distribution then
-    error("On the fly mode is not working with dataset distribution")
-  end
-  -- copy dataset params to auxiliar table
-  local current_dataset_params = {
-    input_dataset = params.input_dataset,
-    distribution  = params.distribution
-  }
-  -- output weights and bias matrices
-  local weights = {}
-  local bias    = {}
-  -- incremental mlp
-  local mlp_final_weights = matrix.dict()
-  local mlp_final = ann.components.stack{ name=params.names_prefix.."stack" }
-  -- loop for each pair of layers
-  for i=2,#params.layers do
-    local input_size = params.layers[i-1].size
-    local cod_size   = params.layers[i].size
-    printf("# Training of layer %d--%d--%d (number %d)\n",
-	   input_size, cod_size, input_size, i-1)
-    io.stdout:flush()
-    local input_actf = params.layers[i-1].actf
-    if input_actf == "logistic" then input_actf = "log_logistic"
-    elseif input_actf == "softmax" then input_actf = "log_softmax"
-    end
-    local cod_actf   = params.layers[i].actf
-    local global_options    = table.deep_copy(params.training_options.global)
-    local layerwise_options = params.training_options.layerwise[i-1] or {}
-    layerwise_options.ann_options = layerwise_options.ann_options or {}
-    local lookup = function(name) return layerwise_options[name] or global_options[name] end
-    local data
-    if not on_the_fly or i == 2 then
-      data = generate_training_table_configuration(current_dataset_params,
-						   params.replacement,
-						   params.shuffle_random,
-						   lookup("noise_pipeline") or {},
-						   nil)
-    else
-      local mlp_final_trainer = trainable.supervised_trainer(mlp_final:clone(),
-							     nil,
-							     params.bunch_size,
-							     params.optimizer())
-
-      local aux_weights = mlp_final_weights:clone()
-      mlp_final_trainer:build{ weights=aux_weights }
-      data = generate_training_table_configuration_on_the_fly(current_dataset_params,
-							      params.replacement,
-							      params.shuffle_random,
-							      lookup("noise_pipeline") or {},
-							      mlp_final_trainer,
-							      nil)
-    end
-    local dae
-    dae = build_two_layered_autoencoder_from_sizes_and_actf(params.names_prefix,
-							    input_size,
-							    input_actf,
-							    cod_size,
-							    cod_actf,
-							    params.weights_random)
-    collectgarbage("collect")
-    local loss_function
-    if input_actf == "log_logistic" then
-      loss_function = ann.loss.cross_entropy(input_size)
-    elseif input_actf == "log_softmax" then
-      loss_function = ann.loss.multi_class_cross_entropy(input_size)
-    else
-      loss_function = ann.loss.mse(input_size)
-    end
-    ---------- TRAIN THE AUTOENCODER WO VALIDATION ----------
-    local trainer = trainable.supervised_trainer(dae, loss_function,
-						 params.bunch_size,
-						 params.optimizer())
-    trainer:build()
-    for key,value in pairs(global_options.ann_options) do
-      if layerwise_options.ann_options[key] == nil then
-	trainer:set_option(key, value)
-      end
-    end
-    for key,value in pairs(layerwise_options.ann_options) do
-      trainer:set_option(key, value)
-    end
-    for _,reg in ipairs({ "weight_decay", "L1_norm", "max_norm_penalty" }) do
-      if trainer:has_option(reg) then
-	trainer:set_layerwise_option(params.names_prefix.."b.*", reg, 0.0)
-      end
-    end
-    if input_actf=="linear" or cod_actf=="linear" then
-      -- if activation is linear, the derivative slope is so high, so we use
-      -- learning_rate to reduce its impact
-      local ratio = 1/math.sqrt(cod_size+input_size)
-      trainer:set_option("learning_rate", trainer:get_option("learning_rate")*ratio)
-    end
-    -- printf("BEFORE TRAIN %d\n", i)
-    local train_func = trainable.train_wo_validation{
-      min_epochs     = lookup("min_epochs"),
-      max_epochs     = lookup("max_epochs"),
-      percentage_stopping_criterion = lookup("pretraining_percentage_stopping_criterion"),      
+ann.autoencoders.greedy_layerwise_pretraining =
+  april_doc{
+    class="function",
+    summary={"MAIN function of this namespace, which implements",
+             "the SDAE training", },
+    description=
+      {
+        "This function builds a SDAE following the greedy",
+        "layerwise algorithm described at",
+        "http://deeplearning.net/tutorial/SdA.html",
+        "The function receives a table with a lot of parameters",
+        "for training description."
+      },
+    params= {
+      ["optimizer"]   = {"A function which returns an optimizer",
+                         "[optional]",},
+      ["names_prefix"]   = {"A prefix added to all component names",
+                            "[optional]",},
+      ["shuffle_random"] = "A random object instance for shuffle",
+      ["weights_random"] = {"A random object instance for weights",
+                            "initialization"},
+      ["layers"] =
+        {"A table describing the layers of the SDAE:",
+         "{ { size=NUMBER, actf=ACTF_STRING }, ... }.",
+         "This table has the sizes of INPUT LAYER, FIRST HIDDEN",
+         "LAYER, SECOND HIDDEN LAYER, ..., LAST HIDDEN LAYER",},
+      ["bunch_size"] = "A number with the value of the bunch",
+      ["training_options"] = {
+        "It is a table with options and hyperparameters related to",
+        "the training. The table has two main fields, global and",
+        "layerwise. Layerwise table is an array of options, so",
+        "any option at global table could be overwritten by",
+        "layerwise option. Each position of layerwise array is",
+        "related to each iteration of the greedy algorithm.",
+        "Please, read the wiki for detailed information.",
+      },
+      ["input_dataset"] = {
+        "It is the dataset with input data",
+      },
+      ["output_datasets"] = {
+        "An array with one dataset, the output data [optional]",
+      },
+      ["replacement"] = "Replacement during training [optional]",
+      ["supervised_layer"] = {
+        "A table with { size=NUMBER, actf=ACTF_STRING } [optional]",
+      },
+      ["on_the_fly"] = {
+        "A boolean, for large datasets, the greedy algorithm must",
+        "compute",
+        "encodings on-the-fly, in order to reduce the memory",
+        "fingerprint [optional]",
+      },
+    },
+    outputs= {
+      {"The sdae_table = { weights = ARRAY OF MATRIXES,",
+       "bias = ARRAY OF MATRIXES }",},
+      {"An instance of ann.components.stack() with encoding",
+       "part of SDAE (or a deep classifier if given",
+       "output_datsets" },
     }
-    while train_func:execute(function()
-                               local data = data
-                               if type(data) == "function" then data = data() end
-                               return trainer,trainer:train_dataset(data)
-                             end) do
-      local t = train_func:get_state_table()
-      printf("%4d %10.6f  (improvement %.4f)\n",
-             t.current_epoch, t.train_error, t.train_improvement)
+  } ..
+  april_doc{
+    class="function",
+    summary={"MAIN function of this namespace, which implements",
+             "the SDAE training", },
+    description=
+      {
+        "This function builds a SDAE following the greedy",
+        "layerwise algorithm described at",
+        "http://deeplearning.net/tutorial/SdA.html",
+        "The function receives a table with a lot of parameters",
+        "for training description."
+      },
+    params= {
+      ["optimizer"]   = {"A function which returns an optimizer",
+                         "[optional]",},
+      ["names_prefix"]   = {"A prefix added to all component names",
+                            "[optional]",},
+      ["shuffle_random"] = "A random object instance for shuffle",
+      ["weights_random"] = {"A random object instance for weights",
+                            "initialization"},
+      ["layers"] =
+        {"A table describing the layers of the SDAE:",
+         "{ { size=NUMBER, actf=ACTF_STRING }, ... }.",
+         "This table has the sizes of INPUT LAYER, FIRST HIDDEN",
+         "LAYER, SECOND HIDDEN LAYER, ..., LAST HIDDEN LAYER",},
+      ["bunch_size"] = "A number with the value of the bunch",
+      ["training_options"] = {
+        "It is a table with options and hyperparameters related to",
+        "the training. The table has two main fields, global and",
+        "layerwise. Layerwise table is an array of options, so",
+        "any option at global table could be overwritten by",
+        "layerwise option. Each position of layerwise array is",
+        "related to each iteration of the greedy algorithm.",
+        "Please, read the wiki for detailed information.",
+      },
+      ["distribution"] = {
+        "A distribution table as for",
+        "trainable.supervised_trainer.train_dataset.",
+      },
+      ["output_datasets"] = {
+        "An array with one dataset, the output data [optional]",
+      },
+      ["replacement"] = "Replacement during training [optional]",
+      ["supervised_layer"] = {
+        "A table with { size=NUMBER, actf=ACTF_STRING } [optional]",
+      },
+      ["on_the_fly"] = {
+        "A boolean, for large datasets, the greedy algorithm must",
+        "compute",
+        "encodings on-the-fly, in order to reduce the memory",
+        "fingerprint [optional]",
+      },
+    },
+    outputs= {
+      {"The sdae_table = { weights = ARRAY OF MATRIXES,",
+       "bias = ARRAY OF MATRIXES }",},
+      {"An instance of ann.components.stack() with encoding",
+       "part of SDAE (or a deep classifier if given",
+       "output_datsets" },
+    }
+  }..
+  function(t)
+    local params = get_table_fields(
+      {
+        optimizer        = { mandatory=false, type_match="function",
+                             default = function() return nil end},
+        names_prefix     = { mandatory=false, default="", type_match="string" },
+        shuffle_random   = { mandatory=true,  isa_match=random },
+        weights_random   = { mandatory=true,  isa_match=random },
+        layers           = { mandatory=true, type_match="table",
+                             getter=get_table_fields_ipairs{
+                               actf = { mandatory=true, type_match="string" },
+                               size = { mandatory=true, type_match="number" },
+                             }, },
+        bunch_size       = { mandatory=true, type_match="number", },
+        training_options = { mandatory=true },
+
+        --      , type_match="table",
+        --			   getter=get_table_fields_recursive{
+        --			     global = { mandatory=true, type_match="table",
+        --					
+        --			   } },
+        --
+        
+        input_dataset    = { mandatory=false },
+        output_datasets  = { mandatory=false, type_match="table", default=nil },
+        distribution     = { mandatory=false, type_match="table", default=nil,
+                             getter=get_table_fields_ipairs{
+                               input_dataset   = { mandatory=true },
+                               output_datasets = { mandatory=true },
+                               probability     = { mandatory=true },
+                             }, },
+        replacement      = { mandatory=false, type_match="number", default=nil },
+        supervised_layer = { mandatory=false, type_match="table", default=nil,
+                             getter=get_table_fields_recursive{
+                               actf = { mandatory=true, type_match="string" },
+                               size = { mandatory=true, type_match="number" },
+                             }, },
+        on_the_fly        = { mandatory=false, default=false, type_match="boolean" },
+      }, t)
+    -- Error checking in params table --
+    if params.input_dataset and params.distribution then
+      error("The input_dataset and distribution parameters are forbidden together")
+    end
+    if params.distribution and not params.replacement then
+      error("The replacement parameter is mandatary if distribution")
+    end
+    if (params.supervised_layer~=nil) == (not params.output_datasets) then
+      error("Params output_datasets and "..
+              "supervised_layer must be present together")
+    end
+    params.training_options.global    = params.training_options.global    or { ann_options = {} }
+    params.training_options.layerwise = params.training_options.layerwise or {}
+    params.training_options.global.ann_options = params.training_options.global.ann_options or {}
+    --------------------------------------
+    -- on the fly. Do not generate all the dataset for each layer
+    local on_the_fly = params.on_the_fly
+    if params.replacement and not params.on_the_fly then
+      fprintf(io.stderr,
+              "WARNING!!!! THE REPLACEMENT PARAMETER IS NOT FORCING "..
+                "ON_THE_FLY, THEY ARE INDEPENDENT\n")
+    end
+    if on_the_fly and params.distribution then
+      error("On the fly mode is not working with dataset distribution")
+    end
+    -- copy dataset params to auxiliar table
+    local current_dataset_params = {
+      input_dataset = params.input_dataset,
+      distribution  = params.distribution
+    }
+    -- output weights and bias matrices
+    local weights = {}
+    local bias    = {}
+    -- incremental mlp
+    local mlp_final_weights = matrix.dict()
+    local mlp_final = ann.components.stack{ name=params.names_prefix.."stack" }
+    -- loop for each pair of layers
+    for i=2,#params.layers do
+      local input_size = params.layers[i-1].size
+      local cod_size   = params.layers[i].size
+      printf("# Training of layer %d--%d--%d (number %d)\n",
+             input_size, cod_size, input_size, i-1)
       io.stdout:flush()
-    end
-    local best_net = trainer
-    -- printf("AFTER TRAIN %d\n", i)
-    ---------------------------------------------------------
-    local b1mat = best_net:weights(params.names_prefix.."b1"):clone()
-    local b2mat = best_net:weights(params.names_prefix.."b2"):clone()
-    local wmat  = best_net:weights(params.names_prefix.."w"):clone()
-    table.insert(weights, wmat)
-    table.insert(bias, { b1mat, b2mat })
-    --
-    mlp_final:push( ann.components.hyperplane{
-		      input  = input_size,
-		      output = cod_size,
-		      name   = params.names_prefix.."layer" .. (i-1),
-		      dot_product_name    = params.names_prefix.."w" .. (i-1),
-		      bias_name           = params.names_prefix.."b" .. (i-1),
-		      dot_product_weights = params.names_prefix.."w" .. (i-1),
-		      bias_weights        = params.names_prefix.."b" .. (i-1), })
-    mlp_final:push( ann.components.actf[cod_actf]{ name=params.names_prefix.."actf" .. (i-1) } )
-    mlp_final_weights[params.names_prefix.."w" .. (i-1)] = wmat
-    mlp_final_weights[params.names_prefix.."b"    .. (i-1)] = b1mat
-    --
-    --insert the information
-    if not on_the_fly then
-      if i ~= #params.layers or params.supervised_layer then
-	-- printf("LAYER %d\n", i)
-	-- generation of new input patterns using only the first part of
-	-- autoencoder except at last loop iteration (only if not
-	-- supervised_layer)
-	local codifier
-	codifier = build_two_layered_codifier(params.names_prefix,
-					      input_size,
-					      input_actf,
-					      cod_size,
-					      cod_actf)
-	local cod_trainer = trainable.supervised_trainer(codifier,
-							 nil,
-							 params.bunch_size,
-							 params.optimizer())
-	cod_trainer:build()
-	-- print("Load bias ", params.names_prefix .. "b")
-	cod_trainer:weights(params.names_prefix.."b"):copy(b1mat)
-	cod_trainer:weights(params.names_prefix.."w"):copy(wmat)
-	if current_dataset_params.distribution then
-	  -- compute code for each distribution dataset
-	  for _,v in ipairs(current_dataset_params.distribution) do
-	    v.input_dataset = cod_trainer:use_dataset{
-	      input_dataset = v.input_dataset,
-	      output_dataset = dataset.matrix(matrix(v.input_dataset:numPatterns(),
-						     cod_trainer:get_output_size())),
-	    }
-	  end
-	else
-	  -- compute code for input dataset
-	  local ds = cod_trainer:use_dataset{
-	    input_dataset = current_dataset_params.input_dataset,
-	    output_dataset = dataset.matrix(matrix(current_dataset_params.input_dataset:numPatterns(),
-						   cod_trainer:get_output_size())),
-	  }
-	  current_dataset_params.input_dataset = ds
-	end -- if distribution ... else
-      end -- if i ~= params.layers
-    end -- for i=2,#params.layers
-  end -- if not on_the_fly
-  local sdae_table = {weights=weights, bias=bias}
-  -- Train a supervised layer
-  if params.supervised_layer then
-    printf("# Training of supervised layer %d--%d (number %d)\n",
-	   params.layers[#params.layers].size, params.supervised_layer.size,
-	   #params.layers)
-    local input_size     = params.layers[#params.layers].size
-    local input_actf     = params.layers[#params.layers].actf
-    local output_size    = params.supervised_layer.size
-    local output_actf    = params.supervised_layer.actf
-    local global_options    = table.deep_copy(params.training_options.global)
-    local layerwise_options = (params.training_options.layerwise[#params.layers] or
-				 { ann_options = {} })
-    layerwise_options.ann_options = layerwise_options.ann_options or {}
-    local lookup = function(name) return layerwise_options[name] or global_options[name] end
-    local data
-
-    if not on_the_fly then
-      data = generate_training_table_configuration(current_dataset_params,
-						   params.replacement,
-						   params.shuffle_random,
-						   lookup("noise_pipeline") or {},
-						   params.output_datasets)
-
-    else
-      local mlp_final_trainer = trainable.supervised_trainer(mlp_final:clone(),
-							     nil,
-							     params.bunch_size,
-							     params.optimizer())
-      local aux_weights = mlp_final_weights:clone()
-      mlp_final_trainer:build{ weights = aux_weights }
-      data = generate_training_table_configuration_on_the_fly(current_dataset_params,
-							      params.replacement,
-							      params.shuffle_random,
-							      lookup("noise_pipeline") or {},
-							      mlp_final_trainer,
-							      params.output_datasets)
-
-    end
-    local thenet = ann.mlp.all_all.generate(
-      string.format("%d inputs %d %s",
-		    input_size,
-		    output_size,
-		    output_actf),
-      nil, params.names_prefix)
-    local loss_function
-    if output_actf == "log_logistic" then
-      loss_function = ann.loss.cross_entropy(output_size)
-    elseif output_actf == "log_softmax" then
-      loss_function = ann.loss.multi_class_cross_entropy(output_size)
-    else
-      loss_function = ann.loss.mse(output_size)
-    end
-    local thenet_trainer = trainable.supervised_trainer(thenet,
-							loss_function,
-							params.bunch_size,
-							params.optimizer())
-    thenet_trainer:build()
-    for key,value in pairs(global_options.ann_options) do
-      if layerwise_options.ann_options[key] == nil then
-	thenet_trainer:set_option(key, value)
+      local input_actf = params.layers[i-1].actf
+      if input_actf == "logistic" then input_actf = "log_logistic"
+      elseif input_actf == "softmax" then input_actf = "log_softmax"
       end
-    end
-    for key,value in pairs(layerwise_options.ann_options) do
-      thenet_trainer:set_option(key, value)
-    end
-    for _,reg in ipairs({ "weight_decay", "L1_norm", "max_norm_penalty" }) do
-      if thenet_trainer:has_option(reg) then
-	thenet_trainer:set_layerwise_option(params.names_prefix.."b.*", reg, 0.0)
+      local cod_actf   = params.layers[i].actf
+      local global_options    = table.deep_copy(params.training_options.global)
+      local layerwise_options = params.training_options.layerwise[i-1] or {}
+      layerwise_options.ann_options = layerwise_options.ann_options or {}
+      local lookup = function(name) return layerwise_options[name] or global_options[name] end
+      local data
+      if not on_the_fly or i == 2 then
+        data = generate_training_table_configuration(current_dataset_params,
+                                                     params.replacement,
+                                                     params.shuffle_random,
+                                                     lookup("noise_pipeline") or {},
+                                                     nil)
+      else
+        local mlp_final_trainer = trainable.supervised_trainer(mlp_final:clone(),
+                                                               nil,
+                                                               params.bunch_size,
+                                                               params.optimizer())
+
+        local aux_weights = mlp_final_weights:clone()
+        mlp_final_trainer:build{ weights=aux_weights }
+        data = generate_training_table_configuration_on_the_fly(current_dataset_params,
+                                                                params.replacement,
+                                                                params.shuffle_random,
+                                                                lookup("noise_pipeline") or {},
+                                                                mlp_final_trainer,
+                                                                nil)
       end
+      local dae
+      dae = build_two_layered_autoencoder_from_sizes_and_actf(params.names_prefix,
+                                                              input_size,
+                                                              input_actf,
+                                                              cod_size,
+                                                              cod_actf,
+                                                              params.weights_random)
+      collectgarbage("collect")
+      local loss_function
+      if input_actf == "log_logistic" then
+        loss_function = ann.loss.cross_entropy(input_size)
+      elseif input_actf == "log_softmax" then
+        loss_function = ann.loss.multi_class_cross_entropy(input_size)
+      else
+        loss_function = ann.loss.mse(input_size)
+      end
+      ---------- TRAIN THE AUTOENCODER WO VALIDATION ----------
+      local trainer = trainable.supervised_trainer(dae, loss_function,
+                                                   params.bunch_size,
+                                                   params.optimizer())
+      trainer:build()
+      for key,value in pairs(global_options.ann_options) do
+        if layerwise_options.ann_options[key] == nil then
+          trainer:set_option(key, value)
+        end
+      end
+      for key,value in pairs(layerwise_options.ann_options) do
+        trainer:set_option(key, value)
+      end
+      for _,reg in ipairs({ "weight_decay", "L1_norm", "max_norm_penalty" }) do
+        if trainer:has_option(reg) then
+          trainer:set_layerwise_option(params.names_prefix.."b.*", reg, 0.0)
+        end
+      end
+      if input_actf=="linear" or cod_actf=="linear" then
+        -- if activation is linear, the derivative slope is so high, so we use
+        -- learning_rate to reduce its impact
+        local ratio = 1/math.sqrt(cod_size+input_size)
+        trainer:set_option("learning_rate", trainer:get_option("learning_rate")*ratio)
+      end
+      -- printf("BEFORE TRAIN %d\n", i)
+      local train_func = trainable.train_wo_validation{
+        min_epochs     = lookup("min_epochs"),
+        max_epochs     = lookup("max_epochs"),
+        percentage_stopping_criterion = lookup("pretraining_percentage_stopping_criterion"),      
+      }
+      while train_func:execute(function()
+          local data = data
+          if type(data) == "function" then data = data() end
+          return trainer,trainer:train_dataset(data)
+      end) do
+        local t = train_func:get_state_table()
+        printf("%4d %10.6f  (improvement %.4f)\n",
+               t.current_epoch, t.train_error, t.train_improvement)
+        io.stdout:flush()
+      end
+      local best_net = trainer
+      -- printf("AFTER TRAIN %d\n", i)
+      ---------------------------------------------------------
+      local b1mat = best_net:weights(params.names_prefix.."b1"):clone()
+      local b2mat = best_net:weights(params.names_prefix.."b2"):clone()
+      local wmat  = best_net:weights(params.names_prefix.."w"):clone()
+      table.insert(weights, wmat)
+      table.insert(bias, { b1mat, b2mat })
+      --
+      mlp_final:push( ann.components.hyperplane{
+                        input  = input_size,
+                        output = cod_size,
+                        name   = params.names_prefix.."layer" .. (i-1),
+                        dot_product_name    = params.names_prefix.."w" .. (i-1),
+                        bias_name           = params.names_prefix.."b" .. (i-1),
+                        dot_product_weights = params.names_prefix.."w" .. (i-1),
+                        bias_weights        = params.names_prefix.."b" .. (i-1), })
+      mlp_final:push( ann.components.actf[cod_actf]{ name=params.names_prefix.."actf" .. (i-1) } )
+      mlp_final_weights[params.names_prefix.."w" .. (i-1)] = wmat
+      mlp_final_weights[params.names_prefix.."b"    .. (i-1)] = b1mat
+      --
+      --insert the information
+      if not on_the_fly then
+        if i ~= #params.layers or params.supervised_layer then
+          -- printf("LAYER %d\n", i)
+          -- generation of new input patterns using only the first part of
+          -- autoencoder except at last loop iteration (only if not
+          -- supervised_layer)
+          local codifier
+          codifier = build_two_layered_codifier(params.names_prefix,
+                                                input_size,
+                                                input_actf,
+                                                cod_size,
+                                                cod_actf)
+          local cod_trainer = trainable.supervised_trainer(codifier,
+                                                           nil,
+                                                           params.bunch_size,
+                                                           params.optimizer())
+          cod_trainer:build()
+          -- print("Load bias ", params.names_prefix .. "b")
+          cod_trainer:weights(params.names_prefix.."b"):copy(b1mat)
+          cod_trainer:weights(params.names_prefix.."w"):copy(wmat)
+          if current_dataset_params.distribution then
+            -- compute code for each distribution dataset
+            for _,v in ipairs(current_dataset_params.distribution) do
+              v.input_dataset = cod_trainer:use_dataset{
+                input_dataset = v.input_dataset,
+                output_dataset = dataset.matrix(matrix(v.input_dataset:numPatterns(),
+                                                       cod_trainer:get_output_size())),
+              }
+            end
+          else
+            -- compute code for input dataset
+            local ds = cod_trainer:use_dataset{
+              input_dataset = current_dataset_params.input_dataset,
+              output_dataset = dataset.matrix(matrix(current_dataset_params.input_dataset:numPatterns(),
+                                                     cod_trainer:get_output_size())),
+            }
+            current_dataset_params.input_dataset = ds
+          end -- if distribution ... else
+        end -- if i ~= params.layers
+      end -- for i=2,#params.layers
+    end -- if not on_the_fly
+    local sdae_table = {weights=weights, bias=bias}
+    -- Train a supervised layer
+    if params.supervised_layer then
+      printf("# Training of supervised layer %d--%d (number %d)\n",
+             params.layers[#params.layers].size, params.supervised_layer.size,
+             #params.layers)
+      local input_size     = params.layers[#params.layers].size
+      local input_actf     = params.layers[#params.layers].actf
+      local output_size    = params.supervised_layer.size
+      local output_actf    = params.supervised_layer.actf
+      local global_options    = table.deep_copy(params.training_options.global)
+      local layerwise_options = (params.training_options.layerwise[#params.layers] or
+                                   { ann_options = {} })
+      layerwise_options.ann_options = layerwise_options.ann_options or {}
+      local lookup = function(name) return layerwise_options[name] or global_options[name] end
+      local data
+
+      if not on_the_fly then
+        data = generate_training_table_configuration(current_dataset_params,
+                                                     params.replacement,
+                                                     params.shuffle_random,
+                                                     lookup("noise_pipeline") or {},
+                                                     params.output_datasets)
+
+      else
+        local mlp_final_trainer = trainable.supervised_trainer(mlp_final:clone(),
+                                                               nil,
+                                                               params.bunch_size,
+                                                               params.optimizer())
+        local aux_weights = mlp_final_weights:clone()
+        mlp_final_trainer:build{ weights = aux_weights }
+        data = generate_training_table_configuration_on_the_fly(current_dataset_params,
+                                                                params.replacement,
+                                                                params.shuffle_random,
+                                                                lookup("noise_pipeline") or {},
+                                                                mlp_final_trainer,
+                                                                params.output_datasets)
+
+      end
+      local thenet = ann.mlp.all_all.generate(
+        string.format("%d inputs %d %s",
+                      input_size,
+                      output_size,
+                      output_actf),
+        nil, params.names_prefix)
+      local loss_function
+      if output_actf == "log_logistic" then
+        loss_function = ann.loss.cross_entropy(output_size)
+      elseif output_actf == "log_softmax" then
+        loss_function = ann.loss.multi_class_cross_entropy(output_size)
+      else
+        loss_function = ann.loss.mse(output_size)
+      end
+      local thenet_trainer = trainable.supervised_trainer(thenet,
+                                                          loss_function,
+                                                          params.bunch_size,
+                                                          params.optimizer())
+      thenet_trainer:build()
+      for key,value in pairs(global_options.ann_options) do
+        if layerwise_options.ann_options[key] == nil then
+          thenet_trainer:set_option(key, value)
+        end
+      end
+      for key,value in pairs(layerwise_options.ann_options) do
+        thenet_trainer:set_option(key, value)
+      end
+      for _,reg in ipairs({ "weight_decay", "L1_norm", "max_norm_penalty" }) do
+        if thenet_trainer:has_option(reg) then
+          thenet_trainer:set_layerwise_option(params.names_prefix.."b.*", reg, 0.0)
+        end
+      end
+      thenet_trainer:randomize_weights{
+        random     = params.weights_random,
+        inf=-math.sqrt(6 / (input_size + output_size)),
+        sup= math.sqrt(6 / (input_size + output_size))
+      }
+      local train_func = trainable.train_wo_validation{
+        min_epochs     = lookup("min_epochs"),
+        max_epochs     = lookup("max_epochs"),
+        percentage_stopping_criterion = lookup("pretraining_percentage_stopping_criterion"),      
+      }
+      while train_func:execute(function()
+          local data = data
+          if type(data) == "function" then data = data() end
+          return thenet_trainer,thenet_trainer:train_dataset(data)
+      end) do
+        local t = train_func:get_state_table()
+        printf("%4d %10.6f  (improvement %.4f)\n",
+               t.current_epoch, t.train_error, t.train_improvement)
+        io.stdout:flush()	
+      end
+      local best_net_trainer = thenet_trainer
+      local wobj  = best_net_trainer:weights(params.names_prefix.."w1"):clone()
+      local bobj  = best_net_trainer:weights(params.names_prefix.."b1"):clone()
+      local lastn = #params.layers
+      mlp_final:push( ann.components.hyperplane{
+                        input  = input_size,
+                        output = output_size,
+                        name   = params.names_prefix.."layer" .. lastn,
+                        dot_product_name    = params.names_prefix.."w" .. lastn,
+                        bias_name           = params.names_prefix.."b" .. lastn,
+                        dot_product_weights = params.names_prefix.."w" .. lastn,
+                        bias_weights        = params.names_prefix.."b" .. lastn, })
+      mlp_final:push( ann.components.actf[output_actf]{
+                        name=params.names_prefix.."actf" .. lastn } )
+      mlp_final_weights[params.names_prefix.."w" .. lastn] = wobj
+      mlp_final_weights[params.names_prefix.."b"    .. lastn] = bobj
     end
-    thenet_trainer:randomize_weights{
-      random     = params.weights_random,
-      inf=-math.sqrt(6 / (input_size + output_size)),
-      sup= math.sqrt(6 / (input_size + output_size))
-    }
-    local train_func = trainable.train_wo_validation{
-      min_epochs     = lookup("min_epochs"),
-      max_epochs     = lookup("max_epochs"),
-      percentage_stopping_criterion = lookup("pretraining_percentage_stopping_criterion"),      
-    }
-    while train_func:execute(function()
-                               local data = data
-                               if type(data) == "function" then data = data() end
-                               return thenet_trainer,thenet_trainer:train_dataset(data)
-                             end) do
-      local t = train_func:get_state_table()
-      printf("%4d %10.6f  (improvement %.4f)\n",
-             t.current_epoch, t.train_error, t.train_improvement)
-      io.stdout:flush()	
-    end
-    local best_net_trainer = thenet_trainer
-    local wobj  = best_net_trainer:weights(params.names_prefix.."w1"):clone()
-    local bobj  = best_net_trainer:weights(params.names_prefix.."b1"):clone()
-    local lastn = #params.layers
-    mlp_final:push( ann.components.hyperplane{
-		      input  = input_size,
-		      output = output_size,
-		      name   = params.names_prefix.."layer" .. lastn,
-		      dot_product_name    = params.names_prefix.."w" .. lastn,
-		      bias_name           = params.names_prefix.."b" .. lastn,
-		      dot_product_weights = params.names_prefix.."w" .. lastn,
-		      bias_weights        = params.names_prefix.."b" .. lastn, })
-    mlp_final:push( ann.components.actf[output_actf]{
-		      name=params.names_prefix.."actf" .. lastn } )
-    mlp_final_weights[params.names_prefix.."w" .. lastn] = wobj
-    mlp_final_weights[params.names_prefix.."b"    .. lastn] = bobj
+    
+    mlp_final:build{ weights = mlp_final_weights }
+    
+    return sdae_table, mlp_final
   end
-  
-  mlp_final:build{ weights = mlp_final_weights }
-  
-  return sdae_table, mlp_final
-end
 
 -- This function returns a MLP formed by the codification part of a full stacked
 -- auto encoder
@@ -1057,197 +1054,197 @@ end
 
 ----------------------------------------------------------------------------
 
-april_set_doc("ann.autoencoders.iterative_sampling",
-	      {
-		class="function",
-		summary={"This function generates samples from a given autoencoder.", },
-		description=
-		  {
-		    "This function generates samples from a given autoencoder,",
-		    "iterating a until convergence. It is possible to indicate",
-		    "a mask of input positions that will be keep untouched.",
-		  },
-		params= {
-		  ["model"] = {"An autoencoder ANN component (not a trainer"},
-		  ["noise"] = {"An ANN component for noise generation (not a trainer"},
-		  ["mask"]   = {"An array with the input positions which",
-				"will be keep untouched [optional]",},
-		  ["input"] = {"A col-major matrix with the input values."},
-		  ["max"] = "Max number of iterations",
-		  ["stop"] = "Stop when loss difference between iterations is lower than given value",
-		  ["verbose"] = "Verbosity true or false [optional].",
-		  ["alpha"] = "A number with the gradient step at each iteration.",
-		  ["log"] = "A boolean indicating if the output is logarithmic [optional]",
-		  ["loss"] = "A loss function instance",
-		},
-		outputs= {
-		  {"A table with the input array after sampling, in natural",
-		   "scale (not logarithmic), even if log=true"},
-		}
-	      })
-function ann.autoencoders.iterative_sampling(t)
-  local params = get_table_fields(
-    {
-      model      = { mandatory = true,  isa_match  = ann.components.base },
-      noise      = { mandatory = true,  isa_match  = ann.components.base },
-      mask       = { mandatory = false, type_match = "table", default = {}, },
-      max        = { mandatory = true,  type_match = "number" },
-      stop       = { mandatory = true,  type_match = "number" },
-      verbose    = { mandatory = false, type_match = "boolean", default=false },
-      log        = { mandatory = false, type_match = "boolean", default=false },
-      input      = { mandatory = true,  isa_match  = matrix  },
-      loss       = { mandatory = true,  isa_match  = ann.loss },
-    }, t)
-  assert(params.model:get_input_size() == params.model:get_output_size(),
-	 "Input and output sizes must be equal!!! (it is an auto-encoder)")
-  local L       = 11111111111111111
-  local last_L  = 11111111111111111
-  local input_rewrapped = params.input:rewrap(1, params.input:size())
-  local input   = input_rewrapped:clone()
-  local output  = input
-  local chain   = {}
-  for i=1,params.max do
-    params.model:reset()
-    output = params.model:forward(input)
-    -- restore masked positions
-    -- for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
-    -- compute the loss of current iteration
-    params.loss:reset()
-    L = params.loss:loss(output, params.model:get_input())
-    if params.log then output:get_matrix():exp() end
-    -- restore masked positions
-    for _,pos in ipairs(params.mask) do
-      output:get_matrix():set(1,pos,input_rewrapped:get(1,pos))
+ann.autoencoders.iterative_sampling =
+  april_doc{
+    class="function",
+    summary={"This function generates samples from a given autoencoder.", },
+    description=
+      {
+        "This function generates samples from a given autoencoder,",
+        "iterating a until convergence. It is possible to indicate",
+        "a mask of input positions that will be keep untouched.",
+      },
+    params= {
+      ["model"] = {"An autoencoder ANN component (not a trainer"},
+      ["noise"] = {"An ANN component for noise generation (not a trainer"},
+      ["mask"]   = {"An array with the input positions which",
+                    "will be keep untouched [optional]",},
+      ["input"] = {"A col-major matrix with the input values."},
+      ["max"] = "Max number of iterations",
+      ["stop"] = "Stop when loss difference between iterations is lower than given value",
+      ["verbose"] = "Verbosity true or false [optional].",
+      ["alpha"] = "A number with the gradient step at each iteration.",
+      ["log"] = "A boolean indicating if the output is logarithmic [optional]",
+      ["loss"] = "A loss function instance",
+    },
+    outputs= {
+      {"A table with the input array after sampling, in natural",
+       "scale (not logarithmic), even if log=true"},
+    }
+  } ..
+  function(t)
+    local params = get_table_fields(
+      {
+        model      = { mandatory = true,  isa_match  = ann.components.base },
+        noise      = { mandatory = true,  isa_match  = ann.components.base },
+        mask       = { mandatory = false, type_match = "table", default = {}, },
+        max        = { mandatory = true,  type_match = "number" },
+        stop       = { mandatory = true,  type_match = "number" },
+        verbose    = { mandatory = false, type_match = "boolean", default=false },
+        log        = { mandatory = false, type_match = "boolean", default=false },
+        input      = { mandatory = true,  isa_match  = matrix  },
+        loss       = { mandatory = true,  isa_match  = ann.loss },
+      }, t)
+    assert(params.model:get_input_size() == params.model:get_output_size(),
+           "Input and output sizes must be equal!!! (it is an auto-encoder)")
+    local L       = 11111111111111111
+    local last_L  = 11111111111111111
+    local input_rewrapped = params.input:rewrap(1, params.input:size())
+    local input   = input_rewrapped:clone()
+    local output  = input
+    local chain   = {}
+    for i=1,params.max do
+      params.model:reset()
+      output = params.model:forward(input)
+      -- restore masked positions
+      -- for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
+      -- compute the loss of current iteration
+      params.loss:reset()
+      L = params.loss:loss(output, params.model:get_input())
+      if params.log then output:get_matrix():exp() end
+      -- restore masked positions
+      for _,pos in ipairs(params.mask) do
+        output:get_matrix():set(1,pos,input_rewrapped:get(1,pos))
+      end
+      -- insert current output to the chain
+      table.insert(chain, output:get_matrix():rewrap(table.unpack(params.input:dim())))
+      -- improvement measure
+      local imp = math.abs(math.abs(last_L - L)/last_L)
+      if params.verbose then printf("%6d %6g :: %6g\n", i, L, imp) end
+      -- stop criterion
+      if last_L == 0 or imp < params.stop then break end
+      last_L = L
+      -- sample from noise distribution
+      params.noise:reset()
+      local input_token = params.noise:forward(output)
+      input = input_token:get_matrix()
+      -- restore masked positions
+      for _,pos in ipairs(params.mask) do
+        input:set(1,pos,input_rewrapped:get(1,pos))
+      end
     end
-    -- insert current output to the chain
-    table.insert(chain, output:get_matrix():rewrap(table.unpack(params.input:dim())))
-    -- improvement measure
-    local imp = math.abs(math.abs(last_L - L)/last_L)
-    if params.verbose then printf("%6d %6g :: %6g\n", i, L, imp) end
-    -- stop criterion
-    if last_L == 0 or imp < params.stop then break end
-    last_L = L
-    -- sample from noise distribution
-    params.noise:reset()
-    local input_token = params.noise:forward(output)
-    input = input_token:get_matrix()
-    -- restore masked positions
-    for _,pos in ipairs(params.mask) do
-      input:set(1,pos,input_rewrapped:get(1,pos))
-    end
+    return output:get_matrix():rewrap(table.unpack(params.input:dim())),L,chain
   end
-  return output:get_matrix():rewrap(table.unpack(params.input:dim())),L,chain
-end
 
 ----------------------------------------------------------------------------
 
-april_set_doc("ann.autoencoders.sgd_sampling",
-	      {
-		class="function",
-		summary={"This function generates samples from a given autoencoder.", },
-		description=
-		  {
-		    "This function generates samples from a given autoencoder,",
-		    "using gradient descent a until convergence. It is possible to indicate",
-		    "a mask of input positions that will be keep untouched.",
-		  },
-		params= {
-		  ["model"] = {"An autoencoder ANN component (not a trainer"},
-		  ["noise"] = {"An ANN component for noise generation (not a trainer"},
-		  ["mask"]   = {"An array with the input positions which",
-				"will be keep untouched [optional]",},
-		  ["input"] = {"A col-major matrix with the input values."},
-		  ["max"] = "Max number of iterations",
-		  ["stop"] = "Stop when loss difference between iterations is lower than given value",
-		  ["verbose"] = "Verbosity true or false [optional].",
-		  ["alpha"] = "A number with the gradient step at each iteration.",
-		  ["beta"]  = "A number for combination with iterative sampling.",
-		  ["clamp"] = "A function to clamp sample values [optional].",
-		  ["log"] = "A boolean indicating if the output is logarithmic [optional]",
-		  ["loss"] = "A loss function instance",
-		},
-		outputs= {
-		  {"A table with the input array after sampling, in natural",
-		   "scale (not logarithmic), even if log=true"},
-		}
-	      })
-function ann.autoencoders.sgd_sampling(t)
-  local params = get_table_fields(
-    {
-      model      = { mandatory = true,  isa_match  = ann.components.base },
-      noise      = { mandatory = true,  isa_match  = ann.components.base },
-      mask       = { mandatory = false, type_match = "table", default = {}, },
-      input      = { mandatory = true,  isa_match  = matrix },
-      max        = { mandatory = true,  type_match = "number" },
-      stop       = { mandatory = true,  type_match = "number" },
-      verbose    = { mandatory = false, type_match = "boolean", default=false },
-      alpha      = { mandatory = true,  type_match = "number" },
-      beta       = { mandatory = false, type_match = "number",  default=0.0 },
-      clamp      = { mandatory = false, type_match = "function",
-		     default = function(v) return v end, },
-      log        = { mandatory = false, type_match = "boolean", default=false },
-      loss       = { mandatory = true,  isa_match  = ann.loss },
-    }, t)
-  assert(params.model:get_input_size() == params.model:get_output_size(),
-	 "Input and output sizes must be equal!!! (it is an auto-encoder)")
-  local L        = 11111111111111111
-  local last_L   = 11111111111111111
-  local min      = 11111111111111111
-  local input_rewrapped = params.input:rewrap(1, params.input:size())
-  local input    = input_rewrapped:clone()
-  local output   = input
-  local result   = input
-  local chain    = {}
-  for i=1,params.max do
-    params.model:reset()
-    output = params.model:forward(input):clone()
-    -- restore masked positions
-    -- for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
-    -- compute the loss of current iteration
-    params.loss:reset()
-    L = params.loss:loss(output, params.model:get_input())
-    if params.log then output:get_matrix():exp() end
-    -- restore masked positions
-    for _,pos in ipairs(params.mask) do
-      output:get_matrix():set(1,pos,input_rewrapped:get(1,pos))
+ann.autoencoders.sgd_sampling =
+  april_doc{
+    class="function",
+    summary={"This function generates samples from a given autoencoder.", },
+    description=
+      {
+        "This function generates samples from a given autoencoder,",
+        "using gradient descent a until convergence. It is possible to indicate",
+        "a mask of input positions that will be keep untouched.",
+      },
+    params= {
+      ["model"] = {"An autoencoder ANN component (not a trainer"},
+      ["noise"] = {"An ANN component for noise generation (not a trainer"},
+      ["mask"]   = {"An array with the input positions which",
+                    "will be keep untouched [optional]",},
+      ["input"] = {"A col-major matrix with the input values."},
+      ["max"] = "Max number of iterations",
+      ["stop"] = "Stop when loss difference between iterations is lower than given value",
+      ["verbose"] = "Verbosity true or false [optional].",
+      ["alpha"] = "A number with the gradient step at each iteration.",
+      ["beta"]  = "A number for combination with iterative sampling.",
+      ["clamp"] = "A function to clamp sample values [optional].",
+      ["log"] = "A boolean indicating if the output is logarithmic [optional]",
+      ["loss"] = "A loss function instance",
+    },
+    outputs= {
+      {"A table with the input array after sampling, in natural",
+       "scale (not logarithmic), even if log=true"},
+    }
+  } ..
+  function(t)
+    local params = get_table_fields(
+      {
+        model      = { mandatory = true,  isa_match  = ann.components.base },
+        noise      = { mandatory = true,  isa_match  = ann.components.base },
+        mask       = { mandatory = false, type_match = "table", default = {}, },
+        input      = { mandatory = true,  isa_match  = matrix },
+        max        = { mandatory = true,  type_match = "number" },
+        stop       = { mandatory = true,  type_match = "number" },
+        verbose    = { mandatory = false, type_match = "boolean", default=false },
+        alpha      = { mandatory = true,  type_match = "number" },
+        beta       = { mandatory = false, type_match = "number",  default=0.0 },
+        clamp      = { mandatory = false, type_match = "function",
+                       default = function(v) return v end, },
+        log        = { mandatory = false, type_match = "boolean", default=false },
+        loss       = { mandatory = true,  isa_match  = ann.loss },
+      }, t)
+    assert(params.model:get_input_size() == params.model:get_output_size(),
+           "Input and output sizes must be equal!!! (it is an auto-encoder)")
+    local L        = 11111111111111111
+    local last_L   = 11111111111111111
+    local min      = 11111111111111111
+    local input_rewrapped = params.input:rewrap(1, params.input:size())
+    local input    = input_rewrapped:clone()
+    local output   = input
+    local result   = input
+    local chain    = {}
+    for i=1,params.max do
+      params.model:reset()
+      output = params.model:forward(input):clone()
+      -- restore masked positions
+      -- for _,pos in ipairs(params.mask) do output[pos] = params.input[pos] end
+      -- compute the loss of current iteration
+      params.loss:reset()
+      L = params.loss:loss(output, params.model:get_input())
+      if params.log then output:get_matrix():exp() end
+      -- restore masked positions
+      for _,pos in ipairs(params.mask) do
+        output:get_matrix():set(1,pos,input_rewrapped:get(1,pos))
+      end
+      table.insert(chain, output:get_matrix():rewrap(table.unpack(params.input:dim())))
+      local imp = math.abs(math.abs(last_L - L)/last_L)
+      if params.verbose then printf("%6d %6g :: %6g", i, L, imp) end
+      if i==1 or L <= min then
+        min,result = L,output:get_matrix()
+        if params.verbose then printf(" *") end
+      end
+      if params.verbose then printf("\n") end
+      if last_L == 0 or imp < params.stop then break end
+      -- GRADIENT DESCENT UPDATE OF INPUT VECTOR
+      --aux = params.noise:forward(input):get_matrix()
+      ---- restore masked positions
+      --for _,pos in ipairs(params.mask) do
+      --aux:set(1,pos,input_rewrapped:get(1,pos))
+      --end
+      
+      local gradient = params.model:backprop(params.loss:gradient(params.model:get_output(),
+                                                                  params.model:get_input()))
+      -- local g = gradient:get_matrix():clone("row_major"):rewrap(16,16):pow(2):sqrt():clamp(0,1)
+      -- matrix.saveImage(g, string.format("gradient-%04d.pnm", i))
+      gradient = gradient:get_matrix()
+      output   = output:get_matrix()
+      -- input = (1 - beta)*input + beta*output - alpha*gradient
+      input = ( input:clone():
+                  scal(1.0 - params.beta):
+                  axpy(params.beta, output):
+                  axpy(-params.alpha, gradient) )
+      params.clamp(input)
+      --
+      last_L = L
+      -- sample from noise distribution
+      params.noise:reset()
+      input = params.noise:forward(input):get_matrix()
+      -- restore masked positions
+      for _,pos in ipairs(params.mask) do
+        input:set(1,pos,input_rewrapped:get(1,pos))
+      end
     end
-    table.insert(chain, output:get_matrix():rewrap(table.unpack(params.input:dim())))
-    local imp = math.abs(math.abs(last_L - L)/last_L)
-    if params.verbose then printf("%6d %6g :: %6g", i, L, imp) end
-    if i==1 or L <= min then
-      min,result = L,output:get_matrix()
-      if params.verbose then printf(" *") end
-    end
-    if params.verbose then printf("\n") end
-    if last_L == 0 or imp < params.stop then break end
-    -- GRADIENT DESCENT UPDATE OF INPUT VECTOR
-    --aux = params.noise:forward(input):get_matrix()
-    ---- restore masked positions
-    --for _,pos in ipairs(params.mask) do
-    --aux:set(1,pos,input_rewrapped:get(1,pos))
-    --end
-    
-    local gradient = params.model:backprop(params.loss:gradient(params.model:get_output(),
-								params.model:get_input()))
-    -- local g = gradient:get_matrix():clone("row_major"):rewrap(16,16):pow(2):sqrt():clamp(0,1)
-    -- matrix.saveImage(g, string.format("gradient-%04d.pnm", i))
-    gradient = gradient:get_matrix()
-    output   = output:get_matrix()
-    -- input = (1 - beta)*input + beta*output - alpha*gradient
-    input = ( input:clone():
-	      scal(1.0 - params.beta):
-	      axpy(params.beta, output):
-	      axpy(-params.alpha, gradient) )
-    params.clamp(input)
-    --
-    last_L = L
-    -- sample from noise distribution
-    params.noise:reset()
-    input = params.noise:forward(input):get_matrix()
-    -- restore masked positions
-    for _,pos in ipairs(params.mask) do
-      input:set(1,pos,input_rewrapped:get(1,pos))
-    end
+    return result,min,chain
   end
-  return result,min,chain
-end

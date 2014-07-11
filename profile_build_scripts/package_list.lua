@@ -1,7 +1,8 @@
-return { 
-  -- BASIC PACAKGES
+local packages_list = { 
+  -- BASIC PACKAGES
   --  "plotter",
   "util",
+  "gtest",
   "utest",
   "stats",
   "dataset",
@@ -48,5 +49,6 @@ return {
   -- HMMs
   "hmm_trainer",
   "rates",
-  
 }
+
+return packages_list

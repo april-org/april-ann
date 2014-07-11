@@ -1,6 +1,7 @@
-return { 
+local packages_list = {
   -- BASIC PACAKGES
   "util",
+  "gtest",
   "utest",
   "stats",
   "dataset",
@@ -22,3 +23,5 @@ return {
   "autodiff",
   "autodiff.ann",
  }
+
+return packages_list

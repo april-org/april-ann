@@ -33,7 +33,7 @@ matrix.__make_generic_print__ = function(name,getter)
     else
       table.insert(out, "Large matrix, not printed to display")
     end
-    table.insert(out, string.format("# %s of size [%s] in %s [%s]",
+    table.insert(out, string.format("# %s of size [%s] in %s [%s]\n",
 				    name,
 				    table.concat(dims, ","), major,
 				    self:get_reference_string()))

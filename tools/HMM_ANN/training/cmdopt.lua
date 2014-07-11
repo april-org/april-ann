@@ -1,7 +1,7 @@
 cmdOptTest = cmdOpt{
   program_name = string.basename(arg[0]),
   argument_description = "",
-  main_description = "HMM/ANN training with April-ANN toolkit",
+  main_description = "HMM/ANN training with APRIL-ANN toolkit",
   {
     index_name="defopt",
     description="Load configuration file (a lua tabla)",
