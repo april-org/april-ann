@@ -22,7 +22,7 @@ package{ name = "gtest",
    target{
      name = "build",
      depends = "provide",
-     use_timestamp = false,
+     use_timestamp = true,
      object{ 
        file = "c_src/*.cc",
        dest_dir = "build",

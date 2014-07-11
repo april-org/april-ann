@@ -27,7 +27,7 @@ using std::endl;
 #define U4 "4"
 #define U5 "5"
 
-typedef hash<const char *,const char *> hash_test;
+typedef april_utils::hash<const char *,const char *> hash_test;
 
 void process_pair(hash_test::value_type p) {
   ASSERT_STRNE( p.second, adios );
