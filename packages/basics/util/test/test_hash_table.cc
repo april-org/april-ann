@@ -109,3 +109,22 @@ TEST(HashTable, HashFcnAndEqualKey) {
   
   ASSERT_EQ( t.size(), 1 );
 }
+
+#undef hola
+#undef hello
+#undef adios
+#undef ciao
+#undef bye
+#undef x
+#undef y
+#undef z
+#undef uno
+#undef dos
+#undef tres
+#undef cuatro
+#undef cinco
+#undef U1
+#undef U2
+#undef U3
+#undef U4
+#undef U5
