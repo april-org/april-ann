@@ -14,7 +14,7 @@ package{ name = "ngram.lira",
    },
    target{
      name = "test",
-     execute_script{
+     lua_unit_test{
        file={
 	 "test/test_ppl_ngramlira.lua",
        },
