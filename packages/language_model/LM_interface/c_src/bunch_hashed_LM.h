@@ -81,6 +81,7 @@ namespace LanguageModels {
 
     virtual void insertQuery(Key key, WordType word, Burden burden,
                              Score threshold) {
+      UNUSED_VARIABLE(threshold);
       WordResultHash &ctxt = context_key_hash[key];
       KeyScoreMultipleBurdenTuple &ctxt_word = ctxt[word];
       ctxt_word.burden_vector.push_back(burden);
@@ -135,12 +136,15 @@ namespace LanguageModels {
   template <typename Key, typename Score>
   class BunchHashedLM : public LMModel <Key,Score> {
   private:
+    int ngram_order;
     unsigned int bunch_size;
 
   public:
 
-    BunchHashedLM(unsigned int bunch_size) :
+    BunchHashedLM(int ngram_order,
+                  unsigned int bunch_size) :
       LMModel<Key,Score>(),
+      ngram_order(ngram_order),
       bunch_size(bunch_size) { }
     
     virtual ~BunchHashedLM() { }
