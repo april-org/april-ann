@@ -72,7 +72,7 @@ TEST(HashTable, StringStringHashTable) {
   a_table[cinco] = U5;
   EXPECT_EQ( a_table.size(), 9 );
   //
-  unsigned int count = 0;
+  int count = 0;
   for (hash_test::const_iterator i=a_table.begin(); i != a_table.end(); ++i) {
     ++count;
     EXPECT_STREQ( (*i).first, i->first );
@@ -109,5 +109,3 @@ TEST(HashTable, HashFcnAndEqualKey) {
   
   ASSERT_EQ( t.size(), 1 );
 }
-
-APRILANN_GTEST_MAIN(test_hash_table)
