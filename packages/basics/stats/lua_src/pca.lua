@@ -44,6 +44,18 @@ function stats.zca_whitening(X,U,S,epsilon)
   return X
 end
 
+-- compute PCA mass
+function stats.pca_mass(S,mass)
+  local acc = 0
+  local acc_mat = matrix.col_major(S:size())
+  for v,i in S:iterate() do
+    acc=acc + v
+    acc_mat:set(i, acc)
+  end
+  acc_mat:scal(1.0/acc)
+  return acc_mat
+end
+
 -- show PCA threshold
 function stats.pca_threshold(S,mass)
   local mass = mass or 0.99
