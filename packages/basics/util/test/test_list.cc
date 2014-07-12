@@ -1,5 +1,6 @@
 #define USE_ITERATOR_TAGS
-#include "../c_src/list.h"
+#include "gtest.h"
+#include "list.h"
 
 #include <algorithm>
 #include <iostream>
@@ -8,198 +9,180 @@ using april_utils::list;
 using std::cout;
 using std::endl;
 
-bool predicado(int x)
-{
-        return x>90;
-}
+#define N 10u
 
-void print_int(int i)
-{
-        cout << i << ", ";
-}
+namespace test_list {
 
-template<class T> void print(list<T> l)
-{
-        for (typename list<T>::iterator i = l.begin(); i != l.end(); i++)
-                cout << *i << ", ";
-}
+  struct checkValue {
+    int value;
+    checkValue(int v) : value(v) { }
+    void operator()(const checkValue &a) {
+      EXPECT_EQ( a.value, value );
+    }
+  };
 
-template<class T> void print_const(const list<T> l)
-{
-        // Si reemplazamos el const_iterator con un iterator aqui, falla
-        // al compilar, porque l es const :D
-        for (typename list<T>::const_iterator i = l.begin(); i != l.end(); i++)
-                cout << *i << ", ";
-}
+  struct checkNotValue {
+    int value;
+    checkNotValue(int v) : value(v) { }
+    void operator()(const checkNotValue &a) {
+      EXPECT_NE( a.value, value );
+    }
+  };
 
+  struct checkLessEqualValue {
+    int value;
+    checkLessEqualValue(int v) : value(v) { }
+    void operator()(const checkLessEqualValue &a) {
+      EXPECT_LE( a.value, value );
+    }
+  };
 
-int main()
-{
-  cout << "creando lista vacia" << endl;
-  list<int> l;
+  bool predicado(int x)
+  {
+    return x>90;
+  }
 
-  cout << "l.max_size() == " << l.max_size() << endl;
-  cout << "l.size()  == " << l.size() << endl;
-  cout << "l.empty() == " << l.empty() << endl;
- 
+  void check_int(int i)
+  {
+    EXPECT_TRUE( 0 <= i && i <= 9 );
+  }
 
-  cout << "empujando elementos" << endl;
-  l.push_back(4);
-  l.push_back(5);
-  l.push_back(6);
-  l.push_back(7);
-  l.push_front(3);
-  l.push_front(2);
-  l.push_front(1);
-  l.push_back(8);
-  l.push_back(9);
-  l.push_front(0);
+  TEST(ListTest, Test1) {
+    int j;
+    list<int> l;
+    EXPECT_TRUE( l.empty() );
+    EXPECT_EQ( l.size(), 0u );
+    
+    // push elements
+    int data[N] = { 4, 5, 6, 7, 3, 2, 1, 8, 9, 0 };
+    for (unsigned int i=0; i<N; ++i) {
+      l.push_back(data[i]);
+    }
+    
+    EXPECT_FALSE( l.empty() );
+    EXPECT_EQ( l.size(), N );
+    EXPECT_EQ( l.front(), data[0] );
+    EXPECT_EQ( l.back(), data[N-1] );
+    
+    // for_each traversal
+    std::for_each(l.begin(), l.end(), check_int);
+    cout << endl;
 
-  cout << "l.size()  == " << l.size() << endl;
-  cout << "l.empty() == " << l.empty() << endl;
-  cout << "l.front() == " << l.front() << endl;
-  cout << "l.back()  == " << l.back() << endl;
+    // for_each reverse traversal
+    std::for_each(l.rbegin(), l.rend(), check_int);
+    
+    // iterator traversal
+    for (list<int>::iterator it = l.begin(); it != l.end(); ++it) {
+      check_int( *it );
+    }
+    
+    for (list<int>::const_iterator it = l.begin(); it != l.end(); ++it) {
+      check_int( *it );
+    }
+
+    // list with elements [4,8) taken from l
+    list<int>::iterator first=l.begin();
+    list<int>::iterator last =l.end();
+
+    for (int i=0; i<4; i++) first++;
+    for (int i=0; i<2; i++) last--;
+    list<int> l4(first,last);
+    EXPECT_EQ( l4.size(), 4u );
+
+    j=4;
+    for (list<int>::iterator it = l4.begin(); it != l4.end(); ++it) {
+      EXPECT_EQ( *it, data[j++] );
+    }
+    
+    // pop
+    l.pop_front();
+    j=1;
+    for (list<int>::iterator it = l.begin(); it != l.end(); ++it) {
+      EXPECT_EQ( *it, data[j++] );
+    }
+    
+    EXPECT_EQ( l.size(), N - 1u );
+    
+    // pop
+    l.pop_back();
+    j=1;
+    for (list<int>::iterator it = l.begin(); it != l.end(); ++it) {
+      EXPECT_EQ( *it, data[j++] );
+    }
+    
+    EXPECT_EQ( l.size(), N - 2u );
+    EXPECT_FALSE( l.empty() );
+    
+    // insert l at l4
+    l4.insert(++l4.begin(), l.begin(), l.end());
+    EXPECT_EQ( l4.size(), 4 + l.size() );
+    
+    // insert 5 times 999
+    l4.insert(--l4.end(), 5, 999);
+    EXPECT_EQ( l4.size(), 4 + l.size() + 5 );
+    
+    l4.insert(l4.end(), -6789);
+    EXPECT_EQ( l4.size(), 4 + l.size() + 5 + 1 );
+    
+    // erase second and third elements
+    last = ++l4.begin();
+    first = last++;
+    ++last;
+    l4.erase(first, last);
+    EXPECT_EQ( l4.size(), 4 + l.size() + 5 + 1 - 2 );
+
+    // resizing
+    l4.resize(10);
+    EXPECT_EQ( l4.size(), 10u );
+    EXPECT_FALSE( l4.empty() );
+    
+    // resize with adding -1 values at end
+    l4.resize(12, -1);
+    EXPECT_EQ( l4.size(), 12u );
+    EXPECT_EQ( l4.back(), -1 );
+    
+    // splice
+    l4.splice(++l4.begin(), l);
+    EXPECT_EQ( l.size(), 0u );
+    EXPECT_TRUE( l.empty() );
+    EXPECT_EQ( l4.size(), 12u + N - 2u );
+    
+    // remove
+    l4.remove(6);
+    std::for_each(l4.begin(), l4.end(), checkNotValue(6));
+    
+    // remove if x>90
+    l4.remove_if(predicado);
+    std::for_each(l4.begin(), l4.end(), checkLessEqualValue(90));
+    
+    // now some STL algorithms ;)
+    l4.erase(std::find(l4.begin(), l4.end(), 7));
+    
+    list<int>::iterator i = std::find(l4.begin(), l4.end(), 5);
+    l4.splice(l4.begin(), l4, i);
+    
+    *l4.begin()=99;
+  }
   
-  cout << "Recorrido con std::for_each: ";
-  std::for_each(l.begin(), l.end(), print_int);
-  cout << endl;
+  TEST(ListTest, Test2) {
+    // 12 elements with value 10
+    list<int> l2(12, 10);
+    std::for_each(l2.begin(), l2.end(), checkValue(10));
+    
+    // 10 elements with value -1234
+    list<int> l3(10, -1234);
+    std::for_each(l3.begin(), l3.end(), checkValue(-1234));
+    
+    l2.swap(l3);
+    std::for_each(l2.begin(), l2.end(), checkValue(-1234));
+    std::for_each(l3.begin(), l3.end(), checkValue(10));
+    
+    //
+    l3.clear();
+    EXPECT_EQ( l3.size(), 0u );
+    EXPECT_TRUE( l3.empty() );
+  }
 
-  cout << "Recorrido inverso con std::for_each: ";
-  std::for_each(l.rbegin(), l.rend(), print_int);
-  cout << endl;
-
-  cout << "Recorrido con iterator: ";
-  print(l);
-  cout << endl;
-
-  cout << "Recorrido con const_iterator: ";
-  print_const(l);
-  cout << endl;
-
-  cout << "creando lista l2 con 10 elementos por defecto" << endl;
-  list<int> l2(10);
-  cout << "l2:  ";
-  std::for_each(l2.begin(), l2.end(), print_int);
-  cout << endl;
-
-  cout << "creando lista l3 con 10 elementos con valor -1234" << endl;
-  list<int> l3(10, -1234);
-  cout << "l3:  ";
-  std::for_each(l3.begin(), l3.end(), print_int);
-  cout << endl;
-
-  cout << "creando lista l4 con elementos [4,8) de l" << endl;
-  list<int>::iterator first=l.begin();
-  list<int>::iterator last =l.end();
-
-  for (int i=0; i<4; i++) first++;
-  for (int i=0; i<2; i++) last--;
-  list<int> l4(first,last);
-  std::for_each(l4.begin(), l4.end(), print_int);
-  cout << endl;
-
-  cout << "l.pop_front(): ";
-  l.pop_front();
-  std::for_each(l.begin(), l.end(), print_int);
-  cout << endl;
-
-  cout << "l.pop_back():  ";
-  l.pop_back();
-  std::for_each(l.begin(), l.end(), print_int);
-  cout << endl;
-
-  cout << "l.swap(l4)" << endl;
-  l.swap(l4);
-  cout << "l:  ";
-  std::for_each(l.begin(), l.end(), print_int);
-  cout << endl;
-  cout << "l4: ";
-  std::for_each(l4.begin(), l4.end(), print_int);
-  cout << endl;
-
-  cout << "l4.insert(++l4.begin(), l.begin(), l.end())" << endl;
-  l4.insert(++l4.begin(), l.begin(), l.end());
-  cout << "l4: ";
-  std::for_each(l4.begin(), l4.end(), print_int);
-  cout << endl;
-
-  cout << "l4.insert(--l4.end(), 5, 999)" << endl;
-  l4.insert(--l4.end(), 5, 999);
-  cout << "l4: ";
-  std::for_each(l4.begin(), l4.end(), print_int);
-  cout << endl;
-  
-  cout << "l4.insert(l4.end(), -6789)" << endl;
-  l4.insert(l4.end(), -6789);
-  cout << "l4: ";
-  std::for_each(l4.begin(), l4.end(), print_int);
-  cout << endl;
-
-  cout << "Erasing the second and third elements of l4" << endl;
-  last = ++l4.begin();
-  first = last++;
-  ++last;
-  l4.erase(first, last);
-  cout << "l4: ";
-  std::for_each(l4.begin(), l4.end(), print_int);
-  cout << endl;
-
-  cout << "l3.clear()" << endl;
-  l3.clear();
-  cout << "l3:  ";
-  std::for_each(l3.begin(), l3.end(), print_int);
-  cout << endl;
-
-  cout << "l4.resize(10)" << endl;
-  l4.resize(10);
-  cout << "l4: ";
-  std::for_each(l4.begin(), l4.end(), print_int);
-  cout << endl;
-
-  cout << "l4.resize(12, -1)" << endl;
-  l4.resize(12, -1);
-  cout << "l4: ";
-  std::for_each(l4.begin(), l4.end(), print_int);
-  cout << endl;
-
-  cout << "l4.splice(++l4.begin(), l)" << endl;
-  l4.splice(++l4.begin(), l);
-  cout << "l: ";
-  std::for_each(l.begin(), l.end(), print_int);
-  cout << endl;
-  cout << "l4: ";
-  std::for_each(l4.begin(), l4.end(), print_int);
-  cout << endl;
-
-  cout << "l4.remove(6)" << endl;
-  l4.remove(6);
-  cout << "l4: ";
-  std::for_each(l4.begin(), l4.end(), print_int);
-  cout << endl;
-
-  cout << "l4.remove_if(x>90)" << endl;
-  l4.remove_if(predicado);
-  cout << "l4: ";
-  std::for_each(l4.begin(), l4.end(), print_int);
-  cout << endl;
-
-  cout << endl << "and now, some STL algorithms ;)" << endl << endl;
-  cout << "l4.erase(std::find(l4.begin(), l4.end(), 7))" << endl;
-  l4.erase(std::find(l4.begin(), l4.end(), 7));
-  cout << "l4: ";
-  std::for_each(l4.begin(), l4.end(), print_int);
-  cout << endl;
-
-
-  list<int>::iterator i = std::find(l4.begin(), l4.end(), 5);
-  l4.splice(l4.begin(), l4, i);
-  cout << "l4: ";
-  std::for_each(l4.begin(), l4.end(), print_int);
-  cout << endl;
-
-  cout << "*l4.begin=99;" << endl;
-  *l4.begin()=99;
-  cout << "l4: ";
-  std::for_each(l4.begin(), l4.end(), print_int);
-  cout << endl;
 }
+
+#undef N
