@@ -27,7 +27,7 @@ using std::endl;
 #define U4 "4"
 #define U5 "5"
 
-typedef hash<const char *,const char *> hash_test;
+typedef april_utils::hash<const char *,const char *> hash_test;
 
 void process_pair(hash_test::value_type p) {
   ASSERT_STRNE( p.second, adios );
@@ -72,7 +72,7 @@ TEST(HashTable, StringStringHashTable) {
   a_table[cinco] = U5;
   EXPECT_EQ( a_table.size(), 9 );
   //
-  unsigned int count = 0;
+  int count = 0;
   for (hash_test::const_iterator i=a_table.begin(); i != a_table.end(); ++i) {
     ++count;
     EXPECT_STREQ( (*i).first, i->first );
@@ -110,4 +110,21 @@ TEST(HashTable, HashFcnAndEqualKey) {
   ASSERT_EQ( t.size(), 1 );
 }
 
-APRILANN_GTEST_MAIN(test_hash_table)
+#undef hola
+#undef hello
+#undef adios
+#undef ciao
+#undef bye
+#undef x
+#undef y
+#undef z
+#undef uno
+#undef dos
+#undef tres
+#undef cuatro
+#undef cinco
+#undef U1
+#undef U2
+#undef U3
+#undef U4
+#undef U5

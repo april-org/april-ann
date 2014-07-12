@@ -42,6 +42,3 @@ TEST(ContextTest, All) {
     EXPECT_LT(output_pos, 13);
   }
 }
-
-
-APRILANN_GTEST_MAIN(ContextTests)
