@@ -81,15 +81,17 @@ local check = function (func,error_msg)
             end)
       write(1, "%s\n", debug.traceback())
     end
-    write(1, "Test %s %d: %sfail%s\n", test_name, testn,
+    write(1, "Test %s %d: %sfail%s", test_name, testn,
           ansi.fg.bright_red, ansi.fg.default)
     if error_msg then
       if type(error_msg) == "function" then
-        error_msg()
+        error_msg = error_msg() or ""
       else
-        write(1, "%s\n",tostring(error_msg))
+        error_msg = tostring(error_msg)
       end
+      error_msg = ", msg: %s"%{error_msg}
     end
+    write(1, "%s\n", error_msg or "")
     failed = failed + 1
     if not failed_list[test_name] then
       table.insert(names_order, test_name)

@@ -10,204 +10,244 @@ local make_eq = function(m1,m2)
 end
 --
 local check = utest.check
+local T = utest.test
 --
 local a_dense = matrix(4,5,{
                          1,  0, 0, -1,  2,
                          0,  0, 2,  1,  0,
                          0,  0, 0,  1, -2,
-                         -4, 0, 2,  0,  0,
-                           })
-local a_sparse_csr = matrix.sparse.csr(4,5,
-                                       blockf{1,-1,2,2,1,1,-2,-4,2},
-                                       blocki{0, 3,4,2,3,3, 4, 0,2},
-                                       blocki{0,3,5,7,9})
-local a_sparse_csc = matrix.sparse.csc(4,5,
-                                       blockf{1,-4,2,2,-1,1,1,2,-2},
-                                       blocki{0, 3,1,3, 0,1,2,0, 2},
-                                       blocki{0,2,2,4,7,9})
-check(make_eq(a_sparse_csr, a_dense))
-check(make_eq(a_sparse_csc, a_dense))
+                           -4, 0, 2,  0,  0,
+})
 
-local a_sparse_csr = matrix.sparse.csr(a_dense)
-local a_sparse_csc = matrix.sparse.csc(a_dense)
+local a_sparse_csr,a_sparse_csc
+T("SparseConstructorsTest",
+  function()
+    a_sparse_csr = matrix.sparse.csr(4,5,
+                                     blockf{1,-1,2,2,1,1,-2,-4,2},
+                                     blocki{0, 3,4,2,3,3, 4, 0,2},
+                                     blocki{0,3,5,7,9})
+    a_sparse_csc = matrix.sparse.csc(4,5,
+                                     blockf{1,-4,2,2,-1,1,1,2,-2},
+                                     blocki{0, 3,1,3, 0,1,2,0, 2},
+                                     blocki{0,2,2,4,7,9})
+    check(make_eq(a_sparse_csr, a_dense), "CSR constructor from blocks")
+    check(make_eq(a_sparse_csc, a_dense), "CSC constructor from blocks")
+    
+    a_sparse_csr = matrix.sparse.csr(a_dense)
+    a_sparse_csc = matrix.sparse.csc(a_dense)
+    
+    check(make_eq(a_sparse_csr, a_dense), "CSR constructor from dense")
+    check(make_eq(a_sparse_csc, a_dense), "CSC constructor from dense")
 
-check(make_eq(a_sparse_csr, a_dense))
-check(make_eq(a_sparse_csc, a_dense))
+    local aux2 = matrix.sparse.diag(matrix(5,{1,2,3,4,5}),"csc")
+    local aux3 = matrix.sparse.diag(blockf({1,2,3,4,5}),"csc")
+    local aux4 = matrix.sparse.diag({1,2,3,4,5},"csc")
+    check(make_eq(aux2, aux3), "diag CSC constructors 1")
+    check(make_eq(aux2, aux4), "diag CSC constructors 2")
 
-local aux2 = matrix.sparse.diag(matrix(5,{1,2,3,4,5}),"csc")
-local aux3 = matrix.sparse.diag(blockf({1,2,3,4,5}),"csc")
-check(make_eq(aux2, aux3))
+    local aux2 = matrix.sparse.diag(matrix(5,{1,2,3,4,5}),"csr")
+    local aux3 = matrix.sparse.diag(blockf({1,2,3,4,5}),"csr")
+    local aux4 = matrix.sparse.diag({1,2,3,4,5},"csr")
+    check(make_eq(aux2, aux3), "diag CSR constructors 1")
+    check(make_eq(aux2, aux4), "diag CSR constructors 2")
+end)
 
-local aux2 = matrix.sparse.diag(matrix(5,{1,2,3,4,5}),"csr")
-local aux3 = matrix.sparse.diag(blockf({1,2,3,4,5}),"csr")
-check(make_eq(aux2, aux3))
+T("SparseMaxTest",
+  function()
+    check(function() return a_sparse_csr:max() == 2 end, "CSR max")
+    check(function() return a_sparse_csc:max() == 2 end, "CSC max")
+end)
 
-check(function() return a_sparse_csr:max() == 2 end)
-check(function() return a_sparse_csc:max() == 2 end)
-
-local m = matrix(9,1):linspace()
-local m2 = matrix.sparse.csc(3,3,
-			     blockf{10,-4},
-			     blocki{1,0},
-			     blocki{0,1,2,2})
-local aux = m2:as_vector()
-check(function()
+T("SparseAXPYTest",
+  function()
+    local m = matrix(9,1):linspace()
+    local m2 = matrix.sparse.csc(3,3,
+                                 blockf{10,-4},
+                                 blocki{1,0},
+                                 blocki{0,1,2,2})
+    local aux = m2:as_vector()
+    check(function()
         return make_eq(m:clone():axpy(1.0,aux:to_dense()),
                        m:clone():axpy(1.0,aux))()
-      end)
+    end)
+end)
 
-local b = matrix.sparse.csr(3,blockf{3},blocki{2})
-local str = aux3:toString("ascii")
-check.eq(str, [[5 5 5
+T("SparseSerializationTest",
+  function()
+    local b = matrix.sparse.csr(3,blockf{3},blocki{2})
+    local aux3 = matrix.sparse.diag(blockf({1,2,3,4,5}),"csr")
+    local str = aux3:toString("ascii")
+    check.eq(str, [[5 5 5
 ascii csr
 1 2 3 4 5 
 0 1 2 3 4 
 0 1 2 3 4 5 
-]])
-
-local str = aux3:transpose():toString("ascii")
-check.eq(str, [[5 5 5
+]],
+    "CSR serialization")
+    
+    local str = aux3:transpose():toString("ascii")
+    check.eq(str, [[5 5 5
 ascii csc
 1 2 3 4 5 
 0 1 2 3 4 
 0 1 2 3 4 5 
-]])
+]],
+    "CSR transpose + CSC serialization")
+end)
 
 local a_csc = matrix.sparse.csc(matrix(3,4,{
                                          1,  2,  3, 0,
                                          0,  0,  2, 0,
                                          0, -1,  0, 1,
-                                           }))
+}))
 local a_csr = matrix.sparse.csr(matrix(3,4,{
                                          1,  2,  3, 0,
                                          0,  0,  2, 0,
                                          0, -1,  0, 1,
-                                           }))
+}))
 local b = matrix(4,2,{
                    2, 1,
                    1, 0,
                      -1, -2,
                    1, 2,
-                     })
-check(function()
-        local c = matrix(3,2):zeros():sparse_mm({
-                                                  trans_A=false,
-                                                  alpha=1.0,
-                                                  A=a_csc,
-                                                  B=b,
-                                                  beta=0.0,
-                                                })
-        return make_eq(matrix(3,4,{
-                                1,  2,  3, 0,
-                                0,  0,  2, 0,
-                                0, -1,  0, 1,
-                                  }) * b,
-                       c)()
-      end)
+})
 
-check(function()
+T("SparseMMTesT",
+  function()
+    check(function()
         local c = matrix(3,2):zeros():sparse_mm({
-                                                  trans_A=false,
-                                                  alpha=1.0,
-                                                  A=a_csr,
-                                                  B=b,
-                                                  beta=0.0,
-                                                })
+            trans_A=false,
+            alpha=1.0,
+            A=a_csc,
+            B=b,
+            beta=0.0,
+                                               })
         return make_eq(matrix(3,4,{
                                 1,  2,  3, 0,
                                 0,  0,  2, 0,
                                 0, -1,  0, 1,
-                                  }) * b,
+                             }) * b,
                        c)()
-      end)
-
-check(function()
+    end,
+    "CSC sparse_mm")
+    
+    check(function()
         local c = matrix(3,2):zeros():sparse_mm({
-                                                  trans_A=true,
-                                                  alpha=1.0,
-                                                  A=a_csc:transpose(),
-                                                  B=b,
-                                                  beta=0.0,
-                                                })
+            trans_A=false,
+            alpha=1.0,
+            A=a_csr,
+            B=b,
+            beta=0.0,
+                                               })
         return make_eq(matrix(3,4,{
                                 1,  2,  3, 0,
                                 0,  0,  2, 0,
                                 0, -1,  0, 1,
-                                  }) * b,
+                             }) * b,
                        c)()
-      end)
-
-check(function()
+    end,
+    "CSR sparse_mm")
+    
+    check(function()
         local c = matrix(3,2):zeros():sparse_mm({
-                                                  trans_A=true,
-                                                  alpha=1.0,
-                                                  A=a_csr:transpose(),
-                                                  B=b,
-                                                  beta=0.0,
-                                                })
+            trans_A=true,
+            alpha=1.0,
+            A=a_csc:transpose(),
+            B=b,
+            beta=0.0,
+                                               })
         return make_eq(matrix(3,4,{
                                 1,  2,  3, 0,
                                 0,  0,  2, 0,
                                 0, -1,  0, 1,
-                                  }) * b,
+                             }) * b,
                        c)()
-      end)
+    end,
+    "CSC + transpose sparse_mm")
+    
+    check(function()
+        local c = matrix(3,2):zeros():sparse_mm({
+            trans_A=true,
+            alpha=1.0,
+            A=a_csr:transpose(),
+            B=b,
+            beta=0.0,
+                                               })
+        return make_eq(matrix(3,4,{
+                                1,  2,  3, 0,
+                                0,  0,  2, 0,
+                                0, -1,  0, 1,
+                             }) * b,
+                       c)()
+    end,
+    "CSR + transpose sparse_mm")
+end)
 
 local x = matrix(4):linear()
 local y = matrix(3):zeros()
 
-check(function()
+T("SparseGEMVTest",
+  function()
+    check(function()
         y:gemv({
-                 trans_A=false,
-                 alpha=1.0,
-                 A=a_csc,
-                 X=x,
-                 beta=0.0
-               })
+            trans_A=false,
+            alpha=1.0,
+            A=a_csc,
+            X=x,
+            beta=0.0
+        })
         return make_eq(a_csc:to_dense()*x, y)()
-      end)
+    end,
+    "CSC GEMV")
 
-check(function()
+    check(function()
         y:gemv({
-                 trans_A=true,
-                 alpha=1.0,
-                 A=a_csc:transpose(),
-                 X=x,
-                 beta=0.0
-               })
+            trans_A=true,
+            alpha=1.0,
+            A=a_csc:transpose(),
+            X=x,
+            beta=0.0
+        })
         return make_eq(a_csc:to_dense()*x, y)()
-      end)
-
-check(function()
+    end,
+    "CSC transpose + CSR GEMV")
+    
+    check(function()
         y:gemv({
-                 trans_A=false,
-                 alpha=1.0,
-                 A=a_csr,
-                 X=x,
-                 beta=0.0
-               })
+            trans_A=false,
+            alpha=1.0,
+            A=a_csr,
+            X=x,
+            beta=0.0
+        })
         return make_eq(a_csc:to_dense()*x, y)()
-      end)
-
-check(function()
+          end,
+      "CSR GEMV")
+    
+    check(function()
         y:gemv({
-                 trans_A=true,
-                 alpha=1.0,
-                 A=a_csr:transpose(),
-                 X=x,
-                 beta=0.0
-               })
+            trans_A=true,
+            alpha=1.0,
+            A=a_csr:transpose(),
+            X=x,
+            beta=0.0
+        })
         return make_eq(a_csc:to_dense()*x, y)()
-      end)
+          end,
+      "CSR + transpose + CSC GEMV")
+end)
 
 ----------------------------------------------------------------------------
 
-local x = matrix(10,1):uniformf(-10,10,random(1234))
-local y = matrix(1,10,{1,-1,4,0,0,2,0,0,0,-3})
-local z = x:dot(y)
-local y_csr = matrix.sparse.csr(y)
-local y_csc = y:transpose()
-
--- FIXME: this test is failing in travis :S
--- check.eq(x:dot(y_csr),z)
-check.eq(x:dot(y_csc),z)
+T("SparseDotTest",
+  function()
+    local x = matrix(10,1):uniformf(-10,10,random(1234))
+    local y = matrix(1,10,{1,-1,4,0,0,2,0,0,0,-3})
+    local z = x:dot(y)
+    local y_csr = matrix.sparse.csr(y)
+    local y_csc = y:transpose()
+    
+    -- FIXME: this test is failing in travis :S
+    -- check.eq(x:dot(y_csr),z)
+    check.eq(x:dot(y_csc),z, "csc dot")
+end)
