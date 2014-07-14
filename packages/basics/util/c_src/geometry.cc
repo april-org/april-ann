@@ -25,7 +25,7 @@ namespace april_utils {
       
   }
   
-  template line::line<float>(const Point<float> &, const Point<float> &);
+  template line::line(const Point<float> &, const Point<float> &);
   
   // static line fromPolar(float phi, float r);
   /*    void line::getPolars(float &phi, float &r) {

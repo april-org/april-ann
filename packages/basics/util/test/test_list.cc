@@ -132,12 +132,12 @@ namespace test_list {
     EXPECT_EQ( l4.size(), 4 + l.size() + 5 + 1 - 2 );
 
     // resizing
-    l4.resize(10);
+    l4.resize(10u);
     EXPECT_EQ( l4.size(), 10u );
     EXPECT_FALSE( l4.empty() );
     
     // resize with adding -1 values at end
-    l4.resize(12, -1);
+    l4.resize(12u, -1);
     EXPECT_EQ( l4.size(), 12u );
     EXPECT_EQ( l4.back(), -1 );
     
