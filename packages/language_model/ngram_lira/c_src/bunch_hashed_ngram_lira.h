@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef HISTORY_BASED_NGRAM_LIRA_H
-#define HISTORY_BASED_NGRAM_LIRA_H
+#ifndef BUNCH_HASHED_NGRAM_LIRA_H
+#define BUNCH_HASHED_NGRAM_LIRA_H
 
 #include "bunch_hashed_LM.h"
 #include "ngram_lira.h"
@@ -39,7 +39,12 @@ namespace LanguageModels {
     
     virtual ~BunchHashedNgramLiraLMInterface();
     Score getBestProb() const;
-
+    Score getBestProb(Key k);
+    Score getFinalScore(Key k, Score threshold);
+    Key getInitialKey();
+    void get(Key key, WordType word, Burden burden,
+             vector<KeyScoreBurdenTuple> &result,
+             Score threshold);
   protected:
     friend class BunchHashedNgramLiraLM;
     BunchHashedNgramLiraLMInterface(BunchHashedNgramLiraLM *model,
@@ -73,4 +78,4 @@ namespace LanguageModels {
 
 } // closes namespace language_models
 
-#endif // HISTORY_BASED_NGRAM_LIRA_H
+#endif // BUNCH_HASHED_NGRAM_LIRA_H
