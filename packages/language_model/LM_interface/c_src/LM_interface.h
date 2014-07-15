@@ -183,7 +183,7 @@ namespace LanguageModels {
     /// automata (e.g. ngram_lira) may perform the LM queries in the
     /// insert method so that here they only have to return the result
     /// vector.
-    virtual const vector<KeyScoreBurdenTuple> &getQueries() const {
+    virtual const vector<KeyScoreBurdenTuple> &getQueries() {
       return result;
     }
 

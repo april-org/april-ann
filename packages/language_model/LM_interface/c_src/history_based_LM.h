@@ -42,7 +42,19 @@ namespace LanguageModels {
   template <typename Key, typename Score>
   class HistoryBasedLMInterface : public LMInterface <Key,Score> {
     friend class HistoryBasedLM<Key,Score>;
-  private:
+    
+    april_utils::TrieVector *trie;
+    WordType *context_words;
+  
+  protected:
+    /**
+     * Looks for the context_words related with the given key of the trie.
+     * @param key - A value indicating a TrieVector state.
+     * @param[out] context_words - An array of WordType with size ngramOrder()-1.
+     * @param[out] offset - The first valid position in context_words.
+     *
+     * @return The valid size of context_words = ngramOrder() - 1 - offset.
+     */
     unsigned int getContextProperties(Key key,
                                       WordType *context_words,
                                       unsigned int &offset) {
@@ -62,10 +74,25 @@ namespace LanguageModels {
       return (this->model->ngramOrder() - 1 - pos);
     }
     
+    /**
+     * Traverses the trie from its root using the given context_words + next
+     * word and returns the destination trie state. The first valid position and
+     * the valid size of context_words are given as parameters. If offset==0
+     * then the left-most word in context_words will be swiped out. Otherwise
+     * all the valid context_size words will be used. In any case, the last
+     * transition is done with the given next word.
+     *
+     * @param context_words - An array of WordType with ngramOrder()-1 size.
+     * @param offset - The first valid position in context_words.
+     * @param context_size - The valid size = ngramOrder() - 1 - offset.
+     * @param next_word - The next word.
+     *
+     * @return The trie destination state.
+     */
     Key getDestinationKey(const WordType *context_words,
                           const unsigned int offset,
                           const unsigned int context_size,
-                          const WordType word) {
+                          const WordType next_word) {
       // in case the offset==0 (context_size == order-1), we need to swipe out
       // one word
       int begin = (offset == 0) ? 1 : offset, end = offset + context_size;
@@ -74,16 +101,11 @@ namespace LanguageModels {
       Key dest_key = trie->rootNode();
       for (int i = begin; i < end; ++i)
         dest_key = trie->getChild(dest_key, context_words[i]);
-      // last transition uses the given word
-      dest_key = trie->getChild(dest_key, word);
+      // last transition uses the given next_word
+      dest_key = trie->getChild(dest_key, next_word);
       return dest_key;
     }
-
-    april_utils::TrieVector *trie;
-    WordType *context_words;
-
-  protected:
-
+    
     HistoryBasedLMInterface(HistoryBasedLM<Key,Score>* model) :
       LMInterface<Key,Score>(model) {
       trie = model->getTrieVector();

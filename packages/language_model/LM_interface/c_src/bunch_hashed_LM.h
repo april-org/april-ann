@@ -63,7 +63,7 @@ namespace LanguageModels {
     virtual ~BunchHashedLMInterface() {
     }
   protected:
-    typedef hash<WordType, vector<KeyScoreMultipleBurdenTuple> > WordResultHash;
+    typedef hash<WordType, KeyScoreMultipleBurdenTuple> WordResultHash;
     typedef open_addr_hash_fast_it<Key, WordResultHash> KeyWordHash;
 
     virtual void computeKeysAndScores(KeyWordHash &ctxt_hash,
@@ -87,7 +87,7 @@ namespace LanguageModels {
       ctxt_word.burden_vector.push_back(burden);
     }
 
-    virtual const vector<KeyScoreBurdenTuple> &getQueries() const {
+    virtual const vector<KeyScoreBurdenTuple> &getQueries() {
       BunchHashedLM<Key,Score> *mdl;
       mdl = static_cast<BunchHashedLM<Key,Score>*>(this->model);
       
