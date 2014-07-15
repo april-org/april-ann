@@ -61,6 +61,12 @@ namespace LanguageModels {
   getInitialKey() {
     return 0; //lira_interface->findKeyFromNgram(init_sequence, 1);
   }
+
+  void BunchHashedNgramLiraLMInterface::
+  get(Key key, WordType word, Burden burden,
+      vector<KeyScoreBurdenTuple> &result,
+      Score threshold) {
+  }
   
   void BunchHashedNgramLiraLMInterface::
   computeKeysAndScores(KeyWordHash &ctxt_hash,

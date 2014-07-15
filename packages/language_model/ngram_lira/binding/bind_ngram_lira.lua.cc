@@ -30,6 +30,8 @@ using namespace april_utils;
 #include "bind_LM_interface.h"
 #include "history_based_LM.h"
 #include "history_based_ngram_lira.h"
+#include "bunch_hashed_LM.h"
+#include "bunch_hashed_ngram_lira.h"
 #include "ngram_lira.h"
 using namespace LanguageModels;
 //BIND_END
@@ -39,6 +41,8 @@ using namespace LanguageModels;
 
 //BIND_LUACLASSNAME HistoryBasedLMUInt32LogFloat language_models.history_based_model
 //BIND_LUACLASSNAME HistoryBasedLMInterfaceUInt32LogFloat language_models.history_based_interface
+//BIND_LUACLASSNAME BunchHashedLMUInt32LogFloat language_models.bunch_hashed_model
+//BIND_LUACLASSNAME BunchHashedLMInterfaceUInt32LogFloat language_models.bunch_hashed_interface
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -223,5 +227,30 @@ using namespace LanguageModels;
 //BIND_CONSTRUCTOR HistoryBasedNgramLiraLMInterface
 {
   LUABIND_ERROR("Use the model method get_interface");
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME BunchHashedNgramLiraLM ngram.lira.bunch_hashed_model
+//BIND_CPP_CLASS    BunchHashedNgramLiraLM
+//BIND_SUBCLASS_OF  BunchHashedNgramLiraLM BunchHashedLMUInt32LogFloat
+
+//BIND_LUACLASSNAME BunchHashedNgramLiraLMInterface ngram.lira.bunch_hashed_interface
+//BIND_CPP_CLASS    BunchHashedNgramLiraLMInterface
+//BIND_SUBCLASS_OF  BunchHashedNgramLiraLMInterface BunchHashedLMInterfaceUInt32LogFloat
+
+//BIND_CONSTRUCTOR BunchHashedNgramLiraLM
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  check_table_fields(L, 1, "bunch_size", "lira_model",
+                     (const char *)0);
+  unsigned int bunch_size;
+  NgramLiraModel *lira_model;
+  LUABIND_GET_TABLE_PARAMETER(1, bunch_size, uint, bunch_size);
+  LUABIND_GET_TABLE_PARAMETER(1, lira_model, NgramLiraModel, lira_model);
+  obj = new BunchHashedNgramLiraLM(bunch_size, lira_model);
+  LUABIND_RETURN(BunchHashedNgramLiraLM, obj);
 }
 //BIND_END
