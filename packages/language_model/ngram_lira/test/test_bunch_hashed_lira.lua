@@ -26,8 +26,7 @@ check.eq( result.numwords, 19 )
 
 local bunch_hashed_lira_model = ngram.lira.bunch_hashed_model{
   lira_model   = model,
-  trie_vector  = util.trie_vector(18),
-  init_word_id = vocab:getWordId("<s>"),
+  bunch_size   = 4,
 }
 
 local result2 = language_models.test_set_ppl{
