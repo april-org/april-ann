@@ -164,6 +164,9 @@ namespace LanguageModels {
     }
   };
 
+  typedef BunchHashedLMInterface<uint32_t, log_float> BunchHashedLMInterfaceUInt32LogFloat;
+  typedef BunchHashedLM<uint32_t, log_float> BunchHashedLMUInt32LogFloat;
+
 }; // closes namespace
 
 #endif // BUNCH_HASHED_LM_H

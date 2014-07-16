@@ -451,3 +451,27 @@ public:
   LUABIND_ERROR("Abstract class!!!");
 }
 //BIND_END
+
+//////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME BunchHashedLMUInt32LogFloat language_models.bunch_hashed_model
+//BIND_CPP_CLASS BunchHashedLMUInt32LogFloat
+//BIND_SUBCLASS_OF BunchHashedLMUInt32LogFloat LMModelUInt32LogFloat
+
+//BIND_CONSTRUCTOR BunchHashedLMUInt32LogFloat
+{
+  LUABIND_ERROR("Abstract class!!!");
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME BunchHashedLMInterfaceUInt32LogFloat language_models.bunch_hashed_interface
+//BIND_CPP_CLASS BunchHashedLMInterfaceUInt32LogFloat
+//BIND_SUBCLASS_OF BunchHashedLMInterfaceUInt32LogFloat LMInterfaceUInt32LogFloat
+
+//BIND_CONSTRUCTOR BunchHashedLMInterfaceUInt32LogFloat
+{
+  LUABIND_ERROR("Abstract class!!!");
+}
+//BIND_END
