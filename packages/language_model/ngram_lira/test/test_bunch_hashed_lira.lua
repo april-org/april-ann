@@ -33,7 +33,7 @@ local result2 = language_models.test_set_ppl{
   lm = bunch_hashed_lira_model,
   vocab = vocab,
   testset = path .. "frase",
-  debug_flag = -1,
+  debug_flag = 2,
   use_bcc = true,
   use_ecc = true,
 }

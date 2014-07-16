@@ -254,3 +254,11 @@ using namespace LanguageModels;
   LUABIND_RETURN(BunchHashedNgramLiraLM, obj);
 }
 //BIND_END
+
+//////////////////////////////////////////////////////////////////////////
+
+//BIND_CONSTRUCTOR BunchHashedNgramLiraLMInterface
+{
+  LUABIND_ERROR("Use the model method get_interface");
+}
+//BIND_END
