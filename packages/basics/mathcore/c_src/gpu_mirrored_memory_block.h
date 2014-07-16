@@ -62,8 +62,16 @@ extern "C" {
 #define ALLOC_MASK 0x08 // bit 3 = 8
 #define MMAP_MASK  0x10 // bit 4 = 16
 
-/// Class base for memory blocks mirrored between host (mem ppal) and device
-/// (GPU)
+/**
+ * Class base for memory blocks mirrored between host (mem ppal) and device
+ * (GPU). This base defines a generic which keeps a pool of memory pointers,
+ * stores the mem ppal pointer and the device pointer, and updates the status of
+ * this pointers. This class does not know pointers type, it works with generic
+ * void* or char* pointers. Therefore, the size property stores the number of
+ * bytes. Doing this way, it is possible to reinterpret the same memory pointer
+ * as different types, allowing a complex number block to be interpreted as a
+ * float block with twice number of floats (but the same size).
+ */
 class GPUMirroredMemoryBlockBase : public Referenced {
 #ifndef NO_POOL
 public:
@@ -104,10 +112,10 @@ protected:
     const void *const_mem_ppal;
   };
 #ifdef USE_CUDA  
-  CUdeviceptr mem_gpu;
+  mutable CUdeviceptr mem_gpu;
   bool    pinned;
 #endif
-  unsigned char status; // bit 0 CPU, bit 1 GPU, bit 2 CONST, bit 3 ALLOCATED
+  mutable unsigned char status; // bit 0 CPU, bit 1 GPU, bit 2 CONST, bit 3 ALLOCATED
   april_utils::MMappedDataReader *mmapped_data;
   
   void setConst() {
@@ -153,6 +161,9 @@ protected:
   void setUpdatedGPU() {
     status = status | GPU_MASK;
   }
+  void setUpdatedGPU() const {
+    status = status | GPU_MASK;
+  }
   
   void updateMemPPAL() const {
     if (!getUpdatedPPAL())
@@ -185,8 +196,27 @@ protected:
   }
   
   void copyPPALtoGPU() const {
-    ERROR_EXIT(128, "You need first to update the "
-	       "memory in a non const pointer\n");
+    /*
+      ERROR_EXIT(128, "You need first to update the "
+      "memory in a non const pointer\n");
+    */
+    CUresult result;
+    
+    if (!pinned) {
+      result = cuMemcpyHtoD(mem_gpu, mem_ppal, size);
+      if (result != CUDA_SUCCESS)
+	ERROR_EXIT1(162, "Could not copy memory from host to device: %s\n",
+		    cudaGetErrorString(cudaGetLastError()));
+    }
+    else {
+      cudaThreadSynchronize();
+      if (cudaMemcpyAsync(reinterpret_cast<void*>(mem_gpu),
+			  mem_ppal,
+			  size,
+			  cudaMemcpyHostToDevice, 0) != cudaSuccess)
+	ERROR_EXIT1(162, "Could not copy memory from host to device: %s\n",
+		    cudaGetErrorString(cudaGetLastError()));
+    }
   }
 
   void copyPPALtoGPU() {
@@ -210,8 +240,19 @@ protected:
   }
 
   bool allocMemGPU() const {
-    ERROR_EXIT(128, "You need first to update the "
-	       "memory in a non const pointer\n");
+    /*
+      ERROR_EXIT(128, "You need first to update the "
+      "memory in a non const pointer\n");
+      return false;
+    */
+    if (mem_gpu == 0) {
+      GPUHelper::initHelper();
+      CUresult result;
+      result = cuMemAlloc(&mem_gpu, size);
+      if (result != CUDA_SUCCESS)
+	ERROR_EXIT1(161, "Could not allocate memory in device, error %d\n", result);
+      return true;
+    }
     return false;
   }
 
@@ -233,8 +274,13 @@ public:
 #ifdef USE_CUDA  
   void updateMemGPU() const {
     if (!getUpdatedGPU()) {
-      ERROR_EXIT(128, "You need first to update the "
-		 "memory in a non const pointer\n");
+      /*
+        ERROR_EXIT(128, "You need first to update the "
+        "memory in a non const pointer\n");
+      */
+      allocMemGPU();
+      setUpdatedGPU();
+      copyPPALtoGPU();
     }
   }
   
@@ -480,8 +526,10 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////
 
-/// Class template for instantiation of GPUMirroredMemoryBlockBase for different
-/// data types.
+/**
+ * Class template for instantiation of GPUMirroredMemoryBlockBase for different
+ * data types.
+ */
 template<typename T>
 class GPUMirroredMemoryBlock : public GPUMirroredMemoryBlockBase {
   
@@ -561,8 +609,11 @@ public:
 
 #ifdef USE_CUDA
   const T *getGPUForRead() const {
-    if (!getUpdatedGPU())
+    /*
+      if (!getUpdatedGPU())
       ERROR_EXIT(128, "Update the memory from a non const pointer\n");
+    */
+    updateMemGPU();
     return reinterpret_cast<T*>(mem_gpu);
   }
 
