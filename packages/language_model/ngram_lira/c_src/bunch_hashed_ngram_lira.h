@@ -41,6 +41,7 @@ namespace LanguageModels {
     Score getBestProb() const;
     Score getBestProb(Key k);
     Score getFinalScore(Key k, Score threshold);
+    bool getZeroKey(Key &k) const;
     Key getInitialKey();
     void get(Key key, WordType word, Burden burden,
              vector<KeyScoreBurdenTuple> &result,

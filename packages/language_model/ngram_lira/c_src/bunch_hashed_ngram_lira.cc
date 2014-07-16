@@ -57,6 +57,11 @@ namespace LanguageModels {
     return lira_interface->getFinalScore(k, threshold);
   }
 
+  bool BunchHashedNgramLiraLMInterface::
+  getZeroKey(Key &k) const {
+    return lira_interface->getZeroKey(k);
+  }
+
   Key BunchHashedNgramLiraLMInterface::
   getInitialKey() {
     return lira_interface->getInitialKey();
