@@ -21,6 +21,7 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
+#include "floatrgb.h"
 #include "referenced.h"
 #include "matrix.h"
 #include "affine_transform.h"
@@ -29,10 +30,12 @@
 
 template <typename T>
 class Image : public Referenced {
- public:
+  
   Matrix<T> *matrix; // dimension 2 is assumed
-  int offset;
-  int width,height;
+  // int offset;
+  // int width,height;
+  
+public:
   //Constructors
   Image(Matrix<T> *mat);
   Image(Matrix<T> *mat, 
@@ -45,16 +48,16 @@ class Image : public Referenced {
   //Methods
   Matrix<T> *getMatrix() { return matrix; }
   T& operator () (int x, int y) { 
-    return matrix->getRawDataAccess()->getPPALForReadAndWrite()[offset+x+y*matrix_width()];
+    return (*matrix)(y, x);
   }
   
   T operator () (int x, int y) const {
-    return matrix->getRawDataAccess()->getPPALForRead()[offset+x+y*matrix_width()];
+    return (*matrix)(y, x);
   }
 
   // Bound-checking version of operator()
   T getpixel(int x, int y, T default_value) const {
-    if (x>=0 && y>=0 && x<width && y<height) return (*this)(x,y);
+    if (x>=0 && y>=0 && x<width() && y<height()) return (*this)(x,y);
     else return default_value;
   }
 
@@ -68,10 +71,14 @@ class Image : public Referenced {
     return (1-fy)*h1 + fy*h2;
   }
   
-  int matrix_width()  const { return matrix->getDimSize(1); }
-  int matrix_height() const { return matrix->getDimSize(0); }
-  int offset_width()  const { return offset % matrix_width(); }
-  int offset_height() const { return offset / matrix_width(); }
+  int width() const { return matrix->getDimSize(1); }
+  int height() const { return matrix->getDimSize(0); }
+  
+  // FIXME: implement this using Matrix
+  int offset_width()  const { return 0; }
+  // FIXME: implement this using Matrix
+  int offset_height() const { return 0; }
+  
   int count_black_pixels(T threshold) const;
 
   Image<T> *clone() const;
@@ -108,6 +115,11 @@ class Image : public Referenced {
   Matrix<T> *comb_lineal_forward(int x, int y, int ancho, int alto, int miniancho, int minialto, LinearCombConf<T> *cl);
   void threshold_image(T low, T high, T value_low, T value_high);
 };
+
+
+template<>
+Image<FloatRGB> *Image<FloatRGB>::convolution5x5(float *k,
+                                                 FloatRGB default_color) const;
 
 /*** Implementacion ***/
 #include "image.cc"

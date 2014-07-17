@@ -752,3 +752,30 @@ void Matrix<T>::GTCondition(Matrix<T> *value) {
   ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
 }
 //
+
+template <typename T>
+Matrix<T> *Matrix<T>::padding(int *begin_padding, int *end_padding,
+                              T default_value) {
+  int *result_sizes = new int[getNumDim()];
+  int *matrix_pos = new int[getNumDim()];
+  for (int i=0; i<getNumDim(); ++i) {
+    result_sizes[i] = getDimSize(i) + begin_padding[i] + end_padding[i];
+    matrix_pos[i] = begin_padding[i];
+  }
+  Matrix<T> *result = new Matrix<T>(getNumDim(), result_sizes, getMajorOrder());
+  // FIXME: implement fill by several submatrices for large matrix sizes with
+  // small padding sizes
+  result->fill(default_value);
+  // take submatrix where data will be located
+  Matrix<T> *result_data = new Matrix<T>(result, matrix_pos, getDimPtr(),
+                                         false);
+  // copy data to the submatrix
+  result_data->copy(this);
+  //
+  delete result_data;
+  delete[] result_sizes;
+  delete[] matrix_pos;
+  return result;
+}
+
+#include "matrix-conv.impl.h"

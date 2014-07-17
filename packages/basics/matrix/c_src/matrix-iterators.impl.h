@@ -667,7 +667,13 @@ int Matrix<T>::const_col_major_iterator::getRawPos() const {
 /*******************************************************************/
 
 template <typename T>
-void Matrix<T>::best_span_iterator::initialize(const Matrix<T> *m, int raw_pos) {
+void Matrix<T>::span_iterator::initialize(const Matrix<T> *m,
+                                          int raw_pos,
+                                          int dim) {
+  if (dim < -2 || dim >= m->numDim) {
+    ERROR_EXIT2(128, "Dimension out of bounds, given %d, expected [-1,%d]\n",
+                dim, m->numDim-1);
+  }
   this->m       = m;
   this->raw_pos = raw_pos;
   coords = new int[m->numDim];
@@ -676,35 +682,58 @@ void Matrix<T>::best_span_iterator::initialize(const Matrix<T> *m, int raw_pos) 
   case 1: order[0] = 0; coords[0] = 0; num_iterations = 1; break;
   case 2:
     coords[0] = 0; coords[1] = 0;
-    if (m->matrixSize[0] > m->matrixSize[1]) {
-      order[0] = 0;
-      order[1] = 1;
-    }
-    else if (m->matrixSize[1] > m->matrixSize[0]) {
-      order[0] = 1;
-      order[1] = 0;
-    }
-    else {
-      // CUATION: this conditions is critical to work with transposed matrices,
-      // in order to ensure the iterator to traverse equally two matrices with
-      // different transposition.
-      if (m->getMajorOrder() == CblasRowMajor) {
-	order[0] = 1;
-	order[1] = 0;
+    if (dim == -1) {
+      if (m->matrixSize[0] > m->matrixSize[1]) {
+        order[0] = 0;
+        order[1] = 1;
+      }
+      else if (m->matrixSize[1] > m->matrixSize[0]) {
+        order[0] = 1;
+        order[1] = 0;
       }
       else {
-	order[0] = 0;
-	order[1] = 1;
+        // CUATION: this conditions are critical to work with transposed matrices,
+        // in order to ensure the iterator to traverse equally two matrices with
+        // different transposition.
+        if (m->getMajorOrder() == CblasRowMajor) {
+          order[0] = 1;
+          order[1] = 0;
+        }
+        else {
+          order[0] = 0;
+          order[1] = 1;
+        }
       }
+    }
+    else {
+      order[0] = dim;
+      order[1] = 1-dim;
     }
     num_iterations = m->matrixSize[order[1]];
     break;
   default:
-    for (int i=0; i<m->numDim; ++i) {
-      coords[i] = 0;
-      order[i] = i;
+    if (dim == -1) {
+      // compute the best dimension
+      for (int i=0; i<m->numDim; ++i) {
+        coords[i] = 0;
+        order[i] = i;
+      }
+      april_utils::Sort(order, 0, m->numDim-1, inverse_sort_compare(m));
     }
-    april_utils::Sort(order, 0, m->numDim-1, inverse_sort_compare(m));
+    else {
+      // take given dim as the best and the sort other dimensions
+      for (int i=0; i<dim; ++i) {
+        coords[i+1] = 0;
+        order[i+1] = i;
+      }
+      for (int i=dim+1; i<m->numDim; ++i) {
+        coords[i] = 0;
+        order[i] = i;
+      }
+      april_utils::Sort(order, 1, m->numDim-1, inverse_sort_compare(m));
+      coords[0] = 0;
+      order[0]  = dim;
+    }
     num_iterations = 1;
     for (int i=1; i<m->numDim; ++i)
       num_iterations *= m->matrixSize[order[i]];
@@ -712,20 +741,20 @@ void Matrix<T>::best_span_iterator::initialize(const Matrix<T> *m, int raw_pos) 
 }
 
 template <typename T>
-Matrix<T>::best_span_iterator::
-best_span_iterator(const Matrix<T> *m,int raw_pos) {
-  initialize(m, raw_pos);
+Matrix<T>::span_iterator::
+span_iterator(const Matrix<T> *m, int raw_pos, int dim) {
+  initialize(m, raw_pos, dim);
   m->computeCoords(raw_pos, coords);
 }
 
 template <typename T>
-Matrix<T>::best_span_iterator::best_span_iterator(const Matrix<T> *m) {
-  initialize(m, m->offset);
+Matrix<T>::span_iterator::span_iterator(const Matrix<T> *m, int dim) {
+  initialize(m, m->offset, dim);
 }
 
 template <typename T>
-Matrix<T>::best_span_iterator::
-best_span_iterator(const best_span_iterator &other) :
+Matrix<T>::span_iterator::
+span_iterator(const span_iterator &other) :
   m(other.m), raw_pos(other.raw_pos), num_iterations(other.num_iterations) {
   coords = new int[m->getNumDim()];
   order  = new int[m->getNumDim()];
@@ -736,32 +765,32 @@ best_span_iterator(const best_span_iterator &other) :
 }
 
 template <typename T>
-Matrix<T>::best_span_iterator::best_span_iterator(): m(0),coords(0),order(0) { }
+Matrix<T>::span_iterator::span_iterator(): m(0),coords(0),order(0) { }
 
 template <typename T>
-Matrix<T>::best_span_iterator::~best_span_iterator() {
+Matrix<T>::span_iterator::~span_iterator() {
   delete[] order;
   delete[] coords;
 }
 
 template <typename T>
-int Matrix<T>::best_span_iterator::getOffset() const {
+int Matrix<T>::span_iterator::getOffset() const {
   return raw_pos;
 }
 
 template <typename T>
-int Matrix<T>::best_span_iterator::getStride() const {
+int Matrix<T>::span_iterator::getStride() const {
   return m->stride[order[0]];
 }
 
 template <typename T>
-int Matrix<T>::best_span_iterator::getSize() const {
+int Matrix<T>::span_iterator::getSize() const {
   return m->matrixSize[order[0]];
 }
 
 template <typename T>
-typename Matrix<T>::best_span_iterator &Matrix<T>::best_span_iterator::
-operator=(const Matrix<T>::best_span_iterator &other) {
+typename Matrix<T>::span_iterator &Matrix<T>::span_iterator::
+operator=(const Matrix<T>::span_iterator &other) {
   if (m==0 || m->numDim != other.m->numDim) {
     delete[] coords;
     delete[] order;
@@ -778,19 +807,19 @@ operator=(const Matrix<T>::best_span_iterator &other) {
   return *this;
 }
 
-template <typename T> bool Matrix<T>::best_span_iterator::
-operator==(const Matrix<T>::best_span_iterator &other) const {
+template <typename T> bool Matrix<T>::span_iterator::
+operator==(const Matrix<T>::span_iterator &other) const {
   return m==other.m && raw_pos==other.raw_pos;
 }
 
 template <typename T>
-bool Matrix<T>::best_span_iterator::
-operator!=(const Matrix<T>::best_span_iterator &other) const {
+bool Matrix<T>::span_iterator::
+operator!=(const Matrix<T>::span_iterator &other) const {
   return !((*this)==other);
 }
 
 template <typename T>
-typename  Matrix<T>::best_span_iterator &Matrix<T>::best_span_iterator::
+typename  Matrix<T>::span_iterator &Matrix<T>::span_iterator::
 operator++() {
   switch(m->numDim) {
   case 1: raw_pos = m->last_raw_pos+1; break;
@@ -817,12 +846,12 @@ operator++() {
 }
 
 template <typename T>
-int Matrix<T>::best_span_iterator::numberOfIterations() const {
+int Matrix<T>::span_iterator::numberOfIterations() const {
   return num_iterations;
 }
 
 template <typename T>
-void Matrix<T>::best_span_iterator::setAtIteration(int idx) {
+void Matrix<T>::span_iterator::setAtIteration(int idx) {
   if (idx < num_iterations) {
     raw_pos = m->offset;
     coords[order[0]] = 0;
