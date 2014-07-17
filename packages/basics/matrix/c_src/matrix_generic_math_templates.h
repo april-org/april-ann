@@ -37,6 +37,9 @@ Matrix<O> *applyFunctorOverDimension(FUNC func,
 				     int dim,
 				     Matrix<O> *dest=0) {
   const int numDim      = orig->getNumDim();
+  if (dim > numDim || dim < 0) {
+    ERROR_EXIT1(128, "Incorrect given dim number %d\n", dim);
+  }
   const int *matrixSize = orig->getDimPtr();
   int *result_dims      = new int[numDim];
   /**** ORIG sliding window ****/

@@ -226,10 +226,11 @@ void sumBunchPatternErrors(float *loss_output_ptr,
 			   unsigned int bunch_size, unsigned int size) {
   cublasHandle_t handle  = GPUHelper::getHandler();
   int aux_size = static_cast<int>(size);
-  for (unsigned int i=0; i<bunch_size; ++i)
+  for (unsigned int i=0; i<bunch_size; ++i) {
     cublasSasum(handle, aux_size,
-		pattern_errors_ptr+i, bunch_size,
-		loss_output_ptr + i);
+                pattern_errors_ptr+i, bunch_size,
+                loss_output_ptr + i);
+  }
 }
 
 #endif
