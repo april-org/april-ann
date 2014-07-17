@@ -19,9 +19,17 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef CUDA_UTILS_H
+#define CUDA_UTILS_H
 
 // AUXILIAR INLINE FUNCTIONS //
 #ifdef USE_CUDA
+
+#include <cuda.h>
+#include <cublas_v2.h>
+#include <cusparse_v2.h>
+#include "gpu_helper.h"
+
 static __device__ void getColumnMajorBunchMatrixPositions(const dim3 &blockIdx,
 							  const dim3 &blockDim,
 							  const dim3 &threadIdx,
@@ -99,3 +107,5 @@ static cusparseOperation_t getCusparseOperation(CBLAS_TRANSPOSE operation) {
     return CUSPARSE_OPERATION_CONJUGATE_TRANSPOSE;
 }
 #endif
+
+#endif // CUDA_UTILS_H

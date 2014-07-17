@@ -19,10 +19,10 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "wrapper.h"
-#include "cuda_utils.h"
 #include "ceiling_power_of_two.h"
+#include "cuda_utils.h"
 #include "unused_variable.h"
+#include "wrapper.h"
 using april_utils::ceilingPowerOfTwo;
 
 #ifdef USE_CUDA

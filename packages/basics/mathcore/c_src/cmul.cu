@@ -37,7 +37,6 @@ __global__ void cmulKernel(int N, const T *x, unsigned int x_stride,
     y[idx*y_stride] *= x[idx*x_stride];
   }
 }
-
 #endif
 
 /***************************************
