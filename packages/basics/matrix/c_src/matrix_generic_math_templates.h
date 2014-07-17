@@ -142,7 +142,7 @@ Matrix<O> *applyFunctorOverDimension2(FUNC func,
 }
 
 // Auxiliary function template which applies a given FUNC object ( implements
-// operator() ) to all the elements of a Matrix, using the best_span_iterator,
+// operator() ) to all the elements of a Matrix, using the span_iterator,
 // and OMP if needed.
 template<typename T, typename FUNC>
 void applyFunctionWithSpanIterator(Matrix<T> *m,
@@ -164,7 +164,7 @@ void applyFunctionWithSpanIterator(Matrix<T> *m,
 	    static_cast<unsigned int>(m->getOffset()));
   // General case
   else {
-    typename Matrix<T>::best_span_iterator span_it(m);
+    typename Matrix<T>::span_iterator span_it(m);
     const int N = span_it.numberOfIterations();
     unsigned int size   = static_cast<unsigned int>(span_it.getSize());
     unsigned int stride = static_cast<unsigned int>(span_it.getStride());
@@ -198,7 +198,7 @@ void applyFunctionWithSpanIterator(Matrix<T> *m,
 }
 
 // Idem but for binary functions (needs two matrices, and two
-// best_span_iterators)
+// span_iterators)
 template<typename T, typename FUNC>
 void applyBinaryFunctionWithSpanIterator(Matrix<T> *m1,
 					 Matrix<T> *m2,
@@ -223,7 +223,7 @@ void applyBinaryFunctionWithSpanIterator(Matrix<T> *m1,
 	    static_cast<unsigned int>(m1->getOffset()),
 	    static_cast<unsigned int>(m2->getOffset()));
   else {
-    typename Matrix<T>::best_span_iterator span_it1(m1), span_it2(m2);
+    typename Matrix<T>::span_iterator span_it1(m1), span_it2(m2);
     const int N = span_it1.numberOfIterations();
     unsigned int size    = static_cast<unsigned int>(span_it1.getSize());
     unsigned int stride1 = static_cast<unsigned int>(span_it1.getStride());
@@ -269,7 +269,7 @@ void applyBinaryFunctionWithSpanIterator(Matrix<T> *m1,
 }
 
 // Idem but for binary functions (needs two matrices, and two
-// best_span_iterators)
+// span_iterators)
 template<typename T, typename FUNC>
 void applyBinaryFunctionWithSpanIterator(Matrix<T> *m1,
 					 const Matrix<T> *m2,
@@ -294,7 +294,7 @@ void applyBinaryFunctionWithSpanIterator(Matrix<T> *m1,
 	    static_cast<unsigned int>(m1->getOffset()),
 	    static_cast<unsigned int>(m2->getOffset()));
   else {
-    typename Matrix<T>::best_span_iterator span_it1(m1), span_it2(m2);
+    typename Matrix<T>::span_iterator span_it1(m1), span_it2(m2);
     const int N = span_it1.numberOfIterations();
     unsigned int size    = static_cast<unsigned int>(span_it1.getSize());
     unsigned int stride1 = static_cast<unsigned int>(span_it1.getStride());
@@ -362,7 +362,7 @@ T applySumReductionWithSpanIterator(const Matrix<T> *m,
 		   static_cast<unsigned int>(m->getOffset()));
   // General case
   else {
-    typename Matrix<T>::best_span_iterator span_it(m);
+    typename Matrix<T>::span_iterator span_it(m);
     const int N = span_it.numberOfIterations();
     unsigned int size   = static_cast<unsigned int>(span_it.getSize());
     unsigned int stride = static_cast<unsigned int>(span_it.getStride());
@@ -414,7 +414,7 @@ T applySumReductionWithSpanIteratorNOPARALLEL(const Matrix<T> *m,
 		   static_cast<unsigned int>(m->getOffset()));
   // General case
   else {
-    typename Matrix<T>::best_span_iterator span_it(m);
+    typename Matrix<T>::span_iterator span_it(m);
     unsigned int size   = static_cast<unsigned int>(span_it.getSize());
     unsigned int stride = static_cast<unsigned int>(span_it.getStride());
     T sum;
@@ -457,7 +457,7 @@ bool applyBinaryAndReductionWithSpanIterator(const Matrix<T> *m1,
 		   static_cast<unsigned int>(m1->getOffset()),
 		   static_cast<unsigned int>(m2->getOffset()));
   else {
-    typename Matrix<T>::best_span_iterator span_it1(m1), span_it2(m2);
+    typename Matrix<T>::span_iterator span_it1(m1), span_it2(m2);
     const int N = span_it1.numberOfIterations();
     unsigned int size    = static_cast<unsigned int>(span_it1.getSize());
     unsigned int stride1 = static_cast<unsigned int>(span_it1.getStride());
@@ -523,7 +523,7 @@ R applyReductionWithSpanIteratorNOPARALLEL(const Matrix<T> *m,
 			    static_cast<unsigned int>(m->getOffset())));
   // General case
   else {
-    typename Matrix<T>::best_span_iterator span_it(m);
+    typename Matrix<T>::span_iterator span_it(m);
     unsigned int size   = static_cast<unsigned int>(span_it.getSize());
     unsigned int stride = static_cast<unsigned int>(span_it.getStride());
     R red(initial_value);
@@ -539,7 +539,7 @@ R applyReductionWithSpanIteratorNOPARALLEL(const Matrix<T> *m,
 }
 
 // Auxiliary function template which applies a given FUNC object ( implements
-// operator() ) to all the elements of a Matrix, using the best_span_iterator,
+// operator() ) to all the elements of a Matrix, using the span_iterator,
 // WITHOUT OMP
 template<typename T, typename FUNC>
 void applyFunctionWithSpanIteratorNOPARALLEL(Matrix<T> *m,
@@ -555,7 +555,7 @@ void applyFunctionWithSpanIteratorNOPARALLEL(Matrix<T> *m,
 	    static_cast<unsigned int>(m->getOffset()));
   // General case
   else {
-    typename Matrix<T>::best_span_iterator span_it(m);
+    typename Matrix<T>::span_iterator span_it(m);
     unsigned int size   = static_cast<unsigned int>(span_it.getSize());
     unsigned int stride = static_cast<unsigned int>(span_it.getStride());
     while(span_it != m->end_span_iterator()) {
@@ -566,7 +566,7 @@ void applyFunctionWithSpanIteratorNOPARALLEL(Matrix<T> *m,
 }
 
 // Idem but for binary functions (needs two matrices, and two
-// best_span_iterators), NO OMP
+// span_iterators), NO OMP
 template<typename T, typename FUNC>
 void applyBinaryFunctionWithSpanIteratorNOPARALLEL(Matrix<T> *m1,
 						   Matrix<T> *m2,
@@ -585,7 +585,7 @@ void applyBinaryFunctionWithSpanIteratorNOPARALLEL(Matrix<T> *m1,
 	    static_cast<unsigned int>(m1->getOffset()),
 	    static_cast<unsigned int>(m2->getOffset()));
   else {
-    typename Matrix<T>::best_span_iterator span_it1(m1), span_it2(m2);
+    typename Matrix<T>::span_iterator span_it1(m1), span_it2(m2);
     const int N = span_it1.numberOfIterations();
     unsigned int size    = static_cast<unsigned int>(span_it1.getSize());
     unsigned int stride1 = static_cast<unsigned int>(span_it1.getStride());
@@ -603,7 +603,7 @@ void applyBinaryFunctionWithSpanIteratorNOPARALLEL(Matrix<T> *m1,
 }
 
 // Idem but for binary functions (needs two matrices, and two
-// best_span_iterators), NO OMP
+// span_iterators), NO OMP
 template<typename T, typename FUNC>
 void applyBinaryFunctionWithSpanIteratorNOPARALLEL(Matrix<T> *m1,
 						   const Matrix<T> *m2,
@@ -622,7 +622,7 @@ void applyBinaryFunctionWithSpanIteratorNOPARALLEL(Matrix<T> *m1,
 	    static_cast<unsigned int>(m1->getOffset()),
 	    static_cast<unsigned int>(m2->getOffset()));
   else {
-    typename Matrix<T>::best_span_iterator span_it1(m1), span_it2(m2);
+    typename Matrix<T>::span_iterator span_it1(m1), span_it2(m2);
     unsigned int size    = static_cast<unsigned int>(span_it1.getSize());
     unsigned int stride1 = static_cast<unsigned int>(span_it1.getStride());
     unsigned int stride2 = static_cast<unsigned int>(span_it2.getStride());

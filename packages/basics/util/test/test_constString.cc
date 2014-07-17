@@ -7,18 +7,21 @@ using namespace std;
 
 #define N 4
 
-TEST(ConstStringTest, All) {
-  const char *strings[N] = { "aaaa", "aab", "aa", "aaa" };
+namespace test_conststring {
+
+  TEST(ConstStringTest, All) {
+    const char *strings[N] = { "aaaa", "aab", "aa", "aaa" };
   
-  for (int i=0; i<N; ++i) {
-    constString s1(strings[i]);
-    for (int j=0; j<N; ++j) {
-      constString s2(strings[j]);
-      EXPECT_EQ( s1 == s2, strcmp(strings[i],strings[j]) == 0 );
-      EXPECT_EQ( s1 <= s2, strcmp(strings[i],strings[j]) <= 0 );
-      EXPECT_EQ( s1 < s2, strcmp(strings[i],strings[j]) < 0 );
-      EXPECT_EQ( s1 >= s2, strcmp(strings[i],strings[j]) >= 0 );
-      EXPECT_EQ( s1 > s2, strcmp(strings[i],strings[j]) > 0 );
+    for (int i=0; i<N; ++i) {
+      constString s1(strings[i]);
+      for (int j=0; j<N; ++j) {
+        constString s2(strings[j]);
+        EXPECT_EQ( s1 == s2, strcmp(strings[i],strings[j]) == 0 );
+        EXPECT_EQ( s1 <= s2, strcmp(strings[i],strings[j]) <= 0 );
+        EXPECT_EQ( s1 < s2, strcmp(strings[i],strings[j]) < 0 );
+        EXPECT_EQ( s1 >= s2, strcmp(strings[i],strings[j]) >= 0 );
+        EXPECT_EQ( s1 > s2, strcmp(strings[i],strings[j]) > 0 );
+      }
     }
   }
 }

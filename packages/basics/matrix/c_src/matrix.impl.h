@@ -87,7 +87,7 @@ Matrix<T>::Matrix(int numDim, const int *stride, const int offset,
   major_order(major_order),
   use_cuda(use_cuda),
   is_contiguous(NONE),
-  end_iterator(), end_const_iterator(), end_best_span_iterator() {
+  end_iterator(), end_const_iterator(), end_span_iterator_() {
   IncRef(data);
   if (mmapped_data) IncRef(mmapped_data);
   for (int i=0; i<numDim; ++i) {
@@ -111,7 +111,7 @@ Matrix<T>::Matrix(int numDim,
   major_order(major_order),
   use_cuda(GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT),
   is_contiguous(CONTIGUOUS),
-  end_iterator(), end_const_iterator(), end_best_span_iterator() {
+  end_iterator(), end_const_iterator(), end_span_iterator_() {
   stride     = new int[numDim];
   matrixSize = new int[numDim];
   initialize(dim);
@@ -139,7 +139,7 @@ Matrix<T>::Matrix(Matrix<T> *other,
   major_order(other->major_order),
   use_cuda(other->use_cuda),
   is_contiguous(NONE),
-  end_iterator(), end_const_iterator(), end_best_span_iterator() {
+  end_iterator(), end_const_iterator(), end_span_iterator_() {
   for (int i=0; i<numDim; i++) {
     if (sizes[i] + coords[i] > other->matrixSize[i])
       ERROR_EXIT3(128, "Size+coordinates are out of dimension size: %d+%d>%d\n",
@@ -201,7 +201,7 @@ Matrix<T>::Matrix(int numDim, int d1, ...) :
   mmapped_data(0),
   major_order(CblasRowMajor),
   is_contiguous(CONTIGUOUS),
-  end_iterator(), end_const_iterator(), end_best_span_iterator() {
+  end_iterator(), end_const_iterator(), end_span_iterator_() {
   int *dim   = new int[numDim];
   stride     = new int[numDim];
   matrixSize = new int[numDim];
@@ -230,7 +230,7 @@ Matrix<T>::Matrix(Matrix<T> *other, bool clone) :
   major_order(other->major_order),
   use_cuda(other->use_cuda),
   is_contiguous(other->is_contiguous),
-  end_iterator(), end_const_iterator(), end_best_span_iterator() {
+  end_iterator(), end_const_iterator(), end_span_iterator_() {
   stride       = new int[numDim];
   matrixSize   = new int[numDim];
   total_size   = other->total_size;

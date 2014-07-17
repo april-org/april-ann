@@ -116,8 +116,8 @@
   LUABIND_CHECK_ARGN(==,0);
   
   LUABIND_RETURN(string, "");
-  LUABIND_RETURN(int, obj->width);
-  LUABIND_RETURN(int, obj->height);
+  LUABIND_RETURN(int, obj->width());
+  LUABIND_RETURN(int, obj->height());
   LUABIND_RETURN(int, obj->offset_width());
   LUABIND_RETURN(int, obj->offset_height());
 }
@@ -126,7 +126,7 @@
 //BIND_METHOD ImageFloatRGB matrix
 {
   LUABIND_CHECK_ARGN(==,0);
-  Matrix<FloatRGB> *img_rgb = obj->matrix;
+  Matrix<FloatRGB> *img_rgb = obj->getMatrix();
   GPUMirroredMemoryBlock<float> *mat_mem;
   mat_mem = img_rgb->getRawDataAccess()->reinterpretAs<float>();
   int dims[3] = { img_rgb->getDimSize(0), img_rgb->getDimSize(1), 3 };
@@ -139,8 +139,8 @@
 //BIND_METHOD ImageFloatRGB geometry
 {
   LUABIND_CHECK_ARGN(==,0);
-  LUABIND_RETURN(int, obj->width);
-  LUABIND_RETURN(int, obj->height);
+  LUABIND_RETURN(int, obj->width());
+  LUABIND_RETURN(int, obj->height());
   LUABIND_RETURN(int, obj->offset_width());
   LUABIND_RETURN(int, obj->offset_height());
 }

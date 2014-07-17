@@ -1829,6 +1829,25 @@ public:
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat padding
+{
+  int *begin_padding, *end_padding;
+  LUABIND_CHECK_ARGN(>=,obj->getNumDim()*2);
+  LUABIND_CHECK_ARGN(<=,obj->getNumDim()*2 + 1);
+  begin_padding = new int[obj->getNumDim()];
+  end_padding = new int[obj->getNumDim()];
+  int j=1;
+  for (int i=0; i<obj->getNumDim(); ++i, j+=2) {
+    LUABIND_GET_PARAMETER(j, int, begin_padding[i]);
+    LUABIND_GET_PARAMETER(j+1, int, end_padding[i]);
+  }
+  float default_value;
+  LUABIND_GET_OPTIONAL_PARAMETER(j, float, default_value, 0.0f);
+  MatrixFloat *result = obj->padding(begin_padding, end_padding, default_value);
+  LUABIND_RETURN(MatrixFloat, result);
+}
+//BIND_END
+
 //////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME MatrixFloatSet matrix.dict
