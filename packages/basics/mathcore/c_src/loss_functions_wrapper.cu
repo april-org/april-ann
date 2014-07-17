@@ -239,20 +239,23 @@ void sumBunchPatternErrors(float *loss_output_ptr,
 ///////////////// Error functions wrappers ////////////////
 ///////////////////////////////////////////////////////////
 
-/// Generic macro for expansion of loss functions code which are computed as a
-/// sum of the loss for every position of input/target matrices. The sum is
-/// computed in two loops, and traversing in col-major (first by bunch_size).
-/// The first loop computes the loss of the first component of all the patterns,
-/// and stores it at the loss_output_ptr. The second loop computes the loss of
-/// the rest of components, adding it to the loss_output_ptr.
-/// The parameters of the macro are:
-/// @param[in]  input   A FloatGPUMirroredMemoryBlock pointer.
-/// @param[in]  target  A FloatGPUMirroredMemoryBlock pointer.
-/// @param[out] loss_output  A FloatGPUMirroredMemoryBlock pointer.
-/// @param[in]  size  The number of components in one pattern.
-/// @param[in]  bunch_size  The number of patterns.
-/// @param[in]  CODE  The code which will be executed.
-/// @param[in]  var  The variable where the CODE stores the loss.
+/**
+ * Generic template for expansion of loss functions code which are computed as a
+ * sum of the loss for every position of input/target matrices. The sum is
+ * computed in two loops, and traversing in col-major (first by bunch_size).
+ * The first loop computes the loss of the first component of all the patterns,
+ * and stores it at the loss_output_ptr. The second loop computes the loss of
+ * the rest of components, adding it to the loss_output_ptr. The parameters of
+ * the template are:
+ *
+ * @param[in]  input - A FloatGPUMirroredMemoryBlock pointer.
+ * @param[in]  target - A FloatGPUMirroredMemoryBlock pointer.
+ * @param[out] loss_output - A FloatGPUMirroredMemoryBlock pointer.
+ * @param[in]  size - The number of components in one pattern.
+ * @param[in]  bunch_size - The number of patterns.
+ * @param[in]  func - The function which will be executed, it receives an input pattern, an output pattern and the zero value.
+ * @param[in]  zero - The value of zero.
+ */
 template<typename F, typename T>
 void COMPUTE_LOSS(FloatGPUMirroredMemoryBlock *input,
 		  FloatGPUMirroredMemoryBlock *target,

@@ -82,6 +82,9 @@ public:
 private:
   static bool use_mmap_allocation;
 
+public:
+  static bool USE_CUDA_DEFAULT;
+
 protected:
 #ifndef NO_POOL
   static size_t MAX_POOL_LIST_SIZE;

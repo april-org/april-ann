@@ -88,7 +88,7 @@ namespace ANN {
     ANNComponent(const char *name, const char *weights_name=0,
                  unsigned int input_size=0, unsigned int output_size=0) :
       input_size(input_size), output_size(output_size),
-      use_cuda(false) {
+      use_cuda(GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT) {
       if (name) this->name = string(name);
       else generateDefaultName();
       if (weights_name) this->weights_name = string(weights_name);
