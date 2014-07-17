@@ -91,6 +91,10 @@ namespace LanguageModels {
         WordType word = it2->first;
         KeyScoreMultipleBurdenTuple result_tuple = it2->second;
         lira_interface->get(context_key, word, Burden(-1, -1), tmp_result, Score::zero());
+        if (tmp_result.size() != 1)
+          ERROR_EXIT(127, "Multiple or zero results from lira!\n");
+        // Debug
+        //printf("KEY: %f\n", tmp_result[0].key_score.score);
         result_tuple.key_score.key = tmp_result[0].key_score.key;
         result_tuple.key_score.score = tmp_result[0].key_score.score;
       }
