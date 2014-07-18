@@ -58,13 +58,17 @@ __global__ void equalsVectorFirstReduction(const T *v1_mem, const T*v2_mem,
     unsigned int index = idx;
     unsigned int passive_index = (idx + active_reduction);
     if (idx + active_reduction < size) {
-      equals_mem[index] = ( equals_mem[index] && equals_mem[passive_index] );
-    }
-    else {
       unsigned int index1 = idx * stride1;
       unsigned int index2 = idx * stride2;
-      T aux(v1_mem[index1] - v2_mem[index2]);
-      equals_mem[index] = (absolute_value(aux) < epsilon);
+      unsigned int passive_index1 = passive_index * stride1;
+      unsigned int passive_index2 = passive_index * stride2;
+      T aux_index(v1_mem[index1] - v2_mem[index2]);
+      T aux_passive_index(v1_mem[passive_index1] - v2_mem[passive_index2]);
+      equals_mem[index] = ( (absolute_value(aux_index) < epsilon) &&
+                            (absolute_value(aux_passive_index) < epsilon) );
+    }
+    else {
+      equals_mem[index] = true;
     }
   }
 }

@@ -221,12 +221,15 @@ __global__ void applyTanhErrorFunctionKernel(const float *output,
   }
 }
 
-void sumBunchPatternErrors(float *loss_output_ptr,
-			   const float *pattern_errors_ptr,
+template<typename T>
+void sumBunchPatternErrors(GPUMirroredMemoryBlock<T> *loss_output,
+			   const GPUMirroredMemoryBlock<T> *pattern_errors,
 			   unsigned int bunch_size, unsigned int size) {
   cublasHandle_t handle  = GPUHelper::getHandler();
   int aux_size = static_cast<int>(size);
   for (unsigned int i=0; i<bunch_size; ++i) {
+    doSum(size, pattern_errors, bunch_size, shift, true, T());
+    
     cublasSasum(handle, aux_size,
                 pattern_errors_ptr+i, bunch_size,
                 loss_output_ptr + i);
@@ -317,8 +320,8 @@ void doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
        bunch_size,
        bunch_size,
        size);
-    sumBunchPatternErrors(loss_output->getGPUForWrite(),
-			  pattern_errors_ptr,
+    sumBunchPatternErrors(loss_output,
+			  pattern_errors,
 			  bunch_size, size);
     delete pattern_errors;
   }
@@ -413,8 +416,8 @@ void doMAELossFunction(FloatGPUMirroredMemoryBlock *input,
        bunch_size,
        bunch_size,
        size);
-    sumBunchPatternErrors(loss_output->getGPUForWrite(),
-			  pattern_errors_ptr,
+    sumBunchPatternErrors(loss_output,
+			  pattern_errors,
 			  bunch_size, size);
     delete pattern_errors;
   }
@@ -539,8 +542,8 @@ void doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
        bunch_size,
        bunch_size,
        size);
-    sumBunchPatternErrors(loss_output->getGPUForWrite(),
-			  pattern_errors_ptr,
+    sumBunchPatternErrors(loss_output,
+			  pattern_errors,
 			  bunch_size, size);
     delete pattern_errors;
   }
@@ -596,8 +599,8 @@ void doMultiClassCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
        bunch_size,
        bunch_size,
        size);
-    sumBunchPatternErrors(loss_output->getGPUForWrite(),
-			  pattern_errors_ptr,
+    sumBunchPatternErrors(loss_output,
+			  pattern_errors,
 			  bunch_size, size);
     delete pattern_errors;
   }

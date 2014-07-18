@@ -41,10 +41,12 @@ __global__ void sumVectorFirstReduction(const T *v,
   if (x_idx < size && x_idx < active_reduction) {
     unsigned int x_pos = x_idx * stride;
     unsigned int passive_index = (x_idx + active_reduction) * stride;
-    if (x_idx + active_reduction < size)
+    if (x_idx + active_reduction < size) {
       sums[x_pos] = v[x_pos] + v[passive_index];
-    else
+    }
+    else {
       sums[x_pos] = v[x_pos];
+    }
   }
 }
 
