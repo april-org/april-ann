@@ -95,16 +95,16 @@ namespace LanguageModels {
       computeKeysAndScores(context_key_hash, mdl->getBunchSize());
 
       // For each context key entry
-      for (typename KeyWordHash::const_iterator it = context_key_hash.begin();
+      for (typename KeyWordHash::iterator it = context_key_hash.begin();
         it != context_key_hash.end(); ++it) {
         Key context_key = it->first;
-        WordResultHash word_hash = it->second;
+        WordResultHash &word_hash = it->second;
 
         // For each word entry
-        for (typename WordResultHash::const_iterator it2 = word_hash.begin();
+        for (typename WordResultHash::iterator it2 = word_hash.begin();
           it2 != word_hash.end(); ++it2) {
           WordType word = it2->first;
-          KeyScoreMultipleBurdenTuple result_tuple = it2->second;
+          KeyScoreMultipleBurdenTuple &result_tuple = it2->second;
 
           // For each burden at burden vector
           for (unsigned int i = 0; i < result_tuple.burden_vector.size(); ++i) {
@@ -113,7 +113,6 @@ namespace LanguageModels {
             new_tuple.key_score.key   = result_tuple.key_score.key;
             new_tuple.key_score.score = result_tuple.key_score.score;
             new_tuple.burden          = result_tuple.burden_vector[i];
-
             this->result.push_back(new_tuple);
           }
         }

@@ -79,22 +79,20 @@ namespace LanguageModels {
                        unsigned int bunch_size) {
     UNUSED_VARIABLE(bunch_size);
     // For each context key entry
-    for (typename KeyWordHash::const_iterator it = ctxt_hash.begin();
+    for (typename KeyWordHash::iterator it = ctxt_hash.begin();
       it != ctxt_hash.end(); ++it) {
       Key context_key = it->first;
-      WordResultHash word_hash = it->second;
+      WordResultHash &word_hash = it->second;
 
       // For each word entry
-      for (typename WordResultHash::const_iterator it2 = word_hash.begin();
+      for (typename WordResultHash::iterator it2 = word_hash.begin();
         it2 != word_hash.end(); ++it2) {
         vector <KeyScoreBurdenTuple> tmp_result;
         WordType word = it2->first;
-        KeyScoreMultipleBurdenTuple result_tuple = it2->second;
+        KeyScoreMultipleBurdenTuple &result_tuple = it2->second;
         lira_interface->get(context_key, word, Burden(-1, -1), tmp_result, Score::zero());
         if (tmp_result.size() != 1)
           ERROR_EXIT(127, "Multiple or zero results from lira!\n");
-        // Debug
-        //printf("KEY: %f\n", tmp_result[0].key_score.score);
         result_tuple.key_score.key = tmp_result[0].key_score.key;
         result_tuple.key_score.score = tmp_result[0].key_score.score;
       }
