@@ -1868,7 +1868,7 @@ public:
 
 //BIND_METHOD MatrixFloat convolution
 {
-  MatrixFloat *kernel, *result;
+  MatrixFloat *kernel, *result; //, *unrolled_kernel, *unrolled_self;
   int *step = 0;
   int D;
   
@@ -1877,6 +1877,12 @@ public:
   LUABIND_CHECK_PARAMETER(1, table);
   LUABIND_GET_TABLE_PARAMETER(1, D, int, D);
   LUABIND_GET_TABLE_PARAMETER(1, kernel, MatrixFloat, kernel);
+  /*
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, unrolled_kernel,
+    MatrixFloat, unrolled_kernel, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, unrolled_self,
+    MatrixFloat, unrolled_self, 0);
+  */
   LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, result, 0);
   lua_getfield(L, 1, "step");
   if (!lua_isnil(L, -1)) {
@@ -1891,8 +1897,11 @@ public:
   }
   lua_pop(L, 1);
   result = obj->convolution(D, step, kernel, result);
+  //&unrolled_kernel, &unrolled_self);
   delete[] step;
   LUABIND_RETURN(MatrixFloat, result);
+  /*LUABIND_RETURN(MatrixFloat, unrolled_kernel);
+    LUABIND_RETURN(MatrixFloat, unrolled_self);*/
 }
 //BIND_END
 

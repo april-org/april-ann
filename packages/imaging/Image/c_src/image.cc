@@ -687,7 +687,6 @@ Image<T> *Image<T>::convolution5x5(float *k, T default_color) const
   dimensions[1] = 1;
   dimensions[2] = 5;
   dimensions[3] = 5;
-  int padding[2] = { 2, 2 };
   int rewrap_dims[2] = { height(), width() };
   // prepare kernel memory block
   GPUMirroredMemoryBlock<float> *k_mem_block = new GPUMirroredMemoryBlock<float>(25, k);
@@ -695,7 +694,7 @@ Image<T> *Image<T>::convolution5x5(float *k, T default_color) const
   Matrix<T> *kernel_mat = new Matrix<T>(4, dimensions, matrix->getMajorOrder(),
                                         k_mem_block);
   // add padding to image
-  Matrix<T> *padded_this_mat = matrix->padding(padding, padding, default_color);
+  Matrix<T> *padded_this_mat = matrix->padding(2, default_color);
   // execute convolution (D=2, step=NULL)
   Matrix<T> *conv_result_mat = padded_this_mat->convolution(2, 0, kernel_mat);
   // rewrap conv_result_mat to be a 2-dimensional matrix

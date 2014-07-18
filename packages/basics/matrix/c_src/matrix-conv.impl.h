@@ -122,11 +122,11 @@ Matrix<T> *unrollSourceMatrixForConvolution(int D, Matrix<T> *mat,
     mat_sw->next();
     unrolled_sw->next();
   }
-  delete mat_slice;
   delete unrolled_slice;
-  delete mat_sw;
   delete unrolled_sw;
   DecRef(unrolled_mat_rewrapped);
+  delete mat_slice;
+  delete mat_sw;
   return unrolled_mat;
 }
 
@@ -216,8 +216,8 @@ Matrix<T> *Matrix<T>::convolution(int D, const int *step,
   int bunch_size = (D+2 == getNumDim()) ? getDimSize(0) : 1;
   // compute kernel sizes and unroll kernel matrix
   int *kernel_sizes;
-  Matrix<T> *unrolled_kernel = unrollKernelForConvolution(D, kernel,
-                                                          kernel_sizes);
+  Matrix<T> *unrolled_kernel =
+    unrollKernelForConvolution(D, kernel, kernel_sizes);
   // allocate result to properly fit the convolution
   result = allocateResultMatrix(D, bunch_size, this,
                                 (kernel_sizes == 0) ? kernel->getDimPtr() :

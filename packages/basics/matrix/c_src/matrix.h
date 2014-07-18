@@ -826,6 +826,8 @@ public:
 
   Matrix<T> *convolution(int D, const int *step,
                          Matrix<T> *kernel, Matrix<T> *result=0);
+                         /*Matrix<T> **unrolled_kernel=0,
+                         Matrix<T> **unrolled_this=0);*/
   Matrix<T> *padding(int *begin_padding, int *end_padding, T default_value=T());
   Matrix<T> *padding(int pad_value, T default_value=T());
 
