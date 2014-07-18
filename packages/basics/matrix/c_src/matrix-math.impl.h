@@ -778,4 +778,28 @@ Matrix<T> *Matrix<T>::padding(int *begin_padding, int *end_padding,
   return result;
 }
 
+template <typename T>
+Matrix<T> *Matrix<T>::padding(int pad_value, T default_value) {
+  int *result_sizes = new int[getNumDim()];
+  int *matrix_pos = new int[getNumDim()];
+  for (int i=0; i<getNumDim(); ++i) {
+    result_sizes[i] = getDimSize(i) + pad_value*2;
+    matrix_pos[i] = pad_value;
+  }
+  Matrix<T> *result = new Matrix<T>(getNumDim(), result_sizes, getMajorOrder());
+  // FIXME: implement fill by several submatrices for large matrix sizes with
+  // small padding sizes
+  result->fill(default_value);
+  // take submatrix where data will be located
+  Matrix<T> *result_data = new Matrix<T>(result, matrix_pos, getDimPtr(),
+                                         false);
+  // copy data to the submatrix
+  result_data->copy(this);
+  //
+  delete result_data;
+  delete[] result_sizes;
+  delete[] matrix_pos;
+  return result;
+}
+
 #include "matrix-conv.impl.h"

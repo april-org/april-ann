@@ -7,7 +7,7 @@ ALL: release
 
 release: release-mkl
 
-debug: debug-atlas
+debug: debug-no-omp
 
 test: test-debug-no-omp
 

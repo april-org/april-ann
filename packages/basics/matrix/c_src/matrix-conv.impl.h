@@ -70,6 +70,7 @@ prepareMatrixSlideWindowConvolution(int D, Matrix<T> *mat,
     }
     break;
   default:
+    mat_sw = 0;
     ERROR_EXIT4(128, "Incorrect number of dimensions, expected "
                 "%d or %d or %d, found %d\n", D, D+1, D+2, numDim);
   }
@@ -90,9 +91,17 @@ Matrix<T> *unrollSourceMatrixForConvolution(int D, Matrix<T> *mat,
   // allocate unrolled matrix
   int dims[2] = { mat_sw->numWindows(), mat_slice->size() };
   Matrix<T> *unrolled_mat = new Matrix<T>(2, dims, mat->getMajorOrder());
-  IncRef(unrolled_mat);
+  int *rewrapped_dims = new int[mat_slice->getNumDim()+1];
+  rewrapped_dims[0] = dims[0];
+  for (int i=0; i<mat_slice->getNumDim(); ++i) {
+    rewrapped_dims[i+1] = mat_slice->getDimSize(i);
+  }
+  Matrix<T> *unrolled_mat_rewrapped =
+    unrolled_mat->rewrap(rewrapped_dims, mat_slice->getNumDim()+1);
+  delete[] rewrapped_dims;
+  IncRef(unrolled_mat_rewrapped);
   typename Matrix<T>::sliding_window *unrolled_sw =
-    new typename Matrix<T>::sliding_window(unrolled_mat);
+    new typename Matrix<T>::sliding_window(unrolled_mat_rewrapped);
   if (unrolled_sw->numWindows() != mat_sw->numWindows()) {
     ERROR_EXIT(128, "Incorrect size in input matrix\n");
   }
@@ -102,14 +111,22 @@ Matrix<T> *unrollSourceMatrixForConvolution(int D, Matrix<T> *mat,
     mat_slice      = mat_sw->getMatrix(mat_slice);
     unrolled_slice = unrolled_sw->getMatrix(unrolled_slice);
     //
-    unrolled_slice->copy(mat_slice);
+    Matrix<T> *rewrapped_mat_slice =
+      mat_slice->rewrap(unrolled_slice->getDimPtr(),
+                        unrolled_slice->getNumDim(),
+                        // clone in case it is not contiguous
+                        !mat_slice->getIsContiguous());
+    unrolled_slice->copy(rewrapped_mat_slice);
+    delete rewrapped_mat_slice;
     //
     mat_sw->next();
     unrolled_sw->next();
   }
   delete mat_slice;
   delete unrolled_slice;
-  ReleaseRef(unrolled_mat);
+  delete mat_sw;
+  delete unrolled_sw;
+  DecRef(unrolled_mat_rewrapped);
   return unrolled_mat;
 }
 
@@ -152,16 +169,17 @@ Matrix<T> *allocateResultMatrix(int D, int bunch_size,
   int *result_sizes = new int[D+2];
   result_sizes[0] = bunch_size;
   result_sizes[1] = kernel_sizes[0];
+  int j = mat->getNumDim() - D; // first mat dimension
   if (step != 0) {
     // with a given step array
     for (int i=0; i<D; ++i) {
-      result_sizes[i+2] = (mat->getDimSize(i) - kernel_sizes[i+2])/step[i] + 1;
+      result_sizes[i+2] = (mat->getDimSize(j+i) - kernel_sizes[i+2])/step[i] + 1;
     }
   }
   else {
     // without a given step array, assumed as step[i]=1
     for (int i=0; i<D; ++i) {
-      result_sizes[i+2] = (mat->getDimSize(i) - kernel_sizes[i+2]) + 1;
+      result_sizes[i+2] = (mat->getDimSize(j+i) - kernel_sizes[i+2]) + 1;
     }
   }
   // allocate new result matrix if not given
@@ -202,15 +220,18 @@ Matrix<T> *Matrix<T>::convolution(int D, const int *step,
                                                           kernel_sizes);
   // allocate result to properly fit the convolution
   result = allocateResultMatrix(D, bunch_size, this,
-                                (kernel_sizes == 0) ? kernel->getDimPtr() : kernel_sizes,
+                                (kernel_sizes == 0) ? kernel->getDimPtr() :
+                                kernel_sizes,
                                 step, result);
   // unroll all convolutions in one matrix, so the whole convolution will be
   // performed as a matrix-matrix multiplication
   Matrix<T> *unrolled_this =
-    unrollSourceMatrixForConvolution(D, this, step, kernel->getDimPtr());
+    unrollSourceMatrixForConvolution(D, this, step,
+                                     (kernel_sizes == 0) ? kernel->getDimPtr() :
+                                     kernel_sizes);
   // unroll the result matrix
   int dims[2] = { unrolled_kernel->getDimSize(0),
-                  unrolled_this->getDimSize(1) };
+                  unrolled_this->getDimSize(0) };
   Matrix<T> *unrolled_result = result->rewrap(dims, 2);
   // compute convolution by using CBLAS GEMM
   unrolled_result->gemm(CblasNoTrans, CblasTrans,

@@ -312,21 +312,44 @@ Matrix<T>::~Matrix() {
 }
 
 template <typename T>
-Matrix<T> *Matrix<T>::rewrap(const int *new_dims, int len) {
-  if (!getIsContiguous())
-    ERROR_EXIT(128, "Impossible to re-wrap non contiguous matrix, "
-	       "clone it first\n");
-  bool equal = true;
-  int new_size = 1;
-  for (int i=0; i<len; ++i) {
-    if (i>=numDim || new_dims[i] != matrixSize[i]) equal=false;
-    new_size *= new_dims[i];
+Matrix<T> *Matrix<T>::rewrap(const int *new_dims, int len, bool clone) {
+  Matrix<T> * obj;
+  if (!clone) {
+    if (!getIsContiguous())
+      ERROR_EXIT(128, "Impossible to re-wrap non contiguous matrix, "
+                 "clone it first\n");
+    bool equal   = true;
+    int new_size = 1;
+    for (int i=0; i<len; ++i) {
+      if (i>=numDim || new_dims[i] != matrixSize[i]) equal=false;
+      new_size *= new_dims[i];
+    }
+    if (len==numDim && equal) return this;
+    if (new_size != size()) {
+      ERROR_EXIT2(128, "Incorrect size, expected %d, and found %d\n",
+                  size(), new_size);
+    }
+    obj = new Matrix<T>(len, new_dims, major_order, data, offset);
   }
-  if (len==numDim && equal) return this;
-  if (new_size != size())
-    ERROR_EXIT2(128, "Incorrect size, expected %d, and found %d\n",
-		size(), new_size);
-  Matrix<T> *obj = new Matrix<T>(len, new_dims, major_order, data, offset);
+  else {
+    bool equal   = true;
+    int new_size = 1;
+    for (int i=0; i<len; ++i) {
+      if (i>=numDim || new_dims[i] != matrixSize[i]) equal=false;
+      new_size *= new_dims[i];
+    }
+    if (len==numDim && equal) return this->clone();
+    if (new_size != size()) {
+      ERROR_EXIT2(128, "Incorrect size, expected %d, and found %d\n",
+                  size(), new_size);
+    }
+    GPUMirroredMemoryBlock<T> *new_data =
+      new GPUMirroredMemoryBlock<T>(new_size);
+    obj = new Matrix<T>(len, new_dims, major_order, new_data);
+    Matrix<T> *aux = obj->rewrap(this->getDimPtr(), this->getNumDim());
+    aux->copy(this);
+    delete aux;
+  }
 #ifdef USE_CUDA
   obj->setUseCuda(use_cuda);
 #endif

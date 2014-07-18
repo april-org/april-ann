@@ -538,7 +538,7 @@ public:
   void toMMappedDataWriter(april_utils::MMappedDataWriter *mmapped_data) const;
 
   /// Modify sizes of matrix
-  Matrix<T> *rewrap(const int *new_dims, int len);
+  Matrix<T> *rewrap(const int *new_dims, int len, bool clone=false);
   
   /* Getters and setters */
   int getNumDim() const { return numDim; }
@@ -827,6 +827,7 @@ public:
   Matrix<T> *convolution(int D, const int *step,
                          Matrix<T> *kernel, Matrix<T> *result=0);
   Matrix<T> *padding(int *begin_padding, int *end_padding, T default_value=T());
+  Matrix<T> *padding(int pad_value, T default_value=T());
 
 private:
   void allocate_memory(int size);
