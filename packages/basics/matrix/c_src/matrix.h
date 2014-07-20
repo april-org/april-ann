@@ -46,7 +46,8 @@ class SparseMatrix;
  * Multidimensional matrix class.
  * 
  * It implements basic linear algebra routines and other math operations. By
- * default, the zero value must be T().
+ * default, the zero value must be T(). Additionally, T(0.0f) and T(1.0f)
+ * constructors must be available.
  */
 template <typename T>
 class Matrix : public Referenced {
