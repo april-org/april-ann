@@ -536,9 +536,16 @@ public:
 					  *mmapped_data);
   /// Writes to a file
   void toMMappedDataWriter(april_utils::MMappedDataWriter *mmapped_data) const;
-
+  
+  /// For DEBUG purposes
+  void print() const;
+  
   /// Modify sizes of matrix
-  Matrix<T> *rewrap(const int *new_dims, int len, bool clone=false);
+  Matrix<T> *rewrap(const int *new_dims, int len,
+                    bool clone_if_not_contiguous=false);
+
+  /// Removes all singleton dimensions
+  Matrix<T> *squeeze();
   
   /* Getters and setters */
   int getNumDim() const { return numDim; }
@@ -823,14 +830,14 @@ public:
     data->forceUpdate(use_cuda);
     #endif
   }
-
+  
   Matrix<T> *convolution(int D, const int *step,
                          Matrix<T> *kernel, Matrix<T> *result=0);
                          /*Matrix<T> **unrolled_kernel=0,
                          Matrix<T> **unrolled_this=0);*/
   Matrix<T> *padding(int *begin_padding, int *end_padding, T default_value=T());
   Matrix<T> *padding(int pad_value, T default_value=T());
-
+  
 private:
   void allocate_memory(int size);
   void release_memory();

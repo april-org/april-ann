@@ -403,16 +403,18 @@ struct copy_functor {
 };
 template<>
 void Matrix<float>::copy(const Matrix<float> *other) {
-  if (size() != other->size())
-    ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d\n",
-		size(), other->size());
-  if (major_order != other->major_order)
-    ERROR_EXIT(128, "Matrices with different major orders\n");
-  if (! sameDim(other) )
-    ERROR_EXIT(128, "Matrices with different dimension sizes\n");
-  use_cuda = other->use_cuda;
-  copy_functor functor;
-  applyBinaryFunctionWithSpanIterator<float>(this, other, functor);
+  if (this != other) {
+    if (size() != other->size())
+      ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d\n",
+                  size(), other->size());
+    if (major_order != other->major_order)
+      ERROR_EXIT(128, "Matrices with different major orders\n");
+    if (! sameDim(other) )
+      ERROR_EXIT(128, "Matrices with different dimension sizes\n");
+    use_cuda = other->use_cuda;
+    copy_functor functor;
+    applyBinaryFunctionWithSpanIterator<float>(this, other, functor);
+  }
 }
 
 /********** SCAL FUNCTION ***************/

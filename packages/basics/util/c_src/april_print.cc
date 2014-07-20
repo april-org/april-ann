@@ -2,7 +2,8 @@
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
- * Copyright 2013, Francisco Zamora-Martinez
+ * Copyright 2013, Salvador España-Boquera, Francisco Zamora-Martinez
+ * Copyright 2012, Salvador España-Boquera
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
@@ -19,16 +20,22 @@
  *
  */
 #include <cstdio>
-#include "complex_number.h"
-
-template struct Complex<float>;
-template struct Complex<double>;
+#include "april_print.h"
 
 namespace april_utils {
-  void aprilPrint(const ComplexF &v) {
-    printf("%f%c%fi", v.real(), (v.img()>+0.0f)?'+':' ', v.img());
+  void aprilPrint(const float &v) {
+    printf("%f", v);
   }
-  void aprilPrint(const ComplexD &v) {
-    printf("%f%c%fi", v.real(), (v.img()>+0.0)?'+':' ', v.img());
+  void aprilPrint(const double &v) {
+    printf("%f", v);
+  }
+  void aprilPrint(const char &v) {
+    printf("%c", v);
+  }
+  void aprilPrint(const int &v) {
+    printf("%d", v);
+  }
+  void aprilPrint(const unsigned int &v) {
+    printf("%u", v);
   }
 }

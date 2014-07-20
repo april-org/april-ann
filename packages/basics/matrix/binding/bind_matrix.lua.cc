@@ -287,9 +287,9 @@ public:
   LUABIND_CHECK_ARGN(>=, 1);
   int ndims;
   ndims = lua_gettop(L); // number of dimensions
-  bool clone = false;
+  bool clone_if_not_contiguous = false;
   if (lua_isboolean(L, ndims)) {
-    LUABIND_GET_PARAMETER(ndims, boolean, clone);
+    LUABIND_GET_PARAMETER(ndims, boolean, clone_if_not_contiguous);
     --ndims;
   }
   int *dims = new int[ndims];
@@ -298,9 +298,15 @@ public:
     if (dims[i-1] <= 0)
       LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
   }
-  MatrixFloat *new_obj = obj->rewrap(dims, ndims, clone);
+  MatrixFloat *new_obj = obj->rewrap(dims, ndims, clone_if_not_contiguous);
   delete[] dims;
   LUABIND_RETURN(MatrixFloat,new_obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat squeeze
+{
+  LUABIND_RETURN(MatrixFloat,obj->squeeze());
 }
 //BIND_END
 

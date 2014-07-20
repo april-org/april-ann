@@ -19,11 +19,12 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-
+#include <cstdio>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include "april_print.h"
 #include "error_print.h"
 #include "ignore_result.h"
 
@@ -312,47 +313,73 @@ Matrix<T>::~Matrix() {
 }
 
 template <typename T>
-Matrix<T> *Matrix<T>::rewrap(const int *new_dims, int len, bool clone) {
+void Matrix<T>::print() const {
+  for (Matrix<T>::const_iterator it(begin()); it != end(); ++it) {
+    april_utils::aprilPrint(*it);
+    printf(" ");
+  }
+  printf("\n");
+}
+
+template <typename T>
+Matrix<T> *Matrix<T>::rewrap(const int *new_dims, int len,
+                             bool clone_if_not_contiguous) {
+  bool need_clone = false;
   Matrix<T> * obj;
-  if (!clone) {
-    if (!getIsContiguous())
+  if (!getIsContiguous()) {
+    if (!clone_if_not_contiguous) {
       ERROR_EXIT(128, "Impossible to re-wrap non contiguous matrix, "
                  "clone it first\n");
-    bool equal   = true;
-    int new_size = 1;
-    for (int i=0; i<len; ++i) {
-      if (i>=numDim || new_dims[i] != matrixSize[i]) equal=false;
-      new_size *= new_dims[i];
     }
-    if (len==numDim && equal) return this;
-    if (new_size != size()) {
-      ERROR_EXIT2(128, "Incorrect size, expected %d, and found %d\n",
-                  size(), new_size);
+    else {
+      need_clone = true;
     }
-    obj = new Matrix<T>(len, new_dims, major_order, data, offset);
   }
-  else {
-    bool equal   = true;
-    int new_size = 1;
-    for (int i=0; i<len; ++i) {
-      if (i>=numDim || new_dims[i] != matrixSize[i]) equal=false;
-      new_size *= new_dims[i];
-    }
-    if (len==numDim && equal) return this->clone();
-    if (new_size != size()) {
-      ERROR_EXIT2(128, "Incorrect size, expected %d, and found %d\n",
-                  size(), new_size);
-    }
+  bool equal   = true;
+  int new_size = 1;
+  for (int i=0; i<len; ++i) {
+    if (i>=numDim || new_dims[i] != matrixSize[i]) equal=false;
+    new_size *= new_dims[i];
+  }
+  if (len==numDim && equal) return this;
+  if (new_size != size()) {
+    ERROR_EXIT2(128, "Incorrect size, expected %d, and found %d\n",
+                size(), new_size);
+  }
+  if (need_clone) {
     GPUMirroredMemoryBlock<T> *new_data =
       new GPUMirroredMemoryBlock<T>(new_size);
     obj = new Matrix<T>(len, new_dims, major_order, new_data);
     Matrix<T> *aux = obj->rewrap(this->getDimPtr(), this->getNumDim());
+    IncRef(aux);
     aux->copy(this);
-    delete aux;
+    DecRef(aux);
+  }
+  else {
+    obj = new Matrix<T>(len, new_dims, major_order, data, offset);
   }
 #ifdef USE_CUDA
   obj->setUseCuda(use_cuda);
 #endif
+  return obj;
+}
+
+template <typename T>
+Matrix<T> *Matrix<T>::squeeze() {
+  int len = 0;
+  int *sizes = new int[getNumDim()];
+  for (int i=0; i<getNumDim(); ++i) {
+    int sz = getDimSize(i);
+    if (sz > 1) {
+      sizes[len++] = sz;
+    }
+  }
+  Matrix<T> *obj = (len==numDim) ?
+    this : new Matrix<T>(len, sizes, major_order, data, offset);
+#ifdef USE_CUDA
+  obj->setUseCuda(use_cuda);
+#endif
+  delete[] sizes;
   return obj;
 }
 

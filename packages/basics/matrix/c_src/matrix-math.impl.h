@@ -151,14 +151,16 @@ void Matrix<T>::scalarAdd(T s) {
 
 template <typename T>
 void Matrix<T>::copy(const Matrix<T> *other) {
-  if (!sameDim(other))
-    ERROR_EXIT(128, "Not equal matrix dimensions\n");
-  const_iterator it_orig(other->begin());
-  iterator it_dest(this->begin());
-  while(it_orig != other->end()) {
-    *it_dest = *it_orig;
-    ++it_orig;
-    ++it_dest;
+  if (this != other) {
+    if (!sameDim(other))
+      ERROR_EXIT(128, "Not equal matrix dimensions\n");
+    const_iterator it_orig(other->begin());
+    iterator it_dest(this->begin());
+    while(it_orig != other->end()) {
+      *it_dest = *it_orig;
+      ++it_orig;
+      ++it_dest;
+    }
   }
 }
 

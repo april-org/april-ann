@@ -894,45 +894,61 @@ Matrix<T>::sliding_window::sliding_window(Matrix<T> *m,
   num_windows(1)
 {
   IncRef(m);
-  if (offset != 0)
+  if (offset != 0) {
     for (int i=0; i<m->numDim; ++i) {
       this->raw_pos += offset[i]*m->stride[i];
       this->coords[i] = this->offset[i] = offset[i];
     }
-  else
+  }
+  else {
     for (int i=0; i<m->numDim; ++i)
       this->coords[i] = this->offset[i] = 0;
+  }
   // default values for arrays if necessary
   if (sub_matrix_size == 0) {
-    for (int i=0; i<m->numDim; ++i)
+    for (int i=0; i<m->numDim; ++i) {
       this->sub_matrix_size[i] = m->matrixSize[i];
+    }
     this->sub_matrix_size[0] = 1;
   }
-  else
-    for (int i=0; i<m->numDim; ++i)
+  else {
+    for (int i=0; i<m->numDim; ++i) {
       this->sub_matrix_size[i] = sub_matrix_size[i];
+    }
+  }
   //
-  if (step == 0)
-    for (int i=0; i<m->numDim; ++i)
+  if (step == 0) {
+    for (int i=0; i<m->numDim; ++i) {
       this->step[i] = 1;
-  else
-    for (int i=0; i<m->numDim; ++i)
+    }
+  }
+  else {
+    for (int i=0; i<m->numDim; ++i) {
       this->step[i] = step[i];
+    }
+  }
   //
   if (num_steps == 0) {
-    for (int i=0; i<m->numDim; ++i)
+    for (int i=0; i<m->numDim; ++i) {
       this->num_steps[i] = (m->matrixSize[i] - this->sub_matrix_size[i])/this->step[i] + 1;
+    }
   }
-  else
-    for (int i=0; i<m->numDim; ++i)
+  else {
+    for (int i=0; i<m->numDim; ++i) {
       this->num_steps[i] = num_steps[i];
+    }
+  }
   //
-  if (order_step == 0)
-    for (int i=0; i<m->numDim; ++i)
+  if (order_step == 0) {
+    for (int i=0; i<m->numDim; ++i) {
       this->order_step[i] = (m->numDim - (i + 1));
-  else
-    for (int i=0; i<m->numDim; ++i)
+    }
+  }
+  else {
+    for (int i=0; i<m->numDim; ++i) {
       this->order_step[i] = order_step[i];
+    }
+  }
   // last_raw_pos is 0 instead of m->offset because at getMatrix method the
   // resulting matrix last_raw_pos is the addition between current window
   // raw_pos (with m->offset) plus the following last_raw_pos computation
@@ -944,23 +960,28 @@ Matrix<T>::sliding_window::sliding_window(Matrix<T> *m,
   }
   // Final sanity check and initialization of auxiliary data structures
   for (int i=0; i<m->numDim; ++i) {
-    if (this->step[i] < 1)
+    if (this->step[i] < 1) {
       ERROR_EXIT2(128, "Unexpected step value of %d at coordinate %d,"
 		  " it must be > 0\n",
 		  this->step[i], i);
-    if (this->num_steps[i] < 1)
+    }
+    if (this->num_steps[i] < 1) {
       ERROR_EXIT2(128, "Unexpected num_steps value of %d at coordinate %d,"
 		  " it must be > 0\n",
 		  this->num_steps[i], i);
-    if (this->offset[i] < 0)
+    }
+    if (this->offset[i] < 0) {
       ERROR_EXIT1(128, "Unexpected offset value at coordinate %d\n", i);
-    if (this->sub_matrix_size[i] < 0)
+    }
+    if (this->sub_matrix_size[i] < 0) {
       ERROR_EXIT1(128, "Unexpected sub_matrix_size value at coordinate %d\n", i);
+    }
     int last = ( this->offset[i] +
 		 this->step[i]*(this->num_steps[i]-1) +
 		 this->sub_matrix_size[i]);
-    if (last > m->matrixSize[i])
+    if (last > m->matrixSize[i]) {
       ERROR_EXIT1(128, "Overflow at sliding window dimension %d!!!\n", i);
+    }
     offset_plus_num_step_by_step[i] = this->offset[i] + this->num_steps[i] * this->step[i];
     num_windows *= this->num_steps[i];
   }
@@ -1073,12 +1094,13 @@ next() {
 template <typename T>
 Matrix<T> *Matrix<T>::sliding_window::getMatrix(Matrix<T> *dest) {
   if (finished) return dest;
-  if (dest == 0)
+  if (dest == 0) {
     return new Matrix<T>(m->numDim, m->stride,
 			 raw_pos, sub_matrix_size,
 			 total_size, last_raw_pos + raw_pos,
 			 m->data, m->major_order, m->use_cuda,
 			 m->transposed);
+  }
   else {
     april_assert(dest->getRawDataAccess() == m->getRawDataAccess());
     dest->changeSubMatrixData(raw_pos, last_raw_pos + raw_pos);
