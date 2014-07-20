@@ -270,7 +270,9 @@ void Matrix<T>::abs() {
 
 template <typename T>
 void Matrix<T>::complement() {
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  for (Matrix<T>::iterator it(begin()); it != end(); ++it) {
+    (*it) = T(1.0f) - *it;
+  }
 }
 
 template <typename T>
