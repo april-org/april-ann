@@ -28,6 +28,7 @@
 //BIND_HEADER_H
 #include "LM_interface.h"
 #include "history_based_LM.h"
+#include "feature_based_LM.h"
 #include "bunch_hashed_LM.h"
 using namespace LanguageModels;
 
@@ -471,6 +472,30 @@ public:
 //BIND_SUBCLASS_OF BunchHashedLMInterfaceUInt32LogFloat LMInterfaceUInt32LogFloat
 
 //BIND_CONSTRUCTOR BunchHashedLMInterfaceUInt32LogFloat
+{
+  LUABIND_ERROR("Abstract class!!!");
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME FeatureBasedLMUInt32LogFloat language_models.feature_based_model
+//BIND_CPP_CLASS FeatureBasedLMUInt32LogFloat
+//BIND_SUBCLASS_OF FeatureBasedLMUInt32LogFloat LMModelUInt32LogFloat
+
+//BIND_CONSTRUCTOR FeatureBasedLMUInt32LogFloat
+{
+  LUABIND_ERROR("Abstract class!!!");
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME FeatureBasedLMInterfaceUInt32LogFloat language_models.feature_based_interface
+//BIND_CPP_CLASS FeatureBasedLMInterfaceUInt32LogFloat
+//BIND_SUBCLASS_OF FeatureBasedLMInterfaceUInt32LogFloat LMInterfaceUInt32LogFloat
+
+//BIND_CONSTRUCTOR FeatureBasedLMInterfaceUInt32LogFloat
 {
   LUABIND_ERROR("Abstract class!!!");
 }

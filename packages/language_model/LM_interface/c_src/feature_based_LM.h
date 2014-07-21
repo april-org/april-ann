@@ -1,0 +1,75 @@
+/*
+ * This file is part of APRIL-ANN toolkit (A
+ * Pattern Recognizer In Lua with Artificial Neural Networks).
+ *
+ * Copyright 2014, Salvador España-Boquera, Adrian Palacios Corella, Francisco
+ * Zamora-Martinez
+ *
+ * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 3 as
+ * published by the Free Software Foundation
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ */
+#ifndef FEATURE_BASED_LM_H
+#define FEATURE_BASED_LM_H
+
+#include <stdint.h>
+#include "april_assert.h"
+#include "error_print.h"
+#include "history_based_LM.h"
+#include "logbase.h"
+#include "trie_vector.h"
+#include "unused_variable.h"
+#include "vector.h"
+
+namespace LanguageModels {
+
+  using april_utils::vector;
+
+  template <typename Key, typename Score>
+  class FeatureBasedLM;
+
+  template <typename Key, typename Score>
+  class FeatureBasedLMInterface : public HistoryBasedLMInterface <Key,Score> {
+    friend class FeatureBasedLM<Key,Score>;
+    
+  //protected:
+
+  public:
+
+    virtual ~FeatureBasedLMInterface() {
+    }
+  };
+
+  template <typename Key, typename Score>
+  class FeatureBasedLM : public HistoryBasedLM <Key,Score> {
+  private:
+
+  public:
+
+    FeatureBasedLM(int ngram_order,
+                   WordType init_word,
+                   april_utils::TrieVector *trie_vector) :
+      HistoryBasedLM<Key,Score>(ngram_order,
+                                init_word,
+                                trie_vector) {
+    }
+
+    virtual ~FeatureBasedLM() {
+    }
+  };
+
+  typedef FeatureBasedLMInterface<uint32_t, log_float> FeatureBasedLMInterfaceUInt32LogFloat;
+  typedef FeatureBasedLM<uint32_t, log_float> FeatureBasedLMUInt32LogFloat;
+}; // closes namespace
+
+#endif // FEATURE_BASED_LM_H
