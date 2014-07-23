@@ -6,16 +6,24 @@ Master branch release
 
 ### Unstable changes
 
+- Added `Matrix<T>::convolution` method and `matrix:convolution` lua
+  method. They are in experimental stage, please, be advice to use them by your
+  own risk.
+- Because of the changes in `Image`, several classes in package `imaging` has
+  been reviewed, consistent tests are necessary to merge with master branch.
+
 ### API Changes
 
 - New `april_doc` and `april_set_doc` API, works with values instead of strings.
-
 - Added `table.values`, `table.ivalues`, `table.keys` and `table.ikeys`
   iterators.
 
 ### Bugs removed
 
 ### C/C++
+
+- `Image` class code has been reviewed to be more coherent with current `Matrix`
+  class implementation.
 
 ### Other
 
