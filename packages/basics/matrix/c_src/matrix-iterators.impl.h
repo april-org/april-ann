@@ -721,7 +721,7 @@ void Matrix<T>::span_iterator::initialize(const Matrix<T> *m,
       april_utils::Sort(order, 0, m->numDim-1, inverse_sort_compare(m));
     }
     else {
-      // take given dim as the best and the sort other dimensions
+      // take given dim as the best and sort other dimensions
       for (int i=0; i<dim; ++i) {
         coords[i+1] = 0;
         order[i+1] = i;

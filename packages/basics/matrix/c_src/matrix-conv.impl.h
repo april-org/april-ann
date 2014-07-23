@@ -36,8 +36,10 @@ prepareMatrixSlideWindowConvolution(int D, Matrix<T> *mat,
     for (int i=0; i<D; ++i) aux_step[i+2] = step[i];
   }
   if (mat->getMajorOrder() == CblasColMajor) {
-    order_step = new int[numDim];
-    for (int i=0; i<numDim; ++i) order_step[i] = i;
+    /*
+      order_step = new int[numDim];
+      for (int i=0; i<numDim; ++i) order_step[i] = i;
+    */
   }
   switch(D+2 - numDim) {
   case 2: // numDim == D
@@ -74,11 +76,6 @@ prepareMatrixSlideWindowConvolution(int D, Matrix<T> *mat,
       int *aux_kernel = new int[numDim];
       aux_kernel[0] = 1; // mat->getDimSize(0);
       for (int i=1; i<numDim; ++i) aux_kernel[i] = kernel[i];
-      if (order_step != 0) {
-        for (int i=2; i<numDim; ++i) order_step[i] = numDim - i - 1 + 2;
-        order_step[0] = 0;
-        order_step[1] = 1;
-      }
       mat_sw = new typename Matrix<T>::sliding_window(mat, aux_kernel,
                                                       aux_step,
                                                       0, 0,
@@ -111,6 +108,7 @@ Matrix<T> *unrollSourceMatrixForConvolution(int D, Matrix<T> *mat,
   int dims[2] = { mat_sw->numWindows(),
                   mat_slice->size() };
   Matrix<T> *unrolled_mat = new Matrix<T>(2, dims, mat->getMajorOrder());
+  unrolled_mat->zeros();
   int *aux_dims = new int[mat_slice->getNumDim()+1];
   aux_dims[0] = dims[0];
   for (int i=0; i<mat_slice->getNumDim(); ++i) {
@@ -147,6 +145,11 @@ Matrix<T> *unrollSourceMatrixForConvolution(int D, Matrix<T> *mat,
                         true);
     IncRef(rewrapped_mat_slice);
     unrolled_slice->copy(rewrapped_mat_slice);
+    //rewrapped_mat_slice->print();
+    //unrolled_slice->print();
+    //unrolled_mat_rewrapped->print();
+    //unrolled_mat->print();
+    //printf("========================================================\n");
     DecRef(rewrapped_mat_slice);
     //
     mat_sw->next();
@@ -157,6 +160,7 @@ Matrix<T> *unrollSourceMatrixForConvolution(int D, Matrix<T> *mat,
   DecRef(unrolled_mat_rewrapped);
   DecRef(mat_slice);
   delete mat_sw;
+  //unrolled_mat->print();
   return unrolled_mat;
 }
 
@@ -239,6 +243,10 @@ Matrix<T> *allocateResultMatrix(int D, int bunch_size,
 template <typename T>
 Matrix<T> *Matrix<T>::convolution(int D, const int *step,
                                   Matrix<T> *kernel, Matrix<T> *result) {
+  // TODO: make it work for CblasColMajor order
+  if (getMajorOrder() == CblasColMajor) {
+    ERROR_EXIT(128, "Not implemented for col_major matrices\n");
+  }
   /*
     Matrix<T> **given_unrolled_kernel,
     Matrix<T> **given_unrolled_input) {
@@ -288,7 +296,7 @@ Matrix<T> *Matrix<T>::convolution(int D, const int *step,
   result_pattern = result_sw.getMatrix();
   IncRef(source_pattern);
   IncRef(result_pattern);
-  april_utils::aprilPrint(0, source_sw.isEnd(), "\n");
+  // april_utils::aprilPrint(0, source_sw.isEnd(), "\n");
   while(!source_sw.isEnd()) {
     source_pattern = source_sw.getMatrix(source_pattern);
     result_pattern = result_sw.getMatrix(result_pattern);
@@ -298,9 +306,9 @@ Matrix<T> *Matrix<T>::convolution(int D, const int *step,
                          unrolled_kernel, source_pattern,
                          T(0.0f));
     //
-    source_pattern->print();
-    result_pattern->print();
-    printf("========================================================\n");
+    //source_pattern->print();
+    //result_pattern->print();
+    //printf("========================================================\n");
     source_sw.next();
     result_sw.next();
   }
