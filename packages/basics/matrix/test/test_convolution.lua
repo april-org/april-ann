@@ -18,7 +18,9 @@ T("MatrixConvolutionBasicTest",
     local o2 = m:clone("col_major"):convolution{ kernel=k:clone("col_major"),
                                                  D=2 }
     --
+    print(o)
     check.eq(o,  target_o)
+    print(o2)
     check.eq(o2, target_o:clone("col_major"))
 end)
 

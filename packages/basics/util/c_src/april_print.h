@@ -2,8 +2,7 @@
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
- * Copyright 2013, Salvador España-Boquera, Francisco Zamora-Martinez
- * Copyright 2012, Salvador España-Boquera
+ * Copyright 2014, Francisco Zamora-Martinez
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
@@ -19,10 +18,20 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+
+#include <cstdio>
+
 namespace april_utils {
   void aprilPrint(const float &v);
   void aprilPrint(const double &v);
   void aprilPrint(const char &v);
   void aprilPrint(const int &v);
   void aprilPrint(const unsigned int &v);
+  void aprilPrint(const bool &v);
+  template<typename T>
+  void aprilPrint(const char *str1, const T &v, const char *str2) {
+    if (str1 != 0) printf("%s",str1);
+    aprilPrint(v);
+    if (str2 != 0) printf("%s",str2);
+  }
 }
