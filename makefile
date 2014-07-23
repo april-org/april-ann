@@ -17,7 +17,7 @@ document:
 #############################################################################
 
 # TEST with OMP and ATLAS
-test-debug-atlas: debug
+test-debug-atlas: debug-atlas
 	lua profile_build_scripts/build_debug_atlas.lua test
 
 # TEST without OMP and ATLAS
