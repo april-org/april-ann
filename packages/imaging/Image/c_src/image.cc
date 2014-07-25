@@ -512,17 +512,45 @@ void Image<T>::min_bounding_box(float threshold,
 template<typename T>
 void Image<T>::copy(const Image<T> *src, int dst_x, int dst_y)
 {
-  int x0=0, y0=0;
-
-  if (dst_x < 0) x0 = -dst_x;
-  if (dst_y < 0) y0 = -dst_y;
-
-  // FIXME: this loop performance can be increased by splitting it in two main
-  // parts: 1. out-of-bounds regions; 2. image regions. Fast matrix specialized
-  // operations can be used for 1 and 2 parts.
-  for (int y=y0; (y < src->height()) && (y+dst_y < height()); ++y)
+  // FIXME: review this new code
+  int src_pos[2], sizes[2], dst_pos[2];
+  if (dst_y < 0) {
+    src_pos[0] = -dst_y;
+    dst_pos[0] = 0;
+  }
+  else {
+    src_pos[0] = 0;
+    dst_pos[0] = dst_y;
+  }
+  if (dst_x < 0) {
+    src_pos[1] = -dst_x;
+    dst_pos[1] = 0;
+  }
+  else {
+    src_pos[1] = 0;
+    dst_pos[1] = dst_x;
+  }
+  sizes[0] = min(src->height() - src_pos[0], this->height() - dst_y);
+  sizes[1] = min(src->width()  - src_pos[1], this->width()  - dst_x);
+  
+  Matrix<T> *src_submat = new Matrix<T>(src->getMatrix(), src_pos, sizes);
+  Matrix<T> *dst_submat = new Matrix<T>(this->getMatrix(), dst_pos, sizes);
+  IncRef(src_submat);
+  IncRef(dst_submat);
+  dst_submat->copy(src_submat);
+  DecRef(src_submat);
+  DecRef(dst_submat);
+  
+  /*
+    int x0=0, y0=0;
+    
+    if (dst_x < 0) x0 = -dst_x;
+    if (dst_y < 0) y0 = -dst_y;
+    
+    for (int y=y0; (y < src->height()) && (y+dst_y < height()); ++y)
     for (int x=x0; (x < src->width()) && (x+dst_x < width()); ++x) 
-      (*this)(x+dst_x, y+dst_y)=(*src)(x, y);
+    (*this)(x+dst_x, y+dst_y)=(*src)(x, y);
+  */
 }
 
 
