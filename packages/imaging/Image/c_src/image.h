@@ -47,6 +47,7 @@ public:
   virtual ~Image();
   //Methods
   Matrix<T> *getMatrix() { return matrix; }
+  const Matrix<T> *getMatrix() const { return matrix; }
   T& operator () (int x, int y) { 
     return (*matrix)(y, x);
   }

@@ -529,6 +529,11 @@ public:
   Matrix(Matrix<T> *other,
 	 const int* coords, const int *sizes,
 	 bool clone=true);
+  /// Sub-matrix constructor of a const matrix. WARNING, this matrices don't
+  /// allow writes if clone=false
+  Matrix(const Matrix<T> *other,
+	 const int* coords, const int *sizes,
+	 bool clone=true);
   /// Destructor
   virtual ~Matrix();
   
@@ -836,8 +841,8 @@ public:
                          Matrix<T> *kernel, Matrix<T> *result=0);
                          /*Matrix<T> **unrolled_kernel=0,
                          Matrix<T> **unrolled_this=0);*/
-  Matrix<T> *padding(int *begin_padding, int *end_padding, T default_value=T());
-  Matrix<T> *padding(int pad_value, T default_value=T());
+  Matrix<T> *padding(int *begin_padding, int *end_padding, T default_value=T()) const;
+  Matrix<T> *padding(int pad_value, T default_value=T()) const;
   
 private:
   void allocate_memory(int size);
