@@ -18,6 +18,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+
 /*
  *    Fichero de implementacion (incluido por la cabecera image.h)
  *
@@ -530,14 +531,15 @@ void Image<T>::copy(const Image<T> *src, int dst_x, int dst_y)
     src_pos[1] = 0;
     dst_pos[1] = dst_x;
   }
-  sizes[0] = min(src->height() - src_pos[0], this->height() - dst_y);
-  sizes[1] = min(src->width()  - src_pos[1], this->width()  - dst_x);
+  sizes[0] = april_utils::min(src->height() - src_pos[0], this->height() - dst_y);
+  sizes[1] = april_utils::min(src->width()  - src_pos[1], this->width()  - dst_x);
   
-  Matrix<T> *src_submat = new Matrix<T>(src->getMatrix(), src_pos, sizes);
-  Matrix<T> *dst_submat = new Matrix<T>(this->getMatrix(), dst_pos, sizes);
+  Matrix<T> *src_submat = new Matrix<T>(src->getMatrix(), src_pos, sizes, false);
+  Matrix<T> *dst_submat = new Matrix<T>(this->getMatrix(), dst_pos, sizes, false);
+  const Matrix<T> *const_src_submat = src_submat;
   IncRef(src_submat);
   IncRef(dst_submat);
-  dst_submat->copy(src_submat);
+  dst_submat->copy(const_src_submat);
   DecRef(src_submat);
   DecRef(dst_submat);
   
@@ -563,15 +565,15 @@ Image<T> *Image<T>::rotate90_cw() const
 
   Matrix<T> *new_mat = new Matrix<T>(2, dimensions, matrix->getMajorOrder());
   Image<T> *result = new Image<T>(new_mat);
-
-  for (int y=0; y < height(); ++y)
-    {
-      for (int x=0; x < width(); ++x)
-	{
-	  //printf("(%d, %d) ---> (%d, %d)\n",x,y,height-1-y,x);
-	  (*result)(height() - 1 - y, x)=(*this)(x, y);
-	}
+  
+  typename Matrix<T>::const_random_access_iterator src_it(this->getMatrix());
+  typename Matrix<T>::random_access_iterator dst_it(new_mat);
+  for (int y=0; y < height(); ++y) {
+    for (int x=0; x < width(); ++x) {
+      //printf("(%d, %d) ---> (%d, %d)\n",x,y,height-1-y,x);
+      dst_it(height() - 1 - y, x) = src_it(y, x);
     }
+  }
 	
   return result;
 }
@@ -585,15 +587,15 @@ Image<T> *Image<T>::rotate90_ccw() const
 
   Matrix<T> *new_mat = new Matrix<T>(2, dimensions, matrix->getMajorOrder());
   Image<T> *result = new Image<T>(new_mat);
-
-  for (int y=0; y < height(); ++y)
-    {
-      for (int x=0; x < width(); ++x)
-	{
-	  (*result)(y, width() - 1 - x)=(*this)(x, y);
-	}
+  
+  typename Matrix<T>::const_random_access_iterator src_it(this->getMatrix());
+  typename Matrix<T>::random_access_iterator dst_it(new_mat);
+  for (int y=0; y < height(); ++y) {
+    for (int x=0; x < width(); ++x) {
+      dst_it(width() - 1 - x, y) = src_it(y, x);
     }
-	
+  }
+  
   return result;
 }
 
@@ -616,20 +618,18 @@ Image<T> *Image<T>::remove_blank_columns() const
   const float UMBRAL_BINARIZADO = 0.5f;
   // Contamos las columnas en blanco de la imagen original
   int nblanco=0;
-  for (int x=0; x<width(); ++x)
-    {
-      bool blanco=true;
-      for(int y=0; y<height(); ++y)
-	{
-	  if ((*this)(x,y)<UMBRAL_BINARIZADO)
-	    {
-	      blanco=false;
-	      break;
-	    }
-	}
-
-      if (blanco) ++nblanco;
+  typename Matrix<T>::const_random_access_iterator src_it(this->getMatrix());
+  for (int x=0; x<width(); ++x) {
+    bool blanco=true;
+    for(int y=0; y<height(); ++y) {
+      if (src_it(y,x) < UMBRAL_BINARIZADO) {
+        blanco=false;
+        break;
+      }
     }
+    
+    if (blanco) ++nblanco;
+  }
 
   int dimensions[2];
   dimensions[0]=height();
@@ -637,62 +637,31 @@ Image<T> *Image<T>::remove_blank_columns() const
 	
   Matrix<T> *new_mat = new Matrix<T>(2, dimensions, matrix->getMajorOrder());
   Image<T> *result = new Image<T>(new_mat);
-	
-  // Ahora copiamos columna a columna
+  
+  typename Matrix<T>::random_access_iterator dst_it(new_mat);
+  // Copy column by column
   int xdest=0;
-  for (int x=0; x<width(); ++x)
-    {
-      bool blanco=true;
-      for (int y=0; y<height(); ++y)
-	{
-	  if ((*this)(x,y) < UMBRAL_BINARIZADO)			
-	    {
-	      blanco=false;
-	    }
-
-	  (*result)(xdest, y) = (*this)(x,y);
-	}
-
-      if (!blanco) ++xdest;
-      if (xdest == width()-nblanco) break; // we're finished
+  for (int x=0; x<width(); ++x) {
+    bool blanco=true;
+    for (int y=0; y<height(); ++y) {
+      if (src_it(y,x) < UMBRAL_BINARIZADO) {
+        blanco=false;
+      }
+      dst_it(y,xdest) = src_it(y,x);
     }
-
+    if (!blanco) ++xdest;
+    if (xdest == width()-nblanco) break; // we're finished
+  }
+  
   return result;
 }
 
 /// Add top_rows at top of the images and bottom_rows at the bottom
 template<typename T>
-Image<T> *Image<T>::add_rows(int top_rows, int bottom_rows, T value) const
-{
-  // Contamos las columnas en blanco de la imagen original
-  int dimensions[2], pos[2];
-  int new_height = height()+top_rows+bottom_rows; 
-  dimensions[0] = new_height;
-  dimensions[1] = width();
-  pos[1] = 0;
-  
-  Matrix<T> *new_mat = new Matrix<T>(2, dimensions, matrix->getMajorOrder());
+Image<T> *Image<T>::add_rows(int top_rows, int bottom_rows, T value) const {
+  int begin_padding[2] = { top_rows, 0 }, end_padding[2] = { bottom_rows, 0 };
+  Matrix<T> *new_mat = matrix->padding(begin_padding, end_padding, value);
   Image<T> *result = new Image<T>(new_mat);
-
-  // Copy row by row
-  int top_image = top_rows;
-  int bottom_image = top_rows + height();
-  
-  pos[0] = 0;
-  dimensions[0] = top_image;
-  Matrix<T> top_matrix(new_mat, pos, dimensions);
-  top_matrix.fill(value);
-  
-  pos[0] = bottom_image;
-  dimensions[0] = new_height - bottom_image;
-  Matrix<T> bottom_matrix(new_mat, pos, dimensions);
-  bottom_matrix.fill(value);
-  
-  pos[0] = top_image;
-  dimensions[0] = bottom_image - top_image;
-  Matrix<T> image_matrix(new_mat, pos, dimensions);
-  image_matrix.copy(matrix);
-  
   return result;
 }
 

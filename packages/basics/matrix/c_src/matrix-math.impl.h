@@ -759,7 +759,7 @@ void Matrix<T>::GTCondition(Matrix<T> *value) {
 
 template <typename T>
 Matrix<T> *Matrix<T>::padding(int *begin_padding, int *end_padding,
-                              T default_value) {
+                              T default_value) const {
   int *result_sizes = new int[getNumDim()];
   int *matrix_pos = new int[getNumDim()];
   for (int i=0; i<getNumDim(); ++i) {
@@ -783,7 +783,7 @@ Matrix<T> *Matrix<T>::padding(int *begin_padding, int *end_padding,
 }
 
 template <typename T>
-Matrix<T> *Matrix<T>::padding(int pad_value, T default_value) {
+Matrix<T> *Matrix<T>::padding(int pad_value, T default_value) const {
   int *result_sizes = new int[getNumDim()];
   int *matrix_pos = new int[getNumDim()];
   for (int i=0; i<getNumDim(); ++i) {
