@@ -46,8 +46,8 @@ class SparseMatrix;
  * Multidimensional matrix class.
  * 
  * It implements basic linear algebra routines and other math operations. By
- * default, the zero value must be T(). Additionally, T(0.0f) and T(1.0f)
- * constructors must be available.
+ * default, the zero value must be T(). Additionally, T(0.0f) and T(1.0f) and
+ * T(-1.0f) constructors must be available.
  */
 template <typename T>
 class Matrix : public Referenced {
@@ -638,9 +638,9 @@ public:
   /// Copy only sizes, but not data
   Matrix<T>* cloneOnlyDims() const;
   /// Deep copy
-  Matrix<T>* clone();
+  Matrix<T>* clone() const;
   /// Deep copy with different major_order
-  Matrix<T> *clone(CBLAS_ORDER major_order);
+  Matrix<T> *clone(CBLAS_ORDER major_order) const;
   /// Shallow copy
   Matrix<T>* shallow_copy();
   
@@ -701,10 +701,10 @@ public:
 
   // Returns a new matrix with the sum, assuming they have the same dimension
   // Crashes otherwise
-  Matrix<T>* addition(const Matrix<T> *other);
+  Matrix<T>* addition(const Matrix<T> *other) const;
 
   // The same as addition but substracting
-  Matrix<T>* substraction(const Matrix<T> *other);
+  Matrix<T>* substraction(const Matrix<T> *other) const;
   
   // Matrices must be NxK and KxM, the result is NxM
   Matrix<T>* multiply(const Matrix<T> *other) const;
