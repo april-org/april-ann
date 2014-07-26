@@ -22,9 +22,10 @@
 #include "gpu_mirrored_memory_block.h"
 #include "token_memory_block.h"
 
-TokenMemoryBlock::TokenMemoryBlock() : mem_block(0), used_size(0) { }
+TokenMemoryBlock::TokenMemoryBlock() : Token(), mem_block(0), used_size(0) { }
 
 TokenMemoryBlock::TokenMemoryBlock(unsigned int size) :
+  Token(),
   mem_block(0), used_size(0) {
   resize(size);
 }

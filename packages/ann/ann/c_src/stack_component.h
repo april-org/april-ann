@@ -32,6 +32,8 @@ namespace ANN {
   /// stacked component. If it is zero, then the stack accepts (or produces) a
   /// non determined number of neurons.
   class StackANNComponent : public ANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(StackANNComponent);
+    
     /// Vector with the stack
     april_utils::vector<ANNComponent*> components;
 

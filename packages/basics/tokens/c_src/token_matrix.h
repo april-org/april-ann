@@ -21,12 +21,14 @@
 #ifndef TOKEN_MATRIX_H
 #define TOKEN_MATRIX_H
 
-#include "unused_variable.h"
+#include "disallow_class_methods.h"
 #include "matrix.h"
 #include "token_base.h"
+#include "unused_variable.h"
 
 template<typename T>
 class TokenMatrix : public Token {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(TokenMatrix);
   Matrix<T> *mat;
 public:
   TokenMatrix(Matrix<T> *mat);
@@ -56,6 +58,7 @@ public:
 
 template<typename T>
 TokenMatrix<T>::TokenMatrix(Matrix<T> *mat) :
+  Token(),
   mat(mat) {
   IncRef(mat);
 }

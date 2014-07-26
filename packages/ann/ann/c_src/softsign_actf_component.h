@@ -30,6 +30,8 @@ namespace ANN {
 
   /// Component for the SoftSign activation function.
   class SoftsignActfANNComponent : public ActivationFunctionANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(SoftsignActfANNComponent);
+    
   protected:
     virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,
 				 FloatGPUMirroredMemoryBlock *output_units,

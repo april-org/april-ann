@@ -38,6 +38,8 @@ namespace ANN {
    */
   class VirtualSparseMatrixANNComponent : public ANNComponent,
                                           public ComponentPropertiesAndAsserts {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(VirtualSparseMatrixANNComponent);
+    
     TokenSparseMatrixFloat *input, *error_output;
     TokenMatrixFloat *output, *error_input;
     

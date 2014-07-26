@@ -27,7 +27,7 @@
 typedef DataSet<float> DataSetFloat;
 typedef MatrixDataSet<float> MatrixDataSetFloat;
 typedef LinearCombConf<float> LinearCombConfFloat;
-typedef SparseDataset<float> SparseDatasetFloat;
+typedef SparseMatrixDataset<float> SparseMatrixDatasetFloat;
 typedef ShortListDataSet<float> ShortListDataSetFloat;
 typedef IndexFilterDataSet<float> IndexFilterDataSetFloat;
 typedef PerturbationDataSet<float> PerturbationDataSetFloat;

@@ -22,19 +22,20 @@
 #define SPARSE_MATRIX_H
 
 #include <cmath>
-#include "april_assert.h"
 #include <cstdarg>
 #include <new> // surprisingly, placement new doesn't work without this
-#include "cblas_headers.h"
-#include "wrapper.h"
-#include "gpu_mirrored_memory_block.h"
-#include "referenced.h"
 #include "aligned_memory.h"
-#include "swap.h"
+#include "april_assert.h"
+#include "cblas_headers.h"
+#include "disallow_class_methods.h"
+#include "gpu_mirrored_memory_block.h"
 #include "maxmin.h"
-#include "qsort.h"
 #include "mmapped_data.h"
+#include "qsort.h"
+#include "referenced.h"
+#include "swap.h"
 #include "unused_variable.h"
+#include "wrapper.h"
 
 //////////////////////////////////////////////////
 // Avoids error messages from flycheck in emacs //
@@ -53,6 +54,8 @@
 /// which shared the data pointers.
 template <typename T>
 class SparseMatrix : public Referenced {
+  APRIL_DISALLOW_ASSIGN(SparseMatrix);
+  
   friend class Matrix<T>;
   const static unsigned int MATRIX_BINARY_VERSION;
   // Auxiliary count variable where the user could store the number of times
