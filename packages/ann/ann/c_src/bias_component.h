@@ -31,6 +31,7 @@ namespace ANN {
 
   /// A component which adds a bias to the given bi-dimensional input matrix.
   class BiasANNComponent : public VirtualMatrixANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(BiasANNComponent);
     MatrixFloat *bias_vector;
     
   protected:

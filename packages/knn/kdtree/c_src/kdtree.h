@@ -22,14 +22,15 @@
 #define KDTREE_H
 
 #include <cfloat>
-#include "MersenneTwister.h"
-#include "referenced.h"
-#include "point.h"
-#include "qsort.h"
+#include "disallow_class_methods.h"
 #include "matrix.h"
 #include "maxmin.h"
+#include "MersenneTwister.h"
 #include "min_heap.h"
 #include "pair.h"
+#include "point.h"
+#include "qsort.h"
+#include "referenced.h"
 
 namespace KNN {
 
@@ -38,6 +39,8 @@ namespace KNN {
   /// and after that the KDTree is build.
   template<typename T>
   class KDTree : public Referenced {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(KDTree);
+    
     typedef april_utils::vector< Point<T> > PointsList;
     static const size_t MEDIAN_APPROX_SIZE=40;
     
@@ -52,6 +55,8 @@ namespace KNN {
     
     // Node of the KDTree
     class KDNode {
+      APRIL_DISALLOW_ASSIGN(KDNode);
+      
       Point<T>    point;
       KDNode     *left;
       KDNode     *right;
@@ -75,7 +80,10 @@ namespace KNN {
     /// Class base for KNN search. It implements the interface for searching
     /// decisions, stores the k-best (or 1-best), and indicates when to stop.
     class Searcher {
+      APRIL_DISALLOW_COPY_AND_ASSIGN(Searcher);
+      
     public:
+      Searcher() { }
       virtual ~Searcher() { }
       virtual void process(const Point<T> &node_point) = 0;
       virtual int side(const T split_value, const int axis) const = 0;
@@ -85,12 +93,15 @@ namespace KNN {
     
     /// Specialization of Searcher for the NN search
     class OneBestSearcher : public Searcher {
+      APRIL_DISALLOW_COPY_AND_ASSIGN(OneBestSearcher);
+      
       Point<T> &X;
       int best_id;
       double best_distance;
       const int D;
     public:
       OneBestSearcher(Point<T> &X, const int D) :
+        Searcher(),
 	X(X), best_id(-1), best_distance(DBL_MAX), D(D) {
       }
       virtual ~OneBestSearcher() { }
@@ -132,6 +143,8 @@ namespace KNN {
     /// the points are ordered by distance (desceding order), allowing to use
     /// the furthest point to define the hypersphere.
     class KBestSearcher : public Searcher {
+      APRIL_DISALLOW_COPY_AND_ASSIGN(KBestSearcher);
+      
       typedef april_utils::pair<int,double> HeapNode;
       typedef april_utils::min_heap<HeapNode,KbestPairLess> MaxHeapType;
       Point<T> &X;
@@ -140,6 +153,7 @@ namespace KNN {
       MaxHeapType max_heap;
     public:
       KBestSearcher(const int K, Point<T> &X, const int D) :
+        Searcher(),
 	X(X), kbest_distance(DBL_MAX), D(D), K(K), max_heap(K,KbestPairLess()) {
       }
       virtual ~KBestSearcher() { }

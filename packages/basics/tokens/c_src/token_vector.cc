@@ -28,20 +28,24 @@ using april_utils::vector;
 using april_utils::pair;
 
 template <typename T>
-TokenVector<T>::TokenVector() {
+TokenVector<T>::TokenVector() : TokenVectorGeneric() {
 }
 
 template <typename T>
-TokenVector<T>::TokenVector(unsigned int vlength) : vec(vlength) {
+TokenVector<T>::TokenVector(unsigned int vlength) :
+  TokenVectorGeneric(),
+  vec(vlength) {
 }
 
 template <typename T>
 TokenVector<T>::TokenVector(const T *vec, unsigned int vlength) :
+  TokenVectorGeneric(),
   vec(vec, vec+vlength) {
 }
 
 template <typename T>
 TokenVector<T>::TokenVector(const vector<T> &vec) :
+  TokenVectorGeneric(),
   vec(vec) {
 }
 
@@ -284,12 +288,14 @@ Token *TokenVector<char>::fromString(constString &cs) {
 
 template <>
 TokenVector<Token*>::TokenVector(Token * const *vec, unsigned int vlength) :
+  TokenVectorGeneric(),
   vec(vec, vec+vlength) {
   for (unsigned int i=0; i<vlength; ++i) IncRef(vec[i]);
 }
 
 template <>
 TokenVector<Token*>::TokenVector(const vector<Token*> &vec) :
+  TokenVectorGeneric(),
   vec(vec) {
   for (unsigned int i=0; i<vec.size(); ++i) IncRef(vec[i]);
 }

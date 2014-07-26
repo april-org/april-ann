@@ -35,6 +35,8 @@ namespace ANN {
   /// will be cloned. If it is contiguous, the output of this component is a
   /// reinterpretation of input matrix, but the memory pointer will be shared.
   class SliceANNComponent : public VirtualMatrixANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(SliceANNComponent);
+    
     int *slice_offset, *slice_size, n;
     
     virtual MatrixFloat *privateDoForward(MatrixFloat* input,

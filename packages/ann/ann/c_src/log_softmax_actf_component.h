@@ -32,6 +32,8 @@ namespace ANN {
   /// activation only works with MultiClassCrossEntropy LossFunction (and
   /// viceversa).
   class LogSoftmaxActfANNComponent : public ActivationFunctionANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(LogSoftmaxActfANNComponent);
+    
   protected:
     virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,
 				 FloatGPUMirroredMemoryBlock *output_units,

@@ -23,20 +23,21 @@
 #define MATRIX_H
 
 #include <cmath>
-#include "april_assert.h"
 #include <cstdarg>
 #include <new> // surprisingly, placement new doesn't work without this
-#include "cblas_headers.h"
-#include "wrapper.h"
-#include "gpu_mirrored_memory_block.h"
-#include "referenced.h"
-#include "clamp.h"
 #include "aligned_memory.h"
-#include "swap.h"
+#include "april_assert.h"
+#include "cblas_headers.h"
+#include "clamp.h"
+#include "disallow_class_methods.h"
+#include "gpu_mirrored_memory_block.h"
 #include "maxmin.h"
-#include "qsort.h"
 #include "mmapped_data.h"
+#include "qsort.h"
+#include "referenced.h"
+#include "swap.h"
 #include "unused_variable.h"
+#include "wrapper.h"
 
 // forward declaration
 template <typename T>
@@ -46,11 +47,13 @@ class SparseMatrix;
  * Multidimensional matrix class.
  * 
  * It implements basic linear algebra routines and other math operations. By
- * default, the zero value must be T(). Additionally, T(0.0f) and T(1.0f)
- * constructors must be available.
+ * default, the zero value must be T(). Additionally, T(0.0f) and T(1.0f) and
+ * T(-1.0f) constructors must be available.
  */
 template <typename T>
 class Matrix : public Referenced {
+  APRIL_DISALLOW_ASSIGN(Matrix);
+  //
   friend class SparseMatrix<T>;
   const static unsigned int MATRIX_BINARY_VERSION;
   enum matrix_contiguous_enum_t { NONE=0, CONTIGUOUS=1, NONCONTIGUOUS=2 };
@@ -638,9 +641,9 @@ public:
   /// Copy only sizes, but not data
   Matrix<T>* cloneOnlyDims() const;
   /// Deep copy
-  Matrix<T>* clone();
+  Matrix<T>* clone() const;
   /// Deep copy with different major_order
-  Matrix<T> *clone(CBLAS_ORDER major_order);
+  Matrix<T> *clone(CBLAS_ORDER major_order) const;
   /// Shallow copy
   Matrix<T>* shallow_copy();
   
@@ -701,10 +704,10 @@ public:
 
   // Returns a new matrix with the sum, assuming they have the same dimension
   // Crashes otherwise
-  Matrix<T>* addition(const Matrix<T> *other);
+  Matrix<T>* addition(const Matrix<T> *other) const;
 
   // The same as addition but substracting
-  Matrix<T>* substraction(const Matrix<T> *other);
+  Matrix<T>* substraction(const Matrix<T> *other) const;
   
   // Matrices must be NxK and KxM, the result is NxM
   Matrix<T>* multiply(const Matrix<T> *other) const;

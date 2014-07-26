@@ -485,7 +485,7 @@ Matrix<T>* Matrix<T>::cloneOnlyDims() const {
 }
 
 template<typename T>
-Matrix<T> *Matrix<T>::clone(CBLAS_ORDER major_order) {
+Matrix<T> *Matrix<T>::clone(CBLAS_ORDER major_order) const {
   Matrix<T> *resul;
   if (this->major_order != major_order) {
     resul = new Matrix<T>(numDim, matrixSize, major_order);
@@ -505,8 +505,10 @@ Matrix<T> *Matrix<T>::clone(CBLAS_ORDER major_order) {
 }
 
 template <typename T>
-Matrix<T>* Matrix<T>::clone() {
-  return new Matrix<T>(this,true);
+Matrix<T>* Matrix<T>::clone() const {
+  Matrix<T> *result = this->cloneOnlyDims();
+  result->copy(this);
+  return result;
 }
 
 template <typename T>

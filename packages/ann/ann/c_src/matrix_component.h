@@ -35,6 +35,8 @@ namespace ANN {
    */
   class VirtualMatrixANNComponent : public ANNComponent,
                                     public ComponentPropertiesAndAsserts {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(VirtualMatrixANNComponent);
+    
     TokenMatrixFloat *input, *output, *error_input, *error_output;
     
   protected:
