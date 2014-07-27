@@ -9,7 +9,7 @@ release: release-mkl
 
 debug: debug-no-omp
 
-test: test-debug-atlas
+test: test-debug-no-omp
 
 document:
 	lua profile_build_scripts/build_release_atlas.lua document

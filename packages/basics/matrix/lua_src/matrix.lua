@@ -170,7 +170,7 @@ function matrix.dict.wrap_matrices(m)
   else
     unwrap = function(m) return m end
   end
-  assert(isa(m, matrix.dict), "Needs a matrix.dict, a matrix, or a table")
+  assert(class.is_a(m, matrix.dict), "Needs a matrix.dict, a matrix, or a table")
   return m,unwrap
 end
 

@@ -330,7 +330,7 @@ Matrix<T>::Matrix(const Matrix<T> *other) :
   major_order(other->major_order),
   use_cuda(other->use_cuda),
   is_contiguous(other->is_contiguous),
-  end_iterator(), end_const_iterator(), end_best_span_iterator() {
+  end_iterator(), end_const_iterator(), end_span_iterator_() {
   stride       = new int[numDim];
   matrixSize   = new int[numDim];
   total_size   = other->total_size;
