@@ -1,7 +1,7 @@
 local blockf = mathcore.block.float
 local blocki = mathcore.block.int32
 --
-local function dense(m) return (isa(m,matrix.sparse) and m:to_dense()) or m end
+local function dense(m) return (class.is_a(m,matrix.sparse) and m:to_dense()) or m end
 local make_eq = function(m1,m2)
   return function()
     local m1,m2=dense(m1),dense(m2)

@@ -7,7 +7,6 @@ local pairs = pairs
 local assert = assert
 --
 local type = type
-local isa = isa
 local iterator = iterator
 local get_table_fields = get_table_fields
 local april_assert = april_assert
@@ -67,32 +66,29 @@ end
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 
-local optimizer_methods,
-optimizer_class_metatable = class("ann.optimizer")
+-- global environment ann.optimizer
+local optimizer,optimizer_methods = class("ann.optimizer", nil, ann.optimizer)
 
-function optimizer_class_metatable:__call(valid_options,
-					  g_options,
-					  l_options,
-					  count)
+function optimizer:constructor(valid_options,
+                               g_options,
+                               l_options,
+                               count)
   local g_options, l_options = g_options or {}, l_options or {}
-  local obj = class_instance({
-			       valid_options     = iterator(ipairs(valid_options or {})):map(function(i,t)return t[1],t[2] end):table(),
-			       global_options    = {},
-			       layerwise_options = {},
-			       count             = count or 0,
-			       regularizations   = {},
-			       constraints       = {},
-			       regularizations_order = {},
-			       constraints_order     = {},
-			     },
-			     self)
+  self.valid_options     = iterator(ipairs(valid_options or {})):map(function(i,t)return t[1],t[2] end):table()
+  self.global_options    = {}
+  self.layerwise_options = {}
+  self.count             = count or 0
+  self.regularizations   = {}
+  self.constraints       = {}
+  self.regularizations_order = {}
+  self.constraints_order     = {}
   for name,value in pairs(g_options) do
-    obj.global_options[name] = value
+    self.global_options[name] = value
   end
   for layer_name,options in pairs(l_options) do
     for name,value in pairs(options) do
-      obj.layerwise_options[layer_name] = obj.layerwise_options[layer_name] or {}
-      obj.layerwise_options[layer_name][name] = value
+      self.layerwise_options[layer_name] = self.layerwise_options[layer_name] or {}
+      self.layerwise_options[layer_name][name] = value
     end
   end
   return obj
@@ -244,25 +240,24 @@ local wrap_matrices = matrix.dict.wrap_matrices
 --------- STOCHASTIC GRADIENT DESCENT ----------
 ------------------------------------------------
 
-local sgd_methods, sgd_class_metatable = class("ann.optimizer.sgd",
-					       ann.optimizer)
+local sgd, sgd_methods = class("ann.optimizer.sgd", ann.optimizer)
+ann.optimizer.sgd = sgd -- global environment
 
-function sgd_class_metatable:__call(g_options, l_options, count, update)
+function sgd:constructor(g_options, l_options, count, update)
   -- the base optimizer, with the supported learning parameters
-  local obj = ann.optimizer({
+  ann.optimizer.constructor(self,
+                            {
 			      {"learning_rate", "Learning speed factor (0.1)"},
 			      {"momentum", "Learning inertia factor (0.1)"},
 			    },
 			    g_options,
 			    l_options,
 			    count)
-  obj.update = wrap_matrices(update or matrix.dict())
-  obj = class_instance(obj, self)
+  self.update = wrap_matrices(update or matrix.dict())
   -- standard regularization and constraints
-  obj:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
-  obj:add_regularization("L1_norm", nil, "Weight L1 regularization (1e-05)")
-  obj:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
-  return obj
+  self:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
+  self:add_regularization("L1_norm", nil, "Weight L1 regularization (1e-05)")
+  self:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
 end
 
 function sgd_methods:execute(eval, weights)
@@ -333,13 +328,14 @@ end
 --------- RESILIENT PROP ----------
 -----------------------------------
 
-local rprop_methods, rprop_class_metatable = class("ann.optimizer.rprop",
-						   ann.optimizer)
+local rprop, rprop_methods = class("ann.optimizer.rprop", ann.optimizer)
+ann.optimizer.rprop = rprop
 
-function rprop_class_metatable:__call(g_options, l_options, count,
-				      steps, old_sign)
+function rprop:constructor(g_options, l_options, count,
+                           steps, old_sign)
   -- the base optimizer, with the supported learning parameters
-  local obj = ann.optimizer({
+  ann.optimizer.constructor(self,
+                            {
 			      {"initial_step", "Initial weight update value (0.1)"},
 			      {"eta_plus", "Update value up by this factor (1.2)"},
 			      {"eta_minus", "Update value down by this factor (0.5)"},
@@ -350,16 +346,14 @@ function rprop_class_metatable:__call(g_options, l_options, count,
 			    g_options,
 			    l_options,
 			    count)
-  obj.steps    = wrap_matrices(steps or matrix.dict())
-  obj.old_sign = wrap_matrices(old_sign or matrix.dict())
-  obj = class_instance(obj, self)
-  obj:set_option("initial_step",  0.1)
-  obj:set_option("eta_plus",      1.2)
-  obj:set_option("eta_minus",     0.5)
-  obj:set_option("max_step",      50)
-  obj:set_option("min_step",      1e-05)
-  obj:set_option("niter",         1)
-  return obj
+  self.steps    = wrap_matrices(steps or matrix.dict())
+  self.old_sign = wrap_matrices(old_sign or matrix.dict())
+  self:set_option("initial_step",  0.1)
+  self:set_option("eta_plus",      1.2)
+  self:set_option("eta_minus",     0.5)
+  self:set_option("max_step",      50)
+  self:set_option("min_step",      1e-05)
+  self:set_option("niter",         1)
 end
 
 function rprop_methods:execute(eval, weights)
@@ -447,25 +441,27 @@ end
 
 -- Conjugate Gradient implementation, copied/modified from optim package of
 -- Torch 7, which is a rewrite of minimize.m written by Carl E. Rasmussen.
-local cg_methods, cg_class_metatable = class("ann.optimizer.cg", ann.optimizer)
+local cg, cg_methods = class("ann.optimizer.cg", ann.optimizer)
+ann.optimizer.cg = cg
 
-function cg_class_metatable:__call(g_options, l_options, count,
-				   df0, df1, df2, df3, x0, s)
+function cg:constructor(g_options, l_options, count,
+                        df0, df1, df2, df3, x0, s)
   -- the base optimizer, with the supported learning parameters
-  local obj = ann.optimizer({
-			      --			      {"momentum", "Learning inertia factor (0.1)"},
-			      {"rho", "Constant for Wolf-Powell conditions (0.01)"},
-			      {"sig", "Constant for Wolf-Powell conditions (0.5)"},
-			      {"int", "Reevaluation limit (0.1)"},
-			      {"ext", "Maximum number of extrapolations (3)"},
-			      {"max_iter", "Maximum number of iterations (20)"},
-			      {"ratio", "Maximum slope ratio (100)"},
-			      {"max_eval", "Maximum number of evaluations (max_iter*1.25)"},
-			    },
-			    g_options,
-			    l_options,
-			    count)
-  obj.state    = {
+  ann.optimizer.constructor(self,
+                            {
+                              --			      {"momentum", "Learning inertia factor (0.1)"},
+                              {"rho", "Constant for Wolf-Powell conditions (0.01)"},
+                              {"sig", "Constant for Wolf-Powell conditions (0.5)"},
+                              {"int", "Reevaluation limit (0.1)"},
+                              {"ext", "Maximum number of extrapolations (3)"},
+                              {"max_iter", "Maximum number of iterations (20)"},
+                              {"ratio", "Maximum slope ratio (100)"},
+                              {"max_eval", "Maximum number of evaluations (max_iter*1.25)"},
+                            },
+                            g_options,
+                            l_options,
+                            count)
+  self.state    = {
     df0 = df0,
     df1 = df1,
     df2 = df2, 
@@ -473,18 +469,16 @@ function cg_class_metatable:__call(g_options, l_options, count,
     x0  = x0,
     s   = s,
   }
-  obj = class_instance(obj, self)
-  obj:set_option("rho",           0.01) -- rho is a constant in Wolfe-Powell conditions
-  obj:set_option("sig",           0.5)  -- sig is another constant of Wolf-Powell
-  obj:set_option("int",           0.1)  -- reevaluation limit
-  obj:set_option("ext",           3.0)  -- maximum number of extrapolations
-  obj:set_option("max_iter",      20)
-  obj:set_option("ratio",         100)  -- maximum slope ratio
+  self:set_option("rho",           0.01) -- rho is a constant in Wolfe-Powell conditions
+  self:set_option("sig",           0.5)  -- sig is another constant of Wolf-Powell
+  self:set_option("int",           0.1)  -- reevaluation limit
+  self:set_option("ext",           3.0)  -- maximum number of extrapolations
+  self:set_option("max_iter",      20)
+  self:set_option("ratio",         100)  -- maximum slope ratio
   -- standard regularization and constraints
-  obj:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
-  obj:add_regularization("L1_norm", nil, "Weight L1 regularization (1e-05)")
-  obj:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
-  return obj
+  self:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
+  self:add_regularization("L1_norm", nil, "Weight L1 regularization (1e-05)")
+  self:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
 end
 
 function cg_methods:execute(eval, weights)
@@ -753,32 +747,32 @@ end
 --------- QUICKPROP ----------
 ------------------------------
 
-local quickprop_methods, quickprop_class_metatable = class("ann.optimizer.quickprop",
-							   ann.optimizer)
+local quickprop, quickprop_methods = class("ann.optimizer.quickprop",
+                                           ann.optimizer)
+ann.optimizer.quickprop = quickprop
 
-function quickprop_class_metatable:__call(g_options, l_options, count,
-					  update, lastg)
+function quickprop:constructor(g_options, l_options, count,
+                               update, lastg)
   -- the base optimizer, with the supported learning parameters
-  local obj = ann.optimizer({
-			      {"learning_rate", "Learning speed factor (0.1)"},
-			      {"mu", "Maximum growth factor (1.75)"},
-			      {"epsilon", "Bootstrap factor (1e-04)"},
+  ann.optimizer.constructor(self,
+                            {
+                              {"learning_rate", "Learning speed factor (0.1)"},
+                              {"mu", "Maximum growth factor (1.75)"},
+                              {"epsilon", "Bootstrap factor (1e-04)"},
 			      {"max_step", "Maximum step value (1000)"},
 			    },
 			    g_options,
 			    l_options,
 			    count)
-  obj:set_option("mu", 1.75)
-  obj:set_option("epsilon", 1e-04)
-  obj:set_option("max_step", 1000)
-  obj.update = wrap_matrices(update or matrix.dict())
-  obj.lastg  = wrap_matrices(lastg  or matrix.dict())
-  obj = class_instance(obj, self)
+  self:set_option("mu", 1.75)
+  self:set_option("epsilon", 1e-04)
+  self:set_option("max_step", 1000)
+  self.update = wrap_matrices(update or matrix.dict())
+  self.lastg  = wrap_matrices(lastg  or matrix.dict())
   -- standard regularization and constraints
-  obj:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
-  obj:add_regularization("L1_norm", nil, "Weight L1 regularization (1e-05)")
-  obj:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
-  return obj
+  self:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
+  self:add_regularization("L1_norm", nil, "Weight L1 regularization (1e-05)")
+  self:add_constraint("max_norm_penalty", nil, "Weight max norm upper bound (4)")
 end
 
 function quickprop_methods:execute(eval, weights)
@@ -888,12 +882,13 @@ end
 -- extracted from: http://research.microsoft.com/pubs/192769/tricks-2012.pdf
 -- Leon Bottou, Stochastic Gradient Descent Tricks, Microsoft Research, 2012
 
-local asgd_methods, asgd_class_metatable = class("ann.optimizer.asgd",
-                                                 ann.optimizer)
+local asgd, asgd_methods = class("ann.optimizer.asgd", ann.optimizer)
+ann.optimizer.asgd = asgd
 
-function asgd_class_metatable:__call(g_options, l_options, count, update)
+function asgd:constructor(g_options, l_options, count, update)
   -- the base optimizer, with the supported learning parameters
-  local obj = ann.optimizer({
+  ann.optimizer.constructor(self,
+                            {
 			      {"learning_rate", "Learning speed factor (0.1)"},
 			      {"lr_decay", "Learning decay factor (0.75)"},
 			      {"t0", "Average starts at bunch t0, good values are data size or data dimension (0)"},
@@ -901,14 +896,12 @@ function asgd_class_metatable:__call(g_options, l_options, count, update)
 			    g_options,
 			    l_options,
 			    count)
-  obj.update = wrap_matrices(update or matrix.dict())
-  obj = class_instance(obj, self)
+  self.update = wrap_matrices(update or matrix.dict())
   -- standard regularization and constraints
-  obj:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
+  self:add_regularization("weight_decay", nil, "Weight L2 regularization (1e-04)")
   -- default values
-  obj:set_option("lr_decay", 0.75)
-  obj:set_option("t0", 0)
-  return obj
+  self:set_option("lr_decay", 0.75)
+  self:set_option("t0", 0)
 end
 
 function asgd_methods:execute(eval, weights)

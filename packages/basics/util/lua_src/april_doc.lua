@@ -193,13 +193,16 @@ function april_help(object, verbosity)
   april_print_doc(object, verbosity)
   local mt = getmetatable(object)
   if mt then
-    -- metatable
-    if mt.__call then
-      if DOC_TABLE[mt.__call] then
-        print("--------------------------------------------------------------\n")
-        april_print_doc(mt.__call, verbosity)
+    -- metatable constructor and destructor
+    for _,k in ipairs{ "__call", "constructor", "__gc", "destructor" } do
+      if mt[k] then
+        if DOC_TABLE[mt[k]] then
+          print("--------------------------------------------------------------\n")
+          april_print_doc(mt[k], verbosity)
+        end
       end
     end
+    -- metatable constructor and destructor
     print("--------------------------------------------------------------\n")
     process_pairs("metatable", { mt, mt.__index },
                   function(i,v) return luatype(v) == "function" end)
@@ -217,7 +220,7 @@ function april_help(object, verbosity)
     local vars       = {}
     for i,v in pairs(object) do
       if i ~= "meta_instance" then
-        if is_class(v) then
+        if class.is_class(v) then
           table.insert(classes, {i, "", v})
         elseif iscallable(v) then
           table.insert(funcs, {i, string.format("%8s",luatype(v)), v})
