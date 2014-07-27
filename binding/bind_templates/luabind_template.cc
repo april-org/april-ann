@@ -596,7 +596,21 @@ int lua_register_subclasses_$$FILENAME2$$(lua_State *L){
   lua_setmetatable(L,-3);
   // pila = ... luabind_clases luabind_clases[childclass]
   // child_meta_instance[__index] luabindclasses[parentclass]
-  lua_pop(L,4);
+  
+  lua_getmetatable(L,-3);
+  // pila = ... luabind_clases luabind_clases[childclass]
+  // child_meta_instance[__index] luabindclasses[parentclass]
+  // chidclass_metatable
+  lua_pushvalue(L, -2);
+  // pila = ... luabind_clases luabind_clases[childclass]
+  // child_meta_instance[__index] luabindclasses[parentclass]
+  // chidclass_metatable luabindclasses[parentclass]
+  lua_setfield(L, -2, "parent");
+  
+  // pila = ... luabind_clases luabind_clases[childclass]
+  // child_meta_instance[__index] luabindclasses[parentclass]
+  // chidclass_metatable
+  lua_pop(L,5);
   // pila =  ...
 
   //LUA end

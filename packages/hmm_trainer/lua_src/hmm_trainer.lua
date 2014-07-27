@@ -36,28 +36,25 @@
 -- 		generate_hmm3st_desc -> crea descripcion de modelo lineal de 3 estados
 -- 		str2model_desc -> crea una descripcion de modelo a partir de una palabra
 
-local trainer_methods,
-trainer_class_metatable = class("HMMTrainer.trainer")
+local trainer, trainer_methods = class("HMMTrainer.trainer")
+HMMTrainer = HMMTrainer or {} -- global environment
+HMMTrainer.trainer = trainer -- global environment
 
-function trainer_class_metatable:__call()
-  local o = {
-    trainer    = hmm_trainer(), -- Objeto trainer en C
-    
-    -- tabla cadena_id --> par (cls_state, cls_transition) indices 
-    -- en el vector del hmm_trainer C++
-    linked_ids = {},
-    
-    -- tabla nombre_modelo --> modelo lua
-    -- TODO: Cuando se meten cosas aqui?
-    models     = {}
-    
-  }
-
-  return class_instance(o, self, true)
-
+function trainer:constructor()
+  self.trainer    = hmm_trainer() -- Objeto trainer en C
+  
+  -- tabla cadena_id --> par (cls_state, cls_transition) indices 
+  -- en el vector del hmm_trainer C++
+  self.linked_ids = {}
+  
+  -- tabla nombre_modelo --> modelo lua
+  -- TODO: Cuando se meten cosas aqui?
+  self.models     = {}
+  
 end
 
-local model_methods = class("HMMTrainer.model")
+local model,model_methods = class("HMMTrainer.model")
+HMMTrainer.model = model
 
 function trainer_methods:model(m)
   -- Creamos una tabla lua con las transiciones de m, 
@@ -95,15 +92,14 @@ function trainer_methods:model(m)
   end
 
   -- Creamos un modelo lua con las transiciones renumeradas
-  local res = {}
-  res = class_instance(res, HMMTrainer.model, false)
+  local res = HMMTrainer.model()
   res.name        = m.name
   res.initial     = state_numbers[m.initial]
   res.final       = state_numbers[m.final]
   res.transitions = newtrans
   res.trainer     = self
   res.num_states  = num-1
-
+  
   return res
 end
 
@@ -114,7 +110,9 @@ function model_methods:update_probs()
 end
 
 function HMMTrainer.model.from_table(t)
-  return class_instance(t, HMMTrainer.model)
+  local res = HMMTrainer.model()
+  for k,v in pairs(t) do res[k] = v end
+  return res
 end
 
 function model_methods:to_string()

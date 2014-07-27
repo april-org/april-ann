@@ -14,6 +14,9 @@ Master branch release
 
 ### API Changes
 
+- Added new `class` behavior taken from
+  [Lua OOP-iter](https://github.com/pakozm/lua-oop-iter), in order to introduce
+  more modularity in APRIL-ANN.
 - New `april_doc` and `april_set_doc` API, works with values instead of strings.
 - Added `table.values`, `table.ivalues`, `table.keys` and `table.ikeys`
   iterators.

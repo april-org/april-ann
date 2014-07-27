@@ -1,5 +1,6 @@
-local mean_var_methods,
-mean_var_class_metatable = class("stats.mean_var")
+stats = stats or {} -- global environment
+local mean_var,mean_var_methods = class("stats.mean_var")
+stats.mean_var = mean_var -- global environment
 
 april_set_doc(stats.mean_var, {
 		class       = "class",
@@ -22,15 +23,8 @@ april_set_doc(stats.mean_var, {
 		},
 		outputs = { "A mean_var object" }, })
 
-function mean_var_class_metatable:__call()
-  local obj = {
-    old_m = 0,
-    old_s = 0,
-    new_m = 0,
-    new_s = 0,
-    N     = 0,
-  }
-  return class_instance(obj, self, true)
+function mean_var:constructor()
+  self:clear()
 end
 
 -----------------------------------------------------------------------------
@@ -138,9 +132,8 @@ mean_var_methods.compute =
 --------------------
 -- Confusion Matrix
 -- -----------------
-local confus_matrix_methods,
-confus_matrix_class_metatable = class("stats.confusion_matrix")
-
+local confus_matrix,confus_matrix_methods = class("stats.confusion_matrix")
+stats.confusion_matrix = confus_matrix -- global environment
 
 april_set_doc(stats.confusion_matrix, {
                 class       = "class",
@@ -163,8 +156,7 @@ april_set_doc(stats.confusion_matrix, {
 
                 }
 })
-function confus_matrix_class_metatable:__call(num_classes, class_dict)
-
+function confus_matrix:constructor(num_classes, class_dict)
   local confusion = {}
   for i = 1, num_classes do
     local t = {}
@@ -185,16 +177,13 @@ function confus_matrix_class_metatable:__call(num_classes, class_dict)
 
   end
 
-  local obj = {
-    num_classes = num_classes,
-    confusion = confusion,
-    hits = 0,
-    misses = 0,
-    samples = 0,
-    -- FIXME: IS NOT POSSIBLE USE MAP DICT AS NIL
-    map_dict = map_dict or false
-  }
-  return class_instance(obj, self, true)
+  self.num_classes = num_classes
+  self.confusion = confusion
+  self.hits = 0
+  self.misses = 0
+  self.samples = 0
+  -- FIXME: IS NOT POSSIBLE USE MAP DICT AS NIL
+  self.map_dict = map_dict or false
 end
 
 confus_matrix_methods.clone =
@@ -211,7 +200,7 @@ confus_matrix_methods.clone =
     
     local obj = table.deep_copy(self)
 
-    return class_instance(obj, stats.confusion_matrix, true)
+    return class_instance(obj, stats.confusion_matrix)
   end
 
 confus_matrix_methods.reset =
@@ -747,14 +736,14 @@ stats.boot.ci =
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
 
-local pearson_methods,
-pearson_class_metatable = class("stats.correlation.pearson")
+local pearson,pearson_methods = class("stats.correlation.pearson")
+get_table_from_dotted_string("stats.correlation", true)
+stats.correlation.pearson = pearson
 
-function pearson_class_metatable:__call()
-  local obj = { mean_var_x  = stats.mean_var(),
-		mean_var_y  = stats.mean_var(),
-		xy_sum      = 0 }
-  return class_instance(obj, self)
+function pearson:constructor()
+  self.mean_var_x  = stats.mean_var()
+  self.mean_var_y  = stats.mean_var()
+  self.xy_sum      = 0
 end
 
 function pearson_methods:clear()
