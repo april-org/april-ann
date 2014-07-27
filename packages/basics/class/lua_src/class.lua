@@ -228,7 +228,8 @@ end
 -- @param t - A Lua value.
 -- @return boolean
 function class.is_class(t)
-  return has_class_instance_index_metamethod(t) ~= nil
+  -- not not allows to transform the returned value into boolean
+  return not not has_class_instance_index_metamethod(t)
 end
 
 -- TODO: reimplement this function
