@@ -18,8 +18,17 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-
+#include <cstdio>
 #include "complex_number.h"
 
 template struct Complex<float>;
 template struct Complex<double>;
+
+namespace april_utils {
+  void aprilPrint(const ComplexF &v) {
+    printf("%f%c%fi", v.real(), (v.img()>+0.0f)?'+':' ', v.img());
+  }
+  void aprilPrint(const ComplexD &v) {
+    printf("%f%c%fi", v.real(), (v.img()>+0.0)?'+':' ', v.img());
+  }
+}

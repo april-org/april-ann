@@ -31,21 +31,6 @@ template<>
 void Matrix<float>::clamp(float lower, float upper);
 
 template<>
-void Matrix<float>::zeros();
-
-template<>
-void Matrix<float>::ones();
-
-template<>
-Matrix<float> *Matrix<float>::addition(const Matrix<float> *other);
-
-template<>
-Matrix<float> *Matrix<float>::substraction(const Matrix<float> *other);
-
-template <>
-Matrix<float>* Matrix<float>::multiply(const Matrix<float> *other) const;
-
-template<>
 float Matrix<float>::sum() const;
 
 template<>

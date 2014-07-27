@@ -1,30 +1,26 @@
-local tied_model_manager_methods,
-tied_model_manager_class_metatable=class("tied_model_manager")
+local tied_model_manager,tied_model_manager_methods =
+  class("tied_model_manager")
+_G.tied_model_manager = tied_model_manager -- global environment
 
 ----------------------------
 -- Constructor
 ----------------------------
-function tied_model_manager_class_metatable:__call(tiedlist_file)
-  local obj = {
-    tiedlist = {},
-    name2id  = {},
-    id2name  = {},
-  }
-  class_instance(obj, self, true)
+function tied_model_manager:constructor(tiedlist_file)
+  self.tiedlist = {}
+  self.name2id  = {}
+  self.id2name  = {}
   local id = 1
   for line in tiedlist_file:lines() do
     local tokens = string.tokenize(line)
     if tokens[2] then
-      obj.name2id[tokens[1]] = obj.name2id[tokens[2]]
+      self.name2id[tokens[1]] = self.name2id[tokens[2]]
     else
-      obj.name2id[tokens[1]] = id
-      obj.id2name[id]        = tokens[1]
+      self.name2id[tokens[1]] = id
+      self.id2name[id]        = tokens[1]
       id = id + 1
     end
-    obj.tiedlist[tokens[1]] = tokens[2] or tokens[1]
+    self.tiedlist[tokens[1]] = tokens[2] or tokens[1]
   end
-  
-  return obj
 end
 
 function tied_model_manager_methods:get_model(phone)

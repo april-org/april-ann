@@ -31,6 +31,8 @@ namespace ANN {
   /// A component which computes a convolutional layer using given kernel size
   /// and step, and the given number of output planes.
   class ConvolutionANNComponent : public VirtualMatrixANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(ConvolutionANNComponent);
+    
     MatrixFloat *weights_matrix;
     
     // parameters of the convolution

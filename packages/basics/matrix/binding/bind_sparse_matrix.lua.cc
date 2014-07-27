@@ -245,6 +245,19 @@ public:
 }
 //BIND_END
 
+//BIND_METHOD SparseMatrixFloat raw_set
+{
+  float value;
+  int idx;
+  LUABIND_GET_PARAMETER(1, int, idx);
+  LUABIND_GET_PARAMETER(2, float, value);
+  if (idx < 1 || idx > obj->nonZeroSize())
+    LUABIND_FERROR2("Index out-of-bounds [%d,%d]", 1, obj->nonZeroSize());
+  (*obj)[idx] = value;
+  LUABIND_RETURN(SparseMatrixFloat, obj);
+}
+//BIND_END
+
 //BIND_METHOD SparseMatrixFloat iterate
 {
   LUABIND_CHECK_ARGN(==, 0);

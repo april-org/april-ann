@@ -21,12 +21,15 @@
 #ifndef COMPONENT_PROPERTIES_H
 #define COMPONENT_PROPERTIES_H
 
+#include "disallow_class_methods.h"
+
 // Properties for VirtualMatrixANNComponent and MatrixInputSwitchANNComponent
 #define DEFAULT_INPUT_CONTIGUOUS_PROPERTY false
 
 namespace ANN {
 
   class ComponentPropertiesAndAsserts {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(ComponentPropertiesAndAsserts);
   private:
     
     // Properties and asserts of input matrices needed by derived classes, and

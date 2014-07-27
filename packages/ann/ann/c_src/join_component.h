@@ -37,6 +37,8 @@ namespace ANN {
   /// outputs.
 
   class JoinANNComponent : public ANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(JoinANNComponent);
+    
     vector<ANNComponent*> components;
     // Token pointers which contains exactly the same that was received
     Token *input, *error_output;

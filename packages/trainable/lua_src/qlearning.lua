@@ -1,11 +1,13 @@
-local trainable_qlearning_trainer_methods,
-trainable_qlearning_trainer_class_metatable=class("trainable.qlearning_trainer")
+local trainable_qlearning_trainer,trainable_qlearning_trainer_methods =
+  class("trainable.qlearning_trainer")
+trainable = trainable or {} -- global environment
+trainable.qlearning_trainer = trainable_qlearning_trainer -- global environment
 
 -----------------------------
 -- QLEARNING TRAINER CLASS --
 -----------------------------
 
-function trainable_qlearning_trainer_class_metatable:__call(t)
+function trainable_qlearning_trainer:constructor(t)
   local params = get_table_fields(
     {
       sup_trainer = { isa_match=trainable.supervised_trainer, mandatory=true },
@@ -21,21 +23,18 @@ function trainable_qlearning_trainer_class_metatable:__call(t)
   local thenet  = tr:get_component()
   local weights = tr:get_weights_table()
   local optimizer = tr:get_optimizer()
-  local obj = {
-    tr = tr,
-    thenet = thenet,
-    weights = weights,
-    optimizer = optimizer,
-    gradients = params.gradients,
-    traces = params.traces,
-    discount = params.discount,
-    lambda = params.lambda,
-    noise = params.noise,
-    nactions = params.nactions or thenet:get_output_size(),
-    clampQ = params.clampQ,
-  }
-  assert(obj.nactions > 0, "nactions must be > 0")
-  return class_instance(obj, self)
+  self.tr = tr
+  self.thenet = thenet
+  self.weights = weights
+  self.optimizer = optimizer
+  self.gradients = params.gradients
+  self.traces = params.traces
+  self.discount = params.discount
+  self.lambda = params.lambda
+  self.noise = params.noise
+  self.nactions = params.nactions or thenet:get_output_size()
+  self.clampQ = params.clampQ
+  assert(self.nactions > 0, "nactions must be > 0")
 end
 
 -- PRIVATE METHOD
@@ -190,14 +189,17 @@ end
 -- http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.72.1193&rep=rep1&type=pdf
 --
 -- Martin Riedmiller, Neural Fitted Q Iteration - First Experiences
--- with a Data Eﬃcient Neural Reinforcement Learning Method, ECML 2005
+-- with a Data Efficient Neural Reinforcement Learning Method, ECML 2005
 
-local trainable_batch_builder_methods,
-trainable_batch_builder_class_metatable=class("trainable.qlearning_trainer.batch_builder")
+local trainable_batch_builder,trainable_batch_builder_methods =
+  class("trainable.qlearning_trainer.batch_builder")
+trainable = trainable or {} -- global environment
+trainable.qlearning_trainer = trainable.qlearning_trainer or {} -- global environment
+trainable.qlearning_trainer.batch_builder = trainable_batch_builder -- global environment
 
-function trainable_batch_builder_class_metatable:__call(qlearner)
-  local obj = { qlearner = qlearner, batch={} }
-  return class_instance(obj,self)
+function trainable_batch_builder:constructor(qlearner)
+  self.qlearner = qlearner
+  self.batch = {}
 end
 
 function trainable_batch_builder_methods:add(prev_state, output, action, reward)

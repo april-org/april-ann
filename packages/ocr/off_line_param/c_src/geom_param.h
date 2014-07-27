@@ -34,11 +34,11 @@ namespace OCR {
       // for each image row, seek white pixel runs between two blacks. If the
       // run length is inferior to a threshold, the run will be filled with
       // black.
-      for (int row=0; row < img->height; ++row) {
+      for (int row=0; row < img->height(); ++row) {
 	int left=-1;
 	int right=0;
 	int run_length=0;
-	while (right < img->width) {
+	while (right < img->width()) {
 	  // a black pixel
 	  if ((*img)(right, row) > BINARIZING_THRESHOLD) {
 	    if (left != -1) {
@@ -70,21 +70,21 @@ namespace OCR {
       Image<T> *i2=img->clone();
       
       RLSA(i2, RLSA_TH);
-      T *projection = new T[img->height];
+      T *projection = new T[img->height()];
       i2->projection_h(projection);
       
       T maximum = 0;
-      for (int i=0; i < img->height; ++i) {
+      for (int i=0; i < img->height(); ++i) {
 	if (projection[i] > maximum)
 	  maximum = projection[i];
       }
       int u=0;
-      while (u < img->height) {
+      while (u < img->height()) {
 	if (projection[u] > projection_th * maximum)
 	  break;
 	++u;
       }
-      int l = img->height - 1;
+      int l = img->height() - 1;
       while (l >= 0) {
 	if (projection[l] > projection_th * maximum)
 	  break;

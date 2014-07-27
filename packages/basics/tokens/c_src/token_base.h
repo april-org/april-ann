@@ -21,19 +21,21 @@
 #ifndef TOKEN_BASE_H
 #define TOKEN_BASE_H
 
-#include "april_assert.h"
 #include <typeinfo>
 #include <stdint.h>
-#include "table_of_token_codes.h"
+#include "april_assert.h"
 #include "buffer_list.h"
 #include "constString.h"
+#include "disallow_class_methods.h"
 #include "referenced.h"
+#include "table_of_token_codes.h"
 
 /// A pure abstract class with interface of Token. A Token represents the
 /// concept of a datatype throught Dataflow architectures (even Artificial
 /// Neural Network components).
 class Token : public Referenced {
- public:
+  APRIL_DISALLOW_COPY_AND_ASSIGN(Token);
+public:
   Token();
   virtual ~Token();
   /// This method implements a deep copy

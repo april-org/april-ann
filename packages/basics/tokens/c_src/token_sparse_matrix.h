@@ -21,12 +21,14 @@
 #ifndef TOKEN_SPARSE_MATRIX_H
 #define TOKEN_SPARSE_MATRIX_H
 
-#include "unused_variable.h"
+#include "disallow_class_methods.h"
 #include "matrix.h"
 #include "token_base.h"
+#include "unused_variable.h"
 
 template<typename T>
 class TokenSparseMatrix : public Token {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(TokenSparseMatrix);
   SparseMatrix<T> *mat;
 public:
   TokenSparseMatrix(SparseMatrix<T> *mat);
@@ -56,6 +58,7 @@ public:
 
 template<typename T>
 TokenSparseMatrix<T>::TokenSparseMatrix(SparseMatrix<T> *mat) :
+  Token(),
   mat(mat) {
   IncRef(mat);
 }

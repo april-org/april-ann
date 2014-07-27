@@ -35,6 +35,8 @@ using april_utils::vector;
 namespace ANN {
 
   class PCAWhiteningANNComponent : public ANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(PCAWhiteningANNComponent);
+    
   protected:
     MatrixFloat *U; //< bi-dimensional
     SparseMatrixFloat *S; //< sparse diagonal matrix in CSR

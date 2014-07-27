@@ -31,6 +31,8 @@ namespace ANN {
   /// This component implements the LogLogistic activation function. This
   /// activation only works with CrossEntropy LossFunction (and viceversa).
   class LogLogisticActfANNComponent : public ActivationFunctionANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(LogLogisticActfANNComponent);
+    
   protected:
     virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,
 				 FloatGPUMirroredMemoryBlock *output_units,

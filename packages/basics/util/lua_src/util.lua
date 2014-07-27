@@ -11,6 +11,22 @@ local assert = assert
 
 ------------------------------------------------------------------------------
 
+-- DEPRECATED
+
+isa = make_deprecated_function("isa",
+                               "class.is_a", class.is_a)
+class_extension = make_deprecated_function("class_extension",
+                                           "class.extend", class.extend)
+class_get = make_deprecated_function("class_get",
+                                     "class.consult", class.consult)
+class_get_value_of_key = make_deprecated_function("class_get_value_of_key",
+                                                  "class.consult",
+                                                  class.consult)
+is_class = make_deprecated_function("is_class",
+                                    "class.is_class", class.is_class)
+
+------------------------------------------------------------------------------
+
 function iscallable(obj)
   local t = luatype(obj)
   return t == "function" or (t == "table" and (getmetatable(obj) or {}).__call)
@@ -53,26 +69,6 @@ end
 
 ------------------------------------------------------------------------------
 
-function class_get(class_table, key)
-  if class_table.meta_instance and
-  luatype(class_table.meta_instance.__index) == "table" then
-    return class_table.meta_instance.__index[key]
-  else
-    error("The table is not a class")
-  end
-end
-
-class_get_value_of_key = class_get
-
-function class_extension(class_table, key, value)
-  if class_table.meta_instance and
-  luatype(class_table.meta_instance.__index) == "table" then
-    class_table.meta_instance.__index[key] = value
-  else
-    error("The table is not a class")
-  end
-end
-
 function get_table_from_dotted_string(dotted_string, create, basetable)
   local create    = create or false
   local basetable = basetable or _G
@@ -111,7 +107,7 @@ function class_wrapper(obj,wrapper)
 	 not rawequal(getmetatable(current).__index,current)) do
     current = getmetatable(current).__index
     for i,v in pairs(current) do
-      if wrapper[i] == nil then
+      if rawget(wrapper,i) == nil then
 	if type(v) == "function" then
 	  wrapper[i] =
 	    function(first, ...)
@@ -139,88 +135,6 @@ function class_wrapper(obj,wrapper)
   return wrapper
 end
 
--- Convert a table in a class, and it receives an optional parent class to
--- implement simple heritance. It returns
--- a table which will contain the methods of the object, and the metatable
--- of the class, so in the metatable could be defined __call constructor.
-function class(classname, parentclass)
-  local current = get_table_from_dotted_string(classname, true)
-  if type(parentclass) == "string" then
-    parentclass = get_table_from_dotted_string(parentclass)
-  end
-  assert(parentclass==nil or is_class(parentclass),
-	 "The parentclass must be defined by 'class' function")
-  local t = string.tokenize(classname,".")
-  --
-  local meta_instance = {
-    id = classname,
-    cls = current,
-    __tostring = function(self) return "instance of " .. classname end,
-    __index = { }
-  }
-  local class_metatable = {
-    __tostring = function() return "class ".. classname .. " class" end,
-    id         = classname .. " class",
-    __concat   = function(a,b)
-      assert(type(b) == "string", "Needs a string as second argument")
-      return class_get(a,b)
-    end,
-    --    __index    = function(t,k)
-    --      local aux = rawget(t,k)
-    --      if aux then return aux else return t.meta_instance.__index[k] end
-    --    end,
-  }
-  if parentclass then
-    setmetatable(meta_instance.__index, parentclass.meta_instance)
-  end
-  -- 
-  current.meta_instance = meta_instance
-  setmetatable(current, class_metatable)
-  return current.meta_instance.__index,class_metatable
-end
-
--- Converts a Lua table in an instance of the given class. An optional
--- nil-safe boolean with true indicates if the resulting table field names are
--- nil safe (is not possible to get a field which doesn't exists)
-function class_instance(obj, class, nil_safe)
-  setmetatable(obj, class.meta_instance)
-  if nil_safe and not getmetatable(class.meta_instance.__index) then
-    setmetatable(class.meta_instance, class.meta_instance)
-  end
-  return obj
-end
-
--- returns true if the given table is a class table (not instance)
-function is_class(t)
-  return luatype(t) == "table" and t.meta_instance and t.meta_instance.id ~= nil
-end
-
--- Predicate which returns true if a given object instance is a subclass of a
--- given Lua table (it works for Lua class(...) and C++ binding)
-function isa( object_instance, base_class_table )
-  assert(luatype(base_class_table) == "table",
-	 "The second argument must be a class table")
-  local base_class_meta = (base_class_table.meta_instance or {}).__index
-  local object_table    = object_instance
-  local _isa            = false
-  while (not _isa and object_table and getmetatable(object_table) and
-	 getmetatable(object_table).__index) do
-    local t = getmetatable(object_table).__index
-    _isa = rawequal(t,base_class_meta)
-    object_table = t
-  end
-  return _isa
-end
-
--- calls the method of the directly super class
-function super(self, methodname, ...)
-  local super_instance = getmetatable(self).__index
-  assert(super_instance, "The given object hasn't a super-class")
-  local aux = super_instance[methodname]
-  assert(aux~=nil, "Method " .. methodname .. " not found")
-  return super_instance[methodname](...)
-end
-
 function april_list(t)
   for i,v in pairs(t) do print(i,v) end
 end
@@ -233,12 +147,7 @@ function get_object_id(obj)
   return id
 end
 
-function get_object_cls(obj)
-  local cls = nil
-  local mt = getmetatable(obj)
-  if mt then cls = mt.cls end
-  return cls
-end
+get_object_cls = class.of
 
 function april_print_script_header(arg,file)
   local file = file or io.stdout
@@ -494,7 +403,7 @@ local valid_get_table_fields_params_attributes = { type_match = true,
 						   getter     = true,
 						   default    = true }
 function get_table_fields(params, t, ignore_other_fields)
-  local isa = isa
+  local is_a = class.is_a
   local type = type
   local pairs = pairs
   local ipairs = ipairs
@@ -531,7 +440,7 @@ function get_table_fields(params, t, ignore_other_fields)
 	  error("Incorrect type '" .. type(v) .. "' for field '" .. key .. "'")
 	end
       end
-      if v ~= nil and data.isa_match and not isa(v, data.isa_match) then
+      if v ~= nil and data.isa_match and not is_a(v, data.isa_match) then
 	error("Incorrect field isa_match predicate: " .. key)
       end
       if data.getter then v=(t[key]~=nil and data.getter(t[key])) or nil end
@@ -1109,12 +1018,11 @@ end
 -- and apply functions, introducing a more natural order of application of the
 -- functions.
 
-local iterator_methods,
-iterator_class_metatable = class("iterator")
+local iterator, iterator_methods = class("iterator")
+_G.iterator = iterator -- make global
 
-function iterator_class_metatable:__call(...)
-  local obj = { data=table.pack(...) }
-  return class_instance(obj, iterator, true)
+function iterator:constructor(...)
+  self.data = table.pack(...)
 end
 
 function iterator.meta_instance:__call() return table.unpack(self.data) end
@@ -1324,46 +1232,6 @@ end
 -------------------
 -- DOCUMENTATION --
 -------------------
-april_set_doc(class, {
-		class = "function",
-		summary = "This function creates a lua class table",
-		description = {
-		  "Creates a lua class table for the given",
-		  "dotted table name string. Also it is possible to",
-		  "especify a parentclass for simple hieritance.", },
-		params = {
-		  "The table name string",
-		  "The parent class table [optional]",
-		}, })
-
-april_set_doc(class_instance, {
-		class = "function",
-		summary = "This function makes a table the instance of a class",
-		description = {
-		  "Transforms a table to be the instance of a given class.",
-		  "It supports an optional argument to indicate if the instance",
-		  "is nonmutable, so the user can't create new indexes.", },
-		params = {
-		  "The table object",
-		  "The class table",
-		  { "A boolean indicating if it is nil-safe [optional], by",
-		    "default it is false. If true, nil fields will throw",
-		    "error" },
-		},
-		outputs = {
-		  "The table instanced as object of the given class",
-		}, })
-
-april_set_doc(isa, {
-		class = "function",
-		summary = "A predicate to check if a table is instance of a class",
-		params = {
-		  "The table object",
-		  "The class table",
-		},
-		outputs = {
-		  "A boolean",
-		}, })
 
 april_set_doc(april_set_doc, {
 		class   = "function",
@@ -1494,22 +1362,22 @@ april_set_doc(util.stopwatch,{
                 summary = "Constructor of stopwatch",
 })
 
-april_set_doc(class_get(util.stopwatch,"go"),{
+april_set_doc(util.stopwatch.."go", {
                 class = "method",
                 summary = "Starts timer",
 })
 
-april_set_doc(class_get(util.stopwatch,"stop"),{
+april_set_doc(util.stopwatch.."stop", {
                 class = "method",
                 summary = "Stops timer",
 })
 
-april_set_doc(class_get(util.stopwatch,"reset"),{
+april_set_doc(util.stopwatch.."reset",{
                 class = "method",
                 summary = "Resets timer",
 })
 
-april_set_doc(class_get(util.stopwatch,"read"),{
+april_set_doc(util.stopwatch.."read",{
                 class = "method",
                 summary = "Resets timer",
                 outputs = {
@@ -1518,7 +1386,7 @@ april_set_doc(class_get(util.stopwatch,"read"),{
                 },
 })
 
-april_set_doc(class_get(util.stopwatch,"is_on"),{
+april_set_doc(util.stopwatch.."is_on",{
                 class = "method",
                 summary = "Is on predicate",
                 outputs = {
@@ -1526,7 +1394,7 @@ april_set_doc(class_get(util.stopwatch,"is_on"),{
                 },
 })
 
-april_set_doc(class_get(util.stopwatch,"clone"),{
+april_set_doc(util.stopwatch.."clone",{
                 class = "method",
                 summary = "Deep copy",
                 outputs = {

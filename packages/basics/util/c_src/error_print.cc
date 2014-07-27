@@ -23,7 +23,11 @@ extern "C" {
 #include "lua.h"
 }
 
-extern lua_State *globalL;
+lua_State *error_print_globalL=0;
+
+void errorPrintSetLuaState(lua_State *L) {
+  error_print_globalL = L;
+}
 
 #define MAX_FRAMES     256
 #define FUNC_NAME_SIZE 256
@@ -122,8 +126,13 @@ void print_CPP_stacktrace(FILE *out) {
 }
 //////////////////////////////////////////////////////////////////////////////
 
-void print_CPP_LUA_stacktrace_and_exit() {
+void print_CPP_LUA_stacktrace_and_exit(int errorcode) {
   print_CPP_stacktrace();
-  lua_pushstring(globalL, "");
-  lua_error(globalL);
+  if (error_print_globalL != 0) {
+    lua_pushstring(error_print_globalL, "");
+    lua_error(error_print_globalL);
+  }
+  else {
+    exit(errorcode);
+  }
 }

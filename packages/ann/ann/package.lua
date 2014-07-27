@@ -15,7 +15,7 @@
    },
    target{
      name = "test",
-     execute_script{
+     lua_unit_test{
        file={
 	 "test/test-components.lua",
 	 "test/test-sparse.lua",

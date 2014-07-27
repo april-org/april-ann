@@ -11,7 +11,7 @@ local pairs = pairs
 local assert = assert
 --
 local type = type
-local isa = isa
+local is_a = class.is_a
 local iterator = iterator
 local get_table_fields = get_table_fields
 local april_assert = april_assert
@@ -151,7 +151,7 @@ trainable.dataset_multiple_iterator =
                            nump, ds:numPatterns())
             else nump = ds:numPatterns()
             end
-            return isa(ds,dataset) and dataset.token.wrapper(ds,
+            return is_a(ds,dataset) and dataset.token.wrapper(ds,
                                                              params.bunch_major) or ds
 	end):
         table(), nump
@@ -326,8 +326,10 @@ trainable.dataset_multiple_iterator =
 -- TRAIN_HOLDOUT_VALIDATION CLASS --
 ------------------------------------
 
-local train_holdout_methods, train_holdout_class_metatable =
+local train_holdout, train_holdout_methods =
   class("trainable.train_holdout_validation")
+trainable = trainable or {} -- global environment
+trainable.train_holdout_validation = train_holdout -- global environment
 
 april_set_doc(trainable.train_holdout_validation, {
 		class       = "class",
@@ -342,65 +344,61 @@ april_set_doc(trainable.train_holdout_validation, {
 		  "the stop criterion is true.",
 		}, })
 
-train_holdout_class_metatable.__call =
-  april_doc{
-    class = "method", summary = "Constructor",
-    description ={
-      "Constructor of the train_holdout_validation class.",
-    },
-    params = {
-      epochs_wo_validation = {
-        "Number of epochs from start where the validation is",
-        "ignored [optional], by default it is 0",
-      },
-      min_epochs = "Minimum number of epochs for training [optional]. By default it is 0",
-      max_epochs = "Maximum number of epochs for training",
-      stopping_criterion = {
-        "A predicate function which",
-        "returns true if stopping criterion, false otherwise.",
-        "Some basic criteria are implemented at",
-        "trainable.stopping_criteria table.",
-        "The criterion function is called as",
-        "stopping_criterion({ current_epoch=..., best_epoch=...,",
-        "best_val_error=..., train_error=...,",
-        "validation_error=... }). [optional] By default it is max_epochs criterion.",
-      },
-      tolerance = {
-        "The tolerance>=0 is the minimum relative difference to",
-        "take the current validation loss as the best [optional],",
-        "by default it is 0.",
-      },
-      first_epoch = "The first epoch number [optional]. By default it is 0.",
-    },
-    outputs = { "Instantiated object" },
-  } ..
-  function(self,t,saved_state)
-    local params = get_table_fields(
-      {
-        epochs_wo_validation = { mandatory=false, type_match="number", default=0 },
-        min_epochs = { mandatory=true, type_match="number", default=0 },
-        max_epochs = { mandatory=true, type_match="number" },
-        tolerance  = { mandatory=true, type_match="number", default=0 },
-        stopping_criterion = { mandatory=true, type_match="function",
-                               default = function() return false end },
-        first_epoch        = { mandatory=false, type_match="number", default=1 },
-      }, t)
-    assert(params.tolerance >= 0, "tolerance < 0 is forbidden")
-    local saved_state = saved_state or {}
-    local obj = {
-      params = params,
-      state  = {
-        current_epoch    = saved_state.current_epoch    or 0,
-        train_error      = saved_state.train_error      or math.huge,
-        validation_error = saved_state.validation_error or math.huge,
-        best_epoch       = saved_state.best_epoch       or 0,
-        best_val_error   = saved_state.best_val_error   or math.huge,
-        best             = saved_state.best             or nil,
-        last             = saved_state.last             or nil,
-      },
-    }
-    return class_instance(obj, self)
-  end
+april_set_doc(trainable.train_holdout_validation, {
+		class = "method", summary = "Constructor",
+		description ={
+		  "Constructor of the train_holdout_validation class.",
+		},
+		params = {
+		  epochs_wo_validation = {
+		    "Number of epochs from start where the validation is",
+		    "ignored [optional], by default it is 0",
+		  },
+		  min_epochs = "Minimum number of epochs for training [optional]. By default it is 0",
+		  max_epochs = "Maximum number of epochs for training",
+		  stopping_criterion = {
+		    "A predicate function which",
+		    "returns true if stopping criterion, false otherwise.",
+		    "Some basic criteria are implemented at",
+		    "trainable.stopping_criteria table.",
+		    "The criterion function is called as",
+		    "stopping_criterion({ current_epoch=..., best_epoch=...,",
+		    "best_val_error=..., train_error=...,",
+		    "validation_error=... }). [optional] By default it is max_epochs criterion.",
+		  },
+		  tolerance = {
+		    "The tolerance>=0 is the minimum relative difference to",
+		    "take the current validation loss as the best [optional],",
+		    "by default it is 0.",
+		  },
+		  first_epoch = "The first epoch number [optional]. By default it is 0.",
+		},
+		outputs = { "Instantiated object" }, })
+
+function train_holdout:constructor(t,saved_state)
+  local params = get_table_fields(
+    {
+      epochs_wo_validation = { mandatory=false, type_match="number", default=0 },
+      min_epochs = { mandatory=true, type_match="number", default=0 },
+      max_epochs = { mandatory=true, type_match="number" },
+      tolerance  = { mandatory=true, type_match="number", default=0 },
+      stopping_criterion = { mandatory=true, type_match="function",
+			     default = function() return false end },
+      first_epoch        = { mandatory=false, type_match="number", default=1 },
+    }, t)
+  assert(params.tolerance >= 0, "tolerance < 0 is forbidden")
+  local saved_state = saved_state or {}
+  self.params = params
+  self.state  = {
+    current_epoch    = saved_state.current_epoch    or 0,
+    train_error      = saved_state.train_error      or math.huge,
+    validation_error = saved_state.validation_error or math.huge,
+    best_epoch       = saved_state.best_epoch       or 0,
+    best_val_error   = saved_state.best_val_error   or math.huge,
+    best             = saved_state.best             or nil,
+    last             = saved_state.last             or nil,
+  }
+end
 
 train_holdout_methods.execute =
   april_doc{
@@ -632,8 +630,10 @@ trainable.train_holdout_validation.load =
 -- TRAIN_HOLDOUT_VALIDATION CLASS --
 ------------------------------------
 
-local train_wo_validation_methods, train_wo_validation_class_metatable =
+local train_wo_validation,train_wo_validation_methods =
   class("trainable.train_wo_validation")
+trainable = trainable or {} -- global environment
+trainable.train_wo_validation = train_wo_validation -- global environment
 
 april_set_doc(trainable.train_wo_validation, {
 		class       = "class",
@@ -661,7 +661,7 @@ april_set_doc(trainable.train_wo_validation, {
 		},
 		outputs = { "Instantiated object" }, })
 
-function train_wo_validation_class_metatable:__call(t,saved_state)
+function train_wo_validation:constructor(t,saved_state)
   local params = get_table_fields(
     {
       min_epochs = { mandatory=true, type_match="number", default=0 },
@@ -671,16 +671,13 @@ function train_wo_validation_class_metatable:__call(t,saved_state)
       first_epoch        = { mandatory=false, type_match="number", default=1 },
     }, t)
   local saved_state = saved_state or {}
-  local obj = {
-    params = params,
-    state  = {
-      current_epoch     = saved_state.current_epoch     or 0,
-      train_error       = saved_state.train_error       or math.huge,
-      train_improvement = saved_state.train_improvement or math.huge,
-      last              = saved_state.last              or nil,
-    },
+  self.params = params
+  self.state  = {
+    current_epoch     = saved_state.current_epoch     or 0,
+    train_error       = saved_state.train_error       or math.huge,
+    train_improvement = saved_state.train_improvement or math.huge,
+    last              = saved_state.last              or nil,
   }
-  return class_instance(obj, self)
 end
 
 train_wo_validation_methods.execute =

@@ -29,24 +29,31 @@
 #include "april_assert.h"
 #include "cblas_headers.h"
 #include "clamp.h"
+#include "disallow_class_methods.h"
 #include "gpu_mirrored_memory_block.h"
-#include "logbase.h"
 #include "maxmin.h"
 #include "mmapped_data.h"
 #include "qsort.h"
 #include "referenced.h"
-#include "unused_variable.h"
 #include "swap.h"
+#include "unused_variable.h"
 #include "wrapper.h"
 
 // forward declaration
 template <typename T>
 class SparseMatrix;
 
-/// Multidimensional matrix class. It implements basic linear algebra routines
-/// and other math operations. By default, the zero value must be T()
+/**
+ * Multidimensional matrix class.
+ * 
+ * It implements basic linear algebra routines and other math operations. By
+ * default, the zero value must be T(). Additionally, T(0.0f) and T(1.0f) and
+ * T(-1.0f) constructors must be available.
+ */
 template <typename T>
 class Matrix : public Referenced {
+  APRIL_DISALLOW_ASSIGN(Matrix);
+  //
   friend class SparseMatrix<T>;
   const static unsigned int MATRIX_BINARY_VERSION;
   enum matrix_contiguous_enum_t { NONE=0, CONTIGUOUS=1, NONCONTIGUOUS=2 };
@@ -316,10 +323,12 @@ public:
   
   /********************************************************/
   /**
-   * The span iterator traverses the matrix allowing to do a linear
-   * traversal of the largest dimension.
+   * The span iterator traverses the matrix allowing to do a linear traversal of
+   * a given dimension. The class allows to generate offset, stride and size
+   * values which given the Matrix base pointer could be used to access to any
+   * position in a given dimension span.
    */
-  class best_span_iterator {
+  class span_iterator {
     friend class Matrix;
     const Matrix<T> *m;
     int raw_pos;
@@ -344,21 +353,21 @@ public:
       }
     };
     //
-    void initialize(const Matrix<T> *m, int raw_pos);
+    void initialize(const Matrix<T> *m, int raw_pos, int dim);
     //
-    best_span_iterator(const Matrix<T> *m, int raw_pos);
+    span_iterator(const Matrix<T> *m, int raw_pos, int dim);
   public:
-    best_span_iterator(const Matrix<T> *m);
-    best_span_iterator();
-    best_span_iterator(const best_span_iterator &other);
-    ~best_span_iterator();
+    span_iterator(const Matrix<T> *m, int dim = -1);
+    span_iterator();
+    span_iterator(const span_iterator &other);
+    ~span_iterator();
     int getOffset() const;
     int getStride() const;
     int getSize() const;
-    best_span_iterator &operator=(const best_span_iterator &other);
-    bool operator==(const best_span_iterator &other) const;
-    bool operator!=(const best_span_iterator &other) const;
-    best_span_iterator &operator++();
+    span_iterator &operator=(const span_iterator &other);
+    bool operator==(const span_iterator &other) const;
+    bool operator!=(const span_iterator &other) const;
+    span_iterator &operator++();
     int numberOfIterations() const;
     void setAtIteration(int idx);
   };
@@ -480,12 +489,12 @@ private:
   // don't waste memory space
   mutable iterator end_iterator;
   mutable const_iterator end_const_iterator;
-  mutable best_span_iterator end_best_span_iterator;
+  mutable span_iterator end_span_iterator_;
   
   // NULL constructor
   Matrix() : is_contiguous(NONE),
 	     end_iterator(), end_const_iterator(),
-	     end_best_span_iterator() { }
+	     end_span_iterator_() { }
   //
   Matrix(int numDim, const int *stride, const int offset,
 	 const int *matrixSize, const int total_size, const int last_raw_pos,
@@ -500,7 +509,7 @@ private:
     last_raw_pos = new_last_raw_pos;
     end_iterator.m	     = 0;
     end_const_iterator.m     = 0;
-    end_best_span_iterator.m = 0;
+    end_span_iterator_.m     = 0;
   }
 
 public:
@@ -525,6 +534,11 @@ public:
   Matrix(Matrix<T> *other,
 	 const int* coords, const int *sizes,
 	 bool clone=true);
+  /// Sub-matrix constructor of a const matrix. WARNING, this matrices don't
+  /// allow writes if clone=false
+  Matrix(const Matrix<T> *other,
+	 const int* coords, const int *sizes,
+	 bool clone=true);
   /// Destructor
   virtual ~Matrix();
   
@@ -533,9 +547,16 @@ public:
 					  *mmapped_data);
   /// Writes to a file
   void toMMappedDataWriter(april_utils::MMappedDataWriter *mmapped_data) const;
-
+  
+  /// For DEBUG purposes
+  void print() const;
+  
   /// Modify sizes of matrix
-  Matrix<T> *rewrap(const int *new_dims, int len);
+  Matrix<T> *rewrap(const int *new_dims, int len,
+                    bool clone_if_not_contiguous=false);
+
+  /// Removes all singleton dimensions
+  Matrix<T> *squeeze();
   
   /* Getters and setters */
   int getNumDim() const { return numDim; }
@@ -585,10 +606,10 @@ public:
       end_iterator = iterator(this, last_raw_pos+1);
     return end_iterator;
   }
-  const best_span_iterator &end_span_iterator() const {
-    if (end_best_span_iterator.m == 0)
-      end_best_span_iterator = best_span_iterator(this, last_raw_pos+1);
-    return end_best_span_iterator;
+  const span_iterator &end_span_iterator() const {
+    if (end_span_iterator_.m == 0)
+      end_span_iterator_ = span_iterator(this, last_raw_pos+1, -1);
+    return end_span_iterator_;
   }
   /************************/
   const_iterator begin() const { return const_iterator(this); }
@@ -685,10 +706,10 @@ public:
 
   // Returns a new matrix with the sum, assuming they have the same dimension
   // Crashes otherwise
-  Matrix<T>* addition(const Matrix<T> *other);
+  Matrix<T>* addition(const Matrix<T> *other) const;
 
   // The same as addition but substracting
-  Matrix<T>* substraction(const Matrix<T> *other);
+  Matrix<T>* substraction(const Matrix<T> *other) const;
   
   // Matrices must be NxK and KxM, the result is NxM
   Matrix<T>* multiply(const Matrix<T> *other) const;
@@ -831,7 +852,14 @@ public:
     data->forceUpdate(use_cuda);
     #endif
   }
-
+  
+  Matrix<T> *convolution(int D, const int *step,
+                         Matrix<T> *kernel, Matrix<T> *result=0);
+                         /*Matrix<T> **unrolled_kernel=0,
+                         Matrix<T> **unrolled_this=0);*/
+  Matrix<T> *padding(int *begin_padding, int *end_padding, T default_value=T()) const;
+  Matrix<T> *padding(int pad_value, T default_value=T()) const;
+  
 private:
   void allocate_memory(int size);
   void release_memory();

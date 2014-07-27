@@ -21,7 +21,7 @@
    },
    target{
      name = "test",
-     execute_script{
+     lua_unit_test{
        file={
 	 "test/test_bootstrap.lua",
 	 "test/test_comb.lua",
