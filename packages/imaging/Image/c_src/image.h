@@ -21,16 +21,18 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
-#include "floatrgb.h"
-#include "referenced.h"
-#include "matrix.h"
+#include <cmath>
 #include "affine_transform.h"
 #include "dataset.h"
-#include <cmath>
+#include "disallow_class_methods.h"
+#include "floatrgb.h"
+#include "matrix.h"
+#include "referenced.h"
 
 template <typename T>
 class Image : public Referenced {
-  
+  APRIL_DISALLOW_ASSIGN(Image);
+
   Matrix<T> *matrix; // dimension 2 is assumed
   // int offset;
   // int width,height;
@@ -47,6 +49,7 @@ public:
   virtual ~Image();
   //Methods
   Matrix<T> *getMatrix() { return matrix; }
+  const Matrix<T> *getMatrix() const { return matrix; }
   T& operator () (int x, int y) { 
     return (*matrix)(y, x);
   }

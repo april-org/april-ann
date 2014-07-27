@@ -29,6 +29,8 @@ namespace ANN {
 
   /// Component for the ReLU activation function.
   class ReLUActfANNComponent : public ActivationFunctionANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(ReLUActfANNComponent);
+    
   protected:
     virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,
 				 FloatGPUMirroredMemoryBlock *output_units,

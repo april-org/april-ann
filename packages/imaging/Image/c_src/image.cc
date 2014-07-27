@@ -18,13 +18,14 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+
 /*
  *    Fichero de implementacion (incluido por la cabecera image.h)
  *
  */
 
-#ifndef _IMAGE_CC_
-#define _IMAGE_CC_
+#ifndef IMAGE_CC
+#define IMAGE_CC
 
 #include <cmath>
 #include <cstdio>
@@ -512,17 +513,46 @@ void Image<T>::min_bounding_box(float threshold,
 template<typename T>
 void Image<T>::copy(const Image<T> *src, int dst_x, int dst_y)
 {
-  int x0=0, y0=0;
-
-  if (dst_x < 0) x0 = -dst_x;
-  if (dst_y < 0) y0 = -dst_y;
-
-  // FIXME: this loop performance can be increased by splitting it in two main
-  // parts: 1. out-of-bounds regions; 2. image regions. Fast matrix specialized
-  // operations can be used for 1 and 2 parts.
-  for (int y=y0; (y < src->height()) && (y+dst_y < height()); ++y)
+  // FIXME: review this new code
+  int src_pos[2], sizes[2], dst_pos[2];
+  if (dst_y < 0) {
+    src_pos[0] = -dst_y;
+    dst_pos[0] = 0;
+  }
+  else {
+    src_pos[0] = 0;
+    dst_pos[0] = dst_y;
+  }
+  if (dst_x < 0) {
+    src_pos[1] = -dst_x;
+    dst_pos[1] = 0;
+  }
+  else {
+    src_pos[1] = 0;
+    dst_pos[1] = dst_x;
+  }
+  sizes[0] = april_utils::min(src->height() - src_pos[0], this->height() - dst_y);
+  sizes[1] = april_utils::min(src->width()  - src_pos[1], this->width()  - dst_x);
+  
+  Matrix<T> *src_submat = new Matrix<T>(src->getMatrix(), src_pos, sizes, false);
+  Matrix<T> *dst_submat = new Matrix<T>(this->getMatrix(), dst_pos, sizes, false);
+  const Matrix<T> *const_src_submat = src_submat;
+  IncRef(src_submat);
+  IncRef(dst_submat);
+  dst_submat->copy(const_src_submat);
+  DecRef(src_submat);
+  DecRef(dst_submat);
+  
+  /*
+    int x0=0, y0=0;
+    
+    if (dst_x < 0) x0 = -dst_x;
+    if (dst_y < 0) y0 = -dst_y;
+    
+    for (int y=y0; (y < src->height()) && (y+dst_y < height()); ++y)
     for (int x=x0; (x < src->width()) && (x+dst_x < width()); ++x) 
-      (*this)(x+dst_x, y+dst_y)=(*src)(x, y);
+    (*this)(x+dst_x, y+dst_y)=(*src)(x, y);
+  */
 }
 
 
@@ -535,15 +565,15 @@ Image<T> *Image<T>::rotate90_cw() const
 
   Matrix<T> *new_mat = new Matrix<T>(2, dimensions, matrix->getMajorOrder());
   Image<T> *result = new Image<T>(new_mat);
-
-  for (int y=0; y < height(); ++y)
-    {
-      for (int x=0; x < width(); ++x)
-	{
-	  //printf("(%d, %d) ---> (%d, %d)\n",x,y,height-1-y,x);
-	  (*result)(height() - 1 - y, x)=(*this)(x, y);
-	}
+  
+  typename Matrix<T>::const_random_access_iterator src_it(this->getMatrix());
+  typename Matrix<T>::random_access_iterator dst_it(new_mat);
+  for (int y=0; y < height(); ++y) {
+    for (int x=0; x < width(); ++x) {
+      //printf("(%d, %d) ---> (%d, %d)\n",x,y,height-1-y,x);
+      dst_it(height() - 1 - y, x) = src_it(y, x);
     }
+  }
 	
   return result;
 }
@@ -557,15 +587,15 @@ Image<T> *Image<T>::rotate90_ccw() const
 
   Matrix<T> *new_mat = new Matrix<T>(2, dimensions, matrix->getMajorOrder());
   Image<T> *result = new Image<T>(new_mat);
-
-  for (int y=0; y < height(); ++y)
-    {
-      for (int x=0; x < width(); ++x)
-	{
-	  (*result)(y, width() - 1 - x)=(*this)(x, y);
-	}
+  
+  typename Matrix<T>::const_random_access_iterator src_it(this->getMatrix());
+  typename Matrix<T>::random_access_iterator dst_it(new_mat);
+  for (int y=0; y < height(); ++y) {
+    for (int x=0; x < width(); ++x) {
+      dst_it(width() - 1 - x, y) = src_it(y, x);
     }
-	
+  }
+  
   return result;
 }
 
@@ -588,20 +618,18 @@ Image<T> *Image<T>::remove_blank_columns() const
   const float UMBRAL_BINARIZADO = 0.5f;
   // Contamos las columnas en blanco de la imagen original
   int nblanco=0;
-  for (int x=0; x<width(); ++x)
-    {
-      bool blanco=true;
-      for(int y=0; y<height(); ++y)
-	{
-	  if ((*this)(x,y)<UMBRAL_BINARIZADO)
-	    {
-	      blanco=false;
-	      break;
-	    }
-	}
-
-      if (blanco) ++nblanco;
+  typename Matrix<T>::const_random_access_iterator src_it(this->getMatrix());
+  for (int x=0; x<width(); ++x) {
+    bool blanco=true;
+    for(int y=0; y<height(); ++y) {
+      if (src_it(y,x) < UMBRAL_BINARIZADO) {
+        blanco=false;
+        break;
+      }
     }
+    
+    if (blanco) ++nblanco;
+  }
 
   int dimensions[2];
   dimensions[0]=height();
@@ -609,62 +637,31 @@ Image<T> *Image<T>::remove_blank_columns() const
 	
   Matrix<T> *new_mat = new Matrix<T>(2, dimensions, matrix->getMajorOrder());
   Image<T> *result = new Image<T>(new_mat);
-	
-  // Ahora copiamos columna a columna
+  
+  typename Matrix<T>::random_access_iterator dst_it(new_mat);
+  // Copy column by column
   int xdest=0;
-  for (int x=0; x<width(); ++x)
-    {
-      bool blanco=true;
-      for (int y=0; y<height(); ++y)
-	{
-	  if ((*this)(x,y) < UMBRAL_BINARIZADO)			
-	    {
-	      blanco=false;
-	    }
-
-	  (*result)(xdest, y) = (*this)(x,y);
-	}
-
-      if (!blanco) ++xdest;
-      if (xdest == width()-nblanco) break; // we're finished
+  for (int x=0; x<width(); ++x) {
+    bool blanco=true;
+    for (int y=0; y<height(); ++y) {
+      if (src_it(y,x) < UMBRAL_BINARIZADO) {
+        blanco=false;
+      }
+      dst_it(y,xdest) = src_it(y,x);
     }
-
+    if (!blanco) ++xdest;
+    if (xdest == width()-nblanco) break; // we're finished
+  }
+  
   return result;
 }
 
 /// Add top_rows at top of the images and bottom_rows at the bottom
 template<typename T>
-Image<T> *Image<T>::add_rows(int top_rows, int bottom_rows, T value) const
-{
-  // Contamos las columnas en blanco de la imagen original
-  int dimensions[2], pos[2];
-  int new_height = height()+top_rows+bottom_rows; 
-  dimensions[0] = new_height;
-  dimensions[1] = width();
-  pos[1] = 0;
-  
-  Matrix<T> *new_mat = new Matrix<T>(2, dimensions, matrix->getMajorOrder());
+Image<T> *Image<T>::add_rows(int top_rows, int bottom_rows, T value) const {
+  int begin_padding[2] = { top_rows, 0 }, end_padding[2] = { bottom_rows, 0 };
+  Matrix<T> *new_mat = matrix->padding(begin_padding, end_padding, value);
   Image<T> *result = new Image<T>(new_mat);
-
-  // Copy row by row
-  int top_image = top_rows;
-  int bottom_image = top_rows + height();
-  
-  pos[0] = 0;
-  dimensions[0] = top_image;
-  Matrix<T> top_matrix(new_mat, pos, dimensions);
-  top_matrix.fill(value);
-  
-  pos[0] = bottom_image;
-  dimensions[0] = new_height - bottom_image;
-  Matrix<T> bottom_matrix(new_mat, pos, dimensions);
-  bottom_matrix.fill(value);
-  
-  pos[0] = top_image;
-  dimensions[0] = bottom_image - top_image;
-  Matrix<T> image_matrix(new_mat, pos, dimensions);
-  image_matrix.copy(matrix);
-  
   return result;
 }
 
@@ -687,7 +684,6 @@ Image<T> *Image<T>::convolution5x5(float *k, T default_color) const
   dimensions[1] = 1;
   dimensions[2] = 5;
   dimensions[3] = 5;
-  int padding[2] = { 2, 2 };
   int rewrap_dims[2] = { height(), width() };
   // prepare kernel memory block
   GPUMirroredMemoryBlock<float> *k_mem_block = new GPUMirroredMemoryBlock<float>(25, k);
@@ -695,7 +691,7 @@ Image<T> *Image<T>::convolution5x5(float *k, T default_color) const
   Matrix<T> *kernel_mat = new Matrix<T>(4, dimensions, matrix->getMajorOrder(),
                                         k_mem_block);
   // add padding to image
-  Matrix<T> *padded_this_mat = matrix->padding(padding, padding, default_color);
+  Matrix<T> *padded_this_mat = matrix->padding(2, default_color);
   // execute convolution (D=2, step=NULL)
   Matrix<T> *conv_result_mat = padded_this_mat->convolution(2, 0, kernel_mat);
   // rewrap conv_result_mat to be a 2-dimensional matrix
@@ -719,6 +715,7 @@ Image<T> *Image<T>::resize(int dst_width, int dst_height) const
 
   Matrix<T> *new_mat = new Matrix<T>(2, dimensions);
   Image<T> *result = new Image<T>(new_mat);
+  typename Matrix<T>::random_access_iterator result_it(new_mat);
 
   // we go through the destination image
   for (int y=0; y<dst_height; y++) {
@@ -740,11 +737,16 @@ Image<T> *Image<T>::resize(int dst_width, int dst_height) const
 	// Less than one row (only a fraction)
 	float yinterp = 0.5f*(y0+y1);
 	if (ix0 == ix1) {
-	  sum = (x1-x0) * getpixel_bilinear(0.5f*(x0+x1), yinterp, default_value);
+	  sum = (x1-x0) * getpixel_bilinear(0.5f*(x0+x1), yinterp,
+                                            default_value);
 	} 
 	else {
-	  sum += (float(ix0+1)-x0) * getpixel_bilinear(0.5f*(float(ix0+1)+x0), yinterp, default_value); // beginning of iy0 (possibly fractional)
-	  sum += (x1-floor(x1)) * getpixel_bilinear(0.5f*(x1+floor(x1)), yinterp, default_value);    // end of iy0 (possibly fractional)
+	  sum += (float(ix0+1)-x0) *
+            getpixel_bilinear(0.5f*(float(ix0+1)+x0), yinterp,
+                              default_value); // beginning of iy0 (possibly fractional)
+	  sum += (x1-floor(x1)) *
+            getpixel_bilinear(0.5f*(x1+floor(x1)), yinterp,
+                              default_value); // end of iy0 (possibly fractional)
 	  for (int col=ix0+1; col < ix1; col++) {
 	    sum += getpixel_bilinear(col+0.5f, yinterp, default_value);
 	  }
@@ -775,8 +777,12 @@ Image<T> *Image<T>::resize(int dst_width, int dst_height) const
 	    sum_row = (x1-x0) * getpixel_bilinear(0.5f*(x0+x1), row, default_value);
 	  } 
 	  else {
-	    sum_row += (float(ix0+1)-x0) * getpixel_bilinear(0.5f*(float(ix0+1)+x0), yinterp, default_value); // beginning of iy0 (possibly fractional)
-	    sum_row += (x1-floor(x1)) * getpixel_bilinear(0.5f*(x1+floor(x1)), yinterp, default_value);    // end of iy0 (possibly fractional)
+	    sum_row += (float(ix0+1)-x0) *
+              getpixel_bilinear(0.5f*(float(ix0+1)+x0), yinterp,
+                                default_value); // beginning of iy0 (possibly fractional)
+	    sum_row += (x1-floor(x1)) *
+              getpixel_bilinear(0.5f*(x1+floor(x1)), yinterp,
+                                default_value); // end of iy0 (possibly fractional)
 
 	    for (int col=ix0+1; col < ix1; col++) {
 	      sum_row += getpixel_bilinear(col+0.5f, yinterp, default_value);
@@ -787,7 +793,7 @@ Image<T> *Image<T>::resize(int dst_width, int dst_height) const
 	}
       }
 
-      (*result)(x,y) = sum/area;
+      result_it(y,x) = sum/area;
       //printf("(%d, %d) ---> (%f, %f)-(%f, %f) area= %f, sum=%f\n", x, y, x0, y0, x1, y1, area, sum); 
     }
   }
@@ -814,8 +820,9 @@ Image<T> *Image<T>::affine_transform(AffineTransform2D *trans, T default_value,
   float c[6];
   MatrixFloat *inverse_mat = trans->inv();
   IncRef(inverse_mat);
-  if (!inverse_mat->isSimple())
-    AssignRef(inverse_mat, inverse_mat->clone(CblasRowMajor));
+  if (!inverse_mat->getIsContiguous()) {
+    AssignRef(inverse_mat, inverse_mat->clone());
+  }
   const float *inverse = inverse_mat->getRawDataAccess()->getPPALForRead();
   /*
     printf("--transform-------\n");
@@ -866,6 +873,7 @@ Image<T> *Image<T>::affine_transform(AffineTransform2D *trans, T default_value,
 
   Matrix<T> *new_mat = new Matrix<T>(2, dimensions);
   Image<T> *result = new Image<T>(new_mat);
+  typename Matrix<T>::random_access_iterator result_it(new_mat);
 
   for (int y=ymin; y<=ymax; y++) {
     for (int x=xmin; x<=xmax; x++) {
@@ -873,7 +881,7 @@ Image<T> *Image<T>::affine_transform(AffineTransform2D *trans, T default_value,
       float srcy = c[3]*x+c[4]*y+c[5];
       T value = getpixel_bilinear(srcx, srcy, default_value);
       //printf("dst=(%d,%d) --- src = (%f, %f) value=%f\n", x, y, srcx, srcy, value);
-      (*result)(x-xmin,y-ymin) = value;
+      result_it(y-ymin,x-xmin) = value;
     }
   }
 
@@ -884,7 +892,9 @@ Image<T> *Image<T>::affine_transform(AffineTransform2D *trans, T default_value,
 }
 
 template <typename T>
-Matrix<T> * Image<T>::comb_lineal_forward(int sx, int sy, int ancho, int alto, int miniancho, int minialto, LinearCombConf<T> *conf) {
+Matrix<T> * Image<T>::comb_lineal_forward(int sx, int sy, int ancho, int alto,
+                                          int miniancho, int minialto,
+                                          LinearCombConf<T> *conf) {
 
   using april_utils::max;
   using april_utils::min;
@@ -892,8 +902,10 @@ Matrix<T> * Image<T>::comb_lineal_forward(int sx, int sy, int ancho, int alto, i
 
   //  printf("Preparing Combination %d\n", conf->patternsize);
   Matrix<T> *mat = new Matrix<T>(1, output_size);
+  typename Matrix<T>::random_access_iterator mat_it(mat);
+  typename Matrix<T>::const_random_access_iterator this_it(this->getMatrix());
  
-  mat->fill(0.0);
+  mat->fill(T(0.0));
 
   //FIXME: This is not working correctly if ancho y alto are not multiples of 2
   int miny = max(sy-alto/2,0);
@@ -908,12 +920,12 @@ Matrix<T> * Image<T>::comb_lineal_forward(int sx, int sy, int ancho, int alto, i
   int *vec_tuplas = conf->numTuplas + (miny-dy)*ancho -dx;
   for (int y = miny; y < maxy; ++y,vec_tuplas+=ancho){
     for (int x = minx; x < maxx; x++){
-      float value = (*this)(x,y);
+      float value = this_it(y,x);
       if (value > th) {
         for (int j = vec_tuplas[x-1];j<vec_tuplas[x];j++) {
           int dest = conf->indices[j];
           // FIXME sustituir por mat[dest], ahora no funciona
-          (*mat)(dest) += value*conf->pesos[j];
+          mat_it(dest) += value*conf->pesos[j];
         }
       }
     } 
@@ -922,41 +934,23 @@ Matrix<T> * Image<T>::comb_lineal_forward(int sx, int sy, int ancho, int alto, i
 }
 template <typename T>
 Image<T>* Image<T>::substract_image(Image<T> *img, T low, T high) const {
-
-  int  s_height = img->height();
-  int  s_width  = img->width();
-
-  //  printf("%d %d %d %d\n", s_width, s_height, this->width, this->height);
-  april_assert("The images does not have the same dimension"
-               && s_width == this->width() && s_height == this->height());
-
-  int dims[2];
-  dims[0] = this->height();
-  dims[1] = this->width();
-  Matrix<T> *mat = new Matrix<T>(2,dims);
+  Matrix<T> *mat = getMatrix()->substraction(img->getMatrix());
   Image<T>  *res = new Image<T>(mat);
-
-
-  for (int y = 0; y < this->height(); y++){
-    for (int x = 0; x < this->width(); x++){
-      T value = high + (*this)(x,y) -(*img)(x,y);
-      (*res)(x, y) =  april_utils::clamp(value, low, high);
-    } 
-  }
-
+  mat->clamp(low, high);
   return res;
 }
 
 template <typename T>
-void Image<T>::threshold_image(T threshold_low, T threshold_high, T value_low, T value_high ){
-
+void Image<T>::threshold_image(T threshold_low, T threshold_high,
+                               T value_low, T value_high ){
+  typename Matrix<T>::iterator it(getMatrix()->begin());
   for (int y = 0; y < this->height(); y++){
-    for (int x = 0; x < this->width(); x++){
-      T value = (*this)(x,y);
-      if (value < threshold_low) (*this)(x,y) = value_low;
-      else if (value > threshold_high) (*this)(x,y) = value_high;
+    for (int x = 0; x < this->width(); x++, ++it){
+      T value = (*it);
+      if (value < threshold_low) (*it) = value_low;
+      else if (value > threshold_high) (*it) = value_high;
     } 
   }
 }
 
-#endif // _IMAGE_CC_
+#endif // IMAGE_CC

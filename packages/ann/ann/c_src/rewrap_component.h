@@ -36,6 +36,8 @@ namespace ANN {
   /// will be cloned. If it is contiguous, the output of this component is a
   /// reinterpretation of input matrix, but the memory pointer will be shared.
   class RewrapANNComponent : public VirtualMatrixANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(RewrapANNComponent);
+    
     int *rewrap_dims, n;
     
     virtual MatrixFloat *privateDoForward(MatrixFloat* input,

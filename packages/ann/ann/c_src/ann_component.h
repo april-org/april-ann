@@ -22,18 +22,18 @@
 #define ANNCOMPONENT_H
 
 #include <cstring>
-#include "vector.h"
-#include "unused_variable.h"
-#include "function_interface.h"
-#include "unused_variable.h"
-#include "mystring.h"
-#include "connection.h"
-#include "error_print.h"
-#include "token_base.h"
 #include "aux_hash_table.h" // required for build
+#include "connection.h"
+#include "disallow_class_methods.h"
+#include "error_print.h"
+#include "function_interface.h"
 #include "hash_table.h"     // required for build
+#include "mystring.h"
+#include "token_base.h"
 #include "matrixFloat.h"
 #include "matrixFloatSet.h"
+#include "unused_variable.h"
+#include "vector.h"
 
 using april_utils::hash;    // required for build
 using april_utils::string;
@@ -57,6 +57,7 @@ namespace ANN {
   /// An abstract class that defines the basic interface that
   /// the anncomponents must fulfill.
   class ANNComponent : public Functions::FunctionInterface {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(ANNComponent);
   private:
     bool is_built;
     void generateDefaultName(const char *prefix=0) {

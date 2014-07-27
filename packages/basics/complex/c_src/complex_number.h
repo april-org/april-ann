@@ -176,4 +176,9 @@ typedef Complex<double> ComplexD;
 #undef UNDEF_DEVICE
 #endif
 
+namespace april_utils {
+  void aprilPrint(const ComplexF &v);
+  void aprilPrint(const ComplexD &v);
+}
+
 #endif // COMPLEX_NUMBER_H

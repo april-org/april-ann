@@ -22,6 +22,10 @@
 -- utest.check.gt(a, b, error_message): tests of a > b
 --
 -- utest.check.ge(a, b, error_message): tests of a >= b
+--
+-- utest.check.TRUE(a, error_message): tests of a == true
+--
+-- utest.check.FALSE(a, error_message): tests of a == false
 -------------------------------------------------------------------------------
 utest = utest or {}
 --
@@ -124,6 +128,12 @@ end
 utest.check.success = check
 utest.check.fail = function(f, ...)
   return check(function() return not f() end, ...)
+end
+utest.check.TRUE = function(a, ...)
+  return check(function() return a end, ...)
+end
+utest.check.FALSE = function(a, ...)
+  return check(function() return not a end, ...)
 end
 --_
 utest.test = function(name, test_func)

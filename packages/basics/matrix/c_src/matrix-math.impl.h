@@ -49,7 +49,7 @@ void Matrix<T>::zeros() {
 
 template <typename T>
 void Matrix<T>::ones() {
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  fill(T(1.0f));
 }
 
 template <typename T>
@@ -69,58 +69,68 @@ void Matrix<T>::diag(T value) {
 
 
 template <typename T>
-Matrix<T>* Matrix<T>::addition(const Matrix<T> *other) {
-  if (!sameDim(other))
-    ERROR_EXIT(128, "Not equal matrix dimensions or format\n");
-  Matrix<T> *result = new Matrix<T>(getNumDim(), matrixSize, major_order);
-  const_iterator this_it(this->begin());
-  const_iterator other_it(this->begin());
-  for (iterator result_it(result->begin());
-       result_it != result->end(); ++result_it, ++this_it, ++other_it) {
-    april_assert(this_it != this->end());
-    april_assert(other_it != other->end());
-    *result_it = (*this_it) + (*other_it);
-  }
-  return result;
+Matrix<T>* Matrix<T>::addition(const Matrix<T> *other) const {
+  Matrix<T> *resul = this->clone();
+  resul->axpy(T(1.0f), other);
+  return resul;
 }
 
 template <typename T>
-Matrix<T>* Matrix<T>::substraction(const Matrix<T> *other) {
-  if (!sameDim(other))
-    ERROR_EXIT(128, "Not equal matrix dimensions or format\n");
-  Matrix<T> *result = new Matrix<T>(getNumDim(), matrixSize, major_order);
-  const_iterator this_it(this->begin());
-  const_iterator other_it(this->begin());
-  for (iterator result_it(result->begin());
-       result_it != result->end(); ++result_it, ++this_it, ++other_it) {
-    april_assert(this_it != this->end());
-    april_assert(other_it != other->end());
-    *result_it = (*this_it) - (*other_it);
-  }
-  return result;
+Matrix<T>* Matrix<T>::substraction(const Matrix<T> *other) const {
+  Matrix<T> *resul = this->clone();
+  resul->axpy(T(-1.0f), other);
+  return resul;
 }
 
 template <typename T>
 Matrix<T>* Matrix<T>::multiply(const Matrix<T> *other) const {
-  if (this->getNumDim() != 2 || other->getNumDim() != 2)
-    ERROR_EXIT(128, "Bi-dimensional matrices expected\n");
-  if (this->matrixSize[1] != other->matrixSize[0])
-    ERROR_EXIT(128, "Incorrect matrix sizes\n");
-  int result_dims[2] = { this->matrixSize[0], other->matrixSize[1] };
-  Matrix<T> *result = new Matrix<T>(2, result_dims, major_order);
-  iterator result_it(result->begin());
-  const_iterator this_it(this->begin());
-  for (int i=0; i<matrixSize[0]; ++i) {
-    const_col_major_iterator other_it(other->begin());
-    for (int j=0; j<matrixSize[1]; ++j, ++result_it) {
-      const_iterator aux_this_it(this_it);
-      *result_it = T();
-      for (int k=0; k<result_dims[1]; ++k, ++aux_this_it, ++other_it) {
-        *result_it += (*this_it) * (*other_it);
-      }
+  Matrix<T> *resul = 0;
+  if (other->isVector()) {
+    if (this->isColVector()) {
+      // OUTER product
+      int dim[2] = {size(),other->size()};
+      resul = new Matrix<T>(2, dim, major_order);
+#ifdef USE_CUDA
+      resul->setUseCuda(use_cuda);
+#endif
+      resul->zeros();
+      resul->ger(T(1.0f), this, other);
+    }
+    else if (!this->isVector()) {
+      // Matrix-Vector product
+      int dim[2] = {matrixSize[0],1};
+      resul = new Matrix<T>(other->numDim, dim, major_order);
+#ifdef USE_CUDA
+      resul->setUseCuda(use_cuda);
+#endif
+      resul->zeros();
+      resul->gemv(CblasNoTrans,
+		  T(1.0f), this, other,
+		  T());
+    }
+    else {
+      // DOT product
+      int dim[2] = {1,1};
+      resul = new Matrix<T>(numDim, dim, major_order);
+#ifdef USE_CUDA
+      resul->setUseCuda(use_cuda);
+#endif
+      (*resul)[0] = this->dot(other);
     }
   }
-  return result;
+  else if (numDim == 2 && other->numDim == 2 &&
+	   matrixSize[1] == other->matrixSize[0]) {
+    // Matrix-Matrix product
+    int dim[2] = {matrixSize[0], other->matrixSize[1]};
+    resul = new Matrix<T>(2,dim,major_order);
+#ifdef USE_CUDA
+    resul->setUseCuda(use_cuda);
+#endif
+    resul->zeros();
+    resul->gemm(CblasNoTrans, CblasNoTrans,
+		T(1.0f), this, other, T());
+  }
+  return resul;
 }
 
 template <typename T>
@@ -151,14 +161,16 @@ void Matrix<T>::scalarAdd(T s) {
 
 template <typename T>
 void Matrix<T>::copy(const Matrix<T> *other) {
-  if (!sameDim(other))
-    ERROR_EXIT(128, "Not equal matrix dimensions\n");
-  const_iterator it_orig(other->begin());
-  iterator it_dest(this->begin());
-  while(it_orig != other->end()) {
-    *it_dest = *it_orig;
-    ++it_orig;
-    ++it_dest;
+  if (this != other) {
+    if (!sameDim(other))
+      ERROR_EXIT(128, "Not equal matrix dimensions\n");
+    const_iterator it_orig(other->begin());
+    iterator it_dest(this->begin());
+    while(it_orig != other->end()) {
+      *it_dest = *it_orig;
+      ++it_orig;
+      ++it_dest;
+    }
   }
 }
 
@@ -268,7 +280,9 @@ void Matrix<T>::abs() {
 
 template <typename T>
 void Matrix<T>::complement() {
-  ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  for (Matrix<T>::iterator it(begin()); it != end(); ++it) {
+    (*it) = T(1.0f) - *it;
+  }
 }
 
 template <typename T>
@@ -755,12 +769,36 @@ void Matrix<T>::GTCondition(Matrix<T> *value) {
 
 template <typename T>
 Matrix<T> *Matrix<T>::padding(int *begin_padding, int *end_padding,
-                              T default_value) {
+                              T default_value) const {
   int *result_sizes = new int[getNumDim()];
   int *matrix_pos = new int[getNumDim()];
   for (int i=0; i<getNumDim(); ++i) {
     result_sizes[i] = getDimSize(i) + begin_padding[i] + end_padding[i];
     matrix_pos[i] = begin_padding[i];
+  }
+  Matrix<T> *result = new Matrix<T>(getNumDim(), result_sizes, getMajorOrder());
+  // FIXME: implement fill by several submatrices for large matrix sizes with
+  // small padding sizes
+  result->fill(default_value);
+  // take submatrix where data will be located
+  Matrix<T> *result_data = new Matrix<T>(result, matrix_pos, getDimPtr(),
+                                         false);
+  // copy data to the submatrix
+  result_data->copy(this);
+  //
+  delete result_data;
+  delete[] result_sizes;
+  delete[] matrix_pos;
+  return result;
+}
+
+template <typename T>
+Matrix<T> *Matrix<T>::padding(int pad_value, T default_value) const {
+  int *result_sizes = new int[getNumDim()];
+  int *matrix_pos = new int[getNumDim()];
+  for (int i=0; i<getNumDim(); ++i) {
+    result_sizes[i] = getDimSize(i) + pad_value*2;
+    matrix_pos[i] = pad_value;
   }
   Matrix<T> *result = new Matrix<T>(getNumDim(), result_sizes, getMajorOrder());
   // FIXME: implement fill by several submatrices for large matrix sizes with

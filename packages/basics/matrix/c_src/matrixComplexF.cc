@@ -37,83 +37,6 @@ void Matrix<ComplexF>::fill(ComplexF value) {
 							       value));
 }
 
-/************* ZEROS FUNCTION **************/
-template<>
-void Matrix<ComplexF>::zeros() {
-  fill(ComplexF::zero_zero());
-}
-
-/************* ONES FUNCTION **************/
-template<>
-void Matrix<ComplexF>::ones() {
-  fill(ComplexF::one_zero());
-}
-
-template <>
-Matrix<ComplexF>* Matrix<ComplexF>::addition(const Matrix<ComplexF> *other) {
-  Matrix<ComplexF> *resul = this->clone();
-  resul->axpy(ComplexF::one_zero(), other);
-  return resul;
-}
-
-template <>
-Matrix<ComplexF>* Matrix<ComplexF>::substraction(const Matrix<ComplexF> *other) {
-  Matrix<ComplexF> *resul = this->clone();
-  resul->axpy(-ComplexF::one_zero(), other);
-  return resul;
-}
-
-template <>
-Matrix<ComplexF>* Matrix<ComplexF>::multiply(const Matrix<ComplexF> *other) const {
-  Matrix<ComplexF> *resul = 0;
-  if (other->isVector()) {
-    if (this->isColVector()) {
-      // OUTER product
-      int dim[2] = {size(),other->size()};
-      resul = new Matrix<ComplexF>(2, dim, major_order);
-#ifdef USE_CUDA
-      resul->setUseCuda(use_cuda);
-#endif
-      resul->zeros();
-      resul->ger(ComplexF::one_zero(), this, other);
-    }
-    else if (!this->isVector()) {
-      // Matrix-Vector product
-      int dim[2] = {matrixSize[0],1};
-      resul = new Matrix<ComplexF>(other->numDim, dim, major_order);
-#ifdef USE_CUDA
-      resul->setUseCuda(use_cuda);
-#endif
-      resul->zeros();
-      resul->gemv(CblasNoTrans,
-		  ComplexF::one_zero(), this, other,
-		  ComplexF::zero_zero());
-    }
-    else {
-      // DOT product
-      int dim[1] = {1};
-      resul = new Matrix<ComplexF>(1, dim, major_order);
-#ifdef USE_CUDA
-      resul->setUseCuda(use_cuda);
-#endif
-      (*resul)(0) = this->dot(other);
-    }
-  }
-  else if (numDim == 2 && other->numDim == 2 &&
-	   matrixSize[1] == other->matrixSize[0]) {
-    // Matrix-Matrix product
-    int dim[2] = {matrixSize[0], other->matrixSize[1]};
-    resul = new Matrix<ComplexF>(2,dim,major_order);
-#ifdef USE_CUDA
-    resul->setUseCuda(use_cuda);
-#endif
-    resul->zeros();
-    resul->gemm(CblasNoTrans, CblasNoTrans,
-		ComplexF::one_zero(), this, other, ComplexF::zero_zero());
-  }
-  return resul;
-}
-
 // COMPONENT-WISE MULTIPLICATION
 struct cmul_functor {
   cmul_functor() { }
@@ -211,16 +134,18 @@ struct copy_functor {
 };
 template<>
 void Matrix<ComplexF>::copy(const Matrix<ComplexF> *other) {
-  if (size() != other->size())
-    ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d\n",
-		size(), other->size());
-  if (major_order != other->major_order)
-    ERROR_EXIT(128, "Matrices with different major orders\n");
-  if (! sameDim(other) )
-    ERROR_EXIT(128, "Matrices with different dimension sizes\n");
-  use_cuda = other->use_cuda;
-  copy_functor functor;
-  applyBinaryFunctionWithSpanIterator<ComplexF>(this, other, functor);
+  if (this != other) {
+    if (size() != other->size())
+      ERROR_EXIT2(128, "Incorrect matrices sizes: %d != %d\n",
+                  size(), other->size());
+    if (major_order != other->major_order)
+      ERROR_EXIT(128, "Matrices with different major orders\n");
+    if (! sameDim(other) )
+      ERROR_EXIT(128, "Matrices with different dimension sizes\n");
+    use_cuda = other->use_cuda;
+    copy_functor functor;
+    applyBinaryFunctionWithSpanIterator<ComplexF>(this, other, functor);
+  }
 }
 
 /********** SCAL FUNCTION ***************/

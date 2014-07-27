@@ -59,5 +59,5 @@ local function processImages(self, clean_img, gt_img, threshold)
     )
 end
 
-class_extension(image.image_metrics, "processImages",processImages)
+class.extend(image.image_metrics, "processImages", processImages)
 

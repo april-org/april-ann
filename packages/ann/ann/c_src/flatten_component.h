@@ -34,6 +34,8 @@ namespace ANN {
   /// its data like to be a bi-dimensional matrix (bunch size X number of
   /// neurons).
   class FlattenANNComponent : public VirtualMatrixANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(FlattenANNComponent);
+    
     int flatten_dims[2];
 
     virtual MatrixFloat *privateDoForward(MatrixFloat* input,

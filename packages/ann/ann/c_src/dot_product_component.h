@@ -32,6 +32,8 @@ namespace ANN {
   /// This components computes, for every I output neuron, the dot product
   /// between input neurons and the weights of the neuron I.
   class DotProductANNComponent : public MatrixInputSwitchANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(DotProductANNComponent);
+    
     MatrixFloat *weights_matrix;
     
     /// learning parameters

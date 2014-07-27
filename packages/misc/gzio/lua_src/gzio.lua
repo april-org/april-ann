@@ -30,6 +30,4 @@ local function gzio_lines(self, ...)
     return table.unpack(values)
   end
 end
-class_extension(gzio,
-		"lines",
-		gzio_lines)
+class.extend(gzio, "lines", gzio_lines)

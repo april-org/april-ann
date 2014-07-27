@@ -86,6 +86,7 @@ DataSetToken *lua_toAuxDataSetToken(lua_State *L, int n) {
 #include "matrixFloat.h"
 #include "utilLua.h"
 #include "bind_matrix.h"
+#include "bind_sparse_matrix.h"
 #include <cmath> // para sqrt en mean_deviation
 #include "bind_mtrand.h"
 #include "MersenneTwister.h"
@@ -862,41 +863,16 @@ LUABIND_ERROR("use constructor methods: matrix, etc.");
 
 //BIND_CLASS_METHOD DataSetFloat sparse
 /* 
-   Permite crear un dataset a partir de una matriz sparse.  Requiere 2
-   argumentos. MatrixFloat y tabla con numpatterns y patternsize.
-   La matriz sparse es una secuencia de numeros, donde cada patron
-   se representa por:
-
-   N x1 v1 x2 v2 ... xN vN
-
-   donde N es el numero de posiciones distintas de ZERO que contiene el patron
-   y (xi vi) son parejas que indican que la posicion xi tiene valor vi.
-
-   IMPORTANTE: xi empieza en 0 y llega hasta patternSize-1
+   Permite crear un dataset a partir de una matriz sparse, pero los patrones
+   seran densos.
 */
 
 {
-  int argn = lua_gettop(L); // number of arguments
-  if (argn < 1 || argn > 2)
-    LUABIND_ERROR("incorrect number of arguments");
-  LUABIND_CHECK_PARAMETER(1, MatrixFloat);
-  if (argn == 2) {
-    LUABIND_CHECK_PARAMETER(2, table);
-    
-    check_table_fields(L, 2,
-		       "patternSize",
-		       "numPatterns",
-		       (const char *)0);
-  }
-
-  MatrixFloat *mat;
-  LUABIND_GET_PARAMETER(1, MatrixFloat, mat);
-  int patsize, numpat;
-  
-  LUABIND_GET_TABLE_PARAMETER(2, patternSize, int, patsize);
-  LUABIND_GET_TABLE_PARAMETER(2, numPatterns, int, numpat);
-  SparseDatasetFloat *obj = new SparseDatasetFloat(mat,numpat,
-						   patsize);
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, SparseMatrixFloat);
+  SparseMatrixFloat *mat;
+  LUABIND_GET_PARAMETER(1, SparseMatrixFloat, mat);
+  SparseMatrixDatasetFloat *obj = new SparseMatrixDatasetFloat(mat);
   LUABIND_RETURN(DataSetFloat,obj);
 }
 //BIND_END

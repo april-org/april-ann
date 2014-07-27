@@ -34,6 +34,8 @@ namespace ANN {
   /// kernel step, and outputs the maximum value of each possible window at
   /// input matrix.
   class MaxPoolingANNComponent : public VirtualMatrixANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(MaxPoolingANNComponent);
+    
     Int32GPUMirroredMemoryBlock *argmax_raw_pos;
     
     // parameters of the convolution

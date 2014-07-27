@@ -1,20 +1,16 @@
-local lexClass_methods,
-lexClass_class_table = class("lexClass")
+local lexClass,lexClass_methods = class("lexClass")
+_G.lexClass = lexClass
 
-function lexClass_class_table:__call(voc_id2word)
-  local obj = {
-    cobj  = _internal_lexclass_(),
-    units = {}
-  }
-  obj = class_instance(obj, self, true)
+function lexClass:constructor(voc_id2word)
+  self.cobj  = _internal_lexclass_()
+  self.units = {}
   if voc_id2word then
     for _,word in ipairs(voc_id2word) do
-      obj:addPair{
+      self:addPair{
 	word = word,
       }
     end
   end
-  return obj
 end
 
 function lexClass_methods:addPair(t)

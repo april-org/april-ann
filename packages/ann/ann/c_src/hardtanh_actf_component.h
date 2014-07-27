@@ -30,6 +30,8 @@ namespace ANN {
   /// Component which computes the HardTanh activation function. It is useful
   /// for deep ANNs and CNNs.
   class HardtanhActfANNComponent : public ActivationFunctionANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(HardtanhActfANNComponent);
+
     float inf, sup;
   protected:
     virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,

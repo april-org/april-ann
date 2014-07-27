@@ -32,6 +32,8 @@ namespace ANN {
   /// 50% for one), and the float values of zero and one. The matrix size and
   /// dimensions are not restricted.
   class SaltAndPepperANNComponent : public StochasticANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(SaltAndPepperANNComponent);
+    
     TokenMatrixFloat *input, *output;
     Token            *error_input, *error_output;
     float            zero, one;

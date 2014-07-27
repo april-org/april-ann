@@ -31,6 +31,8 @@ namespace ANN {
   /// Component for the SoftMax activation function. Softmax is applied over
   /// first dimension of the input matrix (the bunch size).
   class SoftmaxActfANNComponent : public ActivationFunctionANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(SoftmaxActfANNComponent);
+    
   protected:
     virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,
 				 FloatGPUMirroredMemoryBlock *output_units,

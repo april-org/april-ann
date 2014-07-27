@@ -23,31 +23,33 @@ end
 
 -----------------------------------------------------------------------------
 
-class("dataset.token.lua_filter")
+local lua_filter,lua_filter_methods = class("dataset.token.lua_filter")
+get_table_from_dotted_string("dataset.token", true) -- global environment
+dataset.token.lua_filter = lua_filter -- global environment
 
-function dataset.token.lua_filter:__call(t)
+function lua_filter:constructor(t)
   local params = get_table_fields({
 				    dataset = { mandatory=true },
 				    filter  = { mandatory=true,
 						type_match="function" },
 				  }, t)
-  local obj = { ds=params.dataset, filter=params.filter }
-  if isa(ds,dataset) then obj.ds = dataset.token_wrapper(obj.ds) end
-  return class_instance(obj, self)
+  self.ds=params.dataset
+  self.filter=params.filter
+  if class.is_a(ds,dataset) then self.ds = dataset.token_wrapper(self.ds) end
 end
 
-function dataset.token.lua_filter:numPatterns() return self.ds:numPatterns() end
+function lua_filter_methods:numPatterns() return self.ds:numPatterns() end
 
-function dataset.token.lua_filter:patternSize() return self.ds:patternSize() end
+function lua_filter_methods:patternSize() return self.ds:patternSize() end
 
-function dataset.token.lua_filter:getPattern(idx)
+function lua_filter_methods:getPattern(idx)
   local output = self.filter( self.ds:getPattern(idx) )
-  assert( isa(output,token.base), "The output of the filter must be a token")
+  assert( class.is_a(output,token.base), "The output of the filter must be a token")
   return output
 end
 
-function dataset.token.lua_filter:getPatternBunch(idxs)
+function lua_filter_methods:getPatternBunch(idxs)
   local output = self.filter( self.ds:getPatternBunch(idx) )
-  assert( isa(output,token.base), "The output of the filter must be a token")
+  assert( class.is_a(output,token.base), "The output of the filter must be a token")
   return output
 end

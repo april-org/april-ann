@@ -23,11 +23,13 @@
 #define DATASET_H
 
 #include <cmath>
-#include "unused_variable.h"
-#include "referenced.h"
-#include "matrix.h"
-#include "referenced_vector.h"
 #include <stdint.h>
+#include "disallow_class_methods.h"
+#include "matrix.h"
+#include "referenced.h"
+#include "referenced_vector.h"
+#include "sparse_matrix.h"
+#include "unused_variable.h"
 
 using april_utils::ReferencedVectorUint;
 
@@ -41,7 +43,9 @@ using april_utils::ReferencedVectorUint;
 */
 template <typename T>
 class DataSet : public Referenced {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(DataSet);
  public:
+  DataSet() { }
   virtual ~DataSet() { }
   /// Number of patterns in the set
   virtual int numPatterns()=0;
@@ -58,6 +62,7 @@ class DataSet : public Referenced {
 /// DataSet specialization to put or get patterns from a Matrix object.
 template <typename T>
 class MatrixDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(MatrixDataSet);
  private:
   /// A pointer referenced to the underlying Matrix object, shared pointer.
   Matrix<T> *matrix;
@@ -122,6 +127,7 @@ class MatrixDataSet : public DataSet<T> {
 */
 template <typename T>
 class UnionDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(UnionDataSet);
  private:
   /// Number of DataSets.
   int num;
@@ -143,6 +149,7 @@ class UnionDataSet : public DataSet<T> {
 /// DataSet specialization which serves to getPatterns from an IdentityMatrix.
 template <typename T>
 class IdentityDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(IdentityDataSet);
  private:
   /// Value of zero.
   const T zerovalue,
@@ -169,6 +176,7 @@ class IdentityDataSet : public DataSet<T> {
 */
 template <typename T>
 class SubDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(SubDataSet);
  private:
   /// Initial position of the interval
   int ini,
@@ -195,6 +203,7 @@ class SubDataSet : public DataSet<T> {
  */
 template <typename T>
 class SplitDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(SplitDataSet);
  private:
   /// Initial position of the split interval.
   int ini,
@@ -227,6 +236,7 @@ class SplitDataSet : public DataSet<T> {
  */
 template <typename T>
 class JoinDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(JoinDataSet);
  private:
   /// Number of DataSets.
   int num;
@@ -251,6 +261,7 @@ class JoinDataSet : public DataSet<T> {
  */
 template <typename T>
 class IndexDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(IndexDataSet);
   // A float could represent the int value 16777216
  private:
   /// DataSet from which take indexes.
@@ -277,6 +288,7 @@ class IndexDataSet : public DataSet<T> {
 /// An auxiliar object for LinearCombDataSet.
 template <typename T>
 class LinearCombConf : public Referenced {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(LinearCombConf);
   public:
   /// Pattern size of the linear combination
   int patternsize;
@@ -307,6 +319,7 @@ class LinearCombConf : public Referenced {
  */
 template <typename T>
 class LinearCombDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(LinearCombDataSet);
  private:
   /// Linear combination configuration.
   LinearCombConf<T> *conf;
@@ -337,6 +350,7 @@ class LinearCombDataSet : public DataSet<T> {
  */
 template <typename T>
 class ContextualizerDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(ContextualizerDataSet);
  private:
   /// Left context.
   int ctxtizq,
@@ -362,6 +376,7 @@ class ContextualizerDataSet : public DataSet<T> {
 /// A specialization of DataSet for data accumulation using putPattern
 template <typename T>
 class AccumulateDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(AccumulateDataSet);
  private:
   /// Number of patterns
   int numpatterns,
@@ -380,6 +395,7 @@ class AccumulateDataSet : public DataSet<T> {
 
 template <typename T>
 class ByteDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(ByteDataSet);
   // sirve para acumular una serie de valores mediante putpattern
  private:
   int numpatterns,patternsize;
@@ -396,6 +412,7 @@ class ByteDataSet : public DataSet<T> {
 
 template <typename T>
 class BitDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(BitDataSet);
  private:
   int numpatterns, patternsize;
   unsigned char *data;
@@ -411,32 +428,23 @@ class BitDataSet : public DataSet<T> {
 
 /// A specialization of DataSet for use sparse data representation.
 /**
-   This object takes a matrix like this:
-   
-   \verbatim
-   5 2 1 13 2 14 3 15 4 16 5
-   3 20 1 13 2 21 3
-   2 10 1 33 2
-   ...
-   \endverbatim
-   
-   where first N number indicates how many elements, and following N*2 numbers
-   are pairs of (index,value).
+   This object takes a sparse matrix in CSR format, the matrix have NxM where N
+   is numpatterns amd M is patternsize. Every getPattern will return a dense
+   vector. To use sparse matrices use DatasetToken implementation.
  */
 template <typename T>
-class SparseDataset : public DataSet<T> {
-  /// The underlying matrix with sparse data representation.
-  Matrix<T> *matrix;
+class SparseMatrixDataset : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(SparseMatrixDataset);
+  /// The underlying matrix with sparse data representation in CSR format.
+  SparseMatrix<T> *matrix;
   /// Number of patterns.
   int numpatterns,
   /// Pattern size.
     patternsize;
-  /// Index position at the given matrix for each pattern.
-  int *matrix_indexes;
   
  public:
-  SparseDataset(Matrix<T> *m, int nump, int patsize);
-  virtual ~SparseDataset();
+  SparseMatrixDataset(SparseMatrix<T> *m);
+  virtual ~SparseMatrixDataset();
   int numPatterns() { return numpatterns; }
   int patternSize() { return patternsize; }
   int getPattern(int index, T *pat);
@@ -451,6 +459,7 @@ class SparseDataset : public DataSet<T> {
  */
 template <typename T>
 class ShortListDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(ShortListDataSet);
   /// The underlying DataSet
   DataSet<T>	*ds;
   /// Size of the shortlist approach.
@@ -472,6 +481,7 @@ public:
 /// Similar to IndexedDataSet but using a vector of unsigned int as indexes.
 template <typename T>
 class IndexFilterDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(IndexFilterDataSet);
   /// The indexed DataSet.
   DataSet<T> *ds;
   /// The vector of indexes.
@@ -489,6 +499,7 @@ class IndexFilterDataSet : public DataSet<T> {
 /// A specialization of DataSet which add gaussian noise to patterns.
 template <typename T>
 class PerturbationDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(PerturbationDataSet);
   /// The underlying DataSet.
   DataSet<T> *ds;
   /// A MTRand for random gaussian noise generation
@@ -510,6 +521,7 @@ class PerturbationDataSet : public DataSet<T> {
 /// A specialization of DataSet which add a fixed size salt noise to patterns.
 template <typename T>
 class SaltNoiseDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(SaltNoiseDataSet);
   /// The underlying DataSet.
   DataSet<T> *ds;
   /// A MTRand for random selection of pattern components
@@ -535,6 +547,7 @@ public:
 /// A specialization of DataSet which add a fixed size salt and pepper noise to patterns.
 template <typename T>
 class SaltPepperNoiseDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(SaltPepperNoiseDataSet);
   /// The underlying DataSet.
   DataSet<T> *ds;
   /// A MTRand for random selection of pattern components
@@ -562,6 +575,7 @@ public:
 /// A specialization of DataSet which takes samples on a defined step size.
 template <typename T>
 class StepDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(StepDataSet);
   /// The underlying DataSet.
   DataSet<T> *ds;
   /// A MTRand for random selection of pattern components
@@ -578,6 +592,7 @@ public:
 /// A specialization of DataSet for cacheNNLMs training.
 template <typename T>
 class CacheDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(CacheDataSet);
   
   DataSet<T>	*ds;
   int	       **word2cache;
@@ -609,6 +624,8 @@ class CacheDataSet : public DataSet<T> {
 
 template <typename T>
 class DerivDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(DerivDataSet);
+  
   DataSet<T> *ds;
   bool deriv0,deriv1,deriv2;
   int numpatterns,origpatternsz,patternsz;
@@ -625,6 +642,8 @@ class DerivDataSet : public DataSet<T> {
 /// A specialization of DataSet which performs sub, and div normalization
 template <typename T>
 class SubAndDivNormalizationDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(SubAndDivNormalizationDataSet);
+  
   /// The underlying DataSet.
   DataSet<T> *ds;
   /// The vector with sub values
@@ -643,6 +662,8 @@ class SubAndDivNormalizationDataSet : public DataSet<T> {
 /// A specialization of DataSet which performs a clamp
 template <typename T>
 class ClampDataSet : public DataSet<T> {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(ClampDataSet);
+  
   /// The underlying DataSet.
   DataSet<T> *ds;
   float lower, upper;

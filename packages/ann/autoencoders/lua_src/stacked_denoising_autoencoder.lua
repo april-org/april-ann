@@ -5,11 +5,11 @@ get_table_from_dotted_string("ann.autoencoders", true)
 -- The auto-encoder class (AE) will be a denoising auto-encoder (DAE) when
 -- trained with corrupted input, and clean output
 
-local ann_autoencoders_ae_methods,
-ann_autoencoders_ae_class_metatable = class("ann.autoencoders.ae",
-					    ann.components.base)
+local ann_autoencoders_ae,ann_autoencoders_ae_methods =
+  class("ann.autoencoders.ae", ann.components.base)
+ann.autoencoders.ae = ann_autoencoders_ae
 
-function ann_autoencoders_ae_class_metatable:__call(t)
+function ann_autoencoders_ae:constructor(t)
   local params = get_table_fields(
     {
       name   = { mandatory=false, type_match="string" },
@@ -34,44 +34,43 @@ function ann_autoencoders_ae_class_metatable:__call(t)
   
   local name  = params.name or "AE-" .. params.index
   local ae    = ann.components.stack{ name=name }
-  local obj   = class_wrapper(ae,{
-				-- this methods must be defined here because
-				-- they overwrite methods of
-				-- ann.components.stack
-				
-				-- the clone function produces a new ae object
-				clone = function(self)
-				  local params = self.params
-				  local obj = ann.autoencoders.ae{
-				    name    = params.name,
-				    index   = params.index,
-				    hidden  = table.deep_copy(params.hidden),
-				    visible = table.deep_copy(params.visible),
-				    encoder = (params.encoder and params.encoder:clone()) or nil,
-				    decoder = (params.decoder and params.decoder:clone()) or nil,
-				  }
-				  return obj
-				end,
-
-				-- the to_lua_string method
-				to_lua_string = function(self,format)
-				  return string.format("ann.autoencoders.ae(%s)",
-						       table.tostring(self.params))
-				end,
-				
-				-- the build method 
-				build = function(self,...)
-				  local ae      = self.ae
-				  local result  = table.pack(ae:build(...))
-				  local encoder = self.encoder
-				  local decoder = self.decoder
-				  assert(encoder:get_output_size() == decoder:get_input_size() or
-					   encoder:get_output_size() == 0 or
-					   decoder:get_input_size() == 0,
-					 "Output size of encoder must be equals to input size of decoder")
-				  return table.unpack(result)
-				end,
-				 })
+  
+  -- this methods must be defined here because
+  -- they overwrite methods of
+  -- ann.components.stack
+  
+  -- the clone function produces a new ae object
+  self.clone = function(self)
+    local params = self.params
+    local obj = ann.autoencoders.ae{
+      name    = params.name,
+      index   = params.index,
+      hidden  = table.deep_copy(params.hidden),
+      visible = table.deep_copy(params.visible),
+      encoder = (params.encoder and params.encoder:clone()) or nil,
+      decoder = (params.decoder and params.decoder:clone()) or nil,
+    }
+    return obj
+  end
+  -- the to_lua_string method
+  self.to_lua_string = function(self,format)
+    return string.format("ann.autoencoders.ae(%s)",
+                         table.tostring(self.params))
+  end
+  -- the build method 
+  self.build = function(self,...)
+    local ae      = self.ae
+    local result  = table.pack(ae:build(...))
+    local encoder = self.encoder
+    local decoder = self.decoder
+    assert(encoder:get_output_size() == decoder:get_input_size() or
+             encoder:get_output_size() == 0 or
+             decoder:get_input_size() == 0,
+           "Output size of encoder must be equals to input size of decoder")
+    return table.unpack(result)
+  end
+  local obj = class_wrapper(ae,self)
+  assert(rawequal(obj, self))
   
   local encoder = params.encoder
   if not encoder then
@@ -101,25 +100,22 @@ function ann_autoencoders_ae_class_metatable:__call(t)
 				   } ):
     push( ann.components.actf[params.visible.actf]{ name="v-enc-" .. params.index} )
   end
-  if isa(encoder, ann.components.stack) then
+  if class.is_a(encoder, ann.components.stack) then
     ae:push(encoder:unroll())
   else
     ae:push(encoder)
   end
-  if isa(decoder, ann.components.stack) then
+  if class.is_a(decoder, ann.components.stack) then
     ae:push(decoder:unroll())
   else
     ae:push(decoder)
   end
   
-  obj.encoder = encoder
-  obj.decoder = decoder
-  obj.ae      = ae
-  obj.params  = params
+  self.encoder = encoder
+  self.decoder = decoder
+  self.ae      = ae
+  self.params  = params
   
-  obj = class_instance(obj, self)
-  
-  return obj
 end
 
 function ann_autoencoders_ae_methods:get_C_AE_component()
@@ -231,20 +227,22 @@ local function build_two_layered_autoencoder_from_sizes_and_actf(names_prefix,
 end
 
 -- FAKE DATASET INDEXED
-local fake_indexed_methods,
-fake_indexed_metatable = class("fake_dataset_indexed", "datasetToken")
-function fake_indexed_metatable:__call(ds, dict)
-  assert(isa(ds,dataset), "The first argument must be a dataset")
-  local obj = { ds=ds, dict=dict, num_pats=ds:numPatterns() }
+local fake_dataset_indexed, fake_indexed_methods =
+  class("fake_dataset_indexed", datasetToken)
+
+function fake_dataset_indexed:constructor(ds, dict)
+  assert(class.is_a(ds,dataset), "The first argument must be a dataset")
+  self.ds=ds
+  self.dict=dict
+  self.num_pats=ds:numPatterns()
   local pat_size = 0
   for i=1,#dict do
     pat_size = pat_size + dict[i]:patternSize()
-    if isa(dict[i], dataset) then
-      obj.dict[i] = dataset.token.wrapper(dict[i])
+    if class.is_a(dict[i], dataset) then
+      self.dict[i] = dataset.token.wrapper(dict[i])
     end
   end
-  obj.pat_size = pat_size
-  return class_instance(obj,self)
+  self.pat_size = pat_size
 end
 function fake_indexed_methods:patternSize()
   return self.pat_size

@@ -1,8 +1,8 @@
-class_extension(matrix.sparse, "to_lua_string",
-                function(self, format)
-                  return string.format("matrix.sparse.fromString[[%s]]",
-                                       self:toString(format or "binary"))
-                end)
+class.extend(matrix.sparse, "to_lua_string",
+             function(self, format)
+               return string.format("matrix.sparse.fromString[[%s]]",
+                                    self:toString(format or "binary"))
+end)
 
 -- the constructor
 matrix.sparse.csr = function(...)
