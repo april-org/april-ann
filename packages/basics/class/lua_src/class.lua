@@ -92,8 +92,20 @@ end
 -- Returns the class table associated with the given class_name.
 --
 -- @param class_name - A Lua string with the class_name.
--- @return class_table - A Lua class table.
-function class.find(class_name) return class_tables_list[class_name] end
+-- @return class_table,methods_table - A Lua class table, and its methods table.
+function class.find(class_name)
+  local cls = class_tables_list[class_name]
+  if cls then
+    return class_tables_list[class_name],cls.meta_instance.__index
+  end
+end
+
+-- Removes the given class name from the auxiliary class table.
+--
+-- @param class_name - A Lua string with the class_name.
+function class.forget(class_name)
+  class_tables_list[class_name] = nil
+end
 
 -- Predicate which returns true if a given object instance is a subclass of a
 -- given Lua class table.

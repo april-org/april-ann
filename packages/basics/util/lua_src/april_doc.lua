@@ -191,15 +191,20 @@ function april_help(object, verbosity)
   ----------------------------------------------------------------------------
   -- documentation
   april_print_doc(object, verbosity)
+  if class.is_class(object) and DOC_TABLE[object.constructor] then
+    print("--------------------------------------------------------------\n")
+    -- constructor documentation is defined at class_table.constructor method
+    april_print_doc(object.constructor, verbosity)
+  end
   local mt = getmetatable(object)
   if mt then
     -- metatable constructor and destructor
-    for _,k in ipairs{ "__call", "constructor", "__gc", "destructor" } do
-      if mt[k] then
-        if DOC_TABLE[mt[k]] then
-          print("--------------------------------------------------------------\n")
-          april_print_doc(mt[k], verbosity)
-        end
+    if mt.__call then
+      if DOC_TABLE[mt.__call] then
+        -- constructor documentation is defined at
+        -- getmetatable(class_table).__call metamethod
+        print("--------------------------------------------------------------\n")
+        april_print_doc(mt.__call, verbosity)
       end
     end
     -- metatable constructor and destructor
