@@ -26,6 +26,7 @@
 #include "april_assert.h"
 #include "error_print.h"
 #include "history_based_LM.h"
+#include "bunch_hashed_LM.h"
 #include "logbase.h"
 #include "trie_vector.h"
 #include "unused_variable.h"
@@ -39,32 +40,36 @@ namespace LanguageModels {
   class FeatureBasedLM;
 
   template <typename Key, typename Score>
-  class FeatureBasedLMInterface : public HistoryBasedLMInterface <Key,Score> {
+  class FeatureBasedLMInterface : public HistoryBasedLMInterface <Key,Score>, public BunchHashedLMInterface <Key, Score> {
     friend class FeatureBasedLM<Key,Score>;
-    
-  //protected:
 
   public:
+    void incRef() {
+      HistoryBasedLMInterface<Key,Score>::incRef();
+      BunchHashedLMInterface<Key,Score>::incRef();
+    }
 
-    virtual ~FeatureBasedLMInterface() {
+    bool decRef() {
+      HistoryBasedLMInterface<Key,Score>::decRef();
+      BunchHashedLMInterface<Key,Score>::decRef();
+      return (HistoryBasedLMInterface<Key,Score>::getRef() <= 0);
     }
   };
 
   template <typename Key, typename Score>
-  class FeatureBasedLM : public HistoryBasedLM <Key,Score> {
+  class FeatureBasedLM : public HistoryBasedLM <Key,Score>, public BunchHashedLM <Key,Score> {
   private:
 
   public:
-
-    FeatureBasedLM(int ngram_order,
-                   WordType init_word,
-                   april_utils::TrieVector *trie_vector) :
-      HistoryBasedLM<Key,Score>(ngram_order,
-                                init_word,
-                                trie_vector) {
+    void incRef() {
+      HistoryBasedLM<Key,Score>::incRef();
+      BunchHashedLM<Key,Score>::incRef();
     }
 
-    virtual ~FeatureBasedLM() {
+    bool decRef() {
+      HistoryBasedLM<Key,Score>::decRef();
+      BunchHashedLM<Key,Score>::decRef();
+      return (HistoryBasedLM<Key,Score>::getRef() <= 0);
     }
   };
 
