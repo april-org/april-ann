@@ -44,13 +44,21 @@ namespace LanguageModels {
   class FeatureBasedLMInterface : public HistoryBasedLMInterface <Key,Score>, public BunchHashedLMInterface <Key, Score> {
     friend class FeatureBasedLM<Key,Score>;
 
+    Functions::FunctionInterface *filter;
+
   protected:
     FeatureBasedLMInterface(FeatureBasedLM<Key,Score>* model) :
       HistoryBasedLMInterface<Key,Score>(model),
       BunchHashedLMInterface<Key,Score>(model) {
+      filter = model->getFilter();
+      IncRef(filter);
     }
 
   public:
+    virtual ~FeatureBasedLMInterface() {
+      DecRef(filter);
+    }
+
     void incRef() {
       HistoryBasedLMInterface<Key,Score>::incRef();
       BunchHashedLMInterface<Key,Score>::incRef();
@@ -66,16 +74,28 @@ namespace LanguageModels {
   template <typename Key, typename Score>
   class FeatureBasedLM : public HistoryBasedLM <Key,Score>, public BunchHashedLM <Key,Score> {
   private:
+    Functions::FunctionInterface *filter;
 
   public:
     FeatureBasedLM(int ngram_order,
                    WordType init_word,
                    april_utils::TrieVector *trie_vector,
-                   unsigned int bunch_size) :
+                   unsigned int bunch_size,
+                   Functions::FunctionInterface *filter) :
       HistoryBasedLM<Key,Score>(ngram_order,
                                 init_word,
                                 trie_vector),
-      BunchHashedLM<Key,Score>(bunch_size) {
+      BunchHashedLM<Key,Score>(bunch_size),
+      filter(filter) {
+      IncRef(filter);
+    }
+
+    virtual ~FeatureBasedLM() {
+      DecRef(filter);
+    }
+
+    Functions::FunctionInterface* getFilter() {
+      return filter;
     }
 
     void incRef() {
