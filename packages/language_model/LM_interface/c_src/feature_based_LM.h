@@ -24,9 +24,10 @@
 
 #include <stdint.h>
 #include "april_assert.h"
-#include "error_print.h"
-#include "history_based_LM.h"
 #include "bunch_hashed_LM.h"
+#include "error_print.h"
+#include "function_interface.h"
+#include "history_based_LM.h"
 #include "logbase.h"
 #include "trie_vector.h"
 #include "unused_variable.h"

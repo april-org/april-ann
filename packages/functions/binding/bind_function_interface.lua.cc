@@ -25,6 +25,7 @@
 
 //BIND_HEADER_H
 #include "function_interface.h"
+#include "skip_function.h"
 using namespace Functions;
 //BIND_END
 
@@ -57,5 +58,19 @@ using namespace Functions;
   Token *input;
   LUABIND_GET_PARAMETER(1, Token, input);
   LUABIND_RETURN(Token, obj->calculate(input));
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME SkipFunction functions
+//BIND_CPP_CLASS SkipFunction
+//BIND_SUBCLASS_OF SkipFunction FunctionInterface
+
+//BIND_CONSTRUCTOR SkipFunction
+{
+  LUABIND_CHECK_ARGN(==,0);
+  obj = new SkipFunction();
+  LUABIND_RETURN(SkipFunction, obj);
 }
 //BIND_END
