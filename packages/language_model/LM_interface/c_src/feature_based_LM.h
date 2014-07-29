@@ -44,6 +44,12 @@ namespace LanguageModels {
   class FeatureBasedLMInterface : public HistoryBasedLMInterface <Key,Score>, public BunchHashedLMInterface <Key, Score> {
     friend class FeatureBasedLM<Key,Score>;
 
+  protected:
+    FeatureBasedLMInterface(FeatureBasedLM<Key,Score>* model) :
+      HistoryBasedLMInterface<Key,Score>(model),
+      BunchHashedLMInterface<Key,Score>(model) {
+    }
+
   public:
     void incRef() {
       HistoryBasedLMInterface<Key,Score>::incRef();
@@ -62,6 +68,16 @@ namespace LanguageModels {
   private:
 
   public:
+    FeatureBasedLM(int ngram_order,
+                   WordType init_word,
+                   april_utils::TrieVector *trie_vector,
+                   unsigned int bunch_size) :
+      HistoryBasedLM<Key,Score>(ngram_order,
+                                init_word,
+                                trie_vector),
+      BunchHashedLM<Key,Score>(bunch_size) {
+    }
+
     void incRef() {
       HistoryBasedLM<Key,Score>::incRef();
       BunchHashedLM<Key,Score>::incRef();
