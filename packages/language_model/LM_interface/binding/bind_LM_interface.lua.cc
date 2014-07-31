@@ -30,6 +30,7 @@
 #include "history_based_LM.h"
 #include "feature_based_LM.h"
 #include "bunch_hashed_LM.h"
+#include "skip_function.h"
 using namespace LanguageModels;
 
 class QueryResultUInt32LogFloat : public Referenced {
@@ -498,5 +499,19 @@ public:
 //BIND_CONSTRUCTOR FeatureBasedLMInterfaceUInt32LogFloat
 {
   LUABIND_ERROR("Abstract class!!!");
+}
+//BIND_END
+
+//////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME SkipFunction functions
+//BIND_CPP_CLASS SkipFunction
+//BIND_SUBCLASS_OF SkipFunction FunctionInterface
+
+//BIND_CONSTRUCTOR SkipFunction
+{
+  LUABIND_CHECK_ARGN(==,0);
+  obj = new SkipFunction();
+  LUABIND_RETURN(SkipFunction, obj);
 }
 //BIND_END
