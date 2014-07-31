@@ -29,6 +29,7 @@
 #include "function_interface.h"
 #include "history_based_LM.h"
 #include "logbase.h"
+#include "token_matrix.h"
 #include "trie_vector.h"
 #include "unused_variable.h"
 #include "vector.h"
@@ -68,6 +69,10 @@ namespace LanguageModels {
       HistoryBasedLMInterface<Key,Score>::decRef();
       BunchHashedLMInterface<Key,Score>::decRef();
       return (HistoryBasedLMInterface<Key,Score>::getRef() <= 0);
+    }
+
+    Token* applyFilter(Token* token) {
+      return filter->calculate(token);
     }
   };
 
