@@ -19,31 +19,44 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+//BIND_HEADER_C
+#include "bind_tokens.h"
+//BIND_END
 
-#ifndef SKIP_FUNCTION_H
-#define SKIP_FUNCTION_H
-
+//BIND_HEADER_H
 #include "function_interface.h"
+#include "skip_function.h"
+using namespace Functions;
+//BIND_END
 
-namespace Functions {
-  
-  class SkipFunction : public FunctionInterface {
-  public:
-    SkipFunction() : FunctionInterface() { }
-    virtual ~SkipFunction() {
-    }
-    /// It returns the input (or domain) size of the function.
-    virtual unsigned int getInputSize() const {
-      return 0;
-    }
-    /// It returns the output (or range) size of the function.
-    virtual unsigned int getOutputSize() const {
-      return 0;
-    }
-    virtual Token *calculate(Token *input) {
-      return input;
-    }
-  };
+//BIND_LUACLASSNAME FunctionInterface functions
+//BIND_CPP_CLASS    FunctionInterface
+
+//BIND_CONSTRUCTOR FunctionInterface
+{
+  LUABIND_ERROR("Abstract class!!!");
 }
+//BIND_END
 
-#endif //SKIP_FUNCTION_H
+//BIND_METHOD FunctionInterface get_input_size
+{
+  LUABIND_CHECK_ARGN(==,0);
+  LUABIND_RETURN(uint, obj->getInputSize());
+}
+//BIND_END
+
+//BIND_METHOD FunctionInterface get_output_size
+{
+  LUABIND_CHECK_ARGN(==,0);
+  LUABIND_RETURN(uint, obj->getOutputSize());
+}
+//BIND_END
+
+//BIND_METHOD FunctionInterface calculate
+{
+  LUABIND_CHECK_ARGN(==,1);
+  Token *input;
+  LUABIND_GET_PARAMETER(1, Token, input);
+  LUABIND_RETURN(Token, obj->calculate(input));
+}
+//BIND_END
