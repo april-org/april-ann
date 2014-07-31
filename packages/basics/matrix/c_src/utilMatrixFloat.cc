@@ -23,6 +23,7 @@
 #include "binarizer.h"
 #include "buffered_gzfile.h"
 #include "buffered_file.h"
+#include "buffered_zipfile.h"
 #include "clamp.h"
 #include "ignore_result.h"
 #include <cmath>
@@ -214,22 +215,28 @@ int saveMatrixFloatHEX(MatrixFloat *mat,
   return sizedata2+(r-b);
 }
 
+template <typename T>
+void genericWriteMatrixFloatToFile(MatrixFloat *mat,
+                                   const char *filename,
+                                   bool is_ascii) {
+  T f(filename, "w");
+  writeMatrixToStream(mat, f, FloatAsciiSizer(), FloatBinarySizer(),
+                      FloatAsciiCoder<T>(),
+                      FloatBinaryCoder<T>(),
+                      is_ascii);  
+}
+
 void writeMatrixFloatToFile(MatrixFloat *mat,
 			    const char *filename,
 			    bool is_ascii) {
   if (GZFileWrapper::isGZ(filename)) {
-    BufferedGZFile f(filename, "w");
-    writeMatrixToStream(mat, f, FloatAsciiSizer(), FloatBinarySizer(),
-			FloatAsciiCoder<BufferedGZFile>(),
-			FloatBinaryCoder<BufferedGZFile>(),
-			is_ascii);
+    genericWriteMatrixFloatToFile<BufferedGZFile>(mat, filename, is_ascii);
+  }
+  else if (ZIPFileWrapper::isZIP(filename)) {
+    genericWriteMatrixFloatToFile<BufferedZIPFile>(mat, filename, is_ascii);
   }
   else {
-    BufferedFile f(filename, "w");
-    writeMatrixToStream(mat, f, FloatAsciiSizer(), FloatBinarySizer(),
-			FloatAsciiCoder<BufferedFile>(),
-			FloatBinaryCoder<BufferedFile>(),
-			is_ascii);
+    genericWriteMatrixFloatToFile<BufferedFile>(mat, filename, is_ascii);
   }
 }
 

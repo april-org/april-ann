@@ -1,6 +1,6 @@
  package{ name = "matrix",
    version = "1.0",
-   depends = { "util", "mathcore", "random", "gzio" },
+   depends = { "util", "mathcore", "random", "gzio", "zipio" },
    keywords = { "matrix" },
    description = "no description available",
    -- targets como en ant
