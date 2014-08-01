@@ -92,12 +92,12 @@ namespace april_io {
     if (!lua_isstring(L,1)) {
       ERROR_EXIT(256, "Needs a Lua string passed as 1st argument\n");
     }
-    registry_index = new char[19];
-    snprintf(registry_index, 18, "%p", this);
     total_len = static_cast<size_t>(luaL_len(L,1));
-    data = lua_tostring(L, 1);
     lua_pushvalue(L, 1);
-    lua_setfield(L, LUA_REGISTRYINDEX, registry_index);
+    ref = luaL_ref(L, LUA_REGISTRYINDEX);
+    lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
+    data = lua_tostring(L, -1);
+    lua_pop(L, -1);
   }
         
   LuaInputBufferStream::~LuaInputBufferStream() {
@@ -105,17 +105,15 @@ namespace april_io {
   }
 
   void LuaInputBufferStream::close() {
-    if (registry_index != 0) {
-      lua_pushnil(L);
-      lua_setfield(L, LUA_REGISTRYINDEX, registry_index);
-      delete[] registry_index;
-      registry_index = 0;
+    if (ref != LUA_NOREF) {
+      luaL_unref(L, LUA_REGISTRYINDEX, ref);
+      ref = LUA_NOREF;
     }
   }
   
   void LuaInputBufferStream::flush() { }
         
-  bool LuaInputBufferStream::isOpened() const { return registry_index != 0; }
+  bool LuaInputBufferStream::isOpened() const { return ref != LUA_NOREF; }
   
   bool LuaInputBufferStream::eof() { return pos == total_len; }
         

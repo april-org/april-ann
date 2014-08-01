@@ -51,7 +51,7 @@ namespace april_io {
   
   class LuaInputBufferStream : public Stream {
     lua_State *L;
-    char *registry_index;
+    int ref;
     const char *data;
     size_t pos, total_len;
   public:
