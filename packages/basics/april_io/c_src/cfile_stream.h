@@ -18,6 +18,32 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "buffered_file.h"
+#ifndef CFILE_H
+#define CFILE_H
 
-template class BufferedMemory<FileWrapper>;
+#include <cstdlib>
+#include <cstdio>
+#include "stream.h"
+
+namespace april_io {
+
+  class CFileStream : public Stream {
+    FILE *f;
+    bool need_close;
+  public:
+    CFileStream();
+    CFileStream(FILE *f);
+    CFileStream(const char *path, const char *mode);
+    virtual ~CFileStream();
+    virtual void close();
+    virtual void flush();
+    virtual bool isOpened() const;
+    virtual bool eof();
+    virtual int seek(long offset, int whence);
+    virtual size_t read(void *ptr, size_t size, size_t nmemb);
+    virtual size_t write(const void *ptr, size_t size, size_t nmemb);
+  };
+  
+} // namespace april_io
+
+#endif // CFILE_H

@@ -264,8 +264,3 @@ april_io.register_open_by_extension("tar",
                                              "invalid open mode, tar only allows 'r'")
                                       return public.open(io.open(name, mode))
 end)
-
-april_io.register_lines_by_extension("tar",
-                                     function()
-                                       error("lines functionality not implemented for tar files")
-end)

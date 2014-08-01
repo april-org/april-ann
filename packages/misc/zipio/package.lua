@@ -1,9 +1,9 @@
- package{ name = "gzio",
+ package{ name = "zipio",
    version = "1.0",
    depends = { "util", "tar", "april_io" },
    link_libraries = { "z" },
-   keywords = { "gzio" },
-   description = "read and write gz files",
+   keywords = { "zipio" },
+   description = "read and write zip files",
    -- targets como en ant
    target{
      name = "init",
@@ -26,7 +26,7 @@
      name = "provide",
      depends = "init",
      copy{ file= "c_src/*.h", dest_dir = "include" },
-     provide_bind{ file = "binding/bind_gzio.lua.cc", dest_dir = "include" }
+     provide_bind{ file = "binding/bind_zipio.lua.cc", dest_dir = "include" }
    },
    target{
      name = "build",
@@ -42,7 +42,7 @@
        dest_dir = "build",
      },
      build_bind{
-        file = "binding/bind_gzio.lua.cc",
+        file = "binding/bind_zipio.lua.cc",
         dest_dir = "build",
      }
    },

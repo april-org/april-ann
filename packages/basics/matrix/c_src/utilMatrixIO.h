@@ -21,112 +21,55 @@
  */
 #ifndef UTILMATRIXIO_H
 #define UTILMATRIXIO_H
-#include "constString.h"
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+
 #include "binarizer.h"
+#include "constString.h"
 #include "error_print.h"
+#include "file.h"
 #include "matrix.h"
+
 extern "C" {
 #include "lauxlib.h"
 #include "lualib.h"
 #include "lua.h"
 }
-#include <cmath>
-#include <cstdio>
-#include <cstring>
-class WriteBufferWrapper {
-  char *buffer;
-  char *pos;
-public:
-  WriteBufferWrapper() : buffer(0) { }
-  ~WriteBufferWrapper() { delete[] buffer; }
-  void printf(const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    pos += vsprintf(pos, format, args);
-    va_end(args);
-  }
-  void write(const char *ptr, size_t len) {
-    memcpy(pos, ptr, len);
-    pos += len;
-  }
-  void setExpectedSize(int sz) {
-    buffer = new char[sz];
-    pos = buffer;
-  }
-  int getTotalBytes() const { return pos - buffer; }
-  char *getBufferProperty() { char *aux = buffer; buffer = 0; return aux; }
-  bool good() const { return buffer != 0; }
-};
-
-class WriteLuaBufferWrapper {
-  luaL_Buffer lua_buffer;
-  char *buffer_ptr;
-  int total_bytes;
-public:
-  WriteLuaBufferWrapper(lua_State *L) : buffer_ptr(0), total_bytes(0) {
-    luaL_buffinit(L, &lua_buffer);
-  }
-  ~WriteLuaBufferWrapper() { }
-  void printf(const char *format, ...) {
-    april_assert(buffer_ptr != 0);
-    va_list args;
-    va_start(args, format);
-    int len = vsprintf(buffer_ptr, format, args);
-    if (len < 0) ERROR_EXIT(256, "Problem creating auxiliary buffer\n");
-    va_end(args);
-    total_bytes += len;
-    buffer_ptr  += len;
-  }
-  void write(const char *ptr, size_t len) {
-    memcpy(buffer_ptr, ptr, len);
-    total_bytes += len;
-    buffer_ptr  += len;
-  }
-  void setExpectedSize(int sz) {
-    buffer_ptr = luaL_prepbuffsize(&lua_buffer, sz);
-    if (buffer_ptr == 0) ERROR_EXIT(256, "Impossible to get the buffer\n");
-  }
-  int getTotalBytes() const { return total_bytes; }
-  void finish() {
-    luaL_addsize(&lua_buffer, total_bytes);
-    luaL_pushresult(&lua_buffer);
-  }
-  bool good() const { return buffer_ptr!=0; }
-};
 
 /*** The ASCII or BINARY extractor are like this functor struct:
-struct DummyAsciiExtractor {
-  // returns true if success, false otherwise
-  bool operator()(constString &line, MatrixType &destination) {
-    READ FROM LINE OR RETURN FALSE;
-    WRITE AT DESTINATION OR RETURN FALSE;
-    RETURN TRUE;
-  }
-};
-struct DummyBinaryExtractor {
-  // returns true if success, false otherwise
-  bool operator()(constString &line, MatrixType &destination) {
-    READ FROM LINE OR RETURN FALSE;
-    WRITE AT DESTINATION OR RETURN FALSE;
-    RETURN TRUE;
-  }
-};
+     struct DummyAsciiExtractor {
+     // returns true if success, false otherwise
+     bool operator()(constString &line, MatrixType &destination) {
+     READ FROM LINE OR RETURN FALSE;
+     WRITE AT DESTINATION OR RETURN FALSE;
+     RETURN TRUE;
+     }
+     };
+     struct DummyBinaryExtractor {
+     // returns true if success, false otherwise
+     bool operator()(constString &line, MatrixType &destination) {
+     READ FROM LINE OR RETURN FALSE;
+     WRITE AT DESTINATION OR RETURN FALSE;
+     RETURN TRUE;
+     }
+     };
 ****************************************************************/
 
-template <typename StreamType, typename MatrixType,
+template <typename MatrixType,
 	  typename AsciiExtractFunctor,  typename BinaryExtractorFunctor>
 Matrix<MatrixType>*
-readMatrixFromStream(StreamType &stream,
-		     AsciiExtractFunctor ascii_extractor,
-		     BinaryExtractorFunctor bin_extractor,
-		     const char *given_order=0) {
-  if (!stream.good()) {
+readMatrixFromFile(april_io::File *file,
+                   AsciiExtractFunctor ascii_extractor,
+                   BinaryExtractorFunctor bin_extractor,
+                   const char *given_order=0) {
+  if (!file->good()) {
     ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
     return 0;
   }
   constString line,format,order,token;
   // First we read the matrix dimensions
-  line = stream.extract_u_line();
+  line = file->extract_u_line();
   if (!line) {
     ERROR_PRINT("empty file!!!\n");
     return 0;
@@ -154,7 +97,7 @@ readMatrixFromStream(StreamType &stream,
   }
   Matrix<MatrixType> *mat = 0;
   // Now we read the type of the format
-  line = stream.extract_u_line();
+  line = file->extract_u_line();
   format = line.extract_token();
   if (!format) {
     ERROR_PRINT("impossible to read format token\n");
@@ -173,11 +116,11 @@ readMatrixFromStream(StreamType &stream,
     }
     typename Matrix<MatrixType>::iterator data_it(mat->begin());
     if (format == "ascii") {
-      while (data_it!=mat->end() && (line=stream.extract_u_line()))
+      while (data_it!=mat->end() && (line=file->extract_u_line()))
 	while (data_it!=mat->end() &&
 	       ascii_extractor(line, *data_it)) { ++data_it; }
     } else { // binary
-      while (data_it!=mat->end() && (line=stream.extract_u_line()))
+      while (data_it!=mat->end() && (line=file->extract_u_line()))
 	while (data_it!=mat->end() &&
 	       bin_extractor(line, *data_it)) { ++data_it; }
     }
@@ -189,7 +132,7 @@ readMatrixFromStream(StreamType &stream,
     int size=0,maxsize=4096;
     MatrixType *data = new MatrixType[maxsize];
     if (format == "ascii") {
-      while ( (line=stream.extract_u_line()) )
+      while ( (line=file->extract_u_line()) )
 	while (ascii_extractor(line, data[size])) { 
 	  size++; 
 	  if (size == maxsize) { // resize data vector
@@ -201,7 +144,7 @@ readMatrixFromStream(StreamType &stream,
 	  }
 	}
     } else { // binary
-      while ( (line=stream.extract_u_line()) )
+      while ( (line=file->extract_u_line()) )
 	while (bin_extractor(line, data[size])) {
 	  size++; 
 	  if (size == maxsize) { // resize data vector
@@ -239,84 +182,84 @@ readMatrixFromStream(StreamType &stream,
 
 /*** Functor examples
 
-struct DummyAsciiSizer {
-  // returns the number of bytes needed for all matrix data (plus spaces)
-  int operator()(const Matrix<MatrixType> *mat) {
-    RETURN 12 * mat->size();
-  }
-};
-struct DummyBinarySizer {
-  // returns the number of bytes needed for all matrix data (plus spaces)
-  int operator()(const Matrix<MatrixType> *mat) {
-    RETURN binarizer::buffer_size_32(mat->size());
-  }
-};
-template<typename StreamType>
-struct DummyAsciiCoder {
-  // puts to the stream the given value
-  void operator()(const MatrixType &value, StreamType &stream) {
-    stream.printf("%.5g", value);
-  }
-};
-template<typename StreamType>
-struct DummyBinaryCoder {
-  // puts to the stream the given value
-  void operator()(const MatrixType &value, StreamType &stream) {
-    char b[5];
-    binarizer::code_BLAH(value, b);
-    stream.printf("%s", b);
-  }
-};
+     struct DummyAsciiSizer {
+     // returns the number of bytes needed for all matrix data (plus spaces)
+     int operator()(const Matrix<MatrixType> *mat) {
+     RETURN 12 * mat->size();
+     }
+     };
+     struct DummyBinarySizer {
+     // returns the number of bytes needed for all matrix data (plus spaces)
+     int operator()(const Matrix<MatrixType> *mat) {
+     RETURN binarizer::buffer_size_32(mat->size());
+     }
+     };
+
+     struct DummyAsciiCoder {
+     // puts to the stream the given value
+     void operator()(const MatrixType &value, april_io::File *file) {
+     file->printf("%.5g", value);
+     }
+     };
+
+     struct DummyBinaryCoder {
+     // puts to the stream the given value
+     void operator()(const MatrixType &value, april_io::File *file) {
+     char b[5];
+     binarizer::code_BLAH(value, b);
+     file->printf("%s", b);
+     }
+     };
 ****************************************************************/
 
 // Returns the number of chars written (there is a '\0' that is not counted)
-template <typename StreamType, typename MatrixType,
+template <typename MatrixType,
 	  typename AsciiSizeFunctor,  typename BinarySizeFunctor,
 	  typename AsciiCodeFunctor,  typename BinaryCodeFunctor>
-int writeMatrixToStream(Matrix<MatrixType> *mat,
-			StreamType &stream,
-			AsciiSizeFunctor ascii_sizer,
-			BinarySizeFunctor bin_sizer,
-			AsciiCodeFunctor ascii_coder,
-			BinaryCodeFunctor bin_coder,
-			bool is_ascii) {
+int writeMatrixToFile(Matrix<MatrixType> *mat,
+                      april_io::File *stream,
+                      AsciiSizeFunctor ascii_sizer,
+                      BinarySizeFunctor bin_sizer,
+                      AsciiCodeFunctor ascii_coder,
+                      BinaryCodeFunctor bin_coder,
+                      bool is_ascii) {
   int sizedata,sizeheader;
   sizeheader = mat->getNumDim()*10+10+10; // FIXME: To put adequate values
   // sizedata contains the memory used by MatrixType in ascii including spaces,
   // new lines, etc...
   if (is_ascii) sizedata = ascii_sizer(mat);
   else sizedata = bin_sizer(mat);
-  stream.setExpectedSize(sizedata+sizeheader+1);
-  if (!stream.good()) {
+  file->setExpectedSize(sizedata+sizeheader+1);
+  if (!file->good()) {
     ERROR_EXIT(256, "The stream is not prepared, it is empty, or EOF\n");
   }
-  for (int i=0;i<mat->getNumDim()-1;i++) stream.printf("%d ",mat->getDimSize(i));
-  stream.printf("%d\n",mat->getDimSize(mat->getNumDim()-1));
+  for (int i=0;i<mat->getNumDim()-1;i++) file->printf("%d ",mat->getDimSize(i));
+  file->printf("%d\n",mat->getDimSize(mat->getNumDim()-1));
   if (is_ascii) {
     const int columns = 9;
-    stream.printf("ascii");
+    file->printf("ascii");
     if (mat->getMajorOrder() == CblasColMajor)
-      stream.printf(" col_major");
+      file->printf(" col_major");
     else
-      stream.printf(" row_major");
-    stream.printf("\n");
+      file->printf(" row_major");
+    file->printf("\n");
     int i=0;
     for(typename Matrix<MatrixType>::const_iterator it(mat->begin());
 	it!=mat->end();++it,++i) {
       ascii_coder(*it, stream);
-      stream.printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
+      file->printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
     }
     if ((i % columns) != 0) {
-      stream.printf("\n"); 
+      file->printf("\n"); 
     }
   } else { // binary
     const int columns = 16;
-    stream.printf("binary");
+    file->printf("binary");
     if (mat->getMajorOrder() == CblasColMajor)
-      stream.printf(" col_major");
+      file->printf(" col_major");
     else
-      stream.printf(" row_major");
-    stream.printf("\n");
+      file->printf(" row_major");
+    file->printf("\n");
     // We substract 1 so the final '\0' is not considered
     int i=0;
     for(typename Matrix<MatrixType>::const_iterator it(mat->begin());
@@ -328,32 +271,32 @@ int writeMatrixToStream(Matrix<MatrixType> *mat,
 	binarizer::code_float(*it, b);
 	fprintf(f, "%c%c%c%c%c", b[0], b[1], b[2], b[3], b[4]);
       */
-      if ((i+1) % columns == 0) stream.printf("\n");
+      if ((i+1) % columns == 0) file->printf("\n");
     }
-    if ((i % columns) != 0) stream.printf("\n"); 
+    if ((i % columns) != 0) file->printf("\n"); 
   }
-  return stream.getTotalBytes();
+  return file->getTotalBytes();
 }
 
 /*** The ASCII extractor are like this functor struct:
-struct DummyAsciiExtractor {
-  // returns true if success, false otherwise
-  bool operator()(constString &line, MatrixType &destination) {
-    READ FROM LINE OR RETURN FALSE;
-    WRITE AT DESTINATION OR RETURN FALSE;
-    RETURN TRUE;
-  }
-};
+     struct DummyAsciiExtractor {
+     // returns true if success, false otherwise
+     bool operator()(constString &line, MatrixType &destination) {
+     READ FROM LINE OR RETURN FALSE;
+     WRITE AT DESTINATION OR RETURN FALSE;
+     RETURN TRUE;
+     }
+     };
 ****************************************************************/
 
-template <typename StreamType, typename MatrixType,
+template <typename MatrixType,
 	  typename AsciiExtractFunctor>
 Matrix<MatrixType>*
 readMatrixFromTabStream(const int rows, const int cols,
-			StreamType &stream,
+			april_io::File *file,
 			AsciiExtractFunctor ascii_extractor,
 			const char *given_order) {
-  if (!stream.good()) {
+  if (!file->good()) {
     ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
     return 0;
   }
@@ -370,7 +313,7 @@ readMatrixFromTabStream(const int rows, const int cols,
   }
   int i=0;
   typename Matrix<MatrixType>::iterator data_it(mat->begin());
-  while (data_it!=mat->end() && (line=stream.extract_u_line())) {
+  while (data_it!=mat->end() && (line=file->extract_u_line())) {
     int num_cols_size_count = 0;
     while (data_it!=mat->end() &&
 	   ascii_extractor(line, *data_it)) { ++data_it; ++num_cols_size_count; }
@@ -388,26 +331,26 @@ readMatrixFromTabStream(const int rows, const int cols,
 
 /*** Functor examples
 
-struct DummyAsciiSizer {
-  // returns the number of bytes needed for all matrix data (plus spaces)
-  int operator()(const Matrix<MatrixType> *mat) {
-    RETURN 12 * mat->size();
-  }
-};
-template<typename StreamType>
-struct DummyAsciiCoder {
-  // puts to the stream the given value
-  void operator()(const MatrixType &value, StreamType &stream) {
-    stream.printf("%.5g", value);
-  }
-};
+     struct DummyAsciiSizer {
+     // returns the number of bytes needed for all matrix data (plus spaces)
+     int operator()(const Matrix<MatrixType> *mat) {
+     RETURN 12 * mat->size();
+     }
+     };
+
+     struct DummyAsciiCoder {
+     // puts to the stream the given value
+     void operator()(const MatrixType &value, april_io::File *file) {
+     file->printf("%.5g", value);
+     }
+     };
 ****************************************************************/
 
 // Returns the number of chars written (there is a '\0' that is not counted)
-template <typename StreamType, typename MatrixType,
+template <typename MatrixType,
 	  typename AsciiSizeFunctor, typename AsciiCodeFunctor>
 int writeMatrixToTabStream(Matrix<MatrixType> *mat,
-			   StreamType &stream,
+			   april_io::File *file,
 			   AsciiSizeFunctor ascii_sizer,
 			   AsciiCodeFunctor ascii_coder) {
   if (mat->getNumDim() != 2)
@@ -415,8 +358,8 @@ int writeMatrixToTabStream(Matrix<MatrixType> *mat,
   
   int sizedata;
   sizedata = ascii_sizer(mat);
-  stream.setExpectedSize(sizedata+1);
-  if (!stream.good()) {
+  file->setExpectedSize(sizedata+1);
+  if (!file->good()) {
     ERROR_EXIT(256, "The stream is not prepared, it is empty, or EOF\n");
   }
   const int columns = mat->getDimSize(1);
@@ -424,31 +367,31 @@ int writeMatrixToTabStream(Matrix<MatrixType> *mat,
   for(typename Matrix<MatrixType>::const_iterator it(mat->begin());
       it!=mat->end();++it,++i) {
     ascii_coder(*it, stream);
-    stream.printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
+    file->printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
   }
   if ((i % columns) != 0) {
-    stream.printf("\n"); 
+    file->printf("\n"); 
   }
-  return stream.getTotalBytes();
+  return file->getTotalBytes();
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
 // SPARSE
 
-template <typename StreamType, typename MatrixType,
+template <typename MatrixType,
 	  typename AsciiExtractFunctor,  typename BinaryExtractorFunctor>
 SparseMatrix<MatrixType>*
-readSparseMatrixFromStream(StreamType &stream,
-			   AsciiExtractFunctor ascii_extractor,
-			   BinaryExtractorFunctor bin_extractor) {
-  if (!stream.good()) {
+readSparseMatrixFromFile(april_io::File *file,
+                         AsciiExtractFunctor ascii_extractor,
+                         BinaryExtractorFunctor bin_extractor) {
+  if (!file->good()) {
     ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
     return 0;
   }
   constString line,format,sparse,token;
   // First we read the matrix dimensions
-  line = stream.extract_u_line();
+  line = file->extract_u_line();
   if (!line) {
     ERROR_PRINT("empty file!!!\n");
     return 0;
@@ -467,7 +410,7 @@ readSparseMatrixFromStream(StreamType &stream,
   }
   SparseMatrix<MatrixType> *mat = 0;
   // Now we read the type of the format
-  line = stream.extract_u_line();
+  line = file->extract_u_line();
   format = line.extract_token();
   if (!format) {
     ERROR_PRINT("impossible to read format token\n");
@@ -493,7 +436,7 @@ readSparseMatrixFromStream(StreamType &stream,
   if (format == "ascii") {
     int i=0;
     while(i<NZ) {
-      if (! (line=stream.extract_u_line()) )
+      if (! (line=file->extract_u_line()) )
         ERROR_EXIT(128, "Incorrect sparse matrix format\n");
       while(i<NZ &&
             ascii_extractor(line, values_ptr[i])) {
@@ -502,7 +445,7 @@ readSparseMatrixFromStream(StreamType &stream,
     }
     i=0;
     while(i<NZ) {
-      if (! (line=stream.extract_u_line()) )
+      if (! (line=file->extract_u_line()) )
         ERROR_EXIT(128, "Incorrect sparse matrix format\n");
       while(i<NZ &&
             line.extract_int(&indices_ptr[i])) {
@@ -511,7 +454,7 @@ readSparseMatrixFromStream(StreamType &stream,
     }
     i=0;
     while(i<static_cast<int>(first_index->getSize())) {
-      if (! (line=stream.extract_u_line()) )
+      if (! (line=file->extract_u_line()) )
         ERROR_EXIT(128, "Incorrect sparse matrix format\n");
       while(i<static_cast<int>(first_index->getSize()) &&
             line.extract_int(&first_index_ptr[i])) {
@@ -521,7 +464,7 @@ readSparseMatrixFromStream(StreamType &stream,
   } else { // binary
     int i=0;
     while(i<NZ) {
-      if (! (line=stream.extract_u_line()) )
+      if (! (line=file->extract_u_line()) )
         ERROR_EXIT(128, "Incorrect sparse matrix format\n");
       while(i<NZ &&
             bin_extractor(line, values_ptr[i])) {
@@ -530,7 +473,7 @@ readSparseMatrixFromStream(StreamType &stream,
     }
     i=0;
     while(i<NZ) {
-      if (! (line=stream.extract_u_line()) )
+      if (! (line=file->extract_u_line()) )
         ERROR_EXIT(128, "Incorrect sparse matrix format\n");
       while(i<NZ &&
             line.extract_int32_binary(&indices_ptr[i])) {
@@ -539,7 +482,7 @@ readSparseMatrixFromStream(StreamType &stream,
     }
     i=0;
     while(i<static_cast<int>(first_index->getSize())) {
-      if (! (line=stream.extract_u_line()) )
+      if (! (line=file->extract_u_line()) )
         ERROR_EXIT(128, "Incorrect sparse matrix format\n");
       while(i<static_cast<int>(first_index->getSize()) &&
             line.extract_int32_binary(&first_index_ptr[i])) {
@@ -563,122 +506,122 @@ readSparseMatrixFromStream(StreamType &stream,
 
 /*** Functor examples
 
-struct DummyAsciiSizer {
-  // returns the number of bytes needed for all matrix data (plus spaces)
-  int operator()(const Matrix<MatrixType> *mat) {
-    RETURN 12 * mat->size();
-  }
-};
-struct DummyBinarySizer {
-  // returns the number of bytes needed for all matrix data (plus spaces)
-  int operator()(const Matrix<MatrixType> *mat) {
-    RETURN binarizer::buffer_size_32(mat->size());
-  }
-};
-template<typename StreamType>
-struct DummyAsciiCoder {
-  // puts to the stream the given value
-  void operator()(const MatrixType &value, StreamType &stream) {
-    stream.printf("%.5g", value);
-  }
-};
-template<typename StreamType>
-struct DummyBinaryCoder {
-  // puts to the stream the given value
-  void operator()(const MatrixType &value, StreamType &stream) {
-    char b[5];
-    binarizer::code_BLAH(value, b);
-    stream.printf("%s", b);
-  }
-};
+     struct DummyAsciiSizer {
+     // returns the number of bytes needed for all matrix data (plus spaces)
+     int operator()(const Matrix<MatrixType> *mat) {
+     RETURN 12 * mat->size();
+     }
+     };
+     struct DummyBinarySizer {
+     // returns the number of bytes needed for all matrix data (plus spaces)
+     int operator()(const Matrix<MatrixType> *mat) {
+     RETURN binarizer::buffer_size_32(mat->size());
+     }
+     };
+
+     struct DummyAsciiCoder {
+     // puts to the stream the given value
+     void operator()(const MatrixType &value, april_io::File *file) {
+     file->printf("%.5g", value);
+     }
+     };
+
+     struct DummyBinaryCoder {
+     // puts to the stream the given value
+     void operator()(const MatrixType &value, april_io::File *file) {
+     char b[5];
+     binarizer::code_BLAH(value, b);
+     file->printf("%s", b);
+     }
+     };
 ****************************************************************/
 
 // Returns the number of chars written (there is a '\0' that is not counted)
-template <typename StreamType, typename MatrixType,
+template <typename MatrixType,
 	  typename AsciiSizeFunctor,  typename BinarySizeFunctor,
 	  typename AsciiCodeFunctor,  typename BinaryCodeFunctor>
-int writeSparseMatrixToStream(SparseMatrix<MatrixType> *mat,
-			      StreamType &stream,
-			      AsciiSizeFunctor ascii_sizer,
-			      BinarySizeFunctor bin_sizer,
-			      AsciiCodeFunctor ascii_coder,
-			      BinaryCodeFunctor bin_coder,
-			      bool is_ascii) {
+int writeSparseMatrixToFile(SparseMatrix<MatrixType> *mat,
+                            april_io::File *file,
+                            AsciiSizeFunctor ascii_sizer,
+                            BinarySizeFunctor bin_sizer,
+                            AsciiCodeFunctor ascii_coder,
+                            BinaryCodeFunctor bin_coder,
+                            bool is_ascii) {
   int sizedata,sizeheader;
   sizeheader = (mat->getNumDim()+1)*10+10+10; // FIXME: To put adequate values
   // sizedata contains the memory used by MatrixType in ascii including spaces,
   // new lines, etc...
   if (is_ascii) sizedata = ascii_sizer(mat) + mat->nonZeroSize()*12 + mat->getDenseCoordinateSize()*12 + 3;
   else sizedata = bin_sizer(mat) + binarizer::buffer_size_32(mat->nonZeroSize()) + binarizer::buffer_size_32(mat->getDenseCoordinateSize()) + 3;
-  stream.setExpectedSize(sizedata+sizeheader+1);
-  if (!stream.good()) {
+  file->setExpectedSize(sizedata+sizeheader+1);
+  if (!file->good()) {
     ERROR_EXIT(256, "The stream is not prepared, it is empty, or EOF\n");
   }
-  stream.printf("%d ",mat->getDimSize(0));
-  stream.printf("%d ",mat->getDimSize(1));
-  stream.printf("%d\n",mat->nonZeroSize());
+  file->printf("%d ",mat->getDimSize(0));
+  file->printf("%d ",mat->getDimSize(1));
+  file->printf("%d\n",mat->nonZeroSize());
   const float *values_ptr = mat->getRawValuesAccess()->getPPALForRead();
   const int32_t *indices_ptr = mat->getRawIndicesAccess()->getPPALForRead();
   const int32_t *first_index_ptr = mat->getRawFirstIndexAccess()->getPPALForRead();
   if (is_ascii) {
     const int columns = 9;
-    stream.printf("ascii");
+    file->printf("ascii");
     if (mat->getSparseFormat() == CSR_FORMAT)
-      stream.printf(" csr");
+      file->printf(" csr");
     else
-      stream.printf(" csc");
-    stream.printf("\n");
+      file->printf(" csc");
+    file->printf("\n");
     int i;
     for (i=0; i<mat->nonZeroSize(); ++i) {
       ascii_coder(values_ptr[i], stream);
-      stream.printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
+      file->printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
     }
     if ((i % columns) != 0) {
-      stream.printf("\n"); 
+      file->printf("\n"); 
     }
     for (i=0; i<mat->nonZeroSize(); ++i) {
-      stream.printf("%d", indices_ptr[i]);
-      stream.printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
+      file->printf("%d", indices_ptr[i]);
+      file->printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
     }
     if ((i % columns) != 0) {
-      stream.printf("\n"); 
+      file->printf("\n"); 
     }
     for (i=0; i<=mat->getDenseCoordinateSize(); ++i) {
-      stream.printf("%d", first_index_ptr[i]);
-      stream.printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
+      file->printf("%d", first_index_ptr[i]);
+      file->printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
     }
     if ((i % columns) != 0) {
-      stream.printf("\n"); 
+      file->printf("\n"); 
     }
   } else { // binary
     const int columns = 16;
-    stream.printf("binary");
+    file->printf("binary");
     if (mat->getSparseFormat() == CSR_FORMAT)
-      stream.printf(" csr");
+      file->printf(" csr");
     else
-      stream.printf(" csc");
-    stream.printf("\n");
+      file->printf(" csc");
+    file->printf("\n");
     int i=0;
     char b[5];
     for (i=0; i<mat->nonZeroSize(); ++i) {
       bin_coder(values_ptr[i], stream);
-      if ((i+1) % columns == 0) stream.printf("\n");
+      if ((i+1) % columns == 0) file->printf("\n");
     }
-    if ((i % columns) != 0) stream.printf("\n"); 
+    if ((i % columns) != 0) file->printf("\n"); 
     for (i=0; i<mat->nonZeroSize(); ++i) {
       binarizer::code_int32(indices_ptr[i], b);
-      stream.printf("%c%c%c%c%c", b[0],b[1],b[2],b[3],b[4]);
-      if ((i+1) % columns == 0) stream.printf("\n");
+      file->printf("%c%c%c%c%c", b[0],b[1],b[2],b[3],b[4]);
+      if ((i+1) % columns == 0) file->printf("\n");
     }
-    if ((i % columns) != 0) stream.printf("\n"); 
+    if ((i % columns) != 0) file->printf("\n"); 
     for (i=0; i<=mat->getDenseCoordinateSize(); ++i) {
       binarizer::code_int32(first_index_ptr[i], b);
-      stream.printf("%c%c%c%c%c", b[0],b[1],b[2],b[3],b[4]);
-      if ((i+1) % columns == 0) stream.printf("\n");
+      file->printf("%c%c%c%c%c", b[0],b[1],b[2],b[3],b[4]);
+      if ((i+1) % columns == 0) file->printf("\n");
     }
-    if ((i % columns) != 0) stream.printf("\n"); 
+    if ((i % columns) != 0) file->printf("\n"); 
   }
-  return stream.getTotalBytes();
+  return file->getTotalBytes();
 }
 
 

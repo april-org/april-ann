@@ -27,6 +27,12 @@
 #include "sparse_matrixFloat.h"
 #include "utilMatrixIO.h"
 
+/// Generic MatrixFloat write function.
+void writeMatrixFloatToStream(MatrixFloat *mat, Stream *stream);
+
+/// Generic MatrixFloat read function.
+MatrixFloat *readMatrixFloatFromStream(Stream *stream, const char *order);
+
 struct FloatAsciiExtractor {
   // returns true if success, false otherwise
   bool operator()(constString &line, float &destination) {
@@ -67,20 +73,20 @@ struct SparseFloatBinarySizer {
     return binarizer::buffer_size_32(mat->nonZeroSize());
   }
 };
-template<typename StreamType>
+
 struct FloatAsciiCoder {
   // puts to the stream the given value
-  void operator()(const float &value, StreamType &stream) {
-    stream.printf("%.5g", value);
+  void operator()(const float &value, april_io::File *file) {
+    file->printf("%.5g", value);
   }
 };
-template<typename StreamType>
+
 struct FloatBinaryCoder {
   // puts to the stream the given value
-  void operator()(const float &value, StreamType &stream) {
+  void operator()(const float &value, april_io::File *file) {
     char b[5];
     binarizer::code_float(value, b);
-    stream.printf("%c%c%c%c%c", b[0],b[1],b[2],b[3],b[4]);
+    file->printf("%c%c%c%c%c", b[0],b[1],b[2],b[3],b[4]);
   }
 };
 
@@ -99,11 +105,13 @@ int saveMatrixFloatHEX(MatrixFloat *mat,
 		       int *width,
 		       int *height);
 
-void writeMatrixFloatToFile(MatrixFloat *mat, const char *filename,
-			    bool is_ascii);
+//////////////////////////////////////////////////////////////////////////////
+
+void writeMatrixFloatToFilename(MatrixFloat *mat, const char *filename,
+                                bool is_ascii);
 char *writeMatrixFloatToString(MatrixFloat *mat, bool is_ascii, int &len);
 void writeMatrixFloatToLuaString(MatrixFloat *mat, lua_State *L, bool is_ascii);
-MatrixFloat *readMatrixFloatFromFile(const char *filename, const char *order);
+MatrixFloat *readMatrixFloatFromFilename(const char *filename, const char *order);
 MatrixFloat *readMatrixFloatFromString(constString &cs);
 
 void writeMatrixFloatToTabFile(MatrixFloat *mat, const char *filename);
@@ -115,12 +123,12 @@ void writeMatrixFloatToTabStream(MatrixFloat *mat, FILE *f);
 
 // SPARSE MATRIX FLOAT
 
-void writeSparseMatrixFloatToFile(SparseMatrixFloat *mat, const char *filename,
-                                  bool is_ascii);
+void writeSparseMatrixFloatToFilename(SparseMatrixFloat *mat, const char *filename,
+                                      bool is_ascii);
 char *writeSparseMatrixFloatToString(SparseMatrixFloat *mat, bool is_ascii,
 				     int &len);
 void writeSparseMatrixFloatToLuaString(SparseMatrixFloat *mat, lua_State *L,
 				       bool is_ascii);
-SparseMatrixFloat *readSparseMatrixFloatFromFile(const char *filename);
+SparseMatrixFloat *readSparseMatrixFloatFromFilename(const char *filename);
 SparseMatrixFloat *readSparseMatrixFloatFromString(constString &cs);
 #endif // UTILMATRIXFLOAT_H

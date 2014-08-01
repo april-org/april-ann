@@ -19,126 +19,36 @@
  *
  */
 //BIND_HEADER_C
+#include "bind_april_io.h"
+#include "stream.h"
+
+using namespace april_io;
 //BIND_END
 
 //BIND_HEADER_H
-#include "buffered_gzfile.h"
+#include "gzfile_stream.h"
+
+using namespace gzio;
 //BIND_END
 
-//BIND_LUACLASSNAME BufferedGZFile gzio
-//BIND_CPP_CLASS    BufferedGZFile
+/////////////////////////////////////////////////////////////////////////////
 
-//BIND_CONSTRUCTOR BufferedGZFile
+//BIND_LUACLASSNAME Stream april_io.stream
+
+//BIND_LUACLASSNAME GZFileStream gzio.stream
+//BIND_CPP_CLASS GZFileStream
+//BIND_SUBCLASS_OF GZFileStream Stream
+
+//BIND_CONSTRUCTOR GZFileStream
 {
-  LUABIND_ERROR("Use open class method instead of the constructor");
+  LUABIND_INCREASE_NUM_RETURNS(callFileStreamConstructor<GZFileStream>(L));
 }
 //BIND_END
 
-//BIND_CLASS_METHOD BufferedGZFile open
+/////////////////////////////////////////////////////////////////////////////
+
+//BIND_FUNCTION gzio.open
 {
-  const char *path, *mode;
-  LUABIND_GET_PARAMETER(1, string, path);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, string, mode, "r");
-  BufferedGZFile *obj = new BufferedGZFile(path, mode);
-  if (obj->good())
-    LUABIND_RETURN(BufferedGZFile, obj);
-  else {
-    LUABIND_RETURN_NIL();
-    delete obj;
-  }
-}
-//BIND_END
-
-//BIND_METHOD BufferedGZFile close
-{
-  obj->close();
-}
-//BIND_END
-
-//BIND_METHOD BufferedGZFile flush
-{
-  obj->flush();
-}
-//BIND_END
-
-//BIND_METHOD BufferedGZFile seek
-{
-  int offset;
-  const char *whence;
-  int int_whence;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, string, whence, "cur");
-  LUABIND_GET_OPTIONAL_PARAMETER(2, int, offset, 0);
-  if      (strcmp(whence, "cur") == 0) int_whence = SEEK_CUR;
-  else if (strcmp(whence, "set") == 0) int_whence = SEEK_SET;
-  else {
-    int_whence = SEEK_END;
-    LUABIND_FERROR1("Not supported whence '%s'", whence);
-  }
-  int ret = obj->seek(int_whence, offset);
-  if (ret < 0) {
-    LUABIND_RETURN_NIL();
-    LUABIND_RETURN(string, "Impossible to execute seek");
-  }
-  else LUABIND_RETURN(int, ret);
-}
-//BIND_END
-
-//BIND_METHOD BufferedGZFile read
-{
-  /*
-    "*n" reads a number; this is the only format that returns a number instead
-    of a string.
-
-    "*a" reads the whole file, starting at the current position. On end of file,
-    it returns the empty string.
-
-    "*l" reads the next line (skipping the end of line), returning nil on end of
-    file. This is the default format.  number reads a string with up to that
-    number of characters, returning nil on end of file. If number is zero, it
-    reads nothing and returns an empty string, or nil on end of file.
-  */
-  int argn = lua_gettop(L); // number of arguments
-  int num_returned_values=0;
-  if (argn == 0)
-    num_returned_values += obj->readAndPushLineToLua(L);
-  else {
-    for (int i=1; i<=argn; ++i) {
-      if (lua_isnil(L, i))
-	num_returned_values += obj->readAndPushLineToLua(L);
-      else if (lua_isnumber(L, i)) {
-	int size;
-	LUABIND_GET_PARAMETER(i, int, size);
-	num_returned_values += obj->readAndPushStringToLua(L, size);
-      }
-      else {
-	const char *format;
-	LUABIND_GET_PARAMETER(i, string, format);
-	// a number
-	if (strcmp(format, "*n") == 0)
-	  num_returned_values += obj->readAndPushNumberToLua(L);
-	// the whole file
-	else if (strcmp(format, "*a") == 0)
-	  num_returned_values += obj->readAndPushAllToLua(L);
-	// a line
-	else if (strcmp(format, "*l") == 0)
-	  num_returned_values += obj->readAndPushLineToLua(L);
-	else
-	  LUABIND_FERROR1("Unrecognized format string '%s'", format);
-      }
-    }
-  }
-  if (num_returned_values == 0) LUABIND_RETURN_NIL();
-  else LUABIND_INCREASE_NUM_RETURNS(num_returned_values);
-}
-//BIND_END
-
-//BIND_METHOD BufferedGZFile write
-{
-  int argn = lua_gettop(L); // number of arguments
-  for (int i=1; i<=argn; ++i) {
-    const char *value;
-    LUABIND_GET_PARAMETER(i, string, value);
-    obj->printf("%s", value);
-  }
+  LUABIND_INCREASE_NUM_RETURNS(callLuaFileConstructor<GZFileStream>(L));
 }
 //BIND_END

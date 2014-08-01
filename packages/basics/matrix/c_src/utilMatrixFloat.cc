@@ -31,6 +31,19 @@
 
 using april_utils::clamp;
 
+void writeMatrixFloatToFile(MatrixFloat *mat, File *f) {
+  writeMatrixToFile(mat, f, FloatAsciiSizer(), FloatBinarySizer(),
+                    FloatAsciiCoder<T>(),
+                    FloatBinaryCoder<T>(),
+                    is_ascii);  
+}
+
+MatrixFloat *readMatrixFloatFromFile(File *file, const char *order) {
+  return readMatrixFromFile<float>(f, FloatAsciiExtractor(),
+                                   FloatBinaryExtractor(),
+                                   order);
+}
+
 inline int hexdigit(char c) {
   if ('0'<=c && c<='9') return c-'0';
   if ('A'<=c && c<='F') return c-'A'+10;
@@ -213,17 +226,6 @@ int saveMatrixFloatHEX(MatrixFloat *mat,
   *width  = ancho;
   *height = alto;
   return sizedata2+(r-b);
-}
-
-template <typename T>
-void genericWriteMatrixFloatToFile(MatrixFloat *mat,
-                                   const char *filename,
-                                   bool is_ascii) {
-  T f(filename, "w");
-  writeMatrixToStream(mat, f, FloatAsciiSizer(), FloatBinarySizer(),
-                      FloatAsciiCoder<T>(),
-                      FloatBinaryCoder<T>(),
-                      is_ascii);  
 }
 
 void writeMatrixFloatToFile(MatrixFloat *mat,
