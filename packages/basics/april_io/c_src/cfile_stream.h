@@ -32,6 +32,7 @@ namespace april_io {
     bool need_close;
   public:
     CFileStream();
+    CFileStream(int fd);
     CFileStream(FILE *f);
     CFileStream(const char *path, const char *mode);
     virtual ~CFileStream();

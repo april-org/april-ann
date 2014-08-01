@@ -80,7 +80,7 @@ Stream *lua_toAuxStream(lua_State *L, int index) {
   Stream *s;
   luaL_Stream *p = ((luaL_Stream *)luaL_testudata(L, index, LUA_FILEHANDLE));
   if (p == 0) s = lua_toStream(L, index);
-  else s = new CFileStream(p->f);
+  else s = new CFileStream(fileno(p->f));
   return s;
 }
 //BIND_END
@@ -184,7 +184,7 @@ Stream *lua_toAuxStream(lua_State *L, int index) {
 //BIND_CONSTRUCTOR LuaFile
 {
   Stream *stream;
-  LUABIND_GET_PARAMETER(1, Stream, stream);
+  LUABIND_GET_PARAMETER(1, AuxStream, stream);
   obj = new LuaFile(stream);
   LUABIND_RETURN(LuaFile, obj);
 }

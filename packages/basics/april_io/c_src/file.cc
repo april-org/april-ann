@@ -76,6 +76,7 @@ namespace april_io {
   }
   
   File::~File() {
+    delete[] buffer;
     DecRef(stream);
   }
 

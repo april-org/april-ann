@@ -18,13 +18,33 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include <unistd.h> // for dup function
+#include <fcntl.h> // for fcntl
+
 #include "cfile_stream.h"
+#include "error_print.h"
 
 namespace april_io {
         
   CFileStream::CFileStream() : Stream(), f(0), need_close(false) {
   }
-        
+
+  CFileStream::CFileStream(int fd) : Stream() {
+    char access_mode_string[3] = "";
+    int acc_mode = fcntl(fd, F_GETFL) & O_ACCMODE;
+    if (acc_mode == O_RDONLY) access_mode_string[0] = 'r';
+    else if (acc_mode == O_WRONLY) access_mode_string[0] = 'w'; 
+    else if (acc_mode == O_RDWR) {
+      access_mode_string[0] = 'r';
+      access_mode_string[1] = '+';
+    }
+    else {
+      ERROR_EXIT1(128, "Unknown access mode %d\n", acc_mode);
+    }
+    f = fdopen(dup(fd), access_mode_string);
+    need_close = true;
+  }
+
   CFileStream::CFileStream(FILE *f) : Stream(), f(f), need_close(false) {
   }
         

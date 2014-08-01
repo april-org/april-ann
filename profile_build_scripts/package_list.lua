@@ -11,7 +11,7 @@ return {
   -- "cmdOpt",
   -- "profiler",
   -- "mathcore",
-  "gzio",
+  -- "gzio",
   -- "matlab",
   -- "stats.MI",
   -- "autodiff",
