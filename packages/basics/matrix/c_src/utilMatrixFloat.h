@@ -28,10 +28,10 @@
 #include "utilMatrixIO.h"
 
 /// Generic MatrixFloat write function.
-void writeMatrixFloatToStream(MatrixFloat *mat, Stream *stream);
+void writeMatrixFloatToFileStream(MatrixFloat *mat, File *file);
 
 /// Generic MatrixFloat read function.
-MatrixFloat *readMatrixFloatFromStream(Stream *stream, const char *order);
+MatrixFloat *readMatrixFloatFromFileStream(File *File, const char *order);
 
 struct FloatAsciiExtractor {
   // returns true if success, false otherwise

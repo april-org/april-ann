@@ -59,10 +59,10 @@ extern "C" {
 template <typename MatrixType,
 	  typename AsciiExtractFunctor,  typename BinaryExtractorFunctor>
 Matrix<MatrixType>*
-readMatrixFromFile(april_io::File *file,
-                   AsciiExtractFunctor ascii_extractor,
-                   BinaryExtractorFunctor bin_extractor,
-                   const char *given_order=0) {
+readMatrixFromFileStream(april_io::File *file,
+                         AsciiExtractFunctor ascii_extractor,
+                         BinaryExtractorFunctor bin_extractor,
+                         const char *given_order=0) {
   if (!file->good()) {
     ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
     return 0;
@@ -216,13 +216,13 @@ readMatrixFromFile(april_io::File *file,
 template <typename MatrixType,
 	  typename AsciiSizeFunctor,  typename BinarySizeFunctor,
 	  typename AsciiCodeFunctor,  typename BinaryCodeFunctor>
-int writeMatrixToFile(Matrix<MatrixType> *mat,
-                      april_io::File *stream,
-                      AsciiSizeFunctor ascii_sizer,
-                      BinarySizeFunctor bin_sizer,
-                      AsciiCodeFunctor ascii_coder,
-                      BinaryCodeFunctor bin_coder,
-                      bool is_ascii) {
+int writeMatrixToFileStream(Matrix<MatrixType> *mat,
+                            april_io::File *file,
+                            AsciiSizeFunctor ascii_sizer,
+                            BinarySizeFunctor bin_sizer,
+                            AsciiCodeFunctor ascii_coder,
+                            BinaryCodeFunctor bin_coder,
+                            bool is_ascii) {
   int sizedata,sizeheader;
   sizeheader = mat->getNumDim()*10+10+10; // FIXME: To put adequate values
   // sizedata contains the memory used by MatrixType in ascii including spaces,
@@ -246,7 +246,7 @@ int writeMatrixToFile(Matrix<MatrixType> *mat,
     int i=0;
     for(typename Matrix<MatrixType>::const_iterator it(mat->begin());
 	it!=mat->end();++it,++i) {
-      ascii_coder(*it, stream);
+      ascii_coder(*it, file);
       file->printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
     }
     if ((i % columns) != 0) {
@@ -265,7 +265,7 @@ int writeMatrixToFile(Matrix<MatrixType> *mat,
     for(typename Matrix<MatrixType>::const_iterator it(mat->begin());
 	it!=mat->end();
 	++it,++i) {
-      bin_coder(*it, stream);
+      bin_coder(*it, file);
       /*
 	char b[5];
 	binarizer::code_float(*it, b);
@@ -292,10 +292,10 @@ int writeMatrixToFile(Matrix<MatrixType> *mat,
 template <typename MatrixType,
 	  typename AsciiExtractFunctor>
 Matrix<MatrixType>*
-readMatrixFromTabStream(const int rows, const int cols,
-			april_io::File *file,
-			AsciiExtractFunctor ascii_extractor,
-			const char *given_order) {
+readMatrixFromTabFileStream(const int rows, const int cols,
+                            april_io::File *file,
+                            AsciiExtractFunctor ascii_extractor,
+                            const char *given_order) {
   if (!file->good()) {
     ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
     return 0;
@@ -349,10 +349,10 @@ readMatrixFromTabStream(const int rows, const int cols,
 // Returns the number of chars written (there is a '\0' that is not counted)
 template <typename MatrixType,
 	  typename AsciiSizeFunctor, typename AsciiCodeFunctor>
-int writeMatrixToTabStream(Matrix<MatrixType> *mat,
-			   april_io::File *file,
-			   AsciiSizeFunctor ascii_sizer,
-			   AsciiCodeFunctor ascii_coder) {
+int writeMatrixToTabFileStream(Matrix<MatrixType> *mat,
+                               april_io::File *file,
+                               AsciiSizeFunctor ascii_sizer,
+                               AsciiCodeFunctor ascii_coder) {
   if (mat->getNumDim() != 2)
     ERROR_EXIT(128, "Needs a matrix with 2 dimensions");
   
@@ -366,7 +366,7 @@ int writeMatrixToTabStream(Matrix<MatrixType> *mat,
   int i=0;
   for(typename Matrix<MatrixType>::const_iterator it(mat->begin());
       it!=mat->end();++it,++i) {
-    ascii_coder(*it, stream);
+    ascii_coder(*it, file);
     file->printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
   }
   if ((i % columns) != 0) {
@@ -382,9 +382,9 @@ int writeMatrixToTabStream(Matrix<MatrixType> *mat,
 template <typename MatrixType,
 	  typename AsciiExtractFunctor,  typename BinaryExtractorFunctor>
 SparseMatrix<MatrixType>*
-readSparseMatrixFromFile(april_io::File *file,
-                         AsciiExtractFunctor ascii_extractor,
-                         BinaryExtractorFunctor bin_extractor) {
+readSparseMatrixFromFileStream(april_io::File *file,
+                               AsciiExtractFunctor ascii_extractor,
+                               BinaryExtractorFunctor bin_extractor) {
   if (!file->good()) {
     ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
     return 0;
@@ -540,13 +540,13 @@ readSparseMatrixFromFile(april_io::File *file,
 template <typename MatrixType,
 	  typename AsciiSizeFunctor,  typename BinarySizeFunctor,
 	  typename AsciiCodeFunctor,  typename BinaryCodeFunctor>
-int writeSparseMatrixToFile(SparseMatrix<MatrixType> *mat,
-                            april_io::File *file,
-                            AsciiSizeFunctor ascii_sizer,
-                            BinarySizeFunctor bin_sizer,
-                            AsciiCodeFunctor ascii_coder,
-                            BinaryCodeFunctor bin_coder,
-                            bool is_ascii) {
+int writeSparseMatrixToFileStream(SparseMatrix<MatrixType> *mat,
+                                  april_io::File *file,
+                                  AsciiSizeFunctor ascii_sizer,
+                                  BinarySizeFunctor bin_sizer,
+                                  AsciiCodeFunctor ascii_coder,
+                                  BinaryCodeFunctor bin_coder,
+                                  bool is_ascii) {
   int sizedata,sizeheader;
   sizeheader = (mat->getNumDim()+1)*10+10+10; // FIXME: To put adequate values
   // sizedata contains the memory used by MatrixType in ascii including spaces,
@@ -573,7 +573,7 @@ int writeSparseMatrixToFile(SparseMatrix<MatrixType> *mat,
     file->printf("\n");
     int i;
     for (i=0; i<mat->nonZeroSize(); ++i) {
-      ascii_coder(values_ptr[i], stream);
+      ascii_coder(values_ptr[i], file);
       file->printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
     }
     if ((i % columns) != 0) {
@@ -604,7 +604,7 @@ int writeSparseMatrixToFile(SparseMatrix<MatrixType> *mat,
     int i=0;
     char b[5];
     for (i=0; i<mat->nonZeroSize(); ++i) {
-      bin_coder(values_ptr[i], stream);
+      bin_coder(values_ptr[i], file);
       if ((i+1) % columns == 0) file->printf("\n");
     }
     if ((i % columns) != 0) file->printf("\n"); 

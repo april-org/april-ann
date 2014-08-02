@@ -31,6 +31,9 @@ using namespace april_io;
 
 int lua_isAuxStream(lua_State *L, int index);
 Stream *lua_toAuxStream(lua_State *L, int index);
+
+int lua_isAuxFile(lua_State *L, int index);
+Stream *lua_toAuxFile(lua_State *L, int index);
 //BIND_END
 
 //BIND_FOOTER_H
@@ -82,6 +85,19 @@ Stream *lua_toAuxStream(lua_State *L, int index) {
   if (p == 0) s = lua_toStream(L, index);
   else s = new CFileStream(fileno(p->f));
   return s;
+}
+
+int lua_isAuxLuaFile(lua_State *L, int index) {
+  return lua_isLuaFile(L, index) || lua_isAuxStream(L, index);
+}
+
+LuaFile *lua_toAuxLuaFile(lua_State *L, int index) {
+  LuaFile *f = lua_toLuaFile(L, index);
+  if (f == 0) {
+    Stream *s = lua_toAuxStream(L, index);
+    f = new LuaFile(s);
+  }
+  return f;
 }
 //BIND_END
 

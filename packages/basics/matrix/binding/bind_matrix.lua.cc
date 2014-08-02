@@ -19,6 +19,7 @@
  *
  */
 //BIND_HEADER_C
+#include "bind_april_io.h"
 #include "utilMatrixIO.h"
 #include "utilMatrixFloat.h"
 #include "bind_mtrand.h"
@@ -306,262 +307,6 @@ public:
 	  (void*)obj,
 	  (void*)obj->getRawDataAccess());
   LUABIND_RETURN(string, buff);
-}
-//BIND_END
-
-//BIND_CLASS_METHOD MatrixFloat fromFilename
-//DOC_BEGIN
-// matrix *fromFilename(string filename)
-/// Constructor con un argumento que es un fichero que contiene la matriz.  Pueden haber
-/// comentarios que son lineas que empiezan con un simbolo '#'.  La
-/// primera linea contiene tantos valores numericos como dimensiones
-/// tenga la matriz y que corresponde al numero de componentes en cada
-/// dimension.  La siguiente linea contiene la palabra "ascii" o
-/// "binary".  El resto de lineas contienen los datos propiamente
-/// dichos.
-///@param filename Es un string que indica el nombre del fichero.
-//DOC_END
-{
-  LUABIND_CHECK_ARGN(>=, 1);
-  LUABIND_CHECK_ARGN(<=, 2);
-  LUABIND_CHECK_PARAMETER(1, string);
-  const char *filename;
-  const char *order;
-  LUABIND_GET_PARAMETER(1,string,filename);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, string, order, 0);
-  MatrixFloat *obj;
-  if ((obj = readMatrixFloatFromFile(filename, order)) == 0)
-    LUABIND_FERROR1("Error happens reading from %s", filename);
-  else LUABIND_RETURN(MatrixFloat,obj);
-}
-//BIND_END
-
-//BIND_CLASS_METHOD MatrixFloat fromTabFilename
-{
-  LUABIND_CHECK_ARGN(>=, 1);
-  LUABIND_CHECK_ARGN(<=, 2);
-  LUABIND_CHECK_PARAMETER(1, string);
-  const char *filename;
-  const char *order;
-  LUABIND_GET_PARAMETER(1,string,filename);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, string, order, "row_major");
-  MatrixFloat *obj;
-  if ((obj = readMatrixFloatFromTabFile(filename, order)) == 0)
-    LUABIND_FERROR1("Error happens reading from %s", filename);
-  else LUABIND_RETURN(MatrixFloat,obj);
-}
-//BIND_END
-
-
-//BIND_CLASS_METHOD MatrixFloat fromString
-//DOC_BEGIN
-// matrix *fromString(string description)
-/// Constructor con un argumento que es una cadena.  Pueden haber
-/// comentarios que son lineas que empiezan con un simbolo '#'.  La
-/// primera linea contiene tantos valores numericos como dimensiones
-/// tenga la matriz y que corresponde al numero de componentes en cada
-/// dimension.  La siguiente linea contiene la palabra "ascii" o
-/// "binary".  El resto de lineas contienen los datos propiamente
-/// dichos.
-///@param description Es un string que describe a la matriz.
-//DOC_END
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, string);
-  constString cs;
-  LUABIND_GET_PARAMETER(1,constString,cs);
-  MatrixFloat *obj;
-  if ((obj = readMatrixFloatFromString(cs)) == 0)
-    LUABIND_ERROR("bad format");
-  else LUABIND_RETURN(MatrixFloat,obj);
-}
-//BIND_END
-
-//BIND_CLASS_METHOD MatrixFloat fromMMap
-//DOC_END
-{
-  LUABIND_CHECK_ARGN(>=, 1);
-  LUABIND_CHECK_ARGN(<=, 3);
-  LUABIND_CHECK_PARAMETER(1, string);
-  const char *filename;
-  bool write, shared;
-  LUABIND_GET_PARAMETER(1,string,filename);
-  LUABIND_GET_OPTIONAL_PARAMETER(2,bool,write,true);
-  LUABIND_GET_OPTIONAL_PARAMETER(3,bool,shared,true);
-  april_utils::MMappedDataReader *mmapped_data;
-  mmapped_data = new april_utils::MMappedDataReader(filename,write,shared);
-  IncRef(mmapped_data);
-  MatrixFloat *obj = MatrixFloat::fromMMappedDataReader(mmapped_data);
-  DecRef(mmapped_data);
-  LUABIND_RETURN(MatrixFloat,obj);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat toFilename
-//DOC_BEGIN
-// void toFilename(string filename, string type='binary')
-/// Permite salvar una matriz con un formato tal y como se carga con el
-/// metodo fromString. El unico argumento opcional indica el tipo 'ascii'
-/// o 'binary'.
-///@param filename Indica el nombre del fichero.
-///@param type Parametro opcional. Puede ser 'ascii' o 'binary', y por defecto es 'binary'.
-//DOC_END
-{
-  LUABIND_CHECK_ARGN(>=, 1);
-  LUABIND_CHECK_ARGN(<=, 2);
-  const char *filename;
-  constString cs;
-  LUABIND_GET_PARAMETER(1, string, filename);
-  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("binary"));
-  bool is_ascii = (cs == "ascii");
-  writeMatrixFloatToFile(obj, filename, is_ascii);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat toTabFilename
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  const char *filename;
-  LUABIND_GET_PARAMETER(1, string, filename);
-  writeMatrixFloatToTabFile(obj, filename);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat toTabStream
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  if (lua_isBufferedGZFile(L,1)) {
-    BufferedGZFile *stream;
-    LUABIND_GET_PARAMETER(1, BufferedGZFile, stream);
-    writeMatrixFloatToTabGZStream(obj, stream);
-  }
-  else {
-    luaL_Stream *p = ((luaL_Stream *)luaL_checkudata(L, 1, LUA_FILEHANDLE));
-    if (p == 0)
-      LUABIND_ERROR("First argument must be a file");
-    FILE *stream = p->f;
-    writeMatrixFloatToTabStream(obj, stream);
-  }
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat toString
-//DOC_BEGIN
-// string toString(string type='binary')
-/// Permite salvar una matriz con un formato tal y como se carga con el
-/// metodo fromString. El unico argumento opcional indica el tipo 'ascii'
-/// o 'binary'.
-///@param type Parámetro opcional. Puede ser 'ascii' o 'binary', y por defecto es 'binary'.
-//DOC_END
-{
-  LUABIND_CHECK_ARGN(<=, 1);
-  constString cs;
-  LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("binary"));
-  bool is_ascii = (cs == "ascii");
-  writeMatrixFloatToLuaString(obj, L, is_ascii);
-  LUABIND_INCREASE_NUM_RETURNS(1);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat toMMap
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  const char *filename;
-  LUABIND_GET_PARAMETER(1, string, filename);
-  april_utils::MMappedDataWriter *mmapped_data;
-  mmapped_data = new april_utils::MMappedDataWriter(filename);
-  IncRef(mmapped_data);
-  obj->toMMappedDataWriter(mmapped_data);
-  DecRef(mmapped_data);
-}
-//BIND_END
-
-//BIND_CLASS_METHOD MatrixFloat fromPNM
-//DOC_BEGIN
-// matrix *fromPNM(string pnm_image)
-/// constructor con un argumento que es una cadena con una imagen en
-/// formato de netpbm P5 o P6 (binario PGM o PNM)
-///@param pnm_image String que contiene la imagen.
-//DOC_END
-// TODO: poder forzar niveles de gris o color, poder leer PBM
-{
-  LUABIND_CHECK_ARGN(>=, 1);
-  LUABIND_CHECK_ARGN(<=, 2);
-  LUABIND_CHECK_PARAMETER(1, string);
-  bool forcecolor=false,forcegray=false;
-  constString cs,csopt;
-  LUABIND_GET_PARAMETER(1,constString,cs);
-  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,csopt,constString());
-  if (csopt == "color") forcecolor = true;
-  if (csopt == "gray")  forcegray  = true;
-  MatrixFloat *obj;
-  if ((obj = readMatrixFloatPNM(cs,forcecolor,forcegray))== 0)
-    LUABIND_ERROR("bad format");
-  else LUABIND_RETURN(MatrixFloat,obj);
-}
-//BIND_END
-
-//BIND_CLASS_METHOD MatrixFloat fromHEX
-//DOC_BEGIN
-// matrix *fromHEX(width, height, string hex_image)
-/// constructor con 3 argumentos que es una cadena con una imagen en
-/// escala de grises, 2 caracteres hexadecimales por pixel
-///@param width
-///@param height
-///@param hex_image
-//DOC_END
-{
-  LUABIND_CHECK_ARGN(==, 3);
-  LUABIND_CHECK_PARAMETER(1, int);
-  LUABIND_CHECK_PARAMETER(1, int);
-  LUABIND_CHECK_PARAMETER(1, string);
-  int width,height;
-  constString cs;
-  LUABIND_GET_PARAMETER(1,int,width);
-  LUABIND_GET_PARAMETER(2,int,height);
-  LUABIND_GET_PARAMETER(3,constString,cs);
-  MatrixFloat *obj;
-  obj = readMatrixFloatHEX(width,height,cs);
-  LUABIND_RETURN(MatrixFloat,obj);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat toHEX
-//DOC_BEGIN
-// string toHEX()
-//DOC_END
-{
-  char *buffer;
-  int   width, height;
-  int   longitud = saveMatrixFloatHEX(obj,&buffer, &width, &height);
-  if (!buffer)
-    LUABIND_ERROR("bad format");
-  LUABIND_RETURN(int, width);
-  LUABIND_RETURN(int, height);
-  lua_pushlstring(L,buffer,longitud);
-  delete[] buffer;
-  LUABIND_RETURN_FROM_STACK(-1);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat toPNM
-//DOC_BEGIN
-// string toPNM()
-/// Devuelve una cadena correspondiente a un fichero PNM (P5 o P6).  La
-/// matriz debe ser de dimension 2 o, si es de dimension 3, la tercera
-/// dimension debe tener 3 componentes correspondientes respectivamente
-/// a los colores RGB. El 0 se interpreta como negro, el 1 como blanco
-/// y saturan (es decir, un -1 es como 0 y un 5 es como 1).
-//DOC_END
-{
-  LUABIND_CHECK_ARGN(==, 0);
-  char *buffer;
-  int longitud = saveMatrixFloatPNM(obj,&buffer);
-  if (!buffer)
-    LUABIND_ERROR("bad format");
-  lua_pushlstring(L,buffer,longitud);
-  delete[] buffer;
-  LUABIND_RETURN_FROM_STACK(-1);
 }
 //BIND_END
 
@@ -1826,6 +1571,202 @@ public:
 //BIND_METHOD MatrixFloat update
 {
   obj->update();
+}
+//BIND_END
+
+//// MATRIX SERIALIZATION ////
+
+//BIND_CLASS_METHOD MatrixFloat fromFileStream
+{
+  LuaFile *f;
+  const char *order;
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_CHECK_ARGN(<=, 2);
+  LUABIND_GET_PARAMETER(1, AuxLuaFile, f);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, string, order, 0);
+  IncRef(f);
+  Matrix *obj = readMatrixFloatFromFileStream(f, order);
+  DecRef(f);
+  if (obj == 0) {
+    LUABIND_FERROR1("Error happens reading from file stream '%s'",
+                    f->description());
+  }
+  else {
+    LUABIND_RETURN(MatrixFloat,obj);  
+  }
+}
+//BIND_END
+
+//BIND_CLASS_METHOD MatrixFloat fromTabFileStream
+{
+  LuaFile *f;
+  const char *order;
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_CHECK_ARGN(<=, 2);
+  LUABIND_GET_PARAMETER(1, AuxLuaFile, f);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, string, order, 0);
+  IncRef(f);
+  Matrix *obj = readMatrixFloatFromTabFileStream(f, order);
+  DecRef(f);
+  if (obj == 0) {
+    LUABIND_FERROR1("Error happens reading from file stream '%s'",
+                    f->description());
+  }
+  else {
+    LUABIND_RETURN(MatrixFloat,obj);  
+  }
+}
+//BIND_END
+
+//BIND_CLASS_METHOD MatrixFloat fromMMap
+//DOC_END
+{
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_CHECK_ARGN(<=, 3);
+  LUABIND_CHECK_PARAMETER(1, string);
+  const char *filename;
+  bool write, shared;
+  LUABIND_GET_PARAMETER(1,string,filename);
+  LUABIND_GET_OPTIONAL_PARAMETER(2,bool,write,true);
+  LUABIND_GET_OPTIONAL_PARAMETER(3,bool,shared,true);
+  april_utils::MMappedDataReader *mmapped_data;
+  mmapped_data = new april_utils::MMappedDataReader(filename,write,shared);
+  IncRef(mmapped_data);
+  MatrixFloat *obj = MatrixFloat::fromMMappedDataReader(mmapped_data);
+  DecRef(mmapped_data);
+  LUABIND_RETURN(MatrixFloat,obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat toFileStream
+{
+  LuaFile *f;
+  constString cs;
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_CHECK_ARGN(<=, 2);
+  LUABIND_GET_PARAMETER(1, AuxLuaFile, f);
+  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("binary"));
+  bool is_ascii = (cs == "ascii");
+  IncRef(f);
+  writeMatrixFloatToFileStream(obj, f, is_ascii);
+  DecRef(f);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat toTabFileStream
+{
+  LuaFile *f;
+  constString cs;
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_CHECK_ARGN(<=, 2);
+  LUABIND_GET_PARAMETER(1, AuxLuaFile, f);
+  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("binary"));
+  bool is_ascii = (cs == "ascii");
+  IncRef(f);
+  writeMatrixFloatToTabFileStream(obj, f, is_ascii);
+  DecRef(f);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat toMMap
+{
+  LUABIND_CHECK_ARGN(==, 1);
+  const char *filename;
+  LUABIND_GET_PARAMETER(1, string, filename);
+  april_utils::MMappedDataWriter *mmapped_data;
+  mmapped_data = new april_utils::MMappedDataWriter(filename);
+  IncRef(mmapped_data);
+  obj->toMMappedDataWriter(mmapped_data);
+  DecRef(mmapped_data);
+}
+//BIND_END
+
+//BIND_CLASS_METHOD MatrixFloat fromPNM
+//DOC_BEGIN
+// matrix *fromPNM(string pnm_image)
+/// constructor con un argumento que es una cadena con una imagen en
+/// formato de netpbm P5 o P6 (binario PGM o PNM)
+///@param pnm_image String que contiene la imagen.
+//DOC_END
+// TODO: poder forzar niveles de gris o color, poder leer PBM
+{
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_CHECK_ARGN(<=, 2);
+  LUABIND_CHECK_PARAMETER(1, string);
+  bool forcecolor=false,forcegray=false;
+  constString cs,csopt;
+  LUABIND_GET_PARAMETER(1,constString,cs);
+  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,csopt,constString());
+  if (csopt == "color") forcecolor = true;
+  if (csopt == "gray")  forcegray  = true;
+  MatrixFloat *obj;
+  if ((obj = readMatrixFloatPNM(cs,forcecolor,forcegray))== 0)
+    LUABIND_ERROR("bad format");
+  else LUABIND_RETURN(MatrixFloat,obj);
+}
+//BIND_END
+
+//BIND_CLASS_METHOD MatrixFloat fromHEX
+//DOC_BEGIN
+// matrix *fromHEX(width, height, string hex_image)
+/// constructor con 3 argumentos que es una cadena con una imagen en
+/// escala de grises, 2 caracteres hexadecimales por pixel
+///@param width
+///@param height
+///@param hex_image
+//DOC_END
+{
+  LUABIND_CHECK_ARGN(==, 3);
+  LUABIND_CHECK_PARAMETER(1, int);
+  LUABIND_CHECK_PARAMETER(1, int);
+  LUABIND_CHECK_PARAMETER(1, string);
+  int width,height;
+  constString cs;
+  LUABIND_GET_PARAMETER(1,int,width);
+  LUABIND_GET_PARAMETER(2,int,height);
+  LUABIND_GET_PARAMETER(3,constString,cs);
+  MatrixFloat *obj;
+  obj = readMatrixFloatHEX(width,height,cs);
+  LUABIND_RETURN(MatrixFloat,obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat toHEX
+//DOC_BEGIN
+// string toHEX()
+//DOC_END
+{
+  char *buffer;
+  int   width, height;
+  int   longitud = saveMatrixFloatHEX(obj,&buffer, &width, &height);
+  if (!buffer)
+    LUABIND_ERROR("bad format");
+  LUABIND_RETURN(int, width);
+  LUABIND_RETURN(int, height);
+  lua_pushlstring(L,buffer,longitud);
+  delete[] buffer;
+  LUABIND_RETURN_FROM_STACK(-1);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat toPNM
+//DOC_BEGIN
+// string toPNM()
+/// Devuelve una cadena correspondiente a un fichero PNM (P5 o P6).  La
+/// matriz debe ser de dimension 2 o, si es de dimension 3, la tercera
+/// dimension debe tener 3 componentes correspondientes respectivamente
+/// a los colores RGB. El 0 se interpreta como negro, el 1 como blanco
+/// y saturan (es decir, un -1 es como 0 y un 5 es como 1).
+//DOC_END
+{
+  LUABIND_CHECK_ARGN(==, 0);
+  char *buffer;
+  int longitud = saveMatrixFloatPNM(obj,&buffer);
+  if (!buffer)
+    LUABIND_ERROR("bad format");
+  lua_pushlstring(L,buffer,longitud);
+  delete[] buffer;
+  LUABIND_RETURN_FROM_STACK(-1);
 }
 //BIND_END
 

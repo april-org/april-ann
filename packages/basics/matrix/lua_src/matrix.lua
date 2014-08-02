@@ -28,6 +28,19 @@ matrix.row_major = function(...)
   return matrix(...)
 end
 
+-- serialization
+matrix.fromFilename = matrix.__make_generic_fromFilename__(matrix)
+matrix.fromTabFilename = matrix.__make_generic_fromTabFilename__(matrix)
+matrix.fromString = matrix.__make_generic_fromString__(matrix)
+class_extension(matrix, "toFilename",
+                matrix.__make_generic_toFilename__(matrix))
+class_extension(matrix, "toTabFilename",
+                matrix.__make_generic_toTabFilename__(matrix))
+class_extension(matrix, "toString",
+                matrix.__make_generic_toString__(matrix))
+
+-- other stuff
+
 matrix.meta_instance.__call =
   matrix.__make_generic_call__()
 

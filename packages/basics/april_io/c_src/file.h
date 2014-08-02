@@ -71,6 +71,8 @@ namespace april_io {
     
     File(Stream *stream);
     virtual ~File();
+
+    void setExpectedSize(size_t sz) { stream->setExpectedSize(sz); }
     
     /// Calls isOpened method of stream property.
     virtual bool isOpened() const;
