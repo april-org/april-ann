@@ -20,37 +20,88 @@
  */
 #ifndef STREAM_H
 #define STREAM_H
-#include <cstdlib>
 
+#include <cstdio>
+#include <cstring>
+
+#include "constString.h"
+#include "error_print.h"
 #include "referenced.h"
+#include "stream.h"
 #include "unused_variable.h"
 
 namespace april_io {
-
   /**
-   * Defines the basic interface of data streams.
-   *
-   * The class Stream defines the basic interface for opening, closing and
-   * interacting with a generic Stream of data. It does decalre read and write
-   * methods for input/output operations.
+   * The Stream is the parent class which needs to be dervied by I/O
+   * facilities.
    */
   class Stream : public Referenced {
   public:
-    Stream() : Referenced() { }
-    virtual ~Stream() { }
-    virtual void close() = 0;
-    virtual void flush() = 0;
+    Stream();
+    virtual ~Stream();
+    
+    /// Returns if the stream is properly opened and not EOF and no errors.
+    virtual bool good() const;
+
+    /// Reads a string delimited by any of the given chars and puts it into the
+    /// given Stream. If delim==0 then this method ends when dest->eof() is
+    /// true.
+    virtual size_t get(Stream *dest, const char *delim);
+    
+    /// Reads a string with max_size length and delimited by any of the given
+    /// chars and puts it into the given Stream.
+    virtual size_t get(Stream *dest, size_t max_size, const char *delim);
+    
+    /// Reads a string of a maximum given size delimited by any of the given
+    /// chars and puts it into the given char buffer.
+    virtual size_t get(char *dest, size_t size, const char *delim);
+    
+    /// Puts a string of a maximum given size taken from the given Stream.
+    virtual size_t put(Stream *source, size_t size);
+    
+    /// Puts a string of a maximum given size taken from the given char buffer.
+    virtual size_t put(const char *source, size_t size);
+    
+    /// Writes a set of values following the given format. Equals to C printf.    
+    virtual int printf(const char *format, ...);
+    
+    ///////// ABSTRACT INTERFACE /////////
+    
+    virtual bool eof() const = 0;
+    
     virtual bool isOpened() const = 0;
-    virtual bool eof() = 0;
-    virtual int seek(long offset, int whence) = 0;
-    virtual size_t read(void *ptr, size_t size, size_t nmemb) = 0;
-    virtual size_t write(const void *ptr, size_t size, size_t nmemb) = 0;
-    /// Some objects needs to know the expected size before begin to write
-    /// things, so this method is where this size is given.
-    virtual void setExpectedSize(size_t sz) {
-      UNUSED_VARIABLE(sz);
-    }
+
+    virtual void close() = 0;
+    
+    /// Moves the stream cursor to the given offset from given whence position.
+    virtual off_t seek(int whence, int offset);
+    
+    /// Forces to write pending data at stream object.
+    virtual void flush() = 0;
+    
+    /// Modifies the behavior of the buffer.
+    virtual int setvbuf(int mode, size_t size) = 0;
+    
+    /// Indicates if an error has been produced.
+    virtual bool hasError() const = 0;
+    
+    /// Returns an internal string with the last error message.
+    virtual const char *getErrorMsg() const = 0;
+    
+  protected:
+    
+    // Auxiliary proteced methods
+    virtual size_t getInBufferAvailableSize() const = 0;
+    virtual const char *getInBuffer(size_t &buffer_len, size_t max_size,
+                                    const char *delim) = 0;
+    virtual char *getOutBuffer(size_t &buffer_len, size_t max_size) = 0;
+    virtual void moveInBuffer(size_t len) = 0;
+    virtual void moveOutBuffer(size_t len) = 0;
+    
+  private:
+    void trimInBuffer(const char *delim);
   };
   
 } // namespace april_io
+
 #endif // STREAM_H

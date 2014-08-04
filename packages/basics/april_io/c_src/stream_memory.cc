@@ -2,7 +2,7 @@
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
- * Copyright 2013, Francisco Zamora-Martinez
+ * Copyright 2014, Francisco Zamora-Martinez
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
@@ -18,33 +18,35 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef CFILE_H
-#define CFILE_H
 
-#include <cstdlib>
-#include <cstdio>
-#include "stream.h"
+#include <cstdarg>
+#include "stream_memory.h"
+#include "unused_variable.h"
 
 namespace april_io {
-
-  class CFileStream : public Stream {
-    FILE *f;
-    bool need_close;
-  public:
-    CFileStream();
-    CFileStream(int fd);
-    CFileStream(FILE *f);
-    CFileStream(const char *path, const char *mode);
-    virtual ~CFileStream();
-    virtual void close();
-    virtual void flush();
-    virtual bool isOpened() const;
-    virtual bool eof();
-    virtual int seek(long offset, int whence);
-    virtual size_t read(void *ptr, size_t size, size_t nmemb);
-    virtual size_t write(const void *ptr, size_t size, size_t nmemb);
-  };
   
-} // namespace april_io
+  size_t extractLineFromStream(Stream *source, StreamMemory *dest) {
+    return source->get(dest, "\n\r");
+  }
 
-#endif // CFILE_H
+  size_t extractULineFromStream(Stream *source, StreamMemory *dest) {
+    do {
+      dest->clear();
+      source->get(dest, "\n\r");
+    } while ((dest->size() > 0) && ((*dest)[0] == '#'));
+    return dest->size();
+  }
+
+  ///////////////////////////////////////////////////////////////////////////
+  
+  StreamMemory::StreamMemory(size_t block_size, size_t max_size) :
+    block_size(block_size), max_size(max_size),
+    in_block(0), in_block_len(0),
+    out_block(0), out_block_len(0) {
+  }
+  
+  StreamMemory::~StreamMemory() {
+    close();
+  }
+  
+}
