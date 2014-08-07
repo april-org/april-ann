@@ -25,6 +25,7 @@
 
 //BIND_HEADER_H
 #include "function_interface.h"
+#include "identity_function.h"
 using namespace Functions;
 //BIND_END
 
