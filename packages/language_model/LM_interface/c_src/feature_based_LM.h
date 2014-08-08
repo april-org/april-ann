@@ -55,6 +55,34 @@ namespace LanguageModels {
       IncRef(filter);
     }
 
+    typedef typename BunchHashedLMInterface<Key,Score>::KeyWordHash KeyWordHash;
+    typedef typename BunchHashedLMInterface<Key,Score>::WordResultHash WordResultHash;
+
+    virtual void executeQueries(Token *input) = 0;
+
+    virtual void computeKeysAndScores(KeyWordHash &ctxt_hash,
+                                      unsigned int bunch_size) {
+      UNUSED_VARIABLE(bunch_size);
+      FloatMatrix mat;
+      Token *input = new TokenMatrixFloat(mat);
+      // For each context key entry
+      for (typename KeyWordHash::iterator it = ctxt_hash.begin();
+        it != ctxt_hash.end(); ++it) {
+        Key context_key = it->first;
+        WordResultHash &word_hash = it->second;
+
+        // For each word entry
+        for (typename WordResultHash::iterator it2 = word_hash.begin();
+          it2 != word_hash.end(); ++it2) {
+          WordType word = it2->first;
+
+          // Add pattern to token input with key and word
+        }
+      }
+      Token *filtered_input = filter->calculate(input);
+      executeQueries(filtered_input);
+    }
+
   public:
     virtual ~FeatureBasedLMInterface() {
       DecRef(filter);
