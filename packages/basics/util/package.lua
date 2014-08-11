@@ -1,6 +1,6 @@
 package{ name = "util",
    version = "1.0",
-   depends = { },
+   depends = { "class" },
    keywords = { },
    description = "",
    -- targets como en ant
@@ -28,8 +28,7 @@ package{ name = "util",
        },
      },
      c_unit_test{
-       file = { "test/test_context.cc",
-                "test/test_hash_table.cc" },
+       file = { "test/all_util_unit_test.cc" },
      },
    },
    target{

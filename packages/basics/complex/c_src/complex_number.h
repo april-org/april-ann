@@ -57,6 +57,7 @@ struct Complex {
   __host__ __device__ static Complex<T> one_zero() { return Complex(1.0, 0.0); }
   __host__ __device__ static Complex<T> zero_one() { return Complex(0.0, 1.0); }
   __host__ __device__ Complex() { data[REAL_IDX] = T(); data[IMG_IDX] = T(); }
+  __host__ __device__ Complex(T r) { data[REAL_IDX] = r; data[IMG_IDX] = 0.0; }
   __host__ __device__ Complex(T r, T i) { data[REAL_IDX] = r; data[IMG_IDX] = i; }
   __host__ __device__ ~Complex() { }
   __host__ __device__ Complex(const Complex<T> &other) { *this = other; }
@@ -174,5 +175,10 @@ typedef Complex<double> ComplexD;
 #undef __device__
 #undef UNDEF_DEVICE
 #endif
+
+namespace april_utils {
+  void aprilPrint(const ComplexF &v);
+  void aprilPrint(const ComplexD &v);
+}
 
 #endif // COMPLEX_NUMBER_H

@@ -30,6 +30,8 @@ namespace ANN {
 
   /// This component implements the logistic activation function.
   class LogisticActfANNComponent : public ActivationFunctionANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(LogisticActfANNComponent);
+                                   
   protected:
     virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,
 				 FloatGPUMirroredMemoryBlock *output_units,

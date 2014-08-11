@@ -26,8 +26,8 @@
 
 MatrixFloat *ImageHistogram::getHistogram(const ImageFloat *img, int gray_levels) {
 
-  int width = img->width;
-  int height = img->height;
+  int width = img->width();
+  int height = img->height();
 
   int dims[1];
   

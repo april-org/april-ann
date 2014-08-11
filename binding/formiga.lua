@@ -1197,7 +1197,7 @@ function formiga.__lua_unit_test(t)
       printverbose(2," [lua_unit_test] "..command)
       local ok,what,error_resul = formiga.os.execute(command, true)
       if not ok then
-	print("Script execution '".. thefile .. "' failed: " .. t.target.package.name)
+	print("Lua unit test '".. thefile .. "' failed: " .. t.target.package.name)
 	os.exit(1)
       end
     end
@@ -1309,7 +1309,7 @@ function formiga.__c_unit_test__(t)
       formiga.os.execute(command)
       local ok = formiga.os.execute(exec_name, true)
       if not ok then
-	print("Unitary test '".. thefile .. "' failed: " .. t.target.package.name)
+	print("C unit test '".. thefile .. "' failed: " .. t.target.package.name)
 	os.exit(1)
       end
     end

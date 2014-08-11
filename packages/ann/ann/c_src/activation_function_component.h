@@ -32,6 +32,7 @@ namespace ANN {
   /// An abstract class that defines the basic interface that
   /// the anncomponents must fulfill.
   class ActivationFunctionANNComponent : public ANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(ActivationFunctionANNComponent);
     TokenMatrixFloat *input, *output, *error_input, *error_output;
   protected:
     virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,

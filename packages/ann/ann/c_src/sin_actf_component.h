@@ -29,6 +29,8 @@ namespace ANN {
 
   /// A component which computes the Sin activation function.
   class SinActfANNComponent : public ActivationFunctionANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(SinActfANNComponent);
+    
   protected:
     virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,
 				 FloatGPUMirroredMemoryBlock *output_units,

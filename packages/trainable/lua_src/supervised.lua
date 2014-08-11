@@ -11,7 +11,7 @@ local pairs = pairs
 local assert = assert
 --
 local type = type
-local isa = isa
+local is_a = class.is_a
 local iterator = iterator
 local get_table_fields = get_table_fields
 local april_assert = april_assert
@@ -24,8 +24,10 @@ local wrap_matrices = matrix.dict.wrap_matrices
 -- SUPERVISED_TRAINER CLASS --
 ------------------------------
 
-local trainable_supervised_trainer_methods,
-trainable_supervised_trainer_class_metatable=class("trainable.supervised_trainer")
+local trainable_supervised_trainer,trainable_supervised_trainer_methods =
+  class("trainable.supervised_trainer")
+trainable = trainable or {} -- global environment
+trainable.supervised_trainer = trainable_supervised_trainer -- global environment
 
 april_set_doc(trainable.supervised_trainer, {
 		class       = "class",
@@ -44,7 +46,7 @@ april_set_doc(trainable.supervised_trainer, {
 
 ------------------------------------------------------------------------
 
-trainable_supervised_trainer_class_metatable.__call =
+trainable_supervised_trainer.constructor =
   april_doc{
     class = "method", summary = "Constructor",
     description ={"Constructor of the supervised_trainer class.",
@@ -79,14 +81,15 @@ trainable_supervised_trainer_class_metatable.__call =
       local bunch_size  = t.bunch_size
       local optimizer   = t.optimizer
       local smooth_gradients = t.smooth_gradients or true
-      local obj = trainable.supervised_trainer(model, loss, bunch_size, optimizer,
-                                               smooth_gradients)
+      trainable.supervised_trainer.constructor(self,
+                                               model, loss, bunch_size,
+                                               optimizer, smooth_gradients)
       local weight = connections
-      if not isa(connections, matrix.dict) then
+      if not is_a(connections, matrix.dict) then
         weights = matrix.dict()
         for name,wdata in pairs(connections) do
           local m = wdata
-          if not isa(m, matrix) then
+          if not is_a(m, matrix) then
             m = wdata.w:rewrap(wdata.output,wdata.input)
           end
           if m:get_major_order() == "col_major" then
@@ -96,38 +99,33 @@ trainable_supervised_trainer_class_metatable.__call =
           end
         end
       end
-      obj:build{ weights = weights }
-      return obj
+      self:build{ weights = weights }
     else
       -- Constructor of a new object
       local ann_component,loss_function,bunch_size,optimizer,smooth_gradients = ...
       local optimizer = optimizer or ann.optimizer.sgd()
       local smooth_gradients = smooth_gradients or true
-      if loss_function and not isa(loss_function, ann.loss) then
+      if loss_function and not is_a(loss_function, ann.loss) then
         error("The second parameter must be an instance of ann.loss")
       end
-      if optimizer and not isa(optimizer, ann.optimizer) then
+      if optimizer and not is_a(optimizer, ann.optimizer) then
         error("The fourth parameter must be an instance of ann.optimizer")
       end
       if bunch_size and not tonumber(bunch_size) then
         error("The third parameter must be a number")
       end
-      local obj = {
-        ann_component    = assert(ann_component,"Needs an ANN component object"),
-        loss_function    = loss_function or false,
-        optimizer        = optimizer,
-        smooth_gradients = smooth_gradients,
-        weights_table    = matrix.dict(),
-        components_table = {},
-        component2weights_dict = {},
-        weights2component_dict = {},
-        weights_order    = {},
-        components_order = {},
-        bunch_size       = bunch_size or false,
-        weight_grads     = matrix.dict(),
-      }
-      obj = class_instance(obj, self, true)
-      return obj
+      self.ann_component    = assert(ann_component,"Needs an ANN component object")
+      self.loss_function    = loss_function or false
+      self.optimizer        = optimizer
+      self.smooth_gradients = smooth_gradients
+      self.weights_table    = matrix.dict()
+      self.components_table = {}
+      self.component2weights_dict = {}
+      self.weights2component_dict = {}
+      self.weights_order    = {}
+      self.components_order = {}
+      self.bunch_size       = bunch_size or false
+      self.weight_grads     = matrix.dict()
     end
   end
 
@@ -152,7 +150,7 @@ trainable_supervised_trainer_methods.set_loss_function =
     params = { "Loss function" },
   } ..
   function(self, loss_function)
-    assert(isa(loss_function, ann.loss), "Needs an instance of ann.loss")
+    assert(is_a(loss_function, ann.loss), "Needs an instance of ann.loss")
     self.loss_function = loss_function
   end
 
@@ -177,7 +175,7 @@ trainable_supervised_trainer_methods.set_optimizer =
     params = { "An instance of ann.optimizer" },
   } ..
   function(self, optimizer)
-    assert(isa(optimizer, ann.optimizer), "Needs an instance of ann.optimizer")
+    assert(is_a(optimizer, ann.optimizer), "Needs an instance of ann.optimizer")
     self.optimizer = optimizer
   end
 
@@ -787,8 +785,8 @@ trainable_supervised_trainer_methods.train_step =
     local bunch_size = bunch_size or self.bunch_size or 1
     local smooth_gradients = smooth_gradients or self.smooth_gradients
     if mask then
-      if not isa(mask,matrix) then mask = mask:get_matrix() end
-      if not isa(target,matrix) then
+      if not is_a(mask,matrix) then mask = mask:get_matrix() end
+      if not is_a(target,matrix) then
         target = target:get_matrix()
       end
       target = target:clone():cmul(mask)
@@ -804,10 +802,10 @@ trainable_supervised_trainer_methods.train_step =
           model:reset(it)
           local output = model:forward(input, true)
           if mask then
-            if not isa(output,matrix) then
+            if not is_a(output,matrix) then
               output = output:get_matrix()
             end
-            if not isa(target,matrix) then
+            if not is_a(target,matrix) then
               target = target:get_matrix()
             end
             output = output:clone():cmul(mask)
@@ -867,11 +865,11 @@ trainable_supervised_trainer_methods.validate_step =
     model:reset()
     local output = model:forward(input)
     if mask then
-      if not isa(mask,matrix) then mask = mask:get_matrix() end
-      if not isa(output,matrix) then
+      if not is_a(mask,matrix) then mask = mask:get_matrix() end
+      if not is_a(output,matrix) then
         output = output:get_matrix()
       end
-      if not isa(target,matrix) then
+      if not is_a(target,matrix) then
         target = target:get_matrix()
       end
       output = output:clone():cmul(mask)
@@ -1454,10 +1452,10 @@ trainable_supervised_trainer_methods.use_dataset =
     local nump        = params.input_dataset:numPatterns()
     local outsize     = self.ann_component:get_output_size()
     if params.output_dataset then
-      if isa(params.output_dataset, dataset) then
+      if is_a(params.output_dataset, dataset) then
         params.output_dataset = dataset.token.wrapper(params.output_dataset)
       end
-    elseif isa(params.input_dataset, dataset) then
+    elseif is_a(params.input_dataset, dataset) then
       params.output_dataset = dataset.matrix(matrix(nump, outsize))
       t.output_dataset      = params.output_dataset
       params.output_dataset = dataset.token.wrapper(params.output_dataset)
@@ -1465,7 +1463,7 @@ trainable_supervised_trainer_methods.use_dataset =
       params.output_dataset = dataset.token.vector(outsize)
       t.output_dataset      = params.output_dataset
     end
-    if isa(params.input_dataset, dataset) then
+    if is_a(params.input_dataset, dataset) then
       params.input_dataset = dataset.token.wrapper(params.input_dataset)
     end
     local output_dataset        = params.output_dataset

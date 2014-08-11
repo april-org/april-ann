@@ -37,6 +37,8 @@ namespace ANN {
    */
   class MatrixInputSwitchANNComponent : public ANNComponent,
                                         public ComponentPropertiesAndAsserts {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(MatrixInputSwitchANNComponent);
+    
     TokenMatrixFloat *input, *output, *error_input, *error_output;
     TokenSparseMatrixFloat *sparse_input, *sparse_error_output;
     bool is_sparse_input;

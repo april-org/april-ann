@@ -13,8 +13,8 @@
 -- the void long option "--" can be used to stop option list
 
 -- a lua class:
-local cmdopt_methods,
-cmdopt_class_metatable = class("cmdOpt")
+local cmdOpt,cmdopt_methods = class("cmdOpt")
+_G.cmdOpt = cmdOpt
 
 function cmdopt_methods:add_option(option)
   -- option is a table with the following parameters:
@@ -93,24 +93,20 @@ end
 -- program_name -> a string
 -- argument_description -> string, description of positional arguments
 -- the "vector part" of tbl are just options to add with add_option
-function cmdopt_class_metatable:__call(tbl)
-  local obj = {
-    options       = {}, -- lista de opciones
-    short_options = {}, -- diccionario opciones cortas
-    long_options  = {}, -- diccionario opciones largas
-    posix_mode    = tbl.posix_mode or false,
-    program_name  = tbl.program_name or arg[0],
-    argument_description = tbl.argument_description or "positional_arguments",
-    main_description = tbl.main_description or "",
-    author        = tbl.author or "",
-    copyright     = tbl.copyright or "",
-    see_also      = tbl.see_also or "",
-  }
-  obj = class_instance(obj, self, true)
+function cmdOpt:constructor(tbl)
+  self.options       = {} -- lista de opciones
+  self.short_options = {} -- diccionario opciones cortas
+  self.long_options  = {} -- diccionario opciones largas
+  self.posix_mode    = tbl.posix_mode or false
+  self.program_name  = tbl.program_name or arg[0]
+  self.argument_description = tbl.argument_description or "positional_arguments"
+  self.main_description = tbl.main_description or ""
+  self.author        = tbl.author or ""
+  self.copyright     = tbl.copyright or ""
+  self.see_also      = tbl.see_also or ""
   for i,option in ipairs(tbl) do
-    obj:add_option(option)
+    self:add_option(option)
   end
-  return obj
 end
 
 -- cool function to generate the help text

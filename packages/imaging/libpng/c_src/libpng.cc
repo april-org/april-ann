@@ -160,7 +160,7 @@ namespace LibPNG
     png_infop   info_ptr;
     unsigned char *image_data=NULL, *p=NULL;
     png_bytep *row_pointers = NULL;
-    png_uint_32 rowbytes = 3*img->width;
+    png_uint_32 rowbytes = 3*img->width();
 
     // Open file for writing
     FILE *fp = fopen(filename, "wb");
@@ -196,17 +196,17 @@ namespace LibPNG
       goto destroy_png_struct;
     }
 
-    png_set_IHDR(png_ptr, info_ptr, img->width, img->height, 8,
+    png_set_IHDR(png_ptr, info_ptr, img->width(), img->height(), 8,
         PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE,
         PNG_FILTER_TYPE_BASE);
 
     png_write_info(png_ptr, info_ptr);
 
     // Create aux pixel buffer
-    image_data = new unsigned char[img->width * img->height * 3];
+    image_data = new unsigned char[img->width() * img->height() * 3];
     p = image_data; 
-    for (int y=0; y < img->height; y++) {
-      for (int x=0; x < img->width; x++) {
+    for (int y=0; y < img->height(); y++) {
+      for (int x=0; x < img->width(); x++) {
         FloatRGB c = (*img)(x,y);
         *p++ = (unsigned char)(april_utils::clamp(c.r, 0.0f, 1.0f)*255.0f);
         *p++ = (unsigned char)(april_utils::clamp(c.g, 0.0f, 1.0f)*255.0f);
@@ -215,8 +215,8 @@ namespace LibPNG
     }
         
     // Create row_pointers array
-    row_pointers = new png_bytep[img->height];
-    for (int i=0; i < img->height; i++)
+    row_pointers = new png_bytep[img->height()];
+    for (int i=0; i < img->height(); i++)
       row_pointers[i] = image_data + i*rowbytes;
 
     // Write pixel data

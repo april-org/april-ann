@@ -53,17 +53,17 @@ namespace OCR {
 			     float text_center, float *sup, float *inf) {
       // binarizing threshold
       const float THRESHOLD = 0.2;
-      int sup_contour = img->height - 1;
+      int sup_contour = img->height() - 1;
       int inf_contour = 0;
       int row = 0;
       float val = (*img)(col, row);
-      while ((val < THRESHOLD) && (row < img->height - 1)) {
+      while ((val < THRESHOLD) && (row < img->height() - 1)) {
 	++row;
 	val = (*img)(col, row);
       }
       sup_contour = row;
       
-      row = img->height - 1;
+      row = img->height() - 1;
       val = (*img)(col, row);
       while ((val < THRESHOLD) && (row > 0)) {
 	--row;
@@ -128,30 +128,30 @@ namespace OCR {
 	
       // the matrix has as many rows as columns in the image, and as many
       // columns as parameters
-      matrix_size[0] = img->width; 	
+      matrix_size[0] = img->width();
       matrix_size[1] = NPARAM;
 
       result = new MatrixFloat(2, matrix_size);
 
       // temporal vectors which store all the parameters
-      float *v_sup_contour = new float[img->width];
-      float *v_inf_contour = new float[img->width];
-      float *v_height = new float[img->width];
-      float *v_energy = new float[img->width];
-      float *v_density = new float[img->width];
-      float *v_mean_energy_pos = new float[img->width];
-      float *v_stddev_energy = new float[img->width];
-      float *v_sup_derivative = new float[img->width];
-      float *v_inf_derivative = new float[img->width];
-      float *v_derivative2_sup = new float[img->width];
-      float *v_derivative2_inf = new float[img->width];
-      float *v_derivative_pme = new float[img->width];
-      float *v_derivative_height = new float[img->width];
-      float *v_orig_nstrokes = new float[img->width];
-      float *v_nstrokes = new float[img->width]; // after voting (2 of 3)
+      float *v_sup_contour = new float[img->width()];
+      float *v_inf_contour = new float[img->width()];
+      float *v_height = new float[img->width()];
+      float *v_energy = new float[img->width()];
+      float *v_density = new float[img->width()];
+      float *v_mean_energy_pos = new float[img->width()];
+      float *v_stddev_energy = new float[img->width()];
+      float *v_sup_derivative = new float[img->width()];
+      float *v_inf_derivative = new float[img->width()];
+      float *v_derivative2_sup = new float[img->width()];
+      float *v_derivative2_inf = new float[img->width()];
+      float *v_derivative_pme = new float[img->width()];
+      float *v_derivative_height = new float[img->width()];
+      float *v_orig_nstrokes = new float[img->width()];
+      float *v_nstrokes = new float[img->width()]; // after voting (2 of 3)
 	
       // traverse all the columns
-      for (int col = 0; col < img->width; ++col) {
+      for (int col = 0; col < img->width(); ++col) {
 	float energy = 0;
 	float mean_energy_pos = 0;
 	float mean_pos_squared = 0;
@@ -223,21 +223,21 @@ namespace OCR {
       }
       
       // derivatives
-      derivative1(v_sup_contour, v_sup_derivative, img->width);
-      derivative1(v_inf_contour, v_inf_derivative, img->width);
-      derivative1(v_mean_energy_pos, v_derivative_pme, img->width);
-      derivative1(v_height, v_derivative_height, img->width);
+      derivative1(v_sup_contour, v_sup_derivative, img->width());
+      derivative1(v_inf_contour, v_inf_derivative, img->width());
+      derivative1(v_mean_energy_pos, v_derivative_pme, img->width());
+      derivative1(v_height, v_derivative_height, img->width());
       
-      derivative2(v_sup_contour, v_derivative2_sup, img->width);
-      derivative2(v_inf_contour, v_derivative2_inf, img->width);
+      derivative2(v_sup_contour, v_derivative2_sup, img->width());
+      derivative2(v_inf_contour, v_derivative2_inf, img->width());
       
       // compute strokes by voting
-      for (int col=0; col < img->width; ++col) {
+      for (int col=0; col < img->width(); ++col) {
 	int izq, der;
 	
 	// nstrokes
-	izq = clamp(col - 1, 0, img->width - 1);
-	der = clamp(col + 1, 0, img->width - 1);
+	izq = clamp(col - 1, 0, img->width() - 1);
+	der = clamp(col + 1, 0, img->width() - 1);
 	if (v_orig_nstrokes[izq] == v_orig_nstrokes[der])
 	  v_nstrokes[col] = v_orig_nstrokes[izq];
 	else
@@ -250,86 +250,86 @@ namespace OCR {
 	float inv_text_height = 1.0/text_height;
 	switch(params[i]) {
 	case 'S':
-	  result->putCol(i, v_sup_contour, img->width);
+	  result->putCol(i, v_sup_contour, img->width());
 	  break;
 	case 's':
 	  copyNormVector(v_sup_contour, result, i, upper_base, inv_text_height);
 	  break;
 	case 'I':
-	  result->putCol(i, v_inf_contour, img->width);
+	  result->putCol(i, v_inf_contour, img->width());
 	  break;
 	case 'i':
 	  copyNormVector(v_inf_contour, result, i, upper_base, inv_text_height);
 	  break;
 	case 'E':
-	  result->putCol(i, v_energy, img->width);
+	  result->putCol(i, v_energy, img->width());
 	  break;
 	case 'e':
 	  copyNormVector(v_energy, result, i, 0, inv_text_height);
 	  break;
 	case 'P':
-	  result->putCol(i, v_mean_energy_pos, img->width);
+	  result->putCol(i, v_mean_energy_pos, img->width());
 	  break;
 	case 'p':
 	  copyNormVector(v_mean_energy_pos, result, i, upper_base, inv_text_height);
 	  break;
 	case 'D':
-	  result->putCol(i, v_stddev_energy, img->width);
+	  result->putCol(i, v_stddev_energy, img->width());
 	  break;
 	case 'd':
 	  copyNormVector(v_stddev_energy, result, i, 0, inv_text_height);
 	  break;
 	case 'Q':
-	  result->putCol(i, v_sup_derivative, img->width);
+	  result->putCol(i, v_sup_derivative, img->width());
 	  break;
 	case 'q':
 	  copyNormVector(v_sup_derivative, result, i, 0, inv_text_height);
 	  break;
 	case 'A':
-	  result->putCol(i, v_inf_derivative, img->width);
+	  result->putCol(i, v_inf_derivative, img->width());
 	  break;
 	case 'a':
 	  copyNormVector(v_inf_derivative, result, i, 0, inv_text_height);
 	  break;
 	case 'T':
-	  result->putCol(i, v_orig_nstrokes, img->width);
+	  result->putCol(i, v_orig_nstrokes, img->width());
 	  break;
 	case 't': //TODO: Normalizar?
 	  copyNormVector(v_nstrokes, result, i, 0, 0.3);
 	  break;
 	case 'H':
-	  result->putCol(i, v_height, img->width);
+	  result->putCol(i, v_height, img->width());
 	  break;
 	case 'h':
 	  copyNormVector(v_height, result, i, 0, inv_text_height);
 	  break;
 	case 'J':
-	  result->putCol(i, v_derivative_height, img->width);
+	  result->putCol(i, v_derivative_height, img->width());
 	  break;
 	case 'j':
 	  copyNormVector(v_derivative_height, result, i, 0, inv_text_height);
 	  break;
 	case 'M':
-	  result->putCol(i, v_derivative_pme, img->width);
+	  result->putCol(i, v_derivative_pme, img->width());
 	  break;
 	case 'm':
 	  copyNormVector(v_derivative_pme, result, i, 0, inv_text_height);
 	  break;
 	case 'Z':
-	  result->putCol(i, v_derivative2_sup, img->width);
+	  result->putCol(i, v_derivative2_sup, img->width());
 	  break;
 	case 'z':
 	  copyNormVector(v_derivative2_sup, result, i, 0, inv_text_height);
 	  break;
 	case 'X':
-	  result->putCol(i, v_derivative2_inf, img->width);
+	  result->putCol(i, v_derivative2_inf, img->width());
 	  break;
 	case 'x':
 	  copyNormVector(v_derivative2_inf, result, i, 0, inv_text_height);
 	  break;
 	case 'R':
 	case 'r':
-	  result->putCol(i, v_density, img->width);
+	  result->putCol(i, v_density, img->width());
 	  break;
 	default:
 	  ERROR_EXIT1(128,

@@ -35,6 +35,8 @@ namespace ANN {
   /// dimensions of the input matrix are not restricted, only the given
   /// dimension property and index must be valid at the input matrix.
   class SelectANNComponent : public VirtualMatrixANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(SelectANNComponent);
+    
     int dimension, index;
     
   protected:

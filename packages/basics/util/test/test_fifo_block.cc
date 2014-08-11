@@ -1,61 +1,81 @@
 #include <iostream>
-#include "../c_src/fifo_block.h"
+#include "fifo_block.h"
+#include "gtest.h"
 using namespace std;
-using namespace april_utils;
 
-int main() {
-  typedef fifo_block<int,7> fifo_block_type;
-  fifo_block_type fifobint;
-  int i,v;
-  char comando[100];
+#define N 20
+#define EXTRACTN 5
+#define BACKN 5
+#define BSIZE 7u
 
-  cout << "a ver si peta\n";
-  fifo_block_type::iterator r = fifobint.begin();
-  cout << fifobint.is_end(r) << endl;
-  for (fifo_block_type::iterator r = fifobint.begin();
-       !fifobint.is_end(r);
-       ++r) {
-    cout << *r << " ";
-  }
-  cout << "--a ver si peta\n";
+namespace test_fifo_block {
 
-  for (i=0; i<20; i++) fifobint.put(i);
-  fifo_block_type una_copia(fifobint);
-  cout << "La copia tiene " << una_copia.count() << " elementos\n";
-  cout << "Aquí está la copia recorriendola con un   iterador ";
-  for (fifo_block_type::iterator r = una_copia.begin();
-       r != una_copia.end();
-       ++r) {
-    cout << *r << " ";
+  TEST(FifoBlockTest, All) {
+    typedef april_utils::fifo_block<int,BSIZE> fifo_block_type;
+    fifo_block_type fifobint;
+    int i,v;
+  
+    EXPECT_EQ( fifobint.block_size(), BSIZE );
+    EXPECT_TRUE( fifobint.begin() == fifobint.end() );
+    EXPECT_TRUE( fifobint.is_end(fifobint.begin()) );
+    EXPECT_EQ( fifobint.size(), 0u );
+    EXPECT_TRUE( fifobint.empty() );
+
+    // add N elements
+    for (i=0; i<N; i++) fifobint.put(i);
+  
+    fifo_block_type una_copia(fifobint);
+  
+    EXPECT_EQ( fifobint.size(), static_cast<unsigned int>(una_copia.count()) );
+  
+    // iterator traversal of copy and original
+    fifo_block_type::iterator orig_r = fifobint.begin(), r;
+    for (r = una_copia.begin();
+         r != una_copia.end() && !fifobint.is_end(orig_r);
+         ++r, ++orig_r) {
+      ASSERT_EQ( *r, *orig_r );
+    }
+    ASSERT_TRUE( una_copia.is_end(r) );
+    ASSERT_TRUE( r == una_copia.end() );
+    ASSERT_TRUE( fifobint.is_end(orig_r) );
+    ASSERT_TRUE( orig_r == fifobint.end() );
+  
+    // extract 5 elements from original object
+    for (i=0; i<EXTRACTN && fifobint.get(v); i++) {
+      ASSERT_EQ( v, i );
+    }
+  
+    ASSERT_EQ( fifobint.count(), una_copia.count() - EXTRACTN );
+  
+    // insert values from 0 to 4 in both queues
+    for (i=0; i<BACKN ; i++) {
+      fifobint.put(i);
+      una_copia.put(i);
+    }
+  
+    // assignment operator
+    una_copia = fifobint;
+  
+    for (i=EXTRACTN; i<N ; i++) {
+      int v1, v2;
+      ASSERT_TRUE( fifobint.get(v1) );
+      ASSERT_TRUE( una_copia.get(v2) );
+      ASSERT_EQ( v1, v2 );
+    }
+
+    for (i=0; i<BACKN ; i++) {
+      int v1, v2;
+      ASSERT_TRUE( fifobint.get(v1) );
+      ASSERT_TRUE( una_copia.get(v2) );
+      ASSERT_EQ( v1, v2 );
+    }
+  
+    ASSERT_TRUE( fifobint.empty() );
+    ASSERT_TRUE( una_copia.empty() );
   }
-  cout << "\nAquí está la copia recorriendola con otro iterador ";
-  for (fifo_block_type::iterator r = una_copia.begin();
-       !una_copia.is_end(r);
-       ++r) {
-    cout << *r << " ";
-  }
-  cout << "\nsacamos 5 valores de la cola original\n";
-  for (i=0; i<5 && fifobint.get(v); i++) {
-    cout << v << " ";
-  }
-  cout << "La original tiene " << fifobint.count() << " elementos\n";
-  cout << "insertamos otros 5 valores del 1 al 5 en ambas colas\n";
-  for (i=0; i<5 ; i++) {
-    fifobint.put(i);
-    una_copia.put(i);
-  }
-  cout << "asignamos una variable a otra\n";
-  una_copia = fifobint;
-  cout << "Aquí está la cola:\n";
-  while (fifobint.get(v)) {
-    cout << v << " ";
-  }
-  cout << "\nY la copia:\n";
-  while (una_copia.get(v)) {
-    cout << v << " ";
-  }
-  cout << endl;
-  return 0;
 }
 
-
+#undef N
+#undef EXTRACTN
+#undef BACKN
+#undef BSIZE
