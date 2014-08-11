@@ -35,7 +35,7 @@ namespace april_io {
   }
   
   bool OutputLuaStringStream::empty() const {
-    return false;
+    return total_size == 0u;
   }
 
   size_t OutputLuaStringStream::size() const {
@@ -115,7 +115,12 @@ namespace april_io {
   bool OutputLuaStringStream::eofStream() const {
     return !isOpened();
   }
-
+  
+  void OutputLuaStringStream::moveOutBuffer(size_t len) {
+    Stream::moveOutBuffer(len);
+    flush();
+  }
+  
   ///////////////////////////////////////////////////////////////////////////
   
   InputLuaStringStream::InputLuaStringStream(lua_State *L, int pos) :
@@ -136,7 +141,7 @@ namespace april_io {
   }
   
   bool InputLuaStringStream::empty() const {
-    return total_size == 0;
+    return total_size == 0u;
   }
   
   size_t InputLuaStringStream::size() const {

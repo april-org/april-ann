@@ -81,7 +81,6 @@ namespace april_io {
     if (c_string == 0) c_string = new CStringStream();
     c_string->clear();
     obj->get(c_string, " ,;\t\n\r");
-    c_string->flush();
     if (c_string->empty()) return 0;
     double number;
     if (!c_string->getConstString().extract_double(&number)) {
@@ -96,7 +95,6 @@ namespace april_io {
     if (lua_string == 0) lua_string = new OutputLuaStringStream(L);
     lua_string->clear();
     obj->get(lua_string, size);
-    lua_string->flush();
     if (lua_string->empty()) return 0;
     return lua_string->push(L);
   }
@@ -106,7 +104,6 @@ namespace april_io {
     if (lua_string == 0) lua_string = new OutputLuaStringStream(L);
     lua_string->clear();
     extractLineFromStream(obj, lua_string);
-    lua_string->flush();
     if (lua_string->empty()) return 0;
     return lua_string->push(L);
   }
@@ -116,7 +113,6 @@ namespace april_io {
     if (lua_string == 0) lua_string = new OutputLuaStringStream(L);
     lua_string->clear();
     obj->get(lua_string);
-    lua_string->flush();
     if (lua_string->empty()) return 0;
     return lua_string->push(L);
   }

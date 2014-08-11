@@ -44,12 +44,11 @@ namespace april_io {
     if (delim != 0) {
       size_t pos, buf_len;
       do {
-        const char *buf = getInBuffer(buf_len, SIZE_MAX, "");
+        const char *buf = getInBuffer(buf_len, SIZE_MAX, 0);
         pos = 0;
         while(pos < buf_len && strchr(delim, buf[pos]) != 0) ++pos;
         moveInBuffer(pos);
-        if (pos != buf_len) break;
-      } while(true); // the end condition is determined by break if above
+      } while(pos == buf_len && buf_len > 0);
     }
   }
   
@@ -68,7 +67,7 @@ namespace april_io {
     while( !this->hasError() &&
            !this->eof() &&
            !dest->hasError() &&
-           !dest->eof() &&
+           // !dest->eof() &&
            dest_len < max_size &&
            (buf = getInBuffer(buf_len, max_size - dest_len, delim)) ) {
       size_t in_buffer_available_size = getInBufferAvailableSize();
@@ -147,10 +146,14 @@ namespace april_io {
   //////////////////////////////////////////////////////////////////////////
 
   void Stream::resetBuffers() {
-    in_buffer_pos  = in_buffer_len;
-    out_buffer_pos = out_buffer_len;
+    in_buffer_pos  = in_buffer_len  = 0;
+    out_buffer_pos = out_buffer_len = 0;
   }
   
+  void Stream::resetOutBuffer() {
+    out_buffer_pos = out_buffer_len = 0;
+  }
+
   size_t Stream::getInBufferPos() const {
     return in_buffer_pos;
   }
@@ -159,10 +162,6 @@ namespace april_io {
     return out_buffer_pos;
   }
   
-  void Stream::resetOutBuffer() {
-    out_buffer_pos = out_buffer_len;
-  }
-
   const char *Stream::getInBuffer(size_t &buffer_len, size_t max_size,
                                   const char *delim) {
     if (in_buffer == 0) in_buffer = nextInBuffer(in_buffer_len);

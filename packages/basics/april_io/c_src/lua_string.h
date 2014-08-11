@@ -67,6 +67,8 @@ namespace april_io {
     virtual const char *nextInBuffer(size_t &buf_len);
     virtual char *nextOutBuffer(size_t &buf_len);
     virtual bool eofStream() const;
+
+    void moveOutBuffer(size_t len);
   };
 
   /**

@@ -77,7 +77,8 @@ namespace april_io {
   }
   
   void CStringStream::close() {
-    clear();
+    flush();
+    // FIXME: closed = true; ???
   }
   
   off_t CStringStream::seek(int whence, int offset) {
@@ -88,6 +89,9 @@ namespace april_io {
   }
   
   void CStringStream::flush() {
+    size_t new_size = out_pos + getOutBufferPos();
+    april_assert(data.capacity() >= new_size);
+    if (data.size() < new_size) data.resize(new_size);
   }
   
   int CStringStream::setvbuf(int mode, size_t size) {
@@ -105,22 +109,29 @@ namespace april_io {
   }
   
   const char *CStringStream::nextInBuffer(size_t &buf_len) {
-    buf_len = data.size() - in_pos - getInBufferPos();
-    return data.c_str() + in_pos + getInBufferPos();
+    april_assert(data.size() >= in_pos + getInBufferPos());
+    in_pos += getInBufferPos();
+    buf_len = data.size() - in_pos;
+    return data.c_str() + in_pos;
   }
   
   char *CStringStream::nextOutBuffer(size_t &buf_len) {
-    if (out_pos + getOutBufferPos() >= data.capacity()) {
-      data.reserve(data.capacity() << 1);
-    }
-    in_pos  += getInBufferPos();
     out_pos += getOutBufferPos();
-    resetBuffers();
+    if (out_pos >= data.capacity()) {
+      data.reserve(data.capacity() << 1);
+      in_pos += getInBufferPos();
+      resetBuffers();
+    }
     buf_len = data.capacity() - out_pos;
     return data.begin() + out_pos;
   }
   
   bool CStringStream::eofStream() const {
     return in_pos + getInBufferPos() >= data.size();
+  }
+  
+  void CStringStream::moveOutBuffer(size_t len) {
+    Stream::moveOutBuffer(len);
+    flush();
   }
 } // namespace april_io

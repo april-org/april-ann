@@ -146,6 +146,23 @@ namespace april_io {
     virtual size_t getOutBufferPos() const;
     virtual void resetOutBuffer();
 
+    /**
+     * Moves the input buffer pointer a given number of bytes, when empty
+     * buffer, this call will refill the buffer with new data from the real
+     * stream.
+     *
+     * @param len - Size of the movement (<= available size).
+     */
+    virtual void moveInBuffer(size_t len);
+
+    /**
+     * Moves the output buffer pointer a given number of bytes, when full
+     * buffer, this call will flush the data into the real stream.
+     *
+     * @param len - Size of the movement (<= available size).
+     */
+    virtual void moveOutBuffer(size_t len);
+
     
     virtual const char *nextInBuffer(size_t &buf_len) = 0;
 
@@ -185,22 +202,6 @@ namespace april_io {
      */
     virtual char *getOutBuffer(size_t &buffer_len, size_t max_size);
 
-    /**
-     * Moves the input buffer pointer a given number of bytes, when empty
-     * buffer, this call will refill the buffer with new data from the real
-     * stream.
-     *
-     * @param len - Size of the movement (<= available size).
-     */
-    virtual void moveInBuffer(size_t len);
-
-    /**
-     * Moves the output buffer pointer a given number of bytes, when full
-     * buffer, this call will flush the data into the real stream.
-     *
-     * @param len - Size of the movement (<= available size).
-     */
-    virtual void moveOutBuffer(size_t len);
   };
   
 } // namespace april_io

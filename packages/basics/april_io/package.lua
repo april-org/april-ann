@@ -15,11 +15,11 @@
    },
    target{
      name = "test",
-   --   execute_script{
-   --     file={
-   --       "test/test.lua",
-   --     },
-   --   },
+     lua_unit_test{
+       file={
+         "test/test_april_io.lua",
+       },
+     },
      c_unit_test{
        file = { "test/test_april_io.cc" },
      },
