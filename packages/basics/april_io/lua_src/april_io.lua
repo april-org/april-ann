@@ -23,7 +23,7 @@ function april_io.register_open_by_extension(ext, func)
   open_by_extension[ext] = func
 end
 
-class_extension(april_io.file, "lines",
+class_extension(april_io.stream, "lines",
                 function(self, ...)
                   local arg = { ... }
                   return function()

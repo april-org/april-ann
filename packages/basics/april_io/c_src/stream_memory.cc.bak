@@ -20,6 +20,7 @@
  */
 
 #include <cstdarg>
+#include "stream.h"
 #include "stream_memory.h"
 #include "unused_variable.h"
 
@@ -47,6 +48,14 @@ namespace april_io {
   
   StreamMemory::~StreamMemory() {
     close();
+  }
+  
+  void StreamMemory::moveInBuffer(size_t len) {
+    if (len > getInBufferAvailableSize()) {
+      ERROR_EXIT(128, "Read memory block overflow!!!\n");
+    }
+    in_block_pos += len;
+    if (
   }
   
 }

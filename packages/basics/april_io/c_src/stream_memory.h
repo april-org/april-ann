@@ -22,8 +22,12 @@
 #define STREAM_MEMORY_H
 
 extern "C" {
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
 #include <stdint.h> // for SIZE_MAX (using stdint.h because cstdint needs c++11
                     // support)
+
 }
 #include <cstdio>
 #include <cstring>
@@ -33,6 +37,37 @@ extern "C" {
 #include "referenced.h"
 #include "stream.h"
 #include "unused_variable.h"
+
+#define WRITE_ONLY_STREAM_MEMORY(name)                                  \
+  virtual char operator[](size_t pos) const {                           \
+    UNUSED_VARIABLE(pos);                                               \
+    ERROR_EXIT(128, "Read only " #name "\n");                           \
+    return 0;                                                           \
+  }                                                                     \
+  virtual off_t seek(int whence, int offset) {                          \
+    UNUSED_VARIABLE(whence);                                            \
+    UNUSED_VARIABLE(offset);                                            \
+    ERROR_EXIT(128, "Write only " #name "\n");                          \
+    return 0;                                                           \
+  }
+
+#define READ_ONLY_STREAM_MEMORY(name)                                   \
+  virtual char &operator[](size_t pos) {                                \
+    UNUSED_VARIABLE(pos);                                               \
+    ERROR_EXIT(128, "Write only " #name "\n");                          \
+    return StreamMemory::DUMMY_CHAR;                                    \
+  }                                                                     \
+  virtual void clear() {                                                \
+    ERROR_EXIT(128, "Read only " #name "\n");                           \
+  }                                                                     \
+  virtual int push(lua_State *L) {                                      \
+    UNUSED_VARIABLE(L);                                                 \
+    ERROR_EXIT(128, "Read only " #name "\n");                           \
+    return 0;                                                           \
+  }                                                                     \
+  virtual void flush() {                                                \
+    ERROR_EXIT(128, "Read only " #name "\n");                           \
+  }
 
 namespace april_io {
 
@@ -49,56 +84,19 @@ namespace april_io {
   ///////////////////////////////////////////////////////////////////////////
   
   class StreamMemory : public Stream {
+  protected:
+    static char DUMMY_CHAR;
+    static const char *NO_ERROR_STRING;
   public:
-    
-    static const size_t MAX_LIMIT_SIZE = SIZE_MAX; // from cstdint
     static const size_t BLOCK_SIZE = 1024;
-    
-    StreamMemory(size_t block_size = BLOCK_SIZE,
-                 size_t max_size = MAX_LIMIT_SIZE);
-    virtual ~StreamMemory();
-    // virtual bool isOpened() const = 0;
-    // virtual void close() = 0;
-    virtual off_t seek(int whence, int offset);
-    virtual void flush();
-    virtual int setvbuf(int mode, size_t size);
-    // virtual bool hasError() const = 0;
-    // virtual const char *getErrorMsg() const = 0;
+    StreamMemory() { }
+    virtual ~StreamMemory() { }
     virtual bool empty() const = 0;
     virtual size_t size() const = 0;
     virtual char operator[](size_t pos) const = 0;
     virtual char &operator[](size_t pos) = 0;
     virtual void clear() = 0;
     virtual int push(lua_State *L) = 0;
-    
-  protected:
-    
-    /// Closes the real stream.
-    virtual void closeStream() = 0;
-    /// Executes seek operation to the real stream.
-    virtual off_t seekStream(int whence, int offset) = 0;
-  
-  private:
-    /// Size of every Lua addlstring block
-    size_t block_size;
-    /// Maximum size of the allocated buffer
-    size_t max_size;
-    /// Current input buffer block pointer.
-    const char *in_block;
-    /// Length of the current input block pointer.
-    size_t in_block_len;
-    /// Current output buffer block pointer.
-    char *out_block;
-    /// Length of the current output block pointer.
-    size_t out_block_len;
-
-    // Auxiliary private methods
-    size_t getInBufferAvailableSize() const;
-    const char *getInBuffer(size_t &memory_len, size_t max_size,
-                            const char *delim);
-    char *getOutBuffer(size_t &memory_len, size_t max_size);
-    void moveInBuffer(size_t len);
-    void moveOutBuffer(size_t len);
   };
 
 } // namespace april_io

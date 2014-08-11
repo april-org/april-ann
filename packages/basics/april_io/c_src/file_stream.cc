@@ -36,7 +36,7 @@ namespace april_io {
   }
 
   ssize_t FileStream::fillBuffer(char *dest, size_t max_size) {
-    ssize_t ret_value, total_size;
+    ssize_t ret_value, total_size = 0;
     do {
       size_t len = max_size - total_size;
       if ((ret_value = read(fd, dest, len)) > 0) {
@@ -45,12 +45,12 @@ namespace april_io {
       else if (ret_value == 0) is_eof = true;
     } while( checkReturnValue(ret_value)<0 &&
              errnum==EINTR &&
-             total_size < max_size );
+             total_size < static_cast<ssize_t>(max_size) );
     return (errnum==0) ? total_size : ret_value;
   }
 
   ssize_t FileStream::flushBuffer(const char *source, size_t max_size) {
-    ssize_t ret_value, total_size;
+    ssize_t ret_value, total_size = 0;
     do {
       if ((ret_value = write(fd, source, max_size)) > 0) total_size += ret_value;
     } while( checkReturnValue(ret_value)<0 && errnum==EINTR );
@@ -60,15 +60,17 @@ namespace april_io {
   void FileStream::closeStream() {
     if (checkReturnValue(::close(fd)) == 0) fd = -1;
   }
+  
   off_t FileStream::seekStream(int whence, int offset) {
     return checkReturnValue(lseek(fd, whence, offset));
   }
   
   FileStream::FileStream(const char *path, const char *mode) :
-    StreamBuffer() {
+    BufferedStream(),
+    is_eof(false) {
     constString mode_cstr(mode);
     int flags;
-    if (mode_cstr == "r") {
+    if (mode_cstr.empty() || mode_cstr == "r") {
       flags = O_RDONLY;
     }
     else if (mode_cstr == "r+") {
@@ -86,14 +88,26 @@ namespace april_io {
     else if (mode_cstr == "a+") {
       flags = O_RDWR | O_CREAT | O_APPEND;
     }
+    else {
+      flags = 0;
+      ERROR_EXIT1(128, "Unknown given mode string '%s'\n", mode);
+    }
     fd = checkReturnValue(open(path, flags));
   }
+
+  FileStream::FileStream(FILE *f) : BufferedStream(), is_eof(false) {
+    fd = checkReturnValue(dup(fileno(f)));
+  }
   
-  FileStream::FileStream(int fd) : StreamBuffer() {
+  FileStream::FileStream(int fd) : BufferedStream(), is_eof(false) {
     fd = checkReturnValue(dup(fd));
   }
   
-  bool FileStream::isOpened() { return fd >= 0; }
+  FileStream::~FileStream() {
+    close();
+  }
+  
+  bool FileStream::isOpened() const { return fd >= 0; }
 
   bool FileStream::eofStream() const {
     return is_eof;

@@ -28,36 +28,34 @@
 #include "error_print.h"
 #include "referenced.h"
 #include "stream.h"
-#include "stream_buffer.h"
+#include "buffered_stream.h"
 #include "unused_variable.h"
 
 namespace april_io {
-  class FileStream : public StreamBuffer {
+  class FileStream : public BufferedStream {
     /// File descriptor.
     int fd, errnum;
     bool is_eof;
     
     template<typename T>
-    bool checkReturnValue(T ret_value);
+    T checkReturnValue(T ret_value);
 
   protected:
     virtual ssize_t fillBuffer(char *dest, size_t max_size);
     virtual ssize_t flushBuffer(const char *source, size_t max_size);
-    virtual void closeStream() = 0;
-    virtual off_t seekStream(int whence, int offset) = 0;
+    virtual void closeStream();
+    virtual off_t seekStream(int whence, int offset);
     virtual bool eofStream() const;
 
   public:
     
-    FileStream(const char *path, const char *mode);
+    FileStream(const char *path, const char *mode=0);
+    FileStream(FILE *f);
     FileStream(int fd);
     virtual ~FileStream();
     
     /// Calls isOpened method of stream property.
     virtual bool isOpened() const;
-    
-    /// Calls close method of stream property.
-    virtual void close();
     
     /// Indicates if an error has been produced.
     virtual bool hasError() const;

@@ -25,26 +25,29 @@ extern "C" {
                     // support)
 }
 
+#include "maxmin.h"
 #include "stream.h"
-#include "stream_memory.h"
+// #include "stream_memory.h"
 #include "unused_variable.h"
 
 namespace april_io {
   
-  Stream::Stream() : Referenced() {
+  Stream::Stream() : Referenced(),
+                     in_buffer(0), in_buffer_pos(0), in_buffer_len(0),
+                     out_buffer(0), out_buffer_pos(0), out_buffer_len(0) {
   }
-
+  
   Stream::~Stream() {
   }
 
   void Stream::trimInBuffer(const char *delim) {
     size_t pos, buf_len;
     do {
-      const char *buf = getInBuffer(buf_len, SIZE_MAX, delim);
+      const char *buf = getInBuffer(buf_len, SIZE_MAX, "");
       pos = 0;
       while(pos < buf_len && strchr(delim, buf[pos])) ++pos;
-      if (pos != buf_len) break;
       moveInBuffer(pos);
+      if (pos != buf_len) break;
     } while(true); // the end condition is determined by break if above
   }
   
@@ -66,30 +69,30 @@ namespace april_io {
            !dest->eof() &&
            dest_len < max_size &&
            (buf = getInBuffer(buf_len, max_size - dest_len, delim)) ) {
-      size_t in_buffer_tail_size = getInBufferAvailableSize();
+      size_t in_buffer_available_size = getInBufferAvailableSize();
       size_t len = dest->put(buf, buf_len);
       moveInBuffer(len);
       dest_len += len;
       // delim true condition
-      if (len != in_buffer_tail_size) break;
+      if (len != in_buffer_available_size) break;
     }
     return dest_len;
   }
   
-  size_t Stream::get(char *dest, size_t size, const char *delim) {
+  size_t Stream::get(char *dest, size_t max_size, const char *delim) {
     const char *buf;
     size_t buf_len, dest_len=0;
     trimInBuffer(delim);
-    while( dest_len < size &&
+    while( dest_len < max_size &&
            !this->hasError() &&
            !this->eof() &&
-           (buf = getInBuffer(buf_len, size - dest_len, delim)) ) {
-      size_t in_buffer_tail_size = getInBufferAvailableSize();
+           (buf = getInBuffer(buf_len, max_size - dest_len, delim)) ) {
+      size_t in_buffer_available_size = getInBufferAvailableSize();
       memcpy(dest + dest_len, buf, buf_len);
       moveInBuffer(buf_len);
       dest_len += buf_len;
       // delim true condition
-      if (buf_len != in_buffer_tail_size) break;
+      if (buf_len != in_buffer_available_size) break;
     }
     return dest_len;
   }
@@ -134,4 +137,77 @@ namespace april_io {
     free(aux_buffer);
     return len;
   }
+
+  bool Stream::eof() const {
+    return (in_buffer_pos == in_buffer_len) && eofStream();
+  }
+  
+  //////////////////////////////////////////////////////////////////////////
+
+  void Stream::resetBuffers() {
+    in_buffer_pos  = in_buffer_len;
+    out_buffer_pos = out_buffer_len;
+  }
+  
+  size_t Stream::getInBufferPos() const {
+    return in_buffer_pos;
+  }
+  
+  size_t Stream::getOutBufferPos() const {
+    return out_buffer_pos;
+  }
+  
+  void Stream::resetOutBuffer() {
+    out_buffer_pos = out_buffer_len;
+  }
+
+  const char *Stream::getInBuffer(size_t &buffer_len, size_t max_size,
+                                  const char *delim) {
+    if (in_buffer == 0) in_buffer = nextInBuffer(in_buffer_len);
+    buffer_len = april_utils::min(in_buffer_len - in_buffer_pos, max_size);
+    if (delim != 0) {
+      size_t pos = in_buffer_pos;
+      while(pos < in_buffer_len && !strchr(delim, in_buffer[pos])) ++pos;
+      buffer_len = pos - in_buffer_pos;
+    }
+    return in_buffer + in_buffer_pos;
+  }
+  
+  char *Stream::getOutBuffer(size_t &buffer_len, size_t max_size) {
+    if (out_buffer == 0) out_buffer = nextOutBuffer(out_buffer_len);
+    buffer_len = april_utils::min(out_buffer_len - out_buffer_pos, max_size);
+    return out_buffer + out_buffer_pos;
+  }
+
+  size_t Stream::getInBufferAvailableSize() const {
+    return in_buffer_len - in_buffer_pos;
+  }
+  
+  size_t Stream::getOutBufferAvailableSize() const {
+    return out_buffer_len - out_buffer_pos;
+  }
+  
+  void Stream::moveInBuffer(size_t len) {
+    if (len > getInBufferAvailableSize()) {
+      ERROR_EXIT(128, "Read buffer overflow!!!\n");
+    }
+    in_buffer_pos += len;
+    if (in_buffer_pos == in_buffer_len) {
+      in_buffer = nextInBuffer(in_buffer_len);
+      in_buffer_pos = 0;
+    }
+  }
+  
+  void Stream::moveOutBuffer(size_t len) {
+    if (len > getOutBufferAvailableSize()) {
+      ERROR_EXIT(128, "Write buffer overflow!!!\n");
+    }
+    out_buffer_pos += len;
+    if (out_buffer_pos == out_buffer_len) {
+      flush();
+      out_buffer = nextOutBuffer(out_buffer_len);
+      out_buffer_pos = 0;
+    }
+  }
+  
 } // namespace april_io
