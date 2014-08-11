@@ -515,12 +515,17 @@ public:
     return new GPUMirroredMemoryBlock<T>(mmapped_data);
   }
   
+  /// Constructor from non-allocated memory, does not free mem pointer.
   GPUMirroredMemoryBlock(unsigned int sz, T *mem) :
     GPUMirroredMemoryBlockBase(sz*sizeof(T), mem) { }
   
+  /// Constructor from non-allocated const memory, does not free mem pointer,
+  /// and writes are not allowed
   GPUMirroredMemoryBlock(unsigned int sz, const T *mem) :
     GPUMirroredMemoryBlockBase(sz*sizeof(T), mem) { }
   
+  /// Constructor with allocation of memory, the memory pointer will be properly
+  /// allocated and freed at destruction.
   GPUMirroredMemoryBlock(unsigned int sz) :
   GPUMirroredMemoryBlockBase(sz*sizeof(T)) { }
   

@@ -31,6 +31,8 @@ namespace ANN {
   /// to the input matrix. The size and dimensions of input matrix are not
   /// restricted.
   class GaussianNoiseANNComponent : public StochasticANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(GaussianNoiseANNComponent);
+
     TokenMatrixFloat *input, *output;
     Token            *error_input, *error_output;
     float            mean, variance;

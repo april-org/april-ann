@@ -87,6 +87,7 @@ namespace april_io {
     virtual bool empty() const;
     virtual size_t size() const;
     virtual char operator[](size_t pos) const;
+    virtual int push(lua_State *L);
     
     virtual bool isOpened() const;
     virtual void close();

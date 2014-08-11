@@ -1,27 +1,27 @@
 -- OVERWRITTING TOSTRING FUNCTION
-class_extension(matrix, "to_lua_string",
-                function(self, format)
-                  return string.format("matrix.fromString[[%s]]",
-                                       self:toString(format or "binary"))
-                end)
+class.extend(matrix, "to_lua_string",
+             function(self, format)
+               return string.format("matrix.fromString[[%s]]",
+                                    self:toString(format or "binary"))
+end)
 
 -- ADDING PSEUDO-INVERSE METHOD
-class_extension(matrix, "pinv",
-		function(self)
-		  local u,s,vt = self:svd()
-		  for aux,i in s:iterate() do
-		    u:select(2,i):scal(((math.abs(aux)>1e-07) and 1/aux) or 0.0)
-		  end
-		  return matrix.as(self):
-		  gemm{
-		    A       = vt,
-		    B       = u,
-		    trans_A = true,
-		    trans_B = true,
-		    alpha   = 1.0,
-		    beta    = 0.0,
-		  }
-		end)
+class.extend(matrix, "pinv",
+             function(self)
+               local u,s,vt = self:svd()
+               for aux,i in s:iterate() do
+                 u:select(2,i):scal(((math.abs(aux)>1e-07) and 1/aux) or 0.0)
+               end
+               return matrix.as(self):
+                 gemm{
+                   A       = vt,
+                   B       = u,
+                   trans_A = true,
+                   trans_B = true,
+                   alpha   = 1.0,
+                   beta    = 0.0,
+                 }
+end)
 
 -- the constructor
 matrix.row_major = function(...)
@@ -59,7 +59,7 @@ matrix.meta_instance.__eq = function(op1, op2)
 end
 
 matrix.meta_instance.__add = function(op1, op2)
-  if not isa(op1,matrix) then op1,op2=op2,op1 end
+  if not class.is_a(op1,matrix) then op1,op2=op2,op1 end
   if type(op2) == "number" then
     return op1:clone():scalar_add(op2)
   else
@@ -68,18 +68,18 @@ matrix.meta_instance.__add = function(op1, op2)
 end
 
 matrix.meta_instance.__sub = function(op1, op2)
-  if isa(op1,matrix) and isa(op2,matrix) then
+  if class.is_a(op1,matrix) and class.is_a(op2,matrix) then
     return op1:sub(op2)
-  elseif isa(op1,matrix) then
+  elseif class.is_a(op1,matrix) then
     return op1:clone():scalar_add(-op2)
-  elseif isa(op2,matrix) then
+  elseif class.is_a(op2,matrix) then
     return op2:clone():scal(-1):scalar_add(op1)
   end
 end
 
 matrix.meta_instance.__mul = function(op1, op2)
-  if isa(op1,matrix.sparse) or isa(op2,matrix.sparse) then
-    if isa(op2,matrix.sparse) then
+  if class.is_a(op1,matrix.sparse) or class.is_a(op2,matrix.sparse) then
+    if class.is_a(op2,matrix.sparse) then
       local op1,op2 = op2:transpose(),op1:transpose()
       local res = matrix[op2:get_major_order()](op1:dim(1),op2:dim(2))
       res:sparse_mm{ alpha=1.0, beta=0.0, A=op1, B=op2 }
@@ -87,7 +87,7 @@ matrix.meta_instance.__mul = function(op1, op2)
     else
     end
   else
-    if not isa(op1,matrix) then op1,op2=op2,op1 end
+    if not class.is_a(op1,matrix) then op1,op2=op2,op1 end
     if type(op2) == "number" then return op1:clone():scal(op2)
     else return op1:mul(op2)
     end
@@ -107,7 +107,7 @@ matrix.meta_instance.__div = function(op1, op2)
     local new_mat = op2:clone()
     return new_mat:div(op1)
   else
-    assert(isa(op1,matrix) and isa(op2,matrix),
+    assert(class.is_a(op1,matrix) and class.is_a(op2,matrix),
 	   "Expected a matrix and a number or two matrices")
     local new_mat1 = op1:clone()
     local new_mat2 = op2:clone():div(1)
@@ -178,7 +178,7 @@ function matrix.dict.wrap_matrices(m)
   elseif tt == "matrix" then
     m = matrix.dict():insert("1",m)
   end
-  assert(isa(m, matrix.dict), "Needs a matrix.dict, a matrix, or a table")
+  assert(class.is_a(m, matrix.dict), "Needs a matrix.dict, a matrix, or a table")
   return m
 end
 

@@ -38,7 +38,7 @@ using april_utils::clamp;
 // ---------------------------------------------------------------------
 
 template <typename T>
-MatrixDataSet<T>::MatrixDataSet(Matrix<T> *m){
+MatrixDataSet<T>::MatrixDataSet(Matrix<T> *m) : DataSet<T>() {
   if (!m->isSimple())
     ERROR_EXIT(128, "Matrix need to be simple (contiguous "
 	       "and in row-major)\n");
@@ -237,7 +237,8 @@ MatrixDataSet<T>::~MatrixDataSet(){
 template <typename T>
 IdentityDataSet<T>::IdentityDataSet(int patternSize,
 				    T zerovalue,
-				    T onevalue) : zerovalue(zerovalue),
+				    T onevalue) : DataSet<T>(),
+                                                  zerovalue(zerovalue),
 						  onevalue(onevalue) {
   patternsz = patternSize;
 }
@@ -266,7 +267,7 @@ int IdentityDataSet<T>::putPattern(int index, const T *pat) {
 // ---------------------------------------------------------------------
 
 template <typename T>
-UnionDataSet<T>::UnionDataSet(int n, DataSet<T> **v) {
+UnionDataSet<T>::UnionDataSet(int n, DataSet<T> **v) : DataSet<T>() {
   num = n;
   vds = new DataSet<T>*[num];
   d = new int[num+1];
@@ -331,7 +332,7 @@ int UnionDataSet<T>::putPattern(int index, const T *pat) {
 // ---------------------------------------------------------------------
 
 template <typename T>
-SubDataSet<T>::SubDataSet(int ini, int fin, DataSet<T> *ds) {
+SubDataSet<T>::SubDataSet(int ini, int fin, DataSet<T> *ds) : DataSet<T>() {
   this->ds = ds;
   IncRef(ds); // garbage collection
   this->ini = ini;
@@ -359,7 +360,7 @@ int SubDataSet<T>::putPattern(int index, const T *pat) {
 // ---------------------------------------------------------------------
 
 template <typename T>
-SplitDataSet<T>::SplitDataSet(int ini, int fin, DataSet<T> *ds) {
+SplitDataSet<T>::SplitDataSet(int ini, int fin, DataSet<T> *ds) : DataSet<T>() {
   this->ini = ini;
   this->fin = fin;
   this->ds = ds;
@@ -386,7 +387,7 @@ int SplitDataSet<T>::getPattern(int index, T *pat) {
 // ---------------------------------------------------------------------
 
 template <typename T>
-JoinDataSet<T>::JoinDataSet(int n, DataSet<T> **v) {
+JoinDataSet<T>::JoinDataSet(int n, DataSet<T> **v) : DataSet<T>() {
   num = n;
   vds = new DataSet<T>*[num];
   d   = new int[num+1];
@@ -430,7 +431,8 @@ int JoinDataSet<T>::putPattern(int index, const T *pat) {
 // ---------------------------------------------------------------------
 
 template <typename T>
-IndexDataSet<T>::IndexDataSet(DataSet<T> **datasets, int firstindex) {
+IndexDataSet<T>::IndexDataSet(DataSet<T> **datasets, int firstindex) :
+  DataSet<T>() {
   this->firstindex = firstindex;
   indices = datasets[0];
   IncRef(indices); // garbage collection
@@ -485,7 +487,8 @@ int IndexDataSet<T>::putPattern(int index, const T *pat) {
 
 template <typename T>
 LinearCombDataSet<T>::LinearCombDataSet(DataSet<T> *ds,
-                                        LinearCombConf<T> *conf) {
+                                        LinearCombConf<T> *conf) :
+  DataSet<T>() {
   this->ds = ds;
   aux  = new T[ds->patternSize()+1]; aux[0] = 1;
   IncRef(ds); // garbage collection
@@ -521,6 +524,7 @@ template <typename T>
 ContextualizerDataSet<T>::ContextualizerDataSet(DataSet<T> *ds,
 						int izq, int der,
 						bool reverse) :
+  DataSet<T>(),
   ctxtizq(izq), ctxtder(der), ds(ds), reverse(reverse) {
   IncRef(ds); // garbage collection
   numpatterns = ds->numPatterns();
@@ -567,7 +571,7 @@ int ContextualizerDataSet<T>::putPattern(int index, const T *pat) {
 // ---------------------------------------------------------------------
 
 template <typename T>
-AccumulateDataSet<T>::AccumulateDataSet(int patsz, int numpat) {
+AccumulateDataSet<T>::AccumulateDataSet(int patsz, int numpat) : DataSet<T>() {
   patternsize = patsz;
   numpatterns = numpat;
   data        = new double[patsz];
@@ -604,7 +608,7 @@ int AccumulateDataSet<T>::putPattern(int index, const T *pat) {
 
 template <typename T>
 ByteDataSet<T>::ByteDataSet(int patsz, int numpat,
-			    double a, double b) {
+			    double a, double b) : DataSet<T>() {
   patternsize = patsz;
   numpatterns = numpat;
   this->a     = a;
@@ -643,7 +647,7 @@ int ByteDataSet<T>::putPattern(int index, const T *pat) {
 
 
 template <typename T>
-BitDataSet<T>::BitDataSet(int nump, int patsize) {
+BitDataSet<T>::BitDataSet(int nump, int patsize) : DataSet<T>() {
   numpatterns     = nump;
   patternsize     = patsize;
   int p           = ((numpatterns*patternsize)>>3) + 1;
@@ -696,65 +700,48 @@ int BitDataSet<T>::putPattern(int index, const T *pat) {
 // ---------------------------------------------------------------------
 
 template <typename T>
-SparseDataset<T>::SparseDataset(Matrix<T> *m, int nump, int patsize) :
-  matrix(m), numpatterns(nump), patternsize(patsize) {
-  if (!m->isSimple())
-    ERROR_EXIT(128, "Matrix need to be simple (contiguous "
-	       "and in row-major)\n");
+SparseMatrixDataset<T>::SparseMatrixDataset(SparseMatrix<T> *m) :
+  DataSet<T>(),
+  matrix(m), numpatterns(m->getDimSize(0)), patternsize(m->getDimSize(1)) {
+  if (m->getSparseFormat() != CSR_FORMAT) {
+    ERROR_EXIT(128, "SparseMatrix need to be in CSR format\n");
+  }
   IncRef(m);
-  matrix_indexes = new int[nump];
-  int	j	 = 0;
-  const float *d = m->getRawDataAccess()->getPPALForRead();
-  for (int i=0; i<nump; ++i) {
-    matrix_indexes[i]  = j;
-    int	count	       = d[j];
-    for (int k=0; k<count<<2; k+=2)
-      if (d[k] < 0 || d[k] >= patternsize)
-	ERROR_EXIT2(128, "Incorrect position value %.0f at matrix,"
-		    " expected in range [0,%d]\n", d[k], patternsize-1);
-    j += (count<<1) + 1;
-  }
-  if (j > m->size()) {
-    ERROR_EXIT2(128,
-		"Tamanyo de matriz incorrecto para SparseDataset!!!\n"
-		"\tSe esperaba m->size= %d, y fue %d\n",
-		j, m->size());
-  }
 }
 
 template <typename T>
-SparseDataset<T>::~SparseDataset() {
+SparseMatrixDataset<T>::~SparseMatrixDataset() {
   DecRef(matrix);
-  delete[] matrix_indexes;
 }
 
 template <typename T>
-int SparseDataset<T>::getPattern(int index, T *pat) {
-  // WARNING: inly works with float
-  memset(pat, 0, sizeof(T)*patternsize);
-  const float *d = matrix->getRawDataAccess()->getPPALForRead();
-  int	pos   = matrix_indexes[index];
-  int	count = d[pos++];
-  
-  for (int i=0; i<count; i++) {
-    pat[int(d[pos])]	 = d[pos+1];
-    pos			+= 2;
+int SparseMatrixDataset<T>::getPattern(int index, T *pat) {
+  // WARNING: only works with float
+  for (int i=0; i<patternsize; ++i) pat[i] = T(0.0f);
+  typename SparseMatrix<T>::const_iterator it(matrix->iteratorAtFirst(index,0));
+  while(true) {
+    int x0,x1;
+    it.getCoords(x0,x1);
+    if (x0 != index) break;
+    pat[x1] = *it;
   }
   return patternsize;
 }
 
 template <typename T>
-int SparseDataset<T>::putPattern(int index, const T *pat) {
+int SparseMatrixDataset<T>::putPattern(int index, const T *pat) {
   UNUSED_VARIABLE(index);
   UNUSED_VARIABLE(pat);
-  ERROR_EXIT(1,"Method putPattern forbidden for SparseDataset!!!\n");
+  ERROR_EXIT(1,"Method putPattern forbidden for SparseMatrixDataset!!!\n");
   return 0;
 }
 
 // ---------------------------------------------------------------------
 
 template <typename T>
-ShortListDataSet<T>::ShortListDataSet(DataSet<T> *ds, int short_list_size, int unk_word) :
+ShortListDataSet<T>::ShortListDataSet(DataSet<T> *ds, int short_list_size,
+                                      int unk_word) :
+  DataSet<T>(),
   ds(ds), short_list_size(short_list_size), unk_word(unk_word) {
   IncRef(ds);
   patsize = ds->patternSize();
@@ -785,6 +772,7 @@ int ShortListDataSet<T>::putPattern(int index, const T *pat) {
 template <typename T>
 IndexFilterDataSet<T>::IndexFilterDataSet(DataSet<T> *ds,
 					  ReferencedVectorUint *indexes) :
+  DataSet<T>(),
   ds(ds), indexes(indexes) {
   IncRef(ds);
   IncRef(indexes);
@@ -816,6 +804,7 @@ template <typename T>
 PerturbationDataSet<T>::PerturbationDataSet(DataSet<T> *ds, MTRand *random,
 					    double mean,
 					    double variance) :
+  DataSet<T>(),
   ds(ds), random(random), mean(mean), variance(variance) {
   IncRef(ds);
   IncRef(random);
@@ -850,6 +839,7 @@ template <typename T>
 SaltNoiseDataSet<T>::SaltNoiseDataSet(DataSet<T> *ds, MTRand *random,
 				      double vd,
 				      T zero) :
+  DataSet<T>(),
   ds(ds), random(random), vd(vd), zero(zero),
   number_of_zeroes(static_cast<int>(vd*ds->patternSize())) {
   IncRef(ds);
@@ -888,6 +878,7 @@ SaltPepperNoiseDataSet<T>::SaltPepperNoiseDataSet(DataSet<T> *ds, MTRand *random
 						  double vd,
 						  T zero,
 						  T one) :
+  DataSet<T>(),
   ds(ds), random(random), vd(vd), zero(zero), one(one),
   number_of_perturbations(static_cast<int>(vd*ds->patternSize())) {
   IncRef(ds);
@@ -923,7 +914,9 @@ int SaltPepperNoiseDataSet<T>::putPattern(int index, const T *pat) {
 //-------------------------------------------------------------
 
 template <typename T>
-StepDataSet<T>::StepDataSet(DataSet<T> *ds, int step):ds(ds), step(step){
+StepDataSet<T>::StepDataSet(DataSet<T> *ds, int step):
+  DataSet<T>(),
+  ds(ds), step(step){
   IncRef(ds);
 }
 
@@ -950,6 +943,7 @@ template<typename T> int StepDataSet<T>::putPattern(int index, const T *pat) {
 template <typename T>
 DerivDataSet<T>::DerivDataSet(DataSet<T> *ds,
 			      bool deriv0, bool deriv1, bool deriv2) :
+  DataSet<T>(),
   ds(ds), deriv0(deriv0), deriv1(deriv1), deriv2(deriv2) {
   IncRef(ds);
   origpatternsz = ds->patternSize();
@@ -1028,6 +1022,7 @@ CacheDataSet<T>::CacheDataSet(DataSet<T> *ds, int **word2cache,
 			      int end_token_id,
 			      int null_token_id,
 			      int cache_stop_token_id) :
+  DataSet<T>(),
   ds(ds),word2cache(word2cache),
   word2cache_sizes(word2cache_sizes), decays(decays),
   voc_size(voc_size),
@@ -1117,6 +1112,7 @@ int CacheDataSet<T>::putPattern(int index, const T *pat) {
 template <typename T>
 SubAndDivNormalizationDataSet<T>::
 SubAndDivNormalizationDataSet(DataSet<T> *ds, T *sub, T *div) :
+  DataSet<T>(),
   ds(ds) {
   IncRef(ds);
   const int psize=ds->patternSize();
@@ -1156,6 +1152,7 @@ int SubAndDivNormalizationDataSet<T>::putPattern(int index, const T *pat) {
 template <typename T>
 ClampDataSet<T>::
 ClampDataSet(DataSet<T> *ds, float lower, float upper) :
+  DataSet<T>(),
   ds(ds), lower(lower), upper(upper) {
   IncRef(ds);
 }

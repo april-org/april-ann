@@ -2,14 +2,14 @@
 
 EPSILON=1e-03
 
-class_extension(matrix,
-		"normalize",
-		function(self)
-		  for sw in self:sliding_window():iterate() do
-		    sw:scal(1/sw:sum())
-		  end
-		  return self
-		end)
+class.extend(matrix,
+             "normalize",
+             function(self)
+               for sw in self:sliding_window():iterate() do
+                 sw:scal(1/sw:sum())
+               end
+               return self
+end)
 
 function check_loss(i,t,l,f,g)
   if f then

@@ -13,14 +13,17 @@
      delete{ dir = "build" },
      delete{ dir = "include" },
    },
-   -- target{
-   --   name = "test",
+   target{
+     name = "test",
    --   execute_script{
    --     file={
    --       "test/test.lua",
    --     },
    --   },
-   -- },
+     c_unit_test{
+       file = { "test/test_april_io.cc" },
+     },
+   },
    target{
      name = "provide",
      depends = "init",

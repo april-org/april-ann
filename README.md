@@ -4,11 +4,10 @@ APRIL-ANN
 Contributions
 -------------
 
-Contributions are wellcome. Only pull requests
-to `devel` branch will be accepted, so avoid to
-create pull requests to `master`. A Travis CI
-instance will check that your request passes all
-tests. For unit testing use the package `basics/utest`.
+Contributions are wellcome. Only pull requests to `devel` branch will be
+accepted, so avoid to create pull requests to `master`. A Travis CI instance
+will check that your request passes all tests. For Lua unit testing use the
+package `basics/utest`, and for C++ unit testing the package `basics/gtest`.
 
 Requirements
 ------------
@@ -240,6 +239,7 @@ Includes these sources
 - Median filter from Simon Perreault: http://nomis80.org/ctmf.html
 - RuningStat class for efficient and stable computation of mean and variance: http://www.johndcook.com/standard_deviation.html
 - Lua autocompletion rlcompleter release 2, by rthomas: https://github.com/rrthomas/lua-rlcompleter
+- Google C++ Testing Framework: https://code.google.com/p/googletest/
 
 Wiki documentation
 ------------------

@@ -22,7 +22,7 @@ package{ name = "autodiff.ann",
    },
    -- target{
    --   name = "test",
-   --   execute_script{
+   --   lua_unit_test{
    --     file={
    -- 	 "test/test-functional-programming.lua",
    --     },

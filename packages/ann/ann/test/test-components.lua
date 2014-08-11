@@ -1,11 +1,12 @@
 local check   = utest.check
+local T       = utest.test
 local verbose = false
 local rnd     = random(1234)
 
 function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
   if verbose then
     fprintf(io.stderr, "\nGradients %s (%d,%d,%d,%s)\n",
-	    desc,i,o,b,loss_name)
+            desc,i,o,b,loss_name)
   end
   ann.components.reset_id_counters()
   local c = component_builder_func()
@@ -23,11 +24,11 @@ function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
   end
   if norm then
     apply(function(m) m:scal(1/m:sum()) end,
-	  target:sliding_window():iterate())
+      target:sliding_window():iterate())
   end
   result = trainer:grad_check_step(input,
-				   target,
-				   verbose)
+                                   target,
+                                   verbose)
   if not result then
     print("---- INPUT ----")
     print(input)
@@ -47,336 +48,384 @@ end
 ------------------------
 -- DOT PRODUCT + BIAS --
 ------------------------
-
-check(function()
+T("DOTPRODUCT + BIAS TEST",
+  function()
+    check(function()
         for i=2,4 do
           for o=2,4 do
             for b=1,4 do
               check_component(function()
-                                return ann.components.stack():
-                                push( ann.components.dot_product{ input=i,
-                                                                  output=o } ):
-                                push( ann.components.bias{ size=o } )
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i,
+                                                      output=o } ):
+                    push( ann.components.bias{ size=o } )
                               end,
-                              "mse", i, o, b, "DOTPRODUCT + BIAS")
+                "mse", i, o, b, "DOTPRODUCT + BIAS")
             end
           end
         end
         return true
-      end)
+    end)
+end)
 
 -- DROPOUT
 
-check(function()
+T("DOTPRODUCT + BIAS + DROPOUT TEST",
+  function()
+    check(function()
         for i=2,4 do
           for o=2,4 do
             for b=1,4 do
               check_component(function()
-                                return ann.components.stack():
-                                push( ann.components.dot_product{ input=i, output=o } ):
-                                push( ann.components.bias{ size=o } ):
-                                push( ann.components.dropout() )
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.bias{ size=o } ):
+                    push( ann.components.dropout() )
                               end,
-                              "mse", i, o, b, "DOTPRODUCT + BIAS + DROPOUT")
+                "mse", i, o, b, "DOTPRODUCT + BIAS + DROPOUT")
             end
           end
         end
         return true
-      end)
+    end)
+end)
 
 -----------------------------------
 -- DOT PRODUCT + BIAS + FMEASURE --
 -----------------------------------
 
-check(function()
+T("DOTPRODUCT + BIAS + FM_MICRO_AVG TEST",
+  function()
+    check(function()
         for i=2,4 do
           for o=1,4 do
             b=32
             check_component(function()
-                              return ann.components.stack():
-                              push( ann.components.dot_product{ input=i, output=o } ):
-                              push( ann.components.bias{ size=o } ):
-                              push( ann.components.actf.logistic() )
+                return ann.components.stack():
+                  push( ann.components.dot_product{ input=i, output=o } ):
+                  push( ann.components.bias{ size=o } ):
+                  push( ann.components.actf.logistic() )
                             end,
-                            "batch_fmeasure_micro_avg", i, o, b, "DOTPRODUCT + BIAS + LOGISTIC")
+              "batch_fmeasure_micro_avg", i, o, b, "DOTPRODUCT + BIAS + FM")
           end
         end
         return true
-      end)
+    end)
+end)
 
-check(function()
+T("DOTPRODUCT + BIAS + FM_MACRO_AVG TEST",
+  function()
+    check(function()
         for i=2,4 do
           for o=1,4 do
             b=32
             check_component(function()
-                              return ann.components.stack():
-                              push( ann.components.dot_product{ input=i, output=o } ):
-                              push( ann.components.bias{ size=o } ):
-                              push( ann.components.actf.logistic() )
+                return ann.components.stack():
+                  push( ann.components.dot_product{ input=i, output=o } ):
+                  push( ann.components.bias{ size=o } ):
+                  push( ann.components.actf.logistic() )
                             end,
-                            "batch_fmeasure_macro_avg", i, o, b, "DOTPRODUCT + BIAS + LOGISTIC")
+              "batch_fmeasure_macro_avg", i, o, b, "DOTPRODUCT + BIAS + FM")
           end
         end
         return true
-      end)
+    end)
+end)
 
-check(function()
+T("DOTPRODUCT + BIAS + FM_MACRO_AVG + SOFTMAX TEST",
+  function()
+    check(function()
         for i=2,4 do
           for o=2,4 do
             b=32
             check_component(function()
-                              return ann.components.stack():
-                              push( ann.components.dot_product{ input=i, output=o } ):
-                              push( ann.components.bias{ size=o } ):
-                              push( ann.components.actf.softmax() )
+                return ann.components.stack():
+                  push( ann.components.dot_product{ input=i, output=o } ):
+                  push( ann.components.bias{ size=o } ):
+                  push( ann.components.actf.softmax() )
                             end,
-                            "batch_fmeasure_macro_avg", i, o, b, "DOTPRODUCT + BIAS + SOFTMAX",
-                            true)
+              "batch_fmeasure_macro_avg", i, o, b, "DOTPRODUCT + BIAS + SOFTMAX + FM",
+              true)
           end
         end
         return true
-      end)
+    end)
+end)
 
 --------------------------------
 -- SLICE + DOT PRODUCT + BIAS --
 --------------------------------
 
-check(function()
+T("SLICE + DOTPRODUCT + BIAS TEST",
+  function()
+    check(function()
         for p=2,4 do
           for s=2,4 do
             for o=2,4 do
               for b=1,4 do
                 check_component(function()
-                                  return ann.components.stack():
-                                  push( ann.components.rewrap{ size={12, 10} } ):
-                                  push( ann.components.slice{ pos={ p, p+1 },
-                                                              size={s+1, s} }):
-                                  push( ann.components.rewrap{ size={(s+1)*s} } ):
-                                  push( ann.components.dot_product{ input=(s+1)*s,
-                                                                    output=o } ):
-                                  push( ann.components.bias{ size=o } )
+                    return ann.components.stack():
+                      push( ann.components.rewrap{ size={12, 10} } ):
+                      push( ann.components.slice{ pos={ p, p+1 },
+                                                  size={s+1, s} }):
+                      push( ann.components.rewrap{ size={(s+1)*s} } ):
+                      push( ann.components.dot_product{ input=(s+1)*s,
+                                                        output=o } ):
+                      push( ann.components.bias{ size=o } )
                                 end,
-                                "mse", 120, o, b, "SLICE + DOTPRODUCT + BIAS")
+                  "mse", 120, o, b, "SLICE + DOTPRODUCT + BIAS")
               end
             end
           end
         end
         return true
-      end)
+    end)
+end)
 
 ------------------
 -- AUTO-ENCODER --
 ------------------
 
-check(function()
+T("AUTO-ENCODER TEST",
+  function()
+    check(function()
         for i=2,4 do
           for o=2,4 do
             for b=1,4 do
               check_component(function()
-                                return ann.components.stack():
-                                push( ann.components.dot_product{ weights="w1",
-                                                                  input=i, output=o } ):
-                                push( ann.components.bias{ size=o } ):
-                                push( ann.components.actf.logistic() ):
-                                push( ann.components.dot_product{ weights="w1",
-                                                                  input=o, output=i,
-                                                                  transpose=true } ):
-                                push( ann.components.bias{ size=i } ):
-                                push( ann.components.actf.logistic() )
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ weights="w1",
+                                                      input=i, output=o } ):
+                    push( ann.components.bias{ size=o } ):
+                    push( ann.components.actf.logistic() ):
+                    push( ann.components.dot_product{ weights="w1",
+                                                      input=o, output=i,
+                                                      transpose=true } ):
+                    push( ann.components.bias{ size=i } ):
+                    push( ann.components.actf.logistic() )
                               end,
-                              "mse", i, i, b, "AUTO-ENCODER")
+                "mse", i, i, b, "AUTO-ENCODER")
             end
           end
         end
         return true
-      end)
+    end)
+end)
 
 --------------------------------------
 -- CONVOLUTION + ACTF + MAX POOLING --
 --------------------------------------
 
-check(function()
+T("REWRAP + CONVOLUTION + ACTF + MAXPOOLING TEST + FLATTEN TEST",
+  function()
+    check(function()
         for n=1,4 do
           for b=1,4 do
             check_component(function()
-                              return ann.components.stack():
-                              push( ann.components.rewrap{ size={1, 8, 10} } ):
-                              push( ann.components.convolution{ kernel={1, 3, 5}, n=n } ):
-                              push( ann.components.convolution_bias{ n=n, ndims=3 } ):
-                              push( ann.components.actf.logistic() ):
-                              push( ann.components.max_pooling{ kernel={n, 2, 3} } ):
-                              push( ann.components.flatten() )
+                return ann.components.stack():
+                  push( ann.components.rewrap{ size={1, 8, 10} } ):
+                  push( ann.components.convolution{ kernel={1, 3, 5}, n=n } ):
+                  push( ann.components.convolution_bias{ n=n, ndims=3 } ):
+                  push( ann.components.actf.logistic() ):
+                  push( ann.components.max_pooling{ kernel={n, 2, 3} } ):
+                  push( ann.components.flatten() )
                             end,
-                            "mse", 80, 6, b, "CONVOLUTION "..n)
+              "mse", 80, 6, b, "CONVOLUTION "..n)
           end
         end
         return true
-      end)
+    end)
+end)
 
 -------------------------------
 -- COPY + JOIN + DOT PRODUCT --
 -------------------------------
 
-check(function()
+T("COPY + JOIN + DOTPRODUCT TEST",
+  function()
+    check(function()
         for t=2,4 do
           for i=2,4 do
             for o=2,4 do
               for b=1,4 do
                 check_component(function()
-                                  local j = ann.components.join()
-                                  for k=1,t do
-                                    j:add( ann.components.dot_product{ input=i,
-                                                                       output=o,
-                                                                       weights="w" } )
-                                  end
-                                  return ann.components.stack():
-                                  push( ann.components.copy{ input=i, times=t } ):
-                                  push( j )
+                    local j = ann.components.join()
+                    for k=1,t do
+                      j:add( ann.components.dot_product{ input=i,
+                                                         output=o,
+                                                         weights="w" } )
+                    end
+                    return ann.components.stack():
+                      push( ann.components.copy{ input=i, times=t } ):
+                      push( j )
                                 end,
-                                "mse", i, o*t, b, "COPY "..t)
+                  "mse", i, o*t, b, "COPY "..t)
               end
             end
           end
         end
         return true
-      end)
+    end)
+end)
 
 --------------
 -- LOGISTIC --
 --------------
 
-check(function()
+T("DOTPRODUCT + LOGISTIC TEST",
+  function()
+    check(function()
         for i=1,4 do
           for o=1,4 do
             for b=1,4 do
               check_component(function()
-                                return ann.components.stack():
-                                push( ann.components.dot_product{ input=i, output=o } ):
-                                push( ann.components.actf.logistic() )
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.actf.logistic() )
                               end,
-                              "mse", i, o, b, "LOGISTIC")
+                "mse", i, o, b, "LOGISTIC")
             end
           end
         end
         return true
-      end)
+    end)
+end)
 
 ------------------
 -- LOG_LOGISTIC --
 ------------------
 
-check(function()
+T("DOTPRODUCT + LOG_LOGISTIC TEST",
+  function()
+    check(function()
         for i=1,4 do
           for o=1,4 do
             for b=1,4 do
               check_component(function()
-                                return ann.components.stack():
-                                push( ann.components.dot_product{ input=i, output=o } ):
-                                push( ann.components.actf.log_logistic() )
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.actf.log_logistic() )
                               end,
-                              "cross_entropy", i, o, b, "LOG_LOGISTIC")
+                "cross_entropy", i, o, b, "LOG_LOGISTIC")
             end
           end
         end
         return true
-      end)
+    end)
+end)
 
 ----------
 -- TANH --
 ----------
 
-check(function()
+T("DOTPRODUCT + TANH TEST",
+  function()
+    check(function()
         for i=1,4 do
           for o=1,4 do
             for b=1,4 do
               check_component(function()
-                                return ann.components.stack():
-                                push( ann.components.dot_product{ input=i, output=o } ):
-                                push( ann.components.actf.tanh() )
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.actf.tanh() )
                               end,
-                              "mse", i, o, b, "TANH")
+                "mse", i, o, b, "TANH")
             end
           end
         end
         return true
-      end)
+    end)
+end)
 
 --------------
 -- SOFTPLUS --
 --------------
 
-check(function()
+T("DOTPRODUCT + SOFTPLUS TEST",
+  function()
+    check(function()
         for i=1,4 do
           for o=1,4 do
             for b=1,4 do
               check_component(function()
-                                return ann.components.stack():
-                                push( ann.components.dot_product{ input=i, output=o } ):
-                                push( ann.components.actf.softplus() )
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.actf.softplus() )
                               end,
-                              "mse", i, o, b, "SOFTPLUS")
+                "mse", i, o, b, "SOFTPLUS")
             end
           end
         end
         return true
-      end)
+    end)
+end)
 
 ----------
 -- RELU --
 ----------
 
-check(function()
+T("DOTPRODUCT + RELU TEST",
+  function()
+    check(function()
         for i=1,4 do
           for o=1,4 do
             for b=1,4 do
               check_component(function()
-                                return ann.components.stack():
-                                push( ann.components.dot_product{ input=i, output=o } ):
-                                push( ann.components.actf.relu() )
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.actf.relu() )
                               end,
-                              "mse", i, o, b, "RELU")
+                "mse", i, o, b, "RELU")
             end
           end
         end
         return true
-      end)
+    end)
+end)
 
 -------------
 -- SOFTMAX --
 -------------
 
-check(function()
+T("DOTPRODUCT + SOFTMAX TEST",
+  function()
+    check(function()
         for i=1,4 do
           for o=3,6 do
             for b=1,4 do
               check_component(function()
-                                return ann.components.stack():
-                                push( ann.components.dot_product{ input=i, output=o } ):
-                                push( ann.components.actf.softmax() )
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.actf.softmax() )
                               end,
-                              "mse", i, o, b, "SOFTMAX")
+                "mse", i, o, b, "SOFTMAX")
             end
           end
         end
         return true
-      end)
+    end)
+end)
 
 -----------------
 -- LOG_SOFTMAX --
 -----------------
-check(function()
+
+T("DOTPRODUCT + LOG_SOFTMAX TEST",
+  function()
+    check(function()
         for i=1,4 do
           for o=3,6 do
             for b=1,4 do
               check_component(function()
-                                return ann.components.stack():
-                                push( ann.components.dot_product{ input=i, output=o } ):
-                                push( ann.components.actf.log_softmax() )
+                  return ann.components.stack():
+                    push( ann.components.dot_product{ input=i, output=o } ):
+                    push( ann.components.actf.log_softmax() )
                               end,
-                              "multi_class_cross_entropy", i, o, b, "LOG_SOFTMAX",
-                              true)
+                "multi_class_cross_entropy", i, o, b, "LOG_SOFTMAX",
+                true)
             end
           end
         end
         return true
-      end)
+    end)
+end)

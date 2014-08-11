@@ -1,24 +1,18 @@
-local imageSVG_methods,
-imageSVG_class_metatable = class("imageSVG")
+local imageSVG,imageSVG_methods = class("imageSVG")
+_G.imageSVG = imageSVG -- global environment
 
 local colors = { "red", "blue", "green", "orange", "purple","yellow"}
 
-function imageSVG_class_metatable:__call(params)
-
-    local obj = {}
-
-    obj.width = params.width or -1
-    obj.height = params.height or -1
+function imageSVG:constructor(params)
+  
+    self.width = params.width or -1
+    self.height = params.height or -1
 
     -- Header, body and footer are tables of strings
-    obj.header = {}
-    obj.body   = {}
-    obj.footer = {}
+    self.header = {}
+    self.body   = {}
+    self.footer = {}
     
-    obj = class_instance(obj, self)
-
-    return obj
-
 end
 
 function imageSVG_methods:setHeader()

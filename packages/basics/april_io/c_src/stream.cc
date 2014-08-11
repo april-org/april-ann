@@ -41,14 +41,16 @@ namespace april_io {
   }
 
   void Stream::trimInBuffer(const char *delim) {
-    size_t pos, buf_len;
-    do {
-      const char *buf = getInBuffer(buf_len, SIZE_MAX, "");
-      pos = 0;
-      while(pos < buf_len && strchr(delim, buf[pos])) ++pos;
-      moveInBuffer(pos);
-      if (pos != buf_len) break;
-    } while(true); // the end condition is determined by break if above
+    if (delim != 0) {
+      size_t pos, buf_len;
+      do {
+        const char *buf = getInBuffer(buf_len, SIZE_MAX, "");
+        pos = 0;
+        while(pos < buf_len && strchr(delim, buf[pos]) != 0) ++pos;
+        moveInBuffer(pos);
+        if (pos != buf_len) break;
+      } while(true); // the end condition is determined by break if above
+    }
   }
   
   bool Stream::good() const {
@@ -166,8 +168,9 @@ namespace april_io {
     if (in_buffer == 0) in_buffer = nextInBuffer(in_buffer_len);
     buffer_len = april_utils::min(in_buffer_len - in_buffer_pos, max_size);
     if (delim != 0) {
-      size_t pos = in_buffer_pos;
-      while(pos < in_buffer_len && !strchr(delim, in_buffer[pos])) ++pos;
+      size_t pos  = in_buffer_pos;
+      size_t last = pos + buffer_len;
+      while(pos < last && strchr(delim, in_buffer[pos]) == 0) ++pos;
       buffer_len = pos - in_buffer_pos;
     }
     return in_buffer + in_buffer_pos;

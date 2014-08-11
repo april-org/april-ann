@@ -1,6 +1,6 @@
 package{ name = "util",
    version = "1.0",
-   depends = { },
+   depends = { "class" },
    keywords = { },
    description = "",
    -- targets como en ant
@@ -22,10 +22,13 @@ package{ name = "util",
    },
    target{
      name = "test",
-     execute_script{
+     lua_unit_test{
        file={
 	 "test/test-functional-programming.lua",
        },
+     },
+     c_unit_test{
+       file = { "test/all_util_unit_test.cc" },
      },
    },
    target{

@@ -28,105 +28,106 @@
 #include "utilImageFloat.h"
 #include "matrix.h"
 /**
-  Class that contains the counters for calculate the histogram of a given image
+   Class that contains the counters for calculate the histogram of a given image
 
- **/
+**/
 //// Given a pixel value, returns the index of histogram
 inline int getIndex(float value, int gray_levels) {
-    if (value >= 1) return gray_levels - 1;
-    return (int) floor(value*gray_levels);
+  if (value >= 1) return gray_levels - 1;
+  return (int) floor(value*gray_levels);
 }
 
 class ImageHistogram : public Referenced {
-    public:
+public:
 
-        int gray_levels;
-        int *integral_histogram;
-        int width, height;
+  int gray_levels;
+  int *integral_histogram;
+  int width, height;
 
 
-        /// Creator recieves and image
-        ImageHistogram(ImageFloat *img, int levels) :
-	  Referenced(),
-            gray_levels(levels){
-                this->width  = img->width;
-                this->height = img->height;
-                integral_histogram = new int[width*height*levels];
-                memset(integral_histogram, 0, width*height*levels);
-                computeIntegralHistogram(img);
-            }
+  /// Creator recieves and image
+  ImageHistogram(ImageFloat *img, int levels) :
+    Referenced(),
+    gray_levels(levels){
+    this->width  = img->width();
+    this->height = img->height();
+    integral_histogram = new int[width*height*levels];
+    memset(integral_histogram, 0, width*height*levels);
+    computeIntegralHistogram(img);
+  }
 
-        // Copy Constructor
-        ImageHistogram(const ImageHistogram &other);
+  // Copy Constructor
+  ImageHistogram(const ImageHistogram &other);
 
-        /// Destructor
-        ~ImageHistogram(){
-            delete []integral_histogram;
-        }; 
-        //Clone
-        ImageHistogram *clone() {
-            return new ImageHistogram(*this);
-        }
+  /// Destructor
+  ~ImageHistogram(){
+    delete []integral_histogram;
+  }; 
+  //Clone
+  ImageHistogram *clone() {
+    return new ImageHistogram(*this);
+  }
 
-        //// Return the total gray levels
-        int grayLevels() {
-            return gray_levels;
-        }
+  //// Return the total gray levels
+  int grayLevels() {
+    return gray_levels;
+  }
 
-        /// Given a radius gets for each pixel the histogram of these window
-        // centered pixel
-        Matrix<float> * generateWindowHistogram(int radius);
-        //// Return a new copy of the integral matrix
-        Matrix<float> * getIntegralHistogram();
+  /// Given a radius gets for each pixel the histogram of these window
+  // centered pixel
+  Matrix<float> * generateWindowHistogram(int radius);
+  //// Return a new copy of the integral matrix
+  Matrix<float> * getIntegralHistogram();
 
-        /// Compute all the image Histogram
-        Matrix<float> * getImageHistogram();
+  /// Compute all the image Histogram
+  Matrix<float> * getImageHistogram();
 
-        Matrix<float> * getWindowHistogram(int x1, int y1, int x2, int y2);
+  Matrix<float> * getWindowHistogram(int x1, int y1, int x2, int y2);
         
-        /// Returns a matrix of size Height*Levels
-        Matrix<float> *getVerticalHistogram(int radius = 0);
-        /// Returns a matrix of size width*levels
-        Matrix<float> *getHorizontalHistogram(int radius = 0);
+  /// Returns a matrix of size Height*Levels
+  Matrix<float> *getVerticalHistogram(int radius = 0);
+  /// Returns a matrix of size width*levels
+  Matrix<float> *getHorizontalHistogram(int radius = 0);
 
-        ///Light and slow image histogram. It's used for computing the histogram of an image on a traditional way (without computing the integral interval)
-        static Matrix<float> * getHistogram(const ImageFloat *img, int gray_levels);/*{
-            int width = img->width;
-            int height = img->height;
+  ///Light and slow image histogram. It's used for computing the histogram of an image on a traditional way (without computing the integral interval)
+  static Matrix<float> * getHistogram(const ImageFloat *img, int gray_levels);
+  /*{
+    int width = img->width;
+    int height = img->height;
 
-            int dims[1];
+    int dims[1];
 
-            dims[0] = gray_levels;
+    dims[0] = gray_levels;
 
-            Matrix<float> *matrix = new Matrix<float>(1,dims, 0.0);
-            int total = height*width;
+    Matrix<float> *matrix = new Matrix<float>(1,dims, 0.0);
+    int total = height*width;
 
-            for (int i = 0; i < height; ++i) {
-                for (int j = 0; j < width; ++j) {
-                    int h = getIndex((*img)(i,j), gray_levels);
-                    (*matrix)(h) += 1;      
-                }
+    for (int i = 0; i < height; ++i) {
+    for (int j = 0; j < width; ++j) {
+    int h = getIndex((*img)(i,j), gray_levels);
+    (*matrix)(h) += 1;      
+    }
 
-            }
-            //Normalize the histogram
-            for(int h = 0; h < gray_levels; ++h) {
-                (*matrix)(h) /= total;
-            }
+    }
+    //Normalize the histogram
+    for(int h = 0; h < gray_levels; ++h) {
+    (*matrix)(h) /= total;
+    }
 
-            return matrix;
-        }*/
-    protected:
-        /// Accessor to the integral_histogram matrix
-        inline int hist(int x,int y, int h) const { 
-            return integral_histogram[x*width*gray_levels + y*gray_levels+h];
-        }
-        inline int & hist(int x, int y, int h) {
-            return integral_histogram[x*width*gray_levels + y*gray_levels+h];
-        }
-        //// Takes an Image and Fill the integral matrix
-        void computeIntegralHistogram(ImageFloat *img);
+    return matrix;
+    }*/
+protected:
+  /// Accessor to the integral_histogram matrix
+  inline int hist(int x,int y, int h) const { 
+    return integral_histogram[x*width*gray_levels + y*gray_levels+h];
+  }
+  inline int & hist(int x, int y, int h) {
+    return integral_histogram[x*width*gray_levels + y*gray_levels+h];
+  }
+  //// Takes an Image and Fill the integral matrix
+  void computeIntegralHistogram(ImageFloat *img);
 
-        // ImageHistogram* clone();
+  // ImageHistogram* clone();
 };
 
 #endif

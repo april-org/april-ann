@@ -1,6 +1,7 @@
 interest_points = interest_points or {}
 
-local methods, class_metatable = class("interest_points.pointClassifier")
+local pointClassifier,methods = class("interest_points.pointClassifier")
+interest_points.pointClassifier = pointClassifier
 
 april_set_doc(interest_points.pointClassifier, {
 		class       = "class",
@@ -18,7 +19,7 @@ april_set_doc(interest_points.pointClassifier, {
 		},
                 outputs = {"A Point Classifier object"},
 })
-function class_metatable:__call(ancho, alto, miniancho, minialto, reverse_old)
+function pointClassifier:constructor(ancho, alto, miniancho, minialto, reverse_old)
 
     -- prepara la configuracion para aplicar el ojo de pez con dataset.linear_comb
     -- local functions
@@ -118,19 +119,16 @@ function class_metatable:__call(ancho, alto, miniancho, minialto, reverse_old)
         end
     end
     
-    local obj = { }
-    obj.ancho = ancho
-    obj.alto = alto
-    obj.miniancho = miniancho
-    obj.minialto = minialto
-    obj.table_inv = invertir_tlc(tlc)
-    obj.inv_tlc = dataset.linear_comb_conf(obj.table_inv)
-    obj.tlc = dataset.linear_comb_conf(tlc)
-    obj.white = (reverse_old and 1) or 1
-    obj.reverse_old = reverse_old
-    obj = class_instance(obj, self, true)
-    return obj
-
+    self.ancho = ancho
+    self.alto = alto
+    self.miniancho = miniancho
+    self.minialto = minialto
+    self.table_inv = invertir_tlc(tlc)
+    self.inv_tlc = dataset.linear_comb_conf(self.table_inv)
+    self.tlc = dataset.linear_comb_conf(tlc)
+    self.white = (reverse_old and 1) or 1
+    self.reverse_old = reverse_old
+    
 end
 
 ---------------------------------------------------

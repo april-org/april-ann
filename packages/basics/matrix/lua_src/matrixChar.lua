@@ -1,9 +1,9 @@
 -- OVERWRITTING TOSTRING FUNCTION
-class_extension(matrixChar, "to_lua_string",
-                function(self)
-                  return string.format("matrixChar.fromString[[%s]]",
-                                       self:toString())
-                end)
+class.extend(matrixChar, "to_lua_string",
+             function(self)
+               return string.format("matrixChar.fromString[[%s]]",
+                                    self:toString())
+end)
 
 matrixChar.meta_instance.__tostring = function(self)
   local dims   = self:dim()

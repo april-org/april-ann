@@ -60,11 +60,6 @@ extern "C" {
   virtual void clear() {                                                \
     ERROR_EXIT(128, "Read only " #name "\n");                           \
   }                                                                     \
-  virtual int push(lua_State *L) {                                      \
-    UNUSED_VARIABLE(L);                                                 \
-    ERROR_EXIT(128, "Read only " #name "\n");                           \
-    return 0;                                                           \
-  }                                                                     \
   virtual void flush() {                                                \
     ERROR_EXIT(128, "Read only " #name "\n");                           \
   }

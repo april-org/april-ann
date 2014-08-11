@@ -1,9 +1,9 @@
 -- OVERWRITTING TOSTRING FUNCTION
-class_extension(matrixComplex, "to_lua_string",
-                function(self,format)
-                  return string.format("matrixComplex.fromString[[%s]]",
-                                       self:toString(format or "binary"))
-                end)
+class.extend(matrixComplex, "to_lua_string",
+             function(self,format)
+               return string.format("matrixComplex.fromString[[%s]]",
+                                    self:toString(format or "binary"))
+end)
 
 matrixComplex.meta_instance.__call =
   matrix.__make_generic_call__()

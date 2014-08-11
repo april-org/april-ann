@@ -309,6 +309,42 @@ namespace april_io {
 }
 //BIND_END
 
+//BIND_METHOD StreamMemory empty
+{
+  LUABIND_RETURN(boolean, obj->empty());
+}
+//BIND_END
+
+//BIND_METHOD StreamMemory size
+{
+  LUABIND_RETURN(uint, obj->size());
+}
+//BIND_END
+
+//BIND_METHOD StreamMemory raw_get
+{
+  size_t pos;
+  LUABIND_GET_PARAMETER(1, uint, pos);
+  LUABIND_RETURN(char, (*obj)[pos]);
+}
+//BIND_END
+
+//BIND_METHOD StreamMemory raw_set
+{
+  size_t pos;
+  char value;
+  LUABIND_GET_PARAMETER(1, uint, pos);
+  LUABIND_GET_PARAMETER(1, char, value);
+  (*obj)[pos] = value;
+}
+//BIND_END
+
+//BIND_METHOD StreamMemory clear
+{
+  obj->clear();
+}
+//BIND_END
+
 /////////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME InputLuaStringStream april_io.stream.input_lua_string

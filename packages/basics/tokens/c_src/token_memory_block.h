@@ -21,11 +21,13 @@
 #ifndef TOKEN_MEMORY_BLOCK_H
 #define TOKEN_MEMORY_BLOCK_H
 
-#include "unused_variable.h"
+#include "disallow_class_methods.h"
 #include "gpu_mirrored_memory_block.h"
 #include "token_base.h"
+#include "unused_variable.h"
 
 class TokenMemoryBlock : public Token {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(TokenMemoryBlock);
   FloatGPUMirroredMemoryBlock *mem_block;
   unsigned int used_size;
 public:

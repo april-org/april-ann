@@ -15,11 +15,12 @@
    },
    target{
      name = "test",
-     execute_script{
+     lua_unit_test{
        file={
 	 "test/test_matrix_inv_solve.lua",
 	 "test/test_matrix_math.lua",
 	 "test/test_sparse_matrix.lua",
+	 "test/test_convolution.lua",
        },
      },
    },

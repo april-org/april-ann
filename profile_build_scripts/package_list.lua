@@ -2,8 +2,9 @@ return {
   -- BASIC PACAKGES
   --  "plotter",
   "util",
+  "gtest",
   "april_io",
-  -- "utest",
+  "utest",
   -- "stats",
   -- "dataset",
   -- "matrix",

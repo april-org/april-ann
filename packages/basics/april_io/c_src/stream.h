@@ -92,15 +92,15 @@ namespace april_io {
     /// Reads a string delimited by any of the given chars and puts it into the
     /// given Stream. If delim==0 then this method ends when dest->eof() is
     /// true.
-    virtual size_t get(Stream *dest, const char *delim = "");
+    virtual size_t get(Stream *dest, const char *delim = 0);
     
     /// Reads a string with max_size length and delimited by any of the given
     /// chars and puts it into the given Stream.
-    virtual size_t get(Stream *dest, size_t max_size, const char *delim = "");
+    virtual size_t get(Stream *dest, size_t max_size, const char *delim = 0);
     
     /// Reads a string of a maximum given size delimited by any of the given
     /// chars and puts it into the given char buffer.
-    virtual size_t get(char *dest, size_t max_size, const char *delim = "");
+    virtual size_t get(char *dest, size_t max_size, const char *delim = 0);
     
     /// Puts a string of a maximum given size taken from the given Stream.
     virtual size_t put(Stream *source, size_t size);

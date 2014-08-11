@@ -67,7 +67,7 @@ end
 local function tocellarray(e,col_major)
   local cell_array,name = e:get_cell_array()
   local wrapper = class_wrapper(cell_array)
-  wrapper = class_instance(wrapper, getmetatable(cell_array))
+  wrapper = class_instance(wrapper, class.of(cell_array))
   wrapper.get = function(obj, ...)
     return matlab.tolua(cell_array:get(...),col_major)
   end

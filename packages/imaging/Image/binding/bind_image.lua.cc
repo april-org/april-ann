@@ -123,9 +123,9 @@
 		"       Use matrix() or geometry() as needed.\n");
   LUABIND_CHECK_ARGN(==,0);
   
-  LUABIND_RETURN(MatrixFloat, obj->matrix);
-  LUABIND_RETURN(int, obj->width);
-  LUABIND_RETURN(int, obj->height);
+  LUABIND_RETURN(MatrixFloat, obj->getMatrix());
+  LUABIND_RETURN(int, obj->width());
+  LUABIND_RETURN(int, obj->height());
   LUABIND_RETURN(int, obj->offset_width());
   LUABIND_RETURN(int, obj->offset_height());
 }
@@ -134,15 +134,15 @@
 //BIND_METHOD ImageFloat matrix
 {
   LUABIND_CHECK_ARGN(==,0);
-  LUABIND_RETURN(MatrixFloat, obj->matrix);
+  LUABIND_RETURN(MatrixFloat, obj->getMatrix());
 }
 //BIND_END
 
 //BIND_METHOD ImageFloat geometry
 {
   LUABIND_CHECK_ARGN(==,0);
-  LUABIND_RETURN(int, obj->width);
-  LUABIND_RETURN(int, obj->height);
+  LUABIND_RETURN(int, obj->width());
+  LUABIND_RETURN(int, obj->height());
   LUABIND_RETURN(int, obj->offset_width());
   LUABIND_RETURN(int, obj->offset_height());
 }

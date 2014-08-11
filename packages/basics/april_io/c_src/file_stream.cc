@@ -92,15 +92,15 @@ namespace april_io {
       flags = 0;
       ERROR_EXIT1(128, "Unknown given mode string '%s'\n", mode);
     }
-    fd = checkReturnValue(open(path, flags));
+    fd = checkReturnValue(open(path, flags, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH));
   }
 
   FileStream::FileStream(FILE *f) : BufferedStream(), is_eof(false) {
     fd = checkReturnValue(dup(fileno(f)));
   }
   
-  FileStream::FileStream(int fd) : BufferedStream(), is_eof(false) {
-    fd = checkReturnValue(dup(fd));
+  FileStream::FileStream(int f) : BufferedStream(), is_eof(false) {
+    fd = checkReturnValue(dup(f));
   }
   
   FileStream::~FileStream() {

@@ -19,11 +19,12 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-
+#include <cstdio>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include "april_print.h"
 #include "error_print.h"
 #include "ignore_result.h"
 
@@ -87,7 +88,7 @@ Matrix<T>::Matrix(int numDim, const int *stride, const int offset,
   major_order(major_order),
   use_cuda(use_cuda),
   is_contiguous(NONE),
-  end_iterator(), end_const_iterator(), end_best_span_iterator() {
+  end_iterator(), end_const_iterator(), end_span_iterator_() {
   IncRef(data);
   if (mmapped_data) IncRef(mmapped_data);
   for (int i=0; i<numDim; ++i) {
@@ -111,7 +112,7 @@ Matrix<T>::Matrix(int numDim,
   major_order(major_order),
   use_cuda(false),
   is_contiguous(CONTIGUOUS),
-  end_iterator(), end_const_iterator(), end_best_span_iterator() {
+  end_iterator(), end_const_iterator(), end_span_iterator_() {
   stride     = new int[numDim];
   matrixSize = new int[numDim];
   initialize(dim);
@@ -139,7 +140,7 @@ Matrix<T>::Matrix(Matrix<T> *other,
   major_order(other->major_order),
   use_cuda(other->use_cuda),
   is_contiguous(NONE),
-  end_iterator(), end_const_iterator(), end_best_span_iterator() {
+  end_iterator(), end_const_iterator(), end_span_iterator_() {
   for (int i=0; i<numDim; i++) {
     if (sizes[i] + coords[i] > other->matrixSize[i])
       ERROR_EXIT3(128, "Size+coordinates are out of dimension size: %d+%d>%d\n",
@@ -191,6 +192,71 @@ Matrix<T>::Matrix(Matrix<T> *other,
   }
 }
 
+// Constructor for sub-matrix building from a CONST matrix
+template <typename T>
+Matrix<T>::Matrix(const Matrix<T> *other,
+		  const int* coords, const int *sizes,
+		  bool clone) :
+  Referenced(),
+  shared_count(0), transposed(other->transposed),
+  numDim(other->numDim),
+  offset(0),
+  mmapped_data(0),
+  major_order(other->major_order),
+  use_cuda(other->use_cuda),
+  is_contiguous(NONE),
+  end_iterator(), end_const_iterator(), end_span_iterator_() {
+  for (int i=0; i<numDim; i++) {
+    if (sizes[i] + coords[i] > other->matrixSize[i])
+      ERROR_EXIT3(128, "Size+coordinates are out of dimension size: %d+%d>%d\n",
+		  sizes[i], coords[i], other->matrixSize[i]);
+  }
+  stride     = new int[numDim];
+  matrixSize = new int[numDim];
+  if (clone) {
+    transposed    = false;
+    is_contiguous = CONTIGUOUS;
+    initialize(sizes);
+    allocate_memory(total_size);
+    int other_raw_pos = other->computeRawPos(coords);
+    const T *other_data = other->data->getPPALForRead();
+    int *aux_coords = new int[numDim];
+    for (int i=0; i<numDim; ++i) aux_coords[i] = 0;
+    if (major_order == CblasRowMajor) {
+      for (iterator it(begin()); it!=end(); ++it) {
+	*it = other_data[other_raw_pos];
+	nextCoordVectorRowOrder(aux_coords, other_raw_pos,
+				sizes, other->stride, numDim,
+				other->last_raw_pos);
+      }
+    }
+    else {
+      for (col_major_iterator it(begin()); it!=end(); ++it) {
+	*it = other_data[other_raw_pos];
+	nextCoordVectorColOrder(aux_coords, other_raw_pos,
+				sizes, other->stride, numDim,
+				other->last_raw_pos);
+      }
+    }
+    delete[] aux_coords;
+  }
+  else {
+    int *aux_coords = new int[numDim];
+    total_size = 1;
+    for (int i=0; i<numDim; i++) {
+      stride[i]     = other->stride[i];
+      matrixSize[i] = sizes[i];
+      total_size    = total_size * sizes[i];
+      aux_coords[i] = sizes[i]-1;
+    }
+    offset = other->computeRawPos(coords);
+    data   = new GPUMirroredMemoryBlock<T>(other->size(),
+                                           other->data->getPPALForRead());
+    IncRef(data);
+    last_raw_pos = computeRawPos(aux_coords);
+    delete[] aux_coords;
+  }
+}
 
 /// Constructor with variable arguments
 template <typename T>
@@ -201,7 +267,7 @@ Matrix<T>::Matrix(int numDim, int d1, ...) :
   mmapped_data(0),
   major_order(CblasRowMajor),
   is_contiguous(CONTIGUOUS),
-  end_iterator(), end_const_iterator(), end_best_span_iterator() {
+  end_iterator(), end_const_iterator(), end_span_iterator_() {
   int *dim   = new int[numDim];
   stride     = new int[numDim];
   matrixSize = new int[numDim];
@@ -230,7 +296,7 @@ Matrix<T>::Matrix(Matrix<T> *other, bool clone) :
   major_order(other->major_order),
   use_cuda(other->use_cuda),
   is_contiguous(other->is_contiguous),
-  end_iterator(), end_const_iterator(), end_best_span_iterator() {
+  end_iterator(), end_const_iterator(), end_span_iterator_() {
   stride       = new int[numDim];
   matrixSize   = new int[numDim];
   total_size   = other->total_size;
@@ -312,24 +378,73 @@ Matrix<T>::~Matrix() {
 }
 
 template <typename T>
-Matrix<T> *Matrix<T>::rewrap(const int *new_dims, int len) {
-  if (!getIsContiguous())
-    ERROR_EXIT(128, "Impossible to re-wrap non contiguous matrix, "
-	       "clone it first\n");
-  bool equal = true;
+void Matrix<T>::print() const {
+  for (Matrix<T>::const_iterator it(begin()); it != end(); ++it) {
+    april_utils::aprilPrint(*it);
+    printf(" ");
+  }
+  printf("\n");
+}
+
+template <typename T>
+Matrix<T> *Matrix<T>::rewrap(const int *new_dims, int len,
+                             bool clone_if_not_contiguous) {
+  bool need_clone = false;
+  Matrix<T> * obj;
+  if (!getIsContiguous()) {
+    if (!clone_if_not_contiguous) {
+      ERROR_EXIT(128, "Impossible to re-wrap non contiguous matrix, "
+                 "clone it first\n");
+    }
+    else {
+      need_clone = true;
+    }
+  }
+  bool equal   = true;
   int new_size = 1;
   for (int i=0; i<len; ++i) {
     if (i>=numDim || new_dims[i] != matrixSize[i]) equal=false;
     new_size *= new_dims[i];
   }
   if (len==numDim && equal) return this;
-  if (new_size != size())
+  if (new_size != size()) {
     ERROR_EXIT2(128, "Incorrect size, expected %d, and found %d\n",
-		size(), new_size);
-  Matrix<T> *obj = new Matrix<T>(len, new_dims, major_order, data, offset);
+                size(), new_size);
+  }
+  if (need_clone) {
+    GPUMirroredMemoryBlock<T> *new_data =
+      new GPUMirroredMemoryBlock<T>(new_size);
+    obj = new Matrix<T>(len, new_dims, major_order, new_data);
+    Matrix<T> *aux = obj->rewrap(this->getDimPtr(), this->getNumDim());
+    IncRef(aux);
+    aux->copy(this);
+    DecRef(aux);
+  }
+  else {
+    obj = new Matrix<T>(len, new_dims, major_order, data, offset);
+  }
 #ifdef USE_CUDA
   obj->setUseCuda(use_cuda);
 #endif
+  return obj;
+}
+
+template <typename T>
+Matrix<T> *Matrix<T>::squeeze() {
+  int len = 0;
+  int *sizes = new int[getNumDim()];
+  for (int i=0; i<getNumDim(); ++i) {
+    int sz = getDimSize(i);
+    if (sz > 1) {
+      sizes[len++] = sz;
+    }
+  }
+  Matrix<T> *obj = (len==numDim) ?
+    this : new Matrix<T>(len, sizes, major_order, data, offset);
+#ifdef USE_CUDA
+  obj->setUseCuda(use_cuda);
+#endif
+  delete[] sizes;
   return obj;
 }
 
@@ -370,7 +485,7 @@ Matrix<T>* Matrix<T>::cloneOnlyDims() const {
 }
 
 template<typename T>
-Matrix<T> *Matrix<T>::clone(CBLAS_ORDER major_order) {
+Matrix<T> *Matrix<T>::clone(CBLAS_ORDER major_order) const {
   Matrix<T> *resul;
   if (this->major_order != major_order) {
     resul = new Matrix<T>(numDim, matrixSize, major_order);
@@ -390,8 +505,10 @@ Matrix<T> *Matrix<T>::clone(CBLAS_ORDER major_order) {
 }
 
 template <typename T>
-Matrix<T>* Matrix<T>::clone() {
-  return new Matrix<T>(this,true);
+Matrix<T>* Matrix<T>::clone() const {
+  Matrix<T> *result = this->cloneOnlyDims();
+  result->copy(this);
+  return result;
 }
 
 template <typename T>

@@ -23,14 +23,14 @@ function april_io.register_open_by_extension(ext, func)
   open_by_extension[ext] = func
 end
 
-class_extension(april_io.stream, "lines",
-                function(self, ...)
-                  local arg = { ... }
-                  return function()
-                    local values = { self:read(table.unpack(arg)) }
-                    if #values == 0 or values[1] == nil then return nil end
-                    return table.unpack(values)
-                  end
+class.extend(april_io.stream, "lines",
+             function(self, ...)
+               local arg = { ... }
+               return function()
+                 local values = { self:read(table.unpack(arg)) }
+                 if #values == 0 or values[1] == nil then return nil end
+                 return table.unpack(values)
+               end
 end)
 
 april_io.lua_open  = io_old_open
