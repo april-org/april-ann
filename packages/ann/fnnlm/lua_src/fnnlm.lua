@@ -1,6 +1,7 @@
-local ann_fnnlm_methods, ann_fnnlm_class_metatable = class("ann.fnnlm")
+local ann_fnnlm, ann_fnnlm_methods = class("ann.fnnlm")
+ann.fnnlm = ann_fnnlm -- global environment
 
-function ann_fnnlm_class_metatable:__call(t)
+function ann_fnnlm:constructor(t)
   local params = get_table_fields(
     {
       factors = {
@@ -35,20 +36,18 @@ function ann_fnnlm_class_metatable:__call(t)
       bunch_size  = { mandatory = false, type_match = "number", default = 32 },
     }, t)
   --
-  local obj = { 
-    factor_names      = {},
-    factor_components = {},
-    cache_component   = {},
-    input_component   = ann.components.join{  name="factors_join" },
-    hidden_component  = ann.components.stack{ name="hidden_stack" },
-    output_component  = ann.components.stack{ name="output_stack" },
-    ann_component     = ann.components.stack{ name="FNNLM" },
-    trainer           = {},
-    params            = table.deep_copy(params),
-  }
+  self.factor_names      = {}
+  self.factor_components = {}
+  self.cache_component   = {}
+  self.input_component   = ann.components.join{  name="factors_join" }
+  self.hidden_component  = ann.components.stack{ name="hidden_stack" }
+  self.output_component  = ann.components.stack{ name="output_stack" }
+  self.ann_component     = ann.components.stack{ name="FNNLM" }
+  self.trainer           = {}
+  self.params            = table.deep_copy(params)
   local projection_layer_size = 0
   for _,factor in ipairs(params.factors) do
-    table.insert(obj.factor_names, factor.name)
+    table.insert(self.factor_names, factor.name)
     local join = ann.components.join{ name=factor.name.."-join" }
     local size
     for pos=1,factor.order do
@@ -72,18 +71,18 @@ function ann_fnnlm_class_metatable:__call(t)
       join:add(stack)
     end
     projection_layer_size = projection_layer_size + size*factor.order
-    table.insert(obj.factor_components, join)
-    obj.input_component:add(join)
+    table.insert(self.factor_components, join)
+    self.input_component:add(join)
   end
   --
   if params.cache_size > 0 then
     projection_layer_size = projection_layer_size + params.cache_size
-    obj.cache_component   = ann.components.base{ size=params.cache_size,
+    self.cache_component   = ann.components.base{ size=params.cache_size,
 						 name="cache" }
-    obj.input_component:add( obj.cache_component )
+    self.input_component:add( self.cache_component )
   end
   --
-  obj.hidden_component:push( ann.components.hyperplane{
+  self.hidden_component:push( ann.components.hyperplane{
 			       input  = projection_layer_size,
 			       output = params.hidden_size,
 			       name   = "hidden_layer",
@@ -91,9 +90,9 @@ function ann_fnnlm_class_metatable:__call(t)
 			       bias_name           = "hidden_b",
 			       dot_product_weights = "hidden_w",
 			       bias_weights        = "hidden_b", })
-  obj.hidden_component:push(ann.components.actf[params.hidden_actf]{name="hidden_actf"})
+  self.hidden_component:push(ann.components.actf[params.hidden_actf]{name="hidden_actf"})
   --
-  obj.output_component:push( ann.components.hyperplane{
+  self.output_component:push( ann.components.hyperplane{
 			       input  = params.hidden_size,
 			       output = params.output_size,
 			       name   = "output_layer",
@@ -101,16 +100,15 @@ function ann_fnnlm_class_metatable:__call(t)
 			       bias_name           = "output_b",
 			       dot_product_weights = "output_w",
 			       bias_weights        = "output_b", })
-  obj.output_component:push(ann.components.actf.log_softmax{name="output_actf"})
+  self.output_component:push(ann.components.actf.log_softmax{name="output_actf"})
   --
-  obj.ann_component:push(obj.input_component)
-  obj.ann_component:push(obj.hidden_component)
-  obj.ann_component:push(obj.output_component)
+  self.ann_component:push(self.input_component)
+  self.ann_component:push(self.hidden_component)
+  self.ann_component:push(self.output_component)
   --
-  obj = class_instance(obj, self)
-  obj = class_wrapper(obj.ann_component, obj)
+  local obj = class_wrapper(self.ann_component, self)
+  assert(rawequal(obj,self))
   --
-  return obj
 end
 
 function ann_fnnlm_methods:get_trainer()

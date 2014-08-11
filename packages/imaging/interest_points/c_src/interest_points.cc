@@ -204,7 +204,7 @@ namespace InterestPoints {
         int
             x,
             y,
-            h = img.height, w = img.width;
+          h = img.height(), w = img.width();
 
         int *
             stamp_max = new int[h];
@@ -320,7 +320,7 @@ namespace InterestPoints {
       int
           x,
           y,
-          h = img.height, w = img.width;
+        h = img.height(), w = img.width();
 
       int *
           stamp_max = new int[h];
@@ -516,8 +516,8 @@ namespace InterestPoints {
   }
   ImageFloatRGB * area_to_rgb(ImageFloat *img) {
 
-      int width = img->width;
-      int height = img->height;
+    int width = img->width();
+    int height = img->height();
       float eps = 0.05;
       ImageFloatRGB *rgb = new ImageFloatRGB(width, height, FloatRGB(1.0,1.0,1.0));
 
@@ -550,8 +550,8 @@ namespace InterestPoints {
 
   ImageFloat *refine_colored(ImageFloat *img, MatrixFloat *mat, int num_classes)
   {
-      int height = img->height;
-      int width  = img->width;
+    int height = img->height();
+    int width  = img->width();
       int dims[2] = {height, width};
 
       MatrixFloat::random_access_iterator mat_it(mat);
@@ -700,7 +700,7 @@ namespace InterestPoints {
           for (int c = 0; c < num_classes; ++c) {
               it(row, column,c) = exp(ftag[c]);
           }
-          int tag = april_utils::argmax(ftag, num_classes)+1;
+          // int tag = april_utils::argmax(ftag, num_classes)+1;
       }
       delete []ftag;
       return result_mat;
@@ -721,8 +721,8 @@ ImageFloat *get_pixel_area(ImageFloat *source,
       april_assert(!lower_baseline.empty() && "Lower baseline must not be empty");
 
       //FILE *ft son las transiciones
-      int width = source->width;
-      int height = source->height;
+      int width = source->width();
+      int height = source->height();
 
       /* Definimos 4 alturas relevantes en las imagenes
        *  
@@ -773,8 +773,10 @@ ImageFloat *get_pixel_area(ImageFloat *source,
       next_lower = get_next_point(lower_baseline, lower_idx, width, -9999.9f);
       lower_idx++;
 
-      int body_columns=0;
-      float body_size_sum=0.0f;
+      /*
+        int body_columns=0;
+        float body_size_sum=0.0f;
+      */
 
       int BASELINE_SLACK=int(0.02f*height);
 
@@ -846,9 +848,9 @@ ImageFloat *get_pixel_area(ImageFloat *source,
 
       // Compute the number of pixels
       int total = 0;
-      int width  = img->width;
-      int height = img->height;
-      float eps = 0.05;
+      int width  = img->width();
+      int height = img->height();
+      // float eps = 0.05;
       for (int col = 0; col < width; ++col)
       {
           for(int row = 0; row < height; ++row) {

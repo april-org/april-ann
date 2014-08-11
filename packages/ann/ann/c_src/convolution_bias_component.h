@@ -31,6 +31,8 @@ namespace ANN {
   /// A component which adds a convolutional bias given the number of output
   /// planes. Exists one bias per each output plane.
   class ConvolutionBiasANNComponent : public VirtualMatrixANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(ConvolutionBiasANNComponent);
+    
     MatrixFloat *bias_vector;
     MatrixFloat *bias_matrix; // rewrapping of bias_vector matrix to fits at
 			      // input window sizes

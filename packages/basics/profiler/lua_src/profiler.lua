@@ -23,6 +23,7 @@ function profiler.hook(event)
         profiler.profile[info.func] = info
         profiler.profile[info.func].call_count = 0
         profiler.profile[info.func].time = 0
+        profiler.profile[info.func].line = info.currentline
       end
       profiler.profile[info.func].call_count = profiler.profile[info.func].call_count + 1
     end
@@ -58,8 +59,8 @@ function profiler.save(outfile)
   end
   table.sort(profile_list, function(a,b) return a.time > b.time end)
   fprintf(outfile, "Total time: %f\n", profiler.total_time)
-  fprintf(outfile, "%58s\t%8s\t%s\n", "NAME", "TIME", "CALL_COUNT")
+  fprintf(outfile, "%58s\t%8s\t%s\t%s\n", "NAME", "TIME", "CALL_COUNT", "LINE")
   for i, info in ipairs(profile_list) do
-    fprintf(outfile,"[%6s]%50s\t%8.2f\t%d\n", info.what, string.format("%s@%s",info.name, info.source), info.time, info.call_count)
+    fprintf(outfile,"[%6s]%50s\t%8.2f\t%10d\t%d\n", info.what, string.format("%s@%s",info.name, info.source), info.time, info.call_count, info.line)
   end
 end

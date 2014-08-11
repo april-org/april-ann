@@ -556,7 +556,7 @@ namespace april_utils {
     }
 
     /// Inserts or erases elements at the end such that the size becomes n.
-    void resize(int n, T x=T()) {
+    void resize(size_t n, T x=T()) {
       if (list_size < n) {
         while (list_size < n) {
           push_back(x);

@@ -35,6 +35,8 @@ namespace ANN {
   /// first iteration (number 0), the object stores the sequence of random
   /// objects. In the following iterations, this sequence is repeated.
   class StochasticANNComponent : public ANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(StochasticANNComponent);
+    
     enum StochasticState {
       NORMAL     = 0,
       KEEP       = 1,

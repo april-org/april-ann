@@ -547,6 +547,7 @@ namespace april_utils {
 	  node *tmp = cur;
 	  cur = cur->next; // prev sigue siendo el mismo al borrar cur
 	  delete tmp;
+          --the_size;
 	} else {
 	  prev = cur;
 	  cur  = cur->next;

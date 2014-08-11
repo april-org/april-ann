@@ -287,15 +287,26 @@ public:
   LUABIND_CHECK_ARGN(>=, 1);
   int ndims;
   ndims = lua_gettop(L); // number of dimensions
+  bool clone_if_not_contiguous = false;
+  if (lua_isboolean(L, ndims)) {
+    LUABIND_GET_PARAMETER(ndims, boolean, clone_if_not_contiguous);
+    --ndims;
+  }
   int *dims = new int[ndims];
   for (int i=1; i <= ndims; i++) {
     LUABIND_GET_PARAMETER(i, int, dims[i-1]);
     if (dims[i-1] <= 0)
       LUABIND_FERROR1("incorrect argument to matrix dimension (arg %d must be >0)",i);
   }
-  MatrixFloat *new_obj = obj->rewrap(dims, ndims);
+  MatrixFloat *new_obj = obj->rewrap(dims, ndims, clone_if_not_contiguous);
   delete[] dims;
   LUABIND_RETURN(MatrixFloat,new_obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat squeeze
+{
+  LUABIND_RETURN(MatrixFloat,obj->squeeze());
 }
 //BIND_END
 
@@ -1826,6 +1837,77 @@ public:
 //BIND_METHOD MatrixFloat update
 {
   obj->update();
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat padding_all
+{
+  int padding;
+  LUABIND_GET_PARAMETER(1, int, padding);
+  float default_value;
+  LUABIND_GET_OPTIONAL_PARAMETER(2, float, default_value, 0.0f);
+  MatrixFloat *result = obj->padding(padding, default_value);
+  LUABIND_RETURN(MatrixFloat, result);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat padding
+{
+  int *begin_padding, *end_padding;
+  LUABIND_CHECK_ARGN(>=,obj->getNumDim()*2);
+  LUABIND_CHECK_ARGN(<=,obj->getNumDim()*2 + 1);
+  begin_padding = new int[obj->getNumDim()];
+  end_padding = new int[obj->getNumDim()];
+  int j=1;
+  for (int i=0; i<obj->getNumDim(); ++i, j+=2) {
+    LUABIND_GET_PARAMETER(j, int, begin_padding[i]);
+    LUABIND_GET_PARAMETER(j+1, int, end_padding[i]);
+  }
+  float default_value;
+  LUABIND_GET_OPTIONAL_PARAMETER(j, float, default_value, 0.0f);
+  MatrixFloat *result = obj->padding(begin_padding, end_padding, default_value);
+  LUABIND_RETURN(MatrixFloat, result);
+  delete[] begin_padding;
+  delete[] end_padding;
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat convolution
+{
+  MatrixFloat *kernel, *result; //, *unrolled_kernel, *unrolled_self;
+  int *step = 0;
+  int D;
+  
+  LUABIND_CHECK_ARGN(>=, 1);
+  LUABIND_CHECK_ARGN(<=, 2);
+  LUABIND_CHECK_PARAMETER(1, table);
+  LUABIND_GET_TABLE_PARAMETER(1, D, int, D);
+  LUABIND_GET_TABLE_PARAMETER(1, kernel, MatrixFloat, kernel);
+  /*
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, unrolled_kernel,
+    MatrixFloat, unrolled_kernel, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, unrolled_self,
+    MatrixFloat, unrolled_self, 0);
+  */
+  LUABIND_GET_OPTIONAL_PARAMETER(2, MatrixFloat, result, 0);
+  lua_getfield(L, 1, "step");
+  if (!lua_isnil(L, -1)) {
+    step = new int[D];
+    int len;
+    LUABIND_TABLE_GETN(-1, len);
+    if (len != D) {
+      LUABIND_FERROR2("Incorrect length of step table, found %d, expected %d",
+                      len, D);
+    }
+    LUABIND_TABLE_TO_VECTOR(-1, int, step, D);
+  }
+  lua_pop(L, 1);
+  result = obj->convolution(D, step, kernel, result);
+  //&unrolled_kernel, &unrolled_self);
+  delete[] step;
+  LUABIND_RETURN(MatrixFloat, result);
+  /*LUABIND_RETURN(MatrixFloat, unrolled_kernel);
+    LUABIND_RETURN(MatrixFloat, unrolled_self);*/
 }
 //BIND_END
 

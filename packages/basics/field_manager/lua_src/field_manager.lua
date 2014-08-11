@@ -1,13 +1,11 @@
 -- wrapper para field_manager
 
-local field_manager_methods,
-field_manager_class_metatable = class("field_manager")
+local field_manager,field_manager_methods = class("field_manager")
+_G.field_manager = field_manager
 
 -- constructor
-function field_manager_class_metatable:__call()
-  local obj = { fields = {} }
-  obj = class_instance(obj, self, true)
-  return obj
+function field_manager:constructor()
+  self.fields = {}
 end
 
 -- devuelve un campo del field_manager

@@ -35,6 +35,8 @@ using april_utils::vector;
 namespace ANN {
 
   class ZCAWhiteningANNComponent : public PCAWhiteningANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(ZCAWhiteningANNComponent);
+    
     DotProductANNComponent dot_product_decoder; //< Applies the reconstruction from PCA rotated data
   public:
     ZCAWhiteningANNComponent(MatrixFloat *U,

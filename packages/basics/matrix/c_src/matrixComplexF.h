@@ -29,21 +29,6 @@ template<>
 void Matrix<ComplexF>::fill(ComplexF value);
 
 template<>
-void Matrix<ComplexF>::zeros();
-
-template<>
-void Matrix<ComplexF>::ones();
-
-template<>
-Matrix<ComplexF> *Matrix<ComplexF>::addition(const Matrix<ComplexF> *other);
-
-template<>
-Matrix<ComplexF> *Matrix<ComplexF>::substraction(const Matrix<ComplexF> *other);
-
-template <>
-Matrix<ComplexF>* Matrix<ComplexF>::multiply(const Matrix<ComplexF> *other) const;
-
-template<>
 ComplexF Matrix<ComplexF>::sum() const;
 
 template<>

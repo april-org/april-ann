@@ -31,6 +31,8 @@ namespace ANN {
   /// object, the noise probability, and the float value for masked units. The
   /// matrix size and dimensions are not restricted.
   class DropoutANNComponent : public StochasticANNComponent {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(DropoutANNComponent);
+    
     TokenMatrixFloat *input, *output;
     Token            *error_input, *error_output;
     MatrixFloat      *dropout_mask;

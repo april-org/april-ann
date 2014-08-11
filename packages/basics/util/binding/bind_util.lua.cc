@@ -32,8 +32,9 @@
 #ifndef NO_OMP
 #include <omp.h>
 #endif
-#include "omp_utils.h"
 #include "binarizer.h"
+#include "error_print.h"
+#include "omp_utils.h"
 
 // COPIED FROM liolib.c:168
 static int io_fclose (lua_State *L) {
@@ -77,6 +78,7 @@ extern const char *__COMMIT_NUMBER__;
 {
   binarizer::init();
   SignalHandler::initialize(L);
+  errorPrintSetLuaState(L);
 }
 //BIND_END
 

@@ -21,20 +21,23 @@
 #ifndef TOKEN_VECTOR_H
 #define TOKEN_VECTOR_H
 
-#include "vector.h"
-#include "token_base.h"
 #include "pair.h"
+#include "token_base.h"
+#include "vector.h"
 
 using april_utils::vector;
 
 class TokenVectorGeneric : public Token {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(TokenVectorGeneric);
 public:
+  TokenVectorGeneric() : Token() { }
   virtual unsigned int size() const = 0;
   virtual void clear() = 0;
 };
 
 template <typename T>
 class TokenVector : public TokenVectorGeneric {
+  APRIL_DISALLOW_COPY_AND_ASSIGN(TokenVector);
   april_utils::vector<T> vec;
 public:
   TokenVector();

@@ -22,8 +22,12 @@
 -- utest.check.gt(a, b, error_message): tests of a > b
 --
 -- utest.check.ge(a, b, error_message): tests of a >= b
+--
+-- utest.check.TRUE(a, error_message): tests of a == true
+--
+-- utest.check.FALSE(a, error_message): tests of a == false
 -------------------------------------------------------------------------------
-get_table_from_dotted_string("utest",true)
+utest = utest or {}
 --
 local function write(level,format,...)
   if level>0 or util.stdout_is_a_terminal() then
@@ -31,19 +35,26 @@ local function write(level,format,...)
   end
 end
 --
+local NONAMED = "UNKNOWN"
+local test_name = NONAMED
 local testn  = 0
 local passed = 0
 local failed = 0
 local failed_list = {}
+local names_order = {}
 utest.finish = function()
   write((failed > 0 and 1) or 0, "%d total tests: %s%d passed%s, %s%d failed%s\n",
         testn,
         ansi.fg.bright_green, passed, ansi.fg.default,
         ansi.fg.bright_red, failed, ansi.fg.default)
   if failed > 0 then
-    write(1, "%sTest failed%s\tList: %s\n"%{ansi.fg.bright_red,
-                                            ansi.fg.default,
-                                            table.concat(failed_list, ", ")})
+    for _,name in ipairs(names_order) do
+      write(1, "%sTest failed%s %s\tList: [ %s ]\n"%
+              {ansi.fg.bright_red,
+               ansi.fg.default,
+               name,
+               #failed_list[name] < 20 and table.concat( failed_list[name], ", ") or "too large to be displayed"})
+    end
     os.exit(1)
   end
   write(0, "%sOk%s\n", ansi.fg.bright_green, ansi.fg.default)
@@ -61,30 +72,36 @@ local check = function (func,error_msg)
   local ok  = table.remove(ret,1)
   local success = ret[1]
   if ok and success then
-    write(0, "Test %d: %sok%s\n", testn,
+    write(0, "Test %s %d: %sok%s\n", test_name, testn,
           ansi.fg.bright_green, ansi.fg.default)
     passed = passed + 1
     return true
   else
     if not ok then
-      debug.traceback()
       -- protected call to write, in case tostring fails with returned values
       pcall(function()
               write(1, "%s\n",
                     iterator(ipairs(ret)):select(2):map(tostring):concat(" "))
             end)
+      write(1, "%s\n", debug.traceback())
     end
-    write(1, "Test %d: %sfail%s\n", testn,
+    write(1, "Test %s %d: %sfail%s", test_name, testn,
           ansi.fg.bright_red, ansi.fg.default)
     if error_msg then
       if type(error_msg) == "function" then
-        error_msg()
+        error_msg = error_msg() or ""
       else
-        write(1, "%s\n",tostring(error_msg))
+        error_msg = tostring(error_msg)
       end
+      error_msg = ", msg: %s"%{error_msg}
     end
+    write(1, "%s\n", error_msg or "")
     failed = failed + 1
-    table.insert(failed_list, testn)
+    if not failed_list[test_name] then
+      table.insert(names_order, test_name)
+      failed_list[test_name] = {}
+    end
+    table.insert(failed_list[test_name], testn)
     return false
   end
 end
@@ -111,6 +128,21 @@ end
 utest.check.success = check
 utest.check.fail = function(f, ...)
   return check(function() return not f() end, ...)
+end
+utest.check.TRUE = function(a, ...)
+  return check(function() return a end, ...)
+end
+utest.check.FALSE = function(a, ...)
+  return check(function() return not a end, ...)
+end
+--_
+utest.test = function(name, test_func)
+  assert( test_name == NONAMED )
+  assert( type(name) == "string", "Needs a string as first argument" )
+  assert( type(test_func) == "function", "Needs a function as second argument")
+  test_name = name
+  test_func()
+  test_name = NONAMED
 end
 --
 setmetatable(utest.check,{ __call = function(self,...) return check(...) end })

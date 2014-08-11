@@ -1,8 +1,8 @@
-class_extension(matrix.sparse, "to_lua_string",
-                function(self, format)
-                  return string.format("matrix.sparse.fromString[[%s]]",
-                                       self:toString(format or "binary"))
-                end)
+class.extend(matrix.sparse, "to_lua_string",
+             function(self, format)
+               return string.format("matrix.sparse.fromString[[%s]]",
+                                    self:toString(format or "binary"))
+end)
 
 -- the constructor
 matrix.sparse.csr = function(...)
@@ -41,7 +41,7 @@ matrix.sparse.meta_instance.__tostring = function(self)
   else
     table.insert(out, "Large matrix, not printed to display")
   end
-  table.insert(out, string.format("# SparseMatrix of size [%s] in %s [%s], %d non-zeros",
+  table.insert(out, string.format("# SparseMatrix of size [%s] in %s [%s], %d non-zeros\n",
 				  table.concat(dims, ","), sparse,
 				  self:get_reference_string(),
 				  self:non_zero_size()))
