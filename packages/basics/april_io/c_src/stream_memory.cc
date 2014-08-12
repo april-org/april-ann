@@ -22,14 +22,11 @@
 
 namespace april_io {
   
-  char StreamMemory::DUMMY_CHAR = '\0';
-  const char *StreamMemory::NO_ERROR_STRING = "No error";
-
-  size_t extractLineFromStream(Stream *source, StreamMemory *dest) {
+  size_t extractLineFromStream(StreamInterface *source, StreamMemory *dest) {
     return source->get(dest, "\n\r");
   }
 
-  size_t extractULineFromStream(Stream *source, StreamMemory *dest) {
+  size_t extractULineFromStream(StreamInterface *source, StreamMemory *dest) {
     do {
       dest->clear();
       source->get(dest, "\n\r");

@@ -33,22 +33,14 @@ using namespace gzio;
 
 /////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME Stream april_io.stream
+//BIND_LUACLASSNAME StreamInterface april_io.stream
 
 //BIND_LUACLASSNAME GZFileStream gzio.stream
 //BIND_CPP_CLASS GZFileStream
-//BIND_SUBCLASS_OF GZFileStream Stream
+//BIND_SUBCLASS_OF GZFileStream StreamInterface
 
 //BIND_CONSTRUCTOR GZFileStream
 {
   LUABIND_INCREASE_NUM_RETURNS(callFileStreamConstructor<GZFileStream>(L));
-}
-//BIND_END
-
-/////////////////////////////////////////////////////////////////////////////
-
-//BIND_FUNCTION gzio.open
-{
-  LUABIND_INCREASE_NUM_RETURNS(callLuaFileConstructor<GZFileStream>(L));
 }
 //BIND_END

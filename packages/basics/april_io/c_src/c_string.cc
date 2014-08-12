@@ -105,7 +105,7 @@ namespace april_io {
   }
   
   const char *CStringStream::getErrorMsg() const {
-    return StreamMemory::NO_ERROR_STRING;
+    return StreamInterface::NO_ERROR_STRING;
   }
   
   const char *CStringStream::nextInBuffer(size_t &buf_len) {

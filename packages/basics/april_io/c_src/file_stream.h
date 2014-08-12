@@ -34,7 +34,7 @@
 namespace april_io {
   class FileStream : public BufferedStream {
     /// File descriptor.
-    int fd, errnum;
+    int fd, errnum, flags;
     bool is_eof;
     
     template<typename T>
@@ -54,13 +54,10 @@ namespace april_io {
     FileStream(int fd);
     virtual ~FileStream();
     
-    /// Calls isOpened method of stream property.
+    int fileno() const { return fd; }
+    
     virtual bool isOpened() const;
-    
-    /// Indicates if an error has been produced.
     virtual bool hasError() const;
-    
-    /// Returns an internal string with the last error message.
     virtual const char *getErrorMsg() const;
   };
   

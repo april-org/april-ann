@@ -18,6 +18,9 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "maxmin.h"
 #include "buffered_stream.h"
 
@@ -41,11 +44,15 @@ namespace april_io {
   }
 
   off_t BufferedStream::seek(int whence, int offset) {
+    if (whence == SEEK_CUR) {
+      off_t real_pos    = seekStream(SEEK_CUR, 0);
+      off_t current_pos = real_pos - getInBufferAvailableSize();
+      if (offset == 0) return current_pos;
+      offset -= (real_pos - current_pos);
+    }
     flush();
     resetBuffers();
-    int ret_value = seekStream(whence, offset);
-    fillBuffer(in_buffer, max_buffer_len);
-    return ret_value;
+    return seekStream(whence, offset);
   }
   
   void BufferedStream::flush() {

@@ -41,6 +41,7 @@ namespace april_io {
     size_t total_size;
     luaL_Buffer lua_buffer;
     char *out_buffer;
+    bool closed;
 
   public:
     OutputLuaStringStream(lua_State *L,

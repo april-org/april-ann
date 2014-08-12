@@ -29,8 +29,8 @@
 
 using namespace april_io;
 
-int lua_isAuxStream(lua_State *L, int index);
-Stream *lua_toAuxStream(lua_State *L, int index);
+int lua_isAuxStreamInterface(lua_State *L, int index);
+Stream *lua_toAuxStreamInterface(lua_State *L, int index);
 //BIND_END
 
 //BIND_FOOTER_H
@@ -38,9 +38,9 @@ template<typename T>
 int callFileStreamConstructor(lua_State *L) {
   const char *path = luaL_checkstring(L, 1);
   const char *mode = luaL_optstring(L, 2, "r");
-  Stream *stream = new T(path, mode);
+  StreamInterface *stream = new T(path, mode);
   if (stream->isOpened()) {
-    lua_pushStream(L, stream);
+    lua_pushStreamInterface(L, stream);
   }
   else {
     delete stream;
@@ -52,10 +52,10 @@ int callFileStreamConstructor(lua_State *L) {
 
 //BIND_HEADER_C
 template<typename T>
-int lua_isAuxStream(lua_State *L, int index) {
+int lua_isAuxStreamInterface(lua_State *L, int index) {
   luaL_Stream *p = ((luaL_Stream *)luaL_testudata(L, index, LUA_FILEHANDLE));
   if (p == 0) {
-    Stream *s = lua_toStream(L, index);
+    StreamInterface *s = lua_toStreamInterface(L, index);
     if (s == 0) return 0;
     T *s_casted = dynamic_cast<T*>(s);
     if (s_casted == 0) return 0;
@@ -64,10 +64,10 @@ int lua_isAuxStream(lua_State *L, int index) {
 }
 
 template<typename T>
-T *lua_toAuxStream(lua_State *L, int index) {
-  Stream *s;
+T *lua_toAuxStreamInterface(lua_State *L, int index) {
+  StreamInterface *s;
   luaL_Stream *p = ((luaL_Stream *)luaL_testudata(L, index, LUA_FILEHANDLE));
-  if (p == 0) s = lua_toStream(L, index);
+  if (p == 0) s = lua_toStreamInterface(L, index);
   else s = new FileStream(p->f);
   T *s_casted = dynamic_cast<T*>(s);
   if (s_casted == 0) return 0;
@@ -76,9 +76,9 @@ T *lua_toAuxStream(lua_State *L, int index) {
 
 namespace april_io {
 
-  int readAndPushNumberToLua(lua_State *L, Stream *obj,
+  int readAndPushNumberToLua(lua_State *L, StreamInterface *obj,
                              CStringStream *&c_string) {
-    if (c_string == 0) c_string = new CStringStream();
+    if (c_string == 0) AssignRef(c_string, new CStringStream());
     c_string->clear();
     obj->get(c_string, " ,;\t\n\r");
     if (c_string->empty()) return 0;
@@ -90,27 +90,27 @@ namespace april_io {
     return 1;
   }
   
-  int readAndPushStringToLua(lua_State *L, Stream *obj, int size,
+  int readAndPushStringToLua(lua_State *L, StreamInterface *obj, int size,
                              OutputLuaStringStream *&lua_string) {
-    if (lua_string == 0) lua_string = new OutputLuaStringStream(L);
+    if (lua_string == 0) AssignRef(lua_string, new OutputLuaStringStream(L));
     lua_string->clear();
     obj->get(lua_string, size);
     if (lua_string->empty()) return 0;
     return lua_string->push(L);
   }
   
-  int readAndPushLineToLua(lua_State *L, Stream *obj,
+  int readAndPushLineToLua(lua_State *L, StreamInterface *obj,
                            OutputLuaStringStream *&lua_string) {
-    if (lua_string == 0) lua_string = new OutputLuaStringStream(L);
+    if (lua_string == 0) AssignRef(lua_string, new OutputLuaStringStream(L));
     lua_string->clear();
     extractLineFromStream(obj, lua_string);
     if (lua_string->empty()) return 0;
     return lua_string->push(L);
   }
   
-  int readAndPushAllToLua(lua_State *L, Stream *obj,
+  int readAndPushAllToLua(lua_State *L, StreamInterface *obj,
                           OutputLuaStringStream *&lua_string) {
-    if (lua_string == 0) lua_string = new OutputLuaStringStream(L);
+    if (lua_string == 0) AssignRef(lua_string, new OutputLuaStringStream(L));
     lua_string->clear();
     obj->get(lua_string);
     if (lua_string->empty()) return 0;
@@ -122,41 +122,41 @@ namespace april_io {
 
 /////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME Stream april_io.stream
-//BIND_CPP_CLASS Stream
+//BIND_LUACLASSNAME StreamInterface april_io.stream
+//BIND_CPP_CLASS StreamInterface
 
-//BIND_CONSTRUCTOR Stream
+//BIND_CONSTRUCTOR StreamInterface
 {
   LUABIND_ERROR("Abstract class!!!");
 }
 //BIND_END
 
-//BIND_METHOD Stream good
+//BIND_METHOD StreamInterface good
 {
   LUABIND_RETURN(boolean, obj->good());
 }
 //BIND_END
 
-//BIND_METHOD Stream eof
+//BIND_METHOD StreamInterface eof
 {
   LUABIND_RETURN(boolean, obj->eof());
 }
 //BIND_END
 
-//BIND_METHOD Stream is_opened
+//BIND_METHOD StreamInterface is_opened
 {
   LUABIND_RETURN(boolean, obj->isOpened());
 }
 //BIND_END
 
-//BIND_METHOD Stream close
+//BIND_METHOD StreamInterface close
 {
   obj->close();
   LUABIND_RETURN(bool, !obj->isOpened());
 }
 //BIND_END
 
-//BIND_METHOD Stream read
+//BIND_METHOD StreamInterface read
 {
   if (!obj->good()) {
     lua_pushnil(L);
@@ -214,17 +214,24 @@ namespace april_io {
 }
 //BIND_END
 
-//BIND_METHOD Stream write
+//BIND_METHOD StreamInterface write
 {
   int argn = lua_gettop(L); // number of arguments
   for (int i=1; i<=argn; ++i) {
     const char *value = luaL_checkstring(L, i);
     obj->put(value, luaL_len(L, i));
   }
+  if (obj->hasError()) {
+    LUABIND_RETURN_NIL();
+    LUABIND_RETURN(string, obj->getErrorMsg());
+  }
+  else {
+    LUABIND_RETURN(StreamInterface, obj);
+  }
 }
 //BIND_END
 
-//BIND_METHOD Stream seek
+//BIND_METHOD StreamInterface seek
 {
   const char *whence = luaL_optstring(L, 1, "cur");
   int offset = luaL_optint(L, 2, 0);
@@ -239,37 +246,39 @@ namespace april_io {
     int_whence = SEEK_END;
     LUABIND_FERROR1("Not supported whence '%s'", whence);
   }
-  int ret = obj->seek(int_whence, offset);
+  off_t ret = obj->seek(int_whence, offset);
   if (ret < 0) {
     LUABIND_RETURN_NIL();
-    LUABIND_RETURN(string, "Impossible to execute seek");
+    LUABIND_RETURN(string, obj->getErrorMsg());
   }
   else {
-    LUABIND_RETURN(int, ret);
+    // sanity check
+    april_assert( static_cast<off_t>( static_cast<double>( ret ) ) == ret );
+    LUABIND_RETURN(number, static_cast<double>(ret));
     return 1;
   }
 }
 //BIND_END
 
-//BIND_METHOD Stream flush
+//BIND_METHOD StreamInterface flush
 {
   obj->flush();
 }
 //BIND_END
 
-//BIND_METHOD Stream setvbuf
+//BIND_METHOD StreamInterface setvbuf
 {
   LUABIND_ERROR("NOT IMPLEMENTED");
 }
 //BIND_END
 
-//BIND_METHOD Stream has_error
+//BIND_METHOD StreamInterface has_error
 {
   LUABIND_RETURN(boolean, obj->hasError());
 }
 //BIND_END
 
-//BIND_METHOD Stream error_msg
+//BIND_METHOD StreamInterface error_msg
 {
   LUABIND_RETURN(string, obj->getErrorMsg());
 }
@@ -279,7 +288,7 @@ namespace april_io {
 
 //BIND_LUACLASSNAME FileStream april_io.stream.file
 //BIND_CPP_CLASS FileStream
-//BIND_SUBCLASS_OF FileStream Stream
+//BIND_SUBCLASS_OF FileStream StreamInterface
 
 //BIND_CONSTRUCTOR FileStream
 {
@@ -289,63 +298,9 @@ namespace april_io {
 
 /////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME StreamMemory april_io.stream.__memory__
-//BIND_CPP_CLASS StreamMemory
-//BIND_SUBCLASS_OF StreamMemory Stream
-
-//BIND_CONSTRUCTOR StreamMemory
-{
-  LUABIND_ERROR("Abstract class!!!");
-}
-//BIND_END
-
-//BIND_METHOD StreamMemory value
-{
-  LUABIND_INCREASE_NUM_RETURNS(obj->push(L));
-}
-//BIND_END
-
-//BIND_METHOD StreamMemory empty
-{
-  LUABIND_RETURN(boolean, obj->empty());
-}
-//BIND_END
-
-//BIND_METHOD StreamMemory size
-{
-  LUABIND_RETURN(uint, obj->size());
-}
-//BIND_END
-
-//BIND_METHOD StreamMemory raw_get
-{
-  size_t pos;
-  LUABIND_GET_PARAMETER(1, uint, pos);
-  LUABIND_RETURN(char, (*obj)[pos]);
-}
-//BIND_END
-
-//BIND_METHOD StreamMemory raw_set
-{
-  size_t pos;
-  char value;
-  LUABIND_GET_PARAMETER(1, uint, pos);
-  LUABIND_GET_PARAMETER(1, char, value);
-  (*obj)[pos] = value;
-}
-//BIND_END
-
-//BIND_METHOD StreamMemory clear
-{
-  obj->clear();
-}
-//BIND_END
-
-/////////////////////////////////////////////////////////////////////////////
-
 //BIND_LUACLASSNAME InputLuaStringStream april_io.stream.input_lua_string
 //BIND_CPP_CLASS InputLuaStringStream
-//BIND_SUBCLASS_OF InputLuaStringStream StreamMemory
+//BIND_SUBCLASS_OF InputLuaStringStream StreamInterface
 
 //BIND_CONSTRUCTOR InputLuaStringStream
 {
@@ -358,7 +313,7 @@ namespace april_io {
 
 //BIND_LUACLASSNAME CStringStream april_io.stream.c_string
 //BIND_CPP_CLASS CStringStream
-//BIND_SUBCLASS_OF CStringStream StreamMemory
+//BIND_SUBCLASS_OF CStringStream StreamInterface
 
 //BIND_CONSTRUCTOR CStringStream
 {

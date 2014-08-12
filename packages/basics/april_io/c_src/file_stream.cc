@@ -51,9 +51,11 @@ namespace april_io {
 
   ssize_t FileStream::flushBuffer(const char *source, size_t max_size) {
     ssize_t ret_value, total_size = 0;
-    do {
-      if ((ret_value = write(fd, source, max_size)) > 0) total_size += ret_value;
-    } while( checkReturnValue(ret_value)<0 && errnum==EINTR );
+    if (flags & (O_RDWR | O_WRONLY)) {
+      do {
+        if ((ret_value = write(fd, source, max_size)) > 0) total_size += ret_value;
+      } while( checkReturnValue(ret_value)<0 && errnum==EINTR );
+    }
     return (errnum==0) ? total_size : ret_value;
   }
 
@@ -62,14 +64,13 @@ namespace april_io {
   }
   
   off_t FileStream::seekStream(int whence, int offset) {
-    return checkReturnValue(lseek(fd, whence, offset));
+    return checkReturnValue(lseek(fd, offset, whence));
   }
   
   FileStream::FileStream(const char *path, const char *mode) :
     BufferedStream(),
     is_eof(false) {
     constString mode_cstr(mode);
-    int flags;
     if (mode_cstr.empty() || mode_cstr == "r") {
       flags = O_RDONLY;
     }
@@ -96,11 +97,13 @@ namespace april_io {
   }
 
   FileStream::FileStream(FILE *f) : BufferedStream(), is_eof(false) {
-    fd = checkReturnValue(dup(fileno(f)));
+    fd = checkReturnValue(dup(::fileno(f)));
+    flags = fcntl(fd, F_GETFL);
   }
   
   FileStream::FileStream(int f) : BufferedStream(), is_eof(false) {
     fd = checkReturnValue(dup(f));
+    flags = fcntl(fd, F_GETFL);
   }
   
   FileStream::~FileStream() {

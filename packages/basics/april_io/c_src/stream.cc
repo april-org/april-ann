@@ -31,8 +31,11 @@ extern "C" {
 #include "unused_variable.h"
 
 namespace april_io {
+
+  char StreamInterface::DUMMY_CHAR = '\0';
+  const char *StreamInterface::NO_ERROR_STRING = "Success";
   
-  Stream::Stream() : Referenced(),
+  Stream::Stream() : StreamInterface(),
                      in_buffer(0), in_buffer_pos(0), in_buffer_len(0),
                      out_buffer(0), out_buffer_pos(0), out_buffer_len(0) {
   }
@@ -56,18 +59,16 @@ namespace april_io {
     return isOpened() && !eof() && !hasError();
   }
   
-  size_t Stream::get(Stream *dest, const char *delim) {
+  size_t Stream::get(StreamInterface *dest, const char *delim) {
     return get(dest, SIZE_MAX, delim);
   }
 
-  size_t Stream::get(Stream *dest, size_t max_size, const char *delim) {
+  size_t Stream::get(StreamInterface *dest, size_t max_size, const char *delim) {
     const char *buf;
     size_t buf_len, dest_len=0;
     trimInBuffer(delim);
-    while( !this->hasError() &&
-           !this->eof() &&
+    while( this->good() &&
            !dest->hasError() &&
-           // !dest->eof() &&
            dest_len < max_size &&
            (buf = getInBuffer(buf_len, max_size - dest_len, delim)) ) {
       size_t in_buffer_available_size = getInBufferAvailableSize();
@@ -85,8 +86,7 @@ namespace april_io {
     size_t buf_len, dest_len=0;
     trimInBuffer(delim);
     while( dest_len < max_size &&
-           !this->hasError() &&
-           !this->eof() &&
+           this->good() &&
            (buf = getInBuffer(buf_len, max_size - dest_len, delim)) ) {
       size_t in_buffer_available_size = getInBufferAvailableSize();
       memcpy(dest + dest_len, buf, buf_len);
@@ -98,11 +98,11 @@ namespace april_io {
     return dest_len;
   }
 
-  size_t Stream::put(Stream *source, size_t size) {
+  size_t Stream::put(StreamInterface *source, size_t size) {
     char *buf;
     size_t buf_len, source_len = 0;
     while( !this->hasError() &&
-           !source->hasError() &&
+           source->good() &&
            source_len < size &&
            (buf = getOutBuffer(buf_len, size - source_len)) ) {
       size_t len = source->get(buf, buf_len, 0);

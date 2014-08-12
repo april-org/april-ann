@@ -25,7 +25,7 @@ namespace april_io {
   OutputLuaStringStream::OutputLuaStringStream(lua_State *L,
                                                size_t block_size) :
     L(L),
-    block_size(block_size), total_size(0) {
+    block_size(block_size), total_size(0), closed(false) {
     luaL_buffinit(L, &lua_buffer);
     out_buffer = new char[block_size];
   }
@@ -45,28 +45,27 @@ namespace april_io {
   char &OutputLuaStringStream::operator[](size_t pos) {
     UNUSED_VARIABLE(pos);
     ERROR_EXIT(128, "NOT IMPLEMENTED\n");
-    return StreamMemory::DUMMY_CHAR;
+    return StreamInterface::DUMMY_CHAR;
   }
   
   void OutputLuaStringStream::clear() {
     if (total_size > 0) {
       close();
+      closed = false;
       luaL_buffinit(L, &lua_buffer);
       resetBuffers();
-      out_buffer = new char[block_size];
       total_size = 0;
     }
   }
   
   bool OutputLuaStringStream::isOpened() const {
-    return out_buffer != 0;
+    return !closed;
   }
   
   void OutputLuaStringStream::close() {
     if (out_buffer != 0) {
       flush();
-      delete[] out_buffer;
-      out_buffer = 0;
+      closed = true;
     }
   }
   
@@ -99,7 +98,7 @@ namespace april_io {
   }
   
   const char *OutputLuaStringStream::getErrorMsg() const {
-    return StreamMemory::NO_ERROR_STRING;
+    return StreamInterface::NO_ERROR_STRING;
   }
   
   const char *OutputLuaStringStream::nextInBuffer(size_t &buf_len) {
@@ -201,7 +200,7 @@ namespace april_io {
   }
   
   const char *InputLuaStringStream::getErrorMsg() const {
-    return StreamMemory::NO_ERROR_STRING;
+    return StreamInterface::NO_ERROR_STRING;
   }
   
   const char *InputLuaStringStream::nextInBuffer(size_t &buf_len) {

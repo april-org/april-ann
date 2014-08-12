@@ -15,7 +15,15 @@ april_io.lines = function(name, ...)
   local open = open_by_extension[string.get_extension(name)] or io_old_open
   local f = april_assert(open(name), "cannot open file '%s'", name)
   assert(f.lines, "lines method not implemented to this kind of file")
-  return f:lines(...)
+  local it = f:lines(...)
+  return function()
+    local result = table.pack(it())
+    if #result == 0 then
+      f:close()
+    else
+      return table.unpack(result)
+    end
+  end
 end
 io.lines = april_io.lines
 
@@ -27,9 +35,7 @@ class.extend(april_io.stream, "lines",
              function(self, ...)
                local arg = { ... }
                return function()
-                 local values = { self:read(table.unpack(arg)) }
-                 if #values == 0 or values[1] == nil then return nil end
-                 return table.unpack(values)
+                 return self:read(table.unpack(arg))
                end
 end)
 

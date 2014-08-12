@@ -13,8 +13,8 @@ for line in gzio.lines("test.gz") do assert(line, "Hello, World.") end
 os.remove("test.gz")
 
 -- the tar module reads tar files, can be used with gzio in order to read tgz
-local f=gzio.open(string.get_path(arg[0]).."a.tar.gz")
-local t=tar.open(f)
+local f = gzio.open(string.get_path(arg[0]).."a.tar.gz")
+local t = tar.open(f)
 
 local data = {
   ["dos.txt"] = {

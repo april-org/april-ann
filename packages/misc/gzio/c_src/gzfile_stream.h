@@ -24,14 +24,15 @@
 #include <zlib.h>
 #include <cstring>
 
-#include "stream.h"
+#include "buffered_stream.h"
 
 namespace gzio {
 
-  class GZFileStream : public april_io::Stream {
-    gzFile f;
-    bool need_close;
+  class GZFileStream : public april_io::StreamInterface {
   public:
+    
+    /// Indicates if the extesion of a given filename corresponds with a
+    /// gzipped file.
     static bool isGZ(const char *filename) {
       int len = strlen(filename);
       return (len > 3 && filename[len-3] == '.' &&
@@ -39,17 +40,44 @@ namespace gzio {
               filename[len-1] == 'z');
     }
   
-    GZFileStream();
-    GZFileStream(gzFile f);
     GZFileStream(const char *path, const char *mode);
+    /*
+      GZFileStream(FILE *file);
+      GZFileStream(int fd);
+    */
     virtual ~GZFileStream();
+  
+    // int fileno() const { return fd; }
+
+    virtual bool good() const;
+    virtual size_t get(StreamInterface *dest, const char *delim = 0);
+    virtual size_t get(StreamInterface *dest, size_t max_size, const char *delim = 0);
+    virtual size_t get(char *dest, size_t max_size, const char *delim = 0);
+    virtual size_t put(StreamInterface *source, size_t size);
+    virtual size_t put(const char *source, size_t size);
+    virtual int printf(const char *format, ...);
+    virtual bool eof() const;
+    virtual bool isOpened() const ;
     virtual void close();
+    virtual off_t seek(int whence, int offset) ;
     virtual void flush();
-    virtual bool isOpened() const;
-    virtual bool eof();
-    virtual int seek(long offset, int whence);
-    virtual size_t read(void *ptr, size_t size, size_t nmemb);
-    virtual size_t write(const void *ptr, size_t size, size_t nmemb);
+    virtual int setvbuf(int mode, size_t size);
+    virtual bool hasError() const;
+    virtual const char *getErrorMsg() const;
+    
+  private:
+    
+    static const size_t DEFAULT_BUFFER_SIZE = 64*1024; // 64K
+    
+    gzFile f;
+    char *in_buffer;
+    size_t in_buffer_pos, in_buffer_len, max_buffer_size;
+    bool write_flag;
+
+    void prepareInBufferData();    
+    void trimInBuffer(const char *delim);
+    template<typename T>
+    size_t templatizedGet(T &putOp, size_t max_size, const char *delim);
   };
 
 } // namespace gzio

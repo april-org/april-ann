@@ -1,3 +1,9 @@
+gzio = gzio or {}
+
+gzio.open  = function(...)
+  return gzio.stream(...)
+end
+
 gzio.lines = function(name, ...)
   local f = april_assert( gzio.open(name), "cannot open file '%s'", name )
   return f:lines(...)

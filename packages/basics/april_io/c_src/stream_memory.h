@@ -69,19 +69,16 @@ namespace april_io {
   class StreamMemory;
 
   /// Returns a whole line of the stream (a string delimited by \n).
-  size_t extractLineFromStream(Stream *source, StreamMemory *dest);
+  size_t extractLineFromStream(StreamInterface *source, StreamMemory *dest);
   
   /// Returns a whole line of the stream (a string delimited by \n), but
   /// avoiding lines which begins with #. Lines beginning with # are taken as
   /// commented lines.
-  size_t extractULineFromStream(Stream *source, StreamMemory *dest);
+  size_t extractULineFromStream(StreamInterface *source, StreamMemory *dest);
 
   ///////////////////////////////////////////////////////////////////////////
   
   class StreamMemory : public Stream {
-  protected:
-    static char DUMMY_CHAR;
-    static const char *NO_ERROR_STRING;
   public:
     static const size_t BLOCK_SIZE = 1024;
     StreamMemory() { }

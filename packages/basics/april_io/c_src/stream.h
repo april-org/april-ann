@@ -73,46 +73,44 @@
 
 namespace april_io {
   /**
-   * The Stream is the parent class which needs to be dervied by I/O
-   * facilities.
+   * The StreamInterface is the basic public interface needed to implement a
+   * Stream.
    */
-  class Stream : public Referenced {
-    const char *in_buffer;
-    size_t in_buffer_pos, in_buffer_len;
-    char *out_buffer;
-    size_t out_buffer_pos, out_buffer_len;
-    
+  class StreamInterface : public Referenced {
   public:
-    Stream();
-    virtual ~Stream();
+    
+    StreamInterface() : Referenced() { }
+    
+    virtual ~StreamInterface() { }
     
     /// Returns if the stream is properly opened and not EOF and no errors.
-    virtual bool good() const;
+    virtual bool good() const = 0;
 
     /// Reads a string delimited by any of the given chars and puts it into the
     /// given Stream. If delim==0 then this method ends when dest->eof() is
     /// true.
-    virtual size_t get(Stream *dest, const char *delim = 0);
+    virtual size_t get(StreamInterface *dest, const char *delim = 0) = 0;
     
     /// Reads a string with max_size length and delimited by any of the given
     /// chars and puts it into the given Stream.
-    virtual size_t get(Stream *dest, size_t max_size, const char *delim = 0);
+    virtual size_t get(StreamInterface *dest, size_t max_size,
+                       const char *delim = 0) = 0;
     
     /// Reads a string of a maximum given size delimited by any of the given
     /// chars and puts it into the given char buffer.
-    virtual size_t get(char *dest, size_t max_size, const char *delim = 0);
+    virtual size_t get(char *dest, size_t max_size, const char *delim = 0) = 0;
     
     /// Puts a string of a maximum given size taken from the given Stream.
-    virtual size_t put(Stream *source, size_t size);
+    virtual size_t put(StreamInterface *source, size_t size) = 0;
     
     /// Puts a string of a maximum given size taken from the given char buffer.
-    virtual size_t put(const char *source, size_t size);
+    virtual size_t put(const char *source, size_t size) = 0;
     
     /// Writes a set of values following the given format. Equals to C printf.    
-    virtual int printf(const char *format, ...);
+    virtual int printf(const char *format, ...) = 0;
     
     /// Indicates if end-of-file flag is true.
-    virtual bool eof() const;
+    virtual bool eof() const = 0;
     
     ///////// ABSTRACT INTERFACE /////////
     
@@ -138,6 +136,45 @@ namespace april_io {
     virtual const char *getErrorMsg() const = 0;
     
   protected:
+    static char DUMMY_CHAR;
+    static const char *NO_ERROR_STRING;
+  };
+  
+  
+  /**
+   * The Stream is the parent class which needs to be dervied by I/O
+   * facilities based in input/output buffers.
+   */
+  class Stream : public StreamInterface {
+    const char *in_buffer;
+    size_t in_buffer_pos, in_buffer_len;
+    char *out_buffer;
+    size_t out_buffer_pos, out_buffer_len;
+    
+  public:
+    Stream();
+    virtual ~Stream();
+    
+    virtual bool good() const;
+    virtual size_t get(StreamInterface *dest, const char *delim = 0);
+    virtual size_t get(StreamInterface *dest, size_t max_size, const char *delim = 0);
+    virtual size_t get(char *dest, size_t max_size, const char *delim = 0);
+    virtual size_t put(StreamInterface *source, size_t size);
+    virtual size_t put(const char *source, size_t size);
+    virtual int printf(const char *format, ...);
+    virtual bool eof() const;
+    
+    ///////// ABSTRACT INTERFACE /////////
+    
+    // virtual bool isOpened() const = 0;
+    // virtual void close() = 0;
+    // virtual off_t seek(int whence, int offset) = 0;
+    // virtual void flush() = 0;
+    // virtual int setvbuf(int mode, size_t size) = 0;
+    // virtual bool hasError() const = 0;
+    // virtual const char *getErrorMsg() const = 0;
+    
+  protected:
     
     // Auxiliary protected methods
 
@@ -145,7 +182,13 @@ namespace april_io {
     virtual size_t getInBufferPos() const;
     virtual size_t getOutBufferPos() const;
     virtual void resetOutBuffer();
-
+    
+    /// Indicates the available data in the current input buffer.
+    virtual size_t getInBufferAvailableSize() const;
+    
+    /// Indicates the available data in the current output buffer.
+    virtual size_t getOutBufferAvailableSize() const;
+    
     /**
      * Moves the input buffer pointer a given number of bytes, when empty
      * buffer, this call will refill the buffer with new data from the real
@@ -162,22 +205,19 @@ namespace april_io {
      * @param len - Size of the movement (<= available size).
      */
     virtual void moveOutBuffer(size_t len);
-
+    
+    ///// ABSTRACT METHODS /////
     
     virtual const char *nextInBuffer(size_t &buf_len) = 0;
 
     virtual char *nextOutBuffer(size_t &buf_len) = 0;
 
     virtual bool eofStream() const = 0;
+    
+    ////////////////////////////
 
   private:
     void trimInBuffer(const char *delim);
-    
-    /// Indicates the available data in the current input buffer.
-    virtual size_t getInBufferAvailableSize() const;
-
-    /// Indicates the available data in the current output buffer.
-    virtual size_t getOutBufferAvailableSize() const;
     
     /**
      * Returns a pointer to the current input buffer with at most max_size
