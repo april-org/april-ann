@@ -20,8 +20,9 @@
  */
 #include <cstring>
 #include <cstdlib>
-#include "constString.h"
 #include "binarizer.h"
+#include "constString.h"
+#include "mystring.h"
 
 namespace april_utils {
   constString::constString(const char *s, size_t n) {
@@ -103,8 +104,8 @@ namespace april_utils {
   void constString::ltrim(const char *acepta) {
     // todo: puede fallar si la cadena no es terminada en '\0'
     if (buffer) {
-      size_t n = strspn(buffer,acepta);
-      if (n>length) n=length;
+      size_t n = april_utils::strnspn(buffer,acepta,length);
+      april_assert(n<=length);
       length -= n;
       buffer += n;
     }
@@ -144,8 +145,8 @@ namespace april_utils {
     ltrim(separadores);
     if (empty()) return constString();
     const char *newbuffer = buffer;
-    size_t newlength = strcspn(newbuffer,separadores);
-    if (newlength>length) newlength=length;
+    size_t newlength = april_utils::strncspn(newbuffer,separadores,length);
+    april_assert(newlength<=length);
     skip(newlength);
     return constString(newbuffer,newlength);
   }
@@ -179,7 +180,7 @@ namespace april_utils {
     float value = strtof(buffer,&aux);  
     if (aux == buffer) return false;
     if (aux > buffer+length+1) return false;
-    length -= aux - buffer - 1;
+    length -= aux - buffer;
     buffer = aux;
     *resul = value;
     return true;
@@ -205,7 +206,7 @@ namespace april_utils {
     double value = strtod(buffer,&aux);
     if (aux == buffer) return false;
     if (aux > buffer+length+1) return false;
-    length -= aux - buffer - 1;
+    length -= aux - buffer;
     buffer = aux;
     *resul = value;
     return true;
@@ -264,8 +265,8 @@ namespace april_utils {
     // segmento
     long int value = strtol(buffer,&aux, base);
     if (aux == buffer) return false;
-    if (aux > buffer+length) return false;
-    length -= aux-buffer;
+    if (aux > buffer+length+1) return false;
+    length -= aux - buffer;
     buffer = aux;
     *resul = value;
     return true;
@@ -278,8 +279,8 @@ namespace april_utils {
     char *aux;
     long long int value = strtoll(buffer,&aux, base);
     if (aux == buffer) return false;
-    if (aux > buffer+length) return false;
-    length -= aux-buffer;
+    if (aux > buffer+length+1) return false;
+    length -= aux - buffer;
     buffer = aux;
     *resul = value;
     return true;

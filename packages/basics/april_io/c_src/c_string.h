@@ -26,6 +26,11 @@
 
 namespace april_io {
   
+  /**
+   * @brief A class which works as a file in memory using C strings.
+   *
+   * @note The string is ended with a '\0' in order to ensure safe operations.
+   */
   class CStringStream : public StreamMemory {
     april_utils::string data;
     size_t in_pos, out_pos;
@@ -42,6 +47,7 @@ namespace april_io {
 
     virtual bool empty() const;
     virtual size_t size() const;
+    virtual size_t capacity() const;
     virtual char operator[](size_t pos) const;
     virtual char &operator[](size_t pos);
     virtual void clear();

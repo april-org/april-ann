@@ -23,8 +23,8 @@ Master branch release
 
 ### Bugs removed
 
-- Solved bug in `constString::extract_float` and `constString::extract_double`
-  methods.
+- Solved bug in `constString` extract numeric methods which returns `false` when
+  the extraction procedure ends up to the character after the last valid number.
 
 ### C/C++
 

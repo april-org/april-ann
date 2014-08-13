@@ -3,6 +3,48 @@
 
 namespace april_utils {
 
+  size_t strnspn(const char *buffer, const char *accept, size_t length) {
+    if (length > 128) {
+      char lookup_table[256];
+      memset(lookup_table, 0, 256*sizeof(char));
+      for (size_t i=0; i<strlen(accept); ++i) {
+        lookup_table[static_cast<unsigned char>(accept[i])] = 1;
+      }
+      size_t pos=0;
+      while(pos < length &&
+            lookup_table[static_cast<unsigned char>(buffer[pos])]) {
+        ++pos;
+      }
+      return pos;
+    }
+    else {
+      size_t pos=0;
+      while(pos < length && strchr(accept, buffer[pos])) ++pos;
+      return pos;
+    }
+  }
+
+  size_t strncspn(const char *buffer, const char *reject, size_t length) {
+    if (length > 128) {
+      char lookup_table[256];
+      memset(lookup_table, 0, 256*sizeof(char));
+      for (size_t i=0; i<strlen(reject); ++i) {
+        lookup_table[static_cast<unsigned char>(reject[i])] = 1;
+      }
+      size_t pos=0;
+      while(pos < length &&
+            !lookup_table[static_cast<unsigned char>(buffer[pos])]) {
+        ++pos;
+      }
+      return pos;
+    }
+    else {
+      size_t pos=0;
+      while(pos < length && !strchr(reject, buffer[pos])) ++pos;
+      return pos;
+    }
+  }
+
   const char *string::NULL_STRING = "\0";
     
   string::string() { }
@@ -84,7 +126,7 @@ namespace april_utils {
   
   void string::resize(string::size_type size) { vec.resize(size); }
   
-  string::size_type string::capacity() { return vec.capacity(); }
+  string::size_type string::capacity() const { return vec.capacity(); }
   
   void string::reserve(string::size_type size) { vec.reserve(size); }
   

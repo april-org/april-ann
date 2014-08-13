@@ -377,7 +377,7 @@ namespace basics {
   template <typename T>
   Matrix<T>*
   readMatrixFromTabStream(april_utils::UniquePtr<april_io::StreamInterface> &stream,
-                          const char *given_order) {
+                          const char *given_order=0) {
     AsciiExtractor<T> ascii_extractor;
     if (!stream->good()) {
       ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
@@ -409,7 +409,7 @@ namespace basics {
       ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
       return 0;
     }
-    april_utils::constString order(given_order),token;
+    april_utils::constString order( (given_order) ? given_order : "row_major"),token;
     int dims[2] = { nrows, ncols };
     Matrix<T> *mat = 0;
     if (order=="row_major") {

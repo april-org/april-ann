@@ -40,7 +40,7 @@ namespace april_io {
   }
 
   april_utils::constString CStringStream::getConstString() const {
-    return april_utils::constString(data.c_str(), data.size());
+    return april_utils::constString(data.c_str(), size());
   }
 
   void CStringStream::swapString(april_utils::string &other) {
@@ -60,14 +60,18 @@ namespace april_io {
   size_t CStringStream::size() const {
     return data.size();
   }
+
+  size_t CStringStream::capacity() const {
+    return data.capacity()-1;
+  }
   
   char CStringStream::operator[](size_t pos) const {
-    april_assert(pos < data.size());
+    april_assert(pos < size());
     return data[pos];
   }
 
   char &CStringStream::operator[](size_t pos) {
-    april_assert(pos < data.size());
+    april_assert(pos < size());
     return data[pos];
   }
   
@@ -78,7 +82,7 @@ namespace april_io {
   }
   
   int CStringStream::push(lua_State *L) {
-    lua_pushlstring(L, data.c_str(), data.size());
+    lua_pushlstring(L, data.c_str(), size());
     return 1;
   }
   
@@ -92,15 +96,19 @@ namespace april_io {
   }
   
   off_t CStringStream::seek(int whence, int offset) {
-    if (whence == SEEK_CUR && offset == 0) return data.size();
+    if (whence == SEEK_CUR && offset == 0) return size();
     ERROR_EXIT(128, "NOT IMPLEMENTED BEHAVIOR\n");
     return 0;
   }
   
   void CStringStream::flush() {
     size_t new_size = out_pos + getOutBufferPos();
-    april_assert(data.capacity() >= new_size);
-    if (data.size() < new_size) data.resize(new_size);
+    april_assert(capacity() >= new_size);
+    if (size() < new_size+1) {
+      data.reserve(new_size+1);
+      data.resize(new_size);
+    }
+    data[size()] = '\0';
   }
   
   int CStringStream::setvbuf(int mode, size_t size) {
@@ -118,25 +126,26 @@ namespace april_io {
   }
   
   const char *CStringStream::nextInBuffer(size_t &buf_len) {
-    april_assert(data.size() >= in_pos + getInBufferPos());
+    april_assert(size() >= in_pos + getInBufferPos());
     in_pos += getInBufferPos();
-    buf_len = data.size() - in_pos;
+    buf_len = size() - in_pos;
     return data.c_str() + in_pos;
   }
   
   char *CStringStream::nextOutBuffer(size_t &buf_len) {
     out_pos += getOutBufferPos();
-    if (out_pos >= data.capacity()) {
+    if (out_pos >= capacity()) {
+      // NOTE: Here we use data.capacity() which is capacity()+1.
       data.reserve(data.capacity() << 1);
       in_pos += getInBufferPos();
       resetBuffers();
     }
-    buf_len = data.capacity() - out_pos;
+    buf_len = capacity() - out_pos;
     return data.begin() + out_pos;
   }
   
   bool CStringStream::eofStream() const {
-    return in_pos >= data.size();
+    return in_pos >= size();
   }
   
   void CStringStream::moveOutBuffer(size_t len) {
