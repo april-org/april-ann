@@ -5,6 +5,9 @@ class.extend(matrixComplex, "to_lua_string",
                                     self:toString(format or "binary"))
 end)
 
+-- serialization
+matrix.__make_all_serialization_methods__(matrixComplex)
+
 matrixComplex.meta_instance.__call =
   matrix.__make_generic_call__()
 
@@ -118,48 +121,6 @@ april_set_doc(matrixComplex.col_major, {
 		    "string with the complex number.", },
 		},
 		outputs = { "A matrixComplex instantiated object" }, })
-
-april_set_doc(matrixComplex.fromFilename, {
-		class = "function", summary = "constructor",
-		description ={
-		  "Loads a matrixComplex from a filename.",
-		},
-		params = {
-		  "A filename path.",
-		},
-		outputs = { "A matrixComplex instantiated object" }, })
-
-april_set_doc(matrixComplex.."toFilename", {
-		class = "method",
-		summary = "It allows to store a matrixComplex in a file.",
-		description ={
-		  "It allows to store a matrixComplex in a file.",
-		  "It uses the format expected by fromMatrixComplex function.",
-		},
-		params = {
-		  "A filename path.",
-		  { "An string with the format: ascii or binary [optional].",
-		    "By default is ascii." },
-		}, })
-
-april_set_doc(matrixComplex.fromString, {
-		class = "function", summary = "constructor",
-		description ={
-		  "Loads a matrixComplex from a Lua string.",
-		},
-		params = {
-		  "A Lua string.",
-		},
-		outputs = { "A matrixComplex instantiated object" }, })
-
-april_set_doc(matrixComplex.."toString", {
-		class = "method",
-		summary = "It returns a Lua string which stores the matrixComplex.",
-		description ={
-		  "It returns a Lua string which stores the matrixComplex.",
-		  "It uses the format expected by fromString function.",
-		},
-		outputs = { "A Lua string" }, })
 
 april_set_doc(matrixComplex.."to_lua_string", {
 		class = "method",

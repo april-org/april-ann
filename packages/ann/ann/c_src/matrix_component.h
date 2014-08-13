@@ -37,22 +37,22 @@ namespace ANN {
                                     public ComponentPropertiesAndAsserts {
     APRIL_DISALLOW_COPY_AND_ASSIGN(VirtualMatrixANNComponent);
     
-    TokenMatrixFloat *input, *output, *error_input, *error_output;
+    basics::TokenMatrixFloat *input, *output, *error_input, *error_output;
     
   protected:
     
     // Auxiliary methods
     
-    MatrixFloat *getInputMatrix() {
+    basics::MatrixFloat *getInputMatrix() {
       return input->getMatrix();
     }
-    MatrixFloat *getOutputMatrix() {
+    basics::MatrixFloat *getOutputMatrix() {
       return output->getMatrix();
     }
-    MatrixFloat *getErrorInputMatrix() {
+    basics::MatrixFloat *getErrorInputMatrix() {
       return error_input->getMatrix();
     }
-    MatrixFloat *getErrorOutputMatrix() {
+    basics::MatrixFloat *getErrorOutputMatrix() {
       return error_output->getMatrix();
     }
     
@@ -65,15 +65,15 @@ namespace ANN {
      * @param during_training - Indicates if it is training or not.
      * @return A MatrixFloat with the forward computation result.
      */
-    virtual MatrixFloat *privateDoForward(MatrixFloat *input,
-                                          bool during_training) = 0;
+    virtual basics::MatrixFloat *privateDoForward(basics::MatrixFloat *input,
+                                                  bool during_training) = 0;
     /**
      * Backprop computation using MatrixFloat input/output
      *
      * @param input_error - The MatrixFloat received as input_error.
      * @return A MatrixFloat with the backprop computation result.
      */
-    virtual MatrixFloat *privateDoBackprop(MatrixFloat *input_error) = 0;
+    virtual basics::MatrixFloat *privateDoBackprop(basics::MatrixFloat *input_error) = 0;
     
     /**
      * Reset of intermediate data
@@ -88,16 +88,16 @@ namespace ANN {
     VirtualMatrixANNComponent(const char *name, const char *weights_name,
                               unsigned int input_size, unsigned int output_size);
     virtual ~VirtualMatrixANNComponent();
-    virtual Token *getInput() { return input; }
-    virtual Token *getOutput() { return output; }
-    virtual Token *getErrorInput() { return error_input; }
-    virtual Token *getErrorOutput() { return error_output; }
+    virtual basics::Token *getInput() { return input; }
+    virtual basics::Token *getOutput() { return output; }
+    virtual basics::Token *getErrorInput() { return error_input; }
+    virtual basics::Token *getErrorOutput() { return error_output; }
     /**
      * If a TokenSparseMatrixFloat is given as input, it will be converted to
      * TokenMatrixFloat by calling toDense method of SparseMatrixFloat.
      */
-    virtual Token *doForward(Token* input, bool during_training);
-    virtual Token *doBackprop(Token *input_error);
+    virtual basics::Token *doForward(basics::Token* input, bool during_training);
+    virtual basics::Token *doBackprop(basics::Token *input_error);
     virtual void   reset(unsigned int it=0);
     
     // The following methods are not implemented, derived classes had to

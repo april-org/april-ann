@@ -20,15 +20,12 @@
  */
 //BIND_HEADER_C
 #include "bind_april_io.h"
-#include "utilMatrixIO.h"
-#include "utilMatrixFloat.h"
 #include "bind_mtrand.h"
 #include <cmath> // para isfinite
 #include "luabindutil.h"
 #include "luabindmacros.h"
 #include "bind_matrix_int32.h"
 #include "bind_sparse_matrix.h"
-#include "bind_gzio.h"
 
 #define FUNCTION_NAME "read_vector"
 static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
@@ -81,24 +78,99 @@ int matrixfloatset_iterator_function(lua_State *L) {
 //BIND_END
 
 //BIND_HEADER_H
+#include "bind_april_io.h"
 #include "matrixFloat.h"
 #include "matrixFloatSet.h"
 #include "utilLua.h"
+#include "utilMatrixIO.h"
 #include <cmath> // para isfinite
+
+using namespace basics;
+
 typedef MatrixFloat::sliding_window SlidingWindow;
 
-class MatrixFloatSetIteratorWrapper : public Referenced {
-public:
-  MatrixFloatSet *m;
-  MatrixFloatSet::iterator it;
-  MatrixFloatSetIteratorWrapper(MatrixFloatSet *m) :
-  Referenced(), m(m), it(m->begin()) {
-    IncRef(m);
+#define MAKE_READ_MATRIX_LUA_METHOD(MatrixType, Type) do {              \
+    MatrixType *obj = readMatrixLuaMethod<Type>(L);                     \
+    if (obj == 0) {                                                     \
+      luaL_error(L, "Error happens reading from file stream");          \
+    }                                                                   \
+    else {                                                              \
+      lua_push##MatrixType(L, obj);                                     \
+    }                                                                   \
+  } while(false)
+
+#define MAKE_READ_TAB_MATRIX_LUA_METHOD(MatrixType, Type) do {          \
+    MatrixType *obj = readTabMatrixLuaMethod<Type>(L);                  \
+    if (obj == 0) {                                                     \
+      luaL_error(L, "Error happens reading from file stream");          \
+    }                                                                   \
+    else {                                                              \
+      lua_push##MatrixType(L, obj);                                     \
+    }                                                                   \
+  } while(false)
+
+namespace basics {
+
+  class MatrixFloatSetIteratorWrapper : public Referenced {
+  public:
+    MatrixFloatSet *m;
+    MatrixFloatSet::iterator it;
+    MatrixFloatSetIteratorWrapper(MatrixFloatSet *m) :
+      Referenced(), m(m), it(m->begin()) {
+      IncRef(m);
+    }
+    virtual ~MatrixFloatSetIteratorWrapper() {
+      DecRef(m);
+    }
+  };
+
+  template<typename T>
+  Matrix<T> *readMatrixLuaMethod(lua_State *L) {
+    Matrix<T> *obj;
+    april_io::StreamInterface *stream =
+      lua_toAuxStreamInterface<april_io::StreamInterface>(L,1);
+    april_utils::UniquePtr<april_io::StreamInterface> ptr(stream);
+    const char *order = luaL_optstring(L,2,0);
+    if (stream == 0) {
+      luaL_error(L, "Needs a stream as 1st argument");
+      return 0;
+    }
+    return readMatrixFromStream<T>(ptr, order); 
   }
-  virtual ~MatrixFloatSetIteratorWrapper() {
-    DecRef(m);
+
+  template<typename T>
+  void writeMatrixLuaMethod(lua_State *L, Matrix<T> *obj) {
+    april_io::StreamInterface *stream =
+      lua_toAuxStreamInterface<april_io::StreamInterface>(L,1);
+    april_utils::UniquePtr<april_io::StreamInterface> ptr(stream);
+    const char *mode = luaL_optstring(L,2,"binary");
+    april_utils::constString cs(mode);
+    bool is_ascii = (cs == "ascii");
+    writeMatrixToStream(obj, ptr, is_ascii);
   }
-};
+
+  template<typename T>
+  Matrix<T> *readTabMatrixLuaMethod(lua_State *L) {
+    Matrix<T> *obj;
+    april_io::StreamInterface *stream =
+      lua_toAuxStreamInterface<april_io::StreamInterface>(L,1);
+    april_utils::UniquePtr<april_io::StreamInterface> ptr(stream);
+    const char *order = luaL_optstring(L,2,0);
+    if (stream == 0) {
+      luaL_error(L, "Needs a stream as 1st argument");
+      return 0;
+    }
+    return readMatrixFromTabStream<T>(ptr, order); 
+  }
+
+  template<typename T>
+  void writeTabMatrixLuaMethod(lua_State *L, Matrix<T> *obj) {
+    april_io::StreamInterface *stream =
+      lua_toAuxStreamInterface<april_io::StreamInterface>(L,1);
+    april_utils::UniquePtr<april_io::StreamInterface> ptr(stream);
+    writeMatrixToTabStream(obj, ptr);
+  }
+}
 //BIND_END
 
 //BIND_LUACLASSNAME MatrixFloat matrix
@@ -1659,45 +1731,29 @@ public:
 
 //// MATRIX SERIALIZATION ////
 
-//BIND_CLASS_METHOD MatrixFloat fromFileStream
+//BIND_CLASS_METHOD MatrixFloat read
 {
-  LuaFile *f;
-  const char *order;
-  LUABIND_CHECK_ARGN(>=, 1);
-  LUABIND_CHECK_ARGN(<=, 2);
-  LUABIND_GET_PARAMETER(1, AuxLuaFile, f);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, string, order, 0);
-  IncRef(f);
-  Matrix *obj = readMatrixFloatFromFileStream(f, order);
-  DecRef(f);
-  if (obj == 0) {
-    LUABIND_FERROR1("Error happens reading from file stream '%s'",
-                    f->description());
-  }
-  else {
-    LUABIND_RETURN(MatrixFloat,obj);  
-  }
+  MAKE_READ_MATRIX_LUA_METHOD(MatrixFloat, float);
+  LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
 
-//BIND_CLASS_METHOD MatrixFloat fromTabFileStream
+//BIND_METHOD MatrixFloat write
 {
-  LuaFile *f;
-  const char *order;
-  LUABIND_CHECK_ARGN(>=, 1);
-  LUABIND_CHECK_ARGN(<=, 2);
-  LUABIND_GET_PARAMETER(1, AuxLuaFile, f);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, string, order, 0);
-  IncRef(f);
-  Matrix *obj = readMatrixFloatFromTabFileStream(f, order);
-  DecRef(f);
-  if (obj == 0) {
-    LUABIND_FERROR1("Error happens reading from file stream '%s'",
-                    f->description());
-  }
-  else {
-    LUABIND_RETURN(MatrixFloat,obj);  
-  }
+  writeMatrixLuaMethod(L, obj);
+}
+//BIND_END
+
+//BIND_CLASS_METHOD MatrixFloat readTab
+{
+  MAKE_READ_TAB_MATRIX_LUA_METHOD(MatrixFloat, float);
+  LUABIND_INCREASE_NUM_RETURNS(1);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat writeTab
+{
+  writeTabMatrixLuaMethod(L, obj);
 }
 //BIND_END
 
@@ -1718,36 +1774,6 @@ public:
   MatrixFloat *obj = MatrixFloat::fromMMappedDataReader(mmapped_data);
   DecRef(mmapped_data);
   LUABIND_RETURN(MatrixFloat,obj);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat toFileStream
-{
-  LuaFile *f;
-  constString cs;
-  LUABIND_CHECK_ARGN(>=, 1);
-  LUABIND_CHECK_ARGN(<=, 2);
-  LUABIND_GET_PARAMETER(1, AuxLuaFile, f);
-  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("binary"));
-  bool is_ascii = (cs == "ascii");
-  IncRef(f);
-  writeMatrixFloatToFileStream(obj, f, is_ascii);
-  DecRef(f);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat toTabFileStream
-{
-  LuaFile *f;
-  constString cs;
-  LUABIND_CHECK_ARGN(>=, 1);
-  LUABIND_CHECK_ARGN(<=, 2);
-  LUABIND_GET_PARAMETER(1, AuxLuaFile, f);
-  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("binary"));
-  bool is_ascii = (cs == "ascii");
-  IncRef(f);
-  writeMatrixFloatToTabFileStream(obj, f, is_ascii);
-  DecRef(f);
 }
 //BIND_END
 
@@ -1777,9 +1803,10 @@ public:
   LUABIND_CHECK_ARGN(<=, 2);
   LUABIND_CHECK_PARAMETER(1, string);
   bool forcecolor=false,forcegray=false;
-  constString cs,csopt;
+  april_utils::constString cs,csopt;
   LUABIND_GET_PARAMETER(1,constString,cs);
-  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,csopt,constString());
+  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,csopt,
+                                 april_utils::constString());
   if (csopt == "color") forcecolor = true;
   if (csopt == "gray")  forcegray  = true;
   MatrixFloat *obj;
@@ -1804,7 +1831,7 @@ public:
   LUABIND_CHECK_PARAMETER(1, int);
   LUABIND_CHECK_PARAMETER(1, string);
   int width,height;
-  constString cs;
+  april_utils::constString cs;
   LUABIND_GET_PARAMETER(1,int,width);
   LUABIND_GET_PARAMETER(2,int,height);
   LUABIND_GET_PARAMETER(3,constString,cs);

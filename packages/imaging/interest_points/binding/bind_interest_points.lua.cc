@@ -1,3 +1,10 @@
+//BIND_HEADER_C
+#include "interest_points.h"
+using namespace april_utils;
+using namespace basics;
+using namespace imaging;
+//BIND_END
+
 //BIND_HEADER_H
 #include "interest_points.h"
 #include "utilImageFloat.h"
@@ -7,7 +14,6 @@
 #include "pair.h"
 #include <cmath>
 #include <cctype>
-using april_utils::Point2D;
 using namespace InterestPoints;
 //BIND_END
 
@@ -119,33 +125,33 @@ using namespace InterestPoints;
 
 //BIND_FUNCTION interest_points.get_image_matrix_from_index
 {
- LUABIND_CHECK_ARGN(==,4);
- DataSetFloat *dsOut, *indexed;
- int height, width; 
- LUABIND_GET_PARAMETER(1, DataSetFloat, dsOut);
- LUABIND_GET_PARAMETER(2, DataSetFloat, indexed);
- LUABIND_GET_PARAMETER(3, int, width);
- LUABIND_GET_PARAMETER(4, int, height);
- MatrixFloat *mat = InterestPoints::get_image_matrix_from_index(dsOut, indexed, width, height, 3);
- LUABIND_RETURN(MatrixFloat, mat);
+  LUABIND_CHECK_ARGN(==,4);
+  DataSetFloat *dsOut, *indexed;
+  int height, width; 
+  LUABIND_GET_PARAMETER(1, DataSetFloat, dsOut);
+  LUABIND_GET_PARAMETER(2, DataSetFloat, indexed);
+  LUABIND_GET_PARAMETER(3, int, width);
+  LUABIND_GET_PARAMETER(4, int, height);
+  MatrixFloat *mat = InterestPoints::get_image_matrix_from_index(dsOut, indexed, width, height, 3);
+  LUABIND_RETURN(MatrixFloat, mat);
 }
 //BIND_END
 //BIND_FUNCTION interest_points.get_image_area_from_dataset
 {
- LUABIND_CHECK_ARGN(>=,4);
- DataSetFloat *dsOut, *indexed;
- float threshold;
- int height, width; 
- LUABIND_GET_PARAMETER(1, DataSetFloat, dsOut);
- LUABIND_GET_PARAMETER(2, DataSetFloat, indexed);
- LUABIND_GET_PARAMETER(3, int, width);
- LUABIND_GET_PARAMETER(4, int, height);
- LUABIND_GET_OPTIONAL_PARAMETER(5, float, threshold, 0.7);
- ImageFloat *img = InterestPoints::get_image_area_from_dataset(dsOut, indexed, width, height, 3, threshold);
+  LUABIND_CHECK_ARGN(>=,4);
+  DataSetFloat *dsOut, *indexed;
+  float threshold;
+  int height, width; 
+  LUABIND_GET_PARAMETER(1, DataSetFloat, dsOut);
+  LUABIND_GET_PARAMETER(2, DataSetFloat, indexed);
+  LUABIND_GET_PARAMETER(3, int, width);
+  LUABIND_GET_PARAMETER(4, int, height);
+  LUABIND_GET_OPTIONAL_PARAMETER(5, float, threshold, 0.7);
+  ImageFloat *img = InterestPoints::get_image_area_from_dataset(dsOut, indexed, width, height, 3, threshold);
 
- ImageFloatRGB *rgb = InterestPoints::area_to_rgb(img);
- LUABIND_RETURN(ImageFloatRGB, rgb);
- LUABIND_RETURN(ImageFloat, img);
+  ImageFloatRGB *rgb = InterestPoints::area_to_rgb(img);
+  LUABIND_RETURN(ImageFloatRGB, rgb);
+  LUABIND_RETURN(ImageFloat, img);
 }
 //BIND_END
 
@@ -207,7 +213,7 @@ using namespace InterestPoints;
 //DOC_BEGIN
 //DOC_END
 {
- using InterestPoints::SetPoints;
+  using InterestPoints::SetPoints;
   LUABIND_CHECK_ARGN(==,1);
   ImageFloat *img;
   LUABIND_GET_PARAMETER(1, ImageFloat, img);
@@ -224,44 +230,44 @@ using namespace InterestPoints;
 //BIND_END
 //BIND_METHOD SetPoints addPoint
 {
- LUABIND_CHECK_ARGN(==, 2);
- LUABIND_CHECK_PARAMETER(1, int);
- LUABIND_CHECK_PARAMETER(2, table);
+  LUABIND_CHECK_ARGN(==, 2);
+  LUABIND_CHECK_PARAMETER(1, int);
+  LUABIND_CHECK_PARAMETER(2, table);
 
- // Recieves a table of 3-elements {x, y, c, type}
- // Sometimes can include a 5th element with the log-probability
- int elems;
- int comp = 1;
- LUABIND_GET_PARAMETER(1, int, comp);
- LUABIND_TABLE_GETN(1, elems);
+  // Recieves a table of 3-elements {x, y, c, type}
+  // Sometimes can include a 5th element with the log-probability
+  int elems;
+  int comp = 1;
+  LUABIND_GET_PARAMETER(1, int, comp);
+  LUABIND_TABLE_GETN(1, elems);
 
- int x, y, c;
+  int x, y, c;
   
- bool type = true;
- float log_prob = 0.0;
+  bool type = true;
+  float log_prob = 0.0;
 
- lua_rawgeti(L, -1, 1);
- x = (int)lua_tonumber(L,-1);
- lua_pop(L,1);
+  lua_rawgeti(L, -1, 1);
+  x = (int)lua_tonumber(L,-1);
+  lua_pop(L,1);
 
- lua_rawgeti(L, -1, 2);
- y = (int)lua_tonumber(L,-1);
- lua_pop(L,1);
+  lua_rawgeti(L, -1, 2);
+  y = (int)lua_tonumber(L,-1);
+  lua_pop(L,1);
 
- lua_rawgeti(L, -1, 3);
- c = (int)lua_tonumber(L,-1);
- lua_pop(L,1);
+  lua_rawgeti(L, -1, 3);
+  c = (int)lua_tonumber(L,-1);
+  lua_pop(L,1);
 
- lua_rawgeti(L, -1, 4);
- type = (int)lua_tonumber(L,-1);
- lua_pop(L,1);
+  lua_rawgeti(L, -1, 4);
+  type = (int)lua_tonumber(L,-1);
+  lua_pop(L,1);
 
- bool class_type = (type == 0);
- if (elems > 4) {
-   lua_rawgeti(L, -1, 4+c);
-   log_prob = lua_tonumber(L,-1);
- }
- obj->addPoint(comp, x, y, c, class_type, log_prob);
+  bool class_type = (type == 0);
+  if (elems > 4) {
+    lua_rawgeti(L, -1, 4+c);
+    log_prob = lua_tonumber(L,-1);
+  }
+  obj->addPoint(comp, x, y, c, class_type, log_prob);
 }
 //BIND_END
 
@@ -286,41 +292,41 @@ using namespace InterestPoints;
 
 //BIND_METHOD SetPoints getSize
 {
-    LUABIND_RETURN(int, obj->getSize());
+  LUABIND_RETURN(int, obj->getSize());
 }
 //BIND_END
 
 //BIND_METHOD SetPoints getComponentPoints
 {
-    // Devuelve una lista de listas de tuplas ;)
-    const vector <PointComponent> *v = obj->getComponents();
-    int tupla_len = 3;         
+  // Devuelve una lista de listas de tuplas ;)
+  const vector <PointComponent> *v = obj->getComponents();
+  int tupla_len = 3;         
     
-    // Outer list
-    lua_createtable (L, v->size(), 0);
-    //fprintf(stderr, "GetComponent Size %d (%d) Points: %d\n", v->size(), obj->getSize(), obj->getNumPoints()); 
-    for(int i=0; i < (int)v->size(); ++i) 
+  // Outer list
+  lua_createtable (L, v->size(), 0);
+  //fprintf(stderr, "GetComponent Size %d (%d) Points: %d\n", v->size(), obj->getSize(), obj->getNumPoints()); 
+  for(int i=0; i < (int)v->size(); ++i) 
     {   
-        int component_size = (*v)[i].size();
+      int component_size = (*v)[i].size();
 
-        //Inner list
-        lua_createtable (L, component_size, 0);
-        for (int j = 0; j < component_size; ++j) {
-            // Tuple list
-            lua_createtable (L, 3, 0);
-            lua_pushint(L,(*v)[i][j].x);
-            lua_rawseti(L,-2, 1);
-            lua_pushint(L,(*v)[i][j].y);
-            lua_rawseti(L,-2, 2);
-            lua_pushint(L,(*v)[i][j].point_class);
-            lua_rawseti(L,-2, 3);
-            // Add the tuple to the outer list
-            lua_rawseti(L, -2, j+1);
-        }
-        lua_rawseti(L,-2, i+1);
+      //Inner list
+      lua_createtable (L, component_size, 0);
+      for (int j = 0; j < component_size; ++j) {
+        // Tuple list
+        lua_createtable (L, 3, 0);
+        lua_pushint(L,(*v)[i][j].x);
+        lua_rawseti(L,-2, 1);
+        lua_pushint(L,(*v)[i][j].y);
+        lua_rawseti(L,-2, 2);
+        lua_pushint(L,(*v)[i][j].point_class);
+        lua_rawseti(L,-2, 3);
+        // Add the tuple to the outer list
+        lua_rawseti(L, -2, j+1);
+      }
+      lua_rawseti(L,-2, i+1);
     }
 
-    LUABIND_RETURN_FROM_STACK(-1);
+  LUABIND_RETURN_FROM_STACK(-1);
 }
 //BIND_END
 
@@ -347,102 +353,102 @@ using namespace InterestPoints;
 
 //BIND_METHOD ConnectedPoints addPoint
 {
- LUABIND_CHECK_ARGN(==, 1);
- LUABIND_CHECK_PARAMETER(1, table);
+  LUABIND_CHECK_ARGN(==, 1);
+  LUABIND_CHECK_PARAMETER(1, table);
 
- // Recieves a table of 3-elements {x, y, c, type}
- // Sometimes can include a 5th element with the log-probability
- int elems;
+  // Recieves a table of 3-elements {x, y, c, type}
+  // Sometimes can include a 5th element with the log-probability
+  int elems;
 
- LUABIND_TABLE_GETN(1, elems);
+  LUABIND_TABLE_GETN(1, elems);
 
- int x, y, c;
+  int x, y, c;
   
- bool type = true;
- float log_prob = 0.0;
+  bool type = true;
+  float log_prob = 0.0;
 
- lua_rawgeti(L, -1, 1);
- x = (int)lua_tonumber(L,-1);
- lua_pop(L,1);
+  lua_rawgeti(L, -1, 1);
+  x = (int)lua_tonumber(L,-1);
+  lua_pop(L,1);
 
- lua_rawgeti(L, -1, 2);
- y = (int)lua_tonumber(L,-1);
- lua_pop(L,1);
+  lua_rawgeti(L, -1, 2);
+  y = (int)lua_tonumber(L,-1);
+  lua_pop(L,1);
 
- lua_rawgeti(L, -1, 3);
- c = (int)lua_tonumber(L,-1);
- lua_pop(L,1);
+  lua_rawgeti(L, -1, 3);
+  c = (int)lua_tonumber(L,-1);
+  lua_pop(L,1);
 
- lua_rawgeti(L, -1, 4);
- type = (int)lua_tonumber(L,-1);
- lua_pop(L,1);
+  lua_rawgeti(L, -1, 4);
+  type = (int)lua_tonumber(L,-1);
+  lua_pop(L,1);
 
- bool class_type = (type == 0);
- if (elems > 4) {
-   lua_rawgeti(L, -1, 4+c);
-   log_prob = lua_tonumber(L,-1);
- }
- obj->addPoint(x, y, c, class_type, log_prob);
+  bool class_type = (type == 0);
+  if (elems > 4) {
+    lua_rawgeti(L, -1, 4+c);
+    log_prob = lua_tonumber(L,-1);
+  }
+  obj->addPoint(x, y, c, class_type, log_prob);
 }
 //BIND_END
 
 //BIND_METHOD ConnectedPoints computeComponents
 {
- LUABIND_CHECK_ARGN(==,0);
+  LUABIND_CHECK_ARGN(==,0);
 
- SetPoints *sp = obj->computePoints();
+  SetPoints *sp = obj->computePoints();
 
- LUABIND_RETURN(SetPoints, sp);
+  LUABIND_RETURN(SetPoints, sp);
 }
 //BIND_END
 
 //BIND_METHOD SetPoints getLinearRegression
 {
-//Used for drawing the line regression
+  //Used for drawing the line regression
 
-   lua_createtable(L, obj->getSize(), 0);
-   int comp = 1;
+  lua_createtable(L, obj->getSize(), 0);
+  int comp = 1;
 
-   for (int i = 0; i < obj->getSize(); ++i) {
-     PointComponent component = obj->getComponent(i);
-     line *myLine = component.get_regression_line();
-     if (!myLine){
+  for (int i = 0; i < obj->getSize(); ++i) {
+    PointComponent component = obj->getComponent(i);
+    line *myLine = component.get_regression_line();
+    if (!myLine){
         
-         continue;
-     }
-     // Compute most left and most right points
-     component.sort_by_x();
-     interest_point p1 = component[0];
-     interest_point p2 = component[component.size()-1];
-     float dist = 0.0;
-     Point2D cp1 = myLine->closestPoint(p1,dist);
-     Point2D cp2 = myLine->closestPoint(p2,dist);
-     //ini point and end point
-     lua_createtable(L,2,0);
+      continue;
+    }
+    // Compute most left and most right points
+    component.sort_by_x();
+    interest_point p1 = component[0];
+    interest_point p2 = component[component.size()-1];
+    float dist = 0.0;
+    Point2D cp1 = myLine->closestPoint(p1,dist);
+    Point2D cp2 = myLine->closestPoint(p2,dist);
+    //ini point and end point
+    lua_createtable(L,2,0);
 
-     lua_createtable(L,2,0);
-     lua_pushint(L, (int)cp1.x);
-     lua_rawseti(L, -2, 1);
-     lua_pushint(L, (int)cp1.y);
-     lua_rawseti(L, -2, 2);
+    lua_createtable(L,2,0);
+    lua_pushint(L, (int)cp1.x);
+    lua_rawseti(L, -2, 1);
+    lua_pushint(L, (int)cp1.y);
+    lua_rawseti(L, -2, 2);
 
-     lua_rawseti(L,-2, 1);
-     lua_createtable(L, 2,0);
-     lua_pushint(L, (int)cp2.x);
-     lua_rawseti(L, -2, 1);
-     lua_pushint(L, (int)cp2.y);
-     lua_rawseti(L, -2, 2);
+    lua_rawseti(L,-2, 1);
+    lua_createtable(L, 2,0);
+    lua_pushint(L, (int)cp2.x);
+    lua_rawseti(L, -2, 1);
+    lua_pushint(L, (int)cp2.y);
+    lua_rawseti(L, -2, 2);
 
-     lua_rawseti(L, -2, 2);
+    lua_rawseti(L, -2, 2);
 
-     lua_rawseti(L, -2, comp);
-     printf("Componente: %d, Punto A: (%d %d) (%f %f), Punto B: (%d, %d) (%f, %f)\n", i, p1.x, p1.y,cp1.x,cp1.y,  p2.x, p2.y, cp2.x, cp2.y);
-     printf("Slope: %f, intercept %f\n", myLine->getSlope(), myLine->getYintercept());
-     comp++;
-   } 
+    lua_rawseti(L, -2, comp);
+    printf("Componente: %d, Punto A: (%d %d) (%f %f), Punto B: (%d, %d) (%f, %f)\n", i, p1.x, p1.y,cp1.x,cp1.y,  p2.x, p2.y, cp2.x, cp2.y);
+    printf("Slope: %f, intercept %f\n", myLine->getSlope(), myLine->getYintercept());
+    comp++;
+  } 
    
-   //Returns a table of 2 points
-   LUABIND_RETURN_FROM_STACK(-1);
+  //Returns a table of 2 points
+  LUABIND_RETURN_FROM_STACK(-1);
 
 }
 //BIND_END

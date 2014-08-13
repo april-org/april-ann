@@ -20,6 +20,7 @@
  */
 
 #include <cstdarg>
+#include <cstdlib>
 extern "C" {
 #include <stdint.h> // for SIZE_MAX (using stdint.h because cstdint needs c++11
                     // support)
@@ -35,15 +36,17 @@ namespace april_io {
   char StreamInterface::DUMMY_CHAR = '\0';
   const char *StreamInterface::NO_ERROR_STRING = "Success";
   
-  Stream::Stream() : StreamInterface(),
-                     in_buffer(0), in_buffer_pos(0), in_buffer_len(0),
-                     out_buffer(0), out_buffer_pos(0), out_buffer_len(0) {
+  StreamBuffer::StreamBuffer() : StreamInterface(),
+                                 in_buffer(0), in_buffer_pos(0),
+                                 in_buffer_len(0),
+                                 out_buffer(0), out_buffer_pos(0),
+                                 out_buffer_len(0) {
   }
   
-  Stream::~Stream() {
+  StreamBuffer::~StreamBuffer() {
   }
 
-  void Stream::trimInBuffer(const char *delim) {
+  void StreamBuffer::trimInBuffer(const char *delim) {
     if (delim != 0) {
       size_t pos, buf_len;
       do {
@@ -55,15 +58,16 @@ namespace april_io {
     }
   }
   
-  bool Stream::good() const {
+  bool StreamBuffer::good() const {
     return isOpened() && !eof() && !hasError();
   }
   
-  size_t Stream::get(StreamInterface *dest, const char *delim) {
+  size_t StreamBuffer::get(StreamInterface *dest, const char *delim) {
     return get(dest, SIZE_MAX, delim);
   }
 
-  size_t Stream::get(StreamInterface *dest, size_t max_size, const char *delim) {
+  size_t StreamBuffer::get(StreamInterface *dest, size_t max_size,
+                           const char *delim) {
     const char *buf;
     size_t buf_len, dest_len=0;
     trimInBuffer(delim);
@@ -81,7 +85,7 @@ namespace april_io {
     return dest_len;
   }
   
-  size_t Stream::get(char *dest, size_t max_size, const char *delim) {
+  size_t StreamBuffer::get(char *dest, size_t max_size, const char *delim) {
     const char *buf;
     size_t buf_len, dest_len=0;
     trimInBuffer(delim);
@@ -98,7 +102,7 @@ namespace april_io {
     return dest_len;
   }
 
-  size_t Stream::put(StreamInterface *source, size_t size) {
+  size_t StreamBuffer::put(StreamInterface *source, size_t size) {
     char *buf;
     size_t buf_len, source_len = 0;
     while( !this->hasError() &&
@@ -112,7 +116,7 @@ namespace april_io {
     return source_len;
   }
 
-  size_t Stream::put(const char *source, size_t size) {
+  size_t StreamBuffer::put(const char *source, size_t size) {
     char *buf;
     size_t buf_len, source_len = 0;
     while( source_len < size &&
@@ -125,7 +129,7 @@ namespace april_io {
     return source_len;
   }
 
-  int Stream::printf(const char *format, ...) {
+  int StreamBuffer::printf(const char *format, ...) {
     va_list arg;
     char *aux_buffer;
     size_t len;
@@ -139,31 +143,31 @@ namespace april_io {
     return len;
   }
 
-  bool Stream::eof() const {
+  bool StreamBuffer::eof() const {
     return (in_buffer_pos == in_buffer_len) && eofStream();
   }
   
   //////////////////////////////////////////////////////////////////////////
 
-  void Stream::resetBuffers() {
+  void StreamBuffer::resetBuffers() {
     in_buffer_pos  = in_buffer_len  = 0;
     out_buffer_pos = out_buffer_len = 0;
   }
   
-  void Stream::resetOutBuffer() {
+  void StreamBuffer::resetOutBuffer() {
     out_buffer_pos = out_buffer_len = 0;
   }
 
-  size_t Stream::getInBufferPos() const {
+  size_t StreamBuffer::getInBufferPos() const {
     return in_buffer_pos;
   }
   
-  size_t Stream::getOutBufferPos() const {
+  size_t StreamBuffer::getOutBufferPos() const {
     return out_buffer_pos;
   }
   
-  const char *Stream::getInBuffer(size_t &buffer_len, size_t max_size,
-                                  const char *delim) {
+  const char *StreamBuffer::getInBuffer(size_t &buffer_len, size_t max_size,
+                                        const char *delim) {
     if (in_buffer == 0) in_buffer = nextInBuffer(in_buffer_len);
     buffer_len = april_utils::min(in_buffer_len - in_buffer_pos, max_size);
     if (delim != 0) {
@@ -175,21 +179,21 @@ namespace april_io {
     return in_buffer + in_buffer_pos;
   }
   
-  char *Stream::getOutBuffer(size_t &buffer_len, size_t max_size) {
+  char *StreamBuffer::getOutBuffer(size_t &buffer_len, size_t max_size) {
     if (out_buffer == 0) out_buffer = nextOutBuffer(out_buffer_len);
     buffer_len = april_utils::min(out_buffer_len - out_buffer_pos, max_size);
     return out_buffer + out_buffer_pos;
   }
 
-  size_t Stream::getInBufferAvailableSize() const {
+  size_t StreamBuffer::getInBufferAvailableSize() const {
     return in_buffer_len - in_buffer_pos;
   }
   
-  size_t Stream::getOutBufferAvailableSize() const {
+  size_t StreamBuffer::getOutBufferAvailableSize() const {
     return out_buffer_len - out_buffer_pos;
   }
   
-  void Stream::moveInBuffer(size_t len) {
+  void StreamBuffer::moveInBuffer(size_t len) {
     if (len > getInBufferAvailableSize()) {
       ERROR_EXIT(128, "Read buffer overflow!!!\n");
     }
@@ -200,7 +204,7 @@ namespace april_io {
     }
   }
   
-  void Stream::moveOutBuffer(size_t len) {
+  void StreamBuffer::moveOutBuffer(size_t len) {
     if (len > getOutBufferAvailableSize()) {
       ERROR_EXIT(128, "Write buffer overflow!!!\n");
     }

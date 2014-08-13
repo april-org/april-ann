@@ -31,14 +31,14 @@
 #include "unused_variable.h"
 
 namespace april_io {
-  class BufferedStream : public Stream {
+  class BufferedStream : public StreamBuffer {
   public:
     
     BufferedStream(size_t buf_size = BUFSIZ);
     virtual ~BufferedStream();
     // virtual bool isOpened() const = 0;
     virtual void close();
-    virtual off_t seek(int whence, int offset);
+    virtual off_t seek(int whence = SEEK_CUR, int offset = 0);
     virtual void flush();
     virtual int setvbuf(int mode, size_t size);
     // virtual bool hasError() const = 0;

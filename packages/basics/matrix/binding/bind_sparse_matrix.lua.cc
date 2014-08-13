@@ -20,48 +20,91 @@
  */
 //BIND_HEADER_C
 #include <cmath> // para isfinite
-#include "utilMatrixFloat.h"
-#include "luabindutil.h"
-#include "luabindmacros.h"
+#include "april_assert.h"
+#include "bind_april_io.h"
 #include "bind_matrix.h"
 #include "bind_matrix_int32.h"
-#include "bind_gzio.h"
 #include "bind_mathcore.h"
-#include "april_assert.h"
+#include "luabindmacros.h" // for lua_pushfloat and lua_pushint
+#include "luabindutil.h"   // for lua_pushfloat and lua_pushint
+#include "utilMatrixIO.h"
 
-int sparseMatrixFloatIteratorFunction(lua_State *L) {
-  SparseMatrixFloatIterator *obj = lua_toSparseMatrixFloatIterator(L,1);
-  if (obj->it == obj->m->end()) {
-    lua_pushnil(L);
-    return 1;
+namespace basics {
+  int sparseMatrixFloatIteratorFunction(lua_State *L) {
+    SparseMatrixFloatIterator *obj = lua_toSparseMatrixFloatIterator(L,1);
+    if (obj->it == obj->m->end()) {
+      lua_pushnil(L);
+      return 1;
+    }
+    int c0=0,c1=0;
+    obj->it.getCoords(c0,c1);
+    lua_pushfloat(L,*(obj->it));
+    lua_pushint(L,c0+1);
+    lua_pushint(L,c1+1);
+    ++(obj->it);
+    return 3;
   }
-  int c0=0,c1=0;
-  obj->it.getCoords(c0,c1);
-  lua_pushfloat(L,*(obj->it));
-  lua_pushint(L,c0+1);
-  lua_pushint(L,c1+1);
-  ++(obj->it);
-  return 3;
 }
-
 //BIND_END
 
 //BIND_HEADER_H
+#include <cmath> // para isfinite
+
+#include "bind_april_io.h"
 #include "referenced.h"
 #include "sparse_matrixFloat.h"
 #include "utilLua.h"
-#include <cmath> // para isfinite
+#include "utilMatrixIO.h"
 
-class SparseMatrixFloatIterator : public Referenced {
-public:
-  SparseMatrixFloat *m;
-  SparseMatrixFloat::iterator it;
-  //
-  SparseMatrixFloatIterator(SparseMatrixFloat *m) : m(m), it(m->begin()) {
-    IncRef(m);
+namespace basics {
+
+  class SparseMatrixFloatIterator : public Referenced {
+  public:
+    SparseMatrixFloat *m;
+    SparseMatrixFloat::iterator it;
+    //
+    SparseMatrixFloatIterator(SparseMatrixFloat *m) : m(m), it(m->begin()) {
+      IncRef(m);
+    }
+    virtual ~SparseMatrixFloatIterator() { DecRef(m); }
+  };
+
+#define MAKE_READ_SPARSE_MATRIX_LUA_METHOD(MatrixType, Type) do {       \
+    MatrixType *obj = readSparseMatrixLuaMethod<Type>(L);               \
+    if (obj == 0) {                                                     \
+      luaL_error(L, "Error happens reading from file stream");          \
+    }                                                                   \
+    else {                                                              \
+      lua_push##MatrixType(L, obj);                                     \
+    }                                                                   \
+  } while(false)
+  
+  template<typename T>
+  SparseMatrix<T> *readSparseMatrixLuaMethod(lua_State *L) {
+    SparseMatrix<T> *obj;
+    april_io::StreamInterface *stream =
+      lua_toAuxStreamInterface<april_io::StreamInterface>(L,1);
+    april_utils::UniquePtr<april_io::StreamInterface> ptr(stream);
+    if (stream == 0) {
+      luaL_error(L, "Needs a stream as 1st argument");
+      return 0;
+    }
+    return readSparseMatrixFromStream<T>(ptr); 
   }
-  virtual ~SparseMatrixFloatIterator() { DecRef(m); }
-};
+
+  template<typename T>
+  void writeSparseMatrixLuaMethod(lua_State *L, SparseMatrix<T> *obj) {
+    april_io::StreamInterface *stream =
+      lua_toAuxStreamInterface<april_io::StreamInterface>(L,1);
+    april_utils::UniquePtr<april_io::StreamInterface> ptr(stream);
+    const char *mode = luaL_optstring(L,2,"binary");
+    april_utils::constString cs(mode);
+    bool is_ascii = (cs == "ascii");
+    writeSparseMatrixToStream(obj, ptr, is_ascii);
+  }
+} // namespace basics
+
+using namespace basics;
 
 //BIND_END
 
@@ -762,53 +805,18 @@ public:
 }
 //BIND_END
 
-//BIND_METHOD SparseMatrixFloat toString
+
+//// MATRIX SERIALIZATION ////
+
+//BIND_CLASS_METHOD SparseMatrixFloat read
 {
-  LUABIND_CHECK_ARGN(<=, 1);
-  constString cs;
-  LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("binary"));
-  bool is_ascii = (cs == "ascii");
-  writeSparseMatrixFloatToLuaString(obj, L, is_ascii);
+  MAKE_READ_SPARSE_MATRIX_LUA_METHOD(SparseMatrixFloat, float);
   LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
 
-//BIND_CLASS_METHOD SparseMatrixFloat fromString
+//BIND_METHOD SparseMatrixFloat write
 {
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, string);
-  constString cs;
-  LUABIND_GET_PARAMETER(1,constString,cs);
-  SparseMatrixFloat *obj;
-  if ((obj = readSparseMatrixFloatFromString(cs)) == 0)
-    LUABIND_ERROR("bad format");
-  else LUABIND_RETURN(SparseMatrixFloat,obj);
-}
-//BIND_END
-
-//BIND_CLASS_METHOD SparseMatrixFloat fromFilename
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, string);
-  const char *filename;
-  LUABIND_GET_PARAMETER(1,string,filename);
-  SparseMatrixFloat *obj;
-  if ((obj = readSparseMatrixFloatFromFile(filename)) == 0)
-    LUABIND_ERROR("bad format");
-  else LUABIND_RETURN(SparseMatrixFloat,obj);
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixFloat toFilename
-{
-  LUABIND_CHECK_ARGN(>=, 1);
-  LUABIND_CHECK_ARGN(<=, 2);
-  LUABIND_CHECK_PARAMETER(1, string);
-  const char *filename;
-  LUABIND_GET_PARAMETER(1,string,filename);
-  constString cs;
-  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("binary"));
-  bool is_ascii = (cs == "ascii");
-  writeSparseMatrixFloatToFile(obj, filename, is_ascii);
+  writeSparseMatrixLuaMethod(L, obj);
 }
 //BIND_END

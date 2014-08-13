@@ -70,7 +70,7 @@ namespace april_io {
   FileStream::FileStream(const char *path, const char *mode) :
     BufferedStream(),
     is_eof(false) {
-    constString mode_cstr(mode);
+    april_utils::constString mode_cstr(mode);
     if (mode_cstr.empty() || mode_cstr == "r") {
       flags = O_RDONLY;
     }

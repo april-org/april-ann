@@ -1,41 +1,55 @@
 -- GENERIC FROM FILENAME
 matrix.__make_generic_fromFilename__ = function(matrix_class)
-  return function(filename)
-    return matrix_class.fromFileStream(april_io.stream.c_file(filename, "r"))
+  return function(filename,...)
+    return matrix_class.read(io.open(filename),...)
   end
 end
 
 -- GENERIC FROM TAB FILENAME
 matrix.__make_generic_fromTabFilename__ = function(matrix_class)
-  return function(filename)
-    return matrix_class.fromTabFileStream(april_io.stream.c_file(filename, "r"))
+  return function(filename,...)
+    return matrix_class.readTab(io.open(filename),...)
   end
 end
 
 -- GENERIC FROM STRING
 matrix.__make_generic_fromString__ = function(matrix_class)
-  return function(str)
-    return matrix_class.fromFileStream(april_io.stream.input_lua_buffer(str))
+  return function(str,...)
+    return matrix_class.read(april_io.stream.input_lua_string(str),...)
   end
 end
 
 -- GENERIC TO FILENAME
 matrix.__make_generic_toFilename__ = function(matrix_class)
-  return function(filename)
-    return matrix_class.toFileStream(april_io.stream.c_file(filename, "w"))
+  return function(self,filename,...)
+    return class.consult(matrix_class,"write")(self,io.open(filename),...)
   end
 end
 
 -- GENERIC TO TAB FILENAME
 matrix.__make_generic_toTabFilename__ = function(matrix_class)
-  return function(filename)
-    return matrix_class.toTabFileStream(april_io.stream.c_file(filename, "w"))
+  return function(self,filename,...)
+    return class.consult(matrix_class,"writeTab")(self,io.open(filename),...)
   end
 end
 
 -- GENERIC TO STRING
 matrix.__make_generic_toString__ = function(matrix_class)
-  return function(str)
-    return matrix_class.toFileStream(april_io.stream.output_lua_buffer(str))
+  return function(self,...)
+    local stream = april_io.stream.output_lua_string(str)
+    class.consult(matrix_class,"write")(self,stream,...)
+    return stream:value()
   end
+end
+
+function matrix.__make_all_serialization_methods__(matrix_class)
+  matrix_class.fromFilename    = matrix.__make_generic_fromFilename__(matrix_class)
+  matrix_class.fromTabFilename = matrix.__make_generic_fromTabFilename__(matrix_class)
+  matrix_class.fromString      = matrix.__make_generic_fromString__(matrix_class)
+  class.extend(matrix_class, "toFilename",
+               matrix.__make_generic_toFilename__(matrix_class))
+  class.extend(matrix_class, "toTabFilename",
+               matrix.__make_generic_toTabFilename__(matrix_class))
+  class.extend(matrix_class, "toString",
+               matrix.__make_generic_toString__(matrix_class))
 end

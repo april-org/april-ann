@@ -24,7 +24,6 @@
 #include <cstdio>
 #include <cstring>
 
-#include "constString.h"
 #include "error_print.h"
 #include "referenced.h"
 #include "stream.h"

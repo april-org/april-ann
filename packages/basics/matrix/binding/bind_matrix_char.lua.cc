@@ -19,49 +19,52 @@
  *
  */
 //BIND_HEADER_C
+#include "bind_matrix.h"
 #include "utilMatrixChar.h"
 #include "luabindutil.h"
 #include "luabindmacros.h"
 
+namespace basics {
 #define FUNCTION_NAME "read_vector"
-static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
-  int *v=0;
-  lua_getfield(L, 1, key);
-  if (!lua_isnil(L, -1)) {
-    LUABIND_CHECK_PARAMETER(-1, table);
-    int table_len;
-    LUABIND_TABLE_GETN(-1, table_len);
-    if (table_len != num_dim)
-      LUABIND_FERROR3("Table '%s' with incorrect size, expected %d, found %d",
-		      key, num_dim, table_len);
-    v = new int[num_dim];
-    for(int i=0; i < num_dim; i++) {
-      lua_rawgeti(L, -1, i+1);
-      v[i] = static_cast<int>(lua_tonumber(L, -1)) + add;
-      lua_pop(L,1);
+  static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
+    int *v=0;
+    lua_getfield(L, 1, key);
+    if (!lua_isnil(L, -1)) {
+      LUABIND_CHECK_PARAMETER(-1, table);
+      int table_len;
+      LUABIND_TABLE_GETN(-1, table_len);
+      if (table_len != num_dim)
+        LUABIND_FERROR3("Table '%s' with incorrect size, expected %d, found %d",
+                        key, num_dim, table_len);
+      v = new int[num_dim];
+      for(int i=0; i < num_dim; i++) {
+        lua_rawgeti(L, -1, i+1);
+        v[i] = static_cast<int>(lua_tonumber(L, -1)) + add;
+        lua_pop(L,1);
+      }
     }
+    lua_pop(L, 1);
+    return v;
   }
-  lua_pop(L, 1);
-  return v;
-}
 #undef FUNCTION_NAME
 
-int sliding_window_matrixChar_iterator_function(lua_State *L) {
-  SlidingWindowMatrixChar *obj = lua_toSlidingWindowMatrixChar(L,1);
-  if (obj->isEnd()) {
-    lua_pushnil(L);
+  int sliding_window_matrixChar_iterator_function(lua_State *L) {
+    SlidingWindowMatrixChar *obj = lua_toSlidingWindowMatrixChar(L,1);
+    if (obj->isEnd()) {
+      lua_pushnil(L);
+      return 1;
+    }
+    MatrixChar *mat = obj->getMatrix();
+    lua_pushMatrixChar(L, mat);
+    obj->next();
     return 1;
   }
-  MatrixChar *mat = obj->getMatrix();
-  lua_pushMatrixChar(L, mat);
-  obj->next();
-  return 1;
 }
-
 //BIND_END
 
 //BIND_HEADER_H
 #include "matrixChar.h"
+using namespace basics;
 typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 //BIND_END
 
@@ -205,50 +208,6 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 	  (void*)obj,
 	  (void*)obj->getRawDataAccess());
   LUABIND_RETURN(string, buff);
-}
-//BIND_END
-
-//BIND_CLASS_METHOD MatrixChar fromFilename
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, string);
-  const char *filename;
-  LUABIND_GET_PARAMETER(1,string,filename);
-  MatrixChar *obj;
-  if ((obj = readMatrixCharFromFile(filename)) == 0)
-    LUABIND_ERROR("bad format");
-  else LUABIND_RETURN(MatrixChar,obj);
-}
-//BIND_END
-
-
-//BIND_CLASS_METHOD MatrixChar fromString
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, string);
-  constString cs;
-  LUABIND_GET_PARAMETER(1,constString,cs);
-  MatrixChar *obj;
-  if ((obj = readMatrixCharFromString(cs)) == 0)
-    LUABIND_ERROR("bad format");
-  else LUABIND_RETURN(MatrixChar,obj);
-}
-//BIND_END
-
-//BIND_METHOD MatrixChar toFilename
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  const char *filename;
-  LUABIND_GET_PARAMETER(1, string, filename);
-  writeMatrixCharToFile(obj, filename);
-}
-//BIND_END
-
-//BIND_METHOD MatrixChar toString
-{
-  LUABIND_CHECK_ARGN(==, 0);
-  writeMatrixCharToLuaString(obj, L, true);
-  LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
 
@@ -633,6 +592,34 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
   LUABIND_GET_PARAMETER(1, MatrixChar, mat);
   obj->copy(mat);
   LUABIND_RETURN(MatrixChar, obj);
+}
+//BIND_END
+
+//// MATRIX SERIALIZATION ////
+
+//BIND_CLASS_METHOD MatrixChar read
+{
+  MAKE_READ_MATRIX_LUA_METHOD(MatrixChar, char);
+  LUABIND_INCREASE_NUM_RETURNS(1);
+}
+//BIND_END
+
+//BIND_METHOD MatrixChar write
+{
+  writeMatrixLuaMethod(L, obj);
+}
+//BIND_END
+
+//BIND_CLASS_METHOD MatrixChar readTab
+{
+  MAKE_READ_TAB_MATRIX_LUA_METHOD(MatrixChar, char);
+  LUABIND_INCREASE_NUM_RETURNS(1);
+}
+//BIND_END
+
+//BIND_METHOD MatrixChar writeTab
+{
+  writeTabMatrixLuaMethod(L, obj);
 }
 //BIND_END
 

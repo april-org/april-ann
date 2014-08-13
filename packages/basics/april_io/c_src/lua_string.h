@@ -32,8 +32,8 @@ namespace april_io {
   
   /**
    * A class which generates a Lua string on-the-fly using small intermediate C
-   * strings. This class CANNOT BE EXPORTED TO Lua because it needs the Lua
-   * stack with the same content as when the object was created.
+   * strings. FIXME: This class CANNOT BE EXPORTED TO Lua because it needs the
+   * Lua stack with the same content as when the object was created.
    */
   class OutputLuaStringStream : public StreamMemory {
     lua_State *L;
@@ -59,6 +59,7 @@ namespace april_io {
 
     virtual bool isOpened() const;
     virtual void close();
+    virtual off_t seek(int whence = SEEK_CUR, int offset = 0);
     virtual void flush();
     virtual int setvbuf(int mode, size_t size);
     virtual bool hasError() const;
@@ -94,7 +95,7 @@ namespace april_io {
     
     virtual bool isOpened() const;
     virtual void close();
-    virtual off_t seek(int whence, int offset);
+    virtual off_t seek(int whence = SEEK_CUR, int offset = 0);
     virtual int setvbuf(int mode, size_t size);
     virtual bool hasError() const;
     virtual const char *getErrorMsg() const;

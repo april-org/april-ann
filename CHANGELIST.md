@@ -23,8 +23,17 @@ Master branch release
 
 ### Bugs removed
 
+- Solved bug in `constString::extract_float` and `constString::extract_double`
+  methods.
+
 ### C/C++
 
+- Added `basics` namespace which stores almost all C/C++ code in `basics`
+  packages.
+- Simplified read/write of matrices using the new `StreamInterface` objects.
+- Added new `StreamInterface` for input/output operations, with specializations
+  for C files, C strings, Lua strings, GZIP files, ZIP files. Other
+  specializations are easier to implement in the future.
 - `Image` class code has been reviewed to be more coherent with current `Matrix`
   class implementation.
 

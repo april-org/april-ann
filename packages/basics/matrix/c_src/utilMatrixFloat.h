@@ -21,114 +21,64 @@
 #ifndef UTILMATRIXFLOAT_H
 #define UTILMATRIXFLOAT_H
 
-#include "buffered_gzfile.h"
 #include "constString.h"
 #include "matrixFloat.h"
 #include "sparse_matrixFloat.h"
 #include "utilMatrixIO.h"
 
-/// Generic MatrixFloat write function.
-void writeMatrixFloatToFileStream(MatrixFloat *mat, File *file);
+namespace basics {
 
-/// Generic MatrixFloat read function.
-MatrixFloat *readMatrixFloatFromFileStream(File *File, const char *order);
+  /* Especialization of MatrixFloat ascii and binary extractors, sizers and
+     coders */
+  template<>
+  bool AsciiExtractor<float>::operator()(april_utils::constString &line,
+                                         float &destination);
+  
+  template<>
+  bool BinaryExtractor<float>::operator()(april_utils::constString &line,
+                                          float &destination);
+  
+  template<>
+  int AsciiSizer<float>::operator()(const Matrix<float> *mat);
 
-struct FloatAsciiExtractor {
-  // returns true if success, false otherwise
-  bool operator()(constString &line, float &destination) {
-    if (!line.extract_float(&destination)) return false;
-    return true;
-  }
-};
+  template<>
+  int BinarySizer<float>::operator()(const Matrix<float> *mat);
 
-struct FloatBinaryExtractor {
-  // returns true if success, false otherwise
-  bool operator()(constString &line, float &destination) {
-    if (!line.extract_float_binary(&destination)) return false;
-    return true;
-  }
-};
+  template<>
+  void AsciiCoder<float>::operator()(const float &value,
+                                     april_io::StreamInterface *stream);
+  
+  template<>
+  void BinaryCoder<float>::operator()(const float &value,
+                                      april_io::StreamInterface *stream);
+  
+  /* Especialization of SparseMatrixFloat ascii and binary sizers */
+  
+  template<>
+  int SparseAsciiSizer<float>::operator()(const SparseMatrix<float> *mat);
+  
+  template<>
+  int SparseBinarySizer<float>::operator()(const SparseMatrix<float> *mat);
+  
+  /**************************************************************************/
 
-struct FloatAsciiSizer {
-  // returns the number of bytes needed for all matrix data (plus spaces)
-  int operator()(const Matrix<float> *mat) {
-    return mat->size()*12;
-  }
-};
-struct FloatBinarySizer {
-  // returns the number of bytes needed for all matrix data (plus spaces)
-  int operator()(const Matrix<float> *mat) {
-    return binarizer::buffer_size_32(mat->size());
-  }
-};
-struct SparseFloatAsciiSizer {
-  // returns the number of bytes needed for all matrix data (plus spaces)
-  int operator()(const SparseMatrix<float> *mat) {
-    return mat->nonZeroSize()*12;
-  }
-};
-struct SparseFloatBinarySizer {
-  // returns the number of bytes needed for all matrix data (plus spaces)
-  int operator()(const SparseMatrix<float> *mat) {
-    return binarizer::buffer_size_32(mat->nonZeroSize());
-  }
-};
+  MatrixFloat* readMatrixFloatHEX(int width, int height,
+                                  april_utils::constString cs);
 
-struct FloatAsciiCoder {
-  // puts to the stream the given value
-  void operator()(const float &value, april_io::File *file) {
-    file->printf("%.5g", value);
-  }
-};
+  const float CTENEGRO  = 1.0f;
+  const float CTEBLANCO = 0.0f;
+  MatrixFloat* readMatrixFloatPNM(april_utils::constString cs,
+                                  bool forcecolor=false, 
+                                  bool forcegray=false);
 
-struct FloatBinaryCoder {
-  // puts to the stream the given value
-  void operator()(const float &value, april_io::File *file) {
-    char b[5];
-    binarizer::code_float(value, b);
-    file->printf("%c%c%c%c%c", b[0],b[1],b[2],b[3],b[4]);
-  }
-};
+  int saveMatrixFloatPNM(MatrixFloat *mat,
+                         char **buffer);
+  int saveMatrixFloatHEX(MatrixFloat *mat,
+                         char **buffer,
+                         int *width,
+                         int *height);
 
-MatrixFloat* readMatrixFloatHEX(int width, int height, constString cs);
+  //////////////////////////////////////////////////////////////////////////////
+}
 
-const float CTENEGRO  = 1.0f;
-const float CTEBLANCO = 0.0f;
-MatrixFloat* readMatrixFloatPNM(constString cs,
-				bool forcecolor=false, 
-				bool forcegray=false);
-
-int saveMatrixFloatPNM(MatrixFloat *mat,
-		       char **buffer);
-int saveMatrixFloatHEX(MatrixFloat *mat,
-		       char **buffer,
-		       int *width,
-		       int *height);
-
-//////////////////////////////////////////////////////////////////////////////
-
-void writeMatrixFloatToFilename(MatrixFloat *mat, const char *filename,
-                                bool is_ascii);
-char *writeMatrixFloatToString(MatrixFloat *mat, bool is_ascii, int &len);
-void writeMatrixFloatToLuaString(MatrixFloat *mat, lua_State *L, bool is_ascii);
-MatrixFloat *readMatrixFloatFromFilename(const char *filename, const char *order);
-MatrixFloat *readMatrixFloatFromString(constString &cs);
-
-void writeMatrixFloatToTabFile(MatrixFloat *mat, const char *filename);
-MatrixFloat *readMatrixFloatFromTabFile(const char *filename,
-					const char *order = "row_major");
-
-void writeMatrixFloatToTabGZStream(MatrixFloat *mat, BufferedGZFile *stream);
-void writeMatrixFloatToTabStream(MatrixFloat *mat, FILE *f);
-
-// SPARSE MATRIX FLOAT
-
-void writeSparseMatrixFloatToFilename(SparseMatrixFloat *mat, const char *filename,
-                                      bool is_ascii);
-char *writeSparseMatrixFloatToString(SparseMatrixFloat *mat, bool is_ascii,
-				     int &len);
-void writeSparseMatrixFloatToLuaString(SparseMatrixFloat *mat, lua_State *L,
-				       bool is_ascii);
-SparseMatrixFloat *readSparseMatrixFloatFromFilename(const char *filename);
-SparseMatrixFloat *readSparseMatrixFloatFromString(constString &cs);
 #endif // UTILMATRIXFLOAT_H

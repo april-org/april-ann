@@ -2,6 +2,8 @@
 using namespace std;
 #include "../c_src/qsort.h"
 
+using namespace april_utils;
+
 int main() { // Lectura de datos e invocación de la función de sort
   int i,leido,indDat;
   const int maxVec = 1024;

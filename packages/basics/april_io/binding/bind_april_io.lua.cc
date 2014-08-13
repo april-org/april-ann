@@ -28,9 +28,6 @@
 #include "stream_memory.h"
 
 using namespace april_io;
-
-int lua_isAuxStreamInterface(lua_State *L, int index);
-Stream *lua_toAuxStreamInterface(lua_State *L, int index);
 //BIND_END
 
 //BIND_FOOTER_H
@@ -48,9 +45,7 @@ int callFileStreamConstructor(lua_State *L) {
   }
   return 1;
 }
-//BIND_END
 
-//BIND_HEADER_C
 template<typename T>
 int lua_isAuxStreamInterface(lua_State *L, int index) {
   luaL_Stream *p = ((luaL_Stream *)luaL_testudata(L, index, LUA_FILEHANDLE));
@@ -73,7 +68,9 @@ T *lua_toAuxStreamInterface(lua_State *L, int index) {
   if (s_casted == 0) return 0;
   return s_casted;
 }
+//BIND_END
 
+//BIND_HEADER_C
 namespace april_io {
 
   int readAndPushNumberToLua(lua_State *L, StreamInterface *obj,
@@ -309,6 +306,31 @@ namespace april_io {
 }
 //BIND_END
 
+//BIND_METHOD InputLuaStringStream value
+{
+  LUABIND_INCREASE_NUM_RETURNS(obj->push(L));
+}
+//BIND_END
+
+/////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME OutputLuaStringStream april_io.stream.output_lua_string
+//BIND_CPP_CLASS OutputLuaStringStream
+//BIND_SUBCLASS_OF OutputLuaStringStream StreamInterface
+
+//BIND_CONSTRUCTOR OutputLuaStringStream
+{
+  obj = new OutputLuaStringStream(L, 1);
+  LUABIND_RETURN(OutputLuaStringStream, obj);
+}
+//BIND_END
+
+//BIND_METHOD OutputLuaStringStream value
+{
+  LUABIND_INCREASE_NUM_RETURNS(obj->push(L));
+}
+//BIND_END
+
 /////////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME CStringStream april_io.stream.c_string
@@ -326,6 +348,12 @@ namespace april_io {
     obj = new CStringStream();
   }
   LUABIND_RETURN(CStringStream, obj);
+}
+//BIND_END
+
+//BIND_METHOD CStringStream value
+{
+  LUABIND_INCREASE_NUM_RETURNS(obj->push(L));
 }
 //BIND_END
 

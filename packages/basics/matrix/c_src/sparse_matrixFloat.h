@@ -26,6 +26,8 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-typedef SparseMatrix<float> SparseMatrixFloat;
+namespace basics {
+  typedef SparseMatrix<float> SparseMatrixFloat;
+}
 
 #endif // SPARSEMATRIXFLOAT_H

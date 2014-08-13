@@ -36,7 +36,9 @@ namespace april_io {
     CStringStream(const char *str, size_t size);
     virtual ~CStringStream();
     
-    constString getConstString() const;
+    april_utils::constString getConstString() const;
+    void swapString(april_utils::string &other);
+    char *releaseString();
 
     virtual bool empty() const;
     virtual size_t size() const;
@@ -47,7 +49,7 @@ namespace april_io {
 
     virtual bool isOpened() const;
     virtual void close();
-    virtual off_t seek(int whence, int offset);
+    virtual off_t seek(int whence = SEEK_CUR, int offset = 0);
     virtual void flush();
     virtual int setvbuf(int mode, size_t size);
     virtual bool hasError() const;

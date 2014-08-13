@@ -23,6 +23,10 @@
 #include "wrapper.h"
 #include "unused_variable.h"
 
+using namespace basics;
+using namespace april_utils;
+using namespace april_math;
+
 namespace ANN {
 
   BiasANNComponent::BiasANNComponent(unsigned int size,

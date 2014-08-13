@@ -25,6 +25,8 @@
 #include "matrixFloat.h"
 #include "matrixSet.h"
 
-typedef MatrixSet<float> MatrixFloatSet;
+namespace basics {
+  typedef MatrixSet<float> MatrixFloatSet;
+}
 
 #endif // MATRIXFLOATSET_H

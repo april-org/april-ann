@@ -32,6 +32,7 @@ namespace april_io {
   
   OutputLuaStringStream::~OutputLuaStringStream() {
     close();
+    delete[] out_buffer;
   }
   
   bool OutputLuaStringStream::empty() const {
@@ -67,6 +68,12 @@ namespace april_io {
       flush();
       closed = true;
     }
+  }
+
+  off_t OutputLuaStringStream::seek(int whence, int offset) {
+    if (whence == SEEK_CUR && offset == 0) return total_size;
+    ERROR_EXIT(128, "NOT IMPLEMENTED BEHAVIOR\n");
+    return 0;
   }
   
   int OutputLuaStringStream::push(lua_State *L) {
@@ -116,7 +123,7 @@ namespace april_io {
   }
   
   void OutputLuaStringStream::moveOutBuffer(size_t len) {
-    Stream::moveOutBuffer(len);
+    StreamBuffer::moveOutBuffer(len);
     flush();
   }
   
@@ -216,6 +223,6 @@ namespace april_io {
   }
   
   bool InputLuaStringStream::eofStream() const {
-    return data_pos + getInBufferPos() >= total_size;
+    return data_pos >= total_size;
   }
 } // namespace april_io

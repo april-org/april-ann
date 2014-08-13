@@ -59,7 +59,7 @@ namespace gzio {
     virtual bool eof() const;
     virtual bool isOpened() const ;
     virtual void close();
-    virtual off_t seek(int whence, int offset) ;
+    virtual off_t seek(int whence=SEEK_CUR, int offset=0);
     virtual void flush();
     virtual int setvbuf(int mode, size_t size);
     virtual bool hasError() const;

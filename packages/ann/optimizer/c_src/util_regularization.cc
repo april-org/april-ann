@@ -22,6 +22,9 @@
 #include "maxmin.h"
 #include "util_regularization.h"
 #include "wrapper.h"
+
+using basics::MatrixFloat;
+
 namespace ANN {
   namespace optimizer {
     // FIXME: MAKE A CUDA IMPLEMENTATION

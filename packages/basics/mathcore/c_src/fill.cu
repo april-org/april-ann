@@ -23,78 +23,82 @@
 #include "cuda_utils.h"
 #include "unused_variable.h"
 
-#ifdef USE_CUDA
-/***************************************
- ************** CUDA SECTION ***********
- ***************************************/
+namespace april_math {
 
-template<typename T>
-__global__ void fillKernel(T *v, unsigned int N, unsigned int stride,
-			    T value) {
-  unsigned int x_idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (x_idx < N) {
-    unsigned int x_pos = x_idx*stride;
-    v[x_pos] = value;
+#ifdef USE_CUDA
+  /***************************************
+   ************** CUDA SECTION ***********
+   ***************************************/
+
+  template<typename T>
+  __global__ void fillKernel(T *v, unsigned int N, unsigned int stride,
+                             T value) {
+    unsigned int x_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (x_idx < N) {
+      unsigned int x_pos = x_idx*stride;
+      v[x_pos] = value;
+    }
   }
-}
 #endif
 
-/***************************************
- ************** C SECTION **************
- ***************************************/
+  /***************************************
+   ************** C SECTION **************
+   ***************************************/
 
-void wrapperFill(unsigned int N, float value, float *v_mem,
-		 unsigned int stride) {
-  VECTOR_SSET(N, value, v_mem, stride);
-}
+  void wrapperFill(unsigned int N, float value, float *v_mem,
+                   unsigned int stride) {
+    VECTOR_SSET(N, value, v_mem, stride);
+  }
 
-void wrapperFill(unsigned int N, ComplexF value, ComplexF *v_mem,
-		 unsigned int stride) {
-  for (unsigned int i=0; i<N; ++i, v_mem += stride)
-    *v_mem = value;
-}
+  void wrapperFill(unsigned int N, ComplexF value, ComplexF *v_mem,
+                   unsigned int stride) {
+    for (unsigned int i=0; i<N; ++i, v_mem += stride)
+      *v_mem = value;
+  }
 
-/***************************************
- *********** TEMPLATE SECTION **********
- ***************************************/
+  /***************************************
+   *********** TEMPLATE SECTION **********
+   ***************************************/
 
-template <typename T>
-void doFill(unsigned int N,
-	    GPUMirroredMemoryBlock<T> *v,
-	    unsigned int stride,
-	    unsigned int shift,
-	    T value,
-	    bool use_gpu) {
+  template <typename T>
+  void doFill(unsigned int N,
+              GPUMirroredMemoryBlock<T> *v,
+              unsigned int stride,
+              unsigned int shift,
+              T value,
+              bool use_gpu) {
 #ifndef USE_CUDA
-  UNUSED_VARIABLE(use_gpu);
+    UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
-  if (use_gpu) {
-    T *v_ptr = v->getGPUForWrite() + shift;
-    dim3 block, grid;
-    computeBlockAndGridSizesForAnArray(N, block, grid);
-    fillKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-      (v_ptr, N, stride, value);
-  }
-  else {
+    if (use_gpu) {
+      T *v_ptr = v->getGPUForWrite() + shift;
+      dim3 block, grid;
+      computeBlockAndGridSizesForAnArray(N, block, grid);
+      fillKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+        (v_ptr, N, stride, value);
+    }
+    else {
 #endif
-    T *v_mem = v->getPPALForWrite() + shift;
-    wrapperFill(N, value, v_mem, stride);
+      T *v_mem = v->getPPALForWrite() + shift;
+      wrapperFill(N, value, v_mem, stride);
 #ifdef USE_CUDA
-  }
+    }
 #endif
-}
+  }
 
-template void doFill<float>(unsigned int N,
-			    GPUMirroredMemoryBlock<float> *v,
-			    unsigned int stride,
-			    unsigned int shift,
-			    float value,
-			    bool use_gpu);
+  template void doFill<float>(unsigned int N,
+                              GPUMirroredMemoryBlock<float> *v,
+                              unsigned int stride,
+                              unsigned int shift,
+                              float value,
+                              bool use_gpu);
 
-template void doFill<ComplexF>(unsigned int N,
-			    GPUMirroredMemoryBlock<ComplexF> *v,
-			    unsigned int stride,
-			    unsigned int shift,
-			    ComplexF value,
-			    bool use_gpu);
+  template void doFill<ComplexF>(unsigned int N,
+                                 GPUMirroredMemoryBlock<ComplexF> *v,
+                                 unsigned int stride,
+                                 unsigned int shift,
+                                 ComplexF value,
+                                 bool use_gpu);
+
+} // namespace april_math

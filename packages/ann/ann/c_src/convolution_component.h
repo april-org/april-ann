@@ -33,7 +33,7 @@ namespace ANN {
   class ConvolutionANNComponent : public VirtualMatrixANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(ConvolutionANNComponent);
     
-    MatrixFloat *weights_matrix;
+    basics::MatrixFloat *weights_matrix;
     
     // parameters of the convolution
     
@@ -74,14 +74,14 @@ namespace ANN {
     /// Translates the output window into a bi-dimensional matrix
     int *output_window_rewrap;
     
-    MatrixFloat *getRewrappedMatrix(MatrixFloat *w,
-				    const int *rewrap_size,
-				    const int N,
-				    bool copy) const {
-      MatrixFloat *w_flattened;
+    basics::MatrixFloat *getRewrappedMatrix(basics::MatrixFloat *w,
+                                            const int *rewrap_size,
+                                            const int N,
+                                            bool copy) const {
+      basics::MatrixFloat *w_flattened;
       if (w->getIsContiguous()) w_flattened = w->rewrap(rewrap_size, N);
       else {
-	MatrixFloat *w_clone;
+	basics::MatrixFloat *w_clone;
 	if (copy) w_clone = w->clone();
 	else w_clone = w->cloneOnlyDims();
 	IncRef(w_clone);
@@ -95,11 +95,11 @@ namespace ANN {
     
   protected:
 
-    virtual void computeGradients(MatrixFloat*& grads_mat);
+    virtual void computeGradients(basics::MatrixFloat*& grads_mat);
 
-    virtual MatrixFloat *privateDoForward(MatrixFloat* input,
-                                          bool during_training);
-    virtual MatrixFloat *privateDoBackprop(MatrixFloat *input_error);
+    virtual basics::MatrixFloat *privateDoForward(basics::MatrixFloat* input,
+                                                  bool during_training);
+    virtual basics::MatrixFloat *privateDoBackprop(basics::MatrixFloat *input_error);
     virtual void privateReset(unsigned int it=0);
     
   public:
@@ -111,21 +111,23 @@ namespace ANN {
 			    int num_output_planes,      // hidden layer size
 			    const char *name=0, const char *weights_name=0);
     virtual ~ConvolutionANNComponent();
-    virtual void precomputeOutputSize(const vector<unsigned int> &input_size,
-				      vector<unsigned int> &output_size) {
+    virtual void precomputeOutputSize(const april_utils::vector<unsigned int> &input_size,
+				      april_utils::vector<unsigned int> &output_size) {
       output_size.clear();
       output_size.push_back(hidden_size);
-      for (int i=1; i<input_planes_dim; ++i)
+      for (int i=1; i<input_planes_dim; ++i) {
 	output_size.push_back((input_size[i-1]-kernel_dims[i])/kernel_step[i]+1);
-      for (int i=input_planes_dim+1; i<=input_num_dims; ++i)
+      }
+      for (int i=input_planes_dim+1; i<=input_num_dims; ++i) {
 	output_size.push_back((input_size[i-1]-kernel_dims[i])/kernel_step[i]+1);
+      }
     }
     virtual ANNComponent *clone();
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
-		       MatrixFloatSet *weights_dict,
-		       hash<string,ANNComponent*> &components_dict);
-    virtual void copyWeights(MatrixFloatSet *weights_dict);
+		       basics::MatrixFloatSet *weights_dict,
+                       april_utils::hash<april_utils::string,ANNComponent*> &components_dict);
+    virtual void copyWeights(basics::MatrixFloatSet *weights_dict);
 
     virtual char *toLuaString();
 

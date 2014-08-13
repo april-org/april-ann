@@ -35,10 +35,6 @@
 #include "unused_variable.h"
 #include "vector.h"
 
-using april_utils::hash;    // required for build
-using april_utils::string;
-using april_utils::vector;
-
 #ifndef NDEBUG
 #define ASSERT_MATRIX(m) do {						\
     april_assert( (m)->getMajorOrder() == CblasColMajor );		\
@@ -65,7 +61,7 @@ namespace ANN {
       char str_id[MAX_NAME_STR+1];
       if (prefix == 0) prefix = default_prefix;
       snprintf(str_id, MAX_NAME_STR, "%s%u", prefix, next_name_id);
-      name = string(str_id);
+      name = april_utils::string(str_id);
       ++next_name_id;
     }
   protected:
@@ -73,15 +69,15 @@ namespace ANN {
     static unsigned int next_weights_id;
     /// The name identifies this component to do fast search. It is a unique
     /// name, repetitions are forbidden.
-    string name;
-    string weights_name;
+    april_utils::string name;
+    april_utils::string weights_name;
     unsigned int input_size;
     unsigned int output_size;
     bool use_cuda;
 
     /// Method which computes the gradient of the weights on the given
     /// MatrixFloat object
-    virtual void computeGradients(MatrixFloat*& weight_grads) {
+    virtual void computeGradients(basics::MatrixFloat*& weight_grads) {
       UNUSED_VARIABLE(weight_grads);
     }
     
@@ -90,14 +86,14 @@ namespace ANN {
                  unsigned int input_size=0, unsigned int output_size=0) :
       input_size(input_size), output_size(output_size),
       use_cuda(false) {
-      if (name) this->name = string(name);
+      if (name) this->name = april_utils::string(name);
       else generateDefaultName();
-      if (weights_name) this->weights_name = string(weights_name);
+      if (weights_name) this->weights_name = april_utils::string(weights_name);
     }
     virtual ~ANNComponent() { }
 
-    const string &getName() const { return name; }
-    const string &getWeightsName() const { return weights_name; }
+    const april_utils::string &getName() const { return name; }
+    const april_utils::string &getWeightsName() const { return weights_name; }
     bool hasWeightsName() const { return !weights_name.empty(); }
     
     static void resetIdCounters() { next_name_id=0; next_weights_id=0; }
@@ -109,7 +105,7 @@ namespace ANN {
       char default_prefix[2] = "w";
       if (prefix == 0) prefix = default_prefix;
       snprintf(str_id, MAX_NAME_STR, "%s%u", prefix, next_weights_id);
-      weights_name = string(str_id);
+      weights_name = april_utils::string(str_id);
       ++next_weights_id;
     }
     
@@ -120,28 +116,28 @@ namespace ANN {
     virtual unsigned int getOutputSize() const {
       return output_size;
     }
-    virtual Token *calculate(Token *input) {
+    virtual basics::Token *calculate(basics::Token *input) {
       return this->doForward(input, false);
     }
     /////////////////////////////////////////////
     
-    virtual void precomputeOutputSize(const vector<unsigned int> &input_size,
-				      vector<unsigned int> &output_size) {
+    virtual void precomputeOutputSize(const april_utils::vector<unsigned int> &input_size,
+				      april_utils::vector<unsigned int> &output_size) {
       output_size.clear();
       if (getOutputSize()>0) output_size.push_back(getOutputSize());
       else if (getInputSize() > 0) output_size.push_back(getInputSize());
       else output_size = input_size;
     }
 
-    virtual Token *getInput() { return 0; }
-    virtual Token *getOutput() { return 0; }
-    virtual Token *getErrorInput() { return 0; }
-    virtual Token *getErrorOutput() { return 0; }
+    virtual basics::Token *getInput() { return 0; }
+    virtual basics::Token *getOutput() { return 0; }
+    virtual basics::Token *getErrorInput() { return 0; }
+    virtual basics::Token *getErrorOutput() { return 0; }
 
     /// Virtual method that executes the set of operations required for each
     /// block of connections when performing the forward step of the
     /// Backpropagation algorithm, and returns its output Token
-    virtual Token *doForward(Token* input, bool during_training) {
+    virtual basics::Token *doForward(basics::Token* input, bool during_training) {
       UNUSED_VARIABLE(during_training);
       return input;
     }
@@ -149,7 +145,7 @@ namespace ANN {
     /// Virtual method that back-propagates error derivatives and computes
     /// other useful stuff. Receives input error gradients, and returns its
     /// output error gradients Token.
-    virtual Token *doBackprop(Token *input_error) {
+    virtual basics::Token *doBackprop(basics::Token *input_error) {
       return input_error;
     }
     
@@ -162,7 +158,7 @@ namespace ANN {
 
     /// Method which receives a hash table with matrices where compute the
     /// gradients.
-    virtual void computeAllGradients(MatrixFloatSet *weight_grads_dict){
+    virtual void computeAllGradients(basics::MatrixFloatSet *weight_grads_dict){
       if (!weights_name.empty())
 	computeGradients( (*weight_grads_dict)[weights_name] );
     }
@@ -192,8 +188,8 @@ namespace ANN {
     /// parent method before do anything.
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       MatrixFloatSet *weights_dict,
-		       hash<string,ANNComponent*> &components_dict) {
+		       basics::MatrixFloatSet *weights_dict,
+		       april_utils::hash<april_utils::string,ANNComponent*> &components_dict) {
       UNUSED_VARIABLE(weights_dict);
       // if (is_built) ERROR_EXIT(128, "Rebuild is forbidden!!!!\n");
       is_built = true;
@@ -219,13 +215,13 @@ namespace ANN {
     }
     
     /// Abstract method to retrieve matrix weights from ANNComponents
-    virtual void copyWeights(MatrixFloatSet *weights_dict) {
+    virtual void copyWeights(basics::MatrixFloatSet *weights_dict) {
       UNUSED_VARIABLE(weights_dict);
     }
 
     /// Abstract method to retrieve ANNComponents objects. All childs which
     /// rewrite this method must call parent method before do anything.
-    virtual void copyComponents(hash<string,ANNComponent*> &components_dict) {
+    virtual void copyComponents(april_utils::hash<april_utils::string,ANNComponent*> &components_dict) {
       components_dict[name] = this;
     }
     
@@ -242,19 +238,19 @@ namespace ANN {
     /// contains itself. Component composition will need to look to itself and
     /// all contained components. All childs which rewrite this method must
     /// call parent method before do anything.
-    virtual ANNComponent *getComponent(string &name) {
+    virtual ANNComponent *getComponent(april_utils::string &name) {
       if (this->name == name) return this;
       return 0;
     }
     
     virtual char *toLuaString() {
-      buffer_list buffer;
+      april_utils::buffer_list buffer;
       buffer.printf("ann.components.base{ name='%s', weights='%s', size=%d }",
 		    name.c_str(), weights_name.c_str(), input_size);
-      return buffer.to_string(buffer_list::NULL_TERMINATED);
+      return buffer.to_string(april_utils::buffer_list::NULL_TERMINATED);
     }
   };
-}
+} // namespace ANN
 
 #undef MAX_NAME_STR
 

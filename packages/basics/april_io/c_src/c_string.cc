@@ -39,8 +39,18 @@ namespace april_io {
     close();
   }
 
-  constString CStringStream::getConstString() const {
-    return constString(data.c_str(), data.size());
+  april_utils::constString CStringStream::getConstString() const {
+    return april_utils::constString(data.c_str(), data.size());
+  }
+
+  void CStringStream::swapString(april_utils::string &other) {
+    data.swap(other);
+  }
+  
+  char *CStringStream::releaseString() {
+    resetBuffers();
+    in_pos = out_pos = 0;
+    return data.release();
   }
   
   bool CStringStream::empty() const {
@@ -82,9 +92,8 @@ namespace april_io {
   }
   
   off_t CStringStream::seek(int whence, int offset) {
-    UNUSED_VARIABLE(whence);
-    UNUSED_VARIABLE(offset);
-    ERROR_EXIT(128, "NOT IMPLEMENTED\n");
+    if (whence == SEEK_CUR && offset == 0) return data.size();
+    ERROR_EXIT(128, "NOT IMPLEMENTED BEHAVIOR\n");
     return 0;
   }
   
@@ -127,11 +136,11 @@ namespace april_io {
   }
   
   bool CStringStream::eofStream() const {
-    return in_pos + getInBufferPos() >= data.size();
+    return in_pos >= data.size();
   }
   
   void CStringStream::moveOutBuffer(size_t len) {
-    Stream::moveOutBuffer(len);
+    StreamBuffer::moveOutBuffer(len);
     flush();
   }
 } // namespace april_io

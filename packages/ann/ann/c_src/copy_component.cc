@@ -26,6 +26,10 @@
 #include "copy_component.h"
 #include "wrapper.h"
 
+using namespace basics;
+using namespace april_utils;
+using namespace april_math;
+
 namespace ANN {
   
   CopyANNComponent::CopyANNComponent(unsigned int times, const char *name,

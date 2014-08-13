@@ -5,6 +5,9 @@ class.extend(matrixChar, "to_lua_string",
                                     self:toString())
 end)
 
+-- serialization
+matrix.__make_all_serialization_methods__(matrixChar)
+
 matrixChar.meta_instance.__tostring = function(self)
   local dims   = self:dim()
   local coords = {}

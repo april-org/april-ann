@@ -32,15 +32,15 @@ namespace ANN {
   /// A component which adds a bias to the given bi-dimensional input matrix.
   class BiasANNComponent : public VirtualMatrixANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(BiasANNComponent);
-    MatrixFloat *bias_vector;
+    basics::MatrixFloat *bias_vector;
     
   protected:
     
-    virtual MatrixFloat *privateDoForward(MatrixFloat *input,
-                                          bool during_training);
-    virtual MatrixFloat *privateDoBackprop(MatrixFloat *input_error);
+    virtual basics::MatrixFloat *privateDoForward(basics::MatrixFloat *input,
+                                                  bool during_training);
+    virtual basics::MatrixFloat *privateDoBackprop(basics::MatrixFloat *input_error);
     virtual void privateReset(unsigned int it=0);
-    virtual void computeGradients(MatrixFloat*& grad_mat);
+    virtual void computeGradients(basics::MatrixFloat*& grad_mat);
     
   public:
     BiasANNComponent(unsigned int size=0,
@@ -49,12 +49,13 @@ namespace ANN {
     virtual ANNComponent *clone();
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
-		       MatrixFloatSet *weights_dict,
-		       hash<string,ANNComponent*> &components_dict);
-    virtual void copyWeights(MatrixFloatSet *weights_dict);
+		       basics::MatrixFloatSet *weights_dict,
+		       april_utils::hash<april_utils::string,ANNComponent*> &components_dict);
+    virtual void copyWeights(basics::MatrixFloatSet *weights_dict);
     
     virtual char *toLuaString();
   };
+  
 }
 
 #endif // BIASANNCOMPONENT_H

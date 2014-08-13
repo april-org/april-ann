@@ -5,6 +5,7 @@
 #include <iostream>
 using std::cout;
 using std::endl;
+using namespace april_utils;
 
 #define FORMAT_STRING "hola mundo! %d+%d=%d,"
 #define BUFFER_CONTENT "!!!$78ASQ88D<f08FrA08H9J+8IXS'8Jz^{8LAgw8Mcps8O)yo8PJ)khola mundo! 0+2=2,hola mundo! 1+2=3,hola mundo! 2+2=4,"

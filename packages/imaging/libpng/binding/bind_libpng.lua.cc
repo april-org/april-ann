@@ -18,8 +18,6 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-//BIND_HEADER_C
-//BIND_END
 
 //BIND_HEADER_H
 #include "libpng.h"
@@ -27,18 +25,23 @@
 #include "bind_image_RGB.h"
 //BIND_END
 
+//BIND_HEADER_C
+//BIND_END
+
+
 //BIND_FUNCTION libpng.read
 {
-  constString cs;
+  april_utils::constString cs;
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_CHECK_PARAMETER(1, string);
   LUABIND_GET_PARAMETER(1,constString,cs);
   const char *filename = (const char *)cs;
 
-  ImageFloatRGB *res = LibPNG::readPNG(filename);
+  ImageFloatRGB *res = imaging::LibPNG::readPNG(filename);
 
-  if (res == NULL)
+  if (res == NULL) {
     LUABIND_ERROR("libpng.read failed");
+  }
 
   LUABIND_RETURN(ImageFloatRGB, res);
 }
@@ -47,7 +50,7 @@
 //BIND_FUNCTION libpng.write
 {
   ImageFloatRGB *img;
-  constString cs;
+  april_utils::constString cs;
   LUABIND_CHECK_ARGN(==, 2);
   
   LUABIND_CHECK_PARAMETER(2, string);
@@ -55,9 +58,10 @@
   LUABIND_GET_PARAMETER(2,constString,cs);
   const char *filename = (const char *)cs;
 
-  bool ok = LibPNG::writePNG(img, filename);
+  bool ok = imaging::LibPNG::writePNG(img, filename);
   
-  if (!ok)
+  if (!ok) {
     LUABIND_ERROR("libpng.write failed");
+  }
 }
 //BIND_END

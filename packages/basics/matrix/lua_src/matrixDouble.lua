@@ -5,6 +5,9 @@ class.extend(matrixDouble, "to_lua_string",
                                     self:toString(format or "string"))
 end)
 
+-- serialization
+matrix.__make_all_serialization_methods__(matrixDouble)
+
 matrixDouble.meta_instance.__call =
   matrix.__make_generic_call__()
 

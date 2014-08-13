@@ -30,33 +30,33 @@
 #include "stream.h"
 #include "unused_variable.h"
 
-#define READ_ONLY_STREAM(name)                          \
-  virtual size_t put(Stream *source, size_t size) {     \
-    UNUSED_VARIABLE(source);                            \
-    UNUSED_VARIABLE(size);                              \
-    ERROR_EXIT(128, "Read only " #name "\n");           \
-    return 0;                                           \
-  }                                                     \
-  virtual size_t put(const char *source, size_t size) { \
-    UNUSED_VARIABLE(source);                            \
-    UNUSED_VARIABLE(size);                              \
-    ERROR_EXIT(128, "Read only " #name "\n");           \
-    return 0;                                           \
-  }                                                     \
-  virtual int printf(const char *format, ...) {         \
-    UNUSED_VARIABLE(format);                            \
-    ERROR_EXIT(128, "Read only " #name "\n");           \
-    return 0;                                           \
+#define READ_ONLY_STREAM(name)                                  \
+  virtual size_t put(StreamInterface *source, size_t size) {    \
+    UNUSED_VARIABLE(source);                                    \
+    UNUSED_VARIABLE(size);                                      \
+    ERROR_EXIT(128, "Read only " #name "\n");                   \
+    return 0;                                                   \
+  }                                                             \
+  virtual size_t put(const char *source, size_t size) {         \
+    UNUSED_VARIABLE(source);                                    \
+    UNUSED_VARIABLE(size);                                      \
+    ERROR_EXIT(128, "Read only " #name "\n");                   \
+    return 0;                                                   \
+  }                                                             \
+  virtual int printf(const char *format, ...) {                 \
+    UNUSED_VARIABLE(format);                                    \
+    ERROR_EXIT(128, "Read only " #name "\n");                   \
+    return 0;                                                   \
   }
 
 #define WRITE_ONLY_STREAM(name)                                         \
-  virtual size_t get(Stream *dest, const char *delim) {                 \
+  virtual size_t get(StreamInterface *dest, const char *delim) {        \
     UNUSED_VARIABLE(dest);                                              \
     UNUSED_VARIABLE(delim);                                             \
     ERROR_EXIT(128, "Write only " #name "\n");                          \
     return 0;                                                           \
   }                                                                     \
-  virtual size_t get(Stream *dest, size_t max_size, const char *delim) { \
+  virtual size_t get(StreamInterface *dest, size_t max_size, const char *delim) { \
     UNUSED_VARIABLE(dest);                                              \
     UNUSED_VARIABLE(max_size);                                          \
     UNUSED_VARIABLE(delim);                                             \
@@ -105,6 +105,11 @@ namespace april_io {
     
     /// Puts a string of a maximum given size taken from the given char buffer.
     virtual size_t put(const char *source, size_t size) = 0;
+
+    /// Puts a zero ended string, uses strlen to compute source length.
+    virtual size_t put(const char *source) {
+      return put(source, strlen(source));
+    }
     
     /// Writes a set of values following the given format. Equals to C printf.    
     virtual int printf(const char *format, ...) = 0;
@@ -121,7 +126,7 @@ namespace april_io {
     virtual void close() = 0;
     
     /// Moves the stream cursor to the given offset from given whence position.
-    virtual off_t seek(int whence, int offset) = 0;
+    virtual off_t seek(int whence = SEEK_CUR, int offset = 0) = 0;
     
     /// Forces to write pending data at stream object.
     virtual void flush() = 0;
@@ -145,15 +150,15 @@ namespace april_io {
    * The Stream is the parent class which needs to be dervied by I/O
    * facilities based in input/output buffers.
    */
-  class Stream : public StreamInterface {
+  class StreamBuffer : public StreamInterface {
     const char *in_buffer;
     size_t in_buffer_pos, in_buffer_len;
     char *out_buffer;
     size_t out_buffer_pos, out_buffer_len;
     
   public:
-    Stream();
-    virtual ~Stream();
+    StreamBuffer();
+    virtual ~StreamBuffer();
     
     virtual bool good() const;
     virtual size_t get(StreamInterface *dest, const char *delim = 0);

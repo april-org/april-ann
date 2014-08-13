@@ -5,9 +5,9 @@
 #include <algorithm>
 #include <iostream>
 
-using april_utils::list;
 using std::cout;
 using std::endl;
+using namespace april_utils;
 
 #define N 10u
 

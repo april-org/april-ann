@@ -43,12 +43,6 @@ extern "C" {
     UNUSED_VARIABLE(pos);                                               \
     ERROR_EXIT(128, "Read only " #name "\n");                           \
     return 0;                                                           \
-  }                                                                     \
-  virtual off_t seek(int whence, int offset) {                          \
-    UNUSED_VARIABLE(whence);                                            \
-    UNUSED_VARIABLE(offset);                                            \
-    ERROR_EXIT(128, "Write only " #name "\n");                          \
-    return 0;                                                           \
   }
 
 #define READ_ONLY_STREAM_MEMORY(name)                                   \
@@ -78,7 +72,7 @@ namespace april_io {
 
   ///////////////////////////////////////////////////////////////////////////
   
-  class StreamMemory : public Stream {
+  class StreamMemory : public StreamBuffer {
   public:
     static const size_t BLOCK_SIZE = 1024;
     StreamMemory() { }

@@ -22,12 +22,16 @@
 #include "gpu_helper.h"
 
 #ifdef USE_CUDA
-bool GPUHelper::initialized = false;
-cublasHandle_t GPUHelper::handler;
-cusparseHandle_t GPUHelper::sparse_handler;
-cudaDeviceProp GPUHelper::properties;
-CUdevice GPUHelper::device;
-CUcontext GPUHelper::context;
-april_utils::vector<CUstream> GPUHelper::streams;
-unsigned int GPUHelper::current_stream = 0;
+namespace april_math {
+
+  bool GPUHelper::initialized = false;
+  cublasHandle_t GPUHelper::handler;
+  cusparseHandle_t GPUHelper::sparse_handler;
+  cudaDeviceProp GPUHelper::properties;
+  CUdevice GPUHelper::device;
+  CUcontext GPUHelper::context;
+  april_utils::vector<CUstream> GPUHelper::streams;
+  unsigned int GPUHelper::current_stream = 0;
+
+} // namespace april_math
 #endif

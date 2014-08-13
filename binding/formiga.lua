@@ -1715,11 +1715,11 @@ function formiga.__document_src__ (t)
   if (lengroup > 0) then
     local aux_begin = {}
     local aux_end   = {}
-    for _,namegroup in ipairs(group) do
-      table.insert(aux_begin,"/// \\addtogroup "..namegroup)
-      table.insert(aux_begin,"/// @{")
-      table.insert(aux_end,  "/// @}")
-    end      
+    -- for _,namegroup in ipairs(group) do
+    --   table.insert(aux_begin,"/// \\addtogroup "..namegroup)
+    --   table.insert(aux_begin,"/// @{")
+    --   table.insert(aux_end,  "/// @}")
+    -- end      
     table.insert(aux_begin,"")
     table.insert(aux_end,  "")
     str_begin = table.concat(aux_begin,"\n")

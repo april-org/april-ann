@@ -27,41 +27,46 @@
 #include "bind_tokens.h"
 #include "table_of_token_codes.h"
 
-static bool rewrapToAtLeastDim2(Token *&tk) {
-  if (tk->getTokenCode() == table_of_token_codes::token_matrix) {
-    TokenMatrixFloat *tk_mat = tk->convertTo<TokenMatrixFloat*>();
-    MatrixFloat *m = tk_mat->getMatrix();
-    if (m->getNumDim() == 1) {
-      int dims[2] = { 1, m->getDimSize(0) };
-      Token *new_tk = new TokenMatrixFloat(m->rewrap(dims, 2));
-      IncRef(new_tk);
-      DecRef(tk);
-      tk = new_tk;
-      return true;
+using namespace april_utils;
+using namespace basics;
+
+namespace ANN {
+  static bool rewrapToAtLeastDim2(Token *&tk) {
+    if (tk->getTokenCode() == table_of_token_codes::token_matrix) {
+      basics::TokenMatrixFloat *tk_mat = tk->convertTo<basics::TokenMatrixFloat*>();
+      basics::MatrixFloat *m = tk_mat->getMatrix();
+      if (m->getNumDim() == 1) {
+        int dims[2] = { 1, m->getDimSize(0) };
+        basics::Token *new_tk = new basics::TokenMatrixFloat(m->rewrap(dims, 2));
+        IncRef(new_tk);
+        DecRef(tk);
+        tk = new_tk;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static void unwrapToDim1(Token *&tk) {
+    if (tk->getTokenCode() == table_of_token_codes::token_matrix) {
+      basics::TokenMatrixFloat *tk_mat = tk->convertTo<basics::TokenMatrixFloat*>();
+      basics::MatrixFloat *m = tk_mat->getMatrix();
+      int dim = m->getDimSize(1);
+      basics::MatrixFloat *new_m = m->rewrap(&dim, 1);
+      basics::Token *tk = new basics::TokenMatrixFloat(new_m);
     }
   }
-  return false;
-}
 
-static void unwrapToDim1(Token *&tk) {
-  if (tk->getTokenCode() == table_of_token_codes::token_matrix) {
-    TokenMatrixFloat *tk_mat = tk->convertTo<TokenMatrixFloat*>();
-    MatrixFloat *m = tk_mat->getMatrix();
-    int dim = m->getDimSize(1);
-    MatrixFloat *new_m = m->rewrap(&dim, 1);
-    Token *tk = new TokenMatrixFloat(new_m);
-  }
-}
-
-template<typename Value, typename PushFunction>
-void pushHashTableInLuaStack(lua_State *L,
-			     hash<string,Value> &hashobject,
-			     PushFunction push_function) {
-  lua_createtable(L, 0, hashobject.size());
-  for (typename hash<string,Value>::iterator it = hashobject.begin();
-       it != hashobject.end(); ++it) {
-    push_function(L, it->second);
-    lua_setfield(L, -2, it->first.c_str());
+  template<typename Value, typename PushFunction>
+  void pushHashTableInLuaStack(lua_State *L,
+                               april_utils::hash<april_utils::string,Value> &hashobject,
+                               PushFunction push_function) {
+    lua_createtable(L, 0, hashobject.size());
+    for (typename april_utils::hash<april_utils::string,Value>::iterator it = hashobject.begin();
+         it != hashobject.end(); ++it) {
+      push_function(L, it->second);
+      lua_setfield(L, -2, it->first.c_str());
+    }
   }
 }
 
@@ -120,7 +125,7 @@ using namespace ANN;
   check_table_fields(L, 1, "input", "output",
 		     "w", "oldw", "first_pos", "column_size",
 		     (const char *)0);
-  MatrixFloat *w, *oldw;
+  basics::MatrixFloat *w, *oldw;
   unsigned int input_size, output_size, first_pos, column_size;
   LUABIND_GET_TABLE_PARAMETER(1, input, uint, input_size);
   LUABIND_GET_TABLE_PARAMETER(1, output, uint, output_size);
@@ -131,7 +136,7 @@ using namespace ANN;
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, column_size, uint, column_size,
 				       input_size);
   //
-  MatrixFloat *obj;
+  basics::MatrixFloat *obj;
   if (w && w->getMajorOrder() == CblasColMajor) obj = w->clone();
   else {
     obj = Connections::build(input_size, output_size);
@@ -145,7 +150,7 @@ using namespace ANN;
 {
   LUABIND_CHECK_ARGN(==,1);
   LUABIND_CHECK_PARAMETER(1,MatrixFloat);
-  MatrixFloat *obj;
+  basics::MatrixFloat *obj;
   LUABIND_GET_PARAMETER(1, MatrixFloat, obj);
   char *str = Connections::toLuaString(obj);
   LUABIND_RETURN(string, str);
@@ -162,7 +167,7 @@ using namespace ANN;
 		     (const char *)0);
   
   unsigned int	 first_pos, column_size;
-  MatrixFloat	*w, *oldw, *obj;
+  basics::MatrixFloat	*w, *oldw, *obj;
   
   LUABIND_GET_PARAMETER(1, MatrixFloat, obj);
   
@@ -183,7 +188,7 @@ using namespace ANN;
   LUABIND_CHECK_PARAMETER(1, MatrixFloat);
   
   int argn = lua_gettop(L);
-  MatrixFloat *w=0, *oldw=0, *obj;
+  basics::MatrixFloat *w=0, *oldw=0, *obj;
   LUABIND_GET_PARAMETER(1, MatrixFloat, obj);
   unsigned int first_pos=0, column_size=Connections::getNumInputs(obj);
   
@@ -202,7 +207,7 @@ using namespace ANN;
   }
 
   int size = static_cast<int>(obj->size());
-  if (!w)    w    = new MatrixFloat(1, first_pos + size);
+  if (!w)    w    = new basics::MatrixFloat(1, first_pos + size);
   
   if (first_pos + obj->size() > static_cast<unsigned int>(w->size()))
     LUABIND_ERROR("Incorrect matrix size!!\n");
@@ -218,7 +223,7 @@ using namespace ANN;
 {
   LUABIND_CHECK_ARGN(==,1);
   LUABIND_CHECK_PARAMETER(1, MatrixFloat);
-  MatrixFloat *obj;
+  basics::MatrixFloat *obj;
   LUABIND_GET_PARAMETER(1, MatrixFloat, obj);
   LUABIND_RETURN(uint, Connections::getInputSize(obj));
 }
@@ -228,7 +233,7 @@ using namespace ANN;
 {
   LUABIND_CHECK_ARGN(==,1);
   LUABIND_CHECK_PARAMETER(1, MatrixFloat);
-  MatrixFloat *obj;
+  basics::MatrixFloat *obj;
   LUABIND_GET_PARAMETER(1, MatrixFloat, obj);
   LUABIND_RETURN(uint, Connections::getOutputSize(obj));
 }
@@ -240,10 +245,10 @@ using namespace ANN;
   LUABIND_CHECK_PARAMETER(1, MatrixFloat);
   LUABIND_CHECK_PARAMETER(2, table);
   check_table_fields(L, 2, "random", "inf", "sup", (const char *)0);
-  MTRand *rnd;
+  basics::MTRand *rnd;
   float inf, sup;
   bool use_fanin;
-  MatrixFloat *obj;
+  basics::MatrixFloat *obj;
   LUABIND_GET_PARAMETER(1, MatrixFloat, obj);
   LUABIND_GET_TABLE_PARAMETER(2, random, MTRand, rnd);
   LUABIND_GET_TABLE_OPTIONAL_PARAMETER(2, inf, float, inf, -1.0);
@@ -345,7 +350,7 @@ using namespace ANN;
 
 //BIND_METHOD ANNComponent get_input
 {
-  Token *aux = obj->getInput();
+  basics::Token *aux = obj->getInput();
   if (aux == 0)
     LUABIND_RETURN_NIL();
   else LUABIND_RETURN(Token, aux);
@@ -354,7 +359,7 @@ using namespace ANN;
 
 //BIND_METHOD ANNComponent get_output
 {
-  Token *aux = obj->getOutput();
+  basics::Token *aux = obj->getOutput();
   if (aux == 0)
     LUABIND_RETURN_NIL();
   else LUABIND_RETURN(Token, aux);
@@ -363,7 +368,7 @@ using namespace ANN;
 
 //BIND_METHOD ANNComponent get_error_input
 {
-  Token *aux = obj->getErrorInput();
+  basics::Token *aux = obj->getErrorInput();
   if (aux == 0)
     LUABIND_RETURN_NIL();
   else LUABIND_RETURN(Token, aux);
@@ -372,7 +377,7 @@ using namespace ANN;
 
 //BIND_METHOD ANNComponent get_error_output
 {
-  Token *aux = obj->getErrorOutput();
+  basics::Token *aux = obj->getErrorOutput();
   if (aux == 0)
     LUABIND_RETURN_NIL();
   else LUABIND_RETURN(Token, aux);
@@ -400,7 +405,7 @@ using namespace ANN;
 
 //BIND_METHOD ANNComponent forward
 {
-  Token *input;
+  basics::Token *input;
   bool during_training;
   LUABIND_CHECK_ARGN(>=, 1);
   LUABIND_CHECK_ARGN(<=, 2);
@@ -408,7 +413,7 @@ using namespace ANN;
   LUABIND_GET_OPTIONAL_PARAMETER(2, bool, during_training, false);
   IncRef(input);
   bool rewrapped = rewrapToAtLeastDim2(input);
-  Token *output = obj->doForward(input, during_training);
+  basics::Token *output = obj->doForward(input, during_training);
   if (rewrapped) unwrapToDim1(output);
   LUABIND_RETURN(Token, output);
   DecRef(input);
@@ -417,12 +422,12 @@ using namespace ANN;
 
 //BIND_METHOD ANNComponent backprop
 {
-  Token *input;
+  basics::Token *input;
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_GET_PARAMETER(1, AuxToken, input);
   IncRef(input);
   bool rewrapped = rewrapToAtLeastDim2(input);
-  Token *gradient = obj->doBackprop(input);
+  basics::Token *gradient = obj->doBackprop(input);
   if (gradient != 0) {
     if (rewrapped) unwrapToDim1(gradient);
     LUABIND_RETURN(Token, gradient);
@@ -444,11 +449,11 @@ using namespace ANN;
 {
   LUABIND_CHECK_ARGN(<=, 1);
   int argn = lua_gettop(L);
-  MatrixFloatSet *weight_grads_dict;
+  basics::MatrixFloatSet *weight_grads_dict;
   if (argn == 1)
     LUABIND_GET_PARAMETER(1, MatrixFloatSet, weight_grads_dict);
   else
-    weight_grads_dict = new MatrixFloatSet();
+    weight_grads_dict = new basics::MatrixFloatSet();
   //
   obj->computeAllGradients(weight_grads_dict);
   LUABIND_RETURN(MatrixFloatSet, weight_grads_dict);
@@ -482,8 +487,8 @@ using namespace ANN;
   LUABIND_CHECK_ARGN(<=, 1);
   int argn = lua_gettop(L);
   unsigned int input_size=0, output_size=0;
-  MatrixFloatSet *weights_dict = 0;
-  hash<string,ANNComponent*> components_dict;
+  basics::MatrixFloatSet *weights_dict = 0;
+  april_utils::hash<april_utils::string,ANNComponent*> components_dict;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
     check_table_fields(L, 1, "input", "output", "weights", (const char *)0);
@@ -492,7 +497,7 @@ using namespace ANN;
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, weights,
 					 MatrixFloatSet, weights_dict, 0);
   }
-  if (weights_dict == 0) weights_dict = new MatrixFloatSet();
+  if (weights_dict == 0) weights_dict = new basics::MatrixFloatSet();
   //
   obj->build(input_size, output_size, weights_dict, components_dict);
   //
@@ -505,7 +510,7 @@ using namespace ANN;
 
 //BIND_METHOD ANNComponent copy_weights
 {
-  MatrixFloatSet *weights_dict = new MatrixFloatSet();
+  basics::MatrixFloatSet *weights_dict = new basics::MatrixFloatSet();
   obj->copyWeights(weights_dict);
   LUABIND_RETURN(MatrixFloatSet, weights_dict);
 }
@@ -513,7 +518,7 @@ using namespace ANN;
 
 //BIND_METHOD ANNComponent copy_components
 {
-  hash<string,ANNComponent*> components_dict;
+  april_utils::hash<april_utils::string,ANNComponent*> components_dict;
   obj->copyComponents(components_dict);
   pushHashTableInLuaStack(L, components_dict, lua_pushANNComponent);
   LUABIND_RETURN_FROM_STACK(-1);
@@ -1141,7 +1146,7 @@ using namespace ANN;
 
 //BIND_METHOD StochasticANNComponent set_random
 {
-  MTRand *random;
+  basics::MTRand *random;
   LUABIND_CHECK_ARGN(==,1);
   LUABIND_CHECK_PARAMETER(1, MTRand);
   LUABIND_GET_PARAMETER(1, MTRand, random);
@@ -1171,7 +1176,7 @@ using namespace ANN;
   const char *name=0;
   float mean=0.0f, var=0.1f;
   unsigned int size=0;
-  MTRand *random=0;
+  basics::MTRand *random=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
     check_table_fields(L, 1, "size", "random", "mean", "var", "name",
@@ -1182,7 +1187,7 @@ using namespace ANN;
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, size);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, name);
   }
-  if (!random) random = new MTRand();
+  if (!random) random = new basics::MTRand();
   obj = new GaussianNoiseANNComponent(random, mean, var, name, size);
   LUABIND_RETURN(GaussianNoiseANNComponent, obj);
 }
@@ -1210,7 +1215,7 @@ using namespace ANN;
   const char *name=0;
   float zero=0.0f, one=1.0f, prob=0.2f;
   unsigned int size=0;
-  MTRand *random=0;
+  basics::MTRand *random=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
     check_table_fields(L, 1, "size", "random", "one", "zero", "prob", "name",
@@ -1222,7 +1227,7 @@ using namespace ANN;
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint,   size, size);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, name, string, name, name);
   }
-  if (!random) random = new MTRand();  
+  if (!random) random = new basics::MTRand();  
   obj = new SaltAndPepperANNComponent(random, zero, one, prob, name, size);
   LUABIND_RETURN(SaltAndPepperANNComponent, obj);
 }
@@ -1250,7 +1255,7 @@ using namespace ANN;
   const char *name=0;
   float prob=0.5f, value=0.0f;
   unsigned int size=0;
-  MTRand *random=0;
+  basics::MTRand *random=0;
   if (argn == 1) {
     LUABIND_CHECK_PARAMETER(1, table);
     check_table_fields(L, 1, "name", "size", "prob", "value", "random",
@@ -1261,7 +1266,7 @@ using namespace ANN;
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, value, float, value, value);
     LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, random, MTRand, random, random);
   }
-  if (!random) random = new MTRand();
+  if (!random) random = new basics::MTRand();
   obj = new DropoutANNComponent(random, value, prob, name, size);
   LUABIND_RETURN(DropoutANNComponent, obj);  
 }
@@ -1568,8 +1573,8 @@ using namespace ANN;
   const char *name=0;
   float epsilon;
   int takeN;
-  MatrixFloat *U;
-  SparseMatrixFloat *S;
+  basics::MatrixFloat *U;
+  basics::SparseMatrixFloat *S;
   check_table_fields(L, 1, "U", "S", "takeN", "epsilon", (const char *)0);
   LUABIND_GET_TABLE_PARAMETER(1, U, MatrixFloat, U);
   LUABIND_GET_TABLE_PARAMETER(1, S, SparseMatrixFloat, S);
@@ -1604,8 +1609,8 @@ using namespace ANN;
   const char *name=0;
   float epsilon;
   int takeN;
-  MatrixFloat *U;
-  SparseMatrixFloat *S;
+  basics::MatrixFloat *U;
+  basics::SparseMatrixFloat *S;
   check_table_fields(L, 1, "U", "S", "takeN", "epsilon", (const char *)0);
   LUABIND_GET_TABLE_PARAMETER(1, U, MatrixFloat, U);
   LUABIND_GET_TABLE_PARAMETER(1, S, SparseMatrixFloat, S);

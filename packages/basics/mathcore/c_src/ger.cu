@@ -23,200 +23,203 @@
 #include "cuda_utils.h"
 #include "unused_variable.h"
 
+namespace april_math {
+
 #ifdef USE_CUDA
-/***************************************
- ************** CUDA SECTION ***********
- ***************************************/
+  /***************************************
+   ************** CUDA SECTION ***********
+   ***************************************/
 
-cublasStatus_t wrapperCublasGer(cublasHandle_t &handle,
-				unsigned int m, unsigned int n,
-				float *alpha,
-				const float *x_mem,
-				unsigned int x_inc,
-				const float *y_mem,
-				unsigned int y_inc,
-				float *a_mem,
-				unsigned int a_inc) {
-  return cublasSger(handle, m, n, alpha, x_mem, x_inc,
-		    y_mem, y_inc,
-		    a_mem, a_inc);
-}
+  cublasStatus_t wrapperCublasGer(cublasHandle_t &handle,
+                                  unsigned int m, unsigned int n,
+                                  float *alpha,
+                                  const float *x_mem,
+                                  unsigned int x_inc,
+                                  const float *y_mem,
+                                  unsigned int y_inc,
+                                  float *a_mem,
+                                  unsigned int a_inc) {
+    return cublasSger(handle, m, n, alpha, x_mem, x_inc,
+                      y_mem, y_inc,
+                      a_mem, a_inc);
+  }
 
-cublasStatus_t wrapperCublasGer(cublasHandle_t &handle,
-				unsigned int m, unsigned int n,
-				double *alpha,
-				const double *x_mem,
-				unsigned int x_inc,
-				const double *y_mem,
-				unsigned int y_inc,
-				double *a_mem,
-				unsigned int a_inc) {
-  return cublasDger(handle, m, n, alpha, x_mem, x_inc,
-		    y_mem, y_inc,
-		    a_mem, a_inc);
-}
+  cublasStatus_t wrapperCublasGer(cublasHandle_t &handle,
+                                  unsigned int m, unsigned int n,
+                                  double *alpha,
+                                  const double *x_mem,
+                                  unsigned int x_inc,
+                                  const double *y_mem,
+                                  unsigned int y_inc,
+                                  double *a_mem,
+                                  unsigned int a_inc) {
+    return cublasDger(handle, m, n, alpha, x_mem, x_inc,
+                      y_mem, y_inc,
+                      a_mem, a_inc);
+  }
 
-cublasStatus_t wrapperCublasGer(cublasHandle_t &handle,
-				unsigned int m, unsigned int n,
-				ComplexF *alpha,
-				const ComplexF *x_mem,
-				unsigned int x_inc,
-				const ComplexF *y_mem,
-				unsigned int y_inc,
-				ComplexF *a_mem,
-				unsigned int a_inc) {
-  ERROR_EXIT(256, "Ger operation not implemented in CUDA\n");
-  return CUBLAS_STATUS_INTERNAL_ERROR;
-}
+  cublasStatus_t wrapperCublasGer(cublasHandle_t &handle,
+                                  unsigned int m, unsigned int n,
+                                  ComplexF *alpha,
+                                  const ComplexF *x_mem,
+                                  unsigned int x_inc,
+                                  const ComplexF *y_mem,
+                                  unsigned int y_inc,
+                                  ComplexF *a_mem,
+                                  unsigned int a_inc) {
+    ERROR_EXIT(256, "Ger operation not implemented in CUDA\n");
+    return CUBLAS_STATUS_INTERNAL_ERROR;
+  }
 #endif
 
-/***************************************
- ************* CBLAS SECTION ***********
- ***************************************/
+  /***************************************
+   ************* CBLAS SECTION ***********
+   ***************************************/
 
-void wrapperCblasGer(CBLAS_ORDER major_type,
-		     int m, int n, float alpha,
-		     const float *x_mem, unsigned int x_inc,
-		     const float *y_mem, unsigned int y_inc,
-		     float *a_mem, unsigned int a_inc) {
-  cblas_sger(major_type,
-	     m, n,
-	     alpha,
-	     x_mem, x_inc,
-	     y_mem, y_inc,
-	     a_mem, a_inc);
-}
+  void wrapperCblasGer(CBLAS_ORDER major_type,
+                       int m, int n, float alpha,
+                       const float *x_mem, unsigned int x_inc,
+                       const float *y_mem, unsigned int y_inc,
+                       float *a_mem, unsigned int a_inc) {
+    cblas_sger(major_type,
+               m, n,
+               alpha,
+               x_mem, x_inc,
+               y_mem, y_inc,
+               a_mem, a_inc);
+  }
 
-void wrapperCblasGer(CBLAS_ORDER major_type,
-		     int m, int n, double alpha,
-		     const double *x_mem, unsigned int x_inc,
-		     const double *y_mem, unsigned int y_inc,
-		     double *a_mem, unsigned int a_inc) {
-  cblas_dger(major_type,
-	     m, n,
-	     alpha,
-	     x_mem, x_inc,
-	     y_mem, y_inc,
-	     a_mem, a_inc);
-}
+  void wrapperCblasGer(CBLAS_ORDER major_type,
+                       int m, int n, double alpha,
+                       const double *x_mem, unsigned int x_inc,
+                       const double *y_mem, unsigned int y_inc,
+                       double *a_mem, unsigned int a_inc) {
+    cblas_dger(major_type,
+               m, n,
+               alpha,
+               x_mem, x_inc,
+               y_mem, y_inc,
+               a_mem, a_inc);
+  }
 
-void wrapperCblasGer(CBLAS_ORDER major_type,
-		     int m, int n, ComplexF alpha,
-		     const ComplexF *x_mem, unsigned int x_inc,
-		     const ComplexF *y_mem, unsigned int y_inc,
-		     ComplexF *a_mem, unsigned int a_inc) {
-  cblas_cgeru(major_type,
-	      m, n,
-	      &alpha,
-	      x_mem, x_inc,
-	      y_mem, y_inc,
-	      a_mem, a_inc);
-}
+  void wrapperCblasGer(CBLAS_ORDER major_type,
+                       int m, int n, ComplexF alpha,
+                       const ComplexF *x_mem, unsigned int x_inc,
+                       const ComplexF *y_mem, unsigned int y_inc,
+                       ComplexF *a_mem, unsigned int a_inc) {
+    cblas_cgeru(major_type,
+                m, n,
+                &alpha,
+                x_mem, x_inc,
+                y_mem, y_inc,
+                a_mem, a_inc);
+  }
 
-/***************************************
- *********** TEMPLATE SECTION **********
- ***************************************/
+  /***************************************
+   *********** TEMPLATE SECTION **********
+   ***************************************/
 
-template<typename T>
-void doGer(CBLAS_ORDER major_type,
-	   unsigned int m,
-	   unsigned int n,
-	   T alpha,
-	   GPUMirroredMemoryBlock<T> *x,
-	   unsigned int x_shift,
-	   unsigned int x_inc,
-	   GPUMirroredMemoryBlock<T> *y,
-	   unsigned int y_shift,
-	   unsigned int y_inc,
-	   GPUMirroredMemoryBlock<T> *a,
-	   unsigned int a_shift,
-	   unsigned int a_inc,
-	   bool use_gpu) {
-  const T *x_mem;
-  const T *y_mem;
-  T *a_mem;
+  template<typename T>
+  void doGer(CBLAS_ORDER major_type,
+             unsigned int m,
+             unsigned int n,
+             T alpha,
+             GPUMirroredMemoryBlock<T> *x,
+             unsigned int x_shift,
+             unsigned int x_inc,
+             GPUMirroredMemoryBlock<T> *y,
+             unsigned int y_shift,
+             unsigned int y_inc,
+             GPUMirroredMemoryBlock<T> *a,
+             unsigned int a_shift,
+             unsigned int a_inc,
+             bool use_gpu) {
+    const T *x_mem;
+    const T *y_mem;
+    T *a_mem;
 #ifndef USE_CUDA
-  UNUSED_VARIABLE(use_gpu);
+    UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
-  if (use_gpu) {
-    cublasStatus_t status;
-    cublasHandle_t handle = GPUHelper::getHandler();
-    assert(major_type == CblasColMajor);
-    x_mem = x->getGPUForRead() + x_shift;
-    y_mem = y->getGPUForRead() + y_shift;
-    a_mem = a->getGPUForReadAndWrite() + a_shift;
+    if (use_gpu) {
+      cublasStatus_t status;
+      cublasHandle_t handle = GPUHelper::getHandler();
+      assert(major_type == CblasColMajor);
+      x_mem = x->getGPUForRead() + x_shift;
+      y_mem = y->getGPUForRead() + y_shift;
+      a_mem = a->getGPUForReadAndWrite() + a_shift;
 
-    status = cublasSetStream(handle, GPUHelper::getCurrentStream());
-    checkCublasError(status);
+      status = cublasSetStream(handle, GPUHelper::getCurrentStream());
+      checkCublasError(status);
 
-    status = wrapperCublasGer(handle,
-			      m, n,
-			      &alpha,
-			      x_mem, x_inc,
-			      y_mem, y_inc,
-			      a_mem, a_inc);
+      status = wrapperCublasGer(handle,
+                                m, n,
+                                &alpha,
+                                x_mem, x_inc,
+                                y_mem, y_inc,
+                                a_mem, a_inc);
     
-    checkCublasError(status);
-  }
-  else {
+      checkCublasError(status);
+    }
+    else {
 #endif
-    x_mem = x->getPPALForRead() + x_shift;
-    y_mem = y->getPPALForRead() + y_shift;
-    a_mem = a->getPPALForReadAndWrite() + a_shift;
+      x_mem = x->getPPALForRead() + x_shift;
+      y_mem = y->getPPALForRead() + y_shift;
+      a_mem = a->getPPALForReadAndWrite() + a_shift;
 
-    wrapperCblasGer(major_type,
-		    m, n,
-		    alpha,
-		    x_mem, x_inc,
-		    y_mem, y_inc,
-		    a_mem, a_inc);
+      wrapperCblasGer(major_type,
+                      m, n,
+                      alpha,
+                      x_mem, x_inc,
+                      y_mem, y_inc,
+                      a_mem, a_inc);
 #ifdef USE_CUDA
-  }
+    }
 #endif
-}
+  }
 
-template void doGer<float>(CBLAS_ORDER major_type,
-			   unsigned int m,
-			   unsigned int n,
-			   float alpha,
-			   GPUMirroredMemoryBlock<float> *x,
-			   unsigned int x_shift,
-			   unsigned int x_inc,
-			   GPUMirroredMemoryBlock<float> *y,
-			   unsigned int y_shift,
-			   unsigned int y_inc,
-			   GPUMirroredMemoryBlock<float> *a,
-			   unsigned int a_shift,
-			   unsigned int a_inc,
-			   bool use_gpu);
+  template void doGer<float>(CBLAS_ORDER major_type,
+                             unsigned int m,
+                             unsigned int n,
+                             float alpha,
+                             GPUMirroredMemoryBlock<float> *x,
+                             unsigned int x_shift,
+                             unsigned int x_inc,
+                             GPUMirroredMemoryBlock<float> *y,
+                             unsigned int y_shift,
+                             unsigned int y_inc,
+                             GPUMirroredMemoryBlock<float> *a,
+                             unsigned int a_shift,
+                             unsigned int a_inc,
+                             bool use_gpu);
 
-template void doGer<double>(CBLAS_ORDER major_type,
-                            unsigned int m,
-                            unsigned int n,
-                            double alpha,
-                            GPUMirroredMemoryBlock<double> *x,
-                            unsigned int x_shift,
-                            unsigned int x_inc,
-                            GPUMirroredMemoryBlock<double> *y,
-                            unsigned int y_shift,
-                            unsigned int y_inc,
-                            GPUMirroredMemoryBlock<double> *a,
-                            unsigned int a_shift,
-                            unsigned int a_inc,
-                            bool use_gpu);
+  template void doGer<double>(CBLAS_ORDER major_type,
+                              unsigned int m,
+                              unsigned int n,
+                              double alpha,
+                              GPUMirroredMemoryBlock<double> *x,
+                              unsigned int x_shift,
+                              unsigned int x_inc,
+                              GPUMirroredMemoryBlock<double> *y,
+                              unsigned int y_shift,
+                              unsigned int y_inc,
+                              GPUMirroredMemoryBlock<double> *a,
+                              unsigned int a_shift,
+                              unsigned int a_inc,
+                              bool use_gpu);
 
-template void doGer<ComplexF>(CBLAS_ORDER major_type,
-			      unsigned int m,
-			      unsigned int n,
-			      ComplexF alpha,
-			      GPUMirroredMemoryBlock<ComplexF> *x,
-			      unsigned int x_shift,
-			      unsigned int x_inc,
-			      GPUMirroredMemoryBlock<ComplexF> *y,
-			      unsigned int y_shift,
-			      unsigned int y_inc,
-			      GPUMirroredMemoryBlock<ComplexF> *a,
-			      unsigned int a_shift,
-			      unsigned int a_inc,
-			      bool use_gpu);
+  template void doGer<ComplexF>(CBLAS_ORDER major_type,
+                                unsigned int m,
+                                unsigned int n,
+                                ComplexF alpha,
+                                GPUMirroredMemoryBlock<ComplexF> *x,
+                                unsigned int x_shift,
+                                unsigned int x_inc,
+                                GPUMirroredMemoryBlock<ComplexF> *y,
+                                unsigned int y_shift,
+                                unsigned int y_inc,
+                                GPUMirroredMemoryBlock<ComplexF> *a,
+                                unsigned int a_shift,
+                                unsigned int a_inc,
+                                bool use_gpu);
+} // namespace april_math

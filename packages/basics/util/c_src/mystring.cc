@@ -105,4 +105,6 @@ namespace april_utils {
   char  string::back() const { return vec.back(); }
   
   char &string::back() { return vec.back(); }
+
+  char *string::release() { return vec.release(); }
 }

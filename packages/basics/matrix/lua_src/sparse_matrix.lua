@@ -9,6 +9,14 @@ matrix.sparse.csr = function(...)
   return matrix.sparse(...)
 end
 
+-- serialization
+matrix.sparse.fromFilename    = matrix.__make_generic_fromFilename__(matrix.sparse)
+matrix.sparse.fromString      = matrix.__make_generic_fromString__(matrix.sparse)
+class.extend(matrix.sparse, "toFilename",
+             matrix.__make_generic_toFilename__(matrix.sparse))
+class.extend(matrix.sparse, "toString",
+             matrix.__make_generic_toString__(matrix.sparse))
+
 matrix.sparse.meta_instance.__call =
   matrix.__make_generic_call__()
 

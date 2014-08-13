@@ -39,79 +39,79 @@ namespace ANN {
                                         public ComponentPropertiesAndAsserts {
     APRIL_DISALLOW_COPY_AND_ASSIGN(MatrixInputSwitchANNComponent);
     
-    TokenMatrixFloat *input, *output, *error_input, *error_output;
-    TokenSparseMatrixFloat *sparse_input, *sparse_error_output;
+    basics::TokenMatrixFloat *input, *output, *error_input, *error_output;
+    basics::TokenSparseMatrixFloat *sparse_input, *sparse_error_output;
     bool is_sparse_input;
     
     // Auxiliary methods
-    Token *doDenseForward(Token *_input, bool during_training);
-    Token *doSparseForward(Token *_input, bool during_training);
-    Token *doDenseBackprop(Token *_error_input);
-    Token *doSparseBackprop(Token *_error_input);
+    basics::Token *doDenseForward(basics::Token *_input, bool during_training);
+    basics::Token *doSparseForward(basics::Token *_input, bool during_training);
+    basics::Token *doDenseBackprop(basics::Token *_error_input);
+    basics::Token *doSparseBackprop(basics::Token *_error_input);
 
   protected:
 
     // Auxiliary methods
     
-    MatrixFloat *getInputMatrix() {
+    basics::MatrixFloat *getInputMatrix() {
       april_assert(!is_sparse_input);
       return input->getMatrix();
     }
-    SparseMatrixFloat *getSparseInputMatrix() {
+    basics::SparseMatrixFloat *getSparseInputMatrix() {
       april_assert(is_sparse_input);
       return sparse_input->getMatrix();
     }
-    MatrixFloat *getOutputMatrix() {
+    basics::MatrixFloat *getOutputMatrix() {
       return output->getMatrix();
     }
-    MatrixFloat *getErrorInputMatrix() {
+    basics::MatrixFloat *getErrorInputMatrix() {
       return error_input->getMatrix();
     }
-    MatrixFloat *getErrorOutputMatrix() {
+    basics::MatrixFloat *getErrorOutputMatrix() {
       april_assert(!is_sparse_input);
       return error_output->getMatrix();
     }
-    SparseMatrixFloat *getSparseErrorOutputMatrix() {
+    basics::SparseMatrixFloat *getSparseErrorOutputMatrix() {
       april_assert(is_sparse_input);
       return sparse_error_output->getMatrix();
     }
     
-    virtual void computeGradients(MatrixFloat*& grads_mat);
+    virtual void computeGradients(basics::MatrixFloat*& grads_mat);
 
     // Abstract methods
 
-    virtual MatrixFloat *privateDoDenseForward(MatrixFloat *input, bool during_training) = 0;
-    virtual MatrixFloat *privateDoDenseBackprop(MatrixFloat *input_error) = 0;
+    virtual basics::MatrixFloat *privateDoDenseForward(basics::MatrixFloat *input, bool during_training) = 0;
+    virtual basics::MatrixFloat *privateDoDenseBackprop(basics::MatrixFloat *input_error) = 0;
     virtual void privateDenseReset(unsigned int it=0) = 0;
-    virtual void privateDenseComputeGradients(MatrixFloat*& grads_mat) = 0;
+    virtual void privateDenseComputeGradients(basics::MatrixFloat*& grads_mat) = 0;
 
-    virtual MatrixFloat *privateDoSparseForward(SparseMatrixFloat *input, bool during_training) = 0;
-    virtual SparseMatrixFloat *privateDoSparseBackprop(MatrixFloat *input_error) = 0;
+    virtual basics::MatrixFloat *privateDoSparseForward(basics::SparseMatrixFloat *input, bool during_training) = 0;
+    virtual basics::SparseMatrixFloat *privateDoSparseBackprop(basics::MatrixFloat *input_error) = 0;
     virtual void privateSparseReset(unsigned int it=0) = 0;
-    virtual void privateSparseComputeGradients(MatrixFloat*& grads_mat) = 0;
+    virtual void privateSparseComputeGradients(basics::MatrixFloat*& grads_mat) = 0;
 
   public:
     MatrixInputSwitchANNComponent(const char *name, const char *weights_name,
                                   unsigned int input_size,
                                   unsigned int output_size);
     virtual ~MatrixInputSwitchANNComponent();
-    virtual Token *getInput() {
+    virtual basics::Token *getInput() {
       if (!is_sparse_input) return input;
       else return sparse_input;
     }
-    virtual Token *getOutput() {
+    virtual basics::Token *getOutput() {
       return output;
     }
-    virtual Token *getErrorInput() {
+    virtual basics::Token *getErrorInput() {
       return error_input;
     }
-    virtual Token *getErrorOutput() {
+    virtual basics::Token *getErrorOutput() {
       if (!is_sparse_input) return error_output;
       else return sparse_error_output;
     }
     
-    virtual Token *doForward(Token* input, bool during_training);
-    virtual Token *doBackprop(Token *input_error);
+    virtual basics::Token *doForward(basics::Token* input, bool during_training);
+    virtual basics::Token *doBackprop(basics::Token *input_error);
     virtual void   reset(unsigned int it=0);
     //
     

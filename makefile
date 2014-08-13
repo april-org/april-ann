@@ -12,6 +12,7 @@ debug: debug-no-omp
 test: test-debug-no-omp
 
 document:
+	rm -Rf doxygen_doc
 	lua profile_build_scripts/build_release_atlas.lua document
 
 #############################################################################

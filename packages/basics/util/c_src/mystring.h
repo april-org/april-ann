@@ -58,6 +58,7 @@ namespace april_utils {
     char &front();
     char  back() const;
     char &back();
+    char *release();
   };
   
   // For hash tables

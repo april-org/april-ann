@@ -18,181 +18,169 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-
-#include "utilMatrixComplexF.h"
-#include "binarizer.h"
-#include "clamp.h"
-#include "matrixFloat.h"
-#include "buffered_gzfile.h"
-#include "buffered_file.h"
-#include "ignore_result.h"
 #include <cmath>
 #include <cstdio>
 
-void writeMatrixComplexFToFile(MatrixComplexF *mat,
-			       const char *filename,
-			       bool is_ascii) {
-  if (GZFileWrapper::isGZ(filename)) {
-    BufferedGZFile f(filename, "w");
-    writeMatrixToStream(mat, f, ComplexFAsciiSizer(), ComplexFBinarySizer(),
-			ComplexFAsciiCoder<BufferedGZFile>(),
-			ComplexFBinaryCoder<BufferedGZFile>(),
-			is_ascii);
-  }
-  else {
-    BufferedFile f(filename, "w");
-    writeMatrixToStream(mat, f, ComplexFAsciiSizer(), ComplexFBinarySizer(),
-			ComplexFAsciiCoder<BufferedFile>(),
-			ComplexFBinaryCoder<BufferedFile>(),
-			is_ascii);
-  }
-}
+#include "binarizer.h"
+#include "clamp.h"
+#include "complex_number.h"
+#include "ignore_result.h"
+#include "matrixFloat.h"
+#include "utilMatrixComplexF.h"
 
-char *writeMatrixComplexFToString(MatrixComplexF *mat,
-				  bool is_ascii,
-				  int &len) {
-  WriteBufferWrapper wrapper;
-  len = writeMatrixToStream(mat, wrapper,
-			    ComplexFAsciiSizer(),
-			    ComplexFBinarySizer(),
-			    ComplexFAsciiCoder<WriteBufferWrapper>(),
-			    ComplexFBinaryCoder<WriteBufferWrapper>(),
-			    is_ascii);
-  return wrapper.getBufferProperty();
-}
+using april_math::ComplexF;
 
-void writeMatrixComplexFToLuaString(MatrixComplexF *mat,
-				    lua_State *L,
-				    bool is_ascii) {
-  WriteLuaBufferWrapper wrapper(L);
-  IGNORE_RESULT(writeMatrixToStream(mat, wrapper,
-				    ComplexFAsciiSizer(),
-				    ComplexFBinarySizer(),
-				    ComplexFAsciiCoder<WriteLuaBufferWrapper>(),
-				    ComplexFBinaryCoder<WriteLuaBufferWrapper>(),
-				    is_ascii));
-  wrapper.finish();
-}
+namespace basics {
+  
+  /////////////////////////////////////////////////////////////////////////
+  
+  template<>
+  bool AsciiExtractor<ComplexF>::operator()(april_utils::constString &line,
+                                            ComplexF &destination) {
+    if (!line.extract_float(&destination.real())) return false;
+    if (!line.extract_float(&destination.img())) return false;
+    char ch;
+    if (!line.extract_char(&ch)) return false;
+    if (ch != 'i') return false;
+    return true;
+  }
+  
+  template<>
+  bool BinaryExtractor<ComplexF>::operator()(april_utils::constString &line,
+                                             ComplexF &destination) {
+    if (!line.extract_float_binary(&destination.real())) return false;
+    if (!line.extract_float_binary(&destination.img())) return false;
+    return true;
+  }
+  
+  template<>
+  int AsciiSizer<ComplexF>::operator()(const Matrix<ComplexF> *mat) {
+    return mat->size()*26; // 12*2+2
+  }
 
-MatrixComplexF *readMatrixComplexFFromFile(const char *filename) {
-  if (GZFileWrapper::isGZ(filename)) {
-    BufferedGZFile f(filename, "r");
-    return readMatrixFromStream<BufferedGZFile,
-      ComplexF>(f, ComplexFAsciiExtractor(),
-		ComplexFBinaryExtractor());
-  }
-  else {
-    BufferedFile f(filename, "r");
-    return readMatrixFromStream<BufferedFile,
-      ComplexF>(f, ComplexFAsciiExtractor(),
-		ComplexFBinaryExtractor());
-  }
-}
+  template<>
+  int BinarySizer<ComplexF>::operator()(const Matrix<ComplexF> *mat) {
+    return april_utils::binarizer::buffer_size_32(mat->size()<<1); // mat->size() * 2
 
-MatrixComplexF *readMatrixComplexFFromString(constString &cs) {
-  return readMatrixFromStream<constString,
-    ComplexF>(cs,
-	      ComplexFAsciiExtractor(),
-	      ComplexFBinaryExtractor());
-}
+  }
 
-MatrixFloat *convertFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
-  MatrixFloat *new_mat;
-  int N     = mat->getNumDim();
-  int *dims = new int[N+1];
-  if (mat->getMajorOrder() == CblasRowMajor) {
-    // the real and imaginary part are the last dimension (they are stored
-    // together in row major)
-    for (int i=0; i<N; ++i) dims[i] = mat->getDimPtr()[i];
-    dims[N] = 2;
+  template<>
+  void AsciiCoder<ComplexF>::operator()(const ComplexF &value,
+                                        april_io::StreamInterface *stream) {
+    stream->printf("%.5g%+.5gi", value.real(), value.img());
   }
-  else {
-    // the real and imaginary part are the first dimension (they are stored
-    // together in col major)
-    dims[0] = 2;
-    for (int i=0; i<N; ++i) dims[i+1] = mat->getDimPtr()[i];
+  
+  template<>
+  void BinaryCoder<ComplexF>::operator()(const ComplexF &value,
+                                         april_io::StreamInterface *stream) {
+    char b[10];
+    april_utils::binarizer::code_float(value.real(), b);
+    april_utils::binarizer::code_float(value.img(),  b+5);
+    stream->put(b, sizeof(char)*10);
   }
-  FloatGPUMirroredMemoryBlock *new_mat_memory;
-  new_mat_memory = mat->getRawDataAccess()->reinterpretAs<float>();
-  new_mat=new MatrixFloat(N+1, dims, mat->getMajorOrder(), new_mat_memory);
+
+  /////////////////////////////////////////////////////////////////////////////
+
+  
+  MatrixFloat *convertFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
+    MatrixFloat *new_mat;
+    int N     = mat->getNumDim();
+    int *dims = new int[N+1];
+    if (mat->getMajorOrder() == CblasRowMajor) {
+      // the real and imaginary part are the last dimension (they are stored
+      // together in row major)
+      for (int i=0; i<N; ++i) dims[i] = mat->getDimPtr()[i];
+      dims[N] = 2;
+    }
+    else {
+      // the real and imaginary part are the first dimension (they are stored
+      // together in col major)
+      dims[0] = 2;
+      for (int i=0; i<N; ++i) dims[i+1] = mat->getDimPtr()[i];
+    }
+    april_math::FloatGPUMirroredMemoryBlock *new_mat_memory;
+    new_mat_memory = mat->getRawDataAccess()->reinterpretAs<float>();
+    new_mat=new MatrixFloat(N+1, dims, mat->getMajorOrder(), new_mat_memory);
 #ifdef USE_CUDA
-  new_mat->setUseCuda(mat->getCudaFlag());
+    new_mat->setUseCuda(mat->getCudaFlag());
 #endif
-  delete[] dims;
-  return new_mat;
-}
-
-void applyConjugateInPlace(MatrixComplexF *mat) {
-  for (MatrixComplexF::iterator it(mat->begin());
-       it != mat->end(); ++it) {
-    it->conj();
+    delete[] dims;
+    return new_mat;
   }
-}
 
-MatrixFloat *realPartFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
-  MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
-					 mat->getDimPtr(),
-					 mat->getMajorOrder());
+  void applyConjugateInPlace(MatrixComplexF *mat) {
+    for (MatrixComplexF::iterator it(mat->begin());
+         it != mat->end(); ++it) {
+      it->conj();
+    }
+  }
+
+  MatrixFloat *realPartFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
+    MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
+                                           mat->getDimPtr(),
+                                           mat->getMajorOrder());
 #ifdef USE_CUDA
-  new_mat->setUseCuda(mat->getCudaFlag());
+    new_mat->setUseCuda(mat->getCudaFlag());
 #endif
-  MatrixComplexF::const_iterator orig_it(mat->begin());
-  MatrixFloat::iterator dest_it(new_mat->begin());
-  while(orig_it != mat->end()) {
-    *dest_it = orig_it->real();
-    ++orig_it;
-    ++dest_it;
+    MatrixComplexF::const_iterator orig_it(mat->begin());
+    MatrixFloat::iterator dest_it(new_mat->begin());
+    while(orig_it != mat->end()) {
+      *dest_it = orig_it->real();
+      ++orig_it;
+      ++dest_it;
+    }
+    return new_mat;
   }
-  return new_mat;
-}
 
-MatrixFloat *imgPartFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
-  MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
-					 mat->getDimPtr(),
-					 mat->getMajorOrder());
+  MatrixFloat *imgPartFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
+    MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
+                                           mat->getDimPtr(),
+                                           mat->getMajorOrder());
 #ifdef USE_CUDA
-  new_mat->setUseCuda(mat->getCudaFlag());
+    new_mat->setUseCuda(mat->getCudaFlag());
 #endif
-  MatrixComplexF::const_iterator orig_it(mat->begin());
-  MatrixFloat::iterator dest_it(new_mat->begin());
-  while(orig_it != mat->end()) {
-    *dest_it = orig_it->img();
-    ++orig_it;
-    ++dest_it;
+    MatrixComplexF::const_iterator orig_it(mat->begin());
+    MatrixFloat::iterator dest_it(new_mat->begin());
+    while(orig_it != mat->end()) {
+      *dest_it = orig_it->img();
+      ++orig_it;
+      ++dest_it;
+    }
+    return new_mat;
   }
-  return new_mat;
-}
 
-MatrixFloat *absFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
-  MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
-					 mat->getDimPtr(),
-					 mat->getMajorOrder());
+  MatrixFloat *absFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
+    MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
+                                           mat->getDimPtr(),
+                                           mat->getMajorOrder());
 #ifdef USE_CUDA
-  new_mat->setUseCuda(mat->getCudaFlag());
+    new_mat->setUseCuda(mat->getCudaFlag());
 #endif
-  MatrixComplexF::const_iterator orig_it(mat->begin());
-  MatrixFloat::iterator dest_it(new_mat->begin());
-  while(orig_it != mat->end()) {
-    *dest_it = orig_it->abs();
-    ++orig_it;
-    ++dest_it;
+    MatrixComplexF::const_iterator orig_it(mat->begin());
+    MatrixFloat::iterator dest_it(new_mat->begin());
+    while(orig_it != mat->end()) {
+      *dest_it = orig_it->abs();
+      ++orig_it;
+      ++dest_it;
+    }
+    return new_mat;
   }
-  return new_mat;
-}
 
-MatrixFloat *angleFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
-  MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
-					 mat->getDimPtr(),
-					 mat->getMajorOrder());
+  MatrixFloat *angleFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
+    MatrixFloat *new_mat = new MatrixFloat(mat->getNumDim(),
+                                           mat->getDimPtr(),
+                                           mat->getMajorOrder());
 #ifdef USE_CUDA
-  new_mat->setUseCuda(mat->getCudaFlag());
+    new_mat->setUseCuda(mat->getCudaFlag());
 #endif
-  MatrixComplexF::const_iterator orig_it(mat->begin());
-  MatrixFloat::iterator dest_it(new_mat->begin());
-  while(orig_it != mat->end()) {
-    *dest_it = orig_it->angle();
-    ++orig_it;
-    ++dest_it;
+    MatrixComplexF::const_iterator orig_it(mat->begin());
+    MatrixFloat::iterator dest_it(new_mat->begin());
+    while(orig_it != mat->end()) {
+      *dest_it = orig_it->angle();
+      ++orig_it;
+      ++dest_it;
+    }
+    return new_mat;
   }
-  return new_mat;
-}
+
+} // namespace basics

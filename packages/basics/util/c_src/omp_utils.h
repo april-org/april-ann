@@ -18,9 +18,16 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef OMP_UTILS_H
+#define OMP_UTILS_H
+
 #ifndef NO_OMP
+extern "C" {
 #include <omp.h>
+}
 #endif
 namespace omp_utils {
   int get_num_threads();
 }
+
+#endif // OMP_UTILS_H

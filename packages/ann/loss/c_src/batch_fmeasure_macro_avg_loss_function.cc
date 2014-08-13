@@ -22,6 +22,9 @@
 #include "batch_fmeasure_macro_avg_loss_function.h"
 #include "wrapper.h"
 
+using namespace april_utils;
+using namespace basics;
+
 namespace ANN {
 
   BatchFMeasureMacroAvgLossFunction::
