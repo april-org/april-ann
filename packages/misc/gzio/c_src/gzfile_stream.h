@@ -28,18 +28,9 @@
 
 namespace gzio {
 
-  class GZFileStream : public april_io::StreamInterface {
+  class GZFileStream : public april_io::BufferedInputStream {
   public:
     
-    /// Indicates if the extesion of a given filename corresponds with a
-    /// gzipped file.
-    static bool isGZ(const char *filename) {
-      int len = strlen(filename);
-      return (len > 3 && filename[len-3] == '.' &&
-              filename[len-2] == 'g' &&
-              filename[len-1] == 'z');
-    }
-  
     GZFileStream(const char *path, const char *mode);
     /*
       GZFileStream(FILE *file);
@@ -49,35 +40,25 @@ namespace gzio {
   
     // int fileno() const { return fd; }
 
-    virtual bool good() const;
-    virtual size_t get(StreamInterface *dest, const char *delim = 0);
-    virtual size_t get(StreamInterface *dest, size_t max_size, const char *delim = 0);
-    virtual size_t get(char *dest, size_t max_size, const char *delim = 0);
-    virtual size_t put(StreamInterface *source, size_t size);
-    virtual size_t put(const char *source, size_t size);
-    virtual int printf(const char *format, ...);
-    virtual bool eof() const;
     virtual bool isOpened() const ;
     virtual void close();
-    virtual off_t seek(int whence=SEEK_CUR, int offset=0);
     virtual void flush();
     virtual int setvbuf(int mode, size_t size);
     virtual bool hasError() const;
     virtual const char *getErrorMsg() const;
     
+  protected:
+
+    virtual bool privateEof() const;    
+    virtual size_t privateWrite(const char *buf, size_t size);
+    virtual size_t privateRead(char *buf, size_t max_size);
+    virtual off_t privateSeek(int whence, int offset);
+    
   private:
     
-    static const size_t DEFAULT_BUFFER_SIZE = 64*1024; // 64K
-    
     gzFile f;
-    char *in_buffer;
-    size_t in_buffer_pos, in_buffer_len, max_buffer_size;
     bool write_flag;
 
-    void prepareInBufferData();    
-    void trimInBuffer(const char *delim);
-    template<typename T>
-    size_t templatizedGet(T &putOp, size_t max_size, const char *delim);
   };
 
 } // namespace gzio
