@@ -19,6 +19,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef MATRIX_IMPL_H
+#define MATRIX_IMPL_H
 #include <cstdio>
 #include <unistd.h>
 #include <fcntl.h>
@@ -27,6 +29,7 @@
 #include "april_print.h"
 #include "error_print.h"
 #include "ignore_result.h"
+#include "matrix.h"
 
 namespace basics {
 
@@ -62,14 +65,13 @@ namespace basics {
   /// Allocation of memory for data pointer. It is Referenced for sharing.
   template <typename T>
   void Matrix<T>::allocate_memory(int size) {
-    data = new april_math::GPUMirroredMemoryBlock<T>(static_cast<unsigned int>(size));
-    IncRef(data);
+    data.reset( new april_math::GPUMirroredMemoryBlock<T>(static_cast<unsigned int>(size)) );
   }
 
   /// Release of the memory allocated for data pointer.
   template <typename T>
   void Matrix<T>::release_memory() {
-    DecRef(data);
+    data.reset();
   }
 
   /// Null constructor
@@ -91,8 +93,6 @@ namespace basics {
     use_cuda(use_cuda),
     is_contiguous(NONE),
     end_iterator(), end_const_iterator(), end_span_iterator_() {
-    IncRef(data);
-    if (mmapped_data) IncRef(mmapped_data);
     for (int i=0; i<numDim; ++i) {
       this->stride[i] = stride[i];
       this->matrixSize[i] = matrixSize[i];
@@ -110,7 +110,7 @@ namespace basics {
     Referenced(), shared_count(0), transposed(transposed),
     numDim(numDim),
     offset(offset),
-    mmapped_data(0),
+    data(data),
     major_order(major_order),
     use_cuda(false),
     is_contiguous(CONTIGUOUS),
@@ -119,13 +119,11 @@ namespace basics {
     matrixSize = new int[numDim];
     initialize(dim);
     last_raw_pos += offset;
-    if (data == 0) allocate_memory(total_size);
+    if (this->data.empty()) allocate_memory(total_size);
     else {
-      if (static_cast<int>(data->getSize()) < offset + size())
+      if (static_cast<int>(this->data->getSize()) < offset + size())
         ERROR_EXIT2(128, "Data pointer size doesn't fit, expected %d, found %d\n",
                     size(), data->getSize());
-      this->data = data;
-      IncRef(data);
     }
   }
 
@@ -138,7 +136,6 @@ namespace basics {
     shared_count(0), transposed(other->transposed),
     numDim(other->numDim),
     offset(0),
-    mmapped_data(0),
     major_order(other->major_order),
     use_cuda(other->use_cuda),
     is_contiguous(NONE),
@@ -187,8 +184,7 @@ namespace basics {
         aux_coords[i] = sizes[i]-1;
       }
       offset = other->computeRawPos(coords);
-      data   = other->data;
-      IncRef(data);
+      data = other->data;
       last_raw_pos = computeRawPos(aux_coords);
       delete[] aux_coords;
     }
@@ -203,7 +199,6 @@ namespace basics {
     shared_count(0), transposed(other->transposed),
     numDim(other->numDim),
     offset(0),
-    mmapped_data(0),
     major_order(other->major_order),
     use_cuda(other->use_cuda),
     is_contiguous(NONE),
@@ -252,9 +247,9 @@ namespace basics {
         aux_coords[i] = sizes[i]-1;
       }
       offset = other->computeRawPos(coords);
-      data   = new april_math::GPUMirroredMemoryBlock<T>(other->size(),
-                                                         other->data->getPPALForRead());
-      IncRef(data);
+      data.reset( new april_math::
+                  GPUMirroredMemoryBlock<T>(other->size(),
+                                            other->data->getPPALForRead()) );
       last_raw_pos = computeRawPos(aux_coords);
       delete[] aux_coords;
     }
@@ -266,7 +261,6 @@ namespace basics {
     Referenced(), shared_count(0), transposed(false),
     numDim(numDim),
     offset(0),
-    mmapped_data(0),
     major_order(CblasRowMajor),
     is_contiguous(CONTIGUOUS),
     end_iterator(), end_const_iterator(), end_span_iterator_() {
@@ -294,7 +288,6 @@ namespace basics {
     shared_count(0), transposed(other->transposed),
     numDim(other->numDim),
     offset(0),
-    mmapped_data(0),
     major_order(other->major_order),
     use_cuda(other->use_cuda),
     is_contiguous(other->is_contiguous),
@@ -313,7 +306,6 @@ namespace basics {
     else {
       offset       = other->offset;
       data         = other->data;
-      IncRef(data);
       for (int i=0; i<numDim; ++i) {
         stride[i]     = other->stride[i];
         matrixSize[i] = other->matrixSize[i];
@@ -326,8 +318,8 @@ namespace basics {
                                               *mmapped_data) {
     Matrix<T> *obj = new Matrix();
     //
-    obj->data = april_math::GPUMirroredMemoryBlock<T>::fromMMappedDataReader(mmapped_data);
-    IncRef(obj->data);
+    obj->data.reset( april_math::GPUMirroredMemoryBlock<T>::
+                     fromMMappedDataReader(mmapped_data) );
     //
     unsigned int binary_version = *(mmapped_data->get<unsigned int>());
     if (binary_version != MATRIX_BINARY_VERSION)
@@ -348,8 +340,7 @@ namespace basics {
     obj->shared_count  = 0;
     obj->is_contiguous = NONE;
     // THE MMAP POINTER
-    obj->mmapped_data  = mmapped_data;
-    IncRef(obj->mmapped_data);
+    obj->mmapped_data.reset( mmapped_data );
     //
     return obj;
   }
@@ -372,11 +363,10 @@ namespace basics {
   template <typename T>
   Matrix<T>::~Matrix() {
     release_memory();
-    if (mmapped_data == 0) {
+    if (mmapped_data.empty()) {
       delete[] stride;
       delete[] matrixSize;
     }
-    else DecRef(mmapped_data);
   }
 
   template <typename T>
@@ -417,13 +407,12 @@ namespace basics {
       april_math::GPUMirroredMemoryBlock<T> *new_data =
         new april_math::GPUMirroredMemoryBlock<T>(new_size);
       obj = new Matrix<T>(len, new_dims, major_order, new_data);
-      Matrix<T> *aux = obj->rewrap(this->getDimPtr(), this->getNumDim());
-      IncRef(aux);
+      april_utils::UniquePtr< Matrix<T> > aux( obj->rewrap(this->getDimPtr(),
+                                                           this->getNumDim()) );
       aux->copy(this);
-      DecRef(aux);
     }
     else {
-      obj = new Matrix<T>(len, new_dims, major_order, data, offset);
+      obj = new Matrix<T>(len, new_dims, major_order, data.get(), offset);
     }
 #ifdef USE_CUDA
     obj->setUseCuda(use_cuda);
@@ -442,7 +431,7 @@ namespace basics {
       }
     }
     Matrix<T> *obj = (len==numDim) ?
-      this : new Matrix<T>(len, sizes, major_order, data, offset);
+      this : new Matrix<T>(len, sizes, major_order, data.get(), offset);
 #ifdef USE_CUDA
     obj->setUseCuda(use_cuda);
 #endif
@@ -711,8 +700,7 @@ namespace basics {
       result->offset       = offset + index*stride[dim]; // the select implies an offset
       result->last_raw_pos = result->offset;
       result->data         = data;
-      result->mmapped_data = 0;
-      IncRef(data);
+      // Not needed: result->mmapped_data = 0;
       for(int i=0; i<dim; ++i) {
         result->stride[i]      = stride[i];
         result->matrixSize[i]  = matrixSize[i];
@@ -976,7 +964,7 @@ namespace basics {
     // resul_diag is a submatrix of resul, build to do a diagonal traverse
     const int stride  = matrixSize[0] + 1;
     Matrix<T> *resul_diag = new Matrix<T>(1, &stride, 0, dims, dims[0],
-                                          resul->last_raw_pos, resul->data,
+                                          resul->last_raw_pos, resul->data.get(),
                                           resul->major_order,
                                           resul->use_cuda,
                                           resul->transposed);
@@ -991,3 +979,5 @@ namespace basics {
     ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   }
 } // namespace basics
+
+#endif // MATRIX_IMPL_H

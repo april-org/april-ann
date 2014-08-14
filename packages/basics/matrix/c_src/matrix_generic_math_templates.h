@@ -40,10 +40,10 @@ namespace basics {
                                        Matrix<O> *dest=0) {
     const int numDim      = orig->getNumDim();
     const int *matrixSize = orig->getDimPtr();
-    int *result_dims      = new int[numDim];
+    STD_UNIQUE_PTR(int) result_dims( new int[numDim] );
     /**** ORIG sliding window ****/
-    int *orig_w_size      = new int[numDim];
-    int *orig_w_num_steps = new int[numDim];
+    STD_UNIQUE_PTR(int) orig_w_size( new int[numDim] );
+    STD_UNIQUE_PTR(int) orig_w_num_steps( new int[numDim] );
     int result_size=1;
     for (int i=0; i<dim; ++i) {
       orig_w_size[i] = 1;
@@ -57,12 +57,13 @@ namespace basics {
       orig_w_size[i] = 1;
       result_dims[i] = orig_w_num_steps[i] = matrixSize[i];
     }
-    typename Matrix<T>::sliding_window orig_w(orig,orig_w_size,0,0,orig_w_num_steps,0);
-    Matrix<T> *slice = orig_w.getMatrix();
-    IncRef(slice);
+    typename Matrix<T>::sliding_window orig_w(orig,orig_w_size.get(),
+                                              0,0,
+                                              orig_w_num_steps.get(),0);
+    april_utils::UniquePtr< Matrix<T> > slice( orig_w.getMatrix() );
     /******************************/
     Matrix<O> *result = dest;
-    if (result == 0) result = new Matrix<O>(numDim, result_dims,
+    if (result == 0) result = new Matrix<O>(numDim, result_dims.get(),
                                             orig->getMajorOrder());
     else if (result->size() != result_size)
       // else if (!result->sameDim(result_dims, numDim))
@@ -71,14 +72,10 @@ namespace basics {
     // traverse in row major order
     for (typename Matrix<O>::iterator it(result->begin());
          it!=result->end(); ++it) {
-      orig_w.getMatrix(slice);
-      *it = func(slice);
+      orig_w.getMatrix(slice.get());
+      *it = func(slice.get());
       orig_w.next();
     }
-    DecRef(slice);
-    delete[] orig_w_size;
-    delete[] orig_w_num_steps;
-    delete[] result_dims;
     return result;
   }
 
@@ -113,8 +110,7 @@ namespace basics {
       result_dims[i] = orig_w_num_steps[i] = matrixSize[i];
     }
     typename Matrix<T>::sliding_window orig_w(orig,orig_w_size,0,0,orig_w_num_steps,0);
-    Matrix<T> *slice = orig_w.getMatrix();
-    IncRef(slice);
+    april_utils::UniquePtr< Matrix<T> > slice( orig_w.getMatrix() );
     /******************************/
     Matrix<O> *result = dest;
     if (result == 0) result = new Matrix<O>(numDim, result_dims,
@@ -129,11 +125,10 @@ namespace basics {
     typename Matrix<C>::iterator other_it(other->begin());
     for (typename Matrix<O>::iterator it(result->begin());
          it!=result->end(); ++it, ++other_it) {
-      orig_w.getMatrix(slice);
-      *it = func(slice, *other_it);
+      orig_w.getMatrix(slice.get());
+      *it = func(slice.get(), *other_it);
       orig_w.next();
     }
-    DecRef(slice);
     delete[] orig_w_size;
     delete[] orig_w_num_steps;
     delete[] result_dims;
@@ -209,18 +204,20 @@ namespace basics {
     UNUSED_VARIABLE(SIZE_th);
 #endif
     if (m1->getIsContiguous() && m2->getIsContiguous() &&
-        m1->getIsDataRowOrdered() == m2->getIsDataRowOrdered())
+        m1->getIsDataRowOrdered() == m2->getIsDataRowOrdered()) {
       functor(m1, m2,
               static_cast<unsigned int>(m1->size()), 1, 1,
               static_cast<unsigned int>(m1->getOffset()),
               static_cast<unsigned int>(m2->getOffset()));
-    else if (m1->getNumDim() == 1)
+    }
+    else if (m1->getNumDim() == 1) {
       functor(m1, m2,
               static_cast<unsigned int>(m1->size()),
               static_cast<unsigned int>(m1->getStrideSize(0)),
               static_cast<unsigned int>(m2->getStrideSize(0)),
               static_cast<unsigned int>(m1->getOffset()),
               static_cast<unsigned int>(m2->getOffset()));
+    }
     else {
       typename Matrix<T>::span_iterator span_it1(m1), span_it2(m2);
       const int N = span_it1.numberOfIterations();

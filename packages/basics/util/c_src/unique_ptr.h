@@ -22,6 +22,7 @@
 #define UNIQUE_PTR_H
 
 #include "april_assert.h"
+#include "disallow_class_methods.h"
 #include "error_print.h"
 #include "ptr_ref.h"
 #include "referenced.h"
@@ -30,12 +31,18 @@
 namespace april_utils {
   
   /**
-   * T must be derivated from Referenced.
+   * @brief Smart pointer for Referenced with sanity check of getRef()==1.
+   *
+   * T must be derivated from Referenced, but a safe check will be done to
+   * ensure only one reference exists.
    */
   template< typename T,
             typename Referencer=DefaultReferencer<T>,
             typename Deleter=DefaultDeleter<T> >
   class UniquePtr {
+    
+    APRIL_DISALLOW_COPY_AND_ASSIGN(UniquePtr);
+    
   public:
     
     /**
@@ -44,6 +51,7 @@ namespace april_utils {
     UniquePtr(T *ptr=0) : referencer(Referencer()), deleter(Deleter()),
                           ptr(ptr) {
       referencer(ptr);
+      referencer.checkUnique(ptr);
     }
     
     /**
@@ -54,6 +62,14 @@ namespace april_utils {
       referencer(Referencer()), deleter(Deleter()), ptr(other.release()) { }
 
     /**
+     * Builds a UniquePtr from other UniquePtr object, taking the ownership of
+     * the referenced pointer.
+     */
+    template<typename T1>
+    UniquePtr(UniquePtr<T1,Referencer,Deleter> &other) :
+      referencer(Referencer()), deleter(Deleter()), ptr(other.release()) { }
+
+    /**
      * Resets the object to a NULL pointer, what will execute a DecRef.
      */
     ~UniquePtr() { reset(); }
@@ -61,22 +77,22 @@ namespace april_utils {
     /**
      * Dereferencing, returns the pointer itself.
      */
-    T *operator->() { return get(); }
+    T *operator->() { april_assert(get() != 0); return get(); }
 
     /**
      * Dereferencing, returns a const reference to the pointer itself.
      */
-    const T *operator->() const { return get(); }
+    const T *operator->() const { april_assert(get() != 0); return get(); }
     
     /**
      * Dereferencing, returns a reference to the data.
      */
-    T &operator*() { return *get(); }
+    T &operator*() { april_assert(get() != 0); return *get(); }
     
     /**
      * Dereferencing, returns a const reference to the data.
      */
-    const T &operator*() const { return *get(); }
+    const T &operator*() const { april_assert(get() != 0); return *get(); }
 
     /**
      * Assignment operator, transfers the ownership of the pointer referenced by
@@ -88,11 +104,41 @@ namespace april_utils {
     }
 
     /**
+     * Assignment operator, transfers the ownership of the pointer referenced by
+     * the given other object.
+     */
+    template<typename T1>
+    UniquePtr<T,Referencer,Deleter> &operator=(UniquePtr<T1,Referencer,Deleter> &other) {
+      take(other.release());
+      return *this;
+    }
+
+    /**
      * Assignment operator, takes the ownership of the given pointer.
      */
     UniquePtr<T,Referencer,Deleter> &operator=(T *other) {
       reset(other);
       return *this;
+    }
+    
+    /**
+     * Operator[], returns a reference to the data.
+     */
+    T &operator[](int i) {
+      april_assert(ptr != 0); 
+      return ptr[i];
+    }
+
+    /**
+     * Operator[], returns a reference to the data.
+     */
+    const T &operator[](int i) const {
+      april_assert(ptr != 0); 
+      return ptr[i];
+    }
+
+    bool operator==(const T *&other) const {
+      return ptr == other;
     }
 
     /**
@@ -125,6 +171,7 @@ namespace april_utils {
     void take(T *other) {
       reset();
       ptr = other;
+      referencer.checkUnique(ptr);
     }
     
     /**
@@ -137,16 +184,13 @@ namespace april_utils {
         referencer(other);
         deleter(ptr);
         ptr = other;
+        referencer.checkUnique(ptr);
       }
     }
     
     bool empty() const {
       return get() == 0;
     };
-    
-    operator bool() const {
-      return !empty();
-    }
     
   private:
     Referencer referencer;
@@ -160,5 +204,7 @@ namespace april_utils {
   }
   
 } // namespace april_utils
+
+#define STD_UNIQUE_PTR(T) april_utils::UniquePtr< T, april_utils::StandardReferencer<T>, april_utils::StandardDeleter<T> >
  
 #endif // UNIQUE_PTR_H

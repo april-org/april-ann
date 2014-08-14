@@ -19,16 +19,20 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef SPARSE_MATRIX_MATH_IMPL_H
+#define SPARSE_MATRIX_MATH_IMPL_H
 
 #include "maxmin.h"
-#include "matrix_generic_math_templates.h"
+#include "sparse_matrix.h"
+#include "matrix_generic_math_templates.h" // this order is necessary here :S
 
 namespace basics {
 
   template <typename T>
   void SparseMatrix<T>::fill(T value) {
-    for (iterator it(begin()); it!=end(); ++it)
+    for (iterator it(begin()); it!=end(); ++it) {
       *it = value;
+    }
   }
 
   template <typename T>
@@ -52,12 +56,14 @@ namespace basics {
   // the argument indicates over which dimension the sum must be performed
   template <typename T>
   Matrix<T>* SparseMatrix<T>::sum(int dim, Matrix<T> *dest) {
-    if (dim != 0 && dim != 1)
+    if (dim != 0 && dim != 1) {
       ERROR_EXIT1(128, "Incorrect given dimension %d\n", dim);
+    }
     int ndim = (dim==0)?(1):(0);
     if (dest) {
-      if (dest->getDimSize(dim) != 1 || dest->getDimSize(ndim) != matrixSize[ndim])
+      if (dest->getDimSize(dim) != 1 || dest->getDimSize(ndim) != matrixSize[ndim]) {
         ERROR_EXIT(128, "Incorrect matrix sizes\n");
+      }
     }
     else {
       int result_dims[2] = { matrixSize[0], matrixSize[1] };
@@ -302,3 +308,5 @@ namespace basics {
   }
 
 } // namespace basics
+
+#endif // SPARSE_MATRIX_MATH_IMPL_H

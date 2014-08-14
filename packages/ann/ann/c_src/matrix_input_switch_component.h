@@ -76,19 +76,19 @@ namespace ANN {
       return sparse_error_output->getMatrix();
     }
     
-    virtual void computeGradients(basics::MatrixFloat*& grads_mat);
+    virtual void computeGradients(april_utils::SharedPtr<basics::MatrixFloat> & grads_mat);
 
     // Abstract methods
 
     virtual basics::MatrixFloat *privateDoDenseForward(basics::MatrixFloat *input, bool during_training) = 0;
     virtual basics::MatrixFloat *privateDoDenseBackprop(basics::MatrixFloat *input_error) = 0;
     virtual void privateDenseReset(unsigned int it=0) = 0;
-    virtual void privateDenseComputeGradients(basics::MatrixFloat*& grads_mat) = 0;
+    virtual void privateDenseComputeGradients(april_utils::SharedPtr<basics::MatrixFloat> & grads_mat) = 0;
 
     virtual basics::MatrixFloat *privateDoSparseForward(basics::SparseMatrixFloat *input, bool during_training) = 0;
     virtual basics::SparseMatrixFloat *privateDoSparseBackprop(basics::MatrixFloat *input_error) = 0;
     virtual void privateSparseReset(unsigned int it=0) = 0;
-    virtual void privateSparseComputeGradients(basics::MatrixFloat*& grads_mat) = 0;
+    virtual void privateSparseComputeGradients(april_utils::SharedPtr<basics::MatrixFloat> & grads_mat) = 0;
 
   public:
     MatrixInputSwitchANNComponent(const char *name, const char *weights_name,

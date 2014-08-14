@@ -19,7 +19,10 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef MATRIX_MATH_IMPL_H
+#define MATRIX_MATH_IMPL_H
 
+#include "matrix.h"
 #include "maxmin.h"
 #include "clamp.h"
 #include "matrix_generic_math_templates.h"
@@ -309,11 +312,11 @@ namespace basics {
                     unsigned int offset_one,
                     unsigned int offset_other) const {
       april_math::doAxpy(size, alpha,
-             other->getRawDataAccess(),
-             offset_other, stride_other,
-             one->getRawDataAccess(),
-             offset_one, stride_one,
-             one->getCudaFlag());
+                         other->getRawDataAccess(),
+                         offset_other, stride_other,
+                         one->getRawDataAccess(),
+                         offset_one, stride_one,
+                         one->getCudaFlag());
     }
   };
   template <typename T>
@@ -399,12 +402,12 @@ namespace basics {
     if (otherA->getTransposedFlag()) trans_A=NEGATE_CBLAS_TRANSPOSE(trans_A);
     if (otherB->getTransposedFlag()) trans_B=NEGATE_CBLAS_TRANSPOSE(trans_B);
     april_math::doGemm(major_order, trans_A, trans_B,
-           M, N, K,
-           alpha, otherA->data, lda,
-           otherB->data, ldb,
-           beta, data, ldc,
-           otherA->offset, otherB->offset, offset,
-           use_cuda);
+                       M, N, K,
+                       alpha, otherA->getRawDataAccess(), lda,
+                       otherB->getRawDataAccess(), ldb,
+                       beta, getRawDataAccess(), ldc,
+                       otherA->offset, otherB->offset, offset,
+                       use_cuda);
   }
 
   template <typename T>
@@ -460,8 +463,8 @@ namespace basics {
                               otherA->getRawValuesAccess(),
                               otherA->getRawIndicesAccess(),
                               otherA->getRawFirstIndexAccess(),
-                              otherB->data, ldb,
-                              beta, data, ldc,
+                              otherB->getRawDataAccess(), ldb,
+                              beta, getRawDataAccess(), ldc,
                               otherB->offset, offset,
                               use_cuda);
   }
@@ -504,12 +507,12 @@ namespace basics {
     if (otherA->stride[0] + otherA->stride[1] != lda+1)
       ERROR_EXIT(128, "Only allowed with contiguous matrices\n");
     april_math::doGemv(major_order, trans_A,
-           M, N,
-           alpha, otherA->data, lda,
-           otherX->data, ldx,
-           beta, data, ldy,
-           otherA->offset, otherX->offset, offset,
-           use_cuda);
+                       M, N,
+                       alpha, otherA->getRawDataAccess(), lda,
+                       otherX->getRawDataAccess(), ldx,
+                       beta, getRawDataAccess(), ldy,
+                       otherA->offset, otherX->offset, offset,
+                       use_cuda);
   }
 
   template <typename T>
@@ -540,17 +543,17 @@ namespace basics {
     int ldx=otherX->getVectorStride();
     int ldy=getVectorStride();
     april_math::doSparseGemv(major_order,
-                 otherA->getSparseFormat(),
-                 trans_A,
-                 M, N,
-                 alpha,
-                 otherA->getRawValuesAccess(),
-                 otherA->getRawIndicesAccess(),
-                 otherA->getRawFirstIndexAccess(),
-                 otherX->data, ldx,
-                 beta, data, ldy,
-                 otherX->offset, offset,
-                 use_cuda);
+                             otherA->getSparseFormat(),
+                             trans_A,
+                             M, N,
+                             alpha,
+                             otherA->getRawValuesAccess(),
+                             otherA->getRawIndicesAccess(),
+                             otherA->getRawFirstIndexAccess(),
+                             otherX->getRawDataAccess(), ldx,
+                             beta, getRawDataAccess(), ldy,
+                             otherX->offset, offset,
+                             use_cuda);
   }
 
   template <typename T>
@@ -573,11 +576,11 @@ namespace basics {
     int ldx=otherX->getVectorStride();
     int ldy=otherY->getVectorStride();
     april_math::doGer(major_order,
-          M, N,
-          alpha, otherX->data, otherX->offset, ldx,
-          otherY->data, otherY->offset, ldy,
-          data, offset, lda,
-          use_cuda);
+                      M, N,
+                      alpha, otherX->getRawDataAccess(), otherX->offset, ldx,
+                      otherY->getRawDataAccess(), otherY->offset, ldy,
+                      getRawDataAccess(), offset, lda,
+                      use_cuda);
   }
 
   template <typename T>
@@ -590,9 +593,10 @@ namespace basics {
     if (major_order != other->major_order)
       ERROR_EXIT(128, "Matrices with different major orders\n");
     T ret = april_math::doDot(size(),
-                  data, offset, getVectorStride(),
-                  other->data, other->offset, other->getVectorStride(),
-                  use_cuda);
+                              getRawDataAccess(), offset, getVectorStride(),
+                              other->getRawDataAccess(), other->offset,
+                              other->getVectorStride(),
+                              use_cuda);
     return ret;
   }
 
@@ -608,10 +612,10 @@ namespace basics {
                  "dense coordinate size of 1, please, change the sparse "
                  "format\n");
     T ret = april_math::doSparseDot(other->nonZeroSize(),
-                        other->getRawValuesAccess(),
-                        other->getRawIndicesAccess(),
-                        data, offset, getVectorStride(),
-                        use_cuda);
+                                    other->getRawValuesAccess(),
+                                    other->getRawIndicesAccess(),
+                                    getRawDataAccess(), offset, getVectorStride(),
+                                    use_cuda);
     return ret;
   }
 
@@ -821,3 +825,5 @@ namespace basics {
 } // namespace basics
 
 #include "matrix-conv.impl.h"
+
+#endif // MATRIX_MATH_IMPL_H

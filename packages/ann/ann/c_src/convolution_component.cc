@@ -313,12 +313,11 @@ namespace ANN {
     return error_output_mat;
   }
   
-  void ConvolutionANNComponent::computeGradients(MatrixFloat *&grads_mat) {
+  void ConvolutionANNComponent::computeGradients(april_utils::SharedPtr<MatrixFloat> &grads_mat) {
     weights_matrix->addToSharedCount(number_input_windows);
-    if (grads_mat == 0) {
+    if (grads_mat.empty()) {
       grads_mat = weights_matrix->cloneOnlyDims();
       grads_mat->zeros();
-      IncRef(grads_mat);
     }
     MatrixFloat *input_mat       = getInputMatrix();
     MatrixFloat *error_input_mat = getErrorInputMatrix();
@@ -393,11 +392,11 @@ namespace ANN {
     unsigned int weights_input_size  = kernel_size;
     unsigned int weights_output_size = hidden_size;
     ////////////////////////////////////////////////////////////////////
-    MatrixFloat *&w = (*weights_dict)[weights_name];
+    april_utils::SharedPtr<MatrixFloat> &w = (*weights_dict)[weights_name];
     // printf("%s :: %p %p\n", weights_name.c_str(), w, weights_matrix);
-    if (w != 0) {
+    if (!w.empty()) {
       // printf("COPY OF WEIGHTS FROM HASH %s\n", weights_name.c_str());
-      AssignRef(weights_matrix, w);
+      AssignRef(weights_matrix, w.get());
       if (!Connections::checkInputOutputSizes(weights_matrix,
 					      weights_input_size,
 					      weights_output_size))
@@ -415,7 +414,6 @@ namespace ANN {
       }
       // else printf("USING PREVIOUS WEIGHTS %s\n", weights_name.c_str());
       w = weights_matrix;
-      IncRef(w);
     }
   }
 
@@ -423,15 +421,14 @@ namespace ANN {
     if (weights_matrix == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
-    MatrixFloat *&w = (*weights_dict)[weights_name];
-    if (w != 0 && w != weights_matrix)
+    april_utils::SharedPtr<MatrixFloat> &w = (*weights_dict)[weights_name];
+    if (!w.empty() && w.get() != weights_matrix)
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with weights_matrix attribute [%s]\n",
 		  weights_name.c_str(),
 		  name.c_str());
-    else if (w == 0) {
+    else if (w.empty()) {
       w = weights_matrix;
-      IncRef(w);
     }
   }  
 

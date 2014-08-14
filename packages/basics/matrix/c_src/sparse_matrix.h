@@ -29,6 +29,7 @@
 #include "cblas_headers.h"
 #include "disallow_class_methods.h"
 #include "gpu_mirrored_memory_block.h"
+#include "matrix.h"
 #include "maxmin.h"
 #include "mmapped_data.h"
 #include "qsort.h"
@@ -36,13 +37,6 @@
 #include "swap.h"
 #include "unused_variable.h"
 #include "wrapper.h"
-
-//////////////////////////////////////////////////
-// Avoids error messages from flycheck in emacs //
-#ifndef MATRIX_H
-#include "matrix.h"
-#endif
-//////////////////////////////////////////////////
 
 namespace basics {
 
@@ -72,11 +66,14 @@ namespace basics {
     /// Total size of the matrix (number of elements)
     int total_size;
     // Pointers to data: values,indices,first_index
-    april_math::GPUMirroredMemoryBlock<T> *values;      ///< non-zero values
-    april_math::Int32GPUMirroredMemoryBlock *indices;     ///< indices for rows (CSC) or columns (CSR)
-    april_math::Int32GPUMirroredMemoryBlock *first_index; ///< size(values) + 1
+    /// non-zero values
+    april_utils::SharedPtr< april_math::GPUMirroredMemoryBlock<T> > values;
+    /// indices for rows (CSC) or columns (CSR)
+    april_utils::SharedPtr< april_math::Int32GPUMirroredMemoryBlock > indices;
+    /// size(values) + 1
+    april_utils::SharedPtr< april_math::Int32GPUMirroredMemoryBlock > first_index;
     /// For mmapped matrices
-    april_utils::MMappedDataReader *mmapped_data;
+    april_utils::SharedPtr< april_utils::MMappedDataReader > mmapped_data;
     /// Format type (CSC or CSR)
     SPARSE_FORMAT sparse_format;
     /// For CUDA purposes
@@ -103,7 +100,7 @@ namespace basics {
     class iterator {
       friend class const_iterator;
       friend class SparseMatrix;
-      SparseMatrix<T> *m;
+      SparseMatrix<T> *m; // A weak reference.
       int idx;
       //
       T   *values;
@@ -127,7 +124,7 @@ namespace basics {
     /*******************************************************/
     class const_iterator {
       friend class SparseMatrix;
-      const SparseMatrix<T> *m;
+      const SparseMatrix<T> *m; // A weak reference.
       int idx;
       //
       const T   *values;
@@ -303,13 +300,13 @@ namespace basics {
   
     /// Function to obtain RAW access to data pointer. Be careful with it, because
     /// you are losing sub-matrix abstraction, and the major order.
-    april_math::GPUMirroredMemoryBlock<T> *getRawValuesAccess() { return values; }
-    april_math::Int32GPUMirroredMemoryBlock *getRawIndicesAccess() { return indices; }
-    april_math::Int32GPUMirroredMemoryBlock *getRawFirstIndexAccess() { return first_index; }
+    april_math::GPUMirroredMemoryBlock<T> *getRawValuesAccess() { return values.get(); }
+    april_math::Int32GPUMirroredMemoryBlock *getRawIndicesAccess() { return indices.get(); }
+    april_math::Int32GPUMirroredMemoryBlock *getRawFirstIndexAccess() { return first_index.get(); }
 
-    const april_math::GPUMirroredMemoryBlock<T> *getRawValuesAccess() const { return values; }
-    const april_math::Int32GPUMirroredMemoryBlock *getRawIndicesAccess() const { return indices; }
-    const april_math::Int32GPUMirroredMemoryBlock *getRawFirstIndexAccess() const { return first_index; }
+    const april_math::GPUMirroredMemoryBlock<T> *getRawValuesAccess() const { return values.get(); }
+    const april_math::Int32GPUMirroredMemoryBlock *getRawIndicesAccess() const { return indices.get(); }
+    const april_math::Int32GPUMirroredMemoryBlock *getRawFirstIndexAccess() const { return first_index.get(); }
   
     /// Returns true if they have the same dimension
     template<typename O>

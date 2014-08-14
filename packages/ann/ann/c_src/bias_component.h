@@ -40,7 +40,7 @@ namespace ANN {
                                                   bool during_training);
     virtual basics::MatrixFloat *privateDoBackprop(basics::MatrixFloat *input_error);
     virtual void privateReset(unsigned int it=0);
-    virtual void computeGradients(basics::MatrixFloat*& grad_mat);
+    virtual void computeGradients(april_utils::SharedPtr<basics::MatrixFloat> & grad_mat);
     
   public:
     BiasANNComponent(unsigned int size=0,

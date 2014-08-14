@@ -25,7 +25,6 @@
 #include "error_print.h"
 #include "referenced.h"
 #include "shared_ptr.h"
-#include "unique_ptr.h"
 #include "unused_variable.h"
 
 namespace april_utils {
@@ -34,15 +33,44 @@ namespace april_utils {
    */
   template<typename T>
   class WeakPtr {
-  public:
+    
+    WeakPtr(T *ptr=0) : ptr(ptr) { }
 
+    WeakPtr<T> &operator=(T *other) {
+      reset(other);
+      return *this;
+    }
+
+    /**
+     * Takes another pointer.
+     */
+    void take(T *other) {
+      reset(other);
+    }
+
+    /**
+     * Takes another pointer.
+     */
+    void reset(T *other=0) {
+      ptr = other;
+    }
+
+  public:
     /**
      * Builds a WeakPtr from a given pointer, by default NULL.
      */
-    WeakPtr(T *ptr=0) : ptr(ptr) { }
+    WeakPtr();
     WeakPtr(WeakPtr<T> &other) : ptr(other.ptr) { }
-    WeakPtr(UniquePtr<T> &other) : ptr(other.ptr) { }
-    WeakPtr(SharedPtr<T> &other) : ptr(other.ptr) { }
+    template<typename R, typename D>
+    WeakPtr(SharedPtr<T,R,D> &other) : ptr(other.ptr) { }
+    WeakPtr(const WeakPtr<T> &other) : ptr(other.ptr) { }
+
+    template<typename T1>
+    WeakPtr(WeakPtr<T1> &other) : ptr(other.ptr) { }
+    template<typename T1, typename R, typename D>
+    WeakPtr(SharedPtr<T1,R,D> &other) : ptr(other.ptr) { }
+    template<typename T1>
+    WeakPtr(const WeakPtr<T1> &other) : ptr(other.ptr) { }
     
     /**
      * Destructor.
@@ -73,17 +101,56 @@ namespace april_utils {
       reset(other.get());
       return *this;
     }
-    WeakPtr<T> &operator=(UniquePtr<T> &other) {
-      reset(other.get());
-      return *this;
-    }
     WeakPtr<T> &operator=(SharedPtr<T> &other) {
       reset(other.get());
       return *this;
     }
-    WeakPtr<T> &operator=(T *other) {
-      reset(other);
+    WeakPtr<T> &operator=(const WeakPtr<T> &other) {
+      reset(other.ptr);
       return *this;
+    }
+    
+    template<typename T1>
+    WeakPtr<T> &operator=(WeakPtr<T1> &other) {
+      reset(other.get());
+      return *this;
+    }
+    template<typename T1,typename R,typename D>
+    WeakPtr<T> &operator=(SharedPtr<T1,R,D> &other) {
+      reset(other.get());
+      return *this;
+    }
+    template<typename T1>
+    WeakPtr<T> &operator=(const WeakPtr<T1> &other) {
+      reset(other.ptr);
+      return *this;
+    }
+
+    /**
+     * Operator[], returns a reference to the data.
+     */
+    T &operator[](int i) {
+      return ptr[i];
+    }
+
+    /**
+     * Operator[], returns a reference to the data.
+     */
+    const T &operator[](int i) const {
+      return ptr[i];
+    }
+
+    
+    bool operator==(const WeakPtr<T> &other) const {
+      return ptr == other.ptr;
+    }
+    
+    bool operator==(const SharedPtr<T> &other) const {
+      return ptr == other.ptr;
+    }
+    
+    bool operator==(const T *&other) const {
+      return ptr == other;
     }
     
     /**
@@ -110,20 +177,6 @@ namespace april_utils {
     }
     
     /**
-     * Takes another pointer.
-     */
-    void take(T *other) {
-      reset(other);
-    }
-
-    /**
-     * Takes another pointer.
-     */
-    void reset(T *other=0) {
-      ptr = other;
-    }
-
-    /**
      * Returns a SharedPtr which takes the ownership of the referenced pointer.
      */
     SharedPtr<T> lock() {
@@ -133,11 +186,7 @@ namespace april_utils {
     bool empty() const {
       return ptr == 0;
     };
-    
-    operator bool() const {
-      return !empty();
-    }
-    
+        
   private:
     T *ptr;
   };

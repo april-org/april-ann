@@ -19,7 +19,10 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef MATRIX_ITERATORS_IMPL_H
+#define MATRIX_ITERATORS_IMPL_H
 
+#include "matrix.h"
 #include "unused_variable.h"
 
 namespace basics {
@@ -34,7 +37,6 @@ namespace basics {
     }
     else coords = 0;
     raw_pos = m->getOffset();
-    // IncRef(m);
     data = m->getData();
   }
 
@@ -46,7 +48,6 @@ namespace basics {
       m->computeCoords(raw_pos, coords);
     }
     else coords = 0;
-    // IncRef(m);
     data = m->getData();
   }
 
@@ -58,7 +59,6 @@ namespace basics {
       for (int i=0; i<m->getNumDim(); ++i) this->coords[i] = coords[i];
     }
     else coords = 0;
-    // IncRef(m);
     data = m->getData();
   }
 
@@ -75,22 +75,18 @@ namespace basics {
       for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
     }
     else coords = 0;
-    // IncRef(m);
     data = m->getData();
   }
 
   template <typename T>
   Matrix<T>::iterator:: ~iterator() {
     delete[] coords;
-    // if (m) DecRef(m);
   }
 
   template <typename T>
   typename Matrix<T>::iterator &Matrix<T>::iterator::
   operator=(const Matrix<T>::iterator &other) {
-    // if (m) DecRef(m);
     m = other.m;
-    // IncRef(m);
     idx = other.idx;
     raw_pos = other.raw_pos;
     data = m->getData();
@@ -152,7 +148,6 @@ namespace basics {
     }
     else coords = 0;
     raw_pos = m->getOffset();
-    // IncRef(m);
     data = m->getData();
   }
 
@@ -164,7 +159,6 @@ namespace basics {
       m->computeCoords(raw_pos, coords);
     }
     else coords = 0;
-    // IncRef(m);
     data = m->getData();
   }
 
@@ -176,7 +170,6 @@ namespace basics {
       for (int i=0; i<m->getNumDim(); ++i) this->coords[i] = coords[i];
     }
     else coords = 0;
-    // IncRef(m);
     data = m->getData();
   }
 
@@ -194,7 +187,6 @@ namespace basics {
       for (int i=0; i<m->getNumDim(); ++i) coords[i] = other.coords[i];
     }
     else coords = 0;
-    // IncRef(m);
     data = m->getData();
   }
 
@@ -210,21 +202,17 @@ namespace basics {
       else m->computeCoords(raw_pos, coords);
     }
     else coords = 0;
-    // IncRef(m);
     data = m->getData();
   }
 
   template <typename T>
   Matrix<T>::col_major_iterator::~col_major_iterator() {
     delete[] coords;
-    // if (m) DecRef(m);
   }
 
   template <typename T>
   typename Matrix<T>::col_major_iterator &Matrix<T>::col_major_iterator::operator=(const Matrix<T>::col_major_iterator &other) {
-    // if (m) DecRef(m);
     m = other.m;
-    // IncRef(m);
     idx = other.idx;
     raw_pos = other.raw_pos;
     data = m->getData();
@@ -244,10 +232,8 @@ namespace basics {
 
   template <typename T>
   typename Matrix<T>::col_major_iterator &Matrix<T>::col_major_iterator::operator=(const Matrix<T>::iterator &other) {
-    // if (m) DecRef(m);
     m = other.m;
     idx = other.idx;
-    // IncRef(m);
     idx = other.idx;
     raw_pos = other.raw_pos;
     data = m->getData();
@@ -895,7 +881,6 @@ namespace basics {
     offset_plus_num_step_by_step(new int[m->numDim]),
     num_windows(1)
   {
-    IncRef(m);
     if (offset != 0) {
       for (int i=0; i<m->numDim; ++i) {
         this->raw_pos += offset[i]*m->stride[i];
@@ -1006,7 +991,6 @@ namespace basics {
     offset_plus_num_step_by_step(new int[m->numDim]),
     num_windows(other.num_windows)
   {
-    IncRef(m);
     for (int i=0; i<m->numDim; ++i) {
       sub_matrix_size[i]	= other.sub_matrix_size[i];
       step[i]		= other.step[i];
@@ -1020,7 +1004,6 @@ namespace basics {
 
   template <typename T>
   Matrix<T>::sliding_window::~sliding_window() {
-    DecRef(m);
     delete[] sub_matrix_size;
     delete[] step;
     delete[] num_steps;
@@ -1033,7 +1016,7 @@ namespace basics {
   template <typename T>
   typename Matrix<T>::sliding_window::sliding_window &Matrix<T>::sliding_window::
   operator=(const sliding_window &other) {
-    if (m==0 || m->numDim != other.m->numDim) {
+    if (m.empty() || m->numDim != other.m->numDim) {
       delete[] sub_matrix_size;
       delete[] step;
       delete[] num_steps;
@@ -1049,22 +1032,20 @@ namespace basics {
       offset	     = new int[other.m->numDim];
       offset_plus_num_step_by_step = new int[other.m->numDim];
     }
-    if (m) DecRef(m);
-    m		       = other.m;
-    IncRef(m);
-    offset	       = other.offset;
-    raw_pos	       = other.raw_pos;
+    m		         = other.m;
+    offset	         = other.offset;
+    raw_pos	         = other.raw_pos;
     total_size           = other.total_size;
     last_raw_pos         = other.last_raw_pos;
     finished             = other.finished;
     num_windows          = other.num_windows;
     for (int i=0; i<m->numDim; ++i) {
-      sub_matrix_size[i]	= other.sub_matrix_size[i];
-      step[i]		= other.step[i];
-      num_steps[i]	= other.num_steps[i];
-      order_step[i]	= other.order_step[i];
-      coords[i]		= other.coords[i];
-      offset[i]		= other.offset[i];
+      sub_matrix_size[i] = other.sub_matrix_size[i];
+      step[i]		 = other.step[i];
+      num_steps[i]	 = other.num_steps[i];
+      order_step[i]	 = other.order_step[i];
+      coords[i]		 = other.coords[i];
+      offset[i]		 = other.offset[i];
       offset_plus_num_step_by_step[i] = other.offset_plus_num_step_by_step[i];
     }	
     return *this;
@@ -1100,7 +1081,7 @@ namespace basics {
       return new Matrix<T>(m->numDim, m->stride,
                            raw_pos, sub_matrix_size,
                            total_size, last_raw_pos + raw_pos,
-                           m->data, m->major_order, m->use_cuda,
+                           m->data.get(), m->major_order, m->use_cuda,
                            m->transposed);
     }
     else {
@@ -1140,3 +1121,5 @@ namespace basics {
     return m->getNumDim();
   }
 } // namespace basics
+
+#endif // MATRIX_ITERATORS_IMPL_H

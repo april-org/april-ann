@@ -245,10 +245,8 @@ namespace ANN {
     else privateSparseReset(it);
   }
 
-  void MatrixInputSwitchANNComponent::computeGradients(MatrixFloat*& grads_mat) {
-    if (!is_sparse_input)
-      privateDenseComputeGradients(grads_mat);
-    else
-      privateSparseComputeGradients(grads_mat);
+  void MatrixInputSwitchANNComponent::computeGradients(april_utils::SharedPtr<MatrixFloat> & grads_mat) {
+    if (!is_sparse_input) privateDenseComputeGradients(grads_mat);
+    else privateSparseComputeGradients(grads_mat);
   }
 }

@@ -21,6 +21,7 @@
 #ifndef PTR_REF_H
 #define PTR_REF_H
 
+#include "error_print.h"
 #include "referenced.h"
 
 namespace april_utils {
@@ -32,8 +33,13 @@ namespace april_utils {
   struct DefaultReferencer {
     DefaultReferencer() { }
     DefaultReferencer(const DefaultReferencer &) { }
-    void operator()(T *ptr) {
+    void operator()(T *ptr) const {
       if (ptr != 0) IncRef(ptr);
+    }
+    void checkUnique(T *ptr) const {
+      if (ptr != 0 && ptr->getRef() != 1) {
+        ERROR_EXIT(128, "checkUnique test failure\n");
+      }
     }
   };
   
@@ -44,7 +50,7 @@ namespace april_utils {
   struct DefaultDeleter {
     DefaultDeleter() { }
     DefaultDeleter(const DefaultDeleter &) { }
-    void operator()(T *ptr) {
+    void operator()(T *ptr) const {
       if (ptr != 0) DecRef(ptr);
     }
   };
@@ -56,7 +62,10 @@ namespace april_utils {
   struct StandardReferencer {
     StandardReferencer() { }
     StandardReferencer(const StandardReferencer &) { }
-    void operator()(T *ptr) {
+    void operator()(T *ptr) const {
+      UNUSED_VARIABLE(ptr);
+    }
+    void checkUnique(T *ptr) const {
       UNUSED_VARIABLE(ptr);
     }
   };
@@ -68,7 +77,7 @@ namespace april_utils {
   struct StandardDeleter {
     StandardDeleter() { }
     StandardDeleter(const StandardDeleter &) { }
-    void operator()(T *ptr) {
+    void operator()(T *ptr) const {
       delete ptr;
     }
   };
@@ -78,7 +87,7 @@ namespace april_utils {
    */
   template<typename T>
   struct StandardDeleter<T[]> {
-    void operator()(T *ptr) {
+    void operator()(T *ptr) const {
       delete[] ptr;
     }
   };

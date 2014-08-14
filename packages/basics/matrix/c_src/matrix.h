@@ -35,6 +35,7 @@
 #include "mmapped_data.h"
 #include "qsort.h"
 #include "referenced.h"
+#include "smart_ptr.h"
 #include "swap.h"
 #include "unused_variable.h"
 #include "wrapper.h"
@@ -80,8 +81,8 @@ namespace basics {
     int total_size;
     int last_raw_pos;
     /// Pointer to data
-    april_math::GPUMirroredMemoryBlock<T> *data;
-    april_utils::MMappedDataReader *mmapped_data;
+    april_utils::SharedPtr< april_math::GPUMirroredMemoryBlock<T> > data;
+    april_utils::SharedPtr< april_utils::MMappedDataReader > mmapped_data;
     /// Major type (only when numDim=2)
     CBLAS_ORDER major_order;
     /// For CUDA purposes
@@ -150,7 +151,7 @@ namespace basics {
       friend class col_major_iterator;
       friend class const_col_major_iterator;
       friend class Matrix;
-      Matrix<T> *m;
+      Matrix<T> *m; ///< A weak reference.
       int idx;
       int raw_pos;
       /// The coords array is only used when the matrix is not congiuous
@@ -176,7 +177,7 @@ namespace basics {
     /*******************************************************/
     class col_major_iterator {
       friend class Matrix;
-      Matrix<T> *m;
+      Matrix<T> *m; ///< A weak reference.
       int idx;
       int raw_pos;
       /// The coords array is only used when the matrix is not congiuous
@@ -207,7 +208,7 @@ namespace basics {
     class const_iterator {
       friend class const_col_major_iterator;
       friend class Matrix;
-      const Matrix<T> *m;
+      const Matrix<T> *m; ///< A weak reference.
       int idx;
       int raw_pos;
       /// The coords array is only used when the matrix is not congiuous
@@ -238,7 +239,7 @@ namespace basics {
     /*******************************************************/
     class const_col_major_iterator {
       friend class Matrix;
-      const Matrix<T> *m;
+      const Matrix<T> *m; ///< A weak reference.
       int idx;
       int raw_pos;
       /// The coords array is only used when the matrix is not congiuous
@@ -279,7 +280,7 @@ namespace basics {
      */
     class sliding_window : public Referenced {
       /// A reference to the matrix
-      Matrix<T> *m;
+      april_utils::SharedPtr< Matrix<T> > m;
       /// Offset coordinates
       int *offset;
       /// subPattern size.
@@ -334,7 +335,7 @@ namespace basics {
      */
     class span_iterator {
       friend class Matrix;
-      const Matrix<T> *m;
+      const Matrix<T> *m; ///< A weak reference.
       int raw_pos;
       int *coords, *order;
       int num_iterations;
@@ -383,7 +384,7 @@ namespace basics {
      * position of the matrix given its coordinates.
      */
     class random_access_iterator {
-      Matrix<T> *m;
+      Matrix<T> *m; ///< A weak reference.
       T *memory;
       int *coords;
     public:
@@ -440,7 +441,7 @@ namespace basics {
      * iterator.
      */
     class const_random_access_iterator {
-      const Matrix<T> *m;
+      const Matrix<T> *m; ///< A weak reference.
       const T *memory;
       int *coords;
     public:
@@ -678,8 +679,8 @@ namespace basics {
   
     /// Function to obtain RAW access to data pointer. Be careful with it, because
     /// you are losing sub-matrix abstraction, and the major order.
-    april_math::GPUMirroredMemoryBlock<T> *getRawDataAccess() { return data; }
-    const april_math::GPUMirroredMemoryBlock<T> *getRawDataAccess() const { return data; }
+    april_math::GPUMirroredMemoryBlock<T> *getRawDataAccess() { return data.get(); }
+    const april_math::GPUMirroredMemoryBlock<T> *getRawDataAccess() const { return data.get(); }
   
     bool getCol(int col, T* vec, int vecsize);
     bool putCol(int col, T *vec, int vecsize);

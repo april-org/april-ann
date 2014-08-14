@@ -36,8 +36,8 @@ namespace basics {
   template<>
   void Matrix<ComplexF>::fill(ComplexF value) {
     applyFunctionWithSpanIterator<ComplexF>(this,
-                                                        MAKE_CWISE_FUNCTOR_1(doFill,ComplexF,
-                                                                             value));
+                                            MAKE_CWISE_FUNCTOR_1(doFill,ComplexF,
+                                                                 value));
   }
 
   // COMPONENT-WISE MULTIPLICATION
@@ -71,8 +71,8 @@ namespace basics {
   /************* SUM FUNCTION **************/
   struct sum_functor {
     ComplexF operator()(const MatrixComplexF *m,
-                                    unsigned int size, unsigned int stride,
-                                    unsigned int offset) const {
+                        unsigned int size, unsigned int stride,
+                        unsigned int offset) const {
       return doSum(size, m->getRawDataAccess(), stride, offset,
                    m->getCudaFlag(), ComplexF::zero_zero());
     }
@@ -91,8 +91,8 @@ namespace basics {
   template<>
   void Matrix<ComplexF>::scalarAdd(ComplexF s) {
     applyFunctionWithSpanIterator<ComplexF>(this,
-                                                        MAKE_CWISE_FUNCTOR_1(doScalarAdd,
-                                                                             ComplexF,s));
+                                            MAKE_CWISE_FUNCTOR_1(doScalarAdd,
+                                                                 ComplexF,s));
   }
 
   /************* equals FUNCTION **************/
@@ -113,7 +113,7 @@ namespace basics {
   };
   template<>
   bool Matrix<ComplexF>::equals(const Matrix<ComplexF> *other,
-                                            float epsilon) const {
+                                float epsilon) const {
     if (!sameDim(other)) return false;
     equals_functor functor(epsilon);
     return applyBinaryAndReductionWithSpanIterator<ComplexF>(this,other,functor);
@@ -157,13 +157,13 @@ namespace basics {
   void Matrix<ComplexF>::scal(ComplexF value) {
 #ifdef USE_MKL
     applyFunctionWithSpanIteratorNOPARALLEL<ComplexF>(this,
-                                                                  MAKE_CWISE_FUNCTOR_1(doScal,
-                                                                                       ComplexF,
-                                                                                       value));
+                                                      MAKE_CWISE_FUNCTOR_1(doScal,
+                                                                           ComplexF,
+                                                                           value));
 #else
     applyFunctionWithSpanIterator<ComplexF>(this,
-                                                        MAKE_CWISE_FUNCTOR_1(doScal,ComplexF,
-                                                                             value));
+                                            MAKE_CWISE_FUNCTOR_1(doScal,ComplexF,
+                                                                 value));
 #endif
   }
 
@@ -186,18 +186,21 @@ namespace basics {
   float Matrix<ComplexF>::norm2() const {
     float v;
     // Contiguous memory block
-    if (getIsContiguous()) v=doNrm2(total_size, data, 1, offset, use_cuda);
+    if (getIsContiguous()) {
+      v=doNrm2(total_size, data.get(), 1, offset, use_cuda);
+    }
     // One dimension
-    else if (numDim == 1)
-      v=doNrm2(total_size, data, stride[0], offset, use_cuda);
+    else if (numDim == 1) {
+      v=doNrm2(total_size, data.get(), stride[0], offset, use_cuda);
+    }
     // General case
     else {
       norm2_functor  functor;
       norm2_reductor reductor;
       v = applyReductionWithSpanIteratorNOPARALLEL<ComplexF,float>(this,
-                                                                               functor,
-                                                                               reductor,
-                                                                               0.0f);
+                                                                   functor,
+                                                                   reductor,
+                                                                   0.0f);
       v = sqrtf(v);
     }
     return v;

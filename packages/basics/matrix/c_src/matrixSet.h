@@ -30,6 +30,7 @@
 #include "hash_table.h"
 #include "mystring.h"
 #include "maxmin.h"
+#include "smart_ptr.h"
 
 namespace basics {
 
@@ -39,7 +40,8 @@ namespace basics {
    */
   template<typename T>
   class MatrixSet : public Referenced {
-    typedef april_utils::hash<april_utils::string, Matrix<T> *> DictType;
+    typedef april_utils::hash< april_utils::string,
+                               april_utils::SharedPtr< Matrix<T> > > DictType;
     DictType matrix_dict;
   public:
     typedef typename DictType::iterator       iterator;
@@ -48,11 +50,7 @@ namespace basics {
     //
 
     MatrixSet() : matrix_dict(32, 2.0f) { }
-    virtual ~MatrixSet() {
-      for (iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
-        DecRef(it->second);
-      }
-    }
+    virtual ~MatrixSet() { }
 
     iterator begin() { return matrix_dict.begin(); }
 
@@ -75,10 +73,10 @@ namespace basics {
     }
 
     // operator[]
-    Matrix<T> *&operator[](const char *k) {
+    april_utils::SharedPtr< Matrix<T> > &operator[](const char *k) {
       return matrix_dict[april_utils::string(k)];
     }
-    Matrix<T> *&operator[](const april_utils::string &k) {
+    april_utils::SharedPtr< Matrix<T> > &operator[](const april_utils::string &k) {
       return matrix_dict[k];
     }
     // insert operation
@@ -86,16 +84,15 @@ namespace basics {
       return insert(april_utils::string(k), v);
     }
     void insert(const april_utils::string &k, Matrix<T> *v) {
-      Matrix<T> *&old = matrix_dict[k];
-      AssignRef(old, v);
+      matrix_dict[k] = v;
     }
     // find operation
     Matrix<T> *find(const char *k) const {
       return find(april_utils::string(k));
     }
     Matrix<T> *find(const april_utils::string &k) const {
-      Matrix<T> **ptr = matrix_dict.find(k);
-      return (ptr!=0) ? (*ptr) : 0;
+      april_utils::SharedPtr< Matrix<T> > *ptr = matrix_dict.find(k);
+      return (ptr!=0) ? (ptr->get()) : 0;
     }
     // matrix component-wise operators macros
 #define MAKE_N0_OPERATOR(NAME)			\
@@ -158,7 +155,7 @@ namespace basics {
     void NAME(const MatrixSet<T> *other) {			\
       for (iterator it = matrix_dict.begin();			\
            it!=matrix_dict.end(); ++it) {                       \
-        Matrix<T> *a = it->second;				\
+        Matrix<T> *a = it->second.get();                        \
         const Matrix<T> *b = other->find(it->first);		\
         if (b == 0)						\
           ERROR_EXIT1(128, "Matrix with name %s not found\n",	\
@@ -174,7 +171,7 @@ namespace basics {
     // AXPY
     void axpy(T alpha, const MatrixSet<T> *other) {
       for (iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
-        Matrix<T> *a = it->second;
+        Matrix<T> *a = it->second.get();
         const Matrix<T> *b = other->find(it->first);
         if (b == 0)
           ERROR_EXIT1(128, "Matrix with name %s not found\n",
@@ -186,7 +183,7 @@ namespace basics {
     // EQUALS
     void equals(const MatrixSet<T> *other, T epsilon) {
       for (iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
-        const Matrix<T> *a = it->second;
+        const Matrix<T> *a = it->second.get();
         const Matrix<T> *b = other->find(it->first);
         if (b == 0)
           ERROR_EXIT1(128, "Matrix with name %s not found\n",
@@ -218,22 +215,19 @@ namespace basics {
     T dot(MatrixSet<T> *other) {
       T result = T();
       for (iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
-        Matrix<T> *a = it->second;
-        Matrix<T> *b = other->find(it->first);
-        if (b == 0)
+        april_utils::SharedPtr< Matrix<T> > a( it->second.get() );
+        april_utils::SharedPtr< Matrix<T> > b( other->find(it->first) );
+        if (b.empty()) {
           ERROR_EXIT1(128, "Matrix with name %s not found\n",
                       it->first.c_str());
-        IncRef(a);
-        IncRef(b);
-        if (!a->getIsContiguous()) AssignRef(a, a->clone());
-        if (!b->getIsContiguous()) AssignRef(b, b->clone());
+        }
+        if (!a->getIsContiguous()) a = a->clone();
+        if (!b->getIsContiguous()) b = b->clone();
         int a_size = a->size();
         int b_size = b->size();
-        AssignRef(a, a->rewrap(&a_size, 1));
-        AssignRef(b, b->rewrap(&b_size, 1));
-        result = result + a->dot(b);
-        DecRef(a);
-        DecRef(b);
+        a = a->rewrap(&a_size, 1);
+        b = b->rewrap(&b_size, 1);
+        result = result + a->dot(b.get());
       }
       return result;
     }

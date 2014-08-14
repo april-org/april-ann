@@ -52,7 +52,7 @@ namespace ANN {
 
   protected:
 
-    virtual void computeGradients(basics::MatrixFloat*& grads_mat);
+    virtual void computeGradients(april_utils::SharedPtr<basics::MatrixFloat> & grad_mat);
     virtual basics::MatrixFloat *privateDoForward(basics::MatrixFloat *input,
                                           bool during_training);
     virtual basics::MatrixFloat *privateDoBackprop(basics::MatrixFloat *input_error);

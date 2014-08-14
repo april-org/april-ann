@@ -19,6 +19,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef SPARSE_MATRIX_IMPL_H
+#define SPARSE_MATRIX_IMPL_H
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -29,6 +31,7 @@
 #include "qsort.h"
 #include "swap.h"
 #include "pair.h"
+#include "sparse_matrix.h"
 #include "vector.h"
 
 namespace basics {
@@ -42,11 +45,13 @@ namespace basics {
     switch(sparse_format) {
     case CSC_FORMAT:
       if (c1 >= matrixSize[1]) idx = nonZeroSize()+1;
-      else idx = doSearchCSCSparseIndexOf(indices, first_index, c0, c1, use_cuda);
+      else idx = doSearchCSCSparseIndexOf(indices.get(), first_index.get(),
+                                          c0, c1, use_cuda);
       break;
     case CSR_FORMAT:
       if (c0 >= matrixSize[0]) idx = nonZeroSize()+1;
-      else idx = doSearchCSRSparseIndexOf(indices, first_index, c0, c1, use_cuda);
+      else idx = doSearchCSRSparseIndexOf(indices.get(), first_index.get(),
+                                          c0, c1, use_cuda);
       break;
     default:
       ERROR_EXIT1(128, "Unrecognized format %d\n", sparse_format);
@@ -61,12 +66,14 @@ namespace basics {
     switch(sparse_format) {
     case CSC_FORMAT:
       if (c1 >= matrixSize[1]) idx = nonZeroSize()+1;
-      else idx = doSearchCSCSparseIndexOfFirst(indices, first_index, c0, c1,
+      else idx = doSearchCSCSparseIndexOfFirst(indices.get(), first_index.get(),
+                                               c0, c1,
                                                use_cuda);
       break;
     case CSR_FORMAT:
       if (c0 >= matrixSize[0]) idx = nonZeroSize()+1;
-      else idx = doSearchCSRSparseIndexOfFirst(indices, first_index, c0, c1,
+      else idx = doSearchCSRSparseIndexOfFirst(indices.get(), first_index.get(),
+                                               c0, c1,
                                                use_cuda);
       break;
     default:
@@ -152,18 +159,11 @@ namespace basics {
     values  = new april_math::GPUMirroredMemoryBlock<T>(sz);
     indices = new april_math::Int32GPUMirroredMemoryBlock(sz);
     first_index = new april_math::Int32GPUMirroredMemoryBlock(static_cast<unsigned int>(getDenseCoordinateSize())+1);
-    IncRef(values);
-    IncRef(indices);
-    IncRef(first_index);
   }
 
   /// Release of the memory allocated for data pointer.
   template <typename T>
-  void SparseMatrix<T>::release_memory() {
-    DecRef(values);
-    DecRef(indices);
-    DecRef(first_index);
-  }
+  void SparseMatrix<T>::release_memory() { }
 
   /// Default constructor
   template <typename T>
@@ -179,7 +179,7 @@ namespace basics {
     sparse_format(sparse_format), use_cuda(false),
     end_iterator(), end_const_iterator() {
     initialize(d0, d1);
-    if (this->first_index == 0) {
+    if (this->first_index.empty()) {
       if ( (d1 == 1 && sparse_format == CSC_FORMAT) ||
            (d0 == 1 && sparse_format == CSR_FORMAT) ) {
         this->first_index = new april_math::Int32GPUMirroredMemoryBlock(2);
@@ -187,12 +187,11 @@ namespace basics {
         first_index_ptr[0] = 0;
         first_index_ptr[1] = static_cast<int>(values->getSize());
       }
-      else ERROR_EXIT(128, "NULL first_index block only allowed for "
-                      "column or row vectors, not matrices\n");
+      else {
+        ERROR_EXIT(128, "NULL first_index block only allowed for "
+                   "column or row vectors, not matrices\n");
+      }
     }
-    IncRef(values);
-    IncRef(indices);
-    IncRef(this->first_index);
     checkSortedIndices(sort);
   }
 
@@ -272,9 +271,9 @@ namespace basics {
     initialize(other->matrixSize[0], other->matrixSize[1]);
     allocate_memory(static_cast<int>(other->values->getSize()));
     if (this->sparse_format == other->sparse_format) {
-      values->copyFromBlock(other->values, 0, 0, other->values->getSize());
-      indices->copyFromBlock(other->indices, 0, 0, other->indices->getSize());
-      first_index->copyFromBlock(other->first_index,
+      values->copyFromBlock(other->values.get(), 0, 0, other->values->getSize());
+      indices->copyFromBlock(other->indices.get(), 0, 0, other->indices->getSize());
+      first_index->copyFromBlock(other->first_index.get(),
                                  0, 0, other->first_index->getSize());
     }
     else {
@@ -359,9 +358,6 @@ namespace basics {
     obj->values  = april_math::GPUMirroredMemoryBlock<T>::fromMMappedDataReader(mmapped_data);
     obj->indices = april_math::Int32GPUMirroredMemoryBlock::fromMMappedDataReader(mmapped_data);
     obj->first_index = april_math::Int32GPUMirroredMemoryBlock::fromMMappedDataReader(mmapped_data);
-    IncRef(obj->values);
-    IncRef(obj->indices);
-    IncRef(obj->first_index);
     //
     unsigned int binary_version = *(mmapped_data->get<unsigned int>());
     if (binary_version != MATRIX_BINARY_VERSION)
@@ -378,7 +374,6 @@ namespace basics {
     obj->shared_count  = 0;
     // THE MMAP POINTER
     obj->mmapped_data  = mmapped_data;
-    IncRef(obj->mmapped_data);
     //
     return obj;
   }
@@ -398,7 +393,6 @@ namespace basics {
   template <typename T>
   SparseMatrix<T>::~SparseMatrix() {
     release_memory();
-    if (mmapped_data != 0) DecRef(mmapped_data);
   }
 
   template<typename T>
@@ -406,9 +400,9 @@ namespace basics {
     SparseMatrix<T> *result =
       new SparseMatrix<T>(matrixSize[1],
                           matrixSize[0],
-                          values,
-                          indices,
-                          first_index,
+                          values.get(),
+                          indices.get(),
+                          first_index.get(),
                           (sparse_format == CSR_FORMAT) ? CSC_FORMAT : CSR_FORMAT,
                           false);
     return result;
@@ -495,16 +489,20 @@ namespace basics {
     switch(sparse_format) {
     case CSR_FORMAT:
       d0=1; d1=sz;
-      for (int row=0; row<matrixSize[0]; ++row)
-        for (int i=this_first_index_ptr[row]; i<this_first_index_ptr[row+1]; ++i)
+      for (int row=0; row<matrixSize[0]; ++row) {
+        for (int i=this_first_index_ptr[row]; i<this_first_index_ptr[row+1]; ++i) {
           result_indices_ptr[i] = this_indices_ptr[i] + row*matrixSize[1];
+        }
+      }
       break;
     case CSC_FORMAT:
       d0=sz; d1=1;
       sort=true;
-      for (int col=0; col<matrixSize[1]; ++col)
-        for (int i=this_first_index_ptr[col]; i<this_first_index_ptr[col+1]; ++i)
+      for (int col=0; col<matrixSize[1]; ++col) {
+        for (int i=this_first_index_ptr[col]; i<this_first_index_ptr[col+1]; ++i) {
           result_indices_ptr[i] = this_indices_ptr[i] + col*matrixSize[0];
+        }
+      }
       break;
     default:
       // never gonna happen
@@ -521,3 +519,5 @@ namespace basics {
   }
 
 } // namespace basics
+
+#endif // SPARSE_MATRIX_IMPL_H

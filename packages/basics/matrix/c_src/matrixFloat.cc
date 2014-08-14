@@ -386,10 +386,13 @@ namespace basics {
   float Matrix<float>::norm2() const {
     float v;
     // Contiguous memory block
-    if (getIsContiguous()) v=april_math::doNrm2(total_size, data, 1, offset, use_cuda);
+    if (getIsContiguous()) {
+      v=april_math::doNrm2(total_size, data.get(), 1, offset, use_cuda);
+    }
     // One dimension
-    else if (numDim == 1)
-      v=april_math::doNrm2(total_size, data, stride[0], offset, use_cuda);
+    else if (numDim == 1) {
+      v=april_math::doNrm2(total_size, data.get(), stride[0], offset, use_cuda);
+    }
     // General case
     else {
       norm2_functor  functor;
@@ -604,15 +607,13 @@ namespace basics {
   void Matrix<float>::svd(Matrix<float> **U, SparseMatrix<float> **S, Matrix<float> **VT) {
     if (numDim != 2)
       ERROR_EXIT(128, "Only bi-dimensional matrices are allowed\n");
-    Matrix<float> *A = this->clone(CblasColMajor);
-    IncRef(A);
+    april_utils::UniquePtr< Matrix<float> > A( this->clone(CblasColMajor) );
     int INFO;
     const int m = A->matrixSize[0]; // cols
     const int n = A->matrixSize[1]; // rows
     const int lda = A->stride[1];
     const int numSV = m<n ? m : n;
     const int dimsU[2]  = {m, m};
-    const int dimsS[1]  = {numSV};
     const int dimsVT[2] = {n, n};
     *U  = new Matrix<float>(2, dimsU,  CblasColMajor);
     *S  = SparseMatrix<float>::diag(numSV, 0.0f, CSR_FORMAT);
@@ -622,7 +623,6 @@ namespace basics {
                           (*S)->getRawValuesAccess()->getPPALForWrite(),
                           (*VT)->getData());
     checkLapackInfo(INFO);
-    DecRef(A);
   }
 
   template <>

@@ -19,19 +19,24 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef MATRIX_CONV_IMPL_H
+#define MATRIX_CONV_IMPL_H
+
+#include "matrix.h"
+#include "smart_ptr.h"
 
 namespace basics {
 
-  template <typename T> typename Matrix<T>::sliding_window*
+  template <typename T>
+  typename Matrix<T>::sliding_window *
   prepareMatrixSlideWindowConvolution(int D, Matrix<T> *mat,
                                       // step is an array with D size
                                       const int *step,
                                       // kernel is an array with D+2 size
                                       const int *kernel) {
-    typename Matrix<T>::sliding_window *mat_sw;
+    typename Matrix<T>::sliding_window *mat_sw=0;
     int numDim = mat->getNumDim();
-    int *aux_step = 0;
-    int *order_step = 0;
+    STD_UNIQUE_PTR(int) aux_step, order_step;
     if (step != 0) {
       aux_step = new int[D+2];
       aux_step[0] = aux_step[1] = 1;
@@ -50,9 +55,9 @@ namespace basics {
       }
       mat_sw = new typename Matrix<T>::sliding_window(mat, kernel+2,
                                                       (step != 0) ?
-                                                      (aux_step+2) : 0,
+                                                      (aux_step.get()+2) : 0,
                                                       0, 0,
-                                                      order_step);
+                                                      order_step.get());
       break;
     case 1: // numDim == D+1
       // KxPxN1xN2x...xNd kernel :: PxM1xM2x...xMd matrix
@@ -62,9 +67,9 @@ namespace basics {
       }
       mat_sw = new typename Matrix<T>::sliding_window(mat, kernel+1,
                                                       (step != 0) ?
-                                                      (aux_step+1) : 0,
+                                                      (aux_step.get()+1) : 0,
                                                       0, 0,
-                                                      order_step);
+                                                      order_step.get());
       break;
     case 0: // numDim == D+2
       {
@@ -73,23 +78,19 @@ namespace basics {
           ERROR_EXIT2(128, "Incorrect kernel size at 2nd dimension, "
                       "expected %d, found %d\n", mat->getDimSize(1), kernel[1]);
         }
-        int *aux_kernel = new int[numDim];
+        STD_UNIQUE_PTR(int) aux_kernel(new int[numDim]);
         aux_kernel[0] = 1; // mat->getDimSize(0);
         for (int i=1; i<numDim; ++i) aux_kernel[i] = kernel[i];
-        mat_sw = new typename Matrix<T>::sliding_window(mat, aux_kernel,
-                                                        aux_step,
+        mat_sw = new typename Matrix<T>::sliding_window(mat, aux_kernel.get(),
+                                                        aux_step.get(),
                                                         0, 0,
-                                                        order_step);
-        delete[] aux_kernel;
+                                                        order_step.get());
       }
       break;
     default:
-      mat_sw = 0;
       ERROR_EXIT4(128, "Incorrect number of dimensions, expected "
                   "%d or %d or %d, found %d\n", D, D+1, D+2, numDim);
     }
-    delete[] aux_step;
-    delete[] order_step;
     return mat_sw;
   }
 
@@ -100,64 +101,55 @@ namespace basics {
                                               const int *step,
                                               const int *kernel,
                                               int bunch_size) {
-    typename Matrix<T>::sliding_window *mat_sw =
-      prepareMatrixSlideWindowConvolution(D, mat, step, kernel);
-    Matrix<T> *mat_slice      = mat_sw->getMatrix();
-    IncRef(mat_slice);
-    Matrix<T> *unrolled_slice = 0;
+    april_utils::UniquePtr< typename Matrix<T>::sliding_window >
+      mat_sw( prepareMatrixSlideWindowConvolution(D, mat, step, kernel) );
+    april_utils::SharedPtr< Matrix<T> > mat_slice = mat_sw->getMatrix();
+    april_utils::SharedPtr< Matrix<T> > unrolled_slice;
     // allocate unrolled matrix
     int dims[3] = { bunch_size,
                     mat_sw->numWindows()/bunch_size,
                     mat_slice->size() };
     Matrix<T> *unrolled_mat = new Matrix<T>(3, dims, mat->getMajorOrder());
-    int *aux_dims = new int[mat_slice->getNumDim()+2];
+    STD_UNIQUE_PTR(int) aux_dims(new int[mat_slice->getNumDim()+2]);
     aux_dims[0] = dims[0];
     aux_dims[1] = dims[1];
     for (int i=0; i<mat_slice->getNumDim(); ++i) {
       aux_dims[i+2] = mat_slice->getDimSize(i);
     }
-    Matrix<T> *unrolled_mat_rewrapped =
-      unrolled_mat->rewrap(aux_dims, mat_slice->getNumDim()+2);
-    IncRef(unrolled_mat_rewrapped);
+    april_utils::UniquePtr< Matrix<T> >
+      unrolled_mat_rewrapped( unrolled_mat->rewrap(aux_dims.get(),
+                                                   mat_slice->getNumDim()+2) );
     aux_dims[0] = 1;
     aux_dims[1] = 1;
-    int *order_step = 0;
+    STD_UNIQUE_PTR(int) order_step;
     if (mat->getMajorOrder() == CblasColMajor) {
       order_step = new int[mat_slice->getNumDim()+2];
       for (int i=0; i<mat_slice->getNumDim()+2; ++i) order_step[i] = i;
     }
-    typename Matrix<T>::sliding_window *unrolled_sw =
-      new typename Matrix<T>::sliding_window(unrolled_mat_rewrapped,
-                                             aux_dims, 0, 0, 0,
-                                             order_step);
-    delete[] aux_dims;
-    delete[] order_step;
+    april_utils::UniquePtr< typename Matrix<T>::sliding_window >
+      unrolled_sw( new typename Matrix<T>::
+                   sliding_window(unrolled_mat_rewrapped.get(),
+                                  aux_dims.get(), 0, 0, 0,
+                                  order_step.get()) );
     if (unrolled_sw->numWindows() != mat_sw->numWindows()) {
       ERROR_EXIT(128, "Incorrect size in input matrix\n");
     }
     // copy all the slices
     while(!mat_sw->isEnd()) {
       april_assert( !mat_sw->isEnd() && !unrolled_sw->isEnd() );
-      mat_slice      = mat_sw->getMatrix(mat_slice);
-      unrolled_slice = unrolled_sw->getMatrix(unrolled_slice);
+      mat_slice      = mat_sw->getMatrix(mat_slice.get());
+      unrolled_slice = unrolled_sw->getMatrix(unrolled_slice.get());
       //
-      Matrix<T> *rewrapped_mat_slice =
-        mat_slice->rewrap(unrolled_slice->getDimPtr(),
-                          unrolled_slice->getNumDim(),
-                          // clone in case it is not contiguous
-                          true);
-      IncRef(rewrapped_mat_slice);
-      unrolled_slice->copy(rewrapped_mat_slice);
-      DecRef(rewrapped_mat_slice);
+      april_utils::UniquePtr< Matrix<T> >
+        rewrapped_mat_slice( mat_slice->rewrap(unrolled_slice->getDimPtr(),
+                                               unrolled_slice->getNumDim(),
+                                               // clone in case it is not contiguous
+                                               true) );
+      unrolled_slice->copy(rewrapped_mat_slice.get());
       //
       mat_sw->next();
       unrolled_sw->next();
     }
-    delete unrolled_slice;
-    delete unrolled_sw;
-    DecRef(unrolled_mat_rewrapped);
-    DecRef(mat_slice);
-    delete mat_sw;
     return unrolled_mat;
   }
 
@@ -197,7 +189,7 @@ namespace basics {
                                   const int *step,
                                   Matrix<T> *result) {
     // compute result_sizes
-    int *result_sizes = new int[D+2];
+    STD_UNIQUE_PTR(int) result_sizes(new int[D+2]);
     result_sizes[0] = bunch_size;
     result_sizes[1] = kernel_sizes[0];
     int j = mat->getNumDim() - D; // first mat dimension
@@ -215,18 +207,17 @@ namespace basics {
     }
     // allocate new result matrix if not given
     if (result == 0) {
-      result = new Matrix<T>(D+2, result_sizes, mat->getMajorOrder());
+      result = new Matrix<T>(D+2, result_sizes.get(), mat->getMajorOrder());
     }
     // check result matrix sizes (includes number of planes = number of kernels)
     else {
       if (!result->getIsContiguous()) {
         ERROR_EXIT(128, "Needs contiguous matrices\n");
       }
-      if (!result->sameDim(result_sizes, D+2)) {
+      if (!result->sameDim(result_sizes.get(), D+2)) {
         ERROR_EXIT(128, "Incorrect result matrix sizes\n");
       }
     }
-    delete[] result_sizes;
     return result;
   }
 
@@ -251,8 +242,8 @@ namespace basics {
     int bunch_size = (D+2 == getNumDim()) ? getDimSize(0) : 1;
     // compute kernel sizes and unroll kernel matrix
     int *kernel_sizes;
-    Matrix<T> *unrolled_kernel =
-      unrollKernelForConvolution(D, kernel, kernel_sizes);
+    april_utils::UniquePtr< Matrix<T> > unrolled_kernel;
+    unrolled_kernel = unrollKernelForConvolution(D, kernel, kernel_sizes);
     // allocate result to properly fit the convolution
     result = allocateResultMatrix(D, bunch_size, this,
                                   (kernel_sizes == 0) ? kernel->getDimPtr() :
@@ -260,56 +251,48 @@ namespace basics {
                                   step, result);
     // unroll all convolutions in one matrix, so the whole convolution will be
     // performed as a matrix-matrix multiplication
-    Matrix<T> *unrolled_this =
-      unrollSourceMatrixForConvolution(D, this, step,
-                                       (kernel_sizes == 0) ? kernel->getDimPtr() :
-                                       kernel_sizes,
-                                       bunch_size);
+    april_utils::UniquePtr< Matrix<T> >
+      unrolled_this( unrollSourceMatrixForConvolution(D, this, step,
+                                                      (kernel_sizes == 0) ? kernel->getDimPtr() :
+                                                      kernel_sizes,
+                                                      bunch_size) );
     // unroll the result matrix
     int dims[3] = { bunch_size,
                     unrolled_kernel->getDimSize(0),
                     unrolled_this->getDimSize(1) };
-    Matrix<T> *unrolled_result = result->rewrap(dims, 3);
+    april_utils::UniquePtr< Matrix<T> > unrolled_result;
+    unrolled_result = result->rewrap(dims, 3);
     //
-    Matrix<T> *source_pattern = 0, *result_pattern = 0;
+    april_utils::SharedPtr< Matrix<T> > source_pattern, result_pattern;
     source_pattern = unrolled_this->select(0, 0);
     result_pattern = unrolled_result->select(0, 0);
-    IncRef(source_pattern);
-    IncRef(result_pattern);
-    Matrix<T> *contiguous_source_pattern, *contiguous_result_pattern;
+    april_utils::SharedPtr< Matrix<T> > contiguous_source_pattern, contiguous_result_pattern;
     contiguous_source_pattern = ( (source_pattern->getIsContiguous()) ?
                                   source_pattern :
                                   source_pattern->clone() );
     contiguous_result_pattern = ( (result_pattern->getIsContiguous()) ?
                                   result_pattern :
                                   result_pattern->clone() );
-    IncRef(contiguous_source_pattern);
-    IncRef(contiguous_result_pattern);
     // compute convolution by using CBLAS GEMM
     contiguous_result_pattern->gemm(CblasNoTrans, CblasTrans,
                                     T(1.0f),
-                                    unrolled_kernel, contiguous_source_pattern,
+                                    unrolled_kernel.get(),
+                                    contiguous_source_pattern.get(),
                                     T(0.0f));
-    result_pattern->copy(contiguous_result_pattern);
+    result_pattern->copy(contiguous_result_pattern.get());
     for (int j=1; j<bunch_size; ++j) {
-      source_pattern = unrolled_this->select(0, j, source_pattern);
-      result_pattern = unrolled_result->select(0, j, result_pattern);
-      contiguous_source_pattern->copy(source_pattern);
-      contiguous_result_pattern->copy(result_pattern);
+      source_pattern = unrolled_this->select(0, j, source_pattern.get());
+      result_pattern = unrolled_result->select(0, j, result_pattern.get());
+      contiguous_source_pattern->copy(source_pattern.get());
+      contiguous_result_pattern->copy(result_pattern.get());
       // compute convolution by using CBLAS GEMM
       contiguous_result_pattern->gemm(CblasNoTrans, CblasTrans,
                                       T(1.0f),
-                                      unrolled_kernel, contiguous_source_pattern,
+                                      unrolled_kernel.get(),
+                                      contiguous_source_pattern.get(),
                                       T(0.0f));
-      result_pattern->copy(contiguous_result_pattern);
+      result_pattern->copy(contiguous_result_pattern.get());
     }
-    DecRef(contiguous_source_pattern);
-    DecRef(contiguous_result_pattern);
-    DecRef(source_pattern);
-    DecRef(result_pattern);
-    delete unrolled_this;
-    delete unrolled_result;
-    delete unrolled_kernel;
     delete[] kernel_sizes;
     return result;
   }
@@ -617,3 +600,5 @@ namespace basics {
     }
   */
 } // namespace basics
+
+#endif // MATRIX_CONV_IMPL_H

@@ -77,7 +77,7 @@ namespace ANN {
 
     /// Method which computes the gradient of the weights on the given
     /// MatrixFloat object
-    virtual void computeGradients(basics::MatrixFloat*& weight_grads) {
+    virtual void computeGradients(april_utils::SharedPtr<basics::MatrixFloat> &weight_grads) {
       UNUSED_VARIABLE(weight_grads);
     }
     
@@ -159,8 +159,9 @@ namespace ANN {
     /// Method which receives a hash table with matrices where compute the
     /// gradients.
     virtual void computeAllGradients(basics::MatrixFloatSet *weight_grads_dict){
-      if (!weights_name.empty())
+      if (!weights_name.empty()) {
 	computeGradients( (*weight_grads_dict)[weights_name] );
+      }
     }
     
     virtual ANNComponent *clone() {

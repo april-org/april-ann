@@ -70,7 +70,7 @@ int matrixfloatset_iterator_function(lua_State *L) {
     return 1;
   }
   lua_pushstring(L, obj->it->first.c_str());
-  lua_pushMatrixFloat(L, obj->it->second);
+  lua_pushMatrixFloat(L, obj->it->second.get());
   ++obj->it;
   return 2;
 }
@@ -129,7 +129,7 @@ namespace basics {
     Matrix<T> *obj;
     april_io::StreamInterface *stream =
       lua_toAuxStreamInterface<april_io::StreamInterface>(L,1);
-    april_utils::UniquePtr<april_io::StreamInterface> ptr(stream);
+    april_utils::SharedPtr<april_io::StreamInterface> ptr(stream);
     const char *order = luaL_optstring(L,2,0);
     if (stream == 0) {
       luaL_error(L, "Needs a stream as 1st argument");
@@ -142,7 +142,7 @@ namespace basics {
   void writeMatrixLuaMethod(lua_State *L, Matrix<T> *obj) {
     april_io::StreamInterface *stream =
       lua_toAuxStreamInterface<april_io::StreamInterface>(L,1);
-    april_utils::UniquePtr<april_io::StreamInterface> ptr(stream);
+    april_utils::SharedPtr<april_io::StreamInterface> ptr(stream);
     const char *mode = luaL_optstring(L,2,"binary");
     april_utils::constString cs(mode);
     bool is_ascii = (cs == "ascii");
@@ -154,7 +154,7 @@ namespace basics {
     Matrix<T> *obj;
     april_io::StreamInterface *stream =
       lua_toAuxStreamInterface<april_io::StreamInterface>(L,1);
-    april_utils::UniquePtr<april_io::StreamInterface> ptr(stream);
+    april_utils::SharedPtr<april_io::StreamInterface> ptr(stream);
     const char *order = luaL_optstring(L,2,0);
     if (stream == 0) {
       luaL_error(L, "Needs a stream as 1st argument");
@@ -167,7 +167,7 @@ namespace basics {
   void writeTabMatrixLuaMethod(lua_State *L, Matrix<T> *obj) {
     april_io::StreamInterface *stream =
       lua_toAuxStreamInterface<april_io::StreamInterface>(L,1);
-    april_utils::UniquePtr<april_io::StreamInterface> ptr(stream);
+    april_utils::SharedPtr<april_io::StreamInterface> ptr(stream);
     writeMatrixToTabStream(obj, ptr.get());
   }
 }

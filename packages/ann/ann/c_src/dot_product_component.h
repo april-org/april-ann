@@ -46,17 +46,17 @@ namespace ANN {
                                                        bool during_training);
     virtual basics::MatrixFloat *privateDoDenseBackprop(basics::MatrixFloat *error_input);
     virtual void privateDenseReset(unsigned int it=0);
-    virtual void privateDenseComputeGradients(basics::MatrixFloat*& grads_mat);
+    virtual void privateDenseComputeGradients(april_utils::SharedPtr<basics::MatrixFloat> & grads_mat);
 
     // from SparseMatrixANNComponentHelper
     virtual basics::MatrixFloat *privateDoSparseForward(basics::SparseMatrixFloat *input,
                                                         bool during_training);
     virtual basics::SparseMatrixFloat *privateDoSparseBackprop(basics::MatrixFloat *error_input);
     virtual void privateSparseReset(unsigned int it=0);
-    virtual void privateSparseComputeGradients(basics::MatrixFloat*& grads_mat);
+    virtual void privateSparseComputeGradients(april_utils::SharedPtr<basics::MatrixFloat> & grads_mat);
     
     //
-    void initializeComputeGradients(basics::MatrixFloat*& grads_mat);
+    void initializeComputeGradients(april_utils::SharedPtr<basics::MatrixFloat> & grads_mat);
         
   public:
     DotProductANNComponent(const char *name=0, const char *weights_name=0,

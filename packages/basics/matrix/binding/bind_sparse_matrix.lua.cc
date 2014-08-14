@@ -84,7 +84,7 @@ namespace basics {
     SparseMatrix<T> *obj;
     april_io::StreamInterface *stream =
       lua_toAuxStreamInterface<april_io::StreamInterface>(L,1);
-    april_utils::UniquePtr<april_io::StreamInterface> ptr(stream);
+    april_utils::SharedPtr<april_io::StreamInterface> ptr(stream);
     if (stream == 0) {
       luaL_error(L, "Needs a stream as 1st argument");
       return 0;
@@ -96,7 +96,7 @@ namespace basics {
   void writeSparseMatrixLuaMethod(lua_State *L, SparseMatrix<T> *obj) {
     april_io::StreamInterface *stream =
       lua_toAuxStreamInterface<april_io::StreamInterface>(L,1);
-    april_utils::UniquePtr<april_io::StreamInterface> ptr(stream);
+    april_utils::SharedPtr<april_io::StreamInterface> ptr(stream);
     const char *mode = luaL_optstring(L,2,"binary");
     april_utils::constString cs(mode);
     bool is_ascii = (cs == "ascii");

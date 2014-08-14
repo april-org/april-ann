@@ -85,7 +85,7 @@ namespace ANN {
      */
     virtual void privateReset(unsigned int it=0) = 0;
     
-    // virtual void computeGradients(MatrixFloat*& grads_mat) = 0;
+    // virtual void computeGradients(april_utils::SharedPtr<MatrixFloat> & grads_mat) = 0;
     
   public:
     VirtualSparseMatrixANNComponent(const char *name, const char *weights_name,

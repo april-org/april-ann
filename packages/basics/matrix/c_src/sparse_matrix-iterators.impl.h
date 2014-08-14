@@ -18,7 +18,10 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef SPARSE_MATRIX_ITERATORS_IMPL_H
+#define SPARSE_MATRIX_ITERATORS_IMPL_H
 
+#include "sparse_matrix.h"
 #include "unused_variable.h"
 
 namespace basics {
@@ -28,7 +31,6 @@ namespace basics {
   template <typename T>
   SparseMatrix<T>::iterator::iterator(SparseMatrix<T> *m, int idx) :
     m(m), idx(idx), first_index_pos(0) {
-    // IncRef(m);
     values      = m->values->getPPALForReadAndWrite();
     indices     = m->indices->getPPALForReadAndWrite();
     first_index = m->first_index->getPPALForReadAndWrite();
@@ -45,7 +47,6 @@ namespace basics {
     m(other.m),
     idx(other.idx),
     first_index_pos(other.first_index_pos) {
-    // IncRef(m);
     values      = m->values->getPPALForReadAndWrite();
     indices     = m->indices->getPPALForReadAndWrite();
     first_index = other.first_index;
@@ -53,15 +54,12 @@ namespace basics {
 
   template <typename T>
   SparseMatrix<T>::iterator::~iterator() {
-    // if (m) DecRef(m);
   }
 
   template <typename T>
   typename SparseMatrix<T>::iterator &SparseMatrix<T>::iterator::
   operator=(const SparseMatrix<T>::iterator &other) {
-    // if (m) DecRef(m);
     m = other.m;
-    // IncRef(m);
     idx = other.idx;
     values      = m->values->getPPALForReadAndWrite();
     indices     = m->indices->getPPALForReadAndWrite();
@@ -121,7 +119,6 @@ namespace basics {
   SparseMatrix<T>::const_iterator::const_iterator(const SparseMatrix<T> *m,
                                                   int idx) :
     m(m), idx(idx), first_index_pos(0) {
-    // IncRef(m);
     values      = m->values->getPPALForRead();
     indices     = m->indices->getPPALForRead();
     first_index = m->first_index->getPPALForRead();
@@ -138,9 +135,8 @@ namespace basics {
     m(other.m),
     idx(other.idx),
     first_index_pos(other.first_index_pos) {
-    // IncRef(m);
-    values      = m->values->getPPALForReadAndWrite();
-    indices     = m->indices->getPPALForReadAndWrite();
+    values      = m->values->getPPALForRead();
+    indices     = m->indices->getPPALForRead();
     first_index = other.first_index;
   }
 
@@ -149,7 +145,6 @@ namespace basics {
     m(other.m),
     idx(other.idx),
     first_index_pos(other.first_index_pos) {
-    // IncRef(m);
     values      = m->values->getPPALForRead();
     indices     = m->indices->getPPALForRead();
     first_index = other.first_index;
@@ -157,15 +152,12 @@ namespace basics {
 
   template <typename T>
   SparseMatrix<T>::const_iterator::~const_iterator() {
-    // if (m) DecRef(m);
   }
 
   template <typename T>
   typename SparseMatrix<T>::const_iterator &SparseMatrix<T>::const_iterator::
   operator=(const SparseMatrix<T>::const_iterator &other) {
-    // if (m) DecRef(m);
     m = other.m;
-    // IncRef(m);
     idx = other.idx;
     values      = m->values->getPPALForRead();
     indices     = m->indices->getPPALForRead();
@@ -177,9 +169,7 @@ namespace basics {
   template <typename T>
   typename SparseMatrix<T>::const_iterator &SparseMatrix<T>::const_iterator::
   operator=(const SparseMatrix<T>::iterator &other) {
-    // if (m) DecRef(m);
     m = other.m;
-    // IncRef(m);
     idx = other.idx;
     values      = m->values->getPPALForRead();
     indices     = m->indices->getPPALForRead();
@@ -244,3 +234,5 @@ namespace basics {
   }
 
 } // namespace basics
+
+#endif // SPARSE_MATRIX_ITERATORS_IMPL_H
