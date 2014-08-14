@@ -234,10 +234,12 @@ namespace basics {
       int dims[2], major_dim=0;
       dims[0] = static_cast<int>(bunch_size); dims[1] = patternSize();
       MatrixFloat *mat = new MatrixFloat(2, dims, CblasColMajor);
+      // The TokenMatrixFloat takes increases reference counter of Matrix.
       TokenMatrixFloat *token = new TokenMatrixFloat(mat);
+      // The memory block given to ds->getPattern(...).
       april_math::FloatGPUMirroredMemoryBlock *aux_mem_block = aux_mat->getRawDataAccess();
       float *aux_mem = aux_mem_block->getPPALForWrite();
-      int pattern_size = patternSize();
+      // int pattern_size = patternSize();
       int num_patterns = numPatterns();
       dims[major_dim] = 1;
       MatrixFloat::sliding_window window(mat, dims, 0, dims, 0, 0);

@@ -607,7 +607,7 @@ namespace basics {
   void Matrix<float>::svd(Matrix<float> **U, SparseMatrix<float> **S, Matrix<float> **VT) {
     if (numDim != 2)
       ERROR_EXIT(128, "Only bi-dimensional matrices are allowed\n");
-    april_utils::UniquePtr< Matrix<float> > A( this->clone(CblasColMajor) );
+    april_utils::SharedPtr< Matrix<float> > A( this->clone(CblasColMajor) );
     int INFO;
     const int m = A->matrixSize[0]; // cols
     const int n = A->matrixSize[1]; // rows

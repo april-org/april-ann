@@ -28,14 +28,20 @@
 #include "unused_variable.h"
 
 namespace april_utils {
+  
+  // forward declaration
+  template<typename T> class WeakPtr;
+  
   /**
-   * T must be derivated from Referenced.
+   * @brief A smart pointer for shared references.
+   * @note T must be derivated from Referenced.
    */
   template< typename T,
             typename Referencer=DefaultReferencer<T>,
             typename Deleter=DefaultDeleter<T> >
   class SharedPtr {
-    
+    friend class WeakPtr<T>;
+
   public:
     
     /**

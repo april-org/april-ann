@@ -407,7 +407,7 @@ namespace basics {
       april_math::GPUMirroredMemoryBlock<T> *new_data =
         new april_math::GPUMirroredMemoryBlock<T>(new_size);
       obj = new Matrix<T>(len, new_dims, major_order, new_data);
-      april_utils::UniquePtr< Matrix<T> > aux( obj->rewrap(this->getDimPtr(),
+      april_utils::SharedPtr< Matrix<T> > aux( obj->rewrap(this->getDimPtr(),
                                                            this->getNumDim()) );
       aux->copy(this);
     }

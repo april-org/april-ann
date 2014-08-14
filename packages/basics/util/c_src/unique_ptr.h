@@ -31,14 +31,11 @@
 namespace april_utils {
   
   /**
-   * @brief Smart pointer for Referenced with sanity check of getRef()==1.
-   *
-   * T must be derivated from Referenced, but a safe check will be done to
-   * ensure only one reference exists.
+   * @brief Smart pointer similar to auto_ptr in old C++ (before C++11).
    */
   template< typename T,
-            typename Referencer=DefaultReferencer<T>,
-            typename Deleter=DefaultDeleter<T> >
+            typename Referencer=StandardReferencer<T>,
+            typename Deleter=StandardDeleter<T> >
   class UniquePtr {
     
     APRIL_DISALLOW_COPY_AND_ASSIGN(UniquePtr);
@@ -204,7 +201,5 @@ namespace april_utils {
   }
   
 } // namespace april_utils
-
-#define STD_UNIQUE_PTR(T) april_utils::UniquePtr< T, april_utils::StandardReferencer<T>, april_utils::StandardDeleter<T> >
  
 #endif // UNIQUE_PTR_H

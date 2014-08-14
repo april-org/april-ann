@@ -40,10 +40,10 @@ namespace basics {
                                        Matrix<O> *dest=0) {
     const int numDim      = orig->getNumDim();
     const int *matrixSize = orig->getDimPtr();
-    STD_UNIQUE_PTR(int) result_dims( new int[numDim] );
+    april_utils::UniquePtr<int> result_dims( new int[numDim] );
     /**** ORIG sliding window ****/
-    STD_UNIQUE_PTR(int) orig_w_size( new int[numDim] );
-    STD_UNIQUE_PTR(int) orig_w_num_steps( new int[numDim] );
+    april_utils::UniquePtr<int> orig_w_size( new int[numDim] );
+    april_utils::UniquePtr<int> orig_w_num_steps( new int[numDim] );
     int result_size=1;
     for (int i=0; i<dim; ++i) {
       orig_w_size[i] = 1;
@@ -60,7 +60,7 @@ namespace basics {
     typename Matrix<T>::sliding_window orig_w(orig,orig_w_size.get(),
                                               0,0,
                                               orig_w_num_steps.get(),0);
-    april_utils::UniquePtr< Matrix<T> > slice( orig_w.getMatrix() );
+    april_utils::SharedPtr< Matrix<T> > slice( orig_w.getMatrix() );
     /******************************/
     Matrix<O> *result = dest;
     if (result == 0) result = new Matrix<O>(numDim, result_dims.get(),
@@ -110,7 +110,7 @@ namespace basics {
       result_dims[i] = orig_w_num_steps[i] = matrixSize[i];
     }
     typename Matrix<T>::sliding_window orig_w(orig,orig_w_size,0,0,orig_w_num_steps,0);
-    april_utils::UniquePtr< Matrix<T> > slice( orig_w.getMatrix() );
+    april_utils::SharedPtr< Matrix<T> > slice( orig_w.getMatrix() );
     /******************************/
     Matrix<O> *result = dest;
     if (result == 0) result = new Matrix<O>(numDim, result_dims,

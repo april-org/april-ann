@@ -29,7 +29,10 @@
 
 namespace april_utils {
   /**
-   * T can be any type, referenced or not referenced.
+   * @brief A plain wrapper over a pointer.
+   * @note T can be any type, referenced or not referenced.
+   *
+   * The WeakPtr is constructed by passing a SharedPtr object.
    */
   template<typename T>
   class WeakPtr {
@@ -64,6 +67,7 @@ namespace april_utils {
     template<typename R, typename D>
     WeakPtr(SharedPtr<T,R,D> &other) : ptr(other.ptr) { }
     WeakPtr(const WeakPtr<T> &other) : ptr(other.ptr) { }
+    WeakPtr(const SharedPtr<T> &other) : ptr(other.ptr) { }
 
     template<typename T1>
     WeakPtr(WeakPtr<T1> &other) : ptr(other.ptr) { }
@@ -71,6 +75,8 @@ namespace april_utils {
     WeakPtr(SharedPtr<T1,R,D> &other) : ptr(other.ptr) { }
     template<typename T1>
     WeakPtr(const WeakPtr<T1> &other) : ptr(other.ptr) { }
+    template<typename T1>
+    WeakPtr(const SharedPtr<T1> &other) : ptr(other.ptr) { }
     
     /**
      * Destructor.
@@ -122,6 +128,11 @@ namespace april_utils {
     }
     template<typename T1>
     WeakPtr<T> &operator=(const WeakPtr<T1> &other) {
+      reset(other.ptr);
+      return *this;
+    }
+    template<typename T1>
+    WeakPtr<T> &operator=(const SharedPtr<T1> &other) {
       reset(other.ptr);
       return *this;
     }

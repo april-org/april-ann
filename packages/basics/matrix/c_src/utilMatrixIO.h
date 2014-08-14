@@ -175,7 +175,7 @@ namespace basics {
       ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
       return 0;
     }
-    april_utils::UniquePtr<april_io::CStringStream>
+    april_utils::SharedPtr<april_io::CStringStream>
       c_str(new april_io::CStringStream());;
     april_assert(!c_str.empty());
     april_utils::constString line,format,order,token;
@@ -383,7 +383,7 @@ namespace basics {
       ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
       return 0;
     }
-    april_utils::UniquePtr<april_io::CStringStream> c_str;
+    april_utils::SharedPtr<april_io::CStringStream> c_str;
     c_str = new april_io::CStringStream();
     april_assert(!c_str.empty());
     april_utils::constString line("");
@@ -487,7 +487,7 @@ namespace basics {
       ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
       return 0;
     }
-    april_utils::UniquePtr<april_io::CStringStream>
+    april_utils::SharedPtr<april_io::CStringStream>
       c_str(new april_io::CStringStream());
     april_assert(!c_str.empty());
     april_utils::constString line,format,sparse,token;

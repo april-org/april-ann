@@ -81,7 +81,7 @@ namespace ANN {
   }
   
   char *ZCAWhiteningANNComponent::toLuaString() {
-    UniquePtr<CStringStream> stream(new CStringStream());
+    SharedPtr<CStringStream> stream(new CStringStream());
     stream->printf("ann.components.zca_whitening{ name='%s', U=matrix.fromString[[",
                    name.c_str());
     writeMatrixToStream(U, stream.get(), false);

@@ -21,7 +21,7 @@ const size_t REP = 10000;
 namespace april_io {
   
   TEST(FileStream, ConstructorTests) {
-    april_utils::UniquePtr<StreamInterface> ptr;
+    april_utils::SharedPtr<StreamInterface> ptr;
 
     remove(FILE1);
     
@@ -62,8 +62,8 @@ namespace april_io {
   }
   
   TEST(FileStream, ReadAndWrite) {
-    char *aux = new char[N+1];
-    april_utils::UniquePtr<StreamInterface> ptr;
+    april_utils::UniquePtr<char> aux( new char[N+1] );
+    april_utils::SharedPtr<StreamInterface> ptr;
     
     // write of a bunch of data
     ptr.reset( new FileStream(FILE1, "w") );
@@ -84,12 +84,12 @@ namespace april_io {
     EXPECT_TRUE( ptr->good() );
     for (unsigned int i=0; i<REP; ++i) {
       EXPECT_FALSE( ptr->eof() );
-      EXPECT_EQ( ptr->get(aux, N), N );
+      EXPECT_EQ( ptr->get(aux.get(), N), N );
       EXPECT_FALSE( ptr->hasError() );
       aux[N] = '\0';
-      EXPECT_STREQ( aux, DATA );
+      EXPECT_STREQ( aux.get(), DATA );
     }
-    EXPECT_EQ( ptr->get(aux, 1u), 0u ); // just in case to force EOF read
+    EXPECT_EQ( ptr->get(aux.get(), 1u), 0u ); // just in case to force EOF read
     EXPECT_TRUE( ptr->eof() );
     ptr->close();
     EXPECT_FALSE( ptr->hasError() );
@@ -102,29 +102,29 @@ namespace april_io {
     for (unsigned int i=0; i<REP; ++i) {
       EXPECT_FALSE( ptr->eof() );
       // LINE 1
-      EXPECT_EQ( ptr->get(aux, N, "\r\n"), N1 );
+      EXPECT_EQ( ptr->get(aux.get(), N, "\r\n"), N1 );
       EXPECT_FALSE( ptr->hasError() );
       aux[N1] = '\0';
-      EXPECT_STREQ( aux, LINE1 );
+      EXPECT_STREQ( aux.get(), LINE1 );
       // LINE 2
-      EXPECT_EQ( ptr->get(aux, N, "\r\n"), N2 );
+      EXPECT_EQ( ptr->get(aux.get(), N, "\r\n"), N2 );
       EXPECT_FALSE( ptr->hasError() );
       aux[N2] = '\0';
-      EXPECT_STREQ( aux, LINE2 );
+      EXPECT_STREQ( aux.get(), LINE2 );
       // LINE 3
-      EXPECT_EQ( ptr->get(aux, N, "\r\n"), N3 );
+      EXPECT_EQ( ptr->get(aux.get(), N, "\r\n"), N3 );
       EXPECT_FALSE( ptr->hasError() );
       aux[N3] = '\0';
-      EXPECT_STREQ( aux, LINE3 );
+      EXPECT_STREQ( aux.get(), LINE3 );
     }
     EXPECT_FALSE( ptr->eof() );
-    EXPECT_EQ( ptr->get(aux, N), 1u ); // just in case to force EOF read
+    EXPECT_EQ( ptr->get(aux.get(), N), 1u ); // just in case to force EOF read
     EXPECT_TRUE( ptr->eof() );
     ptr->close();
     EXPECT_FALSE( ptr->hasError() );
     
     // read into a c_string
-    april_utils::UniquePtr<CStringStream> c_str;
+    april_utils::SharedPtr<CStringStream> c_str;
     c_str.reset( new CStringStream() );
     EXPECT_TRUE( c_str->empty() );
     // EXPECT_TRUE( c_str->good() );
@@ -140,35 +140,34 @@ namespace april_io {
       EXPECT_EQ( ptr->get(c_str.get(), "\r\n"), N1 );
       EXPECT_FALSE( ptr->hasError() );
       c_str->flush();
-      EXPECT_EQ( c_str->get(aux, N1), N1 );
+      EXPECT_EQ( c_str->get(aux.get(), N1), N1 );
       aux[N1] = '\0';
-      EXPECT_STREQ( aux, LINE1 );
+      EXPECT_STREQ( aux.get(), LINE1 );
       // LINE 2
       EXPECT_EQ( ptr->get(c_str.get(), "\r\n"), N2 );
       EXPECT_FALSE( ptr->hasError() );
       c_str->flush();
-      EXPECT_EQ( c_str->get(aux, N2), N2 );
+      EXPECT_EQ( c_str->get(aux.get(), N2), N2 );
       aux[N2] = '\0';
-      EXPECT_STREQ( aux, LINE2 );
+      EXPECT_STREQ( aux.get(), LINE2 );
       // LINE 3
       EXPECT_EQ( ptr->get(c_str.get(), "\r\n"), N3 );
       EXPECT_FALSE( ptr->hasError() );
       c_str->flush();
-      EXPECT_EQ( c_str->get(aux, N3), N3 );
+      EXPECT_EQ( c_str->get(aux.get(), N3), N3 );
       aux[N3] = '\0';
-      EXPECT_STREQ( aux, LINE3 );
+      EXPECT_STREQ( aux.get(), LINE3 );
       // c_string asserts
       EXPECT_FALSE( c_str->hasError() );
       EXPECT_EQ( c_str->size(), (N1+N2+N3)*(i+1) );
     }
     EXPECT_FALSE( ptr->eof() );
-    EXPECT_EQ( ptr->get(aux, N), 1u ); // just in case to force EOF read
+    EXPECT_EQ( ptr->get(aux.get(), N), 1u ); // just in case to force EOF read
     EXPECT_TRUE( ptr->eof() );
     ptr->close();
     EXPECT_FALSE( ptr->hasError() );
     c_str->close();
     //
-    delete[] aux;
     remove(FILE1);
   }
 }

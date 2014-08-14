@@ -42,6 +42,12 @@ namespace ANN {
   }
 
   MatrixInputSwitchANNComponent::~MatrixInputSwitchANNComponent() {
+    if (input) DecRef(input);
+    if (output) DecRef(output);
+    if (error_input) DecRef(error_input);
+    if (error_output) DecRef(error_output);
+    if (sparse_input) DecRef(sparse_input);
+    if (sparse_error_output) DecRef(sparse_error_output);
   }
 
   Token *MatrixInputSwitchANNComponent::doDenseForward(Token *_input,
