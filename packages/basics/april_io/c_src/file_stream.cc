@@ -50,7 +50,7 @@ namespace april_io {
   }
 
   ssize_t FileStream::flushBuffer(const char *source, size_t max_size) {
-    ssize_t ret_value, total_size = 0;
+    ssize_t ret_value=0, total_size = 0;
     if (flags & (O_RDWR | O_WRONLY)) {
       do {
         if ((ret_value = write(fd, source, max_size)) > 0) total_size += ret_value;
