@@ -29,10 +29,10 @@
 #include "constString.h"
 #include "c_string.h"
 #include "error_print.h"
-#include "stream.h"
-#include "stream_memory.h"
 #include "matrix.h"
 #include "smart_ptr.h"
+#include "stream.h"
+#include "stream_memory.h"
 
 extern "C" {
 #include "lauxlib.h"
@@ -42,8 +42,8 @@ extern "C" {
 
 namespace basics {
 
-  april_utils::constString readULine(april_utils::UniquePtr<april_io::StreamInterface> &stream,
-                                     april_utils::UniquePtr<april_io::CStringStream> &dest);
+  april_utils::constString readULine(april_io::StreamInterface *stream,
+                                     april_io::CStringStream *dest);
 
   /* Templates for ascii and binary extractors, sizers and coders */
   
@@ -167,7 +167,7 @@ namespace basics {
 
   template <typename T>
   Matrix<T>*
-  readMatrixFromStream(april_utils::UniquePtr<april_io::StreamInterface> &stream,
+  readMatrixFromStream(april_io::StreamInterface *stream,
                        const char *given_order=0) {
     AsciiExtractor<T> ascii_extractor;
     BinaryExtractor<T> bin_extractor;
@@ -180,7 +180,7 @@ namespace basics {
     april_assert(!c_str.empty());
     april_utils::constString line,format,order,token;
     // First we read the matrix dimensions
-    line = readULine(stream, c_str);
+    line = readULine(stream, c_str.get());
     if (!line) {
       ERROR_PRINT("empty file!!!\n");
       return 0;
@@ -208,7 +208,7 @@ namespace basics {
     }
     Matrix<T> *mat = 0;
     // Now we read the type of the format
-    line = readULine(stream, c_str);
+    line = readULine(stream, c_str.get());
     format = line.extract_token();
     if (!format) {
       ERROR_PRINT("impossible to read format token\n");
@@ -227,13 +227,13 @@ namespace basics {
       }
       typename Matrix<T>::iterator data_it(mat->begin());
       if (format == "ascii") {
-        while (data_it!=mat->end() && (line=readULine(stream, c_str))) {
+        while (data_it!=mat->end() && (line=readULine(stream, c_str.get()))) {
           while (data_it!=mat->end() && ascii_extractor(line, *data_it)) {
             ++data_it;
           }
         }
       } else { // binary
-        while (data_it!=mat->end() && (line=readULine(stream, c_str))) {
+        while (data_it!=mat->end() && (line=readULine(stream, c_str.get()))) {
           while (data_it!=mat->end() && bin_extractor(line, *data_it)) {
             ++data_it;
           }
@@ -247,7 +247,7 @@ namespace basics {
       int size=0,maxsize=4096;
       T *data = new T[maxsize];
       if (format == "ascii") {
-        while ( (line=readULine(stream, c_str)) ) {
+        while ( (line=readULine(stream, c_str.get())) ) {
           while (ascii_extractor(line, data[size])) { 
             size++; 
             if (size == maxsize) { // resize data vector
@@ -261,7 +261,7 @@ namespace basics {
           }
         }
       } else { // binary
-        while ( (line=readULine(stream, c_str)) ) {
+        while ( (line=readULine(stream, c_str.get())) ) {
           while (bin_extractor(line, data[size])) {
             size++;
             if (size == maxsize) { // resize data vector
@@ -304,7 +304,7 @@ namespace basics {
   // Returns the number of chars written (there is a '\0' that is not counted)
   template <typename T>
   int writeMatrixToStream(Matrix<T> *mat,
-                          april_utils::UniquePtr<april_io::StreamInterface> &stream,
+                          april_io::StreamInterface *stream,
                           bool is_ascii) {
     AsciiSizer<T> ascii_sizer;
     BinarySizer<T> bin_sizer;
@@ -338,7 +338,7 @@ namespace basics {
       int i=0;
       for(typename Matrix<T>::const_iterator it(mat->begin());
           it!=mat->end();++it,++i) {
-        ascii_coder(*it, stream.get());
+        ascii_coder(*it, stream);
         stream->printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
       }
       if ((i % columns) != 0) {
@@ -359,7 +359,7 @@ namespace basics {
       for(typename Matrix<T>::const_iterator it(mat->begin());
           it!=mat->end();
           ++it,++i) {
-        bin_coder(*it, stream.get());
+        bin_coder(*it, stream);
         /*
           char b[5];
           binarizer::code_float(*it, b);
@@ -376,7 +376,7 @@ namespace basics {
 
   template <typename T>
   Matrix<T>*
-  readMatrixFromTabStream(april_utils::UniquePtr<april_io::StreamInterface> &stream,
+  readMatrixFromTabStream(april_io::StreamInterface *stream,
                           const char *given_order=0) {
     AsciiExtractor<T> ascii_extractor;
     if (!stream->good()) {
@@ -390,7 +390,7 @@ namespace basics {
     T value;
     int ncols = 0, nrows = 0;
     while (!stream->eof()) {
-      line = readULine(stream, c_str);
+      line = readULine(stream, c_str.get());
       if (line.len() > 0) {
         if (ncols == 0) {
           while(ascii_extractor(line,value)) ++ncols;
@@ -424,7 +424,7 @@ namespace basics {
     }
     int i=0;
     typename Matrix<T>::iterator data_it(mat->begin());
-    while (data_it!=mat->end() && (line=readULine(stream, c_str))) {
+    while (data_it!=mat->end() && (line=readULine(stream, c_str.get()))) {
       int num_cols_size_count = 0;
       while (data_it!=mat->end() &&
              ascii_extractor(line, *data_it)) {
@@ -447,7 +447,7 @@ namespace basics {
   // Returns the number of chars written (there is a '\0' that is not counted)
   template <typename T>
   int writeMatrixToTabStream(Matrix<T> *mat,
-                             april_utils::UniquePtr<april_io::StreamInterface> &stream) {
+                             april_io::StreamInterface *stream) {
     AsciiSizer<T> ascii_sizer;
     AsciiCoder<T> ascii_coder;
     if (mat->getNumDim() != 2) {
@@ -465,7 +465,7 @@ namespace basics {
     int i=0;
     for(typename Matrix<T>::const_iterator it(mat->begin());
         it!=mat->end();++it,++i) {
-      ascii_coder(*it, stream.get());
+      ascii_coder(*it, stream);
       stream->printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
     }
     if ((i % columns) != 0) {
@@ -480,7 +480,7 @@ namespace basics {
 
   template <typename T>
   SparseMatrix<T>*
-  readSparseMatrixFromStream(april_utils::UniquePtr<april_io::StreamInterface> &stream) {
+  readSparseMatrixFromStream(april_io::StreamInterface *stream) {
     AsciiExtractor<T> ascii_extractor;
     BinaryExtractor<T> bin_extractor;
     if (!stream->good()) {
@@ -492,7 +492,7 @@ namespace basics {
     april_assert(!c_str.empty());
     april_utils::constString line,format,sparse,token;
     // First we read the matrix dimensions
-    line = readULine(stream, c_str);
+    line = readULine(stream, c_str.get());
     if (!line) {
       ERROR_PRINT("empty file!!!\n");
       return 0;
@@ -511,7 +511,7 @@ namespace basics {
     }
     SparseMatrix<T> *mat = 0;
     // Now we read the type of the format
-    line = readULine(stream, c_str);
+    line = readULine(stream, c_str.get());
     format = line.extract_token();
     if (!format) {
       ERROR_PRINT("impossible to read format token\n");
@@ -537,7 +537,7 @@ namespace basics {
     if (format == "ascii") {
       int i=0;
       while(i<NZ) {
-        if (! (line=readULine(stream, c_str)) ) {
+        if (! (line=readULine(stream, c_str.get())) ) {
           ERROR_EXIT(128, "Incorrect sparse matrix format\n");
         }
         while(i<NZ &&
@@ -547,7 +547,7 @@ namespace basics {
       }
       i=0;
       while(i<NZ) {
-        if (! (line=readULine(stream, c_str)) ) {
+        if (! (line=readULine(stream, c_str.get())) ) {
           ERROR_EXIT(128, "Incorrect sparse matrix format\n");
         }
         while(i<NZ &&
@@ -557,7 +557,7 @@ namespace basics {
       }
       i=0;
       while(i<static_cast<int>(first_index->getSize())) {
-        if (! (line=readULine(stream, c_str)) ) {
+        if (! (line=readULine(stream, c_str.get())) ) {
           ERROR_EXIT(128, "Incorrect sparse matrix format\n");
         }
         while(i<static_cast<int>(first_index->getSize()) &&
@@ -568,7 +568,7 @@ namespace basics {
     } else { // binary
       int i=0;
       while(i<NZ) {
-        if (! (line=readULine(stream, c_str)) ) {
+        if (! (line=readULine(stream, c_str.get())) ) {
           ERROR_EXIT(128, "Incorrect sparse matrix format\n");
         }
         while(i<NZ &&
@@ -578,7 +578,7 @@ namespace basics {
       }
       i=0;
       while(i<NZ) {
-        if (! (line=readULine(stream, c_str)) ) {
+        if (! (line=readULine(stream, c_str.get())) ) {
           ERROR_EXIT(128, "Incorrect sparse matrix format\n");
         }
         while(i<NZ &&
@@ -588,7 +588,7 @@ namespace basics {
       }
       i=0;
       while(i<static_cast<int>(first_index->getSize())) {
-        if (! (line=readULine(stream, c_str)) ) {
+        if (! (line=readULine(stream, c_str.get())) ) {
           ERROR_EXIT(128, "Incorrect sparse matrix format\n");
         }
         while(i<static_cast<int>(first_index->getSize()) &&
@@ -614,7 +614,7 @@ namespace basics {
   // Returns the number of chars written (there is a '\0' that is not counted)
   template <typename T>
   int writeSparseMatrixToStream(SparseMatrix<T> *mat,
-                                april_utils::UniquePtr<april_io::StreamInterface> &stream,
+                                april_io::StreamInterface *stream,
                                 bool is_ascii) {
     SparseAsciiSizer<T> ascii_sizer;
     SparseBinarySizer<T> bin_sizer;
@@ -654,7 +654,7 @@ namespace basics {
       stream->printf("\n");
       int i;
       for (i=0; i<mat->nonZeroSize(); ++i) {
-        ascii_coder(values_ptr[i], stream.get());
+        ascii_coder(values_ptr[i], stream);
         stream->printf("%c", ((((i+1) % columns) == 0) ? '\n' : ' '));
       }
       if ((i % columns) != 0) {
@@ -683,7 +683,7 @@ namespace basics {
       int i=0;
       char b[5];
       for (i=0; i<mat->nonZeroSize(); ++i) {
-        bin_coder(values_ptr[i], stream.get());
+        bin_coder(values_ptr[i], stream);
         if ((i+1) % columns == 0) stream->printf("\n");
       }
       if ((i % columns) != 0) stream->printf("\n"); 

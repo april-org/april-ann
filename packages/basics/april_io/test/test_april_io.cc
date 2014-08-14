@@ -3,6 +3,7 @@
 #include "file_stream.h"
 #include "c_string.h"
 #include "gtest.h"
+#include "smart_ptr.h"
 
 const char *FILE1 = "/tmp/APRIL_IO_TEST1.txt";
 const char *DATA  = "some data\n\nin several lines\n\n\n\nto test streams.\n";
@@ -20,40 +21,40 @@ const size_t REP = 10000;
 namespace april_io {
   
   TEST(FileStream, ConstructorTests) {
-    FileStream *f = 0;
+    april_utils::UniquePtr<StreamInterface> ptr;
+
     remove(FILE1);
     
     // Constructor read-only open failure
-    AssignRef( f, new FileStream(FILE1, "r") );
-    EXPECT_TRUE( f->hasError() );
-    EXPECT_FALSE( f->isOpened() );
+    ptr.reset(new FileStream(FILE1, "r"));
+    EXPECT_TRUE( ptr->hasError() );
+    EXPECT_FALSE( ptr->isOpened() );
     
     // Constructor write-only
-    AssignRef(f, new FileStream(FILE1, "w"));
-    EXPECT_FALSE( f->hasError() );
-    EXPECT_TRUE( f->isOpened() );
-    f->close();
-    EXPECT_FALSE( f->hasError() );
+    ptr.reset(new FileStream(FILE1, "w"));
+    EXPECT_FALSE( ptr->hasError() );
+    EXPECT_TRUE( ptr->isOpened() );
+    ptr->close();
+    EXPECT_FALSE( ptr->hasError() );
     
     // Constructor from opened FILE
     FILE *file = tmpfile();
-    AssignRef(f, new FileStream(file));
-    EXPECT_FALSE( f->hasError() );
-    EXPECT_TRUE( f->isOpened() );
-    f->close();
-    EXPECT_FALSE( f->hasError() );
+    ptr.reset(new FileStream(file));
+    EXPECT_FALSE( ptr->hasError() );
+    EXPECT_TRUE( ptr->isOpened() );
+    ptr->close();
+    EXPECT_FALSE( ptr->hasError() );
     fclose(file);
     
     // Constructor from opened file descriptor
     char tmp_name[] = "/tmp/aXXXXXX";
     int fd = mkstemp(tmp_name);
     EXPECT_GE( fd, 0 );
-    AssignRef(f, new FileStream(fd));
-    EXPECT_FALSE( f->hasError() );
-    EXPECT_TRUE( f->isOpened() );
-    f->close();
-    EXPECT_FALSE( f->hasError() );
-    DecRef(f);
+    ptr.reset(new FileStream(fd));
+    EXPECT_FALSE( ptr->hasError() );
+    EXPECT_TRUE( ptr->isOpened() );
+    ptr->close();
+    EXPECT_FALSE( ptr->hasError() );
     close(fd);
     //
     remove(FILE1);
@@ -62,96 +63,96 @@ namespace april_io {
   
   TEST(FileStream, ReadAndWrite) {
     char *aux = new char[N+1];
-    FileStream *f = 0;
+    april_utils::UniquePtr<StreamInterface> ptr;
     
     // write of a bunch of data
-    AssignRef( f, new FileStream(FILE1, "w") );
-    EXPECT_FALSE( f->hasError() );
-    EXPECT_TRUE( f->isOpened() );
-    EXPECT_TRUE( f->good() );
+    ptr.reset( new FileStream(FILE1, "w") );
+    EXPECT_FALSE( ptr->hasError() );
+    EXPECT_TRUE( ptr->isOpened() );
+    EXPECT_TRUE( ptr->good() );
     for (unsigned int i=0; i<REP; ++i) {
-      EXPECT_EQ( f->put(DATA, N), N );
-      EXPECT_FALSE( f->hasError() );
+      EXPECT_EQ( ptr->put(DATA, N), N );
+      EXPECT_FALSE( ptr->hasError() );
     }
-    f->close();
-    EXPECT_FALSE( f->hasError() );
+    ptr->close();
+    EXPECT_FALSE( ptr->hasError() );
     
     // read of previous bunch of data
-    AssignRef(f, new FileStream(FILE1, "r"));
-    EXPECT_FALSE( f->hasError() );
-    EXPECT_TRUE( f->isOpened() );
-    EXPECT_TRUE( f->good() );
+    ptr.reset( new FileStream(FILE1, "r"));
+    EXPECT_FALSE( ptr->hasError() );
+    EXPECT_TRUE( ptr->isOpened() );
+    EXPECT_TRUE( ptr->good() );
     for (unsigned int i=0; i<REP; ++i) {
-      EXPECT_FALSE( f->eof() );
-      EXPECT_EQ( f->get(aux, N), N );
-      EXPECT_FALSE( f->hasError() );
+      EXPECT_FALSE( ptr->eof() );
+      EXPECT_EQ( ptr->get(aux, N), N );
+      EXPECT_FALSE( ptr->hasError() );
       aux[N] = '\0';
       EXPECT_STREQ( aux, DATA );
     }
-    EXPECT_EQ( f->get(aux, 1u), 0u ); // just in case to force EOF read
-    EXPECT_TRUE( f->eof() );
-    f->close();
-    EXPECT_FALSE( f->hasError() );
+    EXPECT_EQ( ptr->get(aux, 1u), 0u ); // just in case to force EOF read
+    EXPECT_TRUE( ptr->eof() );
+    ptr->close();
+    EXPECT_FALSE( ptr->hasError() );
     
     // read of previous bunch of data by lines
-    AssignRef(f, new FileStream(FILE1, "r"));
-    EXPECT_FALSE( f->hasError() );
-    EXPECT_TRUE( f->isOpened() );
-    EXPECT_TRUE( f->good() );
+    ptr.reset( new FileStream(FILE1, "r"));
+    EXPECT_FALSE( ptr->hasError() );
+    EXPECT_TRUE( ptr->isOpened() );
+    EXPECT_TRUE( ptr->good() );
     for (unsigned int i=0; i<REP; ++i) {
-      EXPECT_FALSE( f->eof() );
+      EXPECT_FALSE( ptr->eof() );
       // LINE 1
-      EXPECT_EQ( f->get(aux, N, "\r\n"), N1 );
-      EXPECT_FALSE( f->hasError() );
+      EXPECT_EQ( ptr->get(aux, N, "\r\n"), N1 );
+      EXPECT_FALSE( ptr->hasError() );
       aux[N1] = '\0';
       EXPECT_STREQ( aux, LINE1 );
       // LINE 2
-      EXPECT_EQ( f->get(aux, N, "\r\n"), N2 );
-      EXPECT_FALSE( f->hasError() );
+      EXPECT_EQ( ptr->get(aux, N, "\r\n"), N2 );
+      EXPECT_FALSE( ptr->hasError() );
       aux[N2] = '\0';
       EXPECT_STREQ( aux, LINE2 );
       // LINE 3
-      EXPECT_EQ( f->get(aux, N, "\r\n"), N3 );
-      EXPECT_FALSE( f->hasError() );
+      EXPECT_EQ( ptr->get(aux, N, "\r\n"), N3 );
+      EXPECT_FALSE( ptr->hasError() );
       aux[N3] = '\0';
       EXPECT_STREQ( aux, LINE3 );
     }
-    EXPECT_FALSE( f->eof() );
-    EXPECT_EQ( f->get(aux, N), 1u ); // just in case to force EOF read
-    EXPECT_TRUE( f->eof() );
-    f->close();
-    EXPECT_FALSE( f->hasError() );
+    EXPECT_FALSE( ptr->eof() );
+    EXPECT_EQ( ptr->get(aux, N), 1u ); // just in case to force EOF read
+    EXPECT_TRUE( ptr->eof() );
+    ptr->close();
+    EXPECT_FALSE( ptr->hasError() );
     
     // read into a c_string
-    CStringStream *c_str = 0;
-    AssignRef(c_str, new CStringStream());
+    april_utils::UniquePtr<CStringStream> c_str;
+    c_str.reset( new CStringStream() );
     EXPECT_TRUE( c_str->empty() );
     // EXPECT_TRUE( c_str->good() );
     EXPECT_EQ( c_str->size(), 0u );
     EXPECT_FALSE( c_str->hasError() );
-    AssignRef(f, new FileStream(FILE1, "r"));
-    EXPECT_FALSE( f->hasError() );
-    EXPECT_TRUE( f->isOpened() );
-    EXPECT_TRUE( f->good() );
+    ptr.reset( new FileStream(FILE1, "r"));
+    EXPECT_FALSE( ptr->hasError() );
+    EXPECT_TRUE( ptr->isOpened() );
+    EXPECT_TRUE( ptr->good() );
     for (unsigned int i=0; i<REP; ++i) {
-      EXPECT_FALSE( f->eof() );
+      EXPECT_FALSE( ptr->eof() );
       // LINE 1
-      EXPECT_EQ( f->get(c_str, "\r\n"), N1 );
-      EXPECT_FALSE( f->hasError() );
+      EXPECT_EQ( ptr->get(c_str.get(), "\r\n"), N1 );
+      EXPECT_FALSE( ptr->hasError() );
       c_str->flush();
       EXPECT_EQ( c_str->get(aux, N1), N1 );
       aux[N1] = '\0';
       EXPECT_STREQ( aux, LINE1 );
       // LINE 2
-      EXPECT_EQ( f->get(c_str, "\r\n"), N2 );
-      EXPECT_FALSE( f->hasError() );
+      EXPECT_EQ( ptr->get(c_str.get(), "\r\n"), N2 );
+      EXPECT_FALSE( ptr->hasError() );
       c_str->flush();
       EXPECT_EQ( c_str->get(aux, N2), N2 );
       aux[N2] = '\0';
       EXPECT_STREQ( aux, LINE2 );
       // LINE 3
-      EXPECT_EQ( f->get(c_str, "\r\n"), N3 );
-      EXPECT_FALSE( f->hasError() );
+      EXPECT_EQ( ptr->get(c_str.get(), "\r\n"), N3 );
+      EXPECT_FALSE( ptr->hasError() );
       c_str->flush();
       EXPECT_EQ( c_str->get(aux, N3), N3 );
       aux[N3] = '\0';
@@ -160,14 +161,12 @@ namespace april_io {
       EXPECT_FALSE( c_str->hasError() );
       EXPECT_EQ( c_str->size(), (N1+N2+N3)*(i+1) );
     }
-    EXPECT_FALSE( f->eof() );
-    EXPECT_EQ( f->get(aux, N), 1u ); // just in case to force EOF read
-    EXPECT_TRUE( f->eof() );
-    f->close();
-    EXPECT_FALSE( f->hasError() );
+    EXPECT_FALSE( ptr->eof() );
+    EXPECT_EQ( ptr->get(aux, N), 1u ); // just in case to force EOF read
+    EXPECT_TRUE( ptr->eof() );
+    ptr->close();
+    EXPECT_FALSE( ptr->hasError() );
     c_str->close();
-    DecRef(c_str);
-    
     //
     delete[] aux;
     remove(FILE1);

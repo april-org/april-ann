@@ -129,6 +129,10 @@ namespace april_io {
     return source_len;
   }
 
+  size_t StreamBuffer::put(const char *source) {
+    return put(source, strlen(source));
+  }
+
   int StreamBuffer::printf(const char *format, ...) {
     va_list arg;
     char *aux_buffer;

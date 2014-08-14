@@ -119,15 +119,14 @@ namespace ANN {
   }
   
   char *PCAWhiteningANNComponent::toLuaString() {
-    CStringStream *ptr = new CStringStream();
-    UniquePtr<StreamInterface> stream(ptr);
+    UniquePtr<CStringStream> stream(new CStringStream());
     stream->printf("ann.components.pca_whitening{ name='%s', U=matrix.fromString[[",
                    name.c_str());
-    writeMatrixToStream(U, stream, false);
+    writeMatrixToStream(U, stream.get(), false);
     stream->put("]], S=matrix.sparse.fromString[[");
-    writeSparseMatrixToStream(S, stream, false);
+    writeSparseMatrixToStream(S, stream.get(), false);
     stream->printf("]], epsilon=%g, takeN=%u, }", epsilon, takeN);
     stream->put("\0",1); // forces a \0 at the end of the buffer
-    return ptr->releaseString();
+    return stream->releaseString();
   }
 }

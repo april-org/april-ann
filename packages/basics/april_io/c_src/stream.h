@@ -107,9 +107,7 @@ namespace april_io {
     virtual size_t put(const char *source, size_t size) = 0;
 
     /// Puts a zero ended string, uses strlen to compute source length.
-    virtual size_t put(const char *source) {
-      return put(source, strlen(source));
-    }
+    virtual size_t put(const char *source) = 0;
     
     /// Writes a set of values following the given format. Equals to C printf.    
     virtual int printf(const char *format, ...) = 0;
@@ -166,6 +164,7 @@ namespace april_io {
     virtual size_t get(char *dest, size_t max_size, const char *delim = 0);
     virtual size_t put(StreamInterface *source, size_t size);
     virtual size_t put(const char *source, size_t size);
+    virtual size_t put(const char *source);
     virtual int printf(const char *format, ...);
     virtual bool eof() const;
     

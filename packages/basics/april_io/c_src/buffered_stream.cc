@@ -211,6 +211,10 @@ namespace april_io {
     return ret_value;
   }
 
+  size_t BufferedInputStream::put(const char *source) {
+    return put(source, strlen(source));
+  }
+
   size_t BufferedInputStream::put(const char *source, size_t size) {
     // TODO: control errors
     return privateWrite(source, size);

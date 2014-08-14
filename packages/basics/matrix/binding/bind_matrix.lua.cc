@@ -135,7 +135,7 @@ namespace basics {
       luaL_error(L, "Needs a stream as 1st argument");
       return 0;
     }
-    return readMatrixFromStream<T>(ptr, order); 
+    return readMatrixFromStream<T>(ptr.get(), order); 
   }
 
   template<typename T>
@@ -146,7 +146,7 @@ namespace basics {
     const char *mode = luaL_optstring(L,2,"binary");
     april_utils::constString cs(mode);
     bool is_ascii = (cs == "ascii");
-    writeMatrixToStream(obj, ptr, is_ascii);
+    writeMatrixToStream(obj, ptr.get(), is_ascii);
   }
 
   template<typename T>
@@ -160,7 +160,7 @@ namespace basics {
       luaL_error(L, "Needs a stream as 1st argument");
       return 0;
     }
-    return readMatrixFromTabStream<T>(ptr, order); 
+    return readMatrixFromTabStream<T>(ptr.get(), order); 
   }
 
   template<typename T>
@@ -168,7 +168,7 @@ namespace basics {
     april_io::StreamInterface *stream =
       lua_toAuxStreamInterface<april_io::StreamInterface>(L,1);
     april_utils::UniquePtr<april_io::StreamInterface> ptr(stream);
-    writeMatrixToTabStream(obj, ptr);
+    writeMatrixToTabStream(obj, ptr.get());
   }
 }
 //BIND_END

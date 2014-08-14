@@ -22,10 +22,10 @@
 
 namespace basics {
   
-  april_utils::constString readULine(april_utils::UniquePtr<april_io::StreamInterface> &stream,
-                                     april_utils::UniquePtr<april_io::CStringStream> &dest) {
+  april_utils::constString readULine(april_io::StreamInterface *stream,
+                                     april_io::CStringStream *dest) {
     // Not needed, it is done in extractULineFromStream: dest->clear(); 
-    extractULineFromStream(stream.get(), dest.get());
+    extractULineFromStream(stream, dest);
     return dest->getConstString();
   }
   

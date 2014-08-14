@@ -169,11 +169,10 @@ namespace ANN {
   }
   
   char *Connections::toLuaString(MatrixFloat *weights) {
-    CStringStream *ptr = new CStringStream();
-    UniquePtr<StreamInterface> stream(ptr);
+    UniquePtr<CStringStream> stream(new CStringStream());
     stream->put("matrix.fromString[[");
-    writeMatrixToStream(weights, stream, false);
+    writeMatrixToStream(weights, stream.get(), false);
     stream->put("]]\0", 3); // forces a \0 at the end of the buffer
-    return ptr->releaseString();
+    return stream->releaseString();
   }
 }

@@ -89,7 +89,7 @@ namespace basics {
       luaL_error(L, "Needs a stream as 1st argument");
       return 0;
     }
-    return readSparseMatrixFromStream<T>(ptr); 
+    return readSparseMatrixFromStream<T>(ptr.get());
   }
 
   template<typename T>
@@ -100,7 +100,7 @@ namespace basics {
     const char *mode = luaL_optstring(L,2,"binary");
     april_utils::constString cs(mode);
     bool is_ascii = (cs == "ascii");
-    writeSparseMatrixToStream(obj, ptr, is_ascii);
+    writeSparseMatrixToStream(obj, ptr.get(), is_ascii);
   }
 } // namespace basics
 

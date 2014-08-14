@@ -86,6 +86,7 @@ namespace april_io {
     virtual size_t get(char *dest, size_t max_size, const char *delim = 0);
     virtual size_t put(StreamInterface *source, size_t size);
     virtual size_t put(const char *source, size_t size);
+    virtual size_t put(const char *source);
     virtual int printf(const char *format, ...);
     virtual bool eof() const;
     virtual off_t seek(int whence=SEEK_CUR, int offset=0);
