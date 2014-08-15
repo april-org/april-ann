@@ -71,6 +71,7 @@ T *lua_toAuxStreamInterface(lua_State *L, int index) {
 //BIND_END
 
 //BIND_HEADER_C
+#include "april_assert.h"
 namespace april_io {
 
   int readAndPushNumberToLua(lua_State *L, StreamInterface *obj,
