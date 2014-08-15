@@ -30,9 +30,14 @@
 
 namespace LanguageModels {
   
-  using april_utils::vector;
+  /**
+   * @brief The standard WordType is an unsigned integer of 32 bits.
+   *
+   * @note 4G words are possible to be represented.
+   */
   typedef uint32_t WordType;
-
+  
+  // forward declaration
   class LMHistoryManager;
 
   // Score is usually log_float
@@ -40,22 +45,31 @@ namespace LanguageModels {
   template <typename Key, typename Score>
   class LMModel; // forward declaration
   
-  // Score is usually log_float
-  // Key is usually uint32_t
-  
-  /// LMInterface is the non-thread-safe wrapper around a LMModel.  The
-  /// LMModel contains the 'static' (and usually thread-safe) data
-  /// (e.g. the actual automata, the MLPs of a NNLM, etc.) whereas the
-  /// LMInterface usually contains other data structures to perform the
-  /// actual computation of LM queries. It also contains the
-  /// LMHistoryManager
+  /**
+   * @brief LMInterface is the non-thread-safe warpper around a LMModel.
+   *
+   * The LMModel contains the 'static' (and usually thread-safe) data (e.g. the
+   * actual automata, the MLPs of a NNLM, etc.) where as the LMInterface usually
+   * contains other data structures to perform the actual computation of LM
+   * queries.
+   *
+   * @note In history based LMs this class contains a history manager, usually a
+   * april_utils::TrieVector instance.
+   *
+   * @note Score is usually april_utils::log_float.
+   *
+   * @note Key is usually WordType (uint32_t).
+   */
   template <typename Key, typename Score>
   class LMInterface : public Referenced {
+    /// The LMModel is a friend class because LMInterface constructor is
+    /// protected, and it is forced to be called from LMModel::getInterface()
+    /// method.
     friend class LMModel<Key,Score>;
     
   public:
     
-    /// This is a tuple with a LM key and an associated score
+    /// This is a tuple with a LM Ley and an associated Score.
     struct KeyScoreTuple {
       Key key;
       Score score;
@@ -64,10 +78,10 @@ namespace LanguageModels {
         key(k), score(s) {}
     };
     
-    /// This is the burden ignored by the LM but needed by our decoders
+    /// This is the burden ignored by the LM but needed by our decoders.
     struct Burden {
-      int32_t id_key;
-      int32_t id_word;
+      int32_t id_key;  ///< Usually a number related with the context.
+      int32_t id_word; ///< Usually a number related with the next word.
       Burden() {}
       Burden(int32_t id_key, int32_t id_word) :
         id_key(id_key), id_word(id_word) {}
@@ -75,19 +89,23 @@ namespace LanguageModels {
       id_key(other.id_key), id_word(other.id_word) { }
     };
     
-    /// This struct is the result produced by the LM query, a pair of
-    /// (key,score), which is the next LM key and its associated score, and the
-    /// burden struct, which currently contains two identifiers
+    /**
+     * @brief This struct is the result of a LM query.
+     *
+     * This struct is the result produced by the LM query, a pair of
+     * (Key,S), which is the next LM Key and its associated S, and the
+     * Burden struct, which currently contains two identifiers.
+     */
     struct KeyScoreBurdenTuple {
-      KeyScoreTuple key_score;
-      Burden  burden;
+      KeyScoreTuple key_score; ///< The (Key,Score) pair.
+      Burden  burden;          ///< The Burden related with this pair.
       KeyScoreBurdenTuple() {}
       KeyScoreBurdenTuple(Key k, Score s, Burden burden) :
         key_score(k,s), burden(burden) {}
     };
     
     /// This struct is used for the insertQuery method which receives several
-    /// words together
+    /// words together.
     struct WordIdScoreTuple {
       WordType word;
       int32_t  id_word;
@@ -98,21 +116,26 @@ namespace LanguageModels {
     };
     
   protected:
-    /// auxiliary result vector
-    vector<KeyScoreBurdenTuple> result;
+    /// Auxiliary result vector.
+    april_utils::vector<KeyScoreBurdenTuple> result;
     
+    /// The model reference.
     LMModel<Key,Score>* model;
+    
+    /// The protected constructor, only callable from LMModel::getInterface()
+    /// method.
     LMInterface(LMModel<Key,Score>* model) : model(model) {
       IncRef(model);
     }
     
   public:
-
+    
+    /// Destructor.
     virtual ~LMInterface() { 
       DecRef(model);
     }
 
-    /// retrieves the LMModel where this LMInterface was obtained
+    /// Retrieves the LMModel where this LMInterface was obtained.
     virtual LMModel<Key, Score>* getLMModel() {
       return model;
     }
@@ -125,21 +148,37 @@ namespace LanguageModels {
     // pre-condition)
     
     
-    /// this method is the same get with an interface more similar to
-    /// the bunch (multiple queries) mode
-    /// TODO: threshold should have a default value
+    /**
+     * @brief Queries the model with a (Key,WordType,Burden) tuple.
+     *
+     * This method returns all the (Key,WordType) pairs of a transition in the
+     * LMModel by using the state @c key with the given @c word
+     * instance. Additionally a @c threshold is given to perform beam pruning.
+     *
+     * @param key - The context or state from where the transition starts.
+     *
+     * @param word - The transition word.
+     *
+     * @param[in,out] result - An april_utils::vector with all the destination
+     * states.
+     *
+     * @param threshold - The threshold for the beam pruning.
+     *
+     * @note The result vector is not cleared, so all the resulting states will
+     * be appended using april_utils::vector::push_back() method.
+     */
     virtual void get(Key key, WordType word, Burden burden,
-                     vector<KeyScoreBurdenTuple> &result,
+                     april_utils::vector<KeyScoreBurdenTuple> &result,
                      Score threshold) = 0;
     
     /// this method computes the next keys given a pair (key,word). It could be a
     /// non-deterministic LM. By default, it uses the standard get() method and
     /// discards the Burden and Score.
     virtual void getNextKeys(Key key, WordType word,
-                             vector<Key> &result) {
-      vector<KeyScoreBurdenTuple> aux_result;
+                             april_utils::vector<Key> &result) {
+      april_utils::vector<KeyScoreBurdenTuple> aux_result;
       get(key, word, Burden(-1,-1), aux_result, Score::zero());
-      for (typename vector<KeyScoreBurdenTuple>::iterator it = aux_result.begin();
+      for (typename april_utils::vector<KeyScoreBurdenTuple>::iterator it = aux_result.begin();
            it != aux_result.end(); ++it)
         result.push_back(it->key_score.key);
     }
@@ -166,11 +205,11 @@ namespace LanguageModels {
     /// this method can be naively converted into a series of
     /// insertQuery calls, but it can be optimized for some 
     virtual void insertQueries(Key key, int32_t id_key,
-                               vector<WordIdScoreTuple> words,
+                               april_utils::vector<WordIdScoreTuple> words,
                                bool is_sorted=false) {
       UNUSED_VARIABLE(is_sorted);
       // default behavior
-      for (typename vector<WordIdScoreTuple>::iterator it = words.begin();
+      for (typename april_utils::vector<WordIdScoreTuple>::iterator it = words.begin();
         it != words.end(); ++it)
         insertQuery(key, it->word, Burden(id_key, it->id_word), it->score);
     }
@@ -183,7 +222,7 @@ namespace LanguageModels {
     /// automata (e.g. ngram_lira) may perform the LM queries in the
     /// insert method so that here they only have to return the result
     /// vector.
-    virtual const vector<KeyScoreBurdenTuple> &getQueries() {
+    virtual const april_utils::vector<KeyScoreBurdenTuple> &getQueries() {
       return result;
     }
 
@@ -212,38 +251,69 @@ namespace LanguageModels {
     virtual Score getFinalScore(Key k, Score threshold) = 0;
   };
 
-  /// The LMModel is the thread-safe part of the LM, where the model data is
-  /// stored
+  /**
+   * @brief The LMModel is the thread-safe part of the LM.
+   *
+   * This class is where the model data is stored, it is thread-safe and
+   * therefore can be shared between multiples threads.
+   *
+   * @note Score is usually a april_utils::log_float.
+   *
+   * @note Key is usually a WordType (uint32_t).
+   */
   template <typename Key, typename Score>
   class LMModel : public Referenced {
   public:
-
+    
+    /// Constructor
     LMModel() : Referenced() {}
+    /// Destructor
     virtual ~LMModel() {}
-
+    
+    /**
+     * @brief Indicates if the model is deterministic or not.
+     *
+     * @note the default implementation is <tt>return false</tt>.
+     */
     virtual bool isDeterministic() const {
       // default behavior
       return false;
     }
     
-    // FIXME: Is it needed?
-    // return -1 when it is not an ngram
+    /**
+     * @brief Indicates the order of the N-gram.
+     *
+     * @note By default it returns @c -1 indicating that the model is not an
+     * N-gram model.
+     */
     virtual int ngramOrder() const {
       // default behavior
       return -1;
     }
     
-
+    /**
+     * @brief Indicates if the model requires a history manager.
+     *
+     * @note By default it is <tt>return true</tt>
+     */
     virtual bool requireHistoryManager() const {
       // default behavior
       return true;
     }
-
+    
+    /**
+     * @brief Returns an instance of the interface with the model.
+     *
+     * All derived classes must implement this getInterface() method which must
+     * return the proper instance of a LMInterface derived class corresponding
+     * with a proper LMModel. Every thread which needs to query the language
+     * model needs to get an interface using this method.
+     */
     virtual LMInterface<Key,Score>* getInterface() = 0;
   };
   
-  typedef LMInterface<uint32_t,log_float> LMInterfaceUInt32LogFloat;
-  typedef LMModel<uint32_t,log_float> LMModelUInt32LogFloat;
+  typedef LMInterface<uint32_t,april_utils::log_float> LMInterfaceUInt32LogFloat;
+  typedef LMModel<uint32_t,april_utils::log_float> LMModelUInt32LogFloat;
 
 }; // closes namespace
 

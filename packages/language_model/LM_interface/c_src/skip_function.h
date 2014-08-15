@@ -40,7 +40,7 @@ namespace Functions {
     virtual unsigned int getOutputSize() const {
       return 0;
     }
-    virtual Token *calculate(Token *input) {
+    virtual basics::Token *calculate(basics::Token *input) {
       return input;
     }
   };

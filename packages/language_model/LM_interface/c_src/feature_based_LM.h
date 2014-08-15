@@ -29,14 +29,13 @@
 #include "function_interface.h"
 #include "history_based_LM.h"
 #include "logbase.h"
+#include "matrixFloat.h"
 #include "token_matrix.h"
 #include "trie_vector.h"
 #include "unused_variable.h"
 #include "vector.h"
 
 namespace LanguageModels {
-
-  using april_utils::vector;
 
   template <typename Key, typename Score>
   class FeatureBasedLM;
@@ -58,13 +57,13 @@ namespace LanguageModels {
     typedef typename BunchHashedLMInterface<Key,Score>::KeyWordHash KeyWordHash;
     typedef typename BunchHashedLMInterface<Key,Score>::WordResultHash WordResultHash;
 
-    virtual void executeQueries(Token *input) = 0;
+    virtual void executeQueries(basics::Token *input) = 0;
 
     virtual void computeKeysAndScores(KeyWordHash &ctxt_hash,
                                       unsigned int bunch_size) {
       UNUSED_VARIABLE(bunch_size);
-      FloatMatrix mat;
-      Token *input = new TokenMatrixFloat(mat);
+      basics::MatrixFloat *mat;
+      basics::Token *input = new basics::TokenMatrixFloat(mat);
       // For each context key entry
       for (typename KeyWordHash::iterator it = ctxt_hash.begin();
         it != ctxt_hash.end(); ++it) {
@@ -79,7 +78,7 @@ namespace LanguageModels {
           // Add pattern to token input with key and word
         }
       }
-      Token *filtered_input = filter->calculate(input);
+      basics::Token *filtered_input = filter->calculate(input);
       executeQueries(filtered_input);
     }
 
@@ -99,7 +98,7 @@ namespace LanguageModels {
       return (HistoryBasedLMInterface<Key,Score>::getRef() <= 0);
     }
 
-    Token* applyFilter(Token* token) {
+    basics::Token* applyFilter(basics::Token* token) {
       return filter->calculate(token);
     }
   };
@@ -143,8 +142,10 @@ namespace LanguageModels {
     }
   };
 
-  typedef FeatureBasedLMInterface<uint32_t, log_float> FeatureBasedLMInterfaceUInt32LogFloat;
-  typedef FeatureBasedLM<uint32_t, log_float> FeatureBasedLMUInt32LogFloat;
+  typedef FeatureBasedLMInterface<uint32_t, april_utils::log_float>
+  FeatureBasedLMInterfaceUInt32LogFloat;
+  typedef FeatureBasedLM<uint32_t, april_utils::log_float>
+  FeatureBasedLMUInt32LogFloat;
 }; // closes namespace
 
 #endif // FEATURE_BASED_LM_H

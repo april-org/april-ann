@@ -21,5 +21,7 @@
  */
 #include "LM_interface.h"
 
-template<> class LMInterface<uint32_t,log_float>;
-template<> class LMModel<uint32_t,log_float>;
+namespace LanguageModels {
+  template<> class LMInterface<uint32_t,april_utils::log_float>;
+  template<> class LMModel<uint32_t,april_utils::log_float>;
+}

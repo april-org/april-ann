@@ -33,8 +33,6 @@
 
 namespace LanguageModels {
 
-  using april_utils::vector;
-
   template <typename Key, typename Score>
   class HistoryBasedLM;
 
@@ -147,7 +145,7 @@ namespace LanguageModels {
 
     virtual void get(Key key, WordType word,
                      Burden burden,
-                     vector<KeyScoreBurdenTuple> &result,
+                     april_utils::vector<KeyScoreBurdenTuple> &result,
                      Score threshold) {
       const int order = this->model->ngramOrder();
       unsigned int offset;
@@ -168,7 +166,7 @@ namespace LanguageModels {
     }
 
     virtual void getNextKeys(Key key, WordType word,
-                             vector<Key> &result) {
+                             april_utils::vector<Key> &result) {
       unsigned int offset;
       const unsigned int context_size = getContextProperties(key,
                                                              context_words,
@@ -273,8 +271,10 @@ namespace LanguageModels {
     // virtual LMInterface<Key,Score>* getInterface() = 0;
   };
 
-  typedef HistoryBasedLMInterface<uint32_t, log_float> HistoryBasedLMInterfaceUInt32LogFloat;
-  typedef HistoryBasedLM<uint32_t, log_float> HistoryBasedLMUInt32LogFloat;
+  typedef HistoryBasedLMInterface<uint32_t, april_utils::log_float>
+  HistoryBasedLMInterfaceUInt32LogFloat;
+  typedef HistoryBasedLM<uint32_t, april_utils::log_float>
+  HistoryBasedLMUInt32LogFloat;
 }; // closes namespace
 
 #endif // HISTORY_BASED_LM_H
