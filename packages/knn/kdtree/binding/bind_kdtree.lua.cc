@@ -52,7 +52,7 @@ using namespace KNN;
 //BIND_METHOD KDTreeFloat push
 {
   LUABIND_CHECK_ARGN(==,1);
-  MatrixFloat *m;
+  basics::MatrixFloat *m;
   LUABIND_GET_PARAMETER(1,MatrixFloat,m);
   obj->pushMatrix(m);
   LUABIND_RETURN(KDTreeFloat, obj);
@@ -75,7 +75,7 @@ using namespace KNN;
 
 //BIND_METHOD KDTreeFloat searchNN
 {
-  MatrixFloat *point;
+  basics::MatrixFloat *point;
   double distance;
   LUABIND_GET_PARAMETER(1,MatrixFloat,point);
   int idx = obj->searchNN(point,distance,0);
@@ -86,7 +86,7 @@ using namespace KNN;
 
 //BIND_METHOD KDTreeFloat searchKNN
 {
-  MatrixFloat *point;
+  basics::MatrixFloat *point;
   int K;
   LUABIND_GET_PARAMETER(1,int,K);
   LUABIND_GET_PARAMETER(2,MatrixFloat,point);
@@ -119,10 +119,10 @@ using namespace KNN;
 {
   int index, row;
   LUABIND_GET_PARAMETER(1, int, index);
-  MatrixFloat *m = obj->getMatrixAndRow(index-1,row);
+  basics::MatrixFloat *m = obj->getMatrixAndRow(index-1,row);
   int coords[2] = { row, 0 };
   int sizes[2]  = { 1, obj->getDimSize() };
-  LUABIND_RETURN(MatrixFloat, new MatrixFloat(m, coords, sizes, false));
+  LUABIND_RETURN(MatrixFloat, new basics::MatrixFloat(m, coords, sizes, false));
   LUABIND_RETURN(MatrixFloat, m);
 }
 //BIND_END

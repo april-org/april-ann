@@ -55,7 +55,7 @@
 
 
 #include <cmath> // ceilf
-#include <stddef.h> // ptrdiff_t, size_t...
+#include <cstddef> // ptrdiff_t, size_t...
 #include "pair.h"
 #include "aux_hash_table.h"
 

@@ -23,13 +23,17 @@
 #include "matrix.h"
 #include "matrix_not_implemented.h"
 
-NOT_IMPLEMENT_AXPY_HEADER(char)
-NOT_IMPLEMENT_GEMM_HEADER(char)
-NOT_IMPLEMENT_GEMV_HEEADER(char)
-NOT_IMPLEMENT_GER_HEADER(char)
-NOT_IMPLEMENT_DOT_HEADER(char)
+namespace basics {
 
-///////////////////////////////////////////////////////////////////////////////
-typedef Matrix<char> MatrixChar;
+  NOT_IMPLEMENT_AXPY_HEADER(char)
+  NOT_IMPLEMENT_GEMM_HEADER(char)
+  NOT_IMPLEMENT_GEMV_HEEADER(char)
+  NOT_IMPLEMENT_GER_HEADER(char)
+  NOT_IMPLEMENT_DOT_HEADER(char)
+
+  ///////////////////////////////////////////////////////////////////////////////
+  typedef Matrix<char> MatrixChar;
+
+} // namespace basics
 
 #endif // MATRIX_CHAR_H

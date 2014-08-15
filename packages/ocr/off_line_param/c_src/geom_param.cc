@@ -25,9 +25,9 @@
 #include <cstdio>
 #include <cstring>
 
-using april_utils::clamp;
-using april_utils::derivative1;
-using april_utils::derivative2;
+using namespace april_utils;
+using namespace basics;
+using namespace imaging;
 
 namespace OCR {
   namespace OffLineTextPreprocessing {

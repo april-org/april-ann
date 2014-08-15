@@ -2,6 +2,11 @@
 #include "utilLua.h"
 #include "hmm_trainer.h"
 #include "bind_matrix.h"
+using namespace HMMs;
+//BIND_END
+
+//BIND_HEADER_C
+using namespace april_utils;
 //BIND_END
 
 //BIND_LUACLASSNAME hmm_trainer hmm_trainer

@@ -21,11 +21,15 @@
 #include "matrixChar.h"
 #include "matrix_not_implemented.h"
 
-NOT_IMPLEMENT_AXPY(char)
-NOT_IMPLEMENT_GEMM(char)
-NOT_IMPLEMENT_GEMV(char)
-NOT_IMPLEMENT_GER(char)
-NOT_IMPLEMENT_DOT(char)
+namespace basics {
 
-///////////////////////////////////////////////////////////////////////////////
-template class Matrix<char>;
+  NOT_IMPLEMENT_AXPY(char)
+  NOT_IMPLEMENT_GEMM(char)
+  NOT_IMPLEMENT_GEMV(char)
+  NOT_IMPLEMENT_GER(char)
+  NOT_IMPLEMENT_DOT(char)
+
+  ///////////////////////////////////////////////////////////////////////////////
+  template class Matrix<char>;
+
+} // namespace basics

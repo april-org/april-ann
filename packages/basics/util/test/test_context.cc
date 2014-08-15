@@ -4,6 +4,7 @@
 
 using april_utils::context;
 using namespace std;
+using namespace april_utils;
 
 namespace test_context {
   // test suite= ContextTest, test name= All

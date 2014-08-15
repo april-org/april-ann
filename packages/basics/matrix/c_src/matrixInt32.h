@@ -23,22 +23,26 @@
 #include "matrix.h"
 #include "matrix_not_implemented.h"
 
-NOT_IMPLEMENT_AXPY_HEADER(int32_t)
-NOT_IMPLEMENT_GEMM_HEADER(int32_t)
-NOT_IMPLEMENT_GEMV_HEEADER(int32_t)
-NOT_IMPLEMENT_GER_HEADER(int32_t)
-NOT_IMPLEMENT_DOT_HEADER(int32_t)
+namespace basics {
 
-/************* ZEROS FUNCTION **************/
-template<>
-void Matrix<int32_t>::zeros();
+  NOT_IMPLEMENT_AXPY_HEADER(int32_t)
+  NOT_IMPLEMENT_GEMM_HEADER(int32_t)
+  NOT_IMPLEMENT_GEMV_HEEADER(int32_t)
+  NOT_IMPLEMENT_GER_HEADER(int32_t)
+  NOT_IMPLEMENT_DOT_HEADER(int32_t)
 
-/************* ONES FUNCTION **************/
-template<>
-void Matrix<int32_t>::ones();
+  /************* ZEROS FUNCTION **************/
+  template<>
+  void Matrix<int32_t>::zeros();
 
-///////////////////////////////////////////////////////////////////////////////
+  /************* ONES FUNCTION **************/
+  template<>
+  void Matrix<int32_t>::ones();
 
-typedef Matrix<int32_t> MatrixInt32;
+  ///////////////////////////////////////////////////////////////////////////////
+
+  typedef Matrix<int32_t> MatrixInt32;
+
+} // namespace basics
 
 #endif // MATRIX_INT_H

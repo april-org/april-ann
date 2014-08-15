@@ -2,7 +2,7 @@
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
- * Copyright 2013, Francisco Zamora-Martinez
+ * Copyright 2014, Francisco Zamora-Martinez
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
@@ -18,6 +18,15 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "buffered_file.h"
+#include "utilMatrixIO.h"
 
-template class BufferedMemory<FileWrapper>;
+namespace basics {
+  
+  april_utils::constString readULine(april_io::StreamInterface *stream,
+                                     april_io::CStringStream *dest) {
+    // Not needed, it is done in extractULineFromStream: dest->clear(); 
+    extractULineFromStream(stream, dest);
+    return dest->getConstString();
+  }
+  
+} // namespace basics

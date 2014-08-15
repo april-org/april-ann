@@ -21,10 +21,14 @@
 #include <typeinfo>
 #include "token_base.h"
 
-Token::Token() : Referenced()
-{
-}
+namespace basics {
 
-Token::~Token()
-{
-}
+  Token::Token() : Referenced()
+  {
+  }
+
+  Token::~Token()
+  {
+  }
+
+} // namespace basics

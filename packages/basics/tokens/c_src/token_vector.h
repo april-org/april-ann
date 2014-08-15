@@ -25,155 +25,157 @@
 #include "token_base.h"
 #include "vector.h"
 
-using april_utils::vector;
+namespace basics {
 
-class TokenVectorGeneric : public Token {
-  APRIL_DISALLOW_COPY_AND_ASSIGN(TokenVectorGeneric);
-public:
-  TokenVectorGeneric() : Token() { }
-  virtual unsigned int size() const = 0;
-  virtual void clear() = 0;
-};
+  class TokenVectorGeneric : public Token {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(TokenVectorGeneric);
+  public:
+    TokenVectorGeneric() : Token() { }
+    virtual unsigned int size() const = 0;
+    virtual void clear() = 0;
+  };
 
-template <typename T>
-class TokenVector : public TokenVectorGeneric {
-  APRIL_DISALLOW_COPY_AND_ASSIGN(TokenVector);
-  april_utils::vector<T> vec;
-public:
-  TokenVector();
-  TokenVector(unsigned int vlength);
-  // always copy the vector
-  TokenVector(const T *vec, unsigned int vlength);
-  TokenVector(const april_utils::vector<T> &vec);
-  ~TokenVector();
+  template <typename T>
+  class TokenVector : public TokenVectorGeneric {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(TokenVector);
+    april_utils::vector<T> vec;
+  public:
+    TokenVector();
+    TokenVector(unsigned int vlength);
+    // always copy the vector
+    TokenVector(const T *vec, unsigned int vlength);
+    TokenVector(const april_utils::vector<T> &vec);
+    ~TokenVector();
   
-  T& operator[] (unsigned int i) { return vec[i]; }
-  const T& operator[] (unsigned int i) const { return vec[i]; }
-  april_utils::vector<T> &getContainer() { return vec; }
-  const april_utils::vector<T> &getContainer() const { return vec; }
-  void push_back(T &data) { vec.push_back(data); }
-  T *data() { return vec.begin(); }
-  const T *data() const { return vec.begin(); }
-  Token *clone() const;
-  buffer_list* toString();
-  buffer_list* debugString(const char *prefix, int debugLevel);
-  TokenCode getTokenCode() const;
-  static Token *fromString(constString &cs);
-  virtual unsigned int size() const { return vec.size(); }
-  virtual void clear() { vec.clear(); }
-};
+    T& operator[] (unsigned int i) { return vec[i]; }
+    const T& operator[] (unsigned int i) const { return vec[i]; }
+    april_utils::vector<T> &getContainer() { return vec; }
+    const april_utils::vector<T> &getContainer() const { return vec; }
+    void push_back(T &data) { vec.push_back(data); }
+    T *data() { return vec.begin(); }
+    const T *data() const { return vec.begin(); }
+    Token *clone() const;
+    april_utils::buffer_list* toString();
+    april_utils::buffer_list* debugString(const char *prefix, int debugLevel);
+    TokenCode getTokenCode() const;
+    static Token *fromString(april_utils::constString &cs);
+    virtual unsigned int size() const { return vec.size(); }
+    virtual void clear() { vec.clear(); }
+  };
 
-typedef TokenVector<float>    TokenVectorFloat;
-typedef TokenVector<double>   TokenVectorDouble;
-typedef TokenVector<int32_t>  TokenVectorInt32;
-typedef TokenVector<uint32_t> TokenVectorUint32;
-typedef TokenVector<char>     TokenVectorChar;
-typedef TokenVector<Token*>   TokenBunchVector;
+  typedef TokenVector<float>    TokenVectorFloat;
+  typedef TokenVector<double>   TokenVectorDouble;
+  typedef TokenVector<int32_t>  TokenVectorInt32;
+  typedef TokenVector<uint32_t> TokenVectorUint32;
+  typedef TokenVector<char>     TokenVectorChar;
+  typedef TokenVector<Token*>   TokenBunchVector;
 
-/* forward declarations */
+  /* forward declarations */
 
-template<>
-buffer_list* TokenVector<float>::toString();
+  template<>
+  april_utils::buffer_list* TokenVector<float>::toString();
 
-template<>
-buffer_list* TokenVector<float>::debugString(const char *prefix,
-					     int debugLevel);
+  template<>
+  april_utils::buffer_list* TokenVector<float>::debugString(const char *prefix,
+                                                            int debugLevel);
 
-template <>
-TokenCode TokenVector<float>::getTokenCode() const;
+  template <>
+  TokenCode TokenVector<float>::getTokenCode() const;
 
-template <>
-Token *TokenVector<float>::fromString(constString &cs);
+  template <>
+  Token *TokenVector<float>::fromString(april_utils::constString &cs);
 
-// ------------------------- vector double -------------------------
+  // ------------------------- vector double -------------------------
 
-template <>
-buffer_list* TokenVector<double>::toString();
+  template <>
+  april_utils::buffer_list* TokenVector<double>::toString();
+  
+  template <>
+  april_utils::buffer_list* TokenVector<double>::debugString(const char *prefix,
+                                                             int debugLevel);
 
-template <>
-buffer_list* TokenVector<double>::debugString(const char *prefix,
-					      int debugLevel);
+  template <>
+  TokenCode TokenVector<double>::getTokenCode() const;
 
-template <>
-TokenCode TokenVector<double>::getTokenCode() const;
+  template <>
+  Token *TokenVector<double>::fromString(april_utils::constString &cs);
 
-template <>
-Token *TokenVector<double>::fromString(constString &cs);
+  // ------------------------- vector int32 -------------------------
 
-// ------------------------- vector int32 -------------------------
+  template <>
+  april_utils::buffer_list* TokenVector<int32_t>::toString();
 
-template <>
-buffer_list* TokenVector<int32_t>::toString();
+  template <>
+  april_utils::buffer_list* TokenVector<int32_t>::debugString(const char *prefix,
+                                                              int debugLevel);
 
-template <>
-buffer_list* TokenVector<int32_t>::debugString(const char *prefix,
-					       int debugLevel);
+  template <>
+  TokenCode TokenVector<int32_t>::getTokenCode() const;
 
-template <>
-TokenCode TokenVector<int32_t>::getTokenCode() const;
+  template <>
+  Token *TokenVector<int32_t>::fromString(april_utils::constString &cs);
 
-template <>
-Token *TokenVector<int32_t>::fromString(constString &cs);
+  // ------------------------- vector uint32_t -------------------------
 
-// ------------------------- vector uint32_t -------------------------
+  template <>
+  april_utils::buffer_list* TokenVector<uint32_t>::toString();
 
-template <>
-buffer_list* TokenVector<uint32_t>::toString();
+  template <>
+  april_utils::buffer_list* TokenVector<uint32_t>::debugString(const char *prefix,
+                                                               int debugLevel);
 
-template <>
-buffer_list* TokenVector<uint32_t>::debugString(const char *prefix,
-						int debugLevel);
+  template <>
+  TokenCode TokenVector<uint32_t>::getTokenCode() const;
 
-template <>
-TokenCode TokenVector<uint32_t>::getTokenCode() const;
+  template <>
+  Token *TokenVector<uint32_t>::fromString(april_utils::constString &cs);
 
-template <>
-Token *TokenVector<uint32_t>::fromString(constString &cs);
+  // ------------------------- vector char -------------------------
 
-// ------------------------- vector char -------------------------
+  template <>
+  april_utils::buffer_list* TokenVector<char>::toString();
 
-template <>
-buffer_list* TokenVector<char>::toString();
+  template <>
+  april_utils::buffer_list* TokenVector<char>::debugString(const char *prefix,
+                                                           int debugLevel);
 
-template <>
-buffer_list* TokenVector<char>::debugString(const char *prefix,
-					    int debugLevel);
+  template <>
+  TokenCode TokenVector<char>::getTokenCode() const;
 
-template <>
-TokenCode TokenVector<char>::getTokenCode() const;
-
-template <>
-Token *TokenVector<char>::fromString(constString &cs);
+  template <>
+  Token *TokenVector<char>::fromString(april_utils::constString &cs);
 
 
-// ------------------------- vector token -------------------------
+  // ------------------------- vector token -------------------------
 
-template <>
-TokenVector<Token*>::TokenVector(Token * const *vec, unsigned int vlength);
+  template <>
+  TokenVector<Token*>::TokenVector(Token * const *vec, unsigned int vlength);
 
-template <>
-TokenVector<Token*>::TokenVector(const vector<Token*> &vec);
+  template <>
+  TokenVector<Token*>::TokenVector(const april_utils::vector<Token*> &vec);
 
-template<>
-void TokenVector<Token*>::clear();
+  template<>
+  void TokenVector<Token*>::clear();
 
-template<>
-void TokenVector<Token*>::push_back(Token *&data);
+  template<>
+  void TokenVector<Token*>::push_back(Token *&data);
 
-template <>
-TokenVector<Token*>::~TokenVector();
+  template <>
+  TokenVector<Token*>::~TokenVector();
 
-template <>
-buffer_list* TokenVector<Token*>::toString();
+  template <>
+  april_utils::buffer_list* TokenVector<Token*>::toString();
 
-template <>
-buffer_list* TokenVector<Token*>::debugString(const char *prefix,
-					      int debugLevel);
+  template <>
+  april_utils::buffer_list* TokenVector<Token*>::debugString(const char *prefix,
+                                                             int debugLevel);
 
-template <>
-TokenCode TokenVector<Token*>::getTokenCode() const;
+  template <>
+  TokenCode TokenVector<Token*>::getTokenCode() const;
 
-template <>
-Token *TokenVector<Token*>::fromString(constString &cs);
+  template <>
+  Token *TokenVector<Token*>::fromString(april_utils::constString &cs);
+
+} // namespace basics
 
 #endif // TOKEN_VECTOR_H

@@ -22,12 +22,16 @@
 #define MATRIX_DOUBLE_H
 #include "matrix.h"
 
-typedef Matrix<double> MatrixDouble;
+namespace basics {
 
-template<>
-void Matrix<double>::zeros();
+  typedef Matrix<double> MatrixDouble;
 
-template<>
-void Matrix<double>::ones();
+  template<>
+  void Matrix<double>::zeros();
+
+  template<>
+  void Matrix<double>::ones();
+
+}
 
 #endif // MATRIX_DOUBLE_H

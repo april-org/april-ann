@@ -33,10 +33,8 @@ namespace Functions {
   /**
      A FunctionInterface is an abstraction of an object which represents a
      mathematical function. It adds to the interface abstract methods which
-     calculates output vector given input vector, and a basic implementation of
-     a method that consumes input vectors (from a DataProducer) and produces
-     output vectros (to a DataConsumer).  Every function is feeded with an input
-     Token and produces an output Token.
+     calculates output vector given input vector. Every function is feeded with
+     an input Token and produces an output Token.
    */
   class FunctionInterface : public Referenced {
   public:
@@ -49,7 +47,7 @@ namespace Functions {
     virtual unsigned int getOutputSize() const = 0;
     /// A new abstract method that computes output vector given input vector.
     // FIXME: const Token *input
-    virtual Token *calculate(Token *input) = 0;
+    virtual basics::Token *calculate(basics::Token *input) = 0;
   };
 }
 

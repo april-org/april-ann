@@ -41,11 +41,13 @@ namespace april_utils {
     }
   
     WordsTable(WordsTable *other, unsigned int *filter) {
-      for (unsigned int i=0; i<other->table_first_index.size(); ++i)
+      for (unsigned int i=0; i<other->table_first_index.size(); ++i) {
 	table_first_index.push_back(other->table_first_index[i]);
+      }
       words.reserve(other->words.size());
-      for (unsigned int i=0; i<other->words.size(); ++i)
+      for (unsigned int i=0; i<other->words.size(); ++i) {
 	words[i] = filter[other->words[i]];
+      }
     }
   
     ~WordsTable() {

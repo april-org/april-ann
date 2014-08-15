@@ -5,6 +5,9 @@ class.extend(matrixInt32, "to_lua_string",
                                     self:toString())
 end)
 
+-- serialization
+matrix.__make_all_serialization_methods__(matrixInt32)
+
 matrixInt32.meta_instance.__call =
   matrix.__make_generic_call__()
 

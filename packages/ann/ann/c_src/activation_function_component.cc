@@ -23,6 +23,10 @@
 #include "activation_function_component.h"
 #include "wrapper.h"
 
+using namespace basics;
+using namespace april_utils;
+using namespace april_math;
+
 namespace ANN {
   
   ActivationFunctionANNComponent::ActivationFunctionANNComponent(const char *name) :

@@ -1,6 +1,6 @@
  package{ name = "matrix",
    version = "1.0",
-   depends = { "util", "mathcore", "random", "gzio" },
+   depends = { "util", "mathcore", "random", "april_io" },
    keywords = { "matrix" },
    description = "no description available",
    -- targets como en ant
@@ -59,24 +59,24 @@
 	dest_dir = "build",
      },
      build_bind{
-	file = "binding/bind_matrix_complex_float.lua.cc",
-	dest_dir = "build",
+        file = "binding/bind_matrix_complex_float.lua.cc",
+        dest_dir = "build",
      },
      build_bind{
-	file = "binding/bind_matrix_double.lua.cc",
-	dest_dir = "build",
+        file = "binding/bind_matrix_double.lua.cc",
+        dest_dir = "build",
      },
      build_bind{
-	file = "binding/bind_matrix_int32.lua.cc",
-	dest_dir = "build",
+       file = "binding/bind_matrix_int32.lua.cc",
+       dest_dir = "build",
      },
      build_bind{
-	file = "binding/bind_matrix_char.lua.cc",
-	dest_dir = "build",
+        file = "binding/bind_matrix_char.lua.cc",
+        dest_dir = "build",
      },
      build_bind{
-	file = "binding/bind_referenced_vector.lua.cc",
-	dest_dir = "build",
+        file = "binding/bind_referenced_vector.lua.cc",
+        dest_dir = "build",
      }
    },
    target{

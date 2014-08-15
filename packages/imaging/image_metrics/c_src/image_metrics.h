@@ -26,65 +26,70 @@
 #include "datasetFloat.h"
 #include "utilImageFloat.h"
 
-/**
- Class that contains the counters for calculate the metrics on two different
- datasets (predicted and reference)
+namespace imaging {
 
- The counters are doubles, but they can be used as integer (binary classification problem)
- or doubles (real values classification)
-**/
-class ImageMetrics : public Referenced {
-public:
+  /**
+     Class that contains the counters for calculate the metrics on two different
+     datasets (predicted and reference)
 
-  /// Classification Counters
-  double true_positives;
-  double false_positives;
-  double true_negatives;
-  double false_negatives;
-  
-  //// The SSE cannot be computed throw the counters
-  double SSE;
-  long  long int n_samples;
-           
-  //// Creator
-  ImageMetrics(double tp=0.0f, double fp=0.0f, double tn=0.0f, double fn=0.0f,
-		double SSE=0.0, long int n_samples=0) : 
-    true_positives(tp),
-    false_positives(fp),
-    true_negatives(tn),
-    false_negatives(fn),
-    SSE(SSE), n_samples(n_samples) {
-  }
-
-  //// Add one sample to the counters
-  void processSample(float pred, float ref);
-
-  //// Takes two datasets and add the information to the counters
-  void processDataset(DataSetFloat *ds, DataSetFloat *GT, bool binary, float threshold);
-            
-  /** Returns differents measures
-    FM   - Fmeasure
-    PR   - Precission
-    RC   - Recall
-    GA   - Geometrical Arithmetic 
-    TNR  - True Negative Rate
-    PSNR - Peak signal-to-noise ratio
-    ACC  - Acurracy
-    BRP  - Black Rate Predicted (ratio of black pixels in prediction)
-    BRR  - Black Rate Reference
+     The counters are doubles, but they can be used as integer (binary classification problem)
+     or doubles (real values classification)
   **/
-  bool getMetrics(double &FM, double &PR, double &RC, double &GA, double &MSE, double &TNR, double &ACC, double &PSNR, double &BRP, double &BRR, double &FNR);
+  class ImageMetrics : public Referenced {
+  public:
 
-  //// Take a classes and add the counters to this
-  void combine(ImageMetrics &m1);
+    /// Classification Counters
+    double true_positives;
+    double false_positives;
+    double true_negatives;
+    double false_negatives;
   
-  //// Return the total number of samples
-  int nSamples();
+    //// The SSE cannot be computed throw the counters
+    double SSE;
+    long  long int n_samples;
+           
+    //// Creator
+    ImageMetrics(double tp=0.0f, double fp=0.0f, double tn=0.0f, double fn=0.0f,
+                 double SSE=0.0, long int n_samples=0) : 
+      true_positives(tp),
+      false_positives(fp),
+      true_negatives(tn),
+      false_negatives(fn),
+      SSE(SSE), n_samples(n_samples) {
+    }
 
-  //// Reset the counters
-  void clear();
+    //// Add one sample to the counters
+    void processSample(float pred, float ref);
 
-  ImageMetrics* clone();
-};
+    //// Takes two datasets and add the information to the counters
+    void processDataset(basics::DataSetFloat *ds, basics::DataSetFloat *GT,
+                        bool binary, float threshold);
+            
+    /** Returns differents measures
+        FM   - Fmeasure
+        PR   - Precission
+        RC   - Recall
+        GA   - Geometrical Arithmetic 
+        TNR  - True Negative Rate
+        PSNR - Peak signal-to-noise ratio
+        ACC  - Acurracy
+        BRP  - Black Rate Predicted (ratio of black pixels in prediction)
+        BRR  - Black Rate Reference
+    **/
+    bool getMetrics(double &FM, double &PR, double &RC, double &GA, double &MSE, double &TNR, double &ACC, double &PSNR, double &BRP, double &BRR, double &FNR);
+
+    //// Take a classes and add the counters to this
+    void combine(ImageMetrics &m1);
+  
+    //// Return the total number of samples
+    int nSamples();
+
+    //// Reset the counters
+    void clear();
+
+    ImageMetrics* clone();
+  };
+
+} // namespace imaging
 
 #endif

@@ -26,75 +26,80 @@
 #include "token_base.h"
 #include "unused_variable.h"
 
-template<typename T>
-class TokenSparseMatrix : public Token {
-  APRIL_DISALLOW_COPY_AND_ASSIGN(TokenSparseMatrix);
-  SparseMatrix<T> *mat;
-public:
-  TokenSparseMatrix(SparseMatrix<T> *mat);
-  ~TokenSparseMatrix();
-  SparseMatrix<T> *getMatrix() { return mat; }
-  const SparseMatrix<T> *getMatrix() const { return mat; }
-  unsigned int size() const { return mat->size(); }
-  Token *clone() const;
-  buffer_list* toString();
-  buffer_list* debugString(const char *prefix, int debugLevel);
-  TokenCode getTokenCode() const;
-  static Token *fromString(constString &cs) {
+namespace basics {
+
+  template<typename T>
+  class TokenSparseMatrix : public Token {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(TokenSparseMatrix);
+    SparseMatrix<T> *mat;
+  public:
+    TokenSparseMatrix(SparseMatrix<T> *mat);
+    ~TokenSparseMatrix();
+    SparseMatrix<T> *getMatrix() { return mat; }
+    const SparseMatrix<T> *getMatrix() const { return mat; }
+    unsigned int size() const { return mat->size(); }
+    Token *clone() const;
+    april_utils::buffer_list* toString();
+    april_utils::buffer_list* debugString(const char *prefix, int debugLevel);
+    TokenCode getTokenCode() const;
+    static Token *fromString(april_utils::constString &cs) {
+      // NOT IMPLEMENTED
+      UNUSED_VARIABLE(cs);
+      return 0;
+    }
+    bool getCudaFlag() { return mat->getCudaFlag(); }
+    void printDebug() {
+      /*
+        const float *data = mem_block->getPPALForRead();
+        for (unsigned int i=0; i<used_size; ++i)
+        printf ("%f ", data[i]);
+        printf("\n");
+      */
+    }
+  };
+
+  template<typename T>
+  TokenSparseMatrix<T>::TokenSparseMatrix(SparseMatrix<T> *mat) :
+    Token(),
+    mat(mat) {
+    IncRef(mat);
+  }
+
+  template<typename T>
+  TokenSparseMatrix<T>::~TokenSparseMatrix() {
+    DecRef(mat);
+  }
+
+  template<typename T>
+  Token *TokenSparseMatrix<T>::clone() const {
+    TokenSparseMatrix *token = new TokenSparseMatrix( mat->clone() );
+    return token;
+  }
+
+  template<typename T>
+  april_utils::buffer_list* TokenSparseMatrix<T>::toString() {
     // NOT IMPLEMENTED
-    UNUSED_VARIABLE(cs);
     return 0;
   }
-  bool getCudaFlag() { return mat->getCudaFlag(); }
-  void printDebug() {
-    /*
-      const float *data = mem_block->getPPALForRead();
-      for (unsigned int i=0; i<used_size; ++i)
-      printf ("%f ", data[i]);
-      printf("\n");
-    */
+
+  template<typename T>
+  april_utils::buffer_list* TokenSparseMatrix<T>::debugString(const char *prefix,
+                                                              int debugLevel) {
+    // NOT IMPLEMENTED
+    UNUSED_VARIABLE(prefix);
+    UNUSED_VARIABLE(debugLevel);
+    return 0;
   }
-};
 
-template<typename T>
-TokenSparseMatrix<T>::TokenSparseMatrix(SparseMatrix<T> *mat) :
-  Token(),
-  mat(mat) {
-  IncRef(mat);
-}
+  template<typename T>
+  TokenCode TokenSparseMatrix<T>::getTokenCode() const {
+    return table_of_token_codes::token_sparse_matrix;
+  }
 
-template<typename T>
-TokenSparseMatrix<T>::~TokenSparseMatrix() {
-  DecRef(mat);
-}
+  ///////////////////////////////////////////////////////////////////////////
 
-template<typename T>
-Token *TokenSparseMatrix<T>::clone() const {
-  TokenSparseMatrix *token = new TokenSparseMatrix( mat->clone() );
-  return token;
-}
+  typedef TokenSparseMatrix<float> TokenSparseMatrixFloat;
 
-template<typename T>
-buffer_list* TokenSparseMatrix<T>::toString() {
-  // NOT IMPLEMENTED
-  return 0;
-}
-
-template<typename T>
-buffer_list* TokenSparseMatrix<T>::debugString(const char *prefix, int debugLevel) {
-  // NOT IMPLEMENTED
-  UNUSED_VARIABLE(prefix);
-  UNUSED_VARIABLE(debugLevel);
-  return 0;
-}
-
-template<typename T>
-TokenCode TokenSparseMatrix<T>::getTokenCode() const {
-  return table_of_token_codes::token_sparse_matrix;
-}
-
-///////////////////////////////////////////////////////////////////////////
-
-typedef TokenSparseMatrix<float> TokenSparseMatrixFloat;
+} // namespace basics
 
 #endif // TOKEN_SPARSE_MATRIX_H

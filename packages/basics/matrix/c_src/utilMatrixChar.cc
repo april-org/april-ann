@@ -23,73 +23,59 @@
 #include "binarizer.h"
 #include "clamp.h"
 #include "matrixFloat.h"
-#include "buffered_gzfile.h"
-#include "buffered_file.h"
 #include "ignore_result.h"
 #include <cmath>
 #include <cstdio>
 
-void writeMatrixCharToFile(MatrixChar *mat,
-			   const char *filename) {
-  if (GZFileWrapper::isGZ(filename)) {
-    BufferedGZFile f(filename, "w");
-    writeMatrixToStream(mat, f, CharAsciiSizer(), CharBinarySizer(),
-			CharAsciiCoder<BufferedGZFile>(),
-			CharBinaryCoder<BufferedGZFile>(),
-			true);
-  }
-  else {
-    BufferedFile f(filename, "w");
-    writeMatrixToStream(mat, f, CharAsciiSizer(), CharBinarySizer(),
-			CharAsciiCoder<BufferedFile>(),
-			CharBinaryCoder<BufferedFile>(),
-			true);
-  }
-}
 
-char *writeMatrixCharToString(MatrixChar *mat,
-			      int &len) {
-  WriteBufferWrapper wrapper;
-  len = writeMatrixToStream(mat, wrapper,
-			    CharAsciiSizer(),
-			    CharBinarySizer(),
-			    CharAsciiCoder<WriteBufferWrapper>(),
-			    CharBinaryCoder<WriteBufferWrapper>(),
-			    true);
-  return wrapper.getBufferProperty();
-}
+namespace basics {
 
-void writeMatrixCharToLuaString(MatrixChar *mat,
-				lua_State *L,
-				bool is_ascii) {
-  WriteLuaBufferWrapper wrapper(L);
-  IGNORE_RESULT(writeMatrixToStream(mat, wrapper,
-				    CharAsciiSizer(),
-				    CharBinarySizer(),
-				    CharAsciiCoder<WriteLuaBufferWrapper>(),
-				    CharBinaryCoder<WriteLuaBufferWrapper>(),
-				    is_ascii));
-  wrapper.finish();
-}
-
-MatrixChar *readMatrixCharFromFile(const char *filename) {
-  if (GZFileWrapper::isGZ(filename)) {
-    BufferedGZFile f(filename, "r");
-    return readMatrixFromStream<BufferedGZFile,
-				char>(f, CharAsciiExtractor(),
-				      CharBinaryExtractor());
+  /////////////////////////////////////////////////////////////////////////
+  
+  template<>
+  bool AsciiExtractor<char>::operator()(april_utils::constString &line,
+                                        char &destination) {
+    if (!line.extract_char(&destination)) return false;
+    return true;
   }
-  else {
-    BufferedFile f(filename, "r");
-    return readMatrixFromStream<BufferedFile,
-				char>(f, CharAsciiExtractor(),
-				      CharBinaryExtractor());
-  }
-}
+  
+  template<>
+  bool BinaryExtractor<char>::operator()(april_utils::constString &line,
+                                         char &destination) {
+    UNUSED_VARIABLE(line);
+    UNUSED_VARIABLE(destination);
+    ERROR_EXIT(128, "Char type has not binary option\n");
+    return false;
 
-MatrixChar *readMatrixCharFromString(constString &cs) {
-  return readMatrixFromStream<constString,
-			      char>(cs,
-				    CharAsciiExtractor(),
-				    CharBinaryExtractor());
-}
+  }
+  
+  template<>
+  int AsciiSizer<char>::operator()(const Matrix<char> *mat) {
+    return mat->size()*2;
+  }
+
+  template<>
+  int BinarySizer<char>::operator()(const Matrix<char> *mat) {
+    UNUSED_VARIABLE(mat);
+    ERROR_EXIT(128, "Char type has not binary option\n");
+    return 0;
+  }
+
+  template<>
+  void AsciiCoder<char>::operator()(const char &value,
+                                    april_io::StreamInterface *stream) {
+    stream->printf("%c", value);
+  }
+  
+  template<>
+  void BinaryCoder<char>::operator()(const char &value,
+                                     april_io::StreamInterface *stream) {
+    UNUSED_VARIABLE(value);
+    UNUSED_VARIABLE(stream);
+    ERROR_EXIT(128, "Char type has not binary option\n");
+
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+
+} // namespace basics

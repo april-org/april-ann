@@ -1,8 +1,9 @@
-local packages_list = { 
-  -- BASIC PACKAGES
+return { 
+  -- BASIC PACAKGES
   --  "plotter",
   "util",
   "gtest",
+  "april_io",
   "utest",
   "stats",
   "dataset",
@@ -10,8 +11,10 @@ local packages_list = {
   "random",
   "cmdOpt",
   "profiler",
+  "complex",
   "mathcore",
   "gzio",
+  "tar",
   "matlab",
   "stats.MI",
   "autodiff",
@@ -51,5 +54,3 @@ local packages_list = {
   "hmm_trainer",
   "rates",
 }
-
-return packages_list

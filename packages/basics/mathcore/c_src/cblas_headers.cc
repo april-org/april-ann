@@ -26,6 +26,7 @@
 #include "error_print.h"
 
 using april_utils::swap;
+using april_math::ComplexF;
 
 #ifdef ADHOC_BLAS
 

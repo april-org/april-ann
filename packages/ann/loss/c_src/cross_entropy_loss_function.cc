@@ -22,6 +22,9 @@
 #include "cross_entropy_loss_function.h"
 #include "wrapper.h"
 
+using namespace april_utils;
+using namespace basics;
+
 namespace ANN {
 
   CrossEntropyLossFunction::CrossEntropyLossFunction(unsigned int size) :

@@ -20,12 +20,16 @@
  */
 #include "logbase_standard.h"
 
-const float log_float::floatnearzero    = 1e-37;
-const float log_float::rawscorenearzero = -99;
-const float log_float::rawscorezero     = -1e12;
-const float log_float::rawscoreone      = 0;
+namespace april_utils {
 
-const double log_double::doublenearzero   = 1e-37;
-const double log_double::rawscorenearzero = -85;
-const double log_double::rawscorezero     = -1e8;
-const double log_double::rawscoreone      = 0;
+  const float log_float::floatnearzero    = 1e-37;
+  const float log_float::rawscorenearzero = -99;
+  const float log_float::rawscorezero     = -1e12;
+  const float log_float::rawscoreone      = 0;
+
+  const double log_double::doublenearzero   = 1e-37;
+  const double log_double::rawscorenearzero = -85;
+  const double log_double::rawscorezero     = -1e8;
+  const double log_double::rawscoreone      = 0;
+
+}

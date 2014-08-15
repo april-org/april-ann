@@ -20,11 +20,17 @@
  *
  */
 
+//BIND_HEADER_C
+#include "bind_dataset.h"
+using namespace basics;
+//BIND_END
+
 //BIND_HEADER_H
 #include <errno.h>
 #include <stdio.h>
 #include "image_metrics.h"
-#include "bind_dataset.h"
+
+using namespace imaging;
 //BIND_END
 
 

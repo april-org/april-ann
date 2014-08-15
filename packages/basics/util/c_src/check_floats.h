@@ -18,6 +18,9 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef CHECK_FLOATS_H
+#define CHECK_FLOATS_H
+
 #include <cmath>
 
 // convierte todos los numeros denormales en 0,
@@ -30,3 +33,4 @@ namespace april_utils {
 
 }
 
+#endif // CHECK_FLOATS_H

@@ -48,6 +48,13 @@ namespace april_utils {
     size_type  capacity() const { return vector_size; }
     size_type  max_size() const { return size_type(-1); }
     bool       empty()    const { return (used_size==0); }
+    
+    pointer    release() {
+      pointer tmp = vec;
+      used_size = vector_size = 0;
+      vec = 0;
+      return tmp;
+    }
 
     vector(size_type n=0) { // Creates a vector with n elements.
       used_size   = n;

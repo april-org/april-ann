@@ -28,32 +28,28 @@
 #include "vector.h"
 #include "geometry.h"
 
-using april_utils::Point2D;
 namespace OCR {
-    namespace OffLineTextPreprocessing
-    {
+  namespace OffLineTextPreprocessing {
 
-        MatrixFloat *add_asc_desc (ImageFloat     *img,
-                MatrixFloat *line_mat,
-                    float v_treshold = 5,
-                    int h_threshold = 22.0f
-                    );
-        ImageFloat *normalize_size(ImageFloat *source, float ascender_ratio, float descender_ratio,
-                april_utils::vector<Point2D> ascenders, april_utils::vector<Point2D> upper_baseline, 
-                april_utils::vector<Point2D> lower_baseline, april_utils::vector<Point2D> descenders,
-                int dst_height = -1, bool keep_aspect = false);
+    basics::MatrixFloat *add_asc_desc (imaging::ImageFloat     *img,
+                                       basics::MatrixFloat *line_mat,
+                                       float v_treshold = 5,
+                                       int h_threshold = 22.0f);
+    imaging::ImageFloat *normalize_size(imaging::ImageFloat *source, float ascender_ratio, float descender_ratio,
+                                        april_utils::vector<april_utils::Point2D> ascenders, april_utils::vector<april_utils::Point2D> upper_baseline, 
+                                        april_utils::vector<april_utils::Point2D> lower_baseline, april_utils::vector<april_utils::Point2D> descenders,
+                                        int dst_height = -1, bool keep_aspect = false);
 
-        ImageFloat *normalize_image(ImageFloat *source, int dst_height);
+    imaging::ImageFloat *normalize_image(imaging::ImageFloat *source, int dst_height);
 
-        ImageFloat *normalize_size (ImageFloat     *source,
-                MatrixFloat *line_mat,
-                float           ascender_ratio,
-                float           descender_ratio,
-                int dst_height,
-                bool keep_aspect
-                );
-        april_utils::vector<Point2D>* extract_points_from_image(ImageFloat *pimg);
+    imaging::ImageFloat *normalize_size (imaging::ImageFloat     *source,
+                                         basics::MatrixFloat *line_mat,
+                                         float           ascender_ratio,
+                                         float           descender_ratio,
+                                         int dst_height,
+                                         bool keep_aspect);
+    april_utils::vector<april_utils::Point2D>* extract_points_from_image(imaging::ImageFloat *pimg);
 
-    }
+  }
 }
 #endif

@@ -3,6 +3,8 @@ using namespace std;
 #include "fifo.h"
 #include "gtest.h"
 
+using namespace april_utils;
+
 namespace test_fifo {
 
   TEST(FifoTest, All) {

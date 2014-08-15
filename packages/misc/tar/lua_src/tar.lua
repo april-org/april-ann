@@ -241,7 +241,7 @@ public.open = function(file)
   local archive = {}
   archive.file = file
   archive.list = {}
-  local p = file:seek("set")
+  local p = assert( file:seek("set") )
   while true do
     local block = file:read(512)
     if not block or not string.match(block, "[^%z]") then break end
@@ -252,11 +252,15 @@ public.open = function(file)
 	["size"] = header.size
       }
     end
-    local p = file:seek("cur", 512 * math.ceil(header.size / 512))
+    local p = assert( file:seek("cur", 512 * math.ceil(header.size / 512)) )
   end
   setmetatable(archive, TarFile)
   return archive
 end
 
-return tar
-
+april_io.register_open_by_extension("tar",
+                                    function(name, mode)
+                                      assert(not mode or mode == "r",
+                                             "invalid open mode, tar only allows 'r'")
+                                      return public.open(april_io.lua_open(name, mode))
+end)

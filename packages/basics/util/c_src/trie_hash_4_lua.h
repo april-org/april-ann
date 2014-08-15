@@ -18,31 +18,32 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "trie4lua.h"
+#ifndef TRIE_HASH_4_LUA_H
+#define TRIE_HASH_4_LUA_H
+
+#include "referenced.h"
+#include "aux_hash_table.h"
+#include "hash_table.h"
 
 namespace april_utils {
 
-  Trie4lua::Trie4lua() {
-    lastId = rootNode;
-  }
-   
-  int Trie4lua::reserveId() {
-    lastId++;
-    return lastId;
-  }
+  // This c++ class replaces a previous one implemented in lua, I have
+  // decided not to reuse a previous trie class since this one is even
+  // simpler
 
-  int Trie4lua::find(int *wordsequence, int lenght) {
-    int index = rootNode;
-    for (int i=0; i<lenght; ++i) {
-      bool isNew;
-      hash_type::value_type *r;
-      r = transition_t.find_and_add_pair(make_pair(index,wordsequence[i]),isNew);
-      if (isNew)
-	r->second = reserveId();
-      index = r->second;
-    }
-    return index;
-  }
+  class TrieHash4Lua : public Referenced {
+    static const int rootNode = 0;
+    int lastId;
+    // state x id -> state
+    typedef hash<int_pair, int> hash_type;
+    hash_type transition_t;
+  public:
+    TrieHash4Lua();
+    int reserveId();
+    int find(int *ids, int lenght);
+  };
 
-} // namespace
 
+} // namespace april_utils
+
+#endif // TRIE_HASH_4_LUA_H

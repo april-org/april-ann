@@ -23,64 +23,68 @@
 #include "cuda_utils.h"
 #include "unused_variable.h"
 
-#ifdef USE_CUDA
-/***************************************
- ************** CUDA SECTION ***********
- ***************************************/
+namespace april_math {
 
-template<typename T>
-__global__ void scalarAddKernel(T *v, unsigned int N, unsigned int stride,
-				T value) {
-  unsigned int x_idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (x_idx < N) {
-    T *aux = v + x_idx*stride;
-    *aux += value;
+#ifdef USE_CUDA
+  /***************************************
+   ************** CUDA SECTION ***********
+   ***************************************/
+
+  template<typename T>
+  __global__ void scalarAddKernel(T *v, unsigned int N, unsigned int stride,
+                                  T value) {
+    unsigned int x_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (x_idx < N) {
+      T *aux = v + x_idx*stride;
+      *aux += value;
+    }
   }
-}
 
 #endif
 
-/***************************************
- *********** TEMPLATE SECTION **********
- ***************************************/
+  /***************************************
+   *********** TEMPLATE SECTION **********
+   ***************************************/
 
-template<typename T>
-void doScalarAdd(unsigned int N,
-		 GPUMirroredMemoryBlock<T> *v,
-		 unsigned int stride,
-		 unsigned int shift,
-		 T value,
-		 bool use_gpu) {
+  template<typename T>
+  void doScalarAdd(unsigned int N,
+                   GPUMirroredMemoryBlock<T> *v,
+                   unsigned int stride,
+                   unsigned int shift,
+                   T value,
+                   bool use_gpu) {
 #ifndef USE_CUDA
-  UNUSED_VARIABLE(use_gpu);
+    UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
-  if (use_gpu) {
-    T *v_ptr = v->getGPUForReadAndWrite() + shift;
-    dim3 block, grid;
-    computeBlockAndGridSizesForAnArray(N, block, grid);
-    scalarAddKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-      (v_ptr, N, stride, value);
-  }
-  else {
+    if (use_gpu) {
+      T *v_ptr = v->getGPUForReadAndWrite() + shift;
+      dim3 block, grid;
+      computeBlockAndGridSizesForAnArray(N, block, grid);
+      scalarAddKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+        (v_ptr, N, stride, value);
+    }
+    else {
 #endif
-    T *v_mem = v->getPPALForReadAndWrite() + shift;
-    for (unsigned int i=0; i<N; ++i, v_mem+=stride) *v_mem = *v_mem + value;
+      T *v_mem = v->getPPALForReadAndWrite() + shift;
+      for (unsigned int i=0; i<N; ++i, v_mem+=stride) *v_mem = *v_mem + value;
 #ifdef USE_CUDA
-  }
+    }
 #endif
-}
+  }
 
-template void doScalarAdd<float>(unsigned int N,
-				 GPUMirroredMemoryBlock<float> *v,
-				 unsigned int stride,
-				 unsigned int shift,
-				 float value,
-				 bool use_gpu);
+  template void doScalarAdd<float>(unsigned int N,
+                                   GPUMirroredMemoryBlock<float> *v,
+                                   unsigned int stride,
+                                   unsigned int shift,
+                                   float value,
+                                   bool use_gpu);
 
-template void doScalarAdd<ComplexF>(unsigned int N,
-				    GPUMirroredMemoryBlock<ComplexF> *v,
-				    unsigned int stride,
-				    unsigned int shift,
-				    ComplexF value,
-				    bool use_gpu);
+  template void doScalarAdd<ComplexF>(unsigned int N,
+                                      GPUMirroredMemoryBlock<ComplexF> *v,
+                                      unsigned int stride,
+                                      unsigned int shift,
+                                      ComplexF value,
+                                      bool use_gpu);
+
+} // namespace april_math

@@ -1,9 +1,9 @@
  package{ name = "gzio",
    version = "1.0",
-   depends = { "util" },
+   depends = { "tar", "april_io" },
    link_libraries = { "z" },
    keywords = { "gzio" },
-   description = "read and write tar/gz files",
+   description = "read and write gz files",
    -- targets como en ant
    target{
      name = "init",
@@ -18,7 +18,6 @@
      name = "test",
      lua_unit_test{
        file={
-	 "test/test.lua",
 	 "test/test.lua",
        },
      },

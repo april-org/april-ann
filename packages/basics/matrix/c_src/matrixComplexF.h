@@ -25,35 +25,39 @@
 #include "complex_number.h"
 #include "matrix.h"
 
-template<>
-void Matrix<ComplexF>::fill(ComplexF value);
+namespace basics {
 
-template<>
-ComplexF Matrix<ComplexF>::sum() const;
+  template<>
+  void Matrix<april_math::ComplexF>::fill(april_math::ComplexF value);
 
-template<>
-void Matrix<ComplexF>::scalarAdd(ComplexF s);
+  template<>
+  april_math::ComplexF Matrix<april_math::ComplexF>::sum() const;
 
-template<>
-bool Matrix<ComplexF>::equals(const Matrix<ComplexF> *other,
-			      float epsilon) const;
+  template<>
+  void Matrix<april_math::ComplexF>::scalarAdd(april_math::ComplexF s);
 
-template<>
-void Matrix<ComplexF>::cmul(const Matrix<ComplexF> *other);
+  template<>
+  bool Matrix<april_math::ComplexF>::equals(const Matrix<april_math::ComplexF> *other,
+                                            float epsilon) const;
 
-/**** BLAS OPERATIONS ****/
+  template<>
+  void Matrix<april_math::ComplexF>::cmul(const Matrix<april_math::ComplexF> *other);
 
-template<>
-void Matrix<ComplexF>::copy(const Matrix<ComplexF> *other);
+  /**** BLAS OPERATIONS ****/
 
-template<>
-void Matrix<ComplexF>::scal(ComplexF value);
+  template<>
+  void Matrix<april_math::ComplexF>::copy(const Matrix<april_math::ComplexF> *other);
 
-template<>
-float Matrix<ComplexF>::norm2() const;
+  template<>
+  void Matrix<april_math::ComplexF>::scal(april_math::ComplexF value);
 
-//////////////////////////////////////////////////////////////////////////////
+  template<>
+  float Matrix<april_math::ComplexF>::norm2() const;
 
-typedef Matrix<ComplexF> MatrixComplexF;
+  //////////////////////////////////////////////////////////////////////////////
+
+  typedef Matrix<april_math::ComplexF> MatrixComplexF;
+
+} // namespace basics
 
 #endif // MATRIXCOMPLEXF_H

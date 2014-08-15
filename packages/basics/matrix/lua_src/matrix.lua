@@ -28,6 +28,11 @@ matrix.row_major = function(...)
   return matrix(...)
 end
 
+-- serialization
+matrix.__make_all_serialization_methods__(matrix)
+
+-- other stuff
+
 matrix.meta_instance.__call =
   matrix.__make_generic_call__()
 
@@ -272,35 +277,29 @@ april_set_doc(matrix.col_major, {
 		},
 		outputs = { "A matrix instantiated object" }, })
 
-april_set_doc(matrix.fromFilename, {
-		class = "function", summary = "constructor",
+april_set_doc(matrix.read, {
+		class = "method",
+		summary = "It allows to read a matrix from a stream.",
 		description ={
-		  "Loads a matrix from a filename.",
+		  "It allows to read a matrix from a stream.",
+		  "It uses the format of write function.",
 		},
 		params = {
-		  "A filename path.",
-		  { "A string with 'row_major', 'col_major' or 'no_order'",
-		    "[optional]. It modifies the order specified by content",
-		    "in the file. By default is nil, so the result",
-		    "matrix will has the order specified by the file.",
-		  },
-		},
-		outputs = { "A matrix instantiated object" }, })
+		  "A april_io.stream instance.",
+		}, })
 
-april_set_doc(matrix.fromTabFilename, {
-		class = "function", summary = "constructor",
+april_set_doc(matrix.readTab, {
+		class = "method",
+		summary = "It allows to read a matrix from a tabulated stream.",
 		description ={
-		  "Loads a matrix from a filename tabuled by lines and spaces.",
+		  "It allows to read a matrix from a tabulated stream.",
+		  "It uses the format of writeTab function.",
+                  "Note that this method needs two traversals through",
+                  "the stream, and uses seek operation to rewind it.",
 		},
 		params = {
-		  "A filename path.",
-		  { "A string with 'row_major', 'col_major' or 'no_order'",
-		    "[optional]. It modifies the order specified by content",
-		    "in the file. By default is nil, so the result",
-		    "matrix will has the order specified by the file.",
-		  },
-		},
-		outputs = { "A matrix instantiated object" }, })
+		  "A april_io.stream instance.",
+		}, })
 
 april_set_doc(matrix.fromMMap, {
 		class = "function", summary = "constructor",
@@ -321,28 +320,26 @@ april_set_doc(matrix.fromMMap, {
 		},
 		outputs = { "A matrix instantiated object" }, })
 
-april_set_doc(matrix.."toFilename", {
+april_set_doc(matrix.."write", {
 		class = "method",
-		summary = "It allows to store a matrix in a file.",
+		summary = "It allows to store a matrix into a stream.",
 		description ={
-		  "It allows to store a matrix in a file.",
-		  "It uses the format expected by fromFilename function.",
+		  "It allows to store a matrix into a stream.",
+		  "It uses the format expected by read function.",
 		},
 		params = {
-		  "A filename path.",
-		  { "An string with the format: ascii or binary [optional].",
-		    "By default is ascii." },
+		  "A april_io.stream instance.",
 		}, })
 
-april_set_doc(matrix.."toTabFilename", {
+april_set_doc(matrix.."writeTab", {
 		class = "method",
-		summary = "It allows to store a matrix in a file tabuled by lines and spaces.",
+		summary = "It allows to store a matrix into a tabulated stream.",
 		description ={
-		  "It allows to store a matrix in a file tabuled by lines and spaces.",
-		  "It uses the format expected by fromTabFilename function.",
+		  "It allows to store a matrix into a tabulated stream.",
+		  "It uses the format expected by readTab function.",
 		},
 		params = {
-		  "A filename path.",
+		  "A april_io.stream instance.",
 		}, })
 
 april_set_doc(matrix.."toMMap", {

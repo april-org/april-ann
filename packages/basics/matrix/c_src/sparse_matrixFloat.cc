@@ -23,4 +23,6 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-template class SparseMatrix<float>;
+namespace basics {
+  template class SparseMatrix<float>;
+}

@@ -23,6 +23,10 @@
 #include "wrapper.h"
 #include "unused_variable.h"
 
+using namespace basics;
+using namespace april_utils;
+using namespace april_math;
+
 namespace ANN {
 
   BiasANNComponent::BiasANNComponent(unsigned int size,
@@ -77,13 +81,12 @@ namespace ANN {
     bias_vector->resetSharedCount();
   }
 
-  void BiasANNComponent::computeGradients(MatrixFloat*& grads_mat) {
+  void BiasANNComponent::computeGradients(april_utils::SharedPtr<MatrixFloat> & grads_mat) {
     // count one use of the vector
     bias_vector->addToSharedCount();
-    if (grads_mat == 0) {
+    if (grads_mat.empty()) {
       grads_mat = bias_vector->cloneOnlyDims();
       grads_mat->zeros();
-      IncRef(grads_mat);
     }
     else if (!grads_mat->sameDim(bias_vector))
       ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
@@ -128,10 +131,10 @@ namespace ANN {
     unsigned int weights_input_size  = 1;
     unsigned int weights_output_size = output_size;
     ////////////////////////////////////////////////////////////////////
-    MatrixFloat *&w = (*weights_dict)[weights_name];
+    april_utils::SharedPtr<MatrixFloat> &w = (*weights_dict)[weights_name];
     // printf("%s :: %p %p\n", weights_name.c_str(), w, bias_vector);
-    if (w != 0) {
-      AssignRef(bias_vector, w);
+    if (!w.empty()) {
+      AssignRef(bias_vector, w.get());
       // printf("COPY OF BIAS FROM HASH %s\n", weights_name.c_str());
       if (!Connections::checkInputOutputSizes(bias_vector,
 					      weights_input_size,
@@ -150,7 +153,6 @@ namespace ANN {
       }
       // else printf("USING PREVIOUS BIAS %s\n", weights_name.c_str());
       w = bias_vector;
-      IncRef(w);
     }
   }
 
@@ -158,15 +160,14 @@ namespace ANN {
     if (bias_vector == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
-    MatrixFloat *&w = (*weights_dict)[weights_name];
-    if (w != 0 && w != bias_vector)
+    april_utils::SharedPtr<MatrixFloat> &w = (*weights_dict)[weights_name];
+    if (!w.empty() && w.get() != bias_vector)
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with bias_vector attribute [%s]\n",
 		  weights_name.c_str(),
 		  name.c_str());
-    else if (w == 0) {
+    else if (w.empty()) {
       w = bias_vector;
-      IncRef(w);
     }
   }
 

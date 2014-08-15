@@ -28,48 +28,50 @@
 #include "luabindmacros.h"
 #include "bind_complex.h"
 
+namespace basics {
 #define FUNCTION_NAME "read_vector"
-static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
-  int *v=0;
-  lua_getfield(L, 1, key);
-  if (!lua_isnil(L, -1)) {
-    LUABIND_CHECK_PARAMETER(-1, table);
-    int table_len;
-    LUABIND_TABLE_GETN(-1, table_len);
-    if (table_len != num_dim)
-      LUABIND_FERROR3("Table '%s' with incorrect size, expected %d, found %d",
-		      key, num_dim, table_len);
-    v = new int[num_dim];
-    for(int i=0; i < num_dim; i++) {
-      lua_rawgeti(L, -1, i+1);
-      v[i] = static_cast<int>(lua_tonumber(L, -1)) + add;
-      lua_pop(L,1);
+  static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
+    int *v=0;
+    lua_getfield(L, 1, key);
+    if (!lua_isnil(L, -1)) {
+      LUABIND_CHECK_PARAMETER(-1, table);
+      int table_len;
+      LUABIND_TABLE_GETN(-1, table_len);
+      if (table_len != num_dim)
+        LUABIND_FERROR3("Table '%s' with incorrect size, expected %d, found %d",
+                        key, num_dim, table_len);
+      v = new int[num_dim];
+      for(int i=0; i < num_dim; i++) {
+        lua_rawgeti(L, -1, i+1);
+        v[i] = static_cast<int>(lua_tonumber(L, -1)) + add;
+        lua_pop(L,1);
+      }
     }
+    lua_pop(L, 1);
+    return v;
   }
-  lua_pop(L, 1);
-  return v;
-}
 #undef FUNCTION_NAME
 
-int sliding_window_matrix_complex_iterator_function(lua_State *L) {
-  SlidingWindowComplexF *obj = lua_toSlidingWindowComplexF(L,1);
-  if (obj->isEnd()) {
-    lua_pushnil(L);
+  int sliding_window_matrix_complex_iterator_function(lua_State *L) {
+    SlidingWindowComplexF *obj = lua_toSlidingWindowComplexF(L,1);
+    if (obj->isEnd()) {
+      lua_pushnil(L);
+      return 1;
+    }
+    // lua_pushSlidingWindow(L, obj);
+    MatrixComplexF *mat = obj->getMatrix();
+    lua_pushMatrixComplexF(L, mat);
+    obj->next();
     return 1;
   }
-  // lua_pushSlidingWindow(L, obj);
-  MatrixComplexF *mat = obj->getMatrix();
-  lua_pushMatrixComplexF(L, mat);
-  obj->next();
-  return 1;
 }
-
 //BIND_END
 
 //BIND_HEADER_H
 #include "matrixComplexF.h"
 #include "utilLua.h"
 #include <cmath> // para isfinite
+using namespace basics;
 typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 //BIND_END
 
@@ -271,94 +273,6 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 	  (void*)obj,
 	  (void*)obj->getRawDataAccess());
   LUABIND_RETURN(string, buff);
-}
-//BIND_END
-
-//BIND_CLASS_METHOD MatrixComplexF fromFilename
-//DOC_BEGIN
-// matrix *fromFilename(string filename)
-/// Constructor con un argumento que es un fichero que contiene la matriz.  Pueden haber
-/// comentarios que son lineas que empiezan con un simbolo '#'.  La
-/// primera linea contiene tantos valores numericos como dimensiones
-/// tenga la matriz y que corresponde al numero de componentes en cada
-/// dimension.  La siguiente linea contiene la palabra "ascii" o
-/// "binary".  El resto de lineas contienen los datos propiamente
-/// dichos.
-///@param filename Es un string que indica el nombre del fichero.
-//DOC_END
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, string);
-  const char *filename;
-  LUABIND_GET_PARAMETER(1,string,filename);
-  MatrixComplexF *obj;
-  if ((obj = readMatrixComplexFFromFile(filename)) == 0)
-    LUABIND_ERROR("bad format");
-  else LUABIND_RETURN(MatrixComplexF,obj);
-}
-//BIND_END
-
-
-//BIND_CLASS_METHOD MatrixComplexF fromString
-//DOC_BEGIN
-// matrix *fromString(string description)
-/// Constructor con un argumento que es una cadena.  Pueden haber
-/// comentarios que son lineas que empiezan con un simbolo '#'.  La
-/// primera linea contiene tantos valores numericos como dimensiones
-/// tenga la matriz y que corresponde al numero de componentes en cada
-/// dimension.  La siguiente linea contiene la palabra "ascii" o
-/// "binary".  El resto de lineas contienen los datos propiamente
-/// dichos.
-///@param description Es un string que describe a la matriz.
-//DOC_END
-{
-  LUABIND_CHECK_ARGN(==, 1);
-  LUABIND_CHECK_PARAMETER(1, string);
-  constString cs;
-  LUABIND_GET_PARAMETER(1,constString,cs);
-  MatrixComplexF *obj;
-  if ((obj = readMatrixComplexFFromString(cs)) == 0)
-    LUABIND_ERROR("bad format");
-  else LUABIND_RETURN(MatrixComplexF,obj);
-}
-//BIND_END
-
-//BIND_METHOD MatrixComplexF toFilename
-//DOC_BEGIN
-// void toFilename(string filename, string type='binary')
-/// Permite salvar una matriz con un formato tal y como se carga con el
-/// metodo fromString. El unico argumento opcional indica el tipo 'ascii'
-/// o 'binary'.
-///@param filename Indica el nombre del fichero.
-///@param type Parametro opcional. Puede ser 'ascii' o 'binary', y por defecto es 'binary'.
-//DOC_END
-{
-  LUABIND_CHECK_ARGN(>=, 1);
-  LUABIND_CHECK_ARGN(<=, 2);
-  const char *filename;
-  constString cs;
-  LUABIND_GET_PARAMETER(1, string, filename);
-  LUABIND_GET_OPTIONAL_PARAMETER(2,constString,cs,constString("binary"));
-  bool is_ascii = (cs == "ascii");
-  writeMatrixComplexFToFile(obj, filename, is_ascii);
-}
-//BIND_END
-
-//BIND_METHOD MatrixComplexF toString
-//DOC_BEGIN
-// string toString(string type='binary')
-/// Permite salvar una matriz con un formato tal y como se carga con el
-/// metodo fromString. El unico argumento opcional indica el tipo 'ascii'
-/// o 'binary'.
-///@param type ParÃ¡metro opcional. Puede ser 'ascii' o 'binary', y por defecto es 'binary'.
-//DOC_END
-{
-  LUABIND_CHECK_ARGN(<=, 1);
-  constString cs;
-  LUABIND_GET_OPTIONAL_PARAMETER(1,constString,cs,constString("binary"));
-  bool is_ascii = (cs == "ascii");
-  writeMatrixComplexFToLuaString(obj, L, is_ascii);
-  LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
 
@@ -1043,6 +957,34 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 //BIND_METHOD MatrixComplexF angle
 {
   LUABIND_RETURN(MatrixFloat, angleFromMatrixComplexFToMatrixFloat(obj));
+}
+//BIND_END
+
+//// MATRIX SERIALIZATION ////
+
+//BIND_CLASS_METHOD MatrixComplexF read
+{
+  MAKE_READ_MATRIX_LUA_METHOD(MatrixComplexF, ComplexF);
+  LUABIND_INCREASE_NUM_RETURNS(1);
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplexF write
+{
+  writeMatrixLuaMethod(L, obj);
+}
+//BIND_END
+
+//BIND_CLASS_METHOD MatrixComplexF readTab
+{
+  MAKE_READ_TAB_MATRIX_LUA_METHOD(MatrixComplexF, ComplexF);
+  LUABIND_INCREASE_NUM_RETURNS(1);
+}
+//BIND_END
+
+//BIND_METHOD MatrixComplexF writeTab
+{
+  writeTabMatrixLuaMethod(L, obj);
 }
 //BIND_END
 

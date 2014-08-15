@@ -20,6 +20,10 @@
  */
 #include "ann_component.h"
 
+using namespace basics;
+using namespace april_utils;
+using namespace april_math;
+
 namespace ANN {
   unsigned int ANNComponent::next_name_id    = 1;
   unsigned int ANNComponent::next_weights_id = 1;

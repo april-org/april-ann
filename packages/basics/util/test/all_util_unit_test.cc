@@ -15,5 +15,6 @@
 #include "test_maxiphobic_minheap.cc"
 #include "test_open_adressing_hash.cc"
 #include "test_slist.cc"
+#include "test_smart_ptr.cc"
 
 APRILANN_GTEST_MAIN(test_util)

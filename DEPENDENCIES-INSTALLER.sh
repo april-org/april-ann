@@ -10,7 +10,7 @@ if [ $UNAME = "Linux" ]; then
             exit 10
         fi
         if [[ $ubuntu_release == "12.04" ]]; then
-            sudo apt-get install -y gfortran cmake pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapack-dev
+            sudo apt-get install -y gfortran cmake pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapack-dev libzip-dev
             if ! locate liblapacke.so; then
                 cwd=$(pwd)
                 cd /tmp/ &&
@@ -27,7 +27,7 @@ if [ $UNAME = "Linux" ]; then
                 cd $cwd
             fi
         else
-            sudo apt-get install -y gfortran pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapacke-dev
+            sudo apt-get install -y gfortran pkg-config libz-dev libreadline-dev libblas-dev libatlas-dev libatlas-base-dev libpng12-dev libtiff-dev liblua5.2-dev libncurses5 libncurses5-dev liblapacke-dev libzip-dev
             if [[ $? -ne 0 ]]; then
                 echo "Error installing dependencies, only works with ubuntu >= 12.04"
                 exit 10
@@ -52,7 +52,7 @@ if [ $UNAME = "Linux" ]; then
     fi
 elif [ $UNAME = "Darwin" ]; then
     if [ $(which port) ]; then
-        if ! sudo port install zlib readline libpng tiff findutils pkgconfig lua; then
+        if ! sudo port install zlib readline libpng tiff findutils pkgconfig lua libzip; then
             echo "ERROR INSTALLING DEPENDENCIES USING MACPORTS"
             exit 10
         fi
@@ -63,7 +63,7 @@ elif [ $UNAME = "Darwin" ]; then
         #    echo "ERROR INSTALLING DEPENDENCIES USING HOMEBREW"
         #    exit 10
         #fi
-        brew install lzlib readline libpng libtiff findutils pkgconfig
+        brew install lzlib readline libpng libtiff findutils pkgconfig libzip
         ###################################################################
         # THIS UGLY HACK IS BECAUSE LUA52 IS NOT AT DEFAULT HOMEBREW REPO #
         brew tap homebrew/versions

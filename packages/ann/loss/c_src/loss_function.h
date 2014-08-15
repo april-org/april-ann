@@ -34,20 +34,21 @@ namespace ANN {
   class LossFunction : public Referenced {
     april_utils::RunningStat acc_loss;
   protected:
-    Token *error_output;
+    basics::Token *error_output;
     unsigned int size;
         
-    void throwErrorAndGetMatrixFromTokens(Token *input, Token *target,
-					  MatrixFloat *&input_mat,
-					  MatrixFloat *&target_mat,
+    void throwErrorAndGetMatrixFromTokens(basics::Token *input,
+                                          basics::Token *target,
+					  basics::MatrixFloat *&input_mat,
+					  basics::MatrixFloat *&target_mat,
 					  bool check_target_size=true) const {
-      if (input->getTokenCode() != table_of_token_codes::token_matrix)
+      if (input->getTokenCode() != basics::table_of_token_codes::token_matrix)
 	ERROR_EXIT(128, "Incorrect input token type, expected token matrix\n");
-      if (target->getTokenCode() != table_of_token_codes::token_matrix)
+      if (target->getTokenCode() != basics::table_of_token_codes::token_matrix)
 	ERROR_EXIT(128, "Incorrect target token type, expected token matrix\n");
       //
-      TokenMatrixFloat *input_mat_token = input->convertTo<TokenMatrixFloat*>();
-      TokenMatrixFloat *target_mat_token = target->convertTo<TokenMatrixFloat*>();
+      basics::TokenMatrixFloat *input_mat_token = input->convertTo<basics::TokenMatrixFloat*>();
+      basics::TokenMatrixFloat *target_mat_token = target->convertTo<basics::TokenMatrixFloat*>();
       if (check_target_size && input_mat_token->size()!=target_mat_token->size())
 	ERROR_EXIT2(128, "Different token sizes found: input=%d vs target=%d\n",
 		    input_mat_token->size(),
@@ -71,7 +72,8 @@ namespace ANN {
     }
     
     // To be implemented by derived classes
-    virtual MatrixFloat *computeLossBunch(Token *input, Token *target) = 0;
+    virtual basics::MatrixFloat *computeLossBunch(basics::Token *input,
+                                                  basics::Token *target) = 0;
     ////////////////////////////////////////////////////////////////
 
     LossFunction(LossFunction *other) :
@@ -98,20 +100,22 @@ namespace ANN {
       error_output = 0;
       acc_loss.Clear();
     }
-    virtual MatrixFloat *accumLoss(MatrixFloat *loss_data) {
+    virtual basics::MatrixFloat *accumLoss(basics::MatrixFloat *loss_data) {
       april_assert(loss_data->getNumDim() == 1);
-      for (MatrixFloat::iterator it(loss_data->begin());
+      for (basics::MatrixFloat::iterator it(loss_data->begin());
 	   it!=loss_data->end(); ++it)
 	acc_loss.Push(static_cast<double>(*it));
       return loss_data;
     }
-    virtual MatrixFloat *computeLoss(Token *input, Token *target) {
-      MatrixFloat *loss_data = computeLossBunch(input, target);
+    virtual basics::MatrixFloat *computeLoss(basics::Token *input,
+                                             basics::Token *target) {
+      basics::MatrixFloat *loss_data = computeLossBunch(input, target);
       april_assert(loss_data==0 || loss_data->getNumDim() == 1);
       return loss_data;
     }
     // To be implemented by derived classes
-    virtual Token *computeGradient(Token *input, Token *target) = 0;
+    virtual basics::Token *computeGradient(basics::Token *input,
+                                           basics::Token *target) = 0;
     virtual LossFunction *clone() = 0;
     virtual char *toLuaString() = 0;
     /////////////////////////////////////////////////////////////////

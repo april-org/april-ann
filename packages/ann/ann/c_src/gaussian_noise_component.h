@@ -33,24 +33,24 @@ namespace ANN {
   class GaussianNoiseANNComponent : public StochasticANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(GaussianNoiseANNComponent);
 
-    TokenMatrixFloat *input, *output;
-    Token            *error_input, *error_output;
+    basics::TokenMatrixFloat *input, *output;
+    basics::Token            *error_input, *error_output;
     float            mean, variance;
     
   public:
-    GaussianNoiseANNComponent(MTRand *random, float mean, float variance,
+    GaussianNoiseANNComponent(basics::MTRand *random, float mean, float variance,
 			      const char *name=0,
 			      unsigned int size=0);
     virtual ~GaussianNoiseANNComponent();
     
-    virtual Token *getInput() { return input; }
-    virtual Token *getOutput() { return output; }
-    virtual Token *getErrorInput() { return error_input; }
-    virtual Token *getErrorOutput() { return error_output; }
+    virtual basics::Token *getInput() { return input; }
+    virtual basics::Token *getOutput() { return output; }
+    virtual basics::Token *getErrorInput() { return error_input; }
+    virtual basics::Token *getErrorOutput() { return error_output; }
     
-    virtual Token *doForward(Token* input, bool during_training);
+    virtual basics::Token *doForward(basics::Token* input, bool during_training);
     
-    virtual Token *doBackprop(Token *input_error);
+    virtual basics::Token *doBackprop(basics::Token *input_error);
     
     virtual void reset(unsigned int it=0);
     
@@ -58,8 +58,8 @@ namespace ANN {
 
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       MatrixFloatSet *weights_dict,
-		       hash<string,ANNComponent*> &components_dict);
+		       basics::MatrixFloatSet *weights_dict,
+		       april_utils::hash<april_utils::string,ANNComponent*> &components_dict);
 
     virtual char *toLuaString();
   };

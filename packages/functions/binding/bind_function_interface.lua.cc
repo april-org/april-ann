@@ -27,6 +27,7 @@
 #include "function_interface.h"
 #include "identity_function.h"
 using namespace Functions;
+using basics::Token;
 //BIND_END
 
 //BIND_LUACLASSNAME FunctionInterface functions
