@@ -20,6 +20,7 @@
  */
 #include <cstdlib>
 extern "C" {
+#include <stdint.h>
 #include <sys/types.h>
 #include <unistd.h>
 }
