@@ -23,6 +23,14 @@
 
 #include <cstdio>
 #include <cstring>
+extern "C" {
+#include <stdint.h> // for SIZE_MAX (using stdint.h because cstdint needs c++11
+                    // support)
+}
+#ifndef SIZE_MAX
+#include <limits>
+#define SIZE_MAX std::numeric_limits<std::size_t>::max()
+#endif
 
 #include "constString.h"
 #include "error_print.h"

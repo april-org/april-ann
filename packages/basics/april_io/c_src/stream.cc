@@ -21,11 +21,6 @@
 
 #include <cstdarg>
 #include <cstdlib>
-extern "C" {
-#include <stdint.h> // for SIZE_MAX (using stdint.h because cstdint needs c++11
-                    // support)
-}
-
 #include "maxmin.h"
 #include "stream.h"
 // #include "stream_memory.h"
