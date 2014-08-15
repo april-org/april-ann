@@ -32,6 +32,11 @@ namespace april_utils {
   
   /**
    * @brief Smart pointer similar to auto_ptr in old C++ (before C++11).
+   *
+   * This class uses StandardReferencer and StandardDeleter to reference and
+   * delete the owned resource. In other words, by default it does nothing when
+   * referneces a pointer, but executes delete or delete[] when its time
+   * expires.
    */
   template< typename T,
             typename Referencer=StandardReferencer<T>,
@@ -43,7 +48,7 @@ namespace april_utils {
   public:
     
     /**
-     * Builds a UniquePtr from a given pointer, by default NULL.
+     * @brief Builds a UniquePtr from a given pointer, by default NULL.
      */
     UniquePtr(T *ptr=0) : referencer(Referencer()), deleter(Deleter()),
                           ptr(ptr) {
@@ -52,48 +57,48 @@ namespace april_utils {
     }
     
     /**
-     * Builds a UniquePtr from other UniquePtr object, taking the ownership of
-     * the referenced pointer.
+     * @brief Builds a UniquePtr from other UniquePtr object, taking the
+     * ownership of the referenced pointer.
      */
     UniquePtr(UniquePtr<T,Referencer,Deleter> &other) :
       referencer(Referencer()), deleter(Deleter()), ptr(other.release()) { }
 
     /**
-     * Builds a UniquePtr from other UniquePtr object, taking the ownership of
-     * the referenced pointer.
+     * @brief Builds a UniquePtr from other UniquePtr object, taking the
+     * ownership of the referenced pointer.
      */
     template<typename T1>
     UniquePtr(UniquePtr<T1,Referencer,Deleter> &other) :
       referencer(Referencer()), deleter(Deleter()), ptr(other.release()) { }
 
     /**
-     * Resets the object to a NULL pointer, what will execute a DecRef.
+     * @brief Resets the object to a NULL pointer, what will execute delete.
      */
     ~UniquePtr() { reset(); }
     
     /**
-     * Dereferencing, returns the pointer itself.
+     * @brief Dereferencing, returns the pointer itself.
      */
     T *operator->() { april_assert(get() != 0); return get(); }
 
     /**
-     * Dereferencing, returns a const reference to the pointer itself.
+     * @brief Dereferencing, returns a const reference to the pointer itself.
      */
     const T *operator->() const { april_assert(get() != 0); return get(); }
     
     /**
-     * Dereferencing, returns a reference to the data.
+     * @brief Dereferencing, returns a reference to the data.
      */
     T &operator*() { april_assert(get() != 0); return *get(); }
     
     /**
-     * Dereferencing, returns a const reference to the data.
+     * @brief Dereferencing, returns a const reference to the data.
      */
     const T &operator*() const { april_assert(get() != 0); return *get(); }
 
     /**
-     * Assignment operator, transfers the ownership of the pointer referenced by
-     * the given other object.
+     * @brief Assignment operator, transfers the ownership of the pointer
+     * referenced by the given other object.
      */
     UniquePtr<T,Referencer,Deleter> &operator=(UniquePtr<T,Referencer,Deleter> &other) {
       take(other.release());
@@ -101,8 +106,8 @@ namespace april_utils {
     }
 
     /**
-     * Assignment operator, transfers the ownership of the pointer referenced by
-     * the given other object.
+     * @brief Assignment operator, transfers the ownership of the pointer
+     * referenced by the given other object.
      */
     template<typename T1>
     UniquePtr<T,Referencer,Deleter> &operator=(UniquePtr<T1,Referencer,Deleter> &other) {
@@ -111,7 +116,7 @@ namespace april_utils {
     }
 
     /**
-     * Assignment operator, takes the ownership of the given pointer.
+     * @brief Assignment operator, takes the ownership of the given pointer.
      */
     UniquePtr<T,Referencer,Deleter> &operator=(T *other) {
       reset(other);
@@ -119,7 +124,7 @@ namespace april_utils {
     }
     
     /**
-     * Operator[], returns a reference to the data.
+     * @brief Operator[], returns a reference to the data.
      */
     T &operator[](int i) {
       april_assert(ptr != 0); 
@@ -127,7 +132,7 @@ namespace april_utils {
     }
 
     /**
-     * Operator[], returns a reference to the data.
+     * @brief Operator[], returns a reference to the data.
      */
     const T &operator[](int i) const {
       april_assert(ptr != 0); 
@@ -139,22 +144,22 @@ namespace april_utils {
     }
 
     /**
-     * Bypasses the pointer, but stills having the ownership.
+     * @brief Bypasses the pointer, but stills having the ownership.
      */
     T *get() {
       return ptr;
     }
 
     /**
-     * Bypasses the pointer, but stills having the ownership.
+     * @brief Bypasses the pointer, but stills having the ownership.
      */
     const T *get() const {
       return ptr;
     }
     
     /**
-     * Releases the pointer and the ownership, but NOT executes DecRef, so it
-     * transfers the ownership to the caller.
+     * @brief Releases the pointer and the ownership, but NOT executes delete,
+     * so it transfers the ownership to the caller.
      */
     T *release() {
       T *tmp = ptr;
@@ -163,7 +168,7 @@ namespace april_utils {
     }
 
     /**
-     * Takes the ownership without IncRef the pointer.
+     * @brief Takes the ownership without executing the referencer.
      */
     void take(T *other) {
       reset();
@@ -172,7 +177,8 @@ namespace april_utils {
     }
     
     /**
-     * DecRef its pointer, and takes ownership and IncRef the given pointer.
+     * @brief Deletes its pointer, and takes ownership and executes the
+     * referencer the given pointer.
      *
      * @note By default receives a NULL pointer.
      */

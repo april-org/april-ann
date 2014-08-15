@@ -34,6 +34,7 @@ namespace april_utils {
   
   /**
    * @brief A smart pointer for shared references.
+   *
    * @note T must be derivated from Referenced.
    */
   template< typename T,
@@ -45,7 +46,7 @@ namespace april_utils {
   public:
     
     /**
-     * Builds a SharedPtr from a given pointer, by default NULL.
+     * @brief Builds a SharedPtr from a given pointer, by default NULL.
      */
     SharedPtr(T *ptr=0) : referencer(Referencer()), deleter(Deleter()),
                           ptr(ptr) {
@@ -53,7 +54,7 @@ namespace april_utils {
     }
     
     /**
-     * Builds a SharedPtr from other SharedPtr object, increasing the
+     * @brief Builds a SharedPtr from other SharedPtr object, increasing the
      * reference counter.
      */
     SharedPtr(SharedPtr<T,Referencer,Deleter> &other) : 
@@ -62,7 +63,7 @@ namespace april_utils {
     }
 
     /**
-     * Builds a SharedPtr from other SharedPtr object, increasing the
+     * @brief Builds a SharedPtr from other SharedPtr object, increasing the
      * reference counter.
      */
     SharedPtr(const SharedPtr<T,Referencer,Deleter> &other) : 
@@ -71,7 +72,7 @@ namespace april_utils {
     }
 
     /**
-     * Builds a SharedPtr from other SharedPtr object, increasing the
+     * @brief Builds a SharedPtr from other SharedPtr object, increasing the
      * reference counter.
      */
     template<typename T1>
@@ -81,7 +82,7 @@ namespace april_utils {
     }
 
     /**
-     * Builds a SharedPtr from other SharedPtr object, increasing the
+     * @brief Builds a SharedPtr from other SharedPtr object, increasing the
      * reference counter.
      */
     template<typename T1>
@@ -91,32 +92,33 @@ namespace april_utils {
     }
     
     /**
-     * Resets the object to a NULL pointer, what will execute a DecRef.
+     * @brief Resets the object to a NULL pointer, what will execute a DecRef.
      */
     ~SharedPtr() { reset(); }
     
     /**
-     * Dereferencing, returns the pointer itself.
+     * @brief Dereferencing, returns the pointer itself.
      */
     T *operator->() { return get(); }
 
     /**
-     * Dereferencing, returns the pointer itself.
+     * @brief Dereferencing, returns the pointer itself.
      */
     const T *operator->() const { return get(); }
     
     /**
-     * Dereferencing, returns a reference to the data.
+     * @brief Dereferencing, returns a reference to the data.
      */
     T &operator*() { return *get(); }
 
     /**
-     * Dereferencing, returns a reference to the data.
+     * @brief Dereferencing, returns a reference to the data.
      */
     const T &operator*() const { return *get(); }
     
     /**
-     * Assignment operator, copies the pointer and increases the reference.
+     * @brief Assignment operator, copies the pointer and increases the
+     * reference.
      */
     SharedPtr<T,Referencer,Deleter> &operator=(SharedPtr<T,Referencer,Deleter> &other) {
       reset(other.get());
@@ -124,7 +126,8 @@ namespace april_utils {
     }
 
     /**
-     * Assignment operator, copies the pointer and increases the reference.
+     * @brief Assignment operator, copies the pointer and increases the
+     * reference.
      */
     SharedPtr<T,Referencer,Deleter> &operator=(const SharedPtr<T,Referencer,Deleter> &other) {
       reset(other.ptr);
@@ -132,7 +135,8 @@ namespace april_utils {
     }
 
     /**
-     * Assignment operator, copies the pointer and increases the reference.
+     * @brief Assignment operator, copies the pointer and increases the
+     * reference.
      */
     template<typename T1>
     SharedPtr<T,Referencer,Deleter> &operator=(SharedPtr<T1,Referencer,Deleter> &other) {
@@ -141,7 +145,8 @@ namespace april_utils {
     }
 
     /**
-     * Assignment operator, copies the pointer and increases the reference.
+     * @brief Assignment operator, copies the pointer and increases the
+     * reference.
      */
     template<typename T1>
     SharedPtr<T,Referencer,Deleter> &operator=(const SharedPtr<T1,Referencer,Deleter> &other) {
@@ -150,7 +155,8 @@ namespace april_utils {
     }
     
     /**
-     * Assignment operator, copies the pointer and increases the reference.
+     * @brief Assignment operator, copies the pointer and increases the
+     * reference.
      */
     SharedPtr<T> &operator=(T *other) {
       reset(other);
@@ -158,14 +164,14 @@ namespace april_utils {
     }
     
     /**
-     * Operator[], returns a reference to the data.
+     * @brief Operator[], returns a reference to the data.
      */
     T &operator[](int i) {
       return ptr[i];
     }
 
     /**
-     * Operator[], returns a reference to the data.
+     * @brief Operator[], returns a reference to the data.
      */
     const T &operator[](int i) const {
       return ptr[i];
@@ -180,21 +186,21 @@ namespace april_utils {
     }
 
     /**
-     * Bypasses the pointer, but stills having a reference.
+     * @brief Bypasses the pointer, but stills having a reference.
      */
     T *get() {
       return ptr;
     }
 
     /**
-     * Bypasses the pointer, but stills having a reference.
+     * @brief Bypasses the pointer, but stills having a reference.
      */
     const T *get() const {
       return ptr;
     }
 
     /**
-     * Releases the pointer, but NOT decreases its reference counter.
+     * @brief Releases the pointer, but NOT decreases its reference counter.
      */
     T *release() {
       T *tmp = ptr;
@@ -203,7 +209,7 @@ namespace april_utils {
     }
     
     /**
-     * Takes the ownership without IncRef the pointer.
+     * @brief Takes the ownership without IncRef the pointer.
      */
     void take(T *other) {
       reset();
@@ -211,7 +217,7 @@ namespace april_utils {
     }
 
     /**
-     * DecRef its pointer, and IncRef the given pointer.
+     * @brief DecRef its pointer, and IncRef the given pointer.
      *
      * @note By default receives a NULL pointer.
      */

@@ -83,7 +83,7 @@ namespace april_utils {
   };
 
   /**
-   * Standard deleter template specialization for new[].
+   * Standard deleter template specialization for delete[].
    */
   template<typename T>
   struct StandardDeleter<T[]> {

@@ -30,6 +30,7 @@
 namespace april_utils {
   /**
    * @brief A plain wrapper over a pointer.
+   *
    * @note T can be any type, referenced or not referenced.
    *
    * The WeakPtr is constructed by passing a SharedPtr object.
@@ -45,14 +46,14 @@ namespace april_utils {
     }
 
     /**
-     * Takes another pointer.
+     * @brief Takes another pointer.
      */
     void take(T *other) {
       reset(other);
     }
 
     /**
-     * Takes another pointer.
+     * @brief Takes another pointer.
      */
     void reset(T *other=0) {
       ptr = other;
@@ -60,7 +61,7 @@ namespace april_utils {
 
   public:
     /**
-     * Builds a WeakPtr from a given pointer, by default NULL.
+     * @brief Builds a WeakPtr from a given pointer, by default NULL.
      */
     WeakPtr();
     WeakPtr(WeakPtr<T> &other) : ptr(other.ptr) { }
@@ -79,27 +80,27 @@ namespace april_utils {
     WeakPtr(const SharedPtr<T1> &other) : ptr(other.ptr) { }
     
     /**
-     * Destructor.
+     * @brief Destructor.
      */
     ~WeakPtr() { }
     
     /**
-     * Dereferencing, returns the pointer itself.
+     * @brief Dereferencing, returns the pointer itself.
      */
     T *operator->() { return ptr; }
 
     /**
-     * Dereferencing, returns the pointer itself.
+     * @brief Dereferencing, returns the pointer itself.
      */
     const T *operator->() const { return ptr; }
 
     /**
-     * Dereferencing, returns a reference to the data.
+     * @brief Dereferencing, returns a reference to the data.
      */
     T &operator*() { return *ptr; }
 
     /**
-     * Dereferencing, returns a reference to the data.
+     * @brief Dereferencing, returns a reference to the data.
      */
     const T &operator*() const { return *ptr; }
     
@@ -138,14 +139,14 @@ namespace april_utils {
     }
 
     /**
-     * Operator[], returns a reference to the data.
+     * @brief Operator[], returns a reference to the data.
      */
     T &operator[](int i) {
       return ptr[i];
     }
 
     /**
-     * Operator[], returns a reference to the data.
+     * @brief Operator[], returns a reference to the data.
      */
     const T &operator[](int i) const {
       return ptr[i];
@@ -165,21 +166,21 @@ namespace april_utils {
     }
     
     /**
-     * Bypasses the pointer, but stills having it.
+     * @brief Bypasses the pointer, but stills having it.
      */
     T *get() {
       return ptr;
     }
     
     /**
-     * Bypasses the pointer, but stills having it.
+     * @brief Bypasses the pointer, but stills having it.
      */
     const T *get() const {
       return ptr;
     }
     
     /**
-     * Releases the pointer and assigns it to NULL.
+     * @brief Releases the pointer and assigns it to NULL.
      */
     T *release() {
       T *tmp = ptr;
@@ -188,7 +189,8 @@ namespace april_utils {
     }
     
     /**
-     * Returns a SharedPtr which takes the ownership of the referenced pointer.
+     * @brief Returns a SharedPtr which takes the ownership of the referenced
+     * pointer.
      */
     SharedPtr<T> lock() {
       return SharedPtr<T>(get());
