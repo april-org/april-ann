@@ -1,14 +1,15 @@
-//BIND_HEADER_C
-//BIND_END
-
 //BIND_HEADER_H
 #include "arpa2lira.h"
-using arpa2lira::Transition;
-using arpa2lira::TransitionsType;
-using arpa2lira::TransitionsIterator;
-using arpa2lira::State2Transitions;
-using arpa2lira::VectorReferenced;
+using LanguageModels::arpa2lira::Transition;
+using LanguageModels::arpa2lira::TransitionsType;
+using LanguageModels::arpa2lira::TransitionsIterator;
+using LanguageModels::arpa2lira::State2Transitions;
+using LanguageModels::arpa2lira::VectorReferenced;
+//BIND_END
+
+//BIND_HEADER_C
 using april_utils::vector;
+using april_utils::log_float;
 //BIND_END
 
 ////////////////////////////////////

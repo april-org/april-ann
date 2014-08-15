@@ -38,14 +38,14 @@ namespace LanguageModels {
     typedef NgramLiraModel::Score Score;
     
     virtual ~BunchHashedNgramLiraLMInterface();
-    Score getBestProb() const;
-    Score getBestProb(Key k);
-    Score getFinalScore(Key k, Score threshold);
-    bool getZeroKey(Key &k) const;
-    Key getInitialKey();
-    void get(Key key, WordType word, Burden burden,
-             vector<KeyScoreBurdenTuple> &result,
-             Score threshold);
+    virtual Score getBestProb() const;
+    virtual Score getBestProb(Key k);
+    virtual Score getFinalScore(Key k, Score threshold);
+    virtual bool getZeroKey(Key &k) const;
+    virtual Key getInitialKey();
+    virtual void get(Key key, WordType word, Burden burden,
+                     april_utils::vector<KeyScoreBurdenTuple> &result,
+                     Score threshold);
   protected:
     friend class BunchHashedNgramLiraLM;
     BunchHashedNgramLiraLMInterface(BunchHashedNgramLiraLM *model,

@@ -206,7 +206,7 @@ namespace LanguageModels {
       return score;
     }
 
-    Score getBestProb(Key k) {
+    virtual Score getBestProb(Key k) {
       unsigned int offset;
       const unsigned int context_size = getContextProperties(k, context_words,
                                                              offset);

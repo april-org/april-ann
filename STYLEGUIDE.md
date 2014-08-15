@@ -32,6 +32,8 @@ Requirements and sugestions:
 - Properties: In lower case with underscore sepparating words.
 - Variables: In lower case with underscore sepparating words.
 - Constants: In upper case with underscore sepparating words.
+- Virtual methods: Always let the `virtual` clause in derived classes, in order
+  to allow the code to indicate it is polymorphic.
 
 #### Class declaration and implementation
 

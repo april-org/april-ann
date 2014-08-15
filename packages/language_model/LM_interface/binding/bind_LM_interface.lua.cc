@@ -23,6 +23,9 @@
 #include "bind_dataset.h"
 #include "bind_LM_interface.h"
 #include "LM_interface.h"
+
+using namespace april_utils;
+using namespace basics;
 //BIND_END
 
 //BIND_HEADER_H
@@ -35,16 +38,16 @@ using namespace LanguageModels;
 using namespace Functions;
 
 class QueryResultUInt32LogFloat : public Referenced {
-  LMInterfaceUInt32LogFloat *model;
-  const vector<LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple> &result;
+  LMInterfaceUInt32LogFloat *lm_interface;
+  const april_utils::vector<LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple> &result;
 public:
-  QueryResultUInt32LogFloat(LMInterfaceUInt32LogFloat *model) :
-    model(model),
-    result(model->getQueries()) {
-    IncRef(model);
+  QueryResultUInt32LogFloat(LMInterfaceUInt32LogFloat *lm_interface) :
+    lm_interface(lm_interface),
+    result(lm_interface->getQueries()) {
+    IncRef(lm_interface);
   }
   ~QueryResultUInt32LogFloat() {
-    DecRef(model);
+    DecRef(lm_interface);
   }
   size_t size() const { return result.size(); }
   const LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple &get(unsigned int i) const {
@@ -53,10 +56,10 @@ public:
 };
 
 class GetResultUInt32LogFloat : public Referenced {
-  vector<LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple> result;
+  april_utils::vector<LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple> result;
 public:
   GetResultUInt32LogFloat() {}
-  vector<LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple> &getVector() {
+  april_utils::vector<LMInterfaceUInt32LogFloat::KeyScoreBurdenTuple> &getVector() {
     return result;
   }
   size_t size() const { return result.size(); }
@@ -69,10 +72,10 @@ public:
 };
 
 class NextKeysResultUInt32 : public Referenced {
-  vector<uint32_t> result;
+  april_utils::vector<uint32_t> result;
 public:
   NextKeysResultUInt32() {}
-  vector<uint32_t> &getVector() {
+  april_utils::vector<uint32_t> &getVector() {
     return result;
   }
   size_t size() const { return result.size(); }
@@ -505,7 +508,9 @@ public:
 
 //////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME SkipFunction functions
+//BIND_LUACLASSNAME FunctionInterface functions
+
+//BIND_LUACLASSNAME SkipFunction functions.skip
 //BIND_CPP_CLASS SkipFunction
 //BIND_SUBCLASS_OF SkipFunction FunctionInterface
 

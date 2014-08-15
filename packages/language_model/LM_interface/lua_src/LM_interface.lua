@@ -36,7 +36,7 @@ local function set_iterator_metatable(it_class)
   local metatable = it_class.meta_instance
   metatable.__len = generic_len
   metatable.__ipairs = generic_ipairs
-  class_extension(it_class, "iterate",metatable.__ipairs)
+  class.extend(it_class, "iterate",metatable.__ipairs)
 end
 ---------------------------------------------------------------------------
 

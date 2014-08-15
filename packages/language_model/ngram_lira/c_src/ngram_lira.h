@@ -29,21 +29,19 @@
 #include <climits> // UINT_MAX
 #include "logbase.h"
 
-using namespace april_utils;
-using april_utils::binary_search;
-
 namespace LanguageModels {
 
   struct NgramLiraTransition {
     unsigned int state;
-    log_float    prob;
+    april_utils::log_float prob;
   };
 
   /// lambda backoff transition:
   struct NgramBackoffInfo {
     unsigned int bo_dest_state; // estado al que se baja
-    log_float    bo_prob; // probabilidad de bajar al estado bo_dest_state
-    NgramBackoffInfo() : bo_dest_state(0), bo_prob(log_float::zero()) { }
+    april_utils::log_float bo_prob; // probabilidad de bajar al estado bo_dest_state
+    NgramBackoffInfo() : bo_dest_state(0),
+                         bo_prob(april_utils::log_float::zero()) { }
   };
 
   /// states are sorted by fan_out in .lira format
@@ -67,7 +65,7 @@ namespace LanguageModels {
     unsigned int fan_out_threshold;
     unsigned int first_state_binary_search;
     unsigned int size_first_transition;
-    log_float    best_prob;
+    april_utils::log_float best_prob;
     size_t       size_first_transition_vector;
     size_t       offset_vocabulary_vector;
     size_t       size_vocabulary_vector;
@@ -88,7 +86,7 @@ namespace LanguageModels {
   public:
     
     typedef uint32_t Key;
-    typedef log_float Score;
+    typedef april_utils::log_float Score;
     
     // allows the dictionary used to check the model to be larger than
     // the actual list of words in the model
@@ -110,7 +108,7 @@ namespace LanguageModels {
     NgramBackoffInfo *backoff_table; ///< size num_states
 
     // upper bound on the max probability outgoing from each state
-    log_float *max_out_prob; ///< size num_states, when fan_out==0 equals zero
+    Score *max_out_prob; ///< size num_states, when fan_out==0 equals zero
 
     // number of different fan outs
     unsigned int different_number_of_trans; // size del linear_search_table
@@ -129,7 +127,7 @@ namespace LanguageModels {
     unsigned int *first_transition;     ///< vector shifted first_state_binary_search
 
     /// best_prob is the max of max_tr_prob_table
-    log_float best_prob; ///< loaded from .lira
+    Score best_prob; ///< loaded from .lira
 
     //----------------------------------------------------------------------
     // data in case vectors are mapped:
@@ -201,7 +199,8 @@ namespace LanguageModels {
     }
     
     virtual void get(Key key, WordType word, Burden burden,
-                     vector<KeyScoreBurdenTuple> &result, Score threshold);
+                     april_utils::vector<KeyScoreBurdenTuple> &result,
+                     Score threshold);
     
     virtual void clearQueries();
     
@@ -229,7 +228,7 @@ namespace LanguageModels {
       return static_cast<NgramLiraModel*>(model)->initial_state;
     }
     virtual Score getFinalScore(Key k, Score threshold) {
-      vector<KeyScoreBurdenTuple> aux;
+      april_utils::vector<KeyScoreBurdenTuple> aux;
       Burden dummyBurden;
       get(k, static_cast<NgramLiraModel*>(model)->final_word, dummyBurden, aux,
           threshold);

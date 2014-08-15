@@ -35,6 +35,8 @@
 #include <unistd.h>
 #include <cstdio>
 
+using namespace april_utils;
+
 namespace LanguageModels {
 
   // format errors are NOT checked!!!
@@ -120,7 +122,7 @@ namespace LanguageModels {
     // # bound max trans prob
     get_uncommented_line(buffer,bufferSize,fd);
     sscanf(buffer,"%f",&aux);
-    best_prob = log_float(aux);
+    best_prob = Score(aux);
 
     //----------------------------------------------------------------------
     // # how many different number of transitions
@@ -167,11 +169,11 @@ namespace LanguageModels {
     // # state backoff_st 'weight(state->backoff_st)' [max_transition_prob]
     // # backoff_st == -1 means there is no backoff
     backoff_table     = new NgramBackoffInfo[num_states];
-    max_out_prob = new log_float[num_states];
+    max_out_prob = new Score[num_states];
     // no hace falta inicializar backoff_table explicitamente, por
-    // defecto se pone bo_dest_state a 0 y bo_prob a log_float::zero()
+    // defecto se pone bo_dest_state a 0 y bo_prob a Score::zero()
     for (unsigned int i=0;i<num_states; ++i) {
-      max_out_prob[i] = log_float::zero();
+      max_out_prob[i] = Score::zero();
     }
     for (unsigned int i=0;i<num_states; ++i) {
       int leidos;
@@ -181,13 +183,13 @@ namespace LanguageModels {
       get_uncommented_line(buffer,bufferSize,fd);
       leidos = sscanf(buffer,"%u%d%f%f",
                       &orig,&bo_dest,&dbackoff,&maxOutProb);
-      log_float backoff;
+      Score backoff;
       if (bo_dest >= 0) {
-        backoff_table[orig].bo_prob       = log_float(dbackoff);
+        backoff_table[orig].bo_prob       = Score(dbackoff);
         backoff_table[orig].bo_dest_state = (unsigned int)bo_dest;
       }
       if (leidos == 4) {
-        max_out_prob[orig] = log_float(maxOutProb);
+        max_out_prob[orig] = Score(maxOutProb);
       }
     }
 
@@ -207,7 +209,7 @@ namespace LanguageModels {
       }
       transition_words_table[i] = word;
       transition_table[i].state = dest;
-      transition_table[i].prob  = log_float(prob);
+      transition_table[i].prob  = Score(prob);
       last_state = orig;
     }
     first_transition[num_states] = num_transitions;
@@ -235,16 +237,16 @@ namespace LanguageModels {
     lowest_state    = 1;
 
     // best probability to go from each state:
-    best_prob       = log_float::one();
-    max_out_prob    = new log_float[num_states];
-    max_out_prob[0] = log_float::zero();
-    max_out_prob[1] = log_float::one();
+    best_prob       = Score::one();
+    max_out_prob    = new Score[num_states];
+    max_out_prob[0] = Score::zero();
+    max_out_prob[1] = Score::one();
 
     // backoff information
     backoff_table                  = new NgramBackoffInfo[num_states];
-    backoff_table[0].bo_prob       = log_float::zero();
+    backoff_table[0].bo_prob       = Score::zero();
     backoff_table[0].bo_dest_state = 1;
-    backoff_table[1].bo_prob       = log_float::zero();
+    backoff_table[1].bo_prob       = Score::zero();
     backoff_table[1].bo_dest_state = 1;
 
     // linear search info:
@@ -275,7 +277,7 @@ namespace LanguageModels {
       unsigned int word         = i+1;
       transition_words_table[i] = word;
       transition_table[i].state = (word == final_word) ? final_state : lowest_state;
-      transition_table[i].prob  = log_float::one();
+      transition_table[i].prob  = Score::one();
     }
   }
 
@@ -361,7 +363,7 @@ namespace LanguageModels {
     filesize += header.size_backoff_table;
 
     header.offset_max_out_prob = filesize;
-    header.size_max_out_prob = sizeof(log_float)*num_states;
+    header.size_max_out_prob = sizeof(Score)*num_states;
     filesize += header.size_max_out_prob;
 
     //----------------------------------------------------------------------
@@ -505,7 +507,7 @@ namespace LanguageModels {
     transition_table       = (NgramLiraTransition *)(filemapped + header->offset_transition_table);
     linear_search_table    = (LinearSearchInfo*)(filemapped + header->offset_linear_search_table);
     backoff_table          = (NgramBackoffInfo*)(filemapped + header->offset_backoff_table);
-    max_out_prob           = (log_float*)(filemapped + header->offset_max_out_prob);
+    max_out_prob           = (Score*)(filemapped + header->offset_max_out_prob);
     first_transition       = (unsigned int*)(filemapped + header->offset_first_transition) - first_state_binary_search;
 
     // at this point, all seems to be ok :)

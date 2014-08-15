@@ -23,6 +23,8 @@
 #include "history_based_ngram_lira.h"
 #include "unused_variable.h"
 
+using namespace april_utils;
+
 namespace LanguageModels {
   
   typedef NgramLiraModel::Key Key;
