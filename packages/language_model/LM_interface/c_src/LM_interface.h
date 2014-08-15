@@ -53,6 +53,21 @@ namespace LanguageModels {
    * contains other data structures to perform the actual computation of LM
    * queries.
    *
+   * Two modes are available to query the language models:
+   *
+   * - One-by-one: get() based methods query the language model and store its
+   *   result into an april_utils::vector.
+   *
+   * - Bunch-mode: insertQuery(), getQueries(), clearQueries() methods allow to
+   *   list a bunch of queries into a temporary data structure using
+   *   insertQuery() method, the language model computes its output in the
+   *   getQueries() method, and finally the clearQueries() method allows to
+   *   reset the temporary list of queries. This mode uses the LMInterface
+   *   instance to store the state of the computation.
+   *
+   * @note Language models can be deterministic or not, therefore, this
+   * interface methods produce lists of (key,score) pairs with @c size()>=0.
+   *
    * @note In history based LMs this class contains a history manager, usually a
    * april_utils::TrieVector instance.
    *
@@ -104,11 +119,11 @@ namespace LanguageModels {
         key_score(k,s), burden(burden) {}
     };
     
-    /// This struct is used for the insertQuery method which receives several
+    /// This struct is used for the insertQueries() method which receives several
     /// words together.
     struct WordIdScoreTuple {
       WordType word;
-      int32_t  id_word;
+      int32_t  id_word; ///< A half part of the Burden (see insertQueries()).
       Score    score;
       WordIdScoreTuple() {}
       WordIdScoreTuple(WordType w, int32_t idw, Score s) :
@@ -171,9 +186,19 @@ namespace LanguageModels {
                      april_utils::vector<KeyScoreBurdenTuple> &result,
                      Score threshold) = 0;
     
-    /// this method computes the next keys given a pair (key,word). It could be a
-    /// non-deterministic LM. By default, it uses the standard get() method and
-    /// discards the Burden and Score.
+    /**
+     * @brief Computes only the next keys given a pair (Key,WordType).
+     *
+     * @note Its default implementation uses get() method and discarding Burden
+     * and Score
+     *
+     * @note The result vector is not cleared, so all the resulting states will
+     * be appended using april_utils::vector::push_back() method.
+     *
+     * @param key - The context or state from where the transition starts.
+     *
+     * @param[in,out] result - An april_utils::vector of Key's.
+     */
     virtual void getNextKeys(Key key, WordType word,
                              april_utils::vector<Key> &result) {
       april_utils::vector<KeyScoreBurdenTuple> aux_result;
@@ -188,22 +213,55 @@ namespace LanguageModels {
     // individual queries (gets) and bunch mode queries should not be
     // mixed.
 
-    /// the bunch mode operates in a state fashion, the first operation
-    /// is clearQueries to reset the internal structures and the result
-    /// vector
+    /**
+     * @brief Removes the list of pending queries.
+     *
+     * @note This must be the first operation to be executed before inserting
+     * multiple queries by calling insertQuery() method.
+     *
+     * @see Methods insertQuery() and getQueries().
+     */
     virtual void clearQueries() {
       result.clear();
     }
 
-    /// call this method for each individual query.
-    /// The default implementation use the get method
+    /**
+     * @brief Call this method for each individual query.
+     *
+     * @param key - The context or state from where the transition starts.
+     *
+     * @param word - The transition word.
+     *
+     * @param burden - The related burden with the current query.
+     *
+     * @param threshold - A threshold to be use for beam pruning.
+     *
+     * @note The default implementation uses the get() method within a for loop.
+     */
     virtual void insertQuery(Key key, WordType word, Burden burden,
                              Score threshold) {
       get(key,word,burden,result,threshold);
     }
     
-    /// this method can be naively converted into a series of
-    /// insertQuery calls, but it can be optimized for some 
+    /**
+     * @brief A specialization of insertQuery() method for multiple transition
+     * words.
+     *
+     * @param key - The context or state from where the transition starts.
+     *
+     * @param id_key - A half part of the Burden.
+     *
+     * @param words - An april_utils::vector of WordIdScoreTuple.
+     *
+     * @param is_sorted - Indicates if the words vector is sorted by word.
+     *
+     * @note The Burden is computed by the pair (id_key,id_word), where id_key
+     * is the given parameter and id_word is different for each word in the
+     * given words vector.
+     *
+     * @note The default implementation uses the insertQuery() method within a
+     * for loop.
+     */
     virtual void insertQueries(Key key, int32_t id_key,
                                april_utils::vector<WordIdScoreTuple> words,
                                bool is_sorted=false) {
@@ -214,40 +272,69 @@ namespace LanguageModels {
         insertQuery(key, it->word, Burden(id_key, it->id_word), it->score);
     }
 
-    /// this method may perform the 'actual' computation of LM queries
-    /// in some implementations which can benefit of bunch mode (for
-    /// instance, NNLMs may profit this feature for grouping all
-    /// queries associated to the same Key, and can perform serveral
-    /// forward steps in bunch mode). Other LMs such as those based on
-    /// automata (e.g. ngram_lira) may perform the LM queries in the
-    /// insert method so that here they only have to return the result
-    /// vector.
+    /**
+     * @brief This method may perform the computation of language model queries.
+     *
+     * Some LM implementations can benefit of bunch mode (for instance, NNLMs
+     * may profit this feature for grouping all queries associated to the same
+     * Key, and can perform several forward steps in bunch or mini-batch
+     * mode). Other LMs such as those based on automata (e.g. NgramLiraModel)
+     * may perform the LM queries in the insert method so that here they only
+     * have to return the result vector.
+     *
+     * @return An april_utils::vector of KeyScoreBurdenTuple with the language
+     * model computation result for all the queries inserted with insertQuery()
+     * or insertQueries() from the last call to clearQueries().
+     */
     virtual const april_utils::vector<KeyScoreBurdenTuple> &getQueries() {
       return result;
     }
 
-    /// an upper bound on the best transition probability, usually
-    /// pre-computed in the model
+    /// An upper bound on the best transition probability, usually pre-computed
+    /// in the model.
     virtual Score getBestProb() const = 0;
 
-    /// an upper bound on the best transition probability departing
-    /// from key, usually pre-computed in the model
+    /// An upper bound on the best transition probability departing from key,
+    /// usually pre-computed in the model.
     virtual Score getBestProb(Key k) = 0;
 
-    /// initial key is the initial state (initial context cue)
+    /// Initial key is the initial state (initial context cue).
     virtual Key getInitialKey() = 0;
 
-    /// this method returns false and does nothing on LMs without zero key
+    /**
+     * @brief Returns the Key corresponding to the zero key concept.
+     *
+     * The zero key is a special identifier used to represent that the lowest
+     * possible level in the automata. In a N-gram language model it is the
+     * 0-gram key, so the following transition is a unigram.
+     *
+     * @param[out] k - The zero key, only valid if the method returns @c true.
+     *
+     * @return A bool indicating if the model contains or not a zero key
+     * identifier.
+     *
+     * @note This method returns false and does nothing on LMs without zero key,
+     * in this case, the @c k parameter is not assigned.
+     */
     virtual bool getZeroKey(Key &k) const {
       UNUSED_VARIABLE(k);
       // default behavior
       return false;
     }
 
-    // returns the score associated to the probability of being a
-    // final state. This method is not const since it may depend on
-    // get which is not const either. An score is provided as pruning
-    // technique (in the same way as with get method):
+    /**
+     * @brief Returns the score associated to the probability of being a
+     * final state.
+     *
+     * @param k - The key of the current state.
+     *
+     * @param threshold - For beam prunning.
+     *
+     * @return A Score with the probability of @c k being a final state.
+     *
+     * @note This method is not const since it may depend on get which is not
+     * const either.
+     */
     virtual Score getFinalScore(Key k, Score threshold) = 0;
   };
 
