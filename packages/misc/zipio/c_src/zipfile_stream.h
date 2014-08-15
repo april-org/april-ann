@@ -26,85 +26,40 @@
 #include "buffered_memory.h"
 #include "error_print.h"
 #include "unused_variable.h"
+#include "zipio.h"
 
-/// Opens the file at zip index 0 or use the given opened zip_file
-class ZIPFileWrapper {
-  zip *z;
-  zip_file *f;
-  bool need_close;
-  size_t file_size, read_size;
-public:
-  static bool isZIP(const char *filename) {
-    int len = strlen(filename);
-    return (len > 4 && filename[len-4] == '.' &&
-	    filename[len-3] == 'z' &&
-	    filename[len-2] == 'i' &&
-	    filename[len-1] == 'p');
-  }
+namespace ZIPIO {
+  class ZIPFileStream : public april_io::BufferedInputStream {
+  public:
+    
+    ZIPFileStream(ZIPPackage *zip_package, const char );
+    /*
+      ZIPFileStream(FILE *file);
+      ZIPFileStream(int fd);
+    */
+    virtual ~ZIPFileStream();
   
-  ZIPFileWrapper(ZIPFileWrapper &other) : f(other.f), need_close(false) { }
-  ZIPFileWrapper(zip *z, zip_file *f) : z(z), f(f), need_close(false) { }
-  ZIPFileWrapper() : f(0), need_close(true) { }
-  ~ZIPFileWrapper() {
-    closeS();
-  }
-  bool isOpened() const { return f != 0; }
-  bool openS(const char *path, const char *mode) {
-    int err, flags=0;
-    if (mode != 0) {
-      if (mode[0] == 'w') {
-        // flags = flags | ZIP_CREATE; // | ZIP_TRUNCATE;
-        ERROR_EXIT(128, "zip files writing not implemented\n");
-      }
-    }
-    z = zip_open(path, 0, &err);
-    f = zip_fopen_index(z, 0, 0);
-    struct zip_stat stat;
-    zip_stat_index(z, 0, 0, &stat);
-    file_size = stat.size;
-    read_size = 0;
-    need_close = true;
-    return f != 0;
-  }
-  void closeS() {
-    if (need_close && z != 0) {
-      if (f != 0) zip_fclose(f);
-      zip_close(z);
-    }
-    f = 0;
-  }
-  size_t readS(void *ptr, size_t size, size_t nmemb) {
-    size_t n = zip_fread(f, ptr, size*nmemb);
-    read_size += n;
-    return n;
-  }
-  size_t writeS(const void *ptr, size_t size, size_t nmemb) {
-    UNUSED_VARIABLE(ptr);
-    UNUSED_VARIABLE(size);
-    UNUSED_VARIABLE(nmemb);
-    ERROR_EXIT(128, "NOT IMPLEMENTED\n");
-    return 0;
-  }
-  int seekS(long offset, int whence) {
-    UNUSED_VARIABLE(offset);
-    UNUSED_VARIABLE(whence);
-    ERROR_EXIT(128, "NOT IMPLEMENTED\n");
-    return 0;
-  }
-  void flushS() {
-    ERROR_EXIT(128, "NOT IMPLEMENTED\n");
-  }
-  int printfS(const char *format, va_list &arg) {
-    UNUSED_VARIABLE(format);
-    UNUSED_VARIABLE(arg);
-    ERROR_EXIT(128, "NOT IMPLEMENTED\n");
-    return 0;
-  }
-  bool eofS() const {
-    return read_size == file_size;
-  }
-};
+    // int fileno() const { return fd; }
 
-typedef BufferedMemory<ZIPFileWrapper> BufferedZIPFile;
+    virtual bool isOpened() const ;
+    virtual void close();
+    virtual void flush();
+    virtual int setvbuf(int mode, size_t size);
+    virtual bool hasError() const;
+    virtual const char *getErrorMsg() const;
+    
+  protected:
 
-#endif // BUFFERED_GZFILE_H
+    virtual bool privateEof() const;    
+    virtual size_t privateWrite(const char *buf, size_t size);
+    virtual size_t privateRead(char *buf, size_t max_size);
+    virtual off_t privateSeek(int whence, int offset);
+    
+  private:
+    
+    gzFile f;
+    bool write_flag;
+
+  };
+}
+#endif // BUFFERED_ZIPFILE_H

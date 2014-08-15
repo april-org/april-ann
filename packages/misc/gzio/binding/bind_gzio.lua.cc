@@ -28,7 +28,7 @@ using namespace april_io;
 //BIND_HEADER_H
 #include "gzfile_stream.h"
 
-using namespace gzio;
+using namespace GZIO;
 //BIND_END
 
 /////////////////////////////////////////////////////////////////////////////

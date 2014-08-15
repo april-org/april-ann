@@ -26,7 +26,7 @@
 
 using april_io::StreamInterface;
 
-namespace gzio {
+namespace GZIO {
 
   GZFileStream::GZFileStream(const char *path, const char *mode) :
     BufferedInputStream(), f(0) {

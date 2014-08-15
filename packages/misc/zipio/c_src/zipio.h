@@ -24,14 +24,7 @@
 #include <zip.h>
 #include "referenced.h"
 
-class ZipPackage;
-
-class ZipFile : public Referenced {
-  ZipPackage *zip;
-private:
-};
-
-class ZipPackage : public Referenced {
+class ZIPPackage : public Referenced {
 };
 
 #endif // ZIPIO_H

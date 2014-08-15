@@ -26,7 +26,7 @@
 
 #include "buffered_stream.h"
 
-namespace gzio {
+namespace GZIO {
 
   class GZFileStream : public april_io::BufferedInputStream {
   public:
@@ -61,7 +61,7 @@ namespace gzio {
 
   };
 
-} // namespace gzio
+} // namespace GZIO
 
 #endif // GZFILE_STREAM_H
 
