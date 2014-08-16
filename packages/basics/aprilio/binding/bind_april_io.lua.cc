@@ -408,7 +408,13 @@ namespace AprilIO {
     LUABIND_GET_PARAMETER(1, string, filename);
     stream = obj->openFile(filename, flags);
   }
-  LUABIND_RETURN(StreamInterface, stream);
+  if (stream != 0) {
+    LUABIND_RETURN(StreamInterface, stream);
+  }
+  else {
+    LUABIND_RETURN_NIL();
+    LUABIND_RETURN(string, "Unable to open the file");
+  }
 }
 //BIND_END
 

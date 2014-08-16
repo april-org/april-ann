@@ -27,6 +27,7 @@ with older and newer versions whenver the API was compatible.
 - LAPACK library, offered by liblapack_atlas, mkl_lapack, or MacOS Accelerate Framework
 - LAPACKE library when compiling with ATLAS
 - libz: support for open of GZIPPED files
+- libzip: support for open ZIP packages.
 
 The following libreries are recommended, but optional:
 - [OPTIONAL] libpng: if you want to open PNG images

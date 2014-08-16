@@ -34,6 +34,16 @@ using namespace ZIP;
 
 /////////////////////////////////////////////////////////////////////////////
 
+//BIND_ENUM_CONSTANT zip.flags.compressed ZIP_FL_COMPRESSED
+//BIND_ENUM_CONSTANT zip.flags.unchanged ZIP_FL_UNCHANGED
+//BIND_ENUM_CONSTANT zip.flags.nocase ZIP_FL_NOCASE
+//BIND_ENUM_CONSTANT zip.flags.nodir ZIP_FL_NODIR
+//BIND_ENUM_CONSTANT zip.flags.enc_raw ZIP_FL_ENC_RAW
+//BIND_ENUM_CONSTANT zip.flags.enc_guess ZIP_FL_ENC_GUESS
+//BIND_ENUM_CONSTANT zip.flags.enc_strict ZIP_FL_ENC_STRICT
+
+/////////////////////////////////////////////////////////////////////////////
+
 //BIND_LUACLASSNAME StreamInterface aprilio.stream
 
 //BIND_LUACLASSNAME ZIPFileStream zip.stream
