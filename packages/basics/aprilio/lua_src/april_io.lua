@@ -43,11 +43,10 @@ aprilio.lua_open  = io_old_open
 aprilio.lua_lines = io_old_lines
 
 class.extend(aprilio.package, "files",
-             function(self, ...)
-               local args = table.pack(...)
-               local i,n  = 0,self:number_of_files()
+             function(self)
+               local i,n = 0,self:number_of_files()
                return function()
-                 if i<n then i=i+1 return self:open(i,table.unpack(args)) end
+                 if i<n then i=i+1 return self:name_of(i) end
                end
 end)
 
