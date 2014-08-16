@@ -21,27 +21,25 @@
 #ifndef BUFFERED_ZIPFILE_H
 #define BUFFERED_ZIPFILE_H
 
+extern "C" {
 #include <zip.h>
-#include <cstring>
-#include "buffered_memory.h"
-#include "error_print.h"
-#include "unused_variable.h"
-#include "zipio.h"
+}
 
-namespace ZIPIO {
-  class ZIPFileStream : public april_io::BufferedInputStream {
+#include <cstring>
+#include "buffered_stream.h"
+#include "error_print.h"
+#include "smart_ptr.h"
+#include "unused_variable.h"
+#include "zip_package.h"
+
+namespace ZIP {
+  class ZIPFileStream : public AprilIO::BufferedInputStream {
+    friend class ZIPPackage;
   public:
     
-    ZIPFileStream(ZIPPackage *zip_package, const char );
-    /*
-      ZIPFileStream(FILE *file);
-      ZIPFileStream(int fd);
-    */
     virtual ~ZIPFileStream();
   
-    // int fileno() const { return fd; }
-
-    virtual bool isOpened() const ;
+    virtual bool isOpened() const;
     virtual void close();
     virtual void flush();
     virtual int setvbuf(int mode, size_t size);
@@ -57,9 +55,12 @@ namespace ZIPIO {
     
   private:
     
-    gzFile f;
-    bool write_flag;
+    april_utils::SharedPtr<ZIPPackage> cpp_zip_package;
+    zip_file *file;
+    size_t size;
+    off_t pos;
 
+    ZIPFileStream(ZIPPackage *cpp_zip_package, zip_file *file, size_t size);
   };
 }
 #endif // BUFFERED_ZIPFILE_H

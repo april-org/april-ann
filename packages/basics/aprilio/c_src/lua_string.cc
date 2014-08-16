@@ -21,7 +21,7 @@
 #include "april_assert.h"
 #include "lua_string.h"
 
-namespace april_io {
+namespace AprilIO {
   OutputLuaStringStream::OutputLuaStringStream(lua_State *L,
                                                size_t block_size) :
     L(L),
@@ -225,4 +225,4 @@ namespace april_io {
   bool InputLuaStringStream::eofStream() const {
     return data_pos >= total_size;
   }
-} // namespace april_io
+} // namespace AprilIO

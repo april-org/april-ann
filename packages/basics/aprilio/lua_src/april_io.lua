@@ -1,16 +1,16 @@
 -- modificamos el io.open
-april_io = april_io or {}
+aprilio = aprilio or {}
 local open_by_extension = { }
 
 local io_old_open = io.open
-april_io.open = function(name, ...)
+aprilio.open = function(name, ...)
   local open = (name and open_by_extension[string.get_extension(name)]) or io_old_open
   return open(name, ...)
 end
-io.open = april_io.open
+io.open = aprilio.open
 
 local io_old_lines = io.lines
-april_io.lines = function(name, ...)
+aprilio.lines = function(name, ...)
   if not name then return io_old_lines() end
   local open = open_by_extension[string.get_extension(name)] or io_old_open
   local f = april_assert(open(name), "cannot open file '%s'", name)
@@ -25,13 +25,13 @@ april_io.lines = function(name, ...)
     end
   end
 end
-io.lines = april_io.lines
+io.lines = aprilio.lines
 
-function april_io.register_open_by_extension(ext, func)
+function aprilio.register_open_by_extension(ext, func)
   open_by_extension[ext] = func
 end
 
-class.extend(april_io.stream, "lines",
+class.extend(aprilio.stream, "lines",
              function(self, ...)
                local arg = { ... }
                return function()
@@ -39,7 +39,16 @@ class.extend(april_io.stream, "lines",
                end
 end)
 
-april_io.lua_open  = io_old_open
-april_io.lua_lines = io_old_lines
+aprilio.lua_open  = io_old_open
+aprilio.lua_lines = io_old_lines
 
-return april_io
+class.extend(aprilio.package, "files",
+             function(self, ...)
+               local args = table.pack(...)
+               local i,n  = 0,self:number_of_files()
+               return function()
+                 if i<n then i=i+1 return self:open(i,table.unpack(arg)) end
+               end
+end)
+
+return aprilio

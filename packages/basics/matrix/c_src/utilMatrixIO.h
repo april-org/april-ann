@@ -42,8 +42,8 @@ extern "C" {
 
 namespace basics {
 
-  april_utils::constString readULine(april_io::StreamInterface *stream,
-                                     april_io::CStringStream *dest);
+  april_utils::constString readULine(AprilIO::StreamInterface *stream,
+                                     AprilIO::CStringStream *dest);
 
   /* Templates for ascii and binary extractors, sizers and coders */
   
@@ -112,7 +112,7 @@ namespace basics {
   template <typename T>
   struct AsciiCoder {
     // puts to the stream the given value
-    void operator()(const T &value, april_io::StreamInterface *stream) {
+    void operator()(const T &value, AprilIO::StreamInterface *stream) {
       UNUSED_VARIABLE(value);
       UNUSED_VARIABLE(stream);
       ERROR_EXIT(128, "NOT IMPLEMENTED\n");
@@ -126,7 +126,7 @@ namespace basics {
   template <typename T>
   struct BinaryCoder {
     // puts to the stream the given value
-    void operator()(const T &value, april_io::StreamInterface *stream) {
+    void operator()(const T &value, AprilIO::StreamInterface *stream) {
       UNUSED_VARIABLE(value);
       UNUSED_VARIABLE(stream);
       ERROR_EXIT(128, "NOT IMPLEMENTED\n");
@@ -167,7 +167,7 @@ namespace basics {
 
   template <typename T>
   Matrix<T>*
-  readMatrixFromStream(april_io::StreamInterface *stream,
+  readMatrixFromStream(AprilIO::StreamInterface *stream,
                        const char *given_order=0) {
     AsciiExtractor<T> ascii_extractor;
     BinaryExtractor<T> bin_extractor;
@@ -175,8 +175,8 @@ namespace basics {
       ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
       return 0;
     }
-    april_utils::SharedPtr<april_io::CStringStream>
-      c_str(new april_io::CStringStream());;
+    april_utils::SharedPtr<AprilIO::CStringStream>
+      c_str(new AprilIO::CStringStream());;
     april_assert(!c_str.empty());
     april_utils::constString line,format,order,token;
     // First we read the matrix dimensions
@@ -304,7 +304,7 @@ namespace basics {
   // Returns the number of chars written (there is a '\0' that is not counted)
   template <typename T>
   int writeMatrixToStream(Matrix<T> *mat,
-                          april_io::StreamInterface *stream,
+                          AprilIO::StreamInterface *stream,
                           bool is_ascii) {
     AsciiSizer<T> ascii_sizer;
     BinarySizer<T> bin_sizer;
@@ -376,15 +376,15 @@ namespace basics {
 
   template <typename T>
   Matrix<T>*
-  readMatrixFromTabStream(april_io::StreamInterface *stream,
+  readMatrixFromTabStream(AprilIO::StreamInterface *stream,
                           const char *given_order=0) {
     AsciiExtractor<T> ascii_extractor;
     if (!stream->good()) {
       ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
       return 0;
     }
-    april_utils::SharedPtr<april_io::CStringStream> c_str;
-    c_str = new april_io::CStringStream();
+    april_utils::SharedPtr<AprilIO::CStringStream> c_str;
+    c_str = new AprilIO::CStringStream();
     april_assert(!c_str.empty());
     april_utils::constString line("");
     T value;
@@ -447,7 +447,7 @@ namespace basics {
   // Returns the number of chars written (there is a '\0' that is not counted)
   template <typename T>
   int writeMatrixToTabStream(Matrix<T> *mat,
-                             april_io::StreamInterface *stream) {
+                             AprilIO::StreamInterface *stream) {
     AsciiSizer<T> ascii_sizer;
     AsciiCoder<T> ascii_coder;
     if (mat->getNumDim() != 2) {
@@ -480,15 +480,15 @@ namespace basics {
 
   template <typename T>
   SparseMatrix<T>*
-  readSparseMatrixFromStream(april_io::StreamInterface *stream) {
+  readSparseMatrixFromStream(AprilIO::StreamInterface *stream) {
     AsciiExtractor<T> ascii_extractor;
     BinaryExtractor<T> bin_extractor;
     if (!stream->good()) {
       ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
       return 0;
     }
-    april_utils::SharedPtr<april_io::CStringStream>
-      c_str(new april_io::CStringStream());
+    april_utils::SharedPtr<AprilIO::CStringStream>
+      c_str(new AprilIO::CStringStream());
     april_assert(!c_str.empty());
     april_utils::constString line,format,sparse,token;
     // First we read the matrix dimensions
@@ -614,7 +614,7 @@ namespace basics {
   // Returns the number of chars written (there is a '\0' that is not counted)
   template <typename T>
   int writeSparseMatrixToStream(SparseMatrix<T> *mat,
-                                april_io::StreamInterface *stream,
+                                AprilIO::StreamInterface *stream,
                                 bool is_ascii) {
     SparseAsciiSizer<T> ascii_sizer;
     SparseBinarySizer<T> bin_sizer;

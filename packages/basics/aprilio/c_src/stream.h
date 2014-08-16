@@ -35,7 +35,6 @@ extern "C" {
 #include "constString.h"
 #include "error_print.h"
 #include "referenced.h"
-#include "stream.h"
 #include "unused_variable.h"
 
 #define READ_ONLY_STREAM(name)                                  \
@@ -79,7 +78,7 @@ extern "C" {
     return 0;                                                           \
   }
 
-namespace april_io {
+namespace AprilIO {
   /**
    * The StreamInterface is the basic public interface needed to implement a
    * Stream.
@@ -256,6 +255,6 @@ namespace april_io {
 
   };
   
-} // namespace april_io
+} // namespace AprilIO
 
 #endif // STREAM_H

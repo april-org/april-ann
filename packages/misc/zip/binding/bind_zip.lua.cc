@@ -26,21 +26,50 @@ using namespace AprilIO;
 //BIND_END
 
 //BIND_HEADER_H
-#include "gzfile_stream.h"
+#include "zip_package.h"
+#include "zipfile_stream.h"
 
-using namespace GZIO;
+using namespace ZIP;
 //BIND_END
 
 /////////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME StreamInterface aprilio.stream
 
-//BIND_LUACLASSNAME GZFileStream gzio.stream
-//BIND_CPP_CLASS GZFileStream
-//BIND_SUBCLASS_OF GZFileStream StreamInterface
+//BIND_LUACLASSNAME ZIPFileStream zip.stream
+//BIND_CPP_CLASS ZIPFileStream
+//BIND_SUBCLASS_OF ZIPFileStream StreamInterface
 
-//BIND_CONSTRUCTOR GZFileStream
+//BIND_CONSTRUCTOR ZIPFileStream
 {
-  LUABIND_INCREASE_NUM_RETURNS(callFileStreamConstructor<GZFileStream>(L));
+  LUABIND_ERROR("Use open method of a zip.package instance");
+}
+//BIND_END
+
+/////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME ArchivePackage aprilio.package
+
+//BIND_LUACLASSNAME ZIPPackage zip.package
+//BIND_CPP_CLASS ZIPPackage
+//BIND_SUBCLASS_OF ZIPPackage ArchivePackage
+
+//BIND_CONSTRUCTOR ZIPPackage
+{
+  if (lua_isstring(L,1)) {
+    // from a file name
+    const char *path;
+    const char *mode;
+    LUABIND_GET_PARAMETER(1, string, path);
+    LUABIND_GET_OPTIONAL_PARAMETER(2, string, mode, "r");
+    obj = new ZIPPackage(path, mode);
+  }
+  else {
+    // from a stream
+    StreamInterface *stream;
+    LUABIND_GET_PARAMETER(1, StreamInterface, stream);
+    obj = new ZIPPackage(stream);
+  }
+  LUABIND_RETURN(ZIPPackage, obj);
 }
 //BIND_END

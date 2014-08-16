@@ -24,14 +24,15 @@
 #include <cstdio>
 #include <cstring>
 
+#include "handled_stream.h"
 #include "error_print.h"
 #include "referenced.h"
 #include "stream.h"
 #include "buffered_stream.h"
 #include "unused_variable.h"
 
-namespace april_io {
-  class FileStream : public BufferedStream {
+namespace AprilIO {
+  class FileStream : public BufferedStream, public HandledStreamInterface {
     /// File descriptor.
     int fd, errnum, flags;
     bool is_eof;
@@ -60,6 +61,6 @@ namespace april_io {
     virtual const char *getErrorMsg() const;
   };
   
-} // namespace april_io
+} // namespace AprilIO
 
 #endif // STREAM_BUFFER_H

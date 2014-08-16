@@ -3,7 +3,6 @@ return {
   --  "plotter",
   "util",
   "gtest",
-  "april_io",
   "utest",
   "stats",
   "dataset",
@@ -13,12 +12,16 @@ return {
   "profiler",
   "complex",
   "mathcore",
-  "gzio",
-  "tar",
   "matlab",
   "stats.MI",
   "autodiff",
   "autodiff.ann",
+
+  -- INPUT/OUTPUT
+  "aprilio",
+  "gzio",
+  "zip",
+  "tar",
   
   -- MACHINE LEARNING
   "clustering.kmeans.matrix",

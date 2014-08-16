@@ -28,7 +28,7 @@
 
 namespace GZIO {
 
-  class GZFileStream : public april_io::BufferedInputStream {
+  class GZFileStream : public AprilIO::BufferedInputStream {
   public:
     
     GZFileStream(const char *path, const char *mode);

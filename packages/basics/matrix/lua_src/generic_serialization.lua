@@ -15,7 +15,7 @@ end
 -- GENERIC FROM STRING
 matrix.__make_generic_fromString__ = function(matrix_class)
   return function(str,...)
-    return matrix_class.read(april_io.stream.input_lua_string(str),...)
+    return matrix_class.read(aprilio.stream.input_lua_string(str),...)
   end
 end
 
@@ -36,7 +36,7 @@ end
 -- GENERIC TO STRING
 matrix.__make_generic_toString__ = function(matrix_class)
   return function(self,...)
-    local stream = april_io.stream.output_lua_string(str)
+    local stream = aprilio.stream.output_lua_string(str)
     class.consult(matrix_class,"write")(self,stream,...)
     return stream:value()
   end

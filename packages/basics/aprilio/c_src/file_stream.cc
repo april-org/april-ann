@@ -19,15 +19,17 @@
  *
  */
 #include <cerrno>
+extern "C" {
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+}
 
 #include "constString.h"
 #include "file_stream.h"
 
-namespace april_io {
+namespace AprilIO {
 
   template<typename T>
   T FileStream::checkReturnValue(T ret_value) {

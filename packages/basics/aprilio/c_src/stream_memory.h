@@ -58,7 +58,7 @@ extern "C" {
     ERROR_EXIT(128, "Read only " #name "\n");                           \
   }
 
-namespace april_io {
+namespace AprilIO {
 
   class StreamMemory;
 
@@ -85,6 +85,6 @@ namespace april_io {
     virtual int push(lua_State *L) = 0;
   };
 
-} // namespace april_io
+} // namespace AprilIO
 
 #endif // STREAM_MEMORY_H

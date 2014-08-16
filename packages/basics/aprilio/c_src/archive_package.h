@@ -18,20 +18,41 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "stream_memory.h"
+#ifndef ARCHIVE_PACKAGE_H
+#define ARCHIVE_PACKAGE_H
 
-namespace april_io {
-  
-  size_t extractLineFromStream(StreamInterface *source, StreamMemory *dest) {
-    return source->get(dest, "\n\r");
-  }
+#include "mystring.h"
+#include "referenced.h"
+#include "smart_ptr.h"
+#include "stream.h"
 
-  size_t extractULineFromStream(StreamInterface *source, StreamMemory *dest) {
-    do {
-      dest->clear();
-      source->get(dest, "\n\r");
-    } while ((dest->size() > 0) && ((*dest)[0] == '#'));
-    return dest->size();
-  }
+namespace AprilIO {
   
-} // namespace april_io
+  class ArchivePackage : public Referenced {
+  public:
+    
+    ArchivePackage() : Referenced() { }
+    
+    virtual ~ArchivePackage() { }
+    
+    virtual bool good() const = 0;
+    
+    virtual bool hasError() const = 0;
+    
+    virtual const char *getErrorMessage() = 0;
+    
+    virtual void close() = 0;
+
+    virtual size_t getNumberOfFiles() = 0;
+    
+    virtual const char *getNameOf(size_t idx) = 0;
+    
+    virtual StreamInterface *openFile(const char *name, int flags) = 0;
+    
+    virtual StreamInterface *openFile(size_t idx, int flags) = 0;
+
+  };
+    
+} // namespace AprilIO
+
+#endif // ARCHIVE_PACKAGE_H

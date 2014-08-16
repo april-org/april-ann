@@ -21,7 +21,7 @@
 #include "april_assert.h"
 #include "c_string.h"
 
-namespace april_io {
+namespace AprilIO {
   CStringStream::CStringStream() :
     StreamMemory(), in_pos(0), out_pos(0) {
     data.reserve(StreamMemory::BLOCK_SIZE);
@@ -152,4 +152,4 @@ namespace april_io {
     StreamBuffer::moveOutBuffer(len);
     flush();
   }
-} // namespace april_io
+} // namespace AprilIO

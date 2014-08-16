@@ -24,7 +24,7 @@
 #include "mystring.h"
 #include "stream_memory.h"
 
-namespace april_io {
+namespace AprilIO {
   
   /**
    * @brief A class which works as a file in memory using C strings.
@@ -69,6 +69,6 @@ namespace april_io {
     virtual void moveOutBuffer(size_t len);
   };
   
-} // namespace april_io
+} // namespace AprilIO
 
 #endif // LUA_STRING_H

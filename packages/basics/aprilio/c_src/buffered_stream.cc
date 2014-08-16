@@ -28,7 +28,7 @@ extern "C" {
 #include "maxmin.h"
 #include "buffered_stream.h"
 
-namespace april_io {
+namespace AprilIO {
   
   BufferedStream::BufferedStream(size_t buf_size) : max_buffer_len(buf_size) {
     in_buffer = new char[max_buffer_len];

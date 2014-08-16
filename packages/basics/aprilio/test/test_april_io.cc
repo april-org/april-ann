@@ -18,7 +18,7 @@ const size_t N3 = strlen(LINE3);
 
 const size_t REP = 10000;
 
-namespace april_io {
+namespace AprilIO {
   
   TEST(FileStream, ConstructorTests) {
     april_utils::SharedPtr<StreamInterface> ptr;

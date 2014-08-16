@@ -9,5 +9,5 @@ gzio.lines = function(name, ...)
   return f:lines(...)
 end
 
-april_io.register_open_by_extension("gz", gzio.open)
-april_io.register_open_by_extension("tgz", gzio.open)
+aprilio.register_open_by_extension("gz", gzio.open)
+aprilio.register_open_by_extension("tgz", gzio.open)

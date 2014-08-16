@@ -30,7 +30,7 @@
 #include "stream.h"
 #include "unused_variable.h"
 
-namespace april_io {
+namespace AprilIO {
   class BufferedStream : public StreamBuffer {
   public:
     
@@ -74,7 +74,7 @@ namespace april_io {
   /**
    * @brief Generic stream with buffer for read but not for write.
    */
-  class BufferedInputStream : public april_io::StreamInterface {
+  class BufferedInputStream : public AprilIO::StreamInterface {
   public:
     
     BufferedInputStream();
@@ -119,6 +119,6 @@ namespace april_io {
   };
 
   
-} // namespace april_io
+} // namespace AprilIO
 
 #endif // BUFFERED_STREAM_H

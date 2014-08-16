@@ -26,7 +26,7 @@
 // #include "stream_memory.h"
 #include "unused_variable.h"
 
-namespace april_io {
+namespace AprilIO {
 
   char StreamInterface::DUMMY_CHAR = '\0';
   const char *StreamInterface::NO_ERROR_STRING = "Success";
@@ -215,4 +215,4 @@ namespace april_io {
     }
   }
   
-} // namespace april_io
+} // namespace AprilIO

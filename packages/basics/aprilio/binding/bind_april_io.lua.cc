@@ -20,6 +20,7 @@
  */
 
 //BIND_HEADER_H
+#include "archive_package.h"
 #include "buffered_stream.h"
 #include "c_string.h"
 #include "file_stream.h"
@@ -27,7 +28,7 @@
 #include "stream.h"
 #include "stream_memory.h"
 
-using namespace april_io;
+using namespace AprilIO;
 //BIND_END
 
 //BIND_FOOTER_H
@@ -71,7 +72,7 @@ T *lua_toAuxStreamInterface(lua_State *L, int index) {
 //BIND_END
 
 //BIND_HEADER_C
-namespace april_io {
+namespace AprilIO {
 
   int readAndPushNumberToLua(lua_State *L, StreamInterface *obj,
                              CStringStream *&c_string) {
@@ -119,7 +120,7 @@ namespace april_io {
 
 /////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME StreamInterface april_io.stream
+//BIND_LUACLASSNAME StreamInterface aprilio.stream
 //BIND_CPP_CLASS StreamInterface
 
 //BIND_CONSTRUCTOR StreamInterface
@@ -149,7 +150,6 @@ namespace april_io {
 //BIND_METHOD StreamInterface close
 {
   obj->close();
-  LUABIND_RETURN(bool, !obj->isOpened());
 }
 //BIND_END
 
@@ -283,7 +283,7 @@ namespace april_io {
 
 /////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME FileStream april_io.stream.file
+//BIND_LUACLASSNAME FileStream aprilio.stream.file
 //BIND_CPP_CLASS FileStream
 //BIND_SUBCLASS_OF FileStream StreamInterface
 
@@ -295,7 +295,7 @@ namespace april_io {
 
 /////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME InputLuaStringStream april_io.stream.input_lua_string
+//BIND_LUACLASSNAME InputLuaStringStream aprilio.stream.input_lua_string
 //BIND_CPP_CLASS InputLuaStringStream
 //BIND_SUBCLASS_OF InputLuaStringStream StreamInterface
 
@@ -314,7 +314,7 @@ namespace april_io {
 
 /////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME OutputLuaStringStream april_io.stream.output_lua_string
+//BIND_LUACLASSNAME OutputLuaStringStream aprilio.stream.output_lua_string
 //BIND_CPP_CLASS OutputLuaStringStream
 //BIND_SUBCLASS_OF OutputLuaStringStream StreamInterface
 
@@ -333,7 +333,7 @@ namespace april_io {
 
 /////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME CStringStream april_io.stream.c_string
+//BIND_LUACLASSNAME CStringStream aprilio.stream.c_string
 //BIND_CPP_CLASS CStringStream
 //BIND_SUBCLASS_OF CStringStream StreamInterface
 
@@ -358,3 +358,79 @@ namespace april_io {
 //BIND_END
 
 /////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME ArchivePackage aprilio.package
+//BIND_CPP_CLASS ArchivePackage
+
+//BIND_CONSTRUCTOR ArchivePackage
+{
+  LUABIND_ERROR("Abstract class!!!");
+}
+//BIND_END
+
+//BIND_METHOD ArchivePackage has_error
+{
+  LUABIND_RETURN(boolean, obj->hasError());
+}
+//BIND_END
+
+//BIND_METHOD ArchivePackage error_msg
+{
+  LUABIND_RETURN(string, obj->getErrorMessage());
+}
+//BIND_END
+
+//BIND_METHOD ArchivePackage close
+{
+  obj->close();
+}
+//BIND_END
+
+//BIND_METHOD ArchivePackage open
+{
+  int flags = 0;
+  StreamInterface *stream;
+  int argn = lua_gettop(L); // number of arguments
+  for (int i=2; i<=argn; ++i) {
+    int current = lua_toint(L,i);
+    flags |= current;
+  }
+  if (lua_isnumber(L,1)) {
+    // open with a file index number
+    unsigned int idx;
+    LUABIND_GET_PARAMETER(1, uint, idx);
+    if (idx < 1) LUABIND_ERROR("Index starts at 1");
+    stream = obj->openFile(idx - 1, flags);
+  }
+  else {
+    // open with a file name
+    const char *filename;
+    LUABIND_GET_PARAMETER(1, string, filename);
+    stream = obj->openFile(filename, flags);
+  }
+  LUABIND_RETURN(StreamInterface, stream);
+}
+//BIND_END
+
+//BIND_METHOD ArchivePackage good
+{
+  LUABIND_RETURN(boolean, obj->good());
+}
+//BIND_END
+
+//BIND_METHOD ArchivePackage number_of_files
+{
+  LUABIND_RETURN(uint, obj->getNumberOfFiles());
+}
+//BIND_END
+
+//BIND_METHOD ArchivePackage name_of
+{
+  unsigned int idx;
+  LUABIND_GET_PARAMETER(1, uint, idx);
+  if (idx < 1) LUABIND_ERROR("Index starts at 1");
+  const char *name = obj->getNameOf(idx - 1);
+  if (name == 0) LUABIND_RETURN_NIL();
+  else LUABIND_RETURN(string, name);
+}
+//BIND_END

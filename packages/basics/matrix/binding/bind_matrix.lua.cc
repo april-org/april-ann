@@ -127,9 +127,9 @@ namespace basics {
   template<typename T>
   Matrix<T> *readMatrixLuaMethod(lua_State *L) {
     Matrix<T> *obj;
-    april_io::StreamInterface *stream =
-      lua_toAuxStreamInterface<april_io::StreamInterface>(L,1);
-    april_utils::SharedPtr<april_io::StreamInterface> ptr(stream);
+    AprilIO::StreamInterface *stream =
+      lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
+    april_utils::SharedPtr<AprilIO::StreamInterface> ptr(stream);
     const char *order = luaL_optstring(L,2,0);
     if (stream == 0) {
       luaL_error(L, "Needs a stream as 1st argument");
@@ -140,9 +140,9 @@ namespace basics {
 
   template<typename T>
   void writeMatrixLuaMethod(lua_State *L, Matrix<T> *obj) {
-    april_io::StreamInterface *stream =
-      lua_toAuxStreamInterface<april_io::StreamInterface>(L,1);
-    april_utils::SharedPtr<april_io::StreamInterface> ptr(stream);
+    AprilIO::StreamInterface *stream =
+      lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
+    april_utils::SharedPtr<AprilIO::StreamInterface> ptr(stream);
     const char *mode = luaL_optstring(L,2,"binary");
     april_utils::constString cs(mode);
     bool is_ascii = (cs == "ascii");
@@ -152,9 +152,9 @@ namespace basics {
   template<typename T>
   Matrix<T> *readTabMatrixLuaMethod(lua_State *L) {
     Matrix<T> *obj;
-    april_io::StreamInterface *stream =
-      lua_toAuxStreamInterface<april_io::StreamInterface>(L,1);
-    april_utils::SharedPtr<april_io::StreamInterface> ptr(stream);
+    AprilIO::StreamInterface *stream =
+      lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
+    april_utils::SharedPtr<AprilIO::StreamInterface> ptr(stream);
     const char *order = luaL_optstring(L,2,0);
     if (stream == 0) {
       luaL_error(L, "Needs a stream as 1st argument");
@@ -165,9 +165,9 @@ namespace basics {
 
   template<typename T>
   void writeTabMatrixLuaMethod(lua_State *L, Matrix<T> *obj) {
-    april_io::StreamInterface *stream =
-      lua_toAuxStreamInterface<april_io::StreamInterface>(L,1);
-    april_utils::SharedPtr<april_io::StreamInterface> ptr(stream);
+    AprilIO::StreamInterface *stream =
+      lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
+    april_utils::SharedPtr<AprilIO::StreamInterface> ptr(stream);
     writeMatrixToTabStream(obj, ptr.get());
   }
 }

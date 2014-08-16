@@ -18,13 +18,20 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef ZIPIO_H
-#define ZIPIO_H
+#include "stream_memory.h"
 
-#include <zip.h>
-#include "referenced.h"
+namespace AprilIO {
+  
+  size_t extractLineFromStream(StreamInterface *source, StreamMemory *dest) {
+    return source->get(dest, "\n\r");
+  }
 
-class ZIPPackage : public Referenced {
-};
-
-#endif // ZIPIO_H
+  size_t extractULineFromStream(StreamInterface *source, StreamMemory *dest) {
+    do {
+      dest->clear();
+      source->get(dest, "\n\r");
+    } while ((dest->size() > 0) && ((*dest)[0] == '#'));
+    return dest->size();
+  }
+  
+} // namespace AprilIO

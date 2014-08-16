@@ -1,7 +1,7 @@
- package{ name = "april_io",
+ package{ name = "aprilio",
    version = "1.0",
    depends = { "util" },
-   keywords = { "april_io" },
+   keywords = { "aprilio" },
    description = "modifys io.open behavior",
    -- targets como en ant
    target{

@@ -47,11 +47,11 @@ namespace basics {
 
   template<>
   void AsciiCoder<double>::operator()(const double &value,
-                                      april_io::StreamInterface *stream);
+                                      AprilIO::StreamInterface *stream);
   
   template<>
   void BinaryCoder<double>::operator()(const double &value,
-                                       april_io::StreamInterface *stream);
+                                       AprilIO::StreamInterface *stream);
 
   MatrixFloat *convertFromMatrixDoubleToMatrixFloat(MatrixDouble *mat,
                                                     bool col_major);

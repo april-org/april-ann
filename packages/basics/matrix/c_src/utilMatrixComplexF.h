@@ -48,11 +48,11 @@ namespace basics {
 
   template<>
   void AsciiCoder<april_math::ComplexF>::operator()(const april_math::ComplexF &value,
-                                                    april_io::StreamInterface *stream);
+                                                    AprilIO::StreamInterface *stream);
   
   template<>
   void BinaryCoder<april_math::ComplexF>::operator()(const april_math::ComplexF &value,
-                                                     april_io::StreamInterface *stream);
+                                                     AprilIO::StreamInterface *stream);
   
   MatrixFloat *convertFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat);
   void applyConjugateInPlace(MatrixComplexF *mat);

@@ -258,9 +258,9 @@ public.open = function(file)
   return archive
 end
 
-april_io.register_open_by_extension("tar",
-                                    function(name, mode)
-                                      assert(not mode or mode == "r",
-                                             "invalid open mode, tar only allows 'r'")
-                                      return public.open(april_io.lua_open(name, mode))
+aprilio.register_open_by_extension("tar",
+                                   function(name, mode)
+                                     assert(not mode or mode == "r",
+                                            "invalid open mode, tar only allows 'r'")
+                                     return public.open(aprilio.lua_open(name, mode))
 end)

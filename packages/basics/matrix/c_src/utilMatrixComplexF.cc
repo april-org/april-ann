@@ -66,13 +66,13 @@ namespace basics {
 
   template<>
   void AsciiCoder<ComplexF>::operator()(const ComplexF &value,
-                                        april_io::StreamInterface *stream) {
+                                        AprilIO::StreamInterface *stream) {
     stream->printf("%.5g%+.5gi", value.real(), value.img());
   }
   
   template<>
   void BinaryCoder<ComplexF>::operator()(const ComplexF &value,
-                                         april_io::StreamInterface *stream) {
+                                         AprilIO::StreamInterface *stream) {
     char b[10];
     april_utils::binarizer::code_float(value.real(), b);
     april_utils::binarizer::code_float(value.img(),  b+5);

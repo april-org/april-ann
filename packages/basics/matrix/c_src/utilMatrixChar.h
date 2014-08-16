@@ -46,11 +46,11 @@ namespace basics {
 
   template<>
   void AsciiCoder<char>::operator()(const char &value,
-                                    april_io::StreamInterface *stream);
+                                    AprilIO::StreamInterface *stream);
   
   template<>
   void BinaryCoder<char>::operator()(const char &value,
-                                     april_io::StreamInterface *stream);
+                                     AprilIO::StreamInterface *stream);
 
   
 } // namespace basics

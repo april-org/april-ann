@@ -28,7 +28,7 @@ extern "C" {
 }
 #include "stream_memory.h"
 
-namespace april_io {
+namespace AprilIO {
   
   /**
    * A class which generates a Lua string on-the-fly using small intermediate C
@@ -106,6 +106,6 @@ namespace april_io {
     virtual bool eofStream() const;
   };
 
-} // namespace april_io
+} // namespace AprilIO
 
 #endif // LUA_STRING_H

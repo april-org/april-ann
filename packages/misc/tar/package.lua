@@ -1,6 +1,6 @@
  package{ name = "tar",
    version = "1.0",
-   depends = { "util", "april_io" },
+   depends = { "util", "aprilio" },
    keywords = { "tar" },
    description = "read tar files",
    -- targets como en ant
