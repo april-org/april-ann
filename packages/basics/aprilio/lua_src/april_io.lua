@@ -47,7 +47,7 @@ class.extend(aprilio.package, "files",
                local args = table.pack(...)
                local i,n  = 0,self:number_of_files()
                return function()
-                 if i<n then i=i+1 return self:open(i,table.unpack(arg)) end
+                 if i<n then i=i+1 return self:open(i,table.unpack(args)) end
                end
 end)
 
