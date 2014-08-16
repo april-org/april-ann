@@ -27,6 +27,7 @@ namespace ZIP {
                                size_t size) :
     cpp_zip_package(cpp_zip_package), file(file),
     size(size), pos(0) {
+    cpp_zip_package->incOpenFilesCounter();
   }
   
   ZIPFileStream::~ZIPFileStream() {
@@ -41,6 +42,7 @@ namespace ZIP {
     // TODO: check errors
     if (file != 0) zip_fclose(file);
     file = 0;
+    cpp_zip_package->decOpenFilesCounter();
   }
   
   void ZIPFileStream::flush() {

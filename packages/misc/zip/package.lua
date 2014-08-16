@@ -1,7 +1,7 @@
  package{ name = "zip",
    version = "1.0",
    depends = { "util",  "aprilio" },
-   link_libraries = { "zip" },
+   pkgconfig_depends = { "libzip" },
    keywords = { "zip" },
    description = "read and write zip files",
    -- targets como en ant

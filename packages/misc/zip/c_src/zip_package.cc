@@ -91,8 +91,8 @@ namespace ZIP {
   }
   
   void ZIPPackage::close() {
-    if (zip_package != 0) checkReturnedValue(zip_close(zip_package));
-    zip_package = 0;
+    is_closed = true;
+    tryClose();
   }
 
   void ZIPPackage::init() {
@@ -100,6 +100,8 @@ namespace ZIP {
     serr = 0;
     zip_package = 0;
     error_buffer = new char[ERROR_BUFFER_SIZE+1];
+    num_open_files = 0;
+    is_closed = false;
   }
 
   size_t ZIPPackage::getNumberOfFiles() {
@@ -179,6 +181,22 @@ namespace ZIP {
       zip_error_get(zip_package, &zerr, &serr);
     }
     return code;
+  }
+  
+  void ZIPPackage::incOpenFilesCounter() {
+    ++num_open_files;
+  }
+  
+  void ZIPPackage::decOpenFilesCounter() {
+    --num_open_files;
+    if (is_closed) tryClose();
+  }
+  
+  void ZIPPackage::tryClose() {
+    if (num_open_files == 0 && zip_package != 0) {
+      checkReturnedValue(zip_close(zip_package));
+      zip_package = 0;
+    }
   }
   
 } // namespace ZIP

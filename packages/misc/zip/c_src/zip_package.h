@@ -72,12 +72,17 @@ namespace ZIP {
     int zerr, serr;
     static const size_t ERROR_BUFFER_SIZE;
     april_utils::UniquePtr<char> error_buffer;
+    int num_open_files;
+    bool is_closed;
     
     void init();
     void openFileDescriptor(int fd);
 
     template<typename T>
     T checkReturnedValue(T code);
+    void incOpenFilesCounter();
+    void decOpenFilesCounter();
+    void tryClose();
   };
 
 } // namespace ZIP
