@@ -54,7 +54,7 @@ namespace ZIP {
     
     virtual bool hasError() const;
   
-    virtual const char *getErrorMessage();
+    virtual const char *getErrorMsg();
   
     virtual void close();
 

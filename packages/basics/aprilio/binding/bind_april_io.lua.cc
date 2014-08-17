@@ -376,7 +376,7 @@ namespace AprilIO {
 
 //BIND_METHOD ArchivePackage error_msg
 {
-  LUABIND_RETURN(string, obj->getErrorMessage());
+  LUABIND_RETURN(string, obj->getErrorMsg());
 }
 //BIND_END
 

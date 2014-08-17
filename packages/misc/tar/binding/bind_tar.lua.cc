@@ -26,30 +26,23 @@ using namespace AprilIO;
 //BIND_END
 
 //BIND_HEADER_H
-#include "zip_package.h"
-#include "zipfile_stream.h"
+#include "tar_package.h"
+#include "tarfile_stream.h"
 
-using namespace ZIP;
+using namespace TAR;
 //BIND_END
-
-/////////////////////////////////////////////////////////////////////////////
-
-//BIND_ENUM_CONSTANT zip.flags.NOCASE       ZIP_FL_NOCASE
-//BIND_ENUM_CONSTANT zip.flags.NODIR        ZIP_FL_NODIR
-//BIND_ENUM_CONSTANT zip.flags.COMPRESSED   ZIP_FL_COMPRESSED
-//BIND_ENUM_CONSTANT zip.flags.UNCHANGED    ZIP_FL_UNCHANGED
 
 /////////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME StreamInterface aprilio.stream
 
-//BIND_LUACLASSNAME ZIPFileStream zip.stream
-//BIND_CPP_CLASS ZIPFileStream
-//BIND_SUBCLASS_OF ZIPFileStream StreamInterface
+//BIND_LUACLASSNAME TARFileStream tar.stream
+//BIND_CPP_CLASS TARFileStream
+//BIND_SUBCLASS_OF TARFileStream StreamInterface
 
-//BIND_CONSTRUCTOR ZIPFileStream
+//BIND_CONSTRUCTOR TARFileStream
 {
-  LUABIND_ERROR("Use open method of a zip.package instance");
+  LUABIND_ERROR("Use open method of a tar.package instance");
 }
 //BIND_END
 
@@ -57,11 +50,11 @@ using namespace ZIP;
 
 //BIND_LUACLASSNAME ArchivePackage aprilio.package
 
-//BIND_LUACLASSNAME ZIPPackage zip.package
-//BIND_CPP_CLASS ZIPPackage
-//BIND_SUBCLASS_OF ZIPPackage ArchivePackage
+//BIND_LUACLASSNAME TARPackage tar.package
+//BIND_CPP_CLASS TARPackage
+//BIND_SUBCLASS_OF TARPackage ArchivePackage
 
-//BIND_CONSTRUCTOR ZIPPackage
+//BIND_CONSTRUCTOR TARPackage
 {
   if (lua_isstring(L,1)) {
     // from a file name
@@ -69,14 +62,14 @@ using namespace ZIP;
     const char *mode;
     LUABIND_GET_PARAMETER(1, string, path);
     LUABIND_GET_OPTIONAL_PARAMETER(2, string, mode, "r");
-    obj = new ZIPPackage(path, mode);
+    obj = new TARPackage(path, mode);
   }
   else {
     // from a stream
     StreamInterface *stream;
     LUABIND_GET_PARAMETER(1, StreamInterface, stream);
-    obj = new ZIPPackage(stream);
+    obj = new TARPackage(stream);
   }
-  LUABIND_RETURN(ZIPPackage, obj);
+  LUABIND_RETURN(TARPackage, obj);
 }
 //BIND_END

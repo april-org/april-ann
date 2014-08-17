@@ -80,8 +80,8 @@ extern "C" {
 
 namespace AprilIO {
   /**
-   * The StreamInterface is the basic public interface needed to implement a
-   * Stream.
+   * @brief The StreamInterface is the basic public interface needed to
+   * implement a Stream.
    */
   class StreamInterface : public Referenced {
   public:
@@ -152,7 +152,7 @@ namespace AprilIO {
   
   
   /**
-   * The Stream is the parent class which needs to be dervied by I/O
+   * @brief The Stream is the parent class which needs to be dervied by I/O
    * facilities based in input/output buffers.
    */
   class StreamBuffer : public StreamInterface {
@@ -201,6 +201,8 @@ namespace AprilIO {
     virtual size_t getOutBufferAvailableSize() const;
     
     /**
+     * @brief Moves input buffer current position.
+     *
      * Moves the input buffer pointer a given number of bytes, when empty
      * buffer, this call will refill the buffer with new data from the real
      * stream.
@@ -210,6 +212,8 @@ namespace AprilIO {
     virtual void moveInBuffer(size_t len);
 
     /**
+     * @brief Moves output buffer current position.
+     *
      * Moves the output buffer pointer a given number of bytes, when full
      * buffer, this call will flush the data into the real stream.
      *
@@ -231,8 +235,8 @@ namespace AprilIO {
     void trimInBuffer(const char *delim);
     
     /**
-     * Returns a pointer to the current input buffer with at most max_size
-     * bytes delimited by the given string of delimitiers.
+     * @brief Returns a pointer to the current input buffer with at most
+     * max_size bytes delimited by the given string of delimitiers.
      *
      * @param[out] buffer_len - Size of the returned pointer (<= max_size).
      * @param max_size - The maximum size required for the buffer.
@@ -244,7 +248,8 @@ namespace AprilIO {
                                     const char *delim);
     
     /**
-     * Returns a pointer to the current output buffer with at most max_size.
+     * @brief Returns a pointer to the current output buffer with at most
+     * max_size.
      *
      * @param[out] buffer_len - Size of the returned pointer (<= max_size).
      * @param max_size - The maximum size required for the buffer.

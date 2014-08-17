@@ -181,19 +181,25 @@ namespace AprilIO {
   }
   
   off_t InputLuaStringStream::seek(int whence, int offset) {
+    off_t aux_pos = data_pos;
     switch(whence) {
     case SEEK_SET:
-      data_pos = offset;
+      aux_pos = offset;
       break;
     case SEEK_CUR:
-      data_pos = data_pos + getInBufferPos() + offset;
+      aux_pos += getInBufferPos() + offset;
       break;
     case SEEK_END:
-      data_pos = total_size - offset;
+      aux_pos = total_size + offset;
       break;
     }
+    if (aux_pos < 0) aux_pos = 0;
+    else if (static_cast<size_t>(aux_pos) > total_size) {
+      aux_pos = static_cast<off_t>(total_size);
+    }
+    data_pos = aux_pos;
     resetBuffers();
-    return data_pos;
+    return aux_pos;
   }
   
   int InputLuaStringStream::setvbuf(int mode, size_t size) {

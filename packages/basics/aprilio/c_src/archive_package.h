@@ -28,27 +28,62 @@
 
 namespace AprilIO {
   
+  /**
+   * @brief Class which represent interface of package formats as ZIP or TAR.
+   */
   class ArchivePackage : public Referenced {
   public:
-    
+   
+    /// Constructor.
     ArchivePackage() : Referenced() { }
     
+    /// Destructor.
     virtual ~ArchivePackage() { }
     
+    /// Indicates if the object is in good state.
     virtual bool good() const = 0;
     
+    /// Indicates if a call has produced an error.
     virtual bool hasError() const = 0;
     
-    virtual const char *getErrorMessage() = 0;
+    /// Returns the error message from last call error.
+    virtual const char *getErrorMsg() = 0;
     
+    /// Closes the package.
     virtual void close() = 0;
-
+    
+    /// Returns the number of files contained inside the package.
     virtual size_t getNumberOfFiles() = 0;
     
+    /// Returns the name of the file with index idx.
     virtual const char *getNameOf(size_t idx) = 0;
     
+    /**
+     * @brief Opens a file given its name and a flags integer.
+     *
+     * @note The flags will change depending in the package.
+     *
+     * @param name - The filename as it is indicated by getNameOf() method.
+     *
+     * @param flags - The flags to open the file, which indicates the package
+     * library how to find the given filename.
+     *
+     * @return A StreamInterface pointer or NULL if the call fails.
+     */
     virtual StreamInterface *openFile(const char *name, int flags) = 0;
     
+    /**
+     * @brief Opens a file given its index and a flags integer.
+     *
+     * @note The flags will change depending in the package.
+     *
+     * @param idx - The index of the file inside the package.
+     *
+     * @param flags - The flags to open the file, which indicates the package
+     * library how to find the filename by using its index idx.
+     *
+     * @return A StreamInterface pointer or NULL if the call fails.
+     */
     virtual StreamInterface *openFile(size_t idx, int flags) = 0;
 
   };

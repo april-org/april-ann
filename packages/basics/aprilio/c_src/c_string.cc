@@ -97,8 +97,25 @@ namespace AprilIO {
   
   off_t CStringStream::seek(int whence, int offset) {
     if (whence == SEEK_CUR && offset == 0) return size();
+    off_t aux_pos = 0;
+    switch(whence) {
+    case SEEK_SET:
+      aux_pos = offset;
+      break;
+    case SEEK_CUR:
+      aux_pos = out_pos + getOutBufferPos() + offset;
+      break;
+    case SEEK_END:
+      aux_pos = size() + offset;
+      break;
+    }
     ERROR_EXIT(128, "NOT IMPLEMENTED BEHAVIOR\n");
-    return 0;
+    if (aux_pos < 0) aux_pos = 0;
+    else if (static_cast<size_t>(aux_pos) > size()) {
+      aux_pos = static_cast<off_t>(size());
+    }
+    in_pos = out_pos = static_cast<size_t>(aux_pos);
+    return aux_pos;
   }
   
   void CStringStream::flush() {

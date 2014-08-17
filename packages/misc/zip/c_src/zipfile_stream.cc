@@ -40,9 +40,11 @@ namespace ZIP {
 
   void ZIPFileStream::close() {
     // TODO: check errors
-    if (file != 0) zip_fclose(file);
-    file = 0;
-    cpp_zip_package->decOpenFilesCounter();
+    if (file != 0) {
+      zip_fclose(file);
+      file = 0;
+      cpp_zip_package->decOpenFilesCounter();
+    }
   }
   
   void ZIPFileStream::flush() {

@@ -136,7 +136,7 @@ namespace ZIP {
     return zerr != 0;
   }
   
-  const char *ZIPPackage::getErrorMessage() {
+  const char *ZIPPackage::getErrorMsg() {
     zip_error_to_str(error_buffer.get(), ERROR_BUFFER_SIZE, zerr, serr); 
     return error_buffer.get();
   }
