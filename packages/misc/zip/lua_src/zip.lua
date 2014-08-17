@@ -5,3 +5,4 @@ zip.open = function(...)
 end
 
 aprilio.register_open_by_extension("zip", zip.open)
+aprilio.register_open_by_extension("ZIP", zip.open)

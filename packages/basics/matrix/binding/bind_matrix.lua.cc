@@ -129,6 +129,7 @@ namespace basics {
     Matrix<T> *obj;
     AprilIO::StreamInterface *stream =
       lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
+    if (stream == 0) luaL_error(L, "Needs a stream as first argument");
     april_utils::SharedPtr<AprilIO::StreamInterface> ptr(stream);
     const char *order = luaL_optstring(L,2,0);
     if (stream == 0) {
@@ -142,6 +143,7 @@ namespace basics {
   void writeMatrixLuaMethod(lua_State *L, Matrix<T> *obj) {
     AprilIO::StreamInterface *stream =
       lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
+    if (stream == 0) luaL_error(L, "Needs a stream as first argument");
     april_utils::SharedPtr<AprilIO::StreamInterface> ptr(stream);
     const char *mode = luaL_optstring(L,2,"binary");
     april_utils::constString cs(mode);
@@ -154,6 +156,7 @@ namespace basics {
     Matrix<T> *obj;
     AprilIO::StreamInterface *stream =
       lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
+    if (stream == 0) luaL_error(L, "Needs a stream as first argument");
     april_utils::SharedPtr<AprilIO::StreamInterface> ptr(stream);
     const char *order = luaL_optstring(L,2,0);
     if (stream == 0) {
@@ -167,6 +170,7 @@ namespace basics {
   void writeTabMatrixLuaMethod(lua_State *L, Matrix<T> *obj) {
     AprilIO::StreamInterface *stream =
       lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
+    if (stream == 0) luaL_error(L, "Needs a stream as first argument");
     april_utils::SharedPtr<AprilIO::StreamInterface> ptr(stream);
     writeMatrixToTabStream(obj, ptr.get());
   }
