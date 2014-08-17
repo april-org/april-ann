@@ -73,6 +73,8 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 
 //BIND_LUACLASSNAME MatrixInt32 matrixInt32
 //BIND_CPP_CLASS MatrixInt32
+//BIND_LUACLASSNAME Serializable aprilio.serializable
+//BIND_SUBCLASS_OF MatrixInt32 Serializable
 
 //BIND_LUACLASSNAME SlidingWindowMatrixInt32 matrixInt32.__sliding_window__
 //BIND_CPP_CLASS SlidingWindowMatrixInt32
@@ -598,12 +600,6 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 {
   MAKE_READ_MATRIX_LUA_METHOD(MatrixInt32, int32_t);
   LUABIND_INCREASE_NUM_RETURNS(1);
-}
-//BIND_END
-
-//BIND_METHOD MatrixInt32 write
-{
-  writeMatrixLuaMethod(L, obj);
 }
 //BIND_END
 

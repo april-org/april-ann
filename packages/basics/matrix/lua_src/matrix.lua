@@ -1,10 +1,3 @@
--- OVERWRITTING TOSTRING FUNCTION
-class.extend(matrix, "to_lua_string",
-             function(self, format)
-               return string.format("matrix.fromString[[%s]]",
-                                    self:toString(format or "binary"))
-end)
-
 -- ADDING PSEUDO-INVERSE METHOD
 class.extend(matrix, "pinv",
              function(self)
@@ -29,21 +22,21 @@ matrix.row_major = function(...)
 end
 
 -- serialization
-matrix.__make_all_serialization_methods__(matrix)
+matrix.__generic__.__make_all_serialization_methods__(matrix)
 
 -- other stuff
 
 matrix.meta_instance.__call =
-  matrix.__make_generic_call__()
+  matrix.__generic__.__make_generic_call__()
 
 matrix.meta_instance.__tostring =
-  matrix.__make_generic_print__("Matrix",
-				function(value)
-				  return string.format("% -11.6g", value)
-				end)
+  matrix.__generic__.__make_generic_print__("Matrix",
+                                            function(value)
+                                              return string.format("% -11.6g", value)
+  end)
 
 matrix.join =
-  matrix.__make_generic_join__(matrix)
+  matrix.__generic__.__make_generic_join__(matrix)
 
 matrix.meta_instance.__eq = function(op1, op2)
   if type(op1) == "number" or type(op2) == "number" then return false end
@@ -319,17 +312,6 @@ april_set_doc(matrix.fromMMap, {
 		  
 		},
 		outputs = { "A matrix instantiated object" }, })
-
-april_set_doc(matrix.."write", {
-		class = "method",
-		summary = "It allows to store a matrix into a stream.",
-		description ={
-		  "It allows to store a matrix into a stream.",
-		  "It uses the format expected by read function.",
-		},
-		params = {
-		  "A aprilio.stream instance.",
-		}, })
 
 april_set_doc(matrix.."writeTab", {
 		class = "method",

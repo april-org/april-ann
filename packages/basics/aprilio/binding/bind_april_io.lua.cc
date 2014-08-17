@@ -25,6 +25,7 @@
 #include "c_string.h"
 #include "file_stream.h"
 #include "lua_string.h"
+#include "serializable.h"
 #include "stream.h"
 #include "stream_memory.h"
 
@@ -464,5 +465,34 @@ namespace AprilIO {
   const char *name = obj->getNameOf(idx - 1);
   if (name == 0) LUABIND_RETURN_NIL();
   else LUABIND_RETURN(string, name);
+}
+//BIND_END
+
+/////////////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME Serializable aprilio.serializable
+//BIND_CPP_CLASS Serializable
+
+//BIND_CONSTRUCTOR Serializable
+{
+  LUABIND_ERROR("Abstract class!!!");
+}
+//BIND_END
+
+//BIND_METHOD Serializable write
+{
+  OutputLuaStringStream *aux_lua_string;
+  StreamInterface *ptr;
+  const char *mode;
+  april_utils::SharedPtr<StreamInterface> dest;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, StreamInterface, ptr, 0);
+  LUABIND_GET_OPTIONAL_PARAMETER(2, string, mode, "binary");
+  april_utils::constString cs(mode);
+  bool is_ascii = (cs == "ascii");
+  if (ptr == 0) dest = aux_lua_string = new OutputLuaStringStream(L);
+  else dest = ptr;
+  obj->write(dest.get(), is_ascii);
+  if (ptr == 0) LUABIND_INCREASE_NUM_RETURNS(aux_lua_string->push(L));
+  else LUABIND_RETURN(StreamInterface, ptr);
 }
 //BIND_END

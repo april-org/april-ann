@@ -27,7 +27,6 @@
 #include "bind_mathcore.h"
 #include "luabindmacros.h" // for lua_pushfloat and lua_pushint
 #include "luabindutil.h"   // for lua_pushfloat and lua_pushint
-#include "utilMatrixIO.h"
 
 namespace basics {
   int sparseMatrixFloatIteratorFunction(lua_State *L) {
@@ -54,7 +53,6 @@ namespace basics {
 #include "referenced.h"
 #include "sparse_matrixFloat.h"
 #include "utilLua.h"
-#include "utilMatrixIO.h"
 
 namespace basics {
 
@@ -89,19 +87,9 @@ namespace basics {
       luaL_error(L, "Needs a stream as 1st argument");
       return 0;
     }
-    return readSparseMatrixFromStream<T>(ptr.get());
+    return obj->read(ptr.get());
   }
 
-  template<typename T>
-  void writeSparseMatrixLuaMethod(lua_State *L, SparseMatrix<T> *obj) {
-    AprilIO::StreamInterface *stream =
-      lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
-    april_utils::SharedPtr<AprilIO::StreamInterface> ptr(stream);
-    const char *mode = luaL_optstring(L,2,"binary");
-    april_utils::constString cs(mode);
-    bool is_ascii = (cs == "ascii");
-    writeSparseMatrixToStream(obj, ptr.get(), is_ascii);
-  }
 } // namespace basics
 
 using namespace basics;
@@ -121,6 +109,8 @@ using namespace basics;
 
 //BIND_LUACLASSNAME SparseMatrixFloat matrix.sparse
 //BIND_CPP_CLASS SparseMatrixFloat
+//BIND_LUACLASSNAME Serializable aprilio.serializable
+//BIND_SUBCLASS_OF SparseMatrixFloat Serializable
 
 //BIND_CONSTRUCTOR SparseMatrixFloat
 {
@@ -812,11 +802,5 @@ using namespace basics;
 {
   MAKE_READ_SPARSE_MATRIX_LUA_METHOD(SparseMatrixFloat, float);
   LUABIND_INCREASE_NUM_RETURNS(1);
-}
-//BIND_END
-
-//BIND_METHOD SparseMatrixFloat write
-{
-  writeSparseMatrixLuaMethod(L, obj);
 }
 //BIND_END

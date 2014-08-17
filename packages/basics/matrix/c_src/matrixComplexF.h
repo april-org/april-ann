@@ -27,6 +27,35 @@
 
 namespace basics {
 
+  namespace MatrixIO {
+
+    /* Especialization of MatrixComplexF ascii and binary extractors, sizers and
+       coders */
+    template<>
+    bool AsciiExtractor<april_math::ComplexF>::operator()(april_utils::constString &line,
+                                                          april_math::ComplexF &destination);
+  
+    template<>
+    bool BinaryExtractor<april_math::ComplexF>::operator()(april_utils::constString &line,
+                                                           april_math::ComplexF &destination);
+  
+    template<>
+    int AsciiSizer<april_math::ComplexF>::operator()(const Matrix<april_math::ComplexF> *mat);
+
+    template<>
+    int BinarySizer<april_math::ComplexF>::operator()(const Matrix<april_math::ComplexF> *mat);
+
+    template<>
+    void AsciiCoder<april_math::ComplexF>::operator()(const april_math::ComplexF &value,
+                                                      AprilIO::StreamInterface *stream);
+  
+    template<>
+    void BinaryCoder<april_math::ComplexF>::operator()(const april_math::ComplexF &value,
+                                                       AprilIO::StreamInterface *stream);
+  
+  } // namespace MatrixIO
+
+
   template<>
   void Matrix<april_math::ComplexF>::fill(april_math::ComplexF value);
 

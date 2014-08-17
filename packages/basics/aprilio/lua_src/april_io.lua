@@ -50,4 +50,23 @@ class.extend(aprilio.package, "files",
                end
 end)
 
+---------------------------------------------------------------------------
+
+april_set_doc(aprilio.serializable.."write", {
+		class = "method",
+		summary = "It allows to store an object into a stream.",
+		description ={
+		  "It allows to store an object into a stream.",
+		  "It uses a format expected by read method.",
+		},
+		params = {
+		  { "A aprilio.stream instance [optional]. If not given any,",
+                    "the object is seralized to a Lua string", },
+		  "An string 'ascii' or 'binary', by default it is 'binary' [optional].",
+		},
+                outputs = {
+                  "The given stream object or a Lua string if none given.",
+                },
+})
+
 return aprilio

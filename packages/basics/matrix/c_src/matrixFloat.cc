@@ -19,19 +19,70 @@
  *
  */
 
+#include "binarizer.h"
 #include "cblas_headers.h"
 #include "check_floats.h"
+#include "constString.h"
 #include "swap.h"
 #include "matrix.h"
 #include "matrixFloat.h"
-#include "sparse_matrixFloat.h"
 #include "matrix_generic_math_templates.h" // functions which apply functors
 #include "matrix_generic_math_functors.h"  // standard functors
 #include "wrapper.h" // wrappers of mathematical function (for CPU/GPU)
 
 // WARNING: ALL THE METHODS IMPLEMENTED HERE ARE SPECIALIZED TO FLOAT VERSION
 
+using april_utils::constString;
+
 namespace basics {
+
+  namespace MatrixIO {
+  
+    /////////////////////////////////////////////////////////////////////////
+  
+    template<>
+    bool AsciiExtractor<float>::operator()(constString &line,
+                                           float &destination) {
+      bool result = line.extract_float(&destination);
+      if (!result) return false;
+      return true;
+    }
+  
+    template<>
+    bool BinaryExtractor<float>::operator()(constString &line,
+                                            float &destination) {
+      if (!line.extract_float_binary(&destination)) return false;
+      return true;
+    }
+  
+    template<>
+    int AsciiSizer<float>::operator()(const Matrix<float> *mat) {
+      return mat->size()*12;
+    }
+
+    template<>
+    int BinarySizer<float>::operator()(const Matrix<float> *mat) {
+      return april_utils::binarizer::buffer_size_32(mat->size());
+    }
+
+    template<>
+    void AsciiCoder<float>::operator()(const float &value,
+                                       AprilIO::StreamInterface *stream) {
+      stream->printf("%.5g", value);
+    }
+  
+    template<>
+    void BinaryCoder<float>::operator()(const float &value,
+                                        AprilIO::StreamInterface *stream) {
+      char b[5];
+      april_utils::binarizer::code_float(value, b);
+      stream->put(b, sizeof(char)*5);
+    }
+
+    /////////////////////////////////////////////////////////////////////////////
+  
+
+  } // namespace MatrixIO
 
   /************* FILL FUNCTION **************/
   DEF_CWISE_FUNCTOR_1(doFill,float);

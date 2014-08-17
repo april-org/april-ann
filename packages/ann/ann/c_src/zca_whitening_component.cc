@@ -84,9 +84,9 @@ namespace ANN {
     SharedPtr<CStringStream> stream(new CStringStream());
     stream->printf("ann.components.zca_whitening{ name='%s', U=matrix.fromString[[",
                    name.c_str());
-    writeMatrixToStream(U, stream.get(), false);
+    U->write(stream.get(), false);
     stream->put("]], S=matrix.sparse.fromString[[");
-    writeSparseMatrixToStream(S, stream.get(), false);
+    S->write(stream.get(), false);
     stream->printf("]], epsilon=%g, takeN=%u, }", epsilon, getTakeN());
     stream->put("\0",1); // forces a \0 at the end of the buffer
     return stream->releaseString();

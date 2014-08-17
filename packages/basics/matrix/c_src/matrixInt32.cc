@@ -24,6 +24,52 @@
 
 namespace basics {
 
+  namespace MatrixIO {
+
+    /////////////////////////////////////////////////////////////////////////
+  
+    template<>
+    bool AsciiExtractor<int32_t>::operator()(april_utils::constString &line,
+                                             int32_t &destination) {
+      if (!line.extract_int(&destination)) return false;
+      return true;
+    }
+  
+    template<>
+    bool BinaryExtractor<int32_t>::operator()(april_utils::constString &line,
+                                              int32_t &destination) {
+      if (!line.extract_int32_binary(&destination)) return false;
+      return true;
+    }
+  
+    template<>
+    int AsciiSizer<int32_t>::operator()(const Matrix<int32_t> *mat) {
+      return mat->size()*12;
+    }
+
+    template<>
+    int BinarySizer<int32_t>::operator()(const Matrix<int32_t> *mat) {
+      return april_utils::binarizer::buffer_size_32(mat->size());
+    }
+
+    template<>
+    void AsciiCoder<int32_t>::operator()(const int32_t &value,
+                                         AprilIO::StreamInterface *stream) {
+      stream->printf("%d", value);
+    }
+  
+    template<>
+    void BinaryCoder<int32_t>::operator()(const int32_t &value,
+                                          AprilIO::StreamInterface *stream) {
+      char b[5];
+      april_utils::binarizer::code_int32(value, b);
+      stream->put(b, sizeof(char)*5);
+    }
+
+    /////////////////////////////////////////////////////////////////////////
+
+  } // namespace MatrixIO
+
   NOT_IMPLEMENT_AXPY(int32_t)
   NOT_IMPLEMENT_GEMM(int32_t)
   NOT_IMPLEMENT_GEMV(int32_t)

@@ -26,6 +26,36 @@
 
 namespace basics {
 
+    namespace MatrixIO {
+    
+    /* Especialization of MatrixFloat ascii and binary extractors, sizers and
+       coders */
+    template<>
+    bool AsciiExtractor<float>::operator()(april_utils::constString &line,
+                                           float &destination);
+  
+    template<>
+    bool BinaryExtractor<float>::operator()(april_utils::constString &line,
+                                            float &destination);
+  
+    template<>
+    int AsciiSizer<float>::operator()(const Matrix<float> *mat);
+
+    template<>
+    int BinarySizer<float>::operator()(const Matrix<float> *mat);
+
+    template<>
+    void AsciiCoder<float>::operator()(const float &value,
+                                       AprilIO::StreamInterface *stream);
+  
+    template<>
+    void BinaryCoder<float>::operator()(const float &value,
+                                        AprilIO::StreamInterface *stream);
+  
+    /**************************************************************************/
+ 
+  } // namespace AprilIO
+  
   template<>
   void Matrix<float>::fill(float value);
 

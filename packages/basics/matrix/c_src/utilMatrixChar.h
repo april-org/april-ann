@@ -21,37 +21,9 @@
 #ifndef UTILMATRIXCHAR_H
 #define UTILMATRIXCHAR_H
 
-#include "constString.h"
 #include "matrixChar.h"
-#include "utilMatrixIO.h"
-#include "utilMatrixFloat.h"
 
 namespace basics {
-
-  /* Especialization of MatrixChar ascii and binary extractors, sizers and
-     coders */
-  template<>
-  bool AsciiExtractor<char>::operator()(april_utils::constString &line,
-                                        char &destination);
-  
-  template<>
-  bool BinaryExtractor<char>::operator()(april_utils::constString &line,
-                                         char &destination);
-  
-  template<>
-  int AsciiSizer<char>::operator()(const Matrix<char> *mat);
-
-  template<>
-  int BinarySizer<char>::operator()(const Matrix<char> *mat);
-
-  template<>
-  void AsciiCoder<char>::operator()(const char &value,
-                                    AprilIO::StreamInterface *stream);
-  
-  template<>
-  void BinaryCoder<char>::operator()(const char &value,
-                                     AprilIO::StreamInterface *stream);
-
   
 } // namespace basics
 

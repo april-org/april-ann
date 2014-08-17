@@ -21,41 +21,14 @@
 #ifndef UTILMATRIXINT32_H
 #define UTILMATRIXINT32_H
 
-#include "constString.h"
 #include "matrixInt32.h"
-#include "stream.h"
-#include "utilMatrixIO.h"
-#include "utilMatrixFloat.h"
+#include "matrixFloat.h"
 
 namespace basics {
-
-  /* Especialization of MatrixInt32 ascii and binary extractors, sizers and
-     coders */
-  template<>
-  bool AsciiExtractor<int32_t>::operator()(april_utils::constString &line,
-                                           int32_t &destination);
   
-  template<>
-  bool BinaryExtractor<int32_t>::operator()(april_utils::constString &line,
-                                            int32_t &destination);
-  
-  template<>
-  int AsciiSizer<int32_t>::operator()(const Matrix<int32_t> *mat);
-
-  template<>
-  int BinarySizer<int32_t>::operator()(const Matrix<int32_t> *mat);
-
-  template<>
-  void AsciiCoder<int32_t>::operator()(const int32_t &value,
-                                       AprilIO::StreamInterface *stream);
-  
-  template<>
-  void BinaryCoder<int32_t>::operator()(const int32_t &value,
-                                        AprilIO::StreamInterface *stream);
-
   MatrixFloat *convertFromMatrixInt32ToMatrixFloat(MatrixInt32 *mat,
                                                    bool col_major);
-
+  
 } // namespace basics
 
 #endif // UTILMATRIXINT32_H

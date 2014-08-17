@@ -19,13 +19,15 @@
  *
  */
 //BIND_HEADER_C
+#include <cmath> // para isfinite
 #include "bind_april_io.h"
 #include "bind_mtrand.h"
-#include <cmath> // para isfinite
-#include "luabindutil.h"
-#include "luabindmacros.h"
 #include "bind_matrix_int32.h"
 #include "bind_sparse_matrix.h"
+#include "luabindutil.h"
+#include "luabindmacros.h"
+#include "lua_string.h"
+#include "utilMatrixFloat.h"
 
 #define FUNCTION_NAME "read_vector"
 static int *read_vector(lua_State *L, const char *key, int num_dim, int add) {
@@ -82,7 +84,6 @@ int matrixfloatset_iterator_function(lua_State *L) {
 #include "matrixFloat.h"
 #include "matrixFloatSet.h"
 #include "utilLua.h"
-#include "utilMatrixIO.h"
 #include <cmath> // para isfinite
 
 using namespace basics;
@@ -136,19 +137,7 @@ namespace basics {
       luaL_error(L, "Needs a stream as 1st argument");
       return 0;
     }
-    return readMatrixFromStream<T>(ptr.get(), order); 
-  }
-
-  template<typename T>
-  void writeMatrixLuaMethod(lua_State *L, Matrix<T> *obj) {
-    AprilIO::StreamInterface *stream =
-      lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
-    if (stream == 0) luaL_error(L, "Needs a stream as first argument");
-    april_utils::SharedPtr<AprilIO::StreamInterface> ptr(stream);
-    const char *mode = luaL_optstring(L,2,"binary");
-    april_utils::constString cs(mode);
-    bool is_ascii = (cs == "ascii");
-    writeMatrixToStream(obj, ptr.get(), is_ascii);
+    return Matrix<T>::read(ptr.get(), order); 
   }
 
   template<typename T>
@@ -163,22 +152,32 @@ namespace basics {
       luaL_error(L, "Needs a stream as 1st argument");
       return 0;
     }
-    return readMatrixFromTabStream<T>(ptr.get(), order); 
+    return Matrix<T>::readTab(ptr.get(), order); 
   }
 
   template<typename T>
-  void writeTabMatrixLuaMethod(lua_State *L, Matrix<T> *obj) {
-    AprilIO::StreamInterface *stream =
+  int writeTabMatrixLuaMethod(lua_State *L, Matrix<T> *obj) {
+    int argn = lua_gettop(L);
+    AprilIO::OutputLuaStringStream *aux_lua_string;
+    AprilIO::StreamInterface *ptr = 0;
+    if (argn > 0 && !lua_isnil(L,1)) {
       lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
-    if (stream == 0) luaL_error(L, "Needs a stream as first argument");
-    april_utils::SharedPtr<AprilIO::StreamInterface> ptr(stream);
-    writeMatrixToTabStream(obj, ptr.get());
+      if (ptr == 0) luaL_error(L, "Needs a stream as first argument");
+    }
+    april_utils::SharedPtr<AprilIO::StreamInterface> stream;
+    if (ptr == 0) stream = aux_lua_string = new AprilIO::OutputLuaStringStream(L);
+    obj->writeTab(stream.get());
+    if (ptr == 0) aux_lua_string->push(L);
+    else lua_pushStreamInterface(L, ptr);
+    return 1;
   }
 }
 //BIND_END
 
 //BIND_LUACLASSNAME MatrixFloat matrix
 //BIND_CPP_CLASS MatrixFloat
+//BIND_LUACLASSNAME Serializable aprilio.serializable
+//BIND_SUBCLASS_OF MatrixFloat Serializable
 
 //BIND_LUACLASSNAME SlidingWindow matrix.__sliding_window__
 //BIND_CPP_CLASS SlidingWindow
@@ -1739,12 +1738,6 @@ namespace basics {
 {
   MAKE_READ_MATRIX_LUA_METHOD(MatrixFloat, float);
   LUABIND_INCREASE_NUM_RETURNS(1);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat write
-{
-  writeMatrixLuaMethod(L, obj);
 }
 //BIND_END
 

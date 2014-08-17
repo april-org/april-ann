@@ -21,40 +21,14 @@
 #ifndef UTILMATRIXDOUBLE_H
 #define UTILMATRIXDOUBLE_H
 
-#include "constString.h"
+#include "matrixFloat.h"
 #include "matrixDouble.h"
-#include "stream.h"
-#include "utilMatrixIO.h"
-#include "utilMatrixFloat.h"
 
 namespace basics {
 
-  /* Especialization of MatrixDouble ascii and binary extractors, sizers and
-     coders */
-  template<>
-  bool AsciiExtractor<double>::operator()(april_utils::constString &line,
-                                          double &destination);
-  
-  template<>
-  bool BinaryExtractor<double>::operator()(april_utils::constString &line,
-                                           double &destination);
-  
-  template<>
-  int AsciiSizer<double>::operator()(const Matrix<double> *mat);
-
-  template<>
-  int BinarySizer<double>::operator()(const Matrix<double> *mat);
-
-  template<>
-  void AsciiCoder<double>::operator()(const double &value,
-                                      AprilIO::StreamInterface *stream);
-  
-  template<>
-  void BinaryCoder<double>::operator()(const double &value,
-                                       AprilIO::StreamInterface *stream);
-
   MatrixFloat *convertFromMatrixDoubleToMatrixFloat(MatrixDouble *mat,
                                                     bool col_major);
+  
 
 } // namespace basics
 

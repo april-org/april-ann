@@ -85,7 +85,7 @@ namespace basics {
                     const bool use_cuda,
                     const bool transposed,
                     april_utils::MMappedDataReader *mmapped_data) :
-    Referenced(), shared_count(0), transposed(transposed),
+    AprilIO::Serializable(), shared_count(0), transposed(transposed),
     numDim(numDim), stride(new int[numDim]), offset(offset),
     matrixSize(new int[numDim]), total_size(total_size),
     last_raw_pos(last_raw_pos), data(data), mmapped_data(mmapped_data),
@@ -107,7 +107,7 @@ namespace basics {
                     april_math::GPUMirroredMemoryBlock<T> *data,
                     int offset,
                     bool transposed) :
-    Referenced(), shared_count(0), transposed(transposed),
+    AprilIO::Serializable(), shared_count(0), transposed(transposed),
     numDim(numDim),
     offset(offset),
     data(data),
@@ -132,7 +132,7 @@ namespace basics {
   Matrix<T>::Matrix(Matrix<T> *other,
                     const int* coords, const int *sizes,
                     bool clone) :
-    Referenced(),
+    AprilIO::Serializable(),
     shared_count(0), transposed(other->transposed),
     numDim(other->numDim),
     offset(0),
@@ -195,7 +195,7 @@ namespace basics {
   Matrix<T>::Matrix(const Matrix<T> *other,
                     const int* coords, const int *sizes,
                     bool clone) :
-    Referenced(),
+    AprilIO::Serializable(),
     shared_count(0), transposed(other->transposed),
     numDim(other->numDim),
     offset(0),
@@ -258,7 +258,7 @@ namespace basics {
   /// Constructor with variable arguments
   template <typename T>
   Matrix<T>::Matrix(int numDim, int d1, ...) :
-    Referenced(), shared_count(0), transposed(false),
+    AprilIO::Serializable(), shared_count(0), transposed(false),
     numDim(numDim),
     offset(0),
     major_order(CblasRowMajor),
@@ -284,7 +284,7 @@ namespace basics {
   /// Constructor for copy or clone other given matrix
   template <typename T>
   Matrix<T>::Matrix(Matrix<T> *other, bool clone) :
-    Referenced(),
+    AprilIO::Serializable(),
     shared_count(0), transposed(other->transposed),
     numDim(other->numDim),
     offset(0),
