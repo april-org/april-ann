@@ -29,8 +29,7 @@
 #include "function_interface.h"
 #include "history_based_LM.h"
 #include "logbase.h"
-#include "matrixFloat.h"
-#include "token_matrix.h"
+#include "token_vector.h"
 #include "trie_vector.h"
 #include "unused_variable.h"
 #include "vector.h"
@@ -62,8 +61,8 @@ namespace LanguageModels {
     virtual void computeKeysAndScores(KeyWordHash &ctxt_hash,
                                       unsigned int bunch_size) {
       UNUSED_VARIABLE(bunch_size);
-      basics::MatrixFloat *mat;
-      basics::Token *input = new basics::TokenMatrixFloat(mat);
+      basics::TokenVector<basics::TokenVector<WordType> > *token_vector = new basics::TokenVector<basics::TokenVector<WordType> >();
+
       // For each context key entry
       for (typename KeyWordHash::iterator it = ctxt_hash.begin();
         it != ctxt_hash.end(); ++it) {
@@ -75,9 +74,19 @@ namespace LanguageModels {
           it2 != word_hash.end(); ++it2) {
           WordType word = it2->first;
 
-          // Add pattern to token input with key and word
+          unsigned int offset;
+          WordType *context_words = new WordType[this->HistoryBasedLMInterface<Key,Score>::model->ngramOrder()-1];
+          const unsigned int context_size = this->getContextProperties(context_key,
+                                                                       context_words,
+                                                                       offset);
+          // Fill this vector with context_words
+          basics::TokenVector<WordType> new_token;
+          token_vector->push_back(new_token);
         }
       }
+      // Create token from matrix and filter it
+      // FIXME: Can't do this since token_vector pointer
+      basics::Token *input = token_vector;
       basics::Token *filtered_input = filter->calculate(input);
       executeQueries(filtered_input);
     }
