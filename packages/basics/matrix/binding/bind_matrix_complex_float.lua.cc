@@ -20,7 +20,6 @@
  */
 //BIND_HEADER_C
 #include "bind_matrix.h"
-#include "utilMatrixIO.h"
 #include "utilMatrixComplexF.h"
 #include "bind_mtrand.h"
 #include <cmath> // para isfinite
@@ -77,6 +76,8 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 
 //BIND_LUACLASSNAME MatrixComplexF matrixComplex
 //BIND_CPP_CLASS MatrixComplexF
+//BIND_LUACLASSNAME Serializable aprilio.serializable
+//BIND_SUBCLASS_OF MatrixComplexF Serializable
 
 //BIND_LUACLASSNAME SlidingWindowComplexF matrixComplex.__sliding_window__
 //BIND_CPP_CLASS SlidingWindowComplexF
@@ -966,12 +967,6 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 {
   MAKE_READ_MATRIX_LUA_METHOD(MatrixComplexF, ComplexF);
   LUABIND_INCREASE_NUM_RETURNS(1);
-}
-//BIND_END
-
-//BIND_METHOD MatrixComplexF write
-{
-  writeMatrixLuaMethod(L, obj);
 }
 //BIND_END
 

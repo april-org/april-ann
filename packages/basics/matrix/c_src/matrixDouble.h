@@ -26,6 +26,35 @@ namespace basics {
 
   typedef Matrix<double> MatrixDouble;
 
+
+  namespace MatrixIO {
+
+    /* Especialization of MatrixDouble ascii and binary extractors, sizers and
+       coders */
+    template<>
+    bool AsciiExtractor<double>::operator()(april_utils::constString &line,
+                                            double &destination);
+  
+    template<>
+    bool BinaryExtractor<double>::operator()(april_utils::constString &line,
+                                             double &destination);
+  
+    template<>
+    int AsciiSizer<double>::operator()(const Matrix<double> *mat);
+
+    template<>
+    int BinarySizer<double>::operator()(const Matrix<double> *mat);
+
+    template<>
+    void AsciiCoder<double>::operator()(const double &value,
+                                        AprilIO::StreamInterface *stream);
+  
+    template<>
+    void BinaryCoder<double>::operator()(const double &value,
+                                         AprilIO::StreamInterface *stream);
+    
+  } // namespace MatrixIO
+
   template<>
   void Matrix<double>::zeros();
 

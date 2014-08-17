@@ -1,5 +1,7 @@
 -- GENERIC PRINT FUNCTION
-matrix.__make_generic_print__ = function(name,getter)
+matrix.__generic__ = matrix.__generic__ or {}
+
+matrix.__generic__.__make_generic_print__ = function(name,getter)
   assert(name and getter)
   return function(self)
     local dims   = self:dim()

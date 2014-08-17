@@ -20,62 +20,7 @@
  */
 
 #include "utilMatrixChar.h"
-#include "binarizer.h"
-#include "clamp.h"
-#include "matrixFloat.h"
-#include "ignore_result.h"
-#include <cmath>
-#include <cstdio>
-
 
 namespace basics {
-
-  /////////////////////////////////////////////////////////////////////////
   
-  template<>
-  bool AsciiExtractor<char>::operator()(april_utils::constString &line,
-                                        char &destination) {
-    if (!line.extract_char(&destination)) return false;
-    return true;
-  }
-  
-  template<>
-  bool BinaryExtractor<char>::operator()(april_utils::constString &line,
-                                         char &destination) {
-    UNUSED_VARIABLE(line);
-    UNUSED_VARIABLE(destination);
-    ERROR_EXIT(128, "Char type has not binary option\n");
-    return false;
-
-  }
-  
-  template<>
-  int AsciiSizer<char>::operator()(const Matrix<char> *mat) {
-    return mat->size()*2;
-  }
-
-  template<>
-  int BinarySizer<char>::operator()(const Matrix<char> *mat) {
-    UNUSED_VARIABLE(mat);
-    ERROR_EXIT(128, "Char type has not binary option\n");
-    return 0;
-  }
-
-  template<>
-  void AsciiCoder<char>::operator()(const char &value,
-                                    AprilIO::StreamInterface *stream) {
-    stream->printf("%c", value);
-  }
-  
-  template<>
-  void BinaryCoder<char>::operator()(const char &value,
-                                     AprilIO::StreamInterface *stream) {
-    UNUSED_VARIABLE(value);
-    UNUSED_VARIABLE(stream);
-    ERROR_EXIT(128, "Char type has not binary option\n");
-
-  }
-
-  /////////////////////////////////////////////////////////////////////////////
-
 } // namespace basics

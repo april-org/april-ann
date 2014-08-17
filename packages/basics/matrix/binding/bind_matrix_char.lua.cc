@@ -70,6 +70,8 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 
 //BIND_LUACLASSNAME MatrixChar matrixChar
 //BIND_CPP_CLASS MatrixChar
+//BIND_LUACLASSNAME Serializable aprilio.serializable
+//BIND_SUBCLASS_OF MatrixChar Serializable
 
 //BIND_LUACLASSNAME SlidingWindowMatrixChar matrixChar.__sliding_window__
 //BIND_CPP_CLASS SlidingWindowMatrixChar
@@ -601,12 +603,6 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 {
   MAKE_READ_MATRIX_LUA_METHOD(MatrixChar, char);
   LUABIND_INCREASE_NUM_RETURNS(1);
-}
-//BIND_END
-
-//BIND_METHOD MatrixChar write
-{
-  writeMatrixLuaMethod(L, obj);
 }
 //BIND_END
 

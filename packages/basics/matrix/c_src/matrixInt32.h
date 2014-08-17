@@ -25,6 +25,36 @@
 
 namespace basics {
 
+
+  namespace MatrixIO {
+
+    /* Especialization of MatrixInt32 ascii and binary extractors, sizers and
+       coders */
+    template<>
+    bool AsciiExtractor<int32_t>::operator()(april_utils::constString &line,
+                                             int32_t &destination);
+  
+    template<>
+    bool BinaryExtractor<int32_t>::operator()(april_utils::constString &line,
+                                              int32_t &destination);
+  
+    template<>
+    int AsciiSizer<int32_t>::operator()(const Matrix<int32_t> *mat);
+
+    template<>
+    int BinarySizer<int32_t>::operator()(const Matrix<int32_t> *mat);
+
+    template<>
+    void AsciiCoder<int32_t>::operator()(const int32_t &value,
+                                         AprilIO::StreamInterface *stream);
+  
+    template<>
+    void BinaryCoder<int32_t>::operator()(const int32_t &value,
+                                          AprilIO::StreamInterface *stream);
+
+  } // namespace MatrixIO
+
+
   NOT_IMPLEMENT_AXPY_HEADER(int32_t)
   NOT_IMPLEMENT_GEMM_HEADER(int32_t)
   NOT_IMPLEMENT_GEMV_HEEADER(int32_t)

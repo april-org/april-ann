@@ -1,24 +1,20 @@
-class.extend(matrix.sparse, "to_lua_string",
-             function(self, format)
-               return string.format("matrix.sparse.fromString[[%s]]",
-                                    self:toString(format or "binary"))
-end)
-
 -- the constructor
 matrix.sparse.csr = function(...)
   return matrix.sparse(...)
 end
 
 -- serialization
-matrix.sparse.fromFilename    = matrix.__make_generic_fromFilename__(matrix.sparse)
-matrix.sparse.fromString      = matrix.__make_generic_fromString__(matrix.sparse)
+matrix.sparse.fromFilename    = matrix.__generic__.__make_generic_fromFilename__(matrix.sparse)
+matrix.sparse.fromString      = matrix.__generic__.__make_generic_fromString__(matrix.sparse)
+class.extend(matrix.sparse, "to_lua_string",
+             matrix.__generic__.__make_generic_to_lua_string__(matrix.sparse))
 class.extend(matrix.sparse, "toFilename",
-             matrix.__make_generic_toFilename__(matrix.sparse))
+             matrix.__generic__.__make_generic_toFilename__(matrix.sparse))
 class.extend(matrix.sparse, "toString",
-             matrix.__make_generic_toString__(matrix.sparse))
+             matrix.__generic__.__make_generic_toString__(matrix.sparse))
 
 matrix.sparse.meta_instance.__call =
-  matrix.__make_generic_call__()
+  matrix.__generic__.__make_generic_call__()
 
 matrix.sparse.meta_instance.__tostring = function(self)
   local out      = {}

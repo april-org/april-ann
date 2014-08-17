@@ -23,62 +23,26 @@
 
 #include "constString.h"
 #include "matrixFloat.h"
-#include "sparse_matrixFloat.h"
-#include "utilMatrixIO.h"
 
 namespace basics {
 
-  /* Especialization of MatrixFloat ascii and binary extractors, sizers and
-     coders */
-  template<>
-  bool AsciiExtractor<float>::operator()(april_utils::constString &line,
-                                         float &destination);
+  Matrix<float>* readMatrixFloatHEX(int width, int height,
+                                    april_utils::constString cs);
   
-  template<>
-  bool BinaryExtractor<float>::operator()(april_utils::constString &line,
-                                          float &destination);
-  
-  template<>
-  int AsciiSizer<float>::operator()(const Matrix<float> *mat);
-
-  template<>
-  int BinarySizer<float>::operator()(const Matrix<float> *mat);
-
-  template<>
-  void AsciiCoder<float>::operator()(const float &value,
-                                     AprilIO::StreamInterface *stream);
-  
-  template<>
-  void BinaryCoder<float>::operator()(const float &value,
-                                      AprilIO::StreamInterface *stream);
-  
-  /* Especialization of SparseMatrixFloat ascii and binary sizers */
-  
-  template<>
-  int SparseAsciiSizer<float>::operator()(const SparseMatrix<float> *mat);
-  
-  template<>
-  int SparseBinarySizer<float>::operator()(const SparseMatrix<float> *mat);
-  
-  /**************************************************************************/
-
-  MatrixFloat* readMatrixFloatHEX(int width, int height,
-                                  april_utils::constString cs);
-
   const float CTENEGRO  = 1.0f;
   const float CTEBLANCO = 0.0f;
-  MatrixFloat* readMatrixFloatPNM(april_utils::constString cs,
-                                  bool forcecolor=false, 
-                                  bool forcegray=false);
-
-  int saveMatrixFloatPNM(MatrixFloat *mat,
+  Matrix<float>* readMatrixFloatPNM(april_utils::constString cs,
+                                    bool forcecolor=false, 
+                                    bool forcegray=false);
+  
+  int saveMatrixFloatPNM(Matrix<float> *mat,
                          char **buffer);
-  int saveMatrixFloatHEX(MatrixFloat *mat,
+  int saveMatrixFloatHEX(Matrix<float> *mat,
                          char **buffer,
                          int *width,
                          int *height);
-
+  
   //////////////////////////////////////////////////////////////////////////////
-}
+} // namespace basics
 
 #endif // UTILMATRIXFLOAT_H

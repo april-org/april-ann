@@ -27,6 +27,7 @@
 #include <new> // surprisingly, placement new doesn't work without this
 #include "aligned_memory.h"
 #include "april_assert.h"
+#include "c_string.h"
 #include "cblas_headers.h"
 #include "clamp.h"
 #include "disallow_class_methods.h"
@@ -34,7 +35,7 @@
 #include "maxmin.h"
 #include "mmapped_data.h"
 #include "qsort.h"
-#include "referenced.h"
+#include "serializable.h"
 #include "smart_ptr.h"
 #include "swap.h"
 #include "unused_variable.h"
@@ -56,7 +57,7 @@ namespace basics {
    * operational because math methods are forbidden for these data types.
    */
   template <typename T>
-  class Matrix : public Referenced {
+  class Matrix : public AprilIO::Serializable {
     APRIL_DISALLOW_ASSIGN(Matrix);
     //
     friend class SparseMatrix<T>;
@@ -851,11 +852,28 @@ namespace basics {
       Matrix<T> **unrolled_this=0);*/
     Matrix<T> *padding(int *begin_padding, int *end_padding, T default_value=T()) const;
     Matrix<T> *padding(int pad_value, T default_value=T()) const;
-  
+    
+    // SERIALIZATION
+    
+    static Matrix<T> *read(AprilIO::StreamInterface *stream,
+                           const char *given_order=0);
+    virtual void write(AprilIO::StreamInterface *stream, bool is_ascii);
+    
+    static Matrix<T> *readTab(AprilIO::StreamInterface *stream,
+                              const char *given_order=0);
+    void writeTab(AprilIO::StreamInterface *stream);
+    
   private:
     void allocate_memory(int size);
     void release_memory();
     void initialize(const int *dim);
+
+    static april_utils::constString readULine(AprilIO::StreamInterface *stream,
+                                              AprilIO::CStringStream *dest) {
+      // Not needed, it is done in extractULineFromStream: dest->clear(); 
+      extractULineFromStream(stream, dest);
+      return dest->getConstString();
+    }
   };
 
 } // namespace basics
@@ -865,5 +883,6 @@ namespace basics {
 #include "matrix.impl.h"
 #include "matrix-iterators.impl.h"
 #include "matrix-math.impl.h"
+#include "matrix-serialization.impl.h"
 
 #endif // MATRIX_H

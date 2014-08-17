@@ -33,7 +33,7 @@
 #include "maxmin.h"
 #include "mmapped_data.h"
 #include "qsort.h"
-#include "referenced.h"
+#include "serializable.h"
 #include "swap.h"
 #include "unused_variable.h"
 #include "wrapper.h"
@@ -49,7 +49,7 @@ namespace basics {
   /// memory pointers between different matrices, unless transposition operator
   /// which shared the data pointers.
   template <typename T>
-  class SparseMatrix : public Referenced {
+  class SparseMatrix : public AprilIO::Serializable {
     APRIL_DISALLOW_ASSIGN(SparseMatrix);
   
     friend class Matrix<T>;
@@ -444,11 +444,25 @@ namespace basics {
     /// dimensions in row-major order. If the SparseMatrix is in CSR format, the
     /// resulting vector is a row vector, otherwise, it is a column vector.
     SparseMatrix<T> *asVector() const;  
-  
+
+    
+    // SERIALIZATION
+    
+    static SparseMatrix<T> *read(AprilIO::StreamInterface *stream);
+    virtual void write(AprilIO::StreamInterface *stream, bool is_ascii);
+
+    
   private:
     void allocate_memory(int size);
     void release_memory();
     void initialize(int d0, int d1);
+
+    static april_utils::constString readULine(AprilIO::StreamInterface *stream,
+                                              AprilIO::CStringStream *dest) {
+      // Not needed, it is done in extractULineFromStream: dest->clear(); 
+      extractULineFromStream(stream, dest);
+      return dest->getConstString();
+    }
   };
 
 } // namespace basics
@@ -456,5 +470,6 @@ namespace basics {
 #include "sparse_matrix.impl.h"
 #include "sparse_matrix-iterators.impl.h"
 #include "sparse_matrix-math.impl.h"
+#include "sparse_matrix-serialization.impl.h"
 
 #endif // SPARSE_MATRIX_H

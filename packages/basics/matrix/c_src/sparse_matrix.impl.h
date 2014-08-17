@@ -173,7 +173,7 @@ namespace basics {
                                 april_math::Int32GPUMirroredMemoryBlock *first_index,
                                 const SPARSE_FORMAT sparse_format,
                                 bool sort) :
-    Referenced(), shared_count(0), 
+    AprilIO::Serializable(), shared_count(0), 
     values(values), indices(indices), first_index(first_index),
     mmapped_data(0),
     sparse_format(sparse_format), use_cuda(false),
@@ -199,7 +199,7 @@ namespace basics {
   SparseMatrix<T>::SparseMatrix(const Matrix<T> *other,
                                 const SPARSE_FORMAT sparse_format,
                                 const T zero) :
-    Referenced(), shared_count(0), mmapped_data(0),
+    AprilIO::Serializable(), shared_count(0), mmapped_data(0),
     sparse_format(sparse_format), use_cuda(other->getCudaFlag()),
     end_iterator(), end_const_iterator() {
     if (other->getNumDim() != 2)
@@ -261,7 +261,7 @@ namespace basics {
   template <typename T>
   SparseMatrix<T>::SparseMatrix(const SparseMatrix<T> *other,
                                 SPARSE_FORMAT sparse_format) :
-    Referenced(),
+    AprilIO::Serializable(),
     shared_count(other->shared_count),
     mmapped_data(0),
     use_cuda(other->use_cuda),
@@ -287,7 +287,7 @@ namespace basics {
   SparseMatrix<T>::SparseMatrix(const SparseMatrix<T> *other,
                                 const int *coords, const int *sizes,
                                 bool clone) :
-    Referenced(),
+    AprilIO::Serializable(),
     shared_count(0), mmapped_data(0),
     sparse_format(other->sparse_format),
     use_cuda(other->use_cuda),

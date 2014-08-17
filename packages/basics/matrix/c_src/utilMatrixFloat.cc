@@ -19,74 +19,18 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "utilMatrixFloat.h"
-#include "binarizer.h"
-#include "clamp.h"
-#include "ignore_result.h"
 #include <cmath>
 #include <cstdio>
 
+#include "clamp.h"
+#include "constString.h"
+#include "utilMatrixFloat.h"
+
 using april_utils::clamp;
 using april_utils::constString;
-using AprilIO::StreamInterface;
 
 namespace basics {
   
-  /////////////////////////////////////////////////////////////////////////
-  
-  template<>
-  bool AsciiExtractor<float>::operator()(constString &line,
-                                         float &destination) {
-    bool result = line.extract_float(&destination);
-    if (!result) return false;
-    return true;
-  }
-  
-  template<>
-  bool BinaryExtractor<float>::operator()(constString &line,
-                                          float &destination) {
-    if (!line.extract_float_binary(&destination)) return false;
-    return true;
-  }
-  
-  template<>
-  int AsciiSizer<float>::operator()(const Matrix<float> *mat) {
-    return mat->size()*12;
-  }
-
-  template<>
-  int BinarySizer<float>::operator()(const Matrix<float> *mat) {
-    return april_utils::binarizer::buffer_size_32(mat->size());
-  }
-
-  template<>
-  void AsciiCoder<float>::operator()(const float &value,
-                                     AprilIO::StreamInterface *stream) {
-    stream->printf("%.5g", value);
-  }
-  
-  template<>
-  void BinaryCoder<float>::operator()(const float &value,
-                                      AprilIO::StreamInterface *stream) {
-    char b[5];
-    april_utils::binarizer::code_float(value, b);
-    stream->put(b, sizeof(char)*5);
-  }
-
-  /////////////////////////////////////////////////////////////////////////////
-  
-  template<>
-  int SparseAsciiSizer<float>::operator()(const SparseMatrix<float> *mat) {
-    return mat->nonZeroSize()*12;
-  }
-  
-  template<>
-  int SparseBinarySizer<float>::operator()(const SparseMatrix<float> *mat) {
-    return april_utils::binarizer::buffer_size_32(mat->nonZeroSize());
-  }
-  
-  //////////////////////////////////////////////////////////////////////////
-
   inline int hexdigit(char c) {
     if ('0'<=c && c<='9') return c-'0';
     if ('A'<=c && c<='F') return c-'A'+10;

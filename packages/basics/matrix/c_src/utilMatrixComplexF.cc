@@ -18,70 +18,13 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include <cmath>
-#include <cstdio>
-
-#include "binarizer.h"
-#include "clamp.h"
-#include "complex_number.h"
 #include "ignore_result.h"
-#include "matrixFloat.h"
 #include "utilMatrixComplexF.h"
 
 using april_math::ComplexF;
 
 namespace basics {
-  
-  /////////////////////////////////////////////////////////////////////////
-  
-  template<>
-  bool AsciiExtractor<ComplexF>::operator()(april_utils::constString &line,
-                                            ComplexF &destination) {
-    if (!line.extract_float(&destination.real())) return false;
-    if (!line.extract_float(&destination.img())) return false;
-    char ch;
-    if (!line.extract_char(&ch)) return false;
-    if (ch != 'i') return false;
-    return true;
-  }
-  
-  template<>
-  bool BinaryExtractor<ComplexF>::operator()(april_utils::constString &line,
-                                             ComplexF &destination) {
-    if (!line.extract_float_binary(&destination.real())) return false;
-    if (!line.extract_float_binary(&destination.img())) return false;
-    return true;
-  }
-  
-  template<>
-  int AsciiSizer<ComplexF>::operator()(const Matrix<ComplexF> *mat) {
-    return mat->size()*26; // 12*2+2
-  }
 
-  template<>
-  int BinarySizer<ComplexF>::operator()(const Matrix<ComplexF> *mat) {
-    return april_utils::binarizer::buffer_size_32(mat->size()<<1); // mat->size() * 2
-
-  }
-
-  template<>
-  void AsciiCoder<ComplexF>::operator()(const ComplexF &value,
-                                        AprilIO::StreamInterface *stream) {
-    stream->printf("%.5g%+.5gi", value.real(), value.img());
-  }
-  
-  template<>
-  void BinaryCoder<ComplexF>::operator()(const ComplexF &value,
-                                         AprilIO::StreamInterface *stream) {
-    char b[10];
-    april_utils::binarizer::code_float(value.real(), b);
-    april_utils::binarizer::code_float(value.img(),  b+5);
-    stream->put(b, sizeof(char)*10);
-  }
-
-  /////////////////////////////////////////////////////////////////////////////
-
-  
   MatrixFloat *convertFromMatrixComplexFToMatrixFloat(MatrixComplexF *mat) {
     MatrixFloat *new_mat;
     int N     = mat->getNumDim();

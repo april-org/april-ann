@@ -70,6 +70,8 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 
 //BIND_LUACLASSNAME MatrixDouble matrixDouble
 //BIND_CPP_CLASS MatrixDouble
+//BIND_LUACLASSNAME Serializable aprilio.serializable
+//BIND_SUBCLASS_OF MatrixDouble Serializable
 
 //BIND_LUACLASSNAME SlidingWindowMatrixDouble matrixDouble.__sliding_window__
 //BIND_CPP_CLASS SlidingWindowMatrixDouble
@@ -595,12 +597,6 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 {
   MAKE_READ_MATRIX_LUA_METHOD(MatrixDouble, double);
   LUABIND_INCREASE_NUM_RETURNS(1);
-}
-//BIND_END
-
-//BIND_METHOD MatrixDouble write
-{
-  writeMatrixLuaMethod(L, obj);
 }
 //BIND_END
 

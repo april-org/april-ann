@@ -1,24 +1,17 @@
--- OVERWRITTING TOSTRING FUNCTION
-class.extend(matrixComplex, "to_lua_string",
-             function(self,format)
-               return string.format("matrixComplex.fromString[[%s]]",
-                                    self:toString(format or "binary"))
-end)
-
 -- serialization
-matrix.__make_all_serialization_methods__(matrixComplex)
+matrix.__generic__.__make_all_serialization_methods__(matrixComplex)
 
 matrixComplex.meta_instance.__call =
-  matrix.__make_generic_call__()
+  matrix.__generic__.__make_generic_call__()
 
 matrixComplex.meta_instance.__tostring =
-  matrix.__make_generic_print__("MatrixComplex",
-				function(value)
-				  return string.format("%12s",tostring(value))
-				end)
+  matrix.__generic__.__make_generic_print__("MatrixComplex",
+                                            function(value)
+                                              return string.format("%12s",tostring(value))
+  end)
 
 matrixComplex.join =
-  matrix.__make_generic_join__(matrixComplex)
+  matrix.__generic__.__make_generic_join__(matrixComplex)
 
 
 matrixComplex.meta_instance.__eq = function(op1, op2)
@@ -141,7 +134,7 @@ april_set_doc(matrixComplex.."sum",
 		class="method",
 		summary="Computes the sum of all the elements.",
 		outputs={"A number"},
-	      })
+})
 
 april_set_doc(matrixComplex.."sum",
 	      {
@@ -149,7 +142,7 @@ april_set_doc(matrixComplex.."sum",
 		summary="Computes the sum of all the elements over the given dimension.",
 		params={"A number, the dimension"},
 		outputs={"A matrix"},
-	      })
+})
 
 april_set_doc(matrixComplex.."get", {
 		class = "method",
@@ -512,7 +505,7 @@ april_set_doc(matrixComplex.."copy",
 		summary = "Copy the values from another matrixComplex using BLAS",
 		params  = { "A source matrixComplex" },
 		outputs = { "The caller matrixComplex instance" },
-	      })
+})
 
 april_set_doc(matrixComplex.."linear",
 	      {
@@ -521,7 +514,7 @@ april_set_doc(matrixComplex.."linear",
 		params  = { "First integer value [optional], by default 0",
 			    "Step value [optional], by default 1", },
 		outputs = { "The caller matrixComplex instance" },
-	      })
+})
 
 april_set_doc(matrixComplex.."uniform",
 	      {
@@ -531,14 +524,14 @@ april_set_doc(matrixComplex.."uniform",
 			    "Upper range value",
 			    "A random object instance [optional]" },
 		outputs = { "The caller matrixComplex instance" },
-	      })
+})
 
 april_set_doc(matrixComplex.."is_contiguous",
 	      {
 		class = "method",
 		summary = "Returns true if the matrixComplex data is contiguous at memory",
 		outputs = { "A boolean" },
-	      })
+})
 
 april_set_doc(matrixComplex.."scalar_add",
 	      {
@@ -546,7 +539,7 @@ april_set_doc(matrixComplex.."scalar_add",
 		summary = "Adds a scalar IN-PLACE",
 		params  = { "A number" },
 		outputs = { "The caller matrixComplex instance" },
-	      })
+})
 
 
 april_set_doc(matrixComplex.."to_float",
@@ -561,42 +554,42 @@ april_set_doc(matrixComplex.."to_float",
 		  "matrix is in row_major, or the first if its in col_major.",
 		},
 		outputs = { "A matrix instance" },
-	      })
+})
 
 april_set_doc(matrixComplex.."conj",
 	      {
 		class = "method",
 		summary = "Applies the conjugate of all the elements IN-PLACE",
 		outputs = { "The caller matrixComplex instance" },
-	      })
+})
 
 april_set_doc(matrixComplex.."real",
 	      {
 		class = "method",
 		summary = "Returns the real part of the caller matrix",
 		outputs = { "A matrix instance" },
-	      })
+})
 
 april_set_doc(matrixComplex.."img",
 	      {
 		class = "method",
 		summary = "Returns the imaginary part of the caller matrix",
 		outputs = { "A matrix instance" },
-	      })
+})
 
 april_set_doc(matrixComplex.."abs",
 	      {
 		class = "method",
 		summary = "Returns the abs of the polar representation",
 		outputs = { "A matrix instance" },
-	      })
+})
 
 april_set_doc(matrixComplex.."angle",
 	      {
 		class = "method",
 		summary = "Returns the angle of the polar representation",
 		outputs = { "A matrix instance" },
-	      })
+})
 
 april_set_doc(matrixComplex.."sliding_window",
 	      {
@@ -610,13 +603,13 @@ april_set_doc(matrixComplex.."sliding_window",
 		  orderStep = "Lua table [optional]",
 		},
 		outputs = { "An instance of matrixComplex.__sliding_window__" },
-	      })
+})
 
 april_set_doc(matrixComplex.__sliding_window__,
 	      {
 		class       = "class",
 		summary     = "Sliding window for matrixComplex objects",
-	      })
+})
 
 april_set_doc(matrixComplex.__sliding_window__.."get_matrix",
 	      {
@@ -625,25 +618,25 @@ april_set_doc(matrixComplex.__sliding_window__.."get_matrix",
 		params      = { {"A matrixComplex [optional], to be used instead",
 				 "of alloc a new one"} },
 		outputs     = { "A matrixComplex instance" },
-	      })
+})
 
 april_set_doc(matrixComplex.__sliding_window__.."next",
 	      {
 		class       = "method",
 		summary     = "Moves the window to the next position",
 		outputs     = { "The caller sliding_window object" },
-	      })
+})
 
 april_set_doc(matrixComplex.__sliding_window__.."is_end",
 	      {
 		class       = "method",
 		summary     = "Returns true when it finishes",
 		outputs     = { "A boolean" },
-	      })
+})
 
 april_set_doc(matrixComplex.__sliding_window__.."iterate",
 	      {
 		class       = "method",
 		summary     = "Returns an iterator function: for mat in s:iterate() do ... end",
 		outputs     = { "An iterator function" },
-	      })
+})
