@@ -56,20 +56,6 @@ using namespace TAR;
 
 //BIND_CONSTRUCTOR TARPackage
 {
-  if (lua_isstring(L,1)) {
-    // from a file name
-    const char *path;
-    const char *mode;
-    LUABIND_GET_PARAMETER(1, string, path);
-    LUABIND_GET_OPTIONAL_PARAMETER(2, string, mode, "r");
-    obj = new TARPackage(path, mode);
-  }
-  else {
-    // from a stream
-    StreamInterface *stream;
-    LUABIND_GET_PARAMETER(1, StreamInterface, stream);
-    obj = new TARPackage(stream);
-  }
-  LUABIND_RETURN(TARPackage, obj);
+  LUABIND_INCREASE_NUM_RETURNS(callArchivePackageConstructor<TARPackage>(L));
 }
 //BIND_END

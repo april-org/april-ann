@@ -41,8 +41,33 @@ int callFileStreamConstructor(lua_State *L) {
     lua_pushStreamInterface(L, stream);
   }
   else {
-    delete stream;
     lua_pushnil(L);
+    if (stream->hasError()) lua_pushstring(L, stream->getErrorMsg());
+    delete stream;
+  }
+  return 1;
+}
+
+template<typename T>
+int callArchivePackageConstructor(lua_State *L) {
+  ArchivePackage *obj;
+  if (lua_isstring(L,1)) {
+    // from a file name
+    const char *path = luaL_checkstring(L, 1);
+    const char *mode = luaL_optstring(L, 2, "r");
+    obj = new T(path, mode);
+  }
+  else {
+    // from a stream
+    StreamInterface *stream = lua_toStreamInterface(L,1);
+    obj = new T(stream);
+  }
+  if (obj->good()) {
+    lua_pushArchivePackage(L, obj);
+  }
+  else {
+    lua_pushnil(L);
+    delete obj;
   }
   return 1;
 }

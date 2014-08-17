@@ -63,20 +63,6 @@ using namespace ZIP;
 
 //BIND_CONSTRUCTOR ZIPPackage
 {
-  if (lua_isstring(L,1)) {
-    // from a file name
-    const char *path;
-    const char *mode;
-    LUABIND_GET_PARAMETER(1, string, path);
-    LUABIND_GET_OPTIONAL_PARAMETER(2, string, mode, "r");
-    obj = new ZIPPackage(path, mode);
-  }
-  else {
-    // from a stream
-    StreamInterface *stream;
-    LUABIND_GET_PARAMETER(1, StreamInterface, stream);
-    obj = new ZIPPackage(stream);
-  }
-  LUABIND_RETURN(ZIPPackage, obj);
+  LUABIND_INCREASE_NUM_RETURNS(callArchivePackageConstructor<ZIPPackage>(L));
 }
 //BIND_END
