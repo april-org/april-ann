@@ -28,6 +28,8 @@ Master branch release
 
 ### C/C++
 
+- Added TAR support in C/C++, allowing to use streams as the standard I/O
+  objects in APRIL-ANN.
 - Added `basics` namespace which stores almost all C/C++ code in `basics`
   packages.
 - Simplified read/write of matrices using the new `StreamInterface` objects.
