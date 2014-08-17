@@ -8,6 +8,8 @@ namespace april_utils {
 
   size_t strnspn(const char *buffer, const char *accept, size_t length);
   size_t strncspn(const char *buffer, const char *reject, size_t length);
+  const char *strnchr(const char *buffer, int c, size_t length);
+  const char *strncchr(const char *buffer, int c, size_t length);
   
   class string {
     static const char *NULL_STRING;

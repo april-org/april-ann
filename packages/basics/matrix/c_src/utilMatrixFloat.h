@@ -46,11 +46,11 @@ namespace basics {
 
   template<>
   void AsciiCoder<float>::operator()(const float &value,
-                                     april_io::StreamInterface *stream);
+                                     AprilIO::StreamInterface *stream);
   
   template<>
   void BinaryCoder<float>::operator()(const float &value,
-                                      april_io::StreamInterface *stream);
+                                      AprilIO::StreamInterface *stream);
   
   /* Especialization of SparseMatrixFloat ascii and binary sizers */
   

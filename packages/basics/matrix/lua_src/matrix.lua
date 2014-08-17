@@ -285,7 +285,7 @@ april_set_doc(matrix.read, {
 		  "It uses the format of write function.",
 		},
 		params = {
-		  "A april_io.stream instance.",
+		  "A aprilio.stream instance.",
 		}, })
 
 april_set_doc(matrix.readTab, {
@@ -298,7 +298,7 @@ april_set_doc(matrix.readTab, {
                   "the stream, and uses seek operation to rewind it.",
 		},
 		params = {
-		  "A april_io.stream instance.",
+		  "A aprilio.stream instance.",
 		}, })
 
 april_set_doc(matrix.fromMMap, {
@@ -328,7 +328,7 @@ april_set_doc(matrix.."write", {
 		  "It uses the format expected by read function.",
 		},
 		params = {
-		  "A april_io.stream instance.",
+		  "A aprilio.stream instance.",
 		}, })
 
 april_set_doc(matrix.."writeTab", {
@@ -339,7 +339,7 @@ april_set_doc(matrix.."writeTab", {
 		  "It uses the format expected by readTab function.",
 		},
 		params = {
-		  "A april_io.stream instance.",
+		  "A aprilio.stream instance.",
 		}, })
 
 april_set_doc(matrix.."toMMap", {

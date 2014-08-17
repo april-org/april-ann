@@ -24,9 +24,9 @@
 #include "gzfile_stream.h"
 #include "maxmin.h"
 
-using april_io::StreamInterface;
+using AprilIO::StreamInterface;
 
-namespace gzio {
+namespace GZIO {
 
   GZFileStream::GZFileStream(const char *path, const char *mode) :
     BufferedInputStream(), f(0) {

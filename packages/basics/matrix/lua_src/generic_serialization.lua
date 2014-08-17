@@ -1,42 +1,51 @@
+local function archive_wrapper(s)
+  if class.is_a(s, aprilio.package) then
+    assert(s:number_of_files() == 1, "Expected only 1 file in the package")
+    return s:open(1)
+  else
+    return s
+  end  
+end
+
 -- GENERIC FROM FILENAME
 matrix.__make_generic_fromFilename__ = function(matrix_class)
   return function(filename,...)
-    return matrix_class.read(io.open(filename),...)
+    return matrix_class.read(archive_wrapper( io.open(filename) ),...)
   end
 end
 
 -- GENERIC FROM TAB FILENAME
 matrix.__make_generic_fromTabFilename__ = function(matrix_class)
   return function(filename,...)
-    return matrix_class.readTab(io.open(filename),...)
+    return matrix_class.readTab(archive_wrapper( io.open(filename) ),...)
   end
 end
 
 -- GENERIC FROM STRING
 matrix.__make_generic_fromString__ = function(matrix_class)
   return function(str,...)
-    return matrix_class.read(april_io.stream.input_lua_string(str),...)
+    return matrix_class.read(aprilio.stream.input_lua_string(str),...)
   end
 end
 
 -- GENERIC TO FILENAME
 matrix.__make_generic_toFilename__ = function(matrix_class)
   return function(self,filename,...)
-    return class.consult(matrix_class,"write")(self,io.open(filename),...)
+    return class.consult(matrix_class,"write")(self,io.open(filename,"w"),...)
   end
 end
 
 -- GENERIC TO TAB FILENAME
 matrix.__make_generic_toTabFilename__ = function(matrix_class)
   return function(self,filename,...)
-    return class.consult(matrix_class,"writeTab")(self,io.open(filename),...)
+    return class.consult(matrix_class,"writeTab")(self,io.open(filename,"w"),...)
   end
 end
 
 -- GENERIC TO STRING
 matrix.__make_generic_toString__ = function(matrix_class)
   return function(self,...)
-    local stream = april_io.stream.output_lua_string(str)
+    local stream = aprilio.stream.output_lua_string(str)
     class.consult(matrix_class,"write")(self,stream,...)
     return stream:value()
   end

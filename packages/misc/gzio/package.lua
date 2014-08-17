@@ -1,6 +1,6 @@
  package{ name = "gzio",
    version = "1.0",
-   depends = { "tar", "april_io" },
+   depends = { "tar", "aprilio" },
    link_libraries = { "z" },
    keywords = { "gzio" },
    description = "read and write gz files",

@@ -27,7 +27,7 @@
 #include "wrapper.h"
 #include "utilMatrixFloat.h"
 
-using namespace april_io;
+using namespace AprilIO;
 using namespace april_math;
 using namespace april_utils;
 using namespace basics;

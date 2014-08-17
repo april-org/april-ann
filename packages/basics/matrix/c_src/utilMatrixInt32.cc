@@ -59,13 +59,13 @@ namespace basics {
 
   template<>
   void AsciiCoder<int32_t>::operator()(const int32_t &value,
-                                       april_io::StreamInterface *stream) {
+                                       AprilIO::StreamInterface *stream) {
     stream->printf("%d", value);
   }
   
   template<>
   void BinaryCoder<int32_t>::operator()(const int32_t &value,
-                                        april_io::StreamInterface *stream) {
+                                        AprilIO::StreamInterface *stream) {
     char b[5];
     april_utils::binarizer::code_int32(value, b);
     stream->put(b, sizeof(char)*5);

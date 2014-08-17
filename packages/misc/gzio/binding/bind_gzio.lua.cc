@@ -22,18 +22,18 @@
 #include "bind_april_io.h"
 #include "stream.h"
 
-using namespace april_io;
+using namespace AprilIO;
 //BIND_END
 
 //BIND_HEADER_H
 #include "gzfile_stream.h"
 
-using namespace gzio;
+using namespace GZIO;
 //BIND_END
 
 /////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME StreamInterface april_io.stream
+//BIND_LUACLASSNAME StreamInterface aprilio.stream
 
 //BIND_LUACLASSNAME GZFileStream gzio.stream
 //BIND_CPP_CLASS GZFileStream

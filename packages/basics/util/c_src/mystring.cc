@@ -7,11 +7,11 @@ namespace april_utils {
     if (length > 128) {
       char lookup_table[256];
       memset(lookup_table, 0, 256*sizeof(char));
-      for (size_t i=0; i<strlen(accept); ++i) {
+      for (size_t i=0; accept[i] != '\0'; ++i) {
         lookup_table[static_cast<unsigned char>(accept[i])] = 1;
       }
       size_t pos=0;
-      while(pos < length &&
+      while(pos < length && buffer[pos] != '\0' &&
             lookup_table[static_cast<unsigned char>(buffer[pos])]) {
         ++pos;
       }
@@ -19,7 +19,11 @@ namespace april_utils {
     }
     else {
       size_t pos=0;
-      while(pos < length && strchr(accept, buffer[pos])) ++pos;
+      while(pos < length &&
+            buffer[pos] != '\0' &&
+            strchr(accept, buffer[pos])) {
+        ++pos;
+      }
       return pos;
     }
   }
@@ -28,11 +32,11 @@ namespace april_utils {
     if (length > 128) {
       char lookup_table[256];
       memset(lookup_table, 0, 256*sizeof(char));
-      for (size_t i=0; i<strlen(reject); ++i) {
+      for (size_t i=0; reject[i] != '\0'; ++i) {
         lookup_table[static_cast<unsigned char>(reject[i])] = 1;
       }
       size_t pos=0;
-      while(pos < length &&
+      while(pos < length && buffer[pos] != '\0' &&
             !lookup_table[static_cast<unsigned char>(buffer[pos])]) {
         ++pos;
       }
@@ -40,9 +44,29 @@ namespace april_utils {
     }
     else {
       size_t pos=0;
-      while(pos < length && !strchr(reject, buffer[pos])) ++pos;
+      while(pos < length &&
+            buffer[pos] != '\0' &&
+            !strchr(reject, buffer[pos])) {
+        ++pos;
+      }
       return pos;
     }
+  }
+
+  const char *strnchr(const char *buffer, int c, size_t length) {
+    for (size_t i=0; i<length; ++i) {
+      if (buffer[i] == c) return buffer + i;
+      // WARNING this function looks the entire buffer if (buffer[i] == '\0') break;
+    }
+    return 0;
+  }
+
+  const char *strncchr(const char *buffer, int c, size_t length) {
+    for (size_t i=0; i<length; ++i) {
+      if (buffer[i] != c) return buffer + i;
+      // WARNING this function looks the entire buffer if (buffer[i] == '\0') break;
+    }
+    return 0;
   }
 
   const char *string::NULL_STRING = "\0";

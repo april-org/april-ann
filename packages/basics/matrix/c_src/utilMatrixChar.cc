@@ -63,13 +63,13 @@ namespace basics {
 
   template<>
   void AsciiCoder<char>::operator()(const char &value,
-                                    april_io::StreamInterface *stream) {
+                                    AprilIO::StreamInterface *stream) {
     stream->printf("%c", value);
   }
   
   template<>
   void BinaryCoder<char>::operator()(const char &value,
-                                     april_io::StreamInterface *stream) {
+                                     AprilIO::StreamInterface *stream) {
     UNUSED_VARIABLE(value);
     UNUSED_VARIABLE(stream);
     ERROR_EXIT(128, "Char type has not binary option\n");

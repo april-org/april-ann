@@ -1,6 +1,6 @@
  package{ name = "tar",
    version = "1.0",
-   depends = { "util", "april_io" },
+   depends = { "util", "aprilio" },
    keywords = { "tar" },
    description = "read tar files",
    -- targets como en ant
@@ -15,7 +15,7 @@
    },
    -- target{
    --   name = "test",
-   --   execute_script{
+   --   lua_unit_test{
    --     file={
    --       "test/test.lua",
    --     },
@@ -24,26 +24,26 @@
    target{
      name = "provide",
      depends = "init",
-     --copy{ file= "c_src/*.h", dest_dir = "include" },
-     --provide_bind{ file = "binding/bind_gzio.lua.cc", dest_dir = "include" }
+     copy{ file= "c_src/*.h", dest_dir = "include" },
+     provide_bind{ file = "binding/bind_tar.lua.cc", dest_dir = "include" }
    },
    target{
      name = "build",
      depends = "provide",
      use_timestamp = true,
-     -- object{ 
-     --   file = "c_src/*.cc",
-     --   include_dirs = "${include_dirs}",
-     --   dest_dir = "build",
-     -- },
+     object{ 
+       file = "c_src/*.cc",
+       include_dirs = "${include_dirs}",
+       dest_dir = "build",
+     },
      luac{
        orig_dir = "lua_src",
        dest_dir = "build",
      },
-     -- build_bind{
-     --    file = "binding/bind_gzio.lua.cc",
-     --    dest_dir = "build",
-     -- }
+     build_bind{
+       file = "binding/bind_tar.lua.cc",
+       dest_dir = "build",
+     }
    },
    target{
      name = "document",

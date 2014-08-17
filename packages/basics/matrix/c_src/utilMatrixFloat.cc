@@ -28,7 +28,7 @@
 
 using april_utils::clamp;
 using april_utils::constString;
-using april_io::StreamInterface;
+using AprilIO::StreamInterface;
 
 namespace basics {
   
@@ -61,13 +61,13 @@ namespace basics {
 
   template<>
   void AsciiCoder<float>::operator()(const float &value,
-                                     april_io::StreamInterface *stream) {
+                                     AprilIO::StreamInterface *stream) {
     stream->printf("%.5g", value);
   }
   
   template<>
   void BinaryCoder<float>::operator()(const float &value,
-                                      april_io::StreamInterface *stream) {
+                                      AprilIO::StreamInterface *stream) {
     char b[5];
     april_utils::binarizer::code_float(value, b);
     stream->put(b, sizeof(char)*5);
