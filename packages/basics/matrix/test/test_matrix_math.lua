@@ -195,7 +195,7 @@ end
 T("CSVTest", function()
     local m = load_csv()
     -- TODO: nan comparison returns always FALSE
-    -- check.eq(m, matrix(3,5,{1,2,3,"-nan",4,5,6,7,8,"-nan",4,"-nan","-nan","-nan",5}))
+    check.eq(m, matrix(3,5,{1,2,3,"-nan",4,5,6,7,8,"-nan",4,"-nan","-nan","-nan",5}))
 end)
 
 T("EQandNEQTest", function()

@@ -85,7 +85,9 @@ static bool check_number(lua_State *L, int i, T &dest) {
     return true;
   }
   const char *str = lua_tostring(L,i);
-  if (str != 0 && april_utils::strcmpi(str, "-nan")==0) {
+  if ( str != 0 &&
+       ( april_utils::strcmpi(str, "-nan")==0 ||
+         april_utils::strcmpi(str, "nan") ) ) {
     dest = T(0.0f/0.0f);
     return true;
   }
