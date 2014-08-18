@@ -40,7 +40,21 @@ namespace basics {
   template <typename T>
   Matrix<T>*
   Matrix<T>::read(AprilIO::StreamInterface *stream,
-                  const char *given_order) {
+                  const april_utils::GenericOptions *options) {
+    if (options->getOptionalBoolean(MatrixIO::TAB_OPTION, false)) {
+      return readTab(stream, options);
+    }
+    else {
+      return readNormal(stream, options);
+    }
+  }
+
+  template <typename T>
+  Matrix<T>*
+  Matrix<T>::readNormal(AprilIO::StreamInterface *stream,
+                        const april_utils::GenericOptions *options) {
+    const char *given_order = options->getOptionalString(MatrixIO::ORDER_OPTION, 0);
+    //
     MatrixIO::AsciiExtractor<T> ascii_extractor;
     MatrixIO::BinaryExtractor<T> bin_extractor;
     if (!stream->good()) {
@@ -176,7 +190,18 @@ namespace basics {
   // Returns the number of chars written (there is a '\0' that is not counted)
   template <typename T>
   void Matrix<T>::write(AprilIO::StreamInterface *stream,
-                        bool is_ascii) {
+                        const april_utils::GenericOptions *options) {
+    bool is_tab = options->getOptionalBoolean(MatrixIO::TAB_OPTION, false);
+    if (is_tab) writeTab(stream, options);
+    else writeNormal(stream, options);
+  }
+
+  // Returns the number of chars written (there is a '\0' that is not counted)
+  template <typename T>
+  void Matrix<T>::writeNormal(AprilIO::StreamInterface *stream,
+                              const april_utils::GenericOptions *options) {
+    bool is_ascii = options->getOptionalBoolean(MatrixIO::ASCII_OPTION, false);
+    //
     MatrixIO::AsciiSizer<T> ascii_sizer;
     MatrixIO::BinarySizer<T> bin_sizer;
     MatrixIO::AsciiCoder<T> ascii_coder;
@@ -246,9 +271,13 @@ namespace basics {
 
   template <typename T>
   Matrix<T>*
-  Matrix<T>::readTab(AprilIO::StreamInterface *stream, const char *given_order,
-                     const char *delim, bool keep_delim, T default_value) {
-    if (delim == 0) delim = "\n\r\t ,;";
+  Matrix<T>::readTab(AprilIO::StreamInterface *stream,
+                     const april_utils::GenericOptions *options) {
+    const char *given_order = options->getOptionalString(MatrixIO::ORDER_OPTION, 0);
+    const char *delim       = options->getOptionalString(MatrixIO::DELIM_OPTION, "\n\r\t,; ");
+    bool keep_delim         = options->getOptionalBoolean(MatrixIO::KEEP_OPTION, false);
+    T default_value         = getTemplateOption(options, MatrixIO::DEFAULT_OPTION, T());
+    //
     MatrixIO::AsciiExtractor<T> ascii_extractor;
     if (!stream->good()) {
       ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
@@ -258,27 +287,42 @@ namespace basics {
     c_str = new AprilIO::CStringStream();
     april_assert(!c_str.empty());
     april_utils::constString line("");
-    int ncols = 0, nrows = 0;
-    while (!stream->eof()) {
-      line = readULine(stream, c_str.get(), keep_delim);
-      if (line.len() > 0) {
-        if (ncols == 0) {
-          while(line.extract_token(delim, keep_delim)) ++ncols;
-          // while(ascii_extractor(line,value)) ++ncols;
+    int ncols = options->getOptionalInt32(MatrixIO::NCOLS_OPTION, 0);
+    int nrows = options->getOptionalInt32(MatrixIO::NROWS_OPTION, 0);
+    if (ncols == 0 || nrows == 0) {
+      off_t first_pos = stream->seek();
+      if (nrows == 0) {
+        while (!stream->eof()) {
+          line = readULine(stream, c_str.get(), keep_delim);
+          if (line.len() > 0) {
+            if (ncols == 0) {
+              while(line.extract_token(delim, keep_delim)) ++ncols;
+              // while(ascii_extractor(line,value)) ++ncols;
+            }
+            ++nrows;
+          }
         }
-        ++nrows;
       }
-    }
-    if (nrows <= 0 || ncols <= 0) ERROR_EXIT(256, "Found 0 rows or 0 cols\n");
-    stream->seek(SEEK_SET, 0);
-    if (stream->hasError()) {
-      ERROR_PRINT1("Impossible to rewind the stream: %s\n",
-                   stream->getErrorMsg());
-      return 0;
-    }
-    if (!stream->good()) {
-      ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
-      return 0;
+      else {
+        line = readULine(stream, c_str.get(), keep_delim);
+        if (line.len() > 0) {
+          if (ncols == 0) {
+            while(line.extract_token(delim, keep_delim)) ++ncols;
+            // while(ascii_extractor(line,value)) ++ncols;
+          }
+        }
+      }
+      if (nrows <= 0 || ncols <= 0) ERROR_EXIT(256, "Found 0 rows or 0 cols\n");
+      stream->seek(SEEK_SET, first_pos);
+      if (stream->hasError()) {
+        ERROR_PRINT1("Impossible to rewind the stream: %s\n",
+                     stream->getErrorMsg());
+        return 0;
+      }
+      if (!stream->good()) {
+        ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
+        return 0;
+      }
     }
     april_utils::constString order( (given_order) ? given_order : "row_major"),token;
     int dims[2] = { nrows, ncols };
@@ -345,7 +389,9 @@ namespace basics {
   
   // Returns the number of chars written (there is a '\0' that is not counted)
   template <typename T>
-  void Matrix<T>::writeTab(AprilIO::StreamInterface *stream) {
+  void Matrix<T>::writeTab(AprilIO::StreamInterface *stream,
+                           const april_utils::GenericOptions *options) {
+    UNUSED_VARIABLE(options);
     MatrixIO::AsciiSizer<T> ascii_sizer;
     MatrixIO::AsciiCoder<T> ascii_coder;
     if (this->getNumDim() != 2) {
@@ -369,6 +415,16 @@ namespace basics {
     if ((i % columns) != 0) {
       stream->printf("\n"); 
     }
+  }
+
+  template <typename T>
+  T Matrix<T>::getTemplateOption(const april_utils::GenericOptions *options,
+                                 const char *name, T default_value) {
+    UNUSED_VARIABLE(options);
+    UNUSED_VARIABLE(name);
+    UNUSED_VARIABLE(default_value);
+    ERROR_EXIT(128, "NOT IMPLEMENTED\n");
+    return T();
   }
   
 } // namespace basics

@@ -21,6 +21,7 @@
 #ifndef SERIALIZABLE_H
 #define SERIALIZABLE_H
 
+#include "generic_options.h"
 #include "error_print.h"
 #include "referenced.h"
 #include "stream.h"
@@ -34,7 +35,8 @@ namespace AprilIO {
     virtual ~Serializable() { }
     
     /// Writes the object data into dest, and it could be retrieved by read.
-    virtual void write(StreamInterface *dest, bool is_ascii) = 0;
+    virtual void write(StreamInterface *dest,
+                       const april_utils::GenericOptions *options) = 0;
     
     /**
      * @brief Writes a Lua string which can be instantiated to get the object.
@@ -44,9 +46,10 @@ namespace AprilIO {
      *
      * @note THIS METHOD IS A FUTURE FEATURE, IT IS NOT BEEN USED ANYWHERE.
      */
-    virtual void toLuaString(StreamInterface *dest, bool is_ascii) {
+    virtual void toLuaString(StreamInterface *dest,
+                             const april_utils::GenericOptions *options) {
       UNUSED_VARIABLE(dest);
-      UNUSED_VARIABLE(is_ascii);
+      UNUSED_VARIABLE(options);
       ERROR_EXIT(128, "Unable to instantiate into a Lua string\n");
     }
   };

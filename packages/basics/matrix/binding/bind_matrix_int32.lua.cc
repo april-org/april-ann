@@ -608,18 +608,5 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 }
 //BIND_END
 
-//BIND_CLASS_METHOD MatrixInt32 readTab
-{
-  MAKE_READ_TAB_MATRIX_LUA_METHOD(MatrixInt32, int32_t, april_optint);
-  LUABIND_INCREASE_NUM_RETURNS(1);
-}
-//BIND_END
-
-//BIND_METHOD MatrixInt32 writeTab
-{
-  writeTabMatrixLuaMethod(L, obj);
-}
-//BIND_END
-
 //////////////////////////////////////////////////////////////////////
 

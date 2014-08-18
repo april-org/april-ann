@@ -26,8 +26,8 @@
 
 namespace basics {
 
-    namespace MatrixIO {
-    
+  namespace MatrixIO {
+      
     /* Especialization of MatrixFloat ascii and binary extractors, sizers and
        coders */
     template<>
@@ -55,6 +55,12 @@ namespace basics {
     /**************************************************************************/
  
   } // namespace AprilIO
+  
+  template<>
+  float Matrix<float>::getTemplateOption(const april_utils::GenericOptions *options,
+                                         const char *name, float default_value);
+  
+  //////////////////////////////////////////////////////////////////////////
   
   template<>
   void Matrix<float>::fill(float value);

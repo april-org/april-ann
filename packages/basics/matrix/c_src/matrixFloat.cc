@@ -85,6 +85,14 @@ namespace basics {
 
   } // namespace MatrixIO
 
+  template<>
+  float Matrix<float>::getTemplateOption(const april_utils::GenericOptions *options,
+                                         const char *name, float default_value) {
+    return options->getOptionalFloat(name, default_value);
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+
   /************* FILL FUNCTION **************/
   DEF_CWISE_FUNCTOR_1(doFill,float);
   template<>

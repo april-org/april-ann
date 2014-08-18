@@ -77,6 +77,13 @@ int matrixfloatset_iterator_function(lua_State *L) {
   return 2;
 }
 
+static bool check_number(lua_State *L, int i) {
+  if (lua_isnumber(L,i)) return true;
+  const char *str = lua_tostring(L,i);
+  if (str != 0 && strcmp(str, "-nan")) return true;
+  return true;
+}
+
 //BIND_END
 
 //BIND_HEADER_H
@@ -92,16 +99,6 @@ typedef MatrixFloat::sliding_window SlidingWindow;
 
 #define MAKE_READ_MATRIX_LUA_METHOD(MatrixType, Type) do {              \
     MatrixType *obj = readMatrixLuaMethod<Type>(L);                     \
-    if (obj == 0) {                                                     \
-      luaL_error(L, "Error happens reading from file stream");          \
-    }                                                                   \
-    else {                                                              \
-      lua_push##MatrixType(L, obj);                                     \
-    }                                                                   \
-  } while(false)
-
-#define MAKE_READ_TAB_MATRIX_LUA_METHOD(MatrixType, Type, LuaTo) do {   \
-    MatrixType *obj = readTabMatrixLuaMethod<Type>(L,LuaTo);            \
     if (obj == 0) {                                                     \
       luaL_error(L, "Error happens reading from file stream");          \
     }                                                                   \
@@ -132,50 +129,20 @@ namespace basics {
       lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
     if (stream == 0) luaL_error(L, "Needs a stream as first argument");
     april_utils::SharedPtr<AprilIO::StreamInterface> ptr(stream);
-    const char *order = luaL_optstring(L,2,0);
-    if (stream == 0) {
-      luaL_error(L, "Needs a stream as 1st argument");
-      return 0;
-    }
-    return Matrix<T>::read(ptr.get(), order); 
-  }
-
-  template<typename T, typename LuaToFunction>
-  Matrix<T> *readTabMatrixLuaMethod(lua_State *L, LuaToFunction lua_to) {
-    Matrix<T> *obj;
-    AprilIO::StreamInterface *stream =
-      lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
-    if (stream == 0) luaL_error(L, "Needs a stream as first argument");
-    april_utils::SharedPtr<AprilIO::StreamInterface> ptr(stream);
-    const char *order = luaL_optstring(L,2,0);
-    const char *delim = luaL_optstring(L,3,0);
-    bool keep_delim = lua_toboolean(L,4);
-    T value = lua_to(L,5,T());
-    if (stream == 0) {
-      luaL_error(L, "Needs a stream as 1st argument");
-      return 0;
-    }
-    return Matrix<T>::readTab(ptr.get(), order, delim, keep_delim, value);
-  }
-
-  template<typename T>
-  int writeTabMatrixLuaMethod(lua_State *L, Matrix<T> *obj) {
-    int argn = lua_gettop(L);
-    AprilIO::OutputLuaStringStream *aux_lua_string;
-    AprilIO::StreamInterface *ptr = 0;
-    if (argn > 0 && !lua_isnil(L,1)) {
-      lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
-      if (ptr == 0) luaL_error(L, "Needs a stream as first argument");
-    }
-    april_utils::SharedPtr<AprilIO::StreamInterface> stream;
-    if (ptr == 0) stream = aux_lua_string = new AprilIO::OutputLuaStringStream(L);
-    obj->writeTab(stream.get());
-    if (ptr == 0) aux_lua_string->push(L);
-    else lua_pushStreamInterface(L, ptr);
-    return 1;
+    april_utils::LuaTableOptions options(L,2);
+    return Matrix<T>::read(ptr.get(), &options); 
   }
 }
 //BIND_END
+
+//BIND_STRING_CONSTANT matrix.options.tab basics::MatrixIO::TAB_OPTION
+//BIND_STRING_CONSTANT matrix.options.ascii basics::MatrixIO::ASCII_OPTION
+//BIND_STRING_CONSTANT matrix.options.order basics::MatrixIO::ORDER_OPTION
+//BIND_STRING_CONSTANT matrix.options.delim basics::MatrixIO::DELIM_OPTION
+//BIND_STRING_CONSTANT matrix.options.keep basics::MatrixIO::KEEP_OPTION
+//BIND_STRING_CONSTANT matrix.options.default basics::MatrixIO::DEFAULT_OPTION
+//BIND_STRING_CONSTANT matrix.options.ncols basics::MatrixIO::NCOLS_OPTION
+//BIND_STRING_CONSTANT matrix.options.nrows basics::MatrixIO::NROWS_OPTION
 
 //BIND_LUACLASSNAME MatrixFloat matrix
 //BIND_CPP_CLASS MatrixFloat
@@ -288,7 +255,7 @@ namespace basics {
 		      "found %d, expected %d", len, obj->size());
     for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
       lua_rawgeti(L,argn,i);
-      if (!lua_isnumber(L, -1))
+      if (check_number(L,-1))
 	LUABIND_FERROR1("The given table has a no number value at position %d, "
 			"the table could be smaller than matrix size", i);
       *it = (float)luaL_checknumber(L, -1);
@@ -343,7 +310,7 @@ namespace basics {
 		      "found %d, expected %d", len, obj->size());
     for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
       lua_rawgeti(L,argn,i);
-      if (!lua_isnumber(L, -1))
+      if (check_number(L,-1))
 	LUABIND_FERROR1("The given table has a no number value at position %d, "
 			"the table could be smaller than matrix size", i);
       *it = (float)luaL_checknumber(L, -1);
@@ -417,7 +384,7 @@ namespace basics {
   int i=1;
   for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
     lua_rawgeti(L,1,i);
-    if (!lua_isnumber(L, -1))
+    if (check_number(L,-1))
       LUABIND_FERROR1("The given table has a no number value at position %d, "
 		      "the table could be smaller than matrix size", i);
     *it = (float)luaL_checknumber(L, -1);
@@ -1773,19 +1740,6 @@ namespace basics {
 {
   MAKE_READ_MATRIX_LUA_METHOD(MatrixFloat, float);
   LUABIND_INCREASE_NUM_RETURNS(1);
-}
-//BIND_END
-
-//BIND_CLASS_METHOD MatrixFloat readTab
-{
-  MAKE_READ_TAB_MATRIX_LUA_METHOD(MatrixFloat, float, luaL_optnumber);
-  LUABIND_INCREASE_NUM_RETURNS(1);
-}
-//BIND_END
-
-//BIND_METHOD MatrixFloat writeTab
-{
-  writeTabMatrixLuaMethod(L, obj);
 }
 //BIND_END
 

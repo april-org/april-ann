@@ -42,6 +42,17 @@
 #include "wrapper.h"
 
 namespace basics {
+  
+  namespace MatrixIO {
+    const char * const TAB_OPTION = "tab";
+    const char * const ASCII_OPTION = "ascii";
+    const char * const ORDER_OPTION = "order";
+    const char * const DELIM_OPTION = "delim";
+    const char * const KEEP_OPTION = "keep_delim";
+    const char * const DEFAULT_OPTION = "default";
+    const char * const NCOLS_OPTION = "ncols";
+    const char * const NROWS_OPTION = "nrows";
+  }
 
   // forward declaration
   template <typename T>
@@ -859,15 +870,11 @@ namespace basics {
     Matrix<T> *padding(int pad_value, T default_value=T()) const;
     
     // SERIALIZATION
-    
+    virtual void write(AprilIO::StreamInterface *stream,
+                       const april_utils::GenericOptions *options);
+
     static Matrix<T> *read(AprilIO::StreamInterface *stream,
-                           const char *given_order=0);
-    virtual void write(AprilIO::StreamInterface *stream, bool is_ascii);
-    
-    static Matrix<T> *readTab(AprilIO::StreamInterface *stream,
-                              const char *given_order=0, const char *delim=0,
-                              bool keep_delim=false, T default_value=T());
-    void writeTab(AprilIO::StreamInterface *stream);
+                           const april_utils::GenericOptions *options);
     
   private:
     void allocate_memory(int size);
@@ -881,6 +888,21 @@ namespace basics {
       extractULineFromStream(stream, dest, keep_delim);
       return dest->getConstString();
     }
+
+    void writeNormal(AprilIO::StreamInterface *stream,
+                     const april_utils::GenericOptions *options);
+    
+    void writeTab(AprilIO::StreamInterface *stream,
+                  const april_utils::GenericOptions *options);
+
+    static Matrix<T> *readNormal(AprilIO::StreamInterface *stream,
+                                 const april_utils::GenericOptions *options);
+    
+    static Matrix<T> *readTab(AprilIO::StreamInterface *stream,
+                              const april_utils::GenericOptions *options);
+    
+    static T getTemplateOption(const april_utils::GenericOptions *options,
+                               const char *name, T default_value);
   };
 
 } // namespace basics

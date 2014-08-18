@@ -120,11 +120,13 @@ namespace ANN {
   
   char *PCAWhiteningANNComponent::toLuaString() {
     SharedPtr<CStringStream> stream(new CStringStream());
+    april_utils::HashTableOptions options;
+    options.putBoolean("ascii", false);
     stream->printf("ann.components.pca_whitening{ name='%s', U=matrix.fromString[[",
                    name.c_str());
-    U->write(stream.get(), false);
+    U->write(stream.get(), &options);
     stream->put("]], S=matrix.sparse.fromString[[");
-    S->write(stream.get(), false);
+    S->write(stream.get(), &options);
     stream->printf("]], epsilon=%g, takeN=%u, }", epsilon, takeN);
     stream->put("\0",1); // forces a \0 at the end of the buffer
     return stream->releaseString();

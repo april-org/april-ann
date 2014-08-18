@@ -19,15 +19,17 @@ end
 
 -- GENERIC FROM FILENAME
 matrix.__generic__.__make_generic_fromFilename__ = function(matrix_class)
-  return function(filename,...)
-    return matrix_class.read(archive_wrapper( io.open(filename) ),...)
+  return function(filename,order)
+    return matrix_class.read(archive_wrapper( io.open(filename) ),
+                             { order=order })
   end
 end
 
 -- GENERIC FROM TAB FILENAME
 matrix.__generic__.__make_generic_fromTabFilename__ = function(matrix_class)
-  return function(filename,...)
-    return matrix_class.readTab(archive_wrapper( io.open(filename) ),...)
+  return function(filename,order)
+    return matrix_class.read(archive_wrapper( io.open(filename) ),
+                             { order = order, tab = true })
   end
 end
 
@@ -37,39 +39,40 @@ matrix.__generic__.__make_generic_fromCSVFilename__ = function(matrix_class)
         order  = { mandatory=false, type_match="string" },
         delim  = { mandatory=true, type_match="string", default="," },
         default= { mandatory=false } }, args)
-    return matrix_class.readTab(archive_wrapper( io.open(filename) ),
-                                args.order,
-                                args.delim,
-                                true, -- keep_delim
-                                args.default)
+    args.keep_delim = true
+    args.tab = true
+    return matrix_class.read(archive_wrapper( io.open(filename) ), args)
   end
 end
 
 -- GENERIC FROM STRING
 matrix.__generic__.__make_generic_fromString__ = function(matrix_class)
-  return function(str,...)
-    return matrix_class.read(aprilio.stream.input_lua_string(str),...)
+  return function(str)
+    return matrix_class.read(aprilio.stream.input_lua_string(str))
   end
 end
 
 -- GENERIC TO FILENAME
 matrix.__generic__.__make_generic_toFilename__ = function(matrix_class)
-  return function(self,filename,...)
-    return class.consult(matrix_class,"write")(self,io.open(filename,"w"),...)
+  return function(self,filename,mode)
+    return class.consult(matrix_class,"write")(self,io.open(filename,"w"),
+                                               { ascii = (mode=="ascii") })
   end
 end
 
 -- GENERIC TO TAB FILENAME
 matrix.__generic__.__make_generic_toTabFilename__ = function(matrix_class)
-  return function(self,filename,...)
-    return class.consult(matrix_class,"writeTab")(self,io.open(filename,"w"),...)
+  return function(self,filename,mode)
+    return class.consult(matrix_class,"write")(self,io.open(filename,"w"),
+                                               { ascii = (mode=="ascii"),
+                                                 tab   = true })
   end
 end
 
 -- GENERIC TO STRING
 matrix.__generic__.__make_generic_toString__ = function(matrix_class)
-  return function(self,...)
-    return class.consult(matrix_class,"write")(self,nil,...)
+  return function(self,mode)
+    return class.consult(matrix_class,"write")(self,{ ascii = (mode=="ascii") })
   end
 end
 

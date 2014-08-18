@@ -181,3 +181,34 @@ T("SliceTest",
     local subm = m:slice({1,4},{6,m:dim(2)-3})
     check.eq(subm, m(":6","4:"))
 end)
+
+local function load_csv()
+  local def = 0.0/0.0
+  local m = matrix.readTab( aprilio.stream.input_lua_string[[1,2,3,,4\n5,6,7,8,\n4,,,,5]],
+                            nil,     -- order
+                            ",",     -- delim
+                            true,    -- keep_delim
+                            def)     -- default value
+end
+
+T("CSVTest", function()
+    local m = load_csv()
+    check.eq(m, matrix(3,5,{1,2,3,def,4,5,6,7,8,def,4,def,def,def,5}))
+end)
+
+T("EQandNEQTest", function()
+    local m   = load_csv()
+    local def = 0.0/0.0
+    check.eq(m:clone():eq(def),
+             matrix(3,5,{0,0,0,1,0,0,0,0,0,1,0,1,1,1,0}))
+    check.eq(m:clone():neq(def),
+             matrix(3,5,{1,1,1,0,1,1,1,1,1,0,1,0,0,0,1}))
+    
+    check.eq(m:clone():eq(4),
+             matrix(3,5,{0,0,0,0,1,0,0,0,0,0,1,0,0,0,0}))
+    check.eq(m:clone():neq(4),
+             matrix(3,5,{1,1,1,1,0,1,1,1,1,1,0,1,1,1,1}))
+
+    check.eq(m:clone():eq(m), matrix(3,5):ones())
+    check.eq(m:clone():neq(m), matrix(3,5):zeros())
+end)

@@ -448,11 +448,14 @@ namespace basics {
     
     // SERIALIZATION
     
-    static SparseMatrix<T> *read(AprilIO::StreamInterface *stream);
-    virtual void write(AprilIO::StreamInterface *stream, bool is_ascii);
+    static SparseMatrix<T> *read(AprilIO::StreamInterface *stream,
+                                 const april_utils::GenericOptions *options);
+    virtual void write(AprilIO::StreamInterface *stream,
+                       const april_utils::GenericOptions *options);
 
     
   private:
+    
     void allocate_memory(int size);
     void release_memory();
     void initialize(int d0, int d1);

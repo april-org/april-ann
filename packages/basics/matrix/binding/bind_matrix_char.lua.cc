@@ -612,18 +612,5 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 }
 //BIND_END
 
-//BIND_CLASS_METHOD MatrixChar readTab
-{
-  MAKE_READ_TAB_MATRIX_LUA_METHOD(MatrixChar, char, april_optchar);
-  LUABIND_INCREASE_NUM_RETURNS(1);
-}
-//BIND_END
-
-//BIND_METHOD MatrixChar writeTab
-{
-  writeTabMatrixLuaMethod(L, obj);
-}
-//BIND_END
-
 //////////////////////////////////////////////////////////////////////
 

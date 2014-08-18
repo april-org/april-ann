@@ -540,12 +540,10 @@ namespace AprilIO {
   const char *mode;
   april_utils::SharedPtr<StreamInterface> dest;
   LUABIND_GET_OPTIONAL_PARAMETER(1, StreamInterface, ptr, 0);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, string, mode, "binary");
-  april_utils::constString cs(mode);
-  bool is_ascii = (cs == "ascii");
+  april_utils::LuaTableOptions options(L,2);
   if (ptr == 0) dest = aux_lua_string = new OutputLuaStringStream(L);
   else dest = ptr;
-  obj->write(dest.get(), is_ascii);
+  obj->write(dest.get(), &options);
   if (ptr == 0) LUABIND_INCREASE_NUM_RETURNS(aux_lua_string->push(L));
   else LUABIND_RETURN(StreamInterface, ptr);
 }

@@ -976,18 +976,5 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 }
 //BIND_END
 
-//BIND_CLASS_METHOD MatrixComplexF readTab
-{
-  MAKE_READ_TAB_MATRIX_LUA_METHOD(MatrixComplexF, ComplexF, april_optcomplex);
-  LUABIND_INCREASE_NUM_RETURNS(1);
-}
-//BIND_END
-
-//BIND_METHOD MatrixComplexF writeTab
-{
-  writeTabMatrixLuaMethod(L, obj);
-}
-//BIND_END
-
 //////////////////////////////////////////////////////////////////////
 
