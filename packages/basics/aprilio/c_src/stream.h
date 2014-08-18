@@ -57,23 +57,29 @@ extern "C" {
   }
 
 #define WRITE_ONLY_STREAM(name)                                         \
-  virtual size_t get(StreamInterface *dest, const char *delim) {        \
+  virtual size_t get(StreamInterface *dest, const char *delim,          \
+                     bool keep_delim ) {                                \
     UNUSED_VARIABLE(dest);                                              \
     UNUSED_VARIABLE(delim);                                             \
+    UNUSED_VARIABLE(keep_delim);                                        \
     ERROR_EXIT(128, "Write only " #name "\n");                          \
     return 0;                                                           \
   }                                                                     \
-  virtual size_t get(StreamInterface *dest, size_t max_size, const char *delim) { \
+  virtual size_t get(StreamInterface *dest, size_t max_size, const char *delim, \
+                     bool keep_delim ) {                                \
     UNUSED_VARIABLE(dest);                                              \
     UNUSED_VARIABLE(max_size);                                          \
     UNUSED_VARIABLE(delim);                                             \
+    UNUSED_VARIABLE(keep_delim);                                        \
     ERROR_EXIT(128, "Write only " #name "\n");                          \
     return 0;                                                           \
   }                                                                     \
-  virtual size_t get(char *dest, size_t max_size, const char *delim) {  \
+  virtual size_t get(char *dest, size_t max_size, const char *delim,    \
+                     bool keep_delim ) {                                \
     UNUSED_VARIABLE(dest);                                              \
     UNUSED_VARIABLE(max_size);                                          \
     UNUSED_VARIABLE(delim);                                             \
+    UNUSED_VARIABLE(keep_delim);                                        \
     ERROR_EXIT(128, "Write only " #name "\n");                          \
     return 0;                                                           \
   }
@@ -96,16 +102,19 @@ namespace AprilIO {
     /// Reads a string delimited by any of the given chars and puts it into the
     /// given Stream. If delim==0 then this method ends when dest->eof() is
     /// true.
-    virtual size_t get(StreamInterface *dest, const char *delim = 0) = 0;
+    virtual size_t get(StreamInterface *dest, const char *delim = 0,
+                       bool keep_delim = false ) = 0;
     
     /// Reads a string with max_size length and delimited by any of the given
     /// chars and puts it into the given Stream.
     virtual size_t get(StreamInterface *dest, size_t max_size,
-                       const char *delim = 0) = 0;
+                       const char *delim = 0,
+                       bool keep_delim = false ) = 0;
     
     /// Reads a string of a maximum given size delimited by any of the given
     /// chars and puts it into the given char buffer.
-    virtual size_t get(char *dest, size_t max_size, const char *delim = 0) = 0;
+    virtual size_t get(char *dest, size_t max_size, const char *delim = 0,
+                       bool keep_delim = false ) = 0;
     
     /// Puts a string of a maximum given size taken from the given Stream.
     virtual size_t put(StreamInterface *source, size_t size) = 0;
@@ -166,9 +175,12 @@ namespace AprilIO {
     virtual ~StreamBuffer();
     
     virtual bool good() const;
-    virtual size_t get(StreamInterface *dest, const char *delim = 0);
-    virtual size_t get(StreamInterface *dest, size_t max_size, const char *delim = 0);
-    virtual size_t get(char *dest, size_t max_size, const char *delim = 0);
+    virtual size_t get(StreamInterface *dest, const char *delim = 0,
+                       bool keep_delim = false );
+    virtual size_t get(StreamInterface *dest, size_t max_size, const char *delim = 0,
+                       bool keep_delim = false );
+    virtual size_t get(char *dest, size_t max_size, const char *delim = 0,
+                       bool keep_delim = false );
     virtual size_t put(StreamInterface *source, size_t size);
     virtual size_t put(const char *source, size_t size);
     virtual size_t put(const char *source);
@@ -241,11 +253,12 @@ namespace AprilIO {
      * @param[out] buffer_len - Size of the returned pointer (<= max_size).
      * @param max_size - The maximum size required for the buffer.
      * @param delim - A string with delimitiers.
+     * @param keep_delim - Indicates if keep or not the delimitier at the end.
      *
      * @return A pointer to input buffer position.
      */
     virtual const char *getInBuffer(size_t &buffer_len, size_t max_size,
-                                    const char *delim);
+                                    const char *delim, bool keep_delim);
     
     /**
      * @brief Returns a pointer to the current output buffer with at most

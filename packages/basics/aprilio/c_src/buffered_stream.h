@@ -81,9 +81,12 @@ namespace AprilIO {
     virtual ~BufferedInputStream();
   
     virtual bool good() const;
-    virtual size_t get(StreamInterface *dest, const char *delim = 0);
-    virtual size_t get(StreamInterface *dest, size_t max_size, const char *delim = 0);
-    virtual size_t get(char *dest, size_t max_size, const char *delim = 0);
+    virtual size_t get(StreamInterface *dest, const char *delim = 0,
+                       bool keep_delim = false);
+    virtual size_t get(StreamInterface *dest, size_t max_size,
+                       const char *delim = 0, bool keep_delim = false);
+    virtual size_t get(char *dest, size_t max_size, const char *delim = 0,
+                       bool keep_delim = false);
     virtual size_t put(StreamInterface *source, size_t size);
     virtual size_t put(const char *source, size_t size);
     virtual size_t put(const char *source);
@@ -115,7 +118,8 @@ namespace AprilIO {
     void prepareInBufferData();
     void trimInBuffer(const char *delim);
     template<typename T>
-    size_t templatizedGet(T &putOp, size_t max_size, const char *delim);
+    size_t templatizedGet(T &putOp, size_t max_size, const char *delim,
+                          bool keep_delim);
   };
 
   

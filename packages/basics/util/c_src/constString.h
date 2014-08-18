@@ -75,22 +75,23 @@ namespace april_utils {
     bool skip(const char *theprefix);
     bool skip(const constString &theprefix);
     constString extract_prefix(size_t prefix_len);
-    constString extract_token(const char *separadores=" \t,;\r\n");
+    constString extract_token(const char *delim=" \t,;\r\n",
+                              bool keep_delim=false);
     constString extract_line();
     constString extract_u_line();
     bool extract_char(char *resul);
     bool extract_int(int *resul, int base = 10, 
-                     const char *separadores=" \t,;\r\n");
+                     const char *delim=" \t,;\r\n");
     bool extract_unsigned_int(unsigned int *resul, int base = 10, 
-                              const char *separadores=" \t,;\r\n");
+                              const char *delim=" \t,;\r\n");
     bool extract_long(long int *resul, int base = 10, 
-                      const char *separadores=" \t,;\r\n");
+                      const char *delim=" \t,;\r\n");
     bool extract_long_long(long long int *resul, int base = 10, 
-                           const char *separadores=" \t,;\r\n");
+                           const char *delim=" \t,;\r\n");
     bool extract_float(float *resul, 
-                       const char *separadores=" \t,;\r\n");
+                       const char *delim=" \t,;\r\n");
     bool extract_double(double *resul, 
-                        const char *separadores=" \t,;\r\n");
+                        const char *delim=" \t,;\r\n");
     bool extract_float_binary(float *resul);
     bool extract_double_binary(double *resul);
 
