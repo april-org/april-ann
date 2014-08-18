@@ -757,7 +757,12 @@ namespace basics {
     // greater than
     void GTCondition(T value);
     void GTCondition(Matrix<T> *value);
-    //
+    // equals to
+    void EQCondition(T value);
+    void EQCondition(Matrix<T> *value);
+    // not equals to
+    void NEQCondition(T value);
+    void NEQCondition(Matrix<T> *value);
   
     /**** BLAS OPERATIONS ****/
     void scalarAdd(T s);

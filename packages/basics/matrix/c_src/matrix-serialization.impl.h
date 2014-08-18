@@ -258,7 +258,6 @@ namespace basics {
     c_str = new AprilIO::CStringStream();
     april_assert(!c_str.empty());
     april_utils::constString line("");
-    T value;
     int ncols = 0, nrows = 0;
     while (!stream->eof()) {
       line = readULine(stream, c_str.get(), keep_delim);

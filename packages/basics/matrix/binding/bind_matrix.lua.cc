@@ -1658,6 +1658,38 @@ namespace basics {
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat eq
+{
+  if (lua_isMatrixFloat(L, 1)) {
+    MatrixFloat *value;
+    LUABIND_GET_PARAMETER(1, MatrixFloat, value);
+    obj->EQCondition(value);
+  }
+  else {
+    float value;
+    LUABIND_GET_PARAMETER(1, float, value);
+    obj->EQCondition(value);
+  }
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat neq
+{
+  if (lua_isMatrixFloat(L, 1)) {
+    MatrixFloat *value;
+    LUABIND_GET_PARAMETER(1, MatrixFloat, value);
+    obj->NEQCondition(value);
+  }
+  else {
+    float value;
+    LUABIND_GET_PARAMETER(1, float, value);
+    obj->NEQCondition(value);
+  }
+  LUABIND_RETURN(MatrixFloat, obj);
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat update
 {
   obj->update();

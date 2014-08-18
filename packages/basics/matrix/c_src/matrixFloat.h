@@ -190,6 +190,16 @@ namespace basics {
   void Matrix<float>::GTCondition(float value);
   template <>
   void Matrix<float>::GTCondition(Matrix<float> *value);
+  // equals
+  template <>
+  void Matrix<float>::EQCondition(float value);
+  template <>
+  void Matrix<float>::EQCondition(Matrix<float> *value);
+  // not equals
+  template <>
+  void Matrix<float>::NEQCondition(float value);
+  template <>
+  void Matrix<float>::NEQCondition(Matrix<float> *value);
   //
 
   ////////////////////////////////////////////////////////////////////////////
