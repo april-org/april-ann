@@ -56,24 +56,24 @@ end
 -- GENERIC TO FILENAME
 matrix.__generic__.__make_generic_toFilename__ = function(matrix_class)
   return function(self,filename,mode)
-    return class.consult(matrix_class,"write")(self,io.open(filename,"w"),
-                                               { [matrix.options.ascii] = (mode=="ascii") })
+    return self:write(io.open(filename,"w"),
+                      { [matrix.options.ascii] = (mode=="ascii") })
   end
 end
 
 -- GENERIC TO TAB FILENAME
 matrix.__generic__.__make_generic_toTabFilename__ = function(matrix_class)
   return function(self,filename,mode)
-    return class.consult(matrix_class,"write")(self,io.open(filename,"w"),
-                                               { [matrix.options.ascii] = (mode=="ascii"),
-                                                 [matrix.options.tab]   = true })
+    return self:write(io.open(filename,"w"),
+                      { [matrix.options.ascii] = (mode=="ascii"),
+                        [matrix.options.tab]   = true })
   end
 end
 
 -- GENERIC TO STRING
 matrix.__generic__.__make_generic_toString__ = function(matrix_class)
   return function(self,mode)
-    return class.consult(matrix_class,"write")(self,{ [matrix.options.ascii] = (mode=="ascii") })
+    return self:write({ [matrix.options.ascii] = (mode=="ascii") })
   end
 end
 

@@ -537,12 +537,25 @@ namespace AprilIO {
 {
   OutputLuaStringStream *aux_lua_string;
   StreamInterface *ptr;
-  const char *mode;
   april_utils::SharedPtr<StreamInterface> dest;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, StreamInterface, ptr, 0);
-  april_utils::LuaTableOptions options(L,2);
-  if (ptr == 0) dest = aux_lua_string = new OutputLuaStringStream(L);
-  else dest = ptr;
+  int options_pos;
+  if (!lua_istable(L,1)) {
+    LUABIND_GET_OPTIONAL_PARAMETER(1, StreamInterface, ptr, 0);
+    options_pos = 2;
+    april_utils::LuaTableOptions options(L,2);
+  }
+  else {
+    options_pos = 1;
+    ptr = 0;
+  }
+  april_utils::LuaTableOptions options(L,options_pos);
+  if (ptr == 0) {
+    aux_lua_string = new OutputLuaStringStream(L);
+    dest = aux_lua_string;
+  }
+  else {
+    dest.reset(ptr);
+  }
   obj->write(dest.get(), &options);
   if (ptr == 0) LUABIND_INCREASE_NUM_RETURNS(aux_lua_string->push(L));
   else LUABIND_RETURN(StreamInterface, ptr);
