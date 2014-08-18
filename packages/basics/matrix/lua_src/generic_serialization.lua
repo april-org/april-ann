@@ -21,7 +21,7 @@ end
 matrix.__generic__.__make_generic_fromFilename__ = function(matrix_class)
   return function(filename,order)
     return matrix_class.read(archive_wrapper( io.open(filename) ),
-                             { order=order })
+                             { [matrix.options.order]=order })
   end
 end
 
@@ -29,18 +29,19 @@ end
 matrix.__generic__.__make_generic_fromTabFilename__ = function(matrix_class)
   return function(filename,order)
     return matrix_class.read(archive_wrapper( io.open(filename) ),
-                             { order = order, tab = true })
+                             { [matrix.options.order] = order,
+                               [matrix.options.tab] = true })
   end
 end
 
 matrix.__generic__.__make_generic_fromCSVFilename__ = function(matrix_class)
   return function(filename,args)
     local args = get_table_fields({
-        order  = { mandatory=false, type_match="string" },
-        delim  = { mandatory=true, type_match="string", default="," },
-        default= { mandatory=false } }, args)
-    args.keep_delim = true
-    args.tab = true
+        [matrix.options.order]   = { mandatory=false, type_match="string" },
+        [matrix.options.delim]   = { mandatory=true, type_match="string", default="," },
+        [matrix.options.default] = { mandatory=false } }, args)
+    args[matrix.options.keep] = true
+    args[matrix.options.tab] = true
     return matrix_class.read(archive_wrapper( io.open(filename) ), args)
   end
 end
@@ -56,7 +57,7 @@ end
 matrix.__generic__.__make_generic_toFilename__ = function(matrix_class)
   return function(self,filename,mode)
     return class.consult(matrix_class,"write")(self,io.open(filename,"w"),
-                                               { ascii = (mode=="ascii") })
+                                               { [matrix.options.ascii] = (mode=="ascii") })
   end
 end
 
@@ -64,15 +65,15 @@ end
 matrix.__generic__.__make_generic_toTabFilename__ = function(matrix_class)
   return function(self,filename,mode)
     return class.consult(matrix_class,"write")(self,io.open(filename,"w"),
-                                               { ascii = (mode=="ascii"),
-                                                 tab   = true })
+                                               { [matrix.options.ascii] = (mode=="ascii"),
+                                                 [matrix.options.tab]   = true })
   end
 end
 
 -- GENERIC TO STRING
 matrix.__generic__.__make_generic_toString__ = function(matrix_class)
   return function(self,mode)
-    return class.consult(matrix_class,"write")(self,{ ascii = (mode=="ascii") })
+    return class.consult(matrix_class,"write")(self,{ [matrix.options.ascii] = (mode=="ascii") })
   end
 end
 

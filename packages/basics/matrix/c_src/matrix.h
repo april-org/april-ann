@@ -63,9 +63,10 @@ namespace basics {
    * 
    * It implements basic linear algebra routines and other math operations. By
    * default, the zero value must be T(). Additionally, T(0.0f) and T(1.0f) and
-   * T(-1.0f) constructors must be available with correct math values. In case
-   * of char buffer or integer matrices these constructors are needed but not
-   * operational because math methods are forbidden for these data types.
+   * T(-1.0f) and T(-nan) constructors must be available with correct math
+   * values. In case of char buffer or integer matrices these constructors are
+   * needed but not operational because math methods are forbidden for these
+   * data types.
    */
   template <typename T>
   class Matrix : public AprilIO::Serializable {

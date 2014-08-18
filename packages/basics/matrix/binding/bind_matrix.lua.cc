@@ -27,6 +27,7 @@
 #include "luabindutil.h"
 #include "luabindmacros.h"
 #include "lua_string.h"
+#include "mystring.h"
 #include "utilMatrixFloat.h"
 
 #define FUNCTION_NAME "read_vector"
@@ -77,11 +78,18 @@ int matrixfloatset_iterator_function(lua_State *L) {
   return 2;
 }
 
-static bool check_number(lua_State *L, int i) {
-  if (lua_isnumber(L,i)) return true;
+template<typename T>
+static bool check_number(lua_State *L, int i, T &dest) {
+  if (lua_isnumber(L,i)) {
+    dest = static_cast<T>(lua_tonumber(L,i));
+    return true;
+  }
   const char *str = lua_tostring(L,i);
-  if (str != 0 && strcmp(str, "-nan")) return true;
-  return true;
+  if (str != 0 && april_utils::strcmpi(str, "-nan")==0) {
+    dest = T(0.0f/0.0f);
+    return true;
+  }
+  return false;
 }
 
 //BIND_END
@@ -255,10 +263,9 @@ namespace basics {
 		      "found %d, expected %d", len, obj->size());
     for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
       lua_rawgeti(L,argn,i);
-      if (check_number(L,-1))
+      if (!check_number(L,-1,*it))
 	LUABIND_FERROR1("The given table has a no number value at position %d, "
 			"the table could be smaller than matrix size", i);
-      *it = (float)luaL_checknumber(L, -1);
       lua_remove(L,-1);
     }
   }
@@ -310,10 +317,9 @@ namespace basics {
 		      "found %d, expected %d", len, obj->size());
     for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
       lua_rawgeti(L,argn,i);
-      if (check_number(L,-1))
+      if (!check_number(L,-1,*it))
 	LUABIND_FERROR1("The given table has a no number value at position %d, "
 			"the table could be smaller than matrix size", i);
-      *it = (float)luaL_checknumber(L, -1);
       lua_remove(L,-1);
     }
   }
@@ -384,10 +390,9 @@ namespace basics {
   int i=1;
   for (MatrixFloat::iterator it(obj->begin()); it != obj->end(); ++it, ++i) {
     lua_rawgeti(L,1,i);
-    if (check_number(L,-1))
+    if (!check_number(L,-1,*it))
       LUABIND_FERROR1("The given table has a no number value at position %d, "
 		      "the table could be smaller than matrix size", i);
-    *it = (float)luaL_checknumber(L, -1);
     lua_remove(L,-1);
   }
   LUABIND_RETURN(MatrixFloat, obj);

@@ -1,3 +1,4 @@
+#include <cctype>
 #include <cstring>
 #include "mystring.h"
 
@@ -65,6 +66,18 @@ namespace april_utils {
     for (size_t i=0; i<length; ++i) {
       if (buffer[i] != c) return buffer + i;
       // WARNING this function looks the entire buffer if (buffer[i] == '\0') break;
+    }
+    return 0;
+  }
+
+  int strcmpi(const char *a, const char *b) {
+    while(*a != '\0' && *b != '\0') {
+      char lower_a = tolower(*a);
+      char lower_b = tolower(*b);
+      if (lower_a < lower_b) return -1;
+      else if (lower_a > lower_b) return 1;
+      ++a;
+      ++b;
     }
     return 0;
   }
