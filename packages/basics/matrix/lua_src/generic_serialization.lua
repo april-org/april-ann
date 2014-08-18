@@ -33,11 +33,15 @@ end
 
 matrix.__generic__.__make_generic_fromCSVFilename__ = function(matrix_class)
   return function(filename,args)
-    local args    = args or {}
-    local order   = args.order
-    local delim   = args.delim or ","
-    local default = args.default
-    return matrix_class.readTab(archive_wrapper( io.open(filename) ),order,delim,true,default)
+    local args = get_table_fields({
+        order  = { mandatory=false, type_match="string" },
+        delim  = { mandatory=true, type_match="string", default="," },
+        default= { mandatory=false } }, args)
+    return matrix_class.readTab(archive_wrapper( io.open(filename) ),
+                                args.order,
+                                args.delim,
+                                true, -- keep_delim
+                                args.default)
   end
 end
 

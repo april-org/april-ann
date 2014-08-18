@@ -155,7 +155,7 @@ namespace basics {
       luaL_error(L, "Needs a stream as 1st argument");
       return 0;
     }
-    return Matrix<T>::readTab(ptr.get(), order, delim, keep_delim);
+    return Matrix<T>::readTab(ptr.get(), order, delim, keep_delim, value);
   }
 
   template<typename T>
