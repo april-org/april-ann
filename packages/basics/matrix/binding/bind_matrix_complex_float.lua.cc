@@ -63,6 +63,12 @@ namespace basics {
     obj->next();
     return 1;
   }
+  
+  static ComplexF april_optcomplex(lua_State *L, int i, ComplexF opt) {
+    if (lua_type(L,i) == LUA_TNONE || lua_isnil(L,i)) return opt;
+    return lua_toComplexF(L,i);
+  }
+  
 }
 //BIND_END
 
@@ -972,7 +978,7 @@ typedef MatrixComplexF::sliding_window SlidingWindowComplexF;
 
 //BIND_CLASS_METHOD MatrixComplexF readTab
 {
-  MAKE_READ_TAB_MATRIX_LUA_METHOD(MatrixComplexF, ComplexF);
+  MAKE_READ_TAB_MATRIX_LUA_METHOD(MatrixComplexF, ComplexF, april_optcomplex);
   LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END

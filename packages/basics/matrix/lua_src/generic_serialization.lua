@@ -31,6 +31,16 @@ matrix.__generic__.__make_generic_fromTabFilename__ = function(matrix_class)
   end
 end
 
+matrix.__generic__.__make_generic_fromCSVFilename__ = function(matrix_class)
+  return function(filename,args)
+    local args    = args or {}
+    local order   = args.order
+    local delim   = args.delim or ","
+    local default = args.default
+    return matrix_class.readTab(archive_wrapper( io.open(filename) ),order,delim,true,default)
+  end
+end
+
 -- GENERIC FROM STRING
 matrix.__generic__.__make_generic_fromString__ = function(matrix_class)
   return function(str,...)
@@ -63,6 +73,7 @@ function matrix.__generic__.__make_all_serialization_methods__(matrix_class)
   matrix_class.fromFilename    = matrix.__generic__.__make_generic_fromFilename__(matrix_class)
   matrix_class.fromTabFilename = matrix.__generic__.__make_generic_fromTabFilename__(matrix_class)
   matrix_class.fromString      = matrix.__generic__.__make_generic_fromString__(matrix_class)
+  matrix_class.fromCSVFilename = matrix.__generic__.__make_generic_fromCSVFilename__(matrix_class)
   class.extend(matrix_class, "toFilename",
                matrix.__generic__.__make_generic_toFilename__(matrix_class))
   class.extend(matrix_class, "toTabFilename",

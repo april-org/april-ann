@@ -54,13 +54,27 @@ namespace april_math {
   template<typename T>
   struct Complex {
     T data[2];
-    __host__ __device__ static Complex<T> one_one() { return Complex(1.0, 1.0); }
-    __host__ __device__ static Complex<T> zero_zero() { return Complex(0.0, 0.0); }
-    __host__ __device__ static Complex<T> one_zero() { return Complex(1.0, 0.0); }
-    __host__ __device__ static Complex<T> zero_one() { return Complex(0.0, 1.0); }
+    __host__ __device__ static Complex<T> one_one() {
+      return Complex(static_cast<T>(1.0), static_cast<T>(1.0));
+    }
+    __host__ __device__ static Complex<T> zero_zero() {
+      return Complex(static_cast<T>(0.0), static_cast<T>(0.0));
+    }
+    __host__ __device__ static Complex<T> one_zero() {
+      return Complex(static_cast<T>(1.0), static_cast<T>(0.0));
+    }
+    __host__ __device__ static Complex<T> zero_one() {
+      return Complex(static_cast<T>(0.0), static_cast<T>(1.0));
+    }
     __host__ __device__ Complex() { data[REAL_IDX] = T(); data[IMG_IDX] = T(); }
-    __host__ __device__ Complex(T r) { data[REAL_IDX] = r; data[IMG_IDX] = 0.0; }
-    __host__ __device__ Complex(T r, T i) { data[REAL_IDX] = r; data[IMG_IDX] = i; }
+    __host__ __device__ Complex(T r) {
+      data[REAL_IDX] = r;
+      data[IMG_IDX]  = static_cast<T>(0.0);
+    }
+    __host__ __device__ Complex(T r, T i) {
+      data[REAL_IDX] = r;
+      data[IMG_IDX]  = i;
+    }
     __host__ __device__ ~Complex() { }
     __host__ __device__ Complex(const Complex<T> &other) { *this = other; }
     __host__ __device__ Complex<T> &operator=(const Complex<T> &other) {
@@ -70,7 +84,7 @@ namespace april_math {
     }
     __host__ __device__ bool operator==(const Complex<T> &other) const {
       Complex<T> r(other - *this);
-      return (r.abs() < 0.0001);
+      return (r.abs() < static_cast<T>(0.0001));
     }
     __host__ __device__ bool operator!=(const Complex<T> &other) const {
       return !(*this == other);

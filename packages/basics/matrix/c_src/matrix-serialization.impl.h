@@ -246,8 +246,9 @@ namespace basics {
 
   template <typename T>
   Matrix<T>*
-  Matrix<T>::readTab(AprilIO::StreamInterface *stream,
-                     const char *given_order) {
+  Matrix<T>::readTab(AprilIO::StreamInterface *stream, const char *given_order,
+                     const char *delim, bool keep_delim, T default_value) {
+    if (delim == 0) delim = "\n\r\t ,;";
     MatrixIO::AsciiExtractor<T> ascii_extractor;
     if (!stream->good()) {
       ERROR_PRINT("The stream is not prepared, it is empty, or EOF\n");
@@ -260,10 +261,11 @@ namespace basics {
     T value;
     int ncols = 0, nrows = 0;
     while (!stream->eof()) {
-      line = readULine(stream, c_str.get());
+      line = readULine(stream, c_str.get(), keep_delim);
       if (line.len() > 0) {
         if (ncols == 0) {
-          while(ascii_extractor(line,value)) ++ncols;
+          while(line.extract_token(delim, keep_delim)) ++ncols;
+          // while(ascii_extractor(line,value)) ++ncols;
         }
         ++nrows;
       }
@@ -294,18 +296,46 @@ namespace basics {
     }
     int i=0;
     typename Matrix<T>::iterator data_it(mat->begin());
-    while (data_it!=mat->end() && (line=readULine(stream, c_str.get()))) {
-      int num_cols_size_count = 0;
-      while (data_it!=mat->end() &&
-             ascii_extractor(line, *data_it)) {
-        ++data_it;
-        ++num_cols_size_count;
+    if (keep_delim) {
+      // Allows delim at end of the token and therefore empty fields can be
+      // identified and assigned to default_value.
+      while (data_it!=mat->end() && (line=readULine(stream, c_str.get(), true))) {
+        int num_cols_size_count = 0;
+        while (data_it!=mat->end()) {
+          token = line.extract_token(delim, keep_delim);
+          if (!token) break;
+          if ( keep_delim && token.len() == 1 &&
+               ( strchr(delim, token[0]) || strchr("\r\n", token[0]) ) ) {
+            *data_it = default_value;
+          }
+          else {
+            ascii_extractor(token, *data_it);
+          }
+          ++data_it;
+          ++num_cols_size_count;
+        }
+        if (num_cols_size_count != ncols) {
+          ERROR_EXIT3(128, "Incorrect number of elements at line %d, "
+                      "expected %d, found %d\n", i, ncols, num_cols_size_count);
+        }
+        ++i;
       }
-      if (num_cols_size_count != ncols) {
-        ERROR_EXIT3(128, "Incorrect number of elements at line %d, "
-                    "expected %d, found %d\n", i, ncols, num_cols_size_count);
+    }
+    else {
+      // Doesn't allow delim at end of the token and empty fields are forbidden
+      while (data_it!=mat->end() && (line=readULine(stream, c_str.get()))) {
+        int num_cols_size_count = 0;
+        while (data_it!=mat->end() &&
+               ascii_extractor(line, *data_it)) {
+          ++data_it;
+          ++num_cols_size_count;
+        }
+        if (num_cols_size_count != ncols) {
+          ERROR_EXIT3(128, "Incorrect number of elements at line %d, "
+                      "expected %d, found %d\n", i, ncols, num_cols_size_count);
+        }
+        ++i;
       }
-      ++i;
     }
     if (data_it!=mat->end()) {
       ERROR_PRINT("Impossible to fill all the matrix components\n");

@@ -860,7 +860,8 @@ namespace basics {
     virtual void write(AprilIO::StreamInterface *stream, bool is_ascii);
     
     static Matrix<T> *readTab(AprilIO::StreamInterface *stream,
-                              const char *given_order=0);
+                              const char *given_order=0, const char *delim=0,
+                              bool keep_delim=false, T default_value=T());
     void writeTab(AprilIO::StreamInterface *stream);
     
   private:
@@ -869,9 +870,10 @@ namespace basics {
     void initialize(const int *dim);
 
     static april_utils::constString readULine(AprilIO::StreamInterface *stream,
-                                              AprilIO::CStringStream *dest) {
+                                              AprilIO::CStringStream *dest,
+                                              bool keep_delim = false) {
       // Not needed, it is done in extractULineFromStream: dest->clear(); 
-      extractULineFromStream(stream, dest);
+      extractULineFromStream(stream, dest, keep_delim);
       return dest->getConstString();
     }
   };

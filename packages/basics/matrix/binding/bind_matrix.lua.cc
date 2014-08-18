@@ -100,8 +100,8 @@ typedef MatrixFloat::sliding_window SlidingWindow;
     }                                                                   \
   } while(false)
 
-#define MAKE_READ_TAB_MATRIX_LUA_METHOD(MatrixType, Type) do {          \
-    MatrixType *obj = readTabMatrixLuaMethod<Type>(L);                  \
+#define MAKE_READ_TAB_MATRIX_LUA_METHOD(MatrixType, Type, LuaTo) do {   \
+    MatrixType *obj = readTabMatrixLuaMethod<Type>(L,LuaTo);            \
     if (obj == 0) {                                                     \
       luaL_error(L, "Error happens reading from file stream");          \
     }                                                                   \
@@ -140,19 +140,22 @@ namespace basics {
     return Matrix<T>::read(ptr.get(), order); 
   }
 
-  template<typename T>
-  Matrix<T> *readTabMatrixLuaMethod(lua_State *L) {
+  template<typename T, typename LuaToFunction>
+  Matrix<T> *readTabMatrixLuaMethod(lua_State *L, LuaToFunction lua_to) {
     Matrix<T> *obj;
     AprilIO::StreamInterface *stream =
       lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
     if (stream == 0) luaL_error(L, "Needs a stream as first argument");
     april_utils::SharedPtr<AprilIO::StreamInterface> ptr(stream);
     const char *order = luaL_optstring(L,2,0);
+    const char *delim = luaL_optstring(L,3,0);
+    bool keep_delim = lua_toboolean(L,4);
+    T value = lua_to(L,5,T());
     if (stream == 0) {
       luaL_error(L, "Needs a stream as 1st argument");
       return 0;
     }
-    return Matrix<T>::readTab(ptr.get(), order); 
+    return Matrix<T>::readTab(ptr.get(), order, delim, keep_delim);
   }
 
   template<typename T>
@@ -1743,7 +1746,7 @@ namespace basics {
 
 //BIND_CLASS_METHOD MatrixFloat readTab
 {
-  MAKE_READ_TAB_MATRIX_LUA_METHOD(MatrixFloat, float);
+  MAKE_READ_TAB_MATRIX_LUA_METHOD(MatrixFloat, float, luaL_optnumber);
   LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END

@@ -63,12 +63,14 @@ namespace AprilIO {
   class StreamMemory;
 
   /// Returns a whole line of the stream (a string delimited by \n).
-  size_t extractLineFromStream(StreamInterface *source, StreamMemory *dest);
+  size_t extractLineFromStream(StreamInterface *source, StreamMemory *dest,
+                               bool keep_delim = false);
   
   /// Returns a whole line of the stream (a string delimited by \n), but
   /// avoiding lines which begins with #. Lines beginning with # are taken as
   /// commented lines.
-  size_t extractULineFromStream(StreamInterface *source, StreamMemory *dest);
+  size_t extractULineFromStream(StreamInterface *source, StreamMemory *dest,
+                                bool keep_delim = false);
 
   ///////////////////////////////////////////////////////////////////////////
   

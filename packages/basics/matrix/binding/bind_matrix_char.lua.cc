@@ -59,6 +59,12 @@ namespace basics {
     obj->next();
     return 1;
   }
+
+  static char april_optchar(lua_State *L, int i, char opt) {
+    if (lua_type(L,i) == LUA_TNONE || lua_isnil(L,i)) return opt;
+    const char *str = luaL_checkstring(L,i);
+    return str[0];
+  }
 }
 //BIND_END
 
@@ -608,7 +614,7 @@ typedef MatrixChar::sliding_window SlidingWindowMatrixChar;
 
 //BIND_CLASS_METHOD MatrixChar readTab
 {
-  MAKE_READ_TAB_MATRIX_LUA_METHOD(MatrixChar, char);
+  MAKE_READ_TAB_MATRIX_LUA_METHOD(MatrixChar, char, april_optchar);
   LUABIND_INCREASE_NUM_RETURNS(1);
 }
 //BIND_END
