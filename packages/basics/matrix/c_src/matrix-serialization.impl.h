@@ -187,7 +187,6 @@ namespace basics {
     return mat;
   }
   
-  // Returns the number of chars written (there is a '\0' that is not counted)
   template <typename T>
   void Matrix<T>::write(AprilIO::StreamInterface *stream,
                         const april_utils::GenericOptions *options) {
@@ -196,7 +195,6 @@ namespace basics {
     else writeNormal(stream, options);
   }
 
-  // Returns the number of chars written (there is a '\0' that is not counted)
   template <typename T>
   void Matrix<T>::writeNormal(AprilIO::StreamInterface *stream,
                               const april_utils::GenericOptions *options) {
@@ -277,6 +275,8 @@ namespace basics {
     const char *delim       = options->getOptionalString(MatrixIO::DELIM_OPTION, "\n\r\t,; ");
     bool keep_delim         = options->getOptionalBoolean(MatrixIO::KEEP_OPTION, false);
     T default_value         = getTemplateOption(options, MatrixIO::DEFAULT_OPTION, T());
+    int ncols               = options->getOptionalInt32(MatrixIO::NCOLS_OPTION, 0);
+    int nrows               = options->getOptionalInt32(MatrixIO::NROWS_OPTION, 0);
     //
     MatrixIO::AsciiExtractor<T> ascii_extractor;
     if (!stream->good()) {
@@ -287,8 +287,6 @@ namespace basics {
     c_str = new AprilIO::CStringStream();
     april_assert(!c_str.empty());
     april_utils::constString line("");
-    int ncols = options->getOptionalInt32(MatrixIO::NCOLS_OPTION, 0);
-    int nrows = options->getOptionalInt32(MatrixIO::NROWS_OPTION, 0);
     if (ncols == 0 || nrows == 0) {
       off_t first_pos = stream->seek();
       if (nrows == 0) {
@@ -387,7 +385,6 @@ namespace basics {
     return mat;
   }
   
-  // Returns the number of chars written (there is a '\0' that is not counted)
   template <typename T>
   void Matrix<T>::writeTab(AprilIO::StreamInterface *stream,
                            const april_utils::GenericOptions *options) {

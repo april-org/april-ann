@@ -29,11 +29,18 @@
 
 namespace AprilIO {
 
+  /**
+   * @brief This class defines the basic API for serializable classes.
+   */
   class Serializable : public Referenced {
   public:
     Serializable() : Referenced() { }
     virtual ~Serializable() { }
     
+    // The read method needs to be implemented in derived classes.
+    // Whatever *read(StreamInterface *dest,
+    //                const april_utils::GenericOptions *options);
+
     /// Writes the object data into dest, and it could be retrieved by read.
     virtual void write(StreamInterface *dest,
                        const april_utils::GenericOptions *options) = 0;

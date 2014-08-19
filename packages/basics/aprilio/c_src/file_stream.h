@@ -32,11 +32,19 @@
 #include "unused_variable.h"
 
 namespace AprilIO {
+  
+  /**
+   * @brief Specialization of BufferedStream and HandledStreamInterface for
+   * input/output operations into a disk file.
+   */
   class FileStream : public BufferedStream, public HandledStreamInterface {
-    /// File descriptor.
-    int fd, errnum, flags;
-    bool is_eof;
+    int fd,    ///< File descriptor.
+      errnum,  ///< Last error number.
+      flags;   ///< Flags given at open function.
+    bool is_eof; ///< Indicator of EOF.
     
+    /// Auxiliary method which allow to process returned values from C POSIX
+    /// functions.
     template<typename T>
     T checkReturnValue(T ret_value);
 
@@ -49,9 +57,13 @@ namespace AprilIO {
 
   public:
     
+    /// Constructor from a path and a mode, in the same way as @c fopen.
     FileStream(const char *path, const char *mode=0);
+    /// Constructor from a C @c FILE struct.
     FileStream(FILE *f);
+    /// Constructor from a C file descriptor.
     FileStream(int fd);
+    /// Destructor
     virtual ~FileStream();
     
     int fileno() const { return fd; }

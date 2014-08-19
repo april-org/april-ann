@@ -175,7 +175,6 @@ namespace basics {
     return mat;
   }
   
-  // Returns the number of chars written (there is a '\0' that is not counted)
   template <typename T>
   void SparseMatrix<T>::write(AprilIO::StreamInterface *stream,
                               const april_utils::GenericOptions *options) {

@@ -86,9 +86,9 @@ namespace AprilIO {
 
   ////////////////////////////////////////////////////////////
   
-  BufferedInputStream::BufferedInputStream() : StreamInterface() {
-    in_buffer       = new char[DEFAULT_BUFFER_SIZE+1];
-    max_buffer_size = DEFAULT_BUFFER_SIZE;
+  BufferedInputStream::BufferedInputStream(size_t buf_size) :
+    StreamInterface(), max_buffer_size(buf_size) {
+    in_buffer       = new char[max_buffer_size + 1];
     in_buffer_pos   = in_buffer_len = 0;
   }
   

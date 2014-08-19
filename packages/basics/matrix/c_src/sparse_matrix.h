@@ -447,9 +447,28 @@ namespace basics {
 
     
     // SERIALIZATION
-    
+
+    /**
+     * @brief Writes the SparseMatrix into a stream.
+     *
+     * The @c options dictionary can contain the following keys:
+     *
+     * - MatrixIO::ASCII_OPTION key contains a bool value indicating if the data
+     *   has to be binary or not. It uses april_utils::binarizer for
+     *   binarization purposes. By default it is true.
+     */
     static SparseMatrix<T> *read(AprilIO::StreamInterface *stream,
                                  const april_utils::GenericOptions *options);
+
+    /**
+     * @brief Reads the SparseMatrix from a stream.
+     *
+     * The @c options dictionary can contain the following keys:
+     *
+     * - MatrixIO::ASCII_OPTION key contains a bool value indicating if the data
+     *   has to be binary or not. It uses april_utils::binarizer for
+     *   binarization purposes. By default it is true.
+     */
     virtual void write(AprilIO::StreamInterface *stream,
                        const april_utils::GenericOptions *options);
 

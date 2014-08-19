@@ -871,9 +871,69 @@ namespace basics {
     Matrix<T> *padding(int pad_value, T default_value=T()) const;
     
     // SERIALIZATION
+    
+    /**
+     * @brief Writes the Matrix into a stream.
+     *
+     * The @c options dictionary can contain the following keys:
+     *
+     * - MatrixIO::TAB_OPTION contains a bool value indicating if writing the
+     *   Matrix in a tabulated way (true) or in the APRIL-ANN Matrix format
+     *   (false). By default it is false.
+     *
+     * - MatrixIO::ASCII_OPTION if @c TAB_OPTION=false this key contains a bool
+     *   value indicating if the data has to be binary or not. It uses
+     *   april_utils::binarizer for binarization purposes. By default it is
+     *   true.
+     */
     virtual void write(AprilIO::StreamInterface *stream,
                        const april_utils::GenericOptions *options);
-
+    
+    /**
+     * @brief Reads the Matrix from a stream.
+     *
+     * @return A Matrix pointer or a NULL pointer if it was impossible to be
+     * allocated.
+     *
+     * The @c options dictionary can contain the following keys:
+     *
+     * - MatrixIO::TAB_OPTION contains a bool value indicating if read the
+     *   Matrix in a tabulated way (true) or in the APRIL-ANN Matrix format
+     *   (false). By default it is false.
+     *
+     * - MatrixIO::ORDER_OPTION this key contains a string with "row_major",
+     *   "col_major", or it can be not defined at all. It forces the read()
+     *   method to allocate a Matrix in the indicate major order. By default it
+     *   is not defined and the major order will be taken from the file in case
+     *   @c TAB_OPTION=false or in "row_major" in case @c TAB_OPTION=true.
+     *
+     * - MatrixIO::DELIM_OPTION if @c TAB_OPTION=true this key contains a string
+     *   value with a list of delimitiers. By default it is "\n\r\t,; ".
+     *
+     * - MatrixIO::KEEP_OPTION if @c TAB_OPTION=true this key contains a boolean
+     *   indicating if the delimitiers must be keep during the read process. If
+     *   @c KEEP_OPTION=true, this condition allows the parser to find empty
+     *   values (e.g. in a CSV file an empty field is detected by this
+     *   procedure). By default it is false.
+     *
+     * - MatrixIO::DEFAULT_OPTION if @c TAB_OPTION=true and @c KEEP_OPTION=true,
+     *   this key contains the T value for cases where the read data is
+     *   empty. By default it is T().
+     *
+     * - MatrixIO::NCOLS_OPTION if @c TAB_OPTION=true this key contains an
+     *   int32_t value indicating the number of expected columns in the
+     *   Matrix. By default it is 0, which is equals to a not defined state.
+     *
+     * - MatrixIO::NROWS_OPTION if @c TAB_OPTION=true this key contains an
+     *   int32_t value indicating the number of expected rows in the Matrix. By
+     *   default it is 0, which is equals to a not defined state.
+     *
+     * @note When @c TAB_OPTION=true, if not given both @c NCOLS_OPTION and @c
+     * NROWS_OPTION the parser will need two passes trough the data, first to
+     * compute the number of rows and columns, and second to retrieve the data.
+     *
+     * @note This method throws different kind of errors.
+     */
     static Matrix<T> *read(AprilIO::StreamInterface *stream,
                            const april_utils::GenericOptions *options);
     
