@@ -61,6 +61,11 @@ namespace basics {
     return 1;
   }
 
+  static int32_t april_optint(lua_State *L, int i, int32_t opt) {
+    if (lua_type(L,i) == LUA_TNONE || lua_isnil(L,i)) return opt;
+    return lua_toint(L,i);
+  }
+
 }
 
 //BIND_END
@@ -600,19 +605,6 @@ typedef MatrixInt32::sliding_window SlidingWindowMatrixInt32;
 {
   MAKE_READ_MATRIX_LUA_METHOD(MatrixInt32, int32_t);
   LUABIND_INCREASE_NUM_RETURNS(1);
-}
-//BIND_END
-
-//BIND_CLASS_METHOD MatrixInt32 readTab
-{
-  MAKE_READ_TAB_MATRIX_LUA_METHOD(MatrixInt32, int32_t);
-  LUABIND_INCREASE_NUM_RETURNS(1);
-}
-//BIND_END
-
-//BIND_METHOD MatrixInt32 writeTab
-{
-  writeTabMatrixLuaMethod(L, obj);
 }
 //BIND_END
 

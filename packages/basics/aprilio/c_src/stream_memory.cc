@@ -22,14 +22,16 @@
 
 namespace AprilIO {
   
-  size_t extractLineFromStream(StreamInterface *source, StreamMemory *dest) {
-    return source->get(dest, "\n\r");
+  size_t extractLineFromStream(StreamInterface *source, StreamMemory *dest,
+                               bool keep_delim) {
+    return source->get(dest, "\n\r", keep_delim);
   }
 
-  size_t extractULineFromStream(StreamInterface *source, StreamMemory *dest) {
+  size_t extractULineFromStream(StreamInterface *source, StreamMemory *dest,
+                                bool keep_delim) {
     do {
       dest->clear();
-      source->get(dest, "\n\r");
+      source->get(dest, "\n\r", keep_delim);
     } while ((dest->size() > 0) && ((*dest)[0] == '#'));
     return dest->size();
   }

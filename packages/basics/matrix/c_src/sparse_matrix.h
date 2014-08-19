@@ -447,12 +447,34 @@ namespace basics {
 
     
     // SERIALIZATION
-    
-    static SparseMatrix<T> *read(AprilIO::StreamInterface *stream);
-    virtual void write(AprilIO::StreamInterface *stream, bool is_ascii);
+
+    /**
+     * @brief Writes the SparseMatrix into a stream.
+     *
+     * The @c options dictionary can contain the following keys:
+     *
+     * - MatrixIO::ASCII_OPTION key contains a bool value indicating if the data
+     *   has to be binary or not. It uses april_utils::binarizer for
+     *   binarization purposes. By default it is true.
+     */
+    static SparseMatrix<T> *read(AprilIO::StreamInterface *stream,
+                                 const april_utils::GenericOptions *options);
+
+    /**
+     * @brief Reads the SparseMatrix from a stream.
+     *
+     * The @c options dictionary can contain the following keys:
+     *
+     * - MatrixIO::ASCII_OPTION key contains a bool value indicating if the data
+     *   has to be binary or not. It uses april_utils::binarizer for
+     *   binarization purposes. By default it is true.
+     */
+    virtual void write(AprilIO::StreamInterface *stream,
+                       const april_utils::GenericOptions *options);
 
     
   private:
+    
     void allocate_memory(int size);
     void release_memory();
     void initialize(int d0, int d1);

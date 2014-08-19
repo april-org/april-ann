@@ -18,6 +18,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#include <cmath>
 
 #include "binarizer.h"
 #include "cblas_headers.h"
@@ -83,6 +84,14 @@ namespace basics {
   
 
   } // namespace MatrixIO
+
+  template<>
+  float Matrix<float>::getTemplateOption(const april_utils::GenericOptions *options,
+                                         const char *name, float default_value) {
+    return options->getOptionalFloat(name, default_value);
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
 
   /************* FILL FUNCTION **************/
   DEF_CWISE_FUNCTOR_1(doFill,float);
@@ -733,6 +742,82 @@ namespace basics {
     while(it != end()) {
       if ( (*it) > (*it_value) ) *it = 1.0f;
       else *it = 0.0f;
+      ++it;
+      ++it_value;
+    }
+  }
+  // equals
+  template <>
+  void Matrix<float>::EQCondition(float value) {
+    iterator it(begin());
+    if (std::isnan(value)) {
+      while(it != end()) {
+        if ( std::isnan(*it) ) *it = 1.0f;
+        else *it = 0.0f;
+        ++it;
+      }
+    }
+    else {
+      while(it != end()) {
+        if ( (*it) == value ) *it = 1.0f;
+        else *it = 0.0f;
+        ++it;
+      }
+    }
+  }
+
+  template <>
+  void Matrix<float>::EQCondition(Matrix<float> *value) {
+    if (!sameDim(value))
+      ERROR_EXIT(128, "Incompatible matrix sizes\n");
+    const_iterator it_value(value->begin());
+    iterator it(begin());
+    while(it != end()) {
+      if ( (*it) == (*it_value) ||
+           (std::isnan(*it) && std::isnan(*it_value)) ) {
+        *it = 1.0f;
+      }
+      else {
+        *it = 0.0f;
+      }
+      ++it;
+      ++it_value;
+    }
+  }
+  // not equals
+  template <>
+  void Matrix<float>::NEQCondition(float value) {
+    iterator it(begin());
+    if (std::isnan(value)) {
+      while(it != end()) {
+        if ( !std::isnan(*it) ) *it = 1.0f;
+        else *it = 0.0f;
+        ++it;
+      }
+    }
+    else {
+      while(it != end()) {
+        if ( (*it) != value ) *it = 1.0f;
+        else *it = 0.0f;
+        ++it;
+      }
+    }
+  }
+
+  template <>
+  void Matrix<float>::NEQCondition(Matrix<float> *value) {
+    if (!sameDim(value))
+      ERROR_EXIT(128, "Incompatible matrix sizes\n");
+    const_iterator it_value(value->begin());
+    iterator it(begin());
+    while(it != end()) {
+      if ( (*it) != (*it_value) &&
+           std::isnan(*it) != std::isnan(*it_value) ) {
+        *it = 1.0f;
+      }
+      else {
+        *it = 0.0f;
+      }
       ++it;
       ++it_value;
     }

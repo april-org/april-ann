@@ -86,9 +86,9 @@ namespace AprilIO {
 
   ////////////////////////////////////////////////////////////
   
-  BufferedInputStream::BufferedInputStream() : StreamInterface() {
-    in_buffer       = new char[DEFAULT_BUFFER_SIZE+1];
-    max_buffer_size = DEFAULT_BUFFER_SIZE;
+  BufferedInputStream::BufferedInputStream(size_t buf_size) :
+    StreamInterface(), max_buffer_size(buf_size) {
+    in_buffer       = new char[max_buffer_size + 1];
     in_buffer_pos   = in_buffer_len = 0;
   }
   
@@ -125,9 +125,10 @@ namespace AprilIO {
   // putOp is a predicate which wraps a StreamInterface or a char buffer.
   template<typename T>
   size_t BufferedInputStream::templatizedGet(T &putOp, size_t max_size,
-                                             const char *delim) {
+                                             const char *delim,
+                                             bool keep_delim) {
     size_t dest_len=0;
-    trimInBuffer(delim);
+    if (!keep_delim) trimInBuffer(delim);
     // Read data until complete the given max_size or a delimitier is found, and
     // no errors are found.
     while( this->good() &&
@@ -142,6 +143,7 @@ namespace AprilIO {
         // WARNING: in_buffer needs a '\0' to indicate its size
         char *delim_pos = strpbrk(in_buffer + in_buffer_pos, delim);
         if (delim_pos != NULL) {
+          if (delim_pos < in_buffer + in_buffer_len && keep_delim) ++delim_pos;
           ptrdiff_t ptr_diff = delim_pos - (in_buffer + in_buffer_pos);
           size_t diff = static_cast<size_t>(ptr_diff);
           buf_len = april_utils::min(buf_len, diff);
@@ -162,8 +164,9 @@ namespace AprilIO {
     return isOpened() && !eof();
   }
 
-  size_t BufferedInputStream::get(StreamInterface *dest, const char *delim) {
-    return get(dest, SIZE_MAX, delim);
+  size_t BufferedInputStream::get(StreamInterface *dest, const char *delim,
+                                  bool keep_delim) {
+    return get(dest, SIZE_MAX, delim, keep_delim);
   }
   
   // Operator for put data into a StreamInterface object.
@@ -177,9 +180,10 @@ namespace AprilIO {
   };
   // Get method.
   size_t BufferedInputStream::get(StreamInterface *dest, size_t max_size,
-                                  const char *delim) {
+                                  const char *delim,
+                                  bool keep_delim) {
     putOperatorStream put_op(dest);
-    return templatizedGet(put_op, max_size, delim);
+    return templatizedGet(put_op, max_size, delim, keep_delim);
   }
 
   // Operator for put data into a char buffer.
@@ -193,9 +197,10 @@ namespace AprilIO {
     bool hasError() const { return false; }
   };
   // Get method.
-  size_t BufferedInputStream::get(char *dest, size_t max_size, const char *delim) {
+  size_t BufferedInputStream::get(char *dest, size_t max_size,
+                                  const char *delim, bool keep_delim) {
     putOperatorBuffer put_op(dest);
-    return templatizedGet(put_op, max_size, delim);
+    return templatizedGet(put_op, max_size, delim, keep_delim);
   }
   
   size_t BufferedInputStream::put(StreamInterface *source, size_t size) {

@@ -63,25 +63,37 @@ namespace AprilIO {
   class StreamMemory;
 
   /// Returns a whole line of the stream (a string delimited by \n).
-  size_t extractLineFromStream(StreamInterface *source, StreamMemory *dest);
+  size_t extractLineFromStream(StreamInterface *source, StreamMemory *dest,
+                               bool keep_delim = false);
   
   /// Returns a whole line of the stream (a string delimited by \n), but
   /// avoiding lines which begins with #. Lines beginning with # are taken as
   /// commented lines.
-  size_t extractULineFromStream(StreamInterface *source, StreamMemory *dest);
+  size_t extractULineFromStream(StreamInterface *source, StreamMemory *dest,
+                                bool keep_delim = false);
 
   ///////////////////////////////////////////////////////////////////////////
   
+  /**
+   * @brief Specialization of StreamBuffer for streams which are allocated at
+   * memory, as C strings or Lua strings.
+   */
   class StreamMemory : public StreamBuffer {
   public:
     static const size_t BLOCK_SIZE = 1024;
     StreamMemory() { }
     virtual ~StreamMemory() { }
+    /// Empty flag of the underlying string.
     virtual bool empty() const = 0;
+    /// Size of the underlying string.
     virtual size_t size() const = 0;
+    /// Random access operator.
     virtual char operator[](size_t pos) const = 0;
+    /// Random access operator.
     virtual char &operator[](size_t pos) = 0;
+    /// Sets to zero the string and starts again.
     virtual void clear() = 0;
+    /// Pushes the current data into the given Lua stack.
     virtual int push(lua_State *L) = 0;
   };
 

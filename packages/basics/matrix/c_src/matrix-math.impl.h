@@ -771,6 +771,30 @@ namespace basics {
     UNUSED_VARIABLE(value);
     ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   }
+
+  // equals
+  template <typename T>
+  void Matrix<T>::EQCondition(T value) {
+    UNUSED_VARIABLE(value);
+    ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  }
+  template <typename T>
+  void Matrix<T>::EQCondition(Matrix<T> *value) {
+    UNUSED_VARIABLE(value);
+    ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  }
+
+  // not equals
+  template <typename T>
+  void Matrix<T>::NEQCondition(T value) {
+    UNUSED_VARIABLE(value);
+    ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  }
+  template <typename T>
+  void Matrix<T>::NEQCondition(Matrix<T> *value) {
+    UNUSED_VARIABLE(value);
+    ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+  }
   //
 
   template <typename T>

@@ -600,18 +600,5 @@ typedef MatrixDouble::sliding_window SlidingWindowMatrixDouble;
 }
 //BIND_END
 
-//BIND_CLASS_METHOD MatrixDouble readTab
-{
-  MAKE_READ_TAB_MATRIX_LUA_METHOD(MatrixDouble, double);
-  LUABIND_INCREASE_NUM_RETURNS(1);
-}
-//BIND_END
-
-//BIND_METHOD MatrixDouble writeTab
-{
-  writeTabMatrixLuaMethod(L, obj);
-}
-//BIND_END
-
 //////////////////////////////////////////////////////////////////////
 

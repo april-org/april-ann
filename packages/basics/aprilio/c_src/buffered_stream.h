@@ -31,10 +31,19 @@
 #include "unused_variable.h"
 
 namespace AprilIO {
+  
+  /**
+   * @brief A specialization of StreamBuffer which defines a new interface for
+   * streams which need both, an input and an output buffer.
+   *
+   * @note This class is abstract, it cannot be instantiated.
+   */
   class BufferedStream : public StreamBuffer {
   public:
     
+    /// The constructor allocates input/output buffers of @c buf_size.
     BufferedStream(size_t buf_size = BUFSIZ);
+    /// Destructor.
     virtual ~BufferedStream();
     // virtual bool isOpened() const = 0;
     virtual void close();
@@ -45,8 +54,10 @@ namespace AprilIO {
     // virtual const char *getErrorMsg() const = 0;
 
   protected:
-
+    
+    /// Returns a buffer for input data and indicates its size at @c buf_len.
     virtual const char *nextInBuffer(size_t &buf_len);
+    /// Returns a buffer for output data and indicates its size at @c buf_len.
     virtual char *nextOutBuffer(size_t &buf_len);
     
     /// Reads from the real stream and puts data into the given buffer.
@@ -72,18 +83,25 @@ namespace AprilIO {
   /////////////////////////////////////////////////////////
   
   /**
-   * @brief Generic stream with buffer for read but not for write.
+   * @brief Generic stream with buffer for input but not for output.
+   *
+   * @note This class is abstract, it cannot be instantiated.
    */
   class BufferedInputStream : public AprilIO::StreamInterface {
   public:
     
-    BufferedInputStream();
+    /// Constructor with @c buf_size input buffer.
+    BufferedInputStream(size_t buf_size = DEFAULT_BUFFER_SIZE);
+    /// Destructor.
     virtual ~BufferedInputStream();
   
     virtual bool good() const;
-    virtual size_t get(StreamInterface *dest, const char *delim = 0);
-    virtual size_t get(StreamInterface *dest, size_t max_size, const char *delim = 0);
-    virtual size_t get(char *dest, size_t max_size, const char *delim = 0);
+    virtual size_t get(StreamInterface *dest, const char *delim = 0,
+                       bool keep_delim = false);
+    virtual size_t get(StreamInterface *dest, size_t max_size,
+                       const char *delim = 0, bool keep_delim = false);
+    virtual size_t get(char *dest, size_t max_size, const char *delim = 0,
+                       bool keep_delim = false);
     virtual size_t put(StreamInterface *source, size_t size);
     virtual size_t put(const char *source, size_t size);
     virtual size_t put(const char *source);
@@ -100,22 +118,50 @@ namespace AprilIO {
     
   protected:
     
+    /// Returns if the real stream EOF has been received.
     virtual bool privateEof() const = 0;
+    /// Writes data into the real stream.
     virtual size_t privateWrite(const char *buf, size_t size) = 0;
+    /// Reads data from the real stream.
     virtual size_t privateRead(char *buf, size_t max_size) = 0;
+    /// Moves the real stream pointer.
     virtual off_t privateSeek(int whence, int offset) = 0;
     
   private:
     
+    /// Default input buffer size, it must be a large size because this class is
+    /// used for reading compressed files.
     static const size_t DEFAULT_BUFFER_SIZE = 64*1024; // 64K
     
+    /// Input buffer.
     char *in_buffer;
-    size_t in_buffer_pos, in_buffer_len, max_buffer_size;
-
+    size_t in_buffer_pos, ///< Input buffer position pointer.
+      in_buffer_len,      ///< Input buffer length.
+      max_buffer_size;    ///< Input buffer maximum size.
+    
+    /// Auxiliary method which reads data into the input buffer.
     void prepareInBufferData();
+    /// Auxiliary method which removes delimitiers from buffer left part.
     void trimInBuffer(const char *delim);
+    /**
+     * @brief Auxiliary method which allow to implement get() methods in a
+     * generic way.
+     *
+     * @param putOp - A class or struct with operator() implemented, and with a
+     * @c hasError method. The operator() allows to put data into the stream.
+     *
+     * @param max_size - Maximum size allowed to the get function.
+     *
+     * @param delim - A list of delimitiers.
+     *
+     * @param keep_delim - A boolean indicating if the delimitier must be keep
+     * or not in the buffer.
+     *
+     * @return The number of bytes read from the stream.
+     */
     template<typename T>
-    size_t templatizedGet(T &putOp, size_t max_size, const char *delim);
+    size_t templatizedGet(T &putOp, size_t max_size, const char *delim,
+                          bool keep_delim);
   };
 
   

@@ -307,6 +307,61 @@ namespace AprilIO {
 }
 //BIND_END
 
+//BIND_METHOD StreamInterface get
+{
+  april_utils::SharedPtr<StreamInterface> dest;
+  OutputLuaStringStream *aux_lua_string = 0;
+  size_t size = SIZE_MAX;
+  const char *delim = 0;
+  bool keep_delim = false;
+  if (lua_istable(L,1)) {
+    // complete API
+    check_table_fields(L, 1, "dest", "size", "delim", "keep_delim",
+                       (const char*)0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, dest, StreamInterface, dest, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, size, uint, size, SIZE_MAX);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, delim, string, delim, 0);
+    LUABIND_GET_TABLE_OPTIONAL_PARAMETER(1, keep_delim, boolean, keep_delim, false);
+  }
+  else {
+    // simplified API
+    if (lua_isuint(L,1)) LUABIND_GET_PARAMETER(1, uint, size);
+    else if (lua_isstring(L,1)) LUABIND_GET_PARAMETER(1, string, delim);
+    else LUABIND_ERROR("Needs delimitiers string or number as 1st argument");
+    LUABIND_GET_OPTIONAL_PARAMETER(2, boolean, keep_delim, false);
+  }
+  if (dest.empty()) {
+    aux_lua_string = new OutputLuaStringStream(L);
+    dest = aux_lua_string;
+  }
+  size_t len = obj->get(dest.get(), size, delim, keep_delim);
+  if (len != 0 || !obj->eof()) {
+    if (aux_lua_string == 0) LUABIND_RETURN(StreamInterface, dest.get());
+    else LUABIND_INCREASE_NUM_RETURNS(aux_lua_string->push(L));
+    LUABIND_RETURN(uint, len);
+  }
+}
+//BIND_END
+
+//BIND_METHOD StreamInterface put
+{
+  april_utils::SharedPtr<StreamInterface> ptr;
+  const char *buffer;
+  size_t len;
+  if (lua_isStreamInterface(L,1)) {
+    size_t size;
+    LUABIND_GET_PARAMETER(1, StreamInterface, ptr);
+    LUABIND_GET_OPTIONAL_PARAMETER(2, uint, size, SIZE_MAX);
+    len = obj->put(ptr.get(), size);
+  }
+  else {
+    LUABIND_GET_PARAMETER(1, string, buffer);
+    len = obj->put(buffer);
+  }
+  LUABIND_RETURN(uint, len);
+}
+//BIND_END
+
 /////////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME FileStream aprilio.stream.file
@@ -482,15 +537,26 @@ namespace AprilIO {
 {
   OutputLuaStringStream *aux_lua_string;
   StreamInterface *ptr;
-  const char *mode;
   april_utils::SharedPtr<StreamInterface> dest;
-  LUABIND_GET_OPTIONAL_PARAMETER(1, StreamInterface, ptr, 0);
-  LUABIND_GET_OPTIONAL_PARAMETER(2, string, mode, "binary");
-  april_utils::constString cs(mode);
-  bool is_ascii = (cs == "ascii");
-  if (ptr == 0) dest = aux_lua_string = new OutputLuaStringStream(L);
-  else dest = ptr;
-  obj->write(dest.get(), is_ascii);
+  int options_pos;
+  if (!lua_istable(L,1)) {
+    LUABIND_GET_OPTIONAL_PARAMETER(1, StreamInterface, ptr, 0);
+    options_pos = 2;
+    april_utils::LuaTableOptions options(L,2);
+  }
+  else {
+    options_pos = 1;
+    ptr = 0;
+  }
+  april_utils::LuaTableOptions options(L,options_pos);
+  if (ptr == 0) {
+    aux_lua_string = new OutputLuaStringStream(L);
+    dest = aux_lua_string;
+  }
+  else {
+    dest.reset(ptr);
+  }
+  obj->write(dest.get(), &options);
   if (ptr == 0) LUABIND_INCREASE_NUM_RETURNS(aux_lua_string->push(L));
   else LUABIND_RETURN(StreamInterface, ptr);
 }

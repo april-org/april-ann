@@ -60,12 +60,27 @@ april_set_doc(aprilio.serializable.."write", {
 		  "It uses a format expected by read method.",
 		},
 		params = {
-		  { "A aprilio.stream instance [optional]. If not given any,",
-                    "the object is seralized to a Lua string", },
-		  "An string 'ascii' or 'binary', by default it is 'binary' [optional].",
+		  { "A aprilio.stream instance. If not given any,",
+                    "the object is serialized to a Lua string", },
+		  "A Lua table with options [optional].",
 		},
                 outputs = {
-                  "The given stream object or a Lua string if none given.",
+                  "The given stream object.",
+                },
+})
+
+april_set_doc(aprilio.serializable.."write", {
+		class = "method",
+		summary = "It allows to store an object into a Lua string.",
+		description ={
+		  "It allows to store an object into a Lua string.",
+		  "It uses a format expected by read method.",
+		},
+		params = {
+		  "A Lua table with options [optional].",
+		},
+                outputs = {
+                  "A Lua string with the serialization result.",
                 },
 })
 

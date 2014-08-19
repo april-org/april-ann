@@ -87,7 +87,8 @@ namespace basics {
       luaL_error(L, "Needs a stream as 1st argument");
       return 0;
     }
-    return obj->read(ptr.get());
+    april_utils::LuaTableOptions options(L,2);
+    return obj->read(ptr.get(), &options);
   }
 
 } // namespace basics
