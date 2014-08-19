@@ -23,6 +23,10 @@
 #include "hardtanh_actf_component.h"
 #include "wrapper.h"
 
+using namespace basics;
+using namespace april_utils;
+using namespace april_math;
+
 namespace ANN {
 
   HardtanhActfANNComponent::HardtanhActfANNComponent(const char *name,

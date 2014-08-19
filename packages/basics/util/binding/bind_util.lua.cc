@@ -57,7 +57,7 @@ FILE **newfile (lua_State *L) {
 //BIND_HEADER_H
 #include "mfset.h"
 #include "trie_vector.h"
-#include "trie4lua.h"
+#include "trie_hash_4_lua.h"
 #include "stopwatch.h"
 #include "linear_least_squares.h"
 #include "words_table.h"
@@ -370,22 +370,22 @@ extern const char *__COMMIT_NUMBER__;
 
 /////////////////////////////////////////////////////////////////////////////////
 
-//BIND_LUACLASSNAME Trie4lua util.trie
-//BIND_CPP_CLASS    Trie4lua
+//BIND_LUACLASSNAME TrieHash4Lua util.trie_hash
+//BIND_CPP_CLASS    TrieHash4Lua
 
-//BIND_CONSTRUCTOR Trie4lua
+//BIND_CONSTRUCTOR TrieHash4Lua
 {
-  LUABIND_RETURN(Trie4lua, new Trie4lua());
+  LUABIND_RETURN(TrieHash4Lua, new TrieHash4Lua());
 }
 //BIND_END
 
-//BIND_METHOD Trie4lua reserveId
+//BIND_METHOD TrieHash4Lua reserveId
 {
   LUABIND_RETURN(int, obj->reserveId());
 }
 //BIND_END
 
-//BIND_METHOD Trie4lua find
+//BIND_METHOD TrieHash4Lua find
 {
   int *sequence, length;
   LUABIND_TABLE_GETN(1, length);

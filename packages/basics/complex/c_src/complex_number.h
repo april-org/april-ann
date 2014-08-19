@@ -49,123 +49,141 @@
 #define UNDEF_DEVICE
 #endif
 
-template<typename T>
-struct Complex {
-  T data[2];
-  __host__ __device__ static Complex<T> one_one() { return Complex(1.0, 1.0); }
-  __host__ __device__ static Complex<T> zero_zero() { return Complex(0.0, 0.0); }
-  __host__ __device__ static Complex<T> one_zero() { return Complex(1.0, 0.0); }
-  __host__ __device__ static Complex<T> zero_one() { return Complex(0.0, 1.0); }
-  __host__ __device__ Complex() { data[REAL_IDX] = T(); data[IMG_IDX] = T(); }
-  __host__ __device__ Complex(T r) { data[REAL_IDX] = r; data[IMG_IDX] = 0.0; }
-  __host__ __device__ Complex(T r, T i) { data[REAL_IDX] = r; data[IMG_IDX] = i; }
-  __host__ __device__ ~Complex() { }
-  __host__ __device__ Complex(const Complex<T> &other) { *this = other; }
-  __host__ __device__ Complex<T> &operator=(const Complex<T> &other) {
-    this->data[REAL_IDX] = other.data[REAL_IDX];
-    this->data[IMG_IDX]  = other.data[IMG_IDX];
-    return *this;
-  }
-  __host__ __device__ bool operator==(const Complex<T> &other) const {
-    Complex<T> r(other - *this);
-    return (r.abs() < 0.0001);
-  }
-  __host__ __device__ bool operator!=(const Complex<T> &other) const {
-    return !(*this == other);
-  }
-  __host__ __device__ Complex<T> operator*(const Complex<T> &other) const {
-    Complex<T> result;
-    result.data[REAL_IDX] = (this->data[REAL_IDX]*other.data[REAL_IDX] -
-			     this->data[IMG_IDX]*other.data[IMG_IDX]);
-    result.data[IMG_IDX]  = (this->data[REAL_IDX]*other.data[IMG_IDX] +
-			     this->data[IMG_IDX]*other.data[REAL_IDX]);
-    return result;
-  }
-  __host__ __device__ Complex<T> operator/(const Complex<T> &other) const {
-    T c2_d2 = ( other.data[REAL_IDX]* other.data[REAL_IDX] +
-		other.data[IMG_IDX] * other.data[IMG_IDX] );
-    Complex<T> result;
-    result.data[REAL_IDX] = (this->data[REAL_IDX]*other.data[REAL_IDX] +
-			     this->data[IMG_IDX]*other.data[IMG_IDX]) / c2_d2;
-    result.data[IMG_IDX]  = (this->data[IMG_IDX]*other.data[REAL_IDX] -
-			     this->data[REAL_IDX]*other.data[IMG_IDX]) / c2_d2;
-    return result;
-  }
-  __host__ __device__ Complex<T> &operator+=(const Complex<T> &other) {
-    this->data[REAL_IDX] += other.data[REAL_IDX];
-    this->data[IMG_IDX]  += other.data[IMG_IDX];
-    return *this;
-  }
-  __host__ __device__ Complex<T> &operator*=(const Complex<T> &other) {
-    *this = (*this) * other;
-    return *this;
-  }
-  __host__ __device__ Complex<T> &operator/=(const Complex<T> &other) {
-    *this = (*this) / other;
-    return *this;
-  }
-  __host__ __device__ Complex<T> operator+(const Complex<T> &other) const {
-    Complex<T> result;
-    result.data[REAL_IDX] = this->data[REAL_IDX]+other.data[REAL_IDX];
-    result.data[IMG_IDX]  = this->data[IMG_IDX]+other.data[IMG_IDX];
-    return result;
-  }
-  __host__ __device__ Complex<T> operator-(const Complex<T> &other) const {
-    Complex<T> result;
-    result.data[REAL_IDX] = this->data[REAL_IDX]-other.data[REAL_IDX];
-    result.data[IMG_IDX]  = this->data[IMG_IDX]-other.data[IMG_IDX];
-    return result;
-  }
-  __host__ __device__ Complex<T> operator-() const {
-    Complex<T> result;
-    result.data[REAL_IDX] = -this->data[REAL_IDX];
-    result.data[IMG_IDX]  = -this->data[IMG_IDX];
-    return result;
-  }
-  __host__ __device__ bool operator<(const Complex<T> &other) const {
-    // FIXME: are you sure?
-    return abs() < other.abs();
-  }
-  __host__ __device__ bool operator>(const Complex<T> &other) const {
-    // FIXME: are you sure?
-    return abs() > other.abs();
-  }
-  __host__ __device__ Complex<T> expc() const {
-    T expa = exp(data[REAL_IDX]);
-    return Complex<T>(expa*cos(data[REAL_IDX]),
-		      expa*sin(data[IMG_IDX]));
-  }
-  __host__ __device__ void conj() {
-    data[IMG_IDX] = -data[IMG_IDX];
-  }
-  __host__ __device__ T real() const { return data[REAL_IDX]; }
-  __host__ __device__ T &real() { return data[REAL_IDX]; }
-  __host__ __device__ T img() const { return data[IMG_IDX]; }
-  __host__ __device__ T &img() { return data[IMG_IDX]; }
-  __host__ __device__ T abs() const { return sqrt( data[REAL_IDX]*data[REAL_IDX] +
-			       data[IMG_IDX]*data[IMG_IDX] ); }
-  __host__ __device__ T sqrtc() const { return sqrt( (data[REAL_IDX] + abs()) / 2.0 ); }
-  __host__ __device__ T angle() const {
-    T phi;
-    if (real() > 0)                     phi = atan(img()/real());
-    else if (real() <  0 && img() >= 0) phi = atan(img()/real()) + M_PI;
-    else if (real() <  0 && img() <  0) phi = atan(img()/real()) - M_PI;
-    else if (real() == 0 && img() >  0) phi =  M_PI/2;
-    else if (real() == 0 && img() <  0) phi = -M_PI/2;
-    else phi = NAN;
-    return phi;
-  }
-  __host__ __device__ void polar(T &r, T &phi) const {
-    r = abs();
-    phi = angle();
-  }
-  // POINTER ACCESS
-  __host__ __device__ T *ptr() { return data; }
-  __host__ __device__ const T *ptr() const { return data; }
-};
+namespace april_math {
 
-typedef Complex<float> ComplexF;
-typedef Complex<double> ComplexD;
+  template<typename T>
+  struct Complex {
+    T data[2];
+    __host__ __device__ static Complex<T> one_one() {
+      return Complex(static_cast<T>(1.0), static_cast<T>(1.0));
+    }
+    __host__ __device__ static Complex<T> zero_zero() {
+      return Complex(static_cast<T>(0.0), static_cast<T>(0.0));
+    }
+    __host__ __device__ static Complex<T> one_zero() {
+      return Complex(static_cast<T>(1.0), static_cast<T>(0.0));
+    }
+    __host__ __device__ static Complex<T> zero_one() {
+      return Complex(static_cast<T>(0.0), static_cast<T>(1.0));
+    }
+    __host__ __device__ Complex() { data[REAL_IDX] = T(); data[IMG_IDX] = T(); }
+    __host__ __device__ Complex(T r) {
+      data[REAL_IDX] = r;
+      data[IMG_IDX]  = static_cast<T>(0.0);
+    }
+    __host__ __device__ Complex(T r, T i) {
+      data[REAL_IDX] = r;
+      data[IMG_IDX]  = i;
+    }
+    __host__ __device__ ~Complex() { }
+    __host__ __device__ Complex(const Complex<T> &other) { *this = other; }
+    __host__ __device__ Complex<T> &operator=(const Complex<T> &other) {
+      this->data[REAL_IDX] = other.data[REAL_IDX];
+      this->data[IMG_IDX]  = other.data[IMG_IDX];
+      return *this;
+    }
+    __host__ __device__ bool operator==(const Complex<T> &other) const {
+      Complex<T> r(other - *this);
+      return (r.abs() < static_cast<T>(0.0001));
+    }
+    __host__ __device__ bool operator!=(const Complex<T> &other) const {
+      return !(*this == other);
+    }
+    __host__ __device__ Complex<T> operator*(const Complex<T> &other) const {
+      Complex<T> result;
+      result.data[REAL_IDX] = (this->data[REAL_IDX]*other.data[REAL_IDX] -
+                               this->data[IMG_IDX]*other.data[IMG_IDX]);
+      result.data[IMG_IDX]  = (this->data[REAL_IDX]*other.data[IMG_IDX] +
+                               this->data[IMG_IDX]*other.data[REAL_IDX]);
+      return result;
+    }
+    __host__ __device__ Complex<T> operator/(const Complex<T> &other) const {
+      T c2_d2 = ( other.data[REAL_IDX]* other.data[REAL_IDX] +
+                  other.data[IMG_IDX] * other.data[IMG_IDX] );
+      Complex<T> result;
+      result.data[REAL_IDX] = (this->data[REAL_IDX]*other.data[REAL_IDX] +
+                               this->data[IMG_IDX]*other.data[IMG_IDX]) / c2_d2;
+      result.data[IMG_IDX]  = (this->data[IMG_IDX]*other.data[REAL_IDX] -
+                               this->data[REAL_IDX]*other.data[IMG_IDX]) / c2_d2;
+      return result;
+    }
+    __host__ __device__ Complex<T> &operator+=(const Complex<T> &other) {
+      this->data[REAL_IDX] += other.data[REAL_IDX];
+      this->data[IMG_IDX]  += other.data[IMG_IDX];
+      return *this;
+    }
+    __host__ __device__ Complex<T> &operator*=(const Complex<T> &other) {
+      *this = (*this) * other;
+      return *this;
+    }
+    __host__ __device__ Complex<T> &operator/=(const Complex<T> &other) {
+      *this = (*this) / other;
+      return *this;
+    }
+    __host__ __device__ Complex<T> operator+(const Complex<T> &other) const {
+      Complex<T> result;
+      result.data[REAL_IDX] = this->data[REAL_IDX]+other.data[REAL_IDX];
+      result.data[IMG_IDX]  = this->data[IMG_IDX]+other.data[IMG_IDX];
+      return result;
+    }
+    __host__ __device__ Complex<T> operator-(const Complex<T> &other) const {
+      Complex<T> result;
+      result.data[REAL_IDX] = this->data[REAL_IDX]-other.data[REAL_IDX];
+      result.data[IMG_IDX]  = this->data[IMG_IDX]-other.data[IMG_IDX];
+      return result;
+    }
+    __host__ __device__ Complex<T> operator-() const {
+      Complex<T> result;
+      result.data[REAL_IDX] = -this->data[REAL_IDX];
+      result.data[IMG_IDX]  = -this->data[IMG_IDX];
+      return result;
+    }
+    __host__ __device__ bool operator<(const Complex<T> &other) const {
+      // FIXME: are you sure?
+      return abs() < other.abs();
+    }
+    __host__ __device__ bool operator>(const Complex<T> &other) const {
+      // FIXME: are you sure?
+      return abs() > other.abs();
+    }
+    __host__ __device__ Complex<T> expc() const {
+      T expa = exp(data[REAL_IDX]);
+      return Complex<T>(expa*cos(data[REAL_IDX]),
+                        expa*sin(data[IMG_IDX]));
+    }
+    __host__ __device__ void conj() {
+      data[IMG_IDX] = -data[IMG_IDX];
+    }
+    __host__ __device__ T real() const { return data[REAL_IDX]; }
+    __host__ __device__ T &real() { return data[REAL_IDX]; }
+    __host__ __device__ T img() const { return data[IMG_IDX]; }
+    __host__ __device__ T &img() { return data[IMG_IDX]; }
+    __host__ __device__ T abs() const { return sqrt( data[REAL_IDX]*data[REAL_IDX] +
+                                                     data[IMG_IDX]*data[IMG_IDX] ); }
+    __host__ __device__ T sqrtc() const { return sqrt( (data[REAL_IDX] + abs()) / 2.0 ); }
+    __host__ __device__ T angle() const {
+      T phi;
+      if (real() > 0)                     phi = atan(img()/real());
+      else if (real() <  0 && img() >= 0) phi = atan(img()/real()) + M_PI;
+      else if (real() <  0 && img() <  0) phi = atan(img()/real()) - M_PI;
+      else if (real() == 0 && img() >  0) phi =  M_PI/2;
+      else if (real() == 0 && img() <  0) phi = -M_PI/2;
+      else phi = NAN;
+      return phi;
+    }
+    __host__ __device__ void polar(T &r, T &phi) const {
+      r = abs();
+      phi = angle();
+    }
+    // POINTER ACCESS
+    __host__ __device__ T *ptr() { return data; }
+    __host__ __device__ const T *ptr() const { return data; }
+  };
+
+  typedef Complex<float> ComplexF;
+  typedef Complex<double> ComplexD;
+
+} // namespace april_math
 
 #ifdef UNDEF_HOST
 #undef __host__
@@ -177,8 +195,8 @@ typedef Complex<double> ComplexD;
 #endif
 
 namespace april_utils {
-  void aprilPrint(const ComplexF &v);
-  void aprilPrint(const ComplexD &v);
+  void aprilPrint(const april_math::ComplexF &v);
+  void aprilPrint(const april_math::ComplexD &v);
 }
 
 #endif // COMPLEX_NUMBER_H

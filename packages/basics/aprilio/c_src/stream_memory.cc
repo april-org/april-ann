@@ -2,7 +2,7 @@
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
- * Copyright 2012, Salvador España-Boquera, Jorge Gorbe Moya, Francisco Zamora-Martinez
+ * Copyright 2014, Francisco Zamora-Martinez
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
@@ -18,31 +18,22 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "trie4lua.h"
+#include "stream_memory.h"
 
-namespace april_utils {
-
-  Trie4lua::Trie4lua() {
-    lastId = rootNode;
-  }
-   
-  int Trie4lua::reserveId() {
-    lastId++;
-    return lastId;
+namespace AprilIO {
+  
+  size_t extractLineFromStream(StreamInterface *source, StreamMemory *dest,
+                               bool keep_delim) {
+    return source->get(dest, "\n\r", keep_delim);
   }
 
-  int Trie4lua::find(int *wordsequence, int lenght) {
-    int index = rootNode;
-    for (int i=0; i<lenght; ++i) {
-      bool isNew;
-      hash_type::value_type *r;
-      r = transition_t.find_and_add_pair(make_pair(index,wordsequence[i]),isNew);
-      if (isNew)
-	r->second = reserveId();
-      index = r->second;
-    }
-    return index;
+  size_t extractULineFromStream(StreamInterface *source, StreamMemory *dest,
+                                bool keep_delim) {
+    do {
+      dest->clear();
+      source->get(dest, "\n\r", keep_delim);
+    } while ((dest->size() > 0) && ((*dest)[0] == '#'));
+    return dest->size();
   }
-
-} // namespace
-
+  
+} // namespace AprilIO

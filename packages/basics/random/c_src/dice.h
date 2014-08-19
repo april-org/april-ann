@@ -24,14 +24,18 @@
 #include "referenced.h"
 #include "MersenneTwister.h"
 
-class dice : public Referenced {
-  int outcomes;
-  double *threshold;
-public:
-  dice(int outcom, double *prob);
-  ~dice();
-  int get_outcomes() const { return outcomes; }
-  int thrown(MTRand *generator);
-};
+namespace basics {
+
+  class dice : public Referenced {
+    int outcomes;
+    double *threshold;
+  public:
+    dice(int outcom, double *prob);
+    ~dice();
+    int get_outcomes() const { return outcomes; }
+    int thrown(MTRand *generator);
+  };
+
+} // namespace basics
 
 #endif // DICE_H

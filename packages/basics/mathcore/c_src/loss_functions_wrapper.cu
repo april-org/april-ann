@@ -21,6 +21,7 @@
  */
 #include <cmath>
 #include "clamp.h"
+#include "cuda_utils.h"
 #include "error_print.h"
 #include "wrapper.h"
 #include "unused_variable.h"
@@ -30,12 +31,13 @@ using april_utils::clamp;
 
 #define clip(value, min, max) (((value) < (min)) ? (min) : (((value) > (max)) ? (max) : (value)))
 
+namespace april_math {
+
 ///////////////////////////////////////////////////////////
 /////////////////// Kernels ///////////////////////////////
 ///////////////////////////////////////////////////////////
 
 #ifdef USE_CUDA
-#include "cuda_utils.h"
 __global__ void computeMSELossFunctionKernel(const float *output,
 					     const float *target_output,
 					     float *pattern_errors,
@@ -787,6 +789,8 @@ void doComputeCrossEntropyGradient(FloatGPUMirroredMemoryBlock *input,
   }
 
 */
+
+} // namespace april_math
 
 #undef sigmoid
 #undef clip

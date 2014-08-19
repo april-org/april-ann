@@ -25,6 +25,8 @@
 #include "MersenneTwister.h"
 #include "dice.h"
 #include "utilLua.h"
+using basics::MTRand;
+using basics::dice;
 //BIND_END
 
 //BIND_LUACLASSNAME MTRand random

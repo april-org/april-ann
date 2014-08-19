@@ -22,6 +22,9 @@
 #include "mae_loss_function.h"
 #include "wrapper.h"
 
+using namespace april_utils;
+using namespace basics;
+
 namespace ANN {
 
   MAELossFunction::MAELossFunction(unsigned int size) :

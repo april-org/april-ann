@@ -1,6 +1,6 @@
  package{ name = "stats",
    version = "1.0",
-   depends = { "util", "matrix", "random" },
+   depends = { "util", "matrix", "random", "aprilio" },
    keywords = { "stats" },
    description = "no description available",
    -- targets como en ant

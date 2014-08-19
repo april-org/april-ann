@@ -22,61 +22,66 @@
 #include "gpu_mirrored_memory_block.h"
 #include "token_memory_block.h"
 
-TokenMemoryBlock::TokenMemoryBlock() : Token(), mem_block(0), used_size(0) { }
+using april_utils::buffer_list;
 
-TokenMemoryBlock::TokenMemoryBlock(unsigned int size) :
-  Token(),
-  mem_block(0), used_size(0) {
-  resize(size);
-}
+namespace basics {
+  TokenMemoryBlock::TokenMemoryBlock() : Token(), mem_block(0), used_size(0) { }
 
-TokenMemoryBlock::~TokenMemoryBlock() {
-  delete mem_block;
-}
-
-void TokenMemoryBlock::setData(float *data, unsigned int size) {
-  resize(size);
-  float *mem_ptr = mem_block->getPPALForWrite();
-  for (unsigned int i=0; i<size; ++i)
-    mem_ptr[i] = data[i];
-}
-
-void TokenMemoryBlock::resize(unsigned int size) {
-  if (mem_block == 0)
-    mem_block = new FloatGPUMirroredMemoryBlock(size);
-  else if (size > mem_block->getSize()) {
-    delete mem_block;
-    mem_block = new FloatGPUMirroredMemoryBlock(size);
+  TokenMemoryBlock::TokenMemoryBlock(unsigned int size) :
+    Token(),
+    mem_block(0), used_size(0) {
+    resize(size);
   }
-  used_size = size;
-}
 
-Token *TokenMemoryBlock::clone() const {
-  TokenMemoryBlock *token = new TokenMemoryBlock(mem_block->getSize());
-  token->used_size = used_size;
-  doCopy(mem_block->getSize(),
-	 mem_block, 0, 1,
-	 token->mem_block, 0, 1,
-	 false);
-  return token;
-}
+  TokenMemoryBlock::~TokenMemoryBlock() {
+    delete mem_block;
+  }
 
-buffer_list* TokenMemoryBlock::toString() {
-  // NOT IMPLEMENTED
-  return 0;
-}
+  void TokenMemoryBlock::setData(float *data, unsigned int size) {
+    resize(size);
+    float *mem_ptr = mem_block->getPPALForWrite();
+    for (unsigned int i=0; i<size; ++i)
+      mem_ptr[i] = data[i];
+  }
 
-buffer_list* TokenMemoryBlock::debugString(const char *prefix, int debugLevel) {
-  // NOT IMPLEMENTED
-  UNUSED_VARIABLE(prefix);
-  UNUSED_VARIABLE(debugLevel);
-  return 0;
-}
+  void TokenMemoryBlock::resize(unsigned int size) {
+    if (mem_block == 0)
+      mem_block = new april_math::FloatGPUMirroredMemoryBlock(size);
+    else if (size > mem_block->getSize()) {
+      delete mem_block;
+      mem_block = new april_math::FloatGPUMirroredMemoryBlock(size);
+    }
+    used_size = size;
+  }
 
-TokenCode TokenMemoryBlock::getTokenCode() const {
-  return table_of_token_codes::token_mem_block;
-}
+  Token *TokenMemoryBlock::clone() const {
+    TokenMemoryBlock *token = new TokenMemoryBlock(mem_block->getSize());
+    token->used_size = used_size;
+    doCopy(mem_block->getSize(),
+           mem_block, 0, 1,
+           token->mem_block, 0, 1,
+           false);
+    return token;
+  }
 
-void TokenMemoryBlock::setToZero(bool use_cuda) {
-  doFill(mem_block->getSize(), mem_block, 1, 0, 0.0f, use_cuda);
-}
+  buffer_list* TokenMemoryBlock::toString() {
+    // NOT IMPLEMENTED
+    return 0;
+  }
+
+  buffer_list* TokenMemoryBlock::debugString(const char *prefix, int debugLevel) {
+    // NOT IMPLEMENTED
+    UNUSED_VARIABLE(prefix);
+    UNUSED_VARIABLE(debugLevel);
+    return 0;
+  }
+
+  TokenCode TokenMemoryBlock::getTokenCode() const {
+    return table_of_token_codes::token_mem_block;
+  }
+
+  void TokenMemoryBlock::setToZero(bool use_cuda) {
+    doFill(mem_block->getSize(), mem_block, 1, 0, 0.0f, use_cuda);
+  }
+
+} // namespace basics

@@ -20,6 +20,14 @@
  *
  */
 
+//BIND_HEADER_C
+#include "matrixInt32.h"
+#include "matrixFloat.h"
+#include "utilImageFloat.h"
+using namespace basics;
+using namespace april_utils;
+//BIND_END
+
 //BIND_HEADER_H
 #include <cerrno>
 #include <cstdio>
@@ -30,6 +38,8 @@
 #include "image_connected_components.h"
 #include "utilImageFloat.h"
 #include "utilMatrixFloat.h"
+
+using namespace imaging;
 //BIND_END
 
 //BIND_FUNCTION image.test_connected_components

@@ -34,14 +34,14 @@ namespace ANN {
     APRIL_DISALLOW_COPY_AND_ASSIGN(SoftmaxActfANNComponent);
     
   protected:
-    virtual void applyActivation(FloatGPUMirroredMemoryBlock *input_units,
-				 FloatGPUMirroredMemoryBlock *output_units,
+    virtual void applyActivation(april_math::FloatGPUMirroredMemoryBlock *input_units,
+				 april_math::FloatGPUMirroredMemoryBlock *output_units,
 				 unsigned int size,
 				 unsigned int bunch_size);
-    virtual void multiplyDerivatives(FloatGPUMirroredMemoryBlock *input_units,
-				     FloatGPUMirroredMemoryBlock *output_units,
-				     FloatGPUMirroredMemoryBlock *input_errors,
-				     FloatGPUMirroredMemoryBlock *output_errors,
+    virtual void multiplyDerivatives(april_math::FloatGPUMirroredMemoryBlock *input_units,
+				     april_math::FloatGPUMirroredMemoryBlock *output_units,
+				     april_math::FloatGPUMirroredMemoryBlock *input_errors,
+				     april_math::FloatGPUMirroredMemoryBlock *output_errors,
 				     unsigned int size,
 				     unsigned int bunch_size);
   public:

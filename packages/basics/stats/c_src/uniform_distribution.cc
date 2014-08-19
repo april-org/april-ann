@@ -22,6 +22,11 @@
 #include "uniform_distribution.h"
 #include "utilMatrixFloat.h"
 
+using basics::MatrixFloat;
+using basics::MTRand;
+using april_utils::log_float;
+using april_utils::buffer_list;
+
 namespace Stats {
 
   UniformDistribution::UniformDistribution(MatrixFloat *low,

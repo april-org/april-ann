@@ -29,102 +29,106 @@
 #include "matrix.h"
 #include "referenced.h"
 
-template <typename T>
-class Image : public Referenced {
-  APRIL_DISALLOW_ASSIGN(Image);
+namespace imaging {
 
-  Matrix<T> *matrix; // dimension 2 is assumed
-  // int offset;
-  // int width,height;
+  template <typename T>
+  class Image : public Referenced {
+    APRIL_DISALLOW_ASSIGN(Image);
+
+    basics::Matrix<T> *matrix; // dimension 2 is assumed
+    // int offset;
+    // int width,height;
   
-public:
-  //Constructors
-  Image(Matrix<T> *mat);
-  Image(Matrix<T> *mat, 
-	int width, int height,
-	int offset_w, int offset_h);
-  Image(int width, int height, T value=T()); // Image with a new Matrix, filled with value
-  Image(Image &other); // copy constructor
-  //Destructor...
-  virtual ~Image();
-  //Methods
-  Matrix<T> *getMatrix() { return matrix; }
-  const Matrix<T> *getMatrix() const { return matrix; }
-  T& operator () (int x, int y) { 
-    return (*matrix)(y, x);
-  }
+  public:
+    //Constructors
+    Image(basics::Matrix<T> *mat);
+    Image(basics::Matrix<T> *mat, 
+          int width, int height,
+          int offset_w, int offset_h);
+    Image(int width, int height, T value=T()); // Image with a new Matrix, filled with value
+    Image(Image &other); // copy constructor
+    //Destructor...
+    virtual ~Image();
+    //Methods
+    basics::Matrix<T> *getMatrix() { return matrix; }
+    const basics::Matrix<T> *getMatrix() const { return matrix; }
+    T& operator () (int x, int y) { 
+      return (*matrix)(y, x);
+    }
   
-  T operator () (int x, int y) const {
-    return (*matrix)(y, x);
-  }
+    T operator () (int x, int y) const {
+      return (*matrix)(y, x);
+    }
 
-  // Bound-checking version of operator()
-  T getpixel(int x, int y, T default_value) const {
-    if (x>=0 && y>=0 && x<width() && y<height()) return (*this)(x,y);
-    else return default_value;
-  }
+    // Bound-checking version of operator()
+    T getpixel(int x, int y, T default_value) const {
+      if (x>=0 && y>=0 && x<width() && y<height()) return (*this)(x,y);
+      else return default_value;
+    }
 
-  T getpixel_bilinear(float x, float y, T default_value) const {
-    float fx = fabsf(x - trunc(x));
-    float fy = fabsf(y - trunc(y));
-    float dx = (x >= 0.0f ? 1.0f : -1.0f);
-    float dy = (y >= 0.0f ? 1.0f : -1.0f);
-    T h1 = (1-fx)*getpixel(int(x), int(y), default_value) + fx*getpixel(int(x+dx), int(y), default_value);
-    T h2 = (1-fx)*getpixel(int(x), int(y+dy), default_value) + fx*getpixel(int(x+dx), int(y+dy), default_value);
-    return (1-fy)*h1 + fy*h2;
-  }
+    T getpixel_bilinear(float x, float y, T default_value) const {
+      float fx = fabsf(x - trunc(x));
+      float fy = fabsf(y - trunc(y));
+      float dx = (x >= 0.0f ? 1.0f : -1.0f);
+      float dy = (y >= 0.0f ? 1.0f : -1.0f);
+      T h1 = (1-fx)*getpixel(int(x), int(y), default_value) + fx*getpixel(int(x+dx), int(y), default_value);
+      T h2 = (1-fx)*getpixel(int(x), int(y+dy), default_value) + fx*getpixel(int(x+dx), int(y+dy), default_value);
+      return (1-fy)*h1 + fy*h2;
+    }
   
-  int width() const { return matrix->getDimSize(1); }
-  int height() const { return matrix->getDimSize(0); }
+    int width() const { return matrix->getDimSize(1); }
+    int height() const { return matrix->getDimSize(0); }
   
-  // FIXME: implement this using Matrix
-  int offset_width()  const { return 0; }
-  // FIXME: implement this using Matrix
-  int offset_height() const { return 0; }
+    // FIXME: implement this using Matrix
+    int offset_width()  const { return 0; }
+    // FIXME: implement this using Matrix
+    int offset_height() const { return 0; }
   
-  int count_black_pixels(T threshold) const;
+    int count_black_pixels(T threshold) const;
 
-  Image<T> *clone() const;
-  Image<T> *crop(int width, int height,
-	      int offset_w, int offset_h) const;  
-  Image<T> *clone_subimage(int width, int height,
-			   int offset_w, int offset_h,
-			   T default_color) const;  
-  Image<T> *crop_with_padding(int width, int height,
-			      int offset_w, int offset_h,
-			      T default_color) const;  
-  void projection_v(T *v) const ; // v is not created here
-  void projection_v(Matrix<T> **m) const; // creates matrix m
-  void projection_h(T *v) const ; // v is not created here
-  void projection_h(Matrix<T> **m) const; // creates matrix m
-  Image<T> *shear_h(double radians, T default_color) const;
-  void shear_h_inplace(double radians, T default_color);
+    Image<T> *clone() const;
+    Image<T> *crop(int width, int height,
+                   int offset_w, int offset_h) const;  
+    Image<T> *clone_subimage(int width, int height,
+                             int offset_w, int offset_h,
+                             T default_color) const;  
+    Image<T> *crop_with_padding(int width, int height,
+                                int offset_w, int offset_h,
+                                T default_color) const;  
+    void projection_v(T *v) const ; // v is not created here
+    void projection_v(basics::Matrix<T> **m) const; // creates matrix m
+    void projection_h(T *v) const ; // v is not created here
+    void projection_h(basics::Matrix<T> **m) const; // creates matrix m
+    Image<T> *shear_h(double radians, T default_color) const;
+    void shear_h_inplace(double radians, T default_color);
   
-  void min_bounding_box(float threshold, int *w, int *h, int *x, int *y) const;
-  void copy(const Image<T> *src, int dst_x, int dst_y);
+    void min_bounding_box(float threshold, int *w, int *h, int *x, int *y) const;
+    void copy(const Image<T> *src, int dst_x, int dst_y);
   
-  Image<T> *rotate90_cw() const; // Rotate 90 degrees clockwise, creates a new image
-  Image<T> *rotate90_ccw() const; // Rotate 90 degrees counter-clockwise, new image
-  Image<T> *resize(int dst_width, int dst_height) const; // Resize an image
-  Image<T> *invert_colors() const; // Invert the color of every pixel, new image
+    Image<T> *rotate90_cw() const; // Rotate 90 degrees clockwise, creates a new image
+    Image<T> *rotate90_ccw() const; // Rotate 90 degrees counter-clockwise, new image
+    Image<T> *resize(int dst_width, int dst_height) const; // Resize an image
+    Image<T> *invert_colors() const; // Invert the color of every pixel, new image
 
-  Image<T> *convolution5x5(float *k, T default_color=T()) const;
-  Image<T> *affine_transform(AffineTransform2D *trans, T default_value, int *offset_x=0, int *offset_y=0) const;
+    Image<T> *convolution5x5(float *k, T default_color=T()) const;
+    Image<T> *affine_transform(basics::AffineTransform2D *trans, T default_value, int *offset_x=0, int *offset_y=0) const;
   
-  Image<T> *remove_blank_columns() const;
-  Image<T> *add_rows(int top_rows, int bottom_rows, T value) const;
-  Image<T> *substract_image(Image<T> *img, T low, T high) const;
+    Image<T> *remove_blank_columns() const;
+    Image<T> *add_rows(int top_rows, int bottom_rows, T value) const;
+    Image<T> *substract_image(Image<T> *img, T low, T high) const;
 
-  Matrix<T> *comb_lineal_forward(int x, int y, int ancho, int alto, int miniancho, int minialto, LinearCombConf<T> *cl);
-  void threshold_image(T low, T high, T value_low, T value_high);
-};
+    basics::Matrix<T> *comb_lineal_forward(int x, int y, int ancho, int alto, int miniancho, int minialto, basics::LinearCombConf<T> *cl);
+    void threshold_image(T low, T high, T value_low, T value_high);
+  };
 
 
-template<>
-Image<FloatRGB> *Image<FloatRGB>::convolution5x5(float *k,
-                                                 FloatRGB default_color) const;
+  template<>
+  Image<FloatRGB> *Image<FloatRGB>::convolution5x5(float *k,
+                                                   FloatRGB default_color) const;
 
-/*** Implementacion ***/
+}
+
+  /*** Implementacion ***/
 #include "image.cc"
 
 #endif // IMAGE_H

@@ -24,6 +24,10 @@
 #include "token_matrix.h"
 #include "table_of_token_codes.h"
 
+using namespace basics;
+using namespace april_utils;
+using namespace april_math;
+
 using april_utils::swap;
 
 namespace ANN {

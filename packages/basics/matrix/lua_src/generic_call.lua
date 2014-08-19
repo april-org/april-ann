@@ -1,5 +1,7 @@
 -- GENERIC __CALL METAMETHOD
-matrix.__make_generic_call__ = function()
+matrix.__generic__ = matrix.__generic__ or {}
+
+matrix.__generic__.__make_generic_call__ = function()
   return function(self,...)
     local arg      = table.pack(...)
     local dims     = self:dim()

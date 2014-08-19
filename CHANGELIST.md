@@ -26,10 +26,20 @@ Master branch release
 
 ### Bugs removed
 
+- Solved bug in `constString` extract numeric methods which returns `false` when
+  the extraction procedure ends up to the character after the last valid number.
 - Solved bug at `Matrix<T>::div` and `SparseMatrix<T>::div` methods.
 
 ### C/C++
 
+- Added TAR support in C/C++, allowing to use streams as the standard I/O
+  objects in APRIL-ANN.
+- Added `basics` namespace which stores almost all C/C++ code in `basics`
+  packages.
+- Simplified read/write of matrices using the new `StreamInterface` objects.
+- Added new `StreamInterface` for input/output operations, with specializations
+  for C files, C strings, Lua strings, GZIP files, ZIP files. Other
+  specializations are easier to implement in the future.
 - Added statistical distribution classes.
 - Removed C stack trace in ERROR_PRINT and ERROR_EXIT when compiling without
   debug.

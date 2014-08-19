@@ -22,80 +22,86 @@
 
 // AUXILIAR INLINE FUNCTIONS //
 #ifdef USE_CUDA
-static __device__ void getColumnMajorBunchMatrixPositions(const dim3 &blockIdx,
-							  const dim3 &blockDim,
-							  const dim3 &threadIdx,
-							  unsigned int &matrix_x_pos,
-							  unsigned int &matrix_y_pos) {
-  matrix_x_pos = blockIdx.x*blockDim.x + threadIdx.x;
-  matrix_y_pos = (blockIdx.y*blockDim.y + threadIdx.y);
-}
 
-static void computeBlockAndGridSizesForAColumnMajorBunch(unsigned int bunch_size,
-							 unsigned int size,
-							 dim3 &block, dim3 &grid) {
-  const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
-  
-  // Number of threads on each block dimension
-  block.x = min(MAX_THREADS, bunch_size);
-  block.y = min(MAX_THREADS/block.x, size);
-  block.z = 1;
-  
-  grid.x = (bunch_size/block.x +
-	    (bunch_size % block.x ? 1 : 0));
-  grid.y = (size/block.y + (size % block.y ? 1 : 0));
-  grid.z = 1;
-  // TODO: FIXME: Check that the grid size does not exceed the limits of the GPU
-}
+namespace april_math {
 
-static void computeBlockAndGridSizesForARowMajorBunch(unsigned int bunch_size,
-						      unsigned int size,
-						      dim3 &block, dim3 &grid) {
-  const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
-  
-  // Number of threads on each block dimension
-  block.x = min(MAX_THREADS, size);
-  block.y = min(MAX_THREADS/block.x, bunch_size);
-  block.z = 1;
-  
-  grid.x = (size/block.x +
-	    (size % block.x ? 1 : 0));
-  grid.y = (bunch_size/block.y + (bunch_size % block.y ? 1 : 0));
-  grid.z = 1;
-  // TODO: FIXME: Check that the grid size does not exceed the limits of the GPU
-}
+  static __device__ void getColumnMajorBunchMatrixPositions(const dim3 &blockIdx,
+                                                            const dim3 &blockDim,
+                                                            const dim3 &threadIdx,
+                                                            unsigned int &matrix_x_pos,
+                                                            unsigned int &matrix_y_pos) {
+    matrix_x_pos = blockIdx.x*blockDim.x + threadIdx.x;
+    matrix_y_pos = (blockIdx.y*blockDim.y + threadIdx.y);
+  }
 
-static void computeBlockAndGridSizesForAnArray(unsigned int bunch_size,
-					       dim3 &block, dim3 &grid) {
-  const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
+  static void computeBlockAndGridSizesForAColumnMajorBunch(unsigned int bunch_size,
+                                                           unsigned int size,
+                                                           dim3 &block, dim3 &grid) {
+    const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
   
-  // Number of threads on each block dimension
-  block.x = min(MAX_THREADS, bunch_size);
-  block.y = 1;
-  block.z = 1;
+    // Number of threads on each block dimension
+    block.x = min(MAX_THREADS, bunch_size);
+    block.y = min(MAX_THREADS/block.x, size);
+    block.z = 1;
   
-  grid.x = (bunch_size/block.x +
-	    (bunch_size % block.x ? 1 : 0));
-  grid.y = 1;
-  grid.z = 1;
-  // TODO: FIXME: Check that the grid size does not exceed the limits of the GPU
-}
+    grid.x = (bunch_size/block.x +
+              (bunch_size % block.x ? 1 : 0));
+    grid.y = (size/block.y + (size % block.y ? 1 : 0));
+    grid.z = 1;
+    // TODO: FIXME: Check that the grid size does not exceed the limits of the GPU
+  }
 
-static cublasOperation_t getCublasOperation(CBLAS_TRANSPOSE operation) {
-  if (operation == CblasNoTrans)
-    return CUBLAS_OP_N;
-  else if (operation == CblasTrans)
-    return CUBLAS_OP_T;
-  else // operation == CblasConjTrans
-    return CUBLAS_OP_C;
-}
+  static void computeBlockAndGridSizesForARowMajorBunch(unsigned int bunch_size,
+                                                        unsigned int size,
+                                                        dim3 &block, dim3 &grid) {
+    const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
+  
+    // Number of threads on each block dimension
+    block.x = min(MAX_THREADS, size);
+    block.y = min(MAX_THREADS/block.x, bunch_size);
+    block.z = 1;
+  
+    grid.x = (size/block.x +
+              (size % block.x ? 1 : 0));
+    grid.y = (bunch_size/block.y + (bunch_size % block.y ? 1 : 0));
+    grid.z = 1;
+    // TODO: FIXME: Check that the grid size does not exceed the limits of the GPU
+  }
 
-static cusparseOperation_t getCusparseOperation(CBLAS_TRANSPOSE operation) {
-  if (operation == CblasNoTrans)
-    return CUSPARSE_OPERATION_NON_TRANSPOSE;
-  else if (operation == CblasTrans)
-    return CUSPARSE_OPERATION_TRANSPOSE;
-  else // operation == CblasConjTrans
-    return CUSPARSE_OPERATION_CONJUGATE_TRANSPOSE;
-}
+  static void computeBlockAndGridSizesForAnArray(unsigned int bunch_size,
+                                                 dim3 &block, dim3 &grid) {
+    const unsigned int MAX_THREADS = GPUHelper::getMaxThreadsPerBlock();
+  
+    // Number of threads on each block dimension
+    block.x = min(MAX_THREADS, bunch_size);
+    block.y = 1;
+    block.z = 1;
+  
+    grid.x = (bunch_size/block.x +
+              (bunch_size % block.x ? 1 : 0));
+    grid.y = 1;
+    grid.z = 1;
+    // TODO: FIXME: Check that the grid size does not exceed the limits of the GPU
+  }
+
+  static cublasOperation_t getCublasOperation(CBLAS_TRANSPOSE operation) {
+    if (operation == CblasNoTrans)
+      return CUBLAS_OP_N;
+    else if (operation == CblasTrans)
+      return CUBLAS_OP_T;
+    else // operation == CblasConjTrans
+      return CUBLAS_OP_C;
+  }
+
+  static cusparseOperation_t getCusparseOperation(CBLAS_TRANSPOSE operation) {
+    if (operation == CblasNoTrans)
+      return CUSPARSE_OPERATION_NON_TRANSPOSE;
+    else if (operation == CblasTrans)
+      return CUSPARSE_OPERATION_TRANSPOSE;
+    else // operation == CblasConjTrans
+      return CUSPARSE_OPERATION_CONJUGATE_TRANSPOSE;
+  }
+
+} // namespace april_math
+
 #endif

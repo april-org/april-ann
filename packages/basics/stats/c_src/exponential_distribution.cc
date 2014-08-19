@@ -20,9 +20,18 @@
  */
 #include <cmath>
 #include "buffer_list.h"
+#include "c_string.h"
 #include "error_print.h"
 #include "exponential_distribution.h"
+#include "smart_ptr.h"
 #include "utilMatrixFloat.h"
+
+using april_utils::buffer_list;
+using april_utils::log_float;
+using april_utils::SharedPtr;
+using AprilIO::CStringStream;
+using basics::MatrixFloat;
+using basics::MTRand;
 
 namespace Stats {
   
@@ -126,13 +135,12 @@ namespace Stats {
   }
   
   char *ExponentialDistribution::toLuaString(bool is_ascii) const {
-    buffer_list buffer;
-    char *lambda_str;
-    int len;
-    lambda_str = writeMatrixFloatToString(lambda, is_ascii, len);
-    buffer.printf("stats.dist.exponential(matrix.fromString[[%s]])", lambda_str);
-    delete[] lambda_str;
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+    SharedPtr<CStringStream> stream(new CStringStream());
+    stream->put("stats.dist.exponential(matrix.fromString[[");
+    april_utils::HashTableOptions options;
+    lambda->write( stream.get(), options.putBoolean("ascii", is_ascii) );
+    stream->put("]])\0",4); // forces a \0 at the end of the buffer
+    return stream->releaseString();
   }
   
 }

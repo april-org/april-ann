@@ -24,7 +24,7 @@
 #include "MersenneTwister.h"
 
 namespace Stats {
-  double gammaVariate(MTRand *rng, double a, double b, double c);
+  double gammaVariate(basics::MTRand *rng, double a, double b, double c);
 }
 
 #endif // GAMMA_VARIATE_H

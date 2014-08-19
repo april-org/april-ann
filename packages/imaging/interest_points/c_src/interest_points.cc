@@ -32,6 +32,8 @@
 #include "linear_least_squares.h"
 
 using namespace april_utils;
+using namespace basics;
+using namespace imaging;
 /*::vector;
 using april_utils::pair;
 using april_utils::min;

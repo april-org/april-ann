@@ -8,6 +8,12 @@
 #include "geometry.h"
 //BIND_END
 
+//BIND_HEADER_C
+using namespace april_utils;
+using namespace basics;
+using namespace imaging;
+//BIND_END
+
 //BIND_FUNCTION ocr.off_line_text_preprocessing.normalize_image
 {
   using april_utils::vector;

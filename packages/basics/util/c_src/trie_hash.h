@@ -18,13 +18,14 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef TRIE_H
-#define TRIE_H
+#ifndef TRIE_HASH_H
+#define TRIE_HASH_H
+
+#include <cstdio>
+#include <cstdlib>
 
 #include "aux_hash_table.h"
 #include "error_print.h"
-#include <cstdio>
-#include <cstdlib>
 #include "hash_table.h"
 
 namespace april_utils {
@@ -33,7 +34,7 @@ namespace april_utils {
   /// transiciones entre estados con el tipo int, y da como salida el tipo
   /// O.
   template <typename O>
-  class Trie {
+  class TrieHash {
   public:
     // una transicion va de (estado, int) => (dest)
     typedef april_utils::hash<int_pair, int> transitions_t;
@@ -56,11 +57,11 @@ namespace april_utils {
     
     // iterador sencillo
     class iterator {
-      friend class Trie;
-      Trie *trie;
+      friend class TrieHash;
+      TrieHash *trie;
       typename transitions_t::iterator hash_it;
       
-      iterator(Trie *trie, typename transitions_t::iterator it) {
+      iterator(TrieHash *trie, typename transitions_t::iterator it) {
 	this->trie    = trie;
 	this->hash_it = it;
       }
@@ -118,7 +119,7 @@ namespace april_utils {
     /////////////////////////////////////////////////////////////////////////////
     
     /// Reserva memoria, el tamanyo del Trie debe ser conocido a priori.
-    Trie(int num_nodes = 8) :
+    TrieHash(int num_nodes = 8) :
       outputs_tbl(8, 2.0),
       transitions_tbl(8, 2.0)
     {
@@ -130,7 +131,7 @@ namespace april_utils {
     }
     
     /// Libera los recursos
-    ~Trie() {
+    ~TrieHash() {
       delete[] levels_tbl;
     }
 
@@ -282,4 +283,4 @@ namespace april_utils {
 
 };
 
-#endif // TRIE_H
+#endif // TRIE_HASH_H

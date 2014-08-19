@@ -88,12 +88,14 @@ end
 --               }
 --   HEADER_H        : Cabecera del posible .h
 --   HEADER_C        : Cabecera del posible .cc
+--   FOOTER_H        : Pie del posible .h
 
 FUNCTIONS = {}
 TABLES = {}
 CREATE_CLASS  = {}
 CLASSES = {}
 HEADER_H = ""
+FOOTER_H = ""
 HEADER_C = ""
 LUANAME = {}
 PARENT_CLASS = {}
@@ -229,6 +231,12 @@ function load_data(filename)
 		    last_table, last_key = _G, "HEADER_H"
 		    store_header()
 		    print("...Header h")
+		 end,
+      FOOTER_H = function() 
+		    last_className ="Pie"
+		    last_table, last_key = _G, "FOOTER_H"
+		    store_header()
+		    print("...Footer h")
 		 end,
       LUACLASSNAME = function (cName, luaName)
 	assert(cName and luaName, "LUACLASSNAME needs a cName and luaName")

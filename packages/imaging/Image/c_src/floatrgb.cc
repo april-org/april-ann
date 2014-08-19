@@ -20,115 +20,119 @@
  */
 #include "floatrgb.h"
 
-FloatRGB operator + (FloatRGB x, FloatRGB y)
-{
-  return FloatRGB(x.r + y.r, x.g + y.g, x.b + y.b);
-}
+namespace imaging {
 
-FloatRGB operator - (FloatRGB x, FloatRGB y)
-{
-  return FloatRGB(x.r - y.r, x.g - y.g, x.b - y.b);
-}
+  FloatRGB operator + (FloatRGB x, FloatRGB y)
+  {
+    return FloatRGB(x.r + y.r, x.g + y.g, x.b + y.b);
+  }
 
-FloatRGB operator * (FloatRGB x, FloatRGB y)
-{
-  return FloatRGB(x.r * y.r, x.g * y.g, x.b * y.b);
-}
+  FloatRGB operator - (FloatRGB x, FloatRGB y)
+  {
+    return FloatRGB(x.r - y.r, x.g - y.g, x.b - y.b);
+  }
 
-FloatRGB operator / (FloatRGB x, FloatRGB y)
-{
-  return FloatRGB(x.r / y.r, x.g / y.g, x.b / y.b);
-}
+  FloatRGB operator * (FloatRGB x, FloatRGB y)
+  {
+    return FloatRGB(x.r * y.r, x.g * y.g, x.b * y.b);
+  }
 
-FloatRGB operator + (FloatRGB x, float y)
-{
-  return x+FloatRGB(y);
-}
+  FloatRGB operator / (FloatRGB x, FloatRGB y)
+  {
+    return FloatRGB(x.r / y.r, x.g / y.g, x.b / y.b);
+  }
 
-FloatRGB operator - (FloatRGB x, float y)
-{
-  return x-FloatRGB(y);
-}
+  FloatRGB operator + (FloatRGB x, float y)
+  {
+    return x+FloatRGB(y);
+  }
 
-FloatRGB operator * (FloatRGB x, float y)
-{
-  return x*FloatRGB(y);
-}
+  FloatRGB operator - (FloatRGB x, float y)
+  {
+    return x-FloatRGB(y);
+  }
 
-FloatRGB operator / (FloatRGB x, float y)
-{
-  return x/FloatRGB(y);
-}
+  FloatRGB operator * (FloatRGB x, float y)
+  {
+    return x*FloatRGB(y);
+  }
 
-FloatRGB operator + (float x, FloatRGB y)
-{
-  return FloatRGB(x)+y;
-}
+  FloatRGB operator / (FloatRGB x, float y)
+  {
+    return x/FloatRGB(y);
+  }
 
-FloatRGB operator - (float x, FloatRGB y)
-{
-  return FloatRGB(x)-y;
-}
+  FloatRGB operator + (float x, FloatRGB y)
+  {
+    return FloatRGB(x)+y;
+  }
 
-FloatRGB operator * (float x, FloatRGB y)
-{
-  return FloatRGB(x)*y;
-}
+  FloatRGB operator - (float x, FloatRGB y)
+  {
+    return FloatRGB(x)-y;
+  }
 
-FloatRGB operator / (float x, FloatRGB y)
-{
-  return FloatRGB(x)/y;
-}
+  FloatRGB operator * (float x, FloatRGB y)
+  {
+    return FloatRGB(x)*y;
+  }
 
-FloatRGB operator += (FloatRGB x, FloatRGB y)
-{
-  return (x = x + y);
-}
+  FloatRGB operator / (float x, FloatRGB y)
+  {
+    return FloatRGB(x)/y;
+  }
 
-FloatRGB operator -= (FloatRGB x, FloatRGB y)
-{
-  return (x = x - y);
-}
+  FloatRGB operator += (FloatRGB x, FloatRGB y)
+  {
+    return (x = x + y);
+  }
 
-FloatRGB operator *= (FloatRGB x, FloatRGB y)
-{
-  return (x = x * y);
-}
+  FloatRGB operator -= (FloatRGB x, FloatRGB y)
+  {
+    return (x = x - y);
+  }
 
-FloatRGB operator /= (FloatRGB x, FloatRGB y)
-{
-  return (x = x / y);
-}
+  FloatRGB operator *= (FloatRGB x, FloatRGB y)
+  {
+    return (x = x * y);
+  }
 
-FloatRGB operator += (FloatRGB x, float y)
-{
-  return (x = x + y);
-}
+  FloatRGB operator /= (FloatRGB x, FloatRGB y)
+  {
+    return (x = x / y);
+  }
 
-FloatRGB operator -= (FloatRGB x, float y)
-{
-  return (x = x - y);
-}
+  FloatRGB operator += (FloatRGB x, float y)
+  {
+    return (x = x + y);
+  }
 
-FloatRGB operator *= (FloatRGB x, float y)
-{
-  return (x = x * y);
-}
+  FloatRGB operator -= (FloatRGB x, float y)
+  {
+    return (x = x - y);
+  }
 
-FloatRGB operator /= (FloatRGB x, float y)
-{
-  return (x = x / y);
-}
+  FloatRGB operator *= (FloatRGB x, float y)
+  {
+    return (x = x * y);
+  }
 
+  FloatRGB operator /= (FloatRGB x, float y)
+  {
+    return (x = x / y);
+  }
+
+} // namespace imaging
 
 namespace april_utils{
-  template<> FloatRGB clamp<FloatRGB>(FloatRGB val, FloatRGB lower, FloatRGB upper)
+  template<> imaging::FloatRGB clamp<imaging::FloatRGB>(imaging::FloatRGB val,
+                                                        imaging::FloatRGB lower,
+                                                        imaging::FloatRGB upper)
   {
     float r = clamp(val.r, lower.r, upper.r);
     float g = clamp(val.g, lower.g, upper.g);
     float b = clamp(val.b, lower.b, upper.b);
     
-    return FloatRGB(r,g,b);
+    return imaging::FloatRGB(r,g,b);
   }
 }
-

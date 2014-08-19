@@ -26,116 +26,120 @@
 
 using namespace april_utils;
 
-/// searchs the index where the given coordinate (c1,c2) will is stored, or -1
-/// in case it isn't there
-int doSearchCSCSparseIndexOf(const Int32GPUMirroredMemoryBlock *indices,
-			     const Int32GPUMirroredMemoryBlock *first_index,
-			     const int c1, const int c2, bool use_gpu) {
-#ifndef USE_CUDA
-  UNUSED_VARIABLE(use_gpu);
-#endif
-#ifdef USE_CUDA
-  if (use_gpu) {
-    ERROR_PRINT("CUDA VERSION NOT IMPLEMENTED\n");
-  }
-  // else {
-#endif
-  const int *indices_ptr = indices->getPPALForRead();
-  const int *first_index_ptr = first_index->getPPALForRead();
-  if (c1 == 0) return first_index_ptr[c2];
-  else {
-    return binary_search(indices_ptr + first_index_ptr[c2],
-			 first_index_ptr[c2+1] - first_index_ptr[c2],
-			 c1);
-  }
-#ifdef USE_CUDA
-  // }
-#endif
-}
+namespace april_math {
 
-/// searchs the index where the given coordinate (c1,c2) will is stored, or -1
-/// in case it isn't there
-int doSearchCSRSparseIndexOf(const Int32GPUMirroredMemoryBlock *indices,
-			     const Int32GPUMirroredMemoryBlock *first_index,
-			     const int c1, const int c2, bool use_gpu) {
+  /// searchs the index where the given coordinate (c1,c2) will is stored, or -1
+  /// in case it isn't there
+  int doSearchCSCSparseIndexOf(const Int32GPUMirroredMemoryBlock *indices,
+                               const Int32GPUMirroredMemoryBlock *first_index,
+                               const int c1, const int c2, bool use_gpu) {
 #ifndef USE_CUDA
-  UNUSED_VARIABLE(use_gpu);
+    UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
-  if (use_gpu) {
-    ERROR_PRINT("CUDA VERSION NOT IMPLEMENTED\n");
-  }
-  // else {
+    if (use_gpu) {
+      ERROR_PRINT("CUDA VERSION NOT IMPLEMENTED\n");
+    }
+    // else {
 #endif
-  const int *indices_ptr = indices->getPPALForRead();
-  const int *first_index_ptr = first_index->getPPALForRead();
-  if (c2 == 0) return first_index_ptr[c1];
-  else {
-    return binary_search(indices_ptr + first_index_ptr[c1],
-			 first_index_ptr[c1+1] - first_index_ptr[c1],
-			 c2);
-  }
+    const int *indices_ptr = indices->getPPALForRead();
+    const int *first_index_ptr = first_index->getPPALForRead();
+    if (c1 == 0) return first_index_ptr[c2];
+    else {
+      return binary_search(indices_ptr + first_index_ptr[c2],
+                           first_index_ptr[c2+1] - first_index_ptr[c2],
+                           c1);
+    }
 #ifdef USE_CUDA
-  // }
+    // }
 #endif
-}
+  }
 
-/////////////////////////////////////////////////////////////////////
-
-/// searchs the index where the given coordinate (c1,c2) will is stored, or -1
-/// in case it isn't there
-int doSearchCSCSparseIndexOfFirst(const Int32GPUMirroredMemoryBlock *indices,
-				  const Int32GPUMirroredMemoryBlock *first_index,
-				  const int c1, const int c2, bool use_gpu) {
+  /// searchs the index where the given coordinate (c1,c2) will is stored, or -1
+  /// in case it isn't there
+  int doSearchCSRSparseIndexOf(const Int32GPUMirroredMemoryBlock *indices,
+                               const Int32GPUMirroredMemoryBlock *first_index,
+                               const int c1, const int c2, bool use_gpu) {
 #ifndef USE_CUDA
-  UNUSED_VARIABLE(use_gpu);
+    UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
-  if (use_gpu) {
-    ERROR_PRINT("CUDA VERSION NOT IMPLEMENTED\n");
-  }
-  // else {
+    if (use_gpu) {
+      ERROR_PRINT("CUDA VERSION NOT IMPLEMENTED\n");
+    }
+    // else {
 #endif
-  const int *indices_ptr = indices->getPPALForRead();
-  const int *first_index_ptr = first_index->getPPALForRead();
-  if (c1 == 0) return first_index_ptr[c2];
-  else {
-    const int *aux = binary_search_first(indices_ptr + first_index_ptr[c2],
-					 first_index_ptr[c2+1] - first_index_ptr[c2],
-					 c1);
-    if (aux == 0) ERROR_EXIT(128, "Incorrect given coordinates\n");
-    return *aux;
-  }
+    const int *indices_ptr = indices->getPPALForRead();
+    const int *first_index_ptr = first_index->getPPALForRead();
+    if (c2 == 0) return first_index_ptr[c1];
+    else {
+      return binary_search(indices_ptr + first_index_ptr[c1],
+                           first_index_ptr[c1+1] - first_index_ptr[c1],
+                           c2);
+    }
 #ifdef USE_CUDA
-  // }
+    // }
 #endif
-}
+  }
 
-/// searchs the index where the given coordinate (c1,c2) will is stored, or -1
-/// in case it isn't there
-int doSearchCSRSparseIndexOfFirst(const Int32GPUMirroredMemoryBlock *indices,
-				  const Int32GPUMirroredMemoryBlock *first_index,
-				  const int c1, const int c2, bool use_gpu) {
+  /////////////////////////////////////////////////////////////////////
+
+  /// searchs the index where the given coordinate (c1,c2) will is stored, or -1
+  /// in case it isn't there
+  int doSearchCSCSparseIndexOfFirst(const Int32GPUMirroredMemoryBlock *indices,
+                                    const Int32GPUMirroredMemoryBlock *first_index,
+                                    const int c1, const int c2, bool use_gpu) {
 #ifndef USE_CUDA
-  UNUSED_VARIABLE(use_gpu);
+    UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
-  if (use_gpu) {
-    ERROR_PRINT("CUDA VERSION NOT IMPLEMENTED\n");
-  }
-  // else {
+    if (use_gpu) {
+      ERROR_PRINT("CUDA VERSION NOT IMPLEMENTED\n");
+    }
+    // else {
 #endif
-  const int *indices_ptr = indices->getPPALForRead();
-  const int *first_index_ptr = first_index->getPPALForRead();
-  if (c2 == 0) return first_index_ptr[c1];
-  else {
-    const int *aux = binary_search_first(indices_ptr + first_index_ptr[c1],
-					 first_index_ptr[c1+1] - first_index_ptr[c1],
-					 c2);
-    if (aux == 0) ERROR_EXIT(128, "Incorrect given coordinates\n");
-    return *aux;
-  }
+    const int *indices_ptr = indices->getPPALForRead();
+    const int *first_index_ptr = first_index->getPPALForRead();
+    if (c1 == 0) return first_index_ptr[c2];
+    else {
+      const int *aux = binary_search_first(indices_ptr + first_index_ptr[c2],
+                                           first_index_ptr[c2+1] - first_index_ptr[c2],
+                                           c1);
+      if (aux == 0) ERROR_EXIT(128, "Incorrect given coordinates\n");
+      return *aux;
+    }
 #ifdef USE_CUDA
-  // }
+    // }
 #endif
-}
+  }
+
+  /// searchs the index where the given coordinate (c1,c2) will is stored, or -1
+  /// in case it isn't there
+  int doSearchCSRSparseIndexOfFirst(const Int32GPUMirroredMemoryBlock *indices,
+                                    const Int32GPUMirroredMemoryBlock *first_index,
+                                    const int c1, const int c2, bool use_gpu) {
+#ifndef USE_CUDA
+    UNUSED_VARIABLE(use_gpu);
+#endif
+#ifdef USE_CUDA
+    if (use_gpu) {
+      ERROR_PRINT("CUDA VERSION NOT IMPLEMENTED\n");
+    }
+    // else {
+#endif
+    const int *indices_ptr = indices->getPPALForRead();
+    const int *first_index_ptr = first_index->getPPALForRead();
+    if (c2 == 0) return first_index_ptr[c1];
+    else {
+      const int *aux = binary_search_first(indices_ptr + first_index_ptr[c1],
+                                           first_index_ptr[c1+1] - first_index_ptr[c1],
+                                           c2);
+      if (aux == 0) ERROR_EXIT(128, "Incorrect given coordinates\n");
+      return *aux;
+    }
+#ifdef USE_CUDA
+    // }
+#endif
+  }
+
+} // namespace april_math

@@ -18,8 +18,8 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#ifndef TRIE4LUA_H
-#define TRIE4LUA_H
+#ifndef TRIE_HASH_4_LUA_H
+#define TRIE_HASH_4_LUA_H
 
 #include "referenced.h"
 #include "aux_hash_table.h"
@@ -31,19 +31,19 @@ namespace april_utils {
   // decided not to reuse a previous trie class since this one is even
   // simpler
 
-  class Trie4lua : public Referenced {
+  class TrieHash4Lua : public Referenced {
     static const int rootNode = 0;
     int lastId;
-    // estado x palabra -> estado
+    // state x id -> state
     typedef hash<int_pair, int> hash_type;
     hash_type transition_t;
   public:
-    Trie4lua();
+    TrieHash4Lua();
     int reserveId();
-    int find(int *wordsequence, int lenght);
+    int find(int *ids, int lenght);
   };
 
 
 } // namespace april_utils
 
-#endif // TRIE4LUA_H
+#endif // TRIE_HASH_4_LUA_H

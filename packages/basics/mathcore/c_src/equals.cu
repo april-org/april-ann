@@ -23,61 +23,65 @@
 #include "cuda_utils.h"
 #include "unused_variable.h"
 
-/***************************************
- ************* CBLAS SECTION ***********
- ***************************************/
+namespace april_math {
 
-float absolute_value(const float &v) { return fabsf(v); }
-float absolute_value(const ComplexF &v) { return v.abs(); }
+  /***************************************
+   ************* CBLAS SECTION ***********
+   ***************************************/
 
-template<typename T>
-bool doEquals(unsigned int N,
-	      const GPUMirroredMemoryBlock<T> *v1,
-	      const GPUMirroredMemoryBlock<T> *v2,
-	      unsigned int stride1,
-	      unsigned int stride2,
-	      unsigned int shift1,
-	      unsigned int shift2,
-	      float epsilon,
-	      bool use_gpu) {
-  bool eq = true;
+  float absolute_value(const float &v) { return fabsf(v); }
+  float absolute_value(const ComplexF &v) { return v.abs(); }
+
+  template<typename T>
+  bool doEquals(unsigned int N,
+                const GPUMirroredMemoryBlock<T> *v1,
+                const GPUMirroredMemoryBlock<T> *v2,
+                unsigned int stride1,
+                unsigned int stride2,
+                unsigned int shift1,
+                unsigned int shift2,
+                float epsilon,
+                bool use_gpu) {
+    bool eq = true;
 #ifndef USE_CUDA
-  UNUSED_VARIABLE(use_gpu);
+    UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
-  if (use_gpu) {
-    ERROR_PRINT("CUDA VERSION NOT IMPLEMENTED\n");
-  }
-  // else {
+    if (use_gpu) {
+      ERROR_PRINT("CUDA VERSION NOT IMPLEMENTED\n");
+    }
+    // else {
 #endif
-  const T *v1_mem = v1->getPPALForRead() + shift1;
-  const T *v2_mem = v2->getPPALForRead() + shift2;
-  for (unsigned int i=0; i<N && eq; ++i, v1_mem+=stride1, v2_mem+=stride2) {
-    T aux(*v1_mem - *v2_mem);
-    eq = eq && (absolute_value(aux) < epsilon);
-  }
+    const T *v1_mem = v1->getPPALForRead() + shift1;
+    const T *v2_mem = v2->getPPALForRead() + shift2;
+    for (unsigned int i=0; i<N && eq; ++i, v1_mem+=stride1, v2_mem+=stride2) {
+      T aux(*v1_mem - *v2_mem);
+      eq = eq && (absolute_value(aux) < epsilon);
+    }
 #ifdef USE_CUDA
-  //  }
+    //  }
 #endif
-  return eq;
-}
+    return eq;
+  }
 
-template bool doEquals<float>(unsigned int N,
-			      const GPUMirroredMemoryBlock<float> *v1,
-			      const GPUMirroredMemoryBlock<float> *v2,
-			      unsigned int stride1,
-			      unsigned int stride2,
-			      unsigned int shift1,
-			      unsigned int shift2,
-			      float epsilon,
-			      bool use_gpu);
+  template bool doEquals<float>(unsigned int N,
+                                const GPUMirroredMemoryBlock<float> *v1,
+                                const GPUMirroredMemoryBlock<float> *v2,
+                                unsigned int stride1,
+                                unsigned int stride2,
+                                unsigned int shift1,
+                                unsigned int shift2,
+                                float epsilon,
+                                bool use_gpu);
 
-template bool doEquals<ComplexF>(unsigned int N,
-			      const GPUMirroredMemoryBlock<ComplexF> *v1,
-			      const GPUMirroredMemoryBlock<ComplexF> *v2,
-			      unsigned int stride1,
-			      unsigned int stride2,
-			      unsigned int shift1,
-			      unsigned int shift2,
-			      float epsilon,
-			      bool use_gpu);
+  template bool doEquals<ComplexF>(unsigned int N,
+                                   const GPUMirroredMemoryBlock<ComplexF> *v1,
+                                   const GPUMirroredMemoryBlock<ComplexF> *v2,
+                                   unsigned int stride1,
+                                   unsigned int stride2,
+                                   unsigned int shift1,
+                                   unsigned int shift2,
+                                   float epsilon,
+                                   bool use_gpu);
+
+} // namespace april_math

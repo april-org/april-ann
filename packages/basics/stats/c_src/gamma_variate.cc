@@ -22,6 +22,8 @@
 #include "april_assert.h"
 #include "gamma_variate.h"
 
+using basics::MTRand;
+
 namespace Stats {
   // Modification of: http://ftp.arl.mil/random/random.pdf
   double gammaVariate(MTRand *rng, double a, double b, double c) {

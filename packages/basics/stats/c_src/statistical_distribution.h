@@ -31,50 +31,55 @@
 namespace Stats {
 
   /**
-   * Class StatisticalDistributionBase implements basic interface for
+   * @brief Class StatisticalDistributionBase implements basic interface for
    * statistical distributions and defines a private API for new classes
-   * derivation. All the methods work with col_major matrices (like ANN
-   * components), and with two-dimensional matrices where first dimension is
-   * the bunch_size (like ANN components).
+   * derivation.
+   
+   * All the methods work with col_major matrices (like ANN components), and
+   * with two-dimensional matrices where first dimension is the bunch_size (like
+   * ANN components).
    */
   class StatisticalDistributionBase : public Referenced {
     unsigned int size;
     
   protected:
     /**
-     * Receives a random generator and a MatrixFloat where sampled values will
-     * be stored. The number of samples values will be equal to
+     * @brief Receives a random generator and a MatrixFloat where sampled values
+     * will be stored. The number of samples values will be equal to
      * result->getDimSize(0)
      *
      * @param rng - A MTRand instance.
      * @param result - A MatrixFloat where the sampled data will be stored.
      */
-    virtual void privateSample(MTRand *rng, MatrixFloat *result) = 0;
+    virtual void privateSample(basics::MTRand *rng,
+                               basics::MatrixFloat *result) = 0;
     /**
-     * Receives a x MatrixFloat with NxM size (N = bunch_size), and a N sized
-     * result MatrixFloat.
+     * @brief Receives a x MatrixFloat with NxM size (N = bunch_size), and a N
+     * sized result MatrixFloat.
      *
      * @param x - A NxM MatrixFloat with N data points of size M.
      * @param result - A MatrixFloat where logpdf will be stored.
      */
-    virtual void privateLogpdf(const MatrixFloat *x, MatrixFloat *result) = 0;
+    virtual void privateLogpdf(const basics::MatrixFloat *x,
+                               basics::MatrixFloat *result) = 0;
     /**
-     * Receives a x MatrixFloat with NxM size (N = bunch_size), and a N sized
-     * result MatrixFloat.
+     * @brief Receives a x MatrixFloat with NxM size (N = bunch_size), and a N
+     * sized result MatrixFloat.
      *
      * @param x - A NxM MatrixFloat with N data points of size M.
      * @param result - A MatrixFloat where logcdf will be stored.
      */
-    virtual void privateLogcdf(const MatrixFloat *x, MatrixFloat *result) = 0;
+    virtual void privateLogcdf(const basics::MatrixFloat *x,
+                               basics::MatrixFloat *result) = 0;
     /**
-     * Receives a x MatrixFloat with NxM size (N = bunch_size), and a N sized
-     * grads MatrixFloat.
+     * @brief Receives a x MatrixFloat with NxM size (N = bunch_size), and a N
+     * sized grads MatrixFloat.
      *
      * @param x - A NxM MatrixFloat with N data points of size M.
      * @param result - A MatrixFloat where derivative of logpdf will be stored.
      */
-    virtual void privateLogpdfDerivative(const MatrixFloat *x,
-                                         MatrixFloat *result) {
+    virtual void privateLogpdfDerivative(const basics::MatrixFloat *x,
+                                         basics::MatrixFloat *result) {
       UNUSED_VARIABLE(x);
       UNUSED_VARIABLE(result);
       ERROR_EXIT(128, "Derivative not implemented\n");
@@ -86,7 +91,7 @@ namespace Stats {
     StatisticalDistributionBase(unsigned int size) : Referenced(), size(size) {}
     virtual ~StatisticalDistributionBase() {}
     /**
-     * Public part of sample method, where arguments will be checked.
+     * @brief Public part of sample method, where arguments will be checked.
      *
      * @param rng - A MTRand instance.
      *
@@ -95,10 +100,11 @@ namespace Stats {
      *
      * @return A MatrixFloat with the sample result.
      */
-    MatrixFloat *sample(MTRand *rng, MatrixFloat *result=0) {
+    basics::MatrixFloat *sample(basics::MTRand *rng,
+                                basics::MatrixFloat *result=0) {
       int dims[2] = { 1, static_cast<int>(size) };
       if (result == 0) {
-        result = new MatrixFloat(2, dims, CblasColMajor);
+        result = new basics::MatrixFloat(2, dims, CblasColMajor);
       }
       else if (result->getNumDim() != 2 || result->getDimSize(1) != static_cast<int>(size))
         ERROR_EXIT1(128, "Incorrect result matrix size, expected "
@@ -110,7 +116,7 @@ namespace Stats {
       return result;
     }
     /**
-     * Public part of logpdf method, arguments will be checked here.
+     * @brief Public part of logpdf method, arguments will be checked here.
      *
      * @param x - A MatrixFloat with size NxM where N is the number of data
      * points.
@@ -119,7 +125,8 @@ namespace Stats {
      *
      * @return A MatrixFloat with the sample result.
      */
-    MatrixFloat *logpdf(const MatrixFloat *x, MatrixFloat *result=0) {
+    basics::MatrixFloat *logpdf(const basics::MatrixFloat *x,
+                                basics::MatrixFloat *result=0) {
       if (x->getNumDim() != 2 || x->getDimSize(1) != static_cast<int>(size))
         ERROR_EXIT1(128, "Incorrect x matrix size, expected bi-dimensional "
                     "matrix with Nx%u shape\n", size);
@@ -127,7 +134,7 @@ namespace Stats {
         ERROR_EXIT(128, "Expected col_major in x matrix\n");
       int dims[1] = { x->getDimSize(0) };
       if (result == 0) {
-        result = new MatrixFloat(1, dims, CblasColMajor);
+        result = new basics::MatrixFloat(1, dims, CblasColMajor);
       }
       else if (result->getNumDim() != 1 || result->getDimSize(0) != dims[0])
         ERROR_EXIT1(128, "Incorrect result matrix size, expected "
@@ -139,7 +146,7 @@ namespace Stats {
       return result;
     }
     /**
-     * Public part of logcdf method, arguments will be checked here.
+     * @brief Public part of logcdf method, arguments will be checked here.
      *
      * @param x - A MatrixFloat with size NxM where N is the number of data
      * points.
@@ -148,7 +155,8 @@ namespace Stats {
      *
      * @return A MatrixFloat with the sample result.
      */
-    MatrixFloat *logcdf(const MatrixFloat *x, MatrixFloat *result=0) {
+    basics::MatrixFloat *logcdf(const basics::MatrixFloat *x,
+                                basics::MatrixFloat *result=0) {
       if (x->getNumDim() != 2 || x->getDimSize(1) != static_cast<int>(size))
         ERROR_EXIT1(128, "Incorrect x matrix size, expected bi-dimensional "
                     "matrix with Nx%u shape\n", size);
@@ -156,7 +164,7 @@ namespace Stats {
         ERROR_EXIT(128, "Expected col_major in x matrix\n");
       int dims[1] = { x->getDimSize(0) };
       if (result == 0) {
-        result = new MatrixFloat(1, dims, CblasColMajor);
+        result = new basics::MatrixFloat(1, dims, CblasColMajor);
       }
       else if (result->getNumDim() != 1 || result->getDimSize(0) != dims[0])
         ERROR_EXIT1(128, "Incorrect result matrix size, expected "
@@ -168,7 +176,8 @@ namespace Stats {
       return result;
     }
     /**
-     * Public part of logpdfDerivative method, arguments will be checked here.
+     * @brief Public part of logpdfDerivative method, arguments will be checked
+     * here.
      *
      * @param x - A MatrixFloat with size NxM where N is the number of data
      * points.
@@ -177,7 +186,8 @@ namespace Stats {
      *
      * @return A MatrixFloat with the sample result.
      */
-    MatrixFloat *logpdfDerivative(const MatrixFloat *x, MatrixFloat *grads=0) {
+    basics::MatrixFloat *logpdfDerivative(const basics::MatrixFloat *x,
+                                          basics::MatrixFloat *grads=0) {
       if (x->getNumDim() != 2 || x->getDimSize(1) != static_cast<int>(size))
         ERROR_EXIT1(128, "Incorrect x matrix size, expected bi-dimensional "
                     "matrix with Nx%u shape\n", size);
@@ -185,7 +195,7 @@ namespace Stats {
         ERROR_EXIT(128, "Expected col_major in x matrix\n");
       const int *dims = x->getDimPtr();
       if (grads == 0) {
-        grads = new MatrixFloat(2, dims, CblasColMajor);
+        grads = new basics::MatrixFloat(2, dims, CblasColMajor);
         grads->zeros();
       }
       else if (grads->getNumDim() != 2 || grads->getDimSize(0) != dims[0] ||

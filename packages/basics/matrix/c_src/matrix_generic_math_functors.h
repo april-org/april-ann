@@ -23,9 +23,11 @@
 
 #include "matrix.h"
 
-///// COMPONENT WISE GENERIC FUNCTOR (NO ARGUMENTS) /////
-/// This macro defines structs to be used as FUNCTOR for the templates located
-/// at matrix_generic_math_templates.h
+namespace basics {
+
+  ///// COMPONENT WISE GENERIC FUNCTOR (NO ARGUMENTS) /////
+  /// This macro defines structs to be used as FUNCTOR for the templates located
+  /// at matrix_generic_math_templates.h
 #define DEF_CWISE_FUNCTOR_0(FUNC,TYPE)				\
   struct FUNC##TYPE##CWiseFunctor0 {				\
     FUNC##TYPE##CWiseFunctor0() { }				\
@@ -33,17 +35,17 @@
     void operator()(Matrix<TYPE> *m,				\
 		    unsigned int size, unsigned int stride,	\
 		    unsigned int offset) const {		\
-      FUNC(size, m->getRawDataAccess(), stride, offset,		\
-	   m->getCudaFlag());					\
+      april_math::FUNC(size, m->getRawDataAccess(), stride, offset,     \
+                       m->getCudaFlag());                               \
     }								\
   }
-/// This instantiates a variable of the previous struct
+  /// This instantiates a variable of the previous struct
 #define MAKE_CWISE_FUNCTOR_0(FUNC,TYPE) FUNC##TYPE##CWiseFunctor0()
 
 
-///// COMPONENT WISE GENERIC FUNCTOR (ONE ARGUMENT) /////
-/// This macro defines structs to be used as FUNCTOR for the templates located
-/// at matrix_generic_math_templates.h
+  ///// COMPONENT WISE GENERIC FUNCTOR (ONE ARGUMENT) /////
+  /// This macro defines structs to be used as FUNCTOR for the templates located
+  /// at matrix_generic_math_templates.h
 #define DEF_CWISE_FUNCTOR_1(FUNC,TYPE)				\
   struct FUNC##TYPE##CWiseFunctor1 {				\
     TYPE value;							\
@@ -52,11 +54,13 @@
     void operator()(Matrix<TYPE> *m,				\
 		    unsigned int size, unsigned int stride,	\
 		    unsigned int offset) const {		\
-      FUNC(size, m->getRawDataAccess(), stride, offset,		\
-	   value, m->getCudaFlag());				\
+      april_math::FUNC(size, m->getRawDataAccess(), stride, offset,     \
+                       value, m->getCudaFlag());                        \
     }								\
   }
-/// This instantiates a variable of the previous struct
+  /// This instantiates a variable of the previous struct
 #define MAKE_CWISE_FUNCTOR_1(FUNC,TYPE,VALUE) FUNC##TYPE##CWiseFunctor1(VALUE)
+
+} // namespace basics
 
 #endif // MATRIX_GENERIC_MATH_FUNCTORS_H

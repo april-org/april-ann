@@ -33,11 +33,13 @@ namespace ANN {
     float TH;
     ZeroOneLossFunction(ZeroOneLossFunction *other) : LossFunction(other),
 						      TH(other->TH) { }
-    virtual MatrixFloat *computeLossBunch(Token *input, Token *target);
+    virtual basics::MatrixFloat *computeLossBunch(basics::Token *input,
+                                                  basics::Token *target);
   public:
     ZeroOneLossFunction(unsigned int size, float TH=0.5f);
     virtual ~ZeroOneLossFunction();
-    virtual Token *computeGradient(Token *input, Token *target);
+    virtual basics::Token *computeGradient(basics::Token *input,
+                                           basics::Token *target);
     virtual LossFunction *clone() {
       return new ZeroOneLossFunction(this);
     }

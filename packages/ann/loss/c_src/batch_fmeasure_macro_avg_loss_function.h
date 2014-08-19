@@ -36,7 +36,7 @@ namespace ANN {
   class BatchFMeasureMacroAvgLossFunction : public LossFunction {
     float beta, beta2;
     // auxiliary data for gradient computation speed-up
-    MatrixFloat *Gs, *Hs;
+    basics::MatrixFloat *Gs, *Hs;
     bool complement_output;
     
     BatchFMeasureMacroAvgLossFunction(BatchFMeasureMacroAvgLossFunction *other) :
@@ -48,12 +48,14 @@ namespace ANN {
     }
     
   protected:
-    virtual MatrixFloat *computeLossBunch(Token *input, Token *target);
+    virtual basics::MatrixFloat *computeLossBunch(basics::Token *input,
+                                                  basics::Token *target);
   public:
     BatchFMeasureMacroAvgLossFunction(unsigned int size, float beta=1.0f,
 				      bool complement_output=false);
     virtual ~BatchFMeasureMacroAvgLossFunction();
-    virtual Token *computeGradient(Token *input, Token *target);
+    virtual basics::Token *computeGradient(basics::Token *input,
+                                           basics::Token *target);
     virtual LossFunction *clone() {
       return new BatchFMeasureMacroAvgLossFunction(this);
     }

@@ -26,11 +26,25 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-template <>
-void SparseMatrix<float>::sqrt();
+namespace basics {
+  
+  namespace MatrixIO {
+    
+    /* Especialization of SparseMatrixFloat ascii and binary sizers */
+    
+    template<>
+    int SparseAsciiSizer<float>::operator()(const SparseMatrix<float> *mat);
+    
+    template<>
+    int SparseBinarySizer<float>::operator()(const SparseMatrix<float> *mat);
+    
+  }
 
-///////////////////////////////////////////////////////////////////////////////
+  template <>
+  void SparseMatrix<float>::sqrt();
 
-typedef SparseMatrix<float> SparseMatrixFloat;
+  typedef SparseMatrix<float> SparseMatrixFloat;
+
+}
 
 #endif // SPARSEMATRIXFLOAT_H

@@ -58,4 +58,6 @@ extern "C" {
 
 //LUA end
 
+$$FOOTER_H$$
+
 #endif

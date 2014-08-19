@@ -31,8 +31,6 @@
 #include "error_print.h"
 #include "maxmin.h"
 
-using april_utils::max;
-
 namespace ANN {
 
   /// The class Connections is an static class. It is a helper to build,
@@ -40,47 +38,47 @@ namespace ANN {
   class Connections : public Referenced {
   public:
     static const double weightnearzero;
-    static MatrixFloat *build(unsigned int num_inputs,
-			      unsigned int num_outputs);
+    static basics::MatrixFloat *build(unsigned int num_inputs,
+                                      unsigned int num_outputs);
     //
-    static unsigned int getInputSize(const MatrixFloat *weights) {
+    static unsigned int getInputSize(const basics::MatrixFloat *weights) {
       return static_cast<unsigned int>(weights->getDimSize(1));
     }
-    static unsigned int getNumInputs(const MatrixFloat *weights) {
+    static unsigned int getNumInputs(const basics::MatrixFloat *weights) {
       return static_cast<unsigned int>(weights->getDimSize(1));
     }
-    static unsigned int getOutputSize(const MatrixFloat *weights) {
+    static unsigned int getOutputSize(const basics::MatrixFloat *weights) {
       return static_cast<unsigned int>(weights->getDimSize(0));
     }
-    static unsigned int getNumOutputs(const MatrixFloat *weights) {
+    static unsigned int getNumOutputs(const basics::MatrixFloat *weights) {
       return static_cast<unsigned int>(weights->getDimSize(0));
     }
     
-    static bool checkInputOutputSizes(const MatrixFloat *weights,
+    static bool checkInputOutputSizes(const basics::MatrixFloat *weights,
 				      unsigned int input_size,
 				      unsigned int output_size);
 
-    static void randomizeWeights(MatrixFloat *weights,
-				 MTRand *rnd, float low, float high);
-    static void randomizeWeightsAtColumn(MatrixFloat *weights,
+    static void randomizeWeights(basics::MatrixFloat *weights,
+				 basics::MTRand *rnd, float low, float high);
+    static void randomizeWeightsAtColumn(basics::MatrixFloat *weights,
 					 unsigned int col,
-					 MTRand *rnd,
+					 basics::MTRand *rnd,
 					 float low, float high);
     // Carga/guarda los pesos de la matriz data comenzando por la
     // posicion first_weight_pos. Devuelve la suma del numero de pesos
     // cargados/salvados y first_weight_pos. En caso de error,
     // abortara el programa con un ERROR_EXIT
-    static unsigned int loadWeights(MatrixFloat *weights,
-				    MatrixFloat *data,
+    static unsigned int loadWeights(basics::MatrixFloat *weights,
+				    basics::MatrixFloat *data,
 				    unsigned int first_weight_pos,
 				    unsigned int column_size);
     
-    static unsigned int copyWeightsTo(MatrixFloat *weights,
-				      MatrixFloat *data,
+    static unsigned int copyWeightsTo(basics::MatrixFloat *weights,
+				      basics::MatrixFloat *data,
 				      unsigned int first_weight_pos,
 				      unsigned int column_size);
     
-    static char *toLuaString(MatrixFloat *weights);
+    static char *toLuaString(basics::MatrixFloat *weights);
   };
 }
 #endif

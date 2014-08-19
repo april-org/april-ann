@@ -1,10 +1,3 @@
--- OVERWRITTING TOSTRING FUNCTION
-class.extend(matrix, "to_lua_string",
-             function(self, format)
-               return string.format("matrix.fromString[[%s]]",
-                                    self:toString(format or "binary"))
-end)
-
 -- ADDING PSEUDO-INVERSE METHOD
 class.extend(matrix, "pinv",
              function(self)
@@ -28,17 +21,22 @@ matrix.row_major = function(...)
   return matrix(...)
 end
 
+-- serialization
+matrix.__generic__.__make_all_serialization_methods__(matrix)
+
+-- other stuff
+
 matrix.meta_instance.__call =
-  matrix.__make_generic_call__()
+  matrix.__generic__.__make_generic_call__()
 
 matrix.meta_instance.__tostring =
-  matrix.__make_generic_print__("Matrix",
-				function(value)
-				  return string.format("% -11.6g", value)
-				end)
+  matrix.__generic__.__make_generic_print__("Matrix",
+                                            function(value)
+                                              return string.format("% -11.6g", value)
+  end)
 
 matrix.join =
-  matrix.__make_generic_join__(matrix)
+  matrix.__generic__.__make_generic_join__(matrix)
 
 matrix.meta_instance.__eq = function(op1, op2)
   if type(op1) == "number" or type(op2) == "number" then return false end
@@ -277,35 +275,17 @@ april_set_doc(matrix.col_major, {
 		},
 		outputs = { "A matrix instantiated object" }, })
 
-april_set_doc(matrix.fromFilename, {
-		class = "function", summary = "constructor",
+april_set_doc(matrix.read, {
+		class = "method",
+		summary = "It allows to read a matrix from a stream.",
 		description ={
-		  "Loads a matrix from a filename.",
+		  "It allows to read a matrix from a stream.",
+		  "It uses the format of write function.",
 		},
 		params = {
-		  "A filename path.",
-		  { "A string with 'row_major', 'col_major' or 'no_order'",
-		    "[optional]. It modifies the order specified by content",
-		    "in the file. By default is nil, so the result",
-		    "matrix will has the order specified by the file.",
-		  },
-		},
-		outputs = { "A matrix instantiated object" }, })
-
-april_set_doc(matrix.fromTabFilename, {
-		class = "function", summary = "constructor",
-		description ={
-		  "Loads a matrix from a filename tabuled by lines and spaces.",
-		},
-		params = {
-		  "A filename path.",
-		  { "A string with 'row_major', 'col_major' or 'no_order'",
-		    "[optional]. It modifies the order specified by content",
-		    "in the file. By default is nil, so the result",
-		    "matrix will has the order specified by the file.",
-		  },
-		},
-		outputs = { "A matrix instantiated object" }, })
+		  "A aprilio.stream instance.",
+                  "A lua table with options",
+		}, })
 
 april_set_doc(matrix.fromMMap, {
 		class = "function", summary = "constructor",
@@ -325,30 +305,6 @@ april_set_doc(matrix.fromMMap, {
 		  
 		},
 		outputs = { "A matrix instantiated object" }, })
-
-april_set_doc(matrix.."toFilename", {
-		class = "method",
-		summary = "It allows to store a matrix in a file.",
-		description ={
-		  "It allows to store a matrix in a file.",
-		  "It uses the format expected by fromFilename function.",
-		},
-		params = {
-		  "A filename path.",
-		  { "An string with the format: ascii or binary [optional].",
-		    "By default is ascii." },
-		}, })
-
-april_set_doc(matrix.."toTabFilename", {
-		class = "method",
-		summary = "It allows to store a matrix in a file tabuled by lines and spaces.",
-		description ={
-		  "It allows to store a matrix in a file tabuled by lines and spaces.",
-		  "It uses the format expected by fromTabFilename function.",
-		},
-		params = {
-		  "A filename path.",
-		}, })
 
 april_set_doc(matrix.."toMMap", {
 		class = "method",

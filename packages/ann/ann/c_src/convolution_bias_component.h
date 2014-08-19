@@ -33,9 +33,9 @@ namespace ANN {
   class ConvolutionBiasANNComponent : public VirtualMatrixANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(ConvolutionBiasANNComponent);
     
-    MatrixFloat *bias_vector;
-    MatrixFloat *bias_matrix; // rewrapping of bias_vector matrix to fits at
-			      // input window sizes
+    basics::MatrixFloat *bias_vector;
+    basics::MatrixFloat *bias_matrix; // rewrapping of bias_vector matrix to
+                                      // fits at input window sizes
 
     /// The number of convolutions computed during last forward
     int number_input_windows;
@@ -48,14 +48,14 @@ namespace ANN {
     int *window_num_steps;
     
     void initializeArrays(const int *input_dims);
-    MatrixFloat *prepareBiasBunch();
+    basics::MatrixFloat *prepareBiasBunch();
 
   protected:
 
-    virtual void computeGradients(MatrixFloat*& grads_mat);
-    virtual MatrixFloat *privateDoForward(MatrixFloat *input,
+    virtual void computeGradients(april_utils::SharedPtr<basics::MatrixFloat> & grad_mat);
+    virtual basics::MatrixFloat *privateDoForward(basics::MatrixFloat *input,
                                           bool during_training);
-    virtual MatrixFloat *privateDoBackprop(MatrixFloat *input_error);
+    virtual basics::MatrixFloat *privateDoBackprop(basics::MatrixFloat *input_error);
     virtual void privateReset(unsigned int it=0);
     
   public:
@@ -64,16 +64,16 @@ namespace ANN {
 				const char *name=0,
 				const char *bias_name=0);
     virtual ~ConvolutionBiasANNComponent();
-    virtual void precomputeOutputSize(const vector<unsigned int> &input_size,
-				      vector<unsigned int> &output_size) {
+    virtual void precomputeOutputSize(const april_utils::vector<unsigned int> &input_size,
+				      april_utils::vector<unsigned int> &output_size) {
       output_size = input_size;
     }
     virtual ANNComponent *clone();
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
-		       MatrixFloatSet *weights_dict,
-		       hash<string,ANNComponent*> &components_dict);
-    virtual void copyWeights(MatrixFloatSet *weights_dict);
+		       basics::MatrixFloatSet *weights_dict,
+		       april_utils::hash<april_utils::string,ANNComponent*> &components_dict);
+    virtual void copyWeights(basics::MatrixFloatSet *weights_dict);
     virtual char *toLuaString();
 
   };

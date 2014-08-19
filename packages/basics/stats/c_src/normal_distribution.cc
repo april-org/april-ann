@@ -27,6 +27,11 @@
 #include "unused_variable.h"
 #include "utilMatrixFloat.h"
 
+using basics::MatrixFloat;
+using basics::MTRand;
+using april_utils::log_float;
+using april_utils::buffer_list;
+
 namespace Stats {
   
   const float M_2PI = M_PI*2.0f;

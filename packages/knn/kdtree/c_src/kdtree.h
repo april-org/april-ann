@@ -200,12 +200,12 @@ namespace KNN {
     const int D; ///< The number of dimensions
     int N; ///< The number of points
     /// A vector with matrices which contains the data
-    april_utils::vector< Matrix<T>* > matrix_vector;
+    april_utils::vector< basics::Matrix<T>* > matrix_vector;
     /// A vector with indices of first point index in matrix_vector
     april_utils::vector<int> first_index;
     /// The root node of the KDTree
     KDNode *root;
-    MTRand *random; ///< A random number generator
+    basics::MTRand *random; ///< A random number generator
     
     // for stats
     int number_of_processed_points;
@@ -215,7 +215,7 @@ namespace KNN {
     /// Builds a point given its index
     Point<T> makePoint(int index) {
       int row;
-      Matrix<T> *m = getMatrixAndRow(index,row);
+      basics::Matrix<T> *m = getMatrixAndRow(index,row);
       return Point<T>(m, row, index);
     }
     
@@ -307,21 +307,22 @@ namespace KNN {
     
   public:
 
-    KDTree(const int D, MTRand *random) : D(D), N(0), root(0), random(random) {
+    KDTree(const int D, basics::MTRand *random) :
+      D(D), N(0), root(0), random(random) {
       IncRef(random);
       first_index.push_back(0);
     }
     
     ~KDTree() {
       DecRef(random);
-      for (typename april_utils::vector< Matrix<T>* >::iterator it=matrix_vector.begin();
+      for (typename april_utils::vector< basics::Matrix<T>* >::iterator it=matrix_vector.begin();
 	   it != matrix_vector.end(); ++it)
 	DecRef(*it);
       delete root;
     }
     
     /// Returns a matrix and a row from an index point
-    Matrix<T> *getMatrixAndRow(int index, int &row) {
+    basics::Matrix<T> *getMatrixAndRow(int index, int &row) {
       april_assert(index >= 0 && index < N);
       int izq,der,m;
       izq = 0; der = static_cast<int>(first_index.size());
@@ -336,7 +337,7 @@ namespace KNN {
       return matrix_vector[izq];
     }
     
-    void pushMatrix(Matrix<T> *m) {
+    void pushMatrix(basics::Matrix<T> *m) {
       if (m->getNumDim() != 2)
 	ERROR_EXIT(256,
 		   "Incorrect number of dimensions, expected bi-dimensional\n");
@@ -359,7 +360,7 @@ namespace KNN {
       PointsList *points_list = new PointsList(N);
       int i=0;
       for (size_t j=0; j<matrix_vector.size(); ++j) {
-	Matrix<T> *m = matrix_vector[j];
+	basics::Matrix<T> *m = matrix_vector[j];
 	for (int row=0; row<m->getDimSize(0); ++row, ++i) {
 	  april_assert(i<N);
 	  (*points_list)[i] = Point<T>(m, row, i);
@@ -373,9 +374,9 @@ namespace KNN {
     /// the best point index (in the order of they were pushed), the distance to
     /// the best, and a matrix with the best point (if needed, that is, result
     /// pointer != 0).
-    int searchNN(Matrix<T> *point_matrix,
+    int searchNN(basics::Matrix<T> *point_matrix,
 		 double &distance,
-		 Matrix<T> **result) {
+		 basics::Matrix<T> **result) {
       if (root == 0)
 	ERROR_EXIT(256, "Build method needs to be called before searching\n");
       if (point_matrix->getNumDim() != 2 || point_matrix->getDimSize(0) != 1)
@@ -391,10 +392,10 @@ namespace KNN {
       distance = one_best.getOneBestDistance();
       if (result != 0) {
 	int best_row;
-	Matrix<T> *best_matrix = getMatrixAndRow(best_id, best_row);
+	basics::Matrix<T> *best_matrix = getMatrixAndRow(best_id, best_row);
 	int coords[2] = { best_row, 0 };
 	int sizes[2]  = { 1, D };
-	*result = new Matrix<T>(best_matrix, coords, sizes, false);
+	*result = new basics::Matrix<T>(best_matrix, coords, sizes, false);
       }
       return best_id;
     }
@@ -403,15 +404,15 @@ namespace KNN {
     /// and the K value, and returns a vector of indices, a vector of distances,
     /// and a vector of matrices (if needed, that is, result pointer != 0).
     void searchKNN(int K,
-		   Matrix<T> *point_matrix,
+		   basics::Matrix<T> *point_matrix,
 		   april_utils::vector<int> &indices,
 		   april_utils::vector<double> &distances,
-		   april_utils::vector< Matrix<T> *> *result=0) {
+		   april_utils::vector< basics::Matrix<T> *> *result=0) {
       if (root == 0)
 	ERROR_EXIT(256, "Build method needs to be called before searching\n");
       if (K == 1) {
 	double distance;
-	Matrix<T> *resultM;
+	basics::Matrix<T> *resultM;
 	int best_id = searchNN(point_matrix,distance,(result!=0)?(&resultM):0);
 	indices.push_back(best_id);
 	distances.push_back(distance);
@@ -433,10 +434,11 @@ namespace KNN {
 	  for (size_t i=0; i<indices.size(); ++i) {
 	    int best_id = indices[i];
 	    int best_row;
-	    Matrix<T> *best_matrix = getMatrixAndRow(best_id, best_row);
+	    basics::Matrix<T> *best_matrix = getMatrixAndRow(best_id, best_row);
 	    int coords[2] = { best_row, 0 };
 	    int sizes[2]  = { 1, D };
-	    result->push_back(new Matrix<T>(best_matrix, coords, sizes, false));
+	    result->push_back(new basics::Matrix<T>(best_matrix, coords,
+                                                    sizes, false));
 	  }
 	}
       }
