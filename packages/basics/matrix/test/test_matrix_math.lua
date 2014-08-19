@@ -186,7 +186,7 @@ local function load_csv()
   local def = 0.0/0.0
   local m = matrix.read( aprilio.stream.input_lua_string"1,2,3,,4\n5,6,7,8,\n4,,,,5",
                          { [matrix.options.delim]=",",
-                           [matrix.options.keep]=true,
+                           [matrix.options.empty]=true,
                            [matrix.options.default]=def,
                            [matrix.options.tab]=true } )
   return m

@@ -40,7 +40,7 @@ matrix.__generic__.__make_generic_fromCSVFilename__ = function(matrix_class)
         [matrix.options.order]   = { mandatory=false, type_match="string" },
         [matrix.options.delim]   = { mandatory=true, type_match="string", default="," },
         [matrix.options.default] = { mandatory=false } }, args)
-    args[matrix.options.keep] = true
+    args[matrix.options.empty] = true
     args[matrix.options.tab] = true
     return matrix_class.read(archive_wrapper( io.open(filename) ), args)
   end

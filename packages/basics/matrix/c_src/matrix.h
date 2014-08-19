@@ -48,7 +48,7 @@ namespace basics {
     const char * const ASCII_OPTION = "ascii";
     const char * const ORDER_OPTION = "order";
     const char * const DELIM_OPTION = "delim";
-    const char * const KEEP_OPTION = "keep_delim";
+    const char * const EMPTY_OPTION = "read_empty";
     const char * const DEFAULT_OPTION = "default";
     const char * const NCOLS_OPTION = "ncols";
     const char * const NROWS_OPTION = "nrows";
@@ -910,13 +910,13 @@ namespace basics {
      * - MatrixIO::DELIM_OPTION if @c TAB_OPTION=true this key contains a string
      *   value with a list of delimitiers. By default it is "\n\r\t,; ".
      *
-     * - MatrixIO::KEEP_OPTION if @c TAB_OPTION=true this key contains a boolean
-     *   indicating if the delimitiers must be keep during the read process. If
-     *   @c KEEP_OPTION=true, this condition allows the parser to find empty
+     * - MatrixIO::EMPTY_OPTION if @c TAB_OPTION=true this key contains a boolean
+     *   indicating if empty fields are allowed during the read process. If
+     *   @c EMPTY_OPTION=true, this condition allows the parser to find empty
      *   values (e.g. in a CSV file an empty field is detected by this
      *   procedure). By default it is false.
      *
-     * - MatrixIO::DEFAULT_OPTION if @c TAB_OPTION=true and @c KEEP_OPTION=true,
+     * - MatrixIO::DEFAULT_OPTION if @c TAB_OPTION=true and @c EMPTY_OPTION=true,
      *   this key contains the T value for cases where the read data is
      *   empty. By default it is T().
      *
@@ -944,9 +944,9 @@ namespace basics {
 
     static april_utils::constString readULine(AprilIO::StreamInterface *stream,
                                               AprilIO::CStringStream *dest,
-                                              bool keep_delim = false) {
+                                              bool read_empty = false) {
       // Not needed, it is done in extractULineFromStream: dest->clear(); 
-      extractULineFromStream(stream, dest, keep_delim);
+      extractULineFromStream(stream, dest, read_empty);
       return dest->getConstString();
     }
 

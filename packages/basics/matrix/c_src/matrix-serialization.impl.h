@@ -273,7 +273,7 @@ namespace basics {
                      const april_utils::GenericOptions *options) {
     const char *given_order = options->getOptionalString(MatrixIO::ORDER_OPTION, 0);
     const char *delim       = options->getOptionalString(MatrixIO::DELIM_OPTION, "\n\r\t,; ");
-    bool keep_delim         = options->getOptionalBoolean(MatrixIO::KEEP_OPTION, false);
+    bool read_empty         = options->getOptionalBoolean(MatrixIO::EMPTY_OPTION, false);
     T default_value         = getTemplateOption(options, MatrixIO::DEFAULT_OPTION, T());
     int ncols               = options->getOptionalInt32(MatrixIO::NCOLS_OPTION, 0);
     int nrows               = options->getOptionalInt32(MatrixIO::NROWS_OPTION, 0);
@@ -291,10 +291,10 @@ namespace basics {
       off_t first_pos = stream->seek();
       if (nrows == 0) {
         while (!stream->eof()) {
-          line = readULine(stream, c_str.get(), keep_delim);
+          line = readULine(stream, c_str.get(), read_empty);
           if (line.len() > 0) {
             if (ncols == 0) {
-              while(line.extract_token(delim, keep_delim)) ++ncols;
+              while(line.extract_token(delim, read_empty)) ++ncols;
               // while(ascii_extractor(line,value)) ++ncols;
             }
             ++nrows;
@@ -302,10 +302,10 @@ namespace basics {
         }
       }
       else {
-        line = readULine(stream, c_str.get(), keep_delim);
+        line = readULine(stream, c_str.get(), read_empty);
         if (line.len() > 0) {
           if (ncols == 0) {
-            while(line.extract_token(delim, keep_delim)) ++ncols;
+            while(line.extract_token(delim, read_empty)) ++ncols;
             // while(ascii_extractor(line,value)) ++ncols;
           }
         }
@@ -337,15 +337,15 @@ namespace basics {
     }
     int i=0;
     typename Matrix<T>::iterator data_it(mat->begin());
-    if (keep_delim) {
+    if (read_empty) {
       // Allows delim at end of the token and therefore empty fields can be
       // identified and assigned to default_value.
       while (data_it!=mat->end() && (line=readULine(stream, c_str.get(), true))) {
         int num_cols_size_count = 0;
         while (data_it!=mat->end()) {
-          token = line.extract_token(delim, keep_delim);
+          token = line.extract_token(delim, read_empty);
           if (!token) break;
-          if ( keep_delim && token.len() == 1 &&
+          if ( read_empty && token.len() == 1 &&
                ( strchr(delim, token[0]) || strchr("\r\n", token[0]) ) ) {
             *data_it = default_value;
           }

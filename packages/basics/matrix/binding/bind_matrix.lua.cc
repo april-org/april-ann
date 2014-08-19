@@ -149,7 +149,7 @@ namespace basics {
 //BIND_STRING_CONSTANT matrix.options.ascii basics::MatrixIO::ASCII_OPTION
 //BIND_STRING_CONSTANT matrix.options.order basics::MatrixIO::ORDER_OPTION
 //BIND_STRING_CONSTANT matrix.options.delim basics::MatrixIO::DELIM_OPTION
-//BIND_STRING_CONSTANT matrix.options.keep basics::MatrixIO::KEEP_OPTION
+//BIND_STRING_CONSTANT matrix.options.empty basics::MatrixIO::EMPTY_OPTION
 //BIND_STRING_CONSTANT matrix.options.default basics::MatrixIO::DEFAULT_OPTION
 //BIND_STRING_CONSTANT matrix.options.ncols basics::MatrixIO::NCOLS_OPTION
 //BIND_STRING_CONSTANT matrix.options.nrows basics::MatrixIO::NROWS_OPTION
