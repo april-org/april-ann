@@ -172,8 +172,7 @@ namespace ANN {
     SharedPtr<CStringStream> stream(new CStringStream());
     stream->put("matrix.fromString[[");
     april_utils::HashTableOptions options;
-    options.putBoolean("ascii", false);
-    weights->write(stream.get(), &options);
+    weights->write( stream.get(), options.putBoolean("ascii", false) );
     stream->put("]]\0", 3); // forces a \0 at the end of the buffer
     return stream->releaseString();
   }
