@@ -79,7 +79,6 @@ namespace basics {
   
   template<typename T>
   SparseMatrix<T> *readSparseMatrixLuaMethod(lua_State *L) {
-    SparseMatrix<T> *obj;
     AprilIO::StreamInterface *stream =
       lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
     april_utils::SharedPtr<AprilIO::StreamInterface> ptr(stream);
@@ -88,7 +87,7 @@ namespace basics {
       return 0;
     }
     april_utils::LuaTableOptions options(L,2);
-    return obj->read(ptr.get(), &options);
+    return SparseMatrix<T>::read(ptr.get(), &options);
   }
 
 } // namespace basics

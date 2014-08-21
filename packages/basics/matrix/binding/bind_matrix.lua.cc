@@ -134,7 +134,6 @@ namespace basics {
 
   template<typename T>
   Matrix<T> *readMatrixLuaMethod(lua_State *L) {
-    Matrix<T> *obj;
     AprilIO::StreamInterface *stream =
       lua_toAuxStreamInterface<AprilIO::StreamInterface>(L,1);
     if (stream == 0) luaL_error(L, "Needs a stream as first argument");
