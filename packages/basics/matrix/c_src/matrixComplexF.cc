@@ -82,6 +82,17 @@ namespace basics {
     /////////////////////////////////////////////////////////////////////////////
 
   } // namespace MatrixIO
+
+  template<>
+  ComplexF Matrix<ComplexF>::
+  getTemplateOption(const april_utils::GenericOptions *options,
+                    const char *name,
+                    ComplexF default_value) {
+    april_math::LuaComplexFNumber *c =
+      options->getOptionalReferenced<april_math::LuaComplexFNumber>(name, 0);
+    if (c == 0) return default_value;
+    else return c->getValue();
+  }
   
   /************* FILL FUNCTION **************/
   DEF_CWISE_FUNCTOR_1(doFill,ComplexF);

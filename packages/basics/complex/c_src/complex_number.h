@@ -28,6 +28,10 @@
 
 #include <cmath>
 
+#include "constString.h"
+#include "error_print.h"
+#include "referenced.h"
+
 #ifdef UNDEF_MATH_DEFINES
 #undef _USE_MATH_DEFINES
 #undef UNDEF_MATH_DEFINES
@@ -182,6 +186,85 @@ namespace april_math {
 
   typedef Complex<float> ComplexF;
   typedef Complex<double> ComplexD;
+
+
+  class LuaComplexFNumber : public Referenced {
+  public:
+    
+    LuaComplexFNumber(const ComplexF &number) : Referenced(), number(number) { }
+    LuaComplexFNumber(const char *str) : Referenced() {
+      float num;
+      char  sign='+'; // initialized to avoid compilation warning
+      april_utils::constString cs(str);
+      STATES state = INITIAL;
+      TOKENS token;
+      while(state != FINAL && state != ERROR) {
+        token = getToken(cs,num,sign);
+        switch(state) {
+        case INITIAL:
+          switch(token) {
+          case TOKEN_FLOAT: number.real()=num; state=NUMBER; break;
+          case TOKEN_I: number.real()=0.0f; number.img()=1.0f; state=FINAL; break;
+          case TOKEN_SIGN: number.real()=0.0f; state=SIGN; break;
+          default: state=ERROR;
+          }
+          break;
+        case NUMBER:
+          switch(token) {
+          case TOKEN_FLOAT: number.img()=num; state=NUMBER_NUMBER; break;
+          case TOKEN_I: number.img()=number.real(); number.real()=0.0f; state=FINAL; break;
+          case TOKEN_SIGN: state=NUMBER_SIGN; break;
+          case TOKEN_END: number.img()=0.0f; state=FINAL; break;
+          default: state=ERROR;
+          }
+          break;
+        case SIGN:
+          switch(token) {
+          case TOKEN_I: number.img()=(sign=='+')?1.0f:-1.0f; state=FINAL; break;
+          default: state=ERROR;
+          }
+          break;
+        case NUMBER_NUMBER:
+          switch(token) {
+          case TOKEN_I: state=FINAL; break;
+          default: state=ERROR;
+          }
+          break;
+        case NUMBER_SIGN:
+          switch(token) {
+          case TOKEN_I: number.img()=(sign=='+')?1.0f:-1.0f; state=FINAL; break;
+          default: state=ERROR;
+          }
+          break;
+        default: state=ERROR;
+        }
+      }
+      if (state == ERROR || !cs.empty())
+        ERROR_EXIT1(256, "Incorrect complex string format '%s'\n",str);
+    }
+    
+    ComplexF &getValue() { return number; }
+    const ComplexF &getValue() const { return number; }
+
+  private:
+    ComplexF number;
+    
+    // Automaton which interprets a string like this regexp: N?[+-]N?i
+    enum STATES { INITIAL, NUMBER, SIGN, NUMBER_SIGN, NUMBER_NUMBER,
+                  FINAL, ERROR };
+    enum TOKENS { TOKEN_FLOAT, TOKEN_SIGN, TOKEN_I, TOKEN_UNKOWN, TOKEN_END };
+    TOKENS getToken(april_utils::constString &cs, float &num, char &sign) {
+      if (cs.empty()) return TOKEN_END;
+      char ch;
+      if (cs.extract_float(&num)) return TOKEN_FLOAT;
+      if (cs.extract_char(&ch)) {
+        if (ch == '+' || ch == '-') { sign=ch; return TOKEN_SIGN; }
+        else if (ch == 'i') return TOKEN_I;
+      }
+      return TOKEN_UNKOWN;
+    }
+    
+  };
 
 } // namespace april_math
 
