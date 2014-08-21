@@ -69,7 +69,16 @@ namespace basics {
     /////////////////////////////////////////////////////////////////////////
 
   } // namespace MatrixIO
+  
+  template<>
+  int32_t Matrix<int32_t>::
+  getTemplateOption(const april_utils::GenericOptions *options,
+                    const char *name, int32_t default_value) {
+    return options->getOptionalInt32(name, default_value);
+  }
 
+  /////////////////////////////////////////////////////////////////////////////
+  
   NOT_IMPLEMENT_AXPY(int32_t)
   NOT_IMPLEMENT_GEMM(int32_t)
   NOT_IMPLEMENT_GEMV(int32_t)

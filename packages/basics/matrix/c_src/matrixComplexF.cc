@@ -93,6 +93,8 @@ namespace basics {
     if (c == 0) return default_value;
     else return c->getValue();
   }
+
+  /////////////////////////////////////////////////////////////////////////////
   
   /************* FILL FUNCTION **************/
   DEF_CWISE_FUNCTOR_1(doFill,ComplexF);

@@ -67,7 +67,16 @@ namespace basics {
     /////////////////////////////////////////////////////////////////////////////
 
   } // namespace MatrixIO
+  
+  template<>
+  double Matrix<double>::
+  getTemplateOption(const april_utils::GenericOptions *options,
+                    const char *name, double default_value) {
+    return options->getOptionalDouble(name, default_value);
+  }
 
+  /////////////////////////////////////////////////////////////////////////////
+  
   /************* ZEROS FUNCTION **************/
   template<>
   void Matrix<double>::zeros() {
