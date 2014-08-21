@@ -18,14 +18,19 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "unused_variable.h"
 #include "error_print.h"
+#include "pca_whitening_component.h"
 #include "table_of_token_codes.h"
 #include "token_vector.h"
 #include "token_matrix.h"
-#include "pca_whitening_component.h"
-#include "wrapper.h"
+#include "unused_variable.h"
 #include "utilMatrixFloat.h"
+#include "wrapper.h"
+
+using namespace AprilIO;
+using namespace april_math;
+using namespace april_utils;
+using namespace basics;
 
 #define WEIGHTS_NAME "U_S_epsilon"
 
@@ -114,15 +119,16 @@ namespace ANN {
   }
   
   char *PCAWhiteningANNComponent::toLuaString() {
-    buffer_list buffer;
-    char *U_str, *S_str;
-    int len;
-    U_str = writeMatrixFloatToString(U, false, len);
-    S_str = writeSparseMatrixFloatToString(S, false, len);
-    buffer.printf("ann.components.pca_whitening{ name='%s', U=matrix.fromString[[%s]], S=matrix.sparse.fromString[[%s]], epsilon=%g, takeN=%u, }",
-		  name.c_str(), U_str, 0, S_str, epsilon, takeN);
-    delete[] U_str;
-    delete[] S_str;
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+    SharedPtr<CStringStream> stream(new CStringStream());
+    april_utils::HashTableOptions options;
+    options.putBoolean("ascii", false);
+    stream->printf("ann.components.pca_whitening{ name='%s', U=matrix.fromString[[",
+                   name.c_str());
+    U->write(stream.get(), &options);
+    stream->put("]], S=matrix.sparse.fromString[[");
+    S->write(stream.get(), &options);
+    stream->printf("]], epsilon=%g, takeN=%u, }", epsilon, takeN);
+    stream->put("\0",1); // forces a \0 at the end of the buffer
+    return stream->releaseString();
   }
 }

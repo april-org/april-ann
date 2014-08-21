@@ -22,6 +22,9 @@
 #include "mse_loss_function.h"
 #include "wrapper.h"
 
+using namespace april_utils;
+using namespace basics;
+
 namespace ANN {
 
   MSELossFunction::MSELossFunction(unsigned int size) :

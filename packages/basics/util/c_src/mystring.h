@@ -7,6 +7,12 @@
 
 namespace april_utils {
 
+  size_t strnspn(const char *buffer, const char *accept, size_t length);
+  size_t strncspn(const char *buffer, const char *reject, size_t length);
+  const char *strnchr(const char *buffer, int c, size_t length);
+  const char *strncchr(const char *buffer, int c, size_t length);
+  int strcmpi(const char *a, const char *b);
+  
   class string {
     static const char *NULL_STRING;
   public:
@@ -47,7 +53,7 @@ namespace april_utils {
     size_type size() const;
     size_type max_size() const;
     void resize(size_type size);
-    size_type capacity();
+    size_type capacity() const;
     void reserve(size_type size);
     void clear();
     bool empty() const;
@@ -58,6 +64,7 @@ namespace april_utils {
     char &front();
     char  back() const;
     char &back();
+    char *release();
   };
   
   // For hash tables

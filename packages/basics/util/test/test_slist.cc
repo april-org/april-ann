@@ -6,9 +6,9 @@
 
 #define N 5u
 
-using april_utils::slist;
 using std::cout;
 using std::endl;
+using namespace april_utils;
 
 namespace slist_test {
 

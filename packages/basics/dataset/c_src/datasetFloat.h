@@ -24,19 +24,23 @@
 
 #include "dataset.h"
 
-typedef DataSet<float> DataSetFloat;
-typedef MatrixDataSet<float> MatrixDataSetFloat;
-typedef LinearCombConf<float> LinearCombConfFloat;
-typedef SparseMatrixDataset<float> SparseMatrixDatasetFloat;
-typedef ShortListDataSet<float> ShortListDataSetFloat;
-typedef IndexFilterDataSet<float> IndexFilterDataSetFloat;
-typedef PerturbationDataSet<float> PerturbationDataSetFloat;
-typedef SaltNoiseDataSet<float> SaltNoiseDataSetFloat;
-typedef SaltPepperNoiseDataSet<float> SaltPepperNoiseDataSetFloat;
-typedef StepDataSet<float> StepDataSetFloat;
-typedef DerivDataSet<float> DerivDataSetFloat;
-typedef CacheDataSet<float> CacheDataSetFloat;
-typedef SubAndDivNormalizationDataSet<float> SubAndDivNormalizationDataSetFloat;
-typedef ClampDataSet<float> ClampDataSetFloat;
+namespace basics {
+
+  typedef DataSet<float> DataSetFloat;
+  typedef MatrixDataSet<float> MatrixDataSetFloat;
+  typedef LinearCombConf<float> LinearCombConfFloat;
+  typedef SparseMatrixDataset<float> SparseMatrixDatasetFloat;
+  typedef ShortListDataSet<float> ShortListDataSetFloat;
+  typedef IndexFilterDataSet<float> IndexFilterDataSetFloat;
+  typedef PerturbationDataSet<float> PerturbationDataSetFloat;
+  typedef SaltNoiseDataSet<float> SaltNoiseDataSetFloat;
+  typedef SaltPepperNoiseDataSet<float> SaltPepperNoiseDataSetFloat;
+  typedef StepDataSet<float> StepDataSetFloat;
+  typedef DerivDataSet<float> DerivDataSetFloat;
+  typedef CacheDataSet<float> CacheDataSetFloat;
+  typedef SubAndDivNormalizationDataSet<float> SubAndDivNormalizationDataSetFloat;
+  typedef ClampDataSet<float> ClampDataSetFloat;
+
+} // namespace basics
 
 #endif // UTILDATASETFLOAT_H

@@ -318,7 +318,7 @@ trainable_supervised_trainer_methods.size =
     outputs = { "A number" },
   } ..
   function(self)
-    if #self.components_order == 0 then
+    if not self.is_built then
       error("It is not build")
     end
     return self.weights_table:size()
@@ -327,7 +327,7 @@ trainable_supervised_trainer_methods.size =
 ------------------------------------------------------------------------
 
 function trainable_supervised_trainer_methods:to_lua_string(format)
-  assert(#self.components_order > 0, "The component is not built")
+  assert(self.is_built, "The component is not built")
   local t = { }
   table.insert(t, "trainable.supervised_trainer{ ")
   table.insert(t, "model=")
@@ -384,7 +384,7 @@ trainable_supervised_trainer_methods.save =
     },
   } ..
   function(self, filename, format)
-    assert(#self.components_order > 0, "The component is not built")
+    assert(self.is_built, "The component is not built")
     local f = io.open(filename,"w") or error("Unable to open " .. filename)
     f:write("return ")
     f:write(self:to_lua_string(format))
@@ -435,7 +435,7 @@ trainable_supervised_trainer_methods.count_components =
   } ..
   function(self, match_string)
     local match_string = match_string or ".*"
-    if #self.components_order == 0 then
+    if not self.is_built then
       error("It is not build")
     end
     local count = 0
@@ -458,7 +458,7 @@ trainable_supervised_trainer_methods.count_weights =
   } ..
   function(self, match_string)
     local match_string = match_string or ".*"
-    if #self.components_order == 0 then
+    if not self.is_built then
       error("It is not build")
     end
     local count = 0
@@ -487,7 +487,7 @@ trainable_supervised_trainer_methods.iterate_components =
   } ..
   function(self, match_string)
     local match_string = match_string or ".*"
-    if #self.components_order == 0 then
+    if not self.is_built then
       error("It is not build")
     end
     local pos = 0
@@ -522,7 +522,7 @@ trainable_supervised_trainer_methods.iterate_weights =
   } ..
   function(self, match_string)
     local match_string = match_string or ".*"
-    if #self.components_order == 0 then
+    if not self.is_built then
       error("It is not build")
     end
     local pos = 0
@@ -555,7 +555,7 @@ trainable_supervised_trainer_methods.component =
     outputs = { "A component object" },
   } ..
   function(self, str)
-    if #self.components_order == 0 then
+    if not self.is_built then
       error("Needs execution of build method")
     end
     return self.components_table[str]
@@ -578,7 +578,7 @@ trainable_supervised_trainer_methods.weights =
     outputs = { "An ann.connections object" },
   } ..
   function(self, str)
-    if #self.components_order == 0 then
+    if not self.is_built then
       error("Needs execution of build method")
     end
     return self.weights_table(str)
@@ -593,7 +593,7 @@ trainable_supervised_trainer_methods.get_weights_table =
     outputs = { "A table with all the weights, indexed by names" },
   } ..
   function(self)
-    if #self.components_order == 0 then
+    if not self.is_built then
       error("Needs execution of build method")
     end
     return self.weights_table
@@ -637,7 +637,7 @@ trainable_supervised_trainer_methods.randomize_weights =
         use_fanin  = { type_match="boolean", mandatory = false, default = false },
         use_fanout = { type_match="boolean", mandatory = false, default = false },
       }, t)
-    assert(#self.components_order > 0,
+    assert(self.is_built,
            "Execute build method before randomize_weights")
     for i,wname in ipairs(self.weights_order) do
       if not params.name_match or wname:match(params.name_match) then
@@ -690,39 +690,40 @@ trainable_supervised_trainer_methods.build =
     },
   } ..
   function(self, t)
-  local params = get_table_fields(
-    {
-      weights = { mandatory = false, default=nil },
-      input   = { type_match="number", mandatory = false, default=nil },
-      output  = { type_match="number", mandatory = false, default=nil },
-    }, t or {})
-  self.weight_grads  = matrix.dict()
-  self.weights_table = wrap_matrices(params.weights or matrix.dict())
-  -- BUILD CALL
-  _,
-  self.weights_table,
-  self.components_table = self.ann_component:build{
-    input   = params.input,
-    output  = params.output,
-    weights = self.weights_table, }
-  --
-  self.weights_order = self.weights_table:keys()
-  table.sort(self.weights_order)
-  self.components_order = {}
-  self.component2weights_dict = {}
-  self.weights2component_dict = {}
-  for name,c in pairs(self.components_table) do
-    table.insert(self.components_order, name)
-    if c:has_weights_name() then
-      local wname = c:get_weights_name()
-      self.component2weights_dict[name]  = c:get_weights_name()
-      self.weights2component_dict[wname] = self.weights2component_dict[wname] or {}
-      table.insert(self.weights2component_dict[wname], c)
+    local params = get_table_fields(
+      {
+        weights = { mandatory = false, default=nil },
+        input   = { type_match="number", mandatory = false, default=nil },
+        output  = { type_match="number", mandatory = false, default=nil },
+      }, t or {})
+    self.weight_grads  = matrix.dict()
+    self.weights_table = wrap_matrices(params.weights or matrix.dict())
+    -- BUILD CALL
+    _,
+    self.weights_table,
+    self.components_table = self.ann_component:build{
+      input   = params.input,
+      output  = params.output,
+      weights = self.weights_table, }
+    --
+    self.weights_order = self.weights_table:keys()
+    table.sort(self.weights_order)
+    self.components_order = {}
+    self.component2weights_dict = {}
+    self.weights2component_dict = {}
+    for name,c in pairs(self.components_table) do
+      table.insert(self.components_order, name)
+      if c:has_weights_name() then
+        local wname = c:get_weights_name()
+        self.component2weights_dict[name]  = c:get_weights_name()
+        self.weights2component_dict[wname] = self.weights2component_dict[wname] or {}
+        table.insert(self.weights2component_dict[wname], c)
+      end
     end
+    table.sort(self.components_order)
+    self.is_built = true
+    return self,self.weights_table,self.components_table
   end
-  table.sort(self.components_order)
-  return self,self.weights_table,self.components_table
-end
 
 ------------------------------------------------------------------------
 
@@ -791,8 +792,12 @@ trainable_supervised_trainer_methods.train_step =
       end
       target = target:clone():cmul(mask)
     end
+    local needs_gradient = optimizer:needs_property("gradient")
     local tr_loss, _, tr_loss_matrix =
-      optimizer:execute(function(it)
+      optimizer:execute(function(weights, it)
+          if weights ~= self.weights_table then
+            self:build{ weights = weights }
+          end
           local self   = self
           local loss   = loss
           local model  = self.ann_component
@@ -813,22 +818,26 @@ trainable_supervised_trainer_methods.train_step =
           local tr_loss,tr_loss_matrix
           tr_loss,tr_loss_matrix = loss:compute_loss(output, target)
           if not tr_loss_matrix then return nil end
-          local gradient=model:backprop(loss:gradient(output,target))
-          --
-          grads:zeros()
-          --
-          local grads = model:compute_gradients(grads)
-          self.weight_grads = grads
-          -- gradient smoothing
-          if smooth_gradients then
-            for name,mat in pairs(grads) do
-              local N = mat:get_shared_count()
-              N       = ( N>0 and N) or 1
-              mat:scal( 1.0/math.sqrt(N * bunch_size) )
+          if needs_gradient then
+            local gradient=model:backprop(loss:gradient(output,target))
+            --
+            grads:zeros()
+            --
+            local grads = model:compute_gradients(grads)
+            self.weight_grads = grads
+            -- gradient smoothing
+            if smooth_gradients then
+              for name,mat in pairs(grads) do
+                local N = mat:get_shared_count()
+                N       = ( N>0 and N) or 1
+                mat:scal( 1.0/math.sqrt(N * bunch_size) )
+              end
             end
+            -- the loss, the gradients, and the loss matrix
+            return tr_loss, grads, tr_loss_matrix
+          else
+            return tr_loss, nil, tr_loss_matrix
           end
-          -- the loss, the gradients, and the loss matrix
-          return tr_loss, grads, tr_loss_matrix
                         end,
         self.weights_table)
     if tr_loss_matrix then loss:accum_loss(tr_loss_matrix) end
@@ -1170,7 +1179,7 @@ trainable_supervised_trainer_methods.train_dataset =
                              mandatory  = false,
                              default=self.smooth_gradients },
       }, t, true)
-    assert(#self.components_order > 0,
+    assert(self.is_built,
            "Execute build method before call this method")
     local loss       = params.loss
     local optimizer  = params.optimizer
@@ -1245,7 +1254,7 @@ trainable_supervised_trainer_methods.grad_check_dataset =
         verbose        = { type_match = "boolean",
                            mandatory = false, default=false },
       }, t, true)
-    assert(#self.components_order > 0,
+    assert(self.is_built,
            "Execute build method before call this method")
     local loss                = params.loss
     local verbose             = params.verbose
@@ -1369,7 +1378,7 @@ trainable_supervised_trainer_methods.validate_dataset =
         shuffle        = { isa_match  = random, mandatory = false, default=nil },
         replacement    = { type_match = "number", mandatory = false, default=nil },
       }, t)
-    assert(#self.components_order > 0,
+    assert(self.is_built,
            "Execute build method before call this method")
     -- ERROR CHECKING
     assert(params.input_dataset ~= not params.output_dataset,
@@ -1447,7 +1456,7 @@ trainable_supervised_trainer_methods.use_dataset =
         bunch_size     = { type_match = "number",
                            mandatory = (self.bunch_size == false)  },
       }, t)
-    assert(#self.components_order > 0,
+    assert(self.is_built,
            "Execute build method before call this method")
     local nump        = params.input_dataset:numPatterns()
     local outsize     = self.ann_component:get_output_size()

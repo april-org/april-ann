@@ -22,24 +22,83 @@
 #include "matrixInt32.h"
 #include "matrix_not_implemented.h"
 
-NOT_IMPLEMENT_AXPY(int32_t)
-NOT_IMPLEMENT_GEMM(int32_t)
-NOT_IMPLEMENT_GEMV(int32_t)
-NOT_IMPLEMENT_GER(int32_t)
-NOT_IMPLEMENT_DOT(int32_t)
+namespace basics {
 
-/************* ZEROS FUNCTION **************/
-template<>
-void Matrix<int32_t>::zeros() {
-  fill(0);
-}
+  namespace MatrixIO {
 
-/************* ONES FUNCTION **************/
-template<>
-void Matrix<int32_t>::ones() {
-  fill(1);
-}
+    /////////////////////////////////////////////////////////////////////////
+  
+    template<>
+    bool AsciiExtractor<int32_t>::operator()(april_utils::constString &line,
+                                             int32_t &destination) {
+      if (!line.extract_int(&destination)) return false;
+      return true;
+    }
+  
+    template<>
+    bool BinaryExtractor<int32_t>::operator()(april_utils::constString &line,
+                                              int32_t &destination) {
+      if (!line.extract_int32_binary(&destination)) return false;
+      return true;
+    }
+  
+    template<>
+    int AsciiSizer<int32_t>::operator()(const Matrix<int32_t> *mat) {
+      return mat->size()*12;
+    }
 
-///////////////////////////////////////////////////////////////////////////////
+    template<>
+    int BinarySizer<int32_t>::operator()(const Matrix<int32_t> *mat) {
+      return april_utils::binarizer::buffer_size_32(mat->size());
+    }
 
-template class Matrix<int32_t>;
+    template<>
+    void AsciiCoder<int32_t>::operator()(const int32_t &value,
+                                         AprilIO::StreamInterface *stream) {
+      stream->printf("%d", value);
+    }
+  
+    template<>
+    void BinaryCoder<int32_t>::operator()(const int32_t &value,
+                                          AprilIO::StreamInterface *stream) {
+      char b[5];
+      april_utils::binarizer::code_int32(value, b);
+      stream->put(b, sizeof(char)*5);
+    }
+
+    /////////////////////////////////////////////////////////////////////////
+
+  } // namespace MatrixIO
+  
+  template<>
+  int32_t Matrix<int32_t>::
+  getTemplateOption(const april_utils::GenericOptions *options,
+                    const char *name, int32_t default_value) {
+    return options->getOptionalInt32(name, default_value);
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  
+  NOT_IMPLEMENT_AXPY(int32_t)
+  NOT_IMPLEMENT_GEMM(int32_t)
+  NOT_IMPLEMENT_GEMV(int32_t)
+  NOT_IMPLEMENT_GER(int32_t)
+  NOT_IMPLEMENT_DOT(int32_t)
+
+  /************* ZEROS FUNCTION **************/
+  template<>
+  void Matrix<int32_t>::zeros() {
+    fill(0);
+  }
+
+  /************* ONES FUNCTION **************/
+  template<>
+  void Matrix<int32_t>::ones() {
+    fill(1);
+  }
+
+  ///////////////////////////////////////////////////////////////////////////////
+
+  template class Matrix<int32_t>;
+
+} // namespace basics

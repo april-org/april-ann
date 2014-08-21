@@ -23,6 +23,10 @@
 #include "token_matrix.h"
 #include "table_of_token_codes.h"
 
+using namespace basics;
+using namespace april_utils;
+using namespace april_math;
+
 namespace ANN {
 
   ////////////////////////////////////////////////
@@ -171,13 +175,12 @@ namespace ANN {
     return error_mat;
   }
      
-  void ConvolutionBiasANNComponent::computeGradients(MatrixFloat *&grads_mat) {
+  void ConvolutionBiasANNComponent::computeGradients(april_utils::SharedPtr<MatrixFloat> &grads_mat) {
     // reset shared counter
     bias_vector->addToSharedCount(number_input_windows);
-    if (grads_mat == 0) {
+    if (grads_mat.empty()) {
       grads_mat = bias_vector->cloneOnlyDims();
       grads_mat->zeros();
-      IncRef(grads_mat);
     }
     MatrixFloat *input_error_mat = getErrorInputMatrix();
     // Prepare sliding windows to compute the convolution
@@ -232,9 +235,9 @@ namespace ANN {
     ANNComponent::build(_input_size, _output_size,
 			weights_dict, components_dict);
     ////////////////////////////////////////////////////////////////////
-    MatrixFloat *&b = (*weights_dict)[weights_name];
-    if (b != 0) {
-      AssignRef(bias_vector, b);
+    april_utils::SharedPtr<MatrixFloat> &b = (*weights_dict)[weights_name].getDense();
+    if (!b.empty()) {
+      AssignRef(bias_vector, b.get());
       if (!Connections::checkInputOutputSizes(bias_vector,1,hidden_size))
 	ERROR_EXIT2(256,"The bias vector input/output sizes are not correct, "
 		    "expected 1x%d [%s]\n", hidden_size, name.c_str());
@@ -245,7 +248,6 @@ namespace ANN {
 	IncRef(bias_vector);
       }
       b = bias_vector;
-      IncRef(b);
     }
   }
 
@@ -253,15 +255,14 @@ namespace ANN {
     if (bias_vector == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  name.c_str());
-    MatrixFloat *&b = (*weights_dict)[weights_name];
-    if (b != 0 && b != bias_vector)
+    april_utils::SharedPtr<MatrixFloat> &b = (*weights_dict)[weights_name].getDense();
+    if (!b.empty() && b.get() != bias_vector)
       ERROR_EXIT2(101, "Weights dictionary contains %s bias name which is "
 		  "not shared with bias_vector attribute [%s]\n",
 		  weights_name.c_str(),
 		  name.c_str());
-    else if (b == 0) {
+    else if (b.empty()) {
       b = bias_vector;
-      IncRef(b);
     }
   }  
 

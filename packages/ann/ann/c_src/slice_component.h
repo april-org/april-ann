@@ -26,8 +26,6 @@
 #include "token_vector.h"
 #include "token_matrix.h"
 
-using april_utils::vector;
-
 namespace ANN {
 
   /// This component modifies the input matrix to be reinterpreted as the given
@@ -39,10 +37,10 @@ namespace ANN {
     
     int *slice_offset, *slice_size, n;
     
-    virtual MatrixFloat *privateDoForward(MatrixFloat* input,
-                                          bool during_training);
+    virtual basics::MatrixFloat *privateDoForward(basics::MatrixFloat* input,
+                                                  bool during_training);
     
-    virtual MatrixFloat *privateDoBackprop(MatrixFloat *input_error);
+    virtual basics::MatrixFloat *privateDoBackprop(basics::MatrixFloat *input_error);
     
     virtual void privateReset(unsigned int it=0);
 
@@ -57,8 +55,8 @@ namespace ANN {
 
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       MatrixFloatSet *weights_dict,
-		       hash<string,ANNComponent*> &components_dict);
+		       basics::MatrixFloatSet *weights_dict,
+		       april_utils::hash<april_utils::string,ANNComponent*> &components_dict);
 
     virtual char *toLuaString();
   };

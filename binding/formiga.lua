@@ -1194,7 +1194,8 @@ function formiga.__lua_unit_test(t)
       command = { program_binary, thefile, "> /dev/null" }
       -- creamos y ejecutamos el comando
       command = table.concat(command," ")
-      printverbose(2," [lua_unit_test] "..command)
+      printverbose(0," [lua_unit_test] "..thefile)
+      printverbose(2," [lua_unit_test command] "..command)
       local ok,what,error_resul = formiga.os.execute(command, true)
       if not ok then
 	print("Lua unit test '".. thefile .. "' failed: " .. t.target.package.name)
@@ -1304,7 +1305,8 @@ function formiga.__c_unit_test__(t)
 	end
       end
       command = table.concat(command," ")
-      printverbose(2," [c_unit_test] "..command)
+      printverbose(0," [c_unit_test] "..thefile)
+      printverbose(2," [c_unit_test command] "..command)
       os.execute("mkdir -p ".. dest_dir)
       formiga.os.execute(command)
       local ok = formiga.os.execute(exec_name, true)
@@ -1715,11 +1717,11 @@ function formiga.__document_src__ (t)
   if (lengroup > 0) then
     local aux_begin = {}
     local aux_end   = {}
-    for _,namegroup in ipairs(group) do
-      table.insert(aux_begin,"/// \\addtogroup "..namegroup)
-      table.insert(aux_begin,"/// @{")
-      table.insert(aux_end,  "/// @}")
-    end      
+    -- for _,namegroup in ipairs(group) do
+    --   table.insert(aux_begin,"/// \\addtogroup "..namegroup)
+    --   table.insert(aux_begin,"/// @{")
+    --   table.insert(aux_end,  "/// @}")
+    -- end      
     table.insert(aux_begin,"")
     table.insert(aux_end,  "")
     str_begin = table.concat(aux_begin,"\n")

@@ -25,20 +25,18 @@
 #include "ann_component.h"
 #include "token_vector.h"
 
-using april_utils::vector;
-
 namespace ANN {
   
   /// This component replicates its input a given number of times.
   class CopyANNComponent : public ANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(CopyANNComponent);
     
-    vector<ANNComponent*> components;
+    april_utils::vector<ANNComponent*> components;
     // Token pointers which contains exactly the same that was received
-    Token *input, *error_output;
+    basics::Token *input, *error_output;
     
     // These token are always a TokenBunchVector
-    TokenBunchVector *output, *error_input;
+    basics::TokenBunchVector *output, *error_input;
     
     unsigned int times;
     
@@ -48,14 +46,14 @@ namespace ANN {
 		     unsigned int output_size=0);
     virtual ~CopyANNComponent();
     
-    virtual Token *getInput() { return input; }
-    virtual Token *getOutput() { return output; }
-    virtual Token *getErrorInput() { return error_input; }
-    virtual Token *getErrorOutput() { return error_output; }
+    virtual basics::Token *getInput() { return input; }
+    virtual basics::Token *getOutput() { return output; }
+    virtual basics::Token *getErrorInput() { return error_input; }
+    virtual basics::Token *getErrorOutput() { return error_output; }
     
-    virtual Token *doForward(Token* input, bool during_training);
+    virtual basics::Token *doForward(basics::Token* input, bool during_training);
     
-    virtual Token *doBackprop(Token *input_error);
+    virtual basics::Token *doBackprop(basics::Token *input_error);
     
     virtual void reset(unsigned int it=0);
     
@@ -63,8 +61,8 @@ namespace ANN {
 
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       MatrixFloatSet *weights_dict,
-		       hash<string,ANNComponent*> &components_dict);
+		       basics::MatrixFloatSet *weights_dict,
+		       april_utils::hash<april_utils::string,ANNComponent*> &components_dict);
 
     virtual char *toLuaString();
   };

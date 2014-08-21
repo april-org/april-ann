@@ -23,6 +23,8 @@
 #include "bind_tokens.h"
 #include "bind_matrix.h"
 #include "token_matrix.h"
+
+using namespace basics;
 //BIND_END
 
 //BIND_HEADER_H

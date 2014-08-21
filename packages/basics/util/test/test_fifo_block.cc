@@ -2,6 +2,7 @@
 #include "fifo_block.h"
 #include "gtest.h"
 using namespace std;
+using namespace april_utils;
 
 #define N 20
 #define EXTRACTN 5

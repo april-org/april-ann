@@ -1,5 +1,5 @@
-local packages_list = { 
-  -- BASIC PACKAGES
+return { 
+  -- BASIC PACAKGES
   --  "plotter",
   "util",
   "gtest",
@@ -10,12 +10,18 @@ local packages_list = {
   "random",
   "cmdOpt",
   "profiler",
+  "complex",
   "mathcore",
-  "gzio",
   "matlab",
   "stats.MI",
   "autodiff",
   "autodiff.ann",
+
+  -- INPUT/OUTPUT
+  "aprilio",
+  "gzio",
+  "zip",
+  "tar",
   
   -- MACHINE LEARNING
   "clustering.kmeans.matrix",
@@ -27,6 +33,7 @@ local packages_list = {
   "ann.loss",
   "trainable",
   "ann.autoencoders",
+  "bayesian",
 
   -- LANGUAGE MODELS
   --  "fnnlm",
@@ -50,5 +57,3 @@ local packages_list = {
   "hmm_trainer",
   "rates",
 }
-
-return packages_list

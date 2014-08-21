@@ -21,6 +21,10 @@
 #include "unused_variable.h"
 #include "hyperplane_component.h"
 
+using namespace basics;
+using namespace april_utils;
+using namespace april_math;
+
 namespace ANN {
 
   HyperplaneANNComponent::HyperplaneANNComponent(const char *name) :

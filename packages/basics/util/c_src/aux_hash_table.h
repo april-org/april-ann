@@ -21,7 +21,9 @@
 #ifndef AUX_HASH_TABLE_H
 #define AUX_HASH_TABLE_H
 
+extern "C" {
 #include <stdint.h>
+}
 #include <cstring> // strcmp
 #include "april_assert.h"
 #include "error_print.h"

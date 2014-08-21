@@ -23,13 +23,51 @@
 #include "matrix.h"
 #include "matrix_not_implemented.h"
 
-NOT_IMPLEMENT_AXPY_HEADER(char)
-NOT_IMPLEMENT_GEMM_HEADER(char)
-NOT_IMPLEMENT_GEMV_HEEADER(char)
-NOT_IMPLEMENT_GER_HEADER(char)
-NOT_IMPLEMENT_DOT_HEADER(char)
+namespace basics {
 
-///////////////////////////////////////////////////////////////////////////////
-typedef Matrix<char> MatrixChar;
+
+  namespace MatrixIO {
+
+    /* Especialization of MatrixChar ascii and binary extractors, sizers and
+       coders */
+    template<>
+    bool AsciiExtractor<char>::operator()(april_utils::constString &line,
+                                          char &destination);
+  
+    template<>
+    bool BinaryExtractor<char>::operator()(april_utils::constString &line,
+                                           char &destination);
+  
+    template<>
+    int AsciiSizer<char>::operator()(const Matrix<char> *mat);
+
+    template<>
+    int BinarySizer<char>::operator()(const Matrix<char> *mat);
+
+    template<>
+    void AsciiCoder<char>::operator()(const char &value,
+                                      AprilIO::StreamInterface *stream);
+  
+    template<>
+    void BinaryCoder<char>::operator()(const char &value,
+                                       AprilIO::StreamInterface *stream);
+
+  } // namespace MatrixIO
+
+  template<>
+  char Matrix<char>::getTemplateOption(const april_utils::GenericOptions *options,
+                                       const char *name, char default_value);
+  
+  /////////////////////////////////////////////////////////////////////////////
+  NOT_IMPLEMENT_AXPY_HEADER(char)
+  NOT_IMPLEMENT_GEMM_HEADER(char)
+  NOT_IMPLEMENT_GEMV_HEEADER(char)
+  NOT_IMPLEMENT_GER_HEADER(char)
+  NOT_IMPLEMENT_DOT_HEADER(char)
+
+  ///////////////////////////////////////////////////////////////////////////////
+  typedef Matrix<char> MatrixChar;
+
+} // namespace basics
 
 #endif // MATRIX_CHAR_H

@@ -20,76 +20,7 @@
  */
 
 #include "utilMatrixChar.h"
-#include "binarizer.h"
-#include "clamp.h"
-#include "matrixFloat.h"
-#include "buffered_gzfile.h"
-#include "buffered_file.h"
-#include "ignore_result.h"
-#include <cmath>
-#include <cstdio>
 
-void writeMatrixCharToFile(MatrixChar *mat,
-			   const char *filename) {
-  if (GZFileWrapper::isGZ(filename)) {
-    BufferedGZFile f(filename, "w");
-    writeMatrixToStream(mat, f, CharAsciiSizer(), CharBinarySizer(),
-			CharAsciiCoder<BufferedGZFile>(),
-			CharBinaryCoder<BufferedGZFile>(),
-			true);
-  }
-  else {
-    BufferedFile f(filename, "w");
-    writeMatrixToStream(mat, f, CharAsciiSizer(), CharBinarySizer(),
-			CharAsciiCoder<BufferedFile>(),
-			CharBinaryCoder<BufferedFile>(),
-			true);
-  }
-}
-
-char *writeMatrixCharToString(MatrixChar *mat,
-			      int &len) {
-  WriteBufferWrapper wrapper;
-  len = writeMatrixToStream(mat, wrapper,
-			    CharAsciiSizer(),
-			    CharBinarySizer(),
-			    CharAsciiCoder<WriteBufferWrapper>(),
-			    CharBinaryCoder<WriteBufferWrapper>(),
-			    true);
-  return wrapper.getBufferProperty();
-}
-
-void writeMatrixCharToLuaString(MatrixChar *mat,
-				lua_State *L,
-				bool is_ascii) {
-  WriteLuaBufferWrapper wrapper(L);
-  IGNORE_RESULT(writeMatrixToStream(mat, wrapper,
-				    CharAsciiSizer(),
-				    CharBinarySizer(),
-				    CharAsciiCoder<WriteLuaBufferWrapper>(),
-				    CharBinaryCoder<WriteLuaBufferWrapper>(),
-				    is_ascii));
-  wrapper.finish();
-}
-
-MatrixChar *readMatrixCharFromFile(const char *filename) {
-  if (GZFileWrapper::isGZ(filename)) {
-    BufferedGZFile f(filename, "r");
-    return readMatrixFromStream<BufferedGZFile,
-				char>(f, CharAsciiExtractor(),
-				      CharBinaryExtractor());
-  }
-  else {
-    BufferedFile f(filename, "r");
-    return readMatrixFromStream<BufferedFile,
-				char>(f, CharAsciiExtractor(),
-				      CharBinaryExtractor());
-  }
-}
-
-MatrixChar *readMatrixCharFromString(constString &cs) {
-  return readMatrixFromStream<constString,
-			      char>(cs,
-				    CharAsciiExtractor(),
-				    CharBinaryExtractor());
-}
+namespace basics {
+  
+} // namespace basics

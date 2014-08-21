@@ -24,8 +24,11 @@
 /* Implementacion de un mfset, permite find(), merge(), toString() y
    fromString() */
 
-#include "april_assert.h"
+extern "C" {
 #include <stdint.h>
+}
+
+#include "april_assert.h"
 #include "constString.h"
 #include "binarizer.h"
 #include "referenced.h"

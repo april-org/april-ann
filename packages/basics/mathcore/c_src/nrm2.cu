@@ -23,92 +23,96 @@
 #include "cuda_utils.h"
 #include "unused_variable.h"
 
+namespace april_math {
+
 #ifdef USE_CUDA
-/***************************************
- ************** CUDA SECTION ***********
- ***************************************/
+  /***************************************
+   ************** CUDA SECTION ***********
+   ***************************************/
 
-cublasStatus_t wrapperCublasNrm2(cublasHandle_t &handle,
-				 unsigned int n,
-				 const float *x_mem,
-				 unsigned int x_inc,
-				 float *result) {
-  return cublasSnrm2(handle, n, x_mem, x_inc, result);
-}
+  cublasStatus_t wrapperCublasNrm2(cublasHandle_t &handle,
+                                   unsigned int n,
+                                   const float *x_mem,
+                                   unsigned int x_inc,
+                                   float *result) {
+    return cublasSnrm2(handle, n, x_mem, x_inc, result);
+  }
 
-cublasStatus_t wrapperCublasNrm2(cublasHandle_t &handle,
-				 unsigned int size,
-				 const ComplexF *x_mem,
-				 unsigned int x_inc,
-				 float *result) {
-  UNUSED_VARIABLE(handle);
-  UNUSED_VARIABLE(size);
-  UNUSED_VARIABLE(x_mem);
-  UNUSED_VARIABLE(x_inc);
-  UNUSED_VARIABLE(result);
-  ERROR_EXIT(256, "Nrm2 for complex numbers not implemented in CUDA\n");
-  return CUBLAS_STATUS_INTERNAL_ERROR;
-}
+  cublasStatus_t wrapperCublasNrm2(cublasHandle_t &handle,
+                                   unsigned int size,
+                                   const ComplexF *x_mem,
+                                   unsigned int x_inc,
+                                   float *result) {
+    UNUSED_VARIABLE(handle);
+    UNUSED_VARIABLE(size);
+    UNUSED_VARIABLE(x_mem);
+    UNUSED_VARIABLE(x_inc);
+    UNUSED_VARIABLE(result);
+    ERROR_EXIT(256, "Nrm2 for complex numbers not implemented in CUDA\n");
+    return CUBLAS_STATUS_INTERNAL_ERROR;
+  }
 
 #endif
 
-/***************************************
- ************* CBLAS SECTION ***********
- ***************************************/
+  /***************************************
+   ************* CBLAS SECTION ***********
+   ***************************************/
 
-float wrapperCblasNrm2(unsigned int size,
-		       const float *x_mem, unsigned int x_inc) {
-  return cblas_snrm2(size, x_mem, x_inc);
-}
+  float wrapperCblasNrm2(unsigned int size,
+                         const float *x_mem, unsigned int x_inc) {
+    return cblas_snrm2(size, x_mem, x_inc);
+  }
 
-float wrapperCblasNrm2(unsigned int size,
-		       const ComplexF *x_mem, unsigned int x_inc) {
-  return cblas_scnrm2(size, x_mem, x_inc);
-}
+  float wrapperCblasNrm2(unsigned int size,
+                         const ComplexF *x_mem, unsigned int x_inc) {
+    return cblas_scnrm2(size, x_mem, x_inc);
+  }
 
-/***************************************
- *********** TEMPLATE SECTION **********
- ***************************************/
+  /***************************************
+   *********** TEMPLATE SECTION **********
+   ***************************************/
 
-template <typename T>
-float doNrm2(unsigned int n,
-	     const GPUMirroredMemoryBlock<T> *x,
-	     unsigned int inc,
-	     unsigned int shift,
-	     bool use_gpu) {
-  float result;
-  const T *x_mem;
+  template <typename T>
+  float doNrm2(unsigned int n,
+               const GPUMirroredMemoryBlock<T> *x,
+               unsigned int inc,
+               unsigned int shift,
+               bool use_gpu) {
+    float result;
+    const T *x_mem;
 #ifndef USE_CUDA
-  UNUSED_VARIABLE(use_gpu);
+    UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
-  if (use_gpu) {
-    cublasStatus_t status;
-    cublasHandle_t handle = GPUHelper::getHandler();
-    x_mem  = x->getGPUForRead() + shift;
-    status = cublasSetStream(handle, GPUHelper::getCurrentStream());
-    checkCublasError(status);
-    status = wrapperCublasNrm2(handle, n, x_mem, inc, &result);
-    checkCublasError(status);
-  }
-  else {
+    if (use_gpu) {
+      cublasStatus_t status;
+      cublasHandle_t handle = GPUHelper::getHandler();
+      x_mem  = x->getGPUForRead() + shift;
+      status = cublasSetStream(handle, GPUHelper::getCurrentStream());
+      checkCublasError(status);
+      status = wrapperCublasNrm2(handle, n, x_mem, inc, &result);
+      checkCublasError(status);
+    }
+    else {
 #endif
-    x_mem = x->getPPALForRead() + shift;
-    result = wrapperCblasNrm2(n, x_mem, inc);
+      x_mem = x->getPPALForRead() + shift;
+      result = wrapperCblasNrm2(n, x_mem, inc);
 #ifdef USE_CUDA
-  }
+    }
 #endif
-  return result;
-}
+    return result;
+  }
 
-template float doNrm2<float>(unsigned int n,
-			     const GPUMirroredMemoryBlock<float> *x,
-			     unsigned int inc,
-			     unsigned int shift,
-			     bool use_gpu);
+  template float doNrm2<float>(unsigned int n,
+                               const GPUMirroredMemoryBlock<float> *x,
+                               unsigned int inc,
+                               unsigned int shift,
+                               bool use_gpu);
 
-template float doNrm2<ComplexF>(unsigned int n,
-				const GPUMirroredMemoryBlock<ComplexF> *x,
-				unsigned int inc,
-				unsigned int shift,
-				bool use_gpu);
+  template float doNrm2<ComplexF>(unsigned int n,
+                                  const GPUMirroredMemoryBlock<ComplexF> *x,
+                                  unsigned int inc,
+                                  unsigned int shift,
+                                  bool use_gpu);
+
+} // namespace april_math

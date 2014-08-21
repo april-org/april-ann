@@ -23,48 +23,50 @@
 
 #include "clamp.h"
 
-struct FloatRGB
-{
-  float r,g,b;
+namespace imaging {
 
-  FloatRGB(): r(0.0f), g(0.0f), b(0.0f) {}
-  FloatRGB(float r, float g, float b):r(r), g(g), b(b) {}
-  explicit FloatRGB(float gray): r(gray), g(gray), b(gray) {}
-  float to_grayscale() { return 0.3*r+0.59*g+0.11*b; }
+  struct FloatRGB
+  {
+    float r,g,b;
 
-};
+    FloatRGB(): r(0.0f), g(0.0f), b(0.0f) {}
+    FloatRGB(float r, float g, float b):r(r), g(g), b(b) {}
+    explicit FloatRGB(float gray): r(gray), g(gray), b(gray) {}
+    float to_grayscale() { return 0.3*r+0.59*g+0.11*b; }
 
-FloatRGB operator + (FloatRGB x, FloatRGB y);
-FloatRGB operator - (FloatRGB x, FloatRGB y);
-FloatRGB operator * (FloatRGB x, FloatRGB y);
-FloatRGB operator / (FloatRGB x, FloatRGB y);
+  };
 
-FloatRGB operator + (FloatRGB x, float y);
-FloatRGB operator - (FloatRGB x, float y);
-FloatRGB operator * (FloatRGB x, float y);
-FloatRGB operator / (FloatRGB x, float y);
+  FloatRGB operator + (FloatRGB x, FloatRGB y);
+  FloatRGB operator - (FloatRGB x, FloatRGB y);
+  FloatRGB operator * (FloatRGB x, FloatRGB y);
+  FloatRGB operator / (FloatRGB x, FloatRGB y);
 
-FloatRGB operator + (float x, FloatRGB y);
-FloatRGB operator - (float x, FloatRGB y);
-FloatRGB operator * (float x, FloatRGB y);
-FloatRGB operator / (float x, FloatRGB y);
+  FloatRGB operator + (FloatRGB x, float y);
+  FloatRGB operator - (FloatRGB x, float y);
+  FloatRGB operator * (FloatRGB x, float y);
+  FloatRGB operator / (FloatRGB x, float y);
 
-FloatRGB operator += (FloatRGB x, FloatRGB y);
-FloatRGB operator -= (FloatRGB x, FloatRGB y);
-FloatRGB operator *= (FloatRGB x, FloatRGB y);
-FloatRGB operator /= (FloatRGB x, FloatRGB y);
+  FloatRGB operator + (float x, FloatRGB y);
+  FloatRGB operator - (float x, FloatRGB y);
+  FloatRGB operator * (float x, FloatRGB y);
+  FloatRGB operator / (float x, FloatRGB y);
 
-FloatRGB operator += (FloatRGB x, float y);
-FloatRGB operator -= (FloatRGB x, float y);
-FloatRGB operator *= (FloatRGB x, float y);
-FloatRGB operator /= (FloatRGB x, float y);
+  FloatRGB operator += (FloatRGB x, FloatRGB y);
+  FloatRGB operator -= (FloatRGB x, FloatRGB y);
+  FloatRGB operator *= (FloatRGB x, FloatRGB y);
+  FloatRGB operator /= (FloatRGB x, FloatRGB y);
+
+  FloatRGB operator += (FloatRGB x, float y);
+  FloatRGB operator -= (FloatRGB x, float y);
+  FloatRGB operator *= (FloatRGB x, float y);
+  FloatRGB operator /= (FloatRGB x, float y);
+
+} // namespace imaging
 
 namespace april_utils{
-  template<> FloatRGB clamp<FloatRGB>(FloatRGB val, FloatRGB lower, FloatRGB upper);
+  template<> imaging::FloatRGB clamp<imaging::FloatRGB>(imaging::FloatRGB val,
+                                                        imaging::FloatRGB lower,
+                                                        imaging::FloatRGB upper);
 }
 
-
-
-
 #endif
-

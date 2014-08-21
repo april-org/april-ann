@@ -69,7 +69,7 @@ HIDE_SCOPE_NAMES       = NO
 SHOW_INCLUDE_FILES     = YES
 INLINE_INFO            = YES
 SORT_MEMBER_DOCS       = YES
-SORT_BRIEF_DOCS        = NO
+SORT_BRIEF_DOCS        = YES
 SORT_GROUP_NAMES       = NO
 SORT_BY_SCOPE_NAME     = NO
 GENERATE_TODOLIST      = YES
@@ -269,13 +269,13 @@ PERLMOD_MAKEVAR_PREFIX =
 # Configuration options related to the preprocessor   
 #---------------------------------------------------------------------------
 ENABLE_PREPROCESSING   = YES
-MACRO_EXPANSION        = NO
-EXPAND_ONLY_PREDEF     = NO
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = YES
 SEARCH_INCLUDES        = YES
 INCLUDE_PATH           = 
 INCLUDE_FILE_PATTERNS  = 
 PREDEFINED             = 
-EXPAND_AS_DEFINED      = 
+EXPAND_AS_DEFINED      = METHODS
 SKIP_FUNCTION_MACROS   = YES
 
 #---------------------------------------------------------------------------

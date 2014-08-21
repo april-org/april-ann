@@ -18,22 +18,29 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef UNCOMMENTED_LINE_H
+#define UNCOMMENTED_LINE_H
+
 #include <cstdio>
 
-// responde al perfil de fgets
-inline
-char* get_uncommented_line(char *s, int size, FILE *stream) {
-  char *aux;
-  do {
-    aux = fgets(s,size,stream);
-  } while(aux && aux[0] == '#');
-  return aux;
-}
+namespace april_utils {
+  // responde al perfil de fgets
+  inline
+  char* get_uncommented_line(char *s, int size, FILE *stream) {
+    char *aux;
+    do {
+      aux = fgets(s,size,stream);
+    } while(aux && aux[0] == '#');
+    return aux;
+  }
 
 
-inline
-char* get_line(char *s, int size, FILE *stream) {
-  char *aux = fgets(s,size,stream);
-  return aux;
-}
+  inline
+  char* get_line(char *s, int size, FILE *stream) {
+    char *aux = fgets(s,size,stream);
+    return aux;
+  }
 
+} // namespace april_utils
+
+#endif // UNCOMMENTED_LINE_H

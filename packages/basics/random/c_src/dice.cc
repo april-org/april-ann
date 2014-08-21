@@ -20,31 +20,34 @@
  */
 #include "dice.h"
 
-dice::dice(int outcom, double *prob) {
-  outcomes = outcom;
-  threshold = new double[outcomes];
-  double sum=0.0;
-  for (int i=0; i<outcomes; i++) {
-    sum += prob[i];
-    threshold[i] = sum;
-  }
-  sum = 1.0/sum;
-  for (int i=0; i<outcomes-1; i++)
-    threshold[i] *= sum;
-}
-dice::~dice() {
-  delete[] threshold;
-}
-int dice::thrown(MTRand *generator) {
-  double key = generator->rand(); //real number in [0,1]
-  int left=0,right=outcomes-1;
-  while (left < right) {
-    int middle = (left+right)/2;
-    if (threshold[middle] <= key) 
-      left = middle+1;
-    else
-      right = middle;
-  }
-  return left;
-};
+namespace basics {
 
+  dice::dice(int outcom, double *prob) {
+    outcomes = outcom;
+    threshold = new double[outcomes];
+    double sum=0.0;
+    for (int i=0; i<outcomes; i++) {
+      sum += prob[i];
+      threshold[i] = sum;
+    }
+    sum = 1.0/sum;
+    for (int i=0; i<outcomes-1; i++)
+      threshold[i] *= sum;
+  }
+  dice::~dice() {
+    delete[] threshold;
+  }
+  int dice::thrown(MTRand *generator) {
+    double key = generator->rand(); //real number in [0,1]
+    int left=0,right=outcomes-1;
+    while (left < right) {
+      int middle = (left+right)/2;
+      if (threshold[middle] <= key) 
+        left = middle+1;
+      else
+        right = middle;
+    }
+    return left;
+  };
+
+} // namespace basics

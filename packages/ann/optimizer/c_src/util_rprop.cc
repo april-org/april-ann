@@ -20,6 +20,9 @@
  */
 #include "util_rprop.h"
 #include "wrapper.h"
+
+using basics::MatrixFloat;
+
 namespace ANN {
   namespace optimizer {
     // FIXME: MAKE A CUDA IMPLEMENTATION

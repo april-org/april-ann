@@ -22,7 +22,6 @@
 #define ERROR_PRINT_H
 
 #include <cstdio>
-#include <cstdlib>
 extern "C" {
 #include "lua.h"
 }

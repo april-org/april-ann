@@ -696,7 +696,7 @@ end
 
 function string.get_path(path_with_filename, sep)
   local sep=sep or'/'
-  return path_with_filename:match("(.*"..sep..")") or ""
+  return path_with_filename:match("(.*"..sep..")") or "./"
 end
 
 function string.lines_of(t)
@@ -1159,7 +1159,10 @@ function util.function_to_lua_string(func,format)
   while true do
     local name,value = debug.getupvalue(func,i)
     if not name then break end
-    upvalues[i] = value
+    -- avoid global environment upvalue
+    if name ~= "_ENV" then
+      upvalues[i] = value
+    end
     i = i + 1
   end
   --

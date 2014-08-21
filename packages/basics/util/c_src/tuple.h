@@ -98,7 +98,7 @@ namespace april_utils {
 
   };  
 
-}
+} // namespace april_utils
 
 #endif
 

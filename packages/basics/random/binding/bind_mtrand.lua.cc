@@ -25,6 +25,8 @@
 #include "MersenneTwister.h"
 #include "dice.h"
 #include "utilLua.h"
+using basics::MTRand;
+using basics::dice;
 //BIND_END
 
 //BIND_LUACLASSNAME MTRand random
@@ -44,7 +46,7 @@
 //DOC_END
 {
   int argn = lua_gettop(L); /* number of arguments */
-  if (argn == 0)
+  if ( argn == 0 || (argn == 1 && lua_isnil(L,1)) )
     obj = new MTRand(); // auto-initialize with /dev/urandom or time()
   // and clock()
   else if (argn == 1)

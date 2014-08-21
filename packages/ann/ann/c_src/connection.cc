@@ -19,12 +19,19 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "swap.h"
+#include "buffer_list.h"
 #include "connection.h"
 #include "check_floats.h"
-#include "wrapper.h"
+#include "smart_ptr.h"
+#include "c_string.h"
+#include "swap.h"
 #include "utilMatrixFloat.h"
-#include "buffer_list.h"
+#include "wrapper.h"
+
+using namespace AprilIO;
+using namespace april_math;
+using namespace april_utils;
+using namespace basics;
 
 #define MAX_ITERATIONS_RANDOMIZE_LOOP 1000
 // generates a random weight, checking number of iterations and weightnearzero
@@ -162,11 +169,11 @@ namespace ANN {
   }
   
   char *Connections::toLuaString(MatrixFloat *weights) {
-    int len_w;
-    char *w = writeMatrixFloatToString(weights, false, len_w);
-    buffer_list buffer;
-    buffer.printf("matrix.fromString[[%s]]", w);
-    delete[] w;
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+    SharedPtr<CStringStream> stream(new CStringStream());
+    stream->put("matrix.fromString[[");
+    april_utils::HashTableOptions options;
+    weights->write( stream.get(), options.putBoolean("ascii", false) );
+    stream->put("]]\0", 3); // forces a \0 at the end of the buffer
+    return stream->releaseString();
   }
 }

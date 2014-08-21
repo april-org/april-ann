@@ -23,22 +23,60 @@
 #include "matrix.h"
 #include "matrix_not_implemented.h"
 
-NOT_IMPLEMENT_AXPY_HEADER(int32_t)
-NOT_IMPLEMENT_GEMM_HEADER(int32_t)
-NOT_IMPLEMENT_GEMV_HEEADER(int32_t)
-NOT_IMPLEMENT_GER_HEADER(int32_t)
-NOT_IMPLEMENT_DOT_HEADER(int32_t)
+namespace basics {
 
-/************* ZEROS FUNCTION **************/
-template<>
-void Matrix<int32_t>::zeros();
 
-/************* ONES FUNCTION **************/
-template<>
-void Matrix<int32_t>::ones();
+  namespace MatrixIO {
 
-///////////////////////////////////////////////////////////////////////////////
+    /* Especialization of MatrixInt32 ascii and binary extractors, sizers and
+       coders */
+    template<>
+    bool AsciiExtractor<int32_t>::operator()(april_utils::constString &line,
+                                             int32_t &destination);
+  
+    template<>
+    bool BinaryExtractor<int32_t>::operator()(april_utils::constString &line,
+                                              int32_t &destination);
+  
+    template<>
+    int AsciiSizer<int32_t>::operator()(const Matrix<int32_t> *mat);
 
-typedef Matrix<int32_t> MatrixInt32;
+    template<>
+    int BinarySizer<int32_t>::operator()(const Matrix<int32_t> *mat);
+
+    template<>
+    void AsciiCoder<int32_t>::operator()(const int32_t &value,
+                                         AprilIO::StreamInterface *stream);
+  
+    template<>
+    void BinaryCoder<int32_t>::operator()(const int32_t &value,
+                                          AprilIO::StreamInterface *stream);
+
+  } // namespace MatrixIO
+
+  template<>
+  int32_t Matrix<int32_t>::
+  getTemplateOption(const april_utils::GenericOptions *options,
+                    const char *name, int32_t default_value);
+
+  NOT_IMPLEMENT_AXPY_HEADER(int32_t)
+  NOT_IMPLEMENT_GEMM_HEADER(int32_t)
+  NOT_IMPLEMENT_GEMV_HEEADER(int32_t)
+  NOT_IMPLEMENT_GER_HEADER(int32_t)
+  NOT_IMPLEMENT_DOT_HEADER(int32_t)
+
+  /************* ZEROS FUNCTION **************/
+  template<>
+  void Matrix<int32_t>::zeros();
+
+  /************* ONES FUNCTION **************/
+  template<>
+  void Matrix<int32_t>::ones();
+
+  ///////////////////////////////////////////////////////////////////////////////
+
+  typedef Matrix<int32_t> MatrixInt32;
+
+} // namespace basics
 
 #endif // MATRIX_INT_H

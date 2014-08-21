@@ -23,6 +23,9 @@
 #include "wrapper.h"
 #include "unused_variable.h"
 
+using namespace april_utils;
+using namespace basics;
+
 namespace ANN {
 
   ZeroOneLossFunction::ZeroOneLossFunction(unsigned int size, float TH) :

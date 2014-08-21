@@ -21,7 +21,9 @@
 #ifndef TRIE_VECTOR_H
 #define TRIE_VECTOR_H
 
+extern "C" {
 #include <stdint.h>
+}
 #include "referenced.h"
 
 /*

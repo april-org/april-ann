@@ -21,4 +21,7 @@
 
 #include "matrixSet.h"
 
-template class MatrixSet<float>;
+namespace basics {
+  template class MatrixSet<float>;
+}
+

@@ -21,11 +21,13 @@
 #ifndef MMAPPED_DATA_H
 #define MMAPPED_DATA_H
 
+extern "C" {
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/mman.h>           // mmap() is defined in this header
+}
 #include "referenced.h"
 #include "april_assert.h"
 #include "error_print.h"
@@ -33,8 +35,6 @@
 
 namespace april_utils {
 
-  const int MAGIC_NUMBER = 0x3333;
-  
   class MMappedDataReader : public Referenced {
     int commit_number;
     char   *mmapped_data;

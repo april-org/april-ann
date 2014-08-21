@@ -26,37 +26,41 @@
 #include "token_base.h"
 #include "unused_variable.h"
 
-class TokenMemoryBlock : public Token {
-  APRIL_DISALLOW_COPY_AND_ASSIGN(TokenMemoryBlock);
-  FloatGPUMirroredMemoryBlock *mem_block;
-  unsigned int used_size;
-public:
-  TokenMemoryBlock();
-  TokenMemoryBlock(unsigned int size);
-  ~TokenMemoryBlock();
-  void setData(float *data, unsigned int size);
-  FloatGPUMirroredMemoryBlock *getMemBlock() { return mem_block; }
-  unsigned int getUsedSize() const { return used_size; }
-  unsigned int getMaxSize() const { return mem_block?mem_block->getSize():0; }
-  void resize(unsigned int size);
-  Token *clone() const;
-  buffer_list* toString();
-  buffer_list* debugString(const char *prefix, int debugLevel);
-  TokenCode getTokenCode() const;
-  static Token *fromString(constString &cs) {
-    // NOT IMPLEMENTED
-    UNUSED_VARIABLE(cs);
-    return 0;
-  }
-  void clear() { used_size = 0; }
-  bool getCudaFlag() { return mem_block->getCudaFlag(); }
-  void printDebug() {
-    const float *data = mem_block->getPPALForRead();
-    for (unsigned int i=0; i<used_size; ++i)
-      printf ("%f ", data[i]);
-    printf("\n");
-  }
-  void setToZero(bool use_cuda);
-};
+namespace basics {
+
+  class TokenMemoryBlock : public Token {
+    APRIL_DISALLOW_COPY_AND_ASSIGN(TokenMemoryBlock);
+    april_math::FloatGPUMirroredMemoryBlock *mem_block;
+    unsigned int used_size;
+  public:
+    TokenMemoryBlock();
+    TokenMemoryBlock(unsigned int size);
+    ~TokenMemoryBlock();
+    void setData(float *data, unsigned int size);
+    april_math::FloatGPUMirroredMemoryBlock *getMemBlock() { return mem_block; }
+    unsigned int getUsedSize() const { return used_size; }
+    unsigned int getMaxSize() const { return mem_block?mem_block->getSize():0; }
+    void resize(unsigned int size);
+    Token *clone() const;
+    april_utils::buffer_list* toString();
+    april_utils::buffer_list* debugString(const char *prefix, int debugLevel);
+    TokenCode getTokenCode() const;
+    static Token *fromString(april_utils::constString &cs) {
+      // NOT IMPLEMENTED
+      UNUSED_VARIABLE(cs);
+      return 0;
+    }
+    void clear() { used_size = 0; }
+    bool getCudaFlag() { return mem_block->getCudaFlag(); }
+    void printDebug() {
+      const float *data = mem_block->getPPALForRead();
+      for (unsigned int i=0; i<used_size; ++i)
+        printf ("%f ", data[i]);
+      printf("\n");
+    }
+    void setToZero(bool use_cuda);
+  };
+
+} // namespace basics
 
 #endif // TOKEN_MEMORY_BLOCK_H

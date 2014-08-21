@@ -9,228 +9,224 @@
 #include <cmath>
 #include <cstdio>
 #include "interest_points.h"
-using april_utils::vector;
-using april_utils::pair;
-using april_utils::min;
-using april_utils::max;
-using april_utils::max_finder;
-using april_utils::min_finder;
-using april_utils::swap;
-using april_utils::Point2D;
 
-static Point2D get_next_point(vector<Point2D> v, int index, int width, float default_y)
-{
-  assert(index+1 >= 0 && "Invalid index");
-
-  if (v.size() > 0) {
-    if (index < int(v.size())-1) {
-      return v[index+1];
-    }
-    else {
-      return Point2D(width-1.0f, v.back().y);
-    }
-  } else {
-    return Point2D(width-1.0f, default_y);
-  }
-}
-
-static Point2D get_first_point(vector<Point2D> v, int width, float default_y, int *index)
-{
-  UNUSED_VARIABLE(width);
-  Point2D result;
-  if (!v.empty()) {
-    result.x  = 0;
-    result.y = v[0].y;
-    if (v[0].x == 0) {
-      *index = 0; // index is the last index we have used in v
-    } 
-    else {
-      *index = -1;
-    }
-  } 
-  else {
-    result.x = 0.0f;
-    result.y = default_y;
-    *index = -1;
-  }
-
-  return result;
-}
-
-
-// Reduce a section of one column to one pixel
-static float column_reduce(ImageFloat *src, int col,
-                           float src_top, float src_bottom) {
-  float epsilon = 1e-7;
-  assert(src_top >= 0 && "Top source must be >= 0");
-
-  // assert(src_bottom <= src->height ||
-  //         (0, printf("Bottom source must be <= src_height. (%f/%d)\n",
-  //             src_bottom, src->height)));
-
-  assert(src_top <= src_bottom && "Top pixel has to be lower than bottom");
-
-  int pxl_top = floor(src_top);
-  int pxl_bottom = floor(src_bottom);
-
-  float rst_top = src_top - pxl_top;
-  float rst_bottom = src_bottom - pxl_bottom;
-
-  float total = 0.0f;
-  //if (pxl_top == pxl_bottom)
-  //   return (float) (*src)(col, pxl_top);
-  for(int x = pxl_top; x < pxl_bottom; ++x) {
-    total += (*src)(col, x);
-  }
-  if (rst_top > epsilon) {
-    total -= rst_top * ((*src)(col, pxl_top));
-  }
-  if (rst_bottom > epsilon) {
-    total += rst_bottom * ((*src)(col, pxl_bottom));        
-  }
-
-  return total/(src_bottom - src_top);
-}
-
-// Given a contour matrix (baseline, topline) and a line points
-//
-bool xComparator(Point2D &v1, Point2D &v2) {
-  return v1.x < v2.x;
-}
-
-bool yComparator(Point2D &v1, Point2D &v2) {
-  return v1.y < v2.y;
-}
-bool yComparatorReversed(Point2D &v1, Point2D &v2) {
-  return v1.y > v2.y;
-}
-
-static void filter_asc(vector<Point2D> *points,
-		       MatrixFloat::random_access_iterator &line_it,
-		       int width, 
-		       float vThreshold = 10.0f,
-		       int hThreshold = 20) {
-  bool *valid = new bool[width];
-  for (int i=0; i<width; ++i) valid[i] = true;
-  vector<Point2D> *new_points = new vector<Point2D>();
-  
-  april_utils::Sort(&(*points)[0],points->size(),yComparator);
-  for(int i = 0; i < (int)points->size();++i) {
-    Point2D &p = (*points)[i];
-    int x = int(p.x);
-    if (line_it(x,0) > p.y+vThreshold && valid[x]) {
-      new_points->push_back(p);
-      int first = max(x-hThreshold,0);
-      int last  = min(x+hThreshold,width-1);
-      for (int i=first; i<=last; ++i)
-	valid[i]=false;
-    }
-  }
-  // sort new_points by x
-  april_utils::Sort(&(*new_points)[0],new_points->size(),xComparator); 
-  
-  // delete points and change to new_points
-  vector<Point2D> *aux = points;
-  points->swap(*new_points);
-  delete new_points;
-  delete[] valid;
-}
-
-static void filter_desc(vector<Point2D> *points,
-			MatrixFloat::random_access_iterator &line_it,
-			int width, 
-			float vThreshold = 5.0f,
-			int hThreshold = 20) {
-  bool *valid = new bool[width];
-  for (int i=0; i<width; ++i) valid[i] = true;
-  vector<Point2D> *new_points = new vector<Point2D>();
-  
-  april_utils::Sort(&(*points)[0],points->size(),yComparatorReversed);
-  for(int i = 0; i < (int)points->size();++i) {
-    Point2D &p = (*points)[i];
-    int x = int(p.x);
-    if (line_it(x,1) < p.y-vThreshold && valid[x]) {
-      new_points->push_back(p);
-      int first = max(x-hThreshold,0);
-      int last  = min(x+hThreshold,width-1);
-      for (int i=first; i<=last; ++i)
-	valid[i]=false;
-    }
-  }
-  // sort new_points by x
-  april_utils::Sort(&(*new_points)[0],new_points->size(),xComparator); 
-  
-  // delete points and change to new_points
-  vector<Point2D> *aux = points;
-  points->swap(*new_points);
-  delete new_points;
-  delete[] valid;
-}
-
-
-// Scales the source column to the target column
-// Recieve:
-// Two Images (Source and target)
-// Column to be reduced
-// the initial and final x of the source image
-// the initial and final x of the target image
-static void resize_index(ImageFloat *src, ImageFloat *dst,
-                         int col, float src_top, float src_bottom,
-                         float dst_top, float dst_bottom) {
-  //We are assuming that the row of the column can be viewed
-  //as a float between range 0 and height (inclusive)
-  assert(src_top >= 0 && "Top source must be >= 0");
-  assert(dst_top >= 0 && "Top dest must be >= 0");
-  assert(src_bottom <= src->height() && 
-         "Bottom source must be <= src_height");
-  assert(dst_bottom <= dst->height() && 
-         "Bottom dest must be <= dest_height");
-  assert(src_top <= src_bottom &&
-         "Top src pixel has to be lower than bottom");
-  assert(dst_top < dst_bottom &&
-         "Top target pixel has to be lower than bottom");
-
-  //if (src_top >= src_bottom) 
-  //    src_bottom = src_top+1;
-    
-  double epsilon = 1e-7;
-  float ratio = (src_bottom - src_top)/(dst_bottom - dst_top);
-  float cur_top = src_top;
-  float cur_bottom;
-
-
-  //Compute the first row rest
-  int first_row    = (int) ceil(dst_top);
-  int last_row     = (int) ceil(dst_bottom);
-  float rst_top      = first_row - dst_top;
-
-  if (rst_top > epsilon) {
-    cur_bottom = src_top;
-    cur_top    = (first_row-dst_top)*ratio;
-    (*dst)(col, (int)floor(dst_top)) += column_reduce(src, col, cur_top, cur_bottom);
-  }
-
-  for (int row = first_row; row < last_row; ++row)
-    {
-      // fprintf(stderr, "Assert src_cur %f, src_next: %f, top: %f , bottom: %f, height: %d\n", src_cur, src_cur+ratio, src_top,  src_bottom, src->height);
-      cur_bottom =  ((row +1 - dst_top)*ratio) + src_top;
-      float dst_value = column_reduce(src, col, cur_top, cur_bottom);
-      cur_top = cur_bottom;
-      (*dst)(col, row) = dst_value;
-    }
-
-  //Compute the last row rest
-  float rst_bottom = dst_bottom - last_row;
-
-  if (rst_bottom > epsilon) {
-    cur_bottom = src_bottom;
-    (*dst)(col, (int)ceil(dst_bottom)) += column_reduce(src, col, cur_top, cur_bottom);
-  }
-
-}
+using namespace april_utils;
+using namespace basics;
+using namespace imaging;
 
 namespace OCR {
   namespace OffLineTextPreprocessing {
+
+    static Point2D get_next_point(vector<Point2D> v, int index, int width, float default_y)
+    {
+      assert(index+1 >= 0 && "Invalid index");
+
+      if (v.size() > 0) {
+        if (index < int(v.size())-1) {
+          return v[index+1];
+        }
+        else {
+          return Point2D(width-1.0f, v.back().y);
+        }
+      } else {
+        return Point2D(width-1.0f, default_y);
+      }
+    }
+
+    static Point2D get_first_point(vector<Point2D> v, int width, float default_y, int *index)
+    {
+      UNUSED_VARIABLE(width);
+      Point2D result;
+      if (!v.empty()) {
+        result.x  = 0;
+        result.y = v[0].y;
+        if (v[0].x == 0) {
+          *index = 0; // index is the last index we have used in v
+        } 
+        else {
+          *index = -1;
+        }
+      } 
+      else {
+        result.x = 0.0f;
+        result.y = default_y;
+        *index = -1;
+      }
+
+      return result;
+    }
+
+
+    // Reduce a section of one column to one pixel
+    static float column_reduce(ImageFloat *src, int col,
+                               float src_top, float src_bottom) {
+      float epsilon = 1e-7;
+      assert(src_top >= 0 && "Top source must be >= 0");
+
+      // assert(src_bottom <= src->height ||
+      //         (0, printf("Bottom source must be <= src_height. (%f/%d)\n",
+      //             src_bottom, src->height)));
+
+      assert(src_top <= src_bottom && "Top pixel has to be lower than bottom");
+
+      int pxl_top = floor(src_top);
+      int pxl_bottom = floor(src_bottom);
+
+      float rst_top = src_top - pxl_top;
+      float rst_bottom = src_bottom - pxl_bottom;
+
+      float total = 0.0f;
+      //if (pxl_top == pxl_bottom)
+      //   return (float) (*src)(col, pxl_top);
+      for(int x = pxl_top; x < pxl_bottom; ++x) {
+        total += (*src)(col, x);
+      }
+      if (rst_top > epsilon) {
+        total -= rst_top * ((*src)(col, pxl_top));
+      }
+      if (rst_bottom > epsilon) {
+        total += rst_bottom * ((*src)(col, pxl_bottom));        
+      }
+
+      return total/(src_bottom - src_top);
+    }
+
+    // Given a contour matrix (baseline, topline) and a line points
+    //
+    bool xComparator(Point2D &v1, Point2D &v2) {
+      return v1.x < v2.x;
+    }
+
+    bool yComparator(Point2D &v1, Point2D &v2) {
+      return v1.y < v2.y;
+    }
+    bool yComparatorReversed(Point2D &v1, Point2D &v2) {
+      return v1.y > v2.y;
+    }
+
+    static void filter_asc(vector<Point2D> *points,
+                           MatrixFloat::random_access_iterator &line_it,
+                           int width, 
+                           float vThreshold = 10.0f,
+                           int hThreshold = 20) {
+      bool *valid = new bool[width];
+      for (int i=0; i<width; ++i) valid[i] = true;
+      vector<Point2D> *new_points = new vector<Point2D>();
+  
+      april_utils::Sort(&(*points)[0],points->size(),yComparator);
+      for(int i = 0; i < (int)points->size();++i) {
+        Point2D &p = (*points)[i];
+        int x = int(p.x);
+        if (line_it(x,0) > p.y+vThreshold && valid[x]) {
+          new_points->push_back(p);
+          int first = max(x-hThreshold,0);
+          int last  = min(x+hThreshold,width-1);
+          for (int i=first; i<=last; ++i)
+            valid[i]=false;
+        }
+      }
+      // sort new_points by x
+      april_utils::Sort(&(*new_points)[0],new_points->size(),xComparator); 
+  
+      // delete points and change to new_points
+      vector<Point2D> *aux = points;
+      points->swap(*new_points);
+      delete new_points;
+      delete[] valid;
+    }
+
+    static void filter_desc(vector<Point2D> *points,
+                            MatrixFloat::random_access_iterator &line_it,
+                            int width, 
+                            float vThreshold = 5.0f,
+                            int hThreshold = 20) {
+      bool *valid = new bool[width];
+      for (int i=0; i<width; ++i) valid[i] = true;
+      vector<Point2D> *new_points = new vector<Point2D>();
+  
+      april_utils::Sort(&(*points)[0],points->size(),yComparatorReversed);
+      for(int i = 0; i < (int)points->size();++i) {
+        Point2D &p = (*points)[i];
+        int x = int(p.x);
+        if (line_it(x,1) < p.y-vThreshold && valid[x]) {
+          new_points->push_back(p);
+          int first = max(x-hThreshold,0);
+          int last  = min(x+hThreshold,width-1);
+          for (int i=first; i<=last; ++i)
+            valid[i]=false;
+        }
+      }
+      // sort new_points by x
+      april_utils::Sort(&(*new_points)[0],new_points->size(),xComparator); 
+  
+      // delete points and change to new_points
+      vector<Point2D> *aux = points;
+      points->swap(*new_points);
+      delete new_points;
+      delete[] valid;
+    }
+
+
+    // Scales the source column to the target column
+    // Recieve:
+    // Two Images (Source and target)
+    // Column to be reduced
+    // the initial and final x of the source image
+    // the initial and final x of the target image
+    static void resize_index(ImageFloat *src, ImageFloat *dst,
+                             int col, float src_top, float src_bottom,
+                             float dst_top, float dst_bottom) {
+      //We are assuming that the row of the column can be viewed
+      //as a float between range 0 and height (inclusive)
+      assert(src_top >= 0 && "Top source must be >= 0");
+      assert(dst_top >= 0 && "Top dest must be >= 0");
+      assert(src_bottom <= src->height() && 
+             "Bottom source must be <= src_height");
+      assert(dst_bottom <= dst->height() && 
+             "Bottom dest must be <= dest_height");
+      assert(src_top <= src_bottom &&
+             "Top src pixel has to be lower than bottom");
+      assert(dst_top < dst_bottom &&
+             "Top target pixel has to be lower than bottom");
+
+      //if (src_top >= src_bottom) 
+      //    src_bottom = src_top+1;
+    
+      double epsilon = 1e-7;
+      float ratio = (src_bottom - src_top)/(dst_bottom - dst_top);
+      float cur_top = src_top;
+      float cur_bottom;
+
+
+      //Compute the first row rest
+      int first_row    = (int) ceil(dst_top);
+      int last_row     = (int) ceil(dst_bottom);
+      float rst_top      = first_row - dst_top;
+
+      if (rst_top > epsilon) {
+        cur_bottom = src_top;
+        cur_top    = (first_row-dst_top)*ratio;
+        (*dst)(col, (int)floor(dst_top)) += column_reduce(src, col, cur_top, cur_bottom);
+      }
+
+      for (int row = first_row; row < last_row; ++row)
+        {
+          // fprintf(stderr, "Assert src_cur %f, src_next: %f, top: %f , bottom: %f, height: %d\n", src_cur, src_cur+ratio, src_top,  src_bottom, src->height);
+          cur_bottom =  ((row +1 - dst_top)*ratio) + src_top;
+          float dst_value = column_reduce(src, col, cur_top, cur_bottom);
+          cur_top = cur_bottom;
+          (*dst)(col, row) = dst_value;
+        }
+
+      //Compute the last row rest
+      float rst_bottom = dst_bottom - last_row;
+
+      if (rst_bottom > epsilon) {
+        cur_bottom = src_bottom;
+        (*dst)(col, (int)ceil(dst_bottom)) += column_reduce(src, col, cur_top, cur_bottom);
+      }
+
+    }
 
     ImageFloat *normalize_image(ImageFloat *source, int dst_height) {
 

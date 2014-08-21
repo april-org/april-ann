@@ -27,8 +27,6 @@
 #include "token_vector.h"
 #include "token_matrix.h"
 
-using april_utils::vector;
-
 namespace ANN {
 
   /// This component modifies the input matrix to be reinterpreted as the given
@@ -40,10 +38,10 @@ namespace ANN {
     
     int *rewrap_dims, n;
     
-    virtual MatrixFloat *privateDoForward(MatrixFloat* input,
+    virtual basics::MatrixFloat *privateDoForward(basics::MatrixFloat* input,
                                           bool during_training);
     
-    virtual MatrixFloat *privateDoBackprop(MatrixFloat *input_error);
+    virtual basics::MatrixFloat *privateDoBackprop(basics::MatrixFloat *input_error);
     
     virtual void privateReset(unsigned int it=0);
     
@@ -51,8 +49,8 @@ namespace ANN {
     RewrapANNComponent(const int *rewrap_dims, int n, const char *name=0);
     virtual ~RewrapANNComponent();
     
-    virtual void precomputeOutputSize(const vector<unsigned int> &input_size,
-				      vector<unsigned int> &output_size) {
+    virtual void precomputeOutputSize(const april_utils::vector<unsigned int> &input_size,
+				      april_utils::vector<unsigned int> &output_size) {
       UNUSED_VARIABLE(input_size);
       output_size.clear();
       for (int i=0; i<n-1; ++i)
@@ -63,8 +61,8 @@ namespace ANN {
 
     virtual void build(unsigned int _input_size,
 		       unsigned int _output_size,
-		       MatrixFloatSet *weights_dict,
-		       hash<string,ANNComponent*> &components_dict);
+		       basics::MatrixFloatSet *weights_dict,
+		       april_utils::hash<april_utils::string,ANNComponent*> &components_dict);
 
     virtual char *toLuaString();
   };

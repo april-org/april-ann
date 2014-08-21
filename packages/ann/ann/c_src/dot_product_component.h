@@ -34,7 +34,7 @@ namespace ANN {
   class DotProductANNComponent : public MatrixInputSwitchANNComponent {
     APRIL_DISALLOW_COPY_AND_ASSIGN(DotProductANNComponent);
     
-    MatrixFloat *weights_matrix;
+    basics::MatrixFloat *weights_matrix;
     
     /// learning parameters
     CBLAS_TRANSPOSE transpose_weights;
@@ -42,21 +42,21 @@ namespace ANN {
   protected:
     
     // from MatrixANNComponentHelper
-    virtual MatrixFloat *privateDoDenseForward(MatrixFloat *input,
-                                               bool during_training);
-    virtual MatrixFloat *privateDoDenseBackprop(MatrixFloat *error_input);
+    virtual basics::MatrixFloat *privateDoDenseForward(basics::MatrixFloat *input,
+                                                       bool during_training);
+    virtual basics::MatrixFloat *privateDoDenseBackprop(basics::MatrixFloat *error_input);
     virtual void privateDenseReset(unsigned int it=0);
-    virtual void privateDenseComputeGradients(MatrixFloat*& grads_mat);
+    virtual void privateDenseComputeGradients(april_utils::SharedPtr<basics::MatrixFloat> & grads_mat);
 
     // from SparseMatrixANNComponentHelper
-    virtual MatrixFloat *privateDoSparseForward(SparseMatrixFloat *input,
-                                                bool during_training);
-    virtual SparseMatrixFloat *privateDoSparseBackprop(MatrixFloat *error_input);
+    virtual basics::MatrixFloat *privateDoSparseForward(basics::SparseMatrixFloat *input,
+                                                        bool during_training);
+    virtual basics::SparseMatrixFloat *privateDoSparseBackprop(basics::MatrixFloat *error_input);
     virtual void privateSparseReset(unsigned int it=0);
-    virtual void privateSparseComputeGradients(MatrixFloat*& grads_mat);
+    virtual void privateSparseComputeGradients(april_utils::SharedPtr<basics::MatrixFloat> & grads_mat);
     
     //
-    void initializeComputeGradients(MatrixFloat*& grads_mat);
+    void initializeComputeGradients(april_utils::SharedPtr<basics::MatrixFloat> & grads_mat);
         
   public:
     DotProductANNComponent(const char *name=0, const char *weights_name=0,
@@ -67,9 +67,9 @@ namespace ANN {
     virtual ANNComponent *clone();
     virtual void build(unsigned int input_size,
 		       unsigned int output_size,
-		       MatrixFloatSet *weights_dict,
-		       hash<string,ANNComponent*> &components_dict);
-    virtual void copyWeights(MatrixFloatSet *weights_dict);
+		       basics::MatrixFloatSet *weights_dict,
+		       april_utils::hash<april_utils::string,ANNComponent*> &components_dict);
+    virtual void copyWeights(basics::MatrixFloatSet *weights_dict);
     
     virtual char *toLuaString();
     

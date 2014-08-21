@@ -30,8 +30,6 @@
 #include "pca_whitening_component.h"
 #include "dot_product_component.h"
 
-using april_utils::vector;
-
 namespace ANN {
 
   class ZCAWhiteningANNComponent : public PCAWhiteningANNComponent {
@@ -39,21 +37,21 @@ namespace ANN {
     
     DotProductANNComponent dot_product_decoder; //< Applies the reconstruction from PCA rotated data
   public:
-    ZCAWhiteningANNComponent(MatrixFloat *U,
-			     SparseMatrixFloat *S,
+    ZCAWhiteningANNComponent(basics::MatrixFloat *U,
+			     basics::SparseMatrixFloat *S,
 			     float epsilon=0.0f,
 			     unsigned int takeN=0,
 			     const char *name=0);
     virtual ~ZCAWhiteningANNComponent();
     
-    virtual Token *doForward(Token* input, bool during_training);
+    virtual basics::Token *doForward(basics::Token* input, bool during_training);
     
-    virtual Token *doBackprop(Token *input_error);
+    virtual basics::Token *doBackprop(basics::Token *input_error);
     
-    virtual Token *getInput() { return PCAWhiteningANNComponent::getInput(); }
-    virtual Token *getOutput() { return dot_product_decoder.getOutput(); }
-    virtual Token *getErrorInput() { return dot_product_decoder.getErrorInput(); }
-    virtual Token *getErrorOutput() { return PCAWhiteningANNComponent::getErrorOutput(); }
+    virtual basics::Token *getInput() { return PCAWhiteningANNComponent::getInput(); }
+    virtual basics::Token *getOutput() { return dot_product_decoder.getOutput(); }
+    virtual basics::Token *getErrorInput() { return dot_product_decoder.getErrorInput(); }
+    virtual basics::Token *getErrorOutput() { return PCAWhiteningANNComponent::getErrorOutput(); }
 
 
     virtual ANNComponent *clone();

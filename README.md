@@ -8,6 +8,8 @@ Contributions are wellcome. Only pull requests to `devel` branch will be
 accepted, so avoid to create pull requests to `master`. A Travis CI instance
 will check that your request passes all tests. For Lua unit testing use the
 package `basics/utest`, and for C++ unit testing the package `basics/gtest`.
+At the end of this document there are information about Doxygen documentation
+which can be useful for C/C++ developing. For Lua developing use the wiki.
 
 Requirements
 ------------
@@ -25,6 +27,7 @@ with older and newer versions whenver the API was compatible.
 - LAPACK library, offered by liblapack_atlas, mkl_lapack, or MacOS Accelerate Framework
 - LAPACKE library when compiling with ATLAS
 - libz: support for open of GZIPPED files
+- libzip: support for open ZIP packages.
 
 The following libreries are recommended, but optional:
 - [OPTIONAL] libpng: if you want to open PNG images
@@ -39,7 +42,7 @@ Dependencies setup
 The first time, you need to install dependencies in Linux (via apt-get) and in
 MacOS X (via MacPorts) running:
 
-```$ sudo ./DEPENDENCIES-INSTALLER.sh```
+```$ ./DEPENDENCIES-INSTALLER.sh```
 
 Compilation
 -----------
@@ -250,14 +253,31 @@ Wiki documentation
 
 Doxygen documentation
 ---------------------
+
+The documentation of the master branch will be mantained as updated as possible
+in the following links:
+
 - [Developer manual](http://cafre.dsic.upv.es:8080/~pako/STUFF/doxygen_doc/developer/html/index.html)
 - [Reference manual](http://cafre.dsic.upv.es:8080/~pako/STUFF/doxygen_doc/user_refman/html/index.html)
+
+However, you can produce the Doxygen documentation of the branch where
+you are working by using the makefile's `document` target. Please, note that
+you need to have installed [Doxygen](www.doxygen.org) and
+[Graphviz](http://www.graphviz.org/).
+
+```
+$ make document
+$ open doxygen_doc/developer/html/index.html
+```
+
+The last command can be substituted by you opening the indicated
+location in your prefered web browser ;)
 
 LINUX installation
 ------------------
 
 Install g++, libatlas-dev, libreadline-dev, libpng-dev, libtiff-dev, libz-dev,
-libopenmp-dev or execute: `$ sudo ./DEPENDENCIES-INSTALLER.sh`
+libopenmp-dev or execute: `$ ./DEPENDENCIES-INSTALLER.sh`
 
 MAC OS X installation
 ---------------------
@@ -265,7 +285,7 @@ MAC OS X installation
 Via MacPorts:
 
 - Install [MacPorts](http://www.macports.org/)
-- Execute `$ sudo ./DEPENDENCIES-INSTALLER.sh`
+- Execute `$ ./DEPENDENCIES-INSTALLER.sh`
 
 Or manually:
 

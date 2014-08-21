@@ -56,7 +56,7 @@
 
 #include "aux_hash_table.h"
 #include <cmath> // ceilf
-#include <stddef.h> // ptrdiff_t, size_t...
+#include <cstddef> // ptrdiff_t, size_t...
 #include "pair.h"
 
 namespace april_utils {
