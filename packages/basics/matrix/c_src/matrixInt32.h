@@ -54,6 +54,10 @@ namespace basics {
 
   } // namespace MatrixIO
 
+  template<>
+  int32_t Matrix<int32_t>::
+  getTemplateOption(const april_utils::GenericOptions *options,
+                    const char *name, int32_t default_value);
 
   NOT_IMPLEMENT_AXPY_HEADER(int32_t)
   NOT_IMPLEMENT_GEMM_HEADER(int32_t)

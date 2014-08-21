@@ -42,7 +42,7 @@ Dependencies setup
 The first time, you need to install dependencies in Linux (via apt-get) and in
 MacOS X (via MacPorts) running:
 
-```$ sudo ./DEPENDENCIES-INSTALLER.sh```
+```$ ./DEPENDENCIES-INSTALLER.sh```
 
 Compilation
 -----------
@@ -277,7 +277,7 @@ LINUX installation
 ------------------
 
 Install g++, libatlas-dev, libreadline-dev, libpng-dev, libtiff-dev, libz-dev,
-libopenmp-dev or execute: `$ sudo ./DEPENDENCIES-INSTALLER.sh`
+libopenmp-dev or execute: `$ ./DEPENDENCIES-INSTALLER.sh`
 
 MAC OS X installation
 ---------------------
@@ -285,7 +285,7 @@ MAC OS X installation
 Via MacPorts:
 
 - Install [MacPorts](http://www.macports.org/)
-- Execute `$ sudo ./DEPENDENCIES-INSTALLER.sh`
+- Execute `$ ./DEPENDENCIES-INSTALLER.sh`
 
 Or manually:
 
