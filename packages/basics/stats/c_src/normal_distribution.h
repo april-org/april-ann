@@ -21,6 +21,7 @@
 #ifndef NORMAL_DISTRIBUTION_H
 #define NORMAL_DISTRIBUTION_H
 
+#include "matrixFloat.h"
 #include "sparse_matrixFloat.h"
 #include "statistical_distribution.h"
 

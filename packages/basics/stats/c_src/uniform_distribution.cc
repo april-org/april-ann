@@ -18,14 +18,15 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "buffer_list.h"
+#include "matrixFloat.h"
+#include "smart_ptr.h"
 #include "uniform_distribution.h"
-#include "utilMatrixFloat.h"
 
+using april_utils::log_float;
+using april_utils::SharedPtr;
+using AprilIO::CStringStream;
 using basics::MatrixFloat;
 using basics::MTRand;
-using april_utils::log_float;
-using april_utils::buffer_list;
 
 namespace Stats {
 
@@ -138,16 +139,15 @@ namespace Stats {
   }
 
   char *UniformDistribution::toLuaString(bool is_ascii) const {
-    buffer_list buffer;
-    char *low_str, *high_str;
-    int len;
-    low_str = writeMatrixFloatToString(low, is_ascii, len);
-    high_str = writeMatrixFloatToString(high, is_ascii, len);
-    buffer.printf("stats.dist.uniform(matrix.fromString[[%s]], matrix.fromString[[%s]])",
-                  low_str, high_str);
-    delete[] low_str;
-    delete[] high_str;
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+    SharedPtr<CStringStream> stream(new CStringStream());
+    april_utils::HashTableOptions options;
+    options.putBoolean("ascii", is_ascii);
+    stream->put("stats.dist.uniform(matrix.fromString[[");
+    low->write(stream.get(), &options);
+    stream->put("]], matrix.fromString[[");
+    high->write(stream.get(), &options);
+    stream->put("]])\0",4);
+    return stream->releaseString();
   }
   
   void UniformDistribution::updateParams() {

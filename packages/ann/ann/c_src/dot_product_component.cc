@@ -250,7 +250,7 @@ namespace ANN {
     ////////////////////////////////////////////////////////////////////
     if (transpose_weights == CblasTrans)
       swap(weights_input_size, weights_output_size);
-    april_utils::SharedPtr<MatrixFloat> &w = (*weights_dict)[getWeightsName()].checkDense();
+    april_utils::SharedPtr<MatrixFloat> &w = (*weights_dict)[getWeightsName()].getDense();
     // printf("%s :: %p %p\n", weights_name.c_str(), w, weights_matrix);
     if (!w.empty()) {
       // printf("COPY OF WEIGHTS FROM HASH %s\n", weights_name.c_str());
@@ -281,7 +281,7 @@ namespace ANN {
     if (weights_matrix == 0)
       ERROR_EXIT1(100, "Component not built, impossible execute copyWeights [%s]\n",
 		  getName().c_str());
-    april_utils::SharedPtr<MatrixFloat> &w = (*weights_dict)[getWeightsName()].checkDense();
+    april_utils::SharedPtr<MatrixFloat> &w = (*weights_dict)[getWeightsName()].getDense();
     if (!w.empty() && w.get() != weights_matrix)
       ERROR_EXIT2(101, "Weights dictionary contains %s weights name which is "
 		  "not shared with weights_matrix attribute [%s]\n",

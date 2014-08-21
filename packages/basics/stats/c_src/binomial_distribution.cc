@@ -26,10 +26,10 @@
 #include "combinations.h"
 #include "utilMatrixFloat.h"
 
+using april_utils::buffer_list;
+using april_utils::log_float;
 using basics::MatrixFloat;
 using basics::MTRand;
-using april_utils::log_float;
-using april_utils::buffer_list;
 
 namespace Stats {
   
@@ -145,7 +145,6 @@ namespace Stats {
   char *BinomialDistribution::toLuaString(bool is_ascii) const {
     UNUSED_VARIABLE(is_ascii);
     buffer_list buffer;
-    int len;
     buffer.printf("stats.dist.binomial(%d, %g)", ni, pf);
     return buffer.to_string(buffer_list::NULL_TERMINATED);
   }

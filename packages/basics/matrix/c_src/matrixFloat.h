@@ -54,7 +54,7 @@ namespace basics {
   
     /**************************************************************************/
  
-  } // namespace AprilIO
+  } // namespace MatrixIO
   
   template<>
   float Matrix<float>::getTemplateOption(const april_utils::GenericOptions *options,

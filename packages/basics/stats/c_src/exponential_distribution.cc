@@ -19,14 +19,12 @@
  *
  */
 #include <cmath>
-#include "buffer_list.h"
 #include "c_string.h"
 #include "error_print.h"
 #include "exponential_distribution.h"
 #include "smart_ptr.h"
 #include "utilMatrixFloat.h"
 
-using april_utils::buffer_list;
 using april_utils::log_float;
 using april_utils::SharedPtr;
 using AprilIO::CStringStream;

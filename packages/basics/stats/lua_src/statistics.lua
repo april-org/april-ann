@@ -776,7 +776,7 @@ end
 -------------------------------------------------------------------------------
 
 stats.dist.bernoulli = function(p)
-  if isa(p, matrix) then
+  if class.is_a(p, matrix) then
     return stats.dist.binomial(matrix.col_major(1,{1}),p)
   else
     return stats.dist.binomial(1,p)

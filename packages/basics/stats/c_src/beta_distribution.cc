@@ -26,10 +26,10 @@
 #include "gamma_variate.h"
 #include "utilMatrixFloat.h"
 
+using april_utils::buffer_list;
+using april_utils::log_float;
 using basics::MatrixFloat;
 using basics::MTRand;
-using april_utils::log_float;
-using april_utils::buffer_list;
 
 namespace Stats {
   

@@ -23,14 +23,18 @@
 #include "buffer_list.h"
 #include "check_floats.h"
 #include "error_print.h"
+#include "matrixFloat.h"
 #include "normal_distribution.h"
+#include "smart_ptr.h"
+#include "sparse_matrixFloat.h"
 #include "unused_variable.h"
-#include "utilMatrixFloat.h"
 
-using basics::MatrixFloat;
-using basics::MTRand;
 using april_utils::log_float;
-using april_utils::buffer_list;
+using april_utils::SharedPtr;
+using AprilIO::CStringStream;
+using basics::MatrixFloat;
+using basics::SparseMatrixFloat;
+using basics::MTRand;
 
 namespace Stats {
   
@@ -147,16 +151,15 @@ namespace Stats {
   }
   
   char *GeneralNormalDistribution::toLuaString(bool is_ascii) const {
-    buffer_list buffer;
-    char *mean_str, *cov_str;
-    int len;
-    mean_str = writeMatrixFloatToString(mean, is_ascii, len);
-    cov_str = writeMatrixFloatToString(cov, is_ascii, len);
-    buffer.printf("stats.dist.normal(matrix.fromString[[%s]], matrix.fromString[[%s]])",
-                  mean_str, cov_str);
-    delete[] mean_str;
-    delete[] cov_str;
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+    SharedPtr<CStringStream> stream(new CStringStream());
+    april_utils::HashTableOptions options;
+    options.putBoolean("ascii", is_ascii);
+    stream->put("stats.dist.normal(matrix.fromString[[");
+    mean->write(stream.get(), &options);
+    stream->put("]], matrix.fromString[[");
+    cov->write(stream.get(), &options);
+    stream->put("]])\0",4);
+    return stream->releaseString();
   }
 
   ////////////////////////////////////////////////////////////////////////////
@@ -287,16 +290,15 @@ namespace Stats {
   }
   
   char *DiagonalNormalDistribution::toLuaString(bool is_ascii) const {
-    buffer_list buffer;
-    char *mean_str, *cov_str;
-    int len;
-    mean_str = writeMatrixFloatToString(mean, is_ascii, len);
-    cov_str = writeSparseMatrixFloatToString(cov, is_ascii, len);
-    buffer.printf("stats.dist.normal(matrix.fromString[[%s]], matrix.sparse.fromString[[%s]])",
-                  mean_str, cov_str);
-    delete[] mean_str;
-    delete[] cov_str;
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+    SharedPtr<CStringStream> stream(new CStringStream());
+    april_utils::HashTableOptions options;
+    options.putBoolean("ascii", is_ascii);
+    stream->put("stats.dist.normal(matrix.fromString[[");
+    mean->write(stream.get(), &options);
+    stream->put("]], matrix.sparse.fromString[[");
+    cov->write(stream.get(), &options);
+    stream->put("]])\0",4); // forces a \0 at the end of the buffer
+    return stream->releaseString();
   }
   
   ////////////////////////////////////////////////////////////////////////////
@@ -345,9 +347,9 @@ namespace Stats {
   
   char *StandardNormalDistribution::toLuaString(bool is_ascii) const {
     UNUSED_VARIABLE(is_ascii);
-    buffer_list buffer;
+    april_utils::buffer_list buffer;
     buffer.printf("stats.dist.normal()");
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+    return buffer.to_string(april_utils::buffer_list::NULL_TERMINATED);
   }
 
   ////////////////////////////////////////////////////////////////////////////  
@@ -423,18 +425,17 @@ namespace Stats {
   }
   
   char *GeneralLogNormalDistribution::toLuaString(bool is_ascii) const {
-    buffer_list buffer;
-    char *mean_str, *cov_str, *loc_str;
-    int len;
-    mean_str = writeMatrixFloatToString(mean, is_ascii, len);
-    cov_str = writeMatrixFloatToString(cov, is_ascii, len);
-    loc_str = writeMatrixFloatToString(location, is_ascii, len);
-    buffer.printf("stats.dist.normal(matrix.fromString[[%s]], matrix.fromString[[%s]], matrix.fromString[[%s]])",
-                  mean_str, cov_str, loc_str);
-    delete[] mean_str;
-    delete[] cov_str;
-    delete[] loc_str;
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+    SharedPtr<CStringStream> stream(new CStringStream());
+    april_utils::HashTableOptions options;
+    options.putBoolean("ascii", is_ascii);
+    stream->put("stats.dist.lognormal(matrix.fromString[[");
+    mean->write(stream.get(), &options);
+    stream->put("]], matrix.fromString[[");
+    cov->write(stream.get(), &options);
+    stream->put("]], matrix.fromString[[");
+    location->write(stream.get(), &options);
+    stream->put("]])\0",4); // forces a \0 at the end of the buffer
+    return stream->releaseString();
   }
 
   ////////////////////////////////////////////////////////////////////////////
@@ -510,18 +511,17 @@ namespace Stats {
   }
   
   char *DiagonalLogNormalDistribution::toLuaString(bool is_ascii) const {
-    buffer_list buffer;
-    char *mean_str, *cov_str, *loc_str;
-    int len;
-    mean_str = writeMatrixFloatToString(mean, is_ascii, len);
-    cov_str = writeSparseMatrixFloatToString(cov, is_ascii, len);
-    loc_str = writeMatrixFloatToString(location, is_ascii, len);
-    buffer.printf("stats.dist.normal(matrix.fromString[[%s]], matrix.sparse.fromString[[%s]], matrix.fromString[[%s]])",
-                  mean_str, cov_str, loc_str);
-    delete[] mean_str;
-    delete[] cov_str;
-    delete[] loc_str;
-    return buffer.to_string(buffer_list::NULL_TERMINATED);
+    SharedPtr<CStringStream> stream(new CStringStream());
+    april_utils::HashTableOptions options;
+    options.putBoolean("ascii", is_ascii);
+    stream->put("stats.dist.lognormal(matrix.fromString[[");
+    mean->write(stream.get(), &options);
+    stream->put("]], matrix.sparse.fromString[[");
+    cov->write(stream.get(), &options);
+    stream->put("]], matrix.fromString[[");
+    location->write(stream.get(), &options);
+    stream->put("]])\0",4); // forces a \0 at the end of the buffer
+    return stream->releaseString();
   }
-
+  
 }
