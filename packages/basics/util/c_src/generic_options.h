@@ -21,14 +21,17 @@
 #ifndef GENERIC_OPTIONS_H
 #define GENERIC_OPTIONS_H
 
+#include "error_print.h"
 #include "hash_table.h"
 #include "mystring.h"
+#include "referenced.h"
+#include "smart_ptr.h"
 
 namespace april_utils {
   
-#define METHODS(method, type)                                           \
+#define METHODS(method, type)                                            \
   virtual GenericOptions *put##method(const char *name, type value) = 0; \
-  virtual type get##method(const char *name) const = 0;                 \
+  virtual type get##method(const char *name) const = 0;                  \
   virtual type getOptional##method(const char *name, type const value) const = 0
 
   /**
@@ -36,7 +39,7 @@ namespace april_utils {
    *
    * The key is always a string and the value can be one of the following:
    * double, float, char, const char *, int32_t, uint32_t, int64_t, uint64_t,
-   * bool.
+   * bool, classes derived from Referenced.
    *
    * Three methods are available for each type:
    *
@@ -55,6 +58,9 @@ namespace april_utils {
    *
    * @note The types can be binded to Lua, allowing to have the same generic
    * interface for data coming from Lua or from C/C++.
+   *
+   * @note getReferenced() and getOptionalReferenced() are templates which use
+   * @c dynamic_cast to convert from Referenced to the corresponding class.
    */
   class GenericOptions {
   public:
@@ -63,6 +69,8 @@ namespace april_utils {
     GenericOptions() { }
     /// Destructor.
     virtual ~GenericOptions() { }
+
+    // virtual int pushToLua(lua_State *L, const char *name) = 0;
     
     METHODS(Double, double);
     METHODS(Float, float);
@@ -74,6 +82,39 @@ namespace april_utils {
     METHODS(UInt64, uint64_t);
     METHODS(Boolean, bool);
     
+    virtual GenericOptions *putReferenced(const char *name,
+                                          Referenced *value) = 0;
+    
+    template<typename T>
+    T *getReferenced(const char *name) const {
+      Referenced *aux = privateGetReferenced(name);
+      if (aux == 0) {
+        ERROR_EXIT1(128, "Unable to locate a Referenced class at key %s\n", name);
+      }
+      T *ret = dynamic_cast<T*>(aux);
+      if (ret == 0) {
+        ERROR_EXIT1(128, "Unable dynamic_cast from Referenced at key %s\n", name);
+      }
+      return ret;
+    }
+
+    template<typename T>
+    T *getOptionalReferenced(const char *name, T *opt) const {
+      Referenced *aux = privateGetReferenced(name);
+      if (aux == 0) return opt;
+      T *ret = dynamic_cast<T*>(aux);
+      if (ret == 0) {
+        ERROR_EXIT1(128, "Unable dynamic_cast from Referenced at key %s\n", name);
+      }
+      return ret;
+    }
+    
+  protected:
+    
+    /// Protected method which looks-up for a Referenced object and returns it
+    /// or NULL in the given key name doesn't exits. If the key name exists but
+    /// doesn't contains a Referenced object, this method must throw an error.
+    virtual Referenced *privateGetReferenced(const char *name) const = 0;
   };
 #undef METHODS
   
@@ -96,6 +137,8 @@ namespace april_utils {
     
     HashTableOptions() : GenericOptions() { }
     virtual ~HashTableOptions() { }
+
+    // virtual int pushToLua(lua_State *L, const char *name);
     
     METHODS(Double, double);
     METHODS(Float, float);
@@ -106,12 +149,19 @@ namespace april_utils {
     METHODS(Int64, int64_t);
     METHODS(UInt64, uint64_t);
     METHODS(Boolean, bool);
+
+    virtual GenericOptions *putReferenced(const char *name, Referenced *value);
+
+  protected:
+    
+    virtual Referenced *privateGetReferenced(const char *name) const;
     
   private:
 
     /// Enumeration with the types which can be stored in the table.
     enum ValueTypes {
-      DOUBLE, FLOAT, CHAR, STRING, INT32, UINT32, INT64, UINT64, BOOL, NUM_TYPES
+      DOUBLE, FLOAT, CHAR, STRING, INT32, UINT32, INT64, UINT64, BOOL,
+      REFERENCED, NUM_TYPES
     };
     
     /// Value part of the table elements, it is a union of all the possible
@@ -128,6 +178,7 @@ namespace april_utils {
         bool bl;
       };
       april_utils::string str; // can't be in the union
+      april_utils::SharedPtr<Referenced> ref_ptr;
       ValueTypes type;
     };
     
@@ -155,6 +206,8 @@ namespace april_utils {
     LuaTableOptions(lua_State *L, int i);
     /// Destructor, de-references the Lua table for garbage collection.
     virtual ~LuaTableOptions();
+
+    // virtual int pushToLua(lua_State *L, const char *name);
     
     METHODS(Double, double);
     METHODS(Float, float);
@@ -165,14 +218,20 @@ namespace april_utils {
     METHODS(Int64, int64_t);
     METHODS(UInt64, uint64_t);
     METHODS(Boolean, bool);
+
+    virtual GenericOptions *putReferenced(const char *name, Referenced *value);
     
+  protected:
+    
+    virtual Referenced *privateGetReferenced(const char *name) const;
+
   private:
     
     /// The lua_State where the table is allocated.
     lua_State *L;
     /// The reference in the registry where the table can be retrieved.
     int ref;
-    
+
     /// Auxiliary method to simplify constructors.
     void init(lua_State *L, int i);
   };
