@@ -61,7 +61,8 @@ namespace LanguageModels {
     virtual void computeKeysAndScores(KeyWordHash &ctxt_hash,
                                       unsigned int bunch_size) {
       UNUSED_VARIABLE(bunch_size);
-      basics::TokenVector<basics::TokenVector<WordType> > *token_vector = new basics::TokenVector<basics::TokenVector<WordType> >();
+      april_assert(sizeof(WordType) == sizeof(uint32_t));
+      basics::TokenBunchVector *bunch_of_tokens = new basics::TokenBunchVector();
 
       // For each context key entry
       for (typename KeyWordHash::iterator it = ctxt_hash.begin();
@@ -80,14 +81,13 @@ namespace LanguageModels {
                                                                        context_words,
                                                                        offset);
           // Fill this vector with context_words
-          basics::TokenVector<WordType> new_token;
-          token_vector->push_back(new_token);
+          basics::TokenVectorUint32 *new_token = new basics::TokenVectorUint32();
+          bunch_of_tokens->push_back(new_token);
         }
       }
       // Create token from matrix and filter it
       // FIXME: Can't do this since token_vector pointer
-      basics::Token *input = token_vector;
-      basics::Token *filtered_input = filter->calculate(input);
+      basics::Token *filtered_input = filter->calculate(bunch_of_tokens);
       executeQueries(filtered_input);
     }
 
