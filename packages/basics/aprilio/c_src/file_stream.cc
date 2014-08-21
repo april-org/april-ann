@@ -66,6 +66,7 @@ namespace AprilIO {
   }
   
   off_t FileStream::seekStream(int whence, int offset) {
+    is_eof = false;
     return checkReturnValue(lseek(fd, offset, whence));
   }
   

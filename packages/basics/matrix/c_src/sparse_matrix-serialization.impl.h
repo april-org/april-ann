@@ -42,7 +42,9 @@ namespace basics {
 
   template <typename T>
   SparseMatrix<T>*
-  SparseMatrix<T>::read(AprilIO::StreamInterface *stream) {
+  SparseMatrix<T>::read(AprilIO::StreamInterface *stream,
+                        const april_utils::GenericOptions *options) {
+    UNUSED_VARIABLE(options);
     MatrixIO::AsciiExtractor<T> ascii_extractor;
     MatrixIO::BinaryExtractor<T> bin_extractor;
     if (!stream->good()) {
@@ -173,10 +175,11 @@ namespace basics {
     return mat;
   }
   
-  // Returns the number of chars written (there is a '\0' that is not counted)
   template <typename T>
   void SparseMatrix<T>::write(AprilIO::StreamInterface *stream,
-                              bool is_ascii) {
+                              const april_utils::GenericOptions *options) {
+    bool is_ascii = options->getOptionalBoolean(MatrixIO::ASCII_OPTION, false);
+    //
     MatrixIO::SparseAsciiSizer<T> ascii_sizer;
     MatrixIO::SparseBinarySizer<T> bin_sizer;
     MatrixIO::AsciiCoder<T> ascii_coder;

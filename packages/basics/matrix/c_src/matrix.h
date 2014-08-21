@@ -42,6 +42,17 @@
 #include "wrapper.h"
 
 namespace basics {
+  
+  namespace MatrixIO {
+    const char * const TAB_OPTION = "tab";
+    const char * const ASCII_OPTION = "ascii";
+    const char * const ORDER_OPTION = "order";
+    const char * const DELIM_OPTION = "delim";
+    const char * const EMPTY_OPTION = "read_empty";
+    const char * const DEFAULT_OPTION = "default";
+    const char * const NCOLS_OPTION = "ncols";
+    const char * const NROWS_OPTION = "nrows";
+  }
 
   // forward declaration
   template <typename T>
@@ -52,9 +63,10 @@ namespace basics {
    * 
    * It implements basic linear algebra routines and other math operations. By
    * default, the zero value must be T(). Additionally, T(0.0f) and T(1.0f) and
-   * T(-1.0f) constructors must be available with correct math values. In case
-   * of char buffer or integer matrices these constructors are needed but not
-   * operational because math methods are forbidden for these data types.
+   * T(-1.0f) and T(-nan) constructors must be available with correct math
+   * values. In case of char buffer or integer matrices these constructors are
+   * needed but not operational because math methods are forbidden for these
+   * data types.
    */
   template <typename T>
   class Matrix : public AprilIO::Serializable {
@@ -757,7 +769,12 @@ namespace basics {
     // greater than
     void GTCondition(T value);
     void GTCondition(Matrix<T> *value);
-    //
+    // equals to
+    void EQCondition(T value);
+    void EQCondition(Matrix<T> *value);
+    // not equals to
+    void NEQCondition(T value);
+    void NEQCondition(Matrix<T> *value);
   
     /**** BLAS OPERATIONS ****/
     void scalarAdd(T s);
@@ -855,13 +872,70 @@ namespace basics {
     
     // SERIALIZATION
     
-    static Matrix<T> *read(AprilIO::StreamInterface *stream,
-                           const char *given_order=0);
-    virtual void write(AprilIO::StreamInterface *stream, bool is_ascii);
+    /**
+     * @brief Writes the Matrix into a stream.
+     *
+     * The @c options dictionary can contain the following keys:
+     *
+     * - MatrixIO::TAB_OPTION contains a bool value indicating if writing the
+     *   Matrix in a tabulated way (true) or in the APRIL-ANN Matrix format
+     *   (false). By default it is false.
+     *
+     * - MatrixIO::ASCII_OPTION if @c TAB_OPTION=false this key contains a bool
+     *   value indicating if the data has to be binary or not. It uses
+     *   april_utils::binarizer for binarization purposes. By default it is
+     *   true.
+     */
+    virtual void write(AprilIO::StreamInterface *stream,
+                       const april_utils::GenericOptions *options);
     
-    static Matrix<T> *readTab(AprilIO::StreamInterface *stream,
-                              const char *given_order=0);
-    void writeTab(AprilIO::StreamInterface *stream);
+    /**
+     * @brief Reads the Matrix from a stream.
+     *
+     * @return A Matrix pointer or a NULL pointer if it was impossible to be
+     * allocated.
+     *
+     * The @c options dictionary can contain the following keys:
+     *
+     * - MatrixIO::TAB_OPTION contains a bool value indicating if read the
+     *   Matrix in a tabulated way (true) or in the APRIL-ANN Matrix format
+     *   (false). By default it is false.
+     *
+     * - MatrixIO::ORDER_OPTION this key contains a string with "row_major",
+     *   "col_major", or it can be not defined at all. It forces the read()
+     *   method to allocate a Matrix in the indicate major order. By default it
+     *   is not defined and the major order will be taken from the file in case
+     *   @c TAB_OPTION=false or in "row_major" in case @c TAB_OPTION=true.
+     *
+     * - MatrixIO::DELIM_OPTION if @c TAB_OPTION=true this key contains a string
+     *   value with a list of delimitiers. By default it is "\n\r\t,; ".
+     *
+     * - MatrixIO::EMPTY_OPTION if @c TAB_OPTION=true this key contains a boolean
+     *   indicating if empty fields are allowed during the read process. If
+     *   @c EMPTY_OPTION=true, this condition allows the parser to find empty
+     *   values (e.g. in a CSV file an empty field is detected by this
+     *   procedure). By default it is false.
+     *
+     * - MatrixIO::DEFAULT_OPTION if @c TAB_OPTION=true and @c EMPTY_OPTION=true,
+     *   this key contains the T value for cases where the read data is
+     *   empty. By default it is T().
+     *
+     * - MatrixIO::NCOLS_OPTION if @c TAB_OPTION=true this key contains an
+     *   int32_t value indicating the number of expected columns in the
+     *   Matrix. By default it is 0, which is equals to a not defined state.
+     *
+     * - MatrixIO::NROWS_OPTION if @c TAB_OPTION=true this key contains an
+     *   int32_t value indicating the number of expected rows in the Matrix. By
+     *   default it is 0, which is equals to a not defined state.
+     *
+     * @note When @c TAB_OPTION=true, if not given both @c NCOLS_OPTION and @c
+     * NROWS_OPTION the parser will need two passes trough the data, first to
+     * compute the number of rows and columns, and second to retrieve the data.
+     *
+     * @note This method throws different kind of errors.
+     */
+    static Matrix<T> *read(AprilIO::StreamInterface *stream,
+                           const april_utils::GenericOptions *options);
     
   private:
     void allocate_memory(int size);
@@ -869,11 +943,27 @@ namespace basics {
     void initialize(const int *dim);
 
     static april_utils::constString readULine(AprilIO::StreamInterface *stream,
-                                              AprilIO::CStringStream *dest) {
+                                              AprilIO::CStringStream *dest,
+                                              bool read_empty = false) {
       // Not needed, it is done in extractULineFromStream: dest->clear(); 
-      extractULineFromStream(stream, dest);
+      extractULineFromStream(stream, dest, read_empty);
       return dest->getConstString();
     }
+
+    void writeNormal(AprilIO::StreamInterface *stream,
+                     const april_utils::GenericOptions *options);
+    
+    void writeTab(AprilIO::StreamInterface *stream,
+                  const april_utils::GenericOptions *options);
+
+    static Matrix<T> *readNormal(AprilIO::StreamInterface *stream,
+                                 const april_utils::GenericOptions *options);
+    
+    static Matrix<T> *readTab(AprilIO::StreamInterface *stream,
+                              const april_utils::GenericOptions *options);
+    
+    static T getTemplateOption(const april_utils::GenericOptions *options,
+                               const char *name, T default_value);
   };
 
 } // namespace basics

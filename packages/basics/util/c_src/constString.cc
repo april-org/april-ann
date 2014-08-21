@@ -142,11 +142,12 @@ namespace april_utils {
     return resul;
   }
 
-  constString constString::extract_token(const char *separadores) {
-    ltrim(separadores);
+  constString constString::extract_token(const char *delim, bool keep_delim) {
+    if (!keep_delim) ltrim(delim);
     if (empty()) return constString();
     const char *newbuffer = buffer;
-    size_t newlength = april_utils::strncspn(newbuffer,separadores,length);
+    size_t newlength = april_utils::strncspn(newbuffer,delim,length);
+    if (newlength < length && keep_delim) ++newlength;
     april_assert(newlength<=length);
     skip(newlength);
     return constString(newbuffer,newlength);
@@ -171,8 +172,8 @@ namespace april_utils {
     return true;
   }
 
-  bool constString::extract_float(float *resul,const char *separadores) {
-    ltrim(separadores);
+  bool constString::extract_float(float *resul,const char *delim) {
+    ltrim(delim);
     if (empty()) return false;
     char *aux;
     // FIXME: strtof no controla si nos salimos del constString, luego
@@ -198,8 +199,8 @@ namespace april_utils {
     return true;  
   }
 
-  bool constString::extract_double(double *resul,const char *separadores) {
-    ltrim(separadores);
+  bool constString::extract_double(double *resul,const char *delim) {
+    ltrim(delim);
     char *aux;
     // FIXME: strtod no controla si nos salimos del constString, luego
     // lo comprobamos viendo si length < 0 pero podría dar violación de
@@ -244,21 +245,21 @@ namespace april_utils {
     return true;  
   }
 
-  bool constString::extract_int(int *resul, int base,const char *separadores) {
+  bool constString::extract_int(int *resul, int base,const char *delim) {
     long int x;
-    if (extract_long(&x,base,separadores)) { *resul = (int)x; return true; }
+    if (extract_long(&x,base,delim)) { *resul = (int)x; return true; }
     return false;
   }
 
-  bool constString::extract_unsigned_int(unsigned int *resul, int base,const char *separadores) {
+  bool constString::extract_unsigned_int(unsigned int *resul, int base,const char *delim) {
     long int x;
-    if (extract_long(&x,base,separadores)) { *resul = (unsigned int)x; return true; }
+    if (extract_long(&x,base,delim)) { *resul = (unsigned int)x; return true; }
     return false;
   }
 
   bool constString::extract_long(long int *resul, int base,
-                                 const char *separadores) {
-    ltrim(separadores);
+                                 const char *delim) {
+    ltrim(delim);
     if (empty()) return false;
     char *aux;
     // fixme: strtol no controla si nos salimos del constString, luego
@@ -274,8 +275,8 @@ namespace april_utils {
   }
 
   bool constString::extract_long_long(long long int *resul, int base,
-                                      const char *separadores) {
-    ltrim(separadores);
+                                      const char *delim) {
+    ltrim(delim);
     if (empty()) return false;
     char *aux;
     long long int value = strtoll(buffer,&aux, base);

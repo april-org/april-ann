@@ -33,13 +33,13 @@ ComplexF lua_toComplexF(lua_State *L, int n) {
   if (lua_isLuaComplexFNumber(L, n)) {
     LuaComplexFNumber *aux;
     LUABIND_GET_PARAMETER(n, LuaComplexFNumber, aux);
-    return aux->number;
+    return aux->getValue();
   }
   else if (lua_isstring(L, n)) {
     const char *str;
     LUABIND_GET_PARAMETER(n, string, str);
     LuaComplexFNumber aux(str);
-    return aux.number;
+    return aux.getValue();
   }
   else if (lua_isnumber(L, n)) {
     float aux;
@@ -63,83 +63,6 @@ void lua_pushComplexF(lua_State *L, const ComplexF &number) {
 #include "complex_number.h"
 #include "error_print.h"
 #include "constString.h"
-
-namespace april_math {
-
-  struct LuaComplexFNumber : public Referenced {
-  private:
-    // Automaton which interprets a string like this regexp: N?[+-]N?i
-    enum STATES { INITIAL, NUMBER, SIGN, NUMBER_SIGN, NUMBER_NUMBER,
-                  FINAL, ERROR };
-    enum TOKENS { TOKEN_FLOAT, TOKEN_SIGN, TOKEN_I, TOKEN_UNKOWN, TOKEN_END };
-    TOKENS getToken(april_utils::constString &cs, float &num, char &sign) {
-      if (cs.empty()) return TOKEN_END;
-      char ch;
-      if (cs.extract_float(&num)) return TOKEN_FLOAT;
-      if (cs.extract_char(&ch)) {
-        if (ch == '+' || ch == '-') { sign=ch; return TOKEN_SIGN; }
-        else if (ch == 'i') return TOKEN_I;
-      }
-      return TOKEN_UNKOWN;
-    }
-  
-  public:
-    ComplexF number;
-  
-    LuaComplexFNumber(const ComplexF &number) : Referenced(), number(number) { }
-    LuaComplexFNumber(const char *str) : Referenced() {
-      float num;
-      char  sign='+'; // initialized to avoid compilation warning
-      april_utils::constString cs(str);
-      STATES state = INITIAL;
-      TOKENS token;
-      while(state != FINAL && state != ERROR) {
-        token = getToken(cs,num,sign);
-        switch(state) {
-        case INITIAL:
-          switch(token) {
-          case TOKEN_FLOAT: number.real()=num; state=NUMBER; break;
-          case TOKEN_I: number.real()=0.0f; number.img()=1.0f; state=FINAL; break;
-          case TOKEN_SIGN: number.real()=0.0f; state=SIGN; break;
-          default: state=ERROR;
-          }
-          break;
-        case NUMBER:
-          switch(token) {
-          case TOKEN_FLOAT: number.img()=num; state=NUMBER_NUMBER; break;
-          case TOKEN_I: number.img()=number.real(); number.real()=0.0f; state=FINAL; break;
-          case TOKEN_SIGN: state=NUMBER_SIGN; break;
-          case TOKEN_END: number.img()=0.0f; state=FINAL; break;
-          default: state=ERROR;
-          }
-          break;
-        case SIGN:
-          switch(token) {
-          case TOKEN_I: number.img()=(sign=='+')?1.0f:-1.0f; state=FINAL; break;
-          default: state=ERROR;
-          }
-          break;
-        case NUMBER_NUMBER:
-          switch(token) {
-          case TOKEN_I: state=FINAL; break;
-          default: state=ERROR;
-          }
-          break;
-        case NUMBER_SIGN:
-          switch(token) {
-          case TOKEN_I: number.img()=(sign=='+')?1.0f:-1.0f; state=FINAL; break;
-          default: state=ERROR;
-          }
-          break;
-        default: state=ERROR;
-        }
-      }
-      if (state == ERROR || !cs.empty())
-        ERROR_EXIT1(256, "Incorrect complex string format '%s'\n",str);
-    }
-  };
-
-} // namespace april_math
 
 using april_math::ComplexF;
 using april_math::LuaComplexFNumber;
@@ -178,7 +101,7 @@ void lua_pushComplexF(lua_State *L, const ComplexF &number);
 
 //BIND_METHOD LuaComplexFNumber clone
 {
-  LuaComplexFNumber *other = new LuaComplexFNumber(obj->number);
+  LuaComplexFNumber *other = new LuaComplexFNumber(obj->getValue());
   LUABIND_RETURN(LuaComplexFNumber, other);
 }
 //BIND_END
@@ -187,7 +110,7 @@ void lua_pushComplexF(lua_State *L, const ComplexF &number);
 {
   LuaComplexFNumber *other;
   LUABIND_GET_PARAMETER(1, LuaComplexFNumber, other);
-  LUABIND_RETURN(bool, obj->number == other->number);
+  LUABIND_RETURN(bool, obj->getValue() == other->getValue());
 }
 //BIND_END
 
@@ -195,7 +118,7 @@ void lua_pushComplexF(lua_State *L, const ComplexF &number);
 {
   LuaComplexFNumber *other, *result;
   LUABIND_GET_PARAMETER(1, LuaComplexFNumber, other);
-  result = new LuaComplexFNumber( obj->number * other->number );
+  result = new LuaComplexFNumber( obj->getValue() * other->getValue() );
   LUABIND_RETURN(LuaComplexFNumber, result);
 }
 //BIND_END
@@ -204,7 +127,7 @@ void lua_pushComplexF(lua_State *L, const ComplexF &number);
 {
   LuaComplexFNumber *other, *result;
   LUABIND_GET_PARAMETER(1, LuaComplexFNumber, other);
-  result = new LuaComplexFNumber( obj->number + other->number );
+  result = new LuaComplexFNumber( obj->getValue() + other->getValue() );
   LUABIND_RETURN(LuaComplexFNumber, result);
 }
 //BIND_END
@@ -213,7 +136,7 @@ void lua_pushComplexF(lua_State *L, const ComplexF &number);
 {
   LuaComplexFNumber *other, *result;
   LUABIND_GET_PARAMETER(1, LuaComplexFNumber, other);
-  result = new LuaComplexFNumber( obj->number - other->number );
+  result = new LuaComplexFNumber( obj->getValue() - other->getValue() );
   LUABIND_RETURN(LuaComplexFNumber, result);
 }
 //BIND_END
@@ -222,7 +145,7 @@ void lua_pushComplexF(lua_State *L, const ComplexF &number);
 {
   LuaComplexFNumber *other, *result;
   LUABIND_GET_PARAMETER(1, LuaComplexFNumber, other);
-  result = new LuaComplexFNumber( obj->number / other->number );
+  result = new LuaComplexFNumber( obj->getValue() / other->getValue() );
   LUABIND_RETURN(LuaComplexFNumber, result);
 }
 //BIND_END
@@ -230,48 +153,48 @@ void lua_pushComplexF(lua_State *L, const ComplexF &number);
 //BIND_METHOD LuaComplexFNumber neg
 {
   LuaComplexFNumber *result;
-  result = new LuaComplexFNumber( -obj->number );
+  result = new LuaComplexFNumber( -obj->getValue() );
   LUABIND_RETURN(LuaComplexFNumber, result);
 }
 //BIND_END
 
 //BIND_METHOD LuaComplexFNumber conj
 {
-  obj->number.conj();
+  obj->getValue().conj();
   LUABIND_RETURN(LuaComplexFNumber, obj);
 }
 //BIND_END
 
 //BIND_METHOD LuaComplexFNumber exp
 {
-  LuaComplexFNumber *result = new LuaComplexFNumber( obj->number.expc() );
+  LuaComplexFNumber *result = new LuaComplexFNumber( obj->getValue().expc() );
   LUABIND_RETURN(LuaComplexFNumber, result);
 }
 //BIND_END
 
 //BIND_METHOD LuaComplexFNumber real
 {
-  LUABIND_RETURN(float, obj->number.real());
+  LUABIND_RETURN(float, obj->getValue().real());
 }
 //BIND_END
 
 //BIND_METHOD LuaComplexFNumber img
 {
-  LUABIND_RETURN(float, obj->number.img());
+  LUABIND_RETURN(float, obj->getValue().img());
 }
 //BIND_END
 
 //BIND_METHOD LuaComplexFNumber plane
 {
-  LUABIND_RETURN(float, obj->number.real());
-  LUABIND_RETURN(float, obj->number.img());
+  LUABIND_RETURN(float, obj->getValue().real());
+  LUABIND_RETURN(float, obj->getValue().img());
 }
 //BIND_END
 
 //BIND_METHOD LuaComplexFNumber polar
 {
   float r, phi;
-  obj->number.polar(r, phi);
+  obj->getValue().polar(r, phi);
   LUABIND_RETURN(float, r);
   LUABIND_RETURN(float, phi);
 }
@@ -279,18 +202,18 @@ void lua_pushComplexF(lua_State *L, const ComplexF &number);
 
 //BIND_METHOD LuaComplexFNumber abs
 {
-  LUABIND_RETURN(float, obj->number.abs());
+  LUABIND_RETURN(float, obj->getValue().abs());
 }
 //BIND_END
 
 //BIND_METHOD LuaComplexFNumber angle
 {
-  LUABIND_RETURN(float, obj->number.angle());
+  LUABIND_RETURN(float, obj->getValue().angle());
 }
 //BIND_END
 
 //BIND_METHOD LuaComplexFNumber sqrt
 {
-  LUABIND_RETURN(float, obj->number.sqrtc());
+  LUABIND_RETURN(float, obj->getValue().sqrtc());
 }
 //BIND_END

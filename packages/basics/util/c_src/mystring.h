@@ -10,6 +10,7 @@ namespace april_utils {
   size_t strncspn(const char *buffer, const char *reject, size_t length);
   const char *strnchr(const char *buffer, int c, size_t length);
   const char *strncchr(const char *buffer, int c, size_t length);
+  int strcmpi(const char *a, const char *b);
   
   class string {
     static const char *NULL_STRING;

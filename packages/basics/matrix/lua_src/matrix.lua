@@ -279,19 +279,7 @@ april_set_doc(matrix.read, {
 		},
 		params = {
 		  "A aprilio.stream instance.",
-		}, })
-
-april_set_doc(matrix.readTab, {
-		class = "method",
-		summary = "It allows to read a matrix from a tabulated stream.",
-		description ={
-		  "It allows to read a matrix from a tabulated stream.",
-		  "It uses the format of writeTab function.",
-                  "Note that this method needs two traversals through",
-                  "the stream, and uses seek operation to rewind it.",
-		},
-		params = {
-		  "A aprilio.stream instance.",
+                  "A lua table with options",
 		}, })
 
 april_set_doc(matrix.fromMMap, {
@@ -312,17 +300,6 @@ april_set_doc(matrix.fromMMap, {
 		  
 		},
 		outputs = { "A matrix instantiated object" }, })
-
-april_set_doc(matrix.."writeTab", {
-		class = "method",
-		summary = "It allows to store a matrix into a tabulated stream.",
-		description ={
-		  "It allows to store a matrix into a tabulated stream.",
-		  "It uses the format expected by readTab function.",
-		},
-		params = {
-		  "A aprilio.stream instance.",
-		}, })
 
 april_set_doc(matrix.."toMMap", {
 		class = "method",
