@@ -316,7 +316,7 @@ namespace basics {
   }
 
   template<>
-  void TokenVector<Token*>::push_back(Token *&data) {
+  void TokenVector<Token*>::push_back(Token* const &data) {
     if (data) IncRef(data);
     vec.push_back(data);
   }
