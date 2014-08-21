@@ -215,9 +215,9 @@ namespace basics {
     // UPDATE GPU OR PPAL IF NEEDED
     void update() {
 #ifdef USE_CUDA
-      values->forceUpdate();
-      indices->forceUpdate();
-      first_index->forceUpdate();
+      values->forceUpdate(use_cuda);
+      indices->forceUpdate(use_cuda);
+      first_index->forceUpdate(use_cuda);
 #endif
     }
     void setUseCuda(bool v) {

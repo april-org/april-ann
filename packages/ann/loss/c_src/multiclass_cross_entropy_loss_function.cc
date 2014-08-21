@@ -45,29 +45,42 @@ namespace ANN {
     throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
     int dim = input_mat->getDimSize(0);
     MatrixFloat *loss_output = new MatrixFloat(1, &dim, CblasColMajor);
-    doMultiClassCrossEntropyLossFunction(input_mat->getRawDataAccess(),
-					 target_mat->getRawDataAccess(),
-					 loss_output->getRawDataAccess(),
-					 NEAR_ZERO,
-					 input_mat->getDimSize(1),
-					 input_mat->getDimSize(0),
-					 input_mat->getCudaFlag());
+    MatrixFloat *t_logp = target_mat->clone();
+    IncRef(t_logp);
+    t_logp->cmul(input_mat);
+    t_logp->sum(1, loss_output);
+    DecRef(t_logp);
+    loss_output->scal(-1.0);
+    /*
+      doMultiClassCrossEntropyLossFunction(input_mat->getRawDataAccess(),
+      target_mat->getRawDataAccess(),
+      loss_output->getRawDataAccess(),
+      NEAR_ZERO,
+      input_mat->getDimSize(1),
+      input_mat->getDimSize(0),
+      input_mat->getCudaFlag());
+    */
     return loss_output;
   }
 
   Token *MultiClassCrossEntropyLossFunction::computeGradient(Token *input, Token *target) {
     MatrixFloat *input_mat, *target_mat;
     throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
-    MatrixFloat *error_mat = input_mat->cloneOnlyDims();
+    MatrixFloat *error_mat = input_mat->clone(); //cloneOnlyDims();
     TokenMatrixFloat *error_mat_token = new TokenMatrixFloat(error_mat);
     AssignRef<Token>(error_output, error_mat_token);
-    doComputeCrossEntropyGradient(input_mat->getRawDataAccess(),
-				  target_mat->getRawDataAccess(),
-				  error_mat->getRawDataAccess(),
-				  NEAR_ZERO,
-				  input_mat->getDimSize(1),
-				  input_mat->getDimSize(0),
-				  input_mat->getCudaFlag());
+    error_mat->clamp(logf(NEAR_ZERO), logf(1.0f - NEAR_ZERO));
+    error_mat->exp();
+    error_mat->axpy(-1.0f, target_mat);
+    /*
+      doComputeCrossEntropyGradient(input_mat->getRawDataAccess(),
+      target_mat->getRawDataAccess(),
+      error_mat->getRawDataAccess(),
+      NEAR_ZERO,
+      input_mat->getDimSize(1),
+      input_mat->getDimSize(0),
+      input_mat->getCudaFlag());
+    */
     return error_output;
   }
 

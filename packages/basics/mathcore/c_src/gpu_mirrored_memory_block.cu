@@ -24,6 +24,7 @@
 namespace april_math {
 
   bool   GPUMirroredMemoryBlockBase::use_mmap_allocation = false;
+  bool   GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT = false;
 
 #ifndef NO_POOL
   size_t GPUMirroredMemoryBlockBase::MAX_POOL_LIST_SIZE = 200*1024*1024; // 200 Megabytes

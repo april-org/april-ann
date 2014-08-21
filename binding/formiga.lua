@@ -2288,8 +2288,6 @@ function manage_specific_global_flags()
     formiga.compiler.Ccompiler = os.getenv("CC") or "gcc"
   elseif t.platform == "unix64+cuda" then
     t.ignore_cuda = false
-    table.insert(formiga.compiler.extra_flags, "-DUSE_CUDA")
-    table.insert(formiga.compiler.extra_libs,"-lcuda -lcudart -L/usr/local/cuda/lib64")
   end
   if t.use_readline=="yes" then
     table.insert(formiga.compiler.extra_libs,

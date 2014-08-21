@@ -644,18 +644,18 @@ namespace basics {
   // FIXME: using WRAPPER for generalized CULA, LAPACK, float and complex numbers
   template<>
   Matrix<float> *Matrix<float>::inv() {
-    if (numDim != 2)
+    if (numDim != 2 || matrixSize[0] != matrixSize[1])
       ERROR_EXIT(128, "Only bi-dimensional matrices are allowed\n");
-    if (matrixSize[0] != matrixSize[1])
-      ERROR_EXIT(128, "Only square matrices are allowed\n");
     MatrixFloat *A = this->clone(CblasColMajor);
-    int *IPIV = new int[numDim+1];
+    int *IPIV = new int[matrixSize[0]];
     int INFO;
     INFO = clapack_sgetrf(CblasColMajor,
-                          A->numDim,A->numDim,A->getData(),A->stride[1],IPIV);
+                          A->matrixSize[0],A->matrixSize[1],
+                          A->getData(),A->stride[1],IPIV);
     checkLapackInfo(INFO);
     INFO = clapack_sgetri(CblasColMajor,
-                          A->numDim,A->getData(),A->stride[1],IPIV);
+                          A->matrixSize[0],
+                          A->getData(),A->stride[1],IPIV);
     checkLapackInfo(INFO);
     delete[] IPIV;
     return A;
@@ -683,6 +683,114 @@ namespace basics {
                           (*S)->getRawValuesAccess()->getPPALForWrite(),
                           (*VT)->getData());
     checkLapackInfo(INFO);
+  }
+
+  // FIXME: using WRAPPER for generalized CULA, LAPACK, float and complex numbers
+
+  // FROM: http://www.r-bloggers.com/matrix-determinant-with-the-lapack-routine-dspsv/
+  template <>
+  april_utils::log_float Matrix<float>::logDeterminant(float &sign) {
+    if (numDim != 2 || matrixSize[0] != matrixSize[1])
+      ERROR_EXIT(128, "Only squared bi-dimensional matrices are allowed\n");
+    MatrixFloat *A = this->clone(CblasColMajor);
+    int *IPIV = new int[A->matrixSize[0]];
+    int INFO;
+    INFO = clapack_sgetrf(CblasColMajor,
+                          A->matrixSize[0],A->matrixSize[1],
+                          A->getData(),A->stride[1],IPIV);
+    checkLapackInfo(INFO);
+    const_random_access_iterator it(A);
+    april_utils::log_float det = april_utils::log_float::from_float(it(0,0));
+    int row_changes = 0;
+#if defined(USE_MKL) || defined(USE_XCODE)
+    // in MKL and XCODE the permutation IPIV is one-based
+    if (IPIV[0] != 1) ++row_changes;
+#else
+    // in atlas_lapack IPIV is zero-based
+    if (IPIV[0] != 0) ++row_changes;
+#endif
+    for (int i=1; i<matrixSize[0]; ++i) {
+      const float &v = it(i,i);
+      if (v < 0.0f)
+        ERROR_EXIT(128, "Impossible to compute logDeterminant over "
+                   "non-positive matrix\n");
+      det *= april_utils::log_float::from_float(v);
+#if defined(USE_MKL) || defined(USE_XCODE)
+      // in MKL and XCODE the permutation IPIV is one-based
+      if (IPIV[i] != (i+1)) ++row_changes;
+#else
+      // in atlas_lapack IPIV is zero-based
+      if (IPIV[i] != i) ++row_changes;
+#endif
+    }
+    if ( (row_changes & 1) == 0 ) sign = 1.0f;
+    else sign = -1.0f;
+    delete[] IPIV;
+    delete A;
+    return det;
+  }
+
+  // FROM: http://www.r-bloggers.com/matrix-determinant-with-the-lapack-routine-dspsv/
+  template <>
+  double Matrix<float>::determinant() {
+    if (numDim != 2 || matrixSize[0] != matrixSize[1])
+      ERROR_EXIT(128, "Only squared bi-dimensional matrices are allowed\n");
+    MatrixFloat *A = this->clone(CblasColMajor);
+    int *IPIV = new int[A->matrixSize[0]];
+    int INFO;
+    INFO = clapack_sgetrf(CblasColMajor,
+                          A->matrixSize[0],A->matrixSize[1],
+                          A->getData(),A->stride[1],IPIV);
+    checkLapackInfo(INFO);
+    const_random_access_iterator it(A);
+    double det = 1.0f;
+    int row_changes = 0;
+    for (int i=0; i<matrixSize[0]; ++i) {
+      const float &v = it(i,i);
+      det *= v;
+#if defined(USE_MKL) || defined(USE_XCODE)
+      // in MKL and XCODE the permutation IPIV is one-based
+      if (IPIV[i] != (i+1)) ++row_changes;
+#else
+      // in atlas_lapack IPIV is zero-based
+      if (IPIV[i] != i) ++row_changes;
+#endif
+    }
+    double sign;
+    if ( (row_changes & 1) == 0 ) sign = 1.0f;
+    else sign = -1.0f;
+    delete[] IPIV;
+    delete A;
+    return sign*det;
+  }
+
+  template <>
+  Matrix<float> *Matrix<float>::cholesky(char uplo) {
+    if (numDim != 2 || matrixSize[0] != matrixSize[1])
+      ERROR_EXIT(128, "Only squared bi-dimensional matrices are allowed\n");
+    MatrixFloat *A = this->clone(CblasColMajor);
+    int INFO = clapack_spotrf(CblasColMajor,
+                              (uplo == 'U') ? CblasUpper : CblasLower,
+                              A->matrixSize[0], A->getData(), A->stride[1]);
+    checkLapackInfo(INFO);
+    switch(uplo) {
+    case 'U': {
+      MatrixFloat::random_access_iterator it(A);
+      for (int i=0; i<A->matrixSize[0]; ++i)
+        for (int j=0; j<i; ++j)
+          it(i,j) = 0.0f;
+    
+    }
+      break;
+    case 'L':
+    default: {
+      MatrixFloat::random_access_iterator it(A);
+      for (int i=0; i<A->matrixSize[0]; ++i)
+        for (int j=i+1; j<A->matrixSize[0]; ++j)
+          it(i,j) = 0.0f;
+    }
+    }
+    return A;
   }
 
   template <>
@@ -746,6 +854,7 @@ namespace basics {
       ++it_value;
     }
   }
+
   // equals
   template <>
   void Matrix<float>::EQCondition(float value) {

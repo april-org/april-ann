@@ -134,7 +134,10 @@ local function train_dataset(in_ds,out_ds)
 					      bunch_size=bunch_size,
 					      shuffle = rnd, } do
     local loss
-    loss = opt:execute(function()
+    loss = opt:execute(function(params)
+                         if params ~= weights then
+                           dw_func:set_shared(params)
+                         end
 			 local loss,b1,w1,b2,w2,
 			 b3,w3 = dw_func(input_bunch:get_matrix():transpose(),
 					 output_bunch:get_matrix():transpose())

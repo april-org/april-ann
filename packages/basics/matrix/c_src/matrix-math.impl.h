@@ -347,12 +347,12 @@ namespace basics {
           other->getDimSize(1) != 1) )
       ERROR_EXIT(128, "sparse AXPY needs a CSR row-vector or a CSC col-vector\n");
     april_math::doSparseAxpy(other->nonZeroSize(), alpha,
-                 other->getRawValuesAccess(),
-                 other->getRawIndicesAccess(),
-                 getRawDataAccess(),
-                 static_cast<unsigned int>(getOffset()),
-                 static_cast<unsigned int>(getVectorStride()),
-                 getCudaFlag());  
+                             other->getRawValuesAccess(),
+                             other->getRawIndicesAccess(),
+                             getRawDataAccess(),
+                             static_cast<unsigned int>(getOffset()),
+                             static_cast<unsigned int>(getVectorStride()),
+                             getCudaFlag());  
   }
 
   template <typename T>
@@ -537,23 +537,24 @@ namespace basics {
         ERROR_EXIT4(128, "Incorrect matrixes dimensions: %dx1 + %dx%d * %dx1\n",
                     size(), N, M, otherX->size());
     }
-    if (major_order != otherX->major_order)
+    /*
+      if (major_order != otherX->major_order)
       ERROR_EXIT(128, "Matrices with different major orders\n");
+    */
     //
     int ldx=otherX->getVectorStride();
     int ldy=getVectorStride();
-    april_math::doSparseGemv(major_order,
-                             otherA->getSparseFormat(),
-                             trans_A,
-                             M, N,
-                             alpha,
-                             otherA->getRawValuesAccess(),
-                             otherA->getRawIndicesAccess(),
-                             otherA->getRawFirstIndexAccess(),
-                             otherX->getRawDataAccess(), ldx,
-                             beta, getRawDataAccess(), ldy,
-                             otherX->offset, offset,
-                             use_cuda);
+    doSparseGemv(otherA->getSparseFormat(),
+                 trans_A,
+                 M, N,
+                 alpha,
+                 otherA->getRawValuesAccess(),
+                 otherA->getRawIndicesAccess(),
+                 otherA->getRawFirstIndexAccess(),
+                 otherX->getRawDataAccess(), ldx,
+                 beta, getRawDataAccess(), ldy,
+                 otherX->offset, offset,
+                 use_cuda);
   }
 
   template <typename T>
@@ -742,6 +743,25 @@ namespace basics {
     ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   }
 
+  template <typename T>
+  april_utils::log_float Matrix<T>::logDeterminant(float &sign) {
+    UNUSED_VARIABLE(sign);
+    ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+    return april_utils::log_float::zero();
+  }
+
+  template <typename T>
+  double Matrix<T>::determinant() {
+    ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+    return 0.0f;
+  }
+
+  template <typename T>
+  Matrix<T> *Matrix<T>::cholesky(char uplo) {
+    UNUSED_VARIABLE(uplo);
+    ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
+    return 0;
+  }
 
   // FIXME: IMPLEMENT THE BOOLEAN CONDITIONS USING CUDA WRAPPERS
 

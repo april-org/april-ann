@@ -34,6 +34,7 @@
 #include "gpu_mirrored_memory_block.h"
 #include "maxmin.h"
 #include "mmapped_data.h"
+#include "logbase.h"
 #include "qsort.h"
 #include "serializable.h"
 #include "smart_ptr.h"
@@ -855,6 +856,18 @@ namespace basics {
     /**** LAPACK OPERATIONS ****/
     Matrix<T> *inv();
     void svd(Matrix<T> **U, SparseMatrix<T> **S, Matrix<T> **V);
+
+    april_utils::log_float logDeterminant(float &sign);
+    double determinant();
+    /**
+     * compute the Cholesky factorization of a real symmetric positive
+     * definite matrix A
+     * The factorization has the form
+     * A = U**T *	U,  if UPLO = 'U', or
+     * A = L  * L**T,  if	UPLO = 'L',
+     * where U is an upper triangular matrix and L is lower triangular.
+     */
+    Matrix<T> *cholesky(char uplo); // 'U' or 'L'
 
     // UPDATE GPU OR PPAL IF NEEDED
     void update() {

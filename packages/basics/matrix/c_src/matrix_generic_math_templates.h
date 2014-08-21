@@ -29,7 +29,7 @@ namespace basics {
 
 #define DEFAULT_N_TH 100
 #define DEFAULT_SIZE_TH 100
-
+  
   // Auxiliary function template which applies a FUNCTOR REDUCTION over a given
   // matrix, so the functor is called as FUNC(a matrix), and returns a type O,
   // the type of the destination matrix

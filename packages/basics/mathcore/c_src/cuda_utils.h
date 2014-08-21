@@ -19,9 +19,16 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef CUDA_UTILS_H
+#define CUDA_UTILS_H
 
 // AUXILIAR INLINE FUNCTIONS //
 #ifdef USE_CUDA
+
+#include <cuda.h>
+#include <cublas_v2.h>
+#include <cusparse_v2.h>
+#include "gpu_helper.h"
 
 namespace april_math {
 
@@ -105,3 +112,5 @@ namespace april_math {
 } // namespace april_math
 
 #endif
+
+#endif // CUDA_UTILS_H

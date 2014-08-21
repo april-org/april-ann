@@ -40,6 +40,9 @@ namespace basics {
     
   }
 
+  template <>
+  void SparseMatrix<float>::sqrt();
+
   typedef SparseMatrix<float> SparseMatrixFloat;
 
 }

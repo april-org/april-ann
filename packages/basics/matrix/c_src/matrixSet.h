@@ -23,14 +23,17 @@
 #define MATRIXSET_H
 
 #include <cmath>
-#include "referenced.h"
-#include "matrix.h"
-#include "matrixFloat.h"
+
 #include "aux_hash_table.h"
 #include "hash_table.h"
-#include "mystring.h"
+#include "matrix.h"
+#include "matrixFloat.h"
 #include "maxmin.h"
+#include "mystring.h"
+#include "referenced.h"
 #include "smart_ptr.h"
+#include "sparse_matrix.h"
+#include "sparse_matrixFloat.h"
 
 namespace basics {
 
@@ -39,10 +42,57 @@ namespace basics {
    * math operations to all the underlying matrices, or between two MatrixSet.
    */
   template<typename T>
-  class MatrixSet : public Referenced {
-    typedef april_utils::hash< april_utils::string,
-                               april_utils::SharedPtr< Matrix<T> > > DictType;
+    class MatrixSet : public Referenced {
+  public:
+
+    ///////////////////////////////////////////////////////////////////////
+    
+    class Value {
+    public:
+      Value() {}
+      Value(Matrix<T> *m) : dense(m) {}
+      Value(SparseMatrix<T> *m) : sparse(m) {}
+      bool isSparse() const { return !sparse.empty(); }
+      bool empty() const { return sparse.empty() && dense.empty(); }
+      void assign(Matrix<T> *m) {
+        dense.reset(m);
+        sparse.reset();
+      }
+      void assign(SparseMatrix<T> *m) {
+        sparse.reset(m);
+        dense.reset();
+      }
+      april_utils::SharedPtr< Matrix<T> > &checkDense() {
+        if (dense.empty()) ERROR_EXIT(128, "Impossible to retrive a dense matrix\n");
+        return dense;
+      }
+      april_utils::SharedPtr< SparseMatrix<T> > &checkSparse() {
+        if (sparse.empty()) ERROR_EXIT(128, "Impossible to retrive a sparse matrix\n");
+        return sparse;
+      }
+      april_utils::SharedPtr< Matrix<T> > &getDense() {
+        return dense;
+      }
+      april_utils::SharedPtr< SparseMatrix<T> > &getSparse() {
+        return sparse;
+      }
+      const april_utils::SharedPtr< Matrix<T> > &getDense() const {
+        return dense;
+      }
+      const april_utils::SharedPtr< SparseMatrix<T> > &getSparse() const {
+        return sparse;
+      }
+    private:
+      april_utils::SharedPtr< Matrix<T> > dense;
+      april_utils::SharedPtr< SparseMatrix<T> > sparse;
+    };
+    
+    ///////////////////////////////////////////////////////////////////////
+    
+  private:
+    typedef april_utils::hash<april_utils::string, Value> DictType;
     DictType matrix_dict;
+  
   public:
     typedef typename DictType::iterator       iterator;
     typedef typename DictType::const_iterator const_iterator;
@@ -59,7 +109,12 @@ namespace basics {
     MatrixSet<T> *clone() {
       MatrixSet<T> *cloned = new MatrixSet<T>();
       for (iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
-        cloned->insert(it->first, it->second->clone());
+        if (it->second.isSparse()) {
+          cloned->insert(it->first, it->second.getSparse()->clone());
+        }
+        else {
+          cloned->insert(it->first, it->second.checkDense()->clone());
+        }
       }
       return cloned;
     }
@@ -67,16 +122,19 @@ namespace basics {
     MatrixSet<T> *cloneOnlyDims() {
       MatrixSet<T> *cloned = new MatrixSet<T>();
       for (iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
-        cloned->insert(it->first, it->second->cloneOnlyDims());
+        if (it->second.isSparse())
+          ERROR_EXIT(256, "Impossible to cloneOnlyDims of MatrixSet objects "
+                     "with sparse matrices\n");
+        cloned->insert(it->first, it->second.checkDense()->cloneOnlyDims());
       }
       return cloned;
     }
 
     // operator[]
-    april_utils::SharedPtr< Matrix<T> > &operator[](const char *k) {
+    Value &operator[](const char *k) {
       return matrix_dict[april_utils::string(k)];
     }
-    april_utils::SharedPtr< Matrix<T> > &operator[](const april_utils::string &k) {
+    Value &operator[](const april_utils::string &k) {
       return matrix_dict[k];
     }
     // insert operation
@@ -84,37 +142,51 @@ namespace basics {
       return insert(april_utils::string(k), v);
     }
     void insert(const april_utils::string &k, Matrix<T> *v) {
-      matrix_dict[k] = v;
+      Value &old = matrix_dict[k];
+      old.assign(v);
+    }
+    void insert(const char *k, SparseMatrix<T> *v) {
+      return insert(april_utils::string(k), v);
+    }
+    void insert(const april_utils::string &k, SparseMatrix<T> *v) {
+      Value &old = matrix_dict[k];
+      old.assign(v);
     }
     // find operation
-    Matrix<T> *find(const char *k) const {
+    Value *find(const char *k) const {
       return find(april_utils::string(k));
     }
-    Matrix<T> *find(const april_utils::string &k) const {
-      april_utils::SharedPtr< Matrix<T> > *ptr = matrix_dict.find(k);
-      return (ptr!=0) ? (ptr->get()) : 0;
+    Value *find(const april_utils::string &k) const {
+      Value *ptr = matrix_dict.find(k);
+      return (ptr!=0) ? ptr : 0;
     }
     // matrix component-wise operators macros
-#define MAKE_N0_OPERATOR(NAME)			\
-    void NAME() {                               \
-      for (iterator it = matrix_dict.begin();	\
-           it!=matrix_dict.end(); ++it) {       \
-        it->second->NAME();			\
-      }						\
+#define MAKE_N0_OPERATOR(NAME)                                          \
+    void NAME() {                                                       \
+      for (iterator it = matrix_dict.begin();                           \
+           it!=matrix_dict.end(); ++it) {                               \
+        if (it->second.isSparse())                                      \
+          ERROR_EXIT(256, "Impossible to execute operators with sparse matrices\n"); \
+        it->second.checkDense()->NAME();                                \
+      }                                                                 \
     }
-#define MAKE_N1_OPERATOR(NAME,TYPE1)		\
-    void NAME(const TYPE1 &v1) {                \
-      for (iterator it = matrix_dict.begin();	\
-           it!=matrix_dict.end(); ++it) {       \
-        it->second->NAME(v1);			\
-      }						\
+#define MAKE_N1_OPERATOR(NAME,TYPE1)                                    \
+    void NAME(const TYPE1 &v1) {                                        \
+      for (iterator it = matrix_dict.begin();                           \
+           it!=matrix_dict.end(); ++it) {                               \
+        if (it->second.isSparse())                                      \
+          ERROR_EXIT(256, "Impossible to execute operators with sparse matrices\n"); \
+        it->second.checkDense()->NAME(v1);                              \
+      }                                                                 \
     }
-#define MAKE_N2_OPERATOR(NAME,TYPE1,TYPE2)              \
-    void NAME(const TYPE1 &v1, const TYPE2 &v2) {	\
-      for (iterator it = matrix_dict.begin();           \
-           it!=matrix_dict.end(); ++it) {		\
-        it->second->NAME(v1,v2);			\
-      }                                                 \
+#define MAKE_N2_OPERATOR(NAME,TYPE1,TYPE2)                              \
+    void NAME(const TYPE1 &v1, const TYPE2 &v2) {                       \
+      for (iterator it = matrix_dict.begin();                           \
+           it!=matrix_dict.end(); ++it) {                               \
+        if (it->second.isSparse())                                      \
+          ERROR_EXIT(256, "Impossible to execute operators with sparse matrices\n"); \
+        it->second.checkDense()->NAME(v1,v2);                           \
+      }                                                                 \
     }
     // matrix component-wise operators declaration
     MAKE_N1_OPERATOR(fill,T);
@@ -151,17 +223,19 @@ namespace basics {
 #undef MAKE_N2_OPERATOR
 
     // two matrix basic math operator macros
-#define MAKE_OPERATOR(NAME)					\
-    void NAME(const MatrixSet<T> *other) {			\
-      for (iterator it = matrix_dict.begin();			\
-           it!=matrix_dict.end(); ++it) {                       \
-        Matrix<T> *a = it->second.get();                        \
-        const Matrix<T> *b = other->find(it->first);		\
-        if (b == 0)						\
-          ERROR_EXIT1(128, "Matrix with name %s not found\n",	\
-                      it->first.c_str());                       \
-        a->NAME(b);						\
-      }								\
+#define MAKE_OPERATOR(NAME)                                             \
+    void NAME(const MatrixSet<T> *other) {                              \
+      for (iterator it = matrix_dict.begin();                           \
+           it!=matrix_dict.end(); ++it) {                               \
+        Value &a = it->second;                                          \
+        const Value *b = other->find(it->first);                        \
+        if (a.isSparse() || b->isSparse())                              \
+          ERROR_EXIT(256, "Impossible to execute operators with sparse matrices\n"); \
+        if (b->empty())                                                 \
+          ERROR_EXIT1(128, "Matrix with name %s not found\n",           \
+                      it->first.c_str());                               \
+        a.getDense()->NAME(b->getDense().get());                        \
+      }                                                                 \
     }
     // two matrix basic math operator declarations
     MAKE_OPERATOR(cmul);
@@ -171,24 +245,31 @@ namespace basics {
     // AXPY
     void axpy(T alpha, const MatrixSet<T> *other) {
       for (iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
-        Matrix<T> *a = it->second.get();
-        const Matrix<T> *b = other->find(it->first);
-        if (b == 0)
+        Value &a = it->second;
+        const Value *b = other->find(it->first);
+        if (b->empty())
           ERROR_EXIT1(128, "Matrix with name %s not found\n",
                       it->first.c_str());
-        a->axpy(alpha, b);
+        if (a.isSparse() || b->isSparse())
+          ERROR_EXIT(256, "Impossible to execute operators with sparse matrices\n");
+        a.getDense()->axpy(alpha, b->getDense().get());
       }
     }
 
     // EQUALS
     void equals(const MatrixSet<T> *other, T epsilon) {
       for (iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
-        const Matrix<T> *a = it->second.get();
-        const Matrix<T> *b = other->find(it->first);
-        if (b == 0)
+        const Value &a = it->second;
+        const Value *b = other->find(it->first);
+        if (b->empty())
           ERROR_EXIT1(128, "Matrix with name %s not found\n",
                       it->first.c_str());
-        a->equals(b, epsilon);
+        if (a.isSparse() != b->isSparse())
+          ERROR_EXIT(256, "Impossible to execute operators with different matrix types\n");
+        if (a.isSparse())
+          a.getSparse()->equals(b->getSparse().get(), epsilon);
+        else
+          a.getDense()->equals(b->getDense().get(), epsilon);
       }
     }
 
@@ -196,7 +277,12 @@ namespace basics {
     T norm2() {
       T result_norm2 = T();
       for (iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
-        T current_norm2 = it->second->norm2();
+        T current_norm2;
+        Value &a = it->second;
+        if (a.isSparse())
+          current_norm2 = it->second.getSparse()->norm2();
+        else
+          current_norm2 = it->second.checkDense()->norm2();
         result_norm2 = result_norm2 + current_norm2*current_norm2;
       }
       // FIXME: this call only work with float
@@ -206,8 +292,13 @@ namespace basics {
     // matrix math reductions
     int size() {
       int total_size = 0;
-      for (iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it)
-        total_size += it->second->size();
+      for (iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
+        Value &a = it->second;
+        if (a.isSparse())
+          total_size += it->second.getSparse()->size();
+        else
+          total_size += it->second.checkDense()->size();
+      }
       return total_size;
     }
 
@@ -215,12 +306,14 @@ namespace basics {
     T dot(MatrixSet<T> *other) {
       T result = T();
       for (iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
-        april_utils::SharedPtr< Matrix<T> > a( it->second.get() );
-        april_utils::SharedPtr< Matrix<T> > b( other->find(it->first) );
-        if (b.empty()) {
+        Value &va = it->second;
+        Value *vb = other->find(it->first);
+        if (vb->empty())
           ERROR_EXIT1(128, "Matrix with name %s not found\n",
                       it->first.c_str());
-        }
+        if (va.isSparse() || vb->isSparse())
+          ERROR_EXIT(256, "Impossible to execute operators with sparse matrices\n");
+        april_utils::SharedPtr< Matrix<T> > a = va.checkDense(), b = vb->checkDense();
         if (!a->getIsContiguous()) a = a->clone();
         if (!b->getIsContiguous()) b = b->clone();
         int a_size = a->size();

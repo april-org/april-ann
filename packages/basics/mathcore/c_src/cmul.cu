@@ -25,7 +25,21 @@
 #include "cuda_utils.h"
 
 namespace april_math {
-
+#ifdef USE_CUDA
+  /***************************************
+   ************** CUDA SECTION ***********
+   ***************************************/
+  
+  template<typename T>
+  __global__ void cmulKernel(int N, const T *x, unsigned int x_stride,
+			     T *y, unsigned int y_stride) {
+    unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < N) {
+      y[idx*y_stride] *= x[idx*x_stride];
+    }
+  }
+#endif
+  
   /***************************************
    *********** TEMPLATE SECTION **********
    ***************************************/
@@ -46,16 +60,21 @@ namespace april_math {
 #endif
 #ifdef USE_CUDA
     if (use_gpu) {
-      ERROR_PRINT("CUDA VERSION NOT IMPLEMENTED\n");
+      const T *x_ptr = x->getGPUForRead() + y_shift;
+      T *y_ptr = y->getGPUForReadAndWrite() + y_shift;
+      dim3 block, grid;
+      computeBlockAndGridSizesForAnArray(N, block, grid);
+      cmulKernel<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+	(N, x_ptr, x_inc, y_ptr, y_inc);
     }
-    // else {
+    else {
 #endif
-    x_mem = x->getPPALForRead() + x_shift;
-    y_mem = y->getPPALForReadAndWrite() + y_shift;
-    for (int i=0; i<N; ++i, x_mem+=x_inc, y_mem+=y_inc)
-      (*y_mem) = (*y_mem) * (*x_mem);
+      x_mem = x->getPPALForRead() + x_shift;
+      y_mem = y->getPPALForReadAndWrite() + y_shift;
+      for (int i=0; i<N; ++i, x_mem+=x_inc, y_mem+=y_inc)
+	(*y_mem) = (*y_mem) * (*x_mem);
 #ifdef USE_CUDA
-    // }
+    }
 #endif
   }
 

@@ -73,7 +73,12 @@ int matrixfloatset_iterator_function(lua_State *L) {
     return 1;
   }
   lua_pushstring(L, obj->it->first.c_str());
-  lua_pushMatrixFloat(L, obj->it->second.get());
+  if (obj->it->second.isSparse()) {
+    lua_pushSparseMatrixFloat(L, obj->it->second.getSparse().get());
+  }
+  else {
+    lua_pushMatrixFloat(L, obj->it->second.checkDense().get());
+  }
   ++obj->it;
   return 2;
 }
@@ -107,14 +112,14 @@ using namespace basics;
 
 typedef MatrixFloat::sliding_window SlidingWindow;
 
-#define MAKE_READ_MATRIX_LUA_METHOD(MatrixType, Type) do {              \
-    MatrixType *obj = readMatrixLuaMethod<Type>(L);                     \
-    if (obj == 0) {                                                     \
-      luaL_error(L, "Error happens reading from file stream");          \
-    }                                                                   \
-    else {                                                              \
-      lua_push##MatrixType(L, obj);                                     \
-    }                                                                   \
+#define MAKE_READ_MATRIX_LUA_METHOD(MatrixType, Type) do {      \
+    MatrixType *obj = readMatrixLuaMethod<Type>(L);             \
+    if (obj == 0) {                                             \
+      luaL_error(L, "Error happens reading from file stream");  \
+    }                                                           \
+    else {                                                      \
+      lua_push##MatrixType(L, obj);                             \
+    }                                                           \
   } while(false)
 
 namespace basics {
@@ -874,8 +879,8 @@ namespace basics {
   LUABIND_GET_PARAMETER(1, MatrixFloat, other);
   LUABIND_GET_OPTIONAL_PARAMETER(2, float, epsilon, 1e-04f);
 #ifdef USE_CUDA
-    obj->update();
-    other->update();
+  obj->update();
+  other->update();
 #endif
   LUABIND_RETURN(boolean, obj->equals(other, epsilon));
 }
@@ -911,13 +916,13 @@ namespace basics {
 
 //BIND_METHOD MatrixFloat scalar_add
 {
-    int argn;
-    argn = lua_gettop(L); // number of arguments
-    LUABIND_CHECK_ARGN(==, 1);
-    float scalar;
-    LUABIND_GET_PARAMETER(1, float, scalar);
-    obj->scalarAdd(scalar);
-    LUABIND_RETURN(MatrixFloat, obj);
+  int argn;
+  argn = lua_gettop(L); // number of arguments
+  LUABIND_CHECK_ARGN(==, 1);
+  float scalar;
+  LUABIND_GET_PARAMETER(1, float, scalar);
+  obj->scalarAdd(scalar);
+  LUABIND_RETURN(MatrixFloat, obj);
 }
 //BIND_END
 
@@ -1497,6 +1502,28 @@ namespace basics {
 }
 //BIND_END
 
+//BIND_METHOD MatrixFloat logdet
+{
+  float sign;
+  LUABIND_RETURN(float, obj->logDeterminant(sign).log());
+  LUABIND_RETURN(float, sign);
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat det
+{
+  LUABIND_RETURN(double, obj->determinant());
+}
+//BIND_END
+
+//BIND_METHOD MatrixFloat cholesky
+{
+  char uplo;
+  LUABIND_GET_OPTIONAL_PARAMETER(1, char, uplo, 'U');
+  LUABIND_RETURN(MatrixFloat, obj->cholesky(uplo));
+}
+//BIND_END
+
 //BIND_METHOD MatrixFloat svd
 {
   MatrixFloat *U,*V;
@@ -1566,7 +1593,7 @@ namespace basics {
 //BIND_METHOD MatrixFloat diagonalize
 {
 #ifdef USE_CUDA
-    obj->update();
+  obj->update();
 #endif
   MatrixFloat *resul = obj->diagonalize();
   LUABIND_RETURN(MatrixFloat, resul);
@@ -1893,8 +1920,15 @@ namespace basics {
       // stack now contains: -1 => value; -2 => key; -3 => table
       const char *key = lua_tostring(L, -1);
       // stack now contains: -1 => key; -2 => value; -3 => key; -4 => table
-      MatrixFloat *value = lua_toMatrixFloat(L, -2);
-      obj->insert(key, value);
+      if (lua_isMatrixFloat(L, -2)) {
+        MatrixFloat *value = lua_toMatrixFloat(L, -2);
+        obj->insert(key, value);
+      }
+      else if (lua_isSparseMatrixFloat(L, -2)) {
+        SparseMatrixFloat *value = lua_toSparseMatrixFloat(L, -2);
+        obj->insert(key, value);
+      }
+      else LUABIND_ERROR("Incorrect matrix type, expected matrix or matrix.sparse\n");
       // pop value + copy of key, leaving original key
       lua_pop(L, 2);
       // stack now contains: -1 => key; -2 => table
@@ -1915,11 +1949,19 @@ namespace basics {
 //BIND_METHOD MatrixFloatSet insert
 {
   const char *key;
-  MatrixFloat *m;
   LUABIND_CHECK_ARGN(==, 2);
   LUABIND_GET_PARAMETER(1, string, key);
-  LUABIND_GET_PARAMETER(2, MatrixFloat, m);
-  obj->insert(key, m);
+  if (lua_isMatrixFloat(L, 2)) {
+    MatrixFloat *m;
+    LUABIND_GET_PARAMETER(2, MatrixFloat, m);
+    obj->insert(key, m);
+  }
+  else if (lua_isSparseMatrixFloat(L, 2)) {
+    SparseMatrixFloat *m;
+    LUABIND_GET_PARAMETER(2, SparseMatrixFloat, m);
+    obj->insert(key, m);
+  }
+  else LUABIND_ERROR("Incorrect matrix type, expected matrix or matrix.sparse\n");
   LUABIND_RETURN(MatrixFloatSet, obj);
 }
 //BIND_END
@@ -1929,8 +1971,15 @@ namespace basics {
   const char *key;
   LUABIND_CHECK_ARGN(==, 1);
   LUABIND_GET_PARAMETER(1, string, key);
-  MatrixFloat *m = obj->find(key);
-  if (m != 0) LUABIND_RETURN(MatrixFloat, m);
+  MatrixFloatSet::Value *v = obj->find(key);
+  if (v != 0) {
+    if (v->isSparse()) {
+      LUABIND_RETURN(SparseMatrixFloat, v->getSparse().get());
+    }
+    else {
+      LUABIND_RETURN(MatrixFloat, v->checkDense().get());
+    }
+  }
 }
 //BIND_END
 

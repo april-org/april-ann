@@ -102,6 +102,15 @@ using namespace april_math;
 }
 //BIND_END
 
+//BIND_FUNCTION mathcore.set_use_cuda_default
+{
+  bool v;
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_GET_PARAMETER(1, bool, v);
+  GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT = v;
+}
+//BIND_END
+
 ////////////////////////////////////////////////////////////////////////////
 
 //BIND_LUACLASSNAME FloatGPUMirroredMemoryBlock mathcore.block.float

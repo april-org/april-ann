@@ -19,6 +19,7 @@
  *
  */
 
+#include <cmath>
 #include "sparse_matrixFloat.h"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -40,6 +41,13 @@ namespace basics {
   }
   
   //////////////////////////////////////////////////////////////////////////
+
+  template <>
+  void SparseMatrix<float>::sqrt() {
+    for (iterator it(begin()); it!=end(); ++it) {
+      *it = sqrtf(*it);
+    }
+  }
 
   
   template class SparseMatrix<float>;

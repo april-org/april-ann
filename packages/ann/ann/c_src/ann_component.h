@@ -35,6 +35,10 @@
 #include "unused_variable.h"
 #include "vector.h"
 
+using april_utils::hash;    // required for build
+using april_utils::string;
+using april_utils::vector;
+
 #ifndef NDEBUG
 #define ASSERT_MATRIX(m) do {						\
     april_assert( (m)->getMajorOrder() == CblasColMajor );		\
@@ -107,7 +111,7 @@ namespace ANN {
     ANNComponent(const char *name, const char *weights_name=0,
                  unsigned int input_size=0, unsigned int output_size=0) :
       input_size(input_size), output_size(output_size),
-      use_cuda(false) {
+      use_cuda(april_math::GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT) {
       if (name) this->name = april_utils::string(name);
       else generateDefaultName();
       if (weights_name) this->weights_name = april_utils::string(weights_name);
@@ -289,7 +293,7 @@ namespace ANN {
      */
     virtual void computeAllGradients(basics::MatrixFloatSet *weight_grads_dict){
       if (!weights_name.empty()) {
-	computeGradients( (*weight_grads_dict)[weights_name] );
+        computeGradients( (*weight_grads_dict)[weights_name].getDense() );
       }
     }
     

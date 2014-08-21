@@ -88,7 +88,10 @@ for i=1,30000 do
     input(":",j):copy_from_table(ds_input:getPattern(j))
     output(":",j):copy_from_table(ds_output:getPattern(j))
   end
-  local loss = opt:execute(function()
+  local loss = opt:execute(function(params)
+                             if params ~= weights then
+                               dL_dw:set_shared(params)
+                             end
 			     local loss,db1,dw1,db2,dw2 = dL_dw(input,output)
 			     return loss, { b1=db1, w1=dw1, b2=db2, w2=dw2 }
 			   end,

@@ -267,18 +267,18 @@ namespace april_math {
               unsigned int a_shift, unsigned int x_shift, unsigned int y_shift,
               bool use_gpu);
 
-  template<typename T>
-  void doSparseGemv(CBLAS_ORDER major_type, SPARSE_FORMAT sparse_format,
-                    CBLAS_TRANSPOSE a_transpose,
-                    int m, int n,
-                    T alpha,
-                    const GPUMirroredMemoryBlock<T> *a_values,
-                    const Int32GPUMirroredMemoryBlock *a_indices,
-                    const Int32GPUMirroredMemoryBlock *a_first_index,
-                    const GPUMirroredMemoryBlock<T> *x, unsigned int x_inc,
-                    T beta, GPUMirroredMemoryBlock<T> *y, unsigned int y_inc,
-                    unsigned int x_shift, unsigned int y_shift,
-                    bool use_gpu);
+template<typename T>
+void doSparseGemv(SPARSE_FORMAT sparse_format,
+                  CBLAS_TRANSPOSE a_transpose,
+                  int m, int n,
+                  T alpha,
+                  const GPUMirroredMemoryBlock<T> *a_values,
+                  const Int32GPUMirroredMemoryBlock *a_indices,
+                  const Int32GPUMirroredMemoryBlock *a_first_index,
+                  const GPUMirroredMemoryBlock<T> *x, unsigned int x_inc,
+                  T beta, GPUMirroredMemoryBlock<T> *y, unsigned int y_inc,
+                  unsigned int x_shift, unsigned int y_shift,
+                  bool use_gpu);
 
   template<typename T>
   void doCopy(int N, const GPUMirroredMemoryBlock<T>* x,

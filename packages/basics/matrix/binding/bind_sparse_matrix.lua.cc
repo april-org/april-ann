@@ -489,26 +489,22 @@ using namespace basics;
     obj = SparseMatrixFloat::diag(block,format);
   }
   else if (lua_istable(L,1)) {
-    int i=1;
-    int len;
-    LUABIND_TABLE_GETN(1, len);
-    FloatGPUMirroredMemoryBlock *block;
-    block = new FloatGPUMirroredMemoryBlock(static_cast<unsigned int>(len));
-    float *data = block->getPPALForWrite();
-    for (int i=1; i<=len; ++i) {
-      lua_rawgeti(L,1,i);
-      if (!lua_isnumber(L, -1))
-	LUABIND_FERROR1("The given table has a no number value at position %d, "
-			"the table could be smaller than matrix size", i);
-      data[i-1] = (float)luaL_checknumber(L, -1);
-      lua_pop(L,1);
-    }
+    int N;
+    LUABIND_TABLE_GETN(1, N);
+    FloatGPUMirroredMemoryBlock *block = new FloatGPUMirroredMemoryBlock(N);
     const char *sparse;
     LUABIND_GET_OPTIONAL_PARAMETER(2, string, sparse, "csr");
     SPARSE_FORMAT format = CSR_FORMAT;
     if (strcmp(sparse, "csc") == 0) format = CSC_FORMAT;
     else if (strcmp(sparse, "csr") != 0)
-      LUABIND_FERROR1("Incorrect sparse format string %s", sparse);    
+      LUABIND_FERROR1("Incorrect sparse format string %s", sparse);
+    float *mem = block->getPPALForWrite();
+    lua_pushnil(L);
+    int i=0;
+    while(lua_next(L, 1) != 0) {
+      mem[i++] = lua_tofloat(L, -1); 
+      lua_pop(L, 1);
+    }
     obj = SparseMatrixFloat::diag(block,format);
   }
   else {

@@ -54,7 +54,7 @@ namespace basics {
   
     /**************************************************************************/
  
-  } // namespace AprilIO
+  } // namespace MatrixIO
   
   template<>
   float Matrix<float>::getTemplateOption(const april_utils::GenericOptions *options,
@@ -170,6 +170,15 @@ namespace basics {
   Matrix<float> *Matrix<float>::maxSelDim(const int dim,
                                           april_math::Int32GPUMirroredMemoryBlock *raw_positions,
                                           int shift) const;
+
+  template <>
+  april_utils::log_float Matrix<float>::logDeterminant(float &sign);
+
+  template <>
+  double Matrix<float>::determinant();
+
+  template <>
+  Matrix<float> *Matrix<float>::cholesky(char uplo);
 
   template<>
   void Matrix<float>::adjustRange(float rmin, float rmax);

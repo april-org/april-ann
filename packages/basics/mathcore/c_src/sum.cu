@@ -19,10 +19,10 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
-#include "wrapper.h"
-#include "cuda_utils.h"
 #include "ceiling_power_of_two.h"
+#include "cuda_utils.h"
 #include "unused_variable.h"
+#include "wrapper.h"
 using april_utils::ceilingPowerOfTwo;
 
 namespace april_math {
@@ -34,22 +34,24 @@ namespace april_math {
 
   template<typename T>
   __global__ void sumVectorFirstReduction(const T *v,
-                                          T *sums,
-                                          unsigned int reduction_top,
-                                          unsigned int size,
-                                          unsigned int stride) {
+					  T *sums,
+					  unsigned int reduction_top,
+					  unsigned int size,
+					  unsigned int stride) {
     unsigned int x_idx = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int active_reduction = reduction_top >> 1;
     if (x_idx < size && x_idx < active_reduction) {
       unsigned int x_pos = x_idx * stride;
       unsigned int passive_index = (x_idx + active_reduction) * stride;
-      if (x_idx + active_reduction < size)
-        sums[x_pos] = v[x_pos] + v[passive_index];
-      else
-        sums[x_pos] = v[x_pos];
+      if (x_idx + active_reduction < size) {
+	sums[x_pos] = v[x_pos] + v[passive_index];
+      }
+      else {
+	sums[x_pos] = v[x_pos];
+      }
     }
   }
-
+  
   template<typename T>
   __global__ void sumVectorNextReduction(T *sums,
                                          unsigned int reduction_top,
@@ -57,7 +59,7 @@ namespace april_math {
                                          unsigned int stride) {
     unsigned int x_idx = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int active_reduction = reduction_top >> 1;
-  
+    
     if (x_idx < size && x_idx < active_reduction) {
       unsigned int index = x_idx*stride;
       unsigned int passive_index = (x_idx+active_reduction)*stride;

@@ -112,7 +112,7 @@ namespace basics {
     offset(offset),
     data(data),
     major_order(major_order),
-    use_cuda(false),
+    use_cuda(april_math::GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT),
     is_contiguous(CONTIGUOUS),
     end_iterator(), end_const_iterator(), end_span_iterator_() {
     stride     = new int[numDim];
@@ -336,7 +336,7 @@ namespace basics {
     obj->major_order   = *(mmapped_data->get<CBLAS_ORDER>());
     obj->transposed    = *(mmapped_data->get<bool>());
     // NON MAPPED DATA
-    obj->use_cuda      = false;
+    obj->use_cuda      = april_math::GPUMirroredMemoryBlockBase::USE_CUDA_DEFAULT;
     obj->shared_count  = 0;
     obj->is_contiguous = NONE;
     // THE MMAP POINTER

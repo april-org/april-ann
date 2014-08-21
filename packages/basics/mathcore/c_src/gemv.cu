@@ -276,87 +276,83 @@ namespace april_math {
 #endif
   }
 
-  template<typename T>
-  void doSparseGemv(CBLAS_ORDER major_order, SPARSE_FORMAT sparse_format,
-                    CBLAS_TRANSPOSE a_transpose,
-                    int m, int n,
-                    T alpha,
-                    const GPUMirroredMemoryBlock<T> *a_values,
-                    const Int32GPUMirroredMemoryBlock *a_indices,
-                    const Int32GPUMirroredMemoryBlock *a_first_index,
-                    const GPUMirroredMemoryBlock<T> *x, unsigned int x_inc,
-                    T beta, GPUMirroredMemoryBlock<T> *y, unsigned int y_inc,
-                    unsigned int x_shift, unsigned int y_shift,
-                    bool use_gpu) {
-    const T *a_values_mem, *x_mem;
-    const int *a_indices_mem, *a_first_index_mem;
-    T *y_mem;
-    const int NNZ = static_cast<int>(a_values->getSize());
+template<typename T>
+void doSparseGemv(SPARSE_FORMAT sparse_format,
+                  CBLAS_TRANSPOSE a_transpose,
+                  int m, int n,
+                  T alpha,
+                  const GPUMirroredMemoryBlock<T> *a_values,
+                  const Int32GPUMirroredMemoryBlock *a_indices,
+                  const Int32GPUMirroredMemoryBlock *a_first_index,
+                  const GPUMirroredMemoryBlock<T> *x, unsigned int x_inc,
+                  T beta, GPUMirroredMemoryBlock<T> *y, unsigned int y_inc,
+                  unsigned int x_shift, unsigned int y_shift,
+                  bool use_gpu) {
+  const T *a_values_mem, *x_mem;
+  const int *a_indices_mem, *a_first_index_mem;
+  T *y_mem;
+  const int NNZ = static_cast<int>(a_values->getSize());
 #ifndef USE_CUDA
     UNUSED_VARIABLE(use_gpu);
 #endif
 #ifdef USE_CUDA
-    if (use_gpu) {
-      cusparseStatus_t status;
-      cusparseHandle_t handle = GPUHelper::getSparseHandler();
-      if (major_order != CblasColMajor)
-        ERROR_EXIT(128, "Column major matrices are expected\n");
-      if (sparse_format != CSR_FORMAT)
-        a_transpose = NEGATE_CBLAS_TRANSPOSE(a_transpose);
-      a_values_mem = a_values->getGPUForRead();
-      a_indices_mem = a_indices->getGPUForRead();
-      a_first_index_mem = a_first_index->getGPUForRead();
-      x_mem = x->getGPUForRead() + x_shift;
-      y_mem = y->getGPUForReadAndWrite() + y_shift;
-      cusparseOperation_t cusparse_a_transpose = getCusparseOperation(a_transpose);
+  if (use_gpu) {
+    cusparseStatus_t status;
+    cusparseHandle_t handle = GPUHelper::getSparseHandler();
+    if (sparse_format != CSR_FORMAT)
+      a_transpose = NEGATE_CBLAS_TRANSPOSE(a_transpose);
+    a_values_mem = a_values->getGPUForRead();
+    a_indices_mem = a_indices->getGPUForRead();
+    a_first_index_mem = a_first_index->getGPUForRead();
+    x_mem = x->getGPUForRead() + x_shift;
+    y_mem = y->getGPUForReadAndWrite() + y_shift;
+    cusparseOperation_t cusparse_a_transpose = getCusparseOperation(a_transpose);
     
-      status = cusparseSetStream(handle, GPUHelper::getCurrentStream());
-      checkCusparseError(status);
-      cusparseMatDescr_t descrA;
-      status = cusparseCreateMatDescr(&descrA);
-      checkCusparseError(status);
-      /* by default, it is initialized like this:
-         descrA->MatrixType = CUSPARSE_MATRIX_TYPE_GENERAL;
-         descrA->FillMode   = 0;
-         descrA->DiagType   = 0;
-         descrA->IndexBase  = CUSPARSE_INDEX_BASE_ZERO;
-      */
-      status = wrapperCusparseCSRGemv(handle,
-                                      cusparse_a_transpose,
-                                      m, n, NNZ,
-                                      &alpha,
-                                      descrA,
-                                      a_values_mem,
-                                      a_first_index_mem,
-                                      a_indices_mem,
-                                      x_mem, x_inc,
-                                      &beta, y_mem, y_inc);
-      checkCusparseError(status);
-      status = cusparseDestroyMatDescr(descrA);
-      checkCusparseError(status);
-    }
-    else {
-#endif
-      if (major_order != CblasRowMajor)
-        ERROR_EXIT(128, "Row major matrices are expected\n");
-      a_values_mem = a_values->getPPALForRead();
-      a_indices_mem = a_indices->getPPALForRead();
-      a_first_index_mem = a_first_index->getPPALForRead();
-      x_mem = x->getPPALForRead() + x_shift;
-      y_mem = y->getPPALForReadAndWrite() + y_shift;
-      wrapperCblasSparseGemv(sparse_format,
-                             a_transpose,
-                             m, n,
-                             alpha,
-                             a_values_mem,
-                             a_indices_mem,
-                             a_first_index_mem,
-                             x_mem, x_inc,
-                             beta, y_mem, y_inc);
-#ifdef USE_CUDA
-    }
-#endif
+    status = cusparseSetStream(handle, GPUHelper::getCurrentStream());
+    checkCusparseError(status);
+    cusparseMatDescr_t descrA;
+    status = cusparseCreateMatDescr(&descrA);
+    checkCusparseError(status);
+    /* by default, it is initialized like this:
+       descrA->MatrixType = CUSPARSE_MATRIX_TYPE_GENERAL;
+       descrA->FillMode   = 0;
+       descrA->DiagType   = 0;
+       descrA->IndexBase  = CUSPARSE_INDEX_BASE_ZERO;
+    */
+    status = wrapperCusparseCSRGemv(handle,
+                                    cusparse_a_transpose,
+                                    m, n, NNZ,
+                                    &alpha,
+                                    descrA,
+                                    a_values_mem,
+                                    a_first_index_mem,
+                                    a_indices_mem,
+                                    x_mem, x_inc,
+                                    &beta, y_mem, y_inc);
+    checkCusparseError(status);
+    status = cusparseDestroyMatDescr(descrA);
+    checkCusparseError(status);
   }
+  else {
+#endif
+    a_values_mem = a_values->getPPALForRead();
+    a_indices_mem = a_indices->getPPALForRead();
+    a_first_index_mem = a_first_index->getPPALForRead();
+    x_mem = x->getPPALForRead() + x_shift;
+    y_mem = y->getPPALForReadAndWrite() + y_shift;
+    wrapperCblasSparseGemv(sparse_format,
+                           a_transpose,
+                           m, n,
+                           alpha,
+                           a_values_mem,
+                           a_indices_mem,
+                           a_first_index_mem,
+                           x_mem, x_inc,
+                           beta, y_mem, y_inc);
+#ifdef USE_CUDA
+  }
+#endif
+}
 
   template void doGemv<float>(CBLAS_ORDER major_order, CBLAS_TRANSPOSE a_transpose,
                               int m, int n,
@@ -382,42 +378,39 @@ namespace april_math {
                                  unsigned int a_shift, unsigned int x_shift, unsigned int y_shift,
                                  bool use_gpu);
 
-  template void doSparseGemv<float>(CBLAS_ORDER major_order,
-                                    SPARSE_FORMAT sparse_format,
-                                    CBLAS_TRANSPOSE a_transpose,
-                                    int m, int n,
-                                    float alpha,
-                                    const GPUMirroredMemoryBlock<float> *a_values,
-                                    const Int32GPUMirroredMemoryBlock *a_indices,
-                                    const Int32GPUMirroredMemoryBlock *a_first_index,
-                                    const GPUMirroredMemoryBlock<float> *x, unsigned int x_inc,
-                                    float beta, GPUMirroredMemoryBlock<float> *y, unsigned int y_inc,
-                                    unsigned int x_shift, unsigned int y_shift,
-                                    bool use_gpu);
+template void doSparseGemv<float>(SPARSE_FORMAT sparse_format,
+                                  CBLAS_TRANSPOSE a_transpose,
+                                  int m, int n,
+                                  float alpha,
+                                  const GPUMirroredMemoryBlock<float> *a_values,
+                                  const Int32GPUMirroredMemoryBlock *a_indices,
+                                  const Int32GPUMirroredMemoryBlock *a_first_index,
+                                  const GPUMirroredMemoryBlock<float> *x, unsigned int x_inc,
+                                  float beta, GPUMirroredMemoryBlock<float> *y, unsigned int y_inc,
+                                  unsigned int x_shift, unsigned int y_shift,
+                                  bool use_gpu);
 
-  template void doSparseGemv<double>(CBLAS_ORDER major_order,
-                                     SPARSE_FORMAT sparse_format,
+template void doSparseGemv<double>(SPARSE_FORMAT sparse_format,
+                                   CBLAS_TRANSPOSE a_transpose,
+                                   int m, int n,
+                                   double alpha,
+                                   const GPUMirroredMemoryBlock<double> *a_values,
+                                   const Int32GPUMirroredMemoryBlock *a_indices,
+                                   const Int32GPUMirroredMemoryBlock *a_first_index,
+                                   const GPUMirroredMemoryBlock<double> *x, unsigned int x_inc,
+                                   double beta, GPUMirroredMemoryBlock<double> *y, unsigned int y_inc,
+                                   unsigned int x_shift, unsigned int y_shift,
+                                   bool use_gpu);
+
+template void doSparseGemv<ComplexF>(SPARSE_FORMAT sparse_format,
                                      CBLAS_TRANSPOSE a_transpose,
                                      int m, int n,
-                                     double alpha,
-                                     const GPUMirroredMemoryBlock<double> *a_values,
+                                     ComplexF alpha,
+                                     const GPUMirroredMemoryBlock<ComplexF> *a_values,
                                      const Int32GPUMirroredMemoryBlock *a_indices,
                                      const Int32GPUMirroredMemoryBlock *a_first_index,
-                                     const GPUMirroredMemoryBlock<double> *x, unsigned int x_inc,
-                                     double beta, GPUMirroredMemoryBlock<double> *y, unsigned int y_inc,
+                                     const GPUMirroredMemoryBlock<ComplexF> *x, unsigned int x_inc,
+                                     ComplexF beta, GPUMirroredMemoryBlock<ComplexF> *y, unsigned int y_inc,
                                      unsigned int x_shift, unsigned int y_shift,
                                      bool use_gpu);
-
-  template void doSparseGemv<ComplexF>(CBLAS_ORDER major_order,
-                                       SPARSE_FORMAT sparse_format,
-                                       CBLAS_TRANSPOSE a_transpose,
-                                       int m, int n,
-                                       ComplexF alpha,
-                                       const GPUMirroredMemoryBlock<ComplexF> *a_values,
-                                       const Int32GPUMirroredMemoryBlock *a_indices,
-                                       const Int32GPUMirroredMemoryBlock *a_first_index,
-                                       const GPUMirroredMemoryBlock<ComplexF> *x, unsigned int x_inc,
-                                       ComplexF beta, GPUMirroredMemoryBlock<ComplexF> *y, unsigned int y_inc,
-                                       unsigned int x_shift, unsigned int y_shift,
-                                       bool use_gpu);
 } // namespace april_math
