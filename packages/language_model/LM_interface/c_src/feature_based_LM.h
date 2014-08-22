@@ -55,8 +55,9 @@ namespace LanguageModels {
 
     typedef typename BunchHashedLMInterface<Key,Score>::KeyWordHash KeyWordHash;
     typedef typename BunchHashedLMInterface<Key,Score>::WordResultHash WordResultHash;
+    typedef typename BunchHashedLMInterface<Key,Score>::KeyScoreMultipleBurdenTuple KeyScoreMultipleBurdenTuple;
 
-    virtual void executeQueries(basics::Token *ctxts, basics::Token *words) = 0;
+    virtual april_utils::vector<Score> &executeQueries(basics::Token *ctxts, basics::Token *words) = 0;
 
     virtual void computeKeysAndScores(KeyWordHash &ctxt_hash,
                                       unsigned int bunch_size) {
@@ -70,7 +71,8 @@ namespace LanguageModels {
         it != ctxt_hash.end(); ++it) {
         Key context_key = it->first;
         WordResultHash &word_hash = it->second;
-        unsigned int offset;
+        // offset init'd to 0
+        unsigned int offset = 0;
         basics::TokenVectorUint32 *context_tokens = new basics::TokenVectorUint32();
         WordType *context_words = new WordType[this->HistoryBasedLMInterface<Key,Score>::model->ngramOrder()-1];
         const unsigned int context_size = this->getContextProperties(context_key,
@@ -84,13 +86,37 @@ namespace LanguageModels {
         for (typename WordResultHash::iterator it2 = word_hash.begin();
           it2 != word_hash.end(); ++it2) {
           WordType word = it2->first;
-          
+          KeyScoreMultipleBurdenTuple &result_tuple = it2->second;
+
+          // First pass we get the next key
+          // collect context and word tokens
+          result_tuple.key_score.key = HistoryBasedLMInterface<Key,Score>::getDestinationKey(context_words,
+                                                                    offset,
+                                                                    context_size,
+                                                                    word);
           bunch_of_tokens->push_back(context_tokens);
           word_tokens->push_back(word);
         }
       }
+
+      // Filter context and get scores from executed queries
       basics::Token *filtered_input = filter->calculate(bunch_of_tokens);
-      executeQueries(filtered_input, word_tokens);
+      april_utils::vector<Score> &scores = executeQueries(filtered_input, word_tokens);
+      unsigned int k = 0;
+
+      for (typename KeyWordHash::iterator it = ctxt_hash.begin();
+        it != ctxt_hash.end(); ++it) {
+        Key context_key = it->first;
+        WordResultHash &word_hash = it->second;
+
+        for (typename WordResultHash::iterator it2 = word_hash.begin();
+          it2 != word_hash.end(); ++it2) {
+          KeyScoreMultipleBurdenTuple &result_tuple = it2->second;
+
+          // Second pass to store scores at table
+          result_tuple.key_score.score = scores[k++];
+        }
+      }
     }
 
   public:
