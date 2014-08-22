@@ -56,39 +56,41 @@ namespace LanguageModels {
     typedef typename BunchHashedLMInterface<Key,Score>::KeyWordHash KeyWordHash;
     typedef typename BunchHashedLMInterface<Key,Score>::WordResultHash WordResultHash;
 
-    virtual void executeQueries(basics::Token *input) = 0;
+    virtual void executeQueries(basics::Token *ctxts, basics::Token *words) = 0;
 
     virtual void computeKeysAndScores(KeyWordHash &ctxt_hash,
                                       unsigned int bunch_size) {
       UNUSED_VARIABLE(bunch_size);
       april_assert(sizeof(WordType) == sizeof(uint32_t));
       basics::TokenBunchVector *bunch_of_tokens = new basics::TokenBunchVector();
+      basics::TokenVectorUint32 *word_tokens = new basics::TokenVectorUint32();
 
       // For each context key entry
       for (typename KeyWordHash::iterator it = ctxt_hash.begin();
         it != ctxt_hash.end(); ++it) {
         Key context_key = it->first;
         WordResultHash &word_hash = it->second;
+        unsigned int offset;
+        basics::TokenVectorUint32 *context_tokens = new basics::TokenVectorUint32();
+        WordType *context_words = new WordType[this->HistoryBasedLMInterface<Key,Score>::model->ngramOrder()-1];
+        const unsigned int context_size = this->getContextProperties(context_key,
+                                                                     context_words,
+                                                                     offset);
+
+        for (unsigned int i = 0; i < context_size; i++)
+          context_tokens->push_back(context_words[i]);
 
         // For each word entry
         for (typename WordResultHash::iterator it2 = word_hash.begin();
           it2 != word_hash.end(); ++it2) {
           WordType word = it2->first;
-
-          unsigned int offset;
-          WordType *context_words = new WordType[this->HistoryBasedLMInterface<Key,Score>::model->ngramOrder()-1];
-          const unsigned int context_size = this->getContextProperties(context_key,
-                                                                       context_words,
-                                                                       offset);
-          // Fill this vector with context_words
-          basics::TokenVectorUint32 *new_token = new basics::TokenVectorUint32();
-          bunch_of_tokens->push_back(new_token);
+          
+          bunch_of_tokens->push_back(context_tokens);
+          word_tokens->push_back(word);
         }
       }
-      // Create token from matrix and filter it
-      // FIXME: Can't do this since token_vector pointer
       basics::Token *filtered_input = filter->calculate(bunch_of_tokens);
-      executeQueries(filtered_input);
+      executeQueries(filtered_input, word_tokens);
     }
 
   public:
