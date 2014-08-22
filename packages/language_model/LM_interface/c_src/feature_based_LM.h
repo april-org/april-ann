@@ -61,7 +61,6 @@ namespace LanguageModels {
 
     virtual void computeKeysAndScores(KeyWordHash &ctxt_hash,
                                       unsigned int bunch_size) {
-      UNUSED_VARIABLE(bunch_size);
       april_assert(sizeof(WordType) == sizeof(uint32_t));
       basics::TokenBunchVector *bunch_of_tokens = new basics::TokenBunchVector();
       basics::TokenVectorUint32 *word_tokens = new basics::TokenVectorUint32();
@@ -99,11 +98,29 @@ namespace LanguageModels {
         }
       }
 
-      // Filter context and get scores from executed queries
-      basics::Token *filtered_input = filter->calculate(bunch_of_tokens);
-      april_utils::vector<Score> &scores = executeQueries(filtered_input, word_tokens);
-      unsigned int k = 0;
+      unsigned int total_tokens = bunch_of_tokens->size();
+      basics::TokenBunchVector *tmp_bunch_tokens = new basics::TokenBunchVector();
+      basics::TokenVectorUint32 *tmp_word_tokens = new basics::TokenVectorUint32();
+      april_utils::vector<Score> scores;
 
+      for (unsigned int i = 0; i < total_tokens; i += bunch_size) {
+        tmp_bunch_tokens->clear();
+        tmp_word_tokens->clear();
+        for (unsigned int b = 0; b < bunch_size; b++) {
+          unsigned int shift = i + b;
+          if (shift < total_tokens) {
+            tmp_bunch_tokens->push_back(bunch_of_tokens[i+b]);
+            tmp_word_tokens->push_back(word_tokens[i+b]);
+          } else {
+            break;
+          }
+        }
+        basics::Token *filtered_input = filter->calculate(tmp_bunch_tokens);
+        april_utils::vector<Score> &tmp_scores = executeQueries(filtered_input, tmp_word_tokens);
+        scores.insert(scores.end(), tmp_scores.begin(), tmp_scores.end());
+      }
+
+      unsigned int k = 0;
       for (typename KeyWordHash::iterator it = ctxt_hash.begin();
         it != ctxt_hash.end(); ++it) {
         Key context_key = it->first;
