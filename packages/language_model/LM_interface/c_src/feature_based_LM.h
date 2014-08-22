@@ -57,13 +57,15 @@ namespace LanguageModels {
     typedef typename BunchHashedLMInterface<Key,Score>::WordResultHash WordResultHash;
     typedef typename BunchHashedLMInterface<Key,Score>::KeyScoreMultipleBurdenTuple KeyScoreMultipleBurdenTuple;
 
-    virtual april_utils::vector<Score> &executeQueries(basics::Token *ctxts, basics::Token *words) = 0;
+    virtual void executeQueries(basics::Token *ctxts, basics::Token *words, april_utils::vector<Score> &scores) = 0;
 
     virtual void computeKeysAndScores(KeyWordHash &ctxt_hash,
                                       unsigned int bunch_size) {
       april_assert(sizeof(WordType) == sizeof(uint32_t));
       basics::TokenBunchVector *bunch_of_tokens = new basics::TokenBunchVector();
       basics::TokenVectorUint32 *word_tokens = new basics::TokenVectorUint32();
+      unsigned int cur_bunch = 0;
+      april_utils::vector<Score> scores;
 
       // For each context key entry
       for (typename KeyWordHash::iterator it = ctxt_hash.begin();
@@ -77,7 +79,6 @@ namespace LanguageModels {
         const unsigned int context_size = this->getContextProperties(context_key,
                                                                      context_words,
                                                                      offset);
-
         for (unsigned int i = 0; i < context_size; i++)
           context_tokens->push_back(context_words[i]);
 
@@ -90,34 +91,26 @@ namespace LanguageModels {
           // First pass we get the next key
           // collect context and word tokens
           result_tuple.key_score.key = HistoryBasedLMInterface<Key,Score>::getDestinationKey(context_words,
-                                                                    offset,
-                                                                    context_size,
-                                                                    word);
+                                                                                             offset,
+                                                                                             context_size,
+                                                                                             word);
           bunch_of_tokens->push_back(context_tokens);
           word_tokens->push_back(word);
-        }
-      }
+          cur_bunch = (cur_bunch + 1) % bunch_size;
 
-      unsigned int total_tokens = bunch_of_tokens->size();
-      basics::TokenBunchVector *tmp_bunch_tokens = new basics::TokenBunchVector();
-      basics::TokenVectorUint32 *tmp_word_tokens = new basics::TokenVectorUint32();
-      april_utils::vector<Score> scores;
-
-      for (unsigned int i = 0; i < total_tokens; i += bunch_size) {
-        tmp_bunch_tokens->clear();
-        tmp_word_tokens->clear();
-        for (unsigned int b = 0; b < bunch_size; b++) {
-          unsigned int shift = i + b;
-          if (shift < total_tokens) {
-            tmp_bunch_tokens->push_back(bunch_of_tokens[i+b]);
-            tmp_word_tokens->push_back(word_tokens[i+b]);
-          } else {
-            break;
+          // If we have a full bunch, process it
+          if (cur_bunch == 0) {
+            basics::Token *filtered_input = filter->calculate(bunch_of_tokens);
+            executeQueries(filtered_input, word_tokens, scores);
+            bunch_of_tokens->clear();
+            word_tokens->clear();
           }
         }
-        basics::Token *filtered_input = filter->calculate(tmp_bunch_tokens);
-        april_utils::vector<Score> &tmp_scores = executeQueries(filtered_input, tmp_word_tokens);
-        scores.insert(scores.end(), tmp_scores.begin(), tmp_scores.end());
+      }
+      // If there is something left in the bunch, process it
+      if (cur_bunch >= 0) {
+        basics::Token *filtered_input = filter->calculate(bunch_of_tokens);
+        executeQueries(filtered_input, word_tokens, scores);
       }
 
       unsigned int k = 0;
