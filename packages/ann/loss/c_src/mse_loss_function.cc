@@ -39,13 +39,16 @@ namespace ANN {
     throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
     int dim = input_mat->getDimSize(0);
     MatrixFloat *loss_output = new MatrixFloat(1, &dim, CblasColMajor);
+#ifdef USE_CUDA
+    loss_output->setUseCuda(input_mat->getCudaFlag());
+#endif
     doMSELossFunction(input_mat->getRawDataAccess(),
-		      target_mat->getRawDataAccess(),
-		      loss_output->getRawDataAccess(),
-		      0.0f,
-		      input_mat->getDimSize(1),
-		      input_mat->getDimSize(0),
-		      input_mat->getCudaFlag());
+                      target_mat->getRawDataAccess(),
+                      loss_output->getRawDataAccess(),
+                      0.0f,
+                      input_mat->getDimSize(1),
+                      input_mat->getDimSize(0),
+                      input_mat->getCudaFlag());
     loss_output->scal(0.5f);
     return loss_output;
   }

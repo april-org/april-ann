@@ -70,6 +70,23 @@ namespace april_utils {
     }
   };
   
+
+  /**
+   * Standard referencer template specialization for new[].
+   */
+  template<typename T>
+  struct StandardReferencer<T[]> {
+    StandardReferencer() { }
+    StandardReferencer(const StandardReferencer &) { }
+    void operator()(T *ptr) const {
+      UNUSED_VARIABLE(ptr);
+    }
+    void checkUnique(T *ptr) const {
+      UNUSED_VARIABLE(ptr);
+    }
+  };
+  
+  
   /**
    * Standard deleter template, uses delete.
    */
@@ -87,6 +104,8 @@ namespace april_utils {
    */
   template<typename T>
   struct StandardDeleter<T[]> {
+    StandardDeleter() { }
+    StandardDeleter(const StandardDeleter &) { }
     void operator()(T *ptr) const {
       delete[] ptr;
     }

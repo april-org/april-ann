@@ -43,6 +43,9 @@ namespace ANN {
     int N = input_mat->getDimSize(1);
     int dim = input_mat->getDimSize(0);
     MatrixFloat *loss_output = new MatrixFloat(1, &dim, CblasColMajor);
+#ifdef USE_CUDA
+    loss_output->setUseCuda(input_mat->getCudaFlag());
+#endif
     MatrixFloat::iterator loss_output_it(loss_output->begin());
     // Two major cases:
     //    1) A two-class problem.

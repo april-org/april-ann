@@ -66,6 +66,7 @@ Token *lua_toAuxToken(lua_State *L, int n) {
 #include "token_base.h"
 #include "token_memory_block.h"
 #include "token_matrix.h"
+#include "token_null.h"
 #include "token_sparse_matrix.h"
 #include "token_vector.h"
 
@@ -125,6 +126,18 @@ Token *lua_toAuxToken(lua_State *L, int n);
     TokenBunchVector *token_bunch_vector = obj->convertTo<TokenBunchVector*>();
     LUABIND_RETURN(TokenBunchVector, token_bunch_vector);
   }
+}
+//BIND_END
+
+////////////////////////////////////////////////////////////////////
+
+//BIND_LUACLASSNAME TokenNull tokens.null
+//BIND_CPP_CLASS    TokenNull
+//BIND_SUBCLASS_OF  TokenNull Token
+
+//BIND_CONSTRUCTOR TokenNull
+{
+  LUABIND_RETURN(TokenNull, new TokenNull());
 }
 //BIND_END
 

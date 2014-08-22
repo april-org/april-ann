@@ -351,36 +351,48 @@ using namespace ANN;
 //BIND_METHOD ANNComponent get_input
 {
   basics::Token *aux = obj->getInput();
-  if (aux == 0)
-    LUABIND_RETURN_NIL();
-  else LUABIND_RETURN(Token, aux);
+  if (aux == 0) {
+    LUABIND_RETURN(Token, new TokenNull());
+  }
+  else {
+    LUABIND_RETURN(Token, aux);
+  }
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent get_output
 {
   basics::Token *aux = obj->getOutput();
-  if (aux == 0)
-    LUABIND_RETURN_NIL();
-  else LUABIND_RETURN(Token, aux);
+  if (aux == 0) {
+    LUABIND_RETURN(Token, new TokenNull());
+  }
+  else {
+    LUABIND_RETURN(Token, aux);
+  }
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent get_error_input
 {
   basics::Token *aux = obj->getErrorInput();
-  if (aux == 0)
-    LUABIND_RETURN_NIL();
-  else LUABIND_RETURN(Token, aux);
+  if (aux == 0) {
+    LUABIND_RETURN(Token, new TokenNull());
+  }
+  else {
+    LUABIND_RETURN(Token, aux);
+  }
 }
 //BIND_END
 
 //BIND_METHOD ANNComponent get_error_output
 {
   basics::Token *aux = obj->getErrorOutput();
-  if (aux == 0)
-    LUABIND_RETURN_NIL();
-  else LUABIND_RETURN(Token, aux);
+  if (aux == 0) {
+    LUABIND_RETURN(Token, new TokenNull());
+  }
+  else {
+    LUABIND_RETURN(Token, aux);
+  }
 }
 //BIND_END
 

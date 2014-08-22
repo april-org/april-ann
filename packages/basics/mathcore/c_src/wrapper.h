@@ -444,7 +444,9 @@ void doSparseGemv(SPARSE_FORMAT sparse_format,
           unsigned int stride,
           unsigned int shift,
           bool use_gpu,
-          T zero);
+          T zero,
+          GPUMirroredMemoryBlock<T> *dest=0,
+          unsigned int dest_shift=0);
 
   template<typename T>
   void doScalarAdd(unsigned int N,

@@ -1241,7 +1241,7 @@ namespace april_math {
          size,
          bunch_size,
          bunch_size);
-      for (top_reduction >>= 1; top_reduction != 1; top_reduction >>= 1) {
+      for (top_reduction >>= 1; top_reduction > 1; top_reduction >>= 1) {
         computeBlockAndGridSizesForARowMajorBunch(bunch_size, top_reduction,
                                                   block, grid);
         minMaxNextReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
@@ -1279,7 +1279,7 @@ namespace april_math {
          size,
          bunch_size,
          bunch_size);
-      for (top_reduction >>= 1; top_reduction != 1; top_reduction >>= 1) {
+      for (top_reduction >>= 1; top_reduction > 1; top_reduction >>= 1) {
         computeBlockAndGridSizesForARowMajorBunch(bunch_size, top_reduction,
                                                   block, grid);
         sumNextReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
@@ -1428,7 +1428,7 @@ namespace april_math {
          size,
          bunch_size,
          bunch_size);
-      for (top_reduction >>= 1; top_reduction != 1; top_reduction >>= 1) {
+      for (top_reduction >>= 1; top_reduction > 1; top_reduction >>= 1) {
         computeBlockAndGridSizesForARowMajorBunch(bunch_size, top_reduction,
                                                   block, grid);
         minMaxNextReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
@@ -1438,7 +1438,7 @@ namespace april_math {
            bunch_size,
            bunch_size);
       }
-
+      
       computeBlockAndGridSizesForAnArray(bunch_size, block, grid);
       applyMinimumNorm<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
         (minimums_ptr,
@@ -1466,7 +1466,7 @@ namespace april_math {
          size,
          bunch_size,
          bunch_size);
-      for (top_reduction >>= 1; top_reduction != 1; top_reduction >>= 1) {
+      for (top_reduction >>= 1; top_reduction > 1; top_reduction >>= 1) {
         computeBlockAndGridSizesForARowMajorBunch(bunch_size, top_reduction,
                                                   block, grid);
         sumNextReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
@@ -1475,8 +1475,7 @@ namespace april_math {
            bunch_size,
            bunch_size);
       }
-
-    
+      
       computeBlockAndGridSizesForARowMajorBunch(bunch_size, size,
                                                 block, grid);
 

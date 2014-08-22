@@ -45,6 +45,9 @@ namespace ANN {
     throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
     int dim = input_mat->getDimSize(0);
     MatrixFloat *loss_output = new MatrixFloat(1, &dim, CblasColMajor);
+#ifdef USE_CUDA
+    loss_output->setUseCuda(input_mat->getCudaFlag());
+#endif
     MatrixFloat *t_logp = target_mat->clone();
     IncRef(t_logp);
     t_logp->cmul(input_mat);

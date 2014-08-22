@@ -81,6 +81,9 @@ namespace ANN {
     if ( H>0.0f || H<0.0f ) {
       int dim = 1;
       loss_output = new MatrixFloat(1, &dim, CblasColMajor);
+#ifdef USE_CUDA
+      loss_output->setUseCuda(input_mat->getCudaFlag());
+#endif
       (*loss_output)(0) = -G/H;
     }
     else loss_output = 0;

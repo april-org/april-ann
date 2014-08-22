@@ -227,14 +227,9 @@ template<typename T>
 void sumBunchPatternErrors(GPUMirroredMemoryBlock<T> *loss_output,
 			   const GPUMirroredMemoryBlock<T> *pattern_errors,
 			   unsigned int bunch_size, unsigned int size) {
-  cublasHandle_t handle  = GPUHelper::getHandler();
-  int aux_size = static_cast<int>(size);
   for (unsigned int i=0; i<bunch_size; ++i) {
-    doSum(size, pattern_errors, bunch_size, shift, true, T());
-    
-    cublasSasum(handle, aux_size,
-                pattern_errors_ptr+i, bunch_size,
-                loss_output_ptr + i);
+    doSum(size, pattern_errors, bunch_size, i, true, T(),
+          loss_output, i);
   }
 }
 
@@ -325,6 +320,13 @@ void doMSELossFunction(FloatGPUMirroredMemoryBlock *input,
     sumBunchPatternErrors(loss_output,
 			  pattern_errors,
 			  bunch_size, size);
+    printf("WRAPPER %f %f %f %f :: %f %f\n",
+           pattern_errors->get(0),
+           pattern_errors->get(1),
+           pattern_errors->get(2),
+           pattern_errors->get(3),
+           loss_output->get(0),
+           loss_output->get(1));
     delete pattern_errors;
   }
   else {
@@ -562,7 +564,7 @@ void doCrossEntropyLossFunction(FloatGPUMirroredMemoryBlock *input,
 float MultiClassCE(float input, float target, float EPSILON) {
   april_assert(!(input > 0.0f) &&
 	       "Only log-based activation functions are allowed");
-  april_assert(!(target < 0.0f) && !(target > 1.0f) &&
+  april_assert((!(target < 0.0f)) && (!(target > 1.0f)) &&
 	       "Only [0,1] target patterns are allowed");
   // compute derivative
   float log_o = input;

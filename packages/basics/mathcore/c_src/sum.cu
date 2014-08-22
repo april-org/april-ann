@@ -79,41 +79,57 @@ namespace april_math {
           unsigned int stride,
           unsigned int shift,
           bool use_gpu,
-          T zero) {
+          T zero,
+          GPUMirroredMemoryBlock<T> *dest,
+          unsigned int dest_shift) {
     T sum(zero);
 #ifndef USE_CUDA
     UNUSED_VARIABLE(use_gpu);
+    UNUSED_VARIABLE(dest);
+    UNUSED_VARIABLE(dest_shift);
 #endif
 #ifdef USE_CUDA
     if (use_gpu) {
-      GPUMirroredMemoryBlock<T> sums(N);
       const T *v_ptr             = v->getGPUForRead() + shift;
-      T *sums_ptr                = sums.getGPUForWrite();
-      unsigned int units_top     = ceilingPowerOfTwo(N);
-      unsigned int top_reduction = units_top;
-      dim3 block, grid;
-      computeBlockAndGridSizesForAnArray(N, block, grid);
-      sumVectorFirstReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-        (v_ptr,
-         sums_ptr,
-         top_reduction,
-         N, stride);
-      for (top_reduction >>= 1; top_reduction != 1; top_reduction >>= 1) {
-        computeBlockAndGridSizesForAnArray(top_reduction, block, grid);
-        sumVectorNextReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-          (sums_ptr,
+      if (N > 1) {
+        GPUMirroredMemoryBlock<T> sums(N);
+        T *sums_ptr                = sums.getGPUForWrite();
+        unsigned int units_top     = ceilingPowerOfTwo(N);
+        unsigned int top_reduction = units_top;
+        dim3 block, grid;
+        computeBlockAndGridSizesForAnArray(N, block, grid);
+        sumVectorFirstReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+          (v_ptr,
+           sums_ptr,
            top_reduction,
            N, stride);
+        for (top_reduction >>= 1; top_reduction > 1; top_reduction >>= 1) {
+          computeBlockAndGridSizesForAnArray(top_reduction, block, grid);
+          sumVectorNextReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+            (sums_ptr,
+             top_reduction,
+             N, stride);
+        }
+        cudaMemcpy(&sum, sums_ptr, sizeof(T), cudaMemcpyDeviceToHost);
+        if (dest != 0) {
+          dest->copyFromBlock(&sums, 0u, dest_shift, 1u);
+        }
       }
-      // TODO: Improve the efficiency of this assignment, now it needs
-      // to copy the whole sums array even when only the first one
-      // component is needed
-      sum = sums.getPPALForRead()[0];
+      else {
+        cudaMemcpy(&sum, v_ptr, sizeof(T), cudaMemcpyDeviceToHost);
+        if (dest != 0) {
+          dest->copyFromBlock(v, shift, dest_shift, 1u);
+        }
+      }
     }
     else {
 #endif
       const T *v_mem = v->getPPALForRead() + shift;
       for (unsigned int i=0; i<N; ++i, v_mem+=stride) sum += *v_mem;
+      if (dest != 0) {
+        T *dest_ptr = dest->getPPALForWrite() + shift;
+        *dest_ptr = sum;
+      }
 #ifdef USE_CUDA
     }
 #endif
@@ -125,13 +141,17 @@ namespace april_math {
                               unsigned int stride,
                               unsigned int shift,
                               bool use_gpu,
-                              float zero);
+                              float zero,
+                              GPUMirroredMemoryBlock<float> *dest,
+                              unsigned int dest_shift);
 
   template ComplexF doSum<ComplexF>(unsigned int N,
                                     const GPUMirroredMemoryBlock<ComplexF> *v,
                                     unsigned int stride,
                                     unsigned int shift,
                                     bool use_gpu,
-                                    ComplexF zero);
+                                    ComplexF zero,
+                                    GPUMirroredMemoryBlock<ComplexF> *dest,
+                                    unsigned int dest_shift);
 
 } // namespace april_math

@@ -319,6 +319,9 @@ namespace ANN {
       grads_mat = weights_matrix->cloneOnlyDims();
       grads_mat->zeros();
     }
+#ifdef USE_CUDA
+    grads_mat->setUseCuda(use_cuda);
+#endif
     MatrixFloat *input_mat       = getInputMatrix();
     MatrixFloat *error_input_mat = getErrorInputMatrix();
     // Prepare sliding windows to compute the convolution

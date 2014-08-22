@@ -1,3 +1,6 @@
+ -- forces CUDA when available
+mathcore.set_use_cuda_default(util.is_cuda_available())
+--
 digits_image = ImageIO.read(string.get_path(arg[0]).."digits.png")
 m1           = digits_image:to_grayscale():invert_colors():matrix()
 

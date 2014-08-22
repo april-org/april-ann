@@ -182,6 +182,9 @@ namespace ANN {
       grads_mat = bias_vector->cloneOnlyDims();
       grads_mat->zeros();
     }
+#ifdef USE_CUDA
+    grads_mat->setUseCuda(use_cuda);
+#endif
     MatrixFloat *input_error_mat = getErrorInputMatrix();
     // Prepare sliding windows to compute the convolution
     MatrixFloat::sliding_window error_sw(input_error_mat, window_size,

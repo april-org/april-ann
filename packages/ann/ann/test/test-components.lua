@@ -1,3 +1,7 @@
+-- forces the use of CUDA
+mathcore.set_use_cuda_default(util.is_cuda_available())
+--
+
 local check   = utest.check
 local T       = utest.test
 local verbose = false
@@ -10,7 +14,6 @@ function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
   end
   ann.components.reset_id_counters()
   local c = component_builder_func()
-  if util.is_cuda_available() then c:set_use_cuda(true) end
   trainer = trainable.supervised_trainer(c, ann.loss[loss_name](), b)
   trainer:build()
   trainer:randomize_weights{ inf = -1, sup = 1, random = rnd }
@@ -26,24 +29,69 @@ function check_component(component_builder_func,loss_name,i,o,b,desc,norm)
     apply(function(m) m:scal(1/m:sum()) end,
       target:sliding_window():iterate())
   end
-  result = trainer:grad_check_step(input,
-                                   target,
-                                   verbose)
+  result = trainer:grad_check_step(input, target, verbose)
   if not result then
+    print("---- WEIGHTS ----")
+    for wname,w in pairs(trainer:get_weights_table()) do
+      print(wname:upper())
+      print(w)
+    end
     print("---- INPUT ----")
     print(input)
     print("---- TARGET ----")
     print(target)
     for name,c in trainer:iterate_components() do
       print("---- " .. name .. " ----")
+      print("Input matrix")
       print(c:get_input():get_matrix())
+      print("Output matrix")
       print(c:get_output():get_matrix())
+      print("Error input matrix")
       print(c:get_error_input():get_matrix())
+      print("Error output matrix")
       print(c:get_error_output():get_matrix())
     end
     error(string.format("Error at %s (%d,%d,%d,%s) !!!",desc,i,o,b,loss_name))
   end
 end
+
+-----------------
+-- DOT PRODUCT --
+-----------------
+-- T("DOTPRODUCT TEST",
+--   function()
+--     check(function()
+--         for i=2,4 do
+--           for o=2,4 do
+--             for b=1,4 do
+--               check_component(function()
+--                   return ann.components.dot_product{ input=i,
+--                                                      output=o }                              end,
+--                 "mse", i, o, b, "DOTPRODUCT")
+--             end
+--           end
+--         end
+--         return true
+--     end)
+-- end)
+
+----------
+-- BIAS --
+----------
+T("BIAS TEST",
+  function()
+    check(function()
+        for o=2,4 do
+          for b=1,4 do
+            check_component(function()
+                return ann.components.bias{ size=o }
+                            end,
+              "mse", o, o, b, "BIAS")
+          end
+        end
+        return true
+    end)
+end)
 
 ------------------------
 -- DOT PRODUCT + BIAS --

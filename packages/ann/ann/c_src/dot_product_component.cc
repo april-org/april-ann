@@ -176,6 +176,9 @@ namespace ANN {
     else if (!grads_mat->sameDim(weights_matrix)) {
       ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
     }
+#ifdef USE_CUDA
+    grads_mat->setUseCuda(use_cuda);
+#endif
   }
   
   void DotProductANNComponent::

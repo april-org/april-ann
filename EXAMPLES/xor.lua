@@ -1,3 +1,6 @@
+ -- forces CUDA when available
+mathcore.set_use_cuda_default(util.is_cuda_available())
+--
 local bunch_size=4
 local thenet  = ann.mlp.all_all.generate("2 inputs 2 logistic 1 logistic")
 local trainer = trainable.supervised_trainer(thenet, ann.loss.mse(1), bunch_size)
@@ -23,8 +26,6 @@ local m_xor = matrix.fromString[[
 
 local ds_input  = dataset.matrix(m_xor, {patternSize={1,2}})
 local ds_output = dataset.matrix(m_xor, {offset={0,2}, patternSize={1,1}})
-
-if util.is_cuda_available() then thenet:set_use_cuda(true) end
 
 local rnd=random(523)
 for i=1,10000 do

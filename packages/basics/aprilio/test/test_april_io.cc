@@ -62,7 +62,7 @@ namespace AprilIO {
   }
   
   TEST(FileStream, ReadAndWrite) {
-    april_utils::UniquePtr<char> aux( new char[N+1] );
+    april_utils::UniquePtr<char []> aux( new char[N+1] );
     april_utils::SharedPtr<StreamInterface> ptr;
     
     // write of a bunch of data

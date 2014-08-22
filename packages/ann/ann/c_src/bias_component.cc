@@ -90,6 +90,9 @@ namespace ANN {
     }
     else if (!grads_mat->sameDim(bias_vector))
       ERROR_EXIT(128, "Incorrect weights matrix dimensions\n");
+#ifdef USE_CUDA
+    grads_mat->setUseCuda(use_cuda);
+#endif
     MatrixFloat *error_input_mat = getErrorInputMatrix();
     unsigned int bunch_size = error_input_mat->getDimSize(0);
     // bias update: prev_bias[j] = prev_bias[j] + \sum_b norm_learn_rate * ERROR_INPUT[b,j]

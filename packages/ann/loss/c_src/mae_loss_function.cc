@@ -39,6 +39,9 @@ namespace ANN {
     throwErrorAndGetMatrixFromTokens(input, target, input_mat, target_mat);
     int dim = input_mat->getDimSize(0);
     MatrixFloat *loss_output = new MatrixFloat(1, &dim, CblasColMajor);
+#ifdef USE_CUDA
+    loss_output->setUseCuda(input_mat->getCudaFlag());
+#endif
     doMAELossFunction(input_mat->getRawDataAccess(),
 		      target_mat->getRawDataAccess(),
 		      loss_output->getRawDataAccess(),

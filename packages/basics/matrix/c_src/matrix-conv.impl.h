@@ -36,7 +36,7 @@ namespace basics {
                                       const int *kernel) {
     typename Matrix<T>::sliding_window *mat_sw=0;
     int numDim = mat->getNumDim();
-    april_utils::UniquePtr<int> aux_step, order_step;
+    april_utils::UniquePtr<int []> aux_step, order_step;
     if (step != 0) {
       aux_step = new int[D+2];
       aux_step[0] = aux_step[1] = 1;
@@ -78,7 +78,7 @@ namespace basics {
           ERROR_EXIT2(128, "Incorrect kernel size at 2nd dimension, "
                       "expected %d, found %d\n", mat->getDimSize(1), kernel[1]);
         }
-        april_utils::UniquePtr<int> aux_kernel(new int[numDim]);
+        april_utils::UniquePtr<int []> aux_kernel(new int[numDim]);
         aux_kernel[0] = 1; // mat->getDimSize(0);
         for (int i=1; i<numDim; ++i) aux_kernel[i] = kernel[i];
         mat_sw = new typename Matrix<T>::sliding_window(mat, aux_kernel.get(),
@@ -110,7 +110,7 @@ namespace basics {
                     mat_sw->numWindows()/bunch_size,
                     mat_slice->size() };
     Matrix<T> *unrolled_mat = new Matrix<T>(3, dims, mat->getMajorOrder());
-    april_utils::UniquePtr<int> aux_dims(new int[mat_slice->getNumDim()+2]);
+    april_utils::UniquePtr<int []> aux_dims(new int[mat_slice->getNumDim()+2]);
     aux_dims[0] = dims[0];
     aux_dims[1] = dims[1];
     for (int i=0; i<mat_slice->getNumDim(); ++i) {
@@ -121,7 +121,7 @@ namespace basics {
                                                    mat_slice->getNumDim()+2) );
     aux_dims[0] = 1;
     aux_dims[1] = 1;
-    april_utils::UniquePtr<int> order_step;
+    april_utils::UniquePtr<int []> order_step;
     if (mat->getMajorOrder() == CblasColMajor) {
       order_step = new int[mat_slice->getNumDim()+2];
       for (int i=0; i<mat_slice->getNumDim()+2; ++i) order_step[i] = i;
@@ -189,7 +189,7 @@ namespace basics {
                                   const int *step,
                                   Matrix<T> *result) {
     // compute result_sizes
-    april_utils::UniquePtr<int> result_sizes(new int[D+2]);
+    april_utils::UniquePtr<int []> result_sizes(new int[D+2]);
     result_sizes[0] = bunch_size;
     result_sizes[1] = kernel_sizes[0];
     int j = mat->getNumDim() - D; // first mat dimension

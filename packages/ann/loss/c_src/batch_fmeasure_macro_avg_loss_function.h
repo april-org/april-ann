@@ -24,6 +24,7 @@
 #include "referenced.h"
 #include "token_base.h"
 #include "loss_function.h"
+#include "smart_ptr.h"
 
 namespace ANN {
   /// A multi-class version of the F-Measure loss function as described in: Joan
@@ -36,15 +37,14 @@ namespace ANN {
   class BatchFMeasureMacroAvgLossFunction : public LossFunction {
     float beta, beta2;
     // auxiliary data for gradient computation speed-up
-    basics::MatrixFloat *Gs, *Hs;
+    april_utils::SharedPtr<basics::MatrixFloat> Gs, Hs;
     bool complement_output;
     
     BatchFMeasureMacroAvgLossFunction(BatchFMeasureMacroAvgLossFunction *other) :
     LossFunction(other), beta(other->beta), beta2(other->beta2),
-    Gs(0), Hs(0),
     complement_output(other->complement_output) {
-      if (other->Gs) Gs = other->Gs->clone();
-      if (other->Hs) Hs = other->Hs->clone();
+      if (!other->Gs.empty()) Gs = other->Gs->clone();
+      if (!other->Hs.empty()) Hs = other->Hs->clone();
     }
     
   protected:

@@ -78,12 +78,12 @@ namespace april_math {
    * float block with twice number of floats (but the same size).
    */
   class GPUMirroredMemoryBlockBase : public Referenced {
-#ifndef NO_POOL
   public:
+#ifndef NO_POOL
     typedef april_utils::list<char*>                PoolListType;
     typedef april_utils::hash<size_t, PoolListType> PoolType;
-    static bool USE_CUDA_DEFAULT;
 #endif
+    static bool USE_CUDA_DEFAULT;
     
   private:
     static bool use_mmap_allocation;
@@ -592,9 +592,21 @@ namespace april_math {
   
     void copyFromBlock(const GPUMirroredMemoryBlock<T> *other,
                        size_t from, size_t where, size_t sz) {
-      const T *other_ptr = other->getPPALForRead() + from;
-      T *this_ptr        = this->getPPALForWrite() + where;
-      memcpy(this_ptr, other_ptr, sz * sizeof(T));
+#ifdef USE_CUDA
+      if (other->getUpdatedGPU()) {
+        const T *other_ptr = other->getGPUForRead() + from;
+        T *this_ptr        = this->getGPUForWrite() + where;
+        cudaMemcpy(this_ptr, other_ptr, sz * sizeof(T),
+                   cudaMemcpyDeviceToDevice);
+      }
+      else {
+#endif
+        const T *other_ptr = other->getPPALForRead() + from;
+        T *this_ptr        = this->getPPALForWrite() + where;
+        memcpy(this_ptr, other_ptr, sz * sizeof(T));
+#ifdef USE_CUDA
+      }
+#endif
     }
 
 

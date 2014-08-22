@@ -121,10 +121,12 @@ namespace april_math {
       equalsVectorFirstReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
 	(v1_mem, v2_mem, equals_ptr, top_reduction,
 	 N, stride1, stride2, epsilon);
-      for (top_reduction >>= 1; top_reduction != 1; top_reduction >>= 1) {
-	computeBlockAndGridSizesForAnArray(top_reduction, block, grid);
-	equalsVectorNextReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
-	  (equals_ptr, top_reduction, N);
+      if (top_reduction != 1) {
+        for (top_reduction >>= 1; top_reduction != 1; top_reduction >>= 1) {
+          computeBlockAndGridSizesForAnArray(top_reduction, block, grid);
+          equalsVectorNextReduction<<<grid, block, 0, GPUHelper::getCurrentStream()>>>
+            (equals_ptr, top_reduction, N);
+        }
       }
       // TODO: Improve the efficiency of this assignment, now it needs
       // to copy the whole sums array even when only the first one

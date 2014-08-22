@@ -956,6 +956,7 @@ trainable_supervised_trainer_methods.grad_check_step =
     local output   = self.ann_component:forward(input, true)
     local tr_loss,tr_loss_matrix = loss:compute_loss(output, target)
     if not tr_loss_matrix then return true end
+    print("L", tr_loss)
     local gradient = loss:gradient(output, target)
     gradient=self.ann_component:backprop(gradient)
     self.weight_grads = self.ann_component:compute_gradients(self.weight_grads)
@@ -969,21 +970,30 @@ trainable_supervised_trainer_methods.grad_check_step =
       -- The shared parameter has no effect in gradients check, only bunch_size
       local ratio = 1/bunch_size
       local ann_grads = self.weight_grads(wname)
+      assert(w:is_contiguous(),
+             "Unable to check grads of non-contiguous matrices")
       for i=1,w:size() do
-        local orig_w = w:raw_get(i-1)
-        w:raw_set(i-1, orig_w - epsilon)
+        local orig_w = w:raw_get(w:offset() + i-1)
+        print(orig_w)
+        w:raw_set(w:offset() + i-1, orig_w - epsilon)
+        print(w:raw_get(w:offset() + i-1))
         self.ann_component:reset(it)
         it=it+1
         local loss_a = loss:compute_loss(self.ann_component:forward(input,true),
                                          target)
-        w:raw_set(i-1, orig_w + epsilon)
+        print("La", loss_a)
+        w:raw_set(w:offset() + i-1, orig_w + epsilon)
+        print(w:raw_get(w:offset() + i-1))
         self.ann_component:reset(it)
         it=it+1
         local loss_b = loss:compute_loss(self.ann_component:forward(input,true),
                                          target)
-        w:raw_set(i-1, orig_w)
+        print("Lb", loss_b)
+        w:raw_set(w:offset() + i-1, orig_w)
+        w:update()
         local g = (loss_b - loss_a) / (2*epsilon)
         local ann_g = ann_grads:raw_get(i-1)*ratio
+        print("JARL\n")
         if verbose then
           fprintf(io.stderr,
                   "CHECK GRADIENT %s[%d], found %g, expected %g\n",
@@ -994,6 +1004,15 @@ trainable_supervised_trainer_methods.grad_check_step =
           local err = abs_err/math.abs(ann_g+g)
           -- if err > epsilond and abs_err > 1e-02 then
           if abs_err > 2*epsilon then
+            -- force backprop step
+            self.ann_component:reset(it)
+            loss:reset()
+            local output   = self.ann_component:forward(input, true)
+            local tr_loss,tr_loss_matrix = loss:compute_loss(output, target)
+            assert(tr_loss_matrix)
+            local gradient = loss:gradient(output, target)
+            self.ann_component:backprop(gradient)
+            --
             fprintf(io.stderr,
                     "INCORRECT GRADIENT FOR %s[%d], found %g, expected %g "..
                       "(error %g, abs error %g)\n",

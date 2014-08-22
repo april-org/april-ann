@@ -275,7 +275,7 @@ SEARCH_INCLUDES        = YES
 INCLUDE_PATH           = 
 INCLUDE_FILE_PATTERNS  = 
 PREDEFINED             = 
-EXPAND_AS_DEFINED      = METHODS
+EXPAND_AS_DEFINED      = METHODS ARRAY_UNIQUE_PTR
 SKIP_FUNCTION_MACROS   = YES
 
 #---------------------------------------------------------------------------

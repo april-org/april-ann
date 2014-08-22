@@ -55,7 +55,7 @@ namespace april_utils {
       referencer(ptr);
       referencer.checkUnique(ptr);
     }
-    
+
     /**
      * @brief Builds a UniquePtr from other UniquePtr object, taking the
      * ownership of the referenced pointer.
@@ -119,6 +119,174 @@ namespace april_utils {
      * @brief Assignment operator, takes the ownership of the given pointer.
      */
     UniquePtr<T,Referencer,Deleter> &operator=(T *other) {
+      reset(other);
+      return *this;
+    }
+    
+  private:
+    
+    /**
+     * @brief Operator[], returns a reference to the data.
+     */
+    T &operator[](int i) {
+      return ptr[i];
+    }
+    
+    /**
+     * @brief Operator[], returns a reference to the data.
+     */
+    const T &operator[](int i) const {
+      return ptr[i];
+    }
+
+  public:
+
+    bool operator==(const T *&other) const {
+      return ptr == other;
+    }
+
+    /**
+     * @brief Bypasses the pointer, but stills having the ownership.
+     */
+    T *get() {
+      return ptr;
+    }
+
+    /**
+     * @brief Bypasses the pointer, but stills having the ownership.
+     */
+    const T *get() const {
+      return ptr;
+    }
+    
+    /**
+     * @brief Releases the pointer and the ownership, but NOT executes delete,
+     * so it transfers the ownership to the caller.
+     */
+    T *release() {
+      T *tmp = ptr;
+      ptr = 0;
+      return tmp;
+    }
+
+    /**
+     * @brief Takes the ownership without executing the referencer.
+     */
+    void take(T *other) {
+      reset();
+      ptr = other;
+      referencer.checkUnique(ptr);
+    }
+    
+    /**
+     * @brief Deletes its pointer, and takes ownership and executes the
+     * referencer the given pointer.
+     *
+     * @note By default receives a NULL pointer.
+     */
+    void reset(T *other = 0) {
+      if (ptr != other) {
+        referencer(other);
+        deleter(ptr);
+        ptr = other;
+        referencer.checkUnique(ptr);
+      }
+    }
+    
+    bool empty() const {
+      return get() == 0;
+    };
+    
+  private:
+    Referencer referencer;
+    Deleter deleter;
+    T *ptr;
+  };
+  
+  // Specialization for array declarations
+  template< typename T,
+            typename Referencer,
+            typename Deleter >
+  class UniquePtr <T[], Referencer, Deleter> {
+    
+  public:
+    
+    /**
+     * @brief Builds a UniquePtr from a given pointer, by default NULL.
+     */
+    UniquePtr(T *ptr=0) : referencer(Referencer()), deleter(Deleter()),
+                          ptr(ptr) {
+      referencer(ptr);
+      referencer.checkUnique(ptr);
+    }
+
+    /**
+     * @brief Builds a UniquePtr from other UniquePtr object, taking the
+     * ownership of the referenced pointer.
+     */
+    UniquePtr(UniquePtr<T,Referencer,Deleter> &other) :
+      referencer(Referencer()), deleter(Deleter()), ptr(other.release()) { }
+
+  private:
+    /**
+     * @brief Builds a UniquePtr from other UniquePtr object, taking the
+     * ownership of the referenced pointer.
+     */
+    template<typename T1>
+    UniquePtr(UniquePtr<T1,Referencer,Deleter> &other) {
+      UNUSED_VARIABLE(other);
+    }
+    
+  public:
+
+    /**
+     * @brief Resets the object to a NULL pointer, what will execute delete.
+     */
+    ~UniquePtr() { reset(); }
+    
+    /**
+     * @brief Dereferencing, returns the pointer itself.
+     */
+    T *operator->() { april_assert(get() != 0); return get(); }
+
+    /**
+     * @brief Dereferencing, returns a const reference to the pointer itself.
+     */
+    const T *operator->() const { april_assert(get() != 0); return get(); }
+    
+    /**
+     * @brief Dereferencing, returns a reference to the data.
+     */
+    T &operator*() { april_assert(get() != 0); return *get(); }
+    
+    /**
+     * @brief Dereferencing, returns a const reference to the data.
+     */
+    const T &operator*() const { april_assert(get() != 0); return *get(); }
+
+    /**
+     * @brief Assignment operator, transfers the ownership of the pointer
+     * referenced by the given other object.
+     */
+    UniquePtr<T[],Referencer,Deleter> &operator=(UniquePtr<T,Referencer,Deleter> &other) {
+      take(other.release());
+      return *this;
+    }
+
+    /**
+     * @brief Assignment operator, transfers the ownership of the pointer
+     * referenced by the given other object.
+     */
+    template<typename T1>
+    UniquePtr<T[],Referencer,Deleter> &operator=(UniquePtr<T1,Referencer,Deleter> &other) {
+      take(other.release());
+      return *this;
+    }
+
+    /**
+     * @brief Assignment operator, takes the ownership of the given pointer.
+     */
+    UniquePtr<T[],Referencer,Deleter> &operator=(T *other) {
       reset(other);
       return *this;
     }
@@ -200,12 +368,12 @@ namespace april_utils {
     Deleter deleter;
     T *ptr;
   };
-  
+
   template<typename T>
   UniquePtr<T> makeUniquePtr(T *ptr) {
     return UniquePtr<T>(ptr);
   }
   
 } // namespace april_utils
- 
+
 #endif // UNIQUE_PTR_H

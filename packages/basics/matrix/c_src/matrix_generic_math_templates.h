@@ -40,10 +40,10 @@ namespace basics {
                                        Matrix<O> *dest=0) {
     const int numDim      = orig->getNumDim();
     const int *matrixSize = orig->getDimPtr();
-    april_utils::UniquePtr<int> result_dims( new int[numDim] );
+    april_utils::UniquePtr<int []> result_dims( new int[numDim] );
     /**** ORIG sliding window ****/
-    april_utils::UniquePtr<int> orig_w_size( new int[numDim] );
-    april_utils::UniquePtr<int> orig_w_num_steps( new int[numDim] );
+    april_utils::UniquePtr<int []> orig_w_size( new int[numDim] );
+    april_utils::UniquePtr<int []> orig_w_num_steps( new int[numDim] );
     int result_size=1;
     for (int i=0; i<dim; ++i) {
       orig_w_size[i] = 1;
@@ -69,6 +69,9 @@ namespace basics {
       // else if (!result->sameDim(result_dims, numDim))
       ERROR_EXIT2(256, "Incorrect size at the given dest matrtix, "
                   "expected %d, found %d\n", result_size, result->size());
+    // forces to mark PPAL memory as updated
+    O *force_ppal_bit = result->getRawDataAccess()->getPPALForWrite();
+    UNUSED_VARIABLE(force_ppal_bit);
     // traverse in row major order
     for (typename Matrix<O>::iterator it(result->begin());
          it!=result->end(); ++it) {
@@ -92,10 +95,10 @@ namespace basics {
       ERROR_EXIT(256, "Other dest matrix not given, use a different template\n");
     const int numDim      = orig->getNumDim();
     const int *matrixSize = orig->getDimPtr();
-    int *result_dims      = new int[numDim];
+    april_utils::UniquePtr<int []> result_dims( new int[numDim] );
     /**** ORIG sliding window ****/
-    int *orig_w_size      = new int[numDim];
-    int *orig_w_num_steps = new int[numDim];
+    april_utils::UniquePtr<int []> orig_w_size( new int[numDim] );
+    april_utils::UniquePtr<int []> orig_w_num_steps( new int[numDim] );
     int result_size=1;
     for (int i=0; i<dim; ++i) {
       orig_w_size[i] = 1;
@@ -109,11 +112,12 @@ namespace basics {
       orig_w_size[i] = 1;
       result_dims[i] = orig_w_num_steps[i] = matrixSize[i];
     }
-    typename Matrix<T>::sliding_window orig_w(orig,orig_w_size,0,0,orig_w_num_steps,0);
+    typename Matrix<T>::sliding_window orig_w(orig, orig_w_size.get(), 0, 0,
+                                              orig_w_num_steps.get(), 0);
     april_utils::SharedPtr< Matrix<T> > slice( orig_w.getMatrix() );
     /******************************/
     Matrix<O> *result = dest;
-    if (result == 0) result = new Matrix<O>(numDim, result_dims,
+    if (result == 0) result = new Matrix<O>(numDim, result_dims.get(),
                                             orig->getMajorOrder());
     else if (result->size() != result_size)
       // else if (!result->sameDim(result_dims, numDim))
@@ -121,6 +125,11 @@ namespace basics {
                   "expected %d, found %d\n", result_size, result->size());
     if (result->size() != other->size())
       ERROR_EXIT(256, "Incorrect size at the given other dest matrtix\n");
+    // forces to mark PPAL memory as updated
+    O *force_result_ppal_bit = result->getRawDataAccess()->getPPALForWrite();
+    UNUSED_VARIABLE(force_result_ppal_bit);
+    C *force_other_ppal_bit = other->getRawDataAccess()->getPPALForWrite();
+    UNUSED_VARIABLE(force_other_ppal_bit);
     // traverse in row major order
     typename Matrix<C>::iterator other_it(other->begin());
     for (typename Matrix<O>::iterator it(result->begin());
@@ -129,9 +138,6 @@ namespace basics {
       *it = func(slice.get(), *other_it);
       orig_w.next();
     }
-    delete[] orig_w_size;
-    delete[] orig_w_num_steps;
-    delete[] result_dims;
     return result;
   }
 

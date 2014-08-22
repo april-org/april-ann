@@ -69,6 +69,10 @@ namespace ANN {
       april_assert(input_mat->getMajorOrder() == CblasColMajor);
       april_assert(target_mat->getMajorOrder() == CblasColMajor);
       april_assert(size==0 || input_mat->getDimSize(1)==static_cast<int>(size));
+      //
+#ifdef USE_CUDA
+      target_mat->setUseCuda(input_mat->getCudaFlag());
+#endif
     }
     
     // To be implemented by derived classes
