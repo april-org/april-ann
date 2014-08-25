@@ -516,8 +516,16 @@ public:
 
 //BIND_CONSTRUCTOR SkipFunction
 {
-  LUABIND_CHECK_ARGN(==,0);
-  obj = new SkipFunction();
+  LUABIND_CHECK_ARGN(==,1);
+  LUABIND_CHECK_PARAMETER(1, table);
+  check_table_fields(L, 1, "dice", "random", "mask_value");
+  Dice *dice;
+  MTRand *random;
+  uint32_t mask_value;
+  LUABIND_GET_TABLE_PARAMETER(1, dice, Dice, dice);
+  LUABIND_GET_TABLE_PARAMETER(1, random, MTRand, random);
+  LUABIND_GET_TABLE_PARAMETER(1, mask_value, uint, mask_value);
+  obj = new SkipFunction(dice, random, mask_value);
   LUABIND_RETURN(SkipFunction, obj);
 }
 //BIND_END
