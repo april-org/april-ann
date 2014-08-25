@@ -997,6 +997,11 @@ ImageFloat *get_pixel_area(ImageFloat *source,
 
       april_utils::Sort(&(*this)[0], size(), interestPointXComparator);
   }
+
+  /////////////////////////
+  // TextSegments
+  //
+  ////////////////////
   void SetPoints::sort_by_confidence() {
 
       if (!size) return;
@@ -1013,6 +1018,7 @@ ImageFloat *get_pixel_area(ImageFloat *source,
           (*ccPoints)[i].sort_by_x();
       }
   }
+
   void SetPoints::print_components() {
 
       for(int i = 0; i < size; ++i) {
@@ -1122,10 +1128,12 @@ ImageFloat *get_pixel_area(ImageFloat *source,
   return mySet;
   }*/
 
+  // Compute the set Points given the connected components
   SetPoints * ConnectedPoints::computePoints() {
       SetPoints * mySet = new SetPoints(img);
       float threshold = 100.0;
-      //Process each component
+
+      //Compute baselines
       for (int cc = 0; cc < size; ++cc) {
 
           PointComponent &component = (*ccPoints)[cc];
@@ -1133,13 +1141,18 @@ ImageFloat *get_pixel_area(ImageFloat *source,
           if (n_points == 0)
               continue;
 
+          //Extract baseline
           PointComponent *base_line = component.get_points_by_type(BASELINE);
+          n_points = base_line->size();
+          if (n_points == 0)
+              continue;
           double sse = base_line->line_least_squares();
-
+           
           //Compute the regression over the points of the line
           printf("%d %d %f %f\n", cc, (int)base_line->size(),sse, sse/n_points);
 
           if (sse/n_points < threshold) {
+              TextSegment *current_segment = new TextSegment(*base_line);
               mySet->addComponent(*base_line);
           }
       }

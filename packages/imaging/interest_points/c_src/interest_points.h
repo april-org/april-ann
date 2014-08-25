@@ -108,6 +108,8 @@ namespace InterestPoints
 
   };
 
+
+  // Defines a Set of Points
   class PointComponent:public vector<interest_point> {
   public:
     PointComponent(int size):vector<interest_point>(size){};
@@ -121,9 +123,23 @@ namespace InterestPoints
     void sort_by_x();
     april_utils::line *get_regression_line();
   };
+
+  // Defines a set of point corresponding a unique text segment
+  class TextSegment:public PointComponent {
+    protected:
+        // vector of connected components of the current segment
+        vector<PointComponent> *ccs;
+    public:
+        TextSegment(PointComponent &cp):PointComponent(){
+          ccs->push_back(cp);
+        };
+        TextSegment():PointComponent(){};
+  };
+
   class SetPoints: public Referenced {
   protected:
     vector< PointComponent > *ccPoints;
+     
     int size;
     int num_points;
     imaging::ImageFloat *img;
