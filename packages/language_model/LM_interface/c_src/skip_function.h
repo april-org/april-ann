@@ -25,15 +25,16 @@
 
 #include "function_interface.h"
 #include "dice.h"
+#include "LM_interface.h"
 
 namespace Functions {
   
   class SkipFunction : public FunctionInterface {
     basics::Dice *dice;
     basics::MTRand *random;
-    uint32_t mask_value;
+    LanguageModels::WordType mask_value;
   public:
-    SkipFunction(basics::Dice *dice, basics::MTRand *random, uint32_t mask_value) :
+    SkipFunction(basics::Dice *dice, basics::MTRand *random, LanguageModels::WordType mask_value) :
       FunctionInterface(),
       dice(dice),
       random(random),
@@ -56,12 +57,20 @@ namespace Functions {
     }
     virtual basics::Token *calculate(basics::Token *input) {
       if (input->getTokenCode() != basics::table_of_token_codes::vector_Tokens)
-        ERROR_EXIT(128, "Input token should be a collection of tokens\n");
+        ERROR_EXIT(128, "Input token should be a collection of tokens!\n");
       basics::TokenBunchVector *bunch_of_tokens = input->convertTo<basics::TokenBunchVector*>();
 
       for (unsigned int i = 0; i < bunch_of_tokens->size(); i++) {
-        // Throw dice and apply mask
-        ;
+        if ((*bunch_of_tokens)[i]->getTokenCode() != basics::table_of_token_codes::vector_uint32)
+          ERROR_EXIT(128, "Tokens from input token should be a collection of uint tokens!\n");
+        basics::TokenVectorUint32 *word_tokens = (*bunch_of_tokens)[i]->convertTo<basics::TokenVectorUint32*>();
+        int size = word_tokens->size();
+        int skip_mask = dice->thrown(random);
+        for (int j = size-1; j >= 0; j--) {
+          if (skip_mask % 2)
+            (*word_tokens)[j] = mask_value;
+          skip_mask /= 2;
+        }
       }
       return input;
     }
