@@ -31,6 +31,9 @@
 #include "ignore_result.h"
 #include "matrix.h"
 
+// Must be defined in this order.
+#include "matrix_operations.h"
+
 namespace basics {
 
   template<typename T>
@@ -300,7 +303,7 @@ namespace basics {
       transposed = false;
       initialize(other->matrixSize);
       allocate_memory(total_size);
-      copy(other);
+      april_math::MatrixExt::matCopy(this, other);
       is_contiguous = CONTIGUOUS;
     }
     else {
@@ -409,7 +412,7 @@ namespace basics {
       obj = new Matrix<T>(len, new_dims, major_order, new_data);
       april_utils::SharedPtr< Matrix<T> > aux( obj->rewrap(this->getDimPtr(),
                                                            this->getNumDim()) );
-      aux->copy(this);
+      april_math::MatrixExt::matCopy(aux.get(),this);
     }
     else {
       obj = new Matrix<T>(len, new_dims, major_order, data.get(), offset);
@@ -498,7 +501,7 @@ namespace basics {
   template <typename T>
   Matrix<T>* Matrix<T>::clone() const {
     Matrix<T> *result = this->cloneOnlyDims();
-    result->copy(this);
+    april_math::MatrixExt::matCopy(result,this);
     return result;
   }
 
@@ -968,8 +971,8 @@ namespace basics {
                                           resul->major_order,
                                           resul->use_cuda,
                                           resul->transposed);
-    resul->zeros();
-    resul_diag->copy(this);
+    april_math::MatrixExt::matZeros(resul);
+    april_math::MatrixExt::matCopy(resul_diag, this);
     delete resul_diag;
     return resul;
   }
@@ -978,6 +981,56 @@ namespace basics {
   void Matrix<T>::pruneSubnormalAndCheckNormal() {
     ERROR_EXIT(128, "NOT IMPLEMENTED!!!\n");
   }
+
+  template <typename T>
+  Matrix<T> *Matrix<T>::padding(int *begin_padding, int *end_padding,
+                                T default_value) const {
+    int *result_sizes = new int[getNumDim()];
+    int *matrix_pos = new int[getNumDim()];
+    for (int i=0; i<getNumDim(); ++i) {
+      result_sizes[i] = getDimSize(i) + begin_padding[i] + end_padding[i];
+      matrix_pos[i] = begin_padding[i];
+    }
+    Matrix<T> *result = new Matrix<T>(getNumDim(), result_sizes, getMajorOrder());
+    // FIXME: implement fill by several submatrices for large matrix sizes with
+    // small padding sizes
+    april_math::MatrixExt::matFill(result, default_value);
+    // take submatrix where data will be located
+    Matrix<T> *result_data = new Matrix<T>(result, matrix_pos, getDimPtr(),
+                                           false);
+    // copy data to the submatrix
+    april_math::MatrixExt::matCopy(result_data, this);
+    //
+    delete result_data;
+    delete[] result_sizes;
+    delete[] matrix_pos;
+    return result;
+  }
+
+  template <typename T>
+  Matrix<T> *Matrix<T>::padding(int pad_value, T default_value) const {
+    int *result_sizes = new int[getNumDim()];
+    int *matrix_pos = new int[getNumDim()];
+    for (int i=0; i<getNumDim(); ++i) {
+      result_sizes[i] = getDimSize(i) + pad_value*2;
+      matrix_pos[i] = pad_value;
+    }
+    Matrix<T> *result = new Matrix<T>(getNumDim(), result_sizes, getMajorOrder());
+    // FIXME: implement fill by several submatrices for large matrix sizes with
+    // small padding sizes
+    april_math::MatrixExt::matFill(result, default_value);
+    // take submatrix where data will be located
+    Matrix<T> *result_data = new Matrix<T>(result, matrix_pos, getDimPtr(),
+                                           false);
+    // copy data to the submatrix
+    april_math::MatrixExt::matCopy(result_data, this);
+    //
+    delete result_data;
+    delete[] result_sizes;
+    delete[] matrix_pos;
+    return result;
+  }
+  
 } // namespace basics
 
 #endif // MATRIX_IMPL_H

@@ -75,20 +75,6 @@ namespace basics {
     return options->getOptionalDouble(name, default_value);
   }
 
-  /////////////////////////////////////////////////////////////////////////////
-  
-  /************* ZEROS FUNCTION **************/
-  template<>
-  void Matrix<double>::zeros() {
-    fill(0.0);
-  }
-
-  /************* ONES FUNCTION **************/
-  template<>
-  void Matrix<double>::ones() {
-    fill(1.0);
-  }
-
   /////////////////////////////////////////////////////////////////////////
   
   template class Matrix<double>;

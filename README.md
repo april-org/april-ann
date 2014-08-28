@@ -26,15 +26,19 @@ with older and newer versions whenver the API was compatible.
 - OpenMP
 - LAPACK library, offered by liblapack_atlas, mkl_lapack, or MacOS Accelerate Framework
 - LAPACKE library when compiling with ATLAS
-- libz: support for open of GZIPPED files
-- libzip: support for open ZIP packages.
 
-The following libreries are recommended, but optional:
-- [OPTIONAL] libpng: if you want to open PNG images
-- [OPTIONAL] libtiff: if you want to open TIFF images
+The following libreries are recommended, but optional, you will need to remove
+its package from the path `profile_build_scripts/package_list.lua`:
 
-For perform computation on GPU, this optional library:
-- [OPTIONAL] CUDA and CUBLAS: release 4.2.6
+- [OPTIONAL] libpng: if you want to open PNG images, package `libpng`.
+- [OPTIONAL] libtiff: if you want to open TIFF images, package `libtiff`.
+- [OPTIONAL] libz: support for open of GZIPPED files, package `gzio`.
+- [OPTIONAL] libzip: support for open ZIP packages, package `zip`.
+
+For perform computation on GPU, this optional library, which has an specific
+make target:
+
+- [OPTIONAL] CUDA and CUBLAS: release 4.2.6.
 
 Dependencies setup
 ------------------

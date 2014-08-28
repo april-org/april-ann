@@ -2,7 +2,8 @@
  * This file is part of APRIL-ANN toolkit (A
  * Pattern Recognizer In Lua with Artificial Neural Networks).
  *
- * Copyright 2014, Francisco Zamora-Martinez
+ * Copyright 2012, Salvador España-Boquera, Adrian Palacios Corella, Francisco
+ * Zamora-Martinez
  *
  * The APRIL-ANN toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 3 as
@@ -18,29 +19,14 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef _CUBLAS_ERROR_H_
+#define _CUBLAS_ERROR_H_
 
-#include <cmath>
-#include "sparse_matrixFloat.h"
+#ifdef USE_CUDA
+#include <cublas_v2.h>
 
-///////////////////////////////////////////////////////////////////////////////
+void checkCublasError(cublasStatus_t status);
 
-namespace basics {
-  
-  namespace MatrixIO {
-    
-    template<>
-    int SparseAsciiSizer<float>::operator()(const SparseMatrix<float> *mat) {
-      return mat->nonZeroSize()*12;
-    }
-    
-    template<>
-    int SparseBinarySizer<float>::operator()(const SparseMatrix<float> *mat) {
-      return april_utils::binarizer::buffer_size_32(mat->nonZeroSize());
-    }
-    
-  }
-  
-  //////////////////////////////////////////////////////////////////////////
-  
-  template class SparseMatrix<float>;
-}
+#endif
+
+#endif // _CUBLAS_ERROR_H_

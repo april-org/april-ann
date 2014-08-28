@@ -28,11 +28,14 @@
 #include <sys/types.h>
 #include "error_print.h"
 #include "ignore_result.h"
-#include "qsort.h"
-#include "swap.h"
 #include "pair.h"
+#include "qsort.h"
 #include "sparse_matrix.h"
+#include "swap.h"
 #include "vector.h"
+
+// Must be defined in this order.
+#include "matrix_operations.h"
 
 namespace basics {
 
@@ -271,10 +274,10 @@ namespace basics {
     initialize(other->matrixSize[0], other->matrixSize[1]);
     allocate_memory(static_cast<int>(other->values->getSize()));
     if (this->sparse_format == other->sparse_format) {
-      values->copyFromBlock(other->values.get(), 0, 0, other->values->getSize());
-      indices->copyFromBlock(other->indices.get(), 0, 0, other->indices->getSize());
-      first_index->copyFromBlock(other->first_index.get(),
-                                 0, 0, other->first_index->getSize());
+      values->copyFromBlock(0u, other->values.get(), 0u, other->values->getSize());
+      indices->copyFromBlock(0u, other->indices.get(), 0u, other->indices->getSize());
+      first_index->copyFromBlock(0u, other->first_index.get(),
+                                 0, other->first_index->getSize());
     }
     else {
       // Transformation between compressed sparse formats
@@ -458,7 +461,7 @@ namespace basics {
   Matrix<T> *SparseMatrix<T>::toDense(CBLAS_ORDER order) const {
     Matrix<T> *result = new Matrix<T>(2, matrixSize, order);
     typename Matrix<T>::random_access_iterator result_it(result);
-    result->zeros();
+    april_math::MatrixExt::matZeros(result);
     int x0=0,x1=0;
     for (const_iterator it(begin()); it != end(); ++it) {
       it.getCoords(x0,x1);

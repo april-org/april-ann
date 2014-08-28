@@ -29,6 +29,7 @@
 #include "cblas_headers.h"
 #include "disallow_class_methods.h"
 #include "gpu_mirrored_memory_block.h"
+#include "mathcore.h"
 #include "matrix.h"
 #include "maxmin.h"
 #include "mmapped_data.h"
@@ -36,7 +37,6 @@
 #include "serializable.h"
 #include "swap.h"
 #include "unused_variable.h"
-#include "wrapper.h"
 
 namespace basics {
 
@@ -328,9 +328,6 @@ namespace basics {
       return true;
     }
   
-    void fill(T value);
-    void zeros();
-    void ones();
     static SparseMatrix<T> *diag(int N, T value=T(),
                                  SPARSE_FORMAT sparse_format = CSR_FORMAT) {
       unsigned int uN = static_cast<unsigned int>(N);
@@ -399,47 +396,7 @@ namespace basics {
                                    sparse_format);
       return result;
     }
-
-    T sum() const;
-
-    // the argument indicates over which dimension the sum must be performed
-    Matrix<T>* sum(int dim, Matrix<T> *dest=0);
-
-    /**** COMPONENT WISE OPERATIONS ****/
-    bool equals(const SparseMatrix<T> *other, float epsilon) const;
-    void sqrt();
-    void pow(T value);
-    void tan();
-    void tanh();
-    void atan();
-    void atanh();
-    void sin();
-    void sinh();
-    void asin();
-    void asinh();
-    void abs();
-    void sign();
-  
-    /**** BLAS OPERATIONS ****/
-  
-    // SCOPY BLAS operation this = other
-    void copy(const SparseMatrix<T> *other);
-  
-    void scal(T value);
-
-    void div(T value);
-  
-    float norm2() const;
-    T min(int &c0, int &c1) const;
-    T max(int &c0, int &c1) const;
-    void minAndMax(T &min, T &max) const;
-  
-    // Min and max over given dimension, be careful, argmin and argmax matrices
-    // contains the min/max index at the given dimension, but starting in 1 (not
-    // in 0)
-    Matrix<T> *min(int dim, Matrix<T> *dest=0, Matrix<int32_t> *argmin=0);
-    Matrix<T> *max(int dim, Matrix<T> *dest=0, Matrix<int32_t> *argmax=0);
-  
+    
     /// This method converts the caller SparseMatrix in a vector, unrolling the
     /// dimensions in row-major order. If the SparseMatrix is in CSR format, the
     /// resulting vector is a row vector, otherwise, it is a column vector.
@@ -489,9 +446,11 @@ namespace basics {
 
 } // namespace basics
 
+// must be defined here
+#include "matrix_operations.h"
+
 #include "sparse_matrix.impl.h"
 #include "sparse_matrix-iterators.impl.h"
-#include "sparse_matrix-math.impl.h"
 #include "sparse_matrix-serialization.impl.h"
 
 #endif // SPARSE_MATRIX_H

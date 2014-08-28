@@ -19,7 +19,6 @@
  *
  */
 #include "matrixChar.h"
-#include "matrix_not_implemented.h"
 
 namespace basics {
 
@@ -79,14 +78,6 @@ namespace basics {
                                        const char *name, char default_value) {
     return options->getOptionalChar(name, default_value);
   }
-
-  /////////////////////////////////////////////////////////////////////////////
-  
-  NOT_IMPLEMENT_AXPY(char)
-  NOT_IMPLEMENT_GEMM(char)
-  NOT_IMPLEMENT_GEMV(char)
-  NOT_IMPLEMENT_GER(char)
-  NOT_IMPLEMENT_DOT(char)
 
   ///////////////////////////////////////////////////////////////////////////////
   template class Matrix<char>;

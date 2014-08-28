@@ -167,7 +167,7 @@ namespace basics {
            it!=matrix_dict.end(); ++it) {                               \
         if (it->second.isSparse())                                      \
           ERROR_EXIT(256, "Impossible to execute operators with sparse matrices\n"); \
-        it->second.checkDense()->NAME();                                \
+        april_math::MatrixExt::NAME(it->second.checkDense().get());     \
       }                                                                 \
     }
 #define MAKE_N1_OPERATOR(NAME,TYPE1)                                    \
@@ -176,7 +176,7 @@ namespace basics {
            it!=matrix_dict.end(); ++it) {                               \
         if (it->second.isSparse())                                      \
           ERROR_EXIT(256, "Impossible to execute operators with sparse matrices\n"); \
-        it->second.checkDense()->NAME(v1);                              \
+        april_math::MatrixExt::NAME(it->second.checkDense().get(), v1); \
       }                                                                 \
     }
 #define MAKE_N2_OPERATOR(NAME,TYPE1,TYPE2)                              \
@@ -185,43 +185,51 @@ namespace basics {
            it!=matrix_dict.end(); ++it) {                               \
         if (it->second.isSparse())                                      \
           ERROR_EXIT(256, "Impossible to execute operators with sparse matrices\n"); \
-        it->second.checkDense()->NAME(v1,v2);                           \
+        april_math::MatrixExt::NAME(it->second.checkDense().get(),v1,v2); \
       }                                                                 \
     }
     // matrix component-wise operators declaration
-    MAKE_N1_OPERATOR(fill,T);
-    MAKE_N2_OPERATOR(clamp,T,T);
-    MAKE_N0_OPERATOR(zeros);
-    MAKE_N0_OPERATOR(ones);
-    MAKE_N1_OPERATOR(scalarAdd,T);
-    MAKE_N0_OPERATOR(plogp);
-    MAKE_N0_OPERATOR(log);
-    MAKE_N0_OPERATOR(log1p);
-    MAKE_N0_OPERATOR(exp);
-    MAKE_N0_OPERATOR(sqrt);
-    MAKE_N1_OPERATOR(pow,T);
-    MAKE_N0_OPERATOR(tan);
-    MAKE_N0_OPERATOR(tanh);
-    MAKE_N0_OPERATOR(atan);
-    MAKE_N0_OPERATOR(atanh);
-    MAKE_N0_OPERATOR(cos);
-    MAKE_N0_OPERATOR(cosh);
-    MAKE_N0_OPERATOR(acos);
-    MAKE_N0_OPERATOR(acosh);
-    MAKE_N0_OPERATOR(sin);
-    MAKE_N0_OPERATOR(sinh);
-    MAKE_N0_OPERATOR(asin);
-    MAKE_N0_OPERATOR(asinh);
-    MAKE_N0_OPERATOR(abs);
-    MAKE_N0_OPERATOR(complement);
-    MAKE_N0_OPERATOR(sign);
-    MAKE_N1_OPERATOR(scal,T);
-    MAKE_N2_OPERATOR(adjustRange,T,T);
-    MAKE_N0_OPERATOR(inv);
-    MAKE_N0_OPERATOR(pruneSubnormalAndCheckNormal);
+    MAKE_N1_OPERATOR(matFill,T);
+    MAKE_N2_OPERATOR(matClamp,T,T);
+    MAKE_N0_OPERATOR(matZeros);
+    MAKE_N0_OPERATOR(matOnes);
+    MAKE_N1_OPERATOR(matScalarAdd,T);
+    MAKE_N0_OPERATOR(matPlogp);
+    MAKE_N0_OPERATOR(matLog);
+    MAKE_N0_OPERATOR(matLog1p);
+    MAKE_N0_OPERATOR(matExp);
+    MAKE_N0_OPERATOR(matSqrt);
+    MAKE_N1_OPERATOR(matPow,T);
+    MAKE_N0_OPERATOR(matTan);
+    MAKE_N0_OPERATOR(matTanh);
+    MAKE_N0_OPERATOR(matAtan);
+    MAKE_N0_OPERATOR(matAtanh);
+    MAKE_N0_OPERATOR(matCos);
+    MAKE_N0_OPERATOR(matCosh);
+    MAKE_N0_OPERATOR(matAcos);
+    MAKE_N0_OPERATOR(matAcosh);
+    MAKE_N0_OPERATOR(matSin);
+    MAKE_N0_OPERATOR(matSinh);
+    MAKE_N0_OPERATOR(matAsin);
+    MAKE_N0_OPERATOR(matAsinh);
+    MAKE_N0_OPERATOR(matAbs);
+    MAKE_N0_OPERATOR(matComplement);
+    MAKE_N0_OPERATOR(matSign);
+    MAKE_N1_OPERATOR(matScal,T);
+    MAKE_N2_OPERATOR(matAdjustRange,T,T);
+    MAKE_N0_OPERATOR(matInv);
 #undef MAKE_N1_OPERATOR
 #undef MAKE_N2_OPERATOR
 
+    void pruneSubnormalAndCheckNormal() {
+      for (iterator it = matrix_dict.begin();
+           it!=matrix_dict.end(); ++it) {
+        if (it->second.isSparse())
+          ERROR_EXIT(256, "Impossible to execute operators with sparse matrices\n");
+        it->second.checkDense()->pruneSubnormalAndCheckNormal();
+      }
+    }
+    
     // two matrix basic math operator macros
 #define MAKE_OPERATOR(NAME)                                             \
     void NAME(const MatrixSet<T> *other) {                              \
@@ -234,12 +242,12 @@ namespace basics {
         if (b->empty())                                                 \
           ERROR_EXIT1(128, "Matrix with name %s not found\n",           \
                       it->first.c_str());                               \
-        a.getDense()->NAME(b->getDense().get());                        \
+        april_math::MatrixExt::NAME(a.getDense().get(), b->getDense().get()); \
       }                                                                 \
     }
     // two matrix basic math operator declarations
-    MAKE_OPERATOR(cmul);
-    MAKE_OPERATOR(copy);
+    MAKE_OPERATOR(matCmul);
+    MAKE_OPERATOR(matCopy);
 #undef MAKE_OPERATOR
 
     // AXPY
@@ -252,7 +260,7 @@ namespace basics {
                       it->first.c_str());
         if (a.isSparse() || b->isSparse())
           ERROR_EXIT(256, "Impossible to execute operators with sparse matrices\n");
-        a.getDense()->axpy(alpha, b->getDense().get());
+        april_math::MatrixExt::matAxpy(a.getDense().get(), alpha, b->getDense().get());
       }
     }
 
@@ -267,9 +275,9 @@ namespace basics {
         if (a.isSparse() != b->isSparse())
           ERROR_EXIT(256, "Impossible to execute operators with different matrix types\n");
         if (a.isSparse())
-          a.getSparse()->equals(b->getSparse().get(), epsilon);
+          april_math::MatrixExt::matEquals(a.getSparse().get(), b->getSparse().get(), epsilon);
         else
-          a.getDense()->equals(b->getDense().get(), epsilon);
+          april_math::MatrixExt::matEquals(a.getDense().get(), b->getDense().get(), epsilon);
       }
     }
 
@@ -279,14 +287,15 @@ namespace basics {
       for (iterator it = matrix_dict.begin(); it!=matrix_dict.end(); ++it) {
         T current_norm2;
         Value &a = it->second;
-        if (a.isSparse())
-          current_norm2 = it->second.getSparse()->norm2();
-        else
-          current_norm2 = it->second.checkDense()->norm2();
+        if (a.isSparse()) {
+          current_norm2 = april_math::MatrixExt::matNorm2(it->second.getSparse().get());
+        }
+        else {
+          current_norm2 = april_math::MatrixExt::matNorm2(it->second.checkDense().get());
+        }
         result_norm2 = result_norm2 + current_norm2*current_norm2;
       }
-      // FIXME: this call only work with float
-      return sqrtf(result_norm2);
+      return result_norm2;
     }
 
     // matrix math reductions
@@ -320,7 +329,7 @@ namespace basics {
         int b_size = b->size();
         a = a->rewrap(&a_size, 1);
         b = b->rewrap(&b_size, 1);
-        result = result + a->dot(b.get());
+        result = result + april_math::MatrixExt::matDot(a.get(), b.get());
       }
       return result;
     }

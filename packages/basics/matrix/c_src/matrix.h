@@ -40,18 +40,26 @@
 #include "smart_ptr.h"
 #include "swap.h"
 #include "unused_variable.h"
-#include "wrapper.h"
+#include "mathcore.h"
 
 namespace basics {
   
   namespace MatrixIO {
-    const char * const TAB_OPTION = "tab";
+    /// Boolean option key for read/write using tabulated format.
+    const char * const TAB_OPTION   = "tab";
+    /// Boolean option key for read/write using ascii format.
     const char * const ASCII_OPTION = "ascii";
+    /// String option key for read/write in 'col_major' or 'row_major'.
     const char * const ORDER_OPTION = "order";
+    /// String option key with a delimitiers list.
     const char * const DELIM_OPTION = "delim";
+    /// Boolean option key indicating if empty fields are allowed during read.
     const char * const EMPTY_OPTION = "read_empty";
+    /// T option key indicating the default value for empty fields.
     const char * const DEFAULT_OPTION = "default";
+    /// T option key indicating the expected number of columns.
     const char * const NCOLS_OPTION = "ncols";
+    /// T option key indicating the expected number of rows.
     const char * const NROWS_OPTION = "nrows";
   }
 
@@ -60,14 +68,9 @@ namespace basics {
   class SparseMatrix;
 
   /**
-   * Multidimensional matrix class.
+   * @brief Multidimensional matrix class.
    * 
-   * It implements basic linear algebra routines and other math operations. By
-   * default, the zero value must be T(). Additionally, T(0.0f) and T(1.0f) and
-   * T(-1.0f) and T(-nan) constructors must be available with correct math
-   * values. In case of char buffer or integer matrices these constructors are
-   * needed but not operational because math methods are forbidden for these
-   * data types.
+   * It implements basic tensor operations.
    */
   template <typename T>
   class Matrix : public AprilIO::Serializable {
@@ -376,6 +379,7 @@ namespace basics {
       //
       span_iterator(const Matrix<T> *m, int raw_pos, int dim);
     public:
+      span_iterator(const Matrix<T> *m, const int *order);
       span_iterator(const Matrix<T> *m, int dim = -1);
       span_iterator();
       span_iterator(const span_iterator &other);
@@ -389,6 +393,7 @@ namespace basics {
       span_iterator &operator++();
       int numberOfIterations() const;
       void setAtIteration(int idx);
+      const int *getDimOrder() const { return order; }
     };
 
     /********************************************************/
@@ -711,164 +716,11 @@ namespace basics {
     /// dimension. WARNING, the matrix is not check to be correct, so be careful.
     Matrix<T> *select(int dim, int index, Matrix<T> *dest=0);
   
-    ////////////////////////////////////////////////////////////////////////////
-
-    void clamp(T lower, T upper);
-    void fill(T value);
-    void zeros();
-    void ones();
-  
-    // Set the diagonal to current value
-    void diag(T value);
-
-    // Returns a new matrix with the sum, assuming they have the same dimension
-    // Crashes otherwise
-    Matrix<T>* addition(const Matrix<T> *other) const;
-
-    // The same as addition but substracting
-    Matrix<T>* substraction(const Matrix<T> *other) const;
-  
-    // Matrices must be NxK and KxM, the result is NxM
-    Matrix<T>* multiply(const Matrix<T> *other) const;
-
-    T sum() const;
-
-    // the argument indicates over which dimension the sum must be performed
-    Matrix<T>* sum(int dim, Matrix<T> *dest=0);
-
-    /**** COMPONENT WISE OPERATIONS ****/
-    bool equals(const Matrix<T> *other, float epsilon) const;
-    void plogp();
-    void log();
-    void log1p();
-    void exp();
-    void sqrt();
-    void pow(T value);
-    void tan();
-    void tanh();
-    void atan();
-    void atanh();
-    void sin();
-    void sinh();
-    void asin();
-    void asinh();
-    void cos();
-    void cosh();
-    void acos();
-    void acosh();
-    void abs();
-    void complement();
-    void sign();
-    void cmul(const Matrix<T> *other);
-    void adjustRange(T rmin, T rmax);
-  
-    /* BOOLEAN CONDITIONS: this methods transforms the given matrix in a ZERO/ONE
-       matrix, depending in the truth of the given condition */
-    // less than
-    void LTCondition(T value);
-    void LTCondition(Matrix<T> *value);
-    // greater than
-    void GTCondition(T value);
-    void GTCondition(Matrix<T> *value);
-    // equals to
-    void EQCondition(T value);
-    void EQCondition(Matrix<T> *value);
-    // not equals to
-    void NEQCondition(T value);
-    void NEQCondition(Matrix<T> *value);
-  
-    /**** BLAS OPERATIONS ****/
-    void scalarAdd(T s);
-  
-    // SCOPY BLAS operation this = other
-    void copy(const Matrix<T> *other);
-  
-    // AXPY BLAS operation this = this + alpha * other
-    void axpy(T alpha, const Matrix<T> *other);
-
-    // AXPY Sparse BLAS operation this = this + alpha * other
-    void axpy(T alpha, const SparseMatrix<T> *other);
-  
-    // GEMM BLAS operation this = alpha * op(A)*op(B) + beta*this
-    void gemm(CBLAS_TRANSPOSE trans_A,
-              CBLAS_TRANSPOSE trans_B,
-              T alpha,
-              const Matrix<T> *otherA,
-              const Matrix<T> *otherB,
-              T beta);
-
-    // MM Sparse BLAS operation this = alpha * op(A)*B + beta*this
-    void sparseMM(CBLAS_TRANSPOSE trans_A,
-                  CBLAS_TRANSPOSE trans_B,
-                  CBLAS_TRANSPOSE trans_C,
-                  T alpha,
-                  const SparseMatrix<T> *otherA,
-                  const Matrix<T> *otherB,
-                  T beta);
-
-    // GEMV BLAS operation this = alpha * op(A)*X + beta*this
-    void gemv(CBLAS_TRANSPOSE trans_A,
-              T alpha,
-              const Matrix<T> *otherA,
-              const Matrix<T> *otherX,
-              T beta);
-
-    // GEMV Sparse BLAS operation this = alpha * op(A)*X + beta*this
-    void gemv(CBLAS_TRANSPOSE trans_A,
-              T alpha,
-              const SparseMatrix<T> *otherA,
-              const Matrix<T> *otherX,
-              T beta);
-  
-    // GER BLAS operation this = alpha * X*Y' + this
-    void ger(T alpha,
-             const Matrix<T> *otherX,
-             const Matrix<T> *otherY);
-
-    // DOT BLAS operation value = dot(this, other)
-    T dot(const Matrix<T> *other) const;
-
-    // DOT Sparse BLAS operation value = dot(this, other)
-    T dot(const SparseMatrix<T> *other) const;
-  
-    void scal(T value);
-
-    void div(T value);
-  
-    float norm2() const;
-    T min(int &arg_min, int &arg_min_raw_pos) const;
-    T max(int &arg_max, int &arg_max_raw_pos) const;
-    void minAndMax(T &min, T &max) const;
-  
-    // Min and max over given dimension, be careful, argmin and argmax matrices
-    // contains the min/max index at the given dimension, but starting in 1 (not
-    // in 0)
-    Matrix<T> *min(int dim, Matrix<T> *dest=0, Matrix<int32_t> *argmin=0);
-    Matrix<T> *max(int dim, Matrix<T> *dest=0, Matrix<int32_t> *argmax=0);
-
-    Matrix<T> *maxSelDim(const int dim,
-                         april_math::Int32GPUMirroredMemoryBlock *raw_positions=0,
-                         int shift = 0) const;
-  
     // Expands current matrix to a diagonal matrix
     Matrix<T> *diagonalize() const;
   
     /**** LAPACK OPERATIONS ****/
-    Matrix<T> *inv();
-    void svd(Matrix<T> **U, SparseMatrix<T> **S, Matrix<T> **V);
-
-    april_utils::log_float logDeterminant(float &sign);
-    double determinant();
-    /**
-     * compute the Cholesky factorization of a real symmetric positive
-     * definite matrix A
-     * The factorization has the form
-     * A = U**T *	U,  if UPLO = 'U', or
-     * A = L  * L**T,  if	UPLO = 'L',
-     * where U is an upper triangular matrix and L is lower triangular.
-     */
-    Matrix<T> *cholesky(char uplo); // 'U' or 'L'
-
+    
     // UPDATE GPU OR PPAL IF NEEDED
     void update() {
 #ifdef USE_CUDA
@@ -876,8 +728,6 @@ namespace basics {
 #endif
     }
   
-    Matrix<T> *convolution(int D, const int *step,
-                           Matrix<T> *kernel, Matrix<T> *result=0);
     /*Matrix<T> **unrolled_kernel=0,
       Matrix<T> **unrolled_this=0);*/
     Matrix<T> *padding(int *begin_padding, int *end_padding, T default_value=T()) const;
@@ -983,9 +833,11 @@ namespace basics {
 
 #include "sparse_matrix.h"
 
+// must be defined here
+#include "matrix_operations.h"
+
 #include "matrix.impl.h"
 #include "matrix-iterators.impl.h"
-#include "matrix-math.impl.h"
 #include "matrix-serialization.impl.h"
 
 #endif // MATRIX_H

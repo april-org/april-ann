@@ -61,33 +61,6 @@ namespace basics {
                     const char *name,
                     april_math::ComplexF default_value);
 
-  template<>
-  void Matrix<april_math::ComplexF>::fill(april_math::ComplexF value);
-
-  template<>
-  april_math::ComplexF Matrix<april_math::ComplexF>::sum() const;
-
-  template<>
-  void Matrix<april_math::ComplexF>::scalarAdd(april_math::ComplexF s);
-
-  template<>
-  bool Matrix<april_math::ComplexF>::equals(const Matrix<april_math::ComplexF> *other,
-                                            float epsilon) const;
-
-  template<>
-  void Matrix<april_math::ComplexF>::cmul(const Matrix<april_math::ComplexF> *other);
-
-  /**** BLAS OPERATIONS ****/
-
-  template<>
-  void Matrix<april_math::ComplexF>::copy(const Matrix<april_math::ComplexF> *other);
-
-  template<>
-  void Matrix<april_math::ComplexF>::scal(april_math::ComplexF value);
-
-  template<>
-  float Matrix<april_math::ComplexF>::norm2() const;
-
   //////////////////////////////////////////////////////////////////////////////
 
   typedef Matrix<april_math::ComplexF> MatrixComplexF;

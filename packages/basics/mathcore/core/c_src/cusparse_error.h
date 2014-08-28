@@ -18,29 +18,14 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
+#ifndef _CUSPARSE_ERROR_H_
+#define _CUSPARSE_ERROR_H_
 
-#include <cmath>
-#include "sparse_matrixFloat.h"
+#ifdef USE_CUDA
+#include <cusparse_v2.h>
 
-///////////////////////////////////////////////////////////////////////////////
+void checkCusparseError(cusparseStatus_t status);
 
-namespace basics {
-  
-  namespace MatrixIO {
-    
-    template<>
-    int SparseAsciiSizer<float>::operator()(const SparseMatrix<float> *mat) {
-      return mat->nonZeroSize()*12;
-    }
-    
-    template<>
-    int SparseBinarySizer<float>::operator()(const SparseMatrix<float> *mat) {
-      return april_utils::binarizer::buffer_size_32(mat->nonZeroSize());
-    }
-    
-  }
-  
-  //////////////////////////////////////////////////////////////////////////
-  
-  template class SparseMatrix<float>;
-}
+#endif
+
+#endif // _CUBLAS_ERROR_H_

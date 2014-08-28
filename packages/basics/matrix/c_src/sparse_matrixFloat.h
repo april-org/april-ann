@@ -39,10 +39,9 @@ namespace basics {
     int SparseBinarySizer<float>::operator()(const SparseMatrix<float> *mat);
     
   }
-
-  template <>
-  void SparseMatrix<float>::sqrt();
-
+  
+  /////////////////////////////////////////////////////////////////////////
+  
   typedef SparseMatrix<float> SparseMatrixFloat;
 
 }

@@ -60,12 +60,6 @@ namespace basics {
   getTemplateOption(const april_utils::GenericOptions *options,
                     const char *name, double default_value);
 
-  template<>
-  void Matrix<double>::zeros();
-
-  template<>
-  void Matrix<double>::ones();
-
 }
 
 #endif // MATRIX_DOUBLE_H
