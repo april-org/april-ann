@@ -66,7 +66,7 @@ namespace april_math {
   template<typename T, typename O, typename OP>
   basics::Matrix<O> *MatrixSpanMap1(const basics::Matrix<T> *input,
                                     const OP &functor,
-                                    basics::Matrix<T> *dest = 0,
+                                    basics::Matrix<O> *dest = 0,
                                     const int N_th = DEFAULT_N_TH,
                                     const unsigned int SIZE_th = DEFAULT_SIZE_TH);
   

@@ -35,6 +35,9 @@
 #include "map_matrix.h"
 #include "map_sparse_matrix.h"
 
+#include "reduce_matrix.h"
+#include "reduce_sparse_matrix.h"
+
 namespace april_math {
   
   /**
@@ -667,7 +670,7 @@ namespace april_math {
       if (X->getMajorOrder() != Y->getMajorOrder()) {
         ERROR_EXIT(128, "Matrices with different major orders\n");
       }
-      return MatrixSpanReduce2(X, Y, doDot, r_add<T>, T(0.0f));
+      return MatrixSpanReduce2<T,T,T>(X, Y, doDot<T>, r_add<T>, T(0.0f));
     }
 
     // DOT Sparse BLAS operation value = dot(this, other)
@@ -719,7 +722,7 @@ namespace april_math {
 
     template <typename T>
     float matNorm2(basics::Matrix<T> *obj) {
-      return MatrixSpanReduce1(obj, doNrm2, MatrixNorm2Reductor<T>(), T(0.0f));
+      return MatrixSpanReduce1(obj, doNrm2<T>, MatrixNorm2Reductor<T>(), T(0.0f));
     }
 
     template <typename T>
@@ -732,6 +735,7 @@ namespace april_math {
     template <typename T>
     float matNorm2(basics::SparseMatrix<T> *obj) {
       return m_sqrt(SparseMatrixScalarReduce1(obj, SparseMatrixNorm2<T>(),
+                                              r_add<T>,
                                               T(0.0f)));
     }
     
@@ -1256,7 +1260,7 @@ namespace april_math {
 
     template <typename T>
     T matSum(const basics::SparseMatrix<T> *obj) {
-      return SparseMatrixScalarReduce(obj, T(), r_add<T>);
+      return SparseMatrixScalarReduce(obj, T(), r_add<T>, r_add<T>);
     }
     
     template <typename T>
@@ -1298,10 +1302,21 @@ namespace april_math {
     }
 
     /**** COMPONENT WISE OPERATIONS ****/
+    template<typename T>
+    struct EqualsReductor {
+      const m_curried_relative_equals<T> eq_functor;
+      EqualsReductor(const T &epsilon) : eq_functor(epsilon) { }
+      APRIL_CUDA_EXPORT bool operator()(const bool &acc,
+                                        const T &a, const T &b) {
+        return acc && eq_functor(a,b);
+      }
+    };
     template <typename T>
     bool matEquals(const basics::Matrix<T> *a, const basics::Matrix<T> *b,
                    T epsilon) {
-      return MatrixAndReduce2(a, b, r_curried_relative_equals<T>(epsilon));
+      if (!a->sameDim(b)) return false;
+      return MatrixScalarReduce2<T,T,bool>(a, b, EqualsReductor<T>(epsilon),
+                                           r_and<bool>, true);
     }
 
     template <typename T>

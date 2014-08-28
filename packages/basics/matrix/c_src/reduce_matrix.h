@@ -36,11 +36,12 @@ namespace basics {
 
 namespace april_math {
 
-  template<typename T, typename O, typename OP>
+  template<typename T, typename O, typename OP1, typename OP2>
   O MatrixScalarReduce1(const basics::Matrix<T> *input,
-                        const OP &scalar_red_functor,
+                        const OP1 &scalar_red_functor,
+                        const OP2 &intra_span_red_functor,
                         const O &zero,
-                        basics::Matrix<T> *dest = 0,
+                        basics::Matrix<O> *dest = 0,
                         unsigned int dest_raw_pos = 0);
   
   template<typename T, typename O, typename OP1, typename OP2>
@@ -48,13 +49,31 @@ namespace april_math {
                       const OP1 &inter_span_red_functor,
                       const OP2 &intra_span_red_functor,
                       const O &zero,
-                      basics::Matrix<T> *dest = 0,
+                      basics::Matrix<O> *dest = 0,
+                      unsigned int dest_raw_pos = 0);
+
+  template<typename T1, typename T2, typename O, typename OP1, typename OP2>
+  O MatrixScalarReduce2(const basics::Matrix<T1> *input1,
+                        const basics::Matrix<T2> *input2,
+                        const OP1 &scalar_red_functor,
+                        const OP2 &intra_span_red_functor,
+                        const O &zero,
+                        basics::Matrix<O> *dest = 0,
+                        unsigned int dest_raw_pos = 0);
+  
+  template<typename T1, typename T2, typename O, typename OP1, typename OP2>
+  O MatrixSpanReduce2(const basics::Matrix<T1> *input1,
+                      const basics::Matrix<T2> *input2,
+                      const OP1 &inter_span_red_functor,
+                      const OP2 &intra_span_red_functor,
+                      const O &zero,
+                      basics::Matrix<O> *dest = 0,
                       unsigned int dest_raw_pos = 0);
 
   template<typename T, typename O, typename OP>
   O MatrixScalarSumReduce1(const basics::Matrix<T> *input,
                            const OP &scalar_red_functor,
-                           basics::Matrix<T> *dest,
+                           basics::Matrix<O> *dest,
                            unsigned int dest_raw_pos,
                            int N_th = DEFAULT_N_TH,
                            unsigned int SIZE_th = DEFAULT_SIZE_TH);
@@ -62,7 +81,7 @@ namespace april_math {
   template<typename T, typename O, typename OP>
   O MatrixSpanSumReduce1(const basics::Matrix<T> *input,
                          const OP &inter_span_red_functor,
-                         basics::Matrix<T> *dest,
+                         basics::Matrix<O> *dest,
                          unsigned int dest_raw_pos,
                          int N_th = DEFAULT_N_TH,
                          unsigned int SIZE_th = DEFAULT_N_TH);

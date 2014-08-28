@@ -120,8 +120,8 @@ int clapack_sgesdd(int Order, int M, int N, int LDA,
   delete[] iwork;
   return info;
 }
-int clapack_spotrf(const int Order, const int Uplo, const int N, float *A,
-                   const int LDA) {
+int clapack_spotrf(int Order, int Uplo, int N, float *A,
+                   int LDA) {
   if (Order != CblasColMajor)
     ERROR_EXIT(256, "Only col_major order is allowed\n");
   int info = 0;

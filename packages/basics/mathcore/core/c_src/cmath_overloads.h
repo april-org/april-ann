@@ -268,7 +268,16 @@ namespace april_math {
     if (m_eq(a,b) == T(1.0f)) return T(0.0f);
     else return T(1.0f);
   }
+  template<typename T>
+  APRIL_CUDA_EXPORT bool m_relative_equals(const T &a,
+                                           const T &b,
+                                           const T &TH) {
+    if (a == T(0.0f) && b == T(0.0f)) return true;
+    return 2.0 * ( m_abs(a - b) / (m_abs(a) + m_abs(b)) ) < TH;
+  }
+  
   // DERIVATIVES
+  
   template<typename T>
   APRIL_CUDA_EXPORT T m_logistic_der(const T &input,
                                      const T &output) {
@@ -374,13 +383,6 @@ namespace april_math {
     return a || b;
   }
 
-  template<typename T>
-  APRIL_CUDA_EXPORT bool r_relative_equals(const T &a,
-                                           const T &b,
-                                           const T &TH) {
-    if (a == T(0.0f) && b == T(0.0f)) return true;
-    return 2.0 * ( m_abs(a - b) / (m_abs(a) + m_abs(b)) ) < TH;
-  }
   ///////////////////////
   // Curried functions //
   ///////////////////////
@@ -513,11 +515,11 @@ namespace april_math {
   };
   
   template<typename T>
-  struct r_curried_relative_equals {
+  struct m_curried_relative_equals {
     const T epsilon;
-    r_curried_relative_equals(const T &epsilon) : epsilon(epsilon) { }
+    m_curried_relative_equals(const T &epsilon) : epsilon(epsilon) { }
     APRIL_CUDA_EXPORT bool operator()(const T &a, const T &b) {
-      return r_relative_equals(a, b, epsilon);
+      return m_relative_equals(a, b, epsilon);
     }
   };
 
